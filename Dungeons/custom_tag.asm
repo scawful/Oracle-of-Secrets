@@ -51,20 +51,6 @@ org $09AC81 ; @hook module=Dungeons name=SomariaSocket_InternalLanding kind=jml 
   NOP
 assert pc() == $09AC86
 
-; The native pressure-probe loop uses a viewport-clipped tile query. Permit
-; only that caller's grounded tag $24 cube to read the complete current room.
-assert read4($088A26) == $00A520C2, "Targeted ancilla tile-query entry moved"
-assert read4($088A2A) == $C9E8E538, "Targeted ancilla tile-query continuation moved"
-assert read4($088A42) == $10D01BA5, "Targeted ancilla indoor dispatch moved"
-assert read3($088A56) == $0C7CBD, "Targeted ancilla floor selection moved"
-assert read4($088A59) == $06E87B22, "Targeted ancilla whole-room lookup moved"
-assert read3($08E793) == $8A2620, "Somaria pressure-probe caller moved"
-assert read3($08E75C) == $06469C, "Somaria fresh pressure clear moved"
-assert read3($08E75F) == $03DB9E, "Somaria fresh probe-count clear moved"
-org $088A26 ; @hook module=Dungeons name=SomariaSocket_PressureProbe kind=jml target=SomariaSocket_PressureProbe expected_m=8 expected_x=8 protected_size=4
-  JML SomariaSocket_PressureProbe
-assert pc() == $088A2A
-
 pullpc
 CustomTag:
 {
@@ -402,40 +388,6 @@ SomariaSocket_InternalLanding:
   STZ.w $0646
   LDA.b $48
   JML $09AC86
-}
-
-SomariaSocket_PressureProbe:
-{
-  ; Entry: M/X=8, DBR=$08, D=$0000. The JSR return is still on the stack.
-  ; After PHP/PHA8, $03,S/$04,S identify only JSR $8A26 at $08E793.
-  ; Other targeted queries and the class-1 fallthrough replay native clipping.
-  PHP : PHA
-  LDA $03,S : CMP.b #$95 : BNE .vanilla
-  LDA $04,S : CMP.b #$E7 : BNE .vanilla
-  CPX.b #$05 : BCS .vanilla
-  LDA.b $10 : CMP.b #$07 : BNE .vanilla
-  LDA.b $A0 : CMP.w $048E : BNE .vanilla
-  LDA.b $A1 : CMP.w $048F : BNE .vanilla
-  LDA.b $1B : BEQ .vanilla
-  LDA.b $AE : CMP.b #$24 : BEQ .tag24
-  LDA.b $AF : CMP.b #$24 : BNE .vanilla
-  .tag24
-  LDA.w $0C4A,X : CMP.b #$2C : BNE .vanilla
-  BIT.w $0308 : BMI .vanilla
-  LDA.w $03F4 : BNE .vanilla
-  LDA.w $0394,X : ORA.w $03C5,X : ORA.w $0380,X : BNE .vanilla
-  LDA.w $029E,X : BEQ .read_room
-  CMP.b #$FF : BNE .vanilla
-  .read_room
-  ; Reuse the original floor lookup, four probe points, tile-type tests and
-  ; counter. No prior pressure/probe state is trusted or latched here.
-  PLA : PLP
-  JML $088A42
-  .vanilla
-  PLA : PLP
-  REP #$20
-  LDA.b $00
-  JML $088A2A
 }
 assert pc() <= $2CFD00 ; original tag and draw-cull helper start here
 pullpc
