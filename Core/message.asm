@@ -47,7 +47,8 @@ MessageExpandedData:
   ; Allocation notes retained from the former inline message table:
   ; $1BC-$1C4, $1C8-$1C9, $1CB: sequential-walker/reserved padding
   ; $1C5/$1C6/$1C7/$1CA: Maku Tree hints at 1+/3+/5+/7 crystals
-  ; $1CC-$1D1: D3 prison sequence placeholders
+  ; $1CC/$1CF/$1D1: D3 capture taunt, cellmate hint and exit notice
+  ; $1CD/$1CE/$1D0: unused D3 wake/reclaim message reservations
   ; $1D2-$1D4: Gossip Stone placeholders
   ; $1D5-$1D8: Windmill Guy / Song of Storms quest
   ; $1D9-$1DF: reserved for future use

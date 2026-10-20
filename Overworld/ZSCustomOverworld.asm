@@ -5554,6 +5554,12 @@ if !Func02A5D3 == $01
 org $02A5D3 ; $0125D3 ; @hook module=Overworld
 Overworld_PlayerControl_Interupt:
 {
+    if !ENABLE_D3_PRISON_SEQUENCE == 1
+      JSL Oracle_D3Prison_TryExitMessage : BCC +
+        RTS ; text owns Module0E; do not run entrance/transition code
+      +
+    endif
+
     ; NOTE: Lost Woods camera drift fix was attempted here but broke small-to-large
     ; transitions. See Docs/Debugging/Issues/lost_woods_camera_desync.md for details.
     ; The scroll drift from wrong puzzle moves persists but is visual-only.

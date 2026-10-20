@@ -247,10 +247,14 @@ ElderGuideStage         = $7EF304
 ZoraWaterfallHint       = $7EF305
 
 ; Castle Ambush System ($7EF306) - D3 prison capture sequence
-;   Set by: custom_guard.asm | Read by: custom_guard.asm
+;   Set/read by: Dungeons/d3_prison_state.asm (diagnostic foundation)
 CastleAmbushFlags       = $7EF306
 !CastleAmbush_HasBeenCaptured = $01  ; bit 0 - Player captured (one-shot)
 !CastleAmbush_HasEscaped      = $02  ; bit 1 - Player escaped prison
+!CastleAmbush_AmbushPending   = $04  ; bit 2 - Blade receipt; hall arrest pending
+!CastleAmbush_BladeReclaimed  = $08  ; bit 3 - Silent room54 table retrieval
+!CastleAmbush_SwordMask       = $70  ; bits 4-6 - Confiscated sword level (1-4)
+; Bit 7 is preserved by D3 state transactions. No additional save byte.
 
 ; Reserved: $7EF307-30F available for future use
 

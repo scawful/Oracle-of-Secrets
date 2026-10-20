@@ -151,7 +151,7 @@ namespace Oracle
   ; Part00 villager lines and checkpoint (default on; see Util/macros.asm).
   ; The Wisdom dream scene shares its room-sprites hook ($09C2C3), and so does
   ; the dream return (shows Link after Link_WarpToRoom hides him).
-  if !ENABLE_PART00_ARRIVAL_LINES == 1 || !ENABLE_PART00_CHECKPOINT == 1 || !ENABLE_DREAM_WISDOM_SCENE == 1 || !ENABLE_DREAM_ROOM_SHEETS == 1 || !ENABLE_DREAM_RETURN == 1 || !ENABLE_DREAM_ENTRY_FX == 1
+  if !ENABLE_PART00_ARRIVAL_LINES == 1 || !ENABLE_PART00_CHECKPOINT == 1 || !ENABLE_DREAM_WISDOM_SCENE == 1 || !ENABLE_DREAM_ROOM_SHEETS == 1 || !ENABLE_DREAM_RETURN == 1 || !ENABLE_DREAM_ENTRY_FX == 1 || !ENABLE_D3_PRISON_SEQUENCE == 1
     incsrc "Core/part00.asm"
   endif
 

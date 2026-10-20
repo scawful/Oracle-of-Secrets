@@ -66,6 +66,10 @@ if !ENABLE_DREAM_POWER_SCENE == 1
 DreamPower_WakeLine  = $7FF37A ; word: !DreamPower_WakeLive = Maple says D2.06 in the hut
 endif
 
+; Transient D3 exit-message queue. TextShade reserves through $7FF367;
+; dream scene state begins at $7FF370. No SRAM or shared Lyra/BossKit scratch.
+D3Prison_ExitMessage = $7FF368 ; word: $D355 only after completed escape
+
 ; Current Song
 CurrentSong    = $030F
 
