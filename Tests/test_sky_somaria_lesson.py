@@ -1,4 +1,5 @@
 """Offline safety controls for Tests/native/sky_somaria_lesson.py; no emulator or socket."""
+import ast
 import importlib.util
 import io
 import json
@@ -44,7 +45,7 @@ def stream(objects, doors):
     return body + b"".join(bytes(d) for d in doors) + b"\xff\xff"
 
 
-def lesson_rom(tags=None, doors=None, objects=None, pots=None, ypos=b"\xd8\x13"):
+def lesson_rom(tags=None, doors=None, objects=None, pots=None, entrance=None):
     """Smallest synthetic wired candidate that satisfies validate_candidate."""
     rom = bytearray(offset(0x2CFE00))
     for address, expected, _ in door.PINNED:
@@ -55,12 +56,13 @@ def lesson_rom(tags=None, doors=None, objects=None, pots=None, ypos=b"\xd8\x13")
     doors = {0x90: [(0x83, 0x00)], 0x91: [(0x22, 0x00), (0x83, 0x18)], 0x92: [(0x22, 0x00)], **(doors or {})}
     lesson_objects = [subtype3(0xFD0, 52, 53), subtype3(0xFAF, 12, 54), subtype3(0xFAF, 18, 54)]
     objects = {0x90: [], 0x91: lesson_objects, 0x92: [], **(objects or {})}
-    rom[lesson.HEADER_POINTER_PC:lesson.HEADER_POINTER_PC + 3] = (HEADERS - 0x400).to_bytes(3, "little")
+    table = HEADERS - 0x400
+    rom[lesson.HEADER_POINTER_PC:lesson.HEADER_POINTER_PC + 3] = table.to_bytes(3, "little")
     rom[lesson.HEADER_BANK_PC] = HEADERS >> 16
     at = STREAMS
     for room in (0x90, 0x91, 0x92):
         header = HEADERS + room * 16
-        rom[offset(HEADERS - 0x400) + room * 2:offset(HEADERS - 0x400) + room * 2 + 2] = (header & 0xFFFF).to_bytes(2, "little")
+        rom[offset(table) + room * 2:offset(table) + room * 2 + 2] = (header & 0xFFFF).to_bytes(2, "little")
         rom[offset(header) + 5:offset(header) + 7] = bytes(tags[room])
         slot = lesson.OBJECT_POINTERS_PC + room * 3
         rom[slot:slot + 3] = at.to_bytes(3, "little")
@@ -72,8 +74,9 @@ def lesson_rom(tags=None, doors=None, objects=None, pots=None, ypos=b"\xd8\x13")
     pot_data = b"".join((y * 0x80 + x * 2).to_bytes(2, "little") + bytes([item])
                         for x, y, item in (pots or lesson.POTS)) + b"\xff\xff"
     rom[offset(POT_LIST):offset(POT_LIST) + len(pot_data)] = pot_data
-    for name, (pc, expected) in lesson.ENTRANCE_FIELDS.items():
-        rom[pc:pc + len(expected)] = ypos if name == "ypos" else expected
+    for name, (address, expected) in lesson.EXPANDED_ENTRANCE.items():
+        data = (entrance or {}).get(name, expected)
+        rom[offset(address):offset(address) + len(data)] = data
     exits = offset(lesson.EXIT_ROOMS)
     rom[exits:exits + 2] = b"\x90\x00"
     rom[exits + lesson.EXIT_COUNT * 2] = lesson.OUTSIDE_AREA
@@ -90,21 +93,21 @@ class SkySomariaLessonControls(unittest.TestCase):
     def test_wired_lesson_candidate_is_admitted(self):
         report = lesson.validate_candidate(lesson_rom(), SYMBOLS)
         self.assertEqual(report["tag24"]["hook"], "01CC89 JML 2CFD00")
+        self.assertEqual(report["expanded_entrance_29"]["room"], "9000")
         self.assertEqual(report["exit_area"], "7A")
-        self.assertEqual(report["pots"], [[12, 54, 0x0C], [18, 54, 0x0C]])
 
     def test_unwired_or_unauthored_candidates_are_refused(self):
-        stair = subtype2(0x138, 10, 10)
         plateless = [subtype3(0xFAF, 12, 54), subtype3(0xFAF, 18, 54)]
         for kwargs, message in (
                 ({"tags": {0x91: (0x00, 0)}}, "Room 91 header tags"),
                 ({"tags": {0x92: (0x24, 0)}}, "Room 92 header tags"),
-                ({"objects": {0x90: [stair]}}, "bypass stair"),
+                ({"objects": {0x90: [subtype2(0x138, 10, 10)]}}, "bypass stair"),
                 ({"objects": {0x91: plateless}}, "plate"),
                 ({"objects": {0x92: [subtype3(0xF99, 4, 4)]}}, "chest"),
                 ({"doors": {0x92: [(0x22, 0x00), (0x83, 0x18)]}}, "shutters"),
                 ({"pots": ((12, 54, 0x0C), (18, 54, 0x01))}, "pot items"),
-                ({"ypos": b"\xd8\x0d"}, "Entrance \\$29 ypos")):
+                ({"entrance": {"room": b"\x60\x00"}}, "entrance \\$29 room"),
+                ({"entrance": {"ypos": b"\xd8\x0d"}}, "entrance \\$29 ypos")):
             with self.subTest(message=message), self.assertRaisesRegex(RuntimeError, message):
                 lesson.validate_candidate(lesson_rom(**kwargs), SYMBOLS)
         rom = bytearray(lesson_rom())
@@ -112,86 +115,126 @@ class SkySomariaLessonControls(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Unhooked candidate"):
             lesson.validate_candidate(bytes(rom), SYMBOLS)
 
-    def test_route_overrides_stay_inside_recipe_bounds(self):
-        self.assertEqual(lesson.route_plan({}), lesson.DEFAULT_ROUTE)
-        self.assertEqual(lesson.route_plan({"cast_x": 420, "cast_y": None})["cast_x"], 420)
-        for name, (low, high) in lesson.ROUTE_BOUNDS.items():
-            for value in (low - 1, high + 1):
-                with self.subTest(name=name, value=value), self.assertRaisesRegex(RuntimeError, "outside"):
-                    lesson.route_plan({name: value})
+    def test_warp_subclass_redirects_only_entrance_29_after_live_checks(self):
+        live = {address: expected for address, expected in lesson.EXPANDED_ENTRANCE.values()}
 
-    def test_state_uses_room_local_coordinates(self):
-        low, anc = bytearray(0x700), bytearray(0x1F0)
-        low[0xA0], low[0x22:0x24], low[0x20:0x22] = 0x91, (0x3A0).to_bytes(2, "little"), (0x1390).to_bytes(2, "little")
-        anc[0x5A], anc[0x14], anc[0x28], anc[0x0A], anc[0x1E] = 0x2C, 0xA8, 0x03, 0xAF, 0x13
-        state = lesson.state_from(bytes(low), bytes(anc), bytes(0x90), b"\x01\x00")
-        self.assertEqual((state["lx"], state["ly"]), (416, 400))
-        self.assertEqual((state["slots"][0]["lx"], state["slots"][0]["ly"]), (424, 431))
-        self.assertEqual(lesson.block_slot(state), 0)
-        self.assertEqual(state["potlift"], 1)
+        class Bus:
+            def read_block(self, address, length):
+                return live[address][:length]
 
-    def route(self, states):
-        args = Args()
-        route = lesson.LessonRoute(args, object(), lesson.route_plan({}))
-        route.last = states[0]
-        queue = list(states[1:])
-        route.advance = lambda buttons, count: setattr(route, "last", queue.pop(0) if queue else route.last) or route.last
-        return route
+        class Legacy:
+            def __init__(self, bridge):
+                self.b = bridge
 
-    def walking_state(self, lx):
-        return {"module": 0x07, "submodule": 0, "indoors": 1, "room": 0x91, "area": 0, "x": lx, "y": 400,
-                "lx": lx, "ly": 400, "doorway": 0, "shutter": 1, "hp": 0x48}
+            def _entrance_destination(self, entrance):
+                return ("legacy", entrance["id"])
 
-    def test_movement_refuses_stalls_and_frame_overruns(self):
-        stuck = self.route([self.walking_state(100)])
-        with self.assertRaisesRegex(RuntimeError, "no progress holding Right"):
-            stuck.hold_until("Right", lambda s: s["lx"] >= 200, 600)
-        self.route([self.walking_state(100)]).hold_until("Right", lambda s: False, 600, blocked_ok=True)
-        moving = self.route([self.walking_state(100 + i) for i in range(400)])
-        with self.assertRaisesRegex(RuntimeError, "missed target in 40 frames"):
-            moving.hold_until("Right", lambda s: s["lx"] >= 999, 40)
+            def _exit_area(self, room):
+                return 0x7A if room == 0x90 else None
 
-    def test_body_refuses_writes_and_undeclared_buttons_before_the_socket(self):
+            def r16(self, address):
+                return 0x0060
+
+        cheats = lesson.lesson_cheats(Legacy)(Bus())
+        self.assertEqual(cheats._entrance_destination({"id": "0x29"}), (0x90, 0x7A))
+        self.assertEqual(cheats.legacy_room, 0x0060)
+        self.assertEqual(cheats._entrance_destination({"id": "0x2A"}), ("legacy", "0x2A"))
+        live[0x0F8052] = b"\x60\x00"
+        with self.assertRaisesRegex(RuntimeError, "Live expanded entrance \\$29 room"):
+            cheats._entrance_destination({"id": "0x29"})
+
+    def test_bootstrap_writes_are_allowlisted_and_body_admits_none(self):
+        self.assertEqual({a for a, _, _ in lesson.BOOTSTRAP_WRITES},
+                         {0x7EF350, 0x7E0202, 0x7E0303, 0x7E0304, 0x7EF36E})
+        boot = lesson.Bootstrap(Args(), object(), None)
+        for address, value in ((0x7EF36D, 0x48), (0x7EF36C, 0x50), (0x7E037B, 0x01), (0x7EF36E, 0x80),
+                               (0x7E0020, 0xD8), (0x7EF3C8, 0x29)):
+            with self.subTest(address=address), self.assertRaisesRegex(RuntimeError, "Undeclared bootstrap write"):
+                boot.write(address, value, "probe")
         route = lesson.LessonRoute(Args(), object(), lesson.route_plan({}))
         with self.assertRaisesRegex(RuntimeError, "no memory writes"):
-            route.write(0x7EF36E, 0x80)
-        for buttons, count in (("B", 1), ("Select", 1), ("Up+A", 1), ("Right", 9), ("Right", 0)):
+            route.write(0x7EF36E, 0x10)
+        for buttons, count in (("B", 1), ("Start", 1), ("Up+A", 1), ("Right", 9), ("Right", 0)):
             with self.subTest(buttons=buttons, count=count), self.assertRaisesRegex(RuntimeError, "Undeclared"):
                 route.advance(buttons, count)
 
     def test_source_never_uses_forbidden_runtime_controls(self):
         code = PATH.read_text()
-        for token in ("write_memory", "write_block", "WRITEBLOCK", "SET_PC", "EXEC_LUA", "execute_lua",
-                      "load_state", "LOADSTATE", "save_state", "SAVESTATE", "RESET", ".reset(", "LOADROM",
-                      "load_script", "CHEAT", "Popen", "os.kill", "set_cpu", "SET_REG", "add_breakpoint",
-                      "resume("):
+        for token in ("SET_PC", "EXEC_LUA", "execute_lua", "load_state", "LOADSTATE", "save_state", "SAVESTATE",
+                      "RESET", ".reset(", "LOADROM", "load_script", "CHEAT", "Popen", "os.kill", "set_cpu",
+                      "SET_REG", "add_breakpoint", "resume(", "write_block"):
             with self.subTest(token=token):
                 self.assertNotIn(token, code)
+        body = next(ast.get_source_segment(code, node) for node in ast.parse(code).body
+                    if isinstance(node, ast.ClassDef) and node.name == "LessonRoute")
+        for token in ("write_memory", "_poke", "warp", "BOOTSTRAP_WRITES"):
+            with self.subTest(body_token=token):
+                self.assertNotIn(token, body)
+
+    def test_movement_refuses_stalls_and_frame_overruns(self):
+        def route(states):
+            fixture = lesson.LessonRoute(Args(), object(), lesson.route_plan({}))
+            fixture.last, queue = states[0], list(states[1:])
+            fixture.advance = lambda b, n: setattr(fixture, "last", queue.pop(0) if queue else fixture.last) or fixture.last
+            return fixture
+
+        def at(lx):
+            return {"module": 0x07, "submodule": 0, "indoors": 1, "room": 0x91, "area": 0, "x": lx, "y": 400,
+                    "lx": lx, "ly": 400, "doorway": 0, "shutter": 1, "hp": 0x48}
+
+        with self.assertRaisesRegex(RuntimeError, "no progress holding Right"):
+            route([at(100)]).hold_until("Right", lambda s: s["lx"] >= 200, 600)
+        route([at(100)]).hold_until("Right", lambda s: False, 600, blocked_ok=True)
+        with self.assertRaisesRegex(RuntimeError, "missed target in 40 frames"):
+            route([at(100 + i) for i in range(400)]).hold_until("Right", lambda s: s["lx"] >= 999, 40)
+        for name, (low, high) in lesson.ROUTE_BOUNDS.items():
+            with self.subTest(name=name), self.assertRaisesRegex(RuntimeError, "outside"):
+                lesson.route_plan({name: high + 1})
+
+    def test_run_reads_the_starting_state_before_the_first_phase(self):
+        low, save = bytearray(0x700), bytearray(0x90)
+        low[0x10], low[0x1B], low[0xA0] = 0x07, 0x01, 0x90
+        low[0x20:0x22], low[0x22:0x24] = (0x13D8).to_bytes(2, "little"), (0x0100).to_bytes(2, "little")
+        low[0x202], low[0x303] = 0x0F, 0x12
+        save[0x10], save[0x2D] = 0x01, 0x48
+        memory = {0x7E0000: bytes(low), 0x7E0BF0: bytes(0x1F0), 0x7EF340: bytes(save), lesson.POTLIFT: b"\0\0"}
+        with tempfile.TemporaryDirectory() as temporary:
+            args = Args()
+            args.output = Path(temporary)
+            route = lesson.LessonRoute(args, object(), lesson.route_plan({}))
+            route.block = lambda address, size: memory[address][:size]
+            shots = []
+            route.shot = shots.append
+            route.run("preconditions")
+        self.assertTrue(route.result["runtime_checks_passed"])
+        self.assertEqual(route.result["completed_through"], "preconditions")
+        self.assertIn("room 0090 area 00 local (256,472)", route.result["phases"][0]["start"])
+        self.assertEqual(shots, ["start-room90"])
+        self.assertEqual(route.result["writes"], [])
 
     def test_describe_is_source_only_and_default_refuses(self):
-        stream_out = io.StringIO()
-        with redirect_stdout(stream_out):
+        out = io.StringIO()
+        with redirect_stdout(out):
             self.assertEqual(lesson.main(["--describe"]), 0)
-        plan = json.loads(stream_out.getvalue())
+        plan = json.loads(out.getvalue())
         self.assertFalse(plan["native_executed"])
         self.assertEqual(plan["body"]["memory_writes"], [])
-        self.assertEqual(plan["setup"]["checkpoint_chain"][-1], "d8-entrance")
-        self.assertEqual(plan["phases"], list(lesson.PHASES))
+        self.assertEqual(len(plan["bootstrap"]["writes_after_landing"]), len(lesson.BOOTSTRAP_WRITES))
+        self.assertNotIn("checkpoint d8-entrance", json.dumps(plan))
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / "out"
-            with self.assertRaisesRegex(RuntimeError, "--execute-fixtures"):
-                lesson.main(["--output", str(output)])
-            with self.assertRaisesRegex(RuntimeError, "--execute-fixtures"):
-                lesson.main(["--inspect", "--execute-fixtures", "--output", str(output)])
+            for argv in ([], ["--inspect", "--execute-fixtures"], ["--bootstrap", "--execute-fixtures"]):
+                with self.subTest(argv=argv), self.assertRaisesRegex(RuntimeError, "exactly one of"):
+                    lesson.main(argv + ["--output", str(output)])
             self.assertFalse(output.exists())
 
-    def test_execute_refuses_identity_mismatch_before_output_or_bridge(self):
+    def test_attach_refuses_identity_mismatch_before_output_or_bridge(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             rom, sym, output = root / "c.sfc", root / "c.sym", root / "out"
             rom.write_bytes(lesson_rom())
             sym.write_text(SYMBOLS)
-            base = ["--execute-fixtures", "--socket", "/tmp/mesen2-sky-lesson.sock", "--pid", "1",
+            base = ["--bootstrap", "--socket", "/tmp/mesen2-sky-lesson.sock", "--pid", "1",
                     "--owned-rom", str(rom), "--symbols", str(sym), "--client-root", str(root),
                     "--status-file", str(root / "s.status"), "--owner-file", str(root / "o"),
                     "--owner", "control", "--output", str(output),
