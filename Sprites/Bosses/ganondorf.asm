@@ -74,6 +74,13 @@ org $2A8000
 Sprite_Ganondorf_Long:
 {
   PHB : PHK : PLB
+  ; Fairy revive: the game over module reloaded the sheets and palettes. Graphics only; the
+  ; fight (hits, stun count, action, teleport spot, ball) keeps running from where it was.
+  LDA.w BossReinject : BEQ .no_reinject
+    STZ.w BossReinject
+    JSL ApplyGanondorfGraphics
+    JSL ApplyGanondorfPalette
+  .no_reinject
   JSR Ganondorf_Draw
   JSL Sprite_CheckActive : BCC .not_active
     JSR Ganondorf_Main
@@ -98,6 +105,7 @@ Sprite_Ganondorf_Prep:
   LDA.b #$40 : STA.w SprTimerA, X
   JSL ApplyGanondorfGraphics
   JSL ApplyGanondorfPalette
+  STZ.w BossReinject
   PLB
   RTL
 }
@@ -567,7 +575,19 @@ Ganondorf_DoorGate:
 {
   LDA.b $A0 : ORA.b $A1 : BNE .open
   LDA.l GanondorfFight : CMP.b #$02 : BEQ .open
+  ; Kydreeok must have died first (kydreeok.asm sets FinaleBeat), then the placeholder beat runs out.
+  LDA.w FinaleBeat : BEQ .shut
     PHX : PHY
+    LDX.b #$0F
+    .scan ; a live Ganondorf (fight = 1) means wait; a stale fight = 1 with none respawns him
+      LDA.w SprState, X : BEQ .next
+      LDA.w SprType, X : CMP.b #Sprite_Ganondorf : BEQ .wait
+      .next
+      DEX : BPL .scan
+    LDA.w FinaleBeat : CMP.b #$01 : BEQ .go
+      DEC.w FinaleBeat
+      BRA .wait
+    .go
     LDX.b #$00 ; spawn copies slot 0's position; overwritten below
     LDA.b #Sprite_Ganondorf : JSL Sprite_SpawnDynamically : BMI .full
       TYX
@@ -579,7 +599,9 @@ Ganondorf_DoorGate:
       JSL Sprite_Ganondorf_Prep
       LDA.b #$01 : STA.l GanondorfFight
     .full
+    .wait
     PLY : PLX
+    .shut
     SEC
     RTL
   .open
@@ -597,6 +619,27 @@ if !ENABLE_DREAM_RETURN == 0
     assert pc() == $01C785
   pullpc
 endif
+
+; =========================================================
+; Fairy revive hook. GameOver_ResituateLink ($09F742) is the last step of the fairy path
+; (it hands Module12 back to the previous module); the room is not reloaded and sprites keep
+; their state. Replaces `LDA.b #$90 : STA.w $031F` (A9 90 8D 1F 03 in the base ROM).
+; Room $00 only: Kydreeok and Ganondorf see BossReinject on their next frame.
+
+BossReinject_Set:
+{
+  LDA.b #$90 : STA.w $031F ; original
+  LDA.b $A0 : ORA.b $A1 : BNE .not_finale_room
+    LDA.b #$01 : STA.w BossReinject
+  .not_finale_room
+  RTL
+}
+
+pushpc
+org $09F773 ; @hook module=Sprites name=BossReinject_Set kind=jsl target=BossReinject_Set expected_m=8 expected_x=8
+  JSL BossReinject_Set : NOP
+  assert pc() == $09F778
+pullpc
 
 ; =========================================================
 ; Graphics -> second OBJ name table (VRAM $5000), like Twinrova.
