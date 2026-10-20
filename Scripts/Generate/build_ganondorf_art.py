@@ -20,14 +20,24 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_PROJECT = ROOT / 'Data/graphics/ganondorf/project.json'
-BODY_IDS = ('idle', 'cast', 'hurt', 'release', 'side', 'back_a', 'back_b')
-SOURCE_IDS = BODY_IDS + ('ball_a', 'ball_b')
+BODY_IDS = ('idle', 'cast', 'hurt', 'release', 'side', 'back_a', 'back_b',
+            'cast_ready', 'cast_half', 'cast_a', 'cast_second', 'cast_b',
+            'throw_windup', 'throw', 'throw_follow', 'recover_half')
+SOURCE_IDS = BODY_IDS + ('ball_a', 'ball_b', 'bat_up', 'bat_mid', 'bat_down')
+# Keep superseded art in the editable source without spending resident VRAM on it.
+PACKED_IDS = tuple(name for name in SOURCE_IDS if name not in ('cast', 'release', 'side'))
 RUNTIME_IDS = ('idle', 'cast', 'hurt', 'ball_a', 'ball_b', 'release',
-               'right', 'left', 'back_a', 'back_b', 'charge_a', 'charge_b')
+               'right', 'left', 'back_a', 'back_b', 'charge_a', 'charge_b',
+               'cast_ready', 'cast_half', 'cast_a', 'cast_second',
+               'throw_windup', 'throw_follow', 'recover_half',
+               'bat_up', 'bat_mid', 'bat_down')
+BODY_ALIASES = {'cast': 'cast_b', 'release': 'throw', 'right': 'idle', 'left': 'idle'}
+HELD_BALL_FRAMES = ('charge_a', 'charge_b', 'cast_a', 'cast_second')
 TABLE_NAMES = ('start_index', 'nbr_of_tiles', 'x_offsets', 'y_offsets',
                'chr', 'properties', 'sizes')
-SHEET_SIZE = (128, 64)
-SHEET_BYTES = 0x1000
+SHEET_SIZE = (128, 96)
+SHEET_BYTES = 0x1800
+MAX_CELLS = 48
 BASE_PROPERTIES = 0x3D  # OBJ palette6; palette4 is reserved for vanilla shadows.
 VIEW_ORIGIN = (16, 40)
 VIEW_SIZE = (64, 80)
@@ -68,7 +78,7 @@ def load_source(path):
         name = frame['id']; col, row = frame['cell']; width, height = frame['size']
         if name not in SOURCE_IDS or name in images:
             raise ValueError(f'unknown/duplicate frame:{name}')
-        expected_size = (16, 16) if name.startswith('ball_') else (32, 40)
+        expected_size = (16, 16) if name.startswith(('ball_', 'bat_')) else (32, 40)
         if (width, height) != expected_size:
             raise ValueError(f'{name}: expected{expected_size}')
         if (col, row) in occupied or not 0 <= col < 8 or not 0 <= row < image.height // 48:
@@ -142,7 +152,7 @@ def canonical_cell(image):
 def tile_piece(sheet, piece):
     tile = piece['tile']
     # A16x16 sprite addresses N,N+1,N+$10,N+$11 in the128px sheet.
-    if tile & 1 or (tile//16) & 1 or tile+0x11 >= 128:
+    if tile & 1 or (tile//16) & 1 or tile+0x11 >= SHEET_BYTES//32:
         raise ValueError(f'invalid16x16 tile address:${tile:02X}')
     x = tile % 16*8; y = tile//16*8
     return flipped(sheet.crop((x, y, x+16, y+16)), piece['hflip'], piece['vflip'])
@@ -154,9 +164,9 @@ def paste_visible(canvas, part, position):
 
 def pack_layout(images, palette, align_body_top):
     cells = []; lookup = {}; maps = {}
-    for name in SOURCE_IDS:
+    for name in PACKED_IDS:
         image = images[name]
-        effect = name.startswith('ball_')
+        effect = name.startswith(('ball_', 'bat_'))
         ink = image.getbbox()
         top = ink[1] if ink and align_body_top and not effect else 0
         bottom = 16 if effect else 40
@@ -175,7 +185,7 @@ def pack_layout(images, palette, align_body_top):
                                    x=x, y=y, hflip=h, vflip=v, size=16))
         maps[name] = pieces
     # Evaluate larger losing candidates too; only the selected layout must fit.
-    height = max(64, ((len(cells)+7)//8)*16)
+    height = max(SHEET_SIZE[1], ((len(cells)+7)//8)*16)
     sheet = indexed((128, height), palette)
     for slot, part in enumerate(cells):sheet.paste(part, (slot%8*16, slot//8*16))
     data = encode_4bpp(sheet)
@@ -199,17 +209,22 @@ def runtime_maps(maps):
     def body(name, mirror=False):
         return [dict(p, x=8-p['x'] if mirror else p['x']-8,
                      y=p['y']-16, hflip=p['hflip'] ^ mirror) for p in maps[name]]
-    for name in ('idle','cast','hurt','release','back_a','back_b'):frames[name]=body(name)
-    frames['right']=body('side');frames['left']=body('side',True)
+    for name in RUNTIME_IDS:
+        if name.startswith(('ball_', 'charge_', 'bat_')):continue
+        frames[name]=body(BODY_ALIASES.get(name,name))
     for name in ('ball_a','ball_b'):
         if len(maps[name])!=1 or (maps[name][0]['x'],maps[name][0]['y'])!=(0,0):
             raise ValueError('ball must use one full16x16 piece at0,0')
         frames[name]=[dict(maps[name][0])]
     for letter in ('a','b'):
-        frames['charge_'+letter]=body('cast')+[dict(maps['ball_'+letter][0],x=0,y=-32)]
-    if any(len(frames[name])>6 for name in RUNTIME_IDS if not name.startswith('charge_')):
+        frames['charge_'+letter]=body('cast_b')+[dict(maps['ball_'+letter][0],x=0,y=-32)]
+    for name in ('cast_a', 'cast_second'):
+        frames[name].append(dict(maps['ball_a'][0],x=0,y=-32))
+    for name in ('bat_up', 'bat_mid', 'bat_down'):
+        frames[name]=[dict(maps[name][0],x=0,y=-8)]
+    if any(len(frames[name])>6 for name in RUNTIME_IDS if name not in HELD_BALL_FRAMES):
         raise ValueError('ordinary frame exceeds6 pieces')
-    if any(len(frames[name])>7 for name in ('charge_a','charge_b')):
+    if any(len(frames[name])>7 for name in HELD_BALL_FRAMES):
         raise ValueError('charge exceeds7 pieces; shadow owns OAM index7')
     return frames
 
@@ -219,7 +234,7 @@ def make_asm(frames, hashes, selected):
     lines=['; Generated by Scripts/Generate/build_ganondorf_art.py; do not edit.',
            '; Approved original32x40 pixels; local labels included inside Ganon_DrawFrame.',
            f'; Canonical SHA256: {hashes["canonical_sha256"]}',
-           f'; Layout: {selected["name"]}; {selected["cells"]}/32 unique16x16 cells.',
+           f'; Layout: {selected["name"]}; {selected["cells"]}/{MAX_CELLS} unique16x16 cells.',
            '; Frames: '+', '.join(f'{i}={name}' for i,name in enumerate(RUNTIME_IDS)),
            '; Body x=source_x-8,y=source_y-16; balls0,0; charge ball0,-32.',
            '; X/Y offsets are signed16bit dw; draw loop indexes these tables with ASL.',
@@ -243,6 +258,8 @@ def make_asm(frames, hashes, selected):
         directive, digits = ('dw', 4) if word_offsets else ('db', 2)
         for start in range(0,len(values),16):
             lines.append('  '+directive+' '+', '.join(f'${v:0{digits}X}' for v in values[start:start+16]))
+    lines += ['', f'GanonBall_TileA = ${frames["ball_a"][0]["tile"]:02X}',
+              f'GanonBall_TileB = ${frames["ball_b"][0]["tile"]:02X}']
     return '\n'.join(lines)+'\n',tables
 
 
@@ -291,11 +308,12 @@ def expected_runtime(name,images,palette):
     if name in ('ball_a','ball_b'):
         paste_visible(canvas,images[name],VIEW_ORIGIN)
     else:
-        source='side' if name in ('right','left') else 'cast' if name.startswith('charge_') else name
-        body=flipped(images[source],h=name=='left')
-        paste_visible(canvas,body,(VIEW_ORIGIN[0]-8,VIEW_ORIGIN[1]-16))
-        if name.startswith('charge_'):
-            paste_visible(canvas,images['ball_'+name[-1]],(VIEW_ORIGIN[0],VIEW_ORIGIN[1]-32))
+        source='cast_b' if name.startswith('charge_') else BODY_ALIASES.get(name,name)
+        offset=(0,-8) if name.startswith('bat_') else (-8,-16)
+        paste_visible(canvas,images[source],(VIEW_ORIGIN[0]+offset[0],VIEW_ORIGIN[1]+offset[1]))
+        if name in HELD_BALL_FRAMES:
+            ball='ball_'+name[-1] if name.startswith('charge_') else 'ball_a'
+            paste_visible(canvas,images[ball],(VIEW_ORIGIN[0],VIEW_ORIGIN[1]-32))
     return canvas
 
 
@@ -320,9 +338,9 @@ def self_test():
     for x,y,value in ((0,0,1),(15,0,2),(0,15,4),(15,15,8),(5,6,15)):tile.putpixel((x,y),value)
     keys={canonical_cell(flipped(tile,h,v))[0] for h,v in ((0,0),(1,0),(0,1),(1,1))}
     if len(keys)!=1:raise ValueError('flip canonicalization fixture failed')
-    sheet=indexed(SHEET_SIZE,palette);sheet.paste(tile,(112,48))
+    sheet=indexed(SHEET_SIZE,palette);sheet.paste(tile,(112,SHEET_SIZE[1]-16))
     decoded=decode_4bpp(encode_4bpp(sheet),128,palette)
-    if tile_piece(decoded,dict(tile=0x6E,hflip=False,vflip=False)).tobytes()!=tile.tobytes():
+    if tile_piece(decoded,dict(tile=0xAE,hflip=False,vflip=False)).tobytes()!=tile.tobytes():
         raise ValueError('last16x16 cell fixture failed')
     # Draw-loop ASL indexing requires signed16bit offsets, while tile/props stay8bit.
     fixture = '.start_index\n  db $00\n.nbr_of_tiles\n  db $01\n.x_offsets\n  dw $FFF8, $0008\n.y_offsets\n  dw $FFE0, $0010\n.chr\n  db $00, $02\n.properties\n  db $39, $79\n.sizes\n  db $02, $02\n'
@@ -333,7 +351,7 @@ def self_test():
     try:parse_asm_tables(rejected)
     except ValueError:pass
     else:raise ValueError('8bit X offset table accepted for16bit draw loop')
-    try:tile_piece(decoded,dict(tile=0x70,hflip=False,vflip=False))
+    try:tile_piece(decoded,dict(tile=0xB0,hflip=False,vflip=False))
     except ValueError:pass
     else:raise ValueError('out-of-bounds16x16 tile accepted')
 
@@ -353,14 +371,16 @@ def export_review(out,selected,rendered,frames,tables,validation,palette):
     selected['sheet'].save(out/'packed_sheet.png',transparency=0)
     try:font=ImageFont.truetype('/System/Library/Fonts/Supplemental/Menlo.ttc',12)
     except OSError:font=ImageFont.load_default()
-    board=Image.new('RGB',(4*276,3*356),'#20242c');draw=ImageDraw.Draw(board)
+    board=Image.new('RGB',(4*276,((len(RUNTIME_IDS)+3)//4)*356),'#20242c');draw=ImageDraw.Draw(board)
     for index,name in enumerate(RUNTIME_IDS):
         x=index%4*276+10;y=index//4*356+24
         rgba=rendered[name].convert('RGBA').resize((256,320),Image.Resampling.NEAREST)
         board.paste(rgba,(x,y),rgba)
         draw.text((x,y-18),f'{index:02} {name} / {len(frames[name])}pieces',font=font,fill='#eadfc9')
     board.save(out/'runtime_oam_4x.png')
-    names=['idle','charge_a','charge_b','charge_a','release','idle','right','left','back_a','back_b','hurt','idle']
+    names=['idle','cast_ready','cast_half','cast_a','cast_second','charge_a','charge_b',
+           'throw_windup','release','throw_follow','recover_half','idle',
+           'bat_up','bat_mid','bat_down','bat_mid','back_a','back_b','hurt','idle']
     gif=[]
     for name in names:
         rgba=rendered[name].convert('RGBA').resize((256,320),Image.Resampling.NEAREST)
@@ -368,7 +388,7 @@ def export_review(out,selected,rendered,frames,tables,validation,palette):
     gif[0].save(out/'runtime_poses.gif',save_all=True,append_images=gif[1:],duration=[180]*len(gif),loop=0,disposal=2)
     (out/'validation.json').write_text(json.dumps(validation,indent=2)+'\n')
     (out/'runtime_oam.json').write_text(json.dumps(dict(frames=frames,tables=tables),indent=2)+'\n')
-    lines=['# Ganondorf runtime tile map','',f'Selected `{selected["name"]}` layout: **{selected["cells"]}/32** unique16x16 cells; exact `$1000` raw4bpp sheet.',
+    lines=['# Ganondorf runtime tile map','',f'Selected `{selected["name"]}` layout: **{selected["cells"]}/{MAX_CELLS}** unique16x16 cells; exact `$1800` raw4bpp sheet.',
            '', 'Body source is32x40. Local draw offsets are `x=source_x-8`, `y=source_y-16`; left uses `x=8-source_x` and toggles HFLIP.',
            'Ball source is the unchanged centered16x16 crop `(8,12)-(24,28)`, drawn at `(0,0)`. Charge reuses cast plus ball at `(0,-32)`.',
            'Each16x16 tile uses `N,N+1,N+$10,N+$11`. Base properties are `$3D` (OBJ palette6); H/V flip add `$40/$80`. Shadow owns OAM index7.', '',
@@ -385,8 +405,8 @@ def build(project_path,check=False,out=None):
     project,palette,images,hashes,image_path=load_source(project_path)
     candidates=[pack_layout(images,palette,False),pack_layout(images,palette,True)]
     selected=min(candidates,key=lambda item:item['cells'])
-    if selected['cells']>32 or len(selected['binary'])!=SHEET_BYTES:
-        raise ValueError(f'approved art exceeds resident sheet: {selected["cells"]}/32 cells')
+    if selected['cells']>MAX_CELLS or len(selected['binary'])!=SHEET_BYTES:
+        raise ValueError(f'approved art exceeds resident sheet: {selected["cells"]}/{MAX_CELLS} cells')
     frames=runtime_maps(selected['maps'])
     asm,tables=make_asm(frames,hashes,selected)
     runtime=decode_runtime_tables(parse_asm_tables(asm))
@@ -410,7 +430,7 @@ def build(project_path,check=False,out=None):
         layouts={item['name']:item['cells'] for item in candidates},selected_layout=selected['name'],
         unique_16x16_cells=selected['cells'],sheet_bytes=len(selected['binary']),palette_bytes=len(pal),
         runtime_frames=len(RUNTIME_IDS),total_oam_pieces=len(tables['chr']),max_frame_pieces=max(map(len,runtime.values())),
-        ordinary_max_pieces=max(len(runtime[name]) for name in RUNTIME_IDS if not name.startswith('charge_')),
+        ordinary_max_pieces=max(len(runtime[name]) for name in RUNTIME_IDS if name not in HELD_BALL_FRAMES),
         ball_crop=[8,12,24,28],ball_runtime_offset=[0,0],charge_ball_offset=[0,-32],
         checks=['fixed4bpp_vectors','all16indices','asymmetric_flip_sharing','last_cell_bounds','signed16_offset_tables',
                 'both_layout_source_reconstruction','emitted_asm_runtime_reconstruction','source_hash_recheck'],
