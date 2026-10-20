@@ -363,7 +363,7 @@ class EquipmentSfx:
                 self.watch_remove(ident)
             except Exception as error:
                 self.result["cleanup_errors"].append(f"watch {ident}: {error!r}")
-        for name, op in (("neutral", self.neutral), ("pause", lambda: self.b.pause())):
+        for name, op in (("neutral", self.neutral), ("pause", lambda: self.active.session.pause())):
             try:
                 op()
             except Exception as error:
