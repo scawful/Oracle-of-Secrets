@@ -1,14 +1,14 @@
 {
-  "task": "Private Ganondorf preview: Kalyxo docks/Loom, volcanic tiles and lower-room second cave",
+  "task": "Private Ganondorf preview: docks/Loom, volcanic tiles and lower-room cave",
   "base_sha256": "e75690add9200a8db00a44772b5aaf05c04284616ec8aaf9aa02919096ed14ac",
   "base_size": 2097152,
   "expanded_size": 4194304,
   "expansion_fill": 0,
-  "out_sha256": "a4cb8829f3410aaf2200777944cf257f28a481fa0f1ebc924efb352f950f70c2",
+  "out_sha256": "e990514f9a77b0a0d2d27d202dde4b724ea6a6725e6ed95c38783d850e56cda3",
   "sources": {
     "docks": "PR226 5f14a5d7",
     "volcanic_tiles": "PR228 b731ce8a",
-    "room10_exit": "AFS spacing-impact/map-audit/route/room10_second_cave_patch.json"
+    "room10_exit": "AFS spacing-impact/map-audit/route-lower-only/room10_second_cave_patch.json"
   },
   "note": "Expand a NEW private copy to expanded_size with zero bytes before guarded apply. Does not authorize shared-base writes.",
   "changed_bytes": 4246,
@@ -41,7 +41,7 @@
       "id": "ganondorf-unified-004",
       "pc": "0x007FDC",
       "before": "1A ED E5 12",
-      "after": "51 AA AE 55"
+      "after": "96 AA 69 55"
     },
     {
       "id": "ganondorf-unified-005",
@@ -185,7 +185,7 @@
       "id": "ganondorf-unified-028",
       "pc": "0x0DBBED",
       "before": "00",
-      "after": "7B"
+      "after": "36"
     },
     {
       "id": "ganondorf-unified-029",
@@ -1003,5 +1003,6 @@
       "before": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
       "after": "0A F3 5F 1A 1D 71 44 40 71 28 F6 92 5B 3F F7 07 58 F3 5F F4 44 51 7D 84 58 2A 49 80 A2 39 07 83 3A F3 02 F2 A7 92 99 97 9F 72 4A 7B 01 03 F3 B0 83 F3 95 71 71 97 9A 9B 9D 2A 4A 2F D8 48 31 BD 5E 10 1B CE 91 A3 98 06 8E 2A 4A 69 6F 93 86 3B BC 44 93 BD 0C 95 62 4F 95 FF"
     }
-  ]
+  ],
+  "cave_connection": "OW57 second cave -> existing entrance36 -> room10 lower fall room; original hole7B alone enters boss room00"
 }
