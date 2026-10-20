@@ -170,6 +170,7 @@ incsrc "Collision/water_collision.asm"
 incsrc "Dungeons/sky_d8_award.asm"
 print  "End of sky_d8_award.asm           ", pc
 
+assert pc() <= $2CFC00 ; Somaria internal-landing helper owns the fixed tail
 print "End of dungeons.asm               ", pc
 
 pushpc

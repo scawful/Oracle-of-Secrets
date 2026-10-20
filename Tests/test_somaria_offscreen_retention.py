@@ -21,10 +21,11 @@ def offset(address):
 
 class CPU:
     """Decode actual ROM opcodes; unsupported instructions fail closed."""
-    def __init__(self, rom, memory, slot=4, p=0xF3, y=0x11, a=0xBEEF):
+    def __init__(self, rom, memory, slot=4, p=0xF3, y=0x11, a=0xBEEF,
+                 pc=HOOK, dbr=0x08):
         self.rom, self.memory = rom, dict(memory)
         self.a, self.x, self.y, self.p = a, slot, y, p
-        self.sp, self.dbr, self.d, self.pc = 0x01F0, 0x08, 0, HOOK
+        self.sp, self.dbr, self.d, self.pc = 0x01F0, dbr, 0, pc
         self.memory.update({self.sp + 1: 0xCD, self.sp + 2: 0xAB})
         self.writes, self.stack_writes = [], []
 
@@ -37,7 +38,7 @@ class CPU:
         return int.from_bytes(data, "little")
 
     def read(self, address):
-        if self.dbr != 8 or not 0 <= address < 0x2000:
+        if self.dbr not in (8, 9) or not 0 <= address < 0x2000:
             raise AssertionError("data access outside admitted WRAM mirror")
         return self.memory.get(address, 0)
 
@@ -78,8 +79,14 @@ class CPU:
             self.p = self.pull()
         elif op == 0x5C:
             self.pc = self.fetch(3)
-        elif op in (0xAD, 0xBD):
-            self.load(self.read(self.fetch(2) + (self.x if op == 0xBD else 0)))
+        elif op in (0xA5, 0xAD, 0xBD):
+            self.load(self.read(self.fetch(1 if op == 0xA5 else 2)
+                                + (self.x if op == 0xBD else 0)))
+        elif op == 0xA2:
+            self.x = self.fetch()
+            self.nz(self.x)
+        elif op == 0x29:
+            self.load((self.a & 0xFF) & self.fetch())
         elif op == 0x1D:  # ORA absolute,X
             self.load((self.a & 0xFF) | self.read(self.fetch(2) + self.x))
         elif op == 0x2C:
@@ -88,19 +95,26 @@ class CPU:
         elif op in (0xC9, 0xCD, 0xE0):
             right = self.read(self.fetch(2)) if op == 0xCD else self.fetch()
             self.compare(self.x if op == 0xE0 else self.a & 0xFF, right)
-        elif op in (0xF0, 0xD0, 0xB0, 0x30, 0x80):
+        elif op in (0xF0, 0xD0, 0xB0, 0x30, 0x10, 0x80):
             displacement = self.fetch()
             taken = {0xF0: bool(self.p & 2), 0xD0: not self.p & 2,
-                     0xB0: bool(self.p & 1), 0x30: bool(self.p & 0x80), 0x80: True}[op]
+                     0xB0: bool(self.p & 1), 0x30: bool(self.p & 0x80),
+                     0x10: not self.p & 0x80, 0x80: True}[op]
             if taken:
                 self.pc += displacement - 256 if displacement & 128 else displacement
-        elif op in (0x9C, 0x9E):
-            dest = self.fetch(2) + (self.x if op == 0x9E else 0)
+        elif op in (0x64, 0x9C, 0x9E):
+            dest = self.fetch(1 if op == 0x64 else 2) + (self.x if op == 0x9E else 0)
             self.read(dest)  # Enforce the same data-bank/address boundary on writes.
             self.memory[dest] = 0
             self.writes.append((dest, 0))
         elif op == 0x8A:
             self.load(self.x)
+        elif op == 0x9B:
+            self.y = self.x
+            self.nz(self.y)
+        elif op == 0xCA:
+            self.x = (self.x - 1) & 0xFF
+            self.nz(self.x)
         elif op == 0x1A:
             self.load((self.a + 1) & 0xFF)
         elif op == 0xEA:
@@ -113,9 +127,9 @@ class CPU:
             raise AssertionError(f"unsupported opcode {op:02X} at {address:06X}")
         return False
 
-    def boundary(self):
-        for _ in range(100):
-            if self.pc in (KEEP, FALLBACK):
+    def boundary(self, targets=(KEEP, FALLBACK), limit=100):
+        for _ in range(limit):
+            if self.pc in targets:
                 return self.pc
             self.step()
         raise AssertionError("hook did not reach a vanilla continuation")
@@ -205,6 +219,123 @@ class SomariaOffscreenRetention(unittest.TestCase):
         mutant[restore + 1] = 0xEA
         with self.assertRaises(AssertionError):
             self.execute(with_block(room(), slot=4), True, rom=bytes(mutant))
+
+
+TERM_HOOK, TERM_KEEP, TERM_FALLBACK = 0x09AC81, 0x09ACA9, 0x09AC86
+TERM_ORIGINAL = bytes.fromhex("9c4606a548")
+
+
+@unittest.skipUnless(os.environ.get("OOS_SOMARIA_ROM"), "set OOS_SOMARIA_ROM to compiled candidate")
+class SomariaInternalLandingRetention(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.rom = Path(os.environ["OOS_SOMARIA_ROM"]).read_bytes()
+
+    @staticmethod
+    def fixture(slot=4, **fields):
+        memory = with_block(room(extra={0x10: 7, 0x11: 1, 0xA0: 0x93, 0xA1: 0,
+                                       0x48E: 0x93, 0x48F: 0, 0x48: 0xB5}), slot=slot)
+        memory.update({int(key[1:], 16): value for key, value in fields.items()})
+        return memory
+
+    def execute(self, memory, keep, *, rom=None, slot=4, p=0x73, y=0x55, a=0xBE2C):
+        cpu = CPU(self.rom if rom is None else rom, memory, slot=slot, p=p, y=y,
+                  a=a, pc=TERM_HOOK, dbr=9)
+        before, initial = cpu.registers(), dict(cpu.memory)
+        self.assertEqual(cpu.boundary((TERM_KEEP, TERM_FALLBACK)),
+                         TERM_KEEP if keep else TERM_FALLBACK)
+        expected = list(before)
+        writes = []
+        if not keep:
+            value = memory.get(0x48, 0)
+            expected[0] = (a & 0xFF00) | value
+            expected[3] = (p & ~0x82) | (value & 0x80) | (2 if value == 0 else 0)
+            writes = [(0x646, 0)]
+        self.assertEqual(cpu.registers(), tuple(expected), "internal hook ABI/vanilla replay differs")
+        self.assertEqual(cpu.writes, writes)
+        initial.update(writes)
+        self.assertEqual({k: v for k, v in cpu.memory.items() if k not in cpu.stack_writes},
+                         {k: v for k, v in initial.items() if k not in cpu.stack_writes})
+        return cpu
+
+    def test_gateway_and_native_loop_guards(self):
+        start = offset(TERM_HOOK)
+        self.assertEqual(self.rom[start:start + 5], bytes.fromhex("5c00fc2cea"))
+        for address, raw in ((0x09AC6B, "8b4baba205"), (0x09AC7A, "bd4a0cc92cd00d"),
+                             (TERM_FALLBACK, "2980f0046448645e"), (0x09ACA6, "9e4a0cca10c4")):
+            expected = bytes.fromhex(raw)
+            self.assertEqual(self.rom[offset(address):offset(address) + len(expected)], expected)
+
+    def test_qualifying_internal_slots_tags_altitudes_and_status_abi(self):
+        for slot in range(5):
+            for tags in ((0x24, 0), (0, 0x24)):
+                for z in (0, 0xFF):
+                    memory = self.fixture(slot, xAE=tags[0], xAF=tags[1])
+                    memory[0x29E + slot] = z
+                    for p in range(256):
+                        if p & 0xB3 != 0x33:  # Real CMP #$2C entry: M/X=8, C/Z=1, N=0.
+                            continue
+                        for a, y in ((0xBE2C, 0x55), (0x972C, 4)):
+                            self.execute(memory, True, slot=slot, p=p, a=a, y=y)
+
+    def test_rejections_replay_pressure_clear_and_load_with_exact_flags(self):
+        cases = {"module": {0x10: 9}, "normal play": {0x11: 0}, "external unload": {0x11: 2},
+                 "changed room low": {0x48E: 0x92}, "changed room high": {0x48F: 1},
+                 "no tag": {0xAE: 0x16, 0xAF: 0}, "outdoors": {0x1B: 0},
+                 "no pressure": {0x646: 0}, "carrying": {0x308: 0x80}, "transit": {0x3F4: 1},
+                 "not block": {0xC4E: 0x2D}, "spawn": {0x398: 1}, "bounce": {0x3C9: 1},
+                 "lift": {0x384: 1}, "air": {0x2A2: 1}, "negative air": {0x2A2: 0xFE},
+                 "no probes": {0x3DF: 0}, "partial probes": {0x3DF: 3}, "bad probes": {0x3DF: 5}}
+        for changes in cases.values():
+            for value in (0, 0x7F, 0x80, 0xFF):
+                memory = self.fixture(x48=value)
+                memory.update(changes)
+                self.execute(memory, False)
+        self.execute(self.fixture(5), False, slot=5)
+
+    def test_whole_per_slot_loop_keeps_only_cube_and_preserves_vanilla_controls(self):
+        vanilla = bytearray(self.rom)
+        vanilla[offset(TERM_HOOK):offset(TERM_HOOK) + 5] = TERM_ORIGINAL
+        contexts = ({}, {0x11: 2}, {0x11: 0}, {0x48E: 0x94}, {0x48F: 1},
+                    {0xAE: 0, 0xAF: 0}, {0x308: 0x80, 0x2EC: 3})
+        for slot in (0, 2, 4):
+            for changes in contexts:
+                memory = self.fixture(slot, x48=0, x5E=0x29)
+                memory.update({0xC4A + i: 0x3E if i == 5 else 7 for i in range(6)})
+                memory[0xC4A + slot] = 0x2C
+                memory.update(changes)
+                runs = []
+                for image in (self.rom, bytes(vanilla)):
+                    cpu = CPU(image, memory, pc=0x09AC6E, dbr=9, p=0x73, a=0xBE2C)
+                    self.assertEqual(cpu.boundary((0x09ACAC,), limit=600), 0x09ACAC)
+                    self.assertEqual((cpu.x, cpu.y, cpu.sp, cpu.dbr, cpu.d), (0xFF, 5, 0x1F0, 9, 0))
+                    runs.append(cpu)
+                actual, control = runs
+                expected = dict(control.memory)
+                writes = list(control.writes)
+                if not changes:
+                    expected[0xC4A + slot], expected[0x646] = 0x2C, 1
+                    writes = [w for w in writes if w[0] not in (0xC4A + slot, 0x646)]
+                self.assertEqual(actual.writes, writes, "neighbor slots and vanilla cleanup must match")
+                stack = set(actual.stack_writes + control.stack_writes)
+                self.assertEqual({k: v for k, v in actual.memory.items() if k not in stack},
+                                 {k: v for k, v in expected.items() if k not in stack})
+
+    def test_mutation_unconditional_internal_retention_is_rejected(self):
+        mutant = bytearray(self.rom)
+        mutant[offset(TERM_HOOK):offset(TERM_HOOK) + 5] = bytes.fromhex("5ca9ac09ea")
+        self.execute(self.fixture(), True, rom=bytes(mutant))
+        for memory in (self.fixture(x11=2), self.fixture(xAE=0, xAF=0)):
+            with self.assertRaises(AssertionError):
+                self.execute(memory, False, rom=bytes(mutant))
+
+    def test_mutation_internal_missing_status_pop_is_rejected(self):
+        mutant = bytearray(self.rom)
+        restore = mutant.find(bytes.fromhex("68285ca9ac09"), offset(0x2CFC00), offset(0x2CFD00))
+        self.assertNotEqual(restore, -1)
+        mutant[restore + 1] = 0xEA
+        with self.assertRaises(AssertionError):
+            self.execute(self.fixture(), True, rom=bytes(mutant))
 
 
 if __name__ == "__main__":

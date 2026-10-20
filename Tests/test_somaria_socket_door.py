@@ -439,7 +439,7 @@ class SomariaSocketDoorModel(unittest.TestCase):
         label = lines.index(f"{ROUTINE}:")
         self.assertEqual(lines[label - 2:label], ["pushpc", f"org ${ALLOCATION_START:06X}"])
         orgs = [line for line in lines if line.startswith("org ")]
-        self.assertEqual(orgs, LEGACY_HOOK_ORGS + [GATEWAY_ORG, "org $08E731",
+        self.assertEqual(orgs, LEGACY_HOOK_ORGS + [GATEWAY_ORG, "org $08E731", "org $09AC81", "org $2CFC00",
                                                 f"org ${ALLOCATION_START:06X}"])
         self.assertEqual(ALLOCATION_START >> 16, 0x2C)
         collision = (ROOT / "Dungeons" / "Collision" / "custom_collision.asm").read_text()
@@ -450,7 +450,7 @@ class SomariaSocketDoorModel(unittest.TestCase):
     def test_pc_stack_balance_and_end_bound(self):
         lines = [line for line in code_lines(SOURCE.read_text()) if line]
         directives = [line for line in lines if line in ("pushpc", "pullpc")]
-        self.assertEqual(directives, ["pullpc", "pushpc", "pullpc", "pushpc"])
+        self.assertEqual(directives, ["pullpc", "pushpc", "pullpc", "pushpc", "pullpc", "pushpc"])
         self.assertEqual(lines[-1], "pushpc")
         start = lines.index(f"{ROUTINE}:")
         close = lines.index("}", start)
