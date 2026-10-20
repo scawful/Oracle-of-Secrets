@@ -1041,7 +1041,7 @@ Ganon_DrawFrame:
   LDA.b $02 : PHA
   SEP #$20
   JSR Ganon_ApplyReturnKick
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  JSR Ganon_AllocateOam
 
   LDY.w SprFrame, X
   LDA.w .start_index, Y : STA.b $06
@@ -1089,6 +1089,19 @@ Ganon_DrawFrame:
   RTS
 
   incsrc "ganondorf_frames.asm"
+}
+
+; The engine has already reserved each sprite's ordinary OAM region. Large
+; passive ghosts and multiple wake nodes retain it instead of crowding the
+; small defer-to-Link region used by the live boss and volley.
+Ganon_AllocateOam:
+{
+  LDA.w SprType, X : CMP.b #Sprite_GanonBall : BNE .defer
+  LDA.w SprAction, X : CMP.b #$04 : BCS .ordinary
+  .defer
+  JSL Sprite_OAM_AllocateDeferToPlayer
+  .ordinary
+  RTS
 }
 
 Ganon_ApplyReturnKick:
