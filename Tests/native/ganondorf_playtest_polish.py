@@ -4,10 +4,10 @@
 Caller supplies a paused, owned headless session and an arrival state created by
 that exact candidate ROM. This script never launches/stops Mesen, writes CPU/PC,
 changes ROM bytes, saves SRAM, or attaches to the user's visible fight. Logged
-RAM inputs select charge/return conditions, warp eligibility and floor phase.
-Native routines perform charge, return, three glide modes, warp, stomp and pit replacement.
+RAM inputs select charge/return conditions, glide modes and floor phase.
+Native routines perform charge, return, three glide modes, stomp and pit replacement.
 Four-way ball aim/recoil remains independent of front/rear-only active body art.
-The hidden-warp contact check includes a visible-contact positive control.
+The live-volley check prohibits teleporting until the tracked ball is gone.
 """
 from __future__ import annotations
 
@@ -31,12 +31,17 @@ TABLES = {"y": 0x0D00, "x": 0x0D10, "yh": 0x0D20, "xh": 0x0D30,
           "custom": 0x1CC0}
 # SprMiscC keeps its four-way recoil meaning. SprCustom bit7 independently
 # freezes front/rear body art for the stroke; its low two bits select a glide.
-DIRECTIONS = (("front", 0, 0, 64, 1, 5), ("right", 1, 64, 0, 1, 5),
-              ("left", 2, -64, 0, 1, 5), ("rear", 3, 0, -96, 8, 9),
+DIRECTIONS = (("front", 0, 0, 64, 16, 17), ("right", 1, 64, 0, 16, 17),
+              ("left", 2, -64, 0, 16, 17), ("rear", 3, 0, -96, 8, 9),
               ("upper-right", 1, 64, -64, 8, 9),
               ("upper-left", 2, -64, -64, 8, 9),
               ("upper-horizontal", 1, 96, -8, 8, 9))
 MOVEMENT_MODES = ((0, "clockwise"), (1, "counterclockwise"), (2, "weave"))
+CAST_BANDS = ((7, 56, 112), (4, 64, 120), (0, 72, 128))
+
+
+def cast_band(hits):
+    return next((minimum, maximum) for threshold, minimum, maximum in CAST_BANDS if hits >= threshold)
 
 
 def require(ok, message):
@@ -72,7 +77,7 @@ def symbols(text):
     result = {}
     priority = {}
     used_code = {"GanondorfPalette", "Ganon_DrawFrame", "Ganondorf_Draw_skip",
-                 "Sprite_GanonBall_Long", "GanonBall_Main", "GanonBall_CheckSwordReflect",
+                 "Sprite_GanonBall_Long", "GanonBall_Draw", "GanonBall_Main", "GanonBall_CheckSwordReflect",
                  "GanonBall_SetReturnFacing", "Ganondorf_Float", "Ganondorf_WaitBall", "Ganondorf_Stunned",
                  "Ganondorf_VolleyMove", "Ganondorf_StartStomp", "Ganondorf_Stomp",
                  "Ganondorf_Stomp_done", "Ganondorf_SpawnFloorCollapse",
@@ -102,7 +107,7 @@ class Fixture:
         self.charge_checked = False
         self.deadline = time.monotonic() + 180
         self.result = {"passed": False, "cases": [], "writes": [], "cleanup_errors": [],
-                       "claim": "native controlled volley/draw/mobility/stomp/contact fixtures; no human-play acceptance",
+                       "claim": "native controlled volley/draw/mobility/stomp/no-teleport fixtures; no human-play acceptance",
                        "rom_sha256": digest(image), "rom_sha1": self.rom_sha1,
                        "symbols_sha256": digest(args.symbols.read_bytes()),
                        "state_sha256": digest(args.state.read_bytes())}
@@ -165,11 +170,14 @@ class Fixture:
         require(code.count(call) == 1, f"Missing/ambiguous native {start} -> {target} JSR")
         return entry + code.index(call) + 3
 
-    def write(self, address, value, reason):
+    def allowed_write(self, address):
         allowed = address in (0x7E0020, 0x7E0021, 0x7E0022, 0x7E0023)
         allowed |= any(0x7E0000 + table <= address < 0x7E0010 + table
                        for table in TABLES.values())
-        require(allowed, f"Forbidden fixture address: {address:06X}")
+        return allowed
+
+    def write(self, address, value, reason):
+        require(self.allowed_write(address), f"Forbidden fixture address: {address:06X}")
         self.owner()
         require(self.paused(), "Fixture RAM write requires paused CPU")
         row = {"address": f"{address:06X}", "before": self.r(address),
@@ -271,8 +279,8 @@ class Fixture:
         timer = self.field("timer_c", parent)
         pointer = self.r16(0x7E0090)
         require(0x0800 <= pointer <= 0x09E0, f"Unexpected OAM allocation: {pointer:04X}")
-        first = self.table("start_index", 12)[frame]
-        count = self.table("nbr_of_tiles", 12)[frame] + 1
+        first = self.table("start_index", 22)[frame]
+        count = self.table("nbr_of_tiles", 22)[frame] + 1
         blob = self.block(0x7E0000 | pointer, 32)
         entries = [dict(x=blob[i*4], y=blob[i*4+1], tile=blob[i*4+2], properties=blob[i*4+3])
                    for i in range(8)]
@@ -336,32 +344,35 @@ class Fixture:
     def spawn(self, hits, dx=0, dy=-96):
         parent = self.restore()
         x, y = self.position(parent)
-        if dx == 0 and dy < 0:
-            # The ball appears32px above the hovering body. A64px Link offset
-            # can overlap its first hitbox; retain a clear native launch gap.
-            dy = min(dy, -96)
-        self.write16(0x7E0022, (x + dx) & 0xFFFF, "controlled Link position for native projectile aim")
-        self.write16(0x7E0020, (y + dy) & 0xFFFF, "controlled Link position for native projectile aim")
-        for key, value in (("f", hits), ("action", 2), ("timer_a", 0x20), ("timer_c", 0),
+        minimum, _ = cast_band(hits)
+        launch_y = (y - self.field("height", parent) - 32) & 0xFFFF
+        self.write16(0x7E0022, x + minimum + 16, "safe horizontal gap for the native Float charge gate")
+        self.write16(0x7E0020, launch_y, "align with actual projectile origin, including hover and32px offset")
+        for key, value in (("f", hits), ("action", 1), ("timer_a", 0), ("timer_c", 0),
                            ("timer_b", 0xFF), ("timer_d", 0), ("g", 0), ("subtype", 0),
-                           ("frame", 10), ("b", 0), ("xspeed", 0), ("yspeed", 0), ("flash", 0)):
-            self.set(key, parent, value, "normal native Cast at selected remaining-hit stage")
+                           ("frame", 0), ("b", 0), ("xspeed", 0), ("yspeed", 0), ("flash", 0)):
+            self.set(key, parent, value, "native Float chooses a legal Cast at the selected remaining-hit stage")
         if not self.charge_checked:
             charge = [self.draw(parent, (frame,), screenshot=f"charge-{frame}") for frame in (10, 11)]
             require(all(row["pieces"] == 7 for row in charge), "Charge must draw six body pieces plus held ball")
             self.result["cases"].append(dict(name="initial-front-charge-oam", passed=True, draws=charge))
             self.charge_checked = True
         observed = []
-        for _ in range(36):
+        for _ in range(64):
             self.frames(1)
             frame = self.field("frame", parent)
             observed.append(frame)
-            require(frame in (0, 5, 10, 11), "Initial cast selected a nonfront frame")
+            require(frame in (0, 5, 10, 11, 12, 13, 14, 15, 16, 17, 18), "Initial cast selected a nonfront frame")
             ball = self.find(0x46)
             if ball is not None:
                 require(self.field("b", parent) == 0, "Initial cast incorrectly marked as a return")
+                x, y = self.position(parent)
+                self.write16(0x7E0022, (x + dx) & 0xFFFF,
+                             "post-allocation Link position isolates return aim from initial casting policy")
+                self.write16(0x7E0020, (y + dy) & 0xFFFF,
+                             "post-allocation Link position isolates return aim from initial casting policy")
                 return parent, ball, observed
-        raise RuntimeError("Native Cast did not allocate its energy ball within36 frames")
+        raise RuntimeError("Native Cast did not allocate its energy ball within64 frames")
 
     def launch_stages(self):
         for hits, expected in ((9, 0x10), (6, 0x14), (3, 0x18)):
@@ -370,7 +381,7 @@ class Fixture:
             require(speed == expected, f"Launch stage {hits} expected{expected:02X}, got{speed:02X}")
             # Stop after the ball's own native draw, before its movement/main.
             entry = self.labels["Sprite_GanonBall_Long"]
-            target = self.labels["Ganon_DrawFrame"]
+            target = self.labels["GanonBall_Draw"]
             code = self.raw(entry, 40)
             call = b"\x20" + (target & 0xFFFF).to_bytes(2, "little")
             require(code.count(call) == 1, "Missing/ambiguous native ball draw JSR")
@@ -470,7 +481,7 @@ class Fixture:
                 require(self.field("action", parent) == 3 and self.field("state", ball)
                         and self.field("kind", ball) == 0x46,
                         f"Glide mode{mode} interrupted the active native volley")
-                require(self.field("frame", parent) in (0, 1, 5, 8, 9),
+                require(self.field("frame", parent) in (0, 5, 8, 9, 16, 17, 18),
                         f"WaitBall selected side art in mode{mode}")
                 self.arena_bounds(parent)
                 positions.append(self.position(parent))
@@ -487,7 +498,7 @@ class Fixture:
                 self.frames(1)
                 require(self.position(parent) == stroke_start and self.field("timer_c", parent) > 0,
                         f"Glide mode{mode} moved during the protected return stroke")
-                require(self.field("frame", parent) in (1, 5, 8, 9),
+                require(self.field("frame", parent) in (5, 8, 9, 16, 17, 18),
                         f"WaitBall stroke selected side art in mode{mode}")
             self.set("timer_c", parent, 0, "resume native glide for full16-bit clamp probes")
             clamps = []
@@ -512,30 +523,6 @@ class Fixture:
                                               protected_stroke_position=stroke_start, clamps=clamps))
         require(len(set(deltas)) == 3, f"Three rally modes produced identical short paths: {deltas}")
 
-        parent, ball, _ = self.spawn(9, 0, 64)
-        # A nonanchor position makes even a repeated random anchor observable.
-        for key, value in (("x", 0x80), ("y", 0x80), ("timer_c", 0),
-                           ("b", 1), ("timer_b", 0), ("timer_d", 0)):
-            self.set(key, parent, value, "eligible between-stroke native rally warp")
-        self.set("b", ball, 0, "native ball remains heading toward Link during warp")
-        self.run_to(after_move, f"x == {parent} && [$0EE0+x] == 16")
-        start = self.position(parent)
-        require(self.field("action", parent) == 3 and self.field("timer_b", parent) == 0xC0,
-                "Warp did not retain rally action3 and set cooldownC0")
-        self.run_to(after_move, f"x == {parent} && [$0EE0+x] == 8")
-        relocated = self.position(parent)
-        require(relocated != start, "Native rally warp did not relocate at timer08")
-        require((relocated[0] & 255, relocated[1] & 255) in
-                ((0x70, 0x78), (0x48, 0x90), (0x98, 0x90), (0x70, 0xA8)),
-                "Native rally warp selected an unexpected arena anchor")
-        self.run_to(after_move, f"x == {parent} && [$0EE0+x] == 0")
-        require(self.field("action", parent) == 3 and self.field("state", ball)
-                and self.field("b", ball) == 0, "Warp replaced or interrupted the live rally")
-        self.result["cases"].append(dict(name="rally-native-warp", passed=True,
-                                          action=3, vanish_timer=16, relocate_timer=8,
-                                          cooldown=self.field("timer_b", parent),
-                                          before=start, relocated=relocated, after=self.position(parent)))
-
     def arena_bounds(self, parent):
         x, y = self.position(parent)
         origin_x = self.r(0x7E0023) << 8
@@ -550,35 +537,28 @@ class Fixture:
                      y=self.r(0x7E0B18 + slot) | self.r(0x7E0B20 + slot) << 8)
                 for slot in range(8) if self.r(0x7E0B00 + slot)]
 
-    def invisible_warp_contact(self):
-        contact = 0x06F145
-        require(self.raw(contact, 3) == bytes.fromhex("AD7B03"),
-                "Native sprite-to-player contact entry differs")
-        parent, ball, _ = self.spawn(9, 0, 64)
-        self.set("timer_d", parent, 0x10, "hidden warp must skip native player-contact call")
-        trap = self.b.add_breakpoint(contact, condition=f"x == {parent}")
-        require(isinstance(trap, int) and trap >= 0, "Owned hidden-contact trap rejected")
-        self.breakpoints.add(trap)
-        try:
-            # If contact executes, its owned trap pauses at06F145 and run_to
-            # cannot reach contact_done: the case fails and both probes clean up.
-            self.run_to(self.labels["Ganondorf_WaitBall_contact_done"],
-                        f"x == {parent} && [$0EE0+x] != 0")
-            hidden_timer = self.field("timer_d", parent)
-            require(hidden_timer > 0 and self.field("action", parent) == 3
-                    and self.field("state", ball), "Hidden-contact guard left the live warp")
-        finally:
-            require(self.b.remove_breakpoint(trap), "Owned hidden-contact trap removal rejected")
-            self.breakpoints.remove(trap)
-        parent, _, _ = self.spawn(9, 0, 64)
-        self.set("timer_d", parent, 0, "visible rally positive control must call native contact")
-        cpu = self.run_to(contact, f"x == {parent}")
-        require(self.field("timer_d", parent) == 0 and self.field("action", parent) == 3,
-                "Visible native contact positive control left rally action3")
-        self.result["cases"].append(dict(name="invisible-warp-no-contact", passed=True,
-                                          hidden_timer=hidden_timer,
-                                          hidden_continuation=self.labels["Ganondorf_WaitBall_contact_done"],
-                                          visible_contact_pc=number(cpu.get("pc", cpu.get("PC", -1)))))
+    def active_volley_no_warp(self):
+        rows = []
+        for mode, _ in MOVEMENT_MODES:
+            parent, ball, _ = self.spawn(9, 0, 64)
+            for key, value in (("custom", mode), ("timer_c", 0), ("b", 1),
+                               ("timer_b", 0), ("timer_d", 0)):
+                self.set(key, parent, value, "live volley must ignore the former teleport eligibility")
+            positions = [self.position(parent)]
+            for _ in range(16):
+                self.frames(1)
+                require(self.field("action", parent) == 3 and self.field("state", ball)
+                        and self.field("action", ball) == 0,
+                        "No-teleport control lost its active rally ball")
+                require(self.field("timer_d", parent) == 0,
+                        "Ganondorf started a teleport during an active volley")
+                current = self.position(parent)
+                require(all(abs(a-b) <= 1 for a, b in zip(current, positions[-1])),
+                        "Ganondorf relocated instead of gliding during an active volley")
+                self.arena_bounds(parent)
+                positions.append(current)
+            rows.append(dict(mode=mode, parent=parent, ball=ball, positions=positions))
+        self.result["cases"].append(dict(name="active-volley-no-teleport", passed=True, modes=rows))
 
     def native_floor_garnish(self, overlord):
         # Guard the fixed vanilla path before placing probes in the native bank.
@@ -668,8 +648,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def main():
-    args = parse_args()
+def run_fixture(args, fixture_type=Fixture, checks=None):
     require(args.allow_fixture_writes, "Explicit --allow-fixture-writes is required")
     require(args.owner.strip(), "An explicit reservation owner is required")
     require(not any(token in args.socket.lower() for token in
@@ -685,19 +664,16 @@ def main():
     sys.path.insert(0, str(args.client_root.resolve()))
     from mesen2_client_lib.bridge import MesenBridge
     bridge = MesenBridge(args.socket, auto_reconnect=False, max_retries=0)
-    fixture = Fixture(args, bridge, image, labels)
+    fixture = fixture_type(args, bridge, image, labels)
     owned = False
     try:
         fixture.owner()
         require(fixture.paused(), "Caller must supply a paused private candidate session")
         require(not bridge.list_breakpoints(), "Existing debug breakpoints; refuse shared session")
         owned = True
-        fixture.palette_and_intro()
-        fixture.launch_stages()
-        fixture.return_cases()
-        fixture.rally_mobility()
-        fixture.invisible_warp_contact()
-        fixture.stomp_floor()
+        for check in checks or ("palette_and_intro", "launch_stages", "return_cases", "rally_mobility",
+                                "active_volley_no_warp", "stomp_floor"):
+            getattr(fixture, check)()
         fixture.result["runtime_checks_passed"] = True
     except BaseException as error:
         fixture.result["error"] = repr(error)
@@ -724,6 +700,10 @@ def main():
         (args.out / "RESULT.json").write_text(json.dumps(fixture.result, indent=2) + "\n")
     print(json.dumps({"passed": fixture.result["passed"], "result": str(args.out / "RESULT.json")}))
     return 0 if fixture.result["passed"] else 1
+
+
+def main():
+    return run_fixture(parse_args())
 
 
 if __name__ == "__main__":
