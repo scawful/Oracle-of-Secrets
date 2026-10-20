@@ -90,11 +90,16 @@ BANK_CLAIMS = [
     {"owner": "master world map + source sprite sheets", "lo": 0x40, "hi": 0x41,
      "sources": ["Overworld/world_map.asm",
                  "Core/Generated/source_sprite_sheets/sheet_overrides.asm"]},
-    {"owner": "unclaimed", "lo": 0x42, "hi": 0x43, "sources": []},
+    {"owner": "Garo mask graphics", "lo": 0x42, "hi": 0x42,
+     "sources": ["Masks/all_masks.asm"]},
+    {"owner": "expanded menu icons", "lo": 0x43, "hi": 0x43,
+     "sources": ["Core/Generated/menu_icons/menu_icon_overrides.asm"]},
     {"owner": "PR #226 codex/kalyxo-docks-native-20261020 (docks art)", "lo": 0x44, "hi": 0x44,
      "sources": ["Overworld/custom_gfx.asm", "Overworld/kalyxo_docks*.asm"]},
+    {"owner": "Maple room graphics (composed PR #224)", "lo": 0x45, "hi": 0x45,
+     "sources": ["Dungeons/room_graphics.asm"]},
 ]
-GUARDED = (0x23, 0x25, 0x28, 0x2A, 0x40, 0x41, 0x42, 0x43, 0x44)
+GUARDED = (0x23, 0x25, 0x28, 0x2A, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45)
 
 
 def sha256(path: Path) -> str:
