@@ -60,6 +60,23 @@ def open_hold(route):
 
 
 class Goron97IntraroomReconstruction(unittest.TestCase):
+    def test_retirement_candidate_requires_old_actor_inactive(self):
+        route = route_stub(3793)
+        route.expect_retired_cart = True
+        open_hold(route)
+        retired = {**FRAME_3875, "sprites": sprites({
+            14: {**CART14_RELEASE, "state": 0}, 15: CART15_B2})}
+        gate.Route.validate_cart(route, FRAME_3874, retired)
+        self.assertEqual(route.owned_cart, (gate.ROOM, 15))
+        self.assertTrue(route.result["intraroom_reconstructions"][0]["old_retired"])
+
+    def test_retirement_candidate_rejects_live_superseded_actor(self):
+        route = route_stub(3793)
+        route.expect_retired_cart = True
+        open_hold(route)
+        with self.assertRaisesRegex(RuntimeError, "qualified reconstruction"):
+            gate.Route.validate_cart(route, FRAME_3874, FRAME_3875)
+
     def test_hold_entry_hold_and_exit_through_validate_cart(self):
         route = route_stub(3793, owned_slot=14)
         gate.Route.validate_cart(route, FRAME_3792, FRAME_3793)

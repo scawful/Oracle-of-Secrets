@@ -79,15 +79,15 @@ def intraroom_hold_started(previous, state, owned_cart, seam, cart):
             and INTRAROOM_ENTRY_LY[0] <= state["ly"] <= INTRAROOM_ENTRY_LY[1])
 
 
-def stale_intraroom_follower(state, slot):
+def superseded_intraroom_cart(state, slot, retired=False):
     actor = next((a for a in state["sprites"] if a["slot"] == slot), None)
-    return bool(actor and actor["state"] == 9 and actor["kind"] == 0xA3
+    return bool(actor and actor["state"] == (0 if retired else 9) and actor["kind"] == 0xA3
                 and actor["subtype"] == 0 and actor["floor"] == 0
                 and actor["action"] == 6 and abs(actor["x"] - INTRAROOM_B2[0]) <= 2
                 and 272 <= actor["y"] <= 288)
 
 
-def intraroom_reconstruction_matches(intraroom, previous, state, cart, frame_count):
+def intraroom_reconstruction_matches(intraroom, previous, state, cart, frame_count, retired=False):
     if intraroom is None or cart is None:
         return False
     elapsed = frame_count - intraroom["start_frame"]
@@ -108,7 +108,7 @@ def intraroom_reconstruction_matches(intraroom, previous, state, cart, frame_cou
         return False
     if abs(state["lx"] - INTRAROOM_B2[0]) > 2 or not (184 <= state["ly"] <= 200):
         return False
-    if not stale_intraroom_follower(state, old):
+    if not superseded_intraroom_cart(state, old, retired):
         return False
     return abs(cart["x"] - state["lx"]) <= 16 and abs(cart["y"] - state["ly"]) <= 24
 
@@ -224,6 +224,7 @@ class Route(native.Fixture):
         self.animation_frames = 0
         self.frame_count, self.last_advance = None, 0
         self.owned_cart, self.seam, self.intraroom = None, None, None
+        self.expect_retired_cart = bool(getattr(args, "expect_retired_cart", False))
         self.result.update(checks=[], phases=[], screenshots=[], mode="input-only", memory_writes=[],
                            bootstrap="caller-owned canonical seed and native entrance27 reload to98")
         if args.legacy_control:
@@ -335,10 +336,13 @@ class Route(native.Fixture):
                             "Intraroom hold lost the owned active slot")
                 elif previous["submodule"] == 1 and state["submodule"] == 0:
                     if intraroom_reconstruction_matches(
-                            self.intraroom, previous, state, cart, self.frame_count):
+                            self.intraroom, previous, state, cart, self.frame_count,
+                            getattr(self, "expect_retired_cart", False)):
                         self.result.setdefault("intraroom_reconstructions", []).append(
                             {**self.intraroom, "new_slot": cart["slot"],
-                             "end_frame": self.frame_count})
+                             "end_frame": self.frame_count,
+                             "old_retired": superseded_intraroom_cart(
+                                 state, self.intraroom["old_slot"], retired=True)})
                         self.owned_cart, self.intraroom = (ROOM, cart["slot"]), None
                     else:
                         require(False, "Intraroom submodule exit without qualified reconstruction")
@@ -667,6 +671,8 @@ def parse_args(argv=None):
     for name in ("describe", "validate-candidate", "inspect", "execute-fixtures"):
         p.add_argument("--" + name, action="store_true")
     p.add_argument("--stop-after", choices=PHASES)
+    p.add_argument("--expect-retired-cart", action="store_true",
+                   help="require the superseded intraroom cart to be inactive after ownership transfer")
     p.add_argument("--legacy-control", action="store_true", help="admit the source-built legacy hook variant; only prove remote opening")
     for name in ("socket", "rom-sha256", "rom-sha1", "symbols-sha256", "owner", "code-sha256", "route-sha256"):
         p.add_argument("--" + name)
