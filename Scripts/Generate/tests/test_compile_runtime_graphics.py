@@ -129,6 +129,76 @@ class CompileRuntimeGraphicsTests(unittest.TestCase):
         with self.assertRaisesRegex(pack.PackError, "existing label bytes differ"):
             self.render(catalog=catalog, assets=assets)
 
+    def test_portable_pack_compiles_with_the_same_runtime_records_and_aliases(self):
+        canonical, expected = self.render()
+        with tempfile.TemporaryDirectory() as directory:
+            portable = Path(directory) / "pack"
+            pack.compile_pack(self.catalog_path, portable)
+            text, report = runtime.compile_tables(portable / "catalog.json", self.policy_path,
+                                                  Path(directory) / "runtime.asm")
+            # The full portable export changes asset paths only. Assembly
+            # descriptors, content labels and bank allocation must stay exact.
+            without_paths = lambda value: re.sub(r'^  incbin ".*"$', "  incbin <asset>",
+                                                  value, flags=re.M)
+            self.assertEqual(without_paths(text), without_paths(canonical))
+            self.assertEqual({k: v for k, v in report.items() if k != "generated_sha256"}, expected)
+            self.assertEqual(report["new_payload_bytes"], 5120)
+            self.assertEqual(report["new_payload_count"], 2)
+
+    def test_portable_changed_bytes_do_not_reuse_a_claimed_legacy_identity(self):
+        catalog, assets = copy.deepcopy(self.catalog), dict(self.assets)
+        for resource in catalog["resources"].values():
+            resource["path"] = f"assets/{resource['sha256']}.4bpp.bin"
+        rid = next(key for key in assets if assets[key] == (self.root / "Overworld/gfx/boat.bin").read_bytes())
+        # Even a caller retaining the old ID/path cannot claim the ROM label
+        # for changed data: validate its new SHA, then emit a separate payload.
+        assets[rid] = bytes([assets[rid][0] ^ 1]) + assets[rid][1:]
+        catalog["resources"][rid]["sha256"] = pack.sha256(assets[rid])
+        text, report = self.render(catalog=catalog, assets=assets)
+        self.assertNotIn(rid, report["aliases"])
+        self.assertEqual(report["new_payload_count"], 3)
+        self.assertEqual(report["new_payload_bytes"], 5120 + len(assets[rid]))
+        self.assertIn("SharedGraphicsResource_" + pack.sha256(assets[rid]), text)
+
+    def test_duplicate_portable_resources_share_one_verified_existing_label(self):
+        catalog, assets = copy.deepcopy(self.catalog), dict(self.assets)
+        old = next(key for key, value in catalog["resources"].items()
+                   if value["path"] == "gfx/kalyxo_docks_slot3.bin")
+        new = "same-existing-content"
+        catalog["resources"][new] = dict(catalog["resources"][old], path="assets/copy.4bpp.bin")
+        assets[new] = assets[old]
+        catalog["profiles"]["duplicate"] = copy.deepcopy(catalog["profiles"]["loom-docks-approach"])
+        catalog["profiles"]["duplicate"]["transfers"][0]["resource_id"] = new
+        policy = copy.deepcopy(self.policy)
+        policy["profiles"]["duplicate"] = copy.deepcopy(policy["profiles"]["loom-docks-approach"])
+        policy["profiles"]["duplicate"]["transition"]["transfer"]["resource_id"] = new
+        text, report = self.render(catalog=catalog, assets=assets, policy=policy)
+        self.assertEqual(report["aliases"][old], "KalyxoDocksSlot3Graphics")
+        self.assertEqual(report["aliases"][new], report["aliases"][old])
+        self.assertEqual(report["new_payload_count"], 2)
+        self.assertEqual(text.count("  incbin "), 2)
+
+    def test_portable_reuse_refuses_missing_or_ambiguous_vetted_sources(self):
+        catalog = copy.deepcopy(self.catalog)
+        for resource in catalog["resources"].values():
+            resource["path"] = f"assets/{resource['sha256']}.4bpp.bin"
+        with tempfile.TemporaryDirectory() as directory:
+            legacy_root = Path(directory)
+            def render():
+                return runtime.render(catalog, self.assets, self.policy,
+                                      self.catalog_path.parent, self.catalog_path.parent,
+                                      legacy_root=legacy_root)
+            with self.assertRaisesRegex(pack.PackError, "cannot verify existing label bytes"):
+                render()
+            for path in runtime.LEGACY_ALIASES:
+                destination = legacy_root / "Overworld" / path
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes((self.root / "Overworld" / path).read_bytes())
+            (legacy_root / "Overworld/gfx/boat2.bin").write_bytes(
+                (legacy_root / "Overworld/gfx/boat.bin").read_bytes())
+            with self.assertRaisesRegex(pack.PackError, "ambiguous existing label bytes"):
+                render()
+
     def test_same_unknown_content_uses_one_payload_and_bank_overflow_refuses(self):
         catalog, assets = copy.deepcopy(self.catalog), dict(self.assets)
         old = next(k for k, v in catalog["resources"].items() if v["path"].endswith("tower_87.bin"))
