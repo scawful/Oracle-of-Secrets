@@ -1,0 +1,1791 @@
+{
+  "schema_version": 1,
+  "source_sha256": "13b9c141c8d7a921ed52af9f41bd375df5ff54114e1131841263163ad9eda540",
+  "cell_size": 16,
+  "subtile_size": 8,
+  "cell_count": 32,
+  "atlas_size": [
+    128,
+    64
+  ],
+  "library_subtile_count": 128,
+  "unique_subtile_count_with_flips": 26,
+  "transparent_index": 0,
+  "unique_collision_requirements": {
+    "solid": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      16,
+      17,
+      21,
+      22,
+      23
+    ],
+    "unbound": [
+      15
+    ],
+    "walk": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      14,
+      15,
+      18,
+      19,
+      24,
+      25
+    ],
+    "water": [
+      20
+    ]
+  },
+  "binding": "Unallocated art library. IDs and offsets do not identify ROM, CHR, Map16, palette rows or collision slots.",
+  "palette_format": "Eight little-endian SNES BGR555 words, including transparent index 0.",
+  "palette_binding": "Preview uses existing common MAIN palette row 3 supplied by the integrator for areas 30/32/38. Native indices 1..6 are wood; 7 is water. Authoring index 0 is transparent; native binding must remap it to 7 where the green backdrop would show. palette.pal is a reference, not a ROM write.",
+  "native_binding_index_remap": {
+    "0": 7
+  },
+  "native_binding_remap_applied": false,
+  "unique_payload": "unique.3bpp / unique.4bpp are sequential 8x8 art tiles; apply each subtile hflip/vflip for reconstruction.",
+  "cells": [
+    {
+      "id": 0,
+      "name": "planks_a",
+      "role": "deck",
+      "collision_intent": "walk",
+      "notes": "Regular horizontal boards. Seam every 8 pixels; grain continues at cell boundaries.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 0,
+          "collision_intent": "walk",
+          "offset_4bpp": 0,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 0,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 1,
+          "collision_intent": "walk",
+          "offset_4bpp": 32,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 24,
+          "unique_art_index": 1,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 16,
+          "collision_intent": "walk",
+          "offset_4bpp": 512,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 384,
+          "unique_art_index": 1,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 17,
+          "collision_intent": "walk",
+          "offset_4bpp": 544,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 408,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "planks_b",
+      "role": "deck",
+      "collision_intent": "walk",
+      "notes": "Offset grain variation; same structural footprint as planks_a.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 2,
+          "collision_intent": "walk",
+          "offset_4bpp": 64,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 48,
+          "unique_art_index": 1,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 3,
+          "collision_intent": "walk",
+          "offset_4bpp": 96,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 72,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 18,
+          "collision_intent": "walk",
+          "offset_4bpp": 576,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 432,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 19,
+          "collision_intent": "walk",
+          "offset_4bpp": 608,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 456,
+          "unique_art_index": 1,
+          "hflip": false,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "planks_c",
+      "role": "deck",
+      "collision_intent": "walk",
+      "notes": "Occasional board-end joint and nail. Use sparsely.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 4,
+          "collision_intent": "walk",
+          "offset_4bpp": 128,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 96,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 5,
+          "collision_intent": "walk",
+          "offset_4bpp": 160,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 120,
+          "unique_art_index": 2,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 20,
+          "collision_intent": "walk",
+          "offset_4bpp": 640,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 480,
+          "unique_art_index": 1,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 21,
+          "collision_intent": "walk",
+          "offset_4bpp": 672,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 504,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "plank_patch",
+      "role": "deck",
+      "collision_intent": "walk",
+      "notes": "Small knot and board-end variation; no raised obstacle.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 6,
+          "collision_intent": "walk",
+          "offset_4bpp": 192,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 144,
+          "unique_art_index": 3,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 7,
+          "collision_intent": "walk",
+          "offset_4bpp": 224,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 168,
+          "unique_art_index": 1,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 22,
+          "collision_intent": "walk",
+          "offset_4bpp": 704,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 528,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 23,
+          "collision_intent": "walk",
+          "offset_4bpp": 736,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 552,
+          "unique_art_index": 2,
+          "hflip": false,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "deck_north",
+      "role": "edge",
+      "collision_intent": "walk",
+      "notes": "North rim, walking deck below.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 8,
+          "collision_intent": "walk",
+          "offset_4bpp": 256,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 192,
+          "unique_art_index": 4,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 9,
+          "collision_intent": "walk",
+          "offset_4bpp": 288,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 216,
+          "unique_art_index": 4,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 24,
+          "collision_intent": "walk",
+          "offset_4bpp": 768,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 576,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 25,
+          "collision_intent": "walk",
+          "offset_4bpp": 800,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 600,
+          "unique_art_index": 1,
+          "hflip": false,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "deck_south",
+      "role": "edge",
+      "collision_intent": "walk",
+      "notes": "South rim; retain walk collision, then place fascia below the rim as needed.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 10,
+          "collision_intent": "walk",
+          "offset_4bpp": 320,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 240,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 11,
+          "collision_intent": "walk",
+          "offset_4bpp": 352,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 264,
+          "unique_art_index": 1,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 26,
+          "collision_intent": "walk",
+          "offset_4bpp": 832,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 624,
+          "unique_art_index": 4,
+          "hflip": false,
+          "vflip": true
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 27,
+          "collision_intent": "walk",
+          "offset_4bpp": 864,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 648,
+          "unique_art_index": 4,
+          "hflip": true,
+          "vflip": true
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "deck_west",
+      "role": "edge",
+      "collision_intent": "walk",
+      "notes": "West rim, walking deck to its right.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 12,
+          "collision_intent": "walk",
+          "offset_4bpp": 384,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 288,
+          "unique_art_index": 5,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 13,
+          "collision_intent": "walk",
+          "offset_4bpp": 416,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 312,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 28,
+          "collision_intent": "walk",
+          "offset_4bpp": 896,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 672,
+          "unique_art_index": 5,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 29,
+          "collision_intent": "walk",
+          "offset_4bpp": 928,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 696,
+          "unique_art_index": 1,
+          "hflip": false,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "deck_east",
+      "role": "edge",
+      "collision_intent": "walk",
+      "notes": "East rim, walking deck to its left.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 14,
+          "collision_intent": "walk",
+          "offset_4bpp": 448,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 336,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 15,
+          "collision_intent": "walk",
+          "offset_4bpp": 480,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 360,
+          "unique_art_index": 5,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 30,
+          "collision_intent": "walk",
+          "offset_4bpp": 960,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 720,
+          "unique_art_index": 1,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 31,
+          "collision_intent": "walk",
+          "offset_4bpp": 992,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 744,
+          "unique_art_index": 5,
+          "hflip": true,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "deck_northwest",
+      "role": "corner",
+      "collision_intent": "walk",
+      "notes": "Outside northwest corner; tiny transparent bevel at extreme corner only.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 32,
+          "collision_intent": "walk",
+          "offset_4bpp": 1024,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 768,
+          "unique_art_index": 6,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 33,
+          "collision_intent": "walk",
+          "offset_4bpp": 1056,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 792,
+          "unique_art_index": 4,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 48,
+          "collision_intent": "walk",
+          "offset_4bpp": 1536,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1152,
+          "unique_art_index": 5,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 49,
+          "collision_intent": "walk",
+          "offset_4bpp": 1568,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1176,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "name": "deck_northeast",
+      "role": "corner",
+      "collision_intent": "walk",
+      "notes": "Outside northeast corner.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 34,
+          "collision_intent": "walk",
+          "offset_4bpp": 1088,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 816,
+          "unique_art_index": 4,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 35,
+          "collision_intent": "walk",
+          "offset_4bpp": 1120,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 840,
+          "unique_art_index": 6,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 50,
+          "collision_intent": "walk",
+          "offset_4bpp": 1600,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1200,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 51,
+          "collision_intent": "walk",
+          "offset_4bpp": 1632,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1224,
+          "unique_art_index": 5,
+          "hflip": true,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "deck_southwest",
+      "role": "corner",
+      "collision_intent": "walk",
+      "notes": "Outside southwest corner.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 36,
+          "collision_intent": "walk",
+          "offset_4bpp": 1152,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 864,
+          "unique_art_index": 5,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 37,
+          "collision_intent": "walk",
+          "offset_4bpp": 1184,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 888,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 52,
+          "collision_intent": "walk",
+          "offset_4bpp": 1664,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1248,
+          "unique_art_index": 6,
+          "hflip": false,
+          "vflip": true
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 53,
+          "collision_intent": "walk",
+          "offset_4bpp": 1696,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1272,
+          "unique_art_index": 4,
+          "hflip": false,
+          "vflip": true
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "name": "deck_southeast",
+      "role": "corner",
+      "collision_intent": "walk",
+      "notes": "Outside southeast corner.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 38,
+          "collision_intent": "walk",
+          "offset_4bpp": 1216,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 912,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 39,
+          "collision_intent": "walk",
+          "offset_4bpp": 1248,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 936,
+          "unique_art_index": 5,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 54,
+          "collision_intent": "walk",
+          "offset_4bpp": 1728,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1296,
+          "unique_art_index": 4,
+          "hflip": false,
+          "vflip": true
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 55,
+          "collision_intent": "walk",
+          "offset_4bpp": 1760,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1320,
+          "unique_art_index": 6,
+          "hflip": true,
+          "vflip": true
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "name": "inner_northwest",
+      "role": "notch",
+      "collision_intent": "walk",
+      "notes": "Small inward rim notch at northwest junction; no automatic terrain cutout.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 40,
+          "collision_intent": "walk",
+          "offset_4bpp": 1280,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 960,
+          "unique_art_index": 7,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 41,
+          "collision_intent": "walk",
+          "offset_4bpp": 1312,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 984,
+          "unique_art_index": 1,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 56,
+          "collision_intent": "walk",
+          "offset_4bpp": 1792,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1344,
+          "unique_art_index": 1,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 57,
+          "collision_intent": "walk",
+          "offset_4bpp": 1824,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1368,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "name": "inner_northeast",
+      "role": "notch",
+      "collision_intent": "walk",
+      "notes": "Small inward rim notch at northeast junction.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 42,
+          "collision_intent": "walk",
+          "offset_4bpp": 1344,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1008,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 43,
+          "collision_intent": "walk",
+          "offset_4bpp": 1376,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1032,
+          "unique_art_index": 7,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 58,
+          "collision_intent": "walk",
+          "offset_4bpp": 1856,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1392,
+          "unique_art_index": 1,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 59,
+          "collision_intent": "walk",
+          "offset_4bpp": 1888,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1416,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "name": "inner_southwest",
+      "role": "notch",
+      "collision_intent": "walk",
+      "notes": "Small inward rim notch at southwest junction.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 44,
+          "collision_intent": "walk",
+          "offset_4bpp": 1408,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1056,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 45,
+          "collision_intent": "walk",
+          "offset_4bpp": 1440,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1080,
+          "unique_art_index": 1,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 60,
+          "collision_intent": "walk",
+          "offset_4bpp": 1920,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1440,
+          "unique_art_index": 7,
+          "hflip": false,
+          "vflip": true
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 61,
+          "collision_intent": "walk",
+          "offset_4bpp": 1952,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1464,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "name": "inner_southeast",
+      "role": "notch",
+      "collision_intent": "walk",
+      "notes": "Small inward rim notch at southeast junction.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 46,
+          "collision_intent": "walk",
+          "offset_4bpp": 1472,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1104,
+          "unique_art_index": 0,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 47,
+          "collision_intent": "walk",
+          "offset_4bpp": 1504,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1128,
+          "unique_art_index": 1,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 62,
+          "collision_intent": "walk",
+          "offset_4bpp": 1984,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1488,
+          "unique_art_index": 1,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 63,
+          "collision_intent": "walk",
+          "offset_4bpp": 2016,
+          "sheet_3bpp": 0,
+          "sheet_offset_3bpp": 1512,
+          "unique_art_index": 7,
+          "hflip": true,
+          "vflip": true
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "name": "cap_north",
+      "role": "endcap",
+      "collision_intent": "walk",
+      "notes": "North end of a one-cell-wide finger.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 64,
+          "collision_intent": "walk",
+          "offset_4bpp": 2048,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 0,
+          "unique_art_index": 6,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 65,
+          "collision_intent": "walk",
+          "offset_4bpp": 2080,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 24,
+          "unique_art_index": 6,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 80,
+          "collision_intent": "walk",
+          "offset_4bpp": 2560,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 384,
+          "unique_art_index": 5,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 81,
+          "collision_intent": "walk",
+          "offset_4bpp": 2592,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 408,
+          "unique_art_index": 5,
+          "hflip": true,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "name": "cap_south",
+      "role": "endcap",
+      "collision_intent": "walk",
+      "notes": "South end of a one-cell-wide finger.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 66,
+          "collision_intent": "walk",
+          "offset_4bpp": 2112,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 48,
+          "unique_art_index": 5,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 67,
+          "collision_intent": "walk",
+          "offset_4bpp": 2144,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 72,
+          "unique_art_index": 5,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 82,
+          "collision_intent": "walk",
+          "offset_4bpp": 2624,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 432,
+          "unique_art_index": 6,
+          "hflip": false,
+          "vflip": true
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 83,
+          "collision_intent": "walk",
+          "offset_4bpp": 2656,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 456,
+          "unique_art_index": 6,
+          "hflip": true,
+          "vflip": true
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "name": "cap_west",
+      "role": "endcap",
+      "collision_intent": "walk",
+      "notes": "West end of a one-cell-high horizontal beam.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 68,
+          "collision_intent": "walk",
+          "offset_4bpp": 2176,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 96,
+          "unique_art_index": 6,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 69,
+          "collision_intent": "walk",
+          "offset_4bpp": 2208,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 120,
+          "unique_art_index": 4,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 84,
+          "collision_intent": "walk",
+          "offset_4bpp": 2688,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 480,
+          "unique_art_index": 6,
+          "hflip": false,
+          "vflip": true
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 85,
+          "collision_intent": "walk",
+          "offset_4bpp": 2720,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 504,
+          "unique_art_index": 4,
+          "hflip": false,
+          "vflip": true
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "name": "cap_east",
+      "role": "endcap",
+      "collision_intent": "walk",
+      "notes": "East end of a one-cell-high horizontal beam.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 70,
+          "collision_intent": "walk",
+          "offset_4bpp": 2240,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 144,
+          "unique_art_index": 4,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 71,
+          "collision_intent": "walk",
+          "offset_4bpp": 2272,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 168,
+          "unique_art_index": 6,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 86,
+          "collision_intent": "walk",
+          "offset_4bpp": 2752,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 528,
+          "unique_art_index": 4,
+          "hflip": false,
+          "vflip": true
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 87,
+          "collision_intent": "walk",
+          "offset_4bpp": 2784,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 552,
+          "unique_art_index": 6,
+          "hflip": true,
+          "vflip": true
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "name": "strip_horizontal",
+      "role": "strip",
+      "collision_intent": "walk",
+      "notes": "North and south rims for narrow horizontal connectors.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 72,
+          "collision_intent": "walk",
+          "offset_4bpp": 2304,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 192,
+          "unique_art_index": 4,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 73,
+          "collision_intent": "walk",
+          "offset_4bpp": 2336,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 216,
+          "unique_art_index": 4,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 88,
+          "collision_intent": "walk",
+          "offset_4bpp": 2816,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 576,
+          "unique_art_index": 4,
+          "hflip": false,
+          "vflip": true
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 89,
+          "collision_intent": "walk",
+          "offset_4bpp": 2848,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 600,
+          "unique_art_index": 4,
+          "hflip": true,
+          "vflip": true
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "name": "strip_vertical",
+      "role": "strip",
+      "collision_intent": "walk",
+      "notes": "West and east rims for narrow vertical fingers.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 74,
+          "collision_intent": "walk",
+          "offset_4bpp": 2368,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 240,
+          "unique_art_index": 5,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 75,
+          "collision_intent": "walk",
+          "offset_4bpp": 2400,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 264,
+          "unique_art_index": 5,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 90,
+          "collision_intent": "walk",
+          "offset_4bpp": 2880,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 624,
+          "unique_art_index": 5,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 91,
+          "collision_intent": "walk",
+          "offset_4bpp": 2912,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 648,
+          "unique_art_index": 5,
+          "hflip": true,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "name": "fascia",
+      "role": "support",
+      "collision_intent": "solid",
+      "notes": "Vertical timber face below the walking edge. Not a walking surface. Transparent lower bevel.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 76,
+          "collision_intent": "solid",
+          "offset_4bpp": 2432,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 288,
+          "unique_art_index": 8,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 77,
+          "collision_intent": "solid",
+          "offset_4bpp": 2464,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 312,
+          "unique_art_index": 8,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 92,
+          "collision_intent": "solid",
+          "offset_4bpp": 2944,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 672,
+          "unique_art_index": 9,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 93,
+          "collision_intent": "solid",
+          "offset_4bpp": 2976,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 696,
+          "unique_art_index": 9,
+          "hflip": false,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "name": "fascia_pile",
+      "role": "support",
+      "collision_intent": "solid",
+      "notes": "Timber face over a single centered pile. Shares pile-bottom artwork.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 78,
+          "collision_intent": "solid",
+          "offset_4bpp": 2496,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 336,
+          "unique_art_index": 8,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 79,
+          "collision_intent": "solid",
+          "offset_4bpp": 2528,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 360,
+          "unique_art_index": 8,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 94,
+          "collision_intent": "solid",
+          "offset_4bpp": 3008,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 720,
+          "unique_art_index": 10,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 95,
+          "collision_intent": "solid",
+          "offset_4bpp": 3040,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 744,
+          "unique_art_index": 10,
+          "hflip": true,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "name": "pile",
+      "role": "support",
+      "collision_intent": "solid",
+      "notes": "Round honey-colored piling head and darker vertical shaft; use at intervals.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 96,
+          "collision_intent": "solid",
+          "offset_4bpp": 3072,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 768,
+          "unique_art_index": 11,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 97,
+          "collision_intent": "solid",
+          "offset_4bpp": 3104,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 792,
+          "unique_art_index": 11,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 112,
+          "collision_intent": "solid",
+          "offset_4bpp": 3584,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1152,
+          "unique_art_index": 10,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 113,
+          "collision_intent": "solid",
+          "offset_4bpp": 3616,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1176,
+          "unique_art_index": 10,
+          "hflip": true,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "name": "brace_left",
+      "role": "support",
+      "collision_intent": "solid",
+      "notes": "Diagonal brace under a rim, descending toward the right; optional decorative support.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 98,
+          "collision_intent": "solid",
+          "offset_4bpp": 3136,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 816,
+          "unique_art_index": 12,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 99,
+          "collision_intent": "solid",
+          "offset_4bpp": 3168,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 840,
+          "unique_art_index": 13,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 114,
+          "collision_intent": "water",
+          "offset_4bpp": 3648,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1200,
+          "unique_art_index": 20,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 115,
+          "collision_intent": "solid",
+          "offset_4bpp": 3680,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1224,
+          "unique_art_index": 21,
+          "hflip": false,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "name": "brace_right",
+      "role": "support",
+      "collision_intent": "solid",
+      "notes": "Mirrored diagonal brace, sharing the same canonical artwork.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 100,
+          "collision_intent": "solid",
+          "offset_4bpp": 3200,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 864,
+          "unique_art_index": 13,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 101,
+          "collision_intent": "solid",
+          "offset_4bpp": 3232,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 888,
+          "unique_art_index": 12,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 116,
+          "collision_intent": "solid",
+          "offset_4bpp": 3712,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1248,
+          "unique_art_index": 21,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 117,
+          "collision_intent": "water",
+          "offset_4bpp": 3744,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1272,
+          "unique_art_index": 20,
+          "hflip": false,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "name": "ladder_top",
+      "role": "ladder",
+      "collision_intent": "walk",
+      "notes": "Deck-to-water ladder drawing. Does not implement climbing; binding decides traversal.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 102,
+          "collision_intent": "walk",
+          "offset_4bpp": 3264,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 912,
+          "unique_art_index": 14,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 103,
+          "collision_intent": "walk",
+          "offset_4bpp": 3296,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 936,
+          "unique_art_index": 14,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 118,
+          "collision_intent": "walk",
+          "offset_4bpp": 3776,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1296,
+          "unique_art_index": 15,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 119,
+          "collision_intent": "walk",
+          "offset_4bpp": 3808,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1320,
+          "unique_art_index": 15,
+          "hflip": true,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "name": "ladder_bottom",
+      "role": "ladder",
+      "collision_intent": "unbound",
+      "notes": "Repeating rung extension; no implied climb interaction or water collision.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 104,
+          "collision_intent": "unbound",
+          "offset_4bpp": 3328,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 960,
+          "unique_art_index": 15,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 105,
+          "collision_intent": "unbound",
+          "offset_4bpp": 3360,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 984,
+          "unique_art_index": 15,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 120,
+          "collision_intent": "unbound",
+          "offset_4bpp": 3840,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1344,
+          "unique_art_index": 15,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 121,
+          "collision_intent": "unbound",
+          "offset_4bpp": 3872,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1368,
+          "unique_art_index": 15,
+          "hflip": true,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "name": "crate",
+      "role": "cargo",
+      "collision_intent": "solid",
+      "notes": "Closed cross-braced crate over deck boards; all four subtiles request solid collision.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 106,
+          "collision_intent": "solid",
+          "offset_4bpp": 3392,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1008,
+          "unique_art_index": 16,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 107,
+          "collision_intent": "solid",
+          "offset_4bpp": 3424,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1032,
+          "unique_art_index": 16,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 122,
+          "collision_intent": "solid",
+          "offset_4bpp": 3904,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1392,
+          "unique_art_index": 22,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 123,
+          "collision_intent": "solid",
+          "offset_4bpp": 3936,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1416,
+          "unique_art_index": 22,
+          "hflip": true,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "name": "barrel",
+      "role": "cargo",
+      "collision_intent": "solid",
+      "notes": "Low banded barrel over deck boards; symmetric halves reduce graphics demand.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 108,
+          "collision_intent": "solid",
+          "offset_4bpp": 3456,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1056,
+          "unique_art_index": 17,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 109,
+          "collision_intent": "solid",
+          "offset_4bpp": 3488,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1080,
+          "unique_art_index": 17,
+          "hflip": true,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 124,
+          "collision_intent": "solid",
+          "offset_4bpp": 3968,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1440,
+          "unique_art_index": 23,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 125,
+          "collision_intent": "solid",
+          "offset_4bpp": 4000,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1464,
+          "unique_art_index": 23,
+          "hflip": true,
+          "vflip": false
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "name": "rope_coil",
+      "role": "cargo",
+      "collision_intent": "walk",
+      "notes": "Flat rope coil over boards. Cosmetic and walkable; not an obstacle.",
+      "subtiles": [
+        {
+          "quadrant": "tl",
+          "library_subtile_index": 110,
+          "collision_intent": "walk",
+          "offset_4bpp": 3520,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1104,
+          "unique_art_index": 18,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "tr",
+          "library_subtile_index": 111,
+          "collision_intent": "walk",
+          "offset_4bpp": 3552,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1128,
+          "unique_art_index": 19,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "bl",
+          "library_subtile_index": 126,
+          "collision_intent": "walk",
+          "offset_4bpp": 4032,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1488,
+          "unique_art_index": 24,
+          "hflip": false,
+          "vflip": false
+        },
+        {
+          "quadrant": "br",
+          "library_subtile_index": 127,
+          "collision_intent": "walk",
+          "offset_4bpp": 4064,
+          "sheet_3bpp": 1,
+          "sheet_offset_3bpp": 1512,
+          "unique_art_index": 25,
+          "hflip": false,
+          "vflip": false
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "atlas.png": {
+      "bytes": 1974,
+      "sha256": "65bece70a475c19935f7a1b7b4e7979b95c2795e80d24855b2ba012d70768307"
+    },
+    "preview.png": {
+      "bytes": 40263,
+      "sha256": "a3f00d9e56e0b0601d4dbf9936e7e7f472eb8ffb25e8be3f6fa4fa409f3fe0d8"
+    },
+    "atlas.4bpp": {
+      "bytes": 4096,
+      "sha256": "6eac8b1851f63cacabc373163db0ef2728e27c3196eec569ea1f3f17b9ee4fec"
+    },
+    "unique.4bpp": {
+      "bytes": 832,
+      "sha256": "f95f7a4786bfc6df10c013ca0394aa4dfd75128326da54429b58a0aa1f3e0828"
+    },
+    "unique.3bpp": {
+      "bytes": 624,
+      "sha256": "13f8eda74558e9a132ca24ae9aaa4d121e4278ae9526d479df5e0dc32307135a"
+    },
+    "palette.pal": {
+      "bytes": 16,
+      "sha256": "72baa26455ffc8b372e90fff535fe2daf93367e25316ecba06c61634f3cae1bc"
+    },
+    "sheet_0.3bpp": {
+      "bytes": 1536,
+      "sha256": "1ab84af9951c2fb8fa24dfd8064d2a86ba412f50cf19bccf9c9d6d723b34b28b"
+    },
+    "sheet_1.3bpp": {
+      "bytes": 1536,
+      "sha256": "67ef2823b8cd3e02e8e24cd2be1f21f4cd0d302665e11c6f5a9326837a38a55d"
+    }
+  }
+}
