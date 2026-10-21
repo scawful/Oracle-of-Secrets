@@ -2,6 +2,7 @@
 
 Evidence: native candidate-r4 controller-steps.jsonl frames3792,3793,3874,3875;
 B2 anchor from R05/ALIGNMENT_PROOF.json. Fixtures are literals only (no AFS paths).
+R10 retirement-candidate-r1 frame3850 retains inactive old14 action2/y281.
 """
 import importlib.util
 from pathlib import Path
@@ -65,10 +66,21 @@ class Goron97IntraroomReconstruction(unittest.TestCase):
         route.expect_retired_cart = True
         open_hold(route)
         retired = {**FRAME_3875, "sprites": sprites({
-            14: {**CART14_RELEASE, "state": 0}, 15: CART15_B2})}
+            14: {**CART14_RIDE, "state": 0}, 15: CART15_B2})}
         gate.Route.validate_cart(route, FRAME_3874, retired)
         self.assertEqual(route.owned_cart, (gate.ROOM, 15))
         self.assertTrue(route.result["intraroom_reconstructions"][0]["old_retired"])
+
+    def test_retirement_candidate_rejects_wrong_inactive_pose(self):
+        for old in ({**CART14_RELEASE, "state": 0},
+                    {**CART14_RIDE, "state": 0, "y": 288}):
+            with self.subTest(old=old):
+                route = route_stub(3793)
+                route.expect_retired_cart = True
+                open_hold(route)
+                retired = {**FRAME_3875, "sprites": sprites({14: old, 15: CART15_B2})}
+                with self.assertRaisesRegex(RuntimeError, "qualified reconstruction"):
+                    gate.Route.validate_cart(route, FRAME_3874, retired)
 
     def test_retirement_candidate_rejects_live_superseded_actor(self):
         route = route_stub(3793)

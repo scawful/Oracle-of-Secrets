@@ -80,11 +80,14 @@ def intraroom_hold_started(previous, state, owned_cart, seam, cart):
 
 
 def superseded_intraroom_cart(state, slot, retired=False):
+    # R10 retires before the old actor's next turn: action2/y281 freezes there.
+    # The live R9 control instead advances to its captured action6 release pose.
     actor = next((a for a in state["sprites"] if a["slot"] == slot), None)
     return bool(actor and actor["state"] == (0 if retired else 9) and actor["kind"] == 0xA3
                 and actor["subtype"] == 0 and actor["floor"] == 0
-                and actor["action"] == 6 and abs(actor["x"] - INTRAROOM_B2[0]) <= 2
-                and 272 <= actor["y"] <= 288)
+                and actor["action"] == (2 if retired else 6)
+                and abs(actor["x"] - INTRAROOM_B2[0]) <= 2
+                and (abs(actor["y"] - 281) <= 2 if retired else 272 <= actor["y"] <= 288))
 
 
 def intraroom_reconstruction_matches(intraroom, previous, state, cart, frame_count, retired=False):
