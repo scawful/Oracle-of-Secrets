@@ -471,7 +471,13 @@ Sprite_Minecart_Main:
 
     ; Get direction of the cart (0 to 3)
     LDY.w !SpriteDirection, X
-    JSL DragPlayer
+    if !ENABLE_MINECART_CART_SHUTTERS
+      CartShutter97_DragNorthCall:
+      JSL CartShutter97_DragPlayer
+      CartShutter97_DragNorthCall_End:
+    else
+      JSL DragPlayer
+    endif
     JSR HandlePlayerCameraAndMoveCart
 
     JSR HandleTileDirections
@@ -525,7 +531,13 @@ Sprite_Minecart_Main:
 
     ; Get direction of the cart (0 to 3)
     LDY.w !SpriteDirection, X
-    JSL DragPlayer
+    if !ENABLE_MINECART_CART_SHUTTERS
+      CartShutter97_DragSouthCall:
+      JSL CartShutter97_DragPlayer
+      CartShutter97_DragSouthCall_End:
+    else
+      JSL DragPlayer
+    endif
     JSR HandlePlayerCameraAndMoveCart
 
     JSR HandleTileDirections
@@ -1547,6 +1559,57 @@ org $0289F3 ; @hook module=Sprites name=CartShutter97_TransitionHold kind=jml ta
   JML CartShutter97_TransitionHold
   NOP
 assert pc() == $0289F8
+pullpc
+
+; Reserve one bank-$2C page before the fixed gate. The dynamic sprite
+; stream ended at $2CE114 in R8 and is bounded below $2CFA00 in
+; all_sprites.asm. The gate retains its $2CFB00 entry and $2CFD00 limit.
+pushpc
+org $2CFA00
+; @abi long_entry expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8
+; Called only by the two vertical cart actions with X=slot, Y=direction,
+; D=0 and DBR=$31. Retain DBR: DragPlayer's absolute ROM tables are in
+; bank $31. X/Y/D/DBR and the full SprCachedX word are preserved; A/P
+; are clobbered, as in DragPlayer. Both PHA/PLA execute with A16.
+CartShutter97_DragPlayer:
+{
+  LDA.b $1B : BEQ .plain
+  LDA.b $EE : BNE .plain
+  LDA.b !LinkInCart : BEQ .plain
+  LDA.w SprFloor, X : BNE .plain
+  REP #$20
+  TXA : AND.w #$00FF : CMP.w !MinecartCurrent : BNE .plain_wide
+  LDA.b $A0 : CMP.w #$0097 : BNE .plain_wide
+  SEP #$20
+  LDA.w SprXH, X : XBA : LDA.w SprX, X
+  REP #$20
+  CMP.w #$0F78 : BNE .plain_wide
+  SEP #$20
+  LDA.w SprYH, X : XBA : LDA.w SprY, X
+  REP #$20
+  CMP.w #$12B0 : BCC .plain_wide
+  CMP.w #$1359 : BCS .plain_wide
+
+  ; The paired aperture spans X[$0F78,$0F88). Link's vertical probes
+  ; are X+0,+8,+15, so its drag target must be exactly $0F78 here.
+  ; Only adjust the temporary target; restore the real cached cart X
+  ; before camera handling, overlap checks and stop-position caching.
+  LDA.w SprCachedX : PHA
+  LDA.w #$0F7A : STA.w SprCachedX
+  SEP #$20
+  JSL DragPlayer
+  REP #$20
+  PLA : STA.w SprCachedX
+  SEP #$30
+  RTL
+
+  .plain_wide
+  SEP #$20
+  .plain
+  JML DragPlayer
+}
+CartShutter97_DragPlayer_End:
+assert pc() <= $2CFB00, "Localized cart drag overlaps fixed cart gate"
 pullpc
 
 ; Keep this optional gate out of the nearly full bank-$31 sprite stream.

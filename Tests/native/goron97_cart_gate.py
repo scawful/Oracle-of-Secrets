@@ -73,9 +73,27 @@ def load_route(path):
     return r
 
 
+def validate_drag_calls(rom, symbols, wrapper):
+    calls = []
+    expected = b"\x22" + wrapper.to_bytes(3, "little")
+    for direction, owner, following in (("North", "Minecart_MoveNorth", "Minecart_MoveEast"),
+                                         ("South", "Minecart_MoveSouth", "Minecart_MoveWest")):
+        name = "CartShutter97_Drag" + direction + "Call"
+        start = dispatch.symbol(symbols, name)
+        end = dispatch.symbol(symbols, name + "_End")
+        lo, hi = dispatch.symbol(symbols, owner), dispatch.symbol(symbols, following)
+        require(lo >> 16 == hi >> 16 == 0x31 and lo <= start < end <= hi and end - start == 4,
+                "Invalid vertical drag callsite " + name)
+        at = native.pc_offset(start)
+        require(rom[at:at + 4] == expected, "Vertical drag JSL target mismatch " + name)
+        calls.append({"name": name, "start": f"{start:06X}", "end": f"{end:06X}",
+                      "target": f"{wrapper:06X}"})
+    return calls
+
+
 def validate_candidate(rom, symbols, expected_code, legacy_control=False):
     spans, body = [], bytearray()
-    for name in ("RoomTag_CartShutterDispatch", "RoomTag_CartShutter97"):
+    for name in ("RoomTag_CartShutterDispatch", "RoomTag_CartShutter97", "CartShutter97_DragPlayer"):
         start = dispatch.symbol(symbols, name)
         end = dispatch.symbol(symbols, name + "_End")
         require(start >> 16 == end >> 16 and 0 < end - start <= 0x600, "Invalid handler span " + name)
@@ -90,7 +108,11 @@ def validate_candidate(rom, symbols, expected_code, legacy_control=False):
     require(rom[at:at + 4] == b"\x5c" + target.to_bytes(3, "little"), "Tag37 JML target mismatch")
     require(rom[native.pc_offset(0x01C2EB):native.pc_offset(0x01C2EB) + 2] == b"\x14\xcc",
             "Tag37 dispatch vector mismatch")
-    require(digest(body) == expected_code.lower(), "Compiled dispatch/local-handler SHA256 mismatch")
+    require(digest(body) == expected_code.lower(), "Compiled dispatch/local-handler/drag SHA256 mismatch")
+    wrapper, wrapper_end = int(spans[2]["start"], 16), int(spans[2]["end"], 16)
+    require(wrapper == 0x2CFA00 and wrapper < wrapper_end <= 0x2CFB00,
+            "Cart drag wrapper escaped its source-owned page")
+    drag_calls = validate_drag_calls(rom, symbols, wrapper)
     at = native.pc_offset(0x0289F3)
     transition = rom[at:at + 5]
     try:
@@ -115,7 +137,7 @@ def validate_candidate(rom, symbols, expected_code, legacy_control=False):
     require(word(rom, 0x78000 + 0x27 * 2) == ENTRY, "Expanded entrance27 does not lead to98")
     return {"handlers": spans, "compiled_code_sha256": digest(body), "doors": doors,
             "hook_target": f"{target:06X}", "legacy_control": legacy_control,
-            "transition_hook": transition.hex()}
+            "transition_hook": transition.hex(), "drag_calls": drag_calls}
 
 
 class Route(native.Fixture):

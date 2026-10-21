@@ -71,6 +71,13 @@ class Machine(base.Machine):
             elif op == "BIT":
                 value = self.load(suffix, arg, self.m16())
                 self.z = not (self.a & value)
+            elif op == "AND":
+                value = self.a & self.load(suffix, arg, self.m16())
+                self.a = value if self.m16() else (self.a & 0xFF00) | (value & 255)
+                self.flags_nz(value & (65535 if self.m16() else 255), self.m16())
+            elif op == "TXA":
+                self.a = self.x if self.m16() else (self.a & 0xFF00) | (self.x & 255)
+                self.flags_nz(self.a & (65535 if self.m16() else 255), self.m16())
             elif op == "XBA":
                 self.a = ((self.a << 8) | (self.a >> 8)) & 0xFFFF
                 self.flags_nz(self.a & 0xFF, False)
@@ -97,8 +104,18 @@ class Machine(base.Machine):
                 self.flags_nz(value, size == 2)
             elif op == "JSR":
                 push("return", pc, 2); pc = labels[arg]
+            elif op == "JSL":
+                assert arg == "DragPlayer", "Only the shared drag ABI stub is admitted"
+                self.drag_calls.append((self.read(0x0FD8, True), self.x, self.y, self.p & 0x30))
+                # Model only DragPlayer's documented A/P clobber and M8/X8
+                # return. This checks wrapper admission/cache/stack, not drag
+                # movement, collision, CPU instructions or doorway passage.
+                self.a, self.p = 0xBEEF, self.p | 0x30
             elif op == "RTS":
                 pc = pop("return", 2)
+            elif op == "RTL":
+                assert not stack, "Unbalanced source-model stack at RTL"
+                return "RTL"
             elif op in ("STA", "STX", "STZ"):
                 wide = self.x16() if op == "STX" else self.m16()
                 value = {"STA": self.a, "STX": self.x, "STZ": 0}[op]
@@ -291,9 +308,14 @@ class LocalCartShutter(unittest.TestCase):
     def test_new_code_stays_inside_existing_default_off_guard(self):
         text = SOURCE.read_text()
         flag = "if !ENABLE_MINECART_CART_SHUTTERS"
-        guarded = text.split(flag, 1)[1].split("\nendif", 1)[0]
-        for label in ("RoomTag_CartShutterDispatch:", "RoomTag_CartShutter97:"):
+        guarded = text.split("\n" + flag + "\npushpc\n", 1)[1].split("\nendif", 1)[0]
+        for label in ("RoomTag_CartShutterDispatch:", "RoomTag_CartShutter97:", "CartShutter97_DragPlayer:"):
             self.assertIn(label, guarded)
+        for direction in ("North", "South"):
+            self.assertRegex(text, flag + r"\s+CartShutter97_Drag" + direction + r"Call:\s+"
+                             r"JSL CartShutter97_DragPlayer\s+CartShutter97_Drag" + direction +
+                             r"Call_End:\s+else\s+JSL DragPlayer\s+endif")
+        self.assertEqual(text.count("JSL CartShutter97_DragPlayer"), 2)
         flags = (ROOT / "Util/macros.asm").read_text() + (ROOT / "Config/feature_flags.asm").read_text()
         self.assertNotRegex(flags, r"!ENABLE_MINECART_CART_SHUTTERS\s*(?:\?=|=)\s*1\b")
         self.assertEqual(body(SOURCE, "RoomTag_ShutterDoorRequiresCart"), [
@@ -304,11 +326,13 @@ class LocalCartShutter(unittest.TestCase):
 
     def test_gate_allocation_is_bounded_outside_sprite_bank31(self):
         text = SOURCE.read_text()
+        self.assertRegex(text, r"pushpc\s+org \$2CFA00\s+[^{}]*CartShutter97_DragPlayer:")
+        self.assertRegex(text, r"CartShutter97_DragPlayer_End:\s+assert pc\(\) <= \$2CFB00")
         self.assertRegex(text, r"pushpc\s+org \$2CFB00\s+RoomTag_CartShutterDispatch:")
         self.assertRegex(text, r"RoomTag_CartShutter97_End:\s+assert pc\(\) <= \$2CFD00[^\n]*\s+pullpc\s+endif")
         sprites = (ROOT / "Sprites/all_sprites.asm").read_text()
         self.assertRegex(sprites, r'incsrc "Sprites/NPCs/goron.asm"[\s\S]*?'
-                                  r'if !ENABLE_MINECART_CART_SHUTTERS\s+assert pc\(\) <= \$2CFB00')
+                                  r'if !ENABLE_MINECART_CART_SHUTTERS\s+assert pc\(\) <= \$2CFA00')
         sizes = {op: 1 for op in ("XBA", "DEX", "INX", "CLC", "SEC", "RTS", "PHP", "PLP", "PHA", "PLA", "PHX", "PLX")}
         sizes.update({"JML": 4, "JMP": 3, "JSR": 3, "REP": 2, "SEP": 2,
                  "BEQ": 2, "BNE": 2, "BCC": 2, "BCS": 2, "BPL": 2, "BRA": 2}
@@ -319,6 +343,35 @@ class LocalCartShutter(unittest.TestCase):
             total += sum(sizes[op] if op in sizes else 1 + {"b": 1, "w": 2}[suffix]
                          for op, suffix, _ in code)
         self.assertLessEqual(total, 0x200)
+
+    def test_drag_wrapper_admits_only_current_room97_floor0_shaft_cart(self):
+        code, labels = program(body(SOURCE, "CartShutter97_DragPlayer"))
+        baseline = cart(room(mounted=True), xy=(0x0F78, 0x1300))
+        word(baseline, 0x0FD8, 0xA55A)
+        rejected = []
+        for address, value in ((0x1B, 0), (0xEE, 1), (0x35, 0), (0x0F23, 1)):
+            state = dict(baseline); state[address] = value
+            rejected.append(state)
+        for address, values in ((0xA0, (0x77, 0x98, 0x197)), (0x07EA, (2, 0x103))):
+            for value in values:
+                state = dict(baseline); word(state, address, value)
+                rejected.append(state)
+        rejected.extend(cart(baseline, xy=xy) for xy in
+                        ((0x0F77, 0x1300), (0x0F79, 0x1300), (0x0F80, 0x1300),
+                         (0x1F78, 0x1300), (0x0F78, 0x12AF), (0x0F78, 0x1359),
+                         (0x0F78, 0x22B0)))
+        admitted = [cart(baseline, xy=(0x0F78, y)) for y in (0x12B0, 0x1300, 0x1358)]
+        for qualifies, states in ((False, rejected), (True, admitted)):
+            for state in states:
+                for direction in (0, 1):
+                    with self.subTest(qualifies=qualifies, state=state, direction=direction):
+                        machine = Machine(state, a=0xABCD, x=3, y=direction)
+                        machine.drag_calls = []
+                        self.assertEqual(machine.run(code, labels), "RTL" if qualifies else "DragPlayer")
+                        self.assertEqual(machine.drag_calls, [(0x0F7A, 3, direction, 0x30)] if qualifies else [])
+                        self.assertEqual(machine.memory, state)
+                        self.assertEqual((machine.x, machine.y, machine.sp, machine.p & 0x30),
+                                         (3, direction, 0x01FB, 0x30))
 
     def test_transition_close_skips_only_open_room97_held_corridor(self):
         code, labels = with_hold("CartShutter97_TransitionHold")
