@@ -206,19 +206,22 @@ def render(catalog: dict, assets: dict[str, bytes], policy: dict,
     return "\n".join(lines) + "\n", report
 
 
-def compile_tables(catalog_path: Path, policy_path: Path, output: Path) -> tuple[str, dict]:
+def compile_tables(catalog_path: Path, policy_path: Path, output: Path, *,
+                   legacy_root: Path | None = None) -> tuple[str, dict]:
+    source_root = legacy_root if legacy_root is not None else ROOT
     before = {catalog_path: catalog_path.read_bytes(), policy_path: policy_path.read_bytes()}
     catalog, assets = pack.load(catalog_path)
     policy = pack.read_json(policy_path)
     protected = set(before) | {catalog_path.parent / r["path"] for r in catalog["resources"].values()}
-    canonical_path = ROOT / "Overworld/graphics_catalog.json"
+    canonical_path = source_root / "Overworld/graphics_catalog.json"
     canonical, _ = pack.load(canonical_path)
-    protected.update({canonical_path, ROOT / "Overworld/graphics_runtime_policy.json"})
+    protected.update({canonical_path, source_root / "Overworld/graphics_runtime_policy.json"})
     protected.update(canonical_path.parent / r["path"] for r in canonical["resources"].values())
-    protected.update(ROOT / "Overworld" / path for path in LEGACY_ALIASES)
+    protected.update(source_root / "Overworld" / path for path in LEGACY_ALIASES)
     if output.is_symlink() or output.resolve() in {p.resolve() for p in protected}:
         raise pack.PackError("output overlaps an input or is a symlink")
-    text, report = render(catalog, assets, policy, catalog_path.parent, output.parent)
+    text, report = render(catalog, assets, policy, catalog_path.parent, output.parent,
+                          legacy_root=source_root)
     for path, data in before.items():
         if path.read_bytes() != data:
             raise pack.PackError(f"input changed during compilation: {path}")
