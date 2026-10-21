@@ -306,11 +306,182 @@ def descriptor_asm(catalog: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
-def compile_pack(source: Path, output: Path, reference: Path | None = None) -> dict:
+def _fields(value: object, expected: set[str], name: str) -> dict:
+    record = object_value(value, name)
+    if set(record) != expected:
+        raise PackError(f"{name} fields differ: expected {sorted(expected)}")
+    return record
+
+
+def _transfer_reference(value: object, transfers: list[dict]) -> dict:
+    """Bind policy to an exact semantic slice, never a sorted numeric index."""
+    record = _fields(value, {"resource_id", "source_offset", "vram_word_address",
+                             "byte_count"}, "runtime transfer reference")
+    string_value(record["resource_id"], "runtime resource ID")
+    for key in ("source_offset", "vram_word_address", "byte_count"):
+        integer(record[key], f"runtime {key}")
+    matches = [dict(t, source_offset=t.get("source_offset", 0)) for t in transfers]
+    if record not in matches:
+        raise PackError("runtime transfer reference differs from catalog slice/layout")
+    return dict(record)
+
+
+def lower_runtime_policy(catalog: dict, assets: dict[str, bytes], policy: dict) -> dict:
+    """Lower explicit phase policy to data. This does not enable an ASM consumer.
+
+    ABI is fixed by the existing helpers: outdoor $1B==0, parent $8A;
+    normal A8/XY8, transition A16/XY8 preserving X/Y, late A8/XY16
+    preserving X/Y. The policy chooses phases; destinations never imply them.
+    """
+    validate(catalog, assets)
+    _fields(policy, {"schema_version", "profiles"}, "runtime policy")
+    if integer(policy["schema_version"], "runtime policy schema_version") != 1:
+        raise PackError("runtime policy schema_version must be 1")
+    policies = object_value(policy["profiles"], "runtime profiles")
+    if set(policies) != set(catalog["profiles"]):
+        raise PackError("runtime policy must name every catalog profile exactly")
+    lowered = {}
+    for profile_id in sorted(policies):
+        p = _fields(policies[profile_id], {"runtime_enabled", "normal", "transition",
+                    "cache_slots", "staging", "late"}, f"runtime profile {profile_id}")
+        if type(p["runtime_enabled"]) is not bool:
+            raise PackError("runtime_enabled must be boolean")
+        if p["normal"] != "all_declared_transfers":
+            raise PackError("normal policy must explicitly select all_declared_transfers")
+        profile = catalog["profiles"][profile_id]
+        if profile["bg_character_base_word"] != 0x2000:
+            raise PackError("runtime ABI requires BG character base $2000")
+        transfers = [dict(t, source_offset=t.get("source_offset", 0))
+                     for t in profile["transfers"]]
+        slots = list_value(p["cache_slots"], "runtime cache_slots", nonempty=True)
+        for slot in slots:
+            if integer(slot, "runtime cache slot", 6) < 3:
+                raise PackError("runtime cache slots must lie in 3..6")
+        if slots != sorted(set(slots)):
+            raise PackError("runtime cache slots must be unique and sorted")
+        expected_slots = set()
+        for t in transfers:
+            start, end = t["vram_word_address"], t["vram_word_address"] + t["byte_count"] // 2
+            if start < 0x3C00 and end > 0x2C00:
+                if start < 0x2C00 or end > 0x3C00:
+                    raise PackError("runtime BG slice crosses auxiliary staging bounds")
+                expected_slots.update(range((start - 0x2000) // 0x400,
+                                            (end - 1 - 0x2000) // 0x400 + 1))
+        if set(slots) != expected_slots:
+            raise PackError("runtime cache slots differ from declared BG coverage")
+        transition = object_value(p["transition"], "runtime transition")
+        mode = transition.get("mode")
+        staging_records = []
+        if mode in ("source_range", "source_start"):
+            _fields(transition, {"mode", "transfer"}, "runtime source transition")
+            selected = _transfer_reference(transition["transfer"], transfers)
+            start, count = selected["vram_word_address"], selected["byte_count"]
+            if start % 0x400 or count % 0x800 or not 0x2C00 <= start < 0x3C00 or start + count // 2 > 0x3C00:
+                raise PackError("runtime source transition requires complete auxiliary slots")
+            if mode == "source_start" and count != 0x800:
+                raise PackError("start-only transition must replace exactly one native slot")
+            bg = dict(mode=mode, transfer=selected, target_start_word=start,
+                      target_end_word=start + count // 2)
+            if p["staging"] is not None:
+                raise PackError("source substitution cannot also patch native staging")
+        elif mode == "native_staging":
+            _fields(transition, {"mode"}, "runtime native transition")
+            stage = _fields(p["staging"], {"mode", "vram_start_word", "vram_end_word",
+                            "wram_base"}, "runtime staging")
+            for key in ("vram_start_word", "vram_end_word", "wram_base"):
+                integer(stage[key], f"runtime staging {key}")
+            if stage != dict(mode="native_after_conversion", vram_start_word=0x2C00,
+                             vram_end_word=0x3C00, wram_base=0x7F0000):
+                raise PackError("native staging must use the reviewed postconversion $7F buffer")
+            for t in transfers:
+                if t["byte_count"] != 32 or not 0x2C00 <= t["vram_word_address"] < 0x3C00:
+                    raise PackError("sparse staging requires individual auxiliary 32-byte glyphs")
+                staging_records.append(dict(t, wram_address=0x7F0000 +
+                                            2 * (t["vram_word_address"] - 0x2C00)))
+            bg = dict(mode=mode, source_bank=0x7F)
+        else:
+            raise PackError(f"unknown runtime transition mode: {mode!r}")
+        late = None
+        if p["late"] is not None:
+            spec = _fields(p["late"], {"transfer", "first_step", "end_step", "chunk_bytes"},
+                           "runtime late phase")
+            selected = _transfer_reference(spec["transfer"], transfers)
+            for key in ("first_step", "end_step", "chunk_bytes"):
+                integer(spec[key], f"runtime late {key}", 0xFFFF)
+            if (spec["first_step"], spec["end_step"], spec["chunk_bytes"]) != (0x50, 0x60, 512):
+                raise PackError("late ABI requires existing $50..$5F steps and 512-byte chunks")
+            if selected["byte_count"] != 8192 or selected["vram_word_address"] != 0x5000:
+                raise PackError("late ABI requires the declared full $5000 extended slice")
+            late = dict(spec, chunks=[dict(step=step, resource_id=selected["resource_id"],
+                        source_offset=selected["source_offset"] + (step - 0x50) * 512,
+                        vram_word_address=0x5000 + (step - 0x50) * 256, byte_count=512)
+                        for step in range(0x50, 0x60)])
+        assigned = staging_records if mode == "native_staging" else [bg["transfer"]]
+        covered = [{k: t[k] for k in ("resource_id", "source_offset", "vram_word_address", "byte_count")}
+                   for t in assigned]
+        if late is not None:
+            covered.append(late["transfer"])
+        if sorted(json_bytes(t) for t in covered) != sorted(json_bytes(t) for t in transfers):
+            raise PackError("runtime phases must cover each declared transfer exactly once")
+        lowered[profile_id] = dict(runtime_enabled=p["runtime_enabled"], normal=transfers,
+                    transition=bg, cache_slots=slots, cache_slot_mask=sum(1 << s for s in slots),
+                    staging=staging_records, late=late)
+    parents = {}
+    for binding in catalog["bindings"]:
+        for parent in binding["parent_maps"]:
+            parents[str(parent)] = dict(profile_id=binding["profile_id"],
+                            runtime_enabled=lowered[binding["profile_id"]]["runtime_enabled"])
+    return dict(schema_version=1, status="data only; no executable runtime consumer linked",
+                abi=dict(outdoor_guard="$1B==0", parent="$8A", normal="A8/XY8",
+                         transition="A16/XY8; preserve X/Y", late="A8/XY16; preserve X/Y"),
+                profiles=lowered, parents=parents)
+
+
+def runtime_policy_asm(lowered: dict) -> str:
+    """Emit unallocated phase/cache/copy records, with stable label references."""
+    label = lambda key: "GraphicsRuntimePolicy_" + sha256(key.encode())
+    resource = lambda t: "GraphicsPackResource_" + sha256(t["resource_id"].encode()) + f"+${t['source_offset']:04X}"
+    lines = ["; Generated runtime phase policy DATA ONLY. No org, hooks or include registration.",
+             "; Record: enabled byte, transition mode byte, cache mask byte, normal/staging/late counts words.",
+             "; Normal/source: source long, VRAM word, count word. Staging: source long, WRAM long, count word.",
+             "; Late: step byte, source long, VRAM word, count word. Parent pointers are zero unless admitted.",
+             "GraphicsRuntimeParentPolicies:"]
+    for parent in range(160):
+        binding = lowered["parents"].get(str(parent))
+        target = label(binding["profile_id"]) if binding and binding["runtime_enabled"] else "$000000"
+        lines.append(f"  dl {target} ; ${parent:02X}")
+    modes = {"source_range": 1, "source_start": 2, "native_staging": 3}
+    for profile_id, p in lowered["profiles"].items():
+        base = label(profile_id)
+        chunks = p["late"]["chunks"] if p["late"] else []
+        lines += [f"; {json.dumps(profile_id)}", f"{base}:",
+                  f"  db ${int(p['runtime_enabled']):02X},${modes[p['transition']['mode']]:02X},${p['cache_slot_mask']:02X}",
+                  f"  dw ${len(p['normal']):04X},${len(p['staging']):04X},${len(chunks):04X}",
+                  f"{base}_Normal:"]
+        for t in p["normal"]:
+            lines += [f"  dl {resource(t)}", f"  dw ${t['vram_word_address']:04X},${t['byte_count']:04X}"]
+        lines.append(f"{base}_Transition:")
+        t = p["transition"].get("transfer")
+        if t:
+            lines += [f"  dl {resource(t)}", f"  dw ${t['vram_word_address']:04X},${t['byte_count']:04X}"]
+        lines.append(f"{base}_Staging:")
+        for t in p["staging"]:
+            lines += [f"  dl {resource(t)},${t['wram_address']:06X}", f"  dw ${t['byte_count']:04X}"]
+        lines.append(f"{base}_Late:")
+        for t in chunks:
+            lines += [f"  db ${t['step']:02X}", f"  dl {resource(t)}",
+                      f"  dw ${t['vram_word_address']:04X},${t['byte_count']:04X}"]
+    return "\n".join(lines) + "\n"
+
+
+def compile_pack(source: Path, output: Path, reference: Path | None = None,
+                 runtime_policy: Path | None = None) -> dict:
     """Validate all inputs first; then write only an exclusive new directory."""
     source_bytes = source.read_bytes()
     catalog, assets = load(source)
     resolved = validate(catalog, assets)
+    policy_bytes = runtime_policy.read_bytes() if runtime_policy is not None else None
+    lowered = lower_runtime_policy(catalog, assets, read_json(runtime_policy)) if runtime_policy is not None else None
     reference_parents = []
     if reference is not None:
         reference_bytes = reference.read_bytes()
@@ -323,6 +494,8 @@ def compile_pack(source: Path, output: Path, reference: Path | None = None) -> d
             raise PackError("runtime reference changed during compilation")
     if source.read_bytes() != source_bytes:
         raise PackError("source catalog changed during compilation")
+    if runtime_policy is not None and runtime_policy.read_bytes() != policy_bytes:
+        raise PackError("runtime policy changed during compilation")
     # Normalize paths even when recompiling a caller-authored V2 catalog.
     catalog = json.loads(json.dumps(catalog))
     files = {}
@@ -336,6 +509,9 @@ def compile_pack(source: Path, output: Path, reference: Path | None = None) -> d
     files["catalog.json"] = json_bytes(catalog)
     files["preview-v1.json"] = json_bytes(legacy)
     files["transfer-descriptors.asm"] = descriptor_asm(catalog).encode()
+    if lowered is not None:
+        files["runtime-phase-policy.json"] = json_bytes(lowered)
+        files["runtime-phase-descriptors.asm"] = runtime_policy_asm(lowered).encode()
     receipt = {
         "schema_version": 1, "source_sha256": sha256(source_bytes),
         "catalog_sha256": sha256(files["catalog.json"]),
@@ -345,6 +521,7 @@ def compile_pack(source: Path, output: Path, reference: Path | None = None) -> d
         "runtime_reference_parent_maps": sorted(reference_parents),
         "runtime_reference_sha256": sha256(reference_bytes) if reference is not None else None,
         "runtime_adapter_status": "proposed data only; no ASM include or ROM writes",
+        "runtime_policy_source_sha256": sha256(policy_bytes) if policy_bytes is not None else None,
         "files": {path: {"byte_count": len(data), "sha256": sha256(data)}
                   for path, data in sorted(files.items())}}
     files["receipt.json"] = json_bytes(receipt)
@@ -372,9 +549,12 @@ def main() -> int:
     parser.add_argument("output", type=Path, help="exclusive new pack directory; parent must exist")
     parser.add_argument("--runtime-reference", type=Path,
                         help="require matching character bytes for every parent in this manifest")
+    parser.add_argument("--runtime-policy", type=Path,
+                        help="lower explicit per-profile phase/cache policy to unlinked data")
     arguments = parser.parse_args()
     try:
-        receipt = compile_pack(arguments.source, arguments.output, arguments.runtime_reference)
+        receipt = compile_pack(arguments.source, arguments.output, arguments.runtime_reference,
+                               arguments.runtime_policy)
     except (PackError, OSError) as exc:
         print(f"graphics pack: {exc}", file=sys.stderr)
         return 1

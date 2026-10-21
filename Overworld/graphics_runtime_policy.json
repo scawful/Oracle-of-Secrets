@@ -1,0 +1,111 @@
+{
+  "profiles": {
+    "dragon-ship": {
+      "cache_slots": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "late": {
+        "chunk_bytes": 512,
+        "end_step": 96,
+        "first_step": 80,
+        "transfer": {
+          "byte_count": 8192,
+          "resource_id": "snes4bpp:538906c5ff8ab0c1b9af76e3c0a6c05560b5eac07e72a9d6243fc43ce19857e2",
+          "source_offset": 0,
+          "vram_word_address": 20480
+        }
+      },
+      "normal": "all_declared_transfers",
+      "runtime_enabled": true,
+      "staging": null,
+      "transition": {
+        "mode": "source_range",
+        "transfer": {
+          "byte_count": 8192,
+          "resource_id": "snes4bpp:737a896e831d60e69e9d7e0054e1324e2eb63f83e938ad35f159035cde038178",
+          "source_offset": 0,
+          "vram_word_address": 11264
+        }
+      }
+    },
+    "kalyxo-docks": {
+      "cache_slots": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "late": null,
+      "normal": "all_declared_transfers",
+      "runtime_enabled": true,
+      "staging": null,
+      "transition": {
+        "mode": "source_range",
+        "transfer": {
+          "byte_count": 8192,
+          "resource_id": "snes4bpp:7ee45cc2f6e5f42d741794779fd6b79f9a5775f3fddea03a8a53d2038a9806c0",
+          "source_offset": 0,
+          "vram_word_address": 11264
+        }
+      }
+    },
+    "loom-docks-approach": {
+      "cache_slots": [
+        3
+      ],
+      "late": null,
+      "normal": "all_declared_transfers",
+      "runtime_enabled": true,
+      "staging": null,
+      "transition": {
+        "mode": "source_start",
+        "transfer": {
+          "byte_count": 2048,
+          "resource_id": "snes4bpp:3fd640ea5f71e4301983dc4944b355f6d8582ea14797605688e5adaf37ffc3b4",
+          "source_offset": 0,
+          "vram_word_address": 11264
+        }
+      }
+    },
+    "sky-d8-tower": {
+      "cache_slots": [
+        6
+      ],
+      "late": null,
+      "normal": "all_declared_transfers",
+      "runtime_enabled": false,
+      "staging": null,
+      "transition": {
+        "mode": "source_start",
+        "transfer": {
+          "byte_count": 2048,
+          "resource_id": "snes4bpp:b7db5e904ca0ad98f9c5268846efb2da0668a2e160a40a554c99747e65d659a8",
+          "source_offset": 0,
+          "vram_word_address": 14336
+        }
+      }
+    },
+    "stepped-waterfront-fort": {
+      "cache_slots": [
+        4,
+        5
+      ],
+      "late": null,
+      "normal": "all_declared_transfers",
+      "runtime_enabled": false,
+      "staging": {
+        "mode": "native_after_conversion",
+        "vram_end_word": 15360,
+        "vram_start_word": 11264,
+        "wram_base": 8323072
+      },
+      "transition": {
+        "mode": "native_staging"
+      }
+    }
+  },
+  "schema_version": 1
+}
