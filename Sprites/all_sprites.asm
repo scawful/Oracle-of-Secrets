@@ -365,4 +365,8 @@ incsrc "Sprites/NPCs/tingle.asm"
 incsrc "Sprites/NPCs/goron.asm"
 %log_end("goron", !LOG_DUNGEON)
 
+if !ENABLE_MINECART_CART_SHUTTERS
+  assert pc() <= $2CFB00, "Bank $2C sprite stream overlaps localized cart gate"
+endif
+
 ; =========================================================
