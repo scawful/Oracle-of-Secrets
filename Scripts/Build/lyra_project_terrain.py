@@ -344,8 +344,8 @@ def decode_literal_stream(payload: bytes) -> bytes:
 
 
 def compile_terrain(document: TerrainDocument, native_definitions: Mapping[int, Quad],
-                    allocation: Allocation) -> CompiledTerrain:
-    """Return deterministic native records and writes; never mutate inputs."""
+                    allocation: Allocation, *, map_ids=None) -> CompiledTerrain:
+    """Compile all maps or a sorted explicit subset; never mutate inputs."""
     _require(isinstance(document, TerrainDocument), "Expected parsed TerrainDocument")
     _require(isinstance(allocation, Allocation), "Expected explicit Allocation")
     _require(_integer(allocation.tile32_capacity, 1, TILE32_CAPACITY),
@@ -380,6 +380,21 @@ def compile_terrain(document: TerrainDocument, native_definitions: Mapping[int, 
     _profile(document.profile)
     _require(len(document.maps) == MAP_COUNT and len(document.properties) == MAP_COUNT,
              "Incomplete parsed Lyra maps")
+    if map_ids is None:
+        selected = tuple(range(MAP_COUNT))
+    else:
+        message = "map_ids must be an iterable of unique integer A0..BF map IDs"
+        _require(not isinstance(map_ids, (str, bytes, bytearray)), message)
+        try:
+            requested = iter(map_ids)
+        except TypeError as error:
+            raise ValueError(message) from error
+        seen = set()
+        for area in requested:
+            _require(_integer(area, FIRST_MAP, FIRST_MAP + MAP_COUNT - 1), message)
+            _require(area not in seen, "Duplicate selected Lyra map ID")
+            seen.add(area)
+        selected = tuple(area - FIRST_MAP for area in sorted(seen))
     map_quads = []
     for cells in document.maps:
         _require(len(cells) == 1024
@@ -388,13 +403,13 @@ def compile_terrain(document: TerrainDocument, native_definitions: Mapping[int, 
         map_quads.append(tuple((cells[y * 32 + x], cells[y * 32 + x + 1],
                                 cells[(y + 1) * 32 + x], cells[(y + 1) * 32 + x + 1])
                                for y in range(0, 32, 2) for x in range(0, 32, 2)))
-    # Reserve every reused ID before allocating: a later map may need a native
-    # definition in an explicitly owned slot that an earlier map did not use.
+    # Reserve every selected reused ID before allocating: a later selected map
+    # may need an owned native slot that an earlier selected map did not use.
     lookup = {}
     owned_set = set(owned)
     for index in sorted(definitions, key=lambda value: (value in owned_set, value)):
         lookup.setdefault(definitions[index], index)
-    needed = set(quad for quads in map_quads for quad in quads)
+    needed = set(quad for index in selected for quad in map_quads[index])
     reused = {lookup[quad] for quad in needed if quad in lookup}
     free = iter(sorted(owned_set - reused))
     added = []
@@ -425,7 +440,8 @@ def compile_terrain(document: TerrainDocument, native_definitions: Mapping[int, 
         raise ValueError("Insufficient bank-safe stream allocation")
 
     plans = []
-    for index, quads in enumerate(map_quads):
+    for index in selected:
+        quads = map_quads[index]
         tiles = tuple(lookup[quad] for quad in quads)
         high = place(b"\xe0\xff" + bytes(tile >> 8 for tile in tiles) + b"\xff")
         low = place(b"\xe0\xff" + bytes(tile & 255 for tile in tiles) + b"\xff")

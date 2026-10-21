@@ -61,6 +61,133 @@ def allocation(**overrides):
 
 
 class LyraProjectTerrainTest(unittest.TestCase):
+    def test_subset_preserves_actual_ids_metadata_and_exact_readback(self):
+        data, native = fixture(), definitions()
+        selected = (0xA1, 0xA2, 0xA9, 0xAA)
+        verified = {}
+        for area in selected:
+            auth = data["maps"][area - T.FIRST_MAP]["authoring"]
+            auth["properties"]["music"] = [area, 1, 2, 3]
+            auth["asset_bindings"] = ["a" * 64, "b" * 64, "c" * 64]
+            verified[area] = tuple(auth["asset_bindings"])
+        data["edge_connections"] = [
+            {"id": 1, "map_a": 0xA1, "map_b": 0xA9,
+             "passage": {"first_tile": 14, "last_tile": 17}},
+            {"id": 2, "map_a": 0xA0, "map_b": 0xA8, "passage": None}]
+        document = T.parse_terrain_document(json.dumps(data), profile(),
+                    expected_asset_bindings=verified)
+        owned = allocation()
+        original = copy.deepcopy((document, native, owned))
+        result = T.compile_terrain(document, native, owned,
+                                   map_ids=(0xAA, 0xA9, 0xA2, 0xA1))
+        self.assertEqual([p.map_id for p in result.maps], list(selected))
+        self.assertEqual(len(result.stream_writes), 8)
+        self.assertEqual(sum(len(s.payload) for s in result.stream_writes), 2072)
+        self.assertEqual(result.edge_connections, document.edge_connections)
+        resolved = {**native, **dict(result.new_definitions)}
+        for plan in result.maps:
+            with self.subTest(map_id=plan.map_id):
+                source = data["maps"][plan.map_id - T.FIRST_MAP]
+                self.assertEqual(plan.properties, source["authoring"]["properties"])
+                self.assertEqual(plan.quadrant_maps, T.quadrant_map_plan(plan.map_id))
+                high = T.decode_literal_stream(plan.high.payload)
+                low = T.decode_literal_stream(plan.low.payload)
+                tile_ids = tuple(a << 8 | b for a, b in zip(high, low))
+                self.assertEqual(tile_ids, plan.tiles32)
+                rebuilt = [[None] * 32 for _ in range(32)]
+                for index, tile in enumerate(tile_ids):
+                    row, column = divmod(index, 16)
+                    for quadrant, value in enumerate(resolved[tile]):
+                        rebuilt[row * 2 + quadrant // 2][column * 2 + quadrant % 2] = value
+                self.assertEqual(rebuilt, source["tiles16"])
+        self.assertEqual((document, native, owned), original)
+        result.maps[0].properties["music"][0] = 0
+        self.assertEqual((document, native, owned), original)
+
+    def test_subset_order_is_independent_for_lists_sets_and_generators(self):
+        document, native, owned = parse(fixture()), definitions(), allocation()
+        expected = T.compile_terrain(document, native, owned,
+                                     map_ids=(0xA1, 0xA2, 0xA9, 0xAA))
+        for requested in ([0xAA, 0xA2, 0xA9, 0xA1],
+                          {0xAA, 0xA1, 0xA9, 0xA2},
+                          (area for area in (0xA9, 0xA1, 0xAA, 0xA2))):
+            with self.subTest(requested=type(requested).__name__):
+                self.assertEqual(T.compile_terrain(document, native, owned,
+                                                   map_ids=requested), expected)
+
+    def test_empty_selection_emits_nothing_but_validates_native_inputs(self):
+        document, native = parse(fixture()), definitions()
+        minimal = allocation(stream_ranges=((0x20000, 0x20001),),
+                             owned_tile32_ids=())
+        original = copy.deepcopy((document, native, minimal))
+        for requested in ([], (), iter(())):
+            result = T.compile_terrain(document, native, minimal, map_ids=requested)
+            self.assertEqual(result.maps, ())
+            self.assertEqual(result.stream_writes, ())
+            self.assertEqual(result.new_definitions, ())
+            self.assertEqual(result.edge_connections, document.edge_connections)
+        self.assertEqual((document, native, minimal), original)
+        for incomplete in ({}, {0: (0, 1, 2, 3)},
+                           {**native, 3: (4096, 0, 0, 0)}):
+            with self.subTest(native=incomplete), self.assertRaises(ValueError):
+                T.compile_terrain(document, incomplete, minimal, map_ids=[])
+        for malformed in (None, allocation(stream_ranges=()),
+                          allocation(owned_tile32_ids=(1, 1)),
+                          allocation(tile32_capacity=0),
+                          allocation(stream_ranges=((0x20000, 0x24000),
+                                                    (0x23000, 0x28000)))):
+            with self.subTest(allocation=malformed), self.assertRaises(ValueError):
+                T.compile_terrain(document, native, malformed, map_ids=[])
+
+    def test_unselected_terrain_neither_consumes_nor_reserves_owned_ids(self):
+        data = fixture()
+        for entry in data["maps"]:
+            entry["tiles16"] = [[900] * 32 for _ in range(32)]
+        data["maps"][0]["tiles16"] = [[99] * 32 for _ in range(32)]
+        data["maps"][1]["tiles16"] = [[10] * 32 for _ in range(32)]
+        native = {0: (0,) * 4, 1: (99,) * 4, 2: (98,) * 4}
+        result = T.compile_terrain(parse(data), native,
+                    allocation(tile32_capacity=3, owned_tile32_ids=(1,)),
+                    map_ids=[0xA1])
+        self.assertEqual(result.new_definitions, ((1, (10,) * 4),))
+        self.assertEqual([p.map_id for p in result.maps], [0xA1])
+        self.assertEqual(set(result.maps[0].tiles32), {1})
+
+    def test_later_selected_native_reuse_is_reserved_before_allocation(self):
+        data = fixture()
+        for entry in data["maps"]:
+            entry["tiles16"] = [[30] * 32 for _ in range(32)]
+        data["maps"][1]["tiles16"] = [[10] * 32 for _ in range(32)]
+        data["maps"][10]["tiles16"] = [[20] * 32 for _ in range(32)]
+        native = {0: (0,) * 4, 1: (20,) * 4, 2: (99,) * 4}
+        result = T.compile_terrain(parse(data), native,
+                    allocation(tile32_capacity=3, owned_tile32_ids=(1, 2)),
+                    map_ids=(0xAA, 0xA1))
+        self.assertEqual(result.new_definitions, ((2, (10,) * 4),))
+        self.assertEqual([p.map_id for p in result.maps], [0xA1, 0xAA])
+        self.assertEqual(set(result.maps[0].tiles32), {2})
+        self.assertEqual(set(result.maps[1].tiles32), {1})
+
+    def test_malformed_map_selections_refuse(self):
+        document, native, owned = parse(fixture()), definitions(), allocation()
+        malformed = ([True], [False], [0x9F], [0xC0], [0xA1 + 0.0],
+                     ["A1"], [[0xA1]], [0xA1, 0xA1],
+                     (area for area in (0xA1, 0xA1)),
+                     1, 3.14, "", "A1", b"", {"bad": 0xA1})
+        for requested in malformed:
+            with self.subTest(requested=requested), self.assertRaises(ValueError):
+                T.compile_terrain(document, native, owned, map_ids=requested)
+        with self.assertRaises(TypeError):
+            T.compile_terrain(document, native, owned, [0xA1])
+
+    def test_legacy_none_is_identical_to_explicit_all_maps(self):
+        document, native, owned = parse(fixture()), definitions(), allocation()
+        legacy = T.compile_terrain(document, native, owned)
+        self.assertEqual(legacy, T.compile_terrain(document, native, owned,
+                                                   map_ids=None))
+        self.assertEqual(legacy, T.compile_terrain(document, native, owned,
+                           map_ids=reversed(range(0xA0, 0xC0))))
+
     def test_all_32_maps_read_back_exactly_without_mutating_inputs(self):
         data, native = fixture(), definitions()
         document = parse(data)
