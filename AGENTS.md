@@ -5,6 +5,8 @@ scawful asked for less process and less repetition. These rules apply to Claude,
 Only these need scawful's OK: base-ROM writes, builds or writes in the shared checkout's `Roms/`,
 playtest staging, installs, Discord posts, PR merges, story/dialogue/canon text, and destructive
 actions (delete, force push). Do not ask for approval of anything else.
+Exception (scawful, 2026-10-21): until yaze 1.0, agents may install yaze, Yaze Nightly and z3ed
+without asking. yaze rules: `~/src/hobby/yaze/docs/internal/agents/operating-rules.md`.
 
 1. **Match proof to risk.**
    - Docs-only (text that no script, build, generator or export reads): no build, no emulator.
