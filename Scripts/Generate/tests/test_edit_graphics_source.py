@@ -289,9 +289,39 @@ class EditGraphicsSourceTests(unittest.TestCase):
         planned = run(["plan", "--resource-id", self.resource_id,
                        "--replacement", str(self.replacement), "--plan", str(receipt)])
         self.assertEqual(planned, json.loads(receipt.read_text()))
-        applied = run(["apply", "--plan", str(receipt)])
+        applied = run(["apply", "--plan", str(receipt), "--expected-plan-sha256",
+                       pack.sha256(receipt.read_bytes())])
         self.assertEqual(applied["after_resource_id"], planned["after_resource_id"])
         self.assertEqual(applied["result"], "published")
+
+    def test_held_plan_hash_and_mid_publication_change_refuse_with_rollback(self):
+        plan = self.plan()
+        path = self.work / "review-plan.json"
+        path.write_bytes(pack.json_bytes(plan))
+        plan_guard, _ = edit.snapshot(path)
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            code = edit.main(["apply", "--source-root", str(self.source), "--portable-catalog",
+                              str(self.portable / "catalog.json"), "--plan", str(path),
+                              "--expected-plan-sha256", "0" * 64])
+        self.assertEqual(code, 1)
+        self.assertIn("held review", json.loads(output.getvalue())["error"])
+        self.assertEqual(self.protected_bytes(), self.before)
+
+        original = edit.replace_file
+        changed = False
+
+        def change_plan_after_first_write(target, data):
+            nonlocal changed
+            original(target, data)
+            if not changed:
+                changed = True
+                path.write_bytes(path.read_bytes() + b"\n")
+
+        with mock.patch.object(edit, "replace_file", side_effect=change_plan_after_first_write):
+            with self.assertRaisesRegex(edit.EditError, "Source changed since plan"):
+                edit.apply_plan(plan, self.source, self.portable / "catalog.json", plan_guard=plan_guard)
+        self.assertEqual(self.protected_bytes(), self.before)
 
     def test_cli_error_is_json_and_preserves_inputs(self):
         output = io.StringIO()

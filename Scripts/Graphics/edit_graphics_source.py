@@ -19,6 +19,8 @@ import stat
 import sys
 import tempfile
 
+sys.dont_write_bytecode = True
+
 import compile_graphics_pack as pack
 import compile_runtime_graphics as runtime
 
@@ -328,7 +330,8 @@ def target_unchanged(target: dict) -> None:
         raise EditError(f"Publication target changed since plan: {path}")
 
 
-def apply_plan(plan: dict, source_root: Path, portable: Path, resource_id: str | None = None) -> dict:
+def apply_plan(plan: dict, source_root: Path, portable: Path, resource_id: str | None = None,
+               *, plan_guard: dict | None = None) -> dict:
     if (plan.get("schema_version") != 1 or plan.get("operation") != "plan" or
             plan.get("source_root") != str(absolute(source_root)) or
             plan.get("portable_catalog") != str(absolute(portable)) or
@@ -339,6 +342,8 @@ def apply_plan(plan: dict, source_root: Path, portable: Path, resource_id: str |
     current = make_plan(source_root, portable, plan["before_resource_id"], Path(plan["replacement_path"]))
     if current != plan:
         raise EditError("Recompiled graphics proposal differs from the reviewed plan")
+    if plan_guard is not None:
+        check_snapshot(plan_guard)
     with publication_locks(current["publication_targets"]):
         for record in plan["inputs"]:
             check_snapshot(record)
@@ -354,6 +359,8 @@ def apply_plan(plan: dict, source_root: Path, portable: Path, resource_id: str |
         original_records = {Path(record["path"]): record for record in plan["inputs"]}
         changed_paths = set(originals)
         input_guards = [r for r in plan["inputs"] if Path(r["path"]) not in changed_paths]
+        if plan_guard is not None:
+            input_guards.append(plan_guard)
         published = []
         try:
             for change in plan["changed_files"]:
@@ -407,13 +414,21 @@ def main(argv=None) -> int:
     parser.add_argument("--resource-id")
     parser.add_argument("--replacement", type=Path)
     parser.add_argument("--plan", type=Path)
+    parser.add_argument("--expected-plan-sha256",
+                        help="admit the exact held review-plan bytes before apply")
     args = parser.parse_args(argv)
     try:
         if args.operation == "apply":
             if args.plan is None:
                 raise EditError("apply requires --plan")
-            plan = pack.object_value(pack.read_json(plain(args.plan)), "graphics edit plan")
-            result = apply_plan(plan, args.source_root, args.portable_catalog, args.resource_id)
+            plan_guard, plan_bytes = snapshot(args.plan)
+            if (args.expected_plan_sha256 is not None and
+                    args.expected_plan_sha256.lower() != plan_guard["sha256"]):
+                raise EditError("Graphics plan SHA256 differs from the held review")
+            plan = pack.object_value(json.loads(plan_bytes, object_pairs_hook=pack._unique_object),
+                                     "graphics edit plan")
+            result = apply_plan(plan, args.source_root, args.portable_catalog, args.resource_id,
+                                plan_guard=plan_guard)
         elif args.resource_id is None:
             raise EditError("inspect and plan require --resource-id")
         elif args.operation == "inspect":
