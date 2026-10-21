@@ -100,18 +100,36 @@ def render(catalog: dict, assets: dict[str, bytes], policy: dict,
     profiles = {key: value for key, value in lowered["profiles"].items()
                 if value["runtime_enabled"]}
     used = {t["resource_id"] for p in profiles.values() for t in p["normal"]}
-    labels, payloads = {}, {}
+    labels, payloads, aliases = {}, {}, {}
+    legacy_assets = {}
+
+    def legacy_bytes(path):
+        if path not in legacy_assets:
+            try:
+                legacy_assets[path] = (legacy_root / "Overworld" / path).read_bytes()
+            except OSError as exc:
+                raise pack.PackError(f"cannot verify existing label bytes: {path}") from exc
+        return legacy_assets[path]
+
     for resource_id in sorted(used):
         resource = catalog["resources"][resource_id]
         path = resource["path"]
         if path in LEGACY_ALIASES:
-            expected = legacy_root / "Overworld" / path
-            try:
-                if expected.read_bytes() != assets[resource_id]:
-                    raise pack.PackError(f"existing label bytes differ: {path}")
-            except OSError as exc:
-                raise pack.PackError(f"cannot verify existing label bytes: {path}") from exc
-            labels[resource_id] = LEGACY_ALIASES[path]
+            # Preserve the explicit canonical-path contract: changed content
+            # cannot silently replace an existing payload through its label.
+            if legacy_bytes(path) != assets[resource_id]:
+                raise pack.PackError(f"existing label bytes differ: {path}")
+            alias = LEGACY_ALIASES[path]
+        else:
+            # Portable packs rename assets by content. Reuse only a vetted
+            # label whose actual source bytes match, never a claimed hash/ID.
+            matches = [label for name, label in LEGACY_ALIASES.items()
+                       if legacy_bytes(name) == assets[resource_id]]
+            if len(matches) > 1:
+                raise pack.PackError(f"ambiguous existing label bytes: {resource_id}")
+            alias = matches[0] if matches else None
+        if alias is not None:
+            labels[resource_id] = aliases[resource_id] = alias
         else:
             digest = pack.sha256(assets[resource_id])
             label = "SharedGraphicsResource_" + digest
@@ -184,8 +202,7 @@ def render(catalog: dict, assets: dict[str, bytes], policy: dict,
                   normal_counts={key: len(value) for key, value in normal.items()},
                   staging_counts={key: len(p["staging"]) for key, p in profiles.items()},
                   table_bytes=table_bytes, new_payload_bytes=payload_bytes,
-                  new_payload_count=len(payloads), aliases={key: labels[key] for key in sorted(used)
-                  if catalog["resources"][key]["path"] in LEGACY_ALIASES})
+                  new_payload_count=len(payloads), aliases=aliases)
     return "\n".join(lines) + "\n", report
 
 
