@@ -108,6 +108,7 @@ def parse_allocation(value, source):
         "kind", "source_rom_sha256", "table_range", "code_range",
         "stream_ranges", "owned_tile32_ids", "expanded_size"}
             | ({"admission"} if "admission" in value else set())
+            | ({"tile32_assignment"} if "tile32_assignment" in value else set())
             | ({"reservation"} if "reservation" in value else set()), "Malformed Lyra allocation")
     require(value["kind"] == "lyra.project_runtime_allocation.v1"
             and value["source_rom_sha256"] == sha(source),
@@ -132,13 +133,22 @@ def parse_allocation(value, source):
     ids = value["owned_tile32_ids"]
     require(type(ids) is list and all(type(v) is int and 0 <= v < 0x4540 for v in ids)
             and len(ids) == len(set(ids)), "Invalid owned Tile32 IDs")
-    return Allocation(tuple(tuple(v) for v in ranges), tuple(ids))
+    assignments = None
+    if "tile32_assignment" in value:
+        require("reservation" in value, "Source reservation required for Tile32 assignments")
+        contract = value["tile32_assignment"]
+        require(type(contract) is dict and type(contract.get("assignments")) is list
+                and all(type(r) is dict and set(r) == {"tile32_id", "quadrants"}
+                        and type(r["tile32_id"]) is int and type(r["quadrants"]) is list
+                        for r in contract["assignments"]), "Malformed Tile32 assignments")
+        assignments = tuple((r["tile32_id"], tuple(r["quadrants"])) for r in contract["assignments"])
+    return Allocation(tuple(tuple(v) for v in ranges), tuple(ids), tile32_assignments=assignments)
 
 
-def verify_allocation(source, allocation, reservation=None):
+def verify_allocation(source, allocation, reservation=None, tile32_assignment=None):
     if reservation is not None:
         from lyra_project_allocation import verify_reservation
-        verify_reservation(source, allocation, reservation)
+        verify_reservation(source, allocation, reservation, tile32_assignment=tile32_assignment)
     source = expanded_rom(source)
     if reservation is None:
         require(source[TABLE_START:TABLE_END] == bytes(TABLE_END - TABLE_START),
@@ -465,7 +475,11 @@ def plan_admission(source, terrain_text, proof, allocation_value=None, *, candid
     allocation = None
     if allocation_value is not None:
         allocation = parse_allocation(allocation_value, source)
-        verify_allocation(source, allocation, allocation_value.get("reservation"))
+        assignment = allocation_value.get("tile32_assignment")
+        verify_allocation(source, allocation, allocation_value.get("reservation"), assignment)
+        if assignment is not None:
+            from lyra_project_tile32 import verify_input
+            verify_input(source, text_bytes, admitted, directory, missing_quartets, assignment)
         if missing_quartets and not allocation.owned_tile32_ids:
             blockers.append(dict(code="TILE32_ALLOCATION_REQUIRED", missing_definitions=len(missing_quartets)))
         if len(closure) * 518 > sum(end - start for start, end in allocation.stream_ranges):
@@ -485,6 +499,10 @@ def plan_admission(source, terrain_text, proof, allocation_value=None, *, candid
                     pc=[stream.pc, stream.pc + len(stream.payload)], snes=stream.snes,
                     bytes=len(stream.payload), sha256=sha(stream.payload)))
     new_ids = {i for i, _ in compiled.new_definitions} if compiled else set()
+    tile32_writes = None
+    if compiled is not None and allocation.tile32_assignments is not None:
+        from lyra_project_tile32 import packed_write_plan
+        tile32_writes = packed_write_plan(source, document, compiled, allocation)
     reused = sorted({tile for plan in compiled.maps for tile in plan.tiles32} - new_ids) if compiled else []
     qualification = []
     if admitted:
@@ -509,6 +527,8 @@ def plan_admission(source, terrain_text, proof, allocation_value=None, *, candid
         allocation_verified=allocation is not None, candidate_data_plan_ready=bool(admitted) and compiled is not None and not blockers,
         streams=stream_rows, reused_tile32_ids=reused,
         new_tile32_definitions=[dict(tile32_id=i, quadrants=list(q)) for i, q in compiled.new_definitions] if compiled else [],
+        tile32_assignment_verified=allocation is not None and allocation.tile32_assignments is not None,
+        tile32_write_plan=tile32_writes,
         relocated_tables=tables, unpopulated_table_rows="zero; runtime admission gate required",
         native_parent_count=160, legacy_table_writes=[], profile_overrides=[],
         native_99=proof.get("native_99"),

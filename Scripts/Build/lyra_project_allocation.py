@@ -49,6 +49,12 @@ def reservation_claim(ledger_path=None):
         require(type(fills) is list and fills and all(type(v) is int and v in (0, 255) for v in fills),
                 'Invalid source reservation fill')
         spans.append(tuple(span))
+    tile32 = claim.get('tile32_candidate_reservation')
+    require(type(tile32) is dict and tile32.get('id_range') == [0x44C0, 0x4540]
+            and tile32.get('dictionary_bases_pc') == [0x18000, 0x20000, 0x1F0000, 0x1F8000],
+            'Unsupported source Tile32 reservation')
+    spans += [(base + 0x44C0 // 4 * 6, base + 0x4540 // 4 * 6)
+              for base in tile32['dictionary_bases_pc']]
     def physical(address):
         require(type(address) is int and address & 0x8000
                 and address >> 16 not in (0x7E, 0x7F), 'Invalid legacy ROM ownership address')
@@ -59,8 +65,21 @@ def reservation_claim(ledger_path=None):
     owners = list(ledger.get('claims', []))
     owners += [dict(id=t['id'], space=t.get('space'), base=t.get('address'),
                     size=t['count'] * t['stride']) for t in ledger.get('tables', [])]
+    for other in ledger.get('rom_candidate_reservations', []):
+        if other.get('id') == CLAIM:
+            continue
+        for region in other.get('regions', []):
+            start, end = region['pc']
+            owners.append(dict(id=other.get('id'), space='pc_rom', base=start, size=end - start))
+        for start, end in [other['tile32_candidate_reservation']['id_range']] \
+                if 'tile32_candidate_reservation' in other else []:
+            owners.append(dict(id=other.get('id'), space='tile32_id', base=start, size=end - start))
     for owner in owners:
         space, begin, size = owner.get('space'), owner.get('base'), owner.get('size')
+        if space == 'tile32_id' and begin is not None and size is not None:
+            require(type(begin) is int and type(size) is int and size > 0
+                    and (begin + size <= 0x44C0 or begin >= 0x4540),
+                    f"Source reservation conflicts with Tile32 owner {owner.get('id')}")
         if space not in ('pc_rom', 'snes_rom') or begin is None or size is None:
             continue
         require(type(begin) is int and type(size) is int and size > 0, 'Invalid legacy ROM ownership')
@@ -72,7 +91,7 @@ def reservation_claim(ledger_path=None):
     return claim, sha(raw)
 
 
-def derive_allocation(source, *, ledger_path=None):
+def derive_allocation(source, *, ledger_path=None, tile32_assignment=None):
     require(type(source) is bytes and len(source) == 0x400000,
             'Source reservation requires an actual unheadered4MiB ROM')
     claim, ledger_hash = reservation_claim(ledger_path)
@@ -85,29 +104,41 @@ def derive_allocation(source, *, ledger_path=None):
         preimages.append(dict(purpose=region['purpose'], pc=[start, end],
                               fill=raw[0], sha256=sha(raw)))
     regions = {r['purpose']: r['pc'] for r in claim['regions']}
-    return dict(kind='lyra.project_runtime_allocation.v1', source_rom_sha256=sha(source),
+    result = dict(kind='lyra.project_runtime_allocation.v1', source_rom_sha256=sha(source),
         expanded_size=len(source), table_range=regions['tables'], code_range=regions['code'],
         stream_ranges=[regions['streams']], owned_tile32_ids=[],
         reservation=dict(kind='lyra.project_source_reservation.v1', claim_id=CLAIM,
                          source_rom_sha256=sha(source), ledger_sha256=ledger_hash, regions=preimages),
         admission=dict(candidate_maps=[], candidate_edge_ids=[], production_maps=[], production_edge_ids=[]))
+    if tile32_assignment is not None:
+        from lyra_project_tile32 import verify_contract
+        assignments = verify_contract(source, tile32_assignment, claim, ledger_hash)
+        result['owned_tile32_ids'] = [i for i, _ in assignments]
+        result['tile32_assignment'] = tile32_assignment
+    return result
 
 
-def verify_reservation(source, allocation, reservation, *, ledger_path=None):
-    expected = derive_allocation(bytes(source), ledger_path=ledger_path)
+def verify_reservation(source, allocation, reservation, *, ledger_path=None, tile32_assignment=None):
+    expected = derive_allocation(bytes(source), ledger_path=ledger_path, tile32_assignment=tile32_assignment)
     require(reservation == expected['reservation'], 'Source reservation/preimages are stale or forged')
     require(tuple(expected['table_range']) == (0x144000, 0x1469C0)
             and tuple(expected['code_range']) == (0x3C4000, 0x3C6000)
             and tuple(map(tuple, expected['stream_ranges'])) == allocation.stream_ranges
             and tuple(expected['owned_tile32_ids']) == allocation.owned_tile32_ids,
             'Allocation differs from the source-declared reservation')
+    expected_assignments = None if tile32_assignment is None else tuple(
+        (r['tile32_id'], tuple(r['quadrants'])) for r in tile32_assignment['assignments'])
+    require(expected_assignments == allocation.tile32_assignments,
+            'Allocation differs from the source-bound Tile32 assignments')
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--rom', type=Path, required=True)
+    parser.add_argument('--tile32-assignment', type=Path)
     args = parser.parse_args()
-    print(json.dumps(derive_allocation(args.rom.read_bytes()), sort_keys=True, indent=2))
+    assignment = json.loads(args.tile32_assignment.read_bytes()) if args.tile32_assignment else None
+    print(json.dumps(derive_allocation(args.rom.read_bytes(), tile32_assignment=assignment), sort_keys=True, indent=2))
 
 
 if __name__ == '__main__':

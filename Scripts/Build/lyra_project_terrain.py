@@ -108,6 +108,9 @@ class Allocation:
     stream_ranges: tuple[tuple[int, int], ...]
     owned_tile32_ids: tuple[int, ...] = ()
     tile32_capacity: int = TILE32_CAPACITY
+    # None retains the historical explicit-owner allocator. A reviewed joint
+    # assignment fixes IDs across independently compiled project subsets.
+    tile32_assignments: tuple[tuple[int, Quad], ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -420,10 +423,24 @@ def compile_terrain(document: TerrainDocument, native_definitions: Mapping[int, 
     needed = set(quad for index in selected for quad in map_quads[index])
     reused = {lookup[quad] for quad in needed if quad in lookup}
     free = iter(sorted(owned_set - reused))
+    assigned = None
+    if allocation.tile32_assignments is not None:
+        assigned, assigned_ids = {}, set()
+        for index, quad in allocation.tile32_assignments:
+            _require(type(index) is int and index in owned_set and index not in assigned_ids
+                     and isinstance(quad, (tuple, list)) and len(quad) == 4
+                     and all(_integer(v, 0, 4095) for v in quad),
+                     "Invalid reviewed Tile32 assignment")
+            quad = tuple(quad)
+            _require(quad not in assigned and quad not in lookup and index not in reused,
+                     "Reviewed Tile32 assignment aliases a native or assigned definition")
+            assigned[quad] = index
+            assigned_ids.add(index)
     added = []
     for quad in sorted(needed - set(lookup)):
-        index = next(free, None)
-        _require(index is not None, "Insufficient explicitly owned Tile32 capacity")
+        index = assigned.get(quad) if assigned is not None else next(free, None)
+        _require(index is not None, "Missing reviewed Tile32 assignment" if assigned is not None
+                 else "Insufficient explicitly owned Tile32 capacity")
         lookup[quad] = index
         definitions[index] = quad
         added.append((index, quad))
@@ -466,7 +483,7 @@ def compile_terrain(document: TerrainDocument, native_definitions: Mapping[int, 
         area = FIRST_MAP + index
         plans.append(MapPlan(area, tiles, high, low, tuple(directory.get(area, quadrant_map_plan(area))),
                              copy.deepcopy(document.properties[index])))
-    return CompiledTerrain(tuple(plans), tuple(added), copy.deepcopy(document.edge_connections))
+    return CompiledTerrain(tuple(plans), tuple(sorted(added)), copy.deepcopy(document.edge_connections))
 
 
 # Name accepted by build adapters that identify the project-specific compiler.
