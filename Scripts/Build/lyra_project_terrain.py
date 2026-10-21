@@ -204,6 +204,8 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
              "Lyra profile differs from independently verified source assets")
     flights = data["flight_points"]
     _require(type(flights) is list and len(flights) <= 64, "Invalid flight_points")
+    _require(allow_authoring_drafts or not flights,
+             "Unsupported runtime metadata: flight_points")
     flight_ids = set()
     for flight in flights:
         _keys(flight, {"id", "map_id", "x", "y", "name", "runtime_slot"}, "Lyra flight point")
@@ -214,8 +216,6 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
                  and all(ord(c) >= 32 and ord(c) != 127 for c in flight["name"])
                  and flight["runtime_slot"] is None, "Invalid Lyra flight point")
         flight_ids.add(flight["id"])
-    _require(allow_authoring_drafts or not flights,
-             "Unsupported runtime metadata: flight_points")
     edges = data["edge_connections"]
     _require(type(edges) is list and len(edges) <= 64,
              "Lyra edge connections require an array of at most 64 entries")
@@ -259,6 +259,8 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
             entities = auth[key]
             _require(type(entities) is list and len(entities) <= (128 if key == "sprites" else 64),
                      f"Invalid Lyra {key}")
+            _require(allow_authoring_drafts or not entities,
+                     f"Unsupported runtime metadata: {area:02X}.{key}")
             positions = set()
             for entity in entities:
                 extra = {"sprites": {"sprite_id", "state"}, "doors": {"entrance_id"},
@@ -282,8 +284,6 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
                     _require(_integer(entity["room_id"], 0, 0x127)
                              and (entity["exit_row"] is None
                                   or _integer(entity["exit_row"], 0, 78)), "Invalid Lyra exit")
-            _require(allow_authoring_drafts or not entities,
-                     f"Unsupported runtime metadata: {area:02X}.{key}")
         props = auth["properties"]
         _keys(props, PROPERTY_KEYS, "Lyra map properties")
         _require(_array(props["graphics_sheets"], 8, 0, 255)
