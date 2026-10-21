@@ -35,6 +35,22 @@ PATHS = ("entry-to-cart", "west-to-key", "key-to-key-door", "key-door-to-lever",
 BUTTONS = frozenset({"", "Up", "Down", "Left", "Right", "B"})
 ROOM, ENTRY, WEST, NORTH = 0x97, 0x98, (256, 352), (384, 160)
 GATE_MASK, KEY_MASK = 0x8080, 0x4000  # lower index0 and automatic upper partner index8
+FACE_INDEXES = (5, 6, 9, 10, 21, 22, 25, 26)
+
+
+def face_values(cells):
+    require(len(cells) == 32, "Missing paired shutter collision sample")
+    return tuple(cells[i] for i in FACE_INDEXES)
+
+
+def closed_faces(state):
+    return (state["shutter"] == 1 and not state["door_open_bits"] & GATE_MASK
+            and face_values(state["cells"]) == (0xF8,) * 4 + (0xF0,) * 4)
+
+
+def open_faces(state):
+    return (state["shutter"] == 0 and state["door_open_bits"] & GATE_MASK == GATE_MASK
+            and face_values(state["cells"]) == (0x82,) * 8)
 
 
 def word(data, offset):
@@ -256,8 +272,7 @@ class Route(native.Fixture):
             if cart and (192 <= cart["y"] <= 240 or 284 <= cart["y"] <= 324):
                 require(s["shutter"] == 0, "Cart entered the aperture while shutter was closed")
                 if s["submodule"] != 5:
-                    require(s["door_open_bits"] & GATE_MASK == GATE_MASK,
-                            "Cart entered a gate face before both collision masks opened")
+                    require(open_faces(s), "Cart entered before all eight shutter face cells opened")
         return s
 
     def neutral(self, frames):
@@ -335,11 +350,7 @@ class Route(native.Fixture):
             if s["room"] == ROOM:
                 seen["animation"] |= s["submodule"] == 5
                 seen["open"] |= s["shutter"] == 0 and s["door_open_bits"] & GATE_MASK == GATE_MASK
-                seen["collision_open"] |= bool(self.closed_cells and s["submodule"] == 0
-                                                and s["shutter"] == 0
-                                                and s["door_open_bits"] & GATE_MASK == GATE_MASK
-                                                and s["cells"][:16] != self.closed_cells[:16]
-                                                and s["cells"][16:] != self.closed_cells[16:])
+                seen["collision_open"] |= bool(self.closed_cells and s["submodule"] == 0 and open_faces(s))
                 cart = self.live_cart(s)
                 seen["crossed"] |= bool(cart and s["mounted"] and
                                          (192 <= cart["y"] <= 240 or 284 <= cart["y"] <= 324))
@@ -369,13 +380,14 @@ class Route(native.Fixture):
         if room == ROOM and expect_closed:
             self.until(lambda s: s["shutter"] == 1 and s["submodule"] == 0, 90)
             if self.closed_cells:
-                self.check("closed collision restored", self.last["cells"] == self.closed_cells)
+                self.check("closed shutter faces restored", closed_faces(self.last)
+                           and face_values(self.last["cells"]) == face_values(self.closed_cells))
             self.check("closed gate bit", not self.last["door_open_bits"] & GATE_MASK)
 
     def foot_denied(self, side):
         self.until(lambda s: s["submodule"] == 0 and s["shutter"] == 1
                    and not s["door_open_bits"] & GATE_MASK, 90)
-        self.check("unmounted closed gate", self.last["mounted"] == 0 and self.last["shutter"] == 1)
+        self.check("unmounted closed gate", self.last["mounted"] == 0 and closed_faces(self.last))
         before = self.last["ly"]
         self.check("foot probe aligned with gate", self.last["room"] == ROOM and self.last["layer"] == 0
                    and abs(self.last["lx"] - 376) <= 2)
@@ -388,14 +400,14 @@ class Route(native.Fixture):
             self.advance(direction)
             spent += self.last_advance
             positions.append(self.last["ly"])
-            self.check("foot does not open gate", self.last["mounted"] == 0 and self.last["shutter"] == 1
-                       and not self.last["door_open_bits"] & GATE_MASK)
+            self.check("foot does not open gate", self.last["mounted"] == 0 and closed_faces(self.last))
         self.check("foot attempt stays on initial side", min(positions) >= 296 if side == "south"
                    else max(positions) < 216, {"initial_y": before, "ys": positions})
         self.check("foot collision stalls", max(positions[-12:]) - min(positions[-12:]) <= 1)
         self.check("stall is at the gate", 296 <= positions[-1] <= 320 if side == "south"
                    else 192 <= positions[-1] <= 208, positions[-1])
-        self.check("foot gate collision unchanged", self.last["cells"] == self.closed_cells)
+        self.check("foot shutter faces unchanged", closed_faces(self.last)
+                   and face_values(self.last["cells"]) == face_values(self.closed_cells))
 
     def preconditions(self):
         s = self.last
@@ -411,6 +423,8 @@ class Route(native.Fixture):
         self.board()
         self.ride(WEST, prove_gate=False, expect_closed=not self.a.legacy_control)
         self.closed_cells = list(self.last["cells"])
+        if not self.a.legacy_control:
+            self.check("initial closed shutter face types", closed_faces(self.last))
         self.check("initial lever off", self.last["switch"] == 0)
         self.check("initial key door locked", not self.last["key_open_bits"] & KEY_MASK)
         self.check("runtime paired doors belong to shutter animator", self.last["door_type0"] & 0xFF in (0x18, 0x44)
