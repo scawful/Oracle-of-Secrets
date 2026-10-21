@@ -76,7 +76,7 @@
       ],
       "late": null,
       "normal": "all_declared_transfers",
-      "runtime_enabled": false,
+      "runtime_enabled": true,
       "staging": null,
       "transition": {
         "mode": "source_start",
@@ -95,7 +95,7 @@
       ],
       "late": null,
       "normal": "all_declared_transfers",
-      "runtime_enabled": false,
+      "runtime_enabled": true,
       "staging": {
         "mode": "native_after_conversion",
         "vram_end_word": 15360,

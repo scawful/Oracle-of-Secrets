@@ -206,6 +206,11 @@ echo "[*] Validating expanded message source contract..."
 run_check message_source 1 python3 "$repo_root/Scripts/Generate/validate_expanded_message_source.py" \
   --root "$repo_root"
 
+# The game and editor catalog share the same checked graphics inputs. Refuse
+# stale runtime records before replacing the prior successful build output.
+run_check graphics_runtime_source 1 python3 "$repo_root/Scripts/Graphics/compile_runtime_graphics.py" \
+  --check
+
 current_stage="output_snapshot"
 snapshot_build_outputs
 

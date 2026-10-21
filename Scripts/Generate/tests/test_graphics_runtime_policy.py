@@ -23,7 +23,7 @@ class GraphicsRuntimePolicyTests(unittest.TestCase):
         return pack.lower_runtime_policy(catalog or self.catalog, self.assets,
                                          policy or self.policy)
 
-    def test_existing_runtime_phases_keep_exact_contract_and_new_parents_disabled(self):
+    def test_admitted_runtime_phases_keep_exact_contract_for_all_five_profiles(self):
         data = self.lower()
         p = data["profiles"]
         self.assertEqual(data["abi"], dict(outdoor_guard="$1B==0", parent="$8A",
@@ -43,10 +43,10 @@ class GraphicsRuntimePolicyTests(unittest.TestCase):
         self.assertEqual(p["sky-d8-tower"]["transition"]["mode"], "source_start")
         self.assertEqual(p["sky-d8-tower"]["transition"]["target_start_word"], 0x3800)
         self.assertEqual(p["sky-d8-tower"]["cache_slot_mask"], 0x40)
-        self.assertFalse(p["sky-d8-tower"]["runtime_enabled"])
-        self.assertFalse(p["stepped-waterfront-fort"]["runtime_enabled"])
+        self.assertTrue(p["sky-d8-tower"]["runtime_enabled"])
+        self.assertTrue(p["stepped-waterfront-fort"]["runtime_enabled"])
         self.assertEqual({int(parent) for parent, b in data["parents"].items()
-                          if b["runtime_enabled"]}, {0x30, 0x32, 0x38})
+                          if b["runtime_enabled"]}, {0x30, 0x32, 0x38, 0x83, 0x87})
         self.assertNotIn("57", data["parents"])  # child $39 inherits parent $38
 
     def test_late_chunks_reconstruct_exact_ship_resource_without_extra_bytes(self):
@@ -175,8 +175,8 @@ class GraphicsRuntimePolicyTests(unittest.TestCase):
             self.assertNotIn("\norg ", asm)
             self.assertNotIn("incsrc", asm)
             self.assertNotIn("JSL", asm)
-            self.assertIn("dl $000000 ; $83", asm)
-            self.assertIn("dl $000000 ; $87", asm)
+            for parent, name in [(0x83, "stepped-waterfront-fort"), (0x87, "sky-d8-tower")]:
+                self.assertIn(f"dl GraphicsRuntimePolicy_{pack.sha256(name.encode())} ; ${parent:02X}", asm)
             saved = json.loads((outputs[0] / "runtime-phase-policy.json").read_text())
             self.assertEqual(saved, self.lower())
         for path, before in protected.items():
