@@ -42,6 +42,9 @@ class BuildPipelineReceiptTest(unittest.TestCase):
         for name in ('sheet_overrides.py', 'validate_custom_collision_source.py',
                      'validate_expanded_message_source.py'):
             self.write(f'Scripts/Generate/{name}', 'import os,sys\nsys.exit(int(os.getenv("FIXTURE_SOURCE_EXIT", "0")))\n')
+        self.write('Scripts/Graphics/compile_runtime_graphics.py',
+                   'import os,sys\nassert sys.argv[1:] == ["--check"]\n'
+                   'sys.exit(int(os.getenv("FIXTURE_GRAPHICS_SOURCE_EXIT", "0")))\n')
         self.write('Scripts/Generate/generate_hack_manifest.py',
                    'import json,sys,pathlib\n'
                    'pathlib.Path(sys.argv[sys.argv.index("--output")+1]).write_text(json.dumps({"fixture":True,"argv":sys.argv[1:]}))\n')
@@ -96,6 +99,8 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.check('source_sprite_sheets')['status'], 'passed')
         self.assertTrue(self.check('source_sprite_sheets')['required'])
+        self.assertEqual(self.check('graphics_runtime_source')['status'], 'passed')
+        self.assertTrue(self.check('graphics_runtime_source')['required'])
         self.assertEqual(self.receipt['state'], 'completed_with_gaps')
         self.assertEqual(self.check('smoke')['status'], 'unavailable')
         hooks = json.loads((self.root / 'Roms/hooks.json').read_text())
@@ -115,6 +120,19 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.assertEqual(output.read_text(), 'previous candidate')
         self.assertEqual((self.root / 'Config/feature_flags.asm').read_bytes(), before)
         self.assertNotIn('output_rom', self.receipt['artifacts'])
+
+    def test_graphics_source_guard_failure_preserves_previous_output(self):
+        output = self.write('Roms/oos999x.sfc', 'previous candidate')
+        before = (self.root / 'Config/feature_flags.asm').read_bytes()
+        self.env['FIXTURE_GRAPHICS_SOURCE_EXIT'] = '6'
+        self.assertEqual(self.build('--disable', 'fixture').returncode, 6)
+        self.assertEqual(self.check('graphics_runtime_source')['status'], 'failed')
+        self.assertTrue(self.check('graphics_runtime_source')['required'])
+        self.assertEqual(self.receipt['finish']['stage'], 'graphics_runtime_source')
+        self.assertEqual(output.read_text(), 'previous candidate')
+        self.assertEqual((self.root / 'Config/feature_flags.asm').read_bytes(), before)
+        self.assertNotIn('output_rom', self.receipt['artifacts'])
+        self.assertNotIn('output_rollback', [c['name'] for c in self.receipt['checks']])
 
     def test_external_cwd_preserves_relative_tool_base_and_manifest_paths(self):
         caller = Path(self.temp.name)

@@ -4309,6 +4309,7 @@ NewPrepTransAuxGFX:
 {
     LDA.b $04 : BEQ .dontPrep
         JSL.l PrepTransAuxGFX
+        JSL Oracle_SharedGraphicsStageNative
 
     .dontPrep
 
