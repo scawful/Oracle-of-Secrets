@@ -44,6 +44,9 @@ INTRAROOM_ENTRY_CART_Y = 281
 INTRAROOM_ENTRY_CART_ACTION = 2
 INTRAROOM_MIN_HOLD_FRAMES = 8
 INTRAROOM_MAX_FRAMES = 96  # 82-frame submodule-1 hold at3793–3874 plus cadence slack
+# R10 candidate-r2 frames4184/4185/4262/4263; this is not a mirrored north route.
+SOUTH_PROFILE = "captured-south-r10"
+SOUTH_HOLD_MIN, SOUTH_HOLD_MAX = 70, 86  # observed78-frame hold, eight-frame slack
 
 
 def intraroom_ride_context(state):
@@ -114,6 +117,43 @@ def intraroom_reconstruction_matches(intraroom, previous, state, cart, frame_cou
     if not superseded_intraroom_cart(state, old, retired):
         return False
     return abs(cart["x"] - state["lx"]) <= 16 and abs(cart["y"] - state["ly"]) <= 24
+
+
+def south_predecessor_matches(state, retired=False):
+    actor = next((a for a in state["sprites"] if a["slot"] == 15), None)
+    return bool(actor and actor["state"] == (0 if retired else 9)
+                and actor["kind"] == 0xA3 and actor["subtype"] == 0 and actor["floor"] == 0
+                and actor["action"] == 4 and actor["direction"] == 2
+                and abs(actor["x"] - 376) <= 2 and abs(actor["y"] - 236) <= 2)
+
+
+def south_hold_started(previous, state, owned_cart, seam, cart):
+    if seam is not None or owned_cart != (ROOM, 15) or cart is None or cart["slot"] != 15:
+        return False
+    return (intraroom_ride_context(previous) and intraroom_ride_context(state)
+            and previous["submodule"] == 0 and state["submodule"] == 1
+            and previous["cart_slot"] == state["cart_slot"] == 15
+            and previous.get("doorway") == state.get("doorway") == 1
+            and abs(previous["lx"] - 376) <= 2 and abs(state["lx"] - 376) <= 2
+            and abs(previous["ly"] - 227) <= 2 and abs(state["ly"] - 244) <= 2
+            and south_predecessor_matches(previous) and south_predecessor_matches(state))
+
+
+def south_reconstruction_matches(intraroom, previous, state, cart, frame_count):
+    if intraroom.get("profile") != SOUTH_PROFILE or intraroom["old_slot"] != 15 or cart is None:
+        return False
+    elapsed = frame_count - intraroom["start_frame"]
+    return (SOUTH_HOLD_MIN <= elapsed <= SOUTH_HOLD_MAX
+            and intraroom_ride_context(previous) and intraroom_ride_context(state)
+            and previous["submodule"] == 1 and state["submodule"] == 0
+            and previous["cart_slot"] == 15 and state["cart_slot"] == cart["slot"] == 14
+            and previous.get("doorway") == state.get("doorway") == 0
+            and abs(previous["lx"] - 376) <= 2 and abs(previous["ly"] - 304) <= 2
+            and abs(state["lx"] - 376) <= 2 and abs(state["ly"] - 304) <= 2
+            and (cart["state"], cart["kind"], cart["subtype"], cart["floor"],
+                 cart["action"], cart["direction"]) == (9, 0xA3, 0, 0, 4, 2)
+            and abs(cart["x"] - 378) <= 2 and abs(cart["y"] - 305) <= 2
+            and south_predecessor_matches(previous) and south_predecessor_matches(state, retired=True))
 
 
 def face_values(cells):
@@ -330,21 +370,36 @@ class Route(native.Fixture):
             if self.intraroom is None and intraroom_hold_started(
                     previous, state, self.owned_cart, self.seam, cart):
                 self.intraroom = {"old_slot": self.owned_cart[1], "start_frame": self.frame_count}
+            elif (self.intraroom is None and getattr(self, "expect_retired_cart", False)
+                  and getattr(self, "phase", None) == "ride-south"
+                  and south_hold_started(previous, state, self.owned_cart, self.seam, cart)):
+                self.intraroom = {"old_slot": 15, "start_frame": self.frame_count,
+                                  "profile": SOUTH_PROFILE}
             if self.intraroom is not None:
+                south = self.intraroom.get("profile") == SOUTH_PROFILE
                 require(intraroom_ride_context(state), "Intraroom hold left the qualified ride context")
-                require(self.frame_count - self.intraroom["start_frame"] <= INTRAROOM_MAX_FRAMES,
+                require(self.frame_count - self.intraroom["start_frame"] <=
+                        (SOUTH_HOLD_MAX if south else INTRAROOM_MAX_FRAMES),
                         "Intraroom reconstruction exceeded bounded window")
                 if state["submodule"] == 1:
                     require(state["cart_slot"] == self.intraroom["old_slot"],
                             "Intraroom hold lost the owned active slot")
+                    if south:
+                        require(abs(state["lx"] - 376) <= 2 and 242 <= state["ly"] <= 306
+                                and south_predecessor_matches(state),
+                                "South intraroom hold left the captured corridor or actor pose")
                 elif previous["submodule"] == 1 and state["submodule"] == 0:
-                    if intraroom_reconstruction_matches(
+                    matches = (south_reconstruction_matches(
+                        self.intraroom, previous, state, cart, self.frame_count) if south
+                        else intraroom_reconstruction_matches(
                             self.intraroom, previous, state, cart, self.frame_count,
-                            getattr(self, "expect_retired_cart", False)):
+                            getattr(self, "expect_retired_cart", False)))
+                    if matches:
                         self.result.setdefault("intraroom_reconstructions", []).append(
                             {**self.intraroom, "new_slot": cart["slot"],
                              "end_frame": self.frame_count,
-                             "old_retired": superseded_intraroom_cart(
+                             "old_retired": south_predecessor_matches(state, retired=True) if south
+                             else superseded_intraroom_cart(
                                  state, self.intraroom["old_slot"], retired=True)})
                         self.owned_cart, self.intraroom = (ROOM, cart["slot"]), None
                     else:

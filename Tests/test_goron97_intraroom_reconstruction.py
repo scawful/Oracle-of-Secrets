@@ -3,6 +3,7 @@
 Evidence: native candidate-r4 controller-steps.jsonl frames3792,3793,3874,3875;
 B2 anchor from R05/ALIGNMENT_PROOF.json. Fixtures are literals only (no AFS paths).
 R10 retirement-candidate-r1 frame3850 retains inactive old14 action2/y281.
+South literals are R10 candidate-r2 frames4184,4185,4262,4263 (not mirrored).
 """
 import importlib.util
 from pathlib import Path
@@ -43,6 +44,13 @@ FRAME_3792 = snap(0, 274, 1, 14, {14: CART14_RIDE})
 FRAME_3793 = snap(1, 273, 1, 14, {14: CART14_RIDE})
 FRAME_3874 = snap(1, 192, 0, 14, {14: CART14_RIDE})
 FRAME_3875 = snap(0, 192, 0, 15, {14: CART14_RELEASE, 15: CART15_B2})
+CART15_SOUTH = {"state": 9, "kind": 0xA3, "subtype": 0, "action": 4, "direction": 2,
+                "timer": 0, "floor": 0, "x": 376, "y": 236}
+CART14_SOUTH = {**CART15_SOUTH, "x": 378, "y": 305}
+FRAME_4184 = snap(0, 227, 1, 15, {15: CART15_SOUTH})
+FRAME_4185 = snap(1, 244, 1, 15, {15: CART15_SOUTH})
+FRAME_4262 = snap(1, 304, 0, 15, {15: CART15_SOUTH})
+FRAME_4263 = snap(0, 304, 0, 14, {15: {**CART15_SOUTH, "state": 0}, 14: CART14_SOUTH})
 
 
 def route_stub(frame_count, owned_slot=14):
@@ -60,7 +68,133 @@ def open_hold(route):
     route.frame_count = 3875
 
 
+def south_route():
+    route = route_stub(4185, owned_slot=15)
+    route.expect_retired_cart = True
+    route.phase = "ride-south"
+    return route
+
+
+def open_south_hold(route):
+    gate.Route.validate_cart(route, FRAME_4184, FRAME_4185)
+    route.frame_count = 4263
+
+
+def alter_actor(snapshot, slot, **changes):
+    return {**snapshot, "sprites": [{**actor, **changes} if actor["slot"] == slot else dict(actor)
+                                   for actor in snapshot["sprites"]]}
+
+
 class Goron97IntraroomReconstruction(unittest.TestCase):
+    def test_captured_south_entry_hold_and_retired_exit(self):
+        route = south_route()
+        open_south_hold(route)
+        self.assertEqual(route.intraroom, {"old_slot": 15, "start_frame": 4185,
+                                          "profile": gate.SOUTH_PROFILE})
+        route.frame_count = 4262
+        gate.Route.validate_cart(route, FRAME_4185, FRAME_4262)
+        self.assertEqual(route.owned_cart, (gate.ROOM, 15))
+        route.frame_count = 4263
+        cart = gate.Route.validate_cart(route, FRAME_4262, FRAME_4263)
+        self.assertEqual(cart["slot"], 14)
+        self.assertEqual(route.owned_cart, (gate.ROOM, 14))
+        self.assertIsNone(route.intraroom)
+        self.assertEqual(route.result["intraroom_reconstructions"], [{
+            "old_slot": 15, "start_frame": 4185, "profile": gate.SOUTH_PROFILE,
+            "new_slot": 14, "end_frame": 4263, "old_retired": True}])
+
+    def test_south_requires_retirement_mode_and_ride_south_phase(self):
+        for mode, phase in ((False, "ride-south"), (True, "ride-north")):
+            with self.subTest(mode=mode, phase=phase):
+                route = south_route()
+                route.expect_retired_cart, route.phase = mode, phase
+                open_south_hold(route)
+                self.assertIsNone(route.intraroom)
+                with self.assertRaisesRegex(RuntimeError, "owned T0 slot"):
+                    gate.Route.validate_cart(route, FRAME_4262, FRAME_4263)
+
+    def test_south_exit_requires_the_captured_entry(self):
+        route = south_route()
+        gate.Route.validate_cart(route, dict(FRAME_4184, ly=200), FRAME_4185)
+        self.assertIsNone(route.intraroom)
+        route.frame_count = 4263
+        with self.assertRaisesRegex(RuntimeError, "owned T0 slot"):
+            gate.Route.validate_cart(route, FRAME_4262, FRAME_4263)
+
+    def test_south_entry_rejects_wrong_context_owner_or_actor(self):
+        cases = [(dict(FRAME_4184, **change), FRAME_4185) for change in (
+            {"room": gate.ENTRY}, {"module": 9}, {"submodule": 1}, {"indoors": 0},
+            {"mounted": 0}, {"layer": 1}, {"track": 1}, {"doorway": 0},
+            {"cart_slot": 14}, {"lx": 368}, {"ly": 220})]
+        cases += [(FRAME_4184, dict(FRAME_4185, **change)) for change in (
+            {"room": gate.ENTRY}, {"module": 9}, {"submodule": 0}, {"indoors": 0},
+            {"layer": 1}, {"track": 1}, {"doorway": 0}, {"cart_slot": 14},
+            {"lx": 368}, {"ly": 250})]
+        cases += [(FRAME_4184, alter_actor(FRAME_4185, 15, **change)) for change in (
+            {"state": 0}, {"kind": 0xB0}, {"subtype": 1}, {"floor": 1},
+            {"action": 2}, {"direction": 0}, {"x": 384}, {"y": 244})]
+        for previous, state in cases:
+            with self.subTest(previous=previous, state=state):
+                self.assertFalse(gate.south_hold_started(
+                    previous, state, (gate.ROOM, 15), None, gate.Route.live_cart(state)))
+        for owned, seam in (((gate.ROOM, 14), None), ((gate.ENTRY, 15), None),
+                            ((gate.ROOM, 15), {"active": True})):
+            self.assertFalse(gate.south_hold_started(
+                FRAME_4184, FRAME_4185, owned, seam, gate.Route.live_cart(FRAME_4185)))
+
+    def test_south_exit_rejects_wrong_context_pose_and_retirement(self):
+        exits = [dict(FRAME_4263, **change) for change in (
+            {"room": gate.ENTRY}, {"module": 9}, {"submodule": 1}, {"indoors": 0},
+            {"layer": 1}, {"track": 1}, {"doorway": 1}, {"cart_slot": 15},
+            {"lx": 368}, {"ly": 296})]
+        exits += [alter_actor(FRAME_4263, 15, **change) for change in (
+            {"state": 9}, {"kind": 0xB0}, {"subtype": 1}, {"floor": 1},
+            {"action": 6}, {"direction": 0}, {"x": 384}, {"y": 244})]
+        exits += [alter_actor(FRAME_4263, 14, **change) for change in (
+            {"state": 0}, {"kind": 0xB0}, {"subtype": 1}, {"floor": 1},
+            {"action": 3}, {"direction": 1}, {"x": 384}, {"y": 312})]
+        for state in exits:
+            with self.subTest(state=state):
+                route = south_route()
+                open_south_hold(route)
+                with self.assertRaises(RuntimeError):
+                    gate.Route.validate_cart(route, FRAME_4262, state)
+
+    def test_south_exit_rejects_wrong_previous_context(self):
+        previous_states = [dict(FRAME_4262, **change) for change in (
+            {"module": 9}, {"submodule": 0}, {"indoors": 0}, {"layer": 1},
+            {"track": 1}, {"mounted": 0}, {"doorway": 1}, {"cart_slot": 14},
+            {"lx": 368}, {"ly": 296})]
+        previous_states += [alter_actor(FRAME_4262, 15, state=0)]
+        for previous in previous_states:
+            with self.subTest(previous=previous):
+                route = south_route()
+                open_south_hold(route)
+                with self.assertRaises(RuntimeError):
+                    gate.Route.validate_cart(route, previous, FRAME_4263)
+
+    def test_south_hold_rejects_departure_and_lost_owned_actor(self):
+        states = [dict(FRAME_4262, lx=368), dict(FRAME_4262, ly=320),
+                  dict(FRAME_4262, cart_slot=14), dict(FRAME_4262, mounted=0),
+                  alter_actor(FRAME_4262, 15, state=0),
+                  alter_actor(FRAME_4262, 15, action=2)]
+        for state in states:
+            with self.subTest(state=state):
+                route = south_route()
+                open_south_hold(route)
+                route.frame_count = 4262
+                with self.assertRaises(RuntimeError):
+                    gate.Route.validate_cart(route, FRAME_4185, state)
+
+    def test_south_reconstruction_rejects_short_or_expired_cadence(self):
+        for elapsed in (69, 87):
+            with self.subTest(elapsed=elapsed):
+                route = south_route()
+                open_south_hold(route)
+                route.frame_count = 4185 + elapsed
+                with self.assertRaises(RuntimeError):
+                    gate.Route.validate_cart(route, FRAME_4262, FRAME_4263)
+
     def test_retirement_candidate_requires_old_actor_inactive(self):
         route = route_stub(3793)
         route.expect_retired_cart = True
