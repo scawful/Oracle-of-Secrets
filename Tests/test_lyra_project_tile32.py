@@ -127,6 +127,21 @@ class LyraTile32AssignmentTest(unittest.TestCase):
             with self.subTest(opcode=opcode), self.assertRaisesRegex(ValueError, 'pointer reader differs'):
                 D.ownership(bytes(changed), claim)
 
+    def test_packed_bytes_cannot_alias_an_unreferenced_id_native_stream(self):
+        # A native plane can use the filler bytes as literal compressed data
+        # without ever referencing a reserved dictionary ID. Guard both uses.
+        source = bytearray(self.source)
+        start, end = 0x1E720 - 66, 0x1E7E0
+        tail = bytes(source[0x1E720:end])
+        source[start:end + 1] = b'\xe0\xff' + bytes(64) + tail + b'\xff'
+        at = A.pc(0x02FB2D)
+        source[at:at + 3] = A.snes(start).to_bytes(3, 'little')
+        self.source = bytes(source)
+        request = self.request()
+        contract = D.create_contract([request])
+        with self.assertRaisesRegex(ValueError, 'Packed writes change native terrain stream00'):
+            A.plan_admission(self.source, request['terrain'], request['proof'], self.allocation(request, contract))
+
     def test_source_policy_and_foreign_id_or_packed_owner_conflicts_refuse(self):
         contract = D.create_contract([self.request()])
         self.ledger['description'] += ' changed'

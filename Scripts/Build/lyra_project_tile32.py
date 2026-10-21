@@ -172,6 +172,15 @@ def packed_write_plan(source, document, compiled, allocation):
             proposed[high] = (proposed[high] & ~(15 << shift)) | ((value >> 8) << shift)
             changed_groups.add(at)
     A.require_legacy_definition_preservation(source, compiled)
+    # IDs and packed bytes are distinct resources. A relocated compressed
+    # native stream must not alias the dictionary bytes being proposed here.
+    for area in range(160):
+        for table in (0x02F94D, 0x02FB2D):
+            at = A.pc(table) + area * 3
+            pointer = int.from_bytes(source[at:at + 3], 'little')
+            require(source[at:at + 3] == proposed[at:at + 3]
+                    and A._decode_plane(source, pointer) == A._decode_plane(proposed, pointer),
+                    f'Packed writes change native terrain stream{area:02X}')
     changed = dict(compiled.new_definitions)
     for tile in range(0x4540):
         require(A.read_tile32(proposed, tile) == changed.get(tile, A.read_tile32(source, tile)),
