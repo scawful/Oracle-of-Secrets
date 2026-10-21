@@ -344,7 +344,7 @@ def decode_literal_stream(payload: bytes) -> bytes:
 
 
 def compile_terrain(document: TerrainDocument, native_definitions: Mapping[int, Quad],
-                    allocation: Allocation, *, map_ids=None) -> CompiledTerrain:
+                    allocation: Allocation, *, map_ids=None, render_directory=None) -> CompiledTerrain:
     """Compile all maps or a sorted explicit subset; never mutate inputs."""
     _require(isinstance(document, TerrainDocument), "Expected parsed TerrainDocument")
     _require(isinstance(allocation, Allocation), "Expected explicit Allocation")
@@ -395,6 +395,14 @@ def compile_terrain(document: TerrainDocument, native_definitions: Mapping[int, 
             _require(area not in seen, "Duplicate selected Lyra map ID")
             seen.add(area)
         selected = tuple(area - FIRST_MAP for area in sorted(seen))
+    directory = {} if render_directory is None else dict(render_directory)
+    selected_ids = {FIRST_MAP + index for index in selected}
+    for area, row in directory.items():
+        _require(type(area) is int and area in selected_ids
+                 and isinstance(row, (tuple, list)) and len(row) == 4
+                 and all(type(source) is int and source in selected_ids for source in row)
+                 and tuple(row) in (quadrant_map_plan(area), (area,) * 4),
+                 "Unclosed or unsupported explicit render directory")
     map_quads = []
     for cells in document.maps:
         _require(len(cells) == 1024
@@ -456,7 +464,7 @@ def compile_terrain(document: TerrainDocument, native_definitions: Mapping[int, 
         _require(tuple(rebuilt) == document.maps[index],
                  "Compiled map Tile16 readback differs")
         area = FIRST_MAP + index
-        plans.append(MapPlan(area, tiles, high, low, quadrant_map_plan(area),
+        plans.append(MapPlan(area, tiles, high, low, tuple(directory.get(area, quadrant_map_plan(area))),
                              copy.deepcopy(document.properties[index])))
     return CompiledTerrain(tuple(plans), tuple(added), copy.deepcopy(document.edge_connections))
 

@@ -1466,5 +1466,51 @@
       "reason": "Shared FreeBlock_Large starts F3A8; pending F3A8-AB owners exist. Other free-list bytes are not audited availability."
     }
   ],
-  "allocation_available": false
+  "allocation_available": false,
+  "rom_candidate_reservations": [
+    {
+      "id": "lyra_project_runtime_candidate",
+      "owner": "W02 source-built Lyra candidate",
+      "status": "proposed",
+      "scope": "isolated_candidate_only",
+      "production_admission": false,
+      "parent_count": 160,
+      "regions": [
+        {
+          "purpose": "tables",
+          "pc": [
+            1327104,
+            1337792
+          ],
+          "allowed_fills": [
+            0
+          ]
+        },
+        {
+          "purpose": "code",
+          "pc": [
+            3948544,
+            3956736
+          ],
+          "allowed_fills": [
+            0,
+            255
+          ]
+        },
+        {
+          "purpose": "streams",
+          "pc": [
+            4014080,
+            4016152
+          ],
+          "allowed_fills": [
+            0,
+            255
+          ]
+        }
+      ],
+      "owned_tile32_ids": [],
+      "note": "Named source reservation for read-only candidate planning; actual ROM hash and exact region preimages required. No production allocation, native160 widening or runtime publication."
+    }
+  ]
 }

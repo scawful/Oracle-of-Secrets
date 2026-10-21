@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import struct
 import subprocess
 import sys
 
@@ -106,7 +107,8 @@ def parse_allocation(value, source):
     require(set(value) == {
         "kind", "source_rom_sha256", "table_range", "code_range",
         "stream_ranges", "owned_tile32_ids", "expanded_size"}
-            | ({"admission"} if "admission" in value else set()), "Malformed Lyra allocation")
+            | ({"admission"} if "admission" in value else set())
+            | ({"reservation"} if "reservation" in value else set()), "Malformed Lyra allocation")
     require(value["kind"] == "lyra.project_runtime_allocation.v1"
             and value["source_rom_sha256"] == sha(source),
             "Allocation is not bound to the input ROM")
@@ -133,13 +135,17 @@ def parse_allocation(value, source):
     return Allocation(tuple(tuple(v) for v in ranges), tuple(ids))
 
 
-def verify_allocation(source, allocation):
+def verify_allocation(source, allocation, reservation=None):
+    if reservation is not None:
+        from lyra_project_allocation import verify_reservation
+        verify_reservation(source, allocation, reservation)
     source = expanded_rom(source)
-    require(source[TABLE_START:TABLE_END] == bytes(TABLE_END - TABLE_START),
-            "Expanded bank28 table allocation is occupied")
-    for start, end in ((CODE_START, CODE_END), *allocation.stream_ranges):
-        require(source[start:end] == b"\xFF" * (end - start),
-                f"Owned expanded allocation is occupied: {start:06X}..{end:06X}")
+    if reservation is None:
+        require(source[TABLE_START:TABLE_END] == bytes(TABLE_END - TABLE_START),
+                "Expanded bank28 table allocation is occupied")
+        for start, end in ((CODE_START, CODE_END), *allocation.stream_ranges):
+            require(source[start:end] == b"\xFF" * (end - start),
+                    f"Owned expanded allocation is occupied: {start:06X}..{end:06X}")
     require(source[pc(EMPTY_ACTORS)] == 255
             and source[pc(EMPTY_HIDDEN_ITEMS):pc(EMPTY_HIDDEN_ITEMS) + 2] == b"\xFF\xFF",
             "Native empty actor/hidden-item lists differ")
@@ -244,7 +250,8 @@ def parse_admission(allocation):
     value = (allocation or {}).get("admission", dict(
         candidate_maps=[], candidate_edge_ids=[], production_maps=[], production_edge_ids=[]))
     require(type(value) is dict and set(value) == {
-        "candidate_maps", "candidate_edge_ids", "production_maps", "production_edge_ids"},
+        "candidate_maps", "candidate_edge_ids", "production_maps", "production_edge_ids"}
+            | ({"render_footprints"} if "render_footprints" in value else set()),
         "Malformed Lyra admission")
     maps = _map_ids(value["candidate_maps"], "candidate map IDs")
     _map_ids(value["production_maps"], "production map IDs")
@@ -257,9 +264,23 @@ def parse_admission(allocation):
     return maps, tuple(sorted(value["candidate_edge_ids"]))
 
 
-def render_dependency_plan(map_ids):
+def render_dependency_plan(map_ids, footprints=()):
     maps = _map_ids(map_ids, "candidate map IDs")
     directory = {area: quadrant_map_plan(area) for area in maps}
+    require(type(footprints) in (list, tuple), "Malformed render footprints")
+    seen = set()
+    for entry in footprints:
+        require(type(entry) is dict and set(entry) == {"map_id", "quadrant_maps"},
+                "Malformed render footprint")
+        area, row = entry["map_id"], entry["quadrant_maps"]
+        require(type(area) is int and area in directory and area not in seen,
+                "Render footprint must name one selected traversal map")
+        require(type(row) in (list, tuple) and len(row) == 4
+                and all(type(v) is int for v in row)
+                and tuple(row) in (quadrant_map_plan(area), (area,) * 4),
+                "Render footprint must be natural or explicitly isolated")
+        directory[area] = tuple(row)
+        seen.add(area)
     # Only traversal maps initiate a full load. Render-only dependencies do not
     # recursively acquire traversal admission or their own full-load footprint.
     closure = tuple(sorted({source for row in directory.values() for source in row}))
@@ -268,13 +289,65 @@ def render_dependency_plan(map_ids):
     return directory, closure
 
 
+def appearance_plan(source, document, directory):
+    """Preserve saved selectors and prove conservative render-slot coherence.
+
+    Different used sheet/palette selectors remain unqualified even if their
+    art might happen to match. No draft is rewritten to fit a loaded profile.
+    """
+    at = pc(int.from_bytes(source[0x865:0x868], "little"))
+    definitions = source[at:at + document.profile["tile_count"] * 8]
+    require(len(definitions) == document.profile["tile_count"] * 8
+            and sha(definitions) == document.profile["tile16_definition_fingerprint"],
+            "Native Tile16 observation differs from source ROM")
+    rows, contexts, blockers = [], [], []
+    for area, dependencies in directory.items():
+        prop = document.properties[area - FIRST_MAP]
+        native_rows = []
+        for field, table in (("graphics_sheets", "gfx"), ("main_palette", "main_palette"),
+                             ("palette_set", "palette_set"), ("animated_sheet", "animated")):
+            spec = next(row for row in SPECS if row[0] == table)
+            value = prop[field]
+            payload = bytes(value) if isinstance(value, list) else bytes([value])
+            native_rows.append(dict(table=table, pc=TABLE_START + spec[6] + area * spec[5],
+                                    payload_hex=payload.hex()))
+        rows.append(dict(map_id=area, graphics_sheets=prop["graphics_sheets"],
+                         main_palette=prop["main_palette"], palette_set=prop["palette_set"],
+                         animated_sheet=prop["animated_sheet"],
+                         native_table_rows=native_rows,
+                         asset_bindings=document.authoring[area - FIRST_MAP]["asset_bindings"]))
+        if 255 in prop["graphics_sheets"] or prop["animated_sheet"] in (0, 255):
+            blockers.append(dict(code="UNSUPPORTED_NATIVE_SELECTOR", map_id=area))
+        for dependency in sorted(set(dependencies)):
+            other = document.properties[dependency - FIRST_MAP]
+            tiles = set(document.maps[dependency - FIRST_MAP])
+            chars = {word & 1023 for tile in tiles
+                     for word in struct.unpack_from("<4H", definitions, tile * 8)}
+            slots = sorted({char // 64 for char in chars})
+            differences = []
+            for slot in slots:
+                if slot < 8 and prop["graphics_sheets"][slot] != other["graphics_sheets"][slot]:
+                    differences.append(f"graphics_sheets[{slot}]")
+            for key in ("main_palette", "palette_set", "sprite_palettes"):
+                if prop[key] != other[key]:
+                    differences.append(key)
+            if any(448 <= char < 480 for char in chars) and prop["animated_sheet"] != other["animated_sheet"]:
+                differences.append("animated_sheet")
+            if any(slot >= 8 for slot in slots) and prop["sprite_graphics"] != other["sprite_graphics"]:
+                differences.append("sprite_graphics")
+            context = dict(map_id=area, source_map=dependency, tile16_count=len(tiles),
+                           used_graphics_slots=slots, differing_selectors=differences,
+                           coherent=not differences)
+            contexts.append(context)
+            if differences:
+                blockers.append(dict(code="RENDER_APPEARANCE_UNPROVEN", map_id=area,
+                                     source_map=dependency, fields=differences))
+    return dict(selector_rows=rows, render_contexts=contexts,
+                coherent=not blockers, blockers=blockers)
+
+
 def consumer_blockers(document, traversal, closure):
     blockers = []
-    for area in closure:
-        props = document.properties[area - FIRST_MAP]
-        for key in ("graphics_sheets", "main_palette", "palette_set", "animated_sheet"):
-            if props[key] != document.profile[key]:
-                blockers.append(dict(code="UNSUPPORTED_RENDER_PROFILE", map_id=area, field=key))
     for area in traversal:
         auth = document.authoring[area - FIRST_MAP]
         for key in ("sprites", "doors", "exits"):
@@ -293,7 +366,6 @@ def relocated_table_plan(source, document, compiled, traversal):
     """Propose existing adapter rows, with exact native legacy-copy hashes."""
     rows = []
     donor_bg = int.from_bytes(source[pc(0x288000) + 0x3A * 2:pc(0x288000) + 0x3A * 2 + 2], "little")
-    profile = document.profile
     for name, old, legacy, first, count, stride, offset in SPECS:
         original = source[pc(old):pc(old) + legacy * stride]
         require(len(original) == legacy * stride, f"Truncated native table: {name}")
@@ -306,9 +378,9 @@ def relocated_table_plan(source, document, compiled, traversal):
             x, y = (area & 7) * 512, ((area & 63) // 8) * 512
             phase = lambda key: 0 if prop[key][0] == -1 else prop[key][0]
             values = dict(
-                bg_color=donor_bg, main_palette=profile["main_palette"], mosaic=0,
-                animated=profile["animated_sheet"], overlay=255,
-                gfx=bytes(profile["graphics_sheets"]), parent=area,
+                bg_color=donor_bg, main_palette=prop["main_palette"], mosaic=0,
+                animated=prop["animated_sheet"], overlay=255,
+                gfx=bytes(prop["graphics_sheets"]), parent=area,
                 ByScreen1=0x60, ByScreen2=0x40, ByScreen3=0x1800, ByScreen4=0x1000,
                 transition_y=y, transition_x=x, scroll_north=(y - 0xE0) & 0xFFFF,
                 scroll_west=(x - 0x100) & 0xFFFF,
@@ -318,7 +390,7 @@ def relocated_table_plan(source, document, compiled, traversal):
                 hidden_items=EMPTY_HIDDEN_ITEMS & 0xFFFF,
                 special_sprite_gfx=phase("sprite_graphics"), special_sprite_palettes=phase("sprite_palettes"),
                 area_gfx=0x30, special_entry_gfx=0x30, music_dark_special=phase("music"),
-                area_size=0, palette_set=profile["palette_set"])
+                area_size=0, palette_set=prop["palette_set"])
             value = values[name]
             raw = value if isinstance(value, bytes) else value.to_bytes(stride, "little")
             at = (area - first) * stride
@@ -333,7 +405,7 @@ def relocated_table_plan(source, document, compiled, traversal):
 
 def plan_admission(source, terrain_text, proof, allocation_value=None, *, candidate_maps=None):
     """Return a deterministic report only. No data or runtime publisher exists here."""
-    expanded = expanded_rom(source)
+    expanded_rom(source)
     text_bytes = terrain_text.encode("utf-8") if isinstance(terrain_text, str) else terrain_text
     require(type(proof) is dict and proof.get("source_rom_sha256") == sha(source)
             and proof.get("terrain_sha256") == sha(text_bytes)
@@ -356,7 +428,10 @@ def plan_admission(source, terrain_text, proof, allocation_value=None, *, candid
         candidate_maps = _map_ids(candidate_maps, "candidate map IDs")
         require(not admitted or admitted == candidate_maps, "CLI selection differs from allocated admission")
         admitted = candidate_maps
-    directory, closure = render_dependency_plan(admitted)
+    footprints = ((allocation_value or {}).get("admission") or {}).get("render_footprints", ())
+    directory, closure = render_dependency_plan(admitted, footprints)
+    appearance = appearance_plan(source, document, directory) if admitted else dict(
+        selector_rows=[], render_contexts=[], coherent=True, blockers=[])
     edges_by_id = {edge["id"]: edge for edge in document.edge_connections}
     require(set(edge_ids) <= set(edges_by_id), "Admission refers to a missing edge ID")
     selected_edges, directed = [], []
@@ -374,7 +449,14 @@ def plan_admission(source, terrain_text, proof, allocation_value=None, *, candid
             directed.append(dict(edge_id=edge_id, source=src, destination=dst, direction=direction,
                                  first_pixel=passage["first_tile"] * 16,
                                  end_pixel=(passage["last_tile"] + 1) * 16))
-    blockers = consumer_blockers(document, admitted, closure)
+    blockers = appearance["blockers"] + consumer_blockers(document, admitted, closure)
+    needed_quartets = set()
+    for area in closure:
+        cells = document.maps[area - FIRST_MAP]
+        needed_quartets.update((cells[y * 32 + x], cells[y * 32 + x + 1],
+                               cells[(y + 1) * 32 + x], cells[(y + 1) * 32 + x + 1])
+                              for y in range(0, 32, 2) for x in range(0, 32, 2))
+    missing_quartets = sorted(needed_quartets - {tuple(q) for q in native})
     # The reused adapter currently qualifies only a diagnostic99/A1 edge.
     for edge in selected_edges:
         if (edge["map_a"], edge["map_b"]) != (0x99, 0xA1):
@@ -383,10 +465,14 @@ def plan_admission(source, terrain_text, proof, allocation_value=None, *, candid
     allocation = None
     if allocation_value is not None:
         allocation = parse_allocation(allocation_value, source)
-        verify_allocation(expanded, allocation)
+        verify_allocation(source, allocation, allocation_value.get("reservation"))
+        if missing_quartets and not allocation.owned_tile32_ids:
+            blockers.append(dict(code="TILE32_ALLOCATION_REQUIRED", missing_definitions=len(missing_quartets)))
+        if len(closure) * 518 > sum(end - start for start, end in allocation.stream_ranges):
+            blockers.append(dict(code="STREAM_ALLOCATION_REQUIRED", minimum_bytes=len(closure) * 518))
         if not blockers:
             compiled = compile_terrain(document, {i: tuple(q) for i, q in enumerate(native)},
-                                       allocation, map_ids=closure)
+                                       allocation, map_ids=closure, render_directory=directory)
             require_legacy_definition_preservation(source, compiled)
             tables = relocated_table_plan(source, document, compiled, admitted) if admitted else []
     elif admitted:
@@ -404,12 +490,19 @@ def plan_admission(source, terrain_text, proof, allocation_value=None, *, candid
     if admitted:
         qualification = ["NORMAL_BUILD_RUNTIME_INTEGRATION_REQUIRED", "ENDPOINT_APPEARANCE_DECISION_REQUIRED",
                          "NATIVE_COLLISION_TRANSITION_MUSIC_CONTROL_REQUIRED", "SAVE_DEATH_CONTINUE_RETURN_UNQUALIFIED"]
+        if any(row != quadrant_map_plan(area) for area, row in directory.items()):
+            qualification.append("ISOLATED_FOOTPRINT_NATIVE_QUALIFICATION_REQUIRED")
     events = sorted(set(admitted) | {a for e in selected_edges for a in (e["map_a"], e["map_b"])})
     return dict(kind="lyra.project_admission_plan.v1", status="candidate_unqualified" if admitted else "no_admission",
         source_rom_sha256=sha(source), terrain_sha256=sha(text_bytes), source_map_count=MAP_COUNT,
         candidate_maps=list(admitted), production_maps=[], production_edge_ids=[],
         render_directory=[dict(map_id=a, quadrant_maps=list(row)) for a, row in directory.items()],
         render_maps=list(closure), render_only_maps=sorted(set(closure) - set(admitted)),
+        appearance=appearance,
+        tile32_requirements=dict(unique_quartets=len(needed_quartets),
+                                 missing_definitions=[list(q) for q in missing_quartets]),
+        stream_requirements=dict(minimum_bytes=len(closure) * 518,
+                                 reserved_bytes=sum(end - start for start, end in allocation.stream_ranges) if allocation else 0),
         preserved_draft_maps=sorted(set(range(FIRST_MAP, FIRST_MAP + MAP_COUNT)) - set(admitted)),
         selected_edges=selected_edges, directed_edges=directed,
         unselected_edge_ids=sorted(set(edges_by_id) - set(edge_ids)),

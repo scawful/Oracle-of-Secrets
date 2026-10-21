@@ -18,7 +18,7 @@ import lyra_project_terrain as T
 def profile():
     return {**{k: copy.deepcopy(T.DEFAULT_PROPERTIES[k]) for k in
             ("graphics_sheets", "main_palette", "palette_set", "animated_sheet")},
-            "tile_count": 4096, "tile16_definition_fingerprint": "1" * 64,
+            "tile_count": 4096, "tile16_definition_fingerprint": A.sha(bytes(4096 * 8)),
             "graphics_fingerprint": "2" * 64, "palette_fingerprint": "3" * 64,
             "animation_fingerprint": "4" * 64}
 
@@ -34,6 +34,7 @@ def document():
 
 def source_rom():
     source = bytearray(0x200000)
+    source[0x865:0x868] = (0xBD8000).to_bytes(3, "little")
     source[A.pc(A.EMPTY_ACTORS)] = 255
     source[A.pc(A.EMPTY_HIDDEN_ITEMS):A.pc(A.EMPTY_HIDDEN_ITEMS) + 2] = b"\xff\xff"
     stream = 0x100000
@@ -48,7 +49,7 @@ def source_rom():
 def observation(source, data):
     text = json.dumps(data)
     return text, dict(source_rom_sha256=A.sha(source), terrain_sha256=A.sha(text.encode()),
-        map_count=32, donor_map=0x3A, native_tile32_capacity=0x4540, profile=profile(),
+        map_count=32, donor_map=0x3A, native_tile32_capacity=0x4540, profile=copy.deepcopy(data["profile"]),
         verified_asset_bindings=[copy.deepcopy(e["authoring"]["asset_bindings"]) for e in data["maps"]],
         native_definitions=[list(A.read_tile32(source, i)) for i in range(0x4540)])
 
@@ -153,13 +154,102 @@ class LyraAdmissionTest(unittest.TestCase):
         dep = data["maps"][2]["authoring"]
         dep["properties"]["palette_set"] = 3
         dep["asset_bindings"] = ["c" * 64] * 3
-        self.assertIn(dict(code="UNSUPPORTED_RENDER_PROFILE", map_id=0xA2, field="palette_set"),
+        self.assertIn(dict(code="RENDER_APPEARANCE_UNPROVEN", map_id=0xA1, source_map=0xA2, fields=["palette_set"]),
                       self.plan(data, maps=[0xA1])["consumption_blockers"])
         dep["properties"]["palette_set"] = 1
         dep["asset_bindings"] = [""] * 3
         dep["doors"] = [dict(id=2, x=1, y=1, entrance_id=None)]
         self.assertNotIn(dict(code="UNSUPPORTED_ACTIVE_METADATA", map_id=0xA2, field="doors"),
                          self.plan(data, maps=[0xA1])["consumption_blockers"])
+
+    def test_saved_per_map_selectors_reach_native_rows_without_donor_override(self):
+        data = document()
+        for index in (1, 2, 9, 10):
+            auth = data["maps"][index]["authoring"]
+            auth["properties"]["graphics_sheets"][5] = 0x60
+            auth["properties"]["palette_set"] = 3
+            auth["asset_bindings"] = ["a" * 64] * 3
+        alloc = allocation(self.source)
+        alloc["admission"]["candidate_maps"] = [0xA1]
+        plan = self.plan(data, alloc)
+        self.assertTrue(plan["appearance"]["coherent"])
+        self.assertTrue(plan["candidate_data_plan_ready"])
+        row = plan["appearance"]["selector_rows"][0]
+        self.assertEqual(row["graphics_sheets"][5], 0x60)
+        self.assertEqual(row["palette_set"], 3)
+        table_row = next(r for r in row["native_table_rows"] if r["table"] == "gfx")
+        self.assertEqual(bytes.fromhex(table_row["payload_hex"])[5], 0x60)
+        self.assertEqual(table_row["pc"], A.TABLE_START + 0x540 + 0xA1 * 8)
+        # Independent complete-table reconstruction proves the compiled row
+        # consumes saved selectors, rather than the common donor profile.
+        payload = bytearray(192 * 8)
+        native = self.source[A.pc(0x288480):A.pc(0x288480) + 160 * 8]
+        payload[:len(native)] = native
+        payload[0xA1 * 8:0xA2 * 8] = bytes(row["graphics_sheets"])
+        table = next(r for r in plan["relocated_tables"] if r["name"] == "gfx")
+        self.assertEqual(table["proposed_sha256"], A.sha(payload))
+
+    def test_unused_sheet_difference_can_be_proved_but_used_difference_stays_closed(self):
+        data = document()
+        data["maps"][1]["authoring"]["properties"]["graphics_sheets"][5] = 0x60
+        data["maps"][1]["authoring"]["asset_bindings"] = ["b" * 64] * 3
+        # Synthetic Tile16 definitions use only CHR0, so slot5 is irrelevant.
+        self.assertTrue(self.plan(data, maps=[0xA1])["appearance"]["coherent"])
+        source = bytearray(self.source)
+        source[0x1E8000:0x1E8008] = (320).to_bytes(2, "little") * 4
+        data["profile"]["tile16_definition_fingerprint"] = A.sha(source[0x1E8000:0x1F0000])
+        text, proof = observation(bytes(source), data)
+        plan = A.plan_admission(bytes(source), text, proof, candidate_maps=[0xA1])
+        self.assertFalse(plan["appearance"]["coherent"])
+        self.assertIn(dict(code="RENDER_APPEARANCE_UNPROVEN", map_id=0xA1,
+                           source_map=0xA2, fields=["graphics_sheets[5]"]), plan["consumption_blockers"])
+        self.assertEqual(plan["streams"], [])
+
+    def test_isolated_footprint_is_explicit_and_propagated_into_compiler(self):
+        alloc = allocation(self.source)
+        alloc["admission"].update(candidate_maps=[0xA1], render_footprints=[
+            dict(map_id=0xA1, quadrant_maps=[0xA1] * 4)])
+        plan = self.plan(alloc=alloc)
+        self.assertEqual(plan["render_directory"], [dict(map_id=0xA1, quadrant_maps=[0xA1] * 4)])
+        self.assertEqual(plan["render_maps"], [0xA1])
+        self.assertEqual(len(plan["streams"]), 2)
+        self.assertIn("ISOLATED_FOOTPRINT_NATIVE_QUALIFICATION_REQUIRED", plan["qualification_blockers"])
+        self.assertEqual(plan["production_maps"], [])
+        doc = T.parse_terrain_document(json.dumps(document()), profile())
+        compiled = T.compile_terrain(doc, {i: (0, 0, 0, 0) for i in range(0x4540)},
+            A.parse_allocation(alloc, self.source), map_ids=[0xA1], render_directory={0xA1: (0xA1,) * 4})
+        self.assertEqual(compiled.maps[0].quadrant_maps, (0xA1,) * 4)
+        for bad in ([0xA2] * 4, [0xA1, 0xA1, 0xA1, True]):
+            alloc["admission"]["render_footprints"][0]["quadrant_maps"] = bad
+            with self.assertRaisesRegex(ValueError, "natural or explicitly isolated"):
+                self.plan(alloc=alloc)
+        with self.assertRaisesRegex(ValueError, "Unclosed"):
+            T.compile_terrain(doc, {i: (0, 0, 0, 0) for i in range(0x4540)},
+                A.parse_allocation(alloc, self.source), map_ids=[0xA1],
+                render_directory={0xA1: T.quadrant_map_plan(0xA1)})
+
+    def test_current_tile16_binding_and_missing_tile32_are_not_silently_accepted(self):
+        text, proof = observation(self.source, document())
+        altered = bytearray(self.source)
+        altered[0x1E8000] = 1
+        proof["source_rom_sha256"] = A.sha(altered)
+        with self.assertRaisesRegex(ValueError, "Native Tile16 observation"):
+            A.plan_admission(bytes(altered), text, proof, candidate_maps=[0xA1])
+        data = document()
+        data["maps"][1]["tiles16"][0][0] = 1
+        alloc = allocation(self.source)
+        alloc["admission"]["candidate_maps"] = [0xA1]
+        plan = self.plan(data, alloc)
+        self.assertEqual(plan["tile32_requirements"]["missing_definitions"], [[1, 0, 0, 0]])
+        self.assertIn(dict(code="TILE32_ALLOCATION_REQUIRED", missing_definitions=1), plan["consumption_blockers"])
+        self.assertEqual(plan["streams"], [])
+
+    def test_new_reservation_never_admits_a_padded_two_mib_prefix(self):
+        import lyra_project_allocation as reservation
+        alloc = reservation.derive_allocation(A.expanded_rom(self.source))
+        alloc["source_rom_sha256"] = A.sha(self.source)
+        with self.assertRaisesRegex(ValueError, "actual unheadered4MiB"):
+            self.plan(alloc=alloc)
 
     def test_production_admission_and_selection_mismatch_refuse(self):
         for key, ids in (("production_maps", [0xA1]), ("production_edge_ids", [1])):
