@@ -36,6 +36,81 @@ BUTTONS = frozenset({"", "Up", "Down", "Left", "Right", "B"})
 ROOM, ENTRY, WEST, NORTH = 0x97, 0x98, (256, 352), (384, 160)
 GATE_MASK, KEY_MASK = 0x8080, 0x4000  # lower index0 and automatic upper partner index8
 FACE_INDEXES = (5, 6, 9, 10, 21, 22, 25, 26)
+# R05 north static_turn_traces frame79; native ride-north frame3875 (controller-steps.jsonl).
+INTRAROOM_B2 = (376, 184)
+INTRAROOM_ENTRY_LX = 376
+INTRAROOM_ENTRY_LY = (268, 278)  # observed3792/3793 upper-aperture entry
+INTRAROOM_ENTRY_CART_Y = 281
+INTRAROOM_ENTRY_CART_ACTION = 2
+INTRAROOM_MIN_HOLD_FRAMES = 8
+INTRAROOM_MAX_FRAMES = 96  # 82-frame submodule-1 hold at3793–3874 plus cadence slack
+
+
+def intraroom_ride_context(state):
+    return (state["module"] == 7 and state["indoors"] == 1 and state["room"] == ROOM
+            and state["layer"] == 0 and state["mounted"] and state["track"] == 0)
+
+
+def owned_aperture_cart(state, owned_cart, cart):
+    if cart is None or owned_cart is None:
+        return False
+    if cart["slot"] != owned_cart[1] or state["cart_slot"] != owned_cart[1]:
+        return False
+    return (cart["action"] == INTRAROOM_ENTRY_CART_ACTION
+            and abs(cart["x"] - INTRAROOM_ENTRY_LX) <= 2
+            and abs(cart["y"] - INTRAROOM_ENTRY_CART_Y) <= 8)
+
+
+def intraroom_hold_started(previous, state, owned_cart, seam, cart):
+    if seam is not None or not owned_cart or owned_cart[0] != ROOM:
+        return False
+    if not (previous["room"] == state["room"] == ROOM
+            and previous["submodule"] == 0 and state["submodule"] == 1):
+        return False
+    if not (intraroom_ride_context(previous) and intraroom_ride_context(state)):
+        return False
+    if not owned_aperture_cart(state, owned_cart, cart):
+        return False
+    if previous.get("doorway") != 1 or state.get("doorway") != 1:
+        return False
+    if abs(previous["lx"] - INTRAROOM_ENTRY_LX) > 2 or abs(state["lx"] - INTRAROOM_ENTRY_LX) > 2:
+        return False
+    return (INTRAROOM_ENTRY_LY[0] <= previous["ly"] <= INTRAROOM_ENTRY_LY[1]
+            and INTRAROOM_ENTRY_LY[0] <= state["ly"] <= INTRAROOM_ENTRY_LY[1])
+
+
+def stale_intraroom_follower(state, slot):
+    actor = next((a for a in state["sprites"] if a["slot"] == slot), None)
+    return bool(actor and actor["state"] == 9 and actor["kind"] == 0xA3
+                and actor["subtype"] == 0 and actor["floor"] == 0
+                and actor["action"] == 6 and abs(actor["x"] - INTRAROOM_B2[0]) <= 2
+                and 272 <= actor["y"] <= 288)
+
+
+def intraroom_reconstruction_matches(intraroom, previous, state, cart, frame_count):
+    if intraroom is None or cart is None:
+        return False
+    elapsed = frame_count - intraroom["start_frame"]
+    if elapsed < INTRAROOM_MIN_HOLD_FRAMES or elapsed > INTRAROOM_MAX_FRAMES:
+        return False
+    if not (previous["submodule"] == 1 and state["submodule"] == 0):
+        return False
+    if not (intraroom_ride_context(previous) and intraroom_ride_context(state)):
+        return False
+    old = intraroom["old_slot"]
+    if cart["slot"] == old or state["cart_slot"] != cart["slot"]:
+        return False
+    if state["cart_slot"] == old:
+        return False
+    if abs(cart["x"] - INTRAROOM_B2[0]) > 2 or abs(cart["y"] - INTRAROOM_B2[1]) > 8:
+        return False
+    if cart["action"] != 3 or cart["direction"] != 1:
+        return False
+    if abs(state["lx"] - INTRAROOM_B2[0]) > 2 or not (184 <= state["ly"] <= 200):
+        return False
+    if not stale_intraroom_follower(state, old):
+        return False
+    return abs(cart["x"] - state["lx"]) <= 16 and abs(cart["y"] - state["ly"]) <= 24
 
 
 def face_values(cells):
@@ -148,7 +223,7 @@ class Route(native.Fixture):
         self.closed_cells = None
         self.animation_frames = 0
         self.frame_count, self.last_advance = None, 0
-        self.owned_cart, self.seam = None, None
+        self.owned_cart, self.seam, self.intraroom = None, None, None
         self.result.update(checks=[], phases=[], screenshots=[], mode="input-only", memory_writes=[],
                            bootstrap="caller-owned canonical seed and native entrance27 reload to98")
         if args.legacy_control:
@@ -213,6 +288,7 @@ class Route(native.Fixture):
         """Admit only the observed rail-seam follower reconstruction window."""
         if not state["mounted"]:
             require(self.seam is None, "Ride ended before seam cart reconstruction")
+            require(self.intraroom is None, "Ride ended before intraroom cart reconstruction")
             return None
         require(state["track"] == 0, "Mounted ride changed track")
         if previous["room"] != state["room"]:
@@ -246,6 +322,28 @@ class Route(native.Fixture):
             self.result.setdefault("seam_reconstructions", []).append({**self.seam,
                 "new_slot": cart["slot"], "end_frame": self.frame_count, "state": state})
             self.owned_cart, self.seam = (state["room"], cart["slot"]), None
+        if self.seam is None and state["room"] == ROOM and previous["room"] == ROOM:
+            if self.intraroom is None and intraroom_hold_started(
+                    previous, state, self.owned_cart, self.seam, cart):
+                self.intraroom = {"old_slot": self.owned_cart[1], "start_frame": self.frame_count}
+            if self.intraroom is not None:
+                require(intraroom_ride_context(state), "Intraroom hold left the qualified ride context")
+                require(self.frame_count - self.intraroom["start_frame"] <= INTRAROOM_MAX_FRAMES,
+                        "Intraroom reconstruction exceeded bounded window")
+                if state["submodule"] == 1:
+                    require(state["cart_slot"] == self.intraroom["old_slot"],
+                            "Intraroom hold lost the owned active slot")
+                elif previous["submodule"] == 1 and state["submodule"] == 0:
+                    if intraroom_reconstruction_matches(
+                            self.intraroom, previous, state, cart, self.frame_count):
+                        self.result.setdefault("intraroom_reconstructions", []).append(
+                            {**self.intraroom, "new_slot": cart["slot"],
+                             "end_frame": self.frame_count})
+                        self.owned_cart, self.intraroom = (ROOM, cart["slot"]), None
+                    else:
+                        require(False, "Intraroom submodule exit without qualified reconstruction")
+                elif state["cart_slot"] != self.intraroom["old_slot"]:
+                    require(False, "Unexpected same-room slot change outside reconstruction exit")
         require(cart is not None and self.owned_cart == (state["room"], state["cart_slot"]),
                 "Mounted state lost the owned T0 slot inside the room")
         return cart
