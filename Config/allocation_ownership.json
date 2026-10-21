@@ -1466,5 +1466,75 @@
       "reason": "Shared FreeBlock_Large starts F3A8; pending F3A8-AB owners exist. Other free-list bytes are not audited availability."
     }
   ],
-  "allocation_available": false
+  "allocation_available": false,
+  "rom_candidate_reservations": [
+    {
+      "id": "lyra_project_runtime_candidate",
+      "owner": "W02 source-built Lyra candidate",
+      "status": "proposed",
+      "scope": "isolated_candidate_only",
+      "production_admission": false,
+      "parent_count": 160,
+      "regions": [
+        {
+          "purpose": "tables",
+          "pc": [
+            1327104,
+            1337792
+          ],
+          "allowed_fills": [
+            0
+          ]
+        },
+        {
+          "purpose": "code",
+          "pc": [
+            3948544,
+            3956736
+          ],
+          "allowed_fills": [
+            0,
+            255
+          ]
+        },
+        {
+          "purpose": "streams",
+          "pc": [
+            4014080,
+            4016152
+          ],
+          "allowed_fills": [
+            0,
+            255
+          ]
+        }
+      ],
+      "owned_tile32_ids": [],
+      "tile32_candidate_reservation": {
+        "id_range": [17600, 17728],
+        "dictionary_bases_pc": [98304, 131072, 2031616, 2064384],
+        "lifetime": "exact_saved_source_to_private_candidate_only",
+        "editor_save_preserves_ids": false,
+        "packed_preimage_sha256": "5094c27e006d212aadc5429fb183d0297b5bb234623e56998ffff236cde2a3c6",
+        "native_decoder": {
+          "pc": [95889, 96203],
+          "sha256": "514148e9f9d46b6539f8de1673e95b4e5cd1b708f9f76a6fd5637e2a1f9f9dfb",
+          "consumers": ["Overworld_DecompressAndDrawOneQuadrant", "OverworldLoad_LoadSubOverlayMap32"],
+          "reference_closure": "All160 native high/low map streams; both full load and sub-overlay use these directories."
+        },
+        "native_readers": [
+          {"pc": [95645, 95698], "sha256": "0dfa9e0a275f692491df51ade43bc68a9ad42b729eb88dfa3e206ba369922d7f"},
+          {"pc": [96227, 96280], "sha256": "0dfa9e0a275f692491df51ade43bc68a9ad42b729eb88dfa3e206ba369922d7f"}
+        ],
+        "conflicting_producer": {
+          "path": "yaze/src/zelda3/overworld/overworld.cc",
+          "sha256": "3c7e6362bb9b0ad683e97d28c5706037a3338f5d464e534e870287c203a9db81",
+          "symbols": ["CreateTile32Tilemap", "SaveMap32Expanded"],
+          "policy": "Save ROM rebuilds the native dictionary fromID0. Candidate assignments expire on any source-ROM change; compile only after editor save."
+        },
+        "grant": "Only deterministic joint assignments from source-bound terrain requests. Neither filler definitions nor zero native references grant IDs alone."
+      },
+      "note": "Named source reservation for read-only candidate planning; actual ROM hash and exact region preimages required. No production allocation, native160 widening or runtime publication."
+    }
+  ]
 }
