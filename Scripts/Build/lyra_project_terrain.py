@@ -96,6 +96,10 @@ class TerrainDocument:
     maps: tuple[tuple[int, ...], ...]
     properties: tuple[dict, ...]
     edge_connections: tuple[dict, ...] = ()
+    # Complete schema-3 drafts survive read-only subset planning. They are not
+    # a promise that a runtime adapter consumes their metadata.
+    authoring: tuple[dict, ...] = ()
+    flight_points: tuple[dict, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -170,9 +174,15 @@ def resolve_project_terrain(project_path: str | Path) -> Path:
 
 
 def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
-                           expected_asset_bindings: Mapping[int, tuple[str, str, str]] | None = None
+                           expected_asset_bindings: Mapping[int, tuple[str, str, str]] | None = None,
+                           allow_authoring_drafts: bool = False,
                            ) -> TerrainDocument:
-    """Parse existing Yaze schema 3 against an externally verified profile."""
+    """Parse schema 3 against independently verified native assets.
+
+    The historical strict runtime policy remains the default. A read-only
+    admission planner may preserve valid drafts and apply consumer checks to
+    its explicit traversal/render sets instead. No metadata is discarded.
+    """
     expected = copy.deepcopy(dict(expected_profile))
     _profile(expected)
     _require(isinstance(text, (str, bytes)), "Lyra document must be text")
@@ -192,7 +202,19 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
     _profile(data["profile"])
     _require(data["profile"] == expected,
              "Lyra profile differs from independently verified source assets")
-    _require(type(data["flight_points"]) is list and not data["flight_points"],
+    flights = data["flight_points"]
+    _require(type(flights) is list and len(flights) <= 64, "Invalid flight_points")
+    flight_ids = set()
+    for flight in flights:
+        _keys(flight, {"id", "map_id", "x", "y", "name", "runtime_slot"}, "Lyra flight point")
+        _require(_integer(flight["id"], 1, 0xFFFFFFFF) and flight["id"] not in flight_ids
+                 and _integer(flight["map_id"], 0, 0xBF)
+                 and _integer(flight["x"], 0, 31) and _integer(flight["y"], 0, 31)
+                 and type(flight["name"]) is str and 0 < len(flight["name"].encode("utf-8")) <= 80
+                 and all(ord(c) >= 32 and ord(c) != 127 for c in flight["name"])
+                 and flight["runtime_slot"] is None, "Invalid Lyra flight point")
+        flight_ids.add(flight["id"])
+    _require(allow_authoring_drafts or not flights,
              "Unsupported runtime metadata: flight_points")
     edges = data["edge_connections"]
     _require(type(edges) is list and len(edges) <= 64,
@@ -217,7 +239,8 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
         edge_pairs.add((a, b))
     _require(type(data["maps"]) is list and len(data["maps"]) == MAP_COUNT,
              "Lyra terrain requires all 32 maps")
-    maps, properties = {}, {}
+    maps, properties, authoring = {}, {}, {}
+    entity_ids = {key: set() for key in ("sprites", "doors", "exits")}
     for entry in data["maps"]:
         _keys(entry, {"map_id", "tiles16", "authoring"}, "Lyra map")
         area = entry["map_id"]
@@ -233,7 +256,33 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
         _keys(auth, {"properties", "sprites", "doors", "exits", "asset_bindings"},
               "Lyra authoring")
         for key in ("sprites", "doors", "exits"):
-            _require(type(auth[key]) is list and not auth[key],
+            entities = auth[key]
+            _require(type(entities) is list and len(entities) <= (128 if key == "sprites" else 64),
+                     f"Invalid Lyra {key}")
+            positions = set()
+            for entity in entities:
+                extra = {"sprites": {"sprite_id", "state"}, "doors": {"entrance_id"},
+                         "exits": {"room_id", "exit_row"}}[key]
+                _keys(entity, {"id", "x", "y"} | extra, f"Lyra {key} placement")
+                _require(_integer(entity["id"], 1, 0xFFFFFFFF)
+                         and entity["id"] not in entity_ids[key]
+                         and _integer(entity["x"], 0, 31) and _integer(entity["y"], 0, 31),
+                         f"Invalid or duplicate Lyra {key} placement")
+                entity_ids[key].add(entity["id"])
+                if key == "sprites":
+                    _require(_integer(entity["sprite_id"], 0, 255)
+                             and _integer(entity["state"], 0, 2), "Invalid Lyra sprite")
+                elif key == "doors":
+                    position = (entity["x"], entity["y"])
+                    _require(position not in positions
+                             and (entity["entrance_id"] is None
+                                  or _integer(entity["entrance_id"], 0, 254)), "Invalid Lyra door")
+                    positions.add(position)
+                else:
+                    _require(_integer(entity["room_id"], 0, 0x127)
+                             and (entity["exit_row"] is None
+                                  or _integer(entity["exit_row"], 0, 78)), "Invalid Lyra exit")
+            _require(allow_authoring_drafts or not entities,
                      f"Unsupported runtime metadata: {area:02X}.{key}")
         props = auth["properties"]
         _keys(props, PROPERTY_KEYS, "Lyra map properties")
@@ -246,7 +295,7 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
         for key in ("main_palette", "palette_set", "animated_sheet"):
             _require(_integer(props[key], 0, 255), f"Invalid map {key}")
         for key in ("graphics_sheets", "main_palette", "palette_set", "animated_sheet"):
-            _require(props[key] == expected[key],
+            _require(allow_authoring_drafts or props[key] == expected[key],
                      f"Map {area:02X} {key} needs an independently verified profile")
         bindings = auth["asset_bindings"]
         _require(type(bindings) is list and len(bindings) == 3,
@@ -265,9 +314,11 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
                      "Map asset bindings differ from independently verified source assets")
         maps[area] = tuple(cell for row in rows for cell in row)
         properties[area] = copy.deepcopy(props)
+        authoring[area] = copy.deepcopy(auth)
     ids = range(FIRST_MAP, FIRST_MAP + MAP_COUNT)
     return TerrainDocument(expected, tuple(maps[i] for i in ids),
-                           tuple(properties[i] for i in ids), tuple(copy.deepcopy(edges)))
+                           tuple(properties[i] for i in ids), tuple(copy.deepcopy(edges)),
+                           tuple(authoring[i] for i in ids), tuple(copy.deepcopy(flights)))
 
 
 def quadrant_map_plan(map_id: int) -> Quad:
