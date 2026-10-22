@@ -167,6 +167,8 @@ WaterGate_SelectOverlayPointer:
 ; Water collision system - placed in Bank $2C after main dungeon code
 incsrc "Collision/water_collision.asm"
 
+incsrc "Dungeons/zora_temple_floor.asm"
+
 print "End of dungeons.asm               ", pc
 
 pushpc
