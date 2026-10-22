@@ -8,9 +8,17 @@ assert read2($01E9E6) == $8073, "Room $73 big-chest record moved"
 assert read1($01E9E8) == $39 || read1($01E9E8) == $3A, "Unexpected room $73 big-chest item"
 org $01E9E8 : db $39 ; Pendant of Power: receipt handler sets $7EF374 bit $02
 
+; Shrine of Wisdom (decisions.org 2026-10-22): the pendant moves to the dry $9A
+; big chest, where the Flippers were. The Flippers become a Sea Zora gift after
+; the pendant (Sprites/NPCs/zora.asm). Rooms $8A/$7A need swimming and become an
+; optional return trip; their big chest holds a placeholder until scawful picks one.
+assert read2($01EA1C) == $809A, "Room $9A big-chest record moved"
+assert read1($01EA1E) == $1E || read1($01EA1E) == $38, "Unexpected room $9A big-chest item"
+org $01EA1E : db $38 ; Pendant of Wisdom: receipt handler sets $7EF374 bit $01
+
 assert read2($01E9F5) == $807A, "Room $7A big-chest record moved"
-assert read1($01E9F7) == $38 || read1($01E9F7) == $39, "Unexpected room $7A big-chest item"
-org $01E9F7 : db $38 ; Pendant of Wisdom: receipt handler sets $7EF374 bit $01
+assert read1($01E9F7) == $38 || read1($01E9F7) == $39 || read1($01E9F7) == $46, "Unexpected room $7A big-chest item"
+org $01E9F7 : db $46 ; 300 rupees (placeholder; was the Pendant of Wisdom)
 
 ; D7 (Dragon Ship) has no big-key chest: the Stalfos Knight in room $A2 (NE
 ; alcove, behind the interior small-key door) drops the Big Key. The drop is a

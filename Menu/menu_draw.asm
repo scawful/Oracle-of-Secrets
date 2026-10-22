@@ -655,13 +655,13 @@ Menu_OracleTreasureOwned:
   db $4B ; $0E D6 Goron Mines: Hammer, room $088 (item $09)
   db $59 ; $10 D3 Kalyxo Castle: sword level 2, room $056 (item $01)
   db $45 ; $12 D5 Glacia Estate: Fire Rod, room $0CC (item $07)
-  db $56 ; $14 S1 Shrine of Wisdom: Flippers, room $09A (item $1E)
+  db $00 ; $14 none (S1 Shrine of Wisdom: Flippers are a Sea Zora gift; pendant in room $09A)
   db $42 ; $16 D4 Zora Temple: Hookshot, room $036 (item $0A)
   db $50 ; $18 D7 Dragon Ship: Cane of Somaria, room $0B3 (item $15)
   db $5B ; $1A D8 Fortress of Secrets: Red Mail, room $05C (item $23)
   ; Owned when the SRAM byte is at least this value (0 = no treasure).
   .value
-  db $03, $00, $00, $01, $00, $01, $01, $01, $02, $01, $01, $01, $01, $02
+  db $03, $00, $00, $01, $00, $01, $01, $01, $02, $01, $00, $01, $01, $02
 }
 endif
 
