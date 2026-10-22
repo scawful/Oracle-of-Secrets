@@ -122,6 +122,9 @@ Sprite_Kydreeok_Long:
   PHB : PHK : PLB
   JSR Sprite_Kydreeok_Draw
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    LDA.w BossReinject : BEQ .no_reinject
+      JSR Kydreeok_Reinject
+    .no_reinject
     JSR Sprite_Kydreeok_Main
     JSR Sprite_Kydreeok_CheckIfDead
     ; Stage 3: a lost head grows back on a fixed timer.
@@ -153,6 +156,8 @@ Sprite_Kydreeok_Prep:
   endif
   JSL BossKit_Reset
   JSL BossDirector_Reset
+  ; Kydreeok alive on room load: the finale starts over (Ganondorf only follows a Kydreeok kill).
+  STZ.w GanondorfFight : STZ.w BossReinject : STZ.w FinaleBeat
   ; The heads read the body from their first frame.
   TXA : STA.w Kydreeok_Id
   LDA.b #$40 : STA.w SprTimerA, X
@@ -416,7 +421,8 @@ Sprite_Kydreeok_Main:
     LDA.w SprTimerA, X : BNE .continue
       STZ.w $0422
       STZ.w $0424
-      LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
+      LDA $1C : AND.b #$FE : STA $1C ;dismiss the body (BG2) for good: Ganondorf reuses its VRAM
+      LDA.b #!FinaleBeat_Frames : STA.w FinaleBeat ; Kydreeok is down: start the placeholder beat
       LDA.b #$00 : STA.l BossKit_Quake
       REP #$20
       STZ.w $011A : STZ.w $011C
@@ -622,6 +628,35 @@ StopIfOutOfBounds:
       LDA.b #-10 : STA.w SprYSpeed, X
       STZ.w SprYRound, X
   .not_down
+  RTS
+}
+
+; =========================================================
+; Fairy revive (BossReinject, set by BossReinject_Set in ganondorf.asm): the game over
+; module reloads sprite sheets over VRAM $5000 and restores the BG palettes, so the
+; body goes missing. Re-inject graphics only; HP, stage, heads and timers are untouched.
+
+Kydreeok_Reinject:
+{
+  STZ.w BossReinject
+  LDY.b #$00
+  LDA.w SprMiscD, X : CMP.b #$02 : BNE .sheet
+    LDY.b #$01 ; phase 2 sheet
+  .sheet
+  JSR ApplyKydreeokGraphics
+  JSR ApplyPalette
+  ; The game over restore also rewrites the fade target, so copy it there too.
+  PHX
+  REP #$20
+  LDX.b #$0C
+  .copy
+    LDA.l $7EC5E2, X : STA.l $7EC3E2, X
+    DEX : DEX : BPL .copy
+  SEP #$30
+  PLX
+  LDA.w SprAction, X : CMP.b #!Kyd_Dead : BEQ .dead ; the dying body manages BG2 itself
+    LDA.b $1C : ORA.b #$01 : STA.b $1C
+  .dead
   RTS
 }
 
