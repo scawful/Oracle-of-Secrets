@@ -965,6 +965,11 @@ SOURCE_FAMILY = ('Oracle_main.asm', 'Overworld/lyra_native_loaders.asm',
 def inspect_unverified_native_loaders(compiled, symbols):
     """Candidate locations for independent review; never a verification result."""
     labels = _labels(symbols)
+    required = {label for label, _ in SOURCE_CALLS}
+    required.update('LyraHost_' + host + suffix for host in SOURCE_HOSTS for suffix in ('', '_End'))
+    required.update(('Lyra_RoutingGate', 'Lyra_RoutingReturn'))
+    missing = sorted(required - labels.keys())
+    R.require(not missing, 'Missing mandatory native loader inspection symbols: ' + ', '.join(missing))
     root = Path(__file__).resolve().parents[2]
     calls = [dict(label=label, pc=A.pc(labels[label]), target=target) for label, target in SOURCE_CALLS]
     spans = []

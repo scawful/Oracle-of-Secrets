@@ -248,12 +248,24 @@ class NativeHelperTests(unittest.TestCase):
             L._labels(symbols.replace('F8:C000 Oracle_', 'F8:C001 Oracle_'))
 
     def test_review_pending_is_fail_closed_and_never_uses_wla_as_authority(self):
-        if L.REVIEWED_COMPILED_BINDING is None:
+        with mock.patch.object(L, 'REVIEWED_COMPILED_BINDING', None):
             with self.assertRaisesRegex(ValueError, 'independent first-assembly'):
                 L._verify_reviewed_binding(bytes(0x400000), '[labels]\n')
-        else:
-            with self.assertRaises(ValueError):
-                L._verify_reviewed_binding(bytes(0x400000), '[labels]\n')
+
+    def test_populated_binding_refuses_each_missing_mandatory_inspection_symbol(self):
+        compiled, _, symbols = compiled_fixture()
+        baseline = L.inspect_unverified_native_loaders(compiled, symbols)
+        required = {label for label, _ in L.SOURCE_CALLS}
+        required.update('LyraHost_' + host + suffix for host in L.SOURCE_HOSTS for suffix in ('', '_End'))
+        required.update(('Lyra_RoutingGate', 'Lyra_RoutingReturn'))
+        with mock.patch.object(L, 'REVIEWED_COMPILED_BINDING', baseline):
+            L._verify_reviewed_binding(compiled, symbols)
+            for label in sorted(required):
+                with self.subTest(label=label):
+                    incomplete = '\n'.join(line for line in symbols.splitlines()
+                                           if not line.endswith(' ' + label)) + '\n'
+                    with self.assertRaisesRegex(ValueError, 'Missing mandatory native loader inspection symbols: ' + label):
+                        L._verify_reviewed_binding(compiled, incomplete)
 
     def test_exact_bodies_refuse_early_return_operand_mutation_and_foreign_relocation(self):
         compiled, labels, _ = compiled_fixture()
@@ -300,7 +312,7 @@ class NativeHelperTests(unittest.TestCase):
         self.assertEqual(spans['Lyra_LegacyMusicInitializer']['pc'],
                          [A.pc(0x02C463), A.pc(0x02C4BC)])
         # This stand-in is a synthetic reviewed SOURCE constant for the unit
-        # fixture only; the production constant stays pending root review.
+        # fixture only; the production constant remains unchanged.
         with mock.patch.object(L, 'REVIEWED_COMPILED_BINDING', baseline):
             L._verify_reviewed_binding(compiled, symbols)
             for site in (0x02A5D3, 0x02A5D7, 0x02C463, 0x02C4A1, 0x02C4B6):
