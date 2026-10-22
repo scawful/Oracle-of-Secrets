@@ -208,11 +208,25 @@ def packed_write_plan(source, document, compiled, allocation):
                      payload_hex=proposed[at:at + 6].hex()) for at in sorted(changed_groups)])
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--request', type=Path, action='append', required=True,
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument('--request', type=Path, action='append',
                         help='JSON with rom, terrain, observation paths and explicit map/footprint selection')
-    args = parser.parse_args()
+    mode.add_argument('--compose-native37-a1', type=Path,
+                      help='Exact saved/fresh lineage request; one read-only in-memory composition plan')
+    args = parser.parse_args(argv)
+    if args.compose_native37_a1:
+        from lyra_project_composition import plan_composition
+        raw = args.compose_native37_a1.read_bytes()
+        try:
+            result = plan_composition(json.loads(raw))
+        except (ValueError, OSError) as error:
+            parser.exit(1, f'Native37+A1 composition refused: {error}\n')
+        require(args.compose_native37_a1.read_bytes() == raw, 'Read-only composition request changed')
+        result['request_sha256'] = sha(raw)
+        print(json.dumps(result, sort_keys=True, indent=2))
+        return
     requests, before = [], {}
     for path in args.request:
         value = json.loads(path.read_bytes())
