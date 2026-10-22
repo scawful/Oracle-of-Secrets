@@ -104,10 +104,23 @@ jobs:
           done
 
           # Run Asar against the synthetic headerless ROM.
+          # Keep the original guarded synthetic input for the selected Lyra pass.
+          cp test.sfc test-source.sfc
           set -o pipefail
           ./asar/asar --no-title-check Oracle_main.asm test.sfc 2>&1 | tee asar_output.txt
 
           echo "ASM syntax check passed"
+
+      - name: Check selected Lyra ASM syntax (synthetic data)
+        run: |
+          # This synthetic fixture checks the selected include path and hooks.
+          # It has no real terrain, project admission, or gameplay qualification.
+          python3 Scripts/Build/prepare_lyra_syntax_fixture.py \
+            --seed test-source.sfc --output-rom test-lyra.sfc \
+            --output-dir Data/Generated/lyra_project --report lyra-syntax-fixture.json
+          set -o pipefail
+          ./asar/asar --no-title-check -DLYRA_BUILD_CONTEXT=1 \
+            Oracle_main.asm test-lyra.sfc 2>&1 | tee asar_lyra_output.txt
 
   # =============================================================================
   # Lua Script Validation

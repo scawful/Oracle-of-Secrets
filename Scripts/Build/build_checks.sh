@@ -57,6 +57,12 @@ snapshot_build_outputs() {
     "$repo_root/.cache/annotations.json"
     "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
     "$repo_root/Dungeons/generated/water_fill_table.asm"
+    "$rom_dir/oos${version}x.lyra-verification.json"
+    "$repo_root/Data/Generated/lyra_project/runtime_constants.asm"
+    "$repo_root/Data/Generated/lyra_project/runtime_data.asm"
+    "$repo_root/Data/Generated/lyra_project/descriptor.json"
+    "$repo_root/Data/Generated/lyra_project/prepare.json"
+    "$repo_root/Data/Generated/lyra_project/binaries/payload.bin"
   )
   local path index
   for path in "${build_output_paths[@]}"; do

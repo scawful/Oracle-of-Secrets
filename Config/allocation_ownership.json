@@ -381,7 +381,7 @@
         "DISABLE_OVERWORLD": 0
       },
       "lifetime": "Valid after AdjustOverworldAmbiance through gameplay/menu/transition/module restoration; invalid before initial fill or after full reset.",
-      "reset": "Intro high-WRAM clear; AdjustOverworldAmbiance fills160 active bytes and overrides index80; storm edits first64. Tail32 reserved and untouched by gameplay initialization.",
+      "reset": "Intro high-WRAM clear; legacy AdjustOverworldAmbiance fills160 bytes and overrides index80; storm edits first64. Only ordinary_build_publication initializes A1 from its generated table; other tail bytes remain reserved.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
         "shared:Overworld/music_cache.asm",
@@ -413,7 +413,7 @@
         "DISABLE_OVERWORLD": 0
       },
       "lifetime": "Valid after AdjustOverworldAmbiance through gameplay/menu/transition/module restoration; invalid before initial fill or after full reset.",
-      "reset": "Intro high-WRAM clear; AdjustOverworldAmbiance fills160 active bytes and overrides index80; storm edits first64. Tail32 reserved and untouched by gameplay initialization.",
+      "reset": "Intro high-WRAM clear; legacy AdjustOverworldAmbiance fills160 bytes and overrides index80; storm edits first64. Only ordinary_build_publication initializes A1 from its generated table; other tail bytes remain reserved.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
         "shared:Overworld/music_cache.asm",
@@ -1110,7 +1110,7 @@
         "DISABLE_OVERWORLD": 0
       },
       "lifetime": "Reserved capacity exists; gameplay activation and ROM source tables are separate unresolved work.",
-      "reset": "Future active192 initialization requires new ROM source tables; current code intentionally fills160 only.",
+      "reset": "Full192 activation is unimplemented. The ordinary private native37+A1 variant initializes only A1 after the legacy160 producer; no other tail row is activated.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
         "shared:Overworld/music_cache.asm",
@@ -1583,7 +1583,30 @@
         },
         "grant": "Only deterministic joint assignments from source-bound terrain requests. Neither filler definitions nor zero native references grant IDs alone."
       },
-      "note": "Named source reservation for read-only candidate planning; actual ROM hash and exact region preimages required. No production allocation, native160 widening or runtime publication."
+      "ordinary_build_publication": {
+        "kind": "lyra.ordinary_private_native_readers.v1",
+        "enabled": true,
+        "scope": "isolated_candidate_only",
+        "production_admission": false,
+        "selected_maps": [
+          55,
+          161
+        ],
+        "source_map_count": 160,
+        "table_capacity": 192,
+        "save_destination": "unchanged",
+        "code_pc": [
+          3948544,
+          3956672
+        ],
+        "descriptor_pc": [
+          3956672,
+          3956736
+        ],
+        "source_reader_variant": "original_native160",
+        "compiled_reader_variant": "lyra.ordinary_private_native_readers.v1"
+      },
+      "note": "Named source reservation; original read-only variant remains unchanged. Explicit ordinary_build_publication permits only native37+A1 private candidate code/data in the same regions. No production allocation or save destination policy."
     }
   ]
 }

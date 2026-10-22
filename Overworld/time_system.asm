@@ -349,14 +349,27 @@ OverworldLoadScreensPaletteSet = $02C692
 ; Change buffer palette of trees,houses,rivers,etc.
 RomToPaletteBuffer:
 {
+    LyraHost_RomToPaletteBuffer = pc()
   LDX.b $8A
-  LDA.l $7EFD40,X : STA.b $00
+  if !LYRA_PROJECT_DATA_PRESENT == 1
+  LyraCall_SpritePalette_2 = pc()
+  JSL.l Lyra_ReadSpritePalette
+  else
+  LDA.l $7EFD40,X
+  endif
+  STA.b $00
 
+  if !LYRA_PROJECT_DATA_PRESENT == 1
+  LyraCall_PaletteSet_10 = pc()
+  JSL.l Lyra_ReadPaletteSet
+  else
   LDA.l OverworldPalettesScreenToSet_New,X
+  endif
   JSL OverworldPalettesLoader
   JSR Overworld_CopyPalettesToCache
   JSR OverworldLoadScreensPaletteSet 
   RTL
+    LyraHost_RomToPaletteBuffer_End = pc()
 }
 
 PalBuf300_HUD = $7EC300

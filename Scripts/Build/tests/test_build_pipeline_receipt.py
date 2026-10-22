@@ -51,9 +51,28 @@ class BuildPipelineReceiptTest(unittest.TestCase):
         self.write('Scripts/Generate/export_symbols.py',
                    'import pathlib,sys\npathlib.Path(sys.argv[sys.argv.index("-o")+1]).write_text("fixture label")\n')
         self.write('Scripts/Build/check_zscream_overlap.py', 'import sys\nsys.exit(0)\n')
+        # Generator internals have their own suite. Exercise shell dispatch and
+        # rollback with fixed text bytes, without a real source ROM or Asar.
+        self.write('Scripts/Build/lyra_project_publisher.py', '''import hashlib,json,os,pathlib,sys
+root=pathlib.Path(__file__).resolve().parents[2]
+if sys.argv[1]=='prepare':
+ selected='--project' in sys.argv
+ out=root/'Data/Generated/lyra_project'
+ constants='!LYRA_PROJECT_DATA_PRESENT = '+str(int(selected))+'\\n!LYRA_NATIVE_A1_ENABLED = '+str(int(selected))+'\\n'
+ prepared={'kind':'lyra.ordinary_build_prepare.v1','selected':selected,'generated_files':{'runtime_constants.asm':hashlib.sha256(constants.encode()).hexdigest()}}
+ files={'runtime_constants.asm':constants,'runtime_data.asm':'; fixture data\\n','descriptor.json':json.dumps({'fixture':True}),'prepare.json':json.dumps(prepared),'binaries/payload.bin':'fixture payload'}
+ for name,content in files.items():
+  path=out/name; path.parent.mkdir(parents=True,exist_ok=True)
+  path.write_text(content)
+ sys.exit(int(os.getenv('FIXTURE_LYRA_PREPARE_EXIT','0')))
+if sys.argv[1]=='verify':
+ sys.exit(int(os.environ['FIXTURE_LYRA_VERIFY_EXIT'])) if os.getenv('FIXTURE_LYRA_VERIFY_EXIT') else None
+ out=pathlib.Path(sys.argv[sys.argv.index('--receipt')+1]); out.write_text('fixture verification')
+''')
         self.assembler = self.write('tools/fake-asar', f'#!{sys.executable}\n' + '''import json,hashlib,os,pathlib,sys
 sys.exit(int(os.environ['FIXTURE_ASM_EXIT'])) if os.getenv('FIXTURE_ASM_EXIT') else None
 rom=pathlib.Path(sys.argv[-1]); rom.write_bytes(rom.read_bytes()+b' assembled')
+pathlib.Path('Roms/assembler-args.json').write_text(json.dumps(sys.argv[1:]))
 for arg in sys.argv:
  if arg.startswith('--symbols-path=') and not os.getenv('FIXTURE_OMIT_SYMBOLS'):
   pathlib.Path(arg.split('=',1)[1]).write_text('[labels]\\n2C:8000 Oracle_Fixture\\n')
@@ -108,6 +127,43 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         argv = json.loads((self.root / 'Roms/analyzer-args.json').read_text())
         self.assertEqual(argv[argv.index('--sym')+1], str(self.root / 'Roms/oos999x.sym'))
         self.assertIn('pre_assembly', self.receipt['snapshots'])
+
+    def test_lyra_selected_context_and_postassembly_receipt(self):
+        self.env['OOS_LYRA_PROJECT'] = 'private fixture.yaze'
+        result = self.build()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('-DLYRA_BUILD_CONTEXT=1', json.loads((self.root / 'Roms/assembler-args.json').read_text()))
+        self.assertEqual(self.check('lyra_verify')['status'], 'passed')
+        self.assertIn('lyra_verification', self.receipt['artifacts'])
+
+    def test_unselected_context_does_not_pass_internal_define(self):
+        self.assertEqual(self.build().returncode, 0)
+        self.assertNotIn('-DLYRA_BUILD_CONTEXT=1', json.loads((self.root / 'Roms/assembler-args.json').read_text()))
+        self.assertNotIn('lyra_verification', self.receipt['artifacts'])
+
+    def test_lyra_verify_failure_precedes_output_hash_and_rolls_back_generated_data(self):
+        prior = self.write('Data/Generated/lyra_project/runtime_constants.asm', 'previous selected input')
+        previous_receipt = self.write('Roms/oos999x.lyra-verification.json', 'previous selected receipt')
+        self.env.update(OOS_LYRA_PROJECT='private fixture.yaze', FIXTURE_LYRA_VERIFY_EXIT='9')
+        self.assertEqual(self.build().returncode, 9)
+        self.assertEqual(self.check('lyra_verify')['status'], 'failed')
+        self.assertNotIn('output_rom', self.receipt['artifacts'])
+        self.assertNotIn('hooks', self.receipt['artifacts'])
+        self.assertEqual(prior.read_text(), 'previous selected input')
+        self.assertFalse((self.root / 'Data/Generated/lyra_project/prepare.json').exists())
+        self.assertEqual(previous_receipt.read_text(), 'previous selected receipt')
+
+    def test_lyra_prepare_partial_failure_rolls_back_before_assembly(self):
+        self.env.update(OOS_LYRA_PROJECT='private fixture.yaze', FIXTURE_LYRA_PREPARE_EXIT='8')
+        self.assertEqual(self.build().returncode, 8)
+        self.assertNotIn('pre_assembly', self.receipt['snapshots'])
+        self.assertNotIn('output_rom', self.receipt['artifacts'])
+        self.assertFalse((self.root / 'Data/Generated/lyra_project/prepare.json').exists())
+
+    def test_lyra_selected_context_refuses_no_symbols_before_prepare(self):
+        self.env['OOS_LYRA_PROJECT'] = 'private fixture.yaze'
+        self.assertNotEqual(self.build('--no-symbols').returncode, 0)
+        self.assertFalse((self.root / 'Data/Generated/lyra_project/prepare.json').exists())
 
     def test_source_sheet_guard_failure_preserves_previous_output(self):
         output = self.write('Roms/oos999x.sfc', 'previous candidate')
