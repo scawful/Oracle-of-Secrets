@@ -599,12 +599,12 @@ Sprite_Kydreeok_Main:
     .shown
 
     LDA.w SprTimerA, X : BNE .continue
-      STZ.w $0422
-      STZ.w $0424
       LDA $1C : AND.b #$FE : STA $1C ;dismiss the body (BG2) for good: Ganondorf reuses its VRAM
       ; BossKit_FrameEnd stops with the body: end a running quake here.
       LDA.b #$00 : STA.l BossKit_Quake
       REP #$20
+      STZ.w $0422
+      STZ.w $0424
       STZ.w $011A : STZ.w $011C
       SEP #$20
       %ShowUnconditionalMessage($20F)
