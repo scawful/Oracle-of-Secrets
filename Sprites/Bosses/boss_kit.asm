@@ -36,6 +36,9 @@ BossKit_Quake     = $7FF384 ; frames of earthquake left; store a length to start
 !BossKit_WrapFloor = 48
 !BossKit_ShedTime  = 24
 !BossKit_TrailLife = $50
+; Native ice plots its floor tile at $50 after decrementing its lifetime.
+; Preserve the pre-BossKit $7F start so that threshold remains reachable.
+!BossKit_IceTrailLife = $7F
 
 ; 16-bit A: sign-extend the low byte.
 macro BossKit_Sext16()
@@ -208,7 +211,7 @@ BossKit_IceTrail:
   JSR BossKit_MoveUnlessBlocked
   PLA : STA.b $09
   INC.w SprDelay, X : LDA.w SprDelay, X : AND.b #$07 : BNE .drift
-    LDA.b #!BossKit_TrailLife : STA.b $08
+    LDA.b #!BossKit_IceTrailLife : STA.b $08
     LDA.b #$0C : JSL BossKit_FxAtSprite : BCC .drift
       LDA.b #$14 : JSL Sound_SetSfx3PanLong
   .drift
