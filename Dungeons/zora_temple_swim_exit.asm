@@ -30,7 +30,7 @@ ZoraTemple_StairSwimExit_Long: ; @abi long_entry
   LDA.b $A0 : CMP.w #$0027 : BNE .done
   SEP #$20
   LDA.b $1B : BEQ .done                    ; Indoors.
-  LDA.b $67 : AND.b #$08 : BEQ .done       ; North stair travel.
+  LDA.b $11 : CMP.b #$08 : BNE .done       ; North-stair completion; $67 is live swim input.
   LDA.l $7EF411 : AND.b #$01 : BEQ .done   ; Reservoir filled.
   LDA.b $5D : CMP.b #$04 : BNE .done       ; Swimming Link.
   LDA.w $0345 : BEQ .done                  ; In deep water.
