@@ -93,6 +93,11 @@ def descriptor_payload(properties):
 def make_plan(project, base_rom, request=None, *, ledger_path=None):
     """Read saved inputs, validate original frozen meaning, and plan normal data."""
     project, project_rom, project_terrain, request_path = project_context(project, request)
+    request_kind = json.loads(request_path.read_bytes())
+    R.require(type(request_kind) is dict, 'Ordinary request must be an object')
+    if request_kind.get('kind') == 'lyra.current_saved_request.v1':
+        from lyra_project_prepare import current_plan
+        return current_plan(project, base_rom, request_path, ledger_path=ledger_path)
     base_rom = Path(base_rom).resolve(strict=True)
     ledger_path = Path(ledger_path or R.LEDGER).resolve(strict=True)
     before, cache = {}, {}
@@ -156,76 +161,83 @@ def make_plan(project, base_rom, request=None, *, ledger_path=None):
                          {a: (a,) * 4 for a in power_maps}, C._missing(fixture, power, power_maps), frozen)
         R.require(not A.consumer_blockers(document, [0xA1], {}),
                   'A1 active metadata is unsupported by this isolated publication')
-        definitions = dict(enumerate(A.read_tile32(saved, i) for i in range(0x4540)))
         target = D.reconstruct(manifest, {0x37: D.native_map_grid(saved, 0x37)}, include_fixture=False)[0x37]
         R.require(target == D.native_map_grid(fixture, 0x37)
                   and N.native_profile(saved, 0x37) == manifest['maps'][0]['source_profile']
                   == N.native_profile(fixture, 0x37), 'Native37 target/profile differs')
-        originals, used = {}, set()
-        for area in range(160):
-            planes = [N._plane(saved, area, table)[0] for table in N.POINTER_TABLES]
-            originals[area] = planes
-            used.update(hi << 8 | lo for hi, lo in zip(*planes))
-        lookup = {}
-        for i, quad in definitions.items():
-            if i < 0x44C0:
-                lookup.setdefault(quad, []).append(i)
-        native_ids, changed = [], []
-        for cell, original in enumerate(hi << 8 | lo for hi, lo in zip(*originals[0x37])):
-            y, x = divmod(cell, 16)
-            quad = tuple(D.quad_at(target, x * 2, y * 2))
-            if definitions[original] == quad:
-                native_ids.append(original)
-            else:
-                choices = lookup.get(quad, [])
-                R.require(choices, 'Native37 needs an unallocated dictionary definition')
-                native_ids.append(min(choices, key=lambda i: (i not in used, i)))
-                changed.append(cell)
-        R.require(len(changed) == 8, 'Native37 changed-block count differs')
-        a1_allocation = Allocation(((0x3D4206, 0x3D440C),), tuple(i for i, _ in pairs),
-                                   tile32_assignments=pairs)
-        compiled = compile_terrain(document, definitions, a1_allocation,
-                                   map_ids=[0xA1], render_directory={0xA1: (0xA1,) * 4})
-        R.require(len(compiled.new_definitions) == 55, 'A1 must emit exactly the original55 definitions')
-        appearance = A.appearance_plan(saved, document, {0xA1: (0xA1,) * 4})
-        R.require(appearance['coherent'], 'A1 appearance is incoherent')
-        packed = T32.packed_write_plan(saved, document, compiled, a1_allocation)
-        writes = [dict(kind='a1_dictionary_group', **row) for row in packed['writes']]
-
-        def add(kind, at, raw, label=None):
-            writes.append(dict(kind=kind, pc=[at, at + len(raw)], preimage_hex=saved[at:at + len(raw)].hex(),
-                               payload_hex=raw.hex(), **({'label': label} if label else {})))
-
-        for plane, shift in enumerate((8, 0)):
-            at = 0x3D4000 + plane * 259
-            add('native37_stream', at, b'\xe0\xff' + bytes(i >> shift & 255 for i in native_ids) + b'\xff')
-            add('native37_pointer', A.pc(N.POINTER_TABLES[plane]) + 0x37 * 3, A.snes(at).to_bytes(3, 'little'))
-        for stream in compiled.stream_writes:
-            add('a1_stream', stream.pc, stream.payload)
-        partial = C.apply_writes(saved, writes)
-        tables = A.relocated_table_payloads(partial, document, compiled, [0xA1])
-        for table in tables:
-            add('runtime_table', table['proposed_pc'][0], bytes.fromhex(table['payload_hex']),
-                'LyraRuntime_' + table['name'])
-        descriptor, descriptor_json = descriptor_payload(compiled.maps[0].properties)
-        add('a1_descriptor', DESCRIPTOR_PC, descriptor, 'Lyra_A1Descriptor')
-        N.reject_stream_aliases(saved, [tuple(row['pc']) for row in writes])
-        proposed = C.apply_writes(saved, writes)
-        verify_data(saved, proposed, writes, definitions, dict(compiled.new_definitions), target,
-                    [list(document.maps[1][y:y + 32]) for y in range(0, 1024, 32)])
+        compiled_plan = compile_saved_plan(saved, document, pairs, target)
+        R.require(compiled_plan['native37_changed_blocks'] == 8, 'Native37 changed-block count differs')
+        R.require(len(compiled_plan['emitted_definitions']) == 55, 'A1 must emit exactly the original55 definitions')
         return dict(kind='lyra.ordinary_build_prepare.v1', selected=True,
             project=str(project), base_rom=str(base_rom), request=str(request_path), ledger=str(ledger_path),
             current_ledger_sha256=ledger_sha, historical_ledger_sha256=old_sha,
             saved_rom_sha256=R.sha(saved), inputs=[dict(path=str(p), sha256=h) for p, h in sorted(before.items())],
             source_reservation=value['reservation'], source_map_count=160, table_capacity=TABLE_CAPACITY,
-            writes=writes, descriptor=descriptor_json, table_rows=[{k: v for k, v in t.items() if k != 'payload_hex'} for t in tables],
-            emitted_definitions=[dict(tile32_id=i, quadrants=list(q)) for i, q in compiled.new_definitions],
-            targets={'native37': target, 'a1': [list(document.maps[1][y:y + 32]) for y in range(0, 1024, 32)]},
-            stream_bytes=1036, stream_capacity=2072, frozen115_preserved=True,
-            production_maps=[], production_edge_ids=[], save_exit_policy='unchanged_held')
+            **compiled_plan)
     finally:
         R.require(all(R.sha(path.read_bytes()) == digest for path, digest in before.items()),
                   'Publisher input changed while preparing')
+
+
+def compile_saved_plan(saved, document, pairs, target):
+    """Compile the existing isolated37/A1 consumer without rewriting saved maps."""
+    definitions = dict(enumerate(A.read_tile32(saved, i) for i in range(0x4540)))
+    originals, used = {}, set()
+    for area in range(160):
+        planes = [N._plane(saved, area, table)[0] for table in N.POINTER_TABLES]
+        originals[area] = planes
+        used.update(hi << 8 | lo for hi, lo in zip(*planes))
+    lookup = {}
+    for i, quad in definitions.items():
+        if i < 0x44C0:
+            lookup.setdefault(quad, []).append(i)
+    native_ids, changed = [], []
+    for cell, original in enumerate(hi << 8 | lo for hi, lo in zip(*originals[0x37])):
+        y, x = divmod(cell, 16)
+        quad = tuple(D.quad_at(target, x * 2, y * 2))
+        if definitions[original] == quad:
+            native_ids.append(original)
+        else:
+            choices = lookup.get(quad, [])
+            R.require(choices, 'Native37 needs an unallocated dictionary definition')
+            native_ids.append(min(choices, key=lambda i: (i not in used, i)))
+            changed.append(cell)
+    a1_allocation = Allocation(((0x3D4206, 0x3D440C),), tuple(i for i, _ in pairs),
+                               tile32_assignments=pairs)
+    compiled = compile_terrain(document, definitions, a1_allocation,
+                               map_ids=[0xA1], render_directory={0xA1: (0xA1,) * 4})
+    appearance = A.appearance_plan(saved, document, {0xA1: (0xA1,) * 4})
+    R.require(appearance['coherent'], 'A1 appearance is incoherent')
+    packed = T32.packed_write_plan(saved, document, compiled, a1_allocation)
+    writes = [dict(kind='a1_dictionary_group', **row) for row in packed['writes']]
+
+    def add(kind, at, raw, label=None):
+        writes.append(dict(kind=kind, pc=[at, at + len(raw)], preimage_hex=saved[at:at + len(raw)].hex(),
+                           payload_hex=raw.hex(), **({'label': label} if label else {})))
+
+    for plane, shift in enumerate((8, 0)):
+        at = 0x3D4000 + plane * 259
+        add('native37_stream', at, b'\xe0\xff' + bytes(i >> shift & 255 for i in native_ids) + b'\xff')
+        add('native37_pointer', A.pc(N.POINTER_TABLES[plane]) + 0x37 * 3, A.snes(at).to_bytes(3, 'little'))
+    for stream in compiled.stream_writes:
+        add('a1_stream', stream.pc, stream.payload)
+    partial = C.apply_writes(saved, writes)
+    tables = A.relocated_table_payloads(partial, document, compiled, [0xA1])
+    for table in tables:
+        add('runtime_table', table['proposed_pc'][0], bytes.fromhex(table['payload_hex']),
+            'LyraRuntime_' + table['name'])
+    descriptor, descriptor_json = descriptor_payload(compiled.maps[0].properties)
+    add('a1_descriptor', DESCRIPTOR_PC, descriptor, 'Lyra_A1Descriptor')
+    N.reject_stream_aliases(saved, [tuple(row['pc']) for row in writes])
+    proposed = C.apply_writes(saved, writes)
+    verify_data(saved, proposed, writes, definitions, dict(compiled.new_definitions), target,
+                [list(document.maps[1][y:y + 32]) for y in range(0, 1024, 32)])
+    return dict(
+        writes=writes, native37_changed_blocks=len(changed), descriptor=descriptor_json, table_rows=[{k: v for k, v in t.items() if k != 'payload_hex'} for t in tables],
+        emitted_definitions=[dict(tile32_id=i, quadrants=list(q)) for i, q in compiled.new_definitions],
+        targets={'native37': target, 'a1': [list(document.maps[1][y:y + 32]) for y in range(0, 1024, 32)]},
+        stream_bytes=1036, stream_capacity=2072, frozen115_preserved=True,
+        production_maps=[], production_edge_ids=[], save_exit_policy='unchanged_held')
 
 
 def verify_data(saved, compiled, writes, definitions, emitted, native_target, a1_target):
