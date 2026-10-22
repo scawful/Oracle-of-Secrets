@@ -99,6 +99,7 @@ namespace Oracle
   if !DISABLE_OVERWORLD == 0
     %log_section("Overworld", !LOG_OVERWORLD)
     incsrc "Overworld/overworld.asm"
+    incsrc "Core/credits_text.asm" ; staff-roll names (generate_credits_text.py)
   else
     print "*** OVERWORLD DISABLED ***"
   endif
