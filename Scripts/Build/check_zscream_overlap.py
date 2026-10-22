@@ -9,6 +9,7 @@ every emitted byte is outside a reservation.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 from pathlib import Path
 
@@ -120,7 +121,73 @@ def parse_symbols(symbols_path: Path) -> tuple[dict, list[dict]]:
     return labels, mappings
 
 
-def check_overlaps(symbols_path: Path, zs_ranges: list[dict]) -> list[dict]:
+def lyra_owned_regions(verification_path: Path, rom_path: Path, symbols_path: Path,
+                       input_path: Path | None = None) -> tuple[tuple[str, int, int], ...]:
+    """Authorize only this verified generated source's exact current writes.
+
+    Reconstruct the selected plan, rather than granting its reservation or
+    trusting receipt claims. All validation is read-only; no receipt is emitted.
+    Returned bounds are inclusive, matching OWNED_REGIONS.
+    """
+    import lyra_native_loaders as native
+    import lyra_project_admission as A
+    import lyra_project_allocation as R
+    import lyra_project_publisher as P
+
+    folder = Path(input_path) if input_path is not None else REPO_ROOT / P.OUTPUT
+    paths = [Path(verification_path), Path(rom_path), Path(symbols_path)]
+    paths += [folder / name for name in P.GENERATED_FILES]
+    snapshot = {path: path.read_bytes() for path in paths}
+    proof = json.loads(snapshot[Path(verification_path)])
+    prior = json.loads(snapshot[folder / 'prepare.json'])
+    R.require(type(proof) is dict and type(prior) is dict
+              and proof.get('kind') == 'lyra.ordinary_build_verification.v1'
+              and prior.get('kind') == 'lyra.ordinary_build_prepare.v1'
+              and prior.get('selected') is True, 'No verified selected Lyra ownership context')
+    plan = P.make_plan(prior['project'], prior['base_rom'], prior['request'], ledger_path=prior['ledger'])
+    generated = P.render_outputs(plan)
+    R.require(all(snapshot[folder / name] == raw for name, raw in generated.items()),
+              'Lyra generated ownership inputs are stale or changed')
+    saved, compiled, symbols = Path(plan['base_rom']).read_bytes(), snapshot[Path(rom_path)], snapshot[Path(symbols_path)]
+    R.require(proof.get('prepared_sha256') == R.sha(generated['prepare.json'])
+              and proof.get('saved_rom_sha256') == plan['saved_rom_sha256'] == R.sha(saved)
+              and proof.get('compiled_rom_sha256') == R.sha(compiled)
+              and proof.get('symbols_sha256') == R.sha(symbols)
+              and proof.get('current_ledger_sha256') == plan['current_ledger_sha256']
+              and proof.get('production_maps') == [] and proof.get('production_edge_ids') == []
+              and proof.get('save_exit_policy') == 'unchanged_held',
+              'Lyra ownership receipt identity or publication scope differs')
+    P.require_verified_native_receipt(proof.get('native_loaders'), R.sha(compiled))
+    actual_native = native.verify_native_loaders(saved, compiled, symbols,
+        compiled[P.DESCRIPTOR_PC:P.DESCRIPTOR_PC + 64], ledger_path=plan['ledger'])
+    R.require(P.encoded(actual_native) == P.encoded(proof['native_loaders']),
+              'Lyra ownership receipt does not match actual compiled consumers')
+    for row in plan['writes']:
+        start, end = row['pc']
+        R.require(0 <= start < end <= len(saved) == len(compiled)
+                  and saved[start:end].hex() == row['preimage_hex']
+                  and compiled[start:end].hex() == row['payload_hex'],
+                  'Lyra owned write preimage, payload or extent differs')
+    # This also verifies actual payloads, complete dictionary meaning, all160
+    # native component controls and the emitted table legacy prefixes.
+    actual_data = P.verify_data(saved, compiled, plan['writes'],
+        dict(enumerate(A.read_tile32(saved, i) for i in range(0x4540))),
+        {r['tile32_id']: tuple(r['quadrants']) for r in plan['emitted_definitions']},
+        plan['targets']['native37'], plan['targets']['a1'])
+    R.require(all(proof.get(key) == value for key, value in actual_data.items()),
+              'Lyra ownership data receipt differs from actual readback')
+    source = normalize_source_path(str((folder / 'runtime_data.asm').resolve()))
+    regions = tuple((source, row['pc'][0], row['pc'][1] - 1) for row in plan['writes']
+                    if row['kind'] in ('a1_dictionary_group', 'runtime_table'))
+    R.require(regions and all(start <= end for _, start, end in regions), 'Empty Lyra owned write scope')
+    R.require(all(path.read_bytes() == raw for path, raw in snapshot.items())
+              and all(R.sha(Path(row['path']).read_bytes()) == row['sha256'] for row in plan['inputs']),
+              'Lyra ownership input changed during verification')
+    return regions
+
+
+def check_overlaps(symbols_path: Path, zs_ranges: list[dict], *,
+                   verified_regions: tuple[tuple[str, int, int], ...] = ()) -> list[dict]:
     labels, mappings = parse_symbols(symbols_path)
     overlaps = []
     seen = set()
@@ -132,7 +199,7 @@ def check_overlaps(symbols_path: Path, zs_ranges: list[dict]) -> list[dict]:
             if not reserved["start"] <= pc <= reserved["end"]:
                 continue
             if any(source == item["source"] and start <= pc <= end
-                   for source, start, end in OWNED_REGIONS):
+                   for source, start, end in (*OWNED_REGIONS, *verified_regions)):
                 continue
             key = (pc, item["source"], item["line"])
             if key in seen:
@@ -156,11 +223,21 @@ def main() -> int:
                         help="Fresh Asar WLA .sym from the build (default: Roms/oos168x.sym)")
     parser.add_argument("--map", type=Path, default=root / "Core/ZS ROM MAP.txt",
                         help="ZScream reserved PC address map")
+    parser.add_argument("--lyra-verification", type=Path,
+                        help="Current successful Lyra verification receipt; requires --rom")
+    parser.add_argument("--rom", type=Path,
+                        help="Exact assembled ROM bound to --lyra-verification and --symbols")
+    parser.add_argument("--lyra-input", type=Path,
+                        help="Current prepared Lyra inputs (default: Data/Generated/lyra_project)")
     args = parser.parse_args()
+    if bool(args.lyra_verification) != bool(args.rom) or (args.lyra_input and not args.lyra_verification):
+        parser.error("--lyra-verification and --rom are required together; --lyra-input requires both")
     print(f"[*] Checking mapped emission starts in {args.symbols}...")
     try:
-        overlaps = check_overlaps(args.symbols, parse_zs_map(args.map))
-    except (OSError, ValueError) as exc:
+        owned = (lyra_owned_regions(args.lyra_verification, args.rom, args.symbols, args.lyra_input)
+                 if args.lyra_verification else ())
+        overlaps = check_overlaps(args.symbols, parse_zs_map(args.map), verified_regions=owned)
+    except (OSError, ValueError, KeyError, TypeError) as exc:
         print(f"[-] Error: {exc}")
         return 1
     if overlaps:

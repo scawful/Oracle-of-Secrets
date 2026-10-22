@@ -373,8 +373,8 @@ def consumer_blockers(document, traversal, closure):
     return blockers
 
 
-def relocated_table_plan(source, document, compiled, traversal):
-    """Propose existing adapter rows, with exact native legacy-copy hashes."""
+def relocated_table_payloads(source, document, compiled, traversal):
+    """Produce adapter bytes once for both the planner and ordinary publisher."""
     rows = []
     donor_bg = int.from_bytes(source[pc(0x288000) + 0x3A * 2:pc(0x288000) + 0x3A * 2 + 2], "little")
     for name, old, legacy, first, count, stride, offset in SPECS:
@@ -410,8 +410,14 @@ def relocated_table_plan(source, document, compiled, traversal):
         rows.append(dict(name=name, legacy_snes=old, legacy_rows=legacy,
                          legacy_sha256=sha(original), first_map=first, rows=count, stride=stride,
                          proposed_pc=[TABLE_START + offset, TABLE_START + offset + len(proposed)],
-                         proposed_sha256=sha(proposed)))
+                         proposed_sha256=sha(proposed), payload_hex=proposed.hex()))
     return rows
+
+
+def relocated_table_plan(source, document, compiled, traversal):
+    """Propose existing adapter rows, preserving the public report format."""
+    return [{key: value for key, value in row.items() if key != "payload_hex"}
+            for row in relocated_table_payloads(source, document, compiled, traversal)]
 
 
 def plan_admission(source, terrain_text, proof, allocation_value=None, *, candidate_maps=None,

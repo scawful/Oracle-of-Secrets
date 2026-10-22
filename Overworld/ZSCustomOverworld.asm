@@ -1438,6 +1438,7 @@ endif
 pullpc
 ReadAnimatedTable:
 {
+    LyraHost_ReadAnimatedTable = pc()
     PHB : PHK : PLB
 
     REP #$30 ; Set A, X, and Y in 16bit mode.
@@ -1447,7 +1448,13 @@ ReadAnimatedTable:
 
     ; TODO: For the sake of speed, remove these checks.
     ; $00 crashes the game so just double check that.
-    LDA.w Pool_AnimatedTable, X : BNE .not00
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Animated_0 = pc()
+    JSL.l Lyra_ReadAnimated
+    else
+    LDA.w Pool_AnimatedTable, X
+    endif
+    BNE .not00
         LDA.w Pool_DefaultGFXGroups_sheet7, Y
 
         BRA .notFF
@@ -1465,6 +1472,7 @@ ReadAnimatedTable:
     PLB
 
     RTL
+    LyraHost_ReadAnimatedTable_End = pc()
 }
 pushpc
 
@@ -1531,6 +1539,7 @@ endif
 pullpc
 ActivateSubScreen:
 {
+    LyraHost_ActivateSubScreen = pc()
     PHB : PHK : PLB
 
     PHX
@@ -1575,7 +1584,13 @@ endif
     ; Get the overlay value for this overworld area.
     ; ReadOverlayArray 
     LDA.b $8A : ASL : TAX
-    LDA.w Pool_OverlayTable, X : CMP.w #$00FF : BEQ .normal
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Overlay_0 = pc()
+    JSL.l Lyra_ReadOverlay
+    else
+    LDA.w Pool_OverlayTable, X
+    endif
+    CMP.w #$00FF : BEQ .normal
         ; If not $FF, assume we want an overlay.
 
         .turnOn
@@ -1596,6 +1611,7 @@ endif
     PLB
 
     RTL
+    LyraHost_ActivateSubScreen_End = pc()
 }
 pushpc
 
@@ -1610,11 +1626,18 @@ if !Func00EEBB == 1
 org $00EEBB ; $006EBB
 Palette_InitWhiteFilter_Interupt:
 {
+    LyraHost_Palette_InitWhiteFilter_Interupt = pc()
     ; Check if we are currently in an area that is using an overlay.
     ; By this point $8A is already set to the area we are going to so flip the
     ; #$40 bit to get the one we are currently in.
     LDA.b $8A : EOR.w #$0040 : ASL : TAX
-    LDA.l Pool_OverlayTable, X : CMP.w #$0096 : BNE .notPyramidBG
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Overlay_1 = pc()
+    JSL.l Lyra_ReadOverlay
+    else
+    LDA.l Pool_OverlayTable, X
+    endif
+    CMP.w #$0096 : BNE .notPyramidBG
         ; If so, don't fade that color to white because then we will get the 
         ; double fading.
         JSL.l EraseBGColors
@@ -1627,6 +1650,7 @@ Palette_InitWhiteFilter_Interupt:
                  STZ.w $06BA
         
     RTL
+    LyraHost_Palette_InitWhiteFilter_Interupt_End = pc()
 }
 assert pc() <= $00EEE0
 
@@ -1741,6 +1765,7 @@ assert pc() <= $029F85
 org $0283EE ; $0103EE
 PreOverworld_LoadProperties_Interupt:
 {
+    LyraHost_PreOverworld_LoadProperties_Interupt = pc()
     LDX.b #$F3
 
     ; If the volume was set to half, set it back to full.
@@ -1785,8 +1810,19 @@ PreOverworld_LoadProperties_Interupt:
     JSR.w Overworld_LoadAreaPalettes
         
     LDX.b $8A
-    LDA.l $7EFD40, X : STA.b $00
-    LDA.l OverworldPalettesScreenToSet_New, X 
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_SpritePalette_0 = pc()
+    JSL.l Lyra_ReadSpritePalette
+    else
+    LDA.l $7EFD40, X
+    endif
+    STA.b $00
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_PaletteSet_0 = pc()
+    JSL.l Lyra_ReadPaletteSet
+    else
+    LDA.l OverworldPalettesScreenToSet_New, X
+    endif
     
     ; Load some other palettes.
     JSL.l Overworld_LoadPalettes
@@ -1892,6 +1928,7 @@ PreOverworld_LoadProperties_Interupt:
     STZ.w $0402 : STZ.w $0403
 
     ; Bleeds into the next function
+    LyraHost_PreOverworld_LoadProperties_Interupt_End = pc()
 }
 
 ; Vanilla alternate entry point. Called in 4 different locations all of
@@ -1999,6 +2036,7 @@ if !Func028632 == 1
 org $028632 ; $010632 ; @hook module=Overworld
 Credits_LoadScene_Overworld_PrepGFX_Interupt:
 {
+    LyraHost_Credits_LoadScene_Overworld_PrepGFX_Interupt = pc()
     ; The decompression function increases it by 1 so subtract 1 here.
     JSL.l ReadAnimatedTable : DEC : TAY
     JSL.l DecompOwAnimatedTiles
@@ -2017,7 +2055,12 @@ Credits_LoadScene_Overworld_PrepGFX_Interupt:
     PLA : STA.b $00
 
     LDX.b $8A
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_PaletteSet_1 = pc()
+    JSL.l Lyra_ReadPaletteSet
+    else
     LDA.l OverworldPalettesScreenToSet_New, X
+    endif
     JSL.l Overworld_LoadPalettes
         
     LDA.b #$01 : STA.w $0AB2
@@ -2042,6 +2085,7 @@ Credits_LoadScene_Overworld_PrepGFX_Interupt:
     INC.b $B0
         
     RTS
+    LyraHost_Credits_LoadScene_Overworld_PrepGFX_Interupt_End = pc()
 }
 assert pc() <= $028697 ; $010697
 
@@ -2198,6 +2242,7 @@ if !Func02AF58 == 1
 org $02AF58 ; $012F58
 Overworld_ReloadSubscreenOverlay_Interupt:
 {
+    LyraHost_Overworld_ReloadSubscreenOverlay_Interupt = pc()
     SEP #$20 ; Set A in 8bit mode.
 
     ; Check to see if we are using the mirror so that our $A0 doesn't
@@ -2345,6 +2390,7 @@ endif
     ; addition even though the area's palette already has the correct color.
     ; Weather overrides above still load their real overlay IDs normally.
     .checkNoOverlay
+    Lyra_Fixture_PreOverlaySelect = pc()
     CPX.w #$00FF : BNE .notFF
         JMP.w .noSubscreenOverlay
 
@@ -2429,10 +2475,12 @@ endif
     LDA.l $7EC21B : STA.w $0418
     LDA.l $7EC21D : STA.w $0410
     LDA.l $7EC21F : STA.w $0416
-        
+
+    Lyra_Fixture_OverlayRestored = pc()
     SEP #$20 ; Set A in 8bit mode.
         
     RTS
+    LyraHost_Overworld_ReloadSubscreenOverlay_Interupt_End = pc()
 }
 assert pc() <= $02B0D2 ; $0130D2
 
@@ -2523,10 +2571,17 @@ endif
 pullpc
 EnableSubScreenCheckForPyramid:
 {
+    LyraHost_EnableSubScreenCheckForPyramid = pc()
     REP #$20 ; Set A in 16bit mode.
 
     LDA.b $8A : ASL : TAX
-    LDA.w Pool_OverlayTable, X : CMP.w #$0096 : BNE .notPyramidOrCastle
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Overlay_2 = pc()
+    JSL.l Lyra_ReadOverlay
+    else
+    LDA.w Pool_OverlayTable, X
+    endif
+    CMP.w #$0096 : BNE .notPyramidOrCastle
         SEP #$20 ; Set A in 8bit mode.
 
         LDA.b #$01 : STA.b $1D
@@ -2536,6 +2591,7 @@ EnableSubScreenCheckForPyramid:
     SEP #$20 ; Set A in 8bit mode.
 
     RTL
+    LyraHost_EnableSubScreenCheckForPyramid_End = pc()
 }
 pushpc
 
@@ -2548,7 +2604,13 @@ if !Func02B391 == 1
 org $02B391 ; $013391
 MirrorWarp_LoadSpritesAndColors_Interupt:
 {
+    LyraHost_MirrorWarp_LoadSpritesAndColors_Interupt = pc()
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_PaletteSet_2 = pc()
+    JSL.l Lyra_ReadPaletteSet
+    else
     LDA.l OverworldPalettesScreenToSet_New, X
+    endif
     JSL.l Overworld_LoadPalettes
 
     JSL.l Overworld_SetScreenBGColorCacheOnly
@@ -2596,6 +2658,7 @@ MirrorWarp_LoadSpritesAndColors_Interupt:
     .darkWorld
     
     RTL
+    LyraHost_MirrorWarp_LoadSpritesAndColors_Interupt_End = pc()
 }
 assert pc() <= $02B40A ; $01340A
 
@@ -2655,14 +2718,21 @@ endif
 pullpc
 ReadOverlayArray:
 {
+    LyraHost_ReadOverlayArray = pc()
     PHB : PHK : PLB
 
     LDA.b $8A : ASL : TAX
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Overlay_3 = pc()
+    JSL.l Lyra_ReadOverlay
+    else
     LDA.w Pool_OverlayTable, X
+    endif
 
     PLB
 
     RTL
+    LyraHost_ReadOverlayArray_End = pc()
 }
 
 ; TODO: These comparison values will need to be calculated somehow or set
@@ -2742,6 +2812,7 @@ endif
 pullpc
 ReadOverlayArray2:
 {
+    LyraHost_ReadOverlayArray2 = pc()
     PHX
 
     ; A is already 16 bit here.
@@ -2749,13 +2820,20 @@ ReadOverlayArray2:
 
     ; ReadOverlayArray
     LDA.b $8A : ASL : TAX
-    LDA.l Pool_OverlayTable, X : TAY
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Overlay_4 = pc()
+    JSL.l Lyra_ReadOverlay
+    else
+    LDA.l Pool_OverlayTable, X
+    endif
+    TAY
 
     SEP #$10 ; Set X and Y in 8bit mode.
 
     PLX
 
     RTL
+    LyraHost_ReadOverlayArray2_End = pc()
 }
 pushpc
 
@@ -2776,6 +2854,7 @@ assert pc() <= $02A07D ; $01207D
 org $02C692 ; $014692
 Overworld_LoadAreaPalettes:
 {
+    LyraHost_Overworld_LoadAreaPalettes = pc()
     ; $0AB3 =
     ; 0 - LW
     ; 1 - DW
@@ -2783,7 +2862,13 @@ Overworld_LoadAreaPalettes:
     ; 3 - DW death mountain
     ; 4 - triforce room
     LDX.b $8A
-    LDA.l Pool_MainPaletteTable, X : STA.w $0AB3
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_MainPalette_0 = pc()
+    JSL.l Lyra_ReadMainPalette
+    else
+    LDA.l Pool_MainPaletteTable, X
+    endif
+    STA.w $0AB3
 
     ; Reset pal buffer high byte.
     STZ.w $0AA9
@@ -2831,6 +2916,7 @@ Overworld_LoadAreaPalettes:
     JSL.l Palette_OverworldBgMain
         
     RTS
+    LyraHost_Overworld_LoadAreaPalettes_End = pc()
 }
 assert pc() <= $02C6EB ; $0146EB
 
@@ -3081,6 +3167,7 @@ NewOverworld_FinishTransGfx:
 
 BlockGFXCheck:
 {
+    LyraHost_BlockGFXCheck = pc()
     REP #$30
 
     ; $0E = $8A * 8 
@@ -3106,7 +3193,13 @@ BlockGFXCheck:
         REP #$30
         AND.w #$00FF : CLC : ADC.b $0E : TAX
         SEP #$20
-        LDA.l Pool_OWGFXGroupTable_sheet0, X : STA.b $00
+        if !LYRA_PROJECT_DATA_PRESENT == 1
+        LyraCall_Gfx0_0 = pc()
+        JSL.l Lyra_ReadGfx0
+        else
+        LDA.l Pool_OWGFXGroupTable_sheet0, X
+        endif
+        STA.b $00
         SEP #$10
 
         ; A custom profile marks its underlying native slots for restoration.
@@ -3183,10 +3276,12 @@ BlockGFXCheck:
 
     ; Only copy the latter half of the sheet to prevent the animated tiles
     ; from flickering on transition.
+    LyraHost_BlockGFXCheck_End = pc()
 }
 
 CheckForChangeGraphicsTransitionLoad:
 {
+    LyraHost_CheckForChangeGraphicsTransitionLoad = pc()
     ; Are we currently in a mosaic?
     LDA.b $11 : CMP.b #$0F : BEQ .mosaic
         ; Are we entering a special area?
@@ -3211,7 +3306,13 @@ CheckForChangeGraphicsTransitionLoad:
                     ; Check to see if we need to update the main palette by
                     ; checking what was previously loaded.
                     LDX.b $8A
-                    LDA.w Pool_MainPaletteTable, X : CMP.w $0AB3 : BEQ .dontUpdateMain1
+                    if !LYRA_PROJECT_DATA_PRESENT == 1
+                    LyraCall_MainPalette_1 = pc()
+                    JSL.l Lyra_ReadMainPalette
+                    else
+                    LDA.w Pool_MainPaletteTable, X
+                    endif
+                    CMP.w $0AB3 : BEQ .dontUpdateMain1
                         STA.w $0AB3
 
                         ; Run the modified routine that loads the buffer
@@ -3254,7 +3355,13 @@ CheckForChangeGraphicsTransitionLoad:
     ; Check to see if we need to update the main palette by checking
     ; what was previously loaded.
     LDX.b $8A
-    LDA.w Pool_MainPaletteTable, X : CMP.w $0AB3 : BEQ .dontUpdateMain2
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_MainPalette_2 = pc()
+    JSL.l Lyra_ReadMainPalette
+    else
+    LDA.w Pool_MainPaletteTable, X
+    endif
+    CMP.w $0AB3 : BEQ .dontUpdateMain2
         STA.w $0AB3
 
         ; Run the vanilla routine that only loads the buffer.
@@ -3278,7 +3385,13 @@ CheckForChangeGraphicsTransitionLoad:
     ; Change the fixed color depending on our sub screen overlay.
     ; Lost woods and skull woods.
     LDA.b $8A : ASL : TAX
-    LDA.w Pool_OverlayTable, X : CMP.w #$009D : BEQ .noSpecialColor
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Overlay_5 = pc()
+    JSL.l Lyra_ReadOverlay
+    else
+    LDA.w Pool_OverlayTable, X
+    endif
+    CMP.w #$009D : BEQ .noSpecialColor
         CMP.w #$0040 : BEQ .noSpecialColor
             ; Pyramid area.
             CMP.w #$0096 : BEQ .specialColor
@@ -3321,6 +3434,7 @@ CheckForChangeGraphicsTransitionLoad:
     INC.b $11
 
     RTS
+    LyraHost_CheckForChangeGraphicsTransitionLoad_End = pc()
 }
 
 ; The following 2 functions are copied from the bank 0x1B but they only
@@ -3410,6 +3524,7 @@ Palette_MultiLoad_NonBuffer:
 
 LoadTransMainGFX:
 {
+    LyraHost_LoadTransMainGFX = pc()
     ; Setup the decompression buffer address.
     ; $00[3] = $7E4000
                  STZ.b $00
@@ -3425,7 +3540,13 @@ LoadTransMainGFX:
 
     ; Sheet 0 (static 0)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet0, X : CMP.b #$FF : BEQ .noBgGfxChange0
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx0_1 = pc()
+    JSL.l Lyra_ReadGfx0
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet0, X
+    endif
+    CMP.b #$FF : BEQ .noBgGfxChange0
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+0 : BEQ .noBgGfxChange0
             TAY
@@ -3444,7 +3565,13 @@ LoadTransMainGFX:
     
     ; Sheet 1 (static 1)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet1, X : CMP.b #$FF : BEQ .noBgGfxChange1 
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx1_0 = pc()
+    JSL.l Lyra_ReadGfx1
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet1, X
+    endif
+    CMP.b #$FF : BEQ .noBgGfxChange1
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+1 : BEQ .noBgGfxChange1
             TAY
@@ -3463,7 +3590,13 @@ LoadTransMainGFX:
 
     ; Sheet 2 (static 2)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet2, X : CMP.b #$FF : BEQ .noBgGfxChange2
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx2_0 = pc()
+    JSL.l Lyra_ReadGfx2
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet2, X
+    endif
+    CMP.b #$FF : BEQ .noBgGfxChange2
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+2 : BEQ .noBgGfxChange2
             TAY
@@ -3482,7 +3615,13 @@ LoadTransMainGFX:
 
     ; Sheet 7 (animated)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet7, X : CMP.b #$FF : BEQ .noBgGfxChange7
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx7_0 = pc()
+    JSL.l Lyra_ReadGfx7
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet7, X
+    endif
+    CMP.b #$FF : BEQ .noBgGfxChange7
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+7 : BEQ .noBgGfxChange7
             TAY
@@ -3494,6 +3633,7 @@ LoadTransMainGFX:
     .noBgGfxChange7
 
     RTS
+    LyraHost_LoadTransMainGFX_End = pc()
 }
 
 ; Prepares the transition graphics to be transferred to VRAM during NMI.
@@ -4113,6 +4253,7 @@ endif
 pullpc
 NewLoadTransAuxGFX:
 {
+    LyraHost_NewLoadTransAuxGFX = pc()
     PHB : PHK : PLB
 
     LDA.b $1B : BNE .indoors
@@ -4147,7 +4288,12 @@ NewLoadTransAuxGFX:
 
     ; Sheet 3 (variable 0)
     LDX.b $0E
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx3_0 = pc()
+    JSL.l Lyra_ReadGfx3
+    else
     LDA.w Pool_OWGFXGroupTable_sheet3, X
+    endif
     PHX : SEP #$10
     LDX.b #$03 : JSL Oracle_ResolveCustomGraphicsTransitionSheet
     REP #$10 : PLX
@@ -4169,7 +4315,12 @@ NewLoadTransAuxGFX:
 
     ; Sheet 4 (variable 1)
     LDX.b $0E
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx4_0 = pc()
+    JSL.l Lyra_ReadGfx4
+    else
     LDA.w Pool_OWGFXGroupTable_sheet4, X
+    endif
     PHX : SEP #$10
     LDX.b #$04 : JSL Oracle_ResolveCustomGraphicsTransitionSheet
     REP #$10 : PLX
@@ -4191,7 +4342,12 @@ NewLoadTransAuxGFX:
 
     ; Sheet 5 (variable 2)
     LDX.b $0E
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx5_0 = pc()
+    JSL.l Lyra_ReadGfx5
+    else
     LDA.w Pool_OWGFXGroupTable_sheet5, X
+    endif
     PHX : SEP #$10
     LDX.b #$05 : JSL Oracle_ResolveCustomGraphicsTransitionSheet
     REP #$10 : PLX
@@ -4213,7 +4369,12 @@ NewLoadTransAuxGFX:
 
     ; Sheet 6 (variable 3)
     LDX.b $0E
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx6_0 = pc()
+    JSL.l Lyra_ReadGfx6
+    else
     LDA.w Pool_OWGFXGroupTable_sheet6, X
+    endif
     PHX : SEP #$10
     LDX.b #$06 : JSL Oracle_ResolveCustomGraphicsTransitionSheet
     REP #$10 : PLX
@@ -4239,6 +4400,7 @@ NewLoadTransAuxGFX:
 
     ; $005706 Return to regular code.
     JML.l LoadTransAuxGFX_sprite_continue
+    LyraHost_NewLoadTransAuxGFX_End = pc()
 }
 
 NMI_UpdateChr_Bg2HalfAndAnimatedLONG:
@@ -4367,6 +4529,7 @@ endif
 pullpc
 InitTilesetsLongCalls:
 {
+    LyraHost_InitTilesetsLongCalls = pc()
     SEP #$20
 
     ; TODO: This will eventually be changed when changing the dungeon GFX.
@@ -4402,7 +4565,13 @@ InitTilesetsLongCalls:
     LDA.b $8A : AND.w #$00C0 : LSR #3 : TAY ; (Area / 8) = LW, DW, or SW *8
     SEP #$20
     
-    LDA.w Pool_OWGFXGroupTable_sheet0, X : CMP.b #$FF : BNE .notFF0
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx0_2 = pc()
+    JSL.l Lyra_ReadGfx0
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet0, X
+    endif
+    CMP.b #$FF : BNE .notFF0
         LDA.w Pool_DefaultGFXGroups_sheet0, Y
 
     .notFF0
@@ -4410,7 +4579,13 @@ InitTilesetsLongCalls:
     STA.b $0D
     STA.w TransGFXModule_PriorSheets+0
 
-    LDA.w Pool_OWGFXGroupTable_sheet1, X : CMP.b #$FF : BNE .notFF1
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx1_1 = pc()
+    JSL.l Lyra_ReadGfx1
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet1, X
+    endif
+    CMP.b #$FF : BNE .notFF1
         LDA.w Pool_DefaultGFXGroups_sheet1, Y
 
     .notFF1
@@ -4418,7 +4593,13 @@ InitTilesetsLongCalls:
     STA.b $0C
     STA.w TransGFXModule_PriorSheets+1
 
-    LDA.w Pool_OWGFXGroupTable_sheet2, X : CMP.b #$FF : BNE .notFF2
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx2_1 = pc()
+    JSL.l Lyra_ReadGfx2
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet2, X
+    endif
+    CMP.b #$FF : BNE .notFF2
         LDA.w Pool_DefaultGFXGroups_sheet2, Y
 
     .notFF2
@@ -4426,7 +4607,13 @@ InitTilesetsLongCalls:
     STA.b $0B
     STA.w TransGFXModule_PriorSheets+2
     
-    LDA.w Pool_OWGFXGroupTable_sheet3, X : CMP.b #$FF : BNE .notFF3
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx3_1 = pc()
+    JSL.l Lyra_ReadGfx3
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet3, X
+    endif
+    CMP.b #$FF : BNE .notFF3
         LDA.w Pool_DefaultGFXGroups_sheet3, Y
 
     .notFF3
@@ -4435,7 +4622,13 @@ InitTilesetsLongCalls:
     STA.b $0A
     STA.w TransGFXModule_PriorSheets+3
 
-    LDA.w Pool_OWGFXGroupTable_sheet4, X : CMP.b #$FF : BNE .notFF4
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx4_1 = pc()
+    JSL.l Lyra_ReadGfx4
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet4, X
+    endif
+    CMP.b #$FF : BNE .notFF4
         LDA.w Pool_DefaultGFXGroups_sheet4, Y
 
     .notFF4
@@ -4444,7 +4637,13 @@ InitTilesetsLongCalls:
     STA.b $09
     STA.w TransGFXModule_PriorSheets+4
 
-    LDA.w Pool_OWGFXGroupTable_sheet5, X : CMP.b #$FF : BNE .notFF5
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx5_1 = pc()
+    JSL.l Lyra_ReadGfx5
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet5, X
+    endif
+    CMP.b #$FF : BNE .notFF5
         LDA.w Pool_DefaultGFXGroups_sheet5, Y
 
     .notFF5
@@ -4453,7 +4652,13 @@ InitTilesetsLongCalls:
     STA.b $08
     STA.w TransGFXModule_PriorSheets+5
 
-    LDA.w Pool_OWGFXGroupTable_sheet6, X : CMP.b #$FF : BNE .notFF6
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx6_1 = pc()
+    JSL.l Lyra_ReadGfx6
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet6, X
+    endif
+    CMP.b #$FF : BNE .notFF6
         LDA.w Pool_DefaultGFXGroups_sheet6, Y
 
     .notFF6
@@ -4462,7 +4667,13 @@ InitTilesetsLongCalls:
     STA.b $07
     STA.w TransGFXModule_PriorSheets+6
     
-    LDA.w Pool_OWGFXGroupTable_sheet7, X : CMP.b #$FF : BNE .notFF7
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx7_1 = pc()
+    JSL.l Lyra_ReadGfx7
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet7, X
+    endif
+    CMP.b #$FF : BNE .notFF7
         LDA.w Pool_DefaultGFXGroups_sheet7, Y
 
     .notFF7
@@ -4474,10 +4685,12 @@ InitTilesetsLongCalls:
 
     ; $006282 Skip normal sheet load.
     JML.l $00E282
+    LyraHost_InitTilesetsLongCalls_End = pc()
 }
 
 AnimateMirrorWarp_DecompressNewTileSetsLongCalls:
 {
+    LyraHost_AnimateMirrorWarp_DecompressNewTileSetsLongCalls = pc()
     PHB : PHK : PLB
 
     LDA.b $8A : AND.w #$00FF : ASL #3 : TAX
@@ -4485,7 +4698,13 @@ AnimateMirrorWarp_DecompressNewTileSetsLongCalls:
 
     SEP #$20
 
-    LDA.w Pool_OWGFXGroupTable_sheet3, X : CMP.b #$FF : BNE .notFF3
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx3_2 = pc()
+    JSL.l Lyra_ReadGfx3
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet3, X
+    endif
+    CMP.b #$FF : BNE .notFF3
         LDA.w Pool_DefaultGFXGroups_sheet3, Y
 
     .notFF3
@@ -4493,7 +4712,13 @@ AnimateMirrorWarp_DecompressNewTileSetsLongCalls:
     STA.l $7EC2F8
     STA.w TransGFXModule_PriorSheets+3
 
-    LDA.w Pool_OWGFXGroupTable_sheet4, X : CMP.b #$FF : BNE .notFF4
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx4_2 = pc()
+    JSL.l Lyra_ReadGfx4
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet4, X
+    endif
+    CMP.b #$FF : BNE .notFF4
         LDA.w Pool_DefaultGFXGroups_sheet4, Y
 
     .notFF4
@@ -4501,7 +4726,13 @@ AnimateMirrorWarp_DecompressNewTileSetsLongCalls:
     STA.l $7EC2F9
     STA.w TransGFXModule_PriorSheets+4
 
-    LDA.w Pool_OWGFXGroupTable_sheet5, X : CMP.b #$FF : BNE .notFF5
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx5_2 = pc()
+    JSL.l Lyra_ReadGfx5
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet5, X
+    endif
+    CMP.b #$FF : BNE .notFF5
         LDA.w Pool_DefaultGFXGroups_sheet5, Y
 
     .notFF5
@@ -4509,7 +4740,13 @@ AnimateMirrorWarp_DecompressNewTileSetsLongCalls:
     STA.l $7EC2FA
     STA.w TransGFXModule_PriorSheets+5
 
-    LDA.w Pool_OWGFXGroupTable_sheet6, X : CMP.b #$FF : BNE .notFF6
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx6_2 = pc()
+    JSL.l Lyra_ReadGfx6
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet6, X
+    endif
+    CMP.b #$FF : BNE .notFF6
         LDA.w Pool_DefaultGFXGroups_sheet6, Y
 
     .notFF6
@@ -4521,10 +4758,12 @@ AnimateMirrorWarp_DecompressNewTileSetsLongCalls:
 
     ; $005949 Skip normal sheet load.
     JML.l $00D949
+    LyraHost_AnimateMirrorWarp_DecompressNewTileSetsLongCalls_End = pc()
 }
 
 AnimateMirrorWarp_DecompressNewTileSetsLongCalls2:
 {
+    LyraHost_AnimateMirrorWarp_DecompressNewTileSetsLongCalls2 = pc()
     PHB : PHK : PLB
 
     REP #$30
@@ -4532,7 +4771,13 @@ AnimateMirrorWarp_DecompressNewTileSetsLongCalls2:
     LDA.b $8A : AND.w #$00C0 : LSR #3 : TAY ; (Area / 8) = LW, DW, or SW *8
     SEP #$20
 
-    LDA.w Pool_OWGFXGroupTable_sheet1, X : CMP.b #$FF : BNE .notFF1
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx1_2 = pc()
+    JSL.l Lyra_ReadGfx1
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet1, X
+    endif
+    CMP.b #$FF : BNE .notFF1
         LDA.w Pool_DefaultGFXGroups_sheet1, Y
 
     .notFF1
@@ -4540,7 +4785,13 @@ AnimateMirrorWarp_DecompressNewTileSetsLongCalls2:
     STA.b $08
     STA.w TransGFXModule_PriorSheets+1
 
-    LDA.w Pool_OWGFXGroupTable_sheet0, X : CMP.b #$FF : BNE .notFF0
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx0_3 = pc()
+    JSL.l Lyra_ReadGfx0
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet0, X
+    endif
+    CMP.b #$FF : BNE .notFF0
         LDA.w Pool_DefaultGFXGroups_sheet0, Y
 
     .notFF0
@@ -4554,10 +4805,12 @@ AnimateMirrorWarp_DecompressNewTileSetsLongCalls2:
 
     ; $005988 Skip normal sheet load.
     JML.l $00D988
+    LyraHost_AnimateMirrorWarp_DecompressNewTileSetsLongCalls2_End = pc()
 }
 
 AnimateMirrorWarp_DecompressBackgroundsALongCalls:
 {
+    LyraHost_AnimateMirrorWarp_DecompressBackgroundsALongCalls = pc()
     PHB : PHK : PLB
 
     REP #$30
@@ -4565,7 +4818,13 @@ AnimateMirrorWarp_DecompressBackgroundsALongCalls:
     LDA.b $8A : AND.w #$00C0 : LSR #3 : TAY ; (Area / 8) = LW, DW, or SW *8
     SEP #$20
 
-    LDA.w Pool_OWGFXGroupTable_sheet3, X : CMP.b #$FF : BNE .notFF3
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx3_3 = pc()
+    JSL.l Lyra_ReadGfx3
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet3, X
+    endif
+    CMP.b #$FF : BNE .notFF3
         LDA.w Pool_DefaultGFXGroups_sheet3, Y
 
     .notFF3
@@ -4573,7 +4832,13 @@ AnimateMirrorWarp_DecompressBackgroundsALongCalls:
     STA.b $08
     STA.w TransGFXModule_PriorSheets+3
 
-    LDA.w Pool_OWGFXGroupTable_sheet2, X : CMP.b #$FF : BNE .notFF2
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx2_2 = pc()
+    JSL.l Lyra_ReadGfx2
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet2, X
+    endif
+    CMP.b #$FF : BNE .notFF2
         LDA.w Pool_DefaultGFXGroups_sheet2, Y
 
     .notFF2
@@ -4587,10 +4852,12 @@ AnimateMirrorWarp_DecompressBackgroundsALongCalls:
 
     ; $0059C7 Skip normal sheet load.
     JML.l $00D9C7
+    LyraHost_AnimateMirrorWarp_DecompressBackgroundsALongCalls_End = pc()
 }
 
 AnimateMirrorWarp_DecompressBackgroundsCLongCalls:
 {
+    LyraHost_AnimateMirrorWarp_DecompressBackgroundsCLongCalls = pc()
     PHB : PHK : PLB
 
     REP #$30
@@ -4598,7 +4865,13 @@ AnimateMirrorWarp_DecompressBackgroundsCLongCalls:
     LDA.b $8A : AND.w #$00C0 : LSR #3 : TAY ; (Area / 8) = LW, DW, or SW *8
     SEP #$20
 
-    LDA.w Pool_OWGFXGroupTable_sheet7, X : CMP.b #$FF : BNE .notFF7
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx7_2 = pc()
+    JSL.l Lyra_ReadGfx7
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet7, X
+    endif
+    CMP.b #$FF : BNE .notFF7
         LDA.w Pool_DefaultGFXGroups_sheet7, Y
 
     .notFF7
@@ -4607,7 +4880,13 @@ AnimateMirrorWarp_DecompressBackgroundsCLongCalls:
     STA.w AnimatedTileGFXSet
     STA.w TransGFXModule_PriorSheets+7
 
-    LDA.w Pool_OWGFXGroupTable_sheet6, X : CMP.b #$FF : BNE .notFF6
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Gfx6_3 = pc()
+    JSL.l Lyra_ReadGfx6
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet6, X
+    endif
+    CMP.b #$FF : BNE .notFF6
         LDA.w Pool_DefaultGFXGroups_sheet6, Y
 
     .notFF6
@@ -4621,6 +4900,7 @@ AnimateMirrorWarp_DecompressBackgroundsCLongCalls:
 
     ; $005A3A Skip normal sheet load.
     JML.l $00DA3A
+    LyraHost_AnimateMirrorWarp_DecompressBackgroundsCLongCalls_End = pc()
 }
 
 pushpc
@@ -4660,6 +4940,7 @@ if !Func02A9C4 == 1
 org $02A9C4 ; $0129C4
 OverworldHandleTransitions:
 {
+    LyraHost_OverworldHandleTransitions = pc()
     ; Tells us which direction we're scrolling in.
     LDA.w $0416 : BEQ .noScroll
         JSR.w Overworld_ScrollMap
@@ -4833,12 +5114,24 @@ OverworldHandleTransitions:
         .noMosaic
 
         LDX.b $8A
-        LDA.l $7EFD40, X : STA.b $00
+        if !LYRA_PROJECT_DATA_PRESENT == 1
+        LyraCall_SpritePalette_1 = pc()
+        JSL.l Lyra_ReadSpritePalette
+        else
+        LDA.l $7EFD40, X
+        endif
+        STA.b $00
+        if !LYRA_PROJECT_DATA_PRESENT == 1
+        LyraCall_PaletteSet_3 = pc()
+        JSL.l Lyra_ReadPaletteSet
+        else
         LDA.l OverworldPalettesScreenToSet_New, X
+        endif
         JSL.l Overworld_LoadPalettes
         JSR.w Overworld_CgramAuxToMain
 
         RTS
+    LyraHost_OverworldHandleTransitions_End = pc()
 }
 assert pc() <= $02AB0D ; $012B0D (next org at $02AB0D)
 
@@ -5000,25 +5293,55 @@ pullpc
 ; X - 0 for small map, 2 for large map
 NewOverworld_SetCameraBounds:
 {
+    LyraHost_NewOverworld_SetCameraBounds = pc()
     PHB : PHK : PLB
 
     LDX.b $8A
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Size_0 = pc()
+    JSL.l Lyra_ReadSize
+    else
     LDA.l Pool_BufferAndBuildMap16Stripes_overworldScreenSize, X
+    endif
     AND.w #$00FF : ASL : TAX
 
     REP #$10
 
     LDA.b $8A : ASL : TAY
-    LDA.w Pool_OverworldTransitionPositionY_New, Y : STA.w $0600
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_TransitionYY_0 = pc()
+    JSL.l Lyra_ReadTransitionYY
+    else
+    LDA.w Pool_OverworldTransitionPositionY_New, Y
+    endif
+    STA.w $0600
     CLC : ADC.w .boundary_y_size, X                : STA.w $0602
     
-    LDA.w Pool_OverworldTransitionPositionX_New, Y : STA.w $0604
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_TransitionXY_0 = pc()
+    JSL.l Lyra_ReadTransitionXY
+    else
+    LDA.w Pool_OverworldTransitionPositionX_New, Y
+    endif
+    STA.w $0604
     CLC : ADC.w .boundary_x_size, X                : STA.w $0606
 
-    LDA.w Pool_trans_target_north_new, Y      : STA.w $0610
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_ScrollNorth_0 = pc()
+    JSL.l Lyra_ReadScrollNorth
+    else
+    LDA.w Pool_trans_target_north_new, Y
+    endif
+    STA.w $0610
     CLC : ADC.w .trans_target_south_offset, X : STA.w $0612
 
-    LDA.w Pool_trans_target_west_new, Y      : STA.w $0614
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_ScrollWest_0 = pc()
+    JSL.l Lyra_ReadScrollWest
+    else
+    LDA.w Pool_trans_target_west_new, Y
+    endif
+    STA.w $0614
     CLC : ADC.w .trans_target_east_offset, X : STA.w $0616
 
     SEP #$10
@@ -5039,6 +5362,7 @@ NewOverworld_SetCameraBounds:
 
     .trans_target_east_offset
     dw $0300, $0500, $0500, $0300
+    LyraHost_NewOverworld_SetCameraBounds_End = pc()
 }
 
 ; NOTE: UNUSED:
@@ -5108,6 +5432,7 @@ assert pc() <= $08FA81 ; $047A81
 org $02AB0D ; $012B0D
 Overworld_LoadMapProperties_Interupt:
 {
+    LyraHost_Overworld_LoadMapProperties_Interupt = pc()
     CPX.b #$80 : BCS .inSW
         ; $0AA3 is the sprite graphics index.
         LDA.l $7EFCC0, X
@@ -5116,7 +5441,12 @@ Overworld_LoadMapProperties_Interupt:
 
     .inSW
 
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_SpriteGfxByArea_0 = pc()
+    JSL.l Lyra_ReadSpriteGfxByArea
+    else
     LDA.l Pool_LoadSpecialOverworld_GFX_0AA3-$80, X
+    endif
 
     .write0AA3
 
@@ -5124,7 +5454,12 @@ Overworld_LoadMapProperties_Interupt:
     STA.w $0AA3
 
     ; $0AA2 is the secondary background graphics index.
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_AreaGfx_0 = pc()
+    JSL.l Lyra_ReadAreaGfx
+    else
     LDA.l GFX0AA2ValsOW, X
+    endif
     
     ; In PrepTransAuxGFX the game checks if $0AA2 is below 0x20, if it is,
     ; it will load 3 of the aux sheets as using the low palette instead of
@@ -5135,7 +5470,13 @@ Overworld_LoadMapProperties_Interupt:
     ; Code from vanilla that is still needed.
     LDA.w $0712 : STA.w $0714
 
-    LDA.l Pool_BufferAndBuildMap16Stripes_overworldScreenSize, X : TAX
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Size_1 = pc()
+    JSL.l Lyra_ReadSize
+    else
+    LDA.l Pool_BufferAndBuildMap16Stripes_overworldScreenSize, X
+    endif
+    TAX
     LDA.l .xSize, X : STA.w $0719
     LDA.l .ySize, X : STA.w $0717
 
@@ -5171,6 +5512,7 @@ Overworld_LoadMapProperties_Interupt:
 
     .ySize
     db $01, $03, $01, $03
+    LyraHost_Overworld_LoadMapProperties_Interupt_End = pc()
 }
 assert pc() <= $02AB7B ; $012B7B
 
@@ -5221,14 +5563,32 @@ Copy0716:
 
 AreaSizeCheck:
 {
+    LyraHost_AreaSizeCheck = pc()
     PHB : PHK : PLB
 
     LDA.b $8A : ASL : TAX
-    LDA.l Pool_OverworldTransitionPositionY_New, X          : STA.w $0708
-    LDA.l Pool_OverworldTransitionPositionX_New, X : LSR #3 : STA.w $070C
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_TransitionYX_0 = pc()
+    JSL.l Lyra_ReadTransitionYX
+    else
+    LDA.l Pool_OverworldTransitionPositionY_New, X
+    endif
+    STA.w $0708
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_TransitionXX_0 = pc()
+    JSL.l Lyra_ReadTransitionXX
+    else
+    LDA.l Pool_OverworldTransitionPositionX_New, X
+    endif
+    LSR #3 : STA.w $070C
 
     LDX.b $8A
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Size_2 = pc()
+    JSL.l Lyra_ReadSize
+    else
     LDA.l Pool_BufferAndBuildMap16Stripes_overworldScreenSize, X
+    endif
     AND.w #$00FF : ASL : TAX
     LDA.w .YSize, X : STA.w $070A
     LDA.w .XSize, X : STA.w $070E
@@ -5243,6 +5603,7 @@ AreaSizeCheck:
 
     .XSize
     dw $003E, $007E, $007E, $003E
+    LyraHost_AreaSizeCheck_End = pc()
 }
 
 pushpc
@@ -5254,8 +5615,15 @@ if !Func09C4C7 == $01
 org $09C4C7 ; $04C4C7
 LoadOverworldSprites_Interupt:
 {
+    LyraHost_LoadOverworldSprites_Interupt = pc()
     LDX.w $040A
-    LDA.l Pool_BufferAndBuildMap16Stripes_overworldScreenSize, X : TAY
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Size_3 = pc()
+    JSL.l Lyra_ReadSize
+    else
+    LDA.l Pool_BufferAndBuildMap16Stripes_overworldScreenSize, X
+    endif
+    TAY
 
     LDA.w .xSize, Y : STA.w $0FB9
                       STZ.w $0FB8 
@@ -5272,7 +5640,13 @@ LoadOverworldSprites_Interupt:
     TXA : ASL : CLC : ADC.w .phaseOffset, Y : TAX
     
     ; Get the overworld sprite pointer based on the overworld area and game phase.
-    LDA.l Pool_Overworld_SpritePointers_state_0_New, X : STA.b $00
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_SpritePointer = pc()
+    JSL.l Lyra_SpritePointer
+    else
+    LDA.l Pool_Overworld_SpritePointers_state_0_New, X
+    endif
+    STA.b $00
 
     SEP #$20
 
@@ -5292,6 +5666,7 @@ LoadOverworldSprites_Interupt:
 
     org $09C50D ; $04C50D
     .skip
+    LyraHost_LoadOverworldSprites_Interupt_End = pc()
 }
 assert pc() <= $09C50D ; $04C50D
 
@@ -5454,22 +5829,46 @@ if !Func02E931 == $01
 org $02E931 ; $016931
 LoadSpecialOverworld_Interupt:
 {
+    LyraHost_LoadSpecialOverworld_Interupt = pc()
     LDA.b $8A : SEC : SBC.b #$80 : TAX
 
     ; GFX $0AA3
-    LDA.l Pool_LoadSpecialOverworld_GFX_0AA3, X : STA.w $0AA3
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_SpecialSpriteGfx_0 = pc()
+    JSL.l Lyra_ReadSpecialSpriteGfx
+    else
+    LDA.l Pool_LoadSpecialOverworld_GFX_0AA3, X
+    endif
+    STA.w $0AA3
 
     ; GFX $0AA2
-    LDA.l Pool_LoadSpecialOverworld_GFX_0AA2, X : STA.w $0AA2
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_SpecialEntryGfx_0 = pc()
+    JSL.l Lyra_ReadSpecialEntryGfx
+    else
+    LDA.l Pool_LoadSpecialOverworld_GFX_0AA2, X
+    endif
+    STA.w $0AA2
     
     ; Palette property b
-    LDA.l Pool_LoadSpecialOverworld_palette_prop_b, X : STA.b $00
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_SpecialPalette_0 = pc()
+    JSL.l Lyra_ReadSpecialPalette
+    else
+    LDA.l Pool_LoadSpecialOverworld_palette_prop_b, X
+    endif
+    STA.b $00
 
     ; This table call was changed to read from the same one as the rest of the
     ; areas and is no longer SW specific.
     ; Property property a
     LDX.b $8A
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_PaletteSet_4 = pc()
+    JSL.l Lyra_ReadPaletteSet
+    else
     LDA.l OverworldPalettesScreenToSet_New, X
+    endif
     JSL.l Overworld_LoadPalettes
 
     PLA : STA.b $A0
@@ -5481,8 +5880,20 @@ LoadSpecialOverworld_Interupt:
     LDA.b $A0 : CMP.w #$0180 : BEQ .SpecialCameraBounds
                 CMP.w #$0181 : BEQ .SpecialCameraBounds
         LDA.b $8A : AND.w #$00FF : ASL : TAX
-        LDA.l Pool_OverworldTransitionPositionY_New, X          : STA.w $0708
-        LDA.l Pool_OverworldTransitionPositionX_New, X : LSR #3 : STA.w $070C
+        if !LYRA_PROJECT_DATA_PRESENT == 1
+        LyraCall_TransitionYX_1 = pc()
+        JSL.l Lyra_ReadTransitionYX
+        else
+        LDA.l Pool_OverworldTransitionPositionY_New, X
+        endif
+        STA.w $0708
+        if !LYRA_PROJECT_DATA_PRESENT == 1
+        LyraCall_TransitionXX_1 = pc()
+        JSL.l Lyra_ReadTransitionXX
+        else
+        LDA.l Pool_OverworldTransitionPositionX_New, X
+        endif
+        LSR #3 : STA.w $070C
 
         JSL.l AreaSizeCheck
 
@@ -5503,6 +5914,7 @@ LoadSpecialOverworld_Interupt:
     JSL.l Overworld_SetScreenBGColorCacheOnly
 
     RTS
+    LyraHost_LoadSpecialOverworld_Interupt_End = pc()
 }
 assert pc() <= $02E9BC ; $0169BC
 
@@ -5606,6 +6018,11 @@ Overworld_PlayerControl_Interupt:
     JSL.l Overworld_Entrance
     JSL.l Overworld_DwDeathMountainPaletteAnimation
 
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    Lyra_RoutingGate = pc()
+    LDA.b $8A : CMP.b #$A1 : BEQ .return
+    endif
+
     ; If not in SW mode skip this part.
     LDA.b $8A : CMP.b #$80 : BCC .notSpecialOverworld
         ; Checks for tiles that lead back to normal overworld.
@@ -5624,6 +6041,7 @@ Overworld_PlayerControl_Interupt:
     JSR.w OverworldHandleTransitions
 
     .return
+    Lyra_RoutingReturn = pc()
 
     ; TODO: I think this SEP is not needed but am too scared to comit to
     ; removing it.
@@ -5662,19 +6080,44 @@ JSL.l Sprite_LoadGfxProperties_Interupt
 NOP : NOP : NOP
 
 org $0286DB ; $0106DB
+if !LYRA_PROJECT_DATA_PRESENT == 1
+LyraCall_PaletteSet_5 = pc()
+JSL.l Lyra_ReadPaletteSet
+else
 LDA.l OverworldPalettesScreenToSet_New, X
+endif
 
 org $02B0FB ; $0130FB
+if !LYRA_PROJECT_DATA_PRESENT == 1
+LyraCall_PaletteSet_6 = pc()
+JSL.l Lyra_ReadPaletteSet
+else
 LDA.l OverworldPalettesScreenToSet_New, X
+endif
 
 org $02B4CD ; $0134CD
+if !LYRA_PROJECT_DATA_PRESENT == 1
+LyraCall_PaletteSet_7 = pc()
+JSL.l Lyra_ReadPaletteSet
+else
 LDA.l OverworldPalettesScreenToSet_New, X
+endif
 
 org $02EAAB ; $016AAB
+if !LYRA_PROJECT_DATA_PRESENT == 1
+LyraCall_PaletteSet_8 = pc()
+JSL.l Lyra_ReadPaletteSet
+else
 LDA.l OverworldPalettesScreenToSet_New, X
+endif
 
 org $02ECE8 ; $016CE8
+if !LYRA_PROJECT_DATA_PRESENT == 1
+LyraCall_PaletteSet_9 = pc()
+JSL.l Lyra_ReadPaletteSet
+else
 LDA.l OverworldPalettesScreenToSet_New, X
+endif
 
 else
 
@@ -5702,6 +6145,7 @@ pullpc
 
 Sprite_LoadGfxProperties_Interupt:
 {
+    LyraHost_Sprite_LoadGfxProperties_Interupt = pc()
     LDX.w #$003E
 
     .loop
@@ -5709,7 +6153,12 @@ Sprite_LoadGfxProperties_Interupt:
         ; The free RAM used here is right after $7EFD40 which is where
         ; vanilla stores the sprite palettes for the LW and DW. Very convenient
         ; for our needs, we don't even have to update the read.
+        if !LYRA_PROJECT_DATA_PRESENT == 1
+        LyraCall_SpecialPalette_1 = pc()
+        JSL.l Lyra_ReadSpecialPalette
+        else
         LDA.l Pool_LoadSpecialOverworld_palette_prop_b, X
+        endif
         STA.l ExpandedSpritePalArray, X
     DEX : DEX : BPL .loop
 
@@ -5718,6 +6167,7 @@ Sprite_LoadGfxProperties_Interupt:
     LDA.l $7EF3C5
 
     RTL
+    LyraHost_Sprite_LoadGfxProperties_Interupt_End = pc()
 }
 
 pushpc
@@ -5735,7 +6185,12 @@ Overworld_RevealSecret_Interupt:
 assert pc() <= $1BC8B6 ; $0DC8B6
 
 org $02EF64 ; $016F64
+if !LYRA_PROJECT_DATA_PRESENT == 1
+LyraCall_BombDoor_0 = pc()
+JSL.l Lyra_ReadBombDoor
+else
 LDA.l Overworld_HandleOverlaysAndBombDoors_bombable_door_location_New, X
+endif
 
 else
 
@@ -5765,14 +6220,21 @@ pullpc
 
 Link_Read_Interupt:
 {
+    LyraHost_Link_Read_Interupt = pc()
     PHB : PHK : PLB
 
     TAY
+    if !LYRA_PROJECT_DATA_PRESENT == 1
+    LyraCall_Sign_0 = pc()
+    JSL.l Lyra_ReadSign
+    else
     LDA.w Pool_Overworld_SignText_New, Y
+    endif
 
     PLB
 
     RTL
+    LyraHost_Link_Read_Interupt_End = pc()
 }
 
 ; Mirror warp (AnimateMirrorWarp steps 5-6: TriggerOverlayA_2 sets $17 = $0C,

@@ -19,6 +19,11 @@ class BuildOutputRollbackTest(unittest.TestCase):
         '.cache/annotations.json',
         'Dungeons/generated/water_gate_runtime_tables.asm',
         'Dungeons/generated/water_fill_table.asm',
+        'Data/Generated/lyra_project/runtime_constants.asm',
+        'Data/Generated/lyra_project/runtime_data.asm',
+        'Data/Generated/lyra_project/descriptor.json',
+        'Data/Generated/lyra_project/prepare.json',
+        'Data/Generated/lyra_project/binaries/payload.bin',
     )
 
     def setUp(self):
