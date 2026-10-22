@@ -95,6 +95,11 @@ if !ENABLE_INTRO_STALFOS_PATROL == 1
   incsrc "Sprites/Enemies/stalfos_patrol.asm"
 endif
 
+; Ganondorf finale phase 1: own org in bank $2A, no bank $30 bytes.
+if !ENABLE_GANONDORF_VOLLEY == 1
+  incsrc "Sprites/Bosses/ganondorf.asm"
+endif
+
 %log_start("sea_urchin", !LOG_SPRITES)
 incsrc "Sprites/Enemies/sea_urchin.asm"
 %log_end("sea_urchin", !LOG_SPRITES)
@@ -272,6 +277,15 @@ print "Bank31 Free Space: ", dec($320000-pc()), " bytes"
 ; Bank $32
 org $328000
 %log_start("Bank 32", !LOG_SPRITES)
+
+; Shared boss code (JSL only) comes first: its macros are used by the
+; Kydreeok files below. Bank $31 has no room for it.
+%log_start("boss_kit", !LOG_SPRITES)
+incsrc "Sprites/Bosses/boss_kit.asm"
+%log_end("boss_kit", !LOG_SPRITES)
+
+; Boss pacing (its code is in bank $3A; only labels land here).
+incsrc "Sprites/Bosses/boss_director.asm"
 
 %log_start("twinrova", !LOG_SPRITES)
 incsrc "Sprites/Bosses/twinrova.asm"

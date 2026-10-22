@@ -139,6 +139,7 @@ When a skill doesn't cover the task, consult `~/.context/knowledge/` (paths rela
 |------|------|
 | Writing ASM hooks/patches | `hobby/oracle-hook-patterns.md` |
 | Sprite development | `hobby/oracle-sprite-ram.md` + `alttp/sprite_catalog.md` |
+| Boss fight pacing (stages, turns, cooldowns) | `hobby/oracle-boss-pacing.md` + `Sprites/Bosses/boss_director.asm` |
 | Progression/flag work | `hobby/oracle-progression.md` |
 | Overworld editing | `hobby/zscustom-overworld.md` |
 | Dialogue/message editing | `hobby/oracle-message-format.md` |

@@ -103,6 +103,11 @@
 ; a few seconds after one of Maple's dreams lands, Link is reloaded through the
 ; Dream Hut entrance ($68) so a dream cannot strand him (Sprites/NPCs/maple.asm).
 !ENABLE_DREAM_RETURN                = 1
+; Ganondorf volley finale, slice 1 (DESIGN.md Option A, phase 1): after Kydreeok
+; dies in room $00 the tag $3D gate spawns Ganondorf ($D3); his energy ball ($46)
+; is rallied with the Master Sword, stuns him, and his death opens the Triforce
+; door (Sprites/Bosses/ganondorf.asm). Diagnostic opt-out.
+!ENABLE_GANONDORF_VOLLEY            = 1
 ; Wisdom dream, shots 1-2 (decisions.org pendant dreams; Sealing War
 ; storyboard): D1.01 ($204) in the hut, then the great hall (room $51) with
 ; the Captain and Farore and D1.02 ($205) before the dream return
