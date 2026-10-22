@@ -78,10 +78,13 @@ def resource_report(source, ledger_path):
         R.verify_reservation(source, allocation, value['reservation'], ledger_path=ledger_path)
         R.require(allocation.stream_ranges == ((0x3D4000, 0x3D4818),), 'Stream reservation differs')
 
+    ownership = {}
     for check, code in ((reservation, 'ROM_RESERVATION_REFUSED'),
                         (lambda: T32.ownership(source, claim), 'TILE32_RESERVATION_REFUSED')):
         try:
-            check()
+            result = check()
+            if code == 'TILE32_RESERVATION_REFUSED':
+                ownership = result
         except ValueError as error:
             blockers.append(dict(code=code, detail=str(error)))
     if len(source) == 0x400000:
@@ -95,8 +98,9 @@ def resource_report(source, ledger_path):
                         references.append(dict(map_id=area, cell=cell, tile32_id=tile))
         except (ValueError, IndexError) as error:
             blockers.append(dict(code='NATIVE_CONSUMER_REFUSED', detail=str(error)))
-        if references:
-            blockers.append(dict(code='RESERVED_TILE32_NATIVE_REFERENCES', references=references,
+        unexpected = [r for r in references if r not in ownership.get('retained_native_references', [])]
+        if unexpected:
+            blockers.append(dict(code='RESERVED_TILE32_NATIVE_REFERENCES', references=unexpected,
                 detail='Review native ID relocation or a new ownership contract before preparing; no IDs were reassigned.'))
     return blockers
 
@@ -121,7 +125,8 @@ def current_assignment(source, terrain, document, frozen_pairs, ledger_path):
     additional = sorted(set(missing) - frozen_quads)
     begin, end = claim['tile32_candidate_reservation']['id_range']
     R.require(begin == 0x44C0 and len(frozen_pairs) == 115, 'Frozen115 assignment boundary differs')
-    available = list(range(begin + 115, end))
+    retained = set(receipt.get('retained_native_ids', []))
+    available = [i for i in range(begin + 115, end) if i not in retained]
     R.require(len(additional) <= len(available),
               f'Current A1 Tile32 capacity conflict: {len(additional)} new definitions exceed {len(available)} remaining IDs')
     pairs.extend(zip(available, additional))

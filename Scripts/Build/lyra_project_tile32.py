@@ -15,10 +15,43 @@ from lyra_project_allocation import require, sha, reservation_claim
 
 KIND = 'lyra.post_editor_save_tile32_assignment.v1'
 LIFETIME = 'exact_saved_source_to_private_candidate_only'
+NATIVE_PARTITION = 'lyra.current_saved_native_tile32_partition.v1'
 
 
 def digest(value):
     return sha(json.dumps(value, sort_keys=True, separators=(',', ':')).encode())
+
+
+def native_partition(policy, source_sha256):
+    """An exact saved-source exception retains three authored native meanings.
+
+    It grants no new ID: all remaining bytes/consumers keep the original
+    reservation checks. The historical source does not activate this record.
+    """
+    partition = policy.get('current_saved_native_tile32_partition')
+    if partition is None:
+        return None
+    require(type(partition) is dict and set(partition) == {
+        'kind', 'scope', 'production_admission', 'source_rom_sha256', 'native_tile32_ids',
+        'original_quadrants', 'native_definitions', 'native_references'}
+        and partition['kind'] == NATIVE_PARTITION
+        and partition['scope'] == 'isolated_candidate_only'
+        and partition['production_admission'] is False
+        and partition['native_tile32_ids'] == [0x453D, 0x453E, 0x453F]
+        and partition['original_quadrants'] == [420] * 4,
+        'Malformed current saved native Tile32 partition')
+    require(partition['native_definitions'] == [
+        dict(tile32_id=0x453D, quadrants=[338, 1389, 707, 1327]),
+        dict(tile32_id=0x453E, quadrants=[740, 1433, 338, 1337]),
+        dict(tile32_id=0x453F, quadrants=[1433, 1328, 1342, 338])]
+        and partition['native_references'] == [
+            dict(map_id=0x90, cell=87, tile32_id=0x453F),
+            dict(map_id=0x90, cell=88, tile32_id=0x453E),
+            dict(map_id=0x98, cell=152, tile32_id=0x453D)]
+        and partition['source_rom_sha256'] ==
+            '44f46bb06f589a39275ff40d35e40a3a5652502a981205eaebb54f4c447a3ee2',
+        'Unreviewed current saved native Tile32 meanings/consumers')
+    return partition if source_sha256 == partition['source_rom_sha256'] else None
 
 
 def ownership(source, claim):
@@ -31,6 +64,8 @@ def ownership(source, claim):
             and policy.get('dictionary_bases_pc') == list(A.TILE32_BASES),
             'No reviewed post-editor-save Tile32 source reservation')
     begin, end = policy['id_range']
+    partition = native_partition(claim, sha(source))
+    retained_ids = set(partition['native_tile32_ids']) if partition else set()
     decoder = policy['native_decoder']
     require(decoder['pc'] == [0x17691, 0x177CB]
             and sha(source[0x17691:0x177CB]) == decoder['sha256'],
@@ -43,13 +78,26 @@ def ownership(source, claim):
         require(sha(source[start:stop]) == reader['sha256'],
                 'Reviewed native Tile32 pointer reader differs')
     spans = []
-    for base in A.TILE32_BASES:
+    for quadrant, base in enumerate(A.TILE32_BASES):
         start, stop = base + begin // 4 * 6, base + end // 4 * 6
         raw = source[start:stop]
-        require(len(raw) == stop - start and sha(raw) == policy['packed_preimage_sha256'],
+        normalized = bytearray(raw)
+        if partition:
+            for row in partition['native_definitions']:
+                tile = row['tile32_id']
+                require(A.read_tile32(source, tile) == tuple(row['quadrants']),
+                        'Retained native Tile32 meaning differs')
+                # Normalize only the declared retained IDs in a scratch slice.
+                # Adjacent slots and packed nibbles still use the original pin.
+                group, slot = (tile - begin) // 4 * 6, tile % 4
+                value = partition['original_quadrants'][quadrant]
+                normalized[group + slot] = value & 255
+                at, shift = group + 4 + slot // 2, 4 if slot % 2 == 0 else 0
+                normalized[at] = (normalized[at] & ~(15 << shift)) | ((value >> 8) << shift)
+        require(len(raw) == stop - start and sha(normalized) == policy['packed_preimage_sha256'],
                 'Source-declared packed Tile32 preimage differs')
         spans.append(dict(pc=[start, stop], sha256=sha(raw)))
-    rows, used = [], set()
+    rows, used, retained_references = [], set(), []
     for area in range(160):
         pointers = [int.from_bytes(source[A.pc(table) + area * 3:A.pc(table) + area * 3 + 3],
                                    'little') for table in (0x02F94D, 0x02FB2D)]
@@ -57,19 +105,29 @@ def ownership(source, claim):
         require(all(len(p) == 256 for p in planes), 'Incomplete native Tile32 consumer plane')
         tiles = [a << 8 | b for a, b in zip(*planes)]
         require(all(tile < 0x4540 for tile in tiles), 'Native Tile32 consumer exceeds capacity')
-        require(not any(begin <= tile < end for tile in tiles),
+        require(not any(begin <= tile < end and tile not in retained_ids for tile in tiles),
                 f'Source-declared Tile32 IDs referenced by native map{area:02X}')
+        retained_references.extend(dict(map_id=area, cell=cell, tile32_id=tile)
+                                   for cell, tile in enumerate(tiles) if tile in retained_ids)
         used.update(tiles)
         rows.append(dict(map_id=area, pointers=pointers,
                          tiles_sha256=sha(b''.join(t.to_bytes(2, 'little') for t in tiles))))
-    return dict(source_rom_sha256=sha(source), native_maps=160, native_planes=320,
+    if partition:
+        require(retained_references == partition['native_references'],
+                'Retained native Tile32 reference closure differs')
+    result = dict(source_rom_sha256=sha(source), native_maps=160, native_planes=320,
                 stream_consumers=['full_load', 'sub_overlay'],
                 used_unique_ids=len(used), maximum_used_id=max(used), reserved_references=0,
                 reference_directory_sha256=digest(rows), packed_preimages=spans,
                 native_decoder_sha256=decoder['sha256'], native_readers=readers)
+    if partition:
+        result.update(native_partition_sha256=digest(partition),
+                      retained_native_ids=sorted(retained_ids), retained_native_references=retained_references,
+                      lyra_assignable_ids=[i for i in range(begin, end) if i not in retained_ids])
+    return result
 
 
-def _assignments(inputs, policy):
+def _assignments(inputs, policy, partition_claim=None):
     require(type(inputs) is list and inputs, 'Tile32 assignment needs exact input requests')
     missing = set()
     for request in inputs:
@@ -84,10 +142,16 @@ def _assignments(inputs, policy):
                 'Tile32 requests must contain sorted unique quartets')
         missing.update(map(tuple, quads))
     begin, end = policy['id_range']
-    require(len(missing) <= end - begin,
-            f'Tile32 capacity conflict: {len(missing)} definitions exceed {end - begin} declared IDs')
-    return [dict(tile32_id=begin + i, quadrants=list(quad))
-            for i, quad in enumerate(sorted(missing))]
+    retained = set()
+    for request in inputs:
+        partition = native_partition(partition_claim or {}, request['source_rom_sha256'])
+        if partition:
+            retained.update(partition['native_tile32_ids'])
+    available = [i for i in range(begin, end) if i not in retained]
+    require(len(missing) <= len(available),
+            f'Tile32 capacity conflict: {len(missing)} definitions exceed {len(available)} declared IDs')
+    return [dict(tile32_id=tile, quadrants=list(quad))
+            for tile, quad in zip(available, sorted(missing))]
 
 
 def verify_contract(source, contract, claim, ledger_hash):
@@ -99,7 +163,7 @@ def verify_contract(source, contract, claim, ledger_hash):
     receipt = ownership(source, claim)
     require(any(r.get('source_rom_sha256') == sha(source) and r.get('consumer_receipt') == receipt
                 for r in contract['inputs']), 'Tile32 assignment consumer receipt is stale')
-    expected = _assignments(contract['inputs'], claim['tile32_candidate_reservation'])
+    expected = _assignments(contract['inputs'], claim['tile32_candidate_reservation'], claim)
     require(contract['assignments'] == expected, 'Tile32 joint assignment differs from reviewed requests')
     import lyra_project_admission as A
     native = {A.read_tile32(source, i) for i in range(0x4540)}
@@ -144,7 +208,7 @@ def create_contract(requests):
     inputs.sort(key=lambda r: (r['source_rom_sha256'], r['terrain_sha256'], r['candidate_maps']))
     require(len({digest(r) for r in inputs}) == len(inputs), 'Duplicate Tile32 assignment input')
     contract = dict(kind=KIND, lifetime=LIFETIME, ledger_sha256=ledger_hash, inputs=inputs,
-                    assignments=_assignments(inputs, claim['tile32_candidate_reservation']))
+                    assignments=_assignments(inputs, claim['tile32_candidate_reservation'], claim))
     for request in requests:
         verify_contract(request['source'], contract, claim, ledger_hash)
     return contract

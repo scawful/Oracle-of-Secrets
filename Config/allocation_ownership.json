@@ -1583,6 +1583,69 @@
         },
         "grant": "Only deterministic joint assignments from source-bound terrain requests. Neither filler definitions nor zero native references grant IDs alone."
       },
+      "current_saved_native_tile32_partition": {
+        "kind": "lyra.current_saved_native_tile32_partition.v1",
+        "scope": "isolated_candidate_only",
+        "production_admission": false,
+        "source_rom_sha256": "44f46bb06f589a39275ff40d35e40a3a5652502a981205eaebb54f4c447a3ee2",
+        "native_tile32_ids": [
+          17725,
+          17726,
+          17727
+        ],
+        "original_quadrants": [
+          420,
+          420,
+          420,
+          420
+        ],
+        "native_definitions": [
+          {
+            "tile32_id": 17725,
+            "quadrants": [
+              338,
+              1389,
+              707,
+              1327
+            ]
+          },
+          {
+            "tile32_id": 17726,
+            "quadrants": [
+              740,
+              1433,
+              338,
+              1337
+            ]
+          },
+          {
+            "tile32_id": 17727,
+            "quadrants": [
+              1433,
+              1328,
+              1342,
+              338
+            ]
+          }
+        ],
+        "native_references": [
+          {
+            "map_id": 144,
+            "cell": 87,
+            "tile32_id": 17727
+          },
+          {
+            "map_id": 144,
+            "cell": 88,
+            "tile32_id": 17726
+          },
+          {
+            "map_id": 152,
+            "cell": 152,
+            "tile32_id": 17725
+          }
+        ]
+      },
       "ordinary_build_publication": {
         "kind": "lyra.ordinary_private_native_readers.v1",
         "enabled": true,
