@@ -5,6 +5,7 @@
 
 LoadCheckpointOrWorld:
 {
+  JSL TailEvent_MigrateSave ; Old-save init of tail event flags; keeps X/Y
   LDA.l SpawnPoint : CMP.b #!Spawn_GoronCheckpoint : BNE .legacy
     ; Consume even a malformed marker before the seven-record spawn arrays.
     LDA.b #!Spawn_LinksHouse : STA.l SpawnPoint

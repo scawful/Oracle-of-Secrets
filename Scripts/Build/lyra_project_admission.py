@@ -22,6 +22,7 @@ from lyra_project_terrain import (
     Allocation, FIRST_MAP, MAP_COUNT, compile_terrain, parse_terrain_document,
     quadrant_map_plan, resolve_project_terrain,
 )
+from lyra_native_state import plan_native_state
 
 TABLE_START, TABLE_END = 0x144000, 0x1469C0
 CODE_START, CODE_END = 0x3C4000, 0x3C6000
@@ -413,7 +414,8 @@ def relocated_table_plan(source, document, compiled, traversal):
     return rows
 
 
-def plan_admission(source, terrain_text, proof, allocation_value=None, *, candidate_maps=None):
+def plan_admission(source, terrain_text, proof, allocation_value=None, *, candidate_maps=None,
+                   state_symbols=None, state_ownership=None):
     """Return a deterministic report only. No data or runtime publisher exists here."""
     expanded_rom(source)
     text_bytes = terrain_text.encode("utf-8") if isinstance(terrain_text, str) else terrain_text
@@ -511,6 +513,9 @@ def plan_admission(source, terrain_text, proof, allocation_value=None, *, candid
         if any(row != quadrant_map_plan(area) for area, row in directory.items()):
             qualification.append("ISOLATED_FOOTPRINT_NATIVE_QUALIFICATION_REQUIRED")
     events = sorted(set(admitted) | {a for e in selected_edges for a in (e["map_a"], e["map_b"])})
+    state = plan_native_state(source, events, authoring=[
+        (area, document.authoring[area - FIRST_MAP]) for area in admitted],
+        symbols=state_symbols, ownership=state_ownership)
     return dict(kind="lyra.project_admission_plan.v1", status="candidate_unqualified" if admitted else "no_admission",
         source_rom_sha256=sha(source), terrain_sha256=sha(text_bytes), source_map_count=MAP_COUNT,
         candidate_maps=list(admitted), production_maps=[], production_edge_ids=[],
@@ -532,9 +537,11 @@ def plan_admission(source, terrain_text, proof, allocation_value=None, *, candid
         relocated_tables=tables, unpopulated_table_rows="zero; runtime admission gate required",
         native_parent_count=160, legacy_table_writes=[], profile_overrides=[],
         native_99=proof.get("native_99"),
-        event_aliases=[dict(map_id=a, legacy_address=0x7EF280 + a,
-                           overlaps="item extension $7EF310..$7EF33F") for a in events],
-        event_policy="unallocated; old adapter suppression is containment, not persistence",
+        event_aliases=[dict(map_id=row["map_id"], legacy_address=row["legacy_address"],
+                           overlaps=row["owner"]) for row in state["event_rows"]
+                       if row["aliases_other_owner"]],
+        event_policy=state["event_dispatch"],
+        native_state_contract=state,
         consumption_blockers=blockers, qualification_blockers=qualification,
         runtime_build_ready=False, native_gameplay_verified=False, save_reopen_verified=False,
         production_endpoints_enabled=False)
@@ -546,6 +553,8 @@ def main(argv=None):
     parser.add_argument("--rom", type=Path, required=True)
     parser.add_argument("--z3ed", type=Path, required=True)
     parser.add_argument("--allocation", type=Path)
+    parser.add_argument("--state-symbols", type=Path)
+    parser.add_argument("--state-ownership", type=Path)
     parser.add_argument("--candidate-map", action="append", type=lambda v: int(v, 0))
     args = parser.parse_args(argv)
     # Match Yaze's descriptor-relative resolution even when the descriptor is
@@ -554,12 +563,17 @@ def main(argv=None):
     paths.append(resolve_project_terrain(paths[0]))
     if args.allocation:
         paths.append(args.allocation.resolve(strict=True))
+    for extra in (args.state_symbols, args.state_ownership):
+        if extra:
+            paths.append(extra.resolve(strict=True))
     before = {path: sha(path.read_bytes()) for path in paths}
     try:
         allocation = json.loads(args.allocation.read_text()) if args.allocation else None
         proof = native_verify(paths[2], paths[0], paths[1])
         report = plan_admission(paths[1].read_bytes(), paths[3].read_bytes(), proof, allocation,
-                                candidate_maps=args.candidate_map)
+                                candidate_maps=args.candidate_map,
+                                state_symbols=args.state_symbols.read_text() if args.state_symbols else None,
+                                state_ownership=json.loads(args.state_ownership.read_text()) if args.state_ownership else None)
         report["inputs"] = [dict(path=str(path), sha256=digest) for path, digest in before.items()]
     finally:
         require(all(sha(path.read_bytes()) == digest for path, digest in before.items()),

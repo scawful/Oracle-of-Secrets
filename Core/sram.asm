@@ -801,7 +801,21 @@ FreeBlock_Large    = $7EF3AC  ; 25 bytes ($7EF3AC-3C4)
 ; Purpose: Large block after dreams/water gates
 ; Note: $7EF4FE-4FF are checksum (do not use)
 ;
-FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
+; Allocated: $7EF4C0-4DF = TailEventFlags (Lyra tail maps $A0-$BF)
+;            $7EF4E0     = TailEventVersion
+;
+FreeBlock_Dreams   = $7EF412  ; 174 bytes ($7EF412-4BF)
+
+; Overworld event flags for tail maps $A0-$BF, one byte per area: area
+; $A0+i uses $7EF4C0+i (vanilla $7EF280,X would land on $7EF320-33F).
+; Read/written by Overworld/tail_events.asm. Free before (2026-10-22): no
+; code in any ref or worktree touches $7EF412-4FD; no Oracle indexed
+; $7EF3xx/4xx,X reaches it; vanilla only bulk-clears/copies page $7EF4xx.
+; Old saves are cleared once on load; version $A1 = initialized.
+TailEventFlags     = $7EF4C0  ; 32 bytes ($7EF4C0-4DF)
+TailEventVersion   = $7EF4E0
+!TailEventVersion_Current = $A1
+FreeBlock_Dreams2  = $7EF4E1  ; 29 bytes ($7EF4E1-4FD)
 
 ; ---------------------------------------------------------
 ; FREE BLOCK SUMMARY
@@ -812,9 +826,10 @@ FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF39F  | $7EF3A0  | 2     | Collectibles ext   |
 ; | $7EF3AB  | $7EF3C4  | 26    | Large reserved     |
-; | $7EF412  | $7EF4FD  | 236   | Dreams extension   |
+; | $7EF412  | $7EF4BF  | 174   | Dreams extension   |
+; | $7EF4E1  | $7EF4FD  | 29    | Dreams extension 2 |
 ; |----------|----------|-------|--------------------|
-; | TOTAL AVAILABLE:    | 320   | bytes              |
+; | TOTAL AVAILABLE:    | 287   | bytes              |
 ; ---------------------------------------------------------
 
 ; =========================================================

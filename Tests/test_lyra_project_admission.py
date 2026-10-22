@@ -80,6 +80,64 @@ class LyraAdmissionTest(unittest.TestCase):
         self.assertEqual(plan["relocated_tables"], [])
         self.assertFalse(plan["runtime_build_ready"])
         self.assertFalse(plan["production_endpoints_enabled"])
+        self.assertEqual(plan["native_state_contract"]["event_rows"], [])
+
+    def test_state_contract_keeps_terrain_readiness_separate_and_reports_real_return(self):
+        data = document()
+        data["maps"][0xB0 - 0xA0]["authoring"]["doors"] = [dict(
+            id=1, x=3, y=4, entrance_id=0x0B)]
+        data["maps"][0xB0 - 0xA0]["authoring"]["exits"] = [dict(
+            id=2, room_id=0x83, x=2, y=5, exit_row=None)]
+        plan = self.plan(data, maps=[0xB0])
+        state = plan["native_state_contract"]
+        self.assertEqual(state["requested_returns"][0]["path"], "custom_exit_table")
+        self.assertFalse(state["requested_returns"][0]["requested_row_consumed"])
+        self.assertIn("PERSISTENT_EVENT_STORAGE_UNALLOCATED",
+                      [b["code"] for b in state["runtime_blockers"]])
+        self.assertFalse(state["runtime_ready"])
+        # A source mismatch is reported, rather than promoted by valid terrain.
+        self.assertFalse(state["consumers_verified"])
+        alloc = allocation(self.source)
+        alloc["admission"]["candidate_maps"] = [0xA1]
+        terrain = self.plan(alloc=alloc)
+        self.assertTrue(terrain["candidate_data_plan_ready"])
+        self.assertFalse(terrain["native_state_contract"]["runtime_ready"])
+
+    def test_recognized_tail_state_cannot_admit_power_or_promote_terrain_to_runtime(self):
+        from test_lyra_native_state import tail_fixture
+        source, symbols, ledger = tail_fixture()
+        # Add only this suite's native terrain/table fixtures to the standalone
+        # state image. Nothing is written to an actual ROM or reservation.
+        for index, value in enumerate(self.source):
+            if value:
+                source[index] = value
+        text, proof = observation(source, document())
+        alloc = allocation(source)
+        alloc["admission"]["candidate_maps"] = [0xA1]
+        plan = A.plan_admission(source, text, proof, alloc,
+                                state_symbols=symbols, state_ownership=ledger)
+        self.assertTrue(plan["candidate_data_plan_ready"])
+        self.assertTrue(plan["native_state_contract"]["consumers_verified"])
+        self.assertIsNotNone(plan["native_state_contract"]["persistent_event_storage"])
+        self.assertFalse(plan["runtime_build_ready"])
+        self.assertFalse(plan["production_endpoints_enabled"])
+        self.assertEqual(plan["production_maps"], [])
+        self.assertEqual(plan["production_edge_ids"], [])
+        data = document()
+        data["maps"][0xB0 - 0xA0]["authoring"]["doors"] = [dict(id=1, x=3, y=4, entrance_id=0x0B)]
+        data["maps"][0xB0 - 0xA0]["authoring"]["exits"] = [dict(id=2, room_id=0x83, x=2, y=5, exit_row=None)]
+        text, proof = observation(source, data)
+        alloc = allocation(source)
+        alloc["admission"]["candidate_maps"] = [0xB0]
+        power = A.plan_admission(source, text, proof, alloc,
+                                 state_symbols=symbols, state_ownership=ledger)
+        self.assertFalse(power["candidate_data_plan_ready"])
+        self.assertTrue(power["native_state_contract"]["consumers_verified"])
+        self.assertIn(dict(code="UNSUPPORTED_ACTIVE_METADATA", map_id=0xB0, field="doors"),
+                      power["consumption_blockers"])
+        self.assertFalse(power["native_state_contract"]["requested_returns"][0]["requested_row_consumed"])
+        self.assertFalse(power["native_state_contract"]["runtime_ready"])
+        self.assertEqual(power["production_maps"], [])
 
     def test_a1_render_closure_is_not_traversal_admission(self):
         plan = self.plan(maps=[0xA1])

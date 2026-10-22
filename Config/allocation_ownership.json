@@ -1145,6 +1145,55 @@
       ],
       "count": 64,
       "stride": 1
+    },
+    {
+      "id": "TailEventFlags",
+      "owner": "Lyra tail map overworld events ($A0-$BF)",
+      "space": "save_buffer",
+      "base": 8320192,
+      "size": 32,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "Vanilla new-file clear; TailEvent_MigrateSave clears once when TailEventVersion != $A1.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. TailEvent_MigrateSave clears the flags once for saves without version $A1.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "TailEvent_Load",
+        "TailEvent_Store"
+      ],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "TailEventFlags",
+        "bank00_mirror": false
+      },
+      "count": 32,
+      "stride": 1
+    },
+    {
+      "id": "TailEventVersion",
+      "owner": "Tail event flag migration marker",
+      "space": "save_buffer",
+      "base": 8320224,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "$A1 after TailEvent_MigrateSave; any other value triggers one clear.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. TailEvent_MigrateSave clears the flags once for saves without version $A1.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "TailEventVersion",
+        "bank00_mirror": false
+      }
     }
   ],
   "lifetime_aliases": [],
