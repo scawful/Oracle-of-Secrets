@@ -168,6 +168,7 @@ WaterGate_SelectOverlayPointer:
 incsrc "Collision/water_collision.asm"
 
 incsrc "Dungeons/zora_temple_floor.asm"
+incsrc "Dungeons/zora_temple_swim_exit.asm"
 
 print "End of dungeons.asm               ", pc
 
