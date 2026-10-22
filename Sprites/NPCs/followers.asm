@@ -392,7 +392,30 @@ ZoraBaby_RunPostSwitchSequence:
   RTL
 }
 
+; Thrown Zora Baby passes over the water gate switch.
+; Vanilla ThrownSprite_CheckDamageToSingleSprite ricochets a thrown sprite
+; off any overlapping hitbox. The switch ($04) hitbox is larger than the
+; ZoraBaby_IsOnTopOfSprite window, so most throws bounced back before the
+; switch check ran. Skip damage and ricochet for this one pair only.
+; Entry: JML from $06E1E6 after the hitbox overlap test.
+; X = thrown sprite, Y = target sprite, A/X/Y 8-bit.
+ThrownSprite_SkipZoraBabySwitch:
+{
+  LDA.w SprType, X : CMP.b #$39 : BNE .vanilla
+    LDA.w SprType, Y : CMP.b #$04 : BNE .vanilla
+      JML $06E1B1 ; EXIT_06E1B1 (RTS): no damage, no ricochet
+  .vanilla
+  ; Replaced code: tutorial guard ($3F) tinks, everything else takes damage.
+  LDA.w SprType, Y : CMP.b #$3F : BNE .not_tutorial_guard
+    JML $06E1ED
+  .not_tutorial_guard
+  JML $06E1F3
+}
+
 pushpc
+
+; ThrownSprite_CheckDamageToSingleSprite: after hitbox overlap
+org $06E1E6 : JML ThrownSprite_SkipZoraBabySwitch ; @hook module=Sprites name=ThrownSprite_SkipZoraBabySwitch kind=jml target=ThrownSprite_SkipZoraBabySwitch expected_m=8 expected_x=8
 
 ; Make Zora sway like a girl
 org $09AA5E : JSL CheckForZoraBabyFollower ; @hook module=Sprites name=CheckForZoraBabyFollower kind=jsl target=CheckForZoraBabyFollower
