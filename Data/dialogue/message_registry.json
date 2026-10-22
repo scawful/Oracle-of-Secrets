@@ -2,8 +2,8 @@
   "format": "oos-message-registry",
   "version": 1,
   "expanded_base": "0x18D",
-  "current_expanded_end": "0x20E",
-  "next_append_id": "0x20F",
+  "current_expanded_end": "0x210",
+  "next_append_id": "0x211",
   "renumber_policy": "freeze-published-ids",
   "ranges": [
     {
@@ -221,6 +221,14 @@
       "expected_content": "authored",
       "owner": "dream-wisdom",
       "purpose": "Wisdom pendant dream (D1, The Sealing War), shots 4-6: $20C D1.03 and $20D D1.04, the prison's voice over the lone Captain in the great hall; $20E D1.05 Maple when Link wakes in her bed (Sprites/NPCs/dream_power.asm script, maple.asm); exact words approved by scawful 2026-10-15 (AFS handoffs/lyra_one_map_2026-10-15/DREAM_APPROVALS.json, draft DIALOGUE.json sha256 975448ab...)"
+    },
+    {
+      "start": "0x20F",
+      "end": "0x210",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "kydreeok-finale",
+      "purpose": "Finale Healing beat: $20F and $210, Kydrog's voice after the Song of Healing frees him from the wounded Kydreeok, before Ganondorf appears (Sprites/Bosses/kydreeok.asm Kydreeok_Healing). DRAFT words pending scawful approval."
     }
   ]
 }

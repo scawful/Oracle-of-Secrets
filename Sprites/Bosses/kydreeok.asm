@@ -63,9 +63,15 @@
 !Kyd_Stand  = $01
 !Kyd_Walk   = $02
 !Kyd_Roar   = $03
-!Kyd_Dead   = $05
+!Kyd_Dead   = $05 ; old explosion death, unused since the Healing beat
 !Kyd_Crouch = $06
 !Kyd_Glide  = $08
+; The Healing beat (decisions.org "Kydreeok healing"); every action from
+; !Kyd_Wounded up is the end of the fight.
+!Kyd_Wounded = $0A
+!Kyd_Healing = $0B
+!Kyd_Freed   = $0C
+!Kyd_Gone    = $0D
 
 ; Head actions (Sprite_KydreeokHead_Main order, kydreeok_head.asm).
 !KydHead_Rise    = $00
@@ -120,7 +126,14 @@ Kydreeok_HomeY    = BossDir_Var+6 ; word
 Sprite_Kydreeok_Long:
 {
   PHB : PHK : PLB
+  ; The OAM parts follow the BG2 body: they blink with it while it heals
+  ; and are gone once it is.
+  LDA.w SprAction, X : CMP.b #!Kyd_Freed : BCS .no_draw
+  CMP.b #!Kyd_Healing : BNE .draw
+  LDA.w SprTimerA, X : AND.b #$01 : BNE .no_draw
+  .draw
   JSR Sprite_Kydreeok_Draw
+  .no_draw
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     LDA.w BossReinject : BEQ .no_reinject
       JSR Kydreeok_Reinject
@@ -240,7 +253,9 @@ Kydreeok_SpawnHead:
 Sprite_Kydreeok_CheckIfDead:
 {
   ; Already dying: Kydreeok_Dead owns SprTimerA.
-  LDA.w SprAction, X : CMP.b #$05 : BEQ .not_dead
+  LDA.w SprAction, X : CMP.b #!Kyd_Dead : BEQ .not_dead
+  ; The wounded body and the Healing beat: the fight is over.
+  CMP.b #!Kyd_Wounded : BCS .not_dead
   LDY.w Offspring1_Id : JSR Kydreeok_HeadAlive : BCS .not_dead
   LDY.w Offspring2_Id : JSR Kydreeok_HeadAlive : BCS .not_dead
 
@@ -255,10 +270,14 @@ Sprite_Kydreeok_CheckIfDead:
     LDA.b #$01 : JSR Kydreeok_SpawnHead
     RTS
   .dead
-    LDA.b #$60 : STA.w SprTimerA, X
+    ; Both stage 3 heads down: Kydreeok stops fighting and waits, wounded,
+    ; for the Song of Healing (decisions.org "Kydreeok healing").
     STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
-    LDA.b #$05 : STA.w SprAction, X
-    LDA.b #$13 : STA $012C
+    ; SongFlag stays set until a consumer clears it: a song played before
+    ; this frame (in the fight or in the field) must not count.
+    STZ.b SongFlag
+    LDA.b #!Kyd_Wounded : STA.w SprAction, X
+    LDA.b #$F1 : STA $012C ; fade the music out: the silence is the cue
   .not_dead
   RTS
 }
@@ -289,7 +308,11 @@ Sprite_Kydreeok_Main:
                   Kydreeok_Crouch,
                   Kydreeok_TakeOff,
                   Kydreeok_Glide,
-                  Kydreeok_Dive)
+                  Kydreeok_Dive,
+                  Kydreeok_Wounded,
+                  Kydreeok_Healing,
+                  Kydreeok_Freed,
+                  Kydreeok_Gone)
 
   ; -------------------------------------------------------
   ; 0x00
@@ -381,7 +404,8 @@ Sprite_Kydreeok_Main:
   }
 
   ; -------------------------------------------------------
-  ; 0x05
+  ; 0x05 - old explosion death. Unused since the Healing beat
+  ; (!Kyd_Wounded); kept for isolation.
   Kydreeok_Dead:
   {
     LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
@@ -534,6 +558,80 @@ Sprite_Kydreeok_Main:
     RTS
   }
 
+  ; -------------------------------------------------------
+  ; 0x0A - both heads are down. Killed in the air, the body first sinks
+  ; to the floor. It stays still and harmless and dims for a moment
+  ; every second until the Song of Healing is played. Other songs keep
+  ; their normal effects and are left alone.
+  Kydreeok_Wounded:
+  {
+    JSL Sprite_PlayerCantPassThrough
+    LDA $1C : ORA.b #$01 : STA $1C ; body (BG2) on
+    LDA.b $1A : AND.b #$38 : BNE .shown
+      LDA $1A : AND.b #$02 : BEQ .shown
+        LDA $1C : AND.b #$FE : STA $1C
+    .shown
+
+    LDA.w SprHeight, X : BEQ .grounded
+      SEC : SBC.b #$02 : BPL .sinking
+        LDA.b #$00
+      .sinking
+      JSR Kydreeok_SetAltitude
+      RTS
+    .grounded
+
+    LDA.b SongFlag : CMP.b #$01 : BNE .no_song
+      STZ.b SongFlag
+      LDA.b #$80 : STA.w SprTimerA, X
+      %GotoAction(!Kyd_Healing)
+    .no_song
+    RTS
+  }
+
+  ; -------------------------------------------------------
+  ; 0x0B - the song lands: the body fades out the way the old death did,
+  ; without the explosions.
+  Kydreeok_Healing:
+  {
+    LDA $1C : ORA.b #$01 : STA $1C
+    LDA.w SprTimerA, X : AND.b #$01 : BEQ .shown
+      LDA $1C : AND.b #$FE : STA $1C
+    .shown
+
+    LDA.w SprTimerA, X : BNE .continue
+      STZ.w $0422
+      STZ.w $0424
+      LDA $1C : AND.b #$FE : STA $1C ;dismiss the body (BG2) for good: Ganondorf reuses its VRAM
+      ; BossKit_FrameEnd stops with the body: end a running quake here.
+      LDA.b #$00 : STA.l BossKit_Quake
+      REP #$20
+      STZ.w $011A : STZ.w $011C
+      SEP #$20
+      %ShowUnconditionalMessage($20F)
+      %GotoAction(!Kyd_Freed)
+    .continue
+    RTS
+  }
+
+  ; -------------------------------------------------------
+  ; 0x0C - runs once the first message box closes.
+  Kydreeok_Freed:
+  {
+    %ShowUnconditionalMessage($210)
+    %GotoAction(!Kyd_Gone)
+    RTS
+  }
+
+  ; -------------------------------------------------------
+  ; 0x0D - second box closed: hand over to Ganondorf_DoorGate after a
+  ; short pause.
+  Kydreeok_Gone:
+  {
+    LDA.b #$40 : STA.w FinaleBeat
+    STZ.w SprState, X
+    RTS
+  }
+
 }
 
 ; =========================================================
@@ -661,6 +759,7 @@ Kydreeok_Reinject:
   SEP #$30
   PLX
   LDA.w SprAction, X : CMP.b #!Kyd_Dead : BEQ .dead ; the dying body manages BG2 itself
+  CMP.b #!Kyd_Wounded : BCS .dead ; so do the wounded and healing bodies; after that it is gone
     LDA.b $1C : ORA.b #$01 : STA.b $1C
   .dead
   RTS
