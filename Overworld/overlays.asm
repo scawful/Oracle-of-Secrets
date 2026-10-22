@@ -580,9 +580,9 @@ ZoraTemple_EntranceAnimation:
     STZ.w $011D
     ; set the overlay
     LDX.b $8A
-    LDA.l $7EF280,X
+    JSL TailEvent_Load
     ORA.b #$20
-    STA.l $7EF280,X
+    JSL TailEvent_Store
     .wait
     RTS
   }
@@ -632,9 +632,9 @@ Castle_EntranceAnimation:
     STA.w $012F
     ; set the overlay
     LDX.b $8A
-    LDA.l $7EF280,X
+    JSL TailEvent_Load
     ORA.b #$20
-    STA.l $7EF280,X
+    JSL TailEvent_Store
     RTS
   }
 
@@ -955,9 +955,9 @@ TailPalace_EntranceAnimation:
     STZ.w $011D
     ; set the overlay
     LDX.b $8A
-    LDA.l $7EF280,X
+    JSL TailEvent_Load
     ORA.b #$20
-    STA.l $7EF280,X
+    JSL TailEvent_Store
     .wait
     RTS
   }
@@ -1089,9 +1089,9 @@ Goron_EntranceAnimation:
   STZ.w $011C
   STZ.w $011D
   LDX.b $8A
-  LDA.l $7EF280,X
+  JSL TailEvent_Load
   ORA.b #$20
-  STA.l $7EF280,X
+  JSL TailEvent_Store
   .wait
   RTS
 }
@@ -1326,9 +1326,9 @@ Fortress_EntranceAnimation:
     STZ.w $011D
     ; set the overlay
     LDX.b $8A
-    LDA.l $7EF280,X
+    JSL TailEvent_Load
     ORA.b #$20
-    STA.l $7EF280,X
+    JSL TailEvent_Store
     ; OverworldEntrance_PlayJingle
     #_1BCF40: LDA.b #$1B ; SFX3.1B
 

@@ -110,7 +110,7 @@ Sprite_Goron_Prep:
   +
   PHX
   LDX $8A
-  LDA.l $7EF280, X : AND.b #$20 : BNE +++
+  JSL TailEvent_Load : AND.b #$20 : BNE +++
     PLX
     STZ.w SprAction, X
   ++

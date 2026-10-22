@@ -94,6 +94,7 @@ org $029E58 : NOP #6
 
 pullpc
 incsrc "Overworld/goron_checkpoint.asm"
+incsrc "Overworld/tail_events.asm"
 
 LoadDarkWorldIntro:
 {
