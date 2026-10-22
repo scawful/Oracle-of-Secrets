@@ -42,6 +42,10 @@ Sprite_Twinrova_Long:
   PHB : PHK : PLB
   JSR Sprite_Twinrova_Draw
   JSL Sprite_DrawShadow
+  ; Native boss explosions still draw through this entry, but state $04
+  ; skips the active action table. Restore before that gate, retaining the
+  ; native Draw/Shadow scratch, frame, timers and explosion/prize dispatch.
+  JSR Twinrova_RestoreRodDamageOnDeath
 
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     JSR Sprite_Twinrova_CheckIfDead
@@ -107,7 +111,46 @@ Twinrova_Initialize:
   LDA.b #$04 : STA.w SprMiscE, X
   LDA.b #$07 : STA.w SprGfx, X
   STZ.w $0B69
+  JSR Twinrova_RodDamageDefault
 
+  RTS
+}
+
+; Only Twinrova's two rod subclasses change. The selected source base loads
+; both as zero; swords and every other sprite's damage profile stay intact.
+!Twinrova_FireRodDamage = $7F6CEB
+!Twinrova_IceRodDamage  = $7F6CEC
+!Twinrova_FireRodLoaded = $00
+!Twinrova_IceRodLoaded  = $00
+
+; @abi m8x8 -- X is this Twinrova's slot. A/flags only; preserve X/Y/DB/D and
+; scratch $00-$04, which native explosion rendering consumes after this call.
+Twinrova_RestoreRodDamageOnDeath:
+{
+  LDA.w SprState, X : CMP.b #$04 : BNE .done
+    JSR Twinrova_RodDamageDefault
+  .done
+  RTS
+}
+
+Twinrova_RodDamageDefault:
+{
+  LDA.b #!Twinrova_FireRodLoaded : STA.l !Twinrova_FireRodDamage
+  LDA.b #!Twinrova_IceRodLoaded  : STA.l !Twinrova_IceRodDamage
+  RTS
+}
+
+Twinrova_RodDamageKoume:
+{
+  LDA.b #$00 : STA.l !Twinrova_FireRodDamage
+  LDA.b #$01 : STA.l !Twinrova_IceRodDamage
+  RTS
+}
+
+Twinrova_RodDamageKotake:
+{
+  LDA.b #$01 : STA.l !Twinrova_FireRodDamage
+  LDA.b #$00 : STA.l !Twinrova_IceRodDamage
   RTS
 }
 
@@ -397,8 +440,11 @@ Sprite_Twinrova_Main:
   ; 0x08
   Twinrova_KoumeMode:
   {
-    %StartOnFrame(8)
+    ; Fixed form: StartOnFrame only raises a frame, so Kotake's $09 could
+    ; otherwise persist while the rod profile has already switched to Koume.
+    LDA.b #$08 : STA.w SprFrame, X
     %Show_Koume()
+    JSR Twinrova_RodDamageKoume
 
     JSL GetRandomInt : AND.b #$3F : BNE ++
       JSR AddPitHazard
@@ -422,8 +468,9 @@ Sprite_Twinrova_Main:
   ; 0x09
   Twinrova_KotakeMode:
   {
-    %StartOnFrame(9)
+    LDA.b #$09 : STA.w SprFrame, X
     %Show_Kotake()
+    JSR Twinrova_RodDamageKotake
 
     JSL Sprite_IsBelowPlayer : CPY #$01 : BEQ .not_below
       JSL GetRandomInt : AND.b #$3F : BNE ++
@@ -445,6 +492,7 @@ Sprite_Twinrova_Main:
   Twinrova_Dead:
   {
     %StartOnFrame(11)
+    JSR Twinrova_RodDamageDefault
     JSL Sprite_KillFriends
     %Twinrova_Hurt()
     RTS
