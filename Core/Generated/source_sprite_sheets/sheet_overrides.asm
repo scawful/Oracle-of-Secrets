@@ -14,25 +14,25 @@ org $00D136 ; @hook module=Core kind=data protected_size=1
   db $D0
 org $00D215 ; @hook module=Core kind=data protected_size=1
   db $00
-; Sprite $40, global $B3: Kydrog pirate boss (option B, scawful 2026-10-18): fallen knight under the coat; room $A4 only.
+; Sprite $40, global $B3: Kydrog boss, old pirate art (scawful 2026-10-19): dark outline around the collar and neck; room $A4 only.
 org $00D033 ; @hook module=Core kind=data protected_size=1
   db $C0
 org $00D112 ; @hook module=Core kind=data protected_size=1
   db $D2
 org $00D1F1 ; @hook module=Core kind=data protected_size=1
   db $75
-; Sprite $43, global $B6: Kydrog pirate boss and intro idle (option B, scawful 2026-10-18); tile $39 kept (not Kydrog).
+; Sprite $43, global $B6: Kydrog boss, old pirate art (scawful 2026-10-19): dark outline around the collar and neck; tile $39 kept (not Kydrog).
 org $00D036 ; @hook module=Core kind=data protected_size=1
   db $C0
 org $00D115 ; @hook module=Core kind=data protected_size=1
-  db $D7
+  db $D6
 org $00D1F4 ; @hook module=Core kind=data protected_size=1
-  db $45
-; Sprite $47, global $BA: Kydrog pirate boss (option B, scawful 2026-10-18): fallen knight under the coat; room $A4 only.
+  db $79
+; Sprite $47, global $BA: Kydrog boss, old pirate art (scawful 2026-10-19): dark outline around the collar and neck; room $A4 only.
 org $00D03A ; @hook module=Core kind=data protected_size=1
   db $C0
 org $00D119 ; @hook module=Core kind=data protected_size=1
-  db $DB
+  db $DA
 org $00D1F8 ; @hook module=Core kind=data protected_size=1
-  db $EB
+  db $70
 pullpc
