@@ -107,6 +107,32 @@ endif
   RTL
 }
 
+; Module15 queues the pearl-less poof (ancilla $23) in s03, but ancillae only
+; run once Sprite_Main resumes in s06, after message $35. Until then Link is
+; drawn with $02E0=0 and $BC=$10, and LinkState_GameboyForm poofs again in
+; module 09. On the warp into the Abyss, set the arrival form directly.
+MirrorWarp_PearllessArrival:
+{
+  LDA.b $10 : CMP.b #$15 : BNE .vanilla
+  LDA.l $7EF3CA : BEQ .vanilla
+    LDA.b #$01 : STA.w $02E0 : STA.b $56
+    LDA.b #$3B : STA.b $BC
+    LDA.b #$06 : STA.w $02B2
+    JSL UpdateGbcPalette
+    ; The warp's white filter fades toward the aux palette; keep it in step.
+    REP #$30
+    LDX.w #$001E
+    .copy
+    LDA.l $7EC6E0, X : STA.l $7EC4E0, X
+    DEX : DEX : BPL .copy
+    SEP #$30
+    RTL
+  .vanilla
+  LDY.b #$04 : LDA.b #$23
+  JSL $099102 ; AncillaAdd_BunnyPoof
+  RTL
+}
+
 ; Module08_02_LoadAndAdvance
 org $02EDC0 : JSL LoadOverworld_CheckForGbcLink ; @hook module=Masks name=LoadOverworld_CheckForGbcLink kind=jsl target=LoadOverworld_CheckForGbcLink
 
@@ -115,6 +141,9 @@ org $02ABDA : JSL OverworldTransition_CheckForGbcLink ; @hook module=Masks name=
 
 ; LinkState_CrossingWorlds
 org $07A9B1 : JSL LinkState_GameboyForm ; @hook module=Masks name=LinkState_GameboyForm kind=jsl target=LinkState_GameboyForm
+
+; HandleFollowersAfterMirroring (.check_for_pearl, no pearl)
+org $07AB09 : JSL MirrorWarp_PearllessArrival : NOP #4 ; @hook module=Masks name=MirrorWarp_PearllessArrival kind=jsl target=MirrorWarp_PearllessArrival expected_m=8 expected_x=8
 
 ; Module07_Underworld
 org $0287A4 : JSL LinkState_GameboyInDungeonEntrance ; @hook module=Masks name=LinkState_GameboyInDungeonEntrance kind=jsl target=LinkState_GameboyInDungeonEntrance
@@ -133,6 +162,7 @@ LinkState_GameboyForm:
       BRA .return
 
   .already_gbc
+  LDA $0FFF : BNE .return ; still in the Abyss (MirrorWarp_PearllessArrival set the form)
   JSL PlayerTransform
   LDA #$10 : STA $BC
   STZ $02B2

@@ -56,6 +56,14 @@ org $00997C : dw $00B8
 assert read2($00997A) == $0123 || read2($00997A) == $0097, "Unexpected pit-damage table slot"
 org $00997A : dw $0097
 
+; Module15 (Kydrog's warp to the Eon Abyss) refills the mirror H-scroll table
+; with vanilla's pyramid scroll $0778 when the white fade ends. The wave builder
+; only rewrites every other scanline, so the rest show BG at $0778 while the
+; camera is at Oracle's pyramid ($E2 = $0270): two map edges, then a snap when
+; message $35 turns HDMA off. Use the live camera instead.
+assert read2($00EF80) == $78A9 || read2($00EF80) == $E2A5, "Unexpected Module15 HDMA refill"
+org $00EF80 : LDA.b $E2 : NOP
+
 ; =========================================================
 ; JumpTableLocal Guard (Black-Screen Prevention)
 ;
