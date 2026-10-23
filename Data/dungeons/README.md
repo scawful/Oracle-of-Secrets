@@ -13,6 +13,45 @@ older nonzero-only tools do not satisfy this contract.
 
 ## Current provenance
 
+The reviewed private R03 cart-gate input is now the source contract for rooms
+`$88`, `$97` and `$98`. It adds 204 explicit cells and changes three existing
+room `$97` values to `$00`. All 17 other room entries remain from the prior
+source. Explicit floor records remain present, including all 123 `$00` cells.
+
+- source: 20 rooms, 3,395 explicit tiles (3,272 nonzero and 123 floor tiles)
+- source SHA-256:
+  `216f201247c7cf46210483c669d3838732b0c0ea8203dab974138f9336872b83`
+- matching private R03 edit-base SHA-256:
+  `28b21601f0bf5d068349be8f745b74a19dbb675c3d4b1145dc04f40139aa2781`
+
+This source requires its paired R03 base. An unchanged shared base will fail
+collision-source validation before generation. A collision-only import cannot
+supply R03's object, door, header and sprite dependencies. Shared-base writes
+still require scawful's approval; this source follow-up does not perform one.
+
+`migrations/goron_r03.json` records both exact preimages: the four-byte R02 seal
+and the complete 2,062-byte shared-base migration. Validate the specification
+and source without a ROM, or supply a preimage for in-memory replay only:
+
+```bash
+python3 Scripts/Generate/validate_goron_r03_migration.py --root .
+python3 Scripts/Generate/validate_goron_r03_migration.py --root . --rom /path/to/exact-preimage.sfc
+```
+
+The verifier has no ROM output option. It rejects unknown hashes, checks every
+preimage range and reconstructed target hash, and compares all 296 custom-map
+slots with the tracked source. It never saves the reconstructed ROM.
+
+The qualified patched candidate is
+`03d8e06a3efbd2a86fc2e6076263218112996e5509eda09475349d8a8653da5e`,
+built on PR240 source `ca19cca6` with explicit
+`--enable ENABLE_MINECART_CART_SHUTTERS`. Both tracked defaults remain `0`.
+Default-profile activation is a separate change; a default-off build is not
+this qualified profile. Detailed native fixtures and limits remain in AFS
+`handoffs/goron_b2a_2026-10-22/native/RESULT.md`.
+
+## Previous provenance
+
 The 2026-10-18 Goron Mines safe-rails fix (scawful: "Safe rails first: fix the 313 derail
 tiles in the 7 rooms, no layout change.") gives every lane tile of a plain straight rail
 piece in rooms `$77`, `$89`, `$97`, `$98`, `$B9`, `$D7` and `$D8` an explicit straight:
