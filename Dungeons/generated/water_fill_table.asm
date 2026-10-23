@@ -13,7 +13,7 @@ WaterFillTable_Generated:
 {
   db $02
   db $25, $02 : dw $0009 ; tiles=168
-  db $27, $01 : dw $015A ; tiles=222
+  db $27, $01 : dw $015A ; tiles=224
 }
 
 WaterFillData_Room25:
@@ -40,7 +40,7 @@ WaterFillData_Room25:
 
 WaterFillData_Room27:
 {
-  db $DE ; mask=$01
+  db $E0 ; mask=$01
   dw $03EA, $03EB, $03EC, $042A, $042B, $042C, $046A, $046B, $046C, $04AA
   dw $04AB, $04AC, $04EA, $04EB, $04EC, $052A, $052B, $052C, $056A, $056B
   dw $056C, $05AA, $05AB, $05AC, $05EA, $05EB, $05EC, $062A, $062B, $062C
@@ -48,22 +48,22 @@ WaterFillData_Room27:
   dw $072B, $072C, $076A, $076B, $076C, $07AA, $07AB, $07AC, $07EA, $07EB
   dw $07EC, $082A, $082B, $082C, $086A, $086B, $086C, $08AA, $08AB, $08AC
   dw $08EA, $08EB, $08EC, $092A, $092B, $092C, $096A, $096B, $096C, $09AA
-  dw $09AB, $09AC, $09EA, $09EB, $09EC, $0A2A, $0A2B, $0A2C, $0A45, $0A46
-  dw $0A47, $0A48, $0A49, $0A4A, $0A4B, $0A4C, $0A4D, $0A4E, $0A4F, $0A50
-  dw $0A51, $0A52, $0A53, $0A54, $0A55, $0A56, $0A57, $0A58, $0A59, $0A5A
-  dw $0A5B, $0A5C, $0A5D, $0A5E, $0A5F, $0A60, $0A61, $0A62, $0A63, $0A64
-  dw $0A65, $0A66, $0A67, $0A68, $0A69, $0A6A, $0A6B, $0A6C, $0A6D, $0A6E
-  dw $0A6F, $0A70, $0A71, $0A72, $0A73, $0A74, $0A85, $0A86, $0A87, $0A88
-  dw $0A89, $0A8A, $0A8B, $0A8C, $0A8D, $0A8E, $0A8F, $0A90, $0A91, $0A92
-  dw $0A93, $0A94, $0A95, $0A96, $0A97, $0A98, $0A99, $0A9A, $0A9B, $0A9C
-  dw $0A9D, $0A9E, $0A9F, $0AA0, $0AA1, $0AA2, $0AA3, $0AA4, $0AA5, $0AA6
-  dw $0AA7, $0AA8, $0AA9, $0AAA, $0AAB, $0AAC, $0AAD, $0AAE, $0AAF, $0AB0
-  dw $0AB1, $0AB2, $0AB3, $0AB4, $0AC5, $0AC6, $0AC7, $0AC8, $0AC9, $0ACA
-  dw $0ACB, $0ACC, $0ACD, $0ACE, $0ACF, $0AD0, $0AD1, $0AD2, $0AD3, $0AD4
-  dw $0AD5, $0AD6, $0AD7, $0AD8, $0AD9, $0ADA, $0ADB, $0ADC, $0ADD, $0ADE
-  dw $0ADF, $0AE0, $0AE1, $0AE2, $0AE3, $0AE4, $0AE5, $0AE6, $0AE7, $0AE8
-  dw $0AE9, $0AEA, $0AEB, $0AEC, $0AED, $0AEE, $0AEF, $0AF0, $0AF1, $0AF2
-  dw $0AF3, $0AF4
+  dw $09AB, $09AC, $09EA, $09EB, $09EC, $0A1A, $0A1B, $0A2A, $0A2B, $0A2C
+  dw $0A45, $0A46, $0A47, $0A48, $0A49, $0A4A, $0A4B, $0A4C, $0A4D, $0A4E
+  dw $0A4F, $0A50, $0A51, $0A52, $0A53, $0A54, $0A55, $0A56, $0A57, $0A58
+  dw $0A59, $0A5A, $0A5B, $0A5C, $0A5D, $0A5E, $0A5F, $0A60, $0A61, $0A62
+  dw $0A63, $0A64, $0A65, $0A66, $0A67, $0A68, $0A69, $0A6A, $0A6B, $0A6C
+  dw $0A6D, $0A6E, $0A6F, $0A70, $0A71, $0A72, $0A73, $0A74, $0A85, $0A86
+  dw $0A87, $0A88, $0A89, $0A8A, $0A8B, $0A8C, $0A8D, $0A8E, $0A8F, $0A90
+  dw $0A91, $0A92, $0A93, $0A94, $0A95, $0A96, $0A97, $0A98, $0A99, $0A9A
+  dw $0A9B, $0A9C, $0A9D, $0A9E, $0A9F, $0AA0, $0AA1, $0AA2, $0AA3, $0AA4
+  dw $0AA5, $0AA6, $0AA7, $0AA8, $0AA9, $0AAA, $0AAB, $0AAC, $0AAD, $0AAE
+  dw $0AAF, $0AB0, $0AB1, $0AB2, $0AB3, $0AB4, $0AC5, $0AC6, $0AC7, $0AC8
+  dw $0AC9, $0ACA, $0ACB, $0ACC, $0ACD, $0ACE, $0ACF, $0AD0, $0AD1, $0AD2
+  dw $0AD3, $0AD4, $0AD5, $0AD6, $0AD7, $0AD8, $0AD9, $0ADA, $0ADB, $0ADC
+  dw $0ADD, $0ADE, $0ADF, $0AE0, $0AE1, $0AE2, $0AE3, $0AE4, $0AE5, $0AE6
+  dw $0AE7, $0AE8, $0AE9, $0AEA, $0AEB, $0AEC, $0AED, $0AEE, $0AEF, $0AF0
+  dw $0AF1, $0AF2, $0AF3, $0AF4
 }
 
 pullpc
