@@ -1566,7 +1566,7 @@ assert pc() == $0289F8
 pullpc
 
 ; Reserve one bank-$2C page before the fixed gate. The dynamic sprite
-; stream ended at $2CE114 in R8 and is bounded below $2CFA00 in
+; stream ended at $2CE114 in R8 and is bounded below $2CF000 in
 ; all_sprites.asm. The gate retains its $2CFB00 entry and $2CFD00 limit.
 pushpc
 org $2CFA00
@@ -1630,7 +1630,15 @@ RoomTag_CartShutterDispatch:
   BEQ .local_gate
   JML RoomTag_ShutterDoorRequiresCart
   .local_gate
+  LDA.b $AE : CMP.b #$17 : BNE .legacy_profile
+  LDA.b $AF : CMP.b #$37 : BNE .return
+  JML RoomTag_CartShutter97_Preserved
+  .legacy_profile
+  LDA.b $AE : CMP.b #$37 : BNE .return
+  LDA.b $AF : BNE .return
   JML RoomTag_CartShutter97
+  .return
+  JML $01CC5A
 }
 RoomTag_CartShutterDispatch_End:
 
@@ -1799,6 +1807,9 @@ CartShutter97_TransitionHold:
   LDA.b $A0 : CMP.w #$0097
   SEP #$20
   BNE .original
+  ; Only the R03 header may suppress the original transition close.
+  LDA.b $AE : CMP.b #$37 : BNE .original
+  LDA.b $AF : BNE .original
   LDA.w $0468 : BNE .original
   JSR.w CartShutter97_Hold
   BCC .original
@@ -1821,6 +1832,7 @@ CartShutter97_TransitionHold:
 RoomTag_CartShutter97_End:
 assert pc() <= $2CFD00, "Localized cart gate overlaps SomariaSocketDoor"
 pullpc
+incsrc "Sprites/Objects/cart_shutter97_preserved.asm"
 endif
 
 RoomTag_ShutterDoorRequiresCart:

@@ -71,8 +71,9 @@ class Machine(base.Machine):
             elif op == "BIT":
                 value = self.load(suffix, arg, self.m16())
                 self.z = not (self.a & value)
-            elif op == "AND":
-                value = self.a & self.load(suffix, arg, self.m16())
+            elif op in ("AND", "ORA"):
+                operand = self.load(suffix, arg, self.m16())
+                value = self.a & operand if op == "AND" else self.a | operand
                 self.a = value if self.m16() else (self.a & 0xFF00) | (value & 255)
                 self.flags_nz(value & (65535 if self.m16() else 255), self.m16())
             elif op == "TXA":
@@ -104,6 +105,8 @@ class Machine(base.Machine):
                 self.flags_nz(value, size == 2)
             elif op == "JSR":
                 push("return", pc, 2); pc = labels[arg]
+            elif op == "JSL" and arg in getattr(self, "long_stubs", {}):
+                self.long_stubs[arg](self)
             elif op == "JSL":
                 assert arg == "DragPlayer", "Only the shared drag ABI stub is admitted"
                 self.drag_calls.append((self.read(0x0FD8, True), self.x, self.y, self.p & 0x30))
@@ -138,7 +141,8 @@ def word(memory, address, value):
 
 def room(closed=True, key_open=True, link=(0x0E40, 0x1280), mounted=False, **extra):
     m = {0x1B: 1, 0xEE: 0, 0x35: int(mounted), 0x36: 0xA5, 0x07EA: 3,
-         0x0230: 0xA5, 0x0231: 1, 0x0232: 0x5A, 0x11: 0, 0x12F: 0x66}
+         0x0230: 0xA5, 0x0231: 1, 0x0232: 0x5A, 0x11: 0, 0x12F: 0x66,
+         0xAE: 0x37, 0xAF: 0}
     for address, value in ((0xA0, 0x97), (0x0400, 0x4000 if key_open else 0),
                            (0x0468, int(closed)), (0x068E, 0xA55A), (0x0690, 0x3CC3),
                            (0x22, link[0]), (0x20, link[1])):
@@ -286,7 +290,7 @@ class LocalCartShutter(unittest.TestCase):
     def test_gateway_scopes_exact_room_word_and_retains_legacy_elsewhere(self):
         code, labels = program(body(SOURCE, "RoomTag_CartShutterDispatch"))
         for room_id in (0x97, 0x197, 0x77, 0x98):
-            m = {}; word(m, 0xA0, room_id)
+            m = {0xAE: 0x37, 0xAF: 0}; word(m, 0xA0, room_id)
             actual = Machine(m).run(code, labels)
             self.assertEqual(actual, "RoomTag_CartShutter97" if room_id == 0x97
                              else "RoomTag_ShutterDoorRequiresCart")
@@ -329,10 +333,10 @@ class LocalCartShutter(unittest.TestCase):
         self.assertRegex(text, r"pushpc\s+org \$2CFA00\s+[^{}]*CartShutter97_DragPlayer:")
         self.assertRegex(text, r"CartShutter97_DragPlayer_End:\s+assert pc\(\) <= \$2CFB00")
         self.assertRegex(text, r"pushpc\s+org \$2CFB00\s+RoomTag_CartShutterDispatch:")
-        self.assertRegex(text, r"RoomTag_CartShutter97_End:\s+assert pc\(\) <= \$2CFD00[^\n]*\s+pullpc\s+endif")
+        self.assertRegex(text, r'RoomTag_CartShutter97_End:\s+assert pc\(\) <= \$2CFD00[^\n]*\s+pullpc\s+incsrc "Sprites/Objects/cart_shutter97_preserved.asm"\s+endif')
         sprites = (ROOT / "Sprites/all_sprites.asm").read_text()
         self.assertRegex(sprites, r'incsrc "Sprites/NPCs/goron.asm"[\s\S]*?'
-                                  r'if !ENABLE_MINECART_CART_SHUTTERS\s+assert pc\(\) <= \$2CFA00')
+                                  r'if !ENABLE_MINECART_CART_SHUTTERS\s+assert pc\(\) <= \$2CF000')
         sizes = {op: 1 for op in ("XBA", "DEX", "INX", "CLC", "SEC", "RTS", "PHP", "PLP", "PHA", "PLA", "PHX", "PLX")}
         sizes.update({"JML": 4, "JMP": 3, "JSR": 3, "REP": 2, "SEP": 2,
                  "BEQ": 2, "BNE": 2, "BCC": 2, "BCS": 2, "BPL": 2, "BRA": 2}

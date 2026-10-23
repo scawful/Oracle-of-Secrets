@@ -366,7 +366,7 @@ incsrc "Sprites/NPCs/goron.asm"
 %log_end("goron", !LOG_DUNGEON)
 
 if !ENABLE_MINECART_CART_SHUTTERS
-  assert pc() <= $2CFA00, "Bank $2C sprite stream overlaps localized cart drag"
+  assert pc() <= $2CF000, "Bank $2C sprite stream overlaps preserved cart shutter"
 endif
 
 ; =========================================================

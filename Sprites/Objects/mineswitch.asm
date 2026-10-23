@@ -64,6 +64,9 @@ Sprite_LeverSwitch_Prep:
     LDA.b $A0 : CMP.w #$0097
     SEP #$20
     BNE .selector_ready
+    ; The preserved $17/$37 profile has no invented key-door dependency.
+    LDA.b $AE : CMP.b #$37 : BNE .selector_ready
+    LDA.b $AF : BNE .selector_ready
     CPY.b #$01 : BNE .selector_ready
     REP #$20
     LDA.w $0400 : BIT.w #$4000
