@@ -2832,3 +2832,34 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
      staging and the unresolved early Sea Zora/Goron access remain OPEN.
      The discussion's cooperative combat and ritual machinery are proposals.
   Answers: "pls reconcile these issues and update our docs and artifacts across afs and other docs to align with the latest plot plans, the lyra sky, the sea islands, what role the eon abyss plays, the lupo mountain and fortress swap, etc"; "we'll share a doc with ridoyie with instructions, overview of plot beats, progression and instructions on using yaze to update messages and propose suggestions"
+
+* OPEN Shrine of Power plan: which option? (2026-10-23)
+  :PROPERTIES:
+  :ASKED_BY: Claude-GaroPower (scawful's 2026-10-23 request: "ideas for how the shrine of power segment of the game should play out")
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/garo_power_2026-10-23/README.md]]
+  :END:
+  All options keep the guest rooms as built and put the shrine on an island east of
+  the Goron Mines, after D5 and before D6.
+  A (Claude's pick). Garo guards the stair to the island. Inside, the middle chest
+  (the old Glove chest) gives the Titan's Mitt, and the next gate needs it. The
+  pendant is at the end. The Mitt is a shrine item, not an end gift, so both the
+  "pendant, no free item" and "shrine gives the Mitt" rulings hold.
+  B. A Garo Master miniboss replaces the Stalfos trial and gives the mask inside the
+  shrine. New enemy and art (~3 days). Moves the mask out of the desert NPC.
+  C. Move the doors only; pendant only. The Desert Goron gives the Mitt instead.
+  Cheapest; reopens the Glove/Mitt swap.
+  Answer:
+
+* OPEN Garo quest shape: the last watchman? (2026-10-23)
+  :PROPERTIES:
+  :ASKED_BY: Claude-GaroPower (scawful's 2026-10-23 request: "dialogue/quest for garo sprite in the desert")
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/garo_power_2026-10-23/README.md]]
+  :END:
+  Garo is a sentry's spirit still guarding the stair to the Shrine of Power. He
+  appears after D5. When Link walks up, he blinks away twice, then talks. He duels
+  Link (three hits), then asks for the song that rests the dead. The Song of Healing
+  (already built) turns him into the mask and opens the stair. No text is written
+  yet; lines come back for approval.
+  A (Claude's pick). With the duel.
+  B. Without the duel: blink, talk, Healing.
+  Answer:
