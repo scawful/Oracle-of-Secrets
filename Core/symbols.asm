@@ -32,6 +32,12 @@ assert pc() <= $7E1F00, "Core/symbols.asm WRAM block overflows free RAM $7E1E70-
 }
 base off
 
+; Preserved room97 P animation job and room-load seal. Volatile only;
+; $1E88 starts immediately after the 24-byte symbols block above.
+CartShutter97Job  = $7E1E88
+CartShutter97Seal = $7E1E89
+assert CartShutter97Job > SongTintColor && CartShutter97Seal < $7E1F00
+
 ; =========================================================
 
 function RGBto555(R,G,B) = ((R/8)<<10)|((G/8)<<5)|(B/8) ; zarby

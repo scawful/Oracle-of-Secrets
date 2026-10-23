@@ -10,7 +10,7 @@
     "shared:Sprites/Objects/minecart.asm": {
       "source_set": "shared",
       "path": "Sprites/Objects/minecart.asm",
-      "sha256": "7be68b425080cff1fc6f6b03cd2088d21210f5eae27f949beac2bd45b4551666"
+      "sha256": "9474bbbf8d9f8fea7e598f5fe425aeeeb8b45f562d7425c56b1b7710700dfb14"
     },
     "shared:Masks/all_masks.asm": {
       "source_set": "shared",
@@ -165,7 +165,17 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "4c0dbcc572d26ae32505c57c6cd37f4b2fc3b399f2d73f9d3cda0248d5cddf37"
+      "sha256": "5b2aec549d9b200fd8fb7093f1350f8de2c472cab459e72089651389a4d8cecc"
+    },
+    "shared:Sprites/Objects/cart_shutter97_preserved.asm": {
+      "source_set": "shared",
+      "path": "Sprites/Objects/cart_shutter97_preserved.asm",
+      "sha256": "ff7e15c7952afb18ff76eac4ef4736c93bc128c9e1ba19d58609e6ee3ab60ccb"
+    },
+    "shared:Sprites/all_sprites.asm": {
+      "source_set": "shared",
+      "path": "Sprites/all_sprites.asm",
+      "sha256": "84db2bb358d43b9d816bdc6d8a0158a6c50856ff9e844217d85908e392e94af5"
     }
   },
   "claims": [
@@ -343,6 +353,64 @@
         "source": "shared:Core/symbols.asm",
         "symbol": "MenuScrollLevelV",
         "base_block": true
+      }
+    },
+    {
+      "id": "cart_shutter97_transaction",
+      "owner": "Preserved room97 P shutter transaction and initialization seal",
+      "space": "wram",
+      "base": 8265352,
+      "size": 2,
+      "status": "shared",
+      "condition": {
+        "ENABLE_MINECART_CART_SHUTTERS": 1,
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Volatile room-local animation owner. Job $80/$81 is valid only with seal $A5 and the preserved $17/$37 header.",
+      "reset": "CartShutter97_InitDoors clears both bytes at every Underworld_LoadHeader; only preserved room97 receives seal $A5. Completion clears the job.",
+      "save": "Volatile WRAM; never saved and no $0400 key bit is used.",
+      "provenance": [
+        "shared:Core/symbols.asm",
+        "shared:Sprites/Objects/cart_shutter97_preserved.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "CartShutter97Job  = $7E1E88",
+        "CartShutter97Seal = $7E1E89",
+        "CartShutter97_InitDoors:",
+        "LDA.w #$0000 : STA.l CartShutter97Job"
+      ],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "CartShutter97Job"
+      }
+    },
+    {
+      "id": "cart_shutter97_preserved_code",
+      "owner": "Preserved room97 per-door shutter animation hooks",
+      "space": "snes_rom",
+      "base": 2945024,
+      "size": 2048,
+      "status": "shared",
+      "condition": {
+        "ENABLE_MINECART_CART_SHUTTERS": 1,
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Fixed code block while cart shutters are explicitly enabled; dynamic bank2C sprite stream is fenced below this block.",
+      "reset": "Code; no reset. Private WRAM is reset on every room header load.",
+      "save": "Code; no save data.",
+      "provenance": [
+        "shared:Sprites/Objects/cart_shutter97_preserved.asm",
+        "shared:Sprites/all_sprites.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "assert pc() <= $2CF800",
+        "assert pc() <= $2CF000"
+      ],
+      "binding": {
+        "source": "shared:Sprites/Objects/cart_shutter97_preserved.asm",
+        "symbol": "!CartShutter97PreservedCode"
       }
     },
     {
