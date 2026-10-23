@@ -112,6 +112,8 @@
 ; after Link_WarpToRoom; Wisdom does it in its scene (Sprites/NPCs/
 ; dream_rooms.asm). Needs DREAM_RETURN. Diagnostic opt-out.
 !ENABLE_DREAM_ROOM_SHEETS           = 1
+; Maple BG sheets/palette bound to room $00F; ordinary loads restore other rooms.
+!ENABLE_MAPLE_ROOM_GRAPHICS         = 1
 ; Power dream scene (decisions.org pendant dreams; words approved 2026-10-15):
 ; Farore and Hyrule's king in room $00's north-east arena play D2.01-D2.05
 ; ($206-$20A), then the dream return; Maple says D2.06 ($20B) in the hut
