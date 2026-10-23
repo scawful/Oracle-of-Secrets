@@ -40,11 +40,11 @@
     },
     {
       "path": "src/zelda3/overworld/overworld.cc",
-      "sha256": "470e73c26b331a170760e3a7b687c1530204307fe39ad5e441ef731abcbe1c81"
+      "sha256": "e1253f7c119d9688de7b7d6644460be97f42da41748458bda3bcf63da21541d6"
     },
     {
       "path": "src/zelda3/overworld/overworld.h",
-      "sha256": "70a9a7eafd6d1bcf7a0263806d243447b4a1c9c9973511b8ac520487c0358dac"
+      "sha256": "83f18adca42302b07a2bb418371a8416eefad9c06d55ff22db6d08ee30f57a1d"
     },
     {
       "path": "test/CMakeLists.txt",
@@ -52,7 +52,7 @@
     },
     {
       "path": "test/unit/rom/private_lyra_reservation_test.cc",
-      "sha256": "16dbe68924083da7438f6540e654ff1ef420d7e754c1d29699bf88ea31192904"
+      "sha256": "567bd2252aa5e5dce045189368c01dc82db141b4d3be8091d30541fd62bd6564"
     }
   ]
 }
