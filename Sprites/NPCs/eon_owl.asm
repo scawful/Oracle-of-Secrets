@@ -317,10 +317,9 @@ if !ENABLE_EON_OWL_ONE_SHOT == 1
     BCC .flying
       LDA.b #!EonOwl_SpotB_X&$FF : STA.w SprX, X
       LDA.b #!EonOwl_SpotB_X>>8 : STA.w SprXH, X
-      LDA.b #!EonOwl_SpotB_Y&$FF : STA.w SprY, X
-      LDA.b #!EonOwl_SpotB_Y>>8 : STA.w SprYH, X
       STZ.w SprXSpeed, X
-      STZ.w SprYSpeed, X
+      ; X may finish first on re-entry. Keep descending until Y is clamped.
+      LDA.w SprYSpeed, X : BNE .flying
       STZ.w SprFrame, X
       LDA.b #$20 : STA.w SprTimerA, X
       %GotoAction(8)
