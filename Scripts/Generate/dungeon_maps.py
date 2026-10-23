@@ -148,6 +148,7 @@ def floor_index(name: str, basements: int) -> int:
 # ---------------------------------------------------------------- footprints
 
 PIT_DARK = 70  # pits render black or as a dark mesh; floor and wall tiles have brighter pixels
+PIT_SHARE = 0.4  # a hand-drawn quadrant with more than this share of its pixels off the floor is redrawn
 
 
 def occupancy(png: Path) -> list[list[int]]:
@@ -307,7 +308,7 @@ STEP = {"N": (0, -1), "S": (0, 1), "W": (-1, 0), "E": (1, 0)}
 OPPOSITE = {"N": "S", "S": "N", "W": "E", "E": "W"}
 
 
-def draft_spec(rom_data: bytes, dungeon_id: str, inventory: dict) -> dict:
+def draft_spec(rom_data: bytes, dungeon_id: str, inventory: dict, render_dir: Path | None = None) -> dict:
     """Start from the current map, drop rooms outside the registry, then place
     unmapped registry rooms next to a mapped room they share a door with."""
     cur = MapRom(rom_data).dungeon(SLOTS[dungeon_id])
@@ -364,6 +365,23 @@ def draft_spec(rom_data: bytes, dungeon_id: str, inventory: dict) -> dict:
                 new_templates[f"{slot:02X}"] = [f"{w:04X}" for w in words]
                 shapes[room] = slot
                 notes.append(f"new shape {slot:02X} for {room:02X} (overlap {rows[room]['iou']:.2f} -> {made:.2f})")
+            continue
+        # Hand-drawn quadrants that mostly cover pit or backdrop get the best walkable char instead.
+        # Test against the whole render: the footprint drops quadrants it could not tie to content.
+        png = render_dir / rows[room]["render"] if render_dir else None
+        floor = occupancy(png) if png and png.exists() else fp
+        words, chars = list(mr.templates()[shapes[room]]), map_chars()
+        made = compose_template(floor, rom_data)
+        for q in range(4):
+            px = [(y, x) for y, row in enumerate(word_pixels(chars, words[q])) for x, v in enumerate(row) if v]
+            if px and sum(not floor[(q >> 1) * 8 + y][(q & 1) * 8 + x] for y, x in px) > PIT_SHARE * len(px):
+                words[q] = made[q]
+        if words != mr.templates()[shapes[room]] and free and mr.template_base() == TMPL_EXPANDED:
+            slot = free.pop(0)
+            new_templates[f"{slot:02X}"] = [f"{w:04X}" for w in words]
+            notes.append(f"trimmed pits from {room:02X}: {shapes[room]:02X} -> new shape {slot:02X} "
+                         f"(overlap {iou(fp, sil[shapes[room]]):.2f} -> {iou(fp, template_pixels(chars, words)):.2f})")
+            shapes[room] = slot
         elif iou(fp, sil[shapes[room]]) < CLOSE and rows[room]["iou"] >= MATCH:
             # Hand-drawn shapes keep inner walls, gaps and pits the render misses; flag, never replace.
             notes.append(f"check {room:02X}: kept {shapes[room]:02X}, render suggests {best:02X} "
@@ -508,7 +526,8 @@ def cmd_generate(args) -> int:
     if args.spec and Path(args.spec).exists():
         spec = json.loads(Path(args.spec).read_text())
     else:
-        spec = draft_spec(rom_data, args.dungeon, json.loads(Path(args.inventory).read_text()))
+        spec = draft_spec(rom_data, args.dungeon, json.loads(Path(args.inventory).read_text()),
+                          Path(args.inventory).parent)
         if args.spec:
             Path(args.spec).write_text(json.dumps(spec, indent=1) + "\n")
             print(f"wrote draft spec {args.spec}; review it, then rerun to use it")
