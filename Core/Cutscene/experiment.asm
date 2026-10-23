@@ -1261,17 +1261,29 @@ Exp_DrawActors:
 ; One object attached to Zora A, in front of the hand. The scene's existing
 ; flash/load/black/white gates hide it with the actors. Current scripted X/Y
 ; remain inside the viewport (X >= 100, Y <= 154), including the shake.
+; Side and H-flip follow Zora A's pose, so the Mirror stays on the side the
+; Zora faces (X is 8-bit here: Exp_DrawActors indexes with LDX.b).
 Exp_DrawMirror:
 {
   LDA.l Exp_ActPose+!ExpA_ZoraA : BEQ .done
-  LDA.l Exp_ActX+!ExpA_ZoraA : SEC : SBC.b #14
+  CMP.b #!ExpP_ZoraLeft+1 : BCS .done
+  TAX
+  LDA.l Exp_ActX+!ExpA_ZoraA : CLC : ADC.l .dx, X
   SEC : SBC.l Exp_ShakeX : STA.w $0800
   LDA.l Exp_ActY+!ExpA_ZoraA : STA.w $0801
   LDA.b #$02 : STA.w $0802 ; slot 0 tile $02, four tiles uploaded above
-  LDA.b #$35 : STA.w $0803 ; N=1, palette 2 (item uses indices 8-15)
+  LDA.l .props, X : STA.w $0803 ; N=1, palette 2 (item uses indices 8-15), H-flip per side
   LDA.b #$02 : STA.w $0A20
   LDA.b #$04 : STA.b $02
   INC.b $03
   .done
   RTS
+
+  ; Indexed by Zora pose: hide, front, right, left. The item art has the
+  ; handle at the lower left, so H-flip it when it sits on the Zora's left:
+  ; the handle stays at the Zora's hand and the glass points away.
+  .dx
+  db 0, -14, 14, -14
+  .props
+  db 0, $75, $35, $75
 }
