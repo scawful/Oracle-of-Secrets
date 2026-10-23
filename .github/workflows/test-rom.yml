@@ -69,6 +69,7 @@ jobs:
           printf '\x23\x01' | dd of=test.sfc bs=1 seek=$((0x197C)) conv=notrunc 2>/dev/null  # $00997C pit-damage table filler $0123 (vanilla)
           printf '\x30\x02' | dd of=test.sfc bs=1 seek=$((0x4863E)) conv=notrunc 2>/dev/null  # $09863E AncillaAdd_ItemReceipt operand $0230 (vanilla)
           printf '\x28' | dd of=test.sfc bs=1 seek=$((0x6B205)) conv=notrunc 2>/dev/null  # $0DB205 King Dodongo health (vanilla $28)
+          printf '\xA9\x78\x07' | dd of=test.sfc bs=1 seek=$((0x6F80)) conv=notrunc 2>/dev/null  # $00EF80 Module15 HDMA refill LDA.w #$0778 (vanilla)
           printf '\xE2\x30\xAB\x6B' | dd of=test.sfc bs=1 seek=$((0x75447)) conv=notrunc 2>/dev/null  # $0ED447 CreateMessagePointers epilogue SEP #$30/PLB/RTL (Core/minish_tutorials.asm)
 
           # Original tag $24 vector and Holes2 body guarded by custom_tag.asm.
