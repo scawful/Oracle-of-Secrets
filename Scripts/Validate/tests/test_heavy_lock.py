@@ -6,6 +6,8 @@ nothing touches /tmp/oos-heavy.lock.
 from __future__ import annotations
 
 import importlib.util
+import datetime
+from unittest.mock import patch
 import json
 import os
 import subprocess
@@ -115,6 +117,64 @@ class HeavyLockTest(unittest.TestCase):
         t0 = time.monotonic()
         self.assertIsNone(hl.acquire("t", "unit test", wait=0.3, poll=0.05))
         self.assertGreaterEqual(time.monotonic() - t0, 0.25)
+
+    def test_reclaim_excludes_release_and_new_acquire(self):
+        self.write_owner({"owner": "gone", "token": "old", "pid": dead_pid()})
+        original = hl.status
+        def interleave():
+            snapshot = original()
+            self.assertFalse(hl.release("old"))
+            self.assertIsNone(hl.acquire("new", "test"))
+            return snapshot
+        with patch.object(hl, "status", side_effect=interleave):
+            self.assertIsNotNone(hl.reclaim_if_stale())
+        token = hl.acquire("new", "test")
+        self.assertIsNotNone(token)
+        self.assertFalse(hl.release("old"))
+        self.assertEqual(hl.read_owner()["token"], token)
+
+    def test_release_excludes_reclaim_and_new_acquire(self):
+        self.write_owner({"owner": "gone", "token": "old", "pid": dead_pid()})
+        original = hl.read_owner
+        def interleave():
+            snapshot = original()
+            self.assertIsNone(hl.reclaim_if_stale())
+            self.assertIsNone(hl.acquire("new", "test"))
+            return snapshot
+        with patch.object(hl, "read_owner", side_effect=interleave):
+            self.assertTrue(hl.release("old"))
+        token = hl.acquire("new", "test")
+        self.assertIsNotNone(token)
+        self.assertFalse(hl.release("old"))
+        self.assertEqual(hl.status()["state"], "held")
+
+    def test_failed_ps_keeps_live_owner_and_refuses_acquire(self):
+        token = hl.acquire("live", "test")
+        for reply in (subprocess.CompletedProcess([], 1, "", "failed"),
+                      subprocess.CompletedProcess([], 0, "", "")):
+            with patch.object(hl.subprocess, "run", return_value=reply):
+                self.assertEqual(hl.status()["state"], "held")
+                self.assertIsNone(hl.reclaim_if_stale())
+                self.assertIsNone(hl.acquire("other", "test"))
+        self.assertTrue(hl.release(token))
+
+    def test_dead_or_invalid_worker_refused(self):
+        for pid in (dead_pid(), 0, -1, True):
+            self.assertIsNone(hl.acquire("dead", "test", pid=pid))
+            self.assertFalse(hl.LOCK.exists())
+
+    def test_same_second_archives_are_distinct(self):
+        class FrozenDatetime(datetime.datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return cls(2026, 10, 23, 20, 0, 0, tzinfo=tz)
+        with patch.object(hl.dt, "datetime", FrozenDatetime):
+            for owner in ("first", "second"):
+                self.write_owner({"owner": owner, "pid": dead_pid()})
+                self.assertIsNotNone(hl.reclaim_if_stale())
+        receipts = list(hl.ARCHIVE.glob("*-owner.json"))
+        self.assertEqual({json.loads(p.read_text())["owner"] for p in receipts}, {"first", "second"})
+        self.assertEqual(len(list(hl.ARCHIVE.glob("*-reason.txt"))), 2)
 
     def test_cli_exit_codes(self):
         env = dict(os.environ, OOS_HEAVY_LOCK=str(hl.LOCK), OOS_HEAVY_LOCK_ARCHIVE=str(hl.ARCHIVE))

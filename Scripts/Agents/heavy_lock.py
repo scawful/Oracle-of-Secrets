@@ -3,7 +3,7 @@
 
 One heavy job at a time on this machine (scawful, 2026-09-26). The lock is the
 directory /tmp/oos-heavy.lock (OOS_HEAVY_LOCK overrides it) with a JSON file
-`owner` inside. mkdir is the atomic acquire, as before.
+`owner` inside. A stable advisory mutex serializes all lease mutations.
 
 New since 2026-10-23 (scawful: "any agent may reclaim when the recorded owner
 process has exited"): the owner file records the PID of the process that does
@@ -28,6 +28,8 @@ Exit codes: 0 ok, 1 refused (wrong token, lock not held), 3 wait timed out.
 from __future__ import annotations
 
 import argparse
+import fcntl
+from contextlib import contextmanager
 import datetime as dt
 import json
 import os
@@ -41,11 +43,24 @@ from pathlib import Path
 LOCK = Path(os.environ.get("OOS_HEAVY_LOCK", "/tmp/oos-heavy.lock"))
 ARCHIVE = Path(os.environ.get("OOS_HEAVY_LOCK_ARCHIVE", "/tmp/oos-heavy-lock-reclaimed"))
 ORPHAN_AGE = 120  # seconds a lock directory may exist without an owner file
-MUTEX_AGE = 60  # seconds before a crashed reclaimer's mutex is ignored
+class ProcessInspectionError(RuntimeError):
+    """Process identity could not be determined safely."""
 
 
-def _mutex() -> Path:
-    return LOCK.with_name(LOCK.name + ".reclaim")
+@contextmanager
+def _critical_section():
+    # Never unlink this inode: all cooperating writers lock the same file.
+    path = LOCK.with_name(LOCK.name + ".mutex")
+    with path.open("a+") as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            yield False
+            return
+        try:
+            yield True
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
 
 
 def process_start(pid: int) -> str | None:
@@ -56,9 +71,15 @@ def process_start(pid: int) -> str | None:
         return None
     except PermissionError:
         pass  # exists, owned by another user
-    out = subprocess.run(["/bin/ps", "-p", str(pid), "-o", "lstart="], capture_output=True, text=True)
+    try:
+        out = subprocess.run(["/bin/ps", "-p", str(pid), "-o", "lstart="],
+                             capture_output=True, text=True)
+    except OSError as error:
+        raise ProcessInspectionError(str(error)) from error
     start = " ".join(out.stdout.split())
-    return start or None
+    if out.returncode != 0 or not start:
+        raise ProcessInspectionError(f"cannot inspect pid {pid}")
+    return start
 
 
 def read_owner() -> dict | None:
@@ -98,7 +119,10 @@ def status() -> dict:
     pid = owner.get("pid")
     if not isinstance(pid, int) or pid <= 0:
         return {"state": "held", "reason": "owner has no pid (legacy); not reclaimable", "owner": owner}
-    start = process_start(pid)
+    try:
+        start = process_start(pid)
+    except ProcessInspectionError:
+        return {"state": "held", "reason": f"pid {pid} identity unknown; not reclaimable", "owner": owner}
     if start is None:
         return {"state": "stale", "reason": f"pid {pid} has exited", "owner": owner}
     want = recorded_start(owner)
@@ -108,86 +132,82 @@ def status() -> dict:
     return {"state": "held", "reason": f"pid {pid} is running", "owner": owner}
 
 
-def _take_mutex() -> bool:
-    m = _mutex()
-    try:
-        m.mkdir()
-        return True
-    except FileExistsError:
-        try:
-            if time.time() - m.stat().st_mtime > MUTEX_AGE:
-                m.rmdir()
-        except FileNotFoundError:
-            pass
-        return False
+def _reclaim_if_stale() -> dict | None:
+    """Caller must hold the shared namespace mutex."""
+    st = status()
+    if st["state"] != "stale":
+        return None
+    stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    receipt = f"{stamp}-{uuid.uuid4().hex}"
+    ARCHIVE.mkdir(parents=True, exist_ok=True)
+    # Preserve receipts before removing the lease. Exclusive creation avoids loss.
+    owner_text = (LOCK / "owner").read_text() if (LOCK / "owner").exists() else None
+    if owner_text is not None:
+        with (ARCHIVE / f"{receipt}-owner.json").open("x") as out:
+            out.write(owner_text)
+    with (ARCHIVE / f"{receipt}-reason.txt").open("x") as out:
+        out.write(st["reason"] + "\n")
+    shutil.rmtree(LOCK)
+    return st
 
 
 def reclaim_if_stale() -> dict | None:
-    """Remove a stale lock. Returns the status it acted on, or None if nothing was removed."""
-    if not _take_mutex():
-        return None
-    try:
-        st = status()
-        if st["state"] != "stale":
-            return None
-        stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        moved = LOCK.with_name(f"{LOCK.name}.stale-{stamp}-{uuid.uuid4().hex[:6]}")
-        try:
-            LOCK.rename(moved)
-        except FileNotFoundError:
-            return None
-        ARCHIVE.mkdir(parents=True, exist_ok=True)
-        if (moved / "owner").exists():
-            shutil.copy2(moved / "owner", ARCHIVE / f"{stamp}-owner.json")
-        (ARCHIVE / f"{stamp}-reason.txt").write_text(st["reason"] + "\n", encoding="utf-8")
-        shutil.rmtree(moved, ignore_errors=True)
-        return st
-    finally:
-        try:
-            _mutex().rmdir()
-        except FileNotFoundError:
-            pass
+    """Remove a confirmed stale lease under the shared namespace mutex."""
+    with _critical_section() as locked:
+        return _reclaim_if_stale() if locked else None
 
 
 def acquire(owner: str, purpose: str, pid: int | None = None, wait: float = 0, poll: float = 60,
             log=None) -> str | None:
     """Take the lock for `pid` (default: this process). Returns the token, or None
     if `wait` seconds pass first."""
-    pid = pid or os.getpid()
+    pid = os.getpid() if pid is None else pid
+    if type(pid) is not int or pid <= 0:
+        return None
     deadline = time.monotonic() + wait
     while True:
-        try:
-            LOCK.mkdir()
-        except FileExistsError:
-            st = reclaim_if_stale()
-            if st is not None:
-                if log:
-                    log(f"reclaimed stale lock: {st['reason']}")
-                continue
-            if time.monotonic() >= deadline:
-                return None
-            if log:
-                cur = status()
-                who = (cur["owner"] or {}).get("owner") or (cur["owner"] or {}).get("legacy") or "?"
-                log(f"lock busy: {who} ({cur['reason']})")
-            time.sleep(max(0.0, min(poll, deadline - time.monotonic())))
-            continue
-        token = str(uuid.uuid4())
-        data = {"owner": owner, "token": token,
-                "acquired_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
-                "purpose": purpose, "pid": pid, "pid_start": process_start(pid)}
-        tmp = LOCK / "owner.tmp"
-        tmp.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-        tmp.replace(LOCK / "owner")
-        return token
+        with _critical_section() as locked:
+            if locked:
+                try:
+                    start = process_start(pid)
+                except ProcessInspectionError:
+                    return None
+                if start is None:
+                    return None
+                if LOCK.exists():
+                    st = _reclaim_if_stale()
+                    if st is not None and log:
+                        log(f"reclaimed stale lock: {st['reason']}")
+                if not LOCK.exists():
+                    LOCK.mkdir()
+                    token = str(uuid.uuid4())
+                    data = {"owner": owner, "token": token,
+                            "acquired_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+                            "purpose": purpose, "pid": pid, "pid_start": start}
+                    try:
+                        tmp = LOCK / "owner.tmp"
+                        tmp.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+                        tmp.replace(LOCK / "owner")
+                    except Exception:
+                        shutil.rmtree(LOCK)
+                        raise
+                    return token
+        if time.monotonic() >= deadline:
+            return None
+        if log:
+            log("lock busy")
+        time.sleep(max(0.0, min(poll, deadline - time.monotonic())))
 
 
 def release(token: str) -> bool:
-    owner = read_owner()
-    if not owner or owner.get("token") != token:
-        return False
-    shutil.rmtree(LOCK, ignore_errors=True)
-    return True
+    with _critical_section() as locked:
+        if not locked:
+            return False
+        owner = read_owner()
+        if not owner or owner.get("token") != token:
+            return False
+        shutil.rmtree(LOCK)
+        return True
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -207,7 +227,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(status(), indent=2))
         return 0
     if args.cmd == "acquire":
-        token = acquire(args.owner, args.purpose, args.pid or os.getppid(), args.wait, args.poll,
+        token = acquire(args.owner, args.purpose, os.getppid() if args.pid is None else args.pid, args.wait, args.poll,
                         log=lambda m: print(m, file=sys.stderr, flush=True))
         if token is None:
             print("heavy lock not free before --wait ran out", file=sys.stderr)
