@@ -13,6 +13,22 @@ older nonzero-only tools do not satisfy this contract.
 
 ## Current provenance
 
+Room `$27`'s western ladder approach uses two `$F5` fill markers at offsets
+`$0A1A/$0A1B`, replacing redundant `$08` overrides. Dry collision remains native;
+the generated reservoir table fills 224 cells instead of 222. The exact base
+patch is `Data/rom_patches/zora27_west_ladder_fill_2026-10-23.json`.
+
+- source: 20 rooms, 3,191 explicit tiles (3,095 nonzero and 96 floor tiles)
+- source SHA-256:
+  `36777aaa2e344f9f70fba85a7700cd51f515d569a72affddf9d6abf4994e9d2f`
+- matching tested disposable edit base SHA-256:
+  `33415b9f56a3471590dc13565c5e376435b3403f84a99967cdf92ec72cdbbfb9`
+
+Shared-base application remains pending scawful's approval. The source must be
+built with its matching base; the validator rejects the unmigrated shared base.
+
+The preceding safe-rails source is retained as history:
+
 The 2026-10-18 Goron Mines safe-rails fix (scawful: "Safe rails first: fix the 313 derail
 tiles in the 7 rooms, no layout change.") gives every lane tile of a plain straight rail
 piece in rooms `$77`, `$89`, `$97`, `$98`, `$B9`, `$D7` and `$D8` an explicit straight:
