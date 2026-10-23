@@ -36,6 +36,9 @@
 ; scawful 2026-09-26: about 5 tiles. Tune by feel.
 !EonOwl_TalkDistance = 80
 !EonOwl_ArrivalTalkDistance = $20 ; two tiles; let Link take in the landing
+; Arrival map $40 landing spot (scawful 2026-10-23: spot B, tile (44,34)).
+!EonOwl_SpotB_X = $02C0 ; pixel 704
+!EonOwl_SpotB_Y = $0220 ; pixel 544
 
 Sprite_EonOwl_Long:
 {
@@ -50,6 +53,10 @@ Sprite_EonOwl_Long:
           JSR Sprite_KaeporaGaebora_Draw
           JMP .HandleSprite
   .NotGaebora
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+  ; Arrival owl is not drawn until it flies in.
+  LDA.w SprAction, X : CMP.b #$06 : BEQ .HandleSprite
+endif
   JSR Sprite_EonOwl_Draw
   .HandleSprite
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
@@ -134,7 +141,10 @@ if !ENABLE_EON_OWL_ONE_SHOT == 1
   ; only, and once per save (EonOwl_ArrivalTalked).
   LDA.w AreaIndex : CMP.b #$40 : BNE .not_arrival
     LDA.l MoonPearl : BNE .no_arrival_owl
-    LDA.l EonOwlFlags : AND.b #!EonOwl_ArrivalTalked : BEQ .not_arrival
+    LDA.l EonOwlFlags : AND.b #!EonOwl_ArrivalTalked : BNE .no_arrival_owl
+      ; Hidden until Impa's arrival text ends, then flies in to spot B.
+      LDA.b #$06 : STA.w SprAction, X
+      BRA .not_arrival
     .no_arrival_owl
       STZ.w SprState, X
   .not_arrival
@@ -157,6 +167,12 @@ Sprite_EonOwl_Main:
   dw KaeporaGaebora
   dw KaeporaGaebora_Respond
   dw KaeporaGaebora_FlyAway
+
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+  dw EonOwl_ArrivalWait
+  dw EonOwl_ArrivalFlyIn
+  dw EonOwl_ArrivalLanded
+endif
 
   EonOwl_Idle:
   {
@@ -248,6 +264,80 @@ endif
     .not_ready
     RTS
   }
+
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+  ; 0x06 - Arrival (map $40), hidden. Module15 shows Impa's text ($35/$36)
+  ; and then hands control to module $09, so the first active frame in
+  ; module $09 is after the text. Start 32 px left of the camera.
+  EonOwl_ArrivalWait:
+  {
+    LDA.b $10 : CMP.b #$09 : BNE .wait
+      REP #$20
+      LDA.b $E2 : SEC : SBC.w #$0020
+      CMP.w #!EonOwl_SpotB_X-$20 : BCC +
+        ; Camera is right of spot B (re-entry): start 112 px left of it.
+        LDA.w #!EonOwl_SpotB_X-$70
+      +
+      SEP #$20
+      STA.w SprX, X : XBA : STA.w SprXH, X
+      REP #$20
+      LDA.w #!EonOwl_SpotB_Y-$18
+      SEP #$20
+      STA.w SprY, X : XBA : STA.w SprYH, X
+      LDA.b #$18 : STA.w SprXSpeed, X
+      LDA.b #$05 : STA.w SprYSpeed, X
+      LDA.b #$02 : STA.w SprFrame, X
+      %GotoAction(7)
+    .wait
+    RTS
+  }
+
+  ; 0x07 - Fly right and down to spot B, then land.
+  EonOwl_ArrivalFlyIn:
+  {
+    %PlayAnimation(2,3,10)
+    JSL Sprite_Move
+
+    LDA.w SprY, X : STA.b $00
+    LDA.w SprYH, X : STA.b $01
+    REP #$20
+    LDA.b $00 : CMP.w #!EonOwl_SpotB_Y
+    SEP #$20
+    BCC .y_above
+      STZ.w SprYSpeed, X
+      LDA.b #!EonOwl_SpotB_Y&$FF : STA.w SprY, X
+      LDA.b #!EonOwl_SpotB_Y>>8 : STA.w SprYH, X
+    .y_above
+
+    LDA.w SprX, X : STA.b $00
+    LDA.w SprXH, X : STA.b $01
+    REP #$20
+    LDA.b $00 : CMP.w #!EonOwl_SpotB_X
+    SEP #$20
+    BCC .flying
+      LDA.b #!EonOwl_SpotB_X&$FF : STA.w SprX, X
+      LDA.b #!EonOwl_SpotB_X>>8 : STA.w SprXH, X
+      LDA.b #!EonOwl_SpotB_Y&$FF : STA.w SprY, X
+      LDA.b #!EonOwl_SpotB_Y>>8 : STA.w SprYH, X
+      STZ.w SprXSpeed, X
+      STZ.w SprYSpeed, X
+      STZ.w SprFrame, X
+      LDA.b #$20 : STA.w SprTimerA, X
+      %GotoAction(8)
+    .flying
+    RTS
+  }
+
+  ; 0x08 - Landed: a short pause, then $1FA by itself (no near trigger).
+  EonOwl_ArrivalLanded:
+  {
+    %PlayAnimation(0,1,16)
+    LDA.w SprTimerA, X : BNE .wait
+      %GotoAction(1)
+    .wait
+    RTS
+  }
+endif
 }
 
 if !ENABLE_EON_OWL_NEAR_TRIGGER == 1
