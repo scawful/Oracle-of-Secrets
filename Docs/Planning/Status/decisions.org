@@ -2833,7 +2833,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
      The discussion's cooperative combat and ritual machinery are proposals.
   Answers: "pls reconcile these issues and update our docs and artifacts across afs and other docs to align with the latest plot plans, the lyra sky, the sea islands, what role the eon abyss plays, the lupo mountain and fortress swap, etc"; "we'll share a doc with ridoyie with instructions, overview of plot beats, progression and instructions on using yaze to update messages and propose suggestions"
 
-* OPEN Shrine of Power plan: which option? (2026-10-23)
+* DECIDED Shrine of Power plan: Option A (2026-10-23)
   :PROPERTIES:
   :ASKED_BY: Claude-GaroPower (scawful's 2026-10-23 request: "ideas for how the shrine of power segment of the game should play out")
   :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/garo_power_2026-10-23/README.md]]
@@ -2848,7 +2848,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   shrine. New enemy and art (~3 days). Moves the mask out of the desert NPC.
   C. Move the doors only; pendant only. The Desert Goron gives the Mitt instead.
   Cheapest; reopens the Glove/Mitt swap.
-  Answer:
+  Answer: "Shrine of Power: Option A. Garo guards the stair, Mitt mid-shrine, pendant at the end." (scawful, 2026-10-23).
 
 * OPEN Garo quest shape: the last watchman? (2026-10-23)
   :PROPERTIES:
