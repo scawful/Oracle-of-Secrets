@@ -28,9 +28,8 @@
 ;   0x1CA - 7 crystals: endgame (retarget to Shrine of Courage; TO-BUILD)
 ;   0x1C8/0x1C9 - used by impa_hints.asm (not Maku)
 ;   0x1CB - Village Elder post-D1 ranch hint (not Maku)
-;   !MakuSeed_Message - Seed receipt at 8 essences. PLACEHOLDER: reuses
-;     0x1CA until scawful approves the Seed text and an ID is allocated
-;     (proposed text: AFS handoffs/seed_fortress_gate_2026-10-23/WORK.md)
+;   0x1BC - !MakuSeed_Message: Seed receipt at 8 essences (text approved
+;     by scawful 2026-10-22)
 ;
 ; FLAGS WRITTEN:
 ;   MakuTreeQuest = 1 - Met Maku Tree
@@ -82,8 +81,8 @@
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 
-; PLACEHOLDER message for the Maku Seed receipt (see MESSAGES above).
-!MakuSeed_Message   = $01CA
+; Maku Seed receipt (see MESSAGES above).
+!MakuSeed_Message   = $01BC
 
 %Set_Sprite_Properties(Sprite_MakuTree_Prep, Sprite_MakuTree_Long)
 

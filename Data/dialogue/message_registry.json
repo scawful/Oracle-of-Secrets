@@ -16,6 +16,14 @@
     },
     {
       "start": "0x1BC",
+      "end": "0x1BC",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "maku-seed",
+      "purpose": "Maku Tree gives the Maku Seed at 8 essences (Sprites/NPCs/maku_tree.asm !MakuSeed_Message); words approved by scawful 2026-10-22 (\"approve\"), em dash rendered as '-' (font has no em dash)"
+    },
+    {
+      "start": "0x1BD",
       "end": "0x1BD",
       "status": "placeholder-pool",
       "expected_content": "placeholder",
