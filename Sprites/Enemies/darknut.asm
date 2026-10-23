@@ -81,7 +81,8 @@ Sprite_Darknut_Main:
     JSL Sprite_SpawnProbeAlways_long
   .no_probe
 
-  ; TODO: Setup parrying sword gfx
+  ; Vanilla guard contact/parry reads the current sprite's weapon offsets.
+  JSR Sprite_Darknut_WeaponHitbox
   JSL Guard_ParrySwordAttacks
 
   JSL Sprite_Move
@@ -201,7 +202,7 @@ Sprite_Darknut_Draw:
   JSL Sprite_OAM_AllocateDeferToPlayer
 
   LDA.w SprGfx, X : CLC : ADC $0D90, X : TAY;Animation Frame
-  LDA .start_index, Y : STA $06
+  LDA DarknutDrawStartIndex, Y : STA $06
 if !DISABLE_MASKS == 0
   JSL Darknut_DrawFlash ; armored subtype uses a darker palette
 else
@@ -209,7 +210,7 @@ else
 endif
 
   PHX
-  LDX .nbr_of_tiles, Y ;amount of tiles -1
+  LDX DarknutDrawTileCounts, Y ;amount of tiles -1
   LDY.b #$00
   .nextTile
 
@@ -223,10 +224,10 @@ endif
 
   REP #$20
 
-  LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
+  LDA $00 : CLC : ADC DarknutDrawXOffsets, X : STA ($90), Y
   AND.w #$0100 : STA $0E
   INY
-  LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
+  LDA $02 : CLC : ADC DarknutDrawYOffsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
   SEP #$20
   BCC .on_screen_y
@@ -255,28 +256,6 @@ endif
 
   RTS
 
-  .start_index
-  db $00, $03, $06, $09, $0C, $0E, $10, $12
-  .nbr_of_tiles
-  db 2, 2, 2, 2, 1, 1, 1, 1
-  .x_offsets
-  dw 0, 0, 0
-  dw 0, 0, 0
-  dw 0, 0, 0
-  dw 0, 0, 0
-  dw 0, -12
-  dw 0, -12
-  dw 0, 12
-  dw 0, 12
-  .y_offsets
-  dw -4, 0, -12
-  dw -4, 0, -12
-  dw 0, 12, 20
-  dw 0, 12, 20
-  dw 0, 8
-  dw 0, 8
-  dw 0, 8
-  dw 0, 8
   .chr
   db $EF, $E6, $FF
   db $EF, $E6, $FF
@@ -305,3 +284,43 @@ endif
   db $02, $02
   db $02, $02
 }
+
+; M/X=8, DBR=sprite bank, X=sprite slot. Keeps X/Y and processor widths.
+; The last tile in every Darknut frame is its sword. Read its relative
+; offsets from the exact tables used by Draw; do not inherit the shared
+; cache from a previous sprite. $0FAB=$80 is vanilla's invalid sentinel.
+Sprite_Darknut_WeaponHitbox:
+{
+  PHX : PHY
+  LDA.w SprGfx, X : CLC : ADC.w $0D90, X : TAY
+  LDA.w DarknutDrawStartIndex, Y
+  CLC : ADC.w DarknutDrawTileCounts, Y
+  ASL A : TAY
+  LDA.w DarknutDrawXOffsets, Y : STA.w $0FAB
+  LDA.w DarknutDrawYOffsets, Y : STA.w $0FAA
+  PLY : PLX
+  RTS
+}
+
+DarknutDrawStartIndex:
+  db $00, $03, $06, $09, $0C, $0E, $10, $12
+DarknutDrawTileCounts:
+  db 2, 2, 2, 2, 1, 1, 1, 1
+DarknutDrawXOffsets:
+  dw 0, 0, 0
+  dw 0, 0, 0
+  dw 0, 0, 0
+  dw 0, 0, 0
+  dw 0, -12
+  dw 0, -12
+  dw 0, 12
+  dw 0, 12
+DarknutDrawYOffsets:
+  dw -4, 0, -12
+  dw -4, 0, -12
+  dw 0, 12, 20
+  dw 0, 12, 20
+  dw 0, 8
+  dw 0, 8
+  dw 0, 8
+  dw 0, 8
