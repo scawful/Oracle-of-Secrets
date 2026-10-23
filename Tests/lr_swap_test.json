@@ -20,7 +20,7 @@
   "steps": [
     {
       "type": "assert",
-      "address": "$7E0739",
+      "address": "$7E1E79",
       "in": [0, 1],
       "description": "Starts as hookshot (0 or 1)"
     },
@@ -35,7 +35,7 @@
     },
     {
       "type": "assert",
-      "address": "$7E0739",
+      "address": "$7E1E79",
       "equals": 2,
       "description": "Switched to goldstar"
     },
@@ -50,7 +50,7 @@
     },
     {
       "type": "assert",
-      "address": "$7E0739",
+      "address": "$7E1E79",
       "equals": 1,
       "description": "Switched back to hookshot"
     },
@@ -65,14 +65,14 @@
     },
     {
       "type": "assert",
-      "address": "$7E0739",
+      "address": "$7E1E79",
       "equals": 2,
       "description": "Toggled to goldstar again"
     }
   ],
   "onFailure": {
     "expert": "farore",
-    "context": "L/R swap toggle not working. Check HandleLRSwap routine in equipment.asm. The GoldstarOrHookshot variable at $7E0739 should toggle between 1 (hookshot) and 2 (goldstar) when L or R is pressed while hookshot slot is equipped."
+    "context": "L/R swap toggle not working. Check HandleLRSwap routine in equipment.asm. The GoldstarOrHookshot variable at $7E1E79 should toggle between 1 (hookshot) and 2 (goldstar) when L or R is pressed while hookshot slot is equipped."
   },
   "tags": ["lr-swap", "hookshot", "goldstar", "items"]
 }

@@ -60,33 +60,33 @@ Once a room is loaded, its specific behavior is governed by tags and flags.
 
     The sprite engine in `bank_06.asm` iterates through these arrays each frame, executing the logic for each active sprite.
 
-## 4.5. Custom WRAM Region (`$7E0730+`)
+## 4.5. Custom WRAM Region (`$7E1E70+`)
 
-Oracle of Secrets adds a custom WRAM region starting at `$7E0730`, utilizing the MAP16OVERFLOW free RAM space. All custom variables documented here have been verified against `Core/ram.asm` and are actively used by the project's custom systems.
+Oracle of Secrets adds a custom WRAM region starting at `$7E1E70` (`Core/symbols.asm`), in the vanilla-free block usdasm lists as `UNUSED_7E1E70`. It sat at `$7E0730` until 2026-10-19, inside the minecart track tables. All custom variables documented here have been verified against `Core/ram.asm` and are actively used by the project's custom systems.
 
 ### Verified Custom WRAM Variables
 
 | Address    | Label                   | Description                                               | Verified |
 |------------|-------------------------|-----------------------------------------------------------|----------|
-| `$7E0730`  | `MenuScrollLevelV`      | Vertical scroll position for the custom menu system       | ✓        |
-| `$7E0731`  | `MenuScrollLevelH`      | Horizontal scroll position for the custom menu system     | ✓        |
-| `$7E0732`  | `MenuScrollHDirection`  | Direction flag for horizontal menu scrolling (2 bytes)    | ✓        |
-| `$7E0734`  | `MenuItemValueSpoof`    | Temporary override for displayed menu item values (2 bytes)| ✓       |
-| `$7E0736`  | `ShortSpoof`            | Shorter version of the spoof value (1 byte)               | ✓        |
-| `$7E0737`  | `MusicNoteValue`        | Current music note value for Ocarina system (2 bytes)     | ✓        |
-| `$7E0739`  | `GoldstarOrHookshot`    | Differentiates Hookshot (0) from Goldstar (1) mode        | ✓        |
-| `$7E073A`  | `Neck_Index`            | Index for multi-part sprite body tracking (e.g., bosses)  | ✓        |
-| `$7E073B`  | `Neck1_OffsetX`         | X-offset for first neck/body segment                      | ✓        |
-| `$7E073C`  | `Neck1_OffsetY`         | Y-offset for first neck/body segment                      | ✓        |
-| `$7E073D`  | `Neck2_OffsetX`         | X-offset for second neck/body segment                     | ✓        |
-| `$7E073E`  | `Neck2_OffsetY`         | Y-offset for second neck/body segment                     | ✓        |
-| `$7E073F`  | `Neck3_OffsetX`         | X-offset for third neck/body segment                      | ✓        |
-| `$7E0740`  | `Neck3_OffsetY`         | Y-offset for third neck/body segment                      | ✓        |
-| `$7E0741`  | `Offspring1_Id`         | Sprite ID of first child sprite (for boss mechanics)      | ✓        |
-| `$7E0742`  | `Offspring2_Id`         | Sprite ID of second child sprite (for boss mechanics)     | ✓        |
-| `$7E0743`  | `Offspring3_Id`         | Sprite ID of third child sprite (for boss mechanics)      | ✓        |
-| `$7E0744`  | `Kydreeok_Id`           | Sprite ID for Kydreeok boss entity                        | ✓        |
-| `$7E0745`  | `FishingOrPortalRod`    | Differentiates Fishing Rod (1) from Portal Rod (2)        | ✓        |
+| `$7E1E70`  | `MenuScrollLevelV`      | Vertical scroll position for the custom menu system       | ✓        |
+| `$7E1E71`  | `MenuScrollLevelH`      | Horizontal scroll position for the custom menu system     | ✓        |
+| `$7E1E72`  | `MenuScrollHDirection`  | Direction flag for horizontal menu scrolling (2 bytes)    | ✓        |
+| `$7E1E74`  | `MenuItemValueSpoof`    | Temporary override for displayed menu item values (2 bytes)| ✓       |
+| `$7E1E76`  | `ShortSpoof`            | Shorter version of the spoof value (1 byte)               | ✓        |
+| `$7E1E77`  | `MusicNoteValue`        | Current music note value for Ocarina system (2 bytes)     | ✓        |
+| `$7E1E79`  | `GoldstarOrHookshot`    | Differentiates Hookshot (0) from Goldstar (1) mode        | ✓        |
+| `$7E1E7A`  | `Neck_Index`            | Index for multi-part sprite body tracking (e.g., bosses)  | ✓        |
+| `$7E1E7B`  | `Neck1_OffsetX`         | X-offset for first neck/body segment                      | ✓        |
+| `$7E1E7C`  | `Neck1_OffsetY`         | Y-offset for first neck/body segment                      | ✓        |
+| `$7E1E7D`  | `Neck2_OffsetX`         | X-offset for second neck/body segment                     | ✓        |
+| `$7E1E7E`  | `Neck2_OffsetY`         | Y-offset for second neck/body segment                     | ✓        |
+| `$7E1E7F`  | `Neck3_OffsetX`         | X-offset for third neck/body segment                      | ✓        |
+| `$7E1E80`  | `Neck3_OffsetY`         | Y-offset for third neck/body segment                      | ✓        |
+| `$7E1E81`  | `Offspring1_Id`         | Sprite ID of first child sprite (for boss mechanics)      | ✓        |
+| `$7E1E82`  | `Offspring2_Id`         | Sprite ID of second child sprite (for boss mechanics)     | ✓        |
+| `$7E1E83`  | `Offspring3_Id`         | Sprite ID of third child sprite (for boss mechanics)      | ✓        |
+| `$7E1E84`  | `Kydreeok_Id`           | Sprite ID for Kydreeok boss entity                        | ✓        |
+| `$7E1E85`  | `FishingOrPortalRod`    | Differentiates Fishing Rod (1) from Portal Rod (2)        | ✓        |
 | `$7E0746`  | `DBG_REINIT_FLAGS`      | Debug reinit request bitfield (bridge -> game)            | —        |
 | `$7E0747`  | `DBG_REINIT_STATUS`     | Debug reinit completed bitfield                           | —        |
 | `$7E0748`  | `DBG_REINIT_ERROR`      | Debug reinit error bitfield                               | —        |
@@ -105,14 +105,14 @@ Oracle of Secrets adds a custom WRAM region starting at `$7E0730`, utilizing the
 
 ### Usage Notes
 
--   **Menu System**: Variables `$7E0730-$7E0736` are exclusively used by the custom menu system (`Menu/menu.asm`) to manage smooth scrolling between the Items and Quest Status pages.
+-   **Menu System**: Variables `$7E1E70-$7E1E76` are exclusively used by the custom menu system (`Menu/menu.asm`) to manage smooth scrolling between the Items and Quest Status pages.
 
 -   **Item Differentiation**: `GoldstarOrHookshot` and `FishingOrPortalRod` are critical for shared inventory slots. These allow two distinct items to occupy a single menu slot, with the player able to switch between them using the L/R shoulder buttons.
 
 -   **Boss Mechanics**: The `Neck_*` and `Offspring_*` variables enable complex multi-part boss sprites (e.g., Kydreeok with multiple heads, Manhandla with independent parts). The parent sprite uses these to track and coordinate its child sprite components.
 
--   **Memory Safety**: All variables in this region are placed within the MAP16OVERFLOW free RAM area, which is guaranteed to be unused by the vanilla game engine. This prevents conflicts with vanilla systems.
--   **Debug Reinit + Warp**: `$7E0746-$7E0754` are reserved for the bridge-driven reinit + debug warp systems. Avoid using these for gameplay logic.
+-   **Memory Safety**: All variables in this region sit in `$7E1E70-$7E1EFF`, which vanilla never uses. `Core/symbols.asm` and `Sprites/Objects/minecart.asm` assert that the block stays inside it and clear of the minecart track tables.
+-   **Debug Reinit + Warp**: `DBG_*` rows: `Util/item_cheat.asm` is not assembled (`Oracle_main.asm:164`) and these old addresses now sit inside the minecart track tables (`$7E0728-$7E07E7`); give the debug mailbox new RAM before reviving it.
 
 ## 5. Long-Term Progression: SRAM and Custom Flags
 

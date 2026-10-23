@@ -226,7 +226,7 @@
     "oos_wram": {
       "desc": "Custom OOS WRAM region",
       "ranges": [
-        {"start": "0x0730", "length": 32, "mem_type": "wram"}
+        {"start": "0x1E70", "length": 24, "mem_type": "wram"}
       ]
     },
     "sram": {

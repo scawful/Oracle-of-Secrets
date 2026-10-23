@@ -19,7 +19,7 @@ from pathlib import Path
 import sys
 
 sys.dont_write_bytecode = True
-COUNTERPART_SHA = "d523cde1519e9c888edb8c35bd74b0af5bbdb97047a07dc03e3fda6b557458c2"
+COUNTERPART_SHA = "05f61d02f82ea98b51eb01791a0bd3df375adbbc70efebb770d760223eb2ec10"
 COUNTERPART_PATH = Path(__file__).with_name("portal_counterpart.py")
 if hashlib.sha256(COUNTERPART_PATH.read_bytes()).hexdigest() != COUNTERPART_SHA:
     raise RuntimeError("Qualified Portal counterpart utilities differ")

@@ -117,6 +117,10 @@ Right = $03
 ; is based of the X value used to index sprite arrays.
 !MinecartCurrent = $07EA
 
+; Core/symbols.asm's WRAM block (menu, Kydreeok necks, rod, song tint) shared
+; $0730-$0747 with !MinecartTrackRoom until 2026-10-19. Keep them apart.
+assert MenuScrollLevelV >= $7E0000+!MinecartCurrent+$02 || SongTintColor < $7E0000+!MinecartTrackRoom, "Core/symbols.asm WRAM block overlaps the minecart track tables"
+
 ; One chosen turn per B6 crossing; cleared when leaving its collision cell.
 !MinecartJunctionLatch = SprMiscF
 
