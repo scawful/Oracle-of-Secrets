@@ -475,7 +475,13 @@ Sprite_Minecart_Main:
 
     ; Get direction of the cart (0 to 3)
     LDY.w !SpriteDirection, X
-    JSL DragPlayer
+    if !ENABLE_MINECART_CART_SHUTTERS
+      CartShutter97_DragNorthCall:
+      JSL CartShutter97_DragPlayer
+      CartShutter97_DragNorthCall_End:
+    else
+      JSL DragPlayer
+    endif
     JSR HandlePlayerCameraAndMoveCart
 
     JSR HandleTileDirections
@@ -529,7 +535,13 @@ Sprite_Minecart_Main:
 
     ; Get direction of the cart (0 to 3)
     LDY.w !SpriteDirection, X
-    JSL DragPlayer
+    if !ENABLE_MINECART_CART_SHUTTERS
+      CartShutter97_DragSouthCall:
+      JSL CartShutter97_DragPlayer
+      CartShutter97_DragSouthCall_End:
+    else
+      JSL DragPlayer
+    endif
     JSR HandlePlayerCameraAndMoveCart
 
     JSR HandleTileDirections
@@ -1524,13 +1536,9 @@ Sprite_Minecart_DrawBottom:
 }
 
 ; =========================================================
-; Shutter door only opens if the player is in the cart.
-;
-; STATUS: UNTESTED — needs runtime verification before enabling.
-;   - Confirm shutter stays closed without cart
-;   - Confirm shutter opens when riding cart into tagged room
-;   - Confirm no regression on Crumble Floor (tag 0x34) or other Holes tags
-;   - Confirm JML $01CC5A return path is correct for tag 0x37 context
+; Experimental cart shutters (default off). The legacy room-wide opener's
+; four synthetic native cases are qualified; the localized $97 gate needs
+; its own physical boarding/animation/traversal/reload qualification.
 ;
 ; Hook: Tag 0x37 at $01CC14 (vanilla Holes6 routine).
 ; The old hook at $01CC08 (Holes3/tag 0x34) conflicts with
@@ -1544,8 +1552,274 @@ Sprite_Minecart_DrawBottom:
 
 if !ENABLE_MINECART_CART_SHUTTERS
 pushpc
-org $01CC14 ; @hook module=Sprites name=RoomTag_ShutterDoorRequiresCart kind=jml target=RoomTag_ShutterDoorRequiresCart
+org $01CC14 ; @hook module=Sprites name=RoomTag_CartShutterDispatch kind=jml target=RoomTag_CartShutterDispatch expected_m=8 expected_x=8
+  JML RoomTag_CartShutterDispatch
+assert pc() <= $01CC18
+
+; Intraroom transition completion runs while room tags are suspended.
+; Its unconditional close must honor the same complete-actor hold region.
+assert read4($0289F3) == $D00468AD && read1($0289F7) == $0D, "Intraroom shutter close entry moved"
+org $0289F3 ; @hook module=Sprites name=CartShutter97_TransitionHold kind=jml target=CartShutter97_TransitionHold expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8
+  JML CartShutter97_TransitionHold
+  NOP
+assert pc() == $0289F8
+pullpc
+
+; Reserve one bank-$2C page before the fixed gate. The dynamic sprite
+; stream ended at $2CE114 in R8 and is bounded below $2CFA00 in
+; all_sprites.asm. The gate retains its $2CFB00 entry and $2CFD00 limit.
+pushpc
+org $2CFA00
+; @abi long_entry expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8
+; Called only by the two vertical cart actions with X=slot, Y=direction,
+; D=0 and DBR=$31. Retain DBR: DragPlayer's absolute ROM tables are in
+; bank $31. X/Y/D/DBR and the full SprCachedX word are preserved; A/P
+; are clobbered, as in DragPlayer. Both PHA/PLA execute with A16.
+CartShutter97_DragPlayer:
+{
+  LDA.b $1B : BEQ .plain
+  LDA.b $EE : BNE .plain
+  LDA.b !LinkInCart : BEQ .plain
+  LDA.w SprFloor, X : BNE .plain
+  REP #$20
+  TXA : AND.w #$00FF : CMP.w !MinecartCurrent : BNE .plain_wide
+  LDA.b $A0 : CMP.w #$0097 : BNE .plain_wide
+  SEP #$20
+  LDA.w SprXH, X : XBA : LDA.w SprX, X
+  REP #$20
+  CMP.w #$0F78 : BNE .plain_wide
+  SEP #$20
+  LDA.w SprYH, X : XBA : LDA.w SprY, X
+  REP #$20
+  CMP.w #$12B0 : BCC .plain_wide
+  CMP.w #$1359 : BCS .plain_wide
+
+  ; The paired aperture spans X[$0F78,$0F88). Link's vertical probes
+  ; are X+0,+8,+15, so its drag target must be exactly $0F78 here.
+  ; Only adjust the temporary target; restore the real cached cart X
+  ; before camera handling, overlap checks and stop-position caching.
+  LDA.w SprCachedX : PHA
+  LDA.w #$0F7A : STA.w SprCachedX
+  SEP #$20
+  JSL DragPlayer
+  REP #$20
+  PLA : STA.w SprCachedX
+  SEP #$30
+  RTL
+
+  .plain_wide
+  SEP #$20
+  .plain
+  JML DragPlayer
+}
+CartShutter97_DragPlayer_End:
+assert pc() <= $2CFB00, "Localized cart drag overlaps fixed cart gate"
+pullpc
+
+; Keep this optional gate out of the nearly full bank-$31 sprite stream.
+; Bank-$2C dynamic code ends at $2CE113 in the qualified control. Its
+; guarded stream bound is in all_sprites.asm; the next fixed region is
+; SomariaSocketDoor at $2CFD00, then collision at FE00 and guard at FF00.
+pushpc
+org $2CFB00
+RoomTag_CartShutterDispatch:
+{
+  REP #$20
+  LDA.b $A0 : CMP.w #$0097
+  SEP #$20
+  BEQ .local_gate
   JML RoomTag_ShutterDoorRequiresCart
+  .local_gate
+  JML RoomTag_CartShutter97
+}
+RoomTag_CartShutterDispatch_End:
+
+; Dedicated room contract: one type-$18 shutter, North position8, door
+; index0, tile8 x46..49/y36..38, BG1, with its paired upper face
+; at x47..48/y27..28. The ordinary key door is index1,
+; North position6, so its durable open bit is $0400 & $4000. No other
+; room tag may drive shutters here. Vanilla OperateShutterDoors animates
+; ALL type-$18/$44 doors; locality depends on this one-shutter layout.
+;
+; Entry/exit: natural tag JSR, M8/X8, D=0, mirrored low-WRAM DBR.
+; A/X/P clobbered; Y, DBR, D, natural return stack, tags/$0E preserved.
+; The shared hold predicate uses a balanced JSR/RTS below that stack.
+; Room load sets $0468=1; no gate state is persisted or separately cached.
+; Changing $0468 and entering submodule05 uses vanilla opening/closing
+; graphics, $068C flags and collision at animation step8, ending at16.
+;
+; Closed: actual mounted A3 slot, layer0, vertical action toward gate.
+; Open approach: cart X[$0F78,$0F89), Y[$12B8,$1351), plane $1328.
+; Hold: Link OR any live layer0 cart in X[$0F50,$0FB1), Y[$12B0,$1359).
+; The wider hold contains the approach and BOTH door faces, with
+; >8px clearance for cart OAM x[-8,+23], y[-12,+24], Link and feet/lag.
+; This also holds when dismounted, or when a cart is parked in the gate.
+; No actor moves while vanilla submodule05 animates. J(48,44) and the
+; north terminal(48,20) are outside the cart hold region.
+RoomTag_CartShutter97:
+{
+  SEP #$30
+
+  ; A previously retained selector must not skip the still-locked key
+  ; task. Group1 is private to this layout; room77 retains group0.
+  REP #$20
+  LDA.w $0400 : BIT.w #$4000
+  SEP #$20
+  BNE .key_open
+    LDA.w SwitchRam+1 : BEQ .key_open
+    STZ.w SwitchRam+1
+  .key_open
+
+  LDA.w $0468 : BNE .closed
+  JMP.w .hold
+
+  .idle
+  JML $01CC5A
+
+  .closed
+  LDA.b $1B : BEQ .idle
+  LDA.b $EE : BNE .idle
+  LDA.b !LinkInCart : BEQ .idle
+  LDX.w !MinecartCurrent : CPX.b #$10 : BCS .idle
+  LDA.w SprState, X : CMP.b #$09 : BNE .idle
+  LDA.w SprType, X : CMP.b #Sprite_Minecart : BNE .idle
+  LDA.w SprFloor, X : BNE .idle
+  LDA.w SprAction, X : CMP.b #$02 : BEQ .north
+  CMP.b #$04 : BNE .idle
+
+  ; Southbound approaches from north of the shutter plane.
+  LDA.w SprYH, X : XBA : LDA.w SprY, X
+  REP #$20
+  CMP.w #$1328 : BCS .idle_wide
+  BRA .approach_y
+  .north
+  LDA.w SprYH, X : XBA : LDA.w SprY, X
+  REP #$20
+  CMP.w #$1328 : BCC .idle_wide
+  .approach_y
+  CMP.w #$12B8 : BCC .idle_wide
+  CMP.w #$1351 : BCS .idle_wide
+  SEP #$20
+  LDA.w SprXH, X : XBA : LDA.w SprX, X
+  REP #$20
+  CMP.w #$0F78 : BCC .idle_wide
+  CMP.w #$0F89 : BCS .idle_wide
+  ; A stale mounted flag/slot cannot open while Link is elsewhere.
+  LDA.b $22 : CMP.w #$0F68 : BCC .idle_wide
+  CMP.w #$0F99 : BCS .idle_wide
+  LDA.b $20 : CMP.w #$12B0 : BCC .idle_wide
+  CMP.w #$1359 : BCS .idle_wide
+  REP #$10
+  LDX.w #$0000
+  JMP.w .update
+
+  .idle_wide
+  SEP #$30
+  JMP.w .idle
+
+  .hold
+  JSR.w CartShutter97_Hold
+  REP #$30
+  LDX.w #$0000
+  BCS .update
+  INX
+
+  .update
+  CPX.w $0468 : BEQ .exit
+    STX.w $0468
+    STZ.w $068E : STZ.w $0690
+    SEP #$30
+    CPX.b #$00 : BNE .no_sfx
+      LDA.b #$1B : STA.w $012F
+    .no_sfx
+    LDA.b #$05 : STA.b $11
+  .exit
+  SEP #$30
+  JML $01CC5A
+}
+
+; No WRAM writes. M8/X8 entry/exit; carry set iff Link or any live cart
+; occupies the complete paired-door corridor. A/X/P clobbered; Y/D/DBR
+; unchanged. Shared by the ordinary tag and transition-close interception.
+CartShutter97_Hold:
+{
+  SEP #$30
+  LDA.b $1B : BEQ .scan_carts
+  LDA.b $EE : BNE .scan_carts
+  REP #$20
+  LDA.b $22 : CMP.w #$0F50 : BCC .scan_carts_wide
+  CMP.w #$0FB1 : BCS .scan_carts_wide
+  LDA.b $20 : CMP.w #$12B0 : BCC .scan_carts_wide
+  CMP.w #$1359 : BCS .scan_carts_wide
+  BRA .held
+
+  .scan_carts_wide
+  SEP #$20
+  .scan_carts
+  LDX.b #$0F
+  .next_cart
+  LDA.w SprState, X : CMP.b #$09 : BNE .skip_cart
+  LDA.w SprType, X : CMP.b #Sprite_Minecart : BNE .skip_cart
+  LDA.w SprFloor, X : BNE .skip_cart
+  LDA.w SprXH, X : XBA : LDA.w SprX, X
+  REP #$20
+  CMP.w #$0F50 : BCC .skip_cart_wide
+  CMP.w #$0FB1 : BCS .skip_cart_wide
+  SEP #$20
+  LDA.w SprYH, X : XBA : LDA.w SprY, X
+  REP #$20
+  CMP.w #$12B0 : BCC .skip_cart_wide
+  CMP.w #$1359 : BCS .skip_cart_wide
+  BRA .held
+
+  .skip_cart_wide
+  SEP #$20
+  .skip_cart
+  DEX : BPL .next_cart
+  SEP #$30
+  CLC
+  RTS
+  .held
+  SEP #$30
+  SEC
+  RTS
+}
+
+CartShutter97_TransitionHold:
+{
+  ; Save the original P and full A (including hidden B), then the M8/X8
+  ; caller's X. Outside the private held gate, reproduce LDA0468/BNE
+  ; with the original C/V/D/I flags and hidden B, not our room comparison.
+  PHP
+  REP #$20
+  PHA
+  SEP #$20
+  PHX
+  REP #$20
+  LDA.b $A0 : CMP.w #$0097
+  SEP #$20
+  BNE .original
+  LDA.w $0468 : BNE .original
+  JSR.w CartShutter97_Hold
+  BCC .original
+    PLX
+    REP #$20
+    PLA
+    PLP
+    LDA.w $0468
+    JML $028A05
+  .original
+  PLX
+  REP #$20
+  PLA
+  PLP
+  LDA.w $0468 : BEQ .vanilla_close
+  JML $028A05
+  .vanilla_close
+  JML $0289F8
+}
+RoomTag_CartShutter97_End:
+assert pc() <= $2CFD00, "Localized cart gate overlaps SomariaSocketDoor"
 pullpc
 endif
 
