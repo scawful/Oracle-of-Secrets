@@ -13,7 +13,7 @@
 ; $07FC       : launch module
 ; $07FD       : Bombchu wall-following state (owned by Items/bombchu.asm)
 ; $07FE       : Bombchu allocator latch (owned by Items/bombchu.asm)
-; $07FF       : reserved (unused)
+; $07FF       : Garo lunge timer (owned by Masks/garo_mask.asm)
 ; The latch is shot-owned, never inferred from the current menu icon.
 ; =========================================================
 

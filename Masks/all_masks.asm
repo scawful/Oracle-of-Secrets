@@ -57,8 +57,10 @@ Player_DoSfx2 = $078028
 GaroGuardTimer = $07EE
 GaroCounterTimer = $07EF
 GaroCooldown = $07F0
+GaroLungeTimer = $07FF ; the last byte; $07F1-$07FE belong to Items/
 assert GaroGuardTimer == $07EE
 assert GaroCooldown < $0800
+assert GaroLungeTimer == $07FF
 
 incsrc "Masks/mask_routines.asm"
 
