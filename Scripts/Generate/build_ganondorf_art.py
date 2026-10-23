@@ -38,6 +38,7 @@ TABLE_NAMES = ('start_index', 'nbr_of_tiles', 'x_offsets', 'y_offsets',
 SHEET_SIZE = (128, 96)
 SHEET_BYTES = 0x1800
 MAX_CELLS = 48
+PACKING_LAYOUTS = ('auto', 'fixed', 'first_opaque_row')
 BASE_PROPERTIES = 0x3D  # OBJ palette6; palette4 is reserved for vanilla shadows.
 VIEW_ORIGIN = (16, 40)
 VIEW_SIZE = (64, 80)
@@ -202,6 +203,14 @@ def pack_layout(images, palette, align_body_top):
         if reconstructed.tobytes()!=expected.tobytes():raise ValueError(f'{name}: packed pixels differ')
     return dict(name='first_opaque_row' if align_body_top else 'fixed',
                 cells=len(cells), sheet=sheet, binary=data, maps=maps)
+
+
+def select_layout(candidates, layout='auto'):
+    if layout not in PACKING_LAYOUTS:
+        raise ValueError(f'unknown packing layout: {layout!r}; expected {PACKING_LAYOUTS}')
+    if layout == 'auto':
+        return min(candidates, key=lambda item: item['cells'])
+    return next(item for item in candidates if item['name'] == layout)
 
 
 def runtime_maps(maps):
@@ -400,11 +409,15 @@ def export_review(out,selected,rendered,frames,tables,validation,palette):
     (out/'TILEMAP.md').write_text('\n'.join(lines)+'\n')
 
 
-def build(project_path,check=False,out=None):
+def build(project_path,check=False,out=None,layout=None):
     self_test()
     project,palette,images,hashes,image_path=load_source(project_path)
+    runtime = project.get('runtime', {})
+    if not isinstance(runtime, dict):
+        raise ValueError('runtime metadata must be an object')
+    requested_layout = layout if layout is not None else runtime.get('packing_layout', 'auto')
     candidates=[pack_layout(images,palette,False),pack_layout(images,palette,True)]
-    selected=min(candidates,key=lambda item:item['cells'])
+    selected=select_layout(candidates,requested_layout)
     if selected['cells']>MAX_CELLS or len(selected['binary'])!=SHEET_BYTES:
         raise ValueError(f'approved art exceeds resident sheet: {selected["cells"]}/{MAX_CELLS} cells')
     frames=runtime_maps(selected['maps'])
@@ -427,7 +440,7 @@ def build(project_path,check=False,out=None):
     else:
         for path,data in outputs.items():atomic_bytes(path,data)
     validation=dict(result='pass',mode='check' if check else 'generate',**hashes,
-        layouts={item['name']:item['cells'] for item in candidates},selected_layout=selected['name'],
+        layouts={item['name']:item['cells'] for item in candidates},requested_layout=requested_layout,selected_layout=selected['name'],
         unique_16x16_cells=selected['cells'],sheet_bytes=len(selected['binary']),palette_bytes=len(pal),
         runtime_frames=len(RUNTIME_IDS),total_oam_pieces=len(tables['chr']),max_frame_pieces=max(map(len,runtime.values())),
         ordinary_max_pieces=max(len(runtime[name]) for name in RUNTIME_IDS if name not in HELD_BALL_FRAMES),
@@ -444,11 +457,12 @@ def main():
     parser.add_argument('--project',type=Path,default=DEFAULT_PROJECT)
     parser.add_argument('--check',action='store_true',help='Verify generated files without writing them.')
     parser.add_argument('--out',type=Path,help='Write review PNG/GIF/tilemap/validation to this directory.')
+    parser.add_argument('--layout',choices=PACKING_LAYOUTS,help='Override runtime.packing_layout; metadata without a setting uses auto.')
     parser.add_argument('--self-test',action='store_true',help='Run codec/flip/address fixtures only; write nothing.')
     args=parser.parse_args()
     try:
         if args.self_test:self_test();print('PASS: fixed4bpp vectors,16indices,flip sharing,last cell/bounds,signed16 offsets');return
-        print(json.dumps(build(args.project.resolve(),args.check,args.out),indent=2))
+        print(json.dumps(build(args.project.resolve(),args.check,args.out,args.layout),indent=2))
     except (ValueError,OSError,KeyError,TypeError) as error:parser.exit(1,f'ERROR: {error}\n')
 
 if __name__=='__main__':main()
