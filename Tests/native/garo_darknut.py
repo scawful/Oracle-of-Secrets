@@ -277,8 +277,8 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
 
     def counter_swing(self, hp0):
         native.require(0 < self.r(COUNTER) < 0x80, "Counter swing needs an earned pending window")
-        self.advance("", 1)
-        self.advance("Y", 1)
+        self.advance("", 2)
+        self.advance("Y", 2)
         rows = [self.sample("counter-Y")]
         flag_seen = rows[0]["counter"] & 0x80 != 0
         for _ in range(20):

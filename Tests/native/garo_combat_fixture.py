@@ -219,12 +219,15 @@ class GaroCombatFlow(prototype.NewItemsFlow):
 
     def open_guard_toward(self, toward="Left"):
         native.require(toward in FACING, "Guard needs one cardinal facing")
-        self.advance(toward, 1)
-        self.advance("", 1)
+        # INPUT is applied at the controller poll after vblank; one FRAME can
+        # finish before ALTTP publishes that input to F0/F4. Match tap()'s
+        # two-frame press/release before observing or replacing an edge.
+        self.advance(toward, 2)
+        self.advance("", 2)
         native.require(self.r(0x7E002F) == FACING[toward], "Controller did not face the contact target")
         native.require(self.r(COUNTER) == 0, "Guard trial starts with an existing counter")
         # Y with the facing direction held is the lunge gesture on PR264.
-        self.advance("Y", 1)
+        self.advance("Y", 2)
         row = self.sample("guard-open")
         native.require(row["guard"] > 0, "Neutral Y did not open the guard")
         native.require(row["mask"] == 8 and row["facing"] == FACING[toward]
@@ -266,8 +269,8 @@ class GaroCombatFlow(prototype.NewItemsFlow):
                            "Controller did not face target inside earned counter window")
             native.require(11 <= self.xy()[0] - enemy_x <= 22,
                            "Controller-spaced counter is outside native sword range")
-        self.advance("", 1)  # ensure a fresh Y edge, without moving Link
-        self.advance("Y", 1)
+        self.advance("", 2)  # ensure a fresh Y edge, without moving Link
+        self.advance("Y", 2)
         after = self.sample("counter-Y")
         # Current CounterInput replaces the pending window with live-slash bit
         # 7; pre-flag controls cleared the byte. Neither retains timer bits.
