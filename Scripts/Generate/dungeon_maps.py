@@ -147,22 +147,27 @@ def floor_index(name: str, basements: int) -> int:
 
 # ---------------------------------------------------------------- footprints
 
+PIT_DARK = 70  # pits render black or as a dark mesh; floor and wall tiles have brighter pixels
+
+
 def occupancy(png: Path) -> list[list[int]]:
-    """16x16 grid: 1 where the 4x4-tile block is drawn, 0 where it is backdrop."""
+    """16x16 grid: 1 where the 4x4-tile block is floor, 0 where it is backdrop or pit."""
     from PIL import Image
     im = Image.open(png).convert("RGB")
     px = im.load()
-    uniform = {}
+    uniform, pit = {}, set()
     for ty in range(64):
         for tx in range(64):
             c = px[tx * 8, ty * 8]
             if all(px[tx * 8 + x, ty * 8 + y] == c for y in range(0, 8, 2) for x in range(0, 8, 2)):
                 uniform[(tx, ty)] = c
+            if all(max(px[tx * 8 + x, ty * 8 + y]) <= PIT_DARK for y in range(8) for x in range(8)):
+                pit.add((tx, ty))
     ring = [c for (tx, ty), c in uniform.items() if tx in (0, 63) or ty in (0, 63)]
     if not ring:
         return [[1] * 16 for _ in range(16)]
     back = Counter(ring).most_common(1)[0][0]
-    return [[0 if sum(uniform.get((tx, ty)) == back
+    return [[0 if sum(uniform.get((tx, ty)) == back or (tx, ty) in pit
                       for ty in range(cy * 4, cy * 4 + 4) for tx in range(cx * 4, cx * 4 + 4)) >= 8 else 1
              for cx in range(16)] for cy in range(16)]
 
@@ -225,6 +230,21 @@ def silhouettes(rom_data: bytes, gfx: Path = MAP_GFX) -> list[list[list[int]]]:
     chars = map_chars(gfx)
     return [[[1 if v else 0 for v in row] for row in template_pixels(chars, words)]
             for words in MapRom(rom_data).templates()]
+
+
+def compose_template(fp, rom_data: bytes, gfx: Path = MAP_GFX) -> list[int]:
+    """Build a new shape quadrant by quadrant from the char words hand-drawn
+    templates already use (plus their flips), so the art and palettes stay the same."""
+    chars = map_chars(gfx)
+    used = Counter(w for words in MapRom(rom_data).templates() for w in words if any(words))
+    pool = list(dict.fromkeys(w ^ flip for w, _ in used.most_common() for flip in (0, 0x4000, 0x8000, 0xC000)))
+    words = []
+    for q in range(4):
+        want = [[fp[(q >> 1) * 8 + y][(q & 1) * 8 + x] for x in range(8)] for y in range(8)]
+        words.append(max(pool, key=lambda w: sum((v != 0) == want[y][x]
+                                                 for y, row in enumerate(word_pixels(chars, w))
+                                                 for x, v in enumerate(row))))
+    return words
 
 
 def shape_key(fp: dict) -> str:
@@ -328,21 +348,32 @@ def draft_spec(rom_data: bytes, dungeon_id: str, inventory: dict) -> dict:
     for room in sorted(set(rows) - set(placed)):
         notes.append(f"unplaced {room:02X}: no door to a mapped room; add it to the spec by hand")
     sil = silhouettes(rom_data)
+    mr = MapRom(rom_data)
+    referenced = {t for s in range(14) for f in mr.dungeon(s)["floors"] for t in f["templates"]}
+    free = [i for i, words in enumerate(mr.templates()) if not any(words) and i not in referenced]
+    new_templates = {}
     for room in placed:
         fp = [[int(c) for c in line] for line in rows[room]["footprint"]]
         best = int(rows[room]["best_template"], 16)
         if room not in shapes:
             shapes[room] = best
+            words = compose_template(fp, rom_data)
+            made = iou(fp, template_pixels(map_chars(), words))
+            if rows[room]["iou"] < MATCH and made > rows[room]["iou"] and free and mr.template_base() == TMPL_EXPANDED:
+                slot = free.pop(0)
+                new_templates[f"{slot:02X}"] = [f"{w:04X}" for w in words]
+                shapes[room] = slot
+                notes.append(f"new shape {slot:02X} for {room:02X} (overlap {rows[room]['iou']:.2f} -> {made:.2f})")
         elif iou(fp, sil[shapes[room]]) < CLOSE and rows[room]["iou"] >= MATCH:
-            notes.append(f"reshaped {room:02X}: {shapes[room]:02X} -> {best:02X} "
-                         f"(overlap {iou(fp, sil[shapes[room]]):.2f} -> {rows[room]['iou']:.2f})")
-            shapes[room] = best
+            # Hand-drawn shapes keep inner walls, gaps and pits the render misses; flag, never replace.
+            notes.append(f"check {room:02X}: kept {shapes[room]:02X}, render suggests {best:02X} "
+                         f"(overlap {iou(fp, sil[shapes[room]]):.2f} vs {rows[room]['iou']:.2f})")
     boss = cur["boss_room"] if cur["boss_room"] in placed else EMPTY
     return {"dungeon": dungeon_id, "slot": SLOTS[dungeon_id],
             "floors": [{"name": f["name"], "rows": [" ".join(f"{r:02X}" for r in f["grid"][y * 5:y * 5 + 5])
                                                     for y in range(5)]} for f in floors],
             "shapes": {f"{r:02X}": f"{t:02X}" for r, t in sorted(shapes.items())},
-            "boss": f"{boss:02X}", "notes": notes}
+            "templates": new_templates, "boss": f"{boss:02X}", "notes": notes}
 
 
 def spec_map(spec: dict) -> dict:
@@ -419,6 +450,8 @@ def region_of(pc: int) -> str:
                               (BOSS_FLOORS, 28, "boss floors (signed from 1F)")):
         if start <= pc < start + size:
             return name
+    if TMPL_EXPANDED <= pc < TMPL_EXPANDED + 256 * 8:
+        return "shape templates"
     return "floor grids and shape lists"
 
 
@@ -487,7 +520,13 @@ def cmd_generate(args) -> int:
         for m in maps:
             where = [i for i, f in enumerate(m["floors"]) if m["boss_room"] != EMPTY and m["boss_room"] in f["grid"]]
             m["boss_floor"] = where[0] - m["basements"] if where else -1
-    after = bytes(repack(rom_data, maps, full=args.full_repack))
+    after = repack(rom_data, maps, full=args.full_repack)
+    for slot, words in spec.get("templates", {}).items():  # new shapes go in free expanded-table slots
+        at = TMPL_EXPANDED + int(slot, 16) * 8
+        if MapRom(rom_data).template_base() != TMPL_EXPANDED or any(rom_data[at:at + 8]):
+            raise SystemExit(f"shape slot {slot} is not a free expanded-table slot")
+        after[at:at + 8] = b"".join(int(w, 16).to_bytes(2, "little") for w in words)
+    after = bytes(after)
     patch = byte_patch(rom_data, after, f"map-{spec['dungeon'].lower()}")
     patch["source"] = f"Scripts/Generate/dungeon_maps.py generate --dungeon {spec['dungeon']}"
     Path(args.patch).write_text(json.dumps(patch, indent=1) + "\n")
