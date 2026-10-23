@@ -6,6 +6,7 @@ SourceSpriteSheet_64: incbin "sheets/spr64.bin"
 SourceSpriteSheet_40: incbin "sheets/spr40.bin"
 SourceSpriteSheet_43: incbin "sheets/spr43.bin"
 SourceSpriteSheet_47: incbin "sheets/spr47.bin"
+SourceSpriteSheet_23: incbin "sheets/spr23.bin"
 assert pc() <= $410000 || pc() == $418000, "Source sprite sheets crossed bank $40"
 ; Sprite $64, global $D7: Identity override: Impa follower sheet; no pixel or palette change.
 org $00D057 ; @hook module=Core kind=data protected_size=1
@@ -35,4 +36,11 @@ org $00D119 ; @hook module=Core kind=data protected_size=1
   db $DB
 org $00D1F8 ; @hook module=Core kind=data protected_size=1
   db $EB
+; Sprite $23, global $96: Abyss Stalfos (scawful 2026-10-23): Ages-style copy of sheet $1F, cells $00-$06 changed; loaded only in indoor Abyss rooms by the $00E772 sheet swap.
+org $00D016 ; @hook module=Core kind=data protected_size=1
+  db $C0
+org $00D0F5 ; @hook module=Core kind=data protected_size=1
+  db $E0
+org $00D1D4 ; @hook module=Core kind=data protected_size=1
+  db $48
 pullpc
