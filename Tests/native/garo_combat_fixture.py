@@ -31,6 +31,8 @@ native, menu = prototype.native, prototype.menu
 TYPE = 0x4B  # native Green Knife Guard: no shield parry or prison capture path
 CONTACT_START_GAP = 20
 GUARD, COUNTER, COOLDOWN = 0x7E07EE, 0x7E07EF, 0x7E07F0
+LUNGE_TIMER = 0x7E07FF
+FACING = {"Up": 0, "Down": 2, "Left": 4, "Right": 6}
 STATE, SPRTYPE = 0x0DD0, 0x0E20
 # Native property reset/load destinations plus actor identity/context. Every
 # entry is a per-sprite 16-byte array; no global state lies in this whitelist.
@@ -48,7 +50,7 @@ def describe():
                 actor_fixture="Unused slot, Link layer, 20 px left; native prep then idle timer FF and velocity 0",
                 position_bounds="Link X0940..099F, Y2170..21AF; enemy X0928..099F",
                 checks=["Controller binds sixth Garo mask and transforms with R",
-                        "Y guard plus leftward movement produces real enemy contact and counter window",
+                        "Face target, release direction, neutral Y guard, then move into real enemy contact",
                         "Y consumes earned counter, begins native sword slash and damages the target",
                         "Expired guard allows the same native enemy to reduce Link HP"],
                 fixture_writes="Garo/sword ownership only when absent; one owned sprite slot and its native auxiliary arrays",
@@ -158,9 +160,11 @@ class GaroCombatFlow(prototype.NewItemsFlow):
                      damage_queue=self.r(0x7E0373), recovery=self.r(0x7E031F),
                      recoil=self.r(0x7E0046), sword_state=self.r(0x7E003C),
                      item_flags=self.r(0x7E003A), buttons_new=self.r(0x7E00F4),
+                     buttons_held=self.r(0x7E00F0), mask=self.r(0x7E02B2),
                      facing=self.r(0x7E002F), weapon_y=self.r(0x7E0044),
                      weapon_x=self.r(0x7E0045), recoil_flags=self.r(0x7E004D),
-                     action_state=self.r(0x7E0050), dash_state=self.r(0x7E0372))
+                     action_state=self.r(0x7E0050), dash_state=self.r(0x7E0372),
+                     link_state=self.r(0x7E005D), lunge_timer=self.r(LUNGE_TIMER))
         if self.slot is not None:
             state.update(enemy_state=self.r(0x7E0DD0 + self.slot),
                          enemy_hp=self.r(0x7E0E50 + self.slot),
@@ -213,17 +217,32 @@ class GaroCombatFlow(prototype.NewItemsFlow):
                    and self.r(0x7E02E1) == 0 and not self.ancilla(0x23),
                    "Controller did not enter Garo", 220)
 
+    def open_guard_toward(self, toward="Left"):
+        native.require(toward in FACING, "Guard needs one cardinal facing")
+        self.advance(toward, 1)
+        self.advance("", 1)
+        native.require(self.r(0x7E002F) == FACING[toward], "Controller did not face the contact target")
+        native.require(self.r(COUNTER) == 0, "Guard trial starts with an existing counter")
+        # Y with the facing direction held is the lunge gesture on PR264.
+        self.advance("Y", 1)
+        row = self.sample("guard-open")
+        native.require(row["guard"] > 0, "Neutral Y did not open the guard")
+        native.require(row["mask"] == 8 and row["facing"] == FACING[toward]
+                       and row["buttons_held"] & 0x0F == 0,
+                       "Guard did not open in Garo facing the target with direction released")
+        native.require(row["link_state"] == 0 and row["dash_state"] == 0
+                       and row["lunge_timer"] == 0, "Guard trial entered a dash/lunge")
+        return row
+
     def parry_counter(self):
         self.settle_combat(); self.spawn_target()
         hp, enemy_hp = self.r(menu.HP), self.r(0x7E0E50 + self.slot)
-        self.advance("Y,Left", 1)
-        native.require(self.r(GUARD) > 0, "Y did not open the guard")
-        self.sample("guard-open")
+        self.open_guard_toward()
         for _ in range(12):
             if self.r(COUNTER): break
             self.advance("Left", 1); self.sample("approach-guarded")
             native.require(self.r(menu.HP) == hp, "Real contact damaged Link during guard trial")
-        native.require(self.r(COUNTER) > 0, "No native contact parry; inspect spacing trace")
+        native.require(0 < self.r(COUNTER) < 0x80, "No native contact parry; inspect spacing trace")
         self.check("Successful contact preserves HP", self.r(menu.HP), hp)
         self.check("Successful contact consumes guard", self.r(GUARD), 0)
         self.check("Successful contact clears queued damage", self.r(0x7E0373), 0)
@@ -250,7 +269,9 @@ class GaroCombatFlow(prototype.NewItemsFlow):
         self.advance("", 1)  # ensure a fresh Y edge, without moving Link
         self.advance("Y", 1)
         after = self.sample("counter-Y")
-        self.check("Y consumes earned counter", after["counter"], 0)
+        # Current CounterInput replaces the pending window with live-slash bit
+        # 7; pre-flag controls cleared the byte. Neither retains timer bits.
+        self.check("Y consumes earned counter", after["counter"] & 0x7F, 0)
         slash = after["sword_state"] != 0
         damaged = after["enemy_hp"] < enemy_hp or after["enemy_damage"] != 0
         for _ in range(18):
@@ -261,6 +282,9 @@ class GaroCombatFlow(prototype.NewItemsFlow):
             if slash and damaged: break
         self.check("Counter starts native sword slash", slash, True)
         self.check("Native counter damages target", damaged, True)
+        self.until(lambda: self.r(COUNTER) == 0,
+                   "Counter window/live-slash flag did not clear after the slash", 60)
+        self.check("Counter state clears after the slash", self.r(COUNTER), 0)
         self.shot("garo-counter-hit")
         self.remove_target()
 

@@ -188,27 +188,46 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
 
     def select_bow(self):
         self.ready()
+        self.until(lambda: self.r(0x7E02E1) == 0 and not self.ancilla(0x23),
+                   "Existing transformation cloud did not finish", 220)
+        if self.r(0x7E02B2) == 8:
+            self.tap("R")
+        self.until(lambda: self.r(0x7E02B2) in (0, 6) and self.r(0x7E02E1) == 0
+                   and not self.ancilla(0x23), "Controller did not restore ordinary Link", 220)
+        self.ready()
         if not self.r(ARROWS):
             self.write(ARROWS, 10, "Arrows for the arrow case")
         native.require(self.r(BOW) >= 1, "Seed file has no Bow")
         self.tap("Start"); self.wait_screen("items")
         self.pick(1)
         self.tap("Start"); self.wait_screen("gameplay")
+        self.ready()
+        native.require(self.r(0x7E02B2) in (0, 6) and self.r(0x7E02E1) == 0
+                       and not self.ancilla(0x23), "Bow selected before ordinary form settled")
+        self.check("Controller selects Bow", self.r(0x7E0202), 1)
+        native.require(self.r(BOW) >= 1 and self.r(ARROWS) > 0, "Bow case needs a Bow and arrows")
 
     def armored_arrow(self):
         self.ready(); self.heal()
         self.room_for(48)
         self.spawn(DARKNUT, 48, subtype=1, action=1)
         self.advance("Left", 1); self.advance("", 2)
+        native.require(self.r(0x7E02B2) in (0, 6) and self.r(0x7E02E1) == 0
+                       and not self.ancilla(0x23) and self.r(0x7E0202) == 1
+                       and self.r(BOW) >= 1 and self.r(ARROWS) > 0
+                       and self.r(0x7E002F) == garo.FACING["Left"],
+                       "Arrow trial requires ordinary Link aiming a selected, supplied Bow at the knight")
+        native.require(not self.ancilla(ARROW_ANCILLA), "Arrow trial starts with an existing arrow")
         hp0, sfx = self.enemy_hp(), self.watch(SFX2)
-        self.advance("Y", 2)
-        arrow_frames, hps = 0, []
+        self.advance("Y", 1)
+        arrow_frames, hps = int(bool(self.ancilla(ARROW_ANCILLA))), [self.enemy_hp()]
         for _ in range(40):
             self.advance("", 1)
             arrow_frames += bool(self.ancilla(ARROW_ANCILLA))
             hps.append(self.enemy_hp())
             if self.dead():
                 break
+        native.require(arrow_frames > 0, "Bow trial never spawned a native arrow ancilla")
         return dict(enemy_hp_before=hp0, enemy_hp_min=min(hps), arrow_frames=arrow_frames,
                     damaged=min(hps) < hp0 or self.dead(), sfx2_writes=self.blame(sfx),
                     oam_palettes=self.oam_palettes())
@@ -246,19 +265,18 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
 
     def guarded_contact(self, toward="Left"):
         hp = self.r(HP)
-        self.advance("Y," + toward, 1)
-        native.require(self.r(GUARD) > 0, "Y did not open the guard")
-        rows = [self.sample("guard-open")]
+        rows = [self.open_guard_toward(toward)]
         for _ in range(14):
             if self.r(COUNTER):
                 break
             self.advance(toward, 1)
             rows.append(self.sample("guarded-approach"))
-        return dict(parried=self.r(COUNTER) > 0, link_hp_lost=hp - self.r(HP),
+        return dict(parried=0 < self.r(COUNTER) < 0x80, link_hp_lost=hp - self.r(HP),
                     knockback=any(r["recoil"] or r["recoil_flags"] for r in rows),
                     frames=len(rows), gap=self.gap())
 
     def counter_swing(self, hp0):
+        native.require(0 < self.r(COUNTER) < 0x80, "Counter swing needs an earned pending window")
         self.advance("", 1)
         self.advance("Y", 1)
         rows = [self.sample("counter-Y")]
@@ -326,6 +344,8 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
         c = {k: v for k, v in cases.items()}
         v = {}
         if self.expect == "candidate":
+            v["all selected cases complete"] = bool(c) and all(
+                case.get("completed") is True and "error" not in case for case in c.values())
             v["armored knight ignores arrows"] = (c["armored-arrow"].get("arrow_frames", 0) > 0
                                                   and c["armored-arrow"].get("damaged") is False)
             v["armored knight clinks a normal slash"] = (c["armored-sword"].get("slash") is True
@@ -338,13 +358,17 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
                                                        and ring.get("knockback") is False
                                                        and ring.get("link_hp_lost") == 0)
             cycles = c["armored-counters"].get("cycles", [])
-            v["armored knight dies to Garo counters"] = (c["armored-counters"].get("died") is True and all(
-                row.get("counter", {}).get("damaged") for row in cycles if row.get("parried")))
+            counter_cycles = bool(cycles) and all(
+                row.get("parried") is True and row.get("counter", {}).get("slash") is True
+                and row.get("counter", {}).get("damaged") is True for row in cycles)
+            v["armored knight dies to Garo counters"] = (
+                c["armored-counters"].get("died") is True and counter_cycles)
             v["counter flag set by the counter and cleared after"] = bool(cycles) and all(
-                row["counter"]["counter_flag_seen"] and row["counter"]["counter_flag_cleared"]
-                for row in cycles if row.get("parried"))
-            v["armor restored after each counter"] = all(
-                row.get("armor_restored", True) for row in cycles)
+                row.get("parried") is True and row.get("counter", {}).get("counter_flag_seen") is True
+                and row.get("counter", {}).get("counter_flag_cleared") is True for row in cycles)
+            survived = [row for row in cycles if row.get("dead") is False]
+            v["armor restored after each counter"] = counter_cycles and bool(survived) and all(
+                row.get("armor_restored") is True for row in survived)
         else:
             v["control: arrow reaches the knight"] = c["armored-arrow"].get("damaged") is True
             v["control: slash from behind reaches the knight"] = c["armored-sword"].get("damaged") is True
