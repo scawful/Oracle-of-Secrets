@@ -28,7 +28,7 @@
     },
     {
       "path": "src/rom/rom.h",
-      "sha256": "c6d7f184fc2cab43f58be8fdabeb0c4fcd07718dafbd542a0ce0cb5c1cc088c7"
+      "sha256": "c15616c4adeec462f65240f9ef726674c7516f4878fdc4873070d8c7dac7732a"
     },
     {
       "path": "src/rom/write_fence.h",
@@ -52,8 +52,7 @@
     },
     {
       "path": "test/unit/rom/private_lyra_reservation_test.cc",
-      "sha256": "84b6ff239ce37e13829970366199605da92dcf05cbb9e8066a0f8a1db7e04914"
+      "sha256": "16dbe68924083da7438f6540e654ff1ef420d7e754c1d29699bf88ea31192904"
     }
   ]
 }
-
