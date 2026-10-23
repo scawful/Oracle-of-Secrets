@@ -162,8 +162,8 @@
         32,
         40
       ],
-      "pixel_sha256": "cd9dc9ae719d613244887647d22060901ed255111dd3596be8055f1ddd785a3c",
-      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+      "pixel_sha256": "0dcb4f9ed4260bdafd5419a3c9ae50c2cb36d3cf3b9883e1fdc34945f1bd1b21",
+      "approved_input_sha256": "56d711dda227ac417294ccb02d0eebfa99dc5d2ba4b8d54c193b283ffe5798ec"
     },
     {
       "id": "cast_half",
@@ -176,8 +176,8 @@
         32,
         40
       ],
-      "pixel_sha256": "9b31518c0b737eecda315e56285a41384c91d0fe522c2be76e68741a20be1612",
-      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+      "pixel_sha256": "be751bac119f89325c9a7fc58d54cde3aad7ca9781fac503f441266bb7da49c7",
+      "approved_input_sha256": "56d711dda227ac417294ccb02d0eebfa99dc5d2ba4b8d54c193b283ffe5798ec"
     },
     {
       "id": "cast_a",
@@ -190,8 +190,8 @@
         32,
         40
       ],
-      "pixel_sha256": "dda46ca8ccff44f2f369eaaba05c7e91def2be860bacd1a6247c976e026cd6a2",
-      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+      "pixel_sha256": "5ac0b37e01278f53e4fb7e08def74bcd791c53826a0f446df893574143acf606",
+      "approved_input_sha256": "56d711dda227ac417294ccb02d0eebfa99dc5d2ba4b8d54c193b283ffe5798ec"
     },
     {
       "id": "cast_second",
@@ -204,8 +204,8 @@
         32,
         40
       ],
-      "pixel_sha256": "3ffd18cc1a96defbce6f2b8d0f72ddd70400284b6912a656d93890f8e7ce79f4",
-      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+      "pixel_sha256": "5ac0b37e01278f53e4fb7e08def74bcd791c53826a0f446df893574143acf606",
+      "approved_input_sha256": "56d711dda227ac417294ccb02d0eebfa99dc5d2ba4b8d54c193b283ffe5798ec"
     },
     {
       "id": "cast_b",
@@ -218,8 +218,8 @@
         32,
         40
       ],
-      "pixel_sha256": "ae90d29380f4aee37c3403c60b18ddd70fc1b27e4f53927c35ad2d84285b4f07",
-      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+      "pixel_sha256": "5ac0b37e01278f53e4fb7e08def74bcd791c53826a0f446df893574143acf606",
+      "approved_input_sha256": "56d711dda227ac417294ccb02d0eebfa99dc5d2ba4b8d54c193b283ffe5798ec"
     },
     {
       "id": "throw_windup",
@@ -232,8 +232,8 @@
         32,
         40
       ],
-      "pixel_sha256": "aabb96e3ee0889caad4d6493b7f99b5fcfe28491572cd767c1913e493b6bdc77",
-      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+      "pixel_sha256": "5ac0b37e01278f53e4fb7e08def74bcd791c53826a0f446df893574143acf606",
+      "approved_input_sha256": "56d711dda227ac417294ccb02d0eebfa99dc5d2ba4b8d54c193b283ffe5798ec"
     },
     {
       "id": "throw",
@@ -246,8 +246,8 @@
         32,
         40
       ],
-      "pixel_sha256": "ebc875ca749a599b086ee99b8c6a6a43281731e06ec832f302d328ebb3ce7bb4",
-      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+      "pixel_sha256": "be751bac119f89325c9a7fc58d54cde3aad7ca9781fac503f441266bb7da49c7",
+      "approved_input_sha256": "56d711dda227ac417294ccb02d0eebfa99dc5d2ba4b8d54c193b283ffe5798ec"
     },
     {
       "id": "throw_follow",
@@ -260,8 +260,8 @@
         32,
         40
       ],
-      "pixel_sha256": "9521a92e3821273ace5b973825f74d0265f31a450b7738f0b950d85c03701a32",
-      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+      "pixel_sha256": "be751bac119f89325c9a7fc58d54cde3aad7ca9781fac503f441266bb7da49c7",
+      "approved_input_sha256": "56d711dda227ac417294ccb02d0eebfa99dc5d2ba4b8d54c193b283ffe5798ec"
     },
     {
       "id": "recover_half",
@@ -274,8 +274,8 @@
         32,
         40
       ],
-      "pixel_sha256": "40dfac1957ed181159077d920144225de1758cbc75d8ebb41370537248e99dde",
-      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+      "pixel_sha256": "0dcb4f9ed4260bdafd5419a3c9ae50c2cb36d3cf3b9883e1fdc34945f1bd1b21",
+      "approved_input_sha256": "56d711dda227ac417294ccb02d0eebfa99dc5d2ba4b8d54c193b283ffe5798ec"
     },
     {
       "id": "bat_up",
@@ -359,8 +359,29 @@
     ],
     "properties": 61,
     "sheet_bytes": 6144,
-    "max_cells": 48
+    "max_cells": 48,
+    "packing_layout": "fixed"
   },
-  "source_note": "Exact authored indexed pixels. Legacy cast/release/side retained as dormant source; resident art uses the nine-pose volley and three-pose bat. Bat is cropped from (8,16)-(24,32); balls remain (8,12)-(24,28).",
-  "approved_manifest_sha256": "454c5f5ada46942600b0a2e7f39f59c4976f67a4a006d22cdb3a0d2ef268c410"
+  "source_note": "Exact authored indexed pixels. Original idle and unrelated poses/effects retained. Active front lift/cast/return shares approved base, mid and lifted arrays with fixed 16x16 registration. Dormant legacy cast/release/side retained; bats remain the original three poses. Bat crop (8,16)-(24,32); balls (8,12)-(24,28).",
+  "approved_manifest_sha256": "454c5f5ada46942600b0a2e7f39f59c4976f67a4a006d22cdb3a0d2ef268c410",
+  "approved_animation": {
+    "candidate_sha256": "56d711dda227ac417294ccb02d0eebfa99dc5d2ba4b8d54c193b283ffe5798ec",
+    "original_idle_pixel_sha256": "0dcb4f9ed4260bdafd5419a3c9ae50c2cb36d3cf3b9883e1fdc34945f1bd1b21",
+    "pose_pixel_sha256": {
+      "base": "0dcb4f9ed4260bdafd5419a3c9ae50c2cb36d3cf3b9883e1fdc34945f1bd1b21",
+      "mid": "be751bac119f89325c9a7fc58d54cde3aad7ca9781fac503f441266bb7da49c7",
+      "lifted": "5ac0b37e01278f53e4fb7e08def74bcd791c53826a0f446df893574143acf606"
+    },
+    "active_source_poses": {
+      "cast_ready": "base",
+      "cast_half": "mid",
+      "cast_a": "lifted",
+      "cast_second": "lifted",
+      "cast_b": "lifted",
+      "throw_windup": "lifted",
+      "throw": "mid",
+      "throw_follow": "mid",
+      "recover_half": "base"
+    }
+  }
 }

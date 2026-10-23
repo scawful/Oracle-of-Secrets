@@ -32,6 +32,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install Python test dependencies
+        run: python3 -m pip install Pillow
+
       - name: Run manifest and source contract tests
         run: >-
           python3 -m unittest discover
