@@ -288,6 +288,8 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
 
     def guarded_contact(self, toward="Left"):
         hp = self.r(HP)
+        cache_watches = {axis: self.watch(address) for axis, address in
+                         (("x", 0x7E0FAB), ("y", 0x7E0FAA))}
         rows = [self.open_guard_toward(toward)]
         for _ in range(14):
             if self.r(COUNTER):
@@ -296,7 +298,15 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
             rows.append(self.sample("guarded-approach"))
         return dict(parried=0 < self.r(COUNTER) < 0x80, link_hp_lost=hp - self.r(HP),
                     knockback=any(r["recoil"] or r["recoil_flags"] for r in rows),
-                    frames=len(rows), gap=self.gap())
+                    frames=len(rows), gap=self.gap(),
+                    guard_weapon_cache_writes={axis: self.blame(watch)
+                                               for axis, watch in cache_watches.items()},
+                    # End-of-frame observations only. Another sprite can overwrite
+                    # this shared cache later in the pass; these values cannot
+                    # prove the cache contents at the Darknut contact call.
+                    guard_weapon_cache_samples=[
+                        dict(x=r["guard_weapon_offset_x"], y=r["guard_weapon_offset_y"])
+                        for r in rows])
 
     def counter_swing(self, hp0):
         native.require(0 < self.r(COUNTER) < 0x80, "Counter swing needs an earned pending window")

@@ -163,6 +163,8 @@ class GaroCombatFlow(prototype.NewItemsFlow):
                      buttons_held=self.r(0x7E00F0), mask=self.r(0x7E02B2),
                      facing=self.r(0x7E002F), weapon_y=self.r(0x7E0044),
                      weapon_x=self.r(0x7E0045), recoil_flags=self.r(0x7E004D),
+                     guard_weapon_offset_y=self.r(0x7E0FAA),
+                     guard_weapon_offset_x=self.r(0x7E0FAB),
                      action_state=self.r(0x7E0050), dash_state=self.r(0x7E0372),
                      link_state=self.r(0x7E005D), lunge_timer=self.r(LUNGE_TIMER))
         if self.slot is not None:
