@@ -308,7 +308,8 @@ STEP = {"N": (0, -1), "S": (0, 1), "W": (-1, 0), "E": (1, 0)}
 OPPOSITE = {"N": "S", "S": "N", "W": "E", "E": "W"}
 
 
-def draft_spec(rom_data: bytes, dungeon_id: str, inventory: dict, render_dir: Path | None = None) -> dict:
+def draft_spec(rom_data: bytes, dungeon_id: str, inventory: dict, render_dir: Path | None = None,
+               reach: dict[int, set[int]] | None = None) -> dict:
     """Start from the current map, drop rooms outside the registry, then place
     unmapped registry rooms next to a mapped room they share a door with."""
     cur = MapRom(rom_data).dungeon(SLOTS[dungeon_id])
@@ -356,6 +357,17 @@ def draft_spec(rom_data: bytes, dungeon_id: str, inventory: dict, render_dir: Pa
     for room in placed:
         fp = [[int(c) for c in line] for line in rows[room]["footprint"]]
         best = int(rows[room]["best_template"], 16)
+        png = render_dir / rows[room]["render"] if render_dir else None
+        if reach and room in reach and png and png.exists() and free and mr.template_base() == TMPL_EXPANDED:
+            # Sub-rooms the player can reach, from --reach: draw the render's floor in those quadrants only.
+            fp = [[v if quadrant_of(x * 4, y * 4) in reach[room] else 0 for x, v in enumerate(row)]
+                  for y, row in enumerate(occupancy(png))]
+            slot = free.pop(0)
+            new_templates[f"{slot:02X}"] = [f"{w:04X}" for w in compose_template(fp, rom_data)]
+            notes.append(f"reach {room:02X}: drew {'+'.join(QUADS[q] for q in sorted(reach[room]))} only, "
+                         f"{shapes.get(room, best):02X} -> new shape {slot:02X}")
+            shapes[room] = slot
+            continue
         if room not in shapes:
             shapes[room] = best
             words = compose_template(fp, rom_data)
@@ -368,7 +380,6 @@ def draft_spec(rom_data: bytes, dungeon_id: str, inventory: dict, render_dir: Pa
             continue
         # Hand-drawn quadrants that mostly cover pit or backdrop get the best walkable char instead.
         # Test against the whole render: the footprint drops quadrants it could not tie to content.
-        png = render_dir / rows[room]["render"] if render_dir else None
         floor = occupancy(png) if png and png.exists() else fp
         words, chars = list(mr.templates()[shapes[room]]), map_chars()
         made = compose_template(floor, rom_data)
@@ -526,8 +537,10 @@ def cmd_generate(args) -> int:
     if args.spec and Path(args.spec).exists():
         spec = json.loads(Path(args.spec).read_text())
     else:
+        reach = {int(r, 16): {QUADS.index(q) for q in qs.split("+")}
+                 for r, qs in (item.upper().split("=") for item in args.reach)}
         spec = draft_spec(rom_data, args.dungeon, json.loads(Path(args.inventory).read_text()),
-                          Path(args.inventory).parent)
+                          Path(args.inventory).parent, reach)
         if args.spec:
             Path(args.spec).write_text(json.dumps(spec, indent=1) + "\n")
             print(f"wrote draft spec {args.spec}; review it, then rerun to use it")
@@ -584,6 +597,8 @@ def main() -> int:
     gen.add_argument("--dungeon", required=True, choices=sorted(SLOTS))
     gen.add_argument("--inventory", help="inventory.json (needed to draft a spec)")
     gen.add_argument("--spec", help="spec JSON: used if it exists, else the draft is written here")
+    gen.add_argument("--reach", action="append", default=[], metavar="ROOM=QUADS",
+                     help="draw only these quadrants of a room, e.g. C8=SE or 40=NW+NE (repeatable)")
     gen.add_argument("--fix-boss-floors", action="store_true",
                      help="also rewrite every dungeon's boss floor as a signed floor from 1F")
     gen.add_argument("--full-repack", action="store_true",
