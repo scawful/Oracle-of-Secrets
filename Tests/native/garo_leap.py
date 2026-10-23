@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-"""Garo leap: a d-pad tap away from Link's facing while the guard is open.
+"""Garo Master moves: lunge, cape hop, and the evasive leap.
+
+Lunge: Y while holding Link's facing direction (instant fixed-length dash).
+Cape hop: Y again during the lunge (Roc's Feather style jump, immune).
+Leap: a d-pad tap away from Link's facing while the guard is open.
 
 Attach-only. The caller launches one headless private Mesen2 instance, boots
 file 1 into Link's House room 0104 and writes SESSION.json (same shape as
 garo_combat_fixture.py). Fixture writes: Garo/sword ownership only. Link,
 guard, cooldown, recoil and immunity are only driven by controller input.
 
---expect candidate asserts the leap. --expect baseline runs the same inputs
-on the pre-leap ROM: the guard still opens, the tap only turns and walks Link.
+--expect candidate asserts the moves. --expect baseline runs the same inputs
+on the pre-leap ROM: Y only opens the guard, the tap only turns and walks Link.
 """
 from __future__ import annotations
 
@@ -28,6 +32,7 @@ import garo_combat_fixture as garo
 prototype, native, menu = garo.prototype, garo.native, garo.menu
 GUARD, COOLDOWN = garo.GUARD, garo.COOLDOWN
 Z, BUMP, RECOIL, IMMUNE, STATE = 0x7E0024, 0x7E004D, 0x7E0046, 0x7E037B, 0x7E005D
+DASH, LUNGE_TIMER = 0x11, 0x7E07FF
 FACING = {"Up": 0, "Down": 2, "Left": 4, "Right": 6}
 AWAY = {"Left": "Right", "Right": "Left", "Up": "Down", "Down": "Up"}
 
@@ -35,6 +40,8 @@ AWAY = {"Left": "Right", "Right": "Left", "Up": "Down", "Down": "Up"}
 def describe():
     return dict(native_executed=False, room="0104",
                 cases=["turn-guard: Y with a new d-pad press toward a fresh facing still opens the guard",
+                       "lunge: facing Right, Y while holding Right dashes right with the sword out, ends by itself",
+                       "cape-hop: Y again during the lunge jumps right, immune in flight, lands clean",
                        "back-leap: guard facing Left, then tap Right",
                        "side-leap: guard facing Left, then tap Down",
                        "cooldown: Y right after landing opens no guard; it opens once the cooldown ends"],
@@ -53,7 +60,8 @@ class GaroLeapFlow(garo.GaroCombatFlow):
 
     def row(self, label):
         state = self.sample(label)
-        state.update(z=self.r(Z), immune=self.r(IMMUNE), link_state=self.r(STATE))
+        state.update(z=self.r(Z), immune=self.r(IMMUNE), link_state=self.r(STATE),
+                     lunge_timer=self.r(LUNGE_TIMER))
         return state
 
     def center(self):
@@ -84,6 +92,33 @@ class GaroLeapFlow(garo.GaroCombatFlow):
             self.advance("Left", 1); rows.append(self.row("turn-guard"))
         return dict(guard_opened=True, leaped=any(r["recoil_flags"] for r in rows),
                     facing_end=rows[-1]["facing"])
+
+    def lunge(self, hop=False):
+        self.face("Right")
+        x0, _ = self.xy()
+        self.advance("Y,Right", 1)
+        rows = [self.row("lunge-press")]
+        for _ in range(60):
+            if hop and len(rows) == 5:
+                self.advance("Y", 1); rows.append(self.row("hop-press"))
+                continue
+            self.advance("", 1); rows.append(self.row("cape-hop" if hop and len(rows) > 5 else "lunge"))
+            r = rows[-1]
+            if len(rows) > 5 and r["link_state"] == 0 and r["recoil_flags"] == 0 and r["z"] == 0:
+                break
+        dash = [r for r in rows if r["link_state"] == DASH]
+        air = [r for r in rows if r["link_state"] == 2]
+        x1, _ = self.xy()
+        self.shot("garo-cape-hop" if hop else "garo-lunge")
+        end = rows[-1]
+        return dict(lunged=bool(dash), dash_frames=len(dash),
+                    sword_out=bool(dash) and all(r["sword_state"] == 9 for r in dash[1:]),
+                    hopped=bool(air), air_frames=len(air), z_max=max(r["z"] for r in rows),
+                    immune_in_flight=all(r["immune"] for r in air) if air else None,
+                    guard_opened=any(r["guard"] for r in rows), dx=x1 - x0,
+                    landed_clean=end["link_state"] == 0 and end["recoil_flags"] == 0
+                    and end["immune"] == 0 and end["lunge_timer"] == 0,
+                    cooldown_at_end=end["cooldown"], frames=len(rows))
 
     def leap(self, guard_facing, tap):
         self.face(guard_facing)
@@ -140,8 +175,16 @@ class GaroLeapFlow(garo.GaroCombatFlow):
 
     def verdict(self, cases):
         turn, back, side = cases["turn-guard"], cases["back-leap"], cases["side-leap"]
+        lunge, hop = cases["lunge"], cases["cape-hop"]
         v = {"turn-guard opens a guard, no leap": turn.get("completed", False) and not turn.get("leaped")}
         if self.expect == "candidate":
+            v["lunge dashes right with the sword out"] = bool(lunge.get("lunged") and lunge.get("sword_out")
+                                                             and lunge.get("dx", 0) > 0 and not lunge.get("hopped"))
+            v["lunge ends by itself"] = bool(lunge.get("landed_clean") and 0 < lunge.get("dash_frames", 0) <= 20)
+            v["cape-hop jumps from the lunge, immune"] = bool(hop.get("lunged") and hop.get("hopped")
+                                                             and hop.get("z_max") and hop.get("immune_in_flight"))
+            v["cape-hop goes farther than the lunge"] = hop.get("dx", 0) > lunge.get("dx", 0) > 0
+            v["cape-hop lands clean"] = bool(hop.get("landed_clean"))
             cd = cases["cooldown"]
             v["back-leap moves right, facing kept"] = bool(back.get("leaped") and back.get("dx", 0) > 0
                                                            and back.get("facing_kept"))
@@ -151,6 +194,8 @@ class GaroLeapFlow(garo.GaroCombatFlow):
                                                           and side.get("facing_kept"))
             v["cooldown blocks then recovers"] = bool(cd.get("guard_blocked") and cd.get("guard_after_cooldown"))
         else:
+            v["control Y+forward only guards"] = (lunge.get("completed", False) and not lunge.get("lunged")
+                                                  and lunge.get("guard_opened", False) and not hop.get("hopped"))
             v["control tap does not leap"] = (back.get("completed", False) and not back.get("leaped")
                                               and side.get("completed", False) and not side.get("leaped"))
             v["control tap turns Link"] = back.get("facing_end") == FACING["Right"]
@@ -162,6 +207,8 @@ class GaroLeapFlow(garo.GaroCombatFlow):
         self.bind_garo()
         cases = {}
         cases["turn-guard"] = self.case("turn-guard", self.turn_guard)
+        cases["lunge"] = self.case("lunge", self.lunge)
+        cases["cape-hop"] = self.case("cape-hop", lambda: self.lunge(hop=True))
         cases["back-leap"] = self.case("back-leap", lambda: self.leap("Left", "Right"))
         cases["side-leap"] = self.case("side-leap", lambda: self.leap("Left", "Down"))
         if self.expect == "candidate":

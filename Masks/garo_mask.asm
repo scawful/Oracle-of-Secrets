@@ -1,5 +1,7 @@
 ; =========================================================
-; Garo Master prototype: timed contact parry, then Y counter; a d-pad tap
+; Garo Master prototype. Y standing still opens a timed contact parry, then
+; Y counters. Y while walking toward Link's facing is a short sword lunge;
+; Y again during the lunge is a Roc's Cape style forward jump. A d-pad tap
 ; away from Link's facing while the guard is open is a short evasive leap.
 ; Player art by Herowho (garomaster.1.zspr); palette 1 retained.
 ; Gameplay entries use M/X=8 except the documented Link_Main frame hook.
@@ -38,6 +40,7 @@ endif
   LDA.w GaroCooldown : BEQ +
   DEC.w GaroCooldown
   +
+  JSR GaroMask_LungeTick
   JSL GaroMask_CanAct : BCS .active
   JSL GaroMask_Clear
   BRA .restore
@@ -85,8 +88,8 @@ GaroMasterPalette:
   incbin "gfx/garo_master_palette.bgr555"
 assert pc()-GaroMasterPalette == $20
 
-; Ends a guard or counter. The cooldown is left to expire on its own; the
-; startup hook clears the whole prototype range, cooldown included.
+; Ends a guard or counter. The cooldown and a lunge are left to end on their
+; own; the startup hook clears the whole prototype range.
 GaroMask_Clear:
 {
   STZ.w GaroGuardTimer
@@ -130,6 +133,7 @@ GaroMask_Tick:
   LDA.w GaroCooldown : BNE .done
   LDA.b $3C : BNE .done
   LDA.b $3A : AND.b #$C0 : BNE .done
+  JSR GaroMask_TryLunge : BCS .done
   LDA.b #$0C : STA.w GaroGuardTimer
   LDA.b #$20 : STA.w GaroCooldown
   LDA.b #$05 : STA.w $012E ; guard cue; the same clink confirms contact
@@ -156,7 +160,7 @@ GaroMask_TryLeap:
   PHA
   LDA.b $2F : LSR A : TAX
   PLA : PHA
-  AND.l .facing, X : BNE .no_pull
+  AND.l GaroFacingBits, X : BNE .no_pull
   PLA : TAX
   LDA.l .speed_y, X : STA.b $27
   LDA.l .speed_x, X : STA.b $28
@@ -176,9 +180,6 @@ GaroMask_TryLeap:
   .no
   PLX : RTS
 
-  ; Indexed by $2F/2: up, down, left, right. D-pad bits: 3=U 2=D 1=L 0=R.
-  .facing
-  db $08, $04, $02, $01
   ; Indexed by the new d-pad press. $18 is the vanilla bump speed; diagonals $11.
   .speed_y
   db $00, $00, $00, $00, $18, $11, $11, $18
@@ -186,6 +187,112 @@ GaroMask_TryLeap:
   .speed_x
   db $00, $18, $E8, $00, $00, $11, $EF, $00
   db $00, $11, $EF, $00, $00, $18, $E8, $00
+}
+
+; Indexed by $2F/2: up, down, left, right. D-pad bits: 3=U 2=D 1=L 0=R.
+; The same values as vanilla LinkDirections26 ($078F61).
+GaroFacingBits:
+  db $08, $04, $02, $01
+
+!GaroLungeFrames = $0E
+
+; Called on a Y press that would open a guard. Y while the d-pad holds
+; exactly Link's facing starts a lunge: the vanilla Pegasus dash state
+; ($5D=$11, Link_PerformDash $07B281) entered past its charge-up ($0374=0).
+; Vanilla owns the dash speed, the sword-forward pose and its hitbox, dust,
+; bonks and the steer-out exit; GaroMask_LungeTick only limits its length.
+; A diagonal or a fresh turn this frame opens the guard instead.
+; Carry set = lunge started.
+GaroMask_TryLunge:
+{
+  PHX
+  LDA.b $2F : LSR A : TAX
+  LDA.b $F0 : AND.b #$0F : CMP.l GaroFacingBits, X : BNE .no
+  LDA.l $7EF359 : BEQ .no
+  CMP.b #$05 : BCS .no ; includes the smith-held $FF sentinel
+  ; The dash phase holds the sword out only when $7EF3C5 != 0.
+  LDA.l $7EF3C5 : BEQ .no
+  ; Link_PerformDash's own refusals: Somaria platform, moving floor, sliding.
+  LDA.w $02F5 : ORA.w $0314 : ORA.w $02EC : BNE .no
+  STZ.b $3B : STZ.w $0374
+  LDA.b #$40 : STA.w $02F1
+  LDA.b #$11 : STA.b $5D
+  LDA.b #$01 : STA.w $0372
+  STZ.b $3A
+  STZ.w $0308 : STZ.w $0301
+  STZ.b $48 : STZ.b $6B
+  ; The charge-up normally sets these; it is skipped.
+  STZ.b $30 : STZ.b $31
+  LDA.b #$10 : STA.b $5E
+  LDA.l GaroFacingBits, X : STA.b $26 : STA.b $67 : STA.w $0340
+  ; The sword handler still runs this frame; a B press must not slash.
+  LDA.b #$80 : TRB.b $F4
+  LDA.b #!GaroLungeFrames : STA.w GaroLungeTimer
+  LDA.b #$28 : STA.w GaroCooldown
+  LDA.b #$23 : STA.w $012E ; vanilla dash cue
+  PLX : SEC : RTS
+  .no
+  PLX : CLC : RTS
+}
+
+; From FrameTick, before Link's state dispatch. A lunge ends when its timer
+; runs out, or turns into a cape hop on a Y press. Anything else that leaves
+; the dash state (a bonk, steering out, a transition) was already cleaned up
+; by vanilla, so only the timer is cleared.
+GaroMask_LungeTick:
+{
+  LDA.w GaroLungeTimer : BEQ .done
+  LDA.w !CurrentMask : CMP.b #$08 : BNE .stop
+  LDA.b $5D : CMP.b #$11 : BNE .stop
+  LDA.w $0372 : BEQ .stop
+  LDA.b $F4 : AND.b #$40 : BEQ .tick
+  LDA.b #$40 : TRB.b $F4
+  JMP GaroMask_CapeHop
+  .tick
+  DEC.w GaroLungeTimer : BNE .done
+  ; Out of time: stop as the dash would, without the bonk.
+  JSL Link_CancelDash
+  STZ.b $3A : STZ.b $3C : STZ.b $3D
+  STZ.b $5D
+  RTS
+  .stop
+  STZ.w GaroLungeTimer
+  .done
+  RTS
+}
+
+; Y during a lunge: a Roc's Cape style forward jump. It is the Roc's Feather
+; jump (Items/jump_feather.asm: recoil state $5D=2, ledge hop $4D=2, $46=$20,
+; height $24), aimed along the lunge with a faster carry ($18 vs $10), plus
+; damage immunity ($037B) until vanilla lands it. $5D=2 also skips spike
+; damage (CheckIfJumpingForSpikeDamage). The recoil state checks the floor
+; only on landing, so the jump carries Link over pits and lava it clears.
+GaroMask_CapeHop:
+{
+  STZ.w GaroLungeTimer
+  JSL Link_CancelDash
+  STZ.b $3A : STZ.b $3C : STZ.b $3D
+  STZ.b $30 : STZ.b $31
+  STZ.b $24 : STZ.b $25
+  LDA.b $2F : LSR A : TAX
+  LDA.l .speed_y, X : STA.b $27
+  LDA.l .speed_x, X : STA.b $28
+  LDA.l GaroFacingBits, X : STA.b $67 : STA.w $0340
+  LDA.b #$24 : STA.b $29 : STA.w $02C7
+  LDA.b #$03 : STA.w $02C6 ; the first landing ends it, without a bounce
+  LDA.b #$20 : STA.b $46
+  LDA.b #$02 : STA.b $5D : STA.b $4D
+  LDA.b #$01 : STA.w $037B
+  STA.w $02F8 ; landing thud
+  LDA.b #$40 : STA.w GaroCooldown
+  LDA.b #$20 : STA.w $012E ; vanilla ledge-hop cue
+  RTS
+
+  ; Indexed by $2F/2: up, down, left, right.
+  .speed_y
+  db $E8, $18, $00, $00
+  .speed_x
+  db $00, $00, $E8, $18
 }
 
 ; Called by the existing contact-damage/Armor Ring hook after damage is queued.
