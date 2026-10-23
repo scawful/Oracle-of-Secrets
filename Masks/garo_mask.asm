@@ -40,7 +40,17 @@ endif
   DEC.w GaroGuardTimer
   +
   LDA.w GaroCounterTimer : BEQ +
+  BMI .counter_live
   DEC.w GaroCounterTimer
+  BRA +
+  .counter_live
+  ; Bit 7 = a counter slash is live (set only by GaroMask_CounterInput). It
+  ; ends when vanilla resets the sword ($3A bit 7 clear) or the slash turns
+  ; into a spin charge, poke or spin ($3C >= 9, unsigned).
+  LDA.b $3A : BPL .counter_done
+  LDA.b $3C : CMP.b #$09 : BCC +
+  .counter_done
+  STZ.w GaroCounterTimer
   +
   LDA.w GaroCooldown : BEQ +
   DEC.w GaroCooldown
@@ -123,13 +133,15 @@ GaroMask_Tick:
 ; Called by the existing contact-damage/Armor Ring hook after damage is queued.
 ; This deliberately does not catch floor damage or grant persistent immunity.
 ; Contact recoil has already been set, so CanAct's recoil guard is not used.
+; The hook runs only on a real contact (vanilla $06F3DB passed its $031F/$037B
+; gate), so the contact itself is the trigger. The queued damage is not
+; tested: the Armor Ring halves a 1-damage bump to 0 before this runs.
 GaroMask_ParryContact:
 {
   PHP : PHA
   LDA.w !CurrentMask : CMP.b #$08 : BNE .done
   LDA.l GaroMaskOwned : CMP.b #$01 : BNE .done
   LDA.w GaroGuardTimer : BEQ .done
-  LDA.w $0373 : BEQ .done
   LDA.b $11 : ORA.b $6C : ORA.b $5D : BNE .done
   LDA.w $0FFC : ORA.w $02E4 : BNE .done
   LDA.w $0308 : ORA.w $0376 : ORA.w $0377 : BNE .done
@@ -151,6 +163,7 @@ GaroMask_CounterInput:
 {
   JSL GaroMask_CanAct : BCC .done
   LDA.w GaroCounterTimer : BEQ .done
+  BMI .done ; a counter slash is already live
   LDA.b $F4 : AND.b #$40 : BEQ .done
   LDA.b $3C : BNE .done
   LDA.b $3A : AND.b #$C0 : BNE .done
@@ -158,8 +171,175 @@ GaroMask_CounterInput:
   CMP.b #$05 : BCS .done ; includes the smith-held $FF sentinel
   LDA.b #$40 : TRB.b $F4
   LDA.b #$80 : TSB.b $F4
-  STZ.w GaroCounterTimer
+  ; Mark this slash as the counter. FrameTick clears the mark when it ends.
+  STA.w GaroCounterTimer
   LDA.b #$10 : STA.w GaroCooldown
   .done
   RTL
 }
+
+; =========================================================
+; Point-blank counter reach.
+; A parry happens at body contact, but the normal slash box sits past Link's
+; body and can miss an enemy that already overlaps him. While a counter slash
+; is live, the slash box also covers Link's body (X+0..15, Y+4..19), which
+; contains his contact hurtbox (X+4, Y+8, 8x8) with 4 px to spare.
+; Spin, dash and hammer/net boxes never reach this tail with index != 0.
+
+ActionHitbox_SizeX = $06F4AE
+ActionHitbox_SizeY = $06F530
+
+pushpc
+org $06F633
+; @hook GaroMask_ActionHitboxSize kind=jsl target=GaroMask_ActionHitboxSize
+; @source usdasm/bank_06.asm:SetupActionHitbox ($06F633-$06F63E)
+; @assumption M/X=8, DBR=$06, X = ActionHitbox index (0 = hammer/net).
+; Replaces both size loads; the helper replays them before any change.
+assert read3($06F633) == $F4AEBD, "SetupActionHitbox size_x load moved"
+assert read3($06F638) == $F530BD, "SetupActionHitbox size_y load moved"
+  JSL GaroMask_ActionHitboxSize
+  PLX
+  RTS
+  NOP #6
+assert pc() == $06F63F
+pullpc
+
+; X and Y are free here: the caller's next instruction is PLX, and vanilla
+; SetupActionHitbox already clobbers Y. Exits with M=8.
+GaroMask_ActionHitboxSize:
+{
+  LDA.l ActionHitbox_SizeX, X : STA.b $02
+  LDA.l ActionHitbox_SizeY, X : STA.b $03
+  BIT.w GaroCounterTimer : BPL .done
+  CPX.b #$00 : BEQ .done
+
+  ; X axis: union of [$08:$00, +$02) and [Link X, +16).
+  LDA.b $08 : XBA : LDA.b $00
+  REP #$20
+  PHA                                     ; 3,S after the next push = left
+  LDA.b $02 : AND.w #$00FF : CLC : ADC $01, S
+  PHA                                     ; 1,S = right
+  LDA.b $22 : CMP $03, S : BCS +
+    STA $03, S
+  +
+  LDA.b $22 : CLC : ADC.w #$0010 : CMP $01, S : BCC +
+    STA $01, S
+  +
+  PLA : SEC : SBC $01, S
+  SEP #$20 : STA.b $02
+  REP #$20 : PLA
+  SEP #$20 : STA.b $00 : XBA : STA.b $08
+
+  ; Y axis: union of [$09:$01, +$03) and [Link Y+4, +16).
+  LDA.b $09 : XBA : LDA.b $01
+  REP #$20
+  PHA
+  LDA.b $03 : AND.w #$00FF : CLC : ADC $01, S
+  PHA
+  LDA.b $20 : CLC : ADC.w #$0004 : CMP $03, S : BCS +
+    STA $03, S
+  +
+  LDA.b $20 : CLC : ADC.w #$0014 : CMP $01, S : BCC +
+    STA $01, S
+  +
+  PLA : SEC : SBC $01, S
+  SEP #$20 : STA.b $03
+  REP #$20 : PLA
+  SEP #$20 : STA.b $01 : XBA : STA.b $09
+  .done
+  RTL
+}
+
+; =========================================================
+; Armored Darknut: sprite $1D (Sprite_Darknut) with room subtype 1.
+; Its armor blocks every attack with a clink; only a live Garo counter slash
+; (GaroCounterTimer bit 7, set by GaroMask_CounterInput) can hurt it.
+; Ordinary Darknuts (subtype 0, every overworld placement) keep the original
+; paths: each helper replays the replaced Darknut instructions unchanged.
+; Armor bits: $0E60 bit 6 = no damage from any source, $0CAA bit 2 = sword
+; and hammer clink, $0B6B bit 3 = arrows deflect.
+; Callers run in bank $30 with DBR=$30, M/X=8, X = sprite slot.
+if !DISABLE_SPRITES == 0
+
+!DarknutArmoredSubtype = $01
+!DarknutArmorPalette   = $02 ; ORed into OAM props: palette 4 -> 5
+
+; Replaces LDA #$80 : STA SprDefl,X : LDA #$60 : STA SprTileDie,X in Prep.
+Darknut_PrepDefense:
+{
+  LDA.b #$80 : STA.w SprDefl, X
+  LDA.b #%01100000 : STA.w SprTileDie, X
+  LDA.w SprSubtype, X : CMP.b #!DarknutArmoredSubtype : BNE .done
+  JSR Darknut_SetArmor
+  .done
+  RTL
+}
+
+Darknut_SetArmor:
+{
+  LDA.w $0E60, X : ORA.b #$40 : STA.w $0E60, X
+  LDA.w SprDefl, X : ORA.b #$04 : STA.w SprDefl, X
+  LDA.w SprTileDie, X : ORA.b #$08 : STA.w SprTileDie, X
+  RTS
+}
+
+; Replaces JSL Sprite_CheckDamageFromPlayer in Main; returns its carry.
+; The armor drops only around this one check, and only for a live counter.
+Darknut_CheckDamage:
+{
+  LDA.w SprSubtype, X : CMP.b #!DarknutArmoredSubtype : BEQ .armored
+  JML Sprite_CheckDamageFromPlayer
+  .armored
+  BIT.w GaroCounterTimer : BPL .guarded
+  LDA.w $0E60, X : AND.b #$BF : STA.w $0E60, X
+  LDA.w SprDefl, X : AND.b #$FB : STA.w SprDefl, X
+  .guarded
+  JSL Sprite_CheckDamageFromPlayer
+  PHP
+  JSR Darknut_SetArmor
+  PLP
+  RTL
+}
+
+; Replaces LDA SprFlash,X : STA $08 in Draw.
+Darknut_DrawFlash:
+{
+  LDA.w SprSubtype, X : CMP.b #!DarknutArmoredSubtype : BNE .plain
+  LDA.w SprFlash, X : ORA.b #!DarknutArmorPalette : STA.b $08
+  RTL
+  .plain
+  LDA.w SprFlash, X : STA.b $08
+  RTL
+}
+
+; Every non-sword damage source (arrows that pass the deflect test, bombs,
+; Bombchu, rods, boomerang, hookshot, thrown objects, medallions) reaches
+; Sprite_ApplyCalculatedDamage. Vanilla leaves an invulnerable sprite there
+; silently; an armored Darknut also clinks.
+pushpc
+org $06ED8E
+; @hook GaroArmor_BlockedDamage kind=jsl target=GaroArmor_BlockedDamage
+; @source usdasm/bank_06.asm:Sprite_ApplyCalculatedDamage ($06ED8E-$06ED94)
+; @assumption M/X=8, X = sprite slot; DBR is the caller's (< $40).
+; Replaces LDA $0E60,X : AND #$40 : BNE .exit_a; Z=0 takes the same exit.
+assert read3($06ED8E) == $0E60BD, "ApplyCalculatedDamage invulnerable test moved"
+assert read4($06ED91) == $0AD04029, "ApplyCalculatedDamage invulnerable exit moved"
+  JSL GaroArmor_BlockedDamage
+  BNE $06ED9F
+  NOP
+assert pc() == $06ED95
+pullpc
+
+GaroArmor_BlockedDamage:
+{
+  LDA.w $0E60, X : AND.b #$40 : BEQ .done
+  LDA.w $0E20, X : CMP.b #Sprite_Darknut : BNE .blocked
+  LDA.w SprSubtype, X : CMP.b #!DarknutArmoredSubtype : BNE .blocked
+  LDA.w $012E : BNE .blocked
+  LDA.b #$05 : STA.w $012E ; clink, the same cue as a sword tink
+  .blocked
+  LDA.b #$40 ; Z=0: vanilla's invulnerable exit
+  .done
+  RTL
+}
+endif
