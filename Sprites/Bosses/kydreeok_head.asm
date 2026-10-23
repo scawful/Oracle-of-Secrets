@@ -1,6 +1,20 @@
 ; =========================================================
 ; Kydreeok Head sprite
-; Child sprite of the Kydreeok boss
+; Child sprite of the Kydreeok boss: subtype 0 = left head, 1 = right head.
+;
+; Each frame the head eases toward a pose, an offset from its shoulder
+; anchor on the body, and the neck is drawn as a 4-link chain from the
+; head back to that anchor (BossKit_DrawChain). There is no neck physics:
+; the old Gleeok-style neck ran six ProjectSpeedTowardsEntity + MoveLong
+; per head and drew five more PrepOamCoord parts, about 30% of a frame
+; for the two heads.
+;
+; OAM: 2-4 head tiles + 4 neck links = 8 entries at most (!NbrTiles 07).
+; RAM: SprMiscA = animation step, SprMiscC = sway phase,
+;      SprMiscE/F = attack vector (lunge target or breath step),
+;      SprMiscG = breath flames laid, SprTimerA = state time,
+;      SprTimerB = animation, SprTimerD = breath pacing,
+;      SprTimerE = attack cooldown.
 ; =========================================================
 
 !SPRID              = Sprite_KydreeokHead
@@ -39,7 +53,6 @@ Sprite_KydreeokHead_Long:
   ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
   ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
   LDA.w SprState, X : CMP.b #$06 : BEQ .no_head
-  LDA.w SprAction, X : CMP #$05 : BEQ .no_head
     JSR Sprite_KydreeokHead_Draw
   .no_head
 
@@ -50,291 +63,443 @@ Sprite_KydreeokHead_Long:
   RTL
 }
 
+; Kydreeok_SpawnHead sets the subtype and the position first.
 Sprite_KydreeokHead_Prep:
 {
   PHB : PHK : PLB
   ; scawful 2026-10-16: 200 HP, touch class 7 (4/3/2 hearts by mail).
   LDA.b #$C8 : STA.w SprHealth, X
   LDA.b #$07 : STA.w SprBump,   X ; bump damage class
+  STZ.w SprAction, X              ; KydreeokHead_Rise
+  STZ.w SprFrame, X
+  STZ.w SprMiscA, X
   STZ.w SprMiscE, X
   STZ.w SprMiscF, X
-  STZ.w SprTimerC, X
+  STZ.w SprMiscG, X
+  LDA.b #$28 : STA.w SprTimerA, X ; grow out of the shoulder
+  LDA.b #$40 : STA.w SprTimerE, X ; no attack right after rising
+  ; The two heads sway half a cycle apart.
+  LDA.w SprSubtype, X : BEQ .left
+    LDA.b #$40
+  .left
+  STA.w SprMiscC, X
   PLB
   RTL
 }
 
-SpeedTable:
-  db $00, $02, $04, $06, $07, $01, $06, $03
-  db 0, -2, -4, -6, -7, -1, -6, -3
+; Rest pose by subtype (left, right): an offset from the shoulder anchor.
+KydreeokHead_RestX:
+  db -20, 20
+KydreeokHead_RestY:
+  db -28, -28
 
-KydreeokHead_UpdateTracking:
-{
-  LDA.w SprTimerC, X : BNE .use_cached
-    JSL GetRandomInt : AND #$07 : CLC : ADC #$08 : STA.w SprTimerC, X
-    JSL GetRandomInt : AND #$0F : TAY
-    LDA.w SpeedTable, Y : STA.w SprMiscE, X
-    JSL GetRandomInt : AND #$0F : TAY
-    LDA.w SpeedTable, Y : STA.w SprMiscF, X
-    JSR KydreeokHead_BiasTowardPlayer
-  .use_cached
-  RTS
-}
-
-KydreeokHead_BiasTowardPlayer:
-{
-  PHX
-  JSL Sprite_IsToRightOfPlayer
-  LDA.w SprMiscE, X : CLC : ADC.w .bias_x, Y : STA.w SprMiscE, X
-  JSL Sprite_IsBelowPlayer
-  LDA.w SprMiscF, X : CLC : ADC.w .bias_y, Y : STA.w SprMiscF, X
-  PLX
-  RTS
-
-  .bias_x
-    db 1, -1
-  .bias_y
-    db 1, -1
-}
+; 32-step sine, amplitude 8.
+KydreeokHead_Sine:
+  db  0,  2,  3,  4,  6,  7,  7,  8,  8,  8,  7,  7,  6,  4,  3,  2
+  db  0, -2, -3, -4, -6, -7, -7, -8, -8, -8, -7, -7, -6, -4, -3, -2
 
 Sprite_KydreeokHead_Main:
 {
-  LDA.w SprAction, X
-  JSL   JumpTableLocal
-
-  dw KydreeokHead_ForwardAnim ; 0x00
-  dw KydreeokHead_RightAnim   ; 0x01
-  dw KydreeokHead_LeftAnim    ; 0x02
-  dw KydreeokHead_FarRight    ; 0x03
-  dw KydreeokHead_FarLeft     ; 0x04
-  dw KydreeokHead_SummonFire  ; 0x05
-
-  ; 0x00
-  KydreeokHead_ForwardAnim:
-  {
-    %StartOnFrame(0)
-    %PlayAnimation(0,2,10)
-
+  JSL Sprite_DamageFlash_Long
+  ; A head growing out of the shoulder cannot be hit yet.
+  LDA.w SprAction, X : BEQ .no_contact
     PHX
     JSL Sprite_CheckDamageFromPlayer
     JSL Sprite_CheckDamageToPlayer
     PLX
+  .no_contact
+  JSR KydreeokHead_Animate
 
-    JSR KydreeokHead_RotationMove
-    JSR RandomlyAttack
+  %SpriteJumpTable(KydreeokHead_Rise,
+                   KydreeokHead_Idle,
+                   KydreeokHead_LungeWindup,
+                   KydreeokHead_LungeStrike,
+                   KydreeokHead_BreathWindup,
+                   KydreeokHead_BreathFire,
+                   KydreeokHead_Recover)
 
-    LDA.b #$20 : STA.w SprTimerA, X
-    JSL Sprite_IsToRightOfPlayer : TYA : BNE .not_right
-      JSR GetDistance8bit : CMP #$0B : BCC .not_far
-        %GotoAction(3)
-        RTS
-      .not_far
+  ; 0x00
+  KydreeokHead_Rise:
+  {
+    JSR KydreeokHead_Anchor
+    LDY.w SprSubtype, X
+    LDA.w KydreeokHead_RestX, Y : STA.b $08
+    LDA.w KydreeokHead_RestY, Y : STA.b $09
+    LDA.b #$04 : JSR KydreeokHead_SeekOffset
+    LDA.w SprTimerA, X : BNE .rising
       %GotoAction(1)
-      RTS
-    .not_right
-    JSR GetDistance8bit : CMP #$0B : BCC .not_far2
-      %GotoAction(4)
-      RTS
-    .not_far2
-    %GotoAction(2)
+    .rising
     RTS
   }
 
   ; 0x01
-  KydreeokHead_RightAnim:
+  KydreeokHead_Idle:
   {
-    %StartOnFrame(3)
-    %PlayAnimation(3,5,10)
+    JSR KydreeokHead_IdleMove
+    JMP KydreeokHead_MaybeAttack
+  }
 
-    PHX
-    JSL Sprite_CheckDamageFromPlayer
-    JSL Sprite_CheckDamageToPlayer
-    PLX
-
-    JSR KydreeokHead_RotationMove
-    JSR RandomlyAttack
-
-    JSL Sprite_IsToRightOfPlayer : TYA : BNE .not_right
-      RTS
-    .not_right
-    %GotoAction(0)
+  ; 0x02 - rear up (the draw shakes the head), then commit to a target
+  KydreeokHead_LungeWindup:
+  {
+    JSR KydreeokHead_Anchor
+    LDY.w SprSubtype, X
+    LDA.w KydreeokHead_RestX, Y : STA.b $08
+    LDA.b #-48 : STA.b $09
+    LDA.b #$02 : JSR KydreeokHead_SeekOffset
+    LDA.w SprTimerA, X : BNE .winding
+      JSR KydreeokHead_AimAtPlayer
+      LDA.b #$0C : STA.w SprTimerA, X
+      %GotoAction(3)
+    .winding
     RTS
   }
 
-  ; 0x02
-  KydreeokHead_LeftAnim:
+  ; 0x03 - snap to where the player stood when the windup ended
+  KydreeokHead_LungeStrike:
   {
-    %StartOnFrame(6)
-    %PlayAnimation(6,8,10)
-
-    PHX
-    JSL Sprite_CheckDamageFromPlayer
-    JSL Sprite_CheckDamageToPlayer
-    PLX
-
-    JSR KydreeokHead_RotationMove
-    JSR RandomlyAttack
-
-    LDA.w SprTimerA, X : BNE .not_yet
-      %GotoAction(0)
-    .not_yet
+    JSR KydreeokHead_Anchor
+    LDA.w SprMiscE, X : STA.b $08
+    LDA.w SprMiscF, X : STA.b $09
+    LDA.b #$01 : JSR KydreeokHead_SeekOffset
+    LDA.w SprTimerA, X : BNE .striking
+      LDA.b #$14 : STA.w SprTimerA, X
+      %GotoAction(6)
+    .striking
     RTS
   }
 
-  ; 0x03
-  KydreeokHead_FarRight:
+  ; 0x04 - rear back while the fire charges (the draw glows), then aim
+  KydreeokHead_BreathWindup:
   {
-    %PlayAnimation(9,11,10)
-    %MoveTowardPlayer(15)
-
-    PHX
-    JSL Sprite_CheckDamageFromPlayer
-    JSL Sprite_CheckDamageToPlayer
-    PLX
-
-    JSR KydreeokHead_RotationMove
-    JSR RandomlyAttack
-    LDA.w SprTimerA, X : BNE .not_done
-      %GotoAction(0)
-    .not_done
+    JSR KydreeokHead_Anchor
+    LDY.w SprSubtype, X
+    LDA.w KydreeokHead_RestX, Y : CMP.b #$80 : ROR A : STA.b $08
+    LDA.b #-52 : STA.b $09
+    LDA.b #$02 : JSR KydreeokHead_SeekOffset
+    LDA.w SprTimerA, X : BNE .charging
+      ; One 12 px step toward the player, kept for the whole breath.
+      LDA.b #$0C : JSL Sprite_ProjectSpeedTowardsPlayer
+      LDA.b $01 : STA.w SprMiscE, X
+      LDA.b $00 : STA.w SprMiscF, X
+      STZ.w SprMiscG, X
+      STZ.w SprTimerD, X
+      LDA.b #$2A : JSL Sound_SetSfx2PanLong
+      %GotoAction(5)
+    .charging
     RTS
   }
 
-  ; 0x04
-  KydreeokHead_FarLeft:
+  ; 0x05 - lay a line of 6 flames along the aim, one every 3 frames.
+  ; The flames are garnish (BossKit_FxAtOffset, at most 6 for this head):
+  ; no sprite slots, and only one head breathes at a time.
+  KydreeokHead_BreathFire:
   {
-    %PlayAnimation(12,14,10)
-    %MoveTowardPlayer(15)
+    JSR KydreeokHead_Anchor
+    LDY.w SprSubtype, X
+    LDA.w KydreeokHead_RestX, Y : CMP.b #$80 : ROR A
+    CLC : ADC.w SprMiscE, X : STA.b $08
+    LDA.b #-52 : CLC : ADC.w SprMiscF, X : STA.b $09
+    LDA.b #$02 : JSR KydreeokHead_SeekOffset
 
-    PHX
-    JSL Sprite_CheckDamageFromPlayer
-    JSL Sprite_CheckDamageToPlayer
-    PLX
-
-    JSR KydreeokHead_RotationMove
-    JSR RandomlyAttack
-    LDA.w SprTimerA, X : BNE .not_done
-       %GotoAction(0)
-    .not_done
+    LDA.w SprTimerD, X : BNE .wait
+      LDA.b #$03 : STA.w SprTimerD, X
+      INC.w SprMiscG, X
+      ; Flame k sits k steps out from the mouth (8 px below the head).
+      STZ.b $00
+      LDA.b #$08 : STA.b $01
+      LDA.w SprMiscG, X : TAY
+      .step
+        LDA.b $00 : CLC : ADC.w SprMiscE, X : STA.b $00
+        LDA.b $01 : CLC : ADC.w SprMiscF, X : STA.b $01
+      DEY : BNE .step
+      LDA.b #$30 : STA.b $08
+      LDA.b #$06 : STA.b $09
+      LDA.b #$10 : JSL BossKit_FxAtOffset
+      LDA.w SprMiscG, X : CMP.b #$06 : BCC .wait
+        LDA.b #$18 : STA.w SprTimerA, X
+        %GotoAction(6)
+    .wait
     RTS
   }
 
-  KydreeokHead_SummonFire:
+  ; 0x06
+  KydreeokHead_Recover:
   {
-    %MoveTowardPlayer(10)
-
-    JSL Sprite_CheckDamageToPlayer
-    JSL Sprite_Twinrova_FireAttack
-    LDA.w SprTimerA, X : BNE .not_done
-      LDA #$00 : STA.w SprState, X
-    .not_done
+    JSR KydreeokHead_IdleMove
+    LDA.w SprTimerA, X : BNE .recovering
+      %GotoAction(1)
+    .recovering
     RTS
   }
 }
 
-KydreeokHead_RotationMove:
+; ---------------------------------------------------------
+; Pose
+
+; Out: $04 = shoulder anchor X, $06 = anchor Y (16-bit). The anchor rises
+; with the body's altitude. Keeps X.
+KydreeokHead_Anchor:
 {
-  JSR KydreeokHead_UpdateTracking
-  LDA.w SprMiscE, X : STA.w SprXSpeed, X
-  LDA.w SprMiscF, X : STA.w SprYSpeed, X
-  LDA.w SprXSpeed, X : STA $00
-  LDA.w SprYSpeed, X : STA $01
+  LDA.w SprSubtype, X : AND.b #$01 : TAY
+  PHX
+  LDX.w Kydreeok_Id
+  LDA.w SprXH, X : XBA : LDA.w SprX, X
+  REP #$20
+  STA.b $04
+  LDA.w .shoulder_x, Y : %BossKit_Sext16() : CLC : ADC.b $04 : STA.b $04
+  SEP #$20
+  LDA.w SprYH, X : XBA : LDA.w SprY, X
+  REP #$20
+  STA.b $06
+  LDA.w .shoulder_y, Y : %BossKit_Sext16() : CLC : ADC.b $06 : STA.b $06
+  LDA.w SprHeight, X : AND.w #$00FF : EOR.w #$FFFF : SEC : ADC.b $06 : STA.b $06
+  SEP #$20
+  PLX
+  RTS
 
-  JSR KydreeokHead_NeckControl
-  JSR MoveWithBody
+  .shoulder_x
+    db -16, 13
+  .shoulder_y
+    db -24, -24
+}
 
-  JSR RotateHeadUsingSpeedValues
+; Ease the head toward anchor + offset.
+; In: $04/$06 = anchor (16-bit), $08/$09 = signed offset X/Y,
+;     A = ease shift (1 = half the distance per frame, 4 = 1/16).
+; Keeps $04-$09.
+KydreeokHead_SeekOffset:
+{
+  STA.b $0A
+  LDA.w SprXH, X : XBA : LDA.w SprX, X
+  REP #$20
+  STA.b $0C
+  LDA.b $08 : %BossKit_Sext16() : CLC : ADC.b $04
+  SEC : SBC.b $0C
+  JSR KydreeokHead_EaseStep
+  CLC : ADC.b $0C
+  SEP #$20
+  STA.w SprX, X : XBA : STA.w SprXH, X
+
+  LDA.w SprYH, X : XBA : LDA.w SprY, X
+  REP #$20
+  STA.b $0C
+  LDA.b $09 : %BossKit_Sext16() : CLC : ADC.b $06
+  SEC : SBC.b $0C
+  JSR KydreeokHead_EaseStep
+  CLC : ADC.b $0C
+  SEP #$20
+  STA.w SprY, X : XBA : STA.w SprYH, X
   RTS
 }
 
-CoordinateBasedRotation:
+; 16-bit A = signed distance. Out: A = distance >> $0A (toward zero),
+; at least one pixel while the target is not reached. A stays 16-bit.
+KydreeokHead_EaseStep:
 {
-  LDA.w Neck_Index : TAY
-  ; JSL   GetRandomInt : AND #$04 : TAY
-  LDA.w X_Coords, Y : STA.w Neck1_OffsetX
-  LDA.w X_Coords, Y : STA.w Neck2_OffsetX
-  LDA.w X_Coords, Y : STA.w Neck3_OffsetX
-  LDA.w Y_Coords, Y : STA.w Neck1_OffsetY
-  LDA.w Y_Coords, Y : STA.w Neck2_OffsetY
-  LDA.w Y_Coords, Y : STA.w Neck3_OffsetY
-  JSL GetRandomInt : AND #$3F : BNE .dont_increment
-    INC.w Neck_Index
-  .dont_increment
-  CPY #15 : BNE .not_full
-    LDA #0 : STA.w Neck_Index
-  .not_full
+  CMP.w #$0000 : BEQ .done
+  LDY.b $0A
+  CMP.w #$8000 : BCS .negative
+    .shift_positive
+      LSR A
+    DEY : BNE .shift_positive
+    CMP.w #$0000 : BNE .done
+      INC A
+    .done
+    RTS
+  .negative
+  EOR.w #$FFFF : INC A
+  .shift_negative
+    LSR A
+  DEY : BNE .shift_negative
+  CMP.w #$0000 : BNE .negate
+    INC A
+  .negate
+  EOR.w #$FFFF : INC A
   RTS
-
-  ; Table for X coordinates (based on a radius of 8)
-  X_Coords:
-    db 8, 11,  8,  3, -4, -9, -12, -9
-    db -4,  3,  8, 11,  8,  3, -4, -9
-
-  ; Table for Y coordinates (based on a radius of 8)
-  Y_Coords:
-    db 0, -3, -8, -11, -15, -15, -11, -8
-    db -3,  0,  3,  8, 11, 15, 15, 11
 }
 
-RotateHeadUsingSpeedValues:
+; Idle pose: rest + sway + a lean toward the player.
+KydreeokHead_IdleMove:
 {
-  LDY.w Neck_Index
-  LDA.w SprXSpeed, X : CLC : ADC.w XSpeedSin, Y : ASL : STA.w SprXSpeed, X
-  LDA.w SprYSpeed, X : CLC : ADC.w YSpeedSin, Y : ASL : STA.w SprYSpeed, X
-  INY : CPY #$3F : BNE .not_full
-    LDY.b #$00
-  .not_full
-  STY.w Neck_Index
-  JSL   Sprite_MoveLong
-  RTS
-
-#XSpeedSin:
-  db 0,   3,   6,   9,  12,  15,  18,  20,  23,  25
-  db 27,  28,  30,  31,  31,  32
-
-#YSpeedSin:
-  db 32,  32,  31,  31
-  db 30,  28,  27,  25,  23,  20,  18,  15,  12,   9
-  db 6,   3,   0,  -3,  -6,  -9, -12, -15, -18, -20
-  db -23, -25, -27, -28, -30, -31, -31, -32, -32, -32
-  db -31, -31, -30, -28, -27, -25, -23, -20, -18, -15
-  db -12,  -9,  -6,  -3
-  db 0,   3,   6,   9,  12,  15,  18,  20,  23,  25
-  db 27,  28,  30,  31,  31,  32,  32,  32,  31,  31
-  db 30,  28,  27,  25,  23,  20,  18,  15,  12,   9
-  db 6,   3,   0,  -3,  -6,  -9, -12, -15, -18, -20
-  db -23, -25, -27, -28, -30, -31, -31, -32, -32, -32
-  db -31, -31, -30, -28, -27, -25, -23, -20, -18, -15
-  db -12,  -9,  -6,  -3
+  INC.w SprMiscC, X
+  JSR KydreeokHead_Anchor
+  JSR KydreeokHead_Lean
+  LDA.w SprMiscC, X : LSR A : LSR A : AND.b #$1F : TAY
+  LDA.w KydreeokHead_Sine, Y : CLC : ADC.b $08 : STA.b $08
+  ; Y bobs at twice the rate and half the size.
+  TYA : ASL A : AND.b #$1F : TAY
+  LDA.w KydreeokHead_Sine, Y : CMP.b #$80 : ROR A
+  CLC : ADC.b $09 : STA.b $09
+  LDY.w SprSubtype, X
+  LDA.w KydreeokHead_RestX, Y : CLC : ADC.b $08 : STA.b $08
+  LDA.w KydreeokHead_RestY, Y : CLC : ADC.b $09 : STA.b $09
+  LDA.b #$03 : JMP KydreeokHead_SeekOffset
 }
 
-RandomlyAttack:
+; In: $04/$06 = anchor. Out: $08/$09 = (player - anchor) / 4,
+; clamped to X -16..16 and Y -8..24.
+KydreeokHead_Lean:
 {
-  JSL Sprite_DamageFlash_Long
+  REP #$20
+  LDA.b $22 : SEC : SBC.b $04
+  CMP.w #$8000 : ROR A
+  CMP.w #$8000 : ROR A
+  CMP.w #17 : BMI .x_not_high
+    LDA.w #16
+  .x_not_high
+  CMP.w #-16 : BPL .x_not_low
+    LDA.w #-16
+  .x_not_low
+  STA.b $08
+  LDA.b $20 : SEC : SBC.b $06
+  CMP.w #$8000 : ROR A
+  CMP.w #$8000 : ROR A
+  CMP.w #25 : BMI .y_not_high
+    LDA.w #24
+  .y_not_high
+  CMP.w #-8 : BPL .y_not_low
+    LDA.w #-8
+  .y_not_low
+  SEP #$20
+  STA.b $09
+  RTS
+}
 
-  ; Attack cooldown uses SprTimerE: %PlayAnimation owns SprTimerB, UpdateTracking owns SprTimerC.
-  LDA.w SprTimerE, X : BNE .cooldown
-    JSL GetRandomInt : AND #$1F : BNE .no_attack
-      LDY.w Kydreeok_Id
-      LDA.w SprMiscD, Y : STA $0F
+; In: $04/$06 = anchor. Out: SprMiscE/F = player - anchor, clamped to
+; the neck's reach (X -48..48, Y -16..64).
+KydreeokHead_AimAtPlayer:
+{
+  REP #$20
+  LDA.b $22 : SEC : SBC.b $04
+  CMP.w #49 : BMI .x_not_high
+    LDA.w #48
+  .x_not_high
+  CMP.w #-48 : BPL .x_not_low
+    LDA.w #-48
+  .x_not_low
+  SEP #$20
+  STA.w SprMiscE, X
+  REP #$20
+  LDA.b $20 : CLC : ADC.w #$0008 : SEC : SBC.b $06
+  CMP.w #65 : BMI .y_not_high
+    LDA.w #64
+  .y_not_high
+  CMP.w #-16 : BPL .y_not_low
+    LDA.w #-16
+  .y_not_low
+  SEP #$20
+  STA.w SprMiscF, X
+  RTS
+}
 
-      JSL GetRandomInt : AND #$0F : BEQ .breath
+; Face the player: forward when close in X, turned, or far turned.
+; Steps the 3-frame cycle every 10 frames.
+KydreeokHead_Animate:
+{
+  JSL Sprite_IsToRightOfPlayer   ; Y = 0: player to the right, $0F = dx
+  LDA.b $0F : CPY.b #$00 : BEQ .right
+    EOR.b #$FF : INC A
+  .right
+  CMP.b #20 : BCS .turned
+    LDA.b #$00
+    BRA .base
+  .turned
+  CMP.b #64 : LDA.w .near, Y : BCC .base
+    LDA.w .far, Y
+  .base
+  STA.b $00
 
-      LDA.b $0F : CMP.b #$02 : BCC .targeted
-      JSL GetRandomInt : AND #$01 : BNE .targeted
-        LDA.b #$40 : STA.w SprTimerE, X
-        JSR KydreeokHead_SpawnFireballSpread
-        RTS
-    .targeted
-      LDA.b #$30 : STA.w SprTimerE, X
-      JSR KydreeokHead_SpawnFireballTargeted
-      RTS
-    .breath
-      LDA.b #$50 : STA.w SprTimerE, X
-      JSR KydreeokHead_SpawnBreath
-      RTS
+  LDA.w SprTimerB, X : BNE .hold
+    LDA.b #10 : STA.w SprTimerB, X
+    LDA.w SprMiscA, X : INC A : CMP.b #$03 : BCC .step
+      LDA.b #$00
+    .step
+    STA.w SprMiscA, X
+  .hold
+  LDA.w SprMiscA, X : CLC : ADC.b $00 : STA.w SprFrame, X
+  RTS
+
+  .near
+    db 3, 6
+  .far
+    db 9, 12
+}
+
+; ---------------------------------------------------------
+; Attacks
+
+; Idle only. A new attack needs the cooldown, a 1/32 roll and frame
+; budget (BossKit_CanSpend).
+KydreeokHead_MaybeAttack:
+{
+  LDA.w SprTimerE, X : BNE .no_attack
+  JSL GetRandomInt : AND.b #$1F : BNE .no_attack
+  JSL BossKit_CanSpend : BCC .no_attack
+  JSL GetRandomInt : AND.b #$07
+  CMP.b #$03 : BCC .fireball
+  CMP.b #$05 : BCC .lunge
+  CMP.b #$07 : BCC .breath
   .no_attack
   RTS
-  .cooldown
+
+  .fireball
+    PHA
+    LDA.b #$30 : JSR KydreeokHead_SetCooldown
+    PLA : BNE .targeted
+    JSR KydreeokHead_IsPhaseTwo : BCC .targeted
+      JMP KydreeokHead_SpawnFireballSpread
+    .targeted
+    JMP KydreeokHead_SpawnFireballTargeted
+
+  .lunge
+    LDA.b #$50 : JSR KydreeokHead_SetCooldown
+    LDA.b #$12 : STA.w SprTimerA, X
+    %GotoAction(2)
+    RTS
+
+  .breath
+    JSR KydreeokHead_OtherHeadBreathing : BCS .no_attack
+    LDA.b #$70 : JSR KydreeokHead_SetCooldown
+    LDA.b #$18 : STA.w SprTimerA, X
+    %GotoAction(4)
+    RTS
+}
+
+; A = cooldown in frames; phase two waits 3/4 of it.
+KydreeokHead_SetCooldown:
+{
+  STA.b $00
+  JSR KydreeokHead_IsPhaseTwo : BCC .store
+    LDA.b $00 : LSR A : LSR A : STA.b $01
+    LDA.b $00 : SEC : SBC.b $01 : STA.b $00
+  .store
+  LDA.b $00 : STA.w SprTimerE, X
+  RTS
+}
+
+; Carry set in phase two.
+KydreeokHead_IsPhaseTwo:
+{
+  LDY.w Kydreeok_Id
+  LDA.w SprMiscD, Y : CMP.b #$02
+  RTS
+}
+
+; Carry set while the other head winds up or breathes fire.
+KydreeokHead_OtherHeadBreathing:
+{
+  LDY.w Offspring2_Id
+  LDA.w SprSubtype, X : BEQ .check
+    LDY.w Offspring1_Id
+  .check
+  JSR Kydreeok_HeadAlive : BCC .no
+  LDA.w SprAction, Y : CMP.b #$04 : BCC .no
+  CMP.b #$06 : BCS .no
+    SEC
+    RTS
+  .no
+  CLC
   RTS
 }
 
@@ -352,18 +517,6 @@ KydreeokHead_ConfigureFireball:
 {
   LDA.w SprDefl, Y : ORA.b #$08 : STA.w SprDefl, Y
   LDA.b #$04 : STA.w SprBump, Y
-  RTS
-}
-
-KydreeokHead_SpawnBreath:
-{
-  LDA   #$CF
-  JSL   Sprite_SpawnDynamically : BMI .exit
-    JSL   Sprite_SetSpawnedCoords
-    JSL   Fireball_SpawnTrailGarnish
-    LDA.b #$05 : STA.w SprAction, Y
-    LDA   #$20 : STA.w SprTimerA, Y
-  .exit
   RTS
 }
 
@@ -448,316 +601,17 @@ KydreeokHead_SpawnFireballSpread:
     db -32, -32, -32
 }
 
-MoveWithBody:
+; ---------------------------------------------------------
+; Draw
+
+; A = palette flash bits: the damage flash, plus a glow while charging fire.
+KydreeokHead_FlashBits:
 {
-  LDA.w Kydreeok_Id : TAY
-  CPX.w Offspring2_Id : BEQ .neck2_move
-
-    LDA.w SprX, Y : SEC : SBC #$0F
-    STA.w SprMiscA, X
-    STA.w LeftNeck1_X : DEC
-    STA.w LeftNeck2_X : DEC
-    STA.w LeftNeck3_X
-    ; STA.w SprX, X
-
-    LDA.w SprY, Y : SEC : SBC #$0F
-    STA.w SprMiscB, X
-    STA.w LeftNeck1_Y
-    ; STA.w LeftNeck2_Y
-    ; STA.w LeftNeck3_Y
-    ; STA.w SprY, X
+  LDA.w SprAction, X : CMP.b #$04 : BNE .damage
+    LDA.b $1A : AND.b #$06 : ORA.w SprFlash, X
     RTS
-
-  .neck2_move
-    LDA.w SprX, Y : CLC : ADC #$0C
-    STA.w SprMiscA, X
-    STA.w $19F0 : INC
-    STA.w $19F2 : INC
-    STA.w $19F4
-    ; STA.w SprX, X
-
-    LDA.w SprY, Y : SEC : SBC #$0F
-    ; STA.w SprY,     X
-    STA.w SprMiscB, X
-    STA.w $19F1
-    ; STA.w $19F3
-    ; STA.w $19F5
-  .return
-  RTS
-}
-
-; =========================================================
-; Based on Zarby Gleeok code
-
-Neck1_Control:
-{
-  LDA.w LeftNeck3_X : STA.w SprX, X
-  LDA.w LeftNeck3_Y : STA.w SprY, X
-
-  LDA.w SprX, X : STA.w SprMiscC, X
-  LDA.w SprY, X : STA.w SprMiscD, X
-
-  LDA.w SprXSpeed, X : STA $08
-  LDA.w SprYSpeed, X : STA $09
-
-  LDA.w LeftNeck1_X : STA $02 ; x
-  LDA.w LeftNeck1_Y : STA $03 ; y
-
-  LDA.w SprX, X : STA $04
-  LDA.w SprY, X : STA $05
-
-  JSR GetDistance8bit : CMP #$08 : BCC .TooCloseToHead ; is body1 too close to the head?
-    LDA.w SprX,  X : STA $04 ; dest X
-    LDA.w SprXH, X : STA $05 ; dest XH
-    LDA.w SprY,  X : STA $06 ; dest Y
-    LDA.w SprYH, X : STA $07 ; dest YH
-
-    ; load body position into sprite position
-    LDA.w LeftNeck1_X : STA.w SprX, X
-    LDA.w LeftNeck1_Y : STA.w SprY, X
-
-    LDA   #$06
-    JSL   Sprite_ProjectSpeedTowardsEntityLong
-    LDA.b $01 : STA.w SprXSpeed, X
-    LDA.b $00 : STA.w SprYSpeed, X
-    JSL   Sprite_MoveLong
-
-    LDA.w SprX, X : STA.w LeftNeck1_X
-    LDA.w SprY, X : STA.w LeftNeck1_Y
-  .TooCloseToHead
-
-  ; Do body part 2
-
-  LDA.w LeftNeck2_X : STA $02 ; x
-  LDA.w LeftNeck2_Y : STA $03 ; y
-
-  LDA.w LeftNeck1_X : STA $04
-  LDA.w LeftNeck1_Y : STA $05
-
-  ; is body1 too close to the head?
-  JSR GetDistance8bit : CMP #$0D : BCC .TooCloseToBodyPart1
-    LDA.w LeftNeck1_X : STA $04    ; dest X
-    LDA.w SprXH, X : STA $05 ; dest XH
-    LDA.w LeftNeck1_Y : STA $06    ; dest Y
-    LDA.w SprYH, X : STA $07 ; dest YH
-
-    ;load body position into sprite position
-    LDA.w LeftNeck2_X : STA.w SprX, X
-    LDA.w LeftNeck2_Y : STA.w SprY, X
-
-    LDA   #$06
-    JSL   Sprite_ProjectSpeedTowardsEntityLong
-    LDA.b $01 : STA.w SprXSpeed, X
-    LDA.b $00 : STA.w SprYSpeed, X
-    JSL   Sprite_MoveLong
-
-    LDA.w SprX, X : STA.w LeftNeck2_X
-    LDA.w SprY, X : STA.w LeftNeck2_Y
-  .TooCloseToBodyPart1
-
-  ; Do body part 2
-  LDA.w LeftNeck3_X : STA $02 ; x
-  LDA.w LeftNeck3_Y : STA $03 ; y
-  LDA.w LeftNeck2_X : STA $04
-  LDA.w LeftNeck2_Y : STA $05
-
-  ; is body1 too close to the head?
-  JSR GetDistance8bit : CMP #$14 : BCC .TooCloseToBodyPart2
-    LDA.w LeftNeck2_X : STA $04 ; dest X
-    LDA.w SprXH, X : STA $05 ; dest XH
-    LDA.w LeftNeck2_Y : STA $06 ; dest Y
-    LDA.w SprYH, X : STA $07 ; dest YH
-    ; load body position into sprite position
-    LDA.w LeftNeck3_X : STA.w SprX, X
-    LDA.w LeftNeck3_Y : STA.w SprY, X
-
-    LDA   #$06
-    JSL   Sprite_ProjectSpeedTowardsEntityLong
-    LDA.b $01 : STA.w SprXSpeed, X
-    LDA.b $00 : STA.w SprYSpeed, X
-    JSL   Sprite_MoveLong
-    LDA.w SprX, X : STA.w LeftNeck3_X
-    LDA.w SprY, X : STA.w LeftNeck3_Y
-  .TooCloseToBodyPart2
-
-  LDA.w SprMiscC, X : STA.w SprX, X
-  LDA.w SprMiscD, X : STA.w SprY, X
-  LDA.b $08 : STA.w SprXSpeed, X
-  LDA.b $09 : STA.w SprYSpeed, X
-  RTS
-}
-
-Neck2_Control:
-{
-  LDA $19F4  : STA.w SprX, X
-  LDA $19F5  : STA.w SprY, X
-
-  LDA.w SprX, X : STA.w SprMiscC, X
-  LDA.w SprY, X : STA.w SprMiscD, X
-  LDA.w SprXSpeed, X : STA $08
-  LDA.w SprYSpeed, X : STA $09
-
-  LDA.w $19F0 : STA $02 ; x
-  LDA.w $19F1 : STA $03 ; y
-
-  LDA.w SprX, X : STA $04
-  LDA.w SprY, X : STA $05
-  JSR GetDistance8bit : CMP #$08 : BCC .TooCloseToHead2 ; is body1 too close to the head?
-    LDA.w SprX,               X : STA $04 ; dest X
-    LDA.w SprXH,              X : STA $05 ; dest XH
-    LDA.w SprY,               X : STA $06 ; dest Y
-    LDA.w SprYH,              X : STA $07 ; dest YH
-    ; load body position into sprite position
-    LDA.w $19F0 : STA.w SprX, X
-    LDA.w $19F1 : STA.w SprY, X
-
-    LDA   #$08
-    JSL   Sprite_ProjectSpeedTowardsEntityLong
-    LDA.b $01 : STA.w SprXSpeed, X
-    LDA.b $00 : STA.w SprYSpeed, X
-    JSL   Sprite_MoveLong
-    LDA.w SprX, X : STA.w $19F0
-    LDA.w SprY, X : STA.w $19F1
-
-  .TooCloseToHead2
-
-  LDA.w $19F2 : STA $02 ; x
-  LDA.w $19F3 : STA $03 ; y
-
-  LDA.w $19F0 : STA $04
-  LDA.w $19F1 : STA $05
-
-  ; is body1 too close to the head?
-  JSR GetDistance8bit : CMP #$0D : BCC .TooCloseToBodyPart12
-
-    LDA.w $19F0 : STA $04                 ; dest X
-    LDA.w SprXH,              X : STA $05 ; dest XH
-    LDA.w $19F1 : STA $06                 ; dest Y
-    LDA.w SprYH,              X : STA $07 ; dest YH
-    ;load body position into sprite position
-    LDA.w $19F2 : STA.w SprX, X
-    LDA.w $19F3 : STA.w SprY, X
-
-    LDA   #$04
-    JSL   Sprite_ProjectSpeedTowardsEntityLong
-    LDA.b $01 : STA.w SprXSpeed, X
-    LDA.b $00 : STA.w SprYSpeed, X
-    JSL   Sprite_MoveLong
-    LDA.w SprX,                  X : STA.w $19F2
-    LDA.w SprY,                  X : STA.w $19F3
-
-  .TooCloseToBodyPart12
-
-  ; Do body part 2
-  LDA.w $19F4 : STA $02 ; x
-  LDA.w $19F5 : STA $03 ; y
-
-  LDA.w $19F2 : STA $04
-  LDA.w $19F3 : STA $05
-  JSR   GetDistance8bit : CMP #$14 : BCC .TooCloseToBodyPart22 ; is body1 too close to the head?
-    LDA.w $19F2 : STA $04                 ; dest X
-    LDA.w SprXH,              X : STA $05 ; dest XH
-    LDA.w $19F3 : STA $06                 ; dest Y
-    LDA.w SprYH,              X : STA $07 ; dest YH
-    ;load body position into sprite position
-    LDA.w $19F4 : STA.w SprX, X
-    LDA.w $19F5 : STA.w SprY, X
-
-    LDA   #$03
-    JSL   Sprite_ProjectSpeedTowardsEntityLong
-    LDA.b $01 : STA.w SprXSpeed, X
-    LDA.b $00 : STA.w SprYSpeed, X
-    JSL   Sprite_MoveLong
-    LDA.w SprX,                  X : STA.w $19F4
-    LDA.w SprY,                  X : STA.w $19F5
-  .TooCloseToBodyPart22
-
-  LDA.w SprMiscC, X : STA.w SprX, X
-  LDA.w SprMiscD, X : STA.w SprY, X
-  LDA.b $08 : STA.w SprXSpeed, X
-  LDA.b $09 : STA.w SprYSpeed, X
-  RTS
-}
-
-KydreeokHead_NeckControl:
-{
-  LDA.w SprSubtype, X : BEQ .DoNeck1
-    JSR Neck2_Control
-    RTS
-  .DoNeck1
-  JSR Neck1_Control
-  RTS
-}
-
-Sprite_KydreeokHead_DrawNeck:
-{
-  LDA.w SprSubtype, X : CMP.b #$01 : BEQ .neck2
-    LDA.w LeftNeck3_X : STA.w SprCachedX
-    LDA.w LeftNeck3_Y : CLC : ADC.b #$06 : STA.w SprCachedY
-    JSR DrawNeckPart
-
-    LDA.w LeftNeck2_X : STA.w SprCachedX
-    LDA.w LeftNeck2_Y : STA.w SprCachedY
-    JSR DrawNeckPart
-
-    LDA.w SprCachedY : SEC : SBC.b #$0A : STA.w SprCachedY
-    JSR DrawNeckPart
-
-    LDA.w LeftNeck1_X : STA.w SprCachedX
-    LDA.w LeftNeck1_Y : SEC : SBC.b #$04 : STA.w SprCachedY
-    JSR DrawNeckPart
-
-    LDA.w SprCachedY : SEC : SBC.b #$0A : STA.w SprCachedY
-    JSR DrawNeckPart
-
-    BRA .skipNeck
-  .neck2
-
-  LDA.w RightNeck3_X : STA.w SprCachedX
-  LDA.w RightNeck3_Y : CLC : ADC.b #$06 : STA.w SprCachedY
-  JSR DrawNeckPart
-
-  LDA.w RightNeck2_X : STA.w SprCachedX
-  LDA.w RightNeck2_Y : STA.w SprCachedY
-  JSR DrawNeckPart
-
-  LDA.w SprCachedY : SEC : SBC.b #$0A : STA.w SprCachedY
-  JSR DrawNeckPart
-
-  LDA.w RightNeck1_X : STA.w SprCachedX
-  LDA.w RightNeck1_Y : SEC : SBC.b #$04 : STA.w SprCachedY
-  JSR DrawNeckPart
-
-  LDA.w SprCachedY : SEC : SBC.b #$0A : STA.w SprCachedY
-  JSR DrawNeckPart
-
-  .skipNeck
-  LDA.b $08 : STA.w SprCachedX
-  LDA.b $09 : STA.w SprCachedY
-  .skipNeck2
-  RTS
-}
-
-DrawNeckPart:
-{
-  PHY : JSL Sprite_PrepOamCoord : PLY
-  REP #$20
-  LDA $00 : STA ($90), Y : AND.w #$0100 : STA $0E : INY
-  LDA $02 : STA ($90), Y : CLC   : ADC #$0010 : CMP.w #$0100
-  SEP #$20
-  BCC .on_screen_y2
-    ; Put the sprite out of the way
-    LDA.b #$F0 : STA ($90), Y : STA $0E
-  .on_screen_y2
-  INY
-  LDA #$2E : STA ($90), Y ; Set the Char
-  INY
-  LDA #$39 : ORA $08 : STA ($90), Y ; Set the Properties
-  PHY
-  TYA : LSR #2 : TAY
-  LDA #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-  PLY
-  INY
+  .damage
+  LDA.w SprFlash, X
   RTS
 }
 
@@ -766,9 +620,16 @@ Sprite_KydreeokHead_Draw:
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
+  ; Lunge windup: shake 1 px side to side.
+  LDA.w SprAction, X : CMP.b #$02 : BNE .no_shake
+    REP #$20
+    LDA.b $1A : AND.w #$0002 : DEC A : CLC : ADC.b $00 : STA.b $00
+    SEP #$20
+  .no_shake
+
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-  LDA.w SprFlash, X : STA $08
+  JSR KydreeokHead_FlashBits : STA $08
 
   PHX
   ; amount of tiles - 1
@@ -807,7 +668,7 @@ Sprite_KydreeokHead_Draw:
 
   PLX
 
-  JMP Sprite_KydreeokHead_DrawNeck
+  JMP KydreeokHead_DrawNeck
 
   .start_index
     db $00, $02, $04, $06, $0A, $0E, $12, $16, $1A, $1E, $22, $26, $2A, $2E, $32, $36
@@ -900,21 +761,47 @@ Sprite_KydreeokHead_Draw:
     db $02, $02, $02, $02
 }
 
-GetDistance8bit:
+; Neck: 4 links from the head back to the shoulder anchor, bowed against
+; the sway and sagging 3 px. Y = the next OAM entry after the head tiles.
+KydreeokHead_DrawNeck:
 {
-  LDA   $04        ; Sprite X
-  SEC   : SBC $02  ; - Player X
-  BPL   +
-  EOR.b #$FF : INC
-  +
-  STA   $00        ; Distance X (ABS)
+  PHY
+  JSR KydreeokHead_Anchor
+  LDA.w SprXH, X : XBA : LDA.w SprX, X
+  REP #$20
+  STA.b $08
+  LDA.b $04 : SEC : SBC.b $08
+  JSR KydreeokHead_ClampReach
+  STA.b $08
+  SEP #$20
+  LDA.w SprYH, X : XBA : LDA.w SprY, X
+  REP #$20
+  STA.b $0A
+  LDA.b $06 : SEC : SBC.b $0A
+  JSR KydreeokHead_ClampReach
+  SEP #$20
+  STA.b $05
+  LDA.b $08 : STA.b $04
 
-  LDA   $05                 ; Sprite Y
-  SEC   : SBC $03           ; - Player Y
-  BPL   +
-  EOR.b #$FF : INC
-  +
-  ; Add it back to X Distance
-  CLC   : ADC $00 : STA $00 ; distance total X, Y (ABS)
+  LDA.w SprMiscC, X : LSR A : LSR A : AND.b #$1F : TAY
+  LDA.w KydreeokHead_Sine, Y : EOR.b #$FF : INC A : CMP.b #$80 : ROR A
+  STA.b $0C
+  LDA.b #$03 : STA.b $0D
+  LDA.b #$2E : STA.b $06
+  JSR KydreeokHead_FlashBits : ORA.b #$39 : STA.b $07
+  PLY
+  JSL BossKit_DrawChain
+  RTS
+}
+
+; 16-bit A: clamp to -120..120 (BossKit_DrawChain's range).
+KydreeokHead_ClampReach:
+{
+  CMP.w #121 : BMI .not_high
+    LDA.w #120
+  .not_high
+  CMP.w #-120 : BPL .not_low
+    LDA.w #-120
+  .not_low
   RTS
 }

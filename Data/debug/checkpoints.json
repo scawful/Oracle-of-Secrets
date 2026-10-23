@@ -935,6 +935,32 @@
           "why": "full health"
         }
       ]
+    },
+    {
+      "id": "kydreeok-fight",
+      "label": "Kydreeok fight: outside the room $00 hole (walk left 8 tiles, then up)",
+      "beat": 27,
+      "after": "d8-entrance",
+      "location": {
+        "area": "0x57"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x57"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF36D",
+          "value": "0x58",
+          "name": "CurrentHealth",
+          "inferred": true,
+          "why": "full health for the boss test"
+        }
+      ],
+      "notes": "The area warp lands outside the D8 Final Boss Route door at ($0F70,$04F0) (Data/debug/warps.json area 0x57). The room $00 hole is about 120 px left and 10 px up; from ($0EF8,$04E8) holding up drops Link into room $00, where Kydreeok (sprite $7A) starts (b45 run, AFS handoffs/kydreeok_dragon_2026-10-19/evidence/log.txt). The hole and the room $00 layout are placeholders (the finale room plan is open)."
     }
   ],
   "todo": [
