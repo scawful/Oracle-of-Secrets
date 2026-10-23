@@ -1,0 +1,58 @@
+{
+  "kind": "lyra.reviewed_yaze_private_producer_sources.v1",
+  "source_root": "/Users/scawful/src/hobby/yaze-worktrees/lyra-private-reservation-20261022",
+  "sources": [
+    {
+      "path": "src/app/editor/overworld/overworld_editor.cc",
+      "sha256": "4084bcac37068248cb87574e5b256a0ff04e968186ddb2dd82a960e194534e14"
+    },
+    {
+      "path": "src/app/editor/system/session/rom_lifecycle_manager.cc",
+      "sha256": "c22b1ca1b6b608649da5bfc6207cce6ff2cff66616244e705d0a2c64ba52916b"
+    },
+    {
+      "path": "src/cli/handlers/game/overworld_commands.cc",
+      "sha256": "58f50b031d06d6f489391ac018754a8e4226eba63fabe399f493a4e0a861765a"
+    },
+    {
+      "path": "src/core/hack_manifest.cc",
+      "sha256": "2583228452334262cda5a23100d7416f42cfd692c016b43c18110877d634d6b1"
+    },
+    {
+      "path": "src/core/hack_manifest.h",
+      "sha256": "cd22976b99a8a97d8a35578425e76c042b428cea980fd5e162b3b76bedac5255"
+    },
+    {
+      "path": "src/rom/rom.cc",
+      "sha256": "76b035af6a002b66439998cf8194257c0d71a7c05ae3796f378e85610073a4dc"
+    },
+    {
+      "path": "src/rom/rom.h",
+      "sha256": "c15616c4adeec462f65240f9ef726674c7516f4878fdc4873070d8c7dac7732a"
+    },
+    {
+      "path": "src/rom/write_fence.h",
+      "sha256": "a6ed42466129933d4610a01763e7a794dc3f447b868f16d19211d97383d6c9f5"
+    },
+    {
+      "path": "src/rom/transaction.h",
+      "sha256": "8435eeb7411f37e20bce9ca9820879159f50aa115215493113c570a9605c49c8"
+    },
+    {
+      "path": "src/zelda3/overworld/overworld.cc",
+      "sha256": "e1253f7c119d9688de7b7d6644460be97f42da41748458bda3bcf63da21541d6"
+    },
+    {
+      "path": "src/zelda3/overworld/overworld.h",
+      "sha256": "83f18adca42302b07a2bb418371a8416eefad9c06d55ff22db6d08ee30f57a1d"
+    },
+    {
+      "path": "test/CMakeLists.txt",
+      "sha256": "6d7b2c337f5d29e6c9fdb9858bf6b4fb797d3855e6c67b04d3697ca796e65ccd"
+    },
+    {
+      "path": "test/unit/rom/private_lyra_reservation_test.cc",
+      "sha256": "567bd2252aa5e5dce045189368c01dc82db141b4d3be8091d30541fd62bd6564"
+    }
+  ]
+}

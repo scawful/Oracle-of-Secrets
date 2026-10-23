@@ -110,6 +110,7 @@ def parse_allocation(value, source):
         "stream_ranges", "owned_tile32_ids", "expanded_size"}
             | ({"admission"} if "admission" in value else set())
             | ({"tile32_assignment"} if "tile32_assignment" in value else set())
+            | ({"private_reservation"} if "private_reservation" in value else set())
             | ({"reservation"} if "reservation" in value else set()), "Malformed Lyra allocation")
     require(value["kind"] == "lyra.project_runtime_allocation.v1"
             and value["source_rom_sha256"] == sha(source),
@@ -121,12 +122,17 @@ def parse_allocation(value, source):
             "Allocation must explicitly own the source contract's table/code ranges")
     ranges = value["stream_ranges"]
     require(type(ranges) is list and ranges, "No explicitly owned map stream ranges")
+    private_grant = "private_reservation" in value
+    if private_grant:
+        from lyra_private_reservation import verify_private_allocation
+        verify_private_allocation(value, source)
     occupied = [(TABLE_START, TABLE_END), (CODE_START, CODE_END)]
     for region in ranges:
         require(type(region) is list and len(region) == 2
                 and all(type(v) is int for v in region), "Invalid stream allocation")
         start, end = region
-        require(0x300000 <= start < end <= 0x400000,
+        require((private_grant and region == [0x133D3A, 0x138000])
+                or 0x300000 <= start < end <= 0x400000,
                 "Stream allocation must use the expanded ROM")
         require(all(end <= a or start >= b for a, b in occupied),
                 "Overlapping Lyra allocation")
