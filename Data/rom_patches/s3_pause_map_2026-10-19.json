@@ -1,0 +1,31 @@
+{
+  "base_sha1": "eadc9d8fb075d2329f635d3019acf38dc084e1b1",
+  "task": "S3 Shrine of Courage pause map for dungeon ID $00 (decisions.org 2026-10-19: S3 gets its own dungeon ID $00). DRAFT: needs scawful's OK before it is applied to the shared base ROM.",
+  "note": "The pause map (Module0E_03, bank $0A) reads three ID-indexed tables: DungeonMapFloorCountData $0A:F5D9 (low nibble = floors below 1F, high nibble = floors above), DungeonMapRoomPointers $0A:F605 (ZScream-repointed; ID $00 -> $0A:F039, 25 bytes per floor, $0F = empty) and DungeonMapRoomLayoutPointers $0A:FBE4 (ID $00 -> $0A:F084, one template index per listed room, in grid order). ID $00 still held the vanilla Sewers map (rooms $11/$21/$22/$32, $02/$12/$42, $41; 1 floor below, 2 above), so the S3 map showed Sewers rooms and the location marker in an empty cell (native run 2026-10-19). Floors come from the ROM: entrance $0C floor byte $0F:970C = $00 (room $53 = 1F); room $43 has three spiral-down stairs (object $139) matching spiral-up stairs (object $138) in $33 (13,4)/(47,4) and $17 (30,44); $33 has spiral-down $139 at (52,45) matching $32's spiral-up $138; $07's warp tiles drop to $63. Result: 1F $43 over $53; B1 $07 over $17, $33 beside; B2 $63 under $07, $32 under $33. Templates reuse each room's vanilla map art ($63/$33/$43/$53 from the vanilla Desert grid at ID $06, $07/$17 from the vanilla Hera grid at ID $14, $32 from the Sewers grid). New data is the same size as the old (75 grid bytes, 7 of 8 layout bytes) and stays in place. ID $06 and ID $14 grids are not changed here; they still list $33/$43/$53/$63 and $07/$17 (see the decisions.org question).",
+  "edits": [
+    {
+      "id": "s3-map-floor-count",
+      "pc": "0x575D9",
+      "snes": "$0AF5D9",
+      "before": "21",
+      "after": "12",
+      "why": "DungeonMapFloorCountData ID $00: $21 (1 below, 2 above: Sewers) -> $12 (2 below, 1 above: B2, B1, 1F)"
+    },
+    {
+      "id": "s3-map-room-grid",
+      "pc": "0x57039",
+      "snes": "$0AF039",
+      "before": "0F 0F 0F 0F 0F 0F 0F 11 0F 0F 0F 0F 21 22 0F 0F 0F 0F 32 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 02 0F 0F 0F 0F 12 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 42 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 41 0F",
+      "after": "0F 0F 0F 63 0F 0F 32 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 07 0F 0F 33 0F 17 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 43 0F 0F 0F 0F 53 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F 0F",
+      "why": "ID $00 room grid, floors B2/B1/1F x 5 rows x 5 columns: B2 $63 (r0c3) $32 (r1c1); B1 $07 (r0c3) $33 (r1c1) $17 (r1c3); 1F $43 (r1c2) $53 (r2c2)"
+    },
+    {
+      "id": "s3-map-room-templates",
+      "pc": "0x57084",
+      "snes": "$0AF084",
+      "before": "00 01 02 03 04 05 06",
+      "after": "21 03 84 28 83 29 2A",
+      "why": "ID $00 room template list in grid order ($63 $32 $07 $33 $17 $43 $53); the 8th old byte at $0A:F08B is no longer read and stays"
+    }
+  ]
+}
