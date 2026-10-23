@@ -253,7 +253,7 @@ def fixture_class(portal):
                 (self.a.output / f"{name}-{suffix}.bin").write_bytes(blob)
             return dict(cpu=self.cpu(), frame=number(self.b.get_rom_info()["frameCount"]),
                         body={k: sprites[t - 0xB00] for k, t in TABLES.items()},
-                        offspring=list(self.block(0x7E0741, 3)), speed=self.b.read_memory(0x7E0036),
+                        offspring=list(self.block(0x7E1E81, 3)), speed=self.b.read_memory(0x7E0036),
                         music=self.b.read_memory(0x7E012C), hp=self.b.read_memory(0x7EF36D),
                         module=self.b.read_memory(0x7E0010), room=self.b.read_memory16(0x7E00A0),
                         sprites_sha256=sha(sprites), saved_wram_sha256=sha(saved), native_sram_sha256=sha(sram))
@@ -393,7 +393,7 @@ def fixture_class(portal):
             output["at_emerge"] = self.capture("native-emerge")
             require(output["at_emerge"]["body"]["phase"] == 1 and output["at_emerge"]["body"]["action"] == 7,
                     "Native all-heads-dead output did not execute Emerge")
-            watch = self.watch(0x7E0743)
+            watch = self.watch(0x7E1E83)
             output["flower_cpu"] = self.run_to({self.code["flower"]})
             output["flower_store_cpu"] = self.run_to({self.code["flower_store"]})
             require(number(output["flower_store_cpu"]["y"]) == 15 and number(output["flower_store_cpu"]["a"]) & 255 == 15,

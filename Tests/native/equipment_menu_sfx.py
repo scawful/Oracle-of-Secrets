@@ -35,7 +35,7 @@ STORE_SITES = {"move": ("Menu_Equipment_Move_accept", 10),
                "select": ("Menu_Equipment_Select_sound", 2),
                "wear": ("Menu_Page3_ToggleRing_wear", 6),
                "unwear": ("Menu_Page3_ToggleRing", 14)}
-MODULE, SUBMODULE, MENU, CURSOR, PAGE = 0x7E0010, 0x7E0011, 0x7E0200, 0x7E020B, 0x7E0731
+MODULE, SUBMODULE, MENU, CURSOR, PAGE = 0x7E0010, 0x7E0011, 0x7E0200, 0x7E020B, 0x7E1E71
 ROOM, LINK_STATE, FORM, INVULN = 0x7E00A0, 0x7E005D, 0x7E02B2, 0x7E037B
 Y_ITEM, CURRENT_SONG, HP, MAGIC = 0x7E0202, 0x7E030F, 0x7EF36D, 0x7EF36E
 DEKU, OCARINA, MAGICRINGS = 0x7EF349, 0x7EF34C, 0x7EF3A2
@@ -57,7 +57,7 @@ def describe():
                     "output_path is the receipt file (e.g. out/'RESULT.json')",
         "expected_sound": {"0x20": "candidate 9886005996ab", "0x22": "control 4ff0efc02c70"},
         "route": ["START -> Items (module 0E, 0200=04)",
-                  "L -> Equipment (0200=06, MenuScrollLevelH 7E0731 != 0)",
+                  "L -> Equipment (0200=06, MenuScrollLevelH 7E1E71 != 0)",
                   "D-pad to slot 0 Deku; A: BoundMask 7EF3A8=1, expected_sound",
                   "DOWN movement control 0 -> 5 Power ring: 0x20",
                   "if RingSlot1 7EF3A3 already 2: setup A unwear (0x20)",
