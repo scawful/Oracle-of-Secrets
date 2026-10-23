@@ -144,6 +144,25 @@ class DisposableRefreshTest(unittest.TestCase):
         self.assertEqual(before, after, "refresh in a copy must not touch the real repo")
 
 
+class SpriteSlotLabelsTest(unittest.TestCase):
+    """yaze prints these names instead of vanilla ones for reused sprite slots."""
+
+    def test_reused_slots_get_oracle_names(self) -> None:
+        labels = load(GENERATE / "extract_resource_labels.py", "labels_sprite").extract_sprite_labels(REPO_ROOT)
+        self.assertEqual(labels["0x52"], "Collectible")  # hex !SPRID, no registry row
+        self.assertEqual(labels["0x0E"], "Piratian")
+        self.assertEqual(labels["0x1D"], "Darknut")  # registry constant
+        self.assertEqual(labels["0x11"], "Keese / Vampire Bat")  # main routine, then registry alias
+        self.assertEqual(labels["0xB8"], "Zora / Zora Princess")  # Sprite_Zora_Long lives in zora.asm
+
+    def test_committed_sprite_section_is_current(self) -> None:
+        labels = load(GENERATE / "extract_resource_labels.py", "labels_fresh").extract_sprite_labels(REPO_ROOT)
+        committed = json.loads((REPO_ROOT / "Docs" / "Dev" / "Planning" / "oracle_resource_labels.json")
+                               .read_text(encoding="utf-8"))
+        self.assertEqual(committed["sprite"], labels,
+                         "run: python3 Scripts/Generate/extract_resource_labels.py --only sprite")
+
+
 class SaveStateCatalogTest(unittest.TestCase):
     def test_named_state_resolves_from_data_debug(self) -> None:
         runner = load(REPO_ROOT / "Scripts" / "Validate" / "test_runner.py", "runner_catalog")

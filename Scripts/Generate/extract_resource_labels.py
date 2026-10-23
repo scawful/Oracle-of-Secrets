@@ -56,42 +56,75 @@ def extract_room_labels(root: Path) -> dict:
 
 def extract_sprite_labels(root: Path) -> dict:
     """
-    Parse sprite_registry_ids.asm for ID assignments,
-    then clean up names to human-readable form.
+    Name every sprite slot Oracle reuses.
+
+    Oracle reuses vanilla slots, so yaze needs these names to stop calling
+    $52 "ZoraKing". Sources, in order:
+      1. Sprites/sprite_registry_ids.asm (generated from registry.csv): every
+         registry name for an ID ($07 -> Bean Vendor / Village Elder).
+      2. Sprites/**/*.asm with `!SPRID = $XX` and no registry constant: the
+         `%Set_Sprite_Properties(..., Sprite_<Name>_Long)` routine name comes
+         first ($52 -> Collectible, $11 -> Keese / Vampire Bat).
+      3. A slot whose `_Long` routine lives in another file is a dispatcher;
+         its routine name comes first ($B8 runs Sprite_Zora_Long from
+         zora.asm -> Zora / Zora Princess).
     """
     registry_path = root / "Sprites" / "sprite_registry_ids.asm"
-    labels = {}
+    names: dict[int, list[str]] = {}
+
+    def add(sprite_id: int, raw_name: str, first: bool = False) -> None:
+        clean = _clean_sprite_name(raw_name)
+        slot = names.setdefault(sprite_id, [])
+        if clean in slot:
+            return
+        if first:
+            slot.insert(0, clean)
+        else:
+            slot.append(clean)
 
     if not registry_path.exists():
         print(f"  WARN: {registry_path} not found", file=sys.stderr)
-        return labels
+        return {}
 
     # Pattern: Sprite_FarName = $XX  (optional comment)
-    pattern = re.compile(r"^Sprite_(\w+)\s*=\s*\$([0-9A-Fa-f]{2})", re.MULTILINE)
+    constant = re.compile(r"^Sprite_(\w+)\s*=\s*\$([0-9A-Fa-f]{2})", re.MULTILINE)
+    constants: dict[str, int] = {}
+    for match in constant.finditer(registry_path.read_text()):
+        sprite_id = int(match.group(2), 16)
+        constants[f"Sprite_{match.group(1)}"] = sprite_id
+        add(sprite_id, match.group(1))
 
-    with open(registry_path) as f:
-        content = f.read()
+    sprid = re.compile(r"^!SPRID\s*=\s*(\$[0-9A-Fa-f]{2}|Sprite_\w+)", re.MULTILINE)
+    long_ref = re.compile(r"%Set_Sprite_Properties\(\s*\w+\s*,\s*Sprite_(\w+)_Long\s*\)")
+    sources = sorted((root / "Sprites").rglob("*.asm"))
+    defined_in = {}
+    long_label = re.compile(r"^Sprite_(\w+)_Long:", re.MULTILINE)
+    for path in sources:
+        for match in long_label.finditer(path.read_text(errors="replace")):
+            defined_in.setdefault(match.group(1), path)
 
-    seen_ids = set()
-    for match in pattern.finditer(content):
-        raw_name = match.group(1)
-        hex_id = match.group(2).upper()
-        key = f"0x{hex_id}"
-
-        # Skip duplicate IDs (e.g., BeanVendor and VillageElder both = $07)
-        # Keep the first occurrence
-        if key in seen_ids:
-            # Append as alternate name
-            existing = labels.get(key, "")
-            clean = _clean_sprite_name(raw_name)
-            if clean not in existing:
-                labels[key] = f"{existing} / {clean}"
+    for path in sources:
+        text = path.read_text(errors="replace")
+        id_match = sprid.search(text)
+        routine = long_ref.search(text)
+        if not id_match or not routine:
             continue
-        seen_ids.add(key)
+        value = id_match.group(1)
+        if value.startswith("$"):
+            sprite_id = int(value[1:], 16)
+        elif value in constants:
+            sprite_id = constants[value]
+        else:
+            print(f"  WARN: {path.relative_to(root)}: unknown !SPRID {value}",
+                  file=sys.stderr)
+            continue
+        routine_name = routine.group(1)
+        dispatcher = defined_in.get(routine_name, path) != path
+        if dispatcher or value.startswith("$"):
+            add(sprite_id, routine_name, first=True)  # the slot's main routine
 
-        labels[key] = _clean_sprite_name(raw_name)
-
-    return labels
+    return {f"0x{sprite_id:02X}": " / ".join(slot)
+            for sprite_id, slot in sorted(names.items())}
 
 
 def _clean_sprite_name(raw: str) -> str:
@@ -319,21 +352,22 @@ def build_resource_labels(root: Path) -> dict:
         },
     }
 
-    sections = {
-        "room": extract_room_labels,
-        "sprite": extract_sprite_labels,
-        "item": extract_item_labels,
-        "entrance": extract_entrance_labels,
-        "overworld_map": extract_overworld_labels,
-        "music": extract_music_labels,
-    }
-
-    for section_name, extractor in sections.items():
+    for section_name, extractor in SECTION_EXTRACTORS.items():
         data = extractor(root)
         labels[section_name] = data
         print(f"  {section_name}: {len(data)} entries")
 
     return labels
+
+
+SECTION_EXTRACTORS = {
+    "room": extract_room_labels,
+    "sprite": extract_sprite_labels,
+    "item": extract_item_labels,
+    "entrance": extract_entrance_labels,
+    "overworld_map": extract_overworld_labels,
+    "music": extract_music_labels,
+}
 
 
 def validate_labels(labels: dict) -> bool:
@@ -388,6 +422,11 @@ def main():
         help="Output path (default: Docs/Dev/Planning/oracle_resource_labels.json)",
     )
     parser.add_argument(
+        "--only",
+        choices=["room", "sprite", "item", "entrance", "overworld_map", "music"],
+        help="Regenerate one section and keep the others from the existing output",
+    )
+    parser.add_argument(
         "--validate",
         action="store_true",
         help="Validate existing output without regenerating",
@@ -412,7 +451,16 @@ def main():
             sys.exit(1)
         return
 
-    labels = build_resource_labels(root)
+    if args.only:
+        if not output_path.exists():
+            print(f"ERROR: --only needs an existing {output_path}", file=sys.stderr)
+            sys.exit(1)
+        with open(output_path) as f:
+            labels = json.load(f)
+        labels[args.only] = SECTION_EXTRACTORS[args.only](root)
+        print(f"  {args.only}: {len(labels[args.only])} entries")
+    else:
+        labels = build_resource_labels(root)
     ok = validate_labels(labels)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
