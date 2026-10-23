@@ -10,6 +10,7 @@
 ; 05 = Minish Form
 ; 06 = GBC Form
 ; 07 = Moosh Form
+; 08 = Garo Master
 !CurrentMask  = $02B2
 
 ; Indexed by the bank number
@@ -51,6 +52,16 @@ Link_CheckNewY_ButtonPress = $07B073
 LinkItem_EvaluateMagicCost = $07B0AB
 Player_DoSfx2 = $078028
 
+; Prototype state follows the Minish portal pair and ends before OAM at $0800.
+; StartupMasks clears the shared prototype range $07EE-$07FF.
+GaroGuardTimer = $07EE
+GaroCounterTimer = $07EF
+GaroCooldown = $07F0
+GaroLungeTimer = $07FF ; the last byte; $07F1-$07FE belong to Items/
+assert GaroGuardTimer == $07EE
+assert GaroCooldown < $0800
+assert GaroLungeTimer == $07FF
+
 incsrc "Masks/mask_routines.asm"
 
 ; Start of free space in bank 07
@@ -85,3 +96,12 @@ org $3B8000
 org $338000
   incbin gfx/moosh.4bpp
   incsrc "Masks/moosh.asm"
+
+; First complete bank after the two world maps ($40/$41). The player sheet
+; uses the existing $BC bank-select loader; no source/base-ROM data is replaced.
+org $428000
+GaroMasterGraphics:
+  incbin "gfx/garo_master.4bpp"
+assert pc() == $42F000, "Garo Master must use the complete $7000-byte Link sheet"
+  incsrc "Masks/garo_mask.asm"
+assert pc() <= $430000, "Garo Master exceeded its graphics/behavior bank"

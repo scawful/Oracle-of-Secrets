@@ -309,6 +309,10 @@ incsrc "Sprites/NPCs/ranch_girl.asm"
 incsrc "Sprites/Objects/cloud_bridge.asm"
 %log_end("cloud_bridge", !LOG_SPRITES)
 
+%log_start("garo", !LOG_SPRITES)
+incsrc "Sprites/NPCs/garo.asm"
+%log_end("garo", !LOG_SPRITES)
+
 ; A file that orgs into a vanilla bank must pushpc/pullpc, or the next incsrc
 ; lands on vanilla code (fortune_teller.asm put ranch_girl/cloud_bridge on the
 ; vanilla fortune teller at $0DC92E until 2026-09-26).
