@@ -308,6 +308,22 @@ STEP = {"N": (0, -1), "S": (0, 1), "W": (-1, 0), "E": (1, 0)}
 OPPOSITE = {"N": "S", "S": "N", "W": "E", "E": "W"}
 
 
+def referenced_templates(mr: MapRom) -> set[int]:
+    """Shape slots any of the 14 dungeon maps uses, even all-zero ones."""
+    return {t for s in range(14) for f in mr.dungeon(s)["floors"] for t in f["templates"]}
+
+
+def parse_reach(items: list[str]) -> dict[int, set[int]]:
+    reach = {}
+    for item in items:
+        room, _, quads = item.upper().partition("=")
+        try:
+            reach[int(room, 16)] = {QUADS.index(q) for q in quads.split("+")}
+        except ValueError:
+            raise SystemExit(f"--reach {item}: expected ROOM=QUADS, e.g. C8=SE or 40=NW+NE") from None
+    return reach
+
+
 def draft_spec(rom_data: bytes, dungeon_id: str, inventory: dict, render_dir: Path | None = None,
                reach: dict[int, set[int]] | None = None) -> dict:
     """Start from the current map, drop rooms outside the registry, then place
@@ -351,15 +367,25 @@ def draft_spec(rom_data: bytes, dungeon_id: str, inventory: dict, render_dir: Pa
         notes.append(f"unplaced {room:02X}: no door to a mapped room; add it to the spec by hand")
     sil = silhouettes(rom_data)
     mr = MapRom(rom_data)
-    referenced = {t for s in range(14) for f in mr.dungeon(s)["floors"] for t in f["templates"]}
+    referenced = referenced_templates(mr)
     free = [i for i, words in enumerate(mr.templates()) if not any(words) and i not in referenced]
     new_templates = {}
+    for room in reach or {}:  # --reach applies exactly as asked, or the run stops
+        png = render_dir / rows[room]["render"] if render_dir and room in rows else None
+        why = ("not in this dungeon's inventory" if room not in rows else
+               "not on the map" if room not in placed else
+               "no room render" if not (png and png.exists()) else
+               "needs the expanded shape table" if mr.template_base() != TMPL_EXPANDED else None)
+        if why:
+            raise SystemExit(f"--reach {room:02X}: {why}")
     for room in placed:
         fp = [[int(c) for c in line] for line in rows[room]["footprint"]]
         best = int(rows[room]["best_template"], 16)
         png = render_dir / rows[room]["render"] if render_dir else None
-        if reach and room in reach and png and png.exists() and free and mr.template_base() == TMPL_EXPANDED:
+        if reach and room in reach:
             # Sub-rooms the player can reach, from --reach: draw the render's floor in those quadrants only.
+            if not free:
+                raise SystemExit(f"--reach {room:02X}: no free shape slot left")
             fp = [[v if quadrant_of(x * 4, y * 4) in reach[room] else 0 for x, v in enumerate(row)]
                   for y, row in enumerate(occupancy(png))]
             slot = free.pop(0)
@@ -535,12 +561,12 @@ def cmd_generate(args) -> int:
     from PIL import Image
     rom_data = args.rom.read_bytes()
     if args.spec and Path(args.spec).exists():
+        if args.reach:
+            raise SystemExit("--reach only applies when drafting a spec; edit the spec's shapes instead")
         spec = json.loads(Path(args.spec).read_text())
     else:
-        reach = {int(r, 16): {QUADS.index(q) for q in qs.split("+")}
-                 for r, qs in (item.upper().split("=") for item in args.reach)}
         spec = draft_spec(rom_data, args.dungeon, json.loads(Path(args.inventory).read_text()),
-                          Path(args.inventory).parent, reach)
+                          Path(args.inventory).parent, parse_reach(args.reach))
         if args.spec:
             Path(args.spec).write_text(json.dumps(spec, indent=1) + "\n")
             print(f"wrote draft spec {args.spec}; review it, then rerun to use it")
@@ -553,11 +579,20 @@ def cmd_generate(args) -> int:
             where = [i for i, f in enumerate(m["floors"]) if m["boss_room"] != EMPTY and m["boss_room"] in f["grid"]]
             m["boss_floor"] = where[0] - m["basements"] if where else -1
     after = repack(rom_data, maps, full=args.full_repack)
+    mr = MapRom(rom_data)
+    referenced = referenced_templates(mr)
     for slot, words in spec.get("templates", {}).items():  # new shapes go in free expanded-table slots
-        at = TMPL_EXPANDED + int(slot, 16) * 8
-        if MapRom(rom_data).template_base() != TMPL_EXPANDED or any(rom_data[at:at + 8]):
-            raise SystemExit(f"shape slot {slot} is not a free expanded-table slot")
-        after[at:at + 8] = b"".join(int(w, 16).to_bytes(2, "little") for w in words)
+        try:
+            i, vals = int(slot, 16), [int(w, 16) for w in words]
+        except ValueError:
+            raise SystemExit(f"shape slot {slot}: slot and words must be hex") from None
+        at = TMPL_EXPANDED + i * 8
+        if (mr.template_base() != TMPL_EXPANDED or not 0 <= i < 256 or i in referenced
+                or any(rom_data[at:at + 8])):
+            raise SystemExit(f"shape slot {slot} is not a free, unused expanded-table slot")
+        if len(vals) != 4 or not all(0 <= v <= 0xFFFF for v in vals):
+            raise SystemExit(f"shape slot {slot}: needs four 16-bit words")
+        after[at:at + 8] = b"".join(v.to_bytes(2, "little") for v in vals)
     after = bytes(after)
     patch = byte_patch(rom_data, after, f"map-{spec['dungeon'].lower()}")
     patch["source"] = f"Scripts/Generate/dungeon_maps.py generate --dungeon {spec['dungeon']}"
