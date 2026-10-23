@@ -24,6 +24,7 @@ Kydreeok_Id:              skip 1
 FishingOrPortalRod:       skip 1
 SongTintTimer:            skip 1  ; Frames remaining for song color tint
 SongTintColor:            skip 1  ; Color value to apply to $9A during tint
+GanondorfFight:           skip 1  ; $7E0748 finale: 0 none, 1 Ganondorf spawned, 2 defeated
 }
 base off
 

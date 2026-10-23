@@ -95,6 +95,11 @@ if !ENABLE_INTRO_STALFOS_PATROL == 1
   incsrc "Sprites/Enemies/stalfos_patrol.asm"
 endif
 
+; Ganondorf finale phase 1: own org in bank $2A, no bank $30 bytes.
+if !ENABLE_GANONDORF_VOLLEY == 1
+  incsrc "Sprites/Bosses/ganondorf.asm"
+endif
+
 %log_start("sea_urchin", !LOG_SPRITES)
 incsrc "Sprites/Enemies/sea_urchin.asm"
 %log_end("sea_urchin", !LOG_SPRITES)
