@@ -37,6 +37,16 @@ FACING = {"Up": 0, "Down": 2, "Left": 4, "Right": 6}
 AWAY = {"Left": "Right", "Right": "Left", "Up": "Down", "Down": "Up"}
 
 
+def grounded(row):
+    # Vanilla normal movement uses FF; zero is also visible on the landing frame.
+    return (row["z"] in (0, 0xFF) and row["link_state"] == 0
+            and row["recoil_flags"] == 0 and row["recoil"] == 0 and row["immune"] == 0)
+
+
+def height(z):
+    return z if 0 < z < 0x80 else 0
+
+
 def describe():
     return dict(native_executed=False, room="0104",
                 cases=["turn-guard: Y with a new d-pad press toward a fresh facing still opens the guard",
@@ -75,10 +85,43 @@ class GaroLeapFlow(garo.GaroCombatFlow):
             self.advance(pad, 1)
         native.require(False, "Could not walk Link to the floor centre")
 
-    def face(self, pad):
+    def face(self, pad, lunge=False):
         self.settle_combat(); self.center()
-        self.advance(pad, 3); self.advance("", 2)
+        if lunge:
+            self.lunge_start()
+        else:
+            self.advance(pad, 3); self.advance("", 2)
         native.require(self.r(0x7E002F) == FACING[pad], f"Link did not face {pad}")
+
+    def lunge_start(self):
+        # Go left of the table before walking down into the bottom aisle.
+        for axis, target, low, high in ((0, 0x0940, "Left", "Right"),
+                                        (1, 0x21BC, "Up", "Down")):
+            for _ in range(160):
+                value = self.xy()[axis]
+                if abs(value - target) <= 1:
+                    break
+                self.advance(low if value > target else high, 1)
+            else:
+                native.require(False, "Could not walk Link into the clear lunge aisle")
+        for _ in range(12):
+            if self.xy()[0] >= 0x0948:
+                break
+            self.advance("Right", 1)
+        native.require(0x0948 <= self.xy()[0] <= 0x0949, "Lunge start is outside its two-pixel bound")
+        self.advance("", 2)
+
+    def check_lunge_floor(self):
+        self.assert_room()
+        native.require(self.r(0x7E00EE) == 0, "Lunge aisle requires the lower floor")
+        x, y = self.xy()
+        tiles = self.block(0x7F2000, 0x2000)
+        # Cover 80 px of travel plus Link's width and feet, not just his origin.
+        offsets = {((yy & 0x1F8) << 3) + ((xx & 0x1FF) >> 3)
+                   for yy in range(y + 8, y + 24) for xx in range(x, x + 96)}
+        self.check("Live lunge corridor is ordinary floor", sorted({tiles[i] for i in offsets}), [0])
+        self.result.setdefault("floor_checks", []).append(dict(start=[x, y],
+            offsets=sorted(offsets), values=[tiles[i] for i in sorted(offsets)]))
 
     def open_guard(self, buttons="Y"):
         self.advance(buttons, 2)
@@ -94,30 +137,39 @@ class GaroLeapFlow(garo.GaroCombatFlow):
                     facing_end=rows[-1]["facing"])
 
     def lunge(self, hop=False):
-        self.face("Right")
-        x0, _ = self.xy()
+        self.face("Right", lunge=True)
+        self.check_lunge_floor()
+        start = self.xy()
+        previous = getattr(self, "plain_lunge_start", None)
+        if hop:
+            native.require(previous is not None and all(abs(a - b) <= 1 for a, b in zip(start, previous)),
+                           "Lunge and cape-hop need the same start within one pixel")
+        else:
+            self.plain_lunge_start = start
+        x0, _ = start
         self.advance("Y,Right", 1)
         rows = [self.row("lunge-press")]
-        for _ in range(60):
+        for _ in range(90):
             if hop and len(rows) == 5:
                 self.advance("Y", 1); rows.append(self.row("hop-press"))
                 continue
             self.advance("", 1); rows.append(self.row("cape-hop" if hop and len(rows) > 5 else "lunge"))
             r = rows[-1]
-            if len(rows) > 5 and r["link_state"] == 0 and r["recoil_flags"] == 0 and r["z"] == 0:
+            if len(rows) > 5 and grounded(r):
                 break
         dash = [r for r in rows if r["link_state"] == DASH]
-        air = [r for r in rows if r["link_state"] == 2]
+        air = [r for r in rows if r["link_state"] == 2 and r["recoil_flags"] == 2]
         x1, _ = self.xy()
         self.shot("garo-cape-hop" if hop else "garo-lunge")
         end = rows[-1]
-        return dict(lunged=bool(dash), dash_frames=len(dash),
+        return dict(start=start, end=self.xy(), lunged=bool(dash), dash_frames=len(dash),
                     sword_out=bool(dash) and all(r["sword_state"] == 9 for r in dash[1:]),
-                    hopped=bool(air), air_frames=len(air), z_max=max(r["z"] for r in rows),
+                    hopped=bool(air), air_frames=len(air), z_max=max(height(r["z"]) for r in rows),
                     immune_in_flight=all(r["immune"] for r in air) if air else None,
                     guard_opened=any(r["guard"] for r in rows), dx=x1 - x0,
-                    landed_clean=end["link_state"] == 0 and end["recoil_flags"] == 0
-                    and end["immune"] == 0 and end["lunge_timer"] == 0,
+                    bonked=any(r["recoil_flags"] == 1 for r in rows),
+                    timer_expired=bool(dash) and dash[-1]["lunge_timer"] == 1 and end["lunge_timer"] == 0,
+                    landed_clean=grounded(end) and end["lunge_timer"] == 0,
                     cooldown_at_end=end["cooldown"], frames=len(rows))
 
     def leap(self, guard_facing, tap):
@@ -130,20 +182,19 @@ class GaroLeapFlow(garo.GaroCombatFlow):
         rows = [self.row("leap-tap")]
         for _ in range(40):
             self.advance("", 1); rows.append(self.row("leap"))
-            if rows[-1]["recoil_flags"] == 0 and rows[-1]["recoil"] == 0 and rows[-1]["z"] == 0 \
-                    and len(rows) > 4:
+            if grounded(rows[-1]) and len(rows) > 4:
                 break
         flight = [r for r in rows if r["recoil_flags"]]
         x1, y1 = self.xy()
         self.shot(f"garo-leap-{guard_facing.lower()}-{tap.lower()}")
         return dict(guard_at_tap=guard_at_tap, leaped=bool(flight), flight_frames=len(flight),
-                    airborne_frames=sum(1 for r in rows if r["z"]), z_max=max(r["z"] for r in rows),
+                    airborne_frames=sum(1 for r in rows if height(r["z"])),
+                    z_max=max(height(r["z"]) for r in rows),
                     dx=x1 - x0, dy=y1 - y0,
                     facing_kept=all(r["facing"] == FACING[guard_facing] for r in flight) if flight else None,
                     facing_end=rows[-1]["facing"],
                     immune_in_flight=all(r["immune"] for r in flight) if flight else None,
-                    landed_clean=rows[-1]["recoil_flags"] == 0 and rows[-1]["immune"] == 0
-                    and rows[-1]["link_state"] == 0,
+                    landed_clean=grounded(rows[-1]),
                     cooldown_at_landing=rows[-1]["cooldown"], frames=len(rows))
 
     def cooldown(self):
@@ -151,9 +202,10 @@ class GaroLeapFlow(garo.GaroCombatFlow):
         self.open_guard()
         self.advance("", 2)
         self.advance("Right", 2)
-        self.until(lambda: self.r(BUMP) == 0 and self.r(RECOIL) == 0 and self.r(Z) == 0
-                   and self.r(STATE) == 0, "Leap did not land", 60)
+        self.until(lambda: self.r(BUMP) == 0 and self.r(RECOIL) == 0 and self.r(Z) in (0, 0xFF)
+                   and self.r(STATE) == 0 and self.r(IMMUNE) == 0, "Leap did not land", 60)
         left = self.r(COOLDOWN)
+        native.require(left > 0, "Landing left no cooldown to test")
         self.advance("Y", 2); self.advance("", 1)
         blocked = self.r(GUARD) == 0
         self.until(lambda: self.r(COOLDOWN) == 0, "Cooldown did not expire", 120)
@@ -176,13 +228,18 @@ class GaroLeapFlow(garo.GaroCombatFlow):
     def verdict(self, cases):
         turn, back, side = cases["turn-guard"], cases["back-leap"], cases["side-leap"]
         lunge, hop = cases["lunge"], cases["cape-hop"]
-        v = {"turn-guard opens a guard, no leap": turn.get("completed", False) and not turn.get("leaped")}
+        v = {"all selected cases complete": bool(cases) and all(
+                 case.get("completed") is True and "error" not in case for case in cases.values()),
+             "turn-guard opens a guard, no leap": turn.get("completed", False) and not turn.get("leaped")}
         if self.expect == "candidate":
             v["lunge dashes right with the sword out"] = bool(lunge.get("lunged") and lunge.get("sword_out")
-                                                             and lunge.get("dx", 0) > 0 and not lunge.get("hopped"))
-            v["lunge ends by itself"] = bool(lunge.get("landed_clean") and 0 < lunge.get("dash_frames", 0) <= 20)
+                                                             and lunge.get("dx", 0) > 0 and not lunge.get("hopped")
+                                                             and not lunge.get("bonked"))
+            v["lunge ends by itself"] = bool(lunge.get("landed_clean") and lunge.get("timer_expired")
+                                              and 0 < lunge.get("dash_frames", 0) <= 20)
             v["cape-hop jumps from the lunge, immune"] = bool(hop.get("lunged") and hop.get("hopped")
-                                                             and hop.get("z_max") and hop.get("immune_in_flight"))
+                                                             and hop.get("z_max") and hop.get("immune_in_flight")
+                                                             and not hop.get("bonked"))
             v["cape-hop goes farther than the lunge"] = hop.get("dx", 0) > lunge.get("dx", 0) > 0
             v["cape-hop lands clean"] = bool(hop.get("landed_clean"))
             cd = cases["cooldown"]

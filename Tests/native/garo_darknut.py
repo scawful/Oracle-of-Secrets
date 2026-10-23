@@ -4,7 +4,7 @@
 Attach-only. The caller launches one headless private Mesen2 instance, boots
 file 1 into Link's House room 0104 and writes SESSION.json (same shape as
 garo_combat_fixture.py). Fixture writes: Bow/arrows, Armor Ring slot, mail,
-HP, Garo/sword ownership, and one inactive sprite slot (type, subtype,
+HP, Garo/sword ownership, Sword 1 for the multi-hit armor case, and one inactive sprite slot (type, subtype,
 position, facing, alert timer). Link, guard, counter and sword state are only
 driven by controller input.
 
@@ -50,7 +50,7 @@ def describe():
                        "pointblank-counter: Garo parry then immediate Y on native $4B",
                        "armor-ring-parry: Armor Ring + blue mail, 1-damage Darknut contact",
                        "armored-counters: Garo parry/counter cycles until the armored knight dies"],
-                fixture_writes="Bow/arrows, RingSlot1, mail, HP, Garo/sword ownership; one owned sprite slot",
+                fixture_writes="Bow/arrows, RingSlot1, mail, HP, Garo/sword ownership, Sword 1 for armor cycles; one owned sprite slot",
                 prohibited_writes=["CPU", "Link position", "guard/counter timers", "damage queue",
                                    "module", "room", "story", "SRAM", "save state", "ROM"],
                 limitations=["Link's House has no Darknut graphics; palette is read from OAM bits only",
@@ -124,6 +124,28 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
             self.advance("Right", 1)
         native.require(self.xy()[0] - gap >= 0x0930, "No floor left of Link for the knight")
 
+    def combat_start(self):
+        # A successful contact/counter moves Link. Restore a common clear
+        # start by controller before another actor is placed to his left.
+        for axis, target, low, high in ((0, 0x0960, "Left", "Right"),
+                                        (1, 0x2188, "Up", "Down")):
+            for _ in range(160):
+                value = self.xy()[axis]
+                if abs(value - target) <= 1:
+                    break
+                self.advance(low if value > target else high, 1)
+            else:
+                native.require(False, "Controller could not reach the contact floor start")
+        self.advance("", 2)
+        self.assert_room()
+        native.require(self.r(0x7E00EE) == 0, "Contact floor requires the lower layer")
+        x, y = self.xy()
+        tiles = self.block(0x7F2000, 0x2000)
+        offsets = {((yy & 0x1F8) << 3) + ((xx & 0x1FF) >> 3)
+                   for yy in range(y + 8, y + 24) for xx in range(x - 20, x + 16)}
+        self.check("Live contact corridor is ordinary floor", sorted({tiles[i] for i in offsets}), [0])
+        self.sample("contact-floor-start")
+
     def spawn(self, kind, gap, subtype=0, action=0):
         self.assert_room()
         native.require(self.slot is None, "Previous target must be removed")
@@ -173,6 +195,7 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
         entry = dict(name=name)
         self.result["cases"].append(entry)
         try:
+            self.heal(); self.settle_combat(); self.combat_start()
             entry.update(fn())
             entry["completed"] = True
         except Exception as error:
@@ -188,27 +211,46 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
 
     def select_bow(self):
         self.ready()
+        self.until(lambda: self.r(0x7E02E1) == 0 and not self.ancilla(0x23),
+                   "Existing transformation cloud did not finish", 220)
+        if self.r(0x7E02B2) == 8:
+            self.tap("R")
+        self.until(lambda: self.r(0x7E02B2) in (0, 6) and self.r(0x7E02E1) == 0
+                   and not self.ancilla(0x23), "Controller did not restore ordinary Link", 220)
+        self.ready()
         if not self.r(ARROWS):
             self.write(ARROWS, 10, "Arrows for the arrow case")
         native.require(self.r(BOW) >= 1, "Seed file has no Bow")
         self.tap("Start"); self.wait_screen("items")
         self.pick(1)
         self.tap("Start"); self.wait_screen("gameplay")
+        self.ready()
+        native.require(self.r(0x7E02B2) in (0, 6) and self.r(0x7E02E1) == 0
+                       and not self.ancilla(0x23), "Bow selected before ordinary form settled")
+        self.check("Controller selects Bow", self.r(0x7E0202), 1)
+        native.require(self.r(BOW) >= 1 and self.r(ARROWS) > 0, "Bow case needs a Bow and arrows")
 
     def armored_arrow(self):
         self.ready(); self.heal()
         self.room_for(48)
         self.spawn(DARKNUT, 48, subtype=1, action=1)
         self.advance("Left", 1); self.advance("", 2)
+        native.require(self.r(0x7E02B2) in (0, 6) and self.r(0x7E02E1) == 0
+                       and not self.ancilla(0x23) and self.r(0x7E0202) == 1
+                       and self.r(BOW) >= 1 and self.r(ARROWS) > 0
+                       and self.r(0x7E002F) == garo.FACING["Left"],
+                       "Arrow trial requires ordinary Link aiming a selected, supplied Bow at the knight")
+        native.require(not self.ancilla(ARROW_ANCILLA), "Arrow trial starts with an existing arrow")
         hp0, sfx = self.enemy_hp(), self.watch(SFX2)
-        self.advance("Y", 2)
-        arrow_frames, hps = 0, []
+        self.advance("Y", 1)
+        arrow_frames, hps = int(bool(self.ancilla(ARROW_ANCILLA))), [self.enemy_hp()]
         for _ in range(40):
             self.advance("", 1)
             arrow_frames += bool(self.ancilla(ARROW_ANCILLA))
             hps.append(self.enemy_hp())
             if self.dead():
                 break
+        native.require(arrow_frames > 0, "Bow trial never spawned a native arrow ancilla")
         return dict(enemy_hp_before=hp0, enemy_hp_min=min(hps), arrow_frames=arrow_frames,
                     damaged=min(hps) < hp0 or self.dead(), sfx2_writes=self.blame(sfx),
                     oam_palettes=self.oam_palettes())
@@ -246,21 +288,30 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
 
     def guarded_contact(self, toward="Left"):
         hp = self.r(HP)
-        self.advance("Y," + toward, 1)
-        native.require(self.r(GUARD) > 0, "Y did not open the guard")
-        rows = [self.sample("guard-open")]
+        cache_watches = {axis: self.watch(address) for axis, address in
+                         (("x", 0x7E0FAB), ("y", 0x7E0FAA))}
+        rows = [self.open_guard_toward(toward)]
         for _ in range(14):
             if self.r(COUNTER):
                 break
             self.advance(toward, 1)
             rows.append(self.sample("guarded-approach"))
-        return dict(parried=self.r(COUNTER) > 0, link_hp_lost=hp - self.r(HP),
+        return dict(parried=0 < self.r(COUNTER) < 0x80, link_hp_lost=hp - self.r(HP),
                     knockback=any(r["recoil"] or r["recoil_flags"] for r in rows),
-                    frames=len(rows), gap=self.gap())
+                    frames=len(rows), gap=self.gap(),
+                    guard_weapon_cache_writes={axis: self.blame(watch)
+                                               for axis, watch in cache_watches.items()},
+                    # End-of-frame observations only. Another sprite can overwrite
+                    # this shared cache later in the pass; these values cannot
+                    # prove the cache contents at the Darknut contact call.
+                    guard_weapon_cache_samples=[
+                        dict(x=r["guard_weapon_offset_x"], y=r["guard_weapon_offset_y"])
+                        for r in rows])
 
     def counter_swing(self, hp0):
-        self.advance("", 1)
-        self.advance("Y", 1)
+        native.require(0 < self.r(COUNTER) < 0x80, "Counter swing needs an earned pending window")
+        self.advance("", 2)
+        self.advance("Y", 2)
         rows = [self.sample("counter-Y")]
         flag_seen = rows[0]["counter"] & 0x80 != 0
         for _ in range(20):
@@ -291,8 +342,13 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
 
     def armored_counters(self):
         self.heal(); self.settle_combat()
+        # The all-items seed has Sword 4: one counter kills before armor can
+        # be observed on a survivor. Native prep scales health with the sword.
+        self.write(prototype.SWORD, 1, "Ordinary sword for a surviving armor-restoration cycle")
+        self.check("Armor cycles use Sword 1", self.r(prototype.SWORD), 1)
         self.room_for(garo.CONTACT_START_GAP)
         self.spawn(DARKNUT, garo.CONTACT_START_GAP, subtype=1, action=0)
+        self.check("Sword 1 knight has native health 4", self.enemy_hp(), 4)
         cycles = []
         for cycle in range(8):
             if self.dead():
@@ -302,9 +358,12 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
                            "Knight recoil did not end", 120)
                 if self.dead():
                     break
-                self.place(56, 1, "Park the knight away from Link between cycles")
-                self.room_for(garo.CONTACT_START_GAP)
+                # A fixed 56px gap to the left can put the actor outside the
+                # room after Link has approached. Park at a bounded point on
+                # the right, facing away, before walking Link back to start.
+                self.place(self.xy()[0] - 0x0990, 0, "Park knight at X0990 facing away between cycles")
                 self.heal(); self.settle_combat()
+                self.combat_start()
                 self.place(garo.CONTACT_START_GAP, 0, "Knight 20 px left of Link, facing him")
             hp0 = self.enemy_hp()
             row = dict(cycle=cycle, enemy_hp_before=hp0,
@@ -326,6 +385,8 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
         c = {k: v for k, v in cases.items()}
         v = {}
         if self.expect == "candidate":
+            v["all selected cases complete"] = bool(c) and all(
+                case.get("completed") is True and "error" not in case for case in c.values())
             v["armored knight ignores arrows"] = (c["armored-arrow"].get("arrow_frames", 0) > 0
                                                   and c["armored-arrow"].get("damaged") is False)
             v["armored knight clinks a normal slash"] = (c["armored-sword"].get("slash") is True
@@ -338,13 +399,17 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
                                                        and ring.get("knockback") is False
                                                        and ring.get("link_hp_lost") == 0)
             cycles = c["armored-counters"].get("cycles", [])
-            v["armored knight dies to Garo counters"] = (c["armored-counters"].get("died") is True and all(
-                row.get("counter", {}).get("damaged") for row in cycles if row.get("parried")))
+            counter_cycles = bool(cycles) and all(
+                row.get("parried") is True and row.get("counter", {}).get("slash") is True
+                and row.get("counter", {}).get("damaged") is True for row in cycles)
+            v["armored knight dies to Garo counters"] = (
+                c["armored-counters"].get("died") is True and counter_cycles)
             v["counter flag set by the counter and cleared after"] = bool(cycles) and all(
-                row["counter"]["counter_flag_seen"] and row["counter"]["counter_flag_cleared"]
-                for row in cycles if row.get("parried"))
-            v["armor restored after each counter"] = all(
-                row.get("armor_restored", True) for row in cycles)
+                row.get("parried") is True and row.get("counter", {}).get("counter_flag_seen") is True
+                and row.get("counter", {}).get("counter_flag_cleared") is True for row in cycles)
+            survived = [row for row in cycles if row.get("dead") is False]
+            v["armor restored after each counter"] = counter_cycles and bool(survived) and all(
+                row.get("armor_restored") is True for row in survived)
         else:
             v["control: arrow reaches the knight"] = c["armored-arrow"].get("damaged") is True
             v["control: slash from behind reaches the knight"] = c["armored-sword"].get("damaged") is True
