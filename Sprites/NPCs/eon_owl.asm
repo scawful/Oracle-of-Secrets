@@ -69,12 +69,8 @@ if !ENABLE_EON_OWL_ONE_SHOT == 1
 ; existing Eon Owl sheet $42. Area $7A shares spriteset $18 and is untouched.
 ; All vanilla sprite load paths reach this decompressor, including room exits
 ; and mosaic transitions. Do not write VRAM from the per-frame sprite draw.
-pushpc
-org $00E772 ; @hook module=Sprites name=EonOwl_ArrivalSheet kind=jml target=EonOwl_ArrivalSheet expected_m=8
-  JML EonOwl_ArrivalSheet
-  NOP
-assert pc() == $00E777
-pullpc
+; Entered by JML from SpriteSheet_LoadHook, the shared $00E772 hook in
+; Sprites/Enemies/abyss_variants.asm.
 
 ; Original entry: M=8, Y=sheet, DB=$00, DP destination=$00-$02.
 ; X and DB are preserved. Decompress resets Y before consuming its stream.
