@@ -4,7 +4,7 @@
 Attach-only. The caller launches one headless private Mesen2 instance, boots
 file 1 into Link's House room 0104 and writes SESSION.json (same shape as
 garo_combat_fixture.py). Fixture writes: Bow/arrows, Armor Ring slot, mail,
-HP, Garo/sword ownership, and one inactive sprite slot (type, subtype,
+HP, Garo/sword ownership, Sword 1 for the multi-hit armor case, and one inactive sprite slot (type, subtype,
 position, facing, alert timer). Link, guard, counter and sword state are only
 driven by controller input.
 
@@ -50,7 +50,7 @@ def describe():
                        "pointblank-counter: Garo parry then immediate Y on native $4B",
                        "armor-ring-parry: Armor Ring + blue mail, 1-damage Darknut contact",
                        "armored-counters: Garo parry/counter cycles until the armored knight dies"],
-                fixture_writes="Bow/arrows, RingSlot1, mail, HP, Garo/sword ownership; one owned sprite slot",
+                fixture_writes="Bow/arrows, RingSlot1, mail, HP, Garo/sword ownership, Sword 1 for armor cycles; one owned sprite slot",
                 prohibited_writes=["CPU", "Link position", "guard/counter timers", "damage queue",
                                    "module", "room", "story", "SRAM", "save state", "ROM"],
                 limitations=["Link's House has no Darknut graphics; palette is read from OAM bits only",
@@ -124,6 +124,28 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
             self.advance("Right", 1)
         native.require(self.xy()[0] - gap >= 0x0930, "No floor left of Link for the knight")
 
+    def combat_start(self):
+        # A successful contact/counter moves Link. Restore a common clear
+        # start by controller before another actor is placed to his left.
+        for axis, target, low, high in ((0, 0x0960, "Left", "Right"),
+                                        (1, 0x2188, "Up", "Down")):
+            for _ in range(160):
+                value = self.xy()[axis]
+                if abs(value - target) <= 1:
+                    break
+                self.advance(low if value > target else high, 1)
+            else:
+                native.require(False, "Controller could not reach the contact floor start")
+        self.advance("", 2)
+        self.assert_room()
+        native.require(self.r(0x7E00EE) == 0, "Contact floor requires the lower layer")
+        x, y = self.xy()
+        tiles = self.block(0x7F2000, 0x2000)
+        offsets = {((yy & 0x1F8) << 3) + ((xx & 0x1FF) >> 3)
+                   for yy in range(y + 8, y + 24) for xx in range(x - 20, x + 16)}
+        self.check("Live contact corridor is ordinary floor", sorted({tiles[i] for i in offsets}), [0])
+        self.sample("contact-floor-start")
+
     def spawn(self, kind, gap, subtype=0, action=0):
         self.assert_room()
         native.require(self.slot is None, "Previous target must be removed")
@@ -173,6 +195,7 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
         entry = dict(name=name)
         self.result["cases"].append(entry)
         try:
+            self.heal(); self.settle_combat(); self.combat_start()
             entry.update(fn())
             entry["completed"] = True
         except Exception as error:
@@ -309,8 +332,13 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
 
     def armored_counters(self):
         self.heal(); self.settle_combat()
+        # The all-items seed has Sword 4: one counter kills before armor can
+        # be observed on a survivor. Native prep scales health with the sword.
+        self.write(prototype.SWORD, 1, "Ordinary sword for a surviving armor-restoration cycle")
+        self.check("Armor cycles use Sword 1", self.r(prototype.SWORD), 1)
         self.room_for(garo.CONTACT_START_GAP)
         self.spawn(DARKNUT, garo.CONTACT_START_GAP, subtype=1, action=0)
+        self.check("Sword 1 knight has native health 4", self.enemy_hp(), 4)
         cycles = []
         for cycle in range(8):
             if self.dead():
@@ -320,9 +348,12 @@ class GaroDarknutFlow(garo.GaroCombatFlow):
                            "Knight recoil did not end", 120)
                 if self.dead():
                     break
-                self.place(56, 1, "Park the knight away from Link between cycles")
-                self.room_for(garo.CONTACT_START_GAP)
+                # A fixed 56px gap to the left can put the actor outside the
+                # room after Link has approached. Park at a bounded point on
+                # the right, facing away, before walking Link back to start.
+                self.place(self.xy()[0] - 0x0990, 0, "Park knight at X0990 facing away between cycles")
                 self.heal(); self.settle_combat()
+                self.combat_start()
                 self.place(garo.CONTACT_START_GAP, 0, "Knight 20 px left of Link, facing him")
             hp0 = self.enemy_hp()
             row = dict(cycle=cycle, enemy_hp_before=hp0,
