@@ -1,5 +1,6 @@
 ; =========================================================
-; Garo Master prototype: timed contact parry, then Y counter.
+; Garo Master prototype: timed contact parry, then Y counter; a d-pad tap
+; away from Link's facing while the guard is open is a short evasive leap.
 ; Player art by Herowho (garomaster.1.zspr); palette 1 retained.
 ; Gameplay entries use M/X=8 except the documented Link_Main frame hook.
 ; X/Y are preserved. State is volatile.
@@ -32,6 +33,11 @@ if !ENABLE_MINISH_AUTO_PORTAL == 1
   ; This always-included Link_Main hook also covers GBC and non-Y-item states.
   JSL MinishPortal_Maintain
 endif
+  ; The cooldown also runs while inactive: a leap is vanilla recoil, which
+  ; fails CanAct for its whole flight, and its cooldown must outlast it.
+  LDA.w GaroCooldown : BEQ +
+  DEC.w GaroCooldown
+  +
   JSL GaroMask_CanAct : BCS .active
   JSL GaroMask_Clear
   BRA .restore
@@ -51,9 +57,6 @@ endif
   LDA.b $3C : CMP.b #$09 : BCC +
   .counter_done
   STZ.w GaroCounterTimer
-  +
-  LDA.w GaroCooldown : BEQ +
-  DEC.w GaroCooldown
   +
   .restore
   PLB
@@ -82,11 +85,12 @@ GaroMasterPalette:
   incbin "gfx/garo_master_palette.bgr555"
 assert pc()-GaroMasterPalette == $20
 
+; Ends a guard or counter. The cooldown is left to expire on its own; the
+; startup hook clears the whole prototype range, cooldown included.
 GaroMask_Clear:
 {
   STZ.w GaroGuardTimer
   STZ.w GaroCounterTimer
-  STZ.w GaroCooldown
   RTL
 }
 
@@ -114,6 +118,9 @@ GaroMask_Tick:
   JSL GaroMask_CanAct : BCS .active
   JML GaroMask_Clear
   .active
+  LDA.w GaroGuardTimer : BEQ +
+  JSR GaroMask_TryLeap
+  +
   LDA.b $F4 : AND.b #$40 : BEQ .done
   ; LinkState_Default runs the Y-item tick before its sword-input handler.
   ; Leave a counter press for that later hook; the effective Y action is 0.
@@ -128,6 +135,57 @@ GaroMask_Tick:
   LDA.b #$05 : STA.w $012E ; guard cue; the same clink confirms contact
   .done
   RTL
+}
+
+; Called only while the guard is open. A new d-pad press with no part of
+; it toward Link's facing starts a leap: the vanilla sprite-bump recoil
+; ($4D=1) aimed by that press, with a small hop and damage immunity ($037B)
+; until vanilla lands it. This runs before LinkState_Default turns Link, so
+; $2F is still the guarded facing and is kept: the usual move is a back-step
+; from the enemy being faced, or a side-step. A held direction never
+; triggers it, so turning to guard toward an enemy is unaffected.
+; The hop is about 8 frames high, so it is meant to stay short of clearing
+; a 16 px pit; Tests/native/garo_leap.py measures it. Vanilla resolves the
+; landing tile as for any bump.
+GaroMask_TryLeap:
+{
+  PHX
+  LDA.b $3C : BNE .no
+  LDA.b $3A : AND.b #$C0 : BNE .no
+  LDA.b $F4 : AND.b #$0F : BEQ .no
+  PHA
+  LDA.b $2F : LSR A : TAX
+  PLA : PHA
+  AND.l .facing, X : BNE .no_pull
+  PLA : TAX
+  LDA.l .speed_y, X : STA.b $27
+  LDA.l .speed_x, X : STA.b $28
+  ORA.b $27 : BEQ .no ; opposite directions cancel
+  STZ.b $24 : STZ.b $25
+  LDA.b #$08 : STA.b $29 : STA.w $02C7
+  LDA.b #$03 : STA.w $02C6 ; the first landing ends it, without a bounce
+  LDA.b #$0E : STA.b $46
+  LDA.b #$01 : STA.b $4D : STA.w $037B
+  STA.w $02F8 ; landing thud
+  STZ.w GaroGuardTimer
+  LDA.b #$30 : STA.w GaroCooldown
+  LDA.b #$20 : STA.w $012E ; vanilla ledge-hop cue
+  PLX : RTS
+  .no_pull
+  PLA
+  .no
+  PLX : RTS
+
+  ; Indexed by $2F/2: up, down, left, right. D-pad bits: 3=U 2=D 1=L 0=R.
+  .facing
+  db $08, $04, $02, $01
+  ; Indexed by the new d-pad press. $18 is the vanilla bump speed; diagonals $11.
+  .speed_y
+  db $00, $00, $00, $00, $18, $11, $11, $18
+  db $E8, $EF, $EF, $E8, $00, $00, $00, $00
+  .speed_x
+  db $00, $18, $E8, $00, $00, $11, $EF, $00
+  db $00, $11, $EF, $00, $00, $18, $E8, $00
 }
 
 ; Called by the existing contact-damage/Armor Ring hook after damage is queued.
