@@ -28,9 +28,13 @@
 ;   0x1CA - 7 crystals: endgame (retarget to Shrine of Courage; TO-BUILD)
 ;   0x1C8/0x1C9 - used by impa_hints.asm (not Maku)
 ;   0x1CB - Village Elder post-D1 ranch hint (not Maku)
+;   !MakuSeed_Message - Seed receipt at 8 essences. PLACEHOLDER: reuses
+;     0x1CA until scawful approves the Seed text and an ID is allocated
+;     (proposed text: AFS handoffs/seed_fortress_gate_2026-10-23/WORK.md)
 ;
 ; FLAGS WRITTEN:
 ;   MakuTreeQuest = 1 - Met Maku Tree
+;   MakuTreeQuest |= !MakuTree_HasSeed - Maku Seed (once, 8 essences)
 ;   MapIcon = count+1 - Progressive marker reveal (via UpdateMapIcon)
 ;   $7EF3D6 |= 0x02 - OOSPROG bit 1 (Hall of Secrets flag)
 ;
@@ -77,6 +81,9 @@
 !ImperviousArrow    = 00  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
+
+; PLACEHOLDER message for the Maku Seed receipt (see MESSAGES above).
+!MakuSeed_Message   = $01CA
 
 %Set_Sprite_Properties(Sprite_MakuTree_Prep, Sprite_MakuTree_Long)
 
@@ -155,6 +162,14 @@ Sprite_MakuTree_Main:
     ; UpdateMapIcon sets MapIcon = crystal_count + 1 (progressive
     ; marker reveal, not "go here next").
     ; Clobbers $00-$02 (table pointer), $04 (temp) — safe in sprite context.
+
+    ; All 8 essences and no Seed yet: grant the Maku Seed once.
+    LDA.l Crystals : CMP.b #$FF : BNE .reaction
+      LDA.l MakuTreeQuest : AND.b #!MakuTree_HasSeed : BNE .reaction
+        %ShowSolicitedMessage(!MakuSeed_Message) : BCC .no_talk
+        LDA.l MakuTreeQuest : ORA.b #!MakuTree_HasSeed : STA.l MakuTreeQuest
+        BRA .talked
+    .reaction
 
     ; Set up 24-bit pointer to reaction table
     REP #$20

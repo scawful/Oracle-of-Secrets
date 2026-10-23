@@ -269,9 +269,13 @@ StoryProgress           = $7EF3D6
 ; Secondary story flags - use !Story2_* bit constants
 StoryProgress2          = $7EF3C6
 
-; Maku Tree meeting flag
+; Maku Tree quest flags
 ;   bit 0: Has met Link (0=no, 1=yes)
+;   bit 1: Has the Maku Seed (granted once at 8 essences; opens the
+;          Fortress of Secrets, see Overworld/overlays.asm)
 MakuTreeQuest           = $7EF3D4
+!MakuTree_Met           = $01
+!MakuTree_HasSeed       = $02
 
 ; Reserved for future story flags
 ReservedStory           = $7EF3D5
