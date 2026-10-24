@@ -82,7 +82,7 @@ Sprite_Darknut_Main:
   .no_probe
 
   ; Vanilla guard contact/parry reads the current sprite's weapon offsets.
-  JSR Sprite_Darknut_WeaponHitbox
+  JSL Sprite_Darknut_WeaponHitbox
   JSL Guard_ParrySwordAttacks
 
   JSL Sprite_Move
@@ -283,23 +283,6 @@ endif
   db $02, $02
   db $02, $02
   db $02, $02
-}
-
-; M/X=8, DBR=sprite bank, X=sprite slot. Keeps X/Y and processor widths.
-; The last tile in every Darknut frame is its sword. Read its relative
-; offsets from the exact tables used by Draw; do not inherit the shared
-; cache from a previous sprite. $0FAB=$80 is vanilla's invalid sentinel.
-Sprite_Darknut_WeaponHitbox:
-{
-  PHX : PHY
-  LDA.w SprGfx, X : CLC : ADC.w $0D90, X : TAY
-  LDA.w DarknutDrawStartIndex, Y
-  CLC : ADC.w DarknutDrawTileCounts, Y
-  ASL A : TAY
-  LDA.w DarknutDrawXOffsets, Y : STA.w $0FAB
-  LDA.w DarknutDrawYOffsets, Y : STA.w $0FAA
-  PLY : PLX
-  RTS
 }
 
 DarknutDrawStartIndex:
