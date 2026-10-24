@@ -5,8 +5,8 @@ Adapted from PR #220 for the current four-song menu.
 The caller launches one private headless Mesen2 instance per ROM and holds the
 heavy lock. Fixture writes are limited to cart SRAM slot 1 (main + mirror,
 checksum fixed), built from a copy of --base-srm with the case's $7EF34C,
-SongBits ($7EF3B1) and SavedOcarinaSong ($7EF3AB); controller input; and one
-`warp-entrance 0x6B` (Mask Salesman shop) for the teacher case. Each case
+SongBits ($7EF3B1) and SavedOcarinaSong ($7EF3AB); controller input; and the
+disclosed paused entrance $6B WRAM reload for the teacher case. The selected case
 resets the console and loads file 1 through title and file select, so the
 conversion runs on the native file-load path.
 
@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -31,6 +32,17 @@ SRAM = "SnesSaveRam"
 SLOT1, MIRROR = 0x0000, 0x0F00
 SONG_SLOTS = range(11, 15)          # Equipment slots 11-14 = songs 1-4
 REPO = Path(__file__).resolve().parents[2]
+LEASE = Path("/tmp/oos-heavy.lock/owner")
+FRAME_CAP, WALL_CAP = 14000, 300
+CASES = tuple(f"count-{n}" for n in range(6)) + (
+    "bits-09-healing-time", "save-quit-reopen", "teacher-mask-salesman",
+)
+TEACHER_WRITES = (
+    (0x7EF3CA, 0), (0x7E0FFF, 0),  # shop's Light World destination ($2D)
+    (0x7E010E, 0x6B), (0x7E010F, 0), (0x7E010A, 1),
+    (0x7E04AA, 0), (0x7E001B, 1), (0x7E0011, 0),
+    (0x7E00B0, 0), (0x7E0010, 5),
+)
 
 
 def require(condition, message):
@@ -47,21 +59,98 @@ def lowest(bits):
     return next((song for song in range(1, 5) if bits >> (song - 1) & 1), 0)
 
 
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def read_symbols(path):
+    symbols = {}
+    for line in path.read_text().splitlines():
+        parts = line.split()
+        if len(parts) == 2 and ":" in parts[0] and not parts[1].startswith(":"):
+            bank, offset = parts[0].split(":")
+            symbols[parts[1].removeprefix("Oracle_")] = int(bank + offset, 16)
+    return symbols
+
+
+def preflight(args):
+    require(args.mode == "candidate" or args.case != "bits-09-healing-time",
+            "The out-of-order bit fixture requires candidate mode")
+    for field in ("rom", "symbols", "base_srm"):
+        setattr(args, field, getattr(args, field).resolve(strict=True))
+    seed = args.base_srm.read_bytes()
+    require(len(seed) == 0x2000, "Expected exactly 8192 cartridge SRAM bytes")
+    slot = seed[:0x500]
+    require(slot == seed[0xF00:0x1400], "File 1 primary/mirror differ")
+    require(slot[0x3E5:0x3E7] == bytes.fromhex("aa55"), "File 1 magic differs")
+    require(sum(slot[i] | slot[i + 1] << 8 for i in range(0, 0x500, 2)) & 0xFFFF == 0x5A5A,
+            "File 1 checksum is invalid")
+    symbols = read_symbols(args.symbols)
+    require(all(name in symbols for name in ("NothingGFX", "Menu_Equipment_Gfx", "Menu_Equipment_Pos")),
+            "Required four-song menu symbols are missing")
+    if args.case == "teacher-mask-salesman":
+        require(slot[0x3CC] != 2, "Spawn follower would replace the teacher entrance")
+        # Oracle's relocated entrance room table: $0F:8000, read by $02DA74.
+        rom = args.rom.read_bytes()
+        room_at = 0x78000 + 0x6B * 2
+        require(int.from_bytes(rom[room_at:room_at + 2], "little") == 0x011F,
+                "Entrance $6B no longer leads to teacher room $011F")
+    return dict(case=args.case, mode=args.mode, rom_sha256=sha(args.rom.read_bytes()),
+                symbols_sha256=sha(args.symbols.read_bytes()), base_srm_sha256=sha(seed),
+                driver_sha256=sha(Path(__file__).read_bytes()), slot=1,
+                frame_cap=FRAME_CAP, wall_cap_seconds=WALL_CAP, native_started=False)
+
+
 class SongBitsRun:
     def __init__(self, args, bridge):
         self.a, self.b = args, bridge
         self.rom = args.rom.read_bytes()
-        self.symbols = {}
-        for line in args.symbols.read_text().splitlines():
-            parts = line.split()
-            if len(parts) == 2 and ":" in parts[0] and not parts[1].startswith(":"):
-                bank, offset = parts[0].split(":")
-                self.symbols[parts[1].removeprefix("Oracle_")] = int(bank + offset, 16)
+        self.sha1 = hashlib.sha1(self.rom).hexdigest()
+        self.symbols = read_symbols(args.symbols)
         self.base = args.base_srm.read_bytes()
-        require(len(self.base) >= 0x2000, "Base .srm is shorter than 8 KiB")
+        self.deadline = time.monotonic() + WALL_CAP
+        self.frames_advanced = 0
+        self.native_pid = self.native_start = None
         self.result = dict(mode=args.mode, rom=str(args.rom), base_srm=str(args.base_srm),
-                           cases=[], checks=[], passed=False)
+                           selected_case=args.case, cases=[], checks=[], fixtures=[], passed=False,
+                           rom_sha256=sha(self.rom), base_srm_sha256=sha(self.base),
+                           symbols_sha256=sha(args.symbols.read_bytes()),
+                           driver_sha256=sha(Path(__file__).read_bytes()),
+                           frame_cap=FRAME_CAP, wall_cap_seconds=WALL_CAP)
         self.case = None
+        self.guard()
+
+    def guard(self):
+        require(time.monotonic() < self.deadline, "300-second driver wall cap")
+        require("oos-rc-play" not in str(self.a.socket), "User runtime is forbidden")
+        owner = json.loads(LEASE.read_text())
+        require(owner.get("token") == self.a.lease_token and owner.get("pid") == self.a.owner_pid,
+                "Root lease token/PID differs")
+        status = json.loads(self.a.socket.with_suffix(".status").read_text())
+        require(status.get("socketPath") == str(self.a.socket), "Status socket differs")
+        pid = status.get("pid")
+        require(isinstance(pid, int) and pid > 0, "Native PID missing")
+        reply = subprocess.run(
+            ["/bin/ps", "-p", f"{self.a.owner_pid},{pid}", "-o", "pid=",
+             "-o", "lstart=", "-o", "command="],
+            capture_output=True, text=True, check=False)
+        require(reply.returncode == 0, "Owned processes disappeared")
+        records = {}
+        for line in reply.stdout.splitlines():
+            fields = line.strip().split(None, 6)
+            if len(fields) == 7:
+                records[int(fields[0])] = (" ".join(fields[1:6]), fields[6])
+        require(self.a.owner_pid in records and pid in records, "Owned process missing")
+        require(records[self.a.owner_pid][0] == " ".join(str(owner.get("pid_start", "")).split()),
+                "Root lease process identity differs")
+        start, command = records[pid]
+        require("--headless" in command and str(self.a.rom) in command
+                and "/Contents/MacOS/" in command and "Mesen" in command
+                and "oos-rc-play" not in command, "Native process is not the named private headless ROM")
+        if self.native_pid is None:
+            self.native_pid, self.native_start = pid, start
+        require((pid, start) == (self.native_pid, self.native_start), "Native PID identity changed")
+        self.info()
 
     # --- emulator plumbing -------------------------------------------------
     def r(self, address):
@@ -80,8 +169,9 @@ class SongBitsRun:
         return state.get("paused") is True
 
     def settle_pause(self):
-        self.b.pause()
-        until = time.monotonic() + 5
+        self.guard()
+        require(self.b.pause(), "Pause refused")
+        until = min(self.deadline, time.monotonic() + 5)
         while not self.paused() and time.monotonic() < until:
             time.sleep(.01)
         require(self.paused(), "Pause did not settle")
@@ -90,20 +180,35 @@ class SongBitsRun:
         reply = self.b.send_command("ROMINFO")
         require(reply.get("success"), "ROMINFO rejected")
         info = reply.get("data", {})
-        return json.loads(info) if isinstance(info, str) else info
+        info = json.loads(info) if isinstance(info, str) else info
+        require(isinstance(info, dict) and str(info.get("sha1", "")).lower() == self.sha1,
+                "Loaded ROM SHA1 differs")
+        require("frameCount" in info, "ROMINFO frameCount is missing")
+        return info
 
     def frames(self):
-        return int(self.info()["frameCount"])
+        value = self.info()["frameCount"]
+        return int(value, 0) if isinstance(value, str) else int(value)
 
     def advance(self, buttons="", count=2):
+        require(0 < count <= 180 and self.frames_advanced + count <= FRAME_CAP,
+                "Native frame cap exceeded")
+        self.guard()
         require(self.paused(), "FRAME needs a paused CPU")
         reply = self.b.send_command("INPUT", {"buttons": buttons, "frames": "0", "player": "0"})
         require(reply.get("success"), "INPUT rejected")
         before = self.frames()
         require(self.b.send_command("FRAME", {"count": str(count)}).get("success"), "FRAME rejected")
-        until = time.monotonic() + 10
+        until = min(self.deadline, time.monotonic() + 10)
         while time.monotonic() < until:
-            if self.frames() >= before + count and self.paused():
+            after = self.frames()
+            if after >= before + count and self.paused():
+                require(count <= after - before <= count + 1, "Native frame overshoot")
+                self.frames_advanced += after - before
+                require(self.frames_advanced <= FRAME_CAP, "Native frame cap exceeded")
+                with (self.a.output / "controller.jsonl").open("a") as log:
+                    log.write(json.dumps(dict(before=before, after=after,
+                                              requested=count, buttons=buttons)) + "\n")
                 return
             time.sleep(.01)
         raise RuntimeError("FRAME timeout")
@@ -138,6 +243,7 @@ class SongBitsRun:
         self.advance("", 30)
 
     def shot(self, name):
+        self.guard()
         path = self.a.output / f"{self.a.mode}-{name}.ppm"
         code = "local target=" + json.dumps(str(path)) + '''
 local callback
@@ -161,6 +267,7 @@ end,emu.eventType.endFrame)
         require(reply.get("success"), "Rendered-frame callback rejected")
         self.advance("", 1)
         require(path.is_file() and path.stat().st_size > 100, "Rendered frame missing")
+        require(path.read_bytes().startswith(b"P6\n"), "Rendered frame has an invalid PPM header")
         self.case.setdefault("screenshots", []).append(path.name)
 
     # --- checks -------------------------------------------------------------
@@ -183,17 +290,21 @@ end,emu.eventType.endFrame)
         inverse = (0x5A5A - total) & 0xFFFF
         slot[0x4FE], slot[0x4FF] = inverse & 0xFF, inverse >> 8
         for base in (SLOT1, MIRROR):
+            self.guard()
+            require(self.paused(), "SRAM fixture writes require a paused CPU")
             require(self.b.write_block(base, bytes(slot), SRAM), "SRAM write rejected")
             require(self.block(base, 0x500, SRAM) == bytes(slot), "SRAM readback differs")
         self.case["sram_fixture"] = dict(flute=flute, bits=bits, saved=saved, checksum=f"{inverse:04X}")
 
     def boot_file1(self):
+        self.guard()
         require(self.b.reset(), "Reset rejected")
         self.settle_pause()
         self.advance("", 120)
         self.until(lambda: self.mode() == (0, 8), "Title not reached", 3600, 60)
         self.tap("Start", 120)
         self.until(lambda: self.mode() == (1, 5), "File select not reached", 600)
+        self.check("file 1 selected", self.r(0x7E00C8), 0)
         self.tap("Start", 180)
         self.ready()
 
@@ -294,15 +405,26 @@ end,emu.eventType.endFrame)
         info = self.info()
         self.result["rom_info"] = {k: info.get(k) for k in ("sha1", "name", "frameCount")}
         self.settle_pause()
-        cases = [(count, 0) for count in range(6)]
-        for flute, bits in cases:
+        if self.a.case.startswith("count-"):
+            flute, bits = int(self.a.case[-1]), 0
             self.load_case(f"count-{flute}" + ("-noocarina" if flute == 0 else ""), flute, bits)
-        if self.a.mode == "candidate":
+        elif self.a.case == "bits-09-healing-time":
             # Zelda can teach Time before either Storms or Soaring.
             self.load_case("bits-09-healing-time", 2, 0x09)
-        self.save_reopen()
-        self.teacher()
+        elif self.a.case == "save-quit-reopen":
+            self.save_reopen()
+        else:
+            self.teacher()
         self.result["passed"] = True
+
+    def save_choice_ready(self):
+        if self.mode() != (0x0E, 0x0B):
+            return False
+        text = self.block(0x7E1CD4, 0x16)
+        if (text[4], text[0], text[0x15]) != (1, 3, 0):
+            return False
+        pointer = int.from_bytes(text[5:7], "little")
+        return self.r(0x7F1200 + pointer) & 0x7F == 0x72
 
     def save_reopen(self):
         self.start_case("save-quit-reopen", kind="native Save & Quit, reset, file 1")
@@ -315,11 +437,14 @@ end,emu.eventType.endFrame)
         before = self.save_state_bytes()
         self.case["before_save"] = before
         self.tap("Select", 90)
+        self.until(self.save_choice_ready, "Save and Quit choice is not ready", 600)
         for _ in range(4):
             if self.r(CHOICE) == 1:
                 break
             self.tap("Down", 15)
+            self.until(self.save_choice_ready, "Save and Quit choice did not settle", 600)
         self.check("controller selects Save and Quit", self.r(CHOICE), 1)
+        # RenderText_Choose1or2 ($0ECF86): (F6 & C0 | F4) & D0 accepts A.
         self.tap("A", 180)
         self.until(lambda: self.mode() == (0, 8), "Save and Quit did not reach title", 1800, 60)
         sram = self.block(SLOT1, 0x500, SRAM)
@@ -340,15 +465,21 @@ end,emu.eventType.endFrame)
                        [after["flute"], after["bits"], after["saved"]], [expected_count, expected_bits, 4])
 
     def teacher(self):
-        self.start_case("teacher-mask-salesman", kind="warp-entrance 0x6B, teacher grants Healing")
+        self.start_case("teacher-mask-salesman", kind="paused entrance $6B WRAM reload, teacher grants Healing")
         self.write_slot1(1, 0, 0)
         self.boot_file1()
-        reply = subprocess.run([sys.executable, str(REPO / "Scripts/Mesen2/mesen2_client.py"),
-                                "--socket", self.a.socket, "warp-entrance", "0x6B"],
-                               capture_output=True, text=True, timeout=120)
-        self.case["warp"] = reply.stdout.strip()[-400:]
-        require(reply.returncode == 0, f"warp failed: {reply.stderr.strip()[-300:]}")
         self.settle_pause()
+        require(self.r(0x7EF3CC) != 2, "Spawn follower would replace the teacher entrance")
+        for address, value in TEACHER_WRITES:
+            self.guard()
+            require(self.paused(), "Entrance fixture writes require a paused CPU")
+            before = self.r(address)
+            if address == 0x7EF3CA:
+                value = before & ~0x40
+            require(self.b.write_memory(address, value), "Entrance fixture write refused")
+            require(self.r(address) == value, "Entrance fixture readback differs")
+            self.result["fixtures"].append(dict(address=f"{address:06X}", before=before, after=value,
+                                                reason="Native continue-style entrance $6B load; no unaided route"))
         self.until(lambda: self.r(ROOM) == 0x1F and self.r(ROOM + 1) == 0x01, "Not in room 0x011F", 600)
         self.advance("", 120)
         self.shot("teacher")
@@ -362,26 +493,54 @@ end,emu.eventType.endFrame)
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--socket", required=True)
+    parser.add_argument("--socket", type=Path)
     parser.add_argument("--rom", type=Path, required=True)
     parser.add_argument("--symbols", type=Path, required=True)
     parser.add_argument("--base-srm", type=Path, required=True)
     parser.add_argument("--mode", choices=("candidate", "control"), required=True)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--case", choices=CASES, required=True)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--lease-token")
+    parser.add_argument("--owner-pid", type=int)
+    parser.add_argument("--preflight", action="store_true",
+                        help="Validate case, SRAM and file identities without RPC or output writes")
     parser.add_argument("--client-root", type=Path,
                         default=Path.home() / "src/hobby/mesen2-oos/tools/oos_client")
     args = parser.parse_args()
-    require("oos-rc-play" not in args.socket, "Never drive scawful's play window")
-    args.output.mkdir(parents=True, exist_ok=True)
+    pins = preflight(args)
+    if args.preflight:
+        print(json.dumps(pins))
+        return 0
+    require(args.socket is not None and args.output is not None
+            and args.lease_token and args.owner_pid, "Explicit owned attach arguments are required")
+    require("oos-rc-play" not in str(args.socket), "Never drive scawful's play window")
+    require(not args.output.exists(), "Output already exists; preserve prior evidence")
     sys.path.insert(0, str(args.client_root))
     from mesen2_client_lib.bridge import MesenBridge
-    run = SongBitsRun(args, MesenBridge(args.socket, auto_reconnect=False, max_retries=0))
+    run = SongBitsRun(args, MesenBridge(str(args.socket), auto_reconnect=False, max_retries=0))
+    args.output.mkdir(parents=True, exist_ok=False)
+    run.result["preflight"] = pins
     try:
         run.run()
     except Exception as error:
         run.result["error"] = str(error)
         print("ERROR", error, flush=True)
     finally:
+        try:
+            run.settle_pause()
+            run.guard()
+            require(run.b.send_command("INPUT", {"buttons": "", "frames": "0", "player": "0"})
+                    .get("success"), "Controller neutralization refused")
+        except Exception as error:
+            run.result["neutralize_error"] = str(error)
+            run.result["passed"] = False
+        run.result["frames_advanced"] = run.frames_advanced
+        run.result["native_pid"] = run.native_pid
+        run.result["native_process_exit"] = "ROOT OWNED; driver never stops a process"
+        run.result["rom_preserved"] = args.rom.read_bytes() == run.rom
+        run.result["source_srm_preserved"] = args.base_srm.read_bytes() == run.base
+        run.result["passed"] = (run.result["passed"] and run.result["rom_preserved"]
+                                and run.result["source_srm_preserved"])
         (args.output / f"{args.mode}.json").write_text(json.dumps(run.result, indent=1))
     return 0 if run.result["passed"] else 1
 
