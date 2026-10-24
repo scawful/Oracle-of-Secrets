@@ -1583,7 +1583,7 @@ CheckNewRButtonPress:
 }
 
 pushpc
-org $07800F ; @hook module=Masks name=LinkMain_FrameHook kind=jsl target=LinkMain_FrameHook expected_m=16
+org $07800F ; @hook module=Masks name=LinkMain_FrameHook kind=jsl target=LinkMain_FrameHook expected_m=16 expected_exit_m=8
 ; usdasm/bank_07.asm:Link_Main ($07800F-$078013). M=16, DBR=$07; the inherited
 ; index width is preserved. Replaces SEP #$20 / STZ $0FC1, replayed by the helper. Single owner of this
 ; site: other per-frame Link work must chain from LinkMain_FrameHook.
