@@ -67,7 +67,9 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
   Storms and Soaring, then returns Link to Maple's bed. The dream's exact place
   in history remains `[OPEN]`; neither the title illustration nor the dream
   establishes literal travel to Hyrule. The isolated castle scene uses room
-  `$61`, with messages `$211-$213`; gameplay and save verification are pending.
+  `$61`, with messages `$211-$213`. The isolated candidate has fixture-qualified
+  scene, song, save/reopen and recovery proof; physical D2/D3 access remains
+  `[TO-VERIFY]`.
 
 ## Core rulings (the seven cruxes)
 
@@ -193,7 +195,7 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
 | 9 | **D1 Mushroom Grotto** → essence 1 | built | maiden msg `0x132` (dedup opener — Text debt) |
 | 10 | Guided Ocarina chain: D1 Mushroom → witches / Magic Powder → investigate missing Ranch Girl at Toto Ranch → reveal the strange Cucco temporarily → Ocarina → Mask Salesman at Tail Pond → Song of Healing → Deku Mask | source wiring present; guidance `[DECIDED]`; rendered/player flow `[TO-VERIFY]` | Required hint facts: Twinrova sought essences; Ranch Girl vanished; a strange Cucco appeared; Magic Powder reveals transformed creatures. Current source uses Elder `0x1CB` and Ranch Girl `0x1BE`, replacing the older `0x177`/`0x17D` text. Ranch source sets the Tail Pond objective after the Ocarina receipt. Review the chain for missing Cucco/Powder guidance rather than rewriting connections already present. Maku `0x1C5` is a generic one-crystal reaction; `Core/messages.org` is a review snapshot. |
 | 11 | **D2 Tail Palace** → essence 2 | built | maiden msg `0x133` |
-| 11a | **Moon Pearl dream at Maple's hut** → Hyrule Castle, Zelda, Song of Time | `[DECIDED 2026-10-24]`; candidate in progress | After Healing and physical access to the item-gated hut. D2/D3 timing `[TO-VERIFY]`; optional early Time grants neither Storms nor Soaring. Personal dream, separate from the pendant history. |
+| 11a | **Moon Pearl dream at Maple's hut** → Hyrule Castle, Zelda, Song of Time | `[DECIDED 2026-10-24]`; isolated candidate verified | After Healing and physical access to the item-gated hut. D2/D3 timing `[TO-VERIFY]`; optional early Time grants neither Storms nor Soaring. Personal dream, separate from the pendant history. |
 | 12 | **Book of Secrets**: library dash knockdown; preserve its gameplay function | item code exists; Journal `[DEFERRED 2026-09-29]` | `Items/book_of_secrets.asm`. The later Journal ruling supersedes the earlier Book-unlocks-Journal plan: remove X:LOG and suspend Journal menu entry points. No replacement Journal access or new pickup setter is selected. Deliver required lore through NPCs, dreams and the environment; Librarian lore `0x199–0x19F` remains material for review. |
 | 13 | **D3 Kalyxo Castle** → **Meadow Blade** + essence 3; **Farore's voice calls out** | built; framing `[DECIDED]`; callout text `[TO-VERIFY / TO-REVISE]` | maiden msg `0x134`. Canon name "Meadow Blade". Keep callouts location-vague until Farore helps Link during D7; the older `0x70` inventory currently discloses the vessel (see ruling 1). |
 
