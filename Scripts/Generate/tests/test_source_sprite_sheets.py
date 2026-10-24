@@ -205,8 +205,8 @@ class SourceSheets(unittest.TestCase):
 
     def test_manifest_reserves_global_not_sprite_id(self):
         metadata=sheets.source_metadata(ROOT)
-        self.assertEqual(metadata['sprite_sheet_ids'],['0x64','0x40','0x43','0x47'])
-        self.assertEqual(metadata['global_sheet_ids'],['0xD7','0xB3','0xB6','0xBA'])
+        self.assertEqual(metadata['sprite_sheet_ids'],['0x64','0x40','0x43','0x47','0x23'])
+        self.assertEqual(metadata['global_sheet_ids'],['0xD7','0xB3','0xB6','0xBA','0x96'])
         self.assertEqual(metadata['owned_region']['pc_end'],'0x208000')
 
     def test_manifest_integration_keeps_strict_yaze_keys_and_portable_paths(self):

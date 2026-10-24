@@ -70,8 +70,8 @@ if !ENABLE_EON_OWL_ONE_SHOT == 1
 ; All vanilla sprite load paths reach this decompressor, including room exits
 ; and mosaic transitions. Do not write VRAM from the per-frame sprite draw.
 
-; Called by GfxSheet_GetPtr_SprCA (Core/gfx_sheet_table.asm), the pointer
-; lookup in Decompress_sprite_arbitrary, before the lookup.
+; Called by SpriteSheet_Select (Sprites/Enemies/abyss_variants.asm), the one
+; selector behind the $00E772 reader (GfxSheet_GetPtr_SprCA), before the lookup.
 ; Entry: M=8, X=8, Y=sheet, DB=$00, DP destination=$00-$02. Only Y changes.
 EonOwl_ArrivalSheet:
 {

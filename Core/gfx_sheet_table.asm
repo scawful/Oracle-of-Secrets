@@ -17,7 +17,8 @@
 ; Sprite sheets use the same arrays at index = relative ID + $73.
 ;
 ; Helper ABI: M=8 and X/Y=8 on entry, Y = sheet ID, result in DP, X and Y
-; preserved, P restored. DB does not matter (long addressing).
+; preserved, P restored. DB does not matter (long addressing), except that
+; GfxSheet_GetPtr_SprCA needs DB=$00 for its selector and may change Y.
 ; =========================================================
 
 !GfxSheet_Rows = $100
@@ -45,12 +46,15 @@ GfxSheet_GetPtr_Spr:
 }
 
 ; Y = sprite-relative sheet ID -> $C8-$CA (Decompress_sprite_arbitrary).
-; Eon Owl swaps the arrival sheet before the lookup (it used to hook the
-; first load of the vanilla sequence).
+; This is the single owner of the $00E772 site. Sheet selection (Abyss
+; Stalfos, Eon Owl arrival) runs first through Oracle_SpriteSheet_Select
+; (Sprites/Enemies/abyss_variants.asm), which may change Y and requires
+; DB=$00 as the vanilla caller provides. Y is preserved only when no
+; selector is compiled in; otherwise it is the selected sheet on exit.
 GfxSheet_GetPtr_SprCA:
 {
-  if !ENABLE_EON_OWL_ONE_SHOT == 1
-    JSL Oracle_EonOwl_ArrivalSheet
+  if !ENABLE_EON_OWL_ONE_SHOT == 1 || !ENABLE_ABYSS_STALFOS_SHEET == 1
+    JSL Oracle_SpriteSheet_Select
   endif
   PHP : SEP #$30 : PHX : REP #$10
   TYX
