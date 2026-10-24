@@ -105,6 +105,10 @@ MapleHandler:
 
   Maple_CheckForPendant:
   {
+    if !ENABLE_MOON_PEARL_DREAM == 1
+      JSL DreamZelda_SelectDream
+      RTS
+    else
     ; Offer the first pendant dream that is owned and not yet dreamed (Courage, Power, Wisdom)
     LDA.l Pendants : AND.b #$04 : BEQ .no_courage
     LDA.l Dreams   : AND.b #$04 : BNE .no_courage
@@ -125,6 +129,7 @@ MapleHandler:
     .none
     INC.w SprAction, X
     RTS
+    endif
   }
 
   Maple_NoNewPendant:
@@ -213,8 +218,14 @@ MapleHandler:
         db $00
       endif
       db !DreamMsg_PowerWake&$FF, $00
+      if !ENABLE_MOON_PEARL_DREAM == 1
+        db $00 ; fourth dream wakes in bed without a new Maple caption
+      endif
       .hi
       db !DreamMsg_WisdomWake>>8, !DreamMsg_PowerWake>>8, $00
+      if !ENABLE_MOON_PEARL_DREAM == 1
+        db $00
+      endif
     }
   endif
 }
@@ -265,6 +276,9 @@ Link_HandleDreams:
   dw Dream_Wisdom
   dw Dream_Power
   dw Dream_Courage
+  if !ENABLE_MOON_PEARL_DREAM == 1
+    dw Dream_Zelda
+  endif
 
   ; The dream's Dreams bit is set when it ends (DreamReturn_Begin).
   Dream_Wisdom:
@@ -302,6 +316,16 @@ Link_HandleDreams:
     JSR Link_WarpToRoom
     RTS
   }
+
+  if !ENABLE_MOON_PEARL_DREAM == 1
+    Dream_Zelda:
+    {
+      JSL DreamZelda_Start
+      LDX.b #!DreamZelda_Id
+      JSR Link_WarpToRoom
+      RTS
+    }
+  endif
 }
 
 Link_WarpToRoom:
@@ -335,12 +359,24 @@ Link_WarpToRoom:
   else
     db $61, $00, $31
   endif
+  if !ENABLE_MOON_PEARL_DREAM == 1
+    db !DreamZelda_Room
+  endif
   .x     ; in-room X low byte, SE quadrant
   db $38, $48, $78
+  if !ENABLE_MOON_PEARL_DREAM == 1
+    db $F8 ; DreamZelda_Landing installs the full entrance-$04 coordinates
+  endif
   .y     ; in-room Y low byte, SE quadrant
   db $70, $44, $70
+  if !ENABLE_MOON_PEARL_DREAM == 1
+    db $C0
+  endif
   .layer ; $EE: lower layer in all three rooms
   db $00, $00, $00
+  if !ENABLE_MOON_PEARL_DREAM == 1
+    db $00
+  endif
 }
 
 ; Takes X as argument for the entrance ID
@@ -395,6 +431,11 @@ pullpc
 
 DreamReturn_PlayerControl:
 {
+  if !ENABLE_MOON_PEARL_DREAM == 1
+    JSL DreamZelda_PlayerControl : BCC +
+      RTL ; the boundary wake selected MirrorFade before Link_Main
+    +
+  endif
   JSL $078000 ; Link_Main (replaced instruction)
   PHP
   SEP #$30
@@ -408,6 +449,10 @@ DreamReturn_PlayerControl:
     ; Only from plain player control (Link_Main can start a transition).
     LDA.b $10 : CMP.b #$07 : BNE .done
     LDA.b $11 : BNE .done
+    if !ENABLE_MOON_PEARL_DREAM == 1
+      ; This playable dream ends with Zelda or the hall boundary, not after 8 s.
+      LDA.w CurrentDream : CMP.b #!DreamZelda_Id : BEQ .done
+    endif
     LDA.b $1A : AND.b #$03 : BNE .done
     DEC.w DreamReturnTimer : BNE .done
       JSR DreamReturn_Begin
@@ -431,8 +476,14 @@ DreamReturn_Begin:
   endif
   ; The dream counts as seen only now (decisions.org: pendant dreams):
   ; dying or quitting mid-dream leaves it offerable again.
+  if !ENABLE_MOON_PEARL_DREAM == 1
+    LDA.w CurrentDream : CMP.b #!DreamZelda_Id : BNE .mark_seen
+    LDA.l DreamZelda_Progress : CMP.b #!DreamZelda_Returned : BNE .not_seen
+    .mark_seen
+  endif
   LDX.w CurrentDream
   LDA.l Dreams : ORA.l .bit, X : STA.l Dreams
+  .not_seen
   ; Disarm the dream room's tags: room $00's Ganon-door tag would otherwise
   ; fire on the last fade frame, once DreamReturn_IsDreaming no longer gates it.
   STZ.b $AE : STZ.b $AF
@@ -451,7 +502,21 @@ DreamReturn_Begin:
 
   .bit ; by CurrentDream: Wisdom, Power, Courage
   db !Dream_Wisdom, !Dream_Power, !Dream_Courage
+  if !ENABLE_MOON_PEARL_DREAM == 1
+    db !Dream_Zelda
+  endif
 }
+
+if !ENABLE_MOON_PEARL_DREAM == 1
+; Cross-bank entries for the bank-$42 scene; each balances its own JSR frame.
+DreamReturn_Begin_Long:
+  JSR DreamReturn_Begin
+  RTL
+
+DreamZelda_TuckIntoBed_Long:
+  JSR DreamWake_TuckIntoBed
+  RTL
+endif
 
 ; Carry set while a pendant dream runs: the wake-up timer is armed and the
 ; current entrance is still the Dream Hut's. Room $00 is reached in that

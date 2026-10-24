@@ -115,6 +115,8 @@ if !BetaRelease == 0
 
 endif
   LDA #$04 : STA Flute
+  JSL Ocarina_ValidateSong_Long
+  LDA.l SongBits : ORA.b #$07 : STA.l SongBits
   LDA #$01 : STA RocsFeather
   LDA #$03 : STA Bow
   LDA #$02 : STA Boomerang

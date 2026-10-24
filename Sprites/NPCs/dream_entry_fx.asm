@@ -95,7 +95,13 @@ DreamFX_Start:
   LDA.b #$40 : STA.b $9D
   LDA.b #$80 : STA.b $9E
 
-  LDA.b #$23 : JSL $00D4ED                ; WriteTo4BPPBuffer_item_gfx: pendant
+  LDA.b #$23                             ; item receipt: pendant
+  if !ENABLE_MOON_PEARL_DREAM == 1
+    LDY.w CurrentDream : CPY.b #!DreamZelda_Id : BNE +
+      LDA.b #$1F                         ; Moon Pearl, not a fourth pendant
+    +
+  endif
+  JSL $00D4ED                            ; WriteTo4BPPBuffer_item_gfx
 
   ; HDMA: write-twice mode, direct, from the table in bank $7F.
   LDA.b #$02 : STA.w $4350 : STA.w $4360
@@ -279,6 +285,9 @@ DreamFX_DrawPendant:
 
   .prop ; by CurrentDream: the hut's OBJ palettes 1 red, 2 blue, 4 green
   db $32, $34, $38
+  if !ENABLE_MOON_PEARL_DREAM == 1
+    db $34 ; Moon Pearl: normal item-receipt palette 2
+  endif
 }
 
 ; Part00_RoomSprites, end of every room's sprite list (before the fade-in).

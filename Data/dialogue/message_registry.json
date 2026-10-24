@@ -2,8 +2,8 @@
   "format": "oos-message-registry",
   "version": 1,
   "expanded_base": "0x18D",
-  "current_expanded_end": "0x20E",
-  "next_append_id": "0x20F",
+  "current_expanded_end": "0x213",
+  "next_append_id": "0x214",
   "renumber_policy": "freeze-published-ids",
   "ranges": [
     {
@@ -221,6 +221,22 @@
       "expected_content": "authored",
       "owner": "dream-wisdom",
       "purpose": "Wisdom pendant dream (D1, The Sealing War), shots 4-6: $20C D1.03 and $20D D1.04, the prison's voice over the lone Captain in the great hall; $20E D1.05 Maple when Link wakes in her bed (Sprites/NPCs/dream_power.asm script, maple.asm); exact words approved by scawful 2026-10-15 (AFS handoffs/lyra_one_map_2026-10-15/DREAM_APPROVALS.json, draft DIALOGUE.json sha256 975448ab...)"
+    },
+    {
+      "start": "0x20F",
+      "end": "0x210",
+      "status": "reserved-placeholder",
+      "expected_content": "placeholder",
+      "owner": "finale-healing",
+      "purpose": "Reserved by draft PR247 finale Healing scene; retain allocation when composing, exact text reviewed separately."
+    },
+    {
+      "start": "0x211",
+      "end": "0x213",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "moon-pearl-zelda-dream",
+      "purpose": "Moon Pearl dream: Zelda greeting and Song of Time lesson, Maple offer. Candidate integration requested by scawful 2026-10-24; Sprites/NPCs/dream_zelda.asm."
     }
   ]
 }

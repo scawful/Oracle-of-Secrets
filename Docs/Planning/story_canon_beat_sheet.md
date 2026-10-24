@@ -49,6 +49,26 @@ Accepted by scawful during the opening storyboard discussion; implementation rem
 
 Implementation order and storyboard: [Opening and RC development plan](Plans/opening_and_rc_development_2026-09-23.md). New-game experiment hook comes last; title, summons/arrival, and village sprites come first.
 
+### Link's Hyrule Castle dream — October 24 follow-up
+
+- `[DECIDED 2026-10-24]` The Moon Pearl allows a personal dream in which Link
+  walks through Hyrule Castle, meets Princess Zelda, and learns the Song of
+  Time. This is an additional dream alongside the three pendant dreams.
+  Scawful selected the Song of Time for its Majora's Mask association and
+  approved integration after the Link-and-horse castle illustration.
+- `[DECIDED access constraint]` Maple's hut is not accessible in early game:
+  the Forest of Dreams is item gated from the main Yesterwind area. Eligibility
+  uses the Moon Pearl and learned Song of Healing; reaching the hut remains
+  necessary. The intended D2/D3 opportunity is `[TO-VERIFY]` against the item
+  route. Do not add an early Glove reward or a D2/D3 completion requirement
+  to make the timing fit.
+- `[IMPLEMENTATION CANDIDATE]` Zelda's lesson teaches the existing clock
+  effect: advance to the next dawn or dusk. It grants Time independently of
+  Storms and Soaring, then returns Link to Maple's bed. The dream's exact place
+  in history remains `[OPEN]`; neither the title illustration nor the dream
+  establishes literal travel to Hyrule. The isolated castle scene uses room
+  `$61`, with messages `$211-$213`; gameplay and save verification are pending.
+
 ## Core rulings (the seven cruxes)
 
 1. **Farore hides her power in the Meadow Blade until the pedestal scene** `[DECIDED]`.
@@ -173,6 +193,7 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
 | 9 | **D1 Mushroom Grotto** → essence 1 | built | maiden msg `0x132` (dedup opener — Text debt) |
 | 10 | Guided Ocarina chain: D1 Mushroom → witches / Magic Powder → investigate missing Ranch Girl at Toto Ranch → reveal the strange Cucco temporarily → Ocarina → Mask Salesman at Tail Pond → Song of Healing → Deku Mask | source wiring present; guidance `[DECIDED]`; rendered/player flow `[TO-VERIFY]` | Required hint facts: Twinrova sought essences; Ranch Girl vanished; a strange Cucco appeared; Magic Powder reveals transformed creatures. Current source uses Elder `0x1CB` and Ranch Girl `0x1BE`, replacing the older `0x177`/`0x17D` text. Ranch source sets the Tail Pond objective after the Ocarina receipt. Review the chain for missing Cucco/Powder guidance rather than rewriting connections already present. Maku `0x1C5` is a generic one-crystal reaction; `Core/messages.org` is a review snapshot. |
 | 11 | **D2 Tail Palace** → essence 2 | built | maiden msg `0x133` |
+| 11a | **Moon Pearl dream at Maple's hut** → Hyrule Castle, Zelda, Song of Time | `[DECIDED 2026-10-24]`; candidate in progress | After Healing and physical access to the item-gated hut. D2/D3 timing `[TO-VERIFY]`; optional early Time grants neither Storms nor Soaring. Personal dream, separate from the pendant history. |
 | 12 | **Book of Secrets**: library dash knockdown; preserve its gameplay function | item code exists; Journal `[DEFERRED 2026-09-29]` | `Items/book_of_secrets.asm`. The later Journal ruling supersedes the earlier Book-unlocks-Journal plan: remove X:LOG and suspend Journal menu entry points. No replacement Journal access or new pickup setter is selected. Deliver required lore through NPCs, dreams and the environment; Librarian lore `0x199–0x19F` remains material for review. |
 | 13 | **D3 Kalyxo Castle** → **Meadow Blade** + essence 3; **Farore's voice calls out** | built; framing `[DECIDED]`; callout text `[TO-VERIFY / TO-REVISE]` | maiden msg `0x134`. Canon name "Meadow Blade". Keep callouts location-vague until Farore helps Link during D7; the older `0x70` inventory currently discloses the vessel (see ruling 1). |
 

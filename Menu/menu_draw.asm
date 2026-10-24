@@ -244,10 +244,11 @@ endif
 Menu_DrawMusicNotes:
 {
   SEP #$30
+  JSL Ocarina_ValidateSong_Long
   LDA.b #$7E : STA.b $0A ; Set up the bank of our indirect address
   REP #$30
 
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0002 : BCC .no_healing
+  LDA.l SongBits : AND.w #!Song_Healing : BEQ .no_healing
     LDA.w #$0002 : BRA .draw_healing
   .no_healing
   LDA.w #$0001
@@ -258,7 +259,7 @@ Menu_DrawMusicNotes:
   LDY.w #QuarterNoteGFX
   JSR DrawMenuItem
 
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0003 : BCC .no_storms
+  LDA.l SongBits : AND.w #!Song_Storms : BEQ .no_storms
     LDA.w #$03 : BRA .draw_storms
   .no_storms
   LDA.w #$01
@@ -269,7 +270,7 @@ Menu_DrawMusicNotes:
   LDY.w #QuarterNoteGFX
   JSR DrawMenuItem
 
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0004 : BCC .no_soaring
+  LDA.l SongBits : AND.w #!Song_Soaring : BEQ .no_soaring
     LDA.w #$04 : BRA .draw_soaring
   .no_soaring
   LDA.w #$01
@@ -280,7 +281,7 @@ Menu_DrawMusicNotes:
   LDY.w #QuarterNoteGFX
   JSR DrawMenuItem
 
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0005 : BCC .no_songs
+  LDA.l SongBits : AND.w #!Song_Time : BEQ .no_songs
     LDA.w #$05 : BRA .draw_songs
   .no_songs
   LDA.w #$01
@@ -299,6 +300,7 @@ Menu_DrawMusicNotes:
 DrawYItems:
 {
   SEP #$30
+  JSL Ocarina_ValidateSong_Long
   LDA.b #$7E : STA.b $0A ; Set up the bank of our indirect address
   REP #$30
 
@@ -383,8 +385,8 @@ endif
 
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0000 : BEQ .no_ocarina
 if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
-    ; Ocarina owned, no song learned ($7EF34C = 1): grey icon (entry 5).
-    CMP.w #$0002 : BCS .ocarina_has_songs
+    ; Ocarina owned, no song learned: grey icon (entry 5).
+    LDA.l SongBits : AND.w #!Song_All : BNE .ocarina_has_songs
       LDA.w #$0005 : BRA .spoof_ocarina
     .ocarina_has_songs
     LDA.w $030F : AND.w #$00FF : BNE .spoof_ocarina

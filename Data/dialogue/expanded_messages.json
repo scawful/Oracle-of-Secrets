@@ -1,6 +1,6 @@
 {
   "counts": {
-    "expanded": 130,
+    "expanded": 135,
     "vanilla": 0
   },
   "format": "yaze-message-bundle",
@@ -654,6 +654,31 @@
       "bank": "expanded",
       "id": 129,
       "text": "Bad dream? You were[2]talking in your sleep...[3]about a sword.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 130,
+      "text": "[...]"
+    },
+    {
+      "bank": "expanded",
+      "id": 131,
+      "text": "[...]"
+    },
+    {
+      "bank": "expanded",
+      "id": 132,
+      "text": "[W:02][S:03]Welcome to Hyrule Castle,[2][L].[3]Your Pearl shines even here.[K][V]This dream feels so clear.[V]Rest a moment. There is a[V]song I would like you to hear."
+    },
+    {
+      "bank": "expanded",
+      "id": 133,
+      "text": "[W:02][S:03]This is the Song of Time.[2]Play it, and the hours pass[3]until the next dawn or dusk.[K][V]When the night feels long,[V]remember that morning[V]will come.[K][V]You learned the Song of Time!"
+    },
+    {
+      "bank": "expanded",
+      "id": 134,
+      "text": "[W:02][S:03]Your Moon Pearl is glowing.[2]There is a different dream[3]within it. Close your eyes."
     }
   ],
   "version": 1

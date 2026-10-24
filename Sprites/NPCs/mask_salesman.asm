@@ -9,13 +9,13 @@
 ; TERMINOLOGY: "Mask Salesman" = MaskSalesman
 ;   - Teaches Song of Healing (required for Deku/Zora mask quests)
 ;   - Sells Bunny Hood (100 rupees) and Stone Mask (850 rupees)
-;   - $7EF34C tracks Ocarina/song progress
+;   - $7EF34C owns the Ocarina; SongBits tracks learned songs
 ;
 ; STATES:
 ;   0: InquiryHandler - Check Ocarina status, branch accordingly
 ;   1: NoOcarina - Tell player to get Ocarina first
 ;   2: HasOcarina - Recognize Ocarina, transition to teaching
-;   3: TeachLinkSong - Award Song of Healing ($7EF34C = 2, first song)
+;   3: TeachLinkSong - Award Song of Healing (SongBits |= !Song_Healing)
 ;   4: OfferBunnyHood - Offer Bunny Hood purchase
 ;   5: OfferStoneMask - Offer Stone Mask purchase
 ;   6: PlayerSaidNoToMask - Rejection dialogue
@@ -37,14 +37,14 @@
 ;   0xE9 - No Ocarina yet
 ;
 ; INVENTORY CHECKS:
-;   $7EF34C - Ocarina slot (0=none, 1=Ocarina, 2=Song of Healing)
+;   $7EF34C - Ocarina ownership (0=none, >=1=owned)
 ;   $7EF348 - Bunny Hood slot
 ;   $7EF352 - Stone Mask slot
 ;
 ; FLAGS WRITTEN:
 ;   SideQuestProg |= 0x01 - Met Mask Salesman (if no Ocarina)
 ;   SideQuestProg2 |= 0x04 - Taught Song of Healing
-;   $7EF34C = 2 - Song of Healing learned
+;   SongBits |= !Song_Healing - Song of Healing learned
 ;
 ; ITEMS GIVEN:
 ;   0x10 - Bunny Hood (100 rupees)
@@ -130,15 +130,15 @@ Sprite_MaskSalesman_Main:
   InquiryHandler:
   {
     %PlayAnimation(0, 1, 16)
-    ; Player has a Lv1 Ocarina, skip to the you got it message
-    LDA.l $7EF34C : CMP.b #$01 : BEQ .has_ocarina
-      ; Player has no Ocarina or Lv2 Ocarina
+    ; Owns the Ocarina without Healing: skip to the you got it message
+    JSL Ocarina_SongsInOrder_Long : CMP.b #$01 : BEQ .has_ocarina
+      ; Player has no Ocarina or already knows Healing
       ; Do you want to buy a mask?
       %ShowSolicitedMessage($E5) : BCC .didnt_converse
         LDA $1CE8 : BNE .player_said_no
 
         ; Player wants to buy a mask
-        LDA.l $7EF34C : CMP.b #$02 : BCS .has_song_healing
+        JSL Ocarina_SongsInOrder_Long : CMP.b #$02 : BCS .has_song_healing
 
           ; No Ocarina yet
           %GotoAction(1)
@@ -189,7 +189,7 @@ Sprite_MaskSalesman_Main:
   ; 0x03
   TeachLinkSong:
   {
-    LDA #$02 : STA $7EF34C ; Increment the number of songs Link has
+    LDA.b #!Song_Healing : JSL Ocarina_LearnSong_Long
     ; Set journal flag: Mask Salesman taught Song of Healing
     LDA.l SideQuestProg2 : ORA.b #$04 : STA.l SideQuestProg2
     LDA.b #$13

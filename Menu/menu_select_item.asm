@@ -353,8 +353,8 @@ if !ENABLE_EQUIPMENT_MENU == 1
   ; otherwise the previous file's song would be written into this file.
   ; Harmless on RefreshIcon: the saved byte is kept in sync with $030F.
   STZ.w CurrentSong
-  JSL UpdateFluteSong_Long ; restore/validate the saved song on file load
 endif
+  JSL Ocarina_ValidateSong_Long ; migrate and validate songs in every profile
 
 if !ENABLE_GOLDSTAR_CELL == 1
   JSL GoldstarInventory_Migrate

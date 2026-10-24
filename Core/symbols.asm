@@ -66,6 +66,14 @@ if !ENABLE_DREAM_POWER_SCENE == 1
 DreamPower_WakeLine  = $7FF37A ; word: !DreamPower_WakeLive = Maple says D2.06 in the hut
 endif
 
+; Moon Pearl dream: independent of the Wisdom/Power scene marker and locks.
+; The preceding dream allocations end at $7FF37B.
+if !ENABLE_MOON_PEARL_DREAM == 1
+DreamZelda_Marker       = $7FF37C ; word: $D9A3 while this dream owns the hut context
+DreamZelda_Progress     = $7FF37E ; 0 playing, 2 completed return, 3 aborted return
+DreamZelda_SaveFollower = $7FF37F ; previous follower visibility ($02F9)
+endif
+
 ; Current Song
 CurrentSong    = $030F
 

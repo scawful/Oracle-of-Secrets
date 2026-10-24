@@ -419,18 +419,13 @@ HUD_DrawItem:
 }
 
 if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
-; menu-ocarina-blank-slot. 16-bit A/X/Y. Out: A = Ocarina entry in the
-; $0DF859 HUD table: 0 = grey (owned, no song learned, $7EF34C < 2),
-; else the selected song (1-4); song 0 falls back to 1 (blue).
+; 16-bit A/X/Y. Return HUD entry 0 for no learned song, else the selected
+; learned song (1-4), falling back to the lowest learned song.
 HUD_OcarinaIconIndex:
 {
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0002 : BCC .no_song
-    LDA.w $030F : AND.w #$00FF : BNE .done
-      LDA.w #$0001
-      RTS
-  .no_song
-  LDA.w #$0000
-  .done
+  LDA.w CurrentSong
+  JSL Ocarina_ResolveSong_Long
+  AND.w #$00FF
   RTS
 }
 endif

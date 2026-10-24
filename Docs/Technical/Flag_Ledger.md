@@ -68,6 +68,8 @@
 | Dream_Wisdom | $7EF410 | $01 | TBD | TBD | Dream progress (Wisdom) | Core/sram.asm | 2026-01-23 (code) | Setter not located |
 | Dream_Power | $7EF410 | $02 | TBD | TBD | Dream progress (Power) | Core/sram.asm | 2026-01-23 (code) | Setter not located |
 | Dream_Courage | $7EF410 | $04 | TBD | TBD | Dream progress (Courage) | Core/sram.asm | 2026-01-23 (code) | Setter not located |
+| Dream_Zelda | $7EF410 | $08 | Completed Zelda lesson in dream_zelda.asm | New file | Moon Pearl castle dream completed | Core/sram.asm; Sprites/NPCs/dream_zelda.asm | 2026-10-24 (source candidate) | Independent of pendant dreams; abort must leave clear |
+| SongBits | $7EF3B1 | $01 Healing, $02 Storms, $04 Soaring, $08 Time | Ocarina_ValidateSong_Long legacy migration; Ocarina_LearnSong_Long teachers/Zelda | New file | Independent learned-song ownership | Core/sram.asm; Items/ocarina.asm | 2026-10-24 (source candidate) | Reuses PR220 allocation. Legacy count retained at $7EF34C; migrate before adding a bit. Bits4-7 reserved |
 | WaterGateStates_Room27 | $7EF411 | $01 | WaterGate_SetPersistenceFlag | TBD | Zora Temple water gate room | Dungeons/Collision/water_collision.asm | 2026-01-23 (code) | Bit 0 (room 0x27) |
 | WaterGateStates_Room25 | $7EF411 | $02 | WaterGate_SetPersistenceFlag | TBD | Zora Temple water grate room | Dungeons/Collision/water_collision.asm | 2026-01-23 (code) | Bit 1 (room 0x25) |
 | IntroState | $7EF39E | Value | TBD | TBD | Link's House intro sequence | Core/sram.asm | 2026-01-23 (code) | Value semantics TBD |

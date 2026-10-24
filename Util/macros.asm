@@ -136,6 +136,10 @@
 ; colours cycle, mosaic, white (Sprites/NPCs/dream_entry_fx.asm). Off, the
 ; warp starts right after the sleep. Diagnostic opt-out.
 !ENABLE_DREAM_ENTRY_FX              = 1
+; Moon Pearl dream: a playable Hyrule Castle visit after learning Healing.
+; Zelda teaches Time independently of Storms and Soaring, then Link wakes
+; in Maple's bed. Needs the existing dream return/room/bed systems.
+!ENABLE_MOON_PEARL_DREAM            = 1
 ; Sword warp home (decisions.org "Intro Abyss exit: the sword cuts Link
 ; home"): taking the Forest of Dreams sword (DW $58) plays a spin, sword-up
 ; and white flash, then reloads Link onto the Maku Tree area ($2A) with

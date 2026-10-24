@@ -140,11 +140,11 @@ LinkItem_NewFlute:
   JSR UpdateFluteSong
   JSR Link_CheckNewY_ButtonPress : BCC ReturnFromFluteHook
 if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
-    ; No song learned ($7EF34C < 2): error beep only, no song, SongFlag
+    ; No song learned (SongBits = 0): error beep only, no song, SongFlag
     ; unchanged. Same as vanilla's unusable Mushroom in LinkItem_Powder:
     ; $07A2A8 LDA #$3C : JSR PlaySFX_Set2 ($078028), then $07A30C clears
     ; $3A bit 6 (set by CheckYButtonPress $07B073) so the next Y press works.
-    LDA.l $7EF34C : CMP.b #$02 : BCS .has_song
+    LDA.l SongBits : AND.b #!Song_All : BNE .has_song
       LDA.b #$3C : JSR Player_DoSfx2
       LDA.b $3A : AND.b #$BF : STA.b $3A
       RTS
@@ -216,8 +216,9 @@ endif
   ; If there isn't one, keep checking.
   DEX : BPL .next_ancillary_slot
 
-  ; Paul's weathervane stuff Do we have a normal flute (without bird)?
-  LDA $7EF34C : CMP.b #$02 : BNE .travel_bird_already_released
+  ; The old Soaring count (>=4) never took the count=2 weathervane path.
+  ; Independent songs keep the old count, so preserve the travel-bird path.
+  BRA .travel_bird_already_released
     REP #$20
     ; check the area, is it #$18 = 30?
     LDA $8A : CMP.w #$0018 : BNE .not_weathervane_trigger
@@ -437,112 +438,156 @@ ResetOcarinaFlag:
   RTL
 }
 
-; Values at $7EF34C determine Ocarina/song progression
-; 00 - No Ocarina
-; 01 - Ocarina (no songs)
-; 02 - 1 song (Healing)
-; 03 - 2 songs (Healing, Storms)
-; 04 - 3 songs (Healing, Storms, Soaring)
-; 05 - 4 songs (Healing, Storms, Soaring, Time)
+; Independent four-song ownership, adapted from PR #220. Keep helpers out
+; of the sprite banks; $42D400 begins the Moon Pearl dream implementation.
+pushpc
+org $42D000
+Ocarina_SongMask:
+  db $00, !Song_Healing, !Song_Storms, !Song_Soaring, !Song_Time
+Ocarina_CountToBits:
+  db $01, $03, $07, $0F
+
+; A low byte = candidate song. Returns it when learned (1-4), otherwise the
+; lowest learned song, or 0. Any M/X; preserves X/Y and M/X. A 16-bit caller
+; keeps its high byte and must AND #$00FF. No DBR assumption.
+Ocarina_ResolveSong_Long:
+{
+  PHX : PHP
+  SEP #$30
+  CMP.b #$05 : BCS .lowest
+  TAX
+  LDA.l Ocarina_SongMask, X : AND.l SongBits : BEQ .lowest
+  TXA
+  BRA .done
+.lowest
+  LDA.l SongBits : AND.b #!Song_All : BEQ .done
+  LDX.b #$00
+.scan
+  INX : LSR : BCC .scan
+  TXA
+.done
+  PLP : PLX
+  RTL
+}
+
+; A low byte = current song; C set = next, clear = previous. Returns the
+; next learned song, wrapping, or 0. Any M/X; preserves X/Y and M/X.
+Ocarina_StepSong_Long:
+{
+  PHX : PHP
+  SEP #$30
+  TAX
+  LDA.l SongBits : AND.b #!Song_All : BEQ .done
+  BCC .previous
+.next
+  CPX.b #$04 : BCC .next_ok
+    LDX.b #$00
+  .next_ok
+  INX
+  LDA.l Ocarina_SongMask, X : AND.l SongBits : BEQ .next
+  BRA .found
+.previous
+  CPX.b #$02 : BCC .previous_wrap
+  CPX.b #$05 : BCC .previous_ok
+  .previous_wrap
+    LDX.b #$05
+  .previous_ok
+  DEX
+  LDA.l Ocarina_SongMask, X : AND.l SongBits : BEQ .previous
+.found
+  TXA
+.done
+  PLP : PLX
+  RTL
+}
+
+; Migrate an old Flute count (2-5, clamped) only while SongBits is zero,
+; then resolve CurrentSong. Equipment restores an empty selection from the
+; saved song. Any M/X; preserves X/Y and M/X; clobbers A. No DBR assumption.
+Ocarina_ValidateSong_Long:
+{
+  PHX : PHP
+  SEP #$30
+  LDA.l SongBits : BNE .converted
+  LDA.l Flute : CMP.b #$02 : BCC .converted
+  CMP.b #$06 : BCC .count_ok
+    LDA.b #$05
+  .count_ok
+  TAX
+  LDA.l Ocarina_CountToBits-2, X : STA.l SongBits
+.converted
+if !ENABLE_EQUIPMENT_MENU == 1
+  LDA.l CurrentSong : BNE .resolve
+  LDA.l SavedOcarinaSong
+.resolve
+  JSL Ocarina_ResolveSong_Long
+  STA.l CurrentSong : STA.l SavedOcarinaSong
+else
+  LDA.l CurrentSong
+  JSL Ocarina_ResolveSong_Long
+  STA.l CurrentSong
+endif
+  PLP : PLX
+  RTL
+}
+
+; Existing teachers retain their count-shaped CMP chains without growing
+; bank $30. Return 0 without an Ocarina, else 1 + consecutive learned songs
+; from Healing, stopping at the first gap. Any M/X; keeps X/Y and M/X.
+Ocarina_SongsInOrder_Long:
+{
+  JSL Ocarina_ValidateSong_Long
+  PHX : PHP
+  SEP #$30
+  LDA.l Flute : BEQ .done
+  LDA.l SongBits : LDX.b #$01
+.count
+  LSR : BCC .gap
+  INX : CPX.b #$05 : BCC .count
+.gap
+  TXA
+.done
+  PLP : PLX
+  RTL
+}
+
+; A low byte = one !Song_* mask. Migrate BEFORE setting a bit so an old
+; Healing count cannot be lost when Zelda grants Time. Any M/X; keeps X/Y
+; and P; clobbers A. Repeated grants preserve all previously learned songs.
+Ocarina_LearnSong_Long:
+{
+  PHP
+  SEP #$20
+  PHA
+  JSL Ocarina_ValidateSong_Long
+  PLA
+  ORA.l SongBits : STA.l SongBits
+  PLP
+  RTL
+}
+
+; Called while the Ocarina is equipped. Equipment owns selection; the
+; diagnostic legacy profile steps only learned songs with L/R.
 UpdateFluteSong_Long:
 {
-if !ENABLE_EQUIPMENT_MENU == 1
-  ; Equipment chooses the song. L/R must not also change it in the world.
-  ; CurrentSong ($030F) is volatile; SavedOcarinaSong ($7EF3AB) keeps the
-  ; choice across save/reload. Restore from it when $030F is 0, validate
-  ; against the learned count (garbage or unlearned -> song 1), then sync.
-  LDA.l $7EF34C : CMP.b #$02 : BCC .equipment_none
-  CMP.b #$06 : BCC .equipment_count
-  LDA.b #$05
-.equipment_count
-  DEC : PHA
-  LDA.w CurrentSong : BNE .equipment_check
-  LDA.l SavedOcarinaSong : STA.w CurrentSong
-.equipment_check
-  LDA.w CurrentSong : BEQ .equipment_first
-  CMP.b $01,S : BCC .equipment_valid
-  BEQ .equipment_valid
-.equipment_first
-  LDA.b #$01 : STA.w CurrentSong
-.equipment_valid
-  PLA
-  LDA.w CurrentSong : STA.l SavedOcarinaSong
-  RTL
-.equipment_none
-  STZ.w CurrentSong
-  LDA.b #$00 : STA.l SavedOcarinaSong
-  RTL
-else
-  LDA $7EF34C : CMP.b #$02 : BCS +
-    JMP .no_songs
-  +
-    LDA $030F : BNE .song_exists
-      ; if this code is running, we have the flute song 1
-      LDA #$01 : STA $030F
-    .song_exists
-    LDA.b $F6
-    BIT.b #$20 : BNE .left  ; pressed left
-    BIT.b #$10 : BNE .right ; pressed right
-      RTL
-
-    .left ; L Button Pressed - Decrement song
-    ; LDA.b #$13 : JSR Player_DoSfx2
-    DEC $030F
-    LDA $030F : CMP #$00 : BEQ .wrap_to_max
-      BRA .update_song
-
-    .right ; R Button Pressed - Increment song
-    INC $030F
-    LDA $7EF34C : CMP.b #$02 : BEQ .max_1
-                  CMP.b #$03 : BEQ .max_2
-                  CMP.b #$04 : BEQ .max_3
-                  CMP.b #$05 : BEQ .max_4
-      LDA $030F : CMP.b #$05 : BCS .wrap_to_min
-      RTL
-    .max_1
-    LDA $030F : CMP.b #$02 : BCS .wrap_to_min
-      RTL
-    .max_2
-    LDA $030F : CMP.b #$03 : BCS .wrap_to_min
-      RTL
-    .max_3
-    LDA $030F : CMP.b #$04 : BCS .wrap_to_min
-      RTL
-    .max_4
-    LDA $030F : CMP.b #$05 : BCS .wrap_to_min
-    .update_song
-      RTL
-
-    .wrap_to_max
-    LDA $7EF34C : CMP.b #$02 : BEQ .set_max_to_1
-                  CMP.b #$03 : BEQ .set_max_to_2
-                  CMP.b #$04 : BEQ .set_max_to_3
-                  CMP.b #$05 : BEQ .set_max_to_4
-      LDA #$04 : STA $030F : RTL
-
-    .set_max_to_3
-    LDA #$03 : STA $030F : RTL
-
-    .set_max_to_2
-    LDA #$02 : STA $030F : RTL
-
-    .set_max_to_1
-    LDA #$01 : STA $030F : RTL
-
-    .set_max_to_4
-    LDA #$04 : STA $030F : RTL
-
-    .wrap_to_min
-    LDA #$01 : STA $030F
-
-  .not_pressed
-  RTL
-
-  .no_songs
-  STZ $030F
-  RTL
+  JSL Ocarina_ValidateSong_Long
+if !ENABLE_EQUIPMENT_MENU == 0
+  LDA.l CurrentSong : BEQ .done
+  LDA.b $F6 : BIT.b #$20 : BNE .left
+  BIT.b #$10 : BEQ .done
+  LDA.l CurrentSong : SEC
+  BRA .step
+.left
+  LDA.l CurrentSong : CLC
+.step
+  JSL Ocarina_StepSong_Long
+  STA.l CurrentSong
+.done
 endif
+  RTL
 }
+assert pc() <= $42D400, "Song ownership helpers crossed Moon Pearl dream allocation"
+pullpc
 %log_end("Items/ocarina.asm", !LOG_ITEMS)
 
 pushpc ; Bank2B freespace

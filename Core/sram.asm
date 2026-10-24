@@ -164,6 +164,7 @@ endmacro
 !Dream_Wisdom              = $01  ; bit 0 - Dream 1 "The Sealing War"
 !Dream_Power               = $02  ; bit 1 - Dream 2 "The Oracle's Choice"
 !Dream_Courage             = $04  ; bit 2 - Dream 3 "The Healing Revelation"
+!Dream_Zelda               = $08  ; bit 3 - Moon Pearl / Hyrule Castle dream
 
 ; ---------------------------------------------------------
 ; MagicBeanProgress Bits ($7EF39B)
@@ -313,7 +314,7 @@ BunnyHood               = $7EF348   ; 1=Have
 DekuMask                = $7EF349   ; 1=Have (inventory slot)
 Lamp                    = $7EF34A   ; 1=Have
 Hammer                  = $7EF34B   ; 1=Have
-Flute                   = $7EF34C   ; 1=Shovel, 2=Inactive, 3=Active (also Ocarina)
+Flute                   = $7EF34C   ; 0=none, >=1 Ocarina; old song count retained for migration
 RocsFeather             = $7EF34D   ; 1=Have
 Book                    = $7EF34E   ; 1=Have (Book of Secrets)
 BottleIndex             = $7EF34F   ; Currently selected bottle (1-4)
@@ -786,14 +787,24 @@ GoldstarInventoryVersion = $7EF3AA ; $A5 = legacy upgrade migrated
 ; Read/written only when !ENABLE_EQUIPMENT_MENU = 1 (Items/ocarina.asm
 ; UpdateFluteSong_Long, Menu/menu_equipment.asm). 0 = unset, 1-4 = song.
 ; CurrentSong ($030F) is volatile WRAM; this byte keeps the Equipment
-; choice across save/reload. Validated against learned songs ($7EF34C) on
-; every use; out-of-range or garbage values become song 1.
+; choice across save/reload. Validated against SongBits on every use;
+; unlearned or out-of-range values become the lowest learned song.
 ; Free before: no reader/writer in the full candidate chain or main; no
 ; indexed $7EF3xx,X write reaches it (only bottles $7EF35C,X); none of the
 ; 76 item-receipt destinations ($0984E8) is in $7EF3A0-3C4; vanilla new-file
 ; init clears it ($0CC315-$0CC325); 00 in every stored save checked.
 SavedOcarinaSong   = $7EF3AB
-FreeBlock_Large    = $7EF3AC  ; 25 bytes ($7EF3AC-3C4)
+; Reuse the independent-song allocation from PR #220. The byte is inside
+; the checksummed save buffer and cleared by vanilla new-file initialization.
+; Legacy Flute counts 2-5 migrate once while SongBits is zero. Bits 4-7 unused.
+SongBits          = $7EF3B1
+!Song_Healing     = $01
+!Song_Storms      = $02
+!Song_Soaring     = $04
+!Song_Time        = $08
+!Song_All         = $0F
+FreeBlock_Large    = $7EF3AC  ; 5 bytes ($7EF3AC-3B0)
+FreeBlock_SongsTail = $7EF3B2 ; 19 bytes ($7EF3B2-3C4)
 
 ; ---------------------------------------------------------
 ; Dreams Extension ($7EF411-4FD) - 237 bytes
@@ -811,10 +822,11 @@ FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
 ; | $7EF307  | $7EF30E  | 8     | Story extension    |
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF39F  | $7EF3A0  | 2     | Collectibles ext   |
-; | $7EF3AB  | $7EF3C4  | 26    | Large reserved     |
+; | $7EF3AC  | $7EF3B0  | 5     | Large reserved     |
+; | $7EF3B2  | $7EF3C4  | 19    | Large reserved     |
 ; | $7EF412  | $7EF4FD  | 236   | Dreams extension   |
 ; |----------|----------|-------|--------------------|
-; | TOTAL AVAILABLE:    | 320   | bytes              |
+; | TOTAL AVAILABLE:    | 318   | bytes              |
 ; ---------------------------------------------------------
 
 ; =========================================================

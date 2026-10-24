@@ -63,7 +63,7 @@ org $09C2C3 ; @hook module=Dungeons name=Part00_RoomSprites kind=jsl target=Part
   JSL Part00_RoomSprites
 assert pc() == $09C2C7
 
-if !ENABLE_PART00_CHECKPOINT == 1
+if !ENABLE_PART00_CHECKPOINT == 1 || !ENABLE_MOON_PEARL_DREAM == 1
 ; GameOver_FadeAndRevive .use_this_spawn: LDA.l $7EF3C5 (then BEQ .no_progress)
 org $09F5D4 ; @hook module=Dungeons name=Part00_ReviveGate kind=jsl target=Part00_ReviveGate expected_m=8
   JSL Part00_ReviveGate
@@ -109,6 +109,9 @@ Part00_RoomSprites:
   if !ENABLE_DREAM_ENTRY_FX == 1 && !DISABLE_SPRITES == 0
     JSL DreamFX_RoomLoaded                ; colour math back after the white
   endif
+  if !ENABLE_MOON_PEARL_DREAM == 1 && !DISABLE_SPRITES == 0
+    JSL DreamZelda_RoomLoaded             ; playable castle / hut recovery
+  endif
   if !ENABLE_DREAM_WISDOM_SCENE == 1 && !DISABLE_SPRITES == 0
     JSL DreamWisdom_Stage                 ; Wisdom dream; any GameState
   endif
@@ -143,12 +146,21 @@ Part00_CheckpointTrigger:
   .no
   RTS
 }
+endif
 
+if !ENABLE_PART00_CHECKPOINT == 1 || !ENABLE_MOON_PEARL_DREAM == 1
 ; Replaces LDA.l $7EF3C5 at .use_this_spawn ($09F5D4). The caller follows with
 ; BEQ .no_progress (reload the save). Returns Z clear to skip that reload.
 ; M = 8. $010A was already incremented by the caller ($09F5A2).
 Part00_ReviveGate:
 {
+  if !ENABLE_MOON_PEARL_DREAM == 1
+    JSL DreamZelda_ReviveGate : BCC +
+      LDA.b #$01                         ; Z clear: use the prepared hut load
+      RTL
+    +
+  endif
+  if !ENABLE_PART00_CHECKPOINT == 1
   LDA.l GameState : BNE .vanilla          ; not Part00: vanilla (Z clear)
   LDA.l IntroState : CMP.b #$02 : BCC .reload ; before the wake-up: vanilla reload
 
@@ -180,6 +192,10 @@ Part00_ReviveGate:
   LDA.b #$00                              ; Z set: vanilla .no_progress
   .vanilla
   RTL
+  else
+    LDA.l GameState
+    RTL
+  endif
 }
 endif
 

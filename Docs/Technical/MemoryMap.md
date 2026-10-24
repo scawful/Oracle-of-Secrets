@@ -37,6 +37,7 @@ The following blocks were marked "unused" in vanilla ALTTP but are now utilized 
 | `$7EF39C` | `JournalState`      | Current state of the player's journal.                                   | ✓        |
 | `$7EF39D` | `Reserved` | Unused (Core/sram.asm:466). | |
 | `$7EF39E` | `StoryState`        | State machine for Link's House intro sequence (0-2).                     | ✓        |
+| `$7EF3B1` | `SongBits`          | Independent Healing/Storms/Soaring/Time ownership, bits `$01/$02/$04/$08`; legacy-count migration in `Items/ocarina.asm`. | Source candidate |
 
 #### **Block $7EF403-$7EF4FD** - Partially Repurposed
 
@@ -44,13 +45,13 @@ The following blocks were marked "unused" in vanilla ALTTP but are now utilized 
 
 | Address  | Label     | Description                                                        | Verified |
 |----------|-----------|--------------------------------------------------------------------|----------|
-| `$7EF410` | `Dreams`  | Bitfield tracking collection of three Dreams (`.cpw`: Courage, Power, Wisdom). | ✓        |
+| `$7EF410` | `Dreams`  | Completion bits: Wisdom `$01`, Power `$02`, Courage `$04`, Moon Pearl Zelda dream `$08`. | Source candidate |
 | `$7EF411` | `WaterGateStates` | Bitfield for Zora Temple water gate persistence (bit0=room 0x27, bit1=room 0x25). | ✓        |
 
 > **💡 Usage Notes:**
 > - **Scrolls** (`$7EF398`): One scroll per dungeon (7 total). Bitfield format: `.dgi zktm` where each letter represents a dungeon (m=Mushroom Grotto, t=Tail Palace, k=Kalyxo Castle, z=Zora Temple, i=Glacia Estate, g=Goron Mines, d=Dragon Ship).
 > - **MagicBeanProg** (`$7EF39B`): Tracks multi-day growth cycle with bitfield `.dts fwpb` (b=bean planted, w=watered, p=pollinated, f=first day, s=second day, t=third day, d=done).
-> - **Dreams** (`$7EF410`): Similar to vanilla Pendants, tracks three key collectibles. Bitfield: `.cpw` (c=Courage, p=Power, w=Wisdom).
+> - **Dreams** (`$7EF410`): Pendant dream completion uses bits `$01/$02/$04`; the separate personal Zelda dream uses `$08`.
 > - **WaterGateStates** (`$7EF411`): Water gate persistence flags. Bit 0 = room 0x27, bit 1 = room 0x25.
 
 ### SRAM Address Contradictions (Source File Notes)
@@ -163,7 +164,7 @@ This section details the layout of the save file memory.
 | `$7EF39B` | `MagicBeanProg`   | Tracks the multi-day growth cycle of the magic bean side-quest.          |
 | `$7EF39C` | `JournalState`    | The current state of the player's journal.                              |
 | `$7EF39E` | `StoryState`      | State machine for Link's House intro sequence (0=Telepathy, 1=WakeUp, 2=End). |
-| `$7EF410` | `Dreams`          | A bitfield tracking the collection of the three "Dreams" (Courage, Power, Wisdom). |
+| `$7EF410` | `Dreams`          | Three pendant-dream completion bits `$01/$02/$04`, plus personal Zelda dream `$08`. |
 | `$7EF411` | `WaterGateStates` | Bitfield for Zora Temple water gate persistence (bit0=room 0x27, bit1=room 0x25). |
 | `$7EF347` | `ZoraMask`        | Flag indicating if the player has obtained the Zora Mask.                |
 | `$7EF348` | `BunnyHood`       | Flag indicating if the player has obtained the Bunny Hood.               |
@@ -205,4 +206,5 @@ This section details the allocation of custom code and data within the ROM banks
 | $3F        |                       | DW ZS Tile32                                           |
 | $40        | `$408000` - `$40FFFF` | LW World Map                                           |
 | $41        | `$418000` - `$41FFFF` | DW World Map                                           |
+| $42        | `$428000` - `$42FFFF` | Title Link art below `$42D000`; song helpers `$42D000-$42D3FF`; Moon Pearl dream `$42D400-$42FFFF` (isolated candidate; Asar bounds enforced) |
 | Patches    | Various               | Targeted modifications within vanilla ROM addresses    | `Core/patches.asm`, `Util/item_cheat.asm` |

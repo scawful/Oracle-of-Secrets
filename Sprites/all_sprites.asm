@@ -14,6 +14,9 @@ incsrc Core/sprite_new_table.asm
 incsrc "Sprites/NPCs/farore.asm"
 %log_end("Sprite_Farore", !LOG_SPRITES)
 
+; Own bank-$42 allocation; no scene body is appended to bank $30.
+incsrc "Sprites/NPCs/dream_zelda.asm"
+
 %log_start("hyrule_dream", !LOG_SPRITES)
 incsrc "Sprites/NPCs/hyrule_dream.asm"
 %log_end("hyrule_dream", !LOG_SPRITES)

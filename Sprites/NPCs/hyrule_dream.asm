@@ -1,5 +1,11 @@
 Sprite_HyruleDream_Prep:
 {
+  if !ENABLE_MOON_PEARL_DREAM == 1
+    LDA.w SprSubtype, X : CMP.b #!DreamZelda_Subtype : BNE +
+      JSL DreamZelda_Prep
+      RTS
+    +
+  endif
   if !ENABLE_DREAM_WISDOM_SCENE == 1
     ; Wisdom scene actors (subtypes $D1/$D2, Sprites/NPCs/dream_wisdom.asm),
     ; Power scene actors ($D3/$D4, Sprites/NPCs/dream_power.asm)
@@ -26,6 +32,12 @@ Sprite_HyruleDream_Prep:
 
 Sprite_HyruleDream_Main:
 {
+  if !ENABLE_MOON_PEARL_DREAM == 1
+    LDA.w SprSubtype, X : CMP.b #!DreamZelda_Subtype : BNE +
+      JSL DreamZelda_Main
+      RTS
+    +
+  endif
   if !ENABLE_DREAM_WISDOM_SCENE == 1
     LDA.w SprSubtype, X : CMP.b #!DreamWisdom_SubCaptain : BCC .by_room
       if !ENABLE_DREAM_POWER_SCENE == 1

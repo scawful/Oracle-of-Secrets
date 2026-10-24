@@ -6,8 +6,8 @@
 ;
 ; TERMINOLOGY: "Windmill Guy" = WindmillGuy
 ;   - Requires Ocarina ($7EF34C >= 1)
-;   - Requires Song of Healing ($7EF34C >= 2)
-;   - Teaches Song of Storms ($7EF34C = 3)
+;   - Requires Song of Healing (SongBits !Song_Healing)
+;   - Teaches Song of Storms (SongBits |= !Song_Storms)
 ;
 ; MESSAGES:
 ;   0x1D5 - No Ocarina yet
@@ -16,10 +16,10 @@
 ;   0x1D8 - Already knows Song of Storms
 ;
 ; FLAGS READ:
-;   $7EF34C - Ocarina/song progression
+;   $7EF34C - Ocarina ownership; SongBits - learned songs
 ;
 ; FLAGS WRITTEN:
-;   $7EF34C = 3 - Song of Storms learned
+;   SongBits |= !Song_Storms - Song of Storms learned
 ;
 ; NOTE:
 ;   Uses Race Game Lady draw routine as a placeholder.
@@ -82,12 +82,12 @@ Sprite_WindmillGuy_Main:
   JSL Sprite_PlayerCantPassThrough
   %PlayAnimation(0, 1, 16)
 
-  LDA.l $7EF34C : CMP.b #$01 : BCC .no_ocarina
+  JSL Ocarina_SongsInOrder_Long : CMP.b #$01 : BCC .no_ocarina
                   CMP.b #$02 : BCC .need_healing
                   CMP.b #$03 : BCS .already
 
   %ShowSolicitedMessage($1D7) : BCC .done
-    LDA.b #$03 : STA.l $7EF34C
+    LDA.b #!Song_Storms : JSL Ocarina_LearnSong_Long
     LDA.b #$13
     STA.w $0CF8
     JSL $0DBB67 ; Link_CalculateSFXPan

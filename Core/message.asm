@@ -65,6 +65,8 @@ MessageExpandedData:
   ;   the king, $20A D2.05 Farore's remembered voice, $20B D2.06 Maple in the hut
   ; $20C-$20E: Wisdom pendant dream (D1), shots 4-6: $20C D1.03 and $20D D1.04
   ;   the prison's voice in the great hall, $20E D1.05 Maple in the hut
+  ; $20F-$210: reserved for the finale Healing scene (PR247)
+  ; $211-$213: Moon Pearl Zelda dream: greeting, Time lesson, Maple offer
   ; $1BE: Ranch Girl Ocarina gift (replaces vanilla $17D)
   ; $1CB: Village Elder post-D1 ranch hint (replaces vanilla $177)
   ; Vanilla text region 2 ($0E:DF40, $167-$18C) is length-pinned by the
