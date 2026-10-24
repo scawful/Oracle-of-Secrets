@@ -55,6 +55,7 @@ incsrc "Dungeons/spike_subtype.asm"
 
 incsrc "Dungeons/attract_scenes.asm"
 print  "End of attract_scenes.asm         ", pc
+incsrc "Core/Cutscene/attract_art.asm"
 
 incsrc "Collision/custom_collision.asm"
 ; water_collision.asm moved to Bank $2C after main dungeon code

@@ -59,6 +59,7 @@
 !ENABLE_SOURCE_SPRITE_SHEETS          = 1
 !ENABLE_SWORD_WARP_HOME               = 1
 !ENABLE_TEXT_BOX_SHADE                = 1
+!ENABLE_TITLE_LINK_ART                = 1
 !ENABLE_TRUTHFUL_CONTROLS             = 1
 !ENABLE_VILLAGE_DOG_POLISH            = 1
 !ENABLE_WATER_GATE_HOOKS              = 1
