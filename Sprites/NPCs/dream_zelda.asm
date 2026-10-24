@@ -201,6 +201,7 @@ DreamZelda_Landing:
 DreamZelda_Prep:
 {
   %SetHarmless(1)                         ; contact must not recoil before talking
+  LDA.b #$07 : STA.w SprHitbox, X         ; talk reaches past the solid NPC boundary
   STZ.w SprAction, X
   STZ.w SprFrame, X
   RTL
