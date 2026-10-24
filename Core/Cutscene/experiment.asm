@@ -115,7 +115,8 @@ Exp_PalDW   = $7FF6C0 ; Abyss BG palettes 2-7
 !ExpP_StalWest    = 10
 !ExpP_StalEast    = 11
 !ExpP_StalNorth   = 12
-!ExpP_Count       = 13
+!ExpP_AbyssBias   = 6  ; scene-local poses13-18 mirror the six Stalfos poses7-12
+!ExpP_Count       = 19
 
 ; Messages
 !ExpMsg_ZoraA_Resonance = $01D9 ; M1a
@@ -357,6 +358,8 @@ Exp_Poses:
   db .farore_front-.data, .farore_step-.data, .farore_back-.data
   db .stal_low-.data, .stal_mid-.data, .stal-.data
   db .stal_west-.data, .stal_east-.data, .stal_north-.data
+  db .abyss_low-.data, .abyss_mid-.data, .abyss_stal-.data
+  db .abyss_west-.data, .abyss_east-.data, .abyss_north-.data
 
   ; Pose shown on odd 8-frame steps while walking (0 = same pose).
   .walk_alt
@@ -364,6 +367,7 @@ Exp_Poses:
   db !ExpP_FaroreStep, !ExpP_FaroreFront, 0
   db 0, 0, 0
   db 0, 0, 0
+  db 0, 0, 0, 0, 0, 0
 
   .data
   .hide
@@ -385,18 +389,18 @@ Exp_Poses:
   db 0, 10, $6C, $38, $02
   .farore_front
   db 3
-  db 0, 0, $AA, $3B, $02
-  db 0, -12, $A8, $3B, $02
+  db 0, 4, $AA, $3B, $02
+  db 0, -8, $A8, $3B, $02
   db 0, 10, $6C, $38, $02
   .farore_step
   db 3
-  db 0, 0, $88, $7B, $02
-  db 0, -12, $A8, $3B, $02
+  db 0, 4, $88, $7B, $02
+  db 0, -8, $A8, $3B, $02
   db 0, 10, $6C, $38, $02
   .farore_back
   db 3
-  db 0, 0, $8C, $3B, $02
-  db 0, -12, $8A, $3B, $02
+  db 0, 4, $8C, $3B, $02
+  db 0, -8, $8A, $3B, $02
   db 0, 10, $6C, $38, $02
   .stal_low                               ; skull only, at the ground line
   db 1
@@ -434,6 +438,22 @@ Exp_Poses:
   db -4, 0, $64, $3D, $02
   db 14, 5, $38, $79, $00                 ; spear
   db 6, -11, $26, $39, $02
+  ; Existing PR270 Ages cells in slot1, palette6. Same feet baseline as
+  ; the pirate's y+12 eight-pixel feet; no shield/spear pieces in the Abyss.
+  .abyss_low
+  db 1
+  db 0, 8, $46, $3D, $02
+  .abyss_mid
+  db 1
+  db 0, 6, $44, $3D, $02
+  .abyss_stal
+  .abyss_west
+  .abyss_north
+  db 1
+  db 0, 4, $40, $3D, $02
+  .abyss_east
+  db 1
+  db 0, 4, $42, $7D, $02
   .end
 }
 assert Exp_Poses_end-Exp_Poses_data <= $100, "Exp_Poses data must stay under 256 bytes"
@@ -881,11 +901,38 @@ Exp_LoadSheets:
     PLX
     INX : CPX.b #$04 : BCC .next
   PLB
+  JSR Exp_LoadAbyssStalfosTiles
   JSR Exp_LoadMirrorTiles
   RTS
 
   .sheets
   db !ExpSheet0, !ExpSheet1, !ExpSheet2, !ExpSheet3
+}
+
+; Scene-only copy of the already-authored PR270 Ages cells. No global sheet
+; pointer or enemy hook changes. Load only after the native slot uploads and
+; while Exp_LoadSheets keeps forced blank on. Kalyxo reload restores sheet0D.
+Exp_LoadAbyssStalfosTiles:
+{
+  LDA.l Exp_Area : BEQ .done
+  LDA.b #$80 : STA.w $2115
+  REP #$30
+  LDA.w #$5400 : STA.w $2116
+  LDX.w #$0000
+  .top
+    LDA.l .tiles, X : STA.w $2118
+    INX : INX : CPX.w #$0100 : BCC .top
+  LDA.w #$5500 : STA.w $2116
+  .bottom
+    LDA.l .tiles, X : STA.w $2118
+    INX : INX : CPX.w #$0200 : BCC .bottom
+  SEP #$30
+  .done
+  RTS
+  .tiles
+  incbin "../../Sprites/Enemies/gfx/intro_abyss_stalfos.bin"
+  .tiles_end
+  assert .tiles_end-.tiles == $0200, "Intro Abyss cells require two eight-tile 4bpp rows"
 }
 
 ; Reuse the existing item-receipt Mirror, including its upper palette half.
@@ -1033,6 +1080,11 @@ Exp_SaveAbyssPalettes:
     LDA.l Exp_PalSpr, X : STA.l $7EC620, X
     DEX : DEX : BPL .loop
   LDA.l $7EC500 : STA.l Exp_BackDW
+  ; Explicit scene palette for the approved Ages art indices1/5/6. These are
+  ; the already-reviewed bone white/outline/accent tones, not pirate gold.
+  LDA.w #$7FFF : STA.l $7EC6C2
+  LDA.w #$14A5 : STA.l $7EC6CA
+  LDA.w #$635A : STA.l $7EC6CC
   SEP #$30
   RTS
 }
@@ -1221,6 +1273,13 @@ Exp_DrawActors:
       JMP .next
     +
     STA.b $0A
+    ; Tableaus bypass normal sprite AI/draw hooks. Select actual Ages poses
+    ; explicitly for the Abyss while keeping scripted pose IDs unchanged.
+    LDA.l Exp_Area : BEQ .pose_ready
+    LDA.b $0A : CMP.b #!ExpP_StalLow : BCC .pose_ready
+    CMP.b #!ExpP_StalNorth+1 : BCS .pose_ready
+    CLC : ADC.b #!ExpP_AbyssBias : STA.b $0A
+    .pose_ready
     ; Walking: alternate pose and a 1 px bob every 8 frames.
     STZ.b $0E : STZ.b $0F
     LDA.l Exp_ActX, X : CMP.l Exp_ActTX, X : BNE .moving
