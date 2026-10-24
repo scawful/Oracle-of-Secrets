@@ -73,6 +73,8 @@ EMPTY_STUBS = {0x63, 0x69, 0x6C, 0x6D, 0x6E, 0x6F, 0x70}
 # Sheet claims by branch/PR. Extend with --owners FILE.json ({"0x63": "text"}).
 OWNERS = {
     0x63: "PR #228 claude/volcano-57-import-442b78 (clone of $33 for the 9 volcano areas, slot 5)",
+    0x6F: "D3 prison art, pick B (clone of $1B; $23:C000; room blockset $4F slot 4, rooms $64/$65)",
+    0x70: "D3 prison art, pick B (clone of $22, 7->5 remap on 8 owned tiles; $23:C800; room blockset $4F slot 5)",
 }
 
 # --- Bank ownership (PLAN.md piece 0) ---------------------------------------
