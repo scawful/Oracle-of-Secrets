@@ -39,6 +39,8 @@
 ; ATTRACT and ARRIVAL require CUTSCENE_FRAMEWORK (asserted in Oracle_main.asm).
 !ENABLE_CUTSCENE_FRAMEWORK           = 1
 !ENABLE_CUSTOM_ATTRACT_SEQUENCE      = 1
+; Approved Link/Hyrule illustration before the idle-title history sequence.
+!ENABLE_TITLE_LINK_ART               = 1
 !ENABLE_ORACLE_ARRIVAL_SEQUENCE      = 1
 ; New-file Mirror experiment scene before the arrival (Core/Cutscene/experiment.asm).
 ; Requires ORACLE_ARRIVAL_SEQUENCE (asserted in Oracle_main.asm).

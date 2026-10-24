@@ -1,0 +1,81 @@
+{
+  "compiler": "Scripts/Generate/compile_intro_art.py",
+  "compiler_sha256": "acb78f41f323ba8c8cf86aad0c403905666fe508a875088ef3d6153700622f79",
+  "conversion": {
+    "opaque_indices": [
+      1,
+      15
+    ],
+    "palette": "RGB555 rounded to nearest, canonical numeric order",
+    "quantize": "15-color MEDIANCUT, no dithering",
+    "resize": "centered fit, LANCZOS, 240x136 tile-aligned panel",
+    "transparent_index": 0
+  },
+  "counts": {
+    "opaque_colors": 15,
+    "palette_entries": 16,
+    "panel_tile_cells": 510,
+    "tiles_including_blank": 458
+  },
+  "files": {
+    "approved_source.png": {
+      "bytes": 1574862,
+      "sha256": "2108c0950f9207cf09f34d29914eb1a8fe7b381f0baa0aea969958280f212f12"
+    },
+    "link_hyrule_intro.bin": {
+      "bytes": 14656,
+      "sha256": "bb18074b9b43ef68d1a6eb9d8908582a6b6af02b5681fe565a0067e233ba171c"
+    },
+    "link_hyrule_intro.map": {
+      "bytes": 2048,
+      "sha256": "9a7762627843562b00b7ce6877f1f4b3979e89b42f1d9dd3b4717bd3e8c0f8bf"
+    },
+    "link_hyrule_intro.pal": {
+      "bytes": 32,
+      "sha256": "a326b7c5b7bb1f331b265f621c67b8c838a7a480d6ee0a69d3f68d7bfb5a0bce"
+    }
+  },
+  "layout": {
+    "bg1_map_vram_word_address": 24576,
+    "blank_tile_index": 0,
+    "map_format": "little-endian 16-bit local tile indices; no flags",
+    "max_tiles": 512,
+    "palette_number": 0,
+    "panel_pixels": [
+      240,
+      136
+    ],
+    "panel_tile_origin": [
+      1,
+      5
+    ],
+    "screen_pixels": [
+      256,
+      224
+    ],
+    "tile_format": "SNES planar 4bpp",
+    "tile_vram_word_address": 0,
+    "tilemap_tiles": [
+      32,
+      32
+    ]
+  },
+  "pillow_version": "12.3.0",
+  "preview": {
+    "bytes": 15650,
+    "sha256": "3c038b3b58b1b850932f8b660b6d6870d060ec97a8e444ad08a8daff4789c29f"
+  },
+  "schema_version": 1,
+  "selfcheck": {
+    "decoded_indices_equal_quantized": "PASS",
+    "decoded_visible_indices_sha256": "af1007c0a11c917575b276ac6039a13f0eb0a7347f4bb97e704765508b4b5fef",
+    "known_bitplane_pattern": "PASS",
+    "preview_rgb_sha256": "a659afee893ade1afca1b7816fa119ba24620ec96d3f889a9f887883c7d76309"
+  },
+  "source": {
+    "file": "approved_source.png",
+    "height": 941,
+    "sha256": "2108c0950f9207cf09f34d29914eb1a8fe7b381f0baa0aea969958280f212f12",
+    "width": 1672
+  }
+}
