@@ -1,0 +1,475 @@
+{
+  "schema_version": 1,
+  "base_sha256": "5689b1d383331b383670bdbb2d8470443d9431e22678e90d184ca5f8fad85b62",
+  "tile16_first": 3968,
+  "palette_row": 3,
+  "chr_slot": 3,
+  "water_attr": 7616,
+  "tiles": {
+    "planks_a": {
+      "tile16": 3968,
+      "words": [
+        3275,
+        3276,
+        3276,
+        3275
+      ],
+      "collision_intent": "walk"
+    },
+    "planks_b": {
+      "tile16": 3969,
+      "words": [
+        3276,
+        3275,
+        3275,
+        3276
+      ],
+      "collision_intent": "walk"
+    },
+    "planks_c": {
+      "tile16": 3970,
+      "words": [
+        3275,
+        3279,
+        3276,
+        3275
+      ],
+      "collision_intent": "walk"
+    },
+    "plank_patch": {
+      "tile16": 3971,
+      "words": [
+        3284,
+        3276,
+        3275,
+        3279
+      ],
+      "collision_intent": "walk"
+    },
+    "deck_north": {
+      "tile16": 3972,
+      "words": [
+        3286,
+        19670,
+        3275,
+        3276
+      ],
+      "collision_intent": "walk"
+    },
+    "deck_south": {
+      "tile16": 3973,
+      "words": [
+        3275,
+        3276,
+        36054,
+        52438
+      ],
+      "collision_intent": "walk"
+    },
+    "deck_west": {
+      "tile16": 3974,
+      "words": [
+        3293,
+        3275,
+        3293,
+        3276
+      ],
+      "collision_intent": "walk"
+    },
+    "deck_east": {
+      "tile16": 3975,
+      "words": [
+        3275,
+        19677,
+        3276,
+        19677
+      ],
+      "collision_intent": "walk"
+    },
+    "deck_northwest": {
+      "tile16": 3976,
+      "words": [
+        3295,
+        3286,
+        3293,
+        3275
+      ],
+      "collision_intent": "walk"
+    },
+    "deck_northeast": {
+      "tile16": 3977,
+      "words": [
+        3286,
+        19679,
+        3275,
+        19677
+      ],
+      "collision_intent": "walk"
+    },
+    "deck_southwest": {
+      "tile16": 3978,
+      "words": [
+        3293,
+        3275,
+        36063,
+        36054
+      ],
+      "collision_intent": "walk"
+    },
+    "deck_southeast": {
+      "tile16": 3979,
+      "words": [
+        3275,
+        19677,
+        36054,
+        52447
+      ],
+      "collision_intent": "walk"
+    },
+    "inner_northwest": {
+      "tile16": 3980,
+      "words": [
+        3300,
+        3276,
+        3276,
+        3275
+      ],
+      "collision_intent": "walk"
+    },
+    "inner_northeast": {
+      "tile16": 3981,
+      "words": [
+        3275,
+        19684,
+        3276,
+        3275
+      ],
+      "collision_intent": "walk"
+    },
+    "inner_southwest": {
+      "tile16": 3982,
+      "words": [
+        3275,
+        3276,
+        36068,
+        3275
+      ],
+      "collision_intent": "walk"
+    },
+    "inner_southeast": {
+      "tile16": 3983,
+      "words": [
+        3275,
+        3276,
+        3276,
+        52452
+      ],
+      "collision_intent": "walk"
+    },
+    "cap_north": {
+      "tile16": 3984,
+      "words": [
+        3295,
+        19679,
+        3293,
+        19677
+      ],
+      "collision_intent": "walk"
+    },
+    "cap_south": {
+      "tile16": 3985,
+      "words": [
+        3293,
+        19677,
+        36063,
+        52447
+      ],
+      "collision_intent": "walk"
+    },
+    "cap_west": {
+      "tile16": 3986,
+      "words": [
+        3295,
+        3286,
+        36063,
+        36054
+      ],
+      "collision_intent": "walk"
+    },
+    "cap_east": {
+      "tile16": 3987,
+      "words": [
+        3286,
+        19679,
+        36054,
+        52447
+      ],
+      "collision_intent": "walk"
+    },
+    "strip_horizontal": {
+      "tile16": 3988,
+      "words": [
+        3286,
+        19670,
+        36054,
+        52438
+      ],
+      "collision_intent": "walk"
+    },
+    "strip_vertical": {
+      "tile16": 3989,
+      "words": [
+        3293,
+        19677,
+        3293,
+        19677
+      ],
+      "collision_intent": "walk"
+    },
+    "fascia": {
+      "tile16": 3990,
+      "words": [
+        3268,
+        3268,
+        3281,
+        3281
+      ],
+      "collision_intent": "solid"
+    },
+    "fascia_pile": {
+      "tile16": 3991,
+      "words": [
+        3268,
+        3268,
+        3285,
+        19669
+      ],
+      "collision_intent": "solid"
+    },
+    "pile": {
+      "tile16": 3992,
+      "words": [
+        3292,
+        19676,
+        3285,
+        19669
+      ],
+      "collision_intent": "solid"
+    },
+    "brace_left": {
+      "tile16": 3993,
+      "words": [
+        3297,
+        3301,
+        7616,
+        3307
+      ],
+      "collision_intent": "solid"
+    },
+    "brace_right": {
+      "tile16": 3994,
+      "words": [
+        19685,
+        19681,
+        19691,
+        7616
+      ],
+      "collision_intent": "solid"
+    },
+    "ladder_top": {
+      "tile16": 3995,
+      "words": [
+        3304,
+        19688,
+        3308,
+        19692
+      ],
+      "collision_intent": "walk"
+    },
+    "crate": {
+      "tile16": 3997,
+      "words": [
+        3312,
+        19696,
+        3313,
+        19697
+      ],
+      "collision_intent": "solid"
+    },
+    "barrel": {
+      "tile16": 3998,
+      "words": [
+        3316,
+        19700,
+        3317,
+        19701
+      ],
+      "collision_intent": "solid"
+    },
+    "rope_coil": {
+      "tile16": 3999,
+      "words": [
+        3309,
+        3310,
+        3311,
+        3319
+      ],
+      "collision_intent": "walk"
+    }
+  },
+  "chr": [
+    {
+      "unique_art_index": 0,
+      "collision_intent": "walk",
+      "chr": 203,
+      "collision": 0
+    },
+    {
+      "unique_art_index": 1,
+      "collision_intent": "walk",
+      "chr": 204,
+      "collision": 0
+    },
+    {
+      "unique_art_index": 2,
+      "collision_intent": "walk",
+      "chr": 207,
+      "collision": 0
+    },
+    {
+      "unique_art_index": 3,
+      "collision_intent": "walk",
+      "chr": 212,
+      "collision": 0
+    },
+    {
+      "unique_art_index": 4,
+      "collision_intent": "walk",
+      "chr": 214,
+      "collision": 0
+    },
+    {
+      "unique_art_index": 5,
+      "collision_intent": "walk",
+      "chr": 221,
+      "collision": 0
+    },
+    {
+      "unique_art_index": 6,
+      "collision_intent": "walk",
+      "chr": 223,
+      "collision": 0
+    },
+    {
+      "unique_art_index": 7,
+      "collision_intent": "walk",
+      "chr": 228,
+      "collision": 0
+    },
+    {
+      "unique_art_index": 8,
+      "collision_intent": "solid",
+      "chr": 196,
+      "collision": 1
+    },
+    {
+      "unique_art_index": 9,
+      "collision_intent": "solid",
+      "chr": 209,
+      "collision": 1
+    },
+    {
+      "unique_art_index": 10,
+      "collision_intent": "solid",
+      "chr": 213,
+      "collision": 1
+    },
+    {
+      "unique_art_index": 11,
+      "collision_intent": "solid",
+      "chr": 220,
+      "collision": 1
+    },
+    {
+      "unique_art_index": 12,
+      "collision_intent": "solid",
+      "chr": 225,
+      "collision": 1
+    },
+    {
+      "unique_art_index": 13,
+      "collision_intent": "solid",
+      "chr": 229,
+      "collision": 1
+    },
+    {
+      "unique_art_index": 21,
+      "collision_intent": "solid",
+      "chr": 235,
+      "collision": 1
+    },
+    {
+      "unique_art_index": 14,
+      "collision_intent": "walk",
+      "chr": 232,
+      "collision": 0
+    },
+    {
+      "unique_art_index": 15,
+      "collision_intent": "walk",
+      "chr": 236,
+      "collision": 0
+    },
+    {
+      "unique_art_index": 16,
+      "collision_intent": "solid",
+      "chr": 240,
+      "collision": 1
+    },
+    {
+      "unique_art_index": 22,
+      "collision_intent": "solid",
+      "chr": 241,
+      "collision": 1
+    },
+    {
+      "unique_art_index": 17,
+      "collision_intent": "solid",
+      "chr": 244,
+      "collision": 1
+    },
+    {
+      "unique_art_index": 23,
+      "collision_intent": "solid",
+      "chr": 245,
+      "collision": 1
+    },
+    {
+      "unique_art_index": 18,
+      "collision_intent": "walk",
+      "chr": 237,
+      "collision": 0
+    },
+    {
+      "unique_art_index": 19,
+      "collision_intent": "walk",
+      "chr": 238,
+      "collision": 0
+    },
+    {
+      "unique_art_index": 24,
+      "collision_intent": "walk",
+      "chr": 239,
+      "collision": 0
+    },
+    {
+      "unique_art_index": 25,
+      "collision_intent": "walk",
+      "chr": 247,
+      "collision": 0
+    }
+  ],
+  "excluded": {
+    "ladder_bottom": "Reserved art only; climbing behavior is not implemented."
+  }
+}
