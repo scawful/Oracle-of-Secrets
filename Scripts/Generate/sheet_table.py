@@ -19,15 +19,25 @@ def decomp(rom, addr):
 TBL_BANK, TBL_HIGH, TBL_LOW = 0x00CF80, 0x00D05F, 0x00D13E
 N = 223
 
+# Relocated arrays (Core/gfx_sheet_table.asm): bank $23, $100 rows each.
+NEW_BANK, NEW_HIGH, NEW_LOW = 0x23FD00, 0x23FE00, 0x23FF00
+
+def relocated(rom):
+    """True when Decompress_sprite_arbitrary ($00:E772) is a JSL to the helper."""
+    return rom[pc(0x00E772)] == 0x22
+
 def table_operands(rom):
     # $00:E772 LDA.w $CFF3,Y ; $00:E777 LDA.w $D0D2,Y ; $00:E77C LDA.w $D1B1,Y
     out = {}
+    if relocated(rom):
+        return out
     for name, a in (('bank', 0x00E772), ('high', 0x00E777), ('low', 0x00E77C)):
         i = pc(a); out[name] = (rom[i], rom[i+1] | (rom[i+2] << 8))
     return out
 
 def ptr(rom, g):
-    return (rom[pc(TBL_BANK)+g] << 16) | (rom[pc(TBL_HIGH)+g] << 8) | rom[pc(TBL_LOW)+g]
+    bank, high, low = (NEW_BANK, NEW_HIGH, NEW_LOW) if relocated(rom) else (TBL_BANK, TBL_HIGH, TBL_LOW)
+    return (rom[pc(bank)+g] << 16) | (rom[pc(high)+g] << 8) | rom[pc(low)+g]
 
 def survey(rom):
     rows = []

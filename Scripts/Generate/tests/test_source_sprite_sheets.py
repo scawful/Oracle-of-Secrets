@@ -232,16 +232,13 @@ class SourceSheets(unittest.TestCase):
         fixture.write_text(include,sheets.asm_text(items))
         manifest=generate_manifest(fixture.root,dev_rom_path=fixture.write_dev_rom())
         self.assertFalse(manifest['protected_regions']['exact'])
-        regions=manifest['protected_regions']['regions']
-        for table in (TBL_BANK,TBL_HIGH,TBL_LOW):
-            pointer=table+0xD7
-            covering=[r for r in regions if int(r['start'],16)<=pointer<int(r['end'],16)]
-            self.assertEqual(len(covering),1)
-            self.assertEqual((int(covering[0]['start'],16),int(covering[0]['end'],16)),
-                             (pointer,pointer+1))
+        # Pointer rows live in relocated arrays in bank $23, which asm ownership covers.
+        bank=next(b for b in manifest['owned_banks']['banks'] if b['bank']=='0x23')
+        starts={int(r['start'],16) for r in bank['regions']}
+        for table in (sheets.NEW_BANK,sheets.NEW_HIGH,sheets.NEW_LOW):
+            self.assertIn(table+0xD7,starts)
             for neighbor in (0xD8,0xD9):
-                self.assertFalse(any(int(r['start'],16)<=table+neighbor<int(r['end'],16)
-                                     for r in regions),f'Follower sheet ${neighbor:02X} pointer is protected')
+                self.assertNotIn(table+neighbor,starts,f'Follower sheet ${neighbor:02X} pointer is protected')
 
     def test_actual_build_guard_refuses_wrong_or_truncated_base_before_output(self):
         # Real build wrapper/receipt/guard in a portable disposable repository.

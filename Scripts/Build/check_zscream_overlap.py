@@ -25,6 +25,10 @@ OWNED_REGIONS = (
     # and rejects tables that exceed it. The collision source contract excludes
     # this area from the editor's per-room collision streams.
     ("Dungeons/generated/water_fill_table.asm", 0x12E000, 0x12FFFF),
+    # Relocated graphics sheet pointer arrays and their readers' helpers, at the
+    # top of bank $23. sheet_overrides.asm rewrites rows inside the arrays.
+    ("Core/gfx_sheet_table.asm", 0x11FC00, 0x11FFFF),
+    ("Core/Generated/source_sprite_sheets/sheet_overrides.asm", 0x11FD00, 0x11FFFF),
 )
 
 

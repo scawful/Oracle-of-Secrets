@@ -184,7 +184,10 @@ else
   print "*** ZSCustomOverworld DISABLED ***"
 endif
 
-; Source-owned compressed sheets patch only their streams and pointer bytes.
+; Relocated graphics sheet pointer table (copies the base ROM rows).
+incsrc "Core/gfx_sheet_table.asm"
+
+; Source-owned compressed sheets patch their streams and rows of the table above.
 if !ENABLE_SOURCE_SPRITE_SHEETS == 1
   incsrc "Core/Generated/source_sprite_sheets/sheet_overrides.asm"
 endif

@@ -2261,8 +2261,8 @@ def generate_manifest(
     # not protected, and asar writes nothing there. yaze allows only these three
     # keys; "end" is exclusive; it must stay disjoint from dungeon_stream_regions.
     manifest["graphics_sheet_regions"] = {
-        "description": "Graphics-only free space: bank $23 (PC 0x118000-0x11FFFF), 32 KB of 0x00, not owned or protected; asar writes nothing there.",
-        "allocation_regions": [{"start": "0x238000", "end": "0x248000"}],
+        "description": "Graphics-only free space: bank $23 below the relocated sheet pointer arrays (PC 0x118000-0x11FBFF) plus bank $24 (PC 0x120000-0x127FFF); asar writes nothing there. Bank $23 from 0x23FC00 holds the sheet pointer arrays (Core/gfx_sheet_table.asm).",
+        "allocation_regions": [{"start": "0x238000", "end": "0x23FC00"}, {"start": "0x240000", "end": "0x248000"}],
         "reserved_sheets": ["0x7B", "0x7C"],
     }
     source_sheet_spec = root / "Data/graphics/source_sprite_sheets.json"
