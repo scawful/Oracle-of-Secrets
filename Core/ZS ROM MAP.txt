@@ -17,13 +17,18 @@ And an additional 3 banks at the end of the 2.0MB 0x1E8000 to 0x1FFFFF
     Seems to have been some old dungeon object data expansion but that has since been moved.
 
 0x118000 - 0x11FFFF: 1 Bank
-    Seems to have been some old dungeon object data expansion but that has since been moved.
+    Legacy object expansion reservation retained except these source-policy fields:
+    [0x11C000,0x11D000): D3 B/V20 sheets 6F/70, Yaze graphics owned
+    [0x11FC00,0x120000): exclusive Oracle graphics helpers/tables, including padding
+    Other graphics use remains constrained by the manifest; no bank 24 grant.
 
 0x120000 - 0x127FFF: 1 Bank
     Expanded overlay data
 
 0x128000 - 0x12FFFF: 1 Bank
-    Custom collision data
+    Custom collision data, editor-owned with its existing pointer table
+    [0x12C210,0x12D313): initial D3 room65 field, relocatable by collision writer
+    WaterFill [0x12E000,0x130000) remains separate ASM storage
 
 0x130000 - 0x137FFF: 1 Bank
     Overworld map data overflow
@@ -36,6 +41,8 @@ And an additional 3 banks at the end of the 2.0MB 0x1E8000 to 0x1FFFFF
 
 0x148000 - 0x14FFFF: 1 Bank
     Expanded Dungeon object data
+    [0x14841E,0x1486B3): selected D3 room64/65 streams and door suffixes
+    Yaze readable storage; excluded from unrelated new COW allocation
 
 0x1E0000 - 0x1E7FFF: 1 Bank
     Custom ASM Patches
