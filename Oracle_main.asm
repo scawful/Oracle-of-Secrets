@@ -5,9 +5,9 @@
 ; Custom Code and Data Memory Map:
 ;
 ;   Bank $20 ($208000): Expanded Music (Music/all_music.asm)
-;   Bank $21-$27: ZS Reserved
+;   Bank $21-$27: Editor reserved; bank $23 split in Core/ZS ROM MAP.txt
 ;   Bank $28 ($288000): ZSCustomOverworld (Overworld/ZSCustomOverworld.asm)
-;   Bank $29-$2A: ZS Reserved
+;   Bank $29-$2A: Editor reserved; selected D3 streams remain Yaze-owned
 ;   Bank $2B ($2B8000): Items (Items/all_items.asm)
 ;   Bank $2C ($2C8000): Underworld/Dungeons (Dungeons/dungeons.asm)
 ;   Bank $2D ($2D8000): Menu (Menu/menu.asm)
