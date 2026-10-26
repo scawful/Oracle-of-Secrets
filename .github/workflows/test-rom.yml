@@ -70,6 +70,14 @@ jobs:
           printf '\x30\x02' | dd of=test.sfc bs=1 seek=$((0x4863E)) conv=notrunc 2>/dev/null  # $09863E AncillaAdd_ItemReceipt operand $0230 (vanilla)
           printf '\x28' | dd of=test.sfc bs=1 seek=$((0x6B205)) conv=notrunc 2>/dev/null  # $0DB205 King Dodongo health (vanilla $28)
 
+          # Original instructions and grave chest guarded by Overworld/early_mirror.asm.
+          # Explicit headerless LoROM PC offsets, verified against the edit base.
+          printf '\xA5\x6C\xD0\x0F' | dd of=test.sfc bs=1 seek=$((0x3A942)) conv=notrunc 2>/dev/null  # $07A942 LinkItem_Mirror doorway check
+          printf '\xAF\xCA\xF3\x7E\x49\x40\x8F\xCA\xF3\x7E' | dd of=test.sfc bs=1 seek=$((0x13236)) conv=notrunc 2>/dev/null  # $02B236 MirrorWarp_Initialize world toggle
+          printf '\xA9\x23\x85\x11' | dd of=test.sfc bs=1 seek=$((0x2AFC6)) conv=notrunc 2>/dev/null  # $05AFC6 Sprite_6C_MirrorPortal activation
+          printf '\x22\x9D\xE6\x07' | dd of=test.sfc bs=1 seek=$((0x12C8F)) conv=notrunc 2>/dev/null  # $02AC8F cached-exit moving animation
+          printf '\x13\x01\x1A' | dd of=test.sfc bs=1 seek=$((0xEA7F)) conv=notrunc 2>/dev/null  # $01EA7F room $113 Mirror chest record
+
           # Original tag $24 vector and Holes2 body guarded by custom_tag.asm.
           printf '\x89\xCC' | dd of=test.sfc bs=1 seek=$((0xC2C5)) conv=notrunc 2>/dev/null  # $01C2C5 vector -> $01CC89
           printf '\xC2\x30\x20\xCC\xCD\x90\xF6\xA0\x05\x00\x80\xD9' | dd of=test.sfc bs=1 seek=$((0xCC89)) conv=notrunc 2>/dev/null  # $01CC89 RoomTag_Holes2
