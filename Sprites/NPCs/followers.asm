@@ -947,8 +947,19 @@ Minecart_AnimDirection:
 
 MinecartFollower_TransitionToSprite:
 {
+  ; Keep the prior owner until allocation and Prep have claimed a replacement.
+  ; A malformed word is not a sprite slot; never truncate it into an actor.
+  LDA.w !MinecartCurrent+1 : BEQ .remember_owner
+    LDA.b #$FF
+    BRA .owner_saved
+  .remember_owner
+  LDA.w !MinecartCurrent
+  .owner_saved
+  PHA
+
   LDA.b #$A3
   JSL Sprite_SpawnDynamically
+  BMI .spawn_failed
   TYX
   JSL Sprite_SetSpawnedCoords
   LDA.w !MinecartDirectionCache : STA.w !MinecartDirection, X
@@ -972,9 +983,68 @@ MinecartFollower_TransitionToSprite:
   LDA Minecart_AnimDirection, X : STA $0D90, X
 
   JSL Sprite_Minecart_Prep
+  PLA
+  JSR MinecartFollower_RetireSupersededCart
   LDA.b #$00 : STA.l $7EF3CC
   RTL
+
+  .spawn_failed
+  ; Leave the old actor, ride ownership and follower intact on allocation failure.
+  PLA
+  RTL
 }
+MinecartFollower_TransitionToSprite_End:
+
+; A8/X8: A=prior slot (or FF), X=replacement. Preserve X/Y. No RAM allocation.
+; Only a successful same-room follower transfer may retire its moving/releasing
+; predecessor. Parked carts and actors from another track/floor/room stay live.
+MinecartFollower_RetireSupersededCart:
+{
+  CMP.b #$10 : BCC .valid_slot
+    RTS
+  .valid_slot
+  PHX : PHY
+  TAY
+
+  LDA.b $10 : CMP.b #$07 : BEQ +
+    JMP .restore
+  +
+  LDA.b $11 : BEQ +
+    JMP .restore
+  +
+  LDA.b $1B : BNE +
+    JMP .restore
+  +
+  LDA.l $7EF3CC : CMP.b #$0B : BEQ +
+    JMP .restore
+  +
+  LDA.b !LinkInCart : BEQ .restore
+  LDA.w !MinecartCurrent+1 : BNE .restore
+  TXA : CMP.w !MinecartCurrent : BNE .restore
+  TYA : CMP.w !MinecartCurrent : BEQ .restore
+
+  LDA.w SprState, X : CMP.b #$09 : BNE .restore
+  LDA.w $0E20, X : CMP.b #$A3 : BNE .restore
+  LDA.w SprSubtype, X : CMP.w !MinecartTrackCache : BNE .restore
+  LDA.w $0F20, X : CMP.b $EE : BNE .restore
+
+  TYX
+  LDA.w SprState, X : CMP.b #$09 : BNE .restore
+  LDA.w $0E20, X : CMP.b #$A3 : BNE .restore
+  LDA.w SprSubtype, X : CMP.w !MinecartTrackCache : BNE .restore
+  LDA.w $0F20, X : CMP.b $EE : BNE .restore
+  LDA.w SprAction, X : CMP.b #$02 : BCC .restore
+                      CMP.b #$07 : BCS .restore
+  ; Each room spans two high-byte pages on each axis.
+  LDA.w SprXH, X : EOR.w POSXH : AND.b #$FE : BNE .restore
+  LDA.w SprYH, X : EOR.w POSYH : AND.b #$FE : BNE .restore
+  STZ.w SprState, X
+
+  .restore
+  PLY : PLX
+  RTS
+}
+MinecartFollower_RetireSupersededCart_End:
 
 ; Minecart Follower Main Routine and Draw
 DrawMinecartFollower:

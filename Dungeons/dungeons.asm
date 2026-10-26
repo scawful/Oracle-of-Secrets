@@ -167,6 +167,9 @@ WaterGate_SelectOverlayPointer:
 ; Water collision system - placed in Bank $2C after main dungeon code
 incsrc "Collision/water_collision.asm"
 
+incsrc "Dungeons/sky_d8_award.asm"
+print  "End of sky_d8_award.asm           ", pc
+
 print "End of dungeons.asm               ", pc
 
 pushpc

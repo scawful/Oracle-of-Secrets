@@ -170,7 +170,11 @@ OBJECT_DATA_REGIONS_PC = (
     (0x138000, 0x140000),
     (0x148000, 0x150000),
 )
-OBJECT_ALLOCATION_REGIONS_PC = ((0x148000, 0x150000),)
+# Keep the selected room64/65 import readable, but out of unrelated COW allocation.
+OBJECT_ALLOCATION_REGIONS_PC = (
+    (0x148000, 0x14841E),
+    (0x1486B3, 0x150000),
+)
 CANONICAL_LOROM_ROM_END_PC = 0x3F0000
 
 AUDITED_UNRESOLVED_ORG_CONTRACTS = {
@@ -456,6 +460,7 @@ def scan_bank_ownership(
     # Known shared banks: yaze writes base data, ASM re-patches parts.
     # These need special handling — yaze can write, but must re-run asar after.
     SHARED_BANKS = {
+        0x23: "Yaze graphics below $23FC00; Oracle helpers/tables at $23FC00-$23FFFF",
         0x28: "ZSCustomOverworld (yaze writes overworld data, ASM patches hooks on top)",
         0x20: "Overworld map data (shared between yaze overworld editor and ASM)",
     }
@@ -1342,10 +1347,10 @@ def _derive_dungeon_stream_regions(data: bytes) -> dict:
     )
     _validate_disjoint_named_ranges(
         [
-            (
-                "objects.allocation_regions[0]",
-                *OBJECT_ALLOCATION_REGIONS_PC[0],
-            ),
+            *[
+                (f"objects.allocation_regions[{index}]", start, end)
+                for index, (start, end) in enumerate(OBJECT_ALLOCATION_REGIONS_PC)
+            ],
             ("sprites.allocation_regions[0]", *sprite_regions[0]),
             ("pot_items.allocation_regions[0]", *pot_regions[0]),
         ],
@@ -2256,14 +2261,30 @@ def generate_manifest(
             compute_protected_regions(vanilla_hooks) if vanilla_hooks else []
         )
         protected_description = "Hook addresses within vanilla ROM banks ($00-$1D). Asar patches these on every build, so yaze edits at these addresses are silently overwritten. Yaze should either skip these during save or warn the user."
-    # Graphics-only free space for yaze sheet relocation (scawful approved
-    # 2026-09-26). Bank $23 (PC 0x118000-0x11FFFF, 32 KB of 0x00) is not owned,
-    # not protected, and asar writes nothing there. yaze allows only these three
-    # keys; "end" is exclusive; it must stay disjoint from dungeon_stream_regions.
+    # A shared bank still needs an exact fence around the complete declared
+    # helper/table reservation, including unwritten helper padding. Keep this
+    # fence in both exact and source-scan manifests when its producer is active.
+    if root / "Core/gfx_sheet_table.asm" in asm_sources:
+        protected.append({
+            "start": "0x23FC00",
+            "end": "0x248000",  # mapped end of physical PC [0x11FC00,0x120000)
+            "size": 0x400,
+            "hook_count": 0,
+            "module": "Core/gfx_sheet_table.asm reservation",
+        })
+        protected_description += (
+            " The full $23FC00-$23FFFF helper/table reservation is also "
+            "protected, including padding; the mapped endpoint grants no bank $24 storage."
+        )
+    # Graphics relocation excludes the selected D3 windows and the top tables.
+    # Existing sheet/source exclusions are retained below; no collision schema changes.
     manifest["graphics_sheet_regions"] = {
-        "description": "Graphics-only free space: bank $23 (PC 0x118000-0x11FFFF), 32 KB of 0x00, not owned or protected; asar writes nothing there.",
-        "allocation_regions": [{"start": "0x238000", "end": "0x248000"}],
-        "reserved_sheets": ["0x7B", "0x7C"],
+        "description": "Shared bank $23 graphics relocation excludes D3 sheets at $23C000-$23CFFF and Oracle helpers/tables at $23FC00-$23FFFF.",
+        "allocation_regions": [
+            {"start": "0x238000", "end": "0x23C000"},
+            {"start": "0x23D000", "end": "0x23FC00"},
+        ],
+        "reserved_sheets": ["0x7B", "0x7C", "0x6F", "0x70"],
     }
     source_sheet_spec = root / "Data/graphics/source_sprite_sheets.json"
     if source_sheet_spec.is_file():

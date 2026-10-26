@@ -45,7 +45,8 @@ assert pc() <= $2F8026, "MessageExpand loader crossed fixed data start $2F8026"
 org $2F8026
 MessageExpandedData:
   ; Allocation notes retained from the former inline message table:
-  ; $1BC-$1C4, $1C8-$1C9, $1CB: sequential-walker/reserved padding
+  ; $1BC: Maku Seed receipt (maku_tree.asm !MakuSeed_Message)
+  ; $1BD-$1C4, $1C8-$1C9, $1CB: sequential-walker/reserved padding
   ; $1C5/$1C6/$1C7/$1CA: Maku Tree hints at 1+/3+/5+/7 crystals
   ; $1CC-$1D1: D3 prison sequence placeholders
   ; $1D2-$1D4: Gossip Stone placeholders
@@ -71,6 +72,10 @@ MessageExpandedData:
   ; Vanilla text region 2 ($0E:DF40, $167-$18C) is length-pinned by the
   ; $0EEE75 chain byte, so longer rewrites there move to this bank.
   incsrc "Core/Generated/expanded_messages.asm"
+
+; These three vanilla IDs remain stable while their source-owned tutorials
+; replace base-ROM text after the pointer walker reaches the generated $FF.
+incsrc "Core/minish_tutorials.asm"
 
 print "End of expanded dialogue          ", pc
 

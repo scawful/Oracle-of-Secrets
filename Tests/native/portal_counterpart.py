@@ -20,7 +20,7 @@ from pathlib import Path
 import sys
 
 sys.dont_write_bytecode = True
-UTIL_SHA = "99d1bd2c94bca85a61e62719d25f6d08a69f829c39ec744d242f615844ca8d53"
+UTIL_SHA = "e8491c9f188901dee5e990ff0f44e1c93190253a151022dae1befd091f83f8d4"
 SUPPORT_SHA = "bac027161d84ff12cc56a3a987f52545800da173c37044b22a5cae35ded6ce0f"
 UTIL_PATH = Path(__file__).with_name("manhandla_phase_death.py")
 if hashlib.sha256(UTIL_PATH.read_bytes()).hexdigest() != UTIL_SHA:

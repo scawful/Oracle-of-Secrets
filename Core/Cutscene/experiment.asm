@@ -21,7 +21,8 @@
 ;    both worlds).
 ; 3. Actors are OAM tableaus drawn by this module every frame (no sprite
 ;    slots, no AI): Zora A and Zora B (Sea Zora sheet $56), Farore (sheet
-;    $55), Kydrog's Stalfos (village pirate look: sheet $0D, palette 6).
+;    $55), Kydrog's Stalfos (village pirate look: sheet $0D, palette 6,
+;    gold recolored to bone greys by Exp_BoneStalfos).
 ; 4. A full reload (module $05, room $104) rebuilds the bedroom and tucks
 ;    Link into bed. Exp_Done tells the gate to start the arrival this time.
 ; Start skips to step 4 at any point.
@@ -981,6 +982,7 @@ Exp_ReturnPearl:
 
 Exp_SaveKalyxoPalettes:
 {
+  JSR Exp_BoneStalfos
   REP #$30
   LDX.w #$00BE
   .loop
@@ -988,6 +990,35 @@ Exp_SaveKalyxoPalettes:
     LDA.l $7EC620, X : STA.l Exp_PalSpr, X
     DEX : DEX : BPL .loop
   LDA.l $7EC500 : STA.l Exp_BackLW
+  SEP #$30
+  RTS
+}
+
+; Sprite palette 6 (CGRAM row 14) is used only by the Stalfos skull and body.
+; Turn its gold colors (red and green both 4+ above blue) into bone greys:
+; L = (R+G)/2+1, color = (L, L, L-2). Red and dark colors stay. The shield
+; and spear (palette 4) are not changed.
+Exp_BoneStalfos:
+{
+  REP #$30
+  LDX.w #$001E
+  .loop
+    LDA.l $7EC6C0, X : AND.w #$001F : STA.b $00         ; R
+    LDA.l $7EC6C0, X : LSR #5 : AND.w #$001F : STA.b $02 ; G
+    LDA.l $7EC6C0, X : XBA : LSR #2 : AND.w #$001F       ; B
+    CLC : ADC.w #$0004 : STA.b $04
+    LDA.b $00 : CMP.b $04 : BCC .next
+    LDA.b $02 : CMP.b $04 : BCC .next
+    LDA.b $00 : CLC : ADC.b $02 : LSR A : INC A
+    CMP.w #$0020 : BCC .lum
+      LDA.w #$001F
+    .lum
+    STA.b $06
+    DEC A : DEC A : XBA : ASL #2 : STA.b $04            ; (L-2) << 10
+    LDA.b $06 : ASL #5 : ORA.b $06 : ORA.b $04
+    STA.l $7EC6C0, X
+    .next
+    DEX : DEX : BPL .loop
   SEP #$30
   RTS
 }
@@ -1261,17 +1292,29 @@ Exp_DrawActors:
 ; One object attached to Zora A, in front of the hand. The scene's existing
 ; flash/load/black/white gates hide it with the actors. Current scripted X/Y
 ; remain inside the viewport (X >= 100, Y <= 154), including the shake.
+; Side and H-flip follow Zora A's pose, so the Mirror stays on the side the
+; Zora faces (X is 8-bit here: Exp_DrawActors indexes with LDX.b).
 Exp_DrawMirror:
 {
   LDA.l Exp_ActPose+!ExpA_ZoraA : BEQ .done
-  LDA.l Exp_ActX+!ExpA_ZoraA : SEC : SBC.b #14
+  CMP.b #!ExpP_ZoraLeft+1 : BCS .done
+  TAX
+  LDA.l Exp_ActX+!ExpA_ZoraA : CLC : ADC.l .dx, X
   SEC : SBC.l Exp_ShakeX : STA.w $0800
   LDA.l Exp_ActY+!ExpA_ZoraA : STA.w $0801
   LDA.b #$02 : STA.w $0802 ; slot 0 tile $02, four tiles uploaded above
-  LDA.b #$35 : STA.w $0803 ; N=1, palette 2 (item uses indices 8-15)
+  LDA.l .props, X : STA.w $0803 ; N=1, palette 2 (item uses indices 8-15), H-flip per side
   LDA.b #$02 : STA.w $0A20
   LDA.b #$04 : STA.b $02
   INC.b $03
   .done
   RTS
+
+  ; Indexed by Zora pose: hide, front, right, left. The item art has the
+  ; handle at the lower left, so H-flip it when it sits on the Zora's left:
+  ; the handle stays at the Zora's hand and the glass points away.
+  .dx
+  db 0, -14, 14, -14
+  .props
+  db 0, $75, $35, $75
 }

@@ -27,7 +27,7 @@ Attract_DrawKidnappedMaiden = $0CFA30
 HandleScreenFlash = $1DE9B6
 FadeMusicAndResetSRAMMirror = $0CC2F0
 
-; Island-history experiment (!ENABLE_CUSTOM_ATTRACT_SEQUENCE, default off).
+; Island-history experiment (!ENABLE_CUSTOM_ATTRACT_SEQUENCE, default on).
 ; The storybook and the three room scenes show the history narration in
 ; expanded messages $1C0-$1C3 instead of $112-$115. Text approved by scawful
 ; 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md).

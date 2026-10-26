@@ -37,6 +37,14 @@ org $1BCFD9 ; @hook module=Overworld
 JSL Fortress_EntranceAnimation
 RTS
 
+; AncillaAdd_GTCutscene: replace the vanilla 7-crystal and $7EF2C3 checks
+; with the Maku Seed gate. Waterfall sprite $37 on OW $5E calls this.
+org $099B8F ; @hook module=Overworld
+JSL Fortress_CheckSeedGate
+db $D0, $099B81-$099B95 ; BNE EXIT_099B81 (PLB : RTL)
+db $80, $099BA1-$099B97 ; BRA $099BA1: spawn the cutscene ancilla
+NOP #10
+
 pullpc
 
 ShakeScreen:
@@ -1097,6 +1105,22 @@ Goron_EntranceAnimation:
 }
 
 ; =========================================================
+
+; Returns A = 0 (and Z set) when Link holds the Maku Seed and the
+; Fortress entrance in the current area is not open yet. X preserved.
+Fortress_CheckSeedGate:
+{
+  LDA.l MakuTreeQuest : AND.b #!MakuTree_HasSeed : BEQ .deny
+  PHX
+  LDX.b $8A
+  LDA.l $7EF280,X : PLX
+  AND.b #$20 : BNE .deny
+  LDA.b #$00
+  RTL
+  .deny
+  LDA.b #$01
+  RTL
+}
 
 Fortress_EntranceAnimation:
 {

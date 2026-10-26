@@ -50,6 +50,20 @@ without asking. yaze rules: `~/src/hobby/yaze/docs/internal/agents/operating-rul
      `--migrate` (one time) archives all current content verbatim and seeds the new format.
 5. **One game goal at a time.** The goal is the first line of `inbox.md`; scawful sets it. Agents
    prepare work toward it; scawful decides merges and closes.
+6. **PRs are for real features; decisions happen in the delegator's chat** (scawful, 2026-10-23).
+   - Small changes go straight to `master` as commits once their proof passes: bug fixes, tuning,
+     data and text tweaks, tests, docs. Rebase on `origin/master` before pushing. CI runs on that
+     commit; if it fails, fix forward on `master`.
+   - Open a PR only for a real feature: a new system, item, mechanic or boss, a save-format or
+     shared-hook change (T3), or an editor write path.
+   - PR and commit text: what changed and how it was checked, in a few lines. No Oracle story or
+     design detail, no AFS paths (`~/.context/...`, `handoffs/...`); GitHub readers cannot open them.
+     Design notes stay in AFS.
+   - Decisions: task sessions do not leave questions for scawful in handoff READMEs or PR bodies.
+     They send the question to the delegator session. The delegator asks scawful in chat, one
+     question at a time, and shows the options: screenshots, an Emacs frame, an image-plus-diagram
+     page, or a yaze frame (the Planning editor's decision queue, linked by `[planning] file=` in the
+     `.yaze` project).
 
 ## ROM Naming
 - `Roms/oos<VERSION>.sfc` — unpatched base, the **edit target**
@@ -71,8 +85,9 @@ without asking. yaze rules: `~/src/hobby/yaze/docs/internal/agents/operating-rul
   receipts, CI, headless Mesen2 and routine fixtures now catch what the old
   patch-only rule protected against.
 - Work in your own git worktree on a `claude/*` or `codex/*` branch, never in the
-  shared checkout. Merge by PR after CI passes.
-- Each PR states the build receipt result (`Roms/oos168x.build.json` required
+  shared checkout. Small fixes land on `master` as commits; real features merge by PR
+  after CI passes (Working Rule 6).
+- Each commit or PR states the build receipt result (`Roms/oos168x.build.json` required
   checks) and, for gameplay changes, a headless Mesen2 scenario or routine test.
   Commit the test under `Tests/` when practical.
 - Still need scawful's OK: base-ROM writes, playtest staging, Discord posts.
