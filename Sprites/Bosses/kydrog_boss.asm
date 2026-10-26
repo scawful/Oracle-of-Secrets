@@ -35,8 +35,7 @@
 !ConsecutiveHits    = $AC ; 0x01
 !KydrogPhase        = $7A ; 0x01
 !WalkSpeed          = 10  ; 0x01
-!KydrogRescueStage  = SprMiscF ; 0x00 message pending, 0x01 message shown (commit: KydrogBoss_D7CrystalCommit)
-!KydrogRescueMsg    = $0138    ; Temporary rescue text until dedicated Kydrog defeat slot lands
+!KydrogRescueStage  = SprMiscF ; cleared on prep and death; no reader (rescue text: d7_farore_rescue.asm)
 
 Sprite_KydrogBoss_Long:
 {
@@ -334,9 +333,6 @@ Sprite_KydrogBoss_Main:
     %PlayAnimation(0, 0, 10)
 
     JSL Sprite_KillFriends
-  if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
-    JSR KydrogBoss_Death_FaroreRescueScaffold
-  endif
     LDA.w SprFlash, X : INC : CMP.b #$08 : BNE .dontReset
       LDA.b #$00
     .dontReset
@@ -346,16 +342,7 @@ Sprite_KydrogBoss_Main:
   }
 
   if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
-  KydrogBoss_Death_FaroreRescueScaffold:
-  {
-    ; Show the temporary rescue dialogue once. Progression is not set here:
-    ; Kydrog enters SpriteModule_Explode this frame and never runs again.
-    LDA.w !KydrogRescueStage, X : BNE .return
-      %ShowUnconditionalMessage(!KydrogRescueMsg)
-      LDA.b #$01 : STA.w !KydrogRescueStage, X
-    .return
-    RTS
-  }
+  ; The rescue text runs in the crystal ceremony (Dungeons/d7_farore_rescue.asm).
 
   ; Replaces the crystal store in Ancilla3E_RisingCrystal ($08CC48), which
   ; runs on the single frame the crystal is collected: after the heart

@@ -172,6 +172,11 @@ incsrc "Collision/water_collision.asm"
 
 incsrc "Dungeons/sky_d8_award.asm"
 print  "End of sky_d8_award.asm           ", pc
+if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
+incsrc "Dungeons/d7_farore_rescue.asm"
+print  "End of d7_farore_rescue.asm       ", pc
+assert pc() <= $2CFD00 ; do not overlap RoomTag_SomariaSocketDoor
+endif
 
 print "End of dungeons.asm               ", pc
 

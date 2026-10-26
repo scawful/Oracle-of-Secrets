@@ -32,7 +32,7 @@
 !ENABLE_MINECART_CART_SHUTTERS       = 0
 !ENABLE_MINECART_LIFT_TOSS           = 0
 !ENABLE_D3_PRISON_SEQUENCE           = 0
-!ENABLE_D7_FARORE_RESCUE_SEQUENCE    = 0
+!ENABLE_D7_FARORE_RESCUE_SEQUENCE    = 1
 !ENABLE_OCARINA_SONG_TINT            = 0
 !ENABLE_JUMPTABLELOCAL_GUARD         = 1
 ; RC opening features are enabled by default; disable individually for isolation.
