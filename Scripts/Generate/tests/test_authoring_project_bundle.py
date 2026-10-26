@@ -11,6 +11,9 @@ GENERATE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(GENERATE))
 
 from export_yazeproj_bundle import (  # noqa: E402
+    AUTHORING_BUILD_COMMAND,
+    AUTHORING_BUILD_SCRIPT,
+    PORTABLE_BUILD_COMMAND,
     _parse_project_contract,
     copy_repo_snapshot,
     verify_bundle,
@@ -18,6 +21,9 @@ from export_yazeproj_bundle import (  # noqa: E402
     write_bundle_hack_manifest,
 )
 import test_generate_hack_manifest as manifest_tests  # noqa: E402
+
+sys.path.insert(0, str(GENERATE.parent / "Build"))
+import authoring_bundle_build as build_guard  # noqa: E402
 
 
 class AuthoringProjectBundleTest(unittest.TestCase):
@@ -434,8 +440,116 @@ flagged_sheets=0xD4,0xD6
         (old / "previous-backup.txt").write_text("legacy replacement")
         self.assertEqual(self.run_main(output, authoring=False, force=True), 0)
         verify_bundle(output)
+        _, assignments = _parse_project_contract((output / "project.yaze").read_text())
+        self.assertIn(("build", "build_script", PORTABLE_BUILD_COMMAND), assignments)
         self.assertFalse((output / "previous-output.txt").exists())
         self.assertFalse(old.exists())
+
+    def test_authoring_build_refuses_lyra_before_any_delegate_or_write(self):
+        import contextlib
+        import io
+        from unittest import mock
+
+        self.write(
+            "terrain.json",
+            json.dumps(
+                {
+                    "schema_version": 4,
+                    "maps": [
+                        {"id": 160, "tiles": [[1]], "background_palette": [0] * 128}
+                    ],
+                }
+            ).encode(),
+        )
+        self.capture()
+        self.assertEqual(
+            self.values()["build", "build_script"], AUTHORING_BUILD_COMMAND
+        )
+        self.assertTrue((self.bundle / AUTHORING_BUILD_SCRIPT).is_file())
+        output = self.bundle / "project/Roms/oos168x.sfc"
+        output.write_bytes(b"previous output")
+        before = {
+            p.relative_to(self.bundle): p.read_bytes()
+            for p in self.bundle.rglob("*")
+            if p.is_file()
+        }
+        error = io.StringIO()
+        with (
+            mock.patch.object(build_guard.subprocess, "run") as delegate,
+            contextlib.redirect_stderr(error),
+        ):
+            self.assertEqual(
+                build_guard.main(["--project", str(self.bundle / "project.yaze")]), 2
+            )
+        delegate.assert_not_called()
+        self.assertIn("does not compile Lyra sidecar maps", error.getvalue())
+        self.assertIn("No build was started", error.getvalue())
+        self.assertEqual(
+            before,
+            {
+                p.relative_to(self.bundle): p.read_bytes()
+                for p in self.bundle.rglob("*")
+                if p.is_file()
+            },
+        )
+
+    def test_authoring_build_empty_or_absent_binding_delegates_native(self):
+        from unittest import mock
+
+        original = self.project.read_text()
+        for replacement in ("lyra_terrain_file=\n", ""):
+            with self.subTest(binding=replacement):
+                self.project.write_text(
+                    original.replace("lyra_terrain_file=terrain.json\n", replacement)
+                )
+                self.capture()
+                with mock.patch.object(
+                    build_guard.subprocess, "run", return_value=mock.Mock(returncode=7)
+                ) as delegate:
+                    self.assertEqual(
+                        build_guard.main(
+                            ["--project", str(self.bundle / "project.yaze")]
+                        ),
+                        7,
+                    )
+                args, kwargs = delegate.call_args
+                self.assertEqual(
+                    args[0],
+                    [
+                        "bash",
+                        str(self.bundle / "project/Scripts/Build/build_rom.sh"),
+                        "168",
+                    ],
+                )
+                self.assertEqual(kwargs["cwd"], self.bundle)
+                self.assertEqual(kwargs["env"]["OOS_BASE_ROM"], "rom")
+                self.assertEqual(kwargs["env"]["OOS_BACKUP_ROOT"], "backups")
+                self.assertEqual(kwargs["env"]["OOS_MANIFEST_ROOT"], ".")
+
+    def test_authoring_build_guard_survives_bundle_relocation(self):
+        from unittest import mock
+
+        self.project.write_text(
+            self.project.read_text().replace(
+                "lyra_terrain_file=terrain.json", "lyra_terrain_file="
+            )
+        )
+        self.capture()
+        relocated = self.root / "moved" / "Renamed.yazeproj"
+        relocated.parent.mkdir()
+        self.bundle.rename(relocated)
+        verify_bundle(relocated)
+        with mock.patch.object(
+            build_guard.subprocess, "run", return_value=mock.Mock(returncode=0)
+        ) as delegate:
+            self.assertEqual(
+                build_guard.main(["--project", str(relocated / "project.yaze")]), 0
+            )
+        args, kwargs = delegate.call_args
+        self.assertEqual(kwargs["cwd"], relocated)
+        self.assertEqual(
+            args[0][1], str(relocated / "project/Scripts/Build/build_rom.sh")
+        )
 
 
 if __name__ == "__main__":

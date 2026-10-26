@@ -45,6 +45,8 @@ PORTABLE_BUILD_COMMAND = (
     "OOS_BASE_ROM=rom OOS_BACKUP_ROOT=backups OOS_MANIFEST_ROOT=. "
     f"{PORTABLE_BUILD_SCRIPT} 168"
 )
+AUTHORING_BUILD_SCRIPT = "project/Scripts/Build/authoring_bundle_build.py"
+AUTHORING_BUILD_COMMAND = f"python3 {AUTHORING_BUILD_SCRIPT} --project project.yaze"
 # Fail-closed save settings shared by every Oracle project descriptor.
 ORACLE_BASE_SAVE_CONTRACT = (
     ("feature_flags", "save_dungeon_maps", "false"),
@@ -225,6 +227,7 @@ def validate_portable_project_contract(
     content: str,
     expected_rom_sha1: str,
     save_contract: tuple = ORACLE_SAVE_CONTRACT,
+    build_command: str = PORTABLE_BUILD_COMMAND,
 ) -> None:
     """Require the portable descriptor's paths and build contract."""
     validate_oracle_project_contract(content, save_contract)
@@ -235,6 +238,8 @@ def validate_portable_project_contract(
                 f"project.yaze must contain exactly one [{section}] section"
             )
     for section, key, value in PORTABLE_PROJECT_CONTRACT:
+        if (section, key) == ("build", "build_script"):
+            value = build_command
         _require_project_assignment(assignments, section, key, value)
     _require_project_assignment(
         assignments,
@@ -634,6 +639,9 @@ def write_authoring_project(
     updates = {
         (section, key): value for section, key, value in PORTABLE_PROJECT_CONTRACT
     }
+    updates[("build", "build_script")] = AUTHORING_BUILD_COMMAND
+    copy_file(Path(__file__).resolve().parents[1] / "Build" / "authoring_bundle_build.py",
+              AUTHORING_BUILD_SCRIPT)
     updates[("rom", "expected_hash")] = rom_sha1
     overrides = {"lyra_terrain_file": lyra_terrain}
     for key in PROJECT_FILE_DEPENDENCIES:
@@ -772,7 +780,8 @@ def write_authoring_project(
     )
     result = _rewrite_project(content, updates)
     contract = ORACLE_DESKTOP_SAVE_CONTRACT if desktop else ORACLE_SAVE_CONTRACT
-    validate_portable_project_contract(result, rom_sha1, contract)
+    validate_portable_project_contract(result, rom_sha1, contract,
+                                       AUTHORING_BUILD_COMMAND)
     if desktop:
         validate_desktop_project_contract(result)
     palette = updates.get(("files", "palette_catalog_file"))
@@ -1028,7 +1037,9 @@ def verify_bundle(bundle_root: Path) -> None:
     if authoring and authoring["mode"] == "desktop":
         contract = ORACLE_DESKTOP_SAVE_CONTRACT
         validate_desktop_project_contract(project_content)
-    validate_portable_project_contract(project_content, rom_sha1, contract)
+    validate_portable_project_contract(
+        project_content, rom_sha1, contract,
+        AUTHORING_BUILD_COMMAND if authoring else PORTABLE_BUILD_COMMAND)
     if not authoring:
         palette_catalog = _portable_palette_catalog(bundle_root)
         _, assignments = _parse_project_contract(project_content)
