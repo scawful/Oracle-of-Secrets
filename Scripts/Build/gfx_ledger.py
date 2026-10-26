@@ -73,6 +73,8 @@ EMPTY_STUBS = {0x63, 0x69, 0x6C, 0x6D, 0x6E, 0x6F, 0x70}
 # Sheet claims by branch/PR. Extend with --owners FILE.json ({"0x63": "text"}).
 OWNERS = {
     0x63: "PR #228 claude/volcano-57-import-442b78 (clone of $33 for the 9 volcano areas, slot 5)",
+    0x6F: "D3 B/V20 sheet clone at $23C000 (source policy; application pending)",
+    0x70: "D3 B/V20 trim clone at $23C800 (source policy; application pending)",
     0x96: "Abyss Stalfos sprite sheet $23 (abyss_variants.asm swaps $1F -> $23 in slot 0)",
 }
 
@@ -80,8 +82,10 @@ OWNERS = {
 # lo/hi are inclusive ROM bank numbers. sources are repo-relative globs of the
 # files allowed to `org` into those banks; empty = nobody writes by asm.
 BANK_CLAIMS = [
-    {"owner": "yaze #282 gfx imports (volcano/GBC sheets)", "lo": 0x23, "hi": 0x23,
-     "sources": ["Data/rom_patches/*"], "note": "planned; free space 0x238000-0x248000"},
+    {"owner": "shared bank $23: Yaze graphics and Oracle sheet helpers/tables", "lo": 0x23, "hi": 0x23,
+     "sources": ["Data/rom_patches/*", "Core/gfx_sheet_table.asm",
+                 "Core/Generated/source_sprite_sheets/sheet_overrides.asm"],
+     "note": "source policy: D3 [23C000,23D000); exclusive helpers/tables PC[11FC00,120000); no bank $24 grant"},
     {"owner": "custom collision / water fill table", "lo": 0x25, "hi": 0x25,
      "sources": ["Oracle_main.asm", "Dungeons/generated/*", "Dungeons/*"]},
     {"owner": "ZSCustomOverworld", "lo": 0x28, "hi": 0x28,
