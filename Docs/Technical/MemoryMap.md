@@ -206,5 +206,5 @@ This section details the allocation of custom code and data within the ROM banks
 | $3F        |                       | DW ZS Tile32                                           |
 | $40        | `$408000` - `$40FFFF` | LW World Map                                           |
 | $41        | `$418000` - `$41FFFF` | DW World Map                                           |
-| $42        | `$428000` - `$42FFFF` | Title Link art below `$42D000`; song helpers `$42D000-$42D3FF`; Moon Pearl dream `$42D400-$42FFFF` (isolated candidate; Asar bounds enforced) |
+| $46        | `$468000` - `$46FFFF` | Title Link art below `$46D000`; song helpers `$46D000-$46D3FF`; Moon Pearl dream `$46D400-$46FFFF` (one unit, moved from `$42`; Asar bounds enforced) |
 | Patches    | Various               | Targeted modifications within vanilla ROM addresses    | `Core/patches.asm`, `Util/item_cheat.asm` |

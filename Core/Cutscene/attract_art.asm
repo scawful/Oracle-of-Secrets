@@ -11,11 +11,11 @@ org $0080AD : db AttractArt_Module>>16 ; @hook module=Cutscene name=AttractArt_M
 
 ; New source-owned bank, beyond the existing $40/$41 world-map assets.
 ; The selected base ends before this bank; no editor data is replaced.
-org $428000
+org $468000
 AttractArt_Module:
 {
   ; Main routing enters M/X=8, DP=0, with one long return frame.
-  ; Bank $42 has no hardware/WRAM mirror, so use DB=0, not PHK/PLB.
+  ; Bank $46 has no hardware/WRAM mirror, so use DB=0, not PHK/PLB.
   LDA.b $22 : CMP.b #$01 : BEQ .initialize
               CMP.b #$0A : BCC .vanilla
               CMP.b #$0D : BCS .vanilla
@@ -154,6 +154,6 @@ AttractArt_Palette:
   incbin "Core/Cutscene/Assets/link_hyrule_intro/link_hyrule_intro.pal"
 AttractArt_PaletteEnd:
 assert AttractArt_PaletteEnd-AttractArt_Palette == $0020
-assert pc() <= $430000, "Illustrated attract prologue crossed its source-owned bank"
+assert pc() <= $470000, "Illustrated attract prologue crossed its source-owned bank"
 pullpc
 endif

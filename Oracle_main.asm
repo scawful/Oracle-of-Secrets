@@ -31,6 +31,7 @@
 ;   Bank $3F: DW ZS Tile32
 ;   Bank $40 ($408000): LW World Map (Overworld/overworld.asm)
 ;   Bank $41 ($418000): DW World Map (Overworld/overworld.asm)
+;   Bank $46 ($468000): Title Link art, song helpers, Moon Pearl dream (Core/Cutscene/attract_art.asm, Items/ocarina.asm, Sprites/NPCs/dream_zelda.asm)
 ;
 ;   Patches: Core/patches.asm and Util/item_cheat.asm use pushpc/pullpc and org
 ;            for targeted modifications within vanilla ROM addresses.

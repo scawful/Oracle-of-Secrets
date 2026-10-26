@@ -21,7 +21,7 @@ assert !ENABLE_DREAM_BED_WAKE == 1, "Moon Pearl dream needs DREAM_BED_WAKE"
 !DreamZelda_Aborted  = $03
 
 pushpc
-org $42D400
+org $46D400
 
 ; This existing Maple state lives here to keep bank $30 within its allocation.
 ; Same sprite-state contract as Maple_CheckForPendant: M/X=8, X=sprite slot.
@@ -323,6 +323,6 @@ DreamZelda_Return:
 }
 
 print "End of Moon Pearl Zelda dream     ", pc
-assert pc() <= $430000, "Moon Pearl Zelda dream crossed bank $42"
+assert pc() <= $470000, "Moon Pearl Zelda dream crossed bank $46"
 pullpc
 endif

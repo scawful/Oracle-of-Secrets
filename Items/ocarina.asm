@@ -439,9 +439,9 @@ ResetOcarinaFlag:
 }
 
 ; Independent four-song ownership, adapted from PR #220. Keep helpers out
-; of the sprite banks; $42D400 begins the Moon Pearl dream implementation.
+; of the sprite banks; $46D400 begins the Moon Pearl dream implementation.
 pushpc
-org $42D000
+org $46D000
 Ocarina_SongMask:
   db $00, !Song_Healing, !Song_Storms, !Song_Soaring, !Song_Time
 Ocarina_CountToBits:
@@ -586,7 +586,7 @@ if !ENABLE_EQUIPMENT_MENU == 0
 endif
   RTL
 }
-assert pc() <= $42D400, "Song ownership helpers crossed Moon Pearl dream allocation"
+assert pc() <= $46D400, "Song ownership helpers crossed Moon Pearl dream allocation"
 pullpc
 %log_end("Items/ocarina.asm", !LOG_ITEMS)
 
