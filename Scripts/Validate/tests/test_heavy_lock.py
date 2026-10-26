@@ -35,12 +35,13 @@ class HeavyLockTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         root = Path(self.tmp.name)
-        self.saved = (hl.LOCK, hl.ARCHIVE)
+        self.saved = (hl.LOCK, hl.ARCHIVE, hl.MODE_FILE)
         hl.LOCK = root / "oos-heavy.lock"
         hl.ARCHIVE = root / "reclaimed"
+        hl.MODE_FILE = root / "build_mode"  # missing = laptop
 
     def tearDown(self):
-        hl.LOCK, hl.ARCHIVE = self.saved
+        hl.LOCK, hl.ARCHIVE, hl.MODE_FILE = self.saved
         self.tmp.cleanup()
 
     def write_owner(self, data):
@@ -120,13 +121,13 @@ class HeavyLockTest(unittest.TestCase):
 
     def test_reclaim_excludes_release_and_new_acquire(self):
         self.write_owner({"owner": "gone", "token": "old", "pid": dead_pid()})
-        original = hl.status
-        def interleave():
-            snapshot = original()
+        original = hl.slot_status
+        def interleave(path):
+            snapshot = original(path)
             self.assertFalse(hl.release("old"))
             self.assertIsNone(hl.acquire("new", "test"))
             return snapshot
-        with patch.object(hl, "status", side_effect=interleave):
+        with patch.object(hl, "slot_status", side_effect=interleave):
             self.assertIsNotNone(hl.reclaim_if_stale())
         token = hl.acquire("new", "test")
         self.assertIsNotNone(token)
@@ -136,8 +137,8 @@ class HeavyLockTest(unittest.TestCase):
     def test_release_excludes_reclaim_and_new_acquire(self):
         self.write_owner({"owner": "gone", "token": "old", "pid": dead_pid()})
         original = hl.read_owner
-        def interleave():
-            snapshot = original()
+        def interleave(path=None):
+            snapshot = original(path)
             self.assertIsNone(hl.reclaim_if_stale())
             self.assertIsNone(hl.acquire("new", "test"))
             return snapshot
@@ -177,7 +178,8 @@ class HeavyLockTest(unittest.TestCase):
         self.assertEqual(len(list(hl.ARCHIVE.glob("*-reason.txt"))), 2)
 
     def test_cli_exit_codes(self):
-        env = dict(os.environ, OOS_HEAVY_LOCK=str(hl.LOCK), OOS_HEAVY_LOCK_ARCHIVE=str(hl.ARCHIVE))
+        env = dict(os.environ, OOS_HEAVY_LOCK=str(hl.LOCK), OOS_HEAVY_LOCK_ARCHIVE=str(hl.ARCHIVE),
+                   OOS_BUILD_MODE_FILE=str(hl.MODE_FILE))
         run = lambda *a: subprocess.run([sys.executable, str(SCRIPT), *a], env=env,
                                         capture_output=True, text=True)
         got = run("acquire", "--owner", "cli", "--purpose", "unit test", "--pid", str(os.getpid()))
@@ -187,6 +189,49 @@ class HeavyLockTest(unittest.TestCase):
         self.assertEqual(run("release", "--token", "wrong").returncode, 1)
         self.assertEqual(run("release", "--token", token).returncode, 0)
         self.assertEqual(json.loads(run("status").stdout)["state"], "free")
+        self.assertEqual(run("mode").stdout.split()[0], "laptop")
+        self.assertEqual(run("mode", "desk").stdout.split()[0], "desk")
+        self.assertEqual(hl.MODE_FILE.read_text().strip(), "desk")
+
+    def test_unknown_mode_is_laptop(self):
+        hl.MODE_FILE.write_text("turbo\n")
+        self.assertEqual(hl.mode(), "laptop")
+        with self.assertRaises(ValueError):
+            hl.set_mode("turbo")
+
+    def test_desk_allows_three_holders(self):
+        hl.set_mode("desk")
+        tokens = [hl.acquire(f"t{i}", "unit test") for i in range(3)]
+        self.assertTrue(all(tokens))
+        self.assertEqual(len(set(tokens)), 3)
+        self.assertIsNone(hl.acquire("t3", "unit test"))
+        st = hl.status()
+        self.assertEqual((st["mode"], st["capacity"], st["held"]), ("desk", 3, 3))
+        self.assertTrue(hl.release(tokens[1]))
+        self.assertFalse(hl.slot_paths()[1].exists())
+        self.assertTrue(hl.slot_paths()[0].exists())
+        self.assertIsNotNone(hl.acquire("t4", "unit test"))
+
+    def test_laptop_drains_desk_holders(self):
+        hl.set_mode("desk")
+        first, second = hl.acquire("a", "x"), hl.acquire("b", "x")
+        self.assertTrue(hl.release(first))
+        hl.set_mode("laptop")
+        self.assertEqual(hl.status()["state"], "held")  # slot 1 still held
+        self.assertIsNone(hl.acquire("c", "x"))
+        self.assertTrue(hl.release(second))
+        self.assertIsNotNone(hl.acquire("c", "x"))
+        self.assertTrue(hl.LOCK.exists())
+
+    def test_stale_extra_slot_reclaimed(self):
+        hl.set_mode("desk")
+        extra = hl.slot_paths()[2]
+        extra.mkdir()
+        (extra / "owner").write_text(json.dumps({"owner": "gone", "pid": dead_pid()}))
+        hl.set_mode("laptop")
+        self.assertIsNotNone(hl.acquire("t", "x"))
+        self.assertFalse(extra.exists())
+        self.assertEqual(len(list(hl.ARCHIVE.glob("*-owner.json"))), 1)
 
 
 if __name__ == "__main__":
