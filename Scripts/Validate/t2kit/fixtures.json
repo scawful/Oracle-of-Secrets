@@ -1,0 +1,14 @@
+{
+ "goron-mines-open": {
+  "path": "~/.context/projects/oracle-of-secrets/scratchpad/patches/preview_saves_2026-09-29/out/test-goron-mines-open.srm",
+  "sha256": "f35b2cd4ecd010341ef8d02f089816044d11c68df01bda092e8ac02974d7f283",
+  "file_slot": 2,
+  "contains": "Approved test save (2026-09-29). File 2: preview chain through the D6 entrance, overworld area $36 flag $20 (Goron mines open), Rock Meat 5. Used by keyblock_unlock, goron_heartpiece_flag, minecart_stair_entry and discord_quick_fixes."
+ },
+ "oos-preview": {
+  "path": "~/.context/projects/oracle-of-secrets/scratchpad/patches/preview_saves_2026-09-29/out/oos-preview.srm",
+  "sha256": "47e7002072330556402324c1b3a7f6dbd2f4490b548f1b9a325072bf2008b150",
+  "file_slot": 2,
+  "contains": "Proposed shipping preview save (2026-09-29). File 2: same chain as goron-mines-open without the mines-open flag or Rock Meat."
+ }
+}
