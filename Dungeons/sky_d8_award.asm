@@ -4,7 +4,9 @@
 ; Identity is the full room word $A1:$A0 == $0096 (Sky boss room). Sky
 ; shares dungeon ID $10 with D3 (entrance $29), so $040C never selects it.
 ; The Sky essence is Crystals bit 7 (!Crystal_D8_Sky); bits 0-6 are kept.
-; Room $0196 and every other room take the legacy paths below.
+; Room $0196 and every other room take the legacy paths below; with
+; !ENABLE_D7_FARORE_RESCUE_SEQUENCE the D7 ($040C == $18) maiden paths go to
+; d7_farore_rescue.asm.
 ;
 ; Legacy prize index guard: RoomTagPrizeChecks ($02A1A4) and the heart-tag
 ; .prizes table ($01C6FC) have 13 entries, $040C/2 = $00-$0C. Larger
@@ -237,6 +239,11 @@ SkyD8_MaidenFollowerGfx:
   LDA.b $A0 : CMP.b #$96 : BNE .legacy
     JML $1ECDAD
   .legacy
+if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
+  LDA.w $040C : CMP.b #$18 : BNE +
+    JML D7Farore_Spawn
+  +
+endif
   LDA.w $040C : CMP.b #$18
   JML $1ECD90
 }
@@ -249,6 +256,11 @@ SkyD8_MaidenDraw:
   LDA.b $A0 : CMP.b #$96 : BNE .legacy
     JML $1ECE26
   .legacy
+if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
+  LDA.w $040C : CMP.b #$18 : BNE +
+    JML D7Farore_Draw
+  +
+endif
   LDA.w $0D80, X : CMP.b #$03
   JML $1ECE20
 }
@@ -263,6 +275,11 @@ SkyD8_MaidenSpeech:
     LDA.b #$08 : STA.w $0D80, X
     JML $1ECF17
   .legacy
+if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
+  LDA.w $040C : CMP.b #$18 : BNE +
+    JML D7Farore_Speech
+  +
+endif
   LDA.w $040C : SEC
   JML $1ECED2
 }
