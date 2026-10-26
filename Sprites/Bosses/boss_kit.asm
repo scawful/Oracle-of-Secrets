@@ -189,6 +189,13 @@ BossKit_SpawnFx:
 ; Trail attacks: the sprite drifts toward the player and drops a fire or
 ; ice garnish every 8 frames. A = cap of live garnishes for this sprite.
 
+; Fixed-cap entries for bank $30 callers (keese, vampire bat): a plain JSL
+; there saves the 2-byte LDA, and bank $30 has no free bytes for it.
+BossKit_FireTrail3:
+  LDA.b #$03 : BRA BossKit_FireTrail
+BossKit_FireTrail4:
+  LDA.b #$04 : BRA BossKit_FireTrail
+
 BossKit_FireTrail:
 {
   PHA
