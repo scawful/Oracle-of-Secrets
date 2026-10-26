@@ -107,6 +107,16 @@ assert read1($1ECF17) == $60, "Maiden speech exit moved"
 org $1ECECE : JML SkyD8_MaidenSpeech ; @hook module=Dungeons name=SkyD8_MaidenSpeech kind=jml target=SkyD8_MaidenSpeech expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8 protected_size=4
 assert pc() == $1ECED2
 
+; Vanilla routines d7_farore_rescue.asm calls (kept here so CI seeds them).
+if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
+  assert read1($00E33A) == $6B, "Bank $00 RTL trampoline moved"
+  assert read1($00E772) == $B9 || read1($00E772) == $5C, "Decompress_sprite_arbitrary moved"
+  assert read2($00DFB8) == $0C84, "Do3To4Low16Bit moved"
+  assert read1($00DEFF) == $AE, "Graphics_IncrementalVRAMUpload moved"
+  assert read2($1BECC5) == $31C2, "Palettes_Load_SpriteAux1 moved"
+  assert read1($1ECF07) == $AF, "Maiden speech MapIcon tail moved"
+endif
+
 pullpc
 
 ; Entry $01C508 (JSR from the room-tag dispatcher), M=8 X=8, $0E = tag slot.
