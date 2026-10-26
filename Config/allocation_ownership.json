@@ -75,7 +75,7 @@
     "shared:Overworld/ZSCustomOverworld.asm": {
       "source_set": "shared",
       "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "94d7d7704faf916236b019ced369b49a8e7899fcf9ff73b8c78b6f29c54e91eb"
+      "sha256": "4b11367928c1e600635b96fc7dca5df9db750042bee3ec3e509e84c1d02296db"
     },
     "shared:Sprites/Objects/data/minecart_tracks.asm": {
       "source_set": "shared",
@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "ab6bac6b91005f904ed79d145439220354ad07b186c31182b157f53539b2c368"
+      "sha256": "0c125d7ad3f63ae6a4fed9fca150ce77b8ab92b2b3440defb07b5578449b8acd"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "7034ab46b0e2584ec8ee68d25945a482cacc02478bff3d84ae2d2d8c875e0adf"
+      "sha256": "0f52c3c8732a2adb2f0a8c90ee9392a7a38913fe0492e9bf02266e0a0ec91b68"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -125,7 +125,7 @@
     "shared:Overworld/overworld.asm": {
       "source_set": "shared",
       "path": "Overworld/overworld.asm",
-      "sha256": "8aeb91bae68c28de6506d744dbecfc098c6692310f6765e82c93f4fab65f25d8"
+      "sha256": "d76caefdeb137c0869bb06ab98e8a56dae091bf95a6d136a158a1346a714067c"
     },
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
@@ -166,6 +166,11 @@
       "source_set": "shared",
       "path": "Core/symbols.asm",
       "sha256": "4c0dbcc572d26ae32505c57c6cd37f4b2fc3b399f2d73f9d3cda0248d5cddf37"
+    },
+    "shared:Overworld/area_tilesets.asm": {
+      "source_set": "shared",
+      "path": "Overworld/area_tilesets.asm",
+      "sha256": "4b0fa72a5d5c1e04f75df97ad8535e4b10a7968b8d7664c0f99ddab20bb0d156"
     }
   },
   "claims": [
@@ -548,6 +553,36 @@
       "binding": {
         "source": "shared:Core/ram.asm",
         "symbol": "TEXTDECOMP",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ow_area_tile_types",
+      "owner": "Overworld per-area tile types (AreaTileset_TileTypes)",
+      "space": "wram",
+      "base": 8376320,
+      "size": 512,
+      "status": "shared",
+      "condition": {
+        "ENABLE_OW_AREA_TILESETS": 1,
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Valid after any overworld area load (AreaTileset_Load or AreaTileset_LoadTypes) until the next one; read only by the four retargeted overworld tile type reads.",
+      "reset": "AreaTileset_FillTypes copies all 512 bytes from OverworldTileTypes ($0E9459) on every overworld area load, then applies the area profile ranges.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Overworld/area_tilesets.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "AreaTileset_TileTypes = $7FD000",
+        "LDA.w #$01FF"
+      ],
+      "count": 512,
+      "stride": 1,
+      "binding": {
+        "source": "shared:Overworld/area_tilesets.asm",
+        "symbol": "AreaTileset_TileTypes",
         "bank00_mirror": false
       }
     },

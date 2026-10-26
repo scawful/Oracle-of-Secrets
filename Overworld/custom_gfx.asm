@@ -1,3 +1,7 @@
+; !ENABLE_OW_AREA_TILESETS = 1 replaces this with the area table in
+; Overworld/area_tilesets.asm (same boat sheets).
+if !ENABLE_OW_AREA_TILESETS == 0
+
 ; Boat sheets for wide $38/$39 (Dragon Ship) and wide $30/$31 (Kalyxo Docks,
 ; which held the ship before the 2026-10-19 split). $8A = parent area.
 CheckForChangeGraphicsNormalLoadBoat:
@@ -43,6 +47,8 @@ ApplyGraphics2:
   AdditionalBitmap:
   incbin gfx/boat2.bin
 }
+
+endif
 
 ApplyKorokSpriteSheets:
 {

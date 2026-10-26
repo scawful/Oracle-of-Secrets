@@ -197,6 +197,11 @@
 ; Let GBC Link ($5D = $17, Abyss form before the Pearl) charge the Minish portal
 ; (needs MINISH_AUTO_PORTAL). Without it the Origins Minish passage is unreachable.
 !ENABLE_MINISH_GBC_PORTAL_FIX       = 1
+; Per-area overworld tile types and raw BG sheets: the four OverworldTileTypes
+; reads use a WRAM copy at $7FD000 that each area load refills from
+; AreaTileset_AreaProfile (Overworld/area_tilesets.asm). Off = ROM table and
+; the hardcoded boat load in Overworld/custom_gfx.asm.
+!ENABLE_OW_AREA_TILESETS            = 0
 ;
 ; Truthful controls (M3; Codex menu review, accepted by scawful 2026-09-28):
 ; ring text without the penalties the code never applied; the HUD Y box keeps

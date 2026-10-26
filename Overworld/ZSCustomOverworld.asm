@@ -3224,8 +3224,13 @@ CheckForChangeGraphicsTransitionLoad:
                     ; loaded so that way the BG overlays have a chance to hide
                     ; the cracks.
                     ;INC.b $15
-                
+
                 .dontUpdateBGColor1
+
+                if !ENABLE_OW_AREA_TILESETS
+                    ; Screen is on: tile types only, no sheet DMA.
+                    JSL Oracle_AreaTileset_LoadTypes
+                endif
 
                 RTS
 

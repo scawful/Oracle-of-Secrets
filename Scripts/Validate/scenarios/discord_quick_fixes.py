@@ -121,7 +121,13 @@ class OverworldTiles(TileRoute):
             o = pc(snes)
             return data[o + 1] | data[o + 2] << 8 | data[o + 3] << 16
         self.data, self.pc = data, pc
-        self.map16, self.tiles = pc(long_at(0x008864)), pc(long_at(0x00886E))
+        self.map16 = pc(long_at(0x008864))
+        # !ENABLE_OW_AREA_TILESETS points the tile type read at a WRAM copy.
+        types = long_at(0x00886E)
+        if types >> 16 in (0x7E, 0x7F):
+            self.tile_types = run.b.read_block(types, 0x200)
+        else:
+            self.tile_types = data[pc(types):pc(types) + 0x200]
         self.v0708, self.v070A = run.r16(0x7E0708), run.r16(0x7E070A)
         self.v070C, self.v070E = run.r16(0x7E070C), run.r16(0x7E070E)
         self.buf = run.b.read_block(0x7E2000, 0x2000)
@@ -133,7 +139,7 @@ class OverworldTiles(TileRoute):
         o = self.map16 + ((m << 2) | ((py & 8) >> 2) | (x8 & 1)) * 2
         if o + 1 >= len(self.data):
             return 0x01
-        return self.data[self.tiles + ((self.data[o] | self.data[o + 1] << 8) & 0x1FF)]
+        return self.tile_types[(self.data[o] | self.data[o + 1] << 8) & 0x1FF]
 
 
 class DungeonTiles(TileRoute):
