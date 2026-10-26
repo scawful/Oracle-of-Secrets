@@ -269,6 +269,8 @@ Link_HandleCardinalCollision_Long:
   RTL
 }
 
+; Dungeons/hot_floor.asm owns $07FFA0-$07FFFF.
+assert pc() <= $07FFA0, "Bank $07 free-space chain reached the hot floor slot ($07FFA0)"
 print "Bank07 Free Space: ", pc
 
 org $2B8000

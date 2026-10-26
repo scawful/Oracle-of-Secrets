@@ -49,6 +49,9 @@ print  "End of floor_puzzle.asm           ", pc
 ; Crumble Floor Tag: Holes3
 incsrc "Dungeons/crumblefloor_tag.asm"
 
+; Hot Floor: tile type $DE (fixed bank $07 slot)
+incsrc "Dungeons/hot_floor.asm"
+
 pushpc
 
 incsrc "Dungeons/spike_subtype.asm"
