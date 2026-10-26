@@ -57,7 +57,10 @@ def run(t, case):
     # The entrance half reaches the north door only through a one-tile-high gap.
     t.fixture_collision(rect(9, 28, 22, 31), 0x00, 'walk path to the north half')
     ox, oy = room_origin(ROOM_ENTRY)
-    t.travel((ox + 240, oy + 48), (ox + 16, oy + 16, ox + 480, oy + 480))
+    # Door center x = ox + 248 (where the game places Link after the transition). The
+    # original goal ox + 240 is the doorway's left edge; a walk that stops 1 px short
+    # (x = ox + 239) cannot go through.
+    t.travel((ox + 248, oy + 48), (ox + 16, oy + 16, ox + 480, oy + 480))
     t.through_door('up', ROOM_BLOCK)
     t.clear_enemies()
     st = block_state(t)
