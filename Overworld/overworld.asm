@@ -164,6 +164,7 @@ endif
 if !ENABLE_LUPO_PAD_GATE == 1
   incsrc "Overworld/lupo_pad_gate.asm"
 endif
+incsrc "Overworld/early_mirror.asm"
 
 LoadOverworldPitAreas:
 {

@@ -115,15 +115,12 @@ Sprite_MakuTree_Main:
   dw MakuTree_MeetLink
   dw MakuTree_SpawnHeartContainer
   dw MakuTree_HasMetLink
+  dw MakuTree_GrantMirror
 
   MakuTree_Handler:
   {
-    ; Check the progress flags
-    LDA.l MakuTreeQuest : AND.b #$01 : BNE .has_met_link
-      %GotoAction(1)
-      RTS
-    .has_met_link
-    %GotoAction(3)
+    JSL EarlyMirror_SelectMakuAction
+    STA.w SprAction, X
     RTS
   }
 
@@ -143,6 +140,13 @@ Sprite_MakuTree_Main:
   {
     ; Give Link a heart container
     LDY #$3E : JSL Link_ReceiveItem
+    %GotoAction(4)
+    RTS
+  }
+
+  MakuTree_GrantMirror:
+  {
+    JSL EarlyMirror_GrantMakuMirror
     %GotoAction(3)
     RTS
   }

@@ -280,7 +280,6 @@ endif
 
 }
 
-if !ENABLE_SWORD_WARP_HOME == 1
 ; Overworld cache image ($7EC140-$7EC171, LoadCachedEntranceProperties
 ; $02E5D4) for the arrival on LW $2A: Link at X $0530, Y $0AB0 (the old DW
 ; $6A pad spot); the house-exit walk then steps him ~19 px down the path.
@@ -288,6 +287,7 @@ if !ENABLE_SWORD_WARP_HOME == 1
 ; (scroll = pos - 120/80, trigger = pos + 7/31); camera bounds and $0AA0-3
 ; as read in play on $2A (b29 flags, 2026-09-27). Recapture if $2A's size,
 ; graphics or palette change.
+; Also used by the early Mirror's old-save fallback when sword-warp is off.
 SwordWarp_Cache:
   dw $002A, $0016               ; $040A area, $1C main screen
   dw $0A60, $04B8               ; $E8/$E6 Y scroll, $E2/$E0 X scroll
@@ -299,7 +299,6 @@ SwordWarp_Cache:
   dw $2000, $0A3F               ; $0AA0-$0AA3 graphics bytes
   dw $0000                      ; $7EC168 (unused)
   dw $0000, $0000, $0000, $0000 ; $0624-$062A scroll offsets
-endif
 
 Sprite_Pineapple_Draw:
 {

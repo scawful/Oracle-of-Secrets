@@ -809,10 +809,19 @@ FreeBlock_SongsTail = $7EF3B2 ; 19 bytes ($7EF3B2-3C4)
 ; ---------------------------------------------------------
 ; Dreams Extension ($7EF411-4FD) - 237 bytes
 ; ---------------------------------------------------------
-; Purpose: Large block after dreams/water gates
+; Purpose: Saved extensions after dreams/water gates
 ; Note: $7EF4FE-4FF are checksum (do not use)
 ;
-FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
+; Early Mirror entry anchor, native $32-byte overworld exit-cache image.
+; Set only by accepted post-escape LW warp-pad entry. Retained through
+; caves, dreams, returns, and normal Save & Quit; replaced by a new entry.
+; Magic/version is published last; checksum covers the 25 payload words.
+EarlyMirrorAnchorMagic    = $7EF412 ; 2 bytes, $4D01 = native cache format v1
+EarlyMirrorAnchorCache    = $7EF414 ; $32 bytes, same layout as $7EC140-$7EC171
+EarlyMirrorAnchorChecksum = $7EF446 ; 2 bytes, wrapping sum of payload words
+assert EarlyMirrorAnchorCache == EarlyMirrorAnchorMagic+2
+assert EarlyMirrorAnchorChecksum == EarlyMirrorAnchorCache+$32
+FreeBlock_Dreams          = $7EF448 ; 182 bytes ($7EF448-4FD)
 
 ; ---------------------------------------------------------
 ; FREE BLOCK SUMMARY
@@ -824,9 +833,9 @@ FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
 ; | $7EF39F  | $7EF3A0  | 2     | Collectibles ext   |
 ; | $7EF3AC  | $7EF3B0  | 5     | Large reserved     |
 ; | $7EF3B2  | $7EF3C4  | 19    | Large reserved     |
-; | $7EF412  | $7EF4FD  | 236   | Dreams extension   |
+; | $7EF448  | $7EF4FD  | 182   | Dreams extension   |
 ; |----------|----------|-------|--------------------|
-; | TOTAL AVAILABLE:    | 318   | bytes              |
+; | TOTAL AVAILABLE:    | 264   | bytes              |
 ; ---------------------------------------------------------
 
 ; =========================================================
