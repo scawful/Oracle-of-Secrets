@@ -4,9 +4,7 @@
 ; Identity is the full room word $A1:$A0 == $0096 (Sky boss room). Sky
 ; shares dungeon ID $10 with D3 (entrance $29), so $040C never selects it.
 ; The Sky essence is Crystals bit 7 (!Crystal_D8_Sky); bits 0-6 are kept.
-; Room $0196 and every other room take the legacy paths below; with
-; !ENABLE_D7_FARORE_RESCUE_SEQUENCE the D7 ($040C == $18) maiden paths go to
-; d7_farore_rescue.asm.
+; Room $0196 and every other room take the legacy paths below.
 ;
 ; Legacy prize index guard: RoomTagPrizeChecks ($02A1A4) and the heart-tag
 ; .prizes table ($01C6FC) have 13 entries, $040C/2 = $00-$0C. Larger
@@ -106,16 +104,6 @@ assert read2($1ECED2) == $0AE9, "Maiden speech index moved"
 assert read1($1ECF17) == $60, "Maiden speech exit moved"
 org $1ECECE : JML SkyD8_MaidenSpeech ; @hook module=Dungeons name=SkyD8_MaidenSpeech kind=jml target=SkyD8_MaidenSpeech expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8 protected_size=4
 assert pc() == $1ECED2
-
-; Vanilla routines d7_farore_rescue.asm calls (kept here so CI seeds them).
-if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
-  assert read1($00E33A) == $6B, "Bank $00 RTL trampoline moved"
-  assert read1($00E772) == $B9 || read1($00E772) == $5C, "Decompress_sprite_arbitrary moved"
-  assert read2($00DFB8) == $0C84, "Do3To4Low16Bit moved"
-  assert read1($00DEFF) == $AE, "Graphics_IncrementalVRAMUpload moved"
-  assert read2($1BECC5) == $31C2, "Palettes_Load_SpriteAux1 moved"
-  assert read1($1ECF07) == $AF, "Maiden speech MapIcon tail moved"
-endif
 
 pullpc
 
@@ -249,11 +237,6 @@ SkyD8_MaidenFollowerGfx:
   LDA.b $A0 : CMP.b #$96 : BNE .legacy
     JML $1ECDAD
   .legacy
-if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
-  LDA.w $040C : CMP.b #$18 : BNE +
-    JML D7Farore_Spawn
-  +
-endif
   LDA.w $040C : CMP.b #$18
   JML $1ECD90
 }
@@ -266,11 +249,6 @@ SkyD8_MaidenDraw:
   LDA.b $A0 : CMP.b #$96 : BNE .legacy
     JML $1ECE26
   .legacy
-if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
-  LDA.w $040C : CMP.b #$18 : BNE +
-    JML D7Farore_Draw
-  +
-endif
   LDA.w $0D80, X : CMP.b #$03
   JML $1ECE20
 }
@@ -285,11 +263,6 @@ SkyD8_MaidenSpeech:
     LDA.b #$08 : STA.w $0D80, X
     JML $1ECF17
   .legacy
-if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
-  LDA.w $040C : CMP.b #$18 : BNE +
-    JML D7Farore_Speech
-  +
-endif
   LDA.w $040C : SEC
   JML $1ECED2
 }

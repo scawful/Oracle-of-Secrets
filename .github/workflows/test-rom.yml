@@ -94,6 +94,8 @@ jobs:
           # Preimage bytes taken from the readN() guards in Dungeons/sky_d8_award.asm.
           # Synthetic only; fails on unparsed read guards or conflicting bytes.
           python3 .github/scripts/seed_sky_award_preimages.py Dungeons/sky_d8_award.asm test.sfc
+          # Same for the D7 crystal-ceremony hooks (Dungeons/d7_farore_rescue.asm).
+          python3 .github/scripts/seed_sky_award_preimages.py Dungeons/d7_farore_rescue.asm test.sfc
 
           # Run Asar against the synthetic headerless ROM.
           set -o pipefail
