@@ -20,8 +20,12 @@ One emulator boot, file 2 of the given save:
   5. solid copy      fixture: 512 x $01 into $7FD000; Link pushes down, left,
                      right. candidate: no movement; control: moves. Re-warp $33:
                      both move again.
-  6. reopen          fixture: 512 x $01 again; reset; file 2 again.
-                     candidate: copy == expected; both: Link moves.
+  6. assisted reset reset; file 2 again; helper warp if indoors.
+                     This is reset/reload plus assisted warp, not save/reopen.
+
+--lifecycle-only instead performs actual Save & Quit, cold-process file load
+from game-written SRAM, and death/Continue. See FIX_REVIEW_REQUEST.md for the
+bounded reviewed episode. No helper warp may follow the cold launch.
   7. presence        every EXPECT check for the variant ran (scroll checks only
                      with --transition; file load or door exit, whichever ran).
 
@@ -37,7 +41,7 @@ socket, stop only the owned PID with SIGTERM.
 from __future__ import annotations
 
 import argparse
-import collections
+import hashlib
 import sys
 import time
 from pathlib import Path
@@ -109,6 +113,111 @@ class Run(gh.Run):
         print(('PASS ' if ok else 'FAIL ') + name, observed, flush=True)
         return ok
 
+    def require(self, name, observed, expected=True):
+        if not self.check(name, observed, expected):
+            raise RuntimeError(f'{name}: expected {expected!r}, got {observed!r}')
+
+    def wait_state(self, name, predicate, seconds=20):
+        deadline = time.monotonic() + seconds
+        last = None
+        while time.monotonic() < deadline:
+            state = (self.r(gh.MODULE), self.r(gh.SUBMODULE), self.r(INDOORS), self.r(AREA))
+            if state != last:
+                self.event(name, state=list(state))
+                last = state
+            if predicate(state):
+                return state
+            time.sleep(0.1)
+        raise RuntimeError(f'{name} timed out after {seconds}s: {last}')
+
+    def lifecycle_copy(self, label):
+        # No warp, movement or other repair before this snapshot.
+        state = (self.r(gh.MODULE), self.r(gh.SUBMODULE), self.r(INDOORS), self.r(AREA))
+        self.require(f'{label}: outdoor play area40', state, (9, 0, 0, 0x40))
+        got = self.copy()
+        (self.out / f'{label}-types.bin').write_bytes(got)
+        self.event(f'{label}: first outdoor snapshot', state=list(state),
+                   copy_sha256=hashlib.sha256(got).hexdigest())
+        if self.args.variant == 'candidate':
+            self.require(f'{label}: live types', got == self.rom_types)
+        self.shot(label)
+
+    def lifecycle(self):
+        """Fixture-only: game owns save, load and Continue dispatch."""
+        self.warp(0x40, 'initial outdoor save fixture, before lifecycle boundary')
+        self.lifecycle_boundary = True
+        self.w(0x7EF3CA, 0x40, 'SavedWorld: outdoor Module05 branch, room20 exit -> area40')
+        # A saved marker distinguishes the newly written file from the input SRAM.
+        marker = (self.r16(0x7EF360) + 1) % 999
+        self.w(0x7EF360, marker & 255, 'rupee save marker low')
+        self.w(0x7EF361, marker >> 8, 'rupee save marker high')
+        before = bytes(self.b.read_block(0, 0x2000, memtype='sram'))
+        self.require('input SRAM read length', len(before), 0x2000)
+        self.press('select', 1)
+        self.wait_state('save menu', lambda q: q[:2] == (0x0E, 0x0B))
+        # RenderText needs time to finish drawing before accepting a choice.
+        time.sleep(1)
+        for _ in range(4):
+            if self.r16(0x7E1CE8) == 1:
+                break
+            self.press('down', 1)
+            time.sleep(0.2)
+        self.require('Save & Quit menu choice', self.r16(0x7E1CE8), 1)
+        self.press('a', 1)
+        self.wait_state('Save & Quit reaches title', lambda q: q[0] == 0, 25)
+        saved = bytes(self.b.read_block(0, 0x2000, memtype='sram'))
+        self.require('saved SRAM read length', len(saved), 0x2000)
+        self.require('game changed SRAM', saved != before)
+        (self.out / 'input-sram.bin').write_bytes(before)
+        # File2's primary/backup 0x500-byte records and checksum are game-produced.
+        for offset in (0x500, 0x1400):
+            record = saved[offset:offset + 0x500]
+            self.require(f'slot2 {offset:04X} checksum',
+                         sum(int.from_bytes(record[i:i+2], 'little') for i in range(0, 0x500, 2)) & 0xFFFF,
+                         0x5A5A)
+            self.require(f'slot2 {offset:04X} marker', int.from_bytes(record[0x360:0x362], 'little'), marker)
+            self.require(f'slot2 {offset:04X} SavedWorld', record[0x3CA], 0x40)
+        artifact = self.out / 'game-written.srm'
+        artifact.write_bytes(saved)
+        old_pid = self.pid
+        self.close()
+        self.require('first process exited', gh.identity(old_pid) != self.pid_identity)
+        disk = self.home / 'Saves' / f'gh-{self.args.variant}.srm'
+        self.require('flushed disk SRAM equals game SRAM', disk.read_bytes() == saved)
+        self.result['saved_sram'] = {'path': str(artifact), 'sha256': gh.sha(artifact)}
+        self.result['first_emulator'] = self.result['emulator']
+        self.result['cold_reload_uses_game_written_sram'] = True
+        self.persist()
+        self.pid = None
+        self.b = None
+        (self.out / 'launch.log').rename(self.out / 'first-launch.log')
+        self.launch()  # Same isolated profile, fresh process; no preflight/reseed.
+        self.require('cold process differs', self.pid != old_pid)
+        self.boot_file2()
+        self.lifecycle_copy('cold-load')
+        self.require('cold-load saved marker', self.r16(0x7EF360), marker)
+        # Pending damage is a declared fixture; Link_ControlHandler performs death.
+        # No module/submodule, PC, spawn, Continue choice or loader writes.
+        self.w(NO_DAMAGE, 0, 'enable actual damage processing')
+        self.w(0x7E0055, 0, 'cape off for damage processing')
+        for addr in range(0x7EF35C, 0x7EF360):
+            self.w(addr, 0, 'no bottled fairy revival')
+        self.w(0x7EF36D, 8, 'one heart before lethal pending damage')
+        self.w(0x7E0373, 8, 'pending damage consumed by Link_ControlHandler')
+        self.wait_state('actual Game Over menu', lambda q: q[:2] == (0x12, 9), 30)
+        self.fill_copy('stale collision during Game Over; Continue must refill')
+        # B0=2 is Continue without saving (09F5DA); select cycles 0,1,2.
+        for _ in range(3):
+            if self.r(0x7E00B0) == 2:
+                break
+            self.press('select', 1)
+            time.sleep(0.25)
+        self.require('Continue choice', self.r(0x7E00B0), 2)
+        self.press('start', 1)
+        self.wait_state('Continue outdoor play', lambda q: q[:3] == (9, 0, 0), 25)
+        self.lifecycle_copy('continue')
+        self.require('Continue positive health', self.r(0x7EF36D) > 0)
+
     # -- reads -------------------------------------------------------------
     def copy(self):
         return bytes(self.b.read_block(COPY, 0x200))
@@ -137,6 +246,8 @@ class Run(gh.Run):
 
     # -- movement ----------------------------------------------------------
     def warp(self, area, why):
+        if getattr(self, 'lifecycle_boundary', False):
+            raise RuntimeError('helper warp forbidden after lifecycle boundary')
         res = OracleCheats(self.b).warp_area(area)
         self.fixture(f'warp_area 0x{area:02X} ({why})')
         self.event('warp', why=why, response=res)
@@ -234,6 +345,9 @@ class Run(gh.Run):
 
     # -- case --------------------------------------------------------------
     def run_case(self):
+        if self.args.lifecycle_only:
+            self.lifecycle()
+            return
         self.event('file load', indoors=self.r(INDOORS), area=f'{self.r(AREA):02X}', link=self.link())
         indoors = self.r(INDOORS)
         if indoors:
@@ -268,7 +382,7 @@ class Run(gh.Run):
         if not self.b.reset():
             raise RuntimeError('reset failed')
         time.sleep(1.0)
-        self.event('after reset', copy_all_01=self.copy() == bytes([0x01]) * 0x200)
+        self.event('assisted reset, not save/reopen', copy_all_01=self.copy() == bytes([0x01]) * 0x200)
         self.boot_file2()
         if self.r(INDOORS):
             self.event('reopen: file 2 loads indoors; warp to $33')
@@ -305,6 +419,8 @@ def main():
                    help='tile type ranges of the --profile-areas in the ROM, e.g. 000:0200,1F8:0102 (hex)')
     p.add_argument('--profile-areas', type=lambda t: tuple(int(a, 16) for a in t.split(',')),
                    default=BOAT_AREAS, help='areas whose copy gets the --expect-types ranges (hex), default 30,38')
+    p.add_argument('--lifecycle-only', action='store_true',
+                   help='actual Save & Quit, cold outdoor load, death/Continue; review required before run')
     p.add_argument('--transition', action='store_true', help='also walk $33 -> $3D -> $33')
     return Run(p.parse_args()).run()
 
