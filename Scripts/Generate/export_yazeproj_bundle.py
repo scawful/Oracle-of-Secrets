@@ -20,7 +20,9 @@ Bundle layout (compatible with yaze core + iOS document browser):
 from __future__ import annotations
 
 import argparse
+import ctypes
 import datetime as _dt
+import errno
 import hashlib
 import json
 import os
@@ -222,9 +224,10 @@ def validate_desktop_project_contract(content: str) -> None:
 def validate_portable_project_contract(
     content: str,
     expected_rom_sha1: str,
+    save_contract: tuple = ORACLE_SAVE_CONTRACT,
 ) -> None:
     """Require the portable descriptor's paths and build contract."""
-    validate_oracle_project_contract(content)
+    validate_oracle_project_contract(content, save_contract)
     sections, assignments = _parse_project_contract(content)
     for section in ("project", "files", "rom", "build"):
         if sections.count(section) != 1:
@@ -472,7 +475,10 @@ def should_skip(rel: Path) -> bool:
     return False
 
 
-def copy_repo_snapshot(src_root: Path, dst_root: Path) -> None:
+def copy_repo_snapshot(src_root: Path, dst_root: Path, *, reject_symlinks=False) -> None:
+    if reject_symlinks and dst_root.resolve().is_relative_to(src_root.resolve()):
+        if not should_skip(dst_root.resolve().relative_to(src_root.resolve())):
+            raise ValueError("Snapshot output must not be inside captured source")
     dst_root.mkdir(parents=True, exist_ok=True)
 
     for dirpath, dirnames, filenames in os.walk(src_root):
@@ -484,6 +490,8 @@ def copy_repo_snapshot(src_root: Path, dst_root: Path) -> None:
         for d in dirnames:
             rel = rel_dir / d
             if not should_skip(rel):
+                if reject_symlinks and (src_root / rel).is_symlink():
+                    raise ValueError(f"Snapshot directory is a symlink: {rel}")
                 keep_dirnames.append(d)
         dirnames[:] = keep_dirnames
 
@@ -495,9 +503,335 @@ def copy_repo_snapshot(src_root: Path, dst_root: Path) -> None:
             if should_skip(rel):
                 continue
             src_file = abs_dir / filename
+            if reject_symlinks and src_file.is_symlink():
+                raise ValueError(f"Snapshot file is a symlink: {rel}")
             dst_file = dst_root / rel
             dst_file.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src_file, dst_file)
+
+
+AUTHORING_RECEIPT = "authoring-dependencies.json"
+PROJECT_FILE_DEPENDENCIES = (
+    "labels_filename",
+    "symbols_filename",
+    "dungeon_tile_patterns",
+    "custom_collision_json",
+    "cutscene_shots",
+    "terrain_catalog_file",
+    "lyra_terrain_file",
+    "palette_catalog_file",
+    "sprite_catalog_file",
+)
+
+
+def _source_path(raw: str, parent: Path) -> Path:
+    if not raw or "\\" in raw or "\0" in raw or ".." in Path(raw).parts:
+        raise ValueError(f"Invalid dependency path: {raw!r}")
+    if PureWindowsPath(raw).drive:
+        raise ValueError(f"Foreign dependency path: {raw!r}")
+    path = Path(raw)
+    if not path.is_absolute():
+        path = parent / path
+    for part in (path, *path.parents):
+        if part.is_symlink():
+            raise ValueError(f"Dependency is a symlink: {part}")
+    if not path.exists():
+        raise FileNotFoundError(f"Missing dependency: {path}")
+    return path
+
+
+def _rewrite_project(content: str, updates: dict[tuple[str, str], str]) -> str:
+    """Change declared bindings without rewriting labels, comments or settings."""
+    remaining = dict(updates)
+    output = []
+    section = ""
+
+    def finish_section():
+        for pair in list(remaining):
+            if pair[0] == section:
+                output.append(f"{pair[1]}={remaining.pop(pair)}")
+
+    for line in content.splitlines():
+        if line.startswith("[") and line.endswith("]"):
+            finish_section()
+            section = line[1:-1]
+        elif "=" in line and not line.startswith("#"):
+            key = line.split("=", 1)[0].strip()
+            pair = (section, key)
+            if pair in remaining:
+                line = f"{key}={remaining.pop(pair)}"
+        output.append(line)
+    finish_section()
+    for section in dict.fromkeys(pair[0] for pair in remaining):
+        output.extend(["", f"[{section}]"])
+        finish_section()
+    return "\n".join(output) + "\n"
+
+
+def write_authoring_project(
+    bundle_root: Path,
+    source_project: Path,
+    rom_sha1: str,
+    *,
+    lyra_terrain: Path | None = None,
+    graphics_preview: Path | None = None,
+    desktop: bool = False,
+) -> None:
+    """Capture explicit project dependencies; never modify an input resource."""
+    source_project = _source_path(str(source_project), Path.cwd())
+    project_bytes = source_project.read_bytes()
+    content = project_bytes.decode("utf-8")
+    _, assignments = _parse_project_contract(content)
+    values = {}
+    for section, key, value in assignments:
+        pair = (section, key)
+        if pair in values:
+            raise ValueError(f"Duplicate project assignment: {section}.{key}")
+        values[pair] = value
+    if not values.get(("project", "project_id")):
+        raise ValueError("Source project must declare its project_id")
+    files = {}
+    bindings = {}
+    sources = {}
+
+    def copy_file(source: Path, relative: str):
+        source = _source_path(str(source), source_project.parent)
+        if not source.is_file():
+            raise ValueError(f"Dependency is not a regular file: {source}")
+        target = _resolve_bundle_member(
+            bundle_root, relative, "dependency", must_exist=False
+        )
+        data = source.read_bytes()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        if source.read_bytes() != data or target.read_bytes() != data:
+            raise ValueError(f"Dependency changed during capture: {source}")
+        files[relative] = {
+            "size": len(data),
+            "sha256": hashlib.sha256(data).hexdigest(),
+        }
+        sources[source] = files[relative]["sha256"]
+
+    def copy_directory(source: Path, relative: str):
+        source = _source_path(str(source), source_project.parent)
+        if not source.is_dir():
+            raise ValueError(f"Dependency is not a directory: {source}")
+        if bundle_root.resolve().is_relative_to(source.resolve()):
+            raise ValueError("Bundle output is inside a dependency directory")
+        destination = bundle_root / relative
+        if destination.exists():
+            shutil.rmtree(destination)
+        destination.mkdir(parents=True, exist_ok=True)
+        for directory, dirs, names in os.walk(source, followlinks=False):
+            for name in dirs + names:
+                child = Path(directory) / name
+                _source_path(str(child), source)
+                if child.is_file():
+                    copy_file(
+                        child, relative + "/" + child.relative_to(source).as_posix()
+                    )
+
+    updates = {
+        (section, key): value for section, key, value in PORTABLE_PROJECT_CONTRACT
+    }
+    updates[("rom", "expected_hash")] = rom_sha1
+    overrides = {"lyra_terrain_file": lyra_terrain}
+    for key in PROJECT_FILE_DEPENDENCIES:
+        raw = (
+            str(overrides[key])
+            if overrides.get(key) is not None
+            else values.get(("files", key), "")
+        )
+        if raw:
+            source = _source_path(raw, source_project.parent)
+            relative = f"assets/project/{key}/{source.name}"
+            copy_file(source, relative)
+            updates[("files", key)] = relative
+            bindings[f"files.{key}"] = relative
+    for key, destination in (
+        ("custom_objects_folder", "project/Dungeons/Objects/Data"),
+        ("sprite_source_root", "assets/sprite-source"),
+    ):
+        raw = values.get(("files", key), "")
+        if raw:
+            copy_directory(_source_path(raw, source_project.parent), destination)
+            updates[("files", key)] = destination
+            bindings[f"files.{key}"] = destination
+
+    raw_preview = (
+        str(graphics_preview)
+        if graphics_preview is not None
+        else values.get(("files", "overworld_graphics_preview"), "")
+    )
+    if raw_preview:
+        source = _source_path(raw_preview, source_project.parent)
+        directory = "assets/graphics-preview"
+        copy_file(source, directory + "/" + source.name)
+        document = json.loads(
+            (bundle_root / directory / source.name).read_text(encoding="utf-8")
+        )
+
+        def copy_catalog_resources(value):
+            if isinstance(value, dict):
+                if "path" in value:
+                    raw = value["path"]
+                    if (
+                        not isinstance(raw, str)
+                        or Path(raw).is_absolute()
+                        or PureWindowsPath(raw).root
+                    ):
+                        raise ValueError("Graphics catalog resource must be relative")
+                    resource = _source_path(raw, source.parent)
+                    if not resource.resolve().is_relative_to(source.parent.resolve()):
+                        raise ValueError(
+                            "Graphics catalog resource escapes its directory"
+                        )
+                    copy_file(resource, directory + "/" + raw)
+                    captured = files[directory + "/" + raw]
+                    if "sha256" in value and value["sha256"] != captured["sha256"]:
+                        raise ValueError(
+                            f"Graphics catalog resource hash mismatch: {raw}"
+                        )
+                    if "byte_count" in value and (
+                        type(value["byte_count"]) is not int
+                        or value["byte_count"] != captured["size"]
+                    ):
+                        raise ValueError(
+                            f"Graphics catalog resource size mismatch: {raw}"
+                        )
+                for child in value.values():
+                    copy_catalog_resources(child)
+            elif isinstance(value, list):
+                for child in value:
+                    copy_catalog_resources(child)
+
+        copy_catalog_resources(document)
+        relative = directory + "/" + source.name
+        updates[("files", "overworld_graphics_preview")] = relative
+        bindings["files.overworld_graphics_preview"] = relative
+
+    raw_manifest = values.get(("files", "hack_manifest_file"), "")
+    if raw_manifest:
+        manifest = json.loads(
+            _source_path(raw_manifest, source_project.parent).read_text()
+        )
+        tracks = manifest.get("minecart_tracks", {}).get("source", {})
+        if tracks.get("path"):
+            copy_file(
+                _source_path(tracks["path"], source_project.parent),
+                "project/Sprites/Objects/data/minecart_tracks.asm",
+            )
+    for section, key in (
+        ("agent_settings", "custom_system_prompt"),
+        ("agent_settings", "builder_blueprint_path"),
+        ("planning", "file"),
+        ("atlas", "symbols"),
+        ("zscream_compatibility", "original_project_file"),
+    ):
+        raw = values.get((section, key), "")
+        if raw:
+            source = _source_path(raw, source_project.parent)
+            relative = f"assets/project/{key}/{source.name}"
+            copy_file(source, relative)
+            updates[(section, key)] = relative
+            bindings[f"{section}.{key}"] = relative
+    annotations = []
+    for index, raw in enumerate(
+        filter(None, values.get(("atlas", "annotations"), "").split(","))
+    ):
+        source = _source_path(raw.strip(), source_project.parent)
+        relative = f"assets/atlas/{index}-{source.name}"
+        copy_file(source, relative)
+        annotations.append(relative)
+    if ("atlas", "annotations") in values:
+        updates[("atlas", "annotations")] = ",".join(annotations)
+    if any(section == "atlas" for section, key in values):
+        updates[("atlas", "export_folder")] = "output/atlas"
+    # Sprite asset JSON contains further independently rooted source bindings;
+    # refuse rather than preserving an unreviewed external publisher target.
+    if any(
+        section == "sprite_assets" and value for (section, key), value in values.items()
+    ):
+        raise ValueError(
+            "Sprite asset bindings need an explicit bundle dependency adapter"
+        )
+    additional = []
+    for index, raw in enumerate(
+        filter(None, values.get(("files", "additional_roms"), "").split(","))
+    ):
+        source = _source_path(raw.strip(), source_project.parent)
+        relative = f"assets/additional-roms/{index}-{source.name}"
+        copy_file(source, relative)
+        additional.append(relative)
+    updates[("files", "additional_roms")] = ",".join(additional)
+    updates[("workspace", "recent_files")] = ""
+    updates[("build", "asm_sources")] = ""
+    updates[("build", "track_changes")] = "false"
+    updates[("music", "storage_key")] = (
+        values[("project", "project_id")] + "_bundle_music"
+    )
+    result = _rewrite_project(content, updates)
+    contract = ORACLE_DESKTOP_SAVE_CONTRACT if desktop else ORACLE_SAVE_CONTRACT
+    validate_portable_project_contract(result, rom_sha1, contract)
+    if desktop:
+        validate_desktop_project_contract(result)
+    palette = updates.get(("files", "palette_catalog_file"))
+    if palette:
+        validate_palette_catalog(bundle_root / palette)
+    if source_project.read_bytes() != project_bytes:
+        raise ValueError("Source project changed during capture")
+    for path, expected in sources.items():
+        _source_path(str(path), source_project.parent)
+        if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+            raise ValueError(f"Dependency changed during capture: {path}")
+    (bundle_root / "project.yaze").write_text(result, encoding="utf-8")
+    receipt = {
+        "schema_version": 1,
+        "mode": "desktop" if desktop else "portable",
+        "source_project_sha256": hashlib.sha256(project_bytes).hexdigest(),
+        "project_sha256": hashlib.sha256(result.encode()).hexdigest(),
+        "bindings": bindings,
+        "files": files,
+    }
+    (bundle_root / AUTHORING_RECEIPT).write_text(
+        json.dumps(receipt, indent=2, sort_keys=True) + "\n"
+    )
+
+
+def verify_authoring_dependencies(bundle_root: Path) -> dict | None:
+    receipt_path = bundle_root / AUTHORING_RECEIPT
+    if not receipt_path.exists():
+        return None
+    receipt = json.loads(receipt_path.read_text())
+    if receipt.get("schema_version") != 1 or receipt.get("mode") not in (
+        "desktop",
+        "portable",
+    ):
+        raise ValueError("Invalid authoring dependency receipt")
+    content = (bundle_root / "project.yaze").read_bytes()
+    if hashlib.sha256(content).hexdigest() != receipt["project_sha256"]:
+        raise ValueError("Authoring project descriptor differs from captured input")
+    _, assignments = _parse_project_contract(content.decode("utf-8"))
+    values = {f"{section}.{key}": value for section, key, value in assignments}
+    for key, expected in receipt["bindings"].items():
+        if values.get(key) != expected:
+            raise ValueError(f"Authoring dependency binding changed: {key}")
+        _resolve_bundle_member(
+            bundle_root, expected, "authoring binding", must_exist=False
+        )
+        _source_path(str(bundle_root / expected), bundle_root)
+    for relative, expected in receipt["files"].items():
+        path = _resolve_bundle_member(
+            bundle_root, relative, "authoring dependency", must_exist=True
+        )
+        _source_path(str(bundle_root / relative), bundle_root)
+        data = path.read_bytes()
+        if (
+            len(data) != expected["size"]
+            or hashlib.sha256(data).hexdigest() != expected["sha256"]
+        ):
+            raise ValueError(f"Authoring dependency hash mismatch: {relative}")
+    return receipt
 
 
 def _generate_bundle_hack_manifest(bundle_root: Path) -> dict:
@@ -689,13 +1023,19 @@ def verify_bundle(bundle_root: Path) -> None:
     project_content = (bundle_root / "project.yaze").read_bytes().decode(
         "utf-8"
     )
-    validate_portable_project_contract(project_content, rom_sha1)
-    palette_catalog = _portable_palette_catalog(bundle_root)
-    _, assignments = _parse_project_contract(project_content)
-    values = [value for section, key, value in assignments
-              if section == "files" and key == "palette_catalog_file"]
-    if values != ([palette_catalog] if palette_catalog else []):
-        raise ValueError("Bundle palette_catalog_file differs from source descriptor")
+    authoring = verify_authoring_dependencies(bundle_root)
+    contract = ORACLE_SAVE_CONTRACT
+    if authoring and authoring["mode"] == "desktop":
+        contract = ORACLE_DESKTOP_SAVE_CONTRACT
+        validate_desktop_project_contract(project_content)
+    validate_portable_project_contract(project_content, rom_sha1, contract)
+    if not authoring:
+        palette_catalog = _portable_palette_catalog(bundle_root)
+        _, assignments = _parse_project_contract(project_content)
+        values = [value for section, key, value in assignments
+                  if section == "files" and key == "palette_catalog_file"]
+        if values != ([palette_catalog] if palette_catalog else []):
+            raise ValueError("Bundle palette_catalog_file differs from source descriptor")
 
     hack_manifest_path = bundle_root / PORTABLE_HACK_MANIFEST
     try:
@@ -728,6 +1068,48 @@ def refresh_planning_outputs(repo_root: Path) -> None:
         if not script.exists():
             raise FileNotFoundError(str(script))
         subprocess.run([sys.executable, str(script)], cwd=str(repo_root), check=True)
+
+
+def _rename_without_replacement(source: Path, destination: Path) -> None:
+    """Publish a directory without POSIX rename's empty-directory replacement."""
+    if os.name == "nt":
+        os.rename(source, destination)
+        return
+    libc = ctypes.CDLL(None, use_errno=True)
+    if sys.platform == "darwin":
+        rename = libc.renamex_np
+        rename.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint]
+        rename.restype = ctypes.c_int
+        # Darwin sys/stdio.h: RENAME_EXCL.
+        result = rename(os.fsencode(source), os.fsencode(destination), 0x4)
+    elif sys.platform.startswith("linux") and hasattr(libc, "renameat2"):
+        rename = libc.renameat2
+        rename.argtypes = [
+            ctypes.c_int,
+            ctypes.c_char_p,
+            ctypes.c_int,
+            ctypes.c_char_p,
+            ctypes.c_uint,
+        ]
+        rename.restype = ctypes.c_int
+        # AT_FDCWD and RENAME_NOREPLACE; unsupported kernels/filesystems refuse.
+        result = rename(-100, os.fsencode(source), -100, os.fsencode(destination), 1)
+    else:
+        raise OSError(errno.ENOTSUP, "Exclusive directory publication is unavailable")
+    if result != 0:
+        error = ctypes.get_errno()
+        raise OSError(error, os.strerror(error), str(destination))
+
+
+def _publish_authoring_bundle(
+    staging: Path, output: Path, old: Path, selected_rom: Path, expected_rom: bytes
+) -> None:
+    if old.exists() or old.is_symlink():
+        raise FileExistsError(f"Authoring .old path became occupied: {old}")
+    _source_path(str(selected_rom), Path.cwd())
+    if selected_rom.read_bytes() != expected_rom:
+        raise ValueError("Selected ROM changed before authoring publication")
+    _rename_without_replacement(staging, output)
 
 
 def main() -> int:
@@ -768,7 +1150,17 @@ def main() -> int:
         action="store_true",
         help="Overwrite output bundle if it already exists",
     )
+    parser.add_argument("--project", type=Path,
+                        help="Preserve and rebase an existing authoring .yaze descriptor")
+    parser.add_argument("--lyra-terrain", type=Path,
+                        help="Explicit terrain source override (requires --project)")
+    parser.add_argument("--graphics-preview", type=Path,
+                        help="Explicit graphics catalog override (requires --project)")
+    parser.add_argument("--desktop", action="store_true",
+                        help="Retain the desktop graphics-save contract (requires --project)")
     args = parser.parse_args()
+    if not args.project and (args.lyra_terrain or args.graphics_preview or args.desktop):
+        parser.error("--lyra-terrain, --graphics-preview and --desktop require --project")
 
     rom_path: Path | None = args.rom
     if rom_path is None:
@@ -782,7 +1174,8 @@ def main() -> int:
             )
             return 2
 
-    rom_path = rom_path.resolve()
+    rom_path = (_source_path(str(rom_path), Path.cwd())
+                if args.project else rom_path.resolve())
     if not rom_path.exists():
         print(f"ERROR: ROM not found: {rom_path}", file=sys.stderr)
         return 2
@@ -805,30 +1198,43 @@ def main() -> int:
 
     staging_bundle = out_bundle.with_name(out_bundle.name + ".staging")
     old_bundle = out_bundle.with_name(out_bundle.name + ".old")
+    if args.project:
+        if args.force or any(path.exists() for path in (out_bundle, staging_bundle, old_bundle)):
+            raise ValueError("Authoring export requires a fresh output/staging path; --force is portable-only")
+        for source in (args.project, args.lyra_terrain, args.graphics_preview, rom_path):
+            if source is not None and any(
+                source.resolve().is_relative_to(target.resolve())
+                for target in (out_bundle, staging_bundle, old_bundle)
+            ):
+                raise ValueError("Bundle output aliases an authoring input")
 
     if out_bundle.exists() and not args.force:
         print(f"ERROR: output already exists: {out_bundle}", file=sys.stderr)
         print("Pass --force to overwrite.", file=sys.stderr)
         return 2
 
-    if staging_bundle.exists():
+    if staging_bundle.exists() and not args.project:
         shutil.rmtree(staging_bundle)
 
     if args.refresh_planning:
         refresh_planning_outputs(repo_root)
 
     # Create bundle layout.
-    staging_bundle.mkdir(parents=True, exist_ok=True)
+    staging_bundle.mkdir(parents=True, exist_ok=not args.project)
     (staging_bundle / "backups").mkdir(parents=True, exist_ok=True)
     (staging_bundle / "output").mkdir(parents=True, exist_ok=True)
 
     # Copy ROM to bundle root as `rom` (no extension).
     rom_dst = staging_bundle / "rom"
+    rom_before = rom_path.read_bytes() if args.project else None
     shutil.copy2(rom_path, rom_dst)
+    if args.project and (rom_path.read_bytes() != rom_before or rom_dst.read_bytes() != rom_before):
+        raise ValueError("Selected ROM changed during capture")
     rom_sha1 = sha1_file(rom_dst)
 
     # Copy repo snapshot to bundle/project/.
-    copy_repo_snapshot(repo_root, staging_bundle / "project")
+    copy_repo_snapshot(repo_root, staging_bundle / "project",
+                       reject_symlinks=args.project is not None)
     # Build scripts expect a writable Roms/ folder inside the code snapshot.
     # We intentionally do not copy the repo's real Roms/ directory into the
     # bundle (too large + machine-specific), but an empty directory keeps the
@@ -837,22 +1243,31 @@ def main() -> int:
 
     # Generate the active manifest from the staged snapshot. The build script
     # regenerates this exact path after assembling the playable ROM.
+    if args.project:
+        write_authoring_project(staging_bundle, args.project, rom_sha1,
+                                lyra_terrain=args.lyra_terrain,
+                                graphics_preview=args.graphics_preview,
+                                desktop=args.desktop)
     write_bundle_hack_manifest(staging_bundle)
 
-    # Write config + metadata.
-    write_project_file(staging_bundle, args.name, rom_sha1)
+    # Write config + metadata. Existing portable exports keep their contract.
+    if not args.project:
+        write_project_file(staging_bundle, args.name, rom_sha1)
     write_ios_manifest(staging_bundle, args.name, rom_sha1)
     verify_bundle(staging_bundle)
 
-    # Swap bundle into place (reduce the chance of iCloud syncing a partial
-    # directory tree). Keep a short-lived `.old` copy when overwriting.
-    if old_bundle.exists():
-        shutil.rmtree(old_bundle)
-    if out_bundle.exists():
-        out_bundle.rename(old_bundle)
-    staging_bundle.rename(out_bundle)
-    if old_bundle.exists():
-        shutil.rmtree(old_bundle)
+    if args.project:
+        _publish_authoring_bundle(staging_bundle, out_bundle, old_bundle,
+                                  rom_path, rom_before)
+    else:
+        # Keep the existing portable replacement/--force contract.
+        if old_bundle.exists():
+            shutil.rmtree(old_bundle)
+        if out_bundle.exists():
+            out_bundle.rename(old_bundle)
+        staging_bundle.rename(out_bundle)
+        if old_bundle.exists():
+            shutil.rmtree(old_bundle)
 
     print(f"Wrote bundle: {out_bundle}")
     print(f"  ROM: {rom_path} -> {out_bundle / 'rom'} (sha1={rom_sha1})")
