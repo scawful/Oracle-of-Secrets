@@ -42,7 +42,8 @@ org $01B53C ; @hook module=Dungeons
     LDA.w #$1111
     JMP.w DrawBigGraySegment
 
-assert pc() <= $01B560
+; $01B55C-$01B55F: weight plate tag stub (Dungeons/weight_plate.asm).
+assert pc() <= $01B55C
 
 ; The removed InitHeavyPot occupied $2C8000-$2C8016. Keep all following
 ; custom object routines/data at their existing addresses.

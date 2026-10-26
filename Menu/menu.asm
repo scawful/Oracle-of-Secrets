@@ -1252,3 +1252,5 @@ incsrc "menu_hud.asm"
 %log_end("Menu/menu_hud.asm", !LOG_MENU)
 incsrc "menu_journal.asm"
 %log_end("Menu/menu_journal.asm", !LOG_MENU)
+; Dungeons/weight_plate.asm owns $2EF000-$2EF7FF.
+assert pc() <= $2EF000, "Menu bank $2E reached the weight plate region ($2EF000)"

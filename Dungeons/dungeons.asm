@@ -49,6 +49,9 @@ print  "End of floor_puzzle.asm           ", pc
 ; Crumble Floor Tag: Holes3
 incsrc "Dungeons/crumblefloor_tag.asm"
 
+; Weight Plate: tile type $DD + room tag $35 (fixed slots)
+incsrc "Dungeons/weight_plate.asm"
+
 pushpc
 
 incsrc "Dungeons/spike_subtype.asm"

@@ -805,7 +805,11 @@ FreeBlock_Large    = $7EF3AC  ; 25 bytes ($7EF3AC-3C4)
 ; Purpose: Large block after dreams/water gates
 ; Note: $7EF4FE-4FF are checksum (do not use)
 ;
-FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
+FreeBlock_Dreams   = $7EF412  ; ~222 bytes ($7EF412-4EF), 12 bytes ($7EF4F2-4FD)
+
+; Weight plate latch bits, one per latch room (Dungeons/weight_plate.asm
+; WeightPlate_LatchRooms). Saved with the file; new games clear it.
+WeightPlate_Latch  = $7EF4F0  ; 16 bits ($7EF4F0-4F1)
 
 ; ---------------------------------------------------------
 ; FREE BLOCK SUMMARY
@@ -816,9 +820,10 @@ FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF39F  | $7EF3A0  | 2     | Collectibles ext   |
 ; | $7EF3AB  | $7EF3C4  | 26    | Large reserved     |
-; | $7EF412  | $7EF4FD  | 236   | Dreams extension   |
+; | $7EF412  | $7EF4EF  | 222   | Dreams extension   |
+; | $7EF4F2  | $7EF4FD  | 12    | Dreams extension   |
 ; |----------|----------|-------|--------------------|
-; | TOTAL AVAILABLE:    | 320   | bytes              |
+; | TOTAL AVAILABLE:    | 318   | bytes              |
 ; ---------------------------------------------------------
 
 ; =========================================================

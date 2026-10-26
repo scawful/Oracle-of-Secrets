@@ -213,6 +213,11 @@
 ; Every other pad, including LW $25 -> $65 (Yesterwind), is unchanged
 ; (Overworld/lupo_pad_gate.asm).
 !ENABLE_LUPO_PAD_GATE               = 1
+; Weight plate (underworld tile type $DD, room tag $35): the room's hold
+; doors open while Link on foot, a pushed block, statue, ice block, minecart,
+; follower or Somaria block rests on the plate; listed rooms latch with a
+; save bit (Dungeons/weight_plate.asm).
+!ENABLE_WEIGHT_PLATE                = 1
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
