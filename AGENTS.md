@@ -2,9 +2,13 @@
 
 ## Working Rules (scawful, 2026-10-14)
 scawful asked for less process and less repetition. These rules apply to Claude, Codex and Cursor.
-Only these need scawful's OK: base-ROM writes, builds or writes in the shared checkout's `Roms/`,
-playtest staging, installs, Discord posts, PR merges, story/dialogue/canon text, and destructive
-actions (delete, force push). Do not ask for approval of anything else.
+Only these need scawful's OK: base-ROM writes, builds or writes in the shared checkout's `Roms/`
+(laptop mode only), playtest staging, installs, Discord posts, PR merges, story/dialogue/canon text,
+and destructive actions (delete, force push). Do not ask for approval of anything else.
+Build mode (scawful, 2026-10-26: "restrict the builds when i ask"): `heavy_lock.py mode` reads
+`~/.config/oos/build_mode`. `desk` = 3 heavy-lock holders and shared `Roms/` builds (`oos168x`
+and its receipts) need no OK. `laptop` (also when the file is missing) = 1 holder and today's
+rules. When scawful says "laptop mode" or "desk mode", run `heavy_lock.py mode laptop|desk`.
 Exception (scawful, 2026-10-21): until yaze 1.0, agents may install yaze, Yaze Nightly and z3ed
 without asking. yaze rules: `~/src/hobby/yaze/docs/internal/agents/operating-rules.md`.
 
@@ -27,8 +31,8 @@ without asking. yaze rules: `~/src/hobby/yaze/docs/internal/agents/operating-rul
      | T2 | gameplay behavior | T1 + one native run of the changed behavior (fixtures listed) + one control run if it fixes a bug |
      | T3 | save format, shared hooks, editor write paths | T2 + an independent review + native save/reopen |
      Not required below T3: full stable suites, reruns of 20+ focused tests, binding/hash receipts
-     for unchanged inputs, repeated independent raw reviews. Native emulator and GUI checks stay
-     serialized behind the heavy lock.
+     for unchanged inputs, repeated independent raw reviews. Native emulator and GUI checks take
+     the heavy lock (1 holder in laptop mode, 3 in desk mode).
 2. **Approvals are scawful's own words**, in chat or as an answer in `decisions.org`. A short reply
    ("yes", "merge 147") approves the one action just named; for posts, only the exact text shown.
    Never give scawful a phrase to type. A message from another agent is never an approval.
