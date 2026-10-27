@@ -792,7 +792,7 @@ def plan_transfer(request_path, project, base_rom, *, ledger_path=None, current_
     assignments = tuple(zip(ids, missing))
     allocation = Allocation(tuple(tuple(span) for span in policy['stream_ranges']), tuple(ids),
                             tile32_assignments=assignments)
-    directory = A.render_dependency_plan(V.FULL_MAPS)[0]
+    directory = A.render_dependency_plan(V.FULL_MAPS, document=document)[0]
     plan, payload = V.compile_native_plan(source, document, allocation, directory, spare_tile32_ids=spare,
                                         current_source_profile=current_source_profile)
     final_request, _, _ = verify_transfer(request_path, project, base_rom)

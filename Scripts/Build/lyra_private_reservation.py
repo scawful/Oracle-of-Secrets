@@ -255,8 +255,12 @@ def compile_native_plan(source, document, granted, directory, *, native_copy_map
     """
     R.require(type(source) is bytes and len(source) in (0x200000, 0x400000),
               'Current full32 planning requires an unheadered2MiB or4MiB source')
-    R.require(not document.gameplay_areas,
-              'CURRENT_GAMEPLAY_AREAS_NATIVE_UNBOUND: native render/actor aggregation is not implemented')
+    if document.gameplay_areas:
+        R.require(current_source_profile is not None,
+                  'CURRENT_GAMEPLAY_AREAS_NATIVE_UNBOUND: historical compiler has no authored area consumer')
+        expected_directory = A.render_dependency_plan(FULL_MAPS, document=document)[0]
+        R.require(directory == expected_directory,
+                  'CURRENT_GAMEPLAY_AREAS_RENDER_MISMATCH: directory differs from saved gameplay areas')
     original_source = source
     source_hash, source_size = R.sha(source), len(source)
     source = A.expanded_rom(source)
@@ -385,6 +389,10 @@ def compile_native_plan(source, document, granted, directory, *, native_copy_map
     if current_source_profile is not None:
         result.update(current_source_profile_sha256=T.digest(current_source_profile),
                       source_origins=current_source_profile['origins'])
+        if document.gameplay_areas:
+            result.update(gameplay_area_plan=A.gameplay_area_plan(document),
+                render_directory=[dict(map_id=plan.map_id, quadrant_maps=list(plan.quadrant_maps))
+                                  for plan in compiled.maps])
     return result, payload
 
 

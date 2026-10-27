@@ -121,6 +121,22 @@ def validated_gameplay_areas(value) -> tuple[dict, ...]:
     return tuple(copy.deepcopy(area) for area in value)
 
 
+def gameplay_render_directory(areas) -> dict[int, Quad]:
+    """Map each authored member to the parent's four native load quadrants.
+
+    Wide/tall/small loads repeat their absent quadrants, as the native loader
+    always decompresses four pages. Unassigned pages acquire no layout here.
+    """
+    result = {}
+    for area in validated_gameplay_areas(areas):
+        members, size = tuple(area['maps']), area['size']
+        quadrants = (members * 4 if size == 'small' else members * 2 if size == 'wide'
+                     else (members[0], members[0], members[1], members[1])
+                     if size == 'tall' else members)
+        result.update((member, quadrants) for member in members)
+    return result
+
+
 @dataclass(frozen=True)
 class TerrainDocument:
     profile: dict
@@ -453,13 +469,20 @@ def compile_terrain(document: TerrainDocument, native_definitions: Mapping[int, 
             _require(area not in seen, "Duplicate selected Lyra map ID")
             seen.add(area)
         selected = tuple(area - FIRST_MAP for area in sorted(seen))
-    directory = {} if render_directory is None else dict(render_directory)
     selected_ids = {FIRST_MAP + index for index in selected}
+    authored_directory = gameplay_render_directory(document.gameplay_areas) if document.gameplay_areas else {}
+    if authored_directory:
+        _require(selected_ids <= set(authored_directory),
+                 "CURRENT_GAMEPLAY_AREAS_UNASSIGNED: selected pages need explicit gameplay areas")
+    directory = {area: row for area, row in authored_directory.items() if area in selected_ids}
+    if render_directory is not None:
+        directory.update(render_directory)
     for area, row in directory.items():
         _require(type(area) is int and area in selected_ids
                  and isinstance(row, (tuple, list)) and len(row) == 4
                  and all(type(source) is int and source in selected_ids for source in row)
-                 and tuple(row) in (quadrant_map_plan(area), (area,) * 4),
+                 and (tuple(row) == authored_directory[area] if area in authored_directory
+                      else tuple(row) in (quadrant_map_plan(area), (area,) * 4)),
                  "Unclosed or unsupported explicit render directory")
     map_quads = []
     for cells in document.maps:

@@ -20,7 +20,7 @@ import sys
 
 from lyra_project_terrain import (
     Allocation, FIRST_MAP, MAP_COUNT, TerrainDocument, compile_terrain,
-    gameplay_area_footprint, parse_terrain_document, quadrant_map_plan,
+    gameplay_area_footprint, gameplay_render_directory, parse_terrain_document, quadrant_map_plan,
     resolve_project_terrain, validated_gameplay_areas,
 )
 from lyra_native_state import plan_native_state
@@ -319,9 +319,12 @@ def gameplay_area_plan(document):
                 runtime_admission=False)
 
 
-def render_dependency_plan(map_ids, footprints=()):
+def render_dependency_plan(map_ids, footprints=(), *, document=None):
     maps = _map_ids(map_ids, "candidate map IDs")
-    directory = {area: quadrant_map_plan(area) for area in maps}
+    authored = gameplay_render_directory(document.gameplay_areas) if document is not None and document.gameplay_areas else {}
+    require(not authored or set(maps) <= set(authored),
+            "CURRENT_GAMEPLAY_AREAS_UNASSIGNED: selected pages need explicit gameplay areas")
+    directory = {area: authored.get(area, quadrant_map_plan(area)) for area in maps}
     require(type(footprints) in (list, tuple), "Malformed render footprints")
     seen = set()
     for entry in footprints:
@@ -332,7 +335,8 @@ def render_dependency_plan(map_ids, footprints=()):
                 "Render footprint must name one selected traversal map")
         require(type(row) in (list, tuple) and len(row) == 4
                 and all(type(v) is int for v in row)
-                and tuple(row) in (quadrant_map_plan(area), (area,) * 4),
+                and (tuple(row) == authored[area] if area in authored
+                     else tuple(row) in (quadrant_map_plan(area), (area,) * 4)),
                 "Render footprint must be natural or explicitly isolated")
         directory[area] = tuple(row)
         seen.add(area)

@@ -1261,8 +1261,10 @@ def plan_current_actor_streams(source, document, *, current_source_profile):
     Native OW records are Y, X, sprite ID followed by a single FF terminator.
     The saved Lyra model has map-local Tile16 coordinates and three explicit
     states; it represents no extra native X/Y flag bits. Placement IDs and
-    original ordinals remain provenance, never native sprite bytes. Storage,
-    parent aggregation and the bank-$09 pointer assignments remain unbound.
+    original ordinals remain provenance, never native sprite bytes. Authored
+    area members aggregate in row-major order with 32-tile quadrant offsets;
+    every member selects the same parent list. Storage and the bank-$09 pointer
+    assignments remain unbound.
     """
     import lyra_current_transfer as current
     from lyra_project_terrain import TerrainDocument
@@ -1293,14 +1295,36 @@ def plan_current_actor_streams(source, document, *, current_source_profile):
         authored.append((area, phases))
 
     profile = current.verify_current_native_source_profile(current_source_profile, source, document)
+    area_plan = A.gameplay_area_plan(document)
+    parents = {row['map_id']: row['parent_map_id'] for row in area_plan['assignments']}
+    groups = {row['parent_map_id']: row['maps'] for row in area_plan['areas']}
+    by_map = dict(authored)
     streams = []
     for area, phases in authored:
+        parent = parents.get(area, area)
+        members = groups.get(parent, [area])
+        # The native loader bases its actor coordinate origin on the parent.
+        # Serialize each physical page once; repeated render quadrants never
+        # duplicate actors in wide/tall/small areas.
+        if area in parents:
+            phases = [[], [], []]
+            for member in members:
+                dy, dx = divmod(member - parent, 8)
+                for state, placements in enumerate(by_map[member]):
+                    phases[state].extend((ordinal, identity, y + dy * 32, x + dx * 32, sprite_id)
+                        for ordinal, identity, y, x, sprite_id in placements)
+            R.require(sum(map(len, phases)) <= 128,
+                      'CURRENT_ACTOR_MODEL_INVALID: gameplay area exceeds128 placements')
         for state, placements in enumerate(phases):
             payload = bytes(value for row in placements for value in row[2:]) + b'\xFF'
-            streams.append(dict(map_id=area, state=state, payload_hex=payload.hex(),
+            row = dict(map_id=area, state=state, payload_hex=payload.hex(),
                 sha256=R.sha(payload), bytes=len(payload),
                 placement_ids=[row[1] for row in placements],
-                placement_ordinals=[row[0] for row in placements]))
+                placement_ordinals=[row[0] for row in placements])
+            if area in parents:
+                row.update(parent_map_id=parent, source_maps=list(members),
+                    placement_maps=[member for member in members for _ in by_map[member][state]])
+            streams.append(row)
     result = dict(kind='lyra.current_actor_streams_source_plan.v1',
         source_rom_sha256=R.sha(source), source_size=len(source),
         source_profile_sha256=current.T.digest(profile),
