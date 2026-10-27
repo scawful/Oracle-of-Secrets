@@ -49,6 +49,9 @@ print  "End of floor_puzzle.asm           ", pc
 ; Crumble Floor Tag: Holes3
 incsrc "Dungeons/crumblefloor_tag.asm"
 
+; Hot Floor: tile type $DE (fixed bank $07 slot)
+incsrc "Dungeons/hot_floor.asm"
+
 pushpc
 
 incsrc "Dungeons/spike_subtype.asm"
@@ -167,8 +170,28 @@ WaterGate_SelectOverlayPointer:
 ; Water collision system - placed in Bank $2C after main dungeon code
 incsrc "Collision/water_collision.asm"
 
+incsrc "Dungeons/sky_d8_award.asm"
+print  "End of sky_d8_award.asm           ", pc
+if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
+incsrc "Dungeons/d7_farore_rescue.asm"
+print  "End of d7_farore_rescue.asm       ", pc
+assert pc() <= $2CFD00 ; do not overlap RoomTag_SomariaSocketDoor
+endif
+
+; Zora helpers share the sequential dungeon/NPC stream, not the fixed cart gate.
+assert pc() >= $2C8000, "Bank $2C dungeon stream left its bank before Zora helpers"
 incsrc "Dungeons/zora_temple_floor.asm"
 incsrc "Dungeons/zora_temple_swim_exit.asm"
+incsrc "Dungeons/zora_wisdom_legacy_chest.asm"
+assert pc() >= $2C8000, "Bank $2C dungeon stream left its bank after Zora helpers"
+assert pc() <= $2CFD00, "Bank $2C dungeon stream overlaps SomariaSocketDoor"
+if !ENABLE_MINECART_CART_SHUTTERS
+  assert pc() <= $2CFA00, "Bank $2C dungeon stream overlaps localized cart drag"
+endif
+if !ENABLE_THIN_ICE == 1
+  assert pc() <= $2CF800, "Bank $2C dungeon stream overlaps thin ice slot"
+endif
+print "End of zora_temple helpers        ", pc
 
 print "End of dungeons.asm               ", pc
 

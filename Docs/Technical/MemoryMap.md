@@ -87,21 +87,23 @@ This section details the layout of the game's volatile memory.
 | `$7E0E20` | `SprType`  | An array storing the ID for each of the 16 sprites. |
 | `$7E0E50` | `SprHealth`| An array storing the health for each of the 16 sprites. |
 
-### Custom WRAM Region - `$7E0730+`
+### Custom WRAM Region - `$7E1E70+`
+
+`DBG_*` rows: `Util/item_cheat.asm` is not assembled (`Oracle_main.asm:164`) and these old addresses now sit inside the minecart track tables (`$7E0728-$7E07E7`); give the debug mailbox new RAM before reviving it.
 
 *This section details the custom WRAM area defined in `Core/ram.asm` and `Core/symbols.asm`. It explains the purpose of each custom variable.*
 
 | Address  | Label                  | Description                                                              |
 |----------|------------------------|--------------------------------------------------------------------------|
-| `$7E0730` | `MenuScrollLevelV`     | Vertical scroll position for the menu.                                   |
-| `$7E0731` | `MenuScrollLevelH`     | Horizontal scroll position for the menu.                                 |
-| `$7E0732` | `MenuScrollHDirection` | The direction of horizontal scrolling in the menu.                       |
-| `$7E0734` | `MenuItemValueSpoof`   | Used to temporarily override the displayed value of a menu item.         |
-| `$7E0736` | `ShortSpoof`           | A shorter version of the spoof value.                                    |
-| `$7E0737` | `MusicNoteValue`       | The value of the current music note being played.                        |
-| `$7E0739` | `GoldstarOrHookshot`   | Differentiates between the vanilla Hookshot and the custom Goldstar item.  |
-| `$7E073A` | `Neck_Index`           | Used for multi-part sprites, like a centipede body.                      |
-| `$7E0745` | `FishingOrPortalRod`   | Differentiates between the Fishing Rod and the Portal Rod.               |
+| `$7E1E70` | `MenuScrollLevelV`     | Vertical scroll position for the menu.                                   |
+| `$7E1E71` | `MenuScrollLevelH`     | Horizontal scroll position for the menu.                                 |
+| `$7E1E72` | `MenuScrollHDirection` | The direction of horizontal scrolling in the menu.                       |
+| `$7E1E74` | `MenuItemValueSpoof`   | Used to temporarily override the displayed value of a menu item.         |
+| `$7E1E76` | `ShortSpoof`           | A shorter version of the spoof value.                                    |
+| `$7E1E77` | `MusicNoteValue`       | The value of the current music note being played.                        |
+| `$7E1E79` | `GoldstarOrHookshot`   | Differentiates between the vanilla Hookshot and the custom Goldstar item.  |
+| `$7E1E7A` | `Neck_Index`           | Used for multi-part sprites, like a centipede body.                      |
+| `$7E1E85` | `FishingOrPortalRod`   | Differentiates between the Fishing Rod and the Portal Rod.               |
 | `$7E0746` | `DBG_REINIT_FLAGS`     | Debug reinit request bitfield (bridge -> game).                          |
 | `$7E0747` | `DBG_REINIT_STATUS`    | Debug reinit completed bitfield.                                         |
 | `$7E0748` | `DBG_REINIT_ERROR`     | Debug reinit error bitfield.                                             |

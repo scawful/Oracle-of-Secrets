@@ -95,7 +95,7 @@ local function getGameState()
 
     -- Equipment
     state.equippedItem = read8(0x7E0202)
-    state.goldstarOrHookshot = read8(0x7E0739)
+    state.goldstarOrHookshot = read8(0x7E1E79)
 
     -- Key SRAM flags
     state.hookshot = readSRAM(0x42)  -- $7EF342

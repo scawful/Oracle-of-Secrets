@@ -768,6 +768,39 @@ class ReachableSourceTest(unittest.TestCase):
             {"0x20AF20", "0x20F000"},
         )
 
+    def test_sheet_bank_policy_preserves_tables_and_d3_import(self) -> None:
+        self.fixture.write_text(
+            "Oracle_main.asm", 'incsrc "Core/gfx_sheet_table.asm"\n'
+        )
+        self.fixture.write_text(
+            "Core/gfx_sheet_table.asm", "org $23FC00\ndb $00\n"
+        )
+        self.fixture.write_dev_rom()
+        manifest = generate_manifest(self.fixture.root)
+        banks = {b["bank"]: b for b in manifest["owned_banks"]["banks"]}
+        self.assertEqual(banks["0x23"]["ownership"], "shared")
+        self.assertNotIn("0x24", banks)
+        self.assertIn(
+            {"start": "0x23FC00", "end": "0x248000", "size": 0x400,
+             "hook_count": 0, "module": "Core/gfx_sheet_table.asm reservation"},
+            manifest["protected_regions"]["regions"],
+        )
+        graphics = manifest["graphics_sheet_regions"]
+        self.assertEqual(graphics["allocation_regions"], [
+            {"start": "0x238000", "end": "0x23C000"},
+            {"start": "0x23D000", "end": "0x23FC00"},
+        ])
+        self.assertTrue({"0x7B", "0x7C", "0x6F", "0x70"}.issubset(
+            graphics["reserved_sheets"]))
+        objects = manifest["dungeon_stream_regions"]["objects"]
+        self.assertEqual(objects["strategy"], "copy_on_write")
+        self.assertIn({"start": "0x298000", "end": "0x2A8000"},
+                      objects["data_regions"])
+        self.assertEqual(objects["allocation_regions"], [
+            {"start": "0x298000", "end": "0x29841E"},
+            {"start": "0x2986B3", "end": "0x2A8000"},
+        ])
+
     def test_expanded_hook_cannot_overlap_editor_managed_range(self) -> None:
         self.fixture.write_text(
             "Oracle_main.asm", 'incsrc "Core/active.asm"\n'
@@ -1881,7 +1914,10 @@ class DungeonStreamRegionsTest(unittest.TestCase):
                         {"start": "0x278000", "end": "0x288000"},
                         {"start": "0x298000", "end": "0x2A8000"},
                     ],
-                    "allocation_regions": [{"start": "0x298000", "end": "0x2A8000"}],
+                    "allocation_regions": [
+                        {"start": "0x298000", "end": "0x29841E"},
+                        {"start": "0x2986B3", "end": "0x2A8000"},
+                    ],
                 },
                 "sprites": {
                     "pointer_table": "0x09D2B2",
@@ -2346,6 +2382,24 @@ class ExactHookSourceTest(unittest.TestCase):
     def test_span_crossing_lorom_bank_is_one_canonical_range(self) -> None:
         self.write_hooks([self.hook(0x02FFFE, 4, "data")])
         self.assertEqual(self.regions(self.build()), [("0x02FFFE", "0x038002")])
+
+    def test_exact_sheet_table_protection_includes_unemitted_padding(self) -> None:
+        self.fixture.write_text(
+            "Oracle_main.asm", 'incsrc "Core/gfx_sheet_table.asm"\n'
+        )
+        self.fixture.write_text(
+            "Core/gfx_sheet_table.asm", "org $23FC00\ndb $00\n"
+        )
+        self.write_hooks([self.hook(0x23FC00, 1, "data")])
+        manifest = self.build()
+        self.assertTrue(manifest["protected_regions"]["exact"])
+        ranges = manifest["protected_regions"]["regions"]
+        self.assertTrue(any(r["start"] == "0x23FC00" and
+                            r["end"] == "0x248000" and r["size"] == 0x400
+                            for r in ranges))
+        self.assertEqual(
+            next(b for b in manifest["owned_banks"]["banks"]
+                 if b["bank"] == "0x23")["ownership"], "shared")
 
     def test_shared_bank_write_is_protected_and_neighbor_stays_editable(self) -> None:
         # Bank $28 with an org but no incsrc ownership claim: shared/unclassified.

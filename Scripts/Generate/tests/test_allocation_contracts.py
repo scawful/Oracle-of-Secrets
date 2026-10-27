@@ -97,6 +97,27 @@ class OwnershipTests(unittest.TestCase):
             path.unlink()
             with self.assertRaisesRegex(AllocationError,'Missing/invalid'):source_evidence(data,{'shared':root})
 
+    def test_base_block_binding_checks_base_and_extent(self):
+        block='org $008000\nbase $7E1E70\n{\nFirst: skip 1\nWord:  skip 2 ; note\nassert pc() <= $7E1F00\n}\nbase off\n'
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);path=root/'proof.txt'
+            data=ledger(claim('a',0x7E1E70,3));data['claims'][0]['binding']={'source':'proof','symbol':'First','base_block':True}
+            for text,size,error in [(block,3,None),(block,4,'extent disagrees'),(block.replace('$7E1E70','$7E0730'),3,'address disagrees'),(block.replace('skip 2','skip $02'),3,'Unsupported'),(block.replace('First:','Other:'),3,'Missing/ambiguous')]:
+                path.write_text(text);data['sources']['proof']['sha256']=digest(path);data['claims'][0]['size']=size
+                with self.subTest(text=text,size=size):
+                    if error is None:self.assertTrue(source_evidence(data,{'shared':root}))
+                    else:
+                        with self.assertRaisesRegex(AllocationError,error):source_evidence(data,{'shared':root})
+
+    def test_symbols_block_back_at_7e0730_conflicts_with_cart_room(self):
+        # PR 211 moved Core/symbols.asm out of !MinecartTrackRoom; a move back must be an active conflict.
+        real={c['id']:c for c in read_ledger(ROOT/'Config/allocation_ownership.json')['claims']}
+        block=copy.deepcopy(real['symbols_wram_block']);data=ledger(real['cart_room'],block)
+        self.assertEqual(ownership_conflicts(data,{'DISABLE_SPRITES':0})[0],[])
+        block['base']=0x7E0730
+        conflicts=ownership_conflicts(data,{'DISABLE_SPRITES':0})[0]
+        self.assertEqual([(c['owners'],c['start'],c['end'],c['classification']) for c in conflicts],[(['cart_room','symbols_wram_block'],0x7E0730,0x7E0748,'active_profile_conflict')])
+
 
 class TableTests(unittest.TestCase):
     def test_wla_labels_exclude_address_to_line_records(self):

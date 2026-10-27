@@ -65,6 +65,26 @@ def read_ledger(path):
     return data
 
 
+def base_block(text, first_label):
+    """Base and byte extent of the one asar `base $addr` ... `base off` block
+    whose first label is first_label. Bounded decoder: `Label: skip N` (decimal),
+    braces and asserts only. Other shapes need a new proof, never a guessed size."""
+    found = []
+    for base, body in re.findall(r'^\s*base\s+\$([0-9A-Fa-f]+)\s*$(.*?)^\s*base\s+off\b', text, re.M | re.S):
+        lines = [line.split(';', 1)[0].strip() for line in body.splitlines()]
+        lines = [line for line in lines if line and line not in ('{', '}') and not line.startswith('assert ')]
+        if not lines or not lines[0].startswith(first_label + ':'):
+            continue
+        size = 0
+        for line in lines:
+            match = re.fullmatch(r'\w+:\s*skip\s+(\d+)', line)
+            require(match is not None, f'Unsupported base-block evidence: {line}')
+            size += int(match[1])
+        found.append((int(base, 16), size))
+    require(len(found) == 1, f'Missing/ambiguous base block for {first_label}')
+    return found[0]
+
+
 def source_evidence(ledger, roots):
     texts = {}
     for key, src in ledger['sources'].items():
@@ -79,9 +99,13 @@ def source_evidence(ledger, roots):
         for anchor in c.get('anchors', []):
             require(anchor in text, f"{c['id']}: absent provenance anchor {anchor}")
         if binding := c.get('binding'):
-            matches = re.findall(r'^\s*' + re.escape(binding['symbol']) + r'\s*=\s*\$([0-9a-fA-F]+)\b', texts[binding['source']], re.M)
-            require(len(matches) == 1, f"{c['id']}: missing/ambiguous symbol binding")
-            address = int(matches[0], 16)
+            if binding.get('base_block'):
+                address, size = base_block(texts[binding['source']], binding['symbol'])
+                require(size == c['size'], f"{c['id']}: source extent disagrees with ledger")
+            else:
+                matches = re.findall(r'^\s*' + re.escape(binding['symbol']) + r'\s*=\s*\$([0-9a-fA-F]+)\b', texts[binding['source']], re.M)
+                require(len(matches) == 1, f"{c['id']}: missing/ambiguous symbol binding")
+                address = int(matches[0], 16)
             if binding.get('bank00_mirror') and address < 0x2000:
                 address += 0x7E0000
             require(address == c['base'], f"{c['id']}: source address disagrees with ledger")

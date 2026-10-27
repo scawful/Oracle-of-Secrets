@@ -1566,61 +1566,126 @@ CheckNewRButtonPress:
 
 if !ENABLE_MINISH_AUTO_PORTAL == 1
 ; =========================================================
-; Minish portal, automatic (decisions.org "Masks stay Y items; Y transforms,
-; R toggles; Minish is automatic", point 5).
+; Minish portal, automatic. User steering 2026-10-18 changes the earlier
+; stand-still dwell to walk-on activation with leave-tile rearming.
 ; Called from LinkState_CheckForMinishForm (tile $64 handler, 8-bit A/X/Y).
 ; The tile handler can run several times in one frame (one call per touching
-; detection point), so the charge advances once per frame ($1A).
-; Standing still = no D-pad; the charge pauses while LinkState is not 0 or the
-; sword is out. After !MinishPortalFrames still frames the form toggles: Link
-; (or GBC Link) shrinks, Minish grows. The "toggled" latch ($FF) then holds
-; until a D-pad press, so standing on the portal never toggles back and forth
-; (the transform poof can skip a frame of tile detection). Masked Link or
-; Moosh: nothing happens.
-!MinishPortalFrames = 60
+; detection point), so contact is handled once per frame ($1A).
+; $80 is latched contact. LinkMain_FrameHook advances it before collision;
+; four eligible frames without a contact rearm it. Pauses and action states
+; freeze this absence count; GBC state $17 remains eligible.
+; No new WRAM or second collision scan is required.
+
+pushpc
+org $07800F ; @hook module=Masks name=LinkMain_FrameHook kind=jsl target=LinkMain_FrameHook expected_m=16
+; usdasm/bank_07.asm:Link_Main ($07800F-$078013). M=16, DBR=$07; the inherited
+; index width is preserved. Replaces SEP #$20 / STZ $0FC1, replayed by the helper. Single owner of this
+; site: other per-frame Link work must chain from LinkMain_FrameHook.
+  JSL LinkMain_FrameHook
+  NOP
+assert pc() == $078014
+pullpc
+
+; Link_Main reaches this once per frame before Link_ControlHandler, including
+; the CapePoof and other no-control frames. Preserve full A/X/Y/DBR and
+; precisely the flags after the displaced SEP.
+LinkMain_FrameHook:
+{
+  %a8()
+  STZ.w $0FC1
+  PHP
+  %m16()
+  PHA : PHX : PHY : PHB
+  %m8()
+  JSL MinishPortal_Maintain
+  PLB
+  %m16()
+  PLY : PLX : PLA
+  PLP
+  RTL
+}
+
+MinishPortal_Maintain:
+{
+  ; CapePoof freezes input, but vanilla finish-up still applies velocity.
+  ; The old stand-still trigger hid this. Cancel motion throughout our poof;
+  ; the collision caller can rewrite direction after the initial toggle.
+  LDA.w MinishPortalTimer : BPL .sample
+  LDA.w $02E1 : BEQ .sample
+    JSR MinishPortal_StopMotion
+    RTL
+  .sample
+  JSR MinishPortal_CanAct : BCC .exit
+  LDA.w MinishPortalTimer : BPL .exit
+  ; An older save state can contain the former $FF latch. Keep it latched.
+  CMP.b #$FF : BNE .count_absence
+    LDA.b #$80 : STA.w MinishPortalTimer
+  .count_absence
+  INC.w MinishPortalTimer
+  LDA.w MinishPortalTimer : CMP.b #$84 : BCC .exit
+    STZ.w MinishPortalTimer
+  .exit
+  RTL
+}
 
 MinishPortal_Tick:
 {
-  LDA.l GameState : BEQ .exit
+  PHX : PHY
+  JSR MinishPortal_CanAct : BCC .exit
   LDA.b $1A : CMP.w MinishPortalFrame : BEQ .exit
-  DEC A : CMP.w MinishPortalFrame : BEQ .same_visit
-    LDA.w MinishPortalTimer : INC A : BEQ .same_visit  ; keep the "toggled" latch
-    STZ.w MinishPortalTimer              ; a partial charge from an earlier visit
-  .same_visit
-  LDA.b $1A : STA.w MinishPortalFrame
+  STA.w MinishPortalFrame
 
-  LDA.b $F0 : AND.b #$0F : BNE .rearm    ; D-pad held: start over
+  LDA.w !CurrentMask : BEQ .contact
+  CMP.b #$05 : BEQ .contact              ; Minish: grow
+  CMP.b #$06 : BNE .exit                 ; GBC: shrink; other forms do nothing
+  .contact
+  LDA.w MinishPortalTimer : BMI .refresh
+    LDA.b #$80 : STA.w MinishPortalTimer
+    JSR MinishPortal_Toggle
+    BRA .exit
+  .refresh
+  LDA.b #$80 : STA.w MinishPortalTimer
+  .exit
+  PLY : PLX
+  RTL
+}
+
+; Carry set only while normal gameplay can sample the portal. The frame hook
+; and collision callback share this guard so freezes cannot look like leaving.
+; A/X/Y=8; DBR is a WRAM-mirrored bank. Clobbers only A and flags.
+MinishPortal_CanAct:
+{
+  LDA.l GameState : BEQ .no
+  LDA.b $10 : CMP.b #$07 : BEQ .module_ok
+  CMP.b #$09 : BEQ .module_ok
+  CMP.b #$0B : BNE .no
+  .module_ok
+  LDA.b $11 : ORA.b $6C : ORA.b $46 : ORA.b $4D : BNE .no
+  LDA.w $0FFC : ORA.w $02E4 : ORA.w $02E1 : BNE .no
+  LDA.w $0301 : ORA.w $037A : ORA.w $0308 : BNE .no
+  LDA.w $0376 : ORA.w $0377 : BNE .no
 if !ENABLE_MINISH_GBC_PORTAL_FIX == 1
   ; GBC Link (the Abyss form before the Moon Pearl) walks in the permabunny
-  ; state $5D = $17, so the plain "$5D != 0 -> pause" test below blocked the
-  ; Origins portal (room $05) and with it the Pearl chest behind the Minish passage.
+  ; state $17. Preserve access to the Origins portal before the Pearl.
   LDA.b $5D : BEQ .state_ok
-  CMP.b #$17 : BNE .exit                 ; other states: pause
+  CMP.b #$17 : BNE .no
   .state_ok
 else
-  LDA.b $5D : BNE .exit                  ; not in the default state: pause
+  LDA.b $5D : BNE .no
 endif
-  LDA.b $3C : BNE .exit                  ; sword out or charging: pause
-  LDA.w !CurrentMask : BEQ .charge
-  CMP.b #$05 : BEQ .charge               ; Minish: grow
-  CMP.b #$06 : BEQ .charge               ; GBC Link: shrink
-  BRA .rearm                             ; mask or Moosh: must be Link to shrink
+  LDA.b $3C : BNE .no
+  SEC : RTS
+  .no
+  CLC : RTS
+}
 
-  .charge
-  LDA.w MinishPortalTimer : CMP.b #$FF : BEQ .exit   ; already toggled this visit
-  INC A : STA.w MinishPortalTimer
-  AND.b #$03 : CMP.b #$01 : BNE .no_sparkle
-    JSL $0FF979                          ; AncillaSpawn_SwordChargeSparkle
-  .no_sparkle
-  LDA.w MinishPortalTimer : CMP.b #!MinishPortalFrames : BCC .exit
-  LDA.b #$FF : STA.w MinishPortalTimer
-  JSR MinishPortal_Toggle
-  RTL
-
-  .rearm
-  STZ.w MinishPortalTimer
-  .exit
-  RTL
+; Clear movement intent, velocity and last-frame deltas, not subpixel position.
+MinishPortal_StopMotion:
+{
+  STZ.b $67 : STZ.b $26
+  STZ.b $27 : STZ.b $28
+  STZ.b $30 : STZ.b $31
+  RTS
 }
 
 ; Shrink (Link or GBC Link) or grow (Minish) with the transform poof.
@@ -1633,6 +1698,7 @@ MinishPortal_Toggle:
     LDA.b $00, X : PHA
   DEX : BPL .save
   JSL PlayerTransform
+  JSR MinishPortal_StopMotion
   LDA.w !CurrentMask : CMP.b #$05 : BEQ .grow
     LDA.b #$05 : STA.w !CurrentMask
     JSL Palette_ArmorAndGloves           ; $BC = $39, Link's own palette

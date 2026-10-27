@@ -894,7 +894,7 @@
           "value": "0x03",
           "name": "GameState",
           "inferred": true,
-          "why": "Core/sram.asm:75 (!GameState_FaroreRescued) defines 3 = D7 complete; the in-game setter is feature-gated off (!ENABLE_D7_FARORE_RESCUE_SEQUENCE = 0, Sprites/Bosses/kydrog_boss.asm:377; beat sheet row 23 [TO-BUILD])"
+          "why": "Core/sram.asm:75 (!GameState_FaroreRescued) defines 3 = D7 complete; set on D7 crystal pickup by KydrogBoss_D7CrystalCommit (Sprites/Bosses/kydrog_boss.asm, !ENABLE_D7_FARORE_RESCUE_SEQUENCE = 1)"
         },
         {
           "addr": "0x7EF350",

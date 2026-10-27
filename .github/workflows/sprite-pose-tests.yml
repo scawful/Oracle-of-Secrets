@@ -1,0 +1,43 @@
+name: Sprite Pose Tests
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'Scripts/Graphics/**'
+      - 'Tests/graphics/**'
+      - '.github/workflows/sprite-pose-tests.yml'
+  pull_request:
+    # Any base branch, including stacked PRs; edited covers base retargets.
+    types: [opened, synchronize, reopened, edited]
+    paths:
+      - 'Scripts/Graphics/**'
+      - 'Tests/graphics/**'
+      - '.github/workflows/sprite-pose-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# PR updates share a group; master pushes and manual runs remain independent.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    name: Node sprite pose tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run sprite pose tests
+        run: node --test Tests/graphics/sprite_pose.test.js

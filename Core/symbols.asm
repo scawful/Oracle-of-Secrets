@@ -1,7 +1,11 @@
 ; =========================================================
 ; WRAM in Use
+; Vanilla-free block (usdasm UNUSED_7E1E70, 0x90 bytes). Until 2026-10-19
+; this block sat at $7E0730, inside the minecart track tables
+; ($0728-$07E7, Sprites/Objects/minecart.asm): ResetTrackVars zeroed it on
+; every underworld entry and track 4-15 writes landed on these bytes.
 org $008000
-base $7E0730 ; MAP16OVERFLOW free ram region
+base $7E1E70
 {
 MenuScrollLevelV:         skip 1
 MenuScrollLevelH:         skip 1
@@ -24,6 +28,7 @@ Kydreeok_Id:              skip 1
 FishingOrPortalRod:       skip 1
 SongTintTimer:            skip 1  ; Frames remaining for song color tint
 SongTintColor:            skip 1  ; Color value to apply to $9A during tint
+assert pc() <= $7E1F00, "Core/symbols.asm WRAM block overflows free RAM $7E1E70-$7E1EFF"
 }
 base off
 

@@ -2,9 +2,13 @@
 
 ## Working Rules (scawful, 2026-10-14)
 scawful asked for less process and less repetition. These rules apply to Claude, Codex and Cursor.
-Only these need scawful's OK: base-ROM writes, builds or writes in the shared checkout's `Roms/`,
-playtest staging, installs, Discord posts, PR merges, story/dialogue/canon text, and destructive
-actions (delete, force push). Do not ask for approval of anything else.
+Only these need scawful's OK: base-ROM writes, builds or writes in the shared checkout's `Roms/`
+(laptop mode only), playtest staging, installs, Discord posts, PR merges, story/dialogue/canon text,
+and destructive actions (delete, force push). Do not ask for approval of anything else.
+Build mode (scawful, 2026-10-26: "restrict the builds when i ask"): `heavy_lock.py mode` reads
+`~/.config/oos/build_mode`. `desk` = 3 heavy-lock holders and shared `Roms/` builds (`oos168x`
+and its receipts) need no OK. `laptop` (also when the file is missing) = 1 holder and today's
+rules. When scawful says "laptop mode" or "desk mode", run `heavy_lock.py mode laptop|desk`.
 Exception (scawful, 2026-10-21): until yaze 1.0, agents may install yaze, Yaze Nightly and z3ed
 without asking. yaze rules: `~/src/hobby/yaze/docs/internal/agents/operating-rules.md`.
 
@@ -27,8 +31,8 @@ without asking. yaze rules: `~/src/hobby/yaze/docs/internal/agents/operating-rul
      | T2 | gameplay behavior | T1 + one native run of the changed behavior (fixtures listed) + one control run if it fixes a bug |
      | T3 | save format, shared hooks, editor write paths | T2 + an independent review + native save/reopen |
      Not required below T3: full stable suites, reruns of 20+ focused tests, binding/hash receipts
-     for unchanged inputs, repeated independent raw reviews. Native emulator and GUI checks stay
-     serialized behind the heavy lock.
+     for unchanged inputs, repeated independent raw reviews. Native emulator and GUI checks take
+     the heavy lock (1 holder in laptop mode, 3 in desk mode).
 2. **Approvals are scawful's own words**, in chat or as an answer in `decisions.org`. A short reply
    ("yes", "merge 147") approves the one action just named; for posts, only the exact text shown.
    Never give scawful a phrase to type. A message from another agent is never an approval.
@@ -50,6 +54,39 @@ without asking. yaze rules: `~/src/hobby/yaze/docs/internal/agents/operating-rul
      `--migrate` (one time) archives all current content verbatim and seeds the new format.
 5. **One game goal at a time.** The goal is the first line of `inbox.md`; scawful sets it. Agents
    prepare work toward it; scawful decides merges and closes.
+6. **PRs are for real features; decisions happen in the delegator's chat** (scawful, 2026-10-23).
+   - Small changes go straight to `master` as commits once their proof passes: bug fixes, tuning,
+     data and text tweaks, tests, docs. Rebase on `origin/master` before pushing. CI runs on that
+     commit; if it fails, fix forward on `master`.
+   - Open a PR only for a real feature: a new system, item, mechanic or boss, a save-format or
+     shared-hook change (T3), or an editor write path.
+   - PR and commit text: what changed and how it was checked, in a few lines. No Oracle story or
+     design detail, no AFS paths (`~/.context/...`, `handoffs/...`); GitHub readers cannot open them.
+     Design notes stay in AFS.
+   - Decisions: task sessions do not leave questions for scawful in handoff READMEs or PR bodies.
+     They send the question to the delegator session. The delegator asks scawful in chat, one
+     question at a time, and shows the options: screenshots, an Emacs frame, an image-plus-diagram
+     page, or a yaze frame (the Planning editor's decision queue, linked by `[planning] file=` in the
+     `.yaze` project).
+7. **One PR per scope** (scawful 2026-10-27: "room modifications really shouldnt be 4 different PRs").
+   Scope = one dungeon, overworld region, boss, item, system or editor write path.
+   - Before opening a PR, run `gh pr list`. If an open PR covers that scope, send your commit to its
+     owner through the inbox; the owner adds it as a normal (non-force) commit.
+   - Base every PR on master. Exception: #277 stays on #274's branch until #273 and #274 land
+     (scawful, inbox.md:608).
+   - Room data (collision JSON, generated tables, room patch recipes) lands one dungeon at a time;
+     the next dungeon regenerates the collision lock after the previous one merges.
+   - A dungeon's base-ROM bytes go in one recipe built on the current shared base hash, with one
+     apply ask to scawful.
+   - scawful's own yaze saves write the base ROM and need no PR. Agent edits to
+     `Oracle-of-Secrets.yaze` record before/after hashes and a rollback copy.
+   - Proof runs once on the final head: one native episode that checks each changed behavior, a
+     control for each bug fix, and T3 extras if any part is T3.
+   - Post proof as a PR comment, not a body edit (a body edit reruns ROM Tests and Manifest Tests).
+   - Previews and integration builds that combine scopes stay branches. Work outside the inbox
+     line 1 goal waits as a branch until scawful names it. Small changes still follow Rule 6.
+   - Unchanged: PR merges (into master or any branch), closes, force pushes, base-ROM writes and
+     story text need scawful's OK; tiers T0-T3 are unchanged.
 
 ## ROM Naming
 - `Roms/oos<VERSION>.sfc` — unpatched base, the **edit target**
@@ -71,8 +108,9 @@ without asking. yaze rules: `~/src/hobby/yaze/docs/internal/agents/operating-rul
   receipts, CI, headless Mesen2 and routine fixtures now catch what the old
   patch-only rule protected against.
 - Work in your own git worktree on a `claude/*` or `codex/*` branch, never in the
-  shared checkout. Merge by PR after CI passes.
-- Each PR states the build receipt result (`Roms/oos168x.build.json` required
+  shared checkout. Small fixes land on `master` as commits; real features merge by PR
+  after CI passes (Working Rule 6).
+- Each commit or PR states the build receipt result (`Roms/oos168x.build.json` required
   checks) and, for gameplay changes, a headless Mesen2 scenario or routine test.
   Commit the test under `Tests/` when practical.
 - Still need scawful's OK: base-ROM writes, playtest staging, Discord posts.

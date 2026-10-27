@@ -56,6 +56,23 @@ Sprite_LeverSwitch_Prep:
   ; Get the subtype of the switch so that we can get its on/off state.
   LDA.w SprSubtype, X : TAY
 
+  if !ENABLE_MINECART_CART_SHUTTERS
+    ; Private $97 selector1 starts OFF until ordinary key door index1
+    ; has opened ($0400 bit$4000). Do this before copying the lever's
+    ; action/frame, including after a room reload with retained SwitchRam.
+    REP #$20
+    LDA.b $A0 : CMP.w #$0097
+    SEP #$20
+    BNE .selector_ready
+    CPY.b #$01 : BNE .selector_ready
+    REP #$20
+    LDA.w $0400 : BIT.w #$4000
+    SEP #$20
+    BNE .selector_ready
+    STZ.w SwitchRam+1
+    .selector_ready
+  endif
+
   LDA.w SwitchRam, Y : STA.w SprAction, X : STA.w SprFrame, X
   LDA.b #$00 : STA.w SprTileDie, X
   STZ.w SprBulletproof, X

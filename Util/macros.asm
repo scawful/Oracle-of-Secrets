@@ -32,7 +32,7 @@
 !ENABLE_MINECART_CART_SHUTTERS       = 0
 !ENABLE_MINECART_LIFT_TOSS           = 0
 !ENABLE_D3_PRISON_SEQUENCE           = 0
-!ENABLE_D7_FARORE_RESCUE_SEQUENCE    = 0
+!ENABLE_D7_FARORE_RESCUE_SEQUENCE    = 1
 !ENABLE_OCARINA_SONG_TINT            = 0
 !ENABLE_JUMPTABLELOCAL_GUARD         = 1
 ; RC opening features are enabled by default; disable individually for isolation.
@@ -213,6 +213,14 @@
 ; Every other pad, including LW $25 -> $65 (Yesterwind), is unchanged
 ; (Overworld/lupo_pad_gate.asm).
 !ENABLE_LUPO_PAD_GATE               = 1
+; Hot floor (underworld tile type $DE): hurts like spike floor except in
+; Garo Master form, airborne (feather/cape hop, Deku hover) or in a minecart.
+; Sprites walk on it (Dungeons/hot_floor.asm).
+!ENABLE_HOT_FLOOR                   = 1
+; Thin ice: the crumble floor tag ($34) also tracks ice floor (tile type
+; $0E/$0F by char). The cell Link steps off cracks and becomes a pit after a
+; 40-frame fuse (Dungeons/crumblefloor_tag.asm).
+!ENABLE_THIN_ICE                    = 1
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
