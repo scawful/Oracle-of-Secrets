@@ -343,7 +343,7 @@ def validate_current_source_set(contract):
 
 
 def render_current_source_outputs(table_plan, *, contract, graphics_source, graphics_report,
-                                  current_source_profile=None, bg128_plan=None):
+                                  current_source_profile=None, bg128_plan=None, actor_storage_plan=None):
     """Compose reviewable source through the existing generated-input layout.
 
     A source plan remains unselected and cannot pass the build-context loader.
@@ -412,6 +412,19 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
                   'CURRENT_COMPOSER_PROPERTIES_MISMATCH: native selectors differ from saved properties')
     actor_stream_plan = native.plan_current_actor_streams(
         source, document, current_source_profile=profile)
+    if actor_storage_plan is not None:
+        actor_origin = origins.get('actors')
+        R.require(type(actor_origin) is dict,
+                  'CURRENT_COMPOSER_ACTORS_ORIGIN_UNBOUND: explicit source-profile actors interval required')
+        lo, hi = actor_origin['pc']
+        expected_actors = native.plan_current_actor_storage(source, document,
+            current_source_profile=profile, data_snes=actor_origin['snes'][0], capacity=hi-lo,
+            preimage=A.expanded_rom(source)[lo:hi])
+        R.require(actor_storage_plan == expected_actors,
+                  'CURRENT_COMPOSER_ACTORS_MISMATCH: actor payload/extent/preimage/source differs')
+        R.require(all(tail_rows[area][name] == pointer for area, rows in expected_actors['phase_rows'].items()
+                      for name, pointer in rows.items()),
+                  'CURRENT_COMPOSER_ACTOR_POINTERS_MISMATCH: table pointers differ from bound actor storage')
     gameplay_area_plan = A.gameplay_area_plan(document)
     for row in gameplay_area_plan['assignments']:
         values = tail_rows[row['map_id']]
@@ -440,9 +453,15 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
         '!LYRA_PROJECT_DATA_PRESENT = 1\n!LYRA_NATIVE_A1_ENABLED = 0\n!LYRA_CURRENT_MODE = 1\n'
         + table_plan['constants_assembler']
         + f'!LYRA_CURRENT_GFX_ORIGIN = ${start:06X}\n!LYRA_CURRENT_GFX_END = ${end:06X}\n'
+        + '!LYRA_CURRENT_ACTORS_ENABLED = 0\n!LYRA_CURRENT_ACTORS_BOUND = 0\n'
         + '!PROJECT_BG128_ENABLED = 0\n!PROJECT_BG128_RESTORE_BOUND = 0\n')
     data = table_plan['tables_assembler'] + table_plan['descriptor_assembler']
+    if actor_storage_plan is not None:
+        constants += f"!LYRA_CURRENT_ACTOR_BANK = ${actor_storage_plan['bank']:02X}\n"
+        data += native.emit_current_actor_data(actor_storage_plan)
     remaining = list(table_plan['remaining_consumers'])
+    if actor_storage_plan is None:
+        remaining.append('actor stream storage/bank binding')
     if gameplay_area_plan['areas']:
         remaining.append('authored gameplay-area native render/actor aggregation')
     if gameplay_area_plan['unassigned_maps']:
@@ -471,6 +490,7 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
         reservation_review_id=profile['reservation_review_id'],
         source_contract_sha256=R.sha(encoded(contract)), source_domain=table_plan['source_domain'],
         actor_stream_plan=actor_stream_plan,
+        actor_storage_plan=actor_storage_plan,
         saved_property_rows_sha256=current.T.digest(property_rows),
         gameplay_area_plan=gameplay_area_plan,
         generated_files={name:R.sha(raw) for name,raw in files.items()}, remaining_consumers=remaining,

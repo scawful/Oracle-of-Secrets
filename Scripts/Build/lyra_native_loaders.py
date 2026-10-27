@@ -5,6 +5,7 @@ The saved-source ownership and compiled-reader contracts are separate checks.
 """
 from __future__ import annotations
 
+import copy
 import json
 import re
 from pathlib import Path
@@ -1380,3 +1381,70 @@ def plan_current_actor_streams(source, document, *, current_source_profile):
         ordinary_build_ready=False, runtime_admission=False, actors_compiled=False, rom_written=False)
     current.verify_current_native_source_profile(profile, source, document)
     return result
+
+
+def plan_current_actor_storage(source, document, *, current_source_profile, data_snes, capacity, preimage):
+    """Place deduplicated actor lists inside one explicit source-profile bank.
+
+    Native pointer rows stay u16. The current long-pointer parser supplies this
+    single data bank; no native bank09 bytes or WRAM staging are allocated.
+    This is a source plan, with every readiness/authority flag still false.
+    """
+    actors = plan_current_actor_streams(source, document, current_source_profile=current_source_profile)
+    profile = current_source_profile
+    origin = profile['origins'].get('actors')
+    R.require(type(origin) is dict, 'CURRENT_ACTOR_STORAGE_UNBOUND: explicit actors origin required')
+    R.require(type(data_snes) is int and type(capacity) is int and capacity > 0
+              and [A.pc(data_snes), A.pc(data_snes)+capacity] == origin['pc']
+              and [data_snes, data_snes+capacity] == origin['snes']
+              and data_snes & 0xFFFF >= 0x8000
+              and (data_snes & 0xFFFF)+capacity <= 0x10000,
+              'CURRENT_ACTOR_STORAGE_ORIGIN_MISMATCH: one complete mapped source-profile interval required')
+    expanded = A.expanded_rom(source)
+    R.require(type(preimage) is bytes and len(preimage) == capacity
+              and preimage == expanded[slice(*origin['pc'])],
+              'CURRENT_ACTOR_STORAGE_PREIMAGE_MISMATCH: exact full saved-source interval required')
+    payload, offsets, pointers = bytearray(), {}, []
+    phase_rows = {area: {} for area in range(CURRENT_FIRST,CURRENT_END)}
+    for row in actors['streams']:
+        raw = bytes.fromhex(row['payload_hex'])
+        R.require(raw and raw[-1] == 255 and len(raw) % 3 == 1,
+                  'CURRENT_ACTOR_STORAGE_STREAM_INVALID: headerless terminated triples required')
+        if raw not in offsets:
+            offsets[raw] = len(payload)
+            payload.extend(raw)
+        offset = offsets[raw]
+        pointer = data_snes+offset
+        phase_rows[row['map_id']][f"sprite_phase{row['state']}"] = pointer & 0xFFFF
+        pointers.append(dict(map_id=row['map_id'], state=row['state'], offset=offset,
+                             snes=pointer, pointer_word=pointer & 0xFFFF, stream_sha256=row['sha256']))
+    R.require(len(payload) <= capacity, 'CURRENT_ACTOR_STORAGE_CAPACITY: deduplicated lists exceed explicit interval')
+    result = dict(kind='lyra.current_actor_storage_source_plan.v1', actor_stream_plan=actors,
+        source_rom_sha256=actors['source_rom_sha256'], source_profile_sha256=actors['source_profile_sha256'],
+        document_sha256=actors['document_sha256'], source_contract_binding=actors['source_contract_binding'],
+        generation=actors['generation'], operation_id=actors['operation_id'],
+        reservation_review_id=actors['reservation_review_id'], origin=copy.deepcopy(origin),
+        data_snes=data_snes, bank=data_snes >> 16, capacity=capacity,
+        preimage_sha256=R.sha(preimage), payload_hex=bytes(payload).hex(), payload_bytes=len(payload),
+        payload_sha256=R.sha(payload), unique_lists=len(offsets), pointers=pointers, phase_rows=phase_rows,
+        allocation_granted=False, producer_enforcement_verified=False, publication_authorized=False,
+        ordinary_build_ready=False, runtime_admission=False, actors_compiled=False, rom_written=False)
+    import lyra_current_transfer as current
+    current.verify_current_native_source_profile(profile, source, document)
+    return result
+
+
+def emit_current_actor_data(plan):
+    """Format a previously reconstructed source plan; no selection or writes."""
+    R.require(type(plan) is dict and plan.get('kind') == 'lyra.current_actor_storage_source_plan.v1'
+              and all(plan.get(flag) is False for flag in ('allocation_granted','publication_authorized',
+                  'producer_enforcement_verified','ordinary_build_ready','runtime_admission','rom_written')),
+              'CURRENT_ACTOR_STORAGE_PLAN_REQUIRED: ungranted source plan required')
+    payload = bytes.fromhex(plan['payload_hex'])
+    R.require(len(payload) == plan['payload_bytes'] <= plan['capacity']
+              and R.sha(payload) == plan['payload_sha256'], 'Current actor payload differs')
+    lines = ['; Ungranted source-profile actor data; no activation.', 'pushpc',
+             f"org ${plan['data_snes']:06X}", 'Lyra_CurrentActorData:']
+    lines += ['  db '+', '.join(f'${v:02X}' for v in payload[i:i+16]) for i in range(0,len(payload),16)]
+    lines += [f"assert pc() <= ${plan['data_snes']+plan['capacity']:06X}", 'pullpc']
+    return '\n'.join(lines)+'\n'

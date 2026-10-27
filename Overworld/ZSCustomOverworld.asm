@@ -5722,6 +5722,10 @@ LoadOverworldSprites_Interupt:
     TXA : ASL : CLC : ADC.w .phaseOffset, Y : TAX
     
     ; Get the overworld sprite pointer based on the overworld area and game phase.
+    if !LYRA_CURRENT_ACTORS_ENABLED == 1
+    LyraCall_CurrentActors = pc()
+    JML Lyra_LoadCurrentSprites
+    else
     if !LYRA_PROJECT_DATA_PRESENT == 1
     LyraCall_SpritePointer = pc()
     JSL.l Lyra_SpritePointer
@@ -5733,6 +5737,7 @@ LoadOverworldSprites_Interupt:
     SEP #$20
 
     BRA .skip
+    endif
 
     .xSize
     db $02, $04, $04, $02

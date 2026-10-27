@@ -80,7 +80,7 @@ class ComposerFixture:
             capacity=hi-lo if capacity is None else capacity,
             preimage=X.A.expanded_rom(self.source)[lo:lo+(hi-lo if capacity is None else capacity)])
 
-    def compose(self, *, table_plan=None, profile=None, contract=None, bg128_plan=None):
+    def compose(self, *, table_plan=None, profile=None, contract=None, bg128_plan=None, actor_storage_plan=None):
         contract = self.contract if contract is None else contract
         profile = self.profile if profile is None else profile
         graphics = '; Explicit host graphics source; no real catalog resources qualified.\n'
@@ -90,7 +90,7 @@ class ComposerFixture:
             graphics_origin_snes=contract['origins']['graphics']['snes'])
         return P.render_current_source_outputs(self.table_plan if table_plan is None else table_plan,
             contract=contract, graphics_source=graphics, graphics_report=report,
-            current_source_profile=profile, bg128_plan=bg128_plan)
+            current_source_profile=profile, bg128_plan=bg128_plan, actor_storage_plan=actor_storage_plan)
 
 
 class CurrentComposerBindingTest(unittest.TestCase):

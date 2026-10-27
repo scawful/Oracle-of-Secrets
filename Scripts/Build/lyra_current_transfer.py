@@ -656,7 +656,8 @@ def validate_current_source_contract(review, project, base_rom, *, contract_path
                       'Current native reader spans overlap')
             reader_preimages.append(dict(pc=span, sha256=R.sha(source[slice(*span)])))
     origins = value['origins']
-    _keys(origins, {'tables', 'code', 'descriptor', 'bg_palette', 'graphics'}, 'current source origins')
+    _keys(origins, {'tables', 'code', 'descriptor', 'bg_palette', 'graphics'}
+          | ({'actors'} if 'actors' in origins else set()), 'current source origins')
     missing = [key for key, origin in origins.items() if origin is None]
     R.require(not missing, 'CURRENT_SOURCE_ORIGIN_UNBOUND: ' + ', '.join(missing))
     origin_spans = []

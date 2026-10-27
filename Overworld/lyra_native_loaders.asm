@@ -210,6 +210,9 @@ Lyra_ReadBackdrop:
     LDA.b $8A : AND.w #$00FF
     JML Oracle_Lyra_CurrentBackdropLegacy
 Lyra_ReadBackdrop_End:
+if !LYRA_CURRENT_ACTORS_ENABLED == 1
+  incsrc "lyra_actor_stream.asm"
+endif
 if !LYRA_CURRENT_EVENTS_ENABLED == 1
   incsrc "lyra_tail_events.asm"
 endif
