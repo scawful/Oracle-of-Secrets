@@ -80,6 +80,8 @@ work beneath a header while neighboring keys are silently ignored.
 `prohibited_memory_ranges` checks **assembled ROM write blocks**. It does not
 inspect runtime `STA`/`STZ` destinations and cannot protect SRAM flag ownership.
 Use the allocation ledger and actual consumers for WRAM/SRAM review.
+The reviewed parser also drops `$`-prefixed ranges silently; use `0x`-prefixed
+addresses for any actual ROM-block exclusions until that parser issue is fixed.
 
 The z3dk extension's default LSP selector includes `asar` and `65816-assembly`,
 but not generic `assembly`. Associate Oracle `.asm` files with `asar`, or
