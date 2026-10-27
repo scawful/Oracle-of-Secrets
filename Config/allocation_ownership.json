@@ -165,7 +165,27 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "4c0dbcc572d26ae32505c57c6cd37f4b2fc3b399f2d73f9d3cda0248d5cddf37"
+      "sha256": "f4d9acb8f1e416356fe3e044d7b87284291f14edecd33a935493cfaf9357e169"
+    },
+    "shared:Sprites/Bosses/boss_kit.asm": {
+      "source_set": "shared",
+      "path": "Sprites/Bosses/boss_kit.asm",
+      "sha256": "587aabe9329a6b2b25985bfae7124437910a024b4e8220ae8d261ffe8d3273d6"
+    },
+    "shared:Sprites/Bosses/boss_director.asm": {
+      "source_set": "shared",
+      "path": "Sprites/Bosses/boss_director.asm",
+      "sha256": "a2e7eed5d91064a3593c73cd9fd9612619c7a45455ac383cc3d550e040d38bf6"
+    },
+    "shared:Sprites/Bosses/kydreeok.asm": {
+      "source_set": "shared",
+      "path": "Sprites/Bosses/kydreeok.asm",
+      "sha256": "779f86e0d42c05e2ef9e64b99a3ddffbd70b3a278ca4399759d97f282badd90f"
+    },
+    "shared:Overworld/goron_checkpoint.asm": {
+      "source_set": "shared",
+      "path": "Overworld/goron_checkpoint.asm",
+      "sha256": "905adc8fd7c2e15a89d412fcbaf360ce7f1ab9592aae6b08162cc28d67bfdde6"
     }
   },
   "claims": [
@@ -325,20 +345,26 @@
     },
     {
       "id": "symbols_wram_block",
-      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..SongTintColor)",
+      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..FinaleBeat)",
       "space": "wram",
       "base": 8265328,
-      "size": 24,
+      "size": 27,
       "status": "shared",
       "condition": {},
-      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint.",
-      "reset": "No block-wide reset is claimed. Not in ResetTrackVars' arrays since PR 211 moved it from $7E0730 (inside cart_room) to vanilla-free $7E1E70.",
+      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint. Finale fight/reinject/Healing handoff state occupies $7E1E88-$7E1E8A.",
+      "reset": "No block-wide reset is claimed. Not in ResetTrackVars' arrays since PR 211 moved it from $7E0730 (inside cart_room) to vanilla-free $7E1E70. LoadCheckpointOrWorld clears GanondorfFight, BossReinject and FinaleBeat; Kydreeok prep also initializes finale state.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
-        "shared:Core/symbols.asm"
+        "shared:Core/symbols.asm",
+        "shared:Overworld/goron_checkpoint.asm",
+        "shared:Sprites/Bosses/kydreeok.asm"
       ],
       "aliases": [],
-      "anchors": [],
+      "anchors": [
+        "STZ.w GanondorfFight",
+        "STZ.w BossReinject",
+        "STZ.w FinaleBeat"
+      ],
       "binding": {
         "source": "shared:Core/symbols.asm",
         "symbol": "MenuScrollLevelV",
@@ -1172,6 +1198,65 @@
       ],
       "count": 64,
       "stride": 1
+    },
+    {
+      "id": "bosskit_wram",
+      "owner": "BossKit frame budget and quake",
+      "space": "wram",
+      "base": 8385408,
+      "size": 5,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Shared volatile frame-load/FX budget and quake state used by Twinrova, Kydreeok, vampire bat and keese; valid after reset, not a per-sprite allocation.",
+      "reset": "BossKit_Reset clears all five bytes; Kydreeok prep calls it. Healing termination explicitly clears BossKit_Quake; no universal room-entry reset is claimed.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Sprites/Bosses/boss_kit.asm",
+        "shared:Sprites/Bosses/kydreeok.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "BossKit_Reset:",
+        "STA.l BossKit_Quake",
+        "JSL BossKit_Reset"
+      ],
+      "binding": {
+        "source": "shared:Sprites/Bosses/boss_kit.asm",
+        "symbol": "BossKit_LoadLine",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "bossdirector_wram",
+      "owner": "BossDirector shared fight pacing",
+      "space": "wram",
+      "base": 8385416,
+      "size": 22,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Shared volatile fight token/rest/grace/HP, eight cooldowns, stage/turn and eight boss variables; valid after BossDirector_Reset through the owning fight.",
+      "reset": "BossDirector_Reset sets Token to FF, clears Rest/Grace and Cool through Var (18 bytes), and samples LinkHP. Kydreeok prep calls it; no universal room-entry reset is claimed.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Sprites/Bosses/boss_director.asm",
+        "shared:Sprites/Bosses/kydreeok.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "BossDirector_Reset:",
+        "LDX.b #$11",
+        "STA.l BossDir_Cool, X",
+        "JSL BossDirector_Reset"
+      ],
+      "binding": {
+        "source": "shared:Sprites/Bosses/boss_director.asm",
+        "symbol": "BossDir_Token",
+        "bank00_mirror": false
+      }
     }
   ],
   "lifetime_aliases": [],
