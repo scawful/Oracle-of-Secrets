@@ -7,7 +7,8 @@
     "vanilla": "Local usdasm reference; bind explicitly",
     "current_bg128": "BG128 child371 port on current engine8b/exporterc19, source-only; no code/data ROM grant or activation. Historical shared declarations retained.",
     "lyra_current_full32_port_01": "Current-engine full32 source port on8b/c19; explicit current-mode origins unbound, source review only. Historical declarations remain scoped to their source sets.",
-    "lyra_current_catalog_callers_02": "Current-only catalog cache, transition DMA, incremental and staging callers on frozen6e7e5f15; source review only, no origins or grants. Frozen full32 and BG declarations retained."
+    "lyra_current_catalog_callers_02": "Current-only catalog cache, transition DMA, incremental and staging callers on frozen6e7e5f15; source review only, no origins or grants. Frozen full32 and BG declarations retained.",
+    "lyra_current_composer_binding_03": "Current source composer bound to one verified saved generation/profile, table/code/descriptor origins and BG interval/payload/preimage on80fb34a9; source review only. Earlier source sets retained."
   },
   "sources": {
     "shared:Sprites/Objects/minecart.asm": {
@@ -477,6 +478,141 @@
     },
     "lyra_current_catalog_callers_02:Scripts/Generate/generate_hack_manifest.py": {
       "source_set": "lyra_current_catalog_callers_02",
+      "path": "Scripts/Generate/generate_hack_manifest.py",
+      "sha256": "eed5138006a03e7ad4065d20c728fe0ca2b568fa4770da611445102e19f95674"
+    },
+    "lyra_current_composer_binding_03:Oracle_main.asm": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Oracle_main.asm",
+      "sha256": "af1d12ad808c091b7122bdef44dab11e32ce3a432b27f0f6dff87702c6292e83"
+    },
+    "lyra_current_composer_binding_03:Overworld/ZSCustomOverworld.asm": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Overworld/ZSCustomOverworld.asm",
+      "sha256": "2cd8827fb1326ae560170b6313737f040cff1c03ef3c1207a9a67d566208c7ff"
+    },
+    "lyra_current_composer_binding_03:Overworld/time_system.asm": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Overworld/time_system.asm",
+      "sha256": "7f96493b0f28561af5116086b788b89ee7c3deb87b5c3de293ae2b0311647782"
+    },
+    "lyra_current_composer_binding_03:Overworld/lost_woods.asm": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Overworld/lost_woods.asm",
+      "sha256": "3983c065b08d95199d22543cfa6c51a03a2f323aee3841ab8d1a386e8c07640d"
+    },
+    "lyra_current_composer_binding_03:Overworld/goron_checkpoint.asm": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Overworld/goron_checkpoint.asm",
+      "sha256": "8b2eccf79b2286c67ac7fb6def3165406075ea6937d4d8792df82a07cf692d49"
+    },
+    "lyra_current_composer_binding_03:Masks/mask_routines.asm": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Masks/mask_routines.asm",
+      "sha256": "7c903a40a70e23ac0fe9de798b2de4da48611c6f8c8fe78d29beed0b39db3900"
+    },
+    "lyra_current_composer_binding_03:Overworld/project_bg_palette.asm": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Overworld/project_bg_palette.asm",
+      "sha256": "3f90b20ed7415e99cd15ad1f8c8e083acd0003e0b62ced481bc9092283f6b71b"
+    },
+    "lyra_current_composer_binding_03:Overworld/lyra_native_loaders.asm": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Overworld/lyra_native_loaders.asm",
+      "sha256": "f01b6aadad528725319c9c4b5a440a65bdd4418df6dfec8d2a0108c3b797ebc2"
+    },
+    "lyra_current_composer_binding_03:Overworld/graphics_runtime.asm": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Overworld/graphics_runtime.asm",
+      "sha256": "a1a6615532994d70a22b282a501e9443dca9a539e1f1623b869615078f740ed3"
+    },
+    "lyra_current_composer_binding_03:Overworld/graphics_runtime_tables.asm": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Overworld/graphics_runtime_tables.asm",
+      "sha256": "3620e68e57e3ff11bcea06a64ccb0e5f382687b3932bc70d13f2d02ebf5af6fd"
+    },
+    "lyra_current_composer_binding_03:Overworld/custom_gfx.asm": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Overworld/custom_gfx.asm",
+      "sha256": "b0773e3d436254f215e7d14123dfce6aac62919222c81353f5f59edd0b58b8d7"
+    },
+    "lyra_current_composer_binding_03:Util/macros.asm": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Util/macros.asm",
+      "sha256": "e9f0ef67aa7829232ed37fd5caebcbf4a452763099b0c2b43b7171d97479d165"
+    },
+    "lyra_current_composer_binding_03:Config/feature_flags.asm": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Config/feature_flags.asm",
+      "sha256": "eebe8dad726ebf69937019204b503b52ca1302e46e2d53ef8b1b18cd8928e50f"
+    },
+    "lyra_current_composer_binding_03:Config/module_flags.asm": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Config/module_flags.asm",
+      "sha256": "0dfc5ada77bbf92e30b8f7bf30b034ced9ef3d1dd03591fc1f00a835a747586a"
+    },
+    "lyra_current_composer_binding_03:Scripts/Build/lyra_current_transfer.py": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Scripts/Build/lyra_current_transfer.py",
+      "sha256": "783b65a42c9eb46b3553798e5496e201d029f9de1c623b53b6a0348de63cc2e6"
+    },
+    "lyra_current_composer_binding_03:Scripts/Build/lyra_private_reservation.py": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Scripts/Build/lyra_private_reservation.py",
+      "sha256": "3bf3bf82c69d6a6715f4b77c513293b318e4424bf3d3cfc775b0151216a0bd42"
+    },
+    "lyra_current_composer_binding_03:Scripts/Build/lyra_native_loaders.py": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Scripts/Build/lyra_native_loaders.py",
+      "sha256": "6e25bc7e80fa4852267ed70d3f70052badeaa2176e1435f8698a6a24fa89295e"
+    },
+    "lyra_current_composer_binding_03:Scripts/Build/lyra_project_publisher.py": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Scripts/Build/lyra_project_publisher.py",
+      "sha256": "d4d9765d4d729bd7875645c363183f65dc32aea212d54c0740bb034ad6e59789"
+    },
+    "lyra_current_composer_binding_03:Scripts/Build/lyra_project_bg_palette.py": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Scripts/Build/lyra_project_bg_palette.py",
+      "sha256": "848c8277409e8775c7f3b8da44f5f2a43c3ecc091dd11fd2a0c30c15a6b87da7"
+    },
+    "lyra_current_composer_binding_03:Scripts/Graphics/compile_runtime_graphics.py": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Scripts/Graphics/compile_runtime_graphics.py",
+      "sha256": "a3363c98d34c35b183e62105f7674a0416fc4899852e86077558a263c7f12b89"
+    },
+    "lyra_current_composer_binding_03:Scripts/Graphics/compile_graphics_pack.py": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Scripts/Graphics/compile_graphics_pack.py",
+      "sha256": "eaa492e3c84818f0e5aff12866d394f78aa8b8be218c061b3a18e2efe31644c2"
+    },
+    "lyra_current_composer_binding_03:Scripts/Generate/asm_source.py": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Scripts/Generate/asm_source.py",
+      "sha256": "951cd703056400db9c7a4d1b26857334c26f828c78bc860dbf4d6ddd7f3a2c36"
+    },
+    "lyra_current_composer_binding_03:Overworld/graphics_catalog.json": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Overworld/graphics_catalog.json",
+      "sha256": "382b29598b36cd375cc667657679a056ed1668db0c33a12665299bea4efc2c28"
+    },
+    "lyra_current_composer_binding_03:Overworld/graphics_runtime_policy.json": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Overworld/graphics_runtime_policy.json",
+      "sha256": "6f103ded82e23d0b00d54b8126560f7ead0c8117c5dee4bc326931f226d3460d"
+    },
+    "lyra_current_composer_binding_03:Scripts/Build/build_rom.sh": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Scripts/Build/build_rom.sh",
+      "sha256": "4f2c6bac972a2fc24ec9815a5c0b5fa14e867fe6d4a5297c1f66216d75d46b96"
+    },
+    "lyra_current_composer_binding_03:Scripts/Build/check_zscream_overlap.py": {
+      "source_set": "lyra_current_composer_binding_03",
+      "path": "Scripts/Build/check_zscream_overlap.py",
+      "sha256": "88b2b11afe15d8d923a5f5da133e9d7acbdf7d1fc79806ca003e294b8b28a556"
+    },
+    "lyra_current_composer_binding_03:Scripts/Generate/generate_hack_manifest.py": {
+      "source_set": "lyra_current_composer_binding_03",
       "path": "Scripts/Generate/generate_hack_manifest.py",
       "sha256": "eed5138006a03e7ad4065d20c728fe0ca2b568fa4770da611445102e19f95674"
     }
@@ -1500,14 +1636,14 @@
       "reset": "Always-included selected BG startup composes existing008827 owner including Masks-disabled; destructive Reset state00/areaFF. Intro invalidates. Warm LoadCheckpointOrWorld and indoor02C55E restore valid CA/CB BEFORE invalidation and native partial writers. State00 prohibits substitution; capture validity01 published last;02 after application.",
       "save": "Never serialized to SRAM. Menu/death7FDD80 storage and Minish7FD000 type cache are separate; RESTORE_BOUND remains off pending exact-source review and lifecycle proof.",
       "provenance": [
-        "lyra_current_catalog_callers_02:Overworld/project_bg_palette.asm",
-        "lyra_current_catalog_callers_02:Masks/mask_routines.asm",
-        "lyra_current_catalog_callers_02:Overworld/goron_checkpoint.asm",
-        "lyra_current_catalog_callers_02:Overworld/time_system.asm",
-        "lyra_current_catalog_callers_02:Oracle_main.asm",
-        "lyra_current_catalog_callers_02:Overworld/ZSCustomOverworld.asm",
-        "lyra_current_catalog_callers_02:Util/macros.asm",
-        "lyra_current_catalog_callers_02:Config/feature_flags.asm"
+        "lyra_current_composer_binding_03:Overworld/project_bg_palette.asm",
+        "lyra_current_composer_binding_03:Masks/mask_routines.asm",
+        "lyra_current_composer_binding_03:Overworld/goron_checkpoint.asm",
+        "lyra_current_composer_binding_03:Overworld/time_system.asm",
+        "lyra_current_composer_binding_03:Oracle_main.asm",
+        "lyra_current_composer_binding_03:Overworld/ZSCustomOverworld.asm",
+        "lyra_current_composer_binding_03:Util/macros.asm",
+        "lyra_current_composer_binding_03:Config/feature_flags.asm"
       ],
       "aliases": [],
       "anchors": [

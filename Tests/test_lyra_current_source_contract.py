@@ -16,6 +16,19 @@ class CurrentSourceContractTest(unittest.TestCase):
         self.fixture.setUp()
         self.addCleanup(self.fixture.doCleanups)
         self.case = self.fixture.case
+        if getattr(self, 'bind_composer_sources', False):
+            # The composer fixture needs the same real source-set validation as
+            # production. Bind its actual tiny engine before creating a review.
+            name = json.loads(Path(X.CURRENT_SOURCE_CONTRACT).read_bytes())['ledger']['source_set']
+            ledger_path = self.fixture.root / 'Config/allocation_ownership.json'
+            ledger = json.loads(ledger_path.read_bytes())
+            ledger.update(source_sets={name: 'Owned composer host fixture'}, sources={name+':world':
+                dict(source_set=name, path='Overworld/world.asm',
+                     sha256=X.R.sha((self.fixture.root / 'Overworld/world.asm').read_bytes()))})
+            ledger_path.write_bytes(X.P.encoded(ledger))
+            self.fixture.commit()
+            self.fixture.head = self.fixture.git('rev-parse', 'HEAD').strip()
+            self.fixture.refresh_proposal_source()
         self.review = self.fixture.review()
         self.path = self.fixture.root / 'Config/lyra_current_source_contract.json'
         self.value = json.loads(Path(X.CURRENT_SOURCE_CONTRACT).read_bytes())

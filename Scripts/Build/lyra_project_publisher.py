@@ -14,6 +14,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 
 import lyra_project_admission as A
 import lyra_project_allocation as R
@@ -341,19 +342,70 @@ def validate_current_source_set(contract):
     return bindings
 
 
-def render_current_source_outputs(table_plan, *, contract, graphics_source, graphics_report, bg128_plan=None):
+def render_current_source_outputs(table_plan, *, contract, graphics_source, graphics_report,
+                                  current_source_profile=None, bg128_plan=None):
     """Compose reviewable source through the existing generated-input layout.
 
     A source plan remains unselected and cannot pass the build-context loader.
     Actual output publication keeps the independent current-save refusal.
     """
     native = importlib.import_module('lyra_native_loaders')
+    current = importlib.import_module('lyra_current_transfer')
     source_bindings = validate_current_source_set(contract)
+    profile = current_source_profile
+    R.require(type(profile) is dict and profile.get('kind') == current.CURRENT_PROFILE_KIND,
+              'CURRENT_COMPOSER_PROFILE_REQUIRED: freshly verified current source profile required')
+    _, source, document = current.verify_transfer(profile['review']['transfer']['path'],
+                                                  profile['project'], profile['base_rom'])
+    current.verify_current_native_source_profile(profile, source, document)
+    bound_contract = current._json(current.Q.read_bound(profile['contract']))
+    R.require(contract == bound_contract
+              and Path(profile['selected_source']['root']).resolve() == ROOT.resolve(),
+              'CURRENT_COMPOSER_CONTRACT_MISMATCH: source profile and selected contract differ')
     R.require(table_plan.get('kind') == native.CURRENT_KIND
               and all(table_plan.get(key) is False for key in
                       ('allocation_granted', 'producer_enforcement_verified', 'publication_authorized',
                        'ordinary_build_ready', 'runtime_admission', 'rom_written')),
               'Current source output requires an ungranted current table plan')
+    profile_digest = current.T.digest(profile)
+    R.require(table_plan.get('source_rom_sha256') == R.sha(source)
+              and table_plan.get('source_profile_sha256') == profile_digest
+              and profile['source_size'] == len(source),
+              'CURRENT_COMPOSER_SOURCE_MISMATCH: table plan differs from exact saved source/profile')
+    origins = profile['origins']
+    table_origins = dict(table_base=origins['tables']['snes'][0],
+        code_base=origins['code']['snes'][0], code_end=origins['code']['snes'][1],
+        descriptor_base=origins['descriptor']['snes'][0])
+    R.require(table_plan.get('origins') == table_origins,
+              'CURRENT_COMPOSER_ORIGIN_MISMATCH: table/code/descriptor origins differ from source profile')
+    layout = native.current_table_layout(table_origins['table_base'])
+    expected_layout = {row['name']: dict(offset=row['pc'][0]-origins['tables']['pc'][0],
+        stride=row['stride'], rows=row['rows']) for row in layout}
+    R.require(profile['table_layout'] == expected_layout,
+              'CURRENT_COMPOSER_TABLES_MISMATCH: current table family layout differs from source profile')
+    supplied = table_plan.get('tables')
+    R.require(type(supplied) is list and len(supplied) == len(layout)
+              and all(type(row) is dict for row in supplied)
+              and [row.get('name') for row in supplied] == [row['name'] for row in layout],
+              'CURRENT_COMPOSER_TABLES_MISMATCH: complete ordered current table families required')
+    tail_rows = {area: {} for area in range(native.CURRENT_FIRST, native.CURRENT_END)}
+    for row, expected in zip(supplied, layout):
+        raw = bytes.fromhex(row['payload_hex'])
+        stride = expected['stride']
+        R.require(len(raw) == native.CURRENT_PARENT_COUNT * stride,
+                  'CURRENT_COMPOSER_TABLES_MISMATCH: current table payload extent differs')
+        for area, values in tail_rows.items():
+            value = raw[area*stride:(area+1)*stride]
+            values[expected['name']] = list(value) if stride == 8 else int.from_bytes(value, 'little')
+    rebuilt = native.plan_current_tables(source, tail_rows, origins=table_origins,
+        policy=dict(source_rom_sha256=R.sha(source), source_profile_sha256=profile_digest,
+                    allocation_granted=False, publication_authorized=False))
+    for name, used in (('tables', rebuilt['tables_pc']), ('descriptor', rebuilt['descriptor_pc'])):
+        reserved = origins[name]['pc']
+        R.require(used[0] == reserved[0] and used[1] <= reserved[1],
+                  'CURRENT_COMPOSER_ORIGIN_MISMATCH: ' + name + ' exceeds its source profile interval')
+    R.require(rebuilt['code_pc'] == origins['code']['pc'] and table_plan == rebuilt,
+              'CURRENT_COMPOSER_TABLES_MISMATCH: table payload, assembler or extents differ from canonical plan')
     R.require(type(graphics_source) is str and graphics_source
               and graphics_report.get('current_mode') is True and graphics_report.get('parent_count') == 192
               and graphics_report.get('source_contract_sha256') == R.sha(encoded(contract))
@@ -377,8 +429,15 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
     remaining = list(table_plan['remaining_consumers'])
     if bg128_plan is not None:
         bg = importlib.import_module('lyra_project_bg_palette')
-        R.require(bg128_plan.get('publication_authorized') is False,
-                  'BG128 source plan cannot supply publication authority')
+        bg_origin = origins['bg_palette']
+        lo, hi = bg_origin['pc']
+        expanded_source = A.expanded_rom(source)
+        expected_bg = bg.plan_bg128([SimpleNamespace(map_id=0xA0+index, properties=properties)
+            for index, properties in enumerate(document.properties)],
+            data_snes=bg_origin['snes'][0], capacity=hi-lo, preimage=expanded_source[lo:hi])
+        R.require(type(bg128_plan) is dict and bg128_plan.get('publication_authorized') is False
+                  and bg128_plan == expected_bg,
+                  'CURRENT_COMPOSER_BG128_MISMATCH: BG origin, capacity, document payload or source preimage differs')
         data += bg.emit_bg128_data(bg128_plan)
     else:
         remaining.append('BG128 source data/code origin and consumer binding')
@@ -387,6 +446,9 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
              'descriptor.json': encoded(dict(kind=native.CURRENT_KIND, payload_hex=table_plan['descriptor_hex']))}
     prepared = dict(kind='lyra.current_source_prepare.v1', selected=False, source_bindings=source_bindings,
         source_rom_sha256=table_plan['source_rom_sha256'], source_profile_sha256=table_plan['source_profile_sha256'],
+        source_size=len(source), document_sha256=profile['document_sha256'],
+        generation=profile['review']['generation'], operation_id=profile['review']['operation_id'],
+        reservation_review_id=profile['reservation_review_id'],
         source_contract_sha256=R.sha(encoded(contract)), source_domain=table_plan['source_domain'],
         generated_files={name:R.sha(raw) for name,raw in files.items()}, remaining_consumers=remaining,
         allocation_granted=False, producer_enforcement_verified=False, publication_authorized=False,
@@ -395,6 +457,7 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
     for row in source_bindings:
         R.require(R.sha(Path(row['path']).read_bytes()) == row['sha256'],
                   'Current source changed while composing generated inputs')
+    current.verify_current_native_source_profile(profile, source, document)
     return files
 
 

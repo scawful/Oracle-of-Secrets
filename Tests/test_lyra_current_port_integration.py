@@ -1,12 +1,10 @@
 """Current-engine source composition checks; no assembler or CPU execution."""
-import copy
 import json
 import os
 from pathlib import Path
 import re
 import subprocess
 import sys
-import tempfile
 import unittest
 from unittest import mock
 
@@ -69,7 +67,7 @@ class CurrentPortIntegrationTest(unittest.TestCase):
         ledger = json.loads((ROOT/'Config/allocation_ownership.json').read_bytes())
         contract = json.loads((ROOT/'Config/lyra_current_source_contract.json').read_bytes())
         source_set = contract['ledger']['source_set']
-        self.assertEqual(source_set, 'lyra_current_catalog_callers_02')
+        self.assertEqual(source_set, 'lyra_current_composer_binding_03')
         records = [r for r in ledger['sources'].values() if r['source_set']==source_set]
         self.assertEqual(len(records), 27)
         for row in records:
@@ -85,41 +83,14 @@ class CurrentPortIntegrationTest(unittest.TestCase):
             P.validate_current_source_set(contract)
         self.assertTrue(all(v is None for v in contract['origins'].values()))
 
-    def test_source_composer_binds_graphics_and_inactive_source_without_authority(self):
+    def test_loose_component_plan_cannot_compose_without_verified_current_profile(self):
         reader_fixtures.CurrentNativeLoaderTests.setUpClass()
         table_plan = reader_fixtures.CurrentNativeLoaderTests.plan
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory).resolve()
-            (root/'Config').mkdir()
-            consumer = root/'inactive.asm'
-            consumer.write_text('nop\n')
-            ledger = dict(source_sets={'current':'owned host fixture'}, sources={'current:inactive.asm':
-                dict(source_set='current', path='inactive.asm', sha256=P.R.sha(consumer.read_bytes()))})
-            raw = P.encoded(ledger)
-            (root/'Config/allocation_ownership.json').write_bytes(raw)
-            contract = json.loads((ROOT/'Config/lyra_current_source_contract.json').read_bytes())
-            contract['ledger'].update(source_set='current', sha256=P.R.sha(raw))
-            contract['origins']['graphics'] = dict(snes=[0x608000, 0x60F000])
-            graphics = '; owned host graphics source\n'
-            report = dict(current_mode=True, parent_count=192, source_contract_sha256=P.R.sha(P.encoded(contract)),
-                generated_sha256=P.R.sha(graphics.encode()), graphics_origin_snes=[0x608000, 0x60F000])
-            with mock.patch.object(P, 'ROOT', root):
-                files = P.render_current_source_outputs(table_plan, contract=contract,
-                    graphics_source=graphics, graphics_report=report)
-                prepared = json.loads(files['prepare.json'])
-                self.assertFalse(prepared['selected'])
-                self.assertFalse(prepared['runtime_admission'])
-                self.assertFalse(prepared['rom_written'])
-                self.assertIn(b'!LYRA_CURRENT_MODE = 1', files['runtime_constants.asm'])
-                self.assertIn(b'!PROJECT_BG128_ENABLED = 0', files['runtime_constants.asm'])
-                self.assertEqual(files['graphics_runtime_tables.asm'], graphics.encode())
-                with self.assertRaisesRegex(ValueError, 'matching192-row graphics'):
-                    P.render_current_source_outputs(table_plan, contract=contract,
-                        graphics_source=graphics+'changed', graphics_report=report)
-                consumer.write_text('changed\n')
-                with self.assertRaisesRegex(ValueError, 'consumer changed'):
-                    P.render_current_source_outputs(table_plan, contract=contract,
-                        graphics_source=graphics, graphics_report=report)
+        contract = json.loads((ROOT/'Config/lyra_current_source_contract.json').read_bytes())
+        contract['ledger']['sha256'] = P.R.sha((ROOT/'Config/allocation_ownership.json').read_bytes())
+        with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_PROFILE_REQUIRED'):
+            P.render_current_source_outputs(table_plan, contract=contract,
+                graphics_source='; loose host fixture\n', graphics_report={})
 
 
 if __name__ == '__main__':
