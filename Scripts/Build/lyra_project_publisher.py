@@ -406,7 +406,7 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
                   'CURRENT_COMPOSER_ORIGIN_MISMATCH: ' + name + ' exceeds its source profile interval')
     R.require(rebuilt['code_pc'] == origins['code']['pc'] and table_plan == rebuilt,
               'CURRENT_COMPOSER_TABLES_MISMATCH: table payload, assembler or extents differ from canonical plan')
-    property_rows = native.current_property_rows(document)
+    property_rows = native.current_property_rows(document, source=source)
     for area, values in property_rows.items():
         R.require(all(tail_rows[area][name] == value for name, value in values.items()),
                   'CURRENT_COMPOSER_PROPERTIES_MISMATCH: native selectors differ from saved properties')

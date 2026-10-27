@@ -496,10 +496,12 @@ def appearance_plan(source, document, directory):
                 coherent=not blockers, blockers=blockers)
 
 
-def consumer_blockers(document, traversal, closure):
+def consumer_blockers(document, traversal, closure, *, current_source=False):
     blockers = []
     for area in traversal:
         auth = document.authoring[area - FIRST_MAP]
+        if not current_source and 'mosaic' in document.properties[area - FIRST_MAP]:
+            blockers.append(dict(code="UNSUPPORTED_RUNTIME_PROPERTIES", map_id=area))
         for key in ("sprites", "doors", "exits"):
             if auth[key]:
                 blockers.append(dict(code="UNSUPPORTED_ACTIVE_METADATA", map_id=area, field=key))
@@ -516,6 +518,9 @@ def relocated_table_payloads(source, document, compiled, traversal):
     """Produce adapter bytes once for both the planner and ordinary publisher."""
     require(not getattr(document, "gameplay_areas", ()),
             "Historical table publisher has no authored gameplay area consumer")
+    require((document is None or all('mosaic' not in prop for prop in document.properties))
+            and all('mosaic' not in plan.properties for plan in compiled.maps),
+            "Historical table publisher has no saved runtime property consumer")
     # These tables have palette selectors, but no loader for project BG words.
     # Direct publisher callers must not bypass the admission planner's refusal.
     require(all("background_palette" not in plan.properties for plan in compiled.maps),

@@ -156,8 +156,8 @@ class CurrentActorStreamsTest(unittest.TestCase):
 
     def test_final_profile_recheck_refuses_generation_drift_before_return(self):
         blockers = L.A.consumer_blockers
-        def later_save(*args):
-            result = blockers(*args)
+        def later_save(*args, **kwargs):
+            result = blockers(*args, **kwargs)
             self.fixture.case.next_save()
             return result
         with mock.patch.object(L.A, 'consumer_blockers', side_effect=later_save):

@@ -55,7 +55,7 @@ class ComposerFixture:
         self.source, self.document = self.contract_fixture.inputs()
         reader_fixtures.CurrentNativeLoaderTests.setUpClass()
         self.rows = copy.deepcopy(reader_fixtures.CurrentNativeLoaderTests.rows)
-        for area, values in L.current_property_rows(self.document).items():
+        for area, values in L.current_property_rows(self.document, source=self.source).items():
             self.rows[area].update(values)
         self.table_plan = self.tables()
 

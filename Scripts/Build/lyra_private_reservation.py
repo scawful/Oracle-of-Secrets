@@ -255,6 +255,9 @@ def compile_native_plan(source, document, granted, directory, *, native_copy_map
     """
     R.require(type(source) is bytes and len(source) in (0x200000, 0x400000),
               'Current full32 planning requires an unheadered2MiB or4MiB source')
+    if any('mosaic' in prop for prop in document.properties):
+        R.require(current_source_profile is not None,
+                  'CURRENT_RUNTIME_PROPERTIES_UNBOUND: historical compiler has no saved runtime property consumer')
     if document.gameplay_areas:
         R.require(current_source_profile is not None,
                   'CURRENT_GAMEPLAY_AREAS_NATIVE_UNBOUND: historical compiler has no authored area consumer')
@@ -372,7 +375,8 @@ def compile_native_plan(source, document, granted, directory, *, native_copy_map
                 table['pc'] = origin + field['offset'] + row['map_id'] * field['stride']
         verify_current_native_source_profile(current_source_profile, original_source, document,
             allocation=granted, spare_tile32_ids=spare_tile32_ids, native_copy_maps=native_copy_maps)
-    actors = A.consumer_blockers(document, FULL_MAPS, FULL_MAPS)
+    actors = A.consumer_blockers(document, FULL_MAPS, FULL_MAPS,
+                                current_source=current_source_profile is not None)
     result = dict(kind='lyra.native_full32_write_plan.v1', source_rom_sha256=source_hash,
         source_size=source_size, expanded_size=len(source),
         selected_maps=FULL_MAPS, natural_render_maps=FULL_MAPS,

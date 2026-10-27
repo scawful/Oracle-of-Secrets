@@ -1256,7 +1256,7 @@ def plan_current_tables(source, tail_rows, *, origins, policy):
                     'actor/door/exit admission', 'entry/save/return/world-map/mirror/flight'])
 
 
-def current_property_rows(document):
+def current_property_rows(document, *, source=None):
     """Lower saved native selectors without assigning storage or readiness.
 
     SW graphics/palette selectors are one byte per area in maintained ZScream;
@@ -1292,6 +1292,27 @@ def current_property_rows(document):
             special_sprite_palettes=max(0, prop['sprite_palettes'][0]),
             music_dark_special=prop['music'][0],
             **{f'music_phase{phase}': value for phase, value in enumerate(prop['music'])})
+        runtime_keys = {'mosaic','subscreen_overlay','area_specific_bg_color'}
+        if runtime_keys.intersection(prop):
+            R.require(runtime_keys <= set(prop)
+                      and type(prop['mosaic']) is int and 0 <= prop['mosaic'] <= 15
+                      and type(prop['subscreen_overlay']) is int
+                      and (0 <= prop['subscreen_overlay'] < CURRENT_END or prop['subscreen_overlay'] == 255),
+                      'CURRENT_PROPERTY_MODEL_INVALID: native runtime properties')
+            R.require(type(source) is bytes and len(source) in (0x200000,0x400000),
+                      'CURRENT_PROPERTY_RUNTIME_SOURCE_REQUIRED: exact saved source required')
+            for enabled, requested, feature in ((0x140142, prop['mosaic'] != 0, 'mosaic'),
+                    (0x140144, prop['subscreen_overlay'] != 255, 'subscreen_overlay'),
+                    (0x140140, prop['area_specific_bg_color'] is not None, 'bg_color')):
+                R.require(not requested or source[enabled] != 0,
+                          'CURRENT_PROPERTY_NATIVE_FEATURE_DISABLED: ' + feature)
+            color = prop['area_specific_bg_color']
+            if color is None:
+                at = A.pc(0x288000)+0x3A*2
+                color = int.from_bytes(source[at:at+2],'little')
+            R.require(type(color) is int and 0 <= color <= 0x7FFF,
+                      'CURRENT_PROPERTY_MODEL_INVALID: BGR555 backdrop required')
+            result[area].update(mosaic=prop['mosaic'], overlay=prop['subscreen_overlay'], bg_color=color)
     return result
 
 
@@ -1376,7 +1397,7 @@ def plan_current_actor_streams(source, document, *, current_source_profile):
         streams=streams, demand=dict(maps=32, phases=3, lists=96, placements=len(seen),
             payload_bytes=sum(row['bytes'] for row in streams), pointer_rows=96, pointer_bytes=192),
         storage=None, pointers=None,
-        consumer_blockers=A.consumer_blockers(document, tuple(range(CURRENT_FIRST, CURRENT_END)), ()),
+        consumer_blockers=A.consumer_blockers(document, tuple(range(CURRENT_FIRST, CURRENT_END)), (), current_source=True),
         allocation_granted=False, producer_enforcement_verified=False, publication_authorized=False,
         ordinary_build_ready=False, runtime_admission=False, actors_compiled=False, rom_written=False)
     current.verify_current_native_source_profile(profile, source, document)

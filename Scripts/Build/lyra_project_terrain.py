@@ -37,6 +37,9 @@ DEFAULT_PROPERTIES = {
     "sprite_graphics": [-1, -1, -1], "sprite_palettes": [-1, -1, -1],
     "music": [0, 0, 0, 0], "message_id": 0,
 }
+RUNTIME_PROPERTY_DEFAULTS = {
+    "mosaic": 0, "subscreen_overlay": 255, "area_specific_bg_color": None,
+}
 Quad = tuple[int, int, int, int]
 
 
@@ -230,7 +233,7 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
                            expected_asset_bindings: Mapping[int, tuple[str, str, str]] | None = None,
                            allow_authoring_drafts: bool = False,
                            ) -> TerrainDocument:
-    """Parse schema 3/4/5 against independently verified native assets.
+    """Parse schema 3/4/5/6 against independently verified native assets.
 
     The historical strict runtime policy remains the default. A read-only
     admission planner may preserve valid drafts and apply consumer checks to
@@ -244,13 +247,13 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
     data = json.loads(text, object_pairs_hook=_unique_object,
                       parse_constant=_invalid_constant)
     _require(type(data) is dict and data.get("schema") == "yaze.lyra-terrain"
-             and _integer(data.get("schema_version"), 3, 5),
-             "Expected Yaze Lyra schema 3, 4 or 5")
+             and _integer(data.get("schema_version"), 3, 6),
+             "Expected Yaze Lyra schema 3, 4, 5 or 6")
     version = data["schema_version"]
     _keys(data, {"schema", "schema_version", "columns", "rows", "map_width",
                  "map_height", "tile_pixels", "profile", "maps",
                  "flight_points", "edge_connections"}
-                | ({"gameplay_areas"} if version == 5 else set()), "Lyra schema 3/4/5 header")
+                | ({"gameplay_areas"} if version >= 5 else set()), "Lyra schema 3/4/5/6 header")
     for key, value in (("columns", 8), ("rows", 4), ("map_width", 32),
                        ("map_height", 32), ("tile_pixels", 16)):
         _require(_integer(data[key], value, value), f"Invalid Lyra {key}")
@@ -258,10 +261,11 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
     _require(data["profile"] == expected,
              "Lyra profile differs from independently verified source assets")
     gameplay_areas = ()
-    if version == 5:
+    if version >= 5:
         _require(type(data["gameplay_areas"]) is list,
                  "gameplay_areas requires a JSON array")
-        gameplay_areas = validated_gameplay_areas(data["gameplay_areas"])
+        gameplay_areas = (() if version == 6 and not data["gameplay_areas"]
+                          else validated_gameplay_areas(data["gameplay_areas"]))
         _require(allow_authoring_drafts,
                  "Unsupported runtime metadata: gameplay_areas")
     flights = data["flight_points"]
@@ -350,8 +354,16 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
         props = auth["properties"]
         _require(type(props) is dict, "Malformed Lyra map properties keys")
         has_override = "background_palette" in props
-        _keys(props, PROPERTY_KEYS | ({"background_palette"}
-              if version in (4, 5) and has_override else set()), "Lyra map properties")
+        _keys(props, PROPERTY_KEYS | (set(RUNTIME_PROPERTY_DEFAULTS) if version == 6 else set())
+              | ({"background_palette"} if version >= 4 and has_override else set()), "Lyra map properties")
+        if version == 6:
+            _require(_integer(props["mosaic"], 0, 15), "Lyra mosaic requires direction bits0..15")
+            _require(_integer(props["subscreen_overlay"], 0, 191) or props["subscreen_overlay"] == 255
+                     and type(props["subscreen_overlay"]) is int,
+                     "Lyra subscreen overlay requires map00..BF or255 for none")
+            _require(props["area_specific_bg_color"] is None
+                     or _integer(props["area_specific_bg_color"], 0, 0x7FFF),
+                     "Lyra area BG color requires BGR555 or null inheritance")
         if has_override:
             _require(_array(props["background_palette"], 128, 0, 0x7FFF),
                      "Lyra background palette requires 128 BGR555 integers")
@@ -373,7 +385,8 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
         _require(type(bindings) is list and len(bindings) == 3,
                  "Malformed Lyra map asset bindings")
         if bindings == ["", "", ""]:
-            _require(props == DEFAULT_PROPERTIES,
+            defaults = {**DEFAULT_PROPERTIES, **(RUNTIME_PROPERTY_DEFAULTS if version == 6 else {})}
+            _require(props == defaults,
                      "Empty asset bindings require default map properties")
         else:
             # These are three combined hashes (one per story state), not the
