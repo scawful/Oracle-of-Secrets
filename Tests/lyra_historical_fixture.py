@@ -13,7 +13,6 @@ from lyra_source_snapshots import read_snapshot
 
 
 REVISION = 'f4efa458f24ce3703519615df76c29b6b2b4e3ea'
-FIXTURES = Path(__file__).resolve().parent / 'fixtures/lyra_historical_reservation'
 LEDGER_SHA256 = 'e08c872e206f7c8068a3aeb47ebd9c5fcb32acb54b07aa27c13affc668e06503'
 SOURCE_SHA256 = {
     'Items/ice_rod.asm': '8bcd1f79e44e182728726c49bccd99ff2067d56d63df6552376d1244abd87cd5',
@@ -31,7 +30,7 @@ def _root(owner):
 
 
 def historical_ledger_path(owner):
-    raw = (FIXTURES / 'Config/allocation_ownership.json').read_bytes()
+    raw = read_snapshot(REVISION, 'Config/allocation_ownership.json')
     if hashlib.sha256(raw).hexdigest() != LEDGER_SHA256:
         raise AssertionError('Historical test ledger snapshot changed')
     path = _root(owner) / 'allocation_ownership.json'
