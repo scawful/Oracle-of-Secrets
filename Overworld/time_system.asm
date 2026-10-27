@@ -400,6 +400,7 @@ org $1BEF61 : JSL LoadDayNightPaletteEffect ; @hook module=Overworld name=LoadDa
 org $1BEF84 : JSL LoadDayNightPaletteEffect ; @hook module=Overworld name=LoadDayNightPaletteEffect kind=jsl target=LoadDayNightPaletteEffect
 
 pullpc
+LyraHost_LoadDayNightPaletteEffect = pc()
 LoadDayNightPaletteEffect:
 {
   if !PROJECT_BG128_ENABLED == 1
@@ -440,6 +441,8 @@ LoadDayNightPaletteEffect:
 }
 
 ; =========================================================
+
+LyraHost_LoadDayNightPaletteEffect_End = pc()
 
 !SmallestBlue = #$0400
 !SmallestGreen = #$0020

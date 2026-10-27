@@ -150,6 +150,8 @@ def lyra_owned_regions(verification_path: Path, rom_path: Path, symbols_path: Pa
             source = normalize_source_path(str((folder / 'runtime_data.asm').resolve()))
             spans = [row['pc'] for row in current_prior['terrain_plan']['writes']]
             spans += [row['pc'] for row in current_prior['tables']['tables']]
+            if bg := current_prior.get('bg128_plan'):
+                start=A.pc(bg['data_snes']);spans.append([start,start+len(bytes.fromhex(bg['payload_hex']))])
             return tuple((source,a,b-1) for a,b in spans)
     paths = [Path(verification_path), Path(rom_path), Path(symbols_path)]
     paths += [folder / name for name in P.GENERATED_FILES]

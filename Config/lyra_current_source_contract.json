@@ -18,7 +18,7 @@
   "ledger": {
     "path": "Config/allocation_ownership.json",
     "sha256": null,
-    "source_set": "lyra_current_stage_receipt_19",
+    "source_set": "lyra_current_bg128_binding_20",
     "engine_ledger_sha256": "6bc162723d33d3589b076cbc7726fc6022d73732f2f5cecf75c9952098d485d6"
   },
   "native_readers": {

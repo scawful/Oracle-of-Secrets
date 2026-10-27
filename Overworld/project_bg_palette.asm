@@ -15,6 +15,7 @@ assert Oracle_ProjectBGPalette_Data>>16 == (Oracle_ProjectBGPalette_DataEnd-1)>>
 namespace Oracle
 pushpc
 org !PROJECT_BG128_CODE_BASE
+ProjectBGPalette_CodeStart = pc()
 
 ; Root source-only reservation: exactly [7ECA00,7ECC02), never SRAM.
 ProjectBGPalette_NativeReference = $7ECA00
@@ -249,6 +250,7 @@ macro ProjectBGPaletteApply(name, both)
 endmacro
 %ProjectBGPaletteApply(ProjectBGPalette_ApplyBuffer, 0)
 %ProjectBGPaletteApply(ProjectBGPalette_ApplyBoth, 1)
+ProjectBGPalette_CodeEnd = pc()
 assert pc() <= !PROJECT_BG128_CODE_END, "Project BG128 code exceeds owned span"
 pullpc
 

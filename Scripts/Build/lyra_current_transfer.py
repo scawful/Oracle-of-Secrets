@@ -859,7 +859,8 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     runtime = policies[0].get('current_runtime')
     R.require(type(runtime) is dict, 'CURRENT_SAVE_RUNTIME_EMISSION_UNADMITTED: no reviewed current runtime policy')
     _keys(runtime, {'kind','scope','runtime_admission','review_file','tail_recipe',
-                    'graphics_source','graphics_assets','compiled_consumers','event_state','origin_preimages'}, 'current runtime policy')
+                    'graphics_source','graphics_assets','compiled_consumers','event_state','origin_preimages'}
+          | ({'bg128'} if 'bg128' in runtime else set()), 'current runtime policy')
     R.require(runtime['kind'] == 'lyra.current_runtime_policy.v1'
               and runtime['scope'] == 'disposable_build_only' and runtime['runtime_admission'] is True,
               'CURRENT_SAVE_RUNTIME_EMISSION_UNADMITTED: runtime selection remains held')
@@ -931,11 +932,9 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     contract = _json(Q.read_bound(profile['contract']))
     report = dict(current_mode=True,parent_count=192,source_contract_sha256=R.sha(P.encoded(contract)),
         generated_sha256=R.sha(graphics.encode()),graphics_origin_snes=profile['origins']['graphics']['snes'])
-    # BG128 restore admission is separate. Never silently discard saved colors.
-    R.require(not any('background_palette' in p for p in document.properties),
-              'CURRENT_RUNTIME_BG128_UNADMITTED: explicit restore/code binding required')
+    bg_plan,bg_binding = current_bg128(source,document,profile,ledger,runtime.get('bg128'))
     files = P.render_current_source_outputs(tables,contract=contract,graphics_source=graphics,
-        graphics_report=report,current_source_profile=profile,actor_storage_plan=actors)
+        graphics_report=report,current_source_profile=profile,actor_storage_plan=actors,bg128_plan=bg_plan)
     endpoint_state = _json(files['prepare.json'])['native_state_contract']
     R.require(not document.flight_points
               and all(r['tile_match_verified'] for r in endpoint_state['requested_doors'])
@@ -950,6 +949,14 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
         + f"!LYRA_CURRENT_EVENT_BASE = ${events['flags']:06X}\n"
         + f"!LYRA_CURRENT_EVENT_VERSION = ${events['version']:06X}\n"
         + f"!LYRA_CURRENT_EVENT_MARKER = ${events['marker']:02X}\n")
+    if bg_binding is not None:
+        constants=constants.replace('!PROJECT_BG128_ENABLED = 0','!PROJECT_BG128_ENABLED = 1')
+        constants=constants.replace('!PROJECT_BG128_RESTORE_BOUND = 0','!PROJECT_BG128_RESTORE_BOUND = 1')
+        old_end=f"!LYRA_CURRENT_CODE_END = ${profile['origins']['code']['snes'][1]:06X}"
+        R.require(constants.count(old_end)==1,'Current native-code end constant differs')
+        constants=constants.replace(old_end,f"!LYRA_CURRENT_CODE_END = ${bg_binding['code_snes'][0]:06X}")
+        constants+=(f"!PROJECT_BG128_CODE_BASE = ${bg_binding['code_snes'][0]:06X}\n"
+                   +f"!PROJECT_BG128_CODE_END = ${bg_binding['code_snes'][1]:06X}\n")
     files['runtime_constants.asm'] = constants.encode()
     data = files['runtime_data.asm'].decode()+'pushpc\n'
     binary = bytearray()
@@ -983,6 +990,8 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
         allocation_granted=True,producer_enforcement_verified=True,runtime_admission=True,
         ordinary_build_ready=True,inputs=bindings,current_source_profile=profile,
         tables=tables,terrain_plan=plan,event_state=events,compiled_consumers=runtime['compiled_consumers'],
+        bg128_binding=bg_binding,bg128_plan=(None if bg_plan is None else
+            dict((key,value) for key,value in dict(bg_plan,payload_hex=bg_plan['payload'].hex()).items() if key!='payload')),
         generated_files={name:R.sha(raw) for name,raw in files.items()},
         save_exit_policy='unchanged_held',native_gameplay_verified=False,save_reopen_verified=False)
     for row in bindings:
@@ -991,6 +1000,42 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     verify_transfer(request_path,project,base_rom)
     files['prepare.json'] = P.encoded(prepared)
     return dict(kind='lyra.current_build_prepare.v1',selected=True,current_files=files,inputs=bindings)
+
+
+def current_bg128(source, document, profile, ledger, binding):
+    """Bind existing BG data/restore code inside the same current allocation."""
+    required=any('background_palette' in row for row in document.properties)
+    R.require(not required or binding is not None,
+              'CURRENT_RUNTIME_BG128_UNADMITTED: saved palettes require explicit restore/code binding')
+    if binding is None:
+        return None,None
+    _keys(binding,{'restore_bound','code_snes'},'current BG128 binding')
+    code=binding['code_snes'];origin=profile['origins']['code']['snes']
+    R.require(binding['restore_bound'] is True and type(code) is list and len(code)==2
+              and all(type(value) is int for value in code)
+              and origin[0]<code[0]<code[1]<=origin[1] and code[0]>>16==(code[1]-1)>>16,
+              'CURRENT_BG128_CODE_UNBOUND: restore code must use a distinct suffix of the current code allocation')
+    owners=[row for row in ledger.get('claims',[]) if row.get('id')=='ProjectBGPaletteNativeUnderlay']
+    R.require(len(owners)==1,'CURRENT_BG128_WRAM_UNBOUND: missing native underlay owner')
+    owner=owners[0]
+    R.require(owner.get('space')=='wram' and owner.get('base')==0x7ECA00
+              and owner.get('size')==514 and owner.get('status')=='shared' and owner.get('aliases')==[]
+              and owner.get('condition')==dict(PROJECT_BG128_ENABLED=1),
+              'CURRENT_BG128_WRAM_UNBOUND: native reference/effective/state owner differs')
+    from allocation_contracts import physical
+    for other in ledger.get('claims',[]):
+        if other is owner or other.get('base') is None or other.get('space') not in ('wram','save_buffer'):
+            continue
+        R.require(type(other.get('size')) is int and other['size']>0,'Ambiguous current BG128 physical owner')
+        space,lo,hi=physical(other)
+        R.require(not (lo<0x7ECC02 and 0x7ECA00<hi),'CURRENT_BG128_WRAM_CONFLICT: '+str(other.get('id')))
+    import lyra_project_bg_palette as bg
+    from types import SimpleNamespace
+    data=profile['origins']['bg_palette'];lo,hi=data['pc']
+    plan=bg.plan_bg128([SimpleNamespace(map_id=0xA0+i,properties=row)
+        for i,row in enumerate(document.properties)],data_snes=data['snes'][0],capacity=hi-lo,
+        preimage=A.expanded_rom(source)[lo:hi])
+    return plan,dict(restore_bound=True,code_snes=list(code))
 
 
 def current_event_state(value, ledger):
@@ -1060,7 +1105,16 @@ def verify_current_output(prepared, compiled, symbols):
     gfx=observed['regions'][1]['snes']
     bounds=prepared['current_source_profile']['origins']['graphics']['snes']
     R.require(gfx[0]==bounds[0] and gfx[0]<gfx[1]<=bounds[1], 'Current graphics exceeds selected origin')
+    bg_plan=prepared.get('bg128_plan');bg_binding=prepared.get('bg128_binding')
+    bg_regions=[row for row in observed['regions'] if row['label']=='ProjectBGPalette_Code']
+    R.require(bool(bg_plan)==bool(bg_binding)==bool(bg_regions),'CURRENT_BG128_COMPILED_BINDING_MISMATCH')
+    if bg_binding:
+        start_bg,end_bg=bg_regions[0]['snes'];lo,hi=bg_binding['code_snes']
+        R.require(end<=lo==start_bg<end_bg<=hi<=origin[1], 'Current native/BG code spans overlap or exceed their allocation')
     writes=[*prepared['terrain_plan']['writes']]
+    if bg_plan:
+        a=A.pc(bg_plan['data_snes']);writes.append(dict(pc=[a,a+len(bytes.fromhex(bg_plan['payload_hex']))],
+                                                     payload_hex=bg_plan['payload_hex']))
     for row in prepared['tables']['tables']:
         writes.append(dict(pc=row['pc'],payload_hex=row['payload_hex']))
     a=prepared['tables']['descriptor_pc'][0]
@@ -1093,5 +1147,7 @@ def verify_current_output(prepared, compiled, symbols):
         current_ledger_sha256=prepared['current_ledger_sha256'],
         compiled_consumers_binding=prepared['compiled_consumers'],native_maps_preserved=160,
         native_planes_preserved=320,source_code_fit_bytes=end-start,data_writes_verified=len(writes),
+        bg128_data_verified=bool(bg_plan),bg128_code_bytes=(0 if not bg_regions else
+            bg_regions[0]['snes'][1]-bg_regions[0]['snes'][0]),
         production_maps=[],production_edge_ids=[],save_exit_policy='unchanged_held',
         native_gameplay_verified=False,save_reopen_verified=False,runtime_verified=False)

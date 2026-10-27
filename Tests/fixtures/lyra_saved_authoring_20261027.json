@@ -1,0 +1,2542 @@
+{
+  "kind": "lyra.saved_authoring_test_snapshot.v1",
+  "source_terrain_sha256": "bdfbdbcb13a514e2d06d20eba41790cbd6b9de4aef9e9d8d547bd33ccdac42ba",
+  "source_rom_sha256": "1a5f1ceb93901f0d51af1e79ecb6358b31aa4d04ac9191a14ab33f41501c1f36",
+  "source_schema_version": 4,
+  "maps": [
+    {
+      "map_id": 160,
+      "authoring": {
+        "asset_bindings": [
+          "a3b7f076ecc5dfdead26dcca721cd07598bf8bc9418305d73f3d42b62f46e859",
+          "8a1b36e52ca38bda1b7edfdf16483564634a75f9b0a08bf658bba0dfd383e7bc",
+          "84dfa432a3cd0bf4f3c0ca76ed713f1b160dceb7e0186c84eb46cdea0eacbafa"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            96,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 161,
+      "authoring": {
+        "asset_bindings": [
+          "a3b7f076ecc5dfdead26dcca721cd07598bf8bc9418305d73f3d42b62f46e859",
+          "8a1b36e52ca38bda1b7edfdf16483564634a75f9b0a08bf658bba0dfd383e7bc",
+          "84dfa432a3cd0bf4f3c0ca76ed713f1b160dceb7e0186c84eb46cdea0eacbafa"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            96,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 162,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 163,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 164,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 165,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 166,
+      "authoring": {
+        "asset_bindings": [
+          "46d81d637f439739ace4c603c9d035d4ca633408066c174a0cd4333d82192c51",
+          "d5d12a8f34eaa2005911dd24f2a73414f9d513c0e5c99e9b3576294aa4d21dbc",
+          "b76fbcf53581fed9802fb25f678205e735d35db5c6ec201af9eaa03a98a63a7f"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "background_palette": [
+            9833,
+            408,
+            22197,
+            0,
+            0,
+            24,
+            32767,
+            0,
+            9833,
+            700,
+            32767,
+            0,
+            0,
+            27081,
+            32767,
+            0,
+            9833,
+            14765,
+            32767,
+            0,
+            21140,
+            10741,
+            6842,
+            0,
+            9833,
+            14336,
+            32767,
+            24,
+            0,
+            5892,
+            32767,
+            0,
+            9833,
+            5285,
+            4327,
+            6442,
+            8589,
+            6598,
+            9833,
+            9679,
+            9833,
+            5317,
+            8558,
+            10739,
+            13943,
+            7405,
+            10578,
+            18135,
+            9833,
+            5285,
+            12581,
+            16808,
+            16909,
+            14897,
+            22226,
+            22298,
+            9833,
+            5285,
+            6476,
+            10739,
+            13943,
+            8613,
+            8680,
+            6501,
+            9833,
+            12581,
+            16808,
+            13706,
+            16909,
+            6598,
+            14897,
+            22226,
+            9833,
+            5285,
+            6476,
+            8657,
+            12885,
+            10756,
+            15076,
+            7554,
+            9833,
+            5285,
+            14858,
+            19183,
+            24502,
+            5477,
+            9833,
+            13706,
+            9833,
+            232,
+            13110,
+            19847,
+            31438,
+            13943,
+            25099,
+            10739,
+            9833,
+            5285,
+            6476,
+            8657,
+            12885,
+            7653,
+            9833,
+            9768,
+            9833,
+            5285,
+            6476,
+            8657,
+            11862,
+            10578,
+            15862,
+            7406,
+            9833,
+            5285,
+            15654,
+            21895,
+            25099,
+            4327,
+            25099,
+            6442,
+            9833,
+            5285,
+            10705,
+            20184,
+            30653,
+            6471,
+            12813,
+            6598
+          ],
+          "graphics_sheets": [
+            105,
+            59,
+            60,
+            108,
+            109,
+            110,
+            150,
+            91
+          ],
+          "main_palette": 5,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 12,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 167,
+      "authoring": {
+        "asset_bindings": [
+          "46d81d637f439739ace4c603c9d035d4ca633408066c174a0cd4333d82192c51",
+          "d5d12a8f34eaa2005911dd24f2a73414f9d513c0e5c99e9b3576294aa4d21dbc",
+          "b76fbcf53581fed9802fb25f678205e735d35db5c6ec201af9eaa03a98a63a7f"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "background_palette": [
+            9833,
+            408,
+            22197,
+            0,
+            0,
+            24,
+            32767,
+            0,
+            9833,
+            700,
+            32767,
+            0,
+            0,
+            27081,
+            32767,
+            0,
+            9833,
+            14765,
+            32767,
+            0,
+            21140,
+            10741,
+            6842,
+            0,
+            9833,
+            14336,
+            32767,
+            24,
+            0,
+            5892,
+            32767,
+            0,
+            9833,
+            5285,
+            4327,
+            6442,
+            8589,
+            6598,
+            9833,
+            9679,
+            9833,
+            5317,
+            8558,
+            10739,
+            13943,
+            7405,
+            10578,
+            18135,
+            9833,
+            5285,
+            12581,
+            16808,
+            16909,
+            14897,
+            22226,
+            22298,
+            9833,
+            5285,
+            6476,
+            10739,
+            13943,
+            8613,
+            8680,
+            6501,
+            9833,
+            12581,
+            16808,
+            13706,
+            16909,
+            6598,
+            14897,
+            22226,
+            9833,
+            5285,
+            6476,
+            8657,
+            12885,
+            10756,
+            15076,
+            7554,
+            9833,
+            5285,
+            14858,
+            19183,
+            24502,
+            5477,
+            9833,
+            13706,
+            9833,
+            232,
+            13110,
+            19847,
+            31438,
+            13943,
+            25099,
+            10739,
+            9833,
+            5285,
+            6476,
+            8657,
+            12885,
+            7653,
+            9833,
+            9768,
+            9833,
+            5285,
+            6476,
+            8657,
+            11862,
+            10578,
+            15862,
+            7406,
+            9833,
+            5285,
+            15654,
+            21895,
+            25099,
+            4327,
+            25099,
+            6442,
+            9833,
+            5285,
+            10705,
+            20184,
+            30653,
+            6471,
+            12813,
+            6598
+          ],
+          "graphics_sheets": [
+            105,
+            59,
+            60,
+            108,
+            109,
+            110,
+            150,
+            91
+          ],
+          "main_palette": 5,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 12,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 168,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 169,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 170,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 171,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 172,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 173,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 174,
+      "authoring": {
+        "asset_bindings": [
+          "46d81d637f439739ace4c603c9d035d4ca633408066c174a0cd4333d82192c51",
+          "d5d12a8f34eaa2005911dd24f2a73414f9d513c0e5c99e9b3576294aa4d21dbc",
+          "b76fbcf53581fed9802fb25f678205e735d35db5c6ec201af9eaa03a98a63a7f"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "background_palette": [
+            9833,
+            408,
+            22197,
+            0,
+            0,
+            24,
+            32767,
+            0,
+            9833,
+            700,
+            32767,
+            0,
+            0,
+            27081,
+            32767,
+            0,
+            9833,
+            14765,
+            32767,
+            0,
+            21140,
+            10741,
+            6842,
+            0,
+            9833,
+            14336,
+            32767,
+            24,
+            0,
+            5892,
+            32767,
+            0,
+            9833,
+            5285,
+            4327,
+            6442,
+            8589,
+            6598,
+            9833,
+            9679,
+            9833,
+            5317,
+            8558,
+            10739,
+            13943,
+            7405,
+            10578,
+            18135,
+            9833,
+            5285,
+            12581,
+            16808,
+            16909,
+            14897,
+            22226,
+            22298,
+            9833,
+            5285,
+            6476,
+            10739,
+            13943,
+            8613,
+            8680,
+            6501,
+            9833,
+            12581,
+            16808,
+            13706,
+            16909,
+            6598,
+            14897,
+            22226,
+            9833,
+            5285,
+            6476,
+            8657,
+            12885,
+            10756,
+            15076,
+            7554,
+            9833,
+            5285,
+            14858,
+            19183,
+            24502,
+            5477,
+            9833,
+            13706,
+            9833,
+            232,
+            13110,
+            19847,
+            31438,
+            13943,
+            25099,
+            10739,
+            9833,
+            5285,
+            6476,
+            8657,
+            12885,
+            7653,
+            9833,
+            9768,
+            9833,
+            5285,
+            6476,
+            8657,
+            11862,
+            10578,
+            15862,
+            7406,
+            9833,
+            5285,
+            15654,
+            21895,
+            25099,
+            4327,
+            25099,
+            6442,
+            9833,
+            5285,
+            10705,
+            20184,
+            30653,
+            6471,
+            12813,
+            6598
+          ],
+          "graphics_sheets": [
+            105,
+            59,
+            60,
+            108,
+            109,
+            110,
+            150,
+            91
+          ],
+          "main_palette": 5,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 12,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 175,
+      "authoring": {
+        "asset_bindings": [
+          "46d81d637f439739ace4c603c9d035d4ca633408066c174a0cd4333d82192c51",
+          "d5d12a8f34eaa2005911dd24f2a73414f9d513c0e5c99e9b3576294aa4d21dbc",
+          "b76fbcf53581fed9802fb25f678205e735d35db5c6ec201af9eaa03a98a63a7f"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "background_palette": [
+            9833,
+            408,
+            22197,
+            0,
+            0,
+            24,
+            32767,
+            0,
+            9833,
+            700,
+            32767,
+            0,
+            0,
+            27081,
+            32767,
+            0,
+            9833,
+            14765,
+            32767,
+            0,
+            21140,
+            10741,
+            6842,
+            0,
+            9833,
+            14336,
+            32767,
+            24,
+            0,
+            5892,
+            32767,
+            0,
+            9833,
+            5285,
+            4327,
+            6442,
+            8589,
+            6598,
+            9833,
+            9679,
+            9833,
+            5317,
+            8558,
+            10739,
+            13943,
+            7405,
+            10578,
+            18135,
+            9833,
+            5285,
+            12581,
+            16808,
+            16909,
+            14897,
+            22226,
+            22298,
+            9833,
+            5285,
+            6476,
+            10739,
+            13943,
+            8613,
+            8680,
+            6501,
+            9833,
+            12581,
+            16808,
+            13706,
+            16909,
+            6598,
+            14897,
+            22226,
+            9833,
+            5285,
+            6476,
+            8657,
+            12885,
+            10756,
+            15076,
+            7554,
+            9833,
+            5285,
+            14858,
+            19183,
+            24502,
+            5477,
+            9833,
+            13706,
+            9833,
+            232,
+            13110,
+            19847,
+            31438,
+            13943,
+            25099,
+            10739,
+            9833,
+            5285,
+            6476,
+            8657,
+            12885,
+            7653,
+            9833,
+            9768,
+            9833,
+            5285,
+            6476,
+            8657,
+            11862,
+            10578,
+            15862,
+            7406,
+            9833,
+            5285,
+            15654,
+            21895,
+            25099,
+            4327,
+            25099,
+            6442,
+            9833,
+            5285,
+            10705,
+            20184,
+            30653,
+            6471,
+            12813,
+            6598
+          ],
+          "graphics_sheets": [
+            105,
+            59,
+            60,
+            108,
+            109,
+            110,
+            150,
+            91
+          ],
+          "main_palette": 5,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 12,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 176,
+      "authoring": {
+        "asset_bindings": [
+          "b5255e8585d2967f0abb06df2df34aeb39ddb87c96ae134b1010504f2295811f",
+          "aaa52a889a45f2218513b175175a6950fb8222ecb01d755358e145d7810ff670",
+          "88ca83a55889b171a86bc790baf53439901a7a66ef4ef9df2e1a73e872532948"
+        ],
+        "doors": [
+          {
+            "entrance_id": 11,
+            "id": 24577,
+            "x": 21,
+            "y": 9
+          }
+        ],
+        "exits": [
+          {
+            "exit_row": null,
+            "id": 24578,
+            "room_id": 131,
+            "x": 22,
+            "y": 11
+          }
+        ],
+        "properties": {
+          "animated_sheet": 91,
+          "background_palette": [
+            9833,
+            408,
+            22197,
+            0,
+            0,
+            24,
+            32767,
+            0,
+            9833,
+            700,
+            32767,
+            0,
+            0,
+            27081,
+            32767,
+            0,
+            9833,
+            14765,
+            32767,
+            0,
+            21140,
+            10741,
+            6842,
+            0,
+            9833,
+            14336,
+            32767,
+            24,
+            0,
+            5892,
+            32767,
+            0,
+            9833,
+            5285,
+            4327,
+            6442,
+            8589,
+            6598,
+            9833,
+            9679,
+            9833,
+            5317,
+            8558,
+            10739,
+            13943,
+            7405,
+            10578,
+            18135,
+            9833,
+            4293,
+            6412,
+            8594,
+            12821,
+            18135,
+            16058,
+            21895,
+            9833,
+            5317,
+            14858,
+            19183,
+            24502,
+            27610,
+            6598,
+            9833,
+            9833,
+            5285,
+            6409,
+            10638,
+            7567,
+            6598,
+            9833,
+            9713,
+            9833,
+            5285,
+            6476,
+            8657,
+            12885,
+            10756,
+            15076,
+            7554,
+            9833,
+            5285,
+            14858,
+            19183,
+            24502,
+            5477,
+            9833,
+            6982,
+            9833,
+            8623,
+            6643,
+            21339,
+            9814,
+            12883,
+            17111,
+            4228,
+            9833,
+            5285,
+            6476,
+            8657,
+            12885,
+            7653,
+            9833,
+            9768,
+            9833,
+            12883,
+            21339,
+            4228,
+            8623,
+            8656,
+            16808,
+            17111,
+            9833,
+            4228,
+            3186,
+            4252,
+            4607,
+            5420,
+            2114,
+            8457,
+            9833,
+            23348,
+            18063,
+            13801,
+            6510,
+            4228,
+            6643,
+            10865
+          ],
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            49,
+            50,
+            150,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 3,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": [
+          {
+            "id": 20481,
+            "sprite_id": 82,
+            "state": 1,
+            "x": 23,
+            "y": 14
+          },
+          {
+            "id": 20482,
+            "sprite_id": 82,
+            "state": 1,
+            "x": 15,
+            "y": 21
+          }
+        ]
+      }
+    },
+    {
+      "map_id": 177,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": [
+          {
+            "id": 20485,
+            "sprite_id": 82,
+            "state": 1,
+            "x": 8,
+            "y": 12
+          }
+        ]
+      }
+    },
+    {
+      "map_id": 178,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 179,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 180,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 181,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 182,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 183,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 184,
+      "authoring": {
+        "asset_bindings": [
+          "b5255e8585d2967f0abb06df2df34aeb39ddb87c96ae134b1010504f2295811f",
+          "aaa52a889a45f2218513b175175a6950fb8222ecb01d755358e145d7810ff670",
+          "88ca83a55889b171a86bc790baf53439901a7a66ef4ef9df2e1a73e872532948"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "background_palette": [
+            9833,
+            408,
+            22197,
+            0,
+            0,
+            24,
+            32767,
+            0,
+            9833,
+            700,
+            32767,
+            0,
+            0,
+            27081,
+            32767,
+            0,
+            9833,
+            14765,
+            32767,
+            0,
+            21140,
+            10741,
+            6842,
+            0,
+            9833,
+            14336,
+            32767,
+            24,
+            0,
+            5892,
+            32767,
+            0,
+            9833,
+            5285,
+            4327,
+            6442,
+            8589,
+            6598,
+            9833,
+            9679,
+            9833,
+            5317,
+            8558,
+            10739,
+            13943,
+            7405,
+            10578,
+            18135,
+            9833,
+            4293,
+            6412,
+            8594,
+            12821,
+            18135,
+            16058,
+            21895,
+            9833,
+            5317,
+            14858,
+            19183,
+            24502,
+            27610,
+            6598,
+            9833,
+            9833,
+            5285,
+            6409,
+            10638,
+            7567,
+            6598,
+            9833,
+            9713,
+            9833,
+            5285,
+            6476,
+            8657,
+            12885,
+            10756,
+            15076,
+            7554,
+            9833,
+            5285,
+            14858,
+            19183,
+            24502,
+            5477,
+            9833,
+            6982,
+            9833,
+            8623,
+            6643,
+            21339,
+            9814,
+            12883,
+            17111,
+            4228,
+            9833,
+            5285,
+            6476,
+            8657,
+            12885,
+            7653,
+            9833,
+            9768,
+            9833,
+            12883,
+            21339,
+            4228,
+            8623,
+            8656,
+            16808,
+            17111,
+            9833,
+            4228,
+            3186,
+            4252,
+            4607,
+            5420,
+            2114,
+            8457,
+            9833,
+            23348,
+            18063,
+            13801,
+            6510,
+            4228,
+            6643,
+            10865
+          ],
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            49,
+            50,
+            150,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 3,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": [
+          {
+            "id": 20483,
+            "sprite_id": 82,
+            "state": 1,
+            "x": 13,
+            "y": 11
+          }
+        ]
+      }
+    },
+    {
+      "map_id": 185,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": [
+          {
+            "id": 20484,
+            "sprite_id": 82,
+            "state": 1,
+            "x": 5,
+            "y": 13
+          }
+        ]
+      }
+    },
+    {
+      "map_id": 186,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 187,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 188,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 189,
+      "authoring": {
+        "asset_bindings": [
+          "2adb6c054ac2c5c199dc9bb582ca69385480a1de407cffb4205c36745716315d",
+          "1ae4f29683a9495fd9e2a6b246d4ad2211b3cf6a22e39d580cd85f1dd19621ff",
+          "5c5a2757ae119128a6f863d168581617d4e0bfec7969fdcc4e8dc0fdfd9d2475"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            61,
+            71,
+            72,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 1,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 190,
+      "authoring": {
+        "asset_bindings": [
+          "1eeacbd02d69acf4c2a5a00bea834ace09b943a5331047af229c52c00b854620",
+          "4058679e24420f54a0b1853881e2f1cb9875f7def1e73e0145bdf6b7f5b6aba1",
+          "cf6f03cc1a84743f8051c37b7e782c30c4e3b07abb2c6ac7215efcef02876f47"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "background_palette": [
+            9833,
+            408,
+            22197,
+            0,
+            0,
+            24,
+            32767,
+            0,
+            9833,
+            700,
+            32767,
+            0,
+            0,
+            27081,
+            32767,
+            0,
+            9833,
+            14765,
+            32767,
+            0,
+            21140,
+            10741,
+            6842,
+            0,
+            9833,
+            14336,
+            32767,
+            24,
+            0,
+            5892,
+            32767,
+            0,
+            9833,
+            5285,
+            4327,
+            6442,
+            8589,
+            6598,
+            9833,
+            9679,
+            9833,
+            5317,
+            8558,
+            10739,
+            13943,
+            7405,
+            10578,
+            18135,
+            9833,
+            4293,
+            6412,
+            8594,
+            12821,
+            18135,
+            16058,
+            21895,
+            9833,
+            5317,
+            14858,
+            19183,
+            24502,
+            27610,
+            6598,
+            9833,
+            9833,
+            5285,
+            6409,
+            10638,
+            7567,
+            6598,
+            9833,
+            9713,
+            9833,
+            5285,
+            6476,
+            8657,
+            12885,
+            10756,
+            15076,
+            7554,
+            9833,
+            5285,
+            14858,
+            19183,
+            24502,
+            5477,
+            9833,
+            6982,
+            9833,
+            21895,
+            21002,
+            27377,
+            30583,
+            31675,
+            31742,
+            23150,
+            9833,
+            5285,
+            6476,
+            8657,
+            12885,
+            7653,
+            9833,
+            9768,
+            9833,
+            5285,
+            6476,
+            8657,
+            11862,
+            10578,
+            15862,
+            7406,
+            9833,
+            5285,
+            15654,
+            21895,
+            25099,
+            4327,
+            25099,
+            6442,
+            9833,
+            5285,
+            10705,
+            20184,
+            30653,
+            6471,
+            12813,
+            6598
+          ],
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            94,
+            95,
+            96,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 29,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    },
+    {
+      "map_id": 191,
+      "authoring": {
+        "asset_bindings": [
+          "1eeacbd02d69acf4c2a5a00bea834ace09b943a5331047af229c52c00b854620",
+          "4058679e24420f54a0b1853881e2f1cb9875f7def1e73e0145bdf6b7f5b6aba1",
+          "cf6f03cc1a84743f8051c37b7e782c30c4e3b07abb2c6ac7215efcef02876f47"
+        ],
+        "doors": [],
+        "exits": [],
+        "properties": {
+          "animated_sheet": 91,
+          "background_palette": [
+            9833,
+            408,
+            22197,
+            0,
+            0,
+            24,
+            32767,
+            0,
+            9833,
+            700,
+            32767,
+            0,
+            0,
+            27081,
+            32767,
+            0,
+            9833,
+            14765,
+            32767,
+            0,
+            21140,
+            10741,
+            6842,
+            0,
+            9833,
+            14336,
+            32767,
+            24,
+            0,
+            5892,
+            32767,
+            0,
+            9833,
+            5285,
+            4327,
+            6442,
+            8589,
+            6598,
+            9833,
+            9679,
+            9833,
+            5317,
+            8558,
+            10739,
+            13943,
+            7405,
+            10578,
+            18135,
+            9833,
+            4293,
+            6412,
+            8594,
+            12821,
+            18135,
+            16058,
+            21895,
+            9833,
+            5317,
+            14858,
+            19183,
+            24502,
+            27610,
+            6598,
+            9833,
+            9833,
+            5285,
+            6409,
+            10638,
+            7567,
+            6598,
+            9833,
+            9713,
+            9833,
+            5285,
+            6476,
+            8657,
+            12885,
+            10756,
+            15076,
+            7554,
+            9833,
+            5285,
+            14858,
+            19183,
+            24502,
+            5477,
+            9833,
+            6982,
+            9833,
+            21895,
+            21002,
+            27377,
+            30583,
+            31675,
+            31742,
+            23150,
+            9833,
+            5285,
+            6476,
+            8657,
+            12885,
+            7653,
+            9833,
+            9768,
+            9833,
+            5285,
+            6476,
+            8657,
+            11862,
+            10578,
+            15862,
+            7406,
+            9833,
+            5285,
+            15654,
+            21895,
+            25099,
+            4327,
+            25099,
+            6442,
+            9833,
+            5285,
+            10705,
+            20184,
+            30653,
+            6471,
+            12813,
+            6598
+          ],
+          "graphics_sheets": [
+            58,
+            59,
+            60,
+            94,
+            95,
+            96,
+            62,
+            91
+          ],
+          "main_palette": 0,
+          "message_id": 0,
+          "music": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "palette_set": 29,
+          "sprite_graphics": [
+            -1,
+            -1,
+            -1
+          ],
+          "sprite_palettes": [
+            -1,
+            -1,
+            -1
+          ]
+        },
+        "sprites": []
+      }
+    }
+  ]
+}

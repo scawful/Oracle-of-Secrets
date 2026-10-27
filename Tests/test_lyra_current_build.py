@@ -12,7 +12,7 @@ import lyra_native_loaders as L
 import lyra_native_state as S
 
 
-def consumer_fixture(source, code):
+def consumer_fixture(source, code, *, bg_code=None):
     rom=bytearray(X.A.expanded_rom(source)); labels={}; serial=0
     def put(at,raw):rom[X.A.pc(at):X.A.pc(at)+len(raw)]=raw
     targets={t for _,t in L.SOURCE_CALLS}|{'Lyra_LoadCurrentSprites','Lyra_FullHigh','Lyra_FullLow',
@@ -38,7 +38,25 @@ def consumer_fixture(source, code):
     for a,t in ((0x02F59D,'Lyra_FullHigh'),(0x02F5C8,'Lyra_FullLow'),(0x02F7E3,'Lyra_SubHigh'),(0x02F80E,'Lyra_SubLow')):hook(a,t,pad=8)
     for a in S.TAIL_LOAD_SITES:hook(a,'Lyra_TailEvent_Load')
     for a,_ in S.TAIL_STORE_SITES:hook(a,'Lyra_TailEvent_Store')
-    hook(0x028192,'LoadCheckpointOrWorld',0x5C);hook(labels['LoadCheckpointOrWorld'],'Lyra_TailEvent_MigrateSave')
+    hook(0x028192,'LoadCheckpointOrWorld',0x5C)
+    if bg_code is not None:
+        bg_names=('Startup','IntroReset','IndoorDeparture','NativeAllBegin','WhirlpoolBegin','WhirlpoolComplete',
+                  'NativeMainBegin','NativeAuxBegin','NativeHudComplete','RestoreAndInvalidate','ResolveColor')
+        labels.update({f'ProjectBGPalette_{name}':bg_code+i*16 for i,name in enumerate(bg_names)})
+        labels.update(ProjectBGPalette_CodeStart=bg_code,ProjectBGPalette_CodeEnd=bg_code+0x400,
+                      LyraHost_LoadDayNightPaletteEffect=0xE7B100,LyraHost_LoadDayNightPaletteEffect_End=0xE7B140)
+        put(bg_code,b'\xea'*0x400);put(0xE7B100,b'\xea'*64)
+        for a,t,op,pad in ((0x008827,'Startup',0x22,0),(0x0CC1A0,'IntroReset',0x5C,0),
+                (0x02C55E,'IndoorDeparture',0x5C,0),(0x02C5B2,'NativeAllBegin',0x5C,0),
+                (0x02B4AE,'WhirlpoolBegin',0x5C,3),(0x02B4D9,'WhirlpoolComplete',0x22,0),
+                (0x1BEEC7,'NativeMainBegin',0x5C,2),(0x0ED5A8,'NativeAuxBegin',0x5C,2),
+                (0x02C617,'NativeHudComplete',0x22,0)):
+            hook(a,'ProjectBGPalette_'+t,op,pad)
+        hook(labels['LoadCheckpointOrWorld'],'ProjectBGPalette_RestoreAndInvalidate')
+        hook(labels['LoadCheckpointOrWorld']+4,'Lyra_TailEvent_MigrateSave')
+        hook(labels['LyraHost_LoadDayNightPaletteEffect'],'ProjectBGPalette_ResolveColor')
+    else:
+        hook(labels['LoadCheckpointOrWorld'],'Lyra_TailEvent_MigrateSave')
     put(0x1BC906,bytes.fromhex('290200'))
     symbols=('[labels]\n'+'\n'.join(f'{a>>16:02X}:{a&65535:04X} {n}' for n,a in labels.items())+'\n').encode()
     return bytes(rom),symbols
@@ -49,9 +67,37 @@ class CurrentBuildTest(unittest.TestCase):
     def setUpClass(cls):
         cls.owner=unittest.TestCase();cls.addClassCleanup(cls.owner.doCleanups)
         areas=[dict(parent_map_id=a,size='small',maps=[a]) for a in range(0xA0,0xC0)]
-        cls.f=ComposerFixture(cls.owner,gameplay_areas=areas);f=cls.f;c=f.contract_fixture;engine=c.fixture;case=c.case
+        bg=getattr(cls,'BG128',False)
+        if bg:
+            import test_lyra_current_transfer as transfer_fixtures
+            from test_lyra_project_admission import observation
+            saved=json.loads((Path(__file__).parent/'fixtures/lyra_saved_authoring_20261027.json').read_bytes())
+            palettes={row['map_id']:row['authoring']['properties']['background_palette'] for row in saved['maps']
+                      if 'background_palette' in row['authoring']['properties']}
+            prepare=transfer_fixtures.CurrentSaveTransferTest.prepare
+            def seed(case,**kwargs):
+                data=json.loads(case.terrain.read_bytes())
+                for row in data['maps']:
+                    if row['map_id'] in palettes:
+                        row['authoring']['properties']['background_palette']=palettes[row['map_id']]
+                        row['authoring']['asset_bindings']=['a'*64]*3
+                case.terrain.write_bytes(X.P.encoded(data));case.inputs['terrain']=X.Q.bound(case.terrain)
+                case.save['artifacts']=case.artifacts(case.inputs);case.receipt.write_bytes(X.P.encoded(case.save))
+                case.proof.clear();case.proof.update(observation(case.rom.read_bytes(),data)[1])
+                case.proof['terrain_sha256']=X.R.sha(case.terrain.read_bytes())
+                return prepare(case,**kwargs)
+            with mock.patch.object(transfer_fixtures.CurrentSaveTransferTest,'prepare',seed):
+                cls.f=ComposerFixture(cls.owner,gameplay_areas=areas)
+        else:
+            cls.f=ComposerFixture(cls.owner,gameplay_areas=areas)
+        f=cls.f;c=f.contract_fixture;engine=c.fixture;case=c.case
         bind_origin(c)
-        cls.compiled,cls.symbols=consumer_fixture(f.source,c.value['origins']['code']['snes'][0])
+        if bg:
+            c.value['origins']['code'].update(pc=[0x304000,0x305800],snes=[0xE0C000,0xE0D800])
+            c.value['origins']['descriptor'].update(pc=[0x305800,0x305840],snes=[0xE0D800,0xE0D840])
+            c.write()
+        cls.compiled,cls.symbols=consumer_fixture(f.source,c.value['origins']['code']['snes'][0],
+                                                 bg_code=0xE0D000 if bg else None)
         cls.expected=L.inspect_current_consumers(cls.compiled,cls.symbols)
         recipe=case.root/'tail-recipe.json';recipe.write_bytes(X.P.encoded({f'{a:02X}':r for a,r in f.rows.items()}))
         graphics=case.root/'current-graphics.asm';graphics.write_text('; Explicit host graphics fixture, not a resource grant.\n')
@@ -62,6 +108,7 @@ class CurrentBuildTest(unittest.TestCase):
             compiled_consumers=X.Q.bound(consumers),event_state=dict(flags=0x7EF4C0,version=0x7EF4E0,marker=0xA1),
             origin_preimages=[dict(pc=row['pc'],sha256=X.R.sha(X.A.expanded_rom(f.source)[slice(*row['pc'])]))
                               for row in c.value['origins'].values()])
+        if bg:runtime['bg128']=dict(restore_bound=True,code_snes=[0xE0D000,0xE0D800])
         lo,hi=engine.proposal['proposed_tile32_id_range'];source=X.A.expanded_rom(f.source)
         spans=[r['pc'] for r in engine.proposal['packed_preimages']]+[list(X.V.STREAM)]
         policy=dict(id='host-fixture-only',kind=X.POLICY_KIND,scope='disposable_build_only',
@@ -72,6 +119,9 @@ class CurrentBuildTest(unittest.TestCase):
         value['current_save_transfer_policies']=[policy]
         value['claims']=[dict(id=n,space='save_buffer',status='shared',base=b,size=z,aliases=[],condition=dict(LYRA_CURRENT_MODE=1,LYRA_CURRENT_EVENTS_ENABLED=1)) for n,b,z in
             (('LyraCurrentTailFlags',0x7EF4C0,32),('LyraCurrentTailVersion',0x7EF4E0,1))]
+        if bg:
+            value['claims'].append(dict(id='ProjectBGPaletteNativeUnderlay',space='wram',base=0x7ECA00,size=514,
+                status='shared',aliases=[],condition=dict(PROJECT_BG128_ENABLED=1)))
         cls.ledger.write_bytes(X.P.encoded(value));engine.commit();engine.head=engine.git('rev-parse','HEAD').strip()
         engine.refresh_proposal_source();c.review=engine.review();cls.review_file.write_bytes(X.P.encoded(c.review))
         c.value.update(engine_head=engine.head,base_head=engine.head)

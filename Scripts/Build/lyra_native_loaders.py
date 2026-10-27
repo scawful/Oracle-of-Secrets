@@ -1507,7 +1507,12 @@ def inspect_current_consumers(compiled, symbols):
     # Symbols outside the Lyra namespace are needed only at these exact roles.
     text = symbols.decode() if isinstance(symbols,bytes) else symbols
     required_external = {r[0] for r in state.TAIL_SOURCE_CALLERS} | {state.TAIL_M8_DEPENDENCY[0],
-        'LoadCheckpointOrWorld','SharedGraphicsRuntimeStart','SharedGraphicsRuntimeEnd'}
+        'LoadCheckpointOrWorld','SharedGraphicsRuntimeStart','SharedGraphicsRuntimeEnd',
+        'ProjectBGPalette_CodeStart','ProjectBGPalette_CodeEnd',
+        'ProjectBGPalette_Startup','ProjectBGPalette_IntroReset','ProjectBGPalette_IndoorDeparture',
+        'ProjectBGPalette_NativeAllBegin','ProjectBGPalette_WhirlpoolBegin','ProjectBGPalette_WhirlpoolComplete',
+        'ProjectBGPalette_NativeMainBegin','ProjectBGPalette_NativeAuxBegin','ProjectBGPalette_NativeHudComplete',
+        'ProjectBGPalette_RestoreAndInvalidate','ProjectBGPalette_ResolveColor'}
     active = False
     for line in text.splitlines():
         if line.startswith('['): active = line == '[labels]'
@@ -1528,6 +1533,12 @@ def inspect_current_consumers(compiled, symbols):
     regions = [window('Lyra_CurrentNativeCode',address('Lyra_CurrentNativeCodeStart'),
                        address('Lyra_CurrentNativeCodeEnd'))]
     regions.append(window('SharedGraphicsRuntime',address('SharedGraphicsRuntimeStart'),address('SharedGraphicsRuntimeEnd')))
+    bg='ProjectBGPalette_CodeStart' in labels
+    R.require(bg==('ProjectBGPalette_CodeEnd' in labels),'Incomplete current BG128 code symbols')
+    if bg:
+        regions.append(window('ProjectBGPalette_Code',address('ProjectBGPalette_CodeStart'),address('ProjectBGPalette_CodeEnd')))
+        regions.append(window('LyraHost_LoadDayNightPaletteEffect',address('LyraHost_LoadDayNightPaletteEffect'),
+                              address('LyraHost_LoadDayNightPaletteEffect_End')))
     for host in SOURCE_HOSTS:
         name = 'LyraHost_'+host
         regions.append(window(name,address(name),address(name+'_End')))
@@ -1550,6 +1561,18 @@ def inspect_current_consumers(compiled, symbols):
     fixed.update({a:12 for a in (0x02F59D,0x02F5C8,0x02F7E3,0x02F80E)})
     fixed.update({a:4 for a in (*state.TAIL_LOAD_SITES,*[r[0] for r in state.TAIL_STORE_SITES])})
     fixed[0x1BC906]=3
+    bg_hooks=((0x008827,'ProjectBGPalette_Startup',0x22,0),
+        (0x0CC1A0,'ProjectBGPalette_IntroReset',0x5C,0),
+        (0x02C55E,'ProjectBGPalette_IndoorDeparture',0x5C,0),
+        (0x02C5B2,'ProjectBGPalette_NativeAllBegin',0x5C,0),
+        (0x02B4AE,'ProjectBGPalette_WhirlpoolBegin',0x5C,3),
+        (0x02B4D9,'ProjectBGPalette_WhirlpoolComplete',0x22,0),
+        (0x1BEEC7,'ProjectBGPalette_NativeMainBegin',0x5C,2),
+        (0x0ED5A8,'ProjectBGPalette_NativeAuxBegin',0x5C,2),
+        (0x02C617,'ProjectBGPalette_NativeHudComplete',0x22,0))
+    if bg:
+        fixed.update({site:4+pad for site,_,_,pad in bg_hooks})
+        fixed[0x1BEEE2]=6 # Original native JSR/SEP/RTL frame remains intact.
     hooks=[dict(snes=a,payload_hex=compiled[A.pc(a):A.pc(a)+n].hex()) for a,n in sorted(fixed.items())]
     def hook(at,target,opcode=0x22,padding=0):
         expected=bytes([opcode])+address(target).to_bytes(3,'little')+b'\xea'*padding
@@ -1559,6 +1582,12 @@ def inspect_current_consumers(compiled, symbols):
     for at in state.TAIL_LOAD_SITES:hook(at,'Lyra_TailEvent_Load')
     for at,_ in state.TAIL_STORE_SITES:hook(at,'Lyra_TailEvent_Store')
     hook(0x028192,'LoadCheckpointOrWorld',0x5C)
-    hook(address('LoadCheckpointOrWorld'),'Lyra_TailEvent_MigrateSave')
+    if bg:
+        for site,target,opcode,pad in bg_hooks:hook(site,target,opcode,pad)
+        hook(address('LoadCheckpointOrWorld'),'ProjectBGPalette_RestoreAndInvalidate')
+        hook(address('LoadCheckpointOrWorld')+4,'Lyra_TailEvent_MigrateSave')
+        hook(address('LyraHost_LoadDayNightPaletteEffect'),'ProjectBGPalette_ResolveColor')
+    else:
+        hook(address('LoadCheckpointOrWorld'),'Lyra_TailEvent_MigrateSave')
     R.require(compiled[A.pc(0x1BC906):A.pc(0x1BC906)+3]==bytes.fromhex('290200'), 'Current M16 event mask differs')
     return dict(kind='lyra.current_compiled_consumers.v1',regions=regions,source_calls=calls,fixed_hooks=hooks)
