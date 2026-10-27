@@ -17,7 +17,7 @@ Options:
   --mesen-sync        Sync MLB symbols into Mesen2 Debug folder
   --no-symbols        Skip symbol emission
   --skip-tests        Skip smoke tests
-  --validate          Run hook + sprite validators (non-fatal)
+  --validate          Require hook + sprite validation to pass
   --annotations       Generate annotations.json (OOS_GENERATE_ANNOTATIONS=1)
   --yaze-restart      Restart yaze service with patched ROM
   --yaze-sync         One-shot yaze<->Mesen2 sync (yaze must be running)
