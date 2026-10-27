@@ -1009,7 +1009,9 @@ def current_event_state(value, ledger):
         row = matches[0]
         R.require(row.get('space') == 'save_buffer' and row.get('status') == 'shared'
                   and row.get('base') == value[key] and row.get('size') == size
-                  and row.get('aliases') == [], 'CURRENT_EVENT_STATE_UNBOUND: ungranted named owner')
+                  and row.get('aliases') == []
+                  and row.get('condition') == dict(LYRA_CURRENT_MODE=1,LYRA_CURRENT_EVENTS_ENABLED=1),
+                  'CURRENT_EVENT_STATE_UNBOUND: ungranted or inactive named owner')
         chosen.append(row)
     for owner in ledger.get('claims',[]):
         if owner in chosen or owner.get('base') is None:

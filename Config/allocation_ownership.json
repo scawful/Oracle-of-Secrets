@@ -22,7 +22,8 @@
     "lyra_current_event_width_14": "Current tail readers with the native M16 hidden-item event-read contract; no allocation or activation",
     "lyra_current_endpoint_bindings_15": "Current saved-area native door/exit binding reports with parent offsets and descending native scanners; no endpoint allocation or activation",
     "lyra_current_build_context_16": "Reviewed-input current composition/build context and exact compiled consumer verifier; registry remains ungranted",
-    "lyra_current_consumer_roles_17": "Current compiled-consumer symbol collection binds required roles, allowing unrelated global/Oracle names; no grant"
+    "lyra_current_consumer_roles_17": "Current compiled-consumer symbol collection binds required roles, allowing unrelated global/Oracle names; no grant",
+    "lyra_current_event_predicate_18": "Current build event storage requires the exact active feature predicate; no canonical allocation or selection"
   },
   "sources": {
     "shared:Sprites/Objects/minecart.asm": {
@@ -3227,6 +3228,206 @@
     },
     "lyra_current_consumer_roles_17:Scripts/Build/lyra_native_state.py": {
       "source_set": "lyra_current_consumer_roles_17",
+      "path": "Scripts/Build/lyra_native_state.py",
+      "sha256": "c7b561bd563f78bf396b073f3b470bf8bfa19190fd23c867719428aebf9a9a7d"
+    },
+    "lyra_current_event_predicate_18:Oracle_main.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Oracle_main.asm",
+      "sha256": "e23172309f10ec6f0a234a304e10c10c1840146ff7e360932bc3abc1faaa4279"
+    },
+    "lyra_current_event_predicate_18:Overworld/ZSCustomOverworld.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/ZSCustomOverworld.asm",
+      "sha256": "d6934c3dac74e49e18dcafbd50ca5b43f66a18af222fc246c7fb692063ef1d86"
+    },
+    "lyra_current_event_predicate_18:Overworld/time_system.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/time_system.asm",
+      "sha256": "7f96493b0f28561af5116086b788b89ee7c3deb87b5c3de293ae2b0311647782"
+    },
+    "lyra_current_event_predicate_18:Overworld/lost_woods.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/lost_woods.asm",
+      "sha256": "3983c065b08d95199d22543cfa6c51a03a2f323aee3841ab8d1a386e8c07640d"
+    },
+    "lyra_current_event_predicate_18:Overworld/goron_checkpoint.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/goron_checkpoint.asm",
+      "sha256": "d1d0bd3aa90d044bb0b5fdad3044175721d705a69f73239fc7a88023608396c8"
+    },
+    "lyra_current_event_predicate_18:Masks/mask_routines.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Masks/mask_routines.asm",
+      "sha256": "7c903a40a70e23ac0fe9de798b2de4da48611c6f8c8fe78d29beed0b39db3900"
+    },
+    "lyra_current_event_predicate_18:Overworld/project_bg_palette.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/project_bg_palette.asm",
+      "sha256": "3f90b20ed7415e99cd15ad1f8c8e083acd0003e0b62ced481bc9092283f6b71b"
+    },
+    "lyra_current_event_predicate_18:Overworld/lyra_native_loaders.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/lyra_native_loaders.asm",
+      "sha256": "52b1efaefc28837c32133c15c4fa8e1c242daf6631e78e80697b97bca88129c2"
+    },
+    "lyra_current_event_predicate_18:Overworld/graphics_runtime.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/graphics_runtime.asm",
+      "sha256": "fdde5049ef1c44530865889c1e6fd99341b422ce643d86b1f2f8f5615f9079f0"
+    },
+    "lyra_current_event_predicate_18:Overworld/graphics_runtime_tables.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/graphics_runtime_tables.asm",
+      "sha256": "3620e68e57e3ff11bcea06a64ccb0e5f382687b3932bc70d13f2d02ebf5af6fd"
+    },
+    "lyra_current_event_predicate_18:Overworld/custom_gfx.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/custom_gfx.asm",
+      "sha256": "b0773e3d436254f215e7d14123dfce6aac62919222c81353f5f59edd0b58b8d7"
+    },
+    "lyra_current_event_predicate_18:Util/macros.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Util/macros.asm",
+      "sha256": "e9f0ef67aa7829232ed37fd5caebcbf4a452763099b0c2b43b7171d97479d165"
+    },
+    "lyra_current_event_predicate_18:Config/feature_flags.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Config/feature_flags.asm",
+      "sha256": "eebe8dad726ebf69937019204b503b52ca1302e46e2d53ef8b1b18cd8928e50f"
+    },
+    "lyra_current_event_predicate_18:Config/module_flags.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Config/module_flags.asm",
+      "sha256": "0dfc5ada77bbf92e30b8f7bf30b034ced9ef3d1dd03591fc1f00a835a747586a"
+    },
+    "lyra_current_event_predicate_18:Scripts/Build/lyra_current_transfer.py": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Scripts/Build/lyra_current_transfer.py",
+      "sha256": "9e0a7d6f9e2ba3f9980561b76499e2c3852e34d57df17943be4706597e077e63"
+    },
+    "lyra_current_event_predicate_18:Scripts/Build/lyra_private_reservation.py": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Scripts/Build/lyra_private_reservation.py",
+      "sha256": "8dca1dc74d2735bcd3c4ef3bd9cb909e70d26ddfb45b7df65518154e4fa0a9bf"
+    },
+    "lyra_current_event_predicate_18:Scripts/Build/lyra_native_loaders.py": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Scripts/Build/lyra_native_loaders.py",
+      "sha256": "6732a27ad2bb4a97f75eca173fa55c399e9684b6a62e90c2a807e7ab924324c4"
+    },
+    "lyra_current_event_predicate_18:Scripts/Build/lyra_project_publisher.py": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Scripts/Build/lyra_project_publisher.py",
+      "sha256": "355c005119abfff5f0617da688ee840e6b6add448f796b739a8461ac6564b9d0"
+    },
+    "lyra_current_event_predicate_18:Scripts/Build/lyra_project_bg_palette.py": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Scripts/Build/lyra_project_bg_palette.py",
+      "sha256": "848c8277409e8775c7f3b8da44f5f2a43c3ecc091dd11fd2a0c30c15a6b87da7"
+    },
+    "lyra_current_event_predicate_18:Scripts/Graphics/compile_runtime_graphics.py": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Scripts/Graphics/compile_runtime_graphics.py",
+      "sha256": "a3363c98d34c35b183e62105f7674a0416fc4899852e86077558a263c7f12b89"
+    },
+    "lyra_current_event_predicate_18:Scripts/Graphics/compile_graphics_pack.py": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Scripts/Graphics/compile_graphics_pack.py",
+      "sha256": "eaa492e3c84818f0e5aff12866d394f78aa8b8be218c061b3a18e2efe31644c2"
+    },
+    "lyra_current_event_predicate_18:Scripts/Generate/asm_source.py": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Scripts/Generate/asm_source.py",
+      "sha256": "e14cd807490ed9e2ef145b4d73333a4fcce254259658249b512b0cfb952a6ca2"
+    },
+    "lyra_current_event_predicate_18:Overworld/graphics_catalog.json": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/graphics_catalog.json",
+      "sha256": "382b29598b36cd375cc667657679a056ed1668db0c33a12665299bea4efc2c28"
+    },
+    "lyra_current_event_predicate_18:Overworld/graphics_runtime_policy.json": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/graphics_runtime_policy.json",
+      "sha256": "6f103ded82e23d0b00d54b8126560f7ead0c8117c5dee4bc326931f226d3460d"
+    },
+    "lyra_current_event_predicate_18:Scripts/Build/build_rom.sh": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Scripts/Build/build_rom.sh",
+      "sha256": "2b4ec45d43e2c9aa3c96fd4ad59e7c7e1416514c378a99ebbed416152e3ad97c"
+    },
+    "lyra_current_event_predicate_18:Scripts/Build/check_zscream_overlap.py": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Scripts/Build/check_zscream_overlap.py",
+      "sha256": "a07dfbd05f1fde30401033ea6e18f1eb9c30470314f64d64c33f4829fbaad80c"
+    },
+    "lyra_current_event_predicate_18:Scripts/Generate/generate_hack_manifest.py": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Scripts/Generate/generate_hack_manifest.py",
+      "sha256": "eed5138006a03e7ad4065d20c728fe0ca2b568fa4770da611445102e19f95674"
+    },
+    "lyra_current_event_predicate_18:Overworld/gfx/kalyxo_docks_slot3.bin": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/gfx/kalyxo_docks_slot3.bin",
+      "sha256": "3fd640ea5f71e4301983dc4944b355f6d8582ea14797605688e5adaf37ffc3b4"
+    },
+    "lyra_current_event_predicate_18:Overworld/gfx/kalyxo_docks_bg.bin": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/gfx/kalyxo_docks_bg.bin",
+      "sha256": "7ee45cc2f6e5f42d741794779fd6b79f9a5775f3fddea03a8a53d2038a9806c0"
+    },
+    "lyra_current_event_predicate_18:Overworld/gfx/lyra_sky_tower_87.bin": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/gfx/lyra_sky_tower_87.bin",
+      "sha256": "b7db5e904ca0ad98f9c5268846efb2da0668a2e160a40a554c99747e65d659a8"
+    },
+    "lyra_current_event_predicate_18:Overworld/gfx/lyra_stepped_fort_83.bin": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/gfx/lyra_stepped_fort_83.bin",
+      "sha256": "cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447"
+    },
+    "lyra_current_event_predicate_18:Scripts/Build/lyra_project_terrain.py": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Scripts/Build/lyra_project_terrain.py",
+      "sha256": "8ebdecc0820dce7fdf7ef996fb06db54151be20bd35667c3600f757eb46d2bd8"
+    },
+    "lyra_current_event_predicate_18:Scripts/Build/lyra_project_admission.py": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Scripts/Build/lyra_project_admission.py",
+      "sha256": "b8d9479ffef423841eda6814fc1b7b9c726a00c36d7b947c010f6fb867fa242d"
+    },
+    "lyra_current_event_predicate_18:Overworld/lyra_tail_events.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/lyra_tail_events.asm",
+      "sha256": "5fef9f7c278cec10d81907cad82c56cc40da89e493e34f573793df5cb7650ffc"
+    },
+    "lyra_current_event_predicate_18:Overworld/overlays.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/overlays.asm",
+      "sha256": "04212e55015ebe734711028e563408d67a72bdec495366660e5ace92cafa93a4"
+    },
+    "lyra_current_event_predicate_18:Sprites/Bosses/octoboss.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Sprites/Bosses/octoboss.asm",
+      "sha256": "b5379cdc5f3dadbcfc42f0d1bab3044b97e6780aa75ab07496f16d6689054b77"
+    },
+    "lyra_current_event_predicate_18:Sprites/NPCs/goron.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Sprites/NPCs/goron.asm",
+      "sha256": "bd26f33b770d9e3593bb0b5bca3374742d869e9ef18b319212a575104ef9baa2"
+    },
+    "lyra_current_event_predicate_18:Util/item_cheat.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Util/item_cheat.asm",
+      "sha256": "5263de5233da3cf02df08e67aa80b130ba313384024be55b16c02f64ef49594d"
+    },
+    "lyra_current_event_predicate_18:Overworld/lyra_actor_stream.asm": {
+      "source_set": "lyra_current_event_predicate_18",
+      "path": "Overworld/lyra_actor_stream.asm",
+      "sha256": "519874611d87a1657ebd4538b57897335a69112f94a6098e936373db0a4d7f26"
+    },
+    "lyra_current_event_predicate_18:Scripts/Build/lyra_native_state.py": {
+      "source_set": "lyra_current_event_predicate_18",
       "path": "Scripts/Build/lyra_native_state.py",
       "sha256": "c7b561bd563f78bf396b073f3b470bf8bfa19190fd23c867719428aebf9a9a7d"
     }

@@ -70,7 +70,7 @@ class CurrentBuildTest(unittest.TestCase):
             spare_tile32_ids=[13993,13994,13995],current_runtime=runtime)
         cls.ledger=c.fixture.root/'Config/allocation_ownership.json';value=json.loads(cls.ledger.read_bytes())
         value['current_save_transfer_policies']=[policy]
-        value['claims']=[dict(id=n,space='save_buffer',status='shared',base=b,size=z,aliases=[]) for n,b,z in
+        value['claims']=[dict(id=n,space='save_buffer',status='shared',base=b,size=z,aliases=[],condition=dict(LYRA_CURRENT_MODE=1,LYRA_CURRENT_EVENTS_ENABLED=1)) for n,b,z in
             (('LyraCurrentTailFlags',0x7EF4C0,32),('LyraCurrentTailVersion',0x7EF4E0,1))]
         cls.ledger.write_bytes(X.P.encoded(value));engine.commit();engine.head=engine.git('rev-parse','HEAD').strip()
         engine.refresh_proposal_source();c.review=engine.review();cls.review_file.write_bytes(X.P.encoded(c.review))
@@ -123,10 +123,11 @@ class CurrentBuildTest(unittest.TestCase):
 
     def test_missing_ungranted_conflicting_event_claims_refuse(self):
         value=self.prepared['event_state'];ledger=json.loads(self.ledger.read_bytes())
-        for change in ('missing','proposed','overlap'):
+        for change in ('missing','proposed','predicate','overlap'):
             bad=copy.deepcopy(ledger)
             if change=='missing':bad['claims']=[]
             elif change=='proposed':bad['claims'][0]['status']='proposed'
+            elif change=='predicate':bad['claims'][0]['condition']={'LYRA_CURRENT_EVENTS_ENABLED':0}
             else:bad['claims'].append(dict(id='foreign',space='save_buffer',status='shared',base=0x7EF4C0,size=1))
             with self.assertRaisesRegex(ValueError,'CURRENT_EVENT_STATE_'):X.current_event_state(value,bad)
 
