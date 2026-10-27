@@ -19,7 +19,8 @@ class CurrentTailEventsTest(unittest.TestCase):
         self.assertNotIn('LYRA_CURRENT_EVENT_BASE', defines)
         self.assertNotIn(ROOT/'Overworld/lyra_tail_events.asm', H.collect_reachable_asm_sources(ROOT))
         source = (ROOT/'Oracle_main.asm').read_text()
-        self.assertIn('!LYRA_CURRENT_MODE == 1 && !LYRA_CURRENT_EVENTS_BOUND == 1', source)
+        self.assertIn('!LYRA_CURRENT_EVENTS_ENABLED == 0 || !LYRA_CURRENT_MODE == 1', source)
+        self.assertIn('!LYRA_CURRENT_EVENTS_ENABLED == 0 || !LYRA_CURRENT_EVENTS_BOUND == 1', source)
 
     def test_fixed_native_hooks_keep_complete_preimages_and_m8_contract(self):
         source = (ROOT/'Overworld/lyra_tail_events.asm').read_text()
