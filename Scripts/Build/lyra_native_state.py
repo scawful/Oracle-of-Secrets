@@ -24,6 +24,7 @@ ENTRANCE_COUNT = 129  # FindEntrance: LDX #$0102, then DEX twice before reading.
 EXIT_COUNT = 79       # LoadOverworldFromUnderworld: LDX #$9E, predecrement twice.
 ENTRANCE_SCREENS, ENTRANCE_TILES, ENTRANCE_IDS = 0x1BB96F, 0x1BBA71, 0x1BBB73
 EXIT_ROOMS, EXIT_MAPS = 0x02DD8A, 0x02DE28
+EXIT_PLAYER_Y, EXIT_PLAYER_X = 0x02E051, 0x02E0EF
 ENTRANCE_ROOM_VARIANTS = (
     ("vanilla", "ad0e0129ff000aaa0a0aa8bd13c885a08d8e04", 0x02C813, 133),
     ("zs_expanded", "ad0e0129ff000a2208f00fbd008085a08d8e04", 0x0F8000, 256),
@@ -344,7 +345,8 @@ def room_return(source, room, map_id, exit_row):
                 allocation_granted=False, save_reopen_supported=False)
 
 
-def _plan_native_state(source, map_ids, *, authoring=(), symbols=None, ownership=None):
+def _plan_native_state(source, map_ids, *, authoring=(), symbols=None, ownership=None,
+                       gameplay_areas=()):
     """Bind existing consumers and expose the unchosen tail-state interfaces.
 
     `map_ids` includes selected traversal endpoints, never render-only maps.
@@ -356,6 +358,11 @@ def _plan_native_state(source, map_ids, *, authoring=(), symbols=None, ownership
              and all(type(area) is int and 0 <= area < 192 for area in map_ids)
              and len(map_ids) == len(set(map_ids)),
              "Invalid native state map selection")
+    from lyra_project_terrain import validated_gameplay_areas, gameplay_area_footprint
+    areas = (() if type(gameplay_areas) is tuple and not gameplay_areas
+             else validated_gameplay_areas(gameplay_areas))
+    parents = {member: row['parent_map_id'] for row in areas
+               for member in gameplay_area_footprint(row['parent_map_id'], row['size'])}
     events = [legacy_event_row(area) for area in sorted(map_ids)]
     dispatch = _event_contract(source, symbols, ownership)
     tail_implemented = dispatch["verified"] and dispatch["variant"] == "tail_dispatch_v1"
@@ -380,7 +387,8 @@ def _plan_native_state(source, map_ids, *, authoring=(), symbols=None, ownership
         bindings.append(dict(id=name, label=label, snes=address, bytes=len(expected),
                              expected_hex=expected_hex, observed_sha256=_sha(observed),
                              verified=observed == expected))
-    bindings.append(_entrance_scanner(source))
+    entrance_scanner = _entrance_scanner(source)
+    bindings.append(entrance_scanner)
     decoder = _read(source, 0x02D998, 19)
     room_decoder = None
     for name, expected, address, count in ENTRANCE_ROOM_VARIANTS:
@@ -400,7 +408,9 @@ def _plan_native_state(source, map_ids, *, authoring=(), symbols=None, ownership
                   ("entrance_tiles", ENTRANCE_TILES, ENTRANCE_COUNT, 2),
                   ("entrance_ids", ENTRANCE_IDS, ENTRANCE_COUNT, 1),
                   ("exit_rooms", EXIT_ROOMS, EXIT_COUNT, 2),
-                  ("exit_maps", EXIT_MAPS, EXIT_COUNT, 1))]
+                  ("exit_maps", EXIT_MAPS, EXIT_COUNT, 1),
+                  ("exit_player_x", EXIT_PLAYER_X, EXIT_COUNT, 2),
+                  ("exit_player_y", EXIT_PLAYER_Y, EXIT_COUNT, 2))]
     if room_decoder:
         tables.append(dict(id="entrance_rooms", snes=room_decoder["table_snes"],
             rows=room_decoder["index_capacity"], stride=2,
@@ -413,24 +423,52 @@ def _plan_native_state(source, map_ids, *, authoring=(), symbols=None, ownership
         seen.add(area)
         for entry in metadata["exits"]:
             result = room_return(source, entry["room_id"], area, entry["exit_row"])
+            # Exit destinations store global pixel coordinates, while the Lyra
+            # placement is a physical page's local Tile16 cell. No camera,
+            # door animation or cached-return values are invented here.
+            consumed = result['consumed_row']
+            position = None
+            if consumed is not None:
+                row = consumed['row']
+                position = dict(x=int.from_bytes(_read(source, EXIT_PLAYER_X+row*2, 2), 'little'),
+                                y=int.from_bytes(_read(source, EXIT_PLAYER_Y+row*2, 2), 'little'))
+            expected = dict(x=(area & 7)*512+entry['x']*16,
+                            y=((area & 0x3F) >> 3)*512+entry['y']*16)
+            result.update(saved_player_position=position, expected_player_cell=expected,
+                position_match_verified=bool(result['requested_row_consumed'] and position is not None
+                    and all(position[key]//16 == expected[key]//16 for key in ('x','y'))))
             returns.append(dict(map_id=area, placement_id=entry["id"], **result))
         for entry in metadata["doors"]:
             matches, other_maps = [], []
+            parent = parents.get(area)
+            tile = (2*(entry['x']+(area-parent)%8*32
+                    +64*(entry['y']+(area-parent)//8*32)) if parent is not None else None)
+            scanned = []
             for row in range(ENTRANCE_COUNT):
                 screen = int.from_bytes(_read(source, ENTRANCE_SCREENS + row * 2, 2), "little")
                 entrance = _read(source, ENTRANCE_IDS + row, 1)[0]
+                at = int.from_bytes(_read(source, ENTRANCE_TILES+row*2, 2), 'little')
+                if parent is not None and screen == parent and at == tile:
+                    scanned.append(dict(row=row, map_id=screen, tile_index=at, entrance_id=entrance))
                 if entrance == entry["entrance_id"]:
                     record = dict(row=row, map_id=screen, tile_index=int.from_bytes(
                         _read(source, ENTRANCE_TILES + row * 2, 2), "little"))
-                    (matches if screen == area else other_maps).append(record)
+                    (matches if screen == (parent if parent is not None else area) else other_maps).append(record)
             entrance = entry["entrance_id"]
             room = (int.from_bytes(_read(source, room_decoder["table_snes"] + entrance * 2, 2), "little")
                     if room_decoder and entrance is not None
                     and 0 <= entrance < room_decoder["index_capacity"] else None)
+            # FindEntrance descends by tile+parent BEFORE reading the entrance
+            # ID. A higher duplicate with another ID shadows a lower match.
+            winner = scanned[-1] if scanned else None
             doors.append(dict(map_id=area, placement_id=entry["id"],
                 entrance_id=entrance, resolved_room_id=room, matching_rows=matches,
                 same_entrance_other_maps=other_maps,
-                tile_match_verified=False, allocation_granted=False))
+                parent_map_id=parent, expected_tile_index=tile,
+                scanner_matches=scanned, consumed_row=winner,
+                tile_match_verified=bool(parent is not None and room is not None
+                    and entrance_scanner['verified'] and winner is not None
+                    and winner['entrance_id'] == entrance), allocation_granted=False))
     tail = [row["map_id"] for row in events if row["map_id"] >= 0xA0]
     blockers = ([dict(code="NATIVE_STATE_CONSUMER_MISMATCH", consumers=failures)] if failures else [])
     if tail:
@@ -461,11 +499,13 @@ def _plan_native_state(source, map_ids, *, authoring=(), symbols=None, ownership
         native_acceptance_scenario="LYRA_STATE_SAVE_RETURN_01")
 
 
-def plan_native_state(source, map_ids, *, authoring=(), symbols=None, ownership=None):
+def plan_native_state(source, map_ids, *, authoring=(), symbols=None, ownership=None,
+                      gameplay_areas=()):
     """Plan only a supported full input shape; never expand or pad a ROM."""
     _require(type(source) in (bytes, bytearray) and len(source) in (0x200000, 0x400000),
              "Expected an unheadered2MiB or4MiB native ROM")
-    return _plan_native_state(source, map_ids, authoring=authoring, symbols=symbols, ownership=ownership)
+    return _plan_native_state(source, map_ids, authoring=authoring, symbols=symbols, ownership=ownership,
+                              gameplay_areas=gameplay_areas)
 
 
 def inspect_compiled_dispatch(source, map_ids, *, symbols, ownership, authoring=()):

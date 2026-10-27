@@ -392,7 +392,10 @@ def compile_native_plan(source, document, granted, directory, *, native_copy_map
         producer_enforcement_verified=False, proposed_in_memory_sha256=R.sha(candidate))
     if current_source_profile is not None:
         result.update(current_source_profile_sha256=T.digest(current_source_profile),
-                      source_origins=current_source_profile['origins'])
+                      source_origins=current_source_profile['origins'],
+                      native_state_contract=A.plan_native_state(original_source, FULL_MAPS,
+                          authoring=[(area,document.authoring[area-A.FIRST_MAP]) for area in FULL_MAPS],
+                          gameplay_areas=document.gameplay_areas))
         if document.gameplay_areas:
             result.update(gameplay_area_plan=A.gameplay_area_plan(document),
                 gameplay_transition_rows=A.gameplay_transition_rows(original_source, document),

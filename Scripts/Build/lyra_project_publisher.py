@@ -412,6 +412,10 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
                   'CURRENT_COMPOSER_PROPERTIES_MISMATCH: native selectors differ from saved properties')
     actor_stream_plan = native.plan_current_actor_streams(
         source, document, current_source_profile=profile)
+    native_state_plan = A.plan_native_state(source, list(range(native.CURRENT_FIRST,native.CURRENT_END)),
+        authoring=[(area,document.authoring[area-native.CURRENT_FIRST])
+                   for area in range(native.CURRENT_FIRST,native.CURRENT_END)],
+        gameplay_areas=document.gameplay_areas)
     if actor_storage_plan is not None:
         actor_origin = origins.get('actors')
         R.require(type(actor_origin) is dict,
@@ -491,6 +495,7 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
         source_contract_sha256=R.sha(encoded(contract)), source_domain=table_plan['source_domain'],
         actor_stream_plan=actor_stream_plan,
         actor_storage_plan=actor_storage_plan,
+        native_state_contract=native_state_plan,
         saved_property_rows_sha256=current.T.digest(property_rows),
         gameplay_area_plan=gameplay_area_plan,
         generated_files={name:R.sha(raw) for name,raw in files.items()}, remaining_consumers=remaining,

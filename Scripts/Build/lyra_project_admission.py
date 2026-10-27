@@ -669,7 +669,7 @@ def plan_admission(source, terrain_text, proof, allocation_value=None, *, candid
         if any(row != quadrant_map_plan(area) for area, row in directory.items()):
             qualification.append("ISOLATED_FOOTPRINT_NATIVE_QUALIFICATION_REQUIRED")
     events = sorted(set(admitted) | {a for e in selected_edges for a in (e["map_a"], e["map_b"])})
-    state = plan_native_state(source, events, authoring=[
+    state = plan_native_state(source, events, gameplay_areas=document.gameplay_areas, authoring=[
         (area, document.authoring[area - FIRST_MAP]) for area in admitted],
         symbols=state_symbols, ownership=state_ownership)
     return dict(kind="lyra.project_admission_plan.v1", status="candidate_unqualified" if admitted else "no_admission",

@@ -107,6 +107,11 @@ class CurrentComposerBindingTest(unittest.TestCase):
         self.assertEqual(prepared['generation'], self.f.profile['review']['generation'])
         self.assertEqual(prepared['operation_id'], self.f.profile['review']['operation_id'])
         self.assertEqual(prepared['source_contract_sha256'], P.R.sha(P.encoded(self.f.contract)))
+        state = prepared['native_state_contract']
+        self.assertEqual(state['source_rom_sha256'], prepared['source_rom_sha256'])
+        self.assertEqual(state['requested_doors'], [])
+        self.assertEqual(state['requested_returns'], [])
+        self.assertFalse(state['runtime_ready'])
         self.assertIn(b'Oracle_ProjectBGPalette_Data:', files['runtime_data.asm'])
         for key in ('selected', 'allocation_granted', 'producer_enforcement_verified',
                     'publication_authorized', 'ordinary_build_ready', 'runtime_admission', 'rom_written'):

@@ -118,6 +118,86 @@ def tail_fixture():
     return source, symbols, dict(claims=claims, allocation_available=False)
 
 
+class AuthoredEndpointBindingTest(unittest.TestCase):
+    def plan(self, source, area, *, door=None, exit=None, areas=None):
+        shape = dict(parent_map_id=0xA1, size='large', maps=[0xA1,0xA2,0xA9,0xAA])
+        metadata = dict(doors=[] if door is None else [door], exits=[] if exit is None else [exit])
+        return S.plan_native_state(source, [area], authoring=[(area,metadata)],
+                                   gameplay_areas=(shape,) if areas is None else areas)
+
+    def door_source(self, area=0xAA, x=5, y=6):
+        source = fixture()
+        tile = 2*(x+(area-0xA1)%8*32+64*(y+(area-0xA1)//8*32))
+        put(source,S.ENTRANCE_SCREENS+53*2,(0xA1).to_bytes(2,'little'))
+        put(source,S.ENTRANCE_TILES+53*2,tile.to_bytes(2,'little'))
+        return source,dict(id=1,x=x,y=y,entrance_id=0x0B),tile
+
+    def test_every_large_member_resolves_door_tile_and_parent_before_entrance_id(self):
+        for area in (0xA1,0xA2,0xA9,0xAA):
+            source,door,tile = self.door_source(area)
+            row = self.plan(source,area,door=door)['requested_doors'][0]
+            self.assertEqual((row['parent_map_id'],row['expected_tile_index']),(0xA1,tile))
+            self.assertEqual(row['consumed_row']['row'],53)
+            self.assertTrue(row['tile_match_verified'])
+            self.assertFalse(row['allocation_granted'])
+
+    def test_higher_duplicate_with_another_id_shadows_an_existing_correct_entrance(self):
+        source,door,tile = self.door_source()
+        put(source,S.ENTRANCE_SCREENS+128*2,(0xA1).to_bytes(2,'little'))
+        put(source,S.ENTRANCE_TILES+128*2,tile.to_bytes(2,'little'))
+        put(source,S.ENTRANCE_IDS+128,b'\x0c')
+        row = self.plan(source,0xAA,door=door)['requested_doors'][0]
+        self.assertEqual(row['matching_rows'][0]['row'],53)
+        self.assertEqual(row['consumed_row']['row'],128)
+        self.assertFalse(row['tile_match_verified'])
+
+    def test_wrong_tile_unassigned_shape_and_drifted_scanner_do_not_admit_door(self):
+        source,door,tile = self.door_source()
+        door['x'] += 1
+        self.assertFalse(self.plan(source,0xAA,door=door)['requested_doors'][0]['tile_match_verified'])
+        source,door,_ = self.door_source()
+        row = self.plan(source,0xAA,door=door,areas=())['requested_doors'][0]
+        self.assertIsNone(row['parent_map_id'])
+        self.assertIsNone(row['expected_tile_index'])
+        self.assertFalse(row['tile_match_verified'])
+        source[pc(0x1BBBF4)] ^= 1
+        self.assertFalse(self.plan(source,0xAA,door=door)['requested_doors'][0]['tile_match_verified'])
+
+    def test_physical_exit_cell_matches_global_pixel_destination_without_rewriting_camera(self):
+        source=fixture(); area=0xAA; entry=dict(id=2,x=5,y=6,room_id=0x83,exit_row=41)
+        put(source,S.EXIT_MAPS+41,bytes([area]))
+        x=(area&7)*512+5*16; y=((area&0x3F)>>3)*512+6*16
+        put(source,S.EXIT_PLAYER_X+41*2,(x+7).to_bytes(2,'little'))
+        put(source,S.EXIT_PLAYER_Y+41*2,(y+15).to_bytes(2,'little'))
+        row=self.plan(source,area,exit=entry)['requested_returns'][0]
+        self.assertTrue(row['requested_row_consumed'])
+        self.assertTrue(row['position_match_verified'])
+        self.assertEqual(row['expected_player_cell'],dict(x=x,y=y))
+        self.assertFalse(row['save_reopen_supported'])
+        put(source,S.EXIT_PLAYER_X+41*2,(x+16).to_bytes(2,'little'))
+        self.assertFalse(self.plan(source,area,exit=entry)['requested_returns'][0]['position_match_verified'])
+
+    def test_higher_exit_duplicate_and_cached_room_do_not_invent_an_authored_destination(self):
+        source=fixture();entry=dict(id=2,x=0,y=0,room_id=0x83,exit_row=41)
+        put(source,S.EXIT_ROOMS+78*2,(0x83).to_bytes(2,'little'))
+        put(source,S.EXIT_MAPS+78,b'\xa0')
+        row=self.plan(source,0xAA,exit=entry)['requested_returns'][0]
+        self.assertFalse(row['requested_row_consumed'])
+        self.assertFalse(row['position_match_verified'])
+        entry['room_id']=0x100
+        row=self.plan(source,0xAA,exit=entry)['requested_returns'][0]
+        self.assertEqual(row['path'],'cached_entrance')
+        self.assertIsNone(row['saved_player_position'])
+        self.assertFalse(row['position_match_verified'])
+
+    def test_malformed_explicit_shape_is_not_treated_as_unassigned(self):
+        source,door,_=self.door_source()
+        for bad in (None,False,{},''):
+            with self.subTest(value=bad),self.assertRaises(ValueError):
+                S.plan_native_state(source,[0xAA],authoring=[(0xAA,dict(doors=[door],exits=[]))],
+                                    gameplay_areas=bad)
+
+
 class LyraNativeStateTest(unittest.TestCase):
     def test_legacy_ids_keep_exact_address_including_99(self):
         rows = [S.legacy_event_row(area) for area in range(160)]

@@ -59,6 +59,8 @@ class GameplayRuntimeTest(unittest.TestCase):
             current_source_profile=self.f.profile)
         self.assertEqual(len(payload), 32*518)
         self.assertEqual((plan['native_maps_preserved'], plan['native_planes_preserved']), (160, 320))
+        self.assertEqual(plan['native_state_contract']['source_rom_sha256'], X.R.sha(self.f.source))
+        self.assertFalse(plan['native_state_contract']['runtime_ready'])
         self.assertEqual(plan['render_directory'], [dict(map_id=m, quadrant_maps=list(directory[m]))
                                                    for m in X.V.FULL_MAPS])
         self.assertFalse(plan['runtime_admission'])
