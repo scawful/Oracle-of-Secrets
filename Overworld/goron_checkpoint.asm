@@ -55,6 +55,8 @@ LoadCheckpointOrWorld:
     RTL
 }
 
+LyraHost_LoadCheckpointOrWorld_End = pc()
+
 ; Native cached-exit image, consumed by $02E5D4. Public-side floor east of
 ; the Goron on large area36; keep the ordinary room98 exit unchanged.
 ; Scroll = position -120/-80; triggers = position +7/+31. Bounds come from

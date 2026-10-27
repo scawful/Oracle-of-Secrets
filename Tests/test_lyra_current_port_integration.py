@@ -67,7 +67,7 @@ class CurrentPortIntegrationTest(unittest.TestCase):
         ledger = json.loads((ROOT/'Config/allocation_ownership.json').read_bytes())
         contract = json.loads((ROOT/'Config/lyra_current_source_contract.json').read_bytes())
         source_set = contract['ledger']['source_set']
-        self.assertEqual(source_set, 'lyra_current_endpoint_bindings_15')
+        self.assertEqual(source_set, 'lyra_current_build_context_16')
         records = [r for r in ledger['sources'].values() if r['source_set']==source_set]
         self.assertEqual(len(records), 40)
         for row in records:

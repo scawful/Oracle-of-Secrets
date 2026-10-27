@@ -9,6 +9,7 @@ if !LYRA_CURRENT_MODE == 1
   assert defined("LYRA_CURRENT_GFX_ORIGIN")
   assert defined("LYRA_CURRENT_GFX_END")
   org !LYRA_CURRENT_GFX_ORIGIN
+  SharedGraphicsRuntimeStart = pc()
   incsrc "Data/Generated/lyra_project/graphics_runtime_tables.asm"
 else
 org $5B8000
@@ -224,6 +225,7 @@ endif
   RTL
 }
 if !LYRA_CURRENT_MODE == 1
+  SharedGraphicsRuntimeEnd = pc()
   assert pc() <= !LYRA_CURRENT_GFX_END
 else
   assert pc() <= $5C0000

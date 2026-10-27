@@ -581,8 +581,8 @@ class CurrentSaveTransferTest(unittest.TestCase):
         report, request = self.prepare()
         ledger, policy, proof = self.grant_fixture(request)
         plan, payload = X.plan_transfer(request, self.project, self.rom, ledger_path=ledger, current_source_profile=self.current_profile)
-        self.assertFalse(plan['current_source_allocation_verified'])
-        self.assertFalse(plan['producer_enforcement_verified'])
+        self.assertTrue(plan['current_source_allocation_verified'])
+        self.assertTrue(plan['producer_enforcement_verified'])
         self.assertEqual(plan['retirement'], 'next_native_save')
         self.assertEqual(len(plan['streams']), 64)
         self.assertEqual(len(payload), 32 * 518)
@@ -669,7 +669,7 @@ class CurrentSaveTransferTest(unittest.TestCase):
         report, request = self.prepare()
         ledger, policy, proof = self.grant_fixture(request)
         with mock.patch.object(X.P, 'render_outputs') as render:
-            with self.assertRaisesRegex(ValueError, 'CURRENT_SOURCE_PROFILE_REQUIRED'):
+            with self.assertRaisesRegex(ValueError, 'CURRENT_SAVE_RUNTIME_EMISSION_UNADMITTED'):
                 X.P.prepare(self.root / 'generated', project=self.project, base_rom=self.rom,
                             request=request, ledger_path=ledger)
         render.assert_not_called()

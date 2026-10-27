@@ -14,6 +14,8 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import subprocess
+import sys
 from types import SimpleNamespace
 
 import lyra_project_admission as A
@@ -284,6 +286,8 @@ def verify_data(saved, compiled, writes, definitions, emitted, native_target, a1
 
 
 def render_outputs(plan):
+    if plan.get("kind") == "lyra.current_build_prepare.v1":
+        return plan["current_files"]
     constants = ['; Generated from the current build invocation; not a feature flag.',
         f'!LYRA_PROJECT_DATA_PRESENT = {int(plan["selected"])}',
         f'!LYRA_NATIVE_A1_ENABLED = {int(plan["selected"])}', '!LYRA_A1_ID = $A1',
@@ -531,11 +535,15 @@ def write_outputs(folder, files, *, protected=()):
                 temporary.unlink(missing_ok=True)
 
 
-def prepare(folder, *, project=None, base_rom=None, request=None, ledger_path=None):
+def prepare(folder, *, project=None, base_rom=None, request=None, ledger_path=None, candidate=None):
     R.require(bool(project) or not request, 'A request requires a selected Lyra project')
     plan = (make_plan(project, base_rom, request, ledger_path=ledger_path) if project
             else dict(kind='lyra.ordinary_build_prepare.v1', selected=False, production_maps=[], production_edge_ids=[]))
     files = render_outputs(plan)
+    if plan.get('kind') == 'lyra.current_build_prepare.v1':
+        target=json.loads(files['prepare.json'])['terrain_plan']['target']['path']
+        R.require(candidate is not None and Path(candidate).resolve() == Path(target),
+                  'CURRENT_BUILD_TARGET_MISMATCH: build output must match immutable transfer target')
     write_outputs(folder, files, protected=[row['path'] for row in plan.get('inputs', [])])
     return json.loads(files['prepare.json'])
 
@@ -553,6 +561,17 @@ def require_verified_native_receipt(result, compiled_sha256):
 
 
 def verify(folder, rom, symbols, *, receipt):
+    prior=json.loads((Path(folder)/'prepare.json').read_bytes())
+    if prior.get('kind') == 'lyra.current_build_prepare.v1':
+        from lyra_current_transfer import candidate_inspection
+        R.require(Path(rom).resolve() == Path(prior['terrain_plan']['target']['path']),
+                  'CURRENT_BUILD_TARGET_MISMATCH')
+        with candidate_inspection(rom):
+            return _verify(folder,rom,symbols,receipt=receipt)
+    return _verify(folder,rom,symbols,receipt=receipt)
+
+
+def _verify(folder, rom, symbols, *, receipt):
     folder, rom, symbols, receipt = map(Path, (folder, rom, symbols, receipt))
     R.require(receipt.parent.resolve() == rom.parent.resolve(),
               'Verification receipt must be beside the assembled ROM')
@@ -562,6 +581,16 @@ def verify(folder, rom, symbols, *, receipt):
     files = render_outputs(plan)
     R.require(all((folder / name).read_bytes() == raw for name, raw in files.items()),
               'Prepared context changed after generation')
+    if prior.get('kind') == 'lyra.current_build_prepare.v1':
+        from lyra_current_transfer import verify_current_output
+        result = verify_current_output(prior,rom.read_bytes(),symbols.read_bytes())
+        result.update(prepared_sha256=R.sha(files['prepare.json']))
+        R.require(R.sha(rom.read_bytes()) == result['compiled_rom_sha256']
+                  and R.sha(symbols.read_bytes()) == result['symbols_sha256'],
+                  'Current assembled ROM/symbols changed during verification')
+        write_outputs(receipt.parent,{receipt.name:encoded(result)},
+            protected=[rom,symbols,*[folder/name for name in files],*[r['path'] for r in prior['inputs']]])
+        return result
     saved, compiled = Path(plan['base_rom']).read_bytes(), rom.read_bytes()
     native = importlib.import_module('lyra_native_loaders')  # Missing strict verifier is a hard refusal.
     descriptor = compiled[DESCRIPTOR_PC:DESCRIPTOR_PC + 64]
@@ -590,6 +619,38 @@ def verify(folder, rom, symbols, *, receipt):
     return result
 
 
+def stage_current_candidate(folder, candidate):
+    """Create only the exact new owned target, retaining the saved source bytes."""
+    from lyra_current_transfer import verify_current_context
+    prior=json.loads((Path(folder)/'prepare.json').read_bytes())
+    R.require(prior.get('kind') == 'lyra.current_build_prepare.v1'
+              and Path(candidate).absolute() == Path(prior['terrain_plan']['target']['path'])
+              and not Path(candidate).exists(),'CURRENT_BUILD_TARGET_MISMATCH')
+    verify_current_context(ROOT,prior)
+    source=Path(prior['base_rom']).read_bytes()
+    R.require(R.sha(source) == prior['saved_rom_sha256'],'Current staged source changed')
+    with Path(candidate).open('xb') as handle:
+        handle.write(A.expanded_rom(source))
+    return dict(kind='lyra.current_candidate_staged.v1',selected=True)
+
+
+def check_water_source(kind, rom):
+    """Compare regenerated instructions without rewriting bound source comments."""
+    names={'fill':('generate_water_fill_table.py','water_fill_table.asm'),
+           'gate':('generate_water_gate_runtime_tables.py','water_gate_runtime_tables.asm')}
+    script,name=names[kind];tracked=ROOT/'Dungeons/generated'/name;before=tracked.read_bytes()
+    with tempfile.TemporaryDirectory(prefix='lyra-water-check-') as folder:
+        output=Path(folder)/name
+        subprocess.run([sys.executable,str(ROOT/'Scripts/Generate'/script),'--rom',str(rom),
+                        '--out-asm',str(output)],check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        statements=lambda raw:[line.split(';',1)[0].strip() for line in raw.decode().splitlines()
+                               if line.split(';',1)[0].strip()]
+        R.require(statements(before) == statements(output.read_bytes()),
+                  'CURRENT_WATER_SOURCE_STALE: regenerate and review changed source before selecting a build')
+    R.require(tracked.read_bytes() == before,'Current water source changed while checking')
+    return dict(kind='lyra.current_water_source_check.v1',selected=False)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='command', required=True)
@@ -598,7 +659,14 @@ def main():
     p.add_argument('--request', type=Path)
     p.add_argument('--base-rom', type=Path)
     p.add_argument('--ledger', type=Path)
+    p.add_argument('--candidate', type=Path)
     p.add_argument('--output', type=Path, default=ROOT / OUTPUT)
+    stage = sub.add_parser('stage')
+    stage.add_argument('--input',type=Path,default=ROOT/OUTPUT)
+    stage.add_argument('--rom',type=Path,required=True)
+    water = sub.add_parser('check-water')
+    water.add_argument('--kind',choices=('fill','gate'),required=True)
+    water.add_argument('--rom',type=Path,required=True)
     v = sub.add_parser('verify')
     v.add_argument('--input', type=Path, default=ROOT / OUTPUT)
     v.add_argument('--rom', type=Path, required=True)
@@ -610,7 +678,11 @@ def main():
     args = parser.parse_args()
     if args.command == 'prepare':
         result = prepare(args.output, project=args.project, base_rom=args.base_rom,
-                         request=args.request, ledger_path=args.ledger)
+                         request=args.request, ledger_path=args.ledger, candidate=args.candidate)
+    elif args.command == 'stage':
+        result=stage_current_candidate(args.input,args.rom)
+    elif args.command == 'check-water':
+        result=check_water_source(args.kind,args.rom)
     elif args.command == 'verify':
         result = verify(args.input, args.rom, args.symbols, receipt=args.receipt)
     else:

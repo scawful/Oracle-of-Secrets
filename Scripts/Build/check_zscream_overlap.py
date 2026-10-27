@@ -135,6 +135,22 @@ def lyra_owned_regions(verification_path: Path, rom_path: Path, symbols_path: Pa
     import lyra_project_publisher as P
 
     folder = Path(input_path) if input_path is not None else REPO_ROOT / P.OUTPUT
+    current_prior = json.loads((folder / 'prepare.json').read_bytes())
+    if current_prior.get('kind') == 'lyra.current_build_prepare.v1':
+        import lyra_current_transfer as current
+        R.require(Path(rom_path).resolve() == Path(current_prior['terrain_plan']['target']['path']),
+                  'CURRENT_BUILD_TARGET_MISMATCH')
+        with current.candidate_inspection(rom_path):
+            files = current.verify_current_context(P.ROOT,current_prior)
+            compiled,symbols = Path(rom_path).read_bytes(),Path(symbols_path).read_bytes()
+            proof = json.loads(Path(verification_path).read_bytes())
+            actual = current.verify_current_output(current_prior,compiled,symbols)
+            actual['prepared_sha256'] = R.sha(files['prepare.json'])
+            R.require(proof == actual,'Current Lyra ownership receipt differs from actual consumers')
+            source = normalize_source_path(str((folder / 'runtime_data.asm').resolve()))
+            spans = [row['pc'] for row in current_prior['terrain_plan']['writes']]
+            spans += [row['pc'] for row in current_prior['tables']['tables']]
+            return tuple((source,a,b-1) for a,b in spans)
     paths = [Path(verification_path), Path(rom_path), Path(symbols_path)]
     paths += [folder / name for name in P.GENERATED_FILES]
     snapshot = {path: path.read_bytes() for path in paths}

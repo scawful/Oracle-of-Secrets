@@ -1498,3 +1498,65 @@ def emit_current_actor_data(plan):
     lines += ['  db '+', '.join(f'${v:02X}' for v in payload[i:i+16]) for i in range(0,len(payload),16)]
     lines += [f"assert pc() <= ${plan['data_snes']+plan['capacity']:06X}", 'pullpc']
     return '\n'.join(lines)+'\n'
+
+
+def inspect_current_consumers(compiled, symbols):
+    """Exact inspection for independent review; not a self-issued approval."""
+    import lyra_native_state as state
+    labels = _labels(symbols)
+    # Symbols outside the Lyra namespace are needed only at these exact roles.
+    text = symbols.decode() if isinstance(symbols,bytes) else symbols
+    active = False
+    for line in text.splitlines():
+        if line.startswith('['): active = line == '[labels]'
+        match = re.fullmatch(r'([0-9A-Fa-f]{2}):([0-9A-Fa-f]{4})\s+(?:Oracle_)?(\w+)',line)
+        if active and match:
+            name = match[3]
+            value = int(match[1]+match[2],16)
+            R.require(name not in labels or labels[name] == value,'Conflicting current consumer symbol')
+            labels[name] = value
+    def address(name):
+        R.require(name in labels,'Missing current consumer symbol: '+name)
+        return labels[name]
+    def window(name,start,end):
+        a,b=A.pc(start),A.pc(end-1)+1
+        R.require(start>>16 == (end-1)>>16 and 0 <= a < b <= len(compiled),
+                  'Invalid current consumer span: '+name)
+        return dict(label=name,snes=[start,end],payload_hex=compiled[a:b].hex())
+    regions = [window('Lyra_CurrentNativeCode',address('Lyra_CurrentNativeCodeStart'),
+                       address('Lyra_CurrentNativeCodeEnd'))]
+    regions.append(window('SharedGraphicsRuntime',address('SharedGraphicsRuntimeStart'),address('SharedGraphicsRuntimeEnd')))
+    for host in SOURCE_HOSTS:
+        name = 'LyraHost_'+host
+        regions.append(window(name,address(name),address(name+'_End')))
+    for name,size,_,_ in state.TAIL_SOURCE_CALLERS:
+        regions.append(window(name,address(name),address(name)+size))
+    name,size_hex = state.TAIL_M8_DEPENDENCY[0],state.TAIL_M8_DEPENDENCY[2]
+    regions.append(window(name,address(name),address(name)+len(bytes.fromhex(size_hex))))
+    regions.append(window('LoadCheckpointOrWorld',address('LoadCheckpointOrWorld'),
+                          address('LyraHost_LoadCheckpointOrWorld_End')))
+    calls=[]
+    for name,target in [r for r in SOURCE_CALLS if r[0]!='LyraCall_SpritePointer']+[('LyraCall_CurrentActors','Lyra_LoadCurrentSprites')]:
+        at=address(name);opcode=0x5C if name=='LyraCall_CurrentActors' else 0x22
+        R.require(address('Lyra_CurrentNativeCodeStart') <= address(target) < address('Lyra_CurrentNativeCodeEnd'),
+                  'Current selector points outside its code interval')
+        expected=bytes([opcode])+address(target).to_bytes(3,'little')
+        R.require(compiled[A.pc(at):A.pc(at)+4]==expected,'Current compiled selector target differs: '+name)
+        calls.append(dict(label=name,snes=at,target=target,payload_hex=expected.hex()))
+    fixed={a:8 for a in FIXED_NATIVE_INGRESS}
+    fixed.update({a:4 for a in (*FIXED_SIZE_SITES,*FIXED_SPRITE_PALETTE_SITES,0x1BC8B8,0x02C4BC,0x028192)})
+    fixed.update({a:12 for a in (0x02F59D,0x02F5C8,0x02F7E3,0x02F80E)})
+    fixed.update({a:4 for a in (*state.TAIL_LOAD_SITES,*[r[0] for r in state.TAIL_STORE_SITES])})
+    fixed[0x1BC906]=3
+    hooks=[dict(snes=a,payload_hex=compiled[A.pc(a):A.pc(a)+n].hex()) for a,n in sorted(fixed.items())]
+    def hook(at,target,opcode=0x22,padding=0):
+        expected=bytes([opcode])+address(target).to_bytes(3,'little')+b'\xea'*padding
+        R.require(compiled[A.pc(at):A.pc(at)+len(expected)]==expected,'Current active hook differs: '+hex(at))
+    for at,target in ((0x02F59D,'Lyra_FullHigh'),(0x02F5C8,'Lyra_FullLow'),
+                      (0x02F7E3,'Lyra_SubHigh'),(0x02F80E,'Lyra_SubLow')):hook(at,target,padding=8)
+    for at in state.TAIL_LOAD_SITES:hook(at,'Lyra_TailEvent_Load')
+    for at,_ in state.TAIL_STORE_SITES:hook(at,'Lyra_TailEvent_Store')
+    hook(0x028192,'LoadCheckpointOrWorld',0x5C)
+    hook(address('LoadCheckpointOrWorld'),'Lyra_TailEvent_MigrateSave')
+    R.require(compiled[A.pc(0x1BC906):A.pc(0x1BC906)+3]==bytes.fromhex('290200'), 'Current M16 event mask differs')
+    return dict(kind='lyra.current_compiled_consumers.v1',regions=regions,source_calls=calls,fixed_hooks=hooks)

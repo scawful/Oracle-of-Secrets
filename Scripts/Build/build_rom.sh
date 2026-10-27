@@ -216,7 +216,7 @@ snapshot_build_outputs
 
 # Only this invocation can select generated Lyra inputs. An unselected build
 # emits disabled context and does not pass the internal assembler define.
-lyra_args=()
+lyra_args=(--candidate "$patched_rom")
 lyra_assembler_args=()
 if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
   if [[ "$emit_symbols" != "1" ]]; then
@@ -269,7 +269,11 @@ if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" ]]; then
         --out-asm "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
     )
   }
-  run_check water_tables 1 generate_water_gate_tables
+  if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
+    run_check water_tables 1 python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" check-water --kind gate --rom "$water_table_rom"
+  else
+    run_check water_tables 1 generate_water_gate_tables
+  fi
 else
   omit_check water_tables skipped 0 "OOS_SKIP_WATER_TABLE_GEN=1; tracked generated input retained"
 fi
@@ -284,7 +288,11 @@ if [[ "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
         --out-asm "$repo_root/Dungeons/generated/water_fill_table.asm"
     )
   }
-  run_check water_fill 1 generate_water_fill_tables
+  if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
+    run_check water_fill 1 python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" check-water --kind fill --rom "$water_table_rom"
+  else
+    run_check water_fill 1 generate_water_fill_tables
+  fi
 else
   omit_check water_fill skipped 0 "OOS_SKIP_WATER_FILL_TABLE_GEN=1; tracked generated input retained"
 fi
@@ -402,7 +410,15 @@ receipt tool --name assembler --path "$(command -v "$asar_bin")"
 receipt tool --name python --path "$(command -v python3)"
 
 current_stage="prepare_output"
-cp -f "$base_rom" "$patched_rom"
+if [[ -n "${OOS_LYRA_PROJECT:-}" ]] && python3 - "$repo_root/Data/Generated/lyra_project/prepare.json" <<'PY_CURRENT'
+import json,sys
+sys.exit(0 if json.load(open(sys.argv[1])).get('kind') == 'lyra.current_build_prepare.v1' else 1)
+PY_CURRENT
+then
+  run_check lyra_stage 1 python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" stage --rom "$patched_rom"
+else
+  cp -f "$base_rom" "$patched_rom"
+fi
 
 # Stamp Config/version.json into the in-game version line (message $C7) before
 # assembly. z3asm records the final output ROM hash in hooks.json, so post-build

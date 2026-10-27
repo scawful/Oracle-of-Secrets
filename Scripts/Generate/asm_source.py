@@ -99,6 +99,14 @@ def _load_global_defines(root: Path) -> dict[str, int]:
                     or prepared.get('producer_enforcement_verified') is not True
                     or prepared.get('runtime_admission') is not True):
                 raise ValueError('Current full32 context requires reviewed allocation, producer and runtime admission')
+            import sys
+            build = str(root / 'Scripts/Build')
+            sys.path.insert(0,build)
+            try:
+                from lyra_current_transfer import verify_current_context
+                verify_current_context(root,prepared)
+            finally:
+                sys.path.remove(build)
         elif defines['LYRA_NATIVE_A1_ENABLED'] != 1 or prepared.get('kind') != 'lyra.ordinary_build_prepare.v1':
             raise ValueError('Historical Lyra context requires its original A1 preparation')
     return defines

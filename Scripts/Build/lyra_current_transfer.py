@@ -7,6 +7,8 @@ native compiler only with a separately reviewed current-source allocation.
 from __future__ import annotations
 
 import configparser
+import contextlib
+import contextvars
 import json
 import os
 from pathlib import Path
@@ -300,6 +302,28 @@ def prepare_transfer(project, z3ed, output, candidate, *, policy_id=None):
         runtime_admission=False, ordinary_build_ready=False, rom_written=False)
 
 
+_CANDIDATE_INSPECTION = contextvars.ContextVar('lyra_candidate_inspection',default=None)
+
+
+@contextlib.contextmanager
+def candidate_inspection(rom):
+    """Internal read-only scope; an existing candidate must retain exact bytes."""
+    binding=Q.bound(rom)
+    token=_CANDIDATE_INSPECTION.set(binding)
+    try:
+        yield binding
+        Q.read_bound(binding)
+    finally:
+        _CANDIDATE_INSPECTION.reset(token)
+
+
+def _new_or_inspected_target(path):
+    if not Path(path).exists():
+        return True
+    binding=_CANDIDATE_INSPECTION.get()
+    return binding is not None and binding == Q.bound(path)
+
+
 def verify_transfer(request_path, project, base_rom):
     """Reconstruct readers and compare the live generation before/after use."""
     binding = Q.bound(request_path)
@@ -335,7 +359,7 @@ def verify_transfer(request_path, project, base_rom):
     _keys(target, {'path', 'size', 'role', 'native_serializer_after_compile'}, 'current transfer target')
     R.require(type(target['size']) is int and target['size'] == 0x400000 and target['role'] == 'compiled_candidate'
               and target['native_serializer_after_compile'] == 'forbidden'
-              and not Path(target['path']).exists()
+              and _new_or_inspected_target(target['path'])
               and not any(p.is_symlink() for p in (Path(target['path']), *Path(target['path']).parents))
               and Path(target['path']).is_absolute()
               and Path(os.path.abspath(target['path'])) == Path(target['path'])
@@ -373,8 +397,18 @@ def _engine_source_context(root, engine_head):
     finally:
         sys.path.remove(str(generate))
     def discover():
-        defines = manifest._load_global_defines(root)
-        sources = set(manifest.collect_reachable_asm_sources(root, defines=defines))
+        # Source provenance always binds the normal root plus the separate
+        # current source pin set, not generated selected outputs or recursion.
+        prior_context = os.environ.get('OOS_LYRA_BUILD_CONTEXT')
+        try:
+            os.environ['OOS_LYRA_BUILD_CONTEXT'] = '0'
+            defines = manifest._load_global_defines(root)
+            sources = set(manifest.collect_reachable_asm_sources(root, defines=defines))
+        finally:
+            if prior_context is None:
+                os.environ.pop('OOS_LYRA_BUILD_CONTEXT',None)
+            else:
+                os.environ['OOS_LYRA_BUILD_CONTEXT'] = prior_context
         assets = set()
         for path in sorted(sources):
             for line in path.read_text(encoding='utf-8-sig').splitlines():
@@ -734,7 +768,8 @@ def plan_transfer(request_path, project, base_rom, *, ledger_path=None, current_
               'CURRENT_SAVE_ALLOCATION_UNGRANTED: no reviewed policy matches this transfer')
     policy = selected[0]
     _keys(policy, {'id', 'kind', 'scope', 'producer_identity_sha256', 'tile32_id_range',
-                   'stream_ranges', 'preimages', 'spare_tile32_ids'}, 'current allocation policy')
+                   'stream_ranges', 'preimages', 'spare_tile32_ids'}
+          | ({'current_runtime'} if 'current_runtime' in policy else set()), 'current allocation policy')
     R.require(policy['kind'] == POLICY_KIND and policy['scope'] == 'disposable_build_only'
               and policy['producer_identity_sha256'] == request['live']['producer']['sha256'],
               'Current allocation policy does not bind the selected producer')
@@ -803,8 +838,8 @@ def plan_transfer(request_path, project, base_rom, *, ledger_path=None, current_
     Q.read_bound(proof_binding)
     plan.update(transfer_id=request['transfer_id'], generation=request['live']['generation'],
         operation_id=request['live']['operation_id'], save_context=request['live']['save_context'],
-        current_source_allocation_verified=current_source_profile is None,
-        producer_enforcement_verified=current_source_profile is None,
+        current_source_allocation_verified=True,
+        producer_enforcement_verified=True,
         policy_sha256=T.digest(policy), enforcement_receipt=proof_binding,
         target=request['target'], retirement='next_native_save',
         writer_order=proof['writer_order'])
@@ -812,7 +847,249 @@ def plan_transfer(request_path, project, base_rom, *, ledger_path=None, current_
 
 
 def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
-    plan, payload = plan_transfer(request_path, project, base_rom, ledger_path=ledger_path)
-    raise ValueError('CURRENT_SAVE_RUNTIME_EMISSION_UNADMITTED: verified current-save transfer '
-                     + plan['transfer_id'] + '; full32 reader/emission and appearance/actor/palette '
-                     'admission are required before Build. No A1 fallback or ROM write occurred.')
+    """Select only a source-owned reviewed runtime policy; no A1 fallback."""
+    request, source, document = verify_transfer(request_path, project, base_rom)
+    ledger_path = Path(R.LEDGER).resolve(strict=True) if ledger_path is None else Path(ledger_path).resolve(strict=True)
+    R.require(ledger_path == Path(R.LEDGER).resolve(strict=True), 'CURRENT_SAVE_POLICY_AUTHORITY_MISMATCH')
+    ledger_binding = Q.bound(ledger_path)
+    ledger = _json(Q.read_bound(ledger_binding))
+    policies = [p for p in ledger.get('current_save_transfer_policies', [])
+                if p.get('id') == request['allocation_policy_id']]
+    R.require(len(policies) == 1, 'CURRENT_SAVE_ALLOCATION_UNGRANTED')
+    runtime = policies[0].get('current_runtime')
+    R.require(type(runtime) is dict, 'CURRENT_SAVE_RUNTIME_EMISSION_UNADMITTED: no reviewed current runtime policy')
+    _keys(runtime, {'kind','scope','runtime_admission','review_file','tail_recipe',
+                    'graphics_source','graphics_assets','compiled_consumers','event_state','origin_preimages'}, 'current runtime policy')
+    R.require(runtime['kind'] == 'lyra.current_runtime_policy.v1'
+              and runtime['scope'] == 'disposable_build_only' and runtime['runtime_admission'] is True,
+              'CURRENT_SAVE_RUNTIME_EMISSION_UNADMITTED: runtime selection remains held')
+    # Review is reconstructed from facts, not authority. A path instead of a
+    # digest avoids policy -> review -> ledger -> policy hash self-reference.
+    review_path = Path(runtime['review_file']).resolve(strict=True)
+    review_binding = Q.bound(review_path)
+    review = _json(Q.read_bound(review_binding))
+    R.require(type(review) is dict and review.get('kind') == REVIEW_KIND, 'CURRENT_RUNTIME_REVIEW_REQUIRED')
+    profile = current_native_source_profile(review, project, base_rom)
+    plan, payload = plan_transfer(request_path, project, base_rom, ledger_path=ledger_path,
+                                  current_source_profile=profile)
+    import lyra_native_loaders as native
+    origin_spans = [row['pc'] for row in profile['origins'].values()]
+    R.require(type(runtime['origin_preimages']) is list
+              and sorted(row['pc'] for row in runtime['origin_preimages']) == sorted(origin_spans),
+              'CURRENT_RUNTIME_ORIGIN_PREIMAGES_REQUIRED: every selected interval must be bound')
+    expanded_source = A.expanded_rom(source)
+    for row in runtime['origin_preimages']:
+        R.require(R.sha(expanded_source[slice(*row['pc'])]) == row['sha256'],
+                  'CURRENT_RUNTIME_ORIGIN_PREIMAGE_MISMATCH')
+    write_spans = [row['pc'] for row in plan['writes']]
+    R.require(all(b<=c or a>=d for a,b in origin_spans for c,d in write_spans),
+              'CURRENT_RUNTIME_ORIGIN_OVERLAP: runtime and terrain allocations overlap')
+    other_origins=[dict(id=other['id'],space='pc_rom',base=row['pc'][0],size=row['pc'][1]-row['pc'][0])
+                   for other in ledger.get('current_save_transfer_policies',[]) if other is not policies[0]
+                   for row in other.get('current_runtime',{}).get('origin_preimages',[])]
+    V.require_no_named_conflicts(dict(ledger,claims=[*ledger.get('claims',[]),*other_origins]),
+        tile32_range=policies[0]['tile32_id_range'],stream_ranges=origin_spans+policies[0]['stream_ranges'])
+    rows = _json(Q.read_bound(runtime['tail_recipe']))
+    R.require(type(rows) is dict and set(rows) == {f'{a:02X}' for a in V.FULL_MAPS},
+              'CURRENT_RUNTIME_RECIPE_INCOMPLETE: all32 explicit native rows required')
+    rows = {int(key,16):dict(value) for key,value in rows.items()}
+    areas = A.gameplay_area_plan(document)
+    R.require(areas['complete'], 'CURRENT_GAMEPLAY_AREAS_UNASSIGNED: selected build needs all32 explicit pages')
+    for area, values in native.current_property_rows(document, source=source).items():
+        rows[area].update(values)
+    for area, values in A.gameplay_transition_rows(source,document).items():
+        rows[area].update(values)
+    actors = native.plan_current_actor_storage(source,document,current_source_profile=profile,
+        data_snes=profile['origins']['actors']['snes'][0],
+        capacity=profile['origins']['actors']['pc'][1]-profile['origins']['actors']['pc'][0],
+        preimage=A.expanded_rom(source)[slice(*profile['origins']['actors']['pc'])])
+    for area, values in actors['phase_rows'].items():
+        rows[area].update(values)
+    for stream in plan['streams']:
+        rows[stream['map_id']]['map32_'+('high','low')[stream['plane']]] = A.snes(stream['pc'][0])
+    tables = native.plan_current_tables(source,rows,
+        origins=dict(table_base=profile['origins']['tables']['snes'][0],
+            code_base=profile['origins']['code']['snes'][0],code_end=profile['origins']['code']['snes'][1],
+            descriptor_base=profile['origins']['descriptor']['snes'][0]),
+        policy=dict(source_rom_sha256=R.sha(source),source_profile_sha256=T.digest(profile),
+                    allocation_granted=False,publication_authorized=False))
+    graphics = Q.read_bound(runtime['graphics_source']).decode('utf-8')
+    R.require(type(runtime['graphics_assets']) is list,'CURRENT_GRAPHICS_ASSETS_UNBOUND')
+    assets={row['path']:row for row in runtime['graphics_assets']}
+    R.require(len(assets)==len(runtime['graphics_assets']),'Duplicate current graphics asset binding')
+    referenced=set()
+    for line in graphics.splitlines():
+        line=line.split(';',1)[0]
+        R.require(not re.search(r'\bincsrc\b',line,re.I),'Current graphics cannot include unbound source')
+        if re.search(r'\bincbin\b',line,re.I):
+            match=re.fullmatch(r'\s*incbin\s+"([^"!]+)"\s*',line,re.I)
+            R.require(match is not None,'Unsupported current graphics binary directive')
+            name=Path(match[1]);name=(name if name.is_absolute() else P.ROOT/P.OUTPUT/name).resolve(strict=True)
+            R.require(str(name) in assets,'CURRENT_GRAPHICS_ASSETS_UNBOUND: '+str(name))
+            Q.read_bound(assets[str(name)]);referenced.add(str(name))
+    R.require(referenced==set(assets),'Unused or missing current graphics asset binding')
+    contract = _json(Q.read_bound(profile['contract']))
+    report = dict(current_mode=True,parent_count=192,source_contract_sha256=R.sha(P.encoded(contract)),
+        generated_sha256=R.sha(graphics.encode()),graphics_origin_snes=profile['origins']['graphics']['snes'])
+    # BG128 restore admission is separate. Never silently discard saved colors.
+    R.require(not any('background_palette' in p for p in document.properties),
+              'CURRENT_RUNTIME_BG128_UNADMITTED: explicit restore/code binding required')
+    files = P.render_current_source_outputs(tables,contract=contract,graphics_source=graphics,
+        graphics_report=report,current_source_profile=profile,actor_storage_plan=actors)
+    endpoint_state = _json(files['prepare.json'])['native_state_contract']
+    R.require(not document.flight_points
+              and all(r['tile_match_verified'] for r in endpoint_state['requested_doors'])
+              and all(r['position_match_verified'] for r in endpoint_state['requested_returns']),
+              'CURRENT_RUNTIME_ENDPOINT_UNBOUND: native saved endpoints or transport writer required')
+    events = current_event_state(runtime['event_state'],ledger)
+    constants = files['runtime_constants.asm'].decode().replace('Source review only; current preparation is never selected.',
+        'Reviewed disposable-build context; canonical flags are unchanged.')
+    constants = constants.replace('!LYRA_CURRENT_ACTORS_ENABLED = 0','!LYRA_CURRENT_ACTORS_ENABLED = 1')
+    constants = constants.replace('!LYRA_CURRENT_ACTORS_BOUND = 0','!LYRA_CURRENT_ACTORS_BOUND = 1')
+    constants += ('!LYRA_CURRENT_EVENTS_ENABLED = 1\n!LYRA_CURRENT_EVENTS_BOUND = 1\n'
+        + f"!LYRA_CURRENT_EVENT_BASE = ${events['flags']:06X}\n"
+        + f"!LYRA_CURRENT_EVENT_VERSION = ${events['version']:06X}\n"
+        + f"!LYRA_CURRENT_EVENT_MARKER = ${events['marker']:02X}\n")
+    files['runtime_constants.asm'] = constants.encode()
+    data = files['runtime_data.asm'].decode()+'pushpc\n'
+    binary = bytearray()
+    for row in plan['writes']:
+        raw = bytes.fromhex(row['payload_hex'])
+        data += f"org ${A.snes(row['pc'][0]):06X}\nincbin \"binaries/payload.bin\":${len(binary):X}..${len(binary)+len(raw):X}\n"
+        binary.extend(raw)
+    R.require(bytes(binary) and payload, 'Current runtime has no terrain payload')
+    files['runtime_data.asm'] = (data+'pullpc\n').encode()
+    files['binaries/payload.bin'] = bytes(binary)
+    source_prepare = _json(files.pop('prepare.json'))
+    expected = _json(Q.read_bound(runtime['compiled_consumers']))
+    _keys(expected,{'kind','regions','source_calls','fixed_hooks'},'reviewed current compiled consumers')
+    R.require(expected['kind'] == 'lyra.current_compiled_consumers.v1'
+              and all(type(expected[k]) is list and expected[k] for k in ('regions','source_calls','fixed_hooks')),
+              'CURRENT_COMPILED_BINDING_REQUIRED')
+    bindings = [ledger_binding,review_binding,profile['contract'],runtime['tail_recipe'],
+                runtime['graphics_source'],*runtime['graphics_assets'],runtime['compiled_consumers'],Q.bound(request_path),
+                Q.bound(base_rom),Q.bound(project),plan['enforcement_receipt'],
+                *request['inputs'].values(),*profile['selected_source']['bindings'],
+                *profile['review']['adapter_bindings']]
+    unique = {}
+    for row in bindings:
+        R.require(row['path'] not in unique or unique[row['path']] == row,
+                  'Current prepared inputs have conflicting bindings')
+        unique[row['path']] = row
+    bindings = sorted(unique.values(),key=lambda row:row['path'])
+    prepared = dict(source_prepare,kind='lyra.current_build_prepare.v1',selected=True,
+        project=str(Path(project).resolve()),base_rom=str(Path(base_rom).resolve()),request=str(Path(request_path).resolve()),
+        ledger=str(ledger_path),saved_rom_sha256=R.sha(source),current_ledger_sha256=ledger_binding['sha256'],
+        allocation_granted=True,producer_enforcement_verified=True,runtime_admission=True,
+        ordinary_build_ready=True,inputs=bindings,current_source_profile=profile,
+        tables=tables,terrain_plan=plan,event_state=events,compiled_consumers=runtime['compiled_consumers'],
+        generated_files={name:R.sha(raw) for name,raw in files.items()},
+        save_exit_policy='unchanged_held',native_gameplay_verified=False,save_reopen_verified=False)
+    for row in bindings:
+        Q.read_bound(row)
+    verify_current_native_source_profile(profile,source,document)
+    verify_transfer(request_path,project,base_rom)
+    files['prepare.json'] = P.encoded(prepared)
+    return dict(kind='lyra.current_build_prepare.v1',selected=True,current_files=files,inputs=bindings)
+
+
+def current_event_state(value, ledger):
+    """Consume explicit named save-buffer owners, never infer a free block."""
+    _keys(value, {'flags','version','marker'}, 'current event state')
+    R.require(all(type(x) is int for x in value.values()) and 0 < value['marker'] <= 255
+              and 0x7EF412 <= value['flags'] and value['flags']+32 <= 0x7EF4FE
+              and 0x7EF412 <= value['version'] < 0x7EF4FE
+              and not value['flags'] <= value['version'] < value['flags']+32,
+              'CURRENT_EVENT_STATE_UNBOUND: invalid saved flag/version interval')
+    from allocation_contracts import physical
+    chosen = []
+    for name,key,size in (('LyraCurrentTailFlags','flags',32),('LyraCurrentTailVersion','version',1)):
+        matches = [r for r in ledger.get('claims',[]) if r.get('id') == name]
+        R.require(len(matches)==1, 'CURRENT_EVENT_STATE_UNBOUND: missing named owner')
+        row = matches[0]
+        R.require(row.get('space') == 'save_buffer' and row.get('status') == 'shared'
+                  and row.get('base') == value[key] and row.get('size') == size
+                  and row.get('aliases') == [], 'CURRENT_EVENT_STATE_UNBOUND: ungranted named owner')
+        chosen.append(row)
+    for owner in ledger.get('claims',[]):
+        if owner in chosen or owner.get('base') is None:
+            continue
+        R.require(type(owner.get('base')) is int and type(owner.get('size')) is int
+                  and owner['size'] > 0, 'CURRENT_EVENT_STATE_OWNER_CONFLICT: ambiguous owner extent')
+        space,lo,hi = physical(owner)
+        if space == 'wram':
+            R.require(all(not (lo < value[key]+size and value[key] < hi)
+                          for key,size in (('flags',32),('version',1))),
+                      'CURRENT_EVENT_STATE_OWNER_CONFLICT: '+str(owner.get('id')))
+    return dict(value)
+
+
+def verify_current_context(root, prepared):
+    """Reconstruct selected inputs from the canonical policy, not JSON booleans."""
+    R.require(Path(root).resolve() == P.ROOT.resolve(), 'Current context uses another source root')
+    target=Path(prepared['terrain_plan']['target']['path'])
+    if target.exists() and _CANDIDATE_INSPECTION.get() is None:
+        with candidate_inspection(target):
+            files=verify_current_context(root,prepared)
+            # Source graph inspection also runs before Asar. Compiled-byte
+            # admission belongs to the separate mandatory post-assembly verifier.
+            return files
+    files = P.render_outputs(ordinary_plan(prepared['project'],prepared['base_rom'],prepared['request'],
+                                          ledger_path=prepared['ledger']))
+    R.require(P.encoded(prepared) == files['prepare.json'], 'CURRENT_BUILD_CONTEXT_STALE: preparation differs')
+    folder=Path(root)/P.OUTPUT
+    R.require(all((folder/name).read_bytes() == raw for name,raw in files.items()),
+              'CURRENT_BUILD_CONTEXT_STALE: generated input differs')
+    return files
+
+
+def verify_current_output(prepared, compiled, symbols):
+    """Verify exact reviewed code AND derived data; never run or patch a ROM."""
+    import lyra_native_loaders as native
+    source=Path(prepared['base_rom']).read_bytes()
+    R.require(len(compiled)==0x400000 and R.sha(source)==prepared['saved_rom_sha256'],
+              'CURRENT_COMPILED_SOURCE_MISMATCH: full4MiB output and original saved source required')
+    expected=_json(Q.read_bound(prepared['compiled_consumers']))
+    observed=native.inspect_current_consumers(compiled,symbols)
+    R.require(observed == expected, 'CURRENT_COMPILED_CONSUMERS_MISMATCH: reviewed active bytes differ')
+    start,end=observed['regions'][0]['snes']
+    origin=prepared['current_source_profile']['origins']['code']['snes']
+    R.require(start==origin[0] and start<end<=origin[1], 'Current compiled code exceeds selected origin')
+    gfx=observed['regions'][1]['snes']
+    bounds=prepared['current_source_profile']['origins']['graphics']['snes']
+    R.require(gfx[0]==bounds[0] and gfx[0]<gfx[1]<=bounds[1], 'Current graphics exceeds selected origin')
+    writes=[*prepared['terrain_plan']['writes']]
+    for row in prepared['tables']['tables']:
+        writes.append(dict(pc=row['pc'],payload_hex=row['payload_hex']))
+    a=prepared['tables']['descriptor_pc'][0]
+    writes.append(dict(pc=[a,a+64],payload_hex=prepared['tables']['descriptor_hex']))
+    actors=prepared['actor_storage_plan'];a=A.pc(actors['data_snes'])
+    writes.append(dict(pc=[a,a+actors['payload_bytes']],payload_hex=actors['payload_hex']))
+    for row in writes:
+        a,b=row['pc']
+        R.require(0<=a<b<=len(compiled) and compiled[a:b].hex()==row['payload_hex'],
+                  'CURRENT_COMPILED_PAYLOAD_MISMATCH: derived data differs')
+    # The original pointer directories and all320 decoded native planes remain
+    # native controls even though readers now serve the extra32 pages.
+    for area in range(160):
+        for table in N.POINTER_TABLES:
+            at=A.pc(table)+area*3
+            R.require(source[at:at+3] == compiled[at:at+3], 'CURRENT_NATIVE_POINTER_CHANGED')
+            R.require(N._plane(source,area,table)[0] == N._plane(compiled,area,table)[0],
+                      'CURRENT_NATIVE_PLANE_CHANGED: '+str(area))
+    changed={r['tile32_id'] for r in prepared['terrain_plan']['emitted_definitions']}
+    for tile in range(0x4540):
+        R.require(tile in changed or A.read_tile32(source,tile)==A.read_tile32(compiled,tile),
+                  'CURRENT_NATIVE_DICTIONARY_CHANGED: '+str(tile))
+    for row in prepared['inputs']:
+        Q.read_bound(row)
+    profile=prepared['current_source_profile']
+    _,saved,document=verify_transfer(prepared['request'],prepared['project'],prepared['base_rom'])
+    verify_current_native_source_profile(profile,saved,document)
+    return dict(kind='lyra.current_build_verification.v1',compiled_consumers_verified=True,
+        saved_rom_sha256=R.sha(source),compiled_rom_sha256=R.sha(compiled),symbols_sha256=R.sha(symbols),
+        current_ledger_sha256=prepared['current_ledger_sha256'],
+        compiled_consumers_binding=prepared['compiled_consumers'],native_maps_preserved=160,
+        native_planes_preserved=320,source_code_fit_bytes=end-start,data_writes_verified=len(writes),
+        production_maps=[],production_edge_ids=[],save_exit_policy='unchanged_held',
+        native_gameplay_verified=False,save_reopen_verified=False,runtime_verified=False)
