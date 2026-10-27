@@ -16,8 +16,16 @@ A lock with a live owner, or an owner file without a PID (legacy text), is
 never reclaimed. Reclaim copies the old owner file to the archive directory
 (/tmp/oos-heavy-lock-reclaimed by default) before removing the lock.
 
+Build mode (scawful, 2026-10-26: "restrict the builds when i ask"): the file
+~/.config/oos/build_mode (OOS_BUILD_MODE_FILE overrides it) holds `desk` or
+`laptop`; a missing or unknown value means `laptop`.
+  - laptop: one holder, today's rule.
+  - desk: up to 3 holders at once, in /tmp/oos-heavy.lock, .lock.1 and .lock.2.
+Switching to laptop drains: acquire refuses while any slot is held.
+
 Commands:
   heavy_lock.py status
+  heavy_lock.py mode [desk|laptop]
   heavy_lock.py acquire --owner NAME --purpose TEXT [--pid PID] [--wait SEC] [--poll SEC]
   heavy_lock.py release --token TOKEN
 `acquire` prints the token. --pid defaults to the caller's parent process,
@@ -42,6 +50,8 @@ from pathlib import Path
 
 LOCK = Path(os.environ.get("OOS_HEAVY_LOCK", "/tmp/oos-heavy.lock"))
 ARCHIVE = Path(os.environ.get("OOS_HEAVY_LOCK_ARCHIVE", "/tmp/oos-heavy-lock-reclaimed"))
+MODE_FILE = Path(os.environ.get("OOS_BUILD_MODE_FILE", "~/.config/oos/build_mode")).expanduser()
+SLOTS = {"laptop": 1, "desk": 3}  # holders allowed at once
 ORPHAN_AGE = 120  # seconds a lock directory may exist without an owner file
 class ProcessInspectionError(RuntimeError):
     """Process identity could not be determined safely."""
@@ -82,9 +92,33 @@ def process_start(pid: int) -> str | None:
     return start
 
 
-def read_owner() -> dict | None:
+def mode() -> str:
     try:
-        text = (LOCK / "owner").read_text(encoding="utf-8")
+        value = MODE_FILE.read_text(encoding="utf-8").strip().lower()
+    except OSError:
+        return "laptop"
+    return value if value in SLOTS else "laptop"
+
+
+def set_mode(value: str) -> None:
+    if value not in SLOTS:
+        raise ValueError(f"mode must be one of {sorted(SLOTS)}")
+    MODE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    tmp = MODE_FILE.with_name(MODE_FILE.name + ".tmp")
+    tmp.write_text(value + "\n", encoding="utf-8")
+    tmp.replace(MODE_FILE)
+
+
+def slot_paths() -> list[Path]:
+    """Every slot, whatever the mode, so a laptop switch still sees desk holders."""
+    count = max(SLOTS.values())
+    return [LOCK] + [LOCK.with_name(f"{LOCK.name}.{i}") for i in range(1, count)]
+
+
+def read_owner(path: Path | None = None) -> dict | None:
+    path = LOCK if path is None else path
+    try:
+        text = (path / "owner").read_text(encoding="utf-8")
     except FileNotFoundError:
         return None
     try:
@@ -103,14 +137,14 @@ def recorded_start(owner: dict) -> str | None:
     return None
 
 
-def status() -> dict:
-    """{'state': 'free'|'held'|'stale', 'reason': str, 'owner': dict|None}."""
-    if not LOCK.exists():
+def slot_status(path: Path) -> dict:
+    """{'state': 'free'|'held'|'stale', 'reason': str, 'owner': dict|None} for one slot."""
+    if not path.exists():
         return {"state": "free", "reason": "no lock", "owner": None}
-    owner = read_owner()
+    owner = read_owner(path)
     if owner is None:
         try:
-            age = time.time() - LOCK.stat().st_mtime
+            age = time.time() - path.stat().st_mtime
         except FileNotFoundError:
             return {"state": "free", "reason": "no lock", "owner": None}
         if age > ORPHAN_AGE:
@@ -132,29 +166,43 @@ def status() -> dict:
     return {"state": "held", "reason": f"pid {pid} is running", "owner": owner}
 
 
-def _reclaim_if_stale() -> dict | None:
+def status() -> dict:
+    """The first slot that is not free (or the free first slot), plus 'mode',
+    'capacity' and per-slot 'slots'."""
+    slots = [dict(slot_status(path), path=str(path)) for path in slot_paths()]
+    first = next((s for s in slots if s["state"] != "free"), slots[0])
+    return {"state": first["state"], "reason": first["reason"], "owner": first["owner"],
+            "mode": mode(), "capacity": SLOTS[mode()],
+            "held": sum(s["state"] != "free" for s in slots), "slots": slots}
+
+
+def _reclaim_if_stale(path: Path | None = None) -> dict | None:
     """Caller must hold the shared namespace mutex."""
-    st = status()
+    path = LOCK if path is None else path
+    st = slot_status(path)
     if st["state"] != "stale":
         return None
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     receipt = f"{stamp}-{uuid.uuid4().hex}"
     ARCHIVE.mkdir(parents=True, exist_ok=True)
     # Preserve receipts before removing the lease. Exclusive creation avoids loss.
-    owner_text = (LOCK / "owner").read_text() if (LOCK / "owner").exists() else None
+    owner_text = (path / "owner").read_text() if (path / "owner").exists() else None
     if owner_text is not None:
         with (ARCHIVE / f"{receipt}-owner.json").open("x") as out:
             out.write(owner_text)
     with (ARCHIVE / f"{receipt}-reason.txt").open("x") as out:
         out.write(st["reason"] + "\n")
-    shutil.rmtree(LOCK)
+    shutil.rmtree(path)
     return st
 
 
 def reclaim_if_stale() -> dict | None:
-    """Remove a confirmed stale lease under the shared namespace mutex."""
+    """Remove confirmed stale leases under the shared namespace mutex; returns the first."""
     with _critical_section() as locked:
-        return _reclaim_if_stale() if locked else None
+        if not locked:
+            return None
+        found = [st for st in (_reclaim_if_stale(path) for path in slot_paths()) if st]
+        return found[0] if found else None
 
 
 def acquire(owner: str, purpose: str, pid: int | None = None, wait: float = 0, poll: float = 60,
@@ -174,22 +222,25 @@ def acquire(owner: str, purpose: str, pid: int | None = None, wait: float = 0, p
                     return None
                 if start is None:
                     return None
-                if LOCK.exists():
-                    st = _reclaim_if_stale()
+                paths = slot_paths()
+                for path in paths:
+                    st = _reclaim_if_stale(path) if path.exists() else None
                     if st is not None and log:
                         log(f"reclaimed stale lock: {st['reason']}")
-                if not LOCK.exists():
-                    LOCK.mkdir()
+                free = [path for path in paths if not path.exists()]
+                if len(paths) - len(free) < SLOTS[mode()]:
+                    slot = free[0]
+                    slot.mkdir()
                     token = str(uuid.uuid4())
                     data = {"owner": owner, "token": token,
                             "acquired_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                             "purpose": purpose, "pid": pid, "pid_start": start}
                     try:
-                        tmp = LOCK / "owner.tmp"
+                        tmp = slot / "owner.tmp"
                         tmp.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-                        tmp.replace(LOCK / "owner")
+                        tmp.replace(slot / "owner")
                     except Exception:
-                        shutil.rmtree(LOCK)
+                        shutil.rmtree(slot)
                         raise
                     return token
         if time.monotonic() >= deadline:
@@ -203,17 +254,20 @@ def release(token: str) -> bool:
     with _critical_section() as locked:
         if not locked:
             return False
-        owner = read_owner()
-        if not owner or owner.get("token") != token:
-            return False
-        shutil.rmtree(LOCK)
-        return True
+        for path in slot_paths():
+            owner = read_owner(path)
+            if owner and owner.get("token") == token:
+                shutil.rmtree(path)
+                return True
+        return False
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("status")
+    m = sub.add_parser("mode")
+    m.add_argument("value", nargs="?", choices=sorted(SLOTS))
     a = sub.add_parser("acquire")
     a.add_argument("--owner", required=True)
     a.add_argument("--purpose", required=True)
@@ -225,6 +279,11 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     if args.cmd == "status":
         print(json.dumps(status(), indent=2))
+        return 0
+    if args.cmd == "mode":
+        if args.value:
+            set_mode(args.value)
+        print(f"{mode()} ({SLOTS[mode()]} holder{'s' if SLOTS[mode()] > 1 else ''})")
         return 0
     if args.cmd == "acquire":
         token = acquire(args.owner, args.purpose, os.getppid() if args.pid is None else args.pid, args.wait, args.poll,
