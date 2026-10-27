@@ -16,16 +16,25 @@ older nonzero-only tools do not satisfy this contract.
 Room `$27`'s western ladder approach uses two `$F5` fill markers at offsets
 `$0A1A/$0A1B`, replacing redundant `$08` overrides. Dry collision remains native;
 the generated reservoir table fills 224 cells instead of 222. The exact base
-patch is `Data/rom_patches/zora27_west_ladder_fill_2026-10-23.json`.
+patch is `Data/rom_patches/zora27_west_ladder_fill_current8d_2026-10-27.json`.
 
 - source: 20 rooms, 3,191 explicit tiles (3,095 nonzero and 96 floor tiles)
 - source SHA-256:
   `36777aaa2e344f9f70fba85a7700cd51f515d569a72affddf9d6abf4994e9d2f`
-- matching tested disposable edit base SHA-256:
-  `33415b9f56a3471590dc13565c5e376435b3403f84a99967cdf92ec72cdbbfb9`
+- matching private edit base SHA-256:
+  `88e542598b11755f631947aa6c581b2e5fd1f70a5a4454c03d4d5c9919751e2c`
 
-Shared-base application remains pending scawful's approval. The source must be
-built with its matching base; the validator rejects the unmigrated shared base.
+The recipe reads current base SHA-256
+`8d6157840e402f98d5c4b1d61da90be072531fa661bc1608ae0eeab1b898e721`.
+Its schema-2 tool defaults to dry-run and creates exclusive private outputs only
+with `--write-output`; it never changes the input. The recipe's source pin names
+the preserved pre-fold candidate (HEAD `8b004e65` plus diff `08581f85`), not the
+folded PR head. The historical e756 recipe remains in branch history.
+
+Shared-base application remains pending scawful's approval. After that decision,
+scawful's apply step copies the qualified private image to the shared base.
+The source must be built with its matching base; the validator rejects the
+unmigrated shared base.
 
 The preceding safe-rails source is retained as history:
 

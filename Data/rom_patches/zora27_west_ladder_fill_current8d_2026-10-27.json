@@ -1,0 +1,43 @@
+{
+  "schema_version": 2,
+  "write_policy": "private_output_only",
+  "base_size": 2097152,
+  "base_sha256": "8d6157840e402f98d5c4b1d61da90be072531fa661bc1608ae0eeab1b898e721",
+  "result_sha256": "88e542598b11755f631947aa6c581b2e5fd1f70a5a4454c03d4d5c9919751e2c",
+  "changed_bytes": 2,
+  "source": {
+    "head": "8b004e65efacbd0777121c49a36f09a43759c922",
+    "diff_sha256": "08581f851f9d0d4c2de68cdc4cd7676ddb5f1978dd7ca8e3188ca4ad6b51a46b",
+    "files": {
+      "Data/dungeons/custom_collision.json": "36777aaa2e344f9f70fba85a7700cd51f515d569a72affddf9d6abf4994e9d2f",
+      "Dungeons/generated/water_fill_table.asm": "31e00fbf988c4abd4a17e53219159bec9b95a2f5ec19709e524ce1522dcb7c4b"
+    }
+  },
+  "preserve_ranges": [
+    {
+      "id": "human-current8d-roomD8-object-stream",
+      "pc_start": "0x139E3C",
+      "pc_end_exclusive": "0x13A020",
+      "sha256": "5c8b46033b974e224859bf715a1061211f1cb9b7c963ea8bacd3a5e6888e1a2e"
+    }
+  ],
+  "note": "Current8d private-output recipe. The source pin binds the preserved pre-fold candidate at HEAD8b004e65 plus full diff08581f85, not the folded PR head. This replaces the historical e756 recipe in the current tree; branch history retains that recipe. Default dry-run; --write-output creates an exclusive private image and never writes the input. Shared-base adoption remains a separate scawful decision. Schema2 private_edits intentionally has no legacy edits key, so the old migrator refuses this recipe before any write.",
+  "private_edits": [
+    {
+      "id": "room27-west-ladder-left-fill-marker",
+      "pc": "0x128E51",
+      "snes": "$258E51",
+      "before": "08",
+      "after": "F5",
+      "why": "Offset0A1A tile8(26,40): retain native dry collision, enroll lower ladder approach in filled08 collision."
+    },
+    {
+      "id": "room27-west-ladder-right-fill-marker",
+      "pc": "0x128E54",
+      "snes": "$258E54",
+      "before": "08",
+      "after": "F5",
+      "why": "Offset0A1B tile8(27,40): retain native dry collision, enroll lower ladder approach in filled08 collision."
+    }
+  ]
+}
