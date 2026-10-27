@@ -114,8 +114,8 @@ Lyra_ReadByScreen:
     STA $03,S : PLX : PLA : PLP : PHA : PLA : RTL
 Lyra_ReadByScreen_End:
 
-; M16/X16 original pointer ABI. X already names the actual requested
-; quadrant's three-byte row, including full-load and sub-overlay dependencies.
+; M16/X16 original pointer ABI. Sub-overlays select their actual one-page
+; request, independently of the map currently hosting the overlay.
 macro LyraCurrentPointer(name, old, selected)
 <name>:
     PHP
@@ -132,10 +132,67 @@ macro LyraCurrentPointer(name, old, selected)
     RTL
 <name>_End:
 endmacro
-%LyraCurrentPointer(Lyra_FullHigh, $02F94D, !LYRA_CURRENT_TABLE_map32_high)
-%LyraCurrentPointer(Lyra_FullLow, $02FB2D, !LYRA_CURRENT_TABLE_map32_low)
 %LyraCurrentPointer(Lyra_SubHigh, $02F94D, !LYRA_CURRENT_TABLE_map32_high)
 %LyraCurrentPointer(Lyra_SubLow, $02FB2D, !LYRA_CURRENT_TABLE_map32_low)
+
+; The native full loader ALWAYS requests8A+[0,1,8,9], even for small/wide/
+; tall maps and atBF. Classify its BASE8A, then map the requested quadrant
+; through the saved parent/size. Native00..9F loads retain their original
+; operands even when an unused quadrant's request happens to reachA0+.
+; Entry M16/X16; preserve X/Y/DBR/D/C/V, write onlyC8..CA, return pointer
+; mid/bank in A and its N/Z exactly as the replaced second LDA.
+macro LyraCurrentFullPointer(name, old, selected)
+<name>:
+    PHP : PHX : PHY
+    LDA.b $8A : AND.w #$00FF
+    CMP.w #!LYRA_CURRENT_FIRST : BCS ?upper
+      BRL ?legacy
+?upper:
+    CMP.w #!LYRA_CURRENT_END : BCC ?tail
+      BRL ?legacy
+?tail:
+    TAX
+    LDA.l !LYRA_CURRENT_TABLE_parent, X : AND.w #$00FF : TAY
+    LDA.l !LYRA_CURRENT_TABLE_area_size, X : AND.w #$00FF
+    CMP.w #$0004 : BCC ?sizeValid
+      BRL ?legacy
+?sizeValid:
+    PHA : PHX ; size, base area
+    TXA : ASL : CLC : ADC $01,S : PHA ; base*3
+    LDA $09,S : SEC : SBC $01,S ; original X minus base*3
+    BEQ ?deltaReady
+    CMP.w #$0003 : BEQ ?right
+    CMP.w #$0018 : BEQ ?down
+    CMP.w #$001B : BEQ ?downRight
+      PLA : PLA : PLA
+      BRL ?legacy
+?right:
+    LDA.w #$0001 : BRA ?deltaReady
+?down:
+    LDA.w #$0008 : BRA ?deltaReady
+?downRight:
+    LDA.w #$0009
+?deltaReady:
+    PHA ; quadrant delta
+    LDA $07,S : ASL : TAX
+    LDA.l ?quadMasks, X : AND $01,S : STA $01,S
+    TYA : CLC : ADC $01,S : PHA ; parent + masked quadrant
+    ASL : CLC : ADC $01,S : TAX ; resolved map*3
+    PLA : PLA : PLA : PLA : PLA ; map, delta, base*3, area, size
+    LDA.l <selected>, X : STA.b $C8
+    LDA.l <selected>+1, X : STA.b $C9
+    PLY : PLX : PLP : PHA : PLA : RTL
+?legacy:
+    PLY : PLX : PLP
+    LDA.l <old>, X : STA.b $C8
+    LDA.l <old>+1, X : STA.b $C9
+    RTL
+?quadMasks:
+    dw $0000, $0009, $0001, $0008 ; small, large, wide, tall
+<name>_End:
+endmacro
+%LyraCurrentFullPointer(Lyra_FullHigh, $02F94D, !LYRA_CURRENT_TABLE_map32_high)
+%LyraCurrentFullPointer(Lyra_FullLow, $02FB2D, !LYRA_CURRENT_TABLE_map32_low)
 
 ; Original phase Y is 0/2 (phase0),4 (phase1),6 (phase2).
 ; Each relocated phase has a complete192-row extent, never a native160 stride.

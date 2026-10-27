@@ -5,7 +5,6 @@ The saved-source ownership and compiled-reader contracts are separate checks.
 """
 from __future__ import annotations
 
-import copy
 import json
 import re
 from pathlib import Path
@@ -1113,7 +1112,7 @@ def current_selector_location(name, index, *, table_base):
 
 
 def current_pointer_location(index, *, table_base, plane):
-    """Triplet indices belong to each actual full/sub-load quadrant, not8A."""
+    """Sub-overlay triplet requests select one physical page, independently of8A."""
     R.require(plane in ('high', 'low') and type(index) is int and 0 <= index <= 0xFFFF,
               'Invalid current pointer index')
     selected = CURRENT_FIRST * 3 <= index < CURRENT_END * 3
@@ -1121,6 +1120,27 @@ def current_pointer_location(index, *, table_base, plane):
     row = next(r for r in current_table_layout(table_base) if r['name'] == family)
     original = 0x02F94D if plane == 'high' else 0x02FB2D
     return dict(selected=selected, address=(row['snes'] if selected else original) + index)
+
+
+def current_full_pointer_location(index, *, map_id, table_base, plane, parent=None, area_size=None):
+    """Host arithmetic for the native four-request full-load ABI, not a CPU."""
+    R.require(plane in ('high','low') and type(index) is int and 0 <= index <= 65535
+              and type(map_id) is int and 0 <= map_id <= 65535,
+              'Invalid current full-load pointer input')
+    base = map_id & 255
+    original = 0x02F94D if plane == 'high' else 0x02FB2D
+    selected = CURRENT_FIRST <= base < CURRENT_END and index-base*3 in (0,3,24,27)
+    resolved = None
+    if selected:
+        R.require(type(parent) is int and type(area_size) is int and 0 <= area_size <= 3,
+                  'Current full-load parent/size required')
+        footprint = A.gameplay_area_footprint(parent,('small','large','wide','tall')[area_size])
+        R.require(base in footprint, 'Current full-load parent/size does not own base map')
+        requested_delta = (index-base*3)//3
+        resolved = parent+(requested_delta & (0,9,1,8)[area_size])
+    row = next(r for r in current_table_layout(table_base) if r['name'] == 'map32_'+plane)
+    return dict(selected=selected, address=row['snes']+resolved*3 if selected else original+index,
+                resolved_map=resolved, original_index=index)
 
 
 def _current_origins(origins):
@@ -1200,6 +1220,7 @@ def plan_current_tables(source, tail_rows, *, origins, policy):
                           f'Invalid current {name} row{area:02X}')
                 if name == 'parent':
                     R.require(value < CURRENT_PARENT_COUNT, 'Current parent exceeds192 rows')
+                    R.require(value >= CURRENT_FIRST, 'Current tail parent must beA0..BF')
                 if name == 'area_size':
                     R.require(value <= 3, 'Invalid current area size')
                 if name.startswith('map32_'):
@@ -1210,6 +1231,13 @@ def plan_current_tables(source, tail_rows, *, origins, policy):
         tables.append(dict(row, payload_hex=payload.hex(), payload_sha256=R.sha(payload),
                            native_payload_sha256=R.sha(native),
                            structural_unmapped_prefix_rows=row['legacy_first']))
+    for area, values in tail_rows.items():
+        try:
+            footprint = A.gameplay_area_footprint(values['parent'],('small','large','wide','tall')[values['area_size']])
+        except ValueError as error:
+            raise ValueError('CURRENT_TABLE_GAMEPLAY_AREAS_MISMATCH: parent footprint leaves tail grid') from error
+        R.require(area in footprint,
+                  'CURRENT_TABLE_GAMEPLAY_AREAS_MISMATCH: parent/size cannot own this page')
     lines = ['; UNGRANTED current-engine source plan. No ROM publication.',
              'assert !LYRA_CURRENT_MODE == 1',
              '!LYRA_CURRENT_FIRST = $00A0', '!LYRA_CURRENT_END = $00C0',
@@ -1411,6 +1439,7 @@ def plan_current_actor_storage(source, document, *, current_source_profile, data
     single data bank; no native bank09 bytes or WRAM staging are allocated.
     This is a source plan, with every readiness/authority flag still false.
     """
+    import copy
     actors = plan_current_actor_streams(source, document, current_source_profile=current_source_profile)
     profile = current_source_profile
     origin = profile['origins'].get('actors')

@@ -10,6 +10,59 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'Scripts/Build'))
 import lyra_native_loaders as L
 
 
+class CurrentFullPointerPlanTest(unittest.TestCase):
+    def test_four_sizes_and_every_valid_member_resolve_all_native_requests(self):
+        table = 0x5B8000
+        layout = {r['name']:r for r in L.current_table_layout(table)}
+        for parent in range(0xA0,0xC0):
+            for code,size in enumerate(('small','large','wide','tall')):
+                try:
+                    members = L.A.gameplay_area_footprint(parent,size)
+                except ValueError:
+                    continue
+                expected = (members*4 if code == 0 else members if code == 1 else
+                            members*2 if code == 2 else (members[0],members[0],members[1],members[1]))
+                for base in members:
+                    for delta,resolved in zip((0,1,8,9),expected):
+                        for plane in ('high','low'):
+                            index = (base+delta)*3
+                            row = L.current_full_pointer_location(index,map_id=base,parent=parent,
+                                area_size=code,table_base=table,plane=plane)
+                            self.assertTrue(row['selected'])
+                            self.assertEqual(row['resolved_map'],resolved)
+                            self.assertEqual(row['address'],layout['map32_'+plane]['snes']+resolved*3)
+                            self.assertEqual(row['original_index'],index)
+
+    def test_native160_full_loads_keep_original_operands_even_for_tail_quad_indices(self):
+        for base in range(160):
+            for delta in (0,1,8,9):
+                for plane,original in (('high',0x02F94D),('low',0x02FB2D)):
+                    index = (base+delta)*3
+                    row = L.current_full_pointer_location(index,map_id=base,table_base=0x5B8000,plane=plane)
+                    self.assertFalse(row['selected'])
+                    self.assertEqual(row['address'],original+index)
+
+    def test_original_selector_control_exposes_bf_spill_and_native_base_alias(self):
+        # Original current source selected by requested X alone.
+        self.assertFalse(L.current_pointer_location(0xC8*3,table_base=0x5B8000,plane='high')['selected'])
+        fixed = L.current_full_pointer_location(0xC8*3,map_id=0xBF,parent=0xBF,area_size=0,
+                                                table_base=0x5B8000,plane='high')
+        self.assertEqual((fixed['selected'],fixed['resolved_map']),(True,0xBF))
+        self.assertTrue(L.current_pointer_location(0xA0*3,table_base=0x5B8000,plane='high')['selected'])
+        fixed = L.current_full_pointer_location(0xA0*3,map_id=0x9F,table_base=0x5B8000,plane='high')
+        self.assertFalse(fixed['selected'])
+        # Sub-overlay requests intentionally remain independent physical pages.
+        self.assertTrue(L.current_pointer_location(0xBF*3,table_base=0x5B8000,plane='low')['selected'])
+
+    def test_invalid_indices_and_unowned_parent_shapes_refuse(self):
+        for index in (0xFFFF,0xA0*3+1):
+            self.assertFalse(L.current_full_pointer_location(index,map_id=0xA0,parent=0xA0,
+                area_size=0,table_base=0x5B8000,plane='low')['selected'])
+        with self.assertRaisesRegex(ValueError,'does not own'):
+            L.current_full_pointer_location(0xA1*3,map_id=0xA1,parent=0xA0,area_size=0,
+                                            table_base=0x5B8000,plane='high')
+
+
 class CurrentNativeLoaderTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
