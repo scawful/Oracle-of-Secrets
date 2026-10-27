@@ -414,6 +414,10 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
         R.require(values['parent'] == row['parent_map_id']
                   and values['area_size'] == row['area_size_code'],
                   'CURRENT_COMPOSER_GAMEPLAY_AREAS_MISMATCH: table parent/size differs from authored area')
+    if gameplay_area_plan['complete']:
+        for area, values in A.gameplay_transition_rows(source, document).items():
+            R.require(all(tail_rows[area][name] == value for name, value in values.items()),
+                      'CURRENT_COMPOSER_GAMEPLAY_TRANSITIONS_MISMATCH: table differs from saved-area transition lowering')
     R.require(type(graphics_source) is str and graphics_source
               and graphics_report.get('current_mode') is True and graphics_report.get('parent_count') == 192
               and graphics_report.get('source_contract_sha256') == R.sha(encoded(contract))

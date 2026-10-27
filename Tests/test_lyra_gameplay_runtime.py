@@ -15,6 +15,7 @@ from test_lyra_project_admission import observation
 import lyra_current_transfer as X
 import lyra_native_loaders as L
 import lyra_project_terrain as T
+from test_lyra_gameplay_area_plan import document as parsed_document
 
 
 def areas():
@@ -100,6 +101,77 @@ class GameplayRuntimeTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Render footprint'):
             X.A.render_dependency_plan([0xA2], [dict(map_id=0xA2, quadrant_maps=[0xA2]*4)],
                                        document=partial)
+
+    def test_composer_accepts_lowered_transitions_and_refuses_stale_small_area_constants(self):
+        rows = X.A.gameplay_transition_rows(self.f.source, self.f.document)
+        for area, values in rows.items():
+            self.f.rows[area].update(values)
+        self.f.table_plan = self.f.tables()
+        self.assertEqual(json.loads(self.f.compose()['prepare.json'])['gameplay_area_plan']['status'], 'ASSIGNED')
+        # An independently well-formed table plan still cannot substitute a
+        # small-area left delta for the saved large area's right-hand row.
+        self.f.rows[0xA2]['ByScreen2'] = 0x40
+        with self.assertRaisesRegex(ValueError, 'GAMEPLAY_TRANSITIONS_MISMATCH'):
+            self.f.compose(table_plan=self.f.tables())
+
+
+class GameplayTransitionRowsTest(unittest.TestCase):
+    def rows(self, *specs, source=None):
+        selected = [dict(parent_map_id=p, size=s, maps=list(T.gameplay_area_footprint(p, s))) for p, s in specs]
+        occupied = {m for area in selected for m in area['maps']}
+        selected += [dict(parent_map_id=m, size='small', maps=[m])
+                     for m in range(0xA0, 0xC0) if m not in occupied]
+        return X.A.gameplay_transition_rows(bytes(0x200000) if source is None else source,
+                                            parsed_document(selected))
+
+    def test_parent_camera_and_all_native_size_codes(self):
+        rows = self.rows((0xA1, 'large'), (0xA4, 'wide'), (0xB0, 'tall'))
+        for member in (0xA1, 0xA2, 0xA9, 0xAA):
+            self.assertEqual({k: rows[member][k] for k in ('parent', 'area_size', 'transition_y', 'transition_x',
+                                                        'scroll_north', 'scroll_west')},
+                dict(parent=0xA1, area_size=1, transition_y=0x800, transition_x=0x200,
+                     scroll_north=0x720, scroll_west=0x100))
+        self.assertEqual((rows[0xA4]['area_size'], rows[0xB0]['area_size'], rows[0xBF]['area_size']), (2, 3, 0))
+        self.assertEqual([rows[m]['ByScreen1'] for m in (0xA1, 0xA2, 0xA9, 0xAA)], [0x60, 0x60, 0x1060, 0x1060])
+        self.assertEqual([rows[m]['ByScreen2'] for m in (0xA1, 0xA2, 0xA9, 0xAA)], [0x80, 0x80, 0x1080, 0x1080])
+        self.assertEqual([rows[m]['ByScreen3'] for m in (0xA1, 0xA2, 0xA9, 0xAA)], [0x1800, 0x1840, 0x1800, 0x1840])
+        self.assertEqual([rows[m]['ByScreen4'] for m in (0xA1, 0xA2, 0xA9, 0xAA)], [0x2000, 0x2040, 0x2000, 0x2040])
+        self.assertEqual(rows[0xAB]['ByScreen1'], 0xF060)
+        self.assertEqual(rows[0xA8]['ByScreen2'], 0xF040)
+        self.assertEqual(rows[0xB2]['ByScreen3'], 0x17C0)
+
+    def test_aligned_and_staggered_horizontal_neighbors(self):
+        rows = self.rows((0xA0, 'large'), (0xA2, 'large'))
+        self.assertEqual(rows[0xA9]['ByScreen2'], 0x80)
+        self.assertEqual(rows[0xAA]['ByScreen1'], 0x60)
+        rows = self.rows((0xA0, 'large'), (0xAA, 'large'))
+        self.assertEqual(rows[0xAA]['ByScreen1'], 0xF060)
+        rows = self.rows((0xA1, 'tall'), (0xA2, 'large'))
+        self.assertEqual(rows[0xA9]['ByScreen2'], 0x40)
+        self.assertEqual(rows[0xAA]['ByScreen1'], 0x60)
+
+    def test_aligned_and_staggered_vertical_neighbors_match_maintained_bytes(self):
+        rows = self.rows((0xA0, 'wide'), (0xA8, 'wide'))
+        self.assertEqual(rows[0xA1]['ByScreen4'], 0x1000)
+        self.assertEqual(rows[0xA9]['ByScreen3'], 0x1800)
+        rows = self.rows((0xA0, 'wide'), (0xA9, 'wide'))
+        self.assertEqual(rows[0xA9]['ByScreen3'], 0x07C0)
+        rows = self.rows((0xA1, 'large'), (0xB0, 'large'))
+        self.assertEqual(rows[0xB0]['ByScreen3'], 0x1800)
+        self.assertEqual(rows[0xB1]['ByScreen3'], 0x1840)
+        self.assertEqual(rows[0xA9]['ByScreen4'], 0x1FC0)
+
+    def test_native_special_seam_is_read_without_modifying_native_rows_or_wrapping_columns(self):
+        source = bytearray(0x200000)
+        for m in (0x98, 0x99):
+            source[X.A.pc(0x02F88D)+m] = 2
+            source[X.A.pc(0x288998)+m] = 0x98
+        before = bytes(source)
+        rows = self.rows(source=before)
+        self.assertEqual(rows[0xA1]['ByScreen3'], 0x17C0)
+        self.assertEqual(bytes(source), before)
+        self.assertEqual(rows[0xA0]['ByScreen1'], 0x60)
+        self.assertEqual(set(rows), set(range(0xA0, 0xC0)))
 
 
 if __name__ == '__main__':

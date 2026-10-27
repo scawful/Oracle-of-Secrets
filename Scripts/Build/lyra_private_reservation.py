@@ -391,6 +391,7 @@ def compile_native_plan(source, document, granted, directory, *, native_copy_map
                       source_origins=current_source_profile['origins'])
         if document.gameplay_areas:
             result.update(gameplay_area_plan=A.gameplay_area_plan(document),
+                gameplay_transition_rows=A.gameplay_transition_rows(original_source, document),
                 render_directory=[dict(map_id=plan.map_id, quadrant_maps=list(plan.quadrant_maps))
                                   for plan in compiled.maps])
     return result, payload

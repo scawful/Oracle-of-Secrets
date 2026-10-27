@@ -348,6 +348,83 @@ def render_dependency_plan(map_ids, footprints=(), *, document=None):
     return directory, closure
 
 
+def gameplay_transition_rows(source, document):
+    """Lower complete saved areas using maintained ZScream v3 transitions.
+
+    Save.cs/SaveLargeMapsExpanded at upstream revision
+    0e8658f13ce43d6b0e8ae72af246afa878fbe03b is the byte-value contract.
+    Native00..9F neighbors are read, never modified. AddedA0..BF areas must be
+    explicit; no guessed small-area rows participate in neighbor correction.
+    This returns table values only and grants neither storage nor admission.
+    """
+    require(type(source) is bytes and len(source) in (0x200000, 0x400000),
+            "Current transitions require exact2MiB or4MiB saved bytes")
+    plan = gameplay_area_plan(document)
+    require(plan['complete'],
+            "CURRENT_GAMEPLAY_AREAS_UNASSIGNED: transition lowering requires all32 assigned pages")
+    sizes = {'small': (1, 1), 'large': (2, 2), 'wide': (2, 1), 'tall': (1, 2)}
+    codes = {0: 'small', 1: 'large', 2: 'wide', 3: 'tall'}
+    members = {row['map_id']: row for row in plan['assignments']}
+
+    def neighbor(area, dx, dy):
+        # Same special-world grid, including the native98..9F/A0..A7 seam.
+        row, column = divmod(area % 64, 8)
+        target = area + dy * 8 + dx
+        if not (0 <= column + dx < 8 and 0 <= row + dy < 8 and 0 <= target < 192):
+            return None
+        if target >= FIRST_MAP:
+            entry = members[target]
+            size, parent = entry['size'], entry['parent_map_id']
+        else:
+            size = source[pc(0x02F88D) + target]
+            require(size in codes, "Unsupported native neighbor area size")
+            size, parent = codes[size], source[pc(0x288998) + target]
+            require(parent < 160, "Native neighbor parent exceeds native160")
+        height_offset, width_offset = divmod(target - parent, 8)
+        return size, width_offset, height_offset
+
+    result = {}
+    for area in plan['areas']:
+        parent, size = area['parent_map_id'], area['size']
+        width, height = sizes[size]
+        # These are screen coordinates in the full80..BF special-world grid.
+        y, x = divmod(parent % 64, 8)
+        base_left, base_up = (0x80 if width == 2 else 0x40), (0x2000 if height == 2 else 0x1000)
+        right = [0x60 + dy * 0x1000 for dy in range(height) for dx in range(width)]
+        left = [base_left + dy * 0x1000 for dy in range(height) for dx in range(width)]
+        down = [0x1800 + dx * 0x40 for dy in range(height) for dx in range(width)]
+        up = [base_up + dx * 0x40 for dy in range(height) for dx in range(width)]
+        west, east = neighbor(parent, -1, 0), neighbor(parent, width, 0)
+        north, south = neighbor(parent, 0, -1), neighbor(parent, 0, height)
+        if west and west[0] in ('large', 'tall'):
+            if west[2] == 1:
+                right[0] = 0xF060
+            elif height == 2 and west[2] == 0:
+                right[width] = 0x60
+        if east and east[0] in ('large', 'tall'):
+            if east[2] == 1:
+                left[width-1] = (base_left - 0x1000) & 0xFFFF
+            elif height == 2 and east[2] == 0:
+                left[2*width-1] = base_left
+        if north and north[0] in ('large', 'wide'):
+            if north[1] == 1:
+                # Maintained upstream explicitly uses07C0 for wide->wide.
+                down[0] = 0x07C0 if size == 'wide' and north[0] == 'wide' else 0x17C0
+            elif width == 2 and north[1] == 0:
+                down[1] = 0x1800
+        if south and south[0] in ('large', 'wide'):
+            if south[1] == 1:
+                up[(height-1)*width] = base_up - 0x40
+            elif width == 2 and south[1] == 0:
+                up[height*width-1] = base_up
+        for index, member in enumerate(area['maps']):
+            result[member] = dict(parent=parent, area_size={'small': 0, 'large': 1, 'wide': 2, 'tall': 3}[size],
+                transition_y=y*512, transition_x=x*512,
+                scroll_north=(y*512-0xE0) & 0xFFFF, scroll_west=(x*512-0x100) & 0xFFFF,
+                ByScreen1=right[index], ByScreen2=left[index], ByScreen3=down[index], ByScreen4=up[index])
+    return result
+
+
 def _background_palette_payload(colors):
     payload = struct.pack("<128H", *colors)
     return dict(word_count=128, payload_hex=payload.hex(), sha256=sha(payload),
