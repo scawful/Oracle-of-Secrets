@@ -187,7 +187,7 @@ class CurrentBuildTest(unittest.TestCase):
         root=Path(self.prepared['current_source_profile']['selected_source']['root']);folder=root/X.P.OUTPUT
         X.P.write_outputs(folder,self.files);target=Path(self.prepared['terrain_plan']['target']['path'])
         try:
-            X.P.stage_current_candidate(folder,target)
+            self.assertTrue(X.P.stage_current_candidate(folder,target)['rom_written'])
             self.assertEqual(target.read_bytes(),X.A.expanded_rom(self.f.source))
             with self.assertRaisesRegex(ValueError,'TARGET_MISMATCH'):X.P.stage_current_candidate(folder,target)
             # A source scanner can inspect an admitted source context before

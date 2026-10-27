@@ -3,7 +3,8 @@
 
 The saved source and frozen assignments are historical inputs. The current
 ledger authorizes only native37 plus isolated A1; no output-ROM hash is an input.
-This program writes generated inputs/receipts, never a ROM or a saved project.
+Preparation writes generated inputs/receipts. Explicit current staging creates only
+the new bound candidate; no command writes an editable ROM or saved project.
 """
 from __future__ import annotations
 
@@ -631,7 +632,7 @@ def stage_current_candidate(folder, candidate):
     R.require(R.sha(source) == prior['saved_rom_sha256'],'Current staged source changed')
     with Path(candidate).open('xb') as handle:
         handle.write(A.expanded_rom(source))
-    return dict(kind='lyra.current_candidate_staged.v1',selected=True)
+    return dict(kind='lyra.current_candidate_staged.v1',selected=True,rom_written=True)
 
 
 def check_water_source(kind, rom):
@@ -692,7 +693,7 @@ def main():
         result = {key: old[key] for key in ROLES}
         write_outputs(args.output.parent, {args.output.name: encoded(result)}, protected=[args.composition_request])
     print(json.dumps({'kind': result.get('kind', 'lyra.ordinary_request.v1'),
-                      'selected': result.get('selected'), 'rom_written': False}, sort_keys=True))
+                      'selected': result.get('selected'), 'rom_written': result.get('rom_written',False)}, sort_keys=True))
 
 
 if __name__ == '__main__':
