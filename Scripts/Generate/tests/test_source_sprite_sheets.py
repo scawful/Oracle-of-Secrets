@@ -240,6 +240,72 @@ class SourceSheets(unittest.TestCase):
             for neighbor in (0xD8,0xD9):
                 self.assertNotIn(table+neighbor,starts,f'Follower sheet ${neighbor:02X} pointer is protected')
 
+    def test_new_globals_survive_generated_include_without_legacy_pointer(self):
+        # Synthetic artwork only; no production ID or payload interval is allocated.
+        legacy = dict(self.spec['sheets'][0])
+        self.spec['sheets'] = [dict(legacy, sprite_sheet=hex(g-0x73)) for g in (0xD7,0xB3,0xB6,0xBA,0x96)]
+        self.write_spec()
+        _, old_items = sheets.build(self.spec_path, self.base)
+        self.spec['schema_version'] = 2
+        for g in (0xDF, 0xFE):
+            self.spec['sheets'].append(dict(global_sheet=hex(g), source='sheet.txt',
+                decoded_sha256=hashlib.sha256(self.raw).hexdigest(), why='synthetic source preservation vector'))
+        self.write_spec()
+        self.reservation_root()
+        original_ptr = sheets.ptr
+        def legacy_only(rom, g):
+            self.assertLess(g, 0xDF, 'new sheet queried a nonexistent legacy pointer')
+            return original_ptr(rom, g)
+        with mock.patch.object(sheets, 'ptr', side_effect=legacy_only):
+            _, items = sheets.build(self.spec_path, self.base, self.root, rom_role='editable_base')
+        self.assertEqual(old_items, items[:len(old_items)])
+        outputs = sheets.generated_files(items)
+        out = self.root/'generated'
+        sheets.write_outputs(out, outputs, [self.spec_path, self.base, self.root/'sheet.txt'])
+        _, rebuilt = sheets.build(self.spec_path, self.base, self.root, rom_role='editable_base')
+        self.assertEqual(outputs, sheets.generated_files(rebuilt))
+        for name, payload in outputs.items():
+            self.assertEqual((out/name).read_bytes(), payload)
+        include = outputs[Path('sheet_overrides.asm')].decode()
+        for item in items:
+            self.assertIn(f'org ${sheets.NEW_BANK+item["g"]:06X}', include)
+            self.assertEqual(lz2.decompress(item['stream'], max_output=0x600)[0], self.raw)
+        # The normal build checks tracked output and includes it after initialization.
+        main = (ROOT/'Oracle_main.asm').read_text()
+        self.assertLess(main.index('incsrc "Core/gfx_sheet_table.asm"'),
+                        main.index('incsrc "Core/Generated/source_sprite_sheets/sheet_overrides.asm"'))
+        wrapper = (ROOT/'Scripts/Build/build_rom.sh').read_text()
+        self.assertIn('--check --respect-flags', wrapper)
+        self.assertEqual(self.base.read_bytes(), self.rom)
+
+    def test_new_global_schema_guards_and_unsupported_roles(self):
+        new = dict(global_sheet='0xDF', source='sheet.txt',
+                   decoded_sha256=hashlib.sha256(self.raw).hexdigest(), why='synthetic')
+        self.spec['schema_version'] = 2
+        self.spec['sheets'] = [new]
+        self.write_spec()
+        for role in ('compiled_rom', 'development_editor', 'unknown'):
+            with self.subTest(role=role), self.assertRaisesRegex(ValueError, 'editable_base role'):
+                sheets.build(self.spec_path, self.base, rom_role=role)
+            with self.assertRaisesRegex(ValueError, 'provenance only'):
+                sheets.source_metadata(self.root, rom_role=role)
+        for g in ('0xDE', '0xFF'):
+            self.spec['sheets'] = [dict(new, global_sheet=g)]; self.write_spec()
+            with self.assertRaisesRegex(ValueError, 'DF-.*FE'):
+                sheets.build(self.spec_path, self.base)
+        self.spec['sheets'] = [dict(new, decoded_sha256='0'*64)]; self.write_spec()
+        with self.assertRaisesRegex(ValueError, 'decoded source changed'):
+            sheets.build(self.spec_path, self.base)
+        self.spec['sheets'] = [dict(new), dict(new)]; self.write_spec()
+        with self.assertRaisesRegex(ValueError, 'duplicate'):
+            sheets.build(self.spec_path, self.base)
+        self.spec['sheets'] = [dict(new, source='../outside.txt')]; self.write_spec()
+        with self.assertRaisesRegex(ValueError, 'inside'):
+            sheets.build(self.spec_path, self.base)
+        self.spec['schema_version'] = 1; self.spec['sheets'] = [new]; self.write_spec()
+        with self.assertRaisesRegex(ValueError, 'schema 2'):
+            sheets.build(self.spec_path, self.base)
+
     def test_actual_build_guard_refuses_wrong_or_truncated_base_before_output(self):
         # Real build wrapper/receipt/guard in a portable disposable repository.
         for directory in ('Scripts/Build','Scripts/Generate','Config','Util','Data/graphics','Roms'):
