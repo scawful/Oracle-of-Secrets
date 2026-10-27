@@ -1,7 +1,6 @@
 """Saved Yaze terrain compilation using synthetic definitions and owned spans."""
 
 import copy
-import importlib.util
 import json
 from pathlib import Path
 import sys
@@ -10,11 +9,8 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location(
-    "lyra_project_terrain", ROOT / "Scripts/Build/lyra_project_terrain.py")
-T = importlib.util.module_from_spec(SPEC)
-sys.modules[SPEC.name] = T
-SPEC.loader.exec_module(T)
+sys.path.insert(0, str(ROOT / 'Scripts/Build'))
+import lyra_project_terrain as T
 
 
 def profile():
