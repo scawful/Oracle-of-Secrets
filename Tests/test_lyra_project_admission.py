@@ -369,7 +369,8 @@ class LyraAdmissionTest(unittest.TestCase):
 
     def test_new_reservation_never_admits_a_padded_two_mib_prefix(self):
         import lyra_project_allocation as reservation
-        alloc = reservation.derive_allocation(A.expanded_rom(self.source))
+        from lyra_historical_fixture import historical_ledger_path
+        alloc = reservation.derive_allocation(A.expanded_rom(self.source), ledger_path=historical_ledger_path(self))
         alloc["source_rom_sha256"] = A.sha(self.source)
         with self.assertRaisesRegex(ValueError, "actual unheadered4MiB"):
             self.plan(alloc=alloc)

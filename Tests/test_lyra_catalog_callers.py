@@ -1,10 +1,10 @@
 """Actual guarded call-site/source contracts; no assembler or CPU executor."""
 import os
 from pathlib import Path
-import subprocess
 import unittest
 from unittest import mock
 
+from lyra_source_snapshots import read_snapshot_text
 from test_lyra_current_port_integration import S, statements
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -100,7 +100,7 @@ class CatalogCallersSourceTest(unittest.TestCase):
         self.assertEqual(sum(t.startswith('org $008C0E') for t in tokens), 1)
 
     def test_disabled_and_historical_a1_instructions_match_frozen6e(self):
-        old = subprocess.check_output(['git','-C',str(ROOT),'show',FROZEN+':'+ZS]).decode()
+        old = read_snapshot_text(FROZEN, ZS)
         for defines in (self.disabled, dict(self.disabled, LYRA_CURRENT_MODE=0,
                 LYRA_PROJECT_DATA_PRESENT=1, LYRA_NATIVE_A1_ENABLED=1)):
             self.assertEqual(statements(self.zs, defines), statements(old, defines))

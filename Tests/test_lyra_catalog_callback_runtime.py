@@ -6,9 +6,10 @@ cover cache and DMA lifetime examples; they are not an assembler or emulator.
 from pathlib import Path
 import copy
 import re
-import subprocess
 import sys
 import unittest
+
+from lyra_source_snapshots import read_snapshot_text
 
 ROOT = Path(__file__).resolve().parents[1]
 FROZEN = "6e7e5f15d555dffb9f4b3d8807595c9e3f13305f"
@@ -116,8 +117,7 @@ class CatalogCallbackSourceTests(unittest.TestCase):
              ["SharedGraphicsLookup", "SharedGraphicsInvalidateCache",
               "SharedGraphicsStageNative", "SharedGraphicsIncrementalSource"]),
         ):
-            original = subprocess.check_output(
-                ["git", "show", FROZEN + ":" + path], cwd=ROOT, text=True)
+            original = read_snapshot_text(FROZEN, path)
             for name in names:
                 with self.subTest(path=path, name=name):
                     self.assertEqual(tokens(mode_body(routine(source, name), False)),

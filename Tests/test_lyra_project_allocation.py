@@ -5,11 +5,13 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'Scripts/Build'))
 import lyra_project_admission as A
 import lyra_project_allocation as R
+from lyra_historical_fixture import historical_ledger_path
 
 
 def actual_input():
@@ -20,6 +22,11 @@ def actual_input():
 
 
 class LyraSourceAllocationTest(unittest.TestCase):
+    def setUp(self):
+        patch = mock.patch.object(R, 'LEDGER', historical_ledger_path(self))
+        patch.start()
+        self.addCleanup(patch.stop)
+
     def test_fresh_zero_preimages_require_source_claim_and_validate_exactly(self):
         source = actual_input()
         manifest = R.derive_allocation(source)
@@ -97,6 +104,25 @@ class LyraSourceAllocationTest(unittest.TestCase):
             path.write_text(json.dumps(ledger))
             with self.assertRaisesRegex(ValueError, 'general free-space'):
                 R.derive_allocation(source, ledger_path=path)
+
+
+class CurrentCanonicalReservationControlTest(unittest.TestCase):
+    def test_actual_current_ledger_refuses_and_historical_cleanup_restores_default(self):
+        canonical = (ROOT / 'Config/allocation_ownership.json').resolve()
+        self.assertEqual(R.LEDGER.resolve(), canonical)
+        self.assertNotIn('rom_candidate_reservations', json.loads(canonical.read_bytes()))
+        with self.assertRaisesRegex(ValueError, 'No unique source-declared'):
+            R.reservation_claim(canonical)
+        historical = LyraSourceAllocationTest()
+        try:
+            historical.setUp()
+            self.assertNotEqual(R.LEDGER.resolve(), canonical)
+            self.assertEqual(R.reservation_claim()[0]['id'], R.CLAIM)
+        finally:
+            historical.doCleanups()
+        self.assertEqual(R.LEDGER.resolve(), canonical)
+        with self.assertRaisesRegex(ValueError, 'No unique source-declared'):
+            R.reservation_claim()
 
 
 if __name__ == '__main__':

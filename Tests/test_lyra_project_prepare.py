@@ -16,6 +16,7 @@ import lyra_project_publisher as P
 import lyra_project_allocation as R
 import lyra_project_composition as C
 import lyra_project_admission as A
+from lyra_historical_fixture import historical_ledger_path, historical_source_root
 
 QUALIFICATION = ROOT / 'Roms/LyraProject/ordinary-lineage.json'
 
@@ -85,6 +86,12 @@ class SavedCurrentPreparationTest(unittest.TestCase):
         cls.roles = json.loads(QUALIFICATION.read_bytes())
         if not all(Path(p).exists() for p in cls.roles.values()):
             raise unittest.SkipTest('Exact private qualification controls unavailable')
+        cls.historical_ledger = historical_ledger_path(cls)
+        for module, name, value in ((R, 'LEDGER', cls.historical_ledger),
+                                    (P, 'ROOT', historical_source_root(cls))):
+            patch = mock.patch.object(module, name, value)
+            patch.start()
+            cls.addClassCleanup(patch.stop)
         cls.source = Path(cls.roles['saved_rom']).read_bytes()
         cls.observation = json.loads(Path(cls.roles['authoring_observation']).read_bytes())
 
@@ -221,7 +228,7 @@ class SavedCurrentPreparationTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory).resolve() / 'ledger.json'
             for purpose in ('tables', 'code', 'streams'):
-                ledger = json.loads(R.LEDGER.read_bytes())
+                ledger = json.loads(self.historical_ledger.read_bytes())
                 claim = next(c for c in ledger['rom_candidate_reservations'] if c['id'] == R.CLAIM)
                 region = next(r for r in claim['regions'] if r['purpose'] == purpose)
                 region['pc'] = [0x3D6000, 0x3D6200]

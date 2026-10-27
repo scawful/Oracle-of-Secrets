@@ -7,11 +7,12 @@ import copy
 import json
 from pathlib import Path
 import re
-import subprocess
 import sys
 import tempfile
 import unittest
 from unittest import mock
+
+import lyra_source_snapshots as snapshots
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'Scripts/Build'))
@@ -30,7 +31,7 @@ CONTRACT = 'Config/lyra_current_source_contract.json'
 
 
 def frozen_bytes(path):
-    return subprocess.check_output(['git', '-C', str(ROOT), 'show', FROZEN + ':' + path])
+    return snapshots.read_snapshot(FROZEN, path)
 
 
 def raw_member(text, key):
@@ -49,8 +50,7 @@ class CatalogCallersContractTest(unittest.TestCase):
         cls.frozen_ledger_raw = frozen_bytes(LEDGER)
         cls.frozen_ledger = json.loads(cls.frozen_ledger_raw)
         cls.frozen_contract = json.loads(frozen_bytes(CONTRACT))
-        cls.callers_ledger_raw = subprocess.check_output(
-            ['git', '-C', str(ROOT), 'show', CALLERS_HEAD + ':' + LEDGER])
+        cls.callers_ledger_raw = snapshots.read_snapshot(CALLERS_HEAD, LEDGER)
         # This calls the maintained pure table planner with the labelled host
         # source/origins/32-tail fixture. It writes no generated files or ROM.
         reader_fixtures.CurrentNativeLoaderTests.setUpClass()
@@ -162,6 +162,34 @@ class CatalogCallersContractTest(unittest.TestCase):
         # Binding only the exact ledger cannot supply a verified source profile.
         with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_PROFILE_REQUIRED'):
             self.compose(self.bound_contract())
+
+
+class SourceSnapshotIntegrityTest(unittest.TestCase):
+    def test_all17_pinned_snapshots_load_without_git_or_network(self):
+        self.assertEqual(len(snapshots.SNAPSHOT_KEYS), 17)
+        with mock.patch('subprocess.check_output', side_effect=AssertionError('Unexpected Git call')):
+            for commit, path in snapshots.SNAPSHOT_KEYS:
+                with self.subTest(commit=commit, path=path):
+                    raw = snapshots.read_snapshot(commit, path)
+                    self.assertEqual(snapshots.read_snapshot_text(commit, path).encode('utf-8'), raw)
+
+    def test_changed_compressed_snapshot_refuses_before_comparison(self):
+        commit, path = snapshots.SNAPSHOT_KEYS[0]
+        pin = snapshots._PINS[(commit, path)]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / (pin['git_blob'] + '.gz')).write_bytes(b'changed fixture')
+            with mock.patch.object(snapshots, '_FIXTURE_ROOT', root):
+                with self.assertRaisesRegex(ValueError, 'snapshot compressed bytes changed'):
+                    snapshots.read_snapshot(commit, path)
+
+    def test_unpinned_commit_or_path_refuses(self):
+        commit, path = snapshots.SNAPSHOT_KEYS[0]
+        for key in ((commit[:8], path), (commit, '../' + path),
+                    ('0' * 40, path), (commit, 'unlisted-source.asm')):
+            with self.subTest(key=key):
+                with self.assertRaisesRegex(ValueError, 'Unpinned Lyra source snapshot'):
+                    snapshots.read_snapshot(*key)
 
 
 if __name__ == '__main__':

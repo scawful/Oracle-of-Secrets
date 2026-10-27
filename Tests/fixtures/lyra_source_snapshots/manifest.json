@@ -1,0 +1,158 @@
+{
+  "kind": "lyra.test_source_snapshots.v1",
+  "snapshots": [
+    {
+      "byte_count": 60175,
+      "commit": "6e7e5f15d555dffb9f4b3d8807595c9e3f13305f",
+      "git_blob": "491cbdba93e139056716e313338e0f4ceed60413",
+      "gzip_byte_count": 9659,
+      "gzip_sha256": "d4408dd508797b0716e1eec9c44d4365b3ced643ca868f13e0e86074f8dea609",
+      "path": "Config/allocation_ownership.json",
+      "sha256": "cbe9e136148d961d70abee7b864533383e2632c791bf2fc01f7e7c6cb33afc17"
+    },
+    {
+      "byte_count": 1782,
+      "commit": "6e7e5f15d555dffb9f4b3d8807595c9e3f13305f",
+      "git_blob": "7c315bc1c7435a888c2a0f00c0e63c58b687b637",
+      "gzip_byte_count": 744,
+      "gzip_sha256": "fa33863d80ba3a465e626f7cd5456eb544f962c096bbb86e16c653ff5e54be9b",
+      "path": "Config/lyra_current_source_contract.json",
+      "sha256": "6ff1379267a95184f6d12dce10fd1ce04e57048d54189a647fb1f035c811eeae"
+    },
+    {
+      "byte_count": 186940,
+      "commit": "6e7e5f15d555dffb9f4b3d8807595c9e3f13305f",
+      "git_blob": "0eda5414808c527af098606337f0be7cbd5570f0",
+      "gzip_byte_count": 40868,
+      "gzip_sha256": "c4c0ab192952eb1e2f2f8a25d1154cff910afffbf113386c5a684d81833d8974",
+      "path": "Overworld/ZSCustomOverworld.asm",
+      "sha256": "abdda21d3ac0bd6f7b5b3888cfb66594e2585bedfa65f4a445cc94fb68f2c416"
+    },
+    {
+      "byte_count": 3054,
+      "commit": "6e7e5f15d555dffb9f4b3d8807595c9e3f13305f",
+      "git_blob": "2654cfaa897ddb42b20e975ba6b22803c3bd2ddc",
+      "gzip_byte_count": 1235,
+      "gzip_sha256": "1555d7d3ca323c65a569ac4df904c856f441804f7b7a0c8110e0d946c6be5527",
+      "path": "Overworld/custom_gfx.asm",
+      "sha256": "5712e3b805c539272f887a8e23aa88143f33ae4beebfe6954dc70821c141e519"
+    },
+    {
+      "byte_count": 5918,
+      "commit": "6e7e5f15d555dffb9f4b3d8807595c9e3f13305f",
+      "git_blob": "58a2ef6db180354af62712a9aed464a3889e3b8c",
+      "gzip_byte_count": 2003,
+      "gzip_sha256": "7cf892e740d4c961b2856d66b12790147eb3d6c925b8671d40fbb056d1e63074",
+      "path": "Overworld/graphics_runtime.asm",
+      "sha256": "921c184a8092012eba6444a8d260f99801a615fc99e150473cbcb22c3469f091"
+    },
+    {
+      "byte_count": 67665,
+      "commit": "80fb34a9e70fe0dd7d32b5b47baf00d2033e4a85",
+      "git_blob": "ea8744a3808ae5d316bb6055a2b84f5998c583a3",
+      "gzip_byte_count": 10229,
+      "gzip_sha256": "131e9b0b1dde4d4f87e68b6e96884ac616fc512ca6234b0d4fc177580784bfea",
+      "path": "Config/allocation_ownership.json",
+      "sha256": "2eb364c2fda6f98899248bf0b980a49340c290e7b179aca8646734a7aff18304"
+    },
+    {
+      "byte_count": 35993,
+      "commit": "c19cf98873c0d409043b1d59016633f415b72dba",
+      "git_blob": "93b0ec58791070ac86da38ad7ecb49b0f90ab3ae",
+      "gzip_byte_count": 10628,
+      "gzip_sha256": "89d008f0b0b24f5fe77d452db2dc5721465330bf804203a5f324bf6be28a0b32",
+      "path": "Masks/mask_routines.asm",
+      "sha256": "0c1e6cab6031d1279c4e1fdfbcde52db3213e9f19a818d7d04d9231d5f41526b"
+    },
+    {
+      "byte_count": 173133,
+      "commit": "c19cf98873c0d409043b1d59016633f415b72dba",
+      "git_blob": "356801282342d930b75c0288927ef952ca4e0389",
+      "gzip_byte_count": 39117,
+      "gzip_sha256": "3d4be42e70520287040d90deb61aec24e66a0d357c440380fd70e025a48242e6",
+      "path": "Overworld/ZSCustomOverworld.asm",
+      "sha256": "94d7d7704faf916236b019ced369b49a8e7899fcf9ff73b8c78b6f29c54e91eb"
+    },
+    {
+      "byte_count": 2048,
+      "commit": "c19cf98873c0d409043b1d59016633f415b72dba",
+      "git_blob": "d02ca7c8fd36f66cdddd5de2770058234f058600",
+      "gzip_byte_count": 800,
+      "gzip_sha256": "139bdee91c452151e516b965f601418d3f7ca3b704e6c5cc6df6ed5bb14fcca4",
+      "path": "Overworld/custom_gfx.asm",
+      "sha256": "699430a000dc412c1763303393f7b1f2c21e7c33e12ecc25bb8fd45d1ed59bd1"
+    },
+    {
+      "byte_count": 2663,
+      "commit": "c19cf98873c0d409043b1d59016633f415b72dba",
+      "git_blob": "fb0305d2bb12c466071224097be2fec9270a0a0d",
+      "gzip_byte_count": 1290,
+      "gzip_sha256": "a4d70da4e995c16205f3bc0f8b91fec08b783e4620ca92759373056106914a39",
+      "path": "Overworld/goron_checkpoint.asm",
+      "sha256": "e02776e12460218c3f0d79528d7644475c47e57c313e0784d2a403d2ffaa2477"
+    },
+    {
+      "byte_count": 8341,
+      "commit": "c19cf98873c0d409043b1d59016633f415b72dba",
+      "git_blob": "4afed42d4a6aba0a56f665cd6a26ecbe101d0ffd",
+      "gzip_byte_count": 2559,
+      "gzip_sha256": "396dc477fd156960c3ebbcd38a2da515af1770ab6c80e89a60122d621179e8ca",
+      "path": "Overworld/lost_woods.asm",
+      "sha256": "71949c98effadd157b4f04a412b0220a3b57442b1337e653187f79b98eece351"
+    },
+    {
+      "byte_count": 18989,
+      "commit": "c19cf98873c0d409043b1d59016633f415b72dba",
+      "git_blob": "e5b22e8b960257bc214b3c8d9a09bb1d508e215e",
+      "gzip_byte_count": 6150,
+      "gzip_sha256": "6d1c2d3557be889f95c71a578dc3899bd0332e32768794e6cfb0b091b0acb0f0",
+      "path": "Overworld/time_system.asm",
+      "sha256": "b09a51c1e1b658265aeab66b308e3628e21411ae5b4b7a7fab93dc91cd724adc"
+    },
+    {
+      "byte_count": 53785,
+      "commit": "f4efa458f24ce3703519615df76c29b6b2b4e3ea",
+      "git_blob": "f0a0b7e9d42387a1f7f179ce99f0f0d40ad90e87",
+      "gzip_byte_count": 8050,
+      "gzip_sha256": "b60472b1fd8958681e1f3f5650c499cd203b33ae4f81214df67ecb93281c3b3b",
+      "path": "Config/allocation_ownership.json",
+      "sha256": "e08c872e206f7c8068a3aeb47ebd9c5fcb32acb54b07aa27c13affc668e06503"
+    },
+    {
+      "byte_count": 10285,
+      "commit": "f4efa458f24ce3703519615df76c29b6b2b4e3ea",
+      "git_blob": "e2c6ccee3d49d69cdbdf2b90c0d82338297a75bd",
+      "gzip_byte_count": 4360,
+      "gzip_sha256": "56b54b91011bf941c9757124ef6d3b958a8fe7c0570dd61747ff9191d2adccda",
+      "path": "Core/patches.asm",
+      "sha256": "66101c3b4a4a027c4fa13fbb121bc469c28809dc3f2414969935626c7d3e4619"
+    },
+    {
+      "byte_count": 163335,
+      "commit": "f4efa458f24ce3703519615df76c29b6b2b4e3ea",
+      "git_blob": "80e033b1909c58e223f02f36075e8bf0b3aa4ff3",
+      "gzip_byte_count": 9562,
+      "gzip_sha256": "63b4b4f3b128dbf6f3d11393b4bb06417c62216bb41b6af933eea976c1b9cdfa",
+      "path": "Data/dungeons/custom_collision.json",
+      "sha256": "13342cd4fc8f719e6c502ada53225dd55df8dcd73f299db02fd42b1288c85514"
+    },
+    {
+      "byte_count": 6083,
+      "commit": "f4efa458f24ce3703519615df76c29b6b2b4e3ea",
+      "git_blob": "4603f110bc6f8082535a0625adabf6eeb0c65544",
+      "gzip_byte_count": 943,
+      "gzip_sha256": "6831f78a5c1fcee43ed846ae90c37cdc5c390bc8d3c0df1a3d2a6078dc574009",
+      "path": "Dungeons/Collision/GlobalCollisionTables.asm",
+      "sha256": "37b472419b5095eff2241b6792be43d3257252b0b645f3d72645189365658c8e"
+    },
+    {
+      "byte_count": 3219,
+      "commit": "f4efa458f24ce3703519615df76c29b6b2b4e3ea",
+      "git_blob": "b1ade2cd0827ade4d8010eb0cf56ec2d6e1f2a8d",
+      "gzip_byte_count": 1296,
+      "gzip_sha256": "739941ffe46882b2fe521e84cbfd1b55e571c9f52192950719241bbca8f026d4",
+      "path": "Items/ice_rod.asm",
+      "sha256": "8bcd1f79e44e182728726c49bccd99ff2067d56d63df6552376d1244abd87cd5"
+    }
+  ]
+}

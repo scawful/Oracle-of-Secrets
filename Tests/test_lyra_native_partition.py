@@ -12,13 +12,15 @@ import lyra_project_allocation as R
 import lyra_project_tile32 as T
 import lyra_project_prepare as Q
 import lyra_project_admission as A
+from lyra_historical_fixture import historical_ledger_path
 
 WORKING = Path('/Users/scawful/Zelda/Projects/Oracle-of-Secrets/Oracle-Working/oracle-working.sfc')
 
 
 class NativePartitionTest(unittest.TestCase):
     def setUp(self):
-        self.claim, self.ledger_hash = R.reservation_claim()
+        self.ledger = historical_ledger_path(self)
+        self.claim, self.ledger_hash = R.reservation_claim(self.ledger)
         self.partition = self.claim['current_saved_native_tile32_partition']
 
     def request(self, count, source_hash):
@@ -57,11 +59,11 @@ class NativePartitionTest(unittest.TestCase):
         with (mock.patch.object(Q.T32, 'ownership', return_value={'retained_native_ids': [0x453D, 0x453E, 0x453F]}),
               mock.patch.object(Q.A, 'read_tile32', return_value=(0,) * 4),
               mock.patch.object(Q.C, '_missing', return_value=[(i,) * 4 for i in range(1000, 1010)])):
-            assignment = Q.current_assignment(b'fixture', b'terrain', object(), frozen, R.LEDGER)
+            assignment = Q.current_assignment(b'fixture', b'terrain', object(), frozen, self.ledger)
             self.assertEqual([r['tile32_id'] for r in assignment['assignments']][-10:], list(range(0x4533, 0x453D)))
             with mock.patch.object(Q.C, '_missing', return_value=[(i,) * 4 for i in range(1000, 1011)]):
                 with self.assertRaisesRegex(ValueError, '11 new definitions exceed 10'):
-                    Q.current_assignment(b'fixture', b'terrain', object(), frozen, R.LEDGER)
+                    Q.current_assignment(b'fixture', b'terrain', object(), frozen, self.ledger)
 
 
 @unittest.skipUnless(WORKING.exists(), 'Exact private saved Working source unavailable in CI')
@@ -69,7 +71,8 @@ class ActualSavedPartitionTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.source = WORKING.read_bytes()
-        cls.claim, _ = R.reservation_claim()
+        cls.ledger = historical_ledger_path(cls)
+        cls.claim, _ = R.reservation_claim(cls.ledger)
         cls.partition = cls.claim['current_saved_native_tile32_partition']
         if R.sha(cls.source) != cls.partition['source_rom_sha256']:
             raise unittest.SkipTest('Working project has a newer saved source')
@@ -79,7 +82,7 @@ class ActualSavedPartitionTest(unittest.TestCase):
         self.assertEqual(receipt['native_maps'], 160)
         self.assertEqual(receipt['retained_native_references'], self.partition['native_references'])
         self.assertEqual(receipt['lyra_assignable_ids'], list(range(0x44C0, 0x453D)))
-        self.assertEqual(Q.resource_report(self.source, R.LEDGER), [])
+        self.assertEqual(Q.resource_report(self.source, self.ledger), [])
 
     def test_any_editor_save_change_expires_named_partition(self):
         source = bytearray(self.source)

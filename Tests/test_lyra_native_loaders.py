@@ -323,7 +323,8 @@ class NativeHelperTests(unittest.TestCase):
                         L._verify_reviewed_binding(bytes(altered), symbols)
 
     def test_rom_and_music_foreign_owners_refused(self):
-        original = json.loads(L.R.LEDGER.read_bytes())
+        from lyra_historical_fixture import historical_ledger_path
+        original = json.loads(historical_ledger_path(self).read_bytes())
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'ledger.json'
             for space, at, check in (('pc_rom', L.CODE_START, L._publication),

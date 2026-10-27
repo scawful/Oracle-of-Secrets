@@ -13,6 +13,7 @@ import lyra_project_publisher as P
 import lyra_project_admission as A
 import lyra_project_composition as C
 import lyra_project_allocation as R
+from lyra_historical_fixture import historical_ledger_path, historical_source_root
 
 REQUEST = Path('/Users/scawful/.context/projects/oracle-of-secrets/scratchpad/handoffs/'
     'christmas_completion_2026-10-20/credit-phase/composition/REQUEST.json')
@@ -64,7 +65,7 @@ class PublisherContextTest(unittest.TestCase):
                 P.project_context(project)
 
     def test_current_authorization_is_specific_and_does_not_grant_general_allocation(self):
-        ledger = json.loads(R.LEDGER.read_bytes())
+        ledger = json.loads(historical_ledger_path(self).read_bytes())
         claim = next(c for c in ledger['rom_candidate_reservations'] if c['id'] == R.CLAIM)
         claim['ordinary_build_publication'] = copy.deepcopy(P.PUBLICATION)
         with tempfile.TemporaryDirectory() as directory:
@@ -137,6 +138,9 @@ class ActualPublisherDataTest(unittest.TestCase):
         original = json.loads(REQUEST.read_bytes())
         if not all(Path(original[key]).exists() for key in P.ROLES):
             raise unittest.SkipTest('Exact historical inputs unavailable')
+        source_patch = mock.patch.object(P, 'ROOT', historical_source_root(cls))
+        source_patch.start()
+        cls.addClassCleanup(source_patch.stop)
         cls.directory = tempfile.TemporaryDirectory()
         cls.folder = Path(cls.directory.name).resolve()
         cls.request = cls.folder / 'request.json'
@@ -147,7 +151,7 @@ class ActualPublisherDataTest(unittest.TestCase):
             + original['terrain'] + '\nlyra_build_request_file=request.json\n[rom]\nrole=dev\n')
         # Private preparation test only: does not authorize native code or change
         # the source ledger. Native-owner tests verify the real runtime variant.
-        ledger = json.loads(R.LEDGER.read_bytes())
+        ledger = json.loads(historical_ledger_path(cls).read_bytes())
         next(c for c in ledger['rom_candidate_reservations'] if c['id'] == R.CLAIM)[
             'ordinary_build_publication'] = copy.deepcopy(P.PUBLICATION)
         cls.ledger = cls.folder / 'ledger.json'

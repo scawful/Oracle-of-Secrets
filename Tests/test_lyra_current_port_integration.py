@@ -3,10 +3,11 @@ import json
 import os
 from pathlib import Path
 import re
-import subprocess
 import sys
 import unittest
 from unittest import mock
+
+from lyra_source_snapshots import read_snapshot_text
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'Scripts/Generate'))
@@ -51,8 +52,7 @@ class CurrentPortIntegrationTest(unittest.TestCase):
                      'Overworld/lost_woods.asm', 'Overworld/custom_gfx.asm',
                      'Overworld/goron_checkpoint.asm', 'Masks/mask_routines.asm'):
             with self.subTest(path=name):
-                original = subprocess.check_output(['git', '-C', str(ROOT), 'show',
-                    'c19cf98873c0d409043b1d59016633f415b72dba:'+name]).decode()
+                original = read_snapshot_text('c19cf98873c0d409043b1d59016633f415b72dba', name)
                 self.assertEqual(statements((ROOT/name).read_text(), defines), statements(original, defines))
 
     def test_current_callers_have_separate_direction_and_backdrop_boundaries(self):

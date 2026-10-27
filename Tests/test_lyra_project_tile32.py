@@ -14,13 +14,14 @@ import lyra_project_allocation as R
 import lyra_project_terrain as T
 import lyra_project_tile32 as D
 from test_lyra_project_admission import document, observation, source_rom
+from lyra_historical_fixture import historical_ledger_path
 
 
 class LyraTile32AssignmentTest(unittest.TestCase):
     def setUp(self):
         self.folder = tempfile.TemporaryDirectory()
         self.addCleanup(self.folder.cleanup)
-        self.ledger = json.loads(R.LEDGER.read_bytes())
+        self.ledger = json.loads(historical_ledger_path(self).read_bytes())
         source = bytearray(source_rom().ljust(0x400000, b'\0'))
         for base in A.TILE32_BASES:
             source[base + 0x6720:base + 0x67E0] = bytes.fromhex('a4a4a4a41111') * 32
