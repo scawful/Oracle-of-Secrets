@@ -51,6 +51,7 @@ from asm_source import (
     DEFINE_ANY_ASSIGN_RE,
     _load_global_defines,
     _iter_active_lines,
+    _is_identical_build_context_assignment,
 )
 
 # Hook scanner (Python source scan; see generate_hooks_json.py)
@@ -339,6 +340,8 @@ def collect_reachable_asm_sources(
         for line_index, line, _ in _iter_active_lines(lines, active_defines):
             assignment = DEFINE_ANY_ASSIGN_RE.match(line.split(";", 1)[0])
             if assignment and assignment.group(1) in active_defines:
+                if _is_identical_build_context_assignment(rel, line, active_defines):
+                    continue
                 raise ManifestGenerationError(
                     f"{rel}:{line_index + 1}: reachable source reassigns "
                     f"preloaded global define !{assignment.group(1)} outside "

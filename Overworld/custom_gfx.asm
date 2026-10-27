@@ -2,6 +2,9 @@
 ; which held the ship before the 2026-10-19 split). $8A = parent area.
 CheckForChangeGraphicsNormalLoadBoat:
 {
+if !LYRA_CURRENT_MODE == 1
+  JML SharedGraphicsNormalLoad
+else
   LDA $8A : CMP.b #$38 : BEQ .load
   CMP.b #$30 : BNE .boat_area
   .load
@@ -11,7 +14,45 @@ CheckForChangeGraphicsNormalLoadBoat:
     PLB
   .boat_area
   RTL
+endif
 }
+
+; These callbacks exist only in the explicitly selected current composition.
+; Native mode retains the original load routine and payload placement below.
+if !LYRA_CURRENT_MODE == 1
+InvalidateCustomGraphicsCache:
+{
+  JML SharedGraphicsInvalidateCache
+}
+
+; A8/XY8, X=auxiliary slot. Preserve X/Y; retain native $FF skip behavior
+; unless the existing auxiliary cache has a saved overridden native sheet.
+ResolveCustomGraphicsTransitionSheet:
+{
+  CMP.b #$FF : BNE .done
+  CPX.b #$03 : BCC .done
+  CPX.b #$07 : BCS .done
+  LDA.w $04CB, X : CMP.b #$FF : BEQ .restore
+    LDA.b #$FF
+    RTL
+  .restore
+    LDA.l $7EC2F5, X
+  .done
+  RTL
+}
+
+; A16/XY8, native DMA destination/count/schedule remain caller-owned.
+SelectCustomGraphicsTransitionSource:
+{
+  JML SharedGraphicsTransitionSource
+}
+
+; A8/XY16, retain the native incremental $50..$5F upload schedule.
+SelectShipIncrementalGraphicsSource:
+{
+  JML SharedGraphicsIncrementalSource
+}
+endif
 
 macro ApplyGraphicsSheet(sheet, dest)
   REP #$20                ; A = 16, XY = 8

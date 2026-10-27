@@ -8,6 +8,8 @@ and generate_hack_manifest.py. Also owns their shared reachable include graph.
 from __future__ import annotations
 
 import ast
+import hashlib
+import json
 import os
 import re
 from pathlib import Path
@@ -20,6 +22,13 @@ DEFINE_REF_RE = re.compile(r"!([A-Za-z_][A-Za-z0-9_]*)\b")
 DEFINE_ANY_ASSIGN_RE = re.compile(
     r"^\s*!([A-Za-z_][A-Za-z0-9_]*)\s*(#=|=)\s*(.*?)\s*$"
 )
+DEFINED_RE = re.compile(r'''\bdefined\(\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*\)''')
+LYRA_CONTEXT_ENV = "OOS_LYRA_BUILD_CONTEXT"
+LYRA_CONSTANTS = "Data/Generated/lyra_project/runtime_constants.asm"
+LYRA_CONTEXT_NAMES = {"LYRA_BUILD_CONTEXT", "LYRA_PROJECT_DATA_PRESENT", "LYRA_NATIVE_A1_ENABLED",
+                      "LYRA_CURRENT_MODE", "LYRA_CURRENT_FIRST", "LYRA_CURRENT_END", "LYRA_CURRENT_PARENT_COUNT"}
+BG128_CONTEXT_NAMES = {"PROJECT_BG128_ENABLED", "PROJECT_BG128_RESTORE_BOUND",
+                       "PROJECT_BG128_CODE_BASE", "PROJECT_BG128_CODE_END"}
 HEX_LITERAL_RE = re.compile(r"\$([0-9A-Fa-f]+)\b")
 IF_DIRECTIVE_RE = re.compile(r"^\s*(if|elseif)\b(.*)$", re.IGNORECASE)
 ELSE_DIRECTIVE_RE = re.compile(r"^\s*else\b", re.IGNORECASE)
@@ -53,7 +62,54 @@ def _load_global_defines(root: Path) -> dict[str, int]:
                 continue
             name, value = parsed
             defines[name] = value
+    # This is an internal invocation context, selected by build_rom.sh only
+    # after current preparation succeeds. File existence never enables Lyra.
+    context = os.environ.get(LYRA_CONTEXT_ENV, "0")
+    if context not in ("0", "1"):
+        raise ValueError(f"{LYRA_CONTEXT_ENV} must be0 or1")
+    defines.update(LYRA_BUILD_CONTEXT=int(context), LYRA_PROJECT_DATA_PRESENT=0, LYRA_NATIVE_A1_ENABLED=0,
+                   LYRA_CURRENT_MODE=0, LYRA_CURRENT_FIRST=0xA0, LYRA_CURRENT_END=0xC0,
+                   LYRA_CURRENT_PARENT_COUNT=0xC0, PROJECT_BG128_ENABLED=0, PROJECT_BG128_RESTORE_BOUND=0)
+    if context == "1":
+        constants = (root / LYRA_CONSTANTS).read_bytes()
+        prepared = json.loads((root / "Data/Generated/lyra_project/prepare.json").read_bytes())
+        if (prepared.get("kind") not in ("lyra.ordinary_build_prepare.v1", "lyra.current_build_prepare.v1")
+                or prepared.get("selected") is not True
+                or prepared.get("generated_files", {}).get("runtime_constants.asm")
+                != hashlib.sha256(constants).hexdigest()):
+            raise ValueError("Selected Lyra source context is not bound to current prepared constants")
+        for line in constants.decode("utf-8").splitlines():
+            parsed = _parse_define_assignment(line, defines)
+            if parsed is not None:
+                name, value = parsed
+                if (not name.startswith("LYRA_") and name not in BG128_CONTEXT_NAMES) or name == "LYRA_BUILD_CONTEXT":
+                    raise ValueError("Generated Lyra constants contain a foreign/context definition")
+                defines[name] = value
+        current = defines['LYRA_CURRENT_MODE']
+        if current not in (0, 1) or defines["LYRA_PROJECT_DATA_PRESENT"] != 1:
+            raise ValueError("Selected Lyra context requires enabled prepared data")
+        if current == 1:
+            if (prepared.get('kind') != 'lyra.current_build_prepare.v1'
+                    or defines['LYRA_NATIVE_A1_ENABLED'] != 0
+                    or prepared.get('allocation_granted') is not True
+                    or prepared.get('producer_enforcement_verified') is not True
+                    or prepared.get('runtime_admission') is not True):
+                raise ValueError('Current full32 context requires reviewed allocation, producer and runtime admission')
+        elif defines['LYRA_NATIVE_A1_ENABLED'] != 1 or prepared.get('kind') != 'lyra.ordinary_build_prepare.v1':
+            raise ValueError('Historical Lyra context requires its original A1 preparation')
     return defines
+
+
+def _is_identical_build_context_assignment(relative: str, line: str, defines: dict[str, int]) -> bool:
+    """Only the generated context and entry fallback may repeat these values."""
+    parsed = _parse_define_assignment(line, defines)
+    if parsed is None:
+        return False
+    name, value = parsed
+    allowed = ((relative == "Oracle_main.asm" and name in LYRA_CONTEXT_NAMES)
+               or (relative == LYRA_CONSTANTS and name.startswith("LYRA_")
+                   and name != "LYRA_BUILD_CONTEXT" and defines.get("LYRA_BUILD_CONTEXT") == 1))
+    return allowed and name in defines and defines[name] == value
 
 
 _ALLOWED_BINOPS = {
@@ -72,6 +128,7 @@ _ALLOWED_UNARYOPS = {
     ast.UAdd: lambda a: +a,
     ast.USub: lambda a: -a,
     ast.Invert: lambda a: ~a,
+    ast.Not: lambda a: not a,
 }
 _ALLOWED_CMPOPS = {
     ast.Eq: lambda a, b: a == b,
@@ -130,6 +187,10 @@ def _eval_condition(expr: str, defines: dict[str, int]) -> Optional[bool]:
     if not raw:
         return None
     raw = raw.replace("&&", " and ").replace("||", " or ")
+    # An absent foreign name may come from an external assembler -D option.
+    # Keep that condition unknown unless this invocation owns its presence.
+    raw = DEFINED_RE.sub(lambda m: "1" if m.group(1) in defines else
+                        "0" if m.group(1) in LYRA_CONTEXT_NAMES else m.group(0), raw)
     unknown = False
 
     def repl(m: re.Match) -> str:
@@ -421,6 +482,8 @@ def collect_reachable_asm_sources(
         for line_index, line, _ in _iter_active_lines(lines, active_defines):
             assignment = DEFINE_ANY_ASSIGN_RE.match(line.split(";", 1)[0])
             if assignment and assignment.group(1) in active_defines:
+                if _is_identical_build_context_assignment(rel, line, active_defines):
+                    continue
                 raise SourceGraphError(
                     f"{rel}:{line_index + 1}: reachable source reassigns "
                     f"preloaded global define !{assignment.group(1)} outside "

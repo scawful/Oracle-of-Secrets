@@ -2,7 +2,15 @@
 ; Change Link's sprite by setting $BC to the gfx bank
 
 ; InitializeMemoryAndSRAM
-org $008827 : JSL StartupMasks ; @hook module=Masks name=StartupMasks kind=jsl target=StartupMasks
+!ProjectBG128_OwnsStartup = 0
+if defined("PROJECT_BG128_ENABLED")
+  if !PROJECT_BG128_ENABLED == 1
+    !ProjectBG128_OwnsStartup = 1
+  endif
+endif
+if !ProjectBG128_OwnsStartup == 0
+  org $008827 : JSL StartupMasks ; @hook module=Masks name=StartupMasks kind=jsl target=StartupMasks
+endif
 
 ; Link Sprite hook before game starts
 org $008A01 : LDA $BC

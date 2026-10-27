@@ -1,0 +1,714 @@
+{
+  "bindings": [
+    {
+      "parent_maps": [
+        48
+      ],
+      "profile_id": "kalyxo-docks"
+    },
+    {
+      "parent_maps": [
+        50
+      ],
+      "profile_id": "loom-docks-approach"
+    },
+    {
+      "parent_maps": [
+        56
+      ],
+      "profile_id": "dragon-ship"
+    },
+    {
+      "parent_maps": [
+        135
+      ],
+      "profile_id": "sky-d8-tower"
+    },
+    {
+      "parent_maps": [
+        131
+      ],
+      "profile_id": "stepped-waterfront-fort"
+    }
+  ],
+  "profiles": {
+    "dragon-ship": {
+      "bg_character_base_word": 8192,
+      "transfers": [
+        {
+          "byte_count": 8192,
+          "resource_id": "snes4bpp:737a896e831d60e69e9d7e0054e1324e2eb63f83e938ad35f159035cde038178",
+          "source_offset": 0,
+          "vram_word_address": 11264
+        },
+        {
+          "byte_count": 8192,
+          "resource_id": "snes4bpp:538906c5ff8ab0c1b9af76e3c0a6c05560b5eac07e72a9d6243fc43ce19857e2",
+          "source_offset": 0,
+          "vram_word_address": 20480
+        }
+      ]
+    },
+    "kalyxo-docks": {
+      "bg_character_base_word": 8192,
+      "transfers": [
+        {
+          "byte_count": 8192,
+          "resource_id": "snes4bpp:7ee45cc2f6e5f42d741794779fd6b79f9a5775f3fddea03a8a53d2038a9806c0",
+          "source_offset": 0,
+          "vram_word_address": 11264
+        }
+      ]
+    },
+    "loom-docks-approach": {
+      "bg_character_base_word": 8192,
+      "transfers": [
+        {
+          "byte_count": 2048,
+          "resource_id": "snes4bpp:3fd640ea5f71e4301983dc4944b355f6d8582ea14797605688e5adaf37ffc3b4",
+          "source_offset": 0,
+          "vram_word_address": 11264
+        }
+      ]
+    },
+    "sky-d8-tower": {
+      "bg_character_base_word": 8192,
+      "transfers": [
+        {
+          "byte_count": 2048,
+          "resource_id": "snes4bpp:b7db5e904ca0ad98f9c5268846efb2da0668a2e160a40a554c99747e65d659a8",
+          "source_offset": 0,
+          "vram_word_address": 14336
+        }
+      ]
+    },
+    "stepped-waterfront-fort": {
+      "authoring_contract": {
+        "background_pixel_index": 0,
+        "forbidden_opaque_indices": [
+          8
+        ],
+        "kind": "native-high-import",
+        "schema_version": 1
+      },
+      "bg_character_base_word": 8192,
+      "transfers": [
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 0,
+          "vram_word_address": 12288
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 32,
+          "vram_word_address": 12304
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 64,
+          "vram_word_address": 12336
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 96,
+          "vram_word_address": 12352
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 128,
+          "vram_word_address": 12368
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 160,
+          "vram_word_address": 12384
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 192,
+          "vram_word_address": 12400
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 224,
+          "vram_word_address": 12416
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 256,
+          "vram_word_address": 12432
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 288,
+          "vram_word_address": 12448
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 320,
+          "vram_word_address": 12480
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 352,
+          "vram_word_address": 12496
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 384,
+          "vram_word_address": 12512
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 416,
+          "vram_word_address": 12528
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 448,
+          "vram_word_address": 12544
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 480,
+          "vram_word_address": 12560
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 512,
+          "vram_word_address": 12576
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 544,
+          "vram_word_address": 12592
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 576,
+          "vram_word_address": 12608
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 608,
+          "vram_word_address": 12624
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 640,
+          "vram_word_address": 12640
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 672,
+          "vram_word_address": 12656
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 704,
+          "vram_word_address": 12672
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 736,
+          "vram_word_address": 12688
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 768,
+          "vram_word_address": 12704
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 800,
+          "vram_word_address": 12736
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 832,
+          "vram_word_address": 12752
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 864,
+          "vram_word_address": 12768
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 896,
+          "vram_word_address": 12784
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 928,
+          "vram_word_address": 12800
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 960,
+          "vram_word_address": 12816
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 992,
+          "vram_word_address": 12832
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1024,
+          "vram_word_address": 12848
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1056,
+          "vram_word_address": 12880
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1088,
+          "vram_word_address": 12896
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1120,
+          "vram_word_address": 12912
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1152,
+          "vram_word_address": 12928
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1184,
+          "vram_word_address": 12944
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1216,
+          "vram_word_address": 12960
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1248,
+          "vram_word_address": 12976
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1280,
+          "vram_word_address": 12992
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1312,
+          "vram_word_address": 13008
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1344,
+          "vram_word_address": 13056
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1376,
+          "vram_word_address": 13072
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1408,
+          "vram_word_address": 13088
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1440,
+          "vram_word_address": 13104
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1472,
+          "vram_word_address": 13136
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1504,
+          "vram_word_address": 13152
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1536,
+          "vram_word_address": 13168
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1568,
+          "vram_word_address": 13184
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1600,
+          "vram_word_address": 13200
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1632,
+          "vram_word_address": 13216
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1664,
+          "vram_word_address": 13232
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1696,
+          "vram_word_address": 13248
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1728,
+          "vram_word_address": 13264
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1760,
+          "vram_word_address": 13312
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1792,
+          "vram_word_address": 13328
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1824,
+          "vram_word_address": 13344
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1856,
+          "vram_word_address": 13360
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1888,
+          "vram_word_address": 13376
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1920,
+          "vram_word_address": 13392
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1952,
+          "vram_word_address": 13408
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 1984,
+          "vram_word_address": 13424
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2016,
+          "vram_word_address": 13456
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2048,
+          "vram_word_address": 13472
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2080,
+          "vram_word_address": 13520
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2112,
+          "vram_word_address": 13536
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2144,
+          "vram_word_address": 13552
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2176,
+          "vram_word_address": 13568
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2208,
+          "vram_word_address": 13584
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2240,
+          "vram_word_address": 13600
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2272,
+          "vram_word_address": 13616
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2304,
+          "vram_word_address": 13632
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2336,
+          "vram_word_address": 13648
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2368,
+          "vram_word_address": 13664
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2400,
+          "vram_word_address": 13680
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2432,
+          "vram_word_address": 13696
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2464,
+          "vram_word_address": 13712
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2496,
+          "vram_word_address": 13728
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2528,
+          "vram_word_address": 13776
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2560,
+          "vram_word_address": 13792
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2592,
+          "vram_word_address": 13808
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2624,
+          "vram_word_address": 13824
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2656,
+          "vram_word_address": 13840
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2688,
+          "vram_word_address": 13856
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2720,
+          "vram_word_address": 13872
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2752,
+          "vram_word_address": 13888
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2784,
+          "vram_word_address": 13904
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2816,
+          "vram_word_address": 14000
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2848,
+          "vram_word_address": 14016
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2880,
+          "vram_word_address": 14032
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2912,
+          "vram_word_address": 14048
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2944,
+          "vram_word_address": 14064
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 2976,
+          "vram_word_address": 14256
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 3008,
+          "vram_word_address": 14272
+        },
+        {
+          "byte_count": 32,
+          "resource_id": "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447",
+          "source_offset": 3040,
+          "vram_word_address": 14288
+        }
+      ]
+    }
+  },
+  "resources": {
+    "snes4bpp:3fd640ea5f71e4301983dc4944b355f6d8582ea14797605688e5adaf37ffc3b4": {
+      "byte_count": 2048,
+      "format": "snes4bpp",
+      "path": "gfx/kalyxo_docks_slot3.bin",
+      "sha256": "3fd640ea5f71e4301983dc4944b355f6d8582ea14797605688e5adaf37ffc3b4"
+    },
+    "snes4bpp:538906c5ff8ab0c1b9af76e3c0a6c05560b5eac07e72a9d6243fc43ce19857e2": {
+      "byte_count": 8192,
+      "format": "snes4bpp",
+      "path": "gfx/boat2.bin",
+      "sha256": "538906c5ff8ab0c1b9af76e3c0a6c05560b5eac07e72a9d6243fc43ce19857e2"
+    },
+    "snes4bpp:737a896e831d60e69e9d7e0054e1324e2eb63f83e938ad35f159035cde038178": {
+      "byte_count": 8192,
+      "format": "snes4bpp",
+      "path": "gfx/boat.bin",
+      "sha256": "737a896e831d60e69e9d7e0054e1324e2eb63f83e938ad35f159035cde038178"
+    },
+    "snes4bpp:7ee45cc2f6e5f42d741794779fd6b79f9a5775f3fddea03a8a53d2038a9806c0": {
+      "byte_count": 8192,
+      "format": "snes4bpp",
+      "path": "gfx/kalyxo_docks_bg.bin",
+      "sha256": "7ee45cc2f6e5f42d741794779fd6b79f9a5775f3fddea03a8a53d2038a9806c0"
+    },
+    "snes4bpp:b7db5e904ca0ad98f9c5268846efb2da0668a2e160a40a554c99747e65d659a8": {
+      "byte_count": 2048,
+      "format": "snes4bpp",
+      "path": "gfx/lyra_sky_tower_87.bin",
+      "sha256": "b7db5e904ca0ad98f9c5268846efb2da0668a2e160a40a554c99747e65d659a8"
+    },
+    "snes4bpp:cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447": {
+      "byte_count": 3072,
+      "format": "snes4bpp",
+      "path": "gfx/lyra_stepped_fort_83.bin",
+      "sha256": "cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447"
+    }
+  },
+  "schema_version": 2
+}

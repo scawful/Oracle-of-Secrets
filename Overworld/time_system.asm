@@ -198,6 +198,9 @@ TimeSystem_UpdatePalettes:
       RTS
     .outdoors
 
+    if !PROJECT_BG128_ENABLED == 1
+      JSL ProjectBGPalette_Begin
+    endif
     JSL RomToPaletteBuffer	; update buffer palette
     JSL PaletteBufferToEffective	; update effective palette
 
@@ -205,6 +208,9 @@ TimeSystem_UpdatePalettes:
     ; An hourly tint change does not change overlays: keep $1C/$1D, $99/$9A,
     ; fixed color and BG scroll exactly as the active overlay configured them.
     JSL RefreshOverworldBackdrop
+    if !PROJECT_BG128_ENABLED == 1
+      JSL ProjectBGPalette_CompleteBoth
+    endif
     INC.b $15
     RTS
 }
@@ -349,14 +355,31 @@ OverworldLoadScreensPaletteSet = $02C692
 ; Change buffer palette of trees,houses,rivers,etc.
 RomToPaletteBuffer:
 {
+    LyraHost_RomToPaletteBuffer = pc()
   LDX.b $8A
-  LDA.l $7EFD40,X : STA.b $00
+  if !LYRA_PROJECT_DATA_PRESENT == 1
+  LyraCall_SpritePalette_2 = pc()
+  JSL.l Lyra_ReadSpritePalette
+  else
+  LDA.l $7EFD40,X
+  endif
+  STA.b $00
 
+  if !LYRA_PROJECT_DATA_PRESENT == 1
+  LyraCall_PaletteSet_10 = pc()
+  JSL.l Lyra_ReadPaletteSet
+  else
   LDA.l OverworldPalettesScreenToSet_New,X
+  endif
   JSL OverworldPalettesLoader
   JSR Overworld_CopyPalettesToCache
-  JSR OverworldLoadScreensPaletteSet 
+  if !PROJECT_BG128_ENABLED == 1
+    JSR.w ProjectBGPalette_AreaNativeBody
+  else
+    JSR OverworldLoadScreensPaletteSet
+  endif
   RTL
+    LyraHost_RomToPaletteBuffer_End = pc()
 }
 
 PalBuf300_HUD = $7EC300
@@ -379,6 +402,9 @@ org $1BEF84 : JSL LoadDayNightPaletteEffect ; @hook module=Overworld name=LoadDa
 pullpc
 LoadDayNightPaletteEffect:
 {
+  if !PROJECT_BG128_ENABLED == 1
+    JSL ProjectBGPalette_ResolveColor
+  endif
   STA.l TimeState.SubColor : CPX #$0041 : BPL .title_check
     STA.l PalBuf300_HUD, X
     RTL
@@ -505,6 +531,7 @@ RefreshOverworldBackdrop:
 ReadOverworldBackdropColor:
 {
   LDA.b $8A : AND.w #$00FF
+Lyra_CurrentBackdropLegacy:
   CMP.w #$00A0 : BCS .invalid_area
   CMP.w #$0080 : BNE .area_color
     LDA.b $A0 : CMP.w #$0181 : BNE .reload_area

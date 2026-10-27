@@ -1,0 +1,21 @@
+{
+  "kind": "lyra.private_exact_save_producer_reservation.v1",
+  "scope": "private_candidate_only",
+  "production_admission": false,
+  "source_rom_sha256": "44f46bb06f589a39275ff40d35e40a3a5652502a981205eaebb54f4c447a3ee2",
+  "producer_transfer": {
+    "from": "yaze.native_overworld_terrain",
+    "to": "oracle.lyra_private_candidate",
+    "native_terrain_policy": "refuse_changes"
+  },
+  "tile32_id_range": [13992, 14436],
+  "stream_pc_range": [1260858, 1277952],
+  "dictionary_bases_pc": [98304, 131072, 2031616, 2064384],
+  "packed_preimages": [
+    {"pc": [119292, 119958], "sha256": "a81832a1890ee3808d233633a5cc4f90cd77edd8ef68781c8c1701dea4c09175"},
+    {"pc": [152060, 152726], "sha256": "a81832a1890ee3808d233633a5cc4f90cd77edd8ef68781c8c1701dea4c09175"},
+    {"pc": [2052604, 2053270], "sha256": "a81832a1890ee3808d233633a5cc4f90cd77edd8ef68781c8c1701dea4c09175"},
+    {"pc": [2085372, 2086038], "sha256": "a81832a1890ee3808d233633a5cc4f90cd77edd8ef68781c8c1701dea4c09175"}
+  ],
+  "stream_preimage": {"pc": [1260858, 1277952], "sha256": "412194777d0a23bcff78ea17b498da632466066462a6f0f2dc28b2758fced844"}
+}

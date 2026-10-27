@@ -1,0 +1,75 @@
+{
+  "kind": "lyra.current_engine_source_contract.v1",
+  "status": "proposed",
+  "scope": "source_review_only",
+  "engine_head": "8b004e65efacbd0777121c49a36f09a43759c922",
+  "base_head": "c19cf98873c0d409043b1d59016633f415b72dba",
+  "source_domain": {
+    "first_map": 160,
+    "end_map": 192,
+    "native_parent_count": 160,
+    "parent_count": 192
+  },
+  "allocation_granted": false,
+  "publication_authorized": false,
+  "producer_enforcement_verified": false,
+  "ordinary_build_ready": false,
+  "runtime_admission": false,
+  "ledger": {
+    "path": "Config/allocation_ownership.json",
+    "sha256": null,
+    "source_set": "lyra_current_full32_port_01",
+    "engine_ledger_sha256": "6bc162723d33d3589b076cbc7726fc6022d73732f2f5cecf75c9952098d485d6"
+  },
+  "native_readers": {
+    "decoder_spans": null,
+    "pointer_reader_spans": null
+  },
+  "origins": {
+    "tables": null,
+    "code": null,
+    "descriptor": null,
+    "bg_palette": null,
+    "graphics": null
+  },
+  "tables": {
+    "rows": 192,
+    "families": [
+      "bg_color",
+      "main_palette",
+      "mosaic",
+      "animated",
+      "overlay",
+      "gfx",
+      "parent",
+      "ByScreen1",
+      "ByScreen2",
+      "ByScreen3",
+      "ByScreen4",
+      "transition_y",
+      "transition_x",
+      "scroll_north",
+      "scroll_west",
+      "sprite_phase0",
+      "sprite_phase1",
+      "sprite_phase2",
+      "sign_text",
+      "map32_high",
+      "map32_low",
+      "bomb_doors",
+      "hidden_items",
+      "special_sprite_gfx",
+      "special_sprite_palettes",
+      "area_gfx",
+      "special_entry_gfx",
+      "music_dark_special",
+      "area_size",
+      "palette_set",
+      "music_phase0",
+      "music_phase1",
+      "music_phase2",
+      "music_phase3"
+    ]
+  },
+  "saved_generation_required": true
+}

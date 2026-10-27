@@ -39,6 +39,40 @@
 incsrc    "Util/macros.asm"
 incsrc    "Config/module_flags.asm"
 incsrc    "Config/feature_flags.asm"
+
+; Generated Lyra inputs belong to this build invocation, never file presence.
+if not(defined("LYRA_BUILD_CONTEXT"))
+  !LYRA_BUILD_CONTEXT = 0
+endif
+if !LYRA_BUILD_CONTEXT == 1
+  incsrc "Data/Generated/lyra_project/runtime_constants.asm"
+else
+  !LYRA_PROJECT_DATA_PRESENT = 0
+  !LYRA_NATIVE_A1_ENABLED = 0
+endif
+if not(defined("LYRA_CURRENT_MODE"))
+  !LYRA_CURRENT_MODE = 0
+endif
+if not(defined("LYRA_CURRENT_FIRST"))
+  !LYRA_CURRENT_FIRST = $A0
+endif
+if not(defined("LYRA_CURRENT_END"))
+  !LYRA_CURRENT_END = $C0
+endif
+if not(defined("LYRA_CURRENT_PARENT_COUNT"))
+  !LYRA_CURRENT_PARENT_COUNT = $C0
+endif
+assert !LYRA_CURRENT_FIRST == $A0 && !LYRA_CURRENT_END == $C0 && !LYRA_CURRENT_PARENT_COUNT == $C0
+assert !LYRA_CURRENT_MODE == 0 || !LYRA_NATIVE_A1_ENABLED == 0, "Current and historical Lyra modes are separate"
+assert !LYRA_CURRENT_MODE == 0 || !LYRA_PROJECT_DATA_PRESENT == 1, "Current mode requires selected project inputs"
+if not(defined("PROJECT_BG128_ENABLED"))
+  !PROJECT_BG128_ENABLED = 0
+endif
+if not(defined("PROJECT_BG128_RESTORE_BOUND"))
+  !PROJECT_BG128_RESTORE_BOUND = 0
+endif
+assert !LYRA_PROJECT_DATA_PRESENT == 0 || !DISABLE_OVERWORLD == 0, "Lyra project data requires overworld loaders"
+
 if !ENABLE_MASK_R_BINDING == 1
   assert !ENABLE_MASK_Y_TRANSFORM == 1, "Mask R binding requires mask_y_transform"
   assert !ENABLE_TRUTHFUL_CONTROLS == 1, "Mask R binding requires truthful_controls"
@@ -187,4 +221,20 @@ endif
 ; Source-owned compressed sheets patch only their streams and pointer bytes.
 if !ENABLE_SOURCE_SPRITE_SHEETS == 1
   incsrc "Core/Generated/source_sprite_sheets/sheet_overrides.asm"
+endif
+
+; The ordinary build emits these source-bound bytes in the same assembly.
+; Both includes follow the legacy overworld and source graphics overrides.
+if !LYRA_PROJECT_DATA_PRESENT == 1
+  incsrc "Data/Generated/lyra_project/runtime_data.asm"
+  incsrc "Overworld/lyra_native_loaders.asm"
+endif
+if !LYRA_CURRENT_MODE == 1
+  namespace Oracle
+    incsrc "Overworld/graphics_runtime.asm"
+  namespace off
+endif
+; Source-bound data must precede this late palette consumer.
+if !PROJECT_BG128_ENABLED == 1
+  incsrc "Overworld/project_bg_palette.asm"
 endif

@@ -1,0 +1,32 @@
+; Normal serialized descriptor excerpt from copied-current.yazeproj/project.yaze.
+; Source SHA256 e5bbb96e897b9337274bb6f4235a80aefd989c4feaafb314786d51593e5a81a0.
+; [files] values and empty entries retained; tests configure additional supported
+; fields on an owned copy. Project serializer/emitter source: Yaze7dbfa8ee.
+[project]
+name=Oracle of Secrets
+
+[files]
+rom_filename=rom
+rom_backup_folder=backups
+code_folder=project
+assets_folder=project
+patches_folder=project
+labels_filename=
+symbols_filename=assets/project/symbols_filename/oos168x.sym
+dungeon_tile_patterns=assets/project/dungeon_tile_patterns/house_walls.asm
+cutscene_shots=
+custom_collision_json=assets/project/custom_collision_json/custom_collision.json
+output_folder=project/Roms
+custom_objects_folder=project/Dungeons/Objects/Data
+palette_catalog_file=assets/project/palette_catalog_file/palette_catalog.json
+terrain_catalog_file=
+lyra_terrain_file=assets/project/lyra_terrain_file/unified.lyra-terrain.json
+hack_manifest_file=project/Roms/hack_manifest.json
+sprite_catalog_file=
+sprite_source_root=
+additional_roms=
+overworld_graphics_preview=assets/graphics-preview/preview-v1.json
+
+[rom]
+role=dev
+write_policy=block

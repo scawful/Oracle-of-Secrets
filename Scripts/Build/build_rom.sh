@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+# Internal source-scanner context starts legacy even if inherited by the shell.
+# Current selected preparation below is the only path that changes it to1.
+export OOS_LYRA_BUILD_CONTEXT=0
+
 usage() {
   echo "Usage: $(basename "$0") <version> [asar_binary] [--reload] [--no-symbols] [--mesen-sync] [--skip-tests] [--asar=<path>] [--enable <csv>] [--disable <csv>] [--profile <defaults|all-on|all-off>] [--persist-flags] [--help]" >&2
   echo "Base ROM: Roms/oos<version>.sfc (unpatched edit target; override with OOS_BASE_ROM)." >&2
@@ -15,6 +19,7 @@ usage() {
   echo "  Names: flags,menu,overlap,hooks,sprites,analysis,smoke,annotations." >&2
   echo "  OOS_ANALYZER=<path> selects an analyzer; OOS_TEST_SOCKET=<owned socket> enables exact-ROM current-state smoke." >&2
   echo "  Receipt: Roms/oos<version>x.build.json (override OOS_BUILD_RECEIPT)." >&2
+  echo "  Lyra: OOS_LYRA_PROJECT selects a saved dev project; OOS_LYRA_REQUEST optionally overrides its [files] lyra_build_request_file." >&2
   exit "${1:-1}"
 }
 
@@ -209,6 +214,31 @@ run_check message_source 1 python3 "$repo_root/Scripts/Generate/validate_expande
 current_stage="output_snapshot"
 snapshot_build_outputs
 
+# Only this invocation can select generated Lyra inputs. An unselected build
+# emits disabled context and does not pass the internal assembler define.
+lyra_args=()
+lyra_assembler_args=()
+if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
+  if [[ "$emit_symbols" != "1" ]]; then
+    echo "ERROR: Selected Lyra publication requires symbols for compiled-reader verification." >&2
+    exit 1
+  fi
+  lyra_args+=(--project "$OOS_LYRA_PROJECT" --base-rom "$base_rom")
+  if [[ -n "${OOS_LYRA_REQUEST:-}" ]]; then
+    lyra_args+=(--request "$OOS_LYRA_REQUEST")
+  fi
+elif [[ -n "${OOS_LYRA_REQUEST:-}" ]]; then
+  echo "ERROR: OOS_LYRA_REQUEST requires OOS_LYRA_PROJECT." >&2
+  exit 1
+fi
+run_check lyra_prepare 1 python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" prepare \
+  ${lyra_args[@]+"${lyra_args[@]}"}
+if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
+  lyra_assembler_args+=("-DLYRA_BUILD_CONTEXT=1")
+  export OOS_LYRA_BUILD_CONTEXT=1
+fi
+receipt artifact --name lyra_prepare --path "$repo_root/Data/Generated/lyra_project/prepare.json"
+
 # Keep water-gate runtime tables synced with the validated editor-authored base
 # ROM. The tracked custom-collision source contract guarantees that marker
 # tiles ($F5) are present there, so never implicitly reuse stale patched output.
@@ -400,17 +430,25 @@ assemble_rom() {
   if [[ $emit_symbols -eq 1 ]]; then
     (
       cd "$repo_root"
-      "$asar_bin" --symbols=wla --symbols-path="$symbols_path" ${assembler_emits[@]+"${assembler_emits[@]}"} Oracle_main.asm "$patched_rom"
+      "$asar_bin" --symbols=wla --symbols-path="$symbols_path" ${assembler_emits[@]+"${assembler_emits[@]}"} ${lyra_assembler_args[@]+"${lyra_assembler_args[@]}"} Oracle_main.asm "$patched_rom"
     )
   else
     (
       cd "$repo_root"
-      "$asar_bin" ${assembler_emits[@]+"${assembler_emits[@]}"} Oracle_main.asm "$patched_rom"
+      "$asar_bin" ${assembler_emits[@]+"${assembler_emits[@]}"} ${lyra_assembler_args[@]+"${lyra_assembler_args[@]}"} Oracle_main.asm "$patched_rom"
     )
   fi
 }
 run_check assembly 1 assemble_rom
 
+# Verify actual assembled data and native readers before hashes or hook receipts
+# are published. This step never patches the assembled ROM.
+if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
+  lyra_verification="$rom_dir/oos${version}x.lyra-verification.json"
+  run_check lyra_verify 1 python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" verify \
+    --rom "$patched_rom" --symbols "$symbols_path" --receipt "$lyra_verification"
+  receipt artifact --name lyra_verification --path "$lyra_verification"
+fi
 receipt artifact --name output_rom --path "$patched_rom"
 if [[ "$emit_symbols" == "1" ]]; then
   receipt artifact --name symbols --path "$symbols_path"
@@ -476,7 +514,11 @@ fi
 
 # Run ZScream overlap check
 if [[ $emit_symbols -eq 1 ]]; then
-  run_check overlap 1 python3 "$repo_root/Scripts/Build/check_zscream_overlap.py" --symbols "$symbols_path"
+  overlap_args=(--symbols "$symbols_path")
+  if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
+    overlap_args+=(--lyra-verification "$lyra_verification" --rom "$patched_rom")
+  fi
+  run_check overlap 1 python3 "$repo_root/Scripts/Build/check_zscream_overlap.py" "${overlap_args[@]}"
 else
   omit_check overlap skipped "$(check_required overlap 0)" "--no-symbols requested; no fresh emission map"
 fi
