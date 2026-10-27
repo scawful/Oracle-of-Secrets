@@ -197,3 +197,9 @@ class CurrentBuildTest(unittest.TestCase):
             with X.candidate_inspection(target),self.assertRaises(ValueError):
                 X.verify_current_output(self.prepared,target.read_bytes(),self.symbols)
         finally:target.unlink(missing_ok=True)
+
+    def test_unrelated_namespace_collisions_are_ignored_but_required_roles_are_unique(self):
+        symbols=self.symbols+b'01:8000 Unrelated\n02:8000 Oracle_Unrelated\n'
+        self.assertEqual(L.inspect_current_consumers(self.compiled,symbols),self.expected)
+        with self.assertRaisesRegex(ValueError,'Conflicting current consumer symbol'):
+            L.inspect_current_consumers(self.compiled,self.symbols+b'01:8000 Oracle_Frame8\n')

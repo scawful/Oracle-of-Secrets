@@ -1506,11 +1506,13 @@ def inspect_current_consumers(compiled, symbols):
     labels = _labels(symbols)
     # Symbols outside the Lyra namespace are needed only at these exact roles.
     text = symbols.decode() if isinstance(symbols,bytes) else symbols
+    required_external = {r[0] for r in state.TAIL_SOURCE_CALLERS} | {state.TAIL_M8_DEPENDENCY[0],
+        'LoadCheckpointOrWorld','SharedGraphicsRuntimeStart','SharedGraphicsRuntimeEnd'}
     active = False
     for line in text.splitlines():
         if line.startswith('['): active = line == '[labels]'
         match = re.fullmatch(r'([0-9A-Fa-f]{2}):([0-9A-Fa-f]{4})\s+(?:Oracle_)?(\w+)',line)
-        if active and match:
+        if active and match and match[3] in required_external:
             name = match[3]
             value = int(match[1]+match[2],16)
             R.require(name not in labels or labels[name] == value,'Conflicting current consumer symbol')
