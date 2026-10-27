@@ -191,10 +191,11 @@ class CurrentRuntimeGraphicsTests(unittest.TestCase):
 
     def test_native_custom_load_branch_retains_original_c19_instructions(self):
         asm = (runtime.ROOT / "Overworld/custom_gfx.asm").read_text()
-        body = asm.split("CheckForChangeGraphicsNormalLoadBoat:", 1)[1]
-        current, native = body.split("if !LYRA_CURRENT_MODE", 1)[1].split("else", 1)
+        body = asm.split("CheckForChangeGraphicsNormalLoadBoat:", 1)[1].split("\n}", 1)[0]
+        current, native = body.split("if !LYRA_CURRENT_MODE", 1)[1].split("endif", 1)
         self.assertIn("JML SharedGraphicsNormalLoad", current)
-        native = native.split("endif", 1)[0]
+        self.assertIn("CMP.w #!LYRA_CURRENT_FIRST : BCC .native", current)
+        self.assertIn("CMP.w #!LYRA_CURRENT_END : BCS .native", current)
         self.assertEqual(native.strip(), """LDA $8A : CMP.b #$38 : BEQ .load
   CMP.b #$30 : BNE .boat_area
   .load

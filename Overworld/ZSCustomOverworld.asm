@@ -3102,6 +3102,12 @@ NewOverworld_FinishTransGfx:
 
         JSR.w BlockGFXCheck
 
+        if !LYRA_CURRENT_MODE == 1
+        ; Keep override sentinels after scheduling writes native identities.
+        ; This must precede departure to a native/unbound destination.
+        JSL Oracle_InvalidateCustomGraphicsCache
+        endif
+
         ; If we haven't made it to frame 8, don't move on yet.
         CPY.b #$08 : BCC .return
             ; Move on to next submodule.
@@ -3135,6 +3141,10 @@ NewOverworld_FinishTransGfx:
         LDA.b #$08 : STA.b $06
 
         JSR.w BlockGFXCheck
+
+        if !LYRA_CURRENT_MODE == 1
+        JSL Oracle_InvalidateCustomGraphicsCache
+        endif
 
         ; If we haven't made it to frame 8, don't move on yet.
         CPY.b #$08 : BCS .MoveOn
@@ -3223,6 +3233,13 @@ BlockGFXCheck:
         JSL.l Lyra_ReadGfx0
         else
         LDA.l Pool_OWGFXGroupTable_sheet0, X
+        endif
+        if !LYRA_CURRENT_MODE == 1
+        ; Resolve catalog $FF before the scheduler's skip/cache comparisons.
+        ; $02 is the slot word; its high byte was cleared above with M16.
+        PHX : LDX.b $02
+        JSL Oracle_ResolveCustomGraphicsTransitionSheet
+        PLX
         endif
         STA.b $00
         SEP #$10
@@ -4200,6 +4217,16 @@ org $008C8A ; $000C8A ; @hook module=Overworld
 
 assert pc() <= $008C8C ; $000C8C
 
+if !LYRA_CURRENT_MODE == 1
+; NMI already owns $0118 source, $19 step and the following $0200 count.
+; Replaced $008C0E..$008C12: A9 7F 8D 04 43 (A8/XY16, D/DB=0).
+assert read4($008C0E) == $048D7FA9 && read1($008C12) == $43
+org $008C0E ; @hook module=Overworld name=CurrentCatalogIncrementalSource kind=jsl target=Oracle_SelectShipIncrementalGraphicsSource expected_m=8 expected_x=16 expected_exit_m=8 expected_exit_x=16
+    JSL Oracle_SelectShipIncrementalGraphicsSource
+    NOP
+assert pc() == $008C13
+endif
+
 org $02ABB4 ; $012BB4 ; @hook module=Overworld
     JSL.l NewPrepTransAuxGFX
 
@@ -4290,6 +4317,11 @@ NewLoadTransAuxGFX:
 
     .notNormalLoad
 
+    if !LYRA_CURRENT_MODE == 1
+    ; Invalidate once before auxiliary cache checks, not on each block frame.
+    JSL Oracle_InvalidateCustomGraphicsCache
+    endif
+
     ; Setup the decompression buffer address.
     ; $00[3] = $7E6000
                  STZ.b $00
@@ -4312,9 +4344,9 @@ NewLoadTransAuxGFX:
     LDA.w Pool_OWGFXGroupTable_sheet3, X
     endif
     if !LYRA_CURRENT_MODE == 1
-    PHX : SEP #$10
-    LDX.b #$03 : JSL Oracle_ResolveCustomGraphicsTransitionSheet
-    REP #$10 : PLX
+    PHX
+    LDX.w #$03 : JSL Oracle_ResolveCustomGraphicsTransitionSheet
+    PLX
     endif
     CMP.b #$FF : BEQ .noBgGfxChange3
         SEP #$10
@@ -4341,9 +4373,9 @@ NewLoadTransAuxGFX:
     LDA.w Pool_OWGFXGroupTable_sheet4, X
     endif
     if !LYRA_CURRENT_MODE == 1
-    PHX : SEP #$10
-    LDX.b #$04 : JSL Oracle_ResolveCustomGraphicsTransitionSheet
-    REP #$10 : PLX
+    PHX
+    LDX.w #$04 : JSL Oracle_ResolveCustomGraphicsTransitionSheet
+    PLX
     endif
     CMP.b #$FF : BEQ .noBgGfxChange4
         SEP #$10
@@ -4370,9 +4402,9 @@ NewLoadTransAuxGFX:
     LDA.w Pool_OWGFXGroupTable_sheet5, X
     endif
     if !LYRA_CURRENT_MODE == 1
-    PHX : SEP #$10
-    LDX.b #$05 : JSL Oracle_ResolveCustomGraphicsTransitionSheet
-    REP #$10 : PLX
+    PHX
+    LDX.w #$05 : JSL Oracle_ResolveCustomGraphicsTransitionSheet
+    PLX
     endif
     CMP.b #$FF : BEQ .noBgGfxChange5
         SEP #$10
@@ -4399,9 +4431,9 @@ NewLoadTransAuxGFX:
     LDA.w Pool_OWGFXGroupTable_sheet6, X
     endif
     if !LYRA_CURRENT_MODE == 1
-    PHX : SEP #$10
-    LDX.b #$06 : JSL Oracle_ResolveCustomGraphicsTransitionSheet
-    REP #$10 : PLX
+    PHX
+    LDX.w #$06 : JSL Oracle_ResolveCustomGraphicsTransitionSheet
+    PLX
     endif
     CMP.b #$FF : BEQ .noBgGfxChange6
         SEP #$10
@@ -4449,6 +4481,14 @@ NMI_UpdateChr_Bg2HalfAndAnimatedLONG:
         ; Source address
         LDA.w NewNMISource1 : STA.w DMA.0_SourceAddrOffsetLow
         LDY.b #$7F          : STY.w DMA.0_SourceAddrBank
+
+        if !LYRA_CURRENT_MODE == 1
+        ; The catalog range is in VRAM words, not the WRAM source offset.
+        PHP : PHA
+        LDA.w NewNMITarget1
+        JSL Oracle_SelectCustomGraphicsTransitionSource
+        PLA : PLP
+        endif
         
         ; Write count
         LDA.w NewNMICount1 : STA.w DMA.0_TransferSizeLow
@@ -4466,6 +4506,13 @@ NMI_UpdateChr_Bg2HalfAndAnimatedLONG:
         ; Source address
         LDA.w NewNMISource2 : STA.w DMA.0_SourceAddrOffsetLow
         LDY.b #$7F          : STY.w DMA.0_SourceAddrBank
+
+        if !LYRA_CURRENT_MODE == 1
+        PHP : PHA
+        LDA.w NewNMITarget2
+        JSL Oracle_SelectCustomGraphicsTransitionSource
+        PLA : PLP
+        endif
         
         ; Write count
         LDA.w NewNMICount2 : STA.w DMA.0_TransferSizeLow
@@ -4476,7 +4523,7 @@ NMI_UpdateChr_Bg2HalfAndAnimatedLONG:
     .skipSecond
     
     SEP #$20
-    
+
     STZ.w $0710
 
     PLB
@@ -4488,6 +4535,11 @@ NewPrepTransAuxGFX:
 {
     LDA.b $04 : BEQ .dontPrep
         JSL.l PrepTransAuxGFX
+        if !LYRA_CURRENT_MODE == 1
+        ; Declared staging slots were invalidated before auxiliary checks.
+        ; Convert the native buffer first, then patch only declared glyphs.
+        JSL Oracle_SharedGraphicsStageNative
+        endif
 
     .dontPrep
 
@@ -4696,6 +4748,11 @@ InitTilesetsLongCalls:
     
     STA.b $06
     STA.w TransGFXModule_PriorSheets+7
+
+    if !LYRA_CURRENT_MODE == 1
+    ; Fresh native cache identities precede any custom normal-load override.
+    JSL Oracle_InvalidateCustomGraphicsCache
+    endif
 
     PLB
 

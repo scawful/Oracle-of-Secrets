@@ -3,8 +3,18 @@
 CheckForChangeGraphicsNormalLoadBoat:
 {
 if !LYRA_CURRENT_MODE == 1
+  ; Current catalog dispatch must not replace native boats, indoors or an
+  ; out-of-domain parent. Preserve full A/P before the original fallback.
+  PHP : REP #$20 : PHA
+  LDA.l $7E001B : AND.w #$00FF : BNE .native
+  LDA.l $7E008A : AND.w #$00FF
+  CMP.w #!LYRA_CURRENT_FIRST : BCC .native
+  CMP.w #!LYRA_CURRENT_END : BCS .native
+  PLA : PLP
   JML SharedGraphicsNormalLoad
-else
+  .native
+  PLA : PLP
+endif
   LDA $8A : CMP.b #$38 : BEQ .load
   CMP.b #$30 : BNE .boat_area
   .load
@@ -14,7 +24,6 @@ else
     PLB
   .boat_area
   RTL
-endif
 }
 
 ; These callbacks exist only in the explicitly selected current composition.
@@ -25,19 +34,22 @@ InvalidateCustomGraphicsCache:
   JML SharedGraphicsInvalidateCache
 }
 
-; A8/XY8, X=auxiliary slot. Preserve X/Y; retain native $FF skip behavior
-; unless the existing auxiliary cache has a saved overridden native sheet.
+; A8/XY16, X=auxiliary slot. Preserve P/X/Y/DBR/D and hidden B. Reads only.
+; This recovery also runs after leaving a catalog profile: a native $FF must
+; restore the saved underlying sheet while the prior cache holds our sentinel.
 ResolveCustomGraphicsTransitionSheet:
 {
+  PHP
   CMP.b #$FF : BNE .done
-  CPX.b #$03 : BCC .done
-  CPX.b #$07 : BCS .done
-  LDA.w $04CB, X : CMP.b #$FF : BEQ .restore
+  CPX.w #$0003 : BCC .done
+  CPX.w #$0007 : BCS .done
+  LDA.l $7E04CB, X : CMP.b #$FF : BEQ .restore
     LDA.b #$FF
-    RTL
+    BRA .done
   .restore
     LDA.l $7EC2F5, X
   .done
+  PLP
   RTL
 }
 

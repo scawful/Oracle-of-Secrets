@@ -31,6 +31,9 @@ SharedGraphicsLookup:
 {
   LDA.l $7E001B : AND.w #$00FF : BNE .none
   LDA.l $7E008A : AND.w #$00FF
+if !LYRA_CURRENT_MODE == 1
+  CMP.w #!LYRA_CURRENT_FIRST : BCC .none
+endif
   CMP.w #!GfxRT_ParentCount : BCS .none
   ASL : TAX
   LDA.l SharedGraphicsParentProfiles, X : TAX
@@ -77,7 +80,13 @@ SharedGraphicsNormalLoad:
 SharedGraphicsInvalidateCache:
 {
   PHP : REP #$30 : PHX : PHY
+if !LYRA_CURRENT_MODE == 1
+  PHA
+endif
   JSR SharedGraphicsMarkCache
+if !LYRA_CURRENT_MODE == 1
+  PLA
+endif
   PLY : PLX : PLP
   RTL
 }
@@ -137,7 +146,11 @@ SharedGraphicsTransitionSource:
 ; filler and NMI DMA counts remain intact. No extra NMI transfers.
 SharedGraphicsStageNative:
 {
-  PHP : REP #$30 : PHX : PHY : PHD
+  PHP : REP #$30 : PHX : PHY
+if !LYRA_CURRENT_MODE == 1
+  PHA
+endif
+  PHD
   ; Private stack frame: src[3], dst[3], byte count[2], records left[2].
   ; NMI saves D and sets D=0 at $0080CF..$0080D4; its own stack grows below
   ; these locals. Both the caller's D and stack are restored on every exit.
@@ -166,7 +179,11 @@ SharedGraphicsStageNative:
     DEC.b $08 : BNE .next
   .done
   TSC : CLC : ADC.w #$0010 : TCS
-  PLD : PLY : PLX : PLP
+  PLD
+if !LYRA_CURRENT_MODE == 1
+  PLA
+endif
+  PLY : PLX : PLP
   RTL
 }
 
@@ -175,6 +192,9 @@ SharedGraphicsStageNative:
 SharedGraphicsIncrementalSource:
 {
   PHP : REP #$30 : PHX : PHY
+if !LYRA_CURRENT_MODE == 1
+  PHA
+endif
   JSR SharedGraphicsLookup : BEQ .native
   LDA.l !GfxRT_DataBank+!GfxRT_LateFirst, X : AND.w #$00FF
   BEQ .native
@@ -191,7 +211,16 @@ SharedGraphicsIncrementalSource:
     SEP #$20
     LDA.b #$7F : STA.l $004304
   .done
-  REP #$30 : PLY : PLX : PLP
+  REP #$30
+if !LYRA_CURRENT_MODE == 1
+  PLA
+endif
+  PLY : PLX : PLP
+if !LYRA_CURRENT_MODE == 1
+  ; Replay the replaced LDA #$7F result, flags and hidden B without
+  ; overwriting the selected DMA source bank a second time.
+  LDA.b #$7F
+endif
   RTL
 }
 if !LYRA_CURRENT_MODE == 1

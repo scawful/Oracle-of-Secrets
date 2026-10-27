@@ -67,12 +67,15 @@ class CurrentPortIntegrationTest(unittest.TestCase):
 
     def test_current_and_bg_source_pins_match_actual_composition(self):
         ledger = json.loads((ROOT/'Config/allocation_ownership.json').read_bytes())
-        records = [r for r in ledger['sources'].values() if r['source_set']=='lyra_current_full32_port_01']
-        self.assertGreaterEqual(len(records), 25)
+        contract = json.loads((ROOT/'Config/lyra_current_source_contract.json').read_bytes())
+        source_set = contract['ledger']['source_set']
+        self.assertEqual(source_set, 'lyra_current_catalog_callers_02')
+        records = [r for r in ledger['sources'].values() if r['source_set']==source_set]
+        self.assertEqual(len(records), 27)
         for row in records:
             self.assertEqual(P.R.sha((ROOT/row['path']).read_bytes()), row['sha256'], row['path'])
         claim, = [r for r in ledger['claims'] if r['id']=='ProjectBGPaletteNativeUnderlay']
-        self.assertTrue(all(key.startswith('lyra_current_full32_port_01:') for key in claim['provenance']))
+        self.assertTrue(all(key.startswith(source_set+':') for key in claim['provenance']))
 
     def test_actual_contract_and_review_still_refuse_before_output(self):
         contract = json.loads((ROOT/'Config/lyra_current_source_contract.json').read_bytes())
