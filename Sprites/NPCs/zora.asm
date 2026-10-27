@@ -33,8 +33,11 @@
 ;   0x1A4 - Default dialogue (face forward)
 ;   0x1A5 - Alternative dialogue (face sideways)
 ;   0x1A6 - Post-D4 dialogue (Crystals bit 5 set)
+;   Flippers gift: with the Wisdom pendant and no Flippers, 0x1A4 then item $1E
 ;
 ; FLAGS READ:
+;   Pendants bit 0x01 - Wisdom pendant (Flippers gift)
+;   Flippers - gift given once
 ;   ROOM - Check for Zora Temple boss room (0x105)
 ;   WORLDFLAG - Kalyxo (0) vs Eon Abyss (1)
 ;   Crystals bit 0x20 - D4 (Zora Temple) complete
@@ -152,6 +155,24 @@ Zora_TrackHeadToPlayer:
 
 Zora_HandleDialogue:
 {
+  ; Flippers gift (decisions.org 2026-10-22): Wisdom pendant owned, no Flippers.
+  ; $1A4 plays first (placeholder text); the item is given on the next active
+  ; frame, after the message box closes. SprMiscE = gift pending.
+  LDA.w SprMiscE, X : BEQ .no_pending
+    STZ.w SprMiscE, X
+    LDA.l Flippers : BNE .no_pending
+    LDY.b #$1E : STZ.w $02E9
+    PHX : JSL Link_ReceiveItem : PLX
+    RTS
+  .no_pending
+  LDA.l Pendants : AND.b #!Pendant_Wisdom : BEQ .no_gift
+  LDA.l Flippers : BNE .no_gift
+    %ShowSolicitedMessage($01A4)
+    BCC +
+      LDA.b #$01 : STA.w SprMiscE, X
+    +
+    RTS
+  .no_gift
   LDA.l Crystals : AND.b #$20 : BEQ +++
     %ShowSolicitedMessage($01A6)
     JMP +

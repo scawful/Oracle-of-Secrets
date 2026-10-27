@@ -80,6 +80,7 @@ Sprite_ZoraPrincess_Prep:
 
   LDA #$00 : STA.w SprDefl, X
   LDA #$00 : STA.w SprTileDie, X
+  STZ.w SprMiscE, X ; Sea Zora Flippers gift pending flag (zora.asm)
   PLB
   RTL
 }
