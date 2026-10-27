@@ -1253,3 +1253,67 @@ def plan_current_tables(source, tail_rows, *, origins, policy):
                 actors_compiled=False, rom_written=False,
                 remaining_consumers=['current source call-site composition', 'BG128 lifecycle',
                     'actor/door/exit admission', 'entry/save/return/world-map/mirror/flight'])
+
+
+def plan_current_actor_streams(source, document, *, current_source_profile):
+    """Lower bound authored sprites to headerless OW lists; never place them.
+
+    Native OW records are Y, X, sprite ID followed by a single FF terminator.
+    The saved Lyra model has map-local Tile16 coordinates and three explicit
+    states; it represents no extra native X/Y flag bits. Placement IDs and
+    original ordinals remain provenance, never native sprite bytes. Storage,
+    parent aggregation and the bank-$09 pointer assignments remain unbound.
+    """
+    import lyra_current_transfer as current
+    from lyra_project_terrain import TerrainDocument
+
+    R.require(type(source) is bytes and len(source) in (0x200000, 0x400000),
+              'CURRENT_ACTOR_MODEL_INVALID: exact saved2MiB or4MiB source required')
+    R.require(isinstance(document, TerrainDocument)
+              and type(document.authoring) is tuple and len(document.authoring) == 32
+              and len(document.maps) == len(document.properties) == 32,
+              'CURRENT_ACTOR_MODEL_INVALID: all32 ordered authored maps required')
+    authored, seen = [], set()
+    for area, auth in enumerate(document.authoring, CURRENT_FIRST):
+        R.require(type(auth) is dict and set(auth) ==
+                  {'properties', 'sprites', 'doors', 'exits', 'asset_bindings'}
+                  and type(auth['sprites']) is list and len(auth['sprites']) <= 128,
+                  'CURRENT_ACTOR_MODEL_INVALID: ordered sprite lists require at most128 placements per map')
+        phases = [[], [], []]
+        for ordinal, sprite in enumerate(auth['sprites']):
+            R.require(type(sprite) is dict and set(sprite) == {'id', 'x', 'y', 'sprite_id', 'state'}
+                      and all(type(sprite[key]) is int for key in sprite)
+                      and 1 <= sprite['id'] <= 0xFFFFFFFF and sprite['id'] not in seen
+                      and 0 <= sprite['x'] <= 31 and 0 <= sprite['y'] <= 31
+                      and 0 <= sprite['sprite_id'] <= 255 and 0 <= sprite['state'] <= 2,
+                      'CURRENT_ACTOR_MODEL_INVALID: invalid sprite identity, coordinate, state or byte ID')
+            seen.add(sprite['id'])
+            phases[sprite['state']].append((ordinal, sprite['id'],
+                sprite['y'], sprite['x'], sprite['sprite_id']))
+        authored.append((area, phases))
+
+    profile = current.verify_current_native_source_profile(current_source_profile, source, document)
+    streams = []
+    for area, phases in authored:
+        for state, placements in enumerate(phases):
+            payload = bytes(value for row in placements for value in row[2:]) + b'\xFF'
+            streams.append(dict(map_id=area, state=state, payload_hex=payload.hex(),
+                sha256=R.sha(payload), bytes=len(payload),
+                placement_ids=[row[1] for row in placements],
+                placement_ordinals=[row[0] for row in placements]))
+    result = dict(kind='lyra.current_actor_streams_source_plan.v1',
+        source_rom_sha256=R.sha(source), source_size=len(source),
+        source_profile_sha256=current.T.digest(profile),
+        source_contract_binding=dict(profile['contract']), document_sha256=profile['document_sha256'],
+        generation=profile['review']['generation'], operation_id=profile['review']['operation_id'],
+        reservation_review_id=profile['reservation_review_id'],
+        source_domain=dict(first_map=CURRENT_FIRST, end_map=CURRENT_END,
+                           native_parent_count=160, parent_count=CURRENT_PARENT_COUNT),
+        streams=streams, demand=dict(maps=32, phases=3, lists=96, placements=len(seen),
+            payload_bytes=sum(row['bytes'] for row in streams), pointer_rows=96, pointer_bytes=192),
+        storage=None, pointers=None,
+        consumer_blockers=A.consumer_blockers(document, tuple(range(CURRENT_FIRST, CURRENT_END)), ()),
+        allocation_granted=False, producer_enforcement_verified=False, publication_authorized=False,
+        ordinary_build_ready=False, runtime_admission=False, actors_compiled=False, rom_written=False)
+    current.verify_current_native_source_profile(profile, source, document)
+    return result

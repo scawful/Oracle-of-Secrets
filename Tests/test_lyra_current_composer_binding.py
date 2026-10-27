@@ -93,6 +93,26 @@ class CurrentComposerBindingTest(unittest.TestCase):
             self.assertIs(prepared[key], False, key)
         self.assertFalse(self.f.contract_fixture.case.candidate.exists())
 
+    def test_actor_source_streams_share_saved_identity_without_storage_or_admission(self):
+        prepared = json.loads(self.f.compose()['prepare.json'])
+        actors = prepared['actor_stream_plan']
+        self.assertEqual(actors['kind'], 'lyra.current_actor_streams_source_plan.v1')
+        for key in ('source_rom_sha256', 'source_size', 'source_profile_sha256',
+                    'document_sha256', 'generation', 'operation_id', 'reservation_review_id'):
+            self.assertEqual(actors[key], prepared[key], key)
+        self.assertEqual(actors['source_contract_binding'], self.f.profile['contract'])
+        self.assertEqual([(row['map_id'], row['state']) for row in actors['streams']],
+                         [(area, phase) for area in range(0xA0, 0xC0) for phase in range(3)])
+        self.assertEqual(actors['demand']['lists'], 96)
+        self.assertEqual(actors['demand']['pointer_bytes'], 192)
+        self.assertTrue(all(row['payload_hex'] == 'ff' for row in actors['streams']))
+        self.assertIsNone(actors['storage'])
+        self.assertIsNone(actors['pointers'])
+        for key in ('allocation_granted', 'producer_enforcement_verified', 'publication_authorized',
+                    'ordinary_build_ready', 'runtime_admission', 'actors_compiled', 'rom_written'):
+            self.assertIs(actors[key], False, key)
+        self.assertFalse(self.f.contract_fixture.case.candidate.exists())
+
     def test_independent_valid_origin_and_profile_plans_cannot_be_mixed(self):
         foreign_origins = dict(self.f.table_plan['origins'])
         foreign_origins['table_base'] += 0x10000

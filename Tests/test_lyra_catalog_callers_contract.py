@@ -4,6 +4,7 @@ The loose reader/table and graphics fixtures are deliberately refused by the
 composer. Real common-profile composition lives in test_lyra_current_composer_binding.
 """
 import copy
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -22,7 +23,8 @@ import test_lyra_current_native_loaders as reader_fixtures
 
 
 FROZEN = '6e7e5f15d555dffb9f4b3d8807595c9e3f13305f'
-SOURCE_SET = 'lyra_current_composer_binding_03'
+SOURCE_SET = 'lyra_current_actor_resources_04'
+COMPOSER_SET = 'lyra_current_composer_binding_03'
 FROZEN_SET = 'lyra_current_full32_port_01'
 CALLERS_SET = 'lyra_current_catalog_callers_02'
 CALLERS_HEAD = '80fb34a9e70fe0dd7d32b5b47baf00d2033e4a85'
@@ -86,14 +88,25 @@ class CatalogCallersContractTest(unittest.TestCase):
         return P.render_current_source_outputs(self.table_plan, contract=contract,
             graphics_source=graphics, graphics_report=report)
 
-    def test_child_exact_ledger_and_all27_consumers_validate_but_need_profile_to_compose(self):
+    def test_previous_composer_declaration_and27_pins_remain_verbatim(self):
+        members = [COMPOSER_SET] + [key for key, row in self.ledger['sources'].items()
+                                   if row['source_set'] == COMPOSER_SET]
+        self.assertEqual(len(members), 28)
+        # Exact declaration/record bytes from the green c6ef36e0 parent.
+        retained = b'\n'.join(raw_member(self.ledger_raw.decode(), key) for key in members)
+        self.assertEqual(hashlib.sha256(retained).hexdigest(),
+                         'a3cae98e16be902cff4ef82d5ec84030644de0202aca0677a2477ff4a68ec539')
+
+    def test_child_exact_ledger_and_all31_consumers_validate_but_need_profile_to_compose(self):
         self.assertEqual(self.contract['ledger']['source_set'], SOURCE_SET)
-        self.assertEqual(len(self.records), 27)
+        self.assertEqual(len(self.records), 31)
         old_paths = {row['path'] for row in self.frozen_ledger['sources'].values()
                      if row['source_set'] == FROZEN_SET}
-        self.assertEqual({row['path'] for row in self.records}, old_paths)
+        resources = {'Overworld/gfx/kalyxo_docks_slot3.bin', 'Overworld/gfx/kalyxo_docks_bg.bin',
+                     'Overworld/gfx/lyra_sky_tower_87.bin', 'Overworld/gfx/lyra_stepped_fort_83.bin'}
+        self.assertEqual({row['path'] for row in self.records}, old_paths | resources)
         bindings = P.validate_current_source_set(self.bound_contract())
-        self.assertEqual(len(bindings), 28)
+        self.assertEqual(len(bindings), 32)
         self.assertEqual(bindings[0], dict(path=str(ROOT / LEDGER), sha256=P.R.sha(self.ledger_raw)))
         self.assertEqual({row['path']: row['sha256'] for row in bindings[1:]},
                          {str(ROOT / row['path']): row['sha256'] for row in self.records})
@@ -113,7 +126,7 @@ class CatalogCallersContractTest(unittest.TestCase):
         contract = self.composable_contract()
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
-            # Copy only the selected27 consumer/resource files and exact ledger;
+            # Copy only the selected consumer/resource files and exact ledger;
             # neither validator nor composer is replaced by a test double.
             for row in self.records:
                 target = root / row['path']
@@ -123,7 +136,7 @@ class CatalogCallersContractTest(unittest.TestCase):
             contract['origins']['graphics']['source_binding']['path'] = str(
                 root / 'Overworld/custom_gfx.asm')
             with mock.patch.object(P, 'ROOT', root):
-                self.assertEqual(len(P.validate_current_source_set(contract)), 28)
+                self.assertEqual(len(P.validate_current_source_set(contract)), 32)
                 with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_PROFILE_REQUIRED'):
                     self.compose(contract)
                 consumer = root / 'Overworld/custom_gfx.asm'
