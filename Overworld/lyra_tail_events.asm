@@ -8,8 +8,9 @@ assert !LYRA_CURRENT_EVENT_VERSION >= $7EF412 && !LYRA_CURRENT_EVENT_VERSION < $
 assert !LYRA_CURRENT_EVENT_VERSION < !LYRA_CURRENT_EVENT_BASE || !LYRA_CURRENT_EVENT_VERSION >= !LYRA_CURRENT_EVENT_BASE+$20
 assert !LYRA_CURRENT_EVENT_MARKER > 0 && !LYRA_CURRENT_EVENT_MARKER <= $FF
 
-; All patched event callers enter M8. Keep their A, X/Y, DBR and direct-page
-; contract; loads set N/Z from the selected byte and stores preserve flags.
+; Stores and most loads enter M8; the hidden-item read at1BC902 is M16 and
+; immediately masks with0002. Keep each caller's A width, X/Y, DBR and D;
+; loads set N/Z from the selected byte/word and stores preserve flags.
 ; REP/PLP only widens X temporarily; an X8 caller's high byte is already zero.
 Lyra_TailEvent_Load:
 {
@@ -92,7 +93,10 @@ org $1BC0C6 : JSL Lyra_TailEvent_Load ; @hook module=Overworld kind=jsl expected
 assert read1($1BC20F) == $BF && read3($1BC20F+1) == $7EF280, "TailEvent hook $1BC20F: unexpected bytes"
 org $1BC20F : JSL Lyra_TailEvent_Load ; @hook module=Overworld kind=jsl expected_m=8 name=TailEventLoad1BC20F
 assert read1($1BC902) == $BF && read3($1BC902+1) == $7EF280, "TailEvent hook $1BC902: unexpected bytes"
-org $1BC902 : JSL Lyra_TailEvent_Load ; @hook module=Overworld kind=jsl expected_m=8 name=TailEventLoad1BC902
+; A word read can include the adjacent flag/version byte. This exact mask
+; discards that high byte; no M16 tail store is supported or installed.
+assert read3($1BC906) == $000229, "TailEvent M16 load must retain low-bit mask"
+org $1BC902 : JSL Lyra_TailEvent_Load ; @hook module=Overworld kind=jsl expected_m=16 name=TailEventLoad1BC902
 assert read1($1BCBD8) == $BF && read3($1BCBD8+1) == $7EF280, "TailEvent hook $1BCBD8: unexpected bytes"
 org $1BCBD8 : JSL Lyra_TailEvent_Load ; @hook module=Overworld kind=jsl expected_m=8 name=TailEventLoad1BCBD8
 assert read1($1BCD59) == $BF && read3($1BCD59+1) == $7EF280, "TailEvent hook $1BCD59: unexpected bytes"

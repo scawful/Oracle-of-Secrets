@@ -22,7 +22,7 @@ class CurrentTailEventsTest(unittest.TestCase):
         self.assertIn('!LYRA_CURRENT_EVENTS_ENABLED == 0 || !LYRA_CURRENT_MODE == 1', source)
         self.assertIn('!LYRA_CURRENT_EVENTS_ENABLED == 0 || !LYRA_CURRENT_EVENTS_BOUND == 1', source)
 
-    def test_fixed_native_hooks_keep_complete_preimages_and_m8_contract(self):
+    def test_fixed_native_hooks_keep_complete_preimages_and_actual_widths(self):
         source = (ROOT/'Overworld/lyra_tail_events.asm').read_text()
         loads = {int(site,16) for site in re.findall(r'org \$([0-9A-F]{6}) : JSL Lyra_TailEvent_Load', source)}
         stores = {int(site,16) for site in re.findall(r'org \$([0-9A-F]{6}) : JSL Lyra_TailEvent_Store', source)}
@@ -30,7 +30,9 @@ class CurrentTailEventsTest(unittest.TestCase):
         self.assertEqual(stores, {row[0] for row in N.TAIL_STORE_SITES})
         for site, opcode in [(a,'BF') for a in loads]+[(a,'9F') for a in stores]:
             self.assertIn(f'assert read1(${site:06X}) == ${opcode} && read3(${site:06X}+1) == $7EF280', source)
-        self.assertEqual(source.count('expected_m=8'), len(loads)+len(stores))
+        self.assertEqual(source.count('expected_m=8 '), len(loads)+len(stores)-1)
+        self.assertIn('expected_m=16 name=TailEventLoad1BC902', source)
+        self.assertIn('assert read3($1BC906) == $000229', source)
         self.assertIn('!LYRA_CURRENT_EVENT_BASE+$20 <= $7EF4FE', source)
         self.assertIn('!LYRA_CURRENT_EVENT_VERSION >= !LYRA_CURRENT_EVENT_BASE+$20', source)
 
