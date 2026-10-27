@@ -10,6 +10,9 @@ LoadCheckpointOrWorld:
       JSL ProjectBGPalette_RestoreAndInvalidate ; Warm file/Continue: restore before invalidating.
     endif
   endif
+  if !LYRA_CURRENT_EVENTS_ENABLED == 1
+    JSL Lyra_TailEvent_MigrateSave
+  endif
   LDA.l SpawnPoint : CMP.b #!Spawn_GoronCheckpoint : BNE .legacy
     ; Consume even a malformed marker before the seven-record spawn arrays.
     LDA.b #!Spawn_LinksHouse : STA.l SpawnPoint

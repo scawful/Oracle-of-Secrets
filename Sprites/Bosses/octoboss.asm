@@ -26,7 +26,11 @@ Sprite_Octoboss_Long:
     ; on re-entry. Verified v168 — coordinates are center-right of arena.
     PHX
     LDX.b $8A
+    if !LYRA_CURRENT_EVENTS_ENABLED == 1
+    JSL Lyra_TailEvent_Load : AND.b #$40 : BEQ .notKiledYet
+    else
     LDA.l $7EF280, X : AND.b #$40 : BEQ .notKiledYet
+    endif
       PLX ; get back SPR index
       ; Is is killed? do we have the quake medallion tho ?
       LDA.l $7EF349 : BNE .weHaveMedallion
@@ -470,7 +474,11 @@ Sprite_Octoboss_Secondary:
       ; Throw item here
       PHX
       LDX.b $8A
+      if !LYRA_CURRENT_EVENTS_ENABLED == 1
+      JSL Lyra_TailEvent_Load : ORA.b #$40 : JSL Lyra_TailEvent_Store ; save in HP sram
+      else
       LDA.l $7EF280, X : ORA.b #$40 : STA.l $7EF280, X ; save in HP sram
+      endif
       PLX
     .noItemYet
     RTS

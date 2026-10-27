@@ -210,6 +210,9 @@ Lyra_ReadBackdrop:
     LDA.b $8A : AND.w #$00FF
     JML Oracle_Lyra_CurrentBackdropLegacy
 Lyra_ReadBackdrop_End:
+if !LYRA_CURRENT_EVENTS_ENABLED == 1
+  incsrc "lyra_tail_events.asm"
+endif
 Lyra_CurrentNativeCodeEnd:
 assert pc() <= !LYRA_CURRENT_CODE_END, "Current reader code exceeds explicit origin"
 pullpc

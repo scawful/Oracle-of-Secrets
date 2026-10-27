@@ -26,7 +26,8 @@ DEFINED_RE = re.compile(r'''\bdefined\(\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*\)'
 LYRA_CONTEXT_ENV = "OOS_LYRA_BUILD_CONTEXT"
 LYRA_CONSTANTS = "Data/Generated/lyra_project/runtime_constants.asm"
 LYRA_CONTEXT_NAMES = {"LYRA_BUILD_CONTEXT", "LYRA_PROJECT_DATA_PRESENT", "LYRA_NATIVE_A1_ENABLED",
-                      "LYRA_CURRENT_MODE", "LYRA_CURRENT_FIRST", "LYRA_CURRENT_END", "LYRA_CURRENT_PARENT_COUNT"}
+                      "LYRA_CURRENT_MODE", "LYRA_CURRENT_FIRST", "LYRA_CURRENT_END", "LYRA_CURRENT_PARENT_COUNT",
+                      "LYRA_CURRENT_EVENTS_ENABLED", "LYRA_CURRENT_EVENTS_BOUND"}
 BG128_CONTEXT_NAMES = {"PROJECT_BG128_ENABLED", "PROJECT_BG128_RESTORE_BOUND",
                        "PROJECT_BG128_CODE_BASE", "PROJECT_BG128_CODE_END"}
 HEX_LITERAL_RE = re.compile(r"\$([0-9A-Fa-f]+)\b")
@@ -69,7 +70,8 @@ def _load_global_defines(root: Path) -> dict[str, int]:
         raise ValueError(f"{LYRA_CONTEXT_ENV} must be0 or1")
     defines.update(LYRA_BUILD_CONTEXT=int(context), LYRA_PROJECT_DATA_PRESENT=0, LYRA_NATIVE_A1_ENABLED=0,
                    LYRA_CURRENT_MODE=0, LYRA_CURRENT_FIRST=0xA0, LYRA_CURRENT_END=0xC0,
-                   LYRA_CURRENT_PARENT_COUNT=0xC0, PROJECT_BG128_ENABLED=0, PROJECT_BG128_RESTORE_BOUND=0)
+                   LYRA_CURRENT_PARENT_COUNT=0xC0, LYRA_CURRENT_EVENTS_ENABLED=0, LYRA_CURRENT_EVENTS_BOUND=0,
+                   PROJECT_BG128_ENABLED=0, PROJECT_BG128_RESTORE_BOUND=0)
     if context == "1":
         constants = (root / LYRA_CONSTANTS).read_bytes()
         prepared = json.loads((root / "Data/Generated/lyra_project/prepare.json").read_bytes())

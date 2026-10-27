@@ -71,6 +71,13 @@ endif
 if not(defined("PROJECT_BG128_RESTORE_BOUND"))
   !PROJECT_BG128_RESTORE_BOUND = 0
 endif
+if not(defined("LYRA_CURRENT_EVENTS_ENABLED"))
+  !LYRA_CURRENT_EVENTS_ENABLED = 0
+endif
+if not(defined("LYRA_CURRENT_EVENTS_BOUND"))
+  !LYRA_CURRENT_EVENTS_BOUND = 0
+endif
+assert !LYRA_CURRENT_EVENTS_ENABLED == 0 || (!LYRA_CURRENT_MODE == 1 && !LYRA_CURRENT_EVENTS_BOUND == 1), "Tail events require current-mode source admission"
 assert !LYRA_PROJECT_DATA_PRESENT == 0 || !DISABLE_OVERWORLD == 0, "Lyra project data requires overworld loaders"
 
 if !ENABLE_MASK_R_BINDING == 1

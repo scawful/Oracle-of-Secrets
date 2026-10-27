@@ -110,7 +110,11 @@ Sprite_Goron_Prep:
   +
   PHX
   LDX $8A
+  if !LYRA_CURRENT_EVENTS_ENABLED == 1
+  JSL Lyra_TailEvent_Load : AND.b #$20 : BNE +++
+  else
   LDA.l $7EF280, X : AND.b #$20 : BNE +++
+  endif
     PLX
     STZ.w SprAction, X
   ++
