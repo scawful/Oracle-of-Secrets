@@ -55,6 +55,11 @@ jobs:
           printf '\x73\x80\x39' | dd of=test.sfc bs=1 seek=$((0xE9E6)) conv=notrunc 2>/dev/null
           printf '\x7A\x80\x38' | dd of=test.sfc bs=1 seek=$((0xE9F5)) conv=notrunc 2>/dev/null
           printf '\x9A\x80\x1E' | dd of=test.sfc bs=1 seek=$((0xEA1C)) conv=notrunc 2>/dev/null  # $01EA1C room $9A big chest, Flippers preimage
+          printf '\x8B\xA2\x00\xDA\xAB' | dd of=test.sfc bs=1 seek=$((0x0EB66)) conv=notrunc 2>/dev/null
+          printf '\xC2\x30' | dd of=test.sfc bs=1 seek=$((0x0EB72)) conv=notrunc 2>/dev/null
+          printf '\xBF\x70\xE9\x01' | dd of=test.sfc bs=1 seek=$((0x0EC09)) conv=notrunc 2>/dev/null
+          printf '\x85\x0C' | dd of=test.sfc bs=1 seek=$((0x0EC0D)) conv=notrunc 2>/dev/null
+          printf '\x00\x01' | dd of=test.sfc bs=1 seek=$((0x01900)) conv=notrunc 2>/dev/null
           printf '\x7F' | dd of=test.sfc bs=1 seek=$((0x773FF)) conv=notrunc 2>/dev/null
 
           # Minimal coherent data for ROM-reading guards (source assertions unchanged):
