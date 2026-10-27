@@ -7,10 +7,9 @@ org $0296C0 ; @hook module=Dungeons name=ZoraTemple_WarpReturnFloor kind=jsl tar
   JSL ZoraTemple_WarpReturnFloor
   NOP
 assert pc() == $0296C5
+pullpc
 
-; Fixed tail allocation avoids relocating the bank-$2C NPC stream.
-; $2CFD00 holds RoomTag_SomariaSocketDoor; $2CFE00/$2CFF00 are reserved.
-org $2CFC00
+; Continue the dungeon/NPC stream; its profile fences protect fixed tail owners.
 ; Caller: M16/X8, D=$0000. No index, data-bank or plane changes.
 ; Replay LDA $A0 / CMP #$0017 after restoring P: the vanilla BNE needs Z.
 ZoraTemple_WarpReturnFloor:
@@ -26,5 +25,6 @@ ZoraTemple_WarpReturnFloor:
   CMP.w #$0017
   RTL
 }
+ZoraTemple_WarpReturnFloor_End:
+assert ZoraTemple_WarpReturnFloor_End-ZoraTemple_WarpReturnFloor == 26
 assert pc() <= $2CFD00
-pullpc

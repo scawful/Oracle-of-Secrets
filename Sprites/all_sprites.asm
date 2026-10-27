@@ -365,11 +365,16 @@ incsrc "Sprites/NPCs/tingle.asm"
 incsrc "Sprites/NPCs/goron.asm"
 %log_end("goron", !LOG_DUNGEON)
 
+; Dungeon code saves this bank-$2C cursor for the NPC stream. Fence its
+; actual end, after every sequential include, before the fixed tail owners.
+assert pc() >= $2C8000, "Bank $2C sprite stream left its bank after dungeon helpers"
+assert pc() <= $2CFD00, "Bank $2C sprite stream overlaps SomariaSocketDoor"
 if !ENABLE_MINECART_CART_SHUTTERS
   assert pc() <= $2CFA00, "Bank $2C sprite stream overlaps localized cart drag"
 endif
 if !ENABLE_THIN_ICE == 1
   assert pc() <= $2CF800, "Bank $2C sprite stream overlaps thin ice slot"
 endif
+print "Bank2C stream end: ", pc
 
 ; =========================================================

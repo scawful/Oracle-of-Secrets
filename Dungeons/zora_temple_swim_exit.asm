@@ -6,10 +6,9 @@ org $028F7C ; @hook module=Dungeons name=ZoraTemple_StairSwimExit kind=jsl targe
   JSL ZoraTemple_StairSwimExit_Long
   NOP
 assert pc() == $028F81
+pullpc
 
-; $2CFC00..$2CFC19 belongs to the floor-return helper. Keep the sequential
-; dungeon/NPC stream in place and stop before SomariaSocketDoor at $2CFD00.
-org $2CFC20
+; Follow the floor-return helper in the bounded dungeon/NPC stream.
 ZoraTemple_StairSwimExit_Long: ; @abi long_entry
 {
   ; Replay the byte stores with the caller's original D and DB on every path.
@@ -50,6 +49,5 @@ ZoraTemple_StairSwimExit_Long: ; @abi long_entry
   RTL
 }
 ZoraTemple_StairSwimExit_End:
-assert ZoraTemple_StairSwimExit_Long >= $2CFC1A
+assert ZoraTemple_StairSwimExit_Long == ZoraTemple_WarpReturnFloor_End
 assert pc() <= $2CFD00
-pullpc

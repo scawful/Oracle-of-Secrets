@@ -129,14 +129,15 @@ def execute(args):
     runner_hash = digest(args.cpu_runner.read_bytes())
     require(0 < len(rom) <= 0x400000, "Expected headerless LoROM <=4MiB")
     entry = symbol(symbols.decode(), "ZoraTemple_WarpReturnFloor")
+    end = symbol(symbols.decode(), "ZoraTemple_WarpReturnFloor_End")
     hook_bytes = raw(rom, HOOK, 5)
     require(hook_bytes == b"\x22" + entry.to_bytes(3, "little") + b"\xEA",
             "Compiled hook must be JSL helper / NOP")
     require(raw(rom, HOOK - 2, 2) == b"\xC2\x20"
             and raw(rom, HOOK + 5, 6) == bytes.fromhex("D004A20486A4"),
             "Original M16 entry / Hera BNE and floor assignment changed")
-    require(0x2CFC00 <= entry and entry + 26 <= 0x2CFD00,
-            "Helper outside its reserved bank-$2C allocation")
+    require(0x2C8000 <= entry < end <= 0x2CFD00 and end - entry == 26,
+            "Helper outside the bounded bank-$2C stream or its byte count changed")
     helper = raw(rom, entry, 26)
     plans = [(case, *fixture(case, hook_bytes)) for case in CASES]
     padding = (-len(rom)) % 0x8000

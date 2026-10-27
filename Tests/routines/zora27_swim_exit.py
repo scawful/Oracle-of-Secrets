@@ -152,8 +152,10 @@ def execute(args):
     text = symbols.decode()
     entry = symbol(text, "ZoraTemple_StairSwimExit_Long")
     end = symbol(text, "ZoraTemple_StairSwimExit_End")
-    require(0x2CFC1A <= entry < end <= 0x2CFD00,
-            "Helper overlaps the floor-return helper or SomariaSocketDoor")
+    floor_entry = symbol(text, "ZoraTemple_WarpReturnFloor")
+    floor_end = symbol(text, "ZoraTemple_WarpReturnFloor_End")
+    require(0x2C8000 <= floor_entry < floor_end == entry < end <= 0x2CFD00,
+            "Helpers are outside their ordered bank-$2C stream or overlap SomariaSocketDoor")
     hook_bytes = raw(rom, HOOK, 5)
     require(hook_bytes == b"\x22" + entry.to_bytes(3, "little") + b"\xEA",
             "Compiled hook must be JSL helper / NOP")
@@ -169,9 +171,9 @@ def execute(args):
     require(native_accel == bytes.fromhex(
         "c2209c2f039c31039c26039c28039c2b039c2d039c3c039c3e039c34039c3603e22060"),
         "Native ResetAllAcceleration changed; review its write contract")
-    floor_entry = symbol(text, "ZoraTemple_WarpReturnFloor")
-    require(floor_entry == 0x2CFC00 and raw(rom, 0x0296C0, 5) == bytes.fromhex("2200fc2cea"),
-            "Existing floor-return allocation/hook changed")
+    require(floor_end - floor_entry == 26 and raw(rom, 0x0296C0, 5)
+            == b"\x22" + floor_entry.to_bytes(3, "little") + b"\xEA",
+            "Existing floor-return byte count or symbol-bound hook changed")
     require(raw(rom, floor_entry, 26) == bytes.fromhex(
         "08a5a0c93500d00ba5a2c94400d004e220e6a428a5a0c917006b"),
         "Existing floor-return helper changed")
