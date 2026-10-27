@@ -14,7 +14,8 @@
     "lyra_current_gameplay_runtime_06": "Current saved gameplay-area render directory and parent actor aggregation on8248d1cf; all four sizes and native160 preservation in memory. Actor storage/pointers, runtime admission and publication remain unbound. Earlier source sets and claims retained.",
     "lyra_current_transitions_07": "Current complete-area neighbor transition lowering on4114fb5d against maintained ZScream0e8658f1; native camera/ByScreen rows and composer consistency. Storage, actor pointer, runtime and publication authority remain unbound. Earlier source sets and claims retained.",
     "lyra_current_events_08": "Current default-off tail event source port on16aa2581: explicit event binding, bounded current code include, native/source dispatch and width-safe file-load migration. Save-buffer origins remain unresolved; no activation, storage grant or native save proof. Earlier source sets and claims retained.",
-    "lyra_current_event_assertion_09": "Current tail event guard syntax correction on282b60bf after Asar Ebroken_conditional; split assertions preserve default-off and bound-current requirements. Earlier source sets and claims retained; no runtime/storage/publication grant."
+    "lyra_current_event_assertion_09": "Current tail event guard syntax correction on282b60bf after Asar Ebroken_conditional; split assertions preserve default-off and bound-current requirements. Earlier source sets and claims retained; no runtime/storage/publication grant.",
+    "lyra_current_saved_properties_10": "Current saved native selector lowering and canonical composer property equality on6237efd3. Foreign table values cannot relabel a bound saved generation; all4 music phases retained and unrepresentable SW phase selectors refused. Existing runtime/storage/publication gates and earlier source sets/claims retained."
   },
   "sources": {
     "shared:Sprites/Objects/minecart.asm": {
@@ -1649,6 +1650,196 @@
     },
     "lyra_current_event_assertion_09:Util/item_cheat.asm": {
       "source_set": "lyra_current_event_assertion_09",
+      "path": "Util/item_cheat.asm",
+      "sha256": "5263de5233da3cf02df08e67aa80b130ba313384024be55b16c02f64ef49594d"
+    },
+    "lyra_current_saved_properties_10:Oracle_main.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Oracle_main.asm",
+      "sha256": "aaf405c1ec5ec5b01b4f466dd6b982be005cbddba99e57088a3aa57080ee213e"
+    },
+    "lyra_current_saved_properties_10:Overworld/ZSCustomOverworld.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/ZSCustomOverworld.asm",
+      "sha256": "2cd8827fb1326ae560170b6313737f040cff1c03ef3c1207a9a67d566208c7ff"
+    },
+    "lyra_current_saved_properties_10:Overworld/time_system.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/time_system.asm",
+      "sha256": "7f96493b0f28561af5116086b788b89ee7c3deb87b5c3de293ae2b0311647782"
+    },
+    "lyra_current_saved_properties_10:Overworld/lost_woods.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/lost_woods.asm",
+      "sha256": "3983c065b08d95199d22543cfa6c51a03a2f323aee3841ab8d1a386e8c07640d"
+    },
+    "lyra_current_saved_properties_10:Overworld/goron_checkpoint.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/goron_checkpoint.asm",
+      "sha256": "dd4caf52e84decfe686e6eeacde6f9bb7003787361cc6f6bf773a3eb8a7bf927"
+    },
+    "lyra_current_saved_properties_10:Masks/mask_routines.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Masks/mask_routines.asm",
+      "sha256": "7c903a40a70e23ac0fe9de798b2de4da48611c6f8c8fe78d29beed0b39db3900"
+    },
+    "lyra_current_saved_properties_10:Overworld/project_bg_palette.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/project_bg_palette.asm",
+      "sha256": "3f90b20ed7415e99cd15ad1f8c8e083acd0003e0b62ced481bc9092283f6b71b"
+    },
+    "lyra_current_saved_properties_10:Overworld/lyra_native_loaders.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/lyra_native_loaders.asm",
+      "sha256": "658dbfde3a7c92c01c66883e8bf35247f9681bb1bd4285916c887e9ed78de8ff"
+    },
+    "lyra_current_saved_properties_10:Overworld/graphics_runtime.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/graphics_runtime.asm",
+      "sha256": "a1a6615532994d70a22b282a501e9443dca9a539e1f1623b869615078f740ed3"
+    },
+    "lyra_current_saved_properties_10:Overworld/graphics_runtime_tables.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/graphics_runtime_tables.asm",
+      "sha256": "3620e68e57e3ff11bcea06a64ccb0e5f382687b3932bc70d13f2d02ebf5af6fd"
+    },
+    "lyra_current_saved_properties_10:Overworld/custom_gfx.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/custom_gfx.asm",
+      "sha256": "b0773e3d436254f215e7d14123dfce6aac62919222c81353f5f59edd0b58b8d7"
+    },
+    "lyra_current_saved_properties_10:Util/macros.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Util/macros.asm",
+      "sha256": "e9f0ef67aa7829232ed37fd5caebcbf4a452763099b0c2b43b7171d97479d165"
+    },
+    "lyra_current_saved_properties_10:Config/feature_flags.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Config/feature_flags.asm",
+      "sha256": "eebe8dad726ebf69937019204b503b52ca1302e46e2d53ef8b1b18cd8928e50f"
+    },
+    "lyra_current_saved_properties_10:Config/module_flags.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Config/module_flags.asm",
+      "sha256": "0dfc5ada77bbf92e30b8f7bf30b034ced9ef3d1dd03591fc1f00a835a747586a"
+    },
+    "lyra_current_saved_properties_10:Scripts/Build/lyra_current_transfer.py": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Scripts/Build/lyra_current_transfer.py",
+      "sha256": "374fdc98f71bd9ab337b80f2541e2e24f5c5fa7bc0448c9523e40fddeb6fd071"
+    },
+    "lyra_current_saved_properties_10:Scripts/Build/lyra_private_reservation.py": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Scripts/Build/lyra_private_reservation.py",
+      "sha256": "4752fa2493794b83e72b1f434e1ecf5d7326420d258cbdb860401d55f38872a8"
+    },
+    "lyra_current_saved_properties_10:Scripts/Build/lyra_native_loaders.py": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Scripts/Build/lyra_native_loaders.py",
+      "sha256": "5fe838cbc8de758e894fb858d2e3d26b0fe21cf13a8c3e83886bb0e4d63d43a4"
+    },
+    "lyra_current_saved_properties_10:Scripts/Build/lyra_project_publisher.py": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Scripts/Build/lyra_project_publisher.py",
+      "sha256": "6c82886f87008d3b02af1236d1371d5e079dbbcea4e6d2771273e729a40f10d9"
+    },
+    "lyra_current_saved_properties_10:Scripts/Build/lyra_project_bg_palette.py": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Scripts/Build/lyra_project_bg_palette.py",
+      "sha256": "848c8277409e8775c7f3b8da44f5f2a43c3ecc091dd11fd2a0c30c15a6b87da7"
+    },
+    "lyra_current_saved_properties_10:Scripts/Graphics/compile_runtime_graphics.py": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Scripts/Graphics/compile_runtime_graphics.py",
+      "sha256": "a3363c98d34c35b183e62105f7674a0416fc4899852e86077558a263c7f12b89"
+    },
+    "lyra_current_saved_properties_10:Scripts/Graphics/compile_graphics_pack.py": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Scripts/Graphics/compile_graphics_pack.py",
+      "sha256": "eaa492e3c84818f0e5aff12866d394f78aa8b8be218c061b3a18e2efe31644c2"
+    },
+    "lyra_current_saved_properties_10:Scripts/Generate/asm_source.py": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Scripts/Generate/asm_source.py",
+      "sha256": "4feeb99085ef31c1f8412c32105caf4e5f2b20f22f89a75c8a1141ed9fa61c48"
+    },
+    "lyra_current_saved_properties_10:Overworld/graphics_catalog.json": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/graphics_catalog.json",
+      "sha256": "382b29598b36cd375cc667657679a056ed1668db0c33a12665299bea4efc2c28"
+    },
+    "lyra_current_saved_properties_10:Overworld/graphics_runtime_policy.json": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/graphics_runtime_policy.json",
+      "sha256": "6f103ded82e23d0b00d54b8126560f7ead0c8117c5dee4bc326931f226d3460d"
+    },
+    "lyra_current_saved_properties_10:Scripts/Build/build_rom.sh": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Scripts/Build/build_rom.sh",
+      "sha256": "4f2c6bac972a2fc24ec9815a5c0b5fa14e867fe6d4a5297c1f66216d75d46b96"
+    },
+    "lyra_current_saved_properties_10:Scripts/Build/check_zscream_overlap.py": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Scripts/Build/check_zscream_overlap.py",
+      "sha256": "88b2b11afe15d8d923a5f5da133e9d7acbdf7d1fc79806ca003e294b8b28a556"
+    },
+    "lyra_current_saved_properties_10:Scripts/Generate/generate_hack_manifest.py": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Scripts/Generate/generate_hack_manifest.py",
+      "sha256": "eed5138006a03e7ad4065d20c728fe0ca2b568fa4770da611445102e19f95674"
+    },
+    "lyra_current_saved_properties_10:Overworld/gfx/kalyxo_docks_slot3.bin": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/gfx/kalyxo_docks_slot3.bin",
+      "sha256": "3fd640ea5f71e4301983dc4944b355f6d8582ea14797605688e5adaf37ffc3b4"
+    },
+    "lyra_current_saved_properties_10:Overworld/gfx/kalyxo_docks_bg.bin": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/gfx/kalyxo_docks_bg.bin",
+      "sha256": "7ee45cc2f6e5f42d741794779fd6b79f9a5775f3fddea03a8a53d2038a9806c0"
+    },
+    "lyra_current_saved_properties_10:Overworld/gfx/lyra_sky_tower_87.bin": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/gfx/lyra_sky_tower_87.bin",
+      "sha256": "b7db5e904ca0ad98f9c5268846efb2da0668a2e160a40a554c99747e65d659a8"
+    },
+    "lyra_current_saved_properties_10:Overworld/gfx/lyra_stepped_fort_83.bin": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/gfx/lyra_stepped_fort_83.bin",
+      "sha256": "cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447"
+    },
+    "lyra_current_saved_properties_10:Scripts/Build/lyra_project_terrain.py": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Scripts/Build/lyra_project_terrain.py",
+      "sha256": "e48dcabc2cfec1351716ad9e87d80add49165a40fcf1b7eb293f80ca881577d4"
+    },
+    "lyra_current_saved_properties_10:Scripts/Build/lyra_project_admission.py": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Scripts/Build/lyra_project_admission.py",
+      "sha256": "5fd692636a1627e4c9d7c0c73ec08f76f05f5d2784923dc402850bda44b2f509"
+    },
+    "lyra_current_saved_properties_10:Overworld/lyra_tail_events.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/lyra_tail_events.asm",
+      "sha256": "5e30f8cf0a2a5c85c5f1745b2243ebb2e62849167263816dd390170d06514bf7"
+    },
+    "lyra_current_saved_properties_10:Overworld/overlays.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Overworld/overlays.asm",
+      "sha256": "04212e55015ebe734711028e563408d67a72bdec495366660e5ace92cafa93a4"
+    },
+    "lyra_current_saved_properties_10:Sprites/Bosses/octoboss.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Sprites/Bosses/octoboss.asm",
+      "sha256": "b5379cdc5f3dadbcfc42f0d1bab3044b97e6780aa75ab07496f16d6689054b77"
+    },
+    "lyra_current_saved_properties_10:Sprites/NPCs/goron.asm": {
+      "source_set": "lyra_current_saved_properties_10",
+      "path": "Sprites/NPCs/goron.asm",
+      "sha256": "bd26f33b770d9e3593bb0b5bca3374742d869e9ef18b319212a575104ef9baa2"
+    },
+    "lyra_current_saved_properties_10:Util/item_cheat.asm": {
+      "source_set": "lyra_current_saved_properties_10",
       "path": "Util/item_cheat.asm",
       "sha256": "5263de5233da3cf02df08e67aa80b130ba313384024be55b16c02f64ef49594d"
     }

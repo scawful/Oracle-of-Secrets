@@ -55,6 +55,8 @@ class ComposerFixture:
         self.source, self.document = self.contract_fixture.inputs()
         reader_fixtures.CurrentNativeLoaderTests.setUpClass()
         self.rows = copy.deepcopy(reader_fixtures.CurrentNativeLoaderTests.rows)
+        for area, values in L.current_property_rows(self.document).items():
+            self.rows[area].update(values)
         self.table_plan = self.tables()
 
     def tables(self, *, source=None, origins=None, profile=None):
@@ -110,6 +112,17 @@ class CurrentComposerBindingTest(unittest.TestCase):
                     'publication_authorized', 'ordinary_build_ready', 'runtime_admission', 'rom_written'):
             self.assertIs(prepared[key], False, key)
         self.assertFalse(self.f.contract_fixture.case.candidate.exists())
+
+    def test_valid_foreign_property_table_bytes_cannot_relabel_saved_document(self):
+        for field, value in (('gfx', [1]*8), ('sign_text', 0x1234), ('music_phase3', 0x42)):
+            before = copy.deepcopy(self.f.rows)
+            self.f.rows[0xBF][field] = value
+            # Each table plan remains internally consistent and has the same
+            # genuine source/profile identity. Only the saved selectors differ.
+            foreign = self.f.tables()
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, 'COMPOSER_PROPERTIES_MISMATCH'):
+                self.f.compose(table_plan=foreign)
+            self.f.rows = before
 
     def test_actor_source_streams_share_saved_identity_without_storage_or_admission(self):
         prepared = json.loads(self.f.compose()['prepare.json'])

@@ -1255,6 +1255,45 @@ def plan_current_tables(source, tail_rows, *, origins, policy):
                     'actor/door/exit admission', 'entry/save/return/world-map/mirror/flight'])
 
 
+def current_property_rows(document):
+    """Lower saved native selectors without assigning storage or readiness.
+
+    SW graphics/palette selectors are one byte per area in maintained ZScream;
+    distinct per-phase values cannot be represented by those readers. The
+    established -1 sentinel lowers to0, as in the historical empty-actor path.
+    Four music phases retain all four saved values in the current cache tail.
+    """
+    from lyra_project_terrain import TerrainDocument
+    R.require(isinstance(document, TerrainDocument)
+              and type(document.maps) is tuple and type(document.properties) is tuple
+              and len(document.maps) == len(document.properties) == 32,
+              'CURRENT_PROPERTY_MODEL_INVALID: all32 parsed maps required')
+    result = {}
+    for area, prop in enumerate(document.properties, CURRENT_FIRST):
+        R.require(type(prop) is dict, 'CURRENT_PROPERTY_MODEL_INVALID: properties required')
+        arrays = (('graphics_sheets', 8, 0), ('sprite_graphics', 3, -1),
+                  ('sprite_palettes', 3, -1), ('music', 4, 0))
+        for key, count, minimum in arrays:
+            values = prop.get(key)
+            R.require(type(values) is list and len(values) == count
+                      and all(type(value) is int and minimum <= value <= 255 for value in values),
+                      'CURRENT_PROPERTY_MODEL_INVALID: ' + key)
+        for key, maximum in (('main_palette', 255), ('palette_set', 255),
+                             ('animated_sheet', 255), ('message_id', 65535)):
+            R.require(type(prop.get(key)) is int and 0 <= prop[key] <= maximum,
+                      'CURRENT_PROPERTY_MODEL_INVALID: ' + key)
+        for key in ('sprite_graphics', 'sprite_palettes'):
+            R.require(len(set(prop[key])) == 1,
+                      'CURRENT_PROPERTY_PHASE_SELECTOR_UNSUPPORTED: special-world ' + key)
+        result[area] = dict(gfx=list(prop['graphics_sheets']), main_palette=prop['main_palette'],
+            palette_set=prop['palette_set'], animated=prop['animated_sheet'], sign_text=prop['message_id'],
+            special_sprite_gfx=max(0, prop['sprite_graphics'][0]),
+            special_sprite_palettes=max(0, prop['sprite_palettes'][0]),
+            music_dark_special=prop['music'][0],
+            **{f'music_phase{phase}': value for phase, value in enumerate(prop['music'])})
+    return result
+
+
 def plan_current_actor_streams(source, document, *, current_source_profile):
     """Lower bound authored sprites to headerless OW lists; never place them.
 

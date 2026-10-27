@@ -406,6 +406,10 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
                   'CURRENT_COMPOSER_ORIGIN_MISMATCH: ' + name + ' exceeds its source profile interval')
     R.require(rebuilt['code_pc'] == origins['code']['pc'] and table_plan == rebuilt,
               'CURRENT_COMPOSER_TABLES_MISMATCH: table payload, assembler or extents differ from canonical plan')
+    property_rows = native.current_property_rows(document)
+    for area, values in property_rows.items():
+        R.require(all(tail_rows[area][name] == value for name, value in values.items()),
+                  'CURRENT_COMPOSER_PROPERTIES_MISMATCH: native selectors differ from saved properties')
     actor_stream_plan = native.plan_current_actor_streams(
         source, document, current_source_profile=profile)
     gameplay_area_plan = A.gameplay_area_plan(document)
@@ -467,6 +471,7 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
         reservation_review_id=profile['reservation_review_id'],
         source_contract_sha256=R.sha(encoded(contract)), source_domain=table_plan['source_domain'],
         actor_stream_plan=actor_stream_plan,
+        saved_property_rows_sha256=current.T.digest(property_rows),
         gameplay_area_plan=gameplay_area_plan,
         generated_files={name:R.sha(raw) for name,raw in files.items()}, remaining_consumers=remaining,
         allocation_granted=False, producer_enforcement_verified=False, publication_authorized=False,
