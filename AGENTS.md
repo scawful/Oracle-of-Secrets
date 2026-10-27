@@ -68,6 +68,25 @@ without asking. yaze rules: `~/src/hobby/yaze/docs/internal/agents/operating-rul
      question at a time, and shows the options: screenshots, an Emacs frame, an image-plus-diagram
      page, or a yaze frame (the Planning editor's decision queue, linked by `[planning] file=` in the
      `.yaze` project).
+7. **One PR per scope** (scawful 2026-10-27: "room modifications really shouldnt be 4 different PRs").
+   Scope = one dungeon, overworld region, boss, item, system or editor write path.
+   - Before opening a PR, run `gh pr list`. If an open PR covers that scope, send your commit to its
+     owner through the inbox; the owner adds it as a normal (non-force) commit.
+   - Base every PR on master. Exception: #277 stays on #274's branch until #273 and #274 land
+     (scawful, inbox.md:608).
+   - Room data (collision JSON, generated tables, room patch recipes) lands one dungeon at a time;
+     the next dungeon regenerates the collision lock after the previous one merges.
+   - A dungeon's base-ROM bytes go in one recipe built on the current shared base hash, with one
+     apply ask to scawful.
+   - scawful's own yaze saves write the base ROM and need no PR. Agent edits to
+     `Oracle-of-Secrets.yaze` record before/after hashes and a rollback copy.
+   - Proof runs once on the final head: one native episode that checks each changed behavior, a
+     control for each bug fix, and T3 extras if any part is T3.
+   - Post proof as a PR comment, not a body edit (a body edit reruns ROM Tests and Manifest Tests).
+   - Previews and integration builds that combine scopes stay branches. Work outside the inbox
+     line 1 goal waits as a branch until scawful names it. Small changes still follow Rule 6.
+   - Unchanged: PR merges (into master or any branch), closes, force pushes, base-ROM writes and
+     story text need scawful's OK; tiers T0-T3 are unchanged.
 
 ## ROM Naming
 - `Roms/oos<VERSION>.sfc` — unpatched base, the **edit target**
