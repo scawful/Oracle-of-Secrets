@@ -111,12 +111,14 @@ class OwnershipTests(unittest.TestCase):
 
     def test_symbols_block_back_at_7e0730_conflicts_with_cart_room(self):
         # PR 211 moved Core/symbols.asm out of !MinecartTrackRoom; a move back must be an active conflict.
+        # The composed block includes three Finale bytes (27 total), so its
+        # relocated conflict has the exclusive end $7E074B.
         real={c['id']:c for c in read_ledger(ROOT/'Config/allocation_ownership.json')['claims']}
         block=copy.deepcopy(real['symbols_wram_block']);data=ledger(real['cart_room'],block)
         self.assertEqual(ownership_conflicts(data,{'DISABLE_SPRITES':0})[0],[])
         block['base']=0x7E0730
         conflicts=ownership_conflicts(data,{'DISABLE_SPRITES':0})[0]
-        self.assertEqual([(c['owners'],c['start'],c['end'],c['classification']) for c in conflicts],[(['cart_room','symbols_wram_block'],0x7E0730,0x7E0748,'active_profile_conflict')])
+        self.assertEqual([(c['owners'],c['start'],c['end'],c['classification']) for c in conflicts],[(['cart_room','symbols_wram_block'],0x7E0730,0x7E074B,'active_profile_conflict')])
 
 
 class TableTests(unittest.TestCase):
