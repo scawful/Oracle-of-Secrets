@@ -408,6 +408,12 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
               'CURRENT_COMPOSER_TABLES_MISMATCH: table payload, assembler or extents differ from canonical plan')
     actor_stream_plan = native.plan_current_actor_streams(
         source, document, current_source_profile=profile)
+    gameplay_area_plan = A.gameplay_area_plan(document)
+    for row in gameplay_area_plan['assignments']:
+        values = tail_rows[row['map_id']]
+        R.require(values['parent'] == row['parent_map_id']
+                  and values['area_size'] == row['area_size_code'],
+                  'CURRENT_COMPOSER_GAMEPLAY_AREAS_MISMATCH: table parent/size differs from authored area')
     R.require(type(graphics_source) is str and graphics_source
               and graphics_report.get('current_mode') is True and graphics_report.get('parent_count') == 192
               and graphics_report.get('source_contract_sha256') == R.sha(encoded(contract))
@@ -429,6 +435,10 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
         + '!PROJECT_BG128_ENABLED = 0\n!PROJECT_BG128_RESTORE_BOUND = 0\n')
     data = table_plan['tables_assembler'] + table_plan['descriptor_assembler']
     remaining = list(table_plan['remaining_consumers'])
+    if gameplay_area_plan['areas']:
+        remaining.append('authored gameplay-area native render/actor aggregation')
+    if gameplay_area_plan['unassigned_maps']:
+        remaining.append('unassigned gameplay-area pages')
     if bg128_plan is not None:
         bg = importlib.import_module('lyra_project_bg_palette')
         bg_origin = origins['bg_palette']
@@ -453,6 +463,7 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
         reservation_review_id=profile['reservation_review_id'],
         source_contract_sha256=R.sha(encoded(contract)), source_domain=table_plan['source_domain'],
         actor_stream_plan=actor_stream_plan,
+        gameplay_area_plan=gameplay_area_plan,
         generated_files={name:R.sha(raw) for name,raw in files.items()}, remaining_consumers=remaining,
         allocation_granted=False, producer_enforcement_verified=False, publication_authorized=False,
         ordinary_build_ready=False, runtime_admission=False, rom_written=False)

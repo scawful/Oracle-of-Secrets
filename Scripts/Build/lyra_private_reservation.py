@@ -255,6 +255,8 @@ def compile_native_plan(source, document, granted, directory, *, native_copy_map
     """
     R.require(type(source) is bytes and len(source) in (0x200000, 0x400000),
               'Current full32 planning requires an unheadered2MiB or4MiB source')
+    R.require(not document.gameplay_areas,
+              'CURRENT_GAMEPLAY_AREAS_NATIVE_UNBOUND: native render/actor aggregation is not implemented')
     original_source = source
     source_hash, source_size = R.sha(source), len(source)
     source = A.expanded_rom(source)

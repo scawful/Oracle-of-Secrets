@@ -567,8 +567,15 @@ def verify_reservation_review(review, project, base_rom):
 
 
 def _document_identity(document):
-    return T.digest({key: getattr(document, key) for key in
-                     ('profile', 'maps', 'properties', 'authoring', 'edge_connections', 'flight_points')})
+    R.require(type(document.gameplay_areas) is tuple,
+              'CURRENT_GAMEPLAY_AREAS_MODEL_INVALID: parsed area tuple required')
+    value = {key: getattr(document, key) for key in
+             ('profile', 'maps', 'properties', 'authoring', 'edge_connections', 'flight_points')}
+    # Legacy documents retain their exact identity; authored layout is never
+    # allowed to change under a cached source profile.
+    if document.gameplay_areas:
+        value['gameplay_areas'] = document.gameplay_areas
+    return T.digest(value)
 
 
 def _current_table_layout(families):

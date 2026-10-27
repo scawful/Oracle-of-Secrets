@@ -89,6 +89,38 @@ def _invalid_constant(value: str) -> None:
     raise ValueError(f"Invalid JSON numeric constant: {value}")
 
 
+def gameplay_area_footprint(parent_map_id: int, size: str) -> tuple[int, ...]:
+    """Return the authored row-major footprint; no alignment or clamping."""
+    _require(_integer(parent_map_id, FIRST_MAP, FIRST_MAP + MAP_COUNT - 1),
+             "Gameplay area parent must be A0-BF")
+    dimensions = {"small": (1, 1), "wide": (2, 1), "tall": (1, 2), "large": (2, 2)}
+    _require(type(size) is str and size in dimensions, "Unknown gameplay area size")
+    width, height = dimensions[size]
+    row, column = divmod(parent_map_id - FIRST_MAP, 8)
+    _require(column + width <= 8 and row + height <= 4,
+             "Gameplay area footprint leaves A0-BF grid")
+    return tuple(parent_map_id + y * 8 + x for y in range(height) for x in range(width))
+
+
+def validated_gameplay_areas(value) -> tuple[dict, ...]:
+    """Validate a JSON array or parsed tuple without sorting or inferring areas."""
+    _require(type(value) in (list, tuple) and 1 <= len(value) <= MAP_COUNT,
+             "gameplay_areas requires 1..32 explicit areas")
+    owned = set()
+    for area in value:
+        _keys(area, {"parent_map_id", "size", "maps"}, "gameplay area")
+        expected = gameplay_area_footprint(area["parent_map_id"], area["size"])
+        maps = area["maps"]
+        _require(type(maps) is list and 1 <= len(maps) <= 4
+                 and all(_integer(map_id, FIRST_MAP, FIRST_MAP + MAP_COUNT - 1) for map_id in maps),
+                 "Gameplay area maps must be an A0-BF integer array")
+        _require(tuple(maps) == expected,
+                 "Gameplay area maps must match its exact ordered footprint")
+        _require(not owned.intersection(maps), "Gameplay areas cannot share ownership of a map")
+        owned.update(maps)
+    return tuple(copy.deepcopy(area) for area in value)
+
+
 @dataclass(frozen=True)
 class TerrainDocument:
     profile: dict
@@ -96,10 +128,12 @@ class TerrainDocument:
     maps: tuple[tuple[int, ...], ...]
     properties: tuple[dict, ...]
     edge_connections: tuple[dict, ...] = ()
-    # Complete schema-3/4 drafts survive read-only subset planning. They are not
+    # Complete schema-3/4/5 drafts survive read-only subset planning. They are not
     # a promise that a runtime adapter consumes their metadata.
     authoring: tuple[dict, ...] = ()
     flight_points: tuple[dict, ...] = ()
+    # Empty means UNASSIGNED for older schemas; never infer areas from map IDs.
+    gameplay_areas: tuple[dict, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -180,7 +214,7 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
                            expected_asset_bindings: Mapping[int, tuple[str, str, str]] | None = None,
                            allow_authoring_drafts: bool = False,
                            ) -> TerrainDocument:
-    """Parse schema 3/4 against independently verified native assets.
+    """Parse schema 3/4/5 against independently verified native assets.
 
     The historical strict runtime policy remains the default. A read-only
     admission planner may preserve valid drafts and apply consumer checks to
@@ -193,19 +227,27 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
     _require(size <= MAX_DOCUMENT_BYTES, "Lyra terrain document exceeds 4 MiB")
     data = json.loads(text, object_pairs_hook=_unique_object,
                       parse_constant=_invalid_constant)
+    _require(type(data) is dict and data.get("schema") == "yaze.lyra-terrain"
+             and _integer(data.get("schema_version"), 3, 5),
+             "Expected Yaze Lyra schema 3, 4 or 5")
+    version = data["schema_version"]
     _keys(data, {"schema", "schema_version", "columns", "rows", "map_width",
                  "map_height", "tile_pixels", "profile", "maps",
-                 "flight_points", "edge_connections"}, "Lyra schema 3/4 header")
-    _require(data["schema"] == "yaze.lyra-terrain"
-             and _integer(data["schema_version"], 3, 4),
-             "Expected Yaze Lyra schema 3 or 4")
-    version = data["schema_version"]
+                 "flight_points", "edge_connections"}
+                | ({"gameplay_areas"} if version == 5 else set()), "Lyra schema 3/4/5 header")
     for key, value in (("columns", 8), ("rows", 4), ("map_width", 32),
                        ("map_height", 32), ("tile_pixels", 16)):
         _require(_integer(data[key], value, value), f"Invalid Lyra {key}")
     _profile(data["profile"])
     _require(data["profile"] == expected,
              "Lyra profile differs from independently verified source assets")
+    gameplay_areas = ()
+    if version == 5:
+        _require(type(data["gameplay_areas"]) is list,
+                 "gameplay_areas requires a JSON array")
+        gameplay_areas = validated_gameplay_areas(data["gameplay_areas"])
+        _require(allow_authoring_drafts,
+                 "Unsupported runtime metadata: gameplay_areas")
     flights = data["flight_points"]
     _require(type(flights) is list and len(flights) <= 64, "Invalid flight_points")
     _require(allow_authoring_drafts or not flights,
@@ -293,7 +335,7 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
         _require(type(props) is dict, "Malformed Lyra map properties keys")
         has_override = "background_palette" in props
         _keys(props, PROPERTY_KEYS | ({"background_palette"}
-              if version == 4 and has_override else set()), "Lyra map properties")
+              if version in (4, 5) and has_override else set()), "Lyra map properties")
         if has_override:
             _require(_array(props["background_palette"], 128, 0, 0x7FFF),
                      "Lyra background palette requires 128 BGR555 integers")
@@ -334,7 +376,7 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
     ids = range(FIRST_MAP, FIRST_MAP + MAP_COUNT)
     return TerrainDocument(expected, tuple(maps[i] for i in ids),
                            tuple(properties[i] for i in ids), tuple(copy.deepcopy(edges)),
-                           tuple(authoring[i] for i in ids), tuple(copy.deepcopy(flights)))
+                           tuple(authoring[i] for i in ids), tuple(copy.deepcopy(flights)), gameplay_areas)
 
 
 def quadrant_map_plan(map_id: int) -> Quad:

@@ -20,13 +20,31 @@ import lyra_project_bg_palette as B
 import lyra_project_publisher as P
 import test_lyra_current_native_loaders as reader_fixtures
 import test_lyra_current_source_contract as contract_fixtures
+import test_lyra_current_transfer as transfer_fixtures
+from test_lyra_project_admission import observation
 
 
 class ComposerFixture:
-    def __init__(self, owner):
+    def __init__(self, owner, *, gameplay_areas=None):
         self.contract_fixture = contract_fixtures.CurrentSourceContractTest()
         self.contract_fixture.bind_composer_sources = True
-        self.contract_fixture.setUp()
+        if gameplay_areas is None:
+            self.contract_fixture.setUp()
+        else:
+            prepare = transfer_fixtures.CurrentSaveTransferTest.prepare
+            def prepare_authored(case, **kwargs):
+                data = json.loads(case.terrain.read_bytes())
+                data.update(schema_version=5, gameplay_areas=copy.deepcopy(gameplay_areas))
+                case.terrain.write_bytes(X.P.encoded(data))
+                case.inputs['terrain'] = X.Q.bound(case.terrain)
+                case.save['artifacts'] = case.artifacts(case.inputs)
+                case.receipt.write_bytes(X.P.encoded(case.save))
+                case.proof.clear()
+                case.proof.update(observation(case.rom.read_bytes(), data)[1])
+                case.proof['terrain_sha256'] = X.R.sha(case.terrain.read_bytes())
+                return prepare(case, **kwargs)
+            with mock.patch.object(transfer_fixtures.CurrentSaveTransferTest, 'prepare', prepare_authored):
+                self.contract_fixture.setUp()
         owner.addCleanup(self.contract_fixture.doCleanups)
         self.root = self.contract_fixture.fixture.root
         patch = mock.patch.object(P, 'ROOT', self.root)
@@ -112,6 +130,42 @@ class CurrentComposerBindingTest(unittest.TestCase):
                     'ordinary_build_ready', 'runtime_admission', 'actors_compiled', 'rom_written'):
             self.assertIs(actors[key], False, key)
         self.assertFalse(self.f.contract_fixture.case.candidate.exists())
+
+    def test_legacy_area_identity_and_unassigned_plan_do_not_invent_parent_rows(self):
+        document = self.f.document
+        legacy = X.T.digest({key: getattr(document, key) for key in
+            ('profile', 'maps', 'properties', 'authoring', 'edge_connections', 'flight_points')})
+        self.assertEqual(X._document_identity(document), legacy)
+        plan = json.loads(self.f.compose()['prepare.json'])['gameplay_area_plan']
+        self.assertEqual(plan['status'], 'UNASSIGNED')
+        self.assertEqual(plan['assignments'], [])
+        self.assertEqual(plan['render_footprints'], [])
+        self.assertEqual(plan['unassigned_maps'], list(range(0xA0, 0xC0)))
+
+    def test_authored_area_tables_must_match_and_layout_changes_retire_profile(self):
+        from dataclasses import replace
+        areas = [dict(parent_map_id=0xA1, size='large', maps=[0xA1, 0xA2, 0xA9, 0xAA])]
+        f = ComposerFixture(self, gameplay_areas=areas)
+        for area in areas[0]['maps']:
+            f.rows[area].update(parent=0xA1, area_size=1)
+        f.table_plan = f.tables()
+        prepared = json.loads(f.compose()['prepare.json'])
+        self.assertEqual(prepared['gameplay_area_plan']['areas'], areas)
+        self.assertEqual(prepared['gameplay_area_plan']['status'], 'PARTIAL')
+        self.assertIs(prepared['gameplay_area_plan']['runtime_admission'], False)
+        self.assertIs(prepared['selected'], False)
+        self.assertIn('authored gameplay-area native render/actor aggregation', prepared['remaining_consumers'])
+        for field, value in (('parent', 0xA2), ('area_size', 0)):
+            rows = copy.deepcopy(f.rows)
+            f.rows[0xA2][field] = value
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, 'GAMEPLAY_AREAS_MISMATCH'):
+                f.compose(table_plan=f.tables())
+            f.rows = rows
+        changed = replace(f.document, gameplay_areas=(dict(parent_map_id=0xA1, size='small', maps=[0xA1]),))
+        with self.assertRaisesRegex(ValueError, 'PROFILE_STALE'):
+            X.verify_current_native_source_profile(f.profile, f.source, changed)
+        with self.assertRaisesRegex(ValueError, 'GAMEPLAY_AREAS_NATIVE_UNBOUND'):
+            X.V.compile_native_plan(f.source, f.document, None, {})
 
     def test_independent_valid_origin_and_profile_plans_cannot_be_mixed(self):
         foreign_origins = dict(self.f.table_plan['origins'])

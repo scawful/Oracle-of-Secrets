@@ -23,7 +23,8 @@ import test_lyra_current_native_loaders as reader_fixtures
 
 
 FROZEN = '6e7e5f15d555dffb9f4b3d8807595c9e3f13305f'
-SOURCE_SET = 'lyra_current_actor_resources_04'
+SOURCE_SET = 'lyra_current_gameplay_areas_05'
+ACTOR_SET = 'lyra_current_actor_resources_04'
 COMPOSER_SET = 'lyra_current_composer_binding_03'
 FROZEN_SET = 'lyra_current_full32_port_01'
 CALLERS_SET = 'lyra_current_catalog_callers_02'
@@ -97,16 +98,25 @@ class CatalogCallersContractTest(unittest.TestCase):
         self.assertEqual(hashlib.sha256(retained).hexdigest(),
                          'a3cae98e16be902cff4ef82d5ec84030644de0202aca0677a2477ff4a68ec539')
 
-    def test_child_exact_ledger_and_all31_consumers_validate_but_need_profile_to_compose(self):
+    def test_previous_actor_declaration_and31_pins_remain_verbatim(self):
+        members = [ACTOR_SET] + [key for key, row in self.ledger['sources'].items()
+                                if row['source_set'] == ACTOR_SET]
+        self.assertEqual(len(members), 32)
+        retained = b'\n'.join(raw_member(self.ledger_raw.decode(), key) for key in members)
+        self.assertEqual(hashlib.sha256(retained).hexdigest(),
+                         'da1cf33ca25ba62f063c2bd14151406d96eca9ef022abe94d6c4b49e0cae7a8e')
+
+    def test_child_exact_ledger_and_all33_consumers_validate_but_need_profile_to_compose(self):
         self.assertEqual(self.contract['ledger']['source_set'], SOURCE_SET)
-        self.assertEqual(len(self.records), 31)
+        self.assertEqual(len(self.records), 33)
         old_paths = {row['path'] for row in self.frozen_ledger['sources'].values()
                      if row['source_set'] == FROZEN_SET}
         resources = {'Overworld/gfx/kalyxo_docks_slot3.bin', 'Overworld/gfx/kalyxo_docks_bg.bin',
                      'Overworld/gfx/lyra_sky_tower_87.bin', 'Overworld/gfx/lyra_stepped_fort_83.bin'}
-        self.assertEqual({row['path'] for row in self.records}, old_paths | resources)
+        readers = {'Scripts/Build/lyra_project_terrain.py', 'Scripts/Build/lyra_project_admission.py'}
+        self.assertEqual({row['path'] for row in self.records}, old_paths | resources | readers)
         bindings = P.validate_current_source_set(self.bound_contract())
-        self.assertEqual(len(bindings), 32)
+        self.assertEqual(len(bindings), 34)
         self.assertEqual(bindings[0], dict(path=str(ROOT / LEDGER), sha256=P.R.sha(self.ledger_raw)))
         self.assertEqual({row['path']: row['sha256'] for row in bindings[1:]},
                          {str(ROOT / row['path']): row['sha256'] for row in self.records})
@@ -136,7 +146,7 @@ class CatalogCallersContractTest(unittest.TestCase):
             contract['origins']['graphics']['source_binding']['path'] = str(
                 root / 'Overworld/custom_gfx.asm')
             with mock.patch.object(P, 'ROOT', root):
-                self.assertEqual(len(P.validate_current_source_set(contract)), 32)
+                self.assertEqual(len(P.validate_current_source_set(contract)), 34)
                 with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_PROFILE_REQUIRED'):
                     self.compose(contract)
                 consumer = root / 'Overworld/custom_gfx.asm'

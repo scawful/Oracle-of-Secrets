@@ -19,8 +19,9 @@ import subprocess
 import sys
 
 from lyra_project_terrain import (
-    Allocation, FIRST_MAP, MAP_COUNT, compile_terrain, parse_terrain_document,
-    quadrant_map_plan, resolve_project_terrain,
+    Allocation, FIRST_MAP, MAP_COUNT, TerrainDocument, compile_terrain,
+    gameplay_area_footprint, parse_terrain_document, quadrant_map_plan,
+    resolve_project_terrain, validated_gameplay_areas,
 )
 from lyra_native_state import plan_native_state
 
@@ -281,6 +282,43 @@ def parse_admission(allocation):
     return maps, tuple(sorted(value["candidate_edge_ids"]))
 
 
+def gameplay_area_plan(document):
+    """Describe explicit authored areas without assigning storage or admission."""
+    require(isinstance(document, TerrainDocument),
+            "Gameplay area plan requires a parsed TerrainDocument")
+    raw = document.gameplay_areas
+    # Only the parsed legacy default is unassigned. Malformed falsey values
+    # still pass through the shared validator rather than disappearing.
+    areas = () if type(raw) is tuple and not raw else validated_gameplay_areas(raw)
+    size_codes = {"small": 0, "large": 1, "wide": 2, "tall": 3}
+    assignments, footprints = [], []
+    for area in areas:
+        parent, size = area["parent_map_id"], area["size"]
+        members = gameplay_area_footprint(parent, size)
+        if size == "small":
+            quadrants = members * 4
+        elif size == "wide":
+            quadrants = members * 2
+        elif size == "tall":
+            quadrants = (members[0], members[0], members[1], members[1])
+        else:
+            quadrants = members
+        for map_id in members:
+            assignments.append(dict(map_id=map_id, parent_map_id=parent,
+                                    size=size, area_size_code=size_codes[size]))
+            footprints.append(dict(map_id=map_id, quadrant_maps=list(quadrants)))
+    assigned = {row["map_id"] for row in assignments}
+    unassigned = [map_id for map_id in range(FIRST_MAP, FIRST_MAP + MAP_COUNT)
+                  if map_id not in assigned]
+    complete = not unassigned
+    return dict(kind="lyra.gameplay_area_source_plan.v1",
+                status="ASSIGNED" if complete else "PARTIAL" if areas else "UNASSIGNED",
+                complete=complete, areas=list(areas), assignments=assignments,
+                render_footprints=footprints, unassigned_maps=unassigned,
+                allocation_granted=False, publication_authorized=False,
+                runtime_admission=False)
+
+
 def render_dependency_plan(map_ids, footprints=()):
     maps = _map_ids(map_ids, "candidate map IDs")
     directory = {area: quadrant_map_plan(area) for area in maps}
@@ -395,6 +433,8 @@ def consumer_blockers(document, traversal, closure):
 
 def relocated_table_payloads(source, document, compiled, traversal):
     """Produce adapter bytes once for both the planner and ordinary publisher."""
+    require(not getattr(document, "gameplay_areas", ()),
+            "Historical table publisher has no authored gameplay area consumer")
     # These tables have palette selectors, but no loader for project BG words.
     # Direct publisher callers must not bypass the admission planner's refusal.
     require(all("background_palette" not in plan.properties for plan in compiled.maps),
