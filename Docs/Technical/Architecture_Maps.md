@@ -1,5 +1,10 @@
 # Oracle of Secrets & z3dk Architecture Maps
 
+These are conceptual diagrams. For current tool commands and evidence limits,
+use [ASM and z3dk workflow](ASM_Z3DK_Workflow.md). For memory ownership use
+`Config/allocation_ownership.json`, `Core/ZS ROM MAP.txt` and the selected
+build artifacts; the bank summary below is not a free-space allocation policy.
+
 This document contains conceptual diagrams of the project architecture and the `z3dk` toolchain workflow. Use these as a reference for understanding system dependencies and memory management.
 
 ---

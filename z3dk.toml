@@ -1,18 +1,14 @@
-# z3dk project configuration for Oracle of Secrets
-# Enables z3lsp diagnostics and lint pipeline integration.
-
-[project]
+# z3dk_core/config.cc currently reads flat keys, not nested TOML tables.
+# Keep analyzer switches in build_rom.sh; they are not z3lsp config keys.
 preset = "alttp"
 mapper = "lorom"
-main = "Oracle_main.asm"
+main = ["Oracle_main.asm"]
 symbols = "wla"
+# Editor analysis reads this ROM in memory. Build scripts select their own
+# explicit input/output and record the exact identities in a build receipt.
 rom_path = "Roms/oos168x.sfc"
-
-[project.defines]
-ORACLE = "1"
-
-[project.include_paths]
-paths = [
+defines = ["ORACLE=1"]
+include_paths = [
   ".",
   "Core",
   "Sprites",
@@ -31,24 +27,21 @@ paths = [
   "Data",
 ]
 
-[emit]
-diagnostics = "diagnostics.json"
-symbols_mlb = "Roms/oos168x.mlb"
-hooks = "hooks.json"
+# Callers own output paths. In particular, a private smoke build must not
+# implicitly replace Roms/*.mlb or another build's hooks/diagnostics.
+emit = []
 
-[lint]
-strict = false
-check_hooks = true
-find_mx = true
-find_width_imbalance = true
-check_abi = true
-check_sprite_tables = true
+# z3lsp consumes these options. The z3asm CLI currently forwards only the
+# unused-symbol setting; build_rom.sh invokes the ROM analyzer separately.
+warn_unknown_width = true
+warn_branch_outside_bank = true
+warn_org_collision = true
+warn_stack_balance = true
+warn_hook_return = true
+warn_unauthorized_hook = true
+warn_unused_symbols = false
 
-[lint.prohibited_memory_ranges]
-"$7EF300-$7EF304" = "ZSOW overlay flags (do not use for Oracle story flags)"
-"$7EF340-$7EF37F" = "Vanilla room data (use SRAM extension instead)"
-
-[hooks]
-root = "."
-rom = "Roms/oos168x.sfc"
-output = "hooks.json"
+# This linter option guards assembled ROM write blocks, not runtime STA/STZ
+# operands. WRAM/SRAM ownership belongs to Config/allocation_ownership.json,
+# Core/ram.asm and Core/sram.asm; do not put SRAM "protections" here.
+prohibited_memory_ranges = []

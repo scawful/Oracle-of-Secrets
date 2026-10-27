@@ -1,10 +1,9 @@
 # Oracle of Secrets: 65816 ASM Style Guide
 
-**Version**: 1.0
+**Version**: 1.1
 **Purpose**: Reduce AI errors and ensure consistent code quality across the codebase.
-**Last Verified:** 2026-01-23 (style update)
-**Primary Sources:** Internal conventions
-**Confidence:** High
+**Last Reviewed:** 2026-10-27 (macro, ABI and tool contracts; not every gameplay routine)
+**Primary Sources:** `Core/sprite_macros.asm`, `Util/macros.asm`, current build/validation entry points
 
 ---
 
@@ -25,7 +24,7 @@
 ### Processor State Checklist
 
 - [ ] Always use size suffixes (`.b`, `.w`, `.l`) for ambiguous operations
-- [ ] Use `PHP`/`PLP` for functions called from unknown context
+- [ ] Establish entry/exit widths and preserve the caller state the routine promises
 - [ ] `REP #$30` = 16-bit A and X/Y, `SEP #$30` = 8-bit
 - [ ] `REP #$20` / `SEP #$20` = A only
 - [ ] `REP #$10` / `SEP #$10` = X/Y only
@@ -34,8 +33,8 @@
 
 - [ ] `JSL`/`RTL` for cross-bank calls (3-byte return address)
 - [ ] `JSR`/`RTS` for same-bank calls (2-byte return address)
-- [ ] **NEVER MIX** - mismatch causes crashes
-- [ ] External hooks use `JSL`, internal helpers use `JSR`
+- [ ] Match the actual return frame; document any existing trampoline that changes it
+- [ ] Use `JSL` for long calls, `JSR` for local calls, and `JML` for intentional tail transfers
 
 ### Comment Tags
 
@@ -252,11 +251,12 @@ LDA #$12              ; Is this 8-bit or 16-bit?
 ### 4.2 State Preservation
 
 ```asm
-; Functions called from unknown context
+; Entry: native mode; caller A width may vary. X/Y must remain unchanged.
+; Exit: restores P; A is clobbered. DBR/D are untouched; data accesses are long.
 SomePublicFunction:
 {
   PHP                   ; Save caller's state
-  SEP #$30              ; Set known state (8-bit A, X/Y)
+  SEP #$20              ; Set A to 8-bit without truncating X/Y
 
   ; ... function body ...
 
@@ -271,15 +271,22 @@ SomePublicFunction:
   RTS
 ```
 
+`PHP`/`PLP` preserve flags, not register values. Setting X=8 clears the high
+bytes of X/Y; restoring P cannot recover them. Save full registers before
+narrowing if their values must survive. Match push/pull widths on every exit.
+Preserve or intentionally return N/Z/C/V according to the caller and displaced
+instructions.
+
 ### 4.3 Processor Mode Macros
 
-Use these macros for clarity:
+These macros are defined in `Core/sprite_macros.asm`. Check the actual include
+chain before using them; raw `REP`/`SEP` remains appropriate in existing code:
 
 ```asm
-%m8()                   ; SEP #$20 - 8-bit accumulator
-%m16()                  ; REP #$20 - 16-bit accumulator
-%a8()                   ; SEP #$20 - 8-bit A (alias)
-%a16()                  ; REP #$20 - 16-bit A (alias)
+%m8()                   ; SEP #$30 - 8-bit A and X/Y; truncates X/Y
+%m16()                  ; REP #$30 - 16-bit A and X/Y
+%a8()                   ; SEP #$20 - 8-bit A only
+%a16()                  ; REP #$20 - 16-bit A only
 %index8()               ; SEP #$10 - 8-bit X/Y
 %index16()              ; REP #$10 - 16-bit X/Y
 ```
@@ -332,7 +339,7 @@ MyCustomHook:
 
 Document P and stack behavior at hook entry and exit so callers and future patches are safe:
 
-- **Entry:** Does the hook assume a specific P state (e.g. 16-bit A/X/Y)? If not, use PHP/PLP (or document “caller must set REP/SEP after JSL”).
+- **Entry:** Establish M/X, DBR, D, register/scratch ownership, and the return frame. PHP/PLP alone does not make an unknown caller safe.
 - **Exit:** Does the hook guarantee a single P state on all exit paths? If not, document “return P unspecified” or normalize before every RTL/RTS/JML.
 - **Stack:** JSR↔RTS and JSL↔RTL must pair; no unbalanced PHA/PLA/PHX/PLX/PHY/PLY across paths.
 
@@ -452,10 +459,10 @@ Sprite_Draw:
 ### Common Crash Causes
 
 1. **JSL/JSR mismatch** - Using RTL with JSR or RTS with JSL
-2. **Bank crossing** - Forgetting to set DBR with PHK:PLB
+2. **Data-bank mismatch** - Absolute data accesses use the wrong DBR; choose long addressing or a documented DBR setup
 3. **Processor state** - Assuming 8-bit when 16-bit or vice versa
 4. **Hook overflow** - Patch exceeds available space
-5. **Missing pullpc** - Stack imbalance from pushpc
+5. **Missing pullpc** - Assembly-position stack imbalance, separate from the runtime CPU stack
 
 ---
 
@@ -529,7 +536,7 @@ LDA.l OOSPROG : AND.b #$01 : BEQ .not_complete
 1. **Read existing patterns** - Search for similar implementations
 2. **Check memory map** - Verify address usage won't conflict
 3. **Identify hook points** - Use Hyrule Historian to find vanilla code
-4. **Verify bank space** - Check MemoryMap.md for free space
+4. **Verify ownership and fit** - Consult `Config/allocation_ownership.json` and `Core/ZS ROM MAP.txt`; an "unused" label is not a grant
 
 ### 10.2 When Modifying Code
 
@@ -540,9 +547,9 @@ LDA.l OOSPROG : AND.b #$01 : BEQ .not_complete
 
 ### 10.3 After Writing Code
 
-1. **Run build** - Use `mcp__book-of-mudora__dev_ops(action="build")`
-2. **Run lint** - Use `mcp__book-of-mudora__dev_ops(action="lint")`
-3. **Verify in emulator** - Test before marking complete
+1. **Select proof** - Follow the change tier in `AGENTS.md`; reuse unchanged evidence.
+2. **Build and inspect** - Use the owned checkout's `Scripts/Build/build_rom.sh 168`, then `python3 Scripts/Build/check_zscream_overlap.py`. Preserve receipt outcomes and the compiled-byte comparison.
+3. **Verify behavior when required** - Use a named owned Mesen2-OOS session for the affected scenario, including save/reopen when applicable. See [ASM and z3dk workflow](ASM_Z3DK_Workflow.md) for explicit artifact paths and tool limits.
 
 ---
 

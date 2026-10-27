@@ -3,8 +3,9 @@
 This repo has accumulated scripts over time. The goal is to keep a small “golden path” and treat everything else as optional/internal.
 
 ## Golden Path
-- Quick build + reload: `Scripts/Build/oos-quick.sh`
-- Quick build + reload + validate: `Scripts/Build/oos-verify.sh`
+- Build without emulator control: `Scripts/Build/dev_loop.sh 168 --mesen-sync`
+- Build + reset: `Scripts/Build/oos-quick.sh` (requires explicit `OOS_TEST_SOCKET` already running the exact ROM)
+- Build + reset + validate: `Scripts/Build/oos-verify.sh` (same explicit endpoint requirement)
 - Named debug sessions: `Scripts/Build/oos-session.sh`
 - Metadata popup control panel: `Scripts/Debug/oos_state_popup.py`
 - Build loop: `Scripts/Build/dev_loop.sh`
@@ -18,6 +19,8 @@ This repo has accumulated scripts over time. The goal is to keep a small “gold
 - Handheld (RG353P) testing: moved to the sibling repo `~/src/hobby/oos-rg353p`.
 
 Archived docs may still say `./build.sh` or flat `scripts/…` paths. Prefer this Golden Path (the old `Docs/RUNBOOK.md` is in the AFS archive).
+
+See [ASM and z3dk workflow](../Docs/Technical/ASM_Z3DK_Workflow.md) for supported configuration, receipt paths and the distinction between editor lint, ROM analysis and native proof.
 
 ## Common Debug Helpers
 - Blackout capture bundle: `Scripts/Debug/capture_blackout.py`

@@ -376,10 +376,12 @@ Source of truth: the include order in `Oracle_main.asm`. Do not copy it from her
 # Fast build
 ./Scripts/Build/build_rom.sh 168
 
-# MCP tools
-mcp__book-of-mudora__dev_ops(action="build")  # Build ROM
-mcp__book-of-mudora__dev_ops(action="lint")   # Check style
+# Optional hook/sprite validation; runtime smoke needs an explicit owned socket.
+./Scripts/Build/dev_loop.sh 168 --mesen-sync --validate
 ```
+
+See [ASM and z3dk workflow](ASM_Z3DK_Workflow.md) for config keys, explicit
+ROM/symbol/hook paths, receipt outcomes, and editor versus native evidence.
 
 ---
 

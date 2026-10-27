@@ -4,6 +4,12 @@
 **Primary Sources:** Mixed (ROM/disassembly/runtime/sheets)
 **Confidence:** UNKNOWN (needs audit)
 
+For new allocations, use `Config/allocation_ownership.json`, current source and
+`Core/ZS ROM MAP.txt` with the selected build's artifacts. This document mixes
+historical reference and source observations; "unused" or a checkmark below
+does not grant space or establish native verification. See
+[ASM and z3dk workflow](ASM_Z3DK_Workflow.md).
+
 ## Verification
 | Area | Evidence | Last Verified | Notes |
 | --- | --- | --- | --- |

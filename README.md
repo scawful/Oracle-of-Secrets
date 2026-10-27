@@ -47,5 +47,6 @@ Supported `@hook` fields: `name`, `kind`, `target`, `module`, `note`, `expected_
 
 ## Z3DK config
 - `z3dk.toml`: Oracle of Secrets main entry (`Oracle_main.asm`).
+- [ASM and z3dk workflow](Docs/Technical/ASM_Z3DK_Workflow.md): supported config keys, editor diagnostics, artifact identity, and ASM review contracts.
 
 ---
