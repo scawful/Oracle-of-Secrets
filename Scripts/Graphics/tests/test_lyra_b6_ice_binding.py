@@ -84,6 +84,14 @@ class B6IceBindingTests(unittest.TestCase):
                          ["3104", "2D28", "3DEF", "55E7", "6ACF", "7798", "7BFE"])
         self.assertEqual(plan["unused"], [56])
 
+    def test_backdrop_uses_kit_water_word_zero(self):
+        plan = b6.backdrop_plan(self.palette)
+        self.assertEqual((plan["table"], plan["row"], plan["row_byte_offset"]), ("bg_color", 182, 364))
+        self.assertEqual((plan["bgr555"], plan["bytes_hex"]), ("51E8", "e851"))
+        self.assertIsNone(plan["address"])
+        with self.assertRaises(pack.PackError):
+            b6.backdrop_plan(b"\xff\xff" + self.palette[2:])
+
     def test_rejects_unsafe_allocations(self):
         cases = [dict(chr=list(range(180, 192))), dict(chr=[256] * 12), dict(chr=list(range(256, 267))),
                  dict(parent_map=181), dict(priority=2), dict(palette_row=8),

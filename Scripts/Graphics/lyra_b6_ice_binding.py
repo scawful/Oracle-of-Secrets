@@ -6,7 +6,7 @@ and the bound placement recipe for parent 182. The ICE page is raised to
 native-high 4bpp (index n -> n|8, 0 stays transparent), quadrants are deduped
 under h/v flip, and the result is either a demand plan (no allocation) or, with
 an explicit allocation, a catalog/policy fragment, Tile16 records, global tile
-type bytes and a palette row plan. The fragment is validated against the live
+type bytes and a palette row plan. Every report carries the bg_color backdrop row. The fragment is validated against the live
 catalog and runtime policy in memory; neither file is written here.
 
 Collision follows scawful 2026-10-27: slippery ice, tile type $0E for every ICE
@@ -164,6 +164,21 @@ def bind(result: dict, palette: bytes, allocation: dict) -> dict:
                 palette_plan=palette_plan)
 
 
+def backdrop_plan(palette: bytes) -> dict:
+    """scawful 2026-10-27 option A: B6 backdrop = kit word 0 so transparent rim pixels
+    match the demo water. bg_color is 2 bytes per parent; the legacy $288000 table
+    has 160 rows, so 182 exists only in the 192-row expanded table, whose address
+    stays unbound while the source contract's tables origin is null."""
+    color = int.from_bytes(palette[0:2], "little")
+    if color > 0x7FFF:
+        raise pack.PackError(f"kit word 0 {color:04X} is not BGR555")
+    return dict(table="bg_color", row=PARENT_MAP, row_byte_offset=PARENT_MAP * 2,
+                bgr555=f"{color:04X}", bytes_hex=color.to_bytes(2, "little").hex(),
+                source="kit palette word 0", address=None,
+                note="every transparent pixel on parent 182 shows this color",
+                decision="scawful 2026-10-27 option A")
+
+
 def validate_merged(fragment: dict, result: dict, catalog_path: Path, policy_path: Path) -> dict:
     """Merge into the live catalog/policy in memory and run the shared validators."""
     catalog, assets = pack.load(catalog_path, parent_count=192)
@@ -229,7 +244,7 @@ def main(argv=None) -> int:
                       demand=dict(chr=len(result["glyphs"]), tile16=len(used),
                                   tile16_bytes=8 * len(used), palette_words=7,
                                   tile_types=len(result["glyphs"])),
-                      rom_or_catalog_written=False)
+                      backdrop=backdrop_plan(palette), rom_or_catalog_written=False)
         if args.allocation:
             fragment = bind(result, palette, pack.read_json(args.allocation))
             fragment["validation"] = validate_merged(fragment, result, args.catalog, args.policy)
