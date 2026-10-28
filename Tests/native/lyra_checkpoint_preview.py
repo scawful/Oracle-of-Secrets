@@ -115,10 +115,10 @@ class LyraEpisode(Episode):
         return super().command(name, params)
 
     def boot(self):
-        initial = self.sample()
-        require(initial['module'] in (0, 1, 0x14),
-                f'Cold-boot episode must start at title/file-select: {initial}')
-        self.result['cases'].append(dict(name='cold-title-or-file-select', state=initial))
+        # Frame2 may still be in the native SPC handshake with random WRAM.
+        # Advance normally to initialized title state before controller input.
+        self.wait(lambda s: s['module'] in (0, 1, 0x14) and s['indoors'] == 0,
+                  'cold-title-or-file-select-ready', max_frames=1200)
         return super().boot()
 
     def require_regional_destination(self, state):

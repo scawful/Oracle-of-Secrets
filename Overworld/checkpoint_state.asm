@@ -21,7 +21,16 @@ if !LYRA_PRIVATE_CHECKPOINT_ENABLED == 1
   assert !LYRA_PRIVATE_PILOT_INGRESS_ENABLED == 1, "Private checkpoint requires scoped ingress verification"
   incsrc "Data/Generated/lyra_project/checkpoint_registry_constants.asm"
   assert !CHECKPOINT_STATE_SCHEMA == 1 && !CHECKPOINT_REGISTRY_EPOCH == 1, "Private checkpoint requires the current state codec"
-  assert !CHECKPOINT_REGISTRY_COUNT == 2 && !CHECKPOINT_REGION_MEMBER_COUNT == 6, "Private checkpoint requires control plus selected A0/A1 registry"
+  ; Asar cannot mix && and || in one condition. Shapes: A0 v1 = 2/6;
+  ; A0 plus approved native ferry/Sky v2 = 4/9.
+  !CHECKPOINT_PRIVATE_SHAPE = 0
+  if !CHECKPOINT_REGISTRY_COUNT == 2 && !CHECKPOINT_REGION_MEMBER_COUNT == 6
+    !CHECKPOINT_PRIVATE_SHAPE = 1
+  endif
+  if !CHECKPOINT_REGISTRY_COUNT == 4 && !CHECKPOINT_REGION_MEMBER_COUNT == 9
+    !CHECKPOINT_PRIVATE_SHAPE = 1
+  endif
+  assert !CHECKPOINT_PRIVATE_SHAPE == 1, "Private checkpoint requires control plus A0/A1 (2/6) or A0 plus native ferry/Sky (4/9)"
 else
   !CHECKPOINT_STATE_SCHEMA = $01
   !CHECKPOINT_REGISTRY_EPOCH = $01

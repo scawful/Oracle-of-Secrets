@@ -5608,12 +5608,12 @@
     },
     "lyra_joint_art_bridge_30:Overworld/lyra_native_loaders.asm": {
       "path": "Overworld/lyra_native_loaders.asm",
-      "sha256": "4b6a17efb7d80d4af0cad225de87bb7b7367f35e80d6a09e3906544e4bf85404",
+      "sha256": "42e085ba93a93ee45aa676835dbcb0b1281d98116904ddd08e2600ebeaa4848b",
       "source_set": "lyra_joint_art_bridge_30"
     },
     "lyra_joint_art_bridge_30:Overworld/lyra_private_pilot.asm": {
       "path": "Overworld/lyra_private_pilot.asm",
-      "sha256": "dd2d768d437a83ef4f38b98e4b84acfd8cc2f1e5bb4ed7997f4ea64650bb09f5",
+      "sha256": "35081bcb0e5be6c5f3128ca679cbaaf3c322492ac070c54b4f17c4910b6e3525",
       "source_set": "lyra_joint_art_bridge_30"
     },
     "lyra_joint_art_bridge_30:Overworld/lyra_tail_events.asm": {
@@ -5643,12 +5643,12 @@
     },
     "lyra_joint_art_bridge_30:Scripts/Build/build_checks.sh": {
       "path": "Scripts/Build/build_checks.sh",
-      "sha256": "dc12e239e006d66648a035b98ce2fe8bd9eb53076413ad9199ed4946888cb744",
+      "sha256": "f7318846caa14d6fe3b9074ecf0215647a914144af24101fcbd66634a7de0aa7",
       "source_set": "lyra_joint_art_bridge_30"
     },
     "lyra_joint_art_bridge_30:Scripts/Build/build_rom.sh": {
       "path": "Scripts/Build/build_rom.sh",
-      "sha256": "1d3d721da6f972d01edca357ff930ff0573fb58cfe794c2abfd6bb6c938a0856",
+      "sha256": "ffb148f50f51f7b466f2269361b563dcfbe33488f9d59d63dbab2288c9135056",
       "source_set": "lyra_joint_art_bridge_30"
     },
     "lyra_joint_art_bridge_30:Scripts/Build/check_zscream_overlap.py": {
@@ -5658,7 +5658,7 @@
     },
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_current_transfer.py": {
       "path": "Scripts/Build/lyra_current_transfer.py",
-      "sha256": "1fc19440dc534a281817c6ee93d1abb9ae439f48f950574ef1121b09c9f883fd",
+      "sha256": "e2b4ce89825271a2bd5a18193ec2f5c83b52948e09b16f0b042f9ceaf4166bb5",
       "source_set": "lyra_joint_art_bridge_30"
     },
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_joint_art.py": {
@@ -5668,7 +5668,7 @@
     },
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_native_loaders.py": {
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "7ad9c7096753989f8288eb9800c879c56b5905670ff3edb9d553c8974f3a2f1b",
+      "sha256": "56d175ba6529a70a36f2204756883cc131e62a6fba883a6cc013ab77e231edea",
       "source_set": "lyra_joint_art_bridge_30"
     },
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_native_state.py": {
@@ -5693,7 +5693,7 @@
     },
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_project_publisher.py": {
       "path": "Scripts/Build/lyra_project_publisher.py",
-      "sha256": "8220aea96c87ba934d8b653cb79cba8d79aa6a26b2fa2e5098b44310aa0df9e7",
+      "sha256": "617580938b417b94ffc2f7e7d2330de16c39a4ff62a8256b1337464c8b2babc6",
       "source_set": "lyra_joint_art_bridge_30"
     },
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_project_terrain.py": {
@@ -5713,7 +5713,7 @@
     },
     "lyra_joint_art_bridge_30:Scripts/Generate/generate_hack_manifest.py": {
       "path": "Scripts/Generate/generate_hack_manifest.py",
-      "sha256": "eed5138006a03e7ad4065d20c728fe0ca2b568fa4770da611445102e19f95674",
+      "sha256": "7e27276af9d9d73e3c8f4c30a0228229dddc972724ccd9b57fd49c24a758e47b",
       "source_set": "lyra_joint_art_bridge_30"
     },
     "lyra_joint_art_bridge_30:Scripts/Generate/joint_palette_directory.py": {
@@ -5753,12 +5753,12 @@
     },
     "lyra_joint_art_bridge_30:Tests/native/lyra_checkpoint_preview.py": {
       "path": "Tests/native/lyra_checkpoint_preview.py",
-      "sha256": "86a3c25f12faf04006e5c0eac4501af00e69582e457799007fe4d026c566ef92",
+      "sha256": "3228ce751d8d16963954fee14c83c1004f31ad10ffa941c77add62e07f532123",
       "source_set": "lyra_joint_art_bridge_30"
     },
     "lyra_joint_art_bridge_30:Tests/test_lyra_checkpoint_preview_publisher.py": {
       "path": "Tests/test_lyra_checkpoint_preview_publisher.py",
-      "sha256": "989e603fdeacb2dba2b17bb113eed8fade341c1d8103ae527b89bde82a7da091",
+      "sha256": "350d8f25ec6607b63b3b96f447bbe28139fadf6d8256219112d1c8bbc7fb1d24",
       "source_set": "lyra_joint_art_bridge_30"
     },
     "lyra_joint_art_bridge_30:Tests/test_lyra_current_transfer.py": {
@@ -6368,7 +6368,7 @@
     },
     "regional_checkpoint_runtime_25:Overworld/checkpoint_state.asm": {
       "path": "Overworld/checkpoint_state.asm",
-      "sha256": "3253564bf760108a53dea60b793d079e34b5e9089c9fd5e0191302383148fce1",
+      "sha256": "1d4519109eb1f20f1ed725dc22ed41d315086fc5b1abea45a37b3c66f419e865",
       "source_set": "regional_checkpoint_runtime_25"
     },
     "regional_checkpoint_runtime_25:Overworld/goron_checkpoint.asm": {
@@ -6383,12 +6383,12 @@
     },
     "regional_checkpoint_runtime_25:Scripts/Build/build_rom.sh": {
       "path": "Scripts/Build/build_rom.sh",
-      "sha256": "1d3d721da6f972d01edca357ff930ff0573fb58cfe794c2abfd6bb6c938a0856",
+      "sha256": "ffb148f50f51f7b466f2269361b563dcfbe33488f9d59d63dbab2288c9135056",
       "source_set": "regional_checkpoint_runtime_25"
     },
     "regional_checkpoint_runtime_25:Scripts/Build/checkpoint_registry.py": {
       "path": "Scripts/Build/checkpoint_registry.py",
-      "sha256": "8f621a9539de2c57b6315f7fcd11c6cd51d0bf0102d6c29d6cd9405109e406b4",
+      "sha256": "cf6f8dc7026a2b289bbaef997053b3ca98053f44252a617a74fd459e8a10744a",
       "source_set": "regional_checkpoint_runtime_25"
     },
     "regional_checkpoint_runtime_25:Scripts/Generate/asm_source.py": {

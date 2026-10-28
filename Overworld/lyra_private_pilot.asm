@@ -129,10 +129,10 @@ LyraCall_PrivatePilotColdResume = pc()
 LyraPilot_EntryBlocked = pc()
 LyraPilot_ColdResumeBlocked = pc()
   PLY : PLX : PLA : PLP
-  ; Home receives its own long frame; RTS then consumes ONLY the original
-  ; Module08 near frame. No manual stack discard, chooser or map modulo.
+  ; Home receives its own long frame. Return to bank02 before its native
+  ; RTS consumes the original Module08 near frame; local RTS keeps bankE0.
   JSL Checkpoint_EnterHome
-  RTS
+  JML $02EDC4
 }
 Lyra_PrivatePilotEntryGate_End = pc()
 
@@ -174,6 +174,7 @@ Lyra_PrivatePilotFullNativeCall_End = pc()
 
 ; Module08_02 owns a near dispatcher frame. Route its ENTIRE operation via
 ; the same guarded long operation; denial skips its10/B0/11 completion writes.
+; Both exits restore bank02 at the pinned native RTS without adding a frame.
 Lyra_PrivatePilotFullNearGate:
 {
   PHP
@@ -182,12 +183,12 @@ LyraCall_PrivatePilotFullLoad = pc()
   PLP
   JSL Lyra_PrivatePilotFullNativeCall
   LDA.b #$10 : STA.b $10 : STZ.b $B0 : STZ.b $11
-  RTS
+  JML $02EDC4
 .blocked
 LyraPilot_FullLoadBlocked = pc()
   PLP
   JSL Checkpoint_EnterHome
-  RTS
+  JML $02EDC4
 }
 Lyra_PrivatePilotFullNearGate_End = pc()
 
@@ -241,6 +242,7 @@ org $02B217 ; @hook module=Overworld name=Lyra_PrivatePilotMirrorGate kind=jml t
 assert pc() == $02B21B
 assert read4($02B1F0) == $6BED5920, "Native-only full long-operation source moved"
 assert read1($02B1F9) == $6B, "Native full-operation far return moved"
+assert read1($02EDC4) == $60, "Module08 native near-return instruction moved"
 assert read4($02EDB9) == $A9ED5920, "Module08 full-operation preimage moved"
 org $02EDB9 ; @hook module=Overworld name=Lyra_PrivatePilotFullNearGate kind=jml target=Lyra_PrivatePilotFullNearGate expected_m=8 expected_x=8
   JML Lyra_PrivatePilotFullNearGate

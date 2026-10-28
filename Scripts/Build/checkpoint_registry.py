@@ -370,6 +370,8 @@ def runtime_registry(source_rom, goron_source, *, private_plan=None,
         require(verified_bindings is None and expected_cache is None,
                 'Private checkpoint inputs require an explicit private plan')
         return control
+    if type(private_plan) is dict and private_plan.get('kind') == PREVIEW_PLAN_V2:
+        return _preview_registry_v2(control, private_plan, verified_bindings, expected_cache)
     require(type(private_plan) is dict and set(private_plan) == {
         'kind', 'scope', 'production_admission', 'epoch', 'bindings', 'entry', 'memberships'} and
         private_plan['kind'] == 'checkpoint.private_preview_plan.v1' and
@@ -467,6 +469,258 @@ def _preview_floor_handlers(image, attributes):
         require(read(0x07DA2A + attr*2,2) == address.to_bytes(2,'little') and
                 read(0x070000 | address,len(body)) == body,
                 'Private landing overworld floor handler changed')
+
+
+PREVIEW_PLAN_V2 = 'checkpoint.private_preview_plan.v2'
+NATIVE_LANDING_KIND = 'checkpoint.private_native_landing.v1'
+# Private-only native preview rows; region equals key. `types` lists the
+# (first char, count) ranges the area's tileset profile copies from the
+# joint-art ferry data before collision.
+NATIVE_PREVIEW = {
+    3: dict(domain=Domain.LIGHT, parent=0x30, maps=(0x30, 0x31), size=2,
+            scope='native_preview_30_31', types=((0x100, 0x59),)),
+    4: dict(domain=Domain.SPECIAL, parent=0x87, maps=(0x87,), size=0,
+            scope='native_preview_87', types=()),
+}
+_NATIVE_SIZES = {0: (0x200, 0x200), 2: (0x400, 0x200)}
+# Native parents keep AreaTileset ownership: current GfxRT lookup and the
+# custom_gfx dispatcher both reject parents below LYRA_CURRENT_FIRST.
+_NATIVE_SOURCE_GUARDS = {
+    'Overworld/area_tilesets.asm': (
+        'if !LYRA_AREA_FERRY_BOUND == 1\n  db $02 ; $30: bound ferry collision and sheets',
+        '%AreaTileset_Types($0100, $0059, FerryArea30Types)',
+        '  db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; $80'),
+    'Overworld/graphics_runtime.asm': ('CMP.w #!LYRA_CURRENT_FIRST : BCC .none',),
+    'Overworld/custom_gfx.asm': ('CMP.w #!LYRA_CURRENT_FIRST : BCC .native',),
+}
+
+
+def native_preview_sources(engine):
+    """Bind the native tileset/graphics owners the native caches rely on."""
+    from pathlib import Path
+    import lyra_project_prepare as Q
+    pins = []
+    for name, needles in _NATIVE_SOURCE_GUARDS.items():
+        pin = Q.bound(Path(engine) / name)
+        text = Q.read_bound(pin).decode()
+        require(all(needle in text for needle in needles),
+                'Native preview tileset/graphics owner changed: ' + name)
+        pins.append(pin)
+    return pins
+
+
+def _native_row(image, name, index):
+    import lyra_project_admission as A
+    spec = next(s for s in A.SPECS if s[0] == name)
+    at = A.pc(spec[1]) + (index - spec[3]) * spec[5]
+    return int.from_bytes(image[at:at + spec[5]], 'little')
+
+
+def _native_scope_grid(image, maps):
+    """Tile16 rows for one parent; a wide parent's second map lies east."""
+    import lyra_native_streams as N
+    import lyra_project_admission as A
+    grids = []
+    for area in maps:
+        planes = [N._plane(image, area, table)[0] for table in N.POINTER_TABLES]
+        ids = {high << 8 | low for high, low in zip(*planes)}
+        grids.append(N._native_grid(planes, {i: A.read_tile32(image, i) for i in ids}))
+    return [sum((grid[y] for grid in grids), []) for y in range(32)]
+
+
+def native_preview_cache(image, landing, binding):
+    """Derive an approved native preview cache from the packet-applied saved ROM.
+
+    The landing only selects a point and repeats what it expects there. Every
+    cache word, collision quarter and grid identity is recomputed here.
+    """
+    import struct
+    import lyra_joint_art as J
+    import lyra_project_admission as A
+    require(type(image) is bytes and len(image) == 0x400000,
+            'Native preview requires the expanded packet-applied saved ROM')
+    keys = {'kind', 'scope', 'key', 'map_id', 'parent_map', 'region_key', 'local_pixel',
+            'clear_radius', 'tile16_id', 'tile_attributes', 'grid_sha256', 'binding'}
+    require(type(landing) is dict and set(landing) == keys and landing['kind'] == NATIVE_LANDING_KIND,
+            'Malformed native preview landing')
+    spec = NATIVE_PREVIEW.get(landing['key']) if type(landing['key']) is int else None
+    require(spec is not None and landing['scope'] == spec['scope'] and
+            all(type(landing[name]) is int and landing[name] == value for name, value in (
+                ('map_id', spec['parent']), ('parent_map', spec['parent']), ('region_key', landing['key']))),
+            'Native preview landing must select an approved key/map/region')
+    require(landing['binding'] == binding, 'Native preview landing Save/packet/ferry-type binding differs')
+    parent = spec['parent']
+    for area in spec['maps']:
+        require(_native_row(image, 'parent', area) == parent and
+                _native_row(image, 'area_size', area) == spec['size'],
+                'Native preview camera topology changed')
+    width, height = _NATIVE_SIZES[spec['size']]
+    point = landing['local_pixel']
+    require(type(point) is list and len(point) == 2 and
+            all(type(n) is int and n % 16 == 0 for n in point) and
+            120 <= point[0] <= 120 + width - 0x100 and 80 <= point[1] <= 80 + height - 0xE2,
+            'Native preview anchor must be a camera-legal tile')
+    radius = landing['clear_radius']
+    require(type(radius) is int and 1 <= radius <= 4, 'Native preview requires clearance radius 1..4')
+    grid = _native_scope_grid(image, spec['maps'])
+    flat = [tile for row in grid for tile in row]
+    require(landing['grid_sha256'] == hashlib.sha256(struct.pack(f'<{len(flat)}H', *flat)).hexdigest(),
+            'Native preview grid differs')
+    types = bytearray(image[0x71459:0x71659])
+    area_data = A.pc(J.AREA_DATA[0])
+    for first, count in spec['types']:
+        types[first:first + count] = image[area_data:area_data + count]
+    atlas = A.pc(int.from_bytes(image[0x865:0x868], 'little'))
+
+    def attributes(tile):
+        words = struct.unpack('<4H', image[atlas + tile * 8:atlas + tile * 8 + 8])
+        return [types[word & 0x1FF] for word in words]
+    x, y = (n // 16 for n in point)
+    cells = {(xx, yy) for yy in range(y - radius, y + radius + 1)
+             for xx in range(x - radius, x + radius + 1)}
+    cells |= {(x + dx, y + dy) for dx in (-1, 0, 1) for dy in (1, 2)}  # +19px exit walk
+    require(all(0 <= xx < len(grid[0]) and 0 <= yy < len(grid) for xx, yy in cells),
+            'Native preview clearance leaves its parent')
+    require(type(landing['tile16_id']) is int and landing['tile16_id'] == grid[y][x] and
+            type(landing['tile_attributes']) is list and
+            all(type(n) is int for n in landing['tile_attributes']) and
+            landing['tile_attributes'] == attributes(grid[y][x]),
+            'Native preview anchor binding differs')
+    clearance = set()
+    for xx, yy in cells:
+        clearance.update(attributes(grid[yy][xx]))
+    require(clearance <= set(_PREVIEW_FLOOR_HANDLERS),
+            'Native preview clearance contains a blocked collision quarter')
+    _preview_floor_handlers(image, clearance)
+    rows = {name: _native_row(image, name, parent)
+            for name in ('transition_y', 'transition_x', 'scroll_north', 'scroll_west')}
+    sprites = _native_row(image, 'special_sprite_gfx', parent) if parent >= 0x80 else 0
+    px, py = point[0] + rows['transition_x'], point[1] + rows['transition_y']
+    sx, sy = px - 120, py - 80
+    origin = ((sy & 0x1F0) << 3) | ((sx & 0x1F0) >> 3)
+    words = [parent, 0x16, sy, sx, py, px, parent, origin, py + 31, px + 7,
+             rows['transition_y'], rows['transition_y'] + height - 0xE2,
+             rows['transition_x'], rows['transition_x'] + width - 0x100,
+             rows['scroll_north'], (rows['scroll_north'] + height + 0xE0) & 0xFFFF,
+             rows['scroll_west'], (rows['scroll_west'] + width + 0x100) & 0xFFFF,
+             0x2000, (_native_row(image, 'area_gfx', parent) | 0x20) | sprites << 8, 0, 0, 0, 0, 0]
+    cache = struct.pack('<25H', *words)
+    return cache, dict(key=landing['key'], map_id=parent, parent_map=parent, region_key=landing['key'],
+        local_pixel=list(point), world_pixel=[px, py], scroll=[sx, sy], tilemap_origin=origin,
+        tile16_id=grid[y][x], tile_attributes=attributes(grid[y][x]), clear_radius=radius,
+        clearance_attributes=sorted(clearance), native_exit_walk_y=19, stable_after_walk=[px, py + 19],
+        cache_sha256=hashlib.sha256(cache).hexdigest(), native_gameplay_verified=False)
+
+
+def _bind_native_preview(engine, request, source, plan, runtime):
+    """Guarded packet image -> native caches; plan cache claims are not inputs."""
+    import lyra_joint_art as J
+    import lyra_project_admission as A
+    import lyra_project_prepare as Q
+    packet_binding = runtime.get('joint_art')
+    require(packet_binding is not None and type(plan.get('bindings')) is dict and
+            plan['bindings'].get('joint_art') == packet_binding,
+            'Private checkpoint packet differs from the policy joint-art binding')
+    pins = plan['bindings'].get('native_landings')
+    require(type(pins) is list and len(pins) == len(NATIVE_PREVIEW),
+            'Private checkpoint v2 requires one landing per native key')
+    packet_plan = J.prepare(packet_binding, request, source)[0]
+    image = bytearray(A.expanded_rom(source))
+    for row in packet_plan['writes']:
+        lo, hi = row['pc']
+        image[lo:hi] = bytes.fromhex(row['payload_hex'])
+    packet = json.loads(Q.read_bound(packet_binding))
+    binding = dict(source_rom_sha256=hashlib.sha256(source).hexdigest(),
+                   transfer_id=request['transfer_id'], generation=request['live']['generation'],
+                   operation_id=request['live']['operation_id'], joint_art=packet_binding,
+                   ferry_types=packet['ferry']['types'])
+    caches, derived = [], []
+    for key, pin in zip(NATIVE_PREVIEW, pins):
+        landing = json.loads(Q.read_bound(pin))
+        require(type(landing) is dict and landing.get('key') == key,
+                'Native preview landings must follow approved key order')
+        cache, row = native_preview_cache(bytes(image), landing, binding)
+        caches.append(cache)
+        derived.append(row)
+    return caches, derived, [*packet_plan['inputs'], *pins, *native_preview_sources(engine)]
+
+
+def _private_binding_v2(value):
+    from pathlib import Path
+    require(type(value) is dict and set(value) == {
+        'source_rom_sha256', 'document_sha256', 'transfer_id', 'live', 'selected_pair',
+        'cache_source', 'joint_art', 'native_landings'}, 'Malformed private checkpoint v2 bindings')
+    _private_binding({k: v for k, v in value.items() if k not in ('joint_art', 'native_landings')})
+    pins = value['native_landings']
+    require(type(pins) is list and len(pins) == len(NATIVE_PREVIEW),
+            'Private checkpoint v2 requires one landing per native key')
+    for pin in (value['joint_art'], *pins):
+        require(type(pin) is dict and set(pin) == {'path', 'sha256'} and
+                type(pin['path']) is str and '\0' not in pin['path'] and
+                Path(pin['path']).is_absolute() and type(pin['sha256']) is str and
+                re.fullmatch('[0-9a-f]{64}', pin['sha256']),
+                'Private checkpoint v2 requires exact packet/landing artifact pins')
+
+
+def _preview_registry_v2(control, plan, bindings, expected_cache):
+    """A0 v1 entry plus the approved native rows, each against its derived cache."""
+    require(set(plan) == {'kind', 'scope', 'production_admission', 'epoch', 'bindings',
+                          'entries', 'memberships'} and
+            plan['scope'] == 'seeded_private_preview' and plan['production_admission'] is False,
+            'Checkpoint plan must be an explicit seeded private preview')
+    require(type(plan['epoch']) is int and plan['epoch'] == control.epoch,
+            'Private checkpoint registry epoch differs from the control')
+    _private_binding_v2(bindings)
+    _private_binding_v2(plan['bindings'])
+    require(plan['bindings'] == bindings and bindings['source_rom_sha256'] == control.source_rom_sha256,
+            'Private checkpoint source/current save/packet/landing bindings differ')
+    import lyra_project_prepare as Q
+    for pin in (bindings['live']['save_receipt'], bindings['cache_source'], bindings['joint_art'],
+                *bindings['native_landings']):
+        Q.read_bound(pin)
+    keys = (2, *NATIVE_PREVIEW)
+    require(type(expected_cache) is bytes and len(expected_cache) == CACHE_BYTES * len(keys),
+            'Private checkpoint v2 requires every independently derived cache')
+    entries = plan['entries']
+    require(type(entries) is list and len(entries) == len(keys),
+            'Private checkpoint v2 requires A0 plus each approved native entry')
+    rows, members = [], []
+    for index, (key, entry) in enumerate(zip(keys, entries)):
+        require(type(entry) is dict and set(entry) == {'key', 'domain', 'map_id', 'parent_map',
+                'native_affinity', 'region_key', 'exit_cache_hex', 'cache_sha256'},
+                'Malformed private checkpoint entry')
+        if key == 2:
+            domain, area, maps, region = Domain.SPECIAL, 0xA0, bindings['selected_pair'], entry['region_key']
+        else:
+            spec = NATIVE_PREVIEW[key]
+            domain, area, maps, region = spec['domain'], spec['parent'], list(spec['maps']), key
+        require(type(entry['key']) is int and entry['key'] == key and
+                type(entry['domain']) is str and entry['domain'] == domain.name and
+                type(entry['native_affinity']) is int and entry['native_affinity'] == 0 and
+                type(entry['map_id']) is int and entry['map_id'] == area and
+                type(entry['parent_map']) is int and entry['parent_map'] == area and
+                type(entry['region_key']) is int and entry['region_key'] == region and
+                (key != 2 or region not in (1, *NATIVE_PREVIEW)),
+                'Private checkpoint v2 entry is outside its approved key/domain/map/region')
+        cache = expected_cache[index * CACHE_BYTES:(index + 1) * CACHE_BYTES]
+        require(type(entry['exit_cache_hex']) is str and
+                re.fullmatch('[0-9a-f]{100}', entry['exit_cache_hex']) and
+                type(entry['cache_sha256']) is str and
+                re.fullmatch('[0-9a-f]{64}', entry['cache_sha256']) and
+                bytes.fromhex(entry['exit_cache_hex']) == cache and
+                hashlib.sha256(cache).hexdigest() == entry['cache_sha256'],
+                'Private checkpoint cache differs from the independent landing binding')
+        rows.append(RegionalCheckpoint(key, domain, area, region, area, 0, cache,
+                                       control.source_rom_sha256))
+        members += [dict(map_id=m, domain=domain.name, native_affinity=0, region_key=region) for m in maps]
+    require(type(plan['memberships']) is list and plan['memberships'] == members and
+            all(type(m[k]) is int for m in plan['memberships']
+                for k in ('map_id', 'native_affinity', 'region_key')),
+            'Private checkpoint has an unselected map/domain/affinity/region membership')
+    preview_members = tuple(RegionMembership(m['map_id'], Domain[m['domain']], 0, m['region_key'])
+                            for m in members)
+    return Registry.compile((*control.records, *rows), memberships=(*control.memberships, *preview_members),
+                            epoch=control.epoch, source_rom_sha256=control.source_rom_sha256)
 
 
 def private_preview_cache(source, document, landing, recipe):
@@ -567,6 +821,7 @@ def bind_private_preview(project, base_rom, request_path, profile, plan_binding,
             'Private checkpoint requires its enabled/source-bound engine profile')
     plan = json.loads(Q.read_bound(plan_binding))
     landing = json.loads(Q.read_bound(landing_binding))
+    native = type(plan) is dict and plan.get('kind') == PREVIEW_PLAN_V2
     ledger = json.loads(Path(T.R.LEDGER).read_bytes())
     policies = [p for p in ledger.get('current_save_transfer_policies', [])
                 if p['id'] == request['allocation_policy_id']]
@@ -585,6 +840,10 @@ def bind_private_preview(project, base_rom, request_path, profile, plan_binding,
     required_sources = ('Scripts/Build/checkpoint_registry.py', 'Overworld/checkpoint_state.asm',
                         'Overworld/goron_checkpoint.asm', 'Overworld/ZSCustomOverworld.asm',
                         'Oracle_main.asm', 'Core/sram.asm')
+    if native:
+        import lyra_joint_art as J
+        J.require_source_profile(profile)
+        required_sources += ('Scripts/Build/lyra_joint_art.py',)
     inputs = [plan_binding, landing_binding, recipe_binding, Q.bound(T.R.LEDGER),
               *[Q.bound(engine / name) for name in required_sources]]
     geometry = Q.bound(engine / 'Overworld/ZSCustomOverworld.asm')
@@ -595,13 +854,20 @@ def bind_private_preview(project, base_rom, request_path, profile, plan_binding,
         document_sha256=T._document_identity(document), transfer_id=request['transfer_id'],
         live={key: request['live'][key] for key in ('generation', 'operation_id', 'save_receipt')},
         selected_pair=[0xA0, 0xA1], cache_source=landing_binding)
+    expected = cache
+    if native:
+        caches, native_derived, native_inputs = _bind_native_preview(engine, request, source, plan, runtime)
+        expected = cache + b''.join(caches)
+        derived = dict(a0=derived, native=native_derived)
+        bindings.update(joint_art=runtime['joint_art'], native_landings=plan['bindings']['native_landings'])
+        inputs += native_inputs
     registry = runtime_registry(source, (engine / 'Overworld/goron_checkpoint.asm').read_text(),
-        private_plan=plan, verified_bindings=bindings, expected_cache=cache)
+        private_plan=plan, verified_bindings=bindings, expected_cache=expected)
     require(registry.records[1].region_key == landing['region_key'],
             'Private checkpoint landing and registry region differ')
     for row in inputs:
         Q.read_bound(row)
-    return registry, dict(plan=plan, bindings=bindings, cache_hex=cache.hex(),
+    return registry, dict(plan=plan, bindings=bindings, cache_hex=expected.hex(),
                           inputs=inputs, derived=derived)
 
 

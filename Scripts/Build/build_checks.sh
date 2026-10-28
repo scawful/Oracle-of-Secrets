@@ -35,6 +35,27 @@ configure_current_output() {
   mkdir -p "$rom_dir"
 }
 
+# A selected current build uses only the verifier its authenticated transfer ran.
+configure_current_tools() {
+  [[ -n "${OOS_LYRA_CANDIDATE:-}" ]] || return 0
+  local arguments=(current-verifier --project "$OOS_LYRA_PROJECT" --base-rom "$base_rom")
+  if [[ -n "${OOS_LYRA_REQUEST:-}" ]]; then arguments+=(--request "$OOS_LYRA_REQUEST"); fi
+  if [[ -n "${OOS_Z3ED_BIN:-}" ]]; then arguments+=(--explicit "$OOS_Z3ED_BIN"); fi
+  local pinned
+  pinned="$(python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" "${arguments[@]}")" || return $?
+  export OOS_Z3ED_BIN="$pinned"
+}
+
+select_z3ed_cli() {
+  if [[ -n "${OOS_Z3ED_BIN:-}" ]]; then
+    printf '%s\n' "$OOS_Z3ED_BIN"
+  elif [[ -x "$repo_root/../yaze/scripts/z3ed" ]]; then
+    printf '%s\n' "$repo_root/../yaze/scripts/z3ed"
+  else
+    command -v z3ed 2>/dev/null || true
+  fi
+}
+
 receipt() {
   python3 "$receipt_tool" "$1" --receipt "$receipt_path" "${@:2}"
 }

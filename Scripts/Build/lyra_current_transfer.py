@@ -435,6 +435,35 @@ def _git(root, *args):
         raise ValueError('Selected Oracle source is not available at the exact revision') from error
 
 
+def _git_source_blobs(root, engine_head, relatives):
+    """Read exact committed blobs in one process, preserving binary framing."""
+    relatives = tuple(relatives)
+    R.require(type(engine_head) is str and re.fullmatch('[0-9a-f]{40}', engine_head) is not None
+              and len(set(relatives)) == len(relatives)
+              and all(type(name) is str and name and not Path(name).is_absolute()
+                      and '..' not in Path(name).parts
+                      and not any(char in name for char in '\r\n\0') for name in relatives),
+              'Selected Oracle source blob names are invalid')
+    query = ''.join(engine_head + ':' + name + '\n' for name in relatives).encode('utf-8')
+    try:
+        result = subprocess.run(['git', '-C', str(root), 'cat-file', '--batch'],
+                                input=query, capture_output=True, check=True)
+    except subprocess.CalledProcessError as error:
+        raise ValueError('Selected Oracle source is not available at the exact revision') from error
+    raw, offset, blobs = result.stdout, 0, {}
+    for name in relatives:
+        end = raw.find(b'\n', offset)
+        header = re.fullmatch(rb'[0-9a-f]{40} blob ([0-9]+)', raw[offset:end]) if end >= 0 else None
+        R.require(header is not None,
+                  'Selected Oracle source is not available at the exact revision: ' + name)
+        size = int(header[1]); start = end + 1; offset = start + size
+        R.require(offset < len(raw) and raw[offset:offset+1] == b'\n',
+                  'Selected Oracle source blob response is truncated: ' + name)
+        blobs[name] = raw[start:offset]; offset += 1
+    R.require(offset == len(raw), 'Selected Oracle source blob response has trailing data')
+    return blobs
+
+
 def _engine_source_context(root, engine_head):
     """Bind selected ASM inputs, not ownership or assembled write extents."""
     root = Path(root).resolve(strict=True)
@@ -491,6 +520,8 @@ def _engine_source_context(root, engine_head):
     paths.update(assets)
     paths.update(root / name for name in ('Config/allocation_ownership.json', 'Core/ZS ROM MAP.txt',
                                          'Scripts/Build/build_rom.sh'))
+    committed = _git_source_blobs(root, engine_head,
+        [path.relative_to(root).as_posix() for path in sorted(paths)])
     bindings = []
     for path in sorted(paths):
         R.require(path.is_file() and path.resolve().is_relative_to(root)
@@ -498,7 +529,7 @@ def _engine_source_context(root, engine_head):
                   'Selected Oracle source input escapes its checkout or uses a symlink')
         relative = path.relative_to(root).as_posix()
         binding = Q.bound(path)
-        R.require(Q.read_bound(binding) == _git(root, 'show', engine_head + ':' + relative),
+        R.require(Q.read_bound(binding) == committed[relative],
                   'Selected Oracle source differs from engine commit: ' + relative)
         bindings.append(binding)
     R.require(_git(root, 'rev-parse', 'HEAD').decode().strip() == checkout_head,
