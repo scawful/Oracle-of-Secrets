@@ -12,6 +12,31 @@ import lyra_native_loaders as L
 import lyra_native_state as S
 
 
+class SelectedPaletteDependencyTests(unittest.TestCase):
+    def test_unselected_palette_cannot_block_a_bound_private_pair(self):
+        from test_lyra_project_admission import document
+        from lyra_project_terrain import parse_terrain_document
+        raw=document();raw['schema_version']=4
+        raw['maps'][6]['authoring']['properties']['background_palette']=[0]*128
+        raw['maps'][6]['authoring']['asset_bindings']=['1'*64]*3
+        parsed=parse_terrain_document(X.P.encoded(raw),raw['profile'],allow_authoring_drafts=True,
+            expected_asset_bindings={r['map_id']:r['authoring']['asset_bindings'] for r in raw['maps']})
+        pilot=X.native_checkpoint_boundaries(parsed)
+        self.assertEqual(X.current_bg128(b'',parsed,None,{},None,private_pilot=pilot),(None,None))
+        self.assertIn('background_palette',parsed.properties[6])
+        with self.assertRaisesRegex(ValueError,'BG128_UNADMITTED'):
+            X.current_bg128(b'',parsed,None,{},None)
+        raw['maps'][0]['authoring']['properties']['background_palette']=[0]*128
+        raw['maps'][0]['authoring']['asset_bindings']=['1'*64]*3
+        selected=parse_terrain_document(X.P.encoded(raw),raw['profile'],allow_authoring_drafts=True,
+            expected_asset_bindings={r['map_id']:r['authoring']['asset_bindings'] for r in raw['maps']})
+        with self.assertRaisesRegex(ValueError,'BG128_UNADMITTED'):
+            X.current_bg128(b'',selected,None,{},None,private_pilot=X.native_checkpoint_boundaries(selected))
+        malformed=copy.deepcopy(pilot);malformed['allowed_tail_maps']=[]
+        with self.assertRaises(ValueError):
+            X.current_bg128(b'',parsed,None,{},None,private_pilot=malformed)
+
+
 class EventStorageOwnerTests(unittest.TestCase):
     def proposed_ledger(self):
         ledger = json.loads((X.P.ROOT/'Config/allocation_ownership.json').read_text())
