@@ -159,6 +159,7 @@ mlb_path="$rom_dir/oos${version}x.mlb"
 
 source "$repo_root/Scripts/Build/build_checks.sh"
 configure_current_output
+configure_current_tools
 init_build_receipt
 current_stage="base_rom"
 
@@ -319,15 +320,7 @@ if [[ "${OOS_SKIP_MENU_VALIDATE:-0}" == "1" ]]; then
   # An explicit diagnostic skip may disable the default, never an explicit requirement.
   omit_check menu skipped "$(check_required menu "${OOS_MENU_VALIDATE_FATAL:-0}")" "OOS_SKIP_MENU_VALIDATE=1"
 else
-  z3ed_cli="${OOS_Z3ED_BIN:-}"
-  if [[ -z "$z3ed_cli" ]]; then
-    local_z3ed="$repo_root/../yaze/scripts/z3ed"
-    if [[ -x "$local_z3ed" ]]; then
-      z3ed_cli="$local_z3ed"
-    elif command -v z3ed >/dev/null 2>&1; then
-      z3ed_cli="$(command -v z3ed)"
-    fi
-  fi
+  z3ed_cli="$(select_z3ed_cli)"
   if [[ -n "$z3ed_cli" ]] && command -v "$z3ed_cli" >/dev/null 2>&1; then
     receipt tool --name z3ed --path "$(command -v "$z3ed_cli")"
     menu_validate_args=(oracle-menu-validate --project "$repo_root")

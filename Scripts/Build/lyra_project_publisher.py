@@ -660,6 +660,42 @@ def resolve_current_target(project, base_rom=None, request=None, candidate=None)
                 base_rom=str(rom),request=str(request),candidate=str(target))
 
 
+def current_verifier(project, base_rom=None, request=None, explicit=None):
+    """Pin the verifier the authenticated current transfer actually ran.
+
+    A selected current-save build never falls back to a repository, nightly or
+    PATH z3ed. An explicit tool must be that exact verifier, and it must still
+    load before any derived build output is written.
+    """
+    import lyra_current_transfer as X
+    import lyra_project_prepare as Q
+    project, rom, _, request = project_context(project, request)
+    transfer, _, _ = X.verify_transfer(request, project, base_rom or rom)
+    pinned = (X.native_execution(transfer)['binary'] if 'native_verification' in transfer
+              else transfer['live']['producer_identity']['verifier'])
+    try:
+        Q.read_bound(pinned)
+    except OSError as error:
+        raise ValueError(f'CURRENT_VERIFIER_UNAVAILABLE: {error}') from error
+    if explicit:
+        try:
+            declared = Q.bound(explicit)
+        except OSError:
+            declared = None
+        R.require(declared == pinned,
+                  'CURRENT_VERIFIER_MISMATCH: OOS_Z3ED_BIN is not the selected producer verifier '
+                  f"{pinned['path']}")
+    try:
+        probe = subprocess.run([pinned['path'], '--version'], stdin=subprocess.DEVNULL,
+                               capture_output=True, timeout=60)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise ValueError(f"CURRENT_VERIFIER_UNAVAILABLE: {pinned['path']}: {error}") from error
+    R.require(probe.returncode == 0,
+              f"CURRENT_VERIFIER_UNAVAILABLE: {pinned['path']} exited {probe.returncode}")
+    Q.read_bound(pinned)
+    return dict(kind='lyra.current_build_verifier.v1', selected=True, verifier=pinned)
+
+
 def stage_current_candidate(folder, candidate):
     """Create only the exact new owned target, retaining the saved source bytes."""
     from lyra_current_transfer import verify_current_context
@@ -710,6 +746,11 @@ def main():
     target.add_argument('--base-rom',type=Path)
     target.add_argument('--request',type=Path)
     target.add_argument('--candidate',type=Path)
+    verifier = sub.add_parser('current-verifier')
+    verifier.add_argument('--project',type=Path,required=True)
+    verifier.add_argument('--base-rom',type=Path)
+    verifier.add_argument('--request',type=Path)
+    verifier.add_argument('--explicit',type=Path)
     water = sub.add_parser('check-water')
     water.add_argument('--kind',choices=('fill','gate'),required=True)
     water.add_argument('--rom',type=Path,required=True)
@@ -730,6 +771,10 @@ def main():
     elif args.command == 'resolve-target':
         result=resolve_current_target(args.project,args.base_rom,args.request,args.candidate)
         print(result['candidate'])
+        return
+    elif args.command == 'current-verifier':
+        result=current_verifier(args.project,args.base_rom,args.request,args.explicit)
+        print(result['verifier']['path'])
         return
     elif args.command == 'check-water':
         result=check_water_source(args.kind,args.rom)
