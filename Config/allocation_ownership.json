@@ -30,7 +30,8 @@
     "lyra_private_pilot_boundary_22": "Private selected A0/A1 scroll guard, disabled unless source-bound; no admission or allocation.",
     "lyra_private_pilot_boundary_cpu_23": "Private A0/A1 guard with saved-status binary arithmetic; enabled CPU fixture only, no admission.",
     "regional_checkpoint_state_24": "Root-granted B4..B8 last-activated key reservation; unplaced state codec, no runtime hooks or resume-field grant.",
-    "regional_checkpoint_runtime_25": "Root-granted B4..B9 state and bank34F900..FE00 runtime, source-qualified native Goron control only; default disabled, Lyra entry/native save proof separate."
+    "regional_checkpoint_runtime_25": "Root-granted B4..B9 state and bank34F900..FE00 runtime, source-qualified native Goron control only; default disabled, Lyra entry/native save proof separate.",
+    "lyra_joint_graphics_source_26": "Default-off expanded sheet reader composition from PR286; selected private candidate only, no native proof."
   },
   "sources": {
     "shared:Sprites/Objects/minecart.asm": {
@@ -4536,17 +4537,17 @@
     "regional_checkpoint_runtime_25:Oracle_main.asm": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Oracle_main.asm",
-      "sha256": "45f2d59be72b3c5923f51129f1d473ef0fecacc9df3f6e4f3cface9a8a644290"
+      "sha256": "c408b1a98d23e44c1f9195f5d98debd3077079cb060a970a4a7ad280d2145813"
     },
     "regional_checkpoint_runtime_25:Util/macros.asm": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Util/macros.asm",
-      "sha256": "bece57dbd4ddaf1a462e7cd227a80fd43f5127fa87cf0c9bc896111bdb2c259b"
+      "sha256": "8f73caa2cb740dacbe018925cf983bafd0605ad2f4fee6341008fb54599d658a"
     },
     "regional_checkpoint_runtime_25:Config/feature_flags.asm": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Config/feature_flags.asm",
-      "sha256": "d5d6b12ff7616fc0ea5bd9cac8f87d1291195cf9014bc00db33283b571fc2f36"
+      "sha256": "a5b676ae36a5b690867a0ae98c8f4f054c0bf7882cfaee2765aa56fe26c1aa3c"
     },
     "regional_checkpoint_runtime_25:Scripts/Build/checkpoint_registry.py": {
       "source_set": "regional_checkpoint_runtime_25",
@@ -4556,7 +4557,7 @@
     "regional_checkpoint_runtime_25:Scripts/Build/build_rom.sh": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Scripts/Build/build_rom.sh",
-      "sha256": "9f4c0001780af766451bb56f38d4c93803fee03f916b706524a61879c2af8919"
+      "sha256": "be6ccd4ac894182b62b695f621373d9e8020b80ef27da58bcac57f2c62d7bb97"
     },
     "regional_checkpoint_runtime_25:Scripts/Generate/asm_source.py": {
       "source_set": "regional_checkpoint_runtime_25",
@@ -4572,6 +4573,76 @@
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Tests/routines/regional_checkpoints.py",
       "sha256": "adee8854734806370f99d450e817ce8897058026c5ce9f5a484f8b3258d8c4f7"
+    },
+    "lyra_joint_graphics_source_26:Core/gfx_sheet_table.asm": {
+      "source_set": "lyra_joint_graphics_source_26",
+      "path": "Core/gfx_sheet_table.asm",
+      "sha256": "c73305cb4086a2205c32697d1f1cd5a2b19d200f057b31166bc9827fec0a2a41"
+    },
+    "lyra_joint_graphics_source_26:Scripts/Generate/sheet_overrides.py": {
+      "source_set": "lyra_joint_graphics_source_26",
+      "path": "Scripts/Generate/sheet_overrides.py",
+      "sha256": "ac559ee24157f5a6a8bef44f8c29c862b5eab612311cbb9e5493646a68c0e8a2"
+    },
+    "lyra_joint_graphics_source_26:Scripts/Generate/sheet_table.py": {
+      "source_set": "lyra_joint_graphics_source_26",
+      "path": "Scripts/Generate/sheet_table.py",
+      "sha256": "ec9cdd2108974857f84aeacbc332e45ea341f431dc879f70581457f44a3563e0"
+    },
+    "lyra_joint_graphics_source_26:Overworld/ZSCustomOverworld.asm": {
+      "source_set": "lyra_joint_graphics_source_26",
+      "path": "Overworld/ZSCustomOverworld.asm",
+      "sha256": "edb71d29744bef1e0c81c56cd831f2366737f616db27f6f8beded6fbf6e1be33"
+    },
+    "lyra_joint_graphics_source_26:Sprites/NPCs/eon_owl.asm": {
+      "source_set": "lyra_joint_graphics_source_26",
+      "path": "Sprites/NPCs/eon_owl.asm",
+      "sha256": "1b4a3305fe6f9e801f28d86debaae071b9761a8a4e32f1428eaf5e19b601b7ee"
+    },
+    "lyra_joint_graphics_source_26:Oracle_main.asm": {
+      "source_set": "lyra_joint_graphics_source_26",
+      "path": "Oracle_main.asm",
+      "sha256": "c408b1a98d23e44c1f9195f5d98debd3077079cb060a970a4a7ad280d2145813"
+    },
+    "lyra_joint_graphics_source_26:Util/macros.asm": {
+      "source_set": "lyra_joint_graphics_source_26",
+      "path": "Util/macros.asm",
+      "sha256": "8f73caa2cb740dacbe018925cf983bafd0605ad2f4fee6341008fb54599d658a"
+    },
+    "lyra_joint_graphics_source_26:Config/feature_flags.asm": {
+      "source_set": "lyra_joint_graphics_source_26",
+      "path": "Config/feature_flags.asm",
+      "sha256": "a5b676ae36a5b690867a0ae98c8f4f054c0bf7882cfaee2765aa56fe26c1aa3c"
+    },
+    "lyra_joint_graphics_source_26:Scripts/Build/check_zscream_overlap.py": {
+      "source_set": "lyra_joint_graphics_source_26",
+      "path": "Scripts/Build/check_zscream_overlap.py",
+      "sha256": "b9d5595d3d8a2b68f82066d8e859666a86a4a79aee3c53ca9ab0a8b09abd1ef8"
+    },
+    "lyra_joint_graphics_source_26:Scripts/Generate/tests/test_expanded_sheet_composition.py": {
+      "source_set": "lyra_joint_graphics_source_26",
+      "path": "Scripts/Generate/tests/test_expanded_sheet_composition.py",
+      "sha256": "5315785fd0a4ffe291cb9494c10476f74af51f037d050e41bedbd9ea07c0028c"
+    },
+    "lyra_joint_graphics_source_26:Scripts/Generate/tests/test_sheet_stream_preflight.py": {
+      "source_set": "lyra_joint_graphics_source_26",
+      "path": "Scripts/Generate/tests/test_sheet_stream_preflight.py",
+      "sha256": "ccbeebf69376625dda697076fa385a63cd3cd0acbd629a4d52f3d930d00a3946"
+    },
+    "lyra_joint_graphics_source_26:Scripts/Generate/tests/test_source_sprite_sheets.py": {
+      "source_set": "lyra_joint_graphics_source_26",
+      "path": "Scripts/Generate/tests/test_source_sprite_sheets.py",
+      "sha256": "40ef715c49d55891e63fd576b1c2acf753a4f6789ce2160a9486cea28c4783d8"
+    },
+    "lyra_joint_graphics_source_26:Scripts/Build/build_rom.sh": {
+      "source_set": "lyra_joint_graphics_source_26",
+      "path": "Scripts/Build/build_rom.sh",
+      "sha256": "be6ccd4ac894182b62b695f621373d9e8020b80ef27da58bcac57f2c62d7bb97"
+    },
+    "lyra_joint_graphics_source_26:Core/Generated/source_sprite_sheets/sheet_overrides.asm": {
+      "source_set": "lyra_joint_graphics_source_26",
+      "path": "Core/Generated/source_sprite_sheets/sheet_overrides.asm",
+      "sha256": "54c5bc7a9c0841096c1d2eeea85330b07fbd618597539fd5942e94e39e306bf3"
     }
   },
   "claims": [
@@ -5764,6 +5835,33 @@
       "binding": {
         "source": "regional_checkpoint_runtime_25:Overworld/checkpoint_state.asm",
         "symbol": "Checkpoint_StateCodeBegin",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ExpandedGraphicsSheetTable",
+      "owner": "Selected expanded sheet readers and 256-row arrays",
+      "space": "snes_rom",
+      "base": 2358272,
+      "size": 1024,
+      "status": "shared",
+      "condition": {
+        "ENABLE_EXPANDED_GRAPHICS_TABLE": 1
+      },
+      "lifetime": "Root-owned helper/table reservation; excludes D3 23C000..23D000 and graphics below23FC00.",
+      "reset": "ROM; default disabled.",
+      "save": "No save-buffer change.",
+      "provenance": [
+        "lyra_joint_graphics_source_26:Core/gfx_sheet_table.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "GfxSheet_Helpers",
+        "assert pc() == $240000"
+      ],
+      "binding": {
+        "source": "lyra_joint_graphics_source_26:Core/gfx_sheet_table.asm",
+        "symbol": "GfxSheet_Helpers",
         "bank00_mirror": false
       }
     }

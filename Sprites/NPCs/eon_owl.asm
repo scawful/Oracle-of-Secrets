@@ -69,12 +69,14 @@ if !ENABLE_EON_OWL_ONE_SHOT == 1
 ; existing Eon Owl sheet $42. Area $7A shares spriteset $18 and is untouched.
 ; All vanilla sprite load paths reach this decompressor, including room exits
 ; and mosaic transitions. Do not write VRAM from the per-frame sprite draw.
+if !ENABLE_EXPANDED_GRAPHICS_TABLE == 0
 pushpc
 org $00E772 ; @hook module=Sprites name=EonOwl_ArrivalSheet kind=jml target=EonOwl_ArrivalSheet expected_m=8
   JML EonOwl_ArrivalSheet
   NOP
 assert pc() == $00E777
 pullpc
+endif
 
 ; Original entry: M=8, Y=sheet, DB=$00, DP destination=$00-$02.
 ; X and DB are preserved. Decompress resets Y before consuming its stream.
@@ -98,8 +100,15 @@ EonOwl_ArrivalSheet:
     LDY.b #$42
     LDA.b #$42 : STA.l $7EC2FC
   .original
+if !ENABLE_EXPANDED_GRAPHICS_TABLE == 1
+  ; The table helper owns the full pointer lookup and its native continuation.
+  RTL
+  ; Keep the following sprite code at its legacy address.
+  padbyte $EA : fill 8
+else
   LDA.w $CFF3,Y : STA.b $CA
   JML $00E777
+endif
 }
 endif
 
