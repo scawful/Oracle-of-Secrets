@@ -81,6 +81,9 @@ assert !LYRA_CURRENT_MODE == 0 || !LYRA_PROJECT_DATA_PRESENT == 1, "Current mode
 if not(defined("PROJECT_BG128_ENABLED"))
   !PROJECT_BG128_ENABLED = 0
 endif
+if not(defined("JOINT_PALETTE_DIRECTORY_ENABLED"))
+  !JOINT_PALETTE_DIRECTORY_ENABLED = 0
+endif
 if not(defined("PROJECT_BG128_RESTORE_BOUND"))
   !PROJECT_BG128_RESTORE_BOUND = 0
 endif
@@ -282,6 +285,11 @@ if !LYRA_CURRENT_MODE == 1
   namespace Oracle
     incsrc "Overworld/graphics_runtime.asm"
   namespace off
+endif
+; Generated directory data must precede its four native/ZS readers.
+if !JOINT_PALETTE_DIRECTORY_ENABLED == 1
+  incsrc "Core/Generated/joint_palette/directory.asm"
+  incsrc "Overworld/joint_palette_readers.asm"
 endif
 ; Source-bound data must precede this late palette consumer.
 if !PROJECT_BG128_ENABLED == 1

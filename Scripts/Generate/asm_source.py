@@ -31,7 +31,8 @@ LYRA_CONTEXT_NAMES = {"LYRA_BUILD_CONTEXT", "LYRA_PROJECT_DATA_PRESENT", "LYRA_N
                       "LYRA_CURRENT_ACTORS_ENABLED", "LYRA_CURRENT_ACTORS_BOUND",
                       "LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED", "LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND",
                       "LYRA_PRIVATE_CHECKPOINT_ENABLED", "LYRA_AREA_TILESETS_BOUND",
-                      "LYRA_AREA_TILESETS_ORIGIN", "LYRA_AREA_TILESETS_END"}
+                      "LYRA_AREA_TILESETS_ORIGIN", "LYRA_AREA_TILESETS_END",
+                      "JOINT_PALETTE_DIRECTORY_ENABLED"}
 BG128_CONTEXT_NAMES = {"PROJECT_BG128_ENABLED", "PROJECT_BG128_RESTORE_BOUND",
                        "PROJECT_BG128_CODE_BASE", "PROJECT_BG128_CODE_END"}
 HEX_LITERAL_RE = re.compile(r"\$([0-9A-Fa-f]+)\b")
@@ -78,6 +79,7 @@ def _load_global_defines(root: Path) -> dict[str, int]:
                    LYRA_CURRENT_ACTORS_ENABLED=0, LYRA_CURRENT_ACTORS_BOUND=0,
                    LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED=0, LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND=0,
                    LYRA_PRIVATE_CHECKPOINT_ENABLED=0, LYRA_AREA_TILESETS_BOUND=0,
+                   JOINT_PALETTE_DIRECTORY_ENABLED=0,
                    PROJECT_BG128_ENABLED=0, PROJECT_BG128_RESTORE_BOUND=0,
                    REGIONAL_CHECKPOINTS_ENABLED=defines.get("ENABLE_REGIONAL_CHECKPOINTS", 0),
                    REGIONAL_CHECKPOINTS_BOUND=defines.get("ENABLE_REGIONAL_CHECKPOINT_SOURCE_BINDING", 0))
@@ -93,7 +95,8 @@ def _load_global_defines(root: Path) -> dict[str, int]:
             parsed = _parse_define_assignment(line, defines)
             if parsed is not None:
                 name, value = parsed
-                if (not name.startswith("LYRA_") and name not in BG128_CONTEXT_NAMES) or name == "LYRA_BUILD_CONTEXT":
+                if (not name.startswith("LYRA_") and name not in BG128_CONTEXT_NAMES
+                        and name != "JOINT_PALETTE_DIRECTORY_ENABLED") or name == "LYRA_BUILD_CONTEXT":
                     raise ValueError("Generated Lyra constants contain a foreign/context definition")
                 defines[name] = value
         current = defines['LYRA_CURRENT_MODE']
@@ -126,7 +129,7 @@ def _is_identical_build_context_assignment(relative: str, line: str, defines: di
         return False
     name, value = parsed
     allowed = ((relative == "Oracle_main.asm" and name in LYRA_CONTEXT_NAMES)
-               or (relative == LYRA_CONSTANTS and name.startswith("LYRA_")
+               or (relative == LYRA_CONSTANTS and (name.startswith("LYRA_") or name == "JOINT_PALETTE_DIRECTORY_ENABLED")
                    and name != "LYRA_BUILD_CONTEXT" and defines.get("LYRA_BUILD_CONTEXT") == 1))
     return allowed and name in defines and defines[name] == value
 

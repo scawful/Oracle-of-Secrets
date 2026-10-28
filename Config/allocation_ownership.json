@@ -32,7 +32,9 @@
     "regional_checkpoint_state_24": "Root-granted B4..B8 last-activated key reservation; unplaced state codec, no runtime hooks or resume-field grant.",
     "regional_checkpoint_runtime_25": "Root-granted B4..B9 state and bank34F900..FE00 runtime, source-qualified native Goron control only; default disabled, Lyra entry/native save proof separate.",
     "lyra_joint_graphics_source_26": "Default-off expanded sheet reader composition from PR286; selected private candidate only, no native proof.",
-    "lyra_joint_area_tilesets_27": "Default-off current per-area cache/dispatch composition from PR283; explicit source-bound suffix and WRAM allocation required before activation."
+    "lyra_joint_area_tilesets_27": "Default-off current per-area cache/dispatch composition from PR283; explicit source-bound suffix and WRAM allocation required before activation.",
+    "joint_palette_directory_29": "Default-off source-owned Sky/ferry palette directory and length-preserving native/ZS readers; private candidate only until native/save proof.",
+    "lyra_tail_event_storage_28": "Root-granted private current A0-BF event storage F4C0..F4E1 after independent source/alias/lifecycle review; native current save/reopen remains pending."
   },
   "sources": {
     "shared:Sprites/Objects/minecart.asm": {
@@ -4518,7 +4520,7 @@
     "regional_checkpoint_runtime_25:Core/sram.asm": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Core/sram.asm",
-      "sha256": "377b3f0f7d2b6e770565a7e8ac001be8b0777302ef31ee6817ba18f7583bcd4a"
+      "sha256": "583cc8dc2237e6da89887e127dc231316ce7e77e21936ac65ddea9d86a14392b"
     },
     "regional_checkpoint_runtime_25:Overworld/checkpoint_state.asm": {
       "source_set": "regional_checkpoint_runtime_25",
@@ -4538,7 +4540,7 @@
     "regional_checkpoint_runtime_25:Oracle_main.asm": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Oracle_main.asm",
-      "sha256": "e1b4295e483e8b4cd9bf0582e928eb7b1edc7ca4dcb108120f8f98439c520bd1"
+      "sha256": "90d96692ef5b46722232af7347cfa6d8117c27f711463b1578537a81b4557558"
     },
     "regional_checkpoint_runtime_25:Util/macros.asm": {
       "source_set": "regional_checkpoint_runtime_25",
@@ -4558,12 +4560,12 @@
     "regional_checkpoint_runtime_25:Scripts/Build/build_rom.sh": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Scripts/Build/build_rom.sh",
-      "sha256": "be6ccd4ac894182b62b695f621373d9e8020b80ef27da58bcac57f2c62d7bb97"
+      "sha256": "1d3d721da6f972d01edca357ff930ff0573fb58cfe794c2abfd6bb6c938a0856"
     },
     "regional_checkpoint_runtime_25:Scripts/Generate/asm_source.py": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Scripts/Generate/asm_source.py",
-      "sha256": "1562123abe08f3ad731d6852e32724239d8069d9b75311b3834f264a8a36b4e5"
+      "sha256": "d4dff50736f5f417ed0820cdd702bb5f5463656254538da193530f5d8541b738"
     },
     "regional_checkpoint_runtime_25:Tests/test_checkpoint_registry.py": {
       "source_set": "regional_checkpoint_runtime_25",
@@ -4593,7 +4595,7 @@
     "lyra_joint_graphics_source_26:Overworld/ZSCustomOverworld.asm": {
       "source_set": "lyra_joint_graphics_source_26",
       "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "cb2057200a747a41d70cbbc5b99ee466bb63a97d609f721483917525ab7ce043"
+      "sha256": "2b25fcca02676c91c4258daf81e36fbcdf99e7860c6d3d90a80bd3a7b26f1ef0"
     },
     "lyra_joint_graphics_source_26:Sprites/NPCs/eon_owl.asm": {
       "source_set": "lyra_joint_graphics_source_26",
@@ -4603,7 +4605,7 @@
     "lyra_joint_graphics_source_26:Oracle_main.asm": {
       "source_set": "lyra_joint_graphics_source_26",
       "path": "Oracle_main.asm",
-      "sha256": "e1b4295e483e8b4cd9bf0582e928eb7b1edc7ca4dcb108120f8f98439c520bd1"
+      "sha256": "90d96692ef5b46722232af7347cfa6d8117c27f711463b1578537a81b4557558"
     },
     "lyra_joint_graphics_source_26:Util/macros.asm": {
       "source_set": "lyra_joint_graphics_source_26",
@@ -4638,7 +4640,7 @@
     "lyra_joint_graphics_source_26:Scripts/Build/build_rom.sh": {
       "source_set": "lyra_joint_graphics_source_26",
       "path": "Scripts/Build/build_rom.sh",
-      "sha256": "be6ccd4ac894182b62b695f621373d9e8020b80ef27da58bcac57f2c62d7bb97"
+      "sha256": "1d3d721da6f972d01edca357ff930ff0573fb58cfe794c2abfd6bb6c938a0856"
     },
     "lyra_joint_graphics_source_26:Core/Generated/source_sprite_sheets/sheet_overrides.asm": {
       "source_set": "lyra_joint_graphics_source_26",
@@ -4663,12 +4665,12 @@
     "lyra_joint_area_tilesets_27:Overworld/ZSCustomOverworld.asm": {
       "source_set": "lyra_joint_area_tilesets_27",
       "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "cb2057200a747a41d70cbbc5b99ee466bb63a97d609f721483917525ab7ce043"
+      "sha256": "2b25fcca02676c91c4258daf81e36fbcdf99e7860c6d3d90a80bd3a7b26f1ef0"
     },
     "lyra_joint_area_tilesets_27:Oracle_main.asm": {
       "source_set": "lyra_joint_area_tilesets_27",
       "path": "Oracle_main.asm",
-      "sha256": "e1b4295e483e8b4cd9bf0582e928eb7b1edc7ca4dcb108120f8f98439c520bd1"
+      "sha256": "90d96692ef5b46722232af7347cfa6d8117c27f711463b1578537a81b4557558"
     },
     "lyra_joint_area_tilesets_27:Util/macros.asm": {
       "source_set": "lyra_joint_area_tilesets_27",
@@ -4683,7 +4685,7 @@
     "lyra_joint_area_tilesets_27:Scripts/Generate/asm_source.py": {
       "source_set": "lyra_joint_area_tilesets_27",
       "path": "Scripts/Generate/asm_source.py",
-      "sha256": "1562123abe08f3ad731d6852e32724239d8069d9b75311b3834f264a8a36b4e5"
+      "sha256": "d4dff50736f5f417ed0820cdd702bb5f5463656254538da193530f5d8541b738"
     },
     "lyra_joint_area_tilesets_27:Tests/test_ow_area_tilesets.py": {
       "source_set": "lyra_joint_area_tilesets_27",
@@ -4697,6 +4699,76 @@
     },
     "lyra_joint_area_tilesets_27:Tests/test_lyra_current_build.py": {
       "source_set": "lyra_joint_area_tilesets_27",
+      "path": "Tests/test_lyra_current_build.py",
+      "sha256": "ec22188e1a1295b3d352b9966be485fa78d565cd3be9d12c44fb76c1d9832f1a"
+    },
+    "joint_palette_directory_29:Core/Generated/joint_palette/directory.asm": {
+      "source_set": "joint_palette_directory_29",
+      "path": "Core/Generated/joint_palette/directory.asm",
+      "sha256": "882538367e1509156dd4f8fd52e8c12ab0bc4687690e39acde47f21d984508e3"
+    },
+    "joint_palette_directory_29:Data/graphics/joint_palette_directory.json": {
+      "source_set": "joint_palette_directory_29",
+      "path": "Data/graphics/joint_palette_directory.json",
+      "sha256": "7eb9022d649b402d62379b16f4057a88e2bb720bfb71123450048b102e89e787"
+    },
+    "joint_palette_directory_29:Oracle_main.asm": {
+      "source_set": "joint_palette_directory_29",
+      "path": "Oracle_main.asm",
+      "sha256": "90d96692ef5b46722232af7347cfa6d8117c27f711463b1578537a81b4557558"
+    },
+    "joint_palette_directory_29:Overworld/ZSCustomOverworld.asm": {
+      "source_set": "joint_palette_directory_29",
+      "path": "Overworld/ZSCustomOverworld.asm",
+      "sha256": "2b25fcca02676c91c4258daf81e36fbcdf99e7860c6d3d90a80bd3a7b26f1ef0"
+    },
+    "joint_palette_directory_29:Overworld/joint_palette_readers.asm": {
+      "source_set": "joint_palette_directory_29",
+      "path": "Overworld/joint_palette_readers.asm",
+      "sha256": "90ed49fa8d446aea6a629a9b6e02eb5561ca550379a9eb843e6f99b8e039e3ba"
+    },
+    "joint_palette_directory_29:Scripts/Generate/joint_palette_directory.py": {
+      "source_set": "joint_palette_directory_29",
+      "path": "Scripts/Generate/joint_palette_directory.py",
+      "sha256": "872486226b139f07a103b7d89d48c1ea43d0c7302e07217149188f26f1831883"
+    },
+    "joint_palette_directory_29:Scripts/Generate/asm_source.py": {
+      "source_set": "joint_palette_directory_29",
+      "path": "Scripts/Generate/asm_source.py",
+      "sha256": "d4dff50736f5f417ed0820cdd702bb5f5463656254538da193530f5d8541b738"
+    },
+    "joint_palette_directory_29:Scripts/Generate/tests/test_joint_palette_directory.py": {
+      "source_set": "joint_palette_directory_29",
+      "path": "Scripts/Generate/tests/test_joint_palette_directory.py",
+      "sha256": "1d94a728f7de80d06860954c7d6b804ac29f10b526fec8eb8423741e2c4b7b6d"
+    },
+    "joint_palette_directory_29:Scripts/Validate/verify_joint_palette_directory.py": {
+      "source_set": "joint_palette_directory_29",
+      "path": "Scripts/Validate/verify_joint_palette_directory.py",
+      "sha256": "c400a07c263afef507dcf21faaf1d565918934cb18375040faef8caf1d05c310"
+    },
+    "joint_palette_directory_29:Scripts/Build/build_rom.sh": {
+      "source_set": "joint_palette_directory_29",
+      "path": "Scripts/Build/build_rom.sh",
+      "sha256": "1d3d721da6f972d01edca357ff930ff0573fb58cfe794c2abfd6bb6c938a0856"
+    },
+    "lyra_tail_event_storage_28:Core/sram.asm": {
+      "source_set": "lyra_tail_event_storage_28",
+      "path": "Core/sram.asm",
+      "sha256": "583cc8dc2237e6da89887e127dc231316ce7e77e21936ac65ddea9d86a14392b"
+    },
+    "lyra_tail_event_storage_28:Overworld/lyra_tail_events.asm": {
+      "source_set": "lyra_tail_event_storage_28",
+      "path": "Overworld/lyra_tail_events.asm",
+      "sha256": "5fef9f7c278cec10d81907cad82c56cc40da89e493e34f573793df5cb7650ffc"
+    },
+    "lyra_tail_event_storage_28:Scripts/Build/lyra_current_transfer.py": {
+      "source_set": "lyra_tail_event_storage_28",
+      "path": "Scripts/Build/lyra_current_transfer.py",
+      "sha256": "c9e75cbaf93b36b3db4b482a8dced6bfa2ea5116124284edf823ab8123986ecd"
+    },
+    "lyra_tail_event_storage_28:Tests/test_lyra_current_build.py": {
+      "source_set": "lyra_tail_event_storage_28",
       "path": "Tests/test_lyra_current_build.py",
       "sha256": "ec22188e1a1295b3d352b9966be485fa78d565cd3be9d12c44fb76c1d9832f1a"
     }
@@ -5775,47 +5847,59 @@
       "id": "LyraCurrentTailFlags",
       "owner": "Current Lyra tail event source port",
       "space": "save_buffer",
-      "base": null,
+      "base": 8320192,
       "size": 32,
-      "status": "proposed",
+      "status": "shared",
       "condition": {
         "LYRA_CURRENT_MODE": 1,
         "LYRA_CURRENT_EVENTS_ENABLED": 1
       },
-      "lifetime": "Proposed persistent A0-BF events; explicit source binding and runtime admission required.",
+      "lifetime": "Root-granted private current A0-BF events; exact saved-source/runtime binding required. Checkpoint key/intent remain separate.",
       "reset": "Source migration clears flags on an unmatched explicit version marker; disabled until binding.",
-      "save": "Requires selected bytes inside vanilla7EF412..7EF4FD; actual allocation and native save/reopen unbound.",
+      "save": "Inside native five-page saved/checksummed buffer, all three primary/backup slots. Current candidate native save/reopen pending.",
       "provenance": [
-        "lyra_current_events_08:Overworld/lyra_tail_events.asm",
-        "lyra_current_events_08:Overworld/goron_checkpoint.asm"
+        "lyra_tail_event_storage_28:Core/sram.asm",
+        "lyra_tail_event_storage_28:Overworld/lyra_tail_events.asm"
       ],
       "aliases": [],
       "anchors": [
-        "LYRA_CURRENT_EVENT_BASE"
-      ]
+        "LyraCurrentTailFlags   = $7EF4C0",
+        "LyraCurrentTailVersion = $7EF4E0"
+      ],
+      "binding": {
+        "source": "lyra_tail_event_storage_28:Core/sram.asm",
+        "symbol": "LyraCurrentTailFlags",
+        "bank00_mirror": false
+      }
     },
     {
       "id": "LyraCurrentTailVersion",
       "owner": "Current Lyra tail event source port",
       "space": "save_buffer",
-      "base": null,
+      "base": 8320224,
       "size": 1,
-      "status": "proposed",
+      "status": "shared",
       "condition": {
         "LYRA_CURRENT_MODE": 1,
         "LYRA_CURRENT_EVENTS_ENABLED": 1
       },
-      "lifetime": "Proposed persistent A0-BF events; explicit source binding and runtime admission required.",
+      "lifetime": "Root-granted private current A0-BF events; exact saved-source/runtime binding required. Checkpoint key/intent remain separate.",
       "reset": "Source migration clears flags on an unmatched explicit version marker; disabled until binding.",
-      "save": "Requires selected bytes inside vanilla7EF412..7EF4FD; actual allocation and native save/reopen unbound.",
+      "save": "Inside native five-page saved/checksummed buffer, all three primary/backup slots. Current candidate native save/reopen pending.",
       "provenance": [
-        "lyra_current_events_08:Overworld/lyra_tail_events.asm",
-        "lyra_current_events_08:Overworld/goron_checkpoint.asm"
+        "lyra_tail_event_storage_28:Core/sram.asm",
+        "lyra_tail_event_storage_28:Overworld/lyra_tail_events.asm"
       ],
       "aliases": [],
       "anchors": [
-        "LYRA_CURRENT_EVENT_VERSION"
-      ]
+        "LyraCurrentTailFlags   = $7EF4C0",
+        "LyraCurrentTailVersion = $7EF4E0"
+      ],
+      "binding": {
+        "source": "lyra_tail_event_storage_28:Core/sram.asm",
+        "symbol": "LyraCurrentTailVersion",
+        "bank00_mirror": false
+      }
     },
     {
       "id": "RegionalCheckpointSave",
@@ -5970,6 +6054,33 @@
       "binding": {
         "source": "lyra_joint_area_tilesets_27:Overworld/area_tilesets.asm",
         "symbol": "AreaTileset_CodeBase",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "JointOverworldPaletteDirectory",
+      "owner": "Source-owned current Sky/ferry palette records and pointer directories",
+      "space": "snes_rom",
+      "base": 1816232,
+      "size": 344,
+      "status": "shared",
+      "condition": {
+        "JOINT_PALETTE_DIRECTORY_ENABLED": 1
+      },
+      "lifetime": "Root-granted private palette arena; Music ACK required before canonical integration. Aux23/24 remain inactive.",
+      "reset": "ROM; exact input preimages, emitted labels/extents and compiled bytes required.",
+      "save": "No SRAM field.",
+      "provenance": [
+        "joint_palette_directory_29:Core/Generated/joint_palette/directory.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "JointPalette_ArenaBase = $1BB6A8",
+        "assert JointPalette_Aux22_End == $1BB7AC"
+      ],
+      "binding": {
+        "source": "joint_palette_directory_29:Core/Generated/joint_palette/directory.asm",
+        "symbol": "JointPalette_ArenaBase",
         "bank00_mirror": false
       }
     }

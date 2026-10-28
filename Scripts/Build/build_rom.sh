@@ -213,6 +213,9 @@ echo "[*] Validating expanded message source contract..."
 run_check message_source 1 python3 "$repo_root/Scripts/Generate/validate_expanded_message_source.py" \
   --root "$repo_root"
 
+run_check joint_palette_source 1 python3 "$repo_root/Scripts/Generate/joint_palette_directory.py" \
+  --root "$repo_root" --check
+
 # Shared checkpoints use the existing source/receipt route. Feature defaults off;
 # active candidates require the exact native source-control record and symbols.
 checkpoint_args=(--root "$repo_root" --base-rom "$base_rom")

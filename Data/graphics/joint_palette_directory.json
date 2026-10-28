@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "arena": {
+    "start": "0x1BB6A8",
+    "end": "0x1BB800"
+  },
+  "records": [
+    {
+      "kind": "main",
+      "id": 6,
+      "address": "0x1BB6E8",
+      "mode": "emit",
+      "bgr555_hex": "a514e7102a198d21c6196926cf25a5144b1d25318a35313aa8410d42a51425318a35313a0d42d2565c7ba514e51d69268a35a8410d42d256a5144c19d1215532e51d69262826",
+      "source": "Cursor joint-art JOINT_ART_PACKET.json rom_writes[7] (main6 Sky (source main5))",
+      "source_sha256": "31247dfd1c093988dcdcafd53b4dc5486d3185b4fb911623aacef171a5094bd3",
+      "why": "Sky main palette 06 (area 87)"
+    },
+    {
+      "kind": "aux",
+      "id": 20,
+      "address": "0x1BB72E",
+      "mode": "emit",
+      "bgr555_hex": "e710a5142a198d21cf255c7b187fa514e51d2826692625318a35f746a5148a35a8410d42d2565c7b187f",
+      "source": "Cursor joint-art JOINT_ART_PACKET.json rom_writes[8] (aux20 Sky (source aux18))",
+      "source_sha256": "31247dfd1c093988dcdcafd53b4dc5486d3185b4fb911623aacef171a5094bd3",
+      "why": "Sky aux palette 20 (set 0F aux1)"
+    },
+    {
+      "kind": "aux",
+      "id": 21,
+      "address": "0x1BB758",
+      "mode": "emit",
+      "bgr555_hex": "a5142531313aa8410d42d2561a57a514e51d282669268a350d42d256e710a5142a198d21cf2525318a35",
+      "source": "Cursor joint-art JOINT_ART_PACKET.json rom_writes[9] (aux21 Sky (source aux19))",
+      "source_sha256": "31247dfd1c093988dcdcafd53b4dc5486d3185b4fb911623aacef171a5094bd3",
+      "why": "Sky aux palette 21 (set 0F aux2)"
+    },
+    {
+      "kind": "aux",
+      "id": 22,
+      "address": "0x1BB782",
+      "mode": "emit",
+      "bgr555_hex": "e62849396e21f3297736d746756f8408042ae43a0c191532d746ba3e84080c196e219221f3291532ba3e",
+      "source": "ferry-binding-17 ferry-aux22.bgr555.bin (set 0D aux2, second slot)",
+      "source_sha256": "d764e1478acf1366f832bbffb41017e8390ea7e391e703587e2fc05b410518ed",
+      "why": "Ferry aux palette 22 (set 0D = 10 16 06 FF)"
+    }
+  ],
+  "parked": [
+    {
+      "kind": "aux",
+      "id": 23,
+      "address": "0x1BB7AC",
+      "why": "B6 glacier ice; parked outside the first A0/A1 pilot"
+    },
+    {
+      "kind": "aux",
+      "id": 24,
+      "address": "0x1BB7D6",
+      "why": "BE/BF glacier snow; inactive"
+    }
+  ]
+}
