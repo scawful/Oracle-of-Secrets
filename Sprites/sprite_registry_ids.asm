@@ -2,7 +2,7 @@
 ; Do not edit by hand.
 
 Sprite_Farore = $73
-Sprite_KydrogNPC = $7B
+Sprite_KydrogNPC = $CB ; Subtype 0
 Sprite_MakuTree = $9E
 Sprite_MaskSalesman = $E8
 Sprite_WindmillGuy = $B2
@@ -18,7 +18,7 @@ Sprite_Darknut = $1D
 Sprite_SeaUrchin = $AE
 Sprite_Korok = $F1
 Sprite_Vasu = $D7
-Sprite_KydrogBoss = $CB
+Sprite_KydrogBoss = $CB ; Subtype 1
 Sprite_DekuScrubNPCs = $A0
 Sprite_AntiKirby = $A8
 Sprite_HelmetChuchu = $05

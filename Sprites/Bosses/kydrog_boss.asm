@@ -1,5 +1,13 @@
 ; =========================================================
 ;  Kydrog Boss
+;
+;  Sprite $CB hosts both Kydrog roles, selected by SprSubtype:
+;    0 = intro NPC (kydrog.asm), 1 = D7 boss (this file).
+;  The property tables below hold the boss row; the NPC Prep writes its own.
+;  Dungeon records carry the subtype; overworld records and
+;  Sprite_SpawnDynamically store 0. A dynamic spawner stores the role in
+;  SprSubtype,Y and then SprState,Y = $08, so SpriteModule_Initialize runs
+;  Sprite_KydrogCB_Prep (SpritePrep_ResetProperties keeps $0E30).
 ; =========================================================
 
 !SPRID              = Sprite_KydrogBoss
@@ -30,7 +38,52 @@
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = $01  ; 00 = normal sprite, 01 = sprite is a boss
 
-%Set_Sprite_Properties(Sprite_KydrogBoss_Prep, Sprite_KydrogBoss_Long)
+%Set_Sprite_Properties(Sprite_KydrogCB_Prep, Sprite_KydrogCB_Long)
+
+!KydrogRole_Boss    = $01 ; SprSubtype 0 is the NPC; 2-$FF are unsupported
+
+; Entered from NewSprPrepTable/NewSprTable with M=8, X=8, DBR=$30. The role
+; routines end in RTL and the boss remnant check runs before its PHB, so
+; dispatch with JML.
+Sprite_KydrogCB_Prep:
+{
+  LDA.w SprSubtype, X : CMP.b #!KydrogRole_Boss : BEQ .boss : BCS .unsupported
+    LDA.b #!KydrogNPC_OAMHarm : STA.w SprNbrOAM, X
+    LDA.b #!KydrogNPC_Health : STA.w SprHealth, X
+    LDA.b #!KydrogNPC_Bump : STA.w SprBump, X
+    LDA.b #!KydrogNPC_OAMProp : STA.w SprGfxProps, X
+    AND.b #$0F : STA.w SprProps, X
+    LDA.b #!KydrogNPC_HitBox : STA.w SprHitbox, X
+    LDA.b #!KydrogNPC_TileDie : STA.w SprTileDie, X
+    LDA.b #!KydrogNPC_Prize : STA.w SprPrize, X
+    LDA.b #!KydrogNPC_Defl : STA.w SprDefl, X
+    ; At zero HP, $CB takes TrinexxRock_ScreamAndDie ($06EFF8), which sets
+    ; SprAction = $80; the NPC jump table has 4 entries. Ignore ancilla,
+    ; bomb, thrown-object and medallion hits (their $0BA0 checks).
+    LDA.b #$01 : STA.w SprBulletproof, X
+    JML Sprite_Kydrog_Prep
+  .boss
+  JML Sprite_KydrogBoss_Prep
+  .unsupported
+  STZ.w SprState, X
+  RTL
+}
+
+Sprite_KydrogCB_Long:
+{
+  LDA.w SprSubtype, X : CMP.b #!KydrogRole_Boss : BEQ .boss : BCS .unsupported
+    ; UncacheAndExecuteSprite ($1DEA00) runs a previous room's sprite with
+    ; the slot's current SprSubtype. A frame past the NPC's two is not NPC
+    ; state, so skip it rather than index the NPC draw tables.
+    LDA.w SprGfx, X : CLC : ADC.w SprFrame, X : CMP.b #$02 : BCS .skip
+    JML Sprite_Kydrog_Long
+  .boss
+  JML Sprite_KydrogBoss_Long
+  .unsupported
+  STZ.w SprState, X
+  .skip
+  RTL
+}
 
 !ConsecutiveHits    = $AC ; 0x01
 !KydrogPhase        = $7A ; 0x01

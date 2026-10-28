@@ -51,9 +51,13 @@
 ;       changes as his armor breaks (visual storytelling).
 ; =========================================================
 ; Cutscene Kydrog Sprite Properties
+;
+; Role 0 of sprite $CB. kydrog_boss.asm registers $CB with the boss row of
+; the property tables and dispatches here by SprSubtype; Sprite_KydrogCB_Prep
+; writes the !KydrogNPC_* row below over the boss values that
+; SpritePrep_LoadProperties loaded.
 ; =========================================================
 
-!SPRID              = Sprite_KydrogNPC
 !NbrTiles           = 19  ; Most OAM pieces in a frame, minus one (reserves 20)
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
@@ -81,7 +85,16 @@
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 
-%Set_Sprite_Properties(Sprite_Kydrog_Prep, Sprite_Kydrog_Long)
+; Set_Sprite_Properties packing, evaluated now: later sprite files reuse
+; these property names.
+!KydrogNPC_OAMHarm  #= ((!Harmless<<7)|(!HVelocity<<6)|!NbrTiles)
+!KydrogNPC_Health   #= !Health
+!KydrogNPC_Bump     #= !Damage
+!KydrogNPC_OAMProp  #= ((!DeathAnimation<<7)|(!ImperviousAll<<6)|(!SmallShadow<<5)|(!Shadow<<4)|(!Palette<<1))
+!KydrogNPC_HitBox   #= ((!CollisionLayer<<7)|(!Statis<<6)|(!Persist<<5)|!Hitbox)
+!KydrogNPC_TileDie  #= ((!DeflectArrow<<3)|(!Boss<<1)|!CanFall)
+!KydrogNPC_Prize    #= ((!Interaction<<7)|(!WaterSprite<<6)|(!Blockable<<5)|(!Sound<<4)|!Prize)
+!KydrogNPC_Defl     #= ($40|(!Statue<<5)|(!DeflectProjectiles<<4)|(!ImpervSwordHammer<<2)|(!ImperviousArrow<<1))
 
 Sprite_Kydrog_Long:
 {
