@@ -121,6 +121,9 @@ namespace Oracle
 BoatBitmap = $E28000
 AdditionalBitmap = $E2A000
 SharedGraphicsRuntimeEnd = $E2E000
+org $E2C000
+SharedGraphicsResource_3fd640ea5f71e4301983dc4944b355f6d8582ea14797605688e5adaf37ffc3b4:
+  incbin "Overworld/gfx/kalyxo_docks_slot3.bin"
 incsrc "Overworld/area_tilesets.asm"
 namespace off
 incsrc "Core/gfx_sheet_table.asm"
@@ -139,7 +142,10 @@ incsrc "Overworld/joint_palette_readers.asm"
         proof = J.verify(plan, image, sym.read_bytes(), ROOT)
         self.assertEqual(proof['art_writes_verified'], 272)
         self.assertEqual((proof['palette_readers_verified'], proof['collision_readers_verified']), (4, 4))
+        self.assertEqual((proof['ferry_dock_bytes_verified'], proof['ferry_dma_descriptors_verified']), (0x800, 4))
         for pc, message in ((plan['writes'][0]['pc'][0], 'COMPILED_PAYLOAD'),
+                            (J.A.pc(0xE2C000), 'DOCK_RESOURCE'),
+                            (image.index(bytes.fromhex('002c000800c0e2')), 'DOCK_DMA'),
                             (J.A.pc(0x00E78F), 'EXPANDED_SHEET_READER'),
                             (J.A.pc(0x1BB730), 'PALETTE_PAYLOAD'),
                             (J.A.pc(0x1BEF16), 'PALETTE_READER'),

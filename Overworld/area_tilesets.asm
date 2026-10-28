@@ -190,6 +190,10 @@ AreaTileset_FerryTypes:
   dw $FFFF
 AreaTileset_FerrySheets:
   %AreaTileset_Sheet($2C00, $2000, BoatBitmap)
+  ; BoatBitmap also covers dock chars $0C0-$0FF. Restore the saved dock
+  ; resource already emitted by the current graphics catalog before the
+  ; separate ferry chars $100-$158 overlay below.
+  %AreaTileset_Sheet($2C00, $0800, SharedGraphicsResource_3fd640ea5f71e4301983dc4944b355f6d8582ea14797605688e5adaf37ffc3b4)
   %AreaTileset_Sheet($3000, $0B20, FerryArea30Bitmap)
   %AreaTileset_Sheet($5000, $2000, AdditionalBitmap)
   dw $FFFF

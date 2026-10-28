@@ -25,6 +25,7 @@ SHEET_SPANS = ((0x40E5DB, 0x40E9F0), (0x40E9F0, 0x40EDB9),
                (0x40F7C5, 0x40F982))
 AREA_CODE = (0xE2E000, 0xE2E200)
 AREA_DATA = (0xE2E200, 0xE2ED79)  # 89 type bytes + 89 * 32 raw CHR bytes
+DOCK_RESOURCE = '3fd640ea5f71e4301983dc4944b355f6d8582ea14797605688e5adaf37ffc3b4'
 
 
 def require_source_profile(profile):
@@ -126,8 +127,8 @@ def prepare(binding, request, source, *, occupied=()):
               'JOINT_ART_FERRY_PAYLOAD_INVALID')
     at = A.pc(0x0E9459)
     R.require(R.sha(source[at:at+512]) == ferry['native_types_sha256'], 'JOINT_ART_NATIVE_TYPES_CHANGED')
-    # Fixed same-bank data origin; the source module checks its own 492-byte
-    # code/descriptor extent before this data, including all three DMA spans.
+    # Fixed same-bank data origin; the source module bounds its code and
+    # descriptors before this data, including all four DMA spans.
     raw = types + graphics
     at = A.pc(AREA_DATA[0])
     R.require(len(raw) == AREA_DATA[1] - AREA_DATA[0], 'JOINT_ART_FERRY_DATA_EXTENT_INVALID')
@@ -193,6 +194,17 @@ def verify(plan, compiled, symbols, source_root):
               and labels.get('FerryArea30Types') == AREA_DATA[0]
               and labels.get('FerryArea30Bitmap') == AREA_DATA[0]+89
               and labels.get('FerryArea30BitmapEnd') == AREA_DATA[1], 'JOINT_ART_AREA_SYMBOLS_INVALID')
+    dock = labels.get('SharedGraphicsResource_' + DOCK_RESOURCE, 0)
+    R.require(dock and R.sha(compiled[A.pc(dock):A.pc(dock)+0x800]) == DOCK_RESOURCE,
+              'JOINT_ART_DOCK_RESOURCE_MISMATCH')
+    transfers = ((0x2C00, 0x2000, labels['BoatBitmap']),
+                 (0x2C00, 0x0800, dock),
+                 (0x3000, 0x0B20, labels['FerryArea30Bitmap']),
+                 (0x5000, 0x2000, labels['AdditionalBitmap']))
+    descriptors = b''.join(vram.to_bytes(2, 'little') + size.to_bytes(2, 'little')
+                           + address.to_bytes(3, 'little') for vram, size, address in transfers) + b'\xff\xff'
+    at = A.pc(labels['AreaTileset_FerrySheets'])
+    R.require(compiled[at:at+len(descriptors)] == descriptors, 'JOINT_ART_DOCK_DMA_MISMATCH')
     sys.path.insert(0, str(Path(source_root) / 'Scripts/Validate'))
     import verify_joint_palette_directory as palette
     expected, records = palette.expected_arena(Path(source_root) / 'Data/graphics/joint_palette_directory.json')
@@ -209,5 +221,6 @@ def verify(plan, compiled, symbols, source_root):
                   'JOINT_ART_COLLISION_READER_MISMATCH')
     return dict(art_writes_verified=len(plan['writes']), palette_readers_verified=4,
                 collision_readers_verified=4, expanded_sheet_readers_verified=7,
+                ferry_dock_bytes_verified=0x800, ferry_dma_descriptors_verified=4,
                 unselected_maps=plan['unselected_maps'],
                 native_gameplay_verified=False)

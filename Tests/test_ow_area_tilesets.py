@@ -50,6 +50,7 @@ class AreaTilesetComposition(unittest.TestCase):
 namespace Oracle
 BoatBitmap = $349000
 AdditionalBitmap = $34B000
+SharedGraphicsResource_3fd640ea5f71e4301983dc4944b355f6d8582ea14797605688e5adaf37ffc3b4 = $E2856C
 SharedGraphicsRuntimeEnd = $E28001
 '''
         if bound is not None:
@@ -95,7 +96,7 @@ FerryArea30Bitmap:
                         self.pc(0xE2E000):self.pc(labels['CodeEnd'])]).hexdigest(),
                         '1b29e87070d74dce4f3eda6498bca66fda4e817cc78cfd4819dfc36e307c10ce')
                     continue
-                self.assertEqual(labels['CodeEnd'], 0xE2E1EC)
+                self.assertEqual(labels['CodeEnd'], 0xE2E1F3)
                 self.assertLessEqual(labels['CodeEnd'], 0xE2E200)
                 at = self.pc(labels['Profiles'])
                 self.assertEqual(struct.unpack_from('<6H', result, at),
@@ -104,8 +105,9 @@ FerryArea30Bitmap:
                 at = self.pc(labels['FerryTypes'])
                 self.assertEqual(result[at:at+8], bytes.fromhex('0001590000e2ffff'))
                 at = self.pc(labels['FerrySheets'])
-                self.assertEqual(result[at:at+23], bytes.fromhex(
-                    '002c0020009034' '0030200b59e2e2' '0050002000b034' 'ffff'))
+                self.assertEqual(result[at:at+30], bytes.fromhex(
+                    '002c0020009034' '002c00086c85e2'
+                    '0030200b59e2e2' '0050002000b034' 'ffff'))
                 body = result[self.pc(0xE2E000):self.pc(labels['CodeEnd'])]
                 for dest in (0x002116, 0x004305, 0x004302, 0x004300,
                              0x004304, 0x002115, 0x00420B):
@@ -129,7 +131,7 @@ FerryArea30Bitmap:
         # A module expansion past the exact generated-data boundary must fail.
         mutant = self.folder/'overrun.asm'
         mutant.write_text((ROOT/'Overworld/area_tilesets.asm').read_text().replace(
-            'AreaTileset_CodeEnd = pc()', 'skip $15\nAreaTileset_CodeEnd = pc()'))
+            'AreaTileset_CodeEnd = pc()', 'skip $0E\nAreaTileset_CodeEnd = pc()'))
         text, image = self.ferry_driver(1, module=str(mutant))
         run, _ = self.assemble(text, image)
         self.assertNotEqual(run.returncode, 0)
