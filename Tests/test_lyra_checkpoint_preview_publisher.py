@@ -21,6 +21,30 @@ from lyra_project_terrain import parse_terrain_document
 
 
 class CheckpointPreviewPublisherTests(unittest.TestCase):
+    def test_compiled_checkpoint_cli_owns_exact_readonly_scope(self):
+        import checkpoint_registry as C
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as name:
+            rom=Path(name)/'compiled.sfc';rom.write_bytes(bytes(0x400000))
+            args=['--root',name,'--base-rom',str(Path(name)/'base.sfc'),'--rom',str(rom)]
+            def checked(_):
+                self.assertEqual(X._CANDIDATE_INSPECTION.get(),X.Q.bound(rom))
+                self.assertTrue(X._new_or_inspected_target(str(rom)))
+                return dict(passed=True)
+            self.assertFalse(X._new_or_inspected_target(str(rom)))
+            with mock.patch.object(C,'check_invocation',side_effect=checked),contextlib.redirect_stdout(io.StringIO()):
+                C.main(args)
+            self.assertIsNone(X._CANDIDATE_INSPECTION.get())
+            self.assertFalse(X._new_or_inspected_target(str(rom)))
+            def mutated(_):
+                rom.write_bytes(b'changed')
+                return dict(passed=True)
+            with mock.patch.object(C,'check_invocation',side_effect=mutated):
+                with self.assertRaisesRegex(ValueError,'Current saved input changed'):
+                    C.main(args)
+            self.assertIsNone(X._CANDIDATE_INSPECTION.get())
+
     def test_review_binds_consumers_while_final_build_owns_whole_image_hash(self):
         rom,symbols,request=actual_preview_fixture(combined=True)
         standalone=L.inspect_seeded_checkpoint_preview(rom,symbols,**request)
