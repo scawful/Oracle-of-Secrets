@@ -2316,6 +2316,7 @@ Overworld_ReloadSubscreenOverlay_Interupt:
                 ; Triforce room.
                 CMP.w #$0189 : BEQ .loadOverlayShortcut
                     .noSubscreenOverlay
+                    LyraPilot_SubNativeNoOverlay = pc()
 
                     ; Preserve the no-overlay sentinel for later fixed-color
                     ; updates; never send it to the overlay decompressor.
@@ -2405,12 +2406,25 @@ endif
     ; Weather overrides above still load their real overlay IDs normally.
     .checkNoOverlay
     Lyra_Fixture_PreOverlaySelect = pc()
-    CPX.w #$00FF : BNE .notFF
+    if defined("LYRA_PRIVATE_PILOT_INGRESS_ENABLED")
+      if !LYRA_PRIVATE_PILOT_INGRESS_ENABLED == 1
+        LyraPilot_SubDispatchSite = pc()
+        ; Exact8-byte replacement: this native host already ends atB0D2.
+        JML Lyra_PrivatePilotSubGate
+        NOP #4
+      else
+        CPX.w #$00FF : BNE .notFF
         JMP.w .noSubscreenOverlay
+      endif
+    else
+      CPX.w #$00FF : BNE .notFF
+      JMP.w .noSubscreenOverlay
+    endif
 
     .notFF
     
     .loadSubScreenOverlay
+    LyraPilot_SubNativeAllowed = pc()
 
     STY.b $84
         

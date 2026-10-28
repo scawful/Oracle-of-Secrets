@@ -1561,6 +1561,60 @@ def private_pilot_document(document, pilot):
     return replace(document,gameplay_areas=tuple(pilot['selected_areas']))
 
 
+def private_pilot_native_full_paths(source):
+    """Bind the remaining unchanged native-only full-map call graph.
+
+    The native long wrapper0AB948 restores saved10/0200 after02B1F0; a Home
+    return inside02B1F0 would be unsafe. This cut keeps that path unchanged
+    only while ALL17 full-word transport destinations remain native. New Lyra
+    transport data needs its own reviewed precommit/cancellation interface.
+    Credits likewise retain their16 fixed descriptors and actual exit winners.
+    """
+    R.require(type(source) is bytes and len(source) in (0x200000,0x400000),
+              'PRIVATE_PILOT_NATIVE_FULL_SOURCE_UNBOUND')
+    spans=[]
+    def exact(at,raw):
+        pc=A.pc(at);observed=source[pc:pc+len(raw)]
+        R.require(observed==raw,'PRIVATE_PILOT_NATIVE_FULL_CALLER_CHANGED: '+hex(at))
+        spans.append(dict(snes=at,bytes=len(raw),payload_hex=raw.hex(),sha256=R.sha(raw)))
+    for at,raw in ((0x0286A5,bytes.fromhex('2059ed')),(0x02B1F0,bytes.fromhex('2059ed6b201eafc6116b')),
+        (0x0AB953,bytes.fromhex('22f0b102')),(0x02ABCC,bytes.fromhex('20e8ef')),
+        (0x02EEC7,bytes.fromhex('204af5')),(0x02EFEA,bytes.fromhex('204af5')),
+        (0x02B31A,bytes.fromhex('20c5ee')),(0x02ED8D,bytes.fromhex('20c5ee')),
+        (0x02FD0F,bytes.fromhex('20cbf7'))):exact(at,raw)
+    at=A.pc(0x02EAE5);raw=source[at:at+34]
+    transports=[int.from_bytes(raw[i:i+2],'little') for i in range(0,34,2)]
+    R.require(len(transports)==17 and all(a<0xA0 for a in transports),
+              'PRIVATE_PILOT_NATIVE_TRANSPORT_CHANGED: native-only long full path needs reviewed Warp binding')
+    spans.append(dict(snes=0x02EAE5,bytes=34,payload_hex=raw.hex(),sha256=R.sha(raw)))
+    descriptors=(0x1000,2,0x1002,0x1012,0x1004,0x1006,0x1010,0x1014,
+                 0x100A,0x1016,0x5D,0x64,0x100E,0x1008,0x1018,0x180)
+    exact(0x0285C2,b''.join(a.to_bytes(2,'little') for a in descriptors))
+    import lyra_native_state as state
+    credits=[];held=[]
+    for index,room in enumerate(descriptors):
+        # These two native credit descriptors enter LoadSpecialOverworld.
+        if index in (6,15):
+            target=(0x82 if index==6 else 0x80)
+            credits.append(dict(index=index,room=room,map_id=target,path='fixed_native_special'))
+            continue
+        dispatch=state.room_return(source,room,0,None)
+        winner=dispatch['consumed_row']
+        if winner is None or winner['map_id']>=0xA0:
+            held.append(dict(caller_snes=0x0286A5,descriptor=index,room=room,reason='no native-only exit winner'))
+            credits.append(dict(index=index,room=room,map_id=None,path='UNBOUND'))
+        else:
+            credits.append(dict(index=index,room=room,map_id=winner['map_id'],exit_row=winner['row'],path='highest_native_exit'))
+    # Bind complete native exit data, so a new winner cannot retain old proof.
+    for at,count in ((state.EXIT_ROOMS,158),(state.EXIT_MAPS,79)):
+        pc=A.pc(at);raw=source[pc:pc+count]
+        spans.append(dict(snes=at,bytes=count,payload_hex=raw.hex(),sha256=R.sha(raw)))
+    return dict(kind='lyra.private_native_full_paths.v1',source_rom_sha256=R.sha(source),
+        transport_maps=transports,credits=credits,spans=spans,held_callers=held,complete=not held,
+        mirror_scope='native mirror state machine; initialized tail mirrors abort, whole Module09 preflight guards current map',
+        warp_admission=False,runtime_admission=False)
+
+
 PRIVATE_PILOT_INGRESS_ROLES=('Entry','FullLoad','SubLoad','Mirror','Warp','ColdResume')
 PRIVATE_PILOT_ENTRY_BYTES=bytes.fromhex('08c22048c9a200b0046828186b6828386b')
 

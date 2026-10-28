@@ -68,12 +68,12 @@ def preaccess(args, image, labels):
         for key in ('x','y','sp','d','db'):require(cpu[key]==regs[key],'EntryMap changed '+key)
         require(cpu['p']&~1==regs['p']&~1,'EntryMap changed P');stack_only(row)
         cases.append(dict(case='EntryMap',room=room,parent=parent,target=expected,steps=row['steps'],passed=True))
-    def prefix(entry,writes,target):
+    def prefix(entry,writes,target,**kwargs):
         # Stop at the first boundary instruction, without executing Home/GFX.
         # Each reset run advances exactly one additional instruction; no code
         # patch, synthetic return, breakpoint or instruction stub is used.
         for limit in range(1,120):
-            row,regs=run(entry,writes,max_steps=limit)
+            row,regs=run(entry,writes,max_steps=limit,**kwargs)
             pc=row['registers']['pb']<<16|row['registers']['pc']
             if pc==target:return row,regs,limit
         raise AssertionError('Prefix never reached '+hex(target))
@@ -109,6 +109,49 @@ def preaccess(args, image, labels):
         cpu=row['registers'];require(cpu['a']==0xAB00|word,'Native mirror original LDA changed')
         require(cpu['sp']==regs['sp']-3,'Native mirror stack changed');stack_only(row)
         cases.append(dict(case='native_mirror_original_branch_prefix',map_word=word,steps=steps,passed=True))
+    fullsub='Lyra_PrivatePilotFullNearGate' in labels
+    if fullsub:
+        # Actual Module08 near dispatcher into the whole full-map operation.
+        for word in (0x36,0x37,0x4B,0x98,0x9F,0xA0,0xA1,0xA2,0xC0,0x100,0xFFFF):
+            admitted=word<0xA2;target=0x02ED59 if admitted else 0x34FC54
+            writes=[field(0x7E0010,0x0208),field(0x7E008A,word),field(0x7E040A,0x36),field(0x7E0700,0xFFFF)]
+            row,regs,steps=prefix(0x0283BF,writes,target)
+            require(row['registers']['sp']==regs['sp']-(10 if admitted else 8),'Full near/long replay frames wrong')
+            stack=row['reads'][1]['bytes']
+            if admitted:require(stack[0x26:0x28]==[0xF8,0xB1],'Native RTS must land at existing RTL02B1F9')
+            else:require(stack[0x2B:0x2D]==[0xC5,0x83],'Full refusal lost original Module08 near frame')
+            stack_only(row);cases.append(dict(case='actual_Module08_full_prefix',map_word=word,admitted=admitted,steps=steps,passed=True))
+        # Whole Module09 guard skips all near dispatch/camera/sprite tails on
+        # refusal. Admitted paths replay the native SEP30/LDA11 exactly.
+        for word in (0,0x36,0x37,0x4B,0x98,0x9F,0xA0,0xA1,0xA2,0xC0,0x100,0x1A0,0xFFFF):
+            admitted=word<0xA2;target=0x02A479 if admitted else 0x34FC54
+            row,regs,steps=prefix(0x02A475,[field(0x7E0010,0x0309),field(0x7E008A,word),field(0x7E0700,0xFFFF)],target,
+                                  p=0,registers=dict(x=0x6789,y=0x4567))
+            cpu=row['registers'];require(cpu['sp']==regs['sp']-(3 if admitted else 6),'Whole frame refusal gained a near frame')
+            require(cpu['x']==0x89 and cpu['y']==0x67,'Native SEP30 truncation differs')
+            if admitted:require(cpu['a']==0xAB03 and cpu['p']==0x30,'Native whole-frame LDA/flags differ')
+            stack_only(row);cases.append(dict(case='actual_whole_Module09_prefix',map_word=word,admitted=admitted,steps=steps,passed=True))
+        # The diagnostic shim provides ONLY the actual caller's near frame;
+        # it executes the real extracted source select gate/no-overlay return.
+        shim=labels['Lyra_Fixture_SubNear'];allowed=labels['LyraPilot_SubNativeAllowed']
+        writes=[field(0x7E0010,0x0109),field(0x7E008A,0xA0),field(0x7E0084,0x1234),field(0x7E00C8,0xDEAD)]
+        _,_,limit=prefix(shim,writes,allowed,p=0,registers=dict(x=0x93,y=0x4567))
+        for word in range(0xA2):
+            row,regs=run(shim,writes,p=0,registers=dict(x=word,y=0x4567),max_steps=limit)
+            cpu=row['registers'];require(cpu['pb']<<16|cpu['pc']==allowed,'Admitted overlay never reached native operation')
+            require(cpu['sp']==regs['sp']-5 and cpu['a']==regs['a'] and cpu['x']==word and cpu['y']==0x4567,'Overlay select ABI differs')
+            low=row['reads'][0]['bytes'];require(low[0x8A:0x8C]==[0xA0,0] and low[0x84:0x86]==[0x34,0x12],'Overlay mutated borrowed map before admission')
+            require(low[0xC8:0xCA]==[0xAD,0xDE],'Overlay changed decompressor pointer before admission')
+            stack_only(row);cases.append(dict(case='sub_select_admitted_prefix',overlay_word=word,host=0xA0,passed=True))
+        for host,word in itertools.product((0x4B,0x98,0xA0,0xA1),(0xA2,0xB0,0xBF,0xC0,0xFF,0x100,0x1A0,0xFFFF)):
+            writes=[field(0x7E0010,0x0109),field(0x7E008A,host),field(0x7E0084,0x1234),field(0x7E00C8,0xDEAD),field(0x7E001C,0x0116)]
+            row,regs=run(shim,writes,p=0,registers=dict(x=word,y=0x4567))
+            require(row['returned'],'No-overlay whole operation did not return');low=row['reads'][0]['bytes']
+            require(low[0x8A:0x8C]==list(host.to_bytes(2,'little')) and low[0x84:0x86]==[0x34,0x12],'Rejected overlay changed host map/scroll')
+            require(low[0xC8:0xCA]==[0xAD,0xDE],'Rejected overlay returned stale C8 into decompression')
+            require(low[0x8C:0x8E]==[0xFF,0] and low[0x1C:0x1E]==[0x16,0] and low[0x9A]==0 and low[0x11]==2,'Native no-overlay completion differs')
+            stack_only(row,(0x7E008C,0x7E008D,0x7E001C,0x7E001D,0x7E009A,0x7E0011))
+            cases.append(dict(case='sub_whole_operation_refusal',overlay_word=word,host=host,passed=True))
     if args.raw_output_dir:
         args.raw_output_dir.mkdir(parents=True,exist_ok=False)
         (args.raw_output_dir/'requests-results.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in raw))
@@ -116,7 +159,8 @@ def preaccess(args, image, labels):
     return dict(passed=True,case_count=len(cases),cpu_requests=len(raw),cases=cases,
         rom_sha256=hashlib.sha256(image).hexdigest(),runner_sha256=hashlib.sha256(args.cpu_runner.read_bytes()).hexdigest(),
         scope='emitted helper + actual Module08/mirror hook-prefix and native abort CPU proof; Home body/GFX/native gameplay not executed',
-        held_roles=['FullLoad','SubLoad','Warp','Module0A','other native entry callers'])
+        held_roles=(['Warp','credits_full_caller','Module0A','other native entry callers'] if fullsub else
+                    ['FullLoad','SubLoad','Warp','Module0A','other native entry callers']))
 
 
 def main():

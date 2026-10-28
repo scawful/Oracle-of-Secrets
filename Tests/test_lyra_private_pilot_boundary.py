@@ -182,7 +182,7 @@ class PrivatePilotBoundaryTest(unittest.TestCase):
         self.assertIn('JSL Checkpoint_EnterHome\n  RTS',entry)
         self.assertNotIn('JML Checkpoint_EnterHome',entry)
         self.assertIn('LyraCall_PrivatePilotColdResume = pc()',entry)
-        for role in ('FullLoad','SubLoad','Warp'):
+        for role in ('Warp',):
             self.assertNotIn('LyraCall_PrivatePilot'+role+' = pc()',asm)
         current=asm[asm.index('Lyra_PrivatePilotCurrentMapAllowed:'):asm.index('Lyra_PrivatePilotCurrentMapAllowed_End')]
         self.assertIn('LDA.b $8A',current);self.assertNotIn('AND',current);self.assertNotIn('$0700',current)
@@ -195,6 +195,46 @@ class PrivatePilotBoundaryTest(unittest.TestCase):
         self.assertIn('LDA.l $7EC14C : CMP.w #$00A2',scanner)
         self.assertIn('CMP.w #$0008 : BNE .allowed',entry)
         self.assertIn('LDA.l $02DE28,X : AND.w #$00FF',scanner)
+
+    def test_full_sub_whole_operation_sources_and_native_static_fail_closed(self):
+        asm=(ROOT/'Overworld/lyra_private_pilot.asm').read_text()
+        self.assertNotIn('org $02B1F0',asm)
+        self.assertIn('PEA.w $B1F8\n  JML $02ED59',asm)
+        near=asm[asm.index('Lyra_PrivatePilotFullNearGate:'):asm.index('Lyra_PrivatePilotFullNearGate_End')]
+        self.assertLess(near.index('JSL Lyra_PrivatePilotCurrentMapAllowed'),near.index('JSL Lyra_PrivatePilotFullNativeCall'))
+        self.assertIn('JSL Checkpoint_EnterHome\n  RTS',near)
+        frame=asm[asm.index('Lyra_PrivatePilotFullFrameGate:'):asm.index('Lyra_PrivatePilotFullFrameGate_End')]
+        self.assertTrue(frame.index('SEP #$30')<frame.index('JSL Lyra_PrivatePilotCanEnter')<frame.index('JML $02A479'))
+        self.assertIn('JSL Checkpoint_EnterHome\n  RTL',frame)
+        overlay=(ROOT/'Overworld/ZSCustomOverworld.asm').read_text()
+        block=overlay[overlay.index('Lyra_Fixture_PreOverlaySelect = pc()'):overlay.index('STY.b $84',overlay.index('Lyra_Fixture_PreOverlaySelect = pc()'))]
+        self.assertIn('JML Lyra_PrivatePilotSubGate\n        NOP #4',block)
+        self.assertIn('LyraPilot_SubNativeAllowed = pc()',block)
+        sub=asm[asm.index('Lyra_PrivatePilotSubGate:'):asm.index('Lyra_PrivatePilotSubGate_End')]
+        self.assertIn('PHP : PHA : TXA',sub)
+        self.assertIn('JML LyraPilot_SubNativeNoOverlay',sub);self.assertNotIn('Checkpoint_EnterHome',sub)
+        with self.assertRaisesRegex(ValueError,'NATIVE_FULL_CALLER_CHANGED'):
+            L.private_pilot_native_full_paths(bytes(0x200000))
+
+    def test_native_full_data_is_full_word_and_credits_mismatch_stays_explicit(self):
+        source=bytearray(0x200000)
+        def put(at,raw):source[L.A.pc(at):L.A.pc(at)+len(raw)]=raw
+        for at,raw in ((0x0286A5,'2059ed'),(0x02B1F0,'2059ed6b201eafc6116b'),(0x0AB953,'22f0b102'),
+                (0x02ABCC,'20e8ef'),(0x02EEC7,'204af5'),(0x02EFEA,'204af5'),(0x02B31A,'20c5ee'),
+                (0x02ED8D,'20c5ee'),(0x02FD0F,'20cbf7')):put(at,bytes.fromhex(raw))
+        descriptors=(0x1000,2,0x1002,0x1012,0x1004,0x1006,0x1010,0x1014,0x100A,0x1016,0x5D,0x64,0x100E,0x1008,0x1018,0x180)
+        raw=b''.join(v.to_bytes(2,'little') for v in descriptors);put(0x0285C2,raw);put(0x02DD8A,raw)
+        put(0x02DE28,bytes(range(16)))
+        report=L.private_pilot_native_full_paths(bytes(source))
+        self.assertTrue(report['complete']);self.assertEqual(len(report['transport_maps']),17)
+        self.assertFalse(report['warp_admission']);self.assertFalse(report['runtime_admission'])
+        put(0x02DE28,b'\xa0')
+        report=L.private_pilot_native_full_paths(bytes(source))
+        self.assertFalse(report['complete']);self.assertEqual(report['held_callers'][0]['room'],0x1000)
+        for word in (0xA0,0xA1,0x100,0xFFFF):
+            put(0x02EAE5,word.to_bytes(2,'little'))
+            with self.assertRaisesRegex(ValueError,'NATIVE_TRANSPORT_CHANGED'):
+                L.private_pilot_native_full_paths(bytes(source))
 
     def test_optional_compiled_consumer_requires_exact_carry_branch_target_and_direction_table(self):
         rom,symbols,call=pilot_compiled_fixture()

@@ -915,6 +915,9 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     plan, payload = plan_transfer(request_path, project, base_rom, ledger_path=ledger_path,
                                   current_source_profile=profile,private_pilot=pilot)
     import lyra_native_loaders as native
+    native_full_paths=None if pilot is None else native.private_pilot_native_full_paths(source)
+    R.require(native_full_paths is None or native_full_paths['complete'],
+              'PRIVATE_PILOT_NATIVE_FULL_UNBOUND: unchanged credits full caller requires its own cancellation/source binding')
     origin_spans = [row['pc'] for row in profile['origins'].values()]
     R.require(type(runtime['origin_preimages']) is list
               and sorted(row['pc'] for row in runtime['origin_preimages']) == sorted(origin_spans),
@@ -1046,6 +1049,7 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
             dict((key,value) for key,value in dict(bg_plan,payload_hex=bg_plan['payload'].hex()).items() if key!='payload')),
         generated_files={name:R.sha(raw) for name,raw in files.items()},
         save_exit_policy='unchanged_held',native_gameplay_verified=False,save_reopen_verified=False)
+    if native_full_paths is not None: prepared['native_full_paths']=native_full_paths
     for row in bindings:
         Q.read_bound(row)
     verify_current_native_source_profile(profile,source,document)
@@ -1151,6 +1155,13 @@ def verify_current_output(prepared, compiled, symbols):
     expected=_json(Q.read_bound(prepared['compiled_consumers']))
     observed=native.inspect_current_consumers(compiled,symbols)
     R.require(observed == expected, 'CURRENT_COMPILED_CONSUMERS_MISMATCH: reviewed active bytes differ')
+    if prepared.get('private_pilot') is not None:
+        bound=native.private_pilot_native_full_paths(source)
+        R.require(prepared.get('native_full_paths')==bound,'PRIVATE_PILOT_NATIVE_FULL_SOURCE_STALE')
+        for row in bound['spans']:
+            at=A.pc(row['snes'])
+            R.require(compiled[at:at+row['bytes']]==bytes.fromhex(row['payload_hex']),
+                      'PRIVATE_PILOT_NATIVE_FULL_COMPILED_CHANGED')
     start,end=observed['regions'][0]['snes']
     origin=prepared['current_source_profile']['origins']['code']['snes']
     R.require(start==origin[0] and start<end<=origin[1], 'Current compiled code exceeds selected origin')

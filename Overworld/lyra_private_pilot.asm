@@ -164,6 +164,72 @@ LyraPilot_MirrorBlocked = pc()
 }
 Lyra_PrivatePilotMirrorGate_End = pc()
 
+; Native near-call replay used ONLY after the Module08 whole-operation
+; preflight. PEA supplies an existing native RTL boundary; no allocation at
+; that return and no unsafe Home return into0AB948's saved10/0200 context.
+Lyra_PrivatePilotFullNativeCall:
+  PEA.w $B1F8
+  JML $02ED59
+Lyra_PrivatePilotFullNativeCall_End = pc()
+
+; Module08_02 owns a near dispatcher frame. Route its ENTIRE operation via
+; the same guarded long operation; denial skips its10/B0/11 completion writes.
+Lyra_PrivatePilotFullNearGate:
+{
+  PHP
+LyraCall_PrivatePilotFullLoad = pc()
+  JSL Lyra_PrivatePilotCurrentMapAllowed : BCS .blocked
+  PLP
+  JSL Lyra_PrivatePilotFullNativeCall
+  LDA.b #$10 : STA.b $10 : STZ.b $B0 : STZ.b $11
+  RTS
+.blocked
+LyraPilot_FullLoadBlocked = pc()
+  PLP
+  JSL Checkpoint_EnterHome
+  RTS
+}
+Lyra_PrivatePilotFullNearGate_End = pc()
+
+; Module09's near submodule return is followed by camera/sprite work. Refuse
+; at the WHOLE long module entry, before that near frame exists, so Home can
+; return directly to the original long caller without unsafe postprocessing.
+; Replay the original SEP30 first, including native X/Y-high truncation.
+Lyra_PrivatePilotFullFrameGate:
+{
+  SEP #$30
+  PHP : REP #$30 : PHA : PHX : PHY
+  LDA.b $8A : JSL Lyra_PrivatePilotCanEnter : BCS .blocked
+  PLY : PLX : PLA : PLP
+  LDA.b $11
+  JML $02A479
+.blocked
+  PLY : PLX : PLA : PLP
+  JSL Checkpoint_EnterHome
+  RTL
+}
+Lyra_PrivatePilotFullFrameGate_End = pc()
+
+; M16/X16 at the existing overlay SELECT boundary. X is the complete overlay
+; page, not the host8A parent or0700 true-cell index. Native00..9F templates
+; remain allowed on every host; FF/unselected/invalid words take the existing
+; no-overlay branch BEFORE84/8A/8C/scroll mutations or any decompressor call.
+; Its native no-overlay completion is the correct whole-operation refusal;
+; Home would be wrong while the host is only borrowing an overlay map.
+Lyra_PrivatePilotSubGate:
+{
+  PHP : PHA : TXA
+LyraCall_PrivatePilotSubLoad = pc()
+  JSL Lyra_PrivatePilotCanEnter : BCS .blocked
+  PLA : PLP : CPX.w #$00FF
+  JML LyraPilot_SubNativeAllowed
+.blocked
+LyraPilot_SubLoadBlocked = pc()
+  PLA : PLP : CPX.w #$00FF
+  JML LyraPilot_SubNativeNoOverlay
+}
+Lyra_PrivatePilotSubGate_End = pc()
+
 pushpc
 assert read4($0283C7) == $998582A9, "Module08 entry preimage moved"
 org $0283C7 ; @hook module=Overworld name=Lyra_PrivatePilotEntryGate kind=jml target=Lyra_PrivatePilotEntryGate expected_m=8 expected_x=8
@@ -173,5 +239,15 @@ assert read4($02B217) == $80C98AA5, "Mirror initialization preimage moved"
 org $02B217 ; @hook module=Overworld name=Lyra_PrivatePilotMirrorGate kind=jml target=Lyra_PrivatePilotMirrorGate expected_m=8 expected_x=8
   JML Lyra_PrivatePilotMirrorGate
 assert pc() == $02B21B
+assert read4($02B1F0) == $6BED5920, "Native-only full long-operation source moved"
+assert read1($02B1F9) == $6B, "Native full-operation far return moved"
+assert read4($02EDB9) == $A9ED5920, "Module08 full-operation preimage moved"
+org $02EDB9 ; @hook module=Overworld name=Lyra_PrivatePilotFullNearGate kind=jml target=Lyra_PrivatePilotFullNearGate expected_m=8 expected_x=8
+  JML Lyra_PrivatePilotFullNearGate
+assert pc() == $02EDBD
+assert read4($02A475) == $11A530E2, "Whole outdoor-module preimage moved"
+org $02A475 ; @hook module=Overworld name=Lyra_PrivatePilotFullFrameGate kind=jml target=Lyra_PrivatePilotFullFrameGate
+  JML Lyra_PrivatePilotFullFrameGate
+assert pc() == $02A479
 pullpc
 endif
