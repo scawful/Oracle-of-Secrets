@@ -32,6 +32,7 @@ else
   RTL
 endif
 }
+CheckForChangeGraphicsNormalLoadBoat_End:
 
 ; These callbacks exist only in the explicitly selected current composition.
 ; Native mode retains the original load routine and payload placement below.

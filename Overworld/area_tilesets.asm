@@ -6,6 +6,10 @@ assert !ENABLE_OW_AREA_TILESETS == 1
 assert defined("LYRA_AREA_TILESETS_BOUND") && !LYRA_AREA_TILESETS_BOUND == 1, "Per-area source binding required"
 assert defined("LYRA_AREA_TILESETS_ORIGIN") && defined("LYRA_AREA_TILESETS_END"), "Per-area owned origins required"
 assert !LYRA_AREA_TILESETS_ORIGIN == AreaTileset_CodeBase && !LYRA_AREA_TILESETS_END == AreaTileset_CodeLimit
+if not(defined("LYRA_AREA_FERRY_BOUND"))
+  !LYRA_AREA_FERRY_BOUND = 0
+endif
+assert !LYRA_AREA_FERRY_BOUND == 0 || !LYRA_AREA_FERRY_BOUND == 1
 pushpc
 org !LYRA_AREA_TILESETS_ORIGIN
 AreaTileset_CodeStart = pc()
@@ -139,7 +143,12 @@ AreaTileset_AreaProfile:
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; $00
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; $10
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; $20
-  db $01, $00, $00, $00, $00, $00, $00, $00, $01, $00, $00, $00, $00, $00, $00, $00 ; $30
+if !LYRA_AREA_FERRY_BOUND == 1
+  db $02 ; $30: bound ferry collision and sheets
+else
+  db $01 ; $30: unchanged native boat profile
+endif
+  db      $00, $00, $00, $00, $00, $00, $00, $01, $00, $00, $00, $00, $00, $00, $00 ; $31-$3F
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; $40
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; $50
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; $60
@@ -158,6 +167,9 @@ assert pc() == AreaTileset_AreaProfile+$100
 AreaTileset_Profiles:
   dw $0000, $0000                                  ; 0: none
   dw AreaTileset_NoTypes, AreaTileset_BoatSheets   ; 1: boat ($30 Kalyxo Docks, $38 Dragon Ship)
+if !LYRA_AREA_FERRY_BOUND == 1
+  dw AreaTileset_FerryTypes, AreaTileset_FerrySheets ; 2: private bound ferry ($30)
+endif
 
 AreaTileset_NoTypes:
   dw $FFFF
@@ -168,7 +180,23 @@ AreaTileset_BoatSheets:
   %AreaTileset_Sheet($5000, $2000, AdditionalBitmap)
   dw $FFFF
 
+if !LYRA_AREA_FERRY_BOUND == 1
+; Root emits these forward-bound assets in the suffix after the module.
+assert FerryArea30Types >= $E2E200 && FerryArea30Types+$59 <= !LYRA_AREA_TILESETS_END, "Ferry types outside owned data suffix"
+assert FerryArea30Bitmap >= $E2E200 && FerryArea30Bitmap+$0B20 <= !LYRA_AREA_TILESETS_END, "Ferry bitmap outside owned data suffix"
+assert FerryArea30Types+$59 <= FerryArea30Bitmap || FerryArea30Bitmap+$0B20 <= FerryArea30Types, "Ferry type/bitmap sources overlap"
+AreaTileset_FerryTypes:
+  %AreaTileset_Types($0100, $0059, FerryArea30Types)
+  dw $FFFF
+AreaTileset_FerrySheets:
+  %AreaTileset_Sheet($2C00, $2000, BoatBitmap)
+  %AreaTileset_Sheet($3000, $0B20, FerryArea30Bitmap)
+  %AreaTileset_Sheet($5000, $2000, AdditionalBitmap)
+  dw $FFFF
+endif
+
 AreaTileset_CodeEnd = pc()
+assert pc() <= $E2E200, "Per-area module overlaps generated ferry data"
 assert pc() <= !LYRA_AREA_TILESETS_END, "Per-area code/tables exceed owned suffix"
 if !LYRA_CURRENT_MODE == 1
   assert SharedGraphicsRuntimeEnd <= !LYRA_AREA_TILESETS_ORIGIN, "Shared graphics overlap per-area suffix"
