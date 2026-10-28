@@ -213,6 +213,14 @@ echo "[*] Validating expanded message source contract..."
 run_check message_source 1 python3 "$repo_root/Scripts/Generate/validate_expanded_message_source.py" \
   --root "$repo_root"
 
+# Shared checkpoints use the existing source/receipt route. Feature defaults off;
+# active candidates require the exact native source-control record and symbols.
+checkpoint_args=(--root "$repo_root" --base-rom "$base_rom")
+if [[ "$emit_symbols" != "1" ]]; then
+  checkpoint_args+=(--no-symbols)
+fi
+run_check checkpoint_source 1 python3 "$repo_root/Scripts/Build/checkpoint_registry.py" "${checkpoint_args[@]}"
+
 current_stage="output_snapshot"
 snapshot_build_outputs
 
@@ -467,6 +475,9 @@ if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
     --rom "$patched_rom" --symbols "$symbols_path" --receipt "$lyra_verification"
   receipt artifact --name lyra_verification --path "$lyra_verification"
 fi
+run_check checkpoint_compiled 1 python3 "$repo_root/Scripts/Build/checkpoint_registry.py" \
+  --root "$repo_root" --base-rom "$base_rom" --rom "$patched_rom" --symbols "$symbols_path"
+
 receipt artifact --name output_rom --path "$patched_rom"
 if [[ "$emit_symbols" == "1" ]]; then
   receipt artifact --name symbols --path "$symbols_path"

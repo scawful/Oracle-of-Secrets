@@ -29,7 +29,8 @@
     "lyra_current_bundle_router_21": "Current saved-project bundle routing and immutable generation output paths; no activation.",
     "lyra_private_pilot_boundary_22": "Private selected A0/A1 scroll guard, disabled unless source-bound; no admission or allocation.",
     "lyra_private_pilot_boundary_cpu_23": "Private A0/A1 guard with saved-status binary arithmetic; enabled CPU fixture only, no admission.",
-    "regional_checkpoint_state_24": "Root-granted B4..B8 last-activated key reservation; unplaced state codec, no runtime hooks or resume-field grant."
+    "regional_checkpoint_state_24": "Root-granted B4..B8 last-activated key reservation; unplaced state codec, no runtime hooks or resume-field grant.",
+    "regional_checkpoint_runtime_25": "Root-granted B4..B9 state and bank34F900..FE00 runtime, source-qualified native Goron control only; default disabled, Lyra entry/native save proof separate."
   },
   "sources": {
     "shared:Sprites/Objects/minecart.asm": {
@@ -4511,6 +4512,66 @@
       "source_set": "regional_checkpoint_state_24",
       "path": "Tests/test_checkpoint_registry.py",
       "sha256": "0bb110ff4c5854cde62df885d03df683e78af47d55c0c75fee1f9f28e68e19f9"
+    },
+    "regional_checkpoint_runtime_25:Core/sram.asm": {
+      "source_set": "regional_checkpoint_runtime_25",
+      "path": "Core/sram.asm",
+      "sha256": "377b3f0f7d2b6e770565a7e8ac001be8b0777302ef31ee6817ba18f7583bcd4a"
+    },
+    "regional_checkpoint_runtime_25:Overworld/checkpoint_state.asm": {
+      "source_set": "regional_checkpoint_runtime_25",
+      "path": "Overworld/checkpoint_state.asm",
+      "sha256": "3bbcbd307a771bf71e7a758fd8a80885bda36da32f4ef8968a82318da2d1041a"
+    },
+    "regional_checkpoint_runtime_25:Overworld/goron_checkpoint.asm": {
+      "source_set": "regional_checkpoint_runtime_25",
+      "path": "Overworld/goron_checkpoint.asm",
+      "sha256": "bdfca177a07830456240449921d8abe21880380390eec61910fc1d516cd48020"
+    },
+    "regional_checkpoint_runtime_25:Overworld/overworld.asm": {
+      "source_set": "regional_checkpoint_runtime_25",
+      "path": "Overworld/overworld.asm",
+      "sha256": "4fb4b1199dd8e5021fb1ad74c9a9983ab57e3141acebad597fcacd1f0a0cf696"
+    },
+    "regional_checkpoint_runtime_25:Oracle_main.asm": {
+      "source_set": "regional_checkpoint_runtime_25",
+      "path": "Oracle_main.asm",
+      "sha256": "517ad1fd45f916b57c55339168a3be8f8e489db52c88f4686c3ef0c10e00aeea"
+    },
+    "regional_checkpoint_runtime_25:Util/macros.asm": {
+      "source_set": "regional_checkpoint_runtime_25",
+      "path": "Util/macros.asm",
+      "sha256": "bece57dbd4ddaf1a462e7cd227a80fd43f5127fa87cf0c9bc896111bdb2c259b"
+    },
+    "regional_checkpoint_runtime_25:Config/feature_flags.asm": {
+      "source_set": "regional_checkpoint_runtime_25",
+      "path": "Config/feature_flags.asm",
+      "sha256": "d5d6b12ff7616fc0ea5bd9cac8f87d1291195cf9014bc00db33283b571fc2f36"
+    },
+    "regional_checkpoint_runtime_25:Scripts/Build/checkpoint_registry.py": {
+      "source_set": "regional_checkpoint_runtime_25",
+      "path": "Scripts/Build/checkpoint_registry.py",
+      "sha256": "3321bfaf86636ebe2d0d7ceafea1a853b5137e9dcf77eff61699078ae86b6514"
+    },
+    "regional_checkpoint_runtime_25:Scripts/Build/build_rom.sh": {
+      "source_set": "regional_checkpoint_runtime_25",
+      "path": "Scripts/Build/build_rom.sh",
+      "sha256": "9f4c0001780af766451bb56f38d4c93803fee03f916b706524a61879c2af8919"
+    },
+    "regional_checkpoint_runtime_25:Scripts/Generate/asm_source.py": {
+      "source_set": "regional_checkpoint_runtime_25",
+      "path": "Scripts/Generate/asm_source.py",
+      "sha256": "c56e3aca82fe929e04ca3c08c301f122a254ebdfa1418ebddac718ca44c1fbfc"
+    },
+    "regional_checkpoint_runtime_25:Tests/test_checkpoint_registry.py": {
+      "source_set": "regional_checkpoint_runtime_25",
+      "path": "Tests/test_checkpoint_registry.py",
+      "sha256": "88aa7e97033399e9d3ee7d56e793cf62c0f1304f2255fa08fcbc532c25348127"
+    },
+    "regional_checkpoint_runtime_25:Tests/routines/regional_checkpoints.py": {
+      "source_set": "regional_checkpoint_runtime_25",
+      "path": "Tests/routines/regional_checkpoints.py",
+      "sha256": "5efecca839e42db573c8e5a9885ac16c778cd4249e3929f144429bad07247d25"
     }
   },
   "claims": [
@@ -5638,11 +5699,11 @@
       "status": "shared",
       "condition": {},
       "lifetime": "Per-file schema/epoch/key; retained independently of Home resume, scripts and dungeon return. Resume intent is not stored here.",
-      "reset": "Native new-file clear; explicit registry-bound StateMigrate initializes invalid/retired state, never inferred current-area activation. Runtime codec is unplaced/unhooked.",
-      "save": "Existing F000..F4FF copy/checksum and all3primary/backup slots. No user-save write or native save/reopen proof.",
+      "reset": "Native new-file clear plus source-bound state/intent migration; explicit frame activation; saved key retained independently of pending Home/script/dungeon routing.",
+      "save": "Existing native five-page primary/backup copy/checksum; runtime source wired, native save/reopen qualification pending.",
       "provenance": [
-        "regional_checkpoint_state_24:Core/sram.asm",
-        "regional_checkpoint_state_24:Overworld/checkpoint_state.asm"
+        "regional_checkpoint_runtime_25:Core/sram.asm",
+        "regional_checkpoint_runtime_25:Overworld/checkpoint_state.asm"
       ],
       "aliases": [],
       "anchors": [
@@ -5650,8 +5711,59 @@
         "RegionalCheckpointKey    = $7EF3B6"
       ],
       "binding": {
-        "source": "regional_checkpoint_state_24:Core/sram.asm",
+        "source": "regional_checkpoint_runtime_25:Core/sram.asm",
         "symbol": "RegionalCheckpointSchema",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "RegionalCheckpointResumeIntent",
+      "owner": "Central checkpoint next-resume snapshot",
+      "space": "save_buffer",
+      "base": 8319928,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Per-file 0Home/1last regional key; independent of retained B6/B7 key and C8 scripted/native routing.",
+      "reset": "Native zero; migration normalizes unknown intent to Home without erasing valid key.",
+      "save": "Existing saved/checksummed F000..F4FF and all3primary/backup slots; no user-save mutation or native save proof here.",
+      "provenance": [
+        "regional_checkpoint_runtime_25:Core/sram.asm",
+        "regional_checkpoint_runtime_25:Overworld/checkpoint_state.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "RegionalCheckpointResumeIntent = $7EF3B8"
+      ],
+      "binding": {
+        "source": "regional_checkpoint_runtime_25:Core/sram.asm",
+        "symbol": "RegionalCheckpointResumeIntent",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "RegionalCheckpointRuntime",
+      "owner": "Central checkpoint codec/resolver/native-control registry/adapters",
+      "space": "snes_rom",
+      "base": 3471616,
+      "size": 1280,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Exclusive Overworld bank34 suballocation, conditional fresh ordinary prefix <=34F900 and aggregate end<=34FE00.",
+      "reset": "ROM; source defaults disabled and requires explicit bound flag.",
+      "save": "No direct SRAM physical layout; compiled adapters use only owned checkpoint/native contexts.",
+      "provenance": [
+        "regional_checkpoint_runtime_25:Overworld/checkpoint_state.asm",
+        "regional_checkpoint_runtime_25:Overworld/overworld.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "assert pc() <= Checkpoint_StateCodeLimit",
+        "assert (Checkpoint_OrdinaryOverworldEnd>>16) == $34"
+      ],
+      "binding": {
+        "source": "regional_checkpoint_runtime_25:Overworld/checkpoint_state.asm",
+        "symbol": "Checkpoint_StateCodeBegin",
         "bank00_mirror": false
       }
     }

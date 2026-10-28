@@ -808,7 +808,8 @@ FreeBlock_LargePrefix = $7EF3B2 ; 2 bytes [B2,B4); not an allocation grant
 RegionalCheckpointSchema = $7EF3B4
 RegionalCheckpointEpoch  = $7EF3B5
 RegionalCheckpointKey    = $7EF3B6 ; word, ends before $7EF3B8
-FreeBlock_Large    = $7EF3B8  ; 13 bytes [B8,C5); resume byte NOT granted
+RegionalCheckpointResumeIntent = $7EF3B8 ; byte: 0 Home, 1 last regional key
+FreeBlock_Large    = $7EF3B9  ; 12 bytes [B9,C5)
 
 ; ---------------------------------------------------------
 ; Dreams Extension ($7EF411-4FD) - 237 bytes
@@ -827,7 +828,7 @@ FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF39F  | $7EF3A0  | 2     | Collectibles ext   |
 ; | $7EF3B2  | $7EF3B3  | 2     | Large prefix       |
-; | $7EF3B8  | $7EF3C4  | 13    | Large remainder    |
+; | $7EF3B9  | $7EF3C4  | 12    | Large remainder    |
 ; | $7EF412  | $7EF4FD  | 236   | Dreams extension   |
 ; |----------|----------|-------|--------------------|
 ; | Free-list comments describe candidates, not allocation grants.     |

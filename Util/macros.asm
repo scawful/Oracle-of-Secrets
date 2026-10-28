@@ -354,3 +354,7 @@ endif
 if not(defined("ENABLE_EQUIPMENT_MENU"))
   !ENABLE_EQUIPMENT_MENU = 1
 endif
+
+; Private joint-candidate checkpoint source; no default runtime activation.
+!ENABLE_REGIONAL_CHECKPOINTS = 0
+!ENABLE_REGIONAL_CHECKPOINT_SOURCE_BINDING = 0

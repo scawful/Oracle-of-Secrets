@@ -40,6 +40,16 @@ incsrc    "Util/macros.asm"
 incsrc    "Config/module_flags.asm"
 incsrc    "Config/feature_flags.asm"
 
+; Shared checkpoint source is disabled until the joint candidate binds it.
+if not(defined("REGIONAL_CHECKPOINTS_ENABLED"))
+  !REGIONAL_CHECKPOINTS_ENABLED = !ENABLE_REGIONAL_CHECKPOINTS
+endif
+if not(defined("REGIONAL_CHECKPOINTS_BOUND"))
+  !REGIONAL_CHECKPOINTS_BOUND = !ENABLE_REGIONAL_CHECKPOINT_SOURCE_BINDING
+endif
+assert !REGIONAL_CHECKPOINTS_ENABLED == 0 || !REGIONAL_CHECKPOINTS_BOUND == 1, "Checkpoint runtime requires source binding"
+
+
 ; Generated Lyra inputs belong to this build invocation, never file presence.
 if not(defined("LYRA_BUILD_CONTEXT"))
   !LYRA_BUILD_CONTEXT = 0

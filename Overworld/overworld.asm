@@ -178,6 +178,16 @@ LoadOverworldPitAreas:
   RTL
 }
 
+Checkpoint_OrdinaryOverworldEnd = pc()
+if !REGIONAL_CHECKPOINTS_ENABLED == 1
+  assert (Checkpoint_OrdinaryOverworldEnd>>16) == $34
+  assert Checkpoint_OrdinaryOverworldEnd <= $34F900, "Ordinary Overworld prefix overlaps checkpoint reservation"
+  pushpc
+  org $34F900
+  incsrc "Overworld/checkpoint_state.asm"
+  pullpc
+endif
+
 Overworld_GetPitDestination = $1BB860
 
 ; DetermineConsequencesOfFalling

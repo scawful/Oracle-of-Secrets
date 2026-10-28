@@ -75,7 +75,9 @@ def _load_global_defines(root: Path) -> dict[str, int]:
                    LYRA_CURRENT_PARENT_COUNT=0xC0, LYRA_CURRENT_EVENTS_ENABLED=0, LYRA_CURRENT_EVENTS_BOUND=0,
                    LYRA_CURRENT_ACTORS_ENABLED=0, LYRA_CURRENT_ACTORS_BOUND=0,
                    LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED=0, LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND=0,
-                   PROJECT_BG128_ENABLED=0, PROJECT_BG128_RESTORE_BOUND=0)
+                   PROJECT_BG128_ENABLED=0, PROJECT_BG128_RESTORE_BOUND=0,
+                   REGIONAL_CHECKPOINTS_ENABLED=defines.get("ENABLE_REGIONAL_CHECKPOINTS", 0),
+                   REGIONAL_CHECKPOINTS_BOUND=defines.get("ENABLE_REGIONAL_CHECKPOINT_SOURCE_BINDING", 0))
     if context == "1":
         constants = (root / LYRA_CONSTANTS).read_bytes()
         prepared = json.loads((root / "Data/Generated/lyra_project/prepare.json").read_bytes())
