@@ -1199,10 +1199,17 @@ def current_event_state(value, ledger):
                   'CURRENT_EVENT_STATE_UNBOUND: ungranted or inactive named owner')
         chosen.append(row)
     for owner in ledger.get('claims',[]):
-        if owner in chosen or owner.get('base') is None:
+        if (owner in chosen or owner.get('base') is None
+                or owner.get('space') not in ('wram','save_buffer')):
             continue
-        R.require(type(owner.get('base')) is int and type(owner.get('size')) is int
-                  and owner['size'] > 0, 'CURRENT_EVENT_STATE_OWNER_CONFLICT: ambiguous owner extent')
+        R.require(type(owner['base']) is int and 0x7E0000 <= owner['base'] < 0x800000,
+                  'CURRENT_EVENT_STATE_OWNER_CONFLICT: invalid WRAM owner base')
+        # A forward extent starting above both candidate fields cannot reach
+        # them. A missing size below that boundary remains ambiguous/refused.
+        if owner['base'] >= max(value['flags']+32,value['version']+1):
+            continue
+        R.require(type(owner.get('size')) is int and owner['size'] > 0,
+                  'CURRENT_EVENT_STATE_OWNER_CONFLICT: ambiguous owner extent')
         space,lo,hi = physical(owner)
         if space == 'wram':
             R.require(all(not (lo < value[key]+size and value[key] < hi)
