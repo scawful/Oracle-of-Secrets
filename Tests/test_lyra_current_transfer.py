@@ -85,6 +85,54 @@ class CurrentSaveTransferTest(unittest.TestCase):
                                              operation_id=self.save['operation_id'])
         self.context_path.write_bytes(X.P.encoded(self.context))
 
+    def test_native_policy_uses_actual_capture_not_a_future_producer_record(self):
+        _, request_path = self.prepare()
+        request = json.loads(request_path.read_bytes())
+        execution = X.native_execution(request)
+        self.assertEqual(execution['binary'], self.producer['verifier'])
+        self.assertEqual(execution['observation'], request['observation'])
+        ledger, policy, _ = self.grant_fixture(request_path)
+        policy.update(kind=X.NATIVE_POLICY_KIND,
+                      enforcement=dict(owner='oracle.current_builder', required_order=X.COMPILE_ORDER))
+        self.write_fixture_ledger(ledger, policy)
+        self.enforcement.unlink()  # fixture-only legacy record, never production evidence
+        plan, _ = X.plan_transfer(request_path, self.project, self.rom,
+                                 current_source_profile=self.current_profile)
+        self.assertEqual(plan['enforcement_receipt'], request['native_verification'])
+        self.assertEqual(plan['enforcement_owner'], 'oracle.current_builder')
+        self.assertEqual(plan['producer_enforcement_scope'], 'native_save_only')
+        self.assertFalse(plan['oracle_compile_order_verified'])
+        self.assertFalse(self.enforcement.exists())
+        self.assertFalse(self.candidate.exists())
+        policy['enforcement']['owner'] = 'unverified producer'
+        self.write_fixture_ledger(ledger, policy)
+        with self.assertRaisesRegex(ValueError, 'COMPILE_ORDER_OWNER_MISMATCH'):
+            X.plan_transfer(request_path, self.project, self.rom,
+                            current_source_profile=self.current_profile)
+
+    def test_native_execution_semantics_reject_rebound_wrong_or_failed_verifier(self):
+        _, request_path = self.prepare()
+        original = json.loads(request_path.read_bytes())
+        artifact = Path(original['native_verification']['path'])
+        before = artifact.read_bytes()
+        for change in (dict(exit_code=1), dict(generation=2), dict(source_rom_sha256='0'*64),
+                       dict(command=['verifier did not run this command']),
+                       dict(binary=self.producer['editor']), dict(source_bindings=[])):
+            execution = json.loads(before); execution.update(change)
+            artifact.chmod(0o644); artifact.write_bytes(X.P.encoded(execution)); artifact.chmod(0o444)
+            request = copy.deepcopy(original)
+            request['native_verification'] = X.Q.bound(artifact)
+            request['transfer_id'] = X._identity(request)
+            request_path.chmod(0o644); request_path.write_bytes(X.P.encoded(request)); request_path.chmod(0o444)
+            with self.subTest(change=change), self.assertRaisesRegex(ValueError, 'VERIFIER_EXECUTION_MISMATCH'):
+                X.verify_transfer(request_path, self.project, self.rom)
+
+    def test_failed_native_verifier_cannot_emit_an_execution_or_snapshot(self):
+        with mock.patch.object(X.A, 'native_verify', side_effect=ValueError('selected verifier failed')):
+            with self.assertRaisesRegex(ValueError, 'selected verifier failed'):
+                self.prepare()
+        self.assertFalse(self.output.exists())
+
     def artifacts(self, inputs):
         rows = [dict(role='sidecar' if key == 'terrain' else key, **binding,
                      bytes=Path(binding['path']).stat().st_size) for key, binding in sorted(inputs.items())]
@@ -672,6 +720,17 @@ class CurrentSaveTransferTest(unittest.TestCase):
             context_snapshot.write_bytes(self.context_path.read_bytes())
             context_snapshot.chmod(0o444)
             data['context_snapshot'] = X.Q.bound(context_snapshot)
+            # This is an explicitly manufactured host G2 fixture. Rebind its
+            # complete native-verifier capture as well, so G2 is independently
+            # valid and the test reaches the G1-versus-G2 replacement guard.
+            execution_path = Path(data['native_verification']['path'])
+            execution = json.loads(execution_path.read_bytes())
+            execution.update(generation=data['live']['generation'], operation_id=data['live']['operation_id'],
+                             save_receipt=data['live']['save_receipt'], save_context=data['live']['save_context'])
+            execution_path.chmod(0o644)
+            execution_path.write_bytes(X.P.encoded(execution))
+            execution_path.chmod(0o444)
+            data['native_verification'] = X.Q.bound(execution_path)
             data['transfer_id'] = X._identity(data)
             request.chmod(0o644)
             request.write_bytes(X.P.encoded(data))

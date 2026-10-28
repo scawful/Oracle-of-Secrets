@@ -4696,7 +4696,7 @@
     "lyra_joint_area_tilesets_27:Scripts/Build/lyra_current_transfer.py": {
       "source_set": "lyra_joint_area_tilesets_27",
       "path": "Scripts/Build/lyra_current_transfer.py",
-      "sha256": "2fde7ecc6532d199c30022ad1056e1b263ec325a1e26753d79ad1934be119bc5"
+      "sha256": "01bfbb32b394e6f884e220e37f415c5329bbb3382435d9bc115b3fefacb750d9"
     },
     "lyra_joint_area_tilesets_27:Tests/test_lyra_current_build.py": {
       "source_set": "lyra_joint_area_tilesets_27",
@@ -4766,7 +4766,7 @@
     "lyra_tail_event_storage_28:Scripts/Build/lyra_current_transfer.py": {
       "source_set": "lyra_tail_event_storage_28",
       "path": "Scripts/Build/lyra_current_transfer.py",
-      "sha256": "2fde7ecc6532d199c30022ad1056e1b263ec325a1e26753d79ad1934be119bc5"
+      "sha256": "01bfbb32b394e6f884e220e37f415c5329bbb3382435d9bc115b3fefacb750d9"
     },
     "lyra_tail_event_storage_28:Tests/test_lyra_current_build.py": {
       "source_set": "lyra_tail_event_storage_28",
@@ -4936,7 +4936,7 @@
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_current_transfer.py": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Scripts/Build/lyra_current_transfer.py",
-      "sha256": "2fde7ecc6532d199c30022ad1056e1b263ec325a1e26753d79ad1934be119bc5"
+      "sha256": "01bfbb32b394e6f884e220e37f415c5329bbb3382435d9bc115b3fefacb750d9"
     },
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_joint_art.py": {
       "source_set": "lyra_joint_art_bridge_30",
@@ -4986,7 +4986,7 @@
     "lyra_joint_art_bridge_30:Scripts/Generate/export_yazeproj_bundle.py": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Scripts/Generate/export_yazeproj_bundle.py",
-      "sha256": "b99cbdb5a80a642fb56c8feff62cdb4e1796aafb3583df2328cd17dc8462cfc0"
+      "sha256": "9e5b7a6c53555c7c3ea0140300475989ded0055003739abc45dd6c5a5cbe0402"
     },
     "lyra_joint_art_bridge_30:Scripts/Generate/generate_hack_manifest.py": {
       "source_set": "lyra_joint_art_bridge_30",
@@ -5047,6 +5047,21 @@
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Tests/test_lyra_checkpoint_preview_publisher.py",
       "sha256": "414a8f5db4a1895ef24e8ae37e568489951f357ec13ee9e76dd57e5fb02fa97a"
+    },
+    "lyra_joint_art_bridge_30:Scripts/Generate/tests/test_authoring_project_bundle.py": {
+      "source_set": "lyra_joint_art_bridge_30",
+      "path": "Scripts/Generate/tests/test_authoring_project_bundle.py",
+      "sha256": "8aac57e6a5335668e1876acfa87fb089ce08aa00e3ac09d6ccfa79314badda29"
+    },
+    "lyra_joint_art_bridge_30:Tests/native/lyra_checkpoint_preview.py": {
+      "source_set": "lyra_joint_art_bridge_30",
+      "path": "Tests/native/lyra_checkpoint_preview.py",
+      "sha256": "86a3c25f12faf04006e5c0eac4501af00e69582e457799007fe4d026c566ef92"
+    },
+    "lyra_joint_art_bridge_30:Tests/test_lyra_current_transfer.py": {
+      "source_set": "lyra_joint_art_bridge_30",
+      "path": "Tests/test_lyra_current_transfer.py",
+      "sha256": "cca0716145e0b6105ca440c9d356cb18abddf3aca4cd2f02730ccaba6db14339"
     }
   },
   "claims": [
