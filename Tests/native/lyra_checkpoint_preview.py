@@ -117,8 +117,7 @@ class LyraEpisode(Episode):
     def boot(self):
         # Frame2 may still be in the native SPC handshake with random WRAM.
         # Advance normally to initialized title state before controller input.
-        self.wait(lambda s: s['module'] in (0, 1, 0x14) and s['sub'] == 0
-                  and s['indoors'] == 0,
+        self.wait(lambda s: s['module'] in (0, 1, 0x14) and s['indoors'] == 0,
                   'cold-title-or-file-select-ready', max_frames=1200)
         return super().boot()
 

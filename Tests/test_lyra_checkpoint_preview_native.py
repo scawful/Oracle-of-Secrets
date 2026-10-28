@@ -16,7 +16,8 @@ class NativePreviewStartupTest(unittest.TestCase):
             self.assertEqual(episode.boot(), 'controller-boot')
         predicate = episode.wait.call_args.args[0]
         self.assertFalse(predicate(dict(module=249, sub=225, indoors=6)))
-        self.assertFalse(predicate(dict(module=0, sub=1, indoors=0)))
+        self.assertTrue(predicate(dict(module=0, sub=7, indoors=0)))
+        self.assertFalse(predicate(dict(module=0, sub=7, indoors=1)))
         self.assertTrue(predicate(dict(module=0, sub=0, indoors=0)))
         self.assertEqual(episode.wait.call_args.kwargs['max_frames'], 1200)
         boot.assert_called_once()

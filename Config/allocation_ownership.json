@@ -5056,7 +5056,7 @@
     "lyra_joint_art_bridge_30:Tests/native/lyra_checkpoint_preview.py": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Tests/native/lyra_checkpoint_preview.py",
-      "sha256": "4fe51ac871da569b917fd3f2e28abc9b65b24d85432cafb0a059771458c0ece9"
+      "sha256": "3228ce751d8d16963954fee14c83c1004f31ad10ffa941c77add62e07f532123"
     },
     "lyra_joint_art_bridge_30:Tests/test_lyra_current_transfer.py": {
       "source_set": "lyra_joint_art_bridge_30",
