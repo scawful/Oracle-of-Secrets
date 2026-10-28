@@ -4521,7 +4521,7 @@
     "regional_checkpoint_runtime_25:Overworld/checkpoint_state.asm": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Overworld/checkpoint_state.asm",
-      "sha256": "fa7b6a8ed38296f97c5009d13b1800c7b3dd805837d34bd496585eb5078bfc5a"
+      "sha256": "5fd0439fed8f4cebeee70f4c78eb5a59b5307c172df384d37e55a78b54f4fcac"
     },
     "regional_checkpoint_runtime_25:Overworld/goron_checkpoint.asm": {
       "source_set": "regional_checkpoint_runtime_25",

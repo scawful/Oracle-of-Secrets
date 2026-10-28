@@ -301,7 +301,7 @@ Checkpoint_Load:
 ; Direct M8/X8 long entry for source-bound preaccess guards. No saved frame
 ; from Checkpoint_Load is required here; the caller supplies only its own JSL.
 ; Uses the same temporary C8/native Home path and returns C=set.
-Checkpoint_EnterHome:
+Checkpoint_EnterHome = pc()
   LDA.l SpawnPoint : PHA
   LDA.b #$00 : STA.l SpawnPoint : STA.l SavedWorld
   STZ.w $010A : STZ.w $010E
