@@ -4556,7 +4556,7 @@
     "regional_checkpoint_runtime_25:Scripts/Build/checkpoint_registry.py": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Scripts/Build/checkpoint_registry.py",
-      "sha256": "36f800a78b0f26adb95e7517a2be643a9aa03c02d75e8cba91aa8b306aa25e7f"
+      "sha256": "8f621a9539de2c57b6315f7fcd11c6cd51d0bf0102d6c29d6cd9405109e406b4"
     },
     "regional_checkpoint_runtime_25:Scripts/Build/build_rom.sh": {
       "source_set": "regional_checkpoint_runtime_25",
@@ -5046,7 +5046,7 @@
     "lyra_joint_art_bridge_30:Tests/test_lyra_checkpoint_preview_publisher.py": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Tests/test_lyra_checkpoint_preview_publisher.py",
-      "sha256": "414a8f5db4a1895ef24e8ae37e568489951f357ec13ee9e76dd57e5fb02fa97a"
+      "sha256": "367dd1072210b47d57f604377408415db9b13801d28d708b9ef2ef28afd2c64e"
     },
     "lyra_joint_art_bridge_30:Scripts/Generate/tests/test_authoring_project_bundle.py": {
       "source_set": "lyra_joint_art_bridge_30",

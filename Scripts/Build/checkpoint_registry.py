@@ -692,24 +692,16 @@ def verify_compiled_checkpoint(root, base_rom, image, symbols, *, require_prefix
     return report
 
 
-def main():
-    import argparse
+def check_invocation(args):
+    """Read current source or an already assembled checkpoint without writing it."""
     import sys
     from pathlib import Path
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'Generate'))
     from asm_source import _load_global_defines
     from allocation_contracts import read_symbols
-    parser = argparse.ArgumentParser(description='Read-only shared checkpoint source/compiled binding check')
-    parser.add_argument('--root', type=Path, required=True)
-    parser.add_argument('--base-rom', type=Path, required=True)
-    parser.add_argument('--rom', type=Path)
-    parser.add_argument('--symbols', type=Path)
-    parser.add_argument('--no-symbols', action='store_true')
-    args = parser.parse_args()
     flags = _load_global_defines(args.root)
     if not flags.get('REGIONAL_CHECKPOINTS_ENABLED'):
-        print('{"selected":false,"status":"disabled"}')
-        return
+        return dict(selected=False,status="disabled")
     require(flags.get('REGIONAL_CHECKPOINTS_BOUND') == 1, 'Checkpoint source binding flag is absent')
     require(flags.get('DISABLE_OVERWORLD') == 0, 'Checkpoint runtime requires its existing Overworld owner')
     require(not args.no_symbols, 'Checkpoint runtime requires compiled symbols; remove --no-symbols')
@@ -739,6 +731,27 @@ def main():
         if private:
             report.update(status='private_preview_source_bound', production_admission=False,
                           claim='Bound seeded A0 preview data only; native gameplay qualification pending')
+    return report
+
+
+def main(argv=None):
+    import argparse
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'Generate'))
+    parser = argparse.ArgumentParser(description='Read-only shared checkpoint source/compiled binding check')
+    parser.add_argument('--root', type=Path, required=True)
+    parser.add_argument('--base-rom', type=Path, required=True)
+    parser.add_argument('--rom', type=Path)
+    parser.add_argument('--symbols', type=Path)
+    parser.add_argument('--no-symbols', action='store_true')
+    args = parser.parse_args(argv)
+    if args.rom is not None:
+        from lyra_current_transfer import candidate_inspection
+        with candidate_inspection(args.rom):
+            report = check_invocation(args)
+    else:
+        report = check_invocation(args)
     print(json.dumps(report))
 
 
