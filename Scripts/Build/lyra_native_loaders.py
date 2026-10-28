@@ -1834,6 +1834,24 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None):
         expected=bytes([opcode])+address(target).to_bytes(3,'little')
         R.require(compiled[A.pc(at):A.pc(at)+4]==expected,'Current compiled selector target differs: '+name)
         calls.append(dict(label=name,snes=at,target=target,payload_hex=expected.hex()))
+    # The transition dispatcher subtracts coordinates directly, rather than
+    # calling a selector. Bind those operands too: a valid camera reader does
+    # not prove that movement stopped reading the shorter native tables.
+    coordinate_tables = {r['name']: r for r in current_table_layout(
+        address('Lyra_CurrentTable_bg_color'))}
+    host_start = address('LyraHost_OverworldHandleTransitions')
+    host_end = address('LyraHost_OverworldHandleTransitions_End')
+    for axis in ('Y', 'X'):
+        name = 'LyraCall_TransitionDelta'+axis
+        target = 'Lyra_CurrentTable_transition_'+axis.lower()
+        at = address(name)
+        R.require(address(target) == coordinate_tables['transition_'+axis.lower()]['snes'],
+                  'Current coordinate table layout differs: '+axis)
+        expected = b'\xFF'+address(target).to_bytes(3, 'little')
+        R.require(host_start <= at < at+4 <= host_end and
+                  compiled[A.pc(at):A.pc(at)+4] == expected,
+                  'Current transition subtraction target differs: '+axis)
+        calls.append(dict(label=name,snes=at,target=target,payload_hex=expected.hex()))
     fixed={a:8 for a in FIXED_NATIVE_INGRESS}
     fixed.update({a:4 for a in (*FIXED_SIZE_SITES,*FIXED_SPRITE_PALETTE_SITES,0x1BC8B8,0x02C4BC,0x028192)})
     fixed.update({a:12 for a in (0x02F59D,0x02F5C8,0x02F7E3,0x02F80E)})

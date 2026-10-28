@@ -5057,7 +5057,13 @@ OverworldHandleTransitions:
 
         REP #$10
         LDA.b $8A : ASL : TAX
-        LDA.b $20 : SEC : SBC.l Pool_OverworldTransitionPositionY_New, X
+        LDA.b $20 : SEC
+        if !LYRA_CURRENT_MODE == 1
+        LyraCall_TransitionDeltaY = pc()
+        SBC.l !LYRA_CURRENT_TABLE_transition_y, X
+        else
+        SBC.l Pool_OverworldTransitionPositionY_New, X
+        endif
         SEP #$10
 
         ; Transitioning up.
@@ -5082,7 +5088,13 @@ OverworldHandleTransitions:
 
         REP #$10
         LDA.b $8A : ASL : TAX
-        LDA.b $22 : SEC : SBC.l Pool_OverworldTransitionPositionX_New, X
+        LDA.b $22 : SEC
+        if !LYRA_CURRENT_MODE == 1
+        LyraCall_TransitionDeltaX = pc()
+        SBC.l !LYRA_CURRENT_TABLE_transition_x, X
+        else
+        SBC.l Pool_OverworldTransitionPositionX_New, X
+        endif
         SEP #$10
 
         ; Transitioning left.

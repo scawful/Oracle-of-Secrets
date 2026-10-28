@@ -80,6 +80,13 @@ def consumer_fixture(source, code, *, bg_code=None):
                                     [('LyraCall_CurrentActors','Lyra_LoadCurrentSprites')]):
         at=0xE6D000+i*8;labels[name]=at
         put(at,bytes([0x5C if name=='LyraCall_CurrentActors' else 0x22])+labels[target].to_bytes(3,'little'))
+    for row in L.current_table_layout(0xE08000):
+        labels['Lyra_CurrentTable_'+row['name']] = row['snes']
+    for i, axis in enumerate(('Y', 'X')):
+        at = labels['LyraHost_OverworldHandleTransitions']+0x80+i*4
+        labels['LyraCall_TransitionDelta'+axis] = at
+        target = labels['Lyra_CurrentTable_transition_'+axis.lower()]
+        put(at,b'\xFF'+target.to_bytes(3,'little'))
     for i,(name,size,_,_) in enumerate(S.TAIL_SOURCE_CALLERS):
         at=0xE6F000+i*0x100;labels[name]=at;put(at,b'\xea'*size)
     labels.update(SharedGraphicsRuntimeStart=0xE18000,SharedGraphicsRuntimeEnd=0xE18100)
@@ -113,6 +120,36 @@ def consumer_fixture(source, code, *, bg_code=None):
     put(0x1BC906,bytes.fromhex('290200'))
     symbols=('[labels]\n'+'\n'.join(f'{a>>16:02X}:{a&65535:04X} {n}' for n,a in labels.items())+'\n').encode()
     return bytes(rom),symbols
+
+
+class CoordinateOperandTests(unittest.TestCase):
+    def test_actual_subtractions_require_current_tables_and_indexed_opcode(self):
+        image, symbols = consumer_fixture(bytes(0x400000), 0xE0C000)
+        observed = L.inspect_current_consumers(image, symbols)
+        calls = {r['label']: r for r in observed['source_calls']}
+        for axis, legacy, current in (('Y', 0x288F38, 0xE09200),
+                                      ('X', 0x289078, 0xE09380)):
+            row = calls['LyraCall_TransitionDelta'+axis]
+            self.assertEqual(row['payload_hex'], (b'\xFF'+current.to_bytes(3, 'little')).hex())
+            for payload in (b'\xFF'+legacy.to_bytes(3, 'little'),
+                            b'\xEF'+current.to_bytes(3, 'little')):
+                with self.subTest(axis=axis, payload=payload.hex()):
+                    control = bytearray(image)
+                    at = X.A.pc(row['snes'])
+                    control[at:at+4] = payload
+                    with self.assertRaisesRegex(ValueError, 'transition subtraction target differs'):
+                        L.inspect_current_consumers(bytes(control), symbols)
+
+    def test_missing_or_rebound_coordinate_symbol_refuses(self):
+        image, symbols = consumer_fixture(bytes(0x400000), 0xE0C000)
+        rows = symbols.decode().splitlines()
+        missing = ('\n'.join(r for r in rows if not r.endswith('LyraCall_TransitionDeltaX'))+'\n').encode()
+        with self.assertRaisesRegex(ValueError, 'Missing current consumer symbol'):
+            L.inspect_current_consumers(image, missing)
+        rebound = ('\n'.join('28:9078 Lyra_CurrentTable_transition_x'
+                             if r.endswith('Lyra_CurrentTable_transition_x') else r for r in rows)+'\n').encode()
+        with self.assertRaisesRegex(ValueError, 'coordinate table layout differs'):
+            L.inspect_current_consumers(image, rebound)
 
 
 class CurrentBuildTest(unittest.TestCase):

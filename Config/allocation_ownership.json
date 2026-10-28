@@ -4811,7 +4811,7 @@
     "lyra_joint_art_bridge_30:Overworld/ZSCustomOverworld.asm": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "2b25fcca02676c91c4258daf81e36fbcdf99e7860c6d3d90a80bd3a7b26f1ef0"
+      "sha256": "1de0b0336a9be3f72ac8029cfc7795d42812c373ad61c604d64229e2ec4f588e"
     },
     "lyra_joint_art_bridge_30:Overworld/area_tilesets.asm": {
       "source_set": "lyra_joint_art_bridge_30",
@@ -4931,7 +4931,7 @@
     "lyra_joint_art_bridge_30:Scripts/Build/check_zscream_overlap.py": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Scripts/Build/check_zscream_overlap.py",
-      "sha256": "b9d5595d3d8a2b68f82066d8e859666a86a4a79aee3c53ca9ab0a8b09abd1ef8"
+      "sha256": "093388e1f35dd1a6c558c0c89dc32e6bb1dbe48445e1ad44b9bac82daeb42486"
     },
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_current_transfer.py": {
       "source_set": "lyra_joint_art_bridge_30",
@@ -4946,7 +4946,7 @@
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "56d175ba6529a70a36f2204756883cc131e62a6fba883a6cc013ab77e231edea"
+      "sha256": "79a59d5070aefedd361ea2c8fbd3601813c8a88254b6f324dc185eabf802fe15"
     },
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_native_state.py": {
       "source_set": "lyra_joint_art_bridge_30",
@@ -5056,7 +5056,7 @@
     "lyra_joint_art_bridge_30:Tests/native/lyra_checkpoint_preview.py": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Tests/native/lyra_checkpoint_preview.py",
-      "sha256": "3228ce751d8d16963954fee14c83c1004f31ad10ffa941c77add62e07f532123"
+      "sha256": "26c11d020a09e8d313b9c853f16ed3df6d207dbdc81d0d36091628561d49dfcf"
     },
     "lyra_joint_art_bridge_30:Tests/test_lyra_current_transfer.py": {
       "source_set": "lyra_joint_art_bridge_30",

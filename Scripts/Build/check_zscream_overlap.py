@@ -123,6 +123,47 @@ def parse_symbols(symbols_path: Path) -> tuple[dict, list[dict]]:
     return labels, mappings
 
 
+def joint_art_spans(prepared: dict, compiled: bytes, actual: dict,
+                    occupied: list) -> list[list[int]]:
+    """Return the selected joint-art packet's guarded write spans, end-exclusive.
+
+    The packet plan is re-derived from its bound packet, request and saved
+    source, so grants, completeness, preimages and disjointness from the
+    source origins and other admitted spans are rechecked; then every span is
+    compared with the saved preimage and the actual candidate bytes. No
+    reservation is granted.
+    """
+    import lyra_current_transfer as current
+    import lyra_joint_art as J
+    import lyra_project_admission as A
+    import lyra_project_allocation as R
+    import lyra_project_prepare as Q
+
+    plan = prepared['joint_art']
+    source = Path(prepared['base_rom']).read_bytes()
+    R.require(type(plan) is dict
+              and R.sha(source) == prepared['saved_rom_sha256'] == plan.get('source_rom_sha256'),
+              'JOINT_ART_OWNERSHIP_SOURCE_MISMATCH')
+    request = [row for row in prepared['inputs']
+               if row['path'] == str(Path(prepared['request']).resolve())]
+    R.require(len(request) == 1, 'JOINT_ART_OWNERSHIP_REQUEST_UNBOUND')
+    origins = [row['pc'] for row in prepared['current_source_profile']['origins'].values()]
+    derived = J.prepare(plan.get('binding'), current._json(Q.read_bound(request[0])), source,
+                        occupied=[tuple(span) for span in (*origins, *occupied)])[0]
+    R.require(derived == plan, 'JOINT_ART_OWNERSHIP_PLAN_DIFFERS')
+    verified = actual.get('joint_art')
+    R.require(type(verified) is dict and verified.get('art_writes_verified') == len(plan['writes']),
+              'JOINT_ART_OWNERSHIP_UNVERIFIED')
+    expanded = A.expanded_rom(source)
+    R.require(len(compiled) == len(expanded), 'JOINT_ART_OWNERSHIP_CANDIDATE_SIZE')
+    for row in plan['writes']:
+        start, end = row['pc']
+        R.require(expanded[start:end].hex() == row['preimage_hex']
+                  and compiled[start:end].hex() == row['payload_hex'],
+                  'JOINT_ART_OWNED_WRITE_PREIMAGE_OR_PAYLOAD_DIFFERS')
+    return [list(row['pc']) for row in plan['writes']]
+
+
 def lyra_owned_regions(verification_path: Path, rom_path: Path, symbols_path: Path,
                        input_path: Path | None = None) -> tuple[tuple[str, int, int], ...]:
     """Authorize only this verified generated source's exact current writes.
@@ -154,6 +195,8 @@ def lyra_owned_regions(verification_path: Path, rom_path: Path, symbols_path: Pa
             spans += [row['pc'] for row in current_prior['tables']['tables']]
             if bg := current_prior.get('bg128_plan'):
                 start=A.pc(bg['data_snes']);spans.append([start,start+len(bytes.fromhex(bg['payload_hex']))])
+            if current_prior.get('joint_art') is not None:
+                spans += joint_art_spans(current_prior, compiled, actual, spans)
             return tuple((source,a,b-1) for a,b in spans)
     paths = [Path(verification_path), Path(rom_path), Path(symbols_path)]
     paths += [folder / name for name in P.GENERATED_FILES]
