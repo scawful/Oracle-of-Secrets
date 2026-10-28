@@ -2863,3 +2863,20 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   A (Claude's pick). With the duel.
   B. Without the duel: blink, talk, Healing.
   Answer:
+
+* DECIDED Fortress island block $7B-$9D moves to Sky D8; $4D stays a Fortress room (2026-10-28)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Abyss GBC dungeon override review)
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/dungeon_gfx_review_2026-10-28/ABYSS_GBC_OVERRIDE.md]]
+  :END:
+  1. The nine island rooms $7B/$7C/$7D/$8B/$8C/$8D/$9B/$9C/$9D leave the Fortress
+     of Secrets and become Sky D8 rooms, as in the Sky D8 room plan
+     (handoffs/sky_d8_implementation_2026-10-20/cursor-rooms/ROOM_PLAN.md). The
+     Fortress keeps 13 rooms: $0C $0D $1C $1D $2D $3D $4C $4D $5C $5D $6B $6C $6D.
+  2. Reason: the Abyss is restyled to the GBC look, and the island block holds
+     most of the ornate layer-2, rail and deep-wall rooms. D8 is on Kalyxo and
+     keeps the SNES look.
+  3. $4D (vanilla Moldorm room, 112 objects) is not copied to D8 by this ruling.
+     It may be moved, or its vanilla objects removed; the exact treatment is open.
+  Answer: "Island block only"; "4D might just be moved, the objects or removed
+  since it's a vanilla map mostly" (scawful, 2026-10-28).
