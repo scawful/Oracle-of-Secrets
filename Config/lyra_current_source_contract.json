@@ -40,7 +40,7 @@
       ],
       "source_binding": {
         "path": "/Users/scawful/src/hobby/oracle-of-secrets-worktrees/lyra-tail-runtime-20261027/Overworld/ZSCustomOverworld.asm",
-        "sha256": "2b25fcca02676c91c4258daf81e36fbcdf99e7860c6d3d90a80bd3a7b26f1ef0"
+        "sha256": "1de0b0336a9be3f72ac8029cfc7795d42812c373ad61c604d64229e2ec4f588e"
       }
     },
     "bg_palette": {
@@ -54,7 +54,7 @@
       ],
       "source_binding": {
         "path": "/Users/scawful/src/hobby/oracle-of-secrets-worktrees/lyra-tail-runtime-20261027/Overworld/ZSCustomOverworld.asm",
-        "sha256": "2b25fcca02676c91c4258daf81e36fbcdf99e7860c6d3d90a80bd3a7b26f1ef0"
+        "sha256": "1de0b0336a9be3f72ac8029cfc7795d42812c373ad61c604d64229e2ec4f588e"
       }
     },
     "code": {
@@ -68,7 +68,7 @@
       ],
       "source_binding": {
         "path": "/Users/scawful/src/hobby/oracle-of-secrets-worktrees/lyra-tail-runtime-20261027/Overworld/ZSCustomOverworld.asm",
-        "sha256": "2b25fcca02676c91c4258daf81e36fbcdf99e7860c6d3d90a80bd3a7b26f1ef0"
+        "sha256": "1de0b0336a9be3f72ac8029cfc7795d42812c373ad61c604d64229e2ec4f588e"
       }
     },
     "descriptor": {
@@ -82,7 +82,7 @@
       ],
       "source_binding": {
         "path": "/Users/scawful/src/hobby/oracle-of-secrets-worktrees/lyra-tail-runtime-20261027/Overworld/ZSCustomOverworld.asm",
-        "sha256": "2b25fcca02676c91c4258daf81e36fbcdf99e7860c6d3d90a80bd3a7b26f1ef0"
+        "sha256": "1de0b0336a9be3f72ac8029cfc7795d42812c373ad61c604d64229e2ec4f588e"
       }
     },
     "graphics": {
@@ -110,7 +110,7 @@
       ],
       "source_binding": {
         "path": "/Users/scawful/src/hobby/oracle-of-secrets-worktrees/lyra-tail-runtime-20261027/Overworld/ZSCustomOverworld.asm",
-        "sha256": "2b25fcca02676c91c4258daf81e36fbcdf99e7860c6d3d90a80bd3a7b26f1ef0"
+        "sha256": "1de0b0336a9be3f72ac8029cfc7795d42812c373ad61c604d64229e2ec4f588e"
       }
     }
   },
