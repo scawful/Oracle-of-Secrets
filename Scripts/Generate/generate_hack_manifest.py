@@ -179,6 +179,7 @@ OBJECT_ALLOCATION_REGIONS_PC = (
 CANONICAL_LOROM_ROM_END_PC = 0x3F0000
 
 AUDITED_UNRESOLVED_ORG_CONTRACTS = {
+    ("Overworld/lyra_native_loaders.asm", "Oracle_ReadOverworldBackdropColor", 0x34),
     ("Core/message.asm", "!addr+1", 0x0E),
     ("Core/sprite_macros.asm", "$0DB080+!SPRID", 0x0D),
     ("Core/sprite_macros.asm", "$0DB173+!SPRID", 0x0D),

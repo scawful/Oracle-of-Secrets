@@ -21,6 +21,19 @@ from lyra_project_terrain import parse_terrain_document
 
 
 class CheckpointPreviewPublisherTests(unittest.TestCase):
+    def test_backdrop_org_has_only_the_audited_bank34_manifest_contract(self):
+        import generate_hack_manifest as H
+        from generate_hooks_json import OrgDirective
+        from dataclasses import replace
+        directive=OrgDirective('Oracle_ReadOverworldBackdropColor',None,
+            'Overworld/lyra_native_loaders.asm:374',proof_bank=0x34)
+        H._validate_unresolved_org_proofs([directive],[])
+        for changed in (replace(directive,proof_bank=None),replace(directive,proof_bank=0x35),
+                        replace(directive,expression='OtherLabel'),
+                        replace(directive,source='Overworld/other.asm:374')):
+            with self.subTest(changed=changed),self.assertRaises(H.ManifestGenerationError):
+                H._validate_unresolved_org_proofs([changed],[])
+
     def test_hash_bound_bg_constants_repeat_only_exact_selected_context(self):
         import asm_source as S
         with tempfile.TemporaryDirectory() as name:

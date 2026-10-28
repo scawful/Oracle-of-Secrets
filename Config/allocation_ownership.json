@@ -4886,7 +4886,7 @@
     "lyra_joint_art_bridge_30:Overworld/lyra_native_loaders.asm": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Overworld/lyra_native_loaders.asm",
-      "sha256": "4b6a17efb7d80d4af0cad225de87bb7b7367f35e80d6a09e3906544e4bf85404"
+      "sha256": "42e085ba93a93ee45aa676835dbcb0b1281d98116904ddd08e2600ebeaa4848b"
     },
     "lyra_joint_art_bridge_30:Overworld/lyra_private_pilot.asm": {
       "source_set": "lyra_joint_art_bridge_30",
@@ -4991,7 +4991,7 @@
     "lyra_joint_art_bridge_30:Scripts/Generate/generate_hack_manifest.py": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Scripts/Generate/generate_hack_manifest.py",
-      "sha256": "eed5138006a03e7ad4065d20c728fe0ca2b568fa4770da611445102e19f95674"
+      "sha256": "7e27276af9d9d73e3c8f4c30a0228229dddc972724ccd9b57fd49c24a758e47b"
     },
     "lyra_joint_art_bridge_30:Scripts/Generate/joint_palette_directory.py": {
       "source_set": "lyra_joint_art_bridge_30",
@@ -5046,7 +5046,7 @@
     "lyra_joint_art_bridge_30:Tests/test_lyra_checkpoint_preview_publisher.py": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Tests/test_lyra_checkpoint_preview_publisher.py",
-      "sha256": "989e603fdeacb2dba2b17bb113eed8fade341c1d8103ae527b89bde82a7da091"
+      "sha256": "350d8f25ec6607b63b3b96f447bbe28139fadf6d8256219112d1c8bbc7fb1d24"
     },
     "lyra_joint_art_bridge_30:Scripts/Generate/tests/test_authoring_project_bundle.py": {
       "source_set": "lyra_joint_art_bridge_30",

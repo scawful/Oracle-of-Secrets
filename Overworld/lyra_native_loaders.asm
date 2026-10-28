@@ -371,7 +371,7 @@ org $02ECE2 ; @hook module=Overworld name=Lyra_SpritePal02ECE2 kind=jsl target=L
 pullpc
 
 pushpc
-org Oracle_ReadOverworldBackdropColor
+org Oracle_ReadOverworldBackdropColor ; @manifest-org-bank=$34
     JML Lyra_ReadBackdrop : NOP
 assert pc() == Oracle_Lyra_CurrentBackdropLegacy
 pullpc
