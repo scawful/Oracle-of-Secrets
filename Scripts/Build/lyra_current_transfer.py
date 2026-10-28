@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import tempfile
 import sys
 
 import lyra_native_streams as N
@@ -33,6 +34,8 @@ PRODUCER_KIND = 'yaze.native_save_producer_identity.v1'
 PROOF_KIND = 'yaze.current_save_transfer_enforcement.v1'
 POLICY_KIND = 'lyra.current_save_transfer_policy.v1'
 REVIEW_KIND = 'lyra.current_save_reservation_review.v1'
+PREVIEW_POLICY_KIND = 'lyra.private_checkpoint_preview_policy.v1'
+PREVIEW_SCOPE = 'seeded_checkpoint_preview'
 CURRENT_SOURCE_CONTRACT = Path(__file__).resolve().parents[2] / 'Config/lyra_current_source_contract.json'
 CURRENT_CONTRACT_KIND = 'lyra.current_engine_source_contract.v1'
 CURRENT_PROFILE_KIND = 'lyra.current_native_source_profile.v1'
@@ -885,6 +888,55 @@ def private_pilot_runtime(runtime, source, document):
     return pilot,binding
 
 
+def native_checkpoint_boundaries(document):
+    """The explicit preview mode supplies only the human-selected private pair."""
+    import lyra_native_loaders as native
+    return native.plan_private_pilot_boundaries(document,
+        [dict(parent_map_id=a,size='small',maps=[a]) for a in (0xA0,0xA1)])
+
+
+def require_preview_consumers(expected,guard,source):
+    """Validate reviewed distinct snapshot metadata; post-Asar verifies actual bytes."""
+    import lyra_native_loaders as native
+    _keys(expected,{'kind','regions','source_calls','fixed_hooks','private_pilot_boundary','preview_guards',
+        'current_core_inspected','broad_six_role_qualification','ordinary_build_ready','runtime_admission',
+        'production_admission','native_gameplay_verified','save_reopen_verified'},'reviewed checkpoint preview consumers')
+    _keys(guard,{'kind','scope','source_rom_sha256','guard_source_sha256','code_snes','code_sha256',
+        'overlay_host_snes','overlay_host_sha256','home_snes','home_sha256'},'reviewed checkpoint preview guard binding')
+    R.require(guard['kind']=='lyra.private_checkpoint_preview_binding.v1' and guard['scope']=='seeded_A0_A1_only'
+              and guard['source_rom_sha256']==R.sha(source)
+              and guard['guard_source_sha256']==R.sha((P.ROOT/'Overworld/lyra_private_pilot.asm').read_bytes()),
+              'PRIVATE_PREVIEW_SOURCE_STALE')
+    proof=expected['preview_guards']
+    R.require(type(proof) is dict and expected['kind']==native.PREVIEW_CONSUMER_KIND
+              and expected['current_core_inspected'] is True
+              and all(expected[k] is False for k in ('broad_six_role_qualification','ordinary_build_ready',
+                  'runtime_admission','production_admission','native_gameplay_verified','save_reopen_verified'))
+              and all(type(expected[k]) is list and expected[k] for k in ('regions','source_calls','fixed_hooks'))
+              and proof.get('kind')=='lyra.seeded_checkpoint_preview_guard_inspection.v1'
+              and proof.get('mode')==PREVIEW_SCOPE and proof.get('scope')=='seeded_A0_A1_only'
+              and proof.get('guards_verified') is True and proof.get('transport_native_only') is True
+              and all(proof.get(k) is False for k in ('allocation_granted','producer_enforcement_verified',
+                  'ordinary_build_ready','runtime_admission','production_admission','native_gameplay_verified',
+                  'save_reopen_verified'))
+              and proof.get('code_snes')==guard['code_snes'] and proof.get('home_snes')==guard['home_snes']
+              and type(proof.get('credits_held')) is list and len(proof['credits_held'])==13
+              and proof.get('source_rom_sha256')==R.sha(source)
+              and proof.get('reviewed_binding_sha256')==R.sha(json.dumps(guard,sort_keys=True,separators=(',',':')).encode())
+              and type(proof.get('held_routes')) is list and bool(proof['held_routes']),
+              'PRIVATE_PREVIEW_COMPILED_BINDING_REQUIRED')
+    return expected
+
+
+def checkpoint_symbols(symbols):
+    """Use the maintained allocation parser through an ephemeral symbol file."""
+    from allocation_contracts import read_symbols
+    raw=symbols if isinstance(symbols,bytes) else symbols.encode()
+    with tempfile.NamedTemporaryFile(suffix='.sym') as handle:
+        handle.write(raw);handle.flush()
+        return read_symbols(handle.name)
+
+
 def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     """Select only a source-owned reviewed runtime policy; no A1 fallback."""
     request, source, document = verify_transfer(request_path, project, base_rom)
@@ -897,12 +949,15 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     R.require(len(policies) == 1, 'CURRENT_SAVE_ALLOCATION_UNGRANTED')
     runtime = policies[0].get('current_runtime')
     R.require(type(runtime) is dict, 'CURRENT_SAVE_RUNTIME_EMISSION_UNADMITTED: no reviewed current runtime policy')
+    preview=runtime.get('kind') == PREVIEW_POLICY_KIND
     _keys(runtime, {'kind','scope','runtime_admission','review_file','tail_recipe',
                     'graphics_source','graphics_assets','compiled_consumers','event_state','origin_preimages'}
           | ({'bg128'} if 'bg128' in runtime else set())
-          | ({'private_pilot'} if 'private_pilot' in runtime else set()), 'current runtime policy')
-    R.require(runtime['kind'] == 'lyra.current_runtime_policy.v1'
-              and runtime['scope'] == 'disposable_build_only' and runtime['runtime_admission'] is True,
+          | ({'private_checkpoint','guard_binding'} if preview else
+             ({'private_pilot'} if 'private_pilot' in runtime else set())), 'current runtime policy')
+    R.require(runtime['kind'] == (PREVIEW_POLICY_KIND if preview else 'lyra.current_runtime_policy.v1')
+              and runtime['scope'] == (PREVIEW_SCOPE if preview else 'disposable_build_only')
+              and runtime['runtime_admission'] is True,
               'CURRENT_SAVE_RUNTIME_EMISSION_UNADMITTED: runtime selection remains held')
     # Review is reconstructed from facts, not authority. A path instead of a
     # digest avoids policy -> review -> ledger -> policy hash self-reference.
@@ -911,12 +966,24 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     review = _json(Q.read_bound(review_binding))
     R.require(type(review) is dict and review.get('kind') == REVIEW_KIND, 'CURRENT_RUNTIME_REVIEW_REQUIRED')
     profile = current_native_source_profile(review, project, base_rom)
-    pilot,pilot_binding=private_pilot_runtime(runtime,source,document)
+    checkpoint_context=None;checkpoint_registry=None;guard_binding=None
+    if preview:
+        import checkpoint_registry as checkpoints
+        R.require(hasattr(checkpoints,'bind_private_preview'),'PRIVATE_PREVIEW_BINDER_UNAVAILABLE: source helper dependency required')
+        selection=runtime['private_checkpoint']
+        _keys(selection,{'plan','landing'},'private checkpoint selection')
+        checkpoint_registry,checkpoint_context=checkpoints.bind_private_preview(
+            project,base_rom,request_path,profile,selection['plan'],selection['landing'])
+        pilot=native_checkpoint_boundaries(document)
+        pilot_binding=None
+        guard_binding=_json(Q.read_bound(runtime['guard_binding']))
+    else:
+        pilot,pilot_binding=private_pilot_runtime(runtime,source,document)
     plan, payload = plan_transfer(request_path, project, base_rom, ledger_path=ledger_path,
                                   current_source_profile=profile,private_pilot=pilot)
     import lyra_native_loaders as native
     native_full_paths=None if pilot is None else native.private_pilot_native_full_paths(source)
-    R.require(native_full_paths is None or native_full_paths['complete'],
+    R.require(preview or native_full_paths is None or native_full_paths['complete'],
               'PRIVATE_PILOT_NATIVE_FULL_UNBOUND: unchanged credits full caller requires its own cancellation/source binding')
     origin_spans = [row['pc'] for row in profile['origins'].values()]
     R.require(type(runtime['origin_preimages']) is list
@@ -1007,6 +1074,11 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     if pilot is not None:
         constants += ('!LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED = 1\n!LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND = 1\n'
                       '!LYRA_PRIVATE_PILOT_INGRESS_ENABLED = 1\n')
+    if preview:
+        emitted=checkpoints.emit_runtime_asm(checkpoint_registry)
+        files['checkpoint_registry_constants.asm']=emitted['constants'].encode()
+        files['checkpoint_registry_tables.asm']=emitted['tables'].encode()
+        constants+='!LYRA_PRIVATE_CHECKPOINT_ENABLED = 1\n'
     files['runtime_constants.asm'] = constants.encode()
     data = files['runtime_data.asm'].decode()+'pushpc\n'
     binary = bytearray()
@@ -1019,20 +1091,26 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     files['binaries/payload.bin'] = bytes(binary)
     source_prepare = _json(files.pop('prepare.json'))
     expected = _json(Q.read_bound(runtime['compiled_consumers']))
-    _keys(expected,{'kind','regions','source_calls','fixed_hooks'}
-          | ({'private_pilot_boundary','private_pilot_ingress'} if pilot is not None else set()),
-          'reviewed current compiled consumers')
-    if pilot is not None:
-        native.require_private_pilot_ingress(expected)
-    R.require(expected['kind'] == 'lyra.current_compiled_consumers.v1'
-              and all(type(expected[k]) is list and expected[k] for k in ('regions','source_calls','fixed_hooks')),
-              'CURRENT_COMPILED_BINDING_REQUIRED')
+    if preview:
+        require_preview_consumers(expected,guard_binding,source)
+    else:
+        _keys(expected,{'kind','regions','source_calls','fixed_hooks'}
+              | ({'private_pilot_boundary','private_pilot_ingress'} if pilot is not None else set()),
+              'reviewed current compiled consumers')
+        if pilot is not None:
+            native.require_private_pilot_ingress(expected)
+        R.require(expected['kind'] == 'lyra.current_compiled_consumers.v1'
+                  and all(type(expected[k]) is list and expected[k] for k in ('regions','source_calls','fixed_hooks')),
+                  'CURRENT_COMPILED_BINDING_REQUIRED')
     bindings = [ledger_binding,review_binding,profile['contract'],runtime['tail_recipe'],
                 runtime['graphics_source'],*runtime['graphics_assets'],runtime['compiled_consumers'],Q.bound(request_path),
                 Q.bound(base_rom),Q.bound(project),plan['enforcement_receipt'],
                 *request['inputs'].values(),*profile['selected_source']['bindings'],
                 *profile['review']['adapter_bindings']]
     if pilot_binding is not None: bindings.append(pilot_binding)
+    if preview:
+        bindings += [runtime['private_checkpoint']['plan'],runtime['private_checkpoint']['landing'],
+                     runtime['guard_binding'],*checkpoint_context['inputs']]
     unique = {}
     for row in bindings:
         R.require(row['path'] not in unique or unique[row['path']] == row,
@@ -1043,12 +1121,18 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
         project=str(Path(project).resolve()),base_rom=str(Path(base_rom).resolve()),request=str(Path(request_path).resolve()),
         ledger=str(ledger_path),saved_rom_sha256=R.sha(source),current_ledger_sha256=ledger_binding['sha256'],
         allocation_granted=True,producer_enforcement_verified=True,runtime_admission=True,
-        ordinary_build_ready=True,inputs=bindings,current_source_profile=profile,
+        ordinary_build_ready=not preview,inputs=bindings,current_source_profile=profile,
         private_pilot=pilot,tables=tables,terrain_plan=plan,event_state=events,compiled_consumers=runtime['compiled_consumers'],
         bg128_binding=bg_binding,bg128_plan=(None if bg_plan is None else
             dict((key,value) for key,value in dict(bg_plan,payload_hex=bg_plan['payload'].hex()).items() if key!='payload')),
         generated_files={name:R.sha(raw) for name,raw in files.items()},
         save_exit_policy='unchanged_held',native_gameplay_verified=False,save_reopen_verified=False)
+    if preview:
+        prepared.update(runtime_scope=PREVIEW_SCOPE,production_admission=False,
+            checkpoint_preview=dict(plan_binding=runtime['private_checkpoint']['plan'],
+                                    landing_binding=runtime['private_checkpoint']['landing']),
+            guard_binding=runtime['guard_binding'],held_routes=expected['preview_guards']['held_routes'],
+            save_exit_policy='seeded_checkpoint_preview_only')
     if native_full_paths is not None: prepared['native_full_paths']=native_full_paths
     for row in bindings:
         Q.read_bound(row)
@@ -1153,7 +1237,28 @@ def verify_current_output(prepared, compiled, symbols):
     R.require(len(compiled)==0x400000 and R.sha(source)==prepared['saved_rom_sha256'],
               'CURRENT_COMPILED_SOURCE_MISMATCH: full4MiB output and original saved source required')
     expected=_json(Q.read_bound(prepared['compiled_consumers']))
-    observed=native.inspect_current_consumers(compiled,symbols)
+    preview=prepared.get('runtime_scope') == PREVIEW_SCOPE
+    checkpoint_context=None
+    if preview:
+        import checkpoint_registry as checkpoints
+        R.require(hasattr(checkpoints,'bind_private_preview'),'PRIVATE_PREVIEW_BINDER_UNAVAILABLE: source helper dependency required')
+        selection=prepared['checkpoint_preview']
+        _keys(selection,{'plan_binding','landing_binding'},'prepared private checkpoint selection')
+        _,checkpoint_context=checkpoints.bind_private_preview(
+            prepared['project'],prepared['base_rom'],prepared['request'],prepared['current_source_profile'],
+            selection['plan_binding'],selection['landing_binding'])
+        guard_binding=_json(Q.read_bound(prepared['guard_binding']))
+        require_preview_consumers(expected,guard_binding,source)
+        observed=native.inspect_current_consumers(compiled,symbols,checkpoint_preview=dict(
+            mode=PREVIEW_SCOPE,source=source,reviewed=guard_binding))
+        # The maintained checkpoint verifier independently checks complete
+        # generated table/cache bytes and actual owning hooks against this live context.
+        checkpoint_proof=checkpoints.verify_compiled_checkpoint(P.ROOT,source,compiled,
+            checkpoint_symbols(symbols),private_plan=checkpoint_context['plan'],
+            verified_bindings=checkpoint_context['bindings'],
+            expected_cache=bytes.fromhex(checkpoint_context['cache_hex']))
+    else:
+        observed=native.inspect_current_consumers(compiled,symbols)
     R.require(observed == expected, 'CURRENT_COMPILED_CONSUMERS_MISMATCH: reviewed active bytes differ')
     if prepared.get('private_pilot') is not None:
         bound=native.private_pilot_native_full_paths(source)
@@ -1205,7 +1310,7 @@ def verify_current_output(prepared, compiled, symbols):
     profile=prepared['current_source_profile']
     _,saved,document=verify_transfer(prepared['request'],prepared['project'],prepared['base_rom'])
     verify_current_native_source_profile(profile,saved,document)
-    return dict(kind='lyra.current_build_verification.v1',compiled_consumers_verified=True,
+    result=dict(kind='lyra.current_build_verification.v1',compiled_consumers_verified=True,
         saved_rom_sha256=R.sha(source),compiled_rom_sha256=R.sha(compiled),symbols_sha256=R.sha(symbols),
         current_ledger_sha256=prepared['current_ledger_sha256'],
         compiled_consumers_binding=prepared['compiled_consumers'],native_maps_preserved=160,
@@ -1214,3 +1319,8 @@ def verify_current_output(prepared, compiled, symbols):
             bg_regions[0]['snes'][1]-bg_regions[0]['snes'][0]),
         production_maps=[],production_edge_ids=[],save_exit_policy='unchanged_held',
         native_gameplay_verified=False,save_reopen_verified=False,runtime_verified=False)
+    if preview:
+        result.update(runtime_scope=PREVIEW_SCOPE,ordinary_build_ready=False,production_admission=False,
+                      checkpoint=checkpoint_proof,held_routes=observed['preview_guards']['held_routes'],
+                      save_exit_policy='seeded_checkpoint_preview_only')
+    return result

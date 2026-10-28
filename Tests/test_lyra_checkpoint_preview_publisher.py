@@ -1,0 +1,96 @@
+"""Scoped private publisher controls; diagnostic inputs never grant admission."""
+import copy
+import json
+import tempfile
+from unittest import mock
+from pathlib import Path
+import sys
+import unittest
+
+ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT/'Scripts/Build'))
+sys.path.insert(0,str(ROOT/'Scripts/Generate'))
+import lyra_current_transfer as X
+import lyra_native_loaders as L
+from test_lyra_private_pilot_boundary import actual_preview_fixture
+from test_lyra_project_admission import document
+from lyra_project_terrain import parse_terrain_document
+
+
+class CheckpointPreviewPublisherTests(unittest.TestCase):
+    def test_distinct_consumer_snapshot_is_required_and_never_broad_readiness(self):
+        rom,symbols,request=actual_preview_fixture(combined=True)
+        proof=L.inspect_current_consumers(rom,symbols,checkpoint_preview=request)
+        self.assertIs(X.require_preview_consumers(proof,request['reviewed'],request['source']),proof)
+        self.assertFalse(proof['ordinary_build_ready']);self.assertFalse(proof['runtime_admission'])
+        for key,value in (('kind','lyra.current_compiled_consumers.v1'),('ordinary_build_ready',True),
+                          ('production_admission',True),('current_core_inspected',False)):
+            changed=copy.deepcopy(proof);changed[key]=value
+            with self.subTest(key=key),self.assertRaisesRegex(ValueError,'COMPILED_BINDING_REQUIRED'):
+                X.require_preview_consumers(changed,request['reviewed'],request['source'])
+
+    def test_guard_snapshot_cannot_drop_holds_or_add_native_proof(self):
+        rom,symbols,request=actual_preview_fixture(combined=True)
+        proof=L.inspect_current_consumers(rom,symbols,checkpoint_preview=request)
+        for key,value in (('native_gameplay_verified',True),('runtime_admission',True),
+                          ('held_routes',[]),('credits_held',[]),('code_snes',[0,1]),
+                          ('reviewed_binding_sha256','0'*64)):
+            changed=copy.deepcopy(proof);changed['preview_guards'][key]=value
+            with self.subTest(key=key),self.assertRaisesRegex(ValueError,'COMPILED_BINDING_REQUIRED'):
+                X.require_preview_consumers(changed,request['reviewed'],request['source'])
+        for key in ('guard_source_sha256','source_rom_sha256'):
+            guard=copy.deepcopy(request['reviewed']);guard[key]='0'*64
+            with self.subTest(key=key),self.assertRaisesRegex(ValueError,'SOURCE_STALE'):
+                X.require_preview_consumers(proof,guard,request['source'])
+
+    def test_preview_derives_only_the_explicit_human_pair_without_project_write(self):
+        raw=document();parsed=parse_terrain_document(X.P.encoded(raw),raw['profile'],allow_authoring_drafts=True)
+        before=copy.deepcopy(parsed);pilot=X.native_checkpoint_boundaries(parsed)
+        self.assertEqual(pilot['selected_areas'],[
+            dict(parent_map_id=a,size='small',maps=[a]) for a in (0xA0,0xA1)])
+        self.assertEqual(parsed,before);self.assertEqual(len(parsed.maps),32)
+        self.assertFalse(parsed.gameplay_areas);self.assertEqual(len(pilot['unselected_tail_maps']),30)
+
+    def test_policy_route_reaches_real_binding_interface_and_propagates_its_refusal(self):
+        # Unit dispatch test stops at the binding refusal. It supplies no source
+        # authorization, destination, producer grant or successful private plan.
+        import checkpoint_registry as C
+        with tempfile.TemporaryDirectory() as folder:
+            folder=Path(folder);ledger=folder/'ledger.json';review=folder/'review.json'
+            review.write_bytes(X.P.encoded(dict(kind=X.REVIEW_KIND)))
+            bound=dict(path=str(folder/'not-admitted'),sha256='0'*64)
+            runtime=dict(kind=X.PREVIEW_POLICY_KIND,scope=X.PREVIEW_SCOPE,runtime_admission=True,
+                review_file=str(review),tail_recipe=bound,graphics_source=bound,graphics_assets=[],
+                compiled_consumers=bound,event_state={},origin_preimages=[],guard_binding=bound,
+                private_checkpoint=dict(plan=bound,landing=bound))
+            request=dict(allocation_policy_id='unit-refusal-only')
+            def install(value):
+                ledger.write_bytes(X.P.encoded(dict(current_save_transfer_policies=[
+                    dict(id=request['allocation_policy_id'],current_runtime=value)])))
+            profile=object();source=b'unit refusal, never a qualified source'
+            with mock.patch.object(X.R,'LEDGER',ledger), \
+                 mock.patch.object(X,'verify_transfer',return_value=(request,source,None)), \
+                 mock.patch.object(X,'current_native_source_profile',return_value=profile), \
+                 mock.patch.object(C,'bind_private_preview',create=True,
+                                   side_effect=ValueError('PRIVATE_LANDING_UNBOUND')) as bind:
+                install(runtime)
+                with self.assertRaisesRegex(ValueError,'PRIVATE_LANDING_UNBOUND'):
+                    X.ordinary_plan('project','base','request')
+                bind.assert_called_once_with('project','base','request',profile,bound,bound)
+                for change in ({'scope':'disposable_build_only'},{'runtime_admission':False},
+                               {'private_checkpoint':{'plan':bound}},
+                               {'private_pilot':bound},{'kind':'lyra.current_runtime_policy.v1'}):
+                    bind.reset_mock();bad=copy.deepcopy(runtime);bad.update(change);install(bad)
+                    with self.subTest(change=change),self.assertRaises(ValueError):
+                        X.ordinary_plan('project','base','request')
+                    bind.assert_not_called()
+
+    def test_checkpoint_symbol_adapter_uses_existing_strict_parser(self):
+        symbols=b'[labels]\n34:F900 Oracle_Checkpoint_StateCodeBegin\n34:FC54 Oracle_Checkpoint_EnterHome\n'
+        self.assertEqual(X.checkpoint_symbols(symbols)['Oracle_Checkpoint_EnterHome'],0x34FC54)
+        with self.assertRaisesRegex(ValueError,'Conflicting WLA symbol'):
+            X.checkpoint_symbols(symbols+b'34:FC55 Oracle_Checkpoint_EnterHome\n')
+        with self.assertRaises(ValueError):X.checkpoint_symbols(b'[labels]\nmalformed\n')
+
+
+if __name__=='__main__':unittest.main()
