@@ -21,6 +21,29 @@ from lyra_project_terrain import parse_terrain_document
 
 
 class CheckpointPreviewPublisherTests(unittest.TestCase):
+    def test_hash_bound_bg_constants_repeat_only_exact_selected_context(self):
+        import asm_source as S
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name).resolve();folder=root/'Data/Generated/lyra_project';folder.mkdir(parents=True)
+            (root/'Oracle_main.asm').write_text('incsrc "Data/Generated/lyra_project/runtime_constants.asm"\n')
+            constants=folder/'runtime_constants.asm'
+            for enabled in (0,1):
+                values=dict(PROJECT_BG128_ENABLED=enabled,PROJECT_BG128_RESTORE_BOUND=enabled,
+                            PROJECT_BG128_CODE_BASE=0xE0D000,PROJECT_BG128_CODE_END=0xE0D400)
+                defines=dict(values,LYRA_BUILD_CONTEXT=1)
+                text=''.join(f'!{key} = {value}\n' for key,value in values.items())
+                constants.write_text(text)
+                self.assertIn(constants,S.collect_reachable_asm_sources(root,defines=defines))
+                for key,value in values.items():
+                    line=f'!{key} = {value}'
+                    self.assertFalse(S._is_identical_build_context_assignment(S.LYRA_CONSTANTS,line,
+                        dict(defines,LYRA_BUILD_CONTEXT=0)))
+                    self.assertFalse(S._is_identical_build_context_assignment('Overworld/foreign.asm',line,defines))
+                    constants.write_text(text.replace(line,line+' + 1'))
+                    with self.assertRaisesRegex(S.SourceGraphError,'reassigns preloaded global define'):
+                        S.collect_reachable_asm_sources(root,defines=defines)
+                    constants.write_text(text)
+
     def test_compiled_checkpoint_cli_owns_exact_readonly_scope(self):
         import checkpoint_registry as C
         import contextlib
