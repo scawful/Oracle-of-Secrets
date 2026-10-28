@@ -69,8 +69,8 @@ def receipt_matrix(active, symbols, guarded=True):
         active.session.pause()
         b.write_memory(target, prior)
         b.write_memory(migrate, 0xA5)
-        b.write_block(0x7E0000, list(target.to_bytes(3, "little")))
-        b.write_block(0x7F8000, [0x22, *entry.to_bytes(3, "little"), 0xEA])
+        b.write_block(0x7E0000, target.to_bytes(3, "little"))
+        b.write_block(0x7F8000, bytes([0x22, *entry.to_bytes(3, "little"), 0xEA]))
         bp = b.add_breakpoint(0x7F8004)
         require(isinstance(bp, int) and bp >= 0, "Receipt return breakpoint failed")
         state = {"cpu.a": 0xAB00 | value, "cpu.x": 0x23, "cpu.y": item,
@@ -89,6 +89,10 @@ def receipt_matrix(active, symbols, guarded=True):
                 require(time.monotonic() < deadline, "Receipt helper did not return")
                 time.sleep(0.01)
             cpu = b.get_cpu_state()
+            require(int(str(cpu["pc"]), 0) == 0x7F8004,
+                    "Receipt paused before its real RTL return")
+            require(int(str(cpu["sp"]), 0) == 0x1FFF,
+                    "Receipt helper changed stack balance")
             actual = b.read_memory(target)
             require(actual == expected, name + ": wrong inventory tier")
             results.append({"name": name, "before": prior, "after": actual,
