@@ -53,7 +53,9 @@ def read_spec(path):
         require(type(entry) is dict, 'invalid sheet entry')
         if 'global_sheet' in entry:
             require(spec['schema_version'] == 2, 'new global sheets require source schema 2')
-            require(set(entry) == {'global_sheet', 'source', 'decoded_sha256', 'why'}, 'invalid new global sheet keys')
+            require(set(entry) in ({'global_sheet', 'source', 'decoded_sha256', 'why'},
+                                   {'global_sheet', 'source', 'decoded_sha256', 'why', 'snes_address'}),
+                    'invalid new global sheet keys')
             global_id = number(entry['global_sheet'])
             require(0xDF <= global_id <= 0xFE, 'source-authored globals must be $DF-$FE; $FF is the default sentinel')
             require(isinstance(entry['decoded_sha256'], str) and re.fullmatch('[0-9a-f]{64}', entry['decoded_sha256']), 'decoded_sha256 must be a full lowercase SHA256')
@@ -134,6 +136,11 @@ def build(spec_path, base_rom, root=None, *, rom_role="editable_base"):
             require(not entry['identity'] or raw == base_data, 'identity override changes decoded sheet pixels')
         stream = lz2.stored(raw) if spec['encoding'] == 'stored' else lz2.compress(raw)
         require(lz2.decompress(stream, max_output=0x600) == (raw, len(stream)), 'compressed sheet round trip differs')
+        if new_global and 'snes_address' in entry:
+            selected = number(entry['snes_address'])
+            require(START <= address <= selected < START+CAPACITY,
+                    'new sheet placement overlaps earlier sheets or leaves the audited allocation')
+            address = selected
         require(address+len(stream) <= START+CAPACITY, 'source sprite sheet allocation is full')
         out.append(dict(s=sheet, g=global_id, raw=raw, stream=stream, snes=address, source=entry['source'], why=entry['why']))
         address += len(stream)
@@ -146,6 +153,7 @@ def asm_text(items):
              '; Pointer rows are patched in the relocated arrays, so this file follows Core/gfx_sheet_table.asm.',
              'pushpc', 'org $40D000']
     for item in items:
+        lines.append(f'org ${item["snes"]:06X}')
         lines.append(f'SourceSpriteSheet_{item["s"]:02X}: incbin "sheets/spr{item["s"]:02X}.bin"')
     lines.append('assert pc() <= $410000 || pc() == $418000, "Source sprite sheets crossed bank $40"')
     lines += ['if !ENABLE_EXPANDED_GRAPHICS_TABLE == 1',

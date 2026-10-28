@@ -4582,7 +4582,7 @@
     "lyra_joint_graphics_source_26:Scripts/Generate/sheet_overrides.py": {
       "source_set": "lyra_joint_graphics_source_26",
       "path": "Scripts/Generate/sheet_overrides.py",
-      "sha256": "ac559ee24157f5a6a8bef44f8c29c862b5eab612311cbb9e5493646a68c0e8a2"
+      "sha256": "8558f9c76c68ebc38877395fdeb7a8a46dcb550c2e37f81952d42a171a0208b4"
     },
     "lyra_joint_graphics_source_26:Scripts/Generate/sheet_table.py": {
       "source_set": "lyra_joint_graphics_source_26",
@@ -4632,7 +4632,7 @@
     "lyra_joint_graphics_source_26:Scripts/Generate/tests/test_source_sprite_sheets.py": {
       "source_set": "lyra_joint_graphics_source_26",
       "path": "Scripts/Generate/tests/test_source_sprite_sheets.py",
-      "sha256": "40ef715c49d55891e63fd576b1c2acf753a4f6789ce2160a9486cea28c4783d8"
+      "sha256": "04f9b2a9c3d204e169384fb54de5f557928e09529253a5f6f61652ebe788d62f"
     },
     "lyra_joint_graphics_source_26:Scripts/Build/build_rom.sh": {
       "source_set": "lyra_joint_graphics_source_26",
@@ -4642,7 +4642,7 @@
     "lyra_joint_graphics_source_26:Core/Generated/source_sprite_sheets/sheet_overrides.asm": {
       "source_set": "lyra_joint_graphics_source_26",
       "path": "Core/Generated/source_sprite_sheets/sheet_overrides.asm",
-      "sha256": "54c5bc7a9c0841096c1d2eeea85330b07fbd618597539fd5942e94e39e306bf3"
+      "sha256": "96bb17e3bf2ff1814fd2df0ea3e05491b85649e7b28a776eb8fa558c2d3a3748"
     }
   },
   "claims": [
