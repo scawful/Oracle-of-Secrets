@@ -285,6 +285,30 @@ if defined("LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED")
     incsrc "lyra_private_pilot.asm"
   endif
 endif
+
+; Hookshot ABI is M16/X8: $0700 is the worldless true-cell*2, not $8A*2.
+; Only A0..BF adds the page bits before widening X. Other maps retain the
+; original index/table. PHX/PHP/PHA leaves saved P at3,S; LSR restores its C.
+; After SBC, discard saved P and restore X8, then restore the result N/Z.
+macro LyraHookshotSubtract(name, old, selected)
+<name>:
+    PHX : PHP : PHA
+    LDA.b $8A : AND.w #$FFE0 : CMP.w #$00A0 : BNE ?legacy
+    AND.w #$00C0 : ASL : ORA.w $0700
+    REP #$10 : TAX
+    LDA $03,S : LSR : PLA
+    SBC.l <selected>, X
+    SEP #$10 : PLX : PLX
+    PHA : PLA : RTL
+?legacy:
+    LDA $03,S : LSR : PLA
+    PLX : PLX
+    SBC.l <old>, X
+    RTL
+<name>_End:
+endmacro
+%LyraHookshotSubtract(Lyra_HookshotSubtractY, $288F38, !LYRA_CURRENT_TABLE_transition_y)
+%LyraHookshotSubtract(Lyra_HookshotSubtractX, $289078, !LYRA_CURRENT_TABLE_transition_x)
 Lyra_CurrentNativeCodeEnd:
 assert pc() <= !LYRA_CURRENT_CODE_END, "Current reader code exceeds explicit origin"
 pullpc

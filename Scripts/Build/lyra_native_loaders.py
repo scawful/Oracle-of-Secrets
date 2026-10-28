@@ -1852,6 +1852,25 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None):
                   compiled[A.pc(at):A.pc(at)+4] == expected,
                   'Current transition subtraction target differs: '+axis)
         calls.append(dict(label=name,snes=at,target=target,payload_hex=expected.hex()))
+    # Hookshot callers keep X8 and a worldless true-cell index. Their helpers
+    # restore the page for current maps; an operand-only SBC swap is not valid.
+    hookshot = 'LyraHost_Hookshot_IsCollisionCheckFutile_Interupt'
+    R.require((address(hookshot), address(hookshot+'_End')) == (0x08FA49, 0x08FA81),
+              'Current hookshot host extent differs')
+    regions.append(window(hookshot,address(hookshot),address(hookshot+'_End')))
+    helper_end = address('Lyra_CurrentNativeCodeStart')
+    for axis, site in (('Y', 0x08FA57), ('X', 0x08FA6D)):
+        name = 'LyraCall_HookshotDelta'+axis
+        target = 'Lyra_HookshotSubtract'+axis
+        start, end = address(target), address(target+'_End')
+        R.require(helper_end <= start < end <= address('Lyra_CurrentNativeCodeEnd'),
+                  'Current hookshot helper span differs: '+axis)
+        helper_end = end
+        expected = b'\x22'+start.to_bytes(3, 'little')
+        R.require(address(name) == site and compiled[A.pc(site):A.pc(site)+4] == expected,
+                  'Current hookshot subtraction target differs: '+axis)
+        regions.append(window(target,start,end))
+        calls.append(dict(label=name,snes=site,target=target,payload_hex=expected.hex()))
     fixed={a:8 for a in FIXED_NATIVE_INGRESS}
     fixed.update({a:4 for a in (*FIXED_SIZE_SITES,*FIXED_SPRITE_PALETTE_SITES,0x1BC8B8,0x02C4BC,0x028192)})
     fixed.update({a:12 for a in (0x02F59D,0x02F5C8,0x02F7E3,0x02F80E)})

@@ -87,6 +87,14 @@ def consumer_fixture(source, code, *, bg_code=None):
         labels['LyraCall_TransitionDelta'+axis] = at
         target = labels['Lyra_CurrentTable_transition_'+axis.lower()]
         put(at,b'\xFF'+target.to_bytes(3,'little'))
+    host='LyraHost_Hookshot_IsCollisionCheckFutile_Interupt'
+    labels[host]=0x08FA49;labels[host+'_End']=0x08FA81
+    put(0x08FA49,b'\xea'*(0x08FA81-0x08FA49))
+    for i,(axis,site) in enumerate((('Y',0x08FA57),('X',0x08FA6D))):
+        target='Lyra_HookshotSubtract'+axis;start=code+0x700+i*0x40
+        labels[target]=start;labels[target+'_End']=start+49
+        labels['LyraCall_HookshotDelta'+axis]=site
+        put(site,b'\x22'+start.to_bytes(3,'little'))
     for i,(name,size,_,_) in enumerate(S.TAIL_SOURCE_CALLERS):
         at=0xE6F000+i*0x100;labels[name]=at;put(at,b'\xea'*size)
     labels.update(SharedGraphicsRuntimeStart=0xE18000,SharedGraphicsRuntimeEnd=0xE18100)
@@ -150,6 +158,43 @@ class CoordinateOperandTests(unittest.TestCase):
                              if r.endswith('Lyra_CurrentTable_transition_x') else r for r in rows)+'\n').encode()
         with self.assertRaisesRegex(ValueError, 'coordinate table layout differs'):
             L.inspect_current_consumers(image, rebound)
+
+
+class HookshotOperandTests(unittest.TestCase):
+    def test_calls_require_helpers_instead_of_native_or_current_table_operands(self):
+        image,symbols=consumer_fixture(bytes(0x400000),0xE0C000)
+        observed=L.inspect_current_consumers(image,symbols)
+        calls={r['label']:r for r in observed['source_calls']}
+        regions={r['label']:r for r in observed['regions']}
+        for axis,site,legacy,current in (('Y',0x08FA57,0x288F38,0xE09200),
+                                         ('X',0x08FA6D,0x289078,0xE09380)):
+            row=calls['LyraCall_HookshotDelta'+axis]
+            self.assertEqual(row['snes'],site)
+            self.assertEqual(len(bytes.fromhex(regions[row['target']]['payload_hex'])),49)
+            for payload in (b'\xFF'+legacy.to_bytes(3,'little'),
+                            b'\xFF'+current.to_bytes(3,'little'),
+                            b'\x22'+current.to_bytes(3,'little')):
+                with self.subTest(axis=axis,payload=payload.hex()):
+                    control=bytearray(image);at=X.A.pc(site);control[at:at+4]=payload
+                    with self.assertRaisesRegex(ValueError,'hookshot subtraction target differs'):
+                        L.inspect_current_consumers(bytes(control),symbols)
+
+    def test_missing_shifted_and_unowned_helper_symbols_refuse(self):
+        image,symbols=consumer_fixture(bytes(0x400000),0xE0C000)
+        rows=symbols.decode().splitlines()
+        controls=(('LyraCall_HookshotDeltaX',None,'Missing current consumer symbol'),
+                  ('LyraCall_HookshotDeltaX',0x08FA6E,'hookshot subtraction target differs'),
+                  ('LyraHost_Hookshot_IsCollisionCheckFutile_Interupt_End',0x08FA80,
+                   'hookshot host extent differs'),
+                  ('Lyra_HookshotSubtractY',0xE0BFFF,'hookshot helper span differs'),
+                  ('Lyra_HookshotSubtractX_End',0xE0C801,'hookshot helper span differs'),
+                  ('Lyra_HookshotSubtractY_End',0xE0C741,'hookshot helper span differs'))
+        for name,value,error in controls:
+            with self.subTest(symbol=name,value=value):
+                changed=[(f'{value>>16:02X}:{value&65535:04X} {name}' if value is not None else '')
+                         if r.endswith(' '+name) else r for r in rows]
+                with self.assertRaisesRegex(ValueError,error):
+                    L.inspect_current_consumers(image,('\n'.join(changed)+'\n').encode())
 
 
 class CurrentBuildTest(unittest.TestCase):

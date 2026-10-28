@@ -5531,9 +5531,16 @@ assert pc() <= $02EAE1 ; $016AE1
 org $08FA49 ; $047A49
 Hookshot_IsCollisionCheckFutile_Interupt:
 {
+    LyraHost_Hookshot_IsCollisionCheckFutile_Interupt = pc()
     LDA.w $0C72, X : AND.w #$0002 : BNE .moving_horizontally
         LDX.w $0700
-        LDA.b $00 : SEC : SBC.l Pool_OverworldTransitionPositionY_New, X
+        LDA.b $00 : SEC
+        if !LYRA_CURRENT_MODE == 1
+        LyraCall_HookshotDeltaY = pc()
+        JSL Lyra_HookshotSubtractY
+        else
+        SBC.l Pool_OverworldTransitionPositionY_New, X
+        endif
         CMP.w #$0004 : BCC .off_screen
             CMP.w OWCameraBoundsS : BCS .off_screen
                 BRA .not_at_screen_edge
@@ -5541,7 +5548,13 @@ Hookshot_IsCollisionCheckFutile_Interupt:
     .moving_horizontally
         
     LDX.w $0700
-    LDA.b $02 : SEC : SBC.l Pool_OverworldTransitionPositionX_New, X
+    LDA.b $02 : SEC
+    if !LYRA_CURRENT_MODE == 1
+    LyraCall_HookshotDeltaX = pc()
+    JSL Lyra_HookshotSubtractX
+    else
+    SBC.l Pool_OverworldTransitionPositionX_New, X
+    endif
     CMP.w #$0006 : BCC .off_screen
         CMP.w OWCameraBoundsE : BCC .not_at_screen_edge
         
@@ -5560,6 +5573,7 @@ Hookshot_IsCollisionCheckFutile_Interupt:
     org $08FA81
     .not_at_screen_edge
 }
+LyraHost_Hookshot_IsCollisionCheckFutile_Interupt_End = pc()
 assert pc() <= $08FA81 ; $047A81
 
 ; Change an old OverworldScreenSizeFlag use to set the X value instead.
