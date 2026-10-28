@@ -141,6 +141,10 @@ def validate_saved_sram(raw, checkpoint):
 
 
 class SceneEpisode(LyraEpisode):
+    @property
+    def gameplay_module(self):
+        return {3: 0x09, 4: 0x0B}[self.key]
+
     def __init__(self, args, bridge, plan, cache, derived):
         super().__init__(args, bridge, plan, cache)
         self.key, self.scene = args.key, C.NATIVE_PREVIEW[args.key]
@@ -178,7 +182,7 @@ class SceneEpisode(LyraEpisode):
         x, y = self.derived['stable_after_walk']
         require((state['module'], state['sub'], state['indoors'], state['map'],
                  state['world'], state['x'], state['y'], state['checkpoint']) ==
-                (9, 0, 0, self.scene['parent'], 0, x, y, self.checkpoint),
+                (self.gameplay_module, 0, 0, self.scene['parent'], 0, x, y, self.checkpoint),
                 f'Scene native destination/19px walk/checkpoint mismatch: {state}')
         self.result.setdefault('cache_checks', []).append(dict(
             cache_hex=cache.hex(), sha256=hashlib.sha256(cache).hexdigest(), state=state))
@@ -219,7 +223,7 @@ class SceneEpisode(LyraEpisode):
         self.result['battery_flush_requested'] = True
 
     def ordinary(self, state):
-        return (state['module'] == 9 and state['sub'] == 0 and state['indoors'] == 0
+        return (state['module'] == self.gameplay_module and state['sub'] == 0 and state['indoors'] == 0
                 and state['map'] == self.scene['parent'] and state['hp'] > 0
                 and state['world'] == 0 and state['checkpoint'] == self.checkpoint)
 

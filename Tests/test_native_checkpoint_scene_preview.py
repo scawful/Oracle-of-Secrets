@@ -289,13 +289,23 @@ class SavedCheckpointTest(unittest.TestCase):
 
 def state(key, **fields):
     x, y = DERIVED[key]['stable_after_walk']
-    value = dict(module=9, sub=0, indoors=0, map=MAPS[key][1], world=0, x=x, y=y, hp=24,
+    value = dict(module=9 if key == 3 else 0x0B, sub=0, indoors=0, map=MAPS[key][1], world=0, x=x, y=y, hp=24,
                  checkpoint=N.checkpoint_bytes(dict(epoch=1), key))
     value.update(fields)
     return value
 
 
 class SceneEpisodeTest(unittest.TestCase):
+    def test_native_and_special_world_modules_are_not_interchangeable(self):
+        for key, expected, wrong in ((3, 0x09, 0x0B), (4, 0x0B, 0x09)):
+            e = self.episode(key)
+            self.assertEqual(e.gameplay_module, expected)
+            e.require_regional_destination(state(key))
+            self.assertTrue(e.ordinary(state(key)))
+            self.assertFalse(e.ordinary(state(key, module=wrong)))
+            with self.assertRaisesRegex(RuntimeError, 'destination/19px walk/checkpoint mismatch'):
+                e.require_regional_destination(state(key, module=wrong))
+
     def episode(self, key=3, phase='live', output=None):
         e = object.__new__(N.SceneEpisode)
         e.a = argparse.Namespace(rom=Path('/private/candidate.sfc'), output=Path(output or '/nonexistent'))
