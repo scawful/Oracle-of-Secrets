@@ -3,6 +3,10 @@ from pathlib import Path
 import copy
 import hashlib
 import json
+import os
+import re
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -172,6 +176,7 @@ class CheckpointRegistryTests(unittest.TestCase):
         self.assertIn('(Checkpoint_OrdinaryOverworldEnd>>16) == $34', ow)
         self.assertIn('incsrc "Overworld/checkpoint_state.asm"', ow)
         self.assertEqual(_load_global_defines(root)['REGIONAL_CHECKPOINTS_ENABLED'], 0)
+        self.assertEqual(_load_global_defines(root)['LYRA_PRIVATE_CHECKPOINT_ENABLED'], 0)
 
     def test_five_byte_migration_keeps_valid_key_when_only_intent_is_bad(self):
         r = registry(record())
@@ -418,6 +423,78 @@ class PrivateCheckpointPlanTests(unittest.TestCase):
         bad_symbols['Oracle_CheckpointRegistry_Records'] += 1
         with self.assertRaisesRegex(ValueError,'layout differs'):
             C.verify_runtime_tables(registry,bytes(image),bad_symbols)
+
+    def test_real_asm_selects_bound_private_tables_and_refuses_missing_boundary(self):
+        """Synthetic ROM tests actual ASM/table wiring, not a gameplay cache."""
+        asar = os.environ.get('ASAR_BIN') or shutil.which('asar')
+        if not asar:
+            self.skipTest('Asar required for the bounded checkpoint source fixture')
+        from allocation_contracts import read_symbols
+        repo = Path(__file__).resolve().parents[1]
+        fixture = self.root/'assembly'
+        (fixture/'Overworld').mkdir(parents=True)
+        (fixture/'Overworld/checkpoint_state.asm').write_bytes(
+            (repo/'Overworld/checkpoint_state.asm').read_bytes())
+        generated = fixture/'Data/Generated/lyra_project'
+        generated.mkdir(parents=True)
+        preview = self.compile()
+        emitted = C.emit_runtime_asm(preview)
+        (generated/'checkpoint_registry_constants.asm').write_text(emitted['constants'])
+        (generated/'checkpoint_registry_tables.asm').write_text(emitted['tables'])
+        macro = re.search(r'macro RegionalCheckpoint_GoronControlCache\(\).*?endmacro',
+                          self.goron_source,re.S).group()
+        header = '''lorom
+!REGIONAL_CHECKPOINTS_BOUND = 1
+!ENABLE_D3_PRISON_SEQUENCE = 0
+!LYRA_CURRENT_MODE = 1
+!LYRA_PROJECT_DATA_PRESENT = 1
+!LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED = 1
+!LYRA_PRIVATE_PILOT_INGRESS_ENABLED = 1
+namespace Oracle
+GameState = $7EF3C5
+SpawnPoint = $7EF3C8
+SavedWorld = $7EF3CA
+FollowerId = $7EF3CC
+RegionalCheckpointSchema = $7EF3B4
+RegionalCheckpointEpoch = $7EF3B5
+RegionalCheckpointKey = $7EF3B6
+RegionalCheckpointResumeIntent = $7EF3B8
+Checkpoint_EnterPreparedCache = $348000
+'''
+        def assemble(name, enabled, bound=1):
+            driver = fixture/(name+'.asm')
+            driver.write_text(header+macro+'\n'+
+                f'!LYRA_PRIVATE_CHECKPOINT_ENABLED = {enabled}\n'+
+                f'!LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND = {bound}\n'+
+                'org $34F900\nincsrc "Overworld/checkpoint_state.asm"\n')
+            # Only the source-owned hook preimages exist in this hollow ROM.
+            # No fixture bytes represent selected terrain or a native route.
+            image = bytearray(0x200000)
+            for address, raw in ((0x09F540,'22bfff0b'),(0x02A5A2,'22008007'),
+                                 (0x0CD049,'9c0e019c1007')):
+                pc=((address>>16)&0x7F)*0x8000+(address&0x7FFF)
+                image[pc:pc+len(bytes.fromhex(raw))]=bytes.fromhex(raw)
+            rom = fixture/(name+'.sfc')
+            rom.write_bytes(image)
+            run = subprocess.run([asar,'--no-title-check','--fix-checksum=off',
+                '--symbols=wla','-I'+str(fixture),str(driver),str(rom)],
+                capture_output=True,text=True,cwd=fixture,timeout=20)
+            return run,rom
+        for name, enabled, registry in (
+                ('control',0,C.runtime_registry(self.source,self.goron_source)),
+                ('private',1,preview)):
+            run,rom=assemble(name,enabled)
+            self.assertEqual(run.returncode,0,run.stdout+run.stderr)
+            symbols=read_symbols(rom.with_suffix('.sym'))
+            proof=C.verify_runtime_tables(registry,rom.read_bytes(),symbols)
+            code=proof['first_data']-C.CODE_BASE
+            self.assertEqual(code,895)
+            fit=C.validate_runtime_capacity(registry,code)
+            self.assertEqual(proof['end'],C.CODE_BASE+fit['aggregate_bytes'])
+            self.assertEqual(proof['data_bytes'],184 if enabled else 100)
+        refused,_=assemble('unbound',1,bound=0)
+        self.assertNotEqual(refused.returncode,0)
+        self.assertIn('requires selected pair boundaries',refused.stdout+refused.stderr)
 
 
 if __name__ == '__main__': unittest.main()

@@ -97,6 +97,11 @@ if not(defined("LYRA_CURRENT_ACTORS_BOUND"))
 endif
 assert !LYRA_CURRENT_ACTORS_ENABLED == 0 || !LYRA_CURRENT_MODE == 1, "Current actors require current mode"
 assert !LYRA_CURRENT_ACTORS_ENABLED == 0 || !LYRA_CURRENT_ACTORS_BOUND == 1, "Current actors require source admission"
+if not(defined("LYRA_PRIVATE_CHECKPOINT_ENABLED"))
+  !LYRA_PRIVATE_CHECKPOINT_ENABLED = 0
+endif
+assert !LYRA_PRIVATE_CHECKPOINT_ENABLED == 0 || !REGIONAL_CHECKPOINTS_ENABLED == 1, "Private checkpoint requires shared checkpoint runtime"
+assert !LYRA_PRIVATE_CHECKPOINT_ENABLED == 0 || !REGIONAL_CHECKPOINTS_BOUND == 1, "Private checkpoint requires shared checkpoint source binding"
 if not(defined("LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED"))
   !LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED = 0
 endif
