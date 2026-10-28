@@ -6353,7 +6353,7 @@
     },
     "regional_checkpoint_runtime_25:Config/feature_flags.asm": {
       "path": "Config/feature_flags.asm",
-      "sha256": "7ba93a4832d2da8a0e4b9936224f9e03ffe4a245613db8c814f9a302047f7873",
+      "sha256": "7171ef452b20cf7779865b3a5b3b9daebc47b68f0e8b78faca93264762a08397",
       "source_set": "regional_checkpoint_runtime_25"
     },
     "regional_checkpoint_runtime_25:Core/sram.asm": {
