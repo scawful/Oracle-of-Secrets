@@ -2882,3 +2882,20 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   since it's a vanilla map mostly"; "and maybe not explicitly for D8 but just
   unclaimed for now if we want to do D8 there or some other thing i guess"
   (scawful, 2026-10-28).
+
+* DECIDED Octoboss guards the underwater shrine; no item drop (2026-10-28)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Octoboss overworld fight review)
+  :DOC:      [[file:../../../Sprites/Bosses/octoboss.asm]]
+  :END:
+  1. The cave behind Octoboss on map $75 is the entrance of the Eon Abyss
+     underwater shrine. Its reward stays the Cane of Byrna (Item homes, 2026-10-18).
+  2. Octoboss drops no item. When the brothers surrender, the bridge wall
+     clears and the cave is open; the defeat flag keeps it open.
+  3. The west loop corner is more of the underwater village, not the shrine.
+  4. Open: point the $75 cave entrance at the shrine rooms (base-ROM edit), and
+     write surrender text that hints at the shrine (dialogue approval).
+  Option picked: "Octoboss guards the shrine: the cave behind him on $75 is the
+  shrine entrance (Byrna inside), and the west corner becomes more of the
+  village."
+  Answer: "Guard the shrine" (scawful, 2026-10-28).
