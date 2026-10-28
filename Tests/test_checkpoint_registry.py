@@ -4,6 +4,7 @@ import sys
 import unittest
 from dataclasses import replace
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'Scripts/Build'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'Scripts/Generate'))
 import checkpoint_registry as C
 
 SHA = '1' * 64
@@ -14,7 +15,11 @@ def record(key=1, domain=C.Domain.SPECIAL, map_id=0xA0, parent=0xA0):
     cache = bytearray(range(50))
     cache[0:2] = parent.to_bytes(2, 'little')
     cache[12:14] = map_id.to_bytes(2, 'little')
-    return C.RegionalCheckpoint(key, domain, map_id, parent, bytes(cache), SHA)
+    return C.RegionalCheckpoint(key, domain, map_id, 1, parent, bytes(cache), SHA)
+
+
+def resolve(saved, **kwargs):
+    return C.resolve_checkpoint(saved, resume_intent=C.ResumeIntent.REGIONAL, **kwargs)
 
 
 def registry(*rows, epoch=1):
@@ -27,8 +32,8 @@ class CheckpointRegistryTests(unittest.TestCase):
         r = registry(a, b)
         self.assertEqual([x.key for x in r.records], [2, 4])
         self.assertEqual(len(r.packed_records), 2 * C.RECORD_BYTES)
-        self.assertEqual(r.packed_records[8:58], b.exit_cache)
-        self.assertEqual(r.packed_records[66:116], a.exit_cache)
+        self.assertEqual(r.packed_records[10:60], b.exit_cache)
+        self.assertEqual(r.packed_records[70:120], a.exit_cache)
         self.assertNotEqual(r.content_sha256, registry(a, b, epoch=2).content_sha256)
 
     def test_all_four_domains_use_identical_resolution(self):
@@ -36,13 +41,13 @@ class CheckpointRegistryTests(unittest.TestCase):
             with self.subTest(domain=domain):
                 row = record(domain=domain)
                 r = registry(row)
-                s = C.activate_checkpoint(1, domain=domain, map_id=0xA0, registry=r)
-                self.assertEqual(C.resolve_checkpoint(s, registry=r).checkpoint, row)
+                s = C.activate_checkpoint(1, domain=domain, map_id=0xA0, region_key=1, registry=r)
+                self.assertEqual(resolve(s, registry=r).checkpoint, row)
 
     def test_unknown_or_absent_checkpoint_uses_existing_native_Home_adapter(self):
         r = registry()
         for key in (0, 1, 0xFFFF):
-            result = C.resolve_checkpoint(C.SavedCheckpoint(1, 1, key), registry=r)
+            result = resolve(C.SavedCheckpoint(1, 1, key), registry=r)
             self.assertEqual(result.route, 'home')
             self.assertEqual(result.override, C.native_spawn_adapter(0))
 
@@ -50,7 +55,7 @@ class CheckpointRegistryTests(unittest.TestCase):
         r = registry(record())
         s = C.SavedCheckpoint(1, 1, 1)
         for override in (None, C.native_spawn_adapter(2), C.ScriptOverride(C.OverrideKind.ABYSS_SCRIPT)):
-            self.assertEqual(C.resolve_checkpoint(s, registry=r, dungeon_entrance_continue=True,
+            self.assertEqual(resolve(s, registry=r, dungeon_entrance_continue=True,
                              script_override=override).route, 'dungeon_entrance')
         self.assertEqual(s, C.SavedCheckpoint(1, 1, 1))
 
@@ -59,9 +64,9 @@ class CheckpointRegistryTests(unittest.TestCase):
         for override in (C.native_spawn_adapter(2), C.ScriptOverride(C.OverrideKind.ABYSS_SCRIPT),
                          C.native_spawn_adapter(7)):
             before = saved.encode()
-            self.assertEqual(C.resolve_checkpoint(saved, registry=r, script_override=override).override, override)
+            self.assertEqual(resolve(saved, registry=r, script_override=override).override, override)
             self.assertEqual(saved.encode(), before)
-            self.assertEqual(C.resolve_checkpoint(saved, registry=r).route, 'regional_checkpoint')
+            self.assertEqual(resolve(saved, registry=r).route, 'regional_checkpoint')
 
     def test_legacy_native_adapter_bounds_every_selector(self):
         for selector in range(7):
@@ -75,7 +80,7 @@ class CheckpointRegistryTests(unittest.TestCase):
         for key, domain, map_id in ((0, C.Domain.SPECIAL, 0xA0), (1, C.Domain.MINISH, 0xA0),
                                     (1, C.Domain.SPECIAL, 0xA1), (1, 2, 0xA0)):
             with self.assertRaises(ValueError):
-                C.activate_checkpoint(key, domain=domain, map_id=map_id, registry=r)
+                C.activate_checkpoint(key, domain=domain, map_id=map_id, region_key=1, registry=r)
 
     def test_old_unknown_epoch_and_retired_keys_migrate_to_none(self):
         r = registry(record())
@@ -98,6 +103,65 @@ class CheckpointRegistryTests(unittest.TestCase):
         with self.assertRaises(ValueError): registry(row, row)
         with self.assertRaises(ValueError): registry(row, epoch=0)
 
+    def test_resume_matches_region_not_only_domain_and_never_clears_last_key(self):
+        row = record()
+        r, saved = registry(row), C.SavedCheckpoint(1, 1, row.key)
+        before = saved.encode()
+        for domain, region, expected in ((C.Domain.SPECIAL, 1, C.ResumeIntent.REGIONAL),
+                (C.Domain.SPECIAL, 2, C.ResumeIntent.HOME),
+                (C.Domain.MINISH, 1, C.ResumeIntent.HOME)):
+            intent = C.prepare_resume_intent(saved, domain=domain, region_key=region, registry=r)
+            self.assertEqual(intent, expected)
+            route = C.resolve_checkpoint(saved, registry=r, resume_intent=intent)
+            self.assertEqual(route.route, 'regional_checkpoint' if intent else 'home')
+            self.assertEqual(saved.encode(), before)
+        # Cold routing consumes a separately supplied snapshot, never raw8A.
+        self.assertEqual(C.resolve_checkpoint(saved, registry=r,
+                         resume_intent=C.ResumeIntent.HOME).route, 'home')
+        self.assertEqual(saved.encode(), before)
+
+    def test_activation_region_and_resume_input_are_explicit(self):
+        r, saved = registry(record()), C.SavedCheckpoint(1, 1, 1)
+        with self.assertRaises(ValueError):
+            C.activate_checkpoint(1, domain=C.Domain.SPECIAL, map_id=0xA0, region_key=2, registry=r)
+        with self.assertRaises(ValueError):
+            C.prepare_resume_intent(saved, domain=C.Domain.SPECIAL, region_key=0, registry=r)
+        with self.assertRaises(TypeError): C.resolve_checkpoint(saved, registry=r)
+        with self.assertRaises(ValueError): C.resolve_checkpoint(saved, registry=r, resume_intent=1)
+
+    def test_unplaced_runtime_tables_retain_region_and_complete_destination(self):
+        row = record(7)
+        r = registry(row)
+        t = r.runtime_tables()
+        self.assertEqual(t['CheckpointRegistry_Keys'], b'\x07\x00')
+        self.assertEqual(t['CheckpointRegistry_Regions'], b'\x01\x00')
+        self.assertEqual(t['CheckpointRegistry_Domains'], b'\x02\x00')
+        self.assertEqual(t['CheckpointRegistry_Maps'], b'\xa0\x00')
+        self.assertEqual(t['CheckpointRegistry_Records'][10:], row.exit_cache)
+
+    def test_granted_state_has_exact_symbols_source_provenance_and_nine_baseline(self):
+        import json, re, hashlib
+        from allocation_contracts import read_ledger, source_evidence, ownership_conflicts
+        from asm_source import _load_global_defines
+        root = Path(__file__).resolve().parents[1]
+        ledger = read_ledger(root/'Config/allocation_ownership.json')
+        claim = next(c for c in ledger['claims'] if c['id'] == 'RegionalCheckpointSave')
+        self.assertEqual((claim['base'], claim['size'], claim['condition']), (0x7EF3B4, 4, {}))
+        selected = {k:v for k,v in ledger['sources'].items() if v['source_set'] == 'regional_checkpoint_state_24'}
+        source_evidence({'sources': selected, 'claims': [claim]}, {'regional_checkpoint_state_24': root})
+        source = (root/'Core/sram.asm').read_text()
+        for name, value in (('RegionalCheckpointSchema', 0x7EF3B4), ('RegionalCheckpointEpoch', 0x7EF3B5),
+                            ('RegionalCheckpointKey', 0x7EF3B6), ('FreeBlock_Large', 0x7EF3B8)):
+            self.assertRegex(source, rf'(?m)^{name}\s*= \${value:06X}\b')
+        conflicts, _ = ownership_conflicts(ledger, _load_global_defines(root), pending=True)
+        canonical = '\n'.join(sorted(json.dumps(c, sort_keys=True, separators=(',', ':')) for c in conflicts))+'\n'
+        self.assertEqual(hashlib.sha256(canonical.encode()).hexdigest(),
+                         '4da57a07ee0f6c8d8a741da0b30c8e87f64dd3fe8a182805e024ea6cbacc238c')
+        asm = (root/'Overworld/checkpoint_state.asm').read_text()
+        self.assertEqual(set(re.findall(r'STA\.l (\w+)', asm)),
+                         {'RegionalCheckpointKey', 'RegionalCheckpointSchema', 'RegionalCheckpointEpoch'})
+        self.assertNotIn('incsrc "Overworld/checkpoint_state.asm"', (root/'Overworld/overworld.asm').read_text())
+
     def test_registry_limits_and_record_identity_are_not_silently_coerced(self):
         with self.assertRaises(ValueError):
             registry(*(record(key) for key in range(1, 258)))
@@ -110,14 +174,14 @@ class CheckpointRegistryTests(unittest.TestCase):
     def test_key_domain_does_not_alias_temporary_native_C8(self):
         # Key7 is legal globally; a regional key never invokes legacy selector7.
         r = registry(record(7))
-        result = C.resolve_checkpoint(C.SavedCheckpoint(1, 1, 7), registry=r)
+        result = resolve(C.SavedCheckpoint(1, 1, 7), registry=r)
         self.assertEqual(result.route, 'regional_checkpoint')
         self.assertIsNone(result.override)
 
     def test_raw_unvalidated_override_and_context_refuse(self):
         saved, r = C.SavedCheckpoint(1, 1, 0), registry()
-        with self.assertRaises(ValueError): C.resolve_checkpoint(saved, registry=r, script_override=7)
-        with self.assertRaises(ValueError): C.resolve_checkpoint(saved, registry=r, dungeon_entrance_continue=1)
+        with self.assertRaises(ValueError): resolve(saved, registry=r, script_override=7)
+        with self.assertRaises(ValueError): resolve(saved, registry=r, dungeon_entrance_continue=1)
         with self.assertRaises(ValueError): C.ScriptOverride(C.OverrideKind.NATIVE_SPAWN, 7)
 
 

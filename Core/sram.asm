@@ -797,7 +797,18 @@ GoldstarInventoryVersion = $7EF3AA ; $A5 = legacy upgrade migrated
 ; 76 item-receipt destinations ($0984E8) is in $7EF3A0-3C4; vanilla new-file
 ; init clears it ($0CC315-$0CC325); 00 in every stored save checked.
 SavedOcarinaSong   = $7EF3AB
-FreeBlock_Large    = $7EF3AC  ; 25 bytes ($7EF3AC-3C4)
+; AC..B1 belong to the pending Items/SongBits composition. Keep that range
+; outside the free list even when this source profile has not adopted it.
+; Two separate unassigned ranges remain around the granted checkpoint state.
+FreeBlock_LargePrefix = $7EF3B2 ; 2 bytes [B2,B4); not an allocation grant
+
+; Central checkpoint reservation: root CURRENT_RESOURCE_GRANTS, 2026-10-28.
+; Separate from native SpawnPoint, scripted overrides and dungeon entrances.
+; Schema/epoch identify last ACTIVATED key only, never pending Home intent.
+RegionalCheckpointSchema = $7EF3B4
+RegionalCheckpointEpoch  = $7EF3B5
+RegionalCheckpointKey    = $7EF3B6 ; word, ends before $7EF3B8
+FreeBlock_Large    = $7EF3B8  ; 13 bytes [B8,C5); resume byte NOT granted
 
 ; ---------------------------------------------------------
 ; Dreams Extension ($7EF411-4FD) - 237 bytes
@@ -815,10 +826,11 @@ FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
 ; | $7EF307  | $7EF30E  | 8     | Story extension    |
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF39F  | $7EF3A0  | 2     | Collectibles ext   |
-; | $7EF3AB  | $7EF3C4  | 26    | Large reserved     |
+; | $7EF3B2  | $7EF3B3  | 2     | Large prefix       |
+; | $7EF3B8  | $7EF3C4  | 13    | Large remainder    |
 ; | $7EF412  | $7EF4FD  | 236   | Dreams extension   |
 ; |----------|----------|-------|--------------------|
-; | TOTAL AVAILABLE:    | 320   | bytes              |
+; | Free-list comments describe candidates, not allocation grants.     |
 ; ---------------------------------------------------------
 
 ; =========================================================

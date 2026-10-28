@@ -1,6 +1,6 @@
 """Central regional checkpoint records and policy; no runtime/save writer.
 
-Consumers must bind destination provenance and allocate persistence before wiring
+Consumers must bind destination provenance and runtime placement before wiring
 this module into a build or game hook. Logical domains are independent of physical
 map numbering. Native SpawnPoint remains owned by its compatibility adapters.
 """
@@ -17,6 +17,11 @@ class Domain(IntEnum):
     MINISH = 3
 
 
+class ResumeIntent(IntEnum):
+    HOME = 0
+    REGIONAL = 1
+
+
 class OverrideKind(IntEnum):
     NATIVE_SPAWN = 0
     GORON_FACTORY = 1
@@ -26,7 +31,7 @@ class OverrideKind(IntEnum):
 SCHEMA = 1
 NO_CHECKPOINT = 0
 CACHE_BYTES = 0x32
-RECORD_BYTES = 8 + CACHE_BYTES
+RECORD_BYTES = 10 + CACHE_BYTES
 
 
 def require(condition, message):
@@ -39,6 +44,7 @@ class RegionalCheckpoint:
     key: int
     domain: Domain
     map_id: int
+    region_key: int
     parent_map: int
     exit_cache: bytes
     source_rom_sha256: str
@@ -47,6 +53,8 @@ class RegionalCheckpoint:
         require(type(self.key) is int and 0 < self.key < 0xFFFF,
                 'Checkpoint key must be a stable nonzero u16, excluding FFFF')
         require(isinstance(self.domain, Domain), 'Checkpoint domain must be explicit')
+        require(type(self.region_key) is int and 0 < self.region_key < 0xFFFF,
+                'Checkpoint region must be explicit and independent of camera grouping')
         require(type(self.map_id) is int and 0 <= self.map_id < 0xC0 and
                 type(self.parent_map) is int and 0 <= self.parent_map < 0xC0,
                 'Checkpoint map/parent exceeds the current physical map engine')
@@ -59,7 +67,7 @@ class RegionalCheckpoint:
         require(int.from_bytes(self.exit_cache[12:14], 'little') == self.map_id,
                 'Checkpoint cache physical map disagrees with the explicit map')
         return (self.key.to_bytes(2, 'little') + bytes((self.domain, 0)) +
-                self.map_id.to_bytes(2, 'little') + self.parent_map.to_bytes(2, 'little') +
+                self.region_key.to_bytes(2, 'little') + self.map_id.to_bytes(2, 'little') + self.parent_map.to_bytes(2, 'little') +
                 self.exit_cache)
 
 
@@ -93,13 +101,23 @@ class Registry:
         return hashlib.sha256(bytes((SCHEMA, self.epoch)) +
                               bytes.fromhex(self.source_rom_sha256) + self.packed_records).hexdigest()
 
+    def runtime_tables(self):
+        """Return immutable bytes for the unplaced ASM codec, not ROM allocations."""
+        return {
+            'CheckpointRegistry_Keys': b''.join(r.key.to_bytes(2, 'little') for r in self.records),
+            'CheckpointRegistry_Domains': b''.join(int(r.domain).to_bytes(2, 'little') for r in self.records),
+            'CheckpointRegistry_Maps': b''.join(r.map_id.to_bytes(2, 'little') for r in self.records),
+            'CheckpointRegistry_Regions': b''.join(r.region_key.to_bytes(2, 'little') for r in self.records),
+            'CheckpointRegistry_Records': self.packed_records,
+        }
+
     def find(self, key):
         return next((r for r in self.records if r.key == key), None)
 
 
 @dataclass(frozen=True)
 class SavedCheckpoint:
-    """Proposed four-byte value; address/ownership remain ungranted."""
+    """Granted B4..B8 last-activated value; this host codec performs no RAM writes."""
     schema: int
     epoch: int
     key: int
@@ -113,7 +131,7 @@ class SavedCheckpoint:
 
 
 def restore_saved_checkpoint(raw, registry):
-    """Pure migration: no native C8 mutation and no read from an unallocated address."""
+    """Pure migration; current save-buffer addresses are in Core/sram.asm."""
     require(type(raw) is bytes and len(raw) == 4, 'Checkpoint snapshot must be exactly four bytes')
     schema, epoch, key = raw[0], raw[1], int.from_bytes(raw[2:], 'little')
     reason = ('old_or_unknown_schema' if schema != SCHEMA else
@@ -122,13 +140,29 @@ def restore_saved_checkpoint(raw, registry):
     return SavedCheckpoint(SCHEMA, registry.epoch, key if reason == 'current' else 0), reason
 
 
-def activate_checkpoint(key, *, domain, map_id, registry):
+def activate_checkpoint(key, *, domain, map_id, region_key, registry):
     """Explicit activation only; returns a value for the existing save owner to persist."""
     record = registry.find(key)
     require(record is not None, 'Cannot activate an unregistered checkpoint')
-    require(isinstance(domain, Domain) and record.domain == domain and record.map_id == map_id,
-            'Checkpoint activation domain/map does not match the registered destination')
+    require(isinstance(domain, Domain) and record.domain == domain and record.map_id == map_id and
+            type(region_key) is int and record.region_key == region_key,
+            'Checkpoint activation domain/region/map does not match the registered destination')
     return SavedCheckpoint(SCHEMA, registry.epoch, record.key)
+
+
+def prepare_resume_intent(saved, *, domain, region_key, registry):
+    """Snapshot a qualified current region before saving; never erase the last key.
+
+    Persisting this result requires separate ownership, not schema/epoch bits.
+    The caller supplies domain/region from the live owning loader, not raw8A.
+    """
+    require(isinstance(domain, Domain) and type(region_key) is int and 0 < region_key < 0xFFFF,
+            'Resume preparation requires explicit current domain and region')
+    if saved.schema == SCHEMA and saved.epoch == registry.epoch:
+        record = registry.find(saved.key)
+        if record is not None and record.domain == domain and record.region_key == region_key:
+            return ResumeIntent.REGIONAL
+    return ResumeIntent.HOME
 
 
 @dataclass(frozen=True)
@@ -159,13 +193,14 @@ class Resolution:
     override: ScriptOverride | None = None
 
 
-def resolve_checkpoint(saved, *, registry, dungeon_entrance_continue=False, script_override=None):
+def resolve_checkpoint(saved, *, registry, resume_intent, dungeon_entrance_continue=False, script_override=None):
     """One priority order, independent of domain and physical map numbering.
 
     Callers qualify normal dungeon death/Continue and live script predicates.
     Cold file load must not infer an active dungeon from stale volatile RAM.
     """
     require(isinstance(saved, SavedCheckpoint), 'Resolver requires explicit restored checkpoint state')
+    require(isinstance(resume_intent, ResumeIntent), 'Resolver requires explicit qualified resume intent')
     require(type(dungeon_entrance_continue) is bool, 'Dungeon continue context must be explicit')
     require(script_override is None or isinstance(script_override, ScriptOverride),
             'Resolver requires a validated explicit script override')
@@ -173,7 +208,7 @@ def resolve_checkpoint(saved, *, registry, dungeon_entrance_continue=False, scri
         return Resolution('dungeon_entrance')
     if script_override is not None:
         return Resolution('script_override', override=script_override)
-    if saved.schema == SCHEMA and saved.epoch == registry.epoch:
+    if resume_intent == ResumeIntent.REGIONAL and saved.schema == SCHEMA and saved.epoch == registry.epoch:
         record = registry.find(saved.key)
         if record is not None:
             return Resolution('regional_checkpoint', checkpoint=record)

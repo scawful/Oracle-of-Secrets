@@ -28,7 +28,8 @@
     "lyra_current_bg128_binding_20": "Current BG128 saved-data and restore-code binding inside current allocation; canonical activation remains off",
     "lyra_current_bundle_router_21": "Current saved-project bundle routing and immutable generation output paths; no activation.",
     "lyra_private_pilot_boundary_22": "Private selected A0/A1 scroll guard, disabled unless source-bound; no admission or allocation.",
-    "lyra_private_pilot_boundary_cpu_23": "Private A0/A1 guard with saved-status binary arithmetic; enabled CPU fixture only, no admission."
+    "lyra_private_pilot_boundary_cpu_23": "Private A0/A1 guard with saved-status binary arithmetic; enabled CPU fixture only, no admission.",
+    "regional_checkpoint_state_24": "Root-granted B4..B8 last-activated key reservation; unplaced state codec, no runtime hooks or resume-field grant."
   },
   "sources": {
     "shared:Sprites/Objects/minecart.asm": {
@@ -4490,6 +4491,26 @@
       "source_set": "lyra_private_pilot_boundary_cpu_23",
       "path": "Overworld/lyra_private_pilot.asm",
       "sha256": "5142939a14ff7207454e76a875ea44a761b83bfc2d6acfc46980af5d8ee67ac6"
+    },
+    "regional_checkpoint_state_24:Core/sram.asm": {
+      "source_set": "regional_checkpoint_state_24",
+      "path": "Core/sram.asm",
+      "sha256": "26c52c4b69cbe9f809f78bb789f3da7a03a2e2113f1aa89abc051d5116e84e61"
+    },
+    "regional_checkpoint_state_24:Overworld/checkpoint_state.asm": {
+      "source_set": "regional_checkpoint_state_24",
+      "path": "Overworld/checkpoint_state.asm",
+      "sha256": "3927b7f49e5b1e49325303efba88c46577ecc11b405d1bfdaae77bc58d10d59a"
+    },
+    "regional_checkpoint_state_24:Scripts/Build/checkpoint_registry.py": {
+      "source_set": "regional_checkpoint_state_24",
+      "path": "Scripts/Build/checkpoint_registry.py",
+      "sha256": "308b18c26cd2d370e5bb051b6afda51c0132d04953c1acc43682d99840a92fed"
+    },
+    "regional_checkpoint_state_24:Tests/test_checkpoint_registry.py": {
+      "source_set": "regional_checkpoint_state_24",
+      "path": "Tests/test_checkpoint_registry.py",
+      "sha256": "0bb110ff4c5854cde62df885d03df683e78af47d55c0c75fee1f9f28e68e19f9"
     }
   },
   "claims": [
@@ -5607,6 +5628,32 @@
       "anchors": [
         "LYRA_CURRENT_EVENT_VERSION"
       ]
+    },
+    {
+      "id": "RegionalCheckpointSave",
+      "owner": "Central regional checkpoint last-activated state",
+      "space": "save_buffer",
+      "base": 8319924,
+      "size": 4,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Per-file schema/epoch/key; retained independently of Home resume, scripts and dungeon return. Resume intent is not stored here.",
+      "reset": "Native new-file clear; explicit registry-bound StateMigrate initializes invalid/retired state, never inferred current-area activation. Runtime codec is unplaced/unhooked.",
+      "save": "Existing F000..F4FF copy/checksum and all3primary/backup slots. No user-save write or native save/reopen proof.",
+      "provenance": [
+        "regional_checkpoint_state_24:Core/sram.asm",
+        "regional_checkpoint_state_24:Overworld/checkpoint_state.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "RegionalCheckpointEpoch  = $7EF3B5",
+        "RegionalCheckpointKey    = $7EF3B6"
+      ],
+      "binding": {
+        "source": "regional_checkpoint_state_24:Core/sram.asm",
+        "symbol": "RegionalCheckpointSchema",
+        "bank00_mirror": false
+      }
     }
   ],
   "lifetime_aliases": [],
