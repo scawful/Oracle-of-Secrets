@@ -2074,10 +2074,10 @@ def generate_manifest(
             f"Exact hook mode requires the editable dev ROM: {dev_rom_path}"
         )
 
-    reachable_sources = collect_reachable_asm_sources(root)
-
-    # Load defines for conditional compilation evaluation
+    # Load defines for conditional compilation evaluation once; a selected
+    # Lyra context re-verifies its full preparation on every load.
     defines = _load_global_defines(root)
+    reachable_sources = collect_reachable_asm_sources(root, defines=defines)
     asm_sources = reachable_sources
 
     exact_spans: list[ExactSpan] = []
@@ -2097,7 +2097,7 @@ def generate_manifest(
     else:
         # Scan only the source graph assembled from Oracle_main.asm. Local
         # ignored assets and archived experiments must not claim ROM ownership.
-        hooks = scan_hooks(root, asm_sources)
+        hooks = scan_hooks(root, asm_sources, defines=defines)
         hook_source = {
             "mode": "python-scan",
             "exact": False,
@@ -2214,7 +2214,8 @@ def generate_manifest(
                 hooks, editor_regions
             )
         _validate_unresolved_org_proofs(
-            scan_org_directives(root, asm_sources), editor_regions
+            scan_org_directives(root, asm_sources, defines=defines),
+            editor_regions,
         )
         manifest["editor_managed_regions"] = {
             "description": (
