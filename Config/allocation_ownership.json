@@ -4578,7 +4578,7 @@
     "lyra_joint_graphics_source_26:Core/gfx_sheet_table.asm": {
       "source_set": "lyra_joint_graphics_source_26",
       "path": "Core/gfx_sheet_table.asm",
-      "sha256": "c73305cb4086a2205c32697d1f1cd5a2b19d200f057b31166bc9827fec0a2a41"
+      "sha256": "9b5b5ae64616699b6de9ba11547984dc7ddef6fe34dd84240f50d996d423f07d"
     },
     "lyra_joint_graphics_source_26:Scripts/Generate/sheet_overrides.py": {
       "source_set": "lyra_joint_graphics_source_26",
@@ -4648,7 +4648,7 @@
     "lyra_joint_area_tilesets_27:Overworld/area_tilesets.asm": {
       "source_set": "lyra_joint_area_tilesets_27",
       "path": "Overworld/area_tilesets.asm",
-      "sha256": "d3b0241589801476db77f15007f7425a3211de6876c8027271fc626cfdff2448"
+      "sha256": "e894201752d2200c9022a422053d51b257a5665880b29449d2408456bbbc5d88"
     },
     "lyra_joint_area_tilesets_27:Overworld/custom_gfx.asm": {
       "source_set": "lyra_joint_area_tilesets_27",
@@ -4688,7 +4688,7 @@
     "lyra_joint_area_tilesets_27:Tests/test_ow_area_tilesets.py": {
       "source_set": "lyra_joint_area_tilesets_27",
       "path": "Tests/test_ow_area_tilesets.py",
-      "sha256": "1c9838fa0c6828f4ad4fc0c80fa8585fd5a88bff7d1c9aa662720436b9b905a5"
+      "sha256": "ca6692c0f2c4f80fb8f30f9dec4f7c174fc6a6ee0d3ce895203d0ef7624f6fff"
     }
   },
   "claims": [
@@ -5907,7 +5907,7 @@
       ],
       "binding": {
         "source": "lyra_joint_graphics_source_26:Core/gfx_sheet_table.asm",
-        "symbol": "GfxSheet_Helpers",
+        "symbol": "GfxSheet_HelpersBase",
         "bank00_mirror": false
       }
     },
@@ -5959,7 +5959,7 @@
       ],
       "binding": {
         "source": "lyra_joint_area_tilesets_27:Overworld/area_tilesets.asm",
-        "symbol": "AreaTileset_CodeStart",
+        "symbol": "AreaTileset_CodeBase",
         "bank00_mirror": false
       }
     }

@@ -1,9 +1,11 @@
 ; Selected per-area collision cache and raw BG sheets in the graphics suffix.
 ; Native shared assets retain their existing owner in custom_gfx.asm.
+AreaTileset_CodeBase = $E2E000
+AreaTileset_CodeLimit = $E30000
 assert !ENABLE_OW_AREA_TILESETS == 1
 assert defined("LYRA_AREA_TILESETS_BOUND") && !LYRA_AREA_TILESETS_BOUND == 1, "Per-area source binding required"
 assert defined("LYRA_AREA_TILESETS_ORIGIN") && defined("LYRA_AREA_TILESETS_END"), "Per-area owned origins required"
-assert !LYRA_AREA_TILESETS_ORIGIN == $E2E000 && !LYRA_AREA_TILESETS_END == $E30000
+assert !LYRA_AREA_TILESETS_ORIGIN == AreaTileset_CodeBase && !LYRA_AREA_TILESETS_END == AreaTileset_CodeLimit
 pushpc
 org !LYRA_AREA_TILESETS_ORIGIN
 AreaTileset_CodeStart = pc()

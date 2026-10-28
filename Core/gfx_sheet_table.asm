@@ -22,11 +22,13 @@
 
 !GfxSheet_Rows = $100
 !GfxSheet_SprOffset = $73
+GfxSheet_HelpersBase = $23FC00
 
 pushpc
 
 org $23FC00
 GfxSheet_Helpers:
+assert pc() == GfxSheet_HelpersBase
 
 macro GfxSheetCopy(lo, hi, bk, off)
   LDA.l GfxSheet_Low+<off>,X  : STA.b <lo>
