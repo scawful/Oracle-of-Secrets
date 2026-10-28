@@ -6,7 +6,7 @@
   "ledger": {
     "engine_ledger_sha256": "6bc162723d33d3589b076cbc7726fc6022d73732f2f5cecf75c9952098d485d6",
     "path": "Config/allocation_ownership.json",
-    "sha256": "e3bea408a04ea96417deb1f4a977f55af47729bb646de33eeb90b1db56dc84b7",
+    "sha256": "1c2db6fa7c8558dde14bbfc84149f3225b2d6069d6ea4e84345efac19671682b",
     "source_set": "lyra_ferry_visual_boundary_53"
   },
   "native_readers": {
