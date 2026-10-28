@@ -4561,7 +4561,7 @@
     "regional_checkpoint_runtime_25:Scripts/Build/build_rom.sh": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Scripts/Build/build_rom.sh",
-      "sha256": "1d3d721da6f972d01edca357ff930ff0573fb58cfe794c2abfd6bb6c938a0856"
+      "sha256": "ffb148f50f51f7b466f2269361b563dcfbe33488f9d59d63dbab2288c9135056"
     },
     "regional_checkpoint_runtime_25:Scripts/Generate/asm_source.py": {
       "source_set": "regional_checkpoint_runtime_25",
@@ -4921,12 +4921,12 @@
     "lyra_joint_art_bridge_30:Scripts/Build/build_checks.sh": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Scripts/Build/build_checks.sh",
-      "sha256": "dc12e239e006d66648a035b98ce2fe8bd9eb53076413ad9199ed4946888cb744"
+      "sha256": "f7318846caa14d6fe3b9074ecf0215647a914144af24101fcbd66634a7de0aa7"
     },
     "lyra_joint_art_bridge_30:Scripts/Build/build_rom.sh": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Scripts/Build/build_rom.sh",
-      "sha256": "1d3d721da6f972d01edca357ff930ff0573fb58cfe794c2abfd6bb6c938a0856"
+      "sha256": "ffb148f50f51f7b466f2269361b563dcfbe33488f9d59d63dbab2288c9135056"
     },
     "lyra_joint_art_bridge_30:Scripts/Build/check_zscream_overlap.py": {
       "source_set": "lyra_joint_art_bridge_30",
@@ -4971,7 +4971,7 @@
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_project_publisher.py": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Scripts/Build/lyra_project_publisher.py",
-      "sha256": "8220aea96c87ba934d8b653cb79cba8d79aa6a26b2fa2e5098b44310aa0df9e7"
+      "sha256": "617580938b417b94ffc2f7e7d2330de16c39a4ff62a8256b1337464c8b2babc6"
     },
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_project_terrain.py": {
       "source_set": "lyra_joint_art_bridge_30",
