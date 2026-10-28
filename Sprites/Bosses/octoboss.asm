@@ -72,7 +72,23 @@ Sprite_Octoboss_Prep:
   STZ.w SprAction, X
   STZ.w SprMiscD, X
   STZ.w SprMiscF, X
+
+  ; Incoming damage. The file load fills $7F6000 + id*16 + attack class,
+  ; and the $2F row is empty, so every attack did 0.
+  PHX
+  LDX.b #$0F
+  .damage
+    LDA.l .damage_row, X : STA.l $7F6000+(Sprite_Octoboss*$10), X
+  DEX : BPL .damage
+  PLX
   RTL
+
+  ; Subclass per attack class (row index into DamageSubclassValue, $0DB8F1).
+  ; Swords, arrows, bombs and the fire rod hit; everything else does nothing.
+  ;             boom sw1  sw2  sw3  sw4  sw5  arrw hook
+  .damage_row: db $00, $01, $01, $01, $01, $01, $01, $00
+  ;             bomb silv powd fire ice  bmbs ethr quak
+               db $01, $00, $00, $01, $00, $00, $00, $00
 }
 
 Sprite_Octoboss_Long:
