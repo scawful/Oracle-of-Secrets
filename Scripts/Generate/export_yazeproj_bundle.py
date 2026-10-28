@@ -813,6 +813,206 @@ def write_authoring_project(
     )
 
 
+# The export receipt is immutable provenance. Only these export bindings may
+# change after export, and only as bytes bound by a genuine yaze Save receipt
+# (role names from yaze ProjectSaveSources).
+NATIVE_SAVE_RECEIPT = "project.yaze.native-save.json"
+NATIVE_SAVE_EDITABLE_ROLES = {
+    "files.lyra_terrain_file": "sidecar",
+    "files.custom_collision_json": "dependency.custom_collision_json",
+}
+NATIVE_SAVE_MAX_BYTES = 1024 * 1024
+NATIVE_SAVE_MAX_ARTIFACTS = 256
+CAPTURED_PATH_BINDINGS = (
+    *(f"files.{key}" for key in PROJECT_FILE_DEPENDENCIES),
+    "files.custom_objects_folder",
+    "files.sprite_source_root",
+    "files.overworld_graphics_preview",
+    "files.hack_manifest_file",
+    "agent_settings.custom_system_prompt",
+    "agent_settings.builder_blueprint_path",
+    "planning.file",
+    "atlas.symbols",
+    "zscream_compatibility.original_project_file",
+)
+CAPTURED_PATH_LIST_BINDINGS = ("files.additional_roms", "atlas.annotations")
+
+
+def _is_sha256(value) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(c in "0123456789abcdef" for c in value)
+    )
+
+
+def _is_save_role(value) -> bool:
+    allowed = "abcdefghijklmnopqrstuvwxyz0123456789._:-"
+    return (
+        isinstance(value, str)
+        and 0 < len(value) <= 128
+        and "a" <= value[0] <= "z"
+        and all(c in allowed for c in value)
+    )
+
+
+def _is_count(value) -> bool:
+    return type(value) is int and value >= 0
+
+
+def _load_native_save_receipt(bundle_root: Path) -> dict | None:
+    """Read yaze's adjacent yaze.native_save.v1 receipt without trusting it."""
+    path = bundle_root / NATIVE_SAVE_RECEIPT
+    if not path.exists() and not path.is_symlink():
+        return None
+
+    def invalid(reason: str) -> ValueError:
+        return ValueError(f"Invalid native-save receipt {NATIVE_SAVE_RECEIPT}: {reason}")
+
+    if path.is_symlink() or not path.is_file():
+        raise invalid("not a regular file")
+    data = path.read_bytes()
+    if len(data) > NATIVE_SAVE_MAX_BYTES:
+        raise invalid("exceeds size limit")
+    try:
+        receipt = json.loads(data.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise invalid("not JSON") from exc
+    fields = {
+        "kind", "generation", "operation_id", "operation", "receipt_path",
+        "bindings_complete", "binding_errors", "artifacts",
+    }
+    if not isinstance(receipt, dict) or set(receipt) != fields:
+        raise invalid("unexpected fields")
+    if receipt["kind"] != "yaze.native_save.v1":
+        raise invalid("kind is not yaze.native_save.v1")
+    if not _is_count(receipt["generation"]) or receipt["generation"] == 0:
+        raise invalid("generation must be a positive integer")
+    operation_id = receipt["operation_id"]
+    if (
+        not isinstance(operation_id, str)
+        or not 0 < len(operation_id) <= 128
+        or any(not 0x20 <= ord(c) <= 0x7E for c in operation_id)
+    ):
+        raise invalid("operation_id")
+    if receipt["operation"] not in ("save", "save_as"):
+        raise invalid("operation is not a native Save")
+    if receipt["receipt_path"] != str(path.resolve()):
+        raise invalid("receipt_path names another location; Save again here")
+    errors = receipt["binding_errors"]
+    if (
+        not isinstance(errors, list)
+        or len(errors) > NATIVE_SAVE_MAX_ARTIFACTS
+        or any(not isinstance(e, str) or not e or len(e) > 1024 for e in errors)
+    ):
+        raise invalid("binding_errors")
+    if receipt["bindings_complete"] is not (not errors):
+        raise invalid("bindings_complete disagrees with binding_errors")
+    artifacts = receipt["artifacts"]
+    if not isinstance(artifacts, list) or len(artifacts) > NATIVE_SAVE_MAX_ARTIFACTS:
+        raise invalid("artifacts")
+    roles = {}
+    for artifact in artifacts:
+        if (
+            not isinstance(artifact, dict)
+            or set(artifact) != {"role", "path", "sha256", "bytes"}
+            or not _is_save_role(artifact["role"])
+            or artifact["role"] in roles
+            or not isinstance(artifact["path"], str)
+            or not Path(artifact["path"]).is_absolute()
+            or not _is_sha256(artifact["sha256"])
+            or not _is_count(artifact["bytes"])
+        ):
+            raise invalid("artifact binding")
+        roles[artifact["role"]] = artifact
+    if "rom" not in roles or "producer" not in roles:
+        raise invalid("rom and producer roles are required")
+    receipt["roles"] = roles
+    return receipt
+
+
+def _require_saved_state(
+    bundle_root: Path,
+    receipt: dict,
+    values: dict,
+    changed_files: list[str],
+) -> None:
+    """Accept post-export differences only when a genuine Save binds them."""
+    editable = {receipt["bindings"].get(key): role
+                for key, role in NATIVE_SAVE_EDITABLE_ROLES.items()}
+    editable.pop(None, None)
+    for relative in changed_files:
+        if relative not in editable:
+            raise ValueError(
+                f"Authoring dependency hash mismatch: {relative} is immutable "
+                "export provenance; restore it or re-export the bundle"
+            )
+    native = _load_native_save_receipt(bundle_root)
+    if native is None:
+        raise ValueError(
+            f"Authoring dependency hash mismatch: {changed_files[0]} changed "
+            f"and no {NATIVE_SAVE_RECEIPT} from a yaze Save binds it; refusing "
+            "an external or unsaved edit"
+        )
+    roles = native["roles"]
+
+    def require_bound(relative: str, role: str) -> None:
+        artifact = roles.get(role)
+        path = bundle_root / relative
+        data = path.read_bytes()
+        if (
+            artifact is None
+            or artifact["path"] != str(path.resolve())
+            or artifact["bytes"] != len(data)
+            or artifact["sha256"] != hashlib.sha256(data).hexdigest()
+        ):
+            raise ValueError(
+                f"{NATIVE_SAVE_RECEIPT} does not bind current {relative} "
+                f"(role {role}); it changed outside a genuine yaze Save"
+            )
+
+    require_bound("project.yaze", "project")
+    require_bound("rom", "rom")
+    changed_roles = {"project", *(editable[r] for r in changed_files)}
+    for relative in changed_files:
+        require_bound(relative, editable[relative])
+    for error in native["binding_errors"]:
+        prefix = error.split(": ", 1)[0] if ": " in error else ""
+        if not _is_save_role(prefix) or prefix in changed_roles:
+            raise ValueError(
+                f"{NATIVE_SAVE_RECEIPT} reports an incomplete Save binding "
+                f"affecting {', '.join(sorted(changed_roles))}: {error}"
+            )
+
+    pin = "tools/producer.json"
+    if pin not in receipt["files"]:
+        raise ValueError(
+            f"Bundle export provenance pins no tools producer ({pin}); "
+            "a native Save cannot be qualified"
+        )
+    pinned = json.loads((bundle_root / pin).read_text(encoding="utf-8"))
+    expected = pinned.get("app_executable_sha256")
+    if not _is_sha256(expected) or roles["producer"]["sha256"] != expected:
+        raise ValueError(
+            f"{NATIVE_SAVE_RECEIPT} producer {roles['producer']['sha256']} is "
+            f"not the bundle's pinned tools app {expected}"
+        )
+
+    for key in CAPTURED_PATH_BINDINGS + CAPTURED_PATH_LIST_BINDINGS:
+        raw = values.get(key, "")
+        entries = raw.split(",") if key in CAPTURED_PATH_LIST_BINDINGS else [raw]
+        for entry in filter(None, (item.strip() for item in entries)):
+            try:
+                _resolve_bundle_member(
+                    bundle_root, entry, f"saved binding {key}", must_exist=False
+                )
+            except ValueError as exc:
+                raise ValueError(
+                    f"Saved project.yaze binds {key} outside the bundle "
+                    f"({entry}); re-export to capture it"
+                ) from exc
+
+
 def verify_authoring_dependencies(bundle_root: Path) -> dict | None:
     receipt_path = bundle_root / AUTHORING_RECEIPT
     if not receipt_path.exists():
@@ -824,8 +1024,15 @@ def verify_authoring_dependencies(bundle_root: Path) -> dict | None:
     ):
         raise ValueError("Invalid authoring dependency receipt")
     content = (bundle_root / "project.yaze").read_bytes()
-    if hashlib.sha256(content).hexdigest() != receipt["project_sha256"]:
-        raise ValueError("Authoring project descriptor differs from captured input")
+    descriptor_changed = (
+        hashlib.sha256(content).hexdigest() != receipt["project_sha256"]
+    )
+    if descriptor_changed and _load_native_save_receipt(bundle_root) is None:
+        raise ValueError(
+            "Authoring project descriptor differs from captured input and "
+            f"no {NATIVE_SAVE_RECEIPT} from a yaze Save binds it; refusing "
+            "an external or unsaved edit"
+        )
     _, assignments = _parse_project_contract(content.decode("utf-8"))
     values = {f"{section}.{key}": value for section, key, value in assignments}
     for key, expected in receipt["bindings"].items():
@@ -835,6 +1042,7 @@ def verify_authoring_dependencies(bundle_root: Path) -> dict | None:
             bundle_root, expected, "authoring binding", must_exist=False
         )
         _source_path(str(bundle_root / expected), bundle_root)
+    changed_files = []
     for relative, expected in receipt["files"].items():
         path = _resolve_bundle_member(
             bundle_root, relative, "authoring dependency", must_exist=True
@@ -845,7 +1053,9 @@ def verify_authoring_dependencies(bundle_root: Path) -> dict | None:
             len(data) != expected["size"]
             or hashlib.sha256(data).hexdigest() != expected["sha256"]
         ):
-            raise ValueError(f"Authoring dependency hash mismatch: {relative}")
+            changed_files.append(relative)
+    if descriptor_changed or changed_files:
+        _require_saved_state(bundle_root, receipt, values, changed_files)
     return receipt
 
 

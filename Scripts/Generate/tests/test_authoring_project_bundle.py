@@ -554,6 +554,156 @@ flagged_sheets=0xD4,0xD6
             self.assertEqual(build_guard.build_project(self.bundle/'project.yaze'),0)
         for key in foreign:self.assertNotIn(key,delegate.call_args.kwargs['env'])
 
+    def pin_tools(self):
+        """Export provenance as staged for a desktop bundle with pinned tools."""
+        self.producer = self.root / "Pinned.app/Contents/MacOS/yaze"
+        self.producer.parent.mkdir(parents=True, exist_ok=True)
+        self.producer.write_bytes(b"pinned producer executable")
+        pinned = {
+            "app_executable": "yaze.app/Contents/MacOS/yaze",
+            "app_executable_sha256": hashlib.sha256(
+                self.producer.read_bytes()).hexdigest(),
+        }
+        receipt_path = self.bundle / "authoring-dependencies.json"
+        receipt = json.loads(receipt_path.read_text())
+        for relative, data in (
+            ("tools/producer.json", json.dumps(pinned).encode()),
+            ("tools/z3ed", b"pinned cli"),
+        ):
+            path = self.bundle / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+            receipt["files"][relative] = {
+                "size": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+        receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
+
+    def saved_terrain_edit(self):
+        """Bytes a project Save writes: the terrain sidecar and the descriptor."""
+        self.capture()
+        self.pin_tools()
+        self.export_receipt = (self.bundle / "authoring-dependencies.json").read_bytes()
+        self.terrain = self.bundle / self.values()["files", "lyra_terrain_file"]
+        self.terrain.write_bytes(b'{"populated":"sidecar","cells":[1,2,4]}')
+        descriptor = self.bundle / "project.yaze"
+        descriptor.write_text(descriptor.read_text().replace(
+            "[labels_room]\n151=My Goron Room", "[labels_room]\n151=Saved Goron Room"))
+
+    def write_native_save(self, *, errors=(), producer=None, **artifact_paths):
+        bound = {"rom": self.bundle / "rom", "producer": producer or self.producer,
+                 "project": self.bundle / "project.yaze", "sidecar": self.terrain}
+        bound.update(artifact_paths)
+        receipt = self.bundle / "project.yaze.native-save.json"
+        artifacts = []
+        for role, path in sorted(bound.items()):
+            data = path.read_bytes()
+            artifacts.append({"role": role, "path": str(path.resolve()),
+                              "sha256": hashlib.sha256(data).hexdigest(),
+                              "bytes": len(data)})
+        receipt.write_text(json.dumps({
+            "kind": "yaze.native_save.v1", "generation": 3,
+            "operation_id": "0123abcd4567ef890123abcd4567ef89", "operation": "save",
+            "receipt_path": str(receipt.resolve()),
+            "bindings_complete": not errors, "binding_errors": list(errors),
+            "artifacts": artifacts}, indent=2) + "\n")
+        return receipt
+
+    def test_native_saved_terrain_and_descriptor_pass_without_rewriting_provenance(self):
+        self.saved_terrain_edit()
+        self.write_native_save()
+        verify_bundle(self.bundle)
+        self.write_native_save(
+            errors=["dependency.sprite_0_source: imported source is stale"])
+        verify_bundle(self.bundle)
+        self.assertEqual(
+            (self.bundle / "authoring-dependencies.json").read_bytes(),
+            self.export_receipt)
+
+    def test_external_edit_without_native_save_receipt_refuses(self):
+        self.capture()
+        self.pin_tools()
+        terrain = self.bundle / self.values()["files", "lyra_terrain_file"]
+        terrain.write_bytes(b'{"edited":"outside yaze"}')
+        with self.assertRaisesRegex(
+                ValueError, "hash mismatch: assets/project/lyra_terrain_file/"
+                "terrain.json changed and no project.yaze.native-save.json"):
+            verify_bundle(self.bundle)
+        self.saved_terrain_edit()
+        with self.assertRaisesRegex(ValueError, "descriptor differs.*external"):
+            verify_bundle(self.bundle)
+
+    def test_edit_after_native_save_refuses(self):
+        self.saved_terrain_edit()
+        self.write_native_save()
+        self.terrain.write_bytes(b'{"edited":"after save"}')
+        with self.assertRaisesRegex(
+                ValueError, "does not bind current assets/project/lyra_terrain_file/"
+                r"terrain.json \(role sidecar\)"):
+            verify_bundle(self.bundle)
+        self.write_native_save()
+        descriptor = self.bundle / "project.yaze"
+        descriptor.write_text(descriptor.read_text() + "# appended later\n")
+        with self.assertRaisesRegex(ValueError, r"current project.yaze \(role project\)"):
+            verify_bundle(self.bundle)
+
+    def test_changed_immutable_file_refuses_despite_native_save(self):
+        self.saved_terrain_edit()
+        for relative in ("tools/z3ed", "assets/project/dungeon_tile_patterns/walls.asm"):
+            with self.subTest(relative=relative):
+                path = self.bundle / relative
+                original = path.read_bytes()
+                path.write_bytes(original + b"\n; tampered")
+                self.write_native_save(
+                    **{"dependency.dungeon_tile_patterns": path}
+                    if relative.endswith(".asm") else {})
+                with self.assertRaisesRegex(
+                        ValueError, f"hash mismatch: {relative} is immutable"):
+                    verify_bundle(self.bundle)
+                path.write_bytes(original)
+
+    def test_native_save_producer_mismatch_refuses(self):
+        self.saved_terrain_edit()
+        other = self.root / "Other.app/Contents/MacOS/yaze"
+        other.parent.mkdir(parents=True)
+        other.write_bytes(b"unpinned producer")
+        self.write_native_save(producer=other)
+        with self.assertRaisesRegex(ValueError, "not the bundle's pinned tools app"):
+            verify_bundle(self.bundle)
+
+    def test_native_save_binding_errors_on_changed_role_refuse(self):
+        self.saved_terrain_edit()
+        for error in ("Saved terrain differs from the live document",
+                      "sidecar: Cannot read native save input",
+                      "project: unreadable", "2 additional binding errors"):
+            with self.subTest(error=error):
+                self.write_native_save(errors=[error])
+                with self.assertRaisesRegex(ValueError, "incomplete Save binding"):
+                    verify_bundle(self.bundle)
+
+    def test_relabeled_or_malformed_native_save_receipt_refuses(self):
+        self.saved_terrain_edit()
+        receipt = self.write_native_save()
+        good = json.loads(receipt.read_text())
+        for field, value in (("receipt_path", "/elsewhere/project.yaze.native-save.json"),
+                             ("kind", "yaze.native_save.v0"), ("generation", 0),
+                             ("operation", "export"), ("bindings_complete", False)):
+            with self.subTest(field=field):
+                receipt.write_text(json.dumps({**good, field: value}))
+                with self.assertRaisesRegex(ValueError, "Invalid native-save receipt"):
+                    verify_bundle(self.bundle)
+        receipt.write_text(json.dumps(
+            {**good, "artifacts": [a for a in good["artifacts"] if a["role"] != "rom"]}))
+        with self.assertRaisesRegex(ValueError, "rom and producer roles"):
+            verify_bundle(self.bundle)
+
+    def test_native_saved_descriptor_cannot_add_external_binding(self):
+        self.saved_terrain_edit()
+        descriptor = self.bundle / "project.yaze"
+        descriptor.write_text(
+            descriptor.read_text() + "\n[planning]\nfile=/external/oracle.plan.json\n")
+        self.write_native_save()
+        with self.assertRaisesRegex(ValueError, "binds planning.file outside the bundle"):
+            verify_bundle(self.bundle)
+
     def test_authoring_build_guard_survives_bundle_relocation(self):
         from unittest import mock
 
