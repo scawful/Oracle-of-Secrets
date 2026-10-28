@@ -129,7 +129,8 @@ def _is_identical_build_context_assignment(relative: str, line: str, defines: di
         return False
     name, value = parsed
     allowed = ((relative == "Oracle_main.asm" and name in LYRA_CONTEXT_NAMES)
-               or (relative == LYRA_CONSTANTS and (name.startswith("LYRA_") or name == "JOINT_PALETTE_DIRECTORY_ENABLED")
+               or (relative == LYRA_CONSTANTS and (name.startswith("LYRA_") or name in BG128_CONTEXT_NAMES
+                                                 or name == "JOINT_PALETTE_DIRECTORY_ENABLED")
                    and name != "LYRA_BUILD_CONTEXT" and defines.get("LYRA_BUILD_CONTEXT") == 1))
     return allowed and name in defines and defines[name] == value
 
