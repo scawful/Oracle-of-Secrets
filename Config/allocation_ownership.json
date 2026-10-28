@@ -6710,19 +6710,19 @@
         },
         "graphics_assets": [
           {
-            "path": "/Users/scawful/src/hobby/oracle-of-secrets-worktrees/lyra-tail-runtime-20261027/Overworld/gfx/kalyxo_docks_slot3.bin",
+            "path": "/Users/scawful/.codex/worktrees/lyra-world-lifecycle/oracle-of-secrets/Overworld/gfx/kalyxo_docks_slot3.bin",
             "sha256": "3fd640ea5f71e4301983dc4944b355f6d8582ea14797605688e5adaf37ffc3b4"
           },
           {
-            "path": "/Users/scawful/src/hobby/oracle-of-secrets-worktrees/lyra-tail-runtime-20261027/Overworld/gfx/kalyxo_docks_bg.bin",
+            "path": "/Users/scawful/.codex/worktrees/lyra-world-lifecycle/oracle-of-secrets/Overworld/gfx/kalyxo_docks_bg.bin",
             "sha256": "7ee45cc2f6e5f42d741794779fd6b79f9a5775f3fddea03a8a53d2038a9806c0"
           },
           {
-            "path": "/Users/scawful/src/hobby/oracle-of-secrets-worktrees/lyra-tail-runtime-20261027/Overworld/gfx/lyra_sky_tower_87.bin",
+            "path": "/Users/scawful/.codex/worktrees/lyra-world-lifecycle/oracle-of-secrets/Overworld/gfx/lyra_sky_tower_87.bin",
             "sha256": "b7db5e904ca0ad98f9c5268846efb2da0668a2e160a40a554c99747e65d659a8"
           },
           {
-            "path": "/Users/scawful/src/hobby/oracle-of-secrets-worktrees/lyra-tail-runtime-20261027/Overworld/gfx/lyra_stepped_fort_83.bin",
+            "path": "/Users/scawful/.codex/worktrees/lyra-world-lifecycle/oracle-of-secrets/Overworld/gfx/lyra_stepped_fort_83.bin",
             "sha256": "cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447"
           }
         ],
@@ -6793,7 +6793,7 @@
             "sha256": "1af8f166fc7ec48c0d0ee0b4c72acb9b776a453630d21875e09d4ab2879e0127"
           }
         },
-        "review_file": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-44/RESERVATION_REVIEW.json",
+        "review_file": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-44/RESERVATION_REVIEW_RETRY1.json",
         "runtime_admission": true,
         "scope": "seeded_checkpoint_preview",
         "tail_recipe": {
