@@ -86,6 +86,11 @@ def validate_saved_sram(raw):
 
 
 class LyraEpisode(Episode):
+    @property
+    def gameplay_module(self):
+        # Native Module0B_OverworldSpecial shares Module09's dispatcher.
+        return 0x0B
+
     def __init__(self, args, bridge, plan, cache):
         self.phase, self.plan, self.cache = args.phase, plan, cache
         # Reuse Episode.run's complete ownership/pause/boot path through its
@@ -125,7 +130,7 @@ class LyraEpisode(Episode):
         actual = self.b.read_block(0x7EC140, C.CACHE_BYTES)
         require(actual == self.cache, 'Lyra complete50-byte native cache mismatch')
         require((state['module'], state['sub'], state['indoors'], state['map'],
-                 state['x'], state['y']) == (9, 0, 0, 0xA0, 256, 2355),
+                 state['x'], state['y']) == (self.gameplay_module, 0, 0, 0xA0, 256, 2355),
                 f'Lyra stable destination/native19px exit walk mismatch: {state}')
         require(state['checkpoint'] == CHECKPOINT, 'Lyra checkpoint state differs')
         self.result.setdefault('cache_checks', []).append(dict(
@@ -140,13 +145,13 @@ class LyraEpisode(Episode):
         before = self.sample()
         self.press('right', 16)
         moved = self.sample()
-        require(moved['module'] == 9 and moved['sub'] == 0 and moved['indoors'] == 0
+        require(moved['module'] == self.gameplay_module and moved['sub'] == 0 and moved['indoors'] == 0
                 and moved['map'] == 0xA0 and moved['hp'] > 0
                 and moved['x'] > before['x'] and moved['y'] == before['y'],
                 f'Right16 movement did not stay on the admitted A0 floor: {moved}')
         self.press('left', 16)
         returned = self.sample()
-        require(returned['module'] == 9 and returned['sub'] == 0
+        require(returned['module'] == self.gameplay_module and returned['sub'] == 0
                 and returned['indoors'] == 0 and returned['map'] == 0xA0
                 and returned['hp'] > 0 and returned['y'] == before['y']
                 and abs(returned['x']-before['x']) < abs(moved['x']-before['x']),
@@ -155,7 +160,7 @@ class LyraEpisode(Episode):
                                         before=before, moved=moved, returned=returned))
         self.damage()
         self.choose_gameover(0)
-        state = self.wait(lambda s:s['module'] == 9 and s['sub'] == 0,
+        state = self.wait(lambda s:s['module'] == self.gameplay_module and s['sub'] == 0,
                           'native-death-continue-loaded-lyra-checkpoint')
         self.require_regional_destination(state)
         self.screenshot('lyra-death-continue')

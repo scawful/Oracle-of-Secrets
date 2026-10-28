@@ -9,6 +9,18 @@ import lyra_checkpoint_preview as L
 
 
 class NativePreviewStartupTest(unittest.TestCase):
+    def test_recorded_special_world_entry_requires_native_module_0b(self):
+        episode = object.__new__(L.LyraEpisode)
+        episode.cache = bytes(50)
+        episode.b = mock.Mock()
+        episode.b.read_block.return_value = episode.cache
+        episode.result = {}
+        state = dict(module=0x0B, sub=0, indoors=0, map=0xA0,
+                     x=256, y=2355, checkpoint='0101020001')
+        episode.require_regional_destination(state)
+        with self.assertRaisesRegex(RuntimeError, 'stable destination/native19px exit walk mismatch'):
+            episode.require_regional_destination(dict(state, module=0x09))
+
     def test_waits_for_initialized_title_before_base_controller_boot(self):
         episode = object.__new__(L.LyraEpisode)
         episode.wait = mock.Mock()
