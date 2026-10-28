@@ -4551,7 +4551,7 @@
     "regional_checkpoint_runtime_25:Scripts/Build/checkpoint_registry.py": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Scripts/Build/checkpoint_registry.py",
-      "sha256": "1000f5e0e024ce6ed63cad2f5894a381eda3befd9edee3cff566ce7161e11a32"
+      "sha256": "36f800a78b0f26adb95e7517a2be643a9aa03c02d75e8cba91aa8b306aa25e7f"
     },
     "regional_checkpoint_runtime_25:Scripts/Build/build_rom.sh": {
       "source_set": "regional_checkpoint_runtime_25",
@@ -4566,7 +4566,7 @@
     "regional_checkpoint_runtime_25:Tests/test_checkpoint_registry.py": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Tests/test_checkpoint_registry.py",
-      "sha256": "49ddc0d181b07f2d2d0db9342dd0e8306c30244b12bfe39db197de6f78a37642"
+      "sha256": "63cb00d8da1c9fe754d16646d2469244e36ea443202572074bcbb0aec8d5b988"
     },
     "regional_checkpoint_runtime_25:Tests/routines/regional_checkpoints.py": {
       "source_set": "regional_checkpoint_runtime_25",

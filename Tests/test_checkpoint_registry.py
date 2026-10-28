@@ -586,7 +586,7 @@ class PrivateCheckpointCacheTests(unittest.TestCase):
     def test_collision_clearance_and_recipe_cannot_silently_change(self):
         changed=bytearray(self.source);changed[0x71459]=1
         landing=dict(self.landing,source_rom_sha256=hashlib.sha256(changed).hexdigest())
-        with self.assertRaisesRegex(ValueError,'blocked collision quarter'):
+        with self.assertRaisesRegex(ValueError,'anchor quarter binding differs'):
             C.private_preview_cache(bytes(changed),self.document,landing,self.recipe)
         for recipe in ({'A0':{}},dict(self.recipe,A2={}),{'A0':{'area_gfx':True},'A1':{}}):
             with self.assertRaisesRegex(ValueError,'runtime recipe'):
@@ -609,6 +609,12 @@ class PrivateCheckpointCacheTests(unittest.TestCase):
         landing['source_rom_sha256']=hashlib.sha256(source).hexdigest()
         with self.assertRaisesRegex(ValueError,'floor dispatcher changed'):
             C.private_preview_cache(bytes(source),doc,landing,self.recipe)
+
+    def test_walkable_neighborhood_does_not_override_plain_anchor_binding(self):
+        changed=bytearray(self.source);changed[0x71459]=0x48
+        landing=dict(self.landing,source_rom_sha256=hashlib.sha256(changed).hexdigest())
+        with self.assertRaisesRegex(ValueError,'anchor quarter binding differs'):
+            C.private_preview_cache(bytes(changed),self.document,landing,self.recipe)
 
     def test_live_binder_refuses_an_engine_without_checkpoint_source_selection(self):
         from unittest import mock
