@@ -87,6 +87,14 @@ if not(defined("LYRA_CURRENT_ACTORS_BOUND"))
 endif
 assert !LYRA_CURRENT_ACTORS_ENABLED == 0 || !LYRA_CURRENT_MODE == 1, "Current actors require current mode"
 assert !LYRA_CURRENT_ACTORS_ENABLED == 0 || !LYRA_CURRENT_ACTORS_BOUND == 1, "Current actors require source admission"
+if not(defined("LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED"))
+  !LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED = 0
+endif
+if not(defined("LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND"))
+  !LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND = 0
+endif
+assert !LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED == 0 || !LYRA_CURRENT_MODE == 1, "Private pilot requires current mode"
+assert !LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED == 0 || !LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND == 1, "Private pilot boundaries require source admission"
 assert !LYRA_PROJECT_DATA_PRESENT == 0 || !DISABLE_OVERWORLD == 0, "Lyra project data requires overworld loaders"
 
 if !ENABLE_MASK_R_BINDING == 1

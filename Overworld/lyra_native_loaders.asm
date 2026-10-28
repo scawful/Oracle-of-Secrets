@@ -273,6 +273,11 @@ endif
 if !LYRA_CURRENT_EVENTS_ENABLED == 1
   incsrc "lyra_tail_events.asm"
 endif
+if defined("LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED")
+  if !LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED == 1
+    incsrc "lyra_private_pilot.asm"
+  endif
+endif
 Lyra_CurrentNativeCodeEnd:
 assert pc() <= !LYRA_CURRENT_CODE_END, "Current reader code exceeds explicit origin"
 pullpc

@@ -5074,6 +5074,11 @@ OverworldHandleTransitions:
         .noTransition
         .noDeltaX
 
+        if defined("LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED")
+          if !LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED == 1
+            LyraPilot_BoundaryBlocked = pc()
+          endif
+        endif
         JSL.l Overworld_CheckForSpecialOverworldTrigger
 
         RTS
@@ -5084,6 +5089,12 @@ OverworldHandleTransitions:
 
     SEP #$20
 
+    if defined("LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED")
+      if !LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED == 1
+        LyraCall_PrivatePilotBoundary = pc()
+        JSL Lyra_PrivatePilotCanScroll : BCS .noTransition
+      endif
+    endif
     ; Just makes sure we're not using a medallion or input is disabled.
     JSL.l Player_IsScreenTransitionPermitted : BCS .noTransition
         STY.b $02 : STZ.b $03

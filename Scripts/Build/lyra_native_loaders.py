@@ -1500,6 +1500,37 @@ def emit_current_actor_data(plan):
     return '\n'.join(lines)+'\n'
 
 
+def plan_private_pilot_boundaries(document, selected_areas):
+    """Describe the human-selected private pair; never select a runtime policy.
+
+    Keep the complete saved document as provenance. A partial private test does
+    not assign the other30 areas or qualify their actors, endpoints or assets.
+    """
+    from lyra_project_terrain import TerrainDocument
+    import lyra_current_transfer as current
+    expected=[dict(parent_map_id=0xA0,size='small',maps=[0xA0]),
+              dict(parent_map_id=0xA1,size='small',maps=[0xA1])]
+    R.require(isinstance(document,TerrainDocument) and selected_areas==expected,
+              'PRIVATE_PILOT_AREAS_UNBOUND: exactly A0/A1 as separate Small test areas required')
+    for area in document.gameplay_areas:
+        if set(area['maps']) & {0xA0,0xA1}:
+            R.require(area in expected,'PRIVATE_PILOT_AREAS_CONFLICT: saved camera grouping differs')
+    return dict(kind='lyra.private_pilot_boundary_source_plan.v1',document_sha256=current._document_identity(document),
+        scope='private_test_only',selected_areas=expected,allowed_tail_maps=[0xA0,0xA1],
+        allowed_scroll_edges=[dict(source=0xA0,direction=0,target=0xA1),dict(source=0xA1,direction=2,target=0xA0)],
+        blocked_scroll_edges=[dict(source=a,direction=d) for a in (0xA0,0xA1) for d in (0,2,4,6)
+                              if (a,d) not in ((0xA0,0),(0xA1,2))],
+        unselected_tail_maps=list(range(0xA2,0xC0)),protected_legacy_storage_span=[0x93,0x9F],
+        named_overlay_templates=[0x93,0x94,0x95,0x96,0x97,0x9C,0x9D,0x9E,0x9F],
+        approved_native_coast_map=0x98,other_legacy_roles_unassigned=[0x99,0x9A,0x9B],
+        overlay_decoding_changed=False,native_only_transitions_changed=False,metadata_maps_preserved=32,
+        strict_full32_publication_changed=False,boundary_flag='LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED',
+        boundary_binding_flag='LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND',allocation_granted=False,
+        producer_enforcement_verified=False,runtime_admission=False,boundaries_compiled=False,rom_written=False,
+        remaining_consumers=['separate private subset publisher admission','selected entry/return',
+            'mirror/warp/flight and full/sub loader preaccess admission','regional checkpoint/Home lifecycle'])
+
+
 def inspect_current_consumers(compiled, symbols):
     """Exact inspection for independent review; not a self-issued approval."""
     import lyra_native_state as state
@@ -1590,4 +1621,23 @@ def inspect_current_consumers(compiled, symbols):
     else:
         hook(address('LoadCheckpointOrWorld'),'Lyra_TailEvent_MigrateSave')
     R.require(compiled[A.pc(0x1BC906):A.pc(0x1BC906)+3]==bytes.fromhex('290200'), 'Current M16 event mask differs')
-    return dict(kind='lyra.current_compiled_consumers.v1',regions=regions,source_calls=calls,fixed_hooks=hooks)
+    result=dict(kind='lyra.current_compiled_consumers.v1',regions=regions,source_calls=calls,fixed_hooks=hooks)
+    pilot='Lyra_PrivatePilotCanScroll' in labels
+    R.require(pilot == ('LyraCall_PrivatePilotBoundary' in labels)
+              == ('LyraPilot_BoundaryBlocked' in labels), 'Incomplete private pilot boundary symbols')
+    if pilot:
+        call=address('LyraCall_PrivatePilotBoundary');blocked=address('LyraPilot_BoundaryBlocked')
+        helper=address('Lyra_PrivatePilotCanScroll');raw=compiled[A.pc(call):A.pc(call)+6]
+        R.require(len(raw)==6 and raw[:4]==b'\x22'+helper.to_bytes(3,'little') and raw[4]==0xB0
+                  and call+6+int.from_bytes(raw[5:],'little',signed=True)==blocked,
+                  'Current private pilot precommit branch differs')
+        host=next(row for row in regions if row['label']=='LyraHost_OverworldHandleTransitions')['snes']
+        code=regions[0]['snes']
+        R.require(host[0]<=blocked<call<call+6<=host[1] and code[0]<=helper<code[1],
+                  'Current private pilot boundary escaped its selected code/host')
+        direction=compiled[A.pc(0x02A634):A.pc(0x02A634)+8]
+        R.require(direction==bytes.fromhex('0200feff1000f0ff'), 'Current private pilot direction source differs')
+        result['private_pilot_boundary']=dict(call_snes=call,blocked_snes=blocked,helper_snes=helper,
+            payload_hex=raw.hex(),direction_table_snes=0x02A634,direction_table_hex=direction.hex(),
+            scope='private_A0_A1_scroll_only',entry_warp_loader_admission=False)
+    return result
