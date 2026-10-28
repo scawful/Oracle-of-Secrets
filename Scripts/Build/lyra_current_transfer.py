@@ -1110,7 +1110,7 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     contract = _json(Q.read_bound(profile['contract']))
     report = dict(current_mode=True,parent_count=192,source_contract_sha256=R.sha(P.encoded(contract)),
         generated_sha256=R.sha(graphics.encode()),graphics_origin_snes=profile['origins']['graphics']['snes'])
-    bg_plan,bg_binding = current_bg128(source,document,profile,ledger,runtime.get('bg128'))
+    bg_plan,bg_binding = current_bg128(source,document,profile,ledger,runtime.get('bg128'),private_pilot=pilot)
     files = P.render_current_source_outputs(tables,contract=contract,graphics_source=graphics,
         graphics_report=report,current_source_profile=profile,actor_storage_plan=actors,bg128_plan=bg_plan,private_pilot=pilot)
     endpoint_state = _json(files['prepare.json'])['native_state_contract']
@@ -1222,9 +1222,15 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     return dict(kind='lyra.current_build_prepare.v1',selected=True,current_files=files,inputs=bindings)
 
 
-def current_bg128(source, document, profile, ledger, binding):
+def current_bg128(source, document, profile, ledger, binding, *, private_pilot=None):
     """Bind existing BG data/restore code inside the same current allocation."""
-    required=any('background_palette' in row for row in document.properties)
+    selected = set(V.FULL_MAPS)
+    if private_pilot is not None:
+        import lyra_native_loaders as native
+        native.private_pilot_document(document, private_pilot)
+        selected = set(private_pilot['allowed_tail_maps'])
+    required=any('background_palette' in row for area,row in enumerate(document.properties,0xA0)
+                 if area in selected)
     R.require(not required or binding is not None,
               'CURRENT_RUNTIME_BG128_UNADMITTED: saved palettes require explicit restore/code binding')
     if binding is None:
