@@ -149,6 +149,9 @@ def _live(project):
     for row in receipt['artifacts']:
         _keys(row, {'role', 'path', 'sha256', 'bytes'}, 'native Save artifact')
         role = row['role']
+        R.require(role != 'dependency.planning',
+                  'NATIVE_SAVE_RECEIPT_BINDS_LIVE_PLANNING: Planning is a live project reference, '
+                  'not a build input; complete a new native Save with the selected yaze producer')
         R.require(type(role) is str and role not in artifacts
                   and (role in expected or role.startswith('dependency.')),
                   'Unknown or duplicate native Save artifact role')

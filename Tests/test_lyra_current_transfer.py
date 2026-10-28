@@ -190,6 +190,25 @@ class CurrentSaveTransferTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'retired.*Current saved input changed'):
             X.verify_transfer(request, self.project, self.rom)
 
+    def test_receipt_binding_live_planning_refuses_until_a_new_save(self):
+        plan = self.root / 'live.plan.json'
+        plan.write_bytes(b'{"schema":"yaze.plan/1"}')
+        with self.project.open('a') as handle:
+            handle.write(f'[planning]\nfile={plan}\n')
+        self.inputs['project'] = X.Q.bound(self.project)
+        self.save['artifacts'] = [*self.artifacts(self.inputs),
+            dict(role='dependency.planning', **X.Q.bound(plan), bytes=plan.stat().st_size)]
+        self.next_save()
+        with self.assertRaisesRegex(ValueError, 'NATIVE_SAVE_RECEIPT_BINDS_LIVE_PLANNING.*new native Save'):
+            self.prepare()
+        self.save['artifacts'] = self.artifacts(self.inputs)
+        self.next_save()
+        report, request = self.prepare()
+        self.assertTrue(report['snapshot_ready'])
+        plan.write_bytes(b'{"schema":"yaze.plan/1","status":"agent edit"}')
+        data, _, _ = X.verify_transfer(request, self.project, self.rom)
+        self.assertNotIn('dependency.planning', data['inputs'])
+
     def test_each_modeled_file_and_additional_rom_mutation_retires_normal_descriptor(self):
         self.use_serialized_project()
         report, request = self.prepare()

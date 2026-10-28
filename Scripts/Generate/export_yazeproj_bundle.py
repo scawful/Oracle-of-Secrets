@@ -587,6 +587,7 @@ def write_authoring_project(
     lyra_terrain: Path | None = None,
     graphics_preview: Path | None = None,
     desktop: bool = False,
+    rom_source: Path | None = None,
 ) -> None:
     """Capture explicit project dependencies; never modify an input resource."""
     source_project = _source_path(str(source_project), Path.cwd())
@@ -738,7 +739,6 @@ def write_authoring_project(
     for section, key in (
         ("agent_settings", "custom_system_prompt"),
         ("agent_settings", "builder_blueprint_path"),
-        ("planning", "file"),
         ("atlas", "symbols"),
         ("zscream_compatibility", "original_project_file"),
     ):
@@ -784,6 +784,21 @@ def write_authoring_project(
     updates[("music", "storage_key")] = (
         values[("project", "project_id")] + "_bundle_music"
     )
+    # Planning is a declared live reference, outside build provenance: keep
+    # the plan in place so its own lifecycle never invalidates the export.
+    raw_planning = values.get(("planning", "file"), "")
+    if raw_planning:
+        planning = _source_path(raw_planning, source_project.parent).resolve()
+        aliases = {path.resolve() for path in sources}
+        aliases.add(source_project.resolve())
+        if rom_source is not None:
+            aliases.add(rom_source.resolve())
+        if planning in aliases or planning.is_relative_to(bundle_root.resolve()):
+            raise ValueError(
+                f"planning.file {planning} is also a ROM/tool/build input; a live "
+                "Planning reference must be a separate file"
+            )
+        updates[("planning", "file")] = str(planning)
     result = _rewrite_project(content, updates)
     contract = ORACLE_DESKTOP_SAVE_CONTRACT if desktop else ORACLE_SAVE_CONTRACT
     validate_portable_project_contract(result, rom_sha1, contract,
@@ -831,11 +846,18 @@ CAPTURED_PATH_BINDINGS = (
     "files.hack_manifest_file",
     "agent_settings.custom_system_prompt",
     "agent_settings.builder_blueprint_path",
-    "planning.file",
     "atlas.symbols",
     "zscream_compatibility.original_project_file",
 )
 CAPTURED_PATH_LIST_BINDINGS = ("files.additional_roms", "atlas.annotations")
+NATIVE_SAVE_MANDATORY_ROLES = ("project", "rom", "producer")
+# Bundle members the build or the Save contract reads; a live Planning
+# reference may not name one of them under another role.
+BUILD_OWNED_MEMBERS = ("rom", "project.yaze", "manifest.json",
+                       AUTHORING_RECEIPT, NATIVE_SAVE_RECEIPT)
+BUILD_OWNED_TREES = ("project", "tools", "assets")
+# Hack manifest fields derived from the editable dev ROM (bundle `rom`).
+DEV_ROM_MANIFEST_FIELDS = ("dungeon_stream_regions", "editor_managed_regions")
 
 
 def _is_sha256(value) -> bool:
@@ -927,8 +949,41 @@ def _load_native_save_receipt(bundle_root: Path) -> dict | None:
         roles[artifact["role"]] = artifact
     if "rom" not in roles or "producer" not in roles:
         raise invalid("rom and producer roles are required")
+    if "dependency.planning" in roles:
+        raise invalid(
+            "it binds dependency.planning, but Planning is a live reference "
+            "outside Save provenance; complete a new native Save with the "
+            "bundle's pinned yaze producer"
+        )
     receipt["roles"] = roles
     return receipt
+
+
+def _require_live_planning(
+    bundle_root: Path, receipt: dict, values: dict, native: dict | None
+) -> None:
+    """Refuse a live Planning reference that is also a build or Save input."""
+    raw = values.get("planning.file", "")
+    if not raw:
+        return
+    path = Path(raw)
+    planning = (path if path.is_absolute() else bundle_root / path).resolve()
+    root = bundle_root.resolve()
+    inputs = {(root / member).resolve(): member for member in BUILD_OWNED_MEMBERS}
+    inputs.update({(root / rel).resolve(): rel for rel in receipt["files"]})
+    inputs.update({(root / rel).resolve(): key
+                   for key, rel in receipt["bindings"].items()})
+    if native is not None:
+        inputs.update({Path(artifact["path"]).resolve(): f"native Save role {role}"
+                       for role, artifact in native["roles"].items()})
+    alias = inputs.get(planning) or next(
+        (tree for tree in BUILD_OWNED_TREES
+         if planning.is_relative_to((root / tree).resolve())), None)
+    if alias is not None:
+        raise ValueError(
+            f"planning.file {raw} is also a ROM/tool/build input ({alias}); a "
+            "live Planning reference must stay outside build provenance"
+        )
 
 
 def _require_saved_state(
@@ -936,8 +991,13 @@ def _require_saved_state(
     receipt: dict,
     values: dict,
     changed_files: list[str],
+    rom_identity: tuple[str, str] | None = None,
 ) -> None:
-    """Accept post-export differences only when a genuine Save binds them."""
+    """Accept post-export differences only when a genuine Save binds them.
+
+    rom_identity is (export romChecksum, current sha1) when the editable
+    bundle `rom` differs from its export identity.
+    """
     editable = {receipt["bindings"].get(key): role
                 for key, role in NATIVE_SAVE_EDITABLE_ROLES.items()}
     editable.pop(None, None)
@@ -949,8 +1009,15 @@ def _require_saved_state(
             )
     native = _load_native_save_receipt(bundle_root)
     if native is None:
+        if rom_identity is not None:
+            raise ValueError(
+                f"manifest.json romChecksum mismatch: {rom_identity[0]} != "
+                f"{rom_identity[1]}; no {NATIVE_SAVE_RECEIPT} from a yaze Save "
+                "binds the edited rom; refusing an external or unsaved edit"
+            )
+        changed = changed_files[0] if changed_files else "project.yaze"
         raise ValueError(
-            f"Authoring dependency hash mismatch: {changed_files[0]} changed "
+            f"Authoring dependency hash mismatch: {changed} changed "
             f"and no {NATIVE_SAVE_RECEIPT} from a yaze Save binds it; refusing "
             "an external or unsaved edit"
         )
@@ -972,16 +1039,18 @@ def _require_saved_state(
             )
 
     require_bound("project.yaze", "project")
+    # The editable input `rom`, never the derived build ROM under project/Roms.
     require_bound("rom", "rom")
-    changed_roles = {"project", *(editable[r] for r in changed_files)}
+    checked_roles = {*NATIVE_SAVE_MANDATORY_ROLES,
+                     *(editable[r] for r in changed_files)}
     for relative in changed_files:
         require_bound(relative, editable[relative])
     for error in native["binding_errors"]:
         prefix = error.split(": ", 1)[0] if ": " in error else ""
-        if not _is_save_role(prefix) or prefix in changed_roles:
+        if not _is_save_role(prefix) or prefix in checked_roles:
             raise ValueError(
                 f"{NATIVE_SAVE_RECEIPT} reports an incomplete Save binding "
-                f"affecting {', '.join(sorted(changed_roles))}: {error}"
+                f"affecting {', '.join(sorted(checked_roles))}: {error}"
             )
 
     pin = "tools/producer.json"
@@ -1011,9 +1080,12 @@ def _require_saved_state(
                     f"Saved project.yaze binds {key} outside the bundle "
                     f"({entry}); re-export to capture it"
                 ) from exc
+    _require_live_planning(bundle_root, receipt, values, native)
 
 
-def verify_authoring_dependencies(bundle_root: Path) -> dict | None:
+def verify_authoring_dependencies(
+    bundle_root: Path, rom_identity: tuple[str, str] | None = None
+) -> dict | None:
     receipt_path = bundle_root / AUTHORING_RECEIPT
     if not receipt_path.exists():
         return None
@@ -1054,9 +1126,28 @@ def verify_authoring_dependencies(bundle_root: Path) -> dict | None:
             or hashlib.sha256(data).hexdigest() != expected["sha256"]
         ):
             changed_files.append(relative)
-    if descriptor_changed or changed_files:
-        _require_saved_state(bundle_root, receipt, values, changed_files)
+    _require_live_planning(bundle_root, receipt, values, None)
+    if descriptor_changed or changed_files or rom_identity is not None:
+        _require_saved_state(bundle_root, receipt, values, changed_files,
+                             rom_identity)
     return receipt
+
+
+def _without_dev_rom_fields(manifest: dict) -> dict:
+    """Drop hack manifest fields a native-saved dev ROM edit may change."""
+    masked = json.loads(json.dumps(manifest))
+    rom = masked.get("rom")
+    if isinstance(rom, dict):
+        rom.pop("dev_rom_sha1", None)
+        rom.pop("dev_rom_size", None)
+    for field in DEV_ROM_MANIFEST_FIELDS:
+        masked.pop(field, None)
+    tags = masked.get("room_tags")
+    if isinstance(tags, dict) and tags.get("dispatch_source") == "dev_rom":
+        masked.pop("room_tags")
+        if isinstance(masked.get("summary"), dict):
+            masked["summary"].pop("room_tag_count", None)
+    return masked
 
 
 def _generate_bundle_hack_manifest(bundle_root: Path) -> dict:
@@ -1237,18 +1328,25 @@ def verify_bundle(bundle_root: Path) -> None:
             + "\n".join(f"  - {p}" for p in missing)
         )
 
-    # Ensure manifest checksum matches ROM file.
+    # Ensure manifest checksum matches ROM file. manifest.json stays the export
+    # identity; an authoring bundle accepts a different editable rom only when
+    # a genuine native Save binds it.
     manifest = json.loads((bundle_root / "manifest.json").read_text(encoding="utf-8"))
     rom_sha1 = sha1_file(bundle_root / "rom")
-    if manifest.get("romChecksum") != rom_sha1:
+    export_sha1 = manifest.get("romChecksum")
+    rom_edited = export_sha1 != rom_sha1
+    if rom_edited and not (bundle_root / AUTHORING_RECEIPT).exists():
         raise ValueError(
-            f"manifest.json romChecksum mismatch: {manifest.get('romChecksum')} != {rom_sha1}"
+            f"manifest.json romChecksum mismatch: {export_sha1} != {rom_sha1}"
         )
 
     project_content = (bundle_root / "project.yaze").read_bytes().decode(
         "utf-8"
     )
-    authoring = verify_authoring_dependencies(bundle_root)
+    authoring = verify_authoring_dependencies(
+        bundle_root, (export_sha1, rom_sha1) if rom_edited else None)
+    if authoring:
+        rom_sha1 = export_sha1
     contract = ORACLE_SAVE_CONTRACT
     if authoring and authoring["mode"] == "desktop":
         contract = ORACLE_DESKTOP_SAVE_CONTRACT
@@ -1276,6 +1374,14 @@ def verify_bundle(bundle_root: Path) -> None:
     validate_portable_manifest_contract(bundle_root, hack_manifest)
 
     expected_manifest = _generate_bundle_hack_manifest(bundle_root)
+    if rom_edited:
+        if hack_manifest.get("rom", {}).get("dev_rom_sha1") != export_sha1:
+            raise ValueError(
+                "hack_manifest.json dev_rom_sha1 is not the bundle's export "
+                "romChecksum; refusing relabeled ROM provenance"
+            )
+        hack_manifest = _without_dev_rom_fields(hack_manifest)
+        expected_manifest = _without_dev_rom_fields(expected_manifest)
     if hack_manifest != expected_manifest:
         raise ValueError(
             "hack_manifest.json is stale relative to the bundled ROM or "
@@ -1474,7 +1580,8 @@ def main() -> int:
         write_authoring_project(staging_bundle, args.project, rom_sha1,
                                 lyra_terrain=args.lyra_terrain,
                                 graphics_preview=args.graphics_preview,
-                                desktop=args.desktop)
+                                desktop=args.desktop,
+                                rom_source=rom_path)
     write_bundle_hack_manifest(staging_bundle)
 
     # Write config + metadata. Existing portable exports keep their contract.

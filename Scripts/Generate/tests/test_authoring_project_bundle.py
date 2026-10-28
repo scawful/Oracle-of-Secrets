@@ -279,8 +279,10 @@ flagged_sheets=0xD4,0xD6
         with self.assertRaisesRegex(ValueError, "inside captured source"):
             copy_repo_snapshot(source, source / "nested", reject_symlinks=True)
 
-    def test_planning_and_atlas_writes_resolve_inside_bundle(self):
-        self.write("plan.json", b'{"schema":"yaze.plan/1"}')
+    def test_planning_stays_live_and_atlas_writes_resolve_inside_bundle(self):
+        # Planning is a declared live project reference, not build input: the
+        # export keeps the plan in place and records no provenance for it.
+        plan = self.write("plan.json", b'{"schema":"yaze.plan/1"}')
         self.write("annotations.json", b'{"annotations":[]}')
         with self.project.open("a") as stream:
             stream.write(
@@ -290,8 +292,19 @@ flagged_sheets=0xD4,0xD6
         verify_bundle(self.bundle)
         values = self.values()
         self.assertEqual(values["atlas", "export_folder"], "output/atlas")
-        self.assertTrue((self.bundle / values["planning", "file"]).is_file())
+        self.assertEqual(values["planning", "file"], str(plan.resolve()))
         self.assertTrue((self.bundle / values["atlas", "annotations"]).is_file())
+        receipt = json.loads((self.bundle / "authoring-dependencies.json").read_text())
+        self.assertNotIn("planning.file", receipt["bindings"])
+        self.assertFalse(any("plan.json" in name for name in receipt["files"]))
+        plan.write_bytes(b'{"schema":"yaze.plan/1","status":"agent edit"}')
+        verify_bundle(self.bundle)
+
+    def test_planning_that_aliases_a_build_input_refuses_export(self):
+        with self.project.open("a") as stream:
+            stream.write("\n[planning]\nfile=walls.asm\n")
+        with self.assertRaisesRegex(ValueError, "planning.file .* is also a ROM/tool/build input"):
+            self.capture()
 
     def test_source_change_during_capture_refuses_publication(self):
         from unittest import mock
@@ -698,10 +711,127 @@ flagged_sheets=0xD4,0xD6
     def test_native_saved_descriptor_cannot_add_external_binding(self):
         self.saved_terrain_edit()
         descriptor = self.bundle / "project.yaze"
-        descriptor.write_text(
-            descriptor.read_text() + "\n[planning]\nfile=/external/oracle.plan.json\n")
+        saved = descriptor.read_text()
+        descriptor.write_text(saved + "\n[atlas]\nsymbols=/external/oracle.sym\n")
         self.write_native_save()
-        with self.assertRaisesRegex(ValueError, "binds planning.file outside the bundle"):
+        with self.assertRaisesRegex(ValueError, "binds atlas.symbols outside the bundle"):
+            verify_bundle(self.bundle)
+
+    def test_native_saved_live_planning_reference_passes_outside_bundle(self):
+        self.saved_terrain_edit()
+        plan = self.root / "afs/oracle.plan.json"
+        plan.parent.mkdir()
+        plan.write_bytes(b'{"schema":"yaze.plan/1"}')
+        descriptor = self.bundle / "project.yaze"
+        descriptor.write_text(descriptor.read_text() + f"\n[planning]\nfile={plan}\n")
+        self.write_native_save()
+        verify_bundle(self.bundle)
+        plan.write_bytes(b'{"schema":"yaze.plan/1","status":"agent edit"}')
+        verify_bundle(self.bundle)
+        self.assertEqual(
+            (self.bundle / "authoring-dependencies.json").read_bytes(),
+            self.export_receipt)
+
+    def test_live_planning_that_aliases_a_build_or_save_input_refuses(self):
+        self.saved_terrain_edit()
+        descriptor = self.bundle / "project.yaze"
+        saved = descriptor.read_text()
+        outside = self.root / "labels.json"
+        outside.write_bytes(b"{}")
+        for target in ("tools/z3ed", "rom", "project/Oracle_main.asm",
+                       "assets/project/lyra_terrain_file/terrain.json", str(outside)):
+            with self.subTest(target=target):
+                descriptor.write_text(saved + f"\n[planning]\nfile={target}\n")
+                extra = ({"dependency.labels_filename": outside}
+                         if target == str(outside) else {})
+                self.write_native_save(**extra)
+                with self.assertRaisesRegex(
+                        ValueError, "planning.file .* is also a ROM/tool/build input"):
+                    verify_bundle(self.bundle)
+
+    def test_old_receipt_binding_live_planning_requires_a_new_save(self):
+        self.saved_terrain_edit()
+        plan = self.root / "oracle.plan.json"
+        plan.write_bytes(b'{"schema":"yaze.plan/1"}')
+        self.write_native_save(**{"dependency.planning": plan})
+        with self.assertRaisesRegex(
+                ValueError, "binds dependency.planning.*new native Save"):
+            verify_bundle(self.bundle)
+        self.write_native_save()
+        verify_bundle(self.bundle)
+
+    def test_mandatory_role_binding_errors_refuse_even_when_hashes_match(self):
+        self.saved_terrain_edit()
+        for error in ("rom: explicit incomplete binding",
+                      "producer: explicit incomplete binding"):
+            with self.subTest(error=error):
+                self.write_native_save(errors=[error])
+                with self.assertRaisesRegex(
+                        ValueError, f"incomplete Save binding.*{error}"):
+                    verify_bundle(self.bundle)
+
+    def saved_rom_edit(self):
+        """A genuine yaze ROM Save edits the editable bundle `rom` in place."""
+        self.capture()
+        self.pin_tools()
+        self.terrain = self.bundle / self.values()["files", "lyra_terrain_file"]
+        self.provenance = {
+            name: (self.bundle / name).read_bytes()
+            for name in ("authoring-dependencies.json", "manifest.json",
+                         "project.yaze", "project/Roms/hack_manifest.json")}
+        rom = self.bundle / "rom"
+        self.export_rom = rom.read_bytes()
+        edited = bytearray(self.export_rom)
+        edited[-1] ^= 0xFF
+        rom.write_bytes(bytes(edited))
+
+    def test_native_saved_rom_edit_passes_against_frozen_export_provenance(self):
+        self.saved_rom_edit()
+        self.write_native_save()
+        verify_bundle(self.bundle)
+        for name, data in self.provenance.items():
+            self.assertEqual((self.bundle / name).read_bytes(), data, name)
+
+    def test_external_rom_edit_refuses(self):
+        self.saved_rom_edit()
+        with self.assertRaisesRegex(
+                ValueError, "romChecksum mismatch.*no project.yaze.native-save.json "
+                "from a yaze Save binds the edited rom"):
+            verify_bundle(self.bundle)
+        rom = self.bundle / "rom"
+        edited = rom.read_bytes()
+        rom.write_bytes(self.export_rom)
+        self.write_native_save()
+        rom.write_bytes(edited)
+        with self.assertRaisesRegex(ValueError, r"current rom \(role rom\)"):
+            verify_bundle(self.bundle)
+
+    def test_rom_edit_receipt_must_bind_the_editable_rom_not_the_built_rom(self):
+        self.saved_rom_edit()
+        built = self.bundle / "project/Roms/oos168x.sfc"
+        built.write_bytes((self.bundle / "rom").read_bytes())
+        self.write_native_save(rom=built)
+        with self.assertRaisesRegex(ValueError, r"current rom \(role rom\)"):
+            verify_bundle(self.bundle)
+        built.unlink()
+        self.write_native_save(errors=["rom: explicit incomplete binding"])
+        with self.assertRaisesRegex(ValueError, "incomplete Save binding"):
+            verify_bundle(self.bundle)
+
+    def test_rom_edit_refuses_blind_manifest_refresh(self):
+        self.saved_rom_edit()
+        self.write_native_save()
+        write_bundle_hack_manifest(self.bundle)
+        with self.assertRaisesRegex(ValueError, "export romChecksum|immutable"):
+            verify_bundle(self.bundle)
+        (self.bundle / "project/Roms/hack_manifest.json").write_bytes(
+            self.provenance["project/Roms/hack_manifest.json"])
+        manifest = self.bundle / "manifest.json"
+        refreshed = json.loads(manifest.read_text())
+        refreshed["romChecksum"] = hashlib.sha1(
+            (self.bundle / "rom").read_bytes()).hexdigest()
+        manifest.write_text(json.dumps(refreshed))
+        with self.assertRaises(ValueError):
             verify_bundle(self.bundle)
 
     def test_authoring_build_guard_survives_bundle_relocation(self):
