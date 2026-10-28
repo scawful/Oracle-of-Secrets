@@ -198,7 +198,7 @@ fi
 # Source sheets must match the selected editable base and tracked generated
 # streams. Refuse a changed base sheet before replacing any prior build output.
 run_check source_sprite_sheets 1 python3 "$repo_root/Scripts/Generate/sheet_overrides.py" \
-  --root "$repo_root" --base-rom "$base_rom" --check --respect-flags
+  --root "$repo_root" --base-rom "$base_rom" --check --respect-flags --rom-role editable_base
 
 # Custom collision is editor-authored but source-owned. Fail before generating
 # build inputs when the selected base ROM does not reproduce the tracked JSON.

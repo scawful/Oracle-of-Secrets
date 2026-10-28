@@ -1497,10 +1497,15 @@ AnimateMirrorWarp_LoadSubscreen:
     LDA.l SheetsTable_0AA4, X : TAY
         
     ; Get the pointer for one of the 2 Global sprite #2 sheets.
+    if !ENABLE_EXPANDED_GRAPHICS_TABLE == 1
+    JSL.l GfxSheet_GetPtr_Spr
+    LDA.b $02 : STA.b $05
+    else
     LDA.w GFXSheetPointers_sprite_low, Y  : STA.b $00
     LDA.w GFXSheetPointers_sprite_high, Y : STA.b $01
     LDA.w GFXSheetPointers_sprite_bank, Y : STA.b $02
                                             STA.b $05
+    endif
 
     PLB
         
