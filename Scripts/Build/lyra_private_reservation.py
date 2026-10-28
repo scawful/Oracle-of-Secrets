@@ -246,7 +246,7 @@ def verify_private_allocation(value, source):
 
 
 def compile_native_plan(source, document, granted, directory, *, native_copy_maps=(),
-                        protected_spans=(), spare_tile32_ids=(), current_source_profile=None):
+                        protected_spans=(), spare_tile32_ids=(), current_source_profile=None, private_pilot=None):
     """Compile current saved terrain in memory using an explicit allocation.
 
     This pure compiler does not grant the allocation or authorize publication.
@@ -258,10 +258,17 @@ def compile_native_plan(source, document, granted, directory, *, native_copy_map
     if any('mosaic' in prop for prop in document.properties):
         R.require(current_source_profile is not None,
                   'CURRENT_RUNTIME_PROPERTIES_UNBOUND: historical compiler has no saved runtime property consumer')
-    if document.gameplay_areas:
+    selected = FULL_MAPS
+    layout_document = document
+    if private_pilot is not None:
+        from lyra_native_loaders import private_pilot_document
+        R.require(current_source_profile is not None, 'PRIVATE_PILOT_SOURCE_UNBOUND')
+        layout_document = private_pilot_document(document,private_pilot)
+        selected = list(private_pilot['allowed_tail_maps'])
+    if layout_document.gameplay_areas:
         R.require(current_source_profile is not None,
                   'CURRENT_GAMEPLAY_AREAS_NATIVE_UNBOUND: historical compiler has no authored area consumer')
-        expected_directory = A.render_dependency_plan(FULL_MAPS, document=document)[0]
+        expected_directory = A.render_dependency_plan(selected, document=layout_document)[0]
         R.require(directory == expected_directory,
                   'CURRENT_GAMEPLAY_AREAS_RENDER_MISMATCH: directory differs from saved gameplay areas')
     original_source = source
@@ -274,7 +281,7 @@ def compile_native_plan(source, document, granted, directory, *, native_copy_map
     R.require(type(native_copy_maps) in (tuple, list)
               and all(type(area) is int and 0 <= area < 160 for area in native_copy_maps)
               and len(native_copy_maps) == len(set(native_copy_maps)), 'Invalid native copy maps')
-    missing = C._missing(source, document, FULL_MAPS)
+    missing = C._missing(source, document, selected)
     R.require(len(missing) <= len(granted.owned_tile32_ids),
               f'Current full32 Tile32 capacity conflict: {len(missing)} required, '
               f'{len(granted.owned_tile32_ids)} explicitly allocated')
@@ -296,7 +303,7 @@ def compile_native_plan(source, document, granted, directory, *, native_copy_map
     else:
         from lyra_current_transfer import verify_current_native_source_profile
         verify_current_native_source_profile(current_source_profile, original_source, document,
-            allocation=granted, spare_tile32_ids=spare_tile32_ids, native_copy_maps=native_copy_maps)
+            allocation=granted, spare_tile32_ids=spare_tile32_ids, native_copy_maps=native_copy_maps, private_pilot=private_pilot)
         reader_spans = [tuple(row['pc']) for row in current_source_profile['native_reader_preimages']]
     native_spans = [(0x864, 0x871), (atlas, atlas_end),
         *reader_spans,
@@ -317,8 +324,8 @@ def compile_native_plan(source, document, granted, directory, *, native_copy_map
                                tile32_capacity=granted.tile32_capacity,
                                tile32_assignments=granted.tile32_assignments)
     definitions = {i: A.read_tile32(source, i) for i in range(0x4540)}
-    compiled = compile_terrain(document, definitions, sea_allocation,
-                               map_ids=FULL_MAPS, render_directory=directory)
+    compiled = compile_terrain(layout_document, definitions, sea_allocation,
+                               map_ids=selected, render_directory=directory)
     before_rows = N.reject_stream_aliases(source, granted.stream_ranges)
     packed = T.packed_write_plan(source, document, compiled, sea_allocation)
     writes = [dict(kind='dictionary', **row) for row in packed['writes']]
@@ -374,12 +381,12 @@ def compile_native_plan(source, document, granted, directory, *, native_copy_map
                 field = layout[table['table']]
                 table['pc'] = origin + field['offset'] + row['map_id'] * field['stride']
         verify_current_native_source_profile(current_source_profile, original_source, document,
-            allocation=granted, spare_tile32_ids=spare_tile32_ids, native_copy_maps=native_copy_maps)
-    actors = A.consumer_blockers(document, FULL_MAPS, FULL_MAPS,
+            allocation=granted, spare_tile32_ids=spare_tile32_ids, native_copy_maps=native_copy_maps, private_pilot=private_pilot)
+    actors = A.consumer_blockers(document, selected, selected,
                                 current_source=current_source_profile is not None)
     result = dict(kind='lyra.native_full32_write_plan.v1', source_rom_sha256=source_hash,
         source_size=source_size, expanded_size=len(source),
-        selected_maps=FULL_MAPS, natural_render_maps=FULL_MAPS,
+        selected_maps=selected, natural_render_maps=selected,
         stream_payload_bytes=len(payload), stream_pc_ranges=[list(span) for span in granted.stream_ranges],
         emitted_definitions=[dict(tile32_id=i, quadrants=list(q)) for i, q in compiled.new_definitions],
         native_copies=copies, streams=streams, packed_dictionary_plan=packed, writes=writes,
@@ -393,12 +400,12 @@ def compile_native_plan(source, document, granted, directory, *, native_copy_map
     if current_source_profile is not None:
         result.update(current_source_profile_sha256=T.digest(current_source_profile),
                       source_origins=current_source_profile['origins'],
-                      native_state_contract=A.plan_native_state(original_source, FULL_MAPS,
-                          authoring=[(area,document.authoring[area-A.FIRST_MAP]) for area in FULL_MAPS],
-                          gameplay_areas=document.gameplay_areas))
-        if document.gameplay_areas:
-            result.update(gameplay_area_plan=A.gameplay_area_plan(document),
-                gameplay_transition_rows=A.gameplay_transition_rows(original_source, document),
+                      native_state_contract=A.plan_native_state(original_source, selected,
+                          authoring=[(area,document.authoring[area-A.FIRST_MAP]) for area in selected],
+                          gameplay_areas=layout_document.gameplay_areas))
+        if layout_document.gameplay_areas:
+            result.update(gameplay_area_plan=A.gameplay_area_plan(layout_document),
+                gameplay_transition_rows=A.gameplay_transition_rows(original_source, layout_document,private_pilot=private_pilot is not None),
                 render_directory=[dict(map_id=plan.map_id, quadrant_maps=list(plan.quadrant_maps))
                                   for plan in compiled.maps])
     return result, payload

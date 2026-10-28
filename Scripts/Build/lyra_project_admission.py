@@ -348,7 +348,7 @@ def render_dependency_plan(map_ids, footprints=(), *, document=None):
     return directory, closure
 
 
-def gameplay_transition_rows(source, document):
+def gameplay_transition_rows(source, document, *, private_pilot=False):
     """Lower complete saved areas using maintained ZScream v3 transitions.
 
     Save.cs/SaveLargeMapsExpanded at upstream revision
@@ -360,8 +360,9 @@ def gameplay_transition_rows(source, document):
     require(type(source) is bytes and len(source) in (0x200000, 0x400000),
             "Current transitions require exact2MiB or4MiB saved bytes")
     plan = gameplay_area_plan(document)
-    require(plan['complete'],
-            "CURRENT_GAMEPLAY_AREAS_UNASSIGNED: transition lowering requires all32 assigned pages")
+    require(plan['complete'] or (private_pilot is True and
+            plan['areas'] == [dict(parent_map_id=a,size='small',maps=[a]) for a in (0xA0,0xA1)]),
+            "CURRENT_GAMEPLAY_AREAS_UNASSIGNED: transition lowering requires all32 assigned pages or exact private pair")
     sizes = {'small': (1, 1), 'large': (2, 2), 'wide': (2, 1), 'tall': (1, 2)}
     codes = {0: 'small', 1: 'large', 2: 'wide', 3: 'tall'}
     members = {row['map_id']: row for row in plan['assignments']}
@@ -373,6 +374,8 @@ def gameplay_transition_rows(source, document):
         if not (0 <= column + dx < 8 and 0 <= row + dy < 8 and 0 <= target < 192):
             return None
         if target >= FIRST_MAP:
+            if target not in members:
+                return None  # Unselected pilot neighbors have no topology.
             entry = members[target]
             size, parent = entry['size'], entry['parent_map_id']
         else:

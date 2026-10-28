@@ -51,6 +51,77 @@ class PrivatePilotBoundaryTest(unittest.TestCase):
         conflicting=replace(parsed,gameplay_areas=(dict(parent_map_id=0xA0,size='wide',maps=[0xA0,0xA1]),))
         with self.assertRaisesRegex(ValueError,'AREAS_CONFLICT'):L.plan_private_pilot_boundaries(conflicting,areas)
 
+    def test_subset_view_and_terrain_keep_all_saved_metadata_without_assigning_other_areas(self):
+        from lyra_project_terrain import Allocation,compile_terrain
+        raw=document();raw['maps'][16]['authoring']['doors']=[dict(id=24577,x=21,y=9,entrance_id=11)]
+        parsed=T.parse_terrain_document(json.dumps(raw),raw['profile'],allow_authoring_drafts=True)
+        before=copy.deepcopy(parsed)
+        pilot=L.plan_private_pilot_boundaries(parsed,[dict(parent_map_id=a,size='small',maps=[a]) for a in (0xA0,0xA1)])
+        view=L.private_pilot_document(parsed,pilot)
+        self.assertEqual((view.maps,view.properties,view.authoring),(parsed.maps,parsed.properties,parsed.authoring))
+        self.assertEqual(len(view.gameplay_areas),2);self.assertEqual(parsed,before)
+        directory,closure=L.A.render_dependency_plan([0xA0,0xA1],document=view)
+        self.assertEqual(closure,(0xA0,0xA1));self.assertEqual(directory,{0xA0:(0xA0,)*4,0xA1:(0xA1,)*4})
+        compiled=compile_terrain(view,{0:(0,0,0,0)},Allocation(((0x300000,0x301000),),(),tile32_capacity=1),
+                                 map_ids=[0xA0,0xA1],render_directory=directory)
+        self.assertEqual([row.map_id for row in compiled.maps],[0xA0,0xA1])
+        transitions=L.A.gameplay_transition_rows(source_rom(),view,private_pilot=True)
+        self.assertEqual(set(transitions),{0xA0,0xA1})
+        with self.assertRaisesRegex(ValueError,'all32'):
+            L.A.gameplay_transition_rows(source_rom(),view)
+        stale=copy.deepcopy(pilot);stale['allowed_tail_maps'].append(0xA2)
+        with self.assertRaisesRegex(ValueError,'SELECTION_STALE'):L.private_pilot_document(parsed,stale)
+
+    def test_authored_scroll_to_unselected_area_refuses_without_stripping_it(self):
+        parsed=T.parse_terrain_document(json.dumps(document()),document()['profile'],allow_authoring_drafts=True)
+        pilot=L.plan_private_pilot_boundaries(parsed,[dict(parent_map_id=a,size='small',maps=[a]) for a in (0xA0,0xA1)])
+        for target in (0xA2,0xB0,0x98):
+            changed=replace(parsed,edge_connections=({'map_a':0xA1,'map_b':target},))
+            plan=L.plan_private_pilot_boundaries(changed,pilot['selected_areas'])
+            with self.assertRaisesRegex(ValueError,'UNSELECTED_EDGE'):L.private_pilot_document(changed,plan)
+            self.assertEqual(changed.edge_connections[0]['map_b'],target)
+
+    def test_partial_tables_keep_native_prefix_and_leave_other_tail_rows_inert(self):
+        from test_lyra_current_native_loaders import CurrentNativeLoaderTests as F
+        F.setUpClass()
+        parsed=T.parse_terrain_document(json.dumps(document()),document()['profile'],allow_authoring_drafts=True)
+        pilot=L.plan_private_pilot_boundaries(parsed,[dict(parent_map_id=a,size='small',maps=[a]) for a in (0xA0,0xA1)])
+        rows={a:F.rows[a] for a in (0xA0,0xA1)}
+        result=L.plan_current_tables(F.source,rows,origins=F.origins,policy=F.policy,private_pilot=pilot)
+        self.assertEqual(result['admitted_maps'],[0xA0,0xA1]);self.assertEqual(len(result['unadmitted_maps']),30)
+        for row,full in zip(result['tables'],F.plan['tables']):
+            raw=bytes.fromhex(row['payload_hex']);stride=row['stride']
+            self.assertEqual(raw[:0xA0*stride],bytes.fromhex(full['payload_hex'])[:0xA0*stride])
+            self.assertEqual(raw[0xA2*stride:],bytes(30*stride))
+        with self.assertRaisesRegex(ValueError,'all32'):
+            L.plan_current_tables(F.source,rows,origins=F.origins,policy=F.policy)
+        rows[0xB0]=F.rows[0xB0]
+        with self.assertRaisesRegex(ValueError,'RECIPE_UNSELECTED'):
+            L.plan_current_tables(F.source,rows,origins=F.origins,policy=F.policy,private_pilot=pilot)
+
+    def test_subset_cannot_replace_source_or_entry_or_ingress_qualification(self):
+        import tempfile
+        import lyra_current_transfer as X
+        import lyra_private_reservation as V
+        parsed=T.parse_terrain_document(json.dumps(document()),document()['profile'],allow_authoring_drafts=True)
+        pilot=L.plan_private_pilot_boundaries(parsed,[dict(parent_map_id=a,size='small',maps=[a]) for a in (0xA0,0xA1)])
+        with self.assertRaisesRegex(ValueError,'SOURCE_UNBOUND'):
+            V.compile_native_plan(source_rom(),parsed,None,{},private_pilot=pilot)
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'selection.json'
+            for area,room,row in ((0xA0,None,None),(0xB0,131,41),(0xA0,131,41)):
+                value=dict(kind='lyra.private_pilot_runtime_selection.v1',selected_areas=pilot['selected_areas'],
+                           entry_map_id=area,entry_room_id=room,entry_exit_row=row)
+                path.write_text(json.dumps(value))
+                with self.assertRaisesRegex(ValueError,'ENDPOINT_UNBOUND'):
+                    X.private_pilot_runtime({'private_pilot':X.Q.bound(path)},source_rom(),parsed)
+        rom,symbols,_=pilot_compiled_fixture()
+        scroll_only=L.inspect_current_consumers(rom,symbols)
+        with self.assertRaisesRegex(ValueError,'INGRESS_UNBOUND'):L.require_private_pilot_ingress(scroll_only)
+        asm=(ROOT/'Overworld/lyra_private_pilot.asm').read_text()
+        self.assertIn('CMP.w #$00A2 : BCS .blocked',asm)
+        self.assertNotIn('STA',asm[asm.index('Lyra_PrivatePilotCanEnter:'):])
+
     def test_disabled_boundary_has_no_new_instructions_and_call_precedes_state_mutation(self):
         text=(ROOT/'Overworld/ZSCustomOverworld.asm').read_text()
         base=S._load_global_defines(ROOT)
@@ -82,6 +153,24 @@ class PrivatePilotBoundaryTest(unittest.TestCase):
         for line in ('CPY.w #$0000','CPY.w #$0002','CMP.w #$0040','CMP.w #$0042','CMP.w #$0140'):
             self.assertIn(line,instructions)
 
+    def test_ingress_inspection_requires_every_preaccess_role_and_exact_helper_bytes(self):
+        rom,symbols,_=pilot_compiled_fixture();labels=L._labels(symbols)
+        helper=0xE0C7C0;host=labels['LyraHost_OverworldHandleTransitions']
+        rom=bytearray(rom);rom[L.A.pc(helper):L.A.pc(helper)+len(L.PRIVATE_PILOT_ENTRY_BYTES)]=L.PRIVATE_PILOT_ENTRY_BYTES
+        extra=[('Lyra_PrivatePilotCanEnter',helper),('Lyra_PrivatePilotCanEnter_End',helper+len(L.PRIVATE_PILOT_ENTRY_BYTES))]
+        for i,role in enumerate(L.PRIVATE_PILOT_INGRESS_ROLES):
+            call=host+0x60+i*8;blocked=host+0x20
+            rom[L.A.pc(call):L.A.pc(call)+6]=b'\x22'+helper.to_bytes(3,'little')+bytes([0xB0,(blocked-call-6)&255])
+            extra.extend([('LyraCall_PrivatePilot'+role,call),('LyraPilot_'+role+'Blocked',blocked)])
+        symbols+=(''.join(f'{at>>16:02X}:{at&65535:04X} {name}\n' for name,at in extra)).encode()
+        result=L.inspect_current_consumers(bytes(rom),symbols)
+        self.assertEqual(len(L.require_private_pilot_ingress(result)['calls']),6)
+        # Byte vectors are explicit host fixtures, not assembled or admitted callers.
+        rom[L.A.pc(helper)+1]^=1
+        with self.assertRaises(ValueError):L.inspect_current_consumers(bytes(rom),symbols)
+        missing=b'\n'.join(line for line in symbols.splitlines() if b'LyraCall_PrivatePilotColdResume' not in line)
+        with self.assertRaisesRegex(ValueError,'INGRESS_UNBOUND'):L.inspect_current_consumers(bytes(rom),missing)
+
     def test_optional_compiled_consumer_requires_exact_carry_branch_target_and_direction_table(self):
         rom,symbols,call=pilot_compiled_fixture()
         result=L.inspect_current_consumers(rom,symbols);proof=result['private_pilot_boundary']
@@ -93,6 +182,56 @@ class PrivatePilotBoundaryTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'Incomplete private pilot'):L.inspect_current_consumers(rom,partial)
         oldrom,oldsymbols=consumer_fixture(source_rom(),0xE0C000)
         self.assertNotIn('private_pilot_boundary',L.inspect_current_consumers(oldrom,oldsymbols))
+
+
+class PrivatePilotComposerTest(unittest.TestCase):
+    def test_real_source_bound_subset_compiles_and_composes_without_runtime_admission(self):
+        # Reuse copied-project source/generation fixtures. Only the external
+        # editor observation is a fixture; source binding/review/compiler and
+        # composer are maintained implementations, with all authority OFF.
+        from test_lyra_current_composer_binding import ComposerFixture
+        from test_lyra_current_actor_storage import bind_origin,storage
+        import lyra_current_transfer as X
+        import lyra_private_reservation as V
+        from lyra_project_terrain import Allocation
+        f=ComposerFixture(self);f.profile=bind_origin(f.contract_fixture)
+        pilot=L.plan_private_pilot_boundaries(f.document,[dict(parent_map_id=a,size='small',maps=[a]) for a in (0xA0,0xA1)])
+        view=L.private_pilot_document(f.document,pilot)
+        directory,_=L.A.render_dependency_plan([0xA0,0xA1],document=view)
+        review=f.profile['review'];lo,hi=review['tile32_id_range'];spares=review['spare_tile32_ids']
+        ids=tuple(i for i in range(lo,hi) if i not in spares)
+        missing=X.C._missing(X.A.expanded_rom(f.source),f.document,[0xA0,0xA1])
+        allocation=Allocation((tuple(review['preimages'][-1]['pc']),),ids,tile32_assignments=tuple(zip(ids,missing)))
+        plan,payload=V.compile_native_plan(f.source,f.document,allocation,directory,
+            spare_tile32_ids=spares,current_source_profile=f.profile,private_pilot=pilot)
+        self.assertEqual(plan['selected_maps'],[0xA0,0xA1]);self.assertEqual(len(plan['streams']),4)
+        self.assertTrue(payload);self.assertEqual(plan['native_maps_preserved'],160)
+        actors=storage(f.source,f.document,f.profile,private_pilot=pilot)
+        self.assertEqual(set(actors['phase_rows']),{0xA0,0xA1})
+        self.assertEqual(actors['actor_stream_plan']['demand']['pointer_rows'],6)
+        rows={a:copy.deepcopy(f.rows[a]) for a in (0xA0,0xA1)}
+        for a,v in L.A.gameplay_transition_rows(f.source,view,private_pilot=True).items():rows[a].update(v)
+        for a,v in actors['phase_rows'].items():rows[a].update(v)
+        origins=f.profile['origins']
+        tables=L.plan_current_tables(f.source,rows,
+            origins=dict(table_base=origins['tables']['snes'][0],code_base=origins['code']['snes'][0],
+                code_end=origins['code']['snes'][1],descriptor_base=origins['descriptor']['snes'][0]),
+            policy=dict(source_rom_sha256=X.R.sha(f.source),source_profile_sha256=X.T.digest(f.profile),
+                        allocation_granted=False,publication_authorized=False),private_pilot=pilot)
+        graphics='; Host source only, no asset grant.\n'
+        files=X.P.render_current_source_outputs(tables,contract=f.contract,graphics_source=graphics,
+            graphics_report=dict(current_mode=True,parent_count=192,
+                source_contract_sha256=X.R.sha(X.P.encoded(f.contract)),generated_sha256=X.R.sha(graphics.encode()),
+                graphics_origin_snes=f.contract['origins']['graphics']['snes']),
+            current_source_profile=f.profile,actor_storage_plan=actors,private_pilot=pilot)
+        prepared=json.loads(files['prepare.json'])
+        self.assertEqual(prepared['document_sha256'],X._document_identity(f.document))
+        self.assertEqual([r['map_id'] for r in prepared['native_state_contract']['event_rows']],[0xA0,0xA1])
+        self.assertEqual(len(f.document.maps),32);self.assertFalse(f.document.gameplay_areas)
+        self.assertFalse(prepared['selected']);self.assertFalse(prepared['runtime_admission'])
+        f.contract_fixture.case.next_save()
+        with self.assertRaisesRegex(ValueError,'retired'):
+            L.plan_current_actor_streams(f.source,f.document,current_source_profile=f.profile,private_pilot=pilot)
 
 
 if __name__=='__main__':unittest.main()

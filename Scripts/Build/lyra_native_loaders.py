@@ -1165,7 +1165,7 @@ def _current_origins(origins):
     return layout
 
 
-def plan_current_tables(source, tail_rows, *, origins, policy):
+def plan_current_tables(source, tail_rows, *, origins, policy, private_pilot=None):
     """Emit source text/data plans, never a ROM or publication authority.
 
     The current-transfer binder owns source-profile/grant authenticity. This
@@ -1189,8 +1189,14 @@ def plan_current_tables(source, tail_rows, *, origins, policy):
               'Current source plan cannot accept readiness or activation')
     layout = _current_origins(origins)
     names = {r['name'] for r in layout}
+    selected = (0xA0,0xA1) if private_pilot is not None else tuple(range(CURRENT_FIRST,CURRENT_END))
+    if private_pilot is not None:
+        R.require(type(private_pilot) is dict and private_pilot.get('kind') == 'lyra.private_pilot_boundary_source_plan.v1'
+                  and private_pilot.get('allowed_tail_maps') == list(selected)
+                  and private_pilot.get('scope') == 'private_test_only', 'PRIVATE_PILOT_SELECTION_UNBOUND')
     R.require(type(tail_rows) is dict and all(type(k) is int for k in tail_rows)
-              and set(tail_rows) == set(range(CURRENT_FIRST, CURRENT_END)),
+              and set(tail_rows) == set(selected),
+              'PRIVATE_PILOT_RECIPE_UNSELECTED' if private_pilot is not None else
               'Current mode requires exactly all32 explicit tail maps')
     for area, values in tail_rows.items():
         R.require(type(values) is dict and set(values) == names,
@@ -1208,7 +1214,7 @@ def plan_current_tables(source, tail_rows, *, origins, policy):
             # Native DW/SW source is shared across the four LW phase families.
             other = A.pc(0x02C403)
             payload[0x40:CURRENT_FIRST] = source[other:other + 0x60]
-        for area in range(CURRENT_FIRST, CURRENT_END):
+        for area in selected:
             value = tail_rows[area][name]
             if stride == 8:
                 R.require(type(value) in (bytes, list, tuple) and len(value) == stride
@@ -1265,6 +1271,8 @@ def plan_current_tables(source, tail_rows, *, origins, policy):
                 source_profile_sha256=policy['source_profile_sha256'], origins=dict(origins),
                 source_domain=dict(first_map=CURRENT_FIRST, end_map=CURRENT_END,
                                    native_parent_count=160, parent_count=CURRENT_PARENT_COUNT),
+                private_pilot=private_pilot, admitted_maps=list(selected),
+                unadmitted_maps=[a for a in range(CURRENT_FIRST,CURRENT_END) if a not in selected],
                 tables=tables, tables_bytes=sum(len(bytes.fromhex(r['payload_hex'])) for r in tables),
                 assembler='\n'.join(constant_lines + lines + descriptor_lines) + '\n',
                 constants_assembler='\n'.join(constant_lines) + '\n',
@@ -1344,7 +1352,7 @@ def current_property_rows(document, *, source=None):
     return result
 
 
-def plan_current_actor_streams(source, document, *, current_source_profile):
+def plan_current_actor_streams(source, document, *, current_source_profile, private_pilot=None):
     """Lower bound authored sprites to headerless OW lists; never place them.
 
     Native OW records are Y, X, sprite ID followed by a single FF terminator.
@@ -1384,12 +1392,16 @@ def plan_current_actor_streams(source, document, *, current_source_profile):
         authored.append((area, phases))
 
     profile = current.verify_current_native_source_profile(current_source_profile, source, document)
-    area_plan = A.gameplay_area_plan(document)
+    layout_document = private_pilot_document(document,private_pilot) if private_pilot is not None else document
+    selected = tuple(private_pilot['allowed_tail_maps']) if private_pilot is not None else tuple(range(CURRENT_FIRST,CURRENT_END))
+    area_plan = A.gameplay_area_plan(layout_document)
     parents = {row['map_id']: row['parent_map_id'] for row in area_plan['assignments']}
     groups = {row['parent_map_id']: row['maps'] for row in area_plan['areas']}
     by_map = dict(authored)
     streams = []
     for area, phases in authored:
+        if area not in selected:
+            continue
         parent = parents.get(area, area)
         members = groups.get(parent, [area])
         # The native loader bases its actor coordinate origin on the parent.
@@ -1422,17 +1434,18 @@ def plan_current_actor_streams(source, document, *, current_source_profile):
         reservation_review_id=profile['reservation_review_id'],
         source_domain=dict(first_map=CURRENT_FIRST, end_map=CURRENT_END,
                            native_parent_count=160, parent_count=CURRENT_PARENT_COUNT),
-        streams=streams, demand=dict(maps=32, phases=3, lists=96, placements=len(seen),
-            payload_bytes=sum(row['bytes'] for row in streams), pointer_rows=96, pointer_bytes=192),
+        streams=streams, demand=dict(maps=len(selected), phases=3, lists=len(selected)*3,
+            placements=len({i for row in streams for i in row['placement_ids']}),
+            payload_bytes=sum(row['bytes'] for row in streams), pointer_rows=len(selected)*3, pointer_bytes=len(selected)*6),
         storage=None, pointers=None,
-        consumer_blockers=A.consumer_blockers(document, tuple(range(CURRENT_FIRST, CURRENT_END)), (), current_source=True),
+        consumer_blockers=A.consumer_blockers(document, selected, (), current_source=True),
         allocation_granted=False, producer_enforcement_verified=False, publication_authorized=False,
         ordinary_build_ready=False, runtime_admission=False, actors_compiled=False, rom_written=False)
     current.verify_current_native_source_profile(profile, source, document)
     return result
 
 
-def plan_current_actor_storage(source, document, *, current_source_profile, data_snes, capacity, preimage):
+def plan_current_actor_storage(source, document, *, current_source_profile, data_snes, capacity, preimage, private_pilot=None):
     """Place deduplicated actor lists inside one explicit source-profile bank.
 
     Native pointer rows stay u16. The current long-pointer parser supplies this
@@ -1440,7 +1453,7 @@ def plan_current_actor_storage(source, document, *, current_source_profile, data
     This is a source plan, with every readiness/authority flag still false.
     """
     import copy
-    actors = plan_current_actor_streams(source, document, current_source_profile=current_source_profile)
+    actors = plan_current_actor_streams(source, document, current_source_profile=current_source_profile, private_pilot=private_pilot)
     profile = current_source_profile
     origin = profile['origins'].get('actors')
     R.require(type(origin) is dict, 'CURRENT_ACTOR_STORAGE_UNBOUND: explicit actors origin required')
@@ -1455,7 +1468,7 @@ def plan_current_actor_storage(source, document, *, current_source_profile, data
               and preimage == expanded[slice(*origin['pc'])],
               'CURRENT_ACTOR_STORAGE_PREIMAGE_MISMATCH: exact full saved-source interval required')
     payload, offsets, pointers = bytearray(), {}, []
-    phase_rows = {area: {} for area in range(CURRENT_FIRST,CURRENT_END)}
+    phase_rows = {row['map_id']: {} for row in actors['streams']}
     for row in actors['streams']:
         raw = bytes.fromhex(row['payload_hex'])
         R.require(raw and raw[-1] == 255 and len(raw) % 3 == 1,
@@ -1529,6 +1542,39 @@ def plan_private_pilot_boundaries(document, selected_areas):
         producer_enforcement_verified=False,runtime_admission=False,boundaries_compiled=False,rom_written=False,
         remaining_consumers=['separate private subset publisher admission','selected entry/return',
             'mirror/warp/flight and full/sub loader preaccess admission','regional checkpoint/Home lifecycle'])
+
+
+def private_pilot_document(document, pilot):
+    """Derived layout view only; keep every saved map/property/authoring row.
+
+    This view supplies ONLY the two human-selected test areas. It is never
+    serialized to the project and is never used as source identity/proof.
+    """
+    from dataclasses import replace
+    R.require(type(pilot) is dict and pilot == plan_private_pilot_boundaries(document,pilot.get('selected_areas')),
+              'PRIVATE_PILOT_SELECTION_STALE: exact saved document and pair required')
+    selected=set(pilot['allowed_tail_maps'])
+    for edge in document.edge_connections:
+        ends={edge['map_a'],edge['map_b']}
+        R.require(not ends.intersection(selected) or ends <= selected,
+                  'PRIVATE_PILOT_UNSELECTED_EDGE: authored pilot scroll reaches outside the selected pair')
+    return replace(document,gameplay_areas=tuple(pilot['selected_areas']))
+
+
+PRIVATE_PILOT_INGRESS_ROLES=('Entry','FullLoad','SubLoad','Mirror','Warp','ColdResume')
+PRIVATE_PILOT_ENTRY_BYTES=bytes.fromhex('08c22048c9a200b0046828186b6828386b')
+
+
+def require_private_pilot_ingress(consumers):
+    """A scroll-only proof cannot admit any private subset build."""
+    proof=consumers.get('private_pilot_ingress')
+    R.require(type(proof) is dict and proof.get('scope')=='private_A0_A1_preaccess'
+              and proof.get('helper_hex')==PRIVATE_PILOT_ENTRY_BYTES.hex()
+              and type(proof.get('calls')) is list
+              and [r.get('role') for r in proof['calls']]==list(PRIVATE_PILOT_INGRESS_ROLES)
+              and 'private_pilot_boundary' in consumers,
+              'PRIVATE_PILOT_INGRESS_UNBOUND: entry/full/sub/mirror/warp/cold preaccess guards and scroll proof required')
+    return proof
 
 
 def inspect_current_consumers(compiled, symbols):
@@ -1640,4 +1686,28 @@ def inspect_current_consumers(compiled, symbols):
         result['private_pilot_boundary']=dict(call_snes=call,blocked_snes=blocked,helper_snes=helper,
             payload_hex=raw.hex(),direction_table_snes=0x02A634,direction_table_hex=direction.hex(),
             scope='private_A0_A1_scroll_only',entry_warp_loader_admission=False)
+    ingress='Lyra_PrivatePilotCanEnter' in labels
+    call_names=['LyraCall_PrivatePilot'+role for role in PRIVATE_PILOT_INGRESS_ROLES]
+    # A helper may be present with the earlier scroll-only prototype. It is
+    # never reported as admission unless every required caller is also present.
+    if any(name in labels for name in call_names):
+        R.require(ingress and all(name in labels for name in call_names), 'PRIVATE_PILOT_INGRESS_UNBOUND')
+        helper=address('Lyra_PrivatePilotCanEnter')
+        R.require(address('Lyra_PrivatePilotCanEnter_End')==helper+len(PRIVATE_PILOT_ENTRY_BYTES)
+                  and compiled[A.pc(helper):A.pc(helper)+len(PRIVATE_PILOT_ENTRY_BYTES)]==PRIVATE_PILOT_ENTRY_BYTES,
+                  'Private ingress helper body differs')
+        code=regions[0]['snes']
+        R.require(code[0]<=helper<helper+len(PRIVATE_PILOT_ENTRY_BYTES)<=code[1], 'Private ingress helper escaped code owner')
+        ingress_calls=[]
+        for role,name in zip(PRIVATE_PILOT_INGRESS_ROLES,call_names):
+            call=address(name);blocked=address('LyraPilot_'+role+'Blocked')
+            raw=compiled[A.pc(call):A.pc(call)+6]
+            R.require(len(raw)==6 and raw[:4]==b'\x22'+helper.to_bytes(3,'little') and raw[4]==0xB0
+                      and call+6+int.from_bytes(raw[5:],'little',signed=True)==blocked
+                      and any(r['snes'][0]<=call<call+6<=r['snes'][1] and r['snes'][0]<=blocked<r['snes'][1]
+                              for r in regions), 'Private ingress caller/branch escaped reviewed host')
+            ingress_calls.append(dict(role=role,call_snes=call,blocked_snes=blocked,payload_hex=raw.hex()))
+        result['private_pilot_ingress']=dict(scope='private_A0_A1_preaccess',helper_snes=helper,
+            helper_hex=PRIVATE_PILOT_ENTRY_BYTES.hex(),calls=ingress_calls)
+        require_private_pilot_ingress(result)
     return result

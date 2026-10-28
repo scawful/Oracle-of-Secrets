@@ -45,3 +45,18 @@ Lyra_PrivatePilotCanScroll:
   SEC : RTL
 }
 Lyra_PrivatePilotCanScroll_End = pc()
+
+; Ingress API only: M16 A=complete requested physical map word.
+; C set rejects A2..FFFF; C clear permits preserved native00..9F or A0/A1.
+; Preserve full A/X/Y, DP/DBR, stack and all P bits except C. No RAM writes.
+; This helper alone grants no ingress. The publisher requires independently
+; bound preaccess entry/full/sub/mirror/warp/cold callers before selection.
+Lyra_PrivatePilotCanEnter:
+{
+  PHP : REP #$20 : PHA
+  CMP.w #$00A2 : BCS .blocked
+  PLA : PLP : CLC : RTL
+.blocked
+  PLA : PLP : SEC : RTL
+}
+Lyra_PrivatePilotCanEnter_End = pc()

@@ -731,7 +731,7 @@ def current_native_source_profile(review, project, base_rom, *, contract_path=No
 
 
 def verify_current_native_source_profile(profile, source, document, *, allocation=None,
-                                         spare_tile32_ids=(), native_copy_maps=()):
+                                         spare_tile32_ids=(), native_copy_maps=(), private_pilot=None):
     R.require(type(profile) is dict and profile.get('kind') == CURRENT_PROFILE_KIND,
               'CURRENT_SOURCE_PROFILE_REQUIRED: an explicit current source profile is required')
     fresh = current_native_source_profile(profile['review'], profile['project'], profile['base_rom'],
@@ -744,7 +744,12 @@ def verify_current_native_source_profile(profile, source, document, *, allocatio
         lo, hi = review['tile32_id_range']
         spare = tuple(review['spare_tile32_ids'])
         ids = tuple(i for i in range(lo, hi) if i not in spare)
-        assignments = tuple(zip(ids, C._missing(A.expanded_rom(source), document, V.FULL_MAPS)))
+        selected=V.FULL_MAPS
+        if private_pilot is not None:
+            import lyra_native_loaders as native
+            native.private_pilot_document(document,private_pilot)
+            selected=private_pilot['allowed_tail_maps']
+        assignments = tuple(zip(ids, C._missing(A.expanded_rom(source), document, selected)))
         R.require(isinstance(allocation, Allocation)
                   and allocation.stream_ranges == (tuple(review['preimages'][-1]['pc']),)
                   and allocation.owned_tile32_ids == ids
@@ -754,7 +759,7 @@ def verify_current_native_source_profile(profile, source, document, *, allocatio
     return profile
 
 
-def plan_transfer(request_path, project, base_rom, *, ledger_path=None, current_source_profile=None):
+def plan_transfer(request_path, project, base_rom, *, ledger_path=None, current_source_profile=None, private_pilot=None):
     """Bind an admitted source policy/proof to the common in-memory compiler."""
     canonical_ledger = Path(R.LEDGER).resolve(strict=True)
     R.require(ledger_path is None or Path(ledger_path).resolve(strict=True) == canonical_ledger,
@@ -822,7 +827,14 @@ def plan_transfer(request_path, project, base_rom, *, ledger_path=None, current_
               and check['exit_code'] == 0, 'Current producer verification is incomplete or failed')
     for row in [*proof['source_bindings'], check['binary'], check['log']]:
         Q.read_bound(row)
-    missing = C._missing(expanded, document, V.FULL_MAPS)
+    selected=V.FULL_MAPS
+    layout_document=document
+    if private_pilot is not None:
+        import lyra_native_loaders as native
+        R.require(current_source_profile is not None,'PRIVATE_PILOT_SOURCE_UNBOUND')
+        layout_document=native.private_pilot_document(document,private_pilot)
+        selected=private_pilot['allowed_tail_maps']
+    missing = C._missing(expanded, document, selected)
     spare = policy['spare_tile32_ids']
     R.require(type(spare) is list and len(spare) == len(set(spare))
               and all(type(i) is int and lo <= i < hi for i in spare), 'Invalid current spare IDs')
@@ -831,9 +843,9 @@ def plan_transfer(request_path, project, base_rom, *, ledger_path=None, current_
     assignments = tuple(zip(ids, missing))
     allocation = Allocation(tuple(tuple(span) for span in policy['stream_ranges']), tuple(ids),
                             tile32_assignments=assignments)
-    directory = A.render_dependency_plan(V.FULL_MAPS, document=document)[0]
+    directory = A.render_dependency_plan(selected, document=layout_document)[0]
     plan, payload = V.compile_native_plan(source, document, allocation, directory, spare_tile32_ids=spare,
-                                        current_source_profile=current_source_profile)
+                                        current_source_profile=current_source_profile,private_pilot=private_pilot)
     final_request, _, _ = verify_transfer(request_path, project, base_rom)
     R.require(final_request == request, 'Current-save transfer request replaced during compilation')
     Q.read_bound(request_binding)
@@ -847,6 +859,30 @@ def plan_transfer(request_path, project, base_rom, *, ledger_path=None, current_
         target=request['target'], retirement='next_native_save',
         writer_order=proof['writer_order'])
     return plan, payload
+
+
+def private_pilot_runtime(runtime, source, document):
+    """Consume an explicit private selection and an existing native entry row.
+
+    This source-owned policy input is separate from saved authoring. It grants
+    no storage, producer authority or ingress code. An empty endpoint cannot
+    silently turn a two-page terrain plan into a playable candidate.
+    """
+    binding=runtime.get('private_pilot')
+    if binding is None: return None,None
+    import lyra_native_loaders as native
+    import lyra_native_state as state
+    value=_json(Q.read_bound(binding))
+    _keys(value,{'kind','selected_areas','entry_map_id','entry_room_id','entry_exit_row'},'private pilot runtime selection')
+    R.require(value['kind']=='lyra.private_pilot_runtime_selection.v1','PRIVATE_PILOT_SELECTION_UNBOUND')
+    pilot=native.plan_private_pilot_boundaries(document,value['selected_areas'])
+    R.require(type(value['entry_map_id']) is int and value['entry_map_id'] in pilot['allowed_tail_maps']
+              and type(value['entry_room_id']) is int and type(value['entry_exit_row']) is int,
+              'PRIVATE_PILOT_ENDPOINT_UNBOUND: explicit selected native room/exit required')
+    endpoint=state.room_return(source,value['entry_room_id'],value['entry_map_id'],value['entry_exit_row'])
+    R.require(endpoint['requested_row_consumed'],
+              'PRIVATE_PILOT_ENDPOINT_UNBOUND: source must actually dispatch the selected native exit into A0/A1')
+    return pilot,binding
 
 
 def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
@@ -863,7 +899,8 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     R.require(type(runtime) is dict, 'CURRENT_SAVE_RUNTIME_EMISSION_UNADMITTED: no reviewed current runtime policy')
     _keys(runtime, {'kind','scope','runtime_admission','review_file','tail_recipe',
                     'graphics_source','graphics_assets','compiled_consumers','event_state','origin_preimages'}
-          | ({'bg128'} if 'bg128' in runtime else set()), 'current runtime policy')
+          | ({'bg128'} if 'bg128' in runtime else set())
+          | ({'private_pilot'} if 'private_pilot' in runtime else set()), 'current runtime policy')
     R.require(runtime['kind'] == 'lyra.current_runtime_policy.v1'
               and runtime['scope'] == 'disposable_build_only' and runtime['runtime_admission'] is True,
               'CURRENT_SAVE_RUNTIME_EMISSION_UNADMITTED: runtime selection remains held')
@@ -874,8 +911,9 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     review = _json(Q.read_bound(review_binding))
     R.require(type(review) is dict and review.get('kind') == REVIEW_KIND, 'CURRENT_RUNTIME_REVIEW_REQUIRED')
     profile = current_native_source_profile(review, project, base_rom)
+    pilot,pilot_binding=private_pilot_runtime(runtime,source,document)
     plan, payload = plan_transfer(request_path, project, base_rom, ledger_path=ledger_path,
-                                  current_source_profile=profile)
+                                  current_source_profile=profile,private_pilot=pilot)
     import lyra_native_loaders as native
     origin_spans = [row['pc'] for row in profile['origins'].values()]
     R.require(type(runtime['origin_preimages']) is list
@@ -894,19 +932,22 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     V.require_no_named_conflicts(dict(ledger,claims=[*ledger.get('claims',[]),*other_origins]),
         tile32_range=policies[0]['tile32_id_range'],stream_ranges=origin_spans+policies[0]['stream_ranges'])
     rows = _json(Q.read_bound(runtime['tail_recipe']))
-    R.require(type(rows) is dict and set(rows) == {f'{a:02X}' for a in V.FULL_MAPS},
+    selected=V.FULL_MAPS if pilot is None else pilot['allowed_tail_maps']
+    layout_document=document if pilot is None else native.private_pilot_document(document,pilot)
+    R.require(type(rows) is dict and set(rows) == {f'{a:02X}' for a in selected},
+              'PRIVATE_PILOT_RECIPE_UNSELECTED: recipe must name only A0/A1' if pilot is not None else
               'CURRENT_RUNTIME_RECIPE_INCOMPLETE: all32 explicit native rows required')
     rows = {int(key,16):dict(value) for key,value in rows.items()}
-    areas = A.gameplay_area_plan(document)
-    R.require(areas['complete'], 'CURRENT_GAMEPLAY_AREAS_UNASSIGNED: selected build needs all32 explicit pages')
+    areas = A.gameplay_area_plan(layout_document)
+    R.require(pilot is not None or areas['complete'], 'CURRENT_GAMEPLAY_AREAS_UNASSIGNED: selected build needs all32 explicit pages')
     for area, values in native.current_property_rows(document, source=source).items():
-        rows[area].update(values)
-    for area, values in A.gameplay_transition_rows(source,document).items():
+        if area in rows: rows[area].update(values)
+    for area, values in A.gameplay_transition_rows(source,layout_document,private_pilot=pilot is not None).items():
         rows[area].update(values)
     actors = native.plan_current_actor_storage(source,document,current_source_profile=profile,
         data_snes=profile['origins']['actors']['snes'][0],
         capacity=profile['origins']['actors']['pc'][1]-profile['origins']['actors']['pc'][0],
-        preimage=A.expanded_rom(source)[slice(*profile['origins']['actors']['pc'])])
+        preimage=A.expanded_rom(source)[slice(*profile['origins']['actors']['pc'])],private_pilot=pilot)
     for area, values in actors['phase_rows'].items():
         rows[area].update(values)
     for stream in plan['streams']:
@@ -916,7 +957,7 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
             code_base=profile['origins']['code']['snes'][0],code_end=profile['origins']['code']['snes'][1],
             descriptor_base=profile['origins']['descriptor']['snes'][0]),
         policy=dict(source_rom_sha256=R.sha(source),source_profile_sha256=T.digest(profile),
-                    allocation_granted=False,publication_authorized=False))
+                    allocation_granted=False,publication_authorized=False),private_pilot=pilot)
     graphics = Q.read_bound(runtime['graphics_source']).decode('utf-8')
     R.require(type(runtime['graphics_assets']) is list,'CURRENT_GRAPHICS_ASSETS_UNBOUND')
     assets={row['path']:row for row in runtime['graphics_assets']}
@@ -937,9 +978,9 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
         generated_sha256=R.sha(graphics.encode()),graphics_origin_snes=profile['origins']['graphics']['snes'])
     bg_plan,bg_binding = current_bg128(source,document,profile,ledger,runtime.get('bg128'))
     files = P.render_current_source_outputs(tables,contract=contract,graphics_source=graphics,
-        graphics_report=report,current_source_profile=profile,actor_storage_plan=actors,bg128_plan=bg_plan)
+        graphics_report=report,current_source_profile=profile,actor_storage_plan=actors,bg128_plan=bg_plan,private_pilot=pilot)
     endpoint_state = _json(files['prepare.json'])['native_state_contract']
-    R.require(not document.flight_points
+    R.require(not [r for r in document.flight_points if pilot is None or r['map_id'] in selected]
               and all(r['tile_match_verified'] for r in endpoint_state['requested_doors'])
               and all(r['position_match_verified'] for r in endpoint_state['requested_returns']),
               'CURRENT_RUNTIME_ENDPOINT_UNBOUND: native saved endpoints or transport writer required')
@@ -960,6 +1001,8 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
         constants=constants.replace(old_end,f"!LYRA_CURRENT_CODE_END = ${bg_binding['code_snes'][0]:06X}")
         constants+=(f"!PROJECT_BG128_CODE_BASE = ${bg_binding['code_snes'][0]:06X}\n"
                    +f"!PROJECT_BG128_CODE_END = ${bg_binding['code_snes'][1]:06X}\n")
+    if pilot is not None:
+        constants += '!LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED = 1\n!LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND = 1\n'
     files['runtime_constants.asm'] = constants.encode()
     data = files['runtime_data.asm'].decode()+'pushpc\n'
     binary = bytearray()
@@ -972,7 +1015,11 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     files['binaries/payload.bin'] = bytes(binary)
     source_prepare = _json(files.pop('prepare.json'))
     expected = _json(Q.read_bound(runtime['compiled_consumers']))
-    _keys(expected,{'kind','regions','source_calls','fixed_hooks'},'reviewed current compiled consumers')
+    _keys(expected,{'kind','regions','source_calls','fixed_hooks'}
+          | ({'private_pilot_boundary','private_pilot_ingress'} if pilot is not None else set()),
+          'reviewed current compiled consumers')
+    if pilot is not None:
+        native.require_private_pilot_ingress(expected)
     R.require(expected['kind'] == 'lyra.current_compiled_consumers.v1'
               and all(type(expected[k]) is list and expected[k] for k in ('regions','source_calls','fixed_hooks')),
               'CURRENT_COMPILED_BINDING_REQUIRED')
@@ -981,6 +1028,7 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
                 Q.bound(base_rom),Q.bound(project),plan['enforcement_receipt'],
                 *request['inputs'].values(),*profile['selected_source']['bindings'],
                 *profile['review']['adapter_bindings']]
+    if pilot_binding is not None: bindings.append(pilot_binding)
     unique = {}
     for row in bindings:
         R.require(row['path'] not in unique or unique[row['path']] == row,
@@ -992,7 +1040,7 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
         ledger=str(ledger_path),saved_rom_sha256=R.sha(source),current_ledger_sha256=ledger_binding['sha256'],
         allocation_granted=True,producer_enforcement_verified=True,runtime_admission=True,
         ordinary_build_ready=True,inputs=bindings,current_source_profile=profile,
-        tables=tables,terrain_plan=plan,event_state=events,compiled_consumers=runtime['compiled_consumers'],
+        private_pilot=pilot,tables=tables,terrain_plan=plan,event_state=events,compiled_consumers=runtime['compiled_consumers'],
         bg128_binding=bg_binding,bg128_plan=(None if bg_plan is None else
             dict((key,value) for key,value in dict(bg_plan,payload_hex=bg_plan['payload'].hex()).items() if key!='payload')),
         generated_files={name:R.sha(raw) for name,raw in files.items()},

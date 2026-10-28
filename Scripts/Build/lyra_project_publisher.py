@@ -348,7 +348,7 @@ def validate_current_source_set(contract):
 
 
 def render_current_source_outputs(table_plan, *, contract, graphics_source, graphics_report,
-                                  current_source_profile=None, bg128_plan=None, actor_storage_plan=None):
+                                  current_source_profile=None, bg128_plan=None, actor_storage_plan=None, private_pilot=None):
     """Compose reviewable source through the existing generated-input layout.
 
     A source plan remains unselected and cannot pass the build-context loader.
@@ -393,7 +393,9 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
               and all(type(row) is dict for row in supplied)
               and [row.get('name') for row in supplied] == [row['name'] for row in layout],
               'CURRENT_COMPOSER_TABLES_MISMATCH: complete ordered current table families required')
-    tail_rows = {area: {} for area in range(native.CURRENT_FIRST, native.CURRENT_END)}
+    selected=list(range(native.CURRENT_FIRST,native.CURRENT_END)) if private_pilot is None else private_pilot['allowed_tail_maps']
+    layout_document=document if private_pilot is None else native.private_pilot_document(document,private_pilot)
+    tail_rows = {area: {} for area in selected}
     for row, expected in zip(supplied, layout):
         raw = bytes.fromhex(row['payload_hex'])
         stride = expected['stride']
@@ -404,23 +406,23 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
             values[expected['name']] = list(value) if stride == 8 else int.from_bytes(value, 'little')
     rebuilt = native.plan_current_tables(source, tail_rows, origins=table_origins,
         policy=dict(source_rom_sha256=R.sha(source), source_profile_sha256=profile_digest,
-                    allocation_granted=False, publication_authorized=False))
+                    allocation_granted=False, publication_authorized=False),private_pilot=private_pilot)
     for name, used in (('tables', rebuilt['tables_pc']), ('descriptor', rebuilt['descriptor_pc'])):
         reserved = origins[name]['pc']
         R.require(used[0] == reserved[0] and used[1] <= reserved[1],
                   'CURRENT_COMPOSER_ORIGIN_MISMATCH: ' + name + ' exceeds its source profile interval')
     R.require(rebuilt['code_pc'] == origins['code']['pc'] and table_plan == rebuilt,
               'CURRENT_COMPOSER_TABLES_MISMATCH: table payload, assembler or extents differ from canonical plan')
-    property_rows = native.current_property_rows(document, source=source)
+    property_rows = {a:v for a,v in native.current_property_rows(document,source=source).items() if a in selected}
     for area, values in property_rows.items():
         R.require(all(tail_rows[area][name] == value for name, value in values.items()),
                   'CURRENT_COMPOSER_PROPERTIES_MISMATCH: native selectors differ from saved properties')
     actor_stream_plan = native.plan_current_actor_streams(
-        source, document, current_source_profile=profile)
-    native_state_plan = A.plan_native_state(source, list(range(native.CURRENT_FIRST,native.CURRENT_END)),
+        source, document, current_source_profile=profile,private_pilot=private_pilot)
+    native_state_plan = A.plan_native_state(source, selected,
         authoring=[(area,document.authoring[area-native.CURRENT_FIRST])
-                   for area in range(native.CURRENT_FIRST,native.CURRENT_END)],
-        gameplay_areas=document.gameplay_areas)
+                   for area in selected],
+        gameplay_areas=layout_document.gameplay_areas)
     if actor_storage_plan is not None:
         actor_origin = origins.get('actors')
         R.require(type(actor_origin) is dict,
@@ -428,20 +430,20 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
         lo, hi = actor_origin['pc']
         expected_actors = native.plan_current_actor_storage(source, document,
             current_source_profile=profile, data_snes=actor_origin['snes'][0], capacity=hi-lo,
-            preimage=A.expanded_rom(source)[lo:hi])
+            preimage=A.expanded_rom(source)[lo:hi],private_pilot=private_pilot)
         R.require(actor_storage_plan == expected_actors,
                   'CURRENT_COMPOSER_ACTORS_MISMATCH: actor payload/extent/preimage/source differs')
         R.require(all(tail_rows[area][name] == pointer for area, rows in expected_actors['phase_rows'].items()
                       for name, pointer in rows.items()),
                   'CURRENT_COMPOSER_ACTOR_POINTERS_MISMATCH: table pointers differ from bound actor storage')
-    gameplay_area_plan = A.gameplay_area_plan(document)
+    gameplay_area_plan = A.gameplay_area_plan(layout_document)
     for row in gameplay_area_plan['assignments']:
         values = tail_rows[row['map_id']]
         R.require(values['parent'] == row['parent_map_id']
                   and values['area_size'] == row['area_size_code'],
                   'CURRENT_COMPOSER_GAMEPLAY_AREAS_MISMATCH: table parent/size differs from authored area')
-    if gameplay_area_plan['complete']:
-        for area, values in A.gameplay_transition_rows(source, document).items():
+    if private_pilot is not None or gameplay_area_plan['complete']:
+        for area, values in A.gameplay_transition_rows(source,layout_document,private_pilot=private_pilot is not None).items():
             R.require(all(tail_rows[area][name] == value for name, value in values.items()),
                       'CURRENT_COMPOSER_GAMEPLAY_TRANSITIONS_MISMATCH: table differs from saved-area transition lowering')
     R.require(type(graphics_source) is str and graphics_source
