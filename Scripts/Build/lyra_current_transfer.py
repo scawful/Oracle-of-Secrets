@@ -953,6 +953,7 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     _keys(runtime, {'kind','scope','runtime_admission','review_file','tail_recipe',
                     'graphics_source','graphics_assets','compiled_consumers','event_state','origin_preimages'}
           | ({'bg128'} if 'bg128' in runtime else set())
+          | ({'joint_art'} if 'joint_art' in runtime else set())
           | ({'private_checkpoint','guard_binding'} if preview else
              ({'private_pilot'} if 'private_pilot' in runtime else set())), 'current runtime policy')
     R.require(runtime['kind'] == (PREVIEW_POLICY_KIND if preview else 'lyra.current_runtime_policy.v1')
@@ -1079,6 +1080,18 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
         files['checkpoint_registry_constants.asm']=emitted['constants'].encode()
         files['checkpoint_registry_tables.asm']=emitted['tables'].encode()
         constants+='!LYRA_PRIVATE_CHECKPOINT_ENABLED = 1\n'
+    joint_art = None
+    if 'joint_art' in runtime:
+        import lyra_joint_art
+        R.require(preview, 'JOINT_ART_REQUIRES_PRIVATE_PREVIEW_POLICY')
+        lyra_joint_art.require_source_profile(profile)
+        R.require(profile['origins']['graphics']['snes'][1] <= lyra_joint_art.AREA_CODE[0],
+                  'JOINT_ART_GRAPHICS_SUFFIX_OVERLAP')
+        joint_art, extra_constants, extra_data, extra_binary = lyra_joint_art.prepare(
+            runtime['joint_art'], request, source, occupied=origin_spans + write_spans)
+        constants += extra_constants
+        files['runtime_data.asm'] += extra_data
+        files['binaries/joint-art.bin'] = extra_binary
     files['runtime_constants.asm'] = constants.encode()
     data = files['runtime_data.asm'].decode()+'pushpc\n'
     binary = bytearray()
@@ -1108,6 +1121,8 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
                 *request['inputs'].values(),*profile['selected_source']['bindings'],
                 *profile['review']['adapter_bindings']]
     if pilot_binding is not None: bindings.append(pilot_binding)
+    if joint_art is not None:
+        bindings += [*joint_art['inputs'], Q.bound(Path(lyra_joint_art.__file__))]
     if preview:
         bindings += [runtime['private_checkpoint']['plan'],runtime['private_checkpoint']['landing'],
                      runtime['guard_binding'],*checkpoint_context['inputs']]
@@ -1127,6 +1142,8 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
             dict((key,value) for key,value in dict(bg_plan,payload_hex=bg_plan['payload'].hex()).items() if key!='payload')),
         generated_files={name:R.sha(raw) for name,raw in files.items()},
         save_exit_policy='unchanged_held',native_gameplay_verified=False,save_reopen_verified=False)
+    if joint_art is not None:
+        prepared['joint_art'] = joint_art
     if preview:
         prepared.update(runtime_scope=PREVIEW_SCOPE,production_admission=False,
             checkpoint_preview=dict(plan_binding=runtime['private_checkpoint']['plan'],
@@ -1300,6 +1317,10 @@ def verify_current_output(prepared, compiled, symbols):
         a,b=row['pc']
         R.require(0<=a<b<=len(compiled) and compiled[a:b].hex()==row['payload_hex'],
                   'CURRENT_COMPILED_PAYLOAD_MISMATCH: derived data differs')
+    joint_art_proof = None
+    if prepared.get('joint_art') is not None:
+        import lyra_joint_art
+        joint_art_proof = lyra_joint_art.verify(prepared['joint_art'], compiled, symbols, P.ROOT)
     # The original pointer directories and all320 decoded native planes remain
     # native controls even though readers now serve the extra32 pages.
     for area in range(160):
@@ -1330,4 +1351,6 @@ def verify_current_output(prepared, compiled, symbols):
         result.update(runtime_scope=PREVIEW_SCOPE,ordinary_build_ready=False,production_admission=False,
                       checkpoint=checkpoint_proof,held_routes=observed['preview_guards']['held_routes'],
                       save_exit_policy='seeded_checkpoint_preview_only')
+    if joint_art_proof is not None:
+        result['joint_art'] = joint_art_proof
     return result

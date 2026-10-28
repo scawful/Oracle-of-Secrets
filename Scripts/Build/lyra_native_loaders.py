@@ -1774,7 +1774,10 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None):
         'ProjectBGPalette_Startup','ProjectBGPalette_IntroReset','ProjectBGPalette_IndoorDeparture',
         'ProjectBGPalette_NativeAllBegin','ProjectBGPalette_WhirlpoolBegin','ProjectBGPalette_WhirlpoolComplete',
         'ProjectBGPalette_NativeMainBegin','ProjectBGPalette_NativeAuxBegin','ProjectBGPalette_NativeHudComplete',
-        'ProjectBGPalette_RestoreAndInvalidate','ProjectBGPalette_ResolveColor'}
+        'ProjectBGPalette_RestoreAndInvalidate','ProjectBGPalette_ResolveColor',
+        'AreaTileset_CodeStart','AreaTileset_CodeEnd',
+        'CheckForChangeGraphicsNormalLoadBoat','CheckForChangeGraphicsNormalLoadBoat_End',
+        'GfxSheet_Helpers','JointPalette_ZSMainReader','JointPalette_ZSMainReader_End'}
     active = False
     for line in text.splitlines():
         if line.startswith('['): active = line == '[labels]'
@@ -1801,6 +1804,19 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None):
         regions.append(window('ProjectBGPalette_Code',address('ProjectBGPalette_CodeStart'),address('ProjectBGPalette_CodeEnd')))
         regions.append(window('LyraHost_LoadDayNightPaletteEffect',address('LyraHost_LoadDayNightPaletteEffect'),
                               address('LyraHost_LoadDayNightPaletteEffect_End')))
+    area = 'AreaTileset_CodeStart' in labels
+    if area:
+        regions.append(window('AreaTileset_Code', address('AreaTileset_CodeStart'), address('AreaTileset_CodeEnd')))
+        regions.append(window('AreaTileset_Dispatch', address('CheckForChangeGraphicsNormalLoadBoat'),
+                              address('CheckForChangeGraphicsNormalLoadBoat_End')))
+    expanded_sheets = 'GfxSheet_Helpers' in labels
+    if expanded_sheets:
+        regions.append(window('GfxSheet_HelpersAndPointers', address('GfxSheet_Helpers'), 0x240000))
+    joint_palette = 'JointPalette_ZSMainReader' in labels
+    if joint_palette:
+        regions.append(window('JointPalette_Directory', 0x1BB6A8, 0x1BB800))
+        regions.append(window('JointPalette_ZSMainReader', address('JointPalette_ZSMainReader'),
+                              address('JointPalette_ZSMainReader_End')))
     for host in SOURCE_HOSTS:
         name = 'LyraHost_'+host
         regions.append(window(name,address(name),address(name+'_End')))
@@ -1823,6 +1839,13 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None):
     fixed.update({a:12 for a in (0x02F59D,0x02F5C8,0x02F7E3,0x02F80E)})
     fixed.update({a:4 for a in (*state.TAIL_LOAD_SITES,*[r[0] for r in state.TAIL_STORE_SITES])})
     fixed[0x1BC906]=3
+    if area:
+        fixed.update({site:4 for site in (0x00886E,0x1BBEFD,0x1BBF2A,0x1BC04E)})
+    if expanded_sheets:
+        fixed.update({0x00D53B:17,0x00E2D8:15,0x00E462:17,0x00E6BA:15,
+                      0x00E72E:15,0x00E772:15,0x00E78F:15})
+    if joint_palette:
+        fixed.update({site:7 for site in (0x1BEECE,0x1BEEF2,0x1BEF16)})
     bg_hooks=((0x008827,'ProjectBGPalette_Startup',0x22,0),
         (0x0CC1A0,'ProjectBGPalette_IntroReset',0x5C,0),
         (0x02C55E,'ProjectBGPalette_IndoorDeparture',0x5C,0),
