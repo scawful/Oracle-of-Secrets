@@ -41,10 +41,8 @@ BrotherSpr = $0EB0
 !OctoTriggerY       = $0190 ; fight starts when Link is above this line
 !OctoBlueHomeX      = $0120
 !OctoBlueHomeY      = $0120
-!OctoSubmergeX      = $00C8 ; red resurfaces here to throw the reward
+!OctoSubmergeX      = $00C8 ; red resurfaces here to open the shrine cave
 !OctoSubmergeY      = $0110
-!OctoRewardX        = $00F8 ; reward position when re-entering after the fight
-!OctoRewardY        = $0120
 
 ; Fight tuning
 !OctoSurrenderTotal = $30   ; surrender when both brothers together are below this
@@ -53,12 +51,6 @@ BrotherSpr = $0EB0
 !OctoLungeSpeed     = $18
 !OctoRedIdleTime    = $40
 !OctoBlueIdleTime   = $60   ; offset so the brothers do not attack together
-
-; Reward (Quake until the underwater reward is decided)
-!OctoRewardSprite   = $C0
-!OctoRewardItemGet  = $11
-!OctoRewardSram     = $7EF349
-!OctoRewardGfx      = $1C
 
 ; Dialogue. $48-$4B now hold other text in the ROM (sword and shield,
 ; Toto Ranch sign, witch); the Octoboss lines need new message IDs.
@@ -90,16 +82,13 @@ Sprite_Octoboss_Long:
   LDA.w SprMiscD, X : BNE + ; is the sprite already init
     STZ.w SprBulletproof, X
 
-    ; Red only: after the fight the boss stays gone. If Link left without
-    ; the reward, put it back on the bridge.
+    ; Red only: after the fight the boss stays gone and the shrine cave
+    ; stays open (the area map has no wall).
     LDA.w SprMiscF, X : BNE .notKilledYet
     PHX
     LDX.b $8A
     LDA.l $7EF280, X : AND.b #$40 : BEQ .notKilledYet_plx
       PLX
-      LDA.l !OctoRewardSram : BNE .weHaveReward
-        JSR SpawnMedallionAlt
-      .weHaveReward
       STZ.w SprState, X
       BRA .SpriteIsNotActive
     .notKilledYet_plx
@@ -409,7 +398,8 @@ Sprite_Octoboss_Secondary:
 
   EmergeWaitGiveItem:
   {
-    ; Emerge back wait few frames, throw item in the middle moat, despawn wall
+    ; Emerge back, wait a few frames, then both brothers leave for good.
+    ; The bridge wall is already gone, so the shrine cave is open.
     LDA.w SprTimerB, X : BNE +
       LDA.w SprFrame, X : INC : STA.w SprFrame, X : CMP.b #9 : BCC .noframereset
         LDA.b #$09 : STA.w SprFrame, X
@@ -419,7 +409,6 @@ Sprite_Octoboss_Secondary:
 
     LDA.w SprTimerC, X : BNE .noItemYet
       INC.w SprAction, X
-      JSR SpawnMedallion
       LDY.w BrotherSpr, X
       LDA.b #$07 : STA.w SprAction, Y
       PHX
@@ -541,7 +530,7 @@ Octoboss_DrawWall:
 
   ;       top,   bottom
   .tiles : dw $068F, $06A4 ; wall
-           dw $0034, $0034 ; water
+           dw $0E14, $0E0C ; area map tiles (open)
 }
 
 ; Out: $08 = area origin X, $0A = area origin Y (16-bit). Keeps X and Y.
@@ -930,38 +919,3 @@ HandleMovingSplash:
   RTS
 }
 
-; Reward thrown from the red brother onto the bridge
-SpawnMedallion:
-{
-  LDA.b #!OctoRewardSprite
-  JSL Sprite_SpawnDynamically : BMI Octoboss_SetupReward_exit
-    JSL Sprite_SetSpawnedCoords
-    LDA.b #$10 : STA.w SprXSpeed, Y
-    LDA.b #$30 : STA.w $0F80, Y
-    LDA.b #$20 ; SFX2.20
-    JSL $0DBB7C ; SpriteSFX_QueueSFX2WithPan
-    BRA Octoboss_SetupReward
-}
-
-; Reward left on the bridge when Link returns without it
-SpawnMedallionAlt:
-{
-  LDA.b #!OctoRewardSprite
-  JSL Sprite_SpawnDynamically : BMI Octoboss_SetupReward_exit
-    %Octoboss_PlaceAt(!OctoRewardX, !OctoRewardY)
-}
-
-; In: Y = reward slot. Keeps X; Y is not kept.
-Octoboss_SetupReward:
-{
-  PHX
-  TYX
-  LDA.b #!OctoRewardItemGet : STA.w SprFrame, X
-  LDA.b #$83 : STA.w SprNbrOAM, X
-  LDA.b #$58 : STA.w SprGfxProps, X
-  AND.b #$0F : STA.w SprProps, X
-  LDA.b #!OctoRewardGfx : JSL $00D4ED ; WriteTo4BPPBuffer_item_gfx
-  PLX
-  #Octoboss_SetupReward_exit:
-  RTS
-}
