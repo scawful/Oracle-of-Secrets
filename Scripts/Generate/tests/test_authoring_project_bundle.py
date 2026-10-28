@@ -806,6 +806,26 @@ flagged_sheets=0xD4,0xD6
         with self.assertRaisesRegex(ValueError, r"current rom \(role rom\)"):
             verify_bundle(self.bundle)
 
+    def test_external_rom_edit_before_project_only_save_refuses(self):
+        # yaze binds the ROM only as it loaded or last wrote it: a project-only
+        # Save after another writer edits the ROM persists the descriptor but
+        # publishes no receipt, so the prior receipt keeps verify refusing.
+        self.saved_rom_edit()
+        self.write_native_save()
+        verify_bundle(self.bundle)
+        rom = self.bundle / "rom"
+        external = bytearray(rom.read_bytes())
+        external[-2] ^= 0xFF
+        rom.write_bytes(bytes(external))
+        descriptor = self.bundle / "project.yaze"
+        saved = descriptor.read_text()
+        descriptor.write_text(saved + "# project-only save\n")
+        with self.assertRaisesRegex(ValueError, r"current project.yaze \(role project\)"):
+            verify_bundle(self.bundle)
+        descriptor.write_text(saved)
+        with self.assertRaisesRegex(ValueError, r"current rom \(role rom\)"):
+            verify_bundle(self.bundle)
+
     def test_rom_edit_receipt_must_bind_the_editable_rom_not_the_built_rom(self):
         self.saved_rom_edit()
         built = self.bundle / "project/Roms/oos168x.sfc"
