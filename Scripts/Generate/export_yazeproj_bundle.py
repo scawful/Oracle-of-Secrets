@@ -45,6 +45,7 @@ PORTABLE_BUILD_COMMAND = (
     "OOS_BASE_ROM=rom OOS_BACKUP_ROOT=backups OOS_MANIFEST_ROOT=. "
     f"{PORTABLE_BUILD_SCRIPT} 168"
 )
+PORTABLE_BUILD_TARGET = "project/Roms/oos168x.sfc"
 AUTHORING_BUILD_SCRIPT = "project/Scripts/Build/authoring_bundle_build.py"
 AUTHORING_BUILD_COMMAND = f"python3 {AUTHORING_BUILD_SCRIPT} --project project.yaze"
 # Fail-closed save settings shared by every Oracle project descriptor.
@@ -82,7 +83,7 @@ PORTABLE_PROJECT_CONTRACT = (
     ("build", "build_script", PORTABLE_BUILD_COMMAND),
     ("build", "output_folder", "project/Roms"),
     ("build", "git_repository", "project"),
-    ("build", "build_target", "project/Roms/oos168x.sfc"),
+    ("build", "build_target", PORTABLE_BUILD_TARGET),
     ("build", "asm_entry_point", "project/Oracle_main.asm"),
 )
 
@@ -228,6 +229,7 @@ def validate_portable_project_contract(
     expected_rom_sha1: str,
     save_contract: tuple = ORACLE_SAVE_CONTRACT,
     build_command: str = PORTABLE_BUILD_COMMAND,
+    build_target: str = PORTABLE_BUILD_TARGET,
 ) -> None:
     """Require the portable descriptor's paths and build contract."""
     validate_oracle_project_contract(content, save_contract)
@@ -240,6 +242,8 @@ def validate_portable_project_contract(
     for section, key, value in PORTABLE_PROJECT_CONTRACT:
         if (section, key) == ("build", "build_script"):
             value = build_command
+        elif (section, key) == ("build", "build_target"):
+            value = build_target
         _require_project_assignment(assignments, section, key, value)
     _require_project_assignment(
         assignments,
@@ -959,15 +963,10 @@ def _load_native_save_receipt(bundle_root: Path) -> dict | None:
     return receipt
 
 
-def _require_live_planning(
-    bundle_root: Path, receipt: dict, values: dict, native: dict | None
-) -> None:
-    """Refuse a live Planning reference that is also a build or Save input."""
-    raw = values.get("planning.file", "")
-    if not raw:
-        return
-    path = Path(raw)
-    planning = (path if path.is_absolute() else bundle_root / path).resolve()
+def _input_alias(
+    bundle_root: Path, receipt: dict, native: dict | None, path: Path
+) -> str | None:
+    """Name the ROM, tool, build or Save input that `path` resolves to."""
     root = bundle_root.resolve()
     inputs = {(root / member).resolve(): member for member in BUILD_OWNED_MEMBERS}
     inputs.update({(root / rel).resolve(): rel for rel in receipt["files"]})
@@ -976,9 +975,27 @@ def _require_live_planning(
     if native is not None:
         inputs.update({Path(artifact["path"]).resolve(): f"native Save role {role}"
                        for role, artifact in native["roles"].items()})
-    alias = inputs.get(planning) or next(
+    resolved = path.resolve()
+    alias = inputs.get(resolved) or next(
         (tree for tree in BUILD_OWNED_TREES
-         if planning.is_relative_to((root / tree).resolve())), None)
+         if resolved.is_relative_to((root / tree).resolve())), None)
+    if alias is None and resolved.exists():
+        alias = next((name for existing, name in inputs.items()
+                      if existing.exists() and os.path.samefile(existing, resolved)),
+                     None)
+    return alias
+
+
+def _require_live_planning(
+    bundle_root: Path, receipt: dict, values: dict, native: dict | None
+) -> None:
+    """Refuse a live Planning reference that is also a build or Save input."""
+    raw = values.get("planning.file", "")
+    if not raw:
+        return
+    path = Path(raw)
+    alias = _input_alias(bundle_root, receipt, native,
+                         path if path.is_absolute() else bundle_root / path)
     if alias is not None:
         raise ValueError(
             f"planning.file {raw} is also a ROM/tool/build input ({alias}); a "
@@ -1131,6 +1148,63 @@ def verify_authoring_dependencies(
         _require_saved_state(bundle_root, receipt, values, changed_files,
                              rom_identity)
     return receipt
+
+
+def _saved_build_target(
+    bundle_root: Path, authoring: dict | None, content: bytes
+) -> str:
+    """Return the build_target the portable contract pins for this descriptor.
+
+    build_target is output metadata: a genuine native Save may name a new
+    output, never an input. Every other descriptor pin stays exact; the build
+    backend enforces its own stricter fresh-target rules.
+    """
+    if authoring is None or (
+        hashlib.sha256(content).hexdigest() == authoring["project_sha256"]
+    ):
+        return PORTABLE_BUILD_TARGET
+    _, assignments = _parse_project_contract(content.decode("utf-8"))
+    targets = [value for section, key, value in assignments
+               if (section, key) == ("build", "build_target")]
+    planning = [value for section, key, value in assignments
+                if (section, key) == ("planning", "file") and value]
+    if len(targets) != 1 or targets[0] == PORTABLE_BUILD_TARGET:
+        return PORTABLE_BUILD_TARGET
+    raw = targets[0]
+    native = _load_native_save_receipt(bundle_root)
+    project = (native or {}).get("roles", {}).get("project")
+    if (
+        project is None
+        or project["path"] != str((bundle_root / "project.yaze").resolve())
+        or project["sha256"] != hashlib.sha256(content).hexdigest()
+        or not native["bindings_complete"]
+    ):
+        raise ValueError(
+            f"project.yaze build_target {raw} is not bound by a complete "
+            f"{NATIVE_SAVE_RECEIPT} from a yaze Save; refusing an external "
+            "or unsaved output change"
+        )
+    if ("\\" in raw or "\0" in raw or ".." in Path(raw).parts
+            or PureWindowsPath(raw).drive):
+        raise ValueError(f"Invalid saved build_target: {raw!r}")
+    target = Path(raw)
+    target = target if target.is_absolute() else bundle_root / target
+    alias = _input_alias(bundle_root, authoring, native, target)
+    for raw_plan in planning:
+        plan = Path(raw_plan)
+        plan = plan if plan.is_absolute() else bundle_root / plan
+        if alias is None and plan.resolve() == target.resolve():
+            alias = "planning.file"
+    if alias is None and target.exists() and not target.is_file():
+        alias = "a non-file path"
+    if alias is not None:
+        raise ValueError(
+            f"Saved build_target {raw} aliases {alias}; a build output must "
+            "not name a ROM, project, tool or dependency input"
+        )
+    if target.suffix != ".sfc":
+        raise ValueError(f"Invalid saved build_target: {raw!r}")
+    return raw
 
 
 def _without_dev_rom_fields(manifest: dict) -> dict:
@@ -1353,7 +1427,9 @@ def verify_bundle(bundle_root: Path) -> None:
         validate_desktop_project_contract(project_content)
     validate_portable_project_contract(
         project_content, rom_sha1, contract,
-        AUTHORING_BUILD_COMMAND if authoring else PORTABLE_BUILD_COMMAND)
+        AUTHORING_BUILD_COMMAND if authoring else PORTABLE_BUILD_COMMAND,
+        _saved_build_target(bundle_root, authoring,
+                            project_content.encode("utf-8")))
     if not authoring:
         palette_catalog = _portable_palette_catalog(bundle_root)
         _, assignments = _parse_project_contract(project_content)

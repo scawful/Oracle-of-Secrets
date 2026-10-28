@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import re
 import shutil
 import sys
 import unittest
@@ -768,6 +770,98 @@ flagged_sheets=0xD4,0xD6
                 self.write_native_save(errors=[error])
                 with self.assertRaisesRegex(
                         ValueError, f"incomplete Save binding.*{error}"):
+                    verify_bundle(self.bundle)
+
+    def saved_build_target(self, target):
+        """A project-only Save that names a new output; returns the descriptor."""
+        self.saved_terrain_edit()
+        descriptor = self.bundle / "project.yaze"
+        descriptor.write_text(descriptor.read_text().replace(
+            "build_target=project/Roms/oos168x.sfc", f"build_target={target}"))
+        return descriptor
+
+    def test_native_saved_build_target_passes_as_output_metadata(self):
+        target = self.root / "engine/Roms/generation-01/oos168x.sfc"
+        self.saved_build_target(target)
+        self.write_native_save()
+        verify_bundle(self.bundle)
+        self.assertEqual(self.values()["build", "build_target"], str(target))
+        self.assertEqual(
+            (self.bundle / "authoring-dependencies.json").read_bytes(),
+            self.export_receipt)
+        self.assertFalse(target.parent.exists())
+
+    def test_build_target_change_without_a_current_complete_save_refuses(self):
+        target = self.root / "engine/Roms/generation-01/oos168x.sfc"
+        descriptor = self.saved_build_target(target)
+        with self.assertRaisesRegex(ValueError, "descriptor differs.*external"):
+            verify_bundle(self.bundle)
+        saved = descriptor.read_text()
+        descriptor.write_text(saved.replace(str(target), "project/Roms/oos168x.sfc"))
+        self.write_native_save()
+        descriptor.write_text(saved)
+        with self.assertRaisesRegex(ValueError, r"current project.yaze \(role project\)"):
+            verify_bundle(self.bundle)
+        self.write_native_save(
+            errors=["dependency.sprite_0_source: imported source is stale"])
+        with self.assertRaisesRegex(ValueError, "build_target .* not bound by a complete"):
+            verify_bundle(self.bundle)
+        self.write_native_save(errors=["project: unreadable"])
+        with self.assertRaisesRegex(ValueError, "incomplete Save binding"):
+            verify_bundle(self.bundle)
+
+    def test_saved_build_target_that_aliases_an_input_refuses(self):
+        outside = self.root / "labels.sfc"
+        outside.write_bytes(b"{}")
+        linked = self.root / "linked.sfc"
+        linked.symlink_to(self.bundle / "rom")
+        hardlinked = self.root / "hardlinked.sfc"
+        os.link(self.bundle / "rom", hardlinked)
+        plan = self.root / "plan.sfc"
+        for target in ("rom", "project.yaze", "tools/z3ed", "project/Oracle_main.sfc",
+                       "assets/project/output.sfc", str(outside), str(linked),
+                       str(hardlinked), str(plan), str(self.root / "dir.sfc")):
+            with self.subTest(target=target):
+                descriptor = self.saved_build_target(target)
+                if target == str(plan):
+                    descriptor.write_text(
+                        descriptor.read_text() + f"\n[planning]\nfile={plan}\n")
+                if target.endswith("dir.sfc"):
+                    Path(target).mkdir(exist_ok=True)
+                extra = ({"dependency.labels_filename": outside}
+                         if target == str(outside) else {})
+                self.write_native_save(**extra)
+                with self.assertRaisesRegex(
+                        ValueError, f"build_target {re.escape(target)} aliases"):
+                    verify_bundle(self.bundle)
+
+    def test_saved_build_target_must_be_a_plain_rom_path(self):
+        for target in ("../escape/oos168x.sfc", "C:\\Roms\\oos168x.sfc",
+                       str(self.root / "engine/Roms/oos168x.sym")):
+            with self.subTest(target=target):
+                self.saved_build_target(target)
+                self.write_native_save()
+                with self.assertRaisesRegex(ValueError, "Invalid saved build_target"):
+                    verify_bundle(self.bundle)
+
+    def test_native_save_cannot_change_other_build_pins(self):
+        for key, value in (("build_script", "python3 /external/build.py"),
+                           ("asm_entry_point", "project/Other_main.asm"),
+                           ("output_folder", "/external/Roms"),
+                           ("git_repository", "/external/source")):
+            with self.subTest(key=key):
+                self.saved_build_target(self.root / "engine/Roms/gen/oos168x.sfc")
+                descriptor = self.bundle / "project.yaze"
+                lines = descriptor.read_text().split("\n")
+                section = ""
+                for index, line in enumerate(lines):
+                    if line.startswith("["):
+                        section = line
+                    elif section == "[build]" and line.startswith(f"{key}="):
+                        lines[index] = f"{key}={value}"
+                descriptor.write_text("\n".join(lines))
+                self.write_native_save()
+                with self.assertRaisesRegex(ValueError, f"{key} must equal"):
                     verify_bundle(self.bundle)
 
     def saved_rom_edit(self):
