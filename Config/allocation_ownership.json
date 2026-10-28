@@ -7026,8 +7026,8 @@
           "sha256": "9317e14269655d49e45d6cff366143400bb669fa8ae6f6004f166670eedfb185"
         },
         "joint_art": {
-          "path": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-47/PACKET.json",
-          "sha256": "7d1039fc01b220ac96e710684e8a0a091da5b42b1a013faf013277595b402b6f"
+          "path": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-50/PACKET.json",
+          "sha256": "f915f2393a8e3b028bd16d678f7a3b4ce8fa78cd4fb23a4321dd51ce90157f53"
         },
         "kind": "lyra.private_checkpoint_preview_policy.v1",
         "origin_preimages": [
@@ -7076,15 +7076,15 @@
         ],
         "private_checkpoint": {
           "plan": {
-            "path": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-47/CHECKPOINT_PLAN_V2.json",
-            "sha256": "579e7c30f5495e06834647c982d0024b59e78013eda06d965d21d0bf9f5512ea"
+            "path": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-50/CHECKPOINT_PLAN_V2.json",
+            "sha256": "884da0b6c20ed165e46ad487e0e43a8b17006a13f3e34529b388392c4121e874"
           },
           "landing": {
-            "path": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-47/LANDING_A0.json",
+            "path": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-50/LANDING_A0.json",
             "sha256": "be35b594056e59f307bab43979aba8928b2e4e8397bac3c5f3d5745ff3c21173"
           }
         },
-        "review_file": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-47/RESERVATION_REVIEW.json",
+        "review_file": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-50/RESERVATION_REVIEW.json",
         "runtime_admission": true,
         "scope": "seeded_checkpoint_preview",
         "tail_recipe": {
