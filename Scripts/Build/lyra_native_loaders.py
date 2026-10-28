@@ -1898,6 +1898,12 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None):
         bounds=regions[0]['snes']
         R.require(bounds[0]<=preview['code_snes'][0]<preview['code_snes'][1]<=bounds[1],
                   'PRIVATE_PREVIEW_OUTSIDE_CURRENT_CODE_OWNER')
+        # A reviewed consumer snapshot binds exact code windows. Its enclosing
+        # ROM also contains the source-profile/ledger descriptor, so binding
+        # that aggregate hash here would require a policy/hash fixed point.
+        # Standalone inspection retains it; build verification reports the
+        # actual final image hash after independently checking all derived data.
+        preview = {key:value for key,value in preview.items() if key != 'compiled_rom_sha256'}
         return dict(result,kind=PREVIEW_CONSUMER_KIND,preview_guards=preview,current_core_inspected=True,
             broad_six_role_qualification=False,ordinary_build_ready=False,runtime_admission=False,
             production_admission=False,native_gameplay_verified=False,save_reopen_verified=False)
