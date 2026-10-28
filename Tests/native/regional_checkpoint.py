@@ -220,6 +220,10 @@ class Episode:
                 isinstance(breakpoints.get('breakpoints'), list),
                 'Breakpoint list response is not verified')
         require(not breakpoints['breakpoints'], 'Existing breakpoints: not an isolated session')
+        # BREAKPOINT list only inspects the socket registry; it does not attach
+        # Mesen's debugger. Its first READBLOCK clears the non-debugger pause.
+        require(len(self.b.read_block(0x7E0000, 1)) == 1,
+                'Debugger initialization read failed')
         self.command('PAUSE')
         pause_limit = time.monotonic() + 3
         while not self.command('STATE')['paused']:

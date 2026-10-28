@@ -1,5 +1,6 @@
 """Native driver startup controls; no socket or emulator is opened."""
 from pathlib import Path
+from types import SimpleNamespace
 import sys
 import unittest
 from unittest import mock
@@ -9,6 +10,38 @@ import lyra_checkpoint_preview as L
 
 
 class NativePreviewStartupTest(unittest.TestCase):
+    def test_initial_debugger_read_precedes_the_pause_used_for_frame_stepping(self):
+        episode = object.__new__(L.Episode)
+        episode.a = SimpleNamespace(phase='home')
+        episode.owner = mock.Mock()
+        episode.result = {}
+        episode.screenshot = mock.Mock()
+        state = dict(debugger=False, paused=False)
+        def read(address, count):
+            if not state['debugger']:
+                state.update(debugger=True, paused=False)
+            return bytes(count)
+        episode.b = mock.Mock()
+        episode.b.read_block.side_effect = read
+        def command(name, params=None):
+            if name == 'BREAKPOINT':
+                return dict(breakpoints=[])
+            if name == 'PAUSE':
+                state['paused'] = True
+                return {}
+            if name == 'STATE':
+                return dict(paused=state['paused'])
+            self.fail(name)
+        episode.command = command
+        def boot():
+            read(0x7E0010, 1)
+            self.assertTrue(state['paused'], 'Initial debugger read cleared the startup pause')
+            return dict(module=7, room=0x104, checkpoint='0101000000')
+        episode.boot = boot
+        episode.run()
+        self.assertTrue(episode.result['passed'])
+        episode.b.read_block.assert_called_once_with(0x7E0000, 1)
+
     def test_inherited_damage_accepts_only_the_scene_gameplay_module(self):
         episode = object.__new__(L.LyraEpisode)
         state = dict(module=0x0B, sub=0, hp=48)
