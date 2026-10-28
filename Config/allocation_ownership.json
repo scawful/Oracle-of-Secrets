@@ -4547,7 +4547,7 @@
     "regional_checkpoint_runtime_25:Config/feature_flags.asm": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Config/feature_flags.asm",
-      "sha256": "b9078891943d1362428ffc0824081c615c44c51410303de1d281ad48c240eac0"
+      "sha256": "96ddff6b1b8a04e05eac9545fdbca8c43c44899041110fe423f7c0821d04efe0"
     },
     "regional_checkpoint_runtime_25:Scripts/Build/checkpoint_registry.py": {
       "source_set": "regional_checkpoint_runtime_25",
@@ -4612,7 +4612,7 @@
     "lyra_joint_graphics_source_26:Config/feature_flags.asm": {
       "source_set": "lyra_joint_graphics_source_26",
       "path": "Config/feature_flags.asm",
-      "sha256": "b9078891943d1362428ffc0824081c615c44c51410303de1d281ad48c240eac0"
+      "sha256": "96ddff6b1b8a04e05eac9545fdbca8c43c44899041110fe423f7c0821d04efe0"
     },
     "lyra_joint_graphics_source_26:Scripts/Build/check_zscream_overlap.py": {
       "source_set": "lyra_joint_graphics_source_26",
