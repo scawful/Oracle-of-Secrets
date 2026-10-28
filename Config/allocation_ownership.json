@@ -4689,6 +4689,16 @@
       "source_set": "lyra_joint_area_tilesets_27",
       "path": "Tests/test_ow_area_tilesets.py",
       "sha256": "ca6692c0f2c4f80fb8f30f9dec4f7c174fc6a6ee0d3ce895203d0ef7624f6fff"
+    },
+    "lyra_joint_area_tilesets_27:Scripts/Build/lyra_current_transfer.py": {
+      "source_set": "lyra_joint_area_tilesets_27",
+      "path": "Scripts/Build/lyra_current_transfer.py",
+      "sha256": "c9e75cbaf93b36b3db4b482a8dced6bfa2ea5116124284edf823ab8123986ecd"
+    },
+    "lyra_joint_area_tilesets_27:Tests/test_lyra_current_build.py": {
+      "source_set": "lyra_joint_area_tilesets_27",
+      "path": "Tests/test_lyra_current_build.py",
+      "sha256": "ec22188e1a1295b3d352b9966be485fa78d565cd3be9d12c44fb76c1d9832f1a"
     }
   },
   "claims": [

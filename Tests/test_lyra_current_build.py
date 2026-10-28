@@ -12,6 +12,34 @@ import lyra_native_loaders as L
 import lyra_native_state as S
 
 
+class EventStorageOwnerTests(unittest.TestCase):
+    def proposed_ledger(self):
+        ledger = json.loads((X.P.ROOT/'Config/allocation_ownership.json').read_text())
+        value = dict(flags=0x7EF4C0,version=0x7EF4E0,marker=0xA1)
+        for claim in ledger['claims']:
+            if claim['id'] in ('LyraCurrentTailFlags','LyraCurrentTailVersion'):
+                claim.update(status='shared',base=value[
+                    'flags' if claim['id']=='LyraCurrentTailFlags' else 'version'])
+        return value,ledger
+
+    def test_real_ledger_unbounded_later_text_buffer_cannot_overlap(self):
+        value,ledger = self.proposed_ledger()
+        text = next(c for c in ledger['claims'] if c['id']=='text_decomp_reference')
+        self.assertEqual((text['base'],text['size']),(0x7F5B00,None))
+        self.assertEqual(X.current_event_state(value,ledger),value)
+
+    def test_unknown_earlier_extent_and_known_overlap_still_refuse(self):
+        value,ledger = self.proposed_ledger()
+        for base,size,message in ((0x7EF4BF,None,'ambiguous owner extent'),
+                                  (0x7EF4DF,2,'text_decomp_reference')):
+            with self.subTest(base=base,size=size):
+                bad = copy.deepcopy(ledger)
+                text = next(c for c in bad['claims'] if c['id']=='text_decomp_reference')
+                text.update(base=base,size=size)
+                with self.assertRaisesRegex(ValueError,message):
+                    X.current_event_state(value,bad)
+
+
 def consumer_fixture(source, code, *, bg_code=None):
     rom=bytearray(X.A.expanded_rom(source)); labels={}; serial=0
     def put(at,raw):rom[X.A.pc(at):X.A.pc(at)+len(raw)]=raw
