@@ -200,7 +200,7 @@ Checkpoint_OnFrame:
   PHP : REP #$30 : PHA : PHX : PHY : CLD
   LDA.b $1B : AND.w #$00FF : BNE .done
   LDA.l GameState : AND.w #$00FF : CMP.w #$0002 : BCC .done
-  LDA.w $04C6 : BNE .done
+  LDA.w $04C6 : AND.w #$00FF : BNE .done ; $04C7 is independent dungeon-tag state.
   JSR Checkpoint_FindCurrentRegion : BCC .done
   LDA.l CheckpointRegions_Regions,X : PHA
   LDA.l CheckpointRegions_Domains,X : PHA

@@ -9,6 +9,7 @@ The source-bound Goron destination is a runtime control, not Lyra route proof.
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import json
 import os
@@ -80,9 +81,9 @@ class Episode:
 
     def sample(self):
         low = self.b.read_block(0x7E0000, 0x200)
-        body = self.b.read_block(0x7E0400, 0xB0)
+        body = self.b.read_block(0x7E0400, 0xD0)
         saved = self.b.read_block(0x7EF300, 0xD0)
-        require(len(low) == 0x200 and len(body) == 0xB0 and len(saved) == 0xD0,
+        require(len(low) == 0x200 and len(body) == 0xD0 and len(saved) == 0xD0,
                 'Short native memory snapshot')
         word = lambda b, i: int.from_bytes(b[i:i+2], 'little')
         return dict(module=low[0x10], sub=low[0x11], indoors=low[0x1B],
@@ -90,6 +91,7 @@ class Episode:
                     x=word(low, 0x22), y=word(low, 0x20),
                     continue_marker=low[0x10A], entry=word(low, 0x10E),
                     dungeon=body[0xC], native_continue_hp=body[0xAA],
+                    entrance_animation=body[0xC6], dungeon_tag_suppression=body[0xC7],
                     hp=saved[0x6D], checkpoint=saved[0xB4:0xB9].hex(),
                     spawn=saved[0xC8], world=saved[0xCA], progression=saved[0xC5],
                     menu_choice=low[0xB0])
@@ -115,7 +117,37 @@ class Episode:
         raise RuntimeError('Cold boot did not reach gameplay through file-select input')
 
     def screenshot(self, name):
-        self.command('SCREENSHOT', {'path': str(self.a.output / (name + '.png'))})
+        data = self.command('SCREENSHOT')
+        require(isinstance(data, str), 'Screenshot response is not encoded PNG data')
+        png = base64.b64decode(data.strip('"'), validate=True)
+        require(png.startswith(b'\x89PNG\r\n\x1a\n'), 'Screenshot response is not a PNG')
+        path = self.a.output / (name + '.png')
+        path.write_bytes(png)
+        self.result.setdefault('screenshots', []).append(dict(path=str(path), sha256=sha(path)))
+
+    def require_regional_destination(self, state):
+        cache = self.b.read_block(0x7EC140, 0x32)
+        require(len(cache) == 0x32 and cache[:2] == bytes.fromhex('3600') and
+                cache[8:12] == bytes.fromhex('280e200d'), 'Regional source cache mismatch')
+        # Native02AC8F walks down16 pixels, then adds3 at02ACAB before
+        # returning to ordinary control. Cache Y is the pre-walk coordinate.
+        require((state['module'], state['map'], state['x'], state['y']) ==
+                (9, 0x36, 0xD20, 0xE28 + 0x13),
+                f'Regional stable destination mismatch: {state}')
+
+    def walk_to_anchor(self):
+        for _ in range(96):
+            state = self.sample()
+            if state['checkpoint'] == '0101010001':
+                self.result['cases'].append(dict(name='controller-walk-activated-anchor', state=state))
+                return
+            require(state['module'] == 9 and state['sub'] == 0 and
+                    state['map'] == 0x36 and state['hp'] > 0,
+                    f'Controller walk left admitted live area: {state}')
+            dx, dy = 0xD20 - state['x'], 0xE28 - state['y']
+            button = ('right' if dx > 0 else 'left') if dx else ('down' if dy > 0 else 'up') if dy else ''
+            self.press(button, 1)
+        raise RuntimeError(f'Controller walk did not activate anchor within96 steps: {self.sample()}')
 
     def damage(self):
         s = self.sample()
@@ -147,8 +179,8 @@ class Episode:
         raise RuntimeError('Could not select native GameOver option')
 
     def regional(self):
-        self.wait(lambda s: s['module'] == 9 and s['sub'] == 0 and
-                  s['checkpoint'] == '0101010001', 'ordinary-frame-activated-registered-anchor')
+        self.require_regional_destination(self.sample())
+        self.walk_to_anchor()
         self.screenshot('activated-goron-control')
         self.press('left', 8)
         moved = self.sample()
@@ -157,8 +189,7 @@ class Episode:
         self.choose_gameover(0)
         s = self.wait(lambda v: v['module'] == 9 and v['sub'] == 0,
                       'native-death-continue-loaded-regional-checkpoint')
-        require((s['map'], s['x'], s['y']) == (0x36, 0xD20, 0xE28),
-                f'Regional destination/cache mismatch: {s}')
+        self.require_regional_destination(s)
         require(s['checkpoint'] == '0101010001', 'Death lost activated checkpoint')
         self.screenshot('regional-continue')
         self.damage()
@@ -199,8 +230,7 @@ class Episode:
         elif self.a.phase == 'regional':
             self.regional()
         else:
-            require((s['module'], s['map'], s['x'], s['y']) == (9, 0x36, 0xD20, 0xE28),
-                    f'Fresh-process reopen failed regional cache destination: {s}')
+            self.require_regional_destination(s)
             require(s['checkpoint'] == '0101010001', 'Cold reopen lost native checkpoint bytes')
             self.screenshot('cold-reopened-regional')
         self.result['passed'] = True

@@ -55,6 +55,8 @@ def main():
     case('frame-wrong-point','Checkpoint_OnFrame',[0]*5,none,values={'px':0xD21},core=False)
     case('frame-wrong-affinity','Checkpoint_OnFrame',none,none,values={'world':0x40},core=False)
     case('frame-entrance-animation','Checkpoint_OnFrame',none,none,values={'entrance_animation':1},core=False)
+    case('frame-dungeon-tag-byte-independent','Checkpoint_OnFrame',[0]*5,normal,
+         values={'entrance_animation':0x0100},core=False)
     case('prepare-non-anchor-same-region','Checkpoint_PrepareResume',[1,1,1,0,0],normal,values={'map':0x37},core=False)
     case('frame-non-anchor-does-not-activate','Checkpoint_OnFrame',[0]*5,none,values={'map':0x37},core=False)
     case('prepare-other-region','Checkpoint_PrepareResume',normal,[1,1,1,0,0],values={'map':0x4B},core=False)
