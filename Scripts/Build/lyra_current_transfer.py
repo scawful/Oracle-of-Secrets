@@ -33,6 +33,9 @@ CONTEXT_KIND = 'yaze.native_save_context.v1'
 PRODUCER_KIND = 'yaze.native_save_producer_identity.v1'
 PROOF_KIND = 'yaze.current_save_transfer_enforcement.v1'
 POLICY_KIND = 'lyra.current_save_transfer_policy.v1'
+NATIVE_POLICY_KIND = 'lyra.current_save_transfer_policy.v2'
+NATIVE_EXECUTION_KIND = 'yaze.lyra_verify_project_execution.v1'
+COMPILE_ORDER = ['native_save', 'immutable_snapshot', 'compile_candidate', 'no_native_serializer']
 REVIEW_KIND = 'lyra.current_save_reservation_review.v1'
 PREVIEW_POLICY_KIND = 'lyra.private_checkpoint_preview_policy.v1'
 PREVIEW_SCOPE = 'seeded_checkpoint_preview'
@@ -241,6 +244,8 @@ def _identity(request):
 
 def prepare_transfer(project, z3ed, output, candidate, *, policy_id=None):
     """Capture a new immutable input; never advance Yaze's save generation."""
+    project = Path(os.path.abspath(project))
+    z3ed = Path(z3ed).resolve(strict=True)
     output = Path(os.path.abspath(output))
     candidate = Path(os.path.abspath(candidate))
     R.require(not output.exists() and not candidate.exists(), 'Transfer input/output paths must be new')
@@ -272,11 +277,25 @@ def prepare_transfer(project, z3ed, output, candidate, *, policy_id=None):
     files['native-save.json'] = Q.read_bound(live['save_receipt'])
     files['producer.json'] = Q.read_bound(live['producer'])
     files['context.json'] = Q.read_bound(live['save_context'])
+    # Yaze verifies its native Save and authored bytes, not Oracle's future
+    # compiler. Record the actual successful selected-verifier invocation in
+    # the immutable capture. Oracle owns the subsequent compile/readback order.
+    execution = dict(kind=NATIVE_EXECUTION_KIND, binary=live['producer_identity']['verifier'],
+        source_bindings=live['producer_identity']['source_bindings'],
+        generation=live['generation'], operation_id=live['operation_id'],
+        save_receipt=live['save_receipt'], save_context=live['save_context'],
+        source_rom_sha256=R.sha(raw['rom']), exit_code=0,
+        command=[str(Path(z3ed)), 'lyra-verify-project', f'--project-context={project}',
+                 f'--rom={live["inputs"]["rom"]["path"]}', '--format=json'],
+        observation=dict(path=str(output / 'observation.json'), sha256=R.sha(files['observation.json'])))
+    files['native-verification.json'] = P.encoded(execution)
     request = dict(kind=KIND, live=live, snapshot_root=str(output), inputs=snapshots,
         observation=dict(path=str(output / 'observation.json'), sha256=R.sha(files['observation.json'])),
         save_snapshot=dict(path=str(output / 'native-save.json'), sha256=R.sha(files['native-save.json'])),
         producer_snapshot=dict(path=str(output / 'producer.json'), sha256=R.sha(files['producer.json'])),
         context_snapshot=dict(path=str(output / 'context.json'), sha256=R.sha(files['context.json'])),
+        native_verification=dict(path=str(output / 'native-verification.json'),
+                                 sha256=R.sha(files['native-verification.json'])),
         census=_census(raw['rom'], document), allocation_policy_id=policy_id,
         target=dict(path=str(candidate), size=0x400000, role='compiled_candidate',
                     native_serializer_after_compile='forbidden'))
@@ -335,7 +354,8 @@ def verify_transfer(request_path, project, base_rom):
     binding = Q.bound(request_path)
     request = _json(Q.read_bound(binding))
     _keys(request, {'kind', 'live', 'snapshot_root', 'inputs', 'observation', 'save_snapshot',
-                   'producer_snapshot', 'context_snapshot', 'census', 'allocation_policy_id', 'target', 'transfer_id'}, 'current transfer request')
+                   'producer_snapshot', 'context_snapshot', 'census', 'allocation_policy_id', 'target', 'transfer_id'}
+          | ({'native_verification'} if 'native_verification' in request else set()), 'current transfer request')
     R.require(request['kind'] == KIND and request['transfer_id'] == _identity(request),
               'Current transfer identity differs')
     R.require(Path(request['live']['project']).resolve() == Path(project).resolve(),
@@ -346,6 +366,8 @@ def verify_transfer(request_path, project, base_rom):
     R.require(Path(binding['path']) == root / 'request.json', 'Current transfer completion marker differs')
     rows = [binding, *request['inputs'].values(), request['observation'],
             request['save_snapshot'], request['producer_snapshot'], request['context_snapshot']]
+    if 'native_verification' in request:
+        rows.append(request['native_verification'])
     R.require(set(request['inputs']) == set(request['live']['inputs']), 'Transfer snapshot roles differ')
     R.require(len({row['path'] for row in rows}) == len(rows), 'Transfer snapshot files alias each other')
     for row in rows:
@@ -373,10 +395,37 @@ def verify_transfer(request_path, project, base_rom):
               and target['path'] not in {row['path'] for row in request['live']['inputs'].values()},
               'Current transfer requires a new separate4MiB compiled candidate')
     document = C._document(raw['terrain'], Q.read_bound(request['observation']), raw['rom'])
+    if 'native_verification' in request:
+        native_execution(request)
     R.require(request['census'] == _census(raw['rom'], document), 'Current native reader census differs')
     _recheck(request['live'])
     Q.read_bound(binding)
     return request, raw['rom'], document
+
+
+def native_execution(request):
+    """Validate selected-verifier evidence captured before compilation."""
+    R.require('native_verification' in request, 'CURRENT_NATIVE_VERIFIER_EXECUTION_REQUIRED')
+    value = _json(Q.read_bound(request['native_verification']))
+    _keys(value, {'kind', 'binary', 'source_bindings', 'generation', 'operation_id',
+                  'save_receipt', 'save_context', 'source_rom_sha256', 'exit_code',
+                  'command', 'observation'}, 'native verifier execution')
+    live = request['live']; producer = live['producer_identity']
+    expected_command = [producer['verifier']['path'], 'lyra-verify-project',
+        f'--project-context={live["project"]}', f'--rom={live["inputs"]["rom"]["path"]}', '--format=json']
+    R.require(value['kind'] == NATIVE_EXECUTION_KIND and value['binary'] == producer['verifier']
+              and value['source_bindings'] == producer['source_bindings']
+              and type(value['generation']) is int and value['generation'] == live['generation']
+              and value['operation_id'] == live['operation_id']
+              and value['save_receipt'] == live['save_receipt'] and value['save_context'] == live['save_context']
+              and value['source_rom_sha256'] == request['inputs']['rom']['sha256']
+              and type(value['exit_code']) is int and value['exit_code'] == 0
+              and value['command'] == expected_command and value['observation'] == request['observation'],
+              'CURRENT_NATIVE_VERIFIER_EXECUTION_MISMATCH')
+    for row in [value['binary'], *value['source_bindings'], value['save_receipt'],
+                value['save_context'], value['observation']]:
+        Q.read_bound(row)
+    return value
 
 
 def _git(root, *args):
@@ -780,8 +829,9 @@ def plan_transfer(request_path, project, base_rom, *, ledger_path=None, current_
     policy = selected[0]
     _keys(policy, {'id', 'kind', 'scope', 'producer_identity_sha256', 'tile32_id_range',
                    'stream_ranges', 'preimages', 'spare_tile32_ids'}
-          | ({'current_runtime'} if 'current_runtime' in policy else set()), 'current allocation policy')
-    R.require(policy['kind'] == POLICY_KIND and policy['scope'] == 'disposable_build_only'
+          | ({'current_runtime'} if 'current_runtime' in policy else set())
+          | ({'enforcement'} if policy.get('kind') == NATIVE_POLICY_KIND else set()), 'current allocation policy')
+    R.require(policy['kind'] in (POLICY_KIND, NATIVE_POLICY_KIND) and policy['scope'] == 'disposable_build_only'
               and policy['producer_identity_sha256'] == request['live']['producer']['sha256'],
               'Current allocation policy does not bind the selected producer')
     lo, hi = policy['tile32_id_range']
@@ -806,30 +856,40 @@ def plan_transfer(request_path, project, base_rom, *, ledger_path=None, current_
                                  size=row['pc'][1] - row['pc'][0]) for row in other['preimages'])
     collision_ledger = dict(ledger, claims=[*ledger.get('claims', []), *other_claims])
     V.require_no_named_conflicts(collision_ledger, tile32_range=(lo, hi), stream_ranges=policy['stream_ranges'])
-    R.require(Path(request['live']['enforcement_receipt']).is_file(),
-              'CURRENT_SAVE_PRODUCER_PROOF_REQUIRED: selected producer must enforce this snapshot and writer order')
-    proof_binding = Q.bound(request['live']['enforcement_receipt'])
-    proof = _json(Q.read_bound(proof_binding))
-    _keys(proof, {'kind', 'transfer_id', 'generation', 'operation_id', 'save_context',
-                  'source_rom_sha256', 'policy_sha256', 'producer', 'source_bindings',
-                  'verification', 'writer_order'}, 'current producer proof')
-    producer = request['live']['producer_identity']
-    R.require(proof['kind'] == PROOF_KIND and proof['transfer_id'] == request['transfer_id']
-              and proof['generation'] == request['live']['generation']
-              and proof['operation_id'] == request['live']['operation_id']
-              and proof['save_context'] == request['live']['save_context']
-              and proof['source_rom_sha256'] == R.sha(source) and proof['policy_sha256'] == T.digest(policy)
-              and proof['producer'] == request['live']['producer']
-              and proof['source_bindings'] == producer['source_bindings']
-              and proof['writer_order'] == ['native_save', 'immutable_snapshot', 'compile_candidate', 'no_native_serializer'],
-              'Current producer proof is stale or does not enforce this transfer/order')
-    check = proof['verification']
-    _keys(check, {'binary', 'log', 'command', 'tests', 'exit_code'}, 'current producer verification')
-    R.require(check['binary'] == producer['verifier'] and type(check['command']) is str and check['command']
-              and type(check['tests']) is list and check['tests'] and type(check['exit_code']) is int
-              and check['exit_code'] == 0, 'Current producer verification is incomplete or failed')
-    for row in [*proof['source_bindings'], check['binary'], check['log']]:
-        Q.read_bound(row)
+    if policy['kind'] == NATIVE_POLICY_KIND:
+        _keys(policy['enforcement'], {'owner', 'required_order'}, 'compile-order ownership')
+        R.require(policy['enforcement'] == dict(owner='oracle.current_builder', required_order=COMPILE_ORDER),
+                  'CURRENT_COMPILE_ORDER_OWNER_MISMATCH')
+        native_execution(request)
+        proof_binding = request['native_verification']
+        # This is a required compiler sequence, not a producer-issued claim
+        # that a future assembly has already happened. Final readback owns it.
+        proof = dict(writer_order=list(COMPILE_ORDER))
+    else:
+        R.require(Path(request['live']['enforcement_receipt']).is_file(),
+                  'CURRENT_SAVE_PRODUCER_PROOF_REQUIRED: selected producer must enforce this snapshot and writer order')
+        proof_binding = Q.bound(request['live']['enforcement_receipt'])
+        proof = _json(Q.read_bound(proof_binding))
+        _keys(proof, {'kind', 'transfer_id', 'generation', 'operation_id', 'save_context',
+                      'source_rom_sha256', 'policy_sha256', 'producer', 'source_bindings',
+                      'verification', 'writer_order'}, 'current producer proof')
+        producer = request['live']['producer_identity']
+        R.require(proof['kind'] == PROOF_KIND and proof['transfer_id'] == request['transfer_id']
+                  and proof['generation'] == request['live']['generation']
+                  and proof['operation_id'] == request['live']['operation_id']
+                  and proof['save_context'] == request['live']['save_context']
+                  and proof['source_rom_sha256'] == R.sha(source) and proof['policy_sha256'] == T.digest(policy)
+                  and proof['producer'] == request['live']['producer']
+                  and proof['source_bindings'] == producer['source_bindings']
+                  and proof['writer_order'] == ['native_save', 'immutable_snapshot', 'compile_candidate', 'no_native_serializer'],
+                  'Current producer proof is stale or does not enforce this transfer/order')
+        check = proof['verification']
+        _keys(check, {'binary', 'log', 'command', 'tests', 'exit_code'}, 'current producer verification')
+        R.require(check['binary'] == producer['verifier'] and type(check['command']) is str and check['command']
+                  and type(check['tests']) is list and check['tests'] and type(check['exit_code']) is int
+                  and check['exit_code'] == 0, 'Current producer verification is incomplete or failed')
+        for row in [*proof['source_bindings'], check['binary'], check['log']]:
+            Q.read_bound(row)
     selected=V.FULL_MAPS
     layout_document=document
     if private_pilot is not None:
@@ -860,7 +920,10 @@ def plan_transfer(request_path, project, base_rom, *, ledger_path=None, current_
         producer_enforcement_verified=True,
         policy_sha256=T.digest(policy), enforcement_receipt=proof_binding,
         target=request['target'], retirement='next_native_save',
-        writer_order=proof['writer_order'])
+        writer_order=proof['writer_order'],
+        enforcement_owner=('oracle.current_builder' if policy['kind'] == NATIVE_POLICY_KIND else 'legacy_producer'),
+        producer_enforcement_scope=('native_save_only' if policy['kind'] == NATIVE_POLICY_KIND else 'legacy_protocol'),
+        oracle_compile_order_verified=False)
     return plan, payload
 
 
@@ -1351,6 +1414,11 @@ def verify_current_output(prepared, compiled, symbols):
         result.update(runtime_scope=PREVIEW_SCOPE,ordinary_build_ready=False,production_admission=False,
                       checkpoint=checkpoint_proof,held_routes=observed['preview_guards']['held_routes'],
                       save_exit_policy='seeded_checkpoint_preview_only')
+    if prepared['terrain_plan'].get('enforcement_owner') == 'oracle.current_builder':
+        result['compile_order'] = dict(owner='oracle.current_builder', required_order=list(COMPILE_ORDER),
+            native_verification=prepared['terrain_plan']['enforcement_receipt'],
+            saved_generation_unchanged=True, immutable_snapshot_verified=True,
+            derived_output_verified=True, oracle_compile_order_verified=True)
     if joint_art_proof is not None:
         result['joint_art'] = joint_art_proof
     return result

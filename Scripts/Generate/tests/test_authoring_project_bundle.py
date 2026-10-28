@@ -818,12 +818,15 @@ flagged_sheets=0xD4,0xD6
         hardlinked = self.root / "hardlinked.sfc"
         os.link(self.bundle / "rom", hardlinked)
         plan = self.root / "plan.sfc"
+        plan.write_text("{}")
+        hardlinked_plan = self.root / "hardlinked-plan.sfc"
+        os.link(plan, hardlinked_plan)
         for target in ("rom", "project.yaze", "tools/z3ed", "project/Oracle_main.sfc",
                        "assets/project/output.sfc", str(outside), str(linked),
-                       str(hardlinked), str(plan), str(self.root / "dir.sfc")):
+                       str(hardlinked), str(plan), str(hardlinked_plan), str(self.root / "dir.sfc")):
             with self.subTest(target=target):
                 descriptor = self.saved_build_target(target)
-                if target == str(plan):
+                if target in (str(plan), str(hardlinked_plan)):
                     descriptor.write_text(
                         descriptor.read_text() + f"\n[planning]\nfile={plan}\n")
                 if target.endswith("dir.sfc"):

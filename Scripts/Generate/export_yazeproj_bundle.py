@@ -1193,7 +1193,8 @@ def _saved_build_target(
     for raw_plan in planning:
         plan = Path(raw_plan)
         plan = plan if plan.is_absolute() else bundle_root / plan
-        if alias is None and plan.resolve() == target.resolve():
+        if alias is None and (plan.resolve() == target.resolve()
+                              or (plan.exists() and target.exists() and os.path.samefile(plan, target))):
             alias = "planning.file"
     if alias is None and target.exists() and not target.is_file():
         alias = "a non-file path"
