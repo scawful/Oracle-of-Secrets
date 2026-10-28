@@ -11,10 +11,16 @@ if !LYRA_CURRENT_MODE == 1
   CMP.w #!LYRA_CURRENT_FIRST : BCC .native
   CMP.w #!LYRA_CURRENT_END : BCS .native
   PLA : PLP
+if !ENABLE_OW_AREA_TILESETS == 1
+  JSL AreaTileset_LoadTypes ; Source types before the preserved current sheet owner.
+endif
   JML SharedGraphicsNormalLoad
   .native
   PLA : PLP
 endif
+if !ENABLE_OW_AREA_TILESETS == 1
+  JML AreaTileset_Load ; Reuse this callback's original long return frame.
+else
   LDA $8A : CMP.b #$38 : BEQ .load
   CMP.b #$30 : BNE .boat_area
   .load
@@ -24,6 +30,7 @@ endif
     PLB
   .boat_area
   RTL
+endif
 }
 
 ; These callbacks exist only in the explicitly selected current composition.

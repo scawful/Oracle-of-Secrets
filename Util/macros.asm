@@ -358,5 +358,6 @@ if not(defined("ENABLE_EQUIPMENT_MENU"))
 endif
 
 ; Private joint-candidate checkpoint source; no default runtime activation.
+!ENABLE_OW_AREA_TILESETS = 0
 !ENABLE_REGIONAL_CHECKPOINTS = 0
 !ENABLE_REGIONAL_CHECKPOINT_SOURCE_BINDING = 0

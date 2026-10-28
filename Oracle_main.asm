@@ -41,6 +41,9 @@ incsrc    "Config/module_flags.asm"
 incsrc    "Config/feature_flags.asm"
 
 ; Shared checkpoint source is disabled until the joint candidate binds it.
+if not(defined("LYRA_AREA_TILESETS_BOUND"))
+  !LYRA_AREA_TILESETS_BOUND = 0
+endif
 if not(defined("REGIONAL_CHECKPOINTS_ENABLED"))
   !REGIONAL_CHECKPOINTS_ENABLED = !ENABLE_REGIONAL_CHECKPOINTS
 endif
@@ -111,6 +114,8 @@ endif
 assert !LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED == 0 || !LYRA_CURRENT_MODE == 1, "Private pilot requires current mode"
 assert !LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED == 0 || !LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND == 1, "Private pilot boundaries require source admission"
 assert !LYRA_PROJECT_DATA_PRESENT == 0 || !DISABLE_OVERWORLD == 0, "Lyra project data requires overworld loaders"
+; Generated build constants must load before checking their source binding.
+assert !ENABLE_OW_AREA_TILESETS == 0 || !LYRA_AREA_TILESETS_BOUND == 1, "Per-area source binding required"
 
 if !ENABLE_MASK_R_BINDING == 1
   assert !ENABLE_MASK_Y_TRANSFORM == 1, "Mask R binding requires mask_y_transform"

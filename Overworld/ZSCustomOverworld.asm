@@ -3395,6 +3395,9 @@ CheckForChangeGraphicsTransitionLoad:
                 if !PROJECT_BG128_ENABLED == 1
                   JSL Oracle_ProjectBGPalette_CompleteBoth
                 endif
+                if !ENABLE_OW_AREA_TILESETS == 1
+                  JSL Oracle_AreaTileset_LoadTypes ; Screen on: no sheet DMA.
+                endif
                 RTS
 
     .mosaic
