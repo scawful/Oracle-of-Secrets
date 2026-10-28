@@ -3,7 +3,8 @@
 ; Purpose: Central last-activated checkpoint codec and activation API.
 ; Private source-bound runtime; disabled at Oracle_main until joint admission.
 ; @source: Core/sram.asm; root CURRENT_RESOURCE_GRANTS 2026-10-28
-; @verified: source/host only; assembly and CPU execution pending
+; @verified: Native Home/Goron death, Continue, Save & Quit and cold reopen
+; on 9d8dd38a; Lyra records/entry require separate saved-source qualification.
 ; =========================================================
 ; All public entries require M16/X16, native mode. DBR/DP unchanged.
 ; State APIs write only grantedB4..B9. Load adapters also use the existing

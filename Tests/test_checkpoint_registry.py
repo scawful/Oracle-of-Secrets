@@ -1,6 +1,10 @@
 """Host policy/record proof only; no game, assembler, persistence or allocation proof."""
 from pathlib import Path
+import copy
+import hashlib
+import json
 import sys
+import tempfile
 import unittest
 from dataclasses import replace
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'Scripts/Build'))
@@ -237,6 +241,183 @@ class CheckpointRegistryTests(unittest.TestCase):
         with self.assertRaises(ValueError): resolve(saved, registry=r, script_override=7)
         with self.assertRaises(ValueError): resolve(saved, registry=r, dungeon_entrance_continue=1)
         with self.assertRaises(ValueError): C.ScriptOverride(C.OverrideKind.NATIVE_SPAWN, 7)
+
+
+class PrivateCheckpointPlanTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name).resolve()
+        self.source = b'diagnostic private plan, not a gameplay ROM'
+        self.source_sha = hashlib.sha256(self.source).hexdigest()
+        self.goron_source = (Path(__file__).resolve().parents[1]/'Overworld/goron_checkpoint.asm').read_text()
+        # Reuse the explicit diagnostic record payload. No gameplay cache or
+        # coordinates are selected/qualified by these pure host fixtures.
+        self.cache = record(2).exit_cache
+        self.receipt = self.root/'save.json'
+        self.receipt.write_text('{"generation":7,"operation_id":"fixture-save-seven"}')
+        self.cache_source = self.root/'diagnostic-cache-source.bin'
+        self.cache_source.write_bytes(self.cache)
+        pin = lambda p: dict(path=str(p), sha256=hashlib.sha256(p.read_bytes()).hexdigest())
+        self.bindings = dict(source_rom_sha256=self.source_sha, document_sha256='2'*64,
+            transfer_id='3'*64, live=dict(generation=7, operation_id='fixture-save-seven',
+            save_receipt=pin(self.receipt)), selected_pair=[0xA0,0xA1], cache_source=pin(self.cache_source))
+        self.plan = dict(kind='checkpoint.private_preview_plan.v1', scope='seeded_private_preview',
+            production_admission=False, epoch=1, bindings=copy.deepcopy(self.bindings),
+            entry=dict(key=2, domain='SPECIAL', native_affinity=0, map_id=0xA0, parent_map=0xA0,
+                region_key=2, exit_cache_hex=self.cache.hex(), cache_sha256=hashlib.sha256(self.cache).hexdigest()),
+            memberships=[dict(map_id=area, domain='SPECIAL', native_affinity=0, region_key=2)
+                         for area in (0xA0,0xA1)])
+
+    def compile(self, **overrides):
+        args = dict(private_plan=self.plan, verified_bindings=self.bindings, expected_cache=self.cache)
+        args.update(overrides)
+        return C.runtime_registry(self.source, self.goron_source, **args)
+
+    def test_default_retains_exact_one_row_control_and_private_seed_resolves_key2(self):
+        default = C.runtime_registry(self.source, self.goron_source)
+        control = C.goron_control_registry(self.source, self.goron_source)
+        self.assertEqual(default, control)
+        self.assertEqual(len(default.records), 1)
+        preview = self.compile()
+        self.assertEqual(preview.records[0], control.records[0])
+        self.assertEqual(preview.records[0].pack(self.source_sha), control.packed_records)
+        self.assertEqual([r.key for r in preview.records], [1,2])
+        self.assertEqual(len(preview.memberships), 6)
+        self.assertEqual(preview.records[1].exit_cache, self.cache)
+        seeded = C.SavedCheckpoint(C.SCHEMA, preview.epoch, 2)
+        route = resolve(seeded, registry=preview)
+        self.assertEqual((route.route, route.checkpoint.domain, route.checkpoint.map_id),
+                         ('regional_checkpoint',C.Domain.SPECIAL,0xA0))
+        self.assertIsNone(route.override)
+        self.assertEqual(C.validate_runtime_capacity(preview,0)['data_bytes'],184)
+
+    def test_private_plan_requires_independent_bindings_and_cache(self):
+        for changes in (dict(verified_bindings=None), dict(expected_cache=None),
+                        dict(private_plan=None), dict(expected_cache=self.cache[:-1])):
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                self.compile(**changes)
+
+    def test_source_transfer_document_and_later_save_retire_plan(self):
+        for field in ('source_rom_sha256','document_sha256','transfer_id'):
+            plan = copy.deepcopy(self.plan)
+            plan['bindings'][field] = '9'*64
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError,'bindings differ'):
+                self.compile(private_plan=plan)
+        for field, value in (('generation',8),('operation_id','later-same-byte-save')):
+            fresh = copy.deepcopy(self.bindings)
+            fresh['live'][field] = value
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError,'bindings differ'):
+                self.compile(verified_bindings=fresh)
+        changed_source = copy.deepcopy(self.bindings)
+        changed_source['source_rom_sha256'] = '9'*64
+        plan = copy.deepcopy(self.plan)
+        plan['bindings'] = changed_source
+        with self.assertRaisesRegex(ValueError,'bindings differ'):
+            self.compile(private_plan=plan,verified_bindings=changed_source)
+
+    def test_epoch_scope_key_domain_affinity_and_map_are_not_coerced(self):
+        for key, value in (('epoch',2),('epoch',True),('scope','ordinary_build'),
+                           ('production_admission',True),('production_admission',0)):
+            plan = copy.deepcopy(self.plan)
+            plan[key] = value
+            with self.subTest(key=key,value=value), self.assertRaises(ValueError):
+                self.compile(private_plan=plan)
+        for key,value in (('key',1),('key',True),('domain','LIGHT'),('domain',2),
+                          ('native_affinity',0x40),('native_affinity',False),('map_id',0xA1),
+                          ('parent_map',0xA1),('region_key',0),('region_key',True)):
+            plan = copy.deepcopy(self.plan)
+            plan['entry'][key] = value
+            with self.subTest(key=key,value=value), self.assertRaises(ValueError):
+                self.compile(private_plan=plan)
+
+    def test_unselected_pair_membership_and_foreign_region_refuse(self):
+        for pair in ([0xA0,0xA2],[0xA1,0xA0],[0xA0,0xA0],[0xA0,True]):
+            plan = copy.deepcopy(self.plan)
+            bindings = copy.deepcopy(self.bindings)
+            plan['bindings']['selected_pair'] = bindings['selected_pair'] = pair
+            with self.subTest(pair=pair), self.assertRaises(ValueError):
+                self.compile(private_plan=plan,verified_bindings=bindings)
+        for field,value in (('map_id',0xA2),('domain','LIGHT'),('native_affinity',0x40),('region_key',3)):
+            plan = copy.deepcopy(self.plan)
+            plan['memberships'][1][field] = value
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError,'unselected'):
+                self.compile(private_plan=plan)
+
+    def test_cache_hash_foreign_payload_and_malformed_headers_refuse(self):
+        for field,value in (('cache_sha256','9'*64),('exit_cache_hex',self.cache[:-1].hex())):
+            plan = copy.deepcopy(self.plan)
+            plan['entry'][field] = value
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                self.compile(private_plan=plan)
+        foreign = self.cache[:-1]+bytes([self.cache[-1]^1])
+        plan = copy.deepcopy(self.plan)
+        plan['entry'].update(exit_cache_hex=foreign.hex(),cache_sha256=hashlib.sha256(foreign).hexdigest())
+        with self.assertRaisesRegex(ValueError,'independent landing'):
+            self.compile(private_plan=plan)
+        for offset in (0,12):
+            malformed = bytearray(self.cache)
+            malformed[offset:offset+2] = b'\x36\x00'
+            malformed = bytes(malformed)
+            plan = copy.deepcopy(self.plan)
+            plan['entry'].update(exit_cache_hex=malformed.hex(),cache_sha256=hashlib.sha256(malformed).hexdigest())
+            with self.subTest(offset=offset), self.assertRaisesRegex(ValueError,'cache.*disagrees'):
+                self.compile(private_plan=plan,expected_cache=malformed)
+
+    def test_live_binding_types_and_exact_artifact_paths_refuse(self):
+        for field,value in (('generation',True),('generation',0),('operation_id','bad operation')):
+            plan = copy.deepcopy(self.plan)
+            bindings = copy.deepcopy(self.bindings)
+            plan['bindings']['live'][field] = bindings['live'][field] = value
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                self.compile(private_plan=plan,verified_bindings=bindings)
+        other = self.root/'foreign-cache-source.bin'
+        other.write_bytes(self.cache)
+        plan = copy.deepcopy(self.plan)
+        plan['bindings']['cache_source']['path'] = str(other)
+        with self.assertRaisesRegex(ValueError,'bindings differ'):
+            self.compile(private_plan=plan)
+        self.receipt.write_bytes(self.receipt.read_bytes()+b'changed')
+        with self.assertRaisesRegex(ValueError,'Current saved input changed'):
+            self.compile()
+
+    def test_emission_preserves_every_runtime_byte_and_has_no_placement(self):
+        registry = self.compile()
+        emitted = C.emit_runtime_asm(registry)
+        self.assertIn('!CHECKPOINT_REGISTRY_COUNT = 2\n',emitted['constants'])
+        self.assertIn('!CHECKPOINT_REGION_MEMBER_COUNT = 6\n',emitted['constants'])
+        self.assertNotIn('org ',emitted['constants'])
+        decoded, current = {}, None
+        for line in emitted['tables'].splitlines():
+            if line.endswith(':'):
+                current = line[:-1]
+                decoded[current] = b''
+            elif line.strip().startswith('db '):
+                decoded[current] += bytes(int(n.strip()[1:],16) for n in line.strip()[3:].split(','))
+        self.assertEqual(decoded,registry.runtime_tables())
+        self.assertEqual(C.emit_runtime_asm(C.runtime_registry(self.source,self.goron_source))['constants'].count(
+                         '!CHECKPOINT_REGISTRY_COUNT = 1\n'),1)
+
+    def test_compiled_table_verifier_checks_data_layout_and_complete_cache(self):
+        registry = self.compile()
+        image, symbols, address = bytearray(0x200000), {}, C.CODE_BASE+0x300
+        for name,raw in registry.runtime_tables().items():
+            symbols['Oracle_'+name] = address
+            pc = ((address>>16)&0x7F)*0x8000+(address&0x7FFF)
+            image[pc:pc+len(raw)] = raw
+            address += len(raw)
+        result = C.verify_runtime_tables(registry,bytes(image),symbols)
+        self.assertEqual((result['end'],result['data_bytes']),(address,184))
+        for name in registry.runtime_tables():
+            bad = bytearray(image)
+            address = symbols['Oracle_'+name]
+            bad[((address>>16)&0x7F)*0x8000+(address&0x7FFF)] ^= 1
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError,'disagrees with source'):
+                C.verify_runtime_tables(registry,bytes(bad),symbols)
+        bad_symbols = dict(symbols)
+        bad_symbols['Oracle_CheckpointRegistry_Records'] += 1
+        with self.assertRaisesRegex(ValueError,'layout differs'):
+            C.verify_runtime_tables(registry,bytes(image),bad_symbols)
 
 
 if __name__ == '__main__': unittest.main()

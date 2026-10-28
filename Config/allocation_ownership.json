@@ -4521,7 +4521,7 @@
     "regional_checkpoint_runtime_25:Overworld/checkpoint_state.asm": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Overworld/checkpoint_state.asm",
-      "sha256": "5fd0439fed8f4cebeee70f4c78eb5a59b5307c172df384d37e55a78b54f4fcac"
+      "sha256": "01ab4125090393fc9b31661e7332e3008682a7b7117a06aaa4e08aa621c3c0d0"
     },
     "regional_checkpoint_runtime_25:Overworld/goron_checkpoint.asm": {
       "source_set": "regional_checkpoint_runtime_25",
@@ -4551,7 +4551,7 @@
     "regional_checkpoint_runtime_25:Scripts/Build/checkpoint_registry.py": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Scripts/Build/checkpoint_registry.py",
-      "sha256": "3321bfaf86636ebe2d0d7ceafea1a853b5137e9dcf77eff61699078ae86b6514"
+      "sha256": "8a1dec705e9f5e32fb414e9b60a285c74a2e4c7f2f2409354cdaa82cfc652e0e"
     },
     "regional_checkpoint_runtime_25:Scripts/Build/build_rom.sh": {
       "source_set": "regional_checkpoint_runtime_25",
@@ -4566,7 +4566,7 @@
     "regional_checkpoint_runtime_25:Tests/test_checkpoint_registry.py": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Tests/test_checkpoint_registry.py",
-      "sha256": "88aa7e97033399e9d3ee7d56e793cf62c0f1304f2255fa08fcbc532c25348127"
+      "sha256": "2066c4d5fac59ec919af5c2468b627d7717cc50757f51153f8b0fce95b5df8ad"
     },
     "regional_checkpoint_runtime_25:Tests/routines/regional_checkpoints.py": {
       "source_set": "regional_checkpoint_runtime_25",

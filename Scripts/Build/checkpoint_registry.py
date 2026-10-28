@@ -7,6 +7,7 @@ map numbering. Native SpawnPoint remains owned by its compatibility adapters.
 from dataclasses import dataclass
 from enum import IntEnum
 import hashlib
+import json
 import re
 
 
@@ -324,6 +325,146 @@ def goron_control_registry(source_rom, goron_source):
                             epoch=1, source_rom_sha256=row.source_rom_sha256)
 
 
+def _private_binding(value):
+    """Check the shape of independently verified current-transfer identities."""
+    from pathlib import Path
+    require(type(value) is dict and set(value) == {
+        'source_rom_sha256', 'document_sha256', 'transfer_id', 'live',
+        'selected_pair', 'cache_source'}, 'Malformed private checkpoint bindings')
+    for key in ('source_rom_sha256', 'document_sha256', 'transfer_id'):
+        require(type(value[key]) is str and re.fullmatch('[0-9a-f]{64}', value[key]),
+                'Private checkpoint requires exact '+key)
+    live = value['live']
+    require(type(live) is dict and set(live) == {'generation', 'operation_id', 'save_receipt'}
+            and type(live['generation']) is int and 0 < live['generation'] <= 0xFFFFFFFFFFFFFFFF,
+            'Private checkpoint requires the exact live save generation')
+    token = live['operation_id']
+    require(type(token) is str and 0 < len(token) <= 128 and all(32 < ord(c) < 127 for c in token),
+            'Private checkpoint requires the live save operation ID')
+    require(type(value['selected_pair']) is list and
+            all(type(n) is int for n in value['selected_pair']) and
+            value['selected_pair'] == [0xA0, 0xA1],
+            'Private checkpoint requires the selected A0/A1 pair')
+    for pin in (live['save_receipt'], value['cache_source']):
+        require(type(pin) is dict and set(pin) == {'path', 'sha256'} and
+                type(pin['path']) is str and '\0' not in pin['path'] and
+                Path(pin['path']).is_absolute() and type(pin['sha256']) is str and
+                re.fullmatch('[0-9a-f]{64}', pin['sha256']),
+                'Private checkpoint requires exact save/cache-source artifact pins')
+
+
+def runtime_registry(source_rom, goron_source, *, private_plan=None,
+                     verified_bindings=None, expected_cache=None):
+    """Compile the existing control plus an explicitly bound seeded preview.
+
+    The caller must obtain verified_bindings independently from verify_transfer
+    and current_native_source_profile, and expected_cache from the same reviewed
+    landing/table producer as cache_source. Copying fields out of private_plan
+    is not verification. Reconstruct these live bindings before every use: a
+    later Save retires the plan even if ROM/document bytes did not change.
+    This helper validates data only; it grants no allocation, route, publication,
+    activation or native admission and writes neither a save nor a ROM.
+    """
+    control = goron_control_registry(source_rom, goron_source)
+    if private_plan is None:
+        require(verified_bindings is None and expected_cache is None,
+                'Private checkpoint inputs require an explicit private plan')
+        return control
+    require(type(private_plan) is dict and set(private_plan) == {
+        'kind', 'scope', 'production_admission', 'epoch', 'bindings', 'entry', 'memberships'} and
+        private_plan['kind'] == 'checkpoint.private_preview_plan.v1' and
+        private_plan['scope'] == 'seeded_private_preview' and
+        private_plan['production_admission'] is False,
+        'Checkpoint plan must be an explicit seeded private preview')
+    require(type(private_plan['epoch']) is int and private_plan['epoch'] == control.epoch,
+            'Private checkpoint registry epoch differs from the control')
+    _private_binding(verified_bindings)
+    _private_binding(private_plan['bindings'])
+    require(private_plan['bindings'] == verified_bindings and
+            verified_bindings['source_rom_sha256'] == control.source_rom_sha256,
+            'Private checkpoint source/current save/selected pair bindings differ')
+    # Reuse the current-transfer bound artifact reader. These reads do not
+    # replace the caller's live transfer/profile and landing qualification.
+    import lyra_project_prepare as Q
+    Q.read_bound(verified_bindings['live']['save_receipt'])
+    Q.read_bound(verified_bindings['cache_source'])
+    require(type(expected_cache) is bytes and len(expected_cache) == CACHE_BYTES,
+            'Private checkpoint requires an independently bound complete cache')
+    entry = private_plan['entry']
+    require(type(entry) is dict and set(entry) == {'key', 'domain', 'map_id', 'parent_map',
+            'native_affinity', 'region_key', 'exit_cache_hex', 'cache_sha256'},
+            'Malformed private checkpoint entry')
+    require(type(entry['key']) is int and entry['key'] == 2 and
+            type(entry['domain']) is str and entry['domain'] == 'SPECIAL' and
+            type(entry['native_affinity']) is int and entry['native_affinity'] == 0 and
+            type(entry['map_id']) is int and entry['map_id'] == 0xA0 and
+            type(entry['parent_map']) is int and entry['parent_map'] == 0xA0,
+            'Private checkpoint must explicitly select key2/SPECIAL/affinity0/A0')
+    require(type(entry['exit_cache_hex']) is str and
+            re.fullmatch('[0-9a-f]{100}', entry['exit_cache_hex']) and
+            type(entry['cache_sha256']) is str and
+            re.fullmatch('[0-9a-f]{64}', entry['cache_sha256']),
+            'Private checkpoint requires an exact 50-byte cache and digest')
+    cache = bytes.fromhex(entry['exit_cache_hex'])
+    require(cache == expected_cache and hashlib.sha256(cache).hexdigest() == entry['cache_sha256'],
+            'Private checkpoint cache differs from the independent landing binding')
+    row = RegionalCheckpoint(entry['key'], Domain.SPECIAL, entry['map_id'], entry['region_key'],
+                             entry['parent_map'], entry['native_affinity'], cache,
+                             control.source_rom_sha256)
+    row.pack(control.source_rom_sha256)
+    members = private_plan['memberships']
+    require(type(members) is list and len(members) == 2,
+            'Private checkpoint requires exactly the selected pair memberships')
+    for member, area in zip(members, verified_bindings['selected_pair']):
+        require(type(member) is dict and set(member) == {'map_id', 'domain', 'native_affinity', 'region_key'}
+                and type(member['map_id']) is int and member['map_id'] == area
+                and type(member['domain']) is str and member['domain'] == 'SPECIAL'
+                and type(member['native_affinity']) is int and member['native_affinity'] == 0
+                and type(member['region_key']) is int and member['region_key'] == row.region_key,
+                'Private checkpoint has an unselected map/domain/affinity/region membership')
+    preview_members = tuple(RegionMembership(area, Domain.SPECIAL, 0, row.region_key)
+                            for area in verified_bindings['selected_pair'])
+    return Registry.compile((*control.records, row), memberships=(*control.memberships, *preview_members),
+                            epoch=control.epoch, source_rom_sha256=control.source_rom_sha256)
+
+
+def emit_runtime_asm(registry):
+    """Return separate unplaced constants/table text from compiled registry bytes."""
+    require(isinstance(registry, Registry), 'ASM emission requires a compiled checkpoint registry')
+    constants = ('; Source-bound checkpoint registry; placement/admission remains with the caller.\n'
+                 f'!CHECKPOINT_STATE_SCHEMA = ${SCHEMA:02X}\n'
+                 f'!CHECKPOINT_REGISTRY_EPOCH = ${registry.epoch:02X}\n'
+                 f'!CHECKPOINT_REGISTRY_COUNT = {len(registry.records)}\n'
+                 f'!CHECKPOINT_REGION_MEMBER_COUNT = {len(registry.memberships)}\n')
+    lines = ['; Exact Registry.runtime_tables() bytes; no org, cache inference or save writes.']
+    for name, raw in registry.runtime_tables().items():
+        lines.append(name+':')
+        for start in range(0, len(raw), 16):
+            lines.append('  db '+','.join(f'${byte:02X}' for byte in raw[start:start+16]))
+        lines.append(f'assert pc()-{name} == ${len(raw):04X}')
+    return dict(constants=constants, tables='\n'.join(lines)+'\n')
+
+
+def verify_runtime_tables(registry, image, symbols):
+    """Check actual placed tables against all explicit registry bytes, read-only."""
+    require(isinstance(registry, Registry) and type(image) is bytes,
+            'Compiled table verification requires registry and ROM bytes')
+    first, offset = None, 0
+    for name, expected in registry.runtime_tables().items():
+        address = symbols.get('Oracle_'+name)
+        require(type(address) is int and CODE_BASE <= address <= CODE_LIMIT,
+                'Missing/out-of-range compiled checkpoint table '+name)
+        if first is None:
+            first = address
+        require(address == first+offset, 'Compiled checkpoint table layout differs: '+name)
+        pc = ((address >> 16) & 0x7F)*0x8000+(address & 0x7FFF)
+        require(image[pc:pc+len(expected)] == expected,
+                'Compiled checkpoint table/cache disagrees with source: '+name)
+        offset += len(expected)
+    require(first+offset <= CODE_LIMIT, 'Compiled checkpoint tables exceed their reservation')
+    return dict(first_data=first, end=first+offset, data_bytes=offset)
+
+
 def validate_runtime_capacity(registry, code_bytes, limit=CODE_LIMIT):
     require(type(code_bytes) is int and code_bytes >= 0, 'Checkpoint code size must be explicit')
     payload = sum(len(value) for value in registry.runtime_tables().values())
@@ -333,10 +474,13 @@ def validate_runtime_capacity(registry, code_bytes, limit=CODE_LIMIT):
                 limit=limit, remaining=limit-CODE_BASE-code_bytes-payload)
 
 
-def verify_compiled_checkpoint(root, base_rom, image, symbols, *, require_prefix=True):
+def verify_compiled_checkpoint(root, base_rom, image, symbols, *, require_prefix=True,
+                               private_plan=None, verified_bindings=None, expected_cache=None):
     """Read-only compiled consumer/data check; partial CPU fixture is never admission."""
     qualify_native_control(base_rom)
-    registry = goron_control_registry(base_rom, (root/'Overworld/goron_checkpoint.asm').read_text())
+    registry = runtime_registry(base_rom, (root/'Overworld/goron_checkpoint.asm').read_text(),
+                                private_plan=private_plan, verified_bindings=verified_bindings,
+                                expected_cache=expected_cache)
     def symbol(name):
         key = 'Oracle_'+name
         require(key in symbols, 'Missing compiled checkpoint consumer '+key)
@@ -349,12 +493,11 @@ def verify_compiled_checkpoint(root, base_rom, image, symbols, *, require_prefix
     end = symbol('Checkpoint_StateCodeEnd')
     require(symbol('Checkpoint_StateCodeBegin') == CODE_BASE and end <= CODE_LIMIT,
             'Compiled checkpoint aggregate moved/exceeds the reserved interval')
-    for name, expected in registry.runtime_tables().items():
-        require(read(symbol(name), len(expected)) == expected,
-                'Compiled checkpoint table/cache disagrees with source: '+name)
+    tables = verify_runtime_tables(registry, image, symbols)
     footprint = validate_runtime_capacity(registry, first_data-CODE_BASE)
     require(CODE_BASE+footprint['aggregate_bytes'] == end,
             'Unexpected bytes/gap outside the checkpoint aggregate contract')
+    require(tables['end'] == end, 'Compiled checkpoint table end differs from the aggregate end')
     for site, name in ((0x09F540,'Checkpoint_PrepareAndReset'), (0x02A5A2,'Checkpoint_FrameAndLink'),
                        (0x0CD049,'Checkpoint_ColdContext')):
         require(read(site,4) == b'\x22'+symbol(name).to_bytes(3,'little'),
@@ -373,10 +516,18 @@ def verify_compiled_checkpoint(root, base_rom, image, symbols, *, require_prefix
         span = read(loader, symbol('LyraHost_LoadCheckpointOrWorld_End')-loader)
         require(b'\x22'+symbol('Checkpoint_Load').to_bytes(3,'little') in span,
                 'Existing file-load owner does not call the central resolver')
-    return dict(kind='checkpoint.compiled_contract.v1', passed=True, prefix_bound=require_prefix,
+    report = dict(kind='checkpoint.compiled_contract.v1', passed=True, prefix_bound=require_prefix,
                 source_rom_sha256=hashlib.sha256(base_rom).hexdigest(),
                 output_rom_sha256=hashlib.sha256(image).hexdigest(), registry_sha256=registry.content_sha256,
                 checkpoint_count=len(registry.records), **footprint)
+    if private_plan is not None:
+        report.update(private_seeded_preview=True, production_admission=False,
+                      private_plan_sha256=hashlib.sha256(json.dumps(private_plan, sort_keys=True,
+                        separators=(',', ':')).encode()).hexdigest(),
+                      transfer_id=verified_bindings['transfer_id'],
+                      generation=verified_bindings['live']['generation'],
+                      operation_id=verified_bindings['live']['operation_id'])
+    return report
 
 
 def main():
