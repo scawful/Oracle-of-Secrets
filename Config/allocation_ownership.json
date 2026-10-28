@@ -4936,7 +4936,7 @@
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_current_transfer.py": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Scripts/Build/lyra_current_transfer.py",
-      "sha256": "1fc19440dc534a281817c6ee93d1abb9ae439f48f950574ef1121b09c9f883fd"
+      "sha256": "e2b4ce89825271a2bd5a18193ec2f5c83b52948e09b16f0b042f9ceaf4166bb5"
     },
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_joint_art.py": {
       "source_set": "lyra_joint_art_bridge_30",

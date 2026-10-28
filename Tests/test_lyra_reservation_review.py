@@ -56,6 +56,35 @@ class ReservationReviewTest(unittest.TestCase):
         self.proposal_path.write_bytes(X.P.encoded(self.proposal))
         self.request = self.case.prepare()[1]
 
+    def test_batch_reads_preserve_spaces_binary_data_and_exact_revision(self):
+        binary=self.root/'Overworld/binary data.bin'
+        raw=b'first\nline\x00\xff\n0123456789\n';binary.write_bytes(raw);self.commit()
+        head=self.git('rev-parse','HEAD').strip()
+        paths=['Overworld/binary data.bin','Core/ZS ROM MAP.txt','Oracle_main.asm']
+        with mock.patch.object(X.subprocess,'run',wraps=subprocess.run) as runs:
+            blobs=X._git_source_blobs(self.root,head,paths)
+        self.assertEqual(runs.call_count,1)
+        self.assertEqual(runs.call_args.args[0][-2:],['cat-file','--batch'])
+        self.assertEqual(blobs['Overworld/binary data.bin'],raw)
+        binary.write_bytes(b'changed live bytes')
+        self.assertEqual(X._git_source_blobs(self.root,head,paths),blobs)
+        with self.assertRaisesRegex(ValueError,'exact revision'):
+            X._git_source_blobs(self.root,self.head,paths)
+        for names in (['missing.asm'],['Oracle_main.asm','Oracle_main.asm'],
+                      ['../escape'],['Oracle_main.asm\nHEAD:Oracle_main.asm']):
+            with self.subTest(names=names),self.assertRaises(ValueError):
+                X._git_source_blobs(self.root,head,names)
+
+    def test_batch_refuses_non_blob_truncation_and_trailing_output(self):
+        from types import SimpleNamespace
+        oid=b'0'*40
+        for raw in (oid+b' tree 3\nabc\n',oid+b' blob 4\nabc',
+                    oid+b' blob 3\nabc\ntrailing',b'HEAD:missing missing\n'):
+            with self.subTest(raw=raw),mock.patch.object(X.subprocess,'run',
+                    return_value=SimpleNamespace(stdout=raw)):
+                with self.assertRaises(ValueError):
+                    X._git_source_blobs(self.root,self.head,['Oracle_main.asm'])
+
     def git(self, *args):
         return subprocess.check_output(['git', '-C', str(self.root), *args], stderr=subprocess.PIPE).decode()
 
