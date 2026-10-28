@@ -1002,7 +1002,8 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
         constants+=(f"!PROJECT_BG128_CODE_BASE = ${bg_binding['code_snes'][0]:06X}\n"
                    +f"!PROJECT_BG128_CODE_END = ${bg_binding['code_snes'][1]:06X}\n")
     if pilot is not None:
-        constants += '!LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED = 1\n!LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND = 1\n'
+        constants += ('!LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED = 1\n!LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND = 1\n'
+                      '!LYRA_PRIVATE_PILOT_INGRESS_ENABLED = 1\n')
     files['runtime_constants.asm'] = constants.encode()
     data = files['runtime_data.asm'].decode()+'pushpc\n'
     binary = bytearray()

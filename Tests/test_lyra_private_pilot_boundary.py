@@ -120,7 +120,7 @@ class PrivatePilotBoundaryTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'INGRESS_UNBOUND'):L.require_private_pilot_ingress(scroll_only)
         asm=(ROOT/'Overworld/lyra_private_pilot.asm').read_text()
         self.assertIn('CMP.w #$00A2 : BCS .blocked',asm)
-        self.assertNotIn('STA',asm[asm.index('Lyra_PrivatePilotCanEnter:'):])
+        self.assertNotIn('STA',asm[asm.index('Lyra_PrivatePilotCanEnter:'):asm.index('Lyra_PrivatePilotCanEnter_End')])
 
     def test_disabled_boundary_has_no_new_instructions_and_call_precedes_state_mutation(self):
         text=(ROOT/'Overworld/ZSCustomOverworld.asm').read_text()
@@ -146,7 +146,7 @@ class PrivatePilotBoundaryTest(unittest.TestCase):
             self.assertLess(call,host.index(mutation))
         helper=(ROOT/'Overworld/lyra_private_pilot.asm').read_text()
         self.assertIn('assert !LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND == 1',helper)
-        instructions=statements(helper,dict(base,LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED=1,LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND=1))
+        instructions=statements(helper[:helper.index('; The earlier scroll prototype')],dict(base,LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED=1,LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND=1))
         self.assertFalse(any(line.split()[0].upper() in ('STA','STA.B','STA.W','STA.L','STZ','STZ.W','STZ.B') for line in instructions))
         self.assertIn('ADC.l OverworldScreenIDChange, X',instructions)
         # Exact private pair source checks and stack-only ABI; execution remains unrun.
@@ -170,6 +170,31 @@ class PrivatePilotBoundaryTest(unittest.TestCase):
         with self.assertRaises(ValueError):L.inspect_current_consumers(bytes(rom),symbols)
         missing=b'\n'.join(line for line in symbols.splitlines() if b'LyraCall_PrivatePilotColdResume' not in line)
         with self.assertRaisesRegex(ValueError,'INGRESS_UNBOUND'):L.inspect_current_consumers(bytes(rom),missing)
+
+    def test_actual_module08_and_mirror_gate_sources_keep_remaining_roles_held(self):
+        asm=(ROOT/'Overworld/lyra_private_pilot.asm').read_text()
+        self.assertIn('!LYRA_PRIVATE_PILOT_INGRESS_ENABLED = 0',asm)
+        self.assertIn('assert !REGIONAL_CHECKPOINTS_ENABLED == 1',asm)
+        self.assertIn('assert !REGIONAL_CHECKPOINTS_BOUND == 1',asm)
+        entry=asm[asm.index('Lyra_PrivatePilotEntryGate:'):asm.index('Lyra_PrivatePilotEntryGate_End')]
+        self.assertLess(entry.index('JSL Lyra_PrivatePilotEntryMap'),entry.index('STA.b $99'))
+        self.assertLess(entry.index('JSL Lyra_PrivatePilotCanEnter'),entry.index('STA.b $99'))
+        self.assertIn('JSL Checkpoint_EnterHome\n  RTS',entry)
+        self.assertNotIn('JML Checkpoint_EnterHome',entry)
+        self.assertIn('LyraCall_PrivatePilotColdResume = pc()',entry)
+        for role in ('FullLoad','SubLoad','Warp'):
+            self.assertNotIn('LyraCall_PrivatePilot'+role+' = pc()',asm)
+        current=asm[asm.index('Lyra_PrivatePilotCurrentMapAllowed:'):asm.index('Lyra_PrivatePilotCurrentMapAllowed_End')]
+        self.assertIn('LDA.b $8A',current);self.assertNotIn('AND',current);self.assertNotIn('$0700',current)
+        mirror=asm[asm.index('Lyra_PrivatePilotMirrorGate:'):asm.index('Lyra_PrivatePilotMirrorGate_End')]
+        self.assertIn('JML $02B21B',mirror);self.assertIn('JML $02B21D',mirror)
+        self.assertNotIn('STA',mirror);self.assertNotIn('AND',mirror)
+        scanner=asm[asm.index('Lyra_PrivatePilotEntryMap:'):asm.index('Lyra_PrivatePilotEntryMap_End')]
+        self.assertIn('LDX.w #$009C',scanner);self.assertIn('DEX #2 : BPL .next',scanner)
+        self.assertIn('LDA.l $7EC140 : CMP.w #$00A2',scanner)
+        self.assertIn('LDA.l $7EC14C : CMP.w #$00A2',scanner)
+        self.assertIn('CMP.w #$0008 : BNE .allowed',entry)
+        self.assertIn('LDA.l $02DE28,X : AND.w #$00FF',scanner)
 
     def test_optional_compiled_consumer_requires_exact_carry_branch_target_and_direction_table(self):
         rom,symbols,call=pilot_compiled_fixture()
