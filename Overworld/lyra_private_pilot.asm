@@ -13,7 +13,7 @@ assert !Func02A9C4 == 1, "Private pilot needs the precommit transition owner"
 ; retain their source behavior; there is no approved native-to-tail scroll seam.
 Lyra_PrivatePilotCanScroll:
 {
-  PHP : REP #$30 : PHA : PHX : PHY
+  PHP : CLD : REP #$30 : PHA : PHX : PHY
   TYA : AND.w #$00FF : CMP.w #$0008 : BCS .blocked
   BIT.w #$0001 : BNE .blocked
 

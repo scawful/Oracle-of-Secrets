@@ -27,7 +27,8 @@
     "lyra_current_stage_receipt_19": "Current candidate staging reports its owned ROM creation truthfully; canonical inputs remain ungranted",
     "lyra_current_bg128_binding_20": "Current BG128 saved-data and restore-code binding inside current allocation; canonical activation remains off",
     "lyra_current_bundle_router_21": "Current saved-project bundle routing and immutable generation output paths; no activation.",
-    "lyra_private_pilot_boundary_22": "Private selected A0/A1 scroll guard, disabled unless source-bound; no admission or allocation."
+    "lyra_private_pilot_boundary_22": "Private selected A0/A1 scroll guard, disabled unless source-bound; no admission or allocation.",
+    "lyra_private_pilot_boundary_cpu_23": "Private A0/A1 guard with saved-status binary arithmetic; enabled CPU fixture only, no admission."
   },
   "sources": {
     "shared:Sprites/Objects/minecart.asm": {
@@ -4269,6 +4270,226 @@
       "source_set": "lyra_private_pilot_boundary_22",
       "path": "Overworld/lyra_private_pilot.asm",
       "sha256": "14d83bfce842c8a8970b7c38b1519134a9a91b982b085563f71252a9c472eacb"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Oracle_main.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Oracle_main.asm",
+      "sha256": "38ee63438c3ae2a9766d4a2704fcdf0d9dce08ef6e72d90ff77aa632128406cd"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/ZSCustomOverworld.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/ZSCustomOverworld.asm",
+      "sha256": "2937e6d89cd5cac13b60ee88cc5396e5610881fba85fa30c2745cf7515ea570f"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/time_system.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/time_system.asm",
+      "sha256": "47247d22f3d18bd00c35c478df82da0df0060b6f9f0b90e4cc6fc0263cfa42a2"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/lost_woods.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/lost_woods.asm",
+      "sha256": "3983c065b08d95199d22543cfa6c51a03a2f323aee3841ab8d1a386e8c07640d"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/goron_checkpoint.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/goron_checkpoint.asm",
+      "sha256": "d1d0bd3aa90d044bb0b5fdad3044175721d705a69f73239fc7a88023608396c8"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Masks/mask_routines.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Masks/mask_routines.asm",
+      "sha256": "7c903a40a70e23ac0fe9de798b2de4da48611c6f8c8fe78d29beed0b39db3900"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/project_bg_palette.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/project_bg_palette.asm",
+      "sha256": "3f361fc427ef76e6062cc32a44452fbb1090f098cd4af86fc2a9d2bab7161507"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/lyra_native_loaders.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/lyra_native_loaders.asm",
+      "sha256": "9e3d132a168a0cd1943ae3d848bf0c7f416bcea4149ef76b5cfaccd0a15f5888"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/graphics_runtime.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/graphics_runtime.asm",
+      "sha256": "fdde5049ef1c44530865889c1e6fd99341b422ce643d86b1f2f8f5615f9079f0"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/graphics_runtime_tables.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/graphics_runtime_tables.asm",
+      "sha256": "3620e68e57e3ff11bcea06a64ccb0e5f382687b3932bc70d13f2d02ebf5af6fd"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/custom_gfx.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/custom_gfx.asm",
+      "sha256": "b0773e3d436254f215e7d14123dfce6aac62919222c81353f5f59edd0b58b8d7"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Util/macros.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Util/macros.asm",
+      "sha256": "e9f0ef67aa7829232ed37fd5caebcbf4a452763099b0c2b43b7171d97479d165"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Config/feature_flags.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Config/feature_flags.asm",
+      "sha256": "eebe8dad726ebf69937019204b503b52ca1302e46e2d53ef8b1b18cd8928e50f"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Config/module_flags.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Config/module_flags.asm",
+      "sha256": "0dfc5ada77bbf92e30b8f7bf30b034ced9ef3d1dd03591fc1f00a835a747586a"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Build/lyra_current_transfer.py": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Build/lyra_current_transfer.py",
+      "sha256": "7be75213af66ca2f233aa97784aac3381d601ca04c485748a11a829d11ff7ee3"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Build/lyra_private_reservation.py": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Build/lyra_private_reservation.py",
+      "sha256": "8dca1dc74d2735bcd3c4ef3bd9cb909e70d26ddfb45b7df65518154e4fa0a9bf"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Build/lyra_native_loaders.py": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Build/lyra_native_loaders.py",
+      "sha256": "7ac0b233b38ec57c8454d3855d15a5fc4d3d9d9ca3ea15a55a00e570feadfcef"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Build/lyra_project_publisher.py": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Build/lyra_project_publisher.py",
+      "sha256": "e736c4e567780a842343f5f82bcb1ee98a848ac5ca43bc33318f993fd8281775"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Build/lyra_project_bg_palette.py": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Build/lyra_project_bg_palette.py",
+      "sha256": "848c8277409e8775c7f3b8da44f5f2a43c3ecc091dd11fd2a0c30c15a6b87da7"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Graphics/compile_runtime_graphics.py": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Graphics/compile_runtime_graphics.py",
+      "sha256": "a3363c98d34c35b183e62105f7674a0416fc4899852e86077558a263c7f12b89"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Graphics/compile_graphics_pack.py": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Graphics/compile_graphics_pack.py",
+      "sha256": "eaa492e3c84818f0e5aff12866d394f78aa8b8be218c061b3a18e2efe31644c2"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Generate/asm_source.py": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Generate/asm_source.py",
+      "sha256": "36ab72ba189239b4cd039825ca9b532f05a55474a32b1fd9f67e310d5c98492d"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/graphics_catalog.json": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/graphics_catalog.json",
+      "sha256": "382b29598b36cd375cc667657679a056ed1668db0c33a12665299bea4efc2c28"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/graphics_runtime_policy.json": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/graphics_runtime_policy.json",
+      "sha256": "6f103ded82e23d0b00d54b8126560f7ead0c8117c5dee4bc326931f226d3460d"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Build/build_rom.sh": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Build/build_rom.sh",
+      "sha256": "28662d3c223578a4bf30708c8da55f2d79b6f7d7f71d84c7045ace8d3744f3a0"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Build/check_zscream_overlap.py": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Build/check_zscream_overlap.py",
+      "sha256": "457fe3fe6034abf8760e6d73694bd9e4ed1c694ad8c8e49b41312c95d6037d06"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Generate/generate_hack_manifest.py": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Generate/generate_hack_manifest.py",
+      "sha256": "eed5138006a03e7ad4065d20c728fe0ca2b568fa4770da611445102e19f95674"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/gfx/kalyxo_docks_slot3.bin": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/gfx/kalyxo_docks_slot3.bin",
+      "sha256": "3fd640ea5f71e4301983dc4944b355f6d8582ea14797605688e5adaf37ffc3b4"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/gfx/kalyxo_docks_bg.bin": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/gfx/kalyxo_docks_bg.bin",
+      "sha256": "7ee45cc2f6e5f42d741794779fd6b79f9a5775f3fddea03a8a53d2038a9806c0"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/gfx/lyra_sky_tower_87.bin": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/gfx/lyra_sky_tower_87.bin",
+      "sha256": "b7db5e904ca0ad98f9c5268846efb2da0668a2e160a40a554c99747e65d659a8"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/gfx/lyra_stepped_fort_83.bin": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/gfx/lyra_stepped_fort_83.bin",
+      "sha256": "cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Build/lyra_project_terrain.py": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Build/lyra_project_terrain.py",
+      "sha256": "8ebdecc0820dce7fdf7ef996fb06db54151be20bd35667c3600f757eb46d2bd8"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Build/lyra_project_admission.py": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Build/lyra_project_admission.py",
+      "sha256": "b8d9479ffef423841eda6814fc1b7b9c726a00c36d7b947c010f6fb867fa242d"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/lyra_tail_events.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/lyra_tail_events.asm",
+      "sha256": "5fef9f7c278cec10d81907cad82c56cc40da89e493e34f573793df5cb7650ffc"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/overlays.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/overlays.asm",
+      "sha256": "04212e55015ebe734711028e563408d67a72bdec495366660e5ace92cafa93a4"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Sprites/Bosses/octoboss.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Sprites/Bosses/octoboss.asm",
+      "sha256": "b5379cdc5f3dadbcfc42f0d1bab3044b97e6780aa75ab07496f16d6689054b77"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Sprites/NPCs/goron.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Sprites/NPCs/goron.asm",
+      "sha256": "bd26f33b770d9e3593bb0b5bca3374742d869e9ef18b319212a575104ef9baa2"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Util/item_cheat.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Util/item_cheat.asm",
+      "sha256": "5263de5233da3cf02df08e67aa80b130ba313384024be55b16c02f64ef49594d"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/lyra_actor_stream.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/lyra_actor_stream.asm",
+      "sha256": "519874611d87a1657ebd4538b57897335a69112f94a6098e936373db0a4d7f26"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Build/lyra_native_state.py": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Build/lyra_native_state.py",
+      "sha256": "c7b561bd563f78bf396b073f3b470bf8bfa19190fd23c867719428aebf9a9a7d"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Build/authoring_bundle_build.py": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Build/authoring_bundle_build.py",
+      "sha256": "385e46c619ae85589e8b8ad32dd851547b908ba13ff0687c53b667f88ce21d2c"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Build/build_checks.sh": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Build/build_checks.sh",
+      "sha256": "dc12e239e006d66648a035b98ce2fe8bd9eb53076413ad9199ed4946888cb744"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Scripts/Generate/export_yazeproj_bundle.py": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Scripts/Generate/export_yazeproj_bundle.py",
+      "sha256": "d8f5464ad55a55805438b59317388382596b71ed40675389c802ab6c5a418602"
+    },
+    "lyra_private_pilot_boundary_cpu_23:Overworld/lyra_private_pilot.asm": {
+      "source_set": "lyra_private_pilot_boundary_cpu_23",
+      "path": "Overworld/lyra_private_pilot.asm",
+      "sha256": "5142939a14ff7207454e76a875ea44a761b83bfc2d6acfc46980af5d8ee67ac6"
     }
   },
   "claims": [
@@ -5290,14 +5511,14 @@
       "reset": "Always-included selected BG startup composes existing008827 owner including Masks-disabled; destructive Reset state00/areaFF. Intro invalidates. Warm LoadCheckpointOrWorld and indoor02C55E restore valid CA/CB BEFORE invalidation and native partial writers. State00 prohibits substitution; capture validity01 published last;02 after application.",
       "save": "Never serialized to SRAM. Menu/death7FDD80 storage and Minish7FD000 type cache are separate; RESTORE_BOUND remains off pending exact-source review and lifecycle proof.",
       "provenance": [
-        "lyra_private_pilot_boundary_22:Overworld/project_bg_palette.asm",
-        "lyra_private_pilot_boundary_22:Masks/mask_routines.asm",
-        "lyra_private_pilot_boundary_22:Overworld/goron_checkpoint.asm",
-        "lyra_private_pilot_boundary_22:Overworld/time_system.asm",
-        "lyra_private_pilot_boundary_22:Oracle_main.asm",
-        "lyra_private_pilot_boundary_22:Overworld/ZSCustomOverworld.asm",
-        "lyra_private_pilot_boundary_22:Util/macros.asm",
-        "lyra_private_pilot_boundary_22:Config/feature_flags.asm"
+        "lyra_private_pilot_boundary_cpu_23:Overworld/project_bg_palette.asm",
+        "lyra_private_pilot_boundary_cpu_23:Masks/mask_routines.asm",
+        "lyra_private_pilot_boundary_cpu_23:Overworld/goron_checkpoint.asm",
+        "lyra_private_pilot_boundary_cpu_23:Overworld/time_system.asm",
+        "lyra_private_pilot_boundary_cpu_23:Oracle_main.asm",
+        "lyra_private_pilot_boundary_cpu_23:Overworld/ZSCustomOverworld.asm",
+        "lyra_private_pilot_boundary_cpu_23:Util/macros.asm",
+        "lyra_private_pilot_boundary_cpu_23:Config/feature_flags.asm"
       ],
       "aliases": [],
       "anchors": [
