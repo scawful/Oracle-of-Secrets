@@ -520,6 +520,8 @@ def private_preview_cache(source, document, landing, recipe):
     def attributes(tile_id):
         words = struct.unpack('<4H', source[atlas + tile_id * 8:atlas + tile_id * 8 + 8])
         return [source[0x71459 + (word & 0x1FF)] for word in words]
+    require(attributes(tile) == landing['tile_attributes'],
+            'Private landing anchor quarter binding differs')
     clearance = set()
     for yy in range(y - 4, y + 5):
         for xx in range(x - 4, x + 5):
