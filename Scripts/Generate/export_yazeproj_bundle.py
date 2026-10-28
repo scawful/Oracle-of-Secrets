@@ -526,6 +526,12 @@ PROJECT_FILE_DEPENDENCIES = (
     "lyra_terrain_file",
     "palette_catalog_file",
     "sprite_catalog_file",
+    # Preserve bytes and supported references, never rewrite internal native
+    # Save identities or turn an exported descriptor into the original project.
+    "lyra_build_request_file",
+    "native_save_receipt_file",
+    "native_save_producer_file",
+    "native_save_transfer_proof_file",
 )
 
 

@@ -620,6 +620,44 @@ def _verify(folder, rom, symbols, *, receipt):
     return result
 
 
+def resolve_current_target(project, base_rom=None, request=None, candidate=None):
+    """Authenticate current inputs and resolve one fresh owned output generation.
+
+    Exported metadata retains its original identity. Native Save and transfer
+    validation must succeed for the descriptor actually opened by the editor.
+    """
+    from lyra_current_transfer import KIND, _json
+    project, rom, _, request = project_context(project, request)
+    document = _json(request.read_bytes())
+    R.require(type(document) is dict and document.get('kind') == KIND,
+              'CURRENT_BUILD_REQUEST_REQUIRED: bind a current native-Save transfer request')
+    plan = make_plan(project, base_rom or rom, request)
+    R.require(plan.get('kind') == 'lyra.current_build_prepare.v1' and plan.get('selected') is True,
+              'CURRENT_BUILD_UNSELECTED: reviewed runtime inputs are required')
+    prepared = _json(plan['current_files']['prepare.json'])
+    selected = Path(prepared['current_source_profile']['selected_source']['root']).resolve(strict=True)
+    R.require(selected == ROOT.resolve(), 'CURRENT_BUILD_ENGINE_MISMATCH: use the exact reviewed source checkout')
+    target = Path(prepared['terrain_plan']['target']['path'])
+    R.require(target.is_relative_to(selected / 'Roms') and target.name == 'oos168x.sfc'
+              and target.parent != selected / 'Roms',
+              'CURRENT_BUILD_OUTPUT_REQUIRED: use a fresh generation directory under the selected engine Roms')
+    config = configparser.ConfigParser(interpolation=None)
+    config.read_string(project.read_text(encoding='utf-8-sig'));config.defaults().clear()
+    configured = config.get('build','build_target',fallback='').strip()
+    R.require(configured and (project.parent / configured).resolve() == target,
+              'CURRENT_BUILD_OUTPUT_MISMATCH: build_target must match the new transfer candidate before native Save')
+    R.require(candidate is None or Path(candidate).absolute() == target,
+              'CURRENT_BUILD_OUTPUT_MISMATCH: output override differs from the current transfer')
+    # Generation directories never recycle previous receipts or consumer data.
+    siblings = ('oos168x.sfc','oos168x.sym','oos168x.mlb','oos168x.build.json',
+                'hooks.json','hack_manifest.json','sourcemap.json','annotations.json',
+                'oos168x.lyra-verification.json','oos168x.smoke.json','oos168x.reload-identity.json')
+    R.require(not any((target.parent / name).exists() or (target.parent / name).is_symlink() for name in siblings),
+              'CURRENT_BUILD_OUTPUT_EXISTS: retain the previous generation and bind a fresh target')
+    return dict(kind='lyra.current_build_target.v1',selected=True,engine=str(selected),
+                base_rom=str(rom),request=str(request),candidate=str(target))
+
+
 def stage_current_candidate(folder, candidate):
     """Create only the exact new owned target, retaining the saved source bytes."""
     from lyra_current_transfer import verify_current_context
@@ -665,6 +703,11 @@ def main():
     stage = sub.add_parser('stage')
     stage.add_argument('--input',type=Path,default=ROOT/OUTPUT)
     stage.add_argument('--rom',type=Path,required=True)
+    target = sub.add_parser('resolve-target')
+    target.add_argument('--project',type=Path,required=True)
+    target.add_argument('--base-rom',type=Path)
+    target.add_argument('--request',type=Path)
+    target.add_argument('--candidate',type=Path)
     water = sub.add_parser('check-water')
     water.add_argument('--kind',choices=('fill','gate'),required=True)
     water.add_argument('--rom',type=Path,required=True)
@@ -682,6 +725,10 @@ def main():
                          request=args.request, ledger_path=args.ledger, candidate=args.candidate)
     elif args.command == 'stage':
         result=stage_current_candidate(args.input,args.rom)
+    elif args.command == 'resolve-target':
+        result=resolve_current_target(args.project,args.base_rom,args.request,args.candidate)
+        print(result['candidate'])
+        return
     elif args.command == 'check-water':
         result=check_water_source(args.kind,args.rom)
     elif args.command == 'verify':

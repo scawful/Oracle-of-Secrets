@@ -11,6 +11,30 @@ build_output_transaction=0
 build_output_paths=()
 build_output_existed=()
 
+configure_current_output() {
+  [[ -n "${OOS_LYRA_CANDIDATE:-}" ]] || return 0
+  if [[ -z "${OOS_LYRA_PROJECT:-}" || "$version" != "168" ]]; then
+    echo "ERROR: OOS_LYRA_CANDIDATE requires a selected current168 project." >&2
+    return 1
+  fi
+  local arguments=(resolve-target --project "$OOS_LYRA_PROJECT" --base-rom "$base_rom"
+                   --candidate "$OOS_LYRA_CANDIDATE")
+  if [[ -n "${OOS_LYRA_REQUEST:-}" ]]; then arguments+=(--request "$OOS_LYRA_REQUEST"); fi
+  patched_rom="$(python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" "${arguments[@]}")" || return $?
+  rom_dir="$(dirname "$patched_rom")"
+  receipt_path="$rom_dir/oos168x.build.json"
+  if [[ -n "${OOS_BUILD_RECEIPT:-}" && "$OOS_BUILD_RECEIPT" != "$receipt_path" ]]; then
+    echo "ERROR: Current build receipt must remain beside its immutable candidate: $receipt_path" >&2
+    return 1
+  fi
+  symbols_path="$rom_dir/oos168x.sym"
+  symbols_rel="$symbols_path"
+  mlb_path="$rom_dir/oos168x.mlb"
+  mlb_rel="$mlb_path"
+  annotations_out="$rom_dir/annotations.json"
+  mkdir -p "$rom_dir"
+}
+
 receipt() {
   python3 "$receipt_tool" "$1" --receipt "$receipt_path" "${@:2}"
 }
@@ -54,7 +78,7 @@ snapshot_build_outputs() {
   build_output_paths=(
     "$patched_rom" "$symbols_path" "$mlb_path"
     "$rom_dir/hooks.json" "$rom_dir/hack_manifest.json" "$rom_dir/sourcemap.json"
-    "$repo_root/.cache/annotations.json"
+    "${annotations_out:-$repo_root/.cache/annotations.json}"
     "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
     "$repo_root/Dungeons/generated/water_fill_table.asm"
     "$rom_dir/oos${version}x.lyra-verification.json"

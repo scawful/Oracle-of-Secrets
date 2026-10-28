@@ -20,6 +20,7 @@ usage() {
   echo "  OOS_ANALYZER=<path> selects an analyzer; OOS_TEST_SOCKET=<owned socket> enables exact-ROM current-state smoke." >&2
   echo "  Receipt: Roms/oos<version>x.build.json (override OOS_BUILD_RECEIPT)." >&2
   echo "  Lyra: OOS_LYRA_PROJECT selects a saved dev project; OOS_LYRA_REQUEST optionally overrides its [files] lyra_build_request_file." >&2
+  echo "  Current Lyra: OOS_LYRA_CANDIDATE selects the authenticated fresh generation target; all output metadata follows its directory." >&2
   exit "${1:-1}"
 }
 
@@ -157,6 +158,7 @@ mlb_rel="Roms/oos${version}x.mlb"
 mlb_path="$rom_dir/oos${version}x.mlb"
 
 source "$repo_root/Scripts/Build/build_checks.sh"
+configure_current_output
 init_build_receipt
 current_stage="base_rom"
 
@@ -433,13 +435,13 @@ current_stage="source_snapshot"
 receipt snapshot --phase pre_assembly
 
 # z3asm writes hooks.json from the bytes it assembles (see z3dk docs/Z3DK_HOOKS.md).
-hooks_json="$repo_root/Roms/hooks.json"
+hooks_json="$rom_dir/hooks.json"
 assembler_emits=()
 # Never accept symbols or hook metadata left by a prior build at these paths.
 rm -f "$hooks_json" "$symbols_path" "$mlb_path"
 current_stage="assembly"
 if [[ "$asar_bin" == *"z3asm"* ]]; then
-  assembler_emits+=("--emit=sourcemap:$repo_root/Roms/sourcemap.json" "--emit=hooks:$hooks_json")
+  assembler_emits+=("--emit=sourcemap:$rom_dir/sourcemap.json" "--emit=hooks:$hooks_json")
 fi
 
 assemble_rom() {
@@ -485,7 +487,7 @@ echo "Assembled patched ROM: $patched_rom"
 echo "[*] Generating Yaze hack manifest..."
 manifest_args=(
   --root "$repo_root"
-  --output "$repo_root/Roms/hack_manifest.json"
+  --output "$rom_dir/hack_manifest.json"
   --dev-rom "$base_rom"
   --rom "$patched_rom"
 )
@@ -516,7 +518,7 @@ run_check manifest 1 python3 "$repo_root/Scripts/Generate/generate_hack_manifest
   "${manifest_args[@]}" \
   "${manifest_hook_args[@]}"
 
-receipt artifact --name manifest --path "$repo_root/Roms/hack_manifest.json"
+receipt artifact --name manifest --path "$rom_dir/hack_manifest.json"
 
 # Export symbols for yaze + Mesen2.
 if [[ $emit_symbols -eq 1 && -f "$symbols_path" ]]; then
@@ -541,7 +543,7 @@ fi
 
 # Generate annotations.json if requested (ASM @watch/@assert tags)
 if [[ "${OOS_GENERATE_ANNOTATIONS:-0}" == "1" || "$(check_required annotations 0)" == "1" ]]; then
-  annotations_out="$repo_root/.cache/annotations.json"
+  annotations_out="${annotations_out:-$repo_root/.cache/annotations.json}"
   run_check annotations 1 python3 "$repo_root/Scripts/Generate/generate_annotations.py" --root "$repo_root" --out "$annotations_out"
   receipt artifact --name annotations --path "$annotations_out"
 fi

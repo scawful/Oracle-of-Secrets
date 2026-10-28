@@ -482,7 +482,7 @@ flagged_sheets=0xD4,0xD6
                 build_guard.main(["--project", str(self.bundle / "project.yaze")]), 2
             )
         delegate.assert_not_called()
-        self.assertIn("does not compile Lyra sidecar maps", error.getvalue())
+        self.assertIn("lyra_build_request_file", error.getvalue())
         self.assertIn("No build was started", error.getvalue())
         self.assertEqual(
             before,
@@ -525,6 +525,34 @@ flagged_sheets=0xD4,0xD6
                 self.assertEqual(kwargs["env"]["OOS_BASE_ROM"], "rom")
                 self.assertEqual(kwargs["env"]["OOS_BACKUP_ROOT"], "backups")
                 self.assertEqual(kwargs["env"]["OOS_MANIFEST_ROOT"], ".")
+
+    def test_export_preserves_supported_build_refs_without_rewriting_save_identity(self):
+        controls = ('lyra_build_request_file', 'native_save_receipt_file',
+                    'native_save_producer_file', 'native_save_transfer_proof_file')
+        content = self.project.read_text()
+        for key in controls:
+            self.write(key + '.json', json.dumps({'original_project':str(self.project),'field':key}).encode())
+            content = content.replace('[files]\n','[files]\n'+key+'='+key+'.json\n',1)
+        self.project.write_text(content)
+        self.capture();verify_bundle(self.bundle)
+        values = self.values()
+        for key in controls:
+            captured = self.bundle / values['files',key]
+            self.assertEqual(captured.read_bytes(),(self.source / (key+'.json')).read_bytes())
+            self.assertIn(str(self.project),captured.read_text())
+        # A relocated descriptor cannot borrow the original Save/context.
+        self.assertFalse(Path(str(self.bundle/'project.yaze')+'.native-save.json').exists())
+
+    def test_native_build_discards_inherited_foreign_current_selection(self):
+        from unittest import mock
+        self.project.write_text(self.project.read_text().replace('lyra_terrain_file=terrain.json','lyra_terrain_file='))
+        self.capture()
+        foreign={key:'/foreign/project' for key in
+                 ('OOS_LYRA_PROJECT','OOS_LYRA_REQUEST','OOS_LYRA_CANDIDATE','OOS_LYRA_BUILD_CONTEXT')}
+        with mock.patch.dict(build_guard.os.environ,foreign),mock.patch.object(
+                build_guard.subprocess,'run',return_value=mock.Mock(returncode=0)) as delegate:
+            self.assertEqual(build_guard.build_project(self.bundle/'project.yaze'),0)
+        for key in foreign:self.assertNotIn(key,delegate.call_args.kwargs['env'])
 
     def test_authoring_build_guard_survives_bundle_relocation(self):
         from unittest import mock
