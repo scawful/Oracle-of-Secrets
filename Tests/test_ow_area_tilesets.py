@@ -3,6 +3,7 @@ from pathlib import Path
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -27,6 +28,17 @@ class AreaTilesetComposition(unittest.TestCase):
                               '-I'+str(self.folder), '-I'+str(ROOT), str(driver), str(rom)],
                              capture_output=True, text=True)
         return run, rom.read_bytes()
+
+    def test_allocation_bindings_match_real_source_symbols(self):
+        sys.path.insert(0, str(ROOT/'Scripts/Generate'))
+        from allocation_contracts import read_ledger, source_evidence
+        ledger = read_ledger(ROOT/'Config/allocation_ownership.json')
+        sets = ('lyra_joint_graphics_source_26', 'lyra_joint_area_tilesets_27')
+        sources = {k:v for k,v in ledger['sources'].items() if v['source_set'] in sets}
+        claims = [c for c in ledger['claims'] if c['id'] in
+                  ('ExpandedGraphicsSheetTable', 'LyraAreaTileTypes', 'LyraAreaTilesetSuffix')]
+        self.assertEqual(len(claims), 3)
+        source_evidence(dict(sources=sources, claims=claims), {name:ROOT for name in sets})
 
     def test_main_checks_area_binding_after_generated_constants(self):
         main = (ROOT/'Oracle_main.asm').read_text()
