@@ -4946,7 +4946,7 @@
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "38c1076b0027fd7310885e92fd4067ad039fd4ba60b6be554b3a99dd57eb2dc3"
+      "sha256": "7ad9c7096753989f8288eb9800c879c56b5905670ff3edb9d553c8974f3a2f1b"
     },
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_native_state.py": {
       "source_set": "lyra_joint_art_bridge_30",
@@ -5042,6 +5042,11 @@
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Util/macros.asm",
       "sha256": "874d1051d27bbfd74d7be0df8420383c12809f0852941b1a943513e176ec82ec"
+    },
+    "lyra_joint_art_bridge_30:Tests/test_lyra_checkpoint_preview_publisher.py": {
+      "source_set": "lyra_joint_art_bridge_30",
+      "path": "Tests/test_lyra_checkpoint_preview_publisher.py",
+      "sha256": "414a8f5db4a1895ef24e8ae37e568489951f357ec13ee9e76dd57e5fb02fa97a"
     }
   },
   "claims": [

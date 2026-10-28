@@ -2,6 +2,9 @@
 import copy
 import json
 import tempfile
+import os
+import shutil
+import subprocess
 from unittest import mock
 from pathlib import Path
 import sys
@@ -18,6 +21,39 @@ from lyra_project_terrain import parse_terrain_document
 
 
 class CheckpointPreviewPublisherTests(unittest.TestCase):
+    def test_review_binds_consumers_while_final_build_owns_whole_image_hash(self):
+        rom,symbols,request=actual_preview_fixture(combined=True)
+        standalone=L.inspect_seeded_checkpoint_preview(rom,symbols,**request)
+        self.assertEqual(standalone['compiled_rom_sha256'],X.R.sha(rom))
+        proof=L.inspect_current_consumers(rom,symbols,checkpoint_preview=request)
+        self.assertNotIn('compiled_rom_sha256',proof['preview_guards'])
+        metadata=bytearray(rom);metadata[0x3F0010]^=1
+        self.assertEqual(L.inspect_current_consumers(bytes(metadata),symbols,checkpoint_preview=request),proof)
+        code=bytearray(rom);code[X.A.pc(proof['preview_guards']['code_snes'][0])]^=1
+        with self.assertRaises(ValueError):
+            L.inspect_current_consumers(bytes(code),symbols,checkpoint_preview=request)
+
+    @unittest.skipUnless(os.environ.get('ASAR_BIN') or shutil.which('asar'),'Asar unavailable')
+    def test_actual_global_bridge_resolves_the_namespaced_home_owner(self):
+        text=(ROOT/'Overworld/lyra_native_loaders.asm').read_text()
+        begin=text.index('if defined("LYRA_PRIVATE_CHECKPOINT_ENABLED")')
+        end=text.index('if defined("LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED")',begin)
+        bridge=text[begin:end]
+        with tempfile.TemporaryDirectory() as name:
+            folder=Path(name);main=folder/'main.asm';rom=folder/'synthetic.sfc'
+            prefix='lorom\n!LYRA_PRIVATE_CHECKPOINT_ENABLED = 1\nnamespace Oracle\norg $34FC54\nCheckpoint_EnterHome = pc()\nRTL\nnamespace off\n'
+            for include in (False,True):
+                main.write_text(prefix+(bridge if include else '')+'org $E0C000\nJSL Checkpoint_EnterHome\n')
+                rom.write_bytes(bytes(0x400000))
+                run=subprocess.run([os.environ.get('ASAR_BIN') or shutil.which('asar'),
+                    '--no-title-check','--fix-checksum=off',str(main),str(rom)],capture_output=True,text=True)
+                if include:
+                    self.assertEqual(run.returncode,0,run.stdout+run.stderr)
+                    at=X.A.pc(0xE0C000);self.assertEqual(rom.read_bytes()[at:at+4],bytes.fromhex('2254fc34'))
+                else:
+                    self.assertNotEqual(run.returncode,0)
+                    self.assertIn("Label 'Checkpoint_EnterHome' wasn't found",run.stdout+run.stderr)
+
     def test_distinct_consumer_snapshot_is_required_and_never_broad_readiness(self):
         rom,symbols,request=actual_preview_fixture(combined=True)
         proof=L.inspect_current_consumers(rom,symbols,checkpoint_preview=request)
