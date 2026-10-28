@@ -178,8 +178,18 @@ class Episode:
 
     def run(self):
         self.owner()
-        require(self.command('STATE')['paused'], 'Caller must provide a paused emulator')
-        require(not self.b.list_breakpoints(), 'Existing breakpoints: not an isolated session')
+        # The first debugger read can clear an earlier non-debugger pause.
+        # PAUSE with a debugger is asynchronous, so confirm its completion.
+        breakpoints = self.command('BREAKPOINT', {'action': 'list'})
+        require(isinstance(breakpoints, dict) and
+                isinstance(breakpoints.get('breakpoints'), list),
+                'Breakpoint list response is not verified')
+        require(not breakpoints['breakpoints'], 'Existing breakpoints: not an isolated session')
+        self.command('PAUSE')
+        pause_limit = time.monotonic() + 3
+        while not self.command('STATE')['paused']:
+            require(time.monotonic() < pause_limit, 'Owned CPU did not pause within 3 seconds')
+            time.sleep(.01)
         s = self.boot()
         if self.a.phase == 'home':
             require(s['module'] == 7 and s['room'] == 0x104,
