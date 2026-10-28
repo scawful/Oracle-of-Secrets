@@ -72,7 +72,7 @@ def receipt_matrix(active, symbols, guarded=True):
         b.write_block(0x7E0000, list(target.to_bytes(3, "little")))
         b.write_block(0x7F8000, [0x22, *entry.to_bytes(3, "little"), 0xEA])
         bp = b.add_breakpoint(0x7F8004)
-        require(bp is not None, "Receipt return breakpoint failed")
+        require(isinstance(bp, int) and bp >= 0, "Receipt return breakpoint failed")
         state = {"cpu.a": 0xAB00 | value, "cpu.x": 0x23, "cpu.y": item,
                  "cpu.ps": 0x34, "cpu.sp": 0x1FFF, "cpu.d": 0,
                  "cpu.dbr": 0x09, "cpu.k": 0x7F, "cpu.pc": 0x8000,
