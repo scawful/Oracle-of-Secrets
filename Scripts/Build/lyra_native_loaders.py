@@ -1633,17 +1633,17 @@ def require_private_pilot_ingress(consumers):
 
 PREVIEW_CONSUMER_KIND='lyra.private_checkpoint_preview_consumers.v1'
 PREVIEW_HOME_BYTES=bytes.fromhex('afc8f37e48a9008fc8f37e8fcaf37e9c0a019c0e01a9018daa0422088202688fc8f37e386b')
-# Exact f45 Asar instruction bodies; only explicit long operands relocate.
+# Exact Asar instruction bodies; only explicit long operands relocate.
 # These are code contracts, not invented runtime rows or admission authority.
 _PREVIEW_BODIES={
 'Lyra_PrivatePilotCanScroll': '08d8c23048da5a9829ff00c90800b051890100d04ca58a29ff00c9a0009025f014c9a100d03bc00200d036ad0007c94200d02e8024c00000d027ad0007c94000d01f801598aaa58a29c0000a0d0007187f34a602c94001b008c2307afa6828186bc2307afa6828386b',
 'Lyra_PrivatePilotCanEnter': '08c22048c9a200b0046828186b6828386b',
 'Lyra_PrivatePilotEntryMap': '08c230daa5a0c90401f033c98001b02ec900019029af40c17ec9a200b02daaaf4cc17ec9a200b023c9a000b005e0a0009027488ac301f00368801068801ba29c00df8add02f008caca10f6fa28386b8a4aaabf28de0229ff00fa28186b',
-'Lyra_PrivatePilotEntryGate': '08c23048da5aa51029ff00c90800d00c22{Lyra_PrivatePilotEntryMap}b01222{Lyra_PrivatePilotCanEnter}b00c7afa6828a98285995ccb83027afa682822{Checkpoint_EnterHome}60',
+'Lyra_PrivatePilotEntryGate': '08c23048da5aa51029ff00c90800d00c22{Lyra_PrivatePilotEntryMap}b01222{Lyra_PrivatePilotCanEnter}b00c7afa6828a98285995ccb83027afa682822{Checkpoint_EnterHome}5cc4ed02',
 'Lyra_PrivatePilotCurrentMapAllowed': '08c22048a58a22{Lyra_PrivatePilotCanEnter}b0046828186b6828386b',
 'Lyra_PrivatePilotMirrorGate': '22{Lyra_PrivatePilotCurrentMapAllowed}b008a58ac9805c1bb2025c1db202',
 'Lyra_PrivatePilotFullNativeCall': 'f4f8b15c59ed02',
-'Lyra_PrivatePilotFullNearGate': '0822{Lyra_PrivatePilotCurrentMapAllowed}b00e2822{Lyra_PrivatePilotFullNativeCall}a910851064b06411602822{Checkpoint_EnterHome}60',
+'Lyra_PrivatePilotFullNearGate': '0822{Lyra_PrivatePilotCurrentMapAllowed}b0112822{Lyra_PrivatePilotFullNativeCall}a910851064b064115cc4ed022822{Checkpoint_EnterHome}5cc4ed02',
 'Lyra_PrivatePilotFullFrameGate': 'e23008c23048da5aa58a22{Lyra_PrivatePilotCanEnter}b00a7afa6828a5115c79a4027afa682822{Checkpoint_EnterHome}6b',
 'Lyra_PrivatePilotSubGate': '08488a22{Lyra_PrivatePilotCanEnter}b0096828e0ff005c{LyraPilot_SubNativeAllowed}6828e0ff005c{LyraPilot_SubNativeNoOverlay}',
 }
@@ -1707,7 +1707,7 @@ def inspect_seeded_checkpoint_preview(compiled,symbols,*,source,reviewed,mode):
         R.require(code[0]<=start<end<=code[1] and end-start==len(expected),'PRIVATE_PREVIEW_HELPER_EXTENT: '+name)
         exact(start,expected,name)
     aliases={'Entry':('EntryGate',22,40),'ColdResume':('EntryGate',22,40),
-             'FullLoad':('FullNearGate',1,21),'Mirror':('MirrorGate',0,14),'SubLoad':('SubGate',3,18)}
+             'FullLoad':('FullNearGate',1,24),'Mirror':('MirrorGate',0,14),'SubLoad':('SubGate',3,18)}
     for role,(gate,call_offset,blocked_offset) in aliases.items():
         start=addr('Lyra_PrivatePilot'+gate)
         R.require(addr('LyraCall_PrivatePilot'+role)==start+call_offset
@@ -1736,7 +1736,7 @@ def inspect_seeded_checkpoint_preview(compiled,symbols,*,source,reviewed,mode):
     continuations=((0x0283B9,'c78319afb9eda5110aaafcb9836b'),
         (0x0283CB,'9cf403226a8502a510c908d00520a3e4800320bce92263c402a9ff8f6ff37e2275db0d'),
         (0x02A479,'0aaafc0da4'),(0x02B21B,'9008641164b09c00026b'),
-        (0x02A634,'0200feff1000f0ff'))
+        (0x02A634,'0200feff1000f0ff'),(0x02EDC4,'60'))
     for at,payload in continuations:
         raw=bytes.fromhex(payload)
         R.require(source[A.pc(at):A.pc(at)+len(raw)]==raw,'PRIVATE_PREVIEW_NATIVE_CONTINUATION_CHANGED')

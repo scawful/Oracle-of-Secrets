@@ -1,8 +1,13 @@
-"""Private pair source/consumer controls; no assembler or native execution."""
+"""Private pair source/consumer and bounded Asar/offline return controls."""
 import copy
 from dataclasses import replace
 import json
 import hashlib
+import functools
+import os
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 import sys
 import unittest
@@ -179,7 +184,7 @@ class PrivatePilotBoundaryTest(unittest.TestCase):
         entry=asm[asm.index('Lyra_PrivatePilotEntryGate:'):asm.index('Lyra_PrivatePilotEntryGate_End')]
         self.assertLess(entry.index('JSL Lyra_PrivatePilotEntryMap'),entry.index('STA.b $99'))
         self.assertLess(entry.index('JSL Lyra_PrivatePilotCanEnter'),entry.index('STA.b $99'))
-        self.assertIn('JSL Checkpoint_EnterHome\n  RTS',entry)
+        self.assertIn('JSL Checkpoint_EnterHome\n  JML $02EDC4',entry)
         self.assertNotIn('JML Checkpoint_EnterHome',entry)
         self.assertIn('LyraCall_PrivatePilotColdResume = pc()',entry)
         for role in ('Warp',):
@@ -202,7 +207,7 @@ class PrivatePilotBoundaryTest(unittest.TestCase):
         self.assertIn('PEA.w $B1F8\n  JML $02ED59',asm)
         near=asm[asm.index('Lyra_PrivatePilotFullNearGate:'):asm.index('Lyra_PrivatePilotFullNearGate_End')]
         self.assertLess(near.index('JSL Lyra_PrivatePilotCurrentMapAllowed'),near.index('JSL Lyra_PrivatePilotFullNativeCall'))
-        self.assertIn('JSL Checkpoint_EnterHome\n  RTS',near)
+        self.assertIn('JSL Checkpoint_EnterHome\n  JML $02EDC4',near)
         frame=asm[asm.index('Lyra_PrivatePilotFullFrameGate:'):asm.index('Lyra_PrivatePilotFullFrameGate_End')]
         self.assertTrue(frame.index('SEP #$30')<frame.index('JSL Lyra_PrivatePilotCanEnter')<frame.index('JML $02A479'))
         self.assertIn('JSL Checkpoint_EnterHome\n  RTL',frame)
@@ -299,25 +304,81 @@ class PrivatePilotComposerTest(unittest.TestCase):
             L.plan_current_actor_streams(f.source,f.document,current_source_profile=f.profile,private_pilot=pilot)
 
 
+@functools.lru_cache(maxsize=1)
+def assembled_preview_guard_fixture():
+    """Reassemble current guards over preserved sparse f45 diagnostic windows.
+
+    The old raw fixture stays immutable. Only the current source's guard code,
+    hooks and relocated overlay dispatch are new; Home/host bytes stay pinned.
+    This synthetic combination is not a game build or native qualification.
+    """
+    data=json.loads((ROOT/'Tests/fixtures/lyra_actual_preview_guard_windows.json').read_bytes())
+    source=bytearray(0x200000)
+    for row in data['source_windows']:
+        raw=bytes.fromhex(row['payload_hex']);pc=L.A.pc(row['snes']);source[pc:pc+len(raw)]=raw
+    # Existing native Module08 RTS, independently read from preserved625 ROM.
+    source[L.A.pc(0x02EDC4)]=0x60
+    compiled=source+bytearray(0x200000)
+    for row in data['compiled_windows']:
+        raw=bytes.fromhex(row['payload_hex']);pc=L.A.pc(row['snes']);compiled[pc:pc+len(raw)]=raw
+    # Asar must check actual unpatched hook preimages, not prior JML bytes.
+    for at in (0x0283C7,0x02B217,0x02EDB9,0x02A475):
+        pc=L.A.pc(at);compiled[pc:pc+4]=source[pc:pc+4]
+    asar=os.environ.get('ASAR_BIN') or shutil.which('asar')
+    if not asar:raise unittest.SkipTest('Asar required for current guard regression')
+    labels=data['labels'].copy()
+    with tempfile.TemporaryDirectory() as temp:
+        folder=Path(temp);rom=folder/'sparse.sfc';rom.write_bytes(compiled)
+        driver=folder/'driver.asm'
+        driver.write_text('lorom\n'+
+            '!LYRA_CURRENT_MODE = 1\n!LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED = 1\n'+
+            '!LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND = 1\n!Func02A9C4 = 1\n'+
+            '!LYRA_PRIVATE_PILOT_INGRESS_ENABLED = 1\n'+
+            '!REGIONAL_CHECKPOINTS_ENABLED = 1\n!REGIONAL_CHECKPOINTS_BOUND = 1\n'+
+            'OverworldScreenIDChange = $02A634\nCheckpoint_EnterHome = $34FC54\n'+
+            ''.join(f'{name} = ${labels[name]:06X}\n' for name in
+                    ('LyraPilot_SubNativeAllowed','LyraPilot_SubNativeNoOverlay'))+
+            f'org ${labels["Lyra_PrivatePilotCanScroll"]:06X}\n'+
+            f'incsrc "{ROOT / "Overworld/lyra_private_pilot.asm"}"\n')
+        run=subprocess.run([asar,'--no-title-check','--fix-checksum=off','--symbols=wla',
+                            str(driver),str(rom)],capture_output=True,text=True,timeout=20)
+        if run.returncode:raise AssertionError(run.stdout+run.stderr)
+        compiled=bytearray(rom.read_bytes())
+        emitted=L._labels(rom.with_suffix('.sym').read_bytes())
+    labels.update({name:emitted[name] for name in labels if name in emitted})
+    site=L.A.pc(labels['LyraPilot_SubDispatchSite'])
+    compiled[site:site+4]=b'\x5C'+labels['Lyra_PrivatePilotSubGate'].to_bytes(3,'little')
+    reviewed=copy.deepcopy(data['reviewed'])
+    reviewed['source_rom_sha256']=L.R.sha(source)
+    reviewed['guard_source_sha256']=L.R.sha((ROOT/'Overworld/lyra_private_pilot.asm').read_bytes())
+    reviewed['code_snes']=[labels['Lyra_PrivatePilotCanScroll'],labels['Lyra_PrivatePilotSubGate_End']]
+    lo,hi=reviewed['code_snes'];reviewed['code_sha256']=L.R.sha(compiled[L.A.pc(lo):L.A.pc(lo)+hi-lo])
+    lo,hi=reviewed['overlay_host_snes'];reviewed['overlay_host_sha256']=L.R.sha(compiled[L.A.pc(lo):L.A.pc(lo)+hi-lo])
+    return bytes(source),bytes(compiled),labels,reviewed
+
+
 def actual_preview_fixture(*,combined=False):
     """Actual emitted windows in a sparse diagnostic image, never a ROM grant.
 
     Combined mode adds the existing artificial core-consumer fixture solely
     to exercise the common inspection path. It is not actual core assembly.
     """
-    data=json.loads((ROOT/'Tests/fixtures/lyra_actual_preview_guard_windows.json').read_bytes())
-    source=bytearray(0x200000)
-    for row in data['source_windows']:
-        raw=bytes.fromhex(row['payload_hex']);pc=L.A.pc(row['snes']);source[pc:pc+len(raw)]=raw
-    source=bytes(source)
+    source,actual,labels,reviewed=assembled_preview_guard_fixture()
+    labels=labels.copy()
     if combined:
         compiled,symbols=consumer_fixture(source,0xE0B000)
-        symbols=symbols.replace(b'E0:B800 Lyra_CurrentNativeCodeEnd',b'E0:C18E Lyra_CurrentNativeCodeEnd')
-    else:compiled,symbols=source+bytes(0x200000),b'[labels]\n'
-    compiled=bytearray(compiled)
-    for row in data['compiled_windows']:
-        raw=bytes.fromhex(row['payload_hex']);pc=L.A.pc(row['snes']);compiled[pc:pc+len(raw)]=raw
-    labels=data['labels'].copy()
+        end=labels['Lyra_PrivatePilotSubGate_End']
+        symbols=symbols.replace(b'E0:B800 Lyra_CurrentNativeCodeEnd',
+            f'{end>>16:02X}:{end&65535:04X} Lyra_CurrentNativeCodeEnd'.encode())
+        compiled=bytearray(compiled)
+        # Preserve the original sparse fixture's host/Home spans and use the
+        # real newly assembled guard range and fixed hooks.
+        windows=json.loads((ROOT/'Tests/fixtures/lyra_actual_preview_guard_windows.json').read_bytes())['compiled_windows']
+        for row in windows:
+            lo=row['snes'];size=len(bytes.fromhex(row['payload_hex']))
+            if lo==reviewed['code_snes'][0]:size=reviewed['code_snes'][1]-lo
+            pc=L.A.pc(lo);compiled[pc:pc+size]=actual[pc:pc+size]
+    else:compiled,symbols=bytearray(actual),b'[labels]\n'
     if combined:
         # Replace only this artificial core stub with its actual emitted host.
         replaced={'LyraHost_Overworld_ReloadSubscreenOverlay_Interupt',
@@ -331,7 +392,7 @@ def actual_preview_fixture(*,combined=False):
         compiled[L.A.pc(call):L.A.pc(call)+6]=raw
         labels.update(LyraCall_PrivatePilotBoundary=call,LyraPilot_BoundaryBlocked=blocked)
     symbols+=(''.join(f'{a>>16:02X}:{a&65535:04X} {n}\n' for n,a in labels.items())).encode()
-    return bytes(compiled),symbols,dict(source=source,reviewed=copy.deepcopy(data['reviewed']),
+    return bytes(compiled),symbols,dict(source=source,reviewed=copy.deepcopy(reviewed),
                                       mode='seeded_checkpoint_preview')
 
 
@@ -339,6 +400,63 @@ class SeededCheckpointPreviewConsumerTest(unittest.TestCase):
     @staticmethod
     def inspect(rom,symbols,request):
         return L.inspect_seeded_checkpoint_preview(rom,symbols,**request)
+
+    def test_cross_bank_near_returns_execute_native_thunk_and_old_rts_control_fails(self):
+        runner=os.environ.get('OOS_CPU_RUNNER')
+        if not runner:self.skipTest('Set OOS_CPU_RUNNER for emitted 65816 return regression')
+        rom,symbols,_=actual_preview_fixture();labels=L._labels(symbols)
+        old=json.loads((ROOT/'Tests/fixtures/lyra_actual_preview_guard_windows.json').read_bytes())
+        old_code=next(bytes.fromhex(r['payload_hex']) for r in old['compiled_windows']
+                      if r['snes']==old['labels']['Lyra_PrivatePilotCanScroll'])
+        cases=(('EntryBlocked',labels['Lyra_PrivatePilotEntryGate_End']-4,
+                old['labels']['Lyra_PrivatePilotEntryGate_End']-1),
+               ('FullAllowed',labels['Lyra_PrivatePilotFullNearGate']+20,
+                old['labels']['Lyra_PrivatePilotFullNearGate']+20),
+               ('FullBlocked',labels['Lyra_PrivatePilotFullNearGate_End']-4,
+                old['labels']['Lyra_PrivatePilotFullNearGate_End']-1))
+        with tempfile.TemporaryDirectory() as folder:
+            for name,exit_at,old_at in cases:
+                self.assertEqual(old_code[old_at-old['labels']['Lyra_PrivatePilotCanScroll']],0x60)
+                self.assertEqual(rom[L.A.pc(exit_at):L.A.pc(exit_at)+4],bytes.fromhex('5cc4ed02'))
+                for stage in ('old_rts','native_rts','complete'):
+                    control=stage=='old_rts'
+                    image=bytearray(rom)
+                    # Test-only caller: PEA models the REAL JSR($83B9,X)'s
+                    # saved83C5; the runner already supplies its outer JSL.
+                    # Native0283C6 RTL is the unchanged actual continuation.
+                    image[L.A.pc(0x029000):L.A.pc(0x029000)+7]=(
+                        bytes.fromhex('f4c5835c')+exit_at.to_bytes(3,'little'))
+                    if control:image[L.A.pc(exit_at)]=0x60 # immutable old emitted opcode
+                    path=Path(folder)/'diagnostic.sfc';path.write_bytes(image)
+                    regs=dict(a=0xABCD,x=0x67,y=0x45,p=0x31,db=0,d=0,sp=0x1FFF)
+                    request=dict(entry=0x029000,reset_ram=True,registers=regs,
+                        writes=[],reads=[dict(address=0x7E1FF0,length=16)],
+                        trace_writes=True,max_steps={'old_rts':4,'native_rts':5,'complete':20}[stage])
+                    run=subprocess.run([runner,str(path)],input=json.dumps(request)+'\n',
+                        text=True,capture_output=True,timeout=10)
+                    self.assertEqual(run.returncode,0,run.stderr)
+                    result=json.loads(run.stdout);cpu=result['registers']
+                    with self.subTest(exit=name,stage=stage):
+                        self.assertFalse(result.get('stub_calls'));self.assertFalse(result.get('mmio_writes'))
+                        self.assertEqual(result['returned'],stage=='complete')
+                        for key in ('a','x','y','p','db','d'):self.assertEqual(cpu[key],regs[key],key)
+                        if control:
+                            # RTS pops ONLY the address; PBR remains E0.
+                            self.assertEqual((cpu['pb']<<16)|cpu['pc'],0xE083C6)
+                            self.assertEqual(cpu['sp'],regs['sp']-3)
+                        elif stage=='native_rts':
+                            self.assertEqual((cpu['pb']<<16)|cpu['pc'],0x0283C6)
+                            self.assertEqual(cpu['sp'],regs['sp']-3)
+                        else:
+                            # JML02EDC4; RTS reaches0283C6; its RTL consumes
+                            # exactly the caller's long frame, no extra byte.
+                            self.assertEqual(cpu['sp'],regs['sp'])
+                            self.assertEqual(result['steps'],6) # includes runner's initial JSL
+                        self.assertEqual(result['reads'][0]['bytes'][11:13],[0xC5,0x83])
+                        for write in result.get('writes',[]):
+                            at=write['address']
+                            if at>>16&127<64 and at&65535<8192:at=0x7E0000|(at&65535)
+                            self.assertTrue(0x7E1FF0<=at<0x7E2000 or 0x7F8000<=at<0x7F8004)
 
     def test_actual_guard_windows_have_explicit_scope_and_no_readiness_authority(self):
         rom,symbols,request=actual_preview_fixture();proof=self.inspect(rom,symbols,request)
@@ -352,7 +470,7 @@ class SeededCheckpointPreviewConsumerTest(unittest.TestCase):
 
     def test_each_emitted_helper_byte_refuses_even_with_recomputed_code_hash(self):
         rom,symbols,request=actual_preview_fixture();lo,hi=request['reviewed']['code_snes'];pc=L.A.pc(lo)
-        self.assertEqual(hi-lo,398)
+        self.assertEqual(hi-lo,407)
         for offset in range(hi-lo):
             with self.subTest(offset=offset):
                 changed=bytearray(rom);changed[pc+offset]^=1;pin=copy.deepcopy(request)
@@ -376,7 +494,7 @@ class SeededCheckpointPreviewConsumerTest(unittest.TestCase):
 
     def test_native_continuation_and_direction_source_cannot_be_rebound_to_changed_bytes(self):
         rom,symbols,request=actual_preview_fixture()
-        for at in (0x0283B9,0x0283CB,0x02A479,0x02B21B,0x02A634,0x02B1F9):
+        for at in (0x0283B9,0x0283CB,0x02A479,0x02B21B,0x02A634,0x02B1F9,0x02EDC4):
             with self.subTest(snes=hex(at)):
                 changed=bytearray(rom);changed[L.A.pc(at)]^=1
                 source=bytearray(request['source']);source[L.A.pc(at)]^=1

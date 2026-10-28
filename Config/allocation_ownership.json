@@ -4891,7 +4891,7 @@
     "lyra_joint_art_bridge_30:Overworld/lyra_private_pilot.asm": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Overworld/lyra_private_pilot.asm",
-      "sha256": "dd2d768d437a83ef4f38b98e4b84acfd8cc2f1e5bb4ed7997f4ea64650bb09f5"
+      "sha256": "35081bcb0e5be6c5f3128ca679cbaaf3c322492ac070c54b4f17c4910b6e3525"
     },
     "lyra_joint_art_bridge_30:Overworld/lyra_tail_events.asm": {
       "source_set": "lyra_joint_art_bridge_30",
@@ -4946,7 +4946,7 @@
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "7ad9c7096753989f8288eb9800c879c56b5905670ff3edb9d553c8974f3a2f1b"
+      "sha256": "56d175ba6529a70a36f2204756883cc131e62a6fba883a6cc013ab77e231edea"
     },
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_native_state.py": {
       "source_set": "lyra_joint_art_bridge_30",
