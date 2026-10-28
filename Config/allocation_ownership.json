@@ -4886,7 +4886,7 @@
     "lyra_joint_art_bridge_30:Overworld/lyra_native_loaders.asm": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Overworld/lyra_native_loaders.asm",
-      "sha256": "9e3d132a168a0cd1943ae3d848bf0c7f416bcea4149ef76b5cfaccd0a15f5888"
+      "sha256": "4b6a17efb7d80d4af0cad225de87bb7b7367f35e80d6a09e3906544e4bf85404"
     },
     "lyra_joint_art_bridge_30:Overworld/lyra_private_pilot.asm": {
       "source_set": "lyra_joint_art_bridge_30",

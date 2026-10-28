@@ -273,6 +273,13 @@ endif
 if !LYRA_CURRENT_EVENTS_ENABLED == 1
   incsrc "lyra_tail_events.asm"
 endif
+; The current loaders are global; the shared checkpoint owner is in Oracle.
+; Keep the private guards' established call name without duplicating code.
+if defined("LYRA_PRIVATE_CHECKPOINT_ENABLED")
+  if !LYRA_PRIVATE_CHECKPOINT_ENABLED == 1
+    Checkpoint_EnterHome = Oracle_Checkpoint_EnterHome
+  endif
+endif
 if defined("LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED")
   if !LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED == 1
     incsrc "lyra_private_pilot.asm"
