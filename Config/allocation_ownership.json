@@ -5917,11 +5917,11 @@
       "space": "wram",
       "base": 8376320,
       "size": 512,
-      "status": "proposed",
+      "status": "shared",
       "condition": {
         "ENABLE_OW_AREA_TILESETS": 1
       },
-      "lifetime": "Explicit private current-source binding only; suffix is nested inside the proposed graphics origin and must be disjoint from emitted SharedGraphicsRuntime.",
+      "lifetime": "Root-granted private per-area cache7FD000..7FD200; full512B refill at every OW full/scroll load, separate from UW TILEATTR and palette saves.",
       "reset": "Every OW full/scroll load refills all512types; no types-only screen-on DMA.",
       "save": "Never serialized; does not use UW TILEATTR or checkpoint SRAM.",
       "provenance": [
@@ -5943,11 +5943,11 @@
       "space": "snes_rom",
       "base": 14868480,
       "size": 8192,
-      "status": "proposed",
+      "status": "shared",
       "condition": {
         "ENABLE_OW_AREA_TILESETS": 1
       },
-      "lifetime": "Distinct proposed E2E000..E30000 code/data owner; the current graphics prefix must end at E2E000, not claim this suffix again.",
+      "lifetime": "Root-granted private E2E000..E30000 code/data owner after source/ABI/no-overlap review; the current graphics prefix must end at E2E000 and must fit separately.",
       "reset": "ROM; source-bound origin/end and shared-prefix bound required.",
       "save": "Never serialized; does not use UW TILEATTR or checkpoint SRAM.",
       "provenance": [
