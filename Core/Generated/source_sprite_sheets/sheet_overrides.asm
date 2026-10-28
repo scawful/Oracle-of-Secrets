@@ -3,9 +3,13 @@
 ; Pointer rows are patched in the relocated arrays, so this file follows Core/gfx_sheet_table.asm.
 pushpc
 org $40D000
+org $40D000
 SourceSpriteSheet_64: incbin "sheets/spr64.bin"
+org $40D275
 SourceSpriteSheet_40: incbin "sheets/spr40.bin"
+org $40D745
 SourceSpriteSheet_43: incbin "sheets/spr43.bin"
+org $40DBEB
 SourceSpriteSheet_47: incbin "sheets/spr47.bin"
 assert pc() <= $410000 || pc() == $418000, "Source sprite sheets crossed bank $40"
 if !ENABLE_EXPANDED_GRAPHICS_TABLE == 1

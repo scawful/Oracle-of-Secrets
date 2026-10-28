@@ -306,6 +306,25 @@ class SourceSheets(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'schema 2'):
             sheets.build(self.spec_path, self.base)
 
+    def test_new_global_explicit_placement_preserves_reserved_gap(self):
+        legacy = dict(self.spec['sheets'][0])
+        new = dict(global_sheet='0xDF', source='sheet.txt',
+                   decoded_sha256=hashlib.sha256(self.raw).hexdigest(),
+                   why='synthetic reviewed slot', snes_address='0x40E5DB')
+        self.spec.update(schema_version=2, sheets=[legacy, new])
+        self.write_spec()
+        _, items = sheets.build(self.spec_path, self.base)
+        self.assertEqual(items[0]['snes'], sheets.START)
+        self.assertEqual(items[1]['snes'], 0x40E5DB)
+        include = sheets.asm_text(items)
+        self.assertIn('org $40E5DB\nSourceSpriteSheet_6C:', include)
+        for at in ('0x40D000', '0x40FFFF', '0x238000', '0xC0E5DB'):
+            with self.subTest(at=at):
+                self.spec['sheets'][1]['snes_address'] = at
+                self.write_spec()
+                with self.assertRaisesRegex(ValueError, 'placement|allocation is full'):
+                    sheets.build(self.spec_path, self.base)
+
     def test_actual_build_guard_refuses_wrong_or_truncated_base_before_output(self):
         # Real build wrapper/receipt/guard in a portable disposable repository.
         for directory in ('Scripts/Build','Scripts/Generate','Config','Util','Data/graphics','Roms'):
