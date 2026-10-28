@@ -36,7 +36,8 @@
     "joint_palette_directory_29": "Default-off source-owned Sky/ferry palette directory and length-preserving native/ZS readers; private candidate only until native/save proof.",
     "lyra_tail_event_storage_28": "Root-granted private current A0-BF event storage F4C0..F4E1 after independent source/alias/lifecycle review; native current save/reopen remains pending.",
     "lyra_joint_art_bridge_30": "Selected current-save joint art emitter, exact compiled readers and per-area ferry profile",
-    "lyra_ferry_dock_restore_46": "Selected Ferry dock-slot restoration and exact four-DMA compiled verification; successor to joint art bridge 30"
+    "lyra_ferry_dock_restore_46": "Selected Ferry dock-slot restoration and exact four-DMA compiled verification; successor to joint art bridge 30",
+    "lyra_ferry_visual_boundary_53": "Ferry-only dock-matched aux22 wood and opaque cap edge; same sources/grants as dock restore46, original pins preserved."
   },
   "sources": {
     "shared:Sprites/Objects/minecart.asm": {
@@ -5351,6 +5352,296 @@
     },
     "lyra_ferry_dock_restore_46:Tests/test_lyra_current_transfer.py": {
       "source_set": "lyra_ferry_dock_restore_46",
+      "path": "Tests/test_lyra_current_transfer.py",
+      "sha256": "cca0716145e0b6105ca440c9d356cb18abddf3aca4cd2f02730ccaba6db14339"
+    },
+    "lyra_ferry_visual_boundary_53:Config/feature_flags.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Config/feature_flags.asm",
+      "sha256": "7171ef452b20cf7779865b3a5b3b9daebc47b68f0e8b78faca93264762a08397"
+    },
+    "lyra_ferry_visual_boundary_53:Config/module_flags.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Config/module_flags.asm",
+      "sha256": "0dfc5ada77bbf92e30b8f7bf30b034ced9ef3d1dd03591fc1f00a835a747586a"
+    },
+    "lyra_ferry_visual_boundary_53:Core/Generated/joint_palette/directory.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Core/Generated/joint_palette/directory.asm",
+      "sha256": "2ca64d9df6f5b2d37733869f6d8cef9a0f79758f1ef2892c933b99e579ef74e6"
+    },
+    "lyra_ferry_visual_boundary_53:Core/gfx_sheet_table.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Core/gfx_sheet_table.asm",
+      "sha256": "9b5b5ae64616699b6de9ba11547984dc7ddef6fe34dd84240f50d996d423f07d"
+    },
+    "lyra_ferry_visual_boundary_53:Data/graphics/joint_palette_directory.json": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Data/graphics/joint_palette_directory.json",
+      "sha256": "1162d8d29c3b7d89566241447c95eed0cde50dc52add0a67269c1391509c3e12"
+    },
+    "lyra_ferry_visual_boundary_53:Masks/mask_routines.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Masks/mask_routines.asm",
+      "sha256": "7c903a40a70e23ac0fe9de798b2de4da48611c6f8c8fe78d29beed0b39db3900"
+    },
+    "lyra_ferry_visual_boundary_53:Oracle_main.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Oracle_main.asm",
+      "sha256": "90d96692ef5b46722232af7347cfa6d8117c27f711463b1578537a81b4557558"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/ZSCustomOverworld.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/ZSCustomOverworld.asm",
+      "sha256": "deff646a6820bb9fb7960bfa4216d9512f813bfa91406384c44757cdd6b17a0a"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/area_tilesets.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/area_tilesets.asm",
+      "sha256": "83c8224957e495c0a25dec93df8be762d394c206cc60a2f77021cf13e85fecdb"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/custom_gfx.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/custom_gfx.asm",
+      "sha256": "8c8fb6d228e1b8888685a5d351a5bec1f19e720b59d7bd0156fc9773906d4c0f"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/gfx/kalyxo_docks_bg.bin": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/gfx/kalyxo_docks_bg.bin",
+      "sha256": "7ee45cc2f6e5f42d741794779fd6b79f9a5775f3fddea03a8a53d2038a9806c0"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/gfx/kalyxo_docks_slot3.bin": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/gfx/kalyxo_docks_slot3.bin",
+      "sha256": "3fd640ea5f71e4301983dc4944b355f6d8582ea14797605688e5adaf37ffc3b4"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/gfx/lyra_sky_tower_87.bin": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/gfx/lyra_sky_tower_87.bin",
+      "sha256": "b7db5e904ca0ad98f9c5268846efb2da0668a2e160a40a554c99747e65d659a8"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/gfx/lyra_stepped_fort_83.bin": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/gfx/lyra_stepped_fort_83.bin",
+      "sha256": "cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/goron_checkpoint.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/goron_checkpoint.asm",
+      "sha256": "bdfca177a07830456240449921d8abe21880380390eec61910fc1d516cd48020"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/graphics_catalog.json": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/graphics_catalog.json",
+      "sha256": "382b29598b36cd375cc667657679a056ed1668db0c33a12665299bea4efc2c28"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/graphics_runtime.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/graphics_runtime.asm",
+      "sha256": "fdde5049ef1c44530865889c1e6fd99341b422ce643d86b1f2f8f5615f9079f0"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/graphics_runtime_policy.json": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/graphics_runtime_policy.json",
+      "sha256": "6f103ded82e23d0b00d54b8126560f7ead0c8117c5dee4bc326931f226d3460d"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/graphics_runtime_tables.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/graphics_runtime_tables.asm",
+      "sha256": "3620e68e57e3ff11bcea06a64ccb0e5f382687b3932bc70d13f2d02ebf5af6fd"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/joint_palette_readers.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/joint_palette_readers.asm",
+      "sha256": "90ed49fa8d446aea6a629a9b6e02eb5561ca550379a9eb843e6f99b8e039e3ba"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/lost_woods.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/lost_woods.asm",
+      "sha256": "3983c065b08d95199d22543cfa6c51a03a2f323aee3841ab8d1a386e8c07640d"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/lyra_actor_stream.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/lyra_actor_stream.asm",
+      "sha256": "519874611d87a1657ebd4538b57897335a69112f94a6098e936373db0a4d7f26"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/lyra_native_loaders.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/lyra_native_loaders.asm",
+      "sha256": "800d8caa53f52a671fc4e619e5dac17d8b523d8c450ec692437c391d8b18c308"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/lyra_private_pilot.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/lyra_private_pilot.asm",
+      "sha256": "35081bcb0e5be6c5f3128ca679cbaaf3c322492ac070c54b4f17c4910b6e3525"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/lyra_tail_events.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/lyra_tail_events.asm",
+      "sha256": "5fef9f7c278cec10d81907cad82c56cc40da89e493e34f573793df5cb7650ffc"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/overlays.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/overlays.asm",
+      "sha256": "04212e55015ebe734711028e563408d67a72bdec495366660e5ace92cafa93a4"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/project_bg_palette.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/project_bg_palette.asm",
+      "sha256": "3f361fc427ef76e6062cc32a44452fbb1090f098cd4af86fc2a9d2bab7161507"
+    },
+    "lyra_ferry_visual_boundary_53:Overworld/time_system.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Overworld/time_system.asm",
+      "sha256": "47247d22f3d18bd00c35c478df82da0df0060b6f9f0b90e4cc6fc0263cfa42a2"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Build/authoring_bundle_build.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Build/authoring_bundle_build.py",
+      "sha256": "385e46c619ae85589e8b8ad32dd851547b908ba13ff0687c53b667f88ce21d2c"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Build/build_checks.sh": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Build/build_checks.sh",
+      "sha256": "f7318846caa14d6fe3b9074ecf0215647a914144af24101fcbd66634a7de0aa7"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Build/build_rom.sh": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Build/build_rom.sh",
+      "sha256": "ffb148f50f51f7b466f2269361b563dcfbe33488f9d59d63dbab2288c9135056"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Build/check_zscream_overlap.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Build/check_zscream_overlap.py",
+      "sha256": "093388e1f35dd1a6c558c0c89dc32e6bb1dbe48445e1ad44b9bac82daeb42486"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Build/lyra_current_transfer.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Build/lyra_current_transfer.py",
+      "sha256": "e2b4ce89825271a2bd5a18193ec2f5c83b52948e09b16f0b042f9ceaf4166bb5"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Build/lyra_joint_art.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Build/lyra_joint_art.py",
+      "sha256": "e793f7cadef07120865bc26076988ff7dbd99b8a8fe2cc1a4007ee672b388779"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Build/lyra_native_loaders.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Build/lyra_native_loaders.py",
+      "sha256": "06b063f4782841137e356e442a78b78f86bdec77355bc75e63c624977cd9d7ed"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Build/lyra_native_state.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Build/lyra_native_state.py",
+      "sha256": "c7b561bd563f78bf396b073f3b470bf8bfa19190fd23c867719428aebf9a9a7d"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Build/lyra_private_reservation.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Build/lyra_private_reservation.py",
+      "sha256": "2520de732f0bf8040acb7a20e7f8c7779b27a1a44377de24d30a53ba00eb83f7"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Build/lyra_project_admission.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Build/lyra_project_admission.py",
+      "sha256": "a02b3b5c1a729a0539c648575c3ef2f5595f7cc3494b37a1b8a80aca57b65ba5"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Build/lyra_project_bg_palette.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Build/lyra_project_bg_palette.py",
+      "sha256": "848c8277409e8775c7f3b8da44f5f2a43c3ecc091dd11fd2a0c30c15a6b87da7"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Build/lyra_project_publisher.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Build/lyra_project_publisher.py",
+      "sha256": "617580938b417b94ffc2f7e7d2330de16c39a4ff62a8256b1337464c8b2babc6"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Build/lyra_project_terrain.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Build/lyra_project_terrain.py",
+      "sha256": "8ebdecc0820dce7fdf7ef996fb06db54151be20bd35667c3600f757eb46d2bd8"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Generate/asm_source.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Generate/asm_source.py",
+      "sha256": "77488196ede889da1dfa7229caa17394c3eb1b68c569b1406b48089bc661d6aa"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Generate/export_yazeproj_bundle.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Generate/export_yazeproj_bundle.py",
+      "sha256": "9e5b7a6c53555c7c3ea0140300475989ded0055003739abc45dd6c5a5cbe0402"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Generate/generate_hack_manifest.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Generate/generate_hack_manifest.py",
+      "sha256": "abd8bdcc18c2cb7dd3e5f223ac24c1026336a6f80d878eb58eadca7b1026217b"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Generate/joint_palette_directory.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Generate/joint_palette_directory.py",
+      "sha256": "872486226b139f07a103b7d89d48c1ea43d0c7302e07217149188f26f1831883"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Graphics/compile_graphics_pack.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Graphics/compile_graphics_pack.py",
+      "sha256": "eaa492e3c84818f0e5aff12866d394f78aa8b8be218c061b3a18e2efe31644c2"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Graphics/compile_runtime_graphics.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Graphics/compile_runtime_graphics.py",
+      "sha256": "a3363c98d34c35b183e62105f7674a0416fc4899852e86077558a263c7f12b89"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Validate/verify_joint_palette_directory.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Validate/verify_joint_palette_directory.py",
+      "sha256": "c400a07c263afef507dcf21faaf1d565918934cb18375040faef8caf1d05c310"
+    },
+    "lyra_ferry_visual_boundary_53:Sprites/Bosses/octoboss.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Sprites/Bosses/octoboss.asm",
+      "sha256": "b5379cdc5f3dadbcfc42f0d1bab3044b97e6780aa75ab07496f16d6689054b77"
+    },
+    "lyra_ferry_visual_boundary_53:Sprites/NPCs/goron.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Sprites/NPCs/goron.asm",
+      "sha256": "bd26f33b770d9e3593bb0b5bca3374742d869e9ef18b319212a575104ef9baa2"
+    },
+    "lyra_ferry_visual_boundary_53:Tests/test_lyra_joint_art.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Tests/test_lyra_joint_art.py",
+      "sha256": "468ecbd1e9308e0780082462893dae346c8b4f6e22a2d82f2423be3d199d4d16"
+    },
+    "lyra_ferry_visual_boundary_53:Tests/test_ow_area_tilesets.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Tests/test_ow_area_tilesets.py",
+      "sha256": "9339c30ed2d5c8148e1665cf5eb8533abfdd07db11afffc54231913270acf7f7"
+    },
+    "lyra_ferry_visual_boundary_53:Util/item_cheat.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Util/item_cheat.asm",
+      "sha256": "5263de5233da3cf02df08e67aa80b130ba313384024be55b16c02f64ef49594d"
+    },
+    "lyra_ferry_visual_boundary_53:Util/macros.asm": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Util/macros.asm",
+      "sha256": "874d1051d27bbfd74d7be0df8420383c12809f0852941b1a943513e176ec82ec"
+    },
+    "lyra_ferry_visual_boundary_53:Tests/test_lyra_checkpoint_preview_publisher.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Tests/test_lyra_checkpoint_preview_publisher.py",
+      "sha256": "350d8f25ec6607b63b3b96f447bbe28139fadf6d8256219112d1c8bbc7fb1d24"
+    },
+    "lyra_ferry_visual_boundary_53:Scripts/Generate/tests/test_authoring_project_bundle.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Scripts/Generate/tests/test_authoring_project_bundle.py",
+      "sha256": "8aac57e6a5335668e1876acfa87fb089ce08aa00e3ac09d6ccfa79314badda29"
+    },
+    "lyra_ferry_visual_boundary_53:Tests/native/lyra_checkpoint_preview.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
+      "path": "Tests/native/lyra_checkpoint_preview.py",
+      "sha256": "26c11d020a09e8d313b9c853f16ed3df6d207dbdc81d0d36091628561d49dfcf"
+    },
+    "lyra_ferry_visual_boundary_53:Tests/test_lyra_current_transfer.py": {
+      "source_set": "lyra_ferry_visual_boundary_53",
       "path": "Tests/test_lyra_current_transfer.py",
       "sha256": "cca0716145e0b6105ca440c9d356cb18abddf3aca4cd2f02730ccaba6db14339"
     }

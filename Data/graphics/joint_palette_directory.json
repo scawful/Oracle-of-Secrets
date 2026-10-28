@@ -40,10 +40,10 @@
       "id": 22,
       "address": "0x1BB782",
       "mode": "emit",
-      "bgr555_hex": "e62849396e21f3297736d746756f8408042ae43a0c191532d746ba3e84080c196e219221f3291532ba3e",
-      "source": "ferry-binding-17 ferry-aux22.bgr555.bin (set 0D aux2, second slot)",
-      "source_sha256": "d764e1478acf1366f832bbffb41017e8390ea7e391e703587e2fc05b410518ed",
-      "why": "Ferry aux palette 22 (set 0D = 10 16 06 FF)"
+      "bgr555_hex": "e62849390c1992211532d746756f8408042ae43a0c191532d746ba3e84080c196e219221f3291532ba3e",
+      "source": "ferry-visual-boundary-52/ferry-aux22.bgr555.bin (dock palette3 wood ramp, Ferry-only aux22)",
+      "source_sha256": "082f8a6401aef2b240ba13ad93c3b6ccbbcb7bd278269c346d29ad2ec68e9f5d",
+      "why": "Ferry aux22: dock-matched wood at5B/5C/5D; all other colors unchanged"
     }
   ],
   "parked": [
