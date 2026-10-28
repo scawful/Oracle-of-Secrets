@@ -28,6 +28,10 @@ def sha(path):
 
 
 class Episode:
+    @property
+    def gameplay_module(self):
+        return 0x09
+
     def __init__(self, args, bridge):
         self.a, self.b = args, bridge
         self.deadline = time.monotonic() + 240
@@ -151,7 +155,7 @@ class Episode:
 
     def damage(self):
         s = self.sample()
-        require(s['module'] == 9 and s['sub'] == 0 and s['hp'] > 0,
+        require(s['module'] == self.gameplay_module and s['sub'] == 0 and s['hp'] > 0,
                 'Damage fixture requires ordinary live outdoor gameplay')
         require(self.b.read_memory(0x7E0055) == 0, 'Cape active; refuse damage fixture')
         require(self.command('STATE')['paused'], 'Damage fixture requires paused CPU')

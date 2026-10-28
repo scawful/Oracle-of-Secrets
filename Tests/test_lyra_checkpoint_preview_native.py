@@ -9,6 +9,29 @@ import lyra_checkpoint_preview as L
 
 
 class NativePreviewStartupTest(unittest.TestCase):
+    def test_inherited_damage_accepts_only_the_scene_gameplay_module(self):
+        episode = object.__new__(L.LyraEpisode)
+        state = dict(module=0x0B, sub=0, hp=48)
+        episode.sample = mock.Mock(return_value=state)
+        values = {0x7E0055: 0, 0x7E037B: 1, 0x7E0373: 0}
+        episode.b = mock.Mock()
+        episode.b.read_memory.side_effect = values.__getitem__
+        def write(address, value):
+            values[address] = value
+            return True
+        episode.b.write_memory.side_effect = write
+        episode.command = mock.Mock(return_value=dict(paused=True))
+        episode.wait = mock.Mock(return_value='gameover')
+        episode.result = dict(writes=[])
+        self.assertEqual(episode.damage(), 'gameover')
+        self.assertEqual([(r['address'], r['value']) for r in episode.result['writes']],
+                         [('7E037B', 0), ('7E0373', 48)])
+        episode.b.write_memory.reset_mock()
+        state['module'] = 0x09
+        with self.assertRaisesRegex(RuntimeError, 'ordinary live outdoor gameplay'):
+            episode.damage()
+        episode.b.write_memory.assert_not_called()
+
     def test_recorded_special_world_entry_requires_native_module_0b(self):
         episode = object.__new__(L.LyraEpisode)
         episode.cache = bytes(50)
