@@ -3513,7 +3513,14 @@ Palette_OverworldBgMain2:
     REP #$21
         
     LDA.w $0AB3 : ASL : TAX
-    LDA.l PaletteIDtoOffset_OW_Main, X : ADC.w #PaletteData_owmain : STA.b $00
+    JointPalette_ZSMainReader = pc()
+    if !JOINT_PALETTE_DIRECTORY_ENABLED == 1
+        LDA.l JointPalette_MainDirectory, X : NOP #3
+    else
+        LDA.l PaletteIDtoOffset_OW_Main, X : ADC.w #PaletteData_owmain
+    endif
+    JointPalette_ZSMainReader_End = pc()
+    STA.b $00
         
     REP #$10
         

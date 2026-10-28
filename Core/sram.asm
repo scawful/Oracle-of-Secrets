@@ -812,12 +812,17 @@ RegionalCheckpointResumeIntent = $7EF3B8 ; byte: 0 Home, 1 last regional key
 FreeBlock_Large    = $7EF3B9  ; 12 bytes [B9,C5)
 
 ; ---------------------------------------------------------
-; Dreams Extension ($7EF411-4FD) - 237 bytes
+; Dreams extension and current tail-event reservation ($7EF412-4FD)
 ; ---------------------------------------------------------
 ; Purpose: Large block after dreams/water gates
 ; Note: $7EF4FE-4FF are checksum (do not use)
 ;
-FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
+FreeBlock_Dreams   = $7EF412  ; 174 bytes [F412,F4C0)
+; Root-owned current-build A0-BF event flags and migration marker. The native
+; five-page save/checksum/new-file loops already cover both fields.
+LyraCurrentTailFlags   = $7EF4C0 ; 32 bytes [F4C0,F4E0)
+LyraCurrentTailVersion = $7EF4E0 ; one byte
+FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 
 ; ---------------------------------------------------------
 ; FREE BLOCK SUMMARY
@@ -829,7 +834,8 @@ FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
 ; | $7EF39F  | $7EF3A0  | 2     | Collectibles ext   |
 ; | $7EF3B2  | $7EF3B3  | 2     | Large prefix       |
 ; | $7EF3B9  | $7EF3C4  | 12    | Large remainder    |
-; | $7EF412  | $7EF4FD  | 236   | Dreams extension   |
+; | $7EF412  | $7EF4BF  | 174   | Dreams prefix      |
+; | $7EF4E1  | $7EF4FD  | 29    | Dreams remainder   |
 ; |----------|----------|-------|--------------------|
 ; | Free-list comments describe candidates, not allocation grants.     |
 ; ---------------------------------------------------------
