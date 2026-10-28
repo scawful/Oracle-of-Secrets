@@ -211,13 +211,16 @@ Checkpoint_FrameAndLink:
   JSL Checkpoint_OnFrame
   JML $078000 ; Original Link_Main, exact caller ABI restored.
 
-; Actual normal-OW hook, not test injection. The activation point is the exact
-; existing source control's player coordinate, not a newly invented radius.
+; Actual normal-OW hook, not test injection. Ground movement is 1.5px/frame;
+; exact coordinate equality is unreachable for one subpixel phase. Contact is
+; the source anchor's 2x2px footprint, not map entry or a new activation radius.
 Checkpoint_OnFrame:
 {
   JSL Checkpoint_PrepareResume
   PHP : REP #$30 : PHA : PHX : PHY : CLD
-  LDA.b $1B : AND.w #$00FF : BNE .done
+  LDA.b $1B : AND.w #$00FF : BEQ .outdoors
+    JMP .done
+  .outdoors
   LDA.l GameState : AND.w #$00FF : CMP.w #$0002 : BCC .done
   LDA.w $04C6 : AND.w #$00FF : BNE .done ; $04C7 is independent dungeon-tag state.
   JSR Checkpoint_FindCurrentRegion : BCC .done
@@ -229,8 +232,10 @@ Checkpoint_OnFrame:
     CMP.l CheckpointRegistry_Maps,X : BNE .advance
     TXA : TAY
     JSR Checkpoint_RecordOffset
-    LDA.l CheckpointRegistry_Records+18,X : CMP.b $20 : BNE .restore_index
-    LDA.l CheckpointRegistry_Records+20,X : CMP.b $22 : BNE .restore_index
+    LDA.b $20 : SEC : SBC.l CheckpointRegistry_Records+18,X
+    CMP.w #$0002 : BCS .restore_index
+    LDA.b $22 : SEC : SBC.l CheckpointRegistry_Records+20,X
+    CMP.w #$0002 : BCS .restore_index
     LDA.l CheckpointRegistry_Records+2,X : AND.w #$00FF : CMP $01,S : BNE .restore_index
     LDA.l CheckpointRegistry_Records+4,X : CMP $03,S : BNE .restore_index
     PLA ; Qualified current domain; record domain was compared above.

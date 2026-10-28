@@ -306,7 +306,7 @@ class NativePreviewRegistryTests(NativeFixture):
         with self.assertRaisesRegex(ValueError, pattern) if pattern else self.assertRaises(ValueError):
             self.compile(**overrides)
 
-    def test_v2_compiles_four_records_nine_members_within_41_byte_margin(self):
+    def test_v2_compiles_four_records_nine_members_within_30_byte_margin(self):
         registry = self.compile()
         control = C.goron_control_registry(self.control_source, self.goron)
         self.assertEqual(registry.records[0], control.records[0])
@@ -318,8 +318,8 @@ class NativePreviewRegistryTests(NativeFixture):
                                          resume_intent=C.ResumeIntent.REGIONAL)
             self.assertEqual((route.route, route.checkpoint.domain, route.checkpoint.map_id),
                              ('regional_checkpoint', domain, area))
-        fit = C.validate_runtime_capacity(registry, 895)
-        self.assertEqual((fit['data_bytes'], fit['remaining']), (344, 41))
+        fit = C.validate_runtime_capacity(registry, 906)
+        self.assertEqual((fit['data_bytes'], fit['remaining']), (344, 30))
         C.validate_runtime_capacity(registry, 936)
         with self.assertRaisesRegex(ValueError, 'aggregate exceeds'):
             C.validate_runtime_capacity(registry, 937)
@@ -415,15 +415,15 @@ class NativePreviewRegistryTests(NativeFixture):
             with self.subTest(plan=field):
                 self.refuses(private_plan=plan)
 
-    def test_real_asm_accepts_4_9_and_2_6_but_refuses_other_shapes(self):
-        """Synthetic ROM checks the private build-shape guard and table wiring only."""
+    def assemble_runtime(self, name, registry, constants=None, source=None):
+        """Assemble the production checkpoint include in an isolated synthetic ROM."""
         asar = os.environ.get('ASAR_BIN') or shutil.which('asar')
         if not asar:
             self.skipTest('Asar required for the bounded checkpoint source fixture')
-        from allocation_contracts import read_symbols
-        fixture = self.root / 'assembly'
+        fixture = self.root / ('assembly-' + name)
         (fixture / 'Overworld').mkdir(parents=True)
-        shutil.copyfile(ROOT / 'Overworld/checkpoint_state.asm', fixture / 'Overworld/checkpoint_state.asm')
+        source = source if source is not None else (ROOT / 'Overworld/checkpoint_state.asm').read_text()
+        (fixture / 'Overworld/checkpoint_state.asm').write_text(source)
         generated = fixture / 'Data/Generated/lyra_project'
         generated.mkdir(parents=True)
         macro = re.search(r'macro RegionalCheckpoint_GoronControlCache\(\).*?endmacro', self.goron, re.S).group()
@@ -436,21 +436,24 @@ class NativePreviewRegistryTests(NativeFixture):
             'RegionalCheckpointKey = $7EF3B6', 'RegionalCheckpointResumeIntent = $7EF3B8',
             'Checkpoint_EnterPreparedCache = $348000', ''))
 
-        def assemble(name, registry, constants=None):
-            emitted = C.emit_runtime_asm(registry)
-            (generated / 'checkpoint_registry_constants.asm').write_text(constants or emitted['constants'])
-            (generated / 'checkpoint_registry_tables.asm').write_text(emitted['tables'])
-            driver = fixture / (name + '.asm')
-            driver.write_text(header + macro + '\norg $34F900\nincsrc "Overworld/checkpoint_state.asm"\n')
-            image = bytearray(0x200000)
-            for address, raw in ((0x09F540, '22bfff0b'), (0x02A5A2, '22008007'), (0x0CD049, '9c0e019c1007')):
-                put(image, address, bytes.fromhex(raw))
-            rom = fixture / (name + '.sfc')
-            rom.write_bytes(image)
-            run = subprocess.run([asar, '--no-title-check', '--fix-checksum=off', '--symbols=wla',
-                                  '-I' + str(fixture), str(driver), str(rom)],
-                                 capture_output=True, text=True, cwd=fixture, timeout=20)
-            return run, rom
+        emitted = C.emit_runtime_asm(registry)
+        (generated / 'checkpoint_registry_constants.asm').write_text(constants or emitted['constants'])
+        (generated / 'checkpoint_registry_tables.asm').write_text(emitted['tables'])
+        driver = fixture / (name + '.asm')
+        driver.write_text(header + macro + '\norg $34F900\nincsrc "Overworld/checkpoint_state.asm"\n')
+        image = bytearray(0x200000)
+        for address, raw in ((0x09F540, '22bfff0b'), (0x02A5A2, '22008007'), (0x0CD049, '9c0e019c1007')):
+            put(image, address, bytes.fromhex(raw))
+        rom = fixture / (name + '.sfc')
+        rom.write_bytes(image)
+        run = subprocess.run([asar, '--no-title-check', '--fix-checksum=off', '--symbols=wla',
+                              '-I' + str(fixture), str(driver), str(rom)],
+                             capture_output=True, text=True, cwd=fixture, timeout=20)
+        return run, rom
+
+    def test_real_asm_accepts_4_9_and_2_6_but_refuses_other_shapes(self):
+        """Synthetic ROM checks the private build-shape guard and table wiring only."""
+        from allocation_contracts import read_symbols
 
         v1_bindings = {k: v for k, v in self.bindings.items() if k not in ('joint_art', 'native_landings')}
         v1 = C.runtime_registry(self.control_source, self.goron, private_plan=dict(
@@ -458,18 +461,18 @@ class NativePreviewRegistryTests(NativeFixture):
             epoch=1, bindings=copy.deepcopy(v1_bindings), entry=self.plan['entries'][0],
             memberships=self.plan['memberships'][:2]), verified_bindings=v1_bindings, expected_cache=a0_cache())
         for name, registry, data in (('native', self.compile(), 344), ('a0', v1, 184)):
-            run, rom = assemble(name, registry)
+            run, rom = self.assemble_runtime(name, registry)
             self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
             proof = C.verify_runtime_tables(registry, rom.read_bytes(), read_symbols(rom.with_suffix('.sym')))
-            self.assertEqual((proof['first_data'] - C.CODE_BASE, proof['data_bytes']), (895, data))
-            fit = C.validate_runtime_capacity(registry, 895)
+            self.assertEqual((proof['first_data'] - C.CODE_BASE, proof['data_bytes']), (906, data))
+            fit = C.validate_runtime_capacity(registry, 906)
             self.assertEqual(proof['end'], C.CODE_BASE + fit['aggregate_bytes'])
         constants = C.emit_runtime_asm(self.compile())['constants']
         for count, members in ((3, 8), (2, 9), (4, 6), (1, 4), (5, 10)):
             forged = constants.replace('!CHECKPOINT_REGISTRY_COUNT = 4\n', f'!CHECKPOINT_REGISTRY_COUNT = {count}\n')
             forged = forged.replace('!CHECKPOINT_REGION_MEMBER_COUNT = 9\n',
                                     f'!CHECKPOINT_REGION_MEMBER_COUNT = {members}\n')
-            run, _ = assemble(f'forged-{count}-{members}', self.compile(), forged)
+            run, _ = self.assemble_runtime(f'forged-{count}-{members}', self.compile(), forged)
             with self.subTest(shape=(count, members)):
                 self.assertNotEqual(run.returncode, 0)
                 self.assertIn('(2/6) or A0 plus native ferry/Sky (4/9)', run.stdout + run.stderr)

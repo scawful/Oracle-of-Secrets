@@ -488,7 +488,7 @@ Checkpoint_EnterPreparedCache = $348000
             symbols=read_symbols(rom.with_suffix('.sym'))
             proof=C.verify_runtime_tables(registry,rom.read_bytes(),symbols)
             code=proof['first_data']-C.CODE_BASE
-            self.assertEqual(code,895)
+            self.assertEqual(code,906)
             fit=C.validate_runtime_capacity(registry,code)
             self.assertEqual(proof['end'],C.CODE_BASE+fit['aggregate_bytes'])
             self.assertEqual(proof['data_bytes'],184 if enabled else 100)

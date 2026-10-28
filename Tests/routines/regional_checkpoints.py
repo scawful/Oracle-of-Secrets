@@ -52,7 +52,11 @@ def main():
         case('legacy-'+name,'Checkpoint_ResolveLoad',values=values,route=0)
     case('invalid-native-index','Checkpoint_ResolveLoad',values={'spawn':0xFF},route=1)
     case('frame-source-control-activation','Checkpoint_OnFrame',[0]*5,normal,core=False)
-    case('frame-wrong-point','Checkpoint_OnFrame',[0]*5,none,values={'px':0xD21},core=False)
+    case('frame-contact-band','Checkpoint_OnFrame',[0]*5,normal,
+         values={'px':0xD21,'py':0xE29},core=False)
+    case('frame-wrong-point','Checkpoint_OnFrame',[0]*5,none,values={'px':0xD22},core=False)
+    case('frame-before-anchor','Checkpoint_OnFrame',[0]*5,none,values={'px':0xD1F},core=False)
+    case('frame-below-contact-band','Checkpoint_OnFrame',[0]*5,none,values={'py':0xE2A},core=False)
     case('frame-wrong-affinity','Checkpoint_OnFrame',none,none,values={'world':0x40},core=False)
     case('frame-entrance-animation','Checkpoint_OnFrame',none,none,values={'entrance_animation':1},core=False)
     case('frame-dungeon-tag-byte-independent','Checkpoint_OnFrame',[0]*5,normal,
