@@ -4776,7 +4776,7 @@
     "lyra_joint_art_bridge_30:Config/feature_flags.asm": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Config/feature_flags.asm",
-      "sha256": "0871817675d66c4c7c1c3b36376396267f64c8610354de5916ce6b95bf3eae83"
+      "sha256": "7171ef452b20cf7779865b3a5b3b9daebc47b68f0e8b78faca93264762a08397"
     },
     "lyra_joint_art_bridge_30:Config/module_flags.asm": {
       "source_set": "lyra_joint_art_bridge_30",
