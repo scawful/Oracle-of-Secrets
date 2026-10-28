@@ -54,7 +54,7 @@ class CheckpointRegistryTests(unittest.TestCase):
                              script_override=override).route, 'dungeon_entrance')
         self.assertEqual(s, C.SavedCheckpoint(1, 1, 1))
 
-    def test_prison_Abyss_and_Goron_are_temporary_and_do_not_erase_region(self):
+    def test_temporary_native_Abyss_and_Goron_overrides_preserve_key(self):
         r, saved = registry(record()), C.SavedCheckpoint(1, 1, 1)
         for override in (C.native_spawn_adapter(2), C.ScriptOverride(C.OverrideKind.ABYSS_SCRIPT),
                          C.native_spawn_adapter(7)):
@@ -91,7 +91,9 @@ class CheckpointRegistryTests(unittest.TestCase):
         row = record()
         for bad in (replace(row, exit_cache=row.exit_cache[:-2]), replace(row, parent_map=0xA1),
                     replace(row, map_id=0xA1), replace(row, source_rom_sha256='2' * 64),
-                    replace(row, domain=2), replace(row, key=0), replace(row, map_id=0xC0)):
+                    replace(row, domain=2), replace(row, key=0), replace(row, map_id=0xC0),
+                    replace(row, domain=C.Domain.MINISH, map_id=0xC0),
+                    replace(row, domain=C.Domain.MINISH, map_id=0xFF)):
             with self.assertRaises(ValueError): registry(bad)
         with self.assertRaises(ValueError): registry(row, row)
         with self.assertRaises(ValueError): registry(row, epoch=0)
