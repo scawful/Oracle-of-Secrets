@@ -528,6 +528,17 @@ def _native_scope_grid(image, maps):
     return [sum((grid[y] for grid in grids), []) for y in range(32)]
 
 
+def _native_tilemap_origin(sx, sy, area_x, area_y, width, height):
+    """Byte offset into the native 64-column Map16 buffer, before exit walk.
+
+    Native $02FD87 consumes this offset separately from the camera scroll.
+    A 512px mask drops the second half of a wide/tall area's drawing position.
+    """
+    local_x = (sx - area_x) & (width - 16)
+    local_y = (sy - area_y) & (height - 16)
+    return (local_y << 3) | (local_x >> 3)
+
+
 def native_preview_cache(image, landing, binding):
     """Derive an approved native preview cache from the packet-applied saved ROM.
 
@@ -597,7 +608,8 @@ def native_preview_cache(image, landing, binding):
     sprites = _native_row(image, 'special_sprite_gfx', parent) if parent >= 0x80 else 0
     px, py = point[0] + rows['transition_x'], point[1] + rows['transition_y']
     sx, sy = px - 120, py - 80
-    origin = ((sy & 0x1F0) << 3) | ((sx & 0x1F0) >> 3)
+    origin = _native_tilemap_origin(sx, sy, rows['transition_x'],
+                                   rows['transition_y'], width, height)
     words = [parent, 0x16, sy, sx, py, px, parent, origin, py + 31, px + 7,
              rows['transition_y'], rows['transition_y'] + height - 0xE2,
              rows['transition_x'], rows['transition_x'] + width - 0x100,
