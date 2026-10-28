@@ -1,54 +1,116 @@
 ; =========================================================
 ; Octoboss by Zarby89
+; Overworld boss: two octopus pirate brothers on DW $75 (underwater).
+; Red (SprMiscF = 0) is placed on the map and runs the fight; it spawns
+; the blue brother (SprMiscF = 1) as a second copy of this sprite.
+; Was hooked over Kholdstare ($A2); now its own slot so D8 keeps Kholdstare.
 
-pushpc
-; Sprite_A2_Kholdstare
-org $1E9518 ; @hook module=Sprites
-JSL Sprite_Octoboss_Long
-RTS
-pullpc
+!SPRID              = Sprite_Octoboss
+!NbrTiles           = 06  ; Number of tiles used in a frame
+!Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
+!HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
+!Health             = $40 ; Number of Health the sprite have
+!Damage             = 04  ; (08 is a whole heart), 04 is half heart
+!DeathAnimation     = 01  ; 00 = normal death, 01 = no death animation
+!ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
+!SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
+!Palette            = 06  ; Matches the old Kholdstare slot palette
+!Hitbox             = 09  ; 00 to 31, can be viewed in sprite draw tool
+!Persist            = 01  ; 01 = your sprite continue to live offscreen
+!Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
+!CollisionLayer     = 00  ; 01 = will check both layer for collision
+!CanFall            = 00  ; 01 sprite can fall in hole, 01 = can't fall
+!DeflectArrow       = 00  ; 01 = deflect arrows
+!WaterSprite        = 00  ; 01 = can only walk shallow water
+!Blockable          = 00  ; 01 = can be blocked by link's shield?
+!Prize              = 00  ; 00-15 = the prize pack the sprite will drop from
+!Sound              = 00  ; 01 = Play different sound when taking damage
+!Interaction        = 00  ; ?? No documentation
+!Statue             = 00  ; 01 = Sprite is statue
+!DeflectProjectiles = 00  ; 01 = Sprite will deflect ALL projectiles
+!ImperviousArrow    = 00  ; 01 = Impervious to arrows
+!ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
+!Boss               = 01  ; 00 = normal sprite, 01 = sprite is a boss
+
+%Set_Sprite_Properties(Sprite_Octoboss_Prep, Sprite_Octoboss_Long)
 
 BrotherSpr = $0EB0
+
+; Map-local positions (pixels from the area origin, 16-bit).
+!OctoTriggerY       = $0190 ; fight starts when Link is above this line
+!OctoBlueHomeX      = $0120
+!OctoBlueHomeY      = $0120
+!OctoSubmergeX      = $00C8 ; red resurfaces here to throw the reward
+!OctoSubmergeY      = $0110
+!OctoRewardX        = $00F8 ; reward position when re-entering after the fight
+!OctoRewardY        = $0120
+
+; Fight tuning
+!OctoSurrenderTotal = $30   ; surrender when both brothers together are below this
+!OctoSurrenderOne   = $10   ; ... or when either brother is below this
+!OctoEnrageTotal    = $58   ; second half of the fight
+!OctoLungeSpeed     = $18
+!OctoRedIdleTime    = $40
+!OctoBlueIdleTime   = $60   ; offset so the brothers do not attack together
+
+; Reward (Quake until the underwater reward is decided)
+!OctoRewardSprite   = $C0
+!OctoRewardItemGet  = $11
+!OctoRewardSram     = $7EF349
+!OctoRewardGfx      = $1C
+
+; Dialogue. $48-$4B now hold other text in the ROM (sword and shield,
+; Toto Ranch sign, witch); the Octoboss lines need new message IDs.
+!OctoMsgIntro       = $0048
+!OctoMsgBrother     = $0049
+!OctoMsgWait        = $004A
+!OctoMsgSurrender   = $004B
+
+macro Octoboss_PlaceAt(x, y)
+  REP #$20
+  LDA.w #<x> : STA.b $0E
+  LDA.w #<y> : STA.b $0C
+  SEP #$20
+  JSR Octoboss_PlaceLocal
+endmacro
+
+Sprite_Octoboss_Prep:
+{
+  STZ.w SprAction, X
+  STZ.w SprMiscD, X
+  STZ.w SprMiscF, X
+  RTL
+}
 
 Sprite_Octoboss_Long:
 {
   PHB : PHK : PLB
 
   LDA.w SprMiscD, X : BNE + ; is the sprite already init
-    LDA #$04 : STA.w SprNbrOAM, X
-    ;LDA.w SprHitbox, X : AND.b #$E0 : ORA.b #$23 : STA.w SprHitbox, X
-    ;LDA.w SprDefl, X : AND #$7F : ORA.b #$81 : STA.w SprDefl, X
-    ;LDA.b #$20 : STA.w SprHealth, X
     STZ.w SprBulletproof, X
 
-    ; Safety check: if boss is defeated but player left without collecting
-    ; the Quake Medallion, SpawnMedallionAlt places it at (X=$F7, Y=$DC)
-    ; on re-entry. Verified v168 — coordinates are center-right of arena.
+    ; Red only: after the fight the boss stays gone. If Link left without
+    ; the reward, put it back on the bridge.
+    LDA.w SprMiscF, X : BNE .notKilledYet
     PHX
     LDX.b $8A
-    LDA.l $7EF280, X : AND.b #$40 : BEQ .notKiledYet
-      PLX ; get back SPR index
-      ; Is is killed? do we have the quake medallion tho ?
-      LDA.l $7EF349 : BNE .weHaveMedallion
-        ; Spawn the medallion
-        STZ.w SprState, X
-        JSR SpawnMedallionAlt ; spawn standing medallion
-        BRA .SpriteIsNotActive
-      .weHaveMedallion
-      ; Do nothing just kill this sprite
+    LDA.l $7EF280, X : AND.b #$40 : BEQ .notKilledYet_plx
+      PLX
+      LDA.l !OctoRewardSram : BNE .weHaveReward
+        JSR SpawnMedallionAlt
+      .weHaveReward
       STZ.w SprState, X
       BRA .SpriteIsNotActive
-    .notKiledYet
-
+    .notKilledYet_plx
     PLX
-    ;LDA.w SprGfxProps, X : AND.b #$BF : STA.w SprGfxProps, X
-    ;LDA.w SprProps, X : AND.b #$BF : STA.w SprProps, X
+    .notKilledYet
+
     LDA.b #15 : STA.w SprFrame, X
     LDA.b #$87 : STA.l $7EC664 : STA.l $7EC684
     LDA.b #$55 : STA.l $7EC665 : STA.l $7EC685
     INC.b $15
     INC.w SprMiscD, X ; increase it so sprite is initialized
-    LDA.l $7EF343 : INC : STA.l $7EF343
   +
 
   LDA.w SprMiscF, X : BNE +
@@ -57,6 +119,8 @@ Sprite_Octoboss_Long:
   +
   JSR Sprite_Octoboss_Draw2
   ++
+
+  JSR Octoboss_KeepAlive
 
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     LDA.w SprMiscF, X : BNE +
@@ -67,6 +131,19 @@ Sprite_Octoboss_Long:
   .SpriteIsNotActive
   PLB
   RTL
+}
+
+; The fight ends by surrender, never by death: cap any pending hit so it
+; leaves at least 1 HP. Damage in $0CE2 is applied when the hit timer
+; $0EF0 reaches $18; values $F9+ are special effects, not damage.
+Octoboss_KeepAlive:
+{
+  LDA.w $0EF0, X : AND.b #$7F : BEQ .exit
+    LDA.w $0CE2, X : CMP.b #$F9 : BCS .exit
+      CMP.w SprHealth, X : BCC .exit
+        LDA.w SprHealth, X : DEC : STA.w $0CE2, X
+  .exit
+  RTS
 }
 
 Sprite_Octoboss_Main:
@@ -102,15 +179,16 @@ Sprite_Octoboss_Secondary:
   dw WaitDialog ; 02
   dw IdlePhase ; 03
   dw PickDirection ; 04
-  dw Moving2 ; 05
+  dw Moving ; 05
 
   dw IdleWait ; 06
   dw SubmergeForeverKill ; 07
 
   WaitForPlayerToApproach:
   {
+    JSR Octoboss_GetAreaOrigin
     REP #$20
-    LDA.b $20 : CMP #$08C8
+    LDA.b $20 : SEC : SBC.b $0A : CMP.w #!OctoTriggerY
     SEP #$20
     BCS .TooFar
       INC.w SprAction, X
@@ -122,7 +200,7 @@ Sprite_Octoboss_Secondary:
 
   Emerge:
   {
-    INC.w $02E4 ; prevent link from moving
+    LDA.b #$01 : STA.w $02E4 ; prevent link from moving
     LDA.w SprTimerB, X : BNE +
       LDA.w SprFrame, X : INC : STA.w SprFrame, X : CMP.b #8 : BCC .noframereset
         INC.w SprAction, X
@@ -134,7 +212,7 @@ Sprite_Octoboss_Secondary:
 
   EmergedShowMessage:
   {
-    %ShowUnconditionalMessage($0048)
+    %ShowUnconditionalMessage(!OctoMsgIntro)
     INC.w SprAction, X
     RTS
   }
@@ -144,28 +222,25 @@ Sprite_Octoboss_Secondary:
 
   SpawnAndAwakeHisBrother:
   {
-    LDA.b #$40 : STA.w SprTimerC, X ; Will need to adjust
-    LDA.b #$3C
-    JSL Sprite_SpawnDynamically
-    TYA
-    STA.w BrotherSpr, X ; keep the brother id
-    LDA.b #$D0 : STA.w SprY, Y
-    LDA.b #$08 : STA.w SprYH, Y
-    LDA.b #$20 : STA.w SprX, Y
-    LDA.b #$09 : STA.w SprXH, Y
-    LDA.b #$01 : STA.w SprMiscF, Y
-    LDA.b #$00 : STA.w SprFrame, Y
-    ; Do the spawning code
-    INC.w SprAction, X
+    LDA.b #!SPRID
+    JSL Sprite_SpawnDynamically : BMI .retry
+      TYA : STA.w BrotherSpr, X ; keep the brother id
+      TXA : STA.w BrotherSpr, Y ; and the brother keeps ours
+      %Octoboss_PlaceAt(!OctoBlueHomeX, !OctoBlueHomeY)
+      LDA.b #$00 : STA.w SprAction, Y
+      STA.w SprMiscD, Y
+      STA.w SprFrame, Y
+      LDA.b #$01 : STA.w SprMiscF, Y
+      LDA.b #$40 : STA.w SprTimerC, X
+      INC.w SprAction, X
+    .retry
     RTS
   }
 
   WaitForBrotherEmerge:
   {
     LDA.w SprTimerC, X : BNE +
-      LDA.b #$49
-      LDY.b #$00
-      JSL Sprite_ShowMessageUnconditional
+      %ShowUnconditionalMessage(!OctoMsgBrother)
       LDA #$16 : STA.w SprTimerC, X
       INC.w SprAction, X
     +
@@ -175,10 +250,7 @@ Sprite_Octoboss_Secondary:
   SpawnPirateHats:
   {
     LDA.w SprTimerC, X : CMP #$14 : BNE +
-      PHX
       JSR SpawnBossPoof
-      PLX
-
       PHX
       LDA.w BrotherSpr, X : TAX
       JSR SpawnBossPoof
@@ -195,43 +267,13 @@ Sprite_Octoboss_Secondary:
     LDA.w SprTimerC, X : BNE +
 
       LDA.w SprAction, Y : INC : STA.w SprAction, Y
-      LDA.b #$40
-      STA.w SprTimerC, Y
-      STA.w SprTimerC, X
+      LDA.b #!OctoBlueIdleTime : STA.w SprTimerC, Y
+      LDA.b #!OctoRedIdleTime : STA.w SprTimerC, X
 
       STZ.w $02E4 ; allow link to move again
 
       INC.w SprAction, X
-
-
-      ; All the tiles spawned by the sprite
-      ; you can use a sprite/item to get location from ZS
-      ; and use the macro GetTilePos($x,$y)
-
-      PHX
-      %m16()
-
-      %GetTilePos($0F, $07)
-      LDA.w #$068F : JSL Overworld_DrawMap16_Persist
-
-      %GetTilePos($10, $07)
-      LDA.w #$068F : JSL Overworld_DrawMap16_Persist
-
-      %GetTilePos($11, $07)
-      LDA.w #$068F : JSL Overworld_DrawMap16_Persist
-
-      %GetTilePos($0F, $08)
-      LDA.w #$06A4 : JSL Overworld_DrawMap16_Persist
-
-      %GetTilePos($10, $08)
-      LDA.w #$06A4 : JSL Overworld_DrawMap16_Persist
-
-      %GetTilePos($11, $08)
-      LDA.w #$06A4 : JSL Overworld_DrawMap16_Persist
-
-      %m8()
-      PLX
-      LDA.b #$01 : STA.b $14
+      LDA.b #$00 : JSR Octoboss_DrawWall ; raise the bridge wall
     +
     RTS
   }
@@ -241,145 +283,79 @@ Sprite_Octoboss_Secondary:
     LDA.w SprTimerC, X : CMP.b #$08 : BNE +
       JSL Sprite_SpawnFireball
     +
+    ; Second half of the fight: one more fireball per idle
+    LDA.w SprTimerC, X : CMP.b #$20 : BNE +
+      JSR ReturnTotalHealth : CMP.b #!OctoEnrageTotal : BCS +
+        JSL Sprite_SpawnFireball
+    +
     LDA.w SprTimerC, X : BNE +
       INC.w SprAction, X
     +
-    LDA.w SprTimerB, X : BNE +
-      LDA.b #$01 : STA.w SprHeight, X
-      LDA.w SprFrame, X : INC : STA.w SprFrame, X : CMP.b #12 : BCC .noframereset
-        LDA.b #10 : STA.w SprFrame, X
-        STZ.w SprHeight, X
-      .noframereset
-      LDA.b #18 : STA.w SprTimerB, X
-    +
-    LDA.w SprMiscF, X : BNE + ; is it the red octopus? (blue doesn't need to run that)
-      JSR ReturnTotalHealth : CMP.b #$30 : BCS .tooMuchHealth
-        LDA.b #$09 : STA.w SprAction, X ; go to wait message action
-      .tooMuchHealth
-    +
+    JSR Octoboss_AnimateSwim
     JSL Sprite_CheckDamageFromPlayer
+    JSR Octoboss_CheckSurrender
     RTS
   }
 
   PickDirection:
   {
+    INC.w SprAction, X
+    JSR ReturnTotalHealth : CMP.b #!OctoEnrageTotal : BCS .wander
+    JSL GetRandomInt : AND.b #$01 : BEQ .wander
+      ; Lunge at Link, shorter swim
+      LDA.b #!OctoLungeSpeed
+      JSL Sprite_ApplySpeedTowardsPlayer
+      JSL GetRandomInt : AND.b #$1F : CLC : ADC.b #$18 : STA.w SprTimerC, X
+      RTS
+    .wander
     JSL GetRandomInt : AND.b #$1F : SEC : SBC #$10 : STA.w SprXSpeed, X
     JSL GetRandomInt : AND.b #$1F : SEC : SBC #$10 : STA.w SprYSpeed, X
-    INC.w SprAction, X
     JSL GetRandomInt : AND.b #$4F : CLC : ADC.b #$1F : STA.w SprTimerC, X
     RTS
   }
 
+  ; Shared by both brothers; bounds come from Octoboss_Bounds by SprMiscF.
   Moving:
   {
     LDA.w SprTimerC, X : BNE +
       DEC.w SprAction, X
       DEC.w SprAction, X
-      JSL GetRandomInt : AND.b #$4F : CLC : ADC.b #$1F : STA.w SprTimerC, X
+      LDA.b #!OctoRedIdleTime
+      LDY.w SprMiscF, X : BEQ .red
+        LDA.b #!OctoBlueIdleTime
+      .red
+      STA.w SprTimerC, X
     +
 
     JSL Sprite_Move
-    LDA.w SprTimerB, X : BNE +
-      LDA.b #$01 : STA.w SprHeight, X
-      LDA.w SprFrame, X : INC : STA.w SprFrame, X : CMP.b #12 : BCC .noframereset
-        LDA.b #10 : STA.w SprFrame, X
-        STZ.w SprHeight, X
-      .noframereset
-      LDA.b #10 : STA.w SprTimerB, X
-    +
-
-    LDA.w SprX, X : CMP.b #$E2 : BCC .notTooFarRight
-      LDA.w SprXSpeed, X : BMI .notTooFarRight
-        EOR.b #$FF : STA.w SprXSpeed, X
-    .notTooFarRight
-
-    LDA.w SprX, X : CMP.b #$80 : BCS .notTooFarLeft
-      LDA.w SprXSpeed, X : BPL .notTooFarLeft
-        EOR.b #$FF : STA.w SprXSpeed, X
-    .notTooFarLeft
-
-    LDA.w SprY, X : CMP.b #$FB : BCC .notTooFarDown
-      LDA.w SprYSpeed, X : BMI .notTooFarDown
-        EOR.b #$FF : STA.w SprYSpeed, X
-    .notTooFarDown
-
-    LDA.w SprY, X : CMP.b #$B8 : BCS .notTooFarUp
-      LDA.w SprYSpeed, X : BPL .notTooFarUp
-        EOR.b #$FF : STA.w SprYSpeed, X
-    .notTooFarUp
+    JSR Octoboss_AnimateSwim
+    JSR Octoboss_KeepInPool
 
     JSR HandleMovingSplash
     JSL Sprite_CheckDamageFromPlayer
-    JSR ReturnTotalHealth : CMP.b #$30 : BCS .tooMuchHealth
-      LDA.b #$09 : STA.w SprAction, X ; go to wait message action
-    .tooMuchHealth
-    RTS
-  }
-
-  Moving2:
-  {
-    LDA.w SprTimerC, X : BNE +
-      DEC.w SprAction, X
-      DEC.w SprAction, X
-      JSL GetRandomInt : AND.b #$4F : CLC : ADC.b #$1F : STA.w SprTimerC, X
-    +
-
-    JSL Sprite_Move
-    LDA.w SprTimerB, X : BNE +
-      LDA.b #$01 : STA.w SprHeight, X
-      LDA.w SprFrame, X : INC : STA.w SprFrame, X : CMP.b #12 : BCC .noframereset
-        LDA.b #10 : STA.w SprFrame, X
-        STZ.w SprHeight, X
-      .noframereset
-      LDA.b #10 : STA.w SprTimerB, X
-    +
-
-    LDA.w SprX, X : CMP.b #$78 : BCC .notTooFarRight
-      LDA.w SprXSpeed, X : BMI .notTooFarRight
-        EOR.b #$FF : STA.w SprXSpeed, X
-    .notTooFarRight
-
-    LDA.w SprX, X : CMP.b #$10 : BCS .notTooFarLeft
-      LDA.w SprXSpeed, X : BPL .notTooFarLeft
-        EOR.b #$FF : STA.w SprXSpeed, X
-    .notTooFarLeft
-
-    LDA.w SprY, X : CMP.b #$FB : BCC .notTooFarDown
-      LDA.w SprYSpeed, X : BMI .notTooFarDown
-        EOR.b #$FF : STA.w SprYSpeed, X
-    .notTooFarDown
-
-    LDA.w SprY, X : CMP.b #$B8 : BCS .notTooFarUp
-      LDA.w SprYSpeed, X : BPL .notTooFarUp
-        EOR.b #$FF : STA.w SprYSpeed, X
-    .notTooFarUp
-
-    JSR HandleMovingSplash
-    JSL Sprite_CheckDamageFromPlayer
+    JSL Sprite_CheckDamageToPlayer
+    JSR Octoboss_CheckSurrender
     RTS
   }
 
   WaitMessageBeforeSurrender:
   {
-    ; display message 4A ; Wait! WAIT! please!
+    ; Wait! WAIT! please!
     LDY.w BrotherSpr, X
     LDA.b #$06 : STA.w SprAction, Y ; set brother to action 6
     %SetTimerC($50) ; set timer to remove hat, surrender
-    %ShowUnconditionalMessage($004A)
+    %ShowUnconditionalMessage(!OctoMsgWait)
     INC.w SprAction, X ; go to remove hat routine
     RTS
   }
 
   RemoveHat:
   {
-    INC.w $02E4
+    LDA.b #$01 : STA.w $02E4
     STZ.b $5D ; kill link action
     ; Use timer to remove hat like when it's spawning
     LDA.w SprTimerC, X : CMP #$34 : BNE +
-      PHX
       JSR SpawnBossPoof
-      PLX
-
       PHX
       LDA.w BrotherSpr, X : TAX
       JSR SpawnBossPoof
@@ -393,9 +369,7 @@ Sprite_Octoboss_Secondary:
     +
 
     LDA.w SprTimerC, X : BNE +
-      LDA.b #$4B
-      LDY.b #$00
-      JSL Sprite_ShowMessageUnconditional
+      %ShowUnconditionalMessage(!OctoMsgSurrender)
       INC.w SprAction, X ; surrender message
     +
     RTS
@@ -403,15 +377,14 @@ Sprite_Octoboss_Secondary:
 
   Submerge:
   {
-    ; display message 4B ; Surrender message
     LDA.w SprTimerB, X : BNE +
       LDA.w SprFrame, X : DEC : STA.w SprFrame, X : CMP.b #01 : BCS .noframereset
       JSR SpawnSplash
-      INC.w SprAction, X ; surrender message
+      INC.w SprAction, X
       LDA.b #15 : STA.w SprFrame, X
-      LDA.b #$B0 : STA.w SprX, X
-      LDA.b #$08 : STA.w SprXH, X : STA.w SprYH, X
-      LDA.b #$D4 : STA.w SprY, X
+      STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+      TXY
+      %Octoboss_PlaceAt(!OctoSubmergeX, !OctoSubmergeY)
       LDA.b #$90 : STA.w SprTimerC, X
       .noframereset
       LDA.b #2 : STA.w SprTimerB, X
@@ -429,25 +402,7 @@ Sprite_Octoboss_Secondary:
     +
 
     LDA.w SprTimerC, X : CMP.b #$40 : BNE +
-      PHX
-      %m16()
-
-      %GetTilePos($0F, $07)
-      LDA.w #$0034 : JSL Overworld_DrawMap16_Persist
-      %GetTilePos($10, $07)
-      LDA.w #$0034 : JSL Overworld_DrawMap16_Persist
-      %GetTilePos($11, $07)
-      LDA.w #$0034 : JSL Overworld_DrawMap16_Persist
-      %GetTilePos($0F, $08)
-      LDA.w #$0034 : JSL Overworld_DrawMap16_Persist
-      %GetTilePos($10, $08)
-      LDA.w #$0034 : JSL Overworld_DrawMap16_Persist
-      %GetTilePos($11, $08)
-      LDA.w #$0034 : JSL Overworld_DrawMap16_Persist
-
-      %m8()
-      PLX
-      LDA.b #$01 : STA.b $14
+      LDA.b #$04 : JSR Octoboss_DrawWall ; clear the bridge wall
     +
     RTS
   }
@@ -467,7 +422,6 @@ Sprite_Octoboss_Secondary:
       JSR SpawnMedallion
       LDY.w BrotherSpr, X
       LDA.b #$07 : STA.w SprAction, Y
-      ; Throw item here
       PHX
       LDX.b $8A
       LDA.l $7EF280, X : ORA.b #$40 : STA.l $7EF280, X ; save in HP sram
@@ -478,7 +432,6 @@ Sprite_Octoboss_Secondary:
 
   SubmergeForeverKill:
   {
-    ; Set overworld sram flag for object collected on that screen
     STZ.w $02E4 ; allow link to move
     LDA.w SprTimerB, X : BNE +
       LDA.w SprFrame, X : DEC : STA.w SprFrame, X : CMP.b #01 : BCS .noframereset
@@ -500,6 +453,134 @@ Sprite_Octoboss_Secondary:
     LDA.w SprHealth, X : CLC : ADC.b $00
     RTS
   }
+}
+
+; Swim bob: frames 10-11, half a tile up on the second frame
+Octoboss_AnimateSwim:
+{
+  LDA.w SprTimerB, X : BNE .exit
+    LDA.b #$01 : STA.w SprHeight, X
+    LDA.w SprFrame, X : INC : STA.w SprFrame, X : CMP.b #12 : BCC .noframereset
+      LDA.b #10 : STA.w SprFrame, X
+      STZ.w SprHeight, X
+    .noframereset
+    LDA.b #12 : STA.w SprTimerB, X
+  .exit
+  RTS
+}
+
+; Red only. Carry the fight to the surrender scene.
+Octoboss_CheckSurrender:
+{
+  LDA.w SprMiscF, X : BNE .exit
+  LDA.w SprAction, X : CMP.b #$09 : BCS .exit
+  JSR ReturnTotalHealth : CMP.b #!OctoSurrenderTotal : BCC .surrender
+  LDA.w SprHealth, X : CMP.b #!OctoSurrenderOne : BCC .surrender
+  LDY.w BrotherSpr, X
+  LDA.w SprHealth, Y : CMP.b #!OctoSurrenderOne : BCS .exit
+  .surrender
+  STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+  LDA.b #$09 : STA.w SprAction, X ; go to wait message action
+  .exit
+  RTS
+}
+
+; Bounce off the pool edges. Bounds are map-local, one row per brother.
+Octoboss_KeepInPool:
+{
+  JSR Octoboss_GetLocalPos
+  LDA.w SprMiscF, X : ASL : TAY
+
+  REP #$20 : LDA.b $0E : CMP.w .min_x, Y : SEP #$20 : BCS .check_right
+    LDA.w SprXSpeed, X : BPL .check_right
+      EOR.b #$FF : INC : STA.w SprXSpeed, X
+  .check_right
+  REP #$20 : LDA.b $0E : CMP.w .max_x, Y : SEP #$20 : BCC .check_up
+    LDA.w SprXSpeed, X : BMI .check_up
+      EOR.b #$FF : INC : STA.w SprXSpeed, X
+  .check_up
+  REP #$20 : LDA.b $0C : CMP.w .min_y, Y : SEP #$20 : BCS .check_down
+    LDA.w SprYSpeed, X : BPL .check_down
+      EOR.b #$FF : INC : STA.w SprYSpeed, X
+  .check_down
+  REP #$20 : LDA.b $0C : CMP.w .max_y, Y : SEP #$20 : BCC .exit
+    LDA.w SprYSpeed, X : BMI .exit
+      EOR.b #$FF : INC : STA.w SprYSpeed, X
+  .exit
+  RTS
+
+  ;       red,   blue
+  .min_x : dw $0080, $0118
+  .max_x : dw $00D8, $0170
+  .min_y : dw $0108, $0108
+  .max_y : dw $0140, $0140
+}
+
+; Bridge wall: map16 tiles ($0F-$11, $07-$08) of the area.
+; In: A = 0 to raise the wall, 4 to clear it.
+Octoboss_DrawWall:
+{
+  PHX
+  REP #$30
+  AND.w #$00FF : TAY
+  %GetTilePos($0F, $07)
+  .next_tile
+    PHY : PHX
+    LDA.w .tiles, Y : JSL Overworld_DrawMap16_Persist
+    PLX : PLY
+    INX : INX
+    CPX.w #(($07*$80)+($12*$02)) : BNE .same_row
+      %GetTilePos($0F, $08)
+      INY : INY
+    .same_row
+  CPX.w #(($08*$80)+($12*$02)) : BNE .next_tile
+  SEP #$30
+  PLX
+  LDA.b #$01 : STA.b $14
+  RTS
+
+  ;       top,   bottom
+  .tiles : dw $068F, $06A4 ; wall
+           dw $0034, $0034 ; water
+}
+
+; Out: $08 = area origin X, $0A = area origin Y (16-bit). Keeps X and Y.
+Octoboss_GetAreaOrigin:
+{
+  PHX
+  REP #$30
+  LDA.b $8A : AND.w #$00FF : ASL : TAX
+  LDA.l Pool_OverworldTransitionPositionX_New, X : STA.b $08
+  LDA.l Pool_OverworldTransitionPositionY_New, X : STA.b $0A
+  SEP #$30
+  PLX
+  RTS
+}
+
+; Out: $0E = sprite X, $0C = sprite Y, map-local (16-bit).
+Octoboss_GetLocalPos:
+{
+  JSR Octoboss_GetAreaOrigin
+  LDA.w SprX, X : STA.b $0E : LDA.w SprXH, X : STA.b $0F
+  LDA.w SprY, X : STA.b $0C : LDA.w SprYH, X : STA.b $0D
+  REP #$20
+  LDA.b $0E : SEC : SBC.b $08 : STA.b $0E
+  LDA.b $0C : SEC : SBC.b $0A : STA.b $0C
+  SEP #$20
+  RTS
+}
+
+; In: Y = sprite slot, $0E = local X, $0C = local Y (16-bit).
+Octoboss_PlaceLocal:
+{
+  JSR Octoboss_GetAreaOrigin
+  REP #$20
+  LDA.b $0E : CLC : ADC.b $08 : STA.b $0E
+  LDA.b $0C : CLC : ADC.b $0A : STA.b $0C
+  SEP #$20
+  LDA.b $0E : STA.w SprX, Y : LDA.b $0F : STA.w SprXH, Y
+  LDA.b $0C : STA.w SprY, Y : LDA.b $0D : STA.w SprYH, Y
+  RTS
 }
 
 Sprite_Octoboss_Draw:
@@ -812,26 +893,11 @@ SpawnSplash:
   RTS
 }
 
+; Hat poof. Used to spawn sprite $CE, which is Twinrova now.
 SpawnBossPoof:
 {
-  LDA.b #$0C
-  STA.w $012E
-
-  LDA.b #$CE
-  JSL Sprite_SpawnDynamically
-
-  LDA.b $00 : CLC : ADC.b #$10 : STA.w SprX,Y
-  LDA.b $01 : ADC.b #$00 : STA.w SprXH,Y
-  LDA.b $02 : CLC : ADC.b #$08 : STA.w SprY,Y
-  LDA.b $03 : ADC.b #$00 : STA.w SprYH,Y
-  LDA.b #$0F : STA.w $0DC0,Y
-  LDA.b #$01 : STA.w SprFrame,Y
-  LDA.b #$2F : STA.w SprTimerA,Y
-
-  LDA.b #$09
-  STA.w SprNbrOAM,Y
-  STA.w SprBulletproof,Y
-
+  LDA.b #$0C : STA.w $012E
+  JSL Sprite_SpawnPoofGarnish
   RTS
 }
 
@@ -842,90 +908,60 @@ HandleMovingSplash:
     PHX
     TXY
     LDX.b #$1D
-    LDA.w SprYSpeed, Y : BMI .next_slot
-      LDX.b #$0E
     .next_slot
-    LDA.l $7FF800,X : BNE .slot_occupied
+    LDA.l $7FF800, X : BEQ .free_slot
+    DEX : BPL .next_slot
+    PLX
+    RTS
 
-      LDA.b #$15 ; GARNISH 15
-      STA.l $7FF800,X
-      STA.w $0FB4
+    .free_slot
+    LDA.b #$15 ; GARNISH 15
+    STA.l $7FF800, X
+    STA.w $0FB4
 
-      LDA.w SprX,Y : STA.l $7FF83C,X
-      LDA.w SprXH,Y : STA.l $7FF878,X
-      CLC : ADC.b #$18 : STA.l $7FF81E,X
-      LDA.w SprYH,Y : STA.l $7FF85A,X
-      LDA.b #$0F : STA.l $7FF90E,X
-
-      PLX
-      RTS
-
-    .slot_occupied
-    DEX
-    BPL .next_slot
+    LDA.w SprX, Y : STA.l $7FF83C, X
+    LDA.w SprXH, Y : STA.l $7FF878, X
+    LDA.w SprY, Y : CLC : ADC.b #$18 : STA.l $7FF81E, X
+    LDA.w SprYH, Y : ADC.b #$00 : STA.l $7FF85A, X
+    LDA.b #$0F : STA.l $7FF90E, X
 
     PLX
   .exit
   RTS
 }
 
+; Reward thrown from the red brother onto the bridge
 SpawnMedallion:
 {
-  LDA.b #$C0 ; SPRITE C0
-  JSL Sprite_SpawnDynamically : BMI .exit
-
-    JSL $09AE64 ; Sprite_SetSpawnedCoordinates
-
-    PHX
-    TYX
-
-    LDA.b #$10 : STA.w SprXSpeed, X
-
-    LDA.b #$30 : STA.w $0F80, X
-    LDA.b #$11 : STA.w SprFrame, X ; ITEMGET 11
-
+  LDA.b #!OctoRewardSprite
+  JSL Sprite_SpawnDynamically : BMI Octoboss_SetupReward_exit
+    JSL Sprite_SetSpawnedCoords
+    LDA.b #$10 : STA.w SprXSpeed, Y
+    LDA.b #$30 : STA.w $0F80, Y
     LDA.b #$20 ; SFX2.20
     JSL $0DBB7C ; SpriteSFX_QueueSFX2WithPan
-
-    LDA.b #$83 : STA.w SprNbrOAM,X
-    LDA.b #$58 : STA.w SprGfxProps,X
-    AND.b #$0F : STA.w SprProps,X
-
-    PLX
-
-    PHX
-    PHY
-
-    LDA.b #$1C
-    JSL $00D4ED ; WriteTo4BPPBuffer_item_gfx
-
-    PLY
-    PLX
-
-  .exit
-  RTS
+    BRA Octoboss_SetupReward
 }
 
+; Reward left on the bridge when Link returns without it
 SpawnMedallionAlt:
 {
-  LDA.b #$C0 ; SPRITE C0
-  JSL Sprite_SpawnDynamically : BMI .exit
-    PHX
-    TYX
-    LDA.b #$11 ; ITEMGET 11
-    STA.w SprFrame, X
-    LDA.b #$83 : STA.w SprNbrOAM,X
-    LDA.b #$58 : STA.w SprGfxProps,X
-    AND.b #$0F : STA.w SprProps,X
-    LDA.b #$DC : STA.w SprY, X
-    LDA.b #$F7 : STA.w SprX, X
-    LDA.b #$08 : STA.w SprYH, X : STA.w SprXH, X
-    PLX
-    PHX
-    PHY
-    LDA.b #$1C : JSL $00D4ED ; WriteTo4BPPBuffer_item_gfx
-    PLY
-    PLX
-  .exit
+  LDA.b #!OctoRewardSprite
+  JSL Sprite_SpawnDynamically : BMI Octoboss_SetupReward_exit
+    %Octoboss_PlaceAt(!OctoRewardX, !OctoRewardY)
+}
+
+; In: Y = reward slot. Keeps X; Y is not kept.
+Octoboss_SetupReward:
+{
+  PHX
+  TYX
+  LDA.b #!OctoRewardItemGet : STA.w SprFrame, X
+  LDA.b #$83 : STA.w SprNbrOAM, X
+  LDA.b #$58 : STA.w SprGfxProps, X
+  AND.b #$0F : STA.w SprProps, X
+  LDA.b #!OctoRewardGfx : JSL $00D4ED ; WriteTo4BPPBuffer_item_gfx
+  PLX
+  #Octoboss_SetupReward_exit:
   RTS
 }
