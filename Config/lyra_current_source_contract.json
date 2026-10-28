@@ -1,40 +1,132 @@
 {
-  "kind": "lyra.current_engine_source_contract.v1",
-  "status": "proposed",
-  "scope": "source_review_only",
-  "engine_head": "8b004e65efacbd0777121c49a36f09a43759c922",
+  "allocation_granted": false,
   "base_head": "c19cf98873c0d409043b1d59016633f415b72dba",
+  "engine_head": "8b004e65efacbd0777121c49a36f09a43759c922",
+  "kind": "lyra.current_engine_source_contract.v1",
+  "ledger": {
+    "engine_ledger_sha256": "6bc162723d33d3589b076cbc7726fc6022d73732f2f5cecf75c9952098d485d6",
+    "path": "Config/allocation_ownership.json",
+    "sha256": "e10f3351e1188587bdca488c907cf800d5b76d6fb25fda851aa99cb2c6c0fcb4",
+    "source_set": "lyra_joint_art_bridge_30"
+  },
+  "native_readers": {
+    "decoder_spans": [
+      [
+        95889,
+        96203
+      ]
+    ],
+    "pointer_reader_spans": [
+      [
+        95645,
+        95698
+      ],
+      [
+        96227,
+        96280
+      ]
+    ]
+  },
+  "ordinary_build_ready": false,
+  "origins": {
+    "actors": {
+      "pc": [
+        3180032,
+        3182592
+      ],
+      "snes": [
+        14779904,
+        14782464
+      ],
+      "source_binding": {
+        "path": "/Users/scawful/.codex/worktrees/lyra-world-lifecycle/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
+        "sha256": "deff646a6820bb9fb7960bfa4216d9512f813bfa91406384c44757cdd6b17a0a"
+      }
+    },
+    "bg_palette": {
+      "pc": [
+        3178752,
+        3179776
+      ],
+      "snes": [
+        14778624,
+        14779648
+      ],
+      "source_binding": {
+        "path": "/Users/scawful/.codex/worktrees/lyra-world-lifecycle/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
+        "sha256": "deff646a6820bb9fb7960bfa4216d9512f813bfa91406384c44757cdd6b17a0a"
+      }
+    },
+    "code": {
+      "pc": [
+        3162112,
+        3178496
+      ],
+      "snes": [
+        14729216,
+        14745600
+      ],
+      "source_binding": {
+        "path": "/Users/scawful/.codex/worktrees/lyra-world-lifecycle/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
+        "sha256": "deff646a6820bb9fb7960bfa4216d9512f813bfa91406384c44757cdd6b17a0a"
+      }
+    },
+    "descriptor": {
+      "pc": [
+        3178496,
+        3178560
+      ],
+      "snes": [
+        14778368,
+        14778432
+      ],
+      "source_binding": {
+        "path": "/Users/scawful/.codex/worktrees/lyra-world-lifecycle/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
+        "sha256": "deff646a6820bb9fb7960bfa4216d9512f813bfa91406384c44757cdd6b17a0a"
+      }
+    },
+    "graphics": {
+      "pc": [
+        3211264,
+        3235840
+      ],
+      "snes": [
+        14843904,
+        14868480
+      ],
+      "source_binding": {
+        "path": "/Users/scawful/.codex/worktrees/lyra-world-lifecycle/oracle-of-secrets/Overworld/custom_gfx.asm",
+        "sha256": "8c8fb6d228e1b8888685a5d351a5bec1f19e720b59d7bd0156fc9773906d4c0f"
+      }
+    },
+    "tables": {
+      "pc": [
+        3145728,
+        3162112
+      ],
+      "snes": [
+        14712832,
+        14729216
+      ],
+      "source_binding": {
+        "path": "/Users/scawful/.codex/worktrees/lyra-world-lifecycle/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
+        "sha256": "deff646a6820bb9fb7960bfa4216d9512f813bfa91406384c44757cdd6b17a0a"
+      }
+    }
+  },
+  "producer_enforcement_verified": false,
+  "publication_authorized": false,
+  "runtime_admission": false,
+  "saved_generation_required": true,
+  "scope": "source_review_only",
   "source_domain": {
-    "first_map": 160,
     "end_map": 192,
+    "first_map": 160,
     "native_parent_count": 160,
     "parent_count": 192
   },
-  "allocation_granted": false,
-  "publication_authorized": false,
-  "producer_enforcement_verified": false,
-  "ordinary_build_ready": false,
-  "runtime_admission": false,
-  "ledger": {
-    "path": "Config/allocation_ownership.json",
-    "sha256": null,
-    "source_set": "lyra_private_pilot_boundary_cpu_23",
-    "engine_ledger_sha256": "6bc162723d33d3589b076cbc7726fc6022d73732f2f5cecf75c9952098d485d6"
-  },
-  "native_readers": {
-    "decoder_spans": null,
-    "pointer_reader_spans": null
-  },
-  "origins": {
-    "tables": null,
-    "code": null,
-    "descriptor": null,
-    "bg_palette": null,
-    "graphics": null,
-    "actors": null
-  },
+  "status": "proposed",
   "tables": {
-    "rows": 192,
     "families": [
       "bg_color",
       "main_palette",
@@ -70,7 +162,7 @@
       "music_phase1",
       "music_phase2",
       "music_phase3"
-    ]
-  },
-  "saved_generation_required": true
+    ],
+    "rows": 192
+  }
 }

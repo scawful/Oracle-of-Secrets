@@ -4526,7 +4526,7 @@
     "regional_checkpoint_runtime_25:Overworld/checkpoint_state.asm": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Overworld/checkpoint_state.asm",
-      "sha256": "1d4519109eb1f20f1ed725dc22ed41d315086fc5b1abea45a37b3c66f419e865"
+      "sha256": "4dc9b76d3629fddacff8243cda1a0af0a0628d341e03820c4fe736eaa899fee2"
     },
     "regional_checkpoint_runtime_25:Overworld/goron_checkpoint.asm": {
       "source_set": "regional_checkpoint_runtime_25",
@@ -4551,12 +4551,12 @@
     "regional_checkpoint_runtime_25:Config/feature_flags.asm": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Config/feature_flags.asm",
-      "sha256": "0871817675d66c4c7c1c3b36376396267f64c8610354de5916ce6b95bf3eae83"
+      "sha256": "7171ef452b20cf7779865b3a5b3b9daebc47b68f0e8b78faca93264762a08397"
     },
     "regional_checkpoint_runtime_25:Scripts/Build/checkpoint_registry.py": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Scripts/Build/checkpoint_registry.py",
-      "sha256": "cf6f8dc7026a2b289bbaef997053b3ca98053f44252a617a74fd459e8a10744a"
+      "sha256": "8070cdda64bf4cf44947757735303064de7c5c4dde22821ad489f08343de97b3"
     },
     "regional_checkpoint_runtime_25:Scripts/Build/build_rom.sh": {
       "source_set": "regional_checkpoint_runtime_25",
@@ -4571,12 +4571,12 @@
     "regional_checkpoint_runtime_25:Tests/test_checkpoint_registry.py": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Tests/test_checkpoint_registry.py",
-      "sha256": "63cb00d8da1c9fe754d16646d2469244e36ea443202572074bcbb0aec8d5b988"
+      "sha256": "2fee45f9aed08ae311d84585a60c4c9e36b6a1b85e9ed6c59c16a8ccea99eb3a"
     },
     "regional_checkpoint_runtime_25:Tests/routines/regional_checkpoints.py": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Tests/routines/regional_checkpoints.py",
-      "sha256": "adee8854734806370f99d450e817ce8897058026c5ce9f5a484f8b3258d8c4f7"
+      "sha256": "2a485052827e2cbb466f13611e5e0254282b2ea39f6fcc07128a7152d5048d33"
     },
     "lyra_joint_graphics_source_26:Core/gfx_sheet_table.asm": {
       "source_set": "lyra_joint_graphics_source_26",
@@ -4616,7 +4616,7 @@
     "lyra_joint_graphics_source_26:Config/feature_flags.asm": {
       "source_set": "lyra_joint_graphics_source_26",
       "path": "Config/feature_flags.asm",
-      "sha256": "0871817675d66c4c7c1c3b36376396267f64c8610354de5916ce6b95bf3eae83"
+      "sha256": "7ba93a4832d2da8a0e4b9936224f9e03ffe4a245613db8c814f9a302047f7873"
     },
     "lyra_joint_graphics_source_26:Scripts/Build/check_zscream_overlap.py": {
       "source_set": "lyra_joint_graphics_source_26",
@@ -4681,7 +4681,7 @@
     "lyra_joint_area_tilesets_27:Config/feature_flags.asm": {
       "source_set": "lyra_joint_area_tilesets_27",
       "path": "Config/feature_flags.asm",
-      "sha256": "0871817675d66c4c7c1c3b36376396267f64c8610354de5916ce6b95bf3eae83"
+      "sha256": "7171ef452b20cf7779865b3a5b3b9daebc47b68f0e8b78faca93264762a08397"
     },
     "lyra_joint_area_tilesets_27:Scripts/Generate/asm_source.py": {
       "source_set": "lyra_joint_area_tilesets_27",
@@ -4776,7 +4776,7 @@
     "lyra_joint_art_bridge_30:Config/feature_flags.asm": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Config/feature_flags.asm",
-      "sha256": "0871817675d66c4c7c1c3b36376396267f64c8610354de5916ce6b95bf3eae83"
+      "sha256": "7171ef452b20cf7779865b3a5b3b9daebc47b68f0e8b78faca93264762a08397"
     },
     "lyra_joint_art_bridge_30:Config/module_flags.asm": {
       "source_set": "lyra_joint_art_bridge_30",
@@ -4811,7 +4811,7 @@
     "lyra_joint_art_bridge_30:Overworld/ZSCustomOverworld.asm": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "1de0b0336a9be3f72ac8029cfc7795d42812c373ad61c604d64229e2ec4f588e"
+      "sha256": "deff646a6820bb9fb7960bfa4216d9512f813bfa91406384c44757cdd6b17a0a"
     },
     "lyra_joint_art_bridge_30:Overworld/area_tilesets.asm": {
       "source_set": "lyra_joint_art_bridge_30",
@@ -4886,7 +4886,7 @@
     "lyra_joint_art_bridge_30:Overworld/lyra_native_loaders.asm": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Overworld/lyra_native_loaders.asm",
-      "sha256": "42e085ba93a93ee45aa676835dbcb0b1281d98116904ddd08e2600ebeaa4848b"
+      "sha256": "800d8caa53f52a671fc4e619e5dac17d8b523d8c450ec692437c391d8b18c308"
     },
     "lyra_joint_art_bridge_30:Overworld/lyra_private_pilot.asm": {
       "source_set": "lyra_joint_art_bridge_30",
@@ -4946,7 +4946,7 @@
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "79a59d5070aefedd361ea2c8fbd3601813c8a88254b6f324dc185eabf802fe15"
+      "sha256": "06b063f4782841137e356e442a78b78f86bdec77355bc75e63c624977cd9d7ed"
     },
     "lyra_joint_art_bridge_30:Scripts/Build/lyra_native_state.py": {
       "source_set": "lyra_joint_art_bridge_30",
@@ -4991,7 +4991,7 @@
     "lyra_joint_art_bridge_30:Scripts/Generate/generate_hack_manifest.py": {
       "source_set": "lyra_joint_art_bridge_30",
       "path": "Scripts/Generate/generate_hack_manifest.py",
-      "sha256": "7e27276af9d9d73e3c8f4c30a0228229dddc972724ccd9b57fd49c24a758e47b"
+      "sha256": "abd8bdcc18c2cb7dd3e5f223ac24c1026336a6f80d878eb58eadca7b1026217b"
     },
     "lyra_joint_art_bridge_30:Scripts/Generate/joint_palette_directory.py": {
       "source_set": "lyra_joint_art_bridge_30",
@@ -6695,5 +6695,177 @@
       "reason": "Shared FreeBlock_Large starts F3A8; pending F3A8-AB owners exist. Other free-list bytes are not audited availability."
     }
   ],
-  "allocation_available": false
+  "allocation_available": false,
+  "current_save_transfer_policies": [
+    {
+      "current_runtime": {
+        "compiled_consumers": {
+          "path": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-44/COMPILED_CONSUMERS.json",
+          "sha256": "252ffbd21b98722a2863805c24dcf7cdf6741e184ba135dd701f54d0644bb210"
+        },
+        "event_state": {
+          "flags": 8320192,
+          "marker": 161,
+          "version": 8320224
+        },
+        "graphics_assets": [
+          {
+            "path": "/Users/scawful/src/hobby/oracle-of-secrets-worktrees/lyra-tail-runtime-20261027/Overworld/gfx/kalyxo_docks_slot3.bin",
+            "sha256": "3fd640ea5f71e4301983dc4944b355f6d8582ea14797605688e5adaf37ffc3b4"
+          },
+          {
+            "path": "/Users/scawful/src/hobby/oracle-of-secrets-worktrees/lyra-tail-runtime-20261027/Overworld/gfx/kalyxo_docks_bg.bin",
+            "sha256": "7ee45cc2f6e5f42d741794779fd6b79f9a5775f3fddea03a8a53d2038a9806c0"
+          },
+          {
+            "path": "/Users/scawful/src/hobby/oracle-of-secrets-worktrees/lyra-tail-runtime-20261027/Overworld/gfx/lyra_sky_tower_87.bin",
+            "sha256": "b7db5e904ca0ad98f9c5268846efb2da0668a2e160a40a554c99747e65d659a8"
+          },
+          {
+            "path": "/Users/scawful/src/hobby/oracle-of-secrets-worktrees/lyra-tail-runtime-20261027/Overworld/gfx/lyra_stepped_fort_83.bin",
+            "sha256": "cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447"
+          }
+        ],
+        "graphics_source": {
+          "path": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-44/GRAPHICS.asm",
+          "sha256": "8dc33a1d1da05840506adb805b5c33448d63f7967775aa8f3151f66debe4d62d"
+        },
+        "guard_binding": {
+          "path": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-44/GUARD_BINDING.json",
+          "sha256": "9317e14269655d49e45d6cff366143400bb669fa8ae6f6004f166670eedfb185"
+        },
+        "joint_art": {
+          "path": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-44/PACKET.json",
+          "sha256": "9787e6b844f2dbd0e87c6a720f8af89528c4fffad2dc47b941e149e75b8ac1e6"
+        },
+        "kind": "lyra.private_checkpoint_preview_policy.v1",
+        "origin_preimages": [
+          {
+            "pc": [
+              3180032,
+              3182592
+            ],
+            "sha256": "2b6e99ee899e1515e0cc44b220424cd9da6906b39490504bdcca2236755db51c"
+          },
+          {
+            "pc": [
+              3178752,
+              3179776
+            ],
+            "sha256": "5f4ecdb7b71c3e403983fe405cddcdc2f2576b655fdb3e80d94a6f7c32e58bc2"
+          },
+          {
+            "pc": [
+              3162112,
+              3178496
+            ],
+            "sha256": "0fbba07a833d4dcfc7024eaf313661a0ba8f80a05c6d29b8801c612e10e60dee"
+          },
+          {
+            "pc": [
+              3178496,
+              3178560
+            ],
+            "sha256": "8667e718294e9e0df1d30600ba3eeb201f764aad2dad72748643e4a285e1d1f7"
+          },
+          {
+            "pc": [
+              3211264,
+              3235840
+            ],
+            "sha256": "1df8949b2e345ab8c00cb81fb6b83686e20a4080f969e5cd8b8d520a07cdaba2"
+          },
+          {
+            "pc": [
+              3145728,
+              3162112
+            ],
+            "sha256": "0fbba07a833d4dcfc7024eaf313661a0ba8f80a05c6d29b8801c612e10e60dee"
+          }
+        ],
+        "private_checkpoint": {
+          "landing": {
+            "path": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-44/LANDING_A0.json",
+            "sha256": "be35b594056e59f307bab43979aba8928b2e4e8397bac3c5f3d5745ff3c21173"
+          },
+          "plan": {
+            "path": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-44/CHECKPOINT_PLAN_V2.json",
+            "sha256": "1af8f166fc7ec48c0d0ee0b4c72acb9b776a453630d21875e09d4ab2879e0127"
+          }
+        },
+        "review_file": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-44/RESERVATION_REVIEW.json",
+        "runtime_admission": true,
+        "scope": "seeded_checkpoint_preview",
+        "tail_recipe": {
+          "path": "/Users/scawful/.local/share/worktree-preservation/audits/oracle-chat-scan-20261028T011513Z/lyra-respawn/current-build-44/TAIL_RECIPE.json",
+          "sha256": "1e7f2df5a101e8e12a5067a90dc4116d04610581d59747fbed959c6e4db62d82"
+        }
+      },
+      "enforcement": {
+        "owner": "oracle.current_builder",
+        "required_order": [
+          "native_save",
+          "immutable_snapshot",
+          "compile_candidate",
+          "no_native_serializer"
+        ]
+      },
+      "id": "lyra-seeded-checkpoint-joint-art-20261028",
+      "kind": "lyra.current_save_transfer_policy.v2",
+      "preimages": [
+        {
+          "pc": [
+            119292,
+            120198
+          ],
+          "sha256": "bc9e6ad9982cb8ad88c884be936d9691d42a571fae11ee9dfdc72d0b1341b646"
+        },
+        {
+          "pc": [
+            152060,
+            152966
+          ],
+          "sha256": "bc9e6ad9982cb8ad88c884be936d9691d42a571fae11ee9dfdc72d0b1341b646"
+        },
+        {
+          "pc": [
+            2052604,
+            2053510
+          ],
+          "sha256": "bc9e6ad9982cb8ad88c884be936d9691d42a571fae11ee9dfdc72d0b1341b646"
+        },
+        {
+          "pc": [
+            2085372,
+            2086278
+          ],
+          "sha256": "bc9e6ad9982cb8ad88c884be936d9691d42a571fae11ee9dfdc72d0b1341b646"
+        },
+        {
+          "pc": [
+            4018176,
+            4038656
+          ],
+          "sha256": "1f55ffcddc1fce4d4ab43d09da1f8e58730a19bf3aadd78331c3eaaa8b9b4410"
+        }
+      ],
+      "producer_identity_sha256": "e173eddd234e8fdb8571a7f9114330a0034f703bf0617ac31b2773e8752e05cc",
+      "scope": "disposable_build_only",
+      "spare_tile32_ids": [
+        14593,
+        14594,
+        14595
+      ],
+      "stream_ranges": [
+        [
+          4018176,
+          4038656
+        ]
+      ],
+      "tile32_id_range": [
+        13992,
+        14596
+      ]
+    }
+  ]
 }
