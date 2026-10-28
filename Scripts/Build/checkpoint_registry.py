@@ -445,11 +445,35 @@ def emit_runtime_asm(registry):
     return dict(constants=constants, tables='\n'.join(lines)+'\n')
 
 
+_PREVIEW_FLOOR_HANDLERS = {
+    0: (0xDE5B, bytes.fromhex('a50a0c430360')),
+    4: (0xDE61, bytes.fromhex('a50a0c570360')),
+    0x40: (0xDE61, bytes.fromhex('a50a0c570360')),
+    0x48: (0xDE67, bytes.fromhex('a50a0c5b030c430360')),
+    0x4A: (0xDE67, bytes.fromhex('a50a0c5b030c430360')),
+}
+
+
+def _preview_floor_handlers(image, attributes):
+    """Bind OW's dispatcher, not UW's differently indexed behavior table."""
+    def read(address, size):
+        pc = ((address >> 16) & 0x7F) * 0x8000 + (address & 0x7FFF)
+        return image[pc:pc+size]
+    require(read(0x07DC40,10) == bytes.fromhex('29ff0085060aaa7c2ada'),
+            'Private landing overworld floor dispatcher changed')
+    for attr in attributes:
+        require(attr in _PREVIEW_FLOOR_HANDLERS, 'Private landing contains a blocked collision quarter')
+        address, body = _PREVIEW_FLOOR_HANDLERS[attr]
+        require(read(0x07DA2A + attr*2,2) == address.to_bytes(2,'little') and
+                read(0x070000 | address,len(body)) == body,
+                'Private landing overworld floor handler changed')
+
+
 def private_preview_cache(source, document, landing, recipe):
     """Derive a complete interior A0 cache; no allocation or gameplay grant.
 
     Reuse current Small-area transition lowering and the qualified cached-exit
-    ABI. This first preview refuses camera clamping and nonzero collision; it
+    ABI. This first preview refuses camera clamping and unbound collision; it
     does not invent a native entrance or transplant the Goron coordinates.
     """
     import struct
@@ -496,11 +520,12 @@ def private_preview_cache(source, document, landing, recipe):
     def attributes(tile_id):
         words = struct.unpack('<4H', source[atlas + tile_id * 8:atlas + tile_id * 8 + 8])
         return [source[0x71459 + (word & 0x1FF)] for word in words]
+    clearance = set()
     for yy in range(y - 4, y + 5):
         for xx in range(x - 4, x + 5):
-            require(0 <= xx < 32 and 0 <= yy < 32 and
-                    attributes(grid[yy * 32 + xx]) == [0, 0, 0, 0],
-                    'Private landing clearance contains a blocked collision quarter')
+            require(0 <= xx < 32 and 0 <= yy < 32, 'Private landing clearance leaves its map')
+            clearance.update(attributes(grid[yy * 32 + xx]))
+    _preview_floor_handlers(source, clearance)
     pilot = N.plan_private_pilot_boundaries(document, [
         dict(parent_map_id=a, size='small', maps=[a]) for a in (0xA0, 0xA1)])
     view = N.private_pilot_document(document, pilot)
@@ -522,6 +547,7 @@ def private_preview_cache(source, document, landing, recipe):
     return cache, dict(map_id=0xA0, parent_map=0xA0, region_key=landing['region_key'],
         local_pixel=list(point), world_pixel=[px, py], scroll=[sx, sy], tilemap_origin=origin,
         tile16_id=tile, tile_attributes=attributes(tile), clear_radius=4,
+        clearance_attributes=sorted(clearance),
         native_exit_walk_y=19, stable_after_walk=[px, py + 19],
         cache_sha256=hashlib.sha256(cache).hexdigest(), native_gameplay_verified=False)
 
@@ -613,6 +639,8 @@ def verify_compiled_checkpoint(root, base_rom, image, symbols, *, require_prefix
     registry = runtime_registry(base_rom, (root/'Overworld/goron_checkpoint.asm').read_text(),
                                 private_plan=private_plan, verified_bindings=verified_bindings,
                                 expected_cache=expected_cache)
+    if private_plan is not None:
+        _preview_floor_handlers(image, _PREVIEW_FLOOR_HANDLERS)
     def symbol(name):
         key = 'Oracle_'+name
         require(key in symbols, 'Missing compiled checkpoint consumer '+key)

@@ -538,6 +538,11 @@ class PrivateCheckpointCacheTests(unittest.TestCase):
         self.transfer = T
         source = bytearray(0x200000)
         source[0x865:0x868] = (0xBD8000).to_bytes(3,'little')
+        def put(address,raw):
+            pc=((address>>16)&0x7F)*0x8000+(address&0x7FFF);source[pc:pc+len(raw)]=raw
+        put(0x07DC40,bytes.fromhex('29ff0085060aaa7c2ada'))
+        for attr,(address,body) in C._PREVIEW_FLOOR_HANDLERS.items():
+            put(0x07DA2A+attr*2,address.to_bytes(2,'little'));put(0x070000|address,body)
         self.source = bytes(source)
         self.document = TerrainDocument(profile={},maps=((0xC82,)*1024,)*32,
             properties=tuple(copy.deepcopy(DEFAULT_PROPERTIES) for _ in range(32)))
@@ -586,6 +591,24 @@ class PrivateCheckpointCacheTests(unittest.TestCase):
         for recipe in ({'A0':{}},dict(self.recipe,A2={}),{'A0':{'area_gfx':True},'A1':{}}):
             with self.assertRaisesRegex(ValueError,'runtime recipe'):
                 C.private_preview_cache(self.source,self.document,self.landing,recipe)
+
+    def test_actual_ow_diggable_clearance_is_safe_but_dispatch_changes_refuse(self):
+        import struct
+        source=bytearray(self.source);source[0x71459+1]=0x48
+        at=0x1E8000+5*8;source[at:at+8]=struct.pack('<4H',1,1,1,1)
+        grid=list(self.document.maps[0]);grid[14*32+12]=5
+        doc=replace(self.document,maps=(tuple(grid),*self.document.maps[1:]))
+        landing=dict(self.landing,source_rom_sha256=hashlib.sha256(source).hexdigest(),
+            document_sha256=self.transfer._document_identity(doc),
+            grid_sha256=hashlib.sha256(struct.pack('<1024H',*grid)).hexdigest())
+        _,derived=C.private_preview_cache(bytes(source),doc,landing,self.recipe)
+        self.assertEqual(derived['clearance_attributes'],[0,0x48])
+        # The UW table has different semantics for04. OW must retain its own
+        # real dispatcher and each selected handler, not an unchecked whitelist.
+        pc=((0x07DC47>>16)&0x7F)*0x8000+(0x07DC47&0x7FFF);source[pc+1]^=1
+        landing['source_rom_sha256']=hashlib.sha256(source).hexdigest()
+        with self.assertRaisesRegex(ValueError,'floor dispatcher changed'):
+            C.private_preview_cache(bytes(source),doc,landing,self.recipe)
 
     def test_live_binder_refuses_an_engine_without_checkpoint_source_selection(self):
         from unittest import mock
