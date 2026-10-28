@@ -496,5 +496,104 @@ Checkpoint_EnterPreparedCache = $348000
         self.assertNotEqual(refused.returncode,0)
         self.assertIn('requires selected pair boundaries',refused.stdout+refused.stderr)
 
+    def test_private_cli_dispatches_reconstructed_context_and_reports_data_scope(self):
+        """CLI plumbing only; mocked binder grants no actual private source."""
+        import contextlib
+        import io
+        from unittest import mock
+        import asm_source
+        (self.root/'Overworld').mkdir()
+        (self.root/'Overworld/goron_checkpoint.asm').write_text(self.goron_source)
+        prepared_dir=self.root/'Data/Generated/lyra_project'
+        prepared_dir.mkdir(parents=True)
+        base=self.root/'source.sfc';base.write_bytes(self.source)
+        selection=dict(plan_binding={'path':'/diagnostic/plan','sha256':'1'*64},
+                       landing_binding={'path':'/diagnostic/landing','sha256':'2'*64})
+        prepared=dict(runtime_scope='seeded_checkpoint_preview',checkpoint_preview=selection,
+                      project='/diagnostic/project',request='/diagnostic/request',current_source_profile={})
+        (prepared_dir/'prepare.json').write_text(json.dumps(prepared))
+        flags=dict(REGIONAL_CHECKPOINTS_ENABLED=1,REGIONAL_CHECKPOINTS_BOUND=1,
+                   DISABLE_OVERWORLD=0,LYRA_PRIVATE_CHECKPOINT_ENABLED=1)
+        context=dict(plan=self.plan,bindings=self.bindings,cache_hex=self.cache.hex())
+        output=io.StringIO()
+        with mock.patch.object(sys,'argv',['checkpoint_registry','--root',str(self.root),'--base-rom',str(base)]), \
+             mock.patch.object(asm_source,'_load_global_defines',return_value=flags), \
+             mock.patch.object(C,'qualify_native_control'), \
+             mock.patch.object(C,'bind_private_preview',return_value=(self.compile(),context)) as binder, \
+             contextlib.redirect_stdout(output):
+            C.main()
+        binder.assert_called_once_with('/diagnostic/project',base,'/diagnostic/request',{},
+                                       selection['plan_binding'],selection['landing_binding'])
+        result=json.loads(output.getvalue())
+        self.assertEqual(result['checkpoint_count'],2)
+        self.assertEqual(result['status'],'private_preview_source_bound')
+        self.assertFalse(result['production_admission'])
+
+
+class PrivateCheckpointCacheTests(unittest.TestCase):
+    def setUp(self):
+        import struct
+        import lyra_current_transfer as T
+        from lyra_project_terrain import TerrainDocument, DEFAULT_PROPERTIES
+        self.transfer = T
+        source = bytearray(0x200000)
+        source[0x865:0x868] = (0xBD8000).to_bytes(3,'little')
+        self.source = bytes(source)
+        self.document = TerrainDocument(profile={},maps=((0xC82,)*1024,)*32,
+            properties=tuple(copy.deepcopy(DEFAULT_PROPERTIES) for _ in range(32)))
+        self.landing = dict(kind='checkpoint.private_landing.v1',scope='seeded_A0_A1_only',
+            source_rom_sha256=hashlib.sha256(self.source).hexdigest(),
+            document_sha256=T._document_identity(self.document),map_id=0xA0,parent_map=0xA0,
+            local_pixel=[256,288],region_key=2,clear_radius=4,tile16_id=0xC82,
+            tile_attributes=[0,0,0,0],
+            grid_sha256=hashlib.sha256(struct.pack('<1024H',*self.document.maps[0])).hexdigest(),
+            geometry_source={'path':'/diagnostic-only/not-an-admission','sha256':'1'*64})
+        self.recipe = {'A0':{'area_gfx':0x42},'A1':{'area_gfx':0x42}}
+
+    def test_interior_point_uses_actual_special_grid_and_complete_cache(self):
+        import struct
+        cache,derived=C.private_preview_cache(self.source,self.document,self.landing,self.recipe)
+        words=struct.unpack('<25H',cache)
+        self.assertEqual(words[:10],(0xA0,0x16,0x8D0,0x88,0x920,0x100,0xA0,0x690,0x93F,0x107))
+        self.assertEqual(words[10:18],(0x800,0x91E,0,0x100,0x720,0xA00,0xFF00,0x200))
+        self.assertEqual(words[18:],(0x2000,0x62,0,0,0,0,0))
+        self.assertEqual(derived['world_pixel'],[256,2336])
+        self.assertEqual(derived['stable_after_walk'],[256,2355])
+        self.assertFalse(derived['native_gameplay_verified'])
+
+    def test_source_grid_identity_and_landing_role_must_match(self):
+        for key,value in (('source_rom_sha256','0'*64),('document_sha256','0'*64),
+                          ('grid_sha256','0'*64),('map_id',0xA1),('parent_map',0xA1),
+                          ('tile16_id',0),('region_key',True),('scope','ordinary')):
+            landing=copy.deepcopy(self.landing);landing[key]=value
+            with self.subTest(key=key),self.assertRaises(ValueError):
+                C.private_preview_cache(self.source,self.document,landing,self.recipe)
+
+    def test_edge_clamping_and_unselected_camera_layout_are_refused(self):
+        for point in ([112,288],[256,64],[384,288],[256,400],[257,288],[True,288]):
+            landing=copy.deepcopy(self.landing);landing['local_pixel']=point
+            with self.subTest(point=point),self.assertRaisesRegex(ValueError,'interior tile anchor'):
+                C.private_preview_cache(self.source,self.document,landing,self.recipe)
+        doc=replace(self.document,gameplay_areas=(dict(parent_map_id=0xA0,size='wide',maps=[0xA0,0xA1]),))
+        landing=dict(self.landing,document_sha256=self.transfer._document_identity(doc))
+        with self.assertRaises(ValueError):C.private_preview_cache(self.source,doc,landing,self.recipe)
+
+    def test_collision_clearance_and_recipe_cannot_silently_change(self):
+        changed=bytearray(self.source);changed[0x71459]=1
+        landing=dict(self.landing,source_rom_sha256=hashlib.sha256(changed).hexdigest())
+        with self.assertRaisesRegex(ValueError,'blocked collision quarter'):
+            C.private_preview_cache(bytes(changed),self.document,landing,self.recipe)
+        for recipe in ({'A0':{}},dict(self.recipe,A2={}),{'A0':{'area_gfx':True},'A1':{}}):
+            with self.assertRaisesRegex(ValueError,'runtime recipe'):
+                C.private_preview_cache(self.source,self.document,self.landing,recipe)
+
+    def test_live_binder_refuses_an_engine_without_checkpoint_source_selection(self):
+        from unittest import mock
+        with mock.patch.object(self.transfer,'verify_transfer',return_value=({},self.source,self.document)), \
+             mock.patch.object(self.transfer,'verify_current_native_source_profile'), \
+             self.assertRaisesRegex(ValueError,'enabled/source-bound engine profile'):
+            C.bind_private_preview('/diagnostic/project','/diagnostic/rom','/diagnostic/request',
+                {'selected_source':{'defines':{'ENABLE_REGIONAL_CHECKPOINTS':0}}},{},{})
+
 
 if __name__ == '__main__': unittest.main()

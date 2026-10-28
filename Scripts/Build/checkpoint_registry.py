@@ -445,6 +445,138 @@ def emit_runtime_asm(registry):
     return dict(constants=constants, tables='\n'.join(lines)+'\n')
 
 
+def private_preview_cache(source, document, landing, recipe):
+    """Derive a complete interior A0 cache; no allocation or gameplay grant.
+
+    Reuse current Small-area transition lowering and the qualified cached-exit
+    ABI. This first preview refuses camera clamping and nonzero collision; it
+    does not invent a native entrance or transplant the Goron coordinates.
+    """
+    import struct
+    import lyra_current_transfer as T
+    import lyra_native_loaders as N
+    import lyra_project_admission as A
+    require(type(source) is bytes and len(source) in (0x200000, 0x400000),
+            'Private landing requires exact saved ROM bytes')
+    keys = {'kind', 'scope', 'source_rom_sha256', 'document_sha256', 'map_id',
+            'parent_map', 'local_pixel', 'region_key', 'clear_radius', 'tile16_id',
+            'tile_attributes', 'grid_sha256', 'geometry_source'}
+    require(type(landing) is dict and set(landing) == keys and
+            landing['kind'] == 'checkpoint.private_landing.v1' and
+            landing['scope'] == 'seeded_A0_A1_only' and
+            landing['source_rom_sha256'] == hashlib.sha256(source).hexdigest() and
+            landing['document_sha256'] == T._document_identity(document),
+            'Private landing source/document binding differs')
+    require(type(landing['map_id']) is int and landing['map_id'] == 0xA0 and
+            type(landing['parent_map']) is int and landing['parent_map'] == 0xA0 and
+            type(landing['region_key']) is int and 0 < landing['region_key'] < 0xFFFF,
+            'Private landing must explicitly select A0 parent and region')
+    point = landing['local_pixel']
+    require(type(point) is list and len(point) == 2 and
+            all(type(n) is int and n % 16 == 0 for n in point) and
+            120 <= point[0] <= 376 and 80 <= point[1] <= 398 and
+            type(landing['clear_radius']) is int and landing['clear_radius'] == 4,
+            'Private landing requires an interior tile anchor and four-tile clearance')
+    require(type(recipe) is dict and set(recipe) == {'A0', 'A1'} and
+            all(type(recipe[k]) is dict for k in recipe) and
+            type(recipe['A0'].get('area_gfx')) is int and 0 <= recipe['A0']['area_gfx'] <= 255,
+            'Private landing requires the same selected A0/A1 runtime recipe')
+    grid = document.maps[0]
+    require(len(grid) == 1024 and all(type(t) is int and 0 <= t < 4096 for t in grid) and
+            landing['grid_sha256'] == hashlib.sha256(struct.pack('<1024H', *grid)).hexdigest(),
+            'Private landing grid differs')
+    x, y = (n // 16 for n in point)
+    tile = grid[y * 32 + x]
+    require(type(landing['tile16_id']) is int and landing['tile16_id'] == tile and
+            landing['tile_attributes'] == [0, 0, 0, 0] and
+            all(type(n) is int for n in landing['tile_attributes']),
+            'Private landing must bind plain walkable quarters')
+    atlas = A.pc(int.from_bytes(source[0x865:0x868], 'little'))
+    require(atlas + 0x8000 <= len(source), 'Private landing Tile16 atlas is truncated')
+    def attributes(tile_id):
+        words = struct.unpack('<4H', source[atlas + tile_id * 8:atlas + tile_id * 8 + 8])
+        return [source[0x71459 + (word & 0x1FF)] for word in words]
+    for yy in range(y - 4, y + 5):
+        for xx in range(x - 4, x + 5):
+            require(0 <= xx < 32 and 0 <= yy < 32 and
+                    attributes(grid[yy * 32 + xx]) == [0, 0, 0, 0],
+                    'Private landing clearance contains a blocked collision quarter')
+    pilot = N.plan_private_pilot_boundaries(document, [
+        dict(parent_map_id=a, size='small', maps=[a]) for a in (0xA0, 0xA1)])
+    view = N.private_pilot_document(document, pilot)
+    row = A.gameplay_transition_rows(source, view, private_pilot=True)[0xA0]
+    properties = N.current_property_rows(document, source=source)[0xA0]
+    px, py = point[0] + row['transition_x'], point[1] + row['transition_y']
+    sx, sy = px - 120, py - 80
+    # Both existing source-qualified cache records (Goron and SwordWarp) use
+    # this 16px-aligned stripe origin; 8px alignment would produce wrong tiles.
+    origin = ((sy & 0x1F0) << 3) | ((sx & 0x1F0) >> 3)
+    words = [0xA0, 0x16, sy, sx, py, px, 0xA0, origin, py + 31, px + 7,
+             row['transition_y'], row['transition_y'] + 0x11E,
+             row['transition_x'], row['transition_x'] + 0x100,
+             row['scroll_north'], (row['scroll_north'] + 0x2E0) & 0xFFFF,
+             row['scroll_west'], (row['scroll_west'] + 0x300) & 0xFFFF,
+             0x2000, (recipe['A0']['area_gfx'] | 0x20) |
+             properties['special_sprite_gfx'] << 8, 0, 0, 0, 0, 0]
+    cache = struct.pack('<25H', *words)
+    return cache, dict(map_id=0xA0, parent_map=0xA0, region_key=landing['region_key'],
+        local_pixel=list(point), world_pixel=[px, py], scroll=[sx, sy], tilemap_origin=origin,
+        tile16_id=tile, tile_attributes=attributes(tile), clear_radius=4,
+        native_exit_walk_y=19, stable_after_walk=[px, py + 19],
+        cache_sha256=hashlib.sha256(cache).hexdigest(), native_gameplay_verified=False)
+
+
+def bind_private_preview(project, base_rom, request_path, profile, plan_binding, landing_binding):
+    """Reconstruct the live private registry; callers cannot copy plan claims."""
+    from pathlib import Path
+    import lyra_current_transfer as T
+    import lyra_project_prepare as Q
+    request, source, document = T.verify_transfer(request_path, project, base_rom)
+    T.verify_current_native_source_profile(profile, source, document)
+    defines = profile['selected_source']['defines']
+    require(defines.get('ENABLE_REGIONAL_CHECKPOINTS') == 1 and
+            defines.get('ENABLE_REGIONAL_CHECKPOINT_SOURCE_BINDING') == 1,
+            'Private checkpoint requires its enabled/source-bound engine profile')
+    plan = json.loads(Q.read_bound(plan_binding))
+    landing = json.loads(Q.read_bound(landing_binding))
+    ledger = json.loads(Path(T.R.LEDGER).read_bytes())
+    policies = [p for p in ledger.get('current_save_transfer_policies', [])
+                if p['id'] == request['allocation_policy_id']]
+    require(len(policies) == 1, 'Private checkpoint allocation policy is absent')
+    runtime = policies[0].get('current_runtime', {})
+    require(runtime.get('kind') == 'lyra.private_checkpoint_preview_policy.v1' and
+            runtime.get('scope') == 'seeded_checkpoint_preview' and
+            runtime.get('private_checkpoint') == dict(plan=plan_binding, landing=landing_binding),
+            'Private checkpoint policy bindings differ')
+    recipe_binding = runtime['tail_recipe']
+    recipe = json.loads(Q.read_bound(recipe_binding))
+    engine = Path(profile['selected_source']['root'])
+    require(hashlib.sha256((engine / 'Scripts/Build/checkpoint_registry.py').read_bytes()).hexdigest()
+            == hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            'Private checkpoint binder differs from the selected engine source')
+    required_sources = ('Scripts/Build/checkpoint_registry.py', 'Overworld/checkpoint_state.asm',
+                        'Overworld/goron_checkpoint.asm', 'Overworld/ZSCustomOverworld.asm',
+                        'Oracle_main.asm', 'Core/sram.asm')
+    inputs = [plan_binding, landing_binding, recipe_binding, Q.bound(T.R.LEDGER),
+              *[Q.bound(engine / name) for name in required_sources]]
+    geometry = Q.bound(engine / 'Overworld/ZSCustomOverworld.asm')
+    require(landing['geometry_source'] == geometry, 'Private camera source binding differs')
+    Q.read_bound(geometry)
+    cache, derived = private_preview_cache(source, document, landing, recipe)
+    bindings = dict(source_rom_sha256=hashlib.sha256(source).hexdigest(),
+        document_sha256=T._document_identity(document), transfer_id=request['transfer_id'],
+        live={key: request['live'][key] for key in ('generation', 'operation_id', 'save_receipt')},
+        selected_pair=[0xA0, 0xA1], cache_source=landing_binding)
+    registry = runtime_registry(source, (engine / 'Overworld/goron_checkpoint.asm').read_text(),
+        private_plan=plan, verified_bindings=bindings, expected_cache=cache)
+    require(registry.records[1].region_key == landing['region_key'],
+            'Private checkpoint landing and registry region differ')
+    for row in inputs:
+        Q.read_bound(row)
+    return registry, dict(plan=plan, bindings=bindings, cache_hex=cache.hex(),
+                          inputs=inputs, derived=derived)
+
+
 def verify_runtime_tables(registry, image, symbols):
     """Check actual placed tables against all explicit registry bytes, read-only."""
     require(isinstance(registry, Registry) and type(image) is bytes,
@@ -554,14 +686,29 @@ def main():
     base = args.base_rom.read_bytes()
     qualify_native_control(base)
     registry = goron_control_registry(base, (args.root/'Overworld/goron_checkpoint.asm').read_text())
+    private = {}
+    if flags.get('LYRA_PRIVATE_CHECKPOINT_ENABLED') == 1:
+        prepared = json.loads((args.root/'Data/Generated/lyra_project/prepare.json').read_bytes())
+        selection = prepared.get('checkpoint_preview')
+        require(prepared.get('runtime_scope') == 'seeded_checkpoint_preview' and
+                type(selection) is dict and set(selection) == {'plan_binding', 'landing_binding'},
+                'Private checkpoint requires a reconstructed scoped preparation')
+        registry, context = bind_private_preview(prepared['project'], args.base_rom,
+            prepared['request'], prepared['current_source_profile'],
+            selection['plan_binding'], selection['landing_binding'])
+        private = dict(private_plan=context['plan'], verified_bindings=context['bindings'],
+                       expected_cache=bytes.fromhex(context['cache_hex']))
     if args.rom:
         require(args.symbols is not None, 'Checkpoint runtime requires exact compiled symbols')
-        report = verify_compiled_checkpoint(args.root, base, args.rom.read_bytes(), read_symbols(args.symbols))
+        report = verify_compiled_checkpoint(args.root, base, args.rom.read_bytes(), read_symbols(args.symbols),
+                                           **private)
     else:
         report = dict(selected=True, status='source_control_bound', source_rom_sha256=registry.source_rom_sha256,
                       registry_sha256=registry.content_sha256, checkpoint_count=len(registry.records),
                       claim='native source-qualified Goron control; no Lyra entry or gameplay qualification')
-    import json
+        if private:
+            report.update(status='private_preview_source_bound', production_admission=False,
+                          claim='Bound seeded A0 preview data only; native gameplay qualification pending')
     print(json.dumps(report))
 
 
