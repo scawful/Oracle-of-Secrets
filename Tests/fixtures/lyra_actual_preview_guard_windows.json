@@ -1,0 +1,206 @@
+{
+  "kind": "lyra.actual_guard_sparse_fixture.v1",
+  "provenance": {
+    "guard_source_commit": "f45ce5fe480f3b82bad8451fab0c24e9da6101af",
+    "original_emitted_rom_sha256": "d356f7cc3b440be1d6b2c9f04adec8f4584060218fefc8f5f287597b3bcd466f",
+    "original_source_rom_sha256": "1a5f1ceb93901f0d51af1e79ecb6358b31aa4d04ac9191a14ab33f41501c1f36",
+    "home_native_control_sha256": "bbd6d77db236fbac25b2ff65b2415707f8840afe08056f59d46c9a4934cfe868",
+    "home_source_commit": "9d8dd38a5dccddb1ab4b9dd52aef45a9f389f50e",
+    "combination": "actual emitted windows + actual qualified Home37; sparse diagnostic combination, no native or authority proof"
+  },
+  "source_windows": [
+    {
+      "snes": 164793,
+      "payload_hex": "c78319afb9eda5110aaafcb9836b"
+    },
+    {
+      "snes": 164807,
+      "payload_hex": "a9828599"
+    },
+    {
+      "snes": 164811,
+      "payload_hex": "9cf403226a8502a510c908d00520a3e4800320bce92263c402a9ff8f6ff37e2275db0d"
+    },
+    {
+      "snes": 165314,
+      "payload_hex": "001002000210121004100610101014100a1016105d0064000e10081018108001"
+    },
+    {
+      "snes": 165541,
+      "payload_hex": "2059ed"
+    },
+    {
+      "snes": 173173,
+      "payload_hex": "e230a511"
+    },
+    {
+      "snes": 173177,
+      "payload_hex": "0aaafc0da4"
+    },
+    {
+      "snes": 175052,
+      "payload_hex": "20e8ef"
+    },
+    {
+      "snes": 176624,
+      "payload_hex": "2059ed6b201eafc6116b"
+    },
+    {
+      "snes": 176663,
+      "payload_hex": "a58ac980"
+    },
+    {
+      "snes": 176667,
+      "payload_hex": "9008641164b09c00026b"
+    },
+    {
+      "snes": 176922,
+      "payload_hex": "20c5ee"
+    },
+    {
+      "snes": 187786,
+      "payload_hex": "040112004a00e1005f00ffff53003c0056002800d6000c0058005900f200f3006800e300e60011009800fa00f900e700f000fb002701fd00ed00eb00f100ff00ef00d4002000ea002000f800e400c90084008300e80076008600db000300fe00df00f500f40055002400230014000201d00008002f00d10015002c00000002100500f6009000ff0f17010f00000000000000000000008001810182018901"
+    },
+    {
+      "snes": 187944,
+      "payload_hex": "330e10182f0f501d0b1e385e0b0b18180b0b2d023625252e15072d3236050d0d04052325401505634b4b164b4b0600230456560b4640405c43113344570e001840707a0b765d000000000080808188"
+    },
+    {
+      "snes": 191205,
+      "payload_hex": "00000b00060010001e0038002f003600400018000f00150033000a00350055007600"
+    },
+    {
+      "snes": 191885,
+      "payload_hex": "20c5ee"
+    },
+    {
+      "snes": 191929,
+      "payload_hex": "2059eda9"
+    },
+    {
+      "snes": 192199,
+      "payload_hex": "204af5"
+    },
+    {
+      "snes": 192490,
+      "payload_hex": "204af5"
+    },
+    {
+      "snes": 195855,
+      "payload_hex": "20cbf7"
+    },
+    {
+      "snes": 702803,
+      "payload_hex": "22f0b102"
+    },
+    {
+      "snes": 173620,
+      "payload_hex": "0200feff1000f0ff"
+    }
+  ],
+  "compiled_windows": [
+    {
+      "snes": 164807,
+      "payload_hex": "5cd7c0e0"
+    },
+    {
+      "snes": 173173,
+      "payload_hex": "5c50c1e0"
+    },
+    {
+      "snes": 175960,
+      "payload_hex": "e220a511c923f05ec924f05ac92cf056c220a58ac98000904da5a0c98201d009e220a9018d2d01c220a5a0c98001d013af00f37e294000d0082200d7e0aa4c1bb08012a29400a5a0c98101f0f1a29300c98901f0e9a9ff00858ca91600851ce230649ae61160c2202200d7e0aaa58ad00caf00f37e294000f003a29e00af018228f01ca58ac97000d015aff0f27e292000d00ca29f00e220a9018d2d01c220af00822829ff00f00fafc5f37e29ff00c90200b003a29f00af0ee07e29ff00f003a29f005c73c1e0eaeaeaea8484868a868ca58438e9000429800f0aeb8588a58438e91000293e004a85869c18049c10049c1604e230a9828599a916851ca901851da68ca972e097f02ee094f02ae093f026e09df022e09ef01ee09ff01aa920e095f014e09cf010e096f00ca611e023f006e02cf002641d859a200dfda58cc994d006a5e7090185e7c220af13c27e858aaf15c27e8584af17c27e8588af19c27e8586af1bc27e8d1804af1dc27e8d1004af1fc27e8d1604e22060"
+    },
+    {
+      "snes": 176663,
+      "payload_hex": "5c1cc1e0"
+    },
+    {
+      "snes": 191929,
+      "payload_hex": "5c35c1e0"
+    },
+    {
+      "snes": 3472468,
+      "payload_hex": "afc8f37e48a9008fc8f37e8fcaf37e9c0a019c0e01a9018daa0422088202688fc8f37e386b"
+    },
+    {
+      "snes": 14729216,
+      "payload_hex": "08d8c23048da5a9829ff00c90800b051890100d04ca58a29ff00c9a0009025f014c9a100d03bc00200d036ad0007c94200d02e8024c00000d027ad0007c94000d01f801598aaa58a29c0000a0d0007187f34a602c94001b008c2307afa6828186bc2307afa6828386b08c22048c9a200b0046828186b6828386b08c230daa5a0c90401f033c98001b02ec900019029af40c17ec9a200b02daaaf4cc17ec9a200b023c9a000b005e0a0009027488ac301f00368801068801ba29c00df8add02f008caca10f6fa28386b8a4aaabf28de0229ff00fa28186b08c23048da5aa51029ff00c90800d00c227ac0e0b0122269c0e0b00c7afa6828a98285995ccb83027afa68282254fc346008c22048a58a2269c0e0b0046828186b6828386b2208c1e0b008a58ac9805c1bb2025c1db202f4f8b15c59ed02082208c1e0b00e28222ec1e0a910851064b0641160282254fc3460e23008c23048da5aa58a2269c0e0b00a7afa6828a5115c79a4027afa68282254fc346b08488a2269c0e0b0096828e0ff005c23b0026828e0ff005cadaf02"
+    }
+  ],
+  "labels": {
+    "LyraCall_PrivatePilotColdResume": 14729453,
+    "LyraCall_PrivatePilotEntry": 14729453,
+    "LyraCall_PrivatePilotFullLoad": 14729526,
+    "LyraCall_PrivatePilotMirror": 14729500,
+    "LyraCall_PrivatePilotSubLoad": 14729590,
+    "LyraHost_Overworld_ReloadSubscreenOverlay_Interupt": 175960,
+    "LyraHost_Overworld_ReloadSubscreenOverlay_Interupt_End": 176338,
+    "LyraPilot_ColdResumeBlocked": 14729471,
+    "LyraPilot_EntryBlocked": 14729471,
+    "LyraPilot_FullLoadBlocked": 14729546,
+    "LyraPilot_MirrorBlocked": 14729514,
+    "LyraPilot_SubDispatchSite": 176155,
+    "LyraPilot_SubLoadBlocked": 14729605,
+    "LyraPilot_SubNativeAllowed": 176163,
+    "LyraPilot_SubNativeNoOverlay": 176045,
+    "Lyra_PrivatePilotCanEnter": 14729321,
+    "Lyra_PrivatePilotCanEnter_End": 14729338,
+    "Lyra_PrivatePilotCanEnter_blocked": 14729334,
+    "Lyra_PrivatePilotCanScroll": 14729216,
+    "Lyra_PrivatePilotCanScroll_End": 14729321,
+    "Lyra_PrivatePilotCanScroll_allowed": 14729305,
+    "Lyra_PrivatePilotCanScroll_blocked": 14729313,
+    "Lyra_PrivatePilotCanScroll_first": 14729269,
+    "Lyra_PrivatePilotCanScroll_native": 14729284,
+    "Lyra_PrivatePilotCurrentMapAllowed": 14729480,
+    "Lyra_PrivatePilotCurrentMapAllowed_End": 14729500,
+    "Lyra_PrivatePilotCurrentMapAllowed_blocked": 14729496,
+    "Lyra_PrivatePilotEntryGate": 14729431,
+    "Lyra_PrivatePilotEntryGate_End": 14729480,
+    "Lyra_PrivatePilotEntryGate_allowed": 14729459,
+    "Lyra_PrivatePilotEntryGate_blocked": 14729471,
+    "Lyra_PrivatePilotEntryMap": 14729338,
+    "Lyra_PrivatePilotEntryMap_End": 14729431,
+    "Lyra_PrivatePilotEntryMap_exitFound": 14729417,
+    "Lyra_PrivatePilotEntryMap_exitTable": 14729400,
+    "Lyra_PrivatePilotEntryMap_found": 14729427,
+    "Lyra_PrivatePilotEntryMap_missing": 14729413,
+    "Lyra_PrivatePilotEntryMap_next": 14729403,
+    "Lyra_PrivatePilotEntryMap_same": 14729397,
+    "Lyra_PrivatePilotEntryMap_samePilot": 14729388,
+    "Lyra_PrivatePilotFullFrameGate": 14729552,
+    "Lyra_PrivatePilotFullFrameGate_End": 14729587,
+    "Lyra_PrivatePilotFullFrameGate_blocked": 14729578,
+    "Lyra_PrivatePilotFullNativeCall": 14729518,
+    "Lyra_PrivatePilotFullNativeCall_End": 14729525,
+    "Lyra_PrivatePilotFullNearGate": 14729525,
+    "Lyra_PrivatePilotFullNearGate_End": 14729552,
+    "Lyra_PrivatePilotFullNearGate_blocked": 14729546,
+    "Lyra_PrivatePilotMirrorGate": 14729500,
+    "Lyra_PrivatePilotMirrorGate_End": 14729518,
+    "Lyra_PrivatePilotMirrorGate_blocked": 14729514,
+    "Lyra_PrivatePilotSubGate": 14729587,
+    "Lyra_PrivatePilotSubGate_End": 14729614,
+    "Lyra_PrivatePilotSubGate_blocked": 14729605,
+    "Checkpoint_EnterHome": 3472468
+  },
+  "reviewed": {
+    "kind": "lyra.private_checkpoint_preview_binding.v1",
+    "scope": "seeded_A0_A1_only",
+    "source_rom_sha256": "74cf2021506c09187ebfefe98ba68ac1f8d2ec5096096ebb7b61ea6abb542808",
+    "guard_source_sha256": "dd2d768d437a83ef4f38b98e4b84acfd8cc2f1e5bb4ed7997f4ea64650bb09f5",
+    "code_snes": [
+      14729216,
+      14729614
+    ],
+    "code_sha256": "d11e551e5d5b2fbde72d4dc5c72bcc1a0477667ae1233e6040a038060ca777d4",
+    "overlay_host_snes": [
+      175960,
+      176338
+    ],
+    "overlay_host_sha256": "04700a3d7175e8f238b034ffac063e27d7e9b0201f240b4e8ac7370f1f99db07",
+    "home_snes": 3472468,
+    "home_sha256": "9ec11d6c56625542e12d33dfeba3accc7590e710bb7c154faa0a619324edd998"
+  }
+}

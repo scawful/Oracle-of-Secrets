@@ -299,4 +299,134 @@ class PrivatePilotComposerTest(unittest.TestCase):
             L.plan_current_actor_streams(f.source,f.document,current_source_profile=f.profile,private_pilot=pilot)
 
 
+def actual_preview_fixture(*,combined=False):
+    """Actual emitted windows in a sparse diagnostic image, never a ROM grant.
+
+    Combined mode adds the existing artificial core-consumer fixture solely
+    to exercise the common inspection path. It is not actual core assembly.
+    """
+    data=json.loads((ROOT/'Tests/fixtures/lyra_actual_preview_guard_windows.json').read_bytes())
+    source=bytearray(0x200000)
+    for row in data['source_windows']:
+        raw=bytes.fromhex(row['payload_hex']);pc=L.A.pc(row['snes']);source[pc:pc+len(raw)]=raw
+    source=bytes(source)
+    if combined:
+        compiled,symbols=consumer_fixture(source,0xE0B000)
+        symbols=symbols.replace(b'E0:B800 Lyra_CurrentNativeCodeEnd',b'E0:C18E Lyra_CurrentNativeCodeEnd')
+    else:compiled,symbols=source+bytes(0x200000),b'[labels]\n'
+    compiled=bytearray(compiled)
+    for row in data['compiled_windows']:
+        raw=bytes.fromhex(row['payload_hex']);pc=L.A.pc(row['snes']);compiled[pc:pc+len(raw)]=raw
+    labels=data['labels'].copy()
+    if combined:
+        # Replace only this artificial core stub with its actual emitted host.
+        replaced={'LyraHost_Overworld_ReloadSubscreenOverlay_Interupt',
+                  'LyraHost_Overworld_ReloadSubscreenOverlay_Interupt_End'}
+        symbols=b''.join(row for row in symbols.splitlines(keepends=True)
+                         if row.decode().strip().split(' ')[-1] not in replaced)
+    if combined:
+        host=L._labels(symbols)['LyraHost_OverworldHandleTransitions'];call=host+0x40;blocked=host+0x20
+        helper=labels['Lyra_PrivatePilotCanScroll']
+        raw=b'\x22'+helper.to_bytes(3,'little')+bytes([0xB0,(blocked-call-6)&255])
+        compiled[L.A.pc(call):L.A.pc(call)+6]=raw
+        labels.update(LyraCall_PrivatePilotBoundary=call,LyraPilot_BoundaryBlocked=blocked)
+    symbols+=(''.join(f'{a>>16:02X}:{a&65535:04X} {n}\n' for n,a in labels.items())).encode()
+    return bytes(compiled),symbols,dict(source=source,reviewed=copy.deepcopy(data['reviewed']),
+                                      mode='seeded_checkpoint_preview')
+
+
+class SeededCheckpointPreviewConsumerTest(unittest.TestCase):
+    @staticmethod
+    def inspect(rom,symbols,request):
+        return L.inspect_seeded_checkpoint_preview(rom,symbols,**request)
+
+    def test_actual_guard_windows_have_explicit_scope_and_no_readiness_authority(self):
+        rom,symbols,request=actual_preview_fixture();proof=self.inspect(rom,symbols,request)
+        self.assertTrue(proof['guards_verified']);self.assertEqual(proof['home_bytes'],37)
+        self.assertEqual(len(proof['transport_maps']),17);self.assertEqual(len(proof['credits_held']),13)
+        self.assertIn('Warp/boat ingress',proof['held_routes'])
+        for flag in ('current_core_inspected','allocation_granted','producer_enforcement_verified',
+                     'ordinary_build_ready','runtime_admission','production_admission',
+                     'native_gameplay_verified','save_reopen_verified'):
+            self.assertIs(proof[flag],False,flag)
+
+    def test_each_emitted_helper_byte_refuses_even_with_recomputed_code_hash(self):
+        rom,symbols,request=actual_preview_fixture();lo,hi=request['reviewed']['code_snes'];pc=L.A.pc(lo)
+        self.assertEqual(hi-lo,398)
+        for offset in range(hi-lo):
+            with self.subTest(offset=offset):
+                changed=bytearray(rom);changed[pc+offset]^=1;pin=copy.deepcopy(request)
+                pin['reviewed']['code_sha256']=L.R.sha(changed[pc:pc+hi-lo])
+                with self.assertRaisesRegex(ValueError,'PRIVATE_PREVIEW_BYTES_CHANGED'):
+                    self.inspect(bytes(changed),symbols,pin)
+
+    def test_home_fixed_hooks_and_sub_dispatch_refuse_mutations(self):
+        rom,symbols,request=actual_preview_fixture();labels=L._labels(symbols)
+        sites=list(range(0x34FC54,0x34FC54+37))
+        sites += [a+i for a in (0x0283C7,0x02B217,0x02EDB9,0x02A475) for i in range(4)]
+        for name,length in (('LyraPilot_SubDispatchSite',8),('LyraPilot_SubNativeAllowed',6),
+                            ('LyraPilot_SubNativeNoOverlay',17)):
+            sites += list(range(labels[name],labels[name]+length))
+        for at in sites:
+            with self.subTest(snes=hex(at)):
+                changed=bytearray(rom);changed[L.A.pc(at)]^=1;pin=copy.deepcopy(request)
+                lo,hi=pin['reviewed']['overlay_host_snes']
+                pin['reviewed']['overlay_host_sha256']=L.R.sha(changed[L.A.pc(lo):L.A.pc(lo)+hi-lo])
+                with self.assertRaises(ValueError):self.inspect(bytes(changed),symbols,pin)
+
+    def test_native_continuation_and_direction_source_cannot_be_rebound_to_changed_bytes(self):
+        rom,symbols,request=actual_preview_fixture()
+        for at in (0x0283B9,0x0283CB,0x02A479,0x02B21B,0x02A634,0x02B1F9):
+            with self.subTest(snes=hex(at)):
+                changed=bytearray(rom);changed[L.A.pc(at)]^=1
+                source=bytearray(request['source']);source[L.A.pc(at)]^=1
+                pin=copy.deepcopy(request);pin['source']=bytes(source)
+                pin['reviewed']['source_rom_sha256']=L.R.sha(source)
+                with self.assertRaises(ValueError):self.inspect(bytes(changed),symbols,pin)
+
+    def test_transport_destinations_refuse_tail_invalid_and_high_word_aliases(self):
+        rom,symbols,request=actual_preview_fixture()
+        for target in (0xA0,0xA1,0xBF,0xC0,0x100,0xFFFF):
+            with self.subTest(target=hex(target)):
+                at=L.A.pc(0x02EAE5);changed=bytearray(rom);source=bytearray(request['source'])
+                changed[at:at+2]=source[at:at+2]=target.to_bytes(2,'little')
+                pin=copy.deepcopy(request);pin['source']=bytes(source)
+                pin['reviewed']['source_rom_sha256']=L.R.sha(source)
+                with self.assertRaises(ValueError):self.inspect(bytes(changed),symbols,pin)
+
+    def test_missing_redirected_and_conflicting_symbols_refuse(self):
+        rom,symbols,request=actual_preview_fixture()
+        for name in ('LyraCall_PrivatePilotColdResume','LyraPilot_FullLoadBlocked',
+                     'LyraPilot_SubDispatchSite','Checkpoint_EnterHome'):
+            line=next(row for row in symbols.splitlines(keepends=True) if row.rstrip().endswith(b' '+name.encode()))
+            for altered in (symbols.replace(line,b''),symbols.replace(line,b'E0:C010 '+name.encode()+b'\n'),
+                            symbols+b'E0:C010 '+name.encode()+b'\n'):
+                with self.subTest(name=name),self.assertRaises(ValueError):self.inspect(rom,altered,request)
+
+    def test_explicit_mode_and_complete_current_review_binding_required(self):
+        rom,symbols,request=actual_preview_fixture()
+        for change in ({'mode':True},{'mode':'ordinary'},{'reviewed':{}},
+                       {'reviewed':dict(request['reviewed'],scope='full32')}):
+            with self.assertRaises(ValueError):self.inspect(rom,symbols,dict(request,**change))
+        for name in ('source_rom_sha256','guard_source_sha256','code_sha256','overlay_host_sha256','home_sha256'):
+            pin=copy.deepcopy(request);pin['reviewed'][name]='0'*64
+            with self.subTest(name=name),self.assertRaises(ValueError):self.inspect(rom,symbols,pin)
+        for value in (True,{},dict(request,extra=True)):
+            with self.assertRaisesRegex(ValueError,'EXPLICIT_REQUEST_REQUIRED'):
+                L.inspect_current_consumers(rom,symbols,checkpoint_preview=value)
+
+    def test_combined_opt_in_retains_core_and_default_remains_broad(self):
+        rom,symbols,request=actual_preview_fixture(combined=True)
+        result=L.inspect_current_consumers(rom,symbols,checkpoint_preview=request)
+        self.assertEqual(result['kind'],L.PREVIEW_CONSUMER_KIND)
+        self.assertTrue(result['current_core_inspected']);self.assertIn('private_pilot_boundary',result)
+        self.assertGreater(len(result['source_calls']),20);self.assertGreater(len(result['fixed_hooks']),20)
+        self.assertFalse(result['ordinary_build_ready']);self.assertFalse(result['broad_six_role_qualification'])
+        with self.assertRaisesRegex(ValueError,'PRIVATE_PILOT_INGRESS_UNBOUND'):
+            L.inspect_current_consumers(rom,symbols)
+        changed=bytearray(rom);changed[L.A.pc(0x02F59D)]^=1
+        with self.assertRaisesRegex(ValueError,'Current active hook differs'):
+            L.inspect_current_consumers(bytes(changed),symbols,checkpoint_preview=request)
+
+
 if __name__=='__main__':unittest.main()

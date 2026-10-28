@@ -1631,8 +1631,139 @@ def require_private_pilot_ingress(consumers):
     return proof
 
 
-def inspect_current_consumers(compiled, symbols):
+PREVIEW_CONSUMER_KIND='lyra.private_checkpoint_preview_consumers.v1'
+PREVIEW_HOME_BYTES=bytes.fromhex('afc8f37e48a9008fc8f37e8fcaf37e9c0a019c0e01a9018daa0422088202688fc8f37e386b')
+# Exact f45 Asar instruction bodies; only explicit long operands relocate.
+# These are code contracts, not invented runtime rows or admission authority.
+_PREVIEW_BODIES={
+'Lyra_PrivatePilotCanScroll': '08d8c23048da5a9829ff00c90800b051890100d04ca58a29ff00c9a0009025f014c9a100d03bc00200d036ad0007c94200d02e8024c00000d027ad0007c94000d01f801598aaa58a29c0000a0d0007187f34a602c94001b008c2307afa6828186bc2307afa6828386b',
+'Lyra_PrivatePilotCanEnter': '08c22048c9a200b0046828186b6828386b',
+'Lyra_PrivatePilotEntryMap': '08c230daa5a0c90401f033c98001b02ec900019029af40c17ec9a200b02daaaf4cc17ec9a200b023c9a000b005e0a0009027488ac301f00368801068801ba29c00df8add02f008caca10f6fa28386b8a4aaabf28de0229ff00fa28186b',
+'Lyra_PrivatePilotEntryGate': '08c23048da5aa51029ff00c90800d00c22{Lyra_PrivatePilotEntryMap}b01222{Lyra_PrivatePilotCanEnter}b00c7afa6828a98285995ccb83027afa682822{Checkpoint_EnterHome}60',
+'Lyra_PrivatePilotCurrentMapAllowed': '08c22048a58a22{Lyra_PrivatePilotCanEnter}b0046828186b6828386b',
+'Lyra_PrivatePilotMirrorGate': '22{Lyra_PrivatePilotCurrentMapAllowed}b008a58ac9805c1bb2025c1db202',
+'Lyra_PrivatePilotFullNativeCall': 'f4f8b15c59ed02',
+'Lyra_PrivatePilotFullNearGate': '0822{Lyra_PrivatePilotCurrentMapAllowed}b00e2822{Lyra_PrivatePilotFullNativeCall}a910851064b06411602822{Checkpoint_EnterHome}60',
+'Lyra_PrivatePilotFullFrameGate': 'e23008c23048da5aa58a22{Lyra_PrivatePilotCanEnter}b00a7afa6828a5115c79a4027afa682822{Checkpoint_EnterHome}6b',
+'Lyra_PrivatePilotSubGate': '08488a22{Lyra_PrivatePilotCanEnter}b0096828e0ff005c{LyraPilot_SubNativeAllowed}6828e0ff005c{LyraPilot_SubNativeNoOverlay}',
+}
+
+
+def inspect_seeded_checkpoint_preview(compiled,symbols,*,source,reviewed,mode):
+    """Strict opt-in emitted guard proof; never Save/registry/grant admission.
+
+    Reviewed pins must come from the caller's independently reviewed source
+    contract. Supplying this function with hashes does not grant authority.
+    Normal current reader/actor/event/BG inspection remains independently
+    mandatory; inspect_current_consumers(checkpoint_preview=...) retains it.
+    """
+    R.require(mode=='seeded_checkpoint_preview','PRIVATE_PREVIEW_EXPLICIT_MODE_REQUIRED')
+    R.require(type(compiled) is bytes and len(compiled)==0x400000 and type(source) is bytes
+              and len(source) in (0x200000,0x400000),'PRIVATE_PREVIEW_IMAGE_REQUIRED')
+    keys={'kind','scope','source_rom_sha256','guard_source_sha256','code_snes','code_sha256',
+          'overlay_host_snes','overlay_host_sha256','home_snes','home_sha256'}
+    R.require(type(reviewed) is dict and set(reviewed)==keys
+              and reviewed['kind']=='lyra.private_checkpoint_preview_binding.v1'
+              and reviewed['scope']=='seeded_A0_A1_only','PRIVATE_PREVIEW_REVIEW_BINDING_REQUIRED')
+    for key in ('source_rom_sha256','guard_source_sha256','code_sha256','overlay_host_sha256','home_sha256'):
+        R.require(type(reviewed[key]) is str and re.fullmatch('[0-9a-f]{64}',reviewed[key]) is not None,
+                  'PRIVATE_PREVIEW_INVALID_HASH: '+key)
+    guard=Path(__file__).resolve().parents[2]/'Overworld/lyra_private_pilot.asm'
+    R.require(reviewed['source_rom_sha256']==R.sha(source)
+              and reviewed['guard_source_sha256']==R.sha(guard.read_bytes()),'PRIVATE_PREVIEW_SOURCE_STALE')
+    labels=_labels(symbols);text=symbols.decode() if isinstance(symbols,bytes) else symbols
+    active=False
+    for line in text.splitlines():
+        if line.startswith('['):active=line=='[labels]'
+        m=re.fullmatch(r'([0-9A-Fa-f]{2}):([0-9A-Fa-f]{4})\s+(?:Oracle_)?Checkpoint_EnterHome',line)
+        if active and m:
+            value=int(m[1]+m[2],16)
+            R.require('Checkpoint_EnterHome' not in labels or labels['Checkpoint_EnterHome']==value,
+                      'PRIVATE_PREVIEW_CONFLICTING_HOME_SYMBOL')
+            labels['Checkpoint_EnterHome']=value
+    def addr(name):
+        R.require(name in labels,'PRIVATE_PREVIEW_MISSING_SYMBOL: '+name)
+        return labels[name]
+    def read(at,size):
+        R.require(type(at) is int and type(size) is int and size>0 and at&0x8000
+                  and at>>16==(at+size-1)>>16 and A.pc(at)+size<=len(compiled),'PRIVATE_PREVIEW_BAD_SPAN')
+        return compiled[A.pc(at):A.pc(at)+size]
+    def exact(at,expected,label):
+        R.require(read(at,len(expected))==expected,'PRIVATE_PREVIEW_BYTES_CHANGED: '+label)
+    def interval(key):
+        row=reviewed[key]
+        R.require(type(row) is list and len(row)==2 and all(type(a) is int for a in row)
+                  and row[0]<row[1],'PRIVATE_PREVIEW_INVALID_INTERVAL: '+key)
+        read(row[0],row[1]-row[0]);return row
+    code=interval('code_snes');host=interval('overlay_host_snes')
+    R.require(code==[addr('Lyra_PrivatePilotCanScroll'),addr('Lyra_PrivatePilotSubGate_End')]
+              and R.sha(read(code[0],code[1]-code[0]))==reviewed['code_sha256'],'PRIVATE_PREVIEW_CODE_BINDING_CHANGED')
+    R.require(host==[0x02AF58,addr('LyraHost_Overworld_ReloadSubscreenOverlay_Interupt_End')]
+              and host[1]<=0x02B0D2 and R.sha(read(host[0],host[1]-host[0]))==reviewed['overlay_host_sha256'],
+              'PRIVATE_PREVIEW_OVERLAY_HOST_CHANGED')
+    for name,template in _PREVIEW_BODIES.items():
+        expected=bytes.fromhex(re.sub(r'\{(\w+)\}',lambda m:addr(m[1]).to_bytes(3,'little').hex(),template))
+        start,end=addr(name),addr(name+'_End')
+        R.require(code[0]<=start<end<=code[1] and end-start==len(expected),'PRIVATE_PREVIEW_HELPER_EXTENT: '+name)
+        exact(start,expected,name)
+    aliases={'Entry':('EntryGate',22,40),'ColdResume':('EntryGate',22,40),
+             'FullLoad':('FullNearGate',1,21),'Mirror':('MirrorGate',0,14),'SubLoad':('SubGate',3,18)}
+    for role,(gate,call_offset,blocked_offset) in aliases.items():
+        start=addr('Lyra_PrivatePilot'+gate)
+        R.require(addr('LyraCall_PrivatePilot'+role)==start+call_offset
+                  and addr('LyraPilot_'+role+'Blocked')==start+blocked_offset,
+                  'PRIVATE_PREVIEW_ROLE_ALIAS_CHANGED: '+role)
+    home=addr('Checkpoint_EnterHome')
+    R.require(type(reviewed['home_snes']) is int and reviewed['home_snes']==home
+              and 0x34F900<=home<home+len(PREVIEW_HOME_BYTES)<=0x34FE00
+              and reviewed['home_sha256']==R.sha(PREVIEW_HOME_BYTES),'PRIVATE_PREVIEW_HOME_BINDING_CHANGED')
+    exact(home,PREVIEW_HOME_BYTES,'native-qualified Home37')
+    hooks=[]
+    for at,name,old in ((0x0283C7,'Lyra_PrivatePilotEntryGate','a9828599'),
+            (0x02B217,'Lyra_PrivatePilotMirrorGate','a58ac980'),
+            (0x02EDB9,'Lyra_PrivatePilotFullNearGate','2059eda9'),
+            (0x02A475,'Lyra_PrivatePilotFullFrameGate','e230a511')):
+        pc=A.pc(at);R.require(source[pc:pc+4]==bytes.fromhex(old),'PRIVATE_PREVIEW_NATIVE_PREIMAGE_CHANGED')
+        raw=b'\x5C'+addr(name).to_bytes(3,'little');exact(at,raw,name+' fixed hook')
+        hooks.append(dict(snes=at,payload_hex=raw.hex()))
+    site,allowed,no_overlay=(addr(n) for n in ('LyraPilot_SubDispatchSite','LyraPilot_SubNativeAllowed','LyraPilot_SubNativeNoOverlay'))
+    R.require(host[0]<=no_overlay<site and site+8==allowed<host[1],'PRIVATE_PREVIEW_SUB_BOUNDARIES_CHANGED')
+    exact(site,b'\x5C'+addr('Lyra_PrivatePilotSubGate').to_bytes(3,'little')+b'\xEA'*4,'Sub8 dispatcher')
+    exact(allowed,bytes.fromhex('8484868a868c'),'Sub before borrowed84/8A/8C')
+    exact(no_overlay,bytes.fromhex('a9ff00858ca91600851ce230649ae61160'),'complete native no-overlay return')
+    # Bind actual native dispatcher/continuation frames. No patched symbol
+    # can turn a near caller into a long caller or skip its completion checks.
+    continuations=((0x0283B9,'c78319afb9eda5110aaafcb9836b'),
+        (0x0283CB,'9cf403226a8502a510c908d00520a3e4800320bce92263c402a9ff8f6ff37e2275db0d'),
+        (0x02A479,'0aaafc0da4'),(0x02B21B,'9008641164b09c00026b'),
+        (0x02A634,'0200feff1000f0ff'))
+    for at,payload in continuations:
+        raw=bytes.fromhex(payload)
+        R.require(source[A.pc(at):A.pc(at)+len(raw)]==raw,'PRIVATE_PREVIEW_NATIVE_CONTINUATION_CHANGED')
+        exact(at,raw,'native continuation '+hex(at))
+    exact(0x02B1F9,b'\x6B','PEA near return to existing RTL')
+    native=private_pilot_native_full_paths(source)
+    for row in native['spans']:
+        exact(row['snes'],bytes.fromhex(row['payload_hex']),'bound native full/transport span')
+    return dict(kind='lyra.seeded_checkpoint_preview_guard_inspection.v1',mode=mode,
+        scope='seeded_A0_A1_only',source_rom_sha256=R.sha(source),compiled_rom_sha256=R.sha(compiled),
+        reviewed_binding_sha256=R.sha(json.dumps(reviewed,sort_keys=True,separators=(',',':')).encode()),
+        code_snes=code,overlay_host_snes=host,home_snes=home,home_bytes=37,fixed_hooks=hooks,
+        sub_dispatch_snes=site,sub_dispatch_bytes=8,transport_native_only=True,transport_maps=native['transport_maps'],
+        credits_held=native['held_callers'],held_routes=['credits/ending','Warp/boat ingress','Module0A entry','other direct native entry callers'],
+        guards_verified=True,current_core_inspected=False,allocation_granted=False,producer_enforcement_verified=False,
+        ordinary_build_ready=False,runtime_admission=False,production_admission=False,native_gameplay_verified=False,
+        save_reopen_verified=False,requires_separate=['current core/data consumers','actual Save/generation/assets',
+            'actual checkpoint registry/cache','fresh source/allocation grants','native scene/save-reopen'])
+
+
+def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None):
     """Exact inspection for independent review; not a self-issued approval."""
+    preview=None
+    if checkpoint_preview is not None:
+        R.require(type(checkpoint_preview) is dict and set(checkpoint_preview)=={'mode','source','reviewed'},
+                  'PRIVATE_PREVIEW_EXPLICIT_REQUEST_REQUIRED')
+        preview=inspect_seeded_checkpoint_preview(compiled,symbols,**checkpoint_preview)
     import lyra_native_state as state
     labels = _labels(symbols)
     # Symbols outside the Lyra namespace are needed only at these exact roles.
@@ -1740,6 +1871,13 @@ def inspect_current_consumers(compiled, symbols):
         result['private_pilot_boundary']=dict(call_snes=call,blocked_snes=blocked,helper_snes=helper,
             payload_hex=raw.hex(),direction_table_snes=0x02A634,direction_table_hex=direction.hex(),
             scope='private_A0_A1_scroll_only',entry_warp_loader_admission=False)
+    if preview is not None:
+        bounds=regions[0]['snes']
+        R.require(bounds[0]<=preview['code_snes'][0]<preview['code_snes'][1]<=bounds[1],
+                  'PRIVATE_PREVIEW_OUTSIDE_CURRENT_CODE_OWNER')
+        return dict(result,kind=PREVIEW_CONSUMER_KIND,preview_guards=preview,current_core_inspected=True,
+            broad_six_role_qualification=False,ordinary_build_ready=False,runtime_admission=False,
+            production_admission=False,native_gameplay_verified=False,save_reopen_verified=False)
     ingress='Lyra_PrivatePilotCanEnter' in labels
     call_names=['LyraCall_PrivatePilot'+role for role in PRIVATE_PILOT_INGRESS_ROLES]
     # A helper may be present with the earlier scroll-only prototype. It is
