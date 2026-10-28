@@ -69,6 +69,9 @@ incsrc "Overworld/entrances.asm"
 
 incsrc "Overworld/custom_gfx.asm"
 %log_end("Overworld/custom_gfx.asm", !LOG_OVERWORLD)
+if !ENABLE_OW_AREA_TILESETS == 1
+  incsrc "Overworld/area_tilesets.asm"
+endif
 pushpc
 
 incsrc "Overworld/world_map.asm"

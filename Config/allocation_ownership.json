@@ -31,7 +31,8 @@
     "lyra_private_pilot_boundary_cpu_23": "Private A0/A1 guard with saved-status binary arithmetic; enabled CPU fixture only, no admission.",
     "regional_checkpoint_state_24": "Root-granted B4..B8 last-activated key reservation; unplaced state codec, no runtime hooks or resume-field grant.",
     "regional_checkpoint_runtime_25": "Root-granted B4..B9 state and bank34F900..FE00 runtime, source-qualified native Goron control only; default disabled, Lyra entry/native save proof separate.",
-    "lyra_joint_graphics_source_26": "Default-off expanded sheet reader composition from PR286; selected private candidate only, no native proof."
+    "lyra_joint_graphics_source_26": "Default-off expanded sheet reader composition from PR286; selected private candidate only, no native proof.",
+    "lyra_joint_area_tilesets_27": "Default-off current per-area cache/dispatch composition from PR283; explicit source-bound suffix and WRAM allocation required before activation."
   },
   "sources": {
     "shared:Sprites/Objects/minecart.asm": {
@@ -4532,22 +4533,22 @@
     "regional_checkpoint_runtime_25:Overworld/overworld.asm": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Overworld/overworld.asm",
-      "sha256": "4fb4b1199dd8e5021fb1ad74c9a9983ab57e3141acebad597fcacd1f0a0cf696"
+      "sha256": "86e5b64c398b3564b60c44f2fa27680fe4acd4f4dfacacb766f4e59c09053bd6"
     },
     "regional_checkpoint_runtime_25:Oracle_main.asm": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Oracle_main.asm",
-      "sha256": "c408b1a98d23e44c1f9195f5d98debd3077079cb060a970a4a7ad280d2145813"
+      "sha256": "e1b4295e483e8b4cd9bf0582e928eb7b1edc7ca4dcb108120f8f98439c520bd1"
     },
     "regional_checkpoint_runtime_25:Util/macros.asm": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Util/macros.asm",
-      "sha256": "8f73caa2cb740dacbe018925cf983bafd0605ad2f4fee6341008fb54599d658a"
+      "sha256": "874d1051d27bbfd74d7be0df8420383c12809f0852941b1a943513e176ec82ec"
     },
     "regional_checkpoint_runtime_25:Config/feature_flags.asm": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Config/feature_flags.asm",
-      "sha256": "96ddff6b1b8a04e05eac9545fdbca8c43c44899041110fe423f7c0821d04efe0"
+      "sha256": "7ba93a4832d2da8a0e4b9936224f9e03ffe4a245613db8c814f9a302047f7873"
     },
     "regional_checkpoint_runtime_25:Scripts/Build/checkpoint_registry.py": {
       "source_set": "regional_checkpoint_runtime_25",
@@ -4562,7 +4563,7 @@
     "regional_checkpoint_runtime_25:Scripts/Generate/asm_source.py": {
       "source_set": "regional_checkpoint_runtime_25",
       "path": "Scripts/Generate/asm_source.py",
-      "sha256": "bcef84a19cf7b4ba01fac66382d9c0bd42c074b3f5455b27b91e3b7806bdb14d"
+      "sha256": "1562123abe08f3ad731d6852e32724239d8069d9b75311b3834f264a8a36b4e5"
     },
     "regional_checkpoint_runtime_25:Tests/test_checkpoint_registry.py": {
       "source_set": "regional_checkpoint_runtime_25",
@@ -4592,7 +4593,7 @@
     "lyra_joint_graphics_source_26:Overworld/ZSCustomOverworld.asm": {
       "source_set": "lyra_joint_graphics_source_26",
       "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "edb71d29744bef1e0c81c56cd831f2366737f616db27f6f8beded6fbf6e1be33"
+      "sha256": "cb2057200a747a41d70cbbc5b99ee466bb63a97d609f721483917525ab7ce043"
     },
     "lyra_joint_graphics_source_26:Sprites/NPCs/eon_owl.asm": {
       "source_set": "lyra_joint_graphics_source_26",
@@ -4602,17 +4603,17 @@
     "lyra_joint_graphics_source_26:Oracle_main.asm": {
       "source_set": "lyra_joint_graphics_source_26",
       "path": "Oracle_main.asm",
-      "sha256": "c408b1a98d23e44c1f9195f5d98debd3077079cb060a970a4a7ad280d2145813"
+      "sha256": "e1b4295e483e8b4cd9bf0582e928eb7b1edc7ca4dcb108120f8f98439c520bd1"
     },
     "lyra_joint_graphics_source_26:Util/macros.asm": {
       "source_set": "lyra_joint_graphics_source_26",
       "path": "Util/macros.asm",
-      "sha256": "8f73caa2cb740dacbe018925cf983bafd0605ad2f4fee6341008fb54599d658a"
+      "sha256": "874d1051d27bbfd74d7be0df8420383c12809f0852941b1a943513e176ec82ec"
     },
     "lyra_joint_graphics_source_26:Config/feature_flags.asm": {
       "source_set": "lyra_joint_graphics_source_26",
       "path": "Config/feature_flags.asm",
-      "sha256": "96ddff6b1b8a04e05eac9545fdbca8c43c44899041110fe423f7c0821d04efe0"
+      "sha256": "7ba93a4832d2da8a0e4b9936224f9e03ffe4a245613db8c814f9a302047f7873"
     },
     "lyra_joint_graphics_source_26:Scripts/Build/check_zscream_overlap.py": {
       "source_set": "lyra_joint_graphics_source_26",
@@ -4643,6 +4644,51 @@
       "source_set": "lyra_joint_graphics_source_26",
       "path": "Core/Generated/source_sprite_sheets/sheet_overrides.asm",
       "sha256": "96bb17e3bf2ff1814fd2df0ea3e05491b85649e7b28a776eb8fa558c2d3a3748"
+    },
+    "lyra_joint_area_tilesets_27:Overworld/area_tilesets.asm": {
+      "source_set": "lyra_joint_area_tilesets_27",
+      "path": "Overworld/area_tilesets.asm",
+      "sha256": "d3b0241589801476db77f15007f7425a3211de6876c8027271fc626cfdff2448"
+    },
+    "lyra_joint_area_tilesets_27:Overworld/custom_gfx.asm": {
+      "source_set": "lyra_joint_area_tilesets_27",
+      "path": "Overworld/custom_gfx.asm",
+      "sha256": "87a6a38bc08b5dfd347faef60e51f77c1e5ada46d1ca21656fb9217700c8a5e4"
+    },
+    "lyra_joint_area_tilesets_27:Overworld/overworld.asm": {
+      "source_set": "lyra_joint_area_tilesets_27",
+      "path": "Overworld/overworld.asm",
+      "sha256": "86e5b64c398b3564b60c44f2fa27680fe4acd4f4dfacacb766f4e59c09053bd6"
+    },
+    "lyra_joint_area_tilesets_27:Overworld/ZSCustomOverworld.asm": {
+      "source_set": "lyra_joint_area_tilesets_27",
+      "path": "Overworld/ZSCustomOverworld.asm",
+      "sha256": "cb2057200a747a41d70cbbc5b99ee466bb63a97d609f721483917525ab7ce043"
+    },
+    "lyra_joint_area_tilesets_27:Oracle_main.asm": {
+      "source_set": "lyra_joint_area_tilesets_27",
+      "path": "Oracle_main.asm",
+      "sha256": "e1b4295e483e8b4cd9bf0582e928eb7b1edc7ca4dcb108120f8f98439c520bd1"
+    },
+    "lyra_joint_area_tilesets_27:Util/macros.asm": {
+      "source_set": "lyra_joint_area_tilesets_27",
+      "path": "Util/macros.asm",
+      "sha256": "874d1051d27bbfd74d7be0df8420383c12809f0852941b1a943513e176ec82ec"
+    },
+    "lyra_joint_area_tilesets_27:Config/feature_flags.asm": {
+      "source_set": "lyra_joint_area_tilesets_27",
+      "path": "Config/feature_flags.asm",
+      "sha256": "7ba93a4832d2da8a0e4b9936224f9e03ffe4a245613db8c814f9a302047f7873"
+    },
+    "lyra_joint_area_tilesets_27:Scripts/Generate/asm_source.py": {
+      "source_set": "lyra_joint_area_tilesets_27",
+      "path": "Scripts/Generate/asm_source.py",
+      "sha256": "1562123abe08f3ad731d6852e32724239d8069d9b75311b3834f264a8a36b4e5"
+    },
+    "lyra_joint_area_tilesets_27:Tests/test_ow_area_tilesets.py": {
+      "source_set": "lyra_joint_area_tilesets_27",
+      "path": "Tests/test_ow_area_tilesets.py",
+      "sha256": "1c9838fa0c6828f4ad4fc0c80fa8585fd5a88bff7d1c9aa662720436b9b905a5"
     }
   },
   "claims": [
@@ -5862,6 +5908,58 @@
       "binding": {
         "source": "lyra_joint_graphics_source_26:Core/gfx_sheet_table.asm",
         "symbol": "GfxSheet_Helpers",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "LyraAreaTileTypes",
+      "owner": "Selected current per-area collision and raw-sheet loader",
+      "space": "wram",
+      "base": 8376320,
+      "size": 512,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_OW_AREA_TILESETS": 1
+      },
+      "lifetime": "Explicit private current-source binding only; suffix is nested inside the proposed graphics origin and must be disjoint from emitted SharedGraphicsRuntime.",
+      "reset": "Every OW full/scroll load refills all512types; no types-only screen-on DMA.",
+      "save": "Never serialized; does not use UW TILEATTR or checkpoint SRAM.",
+      "provenance": [
+        "lyra_joint_area_tilesets_27:Overworld/area_tilesets.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "AreaTileset_TileTypes"
+      ],
+      "binding": {
+        "source": "lyra_joint_area_tilesets_27:Overworld/area_tilesets.asm",
+        "symbol": "AreaTileset_TileTypes",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "LyraAreaTilesetSuffix",
+      "owner": "Selected current per-area collision and raw-sheet loader",
+      "space": "snes_rom",
+      "base": 14868480,
+      "size": 8192,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_OW_AREA_TILESETS": 1
+      },
+      "lifetime": "Distinct proposed E2E000..E30000 code/data owner; the current graphics prefix must end at E2E000, not claim this suffix again.",
+      "reset": "ROM; source-bound origin/end and shared-prefix bound required.",
+      "save": "Never serialized; does not use UW TILEATTR or checkpoint SRAM.",
+      "provenance": [
+        "lyra_joint_area_tilesets_27:Overworld/area_tilesets.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "AreaTileset_CodeStart"
+      ],
+      "binding": {
+        "source": "lyra_joint_area_tilesets_27:Overworld/area_tilesets.asm",
+        "symbol": "AreaTileset_CodeStart",
         "bank00_mirror": false
       }
     }
