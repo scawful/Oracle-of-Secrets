@@ -52,7 +52,7 @@ BPP2_FROM = 0xDA           # 2bpp sheets $DA and up
 
 # Unreferenced sheets after the static code search (PLAN.md section 2).
 CLEARED = {  # nothing in code, tables or overrides names them
-    0x5E: "cleared", 0x5F: "cleared", 0x60: "cleared", 0x96: "cleared",
+    0x5E: "cleared", 0x5F: "cleared", 0x60: "cleared",
 }
 NOT_CLEARED = {  # code loads them directly although no table does
     0x58: "animated OW tiles $00D8D5",
@@ -75,6 +75,7 @@ OWNERS = {
     0x63: "PR #228 claude/volcano-57-import-442b78 (clone of $33 for the 9 volcano areas, slot 5)",
     0x6F: "D3 B/V20 sheet clone at $23C000 (source policy; application pending)",
     0x70: "D3 B/V20 trim clone at $23C800 (source policy; application pending)",
+    0x96: "Abyss Stalfos sprite sheet $23 (abyss_variants.asm swaps $1F -> $23 in slot 0)",
 }
 
 # --- Bank ownership (PLAN.md piece 0) ---------------------------------------

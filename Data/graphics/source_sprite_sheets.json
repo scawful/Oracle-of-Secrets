@@ -31,6 +31,13 @@
       "base_sha256": "5f4c7db15b9d3d1ee094d812724ef91eb86fa4d27e6f13fab3fcfaf778b946e7",
       "identity": false,
       "why": "Kydrog pirate boss (option B, scawful 2026-10-18): fallen knight under the coat; room $A4 only."
+    },
+    {
+      "sprite_sheet": "0x23",
+      "source": "spr23.png",
+      "base_sha256": "b2afe2acb89d0a67589bf4bdc6a04b5a0ca9484b8a9f8deb3ca4debc55be0078",
+      "identity": false,
+      "why": "Abyss Stalfos (scawful 2026-10-23): Ages-style copy of sheet $1F, cells $00-$06 changed; loaded only in indoor Abyss rooms by the $00E772 sheet swap."
     }
   ]
 }

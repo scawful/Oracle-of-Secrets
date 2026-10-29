@@ -76,6 +76,11 @@
 ; Eon Owl one-shot: each Abyss Owl appearance happens once; after its talk and
 ; fly-away it does not respawn (EonOwlFlags $7EF3A7, Sprites/NPCs/eon_owl.asm).
 !ENABLE_EON_OWL_ONE_SHOT             = 1
+; Abyss Stalfos: indoor Abyss rooms load sheet $23 (Ages-style copy of $1F)
+; and draw one 16x16 cell per frame (Sprites/Enemies/abyss_variants.asm).
+!ENABLE_ABYSS_STALFOS_SHEET          = 1
+; Abyss Zora recolour (Eon Zora option 1): Abyss Zoras ($55/$56) use OAM palette 4 (abyss_variants.asm).
+!ENABLE_ABYSS_ZORA_PALETTE       = 1
 ; Abyss respawn lock until the escape: outdoor deaths/continues follow the
 ; saved world ($7EF3CA), so the lock ends at the portal home instead of the
 ; Maku Tree (LoadDarkWorldIntro, Overworld/overworld.asm).
