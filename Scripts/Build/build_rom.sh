@@ -15,7 +15,7 @@ usage() {
   echo "  Names: flags,menu,overlap,hooks,sprites,analysis,smoke,annotations." >&2
   echo "  OOS_ANALYZER=<path> selects an analyzer; OOS_TEST_SOCKET=<owned socket> enables exact-ROM current-state smoke." >&2
   echo "  Receipt: Roms/oos<version>x.build.json (override OOS_BUILD_RECEIPT)." >&2
-  echo "  MCR2 source requires a marked base or OOS_MINECART_MIGRATION_RECEIPT bound to migrated room data." >&2
+  echo "  MCR2 source requires a marked base, exact migration receipt, or version 2 Yaze project with current native Save bindings." >&2
   exit "${1:-1}"
 }
 
