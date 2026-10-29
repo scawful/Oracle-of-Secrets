@@ -239,8 +239,8 @@ SelectReactionMessage:
 ;
 ; Returns the number of essences: popcount of all eight bits
 ; of $7EF37A, i.e. the seven legacy crystal bits plus bit 7
-; ($80, !Crystal_D8_Sky). Assembled after the legacy helpers
-; so their addresses do not move. No caller yet: legacy
+; ($80, !Crystal_D8_Sky). Kept after the legacy helpers;
+; consumers use assembler labels for their addresses. No caller yet: legacy
 ; consumers (UpdateMapIcon, SelectReactionMessage, NPC
 ; reaction tables) stay on GetCrystalCount (0-7). Count + 1
 ; can reach 9, which is !MapIcon_TailPond, so do not feed

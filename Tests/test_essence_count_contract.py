@@ -276,7 +276,7 @@ class EssenceCountContract(unittest.TestCase):
                     self.assertEqual(cpu.p, p, label)
                     self.assertEqual((cpu.sp, cpu.stack), (0x1FF0, {}), label)
 
-    def test_legacy_helpers_keep_addresses_and_count(self):
+    def test_legacy_helpers_keep_order_and_count(self):
         order = [self.progression.index(f"\n{name}:\n") for name in (
             "GetCrystalCount", "UpdateMapIcon", "SelectReactionMessage", "GetEssenceCount")]
         self.assertEqual(order, sorted(order))
