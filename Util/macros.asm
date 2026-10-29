@@ -357,6 +357,15 @@ if not(defined("ENABLE_EQUIPMENT_MENU"))
   !ENABLE_EQUIPMENT_MENU = 1
 endif
 
+; Special transitions v2 (Overworld/special_transitions_v2.asm); off by default.
+if not(defined("ENABLE_SPECIAL_TRIGGER_TABLE_V2"))
+  !ENABLE_SPECIAL_TRIGGER_TABLE_V2 = 0
+endif
+
+if not(defined("ENABLE_SPECIAL_EXIT_TABLE_V2"))
+  !ENABLE_SPECIAL_EXIT_TABLE_V2 = 0
+endif
+
 ; Private joint-candidate checkpoint source; no default runtime activation.
 !ENABLE_OW_AREA_TILESETS = 0
 !ENABLE_REGIONAL_CHECKPOINTS = 0

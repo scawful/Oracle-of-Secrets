@@ -295,3 +295,7 @@ endif
 if !PROJECT_BG128_ENABLED == 1
   incsrc "Overworld/project_bg_palette.asm"
 endif
+; Table-driven special triggers and exit records (bank $2A); both flags off by default.
+if !ENABLE_SPECIAL_TRIGGER_TABLE_V2 == 1 || !ENABLE_SPECIAL_EXIT_TABLE_V2 == 1
+  incsrc "Overworld/special_transitions_v2.asm"
+endif
