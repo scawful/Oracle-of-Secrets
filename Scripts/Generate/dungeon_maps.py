@@ -15,8 +15,9 @@ Map format (usdasm bank_0A.asm, DungeonMap_*):
     silhouette at native size.
   - Floors are 5x5 grids of room IDs ($0F = empty), stored lowest floor first.
     Each non-empty cell has one template byte, in grid order.
-  - Boss floor is signed from 1F (0 = 1F, -1 = B1); the game adds the
-    basement count to get the grid index.
+  - Boss floor is a signed byte from 1F (0 = 1F, -1 = B1); the game adds
+    the basement count to get the grid index. The following byte's bit 7
+    hides the boss icon and is independent of the floor.
   - Oracle uses ZScream's expanded template table at $21:9010 (256 slots).
 
 Examples:
@@ -131,10 +132,11 @@ class MapRom:
             floors.append({"name": floor_name(f, basements), "grid": grid,
                            "templates": list(self.data[tp + ti: tp + ti + n])})
             ti += n
-        bf = self.word(BOSS_FLOORS + slot * 2)
+        bf = self.data[BOSS_FLOORS + slot * 2]
         return {"basements": basements, "floors": floors,
                 "boss_room": self.word(BOSS_ROOMS + slot * 2),
-                "boss_floor": bf - 0x10000 if bf & 0x8000 else bf}
+                "boss_floor": bf - 0x100 if bf & 0x80 else bf,
+                "boss_icon_flags": self.data[BOSS_FLOORS + slot * 2 + 1]}
 
 
 def floor_name(index: int, basements: int) -> str:
@@ -494,8 +496,9 @@ def repack(rom_data: bytes, maps: list[dict], full: bool = False) -> bytearray:
             out[at:at + len(block)] = block
             word((ROOM_PTRS, TMPL_PTRS)[kind] + slot * 2, 0x8000 | (at & 0x7FFF))
         word(BOSS_ROOMS + slot * 2, m["boss_room"])
-        # Low byte = signed floor from 1F; high byte $FF = no skull (bank_0A E8C0).
-        word(BOSS_FLOORS + slot * 2, m["boss_floor"] & 0xFF if m["boss_room"] != EMPTY else 0xFFFF)
+        # Floor and icon visibility are separate bytes (bank_0A EE0A).
+        # Generating map floors must preserve the original icon flags.
+        out[BOSS_FLOORS + slot * 2] = m["boss_floor"] & 0xFF if m["boss_room"] != EMPTY else 0xFF
     return out
 
 
@@ -550,7 +553,8 @@ def render_maps(rom_data: bytes, slot: int, title: str):
                 for x in range(16):
                     if px[y][x]:
                         draw.rectangle([x0 + x * 3, y0 + y * 3, x0 + x * 3 + 2, y0 + y * 3 + 2], fill=pal[px[y][x] & 7])
-            boss = room == d["boss_room"] and fi == d["basements"] + d["boss_floor"]
+            boss = (d["boss_icon_flags"] & 0x80 == 0 and room == d["boss_room"]
+                    and fi == d["basements"] + d["boss_floor"])
             draw.text((x0 + 2, y0 + 1), f"{room:02X}", fill=(255, 90, 90) if boss else (255, 255, 255))
             if boss:
                 draw.rectangle([x0, y0, x0 + cell - 1, y0 + cell - 1], outline=(255, 70, 70), width=2)
