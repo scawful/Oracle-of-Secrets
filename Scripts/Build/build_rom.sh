@@ -15,6 +15,7 @@ usage() {
   echo "  Names: flags,menu,overlap,hooks,sprites,analysis,smoke,annotations." >&2
   echo "  OOS_ANALYZER=<path> selects an analyzer; OOS_TEST_SOCKET=<owned socket> enables exact-ROM current-state smoke." >&2
   echo "  Receipt: Roms/oos<version>x.build.json (override OOS_BUILD_RECEIPT)." >&2
+  echo "  MCR2 source requires a marked base or OOS_MINECART_MIGRATION_RECEIPT bound to migrated room data." >&2
   exit "${1:-1}"
 }
 
@@ -187,6 +188,20 @@ if [[ -n "$feat_enable" || -n "$feat_disable" || "$feat_profile" != "defaults" ]
     --disable "$feat_disable"
 fi
 
+
+# The positional MCR2 table reuses four old object31 slots. Never assemble it
+# over unmigrated room records: furniture/crossings would become T junctions.
+# The original control handler has no declaration and retains its old contract.
+minecart_catalog_required=0
+if grep -Eq '^MinecartObjectCatalog:[[:space:]]*$' "$repo_root/Dungeons/Objects/object_handler.asm"; then
+  minecart_catalog_required=1
+  minecart_input_args=(--rom "$base_rom" --verify-build-input)
+  if [[ -n "${OOS_MINECART_MIGRATION_RECEIPT:-}" ]]; then
+    minecart_input_args+=(--verify-receipt "$OOS_MINECART_MIGRATION_RECEIPT")
+  fi
+  run_check minecart_catalog 1 python3 "$repo_root/Scripts/Rooms/migrate_minecart_object_catalog.py" \
+    "${minecart_input_args[@]}"
+fi
 
 # Source sheets must match the selected editable base and tracked generated
 # streams. Refuse a changed base sheet before replacing any prior build output.
@@ -373,6 +388,14 @@ receipt tool --name python --path "$(command -v python3)"
 
 current_stage="prepare_output"
 cp -f "$base_rom" "$patched_rom"
+
+# A Save during the preceding checks must not replace the bytes admitted above.
+# Verify the actual copied input before version stamping or assembly can edit it.
+if [[ "$minecart_catalog_required" == "1" ]]; then
+  minecart_input_args[1]="$patched_rom"
+  run_check minecart_catalog_copy 1 python3 "$repo_root/Scripts/Rooms/migrate_minecart_object_catalog.py" \
+    "${minecart_input_args[@]}"
+fi
 
 # Stamp Config/version.json into the in-game version line (message $C7) before
 # assembly. z3asm records the final output ROM hash in hooks.json, so post-build

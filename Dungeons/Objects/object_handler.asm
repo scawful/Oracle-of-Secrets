@@ -44,9 +44,14 @@ org $01B53C ; @hook module=Dungeons
 
 assert pc() <= $01B560
 
-; The removed InitHeavyPot occupied $2C8000-$2C8016. Keep all following
-; custom object routines/data at their existing addresses.
+; The removed InitHeavyPot occupied $2C8000-$2C8016.
+; Bind the positional editor/runtime catalog before its relocated handlers.
 org $2C8017
+MinecartObjectCatalog:
+  db $4D, $43, $52, $32 ; "MCR2" (literal bytes, independent of the text table)
+  db $10, $0D, $02, $00 ; object $31/$32/$54 subtype counts, reserved
+assert pc() == $2C801F
+
 CustomObjectHandler:
 {
   PHB : PHK : PLB
@@ -60,6 +65,7 @@ CustomObjectHandler:
 
   ;get the offset for the object data based on the object height
   ASL : TAX
+  CPX.w #(.ObjOffsetEnd-.ObjOffset) : BCS .Done
   LDA .ObjOffset, X
   TAX
 
@@ -112,10 +118,12 @@ CustomObjectHandler:
     dw .TopRightFloor-.ObjData    ; 09
     dw .BottomleftFloor-.ObjData  ; 10
     dw .BottomRightFloor-.ObjData ; 11
-    dw .FloorAny-.ObjData         ; 12
-    dw .WallSwordHouse-.ObjData   ; 13
-    dw .TrackAny-.ObjData         ; 14
-    dw .SmallStatue-.ObjData      ; 15
+    dw .TJunctionNorth-.ObjData   ; 12: closed north
+    dw .TJunctionSouth-.ObjData   ; 13: closed south
+    dw .TJunctionEast-.ObjData    ; 14: closed east
+    dw .TJunctionWest-.ObjData    ; 15: closed west
+  .ObjOffsetEnd
+  assert .ObjOffsetEnd-.ObjOffset == $20, "Custom object 31 must contain 16 subtypes"
 
   .ObjData
     .LeftRight
@@ -142,14 +150,15 @@ CustomObjectHandler:
       incbin Data/track_floor_corner_BL.bin
     .BottomRightFloor
       incbin Data/track_floor_corner_BR.bin
-    .FloorAny
-      incbin Data/track_floor_any.bin
-    .WallSwordHouse
-      incbin Data/wall_sword_house.bin
-    .TrackAny
-      incbin Data/track_any.bin
-    .SmallStatue
-      incbin Data/small_statue.bin
+    .TJunctionNorth
+      incbin Data/track_tjunction_N.bin
+    .TJunctionSouth
+      incbin Data/track_tjunction_S.bin
+    .TJunctionEast
+      incbin Data/track_tjunction_E.bin
+    .TJunctionWest
+      incbin Data/track_tjunction_W.bin
+  assert pc() <= $2D0000, "Custom object 31 crossed its DBR bank"
 }
 
 SpriteObjectsDraw:
@@ -165,6 +174,7 @@ SpriteObjectsDraw:
 
   ;get the offset for the object data based on the object height
   ASL : TAX
+  CPX.w #(.ObjOffsetEnd-.ObjOffset) : BCS .Done
   LDA .ObjOffset, X
   TAX
 
@@ -208,12 +218,15 @@ SpriteObjectsDraw:
 .ObjOffset
   dw .KydreeokBody-.ObjData     ; 00
   dw .ManhandlaBody1-.ObjData   ; 01
+.ObjOffsetEnd
+  assert .ObjOffsetEnd-.ObjOffset == $04, "Custom object 54 must contain 2 subtypes"
 
 .ObjData
   .KydreeokBody
     incbin Data/kydreeok_body.bin
   .ManhandlaBody1
     incbin Data/manhandla_body_1a.bin
+  assert pc() <= $2D0000, "Custom object 54 crossed its DBR bank"
 }
 
 
@@ -230,6 +243,7 @@ CustomObjectHandler2:
 
   ;get the offset for the object data based on the object height
   ASL : TAX
+  CPX.w #(.ObjOffsetEnd-.ObjOffset) : BCS .Done
   LDA .ObjOffset, X
   TAX
 
@@ -273,6 +287,18 @@ CustomObjectHandler2:
     dw .IceFurnace-.ObjData       ; 00
     dw .Firewood-.ObjData         ; 01
     dw .IceChair-.ObjData         ; 02
+    dw .Reserved-.ObjData         ; 03: Minish source not admitted
+    dw .Reserved-.ObjData         ; 04: Minish source not admitted
+    dw .FloorAny-.ObjData         ; 05: migrated from object 31 subtype 12
+    dw .WallSwordHouse-.ObjData   ; 06: migrated from object 31 subtype 13
+    dw .TrackAny-.ObjData         ; 07: migrated from object 31 subtype 14
+    dw .SmallStatue-.ObjData      ; 08: migrated from object 31 subtype 15
+    dw .TJunctionNorth-.ObjData   ; 09: closed north, floor style
+    dw .TJunctionSouth-.ObjData   ; 10: closed south, floor style
+    dw .TJunctionEast-.ObjData    ; 11: closed east, floor style
+    dw .TJunctionWest-.ObjData    ; 12: closed west, floor style
+  .ObjOffsetEnd
+  assert .ObjOffsetEnd-.ObjOffset == $1A, "Custom object 32 must contain 13 subtypes"
 
   .ObjData
     .IceFurnace
@@ -281,6 +307,25 @@ CustomObjectHandler2:
       incbin Data/firewood.bin
     .IceChair
       incbin Data/ice_chair.bin
+    .Reserved
+      dw $0000
+    .FloorAny
+      incbin Data/track_floor_any.bin
+    .WallSwordHouse
+      incbin Data/wall_sword_house.bin
+    .TrackAny
+      incbin Data/track_any.bin
+    .SmallStatue
+      incbin Data/small_statue.bin
+    .TJunctionNorth
+      incbin Data/track_floor_tjunction_N.bin
+    .TJunctionSouth
+      incbin Data/track_floor_tjunction_S.bin
+    .TJunctionEast
+      incbin Data/track_floor_tjunction_E.bin
+    .TJunctionWest
+      incbin Data/track_floor_tjunction_W.bin
+  assert pc() <= $2D0000, "Custom object 32 crossed its DBR bank"
 }
 
 pushpc
