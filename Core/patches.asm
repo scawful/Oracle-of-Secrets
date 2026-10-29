@@ -4,6 +4,16 @@
 ; Keep the Shrine pendant rewards reproducible from an unedited base ROM.
 ; Guard both the chest record identity and the accepted old/already-fixed item
 ; values so a changed chest table fails closed instead of patching a wrong byte.
+; Restore the original fixed Boomerang rewards. Keep record identity guards:
+; an editor insertion must not redirect either one-byte patch to another chest.
+assert read2($01E9B3) == $0041, "Room $41 Boomerang chest record moved"
+assert read1($01E9B5) == $31 || read1($01E9B5) == $2A, "Unexpected room $41 chest item"
+org $01E9B5 : db $2A ; Red Boomerang
+
+assert read2($01EA5B) == $00E8, "Room $E8 Boomerang chest record moved"
+assert read1($01EA5D) == $0C || read1($01EA5D) == $2A, "Unexpected room $E8 chest item"
+org $01EA5D : db $0C ; Blue Boomerang; the receipt guard preserves an owned Red.
+
 assert read2($01E9E6) == $8073, "Room $73 big-chest record moved"
 assert read1($01E9E8) == $39 || read1($01E9E8) == $3A, "Unexpected room $73 big-chest item"
 org $01E9E8 : db $39 ; Pendant of Power: receipt handler sets $7EF374 bit $02

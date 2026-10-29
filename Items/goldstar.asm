@@ -1061,6 +1061,13 @@ Goldstar_GetDragged:
 ItemReceipt_KeepGoldstar:
 {
   BMI .done
+  ; These native receipts share an ordered equipment byte with their upgrades.
+  ; Keep the receipt ID for presentation; only refuse the lower inventory write.
+  CPY.b #$0C : BEQ .keep_higher             ; Blue after Red Boomerang
+  CPY.b #$1B : BNE .check_goldstar          ; Power Glove after Titan's Mitt
+  .keep_higher
+  CMP.b [$00] : BCC .done
+  .check_goldstar
 if !ENABLE_GOLDSTAR_CELL == 1
   PHA
   JSL GoldstarInventory_Migrate
@@ -1078,6 +1085,28 @@ endif
   .write
   STA.b [$00]
   .done
+  RTL
+}
+
+; Before the reward restoration, $41 gave Bombs and $E8 gave Blue Boomerang.
+; A save with BOTH first chests open cannot trigger another chest receipt.
+; Recover Red on the next normal menu open; native Save then persists it.
+; Only the inventory byte changes. Do not reopen chests or infer story progress.
+; Preserve full A (including hidden B), P, X/Y, DBR and direct page.
+Boomerang_RecoverLegacyReward:
+{
+  PHP
+  REP #$20
+  PHA
+  SEP #$20
+  LDA.l Boomerang : CMP.b #$02 : BCS .done
+  LDA.l $7EF082 : AND.b #$10 : BEQ .done    ; $41, first chest saved-open bit
+  LDA.l $7EF1D0 : AND.b #$10 : BEQ .done    ; $E8, first chest saved-open bit
+  LDA.b #$02 : STA.l Boomerang
+  .done
+  REP #$20
+  PLA
+  PLP
   RTL
 }
 

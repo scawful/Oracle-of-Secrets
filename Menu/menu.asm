@@ -118,6 +118,9 @@ endif
 
 Menu_InitGraphics:
 {
+if !DISABLE_ITEMS == 0
+  JSL Boomerang_RecoverLegacyReward
+endif
 if !ENABLE_GOLDSTAR_CELL == 1
   JSL GoldstarInventory_Migrate
 endif
