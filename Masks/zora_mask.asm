@@ -32,10 +32,10 @@ UpdateZoraPalette:
 
 ; =========================================================
 
-; TODO: Finish the Zora palette
+; Sea Zora skin and shading use the NPC blue/cyan palette.
 zora_palette:
-  dw $7BDE, $7FFF, $2F7D, $19B5, $3A9C, $14A5, $4E48, $3582
-  dw $55BB, $6EF7, $7BDE, $55C7, $6ECD, $2E5A, $1970, $7616
+  dw $7BDE, $7FFF, $2F7D, $19B5, $3A9C, $14A5, $7F51, $62EC
+  dw $55BB, $6EF7, $7BDE, $6949, $6ECD, $2E5A, $1970, $7616
 ; dw #$6565, #$7271, #$2AB7, #$477E, #$1997, #$14B5, #$459B, #$69F2
 ; dw #$7AB8, #$2609, #$19D8, #$3D95, #$567C, #$1890, #$52F6, #$2357
 
