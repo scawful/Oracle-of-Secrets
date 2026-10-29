@@ -61,19 +61,20 @@ org $2FFE00
 ; Entry: Any M/X state
 ; Exit:
 ;   A = crystal count (0–7)
-;   M flag is SET on exit (8-bit A)
-;   If caller had 16-bit A, high byte is guaranteed $00
-;   X, Y preserved
+;   High byte (B) = $00
+;   P restored, including caller's M/X widths and N/Z/C
+;   X, Y preserved in full
 ;
-; Clobbers: P (M flag forced, restored by PLP at end)
-; Stack: 3 bytes (PHP + PHX with 8-bit X)
-; Cycles: ~40 worst case (7 iterations)
+; Clobbers: B (high byte of A)
+; Stack: 5 bytes (PHP + 16-bit PHX + 16-bit PHY)
 ; =========================================================
 GetCrystalCount:
 {
   PHP                ; Save caller's M/X flags
+  REP #$30           ; Save full indexes before SEP clears their high bytes
+  PHX
+  PHY
   SEP #$30           ; Force 8-bit A, 8-bit X
-  PHX                ; Save X (1 byte — width now known)
 
   LDA.l Crystals     ; Load $7EF37A (24-bit, DBR-safe)
   AND #$7F           ; Mask to 7 valid crystal bits
@@ -88,14 +89,15 @@ GetCrystalCount:
     BNE .loop
 
   TXA                ; A = count (low byte from 8-bit X)
-  PLX                ; Restore X (1 byte, matches 8-bit PHX)
 
   ; Zero-extend to 16-bit so callers with REP #$20 get
   ; clean values. After PLP, if caller had 8-bit A they
   ; see only the low byte (count). If 16-bit A, they see
   ; $00CC where CC = count.
-  REP #$20           ; 16-bit A
+  REP #$30           ; 16-bit A and indexes for matching pulls
   AND #$00FF         ; Clear high byte (B accumulator)
+  PLY
+  PLX
 
   PLP                ; Restore caller's M/X flags
   RTL
@@ -151,12 +153,15 @@ UpdateMapIcon:
 ; or Sprite_ShowMessageUnconditional.
 ;
 ; Entry:
+;   Any M/X state
 ;   $00-$02 = 24-bit pointer to reaction table
 ;             (set all 3 bytes: $00=low, $01=high, $02=bank)
 ;
 ; Exit:
 ;   A = message ID low byte  (8-bit)
 ;   Y = message ID high byte (8-bit)
+;   X preserved in full; P restored, including caller's M/X widths
+;   Use 8-bit A/X for the following Sprite_Show* call
 ;   Ready for: JSL Sprite_ShowSolicitedMessageIfPlayerFacing
 ;         or:  JSL Sprite_ShowMessageUnconditional
 ;
@@ -187,13 +192,14 @@ UpdateMapIcon:
 ;   JSL Sprite_ShowSolicitedMessageIfPlayerFacing
 ;
 ; Clobbers: $04 (temp crystal count)
-; Stack: 3 bytes (PHP + PHX with 8-bit X)
+; Stack: 4 bytes locally (PHP + 16-bit PHX + 8-bit PHA), plus JSL callee
 ; =========================================================
 SelectReactionMessage:
 {
   PHP
-  SEP #$30           ; Force 8-bit A, 8-bit X/Y (stack-safe PHX/PLX)
-  PHX                ; Save X (1 byte — width now known)
+  REP #$10           ; Save full X before SEP clears its high byte
+  PHX
+  SEP #$30           ; Force 8-bit A, 8-bit X/Y for table and message bytes
 
   ; Get crystal count and stash in temp
   JSL GetCrystalCount ; A = count (0-7, 8-bit)
@@ -221,7 +227,8 @@ SelectReactionMessage:
     TAY                ; Y = message high byte (return value)
     PLA                ; A = message low byte (return value)
 
-    PLX                ; Restore X (1 byte, matches 8-bit PHX)
+    REP #$10           ; 16-bit pull matches the saved X
+    PLX
     PLP                ; Restore caller's M/X flags
     ; A = msg low, Y = msg high — ready for Sprite_Show* JSLs
     RTL
