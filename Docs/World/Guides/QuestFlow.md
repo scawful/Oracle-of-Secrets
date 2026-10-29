@@ -59,12 +59,20 @@ her power until her intervention during D7.
 
 ### Shrine of Wisdom -> D4 Zora Temple
 
-The Sea Zora's **Flippers** gift precedes the Lyra Sea **Shrine of Wisdom**.
-The shrine gives the **Pendant of Wisdom**, followed by Dream 1 about the
-Captain's guardianship and temptation. Link wakes in Maple's Abyss hut.
-Wisdom and Flippers are required before **Zora Temple**. The shrine's old
-Abyss-swamp placement and its former Flippers reward are superseded plans.
-The Sea Zora approach and the island gate still need level review.
+A scripted boat from **Kalyxo Docks** reaches the Sea Zora before Flippers.
+Reach **Wisdom** on a dry connection from their settlement; it is a separate
+shrine, possibly on an adjacent connected islet. Its **Pendant of Wisdom**
+proves Link's heroism. Despite suspicion, the Sea Zora trust him with
+**Flippers** and warn of River Zora aggression/conflict. Link keeps the pendant.
+Ordinary swimming then permits Kalyxo return and limited Lyra exploration;
+rough currents require Zora Link. Wisdom and Flippers precede **Zora Temple**.
+
+Dream 1 shows the Captain's guardianship/temptation and wakes Link in Maple's
+Abyss hut. Current dreams start through her conversation; schedule a reachable
+visit without assuming automatic pendant transport or a pre-Flippers journey.
+The exact dream timing, landing and current boundaries need level review.
+Temporary island Save/Exit respawn stays **PROPOSED**, per scawful; it is not
+a required save change. The old Abyss-swamp and gift-before-Wisdom routes are superseded.
 
 D4 develops the Zora conflict and awards the fourth essence. The Zora Mask
 and post-D4 Song of Storms/whirlpool route remain part of this middle game.
@@ -74,18 +82,12 @@ and post-D4 Song of Storms/whirlpool route remain part of this middle game.
 1. Link defeats Twinrova in Glacia Estate and claims the fifth essence.
    Their defeat permanently breaks the Ranch Girl's curse automatically;
    it creates no required return trip or additional healing quest.
-2. The Lyra Sea **Shrine of Power** gives the **Pendant of Power** before D6.
-   Dream 2 shows Farore's appeal to Hyrule; Link wakes in Maple's Abyss hut.
-   The reused guest shrine has no Eon Gorons inside it.
-3. The Goron/Rock Meat route leads to **Goron Mines** and its sixth essence.
-   The shrine-island gate and revised lifting-item route need level review.
-4. Hammer opens the later East Kalyxo route. The River Zora reconciliation
-   and Sky approach give the region middle-game story weight.
+2. **Shrine of Power sits east of the desert**, accessible with the items available at the D6 stage. It is built around **Power Glove**; **Hammer is not required for it or D6** (scawful, 2026-10-21).
+   The guest shrine has separate internal Glove and final Pendant of Power chests in the current base. Dream2 retains Farore's appeal to Hyrule and the Maple-hut return; there are no Eon Gorons inside the shrine.
+3. **Current direction:** keep Power Glove inside the shrine; cut the early Ember Seed/forge grant quest and supersede the required D3 Glove-garden proposal. Hide Rock Meat on nearby Lyra maps, accessible with the shrine's basic Glove and D6-stage items.
+4. Return five Meat to the desert Goron for the existing Mines opening. Eon Goron/Lupo Mountain is optional, not a required Abyss detour. Exact hiding places and the return path remain a map-design task. No Mitt or Hammer is required for this sequence.
 
-**Geography direction:** move the Fortress to the central Kalyxo Castle
-mirror at `$4B`, and move Lupo Mountain toward the former Fortress area at
-`$5E`. This is a plan, not a verified entrance or terrain change. Keep the
-Eon Goron/Rock Meat story separate from the relocated guest shrine.
+**Geography planning:** Fortress `$4B` / Lupo `$5E` remains a recorded placement direction, not applied terrain. The Lupo trip is optional under the current direction. See [Power/Glove reconciliation](/Users/scawful/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_completion_2026-10-20/POWER_GLOVE_ROUTE.md). Use the selected local Lyra supply role; choose exact hiding places and return before binding new map records.
 
 ### D7: Dragon Ship -> Farore rescued and Somaria
 
@@ -101,7 +103,7 @@ Her power remains in the blade until the pedestal scene.
 
 ### Late Courage -> Dream 3 -> Master Sword
 
-1. The Lyra Sea **Shrine of Courage** requires Somaria, so it remains after
+1. The jungle-island **Shrine of Courage** requires Somaria, so it remains after
    D7. Its story reward is the **Pendant of Courage**.
 2. Dream 3 teaches the healing action through the Captain's voice. Link
    wakes in Maple's Abyss hut, as after the other pendant dreams.
@@ -203,14 +205,13 @@ automatically and does not create a return quest.
 ### Goron Mines Quest
 
 1.  **Trigger:** Player needs to open the Goron Mines.
-2.  **Required Item:** Lifting-item access; reconcile the Glove/Mitt route with the current level plan.
+2.  **Required Item / status:** Power Glove from Shrine of Power; preserve the basic-Glove pickup path. The pending Mitt-only policy conflicts with this direction.
 3.  **Action:**
-    *   Collect five pieces of Goron Rock Meat from Lupo Mountain.
+    *   Find five pieces of Rock Meat on Lyra Sea maps near the new Shrine of Power area; exact hiding places remain to design.
     *   Give the five pieces to the Kalyxian Goron NPC in the desert.
 4.  **Consequence:** The Goron NPC opens the entrance to the Goron Mines.
 
-The planned Lupo relocation is `$5E`; the old `$4B` location is a map snapshot,
-not the intended location of the relocated Shrine of Power.
+Lupo/Eon Gorons remain optional exploration/story content. Their recorded relocation direction is `$5E`; the old `$4B` location is historical, not the Power-region Meat source.
 
 ### The Magic Bean
 

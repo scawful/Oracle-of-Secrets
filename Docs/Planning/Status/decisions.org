@@ -2833,6 +2833,151 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
      The discussion's cooperative combat and ritual machinery are proposals.
   Answers: "pls reconcile these issues and update our docs and artifacts across afs and other docs to align with the latest plot plans, the lyra sky, the sea islands, what role the eon abyss plays, the lupo mountain and fortress swap, etc"; "we'll share a doc with ridoyie with instructions, overview of plot beats, progression and instructions on using yaze to update messages and propose suggestions"
 
+* DECIDED Sea Zora arrival: scripted boat from Kalyxo Docks, then Flippers and current gates (2026-10-20)
+  :PROPERTIES:
+  :ASKED_BY: scawful, delivery-plan review
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_completion_2026-10-20/PLAN.md
+  :END:
+  1. Before obtaining Flippers, Link reaches the Sea Zora area by a scripted
+     boat ride from Kalyxo Docks. This resolves the previously open initial
+     access question; the Sea Zora Flippers gift still precedes D4.
+  2. After the gift, ordinary swimming allows a return toward main Kalyxo
+     and limited Lyra Sea exploration. Rougher currents stop ordinary Link;
+     Zora Link can swim through them.
+  3. This selects a scripted ride, not a steerable-boat system. Exact boarding
+     trigger, landing, current boundaries and repeat-trip behavior remain
+     implementation/design work. Since Zora Link is acquired in D4, the
+     separate post-D5 Power/Goron approach gate remains OPEN.
+  Answer: "the sea zora before flippers should be a scripted boat ride from the kalyxo docks to sea zora area, allowing the player to swim out of the sea zora area towards main kalyxo or explore lyra sea bit, before the rougher currents stop them (which zora link can swim through)"
+
+* DECIDED Shrine regional layout: Sea Zora Wisdom, volcanic-shelf Power, jungle-island Courage (2026-10-20)
+  :PROPERTIES:
+  :ASKED_BY: scawful, delivery-plan review
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_completion_2026-10-20/WORK_PACKAGES.md
+  :END:
+  1. Use the volcanic shelf near Goron Mines for the Shrine of Power, rather
+     than requiring a dedicated island. This is the current planning
+     direction; exact map, door, post-D5 gate and Mitt delivery remain OPEN.
+  2. The Shrine of Wisdom is the Sea Zora shrine, in a separate building from
+     the Sea Zora homes. Retain the guest shrine interior and pendant; this
+     does not add another required dungeon or merge the home with the shrine.
+  3. Courage's selected regional direction is the jungle island. scawful's
+     correction supersedes the glacier-island suggestion. Exact map/entrance
+     remains to choose; the post-D7 Somaria requirement is unchanged.
+  4. This supersedes the blanket dedicated-island placement for all three
+     shrines. All three remain required for 1.0, with their guest interiors,
+     pendants and Maple-hut dream returns retained.
+  Answers: "power i think should be close to goron mines in the volcanic shelf region actually, rather than a dedicated island. courage will prob go on the glacier island, with wisdom essentially being the sea zora shrine, but not where the sea zora live separate buildings"; "not glacier island, jungle island"
+
+* DECIDED Wisdom precedes the Sea Zora Flippers gift; its approach is dry (2026-10-20)
+  :PROPERTIES:
+  :ASKED_BY: scawful, Sea Zora/Wisdom route follow-up
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_completion_2026-10-20/WORK_PACKAGES.md
+  :END:
+  1. Use boat arrival -> Sea Zora area -> Shrine of Wisdom -> pendant ->
+     Sea Zora Flippers gift -> D4. This supersedes the earlier gift-before-
+     Wisdom order. Wisdom must be reachable before Link can swim.
+  2. Wisdom may occupy a nearby island connected to the Sea Zora settlement;
+     the shrine and homes are separate buildings. Exact terrain/connection
+     remains planning work, not an assigned ROM map or entrance.
+  3. The pendant-to-Flippers transaction is the current proposal. Recommend
+     recognition/presentation while retaining pendant ownership for the
+     Master Sword; no permanent pendant consumption is approved.
+  4. The D4 objective is the Baby Zora / Princess Zora rescue. Exact mask
+     donor, princess outcome and replacement dialogue remain to resolve.
+  Answer: "wisdom might even be an island but just like close to the sea zora shrine i supposed yeah, connected to their island since u wont have flippers til u do it
+
+probably get pendant from shrine, give to the sea zora guy and they give u the flippers so u can go to D4 ??? and save baby zora and princess zora and all that shit"
+
+* DECIDED Wisdom's pendant earns Sea Zora trust and the Flippers (2026-10-20)
+  :PROPERTIES:
+  :ASKED_BY: scawful, Sea Zora trust follow-up
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_completion_2026-10-20/WORK_PACKAGES.md
+  :END:
+  The pendant proves Link's role as a hero. Despite their suspicion, the Sea
+  Zora trust him with Flippers once he retrieves it, and warn him about River
+  Zora aggression and the conflict. Retain the pendant as proof/progression;
+  this is not permanent consumption of the Master Sword prerequisite.
+  Exact dialogue and the specific NPC/scene implementation remain to write.
+  Answer: "Yeah the pendant is more proof of links role as a hero, so despite sea zora suspicion they trust him with the flippers if he can retrieve it and warn him about the river zora aggression and conflict. This could be another strong candidate for a story beat where save and exit keeps link respawning on the island until he completes the quest and returns to kalyxo"
+
+* PROPOSED Temporary Sea Zora island respawn during the quest (2026-10-20)
+  :PROPERTIES:
+  :ASKED_BY: scawful, Sea Zora trust follow-up
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_completion_2026-10-20/WORK_PACKAGES.md
+  :END:
+  Candidate: Save and Exit respawns Link on the island until quest completion
+  and actual Kalyxo return. Do not implement or promote to a required save
+  change yet. The exact quest endpoint and interaction with Maple's existing
+  conversation-triggered dreams/hut wake remain open. Before implementation,
+  define entry/exit conditions, interrupted travel and ordinary-save recovery.
+  Question: "How long should the temporary Sea Zora island respawn last?"
+  Answer: "Keep this as a proposal for now"
+
+* DECIDED Power east of the desert; Glove-focused shrine; no Hammer requirement for Power or D6 (2026-10-21)
+  :PROPERTIES:
+  :ASKED_BY: scawful, current progression reconciliation
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_completion_2026-10-20/POWER_GLOVE_ROUTE.md
+  :END:
+  Shrine of Power sits east of the desert and is accessible with the items
+  available to the player at the D6 stage. Hammer is not required for the
+  shrine or D6. The dungeon described as built around the Power Glove is
+  Shrine of Power, as scawful clarified. Exact exterior map/door is unassigned.
+  This updates the earlier volcanic-shelf/near-Mines shorthand. It does not
+  select an early Glove source, a Mitt replacement, a new post-D5 gate or
+  a mandatory Lupo/Abyss itinerary; those are reopened in the entry below.
+  Answer: "Correction, hammer is not required at all for the shrine of power or D6. the shrine will sit east of the desert and be accessible with the items that D6 player will have by then. the dungeon is built around the power glove, so it might be best to reconsider how the lupo mountain eon abyss stuff plays out, how it leads into the goron mines if it does, when the power glove is granted and if we should still do the ember seed forge stuff."
+  Clarification: "Shrine of Power"
+
+* OPEN Reconcile Glove timing, Ember Seed forge, D3 garden and Lupo/Goron progression (2026-10-21)
+  :PROPERTIES:
+  :ASKED_BY: scawful, current progression reconciliation
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_completion_2026-10-20/POWER_GLOVE_ROUTE.md
+  :END:
+  The October18/19 early-Glove/forge/D3-garden/Mitt-only-Meat decisions
+  describe an earlier connected proposal, not the current implemented game.
+  scawful has reopened Glove grant timing, whether Ember Seed/forge remains,
+  and whether Lupo/Eon Abyss leads into Goron Mines at all. Reconcile them
+  together before implementing more of that dependency chain.
+  Current read-only evidence: base room74 still grants item1B Power Glove;
+  room73 big chest grants item39 Pendant of Power; the forge/seed exchange
+  is unimplemented. The planned D3 garden Compass relocation is not in the
+  shared base. Master Rock Meat pickup accepts any Glove; open PR205 adds
+  Mitt-only pickup and therefore changes this unresolved progression policy.
+  Older exact Answer text and approved draft lines remain preserved as history.
+  Do not treat their existence as a fresh decision to keep the whole quest.
+  No new grant location, replacement quest or removal is approved here.
+  Question: "Should the Power Glove remain the Shrine of Power's internal acquisition, or be acquired earlier?"
+  Answer:
+  User direction: "yeah that stuff seems a bit murky and mixed with decisions still in flux, need to reconcile that"
+
+* DECIDED Current direction: Glove inside Power; no seed-forge quest; optional Lupo; Lyra Rock Meat (2026-10-21)
+  :PROPERTIES:
+  :ASKED_BY: scawful, Power/Glove reconciliation follow-up
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_completion_2026-10-20/POWER_GLOVE_ROUTE.md
+  :END:
+  1. Keep the Power Glove as Shrine of Power's internal acquisition; no early
+     Glove. Cut the unimplemented Ember Seed/forge-to-Glove quest from the
+     working plan, including its seed/menu exchange work. This concerns that
+     quest; a separate optional smith-partner/tempering idea is not selected
+     or rewritten by this answer.
+  2. Eon Goron/Lupo Mountain is optional, not a required pre-D6 visit.
+     Hide Rock Meat on Lyra Sea maps near the new east-desert Power area.
+     Exact maps, hiding places and return connections still need design.
+  3. Retain the current five-Meat Goron entry transaction as the working
+     baseline. Make the required Meat reachable with the shrine's basic
+     Glove and other D6-stage inventory; do not add a Mitt/Hammer/Lupo gate.
+     The open Mitt-only pickup patch205 conflicts with that selected route.
+  4. The earlier required D3 Glove-garden/Compass proposal cannot remain a
+     prerequisite: all required pre-Power progress must work without Glove.
+     Current Compass placement can remain while any garden redesign is chosen.
+     The Book's existing library/dash source is independent of the cut forge.
+  This answers the previous OPEN grant/forge/Lupo-role reconciliation as the
+  current planning direction. It does not claim authored map placements or
+  authorize a base-ROM write/merge/stage. Exact Meat layout and optional
+  content details remain open for normal map/design work.
+  Answer: "Yeah I’m kinda thinking axe the forge, no early power glove, keep eon goron lupo mountain optional and we hide rock meat in Lyra sea Maps near new shrine of power area"
+
 * DECIDED Shrine of Power plan: Option A (2026-10-23)
   :PROPERTIES:
   :ASKED_BY: Claude-GaroPower (scawful's 2026-10-23 request: "ideas for how the shrine of power segment of the game should play out")
@@ -2863,3 +3008,39 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   A (Claude's pick). With the duel.
   B. Without the duel: blink, talk, Healing.
   Answer:
+
+* DECIDED Fortress island block $7B-$9D leaves the Fortress, unclaimed; $4D open (2026-10-28)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Abyss GBC dungeon override review)
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/dungeon_gfx_review_2026-10-28/ABYSS_GBC_OVERRIDE.md]]
+  :END:
+  1. The nine island rooms $7B/$7C/$7D/$8B/$8C/$8D/$9B/$9C/$9D leave the Fortress
+     of Secrets. They are unclaimed for now: Sky D8 (as in
+     handoffs/sky_d8_implementation_2026-10-20/cursor-rooms/ROOM_PLAN.md) or
+     another use. The Fortress keeps 13 rooms: $0C $0D $1C $1D $2D $3D $4C $4D
+     $5C $5D $6B $6C $6D.
+  2. Reason: the Abyss is restyled to the GBC look, and the island block holds
+     most of the ornate layer-2, rail and deep-wall rooms.
+  3. $4D (vanilla Moldorm room, 112 objects) is not part of this move. It may be
+     moved, or its vanilla objects removed; the exact treatment is open.
+  Answer: "Island block only"; "4D might just be moved, the objects or removed
+  since it's a vanilla map mostly"; "and maybe not explicitly for D8 but just
+  unclaimed for now if we want to do D8 there or some other thing i guess"
+  (scawful, 2026-10-28).
+
+* DECIDED Octoboss guards the underwater shrine; no item drop (2026-10-28)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Octoboss overworld fight review)
+  :DOC:      [[file:../../../Sprites/Bosses/octoboss.asm]]
+  :END:
+  1. The cave behind Octoboss on map $75 is the entrance of the Eon Abyss
+     underwater shrine. Its reward stays the Cane of Byrna (Item homes, 2026-10-18).
+  2. Octoboss drops no item. When the brothers surrender, the bridge wall
+     clears and the cave is open; the defeat flag keeps it open.
+  3. The west loop corner is more of the underwater village, not the shrine.
+  4. Open: point the $75 cave entrance at the shrine rooms (base-ROM edit), and
+     write surrender text that hints at the shrine (dialogue approval).
+  Option picked: "Octoboss guards the shrine: the cave behind him on $75 is the
+  shrine entrance (Byrna inside), and the west corner becomes more of the
+  village."
+  Answer: "Guard the shrine" (scawful, 2026-10-28).
