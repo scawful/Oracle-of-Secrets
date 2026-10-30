@@ -122,7 +122,24 @@ Link_ConsumeMagicBagItem:
 
   Link_DekuSticks:
   {
-    CLC : RTS
+    ; Refuse if an activation is already pending
+    LDA.l PendingSupplyAction : BNE .fail
+
+    ; Refuse if a stick is ALREADY drawn
+    LDA.l DekuStick_State : BNE .fail
+
+    ; Refuse if Link has 0 Deku Sticks
+    LDA.l DekuSticks : BEQ .fail
+
+    ; Queue Deku Stick draw for execution when menu closes
+    LDA.b #!SUPPLY_ACTION_DEKUSTICK : STA.l PendingSupplyAction
+    LDA.b #$01 ; A=1 indicates deferred exit activation to menu caller
+    SEC
+    RTS
+
+  .fail
+    CLC
+    RTS
   }
 
 }
@@ -133,10 +150,13 @@ Supply_ProcessPendingExitAction:
   LDA.l PendingSupplyAction : BNE +
     JMP .done
   +
-  CMP.b #!SUPPLY_ACTION_HONEYCOMB : BEQ +
-    JMP .check_other
+  CMP.b #!SUPPLY_ACTION_HONEYCOMB : BEQ .action_honeycomb
+  CMP.b #!SUPPLY_ACTION_DEKUSTICK : BNE +
+    JMP .action_deku_stick
   +
+  JMP .check_other
 
+.action_honeycomb
   ; Clear pending request
   LDA.b #$00 : STA.l PendingSupplyAction
 
@@ -207,12 +227,68 @@ Supply_ProcessPendingExitAction:
 
 .abort_error
   LDA.b #$3C : STA.w $012E
+  BRA .done
+
+.action_deku_stick
+  ; Clear pending request
+  LDA.b #$00 : STA.l PendingSupplyAction
+
+  ; Re-verify guards upon returning to gameplay:
+  ; 1. Must own at least 1 Deku Stick
+  LDA.l DekuSticks : BEQ .abort_error_deku
+
+  ; 2. Must not already have a stick drawn
+  LDA.l DekuStick_State : BNE .abort_error_deku
+
+  ; 3. Must be on ground in default state ($5D == 0)
+  LDA.l $7E005D : BNE .abort_error_deku
+
+  ; 4. Must not be carrying an object ($0308 == 0)
+  LDA.l $7E0308 : BNE .abort_error_deku
+
+  ; 5. Must not be transformed by a mask (0 and 6 are normal Link)
+  LDA.l $7E02B2 : BEQ +
+  CMP.b #$06 : BNE .abort_error_deku
++
+
+  ; Successful draw!
+  ; Check if we have a saved worn stick in DekuStickWear ($7EF39F)
+  ; Valid worn budget is 1 to 74 ($01..$4A). Fresh budget is 75 ($4B).
+  LDA.l DekuStickWear
+  BEQ .draw_fresh
+  CMP.b #$4B : BCS .draw_fresh ; 75 or out-of-range garbage -> fallback to fresh 75
+    ; Valid worn budget stored:
+    STA.l DekuStick_BurnTimer
+    BRA .finish_draw
+
+.draw_fresh
+  LDA.b #$4B : STA.l DekuStick_BurnTimer ; 75 ticks (20s)
+
+.finish_draw
+  ; Clear stored wear now that the stick is active
+  LDA.b #$00 : STA.l DekuStickWear
+
+  ; Decrement inventory count exactly once
+  LDA.l DekuSticks : DEC A : STA.l DekuSticks
+
+  ; Set active state to 1 (held unlit)
+  LDA.b #$01 : STA.l DekuStick_State
+  LDA.b #$00 : STA.l DekuStick_SwipeTimer
+
+  ; Play equip click sound
+  LDA.b #$20 : STA.w $012F
+  BRA .done
+
+.abort_error_deku
+  LDA.b #$3C : STA.w $012E
 
 .check_other
 .done
   PLB
   RTL
 }
+
+incsrc "Items/deku_stick.asm"
 
 
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
