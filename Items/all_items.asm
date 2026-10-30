@@ -87,13 +87,13 @@ Link_ConsumeMagicBagItem:
     LDA.l PendingSupplyAction : BNE .fail
 
     ; Refuse if an active bee already exists in the room
-    ; Note: Wild bees use ID $79. Player/Good bees use ID $B2 with $0EB0 != 0.
-    ; Windmill Guy uses ID $B2 with $0EB0 == 0; do not treat Windmill Guy as a bee.
+    ; Note: Wild bees use ID $79. Player bees use ID $B2 with $0D80 != 0.
+    ; Windmill Guy uses ID $B2 with $0D80 == 0; do not treat Windmill Guy as a bee.
     LDX.b #$0F
   .check_active
     LDA.w $0E20, X : CMP.b #$79 : BEQ .bee_active
                      CMP.b #$B2 : BNE .not_bee
-    LDA.w $0EB0, X : BEQ .not_bee ; Windmill Guy ($0EB0 == 0) is not a bee
+    LDA.w $0D80, X : BEQ .not_bee ; Windmill Guy ($0D80 == 0) is not a bee
   .bee_active
     LDA.w $0DD0, X : BNE .fail
   .not_bee
@@ -150,7 +150,7 @@ Supply_ProcessPendingExitAction:
 .exit_check_bee
   LDA.w $0E20, X : CMP.b #$79 : BEQ .exit_bee_active
                    CMP.b #$B2 : BNE .exit_not_bee
-  LDA.w $0EB0, X : BEQ .exit_not_bee ; Windmill Guy ($0EB0 == 0) is not a bee
+  LDA.w $0D80, X : BEQ .exit_not_bee ; Windmill Guy ($0D80 == 0) is not a bee
 .exit_bee_active
   LDA.w $0DD0, X : BEQ +
     JMP .abort_error

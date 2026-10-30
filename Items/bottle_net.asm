@@ -192,10 +192,18 @@ LinkItem_Bottles:
 
     .LinkItem_BeeBottle
     STZ.w $0301
+    LDA.l $7EF35C, X : CMP.b #$08 ; Check if releasing a Good Bee ($08) vs Ordinary Bee ($07)
+    PHP
     JSL PlayerItem_ReleaseBee : BPL .bee_spawn_success
+      PLP
       BRL LinkGoBeep ; BRL $07A955
     .bee_spawn_success
-    LDA.b #$01 : STA.w $0EB0, Y
+    LDA.b #$00
+    PLP
+    BNE +
+      INC A ; Good Bee ($08) gets subtype $0EB0 = 1; Ordinary Bee ($07) retains subtype $0EB0 = 0
+    +
+    STA.w $0EB0, Y
     LDA.b #$02 : STA.l $7EF35C, X
     JSL RebuildHUD_long
 

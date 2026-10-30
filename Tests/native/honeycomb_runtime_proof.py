@@ -1,25 +1,33 @@
 #!/usr/bin/env python3
-"""Focused owned-runtime proof for Honeycomb Nimbus bee-swarm and Windmill Guy multiplexing.
+"""Focused owned-runtime proof for Honeycomb Nimbus bee-swarm, bottle bees, and Windmill Guy multiplexing.
 
 Verifies natively in headless Mesen2:
 1. Windmill Guy preservation:
-   - Windmill Guy ($0E20=$B2, $0EB0=0) executes NPC routine ($309119 -> Race Game Lady / dialogue),
+   - Windmill Guy ($0E20=$B2, $0D80=0, $0EB0=0) executes NPC routine ($309119 -> Race Game Lady / dialogue),
      setting SprMiscC=1, without executing bee AI or despawning.
-2. Swarm activation in presence of Windmill Guy:
+2. Ordinary bottle bee release:
+   - Releasing an Ordinary Bee ($07) from Bottle 1 empties the bottle to $02.
+   - Spawned bee routes as PlayerBee ($0D80=1), but retains Ordinary Bee subtype ($0EB0=0).
+   - Windmill Guy in slot 0 remains untouched.
+3. Good Bee bottle release:
+   - Releasing a Good Bee ($08) from Bottle 1 empties the bottle to $02.
+   - Spawned bee routes as PlayerBee ($0D80=1), and sets Good Bee subtype ($0EB0=1).
+   - Windmill Guy in slot 0 remains untouched.
+4. Swarm activation in presence of Windmill Guy:
    - Honeycomb activation in Windmill Guy's presence is accepted (Windmill Guy is not treated as a bee).
    - Menu queues deferred action, scrolls up and returns to gameplay.
-   - Exactly 3 Good Bees spawn ($0E20=$B2, $0EB0=1).
+   - Exactly 3 Good Bees spawn ($0E20=$B2, $0D80=1, $0EB0=1).
    - Inventory decrements: exactly 1 Honeycomb spent ($7EF393: 2 -> 1).
    - Windmill Guy remains untouched while swarm spawns alongside him.
-3. Attacking bees:
+5. Attacking bees:
    - Bees acquire enemy target in room and damage/destroy enemy.
-4. Active swarm refusal:
+6. Active swarm refusal:
    - While bees are active, Honeycomb activation is refused.
    - Menu remains open (no scroll-up/exit), pending remains 0, inventory count preserved.
-5. Slot pressure refusal:
+7. Slot pressure refusal:
    - When fewer than 3 sprite slots are free (< 3 free slots), Honeycomb activation is refused.
    - Menu remains open, pending remains 0, inventory count preserved.
-6. Bottle preservation:
+8. Bottle preservation:
    - Bottles are untouched during Honeycomb usage.
 """
 from __future__ import annotations
@@ -48,10 +56,13 @@ MENU, CURSOR, PAGE = 0x7E0200, 0x7E020B, 0x7E1E71
 HONEYCOMB_COUNT = 0x7EF393
 PENDING_SUPPLY = 0x7E0434
 BOTTLE_1 = 0x7EF35C
+BOTTLE_INDEX = 0x7EF34F
+EQUIPPED_Y = 0x7E0202
 
 SPR_STATUS = 0x7E0DD0
+SPR_ACTION = 0x7E0D80   # $0D80,X (route identity: 0=Windmill Guy, 1=active bee)
 SPR_ID = 0x7E0E20
-SPR_GOODBEE = 0x7E0EB0  # $0EB0,X
+SPR_GOODBEE = 0x7E0EB0  # $0EB0,X (Good Bee subtype: 0=Ordinary Bee, 1=Good Bee)
 SPR_MISCC = 0x7E0DE0    # $0DE0,X
 SPR_HITBOX = 0x7E0E40
 SPR_HEALTH = 0x7E0E50
@@ -198,15 +209,17 @@ class HoneycombRuntimeTest:
         for s in range(16):
             self.w(SPR_STATUS + s, 0)
             self.w(SPR_ID + s, 0)
+            self.w(SPR_ACTION + s, 0)
             self.w(SPR_GOODBEE + s, 0)
 
         # ----------------------------------------------------
         # 1. Windmill Guy preservation test
         # ----------------------------------------------------
         print("[*] Test 1: Windmill Guy NPC execution & preservation...")
-        # Slot 0: Windmill Guy ($B2, state 9, $0EB0=0) positioned near Link with persist flag
+        # Slot 0: Windmill Guy ($B2, state 9, $0D80=0, $0EB0=0) positioned near Link with persist flag
         self.w(SPR_ID + 0, 0xB2)
         self.w(SPR_STATUS + 0, 9)
+        self.w(SPR_ACTION + 0, 0)
         self.w(SPR_GOODBEE + 0, 0)
         self.w(SPR_MISCC + 0, 0)
         self.w(SPR_YL + 0, link_y & 0xFF)
@@ -219,19 +232,88 @@ class HoneycombRuntimeTest:
         # Let frames run naturally so Windmill Guy executes Sprite_WindmillGuy_Long
         time.sleep(0.6)
 
-        # Windmill Guy should have executed Sprite_WindmillGuy_Long -> set SprMiscC=1
+        # Windmill Guy should have executed Sprite_WindmillGuy_Long -> set SprMiscC=1, action=0, goodbee=0
         status0 = self.r(SPR_STATUS + 0)
         id0 = self.r(SPR_ID + 0)
+        action0 = self.r(SPR_ACTION + 0)
         goodbee0 = self.r(SPR_GOODBEE + 0)
         miscc0 = self.r(SPR_MISCC + 0)
-        t1_ok = (status0 == 9 and id0 == 0xB2 and goodbee0 == 0 and miscc0 == 1)
+        t1_ok = (status0 == 9 and id0 == 0xB2 and action0 == 0 and goodbee0 == 0 and miscc0 == 1)
         self.results["windmill_guy_preserved"] = t1_ok
-        print(f"    Windmill Guy status={status0}, id=0x{id0:02X}, goodbee={goodbee0}, miscc={miscc0} -> OK: {t1_ok}")
+        print(f"    Windmill Guy status={status0}, id=0x{id0:02X}, action={action0}, goodbee={goodbee0}, miscc={miscc0} -> OK: {t1_ok}")
 
         # ----------------------------------------------------
-        # 2. Swarm activation in presence of Windmill Guy
+        # 2. Ordinary bottled bee release test
         # ----------------------------------------------------
-        print("[*] Test 2: Honeycomb activation in presence of Windmill Guy...")
+        print("[*] Test 2: Ordinary bottle bee release (subtype 0 preserved)...")
+        # Put Ordinary Bee ($07) into Bottle 1 and equip as Y item
+        self.w(BOTTLE_1, 0x07)
+        self.w(BOTTLE_INDEX, 1)
+        self.w(EQUIPPED_Y, 6)   # Bottle 1 slot
+        time.sleep(0.1)
+
+        # Press Y to release Ordinary Bee
+        self.press("Y", frames=10)
+        time.sleep(0.8)
+
+        bottle_after_ord = self.r(BOTTLE_1)
+        ord_bee_slot = None
+        ord_bee_action = None
+        ord_bee_subtype = None
+        for s in range(1, 16):
+            if self.r(SPR_STATUS + s) != 0 and self.r(SPR_ID + s) == 0xB2:
+                ord_bee_slot = s
+                ord_bee_action = self.r(SPR_ACTION + s)
+                ord_bee_subtype = self.r(SPR_GOODBEE + s)
+                break
+
+        wmg_alive_ord = (self.r(SPR_STATUS + 0) == 9 and self.r(SPR_ID + 0) == 0xB2 and self.r(SPR_ACTION + 0) == 0 and self.r(SPR_GOODBEE + 0) == 0)
+        t2_ok = (bottle_after_ord == 2 and ord_bee_slot is not None and ord_bee_action == 1 and ord_bee_subtype == 0 and wmg_alive_ord)
+        self.results["ordinary_bottle_bee_release"] = t2_ok
+        print(f"    Ordinary bee release: bottle={bottle_after_ord} (expected 2), bee slot={ord_bee_slot}, action={ord_bee_action} (expected 1), subtype={ord_bee_subtype} (expected 0), WMG={wmg_alive_ord} -> OK: {t2_ok}")
+
+        # Clear released bee from slot
+        if ord_bee_slot is not None:
+            self.w(SPR_STATUS + ord_bee_slot, 0)
+
+        # ----------------------------------------------------
+        # 3. Good Bee bottle release test
+        # ----------------------------------------------------
+        print("[*] Test 3: Good Bee bottle release (subtype 1 preserved)...")
+        # Put Good Bee ($08) into Bottle 1 and equip as Y item
+        self.w(BOTTLE_1, 0x08)
+        self.w(BOTTLE_INDEX, 1)
+        self.w(EQUIPPED_Y, 6)
+        time.sleep(0.1)
+
+        # Press Y to release Good Bee
+        self.press("Y", frames=10)
+        time.sleep(0.8)
+
+        bottle_after_good = self.r(BOTTLE_1)
+        good_bee_slot = None
+        good_bee_action = None
+        good_bee_subtype = None
+        for s in range(1, 16):
+            if self.r(SPR_STATUS + s) != 0 and self.r(SPR_ID + s) == 0xB2:
+                good_bee_slot = s
+                good_bee_action = self.r(SPR_ACTION + s)
+                good_bee_subtype = self.r(SPR_GOODBEE + s)
+                break
+
+        wmg_alive_good = (self.r(SPR_STATUS + 0) == 9 and self.r(SPR_ID + 0) == 0xB2 and self.r(SPR_ACTION + 0) == 0 and self.r(SPR_GOODBEE + 0) == 0)
+        t3_ok = (bottle_after_good == 2 and good_bee_slot is not None and good_bee_action == 1 and good_bee_subtype == 1 and wmg_alive_good)
+        self.results["good_bottle_bee_release"] = t3_ok
+        print(f"    Good bee release: bottle={bottle_after_good} (expected 2), bee slot={good_bee_slot}, action={good_bee_action} (expected 1), subtype={good_bee_subtype} (expected 1), WMG={wmg_alive_good} -> OK: {t3_ok}")
+
+        # Clear released bee from slot
+        if good_bee_slot is not None:
+            self.w(SPR_STATUS + good_bee_slot, 0)
+
+        # ----------------------------------------------------
+        # 4. Swarm activation in presence of Windmill Guy
+        # ----------------------------------------------------
+        print("[*] Test 4: Honeycomb activation in presence of Windmill Guy...")
         # Link has 2 Honeycombs
         self.w(HONEYCOMB_COUNT, 2)
         self.w(PENDING_SUPPLY, 0)
@@ -254,22 +336,22 @@ class HoneycombRuntimeTest:
         # Exactly 1 Honeycomb spent: 2 -> 1
         count_after = self.r(HONEYCOMB_COUNT)
         # Windmill Guy still alive in slot 0
-        wmg_alive = (self.r(SPR_STATUS + 0) == 9 and self.r(SPR_ID + 0) == 0xB2 and self.r(SPR_GOODBEE + 0) == 0)
+        wmg_alive = (self.r(SPR_STATUS + 0) == 9 and self.r(SPR_ID + 0) == 0xB2 and self.r(SPR_ACTION + 0) == 0 and self.r(SPR_GOODBEE + 0) == 0)
 
-        # Count spawned bees ($B2 with $0EB0 == 1)
+        # Count spawned bees ($B2 with action 1 and Good Bee subtype 1)
         bee_slots = []
-        for s in range(16):
-            if self.r(SPR_STATUS + s) != 0 and self.r(SPR_ID + s) == 0xB2 and self.r(SPR_GOODBEE + s) == 1:
+        for s in range(1, 16):
+            if self.r(SPR_STATUS + s) != 0 and self.r(SPR_ID + s) == 0xB2 and self.r(SPR_ACTION + s) == 1 and self.r(SPR_GOODBEE + s) == 1:
                 bee_slots.append(s)
 
-        t2_ok = (count_after == 1 and wmg_alive and len(bee_slots) == 3)
-        self.results["swarm_deployed_with_wmg"] = t2_ok
-        print(f"    Honeycomb count={count_after} (expected 1), WMG alive={wmg_alive}, bee_slots={bee_slots} -> OK: {t2_ok}")
+        t4_ok = (count_after == 1 and wmg_alive and len(bee_slots) == 3)
+        self.results["swarm_deployed_with_wmg"] = t4_ok
+        print(f"    Honeycomb count={count_after} (expected 1), WMG alive={wmg_alive}, bee_slots={bee_slots} -> OK: {t4_ok}")
 
         # ----------------------------------------------------
-        # 3. Attacking bees: target acquisition & damage
+        # 5. Attacking bees: target acquisition & damage
         # ----------------------------------------------------
-        print("[*] Test 3: Attacking bees damage enemy target...")
+        print("[*] Test 5: Attacking bees damage enemy target...")
         target_slot = 5
         self.w(SPR_ID + target_slot, 0x05)    # Octorok
         self.w(SPR_STATUS + target_slot, 9)
@@ -299,9 +381,9 @@ class HoneycombRuntimeTest:
         print(f"    Target enemy initial_hp={initial_hp}, final_hp={final_hp}, status={final_status} -> Damaged: {damaged}")
 
         # ----------------------------------------------------
-        # 4. Active swarm refusal
+        # 6. Active swarm refusal
         # ----------------------------------------------------
-        print("[*] Test 4: Active swarm refusal preserves inventory...")
+        print("[*] Test 6: Active swarm refusal preserves inventory...")
         # Give Link 1 Honeycomb to test repeated consumption
         self.w(HONEYCOMB_COUNT, 1)
 
@@ -321,18 +403,18 @@ class HoneycombRuntimeTest:
         pending_after = self.r(PENDING_SUPPLY)
         count_pres = self.r(HONEYCOMB_COUNT)
 
-        t4_ok = (menu_state == 6 and pending_after == 0 and count_pres == 1)
-        self.results["active_swarm_refused"] = t4_ok
-        print(f"    Active swarm refusal: MENU={menu_state} (expected 6), pending={pending_after}, count={count_pres} -> OK: {t4_ok}")
+        t6_ok = (menu_state == 6 and pending_after == 0 and count_pres == 1)
+        self.results["active_swarm_refused"] = t6_ok
+        print(f"    Active swarm refusal: MENU={menu_state} (expected 6), pending={pending_after}, count={count_pres} -> OK: {t6_ok}")
 
         # Close menu
         self.press("START", frames=10)
         self.wait_play(5.0)
 
         # ----------------------------------------------------
-        # 5. Slot pressure refusal
+        # 7. Slot pressure refusal
         # ----------------------------------------------------
-        print("[*] Test 5: Slot pressure refusal (<3 free slots)...")
+        print("[*] Test 7: Slot pressure refusal (<3 free slots)...")
         # Despawn all existing sprites except slot 0
         for s in range(16):
             self.w(SPR_STATUS + s, 0)
@@ -341,6 +423,7 @@ class HoneycombRuntimeTest:
         for s in range(15):
             self.w(SPR_STATUS + s, 9)
             self.w(SPR_ID + s, 0x05)
+            self.w(SPR_ACTION + s, 0)
             self.w(SPR_GOODBEE + s, 0)
             self.w(SPR_YL + s, (link_y + 30) & 0xFF)
             self.w(SPR_YH + s, ((link_y + 30) >> 8) & 0xFF)
@@ -367,22 +450,22 @@ class HoneycombRuntimeTest:
         pend_slot = self.r(PENDING_SUPPLY)
         count_slot = self.r(HONEYCOMB_COUNT)
 
-        t5_ok = (menu_slot == 6 and pend_slot == 0 and count_slot == 1)
-        self.results["slot_pressure_refused"] = t5_ok
-        print(f"    Slot pressure refusal: MENU={menu_slot} (expected 6), pending={pend_slot}, count={count_slot} -> OK: {t5_ok}")
+        t7_ok = (menu_slot == 6 and pend_slot == 0 and count_slot == 1)
+        self.results["slot_pressure_refused"] = t7_ok
+        print(f"    Slot pressure refusal: MENU={menu_slot} (expected 6), pending={pend_slot}, count={count_slot} -> OK: {t7_ok}")
 
         # Close menu
         self.press("START", frames=10)
         self.wait_play(5.0)
 
         # ----------------------------------------------------
-        # 6. Bottle preservation
+        # 8. Bottle preservation
         # ----------------------------------------------------
-        print("[*] Test 6: Bottle inventory preservation...")
+        print("[*] Test 8: Bottle inventory preservation...")
         b1_val = self.r(BOTTLE_1)
-        t6_ok = (b1_val == 2)  # Remained empty bottle ($02) throughout
-        self.results["bottle_preserved"] = t6_ok
-        print(f"    Bottle 1 contents = 0x{b1_val:02X} (expected 0x02) -> OK: {t6_ok}")
+        t8_ok = (b1_val == 2)  # Remained empty bottle ($02)
+        self.results["bottle_preserved"] = t8_ok
+        print(f"    Bottle 1 contents = 0x{b1_val:02X} (expected 0x02) -> OK: {t8_ok}")
 
 
 def main():

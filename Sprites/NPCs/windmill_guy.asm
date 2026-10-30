@@ -64,9 +64,9 @@ Sprite_WindmillGuy_Long:
 {
   ; Safe sprite multiplexing: Sprite ID $B2 is shared between Sprite_WindmillGuy
   ; (NPC) and vanilla PlayerBee (spawned by Honeycomb swarm or player bottle bee).
-  ; When spawned as a bee, $0EB0,X is set to 1 (Good Bee flag).
-  ; Windmill Guy has $0EB0,X == 0.
-  LDA.w $0EB0, X : BEQ +
+  ; When spawned as a bee, $0D80,X is set to 1 (active player bee state).
+  ; Windmill Guy has $0D80,X == 0.
+  LDA.w $0D80, X : BEQ +
     JML SpriteModule_Active_Bank1E
   +
   PHB : PHK : PLB
