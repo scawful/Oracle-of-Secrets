@@ -248,6 +248,19 @@ class DekuStickRuntimeTest:
             raise RuntimeError(f"Failed to reach gameplay after load_state (MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)})")
         print(f"[+] Reached stable gameplay: MODULE={self.r(MODULE)}")
 
+    def boot_indoor_dungeon(self):
+        print("[*] Loading indoor dungeon baseline state...")
+        time.sleep(1)
+        state_path = REPO / "Roms" / "SaveStates" / "library" / "oos_1772076582_Agent_D6_Inside_Entry_Fresh.mss"
+        if not state_path.is_file():
+            state_path = REPO / "Roms" / "SaveStates" / "library" / "oos_1772076583_Agent_Zora_Inside_Fresh.mss"
+        res = self.b.load_state(path=str(state_path))
+        print(f"[*] load_state indoor result: {res}")
+        time.sleep(0.5)
+        if not self.wait_play(8.0):
+            raise RuntimeError(f"Failed to reach gameplay after load_state (MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)})")
+        print(f"[+] Reached stable indoor gameplay: MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)}, UW={self.r(UNDERWORLD_FLAG)}")
+
     def boot_fresh_file(self):
         print("[*] Cold booting fresh emulator session without snapshots...")
         time.sleep(1.0)
@@ -653,31 +666,40 @@ class DekuStickRuntimeTest:
 
         # Resume normal gameplay ($11 = 0)
         self.w(SUBMODULE, 0)
-        time.sleep(0.4)  # ~24 frames: should tick down at least once
-        burn_after_scroll = self.r(DEKU_BURN_TIMER)
-        scroll_resumed = (burn_after_scroll < 50)
+        scroll_resumed = False
+        burn_after_scroll = 50
+        for _ in range(30):
+            time.sleep(0.05)
+            burn_after_scroll = self.r(DEKU_BURN_TIMER)
+            if burn_after_scroll < 50:
+                scroll_resumed = True
+                break
         print(f"    After scroll ($11=0): burn={burn_after_scroll} (exp <50) -> OK: {scroll_resumed}")
 
-        # Destructive transition: entrance/exit fade ($10 = 7) drops drawn stick without refund
-        self.w(MODULE, 7)
+        # Destructive transition: stairs / recoil state ($5D = 0x13) drops drawn stick without refund
+        self.w(DEKU_STICK_STATE, 2)
+        self.w(DEKU_BURN_TIMER, 40)
+        self.w(LINK_STATE, 0x13)  # LinkState_Stairs
         time.sleep(0.1)
-        state_fade = self.r(DEKU_STICK_STATE)
-        burn_fade = self.r(DEKU_BURN_TIMER)
-        count_fade = self.r(DEKU_STICKS_COUNT)
-        fade_dropped = (state_fade == 0 and burn_fade == 0 and count_fade == 1)
-        self.w(MODULE, 9)
-        print(f"    Fade drop ($10=7): state={state_fade} (exp 0), burn={burn_fade} (exp 0), count={count_fade} (exp 1) -> OK: {fade_dropped}")
+        state_stairs = self.r(DEKU_STICK_STATE)
+        burn_stairs = self.r(DEKU_BURN_TIMER)
+        count_stairs = self.r(DEKU_STICKS_COUNT)
+        stairs_dropped = (state_stairs == 0 and burn_stairs == 0 and count_stairs == 1)
+        self.w(LINK_STATE, 0)
+        time.sleep(0.1)
+        print(f"    Stairs transition drop ($5D=0x13): state={state_stairs} (exp 0), burn={burn_stairs} (exp 0), count={count_stairs} (exp 1) -> OK: {stairs_dropped}")
 
         # Stowed wear survives transitions
         self.w(DEKU_STICK_WEAR, 30)
         self.w(DEKU_STICK_STATE, 0)
-        self.w(MODULE, 7)  # Transition while stowed
+        self.w(SUBMODULE, 1)  # Transition scroll while stowed
         time.sleep(0.1)
-        self.w(MODULE, 9)
+        self.w(SUBMODULE, 0)
+        time.sleep(0.1)
         wear_survived = (self.r(DEKU_STICK_WEAR) == 30)
         print(f"    Stowed wear transition survival: wear={self.r(DEKU_STICK_WEAR)} (exp 30) -> OK: {wear_survived}")
 
-        t7_ok = (scroll_paused and scroll_resumed and fade_dropped and wear_survived)
+        t7_ok = (scroll_paused and scroll_resumed and stairs_dropped and wear_survived)
         self.results["cross_room_scroll_and_lifecycle"] = t7_ok
         print(f"    Cross-room lifecycle verdict -> OK: {t7_ok}")
 
@@ -898,6 +920,124 @@ class DekuStickRuntimeTest:
         t12_ok = (menu12 == 6 and pend12 == 0 and count12 == 0 and wear12 == 30)
         self.results["zero_inventory_refusal"] = t12_ok
         print(f"    Zero-inventory refusal: MENU={menu12} (exp 6), pending={pend12} (exp 0), count={count12} (exp 0), wear={wear12} (exp 30) -> OK: {t12_ok}")
+
+        # ----------------------------------------------------
+        # 13. Actual indoor Underworld ($10=7) gameplay proof
+        # ----------------------------------------------------
+        print("[*] Test 13: Actual indoor dungeon ($10=7) draw, hold, swipe, torch, room transition, and stow...")
+        self.boot_indoor_dungeon()
+
+        # Check natural indoor baseline without modifying MODULE:
+        module_init = self.r(MODULE)
+        submodule_init = self.r(SUBMODULE)
+        uw_flag_init = self.r(UNDERWORLD_FLAG)
+        link_state_init = self.r(LINK_STATE)
+        print(f"    Indoor baseline: MODULE={module_init} (exp 7), SUBMODULE={submodule_init} (exp 0), UW={uw_flag_init} (exp !=0), LINK_STATE={link_state_init} (exp 0)")
+        baseline_indoor_ok = (module_init == 7 and submodule_init == 0 and uw_flag_init != 0 and link_state_init == 0)
+
+        # Setup inventory for indoor draw
+        self.w(DEKU_STICKS_COUNT, 3)
+        self.w(DEKU_STICK_WEAR, 0)
+        self.w(DEKU_STICK_STATE, 0)
+        self.w(PENDING_SUPPLY, 0)
+
+        # Draw stick via Equipment menu in indoor mode:
+        if not self.navigate_to_equipment():
+            raise RuntimeError("Failed to open Equipment menu indoors")
+        self.w(CURSOR, 20)
+        time.sleep(0.1)
+        self.press("A", frames=10)
+        if not self.wait_play(8.0):
+            raise RuntimeError("Failed to return to indoor gameplay after menu")
+
+        module_after_draw = self.r(MODULE)
+        state_after_draw = self.r(DEKU_STICK_STATE)
+        count_after_draw = self.r(DEKU_STICKS_COUNT)
+        burn_after_draw = self.r(DEKU_BURN_TIMER)
+        oam_stick_y = self.r(0x7E0811)
+        indoor_draw_ok = (module_after_draw == 7 and state_after_draw == 1 and count_after_draw == 2 and
+                          burn_after_draw == 75 and oam_stick_y != 0xE0)
+        print(f"    Indoor draw ($10=7): MODULE={module_after_draw}, state={state_after_draw} (exp 1), count={count_after_draw} (exp 2), burn={burn_after_draw} (exp 75), stick_y={oam_stick_y} -> OK: {indoor_draw_ok}")
+
+        # Indoor Y swipe:
+        self.b.press_button("y", frames=4)
+        time.sleep(0.05)
+        swipe_observed = False
+        for _ in range(20):
+            st = self.r(DEKU_STICK_STATE)
+            sw = self.r(DEKU_SWIPE_TIMER)
+            if st == 3 and sw > 0:
+                swipe_observed = True
+                break
+            time.sleep(0.02)
+        # Wait for swipe to finish back to held unlit (state 1)
+        time.sleep(0.3)
+        state_after_swipe = self.r(DEKU_STICK_STATE)
+        indoor_swipe_ok = (swipe_observed and state_after_swipe == 1)
+        print(f"    Indoor Y swipe: observed={swipe_observed}, state_after={state_after_swipe} (exp 1) -> OK: {indoor_swipe_ok}")
+
+        # Indoor torch interaction:
+        self.w(LINK_DIR, 2)  # Facing Down
+        # Ignite from lit torch 0:
+        self.w(TORCH_TIMERS + 0, 0x80)
+        self.set_torch_probe_tile(facing=2, torch_id=0)
+        time.sleep(0.1)
+        state_after_ignite = self.r(DEKU_STICK_STATE)
+        burn_after_ignite = self.r(DEKU_BURN_TIMER)
+        indoor_ignite_ok = (state_after_ignite == 2 and burn_after_ignite > 0)
+        print(f"    Indoor lit torch ignition: state={state_after_ignite} (exp 2), burn={burn_after_ignite} -> OK: {indoor_ignite_ok}")
+
+        # Light unlit torch 1 with lit stick:
+        self.w(TORCH_TIMERS + 1, 0x00)
+        self.set_torch_probe_tile(facing=2, torch_id=1)
+        time.sleep(0.1)
+        torch1_lit = self.r(TORCH_TIMERS + 1)
+        indoor_torch_light_ok = (torch1_lit > 0)
+        print(f"    Indoor lighting unlit torch: torch1={torch1_lit} (exp >0) -> OK: {indoor_torch_light_ok}")
+
+        # Indoor room transition (InterroomTransition / door scroll $11 = 2):
+        self.w(DEKU_BURN_TIMER, 50)
+        self.w(SUBMODULE, 2)  # Door scroll
+        time.sleep(0.4)
+        burn_in_door_scroll = self.r(DEKU_BURN_TIMER)
+        state_in_door_scroll = self.r(DEKU_STICK_STATE)
+        flame_y_scroll = self.r(0x7E0815)
+        indoor_scroll_paused = (burn_in_door_scroll == 50 and state_in_door_scroll == 2 and flame_y_scroll != 0xE0)
+        self.w(SUBMODULE, 0)
+        time.sleep(0.4)
+        burn_after_door_scroll = self.r(DEKU_BURN_TIMER)
+        state_after_door_scroll = self.r(DEKU_STICK_STATE)
+        indoor_scroll_resumed = (burn_after_door_scroll < 50 and state_after_door_scroll == 2)
+        print(f"    Indoor door scroll ($11=2): paused={indoor_scroll_paused} (burn={burn_in_door_scroll}), resumed={indoor_scroll_resumed} (burn={burn_after_door_scroll}) -> OK: {indoor_scroll_paused and indoor_scroll_resumed}")
+
+        # Indoor B stow & wear preservation:
+        self.press("B", frames=10)
+        time.sleep(0.2)
+        state_after_stow = self.r(DEKU_STICK_STATE)
+        count_after_stow = self.r(DEKU_STICKS_COUNT)
+        wear_after_stow = self.r(DEKU_STICK_WEAR)
+        indoor_stow_ok = (state_after_stow == 0 and count_after_stow == 3 and 0 < wear_after_stow < 75)
+        print(f"    Indoor B stow: state={state_after_stow} (exp 0), count={count_after_stow} (exp 3), wear={wear_after_stow} (exp in 1..74) -> OK: {indoor_stow_ok}")
+
+        # Indoor destructive transition (stairs recoil $5D = 0x13 drops stick):
+        self.w(DEKU_STICK_STATE, 1)
+        self.w(DEKU_STICKS_COUNT, 2)
+        self.w(LINK_STATE, 0x13)  # LinkState_Stairs
+        time.sleep(0.1)
+        state_spiral = self.r(DEKU_STICK_STATE)
+        burn_spiral = self.r(DEKU_BURN_TIMER)
+        count_spiral = self.r(DEKU_STICKS_COUNT)
+        spiral_dropped = (state_spiral == 0 and burn_spiral == 0 and count_spiral == 2)
+        self.w(LINK_STATE, 0)
+        time.sleep(0.1)
+        print(f"    Indoor stairs drop ($5D=0x13): state={state_spiral} (exp 0), burn={burn_spiral} (exp 0), count={count_spiral} (exp 2) -> OK: {spiral_dropped}")
+
+        t13_ok = (baseline_indoor_ok and indoor_draw_ok and indoor_swipe_ok and
+                  indoor_ignite_ok and indoor_torch_light_ok and
+                  indoor_scroll_paused and indoor_scroll_resumed and
+                  indoor_stow_ok and spiral_dropped)
+        self.results["indoor_underworld_gameplay_proof"] = t13_ok
+        print(f"    Indoor Underworld gameplay verdict -> OK: {t13_ok}")
 
 
 def main():

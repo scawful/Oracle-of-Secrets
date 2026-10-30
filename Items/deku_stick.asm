@@ -125,14 +125,40 @@ DekuStick_Main:
 
   PHP : SEP #$30
 
-  ; Guard 0: Destructive transitions (stairs, entrance/exit fades, warps, etc.)
-  ; Main game mode must be active gameplay (0x09)
-  LDA.b $10 : CMP.b #$09 : BNE .interrupted
+  ; Guard 0: Active gameplay mode (0x07 = Underworld, 0x09 = Overworld)
+  LDA.b $10
+  CMP.b #$07 : BEQ .check_underworld_submodules
+  CMP.b #$09 : BEQ .check_overworld_submodules
+  BRA .interrupted
 
-  ; Submodule stairs check: 0x12 and 0x13 straight inter-room stairs, 0x0E spiral stairs
-  LDA.b $11 : CMP.b #$12 : BEQ .interrupted
-  CMP.b #$13 : BEQ .interrupted
+.check_underworld_submodules
+  ; Destructive Underworld submodules (inter-room stairs, falling, warps, mirror):
+  ; 0x06 (Fat stairs), 0x07 (Fall), 0x0E (Spiral stairs), 0x11..0x13 (Straight stairs),
+  ; 0x14 (Fall recovery), 0x15 (Warp pad), 0x19 (Mirror fade)
+  LDA.b $11
+  CMP.b #$06 : BEQ .interrupted
+  CMP.b #$07 : BEQ .interrupted
   CMP.b #$0E : BEQ .interrupted
+  CMP.b #$11 : BEQ .interrupted
+  CMP.b #$12 : BEQ .interrupted
+  CMP.b #$13 : BEQ .interrupted
+  CMP.b #$14 : BEQ .interrupted
+  CMP.b #$15 : BEQ .interrupted
+  CMP.b #$19 : BEQ .interrupted
+  BRA .submodule_ok
+
+.check_overworld_submodules
+  ; Destructive Overworld submodules (mosaic entrance fades, warps, drowning, whirlpool):
+  LDA.b $11
+  CMP.b #$0D : BEQ .interrupted
+  CMP.b #$17 : BEQ .interrupted
+  CMP.b #$23 : BEQ .interrupted
+  CMP.b #$24 : BEQ .interrupted
+  CMP.b #$2A : BEQ .interrupted
+  CMP.b #$2C : BEQ .interrupted
+  CMP.b #$2E : BEQ .interrupted
+
+.submodule_ok
 
   ; Guard 1: LinkState must be default ($5D == 0)
   LDA.l $7E005D : BNE .interrupted

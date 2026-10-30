@@ -125,6 +125,30 @@ class DekuStickContractTest(unittest.TestCase):
         self.assertIn("JSL Entity_GetTileAttr", stick_text)
         self.assertIn("JSL Dungeon_LightTorch", stick_text)
 
+    def test_gameplay_modes_and_submodule_guards(self):
+        stick_text = DEKU_STICK.read_text(encoding="utf-8")
+        # Both Underworld ($07) and Overworld ($09) gameplay modes must be accepted
+        self.assertIn("CMP.b #$07 : BEQ .check_underworld_submodules", stick_text)
+        self.assertIn("CMP.b #$09 : BEQ .check_overworld_submodules", stick_text)
+        # Destructive Underworld submodules
+        self.assertIn("CMP.b #$06 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$07 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$0E : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$11 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$12 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$13 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$14 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$15 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$19 : BEQ .interrupted", stick_text)
+        # Destructive Overworld submodules
+        self.assertIn("CMP.b #$0D : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$17 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$23 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$24 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$2A : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$2C : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$2E : BEQ .interrupted", stick_text)
+
 
 class DekuStickLogicModelTest(unittest.TestCase):
     """Simulates the ASM state machine logic for Deku Stick draw, stow, and wear."""
