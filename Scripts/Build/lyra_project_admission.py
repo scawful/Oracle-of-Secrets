@@ -434,7 +434,8 @@ def _background_palette_payload(colors):
                 runtime_consumer="unbound")
 
 
-def appearance_plan(source, document, directory):
+def appearance_plan(source, document, directory, *, resource_inspection=None,
+                    terrain_sha256=None, resource_provenance=None):
     """Preserve saved selectors and prove conservative render-slot coherence.
 
     Different used sheet/palette selectors remain unqualified even if their
@@ -495,8 +496,18 @@ def appearance_plan(source, document, directory):
             if differences:
                 blockers.append(dict(code="RENDER_APPEARANCE_UNPROVEN", map_id=area,
                                      source_map=dependency, fields=differences))
-    return dict(selector_rows=rows, render_contexts=contexts,
-                coherent=not blockers, blockers=blockers)
+    result = dict(selector_rows=rows, render_contexts=contexts,
+                  coherent=not blockers, blockers=blockers)
+    if resource_inspection is not None:
+        from lyra_resident_graphics import plan_resident_graphics
+        result['resident_graphics'] = plan_resident_graphics(source, document,
+            resource_inspection, terrain_sha256=terrain_sha256,
+            provenance=resource_provenance)
+        # Terrain packing supplies reviewable data. It does not qualify the
+        # mutable, overlay, OBJ, external-scroll or native render consumers.
+        result['blockers'].append(dict(code='RESIDENT_RESOURCE_CLOSURE_UNBOUND'))
+        result['coherent'] = False
+    return result
 
 
 def consumer_blockers(document, traversal, closure, *, current_source=False):

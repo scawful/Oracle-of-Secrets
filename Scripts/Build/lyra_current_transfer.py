@@ -418,6 +418,69 @@ def verify_transfer(request_path, project, base_rom):
     return request, raw['rom'], document
 
 
+def resident_graphics_plan(request_path, project, base_rom, inspection_path):
+    """Derive held resource data from a genuine Save and retained inspection.
+
+    The inspection is an explicit selected-producer source binding. Reusing it
+    does not claim a new verifier execution or grant any runtime allocation.
+    """
+    request_binding = Q.bound(request_path)
+    request, source, document = verify_transfer(request_path, project, base_rom)
+    inspection_binding = Q.bound(inspection_path)
+    live = request['live']
+    producer = live['producer_identity']
+    R.require(inspection_binding in producer['source_bindings'],
+              'RESIDENT_INSPECTION_UNBOUND: select the retained observation in producer source bindings')
+    inspection = _json(Q.read_bound(inspection_binding))
+    R.require(inspection.get('inspection_only') is True
+              and inspection.get('native_resolution_schema') == 'yaze.lyra-native-resolution.v1'
+              and inspection.get('project_descriptor_identity_status') == 'identified'
+              and inspection.get('project_descriptor_path') == live['project']
+              and inspection.get('project_descriptor_sha256') == request['inputs']['project']['sha256']
+              and inspection.get('terrain_path') == live['inputs']['terrain']['path']
+              and inspection.get('source_rom_sha256') == request['inputs']['rom']['sha256']
+              and inspection.get('terrain_sha256') == request['inputs']['terrain']['sha256'],
+              'RESIDENT_INSPECTION_STALE: retained resolution differs from this saved project')
+    root = Path(__file__).resolve().parents[2]
+    compiler_bindings = [Q.bound(root / name) for name in (
+        'Scripts/Build/lyra_resident_graphics.py',
+        'Scripts/Build/lyra_project_admission.py',
+        'Scripts/Build/lyra_current_transfer.py',
+        'Scripts/Build/lyra_project_publisher.py',
+        'Scripts/Build/lyra_project_terrain.py',
+        'Scripts/Build/lyra_project_prepare.py',
+        'Scripts/Build/lyra_project_allocation.py',
+        'Scripts/Build/lyra_project_composition.py',
+        'Scripts/Build/lyra_project_tile32.py',
+        'Scripts/Build/lyra_native_streams.py',
+        'Scripts/Build/lyra_private_reservation.py',
+        'Scripts/Generate/sheet_table.py', 'Scripts/Generate/sheet_codec.py',
+        'Scripts/Generate/lz2.py')]
+    provenance = dict(transfer=request_binding, transfer_id=request['transfer_id'],
+        generation=live['generation'], operation_id=live['operation_id'],
+        save_receipt=live['save_receipt'], save_context=live['save_context'],
+        selected_producer=live['producer'], producer_identity=producer,
+        inspection=inspection_binding, inspection_origin='retained_selected_observation',
+        compiler_bindings=compiler_bindings)
+    appearance = A.appearance_plan(source, document,
+        A.gameplay_render_directory(document.gameplay_areas),
+        resource_inspection=inspection,
+        terrain_sha256=request['inputs']['terrain']['sha256'],
+        resource_provenance=provenance)
+    fresh, _, _ = verify_transfer(request_path, project, base_rom)
+    R.require(fresh == request and Q.bound(request_path) == request_binding,
+              'RESIDENT_TRANSFER_STALE: saved transfer changed while planning')
+    for binding in [inspection_binding, *compiler_bindings]:
+        Q.read_bound(binding)
+    return dict(kind='lyra.current_resident_graphics_review.v1',
+        project=live['project'], base_rom=live['inputs']['rom']['path'],
+        request=request_binding, inspection=inspection_binding,
+        generation=live['generation'], operation_id=live['operation_id'],
+        appearance=appearance, selected=False, allocation_granted=False,
+        publication_authorized=False, ordinary_build_ready=False,
+        runtime_admission=False, rom_written=False)
+
+
 def native_execution(request):
     """Validate selected-verifier evidence captured before compilation."""
     R.require('native_verification' in request, 'CURRENT_NATIVE_VERIFIER_EXECUTION_REQUIRED')

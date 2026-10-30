@@ -348,7 +348,8 @@ def validate_current_source_set(contract):
 
 
 def render_current_source_outputs(table_plan, *, contract, graphics_source, graphics_report,
-                                  current_source_profile=None, bg128_plan=None, actor_storage_plan=None, private_pilot=None):
+                                  current_source_profile=None, bg128_plan=None, actor_storage_plan=None, private_pilot=None,
+                                  resident_graphics_plan=None, resource_inspection=None):
     """Compose reviewable source through the existing generated-input layout.
 
     A source plan remains unselected and cannot pass the build-context loader.
@@ -494,6 +495,16 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
     files = {'runtime_constants.asm': constants.encode(), 'runtime_data.asm': data.encode(),
              'graphics_runtime_tables.asm': graphics_source.encode(),
              'descriptor.json': encoded(dict(kind=native.CURRENT_KIND, payload_hex=table_plan['descriptor_hex']))}
+    R.require((resident_graphics_plan is None) == (resource_inspection is None),
+              'CURRENT_COMPOSER_RESIDENT_UNBOUND: plan and retained inspection must be supplied together')
+    resident_review = None
+    if resource_inspection is not None:
+        resident_review = current.resident_graphics_plan(profile['review']['transfer']['path'],
+            profile['project'], profile['base_rom'], resource_inspection)
+        R.require(resident_graphics_plan == resident_review['appearance']['resident_graphics'],
+                  'CURRENT_COMPOSER_RESIDENT_MISMATCH: derived resource data differs from saved inputs')
+        files.update(render_resident_data_outputs(resident_review))
+        remaining.append('resident page-word remap and full resource closure')
     prepared = dict(kind='lyra.current_source_prepare.v1', selected=False, source_bindings=source_bindings,
         source_rom_sha256=table_plan['source_rom_sha256'], source_profile_sha256=table_plan['source_profile_sha256'],
         source_size=len(source), document_sha256=profile['document_sha256'],
@@ -508,11 +519,39 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
         generated_files={name:R.sha(raw) for name,raw in files.items()}, remaining_consumers=remaining,
         allocation_granted=False, producer_enforcement_verified=False, publication_authorized=False,
         ordinary_build_ready=False, runtime_admission=False, rom_written=False)
+    if resident_review is not None:
+        prepared['resident_graphics_review'] = resident_review
     files['prepare.json'] = encoded(prepared)
     for row in source_bindings:
         R.require(R.sha(Path(row['path']).read_bytes()) == row['sha256'],
                   'Current source changed while composing generated inputs')
     current.verify_current_native_source_profile(profile, source, document)
+    return files
+
+
+def render_resident_data_outputs(review):
+    """Reconstruct reviewable resource bytes without emitting native source."""
+    from lyra_current_transfer import resident_graphics_plan
+    R.require(type(review) is dict and review.get('kind') == 'lyra.current_resident_graphics_review.v1',
+              'RESIDENT_REVIEW_REQUIRED: authenticated saved input required')
+    expected = resident_graphics_plan(review['request']['path'], review['project'],
+                                      review['base_rom'], review['inspection']['path'])
+    R.require(review == expected, 'RESIDENT_REVIEW_STALE: resource data or provenance changed')
+    plan = expected['appearance']['resident_graphics']
+    files = {'resident_graphics.json': encoded(plan)}
+    for area in plan['areas']:
+        if not area['terrain_plan_ready']:
+            continue
+        prefix = f"resident/{area['parent_map_id']:02X}"
+        payloads = {'static_chr.bin': area['static_chr'], 'palette.bgr555.bin': area['palette']}
+        payloads.update({f'animation-frame{index}.bin': row
+                         for index, row in enumerate(area['animation']['frame_payloads'])})
+        for name, payload in payloads.items():
+            raw = bytes.fromhex(payload['payload_hex'])
+            R.require(len(raw) == payload['byte_count'] and R.sha(raw) == payload['sha256'],
+                      'RESIDENT_PAYLOAD_MISMATCH: derived bytes differ')
+            files[f'{prefix}/{name}'] = raw
+        files[f'{prefix}/remaps.json'] = encoded(area['remaps'])
     return files
 
 
@@ -538,8 +577,51 @@ def write_outputs(folder, files, *, protected=()):
                 temporary.unlink(missing_ok=True)
 
 
-def prepare(folder, *, project=None, base_rom=None, request=None, ledger_path=None, candidate=None):
+def prepare(folder, *, project=None, base_rom=None, request=None, ledger_path=None, candidate=None,
+            resident_data=False, resource_inspection=None):
     R.require(bool(project) or not request, 'A request requires a selected Lyra project')
+    if resident_data:
+        from lyra_current_transfer import resident_graphics_plan, verify_transfer
+        R.require(project is not None and base_rom is not None and request is not None
+                  and resource_inspection is not None and ledger_path is None and candidate is None,
+                  'RESIDENT_REVIEW_INPUT_REQUIRED: project, base ROM, request and retained inspection required')
+        folder = Path(os.path.abspath(folder))
+        R.require(not folder.exists() and not folder.is_symlink(),
+                  'RESIDENT_REVIEW_OUTPUT_EXISTS: use a new private output folder')
+        review = resident_graphics_plan(request, project, base_rom, resource_inspection)
+        files = render_resident_data_outputs(review)
+        transfer, _, _ = verify_transfer(request, project, base_rom)
+        live = transfer['live']
+        bindings = [review['request'], review['inspection'], live['producer'],
+                    live['save_receipt'], live['save_context'], *live['inputs'].values(),
+                    live['producer_identity']['editor'], live['producer_identity']['verifier'],
+                    *live['producer_identity']['source_bindings'],
+                    *review['appearance']['resident_graphics']['provenance']['compiler_bindings']]
+        forbidden = (ROOT.resolve(), Path(project).resolve().parent, Path(transfer['snapshot_root']))
+        R.require(not any(folder.resolve().is_relative_to(root) for root in forbidden)
+                  and not any(Path(row['path']).is_relative_to(folder.resolve()) for row in bindings),
+                  'RESIDENT_REVIEW_OUTPUT_ALIASES_INPUT: private output must remain outside source and saved inputs')
+        prepared = dict(kind='lyra.resident_data_prepare.v1', selected=False,
+            review=review, generated_files={name: R.sha(raw) for name, raw in files.items()},
+            allocation_granted=False, publication_authorized=False,
+            ordinary_build_ready=False, runtime_admission=False, rom_written=False)
+        # Existing writer, separate completion marker: partial output cannot
+        # masquerade as a completed resource preparation.
+        folder.mkdir(parents=True, exist_ok=False)
+        try:
+            write_outputs(folder, files, protected=[row['path'] for row in bindings])
+            R.require(resident_graphics_plan(request, project, base_rom, resource_inspection) == review,
+                      'RESIDENT_REVIEW_STALE: input changed before completion')
+            write_outputs(folder, {'prepare.json': encoded(prepared)},
+                          protected=[row['path'] for row in bindings])
+            R.require(resident_graphics_plan(request, project, base_rom, resource_inspection) == review,
+                      'RESIDENT_REVIEW_STALE: input changed at completion')
+        except BaseException:
+            (folder / 'prepare.json').unlink(missing_ok=True)
+            raise
+        return prepared
+    R.require(resource_inspection is None,
+              'RESIDENT_REVIEW_MODE_REQUIRED: retained inspection requires --resident-data')
     plan = (make_plan(project, base_rom, request, ledger_path=ledger_path) if project
             else dict(kind='lyra.ordinary_build_prepare.v1', selected=False, production_maps=[], production_edge_ids=[]))
     files = render_outputs(plan)
@@ -766,6 +848,10 @@ def main():
     p.add_argument('--ledger', type=Path)
     p.add_argument('--candidate', type=Path)
     p.add_argument('--output', type=Path, default=ROOT / OUTPUT)
+    p.add_argument('--resident-data', action='store_true',
+                   help='Derive unallocated resident terrain data from a genuine saved transfer')
+    p.add_argument('--resource-inspection', type=Path,
+                   help='Retained native inspection selected in producer source bindings')
     stage = sub.add_parser('stage')
     stage.add_argument('--input',type=Path,default=ROOT/OUTPUT)
     stage.add_argument('--rom',type=Path,required=True)
@@ -793,7 +879,8 @@ def main():
     args = parser.parse_args()
     if args.command == 'prepare':
         result = prepare(args.output, project=args.project, base_rom=args.base_rom,
-                         request=args.request, ledger_path=args.ledger, candidate=args.candidate)
+                         request=args.request, ledger_path=args.ledger, candidate=args.candidate,
+                         resident_data=args.resident_data, resource_inspection=args.resource_inspection)
     elif args.command == 'stage':
         result=stage_current_candidate(args.input,args.rom)
     elif args.command == 'resolve-target':
