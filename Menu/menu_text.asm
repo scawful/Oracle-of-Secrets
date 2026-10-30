@@ -144,6 +144,16 @@ Menu_BottleItems:
   dw "_MAGIC_BEAN___  "
   dw "_MILK_BOTTLE__  "
 
+Menu_BombchuLabel:
+  dw "___BOMBCHU____"
+Menu_SwitchHookLabel:
+  dw "_SWITCH_HOOK__"
+Menu_GaroLabel:
+  dw "_GARO_MASTER__"
+
+Menu_ByrnaLabel:
+  dw "____BYRNA_____"
+
 Menu_GoldstarLabel:
   dw "__GOLD_STAR___  "
 
@@ -156,6 +166,8 @@ Menu_SongNames:
   dw "SONG:_STORMS__  "
   dw "SONG:_SOARING_  "
   dw "SONG:_TIME____  "
+  dw "SONG:_SECRETS_  "
+  dw "ELEGY:_STONE__  "
 
 Menu_RingNames:
   dw "____POWER_____  "
@@ -204,6 +216,30 @@ Menu_DrawItemName:
   .haveItem
 
 if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.w $0202 : CMP.b #$1B : BCC .not_new_item
+  CMP.b #$1E : BCS .not_new_item
+  REP #$30
+  AND.w #$00FF : SEC : SBC.w #$001B : ASL : TAX
+  LDA.w .new_names,X : TAX
+  LDY.w #$0000
+  .new_name
+  LDA.w $0000,X : STA.w $1692,Y
+  INX #2 : INY #2 : CPY.w #$001C : BCC .new_name
+  ; Bombchu ownership keeps the cell selectable at zero. Its separate supply
+  ; uses the footer's last two cells, after the existing seven-letter label.
+  LDA.w $0202 : AND.w #$00FF : CMP.w #$001C : BNE .new_name_done
+  LDA.l BombchuAmmo : AND.w #$00FF
+  CMP.w #!BOMBCHU_AMMO_MAX+1 : BCC .new_name_count
+    LDA.w #$0000
+  .new_name_count
+  ASL #2 : TAX
+  LDA.w TimeLabels,X : STA.w $16AA
+  LDA.w TimeLabels+2,X : STA.w $16AC
+  .new_name_done
+  RTS
+  .new_names
+  dw Menu_ByrnaLabel,Menu_BombchuLabel,Menu_SwitchHookLabel
+  .not_new_item
   LDA.w $0202 : CMP.b #$1A : BNE .not_goldstar_cell
   JSR DrawGoldstarName
   RTS
