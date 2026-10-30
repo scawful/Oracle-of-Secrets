@@ -466,7 +466,7 @@
         {
           "id": "0x2E",
           "name": "Compass",
-          "floor": "F1",
+          "floor": "B3",
           "grid_row": 2,
           "grid_col": 14,
           "type": "normal",
@@ -629,11 +629,11 @@
           "tag2": 0
         },
         {
-          "id": "0xDE",
-          "name": "Kholdstare (Boss)",
-          "floor": "F1",
-          "grid_row": 13,
-          "grid_col": 14,
+          "id": "0x1F",
+          "name": "Tail Palace (Boss)",
+          "floor": "B4",
+          "grid_row": 1,
+          "grid_col": 15,
           "type": "boss",
           "palette": 6,
           "blockset": 5,
@@ -697,8 +697,8 @@
         },
         {
           "from": "0x2E",
-          "to": "0xDE",
-          "label": "Compass \u2192 Kholdstare (Boss)"
+          "to": "0x1F",
+          "label": "Compass \u2192 Tail Palace (Boss)"
         },
         {
           "from": "0x3E",
