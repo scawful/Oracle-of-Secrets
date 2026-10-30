@@ -391,6 +391,55 @@ class RoomConnectivityTest(unittest.TestCase):
             self.assertEqual(rc, 1)
             self.assertEqual(out_file.read_text(encoding="utf-8"), SENTINEL)
 
+    def test_refusal_malformed_room_id_preserves_output_and_inputs(self):
+        """A registry with an invalid room ID (e.g. 'not-a-room') refuses with nonzero exit,
+        preserves prior output sentinel, and leaves input hashes unchanged.
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            out_file = tmp / "report.json"
+            out_file.write_text(SENTINEL, encoding="utf-8")
+
+            rom_file = tmp / "rom.sfc"
+            rom_bytes = make_synthetic_rom({0x10: {}})
+            rom_file.write_bytes(rom_bytes)
+            rom_hash_before = hashlib.sha256(rom_bytes).hexdigest()
+
+            reg_file = tmp / "malformed_reg.json"
+            bad_registry = make_synthetic_registry([{
+                "id": "D1",
+                "name": "Test Dungeon",
+                "rooms": [
+                    {"id": "0x10", "name": "Valid Room", "grid_row": 0, "grid_col": 0, "type": "normal"},
+                    {"id": "not-a-room", "name": "Invalid Room", "grid_row": 0, "grid_col": 1, "type": "normal"},
+                ],
+            }])
+            reg_bytes = json.dumps(bad_registry, indent=2).encode("utf-8")
+            reg_file.write_bytes(reg_bytes)
+            reg_hash_before = hashlib.sha256(reg_bytes).hexdigest()
+
+            rc = self.mod.main([
+                "--rom", str(rom_file),
+                "--registry", str(reg_file),
+                "--output", str(out_file),
+            ])
+            self.assertNotEqual(rc, 0)
+            self.assertEqual(rc, 1)
+
+            # Prior output sentinel preserved
+            self.assertEqual(out_file.read_text(encoding="utf-8"), SENTINEL)
+
+            # Input hashes unchanged
+            self.assertEqual(hashlib.sha256(rom_file.read_bytes()).hexdigest(), rom_hash_before)
+            self.assertEqual(hashlib.sha256(reg_file.read_bytes()).hexdigest(), reg_hash_before)
+
+            # Direct load and build also refuse
+            with self.assertRaises(ValueError):
+                self.mod.load_dungeon_registry(reg_file)
+
+            with self.assertRaises(ValueError):
+                self.mod.build_connectivity_report(rom_bytes, bad_registry)
+
     def test_refusal_output_alias_preserves_inputs(self):
         """Output aliases of ROM or registry refuse and preserve input hashes."""
         with tempfile.TemporaryDirectory() as tmpdir:

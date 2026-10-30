@@ -133,12 +133,27 @@ def extract_room_header(rom: bytes, loc: int, room_id: int) -> dict:
     }
 
 
-def load_dungeon_registry(path: Path | str) -> dict:
-    """Load and validate dungeon registry JSON."""
-    p = Path(path)
-    if not p.is_file():
-        raise FileNotFoundError(f"Registry file not found: {p}")
-    data = json.loads(p.read_text(encoding="utf-8"))
+def parse_room_id(raw_id: str | int) -> int:
+    """Parse and validate room ID integer value.
+
+    Raises ValueError on invalid formats (e.g. 'not-a-room') or negative values.
+    """
+    if isinstance(raw_id, int):
+        rid = raw_id
+    elif isinstance(raw_id, str):
+        raw_str = raw_id.strip()
+        if not raw_str:
+            raise ValueError("Room ID cannot be empty")
+        rid = int(raw_str, 0)
+    else:
+        raise ValueError(f"Invalid room ID type: {type(raw_id).__name__}")
+    if rid < 0:
+        raise ValueError(f"Room ID cannot be negative: {raw_id}")
+    return rid
+
+
+def validate_dungeon_registry(data: dict) -> None:
+    """Validate structure and room IDs of dungeon registry dict."""
     if not isinstance(data, dict) or "dungeons" not in data or not isinstance(data["dungeons"], list):
         raise ValueError("Registry JSON missing top-level 'dungeons' list")
     for d in data["dungeons"]:
@@ -147,6 +162,19 @@ def load_dungeon_registry(path: Path | str) -> dict:
         for r in d["rooms"]:
             if not all(k in r for k in ("id", "name", "grid_row", "grid_col")):
                 raise ValueError(f"Room entry missing required fields in dungeon {d['id']}: {r}")
+            try:
+                parse_room_id(r["id"])
+            except (ValueError, TypeError) as err:
+                raise ValueError(f"Invalid room id in dungeon {d['id']}: {r.get('id')!r}: {err}")
+
+
+def load_dungeon_registry(path: Path | str) -> dict:
+    """Load and validate dungeon registry JSON."""
+    p = Path(path)
+    if not p.is_file():
+        raise FileNotFoundError(f"Registry file not found: {p}")
+    data = json.loads(p.read_text(encoding="utf-8"))
+    validate_dungeon_registry(data)
     return data
 
 
@@ -157,10 +185,7 @@ def get_all_dungeon_rooms(registry: dict) -> dict[int, dict]:
         did = dungeon["id"]
         dname = dungeon["name"]
         for room in dungeon["rooms"]:
-            try:
-                rid = int(room["id"], 16) if isinstance(room["id"], str) else int(room["id"])
-            except ValueError:
-                continue
+            rid = parse_room_id(room["id"])
             rooms[rid] = {
                 "dungeon_id": did,
                 "dungeon_name": dname,
@@ -180,10 +205,7 @@ def compute_adjacency_candidates(dungeon_rooms_list: list[dict]) -> list[dict]:
     candidates = []
     room_map = {}
     for r in dungeon_rooms_list:
-        try:
-            rid = int(r["id"], 16) if isinstance(r["id"], str) else int(r["id"])
-        except ValueError:
-            continue
+        rid = parse_room_id(r["id"])
         room_map[rid] = r
 
     room_ids = sorted(room_map.keys())
@@ -327,17 +349,11 @@ def build_connectivity_report(
     registry_sha256: str = "",
 ) -> dict:
     """Build deterministic connectivity evidence report."""
+    validate_dungeon_registry(registry)
     all_dungeon_rooms = get_all_dungeon_rooms(registry)
 
     if room_locs is None:
-        all_room_ids = set()
-        for d in registry["dungeons"]:
-            for r in d["rooms"]:
-                try:
-                    rid = int(r["id"], 16) if isinstance(r["id"], str) else int(r["id"])
-                    all_room_ids.add(rid)
-                except ValueError:
-                    pass
+        all_room_ids = {parse_room_id(r["id"]) for d in registry["dungeons"] for r in d["rooms"]}
         room_locs = validate_rom_spans(rom, all_room_ids)
 
     rom_hash = hashlib.sha256(rom).hexdigest()
@@ -378,10 +394,7 @@ def build_connectivity_report(
         dungeon_header_destinations = []
 
         for room in dungeon["rooms"]:
-            try:
-                rid = int(room["id"], 16) if isinstance(room["id"], str) else int(room["id"])
-            except ValueError:
-                continue
+            rid = parse_room_id(room["id"])
 
             loc = room_locs[rid]
             header = extract_room_header(rom, loc, rid)
@@ -558,14 +571,7 @@ def main(argv=None) -> int:
         sys.stderr.write(f"Error reading ROM: {err}\n")
         return 1
 
-    all_room_ids = set()
-    for d in registry["dungeons"]:
-        for r in d["rooms"]:
-            try:
-                rid = int(r["id"], 16) if isinstance(r["id"], str) else int(r["id"])
-                all_room_ids.add(rid)
-            except ValueError:
-                pass
+    all_room_ids = {parse_room_id(r["id"]) for d in registry["dungeons"] for r in d["rooms"]}
 
     try:
         room_locs = validate_rom_spans(rom_bytes, all_room_ids)
