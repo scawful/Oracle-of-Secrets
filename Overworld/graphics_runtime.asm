@@ -14,6 +14,10 @@ if !LYRA_CURRENT_MODE == 1
 else
 org $5B8000
 incsrc "Overworld/graphics_runtime_tables.asm"
+if !ENABLE_KALYXO_BOAT == 1
+  KalyxoDocksSlot3Graphics:
+    incbin "gfx/kalyxo_docks_slot3.bin"
+endif
 endif
 !GfxRT_DataBank = !GfxRT_Bank<<16
 if !LYRA_CURRENT_MODE == 1
@@ -32,6 +36,9 @@ SharedGraphicsLookup:
 {
   LDA.l $7E001B : AND.w #$00FF : BNE .none
   LDA.l $7E008A : AND.w #$00FF
+if !LYRA_CURRENT_MODE == 0 && !ENABLE_KALYXO_BOAT == 1
+  CMP.w #$0030 : BNE .none
+endif
 if !LYRA_CURRENT_MODE == 1
   CMP.w #!LYRA_CURRENT_FIRST : BCC .none
 endif

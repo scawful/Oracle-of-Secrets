@@ -54,7 +54,7 @@
       "transfers": [
         {
           "byte_count": 8192,
-          "resource_id": "snes4bpp:7ee45cc2f6e5f42d741794779fd6b79f9a5775f3fddea03a8a53d2038a9806c0",
+          "resource_id": "snes4bpp:263549d5a7b3fd6209dfea60fbb46736c05388f5a2a67957125db9f90f3b4030",
           "source_offset": 0,
           "vram_word_address": 11264
         }
@@ -673,6 +673,12 @@
     }
   },
   "resources": {
+    "snes4bpp:263549d5a7b3fd6209dfea60fbb46736c05388f5a2a67957125db9f90f3b4030": {
+      "byte_count": 8192,
+      "format": "snes4bpp",
+      "path": "gfx/source-263549d5a7b3fd6209dfea60fbb46736c05388f5a2a67957125db9f90f3b4030.4bpp.bin",
+      "sha256": "263549d5a7b3fd6209dfea60fbb46736c05388f5a2a67957125db9f90f3b4030"
+    },
     "snes4bpp:3fd640ea5f71e4301983dc4944b355f6d8582ea14797605688e5adaf37ffc3b4": {
       "byte_count": 2048,
       "format": "snes4bpp",

@@ -281,7 +281,7 @@ if !LYRA_PROJECT_DATA_PRESENT == 1
   incsrc "Data/Generated/lyra_project/runtime_data.asm"
   incsrc "Overworld/lyra_native_loaders.asm"
 endif
-if !LYRA_CURRENT_MODE == 1
+if !LYRA_CURRENT_MODE == 1 || !ENABLE_KALYXO_BOAT == 1
   namespace Oracle
     incsrc "Overworld/graphics_runtime.asm"
   namespace off
@@ -298,4 +298,9 @@ endif
 ; Table-driven special triggers and exit records (bank $2A); both flags off by default.
 if !ENABLE_SPECIAL_TRIGGER_TABLE_V2 == 1 || !ENABLE_SPECIAL_EXIT_TABLE_V2 == 1
   incsrc "Overworld/special_transitions_v2.asm"
+endif
+if !ENABLE_KALYXO_BOAT == 1
+  namespace Oracle
+    incsrc "Overworld/kalyxo_boat.asm"
+  namespace off
 endif

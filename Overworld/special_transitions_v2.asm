@@ -53,7 +53,12 @@
 ; =========================================================
 
 if not(defined("STV2_BASE"))
-  !STV2_BASE = $AA8000
+  if !ENABLE_KALYXO_BOAT == 1
+    ; Private 4MiB candidate. Bank2A stays editor-owned.
+    !STV2_BASE = $D18000
+  else
+    !STV2_BASE = $AA8000
+  endif
 endif
 
 ; Link rows. $B0/$B8 stay 0: Lyra_PrivatePilotFullFrameGate ($02A475) and
@@ -101,20 +106,27 @@ macro stv2_exit(id, ow, y, x, large, facing)
   !STV2_EXIT_<id> = 1
   !stv2_mx #= (<ow>&$07)<<9
   !stv2_my #= ((<ow>&$38)>>3)<<9
-  !stv2_size #= select(<large>, 768, 256)
-  !stv2_xs #= clamp(<x>-120, !stv2_mx, !stv2_mx+!stv2_size)
-  !stv2_ys #= clamp(<y>-80, !stv2_my, !stv2_my+!stv2_size+32)
-  !stv2_cx #= clamp(<x>+7, !stv2_mx+127, !stv2_mx+127+!stv2_size)
-  !stv2_cy #= clamp(<y>+31, !stv2_my+111, !stv2_my+143+!stv2_size)
+  assert <large> >= 0 && <large> <= 3, "STV2 exit <id>: size must be small/large/wide/tall"
+  !stv2_xsize #= 256
+  !stv2_ysize #= 256
+  if <large> == 1 || <large> == 2
+    !stv2_xsize #= 768
+  endif
+  if <large> == 1 || <large> == 3
+    !stv2_ysize #= 768
+  endif
+  !stv2_xs #= clamp(<x>-120, !stv2_mx, !stv2_mx+!stv2_xsize)
+  !stv2_ys #= clamp(<y>-80, !stv2_my, !stv2_my+!stv2_ysize+32)
+  !stv2_cx #= clamp(<x>+7, !stv2_mx+127, !stv2_mx+127+!stv2_xsize)
+  !stv2_cy #= clamp(<y>+31, !stv2_my+111, !stv2_my+143+!stv2_ysize)
   !stv2_vram #= (((!stv2_ys-!stv2_my)&$FFF0)<<3)|(((!stv2_xs-!stv2_mx)&$FFF0)>>3)
-  pushpc
-  org !STV2_EXITS+(($<id>-$0180)*32)
-    dw $<id>, !stv2_ys, !stv2_xs, <y>, <x>, !stv2_vram, !stv2_cy, !stv2_cx
-    dw $0000, $0000
-    db <ow>, $00, $00, <facing>
-  org $02E801+$<id>-$0180
-    db <facing>
-  pullpc
+  ; Caller selects the slot explicitly so the source manifest sees every
+  ; concrete org. The macro only emits the existing 32-byte record shape.
+  !STV2_FACING_<id> = <facing>
+  dw $<id>, !stv2_ys, !stv2_xs, <y>, <x>, !stv2_vram, !stv2_cy, !stv2_cx
+  dw $0000, $0000
+  db <ow>, $00, $00, <facing>
+  fillbyte $00 : fill 8
 endmacro
 
 ; ---------------------------------------------------------
@@ -135,25 +147,64 @@ pushpc
 ; ---------------------------------------------------------
 ; Exit records (P3). Placeholder landings on each tail map's west side.
 ; ---------------------------------------------------------
-org !STV2_EXITS
+if !ENABLE_KALYXO_BOAT == 1
+  assert !STV2_EXITS == $D18420, "Private STV2 origin changed"
+  org $D18420
+else
+  assert !STV2_EXITS == $AA8420, "Legacy STV2 origin changed"
+  org $AA8420
+endif
   fillbyte $00 : fill 16*32
 
 if !ENABLE_SPECIAL_EXIT_TABLE_V2 == 1
   if !STV2_LINK_27_A0 == 1
+    if !ENABLE_KALYXO_BOAT == 1
+      assert !STV2_EXITS+(($0183-$0180)*32) == $D18480, "Private STV2 origin changed"
+      org $D18480
+    else
+      assert !STV2_EXITS+(($0183-$0180)*32) == $AA8480, "Legacy STV2 origin changed"
+      org $AA8480
+    endif
     %stv2_exit(0183, $A0, $0900, $0040, 0, $06)
+    org $02E804 : db !STV2_FACING_0183
   endif
   if !STV2_LINK_37_B0 == 1
+    if !ENABLE_KALYXO_BOAT == 1
+      assert !STV2_EXITS+(($0184-$0180)*32) == $D184A0, "Private STV2 origin changed"
+      org $D184A0
+    else
+      assert !STV2_EXITS+(($0184-$0180)*32) == $AA84A0, "Legacy STV2 origin changed"
+      org $AA84A0
+    endif
     %stv2_exit(0184, $B0, $0D00, $0040, 0, $06)
+    org $02E805 : db !STV2_FACING_0184
   endif
   if !STV2_LINK_3F_B8 == 1
+    if !ENABLE_KALYXO_BOAT == 1
+      assert !STV2_EXITS+(($0185-$0180)*32) == $D184C0, "Private STV2 origin changed"
+      org $D184C0
+    else
+      assert !STV2_EXITS+(($0185-$0180)*32) == $AA84C0, "Legacy STV2 origin changed"
+      org $AA84C0
+    endif
     %stv2_exit(0185, $B8, $0F00, $0040, 0, $06)
+    org $02E806 : db !STV2_FACING_0185
+  endif
+  if !ENABLE_KALYXO_BOAT == 1
+    incsrc "../Data/overworld/kalyxo_boat_placements.asm"
   endif
 endif
 
 ; ---------------------------------------------------------
 ; Directory
 ; ---------------------------------------------------------
-org !STV2_BASE
+if !ENABLE_KALYXO_BOAT == 1
+  assert !STV2_BASE == $D18000, "Private STV2 origin changed"
+  org $D18000
+else
+  assert !STV2_BASE == $AA8000, "Legacy STV2 origin changed"
+  org $AA8000
+endif
 STV2_Directory:
   db $53, $54, $56, $32         ; "STV2" (a string literal would go through the message char table)
   dw $0001                      ; version
@@ -206,13 +257,25 @@ STV2_ReturnRows:
 STV2_ReturnRowsEnd:
   padbyte $00 : pad !STV2_EXITS
 
-org !STV2_EXITS
+if !ENABLE_KALYXO_BOAT == 1
+  assert !STV2_EXITS == $D18420, "Private STV2 origin changed"
+  org $D18420
+else
+  assert !STV2_EXITS == $AA8420, "Legacy STV2 origin changed"
+  org $AA8420
+endif
 STV2_ExitRecords:
 
 ; ---------------------------------------------------------
 ; Code
 ; ---------------------------------------------------------
-org !STV2_CODE
+if !ENABLE_KALYXO_BOAT == 1
+  assert !STV2_CODE == $D18800, "Private STV2 origin changed"
+  org $D18800
+else
+  assert !STV2_CODE == $AA8800, "Legacy STV2 origin changed"
+  org $AA8800
+endif
 
 ; Entry from $0EDE57 by JML. M=16 X=16, $00 = char under Link (& $01FF).
 ; Stack holds the JSL return of the trigger routine; DBR is the caller's.
