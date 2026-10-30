@@ -321,10 +321,12 @@ Boat_CodeEnd:
 assert pc() <= $3AB800, "Boat controller overlaps Part00"
 
 ; Six replaced bytes. The taken branch lands on the native bank-$02 RTS.
+Boat_BoardReturn = $02A570
+assert read1(Boat_BoardReturn) == $60, "Native boarding return must remain RTS"
 assert read3($02A53C) == $0112AD && read3($02A53F) == $02E40D
 org $02A53C ; @hook module=Overworld name=Boat_BoardGate kind=jsl target=Boat_BoardGate expected_m=8 expected_x=8
   JSL Boat_BoardGate
-  BCS $02A570
+  BCS Boat_BoardReturn
 assert pc() == $02A542
 pullpc
 

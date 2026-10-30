@@ -110,6 +110,14 @@ def main():
         put(ram, address, value)
         add(name, "Boat_BoardGate", ram, state, admission(False))
 
+    # Exercise the actual patched near caller as well as its long callee.
+    # Literal BCS $02A570 assembles as raw displacement $70 in Asar; a
+    # symbolic target must emit $2E and land on the native bank-$02 RTS.
+    ram, state = fixture()
+    ram[0x1E00:0x1E04] = bytes.fromhex("203CA56B")
+    cases.append(("patched-native-caller-returns", request(
+        0x021E00, ram, state), admission(True)))
+
     ram, state = fixture(area=0x98, x=0xC0, y=0x7B0)
 
     def island(result, ram, state):
