@@ -812,15 +812,32 @@ GaroMaskOwned     = $7EF3AF
 ; above the cap are invalid old-save data and become zero, never a refill.
 BombchuAmmo       = $7EF3B0   ; 0..20; independent of Bombs ($7EF343)
 !BOMBCHU_AMMO_MAX  = 20
-FreeBlock_Large    = $7EF3B1  ; 20 bytes ($7EF3B1-3C4)
+; AC..B0 contain the published Items ownership/ammo fields above.
+; B1 remains excluded for pending SongBits; preserve checkpoint fences.
+; Two separate unassigned ranges remain around the granted checkpoint state.
+FreeBlock_LargePrefix = $7EF3B2 ; 2 bytes [B2,B4); not an allocation grant
+
+; Central checkpoint reservation: root CURRENT_RESOURCE_GRANTS, 2026-10-28.
+; Separate from native SpawnPoint, scripted overrides and dungeon entrances.
+; Schema/epoch identify last ACTIVATED key only, never pending Home intent.
+RegionalCheckpointSchema = $7EF3B4
+RegionalCheckpointEpoch  = $7EF3B5
+RegionalCheckpointKey    = $7EF3B6 ; word, ends before $7EF3B8
+RegionalCheckpointResumeIntent = $7EF3B8 ; byte: 0 Home, 1 last regional key
+FreeBlock_Large    = $7EF3B9  ; 12 bytes [B9,C5)
 
 ; ---------------------------------------------------------
-; Dreams Extension ($7EF411-4FD) - 237 bytes
+; Dreams extension and current tail-event reservation ($7EF412-4FD)
 ; ---------------------------------------------------------
 ; Purpose: Large block after dreams/water gates
 ; Note: $7EF4FE-4FF are checksum (do not use)
 ;
-FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
+FreeBlock_Dreams   = $7EF412  ; 174 bytes [F412,F4C0)
+; Root-owned current-build A0-BF event flags and migration marker. The native
+; five-page save/checksum/new-file loops already cover both fields.
+LyraCurrentTailFlags   = $7EF4C0 ; 32 bytes [F4C0,F4E0)
+LyraCurrentTailVersion = $7EF4E0 ; one byte
+FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 
 ; ---------------------------------------------------------
 ; FREE BLOCK SUMMARY
@@ -830,10 +847,12 @@ FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
 ; | $7EF307  | $7EF30E  | 8     | Story extension    |
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF39F  | $7EF3A0  | 2     | Collectibles ext   |
-; | $7EF3B1  | $7EF3C4  | 20    | Large reserved     |
-; | $7EF412  | $7EF4FD  | 236   | Dreams extension   |
+; | $7EF3B2  | $7EF3B3  | 2     | Large prefix       |
+; | $7EF3B9  | $7EF3C4  | 12    | Large remainder    |
+; | $7EF412  | $7EF4BF  | 174   | Dreams prefix      |
+; | $7EF4E1  | $7EF4FD  | 29    | Dreams remainder   |
 ; |----------|----------|-------|--------------------|
-; | TOTAL AVAILABLE:    | 316   | bytes              |
+; | Free-list comments describe candidates, not allocation grants.     |
 ; ---------------------------------------------------------
 
 ; =========================================================
