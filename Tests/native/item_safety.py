@@ -243,6 +243,65 @@ class ItemSafetyFlow(menu.QuestFlow):
         self.check("non-ring clears effect text", self.words(8, 16, 16), words)
         self.shot("ring-description-cleared")
 
+    def book_sample(self):
+        """Record engine state without manufacturing a transition."""
+        return {f"{a:06X}": self.r(a) for a in (
+            0x7E0010, 0x7E0011, 0x7E001B, 0x7E001C, 0x7E00A0,
+            0x7E00A1, 0x7E0435, 0x7E044C, 0x7E044D)}
+
+    def book_crossing(self):
+        """Cross the cold House exit using L+Down and retain the trace."""
+        self.reset_case("Book reveal through actual House-to-overworld exit")
+        self.write(0x7EF34E, 1, "Book ownership for actual exit")
+        original = self.r(0x7E001C)
+        native.require(original & 2, "House fixture requires BG2")
+        self.advance("L", 2)
+        self.check("Book owns active House reveal", self.r(0x7E0435), 1)
+        self.check("Book hides House BG2", self.r(0x7E001C), original & ~2)
+        self.shot("book-house-active")
+        rows = self.result["cases"][-1]["trace"] = [self.book_sample()]
+        for _ in range(80):
+            self.advance("L,Down", 8)
+            rows.append(self.book_sample())
+            if (self.r(0x7E0010), self.r(0x7E0011), self.r(0x7E001B)) == (9, 0, 0):
+                break
+        self.check("Controller exit reaches ordinary overworld",
+                   (self.r(0x7E0010), self.r(0x7E0011), self.r(0x7E001B)), (9, 0, 0))
+        self.advance("L", 2)
+        self.check("Overworld discards indoor Book ownership", self.r(0x7E0435), 0)
+        destination_layers = self.r(0x7E001C)
+        self.advance("", 2)
+        self.check("Release preserves destination layers", self.r(0x7E001C), destination_layers)
+        self.shot("book-overworld-released")
+
+    def book_save_active(self):
+        """Open normal Save/Quit without releasing L before Select."""
+        self.reset_case("SaveQuit entered while Book reveal is active")
+        self.write(0x7EF34E, 1, "Book ownership for active-reveal SaveQuit")
+        original = self.r(0x7E001C)
+        native.require(original & 2, "House SaveQuit fixture requires BG2")
+        self.advance("L", 2)
+        self.check("SaveQuit starts with active Book ownership", self.r(0x7E0435), 1)
+        self.check("SaveQuit starts with hidden BG2", self.r(0x7E001C), original & ~2)
+        self.result["active_reveal_before_select"] = self.book_sample()
+        self.advance("L,Select", 2)
+        self.advance("L", 90)
+        for _ in range(4):
+            if self.r(0x7E1CE8) == 1:
+                break
+            self.advance("L,Down", 2)
+            self.advance("L", 15)
+        self.check("Active-reveal normal SaveQuit selector", self.r(0x7E1CE8), 1)
+        self.advance("L,A", 2)
+        for _ in range(30):
+            self.advance("L", 30)
+            if (self.r(0x7E0010), self.r(0x7E0011)) == (0, 8):
+                break
+        self.check("Active-reveal SaveQuit reached title",
+                   (self.r(0x7E0010), self.r(0x7E0011)), (0, 8))
+        self.check("SaveQuit clears Book ownership", self.r(0x7E0435), 0)
+        self.input("")
+
     def run(self):
         native.require(self.screen() == "gameplay" and not self.r(0x7E0011), "Need stable House gameplay")
         native.require(self.b.save_state(path=str(self.baseline)), "Own same-ROM baseline capture rejected")
