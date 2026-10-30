@@ -197,6 +197,26 @@ class GaroLeapFlow(garo.GaroCombatFlow):
                     landed_clean=grounded(rows[-1]),
                     cooldown_at_landing=rows[-1]["cooldown"], frames=len(rows))
 
+    def lunge_contact(self):
+        self.face("Left")
+        self.spawn_target()
+        target_hp = 0x7E0E50 + self.slot
+        before = self.r(target_hp)
+        rows = []
+        try:
+            self.advance("Y,Left", 2)
+            for _ in range(24):
+                rows.append(dict(hp=self.r(target_hp), state=self.r(0x7E0DD0 + self.slot),
+                                 lunge_timer=self.r(LUNGE_TIMER), link_state=self.r(STATE)))
+                self.advance("", 1)
+            # Lethal native damage can wrap HP; state 6 is the death module.
+            damaged = any(r["hp"] < before or r["state"] == 6 for r in rows)
+            self.check("Lunge reaches native dash state", any(r["lunge_timer"] for r in rows), True)
+            self.check("Lunge damages native enemy", damaged, True)
+            return dict(initial_hp=before, trace=rows, damaged=damaged)
+        finally:
+            self.remove_target()
+
     def cooldown(self):
         self.face("Left")
         self.open_guard()
@@ -250,6 +270,7 @@ class GaroLeapFlow(garo.GaroCombatFlow):
             v["side-leap moves down, facing kept"] = bool(side.get("leaped") and side.get("dy", 0) > 0
                                                           and side.get("facing_kept"))
             v["cooldown blocks then recovers"] = bool(cd.get("guard_blocked") and cd.get("guard_after_cooldown"))
+            v["lunge damages native enemy"] = bool(cases["lunge-contact"].get("damaged"))
         else:
             v["control Y+forward only guards"] = (lunge.get("completed", False) and not lunge.get("lunged")
                                                   and lunge.get("guard_opened", False) and not hop.get("hopped"))
@@ -270,6 +291,7 @@ class GaroLeapFlow(garo.GaroCombatFlow):
         cases["side-leap"] = self.case("side-leap", lambda: self.leap("Left", "Down"))
         if self.expect == "candidate":
             cases["cooldown"] = self.case("cooldown", self.cooldown)
+            cases["lunge-contact"] = self.case("lunge-contact", self.lunge_contact)
         self.result["verdict"] = self.verdict(cases)
         self.check("Story/rings/progression unchanged", {str(a): self.r(a) for a in garo.PROTECTED}, protected)
         self.result["runtime_checks_passed"] = all(self.result["verdict"].values())

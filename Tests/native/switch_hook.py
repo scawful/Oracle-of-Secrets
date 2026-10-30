@@ -42,7 +42,8 @@ def snapshot(read8, slot):
 
 def check_exchange(before, after):
     """Full 16-bit positions are compared; a low-byte-only swap must fail."""
-    require(before["type"] == after["type"] == 0xD5, "Exchange changed/wrong sprite type")
+    require(before["type"] in (0xD5, 0x1C) and before["type"] == after["type"],
+            "Exchange changed/wrong sprite type")
     require(before["state"] == after["state"] == 9, "Exchange target is not a live block")
     require(before["floor"] == before["layer"], "Fixture is on a different layer")
     require(after["link"] == (before["block"][0], (before["block"][1] - 8) & 0xFFFF),

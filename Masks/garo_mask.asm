@@ -184,8 +184,6 @@ GaroMask_TryLunge:
   LDA.b $F0 : AND.b #$0F : CMP.l GaroFacingBits, X : BNE .no
   LDA.l $7EF359 : BEQ .no
   CMP.b #$05 : BCS .no ; includes the smith-held $FF sentinel
-  ; The dash phase holds the sword out only when $7EF3C5 != 0.
-  LDA.l $7EF3C5 : BEQ .no
   ; Link_PerformDash's own refusals: Somaria platform, moving floor, sliding.
   LDA.w $02F5 : ORA.w $0314 : ORA.w $02EC : BNE .no
   STZ.b $3B : STZ.w $0374
@@ -233,6 +231,24 @@ GaroMask_LungeTick:
   STZ.w GaroLungeTimer
   .done
   RTS
+}
+
+; Vanilla gates the dash sword pose on story progress. A Garo lunge already
+; validated sword ownership, so its pose must not depend on that story byte.
+; Other dashes retain the displaced load and its zero/nonzero result.
+pushpc
+org $079104 ; @hook module=Masks name=GaroMask_DashSword kind=jsl target=GaroMask_DashSword
+assert read4($079104) == $7EF3C5AF, "Dash sword story load moved"
+  JSL GaroMask_DashSword
+assert pc() == $079108
+pullpc
+
+GaroMask_DashSword:
+{
+  LDA.l GameState : BNE .done
+  LDA.w GaroLungeTimer
+  .done
+  RTL
 }
 
 ; Y during a lunge: a Roc's Cape style forward jump. It is the Roc's Feather

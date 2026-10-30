@@ -4,7 +4,7 @@
 Use --describe without a session, or --plan-dump DIR for a file-only floor review.
 Runtime requires a paused,
 owned new-items session and --execute-fixtures. A single unused sprite slot gets
-D5 and native initialize state08; game code runs its actual prep/main routines.
+D5 or native statue 1C and initialize state08; game code runs its prep/main routines.
 Both endpoints are read-only checked against the live dungeon collision map.
 Controller input selects/casts each item. No CPU, room, collision-map, story,
 SRAM, ROM, invincibility or Link-position writes are made.
@@ -123,26 +123,31 @@ class WorldFlow(combined.NewItemsFlow):
         native.require(self.b.write_memory(address, value), "World fixture write rejected")
         self.check("Fixture readback", self.r(address), value)
 
-    def spawn(self, x, y, layer):
+    def spawn(self, x, y, layer, kind=0xD5):
         self.ready()
+        native.require(kind in (0xD5, 0x1C), "Fixture supports ice blocks and native statues")
         if self.slot is None:
             unused = [i for i in range(15, -1, -1) if self.r(0x7E0DD0 + i) == 0]
             native.require(bool(unused), "No unused sprite slot; do not evict a native actor")
             self.slot = unused[0]
             self.saved = {offset: self.r(0x7E0000 + offset + self.slot) for offset in FIELDS}
         else:
-            native.require(self.r(0x7E0E20 + self.slot) == 0xD5, "Owned actor was replaced")
+            native.require(self.r(0x7E0E20 + self.slot) == self.actor_kind, "Owned actor was replaced")
+        self.actor_kind = kind
         self.fixture_write(0xDD0, 0, "Disable only the task's fixture slot while assigning coordinates")
-        for offset, value in ((0xE20, 0xD5), (0xD10, x & 255), (0xD30, x >> 8),
-                              (0xD00, y & 255), (0xD20, y >> 8), (0xF20, layer), (0xE30, 0)):
+        # Native Statue prep adds seven to Y; supply its authored origin.
+        prep_y = y - 7 if kind == 0x1C else y
+        for offset, value in ((0xE20, kind), (0xD10, x & 255), (0xD30, x >> 8),
+                              (0xD00, prep_y & 255), (0xD20, prep_y >> 8), (0xF20, layer), (0xE30, 0)):
             self.fixture_write(offset, value, "Declared live D5 world fixture")
         self.fixture_write(0xDD0, 8, "Native initialize module runs properties and D5 prep")
         self.advance("", 2)
         after = self.snap()
-        self.check("Native D5 prep produced active state", after["state"], 9)
-        self.check("Native D5 prep cached origin", after["block_origin"], (x, y))
-        self.check("D5 remains at declared position", after["block"], (x, y))
-        self.check("D5 remains stationary", after["speed"] + [after["height"], after["timer"]], [0] * 5)
+        self.check("Native actor prep produced active state", after["state"], 9)
+        if kind == 0xD5:
+            self.check("Native D5 prep cached origin", after["block_origin"], (x, y))
+        self.check("Actor remains at declared position", after["block"], (x, y))
+        self.check("Actor remains stationary", after["speed"] + [after["height"], after["timer"]], [0] * 5)
 
     def floors(self, label, block=None):
         ram = self.block(0x7E0000, 0x1000)
@@ -200,10 +205,10 @@ class WorldFlow(combined.NewItemsFlow):
         if self.slot is None:
             return
         self.check_owner()
-        native.require(self.r(0x7E0E20 + self.slot) == 0xD5
+        native.require(self.r(0x7E0E20 + self.slot) == self.actor_kind
                        and (self.r(0x7E00A0) | self.r(0x7E00A1) << 8) == 0x104,
                        "Do not delete an actor after identity/room changed")
-        self.fixture_write(0xDD0, 0, "Remove only the task-created D5 fixture")
+        self.fixture_write(0xDD0, 0, "Remove only the task-created actor fixture")
         for offset, value in self.saved.items():
             if offset != 0xDD0:
                 self.fixture_write(offset, value, "Restore originally unused slot's explicit fixture fields")
@@ -270,6 +275,15 @@ class WorldFlow(combined.NewItemsFlow):
         self.check("Existing wall makes target unsafe", safe(self.floors("unsafe-wall", target)["target"]), False)
         self.spawn(*target, 0)
         self.cast("switch-unsafe-wall", require_overlap=True)
+        self.clear_actor()
+        self.face("Right")
+        ram = self.block(0x7E0000, 0x1000)
+        target = (word(ram, 0x22) + 48, word(ram, 0x20) + 8)
+        self.check("Statue target safe", safe(self.floors("statue", target)["target"]), True)
+        self.spawn(*target, 0, kind=0x1C)
+        self.cast("switch-statue-exchange", accepted=True)
+        self.face("Left")
+        self.cast("switch-statue-return", accepted=True)
         self.clear_actor()
         self.ordinary_control()
         self.result["runtime_checks_passed"] = True
