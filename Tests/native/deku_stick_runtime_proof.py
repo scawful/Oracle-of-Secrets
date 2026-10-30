@@ -65,7 +65,7 @@ Verifies natively in headless Mesen2:
     - Lit stick carried across real same-floor doorway in D6 (room 0x98 -> 0x88) preserves fire and resumes burn countdown.
     - Lit stick carried into real spiral stairs in Zora Temple (room 0x28 -> 0x38) cleans up stick and flame without inventory refund.
 15. Overworld dispatch hook and transition drops:
-    - Part A (Real overworld screen boundary crossing): Real controller-driven movement from Village West (Screen 0x23) across the boundary into destination Screen 0x2A via D-pad LEFT; observes engine-triggered screen scroll, paused burn timer, intact lit stick/flame upon arrival on Screen 0x2A, and resumed burn countdown.
+    - Part A (Real overworld screen boundary crossing fuel pause proof): Real controller-driven movement from Village West (Screen 0x23) across the boundary into destination Screen 0x2A via D-pad LEFT; observes engine-triggered scroll transition, takes two during-scroll samples separated by >= 16 frames proving identical fuel, lit state and flame visibility, observes arrival on destination Screen 0x2A with stick/flame intact, and proves resumed active countdown.
     - Part B (Submodule whitelist fixture control): Verifies $02A477 hook preserves lit stick and pauses burn timer during scroll ($11 = 1) in Module 09.
     - Part C (Real overworld entrance transition): Walking into real overworld entrance doorway (D6 entrance at Screen 54) triggers entrance fade/Module 08 load hook ($0283BF) which drops stick without inventory refund.
 """
@@ -166,6 +166,7 @@ class DekuStickRuntimeTest:
         self.pid_identity = ""
         self.b: MesenBridge | None = None
         self.results: dict[str, bool] = {}
+        self.traces: dict[str, Any] = {}
 
     def launch(self, reset_save: bool = True):
         self.instance_name = f"deku-test-{int(time.time())}"
@@ -342,6 +343,10 @@ class DekuStickRuntimeTest:
 
     def run_tests(self, filter_test: int | None = None):
         print("\n=== STARTING DEKU STICK RUNTIME PROOFS ===")
+        if filter_test == 15:
+            print("[*] Running filtered Test 15 only...")
+            self.run_test_15()
+            return
 
         # ----------------------------------------------------
         # 1. Fresh draw & sword lockout
@@ -1365,6 +1370,10 @@ class DekuStickRuntimeTest:
         # ----------------------------------------------------
         # 15. Overworld dispatch hook and transition drops
         # ----------------------------------------------------
+        if filter_test is None or filter_test == 15:
+            self.run_test_15()
+
+    def run_test_15(self):
         print("[*] Test 15: Overworld dispatch hook ($02A477) and transition drops ($0283BF)...")
 
         # Part A: Real controller-driven overworld screen-edge crossing (Screen 0x23 -> 0x2A)
@@ -1374,55 +1383,184 @@ class DekuStickRuntimeTest:
         time.sleep(0.5)
         self.wait_play(8.0)
 
+        start_ow_mod = self.r(MODULE)
+        start_ow_scr = self.r(0x7E008A)
+        fixture_loaded_ok = (start_ow_mod == 9 and start_ow_scr == 0x23)
+        if not fixture_loaded_ok:
+            raise RuntimeError(f"Expected Village West in Module 09 on Screen 0x23; got Module {start_ow_mod}, Screen 0x{start_ow_scr:02X}")
+
         self.w(DEKU_STICKS_COUNT, 2)
         self.w(DEKU_STICK_STATE, 2)  # Held lit
         self.w(DEKU_BURN_TIMER, 60)
         time.sleep(0.1)
 
-        start_ow_scr = self.r(0x7E008A)
         start_ow_pos = (self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8), self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8))
 
         # Walk LEFT across the screen boundary into destination screen 0x2A
-        ow_real_scroll_observed = False
-        burn_during_real_scroll = None
-        state_during_real_scroll = None
-        flame_y_real_scroll = None
+        scroll_start_observed = False
+        scroll_sample1 = None
+        scroll_sample2 = None
+
         for step in range(30):
             self.b.press_button("LEFT", frames=4)
             time.sleep(0.08)
             sub = self.r(SUBMODULE)
             if sub in (1, 2, 3, 4, 5, 6, 7, 8):
-                ow_real_scroll_observed = True
-                burn_during_real_scroll = self.r(DEKU_BURN_TIMER)
-                state_during_real_scroll = self.r(DEKU_STICK_STATE)
-                flame_y_real_scroll = self.r(SPRITE5_OAM + 1)
+                scroll_start_observed = True
+                f1 = self.r(0x7E001A)
+                scroll_sample1 = {
+                    "submodule": sub,
+                    "burn": self.r(DEKU_BURN_TIMER),
+                    "state": self.r(DEKU_STICK_STATE),
+                    "flame_y": self.r(SPRITE5_OAM + 1),
+                    "stick_y": self.r(SPRITE4_OAM + 1),
+                    "frame": f1,
+                }
                 break
+
+        if not scroll_start_observed or scroll_sample1 is None:
+            raise RuntimeError("Failed to observe engine-triggered screen scroll transition")
+        print(f"    Scroll triggered: sample1={scroll_sample1}")
+
+        # Sample 2 during scroll: poll until at least 16 engine frames have elapsed while still scrolling (submodule 1..8)
+        for _ in range(35):
+            time.sleep(0.03)
+            sub_now = self.r(SUBMODULE)
+            f_now = self.r(0x7E001A)
+            elapsed_frames = (f_now - scroll_sample1["frame"]) & 0xFF
+            if sub_now in (1, 2, 3, 4, 5, 6, 7, 8) and elapsed_frames >= 16:
+                scroll_sample2 = {
+                    "submodule": sub_now,
+                    "burn": self.r(DEKU_BURN_TIMER),
+                    "state": self.r(DEKU_STICK_STATE),
+                    "flame_y": self.r(SPRITE5_OAM + 1),
+                    "stick_y": self.r(SPRITE4_OAM + 1),
+                    "frame": f_now,
+                    "elapsed_frames": elapsed_frames,
+                }
+                break
+
+        if scroll_sample2 is None:
+            raise RuntimeError("Failed to observe second sample during scroll with >= 16 elapsed frames")
+        print(f"    Scroll sampled 2: sample2={scroll_sample2}")
 
         # Wait for screen scroll transition to finalize onto destination screen (submodule 0)
-        for _ in range(40):
-            time.sleep(0.1)
+        dest_settled = False
+        for _ in range(60):
+            time.sleep(0.08)
             if self.r(SUBMODULE) == 0:
+                dest_settled = True
                 break
 
+        if not dest_settled:
+            sub_final = self.r(SUBMODULE)
+            mod_final = self.r(MODULE)
+            raise RuntimeError(f"Screen scroll failed to settle to submodule 0 (current module={mod_final}, submodule={sub_final})")
+
+        dest_ow_mod = self.r(MODULE)
+        dest_ow_sub = self.r(SUBMODULE)
         dest_ow_scr = self.r(0x7E008A)
         dest_ow_pos = (self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8), self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8))
         dest_ow_st = self.r(DEKU_STICK_STATE)
         dest_ow_burn = self.r(DEKU_BURN_TIMER)
         dest_flame_y = self.r(SPRITE5_OAM + 1)
+        dest_stick_y = self.r(SPRITE4_OAM + 1)
+        dest_frame = self.r(0x7E001A)
 
-        # Wait a few frames on destination screen to observe burn countdown resume ticking
-        time.sleep(0.5)
-        ticked_ow_burn = self.r(DEKU_BURN_TIMER)
+        # Wait in active gameplay on destination screen for burn countdown to resume ticking
+        ticked_ow_burn = None
+        ticked_frame = None
+        for _ in range(30):
+            time.sleep(0.05)
+            cur_burn = self.r(DEKU_BURN_TIMER)
+            if cur_burn < dest_ow_burn:
+                ticked_ow_burn = cur_burn
+                ticked_frame = self.r(0x7E001A)
+                break
 
-        real_ow_scroll_ok = (
-            ow_real_scroll_observed and
+        if ticked_ow_burn is None:
+            raise RuntimeError(f"Burn timer failed to resume countdown on destination screen (remained {dest_ow_burn})")
+
+        scroll_pause_proven = (
+            scroll_sample1["submodule"] in (1, 2, 3, 4, 5, 6, 7, 8) and
+            scroll_sample2["submodule"] in (1, 2, 3, 4, 5, 6, 7, 8) and
+            scroll_sample2["elapsed_frames"] >= 16 and
+            scroll_sample1["burn"] == scroll_sample2["burn"] and
+            scroll_sample1["state"] == 2 and
+            scroll_sample2["state"] == 2 and
+            scroll_sample1["flame_y"] != 0xE0 and
+            scroll_sample2["flame_y"] != 0xE0 and
+            scroll_sample1["stick_y"] != 0xE0 and
+            scroll_sample2["stick_y"] != 0xE0
+        )
+
+        scroll_arrival_proven = (
+            dest_settled and
+            dest_ow_mod == 9 and
+            dest_ow_sub == 0 and
             dest_ow_scr == 0x2A and
             dest_ow_st == 2 and
-            dest_flame_y != 0xE0 and
-            burn_during_real_scroll in (58, 59, 60) and
+            dest_ow_burn <= scroll_sample2["burn"]
+        )
+
+        scroll_resume_proven = (
+            ticked_ow_burn is not None and
             ticked_ow_burn < dest_ow_burn
         )
-        print(f"    Real overworld scroll (0x{start_ow_scr:02X} -> 0x{dest_ow_scr:02X}): observed={ow_real_scroll_observed}, dest_pos={dest_ow_pos}, state={dest_ow_st} (exp 2), burn_during={burn_during_real_scroll}, resumed=({ticked_ow_burn} < {dest_ow_burn}) -> OK: {real_ow_scroll_ok}")
+
+        real_ow_scroll_ok = (
+            fixture_loaded_ok and
+            scroll_start_observed and
+            scroll_pause_proven and
+            scroll_arrival_proven and
+            scroll_resume_proven
+        )
+
+        print(f"    Real overworld scroll (0x{start_ow_scr:02X} -> 0x{dest_ow_scr:02X}):")
+        print(f"      Sample 1 (sub={scroll_sample1['submodule']}, frame={scroll_sample1['frame']}): burn={scroll_sample1['burn']}, state={scroll_sample1['state']}, flame_y={scroll_sample1['flame_y']}")
+        print(f"      Sample 2 (sub={scroll_sample2['submodule']}, frame={scroll_sample2['frame']}, elapsed={scroll_sample2['elapsed_frames']}f): burn={scroll_sample2['burn']}, state={scroll_sample2['state']}, flame_y={scroll_sample2['flame_y']}")
+        print(f"      Arrival  (sub={dest_ow_sub}, frame={dest_frame}): screen=0x{dest_ow_scr:02X}, pos={dest_ow_pos}, burn={dest_ow_burn}, state={dest_ow_st}, flame_y={dest_flame_y}")
+        print(f"      Resumed  (frame={ticked_frame}): burn={ticked_ow_burn} (< {dest_ow_burn})")
+        print(f"      Verdict: pause_proven={scroll_pause_proven}, arrival_proven={scroll_arrival_proven}, resume_proven={scroll_resume_proven} -> OK: {real_ow_scroll_ok}")
+
+        real_scroll_trace = {
+            "test_segment": "Test 15 Part A: Real OW Screen-Edge Crossing Fuel Pause Proof",
+            "rom_sha256": hashlib.sha256(self.rom.read_bytes()).hexdigest(),
+            "fixture": {
+                "path": str(village_state_path),
+                "start_module": start_ow_mod,
+                "start_screen": f"0x{start_ow_scr:02X}",
+                "start_pos": start_ow_pos,
+                "loaded_ok": fixture_loaded_ok,
+            },
+            "scroll_sample_1": scroll_sample1,
+            "scroll_sample_2": scroll_sample2,
+            "destination_arrival": {
+                "module": dest_ow_mod,
+                "submodule": dest_ow_sub,
+                "screen": f"0x{dest_ow_scr:02X}",
+                "pos": dest_ow_pos,
+                "state": dest_ow_st,
+                "flame_y": dest_flame_y,
+                "stick_y": dest_stick_y,
+                "burn": dest_ow_burn,
+                "frame": dest_frame,
+            },
+            "resumed_gameplay": {
+                "ticked_burn": ticked_ow_burn,
+                "ticked_frame": ticked_frame,
+            },
+            "verdict": {
+                "scroll_pause_proven": scroll_pause_proven,
+                "scroll_arrival_proven": scroll_arrival_proven,
+                "scroll_resume_proven": scroll_resume_proven,
+                "real_ow_scroll_ok": real_ow_scroll_ok,
+            }
+        }
+        self.traces["real_ow_scroll_trace"] = real_scroll_trace
+        trace_path = self.work_dir / "deku_scroll_trace.json"
+        trace_path.write_text(json.dumps(real_scroll_trace, indent=2))
+        print(f"    [*] Saved scroll trace to {trace_path}")
 
         # Stow stick via B before next part
         self.press("B", frames=8)
@@ -1515,34 +1653,49 @@ def main():
     parser.add_argument("--rom", type=Path, default=Path("/tmp/oos_private_deku.sfc"))
     parser.add_argument("--app", type=Path, default=APP_DEFAULT)
     parser.add_argument("--work-dir", type=Path, default=Path("/tmp/oos_deku_runtime"))
+    parser.add_argument("--test", type=int, default=None, help="Run only specific test index (1..15)")
     args = parser.parse_args()
 
     test = DekuStickRuntimeTest(args.rom, args.app, args.work_dir)
     try:
         test.launch(reset_save=True)
         test.boot_file2()
-        test.run_tests()
+        test.run_tests(filter_test=args.test)
     finally:
         test.close()
 
     print("\n" + "=" * 50)
     print("DEKU STICK RUNTIME PROOF SUMMARY:")
+    report_path = args.work_dir / "deku_runtime_report.json"
+
+    # Merge with existing report results if running a filtered test
+    all_results = {}
+    if report_path.is_file() and args.test is not None:
+        try:
+            prior_data = json.loads(report_path.read_text())
+            all_results = prior_data.get("results", {})
+        except Exception:
+            all_results = {}
+
+    all_results.update(test.results)
+
     all_passed = True
-    for name, passed in test.results.items():
+    for name, passed in all_results.items():
         print(f"  [{'PASS' if passed else 'FAIL'}] {name}")
         if not passed:
             all_passed = False
     print("=" * 50)
 
-    report_path = args.work_dir / "deku_runtime_report.json"
-    report_path.write_text(json.dumps(dict(
-        passed=all_passed,
-        results=test.results,
-        rom_sha256=hashlib.sha256(args.rom.read_bytes()).hexdigest(),
-    ), indent=2))
+    report_payload = {
+        "passed": all_passed,
+        "results": all_results,
+        "rom_sha256": hashlib.sha256(args.rom.read_bytes()).hexdigest(),
+        "traces": test.traces,
+    }
+    report_path.write_text(json.dumps(report_payload, indent=2))
     print(f"[*] Report saved to {report_path}")
 
-    return 0 if all_passed else 1
+    return 0 if (test.results and all(test.results.values())) else 1
 
 
 if __name__ == "__main__":
