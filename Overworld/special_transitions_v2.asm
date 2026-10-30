@@ -121,11 +121,18 @@ macro stv2_exit(id, ow, y, x, large, facing)
   !stv2_cy #= clamp(<y>+31, !stv2_my+111, !stv2_my+143+!stv2_ysize)
   !stv2_vram #= (((!stv2_ys-!stv2_my)&$FFF0)<<3)|(((!stv2_xs-!stv2_mx)&$FFF0)>>3)
   pushpc
-  org !STV2_EXITS+(($<id>-$0180)*32)
+  if !ENABLE_KALYXO_BOAT == 1
+    assert (!STV2_EXITS>>16) == $D1, "Private ferry exit records must stay in bank $D1"
+    org !STV2_EXITS+(($<id>-$0180)*32) ; @manifest-org-bank=$D1
+  else
+    assert (!STV2_EXITS>>16) == $AA, "Legacy STV2 record bank changed"
+    org !STV2_EXITS+(($<id>-$0180)*32) ; @manifest-org-bank=$AA
+  endif
     dw $<id>, !stv2_ys, !stv2_xs, <y>, <x>, !stv2_vram, !stv2_cy, !stv2_cx
     dw $0000, $0000
     db <ow>, $00, $00, <facing>
-  org $02E801+$<id>-$0180
+  assert (($02E801+$<id>-$0180)>>16) == $02, "STV2 direction leaves bank $02"
+  org $02E801+$<id>-$0180 ; @manifest-org-bank=$02
     db <facing>
   pullpc
 endmacro
