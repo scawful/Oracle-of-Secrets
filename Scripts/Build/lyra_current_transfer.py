@@ -109,7 +109,7 @@ def _file_dependencies(project, config):
     return paths
 
 
-def _live(project):
+def _live(project, *, producer_identity=None):
     project = Path(os.path.abspath(project))
     config = configparser.ConfigParser(interpolation=None, strict=True)
     config.optionxform = str
@@ -123,7 +123,12 @@ def _live(project):
     R.require(len({paths[key].resolve() for key in ('project', 'rom', 'terrain')}) == 3,
               'Current-save inputs alias each other')
     inputs = {key: Q.bound(path) for key, path in sorted(paths.items())}
-    producer_path = _reference(project, config, 'native_save_producer_file')
+    if producer_identity is None:
+        producer_path = _reference(project, config, 'native_save_producer_file')
+    else:
+        producer_path = Path(producer_identity).resolve(strict=True)
+        R.require(not producer_path.is_relative_to(project.parent.resolve()),
+                  'Explicit producer identity must remain outside the saved project')
     producer_binding = Q.bound(producer_path)
     producer = _json(Q.read_bound(producer_binding))
     _keys(producer, {'kind', 'source_head', 'editor', 'verifier', 'source_bindings'}, 'selected producer identity')
@@ -174,9 +179,12 @@ def _live(project):
     R.require(context_name and Path(context_name).is_absolute(),
               'CURRENT_SAVE_CONTEXT_REQUIRED: existing editor session must expose its live Save/SaveAs context')
     context_path = Path(context_name).resolve(strict=True)
-    R.require(not context_path.is_relative_to(project.parent.resolve())
+    workspace_controls = (project.parent / '.workspace/yaze/native-saves').resolve()
+    R.require((not context_path.is_relative_to(project.parent.resolve())
+               or context_path.parent == workspace_controls)
               and context_path.parent.name == 'native-saves',
-              'Current native Save context must be outside the project in its stable native-saves control location')
+              'Current native Save context must use native-saves outside the project '
+              'or its managed .workspace/yaze controls')
     context_binding = Q.bound(context_name)
     context = _json(Q.read_bound(context_binding))
     _keys(context, {'kind', 'editing_source_path', 'project_path', 'rom_path', 'producer', 'state', 'native_commit'},
@@ -201,16 +209,23 @@ def _live(project):
     proof_path = _reference(project, config, 'native_save_transfer_proof_file', existing=False)
     R.require(proof_path not in {Path(row['path']) for row in inputs.values()},
               'Transfer proof aliases a saved input')
-    return dict(project=str(project), inputs=inputs, producer=producer_binding,
+    result = dict(project=str(project), inputs=inputs, producer=producer_binding,
         producer_identity=producer, save_receipt=receipt_binding,
         generation=receipt['generation'], operation_id=receipt['operation_id'],
         save_context=context_binding,
         enforcement_receipt=str(proof_path))
+    if producer_identity is not None:
+        result['producer_identity_override'] = producer_binding
+    return result
 
 
 def _recheck(live):
     try:
-        current = _live(live['project'])
+        override = live.get('producer_identity_override')
+        if override is not None:
+            Q.read_bound(override)
+        current = _live(live['project'],
+                        producer_identity=None if override is None else override['path'])
     except (ValueError, OSError, configparser.Error) as error:
         raise ValueError(f'Current-save transfer retired: {error}') from error
     R.require(current == live,
@@ -242,7 +257,7 @@ def _identity(request):
     return T.digest({key: value for key, value in request.items() if key != 'transfer_id'})
 
 
-def prepare_transfer(project, z3ed, output, candidate, *, policy_id=None):
+def prepare_transfer(project, z3ed, output, candidate, *, policy_id=None, producer_identity=None):
     """Capture a new immutable input; never advance Yaze's save generation."""
     project = Path(os.path.abspath(project))
     z3ed = Path(z3ed).resolve(strict=True)
@@ -253,7 +268,7 @@ def prepare_transfer(project, z3ed, output, candidate, *, policy_id=None):
               'Current-save transfer paths use a symlink')
     R.require(not candidate.is_relative_to(output) and not output.is_relative_to(candidate),
               'Candidate must be separate from immutable transfer input')
-    live = _live(project)
+    live = _live(project, producer_identity=producer_identity)
     R.require(candidate != Path(live['enforcement_receipt'])
               and not Path(live['enforcement_receipt']).is_relative_to(output),
               'Transfer proof must be separate from candidate and immutable snapshot input')

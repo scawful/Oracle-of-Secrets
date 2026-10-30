@@ -8,6 +8,7 @@ import copy
 import os
 from pathlib import Path
 import subprocess
+import tempfile
 import unittest
 from unittest import mock
 
@@ -174,6 +175,36 @@ def configure_saved_target(case):
     with case.project.open('w') as handle:config.write(handle)
     case.inputs['project']=X.Q.bound(case.project)
     case.save['artifacts']=case.artifacts(case.inputs);case.next_save()
+
+
+class DetachedCurrentOutputSelectionTest(unittest.TestCase):
+    def test_explicit_request_and_target_do_not_require_a_new_descriptor_save(self):
+        # This isolates output selection after the real plan's admission step.
+        # It does not claim a Save, native verifier, allocation or compiled ROM.
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            engine = root / 'engine'; engine.mkdir()
+            project = root / 'saved.yaze'
+            project.write_text('[build]\nbuild_target=old-output.sfc\n')
+            request = root / 'request.json'
+            request.write_bytes(X.P.encoded(dict(kind=X.KIND)))
+            target = engine / 'Roms/gen15/oos168x.sfc'
+            prepared = dict(current_source_profile=dict(selected_source=dict(root=str(engine))),
+                            terrain_plan=dict(target=dict(path=str(target))))
+            plan = dict(kind='lyra.current_build_prepare.v1', selected=True,
+                        current_files={'prepare.json': X.P.encoded(prepared)})
+            before = project.read_bytes()
+            with (mock.patch.object(X.P, 'ROOT', engine),
+                  mock.patch.object(X.P, 'project_context', return_value=(project, root/'rom', root/'terrain', request)),
+                  mock.patch.object(X.P, 'make_plan', return_value=plan)):
+                result = X.P.resolve_current_target(project, request=request, candidate=target)
+                self.assertEqual(result['candidate'], str(target))
+                with self.assertRaisesRegex(ValueError, 'CURRENT_BUILD_OUTPUT_MISMATCH'):
+                    X.P.resolve_current_target(project, request=request)
+                with self.assertRaisesRegex(ValueError, 'CURRENT_BUILD_OUTPUT_MISMATCH'):
+                    X.P.resolve_current_target(project, request=request, candidate=engine/'Roms/other/oos168x.sfc')
+                self.assertEqual(project.read_bytes(), before)
+                self.assertFalse(target.exists())
 
 
 if __name__=='__main__':unittest.main()

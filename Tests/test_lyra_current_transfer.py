@@ -85,6 +85,61 @@ class CurrentSaveTransferTest(unittest.TestCase):
                                              operation_id=self.save['operation_id'])
         self.context_path.write_bytes(X.P.encoded(self.context))
 
+    def test_explicit_actual_producer_preserves_saved_descriptor_and_receipt(self):
+        external = self.root / 'actual-producer.json'
+        external.write_bytes(self.producer_path.read_bytes())
+        stale = copy.deepcopy(self.producer)
+        (self.root / 'old-editor').write_bytes(b'old editor')
+        stale['editor'] = X.Q.bound(self.root / 'old-editor')
+        self.producer_path.write_bytes(X.P.encoded(stale))
+        before = {path: path.read_bytes() for path in
+                  (self.project, self.rom, self.terrain, self.receipt, self.context_path, self.producer_path)}
+        with self.assertRaisesRegex(ValueError, 'selected producer'):
+            self.prepare()
+        _, request = self.prepare(producer_identity=external)
+        data, _, _ = X.verify_transfer(request, self.project, self.rom)
+        self.assertEqual(data['live']['producer'], X.Q.bound(external))
+        # The legacy authority fixture may create its own dummy proof. Put
+        # that setup outside the saved project; real v2 consumes only the
+        # immutable verifier capture and never creates the descriptor proof.
+        descriptor_proof = self.enforcement
+        self.enforcement = self.root / 'legacy-authority-fixture.json'
+        try:
+            ledger, policy, _ = self.grant_fixture(request)
+        finally:
+            self.enforcement = descriptor_proof
+        policy.update(kind=X.NATIVE_POLICY_KIND,
+                      producer_identity_sha256=data['live']['producer']['sha256'],
+                      enforcement=dict(owner='oracle.current_builder', required_order=X.COMPILE_ORDER))
+        self.write_fixture_ledger(ledger, policy)
+        self.assertFalse(descriptor_proof.exists())
+        plan, _ = X.plan_transfer(request, self.project, self.rom,
+                                 current_source_profile=self.current_profile)
+        self.assertEqual(plan['enforcement_owner'], 'oracle.current_builder')
+        self.assertEqual(plan['enforcement_receipt'], data['native_verification'])
+        self.assertTrue(Path(data['native_verification']['path']).is_relative_to(self.output))
+        self.assertFalse(descriptor_proof.exists())
+        self.assertEqual({path: path.read_bytes() for path in before}, before)
+        self.assertFalse(self.enforcement.exists())
+        self.assertFalse(self.candidate.exists())
+        external.write_bytes(b'changed selected control')
+        with self.assertRaisesRegex(ValueError, 'retired'):
+            X.verify_transfer(request, self.project, self.rom)
+
+    def test_managed_workspace_context_is_valid_but_other_project_paths_refuse(self):
+        workspace = self.project_root / '.workspace/yaze/native-saves' / self.context_path.name
+        workspace.parent.mkdir(parents=True)
+        workspace.write_bytes(self.context_path.read_bytes())
+        with mock.patch.dict(os.environ, {'YAZE_NATIVE_SAVE_CONTEXT': str(workspace)}):
+            _, request = self.prepare()
+            X.verify_transfer(request, self.project, self.rom)
+        unrelated = self.project_root / 'unrelated/native-saves' / self.context_path.name
+        unrelated.parent.mkdir(parents=True)
+        unrelated.write_bytes(self.context_path.read_bytes())
+        with mock.patch.dict(os.environ, {'YAZE_NATIVE_SAVE_CONTEXT': str(unrelated)}):
+            with self.assertRaisesRegex(ValueError, 'managed .workspace/yaze'):
+                X._live(self.project)
+
     def test_native_policy_uses_actual_capture_not_a_future_producer_record(self):
         _, request_path = self.prepare()
         request = json.loads(request_path.read_bytes())

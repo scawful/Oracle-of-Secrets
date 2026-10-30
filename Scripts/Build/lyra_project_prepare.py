@@ -272,6 +272,8 @@ def main():
     parser.add_argument('--current-save-transfer', action='store_true')
     parser.add_argument('--candidate', type=Path)
     parser.add_argument('--allocation-policy-id')
+    parser.add_argument('--producer-identity', type=Path,
+                        help='External identity matching the actual committed Save producer')
     parser.add_argument('--ledger', type=Path)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
@@ -281,10 +283,12 @@ def main():
                       'Current transfer needs --candidate; historical request/ledger overrides are unsupported')
             from lyra_current_transfer import prepare_transfer
             report = prepare_transfer(args.project, args.z3ed, args.output, args.candidate,
-                                      policy_id=args.allocation_policy_id)
+                                      policy_id=args.allocation_policy_id,
+                                      producer_identity=args.producer_identity)
             print(json.dumps(report, sort_keys=True))
             return 0
-        R.require(args.qualification_request is not None and args.candidate is None,
+        R.require(args.qualification_request is not None and args.candidate is None
+                  and args.producer_identity is None,
                   'Historical current37/A1 preparation needs --qualification-request')
         report = prepare_request(args.project, args.z3ed, args.qualification_request, args.output, ledger_path=args.ledger)
     except (ValueError, OSError, configparser.Error, subprocess.SubprocessError) as error:

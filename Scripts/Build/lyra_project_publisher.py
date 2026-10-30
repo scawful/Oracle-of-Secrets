@@ -629,6 +629,9 @@ def resolve_current_target(project, base_rom=None, request=None, candidate=None)
     validation must succeed for the descriptor actually opened by the editor.
     """
     from lyra_current_transfer import KIND, _json
+    # A detached build selection keeps the native-saved descriptor immutable.
+    # The request still authenticates its Save, producer, source and allocation.
+    detached_output = request is not None and candidate is not None
     project, rom, _, request = project_context(project, request)
     document = _json(request.read_bytes())
     R.require(type(document) is dict and document.get('kind') == KIND,
@@ -646,8 +649,9 @@ def resolve_current_target(project, base_rom=None, request=None, candidate=None)
     config = configparser.ConfigParser(interpolation=None)
     config.read_string(project.read_text(encoding='utf-8-sig'));config.defaults().clear()
     configured = config.get('build','build_target',fallback='').strip()
-    R.require(configured and (project.parent / configured).resolve() == target,
-              'CURRENT_BUILD_OUTPUT_MISMATCH: build_target must match the new transfer candidate before native Save')
+    if not detached_output:
+        R.require(configured and (project.parent / configured).resolve() == target,
+                  'CURRENT_BUILD_OUTPUT_MISMATCH: build_target must match the new transfer candidate before native Save')
     R.require(candidate is None or Path(candidate).absolute() == target,
               'CURRENT_BUILD_OUTPUT_MISMATCH: output override differs from the current transfer')
     # Generation directories never recycle previous receipts or consumer data.
