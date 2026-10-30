@@ -151,6 +151,9 @@ class CheckpointPreviewPublisherTests(unittest.TestCase):
         # Unit dispatch test stops at the binding refusal. It supplies no source
         # authorization, destination, producer grant or successful private plan.
         import checkpoint_registry as C
+        from dataclasses import replace
+        raw=document()
+        parsed=parse_terrain_document(X.P.encoded(raw),raw['profile'],allow_authoring_drafts=True)
         with tempfile.TemporaryDirectory() as folder:
             folder=Path(folder);ledger=folder/'ledger.json';review=folder/'review.json'
             review.write_bytes(X.P.encoded(dict(kind=X.REVIEW_KIND)))
@@ -165,7 +168,7 @@ class CheckpointPreviewPublisherTests(unittest.TestCase):
                     dict(id=request['allocation_policy_id'],current_runtime=value)])))
             profile=object();source=b'unit refusal, never a qualified source'
             with mock.patch.object(X.R,'LEDGER',ledger), \
-                 mock.patch.object(X,'verify_transfer',return_value=(request,source,None)), \
+                 mock.patch.object(X,'verify_transfer',return_value=(request,source,parsed)), \
                  mock.patch.object(X,'current_native_source_profile',return_value=profile), \
                  mock.patch.object(C,'bind_private_preview',create=True,
                                    side_effect=ValueError('PRIVATE_LANDING_UNBOUND')) as bind:
@@ -178,6 +181,18 @@ class CheckpointPreviewPublisherTests(unittest.TestCase):
                                {'private_pilot':bound},{'kind':'lyra.current_runtime_policy.v1'}):
                     bind.reset_mock();bad=copy.deepcopy(runtime);bad.update(change);install(bad)
                     with self.subTest(change=change),self.assertRaises(ValueError):
+                        X.ordinary_plan('project','base','request')
+                    bind.assert_not_called()
+                install(runtime)
+                for field,refusal in (('boat_transport','CURRENT_BOAT_SOURCE_UNBOUND'),
+                                      ('whirlpool_transport','CURRENT_WHIRLPOOL_SOURCE_UNBOUND')):
+                    bind.reset_mock()
+                    # Presence alone must stop this dispatch-only fixture before
+                    # the checkpoint binder; it does not authenticate transport.
+                    changed=replace(parsed,**{field:object()})
+                    with self.subTest(field=field), \
+                         mock.patch.object(X,'verify_transfer',return_value=(request,source,changed)), \
+                         self.assertRaisesRegex(ValueError,refusal):
                         X.ordinary_plan('project','base','request')
                     bind.assert_not_called()
 
