@@ -2,7 +2,16 @@
 ; Change Link's sprite by setting $BC to the gfx bank
 
 ; InitializeMemoryAndSRAM
+; BG128's startup adapter resets its underlay, then tail-calls StartupMasks.
+; Exactly one selected owner may patch the shared four-byte boot call.
+!ProjectBG128_OwnsStartup = 0
+if defined("PROJECT_BG128_ENABLED")
+  !ProjectBG128_OwnsStartup = !PROJECT_BG128_ENABLED
+endif
+if !ProjectBG128_OwnsStartup == 0
 org $008827 : JSL StartupMasks ; @hook module=Masks name=StartupMasks kind=jsl target=StartupMasks
+assert pc() == $00882B
+endif
 
 ; Link Sprite hook before game starts
 org $008A01 : LDA $BC

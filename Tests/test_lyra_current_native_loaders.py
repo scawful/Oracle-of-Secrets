@@ -414,7 +414,7 @@ class CurrentSpritePhaseCpuTest(unittest.TestCase):
 
 
 class CurrentResidentAtlasCpuTest(unittest.TestCase):
-    """Actual twelve-reader ASM with synthetic, explicitly unallocated tables."""
+    """The original twelve readers with synthetic, unallocated current tables."""
     @classmethod
     def setUpClass(cls):
         cls.asar = os.environ.get('ASAR_BIN') or shutil.which('asar')
@@ -442,6 +442,14 @@ class CurrentResidentAtlasCpuTest(unittest.TestCase):
                     raw = bytes([0xBF])+(0xBD8000+quadrant*2).to_bytes(3,'little')
                 put(site, raw)
                 cls.hooks.append((site, mode, quadrant, len(raw)))
+        cls.mutable_hooks = []
+        for sites in ((0x1BC9B2, 0x1BC9B9, 0x1BC9C0, 0x1BC9C7),
+                      (0x1BCA3F, 0x1BCA46, 0x1BCA4D, 0x1BCA54)):
+            for quadrant, (site, destination) in enumerate(zip(sites, (0x1006, 0x1008, 0x100E, 0x1010))):
+                raw = b'\xbf' + (0xBD8000 + quadrant * 2).to_bytes(3, 'little')
+                store = b'\x99' + destination.to_bytes(2, 'little')
+                put(site, raw + store)
+                cls.mutable_hooks.append((site, 'Mutable', quadrant, 4, store))
         cls.native_words = {tile: tuple(0x6000+tile*4+q for q in range(4))
                             for tile in range(129)}
         put(0xBD8000, b''.join(word.to_bytes(2,'little')
@@ -491,7 +499,8 @@ class CurrentResidentAtlasCpuTest(unittest.TestCase):
     def assemble(cls, name, constants):
         image, driver = cls.folder_path/(name+'.sfc'), cls.folder_path/(name+'.asm')
         image.write_bytes(cls.seed)
-        driver.write_text('lorom\n'+constants+'\nincsrc "'+str(cls.native)+'"\n')
+        driver.write_text('lorom\n'+constants+'\n'+getattr(cls, 'caller_source', '')+
+                          '\nincsrc "'+str(cls.native)+'"\n')
         result = subprocess.run([cls.asar,'--no-title-check','--fix-checksum=off',
             '--symbols=wla',str(driver),str(image)],capture_output=True,text=True,timeout=20)
         return image, result
@@ -593,6 +602,222 @@ class CurrentResidentAtlasCpuTest(unittest.TestCase):
                         at = 0x7E0000|(at&65535)
                     self.assertIn(at,allowed)
         self.assertEqual(self.image.read_bytes(),compiled)
+
+
+class CurrentResidentMutableCpuTest(unittest.TestCase):
+    """Eight mutable hooks, actual native caller slices, and four new readers."""
+    @classmethod
+    def setUpClass(cls):
+        # Portable instruction slices from USDASM $1BC983..$1BCA9E. These
+        # retain the real input/target/stripe calculations and following stores.
+        # They seed a sparse native image before the product hooks are applied.
+        cls.caller_source = '''
+org $1BC983
+Fixture_DrawMap16_Anywhere:
+PHX
+ASL : ASL : ASL
+STA.b $0C
+STY.b $00
+TXA : CLC : ADC.b $00 : STA.b $00
+JSR Fixture_FindMap16VRAMAddress
+LDY.w $1000
+LDA.b $02 : XBA : STA.w $1002,Y
+LDA.b $02 : CLC : ADC.w #$0020 : XBA : STA.w $100A,Y
+LDA.w #$0300 : STA.w $1004,Y : STA.w $100C,Y
+LDX.b $0C
+assert pc() == $1BC9B2
+LDA.l $BD8000,X : STA.w $1006,Y
+LDA.l $BD8002,X : STA.w $1008,Y
+LDA.l $BD8004,X : STA.w $100E,Y
+LDA.l $BD8006,X : STA.w $1010,Y
+LDA.w #$FFFF : STA.w $1012,Y
+TYA : CLC : ADC.w #$0010 : STA.w $1000
+PLX
+RTL
+assert pc() == $1BC9DE
+Fixture_AlterTileHardcore:
+PHA
+STA.l $7E2000,X
+PHX
+ASL : ASL : ASL : STA.b $0C
+TXA : CLC : ADC.w #$0000 : STA.b $00
+STZ.b $02
+AND.w #$003F : CMP.w #$0020 : BCC .no_high_x
+LDA.w #$0400 : STA.b $02
+.no_high_x
+LDA.b $00 : AND.w #$0FFF : CMP.w #$0800 : BCC .no_high_y
+LDA.b $02 : ADC.w #$07FF : STA.b $02
+.no_high_y
+LDA.b $00 : AND.w #$001F : ADC.b $02 : STA.b $02
+LDA.b $00 : AND.w #$0780 : LSR : ADC.b $02 : STA.b $02
+LDY.w $1000
+XBA : STA.w $1002,Y
+LDA.b $02 : CLC : ADC.w #$0020 : XBA : STA.w $100A,Y
+LDA.w #$0300 : STA.w $1004,Y : STA.w $100C,Y
+LDX.b $0C
+assert pc() == $1BCA3F
+LDA.l $BD8000,X : STA.w $1006,Y
+LDA.l $BD8002,X : STA.w $1008,Y
+LDA.l $BD8004,X : STA.w $100E,Y
+LDA.l $BD8006,X : STA.w $1010,Y
+TYA : CLC : ADC.w #$0010 : STA.w $1000
+PLX : INX : INX : PLA : INC
+RTS
+assert pc() == $1BCA69
+Fixture_FindMap16VRAMAddress:
+STZ.b $02
+LDA.b $00 : AND.w #$003F : CMP.w #$0020 : BCC .no_high_x
+LDA.w #$0400 : STA.b $02
+.no_high_x
+LDA.b $00 : AND.w #$0FFF : CMP.w #$0800 : BCC .no_high_y
+LDA.b $02 : ADC.w #$07FF : STA.b $02
+.no_high_y
+LDA.b $00 : AND.w #$001F : ADC.b $02 : STA.b $02
+LDA.b $00 : AND.w #$0780 : LSR : ADC.b $02 : STA.b $02
+RTS
+assert pc() == $1BCA9F
+org $1BCB00
+Fixture_AlterTileHardcoreEntry:
+JSR Fixture_AlterTileHardcore
+RTL
+'''
+        CurrentResidentAtlasCpuTest.setUpClass.__func__(cls)
+
+    @classmethod
+    def assemble(cls, name, constants):
+        return CurrentResidentAtlasCpuTest.assemble.__func__(cls, name, constants)
+
+    def run_mutable(self, requests, *, image=None):
+        result = subprocess.run([self.runner, str(image or self.image)],
+            input=''.join(json.dumps(row) + '\n' for row in requests),
+            capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        output = [json.loads(line) for line in result.stdout.splitlines()]
+        self.assertEqual(len(output), len(requests))
+        for row in output:
+            self.assertTrue(row['returned'], row)
+            self.assertFalse(row.get('stub_calls'))
+            self.assertFalse(row.get('mmio_writes'))
+        return output
+
+    def test_twenty_emitted_hooks_keep_all_eight_mutable_following_stores(self):
+        compiled = self.image.read_bytes()
+        self.assertEqual((len(self.hooks), len(self.mutable_hooks)), (12, 8))
+        for site, mode, quadrant, length in self.hooks:
+            target = self.labels[f'Lyra_Resident{mode}{quadrant}']
+            expected = b'\x22' + target.to_bytes(3, 'little') + b'\xea' * (length - 4)
+            self.assertEqual(compiled[L.A.pc(site):L.A.pc(site) + length], expected)
+        for site, mode, quadrant, length, store in self.mutable_hooks:
+            target = self.labels[f'Lyra_Resident{mode}{quadrant}']
+            self.assertEqual(compiled[L.A.pc(site):L.A.pc(site) + 7],
+                             b'\x22' + target.to_bytes(3, 'little') + store)
+
+    def test_mutable_readers_use_target_pages_and_preserve_complete_load_abi(self):
+        plans = []
+        for base, pages in ((0xA0, (0xA0,) * 4), (0xA2, (0xA2, 0xA3) * 2),
+                            (0xA4, (0xA4, 0xA4, 0xAC, 0xAC)),
+                            (0xB0, (0xB0, 0xB1, 0xB8, 0xB9))):
+            for raw, page in zip((0, 0x40, 0x1000, 0x1040), pages):
+                for quadrant in range(4):
+                    for tile in (1, 33):
+                        plans.append((base, raw, quadrant, tile, self.words[page][tile][quadrant]))
+        for base, raw, tile in ((0, 0, 1), (0x9F, 0x40, 33), (0xC0, 0, 1),
+                                (0xA6, 0x40, 1), (0xA7, 0, 1), (0xB7, 0x40, 1),
+                                (0xB0, 0x2000, 1), (0xB0, 0xFFC0, 33),
+                                (0xB0, 0, 128), (0xB0, 0, 2), (0xB0, 0, 3),
+                                (0xB0, 0, 65), (0xB0, 0, 97)):
+            for quadrant in range(4):
+                plans.append((base, raw, quadrant, tile, self.native_words[tile][quadrant]))
+        requests, contexts = [], []
+        live = (0, 2, 4, 6, 0x0C, 0x0E, 0x84, 0x86, 0x88, 0x8A, 0x410, 0x416, 0x700)
+        for ordinal, (base, raw, quadrant, tile, expected) in enumerate(plans):
+            state = {0: raw, 2: 0xA55A, 4: 0xBEEF, 6: 0xCAFE,
+                     0x0C: 0xBCDE, 0x0E: 0xDCBA, 0x84: 0x4567, 0x86: 0x13,
+                     0x88: 0x16, 0x8A: base, 0x410: 0xCAFE, 0x416: 6,
+                     0x700: 0xBF if base == 0xB0 else 0xA0}
+            regs = dict(a=0xABCD, x=tile * 8, y=0x4567, p=(0x09, 0x44)[ordinal % 2],
+                        db=(8, 0x7E)[ordinal % 2], d=(0, 0x120)[ordinal % 2], sp=0x1FFF)
+            requests.append(dict(entry=self.labels[f'Lyra_ResidentMutable{quadrant}'],
+                reset_ram=True, registers=regs,
+                writes=[dict(address=0x7E0000 + at, bytes=list(value.to_bytes(2, 'little')))
+                        for at, value in state.items()],
+                reads=[dict(address=0x7E0000 + at, length=2) for at in live],
+                trace_writes=True, max_steps=1000))
+            contexts.append((base, raw, quadrant, tile, expected, regs, state))
+        for row, context in zip(self.run_mutable(requests), contexts):
+            base, raw, quadrant, tile, expected, regs, state = context
+            with self.subTest(base=base, raw=raw, quadrant=quadrant, tile=tile):
+                cpu = row['registers']
+                self.assertEqual(cpu['a'], expected)
+                for field in ('x', 'y', 'sp', 'd', 'db'):
+                    self.assertEqual(cpu[field], regs[field], field)
+                nz = (2 if expected == 0 else 0) | (0x80 if expected & 0x8000 else 0)
+                self.assertEqual(cpu['p'], (regs['p'] & ~0x82) | nz)
+                for at, observed in zip(live, row['reads']):
+                    self.assertEqual(observed['bytes'], list(state[at].to_bytes(2, 'little')), hex(at))
+                allowed = set(range(0x7E1F80, 0x7E2000)) | set(range(0x7E0000, 0x7E0004))
+                for write in row['writes']:
+                    at = write['address']
+                    if at >> 16 & 127 < 64 and at & 65535 < 8192:
+                        at = 0x7E0000 | (at & 65535)
+                    self.assertIn(at, allowed)
+
+    def caller_request(self, kind, base, raw, tile, *, ordinal=0):
+        stripe = (0x20, 0x60)[ordinal % 2]
+        relative = 2 if kind == 'draw' and raw >= 2 else 0
+        initial_x = raw - relative if kind == 'draw' else raw
+        regs = dict(a=tile, x=initial_x, y=relative if kind == 'draw' else 0x4567,
+                    p=0x41, db=8, d=0, sp=0x1FFF)
+        return dict(entry=0x1BC983 if kind == 'draw' else 0x1BCB00,
+            reset_ram=True, registers=regs,
+            writes=[dict(address=0x7E008A, bytes=[base, 0]),
+                    dict(address=0x7E0700, bytes=[0xBF, 0]),
+                    dict(address=0x7E1000, bytes=list(stripe.to_bytes(2, 'little')))],
+            reads=[dict(address=0x7E1000 + stripe + at, length=2) for at in (6, 8, 14, 16)] +
+                  [dict(address=0x7E0000, length=2), dict(address=0x7E1000, length=2)],
+            trace_writes=True, max_steps=5000), regs, stripe
+
+    def test_actual_native_callers_compute_target_coordinates_before_stripe_output(self):
+        plans, requests = [], []
+        for base, pages in ((0xA0, (0xA0,) * 4), (0xA2, (0xA2, 0xA3) * 2),
+                            (0xA3, (0xA2, 0xA3) * 2),
+                            (0xA4, (0xA4, 0xA4, 0xAC, 0xAC)),
+                            (0xAC, (0xA4, 0xA4, 0xAC, 0xAC)),
+                            (0xB0, (0xB0, 0xB1, 0xB8, 0xB9)),
+                            (0xB1, (0xB0, 0xB1, 0xB8, 0xB9)),
+                            (0xBF, (0xBF,) * 4)):
+            for physical, (raw, page) in enumerate(zip((0, 0x40, 0x1000, 0x1040), pages)):
+                for kind in ('draw', 'hardcore'):
+                    tile = (1, 33)[physical % 2]
+                    request, regs, stripe = self.caller_request(kind, base, raw, tile,
+                                                               ordinal=len(plans))
+                    requests.append(request)
+                    plans.append((kind, base, raw, tile, self.words[page][tile], regs, stripe))
+        for row, plan in zip(self.run_mutable(requests), plans):
+            kind, base, raw, tile, expected, regs, stripe = plan
+            with self.subTest(caller=kind, base=base, raw=raw, tile=tile):
+                self.assertEqual([int.from_bytes(bytes(value['bytes']), 'little')
+                                  for value in row['reads'][:4]], list(expected))
+                self.assertEqual(row['reads'][4]['bytes'], list(raw.to_bytes(2, 'little')))
+                self.assertEqual(row['reads'][5]['bytes'], list((stripe + 16).to_bytes(2, 'little')))
+                cpu = row['registers']
+                self.assertEqual(cpu['x'], regs['x'] + (2 if kind == 'hardcore' else 0))
+                self.assertEqual(cpu['y'], stripe)
+                for field in ('sp', 'd', 'db'):
+                    self.assertEqual(cpu[field], regs[field], field)
+                if kind == 'hardcore':
+                    self.assertEqual(cpu['a'], tile + 1)
+
+    def test_native_mutable_control_reproduces_global_words_at_b0_east(self):
+        image, assembled = self.assemble('mutable-native-control',
+            self.constants.replace('LYRA_CURRENT_RESIDENT_ENABLED = 1',
+                                   'LYRA_CURRENT_RESIDENT_ENABLED = 0'))
+        self.assertEqual(assembled.returncode, 0, assembled.stdout + assembled.stderr)
+        request, _, _ = self.caller_request('draw', 0xB0, 0x40, 33)
+        row = self.run_mutable([request], image=image)[0]
+        observed = [int.from_bytes(bytes(value['bytes']), 'little') for value in row['reads'][:4]]
+        self.assertEqual(observed, list(self.native_words[33]))
+        self.assertNotEqual(observed, list(self.words[0xB1][33]))
 
 
 if __name__ == '__main__':

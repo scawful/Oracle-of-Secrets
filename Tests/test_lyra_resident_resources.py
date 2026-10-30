@@ -495,5 +495,151 @@ class ResidentResourceCallersSourceTest(unittest.TestCase):
         self.assertEqual(rearmed, dict(decompress=2, stage=2, mirror=1))
 
 
+class ResidentStartupOwnershipCpuTest(unittest.TestCase):
+    """Actual startup bodies with a literal native boot M8/X8, DB0, D0 ABI.
+
+    Only DekuStick_Drop and the unrelated boot continuation are RTL stubs.
+    The sparse fixture does not load other Masks or palette routines, grant
+    storage, or change the existing resident resource CPU cases above.
+    """
+    BOOT = 0x008827
+    NATIVE_BOOT = bytes.fromhex('a9808513')
+
+    @classmethod
+    def setUpClass(cls):
+        cls.asar = os.environ.get('ASAR_BIN') or shutil.which('asar')
+        cls.runner = os.environ.get('OOS_CPU_RUNNER')
+        if not cls.asar or not cls.runner:
+            raise unittest.SkipTest('Set ASAR_BIN and OOS_CPU_RUNNER for startup ownership checks')
+        cls.temporary = tempfile.TemporaryDirectory(prefix='lyra-startup-ownership-')
+        cls.addClassCleanup(cls.temporary.cleanup)
+        cls.folder = Path(cls.temporary.name)
+        cls.images = {}
+        masks = (ROOT / 'Masks/mask_routines.asm').read_text()
+        palette = (ROOT / 'Overworld/project_bg_palette.asm').read_text()
+        # Keep the actual conditional ownership declaration and complete body.
+        cls.mask_header = masks[:masks.index('; Link Sprite hook before game starts')]
+        cls.mask_body = masks[masks.index('org $3A8000\nStartupMasks:'):
+                              masks.index('PlayerTransform:')]
+        cls.palette_assignments = palette[palette.index('ProjectBGPalette_NativeReference ='):
+                                         palette.index('; Any M/X. Byte stores only;')]
+        cls.palette_bodies = palette[palette.index('ProjectBGPalette_Reset:'):
+                                    palette.index('ProjectBGPalette_RestoreAndInvalidate:')]
+        hook = palette.index('org $008827 ; @hook')
+        end = palette.index('assert pc() == $00882B', hook)
+        cls.palette_hook = palette[hook:end + len('assert pc() == $00882B')]
+        writer = next(line for line in cls.mask_header.splitlines()
+                      if line.startswith('org $008827'))
+        # Non-emitting instrumentation follows the actual writer inside its
+        # actual conditional. This detects duplicate ownership even when the
+        # later patch would hide it in the final ROM bytes.
+        marker = '\n!Fixture_MasksBootWriter = 1'
+        cls.mask_header = cls.mask_header.replace(writer, writer + marker, 1)
+        cls.legacy_header = writer + marker + '\nassert pc() == $00882B\n'
+
+    @classmethod
+    def assemble(cls, *, masks, bg, old_writer=False):
+        key = masks, bg, old_writer
+        if key in cls.images:
+            return cls.images[key]
+        name = f'masks-{int(masks)}-bg-{int(bg)}-old-{int(old_writer)}'
+        image, driver = cls.folder / (name + '.sfc'), cls.folder / (name + '.asm')
+        seed = bytearray(0x400000)
+        seed[pc(cls.BOOT):pc(cls.BOOT) + 4] = cls.NATIVE_BOOT
+        image.write_bytes(seed)
+        source = ['lorom',
+            '; Literal startup profile: native M8/X8, DB0/D0; no resident activation.',
+            f'!DISABLE_MASKS = {int(not masks)}', f'!PROJECT_BG128_ENABLED = {int(bg)}',
+            '!LYRA_CURRENT_RESIDENT_ENABLED = 0',
+            '!LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED = 0',
+            '!PROJECT_BG128_CODE_BASE = $5FC000', 'namespace Oracle']
+        if masks:
+            source += [cls.legacy_header if old_writer else cls.mask_header, cls.mask_body,
+                       'org $3A9000', 'DekuStick_Drop:', 'RTL']
+        if bg:
+            source += ['org !PROJECT_BG128_CODE_BASE', cls.palette_assignments, cls.palette_bodies,
+                'assert not(defined("Fixture_MasksBootWriter")), "Startup boot site already has a writer"',
+                'assert read4($008827) == $138580A9, "Native boot preimage differs"',
+                cls.palette_hook]
+        source += ['namespace off', 'org $00882B',
+                   '; Synthetic return after the actual four-byte boot call.',
+                   'Fixture_BootReturn:', 'RTL']
+        driver.write_text('\n'.join(source) + '\n')
+        assembled = subprocess.run([cls.asar, '--no-title-check', '--fix-checksum=off',
+            '--symbols=wla', str(driver), str(image)], capture_output=True, text=True, timeout=20)
+        result = image, assembled
+        cls.images[key] = result
+        return result
+
+    def assert_startup(self, *, masks, bg):
+        image, assembled = self.assemble(masks=masks, bg=bg)
+        self.assertEqual(assembled.returncode, 0, assembled.stdout + assembled.stderr)
+        symbols = labels(image.with_suffix('.sym').read_text())
+        target = 'Oracle_ProjectBGPalette_Startup' if bg else 'Oracle_StartupMasks'
+        self.assertIn(target, symbols)
+        raw = image.read_bytes()
+        self.assertEqual(raw[pc(self.BOOT):pc(self.BOOT) + 4],
+                         b'\x22' + symbols[target].to_bytes(3, 'little'))
+        self.assertEqual('Oracle_StartupMasks' in symbols, masks)
+        self.assertEqual('Oracle_ProjectBGPalette_Reset' in symbols, bg)
+        requests, registers = [], []
+        for x in (0, 0x77, 0xFF):
+            regs = dict(a=0xABCD, x=x, y=0x35, p=0x31, db=0, d=0, sp=0x1FFF)
+            registers.append(regs)
+            requests.append(dict(entry=self.BOOT, reset_ram=True, registers=regs,
+                writes=[write(0x7E0013, b'\x29'), write(0x7E00BC, b'\x5c'),
+                        write(0x7E07ED, b'\x98' + b'\xe7' * 18 + b'\x99'),
+                        write(0x7ECA00, b'\x6d' * 256), write(0x7ECB00, b'\x4e' * 256),
+                        write(0x7ECC00, b'\xa5\x5a\x77')],
+                reads=[read(0x7E0013, 1), read(0x7E00BC, 1), read(0x7E07ED, 20),
+                       read(0x7ECA00, 256), read(0x7ECB00, 256), read(0x7ECC00, 3)],
+                trace_writes=True, max_steps=1000))
+        run = subprocess.run([self.runner, str(image)],
+            input=''.join(json.dumps(row) + '\n' for row in requests),
+            capture_output=True, text=True, timeout=30)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        results = [json.loads(line) for line in run.stdout.splitlines()]
+        self.assertEqual(len(results), len(requests))
+        for result, regs in zip(results, registers):
+            with self.subTest(masks=masks, bg=bg, x=regs['x']):
+                self.assertTrue(result['returned'], result)
+                self.assertFalse(result.get('stub_calls'))
+                self.assertFalse(result.get('mmio_writes'))
+                for key in ('x', 'y', 'db', 'd', 'sp'):
+                    self.assertEqual(result['registers'][key], regs[key], key)
+                self.assertEqual(result['registers']['a'], 0xAB10 if masks else 0xAB80)
+                self.assertEqual(result['registers']['p'] & ~0x82, regs['p'] & ~0x82)
+                expected = [[0x80], [0x10 if masks else 0x5C],
+                    list(b'\x98' + (bytes(18) if masks else b'\xe7' * 18) + b'\x99'),
+                    [0x6D] * 256, [0x4E] * 256,
+                    [0, 255, 0x77] if bg else [0xA5, 0x5A, 0x77]]
+                self.assertEqual([row['bytes'] for row in result['reads']], expected)
+                allowed = set(range(0x7E1E80, 0x7E2000)) | {0x7E0013}
+                if masks:
+                    allowed |= {0x7E00BC} | set(range(0x7E07EE, 0x7E0800))
+                if bg:
+                    allowed |= {0x7ECC00, 0x7ECC01}
+                for observed in result['writes']:
+                    self.assertIn(canonical_ram(observed['address']), allowed)
+
+    def test_masks_on_bg_off_keeps_native_call_bytes_and_actual_masks_body(self):
+        self.assert_startup(masks=True, bg=False)
+        current, assembled = self.assemble(masks=True, bg=False)
+        legacy, old = self.assemble(masks=True, bg=False, old_writer=True)
+        self.assertEqual(old.returncode, 0, old.stdout + old.stderr)
+        self.assertEqual(current.read_bytes(), legacy.read_bytes())
+
+    def test_masks_on_bg_on_has_one_composed_owner_and_actual_masks_body(self):
+        self.assert_startup(masks=True, bg=True)
+
+    def test_masks_off_bg_on_resets_palette_without_a_masks_body(self):
+        self.assert_startup(masks=False, bg=True)
+
+    def test_old_unconditional_masks_writer_conflicts_with_bg_startup_owner(self):
+        _, old = self.assemble(masks=True, bg=True, old_writer=True)
+        self.assertNotEqual(old.returncode, 0, 'Old duplicate startup writers assembled unnoticed')
+        self.assertIn('Startup boot site already has a writer', old.stdout + old.stderr)
+
+
 if __name__ == '__main__':
     unittest.main()

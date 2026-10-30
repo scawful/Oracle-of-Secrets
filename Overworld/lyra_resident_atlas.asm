@@ -3,7 +3,8 @@
 ; Purpose: Physical-page Tile16 words for a resident gameplay-area atlas.
 ; Author: Codex
 ; =========================================================
-;@source: usdasm bank_02.asm $02F435/$02F50A/$02FDF7.
+;@source: usdasm bank_02.asm $02F435/$02F50A/$02FDF7;
+;         bank_1B.asm Overworld_DrawMap16_Anywhere/Overworld_AlterTileHardcore.
 ;@verified: Source ABI only; allocation and native activation remain unbound.
 ;
 ; ABI v1 directory:32 physical pages A0..BF,8 bytes per record:
@@ -79,6 +80,10 @@ Lyra_ResidentAtlasCodeStart:
 %LyraResidentWord(Lyra_ResidentVertical1, $BD8002, $0002, Lyra_ResidentVerticalWord, 0, $000000)
 %LyraResidentWord(Lyra_ResidentVertical2, $BD8004, $0004, Lyra_ResidentVerticalWord, 0, $000000)
 %LyraResidentWord(Lyra_ResidentVertical3, $BD8006, $0006, Lyra_ResidentVerticalWord, 0, $000000)
+%LyraResidentWord(Lyra_ResidentMutable0, $BD8000, $0000, Lyra_ResidentMutableWord, 0, $000000)
+%LyraResidentWord(Lyra_ResidentMutable1, $BD8002, $0002, Lyra_ResidentMutableWord, 0, $000000)
+%LyraResidentWord(Lyra_ResidentMutable2, $BD8004, $0004, Lyra_ResidentMutableWord, 0, $000000)
+%LyraResidentWord(Lyra_ResidentMutable3, $BD8006, $0006, Lyra_ResidentMutableWord, 0, $000000)
 
 ; Internal M16/X16 helpers return C set only for a qualified remap word.
 ; At entry:3,S=quadrant,5,S=native Y,7,S=native X,9,S=native word.
@@ -131,6 +136,19 @@ Lyra_ResidentVerticalWord:
 .native:
     CLC : RTS
 Lyra_ResidentVerticalWord_End:
+
+; Both mutable renderers retain the actual terrain byte offset in $00.
+; Native X is Tile16*8, while native Y indexes the output stripe buffer.
+; Refuse nonterrain offsets instead of wrapping them onto a resident page.
+Lyra_ResidentMutableWord:
+    LDA.b $00 : CMP.w #$2000 : BCS .native
+    LDA $07,S : ORA $03,S : TAY
+    LDA.b $00
+    JSR Lyra_ResidentLookup
+    RTS
+.native:
+    CLC : RTS
+Lyra_ResidentMutableWord_End:
 
 ; A=twice the native buffer origin ($86 for rows, $88 for columns).
 ; Return (($02-2)-A)&$003F without changing any live native scratch.
@@ -265,5 +283,15 @@ pushpc
 %LyraResidentStripeHook($02F525, $BD8004, Lyra_ResidentVertical2)
 %LyraResidentStripeHook($02F52E, $BD8002, Lyra_ResidentVertical1)
 %LyraResidentStripeHook($02F535, $BD8006, Lyra_ResidentVertical3)
+; Mutable draws replace only their four-byte global word loads. Keep the
+; following stripe stores, target coordinates and native update scheduling.
+%LyraResidentStripeHook($1BC9B2, $BD8000, Lyra_ResidentMutable0)
+%LyraResidentStripeHook($1BC9B9, $BD8002, Lyra_ResidentMutable1)
+%LyraResidentStripeHook($1BC9C0, $BD8004, Lyra_ResidentMutable2)
+%LyraResidentStripeHook($1BC9C7, $BD8006, Lyra_ResidentMutable3)
+%LyraResidentStripeHook($1BCA3F, $BD8000, Lyra_ResidentMutable0)
+%LyraResidentStripeHook($1BCA46, $BD8002, Lyra_ResidentMutable1)
+%LyraResidentStripeHook($1BCA4D, $BD8004, Lyra_ResidentMutable2)
+%LyraResidentStripeHook($1BCA54, $BD8006, Lyra_ResidentMutable3)
 pullpc
 endif
