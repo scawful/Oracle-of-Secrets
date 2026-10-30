@@ -25,7 +25,8 @@ import test_lyra_current_source_contract as contract_fixtures
 
 FROZEN = '6e7e5f15d555dffb9f4b3d8807595c9e3f13305f'
 HISTORICAL_GAMEPLAY_SET = 'lyra_current_gameplay_areas_05'
-SELECTED_SET = 'lyra_current_resident_constructor_54'
+SELECTED_SET = 'lyra_current_resident_conditional_55'
+PREVIOUS_RESIDENT_SET = 'lyra_current_resident_constructor_54'
 PREVIOUS_SET = 'lyra_ferry_visual_boundary_53'
 RESIDENT_ADDITIONS = {
     'Overworld/lyra_resident_atlas.asm', 'Overworld/lyra_resident_resources.asm',
@@ -33,6 +34,7 @@ RESIDENT_ADDITIONS = {
     'Scripts/Build/lyra_project_composition.py', 'Scripts/Build/lyra_project_prepare.py',
     'Scripts/Build/lyra_project_tile32.py', 'Scripts/Build/lyra_resident_graphics.py',
     'Scripts/Generate/lz2.py', 'Scripts/Generate/sheet_codec.py', 'Scripts/Generate/sheet_table.py',
+    'Items/all_items.asm', 'Items/ice_rod.asm', 'Overworld/entrances.asm',
 }
 AUTHORITY_FLAGS = ('allocation_granted', 'publication_authorized',
                    'producer_enforcement_verified', 'ordinary_build_ready', 'runtime_admission')
@@ -126,6 +128,15 @@ class CatalogCallersContractTest(unittest.TestCase):
         retained = b'\n'.join(raw_member(self.ledger_raw.decode(), key) for key in members)
         self.assertEqual(hashlib.sha256(retained).hexdigest(),
                          'da1cf33ca25ba62f063c2bd14151406d96eca9ef022abe94d6c4b49e0cae7a8e')
+
+    def test_previous_resident_declaration_and69_pins_remain_verbatim(self):
+        members = [PREVIOUS_RESIDENT_SET] + [key for key, row in self.ledger['sources'].items()
+                                           if row['source_set'] == PREVIOUS_RESIDENT_SET]
+        self.assertEqual(len(members), 70)
+        # Exact declaration/record bytes at published constructor5539c17d.
+        retained = b'\n'.join(raw_member(self.ledger_raw.decode(), key) for key in members)
+        self.assertEqual(hashlib.sha256(retained).hexdigest(),
+                         '172d2b60a2429b13fa3e15c5a2b5e2b3c620f8c63aedf5b539ae6c646aa27c5e')
 
     def test_historical_gameplay_set_retains_all33_consumer_paths(self):
         self.assertEqual(len(self.historical_records), 33)
@@ -232,8 +243,15 @@ class CatalogCallersContractTest(unittest.TestCase):
 
 
 class SourceSnapshotIntegrityTest(unittest.TestCase):
-    def test_all17_pinned_snapshots_load_without_git_or_network(self):
-        self.assertEqual(len(snapshots.SNAPSHOT_KEYS), 17)
+    def test_original17_manifest_entries_remain_exact(self):
+        manifest = json.loads((ROOT / 'Tests/fixtures/lyra_source_snapshots/manifest.json').read_bytes())
+        original = dict(kind=manifest['kind'], snapshots=manifest['snapshots'][:17])
+        raw = (json.dumps(original, indent=2, sort_keys=True) + '\n').encode()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(),
+                         '44f90940bae6da46e1abb496a4fa13e8c985d29137aa0ec49783d34bc6677d5a')
+
+    def test_all37_pinned_snapshots_load_without_git_or_network(self):
+        self.assertEqual(len(snapshots.SNAPSHOT_KEYS), 37)
         with mock.patch('subprocess.check_output', side_effect=AssertionError('Unexpected Git call')):
             for commit, path in snapshots.SNAPSHOT_KEYS:
                 with self.subTest(commit=commit, path=path):
