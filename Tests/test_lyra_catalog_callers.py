@@ -22,6 +22,10 @@ class CatalogCallersSourceTest(unittest.TestCase):
         cls.zs = (ROOT/ZS).read_text()
         with mock.patch.dict(os.environ, {S.LYRA_CONTEXT_ENV:'0'}):
             cls.disabled = S._load_global_defines(ROOT)
+        # The frozen foundation excludes the separately selected private
+        # ingress patch. An absent external define is intentionally unknown
+        # to the shared scanner, so select its OFF profile explicitly here.
+        cls.disabled['LYRA_PRIVATE_PILOT_INGRESS_ENABLED'] = 0
         cls.current = dict(cls.disabled, LYRA_CURRENT_MODE=1,
             LYRA_NATIVE_A1_ENABLED=0, LYRA_PROJECT_DATA_PRESENT=1)
 
@@ -104,6 +108,28 @@ class CatalogCallersSourceTest(unittest.TestCase):
         for defines in (self.disabled, dict(self.disabled, LYRA_CURRENT_MODE=0,
                 LYRA_PROJECT_DATA_PRESENT=1, LYRA_NATIVE_A1_ENABLED=1)):
             self.assertEqual(statements(self.zs, defines), statements(old, defines))
+
+    def ingress_guard(self):
+        start = self.zs.index('    if defined("LYRA_PRIVATE_PILOT_INGRESS_ENABLED")')
+        return self.zs[start:self.zs.index('\n    .notFF', start)]
+
+    def test_explicit_ingress_selection_keeps_both_real_eight_byte_paths(self):
+        guard = self.ingress_guard()
+        self.assertEqual(statements(guard, self.current),
+            ['CPX.w #$00FF', 'BNE .notFF', 'JMP.w .noSubscreenOverlay'])
+        enabled = dict(self.current, LYRA_PRIVATE_PILOT_INGRESS_ENABLED=1)
+        self.assertEqual(statements(guard, enabled),
+            ['JML Lyra_PrivatePilotSubGate', 'NOP #4'])
+        # Turning the feature ON must remain visible to the source comparison.
+        self.assertNotEqual(statements(self.zs, enabled), self.active(self.zs))
+
+    def test_unknown_ingress_remains_conservative_in_the_shared_scanner(self):
+        unknown = dict(self.current)
+        del unknown['LYRA_PRIVATE_PILOT_INGRESS_ENABLED']
+        selected = statements(self.ingress_guard(), unknown)
+        self.assertIn('JML Lyra_PrivatePilotSubGate', selected)
+        self.assertIn('CPX.w #$00FF', selected)
+        self.assertIn('JMP.w .noSubscreenOverlay', selected)
 
 
 if __name__ == '__main__':
