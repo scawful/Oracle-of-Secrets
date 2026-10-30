@@ -413,5 +413,187 @@ class CurrentSpritePhaseCpuTest(unittest.TestCase):
                     self.assertTrue(0x7E1F00 <= address < 0x7E2000 or address == 0x7E1E01)
 
 
+class CurrentResidentAtlasCpuTest(unittest.TestCase):
+    """Actual twelve-reader ASM with synthetic, explicitly unallocated tables."""
+    @classmethod
+    def setUpClass(cls):
+        cls.asar = os.environ.get('ASAR_BIN') or shutil.which('asar')
+        cls.runner = os.environ.get('OOS_CPU_RUNNER')
+        if not cls.asar or not cls.runner:
+            raise unittest.SkipTest('Set ASAR_BIN and OOS_CPU_RUNNER for resident reader CPU checks')
+        cls.folder = tempfile.TemporaryDirectory(prefix='lyra-resident-readers-')
+        cls.addClassCleanup(cls.folder.cleanup)
+        cls.folder_path = Path(cls.folder.name)
+        cls.native = Path(__file__).resolve().parents[1]/'Overworld/lyra_resident_atlas.asm'
+        seed = bytearray(0x400000)
+        def put(address, raw):
+            at = L.A.pc(address)
+            seed[at:at+len(raw)] = raw
+        cls.hooks = []
+        for mode, sites, quadrants in (
+                ('Full', (0x02FE1B,0x02FE22,0x02FE2B,0x02FE32), (0,2,1,3)),
+                ('Horizontal', (0x02F456,0x02F45D,0x02F466,0x02F46D), (0,1,2,3)),
+                ('Vertical', (0x02F51E,0x02F525,0x02F52E,0x02F535), (0,2,1,3))):
+            for site, quadrant in zip(sites, quadrants):
+                if mode == 'Full':
+                    raw = bytes([0xB9])+(0x8000+quadrant*2).to_bytes(2,'little')
+                    raw += bytes([0x9F])+(0x7F2000+(quadrant//2)*0x40).to_bytes(3,'little')
+                else:
+                    raw = bytes([0xBF])+(0xBD8000+quadrant*2).to_bytes(3,'little')
+                put(site, raw)
+                cls.hooks.append((site, mode, quadrant, len(raw)))
+        cls.native_words = {tile: tuple(0x6000+tile*4+q for q in range(4))
+                            for tile in range(129)}
+        put(0xBD8000, b''.join(word.to_bytes(2,'little')
+            for words in cls.native_words.values() for word in words))
+        # Test-only LoROM origins never declare candidate allocation authority.
+        parent, sizes = bytearray(range(192)), bytearray(192)
+        for base, size, members in ((0xA2,2,(0xA2,0xA3)), (0xA4,3,(0xA4,0xAC)),
+                                    (0xB0,1,(0xB0,0xB1,0xB8,0xB9))):
+            for page in members:
+                parent[page], sizes[page] = base, size
+        parent[0xA6], sizes[0xA6] = 0x9F, 1
+        sizes[0xA7] = 4
+        parent[0xB7], sizes[0xB7] = 0xBF, 1
+        put(0x5BAC00, parent+b'\0')
+        put(0x5BAD00, sizes+b'\0')
+        cls.words = {}
+        for ordinal, page in enumerate(range(0xA0,0xC0)):
+            index, words = 0x5B8200+ordinal*0x100, 0x5BA200+ordinal*0x40
+            # Two-level v1 ABI encoded independently of the product planner.
+            table = bytearray(192)
+            table[0], table[1], table[3] = 1, 2, 129
+            table[128+1], table[128+3], table[160+1] = 1, 3, 2
+            put(index, table)
+            cls.words[page] = {
+                1: (0,0x8000,0x2100+ordinal,0x4100+ordinal),
+                33: tuple(0x1100+ordinal*16+q for q in range(4))}
+            put(words, bytes(8)+b''.join(word.to_bytes(2,'little')
+                for tile in (1,33) for word in cls.words[page][tile]))
+            area = 7 if page in (0xB0,0xB1,0xB8,0xB9) else 0
+            put(0x5B8000+ordinal*8, index.to_bytes(3,'little')
+                +words.to_bytes(3,'little')+bytes([area,2]))
+        cls.seed = bytes(seed)
+        cls.constants = '\n'.join((
+            '!LyraNativeCurrentBranch = 1', '!LYRA_CURRENT_RESIDENT_ENABLED = 1',
+            '!LYRA_CURRENT_RESIDENT_ABI_VERSION = 1',
+            '!LYRA_CURRENT_RESIDENT_CODE_BASE = $5CC000',
+            '!LYRA_CURRENT_RESIDENT_CODE_END = $5CC600',
+            '!LYRA_CURRENT_RESIDENT_DIRECTORY = $5B8000',
+            '!LYRA_CURRENT_RESIDENT_TILE16_COUNT = 128',
+            '!LYRA_CURRENT_TABLE_parent = $5BAC00', '!LYRA_CURRENT_TABLE_area_size = $5BAD00'))
+        cls.image, result = cls.assemble('enabled', cls.constants)
+        if result.returncode:
+            raise AssertionError(result.stdout+result.stderr)
+        cls.labels = L._labels(cls.image.with_suffix('.sym').read_bytes())
+
+    @classmethod
+    def assemble(cls, name, constants):
+        image, driver = cls.folder_path/(name+'.sfc'), cls.folder_path/(name+'.asm')
+        image.write_bytes(cls.seed)
+        driver.write_text('lorom\n'+constants+'\nincsrc "'+str(cls.native)+'"\n')
+        result = subprocess.run([cls.asar,'--no-title-check','--fix-checksum=off',
+            '--symbols=wla',str(driver),str(image)],capture_output=True,text=True,timeout=20)
+        return image, result
+
+    def test_disabled_unbound_wrong_abi_and_invalid_bounds_gates(self):
+        image, result = self.assemble('disabled', '')
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertEqual(image.read_bytes(),self.seed)
+        for name, constants in (
+                ('unbound','!LyraNativeCurrentBranch = 1\n!LYRA_CURRENT_RESIDENT_ENABLED = 1'),
+                ('wrong-abi',self.constants.replace('ABI_VERSION = 1','ABI_VERSION = 2')),
+                ('code-bound',self.constants.replace('CODE_END = $5CC600','CODE_END = $5CC601')),
+                ('directory-bound',self.constants.replace('DIRECTORY = $5B8000','DIRECTORY = $5BFF80'))):
+            with self.subTest(gate=name):
+                _, result = self.assemble(name, constants)
+                self.assertNotEqual(result.returncode,0,'Unbound resident source assembled')
+
+    def test_twelve_emitted_hooks_page_words_fallbacks_and_caller_abi(self):
+        compiled = self.image.read_bytes()
+        for site, mode, q, length in self.hooks:
+            expected = bytes([0x22])+self.labels[f'Lyra_Resident{mode}{q}'].to_bytes(3,'little')
+            self.assertEqual(compiled[L.A.pc(site):L.A.pc(site)+length],expected+b'\xea'*(length-4))
+        plans = []
+        def add(mode, base, raw, q, tile=1, page=None, overlay=False, bank=0x7E):
+            expected = self.native_words[tile][q] if page is None else self.words[page][tile][q]
+            plans.append((mode,base,raw,q,tile,expected,overlay,bank))
+        for base, pages in ((0xA0,(0xA0,)*4), (0xA2,(0xA2,0xA3)*2),
+                            (0xA4,(0xA4,0xA4,0xAC,0xAC)), (0xB0,(0xB0,0xB1,0xB8,0xB9))):
+            for physical, page in enumerate(pages):
+                raw = (physical&1)*0x40+(physical>>1)*0x1000
+                for mode in ('Full','Horizontal','Vertical'):
+                    for q in range(4):
+                        add(mode,base,raw,q,1 if (q+physical)%2 == 0 else 33,page)
+        for mode in ('Full','Horizontal','Vertical'):
+            for q, (base, raw, tile) in enumerate(((0x9F,0,1),(0xC0,0,33),
+                    (0xA6,0x40,1),(0xA7,0,1),(0xB7,0x40,1),
+                    (0xB0,0,128),(0xB0,0,2),(0xB0,0,3),
+                    (0xB0,0,65),(0xB0,0,97))):
+                add(mode,base,raw,q%4,tile)
+            add(mode,0xBF,0x1040,3,33,0xBF)
+        add('Full',0xB0,0,0,overlay=True)
+        add('Full',0xB0,0,1,bank=0x7F)
+        add('Full',0xB0,0x2000,2,page=0xB0)
+        for mode in ('Horizontal','Vertical'):
+            for raw in (0x2000,0xFFC0):
+                add(mode,0xB0,raw,3)
+        requests, contexts = [], []
+        live = (0,2,4,6,0x0C,0x0E,0x84,0x86,0x88,0x8A,0x410,0x416,0x700)
+        for ordinal, plan in enumerate(plans):
+            mode,base,raw,q,tile,expected,overlay,bank = plan
+            scroll = 0 if ordinal%2 == 0 else 6
+            state = {0:0xA55A,2:0x32,4:0x4000 if overlay else 0x2000,6:bank,
+                     0x0C:0xBCDE,0x0E:0xDCBA,0x86:0x13,0x88:0x16,
+                     0x8A:base,0x410:0xCAFE,0x416:scroll,0x700:0x7E}
+            delta = (state[2]-2-2*state[0x88 if mode == 'Horizontal' else 0x86])&63
+            offset = ((0x3D0,0x410)[bool(scroll&2)] if mode == 'Horizontal' else
+                      (0x410,0xF410)[bool(scroll&4)] if mode == 'Vertical' else 0x410)
+            state[0x84] = (raw+offset-(delta<<6 if mode == 'Horizontal' else delta))&65535
+            regs = dict(a=0xABCD,x=0x240 if mode == 'Full' else tile*8,
+                        y=tile*8 if mode == 'Full' else 0x4567,
+                        p=(0x09,0x44)[ordinal%2],db=0xBD if mode == 'Full' else (8,0x7E)[ordinal%2],
+                        d=(0,0x120)[ordinal%2],sp=0x1FFF)
+            destination = 0x7F2000+(q//2)*0x40+regs['x'] if mode == 'Full' else None
+            requests.append(dict(entry=self.labels[f'Lyra_Resident{mode}{q}'],reset_ram=True,
+                registers=regs,writes=[dict(address=0x7E0000+at,bytes=list(value.to_bytes(2,'little')))
+                                      for at,value in state.items()],
+                reads=[dict(address=0x7E0000+at,length=2) for at in live]
+                      +([dict(address=destination,length=2)] if destination is not None else []),
+                trace_writes=True,max_steps=1000))
+            contexts.append((plan,regs,state,destination))
+        result = subprocess.run([self.runner,str(self.image)],
+            input=''.join(json.dumps(row)+'\n' for row in requests),capture_output=True,text=True,timeout=30)
+        self.assertEqual(result.returncode,0,result.stderr)
+        output = result.stdout.splitlines()
+        self.assertEqual(len(output),len(plans))
+        for context, line in zip(contexts,output):
+            plan,regs,state,destination = context
+            row = json.loads(line)
+            with self.subTest(reader=plan[0],base=plan[1],raw=plan[2],quadrant=plan[3],tile=plan[4]):
+                self.assertTrue(row['returned'],row)
+                self.assertFalse(row.get('stub_calls'))
+                self.assertFalse(row.get('mmio_writes'))
+                cpu, expected = row['registers'], plan[5]
+                self.assertEqual(cpu['a'],expected)
+                for field in ('x','y','sp','d','db'):
+                    self.assertEqual(cpu[field],regs[field],field)
+                nz = (2 if expected == 0 else 0)|(0x80 if expected&0x8000 else 0)
+                self.assertEqual(cpu['p'],(regs['p']&~0x82)|nz)
+                for at, observed in zip(live,row['reads']):
+                    self.assertEqual(observed['bytes'],list(state[at].to_bytes(2,'little')),hex(at))
+                if destination is not None:
+                    self.assertEqual(row['reads'][-1]['bytes'],list(expected.to_bytes(2,'little')))
+                allowed = set(range(0x7E1F80,0x7E2000))|set(range(0x7E0000,0x7E0004))
+                if destination is not None:
+                    allowed.update((destination,destination+1))
+                for write in row['writes']:
+                    at = write['address']
+                    if at>>16&127 < 64 and at&65535 < 8192:
+                        at = 0x7E0000|(at&65535)
+                    self.assertIn(at,allowed)
+        self.assertEqual(self.image.read_bytes(),compiled)
+
+
 if __name__ == '__main__':
     unittest.main()

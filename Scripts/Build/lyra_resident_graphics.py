@@ -20,6 +20,11 @@ import sheet_codec
 import sheet_table
 
 KIND = 'lyra.resident_graphics_source_plan.v1'
+NATIVE_KIND = 'lyra.resident_atlas_native_abi.v1'
+NATIVE_ABI_VERSION = 1
+NATIVE_DIRECTORY_STRIDE = 8
+NATIVE_BLOCK_SHIFT = 5
+NATIVE_BLOCK_DIRECTORY_BYTES = 128
 FIRST, END = 0xA0, 0xC0
 STATIC_SLOTS = tuple(range(448)) + tuple(range(480, 512))
 ANIMATED_SLOTS = tuple(range(448, 480))
@@ -387,3 +392,327 @@ def plan_resident_graphics(source, document, inspection, *, terrain_sha256, prov
         decoded_sheets=[sheets[sheet] for sheet in sorted(sheets)])
     plan['plan_sha256'] = _sha(_json_bytes(plan))
     return plan
+
+
+def _native_blob(raw, label, role):
+    return dict(label=label, role=role, **_payload(raw))
+
+
+def _verified_payload(value):
+    _require(type(value) is dict and type(value.get('payload_hex')) is str,
+             'NATIVE_PAYLOAD_INVALID')
+    try:
+        raw = bytes.fromhex(value['payload_hex'])
+    except ValueError as error:
+        raise ValueError('RESIDENT_GRAPHICS_NATIVE_PAYLOAD_INVALID') from error
+    _require(type(value.get('byte_count')) is int and len(raw) == value['byte_count']
+             and value.get('sha256') == _sha(raw), 'NATIVE_PAYLOAD_MISMATCH')
+    return raw
+
+
+def plan_native_resident_abi(resident_plan, *, tile16_count):
+    """Lower authenticated terrain data to relocatable, unselected native ABI.
+
+    Each physical page has a 128-byte block directory followed by 32-byte
+    leaves. A nonzero block/row index is one-based; row zero means that the
+    terrain census did not qualify this Tile16. It does not prove resource
+    closure. Target word zero is valid. Areas share resources, never page keys.
+    """
+    _require(type(resident_plan) is dict and resident_plan.get('kind') == KIND
+             and resident_plan.get('terrain_plan_ready') is True,
+             'NATIVE_TERRAIN_PLAN_REQUIRED')
+    _require(type(tile16_count) is int and 0 < tile16_count <= 4096,
+             'NATIVE_TILE16_COUNT_INVALID')
+    supplied = resident_plan.get('plan_sha256')
+    _require(_digest(supplied) and supplied == _sha(_json_bytes(
+        {key: value for key, value in resident_plan.items() if key != 'plan_sha256'})),
+        'NATIVE_SOURCE_PLAN_MISMATCH')
+    _require(all(resident_plan.get(key) is False for key in (
+        'full_residency_ready', 'appearance_coherent', 'allocation_granted',
+        'publication_authorized', 'ordinary_build_ready', 'runtime_admission',
+        'compiled_consumers_verified')), 'NATIVE_SOURCE_AUTHORITY_INVALID')
+    source_areas = resident_plan.get('areas')
+    _require(type(source_areas) is list and 0 < len(source_areas) <= 32,
+             'NATIVE_AREAS_INVALID')
+    try:
+        layout = validated_gameplay_areas(tuple(dict(parent_map_id=area['parent_map_id'],
+            size=area['size'], maps=area['maps']) for area in source_areas))
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError('RESIDENT_GRAPHICS_NATIVE_AREAS_INVALID') from error
+    _require({page for area in layout for page in area['maps']} == set(range(FIRST, END)),
+             'NATIVE_PAGES_INCOMPLETE')
+    pages, areas, blobs, unique = [], [], [], {}
+
+    def blob(raw, label, role):
+        # Role separation keeps a resource from aliasing executable lookup data.
+        key = (role, raw)
+        if key not in unique:
+            unique[key] = label
+            blobs.append(_native_blob(raw, label, role))
+        return unique[key]
+
+    for area_index, area in enumerate(sorted(source_areas, key=lambda row: row['parent_map_id'])):
+        parent = area['parent_map_id']
+        _require(area.get('terrain_plan_ready') is True and area.get('refusals') == []
+                 and type(area.get('remaps')) is list, 'NATIVE_AREA_UNQUALIFIED')
+        prefix = f'LyraResidentArea_{parent:02X}'
+        static = _verified_payload(area.get('static_chr'))
+        palette = _verified_payload(area.get('palette'))
+        animation = area.get('animation')
+        _require(type(animation) is dict and animation.get('frame_count') == 3
+                 and type(animation.get('frame_payloads')) is list
+                 and len(animation['frame_payloads']) == 3, 'NATIVE_ANIMATION_INVALID')
+        frames = [_verified_payload(value) for value in animation['frame_payloads']]
+        slots = area.get('static_slots')
+        animated_slots = animation.get('slots')
+        _require(type(slots) is list and slots == list(STATIC_SLOTS[:len(slots)])
+                 and len(slots) <= len(STATIC_SLOTS) and len(static) == len(slots) * 32
+                 and type(animated_slots) is list
+                 and animated_slots == list(ANIMATED_SLOTS[:len(animated_slots)])
+                 and len(animated_slots) <= 32
+                 and all(len(raw) == len(animated_slots) * 32 for raw in frames)
+                 and len(palette) == 256, 'NATIVE_RESOURCE_EXTENT_INVALID')
+        palette_words = area['palette'].get('words')
+        _require(type(palette_words) is list and len(palette_words) == 128
+                 and all(type(word) is int and 0 <= word <= 0x7FFF for word in palette_words)
+                 and palette == struct.pack('<128H', *palette_words),
+                 'NATIVE_PALETTE_INVALID')
+        static_label = blob(static, prefix + '_Static', 'static_chr') if static else None
+        palette_label = blob(palette, prefix + '_Palette', 'palette')
+        frame_labels = [blob(raw, prefix + f'_Frame{index}', 'animation') if raw else None
+                        for index, raw in enumerate(frames)]
+        runs = []
+        for index, slot in enumerate(slots):
+            # Native main/aux conversion uses this existing non-linear buffer.
+            sheet, tile_in_sheet = divmod(slot, 64)
+            native_bases = (0x7F2000, 0x7F2800, 0x7F3000, 0x7F0000,
+                            0x7F0800, 0x7F1000, 0x7F1800, 0x7F3800)
+            record = dict(source_offset=index * 32, byte_count=32,
+                          vram_word_address=0x2000 + slot * 16,
+                          wram_address=native_bases[sheet] + tile_in_sheet * 32,
+                          native_sheet=sheet)
+            previous = runs[-1] if runs else None
+            if previous is not None and previous['native_sheet'] == sheet and all(
+                    previous[key] + previous['byte_count'] // divisor == record[key]
+                    for key, divisor in (('source_offset', 1), ('vram_word_address', 2),
+                                         ('wram_address', 1))):
+                previous['byte_count'] += 32
+            else:
+                runs.append(record)
+        areas.append(dict(area_index=area_index, parent_map_id=parent,
+            maps=list(area['maps']), static_label=static_label, static_runs=runs,
+            palette_label=palette_label, palette_byte_count=256,
+            palette_consumer='ProjectBGPalette native reference/effective/tint lifecycle',
+            animation_labels=frame_labels, animation_byte_count=len(frames[0]),
+            animation_wram=[0x7EA680, 0x7EAA80, 0x7EAE80],
+            animation_vram_word_address=0x3C00, native_animation_upload_byte_count=0x400))
+        page_rows = {page: {} for page in area['maps']}
+        for remap in area['remaps']:
+            _require(type(remap) is dict and set(remap) == {
+                'map_id', 'tile16_id', 'quadrant', 'source_word', 'target_word'},
+                'NATIVE_REMAP_INVALID')
+            page, tile, quadrant = (remap[name] for name in ('map_id', 'tile16_id', 'quadrant'))
+            _require(type(page) is int and page in page_rows
+                     and type(tile) is int and 0 <= tile < tile16_count
+                     and type(quadrant) is int and 0 <= quadrant < 4
+                     and all(type(remap[name]) is int and 0 <= remap[name] <= 0xFFFF
+                             for name in ('source_word', 'target_word')), 'NATIVE_REMAP_INVALID')
+            quadrants = page_rows[page].setdefault(tile, {})
+            _require(quadrant not in quadrants, 'NATIVE_REMAP_DUPLICATE')
+            quadrants[quadrant] = remap['target_word']
+        for page, rows in sorted(page_rows.items()):
+            _require(0 < len(rows) and all(set(values) == set(range(4))
+                     for values in rows.values()), 'NATIVE_ROWS_OR_QUADRANTS_INVALID')
+            _require(len(rows) <= 255, 'NATIVE_ROW_CAPACITY_EXCEEDED')
+            directory, leaves, words = bytearray(128), bytearray(), bytearray(8)
+            leaf_rows = {}
+            for row_index, (tile, quadrants) in enumerate(sorted(rows.items()), 1):
+                block, offset = divmod(tile, 32)
+                leaf_rows.setdefault(block, bytearray(32))[offset] = row_index
+                words.extend(struct.pack('<4H', *(quadrants[q] for q in range(4))))
+            for block_index, (block, raw) in enumerate(sorted(leaf_rows.items()), 1):
+                directory[block] = block_index
+                leaves.extend(raw)
+            index = bytes(directory + leaves)
+            index_label = blob(index, f'LyraResidentPageIndex_{page:02X}', 'page_index')
+            words_label = blob(bytes(words), f'LyraResidentPageWords_{page:02X}', 'page_words')
+            pages.append(dict(map_id=page, area_index=area_index, row_count=len(rows),
+                block_count=len(leaf_rows), index_label=index_label, words_label=words_label,
+                index_alias=f'LyraResidentPageIndex_{page:02X}',
+                words_alias=f'LyraResidentPageWords_{page:02X}', tile16_ids=sorted(rows)))
+    pages.sort(key=lambda row: row['map_id'])
+    counts = {role: sum(row['byte_count'] for row in blobs if row['role'] == role)
+              for role in ('page_index', 'page_words', 'static_chr', 'animation', 'palette')}
+    counts['page_directory'] = (END - FIRST) * NATIVE_DIRECTORY_STRIDE
+    result = dict(kind=NATIVE_KIND, abi_version=NATIVE_ABI_VERSION,
+        source_plan_sha256=supplied, tile16_count=tile16_count,
+        directory_label='LyraResidentPageDirectory', directory_stride=NATIVE_DIRECTORY_STRIDE,
+        block_shift=NATIVE_BLOCK_SHIFT, block_directory_bytes=NATIVE_BLOCK_DIRECTORY_BYTES,
+        first_map=FIRST, end_map=END, row_limit=255, pages=pages, areas=areas, blobs=blobs,
+        byte_counts=counts, unaligned_byte_count=sum(counts.values()),
+        consumer_status=dict(page_word_lookup='source_abi_only',
+            main_chr_staging_implemented=False, palette_lifecycle_implemented=False,
+            animation_lifecycle_implemented=False, resource_closure_verified=False),
+        unknowns=copy.deepcopy(resident_plan['unknowns']),
+        missing_row_semantics='unqualified native fallback; resource closure remains unknown',
+        selected=False, allocation_granted=False, publication_authorized=False,
+        ordinary_build_ready=False, runtime_admission=False, compiled_consumers_verified=False)
+    result['abi_sha256'] = _sha(_json_bytes(result))
+    return result
+
+
+def validate_native_resident_abi(native_plan):
+    """Check independently consumable lookup bytes and their semantic page rows."""
+    _require(type(native_plan) is dict and native_plan.get('kind') == NATIVE_KIND
+             and native_plan.get('abi_version') == NATIVE_ABI_VERSION
+             and native_plan.get('abi_sha256') == _sha(_json_bytes({
+                 key: value for key, value in native_plan.items() if key != 'abi_sha256'})),
+             'NATIVE_ABI_MISMATCH')
+    _require(native_plan.get('directory_stride') == 8
+             and native_plan.get('block_shift') == 5
+             and native_plan.get('block_directory_bytes') == 128
+             and native_plan.get('directory_label') == 'LyraResidentPageDirectory'
+             and native_plan.get('first_map') == FIRST and native_plan.get('end_map') == END
+             and type(native_plan.get('tile16_count')) is int
+             and 0 < native_plan['tile16_count'] <= 4096
+             and all(native_plan.get(key) is False for key in (
+                 'selected', 'allocation_granted', 'publication_authorized',
+                 'ordinary_build_ready', 'runtime_admission', 'compiled_consumers_verified'))
+             and native_plan.get('consumer_status') == dict(page_word_lookup='source_abi_only',
+                 main_chr_staging_implemented=False, palette_lifecycle_implemented=False,
+                 animation_lifecycle_implemented=False, resource_closure_verified=False),
+             'NATIVE_ABI_CONTRACT_INVALID')
+    blobs = native_plan.get('blobs')
+    _require(type(blobs) is list and all(type(row) is dict for row in blobs),
+             'NATIVE_BLOBS_INVALID')
+    by_label = {}
+    for row in blobs:
+        label = row.get('label')
+        _require(type(label) is str and re.fullmatch(r'LyraResident[A-Za-z0-9_]+', label)
+                 and label not in by_label and row.get('role') in (
+                     'page_index', 'page_words', 'static_chr', 'animation', 'palette'),
+                 'NATIVE_BLOBS_INVALID')
+        by_label[label] = _verified_payload(row)
+        _require(0 < len(by_label[label]) <= 0x8000, 'NATIVE_BLOB_BANK_CAPACITY')
+    pages = native_plan.get('pages')
+    areas = native_plan.get('areas')
+    _require(type(pages) is list and [row.get('map_id') for row in pages] == list(range(FIRST, END))
+             and type(areas) is list and 0 < len(areas) <= 32,
+             'NATIVE_PAGES_INCOMPLETE')
+    by_role = {row['label']: row['role'] for row in blobs}
+    for area_index, area in enumerate(areas):
+        _require(area.get('area_index') == area_index
+                 and type(area.get('maps')) is list and area['maps']
+                 and area.get('parent_map_id') == area['maps'][0]
+                 and by_role.get(area.get('palette_label')) == 'palette'
+                 and len(by_label[area['palette_label']]) == 256
+                 and area.get('palette_byte_count') == 256
+                 and (area.get('static_label') is None or
+                      by_role.get(area['static_label']) == 'static_chr')
+                 and type(area.get('animation_labels')) is list
+                 and len(area['animation_labels']) == 3
+                 and type(area.get('animation_byte_count')) is int
+                 and 0 <= area['animation_byte_count'] <= 1024
+                 and all((label is None and area['animation_byte_count'] == 0) or
+                         (by_role.get(label) == 'animation'
+                          and len(by_label[label]) == area['animation_byte_count'])
+                         for label in area['animation_labels']), 'NATIVE_AREA_EXTENT_INVALID')
+    for page in pages:
+        index, words = (by_label.get(page.get(key)) for key in ('index_label', 'words_label'))
+        count, blocks, area = (page.get(key) for key in ('row_count', 'block_count', 'area_index'))
+        _require(type(count) is int and 0 < count <= 255
+                 and type(blocks) is int and 0 < blocks <= 128
+                 and type(area) is int and 0 <= area < len(areas)
+                 and page['map_id'] in areas[area]['maps']
+                 and index is not None and len(index) == 128 + blocks * 32
+                 and words is not None and len(words) == (count + 1) * 8
+                 and words[:8] == bytes(8), 'NATIVE_PAGE_EXTENT_INVALID')
+        _require(sorted(value for value in index[:128] if value) == list(range(1, blocks + 1)),
+                 'NATIVE_BLOCK_INDEX_INVALID')
+        observed = {}
+        for tile in range(4096):
+            block = index[tile >> 5]
+            row = index[128 + (block - 1) * 32 + (tile & 31)] if block else 0
+            if row:
+                _require(tile < native_plan['tile16_count'] and row <= count
+                         and row not in observed, 'NATIVE_ROW_INDEX_INVALID')
+                observed[row] = tile
+        _require(sorted(observed) == list(range(1, count + 1))
+                 and [observed[row] for row in range(1, count + 1)] == page.get('tile16_ids'),
+                 'NATIVE_ROW_INDEX_INVALID')
+    expected_counts = {role: sum(row['byte_count'] for row in blobs if row['role'] == role)
+                       for role in ('page_index', 'page_words', 'static_chr', 'animation', 'palette')}
+    expected_counts['page_directory'] = 256
+    _require(native_plan.get('byte_counts') == expected_counts
+             and native_plan.get('unaligned_byte_count') == sum(expected_counts.values()),
+             'NATIVE_BYTE_COUNT_INVALID')
+    return by_label
+
+
+def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
+                             binary_path='binaries/resident-atlas.bin'):
+    """Emit bytes/source for an explicit caller-owned ROM interval, without I/O.
+
+    This mechanically places each blob inside one LoROM bank. It accepts no
+    default address and makes no claim that the interval or runtime is granted.
+    The owning publisher must authenticate and rederive the complete plan.
+    """
+    by_label = validate_native_resident_abi(native_plan)
+    _require(type(data_pc) is int and type(capacity) is int
+             and 0 <= data_pc < data_pc + capacity <= 0x400000
+             and type(preimage) is bytes and len(preimage) == capacity,
+             'NATIVE_ORIGIN_PREIMAGE_REQUIRED')
+    _require(type(binary_path) is str and re.fullmatch(r'binaries/[A-Za-z0-9_-]+\.bin', binary_path),
+             'NATIVE_BINARY_PATH_INVALID')
+    cursor, binary, placements = data_pc, bytearray(), []
+
+    def snes(pc):
+        return 0x800000 | ((pc // 0x8000) << 16) | 0x8000 | (pc % 0x8000)
+
+    def place(label, raw, role):
+        nonlocal cursor
+        if cursor % 0x8000 + len(raw) > 0x8000:
+            cursor = (cursor // 0x8000 + 1) * 0x8000
+        _require(cursor + len(raw) <= data_pc + capacity, 'NATIVE_ALLOCATION_CAPACITY')
+        record = dict(label=label, role=role, pc=[cursor, cursor + len(raw)],
+            snes=snes(cursor), byte_count=len(raw), sha256=_sha(raw),
+            binary_offset=len(binary), preimage_sha256=_sha(
+                preimage[cursor-data_pc:cursor-data_pc+len(raw)]))
+        placements.append(record)
+        binary.extend(raw)
+        cursor += len(raw)
+        return record
+
+    directory = place(native_plan['directory_label'], bytes(256), 'page_directory')
+    for blob in native_plan['blobs']:
+        place(blob['label'], by_label[blob['label']], blob['role'])
+    addresses = {row['label']: row['snes'] for row in placements}
+    directory_raw = b''.join(addresses[page['index_label']].to_bytes(3, 'little')
+        + addresses[page['words_label']].to_bytes(3, 'little')
+        + bytes((page['area_index'], page['row_count'])) for page in native_plan['pages'])
+    binary[:256] = directory_raw
+    directory['sha256'] = _sha(directory_raw)
+    lines = ['; Generated resident ABI v1; unselected terrain census only.', 'pushpc']
+    for row in placements:
+        start, size = row['binary_offset'], row['byte_count']
+        lines += [f'org ${row["snes"]:06X}', row['label'] + ':',
+                  f'incbin "{binary_path}":${start:X}..${start+size:X}',
+                  f'{row["label"]}_End:',
+                  f'assert {row["label"]}>>16 == ({row["label"]}_End-1)>>16']
+    for page in native_plan['pages']:
+        for alias, label in ((page['index_alias'], page['index_label']),
+                             (page['words_alias'], page['words_label'])):
+            if alias != label:
+                lines.append(f'{alias} = {label}')
+    lines += ['pullpc', '']
+    constants = (f'!LYRA_CURRENT_RESIDENT_ABI_VERSION = {NATIVE_ABI_VERSION}\n'
+        + f'!LYRA_CURRENT_RESIDENT_TILE16_COUNT = {native_plan["tile16_count"]}\n'
+        + f'!LYRA_CURRENT_RESIDENT_DIRECTORY = ${directory["snes"]:06X}\n')
+    return dict(kind='lyra.resident_atlas_native_emission.v1',
+        abi_sha256=native_plan['abi_sha256'], data_pc=[data_pc, data_pc + capacity],
+        preimage_sha256=_sha(preimage), used_pc_end=cursor,
+        used_extent_bytes=cursor-data_pc, bank_padding_bytes=cursor-data_pc-len(binary),
+        binary_path=binary_path, payload_hex=bytes(binary).hex(), payload_sha256=_sha(binary),
+        placements=placements, runtime_data_asm='\n'.join(lines), constants_asm=constants,
+        selected=False, allocation_granted=False, publication_authorized=False,
+        ordinary_build_ready=False, runtime_admission=False)

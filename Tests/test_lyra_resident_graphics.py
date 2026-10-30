@@ -436,6 +436,168 @@ class ResidentTransferLifecycleTest(unittest.TestCase):
         self.assertFalse((output / 'prepare.json').exists())
         self.assertFalse(case.candidate.exists())
 
+    def test_native_row_capacity_preserves_raw_resources_and_completion_marker(self):
+        case = self.case
+        _, request = case.prepare()
+        output = case.root / 'resident-native-capacity-review'
+        # The pure 256-row control below verifies the real capacity boundary.
+        # Inject only that exact refusal into the real transfer/publisher lifecycle.
+        code = 'RESIDENT_GRAPHICS_NATIVE_ROW_CAPACITY_EXCEEDED'
+        with mock.patch.object(R, 'plan_native_resident_abi',
+                               side_effect=ValueError(code)) as constructor:
+            prepared = self.prepare_review(request, output)
+        constructor.assert_called_once()
+        self.assertEqual(json.loads((output / 'prepare.json').read_bytes()), prepared)
+        self.assertIs(prepared['selected'], False)
+        self.assertIs(prepared['ordinary_build_ready'], False)
+        self.assertFalse(case.candidate.exists())
+        self.assertFalse((output / 'resident_native_abi.json').exists())
+        refusal = json.loads((output / 'resident_native_abi_refusal.json').read_bytes())
+        self.assertIs(refusal.get('selected'), False)
+        self.assertIn(code, json.dumps(refusal))
+        for name, digest in prepared['generated_files'].items():
+            self.assertEqual(sha((output / name).read_bytes()), digest, name)
+        resident = prepared['review']['appearance']['resident_graphics']
+        for area in resident['areas']:
+            prefix = output / 'resident' / f"{area['parent_map_id']:02X}"
+            payloads = {'static_chr.bin': area['static_chr'],
+                        'palette.bgr555.bin': area['palette']}
+            payloads.update({f'animation-frame{index}.bin': payload
+                             for index, payload in enumerate(area['animation']['frame_payloads'])})
+            for name, payload in payloads.items():
+                self.assertEqual((prefix / name).read_bytes(), bytes.fromhex(payload['payload_hex']))
+            self.assertEqual(json.loads((prefix / 'remaps.json').read_bytes()), area['remaps'])
+
+
+class ResidentNativeAbiTest(unittest.TestCase):
+    @staticmethod
+    def rehash(value, field):
+        value[field] = sha(json.dumps({key: item for key, item in value.items() if key != field},
+            sort_keys=True, separators=(',', ':'), allow_nan=False).encode())
+
+    @staticmethod
+    def lookup(native, page, tile16, quadrant):
+        """Independent consumer of the public two-level byte layout."""
+        if not 0xA0 <= page < 0xC0 or not 0 <= tile16 < native['tile16_count']:
+            return None
+        row = native['pages'][page - 0xA0]
+        blobs = {value['label']: bytes.fromhex(value['payload_hex']) for value in native['blobs']}
+        index = blobs[row['index_label']]
+        block = index[tile16 // 32]
+        if not block:
+            return None
+        entry = index[128 + (block - 1) * 32 + tile16 % 32]
+        if not 1 <= entry <= row['row_count']:
+            return None
+        return struct.unpack_from('<H', blobs[row['words_label']], entry * 8 + quadrant * 2)[0]
+
+    def test_every_page_and_quadrant_round_trips_with_native_zero_valid(self):
+        fixture = Fixture(tuple(((2 << 10) | 64,) * 4 for _ in range(4096)))
+        fixture.map_tiles[0] = ([31, 32, 4095] * 342)[:1024]
+        fixture.map_tiles[1] = [32] * 1024
+        resident = plan(fixture.inputs())
+        resident['areas'][0]['remaps'][0]['target_word'] = 0
+        self.rehash(resident, 'plan_sha256')
+        native = R.plan_native_resident_abi(resident, tile16_count=4096)
+        R.validate_native_resident_abi(native)
+        for area in resident['areas']:
+            for remap in area['remaps']:
+                self.assertEqual(self.lookup(native, remap['map_id'], remap['tile16_id'],
+                                             remap['quadrant']), remap['target_word'])
+        self.assertEqual(self.lookup(native, 0xA0, 31, 0), 0)
+        for page, tile16 in ((0x9F, 31), (0xC0, 31), (0xA0, 4096), (0xA0, 0),
+                             (0xA1, 31), (0xA0, -1)):
+            self.assertIsNone(self.lookup(native, page, tile16, 0))
+        self.assertEqual([row['map_id'] for row in native['pages']], list(range(0xA0, 0xC0)))
+        self.assertEqual(native['abi_version'], 1)
+        self.assertEqual(native['directory_stride'], 8)
+        self.assertIs(native['consumer_status']['main_chr_staging_implemented'], False)
+        self.assertIs(native['consumer_status']['palette_lifecycle_implemented'], False)
+        self.assertIs(native['consumer_status']['animation_lifecycle_implemented'], False)
+        self.assertIn('mutable_event_tile_closure', native['unknowns'])
+
+    def test_b0_sides_keep_physical_page_keys_and_one_area_resource_owner(self):
+        fixture = Fixture()
+        members = [0xB0, 0xB1, 0xB8, 0xB9]
+        fixture.areas = [row for row in fixture.areas if row['parent_map_id'] not in members]
+        fixture.areas.append(dict(parent_map_id=0xB0, size='large', maps=members))
+        fixture.map_sheets[0xB1 - 0xA0][1] = 2
+        fixture.sheet_tiles[2][0] = STRIPES
+        native = R.plan_native_resident_abi(plan(fixture.inputs()), tile16_count=1)
+        rows = [native['pages'][page - 0xA0] for page in members]
+        self.assertEqual(len({row['area_index'] for row in rows}), 1)
+        self.assertNotEqual(self.lookup(native, 0xB0, 0, 0), self.lookup(native, 0xB1, 0, 0))
+        self.assertEqual(native['areas'][rows[0]['area_index']]['maps'], members)
+        R.validate_native_resident_abi(native)
+
+    def test_identical_lookup_resources_deduplicate_without_losing_page_aliases(self):
+        native = R.plan_native_resident_abi(plan(Fixture().inputs()), tile16_count=1)
+        self.assertEqual(len({page['index_label'] for page in native['pages']}), 1)
+        self.assertEqual(len({page['words_label'] for page in native['pages']}), 1)
+        self.assertEqual(len({page['index_alias'] for page in native['pages']}), 32)
+        self.assertEqual(native['byte_counts']['page_index'], 160)
+        self.assertEqual(native['byte_counts']['page_words'], 16)
+        self.assertEqual(native['byte_counts']['page_directory'], 256)
+        self.assertEqual(native['unaligned_byte_count'], sum(native['byte_counts'].values()))
+
+    def test_more_than_255_distinct_tile16_rows_refuses_before_emission(self):
+        fixture = Fixture(tuple(((2 << 10) | 64,) * 4 for _ in range(256)))
+        fixture.map_tiles[0] = list(range(256)) * 4
+        with self.assertRaisesRegex(ValueError, 'NATIVE_ROW_CAPACITY_EXCEEDED'):
+            R.plan_native_resident_abi(plan(fixture.inputs()), tile16_count=256)
+
+    def test_duplicate_quadrant_or_changed_source_plan_refuses(self):
+        resident = plan(Fixture().inputs())
+        changed = copy.deepcopy(resident)
+        changed['areas'][0]['remaps'][0]['target_word'] ^= 1
+        with self.assertRaisesRegex(ValueError, 'NATIVE_SOURCE_PLAN_MISMATCH'):
+            R.plan_native_resident_abi(changed, tile16_count=1)
+        resident['areas'][0]['remaps'].append(copy.deepcopy(resident['areas'][0]['remaps'][0]))
+        self.rehash(resident, 'plan_sha256')
+        with self.assertRaisesRegex(ValueError, 'NATIVE_REMAP_DUPLICATE'):
+            R.plan_native_resident_abi(resident, tile16_count=1)
+
+    def test_invalid_leaf_and_payload_hash_refuse_independent_validation(self):
+        native = R.plan_native_resident_abi(plan(Fixture().inputs()), tile16_count=1)
+        index = next(blob for blob in native['blobs'] if blob['role'] == 'page_index')
+        raw = bytearray.fromhex(index['payload_hex'])
+        raw[128] = 255
+        index.update(payload_hex=raw.hex(), sha256=sha(raw))
+        self.rehash(native, 'abi_sha256')
+        with self.assertRaisesRegex(ValueError, 'NATIVE_ROW_INDEX_INVALID'):
+            R.validate_native_resident_abi(native)
+        index['sha256'] = '0' * 64
+        self.rehash(native, 'abi_sha256')
+        with self.assertRaisesRegex(ValueError, 'NATIVE_PAYLOAD_MISMATCH'):
+            R.validate_native_resident_abi(native)
+
+    def test_parameterized_emission_binds_every_byte_and_keeps_bank_bounds(self):
+        native = R.plan_native_resident_abi(plan(Fixture().inputs()), tile16_count=1)
+        emission = R.emit_native_resident_abi(native, data_pc=0x7FF0, capacity=0x20000,
+                                             preimage=bytes(0x20000))
+        binary = bytes.fromhex(emission['payload_hex'])
+        self.assertEqual(emission['payload_sha256'], sha(binary))
+        labels = {row['label']: row for row in emission['placements']}
+        directory = labels['LyraResidentPageDirectory']
+        self.assertEqual(directory['pc'][0], 0x8000)
+        for row in emission['placements']:
+            self.assertEqual(row['snes'] >> 16, (row['snes'] + row['byte_count'] - 1) >> 16)
+            raw = binary[row['binary_offset']:row['binary_offset'] + row['byte_count']]
+            self.assertEqual(sha(raw), row['sha256'])
+        for offset, page in enumerate(native['pages']):
+            raw = binary[offset * 8:offset * 8 + 8]
+            self.assertEqual(int.from_bytes(raw[:3], 'little'), labels[page['index_label']]['snes'])
+            self.assertEqual(int.from_bytes(raw[3:6], 'little'), labels[page['words_label']]['snes'])
+            self.assertEqual(tuple(raw[6:]), (page['area_index'], page['row_count']))
+        self.assertNotIn('ENABLED', emission['constants_asm'])
+        self.assertNotIn('BOUND', emission['constants_asm'])
+        self.assertIn('LyraResidentPageIndex_BF = LyraResidentPageIndex_A0', emission['runtime_data_asm'])
+        self.assertIs(emission['allocation_granted'], False)
+        with self.assertRaisesRegex(ValueError, 'NATIVE_ALLOCATION_CAPACITY'):
+            R.emit_native_resident_abi(native, data_pc=0, capacity=255, preimage=bytes(255))
+        with self.assertRaisesRegex(ValueError, 'NATIVE_ORIGIN_PREIMAGE_REQUIRED'):
+            R.emit_native_resident_abi(native, data_pc=0, capacity=256, preimage=bytes(255))
+
 
 if __name__ == '__main__':
     unittest.main()

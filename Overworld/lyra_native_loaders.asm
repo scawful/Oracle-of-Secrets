@@ -373,6 +373,9 @@ Lyra_CurrentNativeCodeEnd:
 assert pc() <= !LYRA_CURRENT_CODE_END, "Current reader code exceeds explicit origin"
 pullpc
 
+; Source-only resident atlas readers have a separate, default-off allocation.
+incsrc "lyra_resident_atlas.asm"
+
 ; Fixed original-engine hook sites keep their original preimage assertions.
 pushpc
 assert read4($02F59D) == $02F94DBF, "Native pointer preimage moved"

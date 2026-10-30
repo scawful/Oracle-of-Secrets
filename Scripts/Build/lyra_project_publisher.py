@@ -530,8 +530,9 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
 
 
 def render_resident_data_outputs(review):
-    """Reconstruct reviewable resource bytes without emitting native source."""
+    """Reconstruct unallocated resources and the unselected native data ABI."""
     from lyra_current_transfer import resident_graphics_plan
+    from lyra_resident_graphics import plan_native_resident_abi
     R.require(type(review) is dict and review.get('kind') == 'lyra.current_resident_graphics_review.v1',
               'RESIDENT_REVIEW_REQUIRED: authenticated saved input required')
     expected = resident_graphics_plan(review['request']['path'], review['project'],
@@ -539,6 +540,18 @@ def render_resident_data_outputs(review):
     R.require(review == expected, 'RESIDENT_REVIEW_STALE: resource data or provenance changed')
     plan = expected['appearance']['resident_graphics']
     files = {'resident_graphics.json': encoded(plan)}
+    if all(area['terrain_plan_ready'] for area in plan['areas']):
+        try:
+            native_abi = plan_native_resident_abi(plan, tile16_count=4096)
+        except ValueError as error:
+            if str(error) != 'RESIDENT_GRAPHICS_NATIVE_ROW_CAPACITY_EXCEEDED':
+                raise
+            files['resident_native_abi_refusal.json'] = encoded(dict(
+                kind='lyra.resident_atlas_native_abi_refusal.v1', selected=False,
+                source_plan_file_sha256=R.sha(encoded(plan)), reason=str(error),
+                allocation_granted=False, ordinary_build_ready=False, runtime_admission=False))
+        else:
+            files['resident_native_abi.json'] = encoded(native_abi)
     for area in plan['areas']:
         if not area['terrain_plan_ready']:
             continue
