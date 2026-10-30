@@ -158,7 +158,20 @@ class CheckpointRegistryTests(unittest.TestCase):
         claim = next(c for c in ledger['claims'] if c['id'] == 'RegionalCheckpointSave')
         self.assertEqual((claim['base'], claim['size'], claim['condition']), (0x7EF3B4, 4, {}))
         selected = {k:v for k,v in ledger['sources'].items() if v['source_set'] == 'regional_checkpoint_runtime_25'}
-        source_evidence({'sources': selected, 'claims': [claim]}, {'regional_checkpoint_runtime_25': root})
+        from lyra_source_snapshots import read_snapshot
+        # Recorded25 pins span these revisions; this is historical evidence,
+        # not a coherent old build or permission for the current runtime.
+        with tempfile.TemporaryDirectory() as directory:
+            historical = Path(directory)
+            for row in selected.values():
+                revision = ('37b8887c4618dbe8495c6bbd4a637bcf0348b05a'
+                            if row['path'] in ('Oracle_main.asm', 'Util/macros.asm')
+                            else '9d38f16a943ff5c26c38dfbb880784b15b3cfc57')
+                target = historical / row['path']
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(read_snapshot(revision, row['path']))
+            source_evidence({'sources': selected, 'claims': [claim]},
+                            {'regional_checkpoint_runtime_25': historical})
         source = (root/'Core/sram.asm').read_text()
         for name, value in (('RegionalCheckpointSchema', 0x7EF3B4), ('RegionalCheckpointEpoch', 0x7EF3B5),
                             ('RegionalCheckpointKey', 0x7EF3B6), ('RegionalCheckpointResumeIntent',0x7EF3B8), ('FreeBlock_Large', 0x7EF3B9)):

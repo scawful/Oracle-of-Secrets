@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 _FIXTURE_ROOT = Path(__file__).resolve().parent / 'fixtures/lyra_source_snapshots'
-_MANIFEST_SHA256 = '44f90940bae6da46e1abb496a4fa13e8c985d29137aa0ec49783d34bc6677d5a'
+_MANIFEST_SHA256 = '02ce8cabb2a1efb3cd07bda943df62b8e955410493ba5216f7ea607f27d4b63c'
 
 
 def _load_pins():

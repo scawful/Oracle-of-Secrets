@@ -112,9 +112,13 @@ class RestoreProtocolTest(unittest.TestCase):
         self.assertEqual([(f['offset'], f['size']) for f in row['fields']],
                          [(0, 256), (256, 256), (512, 1), (513, 1)])
         self.assertFalse(row['source_reservation']['activation'])
+        from lyra_source_snapshots import read_snapshot
+        # Claim23 records historical source. Current protocol checks below and
+        # the selected-source validator independently cover the live code.
         for source in row['provenance']:
             record = ledger['sources'][source]
-            self.assertEqual(hashlib.sha256((ROOT / record['path']).read_bytes()).hexdigest(),
+            historical = read_snapshot('a61ebe858cfc20eef748757a2bcb9ff1dab01d96', record['path'])
+            self.assertEqual(hashlib.sha256(historical).hexdigest(),
                              record['sha256'])
         asm = (ROOT / 'Overworld/project_bg_palette.asm').read_text()
         self.assertNotIn('org $1BEEE2', asm)  # original near/long frame unchanged

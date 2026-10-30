@@ -153,6 +153,186 @@
       "gzip_sha256": "739941ffe46882b2fe521e84cbfd1b55e571c9f52192950719241bbca8f026d4",
       "path": "Items/ice_rod.asm",
       "sha256": "8bcd1f79e44e182728726c49bccd99ff2067d56d63df6552376d1244abd87cd5"
+    },
+    {
+      "byte_count": 11429,
+      "commit": "a61ebe858cfc20eef748757a2bcb9ff1dab01d96",
+      "git_blob": "3b354b057341e823a61fdc4d4de9f6eff99e855c",
+      "gzip_byte_count": 3286,
+      "gzip_sha256": "ced20f7e8205c5e5d9c6feae531449ae8d7c257b8015558ce41538c518981c18",
+      "path": "Oracle_main.asm",
+      "sha256": "38ee63438c3ae2a9766d4a2704fcdf0d9dce08ef6e72d90ff77aa632128406cd"
+    },
+    {
+      "byte_count": 189536,
+      "commit": "a61ebe858cfc20eef748757a2bcb9ff1dab01d96",
+      "git_blob": "6ab189ed92f08997248092a6f2a84d6461ae50da",
+      "gzip_byte_count": 42390,
+      "gzip_sha256": "348834a9e12252cc78ae4e7952c20572a9ae36080a605266e9aa6297d0a346ff",
+      "path": "Overworld/ZSCustomOverworld.asm",
+      "sha256": "2937e6d89cd5cac13b60ee88cc5396e5610881fba85fa30c2745cf7515ea570f"
+    },
+    {
+      "byte_count": 19750,
+      "commit": "a61ebe858cfc20eef748757a2bcb9ff1dab01d96",
+      "git_blob": "4838e6bef4ac42f8d1424af6de0a7cd999277654",
+      "gzip_byte_count": 6373,
+      "gzip_sha256": "e2e2c7b1d49d5b1ab2a4c3c5d3f32d38dd6a4bd52cc7f4f8935ff8c420bde1f3",
+      "path": "Overworld/time_system.asm",
+      "sha256": "47247d22f3d18bd00c35c478df82da0df0060b6f9f0b90e4cc6fc0263cfa42a2"
+    },
+    {
+      "byte_count": 2978,
+      "commit": "a61ebe858cfc20eef748757a2bcb9ff1dab01d96",
+      "git_blob": "01d2bb8cf112aca3ba11510c25f2ab01680cc77e",
+      "gzip_byte_count": 1455,
+      "gzip_sha256": "3aef7dc141dd96955d8011b44f6629bc3b479b033d99e452af57831556cd80b2",
+      "path": "Overworld/goron_checkpoint.asm",
+      "sha256": "d1d0bd3aa90d044bb0b5fdad3044175721d705a69f73239fc7a88023608396c8"
+    },
+    {
+      "byte_count": 36182,
+      "commit": "a61ebe858cfc20eef748757a2bcb9ff1dab01d96",
+      "git_blob": "4cd7a1e78d918c395a39ef7e773fd1c6f5c2e605",
+      "gzip_byte_count": 10780,
+      "gzip_sha256": "0c9ea7045f46c5175d97f2f5a01287c615fdad3a7eda44c31d70f604849e6393",
+      "path": "Masks/mask_routines.asm",
+      "sha256": "7c903a40a70e23ac0fe9de798b2de4da48611c6f8c8fe78d29beed0b39db3900"
+    },
+    {
+      "byte_count": 10391,
+      "commit": "a61ebe858cfc20eef748757a2bcb9ff1dab01d96",
+      "git_blob": "4d366c0c5ac02f32a83fbbf515c1c2e27588b6c6",
+      "gzip_byte_count": 3252,
+      "gzip_sha256": "2a5395c98f2d63e0165a12b199f6b8c82bba3b055970a467aab4dea80ba5c868",
+      "path": "Overworld/project_bg_palette.asm",
+      "sha256": "3f361fc427ef76e6062cc32a44452fbb1090f098cd4af86fc2a9d2bab7161507"
+    },
+    {
+      "byte_count": 16750,
+      "commit": "a61ebe858cfc20eef748757a2bcb9ff1dab01d96",
+      "git_blob": "7c6c9d17436f73b7d482a2d1c5597de73c13dc74",
+      "gzip_byte_count": 6715,
+      "gzip_sha256": "3acafe608c4e8771f1b5eaef0ca41abb8d8d52962ab7aac6e84ff89075615ec1",
+      "path": "Util/macros.asm",
+      "sha256": "e9f0ef67aa7829232ed37fd5caebcbf4a452763099b0c2b43b7171d97479d165"
+    },
+    {
+      "byte_count": 2867,
+      "commit": "a61ebe858cfc20eef748757a2bcb9ff1dab01d96",
+      "git_blob": "0a671174f5654379163754d013922e519a27f60d",
+      "gzip_byte_count": 948,
+      "gzip_sha256": "1f858dd3721ac15a6c90c165c3c861de6b2bfc977e8aa467d047b4ce54a2d7d7",
+      "path": "Config/feature_flags.asm",
+      "sha256": "eebe8dad726ebf69937019204b503b52ca1302e46e2d53ef8b1b18cd8928e50f"
+    },
+    {
+      "byte_count": 37259,
+      "commit": "9d38f16a943ff5c26c38dfbb880784b15b3cfc57",
+      "git_blob": "96d27b4fc6ce0175b87f046f87ed43cfb4b4440e",
+      "gzip_byte_count": 10681,
+      "gzip_sha256": "43f4fbf81e3ef7a5ae7f1213e054d1dae4db39189e025ed9161546442eb1c298",
+      "path": "Core/sram.asm",
+      "sha256": "583cc8dc2237e6da89887e127dc231316ce7e77e21936ac65ddea9d86a14392b"
+    },
+    {
+      "byte_count": 14681,
+      "commit": "9d38f16a943ff5c26c38dfbb880784b15b3cfc57",
+      "git_blob": "42760665a7706f68d2f6e69eb0b040106d869337",
+      "gzip_byte_count": 4574,
+      "gzip_sha256": "7f3633651a6c32a6526af49b16b2a919c79f122ce224d5e31c3a20690f0a5b9b",
+      "path": "Overworld/checkpoint_state.asm",
+      "sha256": "4dc9b76d3629fddacff8243cda1a0af0a0628d341e03820c4fe736eaa899fee2"
+    },
+    {
+      "byte_count": 3227,
+      "commit": "9d38f16a943ff5c26c38dfbb880784b15b3cfc57",
+      "git_blob": "936531cabe8976505cb47289857d20599fff8bf1",
+      "gzip_byte_count": 1546,
+      "gzip_sha256": "2333eb05b737d04801c92bbcb4cf227ca3cff2190bef7159674b0b46529f08c1",
+      "path": "Overworld/goron_checkpoint.asm",
+      "sha256": "bdfca177a07830456240449921d8abe21880380390eec61910fc1d516cd48020"
+    },
+    {
+      "byte_count": 8134,
+      "commit": "9d38f16a943ff5c26c38dfbb880784b15b3cfc57",
+      "git_blob": "8bc0db8fcf8c162baabec312e31b3fb80aa68025",
+      "gzip_byte_count": 3132,
+      "gzip_sha256": "8c76e01217d1a0a5317cb7c6b7702625df367004e1bc00312bdfd28e5820974f",
+      "path": "Overworld/overworld.asm",
+      "sha256": "86e5b64c398b3564b60c44f2fa27680fe4acd4f4dfacacb766f4e59c09053bd6"
+    },
+    {
+      "byte_count": 13006,
+      "commit": "37b8887c4618dbe8495c6bbd4a637bcf0348b05a",
+      "git_blob": "04782b6b8015aaf963e1bc4e5cfe4517520b20df",
+      "gzip_byte_count": 3640,
+      "gzip_sha256": "a7d13dad28bc6b20615e3717ffd73e68562a99c55ad5290e1bb41b4bac474102",
+      "path": "Oracle_main.asm",
+      "sha256": "90d96692ef5b46722232af7347cfa6d8117c27f711463b1578537a81b4557558"
+    },
+    {
+      "byte_count": 17057,
+      "commit": "37b8887c4618dbe8495c6bbd4a637bcf0348b05a",
+      "git_blob": "e595181e9ea137a1f26d6e0b250041bd6ba0c885",
+      "gzip_byte_count": 6841,
+      "gzip_sha256": "4e2cf6048fc8dffef43300bfe9ebdddbfe72655a65d4f409f5e52e63e95f38f3",
+      "path": "Util/macros.asm",
+      "sha256": "874d1051d27bbfd74d7be0df8420383c12809f0852941b1a943513e176ec82ec"
+    },
+    {
+      "byte_count": 3019,
+      "commit": "9d38f16a943ff5c26c38dfbb880784b15b3cfc57",
+      "git_blob": "1c97432916715af99de0f15055ed144ddb624b5e",
+      "gzip_byte_count": 994,
+      "gzip_sha256": "5f6ecad7988d30615916a49e662de420d2a088537fd4b7cf4302d1863c15a7a9",
+      "path": "Config/feature_flags.asm",
+      "sha256": "7171ef452b20cf7779865b3a5b3b9daebc47b68f0e8b78faca93264762a08397"
+    },
+    {
+      "byte_count": 58863,
+      "commit": "9d38f16a943ff5c26c38dfbb880784b15b3cfc57",
+      "git_blob": "4cad3a5bd0ae936be32a3f9c90e101928e4d808f",
+      "gzip_byte_count": 15494,
+      "gzip_sha256": "ace288a6594b1dc3fdd0a152a811119aa941cd3e0847bd3bfeb124b2601a8755",
+      "path": "Scripts/Build/checkpoint_registry.py",
+      "sha256": "8070cdda64bf4cf44947757735303064de7c5c4dde22821ad489f08343de97b3"
+    },
+    {
+      "byte_count": 27200,
+      "commit": "9d38f16a943ff5c26c38dfbb880784b15b3cfc57",
+      "git_blob": "76132a25f6b5687af7ba903de65daf438ce712b0",
+      "gzip_byte_count": 7949,
+      "gzip_sha256": "036a83d6ae6b10fcd14f116e0754d6bdcdc59450742b527e0d1d4cae8b089843",
+      "path": "Scripts/Build/build_rom.sh",
+      "sha256": "ffb148f50f51f7b466f2269361b563dcfbe33488f9d59d63dbab2288c9135056"
+    },
+    {
+      "byte_count": 21377,
+      "commit": "9d38f16a943ff5c26c38dfbb880784b15b3cfc57",
+      "git_blob": "be3f28c8e4b1caaf7a3691da27fd5ee2afd28ebd",
+      "gzip_byte_count": 5625,
+      "gzip_sha256": "288c0de626aa00742f86fdd3ac4eb4d04d8c7d33f25bb5328d59c474cfc7664b",
+      "path": "Scripts/Generate/asm_source.py",
+      "sha256": "77488196ede889da1dfa7229caa17394c3eb1b68c569b1406b48089bc661d6aa"
+    },
+    {
+      "byte_count": 37314,
+      "commit": "9d38f16a943ff5c26c38dfbb880784b15b3cfc57",
+      "git_blob": "1a820c2337f669c052ffcd323bd3392c2da91e9f",
+      "gzip_byte_count": 9609,
+      "gzip_sha256": "71bec31d96d1c10535759bd3725a25312c9665b038616c919e3f13d04f612327",
+      "path": "Tests/test_checkpoint_registry.py",
+      "sha256": "2fee45f9aed08ae311d84585a60c4c9e36b6a1b85e9ed6c59c16a8ccea99eb3a"
+    },
+    {
+      "byte_count": 8580,
+      "commit": "9d38f16a943ff5c26c38dfbb880784b15b3cfc57",
+      "git_blob": "dfb49e78cfab7cf9728e848aa6397941dede982b",
+      "gzip_byte_count": 3037,
+      "gzip_sha256": "81ff6f0684897ebd5047c1a38c687671f005136e73ad63f0634d919470e20ae3",
+      "path": "Tests/routines/regional_checkpoints.py",
+      "sha256": "2a485052827e2cbb466f13611e5e0254282b2ea39f6fcc07128a7152d5048d33"
     }
   ]
 }
