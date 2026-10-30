@@ -31,6 +31,8 @@ STATIC_SLOTS = tuple(range(448)) + tuple(range(480, 512))
 ANIMATED_SLOTS = tuple(range(448, 480))
 CONDITIONAL_KIND = 'lyra.conditional_tile16_demands.v1'
 CONDITIONAL_POLICY_KIND = 'lyra.conditional_tile16_source_policy.v1'
+RESOURCE_KIND = 'lyra.native_resources_source_plan.v1'
+RESOURCE_POLICY_KIND = 'lyra.native_resources_source_policy.v1'
 CONDITIONAL_SOURCE_FILES = (
     'Items/all_items.asm', 'Items/ice_rod.asm', 'Overworld/entrances.asm',
     'Overworld/area_tilesets.asm', 'Overworld/custom_gfx.asm',
@@ -63,6 +65,18 @@ CONDITIONAL_UNCLOSED = (
     'overlay_and_shared_bg_resources', 'active_obj_follower_ancilla_resources',
     'external_scroll_coexistence', 'pyramid_029E6A',
 )
+RESOURCE_SOURCE_FILES = CONDITIONAL_SOURCE_FILES + (
+    'Overworld/lyra_native_loaders.asm', 'Overworld/ZSCustomOverworld.asm',
+    'Items/bombchu.asm', 'Masks/wolf_mask.asm', 'Masks/mask_binding.asm',
+    'Items/bombchu_pickup.asm', 'Items/sword_collect.asm',
+)
+# Exact saved-source predicates. The lookup includes the selected ZS removal
+# of the vanilla special-map cutoff, not an assumed vanilla-only consumer.
+RESOURCE_NATIVE_PREIMAGES = {
+    0x1BC89C: 'cc0d1202ffffb40d',
+    0x1BC8A4: '8604ad9c0b2900ff8d9c0ba58ac98000eaea0aaabf84a7828500a99b008502a0fdffc8c8c8b700c9fffff06329ff7fc504d0efc8c8b70029ff00f008c98000b0030c9c0b29ff00c98000904a48ad9c0b09ff008d9c0b68c98400f027a68abf80f27e290200d01ca58ac95b00d00cafccf37e29ff00c90d00d015e220a91b8d2f01c220b700290f00aabf9cc81b850e2043c9a60418602043c9a604a50e3860',
+    0x0681F4: 'd93e79d9dcd8dae4e1dcd8dfe00b42d341d4d9e3d8',
+}
 UNKNOWNS = (
     'mutable_event_tile_closure', 'overlay_and_shared_bg_resources',
     'active_obj_follower_ancilla_resources', 'external_scroll_coexistence',
@@ -172,11 +186,13 @@ def _conditional_definitions(source, document):
     return pointer, raw
 
 
-def _conditional_source_policy(source, document, inspection, policy):
+def _conditional_source_policy(source, document, inspection, policy, *, resources=False):
     keys = {'kind', 'source_epoch', 'selected_features', 'source_files',
-            'native_preimages', 'tail_recipe', 'save_identity', 'area_tilesets'}
+            'native_preimages', 'save_identity', 'area_tilesets'}
+    if not resources:
+        keys.add('tail_recipe')
     _require(type(policy) is dict and set(policy) == keys
-             and policy['kind'] == CONDITIONAL_POLICY_KIND
+             and policy['kind'] == (RESOURCE_POLICY_KIND if resources else CONDITIONAL_POLICY_KIND)
              and type(policy['source_epoch']) is str
              and re.fullmatch('[0-9a-f]{40}', policy['source_epoch']), 'CONDITIONAL_POLICY_INVALID')
     features = policy['selected_features']
@@ -196,7 +212,8 @@ def _conditional_source_policy(source, document, inspection, policy):
                  and type(text) is str and _sha(text.encode('utf-8')) == row['sha256'],
                  'CONDITIONAL_SOURCE_FILE_MISMATCH')
         files[path] = '\n'.join(line.split(';', 1)[0] for line in text.splitlines())
-    _require(set(CONDITIONAL_SOURCE_FILES) <= set(files), 'CONDITIONAL_SOURCE_FILES_UNBOUND')
+    _require(set(RESOURCE_SOURCE_FILES if resources else CONDITIONAL_SOURCE_FILES) <= set(files),
+             'CONDITIONAL_SOURCE_FILES_UNBOUND')
 
     def flag(name, *paths):
         values = [match[1].strip() for path in paths for match in re.finditer(
@@ -242,6 +259,10 @@ def _conditional_source_policy(source, document, inspection, policy):
     for at, expected in CONDITIONAL_NATIVE_PREIMAGES.items():
         _require(preimages.get(at) == bytes.fromhex(expected),
                  'CONDITIONAL_NATIVE_PREDICATE_UNSUPPORTED: ' + f'{at:06X}')
+    if resources:
+        for at, expected in RESOURCE_NATIVE_PREIMAGES.items():
+            _require(preimages.get(at) == bytes.fromhex(expected),
+                     'RESOURCE_NATIVE_PREDICATE_UNSUPPORTED: ' + f'{at:06X}')
     native = preimages.get(0x0E9459)
     _require(native is not None and len(native) == 512, 'CONDITIONAL_NATIVE_TYPES_UNBOUND')
     effective = bytearray(native)
@@ -253,7 +274,26 @@ def _conditional_source_policy(source, document, inspection, policy):
         effective[index:index+3] = bytes.fromhex('0e5757')
         patches.append(dict(source_path='Items/ice_rod.asm', snes=0x0E95DC,
                             before_hex='515757', after_hex='0e5757'))
-    recipe = policy['tail_recipe']
+    if not resources:
+        _conditional_recipe(policy['tail_recipe'])
+    identity = policy['save_identity']
+    _require(type(identity) is dict and set(identity) == {'transfer_id', 'generation', 'operation_id',
+        'source_rom_sha256', 'terrain_sha256', 'inspection_sha256', 'document_sha256'}
+        and _digest(identity['transfer_id']) and type(identity['generation']) is int
+        and 0 < identity['generation'] <= 0xFFFFFFFFFFFFFFFF
+        and type(identity['operation_id']) is str and identity['operation_id']
+        and type(inspection) is dict and identity['source_rom_sha256'] == _sha(source)
+        and inspection.get('source_rom_sha256') == identity['source_rom_sha256']
+        and _digest(identity['terrain_sha256'])
+        and inspection.get('terrain_sha256') == identity['terrain_sha256']
+        and identity['inspection_sha256'] == _sha(_json_bytes(inspection))
+        and identity['document_sha256'] == conditional_document_identity(document),
+        'CONDITIONAL_SAVE_IDENTITY_MISMATCH')
+    return bytes(effective), dict(snes=0x0E9459, byte_count=512,
+        source_sha256=_sha(native), effective_sha256=_sha(effective), patches=patches)
+
+
+def _conditional_recipe(recipe):
     _require(type(recipe) is dict and set(recipe) == {'binding', 'payload_hex'}
              and type(recipe['binding']) is dict
              and set(recipe['binding']) == {'path', 'sha256'}
@@ -275,21 +315,6 @@ def _conditional_source_policy(source, document, inspection, policy):
         raise ValueError('RESIDENT_GRAPHICS_CONDITIONAL_RECIPE_INVALID') from error
     _require(type(recipe_rows) is dict and set(recipe_rows) == {f'{page:02X}' for page in range(FIRST, END)}
              and all(type(row) is dict for row in recipe_rows.values()), 'CONDITIONAL_RECIPE_INCOMPLETE')
-    identity = policy['save_identity']
-    _require(type(identity) is dict and set(identity) == {'transfer_id', 'generation', 'operation_id',
-        'source_rom_sha256', 'terrain_sha256', 'inspection_sha256', 'document_sha256'}
-        and _digest(identity['transfer_id']) and type(identity['generation']) is int
-        and 0 < identity['generation'] <= 0xFFFFFFFFFFFFFFFF
-        and type(identity['operation_id']) is str and identity['operation_id']
-        and type(inspection) is dict and identity['source_rom_sha256'] == _sha(source)
-        and inspection.get('source_rom_sha256') == identity['source_rom_sha256']
-        and _digest(identity['terrain_sha256'])
-        and inspection.get('terrain_sha256') == identity['terrain_sha256']
-        and identity['inspection_sha256'] == _sha(_json_bytes(inspection))
-        and identity['document_sha256'] == conditional_document_identity(document),
-        'CONDITIONAL_SAVE_IDENTITY_MISMATCH')
-    return bytes(effective), dict(snes=0x0E9459, byte_count=512,
-        source_sha256=_sha(native), effective_sha256=_sha(effective), patches=patches)
 
 
 def derive_conditional_demands(source, document, inspection, *, source_policy):
@@ -302,12 +327,18 @@ def derive_conditional_demands(source, document, inspection, *, source_policy):
     _require(type(source) is bytes and isinstance(document, TerrainDocument), 'CONDITIONAL_INPUT_INVALID')
     _require(not has_native_resource_history(document),
              'NATIVE_RESOURCES_UNBOUND: schema9 resources require a typed source-bound binder')
+    return _derive_conditional_demands(source, document, inspection, source_policy=source_policy)
+
+
+def _derive_conditional_demands(source, document, inspection, *, source_policy, resources=False):
+    """Shared pure target derivation; public compiler guards remain unchanged."""
     areas = validated_gameplay_areas(document.gameplay_areas)
     _require({page for area in areas for page in area['maps']} == set(range(FIRST, END))
              and len(document.maps) == 32 and all(type(tiles) is tuple and len(tiles) == 1024
                  for tiles in document.maps), 'CONDITIONAL_PAGES_INCOMPLETE')
     pointer, definitions = _conditional_definitions(source, document)
-    types, type_source = _conditional_source_policy(source, document, inspection, source_policy)
+    types, type_source = _conditional_source_policy(source, document, inspection, source_policy,
+                                                   resources=resources)
     targets = {}
 
     def words(tile):
@@ -397,6 +428,156 @@ def derive_conditional_demands(source, document, inspection, *, source_policy):
         compiled_consumers_verified=False, resource_closure_verified=False,
         rom_written=False, selected=False)
     result['witness_sha256'] = _sha(_json_bytes(result))
+    return result
+
+
+def derive_native_resources(source, document, inspection, *, source_policy):
+    """Reconstruct unallocated schema9 candidates, never compiler permission.
+
+    This shares the direct-trigger derivation and resident packer, retaining the
+    full document. There is no supplied-plan, bank, recipe or persistence input.
+    The transfer wrapper authenticates the saved bytes and committed sources.
+    """
+    _require(type(source) is bytes and isinstance(document, TerrainDocument)
+             and has_native_resource_history(document), 'RESOURCE_DOCUMENT_REQUIRED')
+    _require(len(document.authoring) == len(document.properties) == 32
+             and all('native_resources' in row for row in document.authoring),
+             'RESOURCE_PAGES_INCOMPLETE')
+    conditional = _derive_conditional_demands(source, document, inspection,
+        source_policy=source_policy, resources=True)
+    areas = validated_gameplay_areas(document.gameplay_areas)
+    owners = {page: area for area in areas for page in area['maps']}
+    pointer, definitions = _conditional_definitions(source, document)
+    read_sheet, sheets = _source_sheets(source)
+    assets = _inspection_rows(source, document, inspection,
+        source_policy['save_identity']['terrain_sha256'], read_sheet)
+    rows = {(row['map_id'], row['tile16_id']): copy.deepcopy(row)
+            for row in conditional['rows']}
+    blockers, pages, records, ids, bomb_targets = [], [], [], set(), {}
+
+    def block(reason, **details):
+        blockers.append(dict(reason=reason, **details))
+
+    def target(page, tile, record, raw):
+        _require(0 <= tile < len(definitions)//8, 'RESOURCE_TARGET_DEFINITION_MISSING')
+        key = (page, tile)
+        row = rows.setdefault(key, dict(map_id=page, tile16_id=tile,
+            source_words=list(struct.unpack_from('<4H', definitions, tile*8)),
+            already_authored=tile in document.maps[page-FIRST], families=[], triggers=[]))
+        if 'native_secret' not in row['families']:
+            row['families'].append('native_secret')
+            row['families'].sort()
+        row['triggers'].append(dict(record_id=record['id'], physical_map_id=record['map_id'],
+            secret_id=record['secret_id'], target_raw_offset=raw,
+            lookup_snes=0x1BC8A4, kind='source_candidate_not_qualified_trigger'))
+
+    for index, auth in enumerate(document.authoring):
+        page = FIRST + index
+        resource = auth['native_resources']
+        if resource is None:
+            pages.append(dict(map_id=page, selection='unselected'))
+            block('native_resources_unselected', map_id=page)
+            continue
+        _require(type(resource) is dict and set(resource) == {'secrets', 'event_behavior'}
+                 and type(resource['secrets']) is list, 'RESOURCE_STRUCTURE_INVALID')
+        event = resource['event_behavior']
+        _require(event is None or (type(event) is dict and set(event) == {'kind'}
+                 and event['kind'] == 'native_secret_v1'), 'RESOURCE_EVENT_INVALID')
+        if event is None:
+            block('native_event_behavior_unselected', map_id=page)
+        area = owners[page]
+        parent, size = area['parent_map_id'], area['size']
+        width, height = {'small': (32, 32), 'wide': (64, 32),
+                         'tall': (32, 64), 'large': (64, 64)}[size]
+        qy, qx = divmod(page-parent, 8)
+        positions = set()
+        pages.append(dict(map_id=page, selection='selected',
+            event_behavior=copy.deepcopy(event), record_count=len(resource['secrets']),
+            candidate_stream_bytes=3*len(resource['secrets'])+2))
+        for ordinal, secret in enumerate(resource['secrets']):
+            _require(type(secret) is dict and set(secret) == {'id', 'x', 'y', 'secret_id'}
+                     and all(type(secret[key]) is int and lo <= secret[key] <= hi
+                         for key, lo, hi in (('id', 1, 0xFFFFFFFF), ('x', 0, 31),
+                                            ('y', 0, 31), ('secret_id', 0, 255)))
+                     and secret['id'] not in ids, 'RESOURCE_RECORD_INVALID')
+            ids.add(secret['id'])
+            column, line = secret['x']+32*qx, secret['y']+32*qy
+            _require(0 <= column < width and 0 <= line < height, 'RESOURCE_QUADRANT_INVALID')
+            raw = 128*line+2*column
+            record = dict(secret, map_id=page, ordinal=ordinal, parent_map_id=parent,
+                area_size=size, native_raw_offset_candidate=raw)
+            records.append(record)
+            if raw in positions:
+                block('native_secret_position_conflict', map_id=page, record_id=secret['id'])
+            positions.add(raw)
+            code = secret['secret_id']
+            if code in (0x80, 0x82, 0x84, 0x86):
+                tile = struct.unpack_from('<H', bytes.fromhex(RESOURCE_NATIVE_PREIMAGES[0x1BC89C]),
+                                          code-0x80)[0]
+                record['handler'] = dict(kind='native_terrain', lookup_snes=0x1BC8A4,
+                                         dispatch_snes=0x1BC89C, target_tile16_id=tile)
+                if code == 0x84:
+                    block('native_secret_84_unqualified', map_id=page, record_id=secret['id'])
+                else:
+                    target(page, tile, record, raw)
+                if code == 0x86:
+                    bomb_targets.setdefault(parent, set()).add(raw)
+                    if column+1 >= width:
+                        block('bomb_pair_outside_area', map_id=page, record_id=secret['id'])
+                    else:
+                        next_page = parent+(line//32)*8+(column+1)//32
+                        target(next_page, 0xDB5, record, raw+2)
+                    block('bomb_consumer_and_event_unqualified', map_id=page, record_id=secret['id'])
+            elif 1 <= code <= 0x15:
+                sprite = bytes.fromhex(RESOURCE_NATIVE_PREIMAGES[0x0681F4])[code-1]
+                record['handler'] = dict(kind='native_reward_candidate', lookup_snes=0x1BC8A4,
+                                         reward_table_snes=0x0681F4, sprite_id=sprite)
+                block('wolf_authored_emitter_unqualified', map_id=page, record_id=secret['id'])
+                block('authored_pickup_identity_state_and_lifecycle_unqualified',
+                      map_id=page, record_id=secret['id'])
+                if code in (2, 3, 4, 8, 0xB, 0xE, 0xF, 0x10, 0x11, 0x12):
+                    block('native_reward_context_unqualified', map_id=page, record_id=secret['id'])
+            else:
+                record['handler'] = dict(kind='unqualified', lookup_snes=0x1BC8A4)
+                block('native_secret_id_unqualified', map_id=page, record_id=secret['id'], secret_id=code)
+    _require(document.next_native_resource_id > max(ids, default=0), 'RESOURCE_COUNTER_INVALID')
+    for parent, offsets in sorted(bomb_targets.items()):
+        if len(offsets) > 1:
+            block('bomb_event_selector_multiple_targets_candidate', parent_map_id=parent,
+                  raw_offsets=sorted(offsets))
+    for area in areas:
+        block('native_resource_parent_selector_unqualified', parent_map_id=area['parent_map_id'])
+    block('hidden_list_bank_span_and_adapter_unallocated')
+    block('native_resource_runtime_consumers_unqualified')
+    demands = [rows[key] for key in sorted(rows)]
+    tiles = {}
+    for row in demands:
+        tiles.setdefault(row['map_id'], set()).add(row['tile16_id'])
+    packed = [_plan_area(area, document, assets, definitions, read_sheet, tiles)
+              for area in sorted(areas, key=lambda row: row['parent_map_id'])]
+    parent_budgets = []
+    by_page = {row['map_id']: row for row in pages}
+    for area in areas:
+        selected = all(by_page[page]['selection'] == 'selected' for page in area['maps'])
+        count = sum(by_page[page].get('record_count', 0) for page in area['maps'])
+        parent_budgets.append(dict(parent_map_id=area['parent_map_id'],
+            candidate_stream_bytes=3*count+2 if selected else None,
+            selector_aggregation='unqualified'))
+    result = dict(kind=RESOURCE_KIND, scope='unallocated_native_resource_candidates_only',
+        source_policy=copy.deepcopy(source_policy), source_policy_sha256=_sha(_json_bytes(source_policy)),
+        source_binding=conditional['source_binding'],
+        next_native_resource_id=document.next_native_resource_id,
+        gameplay_areas=copy.deepcopy(list(areas)), pages=pages, records=records,
+        dynamic_demands=demands, resident_areas=packed,
+        decoded_sheets=[sheets[sheet] for sheet in sorted(sheets)],
+        budget=dict(authored_record_bytes=3*len(records),
+            selected_page_stream_bytes=sum(row.get('candidate_stream_bytes', 0) for row in pages),
+            parent_candidates=parent_budgets), blockers=blockers,
+        unclosed_families=list(CONDITIONAL_UNCLOSED),
+        selected=False, allocation_granted=False, publication_authorized=False,
+        ordinary_build_ready=False, runtime_admission=False,
+        compiled_consumers_verified=False, resource_closure_verified=False, rom_written=False)
+    result['plan_sha256'] = _sha(_json_bytes(result))
     return result
 
 

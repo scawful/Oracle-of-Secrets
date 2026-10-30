@@ -1008,5 +1008,140 @@ class Schema9ResidentBoundaryTest(unittest.TestCase):
                                     terrain_sha256=terrain_hash, provenance=dict(test='history only'))
 
 
+def native_resource_inputs(fixture, selections, *, counter=2):
+    """Portable schema9 value fixture; no game ROM or native producer claim."""
+    from dataclasses import replace
+    source, document, inspection, _, policy = ConditionalDemandTest().inputs(fixture)
+    source = bytearray(source)
+    for address, raw in R.RESOURCE_NATIVE_PREIMAGES.items():
+        at = sheet_table.pc(address)
+        source[at:at+len(bytes.fromhex(raw))] = bytes.fromhex(raw)
+    source = bytes(source)
+    authoring = copy.deepcopy(document.authoring)
+    for index, auth in enumerate(authoring):
+        auth['native_resources'] = copy.deepcopy(selections.get(0xA0+index))
+    document = replace(document, authoring=authoring, next_native_resource_id=counter)
+    raw = json.dumps(dict(maps=fixture.map_tiles, authoring=authoring,
+                         areas=fixture.areas), sort_keys=True).encode()
+    inspection.update(source_rom_sha256=sha(source), terrain_sha256=sha(raw))
+    policy.pop('tail_recipe')
+    policy['kind'] = R.RESOURCE_POLICY_KIND
+    for relative in sorted(set(R.RESOURCE_SOURCE_FILES)-set(R.CONDITIONAL_SOURCE_FILES)):
+        content = (ROOT/relative).read_bytes()
+        policy['source_files'].append(dict(path=relative, sha256=sha(content), source_utf8=content.decode()))
+    for address, raw_hex in R.RESOURCE_NATIVE_PREIMAGES.items():
+        content = bytes.fromhex(raw_hex)
+        policy['native_preimages'].append(dict(snes=address, payload_hex=raw_hex, sha256=sha(content)))
+    policy['save_identity'].update(source_rom_sha256=sha(source), terrain_sha256=inspection['terrain_sha256'],
+        inspection_sha256=sha(R._json_bytes(inspection)), document_sha256=R.conditional_document_identity(document))
+    return source, document, inspection, inspection['terrain_sha256'], policy
+
+
+class NativeResourcePlanTest(unittest.TestCase):
+    def fixture(self, *, selections=None, counter=2):
+        fixture = ConditionalDemandTest().fixture()
+        fixture.map_tiles[0][8*32+8] = 0x34
+        if selections is None:
+            selections = {0xA0: dict(secrets=[dict(id=1, x=8, y=8, secret_id=1)], event_behavior=None)}
+        return native_resource_inputs(fixture, selections, counter=counter)
+
+    def derive(self, inputs):
+        source, document, inspection, _, policy = inputs
+        return R.derive_native_resources(source, document, inspection, source_policy=policy)
+
+    def test_one_record_keeps_unselected_pages_and_guards_and_never_writes(self):
+        inputs = self.fixture()
+        before = copy.deepcopy(inputs)
+        with mock.patch.object(Path, 'write_bytes', side_effect=AssertionError('no writes')):
+            result = self.derive(inputs)
+        self.assertEqual(inputs, before)
+        record = result['records'][0]
+        self.assertEqual((record['id'], record['map_id'], record['x'], record['y'],
+                          record['secret_id'], record['native_raw_offset_candidate']),
+                         (1, 0xA0, 8, 8, 1, 0x410))
+        self.assertEqual(result['next_native_resource_id'], 2)
+        self.assertEqual(result['pages'][1:], [dict(map_id=p, selection='unselected')
+                                             for p in range(0xA1, 0xC0)])
+        self.assertEqual(result['budget']['selected_page_stream_bytes'], 5)
+        self.assertIsNone(result['budget']['parent_candidates'][0]['candidate_stream_bytes'])
+        self.assertIn((0xA0, 0xDC9), [(r['map_id'], r['tile16_id']) for r in result['dynamic_demands']])
+        reasons = {r['reason'] for r in result['blockers']}
+        self.assertTrue({'native_event_behavior_unselected', 'wolf_authored_emitter_unqualified',
+                         'authored_pickup_identity_state_and_lifecycle_unqualified',
+                         'hidden_list_bank_span_and_adapter_unallocated'} <= reasons)
+        for name in ('selected', 'allocation_granted', 'publication_authorized',
+                     'ordinary_build_ready', 'runtime_admission', 'rom_written'):
+            self.assertIs(result[name], False)
+        with self.assertRaisesRegex(ValueError, 'NATIVE_RESOURCES_UNBOUND'):
+            R.plan_resident_graphics(*inputs[:3], terrain_sha256=inputs[3], provenance={'test': 'guard'})
+        self.assertEqual(result, self.derive(inputs))
+
+    def test_literal_page_parent_coordinates_cover_four_sizes(self):
+        for parent, size, members, page, offset in (
+                (0xA0, 'small', [0xA0], 0xA0, 0xFBE),
+                (0xA0, 'wide', [0xA0, 0xA1], 0xA1, 0xFFE),
+                (0xA0, 'tall', [0xA0, 0xA8], 0xA8, 0x1FBE),
+                (0xB0, 'large', [0xB0, 0xB1, 0xB8, 0xB9], 0xB9, 0x1FFE)):
+            with self.subTest(size=size):
+                fixture = ConditionalDemandTest().fixture(wide=False)
+                fixture.areas = [area for area in fixture.areas if area['parent_map_id'] not in members]
+                fixture.areas.append(dict(parent_map_id=parent, size=size, maps=members))
+                inputs = native_resource_inputs(fixture, {page: dict(
+                    secrets=[dict(id=1, x=31, y=31, secret_id=0x80)],
+                    event_behavior={'kind': 'native_secret_v1'})})
+                result = self.derive(inputs)
+                self.assertEqual(result['records'][0]['native_raw_offset_candidate'], offset)
+                self.assertIn((page, 0xDCC), [(r['map_id'], r['tile16_id']) for r in result['dynamic_demands']])
+                self.assertIn('native_resource_parent_selector_unqualified',
+                              [r['reason'] for r in result['blockers']])
+
+    def test_bomb_pair_crosses_valid_page_and_blocks_area_edge_and_multiple_targets(self):
+        selections = {0xA0: dict(secrets=[dict(id=1, x=31, y=0, secret_id=0x86)],
+                                event_behavior={'kind': 'native_secret_v1'}),
+                      0xA1: dict(secrets=[dict(id=2, x=31, y=0, secret_id=0x86)],
+                                event_behavior={'kind': 'native_secret_v1'})}
+        result = self.derive(self.fixture(selections=selections, counter=3))
+        self.assertIn((0xA1, 0xDB5), [(r['map_id'], r['tile16_id']) for r in result['dynamic_demands']])
+        self.assertEqual(result['budget']['parent_candidates'][0]['candidate_stream_bytes'], 8)
+        self.assertTrue({'bomb_pair_outside_area', 'bomb_event_selector_multiple_targets_candidate'} <=
+                        {r['reason'] for r in result['blockers']})
+
+    def test_unknown_empty_null_order_and_counter_have_distinct_bound_identities(self):
+        selected = {0xA0: dict(secrets=[dict(id=7, x=1, y=0, secret_id=255),
+                                      dict(id=1, x=1, y=0, secret_id=0x84)], event_behavior=None),
+                    0xA1: dict(secrets=[], event_behavior={'kind': 'native_secret_v1'})}
+        inputs = self.fixture(selections=selected, counter=8)
+        result = self.derive(inputs)
+        self.assertEqual([r['id'] for r in result['records']], [7, 1])
+        self.assertEqual(result['pages'][1]['selection'], 'selected')
+        self.assertEqual(result['pages'][1]['candidate_stream_bytes'], 2)
+        self.assertEqual(result['pages'][2]['selection'], 'unselected')
+        self.assertTrue({'native_secret_id_unqualified', 'native_secret_84_unqualified',
+                         'native_secret_position_conflict'} <= {r['reason'] for r in result['blockers']})
+        from dataclasses import replace
+        for changed in (replace(inputs[1], next_native_resource_id=9),
+                        replace(inputs[1], authoring=tuple(reversed(inputs[1].authoring)))):
+            with self.assertRaisesRegex(ValueError, 'SAVE_IDENTITY_MISMATCH'):
+                R.derive_native_resources(inputs[0], changed, inputs[2], source_policy=inputs[4])
+        new = self.fixture(selections=selected, counter=9)
+        self.assertNotEqual(result['plan_sha256'], self.derive(new)['plan_sha256'])
+
+    def test_independent_asset_and_exact_handler_predicates_are_required(self):
+        inputs = self.fixture()
+        bad = copy.deepcopy(inputs)
+        bad[2]['map_assets'][0]['stored_binding'] = 'f'*64
+        bad[4]['save_identity']['inspection_sha256'] = sha(R._json_bytes(bad[2]))
+        with self.assertRaisesRegex(ValueError, 'ASSET_BINDING_MISMATCH'):
+            self.derive(bad)
+        bad = copy.deepcopy(inputs)
+        raw = bytearray(bad[0]); raw[sheet_table.pc(0x1BC8BE)+1] ^= 1
+        bad = (bytes(raw), *bad[1:])
+        bad[2]['source_rom_sha256'] = sha(bad[0])
+        bad[4]['save_identity'].update(source_rom_sha256=sha(bad[0]),
+            inspection_sha256=sha(R._json_bytes(bad[2])))
+        with self.assertRaisesRegex(ValueError, 'NATIVE_PREIMAGE_MISMATCH'):
+            self.derive(bad)
+
+
 if __name__ == '__main__':
     unittest.main()

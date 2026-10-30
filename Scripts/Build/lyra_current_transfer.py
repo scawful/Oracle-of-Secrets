@@ -535,6 +535,106 @@ def conditional_review_kwargs(review):
                 conditional_source_epoch=selection['source_epoch'])
 
 
+def native_resource_plan(request_path, project, base_rom, inspection_path, *, source_epoch=None):
+    """Read-only schema9 source review from an authenticated immutable transfer.
+
+    No numeric recipe or caller-supplied plan is accepted. This entry point is
+    deliberately separate from ordinary/resident compiler admission, whose
+    schema9 refusals remain in force even when this review succeeds.
+    """
+    import lyra_resident_graphics as resident
+    request_binding = Q.bound(request_path)
+    request, source, document = verify_transfer(request_path, project, base_rom)
+    R.require(has_native_resource_history(document), 'CURRENT_NATIVE_RESOURCE_DOCUMENT_REQUIRED')
+    inspection_binding = Q.bound(inspection_path)
+    live = request['live']
+    R.require(inspection_binding in live['producer_identity']['source_bindings'],
+              'RESIDENT_INSPECTION_UNBOUND: select the retained observation in producer source bindings')
+    inspection = _json(Q.read_bound(inspection_binding))
+    R.require(inspection.get('inspection_only') is True
+              and inspection.get('native_resolution_schema') == 'yaze.lyra-native-resolution.v1'
+              and inspection.get('project_descriptor_identity_status') == 'identified'
+              and inspection.get('project_descriptor_path') == live['project']
+              and inspection.get('project_descriptor_sha256') == request['inputs']['project']['sha256']
+              and inspection.get('terrain_path') == live['inputs']['terrain']['path']
+              and inspection.get('source_rom_sha256') == request['inputs']['rom']['sha256']
+              and inspection.get('terrain_sha256') == request['inputs']['terrain']['sha256'],
+              'RESIDENT_INSPECTION_STALE: retained resolution differs from this saved project')
+    root = P.ROOT.resolve(strict=True)
+    head = _git(root, 'rev-parse', 'HEAD').decode().strip()
+    source_epoch = head if source_epoch is None else source_epoch
+    R.require(type(source_epoch) is str and re.fullmatch('[0-9a-f]{40}', source_epoch)
+              and _git(root, 'merge-base', source_epoch, head).decode().strip() == source_epoch,
+              'CURRENT_NATIVE_RESOURCE_SOURCE_EPOCH_MISMATCH')
+    committed = _git_source_blobs(root, source_epoch, sorted(resident.RESOURCE_SOURCE_FILES))
+    bindings = [request_binding, inspection_binding, live['save_receipt'], live['save_context']]
+    source_files = []
+    for relative in sorted(resident.RESOURCE_SOURCE_FILES):
+        path = root / relative
+        R.require(path.is_file() and path.resolve().is_relative_to(root)
+                  and not any(p.is_symlink() for p in (path, *path.parents)),
+                  'CURRENT_NATIVE_RESOURCE_SOURCE_ESCAPED')
+        binding = Q.bound(path)
+        raw = Q.read_bound(binding)
+        R.require(raw == committed[relative], 'CURRENT_NATIVE_RESOURCE_SOURCE_CHANGED: ' + relative)
+        bindings.append(binding)
+        source_files.append(dict(path=relative, sha256=binding['sha256'], source_utf8=raw.decode('utf-8')))
+    generate = str(Path(__file__).resolve().parents[1] / 'Generate')
+    sys.path.insert(0, generate)
+    try:
+        import asm_source
+    finally:
+        sys.path.remove(generate)
+    prior_context = os.environ.get('OOS_LYRA_BUILD_CONTEXT')
+    try:
+        os.environ['OOS_LYRA_BUILD_CONTEXT'] = '0'
+        defines = asm_source._load_global_defines(root)
+    finally:
+        if prior_context is None:
+            os.environ.pop('OOS_LYRA_BUILD_CONTEXT', None)
+        else:
+            os.environ['OOS_LYRA_BUILD_CONTEXT'] = prior_context
+    R.require(all(type(defines.get(key)) is int and defines[key] in (0, 1)
+                  for key in ('DISABLE_ITEMS', 'ENABLE_OW_AREA_TILESETS')),
+              'CURRENT_NATIVE_RESOURCE_FEATURES_UNBOUND')
+    spans = {at: len(bytes.fromhex(raw)) for at, raw in
+             {**resident.CONDITIONAL_NATIVE_PREIMAGES, **resident.RESOURCE_NATIVE_PREIMAGES}.items()}
+    spans[0x0E9459] = 512
+    preimages = []
+    for snes, size in sorted(spans.items()):
+        at = A.pc(snes)
+        raw = source[at:at+size]
+        R.require(len(raw) == size, 'CURRENT_NATIVE_RESOURCE_PREIMAGE_MISSING')
+        preimages.append(dict(snes=snes, payload_hex=raw.hex(), sha256=R.sha(raw)))
+    policy = dict(kind=resident.RESOURCE_POLICY_KIND, source_epoch=source_epoch,
+        selected_features=dict(ice_rod=defines['DISABLE_ITEMS'] == 0,
+                               area_tilesets=defines['ENABLE_OW_AREA_TILESETS'] == 1),
+        source_files=source_files, native_preimages=preimages, area_tilesets=None,
+        save_identity=dict(transfer_id=request['transfer_id'], generation=live['generation'],
+            operation_id=live['operation_id'], source_rom_sha256=R.sha(source),
+            terrain_sha256=request['inputs']['terrain']['sha256'],
+            inspection_sha256=R.sha(resident._json_bytes(inspection)),
+            document_sha256=resident.conditional_document_identity(document)))
+    compiler_root = Path(__file__).resolve().parents[2]
+    compiler_bindings = [Q.bound(compiler_root / relative) for relative in (
+        'Scripts/Build/lyra_current_transfer.py', 'Scripts/Build/lyra_resident_graphics.py')]
+    bindings.extend([Q.bound(Path(asm_source.__file__)), *compiler_bindings])
+    plan = resident.derive_native_resources(source, document, inspection, source_policy=policy)
+    fresh, fresh_source, fresh_document = verify_transfer(request_path, project, base_rom)
+    R.require(fresh == request and fresh_source == source and fresh_document == document,
+              'CURRENT_NATIVE_RESOURCE_TRANSFER_CHANGED')
+    for binding in bindings:
+        Q.read_bound(binding)
+    R.require(_git(root, 'rev-parse', 'HEAD').decode().strip() == head,
+              'CURRENT_NATIVE_RESOURCE_CHECKOUT_CHANGED')
+    return dict(kind='lyra.current_native_resources_review.v1',
+        request=request_binding, inspection=inspection_binding,
+        generation=live['generation'], operation_id=live['operation_id'],
+        source_epoch=source_epoch, bindings=bindings, resource_plan=plan,
+        selected=False, allocation_granted=False, publication_authorized=False,
+        ordinary_build_ready=False, runtime_admission=False, rom_written=False)
+
+
 def resident_graphics_plan(request_path, project, base_rom, inspection_path, *, tail_recipe=None,
                            conditional_demands=None, conditional_source_epoch=None):
     """Derive held resource data from a genuine Save and retained inspection.

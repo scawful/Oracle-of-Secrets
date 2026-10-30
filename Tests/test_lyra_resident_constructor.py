@@ -545,5 +545,87 @@ class ConditionalDemandBindingTest(unittest.TestCase):
                     conditional_source_epoch=self.epoch)
 
 
+class NativeResourceBindingTest(unittest.TestCase):
+    """Real file/Git binder with the existing disclosed transfer-verifier seam."""
+    git = ConditionalDemandBindingTest.git
+    commit = ConditionalDemandBindingTest.commit
+
+    def setUp(self):
+        ConditionalDemandBindingTest.setUp(self)
+        for relative in sorted(set(R.RESOURCE_SOURCE_FILES)-set(R.CONDITIONAL_SOURCE_FILES)):
+            path = self.root/relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes((ROOT/relative).read_bytes())
+        self.commit()
+        self.epoch = self.git('rev-parse', 'HEAD').strip()
+        self.source, self.document, self.inspection, terrain_hash, _ = resources.NativeResourcePlanTest().fixture()
+        self.source_path.write_bytes(self.source)
+        self.terrain.write_bytes(json.dumps(dict(maps=self.document.maps,
+            authoring=self.document.authoring, areas=self.document.gameplay_areas), sort_keys=True).encode())
+        self.assertEqual(X.Q.bound(self.terrain)['sha256'], terrain_hash)
+        self.request['inputs'].update(rom=X.Q.bound(self.source_path), terrain=X.Q.bound(self.terrain))
+        self.inspection.update(project_descriptor_identity_status='identified',
+            project_descriptor_path=str(self.project),
+            project_descriptor_sha256=X.Q.bound(self.project)['sha256'], terrain_path=str(self.terrain))
+        self.inspection_path.write_bytes(X.P.encoded(self.inspection))
+        self.request['live'].update(generation=2, operation_id='synthetic-resource-save-2',
+            inputs=copy.deepcopy(self.request['inputs']),
+            producer_identity=dict(source_bindings=[X.Q.bound(self.inspection_path)]))
+        self.request['transfer_id'] = X._identity(self.request)
+        self.request_path.write_bytes(X.P.encoded(self.request))
+
+    def review(self):
+        with mock.patch.object(X, 'verify_transfer', return_value=(self.request, self.source, self.document)):
+            return X.native_resource_plan(self.request_path, self.project, self.source_path,
+                                          self.inspection_path, source_epoch=self.epoch)
+
+    def test_reconstructs_saved_records_with_real_source_bindings_and_no_writes(self):
+        paths = [self.source_path, self.terrain, self.project, self.request_path, self.inspection_path,
+                 self.receipt, self.context, self.recipe,
+                 *(self.root/name for name in R.RESOURCE_SOURCE_FILES)]
+        before = {path: path.read_bytes() for path in paths}
+        with mock.patch.object(Path, 'write_bytes', side_effect=AssertionError('review cannot write')):
+            result = self.review()
+        self.assertEqual({path: path.read_bytes() for path in paths}, before)
+        plan = result['resource_plan']
+        self.assertEqual(plan['records'][0]['id'], 1)
+        self.assertEqual(plan['next_native_resource_id'], 2)
+        self.assertEqual(plan['source_policy']['save_identity']['generation'], 2)
+        self.assertEqual(plan['source_policy']['save_identity']['transfer_id'], self.request['transfer_id'])
+        self.assertNotIn('tail_recipe', plan['source_policy'])
+        self.assertNotIn(X.Q.bound(self.recipe), result['bindings'])
+        for name in R.RESOURCE_SOURCE_FILES:
+            self.assertIn(X.Q.bound(self.root/name), result['bindings'])
+        self.assertFalse(result['runtime_admission'])
+        self.assertFalse(plan['resource_closure_verified'])
+        self.assertEqual(plan['source_binding']['document_sha256'], R.conditional_document_identity(self.document))
+
+    def test_independent_inspection_selection_and_committed_source_epoch_are_required(self):
+        saved = copy.deepcopy(self.request)
+        self.request['live']['producer_identity']['source_bindings'] = []
+        with self.assertRaisesRegex(ValueError, 'RESIDENT_INSPECTION_UNBOUND'):
+            self.review()
+        self.request = saved
+        path = self.root/'Masks/wolf_mask.asm'
+        path.write_bytes(path.read_bytes()+b'\n; changed after selected source epoch\n')
+        with self.assertRaisesRegex(ValueError, 'CURRENT_NATIVE_RESOURCE_SOURCE_CHANGED'):
+            self.review()
+
+    def test_rechecks_save_and_inspection_files_after_derivation(self):
+        derive = R.derive_native_resources
+        for path in (self.receipt, self.inspection_path):
+            original = path.read_bytes()
+            def change_after(*args, **kwargs):
+                plan = derive(*args, **kwargs)
+                path.write_bytes(original+b' ')
+                return plan
+            try:
+                with mock.patch.object(R, 'derive_native_resources', side_effect=change_after):
+                    with self.assertRaises(ValueError):
+                        self.review()
+            finally:
+                path.write_bytes(original)
+
+
 if __name__ == '__main__':
     unittest.main()
