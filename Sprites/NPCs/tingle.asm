@@ -175,6 +175,7 @@ Sprite_Tingle_Main:
         LDA.l $7EF360 : SEC : SBC.w .cost, Y
         STA.l $7EF360
         SEP #$30
+        LDA.l TingleId : TAY
         LDA.l TingleMaps
         ORA.w .dungeon, Y
         STA.l TingleMaps
