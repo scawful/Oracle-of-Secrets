@@ -15,7 +15,7 @@
     "shared:Masks/all_masks.asm": {
       "source_set": "shared",
       "path": "Masks/all_masks.asm",
-      "sha256": "4838e42eee2ba069933711bb9ba4617a4bff6f6dc0ea0c68f1e69beaa86280c9"
+      "sha256": "1ca9d6f5b151bd83229e62c503240e10daea5323dd6098bc5f64dfd4eab14e6b"
     },
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
@@ -30,7 +30,7 @@
     "shared:Items/fishing_rod.asm": {
       "source_set": "shared",
       "path": "Items/fishing_rod.asm",
-      "sha256": "b59ebea81e37a536a4c08b7282a0210f347e3b19caff13a1e007126d8026085b"
+      "sha256": "3c456abd3c2ea7f0173ed1ce3dfdc845198e6a68390fd26ed432f7a7e9246e21"
     },
     "shared:Core/ram.asm": {
       "source_set": "shared",
@@ -50,7 +50,7 @@
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
       "path": "Items/magic_rings.asm",
-      "sha256": "5d84e67928ff344671f1e91db4ede8bd7fb1fdfb7484d23cc7158ef4731e1224"
+      "sha256": "3541606cc802c1f717af2c4904fa7a48aefff98801c11a164113652940e0bee2"
     },
     "pending_rc:Core/sram.asm": {
       "source_set": "pending_rc",
@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "ab6bac6b91005f904ed79d145439220354ad07b186c31182b157f53539b2c368"
+      "sha256": "e9f0ef67aa7829232ed37fd5caebcbf4a452763099b0c2b43b7171d97479d165"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "7034ab46b0e2584ec8ee68d25945a482cacc02478bff3d84ae2d2d8c875e0adf"
+      "sha256": "eebe8dad726ebf69937019204b503b52ca1302e46e2d53ef8b1b18cd8928e50f"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -130,7 +130,7 @@
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
       "path": "Menu/menu_hud.asm",
-      "sha256": "b2e6650afa31168089a25f31e52c534500ca259d8eba6d731d6229fffb4f1a88"
+      "sha256": "de44d97c8613b26a2c25d2d4b63831a3b09d2f3e7034649a36e7a181bc25b5dc"
     },
     "shared:Core/Cutscene/experiment.asm": {
       "source_set": "shared",
