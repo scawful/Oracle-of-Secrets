@@ -13,6 +13,15 @@ import lyra_project_terrain as T
 import lyra_project_admission as A
 
 
+def selector_source(graphics=(0, 0, 0), palettes=(0, 0, 0), parent=0x3A):
+    source = bytearray(0x200000)
+    source[A.pc(0x288998) + 0x3A] = parent
+    for phase in range(3):
+        source[0x7A41 + parent + phase * 0x40] = graphics[phase]
+        source[0x7B41 + parent + phase * 0x40] = palettes[phase]
+    return bytes(source)
+
+
 class CurrentPropertyRowsTest(unittest.TestCase):
     def test_saved_selectors_and_four_music_phases_are_exact_at_both_tail_ends(self):
         doc = copy.deepcopy(document())
@@ -21,7 +30,7 @@ class CurrentPropertyRowsTest(unittest.TestCase):
             prop.update(graphics_sheets=[255,1,2,3,4,5,6,7], main_palette=7,
                         palette_set=254, animated_sheet=255, message_id=0x1234,
                         sprite_graphics=[23]*3, sprite_palettes=[15]*3, music=[0x10,0x20,0x30,0x40])
-        rows = L.current_property_rows(doc)
+        rows = L.current_property_rows(doc, source=selector_source())
         for area in (0xA0, 0xBF):
             self.assertEqual(rows[area], dict(gfx=[255,1,2,3,4,5,6,7], main_palette=7,
                 palette_set=254, animated=255, sign_text=0x1234, special_sprite_gfx=23,
@@ -32,9 +41,62 @@ class CurrentPropertyRowsTest(unittest.TestCase):
         rows[0xA0]['gfx'][0] = 0
         self.assertEqual(doc.properties[0]['graphics_sheets'][0], 255)
 
+    def test_inherited_selectors_resolve_exact_native_seed_parent_without_mutation(self):
+        doc = copy.deepcopy(document())
+        original = copy.deepcopy(doc)
+        source = selector_source(graphics=(23, 23, 23), palettes=(15, 15, 15), parent=0x12)
+        rows = L.current_property_rows(doc, source=source)
+        for area in (0xA0, 0xBF):
+            self.assertEqual(rows[area]['special_sprite_gfx'], 23)
+            self.assertEqual(rows[area]['special_sprite_palettes'], 15)
+        self.assertEqual(doc, original)
+        self.assertEqual(doc.properties[0]['sprite_graphics'], [-1, -1, -1])
+        self.assertEqual(source, selector_source((23, 23, 23), (15, 15, 15), 0x12))
+
+    def test_inherited_native_phase_differences_refuse_with_resolved_values(self):
+        for field, source, resolved in (
+                ('sprite_graphics', selector_source((0, 27, 4)), '[0, 27, 4]'),
+                ('sprite_palettes', selector_source(palettes=(1, 0, 0)), '[1, 0, 0]')):
+            doc = copy.deepcopy(document())
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(
+                        ValueError, 'CURRENT_PROPERTY_PHASE_SELECTOR_UNSUPPORTED') as raised:
+                    L.current_property_rows(doc, source=source)
+                self.assertIn('map A0', str(raised.exception))
+                self.assertIn(field, str(raised.exception))
+                self.assertIn(resolved, str(raised.exception))
+                self.assertEqual(doc.properties[0][field], [-1, -1, -1])
+
+    def test_inheritance_needs_complete_source_and_a_light_world_seed_parent(self):
+        for source in (None, b'', bytes(0x100000), bytearray(0x200000)):
+            with self.subTest(source_type=type(source).__name__), self.assertRaisesRegex(
+                    ValueError, 'CURRENT_PROPERTY_INHERITANCE_SOURCE_REQUIRED'):
+                L.current_property_rows(document(), source=source)
+        source = bytearray(selector_source())
+        source[A.pc(0x288998) + 0x3A] = 0x80
+        with self.assertRaisesRegex(ValueError, 'CURRENT_PROPERTY_INHERITANCE_SOURCE_UNSUPPORTED'):
+            L.current_property_rows(document(), source=bytes(source))
+
+    def test_explicit_uniform_selectors_need_no_inherited_source(self):
+        doc = copy.deepcopy(document())
+        for prop in doc.properties:
+            prop.update(sprite_graphics=[23] * 3, sprite_palettes=[15] * 3)
+        rows = L.current_property_rows(doc)
+        self.assertEqual(rows[0xA0]['special_sprite_gfx'], 23)
+        self.assertEqual(rows[0xBF]['special_sprite_palettes'], 15)
+
+    def test_mixed_raw_values_lower_only_when_effective_phases_are_uniform(self):
+        doc = copy.deepcopy(document())
+        doc.properties[0].update(sprite_graphics=[-1, 23, 23], sprite_palettes=[15, -1, 15])
+        rows = L.current_property_rows(doc, source=selector_source((23, 23, 23), (15, 15, 15)))
+        self.assertEqual(rows[0xA0]['special_sprite_gfx'], 23)
+        self.assertEqual(rows[0xA0]['special_sprite_palettes'], 15)
+        self.assertEqual(doc.properties[0]['sprite_graphics'], [-1, 23, 23])
+
     def test_unrepresentable_special_phase_selectors_refuse_instead_of_flattening(self):
         for field in ('sprite_graphics','sprite_palettes'):
             doc = copy.deepcopy(document())
+            doc.properties[0].update(sprite_graphics=[0] * 3, sprite_palettes=[0] * 3)
             doc.properties[0][field] = [1,2,1]
             with self.subTest(field=field), self.assertRaisesRegex(ValueError, 'PHASE_SELECTOR_UNSUPPORTED'):
                 L.current_property_rows(doc)
@@ -127,7 +189,8 @@ class CurrentRuntimePropertiesTest(unittest.TestCase):
     def test_legacy_document_property_shape_and_identity_are_unchanged(self):
         legacy = document()
         self.assertTrue(all(set(prop) == T.PROPERTY_KEYS for prop in legacy.properties))
-        self.assertFalse(any('mosaic' in row for row in L.current_property_rows(legacy).values()))
+        self.assertFalse(any('mosaic' in row for row in
+                             L.current_property_rows(legacy, source=selector_source()).values()))
 
 
 class CurrentRuntimePropertyComposerTest(unittest.TestCase):

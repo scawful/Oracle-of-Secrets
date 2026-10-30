@@ -1292,12 +1292,36 @@ def plan_current_tables(source, tail_rows, *, origins, policy, private_pilot=Non
                     'actor/door/exit admission', 'entry/save/return/world-map/mirror/flight'])
 
 
+def _current_sprite_selector(values, *, source, area, field):
+    """Resolve the native seed's three states before applying the scalar ABI."""
+    resolved = list(values)
+    if -1 in resolved:
+        R.require(type(source) is bytes and len(source) in (0x200000, 0x400000),
+                  'CURRENT_PROPERTY_INHERITANCE_SOURCE_REQUIRED: exact saved source '
+                  f'for map {area:02X} {field}')
+        # ResolveLyraMapAssets copies native map3A. Its LW sprite selectors
+        # come from that seed's saved parent, not the authored gameplay parent.
+        parent = source[A.pc(0x288998) + 0x3A]
+        R.require(parent < 0x40,
+                  'CURRENT_PROPERTY_INHERITANCE_SOURCE_UNSUPPORTED: '
+                  f'native seed3A parent {parent:02X} is outside the LW selector contract')
+        table = {'sprite_graphics': 0x7A41, 'sprite_palettes': 0x7B41}[field]
+        resolved = [source[table + parent + phase * 0x40] if value == -1 else value
+                    for phase, value in enumerate(values)]
+    R.require(len(set(resolved)) == 1,
+              'CURRENT_PROPERTY_PHASE_SELECTOR_UNSUPPORTED: '
+              f'map {area:02X} {field} resolves states0/1/2 to {resolved}; '
+              'the current special-world reader requires one selector per page')
+    return resolved[0]
+
+
 def current_property_rows(document, *, source=None):
     """Lower saved native selectors without assigning storage or readiness.
 
     SW graphics/palette selectors are one byte per area in maintained ZScream;
-    distinct per-phase values cannot be represented by those readers. The
-    established -1 sentinel lowers to0, as in the historical empty-actor path.
+    distinct effective per-phase values cannot be represented by those readers.
+    Resolve -1 through the same bound native seed as the Yaze asset resolver;
+    refuse unrepresentable inheritance rather than replacing it with zero.
     Four music phases retain all four saved values in the current cache tail.
     """
     from lyra_project_terrain import TerrainDocument
@@ -1319,13 +1343,8 @@ def current_property_rows(document, *, source=None):
                              ('animated_sheet', 255), ('message_id', 65535)):
             R.require(type(prop.get(key)) is int and 0 <= prop[key] <= maximum,
                       'CURRENT_PROPERTY_MODEL_INVALID: ' + key)
-        for key in ('sprite_graphics', 'sprite_palettes'):
-            R.require(len(set(prop[key])) == 1,
-                      'CURRENT_PROPERTY_PHASE_SELECTOR_UNSUPPORTED: special-world ' + key)
         result[area] = dict(gfx=list(prop['graphics_sheets']), main_palette=prop['main_palette'],
             palette_set=prop['palette_set'], animated=prop['animated_sheet'], sign_text=prop['message_id'],
-            special_sprite_gfx=max(0, prop['sprite_graphics'][0]),
-            special_sprite_palettes=max(0, prop['sprite_palettes'][0]),
             music_dark_special=prop['music'][0],
             **{f'music_phase{phase}': value for phase, value in enumerate(prop['music'])})
         runtime_keys = {'mosaic','subscreen_overlay','area_specific_bg_color'}
@@ -1349,6 +1368,10 @@ def current_property_rows(document, *, source=None):
             R.require(type(color) is int and 0 <= color <= 0x7FFF,
                       'CURRENT_PROPERTY_MODEL_INVALID: BGR555 backdrop required')
             result[area].update(mosaic=prop['mosaic'], overlay=prop['subscreen_overlay'], bg_color=color)
+        for field, table in (('sprite_graphics', 'special_sprite_gfx'),
+                             ('sprite_palettes', 'special_sprite_palettes')):
+            result[area][table] = _current_sprite_selector(
+                prop[field], source=source, area=area, field=field)
     return result
 
 
