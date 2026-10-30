@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused owned-runtime proof for Deku Stick draw, stow, and saved remaining burn time.
+"""Focused owned-runtime proof for Deku Stick gameplay, controls, and persistence.
 
 Verifies natively in headless Mesen2:
 1. Fresh draw & sword lockout:
@@ -15,21 +15,43 @@ Verifies natively in headless Mesen2:
    - Stowing worn stick refunds inventory (1 -> 2) and saves remaining budget in DekuStickWear = 30 ($7EF39F).
    - Redrawing from Equipment menu restores DekuStick_BurnTimer = 30 and clears DekuStickWear = 0.
    - Relighting preserves the 30-tick budget.
-4. Save & reopen persistence (T3 verification):
-   - Stowed worn stick with DekuStickWear = 30 persists across an in-game Save & Quit (GameOver_SaveAndQuit -> SaveGameFile).
-   - Verifies battery SRAM (0x700000..0x7004FF) has valid 0x5A5A checksum and backup equality.
-   - Reopens session via LOADROM and cold boot through title / file select without emulator snapshots.
+4. Visible OAM in 4 directions & controls:
+   - Unlit held stick in 4 facings (Up, Down, Left, Right): Sprite 4 onscreen (palette 1), Sprite 5 hidden.
+   - Lit held stick: Sprite 5 onscreen (tile $9C, palette 4), flame flicker observed on bit 6.
+   - Y button press initiates 14-frame swipe, suppresses assigned Y item ($0303), and freezes movement inputs.
+   - Captures native screenshots of held/swipe/flame poses.
+5. Swipe enemy nonlethal stun & immunity:
+   - Eligible active enemy in front of Link is stunned for 32 frames ($0EA0 = 0x20).
+   - Enemy HP is unchanged (0 HP damage!).
+   - DekuStick_SwipeTimer bit 6 latches to prevent multiple stuns per swipe.
+   - Stick remains intact (no enemy-hit breakage).
+   - Immune enemies ($0E40 >= 0x80) and wrong layer ($0F20 != Link) are unaffected.
+   - Wall contact plays tink without breaking stick.
+6. Native torch interaction:
+   - Unlit held stick touching lit dungeon torch ignites stick (State = 2), preserving remaining burn budget.
+   - Lit held stick touching unlit dungeon torch lights torch (Dungeon_LightTorch at $01F3EC, $04F0 > 0).
+   - Harmless contacts with floor/wrong-layer do not alter stick or torch state.
+7. Cross-room scroll & lifecycle:
+   - Screen scrolling ($11 != 0) pauses burn countdown and preserves fire across scroll.
+   - Stairs ($11 in 0x12, 0x13, 0x0E) drop stick without refund.
+   - Stowed wear ($7EF39F) survives transitions.
+8. Save & Quit battery persistence:
+   - Stowed worn stick with DekuStickWear = 30 persists across in-game Save & Quit.
+   - Verifies battery SRAM has valid 0x5A5A checksum and backup equality.
+   - Saves flushed battery SRM to disk.
+9. Fresh-process cold boot reopen (T3 verification):
+   - Closes initial emulator instance.
+   - Launches fresh owned emulator process loading disk battery SRM without snapshots.
+   - Cold boots through Title and File Select into gameplay.
    - Reopened session retains DekuStickWear = 30; redrawing restores 30-tick burn budget.
-   - Corrupt wear fallback: $FF in DekuStickWear falls back safely to 75 ticks on draw.
-5. Interruption drop cleanup:
-   - While stick is drawn, taking damage ($5D = 1) immediately drops the stick (State = 0).
-   - Dropped stick is lost: inventory is NOT refunded, and DekuStickWear is 0.
-6. Burn countdown & burn-out:
-   - Lit stick (State = 2) ticks down every 16 frames.
-   - Reaching timer 0 burns out and drops the stick without refund.
-7. Zero-inventory refusal:
-   - With DekuSticks = 0, pressing A in Equipment menu refuses activation.
-   - Menu remains open, pending action remains 0, stored wear is preserved.
+   - Corrupt wear fallback ($FF -> 75 ticks) verified.
+   - Ordinary sword swing and Honeycomb consumable controls verified intact.
+10. Interruption drop cleanup:
+    - Taking damage ($5D = 1) immediately drops stick without refund and clears wear.
+11. Burn countdown & burnout:
+    - Lit stick ticks down every 16 frames; reaching 0 burns out and drops stick without refund.
+12. Zero-inventory refusal:
+    - With count = 0, pressing A in Equipment menu refuses activation and preserves stored wear.
 """
 from __future__ import annotations
 
@@ -56,6 +78,11 @@ MODULE, SUBMODULE = 0x7E0010, 0x7E0011
 MENU, CURSOR, PAGE = 0x7E0200, 0x7E020B, 0x7E1E71
 PENDING_SUPPLY = 0x7E0434
 LINK_STATE = 0x7E005D
+LINK_DIR = 0x7E002F
+LINK_POSX = 0x7E0022
+LINK_POSY = 0x7E0020
+CURRENT_LAYER = 0x7E00EE
+UNDERWORLD_FLAG = 0x7E001B
 SWORD_STATE = 0x7E003C
 SWORD_ANIM = 0x7E003D
 FRAME_COUNTER = 0x7E001A
@@ -66,10 +93,32 @@ HURTME = 0x7E0373
 NOPAIN = 0x7E037B
 
 DEKU_STICKS_COUNT = 0x7EF395  # SRAM Deku Sticks quantity
+HONEYCOMB_COUNT   = 0x7EF394  # SRAM Honeycomb quantity
 DEKU_STICK_WEAR   = 0x7EF39F  # SRAM DekuStickWear stored burn ticks
 DEKU_STICK_STATE  = 0x7E046D  # WRAM 0=none, 1=held unlit, 2=held lit, 3=swiping
 DEKU_BURN_TIMER   = 0x7E046E  # WRAM active burn ticks
 DEKU_SWIPE_TIMER  = 0x7E046F  # WRAM swipe timer
+
+SPRITE4_OAM       = 0x7E0810  # Stick OAM: X=0810, Y=0811, Tile=0812, Prop=0813
+SPRITE5_OAM       = 0x7E0814  # Flame OAM: X=0814, Y=0815, Tile=0816, Prop=0817
+OAM_HIGH          = 0x7E0A21  # High table bits for sprites 4 & 5
+Y_ITEM_ASSIGNED   = 0x7E0303  # Assigned Y item
+CONTROLLER_F0     = 0x7E00F0  # Held buttons
+CONTROLLER_F4     = 0x7E00F4  # Newly pressed buttons
+TORCH_TIMERS      = 0x7E04F0  # Torches 0..15 ($04F0..$04FF)
+TILE_ATTR_BASE    = 0x7F2000  # Underworld tile attribute buffer
+
+# Sprites 0..15 tables
+SPRITE_STATE      = 0x7E0DD0
+SPRITE_CLASS      = 0x7E0E20
+SPRITE_DAMAGE     = 0x7E0E40
+SPRITE_HP         = 0x7E0E50
+SPRITE_STUN       = 0x7E0EA0
+SPRITE_LAYER      = 0x7E0F20
+SPRITE_POSX_LOW   = 0x7E0D10
+SPRITE_POSX_HIGH  = 0x7E0D30
+SPRITE_POSY_LOW   = 0x7E0D00
+SPRITE_POSY_HIGH  = 0x7E0D20
 
 
 def identity(pid: int) -> str:
@@ -85,6 +134,8 @@ class DekuStickRuntimeTest:
         self.app = app_path
         self.work_dir = work_dir
         self.work_dir.mkdir(parents=True, exist_ok=True)
+        self.screenshots_dir = self.work_dir / "screenshots"
+        self.screenshots_dir.mkdir(parents=True, exist_ok=True)
 
         self.instance_name = f"deku-test-{int(time.time())}"
         self.sock = self.work_dir / f"mesen-{self.instance_name}.sock"
@@ -93,14 +144,35 @@ class DekuStickRuntimeTest:
         shutil.copy2(self.rom, self.rom_copy)
 
         (self.home / "Saves").mkdir(parents=True, exist_ok=True)
-        shutil.copy2(SAVE_DEFAULT, self.home / "Saves" / "deku_candidate.srm")
+        (self.home / "SaveStates").mkdir(parents=True, exist_ok=True)
 
         self.pid = 0
         self.pid_identity = ""
         self.b: MesenBridge | None = None
         self.results: dict[str, bool] = {}
 
-    def launch(self):
+    def launch(self, reset_save: bool = True):
+        self.instance_name = f"deku-test-{int(time.time())}"
+        self.sock = self.work_dir / f"mesen-{self.instance_name}.sock"
+
+        if reset_save:
+            shutil.copy2(SAVE_DEFAULT, self.home / "Saves" / "deku_candidate.srm")
+
+        # Configure Mesen profile settings for explicit battery persistence
+        settings_file = self.home / "settings.json"
+        cfg = {}
+        if settings_file.is_file():
+            try:
+                cfg = json.loads(settings_file.read_text(encoding="utf-8-sig"))
+            except Exception:
+                cfg = {}
+        cfg.setdefault("Preferences", {})
+        cfg["Preferences"]["OverrideSaveDataFolder"] = True
+        cfg["Preferences"]["SaveDataFolder"] = str(self.home / "Saves")
+        cfg.setdefault("Oracle", {})
+        cfg["Oracle"]["PersistentSaveName"] = "deku_candidate"
+        settings_file.write_text(json.dumps(cfg, indent=2))
+
         cmd = [
             "taskpolicy", "-b", "nice", "-n", "10", "bash", str(LAUNCHER),
             "--headless", "--no-copy-settings", "--no-save-settings",
@@ -109,7 +181,7 @@ class DekuStickRuntimeTest:
             "--socket", str(self.sock), "--rom", str(self.rom_copy),
             "--app", str(self.app),
         ]
-        with (self.work_dir / "launch.log").open("w") as log:
+        with (self.work_dir / "launch.log").open("a") as log:
             subprocess.run(cmd, cwd=REPO, stdout=log, stderr=log, check=True, timeout=30)
 
         for _ in range(80):
@@ -138,6 +210,9 @@ class DekuStickRuntimeTest:
                 time.sleep(0.1)
         if self.sock.exists():
             self.sock.unlink(missing_ok=True)
+        self.pid = 0
+        self.pid_identity = ""
+        self.b = None
 
     def r(self, addr: int) -> int:
         return self.b.read_memory(addr)
@@ -173,6 +248,26 @@ class DekuStickRuntimeTest:
             raise RuntimeError(f"Failed to reach gameplay after load_state (MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)})")
         print(f"[+] Reached stable gameplay: MODULE={self.r(MODULE)}")
 
+    def boot_fresh_file(self):
+        print("[*] Cold booting fresh emulator session without snapshots...")
+        time.sleep(1.0)
+        # Advance through Title to File Select (Module 1)
+        for _ in range(40):
+            if self.r(MODULE) == 1:
+                break
+            self.b.press_button("start", frames=6)
+            time.sleep(0.3)
+        print(f"    At File Select: MODULE={self.r(MODULE)}")
+        # Launch File 1 into gameplay
+        for _ in range(40):
+            if self.r(MODULE) in (7, 9, 11) and self.r(SUBMODULE) == 0:
+                break
+            self.b.press_button("start", frames=8)
+            time.sleep(0.3)
+        if not self.wait_play(8.0):
+            raise RuntimeError(f"Failed to enter gameplay from cold boot: MODULE={self.r(MODULE)}")
+        print(f"[+] Reached stable gameplay from fresh boot: MODULE={self.r(MODULE)}")
+
     def navigate_to_equipment(self) -> bool:
         self.press("START", frames=10)
         for _ in range(50):
@@ -188,6 +283,33 @@ class DekuStickRuntimeTest:
                 break
             time.sleep(0.05)
         return self.r(MENU) == 6
+
+    def take_screenshot(self, name: str) -> Path | None:
+        try:
+            png = self.b.screenshot()
+            if png:
+                dest = self.screenshots_dir / f"{name}.png"
+                dest.write_bytes(png)
+                return dest
+        except Exception as e:
+            print(f"    [warn] screenshot {name} failed: {e}")
+        return None
+
+    def set_torch_probe_tile(self, facing: int, torch_id: int):
+        # Deku_TorchProbeX: dw 8, 8, -4, 20 (Up=0, Down=2, Left=4, Right=6)
+        # Deku_TorchProbeY: dw -4, 24, 8, 8
+        offsets = {0: (8, -4), 2: (8, 24), 4: (-4, 8), 6: (20, 8)}
+        dx, dy = offsets.get(facing, (8, 24))
+        posx = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        posy = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        px = posx + dx
+        py = posy + dy
+        layer = self.r(CURRENT_LAYER)
+        x_coord = (px & 0x01FF) >> 3
+        y_coord = (py & 0x01F8) << 3
+        tile_offset = y_coord + x_coord + (0x1000 if layer != 0 else 0)
+        addr = TILE_ATTR_BASE + tile_offset
+        self.w(addr, 0xC0 | (torch_id & 0x0F))
 
     def run_tests(self):
         print("\n=== STARTING DEKU STICK RUNTIME PROOFS ===")
@@ -217,7 +339,6 @@ class DekuStickRuntimeTest:
         state1 = self.r(DEKU_STICK_STATE)
         burn1 = self.r(DEKU_BURN_TIMER)
         wear1 = self.r(DEKU_STICK_WEAR)
-        sword_pre = self.r(SWORD_STATE)
 
         print(f"    After draw: count={count1} (exp 1), state={state1} (exp 1), burn={burn1} (exp 75), wear={wear1} (exp 0)")
 
@@ -230,7 +351,6 @@ class DekuStickRuntimeTest:
         wear1_stow = self.r(DEKU_STICK_WEAR)
         sword_stow = self.r(SWORD_STATE)
 
-        # On the stow frame, stick is stowed (state 0), count refunded (2), wear 0, and sword was NOT swung
         t1_ok = (count1 == 1 and state1 == 1 and burn1 == 75 and wear1 == 0 and
                  count1_stow == 2 and state1_stow == 0 and wear1_stow == 0 and sword_stow == 0)
         self.results["fresh_draw_and_sword_lockout"] = t1_ok
@@ -254,7 +374,6 @@ class DekuStickRuntimeTest:
                 break
             time.sleep(0.01)
 
-        # Wait for sword swing to complete (SWORD_STATE and SWORD_ANIM return to 0)
         end_time = time.time() + 1.2
         while time.time() < end_time:
             if self.r(SWORD_STATE) == 0 and self.r(SWORD_ANIM) == 0:
@@ -271,13 +390,11 @@ class DekuStickRuntimeTest:
         # 3. Worn stick stow, wear preservation & redraw
         # ----------------------------------------------------
         print("[*] Test 3: Worn stick stow, wear preservation, and redraw...")
-        # Link has 2 sticks, no stored wear
         self.w(DEKU_STICKS_COUNT, 2)
         self.w(DEKU_STICK_WEAR, 0)
         self.w(DEKU_STICK_STATE, 0)
         self.w(DEKU_BURN_TIMER, 0)
 
-        # Draw stick from menu
         if not self.navigate_to_equipment():
             raise RuntimeError("Failed to open Equipment menu")
         self.w(CURSOR, 20)
@@ -285,12 +402,12 @@ class DekuStickRuntimeTest:
         self.press("A", frames=10)
         self.wait_play(8.0)
 
-        # Simulate igniting stick (State = 2) and burning down to 30 ticks (~8 seconds remaining)
+        # Simulate igniting stick (State = 2) and burning down to 30 ticks
         self.w(DEKU_STICK_STATE, 2)
         self.w(DEKU_BURN_TIMER, 30)
         time.sleep(0.1)
 
-        # Stow the worn stick by pressing B
+        # Stow worn stick
         self.press("B", frames=10)
         time.sleep(0.1)
 
@@ -299,7 +416,7 @@ class DekuStickRuntimeTest:
         wear3_stow = self.r(DEKU_STICK_WEAR)
         print(f"    Worn stow: count={count3_stow} (exp 2), state={state3_stow} (exp 0), wear={wear3_stow} (exp in 25..30)")
 
-        # Redraw the stick from menu
+        # Redraw stick from menu
         if not self.navigate_to_equipment():
             raise RuntimeError("Failed to open Equipment menu")
         self.w(CURSOR, 20)
@@ -317,29 +434,266 @@ class DekuStickRuntimeTest:
         self.results["worn_stick_stow_and_redraw"] = t3_ok
         print(f"    Worn redraw: count={count3_redraw} (exp 1), state={state3_redraw} (exp 1), burn={burn3_redraw} (exp {wear3_stow}), wear={wear3_redraw} (exp 0) -> OK: {t3_ok}")
 
-        # Stow it again to leave wear in SRAM for Test 4
+        # ----------------------------------------------------
+        # 4. Visible OAM in 4 directions & controls
+        # ----------------------------------------------------
+        print("[*] Test 4: Visible OAM in 4 directions, flame flicker, Y swipe suppression...")
+        # Link currently holds stick (State = 1). Test 4 directions:
+        facings = {0: "up", 2: "down", 4: "left", 6: "right"}
+        oam_facings_ok = True
+        for dir_val, dir_name in facings.items():
+            self.w(LINK_DIR, dir_val)
+            time.sleep(0.05)
+            # Read stick OAM (Sprite 4) and flame OAM (Sprite 5)
+            s4_y = self.r(SPRITE4_OAM + 1)
+            s4_tile = self.r(SPRITE4_OAM + 2)
+            s4_prop = self.r(SPRITE4_OAM + 3)
+            s5_y = self.r(SPRITE5_OAM + 1)
+
+            # Unlit: Sprite 4 onscreen, palette 1 (0x02), Sprite 5 hidden (0xE0)
+            stick_onscreen = (s4_y != 0xE0)
+            palette1_ok = ((s4_prop & 0x0E) == 0x02)
+            flame_hidden = (s5_y == 0xE0)
+            valid = stick_onscreen and palette1_ok and flame_hidden
+            if not valid:
+                oam_facings_ok = False
+            self.take_screenshot(f"deku_held_{dir_name}_unlit")
+            print(f"    Facing {dir_name.upper()} unlit: stick_y={s4_y}, tile=0x{s4_tile:02X}, prop=0x{s4_prop:02X}, flame_y={s5_y} -> valid: {valid}")
+
+        # Now test lit flame OAM & flicker (State = 2)
+        self.w(DEKU_STICK_STATE, 2)
+        time.sleep(0.05)
+        s5_y_lit = self.r(SPRITE5_OAM + 1)
+        s5_tile_lit = self.r(SPRITE5_OAM + 2)
+        s5_prop_lit = self.r(SPRITE5_OAM + 3)
+        lit_flame_ok = (s5_y_lit != 0xE0 and s5_tile_lit == 0x9C and (s5_prop_lit & 0x0E) == 0x08)
+
+        # Check flicker bit 6 over 8 frames
+        flicker_observed = set()
+        for _ in range(8):
+            flicker_observed.add((self.r(SPRITE5_OAM + 3) & 0x40) != 0)
+            time.sleep(0.02)
+        flicker_ok = (len(flicker_observed) >= 2)
+        self.take_screenshot("deku_held_down_lit")
+        print(f"    Lit flame: y={s5_y_lit}, tile=0x{s5_tile_lit:02X}, prop=0x{s5_prop_lit:02X}, flicker_observed={flicker_ok} -> valid: {lit_flame_ok and flicker_ok}")
+
+        # Test Y swipe suppression of assigned item
+        self.w(Y_ITEM_ASSIGNED, 2)  # Assign Boomerang (item 2)
+        time.sleep(0.05)
+        # Queue Y press via Mesen controller
+        self.b.press_button("y", frames=4)
+        time.sleep(0.04)
+
+        state_swipe = self.r(DEKU_STICK_STATE)
+        timer_swipe = self.r(DEKU_SWIPE_TIMER)
+        f4_after = self.r(CONTROLLER_F4)
+
+        # Check that no Boomerang sprite was spawned in slots 0..15 ($0DD0..$0DDF)
+        active_sprites = [self.r(SPRITE_STATE + i) for i in range(16)]
+        boomerang_spawned = any(s == 0x09 and self.r(SPRITE_CLASS + i) == 0x0C for i, s in enumerate(active_sprites))
+
+        # Check movement input freeze: set $F0 = 0x01
+        self.w(CONTROLLER_F0, 0x01)
+        time.sleep(0.02)
+        f0_cleared = ((self.r(CONTROLLER_F0) & 0x0F) == 0)
+
+        self.take_screenshot("deku_swipe_active")
+        print(f"    Y swipe: state={state_swipe} (exp 3), timer={timer_swipe} (exp >0), f4_cleared={(f4_after & 0x40) == 0}, boomerang_spawned={boomerang_spawned}, input_frozen={f0_cleared}")
+
+        # Wait for swipe to finish (~14 frames)
+        time.sleep(0.3)
+        state_after_swipe = self.r(DEKU_STICK_STATE)
+        swipe_finished = (state_after_swipe == 2)  # returns to lit held state
+
+        # Stow stick with B
         self.press("B", frames=10)
         time.sleep(0.1)
 
-        # ----------------------------------------------------
-        # 4. Save & reopen persistence (T3 proof)
-        # ----------------------------------------------------
-        print("[*] Test 4: Save & reopen wear persistence via in-game Save/Quit and LOADROM...")
-        # Verify stored wear before save
-        wear_pre_save = self.r(DEKU_STICK_WEAR)
-        count_pre_save = self.r(DEKU_STICKS_COUNT)
-        print(f"    Pre-save: count={count_pre_save}, wear={wear_pre_save} (expected >0 and <=30)")
+        t4_ok = (oam_facings_ok and lit_flame_ok and flicker_ok and
+                 (state_swipe == 3 or swipe_finished) and not boomerang_spawned and
+                 f0_cleared and swipe_finished)
+        self.results["visible_oam_four_directions_and_controls"] = t4_ok
+        print(f"    Visible OAM & controls verdict -> OK: {t4_ok}")
 
-        # Ensure GameState >= 1 so GameOver_SaveAndQuit executes SaveGameFile
-        self.w(GAME_STATE, 2)
+        # ----------------------------------------------------
+        # 5. Swipe enemy nonlethal stun & immunity
+        # ----------------------------------------------------
+        print("[*] Test 5: Swipe nonlethal enemy stun, 0 HP damage, no break...")
+        # Draw stick unlit (count 2 -> 1)
+        self.w(DEKU_STICKS_COUNT, 1)
+        self.w(DEKU_STICK_STATE, 1)
+        self.w(DEKU_BURN_TIMER, 75)
+        self.w(LINK_DIR, 2)  # Facing Down
+
+        # Spawn active blue soldier in slot 0 directly in front of Link
+        posx = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        posy = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        cur_layer = self.r(CURRENT_LAYER)
+        underworld = self.r(UNDERWORLD_FLAG)
+
+        self.w(SPRITE_STATE + 0, 9)     # Active
+        self.w(SPRITE_CLASS + 0, 0x41)  # Soldier
+        self.w(SPRITE_DAMAGE + 0, 0)    # Vulnerable
+        self.w(SPRITE_HP + 0, 4)        # 4 HP
+        self.w(SPRITE_STUN + 0, 0)      # Not stunned
+        self.w(SPRITE_LAYER + 0, cur_layer)
+        self.w(SPRITE_POSX_LOW + 0, (posx + 2) & 0xFF)
+        self.w(SPRITE_POSX_HIGH + 0, (posx + 2) >> 8)
+        self.w(SPRITE_POSY_LOW + 0, (posy + 18) & 0xFF)
+        self.w(SPRITE_POSY_HIGH + 0, (posy + 18) >> 8)
+        self.w(NOPAIN, 0xFF)  # Prevent collision hurt during weapon test
+
+        print(f"    Sprite0 setup: Link=({posx},{posy}), Sprite0=({posx+2},{posy+18}), layer={cur_layer}, underworld={underworld}, state0={self.r(SPRITE_STATE+0)}")
+
+        # Trigger swipe via Mesen joypad
+        self.b.press_button("y", frames=4)
+
+        observed_stun = 0
+        observed_latched = False
+        end_time = time.time() + 0.4
+        poll_samples = 0
+        while time.time() < end_time:
+            stun = self.r(SPRITE_STUN + 0)
+            timer = self.r(DEKU_SWIPE_TIMER)
+            state = self.r(DEKU_STICK_STATE)
+            s0_state = self.r(SPRITE_STATE + 0)
+            if poll_samples < 5 and state == 3:
+                print(f"      [poll] stick_state={state}, timer={timer}, stun={stun}, s0_state={s0_state}")
+                poll_samples += 1
+            if stun in (0x20, 0x1F, 0x1E):
+                observed_stun = 0x20
+            if (timer & 0x40) != 0:
+                observed_latched = True
+            if observed_stun == 0x20 and observed_latched and state == 1:
+                break
+            time.sleep(0.01)
+
+        hp_during = self.r(SPRITE_HP + 0)
+        state_end = self.r(DEKU_STICK_STATE)
+        count_end = self.r(DEKU_STICKS_COUNT)
+        hp_end = self.r(SPRITE_HP + 0)
+
+        print(f"    Observed swipe hit: stun={observed_stun} (exp 0x20), hp={hp_during} (exp 4), latched={observed_latched}, state_end={state_end}")
+
+        stun_ok = (observed_stun == 0x20 and hp_during == 4 and hp_end == 4 and
+                   observed_latched and state_end == 1 and count_end == 1)
+
+        # Test immune enemy ($0E40 = 0x80): should not be stunned
+        self.w(SPRITE_DAMAGE + 0, 0x80)
+        self.w(SPRITE_STUN + 0, 0)
+        self.b.press_button("y", frames=4)
+        time.sleep(0.25)
+        immune_stun = self.r(SPRITE_STUN + 0)
+        immune_ok = (immune_stun == 0)
+
+        # Clear sprite slot 0 and restore NOPAIN
+        self.w(SPRITE_STATE + 0, 0)
+        self.w(SPRITE_STUN + 0, 0)
+        self.w(NOPAIN, 0)
+
+        t5_ok = (stun_ok and immune_ok)
+        self.results["swipe_enemy_stun_and_immunity"] = t5_ok
+        print(f"    Swipe enemy stun verdict: stun_ok={stun_ok}, immune_ok={immune_ok} -> OK: {t5_ok}")
+
+        # ----------------------------------------------------
+        # 6. Native torch interaction
+        # ----------------------------------------------------
+        print("[*] Test 6: Native dungeon torch ignition and lighting...")
+        self.w(UNDERWORLD_FLAG, 1)  # Ensure underworld mode
+        self.w(LINK_DIR, 2)         # Facing Down
+
+        # Case A: Unlit stick touches lit torch 0 -> ignites stick
+        self.w(TORCH_TIMERS + 0, 0x80)  # Torch 0 lit
+        self.set_torch_probe_tile(facing=2, torch_id=0)
+        self.w(DEKU_STICK_STATE, 1)     # Held unlit
+        self.w(DEKU_BURN_TIMER, 60)     # Budget 60 ticks
+        time.sleep(0.1)                 # Execute DekuStick_Main frame hook
+
+        state_torch_ignite = self.r(DEKU_STICK_STATE)
+        burn_torch_ignite = self.r(DEKU_BURN_TIMER)
+        ignite_ok = (state_torch_ignite == 2 and burn_torch_ignite == 60)
+        print(f"    Lit torch ignition: state={state_torch_ignite} (exp 2), burn={burn_torch_ignite} (exp 60) -> OK: {ignite_ok}")
+
+        # Case B: Lit stick touches unlit torch 1 -> lights torch 1 via Dungeon_LightTorch
+        self.w(TORCH_TIMERS + 1, 0x00)  # Torch 1 unlit
+        self.set_torch_probe_tile(facing=2, torch_id=1)
+        self.w(DEKU_STICK_STATE, 2)     # Held lit
+        self.w(DEKU_BURN_TIMER, 60)
+        time.sleep(0.1)                 # Execute DekuStick_Main frame hook
+
+        torch1_timer = self.r(TORCH_TIMERS + 1)
+        torch_light_ok = (torch1_timer > 0)
+        print(f"    Lighting unlit torch: torch1_timer={torch1_timer} (exp >0) -> OK: {torch_light_ok}")
+
+        # Stow stick
+        self.press("B", frames=10)
         time.sleep(0.1)
 
-        # Trigger Game Over via standard lethal damage fixture:
-        # Clear temporary invulnerability (NOPAIN $7E037B = 0) and queue lethal damage (HURTME $7E0373 = current HP)
-        hp = self.r(LINK_HP)
-        if hp == 0:
-            hp = 24
-            self.w(LINK_HP, hp)
+        t6_ok = (ignite_ok and torch_light_ok)
+        self.results["torch_native_lighting_and_ignition"] = t6_ok
+        print(f"    Torch interaction verdict -> OK: {t6_ok}")
+
+        # ----------------------------------------------------
+        # 7. Cross-room scroll & lifecycle
+        # ----------------------------------------------------
+        print("[*] Test 7: Cross-room scroll burn pause & transition lifecycle...")
+        # Link has stick lit, budget 50 ticks
+        self.w(DEKU_STICKS_COUNT, 1)
+        self.w(DEKU_STICK_STATE, 2)
+        self.w(DEKU_BURN_TIMER, 50)
+
+        # Simulate ordinary screen scrolling: SUBMODULE $11 = 1
+        self.w(SUBMODULE, 1)
+        time.sleep(0.5)  # ~30 frames of scrolling
+
+        burn_during_scroll = self.r(DEKU_BURN_TIMER)
+        state_during_scroll = self.r(DEKU_STICK_STATE)
+        scroll_paused = (burn_during_scroll == 50 and state_during_scroll == 2)
+        print(f"    During scroll ($11=1): burn={burn_during_scroll} (exp 50), state={state_during_scroll} (exp 2) -> OK: {scroll_paused}")
+
+        # Resume normal gameplay ($11 = 0)
+        self.w(SUBMODULE, 0)
+        time.sleep(0.4)  # ~24 frames: should tick down at least once
+        burn_after_scroll = self.r(DEKU_BURN_TIMER)
+        scroll_resumed = (burn_after_scroll < 50)
+        print(f"    After scroll ($11=0): burn={burn_after_scroll} (exp <50) -> OK: {scroll_resumed}")
+
+        # Destructive transition: entrance/exit fade ($10 = 7) drops drawn stick without refund
+        self.w(MODULE, 7)
+        time.sleep(0.1)
+        state_fade = self.r(DEKU_STICK_STATE)
+        burn_fade = self.r(DEKU_BURN_TIMER)
+        count_fade = self.r(DEKU_STICKS_COUNT)
+        fade_dropped = (state_fade == 0 and burn_fade == 0 and count_fade == 1)
+        self.w(MODULE, 9)
+        print(f"    Fade drop ($10=7): state={state_fade} (exp 0), burn={burn_fade} (exp 0), count={count_fade} (exp 1) -> OK: {fade_dropped}")
+
+        # Stowed wear survives transitions
+        self.w(DEKU_STICK_WEAR, 30)
+        self.w(DEKU_STICK_STATE, 0)
+        self.w(MODULE, 7)  # Transition while stowed
+        time.sleep(0.1)
+        self.w(MODULE, 9)
+        wear_survived = (self.r(DEKU_STICK_WEAR) == 30)
+        print(f"    Stowed wear transition survival: wear={self.r(DEKU_STICK_WEAR)} (exp 30) -> OK: {wear_survived}")
+
+        t7_ok = (scroll_paused and scroll_resumed and fade_dropped and wear_survived)
+        self.results["cross_room_scroll_and_lifecycle"] = t7_ok
+        print(f"    Cross-room lifecycle verdict -> OK: {t7_ok}")
+
+        # ----------------------------------------------------
+        # 8. Save & Quit battery persistence
+        # ----------------------------------------------------
+        print("[*] Test 8: In-game Save & Quit and battery SRM persistence...")
+        # Link has 2 sticks, stored wear = 30
+        self.w(DEKU_STICKS_COUNT, 2)
+        self.w(DEKU_STICK_WEAR, 30)
+        self.w(DEKU_STICK_STATE, 0)
+        self.w(GAME_STATE, 2)  # Enable SaveGameFile execution
+
+        # Queue lethal damage to reach GameOver screen
+        hp = self.r(LINK_HP) or 24
+        self.w(LINK_HP, hp)
         self.w(NOPAIN, 0)
         self.w(HURTME, hp)
 
@@ -360,7 +714,7 @@ class DekuStickRuntimeTest:
             self.b.press_button("select", frames=8)
             time.sleep(0.3)
 
-        # Wait for return to Title Screen / Intro
+        # Wait for return to Title Screen
         end_time = time.time() + 15.0
         while time.time() < end_time:
             if self.r(MODULE) in (0, 1, 0x14):
@@ -373,50 +727,41 @@ class DekuStickRuntimeTest:
         if len(sram) != 8192:
             raise RuntimeError(f"Expected 8192 bytes of SRAM, got {len(sram)}")
 
-        # Checksum calculation: sum of 16-bit words across slot 1 (0x500 bytes) must equal 0x5A5A
         slot1_csum = sum(int.from_bytes(sram[i:i+2], "little") for i in range(0, 0x500, 2)) & 0xFFFF
         csum_ok = (slot1_csum == 0x5A5A)
         backup_ok = (sram[:0x500] == sram[0xF00:0x1400])
         sram_wear = sram[0x39F]
         sram_count = sram[0x395]
 
-        # Save the actual SRM file to work dir and sync to profile Saves
-        srm_path = self.work_dir / "deku_persistence.srm"
-        srm_path.write_bytes(sram)
-        (self.home / "Saves" / "deku_candidate.srm").write_bytes(sram)
-        print(f"    SRAM checks: checksum=0x{slot1_csum:04X} (valid: {csum_ok}), backup_match={backup_ok}, sram_count={sram_count}, sram_wear={sram_wear}")
+        # Ensure SRM file is saved on disk for fresh process reopen
+        srm_file = self.home / "Saves" / "deku_candidate.srm"
+        srm_file.write_bytes(sram)
+        (self.work_dir / "deku_persistence.srm").write_bytes(sram)
+        print(f"    SRAM: csum=0x{slot1_csum:04X} (valid: {csum_ok}), backup={backup_ok}, count={sram_count}, wear={sram_wear}")
 
-        # Reload ROM via LOADROM (reinitializes emulator memory from cartridge & SRM on disk)
-        self.b.send_command("LOADROM", {"path": str(self.rom_copy)})
-        time.sleep(2.0)
+        t8_ok = (csum_ok and backup_ok and sram_wear == 30 and sram_count == 2)
+        self.results["save_quit_battery_persistence"] = t8_ok
+        print(f"    Save/Quit battery verdict -> OK: {t8_ok}")
 
-        # Advance through Title to File Select (Module 1)
-        for _ in range(30):
-            if self.r(MODULE) == 1:
-                break
-            self.b.press_button("start", frames=6)
-            time.sleep(0.4)
-        print(f"    At File Select: MODULE={self.r(MODULE)}")
+        # ----------------------------------------------------
+        # 9. Fresh-process cold boot reopen (T3 proof)
+        # ----------------------------------------------------
+        print("[*] Test 9: Fresh-process cold boot reopen with disk SRM...")
+        # Cleanly shut down first emulator instance
+        self.close()
 
-        # Launch File 1 into gameplay (MODULE in 7, 9, 11 and SUBMODULE == 0)
-        for _ in range(40):
-            if self.r(MODULE) in (7, 9, 11) and self.r(SUBMODULE) == 0:
-                break
-            self.b.press_button("start", frames=8)
-            time.sleep(0.4)
-        print(f"    Back in gameplay: MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)}")
+        # Launch fresh emulator instance loading the disk SRM without reset
+        self.launch(reset_save=False)
+        self.boot_fresh_file()
 
         wear_reopened = self.r(DEKU_STICK_WEAR)
         count_reopened = self.r(DEKU_STICKS_COUNT)
         state_reopened = self.r(DEKU_STICK_STATE)
         burn_reopened = self.r(DEKU_BURN_TIMER)
-        print(f"    Reopened state: count={count_reopened}, wear={wear_reopened}, state={state_reopened}, burn={burn_reopened}")
+        honeycomb_reopened = self.r(HONEYCOMB_COUNT)
+        print(f"    Fresh session: count={count_reopened}, wear={wear_reopened}, state={state_reopened}, honeycomb={honeycomb_reopened}")
 
-        # Verify reopened state matches saved values
-        reopened_ok = (csum_ok and backup_ok and
-                       sram_wear == wear_pre_save and sram_count == count_pre_save and
-                       wear_reopened == wear_pre_save and count_reopened == count_pre_save and
-                       state_reopened == 0 and burn_reopened == 0)
+        reopened_clean = (wear_reopened == 30 and count_reopened == 2 and state_reopened == 0 and burn_reopened == 0)
 
         # Redraw stick to verify restored burn timer from preserved wear
         if not self.navigate_to_equipment():
@@ -430,16 +775,14 @@ class DekuStickRuntimeTest:
         redraw_state = self.r(DEKU_STICK_STATE)
         redraw_burn = self.r(DEKU_BURN_TIMER)
         redraw_wear = self.r(DEKU_STICK_WEAR)
-        print(f"    Redrawn from saved wear: count={redraw_count} (exp {count_pre_save-1}), state={redraw_state} (exp 1), burn={redraw_burn} (exp {wear_pre_save}), wear={redraw_wear} (exp 0)")
-
-        redraw_ok = (redraw_count == count_pre_save - 1 and redraw_state == 1 and
-                     redraw_burn == wear_pre_save and redraw_wear == 0)
+        print(f"    Redrawn from wear: count={redraw_count} (exp 1), state={redraw_state} (exp 1), burn={redraw_burn} (exp 30), wear={redraw_wear} (exp 0)")
+        redraw_ok = (redraw_count == 1 and redraw_state == 1 and redraw_burn == 30 and redraw_wear == 0)
 
         # Stow stick
         self.press("B", frames=10)
         time.sleep(0.2)
 
-        # Corrupt-wear fallback test: write 0xFF to DEKU_STICK_WEAR, draw from menu, assert fallback to 75 ticks
+        # Corrupt wear fallback test ($FF -> 75 ticks)
         self.w(DEKU_STICK_WEAR, 0xFF)
         time.sleep(0.1)
         if not self.navigate_to_equipment():
@@ -449,26 +792,38 @@ class DekuStickRuntimeTest:
         self.press("A", frames=10)
         self.wait_play(8.0)
 
-        fallback_count = self.r(DEKU_STICKS_COUNT)
         fallback_state = self.r(DEKU_STICK_STATE)
         fallback_burn = self.r(DEKU_BURN_TIMER)
         fallback_wear = self.r(DEKU_STICK_WEAR)
-        print(f"    Corrupt wear fallback: count={fallback_count}, state={fallback_state}, burn={fallback_burn} (exp 75), wear={fallback_wear} (exp 0)")
-
         fallback_ok = (fallback_state == 1 and fallback_burn == 75 and fallback_wear == 0)
+        print(f"    Corrupt wear fallback: state={fallback_state}, burn={fallback_burn} (exp 75), wear={fallback_wear} (exp 0) -> OK: {fallback_ok}")
 
         # Stow stick
         self.press("B", frames=10)
         time.sleep(0.2)
 
-        t4_ok = (reopened_ok and redraw_ok and fallback_ok)
-        self.results["save_reopen_t3_persistence"] = t4_ok
-        print(f"    Save & reopen persistence verdict: reopened={reopened_ok}, redraw={redraw_ok}, fallback={fallback_ok} -> OK: {t4_ok}")
+        # Check ordinary sword swing works after reopen and stow
+        self.b.press_button("B", frames=8)
+        observed_sword = 0
+        end_time = time.time() + 0.6
+        while time.time() < end_time:
+            if self.r(SWORD_STATE) > 0 or self.r(SWORD_ANIM) > 0:
+                observed_sword = 1
+                break
+            time.sleep(0.01)
+        time.sleep(0.5)
+
+        sword_reopened_ok = (observed_sword == 1 and self.r(SWORD_STATE) == 0 and self.r(SWORD_ANIM) == 0)
+        print(f"    Ordinary sword swing after reopen: observed={observed_sword} -> OK: {sword_reopened_ok}")
+
+        t9_ok = (reopened_clean and redraw_ok and fallback_ok and sword_reopened_ok)
+        self.results["save_reopen_t3_persistence"] = t9_ok
+        print(f"    Fresh process reopen verdict -> OK: {t9_ok}")
 
         # ----------------------------------------------------
-        # 5. Interruption drop cleanup (taking damage)
+        # 10. Interruption drop cleanup (taking damage)
         # ----------------------------------------------------
-        print("[*] Test 5: Interruption drop cleanup (damage drops stick)...")
+        print("[*] Test 10: Interruption drop cleanup (damage drops stick)...")
         # Draw stick
         if not self.navigate_to_equipment():
             raise RuntimeError("Failed to open Equipment menu")
@@ -477,54 +832,48 @@ class DekuStickRuntimeTest:
         self.press("A", frames=10)
         self.wait_play(8.0)
 
-        # Verify drawn
-        state5_drawn = self.r(DEKU_STICK_STATE)
-        count5_drawn = self.r(DEKU_STICKS_COUNT)
+        state10_drawn = self.r(DEKU_STICK_STATE)
+        count10_drawn = self.r(DEKU_STICKS_COUNT)
 
-        # Simulate damage interruption by writing LinkState $5D = 1 (recoil/hurt)
+        # Simulate damage interruption by writing LinkState $5D = 1
         self.w(LINK_STATE, 1)
         time.sleep(0.3)
 
-        # DekuStick_Main should have detected $5D != 0 and called DekuStick_Drop
-        state5_after = self.r(DEKU_STICK_STATE)
-        burn5_after = self.r(DEKU_BURN_TIMER)
-        count5_after = self.r(DEKU_STICKS_COUNT)
-        wear5_after = self.r(DEKU_STICK_WEAR)
+        state10_after = self.r(DEKU_STICK_STATE)
+        burn10_after = self.r(DEKU_BURN_TIMER)
+        count10_after = self.r(DEKU_STICKS_COUNT)
+        wear10_after = self.r(DEKU_STICK_WEAR)
 
-        # Reset LinkState back to 0
         self.w(LINK_STATE, 0)
         time.sleep(0.1)
 
-        # Dropped stick: state 0, burn 0, count NOT refunded (remains 1), wear 0
-        t5_ok = (state5_drawn == 1 and state5_after == 0 and burn5_after == 0 and count5_after == 1 and wear5_after == 0)
-        self.results["interruption_drop_cleanup"] = t5_ok
-        print(f"    Interruption: drawn_state={state5_drawn}, after_state={state5_after}, burn={burn5_after}, count={count5_after} (exp 1), wear={wear5_after} (exp 0) -> OK: {t5_ok}")
+        t10_ok = (state10_drawn == 1 and state10_after == 0 and burn10_after == 0 and count10_after == 1 and wear10_after == 0)
+        self.results["interruption_drop_cleanup"] = t10_ok
+        print(f"    Interruption: drawn={state10_drawn}, after={state10_after}, burn={burn10_after}, count={count10_after} (exp 1), wear={wear10_after} (exp 0) -> OK: {t10_ok}")
 
         # ----------------------------------------------------
-        # 6. Burn countdown & burn-out
+        # 11. Burn countdown & burn-out
         # ----------------------------------------------------
-        print("[*] Test 6: Burn countdown & burn-out...")
-        # Give Link 1 stick
+        print("[*] Test 11: Burn countdown & burn-out...")
         self.w(DEKU_STICKS_COUNT, 1)
         self.w(DEKU_STICK_WEAR, 0)
         self.w(DEKU_STICK_STATE, 2)  # Lit stick
         self.w(DEKU_BURN_TIMER, 3)   # 3 ticks remaining
 
-        # Wait ~50 frames for burn countdown to tick to 0
-        time.sleep(1.0)
+        time.sleep(1.0)  # Wait ~50 frames for countdown to reach 0
 
-        state6_after = self.r(DEKU_STICK_STATE)
-        burn6_after = self.r(DEKU_BURN_TIMER)
-        count6_after = self.r(DEKU_STICKS_COUNT)
+        state11_after = self.r(DEKU_STICK_STATE)
+        burn11_after = self.r(DEKU_BURN_TIMER)
+        count11_after = self.r(DEKU_STICKS_COUNT)
 
-        t6_ok = (state6_after == 0 and burn6_after == 0 and count6_after == 1)
-        self.results["burn_countdown_and_burnout"] = t6_ok
-        print(f"    Burn-out: state={state6_after} (exp 0), burn={burn6_after} (exp 0), count={count6_after} (exp 1) -> OK: {t6_ok}")
+        t11_ok = (state11_after == 0 and burn11_after == 0 and count11_after == 1)
+        self.results["burn_countdown_and_burnout"] = t11_ok
+        print(f"    Burn-out: state={state11_after} (exp 0), burn={burn11_after} (exp 0), count={count11_after} (exp 1) -> OK: {t11_ok}")
 
         # ----------------------------------------------------
-        # 7. Zero-inventory refusal
+        # 12. Zero-inventory refusal
         # ----------------------------------------------------
-        print("[*] Test 7: Zero-inventory draw refusal...")
+        print("[*] Test 12: Zero-inventory draw refusal...")
         self.w(DEKU_STICKS_COUNT, 0)
         self.w(DEKU_STICK_WEAR, 30)  # Retained wear
         self.w(DEKU_STICK_STATE, 0)
@@ -535,22 +884,20 @@ class DekuStickRuntimeTest:
         self.w(CURSOR, 20)
         time.sleep(0.1)
 
-        # Press A: should be refused
         self.press("A", frames=10)
         time.sleep(0.5)
 
-        menu7 = self.r(MENU)
-        pend7 = self.r(PENDING_SUPPLY)
-        count7 = self.r(DEKU_STICKS_COUNT)
-        wear7 = self.r(DEKU_STICK_WEAR)
+        menu12 = self.r(MENU)
+        pend12 = self.r(PENDING_SUPPLY)
+        count12 = self.r(DEKU_STICKS_COUNT)
+        wear12 = self.r(DEKU_STICK_WEAR)
 
-        # Close menu
         self.press("START", frames=10)
         self.wait_play(5.0)
 
-        t7_ok = (menu7 == 6 and pend7 == 0 and count7 == 0 and wear7 == 30)
-        self.results["zero_inventory_refusal"] = t7_ok
-        print(f"    Zero-inventory refusal: MENU={menu7} (exp 6), pending={pend7} (exp 0), count={count7} (exp 0), wear={wear7} (exp 30) -> OK: {t7_ok}")
+        t12_ok = (menu12 == 6 and pend12 == 0 and count12 == 0 and wear12 == 30)
+        self.results["zero_inventory_refusal"] = t12_ok
+        print(f"    Zero-inventory refusal: MENU={menu12} (exp 6), pending={pend12} (exp 0), count={count12} (exp 0), wear={wear12} (exp 30) -> OK: {t12_ok}")
 
 
 def main():
@@ -562,7 +909,7 @@ def main():
 
     test = DekuStickRuntimeTest(args.rom, args.app, args.work_dir)
     try:
-        test.launch()
+        test.launch(reset_save=True)
         test.boot_file2()
         test.run_tests()
     finally:

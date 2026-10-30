@@ -469,6 +469,7 @@ endif
 ; when $3C = 0 (vanilla branched past that test when $3C = 0).
 MaskControl_CheckYItem:
 {
+  JSL DekuStick_CheckYPress
 if !ENABLE_MASK_R_BINDING == 1
   JML MaskBinding_Tick
 endif

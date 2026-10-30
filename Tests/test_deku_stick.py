@@ -105,6 +105,26 @@ class DekuStickContractTest(unittest.TestCase):
         self.assertLess(hook_idx, minish_idx)
         self.assertIn("JSL DekuStick_Main", mask_text[hook_idx:minish_idx])
 
+    def test_y_interception_hook(self):
+        mask_text = MASK_ROUTINES.read_text(encoding="utf-8")
+        y_hook_idx = mask_text.find("MaskControl_CheckYItem:")
+        r_bind_idx = mask_text.find("if !ENABLE_MASK_R_BINDING == 1", y_hook_idx)
+        self.assertNotEqual(y_hook_idx, -1)
+        self.assertNotEqual(r_bind_idx, -1)
+        # DekuStick_CheckYPress must precede R binding dispatch in MaskControl_CheckYItem
+        self.assertIn("JSL DekuStick_CheckYPress", mask_text[y_hook_idx:r_bind_idx])
+
+    def test_swipe_and_torch_source_contracts(self):
+        stick_text = DEKU_STICK.read_text(encoding="utf-8")
+        self.assertIn("DekuStick_CheckYPress:", stick_text)
+        self.assertIn("DekuStick_CheckTorch:", stick_text)
+        self.assertIn("DekuStick_CheckHit:", stick_text)
+        self.assertIn("DekuStick_DrawOAM:", stick_text)
+        self.assertIn("Entity_GetTileAttr  = $06E87B", stick_text)
+        self.assertIn("Dungeon_LightTorch  = $01F3EC", stick_text)
+        self.assertIn("JSL Entity_GetTileAttr", stick_text)
+        self.assertIn("JSL Dungeon_LightTorch", stick_text)
+
 
 class DekuStickLogicModelTest(unittest.TestCase):
     """Simulates the ASM state machine logic for Deku Stick draw, stow, and wear."""
@@ -176,6 +196,88 @@ class DekuStickLogicModelTest(unittest.TestCase):
     def ignite(self):
         if self.stick_state == 1:
             self.stick_state = 2  # Lit
+
+    def press_y(self):
+        if self.stick_state == 0:
+            return "NORMAL_ITEM"
+        # Stick is held or swiping: suppress assigned item
+        if self.stick_state in (1, 2):
+            was_lit = 0x80 if self.stick_state == 2 else 0
+            self.swipe_timer = 14 | was_lit
+            self.stick_state = 3
+            return "SWIPE_STARTED"
+        return "SWIPE_ACTIVE"
+
+    def advance_swipe_frame(self, enemy=None, torch_state=None):
+        if self.stick_state != 3:
+            return
+        timer = self.swipe_timer & 0x1F
+        was_lit = bool(self.swipe_timer & 0x80)
+        hit_latched = bool(self.swipe_timer & 0x40)
+
+        # Active window: frames 10 down to 7
+        if 7 <= timer <= 10:
+            if enemy and not hit_latched and enemy.get("active") and not enemy.get("boss"):
+                if enemy.get("stun_timer", 0) == 0:
+                    enemy["stun_timer"] = 32  # Nonlethal stun
+                    self.swipe_timer |= 0x40  # Latch hit bit
+
+            if torch_state == "LIT" and not was_lit:
+                self.swipe_timer |= 0x80  # Ignite swipe
+                was_lit = True
+            elif torch_state == "UNLIT" and was_lit:
+                torch_state = "LIT"
+
+        timer -= 1
+        if timer == 0:
+            self.stick_state = 2 if was_lit else 1
+            self.swipe_timer = 0
+        else:
+            self.swipe_timer = timer | (0x80 if was_lit else 0) | (0x40 if hit_latched else 0)
+
+    def test_swipe_controls_and_stun(self):
+        # 1. Draw fresh stick
+        self.assertTrue(self.menu_press_a())
+        self.assertTrue(self.process_exit_action())
+        self.assertEqual(self.stick_state, 1)
+
+        # 2. Press Y -> starts swipe and suppresses assigned item
+        self.assertEqual(self.press_y(), "SWIPE_STARTED")
+        self.assertEqual(self.stick_state, 3)
+        self.assertEqual(self.swipe_timer & 0x1F, 14)
+
+        # 3. Simulate 14 frames with an enemy present
+        enemy = {"active": True, "hp": 4, "boss": False, "stun_timer": 0}
+        initial_hp = enemy["hp"]
+
+        for f in range(14, 0, -1):
+            self.advance_swipe_frame(enemy=enemy)
+
+        # Verify enemy was stunned, HP was NOT damaged, stick was NOT broken
+        self.assertEqual(enemy["stun_timer"], 32)
+        self.assertEqual(enemy["hp"], initial_hp)  # 0 HP damage!
+        self.assertEqual(self.stick_state, 1)      # Returned cleanly to held unlit!
+        self.assertEqual(self.deku_sticks, 1)      # No stick loss!
+
+    def test_swipe_while_lit_maintains_burn_budget(self):
+        self.assertTrue(self.menu_press_a())
+        self.assertTrue(self.process_exit_action())
+        self.ignite()
+        self.assertEqual(self.stick_state, 2)
+        self.burn_timer = 50
+
+        # Press Y while lit -> starts lit swipe (bit 7 set)
+        self.assertEqual(self.press_y(), "SWIPE_STARTED")
+        self.assertEqual(self.stick_state, 3)
+        self.assertTrue(bool(self.swipe_timer & 0x80))
+
+        # Advance 14 frames
+        for _ in range(14):
+            self.advance_swipe_frame()
+
+        # Returns to lit state 2, burn budget preserved
+        self.assertEqual(self.stick_state, 2)
+        self.assertEqual(self.burn_timer, 50)
 
     def test_fresh_draw_and_stow(self):
         # 1. Draw fresh stick
