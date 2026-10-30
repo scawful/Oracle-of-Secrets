@@ -100,7 +100,10 @@ class CurrentNativePlanTest(unittest.TestCase):
         import lyra_current_transfer as X
         spans = ((0x1759D, 0x175D2), (0x17691, 0x177CB), (0x177E3, 0x17818))
         layout, _ = X._current_table_layout([row[0] for row in A.SPECS]
-            + [f'music_phase{i}' for i in range(4)])
+            + [f'music_phase{i}' for i in range(4)]
+            + [f'{family}_phase{phase}'
+               for family in ('special_sprite_gfx', 'special_sprite_palettes')
+               for phase in (1, 2)])
         profile = dict(kind=X.CURRENT_PROFILE_KIND,
             native_reader_preimages=[dict(pc=list(span), sha256=R.sha(source[slice(*span)])) for span in spans],
             origins=dict(tables=dict(pc=[0x320000, 0x328000])), table_layout=layout)

@@ -385,7 +385,10 @@ class CurrentSaveTransferTest(unittest.TestCase):
         # real current-source validator has independent complete fixtures.
         spans = ((0x1759D, 0x175D2), (0x17691, 0x177CB), (0x177E3, 0x17818))
         layout, _ = X._current_table_layout([row[0] for row in X.A.SPECS]
-            + [f'music_phase{i}' for i in range(4)])
+            + [f'music_phase{i}' for i in range(4)]
+            + [f'{family}_phase{phase}'
+               for family in ('special_sprite_gfx', 'special_sprite_palettes')
+               for phase in (1, 2)])
         source = self.rom.read_bytes()
         self.current_profile = dict(kind=X.CURRENT_PROFILE_KIND,
             native_reader_preimages=[dict(pc=list(span), sha256=X.R.sha(source[slice(*span)])) for span in spans],
