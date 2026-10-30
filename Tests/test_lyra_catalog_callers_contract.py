@@ -20,10 +20,22 @@ sys.path.insert(0, str(ROOT / 'Scripts/Build'))
 import lyra_current_transfer as X
 import lyra_project_publisher as P
 import test_lyra_current_native_loaders as reader_fixtures
+import test_lyra_current_source_contract as contract_fixtures
 
 
 FROZEN = '6e7e5f15d555dffb9f4b3d8807595c9e3f13305f'
-SOURCE_SET = 'lyra_current_gameplay_areas_05'
+HISTORICAL_GAMEPLAY_SET = 'lyra_current_gameplay_areas_05'
+SELECTED_SET = 'lyra_current_resident_constructor_54'
+PREVIOUS_SET = 'lyra_ferry_visual_boundary_53'
+RESIDENT_ADDITIONS = {
+    'Overworld/lyra_resident_atlas.asm', 'Overworld/lyra_resident_resources.asm',
+    'Scripts/Build/lyra_native_streams.py', 'Scripts/Build/lyra_project_allocation.py',
+    'Scripts/Build/lyra_project_composition.py', 'Scripts/Build/lyra_project_prepare.py',
+    'Scripts/Build/lyra_project_tile32.py', 'Scripts/Build/lyra_resident_graphics.py',
+    'Scripts/Generate/lz2.py', 'Scripts/Generate/sheet_codec.py', 'Scripts/Generate/sheet_table.py',
+}
+AUTHORITY_FLAGS = ('allocation_granted', 'publication_authorized',
+                   'producer_enforcement_verified', 'ordinary_build_ready', 'runtime_admission')
 ACTOR_SET = 'lyra_current_actor_resources_04'
 COMPOSER_SET = 'lyra_current_composer_binding_03'
 FROZEN_SET = 'lyra_current_full32_port_01'
@@ -63,8 +75,17 @@ class CatalogCallersContractTest(unittest.TestCase):
         self.ledger_raw = (ROOT / LEDGER).read_bytes()
         self.ledger = json.loads(self.ledger_raw)
         self.contract = json.loads((ROOT / CONTRACT).read_bytes())
+        self.historical_records = [row for row in self.ledger['sources'].values()
+                                   if row['source_set'] == HISTORICAL_GAMEPLAY_SET]
         self.records = [row for row in self.ledger['sources'].values()
-                        if row['source_set'] == SOURCE_SET]
+                        if row['source_set'] == SELECTED_SET]
+
+    def assert_selected_bindings(self, bindings, root):
+        self.assertEqual(bindings[0], dict(path=str(root / LEDGER),
+                                          sha256=P.R.sha(self.ledger_raw)))
+        self.assertEqual(len(bindings), len(self.records) + 1)
+        self.assertEqual({row['path']: row['sha256'] for row in bindings[1:]},
+                         {str(root / row['path']): row['sha256'] for row in self.records})
 
     def bound_contract(self):
         contract = copy.deepcopy(self.contract)
@@ -106,20 +127,27 @@ class CatalogCallersContractTest(unittest.TestCase):
         self.assertEqual(hashlib.sha256(retained).hexdigest(),
                          'da1cf33ca25ba62f063c2bd14151406d96eca9ef022abe94d6c4b49e0cae7a8e')
 
-    def test_child_exact_ledger_and_all33_consumers_validate_but_need_profile_to_compose(self):
-        self.assertEqual(self.contract['ledger']['source_set'], SOURCE_SET)
-        self.assertEqual(len(self.records), 33)
+    def test_historical_gameplay_set_retains_all33_consumer_paths(self):
+        self.assertEqual(len(self.historical_records), 33)
         old_paths = {row['path'] for row in self.frozen_ledger['sources'].values()
                      if row['source_set'] == FROZEN_SET}
         resources = {'Overworld/gfx/kalyxo_docks_slot3.bin', 'Overworld/gfx/kalyxo_docks_bg.bin',
                      'Overworld/gfx/lyra_sky_tower_87.bin', 'Overworld/gfx/lyra_stepped_fort_83.bin'}
         readers = {'Scripts/Build/lyra_project_terrain.py', 'Scripts/Build/lyra_project_admission.py'}
-        self.assertEqual({row['path'] for row in self.records}, old_paths | resources | readers)
-        bindings = P.validate_current_source_set(self.bound_contract())
-        self.assertEqual(len(bindings), 34)
-        self.assertEqual(bindings[0], dict(path=str(ROOT / LEDGER), sha256=P.R.sha(self.ledger_raw)))
-        self.assertEqual({row['path']: row['sha256'] for row in bindings[1:]},
-                         {str(ROOT / row['path']): row['sha256'] for row in self.records})
+        self.assertEqual({row['path'] for row in self.historical_records},
+                         old_paths | resources | readers)
+
+    def test_selected_consumers_bind_exactly_but_need_profile_to_compose(self):
+        self.assertEqual(self.contract['ledger']['source_set'], SELECTED_SET)
+        previous_paths = {row['path'] for row in self.ledger['sources'].values()
+                          if row['source_set'] == PREVIOUS_SET}
+        self.assertTrue(previous_paths)
+        self.assertEqual(set(X.RESIDENT_ADDITIONAL_SOURCES), RESIDENT_ADDITIONS)
+        self.assertEqual({row['path'] for row in self.records},
+                         previous_paths | RESIDENT_ADDITIONS)
+        self.assertEqual(self.contract['ledger']['sha256'], P.R.sha(self.ledger_raw))
+        # Exact inactive source bindings are not a verified engine/Save profile.
+        self.assert_selected_bindings(P.validate_current_source_set(self.contract), ROOT)
         with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_PROFILE_REQUIRED'):
             self.compose(self.composable_contract())
 
@@ -146,7 +174,7 @@ class CatalogCallersContractTest(unittest.TestCase):
             contract['origins']['graphics']['source_binding']['path'] = str(
                 root / 'Overworld/custom_gfx.asm')
             with mock.patch.object(P, 'ROOT', root):
-                self.assertEqual(len(P.validate_current_source_set(contract)), 34)
+                self.assert_selected_bindings(P.validate_current_source_set(contract), root)
                 with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_PROFILE_REQUIRED'):
                     self.compose(contract)
                 consumer = root / 'Overworld/custom_gfx.asm'
@@ -173,18 +201,34 @@ class CatalogCallersContractTest(unittest.TestCase):
             for key in old:
                 self.assertEqual(raw_member(new_text, key), raw_member(old_text, key), key)
 
-    def test_actual_canonical_null_ledger_and_origins_still_refuse(self):
-        self.assertEqual(self.contract['ledger']['source_set'], SOURCE_SET)
-        self.assertIsNone(self.contract['ledger']['sha256'])
-        self.assertTrue(all(value is None for value in self.contract['origins'].values()))
-        self.assertTrue(all(value is None for value in self.contract['native_readers'].values()))
-        with self.assertRaisesRegex(ValueError, 'CURRENT_SOURCE_LEDGER_UNBOUND'):
-            P.validate_current_source_set(self.contract)
-        with self.assertRaisesRegex(ValueError, 'CURRENT_SOURCE_LEDGER_UNBOUND'):
-            X.validate_current_source_contract({}, ROOT / 'unused-project', ROOT / 'unused-rom')
-        # Binding only the exact ledger cannot supply a verified source profile.
+    def test_canonical_bound_proposal_cannot_assert_authority_or_compose_without_profile(self):
+        self.assertEqual(self.contract['ledger']['source_set'], SELECTED_SET)
+        self.assertEqual(self.contract['status'], 'proposed')
+        self.assertEqual(self.contract['scope'], 'source_review_only')
+        self.assertIs(self.contract['saved_generation_required'], True)
+        for key in AUTHORITY_FLAGS:
+            self.assertIs(self.contract[key], False, key)
+        self.assertTrue(all(value is not None for value in self.contract['origins'].values()))
+        self.assertTrue(all(value is not None for value in self.contract['native_readers'].values()))
+        for key in ('resident_data', 'resident_code', 'resident_resource_code'):
+            self.assertNotIn(key, self.contract['origins'])
+        # Bound proposal metadata cannot supply a verified source profile.
         with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_PROFILE_REQUIRED'):
             self.compose(self.bound_contract())
+
+    def test_null_ledger_host_fixture_refuses_both_real_validators(self):
+        # Generic committed HOST source/Save fixture, not genuine all32/native
+        # evidence. Its existing review/project/ROM replace unused-path shortcuts.
+        fixture = contract_fixtures.CurrentSourceContractTest()
+        self.addCleanup(fixture.doCleanups)
+        fixture.setUp()
+        fixture.value['ledger']['sha256'] = None
+        fixture.write()
+        for operation in (lambda: P.validate_current_source_set(fixture.value),
+                          lambda: X.validate_current_source_contract(fixture.review,
+                              fixture.case.project, fixture.case.rom)):
+            with self.assertRaisesRegex(ValueError, 'CURRENT_SOURCE_LEDGER_UNBOUND'):
+                operation()
 
 
 class SourceSnapshotIntegrityTest(unittest.TestCase):
