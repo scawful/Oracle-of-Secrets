@@ -96,6 +96,9 @@ ApplyGraphics1:
   %ApplyGraphicsSheet(BoatBitmap, $2C00)
   RTS
 
+if !ENABLE_KALYXO_BOAT == 1 && !LYRA_CURRENT_MODE == 0
+  ShipBackgroundGraphics:
+endif
   BoatBitmap:
   incbin gfx/boat.bin
 }
@@ -105,6 +108,9 @@ ApplyGraphics2:
   %ApplyGraphicsSheet(AdditionalBitmap, $5000)
   RTS
 
+if !ENABLE_KALYXO_BOAT == 1 && !LYRA_CURRENT_MODE == 0
+  ShipExtendedGraphics:
+endif
   AdditionalBitmap:
   incbin gfx/boat2.bin
 }

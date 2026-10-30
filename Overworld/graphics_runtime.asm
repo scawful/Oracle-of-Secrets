@@ -15,8 +15,6 @@ else
 org $5B8000
 incsrc "Overworld/graphics_runtime_tables.asm"
 if !ENABLE_KALYXO_BOAT == 1
-  ShipBackgroundGraphics = BoatBitmap
-  ShipExtendedGraphics = AdditionalBitmap
   KalyxoDocksSlot3Graphics:
     incbin "gfx/kalyxo_docks_slot3.bin"
 endif
