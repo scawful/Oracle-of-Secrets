@@ -149,6 +149,15 @@ class DekuStickContractTest(unittest.TestCase):
         self.assertIn("CMP.b #$2C : BEQ .interrupted", stick_text)
         self.assertIn("CMP.b #$2E : BEQ .interrupted", stick_text)
 
+    def test_submodule_transition_hooks(self):
+        stick_text = DEKU_STICK.read_text(encoding="utf-8")
+        self.assertIn("DekuStick_SubmoduleCheck:", stick_text)
+        self.assertIn("org $0287A8", stick_text)
+        self.assertIn("JSL DekuStick_SubmoduleCheck", stick_text)
+        self.assertIn("assert pc() == $0287AC", stick_text)
+        self.assertIn("org $0283BF", stick_text)
+        self.assertIn("assert pc() == $0283C3", stick_text)
+
 
 class DekuStickLogicModelTest(unittest.TestCase):
     """Simulates the ASM state machine logic for Deku Stick draw, stow, and wear."""

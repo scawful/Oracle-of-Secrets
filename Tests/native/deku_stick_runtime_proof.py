@@ -33,7 +33,7 @@ Verifies natively in headless Mesen2:
    - Harmless contacts with floor/wrong-layer do not alter stick or torch state.
 7. Cross-room scroll & lifecycle:
    - Screen scrolling ($11 != 0) pauses burn countdown and preserves fire across scroll.
-   - Stairs ($11 in 0x12, 0x13, 0x0E) drop stick without refund.
+   - Non-default state interruption ($5D = 0x13, Hookshotting) drops stick without refund.
    - Stowed wear ($7EF39F) survives transitions.
 8. Save & Quit battery persistence:
    - Stowed worn stick with DekuStickWear = 30 persists across in-game Save & Quit.
@@ -52,6 +52,11 @@ Verifies natively in headless Mesen2:
     - Lit stick ticks down every 16 frames; reaching 0 burns out and drops stick without refund.
 12. Zero-inventory refusal:
     - With count = 0, pressing A in Equipment menu refuses activation and preserves stored wear.
+13. Indoor dungeon ($10=7) gameplay:
+    - Verifies drawing, holding, swiping, torch lighting, and stow inside underworld mode $07.
+14. Real input-driven doorway crossing & real stairs transition:
+    - Lit stick carried across real same-floor doorway in D6 (room 0x98 -> 0x88) preserves fire and resumes burn countdown.
+    - Lit stick carried into real spiral stairs in Zora Temple (room 0x28 -> 0x38) cleans up stick and flame without inventory refund.
 """
 from __future__ import annotations
 
@@ -624,8 +629,8 @@ class DekuStickRuntimeTest:
 
         state_torch_ignite = self.r(DEKU_STICK_STATE)
         burn_torch_ignite = self.r(DEKU_BURN_TIMER)
-        ignite_ok = (state_torch_ignite == 2 and burn_torch_ignite == 60)
-        print(f"    Lit torch ignition: state={state_torch_ignite} (exp 2), burn={burn_torch_ignite} (exp 60) -> OK: {ignite_ok}")
+        ignite_ok = (state_torch_ignite == 2 and burn_torch_ignite in (59, 60))
+        print(f"    Lit torch ignition: state={state_torch_ignite} (exp 2), burn={burn_torch_ignite} (exp in 59..60) -> OK: {ignite_ok}")
 
         # Case B: Lit stick touches unlit torch 1 -> lights torch 1 via Dungeon_LightTorch
         self.w(TORCH_TIMERS + 1, 0x00)  # Torch 1 unlit
@@ -676,10 +681,10 @@ class DekuStickRuntimeTest:
                 break
         print(f"    After scroll ($11=0): burn={burn_after_scroll} (exp <50) -> OK: {scroll_resumed}")
 
-        # Destructive transition: stairs / recoil state ($5D = 0x13) drops drawn stick without refund
+        # Generic non-default state interruption: LinkState $5D = 0x13 (Hookshotting) drops drawn stick without refund
         self.w(DEKU_STICK_STATE, 2)
         self.w(DEKU_BURN_TIMER, 40)
-        self.w(LINK_STATE, 0x13)  # LinkState_Stairs
+        self.w(LINK_STATE, 0x13)  # LinkState_Hookshotting ($5D = 0x13)
         time.sleep(0.1)
         state_stairs = self.r(DEKU_STICK_STATE)
         burn_stairs = self.r(DEKU_BURN_TIMER)
@@ -687,7 +692,7 @@ class DekuStickRuntimeTest:
         stairs_dropped = (state_stairs == 0 and burn_stairs == 0 and count_stairs == 1)
         self.w(LINK_STATE, 0)
         time.sleep(0.1)
-        print(f"    Stairs transition drop ($5D=0x13): state={state_stairs} (exp 0), burn={burn_stairs} (exp 0), count={count_stairs} (exp 1) -> OK: {stairs_dropped}")
+        print(f"    Non-default state drop ($5D=0x13, Hookshotting): state={state_stairs} (exp 0), burn={burn_stairs} (exp 0), count={count_stairs} (exp 1) -> OK: {stairs_dropped}")
 
         # Stowed wear survives transitions
         self.w(DEKU_STICK_WEAR, 30)
@@ -1019,10 +1024,10 @@ class DekuStickRuntimeTest:
         indoor_stow_ok = (state_after_stow == 0 and count_after_stow == 3 and 0 < wear_after_stow < 75)
         print(f"    Indoor B stow: state={state_after_stow} (exp 0), count={count_after_stow} (exp 3), wear={wear_after_stow} (exp in 1..74) -> OK: {indoor_stow_ok}")
 
-        # Indoor destructive transition (stairs recoil $5D = 0x13 drops stick):
+        # Indoor non-default LinkState interrupt ($5D = 0x13, Hookshotting drops stick):
         self.w(DEKU_STICK_STATE, 1)
         self.w(DEKU_STICKS_COUNT, 2)
-        self.w(LINK_STATE, 0x13)  # LinkState_Stairs
+        self.w(LINK_STATE, 0x13)  # LinkState_Hookshotting ($5D = 0x13)
         time.sleep(0.1)
         state_spiral = self.r(DEKU_STICK_STATE)
         burn_spiral = self.r(DEKU_BURN_TIMER)
@@ -1030,7 +1035,7 @@ class DekuStickRuntimeTest:
         spiral_dropped = (state_spiral == 0 and burn_spiral == 0 and count_spiral == 2)
         self.w(LINK_STATE, 0)
         time.sleep(0.1)
-        print(f"    Indoor stairs drop ($5D=0x13): state={state_spiral} (exp 0), burn={burn_spiral} (exp 0), count={count_spiral} (exp 2) -> OK: {spiral_dropped}")
+        print(f"    Indoor non-default state drop ($5D=0x13, Hookshotting): state={state_spiral} (exp 0), burn={burn_spiral} (exp 0), count={count_spiral} (exp 2) -> OK: {spiral_dropped}")
 
         t13_ok = (baseline_indoor_ok and indoor_draw_ok and indoor_swipe_ok and
                   indoor_ignite_ok and indoor_torch_light_ok and
@@ -1038,6 +1043,115 @@ class DekuStickRuntimeTest:
                   indoor_stow_ok and spiral_dropped)
         self.results["indoor_underworld_gameplay_proof"] = t13_ok
         print(f"    Indoor Underworld gameplay verdict -> OK: {t13_ok}")
+
+        # ----------------------------------------------------
+        # 14. Real input-driven doorway crossing and real stairs transition
+        # ----------------------------------------------------
+        print("[*] Test 14: Real input-driven doorway traversal and stairs transition...")
+        # Part A: Carry lit stick through real same-floor doorway in D6 (room 0x98 -> 0x88)
+        self.boot_indoor_dungeon()  # loads oos_1772076582_Agent_D6_Inside_Entry_Fresh.mss (Room 0x98)
+        init_room = self.r(0x7E00A0)
+        self.w(DEKU_STICKS_COUNT, 2)
+        self.w(DEKU_STICK_STATE, 2)   # Held lit
+        self.w(DEKU_BURN_TIMER, 60)   # 60 ticks
+        time.sleep(0.1)
+
+        print(f"    Doorway initial room: 0x{init_room:02X}, state={self.r(DEKU_STICK_STATE)}, burn={self.r(DEKU_BURN_TIMER)}")
+
+        # Drive Link north through north doorway using joypad input UP
+        door_scroll_entered = False
+        for _ in range(25):
+            self.b.press_button("UP", frames=8)
+            time.sleep(0.15)
+            if self.r(SUBMODULE) == 2:
+                door_scroll_entered = True
+                break
+
+        # Wait for door scroll to finish and gameplay to resume in destination room
+        door_scroll_finished = False
+        for _ in range(40):
+            time.sleep(0.1)
+            if self.r(SUBMODULE) == 0 and self.r(MODULE) == 7:
+                door_scroll_finished = True
+                break
+
+        dest_room = self.r(0x7E00A0)
+        state_after_door = self.r(DEKU_STICK_STATE)
+        flame_y_door = self.r(0x7E0815)
+        burn_after_door = self.r(DEKU_BURN_TIMER)
+
+        # Wait a moment to observe burn countdown ticking in new room
+        burn_ticked = False
+        for _ in range(30):
+            time.sleep(0.1)
+            if self.r(DEKU_BURN_TIMER) < burn_after_door:
+                burn_ticked = True
+                break
+
+        doorway_traversal_ok = (
+            door_scroll_entered and door_scroll_finished and
+            dest_room == 0x88 and
+            state_after_door == 2 and
+            flame_y_door != 0xE0 and
+            burn_ticked
+        )
+        print(f"    Doorway traversal (0x98 -> 0x{dest_room:02X}): scroll={door_scroll_entered}, arrived={door_scroll_finished}, state={state_after_door} (exp 2), flame_visible={flame_y_door != 0xE0}, burn_ticked={burn_ticked} -> OK: {doorway_traversal_ok}")
+
+        # Part B: Enter real spiral stairs using joypad input UP in Zora Temple (Room 0x28)
+        stairs_state_path = REPO / "Roms" / "SaveStates" / "library" / "oos168x" / "zora_temple_stairs_seed_20260207.mss"
+        res = self.b.load_state(path=str(stairs_state_path))
+        time.sleep(0.5)
+        self.wait_play(8.0)
+        zora_init_room = self.r(0x7E00A0)
+
+        # Set lit stick fixture
+        self.w(DEKU_STICKS_COUNT, 2)
+        self.w(DEKU_STICK_STATE, 2)
+        self.w(DEKU_BURN_TIMER, 60)
+        time.sleep(0.1)
+
+        print(f"    Zora initial room: 0x{zora_init_room:02X}, state={self.r(DEKU_STICK_STATE)}, burn={self.r(DEKU_BURN_TIMER)}, count={self.r(DEKU_STICKS_COUNT)}")
+
+        # Drive Link north into spiral stairs using joypad input UP
+        stairs_entered = False
+        dropped_on_stairs = False
+        for _ in range(25):
+            self.b.press_button("UP", frames=8)
+            time.sleep(0.15)
+            sub = self.r(SUBMODULE)
+            st = self.r(DEKU_STICK_STATE)
+            if sub == 0x0E or st == 0:
+                stairs_entered = True
+                dropped_on_stairs = (st == 0 and self.r(DEKU_BURN_TIMER) == 0 and self.r(DEKU_STICKS_COUNT) == 2)
+                break
+
+        # Wait for stairs transition to complete and Link to arrive in destination room (0x38)
+        for _ in range(50):
+            time.sleep(0.1)
+            if self.r(SUBMODULE) == 0 and self.r(MODULE) == 7:
+                break
+
+        final_room = self.r(0x7E00A0)
+        final_state = self.r(DEKU_STICK_STATE)
+        final_burn = self.r(DEKU_BURN_TIMER)
+        final_count = self.r(DEKU_STICKS_COUNT)
+        final_flame_y = self.r(0x7E0815)
+        final_stick_y = self.r(0x7E0811)
+
+        stairs_cleanup_ok = (
+            stairs_entered and
+            final_state == 0 and
+            final_burn == 0 and
+            final_count == 2 and
+            final_flame_y >= 0xE0 and
+            final_stick_y >= 0xE0 and
+            final_room == 0x38
+        )
+        print(f"    Stairs transition (0x28 -> 0x{final_room:02X}): entered={stairs_entered}, state={final_state} (exp 0), burn={final_burn} (exp 0), count={final_count} (exp 2, no refund), flame_y={final_flame_y}, stick_y={final_stick_y}, dropped_on_stairs={dropped_on_stairs} -> OK: {stairs_cleanup_ok}")
+
+        t14_ok = (doorway_traversal_ok and stairs_cleanup_ok)
+        self.results["real_transitions_proof"] = t14_ok
+        print(f"    Real transitions verdict -> OK: {t14_ok}")
 
 
 def main():

@@ -585,3 +585,75 @@ DekuStick_Ignite:
   .exit
   RTL
 }
+
+; ==============================================================================
+; DekuStick_SubmoduleCheck: Per-frame transition drop check in Module07 / Module09
+; ==============================================================================
+DekuStick_SubmoduleCheck:
+{
+  PHP : SEP #$30
+  PHA : PHX : PHY : PHB
+  PHK : PLB
+
+  LDA.l DekuStick_State : BEQ .done
+
+  ; Check active mode: 0x07 = Underworld, 0x09 = Overworld
+  LDA.b $10
+  CMP.b #$07 : BEQ .check_uw
+  CMP.b #$09 : BEQ .check_ow
+  BRA .drop
+
+.check_uw
+  ; Destructive Underworld submodules (inter-room stairs, falling, warps, mirror):
+  ; 0x06 (Fat stairs), 0x07 (Fall), 0x0E (Spiral stairs), 0x11..0x13 (Straight stairs),
+  ; 0x14 (Fall recovery), 0x15 (Warp pad), 0x19 (Mirror fade)
+  LDA.b $11
+  CMP.b #$06 : BEQ .drop
+  CMP.b #$07 : BEQ .drop
+  CMP.b #$0E : BEQ .drop
+  CMP.b #$11 : BEQ .drop
+  CMP.b #$12 : BEQ .drop
+  CMP.b #$13 : BEQ .drop
+  CMP.b #$14 : BEQ .drop
+  CMP.b #$15 : BEQ .drop
+  CMP.b #$19 : BEQ .drop
+  BRA .done
+
+.check_ow
+  ; Destructive Overworld submodules (mosaic entrance fades, warps, drowning, whirlpool):
+  ; 0x0D, 0x17, 0x23, 0x24, 0x2A, 0x2C, 0x2E
+  LDA.b $11
+  CMP.b #$0D : BEQ .drop
+  CMP.b #$17 : BEQ .drop
+  CMP.b #$23 : BEQ .drop
+  CMP.b #$24 : BEQ .drop
+  CMP.b #$2A : BEQ .drop
+  CMP.b #$2C : BEQ .drop
+  CMP.b #$2E : BEQ .drop
+  BRA .done
+
+.drop
+  JSL DekuStick_Drop
+
+.done
+  PLB : PLY : PLX : PLA
+  PLP
+  ; Replay displaced instructions: LDA $11 : ASL A : TAX
+  LDA.b $11
+  ASL A
+  TAX
+  RTL
+}
+
+pushpc
+; Module07_Underworld ($0287A8-$0287AB): replaces LDA $11 : ASL A : TAX (replayed by helper)
+org $0287A8 ; @hook module=Items name=DekuStick_UWSubmoduleHook kind=jsl target=DekuStick_SubmoduleCheck expected_m=8 expected_x=8
+  JSL DekuStick_SubmoduleCheck
+assert pc() == $0287AC
+
+; Module09_Overworld ($0283BF-$0283C2): replaces LDA $11 : ASL A : TAX (replayed by helper)
+org $0283BF ; @hook module=Items name=DekuStick_OWSubmoduleHook kind=jsl target=DekuStick_SubmoduleCheck expected_m=8 expected_x=8
+  JSL DekuStick_SubmoduleCheck
+assert pc() == $0283C3
+pullpc
+
