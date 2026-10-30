@@ -20,7 +20,7 @@
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "6f978fb2e5f5317d5719830ee1962a23e2de7283ba413ddfe281c1c6ff63ddc3"
+      "sha256": "caedc06008d618d6fceca2f72c94dd622cb95bb141e12c2bde186393a6f69707"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -30,12 +30,12 @@
     "shared:Items/fishing_rod.asm": {
       "source_set": "shared",
       "path": "Items/fishing_rod.asm",
-      "sha256": "3c456abd3c2ea7f0173ed1ce3dfdc845198e6a68390fd26ed432f7a7e9246e21"
+      "sha256": "59501b12be983a0cd98dfa771e2a620ff42b5789f4dd278a715ca7a9e949f577"
     },
     "shared:Core/ram.asm": {
       "source_set": "shared",
       "path": "Core/ram.asm",
-      "sha256": "6c28f2b751ff5b89d469c47d76818e4f84a831285d205a8ffaaa074cc5b0bc8a"
+      "sha256": "e30758d404c751adcd52da30259a831450b8dc0bb6f32ff369f77abb9aa1886c"
     },
     "shared:Overworld/overlays.asm": {
       "source_set": "shared",
@@ -166,6 +166,11 @@
       "source_set": "shared",
       "path": "Core/symbols.asm",
       "sha256": "bcc6df2404dc097f25f9b547699359f924387c7cdaa1c70e87fd571b9f317475"
+    },
+    "shared:Items/book_of_secrets.asm": {
+      "source_set": "shared",
+      "path": "Items/book_of_secrets.asm",
+      "sha256": "c1628f20304ed001602f5c428fbbe74e59f17befc146bff9983fe32545c03d26"
     }
   },
   "claims": [
@@ -473,7 +478,7 @@
         "DISABLE_ITEMS": 0
       },
       "lifetime": "Fishing action; can coexist with overworld music.",
-      "reset": "EndFishing clears mode; spawn sets mode/floater index. Power extent is a documented reservation, not an observed writer.",
+      "reset": "Fishing_ClearSession clears mode and sets floater index $FF. Mode 3 owns cast graphics before allocation; only live $2D with SprMiscA=$F1 is deleted. Native sprite allocation resets that actor field on slot reuse.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
         "shared:Items/fishing_rod.asm"
@@ -495,7 +500,7 @@
         "DISABLE_ITEMS": 0
       },
       "lifetime": "Fishing action; can coexist with overworld music.",
-      "reset": "EndFishing clears mode; spawn sets mode/floater index. Power extent is a documented reservation, not an observed writer.",
+      "reset": "Fishing_ClearSession clears mode and sets floater index $FF. Mode 3 owns cast graphics before allocation; only live $2D with SprMiscA=$F1 is deleted. Native sprite allocation resets that actor field on slot reuse.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
         "shared:Items/fishing_rod.asm"
@@ -517,7 +522,7 @@
         "DISABLE_ITEMS": 0
       },
       "lifetime": "Fishing action; can coexist with overworld music.",
-      "reset": "EndFishing clears mode; spawn sets mode/floater index. Power extent is a documented reservation, not an observed writer.",
+      "reset": "Fishing_ClearSession clears mode and sets floater index $FF. Mode 3 owns cast graphics before allocation; only live $2D with SprMiscA=$F1 is deleted. Native sprite allocation resets that actor field on slot reuse.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
         "shared:Items/fishing_rod.asm"
@@ -1284,6 +1289,58 @@
         "source": "shared:Core/symbols.asm",
         "symbol": "PendingSupplyAction",
         "bank00_mirror": true
+      }
+    },
+    {
+      "id": "BookRevealState",
+      "owner": "Book of Secrets layer reveal",
+      "space": "wram",
+      "base": 8258613,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "DISABLE_ITEMS": 0
+      },
+      "lifetime": "Only while Book hides the current indoor room BG2 bit; full room identity prevents cross-room layer restoration.",
+      "reset": "Book_RevealReset on startup/death/Save-and-Quit; frame service restores its own bit on release/transition and forgets it on room/world changes.",
+      "save": "Volatile WRAM; never saved.",
+      "provenance": [
+        "shared:Core/ram.asm",
+        "shared:Items/book_of_secrets.asm",
+        "shared:Masks/mask_routines.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/ram.asm",
+        "symbol": "BookRevealState",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "BookRevealRoom",
+      "owner": "Book of Secrets layer reveal",
+      "space": "wram",
+      "base": 8258636,
+      "size": 2,
+      "status": "shared",
+      "condition": {
+        "DISABLE_ITEMS": 0
+      },
+      "lifetime": "Only while Book hides the current indoor room BG2 bit; full room identity prevents cross-room layer restoration.",
+      "reset": "Book_RevealReset on startup/death/Save-and-Quit; frame service restores its own bit on release/transition and forgets it on room/world changes.",
+      "save": "Volatile WRAM; never saved.",
+      "provenance": [
+        "shared:Core/ram.asm",
+        "shared:Items/book_of_secrets.asm",
+        "shared:Masks/mask_routines.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/ram.asm",
+        "symbol": "BookRevealRoom",
+        "bank00_mirror": false
       }
     }
   ],

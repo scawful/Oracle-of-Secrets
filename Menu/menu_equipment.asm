@@ -234,6 +234,7 @@ Menu_Equipment_Draw:
 .no_cursor
   SEP #$30
   JSR Menu_Equipment_Name
+  JSR Menu_Equipment_RingDescription
   RTS
 .marker
   TAX
@@ -286,6 +287,23 @@ Menu_Equipment_Bracket:
   ORA.w #$4000 : STA.w $110C,X
   ORA.w #$8000 : STA.w $114C,X
   EOR.w #$4000 : STA.w $1146,X
+  RTS
+}
+
+; The blank row between the ring icons and SONGS fits the existing 16 tiles.
+Menu_Equipment_RingDescription:
+{
+  LDA.w $020B : SEC : SBC.b #$06 : CMP.b #$06 : BCS .done
+  LDA.w $020B : JSR Menu_Equipment_Owned : BEQ .done
+  LDA.w $020B : SEC : SBC.b #$06
+  REP #$30
+  AND.w #$00FF : ASL #5 : TAX
+  LDY.w #$0000
+  .loop
+  LDA.w Menu_RingDescriptions,X : STA.w $1000+menu_offset(16,8),Y
+  INX #2 : INY #2 : CPY.w #$0020 : BCC .loop
+  .done
+  SEP #$30
   RTS
 }
 

@@ -41,6 +41,9 @@ StartupMasks:
   ; set links sprite bank
   LDA #$10 : STA $BC
   JSL DekuStick_Drop
+if !DISABLE_ITEMS == 0
+  JSL Book_RevealReset
+endif
   ; Volatile state shared by the Garo/Bombchu/Switch Hook prototypes.
   PHX
   LDX.b #$11
@@ -80,6 +83,9 @@ ResetToLinkGraphics:
 ForceResetMask_GameOver:
 {
   JSL DekuStick_Drop
+if !DISABLE_ITEMS == 0
+  JSL Book_RevealReset
+endif
   LDA $02B2 : BEQ .still_link
     CMP.b #$06 : BEQ .gbc_link
       JSL ResetToLinkGraphics
@@ -96,6 +102,9 @@ ForceResetMask_GameOver:
 ForceResetMask_SaveAndQuit:
 {
   JSL DekuStick_Drop
+if !DISABLE_ITEMS == 0
+  JSL Book_RevealReset
+endif
   LDA !CurrentMask : BEQ .still_link
     JSL ResetToLinkGraphics
   .still_link
@@ -1626,6 +1635,9 @@ if !ENABLE_MINISH_AUTO_PORTAL == 1
 endif
   JSL GaroMask_FrameTick
   JSL DekuStick_Main
+if !DISABLE_ITEMS == 0
+  JSL Dungeon_RevealSecrets
+endif
   PLB
   %m16()
   PLY : PLX : PLA

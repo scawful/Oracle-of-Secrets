@@ -2070,8 +2070,8 @@ STARINDEX       = $7E0432
 STARINDEXH      = $7E0433
 
 ; $7E0434 is PendingSupplyAction (Core/symbols.asm), a volatile menu-exit request.
-; FREE RAM: 0x01
-UNUSED_7E0435   = $7E0435
+; Book of Secrets owns only the BG2 bit it hides in the recorded room.
+BookRevealState = $7E0435 ; 0 = no layer override, 1 = BG2 hidden by Book
 
 ; Seems to flag the eye door to Turtle Rock compass.
 ; Defaults to 0xFFFF.
@@ -2106,9 +2106,8 @@ RSTAIRSI7H      = $7E0449
 EGSTR           = $7E044A
 EGSTRH          = $7E044B
 
-; FREE RAM: 0x02
-UNUSED_7E044C   = $7E044C
-UNUSED_7E044D   = $7E044D
+BookRevealRoom  = $7E044C ; full loaded-room identity for the layer override
+BookRevealRoomH = $7E044D
 
 ; Indexes layer swap doors when building rooms.
 LSWAPI          = $7E044E
