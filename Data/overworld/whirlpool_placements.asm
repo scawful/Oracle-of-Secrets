@@ -11,28 +11,17 @@ macro whirlpool_route(slot, source, destination, y, x, vram, scroll_y, scroll_x,
   assert <source> >= 0 && <source> < $C0 && <source> != $1B, "Unsupported source parent"
   assert <destination> >= 0 && <destination> < $C0, "Unsupported arrival parent"
   assert <x> >= 0 && <x> <= $0FF8 && <y> >= 0 && <y> <= $0FF8, "Invalid arrival position"
-  org $02ECF8+<slot>*2
-    dw <source>
-  org $02EAE5+(9+<slot>)*2
-    dw <destination>
-  org $02EB07+(9+<slot>)*2
-    dw <vram>
-  org $02EB29+(9+<slot>)*2
-    dw <scroll_y>
-  org $02EB4B+(9+<slot>)*2
-    dw <scroll_x>
-  org $02EB6D+(9+<slot>)*2
-    dw <y>
-  org $02EB8F+(9+<slot>)*2
-    dw <x>
-  org $02EBB1+(9+<slot>)*2
-    dw <camera_y>
-  org $02EBD3+(9+<slot>)*2
-    dw <camera_x>
-  org $02EBF5+(9+<slot>)*2
-    dw <mod_y>
-  org $02EC17+(9+<slot>)*2
-    dw <mod_x>
+  !WHIRLPOOL_SOURCE_<slot> = <source>
+  !WHIRLPOOL_DESTINATION_<slot> = <destination>
+  !WHIRLPOOL_VRAM_<slot> = <vram>
+  !WHIRLPOOL_SCROLL_Y_<slot> = <scroll_y>
+  !WHIRLPOOL_SCROLL_X_<slot> = <scroll_x>
+  !WHIRLPOOL_Y_<slot> = <y>
+  !WHIRLPOOL_X_<slot> = <x>
+  !WHIRLPOOL_CAMERA_Y_<slot> = <camera_y>
+  !WHIRLPOOL_CAMERA_X_<slot> = <camera_x>
+  !WHIRLPOOL_MOD_Y_<slot> = <mod_y>
+  !WHIRLPOOL_MOD_X_<slot> = <mod_x>
 endmacro
 
 ; Source ABI assertions. This patch adds data only; no hooks or allocations.
@@ -57,4 +46,28 @@ assert defined("WHIRLPOOL_SLOT_4"), "Missing whirlpool slot 4"
 assert defined("WHIRLPOOL_SLOT_5"), "Missing whirlpool slot 5"
 assert defined("WHIRLPOOL_SLOT_6"), "Missing whirlpool slot 6"
 assert defined("WHIRLPOOL_SLOT_7"), "Missing whirlpool slot 7"
+; Literal origins let the manifest validate every emitted native table.
+; Destination tables start at row9; bird/event rows0..8 are untouched.
+org $02ECF8
+  dw !WHIRLPOOL_SOURCE_0, !WHIRLPOOL_SOURCE_1, !WHIRLPOOL_SOURCE_2, !WHIRLPOOL_SOURCE_3, !WHIRLPOOL_SOURCE_4, !WHIRLPOOL_SOURCE_5, !WHIRLPOOL_SOURCE_6, !WHIRLPOOL_SOURCE_7
+org $02EAF7
+  dw !WHIRLPOOL_DESTINATION_0, !WHIRLPOOL_DESTINATION_1, !WHIRLPOOL_DESTINATION_2, !WHIRLPOOL_DESTINATION_3, !WHIRLPOOL_DESTINATION_4, !WHIRLPOOL_DESTINATION_5, !WHIRLPOOL_DESTINATION_6, !WHIRLPOOL_DESTINATION_7
+org $02EB19
+  dw !WHIRLPOOL_VRAM_0, !WHIRLPOOL_VRAM_1, !WHIRLPOOL_VRAM_2, !WHIRLPOOL_VRAM_3, !WHIRLPOOL_VRAM_4, !WHIRLPOOL_VRAM_5, !WHIRLPOOL_VRAM_6, !WHIRLPOOL_VRAM_7
+org $02EB3B
+  dw !WHIRLPOOL_SCROLL_Y_0, !WHIRLPOOL_SCROLL_Y_1, !WHIRLPOOL_SCROLL_Y_2, !WHIRLPOOL_SCROLL_Y_3, !WHIRLPOOL_SCROLL_Y_4, !WHIRLPOOL_SCROLL_Y_5, !WHIRLPOOL_SCROLL_Y_6, !WHIRLPOOL_SCROLL_Y_7
+org $02EB5D
+  dw !WHIRLPOOL_SCROLL_X_0, !WHIRLPOOL_SCROLL_X_1, !WHIRLPOOL_SCROLL_X_2, !WHIRLPOOL_SCROLL_X_3, !WHIRLPOOL_SCROLL_X_4, !WHIRLPOOL_SCROLL_X_5, !WHIRLPOOL_SCROLL_X_6, !WHIRLPOOL_SCROLL_X_7
+org $02EB7F
+  dw !WHIRLPOOL_Y_0, !WHIRLPOOL_Y_1, !WHIRLPOOL_Y_2, !WHIRLPOOL_Y_3, !WHIRLPOOL_Y_4, !WHIRLPOOL_Y_5, !WHIRLPOOL_Y_6, !WHIRLPOOL_Y_7
+org $02EBA1
+  dw !WHIRLPOOL_X_0, !WHIRLPOOL_X_1, !WHIRLPOOL_X_2, !WHIRLPOOL_X_3, !WHIRLPOOL_X_4, !WHIRLPOOL_X_5, !WHIRLPOOL_X_6, !WHIRLPOOL_X_7
+org $02EBC3
+  dw !WHIRLPOOL_CAMERA_Y_0, !WHIRLPOOL_CAMERA_Y_1, !WHIRLPOOL_CAMERA_Y_2, !WHIRLPOOL_CAMERA_Y_3, !WHIRLPOOL_CAMERA_Y_4, !WHIRLPOOL_CAMERA_Y_5, !WHIRLPOOL_CAMERA_Y_6, !WHIRLPOOL_CAMERA_Y_7
+org $02EBE5
+  dw !WHIRLPOOL_CAMERA_X_0, !WHIRLPOOL_CAMERA_X_1, !WHIRLPOOL_CAMERA_X_2, !WHIRLPOOL_CAMERA_X_3, !WHIRLPOOL_CAMERA_X_4, !WHIRLPOOL_CAMERA_X_5, !WHIRLPOOL_CAMERA_X_6, !WHIRLPOOL_CAMERA_X_7
+org $02EC07
+  dw !WHIRLPOOL_MOD_Y_0, !WHIRLPOOL_MOD_Y_1, !WHIRLPOOL_MOD_Y_2, !WHIRLPOOL_MOD_Y_3, !WHIRLPOOL_MOD_Y_4, !WHIRLPOOL_MOD_Y_5, !WHIRLPOOL_MOD_Y_6, !WHIRLPOOL_MOD_Y_7
+org $02EC29
+  dw !WHIRLPOOL_MOD_X_0, !WHIRLPOOL_MOD_X_1, !WHIRLPOOL_MOD_X_2, !WHIRLPOOL_MOD_X_3, !WHIRLPOOL_MOD_X_4, !WHIRLPOOL_MOD_X_5, !WHIRLPOOL_MOD_X_6, !WHIRLPOOL_MOD_X_7
 pullpc
