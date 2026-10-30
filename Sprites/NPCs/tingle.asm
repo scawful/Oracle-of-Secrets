@@ -174,6 +174,11 @@ Sprite_Tingle_Main:
         REP #$20
         LDA.l $7EF360 : SEC : SBC.w .cost, Y
         STA.l $7EF360
+        PHA
+        LDA.l DungeonMapSet1
+        ORA.w .map_ownership, Y
+        STA.l DungeonMapSet1
+        PLA
         SEP #$30
         LDA.l TingleId : TAY
         LDA.l TingleMaps
@@ -199,6 +204,14 @@ Sprite_Tingle_Main:
     dw 90
     dw 60
     dw 120
+    .map_ownership
+    dw $0200
+    dw $0400
+    dw $0080
+    dw $0010
+    dw $0040
+    dw $0100
+    dw $0008
     .dungeon
     db 01
     db 02
