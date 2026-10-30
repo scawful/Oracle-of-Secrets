@@ -327,3 +327,11 @@ org $02A53C ; @hook module=Overworld name=Boat_BoardGate kind=jsl target=Boat_Bo
   BCS $02A570
 assert pc() == $02A542
 pullpc
+
+; The explicitly selected candidate uses the native 4MiB LoROM envelope.
+; The maintained build preparation supplies the padded private editable base.
+pushpc
+org $00FFD7 ; @hook module=Overworld name=BoatCandidateRomSize kind=data protected_size=1
+  db $0C
+assert pc() == $00FFD8
+pullpc
