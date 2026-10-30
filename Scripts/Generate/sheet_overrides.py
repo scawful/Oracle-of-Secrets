@@ -155,6 +155,8 @@ def asm_text(items):
     for item in items:
         lines.append(f'org ${item["snes"]:06X}')
         lines.append(f'SourceSpriteSheet_{item["s"]:02X}: incbin "sheets/spr{item["s"]:02X}.bin"')
+    if items:
+        lines.append(f'SourceSpriteSheetGroupEnd_{items[0]["g"]:02X}:')
     lines.append('assert pc() <= $410000 || pc() == $418000, "Source sprite sheets crossed bank $40"')
     lines += ['if !ENABLE_EXPANDED_GRAPHICS_TABLE == 1',
               f'assert GfxSheet_Bank == ${NEW_BANK:06X} && GfxSheet_High == ${NEW_HIGH:06X} && GfxSheet_Low == ${NEW_LOW:06X}, "sheet_overrides.asm must follow Core/gfx_sheet_table.asm"']
@@ -214,18 +216,20 @@ def write_outputs(out, files, inputs):
             temporary.unlink(missing_ok=True)
 
 
-def source_metadata(root, *, rom_role="build_output"):
+def source_metadata(root, *, rom_role="build_output", spec_path=SPEC,
+                    output=OUTPUT, feature_flag=FLAG):
     # This is build-output provenance/reservations, never writable source-origin
     # metadata. No development/compiled editor write contract exists here.
     require(rom_role == 'build_output', 'source metadata supports build_output provenance only; editor source origins are unsupported')
-    spec_path = Path(root)/SPEC
+    relative_spec = Path(spec_path)
+    spec_path = Path(root)/relative_spec
     spec = read_spec(spec_path)
     globals_ = [number(e['global_sheet']) if 'global_sheet' in e else number(e['sprite_sheet'])+0x73 for e in spec['sheets']]
-    return dict(schema_version=1, spec=SPEC.as_posix(), spec_sha256=hashlib.sha256(spec_path.read_bytes()).hexdigest(),
-                feature_flag=FLAG, sprite_sheet_ids=[f'0x{g-0x73:02X}' for g in globals_],
+    return dict(schema_version=1, spec=relative_spec.as_posix(), spec_sha256=hashlib.sha256(spec_path.read_bytes()).hexdigest(),
+                feature_flag=feature_flag, sprite_sheet_ids=[f'0x{g-0x73:02X}' for g in globals_],
                 global_sheet_ids=[f'0x{g:02X}' for g in globals_],
                 owned_region=dict(start='0x40D000', end='0x418000', end_exclusive=True, pc_start='0x205000', pc_end='0x208000', size=CAPACITY),
-                generated_include=(OUTPUT/'sheet_overrides.asm').as_posix())
+                generated_include=(Path(output)/'sheet_overrides.asm').as_posix())
 
 
 def main():

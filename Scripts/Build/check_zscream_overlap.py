@@ -28,6 +28,9 @@ OWNED_REGIONS = (
     ("Dungeons/generated/water_fill_table.asm", 0x12E000, 0x12FFFF),
     ("Core/gfx_sheet_table.asm", 0x11FC00, 0x11FFFF),
     ("Core/Generated/source_sprite_sheets/sheet_overrides.asm", 0x11FD00, 0x11FFFF),
+    ("Core/Generated/source_sprite_sheets/snowpeak/sheet_overrides.asm", 0x11FDDF, 0x11FDDF),
+    ("Core/Generated/source_sprite_sheets/snowpeak/sheet_overrides.asm", 0x11FEDF, 0x11FEDF),
+    ("Core/Generated/source_sprite_sheets/snowpeak/sheet_overrides.asm", 0x11FFDF, 0x11FFDF),
 )
 
 

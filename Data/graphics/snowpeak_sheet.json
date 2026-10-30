@@ -1,0 +1,15 @@
+{
+  "schema_version": 2,
+  "start": "0x40D000",
+  "capacity": 12288,
+  "encoding": "lz2",
+  "sheets": [
+    {
+      "global_sheet": "0xDF",
+      "source": "snowpeak_sheet37.txt",
+      "decoded_sha256": "19279a4cee41b2ee83d52421256b8327dd50338b0a0c0994ee0ec08d35b515a8",
+      "snes_address": "0x40E800",
+      "why": "Snowpeak maps 05/06/07: original sheet 37 with missing 2B/3B glyphs copied unchanged from sheet 2D."
+    }
+  ]
+}

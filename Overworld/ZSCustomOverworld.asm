@@ -6464,3 +6464,20 @@ endif
 
 pullpc
 pullpc
+
+; Sheet $DF is a private copy of $37, retaining every terrain glyph and
+; restoring only the two characters shared with the distant-tree overlay.
+; The expanded reader is selected explicitly; its default stays unchanged.
+if !ENABLE_SOURCE_SPRITE_SHEETS == 1 && !ENABLE_EXPANDED_GRAPHICS_TABLE == 1
+pushpc
+org $2884AC ; @hook module=Overworld kind=data protected_size=1
+  assert read1($2884AC) == $37, "Snowpeak05 slot4 preimage changed"
+  db $DF
+org $2884B4 ; @hook module=Overworld kind=data protected_size=1
+  assert read1($2884B4) == $37, "Snowpeak06 slot4 preimage changed"
+  db $DF
+org $2884BC ; @hook module=Overworld kind=data protected_size=1
+  assert read1($2884BC) == $37, "Snowpeak07 slot4 preimage changed"
+  db $DF
+pullpc
+endif

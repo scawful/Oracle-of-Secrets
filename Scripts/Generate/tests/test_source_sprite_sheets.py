@@ -222,6 +222,29 @@ class SourceSheets(unittest.TestCase):
         self.assertIn('0xD7',graphics['reserved_sheets']);self.assertNotIn('0x64',graphics['reserved_sheets'])
         self.assertEqual(manifest['source_sprite_sheets']['spec'],fixture.root.name+'/Data/graphics/source_sprite_sheets.json')
 
+    def test_snowpeak_manifest_reserves_df_only_when_selected(self):
+        from test_generate_hack_manifest import ManifestFixture
+        from generate_hack_manifest import generate_manifest
+        fixture=ManifestFixture();self.addCleanup(fixture.close)
+        fixture.write_text('Data/graphics/snowpeak_sheet.json',
+                           (ROOT/'Data/graphics/snowpeak_sheet.json').read_text())
+        rom=fixture.write_dev_rom()
+        for expanded, source in ((0, 1), (1, 0), (1, 1)):
+            with self.subTest(expanded=expanded, source=source):
+                fixture.write_text('Oracle_main.asm', '')
+                fixture.write_text('Config/feature_flags.asm',
+                                   f'!ENABLE_EXPANDED_GRAPHICS_TABLE = {expanded}\n'
+                                   f'!ENABLE_SOURCE_SPRITE_SHEETS = {source}\n')
+                manifest=generate_manifest(fixture.root, dev_rom_path=rom,
+                                           manifest_root=fixture.root.parent)
+                selected=bool(expanded and source)
+                self.assertEqual('snowpeak_graphics' in manifest, selected)
+                self.assertEqual('0xDF' in manifest['graphics_sheet_regions']['reserved_sheets'], selected)
+                if selected:
+                    self.assertEqual(manifest['snowpeak_graphics']['global_sheet_ids'], ['0xDF'])
+                    self.assertEqual(manifest['snowpeak_graphics']['spec'],
+                                     fixture.root.name+'/Data/graphics/snowpeak_sheet.json')
+
     def test_generated_pointer_manifest_leaves_neighbor_sheets_editable(self):
         from test_generate_hack_manifest import ManifestFixture
         from generate_hack_manifest import generate_manifest

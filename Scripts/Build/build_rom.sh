@@ -200,6 +200,10 @@ fi
 # streams. Refuse a changed base sheet before replacing any prior build output.
 run_check source_sprite_sheets 1 python3 "$repo_root/Scripts/Generate/sheet_overrides.py" \
   --root "$repo_root" --base-rom "$base_rom" --check --respect-flags --rom-role editable_base
+run_check snowpeak_sheet 1 python3 "$repo_root/Scripts/Generate/sheet_overrides.py" \
+  "$repo_root/Data/graphics/snowpeak_sheet.json" \
+  --out-dir "$repo_root/Core/Generated/source_sprite_sheets/snowpeak" \
+  --root "$repo_root" --base-rom "$base_rom" --check --respect-flags --rom-role editable_base
 
 # Prototype HUD icons preserve every unallocated tile in the editable base.
 run_check menu_icon_sheets 1 python3 "$repo_root/Scripts/Generate/menu_icon_overrides.py" \

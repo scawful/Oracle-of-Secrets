@@ -273,6 +273,10 @@ endif
 ; Source-owned compressed sheets patch streams and the selected pointer arrays.
 if !ENABLE_SOURCE_SPRITE_SHEETS == 1
   incsrc "Core/Generated/source_sprite_sheets/sheet_overrides.asm"
+  if !ENABLE_EXPANDED_GRAPHICS_TABLE == 1
+    incsrc "Core/Generated/source_sprite_sheets/snowpeak/sheet_overrides.asm"
+    assert SourceSpriteSheetGroupEnd_D7 <= SourceSpriteSheet_6C, "Source sprite sheets overlap the Snowpeak sheet"
+  endif
 endif
 
 ; The ordinary build emits these source-bound bytes in the same assembly.

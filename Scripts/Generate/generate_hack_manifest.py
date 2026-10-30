@@ -2291,11 +2291,18 @@ def generate_manifest(
         ],
         "reserved_sheets": ["0x7B", "0x7C", "0x6F", "0x70"],
     }
-    source_sheet_spec = root / "Data/graphics/source_sprite_sheets.json"
-    if source_sheet_spec.is_file():
+    sheet_sources = [("source_sprite_sheets", Path("Data/graphics/source_sprite_sheets.json"),
+                      Path("Core/Generated/source_sprite_sheets"), "ENABLE_SOURCE_SPRITE_SHEETS")]
+    if defines.get("ENABLE_EXPANDED_GRAPHICS_TABLE") == 1 and defines.get("ENABLE_SOURCE_SPRITE_SHEETS") == 1:
+        sheet_sources.append(("snowpeak_graphics", Path("Data/graphics/snowpeak_sheet.json"),
+                              Path("Core/Generated/source_sprite_sheets/snowpeak"), "ENABLE_EXPANDED_GRAPHICS_TABLE"))
+    for metadata_key, source_sheet_spec, source_output, source_flag in sheet_sources:
+        if not (root / source_sheet_spec).is_file():
+            continue
         from sheet_overrides import source_metadata
         try:
-            source_sheets = source_metadata(root)
+            source_sheets = source_metadata(root, spec_path=source_sheet_spec,
+                                            output=source_output, feature_flag=source_flag)
         except (OSError, ValueError, KeyError, TypeError) as exc:
             raise ManifestGenerationError(f"Source sprite sheet metadata invalid: {exc}") from exc
         for field in ("spec", "generated_include"):
@@ -2306,7 +2313,7 @@ def generate_manifest(
         # Yaze's reservations use global sheet IDs (sprite $64 + $73 = $D7).
         # Keep extra metadata outside graphics_sheet_regions: its schema is strict.
         manifest["graphics_sheet_regions"]["reserved_sheets"].extend(source_sheets["global_sheet_ids"])
-        manifest["source_sprite_sheets"] = source_sheets
+        manifest[metadata_key] = source_sheets
 
     manifest["protected_regions"] = {
         "description": protected_description,

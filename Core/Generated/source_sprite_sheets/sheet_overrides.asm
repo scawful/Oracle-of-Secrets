@@ -11,6 +11,7 @@ org $40D745
 SourceSpriteSheet_43: incbin "sheets/spr43.bin"
 org $40DBEB
 SourceSpriteSheet_47: incbin "sheets/spr47.bin"
+SourceSpriteSheetGroupEnd_D7:
 assert pc() <= $410000 || pc() == $418000, "Source sprite sheets crossed bank $40"
 if !ENABLE_EXPANDED_GRAPHICS_TABLE == 1
 assert GfxSheet_Bank == $23FD00 && GfxSheet_High == $23FE00 && GfxSheet_Low == $23FF00, "sheet_overrides.asm must follow Core/gfx_sheet_table.asm"
