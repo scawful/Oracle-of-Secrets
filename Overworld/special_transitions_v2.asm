@@ -147,22 +147,46 @@ pushpc
 ; ---------------------------------------------------------
 ; Exit records (P3). Placeholder landings on each tail map's west side.
 ; ---------------------------------------------------------
-org !STV2_EXITS
+if !ENABLE_KALYXO_BOAT == 1
+  assert !STV2_EXITS == $D18420, "Private STV2 origin changed"
+  org $D18420
+else
+  assert !STV2_EXITS == $AA8420, "Legacy STV2 origin changed"
+  org $AA8420
+endif
   fillbyte $00 : fill 16*32
 
 if !ENABLE_SPECIAL_EXIT_TABLE_V2 == 1
   if !STV2_LINK_27_A0 == 1
-    org !STV2_EXITS+(($0183-$0180)*32)
+    if !ENABLE_KALYXO_BOAT == 1
+      assert !STV2_EXITS+(($0183-$0180)*32) == $D18480, "Private STV2 origin changed"
+      org $D18480
+    else
+      assert !STV2_EXITS+(($0183-$0180)*32) == $AA8480, "Legacy STV2 origin changed"
+      org $AA8480
+    endif
     %stv2_exit(0183, $A0, $0900, $0040, 0, $06)
     org $02E804 : db !STV2_FACING_0183
   endif
   if !STV2_LINK_37_B0 == 1
-    org !STV2_EXITS+(($0184-$0180)*32)
+    if !ENABLE_KALYXO_BOAT == 1
+      assert !STV2_EXITS+(($0184-$0180)*32) == $D184A0, "Private STV2 origin changed"
+      org $D184A0
+    else
+      assert !STV2_EXITS+(($0184-$0180)*32) == $AA84A0, "Legacy STV2 origin changed"
+      org $AA84A0
+    endif
     %stv2_exit(0184, $B0, $0D00, $0040, 0, $06)
     org $02E805 : db !STV2_FACING_0184
   endif
   if !STV2_LINK_3F_B8 == 1
-    org !STV2_EXITS+(($0185-$0180)*32)
+    if !ENABLE_KALYXO_BOAT == 1
+      assert !STV2_EXITS+(($0185-$0180)*32) == $D184C0, "Private STV2 origin changed"
+      org $D184C0
+    else
+      assert !STV2_EXITS+(($0185-$0180)*32) == $AA84C0, "Legacy STV2 origin changed"
+      org $AA84C0
+    endif
     %stv2_exit(0185, $B8, $0F00, $0040, 0, $06)
     org $02E806 : db !STV2_FACING_0185
   endif
@@ -174,7 +198,13 @@ endif
 ; ---------------------------------------------------------
 ; Directory
 ; ---------------------------------------------------------
-org !STV2_BASE
+if !ENABLE_KALYXO_BOAT == 1
+  assert !STV2_BASE == $D18000, "Private STV2 origin changed"
+  org $D18000
+else
+  assert !STV2_BASE == $AA8000, "Legacy STV2 origin changed"
+  org $AA8000
+endif
 STV2_Directory:
   db $53, $54, $56, $32         ; "STV2" (a string literal would go through the message char table)
   dw $0001                      ; version
@@ -227,13 +257,25 @@ STV2_ReturnRows:
 STV2_ReturnRowsEnd:
   padbyte $00 : pad !STV2_EXITS
 
-org !STV2_EXITS
+if !ENABLE_KALYXO_BOAT == 1
+  assert !STV2_EXITS == $D18420, "Private STV2 origin changed"
+  org $D18420
+else
+  assert !STV2_EXITS == $AA8420, "Legacy STV2 origin changed"
+  org $AA8420
+endif
 STV2_ExitRecords:
 
 ; ---------------------------------------------------------
 ; Code
 ; ---------------------------------------------------------
-org !STV2_CODE
+if !ENABLE_KALYXO_BOAT == 1
+  assert !STV2_CODE == $D18800, "Private STV2 origin changed"
+  org $D18800
+else
+  assert !STV2_CODE == $AA8800, "Legacy STV2 origin changed"
+  org $AA8800
+endif
 
 ; Entry from $0EDE57 by JML. M=16 X=16, $00 = char under Link (& $01FF).
 ; Stack holds the JSL return of the trigger routine; DBR is the caller's.
