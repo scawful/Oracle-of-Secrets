@@ -1,6 +1,7 @@
 ; Overworld.asm
 
 incsrc "Overworld/music_cache.asm"
+incsrc "Data/overworld/whirlpool_placements.asm"
 
 ; Random chance of hearts from bush instead of guards
 org $1AFBBF : db $0B ; Heart Index
