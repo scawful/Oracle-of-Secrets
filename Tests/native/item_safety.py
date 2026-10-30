@@ -293,8 +293,11 @@ class ItemSafetyFlow(menu.QuestFlow):
             self.advance("L", 15)
         self.check("Active-reveal normal SaveQuit selector", self.r(0x7E1CE8), 1)
         self.advance("L,A", 2)
+        # Reuse the established SaveQuit/title settling bound. Submodule07
+        # is still the subtitle animation, before the ordinary title08.
+        self.advance("L", 180)
         for _ in range(30):
-            self.advance("L", 30)
+            self.advance("L", 60)
             if (self.r(0x7E0010), self.r(0x7E0011)) == (0, 8):
                 break
         self.check("Active-reveal SaveQuit reached title",
