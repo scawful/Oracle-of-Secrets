@@ -88,7 +88,7 @@ class ItemSafetyFlow(menu.QuestFlow):
     def enter(self, name, button, hold=False):
         self.advance("", 2)
         self.input(button)
-        cpu = self.run_to({self.symbol(name)})
+        cpu = self.run_to({self.symbol(name) if isinstance(name, str) else name})
         if not hold:
             self.input("")
         return cpu
@@ -172,7 +172,16 @@ class ItemSafetyFlow(menu.QuestFlow):
         self.write(0x7EF35C, 2, "Empty Bottle1")
         self.equip(6)
         self.tap(direction)
-        entry = self.enter("LinkItem_CatchBottle", "Y", hold=True)
+        # The item dispatcher visits CatchBottle on neutral frames too. Stop
+        # after its fresh-Y gate, before the facing/counter initializer, so
+        # ordinary movement setup cannot legitimately clear the canaries.
+        start = self.symbol("LinkItem_CatchBottle")
+        pc = native.pc_offset(start)
+        native.require(self.rom[pc + 8:pc + 11] == bytes.fromhex("20 73 B0")
+                       and self.rom[pc + 13:pc + 15] == bytes.fromhex("A5 2F"),
+                       "Catch fresh-press initializer boundary moved")
+        entry = self.enter(start + 13, "Y", hold=True)
+        self.check("catch fresh Y accepted", self.r(0x7E003A) & 0x40, 0x40)
         self.result["cases"][-1]["entry"] = dict(cpu=entry, y_latch=self.r(0x7E003A),
                                                    new_input=self.r(0x7E00F4), doorway=self.r(0x7E006C))
         for address in (0x7E030D, 0x7E0317, 0x7E0321, 0x7E032B):
