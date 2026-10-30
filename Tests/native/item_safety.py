@@ -54,7 +54,14 @@ class ItemSafetyFlow(menu.QuestFlow):
         native.require(not self.breakpoints, "Case leaked a breakpoint")
         self.input("")
         native.require(self.b.load_state(path=str(self.baseline)), "Own same-ROM baseline reload rejected")
+        # Load can recreate the debugger. Its first CPU/memory request clears
+        # Pause, so instantiate it before requesting and confirming Pause.
+        native.require(bool(self.b.get_cpu_state()), "Debugger unavailable after baseline reload")
         native.require(self.b.pause(), "Pause after own baseline rejected")
+        until = min(self.deadline, time.monotonic() + 5)
+        while not self.paused():
+            native.require(time.monotonic() < until, "Pause did not settle after baseline reload")
+            time.sleep(.01)
         self.result["cases"].append(dict(name=name))
         self.check("baseline room", int.from_bytes(self.block(0x7E00A0, 2), "little"), 0x104)
 
@@ -260,10 +267,15 @@ def main():
     except Exception as error:
         flow.result["error"] = repr(error)
     finally:
-        flow.input(""); flow.b.pause()
-        for ident in list(flow.breakpoints):
-            flow.remove(ident)
-        flow.result["passed"] = bool(flow.result.get("runtime_checks_passed"))
+        try:
+            flow.input("")
+            native.require(flow.b.pause(), "Final fixture Pause rejected")
+            for ident in list(flow.breakpoints):
+                flow.remove(ident)
+        except Exception as error:
+            flow.result["cleanup_errors"].append(repr(error))
+        flow.result["passed"] = bool(flow.result.get("runtime_checks_passed")
+                                     and not flow.result["cleanup_errors"])
         (session["output"] / "RESULT.json").write_text(json.dumps(flow.result, indent=2, default=str) + "\n")
     return 0 if flow.result["passed"] else 1
 
