@@ -47,9 +47,13 @@ class BuildPipelineReceiptTest(unittest.TestCase):
         self.write('Oracle_main.asm', 'incsrc "Util/macros.asm"\n'
                    'incsrc "Config/feature_flags.asm"\norg $028000 ; @hook module=Core\nRTL\n')
         self.write('Roms/oos999.sfc', 'disposable fixture bytes')
-        for name in ('sheet_overrides.py', 'validate_custom_collision_source.py',
-                     'validate_expanded_message_source.py'):
+        for name in ('sheet_overrides.py', 'menu_icon_overrides.py',
+                     'validate_custom_collision_source.py',
+                     'validate_expanded_message_source.py', 'joint_palette_directory.py'):
             self.write(f'Scripts/Generate/{name}', 'import os,sys\nsys.exit(int(os.getenv("FIXTURE_SOURCE_EXIT", "0")))\n')
+        # These source guards have independent suites; keep their child-process
+        # transport explicit, like the generators above and fixture assembler.
+        self.write('Scripts/Build/checkpoint_registry.py', 'import sys\nsys.exit(0)\n')
         self.write('Scripts/Generate/generate_hack_manifest.py',
                    'import json,sys,pathlib\n'
                    'pathlib.Path(sys.argv[sys.argv.index("--output")+1]).write_text(json.dumps({"fixture":True,"argv":sys.argv[1:]}))\n')
@@ -104,6 +108,11 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.check('source_sprite_sheets')['status'], 'passed')
         self.assertTrue(self.check('source_sprite_sheets')['required'])
+        self.assertEqual(self.check('menu_icon_sheets')['status'], 'passed')
+        self.assertTrue(self.check('menu_icon_sheets')['required'])
+        for name in ('joint_palette_source', 'checkpoint_source'):
+            self.assertEqual(self.check(name)['status'], 'passed')
+            self.assertTrue(self.check(name)['required'])
         self.assertEqual(self.check('lyra_prepare')['status'], 'passed')
         self.assertTrue(self.check('lyra_prepare')['required'])
         generated = self.root / 'Data/Generated/lyra_project'
