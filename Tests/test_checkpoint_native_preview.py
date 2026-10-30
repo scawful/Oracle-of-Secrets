@@ -20,7 +20,7 @@ import checkpoint_registry as C
 import lyra_joint_art as J
 import lyra_project_admission as A
 
-FERRY_HEX = ('30001600100d8802600d0003300090087f0d0703000c1e0d00000003200b000e00ff00'
+FERRY_HEX = ('30001600100d8802600d00033000d0087f0d0703000c1e0d00000003200b000e00ff00'
              '040020380000000000000000000000')
 SKY_HEX = ('87001600a000180ef000900e870002050f01970e00001e01000e000f20ff0002000d00'
            '1000203b1000000000000000000000')
@@ -134,7 +134,9 @@ class NativePreviewCacheTests(NativeFixture):
             self.assertEqual(cache.hex(), expected)
             self.assertEqual(derived['cache_sha256'], sha(cache))
             self.assertFalse(derived['native_gameplay_verified'])
-        _, ferry = C.native_preview_cache(self.image(), self.landing(3), self.binding)
+        ferry_cache, ferry = C.native_preview_cache(self.image(), self.landing(3), self.binding)
+        # Camera-local (640,272) is column40/row17 in the native64-column buffer.
+        self.assertEqual(struct.unpack('<25H', ferry_cache)[7], 2 * (17 * 64 + 40))
         self.assertEqual((ferry['world_pixel'], ferry['stable_after_walk']), ([768, 3424], [768, 3443]))
         _, sky = C.native_preview_cache(self.image(), self.landing(4), self.binding)
         self.assertEqual((sky['world_pixel'], sky['clearance_attributes']), ([3728, 240], [0x48]))
