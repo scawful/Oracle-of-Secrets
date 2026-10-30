@@ -80,6 +80,115 @@ class LyraProjectTerrainTest(unittest.TestCase):
         return T.parse_terrain_document(json.dumps(data), profile(),
                                          allow_authoring_drafts=True, **kwargs)
 
+    def whirlpool_document(self):
+        data = self.transport_document()
+        data.update(schema_version=8, whirlpool_transport={
+            "source_root": "C:/private/oracle-source",
+            "source_path": "Data/overworld/whirlpool_placements.asm",
+            "source_template": "; preserved baseline\n" + "".join(
+                f"%whirlpool_route({slot}, {slot}, {slot}, 128, {slot * 512 + 128}, "
+                "$1000, $FFFF, 0, 0, 0, $FFFA, $FFF6) ; route\n"
+                for slot in range(8)),
+            "routes": [dict(zip(T.WHIRLPOOL_FIELDS,
+                                (slot, slot, 128, slot * 512 + 128,
+                                 0x1000, 0xFFFF, 0, 0, 0, 0xFFFA, 0xFFF6)))
+                       for slot in range(8)]})
+        return data
+
+    def test_schema8_preserves_edited_routes_raw_words_and_immutable_template(self):
+        data = self.whirlpool_document()
+        data["gameplay_areas"] = [{"parent_map_id": 0xB0, "size": "large",
+                                    "maps": [0xB0, 0xB1, 0xB8, 0xB9]}]
+        route = data["whirlpool_transport"]["routes"][0]
+        route.update(source_map=0xB0, destination_map=0xB0, world_x=1000, world_y=4000)
+        before = copy.deepcopy(data)
+        parsed = self.parse_transport(data)
+        self.assertEqual(parsed.whirlpool_transport, before["whirlpool_transport"])
+        self.assertEqual(parsed.boat_transport, before["boat_transport"])
+        self.assertEqual(parsed.next_flight_point_id, 8)
+        self.assertEqual(parsed.whirlpool_transport["routes"][0]["scroll_mod_x"], 0xFFF6)
+        parsed.whirlpool_transport["routes"][0]["world_x"] = 0
+        self.assertEqual(data, before)
+        data["whirlpool_transport"] = None
+        self.assertIsNone(self.parse_transport(data).whirlpool_transport)
+        del data["whirlpool_transport"]
+        with self.assertRaisesRegex(ValueError, "header keys"):
+            self.parse_transport(data)
+
+    def test_schema8_rejects_malformed_route_shape_and_numeric_fields(self):
+        original = self.whirlpool_document()
+        for field in T.WHIRLPOOL_FIELDS:
+            maximum = 0xBF if field.endswith("_map") else 4088 if field.startswith("world_") else 65535
+            for value in (True, 0.0, -1, maximum + 1):
+                data = copy.deepcopy(original)
+                data["whirlpool_transport"]["routes"][0][field] = value
+                with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, "route"):
+                    self.parse_transport(data)
+        for count in (0, 7, 9):
+            data = copy.deepcopy(original)
+            data["whirlpool_transport"]["routes"] = (data["whirlpool_transport"]["routes"] * 2)[:count]
+            with self.subTest(count=count), self.assertRaisesRegex(ValueError, "eight ordered"):
+                self.parse_transport(data)
+        for source in (1, 0x1B):
+            data = copy.deepcopy(original)
+            data["whirlpool_transport"]["routes"][0]["source_map"] = source
+            with self.subTest(source=source), self.assertRaisesRegex(ValueError, "source parents"):
+                self.parse_transport(data)
+        for target in ("binding", "route"):
+            data = copy.deepcopy(original)
+            binding = data["whirlpool_transport"]
+            (binding if target == "binding" else binding["routes"][0])["future"] = 1
+            with self.subTest(target=target), self.assertRaisesRegex(ValueError, "keys"):
+                self.parse_transport(data)
+
+    def test_schema8_requires_numeric_complete_template_without_executing_source(self):
+        original = self.whirlpool_document()
+        for key, value in (("source_root", "relative"), ("source_root", "x" * 4097),
+                           ("source_path", "../other.asm"), ("source_template", ""),
+                           ("source_template", "x\0"), ("source_template", "x" * 65537)):
+            data = copy.deepcopy(original)
+            data["whirlpool_transport"][key] = value
+            with self.subTest(key=key, value=value[:20]), self.assertRaises(ValueError):
+                self.parse_transport(data)
+        template = original["whirlpool_transport"]["source_template"]
+        changes = (("%whirlpool_route(7,", "%whirlpool_route(8,"),
+                   ("%whirlpool_route(7,", "%whirlpool_route(0,"),
+                   ("$FFFF", "$10000"), ("$FFFF", "1+1"),
+                   ("$FFFF", "-1"), ("$FFFF", "+1"),
+                   (", $FFF6)", ")"), ("%whirlpool_route(0, 0,", "%whirlpool_route(0, 27,"))
+        for old, new in changes:
+            data = copy.deepcopy(original)
+            data["whirlpool_transport"]["source_template"] = template.replace(old, new)
+            with self.subTest(new=new), self.assertRaisesRegex(ValueError, "Whirlpool"):
+                self.parse_transport(data)
+        data = copy.deepcopy(original)
+        data["whirlpool_transport"]["source_template"] = template + "%whirlpool_route(\n"
+        with self.assertRaisesRegex(ValueError, "complete numeric"):
+            self.parse_transport(data)
+
+    def test_schema8_tail_routes_require_explicit_parent_and_exact_arrival_footprint(self):
+        for size, width, height, members in (
+                ("small", 512, 512, [0xA0]), ("wide", 1024, 512, [0xA0, 0xA1]),
+                ("tall", 512, 1024, [0xA0, 0xA8]),
+                ("large", 1024, 1024, [0xA0, 0xA1, 0xA8, 0xA9])):
+            data = self.whirlpool_document()
+            data["gameplay_areas"] = [{"parent_map_id": 0xA0, "size": size, "maps": members}]
+            route = data["whirlpool_transport"]["routes"][0]
+            route.update(source_map=0xA0, destination_map=0xA0,
+                         world_x=width - 1, world_y=2048 + height - 1)
+            with self.subTest(size=size):
+                self.parse_transport(data)
+            for field, value in (("world_x", width), ("world_y", 2047),
+                                 ("world_y", 2048 + height),
+                                 ("source_map", 0xA1), ("destination_map", 0xA1)):
+                bad = copy.deepcopy(data)
+                bad["whirlpool_transport"]["routes"][0][field] = value
+                with self.subTest(size=size, field=field), self.assertRaisesRegex(ValueError, "explicit"):
+                    self.parse_transport(bad)
+            data["gameplay_areas"] = []
+            with self.assertRaisesRegex(ValueError, "explicit gameplay area"):
+                self.parse_transport(data)
+
     def test_schema7_preserves_transport_subtile_values_and_schema6_runtime_fields(self):
         data = self.transport_document()
         auth = data["maps"][-1]["authoring"]
@@ -148,7 +257,7 @@ class LyraProjectTerrainTest(unittest.TestCase):
             with self.subTest(domain=domain), self.assertRaisesRegex(ValueError, "Malformed"):
                 self.parse_transport(data)
         data = self.transport_document()
-        data["schema_version"] = 8
+        data["schema_version"] = 9
         with self.assertRaisesRegex(ValueError, "Expected Yaze Lyra schema"):
             self.parse_transport(data)
 

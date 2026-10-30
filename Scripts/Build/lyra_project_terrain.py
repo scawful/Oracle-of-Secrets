@@ -157,6 +157,8 @@ class TerrainDocument:
     # lowering or write access to the named source tree.
     boat_transport: dict | None = None
     next_flight_point_id: int = 1
+    # Schema-8 source metadata is retained without authenticating a writer.
+    whirlpool_transport: dict | None = None
 
 
 @dataclass(frozen=True)
@@ -280,11 +282,91 @@ def validated_boat_transport(value) -> dict | None:
     return copy.deepcopy(value)
 
 
+WHIRLPOOL_FIELDS = ("source_map", "destination_map", "world_y", "world_x",
+                    "vram", "scroll_y", "scroll_x", "camera_y", "camera_x",
+                    "scroll_mod_y", "scroll_mod_x")
+
+
+def _validated_whirlpool_routes(routes) -> None:
+    _require(type(routes) is list and len(routes) == 8,
+             "Whirlpool transport requires eight ordered routes")
+    sources = set()
+    for route in routes:
+        _keys(route, set(WHIRLPOOL_FIELDS), "whirlpool route")
+        for key in WHIRLPOOL_FIELDS:
+            maximum = (0xBF if key.endswith("_map") else
+                       4088 if key.startswith("world_") else 0xFFFF)
+            _require(_integer(route[key], 0, maximum),
+                     f"Invalid whirlpool route {key}")
+        source = route["source_map"]
+        _require(source != 0x1B and source not in sources,
+                 "Whirlpool source parents must be unique and exclude castle map1B")
+        sources.add(source)
+
+
+def validated_whirlpool_transport(value, gameplay_areas) -> dict | None:
+    """Read schema-8 authoring without opening or granting its source tree."""
+    if value is None:
+        return None
+    _keys(value, {"source_root", "source_path", "source_template", "routes"},
+          "whirlpool transport")
+    root = value["source_root"]
+    _require(type(root) is str and 0 < len(root.encode("utf-8")) <= 4096
+             and "\0" not in root
+             and (PurePosixPath(root).is_absolute() or PureWindowsPath(root).is_absolute()),
+             "Whirlpool source_root must be absolute")
+    _require(value["source_path"] == "Data/overworld/whirlpool_placements.asm",
+             "Unsupported whirlpool source_path")
+    template = value["source_template"]
+    _require(type(template) is str and template and "\0" not in template
+             and len(template.encode("utf-8")) <= 65536,
+             "Invalid whirlpool source_template")
+    # Match the Yaze numeric source dialect. The immutable baseline may differ
+    # from edited JSON routes, but must contain all eight valid stable slots.
+    baseline = {}
+    for line in template.split("\n"):
+        line = line.split(";", 1)[0]
+        if "%whirlpool_route" not in line:
+            continue
+        call = re.fullmatch(r"[ \t]*%whirlpool_route\(([^()]*)\)[ \t\r]*", line)
+        _require(call is not None, "Whirlpool template requires a complete numeric macro call")
+        tokens = [token.strip(" \t") for token in call[1].split(",")]
+        _require(len(tokens) == 12 and all(
+            re.fullmatch(r"(?:[0-9]+|\$[0-9a-fA-F]+)", token) for token in tokens),
+            "Whirlpool template requires twelve unsigned word literals")
+        numbers = [int(token[1:], 16) if token.startswith("$") else int(token, 10)
+                   for token in tokens]
+        _require(all(number <= 0xFFFF for number in numbers),
+                 "Whirlpool template requires unsigned word literals")
+        slot = numbers[0]
+        _require(0 <= slot < 8 and slot not in baseline,
+                 "Whirlpool template slot is foreign or duplicated")
+        baseline[slot] = dict(zip(WHIRLPOOL_FIELDS, numbers[1:]))
+    _require(set(baseline) == set(range(8)), "Whirlpool template requires all eight stable slots")
+    _validated_whirlpool_routes([baseline[slot] for slot in range(8)])
+    _validated_whirlpool_routes(value["routes"])
+    parents = {area["parent_map_id"]: area for area in gameplay_areas}
+    for route in value["routes"]:
+        for parent in (route["source_map"], route["destination_map"]):
+            if parent < FIRST_MAP:
+                continue
+            _require(parent in parents, "Whirlpool tail parent requires an explicit gameplay area")
+            if parent == route["destination_map"]:
+                size = parents[parent]["size"]
+                width = 1024 if size in ("wide", "large") else 512
+                height = 1024 if size in ("tall", "large") else 512
+                x, y = parent % 8 * 512, (parent % 0x40 // 8) * 512
+                _require(x <= route["world_x"] < x + width
+                         and y <= route["world_y"] < y + height,
+                         "Whirlpool arrival leaves its explicit gameplay area")
+    return copy.deepcopy(value)
+
+
 def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
                            expected_asset_bindings: Mapping[int, tuple[str, str, str]] | None = None,
                            allow_authoring_drafts: bool = False,
                            ) -> TerrainDocument:
-    """Parse schema 3/4/5/6/7 against independently verified native assets.
+    """Parse schema 3/4/5/6/7/8 against independently verified native assets.
 
     The historical strict runtime policy remains the default. A read-only
     admission planner may preserve valid drafts and apply consumer checks to
@@ -298,15 +380,16 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
     data = json.loads(text, object_pairs_hook=_unique_object,
                       parse_constant=_invalid_constant)
     _require(type(data) is dict and data.get("schema") == "yaze.lyra-terrain"
-             and _integer(data.get("schema_version"), 3, 7),
-             "Expected Yaze Lyra schema 3, 4, 5, 6 or 7")
+             and _integer(data.get("schema_version"), 3, 8),
+             "Expected Yaze Lyra schema 3, 4, 5, 6, 7 or 8")
     version = data["schema_version"]
     _keys(data, {"schema", "schema_version", "columns", "rows", "map_width",
                  "map_height", "tile_pixels", "profile", "maps",
                  "flight_points", "edge_connections"}
                 | ({"gameplay_areas"} if version >= 5 else set())
-                | ({"boat_transport", "next_flight_point_id"} if version >= 7 else set()),
-             "Lyra schema 3/4/5/6/7 header")
+                | ({"boat_transport", "next_flight_point_id"} if version >= 7 else set())
+                | ({"whirlpool_transport"} if version >= 8 else set()),
+             "Lyra schema 3/4/5/6/7/8 header")
     for key, value in (("columns", 8), ("rows", 4), ("map_width", 32),
                        ("map_height", 32), ("tile_pixels", 16)):
         _require(_integer(data[key], value, value), f"Invalid Lyra {key}")
@@ -343,6 +426,8 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
                  and next_flight_point_id > max(flight_ids, default=0),
                  "Invalid next_flight_point_id")
         boat_transport = validated_boat_transport(data["boat_transport"])
+    whirlpool_transport = (validated_whirlpool_transport(data["whirlpool_transport"], gameplay_areas)
+                           if version >= 8 else None)
     edges = data["edge_connections"]
     _require(type(edges) is list and len(edges) <= 64,
              "Lyra edge connections require an array of at most 64 entries")
@@ -467,7 +552,7 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
     return TerrainDocument(expected, tuple(maps[i] for i in ids),
                            tuple(properties[i] for i in ids), tuple(copy.deepcopy(edges)),
                            tuple(authoring[i] for i in ids), tuple(copy.deepcopy(flights)), gameplay_areas,
-                           boat_transport, next_flight_point_id)
+                           boat_transport, next_flight_point_id, whirlpool_transport)
 
 
 def quadrant_map_plan(map_id: int) -> Quad:
