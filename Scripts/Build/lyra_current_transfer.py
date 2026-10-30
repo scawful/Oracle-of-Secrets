@@ -25,7 +25,7 @@ import lyra_project_composition as C
 import lyra_project_prepare as Q
 import lyra_project_publisher as P
 import lyra_project_tile32 as T
-from lyra_project_terrain import Allocation, resolve_project_terrain
+from lyra_project_terrain import Allocation, has_native_resource_history, resolve_project_terrain
 
 KIND = 'lyra.current_save_transfer_request.v1'
 SAVE_KIND = 'yaze.native_save.v1'
@@ -907,6 +907,8 @@ def _document_identity(document):
     # allowed to change under a cached source profile.
     if document.gameplay_areas:
         value['gameplay_areas'] = document.gameplay_areas
+    if has_native_resource_history(document):
+        value['next_native_resource_id'] = document.next_native_resource_id
     return T.digest(value)
 
 
@@ -1048,6 +1050,8 @@ def current_native_source_profile(review, project, base_rom, *, contract_path=No
 
 def verify_current_native_source_profile(profile, source, document, *, allocation=None,
                                          spare_tile32_ids=(), native_copy_maps=(), private_pilot=None):
+    R.require(not has_native_resource_history(document),
+              'CURRENT_NATIVE_RESOURCES_UNBOUND: schema9 resources require a typed source-bound binder')
     R.require(type(profile) is dict and profile.get('kind') == CURRENT_PROFILE_KIND,
               'CURRENT_SOURCE_PROFILE_REQUIRED: an explicit current source profile is required')
     fresh = current_native_source_profile(profile['review'], profile['project'], profile['base_rom'],
@@ -1082,6 +1086,8 @@ def plan_transfer(request_path, project, base_rom, *, ledger_path=None, current_
               'CURRENT_SAVE_POLICY_AUTHORITY_MISMATCH: only the source-owned policy registry is accepted')
     request_binding = Q.bound(request_path)
     request, source, document = verify_transfer(request_path, project, base_rom)
+    R.require(not has_native_resource_history(document),
+              'CURRENT_NATIVE_RESOURCES_UNBOUND: schema9 resources require a typed source-bound binder')
     ledger_binding = Q.bound(canonical_ledger)
     ledger = _json(Q.read_bound(ledger_binding))
     policies = ledger.get('current_save_transfer_policies', [])
@@ -1387,6 +1393,8 @@ def verify_resident_payload(emission, compiled, symbols):
 def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     """Select only a source-owned reviewed runtime policy; no A1 fallback."""
     request, source, document = verify_transfer(request_path, project, base_rom)
+    R.require(not has_native_resource_history(document),
+              'CURRENT_NATIVE_RESOURCES_UNBOUND: schema9 resources require a typed source-bound binder')
     R.require(document.boat_transport is None,
               'CURRENT_BOAT_SOURCE_UNBOUND: saved boat source requires current runtime authentication')
     R.require(document.whirlpool_transport is None,

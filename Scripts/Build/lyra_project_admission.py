@@ -20,7 +20,8 @@ import sys
 
 from lyra_project_terrain import (
     Allocation, FIRST_MAP, MAP_COUNT, TerrainDocument, compile_terrain,
-    gameplay_area_footprint, gameplay_render_directory, parse_terrain_document, quadrant_map_plan,
+    gameplay_area_footprint, gameplay_render_directory, has_native_resource_history,
+    parse_terrain_document, quadrant_map_plan,
     resolve_project_terrain, validated_gameplay_areas,
 )
 from lyra_native_state import plan_native_state
@@ -515,6 +516,8 @@ def appearance_plan(source, document, directory, *, resource_inspection=None,
 
 def consumer_blockers(document, traversal, closure, *, current_source=False):
     blockers = []
+    if has_native_resource_history(document):
+        blockers.append(dict(code="NATIVE_RESOURCES_UNBOUND", field="native_resources"))
     current_sprite_phases = False
     if current_source:
         # The caller validates the selected profile. Read its source-owned

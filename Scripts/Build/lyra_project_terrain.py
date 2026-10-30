@@ -163,6 +163,18 @@ class TerrainDocument:
     next_native_resource_id: int = 1
 
 
+def has_native_resource_history(document: TerrainDocument) -> bool:
+    """Recognize schema9 history without interpreting or dropping resource drafts."""
+    _require(isinstance(document, TerrainDocument), "Expected parsed TerrainDocument")
+    _require(_integer(document.next_native_resource_id, 1, 0x100000000),
+             "Invalid next_native_resource_id")
+    _require(type(document.authoring) is tuple
+             and all(type(row) is dict for row in document.authoring),
+             "Invalid parsed Lyra authoring")
+    return (document.next_native_resource_id != 1
+            or any("native_resources" in row for row in document.authoring))
+
+
 @dataclass(frozen=True)
 class Allocation:
     # Headerless PC ranges, end-exclusive, independently owned by the caller.
@@ -612,6 +624,8 @@ def compile_terrain(document: TerrainDocument, native_definitions: Mapping[int, 
                     allocation: Allocation, *, map_ids=None, render_directory=None) -> CompiledTerrain:
     """Compile all maps or a sorted explicit subset; never mutate inputs."""
     _require(isinstance(document, TerrainDocument), "Expected parsed TerrainDocument")
+    _require(not has_native_resource_history(document),
+             "NATIVE_RESOURCES_UNBOUND: schema9 resources require a typed source-bound binder")
     _require(isinstance(allocation, Allocation), "Expected explicit Allocation")
     _require(_integer(allocation.tile32_capacity, 1, TILE32_CAPACITY),
              "Invalid native Tile32 capacity")

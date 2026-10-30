@@ -459,5 +459,84 @@ class ResidentComposerResourceTest(unittest.TestCase):
                            resident_native_plan=self.native)
 
 
+class Schema9IdentityBoundaryTest(unittest.TestCase):
+    def test_legacy_schema3_to8_identity_payloads_remain_exact(self):
+        import test_lyra_project_terrain as fixtures
+        import lyra_resident_graphics as resident
+        case = fixtures.LyraProjectTerrainTest()
+        for version in range(3, 9):
+            bindings = None
+            if version == 3:
+                raw = fixtures.fixture()
+            elif version == 4:
+                raw, bindings = case.palette_document()
+            else:
+                raw = case.whirlpool_document()
+                raw['schema_version'] = version
+                if version < 8:
+                    del raw['whirlpool_transport']
+                if version < 7:
+                    del raw['boat_transport'], raw['next_flight_point_id']
+                if version == 5:
+                    raw['gameplay_areas'] = [dict(parent_map_id=0xA0, size='small', maps=[0xA0])]
+                    for row in raw['maps']:
+                        for key in fixtures.T.RUNTIME_PROPERTY_DEFAULTS:
+                            del row['authoring']['properties'][key]
+            document = case.parse_transport(raw, expected_asset_bindings=bindings)
+            old_current = {key: getattr(document, key) for key in
+                ('profile', 'maps', 'properties', 'authoring', 'edge_connections', 'flight_points')}
+            if document.gameplay_areas:
+                old_current['gameplay_areas'] = document.gameplay_areas
+            old_resident = {key: getattr(document, key) for key in
+                ('profile', 'maps', 'properties', 'authoring', 'gameplay_areas')}
+            with self.subTest(version=version):
+                self.assertEqual(X._document_identity(document), X.T.digest(old_current))
+                self.assertEqual(resident.conditional_document_identity(document), resident._sha(resident._json_bytes(old_resident)))
+
+    def test_schema9_counter_only_history_and_resource_content_retire_both_identities(self):
+        from dataclasses import replace
+        import test_lyra_project_terrain as fixtures
+        import lyra_resident_graphics as resident
+        case = fixtures.LyraProjectTerrainTest()
+        raw = case.resource_document()
+        for row in raw['maps']:
+            row['authoring']['native_resources'] = None
+        raw['next_native_resource_id'] = 1
+        document = case.parse_transport(raw)
+        identities = (X._document_identity, resident.conditional_document_identity)
+        for identity in identities:
+            first = identity(document)
+            for counter in (2, 123, 0x100000000):
+                changed = replace(document, next_native_resource_id=counter)
+                self.assertEqual(changed.authoring, document.authoring)
+                with self.subTest(identity=identity.__name__, counter=counter):
+                    self.assertNotEqual(identity(changed), first)
+            stripped = replace(document, authoring=tuple(
+                {key: value for key, value in row.items() if key != 'native_resources'}
+                for row in document.authoring))
+            self.assertNotEqual(identity(stripped), first)
+            hashes = {first}
+            for resources in ({'secrets': [], 'event_behavior': None},
+                              {'secrets': [], 'event_behavior': {'kind': 'native_secret_v1'}},
+                              {'secrets': [{'id': 1, 'x': 0, 'y': 31, 'secret_id': 255}], 'event_behavior': None}):
+                edited = copy.deepcopy(raw)
+                edited['next_native_resource_id'] = 2
+                edited['maps'][-1]['authoring']['native_resources'] = resources
+                hashes.add(identity(case.parse_transport(edited)))
+            self.assertEqual(len(hashes), 4)
+
+    def test_current_profile_boundary_refuses_resource_history_after_valid_legacy_control(self):
+        from dataclasses import replace
+        f = ComposerFixture(self)
+        self.assertEqual(X.verify_current_native_source_profile(f.profile, f.source, f.document), f.profile)
+        for document in (
+                replace(f.document, next_native_resource_id=2),
+                replace(f.document, authoring=tuple(dict(row, native_resources=None) for row in f.document.authoring))):
+            self.assertNotEqual(X._document_identity(document), X._document_identity(f.document))
+            with self.assertRaisesRegex(ValueError, 'CURRENT_NATIVE_RESOURCES_UNBOUND'):
+                X.verify_current_native_source_profile(f.profile, f.source, document)
+            self.assertFalse(f.contract_fixture.case.candidate.exists())
+
+
 if __name__ == '__main__':
     unittest.main()

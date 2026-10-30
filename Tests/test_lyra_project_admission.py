@@ -233,6 +233,39 @@ class LyraAdmissionTest(unittest.TestCase):
             self.assertEqual(row["legacy_sha256"], A.sha(old))
         self.assertEqual(first["event_aliases"][0]["legacy_address"], 0x7EF321)
 
+    def test_schema9_history_reports_document_wide_blocker_without_streams_or_default_tables(self):
+        alloc = allocation(self.source)
+        alloc["admission"]["candidate_maps"] = [0xA1]
+        baseline = self.plan(alloc=alloc)
+        self.assertTrue(baseline["candidate_data_plan_ready"])
+        self.assertTrue(baseline["streams"])
+        self.assertTrue(baseline["relocated_tables"])
+        for resources, counter in ((None, 1), (None, 0x100000000),
+                                   ({"secrets": [], "event_behavior": None}, 1),
+                                   ({"secrets": [{"id": 1, "x": 31, "y": 31, "secret_id": 255}],
+                                     "event_behavior": None}, 2)):
+            data = document()
+            data.update(schema_version=9, gameplay_areas=[], boat_transport=None,
+                        next_flight_point_id=1, whirlpool_transport=None,
+                        next_native_resource_id=counter)
+            for row in data["maps"]:
+                row["authoring"]["properties"].update(T.RUNTIME_PROPERTY_DEFAULTS)
+                row["authoring"]["native_resources"] = None
+            data["maps"][-1]["authoring"]["native_resources"] = resources
+            before = copy.deepcopy((data, alloc))
+            with self.subTest(resources=resources, counter=counter):
+                planned = self.plan(data, alloc)
+                self.assertIn(dict(code="NATIVE_RESOURCES_UNBOUND", field="native_resources"),
+                              planned["consumption_blockers"])
+                self.assertFalse(planned["candidate_data_plan_ready"])
+                self.assertEqual(planned["streams"], [])
+                self.assertEqual(planned["relocated_tables"], [])
+                self.assertEqual((data, alloc), before)
+                parsed = T.parse_terrain_document(json.dumps(data), profile(), allow_authoring_drafts=True)
+                for current in (False, True):
+                    self.assertIn(dict(code="NATIVE_RESOURCES_UNBOUND", field="native_resources"),
+                                  A.consumer_blockers(parsed, [], (), current_source=current))
+
     def test_drafts_outside_subset_keep_cells_entities_profiles_and_flights(self):
         data = document()
         draft = data["maps"][0xBF - 0xA0]

@@ -974,5 +974,39 @@ class ConditionalDemandTest(unittest.TestCase):
                 self.derive(inputs)
 
 
+class Schema9ResidentBoundaryTest(unittest.TestCase):
+    def test_schema9_history_refuses_direct_derivation_and_resource_abi_preparation(self):
+        from dataclasses import replace
+        case = ConditionalDemandTest()
+        inputs = case.inputs(case.fixture())
+        source, document, inspection, terrain_hash, policy = inputs
+        witness = case.derive(inputs)
+        baseline = case.packed(inputs, witness)
+        self.assertTrue(baseline['terrain_plan_ready'])
+        self.assertFalse(baseline['runtime_admission'])
+        history = tuple(dict(row, native_resources=None) for row in document.authoring)
+        for counter in (1, 2, 0x100000000):
+            selected = replace(document, authoring=copy.deepcopy(history), next_native_resource_id=counter)
+            before = copy.deepcopy(selected)
+            # Even an honestly rebound recipe/witness does not supply a typed binder.
+            bound_policy = copy.deepcopy(policy)
+            bound_policy['save_identity']['document_sha256'] = R.conditional_document_identity(selected)
+            with self.subTest(counter=counter):
+                with mock.patch.object(R, '_conditional_definitions', wraps=R._conditional_definitions) as definitions:
+                    with self.assertRaisesRegex(ValueError, 'NATIVE_RESOURCES_UNBOUND'):
+                        R.derive_conditional_demands(source, selected, inspection, source_policy=bound_policy)
+                    definitions.assert_not_called()
+                with mock.patch.object(R, '_plan_area', wraps=R._plan_area) as pack:
+                    with self.assertRaisesRegex(ValueError, 'NATIVE_RESOURCES_UNBOUND'):
+                        R.plan_resident_graphics(source, selected, inspection, terrain_sha256=terrain_hash,
+                                                provenance=dict(test='same authenticated source'),
+                                                conditional_demands=witness)
+                    pack.assert_not_called()
+                self.assertEqual(selected, before)
+        with self.assertRaisesRegex(ValueError, 'NATIVE_RESOURCES_UNBOUND'):
+            R.plan_resident_graphics(source, replace(document, next_native_resource_id=2), inspection,
+                                    terrain_sha256=terrain_hash, provenance=dict(test='history only'))
+
+
 if __name__ == '__main__':
     unittest.main()

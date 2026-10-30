@@ -235,6 +235,41 @@ class LyraProjectTerrainTest(unittest.TestCase):
                 T.parse_terrain_document(text.replace(original, replacement, 1), profile(),
                                          allow_authoring_drafts=True)
 
+    def test_schema9_history_blocks_compilation_even_for_empty_or_unselected_subsets(self):
+        from dataclasses import replace
+        legacy = parse(fixture())
+        self.assertFalse(T.has_native_resource_history(legacy))
+        baseline = T.compile_terrain(legacy, definitions(), allocation(), map_ids=[0xA0])
+        self.assertEqual([row.map_id for row in baseline.maps], [0xA0])
+        variants = []
+        for resources, counter in ((None, 1), (None, 123), (None, 0x100000000),
+                                   ({"secrets": [], "event_behavior": None}, 1),
+                                   ({"secrets": [{"id": 1, "x": 31, "y": 31, "secret_id": 255}],
+                                     "event_behavior": None}, 2)):
+            data = self.resource_document()
+            for entry in data["maps"]:
+                entry["authoring"]["native_resources"] = None
+            data["maps"][-1]["authoring"]["native_resources"] = resources
+            data["next_native_resource_id"] = counter
+            variants.append(self.parse_transport(data))
+        variants.append(replace(legacy, next_native_resource_id=2))
+        for index, document in enumerate(variants):
+            before = copy.deepcopy(document)
+            self.assertTrue(T.has_native_resource_history(document))
+            for selected in ([], [0xA0], None):
+                with self.subTest(index=index, selected=selected), self.assertRaisesRegex(
+                        ValueError, "NATIVE_RESOURCES_UNBOUND"):
+                    T.compile_terrain(document, definitions(), allocation(), map_ids=selected)
+            self.assertEqual(document, before)
+
+    def test_resource_history_rejects_invalid_constructed_counter_without_normalizing(self):
+        from dataclasses import replace
+        legacy = parse(fixture())
+        for counter in (True, 1.0, "1", 0, -1, 0x100000001):
+            document = replace(legacy, next_native_resource_id=counter)
+            with self.subTest(counter=counter), self.assertRaisesRegex(ValueError, "next_native_resource_id"):
+                T.has_native_resource_history(document)
+
     def test_legacy_schemas_keep_unselected_resources_and_reject_schema9_extras(self):
         for version in range(3, 9):
             if version == 4:

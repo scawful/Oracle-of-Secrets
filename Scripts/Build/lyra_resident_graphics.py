@@ -13,7 +13,7 @@ import re
 import struct
 import sys
 
-from lyra_project_terrain import TerrainDocument, validated_gameplay_areas
+from lyra_project_terrain import TerrainDocument, has_native_resource_history, validated_gameplay_areas
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'Generate'))
 import sheet_codec
@@ -149,9 +149,12 @@ def _source_sheets(source):
 
 def conditional_document_identity(document):
     """Shared exact saved-document value identity; no runtime state is inferred."""
-    return _sha(_json_bytes(dict(profile=document.profile, maps=document.maps,
+    value = dict(profile=document.profile, maps=document.maps,
         properties=document.properties, authoring=document.authoring,
-        gameplay_areas=document.gameplay_areas)))
+        gameplay_areas=document.gameplay_areas)
+    if has_native_resource_history(document):
+        value['next_native_resource_id'] = document.next_native_resource_id
+    return _sha(_json_bytes(value))
 
 
 def _conditional_definitions(source, document):
@@ -297,6 +300,8 @@ def derive_conditional_demands(source, document, inspection, *, source_policy):
     quadrant's effective char type, and the source door's actual target offsets.
     """
     _require(type(source) is bytes and isinstance(document, TerrainDocument), 'CONDITIONAL_INPUT_INVALID')
+    _require(not has_native_resource_history(document),
+             'NATIVE_RESOURCES_UNBOUND: schema9 resources require a typed source-bound binder')
     areas = validated_gameplay_areas(document.gameplay_areas)
     _require({page for area in areas for page in area['maps']} == set(range(FIRST, END))
              and len(document.maps) == 32 and all(type(tiles) is tuple and len(tiles) == 1024
@@ -618,6 +623,8 @@ def _plan_area(area, document, assets, definitions, read_sheet, conditional_tile
 def plan_resident_graphics(source, document, inspection, *, terrain_sha256, provenance,
                            conditional_demands=None):
     """Return deterministic ungranted DATA; native/shared-resource readiness stays false."""
+    _require(not has_native_resource_history(document),
+             'NATIVE_RESOURCES_UNBOUND: schema9 resources require a typed source-bound binder')
     _require(type(source) is bytes and 0 < len(source) <= 0x400000
              and len(source) % 0x8000 == 0, 'SOURCE_INVALID')
     _require(isinstance(document, TerrainDocument)

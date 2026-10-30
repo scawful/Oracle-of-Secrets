@@ -624,6 +624,57 @@ class CurrentSaveTransferTest(unittest.TestCase):
         self.assertFalse(generated.exists())
         self.assertFalse(self.candidate.exists())
 
+    def test_schema9_snapshot_stays_readable_but_current_planning_and_publication_refuse(self):
+        _, legacy_request = self.prepare()
+        legacy, _, legacy_document = X.verify_transfer(legacy_request, self.project, self.rom)
+        self.assertFalse(X.has_native_resource_history(legacy_document))
+        self.assertTrue(legacy['transfer_id'])
+        for index, (resources, counter) in enumerate((
+                (None, 1), (None, 0x100000000),
+                ({'secrets': [], 'event_behavior': None}, 1),
+                ({'secrets': [{'id': 1, 'x': 0, 'y': 0, 'secret_id': 255}],
+                  'event_behavior': None}, 2))):
+            raw = json.loads(self.terrain.read_bytes())
+            raw.update(schema_version=9, gameplay_areas=[], boat_transport=None,
+                       next_flight_point_id=1, whirlpool_transport=None,
+                       next_native_resource_id=counter)
+            for row in raw['maps']:
+                row['authoring']['properties'].update(mosaic=0, subscreen_overlay=255, area_specific_bg_color=None)
+                row['authoring']['native_resources'] = None
+            raw['maps'][-1]['authoring']['native_resources'] = resources
+            self.terrain.write_bytes(X.P.encoded(raw))
+            self.inputs['terrain'] = X.Q.bound(self.terrain)
+            self.save['artifacts'] = self.artifacts(self.inputs)
+            self.next_save()
+            self.proof.clear()
+            self.proof.update(observation(self.rom.read_bytes(), raw)[1])
+            self.proof['terrain_sha256'] = X.R.sha(self.terrain.read_bytes())
+            self.output = self.root / f'schema9-snapshot-{index}'
+            report, request = self.prepare()
+            checked, source, parsed = X.verify_transfer(request, self.project, self.rom)
+            self.assertTrue(report['snapshot_ready'])
+            self.assertEqual(checked['live']['generation'], self.save['generation'])
+            self.assertEqual(parsed.next_native_resource_id, counter)
+            self.assertEqual(parsed.authoring[-1]['native_resources'], resources)
+            before = {path: path.read_bytes() for path in
+                      (self.project, self.rom, self.terrain, self.receipt, self.context_path)}
+            generated = self.root / f'schema9-generated-{index}'
+            with (mock.patch.object(X.V, 'compile_native_plan', wraps=X.V.compile_native_plan) as compile_plan,
+                  mock.patch.object(X.P, 'render_outputs', wraps=X.P.render_outputs) as render,
+                  mock.patch.object(X.P, 'write_outputs', wraps=X.P.write_outputs) as write):
+                with self.subTest(index=index), self.assertRaisesRegex(ValueError, 'CURRENT_NATIVE_RESOURCES_UNBOUND'):
+                    X.plan_transfer(request, self.project, self.rom)
+                with self.assertRaisesRegex(ValueError, 'CURRENT_NATIVE_RESOURCES_UNBOUND'):
+                    X.ordinary_plan(self.project, self.rom, request)
+                with self.assertRaisesRegex(ValueError, 'CURRENT_NATIVE_RESOURCES_UNBOUND'):
+                    X.P.prepare(generated, project=self.project, base_rom=self.rom, request=request)
+                compile_plan.assert_not_called()
+                render.assert_not_called()
+                write.assert_not_called()
+            self.assertFalse(generated.exists())
+            self.assertFalse(self.candidate.exists())
+            self.assertEqual({path: path.read_bytes() for path in before}, before)
+
     def test_normal_prepare_cli_exits_nonzero_without_asm_or_output_rom(self):
         report, request = self.prepare()
         result = subprocess.run([sys.executable, str(ROOT / 'Scripts/Build/lyra_project_publisher.py'),
