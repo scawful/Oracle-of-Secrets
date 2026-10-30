@@ -18,6 +18,11 @@ class CurrentOutputGenerationTest(unittest.TestCase):
 
     def setUp(self):
         fixtures.BuildPipelineReceiptTest.setUp(self)
+        self.copy('Scripts/Build/rom_stage_input.py')
+        # These source guards have independent suites. Keep their child-process
+        # transport explicit here, like the fixture assembler and publisher.
+        self.write('Scripts/Generate/joint_palette_directory.py', 'import sys\nsys.exit(0)\n')
+        self.write('Scripts/Build/checkpoint_registry.py', 'import sys\nsys.exit(0)\n')
         self.write('Roms/oos168.sfc','x'*(2*1024*1024))
         self.write('Scripts/Build/lyra_current_transfer.py','def verify_current_context(root,prepared): return {}\n')
         self.write('Scripts/Build/lyra_project_publisher.py','''import hashlib,json,os,pathlib,sys
@@ -39,10 +44,20 @@ if command=='prepare':
  (folder/'runtime_constants.asm').write_bytes(constants)
  (folder/'prepare.json').write_text(json.dumps(dict(kind='lyra.current_build_prepare.v1',selected=True,
   allocation_granted=True,producer_enforcement_verified=True,runtime_admission=True,
+  base_rom=os.environ['OOS_BASE_ROM'],
+  saved_rom_sha256=hashlib.sha256(pathlib.Path(os.environ['OOS_BASE_ROM']).read_bytes()).hexdigest(),
+  terrain_plan={'target':{'path':str(target),'size':0x400000,'role':'compiled_candidate'}},
   generated_files={'runtime_constants.asm':hashlib.sha256(constants).hexdigest()})))
 elif command=='stage':
  assert pathlib.Path(arg('--rom'))==target
- with target.open('xb') as stream:stream.write(pathlib.Path(os.environ['OOS_BASE_ROM']).read_bytes()+bytes(2*1024*1024))
+ import rom_stage_input as stage
+ source_path=pathlib.Path(os.environ['OOS_BASE_ROM']);source=source_path.read_bytes()
+ prepare_path=folder/'prepare.json';prepare_raw=prepare_path.read_bytes()
+ declaration=stage.describe_ff_stage(source,source_path,target,prepare_path,prepare_raw)
+ staged=source.ljust(0x400000,b'\\xff')
+ stage.verify_ff_stage(source,staged,declaration,source_path,target,prepare_path,prepare_raw)
+ with target.open('xb') as stream:stream.write(staged)
+ with pathlib.Path(str(target)+stage.RECEIPT_SUFFIX).open('x') as stream:json.dump(declaration,stream)
 elif command=='verify':
  assert pathlib.Path(arg('--rom'))==target and pathlib.Path(arg('--symbols'))==target.with_suffix('.sym')
  pathlib.Path(arg('--receipt')).write_text('{}')
@@ -96,12 +111,16 @@ print('{}')
                 cwd=self.temp.name,env=self.env,text=True,capture_output=True)
             self.assertEqual(result.returncode,0,result.stdout+result.stderr)
             expected=('oos168x.sfc','oos168x.sym','oos168x.mlb','oos168x.build.json',
-                      'hooks.json','hack_manifest.json','oos168x.lyra-verification.json')
+                      'hooks.json','hack_manifest.json','oos168x.lyra-verification.json','oos168x.sfc.stage-input.json')
             self.assertTrue(all((directory/name).is_file() for name in expected))
             receipt=json.loads((directory/'oos168x.build.json').read_bytes())
             self.assertEqual(receipt['artifacts']['output_rom']['path'],str(target))
             self.assertEqual(receipt['artifacts']['hooks']['path'],str(directory/'hooks.json'))
             self.assertEqual(receipt['artifacts']['manifest']['path'],str(directory/'hack_manifest.json'))
+            stage_path=directory/'oos168x.sfc.stage-input.json'
+            self.assertEqual(receipt['artifacts']['staged_input_transform']['path'],str(stage_path))
+            self.assertEqual(receipt['artifacts']['staged_input_transform']['sha256'],
+                             hashlib.sha256(stage_path.read_bytes()).hexdigest())
             if generation==1:first={p:p.read_bytes() for p in directory.iterdir() if p.is_file()}
             else:self.assertTrue(all(p.read_bytes()==raw for p,raw in first.items()))
         self.assertEqual((self.root/'Roms/oos168.sfc').read_bytes(),before)

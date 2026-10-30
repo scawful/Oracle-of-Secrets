@@ -697,18 +697,42 @@ def current_verifier(project, base_rom=None, request=None, explicit=None):
 
 
 def stage_current_candidate(folder, candidate):
-    """Create only the exact new owned target, retaining the saved source bytes."""
+    """Create a fresh target with an exact source-preserving FF-stage declaration."""
     from lyra_current_transfer import verify_current_context
-    prior=json.loads((Path(folder)/'prepare.json').read_bytes())
+    import rom_stage_input as stage
+    prepare_path=(Path(folder)/'prepare.json').resolve(strict=True)
+    prepare_raw=prepare_path.read_bytes()
+    prior=json.loads(prepare_raw)
+    candidate=Path(candidate).absolute()
+    stage_path=Path(str(candidate)+stage.RECEIPT_SUFFIX)
     R.require(prior.get('kind') == 'lyra.current_build_prepare.v1'
-              and Path(candidate).absolute() == Path(prior['terrain_plan']['target']['path'])
-              and not Path(candidate).exists(),'CURRENT_BUILD_TARGET_MISMATCH')
+              and candidate == Path(prior['terrain_plan']['target']['path'])
+              and not candidate.exists() and not candidate.is_symlink()
+              and not stage_path.exists() and not stage_path.is_symlink(),
+              'CURRENT_BUILD_TARGET_MISMATCH')
     verify_current_context(ROOT,prior)
-    source=Path(prior['base_rom']).read_bytes()
+    source_path=Path(prior['base_rom'])
+    source=source_path.read_bytes()
     R.require(R.sha(source) == prior['saved_rom_sha256'],'Current staged source changed')
-    with Path(candidate).open('xb') as handle:
-        handle.write(A.expanded_rom(source))
-    return dict(kind='lyra.current_candidate_staged.v1',selected=True,rom_written=True)
+    staged=A.expanded_rom(source)
+    declaration=stage.describe_ff_stage(source,source_path,candidate,prepare_path,prepare_raw)
+    stage.verify_ff_stage(source,staged,declaration,source_path,candidate,prepare_path,prepare_raw)
+    with candidate.open('xb') as handle:
+        handle.write(staged)
+    R.require(not os.path.samefile(candidate,source_path),
+              'Current candidate aliases saved source')
+    R.require(candidate.read_bytes() == staged
+              and source_path.read_bytes() == source
+              and prepare_path.read_bytes() == prepare_raw,
+              'Current stage inputs changed while publishing')
+    with stage_path.open('xb') as handle:
+        handle.write(encoded(declaration))
+    R.require(stage_path.read_bytes() == encoded(declaration),
+              'Current stage declaration readback differs')
+    R.require(not os.path.samefile(candidate,source_path),
+              'Current candidate aliases saved source')
+    return dict(kind='lyra.current_candidate_staged.v1',selected=True,rom_written=True,
+                stage_input=str(stage_path),stage_input_sha256=R.sha(encoded(declaration)))
 
 
 def check_water_source(kind, rom):

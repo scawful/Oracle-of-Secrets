@@ -422,6 +422,7 @@ sys.exit(0 if json.load(open(sys.argv[1])).get('kind') == 'lyra.current_build_pr
 PY_CURRENT
 then
   run_check lyra_stage 1 python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" stage --rom "$patched_rom"
+  receipt artifact --name staged_input_transform --path "$patched_rom.stage-input.json"
 else
   cp -f "$base_rom" "$patched_rom"
 fi

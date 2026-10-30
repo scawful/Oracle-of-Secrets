@@ -15,8 +15,65 @@ from test_lyra_current_build import CurrentBuildTest
 import test_lyra_current_transfer as transfer_fixtures
 import lyra_current_transfer as X
 import authoring_bundle_build as B
+import rom_stage_input as stage
 
 ROOT=Path(__file__).resolve().parents[1]
+
+
+class StageTransformTest(unittest.TestCase):
+    def prepare(self, source):
+        self.source = Path('/owned/source.sfc')
+        self.target = Path('/owned/target.sfc')
+        self.prepare_path = Path('/owned/prepare.json')
+        self.raw = X.P.encoded(dict(kind='lyra.current_build_prepare.v1', selected=True,
+            base_rom=str(self.source), saved_rom_sha256=stage.digest(source),
+            terrain_plan=dict(target=dict(path=str(self.target), size=0x400000,
+                                          role='compiled_candidate'))))
+        return stage.describe_ff_stage(source, self.source, self.target, self.prepare_path, self.raw)
+
+    def verify(self, source, staged, declaration):
+        return stage.verify_ff_stage(source, staged, declaration,
+            self.source, self.target, self.prepare_path, self.raw)
+
+    def test_two_to_four_mib_preserves_source_and_appends_only_ff(self):
+        source = b'\x23' * 0x200000
+        declaration = self.prepare(source)
+        staged = source + b'\xff' * 0x200000
+        proof = self.verify(source, staged, declaration)
+        self.assertEqual(proof['padding'], dict(start=0x200000, end=0x400000, value=255))
+        self.assertEqual(staged[:len(source)], source)
+
+    def test_four_mib_identity_has_empty_padding(self):
+        source = b'\x23' * 0x400000
+        proof = self.verify(source, source, self.prepare(source))
+        self.assertEqual(proof['padding'], dict(start=0x400000, end=0x400000, value=255))
+
+    def test_headered_and_other_sizes_refuse(self):
+        for size in (0x200200, 0x200001, 0x300000, 0x400200):
+            with self.subTest(size=size), self.assertRaisesRegex(stage.StageInputError, 'unheadered'):
+                self.prepare(bytes(size))
+
+    def test_rehashed_prefix_and_padding_tampering_still_refuse(self):
+        source = bytes(0x200000)
+        for offset, message in ((0x100000, 'authored source prefix'), (0x300000, 'non-FF')):
+            declaration = self.prepare(source)
+            staged = bytearray(source + b'\xff' * 0x200000)
+            staged[offset] ^= 1
+            declaration['target']['sha256'] = stage.digest(staged)
+            with self.subTest(offset=offset), self.assertRaisesRegex(stage.StageInputError, message):
+                self.verify(source, bytes(staged), declaration)
+
+    def test_stale_prepare_and_boolean_padding_refuse(self):
+        source = bytes(0x200000)
+        staged = source + b'\xff' * 0x200000
+        declaration = self.prepare(source)
+        self.raw += b'\n'
+        with self.assertRaisesRegex(stage.StageInputError, 'prepare binding is stale'):
+            self.verify(source, staged, declaration)
+        declaration = self.prepare(source)
+        declaration['padding']['value'] = True
+        with self.assertRaisesRegex(stage.StageInputError, 'padding fields must be integers'):
+            self.verify(source, staged, declaration)
 
 
 class CurrentAuthoringRouterTest(unittest.TestCase):
@@ -74,6 +131,10 @@ printf '%s\\n' "$patched_rom" "$rom_dir" "$receipt_path" "$symbols_path" "$mlb_p
         folder=self.f.root/X.P.OUTPUT;X.P.write_outputs(folder,self.files)
         self.assertTrue(X.P.stage_current_candidate(folder,first)['rom_written'])
         self.assertEqual(first.read_bytes(),X.A.expanded_rom(source_before))
+        first_stage=Path(str(first)+stage.RECEIPT_SUFFIX)
+        stage.verify_ff_stage(source_before,first.read_bytes(),X._json(first_stage.read_bytes()),
+                             case.rom,first,folder/'prepare.json',(folder/'prepare.json').read_bytes())
+        first_stage_bytes=first_stage.read_bytes()
         metadata=first.parent/'hooks.json';metadata.write_bytes(b'prior generation hooks')
         first_bytes=first.read_bytes()
         with self.assertRaises(ValueError):X.P.resolve_current_target(case.project)
@@ -93,6 +154,7 @@ printf '%s\\n' "$patched_rom" "$rom_dir" "$receipt_path" "$symbols_path" "$mlb_p
         X.P.write_outputs(folder,files);X.P.stage_current_candidate(folder,case.candidate)
         self.assertEqual(case.candidate.read_bytes(),X.A.expanded_rom(source_before))
         self.assertEqual(first.read_bytes(),first_bytes);self.assertEqual(metadata.read_bytes(),b'prior generation hooks')
+        self.assertEqual(first_stage.read_bytes(),first_stage_bytes)
         self.assertEqual(case.rom.read_bytes(),source_before)
         self.assertNotEqual(case.project.read_bytes(),project_before) # deliberate fixture Save target update only
         with self.assertRaises(ValueError):X.P.resolve_current_target(case.project,request=first_request)
