@@ -152,17 +152,17 @@ org !STV2_EXITS
 
 if !ENABLE_SPECIAL_EXIT_TABLE_V2 == 1
   if !STV2_LINK_27_A0 == 1
-    org !STV2_EXITS+($0183-$0180)*32
+    org !STV2_EXITS+(($0183-$0180)*32)
     %stv2_exit(0183, $A0, $0900, $0040, 0, $06)
     org $02E804 : db !STV2_FACING_0183
   endif
   if !STV2_LINK_37_B0 == 1
-    org !STV2_EXITS+($0184-$0180)*32
+    org !STV2_EXITS+(($0184-$0180)*32)
     %stv2_exit(0184, $B0, $0D00, $0040, 0, $06)
     org $02E805 : db !STV2_FACING_0184
   endif
   if !STV2_LINK_3F_B8 == 1
-    org !STV2_EXITS+($0185-$0180)*32
+    org !STV2_EXITS+(($0185-$0180)*32)
     %stv2_exit(0185, $B8, $0F00, $0040, 0, $06)
     org $02E806 : db !STV2_FACING_0185
   endif
