@@ -698,5 +698,281 @@ class ResidentNativeAbiTest(unittest.TestCase):
         self.assertEqual(native, before)
 
 
+class ConditionalDemandTest(unittest.TestCase):
+    """Literal native predicates in a synthetic ROM; no game ROM or runtime."""
+
+    def fixture(self, *, wide=True):
+        definitions = [((2 << 10) | 64,) * 4 for _ in range(4096)]
+        fixture = Fixture(tuple(definitions), wide=wide)
+        fixture.sheet_tiles[1][1] = STRIPES
+        return fixture
+
+    def inputs(self, fixture, *, native_types=None):
+        source, document, inspection, terrain_hash = fixture.inputs()
+        source = bytearray(source.ljust(0x200000, b'\0'))
+        # Public byte contracts seed a source fixture only. Expected demand
+        # families/pages, colors and native door targets are literal below.
+        for address, raw in R.CONDITIONAL_NATIVE_PREIMAGES.items():
+            at = sheet_table.pc(address)
+            source[at:at+len(bytes.fromhex(raw))] = bytes.fromhex(raw)
+        # The native reader's operand at008865 is itself the maintained
+        # definition pointer. Preserve that real coupling in the fixture.
+        definitions = b''.join(struct.pack('<4H', *row) for row in fixture.definitions)
+        at = sheet_table.pc(0xBD8000)
+        source[at:at+len(definitions)] = definitions
+        at = sheet_table.pc(0x0E9459)
+        source[at:at+512] = bytes(512)
+        source[at+0x183:at+0x186] = bytes.fromhex('515757')
+        for char, value in (native_types or {}).items():
+            source[at+char] = value
+        source = bytes(source)
+        inspection['source_rom_sha256'] = sha(source)
+        files = [dict(path=path, sha256=sha((ROOT/path).read_bytes()),
+                      source_utf8=(ROOT/path).read_bytes().decode('utf-8')) for path in R.CONDITIONAL_SOURCE_FILES]
+        preimages = []
+        for address, expected in R.CONDITIONAL_NATIVE_PREIMAGES.items():
+            size = len(bytes.fromhex(expected))
+            raw = source[sheet_table.pc(address):sheet_table.pc(address)+size]
+            preimages.append(dict(snes=address, payload_hex=raw.hex(), sha256=sha(raw)))
+        native = source[at:at+512]
+        preimages.append(dict(snes=0x0E9459, payload_hex=native.hex(), sha256=sha(native)))
+        recipe = R._json_bytes({f'{page:02X}': {} for page in range(0xA0, 0xC0)})
+        policy = dict(kind=R.CONDITIONAL_POLICY_KIND, source_epoch='1'*40,
+            selected_features=dict(ice_rod=True, area_tilesets=False), source_files=files,
+            native_preimages=preimages, tail_recipe=dict(
+                binding=dict(path='/synthetic/selected-tail-recipe.json', sha256=sha(recipe)),
+                payload_hex=recipe.hex()), area_tilesets=None,
+            save_identity=dict(transfer_id='2'*64, generation=1, operation_id='synthetic-save',
+                source_rom_sha256=sha(source), terrain_sha256=terrain_hash,
+                inspection_sha256=sha(R._json_bytes(inspection)),
+                document_sha256=R.conditional_document_identity(document)))
+        return source, document, inspection, terrain_hash, policy
+
+    def derive(self, inputs):
+        source, document, inspection, _, policy = inputs
+        return R.derive_conditional_demands(source, document, inspection, source_policy=policy)
+
+    def packed(self, inputs, witness):
+        source, document, inspection, terrain_hash, _ = inputs
+        return R.plan_resident_graphics(source, document, inspection,
+            terrain_sha256=terrain_hash, provenance=dict(test='synthetic conditional source'),
+            conditional_demands=witness)
+
+    @staticmethod
+    def rehash(value, key='witness_sha256'):
+        value[key] = sha(R._json_bytes({name: raw for name, raw in value.items() if name != key}))
+
+    def test_all_native_dig_and_supported_object_ids_derive_without_a_51_row_cap(self):
+        fixture = self.fixture()
+        triggers = (0x34, 0x71, 0x35, 0x10D, 0x10F, 0xE1, 0xE2, 0xDA, 0xF8, 0x10E,
+                    0x36, 0x72A, 0x20F, 0x239, 0x101)
+        fixture.map_tiles[0][:len(triggers)] = triggers
+        for tiles in fixture.map_tiles[1:]:
+            tiles[:2] = [0x34, 0x36]
+        witness = self.derive(self.inputs(fixture))
+        rows = {row['tile16_id']: row for row in witness['rows'] if row['map_id'] == 0xA0}
+        self.assertEqual(set(rows), {0xDC9, 0xDC7, 0xDC8, 0xDCA, 0xDC6})
+        self.assertEqual({row['source_tile16_id'] for row in rows[0xDC9]['triggers']}, set(triggers[:10]))
+        self.assertEqual({row['source_tile16_id'] for row in rows[0xDCA]['triggers']}, {0x20F, 0x239})
+        self.assertEqual(len(witness['additional_rows']), 67)
+        for key in ('full_residency_ready', 'appearance_coherent', 'allocation_granted',
+                    'publication_authorized', 'ordinary_build_ready', 'runtime_admission',
+                    'compiled_consumers_verified', 'resource_closure_verified', 'selected', 'rom_written'):
+            self.assertIs(witness[key], False)
+        self.assertIn('ice_rod_direct_dma_adapter', witness['unclosed_families'])
+
+    def test_added_quadrants_pack_with_original_colors_and_no_saved_data_mutation(self):
+        fixture = self.fixture()
+        fixture.map_tiles[0][0] = 0x34
+        definitions = list(fixture.definitions)
+        definitions[0xDC9] = (0x0840, 0x0841, 0x4840, 0x8841)
+        fixture.definitions = tuple(definitions)
+        inputs = self.inputs(fixture)
+        before = copy.deepcopy(inputs[:4])
+        witness = self.derive(inputs)
+        result = self.packed(inputs, witness)
+        area = next(row for row in result['areas'] if row['parent_map_id'] == 0xA0)
+        extra = [row for row in area['remaps'] if row['map_id'] == 0xA0 and row['tile16_id'] == 0xDC9]
+        self.assertEqual([row['quadrant'] for row in extra], [0, 1, 2, 3])
+        source_area = plan(inputs[:4])['areas'][0]
+        # The independent decoder checks every emitted quadrant against a
+        # separately packed authored picture of precisely the source word.
+        for row in extra:
+            reference = self.fixture()
+            reference.definitions = ((row['source_word'],) * 4,)
+            expected_area = plan(reference.inputs())['areas'][0]
+            expected_word = expected_area['remaps'][0]['target_word']
+            self.assertEqual(picture(area, row['target_word']), picture(expected_area, expected_word))
+        self.assertTrue(result['terrain_plan_ready'])
+        self.assertIn('mutable_event_tile_closure', result['unknowns'])
+        self.assertFalse(result['full_residency_ready'])
+        self.assertEqual(inputs[:4], before)
+        self.assertEqual(source_area['maps'], area['maps'])
+        native = R.plan_native_resident_abi(result, tile16_count=4096)
+        page = next(row for row in native['pages'] if row['map_id'] == 0xA0)
+        self.assertIn(0xDC9, page['tile16_ids'])
+        self.assertNotIn(0xDC9, next(row for row in native['pages'] if row['map_id'] == 0xA1)['tile16_ids'])
+
+    def test_water_uses_each_quadrant_and_keeps_b0_east_physical_page(self):
+        fixture = self.fixture(wide=False)
+        fixture.areas = [row for row in fixture.areas if row['parent_map_id'] not in (0xB0, 0xB1)]
+        fixture.areas.append(dict(parent_map_id=0xB0, size='wide', maps=[0xB0, 0xB1]))
+        definitions = list(fixture.definitions)
+        definitions[1] = (0x0840, 0x0840, 0x0840, 0x0841)
+        fixture.definitions = tuple(definitions)
+        fixture.map_tiles[0xB1-0xA0][7] = 1
+        inputs = self.inputs(fixture, native_types={65: 8})
+        witness = self.derive(inputs)
+        self.assertEqual(witness['additional_rows'], [dict(map_id=0xB1, tile16_id=0xB7)])
+        self.assertEqual(witness['rows'][0]['triggers'][0]['eligible_quadrants'], [3])
+        result = self.packed(inputs, witness)
+        area = next(row for row in result['areas'] if row['parent_map_id'] == 0xB0)
+        self.assertTrue(any(row['map_id'] == 0xB1 and row['tile16_id'] == 0xB7 for row in area['remaps']))
+        self.assertFalse(any(row['map_id'] == 0xB0 and row['tile16_id'] == 0xB7 for row in area['remaps']))
+
+    def test_ice_source_projects_all_three_type_bytes_without_changing_the_source(self):
+        inputs = self.inputs(self.fixture())
+        before = inputs[0]
+        witness = self.derive(inputs)
+        raw = bytearray.fromhex(next(row['payload_hex'] for row in inputs[4]['native_preimages']
+                                    if row['snes'] == 0x0E9459))
+        raw[0x183:0x186] = bytes.fromhex('0e5757')
+        self.assertEqual(witness['native_type_source']['effective_sha256'], sha(raw))
+        self.assertEqual(witness['native_type_source']['patches'], [dict(source_path='Items/ice_rod.asm',
+            snes=0x0E95DC, before_hex='515757', after_hex='0e5757')])
+        self.assertEqual(inputs[0], before)
+
+    def test_door_source_predicates_and_native_neighbor_target_cross_a_page_boundary(self):
+        fixture = self.fixture()
+        definitions = list(fixture.definitions)
+        definitions[0xFB] = (0x0840, 0x00E9, 0x0840, 0x0840)
+        definitions[0xFC] = (0x40E9, 0x0840, 0x0840, 0x0840)
+        fixture.definitions = tuple(definitions)
+        fixture.map_tiles[0][31] = 0xFB
+        fixture.map_tiles[1][1] = 0xFC
+        witness = self.derive(self.inputs(fixture))
+        self.assertEqual(witness['additional_rows'], [dict(map_id=0xA0, tile16_id=0xDA4),
+                                                     dict(map_id=0xA1, tile16_id=0xDA6)])
+        left, right = witness['rows']
+        self.assertEqual({row['target_cell_index'] for row in left['triggers']}, {31})
+        self.assertEqual({row['target_cell_index'] for row in right['triggers']}, {0})
+        self.assertEqual({row['branch'] for row in left['triggers']},
+                         {'current_q1_00E9', 'neighbor_q0_40E9'})
+
+    def test_door_raw_border_and_unsupported_mutation_families_refuse(self):
+        for tile_id in (0x37E, 0x21B, 0x36D, 0x36E, 0x374, 0x375,
+                        0x23B, 0x23C, 0x23D, 0x23E, 0x226, 0x227, 0x228, 0x229):
+            fixture = self.fixture()
+            fixture.map_tiles[0][0] = tile_id
+            with self.subTest(tile16=tile_id), self.assertRaisesRegex(ValueError, 'CONDITIONAL_UNSUPPORTED_FAMILY'):
+                self.derive(self.inputs(fixture))
+        fixture = self.fixture()
+        definitions = list(fixture.definitions)
+        definitions[1] = (0x40E9, 0x0840, 0x0840, 0x0840)
+        fixture.definitions = tuple(definitions)
+        fixture.map_tiles[0][1] = 1
+        with self.assertRaisesRegex(ValueError, 'CONDITIONAL_DOOR_TARGET_OUT_OF_DOMAIN'):
+            self.derive(self.inputs(fixture))
+
+    def test_door_queries_exclude_absent_quadrants_but_keep_literal_edge_targets(self):
+        cases = (
+            ('small', [0xA0], 0x0FBE, 0xA0, 31*32),
+            ('wide', [0xA0, 0xA1], 0x0FFE, 0xA0, 0),
+            ('tall', [0xA0, 0xA8], 0x1FBE, 0xA8, 31*32),
+        )
+        for size, members, raw, right_page, right_cell in cases:
+            fixture = self.fixture(wide=False)
+            fixture.areas = [row for row in fixture.areas if row['parent_map_id'] not in members]
+            fixture.areas.append(dict(parent_map_id=0xA0, size=size, maps=members))
+            definitions = list(fixture.definitions)
+            definitions[0xFB] = (0x0840, 0x00E9, 0x0840, 0x0840)
+            fixture.definitions = tuple(definitions)
+            fixture.map_tiles[members[-1]-0xA0][1023] = 0xFB
+            with self.subTest(size=size):
+                witness = self.derive(self.inputs(fixture))
+                rows = {(row['map_id'], row['tile16_id']): row for row in witness['rows']}
+                self.assertEqual(set(rows), {(members[-1], 0xDA4), (right_page, 0xDA6)})
+                left = rows[members[-1], 0xDA4]['triggers']
+                right = rows[right_page, 0xDA6]['triggers']
+                self.assertEqual([row['native_raw_offset'] for row in left], [raw])
+                self.assertEqual([row['native_raw_offset'] for row in right], [raw])
+                self.assertEqual(left[0]['target_cell_index'], 1023)
+                self.assertEqual(right[0]['target_raw_offset'], raw+2)
+                self.assertEqual(right[0]['target_cell_index'], right_cell)
+                mask = {'small': 0, 'wide': 1, 'tall': 8}[size]
+                self.assertTrue(all((((row['native_raw_offset'] & 0x1000) >> 9)
+                    | ((row['native_raw_offset'] & 0x40) >> 6)) & ~mask == 0
+                    for row in left+right))
+
+    def test_door_actual_large_area_overflow_still_refuses(self):
+        fixture = self.fixture(wide=False)
+        members = [0xA0, 0xA1, 0xA8, 0xA9]
+        fixture.areas = [row for row in fixture.areas if row['parent_map_id'] not in members]
+        fixture.areas.append(dict(parent_map_id=0xA0, size='large', maps=members))
+        definitions = list(fixture.definitions)
+        definitions[0xFB] = (0x0840, 0x00E9, 0x0840, 0x0840)
+        fixture.definitions = tuple(definitions)
+        fixture.map_tiles[0xA9-0xA0][1023] = 0xFB
+        with self.assertRaisesRegex(ValueError, 'CONDITIONAL_DOOR_TARGET_OUT_OF_DOMAIN'):
+            self.derive(self.inputs(fixture))
+
+    def test_repeated_triggers_and_already_authored_targets_do_not_duplicate_rows(self):
+        fixture = self.fixture()
+        fixture.map_tiles[0][:4] = [0x34, 0x34, 0xE1, 0xDC9]
+        inputs = self.inputs(fixture)
+        witness = self.derive(inputs)
+        self.assertEqual(len(witness['rows']), 1)
+        self.assertEqual(len(witness['rows'][0]['triggers']), 3)
+        self.assertTrue(witness['rows'][0]['already_authored'])
+        self.assertEqual(witness['additional_rows'], [])
+        remaps = self.packed(inputs, witness)['areas'][0]['remaps']
+        self.assertEqual(len([row for row in remaps if row['map_id'] == 0xA0 and row['tile16_id'] == 0xDC9]), 4)
+
+    def test_rehashed_missing_extra_or_changed_quadrants_are_not_a_witness_authority(self):
+        fixture = self.fixture()
+        fixture.map_tiles[0][0] = 0x34
+        inputs = self.inputs(fixture)
+        original = self.derive(inputs)
+        for mutation in ('missing', 'extra', 'word', 'generation'):
+            witness = copy.deepcopy(original)
+            if mutation == 'missing':
+                witness['rows'].clear()
+            elif mutation == 'extra':
+                witness['rows'].append(dict(witness['rows'][0], map_id=0xA1))
+            elif mutation == 'word':
+                witness['rows'][0]['source_words'][0] ^= 1
+            else:
+                witness['source_policy']['save_identity']['generation'] += 1
+            self.rehash(witness)
+            with self.subTest(mutation=mutation), self.assertRaisesRegex(ValueError, 'CONDITIONAL_WITNESS_MISMATCH'):
+                self.packed(inputs, witness)
+
+    def test_source_native_feature_recipe_and_saved_identity_tampering_refuse(self):
+        original = self.inputs(self.fixture())
+        for mutation, error in (('source', 'SOURCE_FILE_MISMATCH'), ('native', 'NATIVE_PREIMAGE_MISMATCH'),
+                                ('feature', 'FEATURE_SOURCE_MISMATCH'), ('recipe', 'RECIPE_INCOMPLETE'),
+                                ('document', 'SAVE_IDENTITY_MISMATCH'), ('area', 'AREA_TYPES_UNQUALIFIED')):
+            inputs = copy.deepcopy(original)
+            policy = inputs[4]
+            if mutation == 'source':
+                policy['source_files'][0]['source_utf8'] += ';changed\n'
+            elif mutation == 'native':
+                row = policy['native_preimages'][0]
+                raw = bytearray.fromhex(row['payload_hex']); raw[0] ^= 1
+                row.update(payload_hex=raw.hex(), sha256=sha(raw))
+            elif mutation == 'feature':
+                policy['selected_features']['ice_rod'] = False
+            elif mutation == 'recipe':
+                raw = R._json_bytes({f'{page:02X}': {} for page in range(0xA1, 0xC0)})
+                policy['tail_recipe']['payload_hex'] = raw.hex()
+                policy['tail_recipe']['binding']['sha256'] = sha(raw)
+            elif mutation == 'document':
+                policy['save_identity']['document_sha256'] = '0'*64
+            else:
+                policy['selected_features']['area_tilesets'] = True
+            with self.subTest(mutation=mutation), self.assertRaisesRegex(ValueError, 'CONDITIONAL_' + error):
+                self.derive(inputs)
+
+
 if __name__ == '__main__':
     unittest.main()

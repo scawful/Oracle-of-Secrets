@@ -425,7 +425,117 @@ def verify_transfer(request_path, project, base_rom):
     return request, raw['rom'], document
 
 
-def resident_graphics_plan(request_path, project, base_rom, inspection_path):
+def conditional_demands_inputs(request, source, document, inspection, *, tail_recipe,
+                               artifact=None, source_epoch=None):
+    """Rebuild a bound direct-trigger witness; this cannot qualify resources.
+
+    The witness is selected after the immutable Save transfer. Requiring it in
+    the producer identity would make its transfer ID and producer hash cyclic.
+    """
+    import lyra_resident_graphics as resident
+    R.require(request.get('kind') == KIND and request.get('transfer_id') == _identity(request),
+              'CURRENT_CONDITIONAL_TRANSFER_MISMATCH')
+    root = P.ROOT.resolve(strict=True)
+    head = _git(root, 'rev-parse', 'HEAD').decode().strip()
+    recipe_binding = Q.bound(tail_recipe)
+    recipe_raw = Q.read_bound(recipe_binding)
+    bindings = [recipe_binding, request['live']['save_receipt'], request['live']['save_context']]
+    provided = artifact_binding = None
+    if artifact is not None:
+        artifact_binding = Q.bound(artifact)
+        provided = _json(Q.read_bound(artifact_binding))
+        R.require(type(provided) is dict and type(provided.get('source_policy')) is dict,
+                  'CURRENT_CONDITIONAL_ARTIFACT_INVALID')
+        selected_epoch = provided['source_policy'].get('source_epoch')
+        R.require(source_epoch is None or source_epoch == selected_epoch,
+                  'CURRENT_CONDITIONAL_SOURCE_EPOCH_MISMATCH')
+        source_epoch = selected_epoch
+        bindings.append(artifact_binding)
+    source_epoch = head if source_epoch is None else source_epoch
+    R.require(type(source_epoch) is str and re.fullmatch('[0-9a-f]{40}', source_epoch)
+              and _git(root, 'merge-base', source_epoch, head).decode().strip() == source_epoch,
+              'CURRENT_CONDITIONAL_SOURCE_EPOCH_MISMATCH')
+    paths = sorted(resident.CONDITIONAL_SOURCE_FILES)
+    committed = _git_source_blobs(root, source_epoch, paths)
+    source_files = []
+    for relative in paths:
+        path = root / relative
+        R.require(path.is_file() and path.resolve().is_relative_to(root)
+                  and not any(p.is_symlink() for p in (path, *path.parents)),
+                  'CURRENT_CONDITIONAL_SOURCE_ESCAPED')
+        binding = Q.bound(path)
+        raw = Q.read_bound(binding)
+        R.require(raw == committed[relative], 'CURRENT_CONDITIONAL_SOURCE_CHANGED: ' + relative)
+        bindings.append(binding)
+        source_files.append(dict(path=relative, sha256=binding['sha256'], source_utf8=raw.decode('utf-8')))
+    generate = str(Path(__file__).resolve().parents[1] / 'Generate')
+    sys.path.insert(0, generate)
+    try:
+        import asm_source
+    finally:
+        sys.path.remove(generate)
+    prior_context = os.environ.get('OOS_LYRA_BUILD_CONTEXT')
+    try:
+        os.environ['OOS_LYRA_BUILD_CONTEXT'] = '0'
+        defines = asm_source._load_global_defines(root)
+    finally:
+        if prior_context is None:
+            os.environ.pop('OOS_LYRA_BUILD_CONTEXT', None)
+        else:
+            os.environ['OOS_LYRA_BUILD_CONTEXT'] = prior_context
+    R.require(all(type(defines.get(key)) is int and defines[key] in (0, 1)
+                  for key in ('DISABLE_ITEMS', 'ENABLE_OW_AREA_TILESETS')),
+              'CURRENT_CONDITIONAL_FEATURES_UNBOUND')
+    spans = {at: len(bytes.fromhex(raw)) for at, raw in resident.CONDITIONAL_NATIVE_PREIMAGES.items()}
+    spans[0x0E9459] = 512
+    preimages = []
+    for snes, size in sorted(spans.items()):
+        at = A.pc(snes)
+        raw = source[at:at+size]
+        R.require(len(raw) == size, 'CURRENT_CONDITIONAL_NATIVE_PREIMAGE_MISSING')
+        preimages.append(dict(snes=snes, payload_hex=raw.hex(), sha256=R.sha(raw)))
+    live = request['live']
+    R.require(request['inputs']['rom']['sha256'] == R.sha(source)
+              and request['inputs']['terrain']['sha256'] == inspection.get('terrain_sha256'),
+              'CURRENT_CONDITIONAL_SAVE_MISMATCH')
+    policy = dict(kind=resident.CONDITIONAL_POLICY_KIND, source_epoch=source_epoch,
+        selected_features=dict(ice_rod=defines['DISABLE_ITEMS'] == 0,
+                               area_tilesets=defines['ENABLE_OW_AREA_TILESETS'] == 1),
+        source_files=source_files, native_preimages=preimages,
+        tail_recipe=dict(binding=recipe_binding, payload_hex=recipe_raw.hex()),
+        save_identity=dict(transfer_id=request['transfer_id'], generation=live['generation'],
+            operation_id=live['operation_id'], source_rom_sha256=R.sha(source),
+            terrain_sha256=request['inputs']['terrain']['sha256'],
+            inspection_sha256=R.sha(resident._json_bytes(inspection)),
+            document_sha256=resident.conditional_document_identity(document)), area_tilesets=None)
+    witness = resident.derive_conditional_demands(source, document, inspection, source_policy=policy)
+    R.require(provided is None or provided == witness,
+              'CURRENT_CONDITIONAL_ARTIFACT_MISMATCH: supplied rows differ from independent derivation')
+    bindings.append(Q.bound(Path(asm_source.__file__)))
+    for row in bindings:
+        Q.read_bound(row)
+    R.require(_git(root, 'rev-parse', 'HEAD').decode().strip() == head,
+              'CURRENT_CONDITIONAL_CHECKOUT_CHANGED')
+    return dict(witness=witness, bindings=bindings,
+                selection=dict(tail_recipe=recipe_binding, artifact=artifact_binding, source_epoch=source_epoch))
+
+
+def conditional_review_kwargs(review):
+    """Retain the explicit epoch and input identities during rederivation."""
+    selection = review.get('conditional_selection')
+    if selection is None:
+        return {}
+    _keys(selection, {'tail_recipe', 'artifact', 'source_epoch'}, 'conditional review selection')
+    for row in (selection['tail_recipe'], selection['artifact']):
+        if row is not None:
+            Q.read_bound(row)
+    return dict(tail_recipe=selection['tail_recipe']['path'],
+                conditional_demands=None if selection['artifact'] is None else selection['artifact']['path'],
+                conditional_source_epoch=selection['source_epoch'])
+
+
+def resident_graphics_plan(request_path, project, base_rom, inspection_path, *, tail_recipe=None,
+                           conditional_demands=None, conditional_source_epoch=None):
     """Derive held resource data from a genuine Save and retained inspection.
 
     The inspection is an explicit selected-producer source binding. Reusing it
@@ -463,29 +573,45 @@ def resident_graphics_plan(request_path, project, base_rom, inspection_path):
         'Scripts/Build/lyra_private_reservation.py',
         'Scripts/Generate/sheet_table.py', 'Scripts/Generate/sheet_codec.py',
         'Scripts/Generate/lz2.py')]
+    R.require(tail_recipe is not None or (conditional_demands is None and conditional_source_epoch is None),
+              'CURRENT_CONDITIONAL_RECIPE_REQUIRED')
+    conditional = None if tail_recipe is None else conditional_demands_inputs(
+        request, source, document, inspection, tail_recipe=tail_recipe, artifact=conditional_demands,
+        source_epoch=conditional_source_epoch)
     provenance = dict(transfer=request_binding, transfer_id=request['transfer_id'],
         generation=live['generation'], operation_id=live['operation_id'],
         save_receipt=live['save_receipt'], save_context=live['save_context'],
         selected_producer=live['producer'], producer_identity=producer,
         inspection=inspection_binding, inspection_origin='retained_selected_observation',
         compiler_bindings=compiler_bindings)
+    if conditional is not None:
+        provenance.update(conditional_selection=conditional['selection'],
+                          conditional_bindings=conditional['bindings'])
+    conditional_options = {} if conditional is None else dict(conditional_demands=conditional['witness'])
     appearance = A.appearance_plan(source, document,
         A.gameplay_render_directory(document.gameplay_areas),
         resource_inspection=inspection,
         terrain_sha256=request['inputs']['terrain']['sha256'],
-        resource_provenance=provenance)
+        resource_provenance=provenance, **conditional_options)
     fresh, _, _ = verify_transfer(request_path, project, base_rom)
     R.require(fresh == request and Q.bound(request_path) == request_binding,
               'RESIDENT_TRANSFER_STALE: saved transfer changed while planning')
     for binding in [inspection_binding, *compiler_bindings]:
         Q.read_bound(binding)
-    return dict(kind='lyra.current_resident_graphics_review.v1',
+    if conditional is not None:
+        for binding in conditional['bindings']:
+            Q.read_bound(binding)
+    result = dict(kind='lyra.current_resident_graphics_review.v1',
         project=live['project'], base_rom=live['inputs']['rom']['path'],
         request=request_binding, inspection=inspection_binding,
         generation=live['generation'], operation_id=live['operation_id'],
         appearance=appearance, selected=False, allocation_granted=False,
         publication_authorized=False, ordinary_build_ready=False,
         runtime_admission=False, rom_written=False)
+    if conditional is not None:
+        result.update(conditional_selection=conditional['selection'],
+                      conditional_bindings=conditional['bindings'], conditional_demands=conditional['witness'])
+    return result
 
 
 def native_execution(request):
@@ -1144,8 +1270,12 @@ def current_resident_inputs(profile, source, document, selection):
     policy. Terrain residency alone cannot close dynamic/native resources.
     """
     import lyra_resident_graphics as resident
-    _keys(selection, {'inspection', 'graphics_catalog', 'graphics_policy'},
+    _keys(selection, {'inspection', 'graphics_catalog', 'graphics_policy'}
+          | ({'tail_recipe'} if 'tail_recipe' in selection else set())
+          | ({'conditional_demands'} if 'conditional_demands' in selection else set()),
           'current resident source selection')
+    R.require('conditional_demands' not in selection or 'tail_recipe' in selection,
+              'CURRENT_CONDITIONAL_RECIPE_REQUIRED')
     verify_current_native_source_profile(profile, source, document)
     contract = _json(Q.read_bound(profile['contract']))
     R.require(contract['ledger']['source_set'] == RESIDENT_SOURCE_SET,
@@ -1157,8 +1287,17 @@ def current_resident_inputs(profile, source, document, selection):
     bindings = [selection[key] for key in ('inspection', 'graphics_catalog', 'graphics_policy')]
     for row in bindings:
         Q.read_bound(row)
+    conditional_options = {}
+    if 'tail_recipe' in selection:
+        for key in ('tail_recipe', 'conditional_demands'):
+            if key in selection:
+                Q.read_bound(selection[key]); bindings.append(selection[key])
+        conditional_options = dict(tail_recipe=selection['tail_recipe']['path'],
+            conditional_demands=None if 'conditional_demands' not in selection else
+                selection['conditional_demands']['path'])
     review = resident_graphics_plan(profile['review']['transfer']['path'],
-        profile['project'], profile['base_rom'], selection['inspection']['path'])
+        profile['project'], profile['base_rom'], selection['inspection']['path'], **conditional_options)
+    bindings += review.get('conditional_bindings', [])
     plan = review['appearance']['resident_graphics']
     native = resident.plan_native_resident_abi(plan, tile16_count=4096)
     lo, hi = origins['resident_data']['pc']
@@ -1278,6 +1417,9 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     R.require(type(review) is dict and review.get('kind') == REVIEW_KIND, 'CURRENT_RUNTIME_REVIEW_REQUIRED')
     profile = current_native_source_profile(review, project, base_rom)
     if 'resident' in runtime:
+        if 'tail_recipe' in runtime['resident']:
+            R.require(runtime['resident']['tail_recipe'] == runtime['tail_recipe'],
+                      'CURRENT_CONDITIONAL_RECIPE_MISMATCH')
         # Reconstruct the source path, but do not turn a terrain-only census
         # into permission to use unclosed dynamic/native resource inputs.
         current_resident_inputs(profile, source, document, runtime['resident'])

@@ -11,7 +11,9 @@ import copy
 import json
 from pathlib import Path
 import struct
+import subprocess
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
@@ -314,6 +316,219 @@ class ResidentPlacementReadbackTest(unittest.TestCase):
         changed = copy.deepcopy(self.emission); changed['placements'][1]['role'] = 'unqualified'
         with self.assertRaisesRegex(ValueError, 'CURRENT_RESIDENT_PLACEMENT_COVERAGE_MISMATCH'):
             X.verify_resident_payload(changed, self.compiled, self.symbols)
+
+
+class ConditionalDemandBindingTest(unittest.TestCase):
+    """Real binder/Git/files around a disclosed synthetic Save-transfer seam.
+
+    Receipt/context files and the minimal request are host fixtures. The real
+    binder authenticates their hashes, source epoch, feature files, exact recipe
+    bytes and independently derived artifact. No verifier or native Save runs.
+    """
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix='lyra-conditional-binding-')
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name).resolve()
+        for relative in R.CONDITIONAL_SOURCE_FILES:
+            path = self.root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes((ROOT / relative).read_bytes())
+        self.git('init', '-q')
+        self.git('config', 'user.name', 'Conditional binding fixture')
+        self.git('config', 'user.email', 'fixture@example.invalid')
+        self.commit()
+        self.epoch = self.git('rev-parse', 'HEAD').strip()
+        patch = mock.patch.object(X.P, 'ROOT', self.root)
+        patch.start(); self.addCleanup(patch.stop)
+        pure = resources.ConditionalDemandTest()
+        fixture = pure.fixture()
+        fixture.map_tiles[0][0] = 0x34
+        fixture.map_tiles[1][7] = 0x36
+        self.source, self.document, self.inspection, terrain_hash, _ = pure.inputs(fixture)
+        self.source_path = self.root / 'saved-source.bin'
+        self.source_path.write_bytes(self.source)
+        self.terrain = self.root / 'saved-terrain.json'
+        self.terrain.write_bytes(json.dumps(dict(maps=fixture.map_tiles,
+            authoring=self.document.authoring, areas=fixture.areas), sort_keys=True).encode())
+        self.assertEqual(X.Q.bound(self.terrain)['sha256'], terrain_hash)
+        self.project = self.root / 'saved-project.yaze'
+        self.project.write_text('[rom]\nrole=dev\n')
+        self.receipt = self.root / 'native-save.json'
+        self.context = self.root / 'native-context.json'
+        self.producer = self.root / 'selected-producer.json'
+        for path, kind in ((self.receipt, 'synthetic_receipt'), (self.context, 'synthetic_context'),
+                           (self.producer, 'synthetic_producer')):
+            path.write_bytes(X.P.encoded(dict(kind=kind, generation=1)))
+        self.inspection.update(project_descriptor_identity_status='identified',
+            project_descriptor_path=str(self.project),
+            project_descriptor_sha256=X.Q.bound(self.project)['sha256'], terrain_path=str(self.terrain))
+        self.inspection_path = self.root / 'retained-inspection.json'
+        self.inspection_path.write_bytes(X.P.encoded(self.inspection))
+        inputs = dict(project=X.Q.bound(self.project), rom=X.Q.bound(self.source_path),
+                      terrain=X.Q.bound(self.terrain))
+        self.request = dict(kind=X.KIND, inputs=inputs, live=dict(generation=1,
+            operation_id='synthetic-native-save-1', save_receipt=X.Q.bound(self.receipt),
+            save_context=X.Q.bound(self.context), project=str(self.project), inputs=copy.deepcopy(inputs),
+            producer=X.Q.bound(self.producer), producer_identity=dict(
+                source_bindings=[X.Q.bound(self.inspection_path)])))
+        self.request['transfer_id'] = X._identity(self.request)
+        self.request_path = self.root / 'immutable-transfer.json'
+        self.request_path.write_bytes(X.P.encoded(self.request))
+        self.recipe = self.root / 'selected-tail-recipe.json'
+        self.recipe.write_bytes(X.P.encoded({f'{page:02X}': {} for page in range(0xA0, 0xC0)}))
+        self.artifact = self.root / 'selected-conditional-demands.json'
+
+    def git(self, *args):
+        return subprocess.check_output(['git', '-C', str(self.root), *args], stderr=subprocess.PIPE).decode()
+
+    def commit(self):
+        self.git('add', '-A')
+        self.git('commit', '-qm', 'Independent conditional source binding fixture')
+
+    def bind(self, *, artifact=None, request=None, source=None, inspection=None, source_epoch=None):
+        return X.conditional_demands_inputs(self.request if request is None else request,
+            self.source if source is None else source, self.document,
+            self.inspection if inspection is None else inspection, tail_recipe=self.recipe,
+            artifact=artifact, source_epoch=self.epoch if source_epoch is None else source_epoch)
+
+    def write_artifact(self, witness):
+        self.artifact.write_bytes(X.P.encoded(witness))
+        return self.artifact
+
+    def public_review(self, *, artifact=None, **kwargs):
+        with mock.patch.object(X, 'verify_transfer', return_value=(self.request, self.source, self.document)):
+            return X.resident_graphics_plan(self.request_path, self.project, self.source_path,
+                self.inspection_path, tail_recipe=self.recipe, conditional_demands=artifact,
+                conditional_source_epoch=self.epoch, **kwargs)
+
+    def test_post_save_artifact_rederives_with_bound_recipe_epoch_and_save_inputs(self):
+        before = {path: path.read_bytes() for path in (self.source_path, self.terrain, self.recipe)}
+        generated = self.bind()
+        witness = generated['witness']
+        selected = self.bind(artifact=self.write_artifact(witness))
+        self.assertEqual(selected['witness'], witness)
+        self.assertEqual(selected['selection'], dict(tail_recipe=X.Q.bound(self.recipe),
+            artifact=X.Q.bound(self.artifact), source_epoch=self.epoch))
+        for path in (self.recipe, self.artifact, self.receipt, self.context,
+                     *(self.root / name for name in R.CONDITIONAL_SOURCE_FILES)):
+            self.assertIn(X.Q.bound(path), selected['bindings'])
+        self.assertNotIn(X.Q.bound(self.artifact), self.request['live']['producer_identity']['source_bindings'])
+        self.assertEqual(witness['source_policy']['save_identity']['transfer_id'], self.request['transfer_id'])
+        self.assertEqual(witness['source_policy']['save_identity']['generation'], 1)
+        self.assertEqual(witness['additional_rows'], [dict(map_id=0xA0, tile16_id=0xDC9),
+                                                     dict(map_id=0xA1, tile16_id=0xDC7)])
+        self.assertTrue(witness['known_conditional_demands_ready'])
+        for key in ('selected', 'allocation_granted', 'ordinary_build_ready', 'runtime_admission',
+                    'resource_closure_verified', 'compiled_consumers_verified'):
+            self.assertIs(witness[key], False)
+        self.assertEqual({path: path.read_bytes() for path in before}, before)
+
+    def test_rehashed_missing_extra_and_changed_trigger_rows_refuse(self):
+        original = self.bind()['witness']
+        for change in ('missing', 'extra', 'trigger'):
+            witness = copy.deepcopy(original)
+            if change == 'missing':
+                witness['rows'].pop()
+            elif change == 'extra':
+                row = copy.deepcopy(witness['rows'][0]); row['map_id'] = 0xA2
+                witness['rows'].append(row)
+            else:
+                witness['rows'][0]['triggers'][0]['cell_index'] += 1
+            resources.ConditionalDemandTest.rehash(witness)
+            with self.subTest(change=change), self.assertRaisesRegex(ValueError, 'CURRENT_CONDITIONAL_ARTIFACT_MISMATCH'):
+                self.bind(artifact=self.write_artifact(witness))
+
+    def test_rebound_recipe_source_and_definition_cannot_reuse_the_artifact(self):
+        artifact = self.write_artifact(self.bind()['witness'])
+        before = self.recipe.read_bytes()
+        recipe = json.loads(before); recipe['A0']['hidden_items'] = 1
+        self.recipe.write_bytes(X.P.encoded(recipe))
+        with self.assertRaisesRegex(ValueError, 'CURRENT_CONDITIONAL_ARTIFACT_MISMATCH'):
+            self.bind(artifact=artifact)
+        self.recipe.write_bytes(before)
+        changed = bytearray(self.source); changed[0x1234] ^= 1
+        with self.assertRaisesRegex(ValueError, 'CURRENT_CONDITIONAL_SAVE_MISMATCH'):
+            self.bind(artifact=artifact, source=bytes(changed))
+        changed = bytearray(self.source)
+        at = X.A.pc(int.from_bytes(changed[0x865:0x868], 'little')) + 0xDC9 * 8
+        changed[at] ^= 1
+        source_path = self.root / 'changed-definitions.bin'; source_path.write_bytes(changed)
+        request = copy.deepcopy(self.request); request['inputs']['rom'] = X.Q.bound(source_path)
+        request['transfer_id'] = X._identity(request)
+        inspection = copy.deepcopy(self.inspection); inspection['source_rom_sha256'] = X.R.sha(changed)
+        with self.assertRaisesRegex(ValueError, 'CONDITIONAL_DEFINITION_HASH_MISMATCH'):
+            self.bind(artifact=artifact, source=bytes(changed), request=request, inspection=inspection)
+
+    def test_changed_source_epoch_and_uncommitted_semantic_file_refuse(self):
+        artifact = self.write_artifact(self.bind()['witness'])
+        path = self.root / 'Items/ice_rod.asm'
+        path.write_bytes(path.read_bytes() + b'\n; Fixture epoch changes without gameplay edits.\n')
+        with self.assertRaisesRegex(ValueError, 'CURRENT_CONDITIONAL_SOURCE_CHANGED'):
+            self.bind(artifact=artifact)
+        self.commit()
+        newer = self.git('rev-parse', 'HEAD').strip()
+        with self.assertRaisesRegex(ValueError, 'CURRENT_CONDITIONAL_SOURCE_EPOCH_MISMATCH'):
+            self.bind(artifact=artifact, source_epoch=newer)
+        fresh = self.bind(source_epoch=newer)
+        self.assertEqual(fresh['witness']['source_policy']['source_epoch'], newer)
+        self.assertNotEqual(fresh['witness']['witness_sha256'], json.loads(artifact.read_bytes())['witness_sha256'])
+
+    def test_changed_save_generation_operation_inspection_and_transfer_refuse(self):
+        artifact = self.write_artifact(self.bind()['witness'])
+        for key, value in (('generation', 2), ('operation_id', 'synthetic-native-save-2')):
+            request = copy.deepcopy(self.request); request['live'][key] = value
+            request['transfer_id'] = X._identity(request)
+            with self.subTest(field=key), self.assertRaisesRegex(ValueError, 'CURRENT_CONDITIONAL_ARTIFACT_MISMATCH'):
+                self.bind(artifact=artifact, request=request)
+        inspection = copy.deepcopy(self.inspection); inspection['retained_fixture_revision'] = 2
+        with self.assertRaisesRegex(ValueError, 'CURRENT_CONDITIONAL_ARTIFACT_MISMATCH'):
+            self.bind(artifact=artifact, inspection=inspection)
+        request = copy.deepcopy(self.request); request['transfer_id'] = '0' * 64
+        with self.assertRaisesRegex(ValueError, 'CURRENT_CONDITIONAL_TRANSFER_MISMATCH'):
+            self.bind(artifact=artifact, request=request)
+
+    def test_late_recipe_and_save_context_writes_invalidate_bound_inputs(self):
+        derive = R.derive_conditional_demands
+        for path in (self.recipe, self.context):
+            original = path.read_bytes()
+
+            def change_after_derivation(*args, **kwargs):
+                result = derive(*args, **kwargs)
+                path.write_bytes(b'{}')
+                return result
+
+            try:
+                with mock.patch.object(R, 'derive_conditional_demands', side_effect=change_after_derivation):
+                    with self.subTest(path=path.name), self.assertRaisesRegex(ValueError, 'Current saved input changed'):
+                        self.bind()
+            finally:
+                path.write_bytes(original)
+
+    def test_public_review_preserves_conditional_selection_and_rejects_recipe_drift(self):
+        artifact = self.write_artifact(self.bind()['witness'])
+        review = self.public_review(artifact=artifact)
+        self.assertEqual(review['conditional_demands'], json.loads(artifact.read_bytes()))
+        self.assertEqual(review['appearance']['resident_graphics']['conditional_demands'], review['conditional_demands'])
+        self.assertEqual(X.conditional_review_kwargs(review), dict(tail_recipe=str(self.recipe),
+            conditional_demands=str(artifact), conditional_source_epoch=self.epoch))
+        self.recipe.write_bytes(b'{}')
+        with self.assertRaisesRegex(ValueError, 'Current saved input changed'):
+            X.conditional_review_kwargs(review)
+
+    def test_public_review_rejects_artifact_without_recipe_and_a_later_save(self):
+        artifact = self.write_artifact(self.bind()['witness'])
+        with mock.patch.object(X, 'verify_transfer', return_value=(self.request, self.source, self.document)):
+            with self.assertRaisesRegex(ValueError, 'CURRENT_CONDITIONAL_RECIPE_REQUIRED'):
+                X.resident_graphics_plan(self.request_path, self.project, self.source_path,
+                    self.inspection_path, conditional_demands=artifact)
+        later = copy.deepcopy(self.request); later['live']['generation'] = 2
+        later['transfer_id'] = X._identity(later)
+        with mock.patch.object(X, 'verify_transfer', side_effect=[(self.request, self.source, self.document),
+                                                                (later, self.source, self.document)]):
+            with self.assertRaisesRegex(ValueError, 'RESIDENT_TRANSFER_STALE'):
+                X.resident_graphics_plan(self.request_path, self.project, self.source_path,
+                    self.inspection_path, tail_recipe=self.recipe, conditional_demands=artifact,
+                    conditional_source_epoch=self.epoch)
 
 
 if __name__ == '__main__':

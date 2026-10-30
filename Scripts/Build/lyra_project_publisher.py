@@ -350,7 +350,8 @@ def validate_current_source_set(contract):
 def render_current_source_outputs(table_plan, *, contract, graphics_source, graphics_report,
                                   current_source_profile=None, bg128_plan=None, actor_storage_plan=None, private_pilot=None,
                                   resident_graphics_plan=None, resource_inspection=None,
-                                  resident_native_emission=None):
+                                  resident_native_emission=None, conditional_tail_recipe=None,
+                                  conditional_demands=None, conditional_source_epoch=None):
     """Compose reviewable source through the existing generated-input layout.
 
     A source plan remains unselected and cannot pass the build-context loader.
@@ -476,10 +477,16 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
     # The saved document and its property hashes remain the authored source.
     R.require((resident_graphics_plan is None) == (resource_inspection is None),
               'CURRENT_COMPOSER_RESIDENT_UNBOUND: plan and retained inspection must be supplied together')
+    R.require(resource_inspection is not None or all(value is None for value in
+                  (conditional_tail_recipe, conditional_demands, conditional_source_epoch)),
+              'CURRENT_COMPOSER_CONDITIONAL_INSPECTION_REQUIRED')
     resident_review = resident_native = None
     if resource_inspection is not None:
         resident_review = current.resident_graphics_plan(profile['review']['transfer']['path'],
-            profile['project'], profile['base_rom'], resource_inspection)
+            profile['project'], profile['base_rom'], resource_inspection,
+            **({} if conditional_tail_recipe is None and conditional_demands is None
+                     and conditional_source_epoch is None else dict(tail_recipe=conditional_tail_recipe,
+                conditional_demands=conditional_demands, conditional_source_epoch=conditional_source_epoch)))
         R.require(resident_graphics_plan == resident_review['appearance']['resident_graphics'],
                   'CURRENT_COMPOSER_RESIDENT_MISMATCH: derived resource data differs from saved inputs')
     if resident_native_emission is not None:
@@ -589,10 +596,13 @@ def render_resident_data_outputs(review):
     R.require(type(review) is dict and review.get('kind') == 'lyra.current_resident_graphics_review.v1',
               'RESIDENT_REVIEW_REQUIRED: authenticated saved input required')
     expected = resident_graphics_plan(review['request']['path'], review['project'],
-                                      review['base_rom'], review['inspection']['path'])
+                                      review['base_rom'], review['inspection']['path'],
+                                      **importlib.import_module('lyra_current_transfer').conditional_review_kwargs(review))
     R.require(review == expected, 'RESIDENT_REVIEW_STALE: resource data or provenance changed')
     plan = expected['appearance']['resident_graphics']
     files = {'resident_graphics.json': encoded(plan)}
+    if 'conditional_demands' in review:
+        files['conditional_demands.json'] = encoded(review['conditional_demands'])
     if all(area['terrain_plan_ready'] for area in plan['areas']):
         try:
             native_abi = plan_native_resident_abi(plan, tile16_count=4096)
@@ -644,7 +654,7 @@ def write_outputs(folder, files, *, protected=()):
 
 
 def prepare(folder, *, project=None, base_rom=None, request=None, ledger_path=None, candidate=None,
-            resident_data=False, resource_inspection=None):
+            resident_data=False, resource_inspection=None, tail_recipe=None, conditional_demands=None):
     R.require(bool(project) or not request, 'A request requires a selected Lyra project')
     if resident_data:
         from lyra_current_transfer import resident_graphics_plan, verify_transfer
@@ -654,7 +664,10 @@ def prepare(folder, *, project=None, base_rom=None, request=None, ledger_path=No
         folder = Path(os.path.abspath(folder))
         R.require(not folder.exists() and not folder.is_symlink(),
                   'RESIDENT_REVIEW_OUTPUT_EXISTS: use a new private output folder')
-        review = resident_graphics_plan(request, project, base_rom, resource_inspection)
+        options = {} if tail_recipe is None and conditional_demands is None else dict(
+            tail_recipe=tail_recipe, conditional_demands=conditional_demands)
+        review = resident_graphics_plan(request, project, base_rom, resource_inspection, **options)
+        review_options = importlib.import_module('lyra_current_transfer').conditional_review_kwargs(review)
         files = render_resident_data_outputs(review)
         transfer, _, _ = verify_transfer(request, project, base_rom)
         live = transfer['live']
@@ -662,7 +675,8 @@ def prepare(folder, *, project=None, base_rom=None, request=None, ledger_path=No
                     live['save_receipt'], live['save_context'], *live['inputs'].values(),
                     live['producer_identity']['editor'], live['producer_identity']['verifier'],
                     *live['producer_identity']['source_bindings'],
-                    *review['appearance']['resident_graphics']['provenance']['compiler_bindings']]
+                    *review['appearance']['resident_graphics']['provenance']['compiler_bindings'],
+                    *review.get('conditional_bindings', [])]
         forbidden = (ROOT.resolve(), Path(project).resolve().parent, Path(transfer['snapshot_root']))
         R.require(not any(folder.resolve().is_relative_to(root) for root in forbidden)
                   and not any(Path(row['path']).is_relative_to(folder.resolve()) for row in bindings),
@@ -676,17 +690,17 @@ def prepare(folder, *, project=None, base_rom=None, request=None, ledger_path=No
         folder.mkdir(parents=True, exist_ok=False)
         try:
             write_outputs(folder, files, protected=[row['path'] for row in bindings])
-            R.require(resident_graphics_plan(request, project, base_rom, resource_inspection) == review,
+            R.require(resident_graphics_plan(request, project, base_rom, resource_inspection, **review_options) == review,
                       'RESIDENT_REVIEW_STALE: input changed before completion')
             write_outputs(folder, {'prepare.json': encoded(prepared)},
                           protected=[row['path'] for row in bindings])
-            R.require(resident_graphics_plan(request, project, base_rom, resource_inspection) == review,
+            R.require(resident_graphics_plan(request, project, base_rom, resource_inspection, **review_options) == review,
                       'RESIDENT_REVIEW_STALE: input changed at completion')
         except BaseException:
             (folder / 'prepare.json').unlink(missing_ok=True)
             raise
         return prepared
-    R.require(resource_inspection is None,
+    R.require(resource_inspection is None and tail_recipe is None and conditional_demands is None,
               'RESIDENT_REVIEW_MODE_REQUIRED: retained inspection requires --resident-data')
     plan = (make_plan(project, base_rom, request, ledger_path=ledger_path) if project
             else dict(kind='lyra.ordinary_build_prepare.v1', selected=False, production_maps=[], production_edge_ids=[]))
@@ -918,6 +932,10 @@ def main():
                    help='Derive unallocated resident terrain data from a genuine saved transfer')
     p.add_argument('--resource-inspection', type=Path,
                    help='Retained native inspection selected in producer source bindings')
+    p.add_argument('--tail-recipe', type=Path,
+                   help='Explicit bound32-row recipe for source-only conditional-demand review')
+    p.add_argument('--conditional-demands', type=Path,
+                   help='Optional witness to compare with independent direct-trigger derivation')
     stage = sub.add_parser('stage')
     stage.add_argument('--input',type=Path,default=ROOT/OUTPUT)
     stage.add_argument('--rom',type=Path,required=True)
@@ -946,7 +964,8 @@ def main():
     if args.command == 'prepare':
         result = prepare(args.output, project=args.project, base_rom=args.base_rom,
                          request=args.request, ledger_path=args.ledger, candidate=args.candidate,
-                         resident_data=args.resident_data, resource_inspection=args.resource_inspection)
+                         resident_data=args.resident_data, resource_inspection=args.resource_inspection,
+                         tail_recipe=args.tail_recipe, conditional_demands=args.conditional_demands)
     elif args.command == 'stage':
         result=stage_current_candidate(args.input,args.rom)
     elif args.command == 'resolve-target':

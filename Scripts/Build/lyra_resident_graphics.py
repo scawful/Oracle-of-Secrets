@@ -29,6 +29,40 @@ NATIVE_ANIMATION_DIRECTORY_STRIDE = 11
 FIRST, END = 0xA0, 0xC0
 STATIC_SLOTS = tuple(range(448)) + tuple(range(480, 512))
 ANIMATED_SLOTS = tuple(range(448, 480))
+CONDITIONAL_KIND = 'lyra.conditional_tile16_demands.v1'
+CONDITIONAL_POLICY_KIND = 'lyra.conditional_tile16_source_policy.v1'
+CONDITIONAL_SOURCE_FILES = (
+    'Items/all_items.asm', 'Items/ice_rod.asm', 'Overworld/entrances.asm',
+    'Overworld/area_tilesets.asm', 'Overworld/custom_gfx.asm',
+    'Config/feature_flags.asm', 'Config/module_flags.asm', 'Util/macros.asm',
+)
+# These are saved-source predicates, not the compiled consumer's new hooks.
+# Bind their complete bytes before deriving replacements from native IDs.
+CONDITIONAL_NATIVE_PREIMAGES = {
+    0x1BBDF4: 'c93400f045c97100f040c93500f03bc90d01f036c90f01f031c9e100f02cc9e200f027c9da00f022c9f800f01dc90e01f018',
+    0x1BBE3E: 'ad7a0329ff00c90100d0f2',
+    0x1BBE58: 'a0c90d805d',
+    0x1BBEAF: 'a0c70dc92a07d003a0c80d',
+    0x1BBFE3: 'a0c70dc93600f01da0c80dc92a07f015a0ca0dc90f02f00dc93902f008c90101d022a0c60d',
+    0x1BBE26: 'c97e03f032a00200c93600f05aa00400c92a07f052',
+    0x1BBE5D: 'ad7a0329ff00c90100d0034c1abf',
+    0x1BBE88: 'a0c50d802d',
+    0x1BBDD1: 'c91b02d013e220a9118d2e01c2202267dd0ea9cb0d4cc3be',
+    0x1BBFAC: 'a00000c96d03f02cc8c96e03f026c8c97403f020c8c97503f01aa00000c93b02f012c8c93c02f00cc8c93d02f006c93e02d004c84c9fc0',
+    0x1BC081: 'bf00207ea00000c92602f012c8c92702f00cc8c92802f006c92902d0b7c8',
+    0x1BBEDF: '0a0a8506a5002908004a4a0406a50229010005060aaabf0080bd29ff01aabf59940e',
+    0x1BC027: '0a0a8506a5022908004a4a0406a5004a4a4a29010005060aaabf0080bd29ff01aa688500688502bf59940ee2316b',
+    0x008864: 'bf0080bd850629ff01aabf59940e',
+    0x1BBF22: 'bf0080bd29ff01aabf59940e',
+    0x1BBBF4: 'c231a520',
+    0x088A5D: '9de403a8',
+    0x0E95DC: '515757',
+}
+CONDITIONAL_UNCLOSED = (
+    'hidden_items_bomb_doors_and_event_recipe', 'ice_rod_direct_dma_adapter',
+    'overlay_and_shared_bg_resources', 'active_obj_follower_ancilla_resources',
+    'external_scroll_coexistence', 'pyramid_029E6A',
+)
 UNKNOWNS = (
     'mutable_event_tile_closure', 'overlay_and_shared_bg_resources',
     'active_obj_follower_ancilla_resources', 'external_scroll_coexistence',
@@ -111,6 +145,254 @@ def _source_sheets(source):
         return cache[sheet]
 
     return read, records
+
+
+def conditional_document_identity(document):
+    """Shared exact saved-document value identity; no runtime state is inferred."""
+    return _sha(_json_bytes(dict(profile=document.profile, maps=document.maps,
+        properties=document.properties, authoring=document.authoring,
+        gameplay_areas=document.gameplay_areas)))
+
+
+def _conditional_definitions(source, document):
+    count = document.profile.get('tile_count')
+    _require(type(count) is int and 0 < count <= 4096 and len(source) >= 0x868,
+             'CONDITIONAL_DEFINITIONS_INVALID')
+    pointer = int.from_bytes(source[0x865:0x868], 'little')
+    _require(pointer & 0xFFFF >= 0x8000 and (pointer >> 16) & 0x7F < 0x7E,
+             'CONDITIONAL_DEFINITION_POINTER_INVALID')
+    at = sheet_table.pc(pointer)
+    raw = source[at:at + count * 8]
+    _require(len(raw) == count * 8
+             and _sha(raw) == document.profile.get('tile16_definition_fingerprint'),
+             'CONDITIONAL_DEFINITION_HASH_MISMATCH')
+    return pointer, raw
+
+
+def _conditional_source_policy(source, document, inspection, policy):
+    keys = {'kind', 'source_epoch', 'selected_features', 'source_files',
+            'native_preimages', 'tail_recipe', 'save_identity', 'area_tilesets'}
+    _require(type(policy) is dict and set(policy) == keys
+             and policy['kind'] == CONDITIONAL_POLICY_KIND
+             and type(policy['source_epoch']) is str
+             and re.fullmatch('[0-9a-f]{40}', policy['source_epoch']), 'CONDITIONAL_POLICY_INVALID')
+    features = policy['selected_features']
+    _require(type(features) is dict and set(features) == {'ice_rod', 'area_tilesets'}
+             and all(type(value) is bool for value in features.values()), 'CONDITIONAL_FEATURES_INVALID')
+    _require(not features['area_tilesets'] and policy['area_tilesets'] is None,
+             'CONDITIONAL_AREA_TYPES_UNQUALIFIED')
+    rows = policy['source_files']
+    _require(type(rows) is list, 'CONDITIONAL_SOURCE_FILES_UNBOUND')
+    files = {}
+    for row in rows:
+        _require(type(row) is dict and set(row) == {'path', 'sha256', 'source_utf8'},
+                 'CONDITIONAL_SOURCE_FILE_INVALID')
+        path, text = row['path'], row['source_utf8']
+        _require(type(path) is str and path and not Path(path).is_absolute()
+                 and '..' not in Path(path).parts and '\0' not in path and path not in files
+                 and type(text) is str and _sha(text.encode('utf-8')) == row['sha256'],
+                 'CONDITIONAL_SOURCE_FILE_MISMATCH')
+        files[path] = '\n'.join(line.split(';', 1)[0] for line in text.splitlines())
+    _require(set(CONDITIONAL_SOURCE_FILES) <= set(files), 'CONDITIONAL_SOURCE_FILES_UNBOUND')
+
+    def flag(name, *paths):
+        values = [match[1].strip() for path in paths for match in re.finditer(
+            r'^\s*!' + name + r'\s*=\s*([^\n]+)$', files[path], re.M)]
+        _require(values and all(value in ('0', '1') for value in values),
+                 'CONDITIONAL_FEATURE_SOURCE_UNBOUND: ' + name)
+        return int(values[-1])
+
+    _require(features['ice_rod'] == (flag('DISABLE_ITEMS', 'Util/macros.asm',
+                 'Config/module_flags.asm') == 0)
+             and features['area_tilesets'] == bool(flag('ENABLE_OW_AREA_TILESETS',
+                 'Util/macros.asm', 'Config/feature_flags.asm')),
+             'CONDITIONAL_FEATURE_SOURCE_MISMATCH')
+    _require(re.search(r'^\s*incsrc\s+"Items/ice_rod\.asm"\s*$',
+                       files['Items/all_items.asm'], re.M), 'CONDITIONAL_ICE_SOURCE_UNBOUND')
+    ice = re.sub(r'\s+', '', files['Items/ice_rod.asm']).upper()
+    for snippet in ('LDA$03E8:CMP#$08', 'LDA$03E8:CMP#$03',
+                    'LDA#$00B7:STA$7E2000,X', 'ORG$0E95DCASL$5757'):
+        _require(snippet in ice, 'CONDITIONAL_ICE_SOURCE_UNSUPPORTED')
+    door = re.sub(r'\s+', '', files['Overworld/entrances.asm']).upper()
+    door_predicate = ('LDA.B$2F:AND.W#$00FF:BNE.NOT_FACING_UP'
+        'LDA.LMAP16DEFINITIONS+2,XAND.W#$41FF:CMP.W#$00E9:BEQ.OPEN_DOOR'
+        'CMP.W#$0149:BEQ.LEFT_SIDE_CASTLE_DOORCMP.W#$0169:BEQ.LEFT_SIDE_CASTLE_DOOR'
+        'TYXLDA.L$7E2002,XASL#3TAXLDA.LMAP16DEFINITIONS+0,X'
+        'AND.W#$41FF:CMP.W#$4149:BEQ.RIGHT_SIDE_CASTLE_DOOR'
+        'CMP.W#$4169:BEQ.RIGHT_SIDE_CASTLE_DOORCMP.W#$40E9:BNE.CHECK_DOOR_TYPE'
+        'DEYDEY.OPEN_DOORTYXLDA.W#$0DA4:JSLOVERWORLD_DRAWMAP16_PERSIST'
+        'LDA.W#$0DA6:STA.L$7E2002,XLDY.W#$0002JSLOVERWORLD_DRAWMAP16_ANYWHERE')
+    _require(door_predicate in door, 'CONDITIONAL_DOOR_SOURCE_UNSUPPORTED')
+    preimages = {}
+    _require(type(policy['native_preimages']) is list, 'CONDITIONAL_NATIVE_PREIMAGES_UNBOUND')
+    for row in policy['native_preimages']:
+        _require(type(row) is dict and set(row) == {'snes', 'payload_hex', 'sha256'}
+                 and type(row['snes']) is int and row['snes'] & 0xFFFF >= 0x8000
+                 and type(row['payload_hex']) is str
+                 and re.fullmatch(r'(?:[0-9a-f]{2})+', row['payload_hex'])
+                 and row['snes'] not in preimages, 'CONDITIONAL_NATIVE_PREIMAGE_INVALID')
+        raw = bytes.fromhex(row['payload_hex'])
+        at = sheet_table.pc(row['snes'])
+        _require(_sha(raw) == row['sha256'] and source[at:at+len(raw)] == raw,
+                 'CONDITIONAL_NATIVE_PREIMAGE_MISMATCH')
+        preimages[row['snes']] = raw
+    for at, expected in CONDITIONAL_NATIVE_PREIMAGES.items():
+        _require(preimages.get(at) == bytes.fromhex(expected),
+                 'CONDITIONAL_NATIVE_PREDICATE_UNSUPPORTED: ' + f'{at:06X}')
+    native = preimages.get(0x0E9459)
+    _require(native is not None and len(native) == 512, 'CONDITIONAL_NATIVE_TYPES_UNBOUND')
+    effective = bytearray(native)
+    patches = []
+    if features['ice_rod']:
+        index = 0x0E95DC - 0x0E9459
+        _require(effective[index:index+3] == bytes.fromhex('515757'),
+                 'CONDITIONAL_ICE_TYPE_PREIMAGE_MISMATCH')
+        effective[index:index+3] = bytes.fromhex('0e5757')
+        patches.append(dict(source_path='Items/ice_rod.asm', snes=0x0E95DC,
+                            before_hex='515757', after_hex='0e5757'))
+    recipe = policy['tail_recipe']
+    _require(type(recipe) is dict and set(recipe) == {'binding', 'payload_hex'}
+             and type(recipe['binding']) is dict
+             and set(recipe['binding']) == {'path', 'sha256'}
+             and type(recipe['binding']['path']) is str and recipe['binding']['path']
+             and type(recipe['payload_hex']) is str
+             and re.fullmatch(r'(?:[0-9a-f]{2})+', recipe['payload_hex']),
+             'CONDITIONAL_RECIPE_UNBOUND')
+    raw = bytes.fromhex(recipe['payload_hex'])
+    _require(_sha(raw) == recipe['binding']['sha256'], 'CONDITIONAL_RECIPE_MISMATCH')
+    def unique(pairs):
+        result = {}
+        for key, value in pairs:
+            _require(key not in result, 'CONDITIONAL_RECIPE_DUPLICATE')
+            result[key] = value
+        return result
+    try:
+        recipe_rows = json.loads(raw, object_pairs_hook=unique)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError('RESIDENT_GRAPHICS_CONDITIONAL_RECIPE_INVALID') from error
+    _require(type(recipe_rows) is dict and set(recipe_rows) == {f'{page:02X}' for page in range(FIRST, END)}
+             and all(type(row) is dict for row in recipe_rows.values()), 'CONDITIONAL_RECIPE_INCOMPLETE')
+    identity = policy['save_identity']
+    _require(type(identity) is dict and set(identity) == {'transfer_id', 'generation', 'operation_id',
+        'source_rom_sha256', 'terrain_sha256', 'inspection_sha256', 'document_sha256'}
+        and _digest(identity['transfer_id']) and type(identity['generation']) is int
+        and 0 < identity['generation'] <= 0xFFFFFFFFFFFFFFFF
+        and type(identity['operation_id']) is str and identity['operation_id']
+        and type(inspection) is dict and identity['source_rom_sha256'] == _sha(source)
+        and inspection.get('source_rom_sha256') == identity['source_rom_sha256']
+        and _digest(identity['terrain_sha256'])
+        and inspection.get('terrain_sha256') == identity['terrain_sha256']
+        and identity['inspection_sha256'] == _sha(_json_bytes(inspection))
+        and identity['document_sha256'] == conditional_document_identity(document),
+        'CONDITIONAL_SAVE_IDENTITY_MISMATCH')
+    return bytes(effective), dict(snes=0x0E9459, byte_count=512,
+        source_sha256=_sha(native), effective_sha256=_sha(effective), patches=patches)
+
+
+def derive_conditional_demands(source, document, inspection, *, source_policy):
+    """Derive a closed subset of potential mutations, never runtime admission.
+
+    The wrapper authenticates source epoch/files, Save IDs and recipe identity.
+    This pure layer rechecks their value hashes, exact native predicates, every
+    quadrant's effective char type, and the source door's actual target offsets.
+    """
+    _require(type(source) is bytes and isinstance(document, TerrainDocument), 'CONDITIONAL_INPUT_INVALID')
+    areas = validated_gameplay_areas(document.gameplay_areas)
+    _require({page for area in areas for page in area['maps']} == set(range(FIRST, END))
+             and len(document.maps) == 32 and all(type(tiles) is tuple and len(tiles) == 1024
+                 for tiles in document.maps), 'CONDITIONAL_PAGES_INCOMPLETE')
+    pointer, definitions = _conditional_definitions(source, document)
+    types, type_source = _conditional_source_policy(source, document, inspection, source_policy)
+    targets = {}
+
+    def words(tile):
+        _require(type(tile) is int and 0 <= tile < len(definitions)//8, 'CONDITIONAL_TILE16_INVALID')
+        return list(struct.unpack_from('<4H', definitions, tile*8))
+
+    def add(page, target, family, trigger):
+        key = (page, target)
+        row = targets.setdefault(key, dict(map_id=page, tile16_id=target,
+            source_words=words(target), already_authored=target in document.maps[page-FIRST],
+            families=set(), triggers={}))
+        row['families'].add(family)
+        row['triggers'][_json_bytes(trigger)] = trigger
+
+    dig = {0x34, 0x71, 0x35, 0x10D, 0x10F, 0xE1, 0xE2, 0xDA, 0xF8, 0x10E}
+    objects = {0x36: 0xDC7, 0x72A: 0xDC8, 0x20F: 0xDCA, 0x239: 0xDCA, 0x101: 0xDC6}
+    unsupported = {0x37E: 'grass', 0x21B: 'peg', **dict.fromkeys(
+        (0x36D, 0x36E, 0x374, 0x375, 0x23B, 0x23C, 0x23D, 0x23E,
+         0x226, 0x227, 0x228, 0x229), 'large_rock')}
+    for page in range(FIRST, END):
+        for cell, tile in enumerate(document.maps[page-FIRST]):
+            original = words(tile)
+            quadrants = [types[word & 0x1FF] for word in original]
+            _require(tile not in unsupported, 'CONDITIONAL_UNSUPPORTED_FAMILY: '
+                     + f'{unsupported.get(tile)}:{page:02X}:{cell}:{tile:04X}')
+            trigger = dict(map_id=page, cell_index=cell, source_tile16_id=tile,
+                           source_words=original, quadrant_types=quadrants)
+            if tile in dig:
+                add(page, 0xDC9, 'dig', dict(trigger, action='037A.low==1'))
+            if tile in objects:
+                add(page, objects[tile], 'bush' if tile in (0x36, 0x72A) else 'small_object', trigger)
+            if source_policy['selected_features']['ice_rod'] and any(value in (3, 8) for value in quadrants):
+                add(page, 0xB7, 'ice_rod_water', dict(trigger,
+                    eligible_quadrants=[q for q, value in enumerate(quadrants) if value in (3, 8)]))
+
+    for area in sorted(areas, key=lambda row: row['parent_map_id']):
+        mask = {'small': 0, 'wide': 1, 'tall': 8, 'large': 9}[area['size']]
+        def cell_at(raw):
+            _require(0 <= raw < 0x2000 and raw % 2 == 0, 'CONDITIONAL_DOOR_TARGET_OUT_OF_DOMAIN')
+            quadrant = (((raw & 0x1000) >> 12) * 8 + ((raw & 0x40) >> 6)) & mask
+            page = area['parent_map_id'] + quadrant
+            cell = ((raw >> 7) & 31)*32 + ((raw >> 1) & 31)
+            return page, cell, document.maps[page-FIRST][cell]
+        for raw in range(0, 0x2000, 2):
+            query_quadrant = ((raw & 0x1000) >> 9) | ((raw & 0x40) >> 6)
+            if query_quadrant & ~mask:
+                continue
+            page, cell, tile = cell_at(raw)
+            original = words(tile)
+            predicate = original[1] & 0x41FF
+            if predicate == 0xE9:
+                left, branch = raw, 'current_q1_00E9'
+            elif predicate in (0x149, 0x169) or raw+2 >= 0x2000:
+                continue
+            else:
+                neighbor_page, neighbor_cell, neighbor_tile = cell_at(raw+2)
+                if words(neighbor_tile)[0] & 0x41FF != 0x40E9:
+                    continue
+                left, branch = raw-2, 'neighbor_q0_40E9'
+            for offset, target in ((left, 0xDA4), (left+2, 0xDA6)):
+                target_page, target_cell, _ = cell_at(offset)
+                evidence = dict(map_id=page, cell_index=cell, source_tile16_id=tile,
+                    source_words=original, native_raw_offset=raw, branch=branch,
+                    target_raw_offset=offset, target_cell_index=target_cell)
+                if branch == 'neighbor_q0_40E9':
+                    evidence['neighbor'] = dict(map_id=neighbor_page, cell_index=neighbor_cell,
+                        source_tile16_id=neighbor_tile, source_words=words(neighbor_tile))
+                add(target_page, target, 'wooden_door', evidence)
+    rows = []
+    for _, row in sorted(targets.items()):
+        rows.append(dict(row, families=sorted(row['families']),
+                         triggers=[value for _, value in sorted(row['triggers'].items())]))
+    result = dict(kind=CONDITIONAL_KIND, scope='saved_terrain_direct_trigger_subset',
+        source_policy=copy.deepcopy(source_policy),
+        source_policy_sha256=_sha(_json_bytes(source_policy)),
+        source_binding=dict(source_rom_sha256=_sha(source),
+            terrain_sha256=source_policy['save_identity']['terrain_sha256'],
+            inspection_sha256=_sha(_json_bytes(inspection)),
+            document_sha256=conditional_document_identity(document),
+            tile16_definition_snes=pointer, tile16_definition_sha256=_sha(definitions)),
+        native_type_source=type_source, rows=rows,
+        additional_rows=[dict(map_id=row['map_id'], tile16_id=row['tile16_id'])
+                         for row in rows if not row['already_authored']],
+        unclosed_families=list(CONDITIONAL_UNCLOSED), known_conditional_demands_ready=True,
+        full_residency_ready=False, appearance_coherent=False, allocation_granted=False,
+        publication_authorized=False, ordinary_build_ready=False, runtime_admission=False,
+        compiled_consumers_verified=False, resource_closure_verified=False,
+        rom_written=False, selected=False)
+    result['witness_sha256'] = _sha(_json_bytes(result))
+    return result
 
 
 def _inspection_rows(source, document, inspection, terrain_sha256, read_sheet):
@@ -213,12 +495,15 @@ def _inspection_rows(source, document, inspection, terrain_sha256, read_sheet):
     return rows
 
 
-def _plan_area(area, document, assets, definitions, read_sheet):
+def _plan_area(area, document, assets, definitions, read_sheet, conditional_tiles=None):
     demands, references, claims = {}, [], {}
     for map_id in area['maps']:
         data = assets[map_id, 0]
         palette = data['palette']['words']
-        for tile in sorted(set(document.maps[map_id - FIRST])):
+        tiles = set(document.maps[map_id - FIRST])
+        if conditional_tiles is not None:
+            tiles.update(conditional_tiles.get(map_id, ()))
+        for tile in sorted(tiles):
             for quadrant, word in enumerate(struct.unpack_from('<4H', definitions, tile * 8)):
                 references.append((map_id, tile, quadrant, word))
                 key = (map_id, word)
@@ -330,7 +615,8 @@ def _plan_area(area, document, assets, definitions, read_sheet):
     return result
 
 
-def plan_resident_graphics(source, document, inspection, *, terrain_sha256, provenance):
+def plan_resident_graphics(source, document, inspection, *, terrain_sha256, provenance,
+                           conditional_demands=None):
     """Return deterministic ungranted DATA; native/shared-resource readiness stays false."""
     _require(type(source) is bytes and 0 < len(source) <= 0x400000
              and len(source) % 0x8000 == 0, 'SOURCE_INVALID')
@@ -372,16 +658,27 @@ def plan_resident_graphics(source, document, inspection, *, terrain_sha256, prov
     _require(len(definitions) == count * 8
              and _sha(definitions) == document.profile['tile16_definition_fingerprint'],
              'DEFINITION_HASH_MISMATCH')
+    conditional_tiles = None
+    if conditional_demands is not None:
+        _require(type(conditional_demands) is dict
+                 and type(conditional_demands.get('source_policy')) is dict,
+                 'CONDITIONAL_WITNESS_UNBOUND')
+        expected = derive_conditional_demands(source, document, inspection,
+            source_policy=conditional_demands['source_policy'])
+        _require(conditional_demands == expected, 'CONDITIONAL_WITNESS_MISMATCH')
+        _require(expected['source_binding']['terrain_sha256'] == terrain_sha256,
+                 'CONDITIONAL_TERRAIN_MISMATCH')
+        conditional_tiles = {}
+        for row in expected['rows']:
+            conditional_tiles.setdefault(row['map_id'], set()).add(row['tile16_id'])
     read_sheet, sheets = _source_sheets(source)
     assets = _inspection_rows(source, document, inspection, terrain_sha256, read_sheet)
-    planned = [_plan_area(area, document, assets, definitions, read_sheet)
+    planned = [_plan_area(area, document, assets, definitions, read_sheet, conditional_tiles)
                for area in sorted(areas, key=lambda row: row['parent_map_id'])]
     plan = dict(kind=KIND, scope='terrain_resource_data_only',
         source_binding=dict(source_rom_sha256=_sha(source), source_byte_count=len(source),
             terrain_sha256=terrain_sha256, inspection_sha256=_sha(_json_bytes(inspection)),
-            document_sha256=_sha(_json_bytes(dict(profile=document.profile,
-                maps=document.maps, properties=document.properties, authoring=document.authoring,
-                gameplay_areas=document.gameplay_areas))),
+            document_sha256=conditional_document_identity(document),
             tile16_definition_snes=pointer, tile16_definition_sha256=_sha(definitions)),
         provenance=copy.deepcopy(provenance), provenance_sha256=_sha(_json_bytes(provenance)),
         terrain_plan_ready=all(area['terrain_plan_ready'] for area in planned),
@@ -391,6 +688,9 @@ def plan_resident_graphics(source, document, inspection, *, terrain_sha256, prov
         static_namespace=list(STATIC_SLOTS), animated_namespace=list(ANIMATED_SLOTS),
         unknowns=list(UNKNOWNS), areas=planned,
         decoded_sheets=[sheets[sheet] for sheet in sorted(sheets)])
+    if conditional_demands is not None:
+        plan['scope'] = 'terrain_and_known_conditional_resource_data_only'
+        plan['conditional_demands'] = copy.deepcopy(expected)
     plan['plan_sha256'] = _sha(_json_bytes(plan))
     return plan
 
