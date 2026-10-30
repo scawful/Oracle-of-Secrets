@@ -144,24 +144,24 @@ def expected(slot, f6, f4, owned, rings, one_ring):
     """Returns (sound writes, changed selection state, stub calls)."""
     if not (f6 & 0x80 or f4 & 0x40):
         return [], {}, []
-    if slot >= 0x15 or not owned:
+    if slot >= 0x18 or not owned:
         return [("$012E", ERROR)], {}, []
-    if slot < 0x05:
+    if slot < 0x06:
         return [("$012F", MENU_CURSOR)], {"BoundMask": slot + 1, "$0207": 0x20}, []
-    if slot < 0x0B:
-        ring = slot - 3
+    if slot < 0x0C:
+        ring = slot - 4
         if ring in rings:
             return [("$012F", MENU_CURSOR)], {f"RingSlot{rings.index(ring) + 1}": 0, "$0207": 0x00}, []
         if one_ring:
             return [("$012F", MENU_CURSOR)], {"RingSlot1": ring, "$0207": 0x20}, []
         return [("$012F", MENU_CURSOR)], {"$0207": 0x20}, [("RingMenu_StoreRingToSlotStack", ring)]
-    if slot < 0x0F:
-        song = slot - 0x0A
+    if slot < 0x12:
+        song = slot - 0x0B
         state = {"CurrentSong": song, "SavedOcarinaSong": song, "$0202": 0x0D, "$0207": 0x20}
         return [("$012F", MENU_CURSOR)], state, []
     if not f6 & 0x80:
         return [], {}, []
-    return [], {}, [("MagicBag_ConsumeItem", slot - 0x0F)]
+    return [], {}, [("MagicBag_ConsumeItem", slot - 0x12)]
 
 
 def check_select(test, equipment_text, page3_text, flags):
@@ -170,10 +170,10 @@ def check_select(test, equipment_text, page3_text, flags):
         (equipment_text, "Menu_Equipment_Select"), (page3_text, "Menu_Page3_ToggleRing"))}
     one_ring = flags["ENABLE_ONE_RING"] == 1
     cases = 0
-    for slot in list(range(0x15)) + [0xFF]:
-        ownership = (True,) if 0x0F <= slot < 0x15 else (False,) if slot >= 0x15 else (False, True)
+    for slot in list(range(0x18)) + [0xFF]:
+        ownership = (True,) if 0x12 <= slot < 0x18 else (False,) if slot >= 0x18 else (False, True)
         for owned in ownership:
-            rings_list = ring_states(slot - 3, one_ring) if 0x05 <= slot < 0x0B else [(0, 0, 0)]
+            rings_list = ring_states(slot - 4, one_ring) if 0x06 <= slot < 0x0C else [(0, 0, 0)]
             for rings in rings_list:
                 for f6, f4 in INPUTS:
                     memory = {"$F6": f6, "$F4": f4, "$020B": slot, "$0207": 0x05,
@@ -223,7 +223,7 @@ class EquipmentMenuSfxContract(unittest.TestCase):
     def test_move_accept_plays_cursor_sound(self):
         routines = {"Menu_Equipment_Move": routine_lines(
             self.equipment, "Menu_Equipment_Move", self.flags)}
-        for target in range(0x15):
+        for target in range(0x18):
             menu = Menu(routines, {"$02": target, "$020B": 0xFF, "$0207": 0x05}, {})
             menu.run("Menu_Equipment_Move", ".accept")
             self.assertEqual(menu.sounds, [("$012F", MENU_CURSOR)])
