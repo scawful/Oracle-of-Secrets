@@ -1049,6 +1049,8 @@ def checkpoint_symbols(symbols):
 def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     """Select only a source-owned reviewed runtime policy; no A1 fallback."""
     request, source, document = verify_transfer(request_path, project, base_rom)
+    R.require(document.boat_transport is None,
+              'CURRENT_BOAT_SOURCE_UNBOUND: saved boat source requires current runtime authentication')
     ledger_path = Path(R.LEDGER).resolve(strict=True) if ledger_path is None else Path(ledger_path).resolve(strict=True)
     R.require(ledger_path == Path(R.LEDGER).resolve(strict=True), 'CURRENT_SAVE_POLICY_AUTHORITY_MISMATCH')
     ledger_binding = Q.bound(ledger_path)

@@ -12,7 +12,7 @@ import copy
 from dataclasses import dataclass
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 import re
 from typing import Mapping
 
@@ -153,6 +153,10 @@ class TerrainDocument:
     flight_points: tuple[dict, ...] = ()
     # Empty means UNASSIGNED for older schemas; never infer areas from map IDs.
     gameplay_areas: tuple[dict, ...] = ()
+    # Schema-7 values retain authoring and provenance without granting runtime
+    # lowering or write access to the named source tree.
+    boat_transport: dict | None = None
+    next_flight_point_id: int = 1
 
 
 @dataclass(frozen=True)
@@ -229,11 +233,58 @@ def resolve_project_terrain(project_path: str | Path) -> Path:
     return asset
 
 
+def validated_boat_transport(value) -> dict | None:
+    """Retain schema-7 authoring; filesystem/source admission is independent."""
+    if value is None:
+        return None
+    _keys(value, {"source_root", "source_path", "source_template", "endpoints"},
+          "boat transport")
+    root = value["source_root"]
+    _require(type(root) is str and root and "\0" not in root
+             and (PurePosixPath(root).is_absolute() or PureWindowsPath(root).is_absolute()),
+             "Boat source_root must be absolute")
+    _require(value["source_path"] == "Data/overworld/kalyxo_boat_placements.asm",
+             "Unsupported boat source_path")
+    template = value["source_template"]
+    _require(type(template) is str and template and "\0" not in template
+             and len(template.encode("utf-8")) <= 65536,
+             "Invalid boat source_template")
+    endpoints = value["endpoints"]
+    _require(type(endpoints) is list and len(endpoints) == 2,
+             "Boat transport requires two endpoints")
+    keys = set()
+    for endpoint in endpoints:
+        _keys(endpoint, {"exit_id", "parent_map", "world_x", "world_y",
+                         "area_size", "facing", "name"}, "boat endpoint")
+        key = endpoint["exit_id"]
+        _require(_integer(key, 0x186, 0x187) and key not in keys,
+                 "Boat endpoints require unique keys0186/0187")
+        keys.add(key)
+        parent, x, y, size = (endpoint[k] for k in
+                              ("parent_map", "world_x", "world_y", "area_size"))
+        _require(_integer(parent, 0, 0xBF) and _integer(x, 0, 4095)
+                 and _integer(y, 0, 4095) and _integer(size, 0, 3),
+                 "Invalid boat endpoint geometry")
+        col, row = parent % 8, parent % 0x40 // 8
+        width, height = (2 if size in (1, 2) else 1), (2 if size in (1, 3) else 1)
+        _require(col + width <= 8 and row + height <= 8
+                 and col * 512 <= x < (col + width) * 512
+                 and row * 512 <= y < (row + height) * 512,
+                 "Boat endpoint leaves its explicit gameplay area")
+        _require(_integer(endpoint["facing"], 0, 6) and endpoint["facing"] % 2 == 0,
+                 "Invalid boat arrival facing")
+        name = endpoint["name"]
+        _require(type(name) is str and 0 < len(name.encode("utf-8")) <= 80
+                 and all(ord(c) >= 32 and ord(c) != 127 for c in name),
+                 "Invalid boat endpoint name")
+    return copy.deepcopy(value)
+
+
 def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
                            expected_asset_bindings: Mapping[int, tuple[str, str, str]] | None = None,
                            allow_authoring_drafts: bool = False,
                            ) -> TerrainDocument:
-    """Parse schema 3/4/5/6 against independently verified native assets.
+    """Parse schema 3/4/5/6/7 against independently verified native assets.
 
     The historical strict runtime policy remains the default. A read-only
     admission planner may preserve valid drafts and apply consumer checks to
@@ -247,13 +298,15 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
     data = json.loads(text, object_pairs_hook=_unique_object,
                       parse_constant=_invalid_constant)
     _require(type(data) is dict and data.get("schema") == "yaze.lyra-terrain"
-             and _integer(data.get("schema_version"), 3, 6),
-             "Expected Yaze Lyra schema 3, 4, 5 or 6")
+             and _integer(data.get("schema_version"), 3, 7),
+             "Expected Yaze Lyra schema 3, 4, 5, 6 or 7")
     version = data["schema_version"]
     _keys(data, {"schema", "schema_version", "columns", "rows", "map_width",
                  "map_height", "tile_pixels", "profile", "maps",
                  "flight_points", "edge_connections"}
-                | ({"gameplay_areas"} if version >= 5 else set()), "Lyra schema 3/4/5/6 header")
+                | ({"gameplay_areas"} if version >= 5 else set())
+                | ({"boat_transport", "next_flight_point_id"} if version >= 7 else set()),
+             "Lyra schema 3/4/5/6/7 header")
     for key, value in (("columns", 8), ("rows", 4), ("map_width", 32),
                        ("map_height", 32), ("tile_pixels", 16)):
         _require(_integer(data[key], value, value), f"Invalid Lyra {key}")
@@ -264,7 +317,7 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
     if version >= 5:
         _require(type(data["gameplay_areas"]) is list,
                  "gameplay_areas requires a JSON array")
-        gameplay_areas = (() if version == 6 and not data["gameplay_areas"]
+        gameplay_areas = (() if version >= 6 and not data["gameplay_areas"]
                           else validated_gameplay_areas(data["gameplay_areas"]))
         _require(allow_authoring_drafts,
                  "Unsupported runtime metadata: gameplay_areas")
@@ -282,6 +335,14 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
                  and all(ord(c) >= 32 and ord(c) != 127 for c in flight["name"])
                  and flight["runtime_slot"] is None, "Invalid Lyra flight point")
         flight_ids.add(flight["id"])
+    next_flight_point_id = max(flight_ids, default=0) + 1
+    boat_transport = None
+    if version >= 7:
+        next_flight_point_id = data["next_flight_point_id"]
+        _require(_integer(next_flight_point_id, 1, 0x100000000)
+                 and next_flight_point_id > max(flight_ids, default=0),
+                 "Invalid next_flight_point_id")
+        boat_transport = validated_boat_transport(data["boat_transport"])
     edges = data["edge_connections"]
     _require(type(edges) is list and len(edges) <= 64,
              "Lyra edge connections require an array of at most 64 entries")
@@ -354,9 +415,9 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
         props = auth["properties"]
         _require(type(props) is dict, "Malformed Lyra map properties keys")
         has_override = "background_palette" in props
-        _keys(props, PROPERTY_KEYS | (set(RUNTIME_PROPERTY_DEFAULTS) if version == 6 else set())
+        _keys(props, PROPERTY_KEYS | (set(RUNTIME_PROPERTY_DEFAULTS) if version >= 6 else set())
               | ({"background_palette"} if version >= 4 and has_override else set()), "Lyra map properties")
-        if version == 6:
+        if version >= 6:
             _require(_integer(props["mosaic"], 0, 15), "Lyra mosaic requires direction bits0..15")
             _require(_integer(props["subscreen_overlay"], 0, 191) or props["subscreen_overlay"] == 255
                      and type(props["subscreen_overlay"]) is int,
@@ -385,7 +446,7 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
         _require(type(bindings) is list and len(bindings) == 3,
                  "Malformed Lyra map asset bindings")
         if bindings == ["", "", ""]:
-            defaults = {**DEFAULT_PROPERTIES, **(RUNTIME_PROPERTY_DEFAULTS if version == 6 else {})}
+            defaults = {**DEFAULT_PROPERTIES, **(RUNTIME_PROPERTY_DEFAULTS if version >= 6 else {})}
             _require(props == defaults,
                      "Empty asset bindings require default map properties")
         else:
@@ -405,7 +466,8 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
     ids = range(FIRST_MAP, FIRST_MAP + MAP_COUNT)
     return TerrainDocument(expected, tuple(maps[i] for i in ids),
                            tuple(properties[i] for i in ids), tuple(copy.deepcopy(edges)),
-                           tuple(authoring[i] for i in ids), tuple(copy.deepcopy(flights)), gameplay_areas)
+                           tuple(authoring[i] for i in ids), tuple(copy.deepcopy(flights)), gameplay_areas,
+                           boat_transport, next_flight_point_id)
 
 
 def quadrant_map_plan(map_id: int) -> Quad:

@@ -57,6 +57,101 @@ def allocation(**overrides):
 
 
 class LyraProjectTerrainTest(unittest.TestCase):
+    def transport_document(self):
+        data = fixture()
+        data.update(schema_version=7, gameplay_areas=[], next_flight_point_id=8)
+        for entry in data["maps"]:
+            entry["authoring"]["properties"].update(copy.deepcopy(T.RUNTIME_PROPERTY_DEFAULTS))
+        data["flight_points"] = [{"id": 7, "map_id": 0xA0, "x": 4, "y": 5,
+                                  "name": "Sea point", "runtime_slot": None}]
+        data["boat_transport"] = {
+            "source_root": "/private/tmp/oracle-transport-source",
+            "source_path": "Data/overworld/kalyxo_boat_placements.asm",
+            "source_template": "%stv2_exit(0186, $98, $07B0, $00C0, 0, $06)\n"
+                               "%stv2_exit(0187, $30, $0D70, $0300, 1, $06)\n",
+            "endpoints": [
+                {"exit_id": 0x186, "parent_map": 0x98, "world_x": 0xC1,
+                 "world_y": 0x7B3, "area_size": 0, "facing": 6, "name": "Sea shore"},
+                {"exit_id": 0x187, "parent_map": 0x30, "world_x": 0x300,
+                 "world_y": 0xD70, "area_size": 1, "facing": 6, "name": "Kalyxo Docks"}]}
+        return data
+
+    def parse_transport(self, data, **kwargs):
+        return T.parse_terrain_document(json.dumps(data), profile(),
+                                         allow_authoring_drafts=True, **kwargs)
+
+    def test_schema7_preserves_transport_subtile_values_and_schema6_runtime_fields(self):
+        data = self.transport_document()
+        auth = data["maps"][-1]["authoring"]
+        auth["properties"].update(mosaic=12, subscreen_overlay=0xA1,
+                                   area_specific_bg_color=0x1234)
+        auth["asset_bindings"] = ["a" * 64, "b" * 64, "c" * 64]
+        before = copy.deepcopy(data)
+        parsed = self.parse_transport(data, expected_asset_bindings={0xBF: tuple(auth["asset_bindings"])})
+        self.assertEqual(parsed.boat_transport, data["boat_transport"])
+        self.assertEqual(parsed.next_flight_point_id, 8)
+        self.assertEqual(parsed.properties[-1], auth["properties"])
+        self.assertEqual(parsed.flight_points[0], data["flight_points"][0])
+        self.assertEqual(len(parsed.maps), 32)
+        parsed.boat_transport["endpoints"][0]["world_x"] = 0
+        self.assertEqual(data, before)
+
+    def test_schema7_counter_is_nonrewinding_and_can_represent_exhaustion(self):
+        original = self.transport_document()
+        for value in (True, 0, 7, 0x100000001):
+            data = copy.deepcopy(original)
+            data["next_flight_point_id"] = value
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "next_flight_point_id"):
+                self.parse_transport(data)
+        original["flight_points"][0]["id"] = 0xFFFFFFFF
+        original["next_flight_point_id"] = 0x100000000
+        self.assertEqual(self.parse_transport(original).next_flight_point_id, 0x100000000)
+
+    def test_schema7_rejects_invalid_or_duplicate_endpoint_payloads(self):
+        for key, value in (("exit_id", True), ("exit_id", 0x187), ("world_x", 512),
+                           ("parent_map", 0xC0), ("area_size", 4), ("facing", 1),
+                           ("name", "bad\x00name"), ("name", "x" * 81)):
+            data = self.transport_document()
+            data["boat_transport"]["endpoints"][0][key] = value
+            with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                self.parse_transport(data)
+
+    def test_schema7_source_shape_is_strict_without_filesystem_access(self):
+        for key, value in (("source_root", "relative"), ("source_path", "../other.asm"),
+                           ("source_template", ""), ("source_template", "x\0"),
+                           ("source_template", "x" * 65537), ("endpoints", [])):
+            data = self.transport_document()
+            data["boat_transport"][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                self.parse_transport(data)
+        data = self.transport_document()
+        data["boat_transport"]["unexpected"] = 1
+        with self.assertRaisesRegex(ValueError, "Malformed boat transport keys"):
+            self.parse_transport(data)
+
+    def test_schema7_null_boat_and_legacy_counter_derivation(self):
+        data = self.transport_document()
+        data["boat_transport"] = None
+        self.assertIsNone(self.parse_transport(data).boat_transport)
+        data["schema_version"] = 6
+        del data["boat_transport"], data["next_flight_point_id"]
+        parsed = self.parse_transport(data)
+        self.assertIsNone(parsed.boat_transport)
+        self.assertEqual(parsed.next_flight_point_id, 8)
+        self.assertEqual(parsed.properties[0]["mosaic"], 0)
+
+    def test_schema7_rejects_unknown_header_and_runtime_property_keys(self):
+        for domain in ("header", "properties"):
+            data = self.transport_document()
+            target = data if domain == "header" else data["maps"][0]["authoring"]["properties"]
+            target["future"] = 1
+            with self.subTest(domain=domain), self.assertRaisesRegex(ValueError, "Malformed"):
+                self.parse_transport(data)
+        data = self.transport_document()
+        data["schema_version"] = 8
+        with self.assertRaisesRegex(ValueError, "Expected Yaze Lyra schema"):
+            self.parse_transport(data)
+
     def palette_document(self):
         data = fixture()
         data["schema_version"] = 4

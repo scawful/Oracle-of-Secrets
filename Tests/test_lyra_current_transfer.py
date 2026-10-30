@@ -798,6 +798,20 @@ class CurrentSaveTransferTest(unittest.TestCase):
                 X.plan_transfer(request, self.project, self.rom, ledger_path=ledger, current_source_profile=self.current_profile)
         self.assertFalse(self.candidate.exists())
 
+    def test_saved_boat_refuses_before_policy_selection_or_asm_rendering(self):
+        # This is the parsed schema7 document shape produced by the editor.
+        from test_lyra_project_terrain import LyraProjectTerrainTest
+        reader = LyraProjectTerrainTest()
+        document = reader.parse_transport(reader.transport_document())
+        with mock.patch.object(X, 'verify_transfer', return_value=({}, b'', document)), \
+             mock.patch.object(X.Q, 'read_bound') as read_policy, \
+             mock.patch.object(X.P, 'render_current_source_outputs') as render:
+            with self.assertRaisesRegex(ValueError, 'CURRENT_BOAT_SOURCE_UNBOUND'):
+                X.ordinary_plan(self.project, self.rom, self.root / 'request.json')
+        read_policy.assert_not_called()
+        render.assert_not_called()
+        self.assertFalse(self.candidate.exists())
+
     def test_qualified_data_still_refuses_unadmitted_runtime_before_asm_rendering(self):
         report, request = self.prepare()
         ledger, policy, proof = self.grant_fixture(request)
