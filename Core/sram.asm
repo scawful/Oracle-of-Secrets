@@ -317,7 +317,7 @@ BunnyHood               = $7EF348   ; 1=Have
 DekuMask                = $7EF349   ; 1=Have (inventory slot)
 Lamp                    = $7EF34A   ; 1=Have
 Hammer                  = $7EF34B   ; 1=Have
-Flute                   = $7EF34C   ; 1=Shovel, 2=Inactive, 3=Active (also Ocarina)
+Flute                   = $7EF34C   ; 0=none, 1=ocarina, 2..7=Healing..Stone count
 RocsFeather             = $7EF34D   ; 1=Have
 Book                    = $7EF34E   ; 1=Have (Book of Secrets)
 BottleIndex             = $7EF34F   ; Currently selected bottle (1-4)
@@ -788,7 +788,7 @@ GoldstarInventoryVersion = $7EF3AA ; $A5 = legacy upgrade migrated
 
 ; Saved Ocarina song ($7EF3AB). Allocated 2026-09-29 by the RC integrator.
 ; Read/written only when !ENABLE_EQUIPMENT_MENU = 1 (Items/ocarina.asm
-; UpdateFluteSong_Long, Menu/menu_equipment.asm). 0 = unset, 1-4 = song.
+; UpdateFluteSong_Long, Menu/menu_equipment.asm). 0 = unset, 1-6 = song (Healing, Storms, Soaring, Time, Secrets, Stone).
 ; CurrentSong ($030F) is volatile WRAM; this byte keeps the Equipment
 ; choice across save/reload. Validated against learned songs ($7EF34C) on
 ; every use; out-of-range or garbage values become song 1.
@@ -797,8 +797,23 @@ GoldstarInventoryVersion = $7EF3AA ; $A5 = legacy upgrade migrated
 ; 76 item-receipt destinations ($0984E8) is in $7EF3A0-3C4; vanilla new-file
 ; init clears it ($0CC315-$0CC325); 00 in every stored save checked.
 SavedOcarinaSong   = $7EF3AB
-; AC..B1 belong to the pending Items/SongBits composition. Keep that range
-; outside the free list even when this source profile has not adopted it.
+; Independent Cane of Byrna ownership. $7EF351 remains Fishing/Portal level.
+; Allocated 2026-10-18 from FreeBlock_Large: unused in Oracle/usdasm, absent
+; from all 76 receipt destinations, zero in 12 initialized retained save slots.
+; New-file initialization clears this saved/checksummed byte. Only 1 is owned;
+; no migration or grant is inferred from rods. Acquisition placement is pending.
+ByrnaOwned        = $7EF3AC   ; 0 = no, 1 = owned
+; Prototype ownership: exact 1 only; independently saved/checksummed.
+BombchuOwned      = $7EF3AD
+SwitchHookOwned   = $7EF3AE
+GaroMaskOwned     = $7EF3AF
+; Separate collectible supply; owning the tool does not imply ammunition.
+; Saved/checksummed with the vanilla block and zeroed for new files. Values
+; above the cap are invalid old-save data and become zero, never a refill.
+BombchuAmmo       = $7EF3B0   ; 0..20; independent of Bombs ($7EF343)
+!BOMBCHU_AMMO_MAX  = 20
+; AC..B0 contain the published Items ownership/ammo fields above.
+; B1 remains excluded for pending SongBits; preserve checkpoint fences.
 ; Two separate unassigned ranges remain around the granted checkpoint state.
 FreeBlock_LargePrefix = $7EF3B2 ; 2 bytes [B2,B4); not an allocation grant
 

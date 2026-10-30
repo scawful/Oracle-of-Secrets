@@ -146,9 +146,19 @@ if !ENABLE_TRUTHFUL_CONTROLS == 1
 else
   LDX   $0202 : LDA $7EF33F, X : AND.w #$00FF
 endif
-  CPX.w #$0004 : BNE .not_bombs
+  CPX.w #$0004 : BEQ .bomb_count
+if !ENABLE_GOLDSTAR_CELL == 1
+  CPX.w #$001C : BNE .not_bombs
+    LDA.l BombchuAmmo : AND.w #$00FF
+    CMP.w #!BOMBCHU_AMMO_MAX+1 : BCC .draw_bomb_count
+    LDA.w #$0000
+    BRA .draw_bomb_count
+endif
+  BRA .not_bombs
+  .bomb_count
     ; Number of bombs Link has.
     LDA $7EF343 : AND.w #$00FF
+  .draw_bomb_count
     JSR HexToDecimal
     REP #$30
 
@@ -305,11 +315,7 @@ endif
     .bottle_not_equipped
 
     CPX.w #$000D : BNE .flute_not_equipped
-if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
-      JSR HUD_OcarinaIconIndex ; same size as LDA $030F (branch range)
-else
-      LDA $030F
-endif
+      JSR HUD_OcarinaIconIndex
 
     .flute_not_equipped
 
@@ -376,6 +382,9 @@ if !ENABLE_MASK_R_BINDING == 1
   .form_check
 endif
   LDA.w !CurrentMask : AND.w #$00FF : BEQ .y_item
+  CMP.w #$0008 : BNE +
+    LDX.w #$001E : RTS
+  +
   CMP.w #$0005 : BCS .y_item
     CLC : ADC.w #$0012 : TAX             ; Deku $13, Zora $14, Wolf $15, Bunny $16
     RTS
@@ -404,6 +413,34 @@ endif
 
 HUD_DrawItem:
 {
+  ; Seven entries cannot fit the vanilla five-entry $0DF859 allocation.
+  ; Bypass its 16-bit pointer table and read the extended bank-$2E table long.
+  CPX.w #$000D : BNE .not_ocarina
+  JSR HUD_OcarinaIconIndex
+  ASL #3 : TAX
+  LDA.l HUD_OcarinaIcons,X : STA.l $7EC776
+  LDA.l HUD_OcarinaIcons+2,X : STA.l $7EC778
+  LDA.l HUD_OcarinaIcons+4,X : STA.l $7EC7B6
+  LDA.l HUD_OcarinaIcons+6,X : STA.l $7EC7B8
+  RTS
+.not_ocarina
+if !ENABLE_GOLDSTAR_CELL == 1
+  ; Logical prototype items are beyond vanilla's 24-entry pointer table.
+  CPX.w #$001B : BCC .ordinary
+  CPX.w #$001F : BCS .ordinary
+  TXA : SEC : SBC.w #$001B : ASL #3 : TAX
+  LDA.l .new_icons,X : STA.l $7EC776
+  LDA.l .new_icons+2,X : STA.l $7EC778
+  LDA.l .new_icons+4,X : STA.l $7EC7B6
+  LDA.l .new_icons+6,X : STA.l $7EC7B8
+  RTS
+  .new_icons
+  dw $2CDC,$2CDD,$2CEC,$2CED ; Byrna
+  dw $2C7B,$2C8F,$2CAC,$2CAF ; Bombchu
+  dw $24F2,$2530,$257E,$257F ; Switch Hook
+  dw $340D,$340E,$340F,$3425 ; Garo
+  .ordinary
+endif
   STA $02
   TXA : DEC A : ASL A : TAX
   LDA $FA93, X : STA $04
@@ -418,22 +455,35 @@ HUD_DrawItem:
   RTS
 }
 
-if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
-; menu-ocarina-blank-slot. 16-bit A/X/Y. Out: A = Ocarina entry in the
-; $0DF859 HUD table: 0 = grey (owned, no song learned, $7EF34C < 2),
-; else the selected song (1-4); song 0 falls back to 1 (blue).
+; 16-bit A/X/Y. Returns 0 for an unlearned ocarina, otherwise song 1-6.
+; The caller may run before the file-load validator, so bound both values here.
 HUD_OcarinaIconIndex:
 {
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0002 : BCC .no_song
-    LDA.w $030F : AND.w #$00FF : BNE .done
-      LDA.w #$0001
-      RTS
-  .no_song
+  CMP.w #$0008 : BCC .count_ok
+  LDA.w #$0007
+.count_ok
+  DEC : STA.b $02
+  LDA.w CurrentSong : AND.w #$00FF : BEQ .first
+  CMP.b $02 : BCC .done : BEQ .done
+.first
+  LDA.w #$0001 : RTS
+.no_song
   LDA.w #$0000
-  .done
+.done
   RTS
 }
-endif
+
+HUD_OcarinaIcons:
+  dw $30D4,$30D5,$30E4,$30E5 ; Unlearned: grey
+  ; The instrument stays blue; only the song notes use individual colors.
+  dw $2CD4,$2CD5,$2CE4,$2CE5 ; Healing selected
+  dw $2CD4,$2CD5,$2CE4,$2CE5 ; Storms selected
+  dw $2CD4,$2CD5,$2CE4,$2CE5 ; Soaring selected
+  dw $2CD4,$2CD5,$2CE4,$2CE5 ; Time selected
+  dw $2CD4,$2CD5,$2CE4,$2CE5 ; Secrets selected
+  dw $2CD4,$2CD5,$2CE4,$2CE5 ; Stone selected
+assert pc()-HUD_OcarinaIcons == 7*8, "Ocarina HUD requires grey plus six songs"
 
 ; =========================================================
 
@@ -587,9 +637,9 @@ else
   dw $2CD4, $2CD5, $2CE4, $2CE5
 endif
   dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
-  dw $3CD4, $3CD5, $3CE4, $3CE5 ; Green
-  dw $24D4, $24D5, $24E4, $24E5 ; Red
-  dw $34D4, $34D5, $34E4, $34E5 ; Gold
+  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
+  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
+  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
 
 ; Roc's Feather (Net)
 org $0DF731

@@ -53,13 +53,14 @@ ShovelGFX:
 	dw $30D0, $20D1, $30E0, $30E1
 
 OcarinaGFX:
-  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
-  dw $3CD4, $3CD5, $3CE4, $3CE5 ; Green
-  dw $24D4, $24D5, $24E4, $24E5 ; Red
-  dw $34D4, $34D5, $34E4, $34E5 ; Gold
-if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
-  dw $30D4, $30D5, $30E4, $30E5 ; Grey (value 5): owned, no song learned
-endif
+  ; The instrument stays blue; only the song notes use individual colors.
+  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Healing selected
+  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Storms selected
+  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Soaring selected
+  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Time selected
+  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Secrets selected
+  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Stone selected
+  dw $30D4, $30D5, $30E4, $30E5 ; Grey (value7): no song learned
 
 BigKeyGFX:
   dw $34D6, $74D6, $34E6, $34E7
@@ -138,11 +139,13 @@ MirrorGFX:
 ; vhopppcc cccccccc
 
 QuarterNoteGFX:
-  dw $30AA, $306B, $307A, $306A ; Gray Note
-  dw $2CAA, $2C6B, $2C7A, $2C6A ; Blue Note
-  dw $3CAA, $3C6B, $3C7A, $3C6A ; Green Note
-  dw $24AA, $246B, $247A, $246A ; Red Note
-  dw $34AA, $346B, $347A, $346A ; Gold Note
+  dw $30AA, $306B, $307A, $306A ; Grey: not learned
+  dw $2CAA, $2C6B, $2C7A, $2C6A ; Healing: blue
+  dw $3CAA, $3C6B, $3C7A, $3C6A ; Storms: green
+  dw $24AA, $246B, $247A, $246A ; Soaring: red
+  dw $28AA, $286B, $287A, $286A ; Time: ivory/tan, matching the fourth ring
+  dw $34AA, $346B, $347A, $346A ; Secrets: gold
+  dw $20AA, $206B, $207A, $206A ; Stone: bronze
 
 BananaGFX:
   dw $341E, $341F, $342E, $342F ; Banana
@@ -237,3 +240,11 @@ RingBoxPromptTXT:
   dw $2568, $256B, $2551, $2550  ; Y:BA
   dw $2552, $255A, $2417, $2417  ; CK  (spaces)
 endif
+
+; New prototype icons use only the audited spare 2bpp tiles; $07F stays blank.
+BombchuGFX:
+  dw $2C7B,$2C8F,$2CAC,$2CAF
+SwitchHookGFX:
+  dw $24F2,$2530,$257E,$257F
+GaroMaskGFX:
+  dw $340D,$340E,$340F,$3425
