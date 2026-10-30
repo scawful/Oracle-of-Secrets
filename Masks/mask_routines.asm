@@ -1582,18 +1582,6 @@ CheckNewRButtonPress:
   RTL
 }
 
-if !ENABLE_MINISH_AUTO_PORTAL == 1
-; =========================================================
-; Minish portal, automatic. User steering 2026-10-18 changes the earlier
-; stand-still dwell to walk-on activation with leave-tile rearming.
-; Called from LinkState_CheckForMinishForm (tile $64 handler, 8-bit A/X/Y).
-; The tile handler can run several times in one frame (one call per touching
-; detection point), so contact is handled once per frame ($1A).
-; $80 is latched contact. LinkMain_FrameHook advances it before collision;
-; four eligible frames without a contact rearm it. Pauses and action states
-; freeze this absence count; GBC state $17 remains eligible.
-; No new WRAM or second collision scan is required.
-
 pushpc
 org $07800F ; @hook module=Masks name=LinkMain_FrameHook kind=jsl target=LinkMain_FrameHook expected_m=16
 ; usdasm/bank_07.asm:Link_Main ($07800F-$078013). M=16, DBR=$07; the inherited
@@ -1615,7 +1603,9 @@ LinkMain_FrameHook:
   %m16()
   PHA : PHX : PHY : PHB
   %m8()
+if !ENABLE_MINISH_AUTO_PORTAL == 1
   JSL MinishPortal_Maintain
+endif
   JSL DekuStick_Main
   PLB
   %m16()
@@ -1623,6 +1613,18 @@ LinkMain_FrameHook:
   PLP
   RTL
 }
+
+if !ENABLE_MINISH_AUTO_PORTAL == 1
+; =========================================================
+; Minish portal, automatic. User steering 2026-10-18 changes the earlier
+; stand-still dwell to walk-on activation with leave-tile rearming.
+; Called from LinkState_CheckForMinishForm (tile $64 handler, 8-bit A/X/Y).
+; The tile handler can run several times in one frame (one call per touching
+; detection point), so contact is handled once per frame ($1A).
+; $80 is latched contact. LinkMain_FrameHook advances it before collision;
+; four eligible frames without a contact rearm it. Pauses and action states
+; freeze this absence count; GBC state $17 remains eligible.
+; No new WRAM or second collision scan is required.
 
 MinishPortal_Maintain:
 {

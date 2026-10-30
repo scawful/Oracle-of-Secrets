@@ -95,6 +95,16 @@ class DekuStickContractTest(unittest.TestCase):
         self.assertIn("JSL DekuStick_Stow", mask_text)
         self.assertIn("LDA.b #$10", mask_text)
 
+    def test_frame_hook_independence(self):
+        mask_text = MASK_ROUTINES.read_text(encoding="utf-8")
+        hook_idx = mask_text.find("LinkMain_FrameHook:")
+        minish_idx = mask_text.find("if !ENABLE_MINISH_AUTO_PORTAL == 1\n; =========================================================")
+        self.assertNotEqual(hook_idx, -1)
+        self.assertNotEqual(minish_idx, -1)
+        # Frame hook must be independent of and precede the Minish auto portal feature block
+        self.assertLess(hook_idx, minish_idx)
+        self.assertIn("JSL DekuStick_Main", mask_text[hook_idx:minish_idx])
+
 
 class DekuStickLogicModelTest(unittest.TestCase):
     """Simulates the ASM state machine logic for Deku Stick draw, stow, and wear."""

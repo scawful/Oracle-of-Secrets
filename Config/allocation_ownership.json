@@ -20,7 +20,7 @@
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "0c1e6cab6031d1279c4e1fdfbcde52db3213e9f19a818d7d04d9231d5f41526b"
+      "sha256": "c846e794bdb94f051ed27714e5d65c3082d71669f45da6d3f4bbe5a3c0dfad71"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -35,7 +35,7 @@
     "shared:Core/ram.asm": {
       "source_set": "shared",
       "path": "Core/ram.asm",
-      "sha256": "a0d5f72ddbf9b2937b94a10bbb08b1d7575b28cf3f794c80a19af75c5d2f59f3"
+      "sha256": "5eb4d94fbf920fc9f28b83e58339f3ec1fc877f8c235ed03465cb53eb790fd0a"
     },
     "shared:Overworld/overlays.asm": {
       "source_set": "shared",
@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "95c5787976d0a76c7c48afdd2122eb3947caf3ca4ac13da866cadec57dcb2fbb"
+      "sha256": "919743a31455930ca8d7abe7609b6bb5d9d7328a6682cafdc0a72c651969fb4f"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -1172,6 +1172,94 @@
       ],
       "count": 64,
       "stride": 1
+    },
+    {
+      "id": "DekuStick_State",
+      "owner": "Deku Stick active state",
+      "space": "wram",
+      "base": 8258669,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Volatile active stick state (0=none, 1=held unlit, 2=held lit, 3=swiping); never saved.",
+      "reset": "Cleared to 0 on boot, save/quit, game over, or damage/interruption. Set to 1 on menu draw, 2 on ignition, 3 during swipe.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Core/ram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/ram.asm",
+        "symbol": "DekuStick_State",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "DekuStick_BurnTimer",
+      "owner": "Deku Stick active burn timer",
+      "space": "wram",
+      "base": 8258670,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Volatile burn countdown ticks for active held stick; never saved directly.",
+      "reset": "Cleared to 0 on stow/drop. Initialized to stored wear budget (or 75 if fresh) on draw. Ticks down every 16 frames when lit.",
+      "save": "Volatile WRAM; not saved directly (remaining ticks copied to DekuStickWear on stow).",
+      "provenance": [
+        "shared:Core/ram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/ram.asm",
+        "symbol": "DekuStick_BurnTimer",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "DekuStick_SwipeTimer",
+      "owner": "Deku Stick swipe animation timer",
+      "space": "wram",
+      "base": 8258671,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Volatile frame timer for swipe swing animation and hit window; never saved.",
+      "reset": "Cleared to 0 on draw, stow, drop, or swipe completion. Initialized during Y swipe.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Core/ram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/ram.asm",
+        "symbol": "DekuStick_SwipeTimer",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "DekuStickWear",
+      "owner": "Deku Stick stowed wear budget",
+      "space": "save_buffer",
+      "base": 8319903,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file; persists remaining burn ticks (1-74) of a stowed lit stick across sessions.",
+      "reset": "Zeroed on new file initialization, on fresh stick draw, or when a fresh unlit stick is stowed. Populated with BurnTimer on stowing a partially burned stick.",
+      "save": "Inside vanilla EF000-EF4FF save buffer; physical slot/checksum mapping is separate.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "DekuStickWear",
+        "bank00_mirror": false
+      }
     }
   ],
   "lifetime_aliases": [],

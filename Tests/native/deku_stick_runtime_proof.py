@@ -8,15 +8,19 @@ Verifies natively in headless Mesen2:
    - While stick is held, pressing B stows the stick without swinging the sword on that frame.
    - Fresh unlit stow refunds count (1 -> 2) and leaves DekuStickWear = 0.
 2. Sword swings normally after stow:
-   - On the next frame after stowing (DekuStick_State == 0), pressing B initiates sword swing.
+   - On the stow frame, stick is stowed (state 0), count refunded, wear 0, and sword is suppressed (BFLAG == 0).
+   - On the subsequent frame with stick stowed, pressing B initiates an actual sword swing (observing BFLAG > 0 or ANIMTIME2 > 0) before returning cleanly to idle.
 3. Worn stick stow & redraw:
    - Drawing stick, igniting (State = 2), and burning down to 30 ticks (~8s).
    - Stowing worn stick refunds inventory (1 -> 2) and saves remaining budget in DekuStickWear = 30 ($7EF39F).
    - Redrawing from Equipment menu restores DekuStick_BurnTimer = 30 and clears DekuStickWear = 0.
    - Relighting preserves the 30-tick budget.
 4. Save & reopen persistence (T3 verification):
-   - Stowed worn stick with DekuStickWear = 30 persists across save state save/reload.
+   - Stowed worn stick with DekuStickWear = 30 persists across an in-game Save & Quit (GameOver_SaveAndQuit -> SaveGameFile).
+   - Verifies battery SRAM (0x700000..0x7004FF) has valid 0x5A5A checksum and backup equality.
+   - Reopens session via LOADROM and cold boot through title / file select without emulator snapshots.
    - Reopened session retains DekuStickWear = 30; redrawing restores 30-tick burn budget.
+   - Corrupt wear fallback: $FF in DekuStickWear falls back safely to 75 ticks on draw.
 5. Interruption drop cleanup:
    - While stick is drawn, taking damage ($5D = 1) immediately drops the stick (State = 0).
    - Dropped stick is lost: inventory is NOT refunded, and DekuStickWear is 0.
@@ -53,7 +57,13 @@ MENU, CURSOR, PAGE = 0x7E0200, 0x7E020B, 0x7E1E71
 PENDING_SUPPLY = 0x7E0434
 LINK_STATE = 0x7E005D
 SWORD_STATE = 0x7E003C
+SWORD_ANIM = 0x7E003D
 FRAME_COUNTER = 0x7E001A
+LINK_HP = 0x7EF36D
+GAME_STATE = 0x7EF3C5
+CHOICE = 0x7E00B0
+HURTME = 0x7E0373
+NOPAIN = 0x7E037B
 
 DEKU_STICKS_COUNT = 0x7EF395  # SRAM Deku Sticks quantity
 DEKU_STICK_WEAR   = 0x7EF39F  # SRAM DekuStickWear stored burn ticks
@@ -231,13 +241,31 @@ class DekuStickRuntimeTest:
         # ----------------------------------------------------
         print("[*] Test 2: Sword swings normally after stick is stowed...")
         time.sleep(0.1)
-        self.press("B", frames=15)
-        # Check during or after press that sword activated
-        sword_act = self.r(SWORD_STATE)
-        t2_ok = (state1_stow == 0)  # Verifies Link was in clean state and sword swing path was available
+        self.b.press_button("B", frames=8)
+        observed_bflag = 0
+        observed_anim = 0
+        end_time = time.time() + 0.6
+        while time.time() < end_time:
+            bflag = self.r(SWORD_STATE)
+            anim = self.r(SWORD_ANIM)
+            if bflag > 0 or anim > 0:
+                observed_bflag = bflag
+                observed_anim = anim
+                break
+            time.sleep(0.01)
+
+        # Wait for sword swing to complete (SWORD_STATE and SWORD_ANIM return to 0)
+        end_time = time.time() + 1.2
+        while time.time() < end_time:
+            if self.r(SWORD_STATE) == 0 and self.r(SWORD_ANIM) == 0:
+                break
+            time.sleep(0.02)
+
+        idle_after = (self.r(SWORD_STATE) == 0 and self.r(SWORD_ANIM) == 0)
+        t2_ok = (state1_stow == 0 and (observed_bflag > 0 or observed_anim > 0) and idle_after)
         self.results["sword_normal_after_stow"] = t2_ok
-        print(f"    Sword check: stick_state={state1_stow}, sword_state={sword_act} -> OK: {t2_ok}")
-        time.sleep(0.5)
+        print(f"    Sword check: stick_state={state1_stow}, observed_bflag={observed_bflag}, observed_anim={observed_anim}, idle_after={idle_after} -> OK: {t2_ok}")
+        time.sleep(0.3)
 
         # ----------------------------------------------------
         # 3. Worn stick stow, wear preservation & redraw
@@ -296,33 +324,146 @@ class DekuStickRuntimeTest:
         # ----------------------------------------------------
         # 4. Save & reopen persistence (T3 proof)
         # ----------------------------------------------------
-        print("[*] Test 4: Save & reopen wear persistence in SRAM ($7EF39F)...")
+        print("[*] Test 4: Save & reopen wear persistence via in-game Save/Quit and LOADROM...")
         # Verify stored wear before save
         wear_pre_save = self.r(DEKU_STICK_WEAR)
         count_pre_save = self.r(DEKU_STICKS_COUNT)
         print(f"    Pre-save: count={count_pre_save}, wear={wear_pre_save} (expected >0 and <=30)")
 
-        # Save state to temporary file
-        save_tmp = self.work_dir / "deku_t3_persistence.mss"
-        save_ok = self.b.save_state(path=str(save_tmp))
-        time.sleep(0.5)
+        # Ensure GameState >= 1 so GameOver_SaveAndQuit executes SaveGameFile
+        self.w(GAME_STATE, 2)
+        time.sleep(0.1)
 
-        # Alter memory to simulate fresh power-on or garbage
-        self.w(DEKU_STICK_WEAR, 0x00)
-        self.w(DEKU_STICK_STATE, 0x00)
+        # Trigger Game Over via standard lethal damage fixture:
+        # Clear temporary invulnerability (NOPAIN $7E037B = 0) and queue lethal damage (HURTME $7E0373 = current HP)
+        hp = self.r(LINK_HP)
+        if hp == 0:
+            hp = 24
+            self.w(LINK_HP, hp)
+        self.w(NOPAIN, 0)
+        self.w(HURTME, hp)
 
-        # Reload the saved state
-        load_ok = self.b.load_state(path=str(save_tmp))
-        time.sleep(0.5)
-        self.wait_play(5.0)
+        # Wait for Game Over screen (MODULE 18 = 0x12, SUBMODULE 9)
+        end_time = time.time() + 15.0
+        while time.time() < end_time:
+            if self.r(MODULE) == 18 and self.r(SUBMODULE) == 9:
+                break
+            time.sleep(0.05)
+        if self.r(MODULE) != 18 or self.r(SUBMODULE) != 9:
+            raise RuntimeError(f"Failed to enter GameOver screen: MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)}")
 
-        wear_post_load = self.r(DEKU_STICK_WEAR)
-        count_post_load = self.r(DEKU_STICKS_COUNT)
-        state_post_load = self.r(DEKU_STICK_STATE)
+        # Select Save and Quit (choice 1)
+        for _ in range(4):
+            if self.r(CHOICE) == 1:
+                self.b.press_button("a", frames=8)
+                break
+            self.b.press_button("select", frames=8)
+            time.sleep(0.3)
 
-        t4_ok = (save_ok and load_ok and wear_post_load == wear_pre_save and wear_pre_save > 0 and count_post_load == 2 and state_post_load == 0)
+        # Wait for return to Title Screen / Intro
+        end_time = time.time() + 15.0
+        while time.time() < end_time:
+            if self.r(MODULE) in (0, 1, 0x14):
+                break
+            time.sleep(0.05)
+        print(f"    Returned to title/intro: MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)}")
+
+        # Read battery SRAM directly from emulator
+        sram = self.b.read_block(0, 8192, memtype="SnesSaveRam")
+        if len(sram) != 8192:
+            raise RuntimeError(f"Expected 8192 bytes of SRAM, got {len(sram)}")
+
+        # Checksum calculation: sum of 16-bit words across slot 1 (0x500 bytes) must equal 0x5A5A
+        slot1_csum = sum(int.from_bytes(sram[i:i+2], "little") for i in range(0, 0x500, 2)) & 0xFFFF
+        csum_ok = (slot1_csum == 0x5A5A)
+        backup_ok = (sram[:0x500] == sram[0xF00:0x1400])
+        sram_wear = sram[0x39F]
+        sram_count = sram[0x395]
+
+        # Save the actual SRM file to work dir and sync to profile Saves
+        srm_path = self.work_dir / "deku_persistence.srm"
+        srm_path.write_bytes(sram)
+        (self.home / "Saves" / "deku_candidate.srm").write_bytes(sram)
+        print(f"    SRAM checks: checksum=0x{slot1_csum:04X} (valid: {csum_ok}), backup_match={backup_ok}, sram_count={sram_count}, sram_wear={sram_wear}")
+
+        # Reload ROM via LOADROM (reinitializes emulator memory from cartridge & SRM on disk)
+        self.b.send_command("LOADROM", {"path": str(self.rom_copy)})
+        time.sleep(2.0)
+
+        # Advance through Title to File Select (Module 1)
+        for _ in range(30):
+            if self.r(MODULE) == 1:
+                break
+            self.b.press_button("start", frames=6)
+            time.sleep(0.4)
+        print(f"    At File Select: MODULE={self.r(MODULE)}")
+
+        # Launch File 1 into gameplay (MODULE in 7, 9, 11 and SUBMODULE == 0)
+        for _ in range(40):
+            if self.r(MODULE) in (7, 9, 11) and self.r(SUBMODULE) == 0:
+                break
+            self.b.press_button("start", frames=8)
+            time.sleep(0.4)
+        print(f"    Back in gameplay: MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)}")
+
+        wear_reopened = self.r(DEKU_STICK_WEAR)
+        count_reopened = self.r(DEKU_STICKS_COUNT)
+        state_reopened = self.r(DEKU_STICK_STATE)
+        burn_reopened = self.r(DEKU_BURN_TIMER)
+        print(f"    Reopened state: count={count_reopened}, wear={wear_reopened}, state={state_reopened}, burn={burn_reopened}")
+
+        # Verify reopened state matches saved values
+        reopened_ok = (csum_ok and backup_ok and
+                       sram_wear == wear_pre_save and sram_count == count_pre_save and
+                       wear_reopened == wear_pre_save and count_reopened == count_pre_save and
+                       state_reopened == 0 and burn_reopened == 0)
+
+        # Redraw stick to verify restored burn timer from preserved wear
+        if not self.navigate_to_equipment():
+            raise RuntimeError("Failed to open Equipment menu after reopen")
+        self.w(CURSOR, 20)
+        time.sleep(0.1)
+        self.press("A", frames=10)
+        self.wait_play(8.0)
+
+        redraw_count = self.r(DEKU_STICKS_COUNT)
+        redraw_state = self.r(DEKU_STICK_STATE)
+        redraw_burn = self.r(DEKU_BURN_TIMER)
+        redraw_wear = self.r(DEKU_STICK_WEAR)
+        print(f"    Redrawn from saved wear: count={redraw_count} (exp {count_pre_save-1}), state={redraw_state} (exp 1), burn={redraw_burn} (exp {wear_pre_save}), wear={redraw_wear} (exp 0)")
+
+        redraw_ok = (redraw_count == count_pre_save - 1 and redraw_state == 1 and
+                     redraw_burn == wear_pre_save and redraw_wear == 0)
+
+        # Stow stick
+        self.press("B", frames=10)
+        time.sleep(0.2)
+
+        # Corrupt-wear fallback test: write 0xFF to DEKU_STICK_WEAR, draw from menu, assert fallback to 75 ticks
+        self.w(DEKU_STICK_WEAR, 0xFF)
+        time.sleep(0.1)
+        if not self.navigate_to_equipment():
+            raise RuntimeError("Failed to open Equipment menu for corrupt wear test")
+        self.w(CURSOR, 20)
+        time.sleep(0.1)
+        self.press("A", frames=10)
+        self.wait_play(8.0)
+
+        fallback_count = self.r(DEKU_STICKS_COUNT)
+        fallback_state = self.r(DEKU_STICK_STATE)
+        fallback_burn = self.r(DEKU_BURN_TIMER)
+        fallback_wear = self.r(DEKU_STICK_WEAR)
+        print(f"    Corrupt wear fallback: count={fallback_count}, state={fallback_state}, burn={fallback_burn} (exp 75), wear={fallback_wear} (exp 0)")
+
+        fallback_ok = (fallback_state == 1 and fallback_burn == 75 and fallback_wear == 0)
+
+        # Stow stick
+        self.press("B", frames=10)
+        time.sleep(0.2)
+
+        t4_ok = (reopened_ok and redraw_ok and fallback_ok)
         self.results["save_reopen_t3_persistence"] = t4_ok
-        print(f"    Post-load: save_res={save_ok}, load_res={load_ok}, count={count_post_load}, wear={wear_post_load} (exp {wear_pre_save}) -> OK: {t4_ok}")
+        print(f"    Save & reopen persistence verdict: reopened={reopened_ok}, redraw={redraw_ok}, fallback={fallback_ok} -> OK: {t4_ok}")
 
         # ----------------------------------------------------
         # 5. Interruption drop cleanup (taking damage)
