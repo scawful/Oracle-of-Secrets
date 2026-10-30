@@ -306,13 +306,13 @@
         "room_id": 31,
         "room_hex": "0x1F",
         "blockset": 5,
-        "spriteset": 41,
-        "palette": 3,
+        "spriteset": 12,
+        "palette": 6,
         "layout": 0,
-        "floor1": 0,
-        "floor2": 0,
+        "floor1": 1,
+        "floor2": 5,
         "effect": 0,
-        "object_count": 0
+        "object_count": 21
       },
       "0x2D": {
         "room_id": 45,
@@ -457,29 +457,11 @@
         "floor2": 14,
         "effect": 0,
         "object_count": 88
-      },
-      "0xDE": {
-        "room_id": 222,
-        "room_hex": "0xDE",
-        "blockset": 5,
-        "spriteset": 12,
-        "palette": 6,
-        "layout": 0,
-        "floor1": 1,
-        "floor2": 5,
-        "effect": 0,
-        "object_count": 21
       }
     },
     "anomalies": [
       {
         "room": "0x1D",
-        "type": "palette_mismatch",
-        "value": 3,
-        "expected": 6
-      },
-      {
-        "room": "0x1F",
         "type": "palette_mismatch",
         "value": 3,
         "expected": 6

@@ -78,9 +78,9 @@
       "palette": 6,
       "theme": "palace",
       "boss": {
-        "name": "TBD",
-        "room": "0x2F",
-        "notes": "Room has unique blockset=6, palette=24 - visually distinct boss arena"
+        "name": "Tail Palace (Boss)",
+        "room": "0x1F",
+        "notes": "B4 arena reached by falling from 0x2E"
       },
       "special_areas": {
         "0x1D_0x2D": {
@@ -94,15 +94,15 @@
       "dungeon_item": "TBD",
       "big_chest_room": null,
       "miniboss": null,
-      "floors": ["F1"],
+      "floors": ["B4", "B3", "B2", "B1"],
       "rooms": {
         "0x0E": { "name": "Room 0x0E", "floor": "F1" },
         "0x1D": { "name": "Special Wing", "floor": "F1", "blockset_override": 14, "palette_override": 3, "notes": "Different visual theme area" },
         "0x1E": { "name": "Room 0x1E", "floor": "F1" },
-        "0x1F": { "name": "Transition Room", "floor": "F1", "palette_override": 3, "object_count": 0, "notes": "Empty transition room" },
+        "0x1F": { "name": "Tail Palace (Boss)", "floor": "B4", "is_boss": true, "object_count": 21, "notes": "Reached by falling from 0x2E" },
         "0x2D": { "name": "Special Wing Lower", "floor": "F1", "blockset_override": 14, "palette_override": 3, "notes": "Connected to 0x1D via stairs" },
-        "0x2E": { "name": "Room 0x2E", "floor": "F1" },
-        "0x2F": { "name": "Boss Arena", "floor": "F1", "blockset_override": 6, "palette_override": 24, "notes": "Unique blockset/palette - likely boss room" },
+        "0x2E": { "name": "Room 0x2E", "floor": "B3" },
+        "0x2F": { "name": "Cave", "floor": "F1", "blockset_override": 6, "palette_override": 24, "notes": "Independent interior reached by entrance 0x39" },
         "0x3E": { "name": "Room 0x3E", "floor": "F1" },
         "0x3F": { "name": "Room 0x3F", "floor": "F1" },
         "0x4E": { "name": "Room 0x4E", "floor": "F1" },
@@ -111,8 +111,7 @@
         "0x5F": { "name": "Entrance", "floor": "F1", "is_entrance": true },
         "0x6E": { "name": "Room 0x6E", "floor": "F1" },
         "0x6F": { "name": "Room 0x6F", "floor": "F1" },
-        "0x7E": { "name": "Room 0x7E", "floor": "F1" },
-        "0xDE": { "name": "Room 0xDE", "floor": "F1" }
+        "0x7E": { "name": "Room 0x7E", "floor": "F1" }
       },
       "difficulty": {
         "order": 2,
