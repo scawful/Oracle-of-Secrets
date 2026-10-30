@@ -21,6 +21,7 @@ import asm_source as S
 from test_lyra_current_build import consumer_fixture
 from test_lyra_project_admission import document,source_rom
 from test_lyra_current_port_integration import statements
+from lyra_source_snapshots import read_snapshot_text
 
 
 def pilot_compiled_fixture():
@@ -130,18 +131,30 @@ class PrivatePilotBoundaryTest(unittest.TestCase):
     def test_disabled_boundary_has_no_new_instructions_and_call_precedes_state_mutation(self):
         text=(ROOT/'Overworld/ZSCustomOverworld.asm').read_text()
         base=S._load_global_defines(ROOT)
+        base['LYRA_PRIVATE_PILOT_INGRESS_ENABLED']=0  # Explicit unrelated HOST feature selection.
         host=text[text.index('OverworldHandleTransitions:\n'):text.index('org $02A62C ;',text.index('OverworldHandleTransitions:\n'))]
         off=statements(host,dict(base,LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED=0))
         absent=statements(host,base)
         self.assertEqual(absent,off)
-        # Frozen62b instruction baselines: absent/zero remains byte-equivalent
-        # in both native and current source paths. This is not an Asar run.
+        frozen=read_snapshot_text('6e7e5f15d555dffb9f4b3d8807595c9e3f13305f',
+                                  'Overworld/ZSCustomOverworld.asm')
+        begin=frozen.index('OverworldHandleTransitions:\n')
+        frozen_host=frozen[begin:frozen.index('org $02A62C ;',begin)]
+        # Retain both frozen62b digests on the bundled6e host. Successor859f10a
+        # corrected only two current-mode coordinate operands. Not an Asar run.
         digests={0:'c0451aba9645e9e0394eb16809f5c6f95b16813654dbdbfd795411dced8250a2',
                  1:'67baca06839de41268d3873fdbfe4d79f38451d41a76e39e8c5a176ec27382fc'}
         for mode,digest in digests.items():
             defines=dict(base,LYRA_CURRENT_MODE=mode,LYRA_PROJECT_DATA_PRESENT=mode,
                          LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED=0)
-            self.assertEqual(hashlib.sha256('\n'.join(statements(host,defines)).encode()).hexdigest(),digest)
+            expected=statements(frozen_host,defines)
+            self.assertEqual(hashlib.sha256('\n'.join(expected).encode()).hexdigest(),digest)
+            if mode:
+                for axis in ('Y','X'):
+                    old='SBC.l Pool_OverworldTransitionPosition'+axis+'_New, X'
+                    self.assertEqual(expected.count(old),1)
+                    expected[expected.index(old)]='SBC.l !LYRA_CURRENT_TABLE_transition_'+axis.lower()+', X'
+            self.assertEqual(statements(host,defines),expected)
         enabled=statements(host,dict(base,LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED=1))
         self.assertEqual(len(enabled),len(off)+2)
         index=enabled.index('JSL Lyra_PrivatePilotCanScroll')
@@ -161,12 +174,20 @@ class PrivatePilotBoundaryTest(unittest.TestCase):
     def test_ingress_inspection_requires_every_preaccess_role_and_exact_helper_bytes(self):
         rom,symbols,_=pilot_compiled_fixture();labels=L._labels(symbols)
         helper=0xE0C7C0;host=labels['LyraHost_OverworldHandleTransitions']
+        coordinates={labels['LyraCall_TransitionDelta'+axis]:
+                     rom[L.A.pc(labels['LyraCall_TransitionDelta'+axis]):
+                         L.A.pc(labels['LyraCall_TransitionDelta'+axis])+4]
+                     for axis in ('Y','X')}
         rom=bytearray(rom);rom[L.A.pc(helper):L.A.pc(helper)+len(L.PRIVATE_PILOT_ENTRY_BYTES)]=L.PRIVATE_PILOT_ENTRY_BYTES
         extra=[('Lyra_PrivatePilotCanEnter',helper),('Lyra_PrivatePilotCanEnter_End',helper+len(L.PRIVATE_PILOT_ENTRY_BYTES))]
         for i,role in enumerate(L.PRIVATE_PILOT_INGRESS_ROLES):
-            call=host+0x60+i*8;blocked=host+0x20
+            call=host+0x90+i*8;blocked=host+0x60
+            self.assertTrue(-128 <= blocked-call-6 <= 127)
+            self.assertTrue(all(call+6 <= at or at+4 <= call for at in coordinates))
             rom[L.A.pc(call):L.A.pc(call)+6]=b'\x22'+helper.to_bytes(3,'little')+bytes([0xB0,(blocked-call-6)&255])
             extra.extend([('LyraCall_PrivatePilot'+role,call),('LyraPilot_'+role+'Blocked',blocked)])
+        for at,before in coordinates.items():
+            self.assertEqual(bytes(rom[L.A.pc(at):L.A.pc(at)+4]),before)
         symbols+=(''.join(f'{at>>16:02X}:{at&65535:04X} {name}\n' for name,at in extra)).encode()
         result=L.inspect_current_consumers(bytes(rom),symbols)
         self.assertEqual(len(L.require_private_pilot_ingress(result)['calls']),6)
