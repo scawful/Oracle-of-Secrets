@@ -26,15 +26,20 @@ def routine(source, name):
     return match.group(1)
 
 
-def mode_body(body, current, *, resident=False):
-    """Select local current/resident gates; this is not an Asar evaluator."""
+def mode_body(body, current, *, resident=False, boat=False, area_tilesets=False):
+    """Select explicit local feature gates; retain unknown conditions verbatim."""
+    values = {"LYRA_CURRENT_MODE": current,
+              "LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED": resident,
+              "ENABLE_KALYXO_BOAT": boat,
+              "ENABLE_OW_AREA_TILESETS": area_tilesets}
     result, stack, active = [], [], True
     for raw in body.splitlines():
         line = raw.split(";", 1)[0].strip()
         if line.startswith("if "):
-            match = re.fullmatch(r"if !(LYRA_CURRENT_MODE|LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED)\s*==\s*1", line)
-            known = match is not None
-            selected = (current if match[1] == "LYRA_CURRENT_MODE" else resident) if known else False
+            terms = [re.fullmatch(r"!([A-Za-z_][A-Za-z0-9_]*)\s*==\s*([01])", part.strip())
+                     for part in line[3:].split("&&")]
+            known = all(term is not None and term[1] in values for term in terms)
+            selected = known and all(values[term[1]] == (term[2] == "1") for term in terms)
             stack.append((active, known, selected))
             if known:
                 active = active and selected
@@ -184,6 +189,39 @@ class CatalogCallbackSourceTests(unittest.TestCase):
         cls.runtime = (ROOT / "Overworld/graphics_runtime.asm").read_text()
         cls.custom = (ROOT / "Overworld/custom_gfx.asm").read_text()
         cls.zs = (ROOT / "Overworld/ZSCustomOverworld.asm").read_text()
+
+    def test_explicit_optional_features_preserve_their_real_callback_paths(self):
+        custom = routine(self.custom, "CheckForChangeGraphicsNormalLoadBoat")
+        area = tokens(mode_body(custom, False, area_tilesets=True))
+        self.assertIn("JML AreaTileset_Load", area)
+        self.assertNotIn("JSR ApplyGraphics1", area)
+        current = tokens(mode_body(custom, True, area_tilesets=True))
+        self.assertLess(current.index("JSL AreaTileset_LoadTypes"),
+                        current.index("JML SharedGraphicsNormalLoad"))
+        lookup = routine(self.runtime, "SharedGraphicsLookup")
+        self.assertIn("CMP.w #$0030 BNE .none", tokens(mode_body(lookup, False, boat=True)))
+        self.assertNotIn("CMP.w #$0030", tokens(mode_body(lookup, False)))
+        self.assertNotIn("CMP.w #$0030", tokens(mode_body(lookup, True, boat=True)))
+
+    def test_selector_keeps_unknown_and_mixed_conditions_conservative(self):
+        for condition in ("!FUTURE_FLAG == 1",
+                          "!LYRA_CURRENT_MODE == 1 && !FUTURE_FLAG == 1",
+                          "!LYRA_CURRENT_MODE == 1 || !ENABLE_KALYXO_BOAT == 1"):
+            body = f"if {condition}\nLDA.b #$01\nelse\nLDA.b #$02\nendif"
+            for current in (False, True):
+                with self.subTest(condition=condition, current=current):
+                    selected_body = mode_body(body, current)
+                    self.assertIn(f"if {condition}", selected_body)
+                    self.assertIn("LDA.b #$01", selected_body)
+                    self.assertIn("LDA.b #$02", selected_body)
+
+    def test_nested_known_features_restore_outer_selection(self):
+        body = ("if !LYRA_CURRENT_MODE == 1\n"
+                "if !ENABLE_OW_AREA_TILESETS == 1\nLDA.b #$01\n"
+                "else\nLDA.b #$02\nendif\nelse\nLDA.b #$03\nendif")
+        for current, area, expected in ((False, False, 3), (True, False, 2), (True, True, 1)):
+            with self.subTest(current=current, area=area):
+                self.assertEqual(mode_body(body, current, area_tilesets=area), f"LDA.b #$0{expected}")
 
     def test_default_callback_instructions_equal_frozen_control(self):
         for path, source, names in (
