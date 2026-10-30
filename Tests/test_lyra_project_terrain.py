@@ -95,6 +95,181 @@ class LyraProjectTerrainTest(unittest.TestCase):
                        for slot in range(8)]})
         return data
 
+    def resource_document(self):
+        data = self.whirlpool_document()
+        data.update(schema_version=9, next_native_resource_id=10)
+        for entry in data["maps"]:
+            entry["authoring"]["native_resources"] = None
+        data["maps"][0]["authoring"]["native_resources"] = {
+            "secrets": [{"id": 9, "x": 31, "y": 0, "secret_id": 0x86},
+                        {"id": 7, "x": 0, "y": 31, "secret_id": 0xFF}],
+            "event_behavior": {"kind": "native_secret_v1"}}
+        return data
+
+    def test_schema9_preserves_resources_order_counter_and_schema8_transport(self):
+        data = self.resource_document()
+        data["maps"][1]["authoring"]["native_resources"] = {
+            "secrets": [], "event_behavior": None}
+        data["maps"][-1]["authoring"]["native_resources"] = {
+            "secrets": [{"id": 1, "x": 0, "y": 0, "secret_id": 0}],
+            "event_behavior": None}
+        before = copy.deepcopy(data)
+        parsed = self.parse_transport(data)
+        self.assertEqual(parsed.next_native_resource_id, 10)
+        self.assertEqual(parsed.authoring, tuple(entry["authoring"] for entry in before["maps"]))
+        self.assertEqual([s["id"] for s in parsed.authoring[0]["native_resources"]["secrets"]], [9, 7])
+        self.assertEqual(parsed.authoring[0]["native_resources"]["secrets"][1]["secret_id"], 0xFF)
+        self.assertEqual(parsed.authoring[1]["native_resources"], {"secrets": [], "event_behavior": None})
+        self.assertIsNone(parsed.authoring[2]["native_resources"])
+        legacy = self.parse_transport(self.whirlpool_document())
+        for field in ("profile", "maps", "properties", "edge_connections", "flight_points",
+                      "gameplay_areas", "boat_transport", "next_flight_point_id", "whirlpool_transport"):
+            self.assertEqual(getattr(parsed, field), getattr(legacy, field), field)
+        parsed.authoring[0]["native_resources"]["secrets"][0]["x"] = 0
+        parsed.authoring[1]["native_resources"]["secrets"].append({"id": 1})
+        self.assertEqual(data, before)
+
+    def test_schema9_retains_null_empty_and_unknown_secret_drafts_but_refuses_strict_mode(self):
+        for resources in (None, {"secrets": [], "event_behavior": None},
+                          {"secrets": [], "event_behavior": {"kind": "native_secret_v1"}},
+                          self.resource_document()["maps"][0]["authoring"]["native_resources"]):
+            data = self.resource_document()
+            for entry in data["maps"]:
+                entry["authoring"]["native_resources"] = None
+            data["maps"][0]["authoring"]["native_resources"] = copy.deepcopy(resources)
+            with self.subTest(resources=resources):
+                self.assertEqual(self.parse_transport(data).authoring[0]["native_resources"], resources)
+                with self.assertRaisesRegex(ValueError, "Unsupported runtime metadata: native_resources"):
+                    parse(data)
+
+    def test_schema9_requires_exact_header_authoring_resource_and_record_keys(self):
+        mutations = (
+            lambda d: d.pop("next_native_resource_id"),
+            lambda d: d.update(extra=1),
+            lambda d: d["maps"][-1]["authoring"].pop("native_resources"),
+            lambda d: d["maps"][0]["authoring"].update(extra=1),
+            lambda d: d["maps"][0]["authoring"]["native_resources"].pop("secrets"),
+            lambda d: d["maps"][0]["authoring"]["native_resources"].pop("event_behavior"),
+            lambda d: d["maps"][0]["authoring"]["native_resources"].update(next_id=10),
+            lambda d: d["maps"][0]["authoring"]["native_resources"]["secrets"][0].pop("secret_id"),
+            lambda d: d["maps"][0]["authoring"]["native_resources"]["secrets"][0].update(bomb_offset=0),
+        )
+        for index, mutate in enumerate(mutations):
+            data = self.resource_document()
+            mutate(data)
+            with self.subTest(index=index), self.assertRaisesRegex(ValueError, "Malformed"):
+                self.parse_transport(data)
+
+    def test_schema9_rejects_wrong_resource_container_and_event_shapes(self):
+        for value in (True, 0, [], "unselected"):
+            data = self.resource_document()
+            data["maps"][0]["authoring"]["native_resources"] = value
+            with self.subTest(resources=value), self.assertRaisesRegex(ValueError, "native resources"):
+                self.parse_transport(data)
+        for value in (None, True, {}, "", [None]):
+            data = self.resource_document()
+            data["maps"][0]["authoring"]["native_resources"]["secrets"] = value
+            with self.subTest(secrets=value), self.assertRaisesRegex(ValueError, "native secret"):
+                self.parse_transport(data)
+        for value in (True, [], "native_secret_v1", {}, {"kind": "script"},
+                      {"kind": None}, {"kind": True}, {"kind": 1},
+                      {"kind": "native_secret_v1", "flags": 2}):
+            data = self.resource_document()
+            data["maps"][0]["authoring"]["native_resources"]["event_behavior"] = value
+            with self.subTest(event=value), self.assertRaisesRegex(ValueError, "native event behavior"):
+                self.parse_transport(data)
+
+    def test_schema9_rejects_invalid_secret_numeric_fields(self):
+        for field, invalid in (
+                ("id", (True, False, 1.0, "1", None, -1, 0, 0x100000000)),
+                ("x", (True, False, 0.0, "0", None, -1, 32)),
+                ("y", (True, False, 0.0, "0", None, -1, 32)),
+                ("secret_id", (True, False, 0.0, "0", None, -1, 256))):
+            for value in invalid:
+                data = self.resource_document()
+                data["maps"][0]["authoring"]["native_resources"]["secrets"][0][field] = value
+                with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, "native secret"):
+                    self.parse_transport(data)
+
+    def test_schema9_secret_ids_are_global_but_independent_of_other_families(self):
+        for map_index in (0, 1, 31):
+            data = self.resource_document()
+            resources = data["maps"][map_index]["authoring"]["native_resources"]
+            if resources is None:
+                resources = {"secrets": [], "event_behavior": None}
+                data["maps"][map_index]["authoring"]["native_resources"] = resources
+            resources["secrets"].append({"id": 9, "x": 1, "y": 1, "secret_id": 1})
+            with self.subTest(map_index=map_index), self.assertRaisesRegex(ValueError, "duplicate Lyra native secret"):
+                self.parse_transport(data)
+        data = self.resource_document()
+        parsed = self.parse_transport(data)
+        self.assertEqual(parsed.flight_points[0]["id"], 7)
+        self.assertEqual(parsed.authoring[0]["native_resources"]["secrets"][1]["id"], 7)
+
+    def test_schema9_preserves_persisted_high_water_and_exhaustion_without_allocating(self):
+        for value in (True, False, 1.0, "10", None, -1, 0, 9, 0x100000001):
+            data = self.resource_document()
+            data["next_native_resource_id"] = value
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "next_native_resource_id"):
+                self.parse_transport(data)
+        data = self.resource_document()
+        data["maps"][0]["authoring"]["native_resources"]["secrets"][0]["id"] = 0xFFFFFFFF
+        data["next_native_resource_id"] = 0x100000000
+        self.assertEqual(self.parse_transport(data).next_native_resource_id, 0x100000000)
+        for entry in data["maps"]:
+            entry["authoring"]["native_resources"] = None
+        for value in (1, 123, 0x100000000):
+            data["next_native_resource_id"] = value
+            self.assertEqual(self.parse_transport(data).next_native_resource_id, value)
+
+    def test_schema9_rejects_duplicate_json_keys_at_each_new_boundary(self):
+        text = json.dumps(self.resource_document())
+        for original, replacement in (
+                ('"next_native_resource_id": 10', '"next_native_resource_id": 10, "next_native_resource_id": 10'),
+                ('"native_resources": null', '"native_resources": null, "native_resources": null'),
+                ('"event_behavior": {', '"event_behavior": null, "event_behavior": {'),
+                ('"secret_id": 134', '"secret_id": 134, "secret_id": 134'),
+                ('"kind": "native_secret_v1"', '"kind": "native_secret_v1", "kind": "native_secret_v1"')):
+            self.assertIn(original, text)
+            with self.subTest(original=original), self.assertRaisesRegex(ValueError, "Duplicate JSON"):
+                T.parse_terrain_document(text.replace(original, replacement, 1), profile(),
+                                         allow_authoring_drafts=True)
+
+    def test_legacy_schemas_keep_unselected_resources_and_reject_schema9_extras(self):
+        for version in range(3, 9):
+            if version == 4:
+                data, bindings = self.palette_document()
+            else:
+                data, bindings = self.whirlpool_document(), None
+                data["schema_version"] = version
+                if version < 8:
+                    del data["whirlpool_transport"]
+                if version < 7:
+                    del data["boat_transport"], data["next_flight_point_id"]
+                if version < 6:
+                    for entry in data["maps"]:
+                        for key in T.RUNTIME_PROPERTY_DEFAULTS:
+                            del entry["authoring"]["properties"][key]
+                if version < 5:
+                    del data["gameplay_areas"]
+                elif version == 5:
+                    data["gameplay_areas"] = [{"parent_map_id": 0xA0, "size": "small", "maps": [0xA0]}]
+            before = copy.deepcopy(data)
+            with self.subTest(version=version):
+                parsed = self.parse_transport(data, expected_asset_bindings=bindings)
+                self.assertEqual(parsed.next_native_resource_id, 1)
+                self.assertEqual(parsed.authoring, tuple(e["authoring"] for e in data["maps"]))
+                self.assertTrue(all("native_resources" not in auth for auth in parsed.authoring))
+                self.assertEqual(data, before)
+                for domain in ("header", "authoring"):
+                    extra = copy.deepcopy(data)
+                    if domain == "header":
+                        extra["next_native_resource_id"] = 1
+                    else:
+                        extra["maps"][0]["authoring"]["native_resources"] = None
+                    with self.subTest(domain=domain), self.assertRaisesRegex(ValueError, "Malformed"):
+                        self.parse_transport(extra, expected_asset_bindings=bindings)
+
     def test_schema8_preserves_edited_routes_raw_words_and_immutable_template(self):
         data = self.whirlpool_document()
         data["gameplay_areas"] = [{"parent_map_id": 0xB0, "size": "large",
@@ -257,7 +432,7 @@ class LyraProjectTerrainTest(unittest.TestCase):
             with self.subTest(domain=domain), self.assertRaisesRegex(ValueError, "Malformed"):
                 self.parse_transport(data)
         data = self.transport_document()
-        data["schema_version"] = 9
+        data["schema_version"] = 10
         with self.assertRaisesRegex(ValueError, "Expected Yaze Lyra schema"):
             self.parse_transport(data)
 

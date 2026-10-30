@@ -159,6 +159,8 @@ class TerrainDocument:
     next_flight_point_id: int = 1
     # Schema-8 source metadata is retained without authenticating a writer.
     whirlpool_transport: dict | None = None
+    # Schema-9 document-owned high-water mark; parsing never allocates IDs.
+    next_native_resource_id: int = 1
 
 
 @dataclass(frozen=True)
@@ -366,7 +368,7 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
                            expected_asset_bindings: Mapping[int, tuple[str, str, str]] | None = None,
                            allow_authoring_drafts: bool = False,
                            ) -> TerrainDocument:
-    """Parse schema 3/4/5/6/7/8 against independently verified native assets.
+    """Parse schema 3/4/5/6/7/8/9 against independently verified native assets.
 
     The historical strict runtime policy remains the default. A read-only
     admission planner may preserve valid drafts and apply consumer checks to
@@ -380,16 +382,20 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
     data = json.loads(text, object_pairs_hook=_unique_object,
                       parse_constant=_invalid_constant)
     _require(type(data) is dict and data.get("schema") == "yaze.lyra-terrain"
-             and _integer(data.get("schema_version"), 3, 8),
-             "Expected Yaze Lyra schema 3, 4, 5, 6, 7 or 8")
+             and _integer(data.get("schema_version"), 3, 9),
+             "Expected Yaze Lyra schema 3, 4, 5, 6, 7, 8 or 9")
     version = data["schema_version"]
     _keys(data, {"schema", "schema_version", "columns", "rows", "map_width",
                  "map_height", "tile_pixels", "profile", "maps",
                  "flight_points", "edge_connections"}
                 | ({"gameplay_areas"} if version >= 5 else set())
                 | ({"boat_transport", "next_flight_point_id"} if version >= 7 else set())
-                | ({"whirlpool_transport"} if version >= 8 else set()),
-             "Lyra schema 3/4/5/6/7/8 header")
+                | ({"whirlpool_transport"} if version >= 8 else set())
+                | ({"next_native_resource_id"} if version >= 9 else set()),
+             "Lyra schema 3/4/5/6/7/8/9 header")
+    if version >= 9:
+        _require(allow_authoring_drafts,
+                 "Unsupported runtime metadata: native_resources")
     for key, value in (("columns", 8), ("rows", 4), ("map_width", 32),
                        ("map_height", 32), ("tile_pixels", 16)):
         _require(_integer(data[key], value, value), f"Invalid Lyra {key}")
@@ -454,6 +460,7 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
     maps, properties, authoring = {}, {}, {}
     has_background_palette = False
     entity_ids = {key: set() for key in ("sprites", "doors", "exits")}
+    native_resource_ids = set()
     for entry in data["maps"]:
         _keys(entry, {"map_id", "tiles16", "authoring"}, "Lyra map")
         area = entry["map_id"]
@@ -466,8 +473,27 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
                          for row in rows),
                  "Lyra map requires 32x32 native Tile16 cells")
         auth = entry["authoring"]
-        _keys(auth, {"properties", "sprites", "doors", "exits", "asset_bindings"},
+        _keys(auth, {"properties", "sprites", "doors", "exits", "asset_bindings"}
+              | ({"native_resources"} if version >= 9 else set()),
               "Lyra authoring")
+        if version >= 9 and auth["native_resources"] is not None:
+            resources = auth["native_resources"]
+            _keys(resources, {"secrets", "event_behavior"}, "Lyra native resources")
+            _require(type(resources["secrets"]) is list, "Invalid Lyra native secrets")
+            for secret in resources["secrets"]:
+                _keys(secret, {"id", "x", "y", "secret_id"}, "Lyra native secret")
+                _require(_integer(secret["id"], 1, 0xFFFFFFFF)
+                         and secret["id"] not in native_resource_ids
+                         and _integer(secret["x"], 0, 31)
+                         and _integer(secret["y"], 0, 31)
+                         and _integer(secret["secret_id"], 0, 255),
+                         "Invalid or duplicate Lyra native secret")
+                native_resource_ids.add(secret["id"])
+            behavior = resources["event_behavior"]
+            if behavior is not None:
+                _keys(behavior, {"kind"}, "Lyra native event behavior")
+                _require(behavior["kind"] == "native_secret_v1",
+                         "Unsupported Lyra native event behavior kind")
         for key in ("sprites", "doors", "exits"):
             entities = auth[key]
             _require(type(entities) is list and len(entities) <= (128 if key == "sprites" else 64),
@@ -548,11 +574,16 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
         authoring[area] = copy.deepcopy(auth)
     _require(version != 4 or has_background_palette,
              "Lyra schema 4 requires a background palette override")
+    next_native_resource_id = data["next_native_resource_id"] if version >= 9 else 1
+    _require(_integer(next_native_resource_id, 1, 0x100000000)
+             and next_native_resource_id > max(native_resource_ids, default=0),
+             "Invalid next_native_resource_id")
     ids = range(FIRST_MAP, FIRST_MAP + MAP_COUNT)
     return TerrainDocument(expected, tuple(maps[i] for i in ids),
                            tuple(properties[i] for i in ids), tuple(copy.deepcopy(edges)),
                            tuple(authoring[i] for i in ids), tuple(copy.deepcopy(flights)), gameplay_areas,
-                           boat_transport, next_flight_point_id, whirlpool_transport)
+                           boat_transport, next_flight_point_id, whirlpool_transport,
+                           next_native_resource_id)
 
 
 def quadrant_map_plan(map_id: int) -> Quad:
