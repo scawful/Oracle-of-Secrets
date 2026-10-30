@@ -29,7 +29,8 @@ Archived docs may still say `./build.sh` or flat `scripts/…` paths. Prefer thi
 ## Generation / Validation
 - Hook metadata: `Scripts/Generate/generate_hooks_json.py`, `Scripts/Validate/verify_hooks_json.py`
 - Hack manifest: `Scripts/Generate/generate_hack_manifest.py`
-- Yaze project registry outputs: `Scripts/Generate/extract_resource_labels.py`, `extract_overworld_registry.py`, `extract_room_connectivity.py`
+- Yaze project registry outputs: `Scripts/Generate/extract_resource_labels.py`, `Scripts/Generate/extract_overworld_registry.py`
+- Room connectivity evidence report: `Scripts/Generate/extract_room_connectivity.py` (extracts grid adjacency candidates and raw header destinations; schema_version=2 evidence report, does not claim confirmed traversal or usable routes)
 - Yaze story events export: `Scripts/Generate/extract_story_events.py`
 - Symbol export: `Scripts/Generate/export_symbols.py`
 - Portable iOS/Mac project bundle: `Scripts/Generate/export_yazeproj_bundle.py --out-icloud`

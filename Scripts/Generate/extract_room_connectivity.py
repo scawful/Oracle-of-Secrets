@@ -1,22 +1,35 @@
 #!/usr/bin/env python3
-"""Extract room connectivity data (stairs, holewarps, doors) from ALTTP ROM.
+"""Extract room connectivity evidence from ALTTP ROM headers and dungeon registry.
 
-Reads room headers to extract stair destinations and holewarp targets,
-then cross-references with dungeon room lists to build connectivity graph.
+Distinguishes registry grid adjacency candidates from raw ROM-header destinations.
+Neither observation establishes a usable door, staircase, pit transition, or return route.
+
+Evidence-report schema_version = 2.
 
 Usage:
-    python3 Scripts/extract_room_connectivity.py --rom Roms/oos168.sfc
-    python3 Scripts/extract_room_connectivity.py --rom Roms/oos168.sfc --format json
+    python3 Scripts/Generate/extract_room_connectivity.py --rom Roms/oos168.sfc
+    python3 Scripts/Generate/extract_room_connectivity.py --rom Roms/oos168.sfc --format json
+    python3 Scripts/Generate/extract_room_connectivity.py --rom Roms/oos168.sfc --output report.txt
 """
 
 import argparse
+import hashlib
 import json
-import struct
+import os
+import signal
 import sys
 from pathlib import Path
 
+try:
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+except (AttributeError, ValueError):
+    pass
 
-def snes_to_pc(addr):
+ROOM_HEADER_POINTER_OFFSET = 0xB5DD
+ROOM_HEADER_BANK_OFFSET = 0xB5E7
+
+
+def snes_to_pc(addr: int) -> int:
     """Convert SNES LoROM address to PC file offset."""
     bank = (addr >> 16) & 0xFF
     offset = addr & 0xFFFF
@@ -26,41 +39,79 @@ def snes_to_pc(addr):
         return ((bank - 0x80) * 0x8000) + (offset - 0x8000)
 
 
-def get_room_header_location(rom, room_id):
+def get_room_header_location(rom: bytes, room_id: int) -> int:
     """Get the PC offset of a room's 14-byte header."""
-    # Read the 3-byte pointer at 0xB5DD (PC address)
-    ptr_pc = snes_to_pc(0x04F1E0)  # Known header pointer table in bank $04
-
-    # The header pointer table is a list of 2-byte offsets, one per room
-    # Bank byte for all headers
-    bank_addr = snes_to_pc(0x04F1E0)
-
-    # Actually, based on yaze code:
-    # kRoomHeaderPointer = 0xB5DD (this is a PC address in the ROM)
-    # kRoomHeaderPointerBank = 0xB5E7
-    # Let's read the base pointer
-    base_ptr = rom[0xB5DD] | (rom[0xB5DE] << 8) | (rom[0xB5DF] << 16)
+    if len(rom) < ROOM_HEADER_BANK_OFFSET + 1:
+        raise ValueError(
+            f"ROM truncated: length {len(rom)} bytes is smaller than required header pointer area"
+        )
+    base_ptr = (
+        rom[ROOM_HEADER_POINTER_OFFSET]
+        | (rom[ROOM_HEADER_POINTER_OFFSET + 1] << 8)
+        | (rom[ROOM_HEADER_POINTER_OFFSET + 2] << 16)
+    )
     base_pc = snes_to_pc(base_ptr)
-
-    bank = rom[0xB5E7]
-
-    # Each room has a 2-byte entry in the pointer table
+    if base_pc < 0 or base_pc >= len(rom):
+        raise ValueError(
+            f"ROM malformed: base pointer 0x{base_ptr:06X} resolves to invalid PC offset {base_pc}"
+        )
+    bank = rom[ROOM_HEADER_BANK_OFFSET]
     table_offset = base_pc + (room_id * 2)
+    if table_offset < 0 or table_offset + 2 > len(rom):
+        raise ValueError(
+            f"ROM malformed or truncated: table offset {table_offset} for room 0x{room_id:02X} exceeds ROM size {len(rom)}"
+        )
     room_ptr = (bank << 16) | (rom[table_offset + 1] << 8) | rom[table_offset]
-
-    return snes_to_pc(room_ptr)
-
-
-def extract_room_header(rom, room_id):
-    """Extract the 14-byte room header for a given room ID."""
-    try:
-        loc = get_room_header_location(rom, room_id)
-    except (IndexError, ValueError):
-        return None
-
+    loc = snes_to_pc(room_ptr)
     if loc < 0 or loc + 14 > len(rom):
-        return None
+        raise ValueError(
+            f"ROM malformed or truncated: room 0x{room_id:02X} header offset {loc} exceeds ROM size {len(rom)}"
+        )
+    return loc
 
+
+def validate_rom_spans(rom: bytes, room_ids: set[int]) -> dict[int, int]:
+    """Validate room-header pointer table and header spans for all requested rooms.
+
+    Returns a map of room_id -> PC offset.
+    Raises ValueError on any truncated, malformed, or out-of-bounds structure.
+    """
+    if len(rom) < ROOM_HEADER_BANK_OFFSET + 1:
+        raise ValueError(
+            f"ROM truncated: size {len(rom)} bytes is smaller than required pointer table area ({ROOM_HEADER_BANK_OFFSET + 1} bytes)"
+        )
+    base_ptr = (
+        rom[ROOM_HEADER_POINTER_OFFSET]
+        | (rom[ROOM_HEADER_POINTER_OFFSET + 1] << 8)
+        | (rom[ROOM_HEADER_POINTER_OFFSET + 2] << 16)
+    )
+    base_pc = snes_to_pc(base_ptr)
+    if base_pc < 0 or base_pc >= len(rom):
+        raise ValueError(
+            f"ROM malformed: base pointer 0x{base_ptr:06X} resolves to invalid PC offset {base_pc}"
+        )
+    bank = rom[ROOM_HEADER_BANK_OFFSET]
+
+    room_locs = {}
+    for rid in sorted(room_ids):
+        table_offset = base_pc + (rid * 2)
+        if table_offset < 0 or table_offset + 2 > len(rom):
+            raise ValueError(
+                f"ROM malformed or truncated: table offset {table_offset} for room 0x{rid:02X} exceeds ROM size {len(rom)}"
+            )
+        room_ptr = (bank << 16) | (rom[table_offset + 1] << 8) | rom[table_offset]
+        loc = snes_to_pc(room_ptr)
+        if loc < 0 or loc + 14 > len(rom):
+            raise ValueError(
+                f"ROM malformed or truncated: room 0x{rid:02X} header offset {loc} (pointer 0x{room_ptr:06X}) exceeds ROM size {len(rom)}"
+            )
+        room_locs[rid] = loc
+
+    return room_locs
+
+
+def extract_room_header(rom: bytes, loc: int, room_id: int) -> dict:
+    """Extract raw 14-byte room header data from validated PC offset."""
     return {
         "room_id": room_id,
         "bg2_collision": rom[loc],
@@ -82,262 +133,241 @@ def extract_room_header(rom, room_id):
     }
 
 
-def load_dungeon_registry(path):
-    """Load dungeons.json."""
-    with open(path) as f:
-        return json.load(f)
+def load_dungeon_registry(path: Path | str) -> dict:
+    """Load and validate dungeon registry JSON."""
+    p = Path(path)
+    if not p.is_file():
+        raise FileNotFoundError(f"Registry file not found: {p}")
+    data = json.loads(p.read_text(encoding="utf-8"))
+    if not isinstance(data, dict) or "dungeons" not in data or not isinstance(data["dungeons"], list):
+        raise ValueError("Registry JSON missing top-level 'dungeons' list")
+    for d in data["dungeons"]:
+        if "id" not in d or "name" not in d or "rooms" not in d or not isinstance(d["rooms"], list):
+            raise ValueError(f"Dungeon entry missing required id/name/rooms: {d}")
+        for r in d["rooms"]:
+            if not all(k in r for k in ("id", "name", "grid_row", "grid_col")):
+                raise ValueError(f"Room entry missing required fields in dungeon {d['id']}: {r}")
+    return data
 
 
-def get_all_dungeon_rooms(registry):
-    """Get a set of all room IDs that belong to any dungeon."""
+def get_all_dungeon_rooms(registry: dict) -> dict[int, dict]:
+    """Get a map of all room IDs in registry to their dungeon identity."""
     rooms = {}
     for dungeon in registry["dungeons"]:
+        did = dungeon["id"]
+        dname = dungeon["name"]
         for room in dungeon["rooms"]:
-            rid = int(room["id"], 16)
+            try:
+                rid = int(room["id"], 16) if isinstance(room["id"], str) else int(room["id"])
+            except ValueError:
+                continue
             rooms[rid] = {
-                "dungeon_id": dungeon["id"],
-                "dungeon_name": dungeon["name"],
-                "name": room["name"],
+                "dungeon_id": did,
+                "dungeon_name": dname,
+                "name": room.get("name", f"Room 0x{rid:02X}"),
             }
     return rooms
 
 
-def classify_room_type(room_name, room_id, entrance_rooms, dungeon_id):
-    """Classify a room as entrance/boss/mini_boss/connector/normal."""
-    name_lower = room_name.lower()
+def compute_adjacency_candidates(dungeon_rooms_list: list[dict]) -> list[dict]:
+    """Compute grid-adjacent room candidates within the same dungeon.
 
-    # Check if it's an entrance from overworld
-    if room_id in entrance_rooms:
-        return "entrance"
-
-    # Boss rooms
-    if "[boss]" in name_lower or "(boss)" in name_lower or "boss" in name_lower:
-        return "boss"
-
-    # Mini-boss rooms
-    mini_boss_keywords = [
-        "lanmolas mini",
-        "mini-boss",
-        "miniboss",
-        "armos knights",
-    ]
-    if any(kw in name_lower for kw in mini_boss_keywords):
-        return "mini_boss"
-
-    # Connector rooms (small transition rooms)
-    if name_lower in ("connector",) or room_name == "Connector":
-        return "connector"
-
-    return "normal"
-
-
-def find_entrance_rooms(csv_path, dungeon_rooms):
-    """Parse the Rooms and Entrances CSV to find which rooms have overworld entrances."""
-    entrance_rooms = {}  # room_id -> [entrance_info, ...]
-
-    if not csv_path.exists():
-        return entrance_rooms
-
-    with open(csv_path) as f:
-        lines = f.readlines()
-
-    for line in lines[1:]:  # Skip header
-        parts = line.strip().split(",")
-        if len(parts) < 4:
-            continue
-
-        entrance_id_str = parts[0].strip()
-        room_name = parts[1].strip()
-        world = parts[2].strip()
-        ow_area = parts[3].strip()
-
-        if not entrance_id_str or not room_name:
-            continue
-
+    Two rooms are grid adjacency candidates if their grid_row/grid_col differ
+    by exactly 1 Manhattan distance step (dr + dc == 1).
+    These are structural layout neighbors from the registry grid;
+    neither establishes a usable door or traversal route.
+    """
+    candidates = []
+    room_map = {}
+    for r in dungeon_rooms_list:
         try:
-            entrance_id = int(entrance_id_str, 16)
+            rid = int(r["id"], 16) if isinstance(r["id"], str) else int(r["id"])
         except ValueError:
             continue
+        room_map[rid] = r
 
-        # Match entrance room names to dungeon room IDs
-        for rid, info in dungeon_rooms.items():
-            if info["name"].lower() in room_name.lower() or room_name.lower() in info["name"].lower():
-                if rid not in entrance_rooms:
-                    entrance_rooms[rid] = []
-                entrance_rooms[rid].append({
-                    "entrance_id": entrance_id,
-                    "name": room_name,
-                    "world": world,
-                    "overworld_area": ow_area,
-                })
-
-    return entrance_rooms
-
-
-def compute_door_connections(dungeon_rooms_list):
-    """Compute valid door connections between grid-adjacent rooms in same dungeon.
-
-    Two rooms are door-connected if they differ by exactly 1 in grid position
-    (horizontally or vertically, not diagonally).
-    """
-    doors = []
-    room_set = {int(r["id"], 16): r for r in dungeon_rooms_list}
-    room_ids = sorted(room_set.keys())
-
+    room_ids = sorted(room_map.keys())
     for i, rid_a in enumerate(room_ids):
-        for rid_b in room_ids[i + 1 :]:
-            ra = room_set[rid_a]
-            rb = room_set[rid_b]
+        for rid_b in room_ids[i + 1:]:
+            ra = room_map[rid_a]
+            rb = room_map[rid_b]
             row_a, col_a = ra["grid_row"], ra["grid_col"]
             row_b, col_b = rb["grid_row"], rb["grid_col"]
 
             dr = abs(row_a - row_b)
             dc = abs(col_a - col_b)
-
-            if dr + dc == 1:  # Exactly one step apart
+            if dr + dc == 1:
                 if dr == 1:
                     direction = "south" if row_b > row_a else "north"
                 else:
                     direction = "east" if col_b > col_a else "west"
 
-                doors.append({
-                    "from": ra["id"],
-                    "to": rb["id"],
+                candidates.append({
+                    "from_room": ra["id"],
+                    "to_room": rb["id"],
+                    "rooms": [ra["id"], rb["id"]],
                     "direction": direction,
+                    "source": "registry_grid",
+                    "verification_status": "unverified",
                 })
-
-    return doors
-
-
-def build_stair_connections(rom, dungeon_rooms_list, all_dungeon_rooms):
-    """Build stair connections for rooms in a dungeon by reading ROM headers."""
-    stairs = []
-    seen = set()
-
-    for room in dungeon_rooms_list:
-        rid = int(room["id"], 16)
-        header = extract_room_header(rom, rid)
-        if not header:
-            continue
-
-        for slot, dest in enumerate(header["staircase_rooms"]):
-            if dest == 0 or dest == rid:
-                continue
-
-            # Create a canonical pair to avoid duplicates
-            pair = tuple(sorted([rid, dest]))
-            if pair in seen:
-                continue
-            seen.add(pair)
-
-            # Determine if destination is in same dungeon or outside
-            dest_hex = f"0x{dest:02X}"
-            from_hex = room["id"]
-
-            dest_info = all_dungeon_rooms.get(dest)
-            from_info = all_dungeon_rooms.get(rid)
-
-            if dest_info and from_info and dest_info["dungeon_id"] == from_info["dungeon_id"]:
-                dest_name = dest_info["name"]
-                from_name = from_info["name"]
-                stairs.append({
-                    "from": from_hex,
-                    "to": dest_hex,
-                    "label": f"{from_name} ↔ {dest_name}",
-                })
-
-    return stairs
+    return candidates
 
 
-def build_holewarp_connections(rom, dungeon_rooms_list, all_dungeon_rooms):
-    """Build holewarp connections for rooms in a dungeon."""
-    holewarps = []
+def extract_header_destinations(
+    rom: bytes,
+    loc: int,
+    room_id: int,
+    room_name: str,
+    all_dungeon_rooms: dict[int, dict],
+    current_dungeon_id: str,
+) -> list[dict]:
+    """Extract raw pit and stair header destination records for a room.
 
-    for room in dungeon_rooms_list:
-        rid = int(room["id"], 16)
-        header = extract_room_header(rom, rid)
-        if not header:
-            continue
+    Preserves exact slot, byte offset, raw target byte, raw destination-plane bits,
+    and lookup status. Does not filter 0x00 or self targets.
+    Does not infer active routes or reciprocity.
+    """
+    destinations = []
+    from_hex = f"0x{room_id:02X}"
 
-        dest = header["holewarp"]
-        if dest == 0 or dest == rid:
-            continue
+    # Pit / holewarp destination (byte +9, plane in byte +7 bits 0..1)
+    raw_pit_target = rom[loc + 9]
+    pit_plane = rom[loc + 7] & 0x03
+    target_hex = f"0x{raw_pit_target:02X}"
 
-        dest_hex = f"0x{dest:02X}"
-        from_hex = room["id"]
+    pit_lookup = all_dungeon_rooms.get(raw_pit_target)
+    if pit_lookup:
+        if pit_lookup["dungeon_id"] == current_dungeon_id:
+            lookup_status = "same_dungeon"
+        else:
+            lookup_status = "cross_dungeon"
+        target_dungeon_id = pit_lookup["dungeon_id"]
+        target_dungeon_name = pit_lookup["dungeon_name"]
+        target_room_name = pit_lookup["name"]
+    else:
+        lookup_status = "unregistered"
+        target_dungeon_id = None
+        target_dungeon_name = None
+        target_room_name = None
 
-        dest_info = all_dungeon_rooms.get(dest)
-        from_info = all_dungeon_rooms.get(rid)
+    destinations.append({
+        "source_room": from_hex,
+        "source_room_name": room_name,
+        "transition_kind": "pit",
+        "slot": 0,
+        "header_byte_offset": 9,
+        "raw_target_byte": raw_pit_target,
+        "target_room": target_hex,
+        "destination_plane": pit_plane,
+        "plane_bits": pit_plane,
+        "lookup_status": lookup_status,
+        "target_dungeon_id": target_dungeon_id,
+        "target_dungeon_name": target_dungeon_name,
+        "target_room_name": target_room_name,
+        "is_self_target": (raw_pit_target == room_id),
+        "verification_status": "unverified",
+    })
 
-        if dest_info and from_info and dest_info["dungeon_id"] == from_info["dungeon_id"]:
-            holewarps.append({
-                "from": from_hex,
-                "to": dest_hex,
-                "label": f"{from_info['name']} → {dest_info['name']}",
-            })
+    # Staircase destinations (slots 0..3 at byte offsets 10..13)
+    planes = [
+        (rom[loc + 7] >> 2) & 0x03,
+        (rom[loc + 7] >> 4) & 0x03,
+        (rom[loc + 7] >> 6) & 0x03,
+        rom[loc + 8] & 0x03,
+    ]
 
-    return holewarps
+    for slot_idx in range(4):
+        byte_offset = 10 + slot_idx
+        raw_target = rom[loc + byte_offset]
+        plane = planes[slot_idx]
+        target_hex = f"0x{raw_target:02X}"
+
+        lookup = all_dungeon_rooms.get(raw_target)
+        if lookup:
+            if lookup["dungeon_id"] == current_dungeon_id:
+                lookup_status = "same_dungeon"
+            else:
+                lookup_status = "cross_dungeon"
+            target_dungeon_id = lookup["dungeon_id"]
+            target_dungeon_name = lookup["dungeon_name"]
+            target_room_name = lookup["name"]
+        else:
+            lookup_status = "unregistered"
+            target_dungeon_id = None
+            target_dungeon_name = None
+            target_room_name = None
+
+        destinations.append({
+            "source_room": from_hex,
+            "source_room_name": room_name,
+            "transition_kind": "stair",
+            "slot": slot_idx,
+            "header_byte_offset": byte_offset,
+            "raw_target_byte": raw_target,
+            "target_room": target_hex,
+            "destination_plane": plane,
+            "plane_bits": plane,
+            "lookup_status": lookup_status,
+            "target_dungeon_id": target_dungeon_id,
+            "target_dungeon_name": target_dungeon_name,
+            "target_room_name": target_room_name,
+            "is_self_target": (raw_target == room_id),
+            "verification_status": "unverified",
+        })
+
+    return destinations
 
 
-# Known entrance room IDs per dungeon (from data sheet analysis)
-ENTRANCE_ROOMS = {
-    "D1": [0x4A],       # Mushroom Grotto Entrance
-    "D2": [0x0E],       # Tail Palace Entrance
-    "D3": [0x59, 0x56], # Kalyxo Castle entrances
-    "D4": [0x28],       # Zora Temple Entrance
-    "D5": [0xDB, 0xCB, 0xCC, 0xDC],  # Glacia Estate (4 entrances)
-    "D6": [0x98, 0xC9], # Goron Mines (Main + Lower)
-    "D7": [0xD6],       # Dragon Ship Entrance
-    "FOS": [0x0C],      # Fortress of Secrets Entrance
-    "SOP": [0x84, 0x83, 0x85, 0x86],  # Shrine of Power (4 entrances)
-    "SOW": [0x9A],      # Shrine of Wisdom
-}
-
-# Known boss room IDs per dungeon
-BOSS_ROOMS = {
-    "D1": [0x5A],  # Helmasaur King
-    "D2": [0xDE],  # Kholdstare
-    "D3": [0x29],  # Mothula
-    "D4": [0x06],  # Arrghus
-    "D5": [0xAC],  # Blind the Thief
-    "D6": [0x90, 0xC8],  # Vitreous + Armos Knights
-    "D7": [0xA4],  # Trinexx
-    "FOS": [0x0D], # Agahnim2
-    "SOP": [0x33], # Lanmolas
-    "SOW": [],     # No boss
-}
-
-# Known mini-boss rooms
-MINI_BOSS_ROOMS = {
-    "D6": [0x78],  # Lanmolas Mini-boss
-}
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Extract room connectivity from ALTTP ROM")
-    parser.add_argument("--rom", required=True, help="Path to ROM file")
-    parser.add_argument("--registry", default="Docs/Dev/Planning/dungeons.json",
-                       help="Path to dungeons.json")
-    parser.add_argument("--format", choices=["json", "text"], default="text")
-    parser.add_argument("--output", help="Output file (default: stdout)")
-    args = parser.parse_args()
-
-    rom_path = Path(args.rom)
-    if not rom_path.exists():
-        print(f"ROM not found: {rom_path}", file=sys.stderr)
-        sys.exit(1)
-
-    rom = rom_path.read_bytes()
-    registry = load_dungeon_registry(args.registry)
+def build_connectivity_report(
+    rom: bytes,
+    registry: dict,
+    rom_path: str = "",
+    registry_path: str = "",
+    room_locs: dict[int, int] | None = None,
+    registry_sha256: str = "",
+) -> dict:
+    """Build deterministic connectivity evidence report."""
     all_dungeon_rooms = get_all_dungeon_rooms(registry)
 
-    csv_path = Path("Docs/Technical/Sheets/Oracle of Secrets Data Sheet - Rooms and Entrances.csv")
+    if room_locs is None:
+        all_room_ids = set()
+        for d in registry["dungeons"]:
+            for r in d["rooms"]:
+                try:
+                    rid = int(r["id"], 16) if isinstance(r["id"], str) else int(r["id"])
+                    all_room_ids.add(rid)
+                except ValueError:
+                    pass
+        room_locs = validate_rom_spans(rom, all_room_ids)
+
+    rom_hash = hashlib.sha256(rom).hexdigest()
+    if not registry_sha256:
+        registry_canonical_bytes = json.dumps(registry, sort_keys=True).encode("utf-8")
+        registry_hash = hashlib.sha256(registry_canonical_bytes).hexdigest()
+    else:
+        registry_hash = registry_sha256
 
     result = {
         "_meta": {
             "generated_by": "extract_room_connectivity.py",
+            "schema_version": 2,
+            "description": "Room connectivity evidence report distinguishing registry grid adjacency from raw ROM-header destinations",
             "rom": str(rom_path),
-            "description": "Room connectivity data extracted from ROM headers",
+            "rom_sha256": rom_hash,
+            "registry": str(registry_path),
+            "registry_sha256": registry_hash,
+            "verification_status": {
+                "door_objects_checked": False,
+                "triggers_checked": False,
+                "collision_checked": False,
+                "state_checked": False,
+                "gameplay_checked": False,
+                "status": "unverified",
+                "notes": (
+                    "Grid adjacency candidates and raw header destinations do not establish "
+                    "confirmed traversal, usable doors, staircases, pit transitions, or return routes."
+                ),
+            },
         },
         "dungeons": [],
     }
@@ -345,101 +375,238 @@ def main():
     for dungeon in registry["dungeons"]:
         did = dungeon["id"]
         rooms_enriched = []
+        dungeon_header_destinations = []
 
         for room in dungeon["rooms"]:
-            rid = int(room["id"], 16)
-            header = extract_room_header(rom, rid)
+            try:
+                rid = int(room["id"], 16) if isinstance(room["id"], str) else int(room["id"])
+            except ValueError:
+                continue
 
-            # Determine room type
-            if rid in BOSS_ROOMS.get(did, []):
-                rtype = "boss"
-            elif rid in MINI_BOSS_ROOMS.get(did, []):
-                rtype = "mini_boss"
-            elif rid in ENTRANCE_ROOMS.get(did, []):
-                rtype = "entrance"
-            elif room["name"].lower() == "connector":
-                rtype = "connector"
-            else:
-                rtype = "normal"
+            loc = room_locs[rid]
+            header = extract_room_header(rom, loc, rid)
 
-            room_entry = {
-                "id": room["id"],
-                "name": room["name"],
-                "grid_row": room["grid_row"],
-                "grid_col": room["grid_col"],
-                "type": rtype,
-            }
-
-            if header:
+            # Preserve all room metadata from input registry exactly
+            room_entry = dict(room)
+            if "palette" not in room_entry:
                 room_entry["palette"] = header["palette"]
+            if "blockset" not in room_entry:
                 room_entry["blockset"] = header["blockset"]
+            if "spriteset" not in room_entry:
                 room_entry["spriteset"] = header["spriteset"]
+            if "tag1" not in room_entry:
                 room_entry["tag1"] = header["tag1"]
+            if "tag2" not in room_entry:
                 room_entry["tag2"] = header["tag2"]
 
             rooms_enriched.append(room_entry)
 
-        # Build connections
-        stairs = build_stair_connections(rom, dungeon["rooms"], all_dungeon_rooms)
-        holewarps = build_holewarp_connections(rom, dungeon["rooms"], all_dungeon_rooms)
-        doors = compute_door_connections(dungeon["rooms"])
+            room_dests = extract_header_destinations(
+                rom, loc, rid, room.get("name", ""), all_dungeon_rooms, did
+            )
+            dungeon_header_destinations.extend(room_dests)
+
+        adjacency_candidates = compute_adjacency_candidates(dungeon["rooms"])
 
         dungeon_entry = {
             "id": did,
             "name": dungeon["name"],
-            "vanilla_name": dungeon["vanilla_name"],
-            "crystal_bit": dungeon.get("crystal_bit"),
+            "vanilla_name": dungeon.get("vanilla_name", ""),
             "rooms": rooms_enriched,
-            "stairs": stairs,
-            "holewarps": holewarps,
-            "doors": doors,
-            "features": dungeon.get("features", {}),
+            "adjacency_candidates": adjacency_candidates,
+            "header_destinations": dungeon_header_destinations,
         }
+        if "crystal_bit" in dungeon:
+            dungeon_entry["crystal_bit"] = dungeon["crystal_bit"]
+        if "features" in dungeon:
+            dungeon_entry["features"] = dungeon["features"]
 
         result["dungeons"].append(dungeon_entry)
 
-    if args.format == "json":
-        output = json.dumps(result, indent=2)
-    else:
-        output = format_text(result)
-
-    if args.output:
-        Path(args.output).write_text(output)
-        print(f"Written to {args.output}")
-    else:
-        print(output)
+    return result
 
 
-def format_text(result):
-    """Format connectivity data as human-readable text."""
+def format_text(result: dict) -> str:
+    """Format connectivity evidence report as human-readable text."""
     lines = []
-    for dungeon in result["dungeons"]:
+    meta = result.get("_meta", {})
+    lines.append("=" * 60)
+    lines.append("ROOM CONNECTIVITY EVIDENCE REPORT (schema_version=2)")
+    lines.append("=" * 60)
+    lines.append(f"ROM: {meta.get('rom', '')} (SHA256: {meta.get('rom_sha256', '')})")
+    lines.append(f"Registry: {meta.get('registry', '')} (SHA256: {meta.get('registry_sha256', '')})")
+    vstatus = meta.get("verification_status", {})
+    lines.append(f"Verification status: {vstatus.get('status', 'unverified')}")
+    lines.append(f"Notice: {vstatus.get('notes', '')}")
+
+    for dungeon in result.get("dungeons", []):
         lines.append(f"\n{'='*60}")
         lines.append(f"{dungeon['id']} {dungeon['name']} ({len(dungeon['rooms'])} rooms)")
         lines.append(f"{'='*60}")
 
         lines.append("\nRooms:")
         for room in dungeon["rooms"]:
-            rtype = f" [{room['type']}]" if room["type"] != "normal" else ""
-            lines.append(f"  {room['id']} {room['name']}{rtype}  (row={room['grid_row']}, col={room['grid_col']})")
+            rtype = f" [{room.get('type')}]" if room.get("type") and room.get("type") != "normal" else ""
+            floor = f" (floor={room.get('floor')})" if room.get("floor") else ""
+            lines.append(
+                f"  {room['id']} {room['name']}{rtype}{floor}  (row={room['grid_row']}, col={room['grid_col']})"
+            )
 
-        if dungeon["stairs"]:
-            lines.append(f"\nStairs ({len(dungeon['stairs'])}):")
-            for s in dungeon["stairs"]:
-                lines.append(f"  {s['from']} ↔ {s['to']}  ({s['label']})")
+        candidates = dungeon.get("adjacency_candidates", [])
+        lines.append(f"\nGrid adjacency candidates ({len(candidates)}):")
+        if candidates:
+            for c in candidates:
+                lines.append(
+                    f"  {c['from_room']} -> {c['to_room']}  ({c['direction']}, source={c['source']}, {c['verification_status']})"
+                )
+        else:
+            lines.append("  (none)")
 
-        if dungeon["holewarps"]:
-            lines.append(f"\nHolewarps ({len(dungeon['holewarps'])}):")
-            for h in dungeon["holewarps"]:
-                lines.append(f"  {h['from']} → {h['to']}  ({h['label']})")
-
-        if dungeon["doors"]:
-            lines.append(f"\nDoor connections ({len(dungeon['doors'])}):")
-            for d in dungeon["doors"]:
-                lines.append(f"  {d['from']} → {d['to']}  ({d['direction']})")
+        destinations = dungeon.get("header_destinations", [])
+        lines.append(f"\nHeader destinations ({len(destinations)}):")
+        if destinations:
+            for d in destinations:
+                kind = d["transition_kind"]
+                slot = d["slot"]
+                byte_off = d["header_byte_offset"]
+                src = d["source_room"]
+                tgt = d["target_room"]
+                plane = d["destination_plane"]
+                lstatus = d["lookup_status"]
+                tname = f": {d['target_room_name']}" if d.get("target_room_name") else ""
+                tdung = f" in {d['target_dungeon_id']}" if d.get("target_dungeon_id") else ""
+                self_note = ", self" if d.get("is_self_target") else ""
+                lines.append(
+                    f"  {src} {kind} slot {slot} (byte +{byte_off}) -> {tgt} "
+                    f"(plane {plane}, {lstatus}{tdung}{tname}{self_note}) [{d['verification_status']}]"
+                )
+        else:
+            lines.append("  (none)")
 
     return "\n".join(lines)
 
 
+def check_output_alias(output_path: Path, rom_path: Path, registry_path: Path) -> None:
+    """Refuse to run if output path aliases ROM or registry."""
+    targets = [("ROM", rom_path), ("registry", registry_path)]
+    for target_name, target_path in targets:
+        try:
+            if output_path.resolve() == target_path.resolve():
+                raise ValueError(
+                    f"Refusing to overwrite input {target_name}: output path '{output_path}' aliases '{target_path}'"
+                )
+        except (FileNotFoundError, OSError):
+            pass
+
+        try:
+            if output_path.exists() and target_path.exists() and output_path.samefile(target_path):
+                raise ValueError(
+                    f"Refusing to overwrite input {target_name}: output path '{output_path}' points to same file as '{target_path}'"
+                )
+        except (FileNotFoundError, OSError):
+            pass
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Extract room connectivity evidence from ALTTP ROM headers and dungeon registry (schema_version=2)"
+    )
+    parser.add_argument("--rom", required=True, help="Path to ROM file")
+    parser.add_argument(
+        "--registry",
+        default="Docs/Dev/Planning/dungeons.json",
+        help="Path to dungeons.json (default: Docs/Dev/Planning/dungeons.json)",
+    )
+    parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format: text (default) or json",
+    )
+    parser.add_argument("--output", help="Output file path (default: stdout)")
+    args = parser.parse_args(argv)
+
+    rom_path = Path(args.rom)
+    registry_path = Path(args.registry)
+
+    if not rom_path.is_file():
+        sys.stderr.write(f"ROM file not found: {rom_path}\n")
+        return 1
+
+    if not registry_path.is_file():
+        sys.stderr.write(f"Registry file not found: {registry_path}\n")
+        return 1
+
+    if args.output:
+        output_path = Path(args.output)
+        try:
+            check_output_alias(output_path, rom_path, registry_path)
+        except ValueError as err:
+            sys.stderr.write(f"Alias error: {err}\n")
+            return 1
+
+    try:
+        registry_raw = registry_path.read_bytes()
+        registry = load_dungeon_registry(registry_path)
+    except Exception as err:
+        sys.stderr.write(f"Registry error: {err}\n")
+        return 1
+
+    try:
+        rom_bytes = rom_path.read_bytes()
+    except Exception as err:
+        sys.stderr.write(f"Error reading ROM: {err}\n")
+        return 1
+
+    all_room_ids = set()
+    for d in registry["dungeons"]:
+        for r in d["rooms"]:
+            try:
+                rid = int(r["id"], 16) if isinstance(r["id"], str) else int(r["id"])
+                all_room_ids.add(rid)
+            except ValueError:
+                pass
+
+    try:
+        room_locs = validate_rom_spans(rom_bytes, all_room_ids)
+    except ValueError as err:
+        sys.stderr.write(f"ROM validation error: {err}\n")
+        return 1
+
+    try:
+        report = build_connectivity_report(
+            rom_bytes,
+            registry,
+            rom_path=str(rom_path),
+            registry_path=str(registry_path),
+            room_locs=room_locs,
+            registry_sha256=hashlib.sha256(registry_raw).hexdigest(),
+        )
+    except Exception as err:
+        sys.stderr.write(f"Report generation error: {err}\n")
+        return 1
+
+    if args.format == "json":
+        rendered = json.dumps(report, indent=2) + "\n"
+    else:
+        rendered = format_text(report) + "\n"
+
+    if args.output:
+        try:
+            out_p = Path(args.output)
+            out_p.parent.mkdir(parents=True, exist_ok=True)
+            tmp_p = out_p.with_name(f"{out_p.name}.tmp.{os.getpid()}")
+            tmp_p.write_text(rendered, encoding="utf-8")
+            tmp_p.replace(out_p)
+            print(f"Written to {args.output}")
+        except Exception as err:
+            sys.stderr.write(f"Error writing output: {err}\n")
+            return 1
+    else:
+        sys.stdout.write(rendered)
+
+    return 0
+
+
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
