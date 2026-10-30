@@ -716,10 +716,14 @@ def _document_identity(document):
 def _current_table_layout(families):
     widths = {row[0]: row[5] for row in A.SPECS}
     widths.update({f'music_phase{i}': 1 for i in range(4)})
+    widths.update({f'{family}_phase{phase}': 1
+                   for family in ('special_sprite_gfx', 'special_sprite_palettes')
+                   for phase in (1, 2)})
     R.require(type(families) is list and len(families) == len(widths)
               and all(type(name) is str for name in families)
               and len(set(families)) == len(families) and set(families) == set(widths),
-              'CURRENT_SOURCE_TABLES_INCOMPLETE: every native family and four music phases require192 rows')
+              'CURRENT_SOURCE_TABLES_INCOMPLETE: native families, four music phases '
+              'and three sprite-selector phases require192 rows')
     layout, offset = {}, 0
     for name in families:
         layout[name] = dict(offset=offset, stride=widths[name], rows=192)

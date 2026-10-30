@@ -501,6 +501,22 @@ def appearance_plan(source, document, directory):
 
 def consumer_blockers(document, traversal, closure, *, current_source=False):
     blockers = []
+    current_sprite_phases = False
+    if current_source:
+        # The caller validates the selected profile. Read its source-owned
+        # contract too: a boolean alone cannot make scalar readers phase-aware.
+        import lyra_current_transfer as current
+        try:
+            contract = current._json(Path(current.CURRENT_SOURCE_CONTRACT).read_bytes())
+            tables = contract['tables']
+            current_sprite_phases = (contract['kind'] == current.CURRENT_CONTRACT_KIND
+                and contract['scope'] == 'source_review_only'
+                and contract['status'] == 'proposed'
+                and type(tables['rows']) is int and tables['rows'] == 192)
+            if current_sprite_phases:
+                current._current_table_layout(tables['families'])
+        except (OSError, ValueError, TypeError, KeyError):
+            current_sprite_phases = False
     for area in traversal:
         auth = document.authoring[area - FIRST_MAP]
         if not current_source and 'mosaic' in document.properties[area - FIRST_MAP]:
@@ -509,7 +525,8 @@ def consumer_blockers(document, traversal, closure, *, current_source=False):
             if auth[key]:
                 blockers.append(dict(code="UNSUPPORTED_ACTIVE_METADATA", map_id=area, field=key))
         for key in ("sprite_graphics", "sprite_palettes", "music"):
-            if len(set(auth["properties"][key])) != 1:
+            if (len(set(auth["properties"][key])) != 1
+                    and not (current_sprite_phases and key in ('sprite_graphics', 'sprite_palettes'))):
                 blockers.append(dict(code="UNSUPPORTED_PHASE_SELECTOR", map_id=area, field=key))
     for flight in document.flight_points:
         if flight["map_id"] in traversal:

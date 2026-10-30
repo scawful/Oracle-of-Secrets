@@ -52,9 +52,69 @@ endif
 <name>_End:
 endmacro
 
+; Sprite resources follow the same three placement states as the actor list.
+; Save full A/X/Y and P before classification; only selected tail calls query
+; Oracle's phase. The M16 SpecialPalette caller initializes a word cache, so
+; it copies phase0 without consulting active-area clock/progression state.
+; All other selected reads preserve the original byte/word load width.
+macro LyraCurrentSpriteIndexed(name, old, phase0, phase1, phase2, first, end, bias, word_cache)
+<name>:
+    PHP : REP #$30 : PHA : PHX : PHY
+    TXA
+    CMP.w #<first> : BCS ?upper
+      BRL ?legacy
+?upper:
+    CMP.w #<end> : BCC ?selected
+      BRL ?legacy
+?selected:
+if <bias> != 0
+    CLC : ADC.w #<bias>
+endif
+    TAX
+if <word_cache> == 1
+    LDA $07,S : AND.w #$0020 : BEQ ?load
+endif
+    JSR Lyra_CurrentSpritePhase
+    CMP.w #$0002 : BEQ ?phase1
+    CMP.w #$0003 : BNE ?load
+    TXA : CLC : ADC.w #(<phase2>-<phase0>) : TAX
+    BRA ?load
+?phase1:
+    TXA : CLC : ADC.w #(<phase1>-<phase0>) : TAX
+?load:
+    LDA $07,S : AND.w #$0020 : BNE ?byte
+    LDA.l <phase0>, X : STA $05,S
+    BRA ?restore
+?byte:
+    SEP #$20
+    LDA.l <phase0>, X : STA $05,S
+    REP #$20
+?restore:
+    PLY : PLX : PLA : PLP
+    PHA : PLA : RTL
+?legacy:
+    PLY : PLX : PLA : PLP
+    LDA.l <old>, X
+    RTL
+<name>_End:
+endmacro
+
 pushpc
 org !LYRA_CURRENT_CODE_BASE
 Lyra_CurrentNativeCodeStart:
+; M16/XY16 internal helper. CheckIfNight uses native DP0; retain caller D,
+; the normalized table index and Y even if that source changes index width.
+Lyra_CurrentSpritePhase:
+    PHD : PHX : PHY
+    PEA.w $0000 : PLD
+    SEP #$20
+    JSL Oracle_CheckIfNight
+    REP #$30
+    AND.w #$00FF
+    PLY : PLX : PLD
+    RTS
+Lyra_CurrentSpritePhase_End:
+
 %LyraCurrentIndexed(Lyra_ReadAnimated, $2882A0, !LYRA_CURRENT_TABLE_animated+$0000, 0, $00A0, $00C0, $0000)
 %LyraCurrentIndexed(Lyra_ReadMainPalette, $288160, !LYRA_CURRENT_TABLE_main_palette+$0000, 0, $00A0, $00C0, $0000)
 %LyraCurrentIndexed(Lyra_ReadOverlay, $288340, !LYRA_CURRENT_TABLE_overlay+$0000, 0, $0140, $0180, $0000)
@@ -70,10 +130,10 @@ Oracle_Lyra_ReadParent:
 Oracle_Lyra_ReadPaletteSet:
 %LyraCurrentIndexed(Lyra_ReadPaletteSet, $09C635, !LYRA_CURRENT_TABLE_palette_set+$0000, 0, $00A0, $00C0, $0000)
 Oracle_Lyra_ReadSpritePalette:
-%LyraCurrentIndexed(Lyra_ReadSpritePalette, $7EFD40, !LYRA_CURRENT_TABLE_special_sprite_palettes+$0000, 0, $00A0, $00C0, $0000)
-%LyraCurrentIndexed(Lyra_ReadSpecialPalette, $02E701, !LYRA_CURRENT_TABLE_special_sprite_palettes+$0000, 0, $0020, $0040, $0080)
-%LyraCurrentIndexed(Lyra_ReadSpecialSpriteGfx, $02E6E1, !LYRA_CURRENT_TABLE_special_sprite_gfx+$0000, 0, $0020, $0040, $0080)
-%LyraCurrentIndexed(Lyra_ReadSpriteGfxByArea, $02E661, !LYRA_CURRENT_TABLE_special_sprite_gfx+$0000, 0, $00A0, $00C0, $0000)
+%LyraCurrentSpriteIndexed(Lyra_ReadSpritePalette, $7EFD40, !LYRA_CURRENT_TABLE_special_sprite_palettes, !LYRA_CURRENT_TABLE_special_sprite_palettes_phase1, !LYRA_CURRENT_TABLE_special_sprite_palettes_phase2, $00A0, $00C0, $0000, 0)
+%LyraCurrentSpriteIndexed(Lyra_ReadSpecialPalette, $02E701, !LYRA_CURRENT_TABLE_special_sprite_palettes, !LYRA_CURRENT_TABLE_special_sprite_palettes_phase1, !LYRA_CURRENT_TABLE_special_sprite_palettes_phase2, $0020, $0040, $0080, 1)
+%LyraCurrentSpriteIndexed(Lyra_ReadSpecialSpriteGfx, $02E6E1, !LYRA_CURRENT_TABLE_special_sprite_gfx, !LYRA_CURRENT_TABLE_special_sprite_gfx_phase1, !LYRA_CURRENT_TABLE_special_sprite_gfx_phase2, $0020, $0040, $0080, 0)
+%LyraCurrentSpriteIndexed(Lyra_ReadSpriteGfxByArea, $02E661, !LYRA_CURRENT_TABLE_special_sprite_gfx, !LYRA_CURRENT_TABLE_special_sprite_gfx_phase1, !LYRA_CURRENT_TABLE_special_sprite_gfx_phase2, $00A0, $00C0, $0000, 0)
 %LyraCurrentIndexed(Lyra_ReadSpecialEntryGfx, $02E821, !LYRA_CURRENT_TABLE_special_entry_gfx+$0000, 0, $0020, $0040, $0080)
 %LyraCurrentIndexed(Lyra_ReadAreaGfx, $00FC9C, !LYRA_CURRENT_TABLE_area_gfx+$0000, 0, $00A0, $00C0, $0000)
 %LyraCurrentIndexed(Lyra_ReadBombDoor, $02A644, !LYRA_CURRENT_TABLE_bomb_doors+$0000, 0, $0140, $0180, $0000)

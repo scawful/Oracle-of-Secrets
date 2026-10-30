@@ -254,6 +254,55 @@ class LyraAdmissionTest(unittest.TestCase):
         plan = A.plan_admission(self.source, text, proof, candidate_maps=[0xA1])
         self.assertEqual(plan["consumption_blockers"], [dict(code="ALLOCATION_REQUIRED")])
 
+    def test_current_sprite_phases_require_complete_selected_source_families(self):
+        import lyra_current_transfer as current
+        data = document()
+        auth = data['maps'][1]['authoring']
+        auth['properties'].update(sprite_graphics=[0, 27, 4], sprite_palettes=[1, 0, 0],
+                                  music=[1, 2, 3, 4])
+        auth['sprites'] = [dict(id=1, sprite_id=0x52, x=0, y=0, state=1)]
+        auth['asset_bindings'] = ['a' * 64] * 3
+        parsed = T.parse_terrain_document(json.dumps(data), profile(), allow_authoring_drafts=True,
+                                         expected_asset_bindings={0xA1: ('a' * 64,) * 3})
+        phase = lambda field: dict(code='UNSUPPORTED_PHASE_SELECTOR', map_id=0xA1, field=field)
+        source_contract = json.loads(Path(current.CURRENT_SOURCE_CONTRACT).read_bytes())
+        legacy = A.consumer_blockers(parsed, [0xA1], ())
+        for field in ('sprite_graphics', 'sprite_palettes', 'music'):
+            self.assertIn(phase(field), legacy)
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'source-contract.json'
+            with mock.patch.object(current, 'CURRENT_SOURCE_CONTRACT', path):
+                path.write_text(json.dumps(source_contract))
+                active = A.consumer_blockers(parsed, [0xA1], (), current_source=True)
+                self.assertNotIn(phase('sprite_graphics'), active)
+                self.assertNotIn(phase('sprite_palettes'), active)
+                self.assertIn(phase('music'), active)
+                self.assertIn(dict(code='UNSUPPORTED_ACTIVE_METADATA', map_id=0xA1,
+                                   field='sprites'), active)
+                mutants = []
+                for field, value in (('rows', 64), ('rows', True), ('families', 'invalid')):
+                    bad = copy.deepcopy(source_contract)
+                    bad['tables'][field] = value
+                    mutants.append(bad)
+                for family in ('special_sprite_gfx_phase1', 'special_sprite_palettes_phase2'):
+                    bad = copy.deepcopy(source_contract)
+                    bad['tables']['families'].remove(family)
+                    mutants.append(bad)
+                bad = copy.deepcopy(source_contract)
+                bad['tables']['families'][-1] = bad['tables']['families'][-2]
+                mutants.append(bad)
+                bad = copy.deepcopy(source_contract)
+                bad['kind'] = 'unsupported'
+                mutants.append(bad)
+                for bad in mutants:
+                    path.write_text(json.dumps(bad))
+                    blocked = A.consumer_blockers(parsed, [0xA1], (), current_source=True)
+                    self.assertIn(phase('sprite_graphics'), blocked)
+                    self.assertIn(phase('sprite_palettes'), blocked)
+                path.write_text('{malformed')
+                self.assertIn(phase('sprite_graphics'),
+                              A.consumer_blockers(parsed, [0xA1], (), current_source=True))
+
     def test_active_metadata_and_phase_disagreement_block_consumption(self):
         for key, entity in (("sprites", dict(id=1, sprite_id=4, x=0, y=0, state=0)),
                             ("doors", dict(id=1, x=0, y=0, entrance_id=None)),

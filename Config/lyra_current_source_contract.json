@@ -161,7 +161,11 @@
       "music_phase0",
       "music_phase1",
       "music_phase2",
-      "music_phase3"
+      "music_phase3",
+      "special_sprite_gfx_phase1",
+      "special_sprite_palettes_phase1",
+      "special_sprite_palettes_phase2",
+      "special_sprite_gfx_phase2"
     ],
     "rows": 192
   }

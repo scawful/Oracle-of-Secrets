@@ -1,8 +1,17 @@
-"""Current-reader host/source contracts; no CPU, assembler or native execution."""
+"""Current-reader plans and sparse actual-source CPU/ABI controls.
+
+The CPU fixture has an explicit synthetic phase query. It does not run a SNES,
+load graphics, or grant runtime/allocation authority.
+"""
 import copy
 import hashlib
+import json
+import os
 from pathlib import Path
+import shutil
+import subprocess
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
@@ -98,7 +107,7 @@ class CurrentNativeLoaderTests(unittest.TestCase):
                                     policy=self.policy if policy is None else policy)
 
     def test_complete_families_copy_actual_native_sections(self):
-        self.assertEqual(len(self.plan['tables']), len(L.A.SPECS) + 4)
+        self.assertEqual(len(self.plan['tables']), len(L.A.SPECS) + 8)
         for row in self.plan['tables']:
             raw = bytes.fromhex(row['payload_hex'])
             self.assertEqual(row['rows'], 192)
@@ -127,7 +136,9 @@ class CurrentNativeLoaderTests(unittest.TestCase):
         rows = {r['name']: r for r in self.plan['tables']}
         for names in (('sprite_phase0', 'sprite_phase1', 'sprite_phase2'),
                       ('map32_high', 'map32_low'),
-                      tuple(f'music_phase{i}' for i in range(4))):
+                      tuple(f'music_phase{i}' for i in range(4)),
+                      ('special_sprite_gfx', 'special_sprite_gfx_phase1', 'special_sprite_gfx_phase2'),
+                      ('special_sprite_palettes', 'special_sprite_palettes_phase1', 'special_sprite_palettes_phase2')):
             intervals = [rows[n]['pc'] for n in names]
             for i, (a, b) in enumerate(intervals):
                 for c, d in intervals[i + 1:]:
@@ -136,6 +147,41 @@ class CurrentNativeLoaderTests(unittest.TestCase):
         for area in (0xA0, 0xA1, 0xBF):
             values = [bytes.fromhex(rows[f'music_phase{i}']['payload_hex'])[area] for i in range(4)]
             self.assertEqual(len(set(values)), 4)
+
+    def test_sprite_phase_families_append_without_moving_legacy_tables(self):
+        rows = self.plan['tables']
+        old_specs = tuple((s[0], s[1], s[2], s[3], s[5]) for s in L.A.SPECS) + tuple(
+            (f'music_phase{i}', 0x02C303 + i * 0x40, 0x40, 0, 1) for i in range(4))
+        offset = 0
+        for row, spec in zip(rows, old_specs):
+            self.assertEqual((row['name'], row['offset']), (spec[0], offset))
+            offset += 192 * spec[4]
+        self.assertEqual([r['name'] for r in rows[len(old_specs):]],
+                         ['special_sprite_gfx_phase1', 'special_sprite_palettes_phase1',
+                          'special_sprite_palettes_phase2', 'special_sprite_gfx_phase2'])
+
+    def test_sprite_phase_indices_change_only_selected_tail_families(self):
+        tables = {r['name']: r for r in self.plan['tables']}
+        for name, family, bias in (
+                ('SpriteGfxByArea', 'special_sprite_gfx', 0),
+                ('SpecialSpriteGfx', 'special_sprite_gfx', 128),
+                ('SpritePalette', 'special_sprite_palettes', 0),
+                ('SpecialPalette', 'special_sprite_palettes', 128)):
+            for phase in range(3):
+                selected = family + (f'_phase{phase}' if phase else '')
+                for area in (0xA0, 0xB0, 0xBF):
+                    row = L.current_selector_location(name, area-bias,
+                        table_base=self.origins['table_base'], placement_phase=phase)
+                    self.assertEqual((row['family'], row['address']),
+                                     (selected, tables[selected]['snes']+area))
+                control = L.current_selector_location(name, 0x9F-bias,
+                    table_base=self.origins['table_base'], placement_phase=phase)
+                self.assertFalse(control['selected'])
+                self.assertEqual(control['family'], family)
+        for phase in (-1, 3, True):
+            with self.assertRaisesRegex(ValueError, 'placement phase'):
+                L.current_selector_location('SpritePalette', 0xB0,
+                    table_base=self.origins['table_base'], placement_phase=phase)
 
     def test_original160_selector_fallbacks_and_tail_index_conversions(self):
         table = {r['name']: r for r in self.plan['tables']}
@@ -245,6 +291,126 @@ class CurrentNativeLoaderTests(unittest.TestCase):
         historical = py.split(b'\n\n# Current-engine mode is a separate', 1)[0] + b'\n'
         self.assertEqual(hashlib.sha256(historical).hexdigest(),
                          '0700b57cfa3b594160c63d46ecff6dfbcc40b518ead16ff114b01ba64da7c97d')
+
+
+class CurrentSpritePhaseCpuTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        asar = os.environ.get('ASAR_BIN') or shutil.which('asar')
+        runner = os.environ.get('OOS_CPU_RUNNER')
+        if not asar or not runner:
+            raise unittest.SkipTest('Set ASAR_BIN and OOS_CPU_RUNNER for sparse reader CPU checks')
+        cls.runner = runner
+        cls.folder = tempfile.TemporaryDirectory(prefix='lyra-sprite-readers-')
+        cls.addClassCleanup(cls.folder.cleanup)
+        folder = Path(cls.folder.name)
+        cls.image = folder/'readers.sfc'
+        root = Path(__file__).resolve().parents[1]
+        native = (root/'Overworld/lyra_native_loaders.asm').read_text()
+        start = native.index('macro LyraCurrentSpriteIndexed(')
+        macro = native[start:native.index('endmacro', start)+len('endmacro')]
+        start = native.index('Lyra_CurrentSpritePhase:')
+        helper = native[start:native.index('Lyra_CurrentSpritePhase_End:', start)]
+        invocations = [line for line in native.splitlines()
+                       if line.startswith('%LyraCurrentSpriteIndexed(')]
+        if len(invocations) != 4:
+            raise AssertionError('Expected the four maintained sprite reader invocations')
+        cls.layout = {r['name']:r for r in L.current_table_layout(0x5B8000)}
+        seed = bytearray(0x400000)
+        # Native fallback windows are distinct from every selected resource.
+        for address in (0x02E661, 0x02E6E1, 0x02E701):
+            at = L.A.pc(address)
+            seed[at:at+256] = bytes((0x65+i)&255 for i in range(256))
+        cls.tables = {}
+        for family in ('special_sprite_gfx', 'special_sprite_palettes'):
+            for phase in range(3):
+                name = family + (f'_phase{phase}' if phase else '')
+                data = bytearray((phase*0x31+i*3)&255 for i in range(192))
+                data[0xB0] = ((0,27,4) if family.endswith('gfx') else (1,0,0))[phase]
+                data[0xA1] = 0x80
+                if family.endswith('palettes') and phase == 0:
+                    data[0xBE:0xC0] = bytes([0x12,0x80])
+                cls.tables[name] = bytes(data)
+                at = L.A.pc(cls.layout[name]['snes'])
+                seed[at:at+192] = data
+        cls.seed = bytes(seed)
+        cls.image.write_bytes(seed)
+        constants = '\n'.join(f'!LYRA_CURRENT_TABLE_{name} = ${row["snes"]:06X}'
+                              for name,row in cls.layout.items())
+        # This fixture deliberately changes widths/X/Y/C/V and counts queries.
+        # DP8A supplies a synthetic phase, not real progression/clock behavior.
+        phase_query = ('org $5CD000\nOracle_CheckIfNight:\nSEP #$30\n'
+                       'LDA.l $7E1E01 : INC : STA.l $7E1E01\n'
+                       'LDX.b #$A5 : LDY.b #$D3\nLDA.b $8A\nCLC : CLV : RTL\n')
+        driver = folder/'readers.asm'
+        driver.write_text('lorom\n'+constants+'\n'+macro+'\norg $5CC000\n'+helper+
+                          '\n'+'\n'.join(invocations)+'\nassert pc() <= $5CD000\n'+phase_query)
+        result = subprocess.run([asar,'--no-title-check','--fix-checksum=off','--symbols=wla',
+                                 str(driver),str(cls.image)],capture_output=True,text=True,timeout=20)
+        if result.returncode:
+            raise AssertionError(result.stdout+result.stderr)
+        cls.labels = L._labels(cls.image.with_suffix('.sym').read_bytes())
+
+    def test_emitted_readers_preserve_abi_phase_mapping_fallback_and_startup_word_copy(self):
+        plans = []
+        cache = bytes((0xF1+i)&255 for i in range(256))
+        for name,family,bias,old in (
+                ('SpriteGfxByArea','special_sprite_gfx',0,0x02E661),
+                ('SpecialSpriteGfx','special_sprite_gfx',128,0x02E6E1),
+                ('SpritePalette','special_sprite_palettes',0,0x7EFD40),
+                ('SpecialPalette','special_sprite_palettes',128,0x02E701)):
+            for phase in range(4):
+                placement = 0 if phase < 2 else phase-1
+                selected_family = family+(f'_phase{placement}' if placement else '')
+                for p in (0x20,0x71):
+                    for area in (0x9F,0xA0,0xA1,0xB0,0xBF,0xC0):
+                        index = area-bias
+                        selected = 0xA0 <= area < 0xC0
+                        if selected:
+                            expected = self.tables[selected_family][area]
+                        elif old == 0x7EFD40:
+                            expected = cache[index]
+                        else:
+                            expected = self.seed[L.A.pc(old)+index]
+                        regs = dict(a=0xABCD,x=index,y=0x4567 if not p&0x10 else 0x67,
+                                    p=p,db=8,d=0x100,sp=0x1FFF)
+                        plans.append((name,phase,regs,expected,selected))
+        # Real M16 bulk cache calls copy phase0 adjacent page bytes without a query.
+        for phase in range(4):
+            for area in (0xA0,0xBE):
+                data = self.tables['special_sprite_palettes'][area:area+2]
+                regs = dict(a=0xABCD,x=area-128,y=0x4567,p=0x41,db=8,d=0x100,sp=0x1FFF)
+                plans.append(('SpecialPalette',phase,regs,int.from_bytes(data,'little'),False))
+        requests = [dict(entry=self.labels['Lyra_Read'+name],reset_ram=True,registers=regs,
+                         writes=[dict(address=0x7E008A,bytes=[phase]),
+                                 dict(address=0x7EFD40,bytes=list(cache))],
+                         reads=[dict(address=0x7E1E01,length=1)],trace_writes=True,max_steps=200)
+                    for name,phase,regs,expected,query in plans]
+        run = subprocess.run([self.runner,str(self.image)],
+            input=''.join(json.dumps(r)+'\n' for r in requests),capture_output=True,text=True,timeout=20)
+        self.assertEqual(run.returncode,0,run.stderr)
+        output = run.stdout.splitlines()
+        self.assertEqual(len(output),len(plans))
+        for plan,line in zip(plans,output):
+            name,phase,regs,expected,query = plan
+            result = json.loads(line)
+            with self.subTest(reader=name,phase=phase,p=regs['p'],index=regs['x']):
+                self.assertTrue(result['returned'],result)
+                self.assertFalse(result.get('stub_calls'))
+                self.assertFalse(result.get('mmio_writes'))
+                cpu = result['registers']
+                mask = 255 if regs['p']&0x20 else 65535
+                self.assertEqual(cpu['a'],(regs['a']&~mask)|expected)
+                for key in ('x','y','sp','d','db'):
+                    self.assertEqual(cpu[key],regs[key],key)
+                nz = (0x02 if expected == 0 else 0) | (0x80 if expected&(0x80 if mask == 255 else 0x8000) else 0)
+                self.assertEqual(cpu['p'],(regs['p']&~0x82)|nz)
+                self.assertEqual(result['reads'][0]['bytes'],[int(query)])
+                for write in result['writes']:
+                    address = write['address']
+                    if address>>16&127 < 64 and address&65535 < 8192:
+                        address = 0x7E0000|(address&65535)
+                    self.assertTrue(0x7E1F00 <= address < 0x7E2000 or address == 0x7E1E01)
 
 
 if __name__ == '__main__':

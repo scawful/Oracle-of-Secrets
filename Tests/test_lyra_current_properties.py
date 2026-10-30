@@ -35,6 +35,8 @@ class CurrentPropertyRowsTest(unittest.TestCase):
             self.assertEqual(rows[area], dict(gfx=[255,1,2,3,4,5,6,7], main_palette=7,
                 palette_set=254, animated=255, sign_text=0x1234, special_sprite_gfx=23,
                 special_sprite_palettes=15, music_dark_special=0x10,
+                special_sprite_gfx_phase1=23, special_sprite_gfx_phase2=23,
+                special_sprite_palettes_phase1=15, special_sprite_palettes_phase2=15,
                 music_phase0=0x10, music_phase1=0x20, music_phase2=0x30, music_phase3=0x40))
         self.assertEqual(set(rows), set(range(0xA0,0xC0)))
         self.assertEqual(rows[0xA1]['special_sprite_gfx'], 0)
@@ -53,18 +55,17 @@ class CurrentPropertyRowsTest(unittest.TestCase):
         self.assertEqual(doc.properties[0]['sprite_graphics'], [-1, -1, -1])
         self.assertEqual(source, selector_source((23, 23, 23), (15, 15, 15), 0x12))
 
-    def test_inherited_native_phase_differences_refuse_with_resolved_values(self):
-        for field, source, resolved in (
-                ('sprite_graphics', selector_source((0, 27, 4)), '[0, 27, 4]'),
-                ('sprite_palettes', selector_source(palettes=(1, 0, 0)), '[1, 0, 0]')):
+    def test_inherited_native_phase_differences_survive_without_flattening(self):
+        for field, table, source, resolved in (
+                ('sprite_graphics', 'special_sprite_gfx', selector_source((0, 27, 4)), [0, 27, 4]),
+                ('sprite_palettes', 'special_sprite_palettes',
+                 selector_source(palettes=(1, 0, 0)), [1, 0, 0])):
             doc = copy.deepcopy(document())
             with self.subTest(field=field):
-                with self.assertRaisesRegex(
-                        ValueError, 'CURRENT_PROPERTY_PHASE_SELECTOR_UNSUPPORTED') as raised:
-                    L.current_property_rows(doc, source=source)
-                self.assertIn('map A0', str(raised.exception))
-                self.assertIn(field, str(raised.exception))
-                self.assertIn(resolved, str(raised.exception))
+                rows = L.current_property_rows(doc, source=source)
+                for area in (0xA0, 0xBF):
+                    self.assertEqual([rows[area][table], rows[area][table + '_phase1'],
+                                      rows[area][table + '_phase2']], resolved)
                 self.assertEqual(doc.properties[0][field], [-1, -1, -1])
 
     def test_inheritance_needs_complete_source_and_a_light_world_seed_parent(self):
@@ -93,13 +94,16 @@ class CurrentPropertyRowsTest(unittest.TestCase):
         self.assertEqual(rows[0xA0]['special_sprite_palettes'], 15)
         self.assertEqual(doc.properties[0]['sprite_graphics'], [-1, 23, 23])
 
-    def test_unrepresentable_special_phase_selectors_refuse_instead_of_flattening(self):
-        for field in ('sprite_graphics','sprite_palettes'):
+    def test_explicit_special_phase_selectors_survive_instead_of_flattening(self):
+        for field, table in (('sprite_graphics', 'special_sprite_gfx'),
+                             ('sprite_palettes', 'special_sprite_palettes')):
             doc = copy.deepcopy(document())
             doc.properties[0].update(sprite_graphics=[0] * 3, sprite_palettes=[0] * 3)
             doc.properties[0][field] = [1,2,1]
-            with self.subTest(field=field), self.assertRaisesRegex(ValueError, 'PHASE_SELECTOR_UNSUPPORTED'):
-                L.current_property_rows(doc)
+            with self.subTest(field=field):
+                rows = L.current_property_rows(doc, source=selector_source())
+                self.assertEqual([rows[0xA0][table], rows[0xA0][table + '_phase1'],
+                                  rows[0xA0][table + '_phase2']], [1, 2, 1])
 
     def test_malformed_models_refuse_without_byte_masking_or_missing_key_fallbacks(self):
         for field,value in (('graphics_sheets',[False]*8),('graphics_sheets',[256]*8),

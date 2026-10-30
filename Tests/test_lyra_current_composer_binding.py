@@ -100,6 +100,13 @@ class CurrentComposerBindingTest(unittest.TestCase):
     def test_same_verified_profile_composes_saved_identity_and_bg_without_selection(self):
         files = self.f.compose(bg128_plan=self.f.bg())
         prepared = json.loads(files['prepare.json'])
+        tables = self.f.table_plan['tables']
+        self.assertEqual(len(tables), 38)
+        self.assertEqual(self.f.table_plan['tables_snes'][1] -
+                         self.f.table_plan['tables_snes'][0], 0x30C0)
+        self.assertEqual([row['name'] for row in tables[-4:]],
+                         ['special_sprite_gfx_phase1', 'special_sprite_palettes_phase1',
+                          'special_sprite_palettes_phase2', 'special_sprite_gfx_phase2'])
         self.assertEqual(prepared['source_rom_sha256'], P.R.sha(self.f.source))
         self.assertEqual(prepared['source_size'], 0x200000)
         self.assertEqual(prepared['source_profile_sha256'], X.T.digest(self.f.profile))
@@ -119,7 +126,10 @@ class CurrentComposerBindingTest(unittest.TestCase):
         self.assertFalse(self.f.contract_fixture.case.candidate.exists())
 
     def test_valid_foreign_property_table_bytes_cannot_relabel_saved_document(self):
-        for field, value in (('gfx', [1]*8), ('sign_text', 0x1234), ('music_phase3', 0x42)):
+        for field, value in (('gfx', [1]*8), ('sign_text', 0x1234), ('music_phase3', 0x42),
+                             ('special_sprite_gfx_phase1', 27), ('special_sprite_gfx_phase2', 4),
+                             ('special_sprite_palettes_phase1', 1),
+                             ('special_sprite_palettes_phase2', 2)):
             before = copy.deepcopy(self.f.rows)
             self.f.rows[0xBF][field] = value
             # Each table plan remains internally consistent and has the same

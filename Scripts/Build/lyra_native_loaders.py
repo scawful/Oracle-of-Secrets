@@ -1062,11 +1062,17 @@ SOURCE_HOSTS["Overworld_ReloadSubscreenOverlay_Interupt"] = []
 # historical constructor, byte bodies, source pins or ledger paths above change.
 CURRENT_FIRST, CURRENT_END, CURRENT_PARENT_COUNT = 0xA0, 0xC0, 0xC0
 CURRENT_KIND = 'lyra.current_native_readers_source_plan.v1'
+CURRENT_SPRITE_PHASE_TABLES = (
+    ('special_sprite_gfx_phase1', 0x02E6E1, 32, 128, 1),
+    ('special_sprite_palettes_phase1', 0x02E701, 32, 128, 1),
+    ('special_sprite_palettes_phase2', 0x02E701, 32, 128, 1),
+    ('special_sprite_gfx_phase2', 0x02E6E1, 32, 128, 1),
+)
 # name, original ROM operand, original rows, original first area, row stride.
 # Special-world tables acquire structural zero prefixes, never active defaults:
 # native areas always use their original readers; every tail row is explicit.
 CURRENT_TABLE_SPECS = tuple((s[0], s[1], s[2], s[3], s[5]) for s in A.SPECS) + tuple(
-    (f'music_phase{i}', 0x02C303 + i * 0x40, 0x40, 0, 1) for i in range(4))
+    (f'music_phase{i}', 0x02C303 + i * 0x40, 0x40, 0, 1) for i in range(4)) + CURRENT_SPRITE_PHASE_TABLES
 CURRENT_SELECTORS = SELECTORS + (
     ('Mosaic', 'mosaic', 0x288200, 'X', 0xFF, 0xA1, False),
 ) + tuple((f'ByScreen{i + 1}', f'ByScreen{i + 1}', 0x288A38 + i * 0x140,
@@ -1088,13 +1094,15 @@ def current_table_layout(table_base):
     return rows
 
 
-def current_selector_location(name, index, *, table_base):
+def current_selector_location(name, index, *, table_base, placement_phase=0):
     """Host arithmetic contract for an original reader index; no CPU execution.
 
     The source caller owns index width/normalization. Out-of-domain indices,
     including high garbage, retain the exact original operand and index.
     """
     R.require(type(index) is int and 0 <= index <= 0xFFFF, 'Invalid current reader index')
+    R.require(type(placement_phase) is int and 0 <= placement_phase <= 2,
+              'Invalid current sprite placement phase')
     row = next((r for r in CURRENT_SELECTORS if r[0] == name), None)
     R.require(row is not None, 'Unknown current selector')
     _, family, old, reg, _, _, _ = row
@@ -1104,6 +1112,10 @@ def current_selector_location(name, index, *, table_base):
     bias = 0x80 if special else 0
     first, end = (CURRENT_FIRST - bias) * scale, (CURRENT_END - bias) * scale
     selected = first <= index < end
+    if selected and placement_phase and name in (
+            'SpritePalette', 'SpecialPalette', 'SpecialSpriteGfx', 'SpriteGfxByArea'):
+        family += f'_phase{placement_phase}'
+        layout = next(r for r in current_table_layout(table_base) if r['name'] == family)
     slot = int(name[-1]) if family == 'gfx' else 0
     target = (layout['snes'] + index + bias * scale + slot if selected else
               old + index if reg == 'X' else 0x280000 + (old & 0xFFFF) + index)
@@ -1292,8 +1304,8 @@ def plan_current_tables(source, tail_rows, *, origins, policy, private_pilot=Non
                     'actor/door/exit admission', 'entry/save/return/world-map/mirror/flight'])
 
 
-def _current_sprite_selector(values, *, source, area, field):
-    """Resolve the native seed's three states before applying the scalar ABI."""
+def _current_sprite_selector_phases(values, *, source, area, field):
+    """Resolve the native seed's three placement states without flattening."""
     resolved = list(values)
     if -1 in resolved:
         R.require(type(source) is bytes and len(source) in (0x200000, 0x400000),
@@ -1308,20 +1320,15 @@ def _current_sprite_selector(values, *, source, area, field):
         table = {'sprite_graphics': 0x7A41, 'sprite_palettes': 0x7B41}[field]
         resolved = [source[table + parent + phase * 0x40] if value == -1 else value
                     for phase, value in enumerate(values)]
-    R.require(len(set(resolved)) == 1,
-              'CURRENT_PROPERTY_PHASE_SELECTOR_UNSUPPORTED: '
-              f'map {area:02X} {field} resolves states0/1/2 to {resolved}; '
-              'the current special-world reader requires one selector per page')
-    return resolved[0]
+    return resolved
 
 
 def current_property_rows(document, *, source=None):
     """Lower saved native selectors without assigning storage or readiness.
 
-    SW graphics/palette selectors are one byte per area in maintained ZScream;
-    distinct effective per-phase values cannot be represented by those readers.
-    Resolve -1 through the same bound native seed as the Yaze asset resolver;
-    refuse unrepresentable inheritance rather than replacing it with zero.
+    Each current SW graphics/palette reader selects one of three placement
+    state families. Resolve -1 through the same bound native seed as the Yaze
+    asset resolver, preserving all effective states and the saved raw values.
     Four music phases retain all four saved values in the current cache tail.
     """
     from lyra_project_terrain import TerrainDocument
@@ -1370,8 +1377,11 @@ def current_property_rows(document, *, source=None):
             result[area].update(mosaic=prop['mosaic'], overlay=prop['subscreen_overlay'], bg_color=color)
         for field, table in (('sprite_graphics', 'special_sprite_gfx'),
                              ('sprite_palettes', 'special_sprite_palettes')):
-            result[area][table] = _current_sprite_selector(
+            phases = _current_sprite_selector_phases(
                 prop[field], source=source, area=area, field=field)
+            result[area][table] = phases[0]
+            result[area].update({f'{table}_phase{phase}': phases[phase]
+                                 for phase in (1, 2)})
     return result
 
 
