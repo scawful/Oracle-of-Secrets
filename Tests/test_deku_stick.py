@@ -152,11 +152,15 @@ class DekuStickContractTest(unittest.TestCase):
     def test_submodule_transition_hooks(self):
         stick_text = DEKU_STICK.read_text(encoding="utf-8")
         self.assertIn("DekuStick_SubmoduleCheck:", stick_text)
+        self.assertIn("DekuStick_OWLoadCheck:", stick_text)
         self.assertIn("org $0287A8", stick_text)
         self.assertIn("JSL DekuStick_SubmoduleCheck", stick_text)
         self.assertIn("assert pc() == $0287AC", stick_text)
         self.assertIn("org $0283BF", stick_text)
+        self.assertIn("JSL DekuStick_OWLoadCheck", stick_text)
         self.assertIn("assert pc() == $0283C3", stick_text)
+        self.assertIn("org $02A477", stick_text)
+        self.assertIn("assert pc() == $02A47B", stick_text)
 
 
 class DekuStickLogicModelTest(unittest.TestCase):

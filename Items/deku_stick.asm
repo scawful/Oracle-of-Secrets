@@ -645,15 +645,43 @@ DekuStick_SubmoduleCheck:
   RTL
 }
 
+; ==============================================================================
+; DekuStick_OWLoadCheck: Transition drop check during Module08/0A Overworld Load
+; Clears active stick on entrance/exit fades, loading properties, etc.
+; ==============================================================================
+DekuStick_OWLoadCheck:
+{
+  PHP : SEP #$30
+  PHA : PHX : PHY : PHB
+  PHK : PLB
+
+  LDA.l DekuStick_State : BEQ .done
+  JSL DekuStick_Drop
+
+.done
+  PLB : PLY : PLX : PLA
+  PLP
+  ; Replay displaced instructions: LDA $11 : ASL A : TAX
+  LDA.b $11
+  ASL A
+  TAX
+  RTL
+}
+
 pushpc
 ; Module07_Underworld ($0287A8-$0287AB): replaces LDA $11 : ASL A : TAX (replayed by helper)
 org $0287A8 ; @hook module=Items name=DekuStick_UWSubmoduleHook kind=jsl target=DekuStick_SubmoduleCheck expected_m=8 expected_x=8
   JSL DekuStick_SubmoduleCheck
 assert pc() == $0287AC
 
-; Module09_Overworld ($0283BF-$0283C2): replaces LDA $11 : ASL A : TAX (replayed by helper)
-org $0283BF ; @hook module=Items name=DekuStick_OWSubmoduleHook kind=jsl target=DekuStick_SubmoduleCheck expected_m=8 expected_x=8
-  JSL DekuStick_SubmoduleCheck
+; Module08_OverworldLoad / Module0A_OverworldSpecialLoad ($0283BF-$0283C2): replaces LDA $11 : ASL A : TAX (replayed by helper)
+org $0283BF ; @hook module=Items name=DekuStick_OWLoadHook kind=jsl target=DekuStick_OWLoadCheck expected_m=8 expected_x=8
+  JSL DekuStick_OWLoadCheck
 assert pc() == $0283C3
+
+; Module09_Overworld ($02A477-$02A47A): replaces LDA $11 : ASL A : TAX (replayed by helper)
+org $02A477 ; @hook module=Items name=DekuStick_OWSubmoduleHook kind=jsl target=DekuStick_SubmoduleCheck expected_m=8 expected_x=8
+  JSL DekuStick_SubmoduleCheck
+assert pc() == $02A47B
 pullpc
 

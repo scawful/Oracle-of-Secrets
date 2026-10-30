@@ -27,10 +27,16 @@ Verifies natively in headless Mesen2:
    - Stick remains intact (no enemy-hit breakage).
    - Immune enemies ($0E40 >= 0x80) and wrong layer ($0F20 != Link) are unaffected.
    - Wall contact plays tink without breaking stick.
-6. Native torch interaction:
-   - Unlit held stick touching lit dungeon torch ignites stick (State = 2), preserving remaining burn budget.
-   - Lit held stick touching unlit dungeon torch lights torch (Dungeon_LightTorch at $01F3EC, $04F0 > 0).
-   - Harmless contacts with floor/wrong-layer do not alter stick or torch state.
+6. Native torch interaction (controller-driven):
+   - Authored room: Room 0x00 (Entrance 0x7B), Floor F1, Layer 0 with real torch objects.
+   - Joypad Equipment menu draw: unlit stick drawn (count 2 -> 1, state 1, burn 75).
+   - D-pad movement approaches lit Torch 0: physical tip contact ignites stick (state 2).
+   - D-pad movement carries lit stick across room to unlit Torch 1: physical tip contact lights Torch 1 ($04F1 > 0).
+   - Joypad B button stows stick: count refunded (1 -> 2), burn budget saved in DekuStickWear ($7EF39F).
+   - Redraw via joypad Equipment menu: restores burn budget from wear, wear cleared.
+   - Reignite via D-pad against lit Torch 1: reignites stick, conserving remaining burn budget.
+   - Noncontact controls: out of reach (at spawn and 39px north of torch) and walk away.
+   - Captures native 256x224 screenshots: before_torch, contact_torch_ignite, after_torch_lit.
 7. Cross-room scroll & lifecycle:
    - Screen scrolling ($11 != 0) pauses burn countdown and preserves fire across scroll.
    - Non-default state interruption ($5D = 0x13, Hookshotting) drops stick without refund.
@@ -57,6 +63,11 @@ Verifies natively in headless Mesen2:
 14. Real input-driven doorway crossing & real stairs transition:
     - Lit stick carried across real same-floor doorway in D6 (room 0x98 -> 0x88) preserves fire and resumes burn countdown.
     - Lit stick carried into real spiral stairs in Zora Temple (room 0x28 -> 0x38) cleans up stick and flame without inventory refund.
+15. Overworld dispatch hook and transition drops:
+    - Verifies $02A477 (Module09 dispatch hook) executes DekuStick_SubmoduleCheck every frame in overworld.
+    - Walking across screen or scroll submodule preserves lit stick and pauses burn countdown.
+    - Walking into real overworld entrance (D6 entrance at (3342, 3557)) triggers Module 08/entrance fade.
+    - $0283BF (Module08/0A load hook) drops stick without inventory refund.
 """
 from __future__ import annotations
 
@@ -329,50 +340,51 @@ class DekuStickRuntimeTest:
         addr = TILE_ATTR_BASE + tile_offset
         self.w(addr, 0xC0 | (torch_id & 0x0F))
 
-    def run_tests(self):
+    def run_tests(self, filter_test: int | None = None):
         print("\n=== STARTING DEKU STICK RUNTIME PROOFS ===")
 
         # ----------------------------------------------------
         # 1. Fresh draw & sword lockout
         # ----------------------------------------------------
-        print("[*] Test 1: Fresh Deku Stick draw & sword lockout...")
-        self.w(DEKU_STICKS_COUNT, 2)
-        self.w(DEKU_STICK_WEAR, 0)
-        self.w(DEKU_STICK_STATE, 0)
-        self.w(DEKU_BURN_TIMER, 0)
-        self.w(PENDING_SUPPLY, 0)
+        if filter_test is None or filter_test == 1:
+            print("[*] Test 1: Fresh Deku Stick draw & sword lockout...")
+            self.w(DEKU_STICKS_COUNT, 2)
+            self.w(DEKU_STICK_WEAR, 0)
+            self.w(DEKU_STICK_STATE, 0)
+            self.w(DEKU_BURN_TIMER, 0)
+            self.w(PENDING_SUPPLY, 0)
 
-        if not self.navigate_to_equipment():
-            raise RuntimeError("Failed to open Equipment menu")
+            if not self.navigate_to_equipment():
+                raise RuntimeError("Failed to open Equipment menu")
 
-        # Cursor 20 = Deku Stick (supplies row 2, slot 3)
-        self.w(CURSOR, 20)
-        time.sleep(0.1)
+            # Cursor 20 = Deku Stick (supplies row 2, slot 3)
+            self.w(CURSOR, 20)
+            time.sleep(0.1)
 
-        # Press A to queue draw
-        self.press("A", frames=10)
-        self.wait_play(8.0)
+            # Press A to queue draw
+            self.press("A", frames=10)
+            self.wait_play(8.0)
 
-        count1 = self.r(DEKU_STICKS_COUNT)
-        state1 = self.r(DEKU_STICK_STATE)
-        burn1 = self.r(DEKU_BURN_TIMER)
-        wear1 = self.r(DEKU_STICK_WEAR)
+            count1 = self.r(DEKU_STICKS_COUNT)
+            state1 = self.r(DEKU_STICK_STATE)
+            burn1 = self.r(DEKU_BURN_TIMER)
+            wear1 = self.r(DEKU_STICK_WEAR)
 
-        print(f"    After draw: count={count1} (exp 1), state={state1} (exp 1), burn={burn1} (exp 75), wear={wear1} (exp 0)")
+            print(f"    After draw: count={count1} (exp 1), state={state1} (exp 1), burn={burn1} (exp 75), wear={wear1} (exp 0)")
 
-        # While stick is held (state 1), press B to test stow and sword lockout
-        self.press("B", frames=10)
-        time.sleep(0.1)
+            # While stick is held (state 1), press B to test stow and sword lockout
+            self.press("B", frames=10)
+            time.sleep(0.1)
 
-        count1_stow = self.r(DEKU_STICKS_COUNT)
-        state1_stow = self.r(DEKU_STICK_STATE)
-        wear1_stow = self.r(DEKU_STICK_WEAR)
-        sword_stow = self.r(SWORD_STATE)
+            count1_stow = self.r(DEKU_STICKS_COUNT)
+            state1_stow = self.r(DEKU_STICK_STATE)
+            wear1_stow = self.r(DEKU_STICK_WEAR)
+            sword_stow = self.r(SWORD_STATE)
 
-        t1_ok = (count1 == 1 and state1 == 1 and burn1 == 75 and wear1 == 0 and
-                 count1_stow == 2 and state1_stow == 0 and wear1_stow == 0 and sword_stow == 0)
-        self.results["fresh_draw_and_sword_lockout"] = t1_ok
-        print(f"    After B stow: count={count1_stow} (exp 2), state={state1_stow} (exp 0), wear={wear1_stow} (exp 0), sword={sword_stow} (exp 0) -> OK: {t1_ok}")
+            t1_ok = (count1 == 1 and state1 == 1 and burn1 == 75 and wear1 == 0 and
+                     count1_stow == 2 and state1_stow == 0 and wear1_stow == 0 and sword_stow == 0)
+            self.results["fresh_draw_and_sword_lockout"] = t1_ok
+            print(f"    After B stow: count={count1_stow} (exp 2), state={state1_stow} (exp 0), wear={wear1_stow} (exp 0), sword={sword_stow} (exp 0) -> OK: {t1_ok}")
 
         # ----------------------------------------------------
         # 2. Sword swings normally after stow
@@ -614,42 +626,181 @@ class DekuStickRuntimeTest:
         print(f"    Swipe enemy stun verdict: stun_ok={stun_ok}, immune_ok={immune_ok} -> OK: {t5_ok}")
 
         # ----------------------------------------------------
-        # 6. Native torch interaction
+        # 6. Real controller-driven torch interaction in authored room 0x00
         # ----------------------------------------------------
-        print("[*] Test 6: Native dungeon torch ignition and lighting...")
-        self.w(UNDERWORLD_FLAG, 1)  # Ensure underworld mode
-        self.w(LINK_DIR, 2)         # Facing Down
+        print("[*] Test 6: Controller-driven torch interaction in authored room 0x00...")
+        self.boot_indoor_dungeon()
+        # Load Entrance 0x7B (Room 0x00, Floor F1, Layer 0)
+        self.w(0x7E010E, 0x7B)
+        self.w(MODULE, 6)  # Module 06 UnderworldLoad
+        self.w(SUBMODULE, 0)
+        self.wait_play(8.0)
+        time.sleep(0.5)
 
-        # Case A: Unlit stick touches lit torch 0 -> ignites stick
-        self.w(TORCH_TIMERS + 0, 0x80)  # Torch 0 lit
-        self.set_torch_probe_tile(facing=2, torch_id=0)
-        self.w(DEKU_STICK_STATE, 1)     # Held unlit
-        self.w(DEKU_BURN_TIMER, 60)     # Budget 60 ticks
-        time.sleep(0.1)                 # Execute DekuStick_Main frame hook
+        # Setup starting fixture:
+        # Declared progression fixture:
+        # Deku Sticks count = 2, wear = 0, state = 0, burn = 0
+        # Torch 0 lit ($04F0 = 0x80), Torch 1 unlit ($04F1 = 0x00, 0542 unlit bit)
+        # Clear room boss sprite in slot 0 and protect Link from room hazards
+        self.w(DEKU_STICKS_COUNT, 2)
+        self.w(DEKU_STICK_WEAR, 0)
+        self.w(DEKU_STICK_STATE, 0)
+        self.w(DEKU_BURN_TIMER, 0)
+        self.w(TORCH_TIMERS + 0, 0x80)
+        self.w(TORCH_TIMERS + 1, 0x00)
+        self.w(NOPAIN, 0x01)
+        self.w(SPRITE_STATE + 0, 0)
+        val_0542 = (self.r(0x7E0542) | (self.r(0x7E0543) << 8)) & 0x7FFF
+        self.w(0x7E0542, val_0542 & 0xFF)
+        self.w(0x7E0543, (val_0542 >> 8) & 0xFF)
 
-        state_torch_ignite = self.r(DEKU_STICK_STATE)
-        burn_torch_ignite = self.r(DEKU_BURN_TIMER)
-        ignite_ok = (state_torch_ignite == 2 and burn_torch_ignite in (59, 60))
-        print(f"    Lit torch ignition: state={state_torch_ignite} (exp 2), burn={burn_torch_ignite} (exp in 59..60) -> OK: {ignite_ok}")
+        init_x = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        init_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        print(f"    Room 0x00 loaded: Link=({init_x}, {init_y}), Torch0=0x{self.r(TORCH_TIMERS+0):02X}, Torch1=0x{self.r(TORCH_TIMERS+1):02X}")
 
-        # Case B: Lit stick touches unlit torch 1 -> lights torch 1 via Dungeon_LightTorch
-        self.w(TORCH_TIMERS + 1, 0x00)  # Torch 1 unlit
-        self.set_torch_probe_tile(facing=2, torch_id=1)
-        self.w(DEKU_STICK_STATE, 2)     # Held lit
-        self.w(DEKU_BURN_TIMER, 60)
-        time.sleep(0.1)                 # Execute DekuStick_Main frame hook
+        # Noncontact control 1: Link at spawn (383, 137), 100+ px from torches
+        nc1_state = self.r(DEKU_STICK_STATE)
+        nc1_ok = (nc1_state == 0)
 
-        torch1_timer = self.r(TORCH_TIMERS + 1)
-        torch_light_ok = (torch1_timer > 0)
-        print(f"    Lighting unlit torch: torch1_timer={torch1_timer} (exp >0) -> OK: {torch_light_ok}")
+        # Step A: Draw unlit stick from Equipment menu via controller
+        if not self.navigate_to_equipment():
+            raise RuntimeError("Failed to open Equipment menu in Room 0x00")
+        self.w(CURSOR, 20)
+        self.press("A", frames=10)
+        self.wait_play(8.0)
 
-        # Stow stick
-        self.press("B", frames=10)
+        state_drawn = self.r(DEKU_STICK_STATE)
+        count_drawn = self.r(DEKU_STICKS_COUNT)
+        burn_drawn = self.r(DEKU_BURN_TIMER)
+        draw_ok = (state_drawn == 1 and count_drawn == 1 and burn_drawn == 75)
+        pos_draw = (self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8), self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8))
+        print(f"    Joypad draw unlit stick: state={state_drawn} (exp 1), count={count_drawn} (exp 1), burn={burn_drawn} (exp 75), pos={pos_draw} -> OK: {draw_ok}")
+        self.take_screenshot("before_torch")
+
+        # Step B: Walk LEFT to X=296 (probe X = Link_X+8 = 302..304, in tile col 18 X=288..303)
+        left_step = 0
+        while (self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)) > 296:
+            self.press("LEFT", frames=3)
+            time.sleep(0.04)
+            left_step += 1
+            if left_step % 5 == 0:
+                cx = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+                cy = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+                c_st = self.r(DEKU_STICK_STATE)
+                c_5d = self.r(LINK_STATE)
+                print(f"      [walk LEFT {left_step}] pos=({cx}, {cy}), state={c_st}, 5D=0x{c_5d:02X}")
+
+        # Noncontact control 2: Link at (296, 137), 50+ px north of Torch 0, stick remains unlit
+        posx_nc2 = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        posy_nc2 = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        nc2_state = self.r(DEKU_STICK_STATE)
+        nc2_ok = (nc2_state == 1 and posy_nc2 <= 150)
+        print(f"    Noncontact control 2 at ({posx_nc2}, {posy_nc2}): state={nc2_state} (exp 1) -> OK: {nc2_ok}")
+
+        # Step C: Approach existing lit Torch 0 via D-pad DOWN
+        while (self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)) < 176:
+            self.press("DOWN", frames=2)
+            time.sleep(0.04)
+            if self.r(DEKU_STICK_STATE) == 2:
+                break
+
+        ignite_state = self.r(DEKU_STICK_STATE)
+        ignite_burn = self.r(DEKU_BURN_TIMER)
+        ignite_flame_y = self.r(SPRITE5_OAM + 1)
+        ignite_ok = (ignite_state == 2 and ignite_burn in (74, 75) and ignite_flame_y != 0xE0)
+        posx_ignite = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        posy_ignite = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        print(f"    Torch 0 ignition contact at ({posx_ignite}, {posy_ignite}): state={ignite_state} (exp 2), burn={ignite_burn} (exp 74..75), flame_y={ignite_flame_y} -> OK: {ignite_ok}")
+        self.take_screenshot("contact_torch_ignite")
+
+        # Step D: Carry lit stick to unlit Torch 1
+        # Walk UP to Y=158 for clearance
+        while (self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)) > 158:
+            self.press("UP", frames=3)
+            time.sleep(0.04)
+
+        # Walk RIGHT to X=452 (aligned with Torch 1)
+        while (self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)) < 452:
+            self.press("RIGHT", frames=3)
+            time.sleep(0.04)
+
+        # Approach Torch 1: Walk DOWN to Y=176 facing DOWN
+        while (self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)) < 176:
+            self.press("DOWN", frames=2)
+            time.sleep(0.04)
+            if self.r(TORCH_TIMERS + 1) > 0:
+                break
+
+        t1_timer = self.r(TORCH_TIMERS + 1)
+        stick_burn_when_lit = self.r(DEKU_BURN_TIMER)
+        torch1_lit_ok = (t1_timer > 0 and stick_burn_when_lit > 0)
+        posx_t1 = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        posy_t1 = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        print(f"    Torch 1 contact at ({posx_t1}, {posy_t1}): torch1_timer={t1_timer} (exp >0), stick_burn={stick_burn_when_lit} -> OK: {torch1_lit_ok}")
+        self.take_screenshot("after_torch_lit")
+
+        # Step E: Step slightly UP away from Torch 1 (to Y=166) so redrawn stick is out of torch probe range
+        while (self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)) > 166:
+            self.press("UP", frames=2)
+            time.sleep(0.04)
+
+        burn_before_stow = self.r(DEKU_BURN_TIMER)
+        # Stow stick via joypad B button
+        self.press("B", frames=8)
+        time.sleep(0.15)
+        stow_state = self.r(DEKU_STICK_STATE)
+        stow_count = self.r(DEKU_STICKS_COUNT)
+        saved_wear = self.r(DEKU_STICK_WEAR)
+        stow_ok = (stow_state == 0 and stow_count == 2 and saved_wear == burn_before_stow and saved_wear > 0)
+        print(f"    Stow via B: state={stow_state} (exp 0), count={stow_count} (exp 2), wear={saved_wear} (exp {burn_before_stow}) -> OK: {stow_ok}")
+
+        # Step F: Redraw stick via joypad Equipment menu (at Y=166, out of torch reach -> draws unlit with wear)
+        if not self.navigate_to_equipment():
+            raise RuntimeError("Failed to open Equipment menu for redraw")
+        self.w(CURSOR, 20)
+        self.press("A", frames=10)
+        self.wait_play(8.0)
+
+        redraw_state = self.r(DEKU_STICK_STATE)
+        redraw_count = self.r(DEKU_STICKS_COUNT)
+        redraw_burn = self.r(DEKU_BURN_TIMER)
+        redraw_wear = self.r(DEKU_STICK_WEAR)
+        redraw_ok = (redraw_state == 1 and redraw_count == 1 and redraw_burn == saved_wear and redraw_wear == 0)
+        print(f"    Redraw stick: state={redraw_state} (exp 1), count={redraw_count} (exp 1), burn={redraw_burn} (exp {saved_wear}), wear={redraw_wear} (exp 0) -> OK: {redraw_ok}")
+
+        # Step G: Reignite stick by approaching lit Torch 1 via D-pad DOWN
+        while (self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)) < 176:
+            self.press("DOWN", frames=2)
+            time.sleep(0.04)
+            if self.r(DEKU_STICK_STATE) == 2:
+                break
+
+        reignite_state = self.r(DEKU_STICK_STATE)
+        reignite_burn = self.r(DEKU_BURN_TIMER)
+        reignite_ok = (reignite_state == 2 and reignite_burn in (saved_wear, saved_wear - 1))
+        print(f"    Reignite stick from Torch 1: state={reignite_state} (exp 2), burn={reignite_burn} (exp in [{saved_wear-1}, {saved_wear}]) -> OK: {reignite_ok}")
+
+        # Step H: Noncontact control - walk away UP
+        self.press("UP", frames=6)
         time.sleep(0.1)
+        posy_away = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        state_away = self.r(DEKU_STICK_STATE)
+        burn_away = self.r(DEKU_BURN_TIMER)
+        nc3_ok = (state_away == 2 and posy_away <= 170 and burn_away <= reignite_burn)
+        print(f"    Noncontact walk away: posy={posy_away}, state={state_away} (exp 2), burn={burn_away} -> OK: {nc3_ok}")
 
-        t6_ok = (ignite_ok and torch_light_ok)
+        # Stow stick to leave clean state
+        self.press("B", frames=8)
+        time.sleep(0.1)
+        self.w(NOPAIN, 0x00)
+
+        t6_ok = (nc1_ok and draw_ok and nc2_ok and ignite_ok and torch1_lit_ok and
+                 stow_ok and redraw_ok and reignite_ok and nc3_ok)
         self.results["torch_native_lighting_and_ignition"] = t6_ok
         print(f"    Torch interaction verdict -> OK: {t6_ok}")
+
+        # Restore overworld baseline state for subsequent lifecycle tests
+        self.boot_file2()
 
         # ----------------------------------------------------
         # 7. Cross-room scroll & lifecycle
@@ -1152,6 +1303,91 @@ class DekuStickRuntimeTest:
         t14_ok = (doorway_traversal_ok and stairs_cleanup_ok)
         self.results["real_transitions_proof"] = t14_ok
         print(f"    Real transitions verdict -> OK: {t14_ok}")
+
+        # ----------------------------------------------------
+        # 15. Overworld dispatch hook and transition drops
+        # ----------------------------------------------------
+        print("[*] Test 15: Overworld dispatch hook ($02A477) and transition drops ($0283BF)...")
+        # Load overworld baseline state
+        self.boot_file2()  # loads oos_1772076682_Agent_Gameplay_Baseline_Fresh.mss (Module 09, Screen 64)
+        self.w(DEKU_STICKS_COUNT, 2)
+        self.w(DEKU_STICK_STATE, 2)  # Held lit
+        self.w(DEKU_BURN_TIMER, 60)
+        time.sleep(0.1)
+
+        # Part A: Ordinary overworld scroll / no-drop control
+        # In Module 09, submodule 1..4 is whitelisted by DekuStick_SubmoduleCheck hooked at $02A477
+        self.w(SUBMODULE, 1)  # scroll active
+        time.sleep(0.4)
+        burn_during_ow_scroll = self.r(DEKU_BURN_TIMER)
+        state_during_ow_scroll = self.r(DEKU_STICK_STATE)
+        flame_y_ow_scroll = self.r(SPRITE5_OAM + 1)
+        ow_scroll_paused = (burn_during_ow_scroll == 60 and state_during_ow_scroll == 2 and flame_y_ow_scroll != 0xE0)
+
+        self.w(SUBMODULE, 0)  # scroll complete
+        time.sleep(0.4)
+        burn_after_ow_scroll = self.r(DEKU_BURN_TIMER)
+        state_after_ow_scroll = self.r(DEKU_STICK_STATE)
+        ow_scroll_resumed = (burn_after_ow_scroll < 60 and state_after_ow_scroll == 2)
+        print(f"    Overworld scroll ($11=1): paused={ow_scroll_paused} (burn={burn_during_ow_scroll}), resumed={ow_scroll_resumed} (burn={burn_after_ow_scroll}) -> OK: {ow_scroll_paused and ow_scroll_resumed}")
+
+        # Part B: Real overworld destructive transition into D6 entrance
+        # Load D6 Pre-Entrance overworld state (Screen 54, right outside D6)
+        d6_ow_state_path = REPO / "Roms" / "SaveStates" / "library" / "oos_1772076582_Agent_D6_Pre_Entrance_Fresh.mss"
+        self.b.load_state(path=str(d6_ow_state_path))
+        time.sleep(0.5)
+        self.wait_play(8.0)
+
+        self.w(DEKU_STICKS_COUNT, 2)
+        self.w(DEKU_STICK_STATE, 2)  # Held lit
+        self.w(DEKU_BURN_TIMER, 60)
+        time.sleep(0.1)
+
+        init_ow_pos = (self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8), self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8))
+        print(f"    D6 Pre-Entrance: pos={init_ow_pos}, screen={self.r(0x7E008A)}, state={self.r(DEKU_STICK_STATE)}")
+
+        # Drive Link north into entrance doorway using joypad input UP
+        ow_entrance_entered = False
+        dropped_on_ow_entrance = False
+        for step in range(35):
+            self.b.press_button("UP", frames=4)
+            time.sleep(0.08)
+            mod = self.r(MODULE)
+            st = self.r(DEKU_STICK_STATE)
+            if st == 0 and not dropped_on_ow_entrance:
+                dropped_on_ow_entrance = (self.r(DEKU_BURN_TIMER) == 0 and self.r(DEKU_STICKS_COUNT) == 2)
+            if mod in (6, 7, 8, 15):
+                ow_entrance_entered = True
+                break
+
+        # Wait for entrance transition into dungeon (Module 07)
+        for _ in range(50):
+            time.sleep(0.1)
+            if self.r(MODULE) == 7 and self.r(SUBMODULE) == 0:
+                break
+
+        final_mod = self.r(MODULE)
+        final_ow_state = self.r(DEKU_STICK_STATE)
+        final_ow_burn = self.r(DEKU_BURN_TIMER)
+        final_ow_count = self.r(DEKU_STICKS_COUNT)
+        final_ow_flame_y = self.r(SPRITE5_OAM + 1)
+        final_ow_stick_y = self.r(SPRITE4_OAM + 1)
+
+        ow_entrance_drop_ok = (
+            ow_entrance_entered and
+            dropped_on_ow_entrance and
+            final_ow_state == 0 and
+            final_ow_burn == 0 and
+            final_ow_count == 2 and  # NO refund!
+            final_ow_flame_y >= 0xE0 and
+            final_ow_stick_y >= 0xE0 and
+            final_mod == 7
+        )
+        print(f"    Overworld entrance transition: entered={ow_entrance_entered}, state={final_ow_state} (exp 0), burn={final_ow_burn} (exp 0), count={final_ow_count} (exp 2, no refund), flame_y={final_ow_flame_y}, stick_y={final_ow_stick_y}, final_module={final_mod} -> OK: {ow_entrance_drop_ok}")
+
+        t15_ok = (ow_scroll_paused and ow_scroll_resumed and ow_entrance_drop_ok)
+        self.results["overworld_transitions_and_hooks_proof"] = t15_ok
+        print(f"    Overworld transitions & hooks verdict -> OK: {t15_ok}")
 
 
 def main():
