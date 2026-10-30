@@ -43,10 +43,11 @@ class HoneycombSwarmContractTest(unittest.TestCase):
 
     def test_link_honeycomb_routine_structure(self):
         items_text = ALL_ITEMS.read_text(encoding="utf-8")
-        # Verify Link_Honeycombs exists and checks PendingSupplyAction, active bee, slot count
+        # Verify Link_Honeycombs exists and checks PendingSupplyAction, active bee with $0EB0, slot count
         self.assertIn("Link_Honeycombs:", items_text)
         self.assertIn("PendingSupplyAction : BNE .fail", items_text)
         self.assertIn("CMP.b #$B2 : BNE .not_bee", items_text)
+        self.assertIn("LDA.w $0EB0, X : BEQ .not_bee", items_text)
         self.assertIn("CPY.b #$03 : BCC .fail", items_text)
         self.assertIn("!SUPPLY_ACTION_HONEYCOMB : STA.l PendingSupplyAction", items_text)
 
@@ -55,6 +56,8 @@ class HoneycombSwarmContractTest(unittest.TestCase):
         self.assertIn("Supply_ProcessPendingExitAction:", items_text)
         # Verify check of PendingSupplyAction
         self.assertIn("!SUPPLY_ACTION_HONEYCOMB", items_text)
+        # Verify active bee guard in exit action checks $0EB0
+        self.assertIn("LDA.w $0EB0, X : BEQ .exit_not_bee", items_text)
         # Verify 3 calls to PlayerItem_ReleaseBee
         matches = re.findall(r"JSL\s+PlayerItem_ReleaseBee", items_text)
         self.assertGreaterEqual(len(matches), 3)
@@ -66,6 +69,12 @@ class HoneycombSwarmContractTest(unittest.TestCase):
         self.assertIn("LDA.b #$3C : STA.w $012E", items_text)
         # Verify success sound on deployment
         self.assertIn("LDA.b #$2F : STA.w $012F", items_text)
+
+    def test_windmill_guy_dispatch_multiplexing(self):
+        wmg_asm = (ROOT / "Sprites" / "NPCs" / "windmill_guy.asm").read_text(encoding="utf-8")
+        self.assertIn("SpriteModule_Active_Bank1E = $1E8B11", wmg_asm)
+        self.assertIn("LDA.w $0EB0, X : BEQ +", wmg_asm)
+        self.assertIn("JML SpriteModule_Active_Bank1E", wmg_asm)
 
 
 class HoneycombLogicModelTest(unittest.TestCase):

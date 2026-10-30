@@ -195,6 +195,7 @@ LinkItem_Bottles:
     JSL PlayerItem_ReleaseBee : BPL .bee_spawn_success
       BRL LinkGoBeep ; BRL $07A955
     .bee_spawn_success
+    LDA.b #$01 : STA.w $0EB0, Y
     LDA.b #$02 : STA.l $7EF35C, X
     JSL RebuildHUD_long
 

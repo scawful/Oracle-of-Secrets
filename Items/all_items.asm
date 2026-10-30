@@ -87,10 +87,15 @@ Link_ConsumeMagicBagItem:
     LDA.l PendingSupplyAction : BNE .fail
 
     ; Refuse if an active bee already exists in the room
+    ; Note: Wild bees use ID $79. Player/Good bees use ID $B2 with $0EB0 != 0.
+    ; Windmill Guy uses ID $B2 with $0EB0 == 0; do not treat Windmill Guy as a bee.
     LDX.b #$0F
   .check_active
-    LDA.w $0E20, X : CMP.b #$B2 : BNE .not_bee
-      LDA.w $0DD0, X : BNE .fail
+    LDA.w $0E20, X : CMP.b #$79 : BEQ .bee_active
+                     CMP.b #$B2 : BNE .not_bee
+    LDA.w $0EB0, X : BEQ .not_bee ; Windmill Guy ($0EB0 == 0) is not a bee
+  .bee_active
+    LDA.w $0DD0, X : BNE .fail
   .not_bee
     DEX : BPL .check_active
 
@@ -136,13 +141,20 @@ Supply_ProcessPendingExitAction:
   LDA.b #$00 : STA.l PendingSupplyAction
 
   ; Verify Link still owns at least 1 Honeycomb
-  LDA.l Honeycomb : BEQ .abort_error
+  LDA.l Honeycomb : BNE +
+    JMP .abort_error
+  +
 
   ; Verify no active bee is in the room
   LDX.b #$0F
 .exit_check_bee
-  LDA.w $0E20, X : CMP.b #$B2 : BNE .exit_not_bee
-    LDA.w $0DD0, X : BNE .abort_error
+  LDA.w $0E20, X : CMP.b #$79 : BEQ .exit_bee_active
+                   CMP.b #$B2 : BNE .exit_not_bee
+  LDA.w $0EB0, X : BEQ .exit_not_bee ; Windmill Guy ($0EB0 == 0) is not a bee
+.exit_bee_active
+  LDA.w $0DD0, X : BEQ +
+    JMP .abort_error
+  +
 .exit_not_bee
   DEX : BPL .exit_check_bee
 
@@ -154,28 +166,36 @@ Supply_ProcessPendingExitAction:
     INY
 .exit_slot_used
   DEX : BPL .exit_count_slots
-  CPY.b #$03 : BCC .abort_error
+  CPY.b #$03 : BCS +
+    JMP .abort_error
+  +
 
   ; Spawn 3 Good Bees using PlayerItem_ReleaseBee ($1EDCCF)
   ; Bee 1
   LDA.b $3A : AND.b #$BF : STA.b $3A
   STZ.w $0301
   JSL PlayerItem_ReleaseBee
-  BMI .abort_error
+  BPL +
+    JMP .abort_error
+  +
   TYX : LDA.b #$01 : STA.w $0EB0, X
 
   ; Bee 2
   LDA.b $3A : AND.b #$BF : STA.b $3A
   STZ.w $0301
   JSL PlayerItem_ReleaseBee
-  BMI .abort_error
+  BPL +
+    JMP .abort_error
+  +
   TYX : LDA.b #$01 : STA.w $0EB0, X
 
   ; Bee 3
   LDA.b $3A : AND.b #$BF : STA.b $3A
   STZ.w $0301
   JSL PlayerItem_ReleaseBee
-  BMI .abort_error
+  BPL +
+    JMP .abort_error
+  +
   TYX : LDA.b #$01 : STA.w $0EB0, X
 
   ; Swarm successfully deployed! Spend exactly one Honeycomb
