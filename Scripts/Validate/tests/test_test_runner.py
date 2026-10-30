@@ -273,7 +273,9 @@ class RepositoryDefinitionsTest(unittest.TestCase):
         placeholders = runner.build_placeholders(ROOT)
         broken = {}
         for path in sorted((ROOT / "Tests").rglob("*.json")):
-            if path.name == "manifest.json":
+            # Fixture snapshots are input data for their owning host tests.
+            # They are not runnable emulator definitions with a steps list.
+            if path.name == "manifest.json" or (ROOT / "Tests/fixtures") in path.parents:
                 continue
             errors, _ = runner.validate_test_definition(json.loads(path.read_text()), ROOT, placeholders)
             if errors:
