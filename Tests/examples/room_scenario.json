@@ -1,0 +1,44 @@
+{
+  "name": "UNBOUND template: D6 pre-entry, inventory interaction, and return",
+  "description": "Template only. Bind a compatible pre-entry state and calibrate every controller segment before qualification. This illustrates an inventory lifecycle smoke, not cart, lever, enemy, or human acceptance.",
+  "version": "1.0",
+  "status": "template-unbound",
+  "tags": ["example", "room-scenario", "unbound"],
+  "notes": [
+    "No compatible current candidate ROM/SRM/state tuple is supplied. The absent state path intentionally prevents execution.",
+    "Capture the baseline in room 0x98 before entering 0x97, at the reviewed west-door approach, with its normal checkpoint/profile already applied.",
+    "Coordinates, controller durations, menu behavior, equipment, room flags, and return route require candidate-specific verification.",
+    "No memory fixture, invincibility, enemy deactivation, slot fallback, or raw command is included."
+  ],
+  "timeout_seconds": 45,
+  "saveState": {
+    "path": "UNBOUND/pre-entry-98.mss"
+  },
+  "preconditions": [
+    {"address": "$7E0010", "equals": 7, "description": "Baseline is in dungeon mode"},
+    {"address": "$7E0011", "equals": 0, "description": "Baseline transition submode is idle"},
+    {"address": "$7E00A0", "size": 2, "equals": 152, "description": "Baseline is full room ID 0x0098 before entry"},
+    {"address": "$7E001B", "equals": 1, "description": "Baseline is indoors"},
+    {"address": "$7E00EE", "equals": 0, "description": "Baseline uses the declared upper collision plane"}
+  ],
+  "fixtures": [],
+  "steps": [
+    {"type": "comment", "description": "PRE-ENTRY: verify the loaded baseline before controller input"},
+    {"type": "assert", "address": "$7E00A0", "size": 2, "equals": 152, "description": "pre-entry: full room ID is 0x0098"},
+    {"type": "press", "button": "LEFT", "frames": 24, "description": "Controller entry through the calibrated west-door approach"},
+    {"type": "wait_addr", "address": "$7E00A0", "size": 2, "equals": 151, "timeout": 5.0, "interval": 0.1, "description": "entry: full room ID becomes 0x0097"},
+    {"type": "wait_addr", "address": "$7E0010", "equals": 7, "timeout": 5.0, "interval": 0.1, "description": "ready: dungeon module resumes"},
+    {"type": "wait_addr", "address": "$7E0011", "equals": 0, "timeout": 5.0, "interval": 0.1, "description": "ready: transition submode settles"},
+    {"type": "wait_addr", "address": "$7E0013", "equals": 15, "timeout": 5.0, "interval": 0.1, "description": "ready: display queue clears forced blank"},
+    {"type": "comment", "description": "INTERACTION: inventory open/close is the only smoke interaction asserted here"},
+    {"type": "press", "button": "START", "frames": 1, "description": "Open inventory through controller input"},
+    {"type": "wait_addr", "address": "$7E0010", "equals": 14, "timeout": 3.0, "interval": 0.1, "description": "interaction: inventory module opens"},
+    {"type": "press", "button": "START", "frames": 1, "description": "Close inventory through controller input"},
+    {"type": "wait_addr", "address": "$7E0010", "equals": 7, "timeout": 3.0, "interval": 0.1, "description": "interaction: inventory returns to dungeon mode"},
+    {"type": "wait_addr", "address": "$7E0011", "equals": 0, "timeout": 3.0, "interval": 0.1, "description": "interaction: dungeon submode is idle after inventory"},
+    {"type": "press", "button": "RIGHT", "frames": 24, "description": "Controller return through the calibrated east-door approach"},
+    {"type": "wait_addr", "address": "$7E00A0", "size": 2, "equals": 152, "timeout": 5.0, "interval": 0.1, "description": "return: full room ID becomes 0x0098"},
+    {"type": "wait_addr", "address": "$7E0011", "equals": 0, "timeout": 5.0, "interval": 0.1, "description": "return: transition submode settles"},
+    {"type": "assert", "address": "$7E0010", "equals": 7, "description": "return: final module remains dungeon"}
+  ]
+}

@@ -24,6 +24,8 @@ Usage:
 """
 
 import argparse
+import hashlib
+import math
 import json
 import os
 import re
@@ -41,6 +43,7 @@ if str(_MESEN2_DIR) not in sys.path:
 
 try:
     from mesen2_client_lib.client import OracleDebugClient
+    from mesen2_client_lib.bridge import MesenBridge
     HAS_SOCKET_BACKEND = True
 except Exception:
     HAS_SOCKET_BACKEND = False
@@ -117,8 +120,8 @@ def _parse_addr(addr: Any) -> Optional[int]:
 
 
 class MesenSocketBackend:
-    def __init__(self):
-        self.client = OracleDebugClient()
+    def __init__(self, client=None):
+        self.client = client if client is not None else OracleDebugClient()
 
     def is_connected(self) -> bool:
         return self.client.is_connected()
@@ -914,9 +917,10 @@ def parse_mesen_value(output: str) -> int | None:
         pass
     return None
 
-def check_preconditions(test: dict, verbose: bool = False) -> tuple[bool, list[str]]:
+def check_preconditions(test: dict, verbose: bool = False, backend=None) -> tuple[bool, list[str]]:
     """Check all preconditions are met. Returns (passed, errors)."""
     errors = []
+    send = backend.send if backend is not None else mesen_cmd
 
     for pre in normalize_preconditions(test):
         addr = normalize_addr(pre.get("address"))
@@ -927,7 +931,7 @@ def check_preconditions(test: dict, verbose: bool = False) -> tuple[bool, list[s
             errors.append(f"Missing condition for {addr}")
             continue
 
-        success, output = mesen_cmd('read', addr)
+        success, output = send('read16' if pre.get('size', 1) == 2 else 'read', addr)
         if not success:
             errors.append(f"Failed to read {addr}: {output}")
             continue
@@ -946,9 +950,10 @@ def check_preconditions(test: dict, verbose: bool = False) -> tuple[bool, list[s
     return len(errors) == 0, errors
 
 def execute_step(step: dict, verbose: bool = False,
-                 placeholders: Optional[dict[str, str]] = None) -> tuple[bool, str]:
+                 placeholders: Optional[dict[str, str]] = None, backend=None) -> tuple[bool, str]:
     """Execute a single test step. Returns (passed, message)."""
     step_type = step['type']
+    send = backend.send if backend is not None else mesen_cmd
 
     if step_type == 'comment':
         return True, step.get('description', '')
@@ -956,7 +961,7 @@ def execute_step(step: dict, verbose: bool = False,
     if step_type == 'press':
         button = step['button']
         frames = step.get('frames', 5)
-        success, output = mesen_cmd('press', button, frames, timeout=step.get("timeout", 2.0))
+        success, output = send('press', button, frames, timeout=step.get("timeout", 2.0))
         if verbose:
             log(f"  → Press {button} ({frames} frames)", Colors.BLUE)
         return success, output
@@ -979,7 +984,7 @@ def execute_step(step: dict, verbose: bool = False,
         if not condition:
             return False, f"Missing condition for {addr}"
 
-        success, output = mesen_cmd('read', addr, timeout=step.get("timeout", 2.0))
+        success, output = send('read16' if step.get('size', 1) == 2 else 'read', addr, timeout=step.get("timeout", 2.0))
         if not success:
             return False, f"Failed to read {addr}: {output}"
 
@@ -996,7 +1001,7 @@ def execute_step(step: dict, verbose: bool = False,
 
     elif step_type == 'screenshot':
         path = step.get('path', '')
-        success, output = mesen_cmd('screenshot', path, timeout=step.get("timeout", 4.0))
+        success, output = send('screenshot', path, timeout=step.get("timeout", 4.0))
         if verbose:
             log(f"  → Screenshot: {output}", Colors.BLUE)
         return success, output
@@ -1005,7 +1010,7 @@ def execute_step(step: dict, verbose: bool = False,
         value = step.get("value", step.get("equals"))
         if value is None:
             return False, f"Missing value for write to {addr}"
-        success, output = mesen_cmd('write', addr, value, timeout=step.get("timeout", 2.0))
+        success, output = send('write', addr, value, timeout=step.get("timeout", 2.0))
         if verbose:
             log(f"  → Write {addr} = {value}", Colors.BLUE)
         return success, output
@@ -1014,7 +1019,7 @@ def execute_step(step: dict, verbose: bool = False,
         value = step.get("value", step.get("equals"))
         if value is None:
             return False, f"Missing value for write16 to {addr}"
-        success, output = mesen_cmd('write16', addr, value, timeout=step.get("timeout", 2.0))
+        success, output = send('write16', addr, value, timeout=step.get("timeout", 2.0))
         if verbose:
             log(f"  → Write16 {addr} = {value}", Colors.BLUE)
         return success, output
@@ -1023,7 +1028,7 @@ def execute_step(step: dict, verbose: bool = False,
         args = step.get("args", [])
         if not cmd:
             return False, "Missing command in command step"
-        success, output = mesen_cmd(cmd, *args, timeout=step.get("timeout", 2.0))
+        success, output = send(cmd, *args, timeout=step.get("timeout", 2.0))
         if verbose:
             log(f"  → Command {cmd} {args}", Colors.BLUE)
         return success, output
@@ -1037,7 +1042,7 @@ def execute_step(step: dict, verbose: bool = False,
         interval = float(step.get("interval", 0.1))
         start = time.time()
         while True:
-            success, output = mesen_cmd('read', addr, timeout=step.get("readTimeout", 2.0))
+            success, output = send('read16' if step.get('size', 1) == 2 else 'read', addr, timeout=step.get("readTimeout", 2.0))
             if success:
                 actual = parse_mesen_value(output)
                 if actual is not None:
@@ -1060,7 +1065,7 @@ def execute_step(step: dict, verbose: bool = False,
         interval = float(step.get("interval", 0.2))
         start = time.time()
         while True:
-            success, output = mesen_cmd('state', timeout=step.get("readTimeout", 2.0))
+            success, output = send('state', timeout=step.get("readTimeout", 2.0))
             if success and output:
                 try:
                     state = json.loads(output)
@@ -1451,6 +1456,458 @@ def run_test(test_path: Path, verbose: bool = False, quiet: bool = False, dry_ru
     return "passed", None
 
 
+def _room_binding_create(**kwargs):
+    # Lazy import keeps ordinary host-only tests independent of this opt-in path.
+    directory = str(Path(__file__).resolve().parent)
+    if directory not in sys.path:
+        sys.path.insert(0, directory)
+    from room_scenario_binding import RoomScenarioBinding
+    return RoomScenarioBinding.create(**kwargs)
+
+
+def _new_room_bridge(binding):
+    if not HAS_SOCKET_BACKEND:
+        raise ValueError("Mesen socket client is unavailable")
+    return MesenBridge(binding.socket_path, auto_reconnect=False, max_retries=0)
+
+
+def _new_room_backend(binding, bridge):
+    client = OracleDebugClient(socket_path=binding.socket_path)
+    # Keep all strict operations on the already admitted inert bridge.
+    client.bridge = bridge
+    return MesenSocketBackend(client=client)
+
+
+def _room_number(value, label, low, high):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{label} must be a finite number")
+    if not math.isfinite(value) or not low <= value <= high:
+        raise ValueError(f"{label} must be in {low}..{high}")
+    return value
+
+
+def _room_integer(value, label):
+    if isinstance(value, bool) or not isinstance(value, (int, str)):
+        raise ValueError(f"{label} must be a lossless integer")
+    if isinstance(value, int):
+        return value
+    if not re.fullmatch(r"-?(?:0[xX][0-9a-fA-F]+|\$[0-9a-fA-F]+|[0-9]+)", value):
+        raise ValueError(f"{label} must be a lossless integer")
+    negative = value.startswith("-")
+    raw = value[1:] if negative else value
+    number = int(raw[1:], 16) if raw.startswith("$") else int(raw, 16 if raw.lower().startswith("0x") else 10)
+    return -number if negative else number
+
+
+def _room_predicate(row, label):
+    if "condition" in row:
+        condition = row["condition"]
+        if not isinstance(condition, str):
+            raise ValueError(f"{label} requires a condition name")
+        condition = condition.lower()
+        target = "values" if condition == "in" else "value"
+        if set(row) & ({"equals", "not_equals", "in", "value", "values", "expected"} - {target}):
+            raise ValueError(f"{label} has competing condition/target forms")
+        values = row.get(target)
+    else:
+        forms = set(row) & {"equals", "not_equals", "in"}
+        if len(forms) != 1 or set(row) & {"value", "values", "expected"}:
+            raise ValueError(f"{label} requires one unambiguous condition")
+        condition = next(iter(forms))
+        values = row[condition]
+    if condition not in ("equals", "not_equals", "in", "less_than", "lt", "greater_than", "gt"):
+        raise ValueError(f"{label} has unsupported condition")
+    targets = values if condition == "in" else [values]
+    if not isinstance(targets, list) or not targets:
+        raise ValueError(f"{label} requires expected values")
+    for value in targets:
+        _room_integer(value, f"{label} expected value")
+
+
+def _room_json_pairs(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"Duplicate room JSON field: {key}")
+        result[key] = value
+    return result
+
+
+def _room_json_constant(value):
+    raise ValueError(f"Nonfinite room JSON number: {value}")
+
+
+def _room_json_float(value):
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError("Nonfinite room JSON number")
+    return number
+
+
+def _room_command(bridge, command, params=None, timeout=2):
+    reply = bridge.send_command(command, params, timeout=max(0.001, min(timeout, 2)))
+    if not isinstance(reply, dict) or reply.get("success") is not True:
+        raise ValueError(f"{command} failed: {reply}")
+    return reply.get("data")
+
+
+def _room_state(bridge, timeout=2):
+    state = _room_command(bridge, "STATE", timeout=timeout)
+    if isinstance(state, str):
+        state = json.loads(state)
+    if (not isinstance(state, dict) or state.get("running") is not True or
+            not isinstance(state.get("paused"), bool) or
+            isinstance(state.get("frame"), bool) or not isinstance(state.get("frame"), int) or state["frame"] < 0):
+        raise ValueError("STATE did not provide running/paused/frame identity")
+    return state
+
+
+def _room_pause(bridge, timeout=2):
+    _room_command(bridge, "PAUSE", timeout=timeout)
+    state = _room_state(bridge, timeout)
+    if not state["paused"]:
+        raise ValueError("Owned session did not pause")
+    return state
+
+
+def _room_input(bridge, buttons, frames):
+    # No OracleDebugClient RAM fallback and no bridge delayed detach thread.
+    if not bridge.press_button(buttons, frames=frames, player=0, detach_debugger=False):
+        raise ValueError("INPUT failed; raw RAM input fallback is forbidden")
+
+
+def _room_press(bridge, buttons, frames, deadline, admit):
+    observation = {"requested_input_polls": frames}
+    try:
+        before = _room_state(bridge, deadline - time.monotonic())
+        observation["frame_before"] = before["frame"]
+        if before["paused"]:
+            raise ValueError("Strict input requires the intentionally resumed owned session")
+        _room_input(bridge, buttons, frames)
+        acknowledged = _room_state(bridge, deadline - time.monotonic())
+        observation["frame_after_input_ack"] = acknowledged["frame"]
+        observation["frame_after"] = acknowledged["frame"]
+        observation["observed_frame_advance"] = 0
+        if acknowledged["paused"] or acknowledged["frame"] < before["frame"]:
+            raise ValueError("INPUT acknowledgement frame observation paused or regressed")
+        while True:
+            admit()
+            if time.monotonic() >= deadline:
+                raise ValueError("INPUT did not observe requested frame progression before deadline")
+            after = _room_state(bridge, deadline - time.monotonic())
+            observation["frame_after"] = after["frame"]
+            observation["observed_frame_advance"] = after["frame"] - acknowledged["frame"]
+            if after["paused"] or after["frame"] < acknowledged["frame"]:
+                raise ValueError("INPUT frame observation paused or regressed")
+            if after["frame"] - acknowledged["frame"] >= frames:
+                break
+            time.sleep(min(0.005, max(0, deadline - time.monotonic())))
+        _room_input(bridge, "", 0)
+        return True, "INPUT observed finite frame progression; no RAM fallback", observation
+    except (ValueError, OSError, RuntimeError) as error:
+        observation["error"] = str(error)
+        return False, str(error), observation
+
+
+def _validate_room_condition(row, label):
+    if not isinstance(row, dict):
+        raise ValueError(f"{label} requires a condition object")
+    address = _room_integer(row.get("address"), f"{label} address")
+    size = row.get("size", 1)
+    if type(size) is not int or size not in (1, 2) or not 0 <= address <= 0x1000000 - size:
+        raise ValueError(f"{label} address/size is outside the supported memory range")
+    _room_predicate(row, label)
+
+
+def _room_buttons(value):
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("Room press requires a button")
+    tokens = [token.strip().upper() for token in value.split(",")]
+    if any(token not in {"A", "B", "X", "Y", "L", "R", "UP", "DOWN", "LEFT", "RIGHT", "SELECT", "START"} for token in tokens):
+        raise ValueError("Room press contains an unsupported button token")
+    return ",".join(tokens)
+
+
+def _reject_room_skips(value):
+    if isinstance(value, dict):
+        if set(value) & {"skipIfMissing", "skip", "allowMissing", "skipMissing"}:
+            raise ValueError("Room scenarios cannot skip steps or missing artifacts")
+        for child in value.values():
+            _reject_room_skips(child)
+    elif isinstance(value, list):
+        for child in value:
+            _reject_room_skips(child)
+
+
+def _validate_room_case(test):
+    if not isinstance(test, dict) or test.get("requiresEmulator") is False:
+        raise ValueError("Room scenario requires an emulator case object")
+    _reject_room_skips(test)
+    state = test.get("saveState")
+    if not isinstance(state, dict) or set(state) != {"path"} or not isinstance(state["path"], str) or not state["path"]:
+        raise ValueError("Room scenario saveState requires only an explicit path; no IDs, slots or fallback")
+    timeout = _room_number(test.get("timeout_seconds", 30), "timeout_seconds", 0.01, 300)
+    preconditions = normalize_preconditions(test)
+    if not preconditions:
+        raise ValueError("Room scenario requires nonempty preconditions")
+    for index, row in enumerate(preconditions):
+        _validate_room_condition(row, f"precondition {index + 1}")
+    steps = test.get("steps")
+    if not isinstance(steps, list) or not 1 <= len(steps) <= 1000:
+        raise ValueError("Room scenario requires 1..1000 steps")
+    allowed = {"press", "wait", "assert", "wait_addr", "wait-address", "wait_state", "wait-state", "screenshot", "comment"}
+    checks = set()
+    for index, step in enumerate(steps):
+        if not isinstance(step, dict) or step.get("type") not in allowed:
+            raise ValueError(f"Room step {index + 1}: unsupported type (exec/raw command/writes are refused)")
+        if any(key in step for key in ("skipIfMissing", "skip", "allowMissing", "skipMissing")):
+            raise ValueError("Room scenarios cannot skip steps or missing artifacts")
+        kind = step["type"]
+        if kind in ("assert", "wait_addr", "wait-address", "wait_state", "wait-state"):
+            name = step.get("description")
+            if not isinstance(name, str) or not name.strip() or name in checks:
+                raise ValueError("Room checks require unique nonempty descriptions")
+            checks.add(name)
+            if kind not in ("wait_state", "wait-state"):
+                _validate_room_condition(step, name)
+            else:
+                if (len(set(step) & {"key", "field"}) != 1 or
+                        not isinstance(step.get("key", step.get("field")), str) or
+                        not step.get("key", step.get("field"))):
+                    raise ValueError(f"{name} requires one state key")
+                _room_predicate(step, name)
+        for key in ("timeout", "readTimeout", "interval"):
+            if key in step:
+                _room_number(step[key], key, 0.001, 60)
+        if kind == "press":
+            _room_buttons(step.get("button"))
+            frames = _room_integer(step.get("frames", 5), "Room press frames")
+            if not 1 <= frames <= 6000:
+                raise ValueError("Room press frames must be 1..6000")
+        if kind == "wait":
+            if "seconds" in step and "ms" in step:
+                raise ValueError("Room wait has competing seconds/ms targets")
+            _room_number(step.get("seconds", step.get("ms", 100) / 1000), "wait seconds", 0, 60)
+        if kind == "screenshot" and (not isinstance(step.get("path"), str) or not step["path"]):
+            raise ValueError("Room screenshot requires an explicit output path")
+    if not checks:
+        raise ValueError("Room scenario requires at least one named check")
+    fixtures = test.get("fixtures", [])
+    if not isinstance(fixtures, list) or len(fixtures) > 128:
+        raise ValueError("Room fixtures must be a list of at most 128 writes")
+    for fixture in fixtures:
+        if not isinstance(fixture, dict) or set(fixture) - {"type", "address", "value", "description"}:
+            raise ValueError("Room fixture has unsupported fields")
+        kind = fixture.get("type")
+        address = _room_integer(fixture.get("address"), "Fixture address")
+        value = _room_integer(fixture.get("value"), "Fixture value")
+        width = 2 if kind == "write16" else 1
+        if (kind not in ("write", "write16") or address is None or
+                not 0x7E0000 <= address <= 0x800000 - width or value is None or
+                not 0 <= value < (1 << (8 * width)) or
+                not isinstance(fixture.get("description"), str) or not fixture["description"].strip()):
+            raise ValueError("Room fixture requires a declared WRAM write, value and description")
+    return timeout, fixtures
+
+
+def run_room_scenario(test_path, *, rom, expected_rom_sha256, expected_state_sha256,
+                      socket_path, session_record, owner, repeat=1, dry_run=False):
+    """Strict fast reset of one admitted state; never launch or discover a session."""
+    receipt = {"schema": "oracle.room-scenario.v1", "mode": "fast_state_reset",
+               "status": "failed", "dry_run": bool(dry_run), "identity": {},
+               "fixtures": [], "runs": [], "gaps": [
+                   "Fresh-launch comparison is not run; use the same case with a separately owned fresh launcher.",
+                   "Declared RAM fixtures are injected state, not controller-acquired progression or natural initialization.",
+                   "No separate SRM input or fresh game initialization is admitted by this saved-state reset.",
+                   "INPUT durations are input-poll counts; completion uses post-ack STATE frames, excluding dispatch delay but allowing consumed input polls and polling overshoot, not exact cycle determinism.",
+                   "Owned cleanup leaves the session paused with debugger attached; no unproven STOP_DEBUGGER dependency."]}
+    binding = bridge = None
+    remote_admitted = False
+    try:
+        path = Path(test_path).expanduser().resolve(strict=True)
+        case_bytes = path.read_bytes()
+        case_sha = hashlib.sha256(case_bytes).hexdigest()
+        test = json.loads(case_bytes, object_pairs_hook=_room_json_pairs,
+                          parse_constant=_room_json_constant, parse_float=_room_json_float)
+        timeout, fixtures = _validate_room_case(test)
+        if isinstance(repeat, bool) or not isinstance(repeat, int) or not 1 <= repeat <= 100:
+            raise ValueError("Room repeat must be 1..100")
+        state = Path(test["saveState"]["path"]).expanduser()
+        if not state.is_absolute():
+            state = path.parent / state
+        binding = _room_binding_create(
+            rom=rom, expected_rom_sha256=expected_rom_sha256, state=state,
+            expected_state_sha256=expected_state_sha256, socket_path=socket_path,
+            session_record=session_record, owner=owner)
+        receipt["identity"] = {"case_path": str(path), "case_sha256": case_sha,
+            "rom_path": str(binding.rom_path), "rom_sha256": binding.rom_sha256,
+            "rom_sha1": binding.rom_sha1, "state_path": str(binding.state_path),
+            "state_sha256": binding.state_sha256, "socket_path": binding.socket_path,
+            "session_record": str(binding.session_record), "owner": binding.owner,
+            "pid": binding.pid, "process_identity": binding.process_identity}
+        receipt["fixtures"] = fixtures
+        receipt["requested_repeats"] = repeat
+        binding.verify_local()
+        if dry_run:
+            receipt["status"] = "validated"
+            return receipt
+        bridge = _new_room_bridge(binding)
+        binding.verify_remote(bridge)  # First remote operation is ROMINFO only.
+        remote_admitted = True
+        backend = _new_room_backend(binding, bridge)
+        protected = {path, binding.rom_path, binding.state_path, binding.session_record}
+        for iteration in range(1, repeat + 1):
+            run = {"iteration": iteration, "status": "failed", "preconditions": [],
+                   "fixtures": [], "checks": [], "steps": []}
+            receipt["runs"].append(run)
+            started = time.monotonic()
+            deadline = started + timeout
+            def admit():
+                if time.monotonic() >= deadline:
+                    raise ValueError("Room scenario exceeded timeout_seconds")
+                if hashlib.sha256(path.read_bytes()).hexdigest() != case_sha:
+                    raise ValueError("Room case changed after admission")
+                binding.verify_local()
+                if time.monotonic() >= deadline:
+                    raise ValueError("Room scenario exceeded timeout_seconds")
+            admit()
+            binding.verify_remote(bridge)
+            # First debugger initialization can unpause. Seed it before freezing
+            # the baseline; READ/INPUT must not initialize it during setup.
+            _room_input(bridge, "", 0)
+            _room_pause(bridge, deadline - time.monotonic())
+            admit()
+            ok, message = backend.send("loadstate", str(binding.state_path), timeout=min(timeout, 4))
+            if not ok:
+                raise ValueError(f"Baseline state load failed: {message}")
+            admit()
+            binding.verify_remote(bridge)  # No fixture may precede this join.
+            setup = _room_state(bridge, deadline - time.monotonic())
+            if not setup["paused"]:
+                raise ValueError("Baseline state load did not remain paused")
+            run["setup_frame_before"] = setup["frame"]
+            for precondition in normalize_preconditions(test):
+                admit()
+                row = dict(precondition, type="assert")
+                ok, message = execute_step(row, backend=backend)
+                run["preconditions"].append({"name": row.get("description", row["address"]),
+                                              "passed": ok, "message": message})
+                if not ok:
+                    raise ValueError(message)
+            for fixture in fixtures:
+                admit()
+                binding.verify_remote(bridge)
+                ok, message = execute_step(fixture, backend=backend)
+                row = {"name": fixture["description"], "passed": ok, "message": message}
+                run["fixtures"].append(row)
+                if not ok:
+                    raise ValueError(message)
+                read = "read16" if fixture["type"] == "write16" else "read"
+                ok, message = backend.send(read, fixture["address"])
+                row["readback"] = message
+                if not ok or parse_mesen_value(message) != parse_int(fixture["value"]):
+                    row["passed"] = False
+                    raise ValueError(f"Fixture readback failed: {fixture['description']}")
+            frozen = _room_state(bridge, deadline - time.monotonic())
+            run["setup_frame_after"] = frozen["frame"]
+            if not frozen["paused"] or frozen["frame"] != setup["frame"]:
+                raise ValueError("Room setup advanced while preconditions/fixtures were applied")
+            admit()
+            binding.verify_remote(bridge)
+            _room_command(bridge, "RESUME", timeout=deadline - time.monotonic())
+            if _room_state(bridge, deadline - time.monotonic())["paused"]:
+                raise ValueError("Owned session did not resume for scenario actions")
+            for index, original in enumerate(test["steps"], 1):
+                admit()
+                remaining = deadline - time.monotonic()
+                step = dict(original)
+                kind = step["type"]
+                step["timeout"] = min(step.get("timeout", 5), remaining)
+                step["readTimeout"] = min(step.get("readTimeout", 2), remaining)
+                if kind == "wait" and step.get("seconds", step.get("ms", 100) / 1000) > remaining:
+                    raise ValueError("Wait exceeds remaining case time")
+                if kind == "press":
+                    step["button"] = _room_buttons(step["button"])
+                    step["frames"] = _room_integer(step.get("frames", 5), "frames")
+                    if step["frames"] / 60 > remaining:
+                        raise ValueError("Input frames exceed remaining case time")
+                if kind == "screenshot":
+                    target = Path(step["path"]).expanduser()
+                    if not target.is_absolute():
+                        target = path.parent / target
+                    target = target.resolve()
+                    if repeat > 1:
+                        target = target.with_name(f"{target.stem}.run-{iteration:03d}{target.suffix}")
+                    if target in protected or target.exists():
+                        raise ValueError("Room screenshot refuses an existing or input path")
+                    step["path"] = str(target)
+                observation = None
+                if kind == "press":
+                    ok, message, observation = _room_press(bridge, step["button"],
+                        step["frames"], min(deadline, time.monotonic() + step["timeout"]), admit)
+                else:
+                    ok, message = execute_step(step, backend=backend)
+                row = {"step": index, "name": original.get("description", kind),
+                       "type": kind, "passed": ok, "message": message}
+                if observation is not None:
+                    row["input_observation"] = observation
+                run["steps"].append(row)
+                if kind in ("assert", "wait_addr", "wait-address", "wait_state", "wait-state"):
+                    run["checks"].append(row)
+                if not ok:
+                    raise ValueError(message)
+            admit()
+            binding.verify_remote(bridge)
+            run["elapsed_seconds"] = round(time.monotonic() - started, 6)
+            run["status"] = "passed"
+        receipt["status"] = "passed"
+    except (ValueError, OSError, TypeError, KeyError, RuntimeError, OverflowError) as error:
+        receipt["error"] = str(error)
+        if receipt["runs"]:
+            receipt["runs"][-1]["error"] = str(error)
+    finally:
+        if bridge is not None and remote_admitted:
+            try:
+                # Ownership must still match before any cleanup control. Never
+                # attach to a replacement endpoint or resume a failed episode.
+                binding.verify_local()
+                binding.verify_remote(bridge)
+            except (ValueError, OSError, RuntimeError) as error:
+                receipt["cleanup"] = {"status": "refused_identity", "error": str(error)}
+                receipt["status"] = "failed"
+                receipt.setdefault("error", "Cleanup identity no longer matches")
+            else:
+                try:
+                    _room_pause(bridge)
+                    _room_input(bridge, "", 0)
+                    final = _room_pause(bridge)
+                    receipt["cleanup"] = {"status": "paused_input_cleared",
+                        "frame": final["frame"], "debugger_attached": True}
+                except (ValueError, OSError, RuntimeError) as error:
+                    receipt["cleanup"] = {"status": "failed", "error": str(error)}
+                    receipt["status"] = "failed"
+                    receipt.setdefault("error", f"Owned cleanup failed: {error}")
+    return receipt
+
+
+def room_scenario_main(args):
+    # This branch runs before legacy selection, UNSTASH, FOCUS or get_backend().
+    incompatible = (args.output_format == "junit" or args.suite or args.tag or args.manifest or args.skip_preconditions or
+                    args.skip_load or args.skip_missing_state or args.moe_enabled)
+    if incompatible or len(args.tests) != 1 or not Path(args.tests[0]).is_file() or not args.rom:
+        receipt = {"schema": "oracle.room-scenario.v1", "status": "failed",
+                   "error": "Room scenario requires one explicit case, --rom, and no suite/tag/skip/MoE options"}
+    else:
+        receipt = run_room_scenario(args.tests[0], rom=args.rom,
+            expected_rom_sha256=args.expected_rom_sha256,
+            expected_state_sha256=args.expected_state_sha256,
+            socket_path=args.mesen_socket, session_record=args.session_record,
+            owner=args.session_owner, repeat=args.repeat, dry_run=args.dry_run)
+    # Strict mode emits one clean machine-readable receipt; no legacy log/UI path.
+    print(json.dumps(receipt, indent=2))
+    return 0 if receipt["status"] in ("passed", "validated") else 1
+
+
 def output_results_json(results: list[dict], passed: int, failed: int, skipped: int) -> None:
     """Output results in JSON format."""
     output = {
@@ -1522,7 +1979,21 @@ def main():
     parser.add_argument('--rom', type=str,
                         help='ROM bound to {rom} in exec steps (default: $OOS_TEST_ROM, '
                              f'then the manifest default, then {DEFAULT_ROM})')
+    parser.add_argument('--room-scenario', action='store_true',
+                        help='Strict hash-bound case on one explicitly owned Mesen session')
+    parser.add_argument('--mesen-socket', help='Explicit owned socket; no discovery fallback')
+    parser.add_argument('--session-record', help='Existing named-instance owner record JSON')
+    parser.add_argument('--session-owner', help='Expected owner in the session record')
+    parser.add_argument('--expected-rom-sha256', help='Immutable input ROM SHA256')
+    parser.add_argument('--expected-state-sha256', help='Immutable baseline state SHA256')
+    parser.add_argument('--repeat', type=int, default=1,
+                        help='Strict fast resets of the same bound baseline (1..100)')
     args = parser.parse_args()
+    if args.room_scenario:
+        return room_scenario_main(args)
+    if (args.mesen_socket or args.session_record or args.session_owner or
+            args.expected_rom_sha256 or args.expected_state_sha256 or args.repeat != 1):
+        parser.error('room-scenario binding options require --room-scenario')
 
     repo_root = Path(__file__).resolve().parents[2]
 

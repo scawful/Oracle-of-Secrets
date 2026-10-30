@@ -1,5 +1,8 @@
 """Host-only behaviour of Scripts/Validate/test_runner.py: no emulator, no ROM."""
 import importlib.util
+import hashlib
+import io
+from contextlib import redirect_stdout
 import json
 import os
 from pathlib import Path
@@ -372,6 +375,391 @@ class ModuleIsolationScriptsTest(unittest.TestCase):
                                 capture_output=True, text=True, timeout=60)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn(f"ROM: {ROOT / 'Roms/oos168x.sfc'}", result.stdout)
+
+
+
+class StrictRoomScenarioTest(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.rom = self.root / "case.sfc"
+        self.state = self.root / "baseline.mss"
+        self.record = self.root / "owned.json"
+        self.rom.write_bytes(b"immutable rom")
+        self.state.write_bytes(b"immutable state")
+        self.record.write_text("{}")
+        self.path = self.root / "case.json"
+        self.case = {"name": "Room probe", "timeout_seconds": 2,
+                     "saveState": {"path": "baseline.mss"},
+                     "preconditions": [{"address": "$7E0010", "equals": 7}],
+                     "steps": [{"type": "assert", "address": "$7E00A0", "size": 2,
+                                "equals": 0x104, "description": "Full room identity"}]}
+        self.events = []
+        self.paused, self.frame, self.frame_tick = False, 100, 1
+        self.debugger_initialized = False
+        self.control = mock.Mock()
+        self.control.send_command.side_effect = self.control_command
+        self.control.press_button.side_effect = self.control_input
+        self.memory = {0x7E0010: 7, 0x7E00A0: 0x104, 0x7EF36F: 0}
+        self.binding = mock.Mock()
+        self.binding.rom_path, self.binding.state_path = self.rom, self.state
+        self.binding.socket_path = str(self.root / "owned.sock")
+        self.binding.session_record, self.binding.owner = self.record, "agent"
+        self.binding.pid, self.binding.process_identity = 123, "owned Mesen process"
+        self.binding.rom_sha256 = hashlib.sha256(self.rom.read_bytes()).hexdigest()
+        self.binding.rom_sha1 = hashlib.sha1(self.rom.read_bytes()).hexdigest()
+        self.binding.state_sha256 = hashlib.sha256(self.state.read_bytes()).hexdigest()
+        self.binding.verify_local.side_effect = self.verify_local
+        self.binding.verify_remote.side_effect = lambda bridge: self.events.append("ROMINFO")
+        self.backend = mock.Mock()
+        self.backend.send.side_effect = self.send
+        for name in ("get_backend", "_prepare_emulator", "run_yabai"):
+            patch = mock.patch.object(runner, name, side_effect=AssertionError(f"legacy {name} used"))
+            patch.start()
+            self.addCleanup(patch.stop)
+        patch = mock.patch.object(runner, "_room_binding_create", return_value=self.binding)
+        self.create = patch.start()
+        self.addCleanup(patch.stop)
+        self.real_bridge_factory = runner._new_room_bridge
+        self.real_backend_factory = runner._new_room_backend
+        patch = mock.patch.object(runner, "_new_room_bridge", side_effect=lambda binding: self.events.append("bridge") or self.control)
+        self.bridge = patch.start()
+        self.addCleanup(patch.stop)
+        patch = mock.patch.object(runner, "_new_room_backend", side_effect=lambda *args: self.events.append("client") or self.backend)
+        self.client = patch.start()
+        self.addCleanup(patch.stop)
+
+    def verify_local(self):
+        if hashlib.sha256(self.state.read_bytes()).hexdigest() != self.binding.state_sha256:
+            raise ValueError("Baseline state changed")
+
+    def control_command(self, command, params=None, **kwargs):
+        self.events.append(command)
+        if command == "PAUSE":
+            self.paused = True
+        elif command == "RESUME":
+            self.paused = False
+        if command == "STATE":
+            if not self.paused:
+                self.frame += self.frame_tick
+            return {"success": True, "data": {"running": True, "paused": self.paused,
+                                               "frame": self.frame, "fps": 60}}
+        return {"success": True, "data": "OK"}
+
+    def control_input(self, buttons, frames=5, player=0, detach_debugger=True):
+        self.events.append(f"INPUT:{buttons}:{frames}")
+        self.assertFalse(detach_debugger, "strict input started a delayed detach thread")
+        self.assertEqual(player, 0)
+        if not self.debugger_initialized:
+            self.debugger_initialized = True
+            self.paused = False  # The actual first GetDebugger(true) does this.
+        return True
+
+    def send(self, command, *args, **kwargs):
+        self.events.append(command)
+        if command == "loadstate":
+            self.assertTrue(self.paused, "baseline load was not frozen")
+            self.frame = 1000
+            self.memory[0x7EF36F] = 0
+            return True, "loaded immutable baseline"
+        if command in ("read", "read16"):
+            address = runner._parse_addr(args[0])
+            return True, f"READ:0x{address:06X}=0x{self.memory.get(address, 0):04X}"
+        if command in ("write", "write16"):
+            self.assertTrue(self.paused, "fixture applied while game was running")
+            self.memory[runner._parse_addr(args[0])] = int(args[1])
+        return True, "ok"
+
+    def run_case(self, **kwargs):
+        self.path.write_text(json.dumps(self.case))
+        return self.invoke(**kwargs)
+
+    def invoke(self, **kwargs):
+        return runner.run_room_scenario(self.path, rom=self.rom,
+            expected_rom_sha256=self.binding.rom_sha256,
+            expected_state_sha256=self.binding.state_sha256,
+            socket_path=self.binding.socket_path, session_record=self.record,
+            owner="agent", **kwargs)
+
+    def test_dry_run_validates_local_identity_without_any_remote_constructor(self):
+        result = self.run_case(dry_run=True)
+        self.assertEqual(result["status"], "validated", result)
+        self.assertEqual(self.events, [])
+        self.bridge.assert_not_called()
+        self.client.assert_not_called()
+        self.assertEqual(result["identity"]["state_sha256"], self.binding.state_sha256)
+
+    def test_explicit_factories_use_inert_bridge_and_never_ambient_endpoint(self):
+        # Exercise the real factories independently from the mocked run boundary.
+        bridge_factory = self.real_bridge_factory
+        backend_factory = self.real_backend_factory
+        inert = object()
+        with mock.patch.object(runner, "HAS_SOCKET_BACKEND", True), \
+                mock.patch.object(runner, "MesenBridge", create=True, return_value=inert) as bridge_class, \
+                mock.patch.object(runner, "OracleDebugClient", create=True) as client_class:
+            self.assertIs(bridge_factory(self.binding), inert)
+            bridge_class.assert_called_once_with(self.binding.socket_path,
+                                                 auto_reconnect=False, max_retries=0)
+            backend = backend_factory(self.binding, inert)
+            client_class.assert_called_once_with(socket_path=self.binding.socket_path)
+            self.assertIs(backend.client.bridge, inert)
+
+    def test_documented_example_has_strict_shape_but_remains_unbound(self):
+        example = json.loads((ROOT / "Tests/examples/room_scenario.json").read_text())
+        runner._validate_room_case(example)
+        state = ROOT / "Tests/examples" / example["saveState"]["path"]
+        self.assertFalse(state.exists())
+
+    def test_invalid_local_binding_refuses_before_remote_constructors(self):
+        self.create.side_effect = ValueError("owner/endpoint mismatch")
+        result = self.run_case()
+        self.assertEqual(result["status"], "failed")
+        self.assertIn("owner/endpoint mismatch", result["error"])
+        self.assertEqual(self.events, [])
+
+    def test_slots_fallbacks_skips_and_arbitrary_commands_refuse_offline(self):
+        originals = json.loads(json.dumps(self.case))
+        bad_cases = []
+        for state in ({"slot": 1}, {"path": "baseline.mss", "id": "fallback"},
+                      {"path": "baseline.mss", "allowMissing": True}):
+            case = json.loads(json.dumps(originals)); case["saveState"] = state; bad_cases.append(case)
+        for kind in ("exec", "command", "write", "write16"):
+            case = json.loads(json.dumps(originals)); case["steps"][0]["type"] = kind; bad_cases.append(case)
+        case = json.loads(json.dumps(originals)); case["steps"][0]["skipIfMissing"] = ["missing"]; bad_cases.append(case)
+        for case in bad_cases:
+            with self.subTest(case=case):
+                self.case = case
+                self.assertEqual(self.run_case()["status"], "failed")
+        self.assertEqual(self.events, [])
+        self.create.assert_not_called()
+
+    def test_missing_preconditions_or_named_checks_refuse_offline(self):
+        self.case["preconditions"] = []
+        self.assertEqual(self.run_case()["status"], "failed")
+        self.case["preconditions"] = [{"address": "$7E0010", "equals": 7}]
+        self.case["steps"][0].pop("description")
+        self.assertEqual(self.run_case()["status"], "failed")
+        self.assertEqual(self.events, [])
+
+    def test_nonfinite_bounds_and_rom_fixture_writes_refuse_offline(self):
+        self.case["timeout_seconds"] = float("inf")
+        self.assertEqual(self.run_case()["status"], "failed")
+        self.case["timeout_seconds"] = 2
+        self.case["fixtures"] = [{"type": "write", "address": "$018000", "value": 0, "description": "unsafe ROM"}]
+        self.assertEqual(self.run_case()["status"], "failed")
+        self.assertEqual(self.events, [])
+
+    def test_rominfo_is_first_remote_operation_and_mismatch_never_builds_client(self):
+        self.binding.verify_remote.side_effect = ValueError("ROMINFO mismatch")
+        result = self.run_case()
+        self.assertEqual(result["status"], "failed")
+        self.client.assert_not_called()
+        self.backend.send.assert_not_called()
+
+    def test_post_load_identity_mismatch_stops_before_reads_or_fixtures(self):
+        calls = [0]
+        def remote(bridge):
+            self.events.append("ROMINFO")
+            calls[0] += 1
+            if calls[0] >= 3:
+                raise ValueError("ROM changed after state load")
+        self.binding.verify_remote.side_effect = remote
+        self.case["fixtures"] = [{"type": "write", "address": "$7EF36F", "value": 1, "description": "one key"}]
+        result = self.run_case(repeat=3)
+        self.assertEqual(result["status"], "failed")
+        self.assertLess(self.events.index("PAUSE"), self.events.index("loadstate"))
+        self.assertNotIn("read", self.events)
+        self.assertNotIn("write", self.events)
+        self.assertNotIn("RESUME", self.events)
+        self.assertEqual(result["cleanup"]["status"], "refused_identity")
+
+    def test_repeat_reloads_baseline_and_records_ordered_named_checks(self):
+        self.case["fixtures"] = [{"type": "write", "address": "$7EF36F", "value": 1, "description": "one key"}]
+        self.case["steps"].append({"type": "assert", "address": "$7EF36F", "equals": 1, "description": "Key fixture applied"})
+        result = self.run_case(repeat=2)
+        self.assertEqual(result["status"], "passed", result)
+        self.assertEqual(self.events.count("loadstate"), 2)
+        self.assertEqual(self.events.count("client"), 1)
+        self.assertEqual(self.events.count("write"), 2)
+        self.assertEqual([c["name"] for c in result["runs"][1]["checks"]],
+                         ["Full room identity", "Key fixture applied"])
+        self.assertTrue(result["runs"][0]["fixtures"][0]["passed"])
+        self.assertEqual(result["mode"], "fast_state_reset")
+        self.assertIn("Fresh-launch", result["gaps"][0])
+
+    def test_fixture_readback_failure_stops_before_actions(self):
+        self.case["fixtures"] = [{"type": "write", "address": "$7EF36F", "value": 1, "description": "one key"}]
+        def send(command, *args, **kwargs):
+            if command == "write":
+                self.events.append(command)
+                return True, "write ignored by server"
+            return self.send(command, *args, **kwargs)
+        self.backend.send.side_effect = send
+        result = self.run_case(repeat=2)
+        self.assertEqual(result["status"], "failed")
+        self.assertIn("Fixture readback failed", result["error"])
+        self.assertEqual(result["runs"][0]["steps"], [])
+        self.assertEqual(self.events.count("loadstate"), 1)
+
+    def test_failed_initial_precondition_prevents_fixture_write(self):
+        self.case["preconditions"][0]["equals"] = 9
+        self.case["fixtures"] = [{"type": "write", "address": "$7EF36F", "value": 1, "description": "one key"}]
+        result = self.run_case()
+        self.assertEqual(result["status"], "failed")
+        self.assertNotIn("write", self.events)
+        self.assertFalse(result["runs"][0]["preconditions"][0]["passed"])
+
+    def test_first_failed_check_stops_all_remaining_repeats(self):
+        self.case["steps"][0]["equals"] = 0x105
+        result = self.run_case(repeat=3)
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(len(result["runs"]), 1)
+        self.assertEqual(self.events.count("loadstate"), 1)
+        self.assertFalse(result["runs"][0]["checks"][0]["passed"])
+
+    def test_bound_state_change_during_case_cannot_start_next_repeat(self):
+        def send(command, *args, **kwargs):
+            answer = self.send(command, *args, **kwargs)
+            if command == "read16":
+                self.state.write_bytes(b"changed")
+            return answer
+        self.backend.send.side_effect = send
+        result = self.run_case(repeat=2)
+        self.assertEqual(result["status"], "failed")
+        self.assertIn("Baseline state changed", result["error"])
+        self.assertEqual(self.events.count("loadstate"), 1)
+
+    def test_setup_stays_paused_and_actions_resume_then_cleanup_pauses(self):
+        self.case["fixtures"] = [{"type": "write", "address": "$7EF36F", "value": 1, "description": "one key"}]
+        result = self.run_case()
+        self.assertEqual(result["status"], "passed", result)
+        self.assertLess(self.events.index("INPUT::0"), self.events.index("PAUSE"))
+        self.assertLess(self.events.index("PAUSE"), self.events.index("loadstate"))
+        self.assertLess(self.events.index("write"), self.events.index("RESUME"))
+        self.assertEqual(result["runs"][0]["setup_frame_before"], result["runs"][0]["setup_frame_after"])
+        self.assertEqual(result["cleanup"]["status"], "paused_input_cleared")
+        self.assertTrue(self.paused)
+
+    def test_setup_advancement_refuses_before_actions(self):
+        def send(command, *args, **kwargs):
+            answer = self.send(command, *args, **kwargs)
+            if command == "read":
+                self.frame += 1
+            return answer
+        self.backend.send.side_effect = send
+        result = self.run_case()
+        self.assertEqual(result["status"], "failed")
+        self.assertIn("Room setup advanced", result["error"])
+        self.assertNotIn("RESUME", self.events)
+        self.assertTrue(self.paused)
+
+    def test_strict_input_observes_frames_and_never_uses_client_fallback(self):
+        self.case["steps"].insert(0, {"type": "press", "button": "LEFT", "frames": 3})
+        result = self.run_case()
+        self.assertEqual(result["status"], "passed", result)
+        self.assertNotIn("press", self.events)
+        observation = result["runs"][0]["steps"][0]["input_observation"]
+        self.assertEqual(observation["requested_input_polls"], 3)
+        self.assertGreaterEqual(observation["observed_frame_advance"], 3)
+        self.assertIn("INPUT:LEFT:3", self.events)
+        self.assertTrue(self.paused)
+
+    def test_input_refusal_does_not_fallback_to_ram(self):
+        self.case["steps"].insert(0, {"type": "press", "button": "LEFT", "frames": 1})
+        original = self.control_input
+        self.control.press_button.side_effect = lambda buttons, **kw: False if buttons else original(buttons, **kw)
+        result = self.run_case()
+        self.assertEqual(result["status"], "failed")
+        self.assertIn("fallback is forbidden", result["error"])
+        self.assertNotIn("write", self.events)
+        self.assertNotIn("press", self.events)
+        self.assertTrue(self.paused)
+
+    def test_condition_size_requires_json_integer_before_admission(self):
+        for target in (self.case["preconditions"][0], self.case["steps"][0]):
+            with self.subTest(target=target):
+                target["size"] = "2"
+                result = self.run_case()
+                self.assertEqual(result["status"], "failed")
+                self.assertIn("address/size", result["error"])
+                del target["size"]
+        self.assertEqual(self.events, [])
+        self.create.assert_not_called()
+
+    def test_button_tokens_reject_internal_spaces_and_send_canonical_edges(self):
+        self.case["steps"].insert(0, {"type": "press", "button": "U P", "frames": 1})
+        result = self.run_case()
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(self.events, [])
+        self.create.assert_not_called()
+        self.case["steps"][0]["button"] = " up , a "
+        result = self.run_case()
+        self.assertEqual(result["status"], "passed", result)
+        self.assertIn("INPUT:UP,A:1", self.events)
+
+    def test_input_completion_excludes_frames_before_dispatch_ack(self):
+        self.case["steps"].insert(0, {"type": "press", "button": "LEFT", "frames": 3})
+        release_frames = []
+        original = self.control_input
+        def delayed_input(buttons, **kwargs):
+            if buttons:
+                self.frame += 100  # Running frames elapsed before INPUT acknowledgement.
+            elif "INPUT:LEFT:3" in self.events:
+                release_frames.append(self.frame)
+            return original(buttons, **kwargs)
+        self.control.press_button.side_effect = delayed_input
+        result = self.run_case()
+        self.assertEqual(result["status"], "passed", result)
+        observation = result["runs"][0]["steps"][0]["input_observation"]
+        self.assertGreaterEqual(observation["frame_after_input_ack"] - observation["frame_before"], 100)
+        self.assertGreaterEqual(release_frames[0] - observation["frame_after_input_ack"], 3)
+        self.assertEqual(observation["observed_frame_advance"],
+                         observation["frame_after"] - observation["frame_after_input_ack"])
+
+    def test_stalled_frame_counter_stops_before_next_action(self):
+        self.frame_tick = 0
+        self.case["steps"].insert(0, {"type": "press", "button": "LEFT", "frames": 1, "timeout": 0.03})
+        result = self.run_case(repeat=2)
+        self.assertEqual(result["status"], "failed")
+        observation = result["runs"][0]["steps"][0]["input_observation"]
+        self.assertEqual(observation["observed_frame_advance"], 0)
+        self.assertIn("deadline", observation["error"])
+        self.assertEqual(self.events.count("loadstate"), 1)
+        self.assertTrue(self.paused)
+
+    def test_duplicate_nonfinite_fractional_and_ambiguous_json_refuse_offline(self):
+        baseline = json.loads(json.dumps(self.case))
+        payloads = [json.dumps(baseline).replace('"path": "baseline.mss"',
+                    '"path": "other.mss", "path": "baseline.mss"')]
+        for fields in ({"notes": float("nan")}, {"notes": float("inf")}):
+            payloads.append(json.dumps(dict(baseline, **fields)))
+        for key, value in (("address", 123.5), ("address", True), ("equals", float("inf")),
+                           ("equals", 1.5), ("not_equals", 1)):
+            case = json.loads(json.dumps(baseline)); case["steps"][0][key] = value
+            payloads.append(json.dumps(case))
+        case = json.loads(json.dumps(baseline)); case["steps"][0] = {"type": "press", "button": "RESET", "frames": 1}
+        payloads.append(json.dumps(case))
+        case = json.loads(json.dumps(baseline)); case["steps"].insert(0, {"type": "wait", "seconds": 1, "ms": 10})
+        payloads.append(json.dumps(case))
+        for payload in payloads:
+            with self.subTest(payload=payload):
+                self.path.write_text(payload)
+                self.assertEqual(self.invoke()["status"], "failed")
+        self.assertEqual(self.events, [])
+        self.create.assert_not_called()
+
+    def test_main_strict_receipt_is_clean_json_without_legacy_ui(self):
+        self.path.write_text(json.dumps(self.case))
+        argv = [str(RUNNER), str(self.path), "--room-scenario", "--rom", str(self.rom),
+                "--expected-rom-sha256", self.binding.rom_sha256,
+                "--expected-state-sha256", self.binding.state_sha256,
+                "--mesen-socket", self.binding.socket_path, "--session-record", str(self.record),
+                "--session-owner", "agent", "--dry-run", "--output-format", "json"]
+        with mock.patch.object(sys, "argv", argv), redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(runner.main(), 0)
+        self.assertEqual(json.loads(output.getvalue())["status"], "validated")
+        self.bridge.assert_not_called()
 
 
 if __name__ == "__main__":
