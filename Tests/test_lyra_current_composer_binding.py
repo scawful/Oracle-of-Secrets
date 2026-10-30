@@ -310,6 +310,7 @@ class ResidentComposerResourceTest(unittest.TestCase):
         import test_lyra_resident_graphics as resources
         self.resident = resident
         self.f = ComposerFixture(self)
+        self.bind_origins()
         self.plan = resources.plan(resources.Fixture().inputs())
         self.native = resident.plan_native_resident_abi(self.plan, tile16_count=4096)
         self.inspection = 'explicit-host-inspection-seam'
@@ -321,6 +322,22 @@ class ResidentComposerResourceTest(unittest.TestCase):
         patch = mock.patch.object(X, 'resident_graphics_plan', return_value=self.review)
         patch.start()
         self.addCleanup(patch.stop)
+
+    def bind_origins(self):
+        # These are private proposed host-fixture intervals, not repository
+        # claims. The real profile validator binds their source and geometry.
+        origins = self.f.contract_fixture.value['origins']
+        for name, lo, hi in (('resident_data', 0x310000, 0x330000),
+                             ('resident_code', 0x3C0000, 0x3C0600),
+                             ('resident_resource_code', 0x3C0600, 0x3C0700)):
+            origins[name] = dict(pc=[lo, hi], snes=[X.A.snes(lo), X.A.snes(hi-1)+1],
+                                 source_binding=origins['code']['source_binding'])
+        self.refresh_profile()
+
+    def refresh_profile(self):
+        self.f.contract_fixture.write()
+        self.f.profile = self.f.contract_fixture.profile()
+        self.f.table_plan = self.f.tables()
 
     def emission(self, start=0x310000):
         preimage = X.A.expanded_rom(self.f.source)[start:start+0x20000]
@@ -345,6 +362,11 @@ class ResidentComposerResourceTest(unittest.TestCase):
         constants = files['runtime_constants.asm']
         self.assertIn(b'!LYRA_CURRENT_RESIDENT_ENABLED = 0', constants)
         self.assertIn(b'!LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED = 0', constants)
+        for name, prefix in (('resident_code', 'LYRA_CURRENT_RESIDENT_CODE'),
+                             ('resident_resource_code', 'LYRA_CURRENT_RESIDENT_RESOURCE_CODE')):
+            lo, hi = self.f.profile['origins'][name]['snes']
+            self.assertIn(f'!{prefix}_BASE = ${lo:06X}'.encode(), constants)
+            self.assertIn(f'!{prefix}_END = ${hi:06X}'.encode(), constants)
         self.assertNotIn(b'MAIN_CACHE_BASE', constants)
         prepared = json.loads(files['prepare.json'])
         self.assertFalse(prepared['selected'])
@@ -355,7 +377,7 @@ class ResidentComposerResourceTest(unittest.TestCase):
 
     def test_each_existing_generated_origin_refuses_resident_overlap(self):
         for name, origin in self.f.profile['origins'].items():
-            if origin is None:
+            if origin is None or name == 'resident_data':
                 continue
             emission, bridge = self.emission(origin['pc'][0])
             with self.subTest(origin=name), self.assertRaisesRegex(ValueError,
@@ -366,6 +388,45 @@ class ResidentComposerResourceTest(unittest.TestCase):
             with self.subTest(terrain=reserved['pc']), self.assertRaisesRegex(ValueError,
                     'CURRENT_COMPOSER_RESIDENT_ORIGIN_CONFLICT'):
                 self.compose(emission, bridge)
+
+    def test_missing_or_rebound_resident_origins_cannot_join(self):
+        original = copy.deepcopy(self.f.contract_fixture.value['origins'])
+        emission, bridge = self.emission()
+        for name in ('resident_data', 'resident_code', 'resident_resource_code'):
+            self.f.contract_fixture.value['origins'] = copy.deepcopy(original)
+            del self.f.contract_fixture.value['origins'][name]
+            self.refresh_profile()
+            with self.subTest(origin=name), self.assertRaisesRegex(ValueError,
+                    'CURRENT_COMPOSER_RESIDENT_ORIGIN_UNBOUND'):
+                self.compose(emission, bridge)
+        self.f.contract_fixture.value['origins'] = copy.deepcopy(original)
+        data = self.f.contract_fixture.value['origins']['resident_data']
+        data['pc'][0] += 1
+        data['snes'][0] += 1
+        self.refresh_profile()
+        with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_RESIDENT_ORIGIN_MISMATCH'):
+            self.compose(emission, bridge)
+
+    def test_code_capacity_and_bank_crossing_refuse_without_activation(self):
+        original = copy.deepcopy(self.f.contract_fixture.value['origins'])
+        emission, bridge = self.emission()
+        for name, lo, hi in (('resident_code', 0x3B0000, 0x3B0601),
+                             ('resident_code', 0x3C7F00, 0x3C8100),
+                             ('resident_resource_code', 0x3C7F00, 0x3C8100)):
+            self.f.contract_fixture.value['origins'] = copy.deepcopy(original)
+            self.f.contract_fixture.value['origins'][name].update(
+                pc=[lo, hi], snes=[X.A.snes(lo), X.A.snes(hi-1)+1])
+            self.refresh_profile()
+            with self.subTest(origin=name, pc=[lo, hi]), self.assertRaisesRegex(ValueError,
+                    'CURRENT_COMPOSER_RESIDENT_CODE_ORIGIN_INVALID'):
+                self.compose(emission, bridge)
+
+    def test_proposed_origins_do_not_emit_code_constants_without_resident_emission(self):
+        files = self.f.compose()
+        constants = files['runtime_constants.asm']
+        self.assertNotIn(b'!LYRA_CURRENT_RESIDENT_CODE_BASE', constants)
+        self.assertNotIn(b'!LYRA_CURRENT_RESIDENT_RESOURCE_CODE_BASE', constants)
+        self.assertIn(b'!LYRA_CURRENT_RESIDENT_ENABLED = 0', constants)
 
     def test_stale_preimage_or_missing_graphics_bridge_cannot_join(self):
         emission, bridge = self.emission()

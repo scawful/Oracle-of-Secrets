@@ -1790,7 +1790,31 @@ def inspect_seeded_checkpoint_preview(compiled,symbols,*,source,reviewed,mode):
             'actual checkpoint registry/cache','fresh source/allocation grants','native scene/save-reopen'])
 
 
-def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None):
+RESIDENT_WORD_HOOKS = (
+    (0x02FE1B, 'Lyra_ResidentFull0', 3), (0x02FE22, 'Lyra_ResidentFull2', 3),
+    (0x02FE2B, 'Lyra_ResidentFull1', 3), (0x02FE32, 'Lyra_ResidentFull3', 3),
+    (0x02F456, 'Lyra_ResidentHorizontal0', 0), (0x02F45D, 'Lyra_ResidentHorizontal1', 0),
+    (0x02F466, 'Lyra_ResidentHorizontal2', 0), (0x02F46D, 'Lyra_ResidentHorizontal3', 0),
+    (0x02F51E, 'Lyra_ResidentVertical0', 0), (0x02F525, 'Lyra_ResidentVertical2', 0),
+    (0x02F52E, 'Lyra_ResidentVertical1', 0), (0x02F535, 'Lyra_ResidentVertical3', 0),
+    (0x1BC9B2, 'Lyra_ResidentMutable0', 0), (0x1BC9B9, 'Lyra_ResidentMutable1', 0),
+    (0x1BC9C0, 'Lyra_ResidentMutable2', 0), (0x1BC9C7, 'Lyra_ResidentMutable3', 0),
+    (0x1BCA3F, 'Lyra_ResidentMutable0', 0), (0x1BCA46, 'Lyra_ResidentMutable1', 0),
+    (0x1BCA4D, 'Lyra_ResidentMutable2', 0), (0x1BCA54, 'Lyra_ResidentMutable3', 0))
+
+RESIDENT_EXTERNAL_LABELS = {
+    'ResidentResourceCodeStart', 'ResidentResourceCodeEnd', 'ResidentAnimationSelected',
+    'ResidentAnimationForceTransition', 'ResidentAnimationStage', 'ResidentAnimationDecompress',
+    'ResidentAnimationDestinations', 'ResidentGraphicsResetMainCache', 'ResidentGraphicsMarkMainCache',
+    'SharedGraphicsTransitionSource', 'SharedGraphicsStageNativeMain', 'SharedGraphicsStageNative',
+    'SharedGraphicsInvalidateCache', 'SharedGraphicsIncrementalSource',
+    'InvalidateCustomGraphicsCache', 'ResolveCustomGraphicsTransitionSheet',
+    'SelectCustomGraphicsTransitionSource', 'SelectShipIncrementalGraphicsSource',
+    'AnimateMirrorWarp_DecompressAnimatedTiles', 'NewOverworld_FinishTransGfx', 'BlockGFXCheck',
+    'CheckForChangeGraphicsNormalLoad', 'BirdTravel_LoadTargetArea_Interupt'}
+
+
+def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None, require_resident=False):
     """Exact inspection for independent review; not a self-issued approval."""
     preview=None
     if checkpoint_preview is not None:
@@ -1810,7 +1834,7 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None):
         'ProjectBGPalette_RestoreAndInvalidate','ProjectBGPalette_ResolveColor',
         'AreaTileset_CodeStart','AreaTileset_CodeEnd',
         'CheckForChangeGraphicsNormalLoadBoat','CheckForChangeGraphicsNormalLoadBoat_End',
-        'GfxSheet_Helpers','JointPalette_ZSMainReader','JointPalette_ZSMainReader_End'}
+        'GfxSheet_Helpers','JointPalette_ZSMainReader','JointPalette_ZSMainReader_End'} | RESIDENT_EXTERNAL_LABELS
     active = False
     for line in text.splitlines():
         if line.startswith('['): active = line == '[labels]'
@@ -1859,6 +1883,84 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None):
     regions.append(window(name,address(name),address(name)+len(bytes.fromhex(size_hex))))
     regions.append(window('LoadCheckpointOrWorld',address('LoadCheckpointOrWorld'),
                           address('LyraHost_LoadCheckpointOrWorld_End')))
+    resident = any(name.startswith('Lyra_Resident') or name.startswith('Resident')
+                   or name == 'SharedGraphicsStageNativeMain' for name in labels)
+    R.require(type(require_resident) is bool, 'CURRENT_RESIDENT_SELECTION_INVALID')
+    R.require(not require_resident or resident, 'CURRENT_RESIDENT_COMPILED_BINDING_REQUIRED')
+    if resident:
+        R.require(bg, 'CURRENT_RESIDENT_BG128_COMPILED_BINDING_REQUIRED')
+        # The code windows become part of the independent reviewed snapshot.
+        # Merely finding a page directory never proves that its callers use it.
+        atlas_start, atlas_end = address('Lyra_ResidentAtlasCodeStart'), address('Lyra_ResidentAtlasCodeEnd')
+        R.require(0 < atlas_end-atlas_start <= 0x600, 'CURRENT_RESIDENT_ATLAS_CODE_EXTENT')
+        regions.append(window('Lyra_ResidentAtlasCode', atlas_start, atlas_end))
+        for name in {row[1] for row in RESIDENT_WORD_HOOKS} | {
+                'Lyra_ResidentFullWord', 'Lyra_ResidentHorizontalWord', 'Lyra_ResidentVerticalWord',
+                'Lyra_ResidentMutableWord', 'Lyra_ResidentBufferDelta', 'Lyra_ResidentPhysicalPage',
+                'Lyra_ResidentLookup'}:
+            R.require(atlas_start <= address(name) < address(name+'_End') <= atlas_end,
+                      'CURRENT_RESIDENT_HELPER_OUTSIDE_CODE: '+name)
+        resource_names = ('ResidentResourceCodeStart', 'ResidentAnimationSelected',
+            'ResidentAnimationForceTransition', 'ResidentAnimationStage', 'ResidentAnimationDecompress',
+            'ResidentAnimationDestinations', 'ResidentResourceCodeEnd')
+        resource_addresses = [address(name) for name in resource_names]
+        R.require(resource_addresses[0] == resource_addresses[1]
+                  and all(a < b for a, b in zip(resource_addresses[1:], resource_addresses[2:]))
+                  and resource_addresses[-1] == resource_addresses[-2]+6,
+                  'CURRENT_RESIDENT_RESOURCE_CODE_EXTENT')
+        regions.append(window('ResidentResourceCode', resource_addresses[0], resource_addresses[-1]))
+        start = address('ResidentAnimationDecompress')
+        expected = b'\x22\x94\xD3\x00\x5C'+address('ResidentAnimationStage').to_bytes(3, 'little')
+        R.require(start+len(expected) == address('ResidentAnimationDestinations')
+                  and compiled[A.pc(start):A.pc(start)+len(expected)] == expected,
+                  'CURRENT_RESIDENT_NATIVE_DECOMPRESSOR_CHANGED')
+        start = address('ResidentAnimationDestinations')
+        R.require(compiled[A.pc(start):A.pc(start)+6] == bytes.fromhex('80a680aa80ae'),
+                  'CURRENT_RESIDENT_ANIMATION_DESTINATIONS_CHANGED')
+        gfx_start, gfx_end = address('SharedGraphicsRuntimeStart'), address('SharedGraphicsRuntimeEnd')
+        for name in ('ResidentGraphicsResetMainCache', 'ResidentGraphicsMarkMainCache',
+                     'SharedGraphicsStageNativeMain', 'SharedGraphicsStageNative'):
+            R.require(gfx_start <= address(name) < gfx_end,
+                      'CURRENT_RESIDENT_GRAPHICS_HELPER_OUTSIDE_CODE: '+name)
+        # Bind the four stores and recovery loads to one physical cache. This
+        # checks compiled operands only; its WRAM ownership remains independent.
+        start = address('ResidentGraphicsResetMainCache')
+        raw = compiled[A.pc(start):A.pc(start)+29]
+        R.require(start+29 <= gfx_end and len(raw) == 29
+                  and raw[:8] == bytes.fromhex('08c22048e220a9ff'),
+                  'CURRENT_RESIDENT_MAIN_CACHE_RESET_CHANGED')
+        cache = int.from_bytes(raw[9:12], 'little')
+        R.require(0x7E0000 <= cache < cache+4 <= 0x800000 and cache>>16 == (cache+3)>>16,
+                  'CURRENT_RESIDENT_MAIN_CACHE_RESET_CHANGED')
+        expected = bytes.fromhex('08c22048e220a9ff') + b''.join(
+            b'\x8F'+(cache+i).to_bytes(3, 'little') for i in range(4)) + bytes.fromhex('c22068286b')
+        R.require(raw == expected, 'CURRENT_RESIDENT_MAIN_CACHE_RESET_CHANGED')
+        callback_names = ('InvalidateCustomGraphicsCache', 'ResolveCustomGraphicsTransitionSheet',
+                          'SelectCustomGraphicsTransitionSource', 'SelectShipIncrementalGraphicsSource')
+        callback_addresses = [address(name) for name in callback_names]
+        R.require(all(a < b for a, b in zip(callback_addresses, callback_addresses[1:]))
+                  and callback_addresses[0]+4 == callback_addresses[1]
+                  and callback_addresses[-2]+4 == callback_addresses[-1],
+                  'CURRENT_RESIDENT_GRAPHICS_CALLBACK_EXTENT')
+        regions.append(window('ResidentGraphicsTransitionCallbacks', address('InvalidateCustomGraphicsCache'),
+                              address('SelectShipIncrementalGraphicsSource')+4))
+        recovery = window('ResidentGraphicsMainCacheRecovery', address('ResolveCustomGraphicsTransitionSheet'),
+                          address('SelectCustomGraphicsTransitionSource'))
+        recovery_raw = bytes.fromhex(recovery['payload_hex'])
+        R.require(recovery_raw.count(b'\xBF'+cache.to_bytes(3, 'little')) == 1
+                  and recovery_raw.count(b'\xAF'+(cache+3).to_bytes(3, 'little')) == 1,
+                  'CURRENT_RESIDENT_MAIN_CACHE_RECOVERY_CHANGED')
+        # These source routines have no LyraHost End aliases. Their maintained
+        # fixed overwrite bounds or next same-bank function bound their bytes.
+        R.require(address('AnimateMirrorWarp_DecompressAnimatedTiles') == 0x00D8D5
+                  and address('BirdTravel_LoadTargetArea_Interupt') == 0x0AB8F5,
+                  'CURRENT_RESIDENT_RESOURCE_HOST_MOVED')
+        regions.extend((
+            window('ResidentHost_AnimateMirrorAnimated', 0x00D8D5, 0x00D8EE),
+            window('ResidentHost_BirdTravel', 0x0AB8F5, 0x0AB948),
+            window('ResidentHost_FinishTransGfx', address('NewOverworld_FinishTransGfx'), address('BlockGFXCheck')),
+            window('ResidentHost_NormalLoad', address('CheckForChangeGraphicsNormalLoad'),
+                   address('CheckForChangeGraphicsNormalLoad')+26)))
     calls=[]
     for name,target in [r for r in SOURCE_CALLS if r[0]!='LyraCall_SpritePointer']+[('LyraCall_CurrentActors','Lyra_LoadCurrentSprites')]:
         at=address(name);opcode=0x5C if name=='LyraCall_CurrentActors' else 0x22
@@ -1904,11 +2006,45 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None):
                   'Current hookshot subtraction target differs: '+axis)
         regions.append(window(target,start,end))
         calls.append(dict(label=name,snes=site,target=target,payload_hex=expected.hex()))
+    if resident:
+        resource_calls = (
+            ('LyraHost_PreOverworld_LoadProperties_Interupt', 'ResidentAnimationDecompress', 1),
+            ('LyraHost_Credits_LoadScene_Overworld_PrepGFX_Interupt', 'ResidentAnimationDecompress', 1),
+            ('LyraHost_CheckForChangeGraphicsTransitionLoad', 'ResidentAnimationForceTransition', 2),
+            ('LyraHost_CheckForChangeGraphicsTransitionLoad', 'ResidentAnimationDecompress', 2),
+            ('LyraHost_InitTilesetsLongCalls', 'ResidentGraphicsResetMainCache', 1),
+            ('LyraHost_AnimateMirrorWarp_DecompressNewTileSetsLongCalls', 'ResidentGraphicsResetMainCache', 1),
+            ('LyraHost_AnimateMirrorWarp_DecompressBackgroundsCLongCalls', 'ResidentAnimationStage', 1),
+            ('ResidentHost_AnimateMirrorAnimated', 'ResidentAnimationDecompress', 1),
+            ('ResidentHost_BirdTravel', 'ResidentAnimationStage', 1),
+            ('ResidentHost_BirdTravel', 'ResidentAnimationDecompress', 1),
+            ('ResidentHost_FinishTransGfx', 'SharedGraphicsStageNativeMain', 2),
+            ('ResidentHost_NormalLoad', 'ResidentAnimationStage', 1))
+        by_name = {row['label']: row for row in regions}
+        for host, target, count in resource_calls:
+            region = by_name[host]
+            raw = bytes.fromhex(region['payload_hex'])
+            expected = b'\x22'+address(target).to_bytes(3, 'little')
+            offsets = [offset for offset in range(len(raw)-3) if raw[offset:offset+4] == expected]
+            R.require(len(offsets) == count, 'CURRENT_RESIDENT_RESOURCE_CALL_UNBOUND: '+host+' -> '+target)
+            for index, offset in enumerate(offsets):
+                calls.append(dict(label=f'ResidentCall_{host}_{target}_{index}',
+                    snes=region['snes'][0]+offset, target=target, payload_hex=expected.hex()))
+        for name, target in (('InvalidateCustomGraphicsCache', 'SharedGraphicsInvalidateCache'),
+                             ('SelectCustomGraphicsTransitionSource', 'SharedGraphicsTransitionSource'),
+                             ('SelectShipIncrementalGraphicsSource', 'SharedGraphicsIncrementalSource')):
+            start = address(name)
+            expected = b'\x5C'+address(target).to_bytes(3, 'little')
+            R.require(compiled[A.pc(start):A.pc(start)+4] == expected,
+                      'CURRENT_RESIDENT_GRAPHICS_CALLBACK_UNBOUND: '+name)
+            calls.append(dict(label=name, snes=start, target=target, payload_hex=expected.hex()))
     fixed={a:8 for a in FIXED_NATIVE_INGRESS}
     fixed.update({a:4 for a in (*FIXED_SIZE_SITES,*FIXED_SPRITE_PALETTE_SITES,0x1BC8B8,0x02C4BC,0x028192)})
     fixed.update({a:12 for a in (0x02F59D,0x02F5C8,0x02F7E3,0x02F80E)})
     fixed.update({a:4 for a in (*state.TAIL_LOAD_SITES,*[r[0] for r in state.TAIL_STORE_SITES])})
     fixed[0x1BC906]=3
+    if resident:
+        fixed.update({site:4+pad for site, _, pad in RESIDENT_WORD_HOOKS})
     if area:
         fixed.update({site:4 for site in (0x00886E,0x1BBEFD,0x1BBF2A,0x1BC04E)})
     if expanded_sheets:
@@ -1932,6 +2068,9 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None):
     def hook(at,target,opcode=0x22,padding=0):
         expected=bytes([opcode])+address(target).to_bytes(3,'little')+b'\xea'*padding
         R.require(compiled[A.pc(at):A.pc(at)+len(expected)]==expected,'Current active hook differs: '+hex(at))
+    if resident:
+        for site, target, pad in RESIDENT_WORD_HOOKS:
+            hook(site, target, padding=pad)
     for at,target in ((0x02F59D,'Lyra_FullHigh'),(0x02F5C8,'Lyra_FullLow'),
                       (0x02F7E3,'Lyra_SubHigh'),(0x02F80E,'Lyra_SubLow')):hook(at,target,padding=8)
     for at in state.TAIL_LOAD_SITES:hook(at,'Lyra_TailEvent_Load')

@@ -42,6 +42,13 @@ PREVIEW_SCOPE = 'seeded_checkpoint_preview'
 CURRENT_SOURCE_CONTRACT = Path(__file__).resolve().parents[2] / 'Config/lyra_current_source_contract.json'
 CURRENT_CONTRACT_KIND = 'lyra.current_engine_source_contract.v1'
 CURRENT_PROFILE_KIND = 'lyra.current_native_source_profile.v1'
+RESIDENT_SOURCE_SET = 'lyra_current_resident_constructor_54'
+RESIDENT_ADDITIONAL_SOURCES = (
+    'Overworld/lyra_resident_atlas.asm', 'Overworld/lyra_resident_resources.asm',
+    'Scripts/Build/lyra_native_streams.py', 'Scripts/Build/lyra_project_allocation.py',
+    'Scripts/Build/lyra_project_composition.py', 'Scripts/Build/lyra_project_prepare.py',
+    'Scripts/Build/lyra_project_tile32.py', 'Scripts/Build/lyra_resident_graphics.py',
+    'Scripts/Generate/lz2.py', 'Scripts/Generate/sheet_codec.py', 'Scripts/Generate/sheet_table.py')
 CONTROL_FILES = {'lyra_build_request_file', 'native_save_receipt_file',
                  'native_save_producer_file', 'native_save_transfer_proof_file'}
 # Yaze 7dbfa8ee ProjectSaveSources and SaveToFile define these [files] types.
@@ -857,9 +864,25 @@ def validate_current_source_contract(review, project, base_rom, *, contract_path
             R.require(not any(span[0] < row['pc'][1] and row['pc'][0] < span[1] for row in reader_preimages),
                       'Current native reader spans overlap')
             reader_preimages.append(dict(pc=span, sha256=R.sha(source[slice(*span)])))
+    # Normal source reachability omits inactive resident readers. Bind the
+    # separately selected source set to this exact engine revision as well.
+    current_bindings = P.validate_current_source_set(value)
+    relatives = [Path(row['path']).relative_to(root).as_posix() for row in current_bindings]
+    if ledger['source_set'] == RESIDENT_SOURCE_SET:
+        source_ledger = _json(Q.read_bound(context['ledger']))
+        historical = {row['path'] for row in source_ledger['sources'].values()
+                      if row.get('source_set') == 'lyra_ferry_visual_boundary_53'}
+        R.require(historical and set(relatives) == historical | set(RESIDENT_ADDITIONAL_SOURCES)
+                  | {'Config/allocation_ownership.json'},
+                  'CURRENT_RESIDENT_SOURCE_SET_INCOMPLETE: explicit current consumer/compiler bindings required')
+    committed = _git_source_blobs(root, context['engine_head'], relatives)
+    for row, relative in zip(current_bindings, relatives):
+        R.require(Q.read_bound(row) == committed[relative],
+                  'CURRENT_SOURCE_SET_ENGINE_MISMATCH: ' + relative)
     origins = value['origins']
+    optional_origins = {'actors', 'resident_data', 'resident_code', 'resident_resource_code'}
     _keys(origins, {'tables', 'code', 'descriptor', 'bg_palette', 'graphics'}
-          | ({'actors'} if 'actors' in origins else set()), 'current source origins')
+          | (optional_origins & set(origins)), 'current source origins')
     missing = [key for key, origin in origins.items() if origin is None]
     R.require(not missing, 'CURRENT_SOURCE_ORIGIN_UNBOUND: ' + ', '.join(missing))
     origin_spans = []
@@ -872,7 +895,7 @@ def validate_current_source_contract(review, project, base_rom, *, contract_path
                   and all(type(n) is int for n in snes_span) and 0 < snes_span[0] < snes_span[1] <= 0x1000000
                   and [A.pc(snes_span[0]), A.pc(snes_span[1]-1)+1] == pc_span,
                   'Current ' + name + ' PC/SNES origin differs')
-        R.require(origin['source_binding'] in context['bindings'],
+        R.require(origin['source_binding'] in context['bindings'] + current_bindings,
                   'Current ' + name + ' origin lacks a selected source binding')
         Q.read_bound(origin['source_binding'])
         R.require(not any(pc_span[0] < hi and lo < pc_span[1] for lo, hi in origin_spans),
@@ -884,6 +907,7 @@ def validate_current_source_contract(review, project, base_rom, *, contract_path
     verify_reservation_review(current, project, base_rom)
     return dict(kind='lyra.current_source_contract_review.v1', contract=binding,
         reservation_review_id=current['review_id'], selected_source=context,
+        current_source_bindings=current_bindings,
         native_reader_preimages=reader_preimages, origins=origins, table_layout=layout,
         document_sha256=_document_identity(document), source_rom_sha256=R.sha(source), source_size=len(source),
         **{key: False for key in flags})
@@ -1113,6 +1137,111 @@ def checkpoint_symbols(symbols):
         return read_symbols(handle.name)
 
 
+def current_resident_inputs(profile, source, document, selection):
+    """Reconstruct resident source inputs without granting runtime admission.
+
+    The same constructor serves source review and a future qualified ordinary
+    policy. Terrain residency alone cannot close dynamic/native resources.
+    """
+    import lyra_resident_graphics as resident
+    _keys(selection, {'inspection', 'graphics_catalog', 'graphics_policy'},
+          'current resident source selection')
+    verify_current_native_source_profile(profile, source, document)
+    contract = _json(Q.read_bound(profile['contract']))
+    R.require(contract['ledger']['source_set'] == RESIDENT_SOURCE_SET,
+              'CURRENT_RESIDENT_SOURCE_SET_REQUIRED: inactive resident consumers and compiler must be engine-bound')
+    origins = profile['origins']
+    R.require(all(name in origins for name in
+                  ('resident_data', 'resident_code', 'resident_resource_code')),
+              'CURRENT_RESIDENT_ORIGIN_UNBOUND: data and both code intervals required')
+    bindings = [selection[key] for key in ('inspection', 'graphics_catalog', 'graphics_policy')]
+    for row in bindings:
+        Q.read_bound(row)
+    review = resident_graphics_plan(profile['review']['transfer']['path'],
+        profile['project'], profile['base_rom'], selection['inspection']['path'])
+    plan = review['appearance']['resident_graphics']
+    native = resident.plan_native_resident_abi(plan, tile16_count=4096)
+    lo, hi = origins['resident_data']['pc']
+    preimage = A.expanded_rom(source)[lo:hi]
+    emission = resident.emit_native_resident_abi(native, data_pc=lo, capacity=hi-lo,
+                                                preimage=preimage)
+    bridge = resident.resident_runtime_inputs(native, emission, preimage=preimage)
+    graphics_path = Path(selection['graphics_catalog']['path'])
+    graphics_modules = str(Path(__file__).resolve().parents[1] / 'Graphics')
+    sys.path.insert(0, graphics_modules)
+    try:
+        import compile_runtime_graphics as graphics
+    finally:
+        sys.path.remove(graphics_modules)
+    catalog, assets = graphics.pack.load(graphics_path, parent_count=192)
+    policy = graphics.pack.read_json(Path(selection['graphics_policy']['path']))
+    for name, resource in catalog['resources'].items():
+        binding = Q.bound(graphics_path.parent / resource['path'])
+        R.require(Q.read_bound(binding) == assets[name], 'CURRENT_RESIDENT_GRAPHICS_ASSET_STALE')
+        bindings.append(binding)
+    text, report = graphics.render(catalog, assets, policy, graphics_path.parent, P.ROOT/P.OUTPUT,
+        current_contract=contract, source_root=P.ROOT,
+        resident_native=dict(plan=native, emission=emission, preimage=preimage))
+    R.require(report.get('resident_bridge') == bridge,
+              'CURRENT_RESIDENT_GRAPHICS_BRIDGE_MISMATCH')
+    import lyra_project_bg_palette as bg
+    from types import SimpleNamespace
+    palette_origin = origins['bg_palette']
+    palette_lo, palette_hi = palette_origin['pc']
+    bg_plan = bg.plan_bg128([SimpleNamespace(**row) for row in resident.resident_bg128_rows(native)],
+        data_snes=palette_origin['snes'][0], capacity=palette_hi-palette_lo,
+        preimage=A.expanded_rom(source)[palette_lo:palette_hi])
+    bindings += [Q.bound(Path(graphics.__file__)), Q.bound(Path(graphics.pack.__file__)),
+                 *plan['provenance']['compiler_bindings']]
+    for row in bindings:
+        Q.read_bound(row)
+    verify_current_native_source_profile(profile, source, document)
+    return dict(kind='lyra.current_resident_source_inputs.v1', review=review, plan=plan,
+                native=native, emission=emission, bridge=bridge,
+                graphics_source=text, graphics_report=report,
+                bg128_plan={key: value for key, value in dict(bg_plan,
+                    payload_hex=bg_plan['payload'].hex()).items() if key != 'payload'}, inputs=bindings,
+                selected=False, allocation_granted=False, publication_authorized=False,
+                ordinary_build_ready=False, runtime_admission=False)
+
+
+def verify_resident_payload(emission, compiled, symbols):
+    """Read every emitted placement back at its bound label and physical span."""
+    import lyra_native_loaders as native
+    R.require(type(emission) is dict and emission.get('kind') == 'lyra.resident_atlas_native_emission.v1',
+              'CURRENT_RESIDENT_EMISSION_REQUIRED')
+    labels = native._labels(symbols)
+    payload = bytes.fromhex(emission['payload_hex'])
+    R.require(R.sha(payload) == emission['payload_sha256'], 'CURRENT_RESIDENT_PAYLOAD_STALE')
+    lo, hi = emission['data_pc']
+    cursor, binary_offset = lo, 0
+    placements = emission['placements']
+    R.require(type(placements) is list and len(placements) >= 2,
+              'CURRENT_RESIDENT_PLACEMENTS_REQUIRED')
+    for row in placements:
+        a, b = row['pc']; size = row['byte_count']; offset = row['binary_offset']
+        R.require(type(a) is int and type(b) is int and type(size) is int and size > 0
+                  and lo <= cursor <= a < b <= hi <= len(compiled) and b-a == size
+                  and a//0x8000 == (b-1)//0x8000 and offset == binary_offset
+                  and offset+size <= len(payload)
+                  and A.pc(row['snes']) == a
+                  and labels.get(row['label']) == row['snes']
+                  and labels.get(row['label']+'_End') == row['snes']+size,
+                  'CURRENT_RESIDENT_PLACEMENT_MISMATCH: ' + str(row.get('label')))
+        expected = payload[offset:offset+size]
+        R.require(R.sha(expected) == row['sha256'] and compiled[a:b] == expected,
+                  'CURRENT_RESIDENT_COMPILED_PAYLOAD_MISMATCH: ' + row['label'])
+        cursor = b; binary_offset += size
+    R.require(binary_offset == len(payload) and cursor == emission['used_pc_end']
+              and cursor-lo == emission['used_extent_bytes']
+              and cursor-lo-len(payload) == emission['bank_padding_bytes']
+              and placements[0]['role'] == 'page_directory' and placements[0]['byte_count'] == 256
+              and placements[1]['role'] == 'animation_directory' and placements[1]['byte_count'] == 352,
+              'CURRENT_RESIDENT_PLACEMENT_COVERAGE_MISMATCH')
+    return dict(placements_verified=len(placements), payload_bytes_verified=len(payload),
+                abi_sha256=emission['abi_sha256'], payload_sha256=emission['payload_sha256'])
+
+
 def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     """Select only a source-owned reviewed runtime policy; no A1 fallback."""
     request, source, document = verify_transfer(request_path, project, base_rom)
@@ -1134,6 +1263,7 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
                     'graphics_source','graphics_assets','compiled_consumers','event_state','origin_preimages'}
           | ({'bg128'} if 'bg128' in runtime else set())
           | ({'joint_art'} if 'joint_art' in runtime else set())
+          | ({'resident'} if 'resident' in runtime else set())
           | ({'private_checkpoint','guard_binding'} if preview else
              ({'private_pilot'} if 'private_pilot' in runtime else set())), 'current runtime policy')
     R.require(runtime['kind'] == (PREVIEW_POLICY_KIND if preview else 'lyra.current_runtime_policy.v1')
@@ -1147,6 +1277,12 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     review = _json(Q.read_bound(review_binding))
     R.require(type(review) is dict and review.get('kind') == REVIEW_KIND, 'CURRENT_RUNTIME_REVIEW_REQUIRED')
     profile = current_native_source_profile(review, project, base_rom)
+    if 'resident' in runtime:
+        # Reconstruct the source path, but do not turn a terrain-only census
+        # into permission to use unclosed dynamic/native resource inputs.
+        current_resident_inputs(profile, source, document, runtime['resident'])
+        R.require(False, 'RESIDENT_RESOURCE_CLOSURE_UNBOUND: terrain source preparation '
+                  'does not qualify dynamic recipes, native coexistence or cache ownership')
     checkpoint_context=None;checkpoint_registry=None;guard_binding=None
     if preview:
         import checkpoint_registry as checkpoints
@@ -1299,7 +1435,7 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
                 runtime['graphics_source'],*runtime['graphics_assets'],runtime['compiled_consumers'],Q.bound(request_path),
                 Q.bound(base_rom),Q.bound(project),plan['enforcement_receipt'],
                 *request['inputs'].values(),*profile['selected_source']['bindings'],
-                *profile['review']['adapter_bindings']]
+                *profile['review']['adapter_bindings'], *profile['current_source_bindings']]
     if pilot_binding is not None: bindings.append(pilot_binding)
     if joint_art is not None:
         bindings += [*joint_art['inputs'], Q.bound(Path(lyra_joint_art.__file__))]
@@ -1475,7 +1611,8 @@ def verify_current_output(prepared, compiled, symbols):
             verified_bindings=checkpoint_context['bindings'],
             expected_cache=bytes.fromhex(checkpoint_context['cache_hex']))
     else:
-        observed=native.inspect_current_consumers(compiled,symbols)
+        observed=native.inspect_current_consumers(compiled,symbols,
+            require_resident=prepared.get('resident_source') is not None)
     R.require(observed == expected, 'CURRENT_COMPILED_CONSUMERS_MISMATCH: reviewed active bytes differ')
     if prepared.get('private_pilot') is not None:
         bound=native.private_pilot_native_full_paths(source)
@@ -1510,6 +1647,24 @@ def verify_current_output(prepared, compiled, symbols):
         a,b=row['pc']
         R.require(0<=a<b<=len(compiled) and compiled[a:b].hex()==row['payload_hex'],
                   'CURRENT_COMPILED_PAYLOAD_MISMATCH: derived data differs')
+    resident_proof = None
+    if prepared.get('resident_source') is not None:
+        profile = prepared['current_source_profile']
+        _, saved, document = verify_transfer(prepared['request'], prepared['project'], prepared['base_rom'])
+        rebuilt = current_resident_inputs(profile, saved, document, prepared['resident_selection'])
+        R.require(rebuilt == prepared['resident_source'], 'CURRENT_RESIDENT_SOURCE_STALE')
+        R.require(prepared.get('bg128_binding') is not None
+                  and prepared.get('bg128_plan') == rebuilt['bg128_plan'],
+                  'CURRENT_RESIDENT_BG128_MISMATCH: compiled palettes must use the same packed resident rows')
+        resident_proof = verify_resident_payload(rebuilt['emission'], compiled, symbols)
+        regions = {row['label']: row for row in observed['regions']}
+        for name, label in (('resident_code', 'Lyra_ResidentAtlasCode'),
+                            ('resident_resource_code', 'ResidentResourceCode')):
+            R.require(label in regions, 'CURRENT_RESIDENT_CODE_UNBOUND: ' + label)
+            start_resident, end_resident = regions[label]['snes']
+            lo, hi = profile['origins'][name]['snes']
+            R.require(lo == start_resident < end_resident <= hi,
+                      'CURRENT_RESIDENT_CODE_ORIGIN_MISMATCH: ' + label)
     joint_art_proof = None
     if prepared.get('joint_art') is not None:
         import lyra_joint_art
@@ -1551,4 +1706,6 @@ def verify_current_output(prepared, compiled, symbols):
             derived_output_verified=True, oracle_compile_order_verified=True)
     if joint_art_proof is not None:
         result['joint_art'] = joint_art_proof
+    if resident_proof is not None:
+        result['resident'] = resident_proof
     return result

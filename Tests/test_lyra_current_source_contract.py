@@ -16,24 +16,32 @@ class CurrentSourceContractTest(unittest.TestCase):
         self.fixture.setUp()
         self.addCleanup(self.fixture.doCleanups)
         self.case = self.fixture.case
-        if getattr(self, 'bind_composer_sources', False):
-            # The composer fixture needs the same real source-set validation as
-            # production. Bind its actual tiny engine before creating a review.
-            name = json.loads(Path(X.CURRENT_SOURCE_CONTRACT).read_bytes())['ledger']['source_set']
-            ledger_path = self.fixture.root / 'Config/allocation_ownership.json'
-            ledger = json.loads(ledger_path.read_bytes())
-            ledger.update(source_sets={name: 'Owned composer host fixture'}, sources={name+':world':
-                dict(source_set=name, path='Overworld/world.asm',
-                     sha256=X.R.sha((self.fixture.root / 'Overworld/world.asm').read_bytes()))})
-            ledger_path.write_bytes(X.P.encoded(ledger))
-            self.fixture.commit()
-            self.fixture.head = self.fixture.git('rev-parse', 'HEAD').strip()
-            self.fixture.refresh_proposal_source()
+        # Every current profile binds inactive consumers and its compiler too.
+        # These tiny files are committed but never reached by Oracle_main.asm.
+        self.inactive = self.fixture.root / 'Overworld/inactive-resident.asm'
+        self.compiler = self.fixture.root / 'Scripts/Build/fixture-compiler.py'
+        self.inactive.write_text('; Disabled resident host fixture; no ROM allocation.\n')
+        self.compiler.write_text('# Bound host compiler fixture; never executed.\n')
+        # The generic host profile is deliberately not the full resident set.
+        # ResidentConstructorTest adds and authenticates that set separately.
+        name = 'lyra_ferry_visual_boundary_53'
+        ledger_path = self.fixture.root / 'Config/allocation_ownership.json'
+        ledger = json.loads(ledger_path.read_bytes())
+        ledger.update(source_sets={name: 'Owned current-source host fixture'}, sources={
+            name+':'+str(path.relative_to(self.fixture.root)): dict(
+                source_set=name, path=str(path.relative_to(self.fixture.root)),
+                sha256=X.R.sha(path.read_bytes()))
+            for path in (self.fixture.root / 'Overworld/world.asm', self.inactive, self.compiler)})
+        ledger_path.write_bytes(X.P.encoded(ledger))
+        self.fixture.commit()
+        self.fixture.head = self.fixture.git('rev-parse', 'HEAD').strip()
+        self.fixture.refresh_proposal_source()
         self.review = self.fixture.review()
         self.path = self.fixture.root / 'Config/lyra_current_source_contract.json'
         self.value = json.loads(Path(X.CURRENT_SOURCE_CONTRACT).read_bytes())
         self.value.update(engine_head=self.fixture.head, base_head=self.fixture.head)
-        self.value['ledger'].update(sha256=self.review['selected_source']['ledger']['sha256'],
+        self.value['ledger'].update(source_set=name,
+            sha256=self.review['selected_source']['ledger']['sha256'],
             engine_ledger_sha256=self.review['selected_source']['ledger']['sha256'])
         self.value['native_readers'] = dict(decoder_spans=[[0x17691, 0x177CB]],
             pointer_reader_spans=[[0x1759D, 0x175D2], [0x177E3, 0x17818]])
@@ -45,7 +53,8 @@ class CurrentSourceContractTest(unittest.TestCase):
                 graphics=(0x308000, 0x30A000)).items()}
         self.write()
         for owner, key, value in ((X, 'CURRENT_SOURCE_CONTRACT', self.path),
-                (X.R, 'LEDGER', self.fixture.root / 'Config/allocation_ownership.json')):
+                (X.R, 'LEDGER', self.fixture.root / 'Config/allocation_ownership.json'),
+                (X.P, 'ROOT', self.fixture.root)):
             patch = mock.patch.object(owner, key, value)
             patch.start()
             self.addCleanup(patch.stop)
@@ -78,6 +87,56 @@ class CurrentSourceContractTest(unittest.TestCase):
         for key in ('producer_enforcement_verified', 'ordinary_build_ready', 'runtime_admission', 'rom_written'):
             self.assertIs(plan[key], False)
         self.assertFalse(self.case.candidate.exists())
+
+    def test_inactive_source_origins_are_bound_to_the_selected_commit(self):
+        self.value['origins']['code']['source_binding'] = X.Q.bound(self.inactive)
+        self.write()
+        profile = self.profile()
+        self.assertNotIn(str(self.inactive),
+                         {row['path'] for row in profile['selected_source']['bindings']})
+        self.assertIn(X.Q.bound(self.inactive), profile['current_source_bindings'])
+        self.assertIn(X.Q.bound(self.compiler), profile['current_source_bindings'])
+        self.assertEqual(profile['origins']['code']['source_binding'], X.Q.bound(self.inactive))
+        for key in ('allocation_granted', 'publication_authorized',
+                    'producer_enforcement_verified', 'ordinary_build_ready', 'runtime_admission'):
+            self.assertIs(profile[key], False)
+
+    def test_inactive_source_or_compiler_mutation_and_missing_file_refuse(self):
+        for path in (self.inactive, self.compiler):
+            original = path.read_bytes()
+            try:
+                path.write_bytes(original + b'; uncommitted change\n')
+                with self.subTest(path=path.name, control='mutated'):
+                    with self.assertRaisesRegex(ValueError, 'source-set consumer changed'):
+                        self.profile()
+                path.unlink()
+                with self.subTest(path=path.name, control='missing'):
+                    with self.assertRaisesRegex(ValueError, 'source-set consumer escaped|not available|not found'):
+                        self.profile()
+            finally:
+                path.write_bytes(original)
+
+    def test_newly_rehashed_source_set_cannot_relabel_an_older_engine_commit(self):
+        # The ledger may truthfully hash the new bytes while the selected engine
+        # still names the earlier committed compiler. That is not the same source.
+        previous = self.fixture.head
+        self.compiler.write_text('# Different compiler bytes.\n')
+        ledger_path = self.fixture.root / 'Config/allocation_ownership.json'
+        ledger = json.loads(ledger_path.read_bytes())
+        for row in ledger['sources'].values():
+            if row['path'] == str(self.compiler.relative_to(self.fixture.root)):
+                row['sha256'] = X.R.sha(self.compiler.read_bytes())
+        ledger_path.write_bytes(X.P.encoded(ledger))
+        self.fixture.git('add', 'Config/allocation_ownership.json')
+        self.fixture.git('commit', '-qm', 'Rehashed ledger without selected compiler commit')
+        self.fixture.head = self.fixture.git('rev-parse', 'HEAD').strip()
+        self.fixture.refresh_proposal_source()
+        self.review = self.fixture.review()
+        self.value.update(engine_head=previous, base_head=previous)
+        self.value['ledger']['sha256'] = X.Q.bound(ledger_path)['sha256']
+        self.write()
+        with self.assertRaisesRegex(ValueError, 'CURRENT_SOURCE_SET_ENGINE_MISMATCH'):
+            self.profile()
 
     def test_proposed_null_ledger_readers_and_origins_have_explicit_refusals(self):
         original = copy.deepcopy(self.value)

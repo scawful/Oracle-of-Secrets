@@ -6,8 +6,8 @@
   "ledger": {
     "engine_ledger_sha256": "6bc162723d33d3589b076cbc7726fc6022d73732f2f5cecf75c9952098d485d6",
     "path": "Config/allocation_ownership.json",
-    "sha256": "1c2db6fa7c8558dde14bbfc84149f3225b2d6069d6ea4e84345efac19671682b",
-    "source_set": "lyra_ferry_visual_boundary_53"
+    "sha256": "54e895ce534bbab0454be00e8c288386782388f8906fca4547eeea50e5b533d2",
+    "source_set": "lyra_current_resident_constructor_54"
   },
   "native_readers": {
     "decoder_spans": [
@@ -39,8 +39,8 @@
         14782464
       ],
       "source_binding": {
-        "path": "/Users/scawful/.codex/worktrees/lyra-world-lifecycle/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
-        "sha256": "deff646a6820bb9fb7960bfa4216d9512f813bfa91406384c44757cdd6b17a0a"
+        "path": "/Users/scawful/.codex/worktrees/items-menu-daily-20261030/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
+        "sha256": "9bb9f0ae180128bdf8ce461ae0f0d760699f5c78f9d2c33112ab91d7650cf6c2"
       }
     },
     "bg_palette": {
@@ -53,8 +53,8 @@
         14779648
       ],
       "source_binding": {
-        "path": "/Users/scawful/.codex/worktrees/lyra-world-lifecycle/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
-        "sha256": "deff646a6820bb9fb7960bfa4216d9512f813bfa91406384c44757cdd6b17a0a"
+        "path": "/Users/scawful/.codex/worktrees/items-menu-daily-20261030/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
+        "sha256": "9bb9f0ae180128bdf8ce461ae0f0d760699f5c78f9d2c33112ab91d7650cf6c2"
       }
     },
     "code": {
@@ -67,8 +67,8 @@
         14745600
       ],
       "source_binding": {
-        "path": "/Users/scawful/.codex/worktrees/lyra-world-lifecycle/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
-        "sha256": "deff646a6820bb9fb7960bfa4216d9512f813bfa91406384c44757cdd6b17a0a"
+        "path": "/Users/scawful/.codex/worktrees/items-menu-daily-20261030/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
+        "sha256": "9bb9f0ae180128bdf8ce461ae0f0d760699f5c78f9d2c33112ab91d7650cf6c2"
       }
     },
     "descriptor": {
@@ -81,8 +81,8 @@
         14778432
       ],
       "source_binding": {
-        "path": "/Users/scawful/.codex/worktrees/lyra-world-lifecycle/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
-        "sha256": "deff646a6820bb9fb7960bfa4216d9512f813bfa91406384c44757cdd6b17a0a"
+        "path": "/Users/scawful/.codex/worktrees/items-menu-daily-20261030/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
+        "sha256": "9bb9f0ae180128bdf8ce461ae0f0d760699f5c78f9d2c33112ab91d7650cf6c2"
       }
     },
     "graphics": {
@@ -95,8 +95,8 @@
         14868480
       ],
       "source_binding": {
-        "path": "/Users/scawful/.codex/worktrees/lyra-world-lifecycle/oracle-of-secrets/Overworld/custom_gfx.asm",
-        "sha256": "8c8fb6d228e1b8888685a5d351a5bec1f19e720b59d7bd0156fc9773906d4c0f"
+        "path": "/Users/scawful/.codex/worktrees/items-menu-daily-20261030/oracle-of-secrets/Overworld/custom_gfx.asm",
+        "sha256": "287a087964ceea27169112107efe551caefb185eeed9290eab8c75b407ad495b"
       }
     },
     "tables": {
@@ -109,8 +109,8 @@
         14729216
       ],
       "source_binding": {
-        "path": "/Users/scawful/.codex/worktrees/lyra-world-lifecycle/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
-        "sha256": "deff646a6820bb9fb7960bfa4216d9512f813bfa91406384c44757cdd6b17a0a"
+        "path": "/Users/scawful/.codex/worktrees/items-menu-daily-20261030/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
+        "sha256": "9bb9f0ae180128bdf8ce461ae0f0d760699f5c78f9d2c33112ab91d7650cf6c2"
       }
     }
   },

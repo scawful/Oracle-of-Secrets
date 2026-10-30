@@ -492,16 +492,29 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
                   and all(type(value) is int for value in interval)
                   and 0 <= interval[0] < interval[1] <= 0x400000,
                   'CURRENT_COMPOSER_RESIDENT_ORIGIN_UNBOUND: explicit data interval required')
+        resident_origins = ('resident_data', 'resident_code', 'resident_resource_code')
+        R.require(all(type(origins.get(name)) is dict for name in resident_origins),
+                  'CURRENT_COMPOSER_RESIDENT_ORIGIN_UNBOUND: explicit data and code origins required')
         for name, origin in origins.items():
-            if origin is None:
+            if origin is None or name == 'resident_data':
                 continue
             reserved = origin['pc']
             R.require(not (interval[0] < reserved[1] and reserved[0] < interval[1]),
                       'CURRENT_COMPOSER_RESIDENT_ORIGIN_CONFLICT: ' + name)
+        for name, prefix in (('resident_code', 'LYRA_CURRENT_RESIDENT_CODE'),
+                             ('resident_resource_code', 'LYRA_CURRENT_RESIDENT_RESOURCE_CODE')):
+            lo, hi = origins[name]['snes']
+            R.require(lo & 0xFFFF >= 0x8000 and lo < hi
+                      and lo >> 16 == (hi-1) >> 16
+                      and (name != 'resident_code' or hi-lo <= 0x600),
+                      'CURRENT_COMPOSER_RESIDENT_CODE_ORIGIN_INVALID: ' + name)
+            constants += f'!{prefix}_BASE = ${lo:06X}\n!{prefix}_END = ${hi:06X}\n'
         for reserved in profile['review']['preimages']:
             lo, hi = reserved['pc']
             R.require(not (interval[0] < hi and lo < interval[1]),
                       'CURRENT_COMPOSER_RESIDENT_ORIGIN_CONFLICT: reviewed terrain output')
+        R.require(interval == origins['resident_data']['pc'],
+                  'CURRENT_COMPOSER_RESIDENT_ORIGIN_MISMATCH: emission differs from source-profile data interval')
         preimage = A.expanded_rom(source)[slice(*interval)]
         bridge = resident.resident_runtime_inputs(resident_native, resident_native_emission, preimage=preimage)
         R.require(graphics_report.get('resident_bridge') == bridge,

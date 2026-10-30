@@ -280,7 +280,10 @@ class CurrentBuildTest(unittest.TestCase):
         self.assertEqual(p['kind'],'lyra.current_build_prepare.v1');self.assertTrue(p['selected'])
         self.assertEqual(p['generation'],self.case.save['generation'])
         self.assertEqual(p['actor_storage_plan']['payload_bytes'],1)
-        self.assertEqual(len(p['tables']['tables']),34)
+        self.assertEqual(len(p['tables']['tables']),38)
+        self.assertTrue({'special_sprite_gfx_phase1', 'special_sprite_gfx_phase2',
+                         'special_sprite_palettes_phase1', 'special_sprite_palettes_phase2'}
+                        <= {row['name'] for row in p['tables']['tables']})
         self.assertIn(b'!LYRA_CURRENT_EVENTS_ENABLED = 1',self.files['runtime_constants.asm'])
         self.assertIn(b'!LYRA_CURRENT_ACTORS_ENABLED = 1',self.files['runtime_constants.asm'])
         self.assertIn(b'Lyra_CurrentActorData:',self.files['runtime_data.asm'])
