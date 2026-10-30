@@ -1790,6 +1790,56 @@ def inspect_seeded_checkpoint_preview(compiled,symbols,*,source,reviewed,mode):
             'actual checkpoint registry/cache','fresh source/allocation grants','native scene/save-reopen'])
 
 
+# Exact Conn Ice Rod body from the maintained source, with its literal fill
+# removed at offset $A3. Only that load becomes a resident JSL; the target
+# calculation, semantic B7 store, both payload stores and both DMAs stay exact.
+ICE_ROD_NATIVE_MAIN = bytes.fromhex(
+    '9de403a8ad8c00d0016bada303c906f0016be004f0016bade803c908f008'
+    'ade803c903f0016bad0303c906f0016bad0403c906f0016b8a8f04d07e'
+    'ad12422980f0f9c230ad16218f05d07ea50038ed08072d0a070a0a0a8506'
+    'a50238ed0c072d0e070506aaa9b7009f00207e1864028a293f00c920009005'
+    'a9000485028a29ff0fc900089007a50269ff0785028a291f00650285028a29'
+    '80074a65028d16218f07d07ea9831d8f00d07e8f02d07e2000fdc230af07'
+    'd07e6920008d16212000fdaf05d07e8d1621e230af04d07eaa6b')
+ICE_ROD_NATIVE_DMA = bytes.fromhex(
+    'a97e008d0443a900d08d0243e230a9188d0143a9048d0543a9018d00438d0b4260')
+
+
+def require_current_resident_ice_rod_rows(plan):
+    """Qualify one-word B7 reuse from authenticated original/packed remaps.
+
+    Dry physical pages need no B7 row. Every present row must describe all
+    four quadrants; the direct writer repeats quadrant zero for both DMAs.
+    This shape check grants no allocation, resource closure or runtime use.
+    """
+    R.require(type(plan) is dict and type(plan.get('areas')) is list,
+              'CURRENT_RESIDENT_ICE_ROD_PLAN_INVALID')
+    pages = {}
+    for area in plan['areas']:
+        R.require(type(area) is dict and type(area.get('maps')) is list
+                  and type(area.get('remaps')) is list,
+                  'CURRENT_RESIDENT_ICE_ROD_PLAN_INVALID')
+        for row in area['remaps']:
+            R.require(type(row) is dict and all(type(row.get(key)) is int
+                for key in ('map_id', 'tile16_id', 'quadrant', 'source_word', 'target_word')),
+                'CURRENT_RESIDENT_ICE_ROD_ROW_INVALID')
+            if row['tile16_id'] != 0xB7:
+                continue
+            page, quadrant = row['map_id'], row['quadrant']
+            R.require(0xA0 <= page < 0xC0 and page in area['maps']
+                      and 0 <= quadrant < 4 and 0 <= row['target_word'] <= 0xFFFF,
+                      'CURRENT_RESIDENT_ICE_ROD_ROW_INVALID')
+            words = pages.setdefault(page, {})
+            R.require(quadrant not in words, 'CURRENT_RESIDENT_ICE_ROD_ROW_DUPLICATE')
+            R.require(row['source_word'] == 0x1D83,
+                      'CURRENT_RESIDENT_ICE_ROD_SOURCE_SHAPE_UNSUPPORTED')
+            words[quadrant] = row['target_word']
+    for words in pages.values():
+        R.require(set(words) == {0, 1, 2, 3} and len(set(words.values())) == 1,
+                  'CURRENT_RESIDENT_ICE_ROD_PACKED_SHAPE_UNSUPPORTED')
+    return [dict(map_id=page, target_word=words[0]) for page, words in sorted(pages.items())]
+
+
 RESIDENT_WORD_HOOKS = (
     (0x02FE1B, 'Lyra_ResidentFull0', 3), (0x02FE22, 'Lyra_ResidentFull2', 3),
     (0x02FE2B, 'Lyra_ResidentFull1', 3), (0x02FE32, 'Lyra_ResidentFull3', 3),
@@ -1897,9 +1947,30 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None, req
         for name in {row[1] for row in RESIDENT_WORD_HOOKS} | {
                 'Lyra_ResidentFullWord', 'Lyra_ResidentHorizontalWord', 'Lyra_ResidentVerticalWord',
                 'Lyra_ResidentMutableWord', 'Lyra_ResidentBufferDelta', 'Lyra_ResidentPhysicalPage',
-                'Lyra_ResidentLookup'}:
+                'Lyra_ResidentLookup', 'Lyra_ResidentIceRodWord'}:
             R.require(atlas_start <= address(name) < address(name+'_End') <= atlas_end,
                       'CURRENT_RESIDENT_HELPER_OUTSIDE_CODE: '+name)
+        # Bind the complete maintained direct writer, not only a matching JSL
+        # somewhere in its body. Early branches, target X and carry-sensitive
+        # ADC $0020 must remain the original protocol.
+        ice_start, ice_end = address('LyraHost_IceRodStart'), address('LyraHost_IceRodEnd')
+        ice_call = address('LyraCall_IceRodWord')
+        expected_ice = (ICE_ROD_NATIVE_MAIN[:0xA3] + b'\x22'
+            + address('Lyra_ResidentIceRodWord').to_bytes(3, 'little') + ICE_ROD_NATIVE_MAIN[0xA6:])
+        R.require((ice_start, ice_end, address('LyraHost_IceRodTargetStart'), ice_call,
+                   address('LyraCall_IceRodWord_End')) ==
+                  (0x0EFBA0, 0x0EFBA0+len(expected_ice), 0x0EFBE2, 0x0EFC43, 0x0EFC47)
+                  and ice_end <= 0x0EFC80, 'CURRENT_RESIDENT_ICE_ROD_HOST_EXTENT')
+        R.require(compiled[A.pc(ice_start):A.pc(ice_start)+len(expected_ice)] == expected_ice,
+                  'CURRENT_RESIDENT_ICE_ROD_BODY_CHANGED')
+        R.require((address('LyraHost_IceRodDmaStart'), address('LyraHost_IceRodDmaEnd')) ==
+                  (0x0EFD00, 0x0EFD00+len(ICE_ROD_NATIVE_DMA)),
+                  'CURRENT_RESIDENT_ICE_ROD_DMA_EXTENT')
+        R.require(compiled[A.pc(0x0EFD00):A.pc(0x0EFD00)+len(ICE_ROD_NATIVE_DMA)] == ICE_ROD_NATIVE_DMA,
+                  'CURRENT_RESIDENT_ICE_ROD_DMA_CHANGED')
+        regions.extend((window('ResidentHost_IceRod', ice_start, ice_end),
+            window('ResidentHost_IceRodDma', address('LyraHost_IceRodDmaStart'),
+                   address('LyraHost_IceRodDmaEnd'))))
         resource_names = ('ResidentResourceCodeStart', 'ResidentAnimationSelected',
             'ResidentAnimationForceTransition', 'ResidentAnimationStage', 'ResidentAnimationDecompress',
             'ResidentAnimationDestinations', 'ResidentResourceCodeEnd')
@@ -2007,6 +2078,9 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None, req
         regions.append(window(target,start,end))
         calls.append(dict(label=name,snes=site,target=target,payload_hex=expected.hex()))
     if resident:
+        calls.append(dict(label='LyraCall_IceRodWord', snes=address('LyraCall_IceRodWord'),
+            target='Lyra_ResidentIceRodWord', payload_hex=(b'\x22'
+                + address('Lyra_ResidentIceRodWord').to_bytes(3, 'little')).hex()))
         resource_calls = (
             ('LyraHost_PreOverworld_LoadProperties_Interupt', 'ResidentAnimationDecompress', 1),
             ('LyraHost_Credits_LoadScene_Overworld_PrepGFX_Interupt', 'ResidentAnimationDecompress', 1),
@@ -2045,6 +2119,7 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None, req
     fixed[0x1BC906]=3
     if resident:
         fixed.update({site:4+pad for site, _, pad in RESIDENT_WORD_HOOKS})
+        fixed[0x088A5D] = 4
     if area:
         fixed.update({site:4 for site in (0x00886E,0x1BBEFD,0x1BBF2A,0x1BC04E)})
     if expanded_sheets:
@@ -2069,6 +2144,8 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None, req
         expected=bytes([opcode])+address(target).to_bytes(3,'little')+b'\xea'*padding
         R.require(compiled[A.pc(at):A.pc(at)+len(expected)]==expected,'Current active hook differs: '+hex(at))
     if resident:
+        R.require(compiled[A.pc(0x088A5D):A.pc(0x088A5D)+4] == bytes.fromhex('22a0fb0e'),
+                  'CURRENT_RESIDENT_ICE_ROD_ENTRY_CHANGED')
         for site, target, pad in RESIDENT_WORD_HOOKS:
             hook(site, target, padding=pad)
     for at,target in ((0x02F59D,'Lyra_FullHigh'),(0x02F5C8,'Lyra_FullLow'),

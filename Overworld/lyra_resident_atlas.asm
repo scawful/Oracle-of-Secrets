@@ -85,6 +85,28 @@ Lyra_ResidentAtlasCodeStart:
 %LyraResidentWord(Lyra_ResidentMutable2, $BD8004, $0004, Lyra_ResidentMutableWord, 0, $000000)
 %LyraResidentWord(Lyra_ResidentMutable3, $BD8006, $0006, Lyra_ResidentMutableWord, 0, $000000)
 
+; Ice Rod's direct writer enters M16/X16 with X=the raw terrain target.
+; Its qualified B7 row must have four identical source and packed words.
+; Preserve X/Y/DBR/D, scratch and P except loaded N/Z, especially carry:
+; the unchanged second DMA row uses ADC #$0020 without another CLC.
+if defined("LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED")
+if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+Lyra_ResidentIceRodWord:
+    PHP : PHD : PEA.w $0000 : PLD : CLD
+    LDA.w #$1D83 : PHA : PHX : PHY
+    LDA.l $7E001B : AND.w #$00FF : BNE .restore
+    TXA : CMP.w #$2000 : BCS .restore
+    LDY.w #($00B7*8)
+    JSR Lyra_ResidentLookup
+    BCC .restore
+    STA $05,S
+.restore:
+    PLY : PLX : PLA : PLD : PLP
+    PHA : PLA : RTL
+Lyra_ResidentIceRodWord_End:
+endif
+endif
+
 ; Internal M16/X16 helpers return C set only for a qualified remap word.
 ; At entry:3,S=quadrant,5,S=native Y,7,S=native X,9,S=native word.
 ; $02 is already two bytes beyond the current $0500 entry.

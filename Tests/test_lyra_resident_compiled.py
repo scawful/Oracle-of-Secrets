@@ -3,6 +3,7 @@
 The literal hook census is independent of the inspector's implementation.
 These byte fixtures prove inspection, not assembled CPU or native behavior.
 """
+import copy
 import re
 import unittest
 
@@ -53,11 +54,32 @@ def resident_fixture():
     names = [family+str(index) for family in ('Full', 'Horizontal', 'Vertical', 'Mutable')
              for index in range(4)]
     names += ['FullWord', 'HorizontalWord', 'VerticalWord', 'MutableWord',
-              'BufferDelta', 'PhysicalPage', 'Lookup']
+              'BufferDelta', 'PhysicalPage', 'Lookup', 'IceRodWord']
     for index, name in enumerate(names):
         start = 0xF88000+index*0x20
         labels['Lyra_Resident'+name] = start
         labels['Lyra_Resident'+name+'_End'] = start+16
+    # Independent literal Conn writer. Only its initial word load is a JSL;
+    # the semantic B7, native target and unchanged two-DMA tail remain here.
+    ice_prefix = bytes.fromhex(
+        '9de403a8ad8c00d0016bada303c906f0016be004f0016bade803c908f008'
+        'ade803c903f0016bad0303c906f0016bad0403c906f0016b8a8f04d07e'
+        'ad12422980f0f9c230ad16218f05d07ea50038ed08072d0a070a0a0a8506'
+        'a50238ed0c072d0e070506aaa9b7009f00207e1864028a293f00c920009005'
+        'a9000485028a29ff0fc900089007a50269ff0785028a291f00650285028a29'
+        '80074a65028d16218f07d07e')
+    ice_suffix = bytes.fromhex(
+        '8f00d07e8f02d07e2000fdc230af07d07e6920008d16212000fdaf05d07e'
+        '8d1621e230af04d07eaa6b')
+    labels.update(LyraHost_IceRodStart=0x0EFBA0, LyraHost_IceRodEnd=0x0EFC70,
+        LyraHost_IceRodTargetStart=0x0EFBE2, LyraCall_IceRodWord=0x0EFC43,
+        LyraCall_IceRodWord_End=0x0EFC47, LyraHost_IceRodDmaStart=0x0EFD00,
+        LyraHost_IceRodDmaEnd=0x0EFD21)
+    put(0x0EFBA0, ice_prefix+b'\x22'
+        +labels['Lyra_ResidentIceRodWord'].to_bytes(3, 'little')+ice_suffix)
+    put(0x0EFD00, bytes.fromhex(
+        'a97e008d0443a900d08d0243e230a9188d0143a9048d0543a9018d00438d0b4260'))
+    put(0x088A5D, bytes.fromhex('22a0fb0e'))
     for at, suffix, padding in WORD_HOOKS:
         put(at, b'\x22'+labels['Lyra_Resident'+suffix].to_bytes(3, 'little')+b'\xEA'*padding)
     put(labels['ResidentAnimationDecompress'], bytes.fromhex('2294d3005c')
@@ -133,7 +155,9 @@ class ResidentCompiledInspectionTest(unittest.TestCase):
 
     def test_missing_symbols_and_partial_resident_families_refuse(self):
         for name in ('Lyra_ResidentMutable3_End', 'ResidentAnimationStage', 'ResidentResourceCodeEnd',
-                     'ResidentGraphicsResetMainCache', 'SharedGraphicsStageNativeMain'):
+                     'ResidentGraphicsResetMainCache', 'SharedGraphicsStageNativeMain',
+                     'Lyra_ResidentIceRodWord_End', 'LyraCall_IceRodWord',
+                     'LyraHost_IceRodDmaEnd'):
             symbols = b'\n'.join(row for row in self.symbols.splitlines() if not row.endswith(('Oracle_'+name).encode()))+b'\n'
             with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'Missing current consumer symbol'):
                 self.inspect(symbols=symbols)
@@ -177,6 +201,51 @@ class ResidentCompiledInspectionTest(unittest.TestCase):
             with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'GRAPHICS_CALLBACK_UNBOUND'):
                 self.inspect(self.mutate(self.labels[name], b'\xEA'))
 
+    def test_ice_rod_body_call_dma_and_native_entry_are_read_back(self):
+        observed = self.inspect()
+        regions = {row['label']: row for row in observed['regions']}
+        self.assertEqual(regions['ResidentHost_IceRod']['snes'], [0x0EFBA0, 0x0EFC70])
+        self.assertEqual(regions['ResidentHost_IceRodDma']['snes'], [0x0EFD00, 0x0EFD21])
+        calls = [row for row in observed['source_calls'] if row['label'] == 'LyraCall_IceRodWord']
+        self.assertEqual(calls, [dict(label='LyraCall_IceRodWord', snes=0x0EFC43,
+            target='Lyra_ResidentIceRodWord', payload_hex=(b'\x22'
+                + self.labels['Lyra_ResidentIceRodWord'].to_bytes(3, 'little')).hex())])
+        hooks = {row['snes']: row['payload_hex'] for row in observed['fixed_hooks']}
+        self.assertEqual(hooks[0x088A5D], '22a0fb0e')
+
+    def test_ice_rod_old_fill_wrong_call_and_protocol_mutations_refuse(self):
+        for at, replacement in (
+                (0x0EFC43, bytes.fromhex('a9831dea')),  # Old raw appearance.
+                (0x0EFC43, b'\xEA'*4),
+                (0x0EFC44, (self.labels['Lyra_ResidentIceRodWord']+1).to_bytes(3, 'little')),
+                (0x0EFC06, b'\xB8'),  # Semantic tile identity.
+                (0x0EFC47, b'\xEA'),  # First payload store.
+                (0x0EFC4B, b'\xEA'),  # Second payload store.
+                (0x0EFC4F, b'\xEA'),  # First DMA call.
+                (0x0EFC58, b'\x18'),  # Carry-sensitive ADC row step.
+                (0x0EFC5E, b'\xEA')):  # Second DMA call.
+            with self.subTest(site=hex(at)), self.assertRaisesRegex(
+                    ValueError, 'CURRENT_RESIDENT_ICE_ROD_BODY_CHANGED'):
+                self.inspect(self.mutate(at, replacement))
+        for at in (0x0EFD00, 0x0EFD0E, 0x0EFD14, 0x0EFD1D):
+            with self.subTest(dma=hex(at)), self.assertRaisesRegex(
+                    ValueError, 'CURRENT_RESIDENT_ICE_ROD_DMA_CHANGED'):
+                self.inspect(self.mutate(at, b'\x00'))
+        with self.assertRaisesRegex(ValueError, 'CURRENT_RESIDENT_ICE_ROD_ENTRY_CHANGED'):
+            self.inspect(self.mutate(0x088A5D, b'\xEA'))
+
+    def test_ice_rod_call_body_dma_and_helper_extents_refuse(self):
+        for name, value, error in (
+                ('LyraCall_IceRodWord', 0x0EFC42, 'ICE_ROD_HOST_EXTENT'),
+                ('LyraCall_IceRodWord_End', 0x0EFC46, 'ICE_ROD_HOST_EXTENT'),
+                ('LyraHost_IceRodEnd', 0x0EFC81, 'ICE_ROD_HOST_EXTENT'),
+                ('LyraHost_IceRodDmaEnd', 0x0EFD22, 'ICE_ROD_DMA_EXTENT'),
+                ('Lyra_ResidentIceRodWord_End', 0xF88401, 'HELPER_OUTSIDE_CODE')):
+            original = f'{self.labels[name]>>16:02X}:{self.labels[name]&65535:04X} Oracle_{name}'.encode()
+            changed = f'{value>>16:02X}:{value&65535:04X} Oracle_{name}'.encode()
+            with self.subTest(symbol=name), self.assertRaisesRegex(ValueError, error):
+                self.inspect(symbols=self.symbols.replace(original, changed))
+
     def test_changed_code_is_preserved_in_the_reviewed_snapshot(self):
         original = self.inspect()
         for name, offset in (('Lyra_ResidentAtlasCodeStart', 0), ('ResidentResourceCodeStart', 0x10),
@@ -185,6 +254,50 @@ class ResidentCompiledInspectionTest(unittest.TestCase):
             with self.subTest(name=name):
                 changed = self.inspect(self.mutate(self.labels[name]+offset, b'\x00'))
                 self.assertNotEqual(changed['regions'], original['regions'])
+
+
+class ResidentIceRodShapeTest(unittest.TestCase):
+    def setUp(self):
+        self.plan = dict(areas=[dict(maps=[0xB0, 0xB1], remaps=[
+            dict(map_id=0xB1, tile16_id=0xB7, quadrant=quadrant,
+                 source_word=0x1D83, target_word=0) for quadrant in range(4)])])
+
+    def check(self, plan=None):
+        return L.require_current_resident_ice_rod_rows(self.plan if plan is None else plan)
+
+    def test_uniform_source_and_zero_packed_word_qualify_with_dry_page_absent(self):
+        self.assertEqual(self.check(), [dict(map_id=0xB1, target_word=0)])
+        self.plan['areas'][0]['remaps'] = []
+        self.assertEqual(self.check(), [])
+
+    def test_nonuniform_source_or_packed_row_refuses(self):
+        for field, value, error in (
+                ('source_word', 0x1D82, 'SOURCE_SHAPE_UNSUPPORTED'),
+                ('target_word', 1, 'PACKED_SHAPE_UNSUPPORTED')):
+            plan = copy.deepcopy(self.plan)
+            plan['areas'][0]['remaps'][3][field] = value
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, error):
+                self.check(plan)
+
+    def test_missing_and_duplicate_quadrants_refuse(self):
+        plan = copy.deepcopy(self.plan)
+        plan['areas'][0]['remaps'].pop()
+        with self.assertRaisesRegex(ValueError, 'PACKED_SHAPE_UNSUPPORTED'):
+            self.check(plan)
+        self.plan['areas'][0]['remaps'].append(dict(self.plan['areas'][0]['remaps'][0]))
+        with self.assertRaisesRegex(ValueError, 'ROW_DUPLICATE'):
+            self.check()
+
+    def test_invalid_types_ranges_and_page_ownership_refuse(self):
+        for field, value in (('map_id', True), ('map_id', 0xB8), ('quadrant', True),
+                             ('quadrant', 4), ('tile16_id', True),
+                             ('source_word', True), ('target_word', True),
+                             ('target_word', -1), ('target_word', 0x10000)):
+            plan = copy.deepcopy(self.plan)
+            plan['areas'][0]['remaps'][0][field] = value
+            with self.subTest(field=field, value=value), self.assertRaisesRegex(
+                    ValueError, 'ROW_INVALID'):
+                self.check(plan)
 
 
 if __name__ == '__main__':

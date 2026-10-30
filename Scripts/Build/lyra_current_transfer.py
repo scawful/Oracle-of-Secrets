@@ -42,13 +42,14 @@ PREVIEW_SCOPE = 'seeded_checkpoint_preview'
 CURRENT_SOURCE_CONTRACT = Path(__file__).resolve().parents[2] / 'Config/lyra_current_source_contract.json'
 CURRENT_CONTRACT_KIND = 'lyra.current_engine_source_contract.v1'
 CURRENT_PROFILE_KIND = 'lyra.current_native_source_profile.v1'
-RESIDENT_SOURCE_SET = 'lyra_current_resident_constructor_54'
+RESIDENT_SOURCE_SET = 'lyra_current_resident_conditional_55'
 RESIDENT_ADDITIONAL_SOURCES = (
     'Overworld/lyra_resident_atlas.asm', 'Overworld/lyra_resident_resources.asm',
     'Scripts/Build/lyra_native_streams.py', 'Scripts/Build/lyra_project_allocation.py',
     'Scripts/Build/lyra_project_composition.py', 'Scripts/Build/lyra_project_prepare.py',
     'Scripts/Build/lyra_project_tile32.py', 'Scripts/Build/lyra_resident_graphics.py',
-    'Scripts/Generate/lz2.py', 'Scripts/Generate/sheet_codec.py', 'Scripts/Generate/sheet_table.py')
+    'Scripts/Generate/lz2.py', 'Scripts/Generate/sheet_codec.py', 'Scripts/Generate/sheet_table.py',
+    'Items/all_items.asm', 'Items/ice_rod.asm', 'Overworld/entrances.asm')
 CONTROL_FILES = {'lyra_build_request_file', 'native_save_receipt_file',
                  'native_save_producer_file', 'native_save_transfer_proof_file'}
 # Yaze 7dbfa8ee ProjectSaveSources and SaveToFile define these [files] types.
@@ -1299,6 +1300,8 @@ def current_resident_inputs(profile, source, document, selection):
         profile['project'], profile['base_rom'], selection['inspection']['path'], **conditional_options)
     bindings += review.get('conditional_bindings', [])
     plan = review['appearance']['resident_graphics']
+    import lyra_native_loaders as native_loaders
+    native_loaders.require_current_resident_ice_rod_rows(plan)
     native = resident.plan_native_resident_abi(plan, tile16_count=4096)
     lo, hi = origins['resident_data']['pc']
     preimage = A.expanded_rom(source)[lo:hi]

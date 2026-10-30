@@ -38,7 +38,8 @@
     "lyra_joint_art_bridge_30": "Selected current-save joint art emitter, exact compiled readers and per-area ferry profile",
     "lyra_ferry_dock_restore_46": "Selected Ferry dock-slot restoration and exact four-DMA compiled verification; successor to joint art bridge 30",
     "lyra_ferry_visual_boundary_53": "Ferry-only dock-matched aux22 wood and opaque cap edge; same sources/grants as dock restore46, original pins preserved.",
-    "lyra_current_resident_constructor_54": "Proposed current resident constructor source review only; preserves historical records and grants no allocation or runtime admission."
+    "lyra_current_resident_constructor_54": "Proposed current resident constructor source review only; preserves historical records and grants no allocation or runtime admission.",
+    "lyra_current_resident_conditional_55": "Proposed current conditional resident demand and Ice Rod constructor source review only; preserves historical records and grants no allocation or runtime admission."
   },
   "sources": {
     "shared:Sprites/Objects/minecart.asm": {
@@ -5988,6 +5989,366 @@
     },
     "lyra_current_resident_constructor_54:Util/macros.asm": {
       "source_set": "lyra_current_resident_constructor_54",
+      "path": "Util/macros.asm",
+      "sha256": "e344b90c39feb9aa71fe3461247a5ddbf3a14fc38c966f583d428db4d48a0953"
+    },
+    "lyra_current_resident_conditional_55:Config/feature_flags.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Config/feature_flags.asm",
+      "sha256": "011f81ee6bbb24a23fc5a7e033b735a7b43adf34b89a87941399186347b67528"
+    },
+    "lyra_current_resident_conditional_55:Config/module_flags.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Config/module_flags.asm",
+      "sha256": "0dfc5ada77bbf92e30b8f7bf30b034ced9ef3d1dd03591fc1f00a835a747586a"
+    },
+    "lyra_current_resident_conditional_55:Core/Generated/joint_palette/directory.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Core/Generated/joint_palette/directory.asm",
+      "sha256": "2ca64d9df6f5b2d37733869f6d8cef9a0f79758f1ef2892c933b99e579ef74e6"
+    },
+    "lyra_current_resident_conditional_55:Core/gfx_sheet_table.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Core/gfx_sheet_table.asm",
+      "sha256": "9b5b5ae64616699b6de9ba11547984dc7ddef6fe34dd84240f50d996d423f07d"
+    },
+    "lyra_current_resident_conditional_55:Data/graphics/joint_palette_directory.json": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Data/graphics/joint_palette_directory.json",
+      "sha256": "1162d8d29c3b7d89566241447c95eed0cde50dc52add0a67269c1391509c3e12"
+    },
+    "lyra_current_resident_conditional_55:Items/all_items.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Items/all_items.asm",
+      "sha256": "81e617b9db246c85e4e7a8066096f03b39c54bb4555a2cdf3f88d17b8ce91adb"
+    },
+    "lyra_current_resident_conditional_55:Items/ice_rod.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Items/ice_rod.asm",
+      "sha256": "a861b4c8d5e21a4199250547b991a1d1cc6f203d2a75dc5178cb042e6a0de145"
+    },
+    "lyra_current_resident_conditional_55:Masks/mask_routines.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Masks/mask_routines.asm",
+      "sha256": "c8c9fd7660b4f10752148b2d09b190ee6ce8e872d39718a76c566aeff0057016"
+    },
+    "lyra_current_resident_conditional_55:Oracle_main.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Oracle_main.asm",
+      "sha256": "8409d83836364c7e402ca3b91b126d93f28ab24f8dd3dbf28f4eee2f86423158"
+    },
+    "lyra_current_resident_conditional_55:Overworld/ZSCustomOverworld.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/ZSCustomOverworld.asm",
+      "sha256": "9bb9f0ae180128bdf8ce461ae0f0d760699f5c78f9d2c33112ab91d7650cf6c2"
+    },
+    "lyra_current_resident_conditional_55:Overworld/area_tilesets.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/area_tilesets.asm",
+      "sha256": "83c8224957e495c0a25dec93df8be762d394c206cc60a2f77021cf13e85fecdb"
+    },
+    "lyra_current_resident_conditional_55:Overworld/custom_gfx.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/custom_gfx.asm",
+      "sha256": "287a087964ceea27169112107efe551caefb185eeed9290eab8c75b407ad495b"
+    },
+    "lyra_current_resident_conditional_55:Overworld/entrances.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/entrances.asm",
+      "sha256": "343d4b459009d479b1a210eaa807128af08802175162839bdafbaf709f734c83"
+    },
+    "lyra_current_resident_conditional_55:Overworld/gfx/kalyxo_docks_bg.bin": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/gfx/kalyxo_docks_bg.bin",
+      "sha256": "7ee45cc2f6e5f42d741794779fd6b79f9a5775f3fddea03a8a53d2038a9806c0"
+    },
+    "lyra_current_resident_conditional_55:Overworld/gfx/kalyxo_docks_slot3.bin": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/gfx/kalyxo_docks_slot3.bin",
+      "sha256": "3fd640ea5f71e4301983dc4944b355f6d8582ea14797605688e5adaf37ffc3b4"
+    },
+    "lyra_current_resident_conditional_55:Overworld/gfx/lyra_sky_tower_87.bin": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/gfx/lyra_sky_tower_87.bin",
+      "sha256": "b7db5e904ca0ad98f9c5268846efb2da0668a2e160a40a554c99747e65d659a8"
+    },
+    "lyra_current_resident_conditional_55:Overworld/gfx/lyra_stepped_fort_83.bin": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/gfx/lyra_stepped_fort_83.bin",
+      "sha256": "cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447"
+    },
+    "lyra_current_resident_conditional_55:Overworld/goron_checkpoint.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/goron_checkpoint.asm",
+      "sha256": "107a9145a13af04e79f6a6576cc82853314c06e9bfcc408af255a13d2960ab67"
+    },
+    "lyra_current_resident_conditional_55:Overworld/graphics_catalog.json": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/graphics_catalog.json",
+      "sha256": "9ec5b87f23de7748141edebf40dbce2ca46bf20472787315a8b9d75a3dc296cb"
+    },
+    "lyra_current_resident_conditional_55:Overworld/graphics_runtime.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/graphics_runtime.asm",
+      "sha256": "ea2a0d096f29e57df2c11462c374ee6c81b99be2a037366942f7feacbdce2739"
+    },
+    "lyra_current_resident_conditional_55:Overworld/graphics_runtime_policy.json": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/graphics_runtime_policy.json",
+      "sha256": "35fffe6b2a1f32de5a73dc8f381aab918556fcb574f170b78cb599944b1be037"
+    },
+    "lyra_current_resident_conditional_55:Overworld/graphics_runtime_tables.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/graphics_runtime_tables.asm",
+      "sha256": "026d21fd1f7b8847cf59a42a4fc4c3c3a6df54c31eda13e041df25225c5d09b6"
+    },
+    "lyra_current_resident_conditional_55:Overworld/joint_palette_readers.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/joint_palette_readers.asm",
+      "sha256": "90ed49fa8d446aea6a629a9b6e02eb5561ca550379a9eb843e6f99b8e039e3ba"
+    },
+    "lyra_current_resident_conditional_55:Overworld/lost_woods.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/lost_woods.asm",
+      "sha256": "3983c065b08d95199d22543cfa6c51a03a2f323aee3841ab8d1a386e8c07640d"
+    },
+    "lyra_current_resident_conditional_55:Overworld/lyra_actor_stream.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/lyra_actor_stream.asm",
+      "sha256": "519874611d87a1657ebd4538b57897335a69112f94a6098e936373db0a4d7f26"
+    },
+    "lyra_current_resident_conditional_55:Overworld/lyra_native_loaders.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/lyra_native_loaders.asm",
+      "sha256": "5fcbbaa4ab6fa356216270853b68afc19dcb9aaaae0c68d3c3b200a696c11bce"
+    },
+    "lyra_current_resident_conditional_55:Overworld/lyra_private_pilot.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/lyra_private_pilot.asm",
+      "sha256": "35081bcb0e5be6c5f3128ca679cbaaf3c322492ac070c54b4f17c4910b6e3525"
+    },
+    "lyra_current_resident_conditional_55:Overworld/lyra_resident_atlas.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/lyra_resident_atlas.asm",
+      "sha256": "493765e16dbc8aa60fbf812a05529acf90ed3609fc5491969f649c98187be797"
+    },
+    "lyra_current_resident_conditional_55:Overworld/lyra_resident_resources.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/lyra_resident_resources.asm",
+      "sha256": "7c27d39db77438662e251e80ba39266a12ed44aab443ee54eca637090abc9ccd"
+    },
+    "lyra_current_resident_conditional_55:Overworld/lyra_tail_events.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/lyra_tail_events.asm",
+      "sha256": "5fef9f7c278cec10d81907cad82c56cc40da89e493e34f573793df5cb7650ffc"
+    },
+    "lyra_current_resident_conditional_55:Overworld/overlays.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/overlays.asm",
+      "sha256": "04212e55015ebe734711028e563408d67a72bdec495366660e5ace92cafa93a4"
+    },
+    "lyra_current_resident_conditional_55:Overworld/project_bg_palette.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/project_bg_palette.asm",
+      "sha256": "3f361fc427ef76e6062cc32a44452fbb1090f098cd4af86fc2a9d2bab7161507"
+    },
+    "lyra_current_resident_conditional_55:Overworld/time_system.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Overworld/time_system.asm",
+      "sha256": "71524f34861c49d39f4975f20ce83cf5c746479e7e1bf555ab357599919872a8"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/authoring_bundle_build.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/authoring_bundle_build.py",
+      "sha256": "385e46c619ae85589e8b8ad32dd851547b908ba13ff0687c53b667f88ce21d2c"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/build_checks.sh": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/build_checks.sh",
+      "sha256": "f7318846caa14d6fe3b9074ecf0215647a914144af24101fcbd66634a7de0aa7"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/build_rom.sh": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/build_rom.sh",
+      "sha256": "42502b3737b6823f7d914663bc6a8725e1dad3f45e8652a0afbbf1fd74a26a26"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/check_zscream_overlap.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/check_zscream_overlap.py",
+      "sha256": "238f47744b5931803e5c33c77072fe430897618ea52f1120de4f46f9b65def14"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/lyra_current_transfer.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/lyra_current_transfer.py",
+      "sha256": "cd8e33d6f3f0036e41da28b262dded90e3d4d399eb3fea751a9334eb15a4ea22"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/lyra_joint_art.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/lyra_joint_art.py",
+      "sha256": "e793f7cadef07120865bc26076988ff7dbd99b8a8fe2cc1a4007ee672b388779"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/lyra_native_loaders.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/lyra_native_loaders.py",
+      "sha256": "93d46ce82d33ccd4ac7a45e5bfd771f1ad64af037a22ee52d427db9475c3b099"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/lyra_native_state.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/lyra_native_state.py",
+      "sha256": "c7b561bd563f78bf396b073f3b470bf8bfa19190fd23c867719428aebf9a9a7d"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/lyra_native_streams.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/lyra_native_streams.py",
+      "sha256": "2f4f214102bbfc2c7ccf688527970389c9d841921ba32ac9a3875415bbcea0f5"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/lyra_private_reservation.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/lyra_private_reservation.py",
+      "sha256": "2520de732f0bf8040acb7a20e7f8c7779b27a1a44377de24d30a53ba00eb83f7"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/lyra_project_admission.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/lyra_project_admission.py",
+      "sha256": "293f837bd849886d6c5e7773b213b077d8038f84d8d0aaa295f7586e5e475c97"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/lyra_project_allocation.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/lyra_project_allocation.py",
+      "sha256": "2032f791189702e4b9585975671177dc9a5e0881b4f83fe7674f90056fce9f1f"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/lyra_project_bg_palette.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/lyra_project_bg_palette.py",
+      "sha256": "848c8277409e8775c7f3b8da44f5f2a43c3ecc091dd11fd2a0c30c15a6b87da7"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/lyra_project_composition.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/lyra_project_composition.py",
+      "sha256": "58047c6a17c0ed445e0003d4de25c8cfd5472e4e3a521b34275d67bd1e6bbd94"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/lyra_project_prepare.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/lyra_project_prepare.py",
+      "sha256": "062c5d370078604fdf38773beedf527e9ab9d465240529b14f7f4034dcbd2d96"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/lyra_project_publisher.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/lyra_project_publisher.py",
+      "sha256": "c996c67445310ca3e10bd05b5e457d31f92137e313778337496e80266c662e9d"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/lyra_project_terrain.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/lyra_project_terrain.py",
+      "sha256": "b444d80de3b78cab98ab7defc36ce38c91b444348e5d5d2d08e86e3abbeda999"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/lyra_project_tile32.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/lyra_project_tile32.py",
+      "sha256": "f9ed0a88878449083341b649b9174efd3ed8ef9c14ce1cec445156c93ea89eb6"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Build/lyra_resident_graphics.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Build/lyra_resident_graphics.py",
+      "sha256": "8ec1ebb9706d2b560f9c90e2f8f4b78bab9ecf9da73c6edc76b50fc5c1d58a02"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Generate/asm_source.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Generate/asm_source.py",
+      "sha256": "189a1a66b9ebf307c0c5437c5ea78384590fa39cf4aab7f6562097e989797f50"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Generate/export_yazeproj_bundle.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Generate/export_yazeproj_bundle.py",
+      "sha256": "9e5b7a6c53555c7c3ea0140300475989ded0055003739abc45dd6c5a5cbe0402"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Generate/generate_hack_manifest.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Generate/generate_hack_manifest.py",
+      "sha256": "eafcf45576f1deb56538078491b4addafa81436843b9266ba3dd25c5d8be0cc2"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Generate/joint_palette_directory.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Generate/joint_palette_directory.py",
+      "sha256": "872486226b139f07a103b7d89d48c1ea43d0c7302e07217149188f26f1831883"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Generate/lz2.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Generate/lz2.py",
+      "sha256": "5982b4815c9e5375b8f997038483df2a98ed5cb33215648061fc88b08f00a733"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Generate/sheet_codec.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Generate/sheet_codec.py",
+      "sha256": "ec47f771f7d082dd5d136675a99a75821afb1e3f1fded01b43a9740ffdf968ee"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Generate/sheet_table.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Generate/sheet_table.py",
+      "sha256": "ec9cdd2108974857f84aeacbc332e45ea341f431dc879f70581457f44a3563e0"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Generate/tests/test_authoring_project_bundle.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Generate/tests/test_authoring_project_bundle.py",
+      "sha256": "8aac57e6a5335668e1876acfa87fb089ce08aa00e3ac09d6ccfa79314badda29"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Graphics/compile_graphics_pack.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Graphics/compile_graphics_pack.py",
+      "sha256": "eaa492e3c84818f0e5aff12866d394f78aa8b8be218c061b3a18e2efe31644c2"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Graphics/compile_runtime_graphics.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Graphics/compile_runtime_graphics.py",
+      "sha256": "cd5d896a786d62e7a43f5f0dc6cfbe26fce7667e44c6dadf4d28a659194abd66"
+    },
+    "lyra_current_resident_conditional_55:Scripts/Validate/verify_joint_palette_directory.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Scripts/Validate/verify_joint_palette_directory.py",
+      "sha256": "c400a07c263afef507dcf21faaf1d565918934cb18375040faef8caf1d05c310"
+    },
+    "lyra_current_resident_conditional_55:Sprites/Bosses/octoboss.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Sprites/Bosses/octoboss.asm",
+      "sha256": "b5379cdc5f3dadbcfc42f0d1bab3044b97e6780aa75ab07496f16d6689054b77"
+    },
+    "lyra_current_resident_conditional_55:Sprites/NPCs/goron.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Sprites/NPCs/goron.asm",
+      "sha256": "bd26f33b770d9e3593bb0b5bca3374742d869e9ef18b319212a575104ef9baa2"
+    },
+    "lyra_current_resident_conditional_55:Tests/native/lyra_checkpoint_preview.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Tests/native/lyra_checkpoint_preview.py",
+      "sha256": "26c11d020a09e8d313b9c853f16ed3df6d207dbdc81d0d36091628561d49dfcf"
+    },
+    "lyra_current_resident_conditional_55:Tests/test_lyra_checkpoint_preview_publisher.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Tests/test_lyra_checkpoint_preview_publisher.py",
+      "sha256": "8d7dae0c3f7af8786149e2e7b1100a42000530bd4b527610ea116333681ec74d"
+    },
+    "lyra_current_resident_conditional_55:Tests/test_lyra_current_transfer.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Tests/test_lyra_current_transfer.py",
+      "sha256": "ee3605ffb022c4c7e4f559f73042398be7df851dbe87c8b30ceba65b008834dc"
+    },
+    "lyra_current_resident_conditional_55:Tests/test_lyra_joint_art.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Tests/test_lyra_joint_art.py",
+      "sha256": "468ecbd1e9308e0780082462893dae346c8b4f6e22a2d82f2423be3d199d4d16"
+    },
+    "lyra_current_resident_conditional_55:Tests/test_ow_area_tilesets.py": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Tests/test_ow_area_tilesets.py",
+      "sha256": "9339c30ed2d5c8148e1665cf5eb8533abfdd07db11afffc54231913270acf7f7"
+    },
+    "lyra_current_resident_conditional_55:Util/item_cheat.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
+      "path": "Util/item_cheat.asm",
+      "sha256": "5263de5233da3cf02df08e67aa80b130ba313384024be55b16c02f64ef49594d"
+    },
+    "lyra_current_resident_conditional_55:Util/macros.asm": {
+      "source_set": "lyra_current_resident_conditional_55",
       "path": "Util/macros.asm",
       "sha256": "e344b90c39feb9aa71fe3461247a5ddbf3a14fc38c966f583d428db4d48a0953"
     }

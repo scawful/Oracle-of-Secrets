@@ -64,12 +64,13 @@ class ResidentConstructorTest(unittest.TestCase):
             'Scripts/Build/lyra_native_streams.py', 'Scripts/Build/lyra_project_allocation.py',
             'Scripts/Build/lyra_project_composition.py', 'Scripts/Build/lyra_project_prepare.py',
             'Scripts/Build/lyra_project_tile32.py', 'Scripts/Build/lyra_resident_graphics.py',
-            'Scripts/Generate/lz2.py', 'Scripts/Generate/sheet_codec.py', 'Scripts/Generate/sheet_table.py')
+            'Scripts/Generate/lz2.py', 'Scripts/Generate/sheet_codec.py', 'Scripts/Generate/sheet_table.py',
+            'Items/all_items.asm', 'Items/ice_rod.asm', 'Overworld/entrances.asm')
         for relative in self.resident_sources:
             path = self.f.root / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes((ROOT / relative).read_bytes())
-        self.bind_source_set('lyra_current_resident_constructor_54')
+        self.bind_source_set(X.RESIDENT_SOURCE_SET)
         for name, lo, hi in (('resident_data', 0x340000, 0x360000),
                              ('resident_code', 0x3C0000, 0x3C0600),
                              ('resident_resource_code', 0x3C0600, 0x3C0700)):
@@ -173,12 +174,25 @@ class ResidentConstructorTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'CURRENT_RESIDENT_SOURCE_SET_REQUIRED'):
             self.construct()
 
+    def test_nonuniform_ice_rod_row_refuses_before_native_emission(self):
+        # Supply a plausible four-quadrant B7 row at the authenticated-review
+        # seam. One lookup cannot feed both DMA rows when its words differ.
+        area = self.plan['areas'][0]
+        page = area['maps'][0]
+        area['remaps'].extend(dict(map_id=page, tile16_id=0xB7, quadrant=q,
+            source_word=0x1D83, target_word=0x2100 + (q == 3)) for q in range(4))
+        with mock.patch.object(R, 'plan_native_resident_abi') as lower:
+            with self.assertRaisesRegex(ValueError,
+                    'CURRENT_RESIDENT_ICE_ROD_PACKED_SHAPE_UNSUPPORTED'):
+                self.construct()
+        lower.assert_not_called()
+
     def test_omitted_resident_source_record_refuses_even_when_file_exists(self):
         c = self.f.contract_fixture
         ledger_path = self.f.root / 'Config/allocation_ownership.json'
         ledger = json.loads(ledger_path.read_bytes())
         relative = 'Overworld/lyra_resident_resources.asm'
-        omitted = ledger['sources'].pop('lyra_current_resident_constructor_54:' + relative)
+        omitted = ledger['sources'].pop(X.RESIDENT_SOURCE_SET + ':' + relative)
         self.assertEqual(omitted['sha256'], X.R.sha((self.f.root / relative).read_bytes()))
         for row in ledger['sources'].values():
             self.assertEqual(row['sha256'], X.R.sha((self.f.root / row['path']).read_bytes()))

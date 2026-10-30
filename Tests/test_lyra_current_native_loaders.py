@@ -820,5 +820,234 @@ RTL
         self.assertNotEqual(observed, list(self.words[0xB1][33]))
 
 
+class CurrentResidentIceRodCpuTest(unittest.TestCase):
+    """Actual Ice Rod source and lookup; synthetic IO latches do not emulate DMA."""
+
+    # Independent disabled-byte witness from exact 5539c17d's retained default
+    # ROM SHA256 11ce2823007593742584711c189f345765d6013595c6ed89127744f3edd1bf6b.
+    # No game ROM is loaded by this test: these literals seed a sparse fixture.
+    native_main = bytes.fromhex(
+        '9de403a8ad8c00d0016bada303c906f0016be004f0016bade803c908f008'
+        'ade803c903f0016bad0303c906f0016bad0403c906f0016b8a8f04d07e'
+        'ad12422980f0f9c230ad16218f05d07ea50038ed08072d0a070a0a0a8506'
+        'a50238ed0c072d0e070506aaa9b7009f00207e1864028a293f00c920009005'
+        'a9000485028a29ff0fc900089007a50269ff0785028a291f00650285028a29'
+        '80074a65028d16218f07d07ea9831d8f00d07e8f02d07e2000fdc230af07'
+        'd07e6920008d16212000fdaf05d07e8d1621e230af04d07eaa6b')
+    native_dma = bytes.fromhex(
+        'a97e008d0443a900d08d0243e230a9188d0143a9048d0543a9018d00438d0b4260')
+
+    @classmethod
+    def setUpClass(cls):
+        # Reuse the existing sparse native hook/page seed, never its old tests.
+        CurrentResidentAtlasCpuTest.setUpClass.__func__(cls)
+        cls.constants = cls.ice_constants(cls.constants)
+
+    @staticmethod
+    def ice_constants(constants):
+        constants = constants.replace('RESIDENT_TILE16_COUNT = 128',
+                                      'RESIDENT_TILE16_COUNT = 256')
+        if 'LYRA_CURRENT_MODE =' not in constants:
+            constants += '\n!LYRA_CURRENT_MODE = 1'
+        if 'LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED =' not in constants:
+            constants += '\n!LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED = 1'
+        return constants
+
+    @classmethod
+    def ice_seed(cls):
+        seed = bytearray(cls.seed)
+        def put(at, raw):
+            seed[L.A.pc(at):L.A.pc(at)+len(raw)] = raw
+        cls.ice_words = {}
+        for ordinal, page in enumerate(range(0xA0, 0xC0)):
+            index, words = 0x5B8200+ordinal*0x100, 0x5BA200+ordinal*0x40
+            table = bytearray(224)
+            table[0], table[1], table[5] = 1, 2, 3
+            table[129], table[161], table[192+23] = 1, 2, 3
+            # Four distinct fallback mechanisms for the same B7 query.
+            if page == 0xA8:
+                table[5] = 0
+            elif page == 0xA9:
+                table[192+23] = 0
+            elif page == 0xAA:
+                table[5] = 129
+            elif page == 0xAB:
+                table[192+23] = 4
+            word = 0 if page == 0xA0 else 0x8100+ordinal
+            cls.ice_words[page] = word
+            put(index, table)
+            put(words+24, word.to_bytes(2, 'little')*4)
+            put(0x5B8000+ordinal*8+7, b'\x03')
+        put(0xBD8000+0xB7*8, bytes.fromhex('831d')*4)
+        return bytes(seed)
+
+    @classmethod
+    def assemble(cls, name, constants):
+        image, driver = cls.folder_path/(name+'.sfc'), cls.folder_path/(name+'.asm')
+        image.write_bytes(cls.ice_seed())
+        item = cls.native.parents[1]/'Items/ice_rod.asm'
+        driver.write_text('lorom\n'+cls.ice_constants(constants)+'\nnamespace Oracle\n'
+            'incsrc "'+str(cls.native)+'"\nincsrc "'+str(item)+'"\nnamespace off\n')
+        result = subprocess.run([cls.asar, '--no-title-check', '--fix-checksum=off',
+            '--symbols=wla', str(driver), str(image)], capture_output=True, text=True, timeout=20)
+        return image, result
+
+    def run_ice(self, requests, *, image=None):
+        run = subprocess.run([self.runner, str(image or self.image)],
+            input=''.join(json.dumps(row)+'\n' for row in requests),
+            capture_output=True, text=True, timeout=30)
+        self.assertEqual(run.returncode, 0, run.stderr)
+        rows = [json.loads(line) for line in run.stdout.splitlines()]
+        self.assertEqual(len(rows), len(requests))
+        for row in rows:
+            self.assertTrue(row['returned'], row)
+            self.assertFalse(row.get('stub_calls'))
+        return rows
+
+    def helper_request(self, base, raw, p, *, indoor=0, db=0xBD, d=0x120):
+        live = {0: 0xA55A, 2: 0xBEEF, 4: 0xCAFE, 6: 0x1234,
+                0x1B: indoor | 0xA500, 0x8A: base | 0x5A00, 0x700: 0xBF}
+        regs = dict(a=0xABCD, x=raw, y=0x4567, p=p, db=db, d=d, sp=0x1FFF)
+        return dict(entry=self.labels['Lyra_ResidentIceRodWord'], reset_ram=True,
+            registers=regs, writes=[dict(address=0x7E0000+at,
+                bytes=list(word.to_bytes(2, 'little'))) for at, word in live.items()],
+            reads=[dict(address=0x7E0000+at, length=2) for at in live],
+            trace_writes=True, max_steps=1200), regs, live
+
+    def test_helper_target_pages_zero_word_fallbacks_and_complete_load_abi(self):
+        plans = []
+        for base, pages in ((0xA0, (0xA0,)*4), (0xA2, (0xA2, 0xA3)*2),
+                            (0xA4, (0xA4, 0xA4, 0xAC, 0xAC)),
+                            (0xB0, (0xB0, 0xB1, 0xB8, 0xB9)),
+                            (0xB1, (0xB0, 0xB1, 0xB8, 0xB9))):
+            for raw, page in zip((2, 0x42, 0x1002, 0x1042), pages):
+                for p in (0x04, 0x05, 0x4C, 0x4D):
+                    plans.append((base, raw, p, 0, self.ice_words[page]))
+        for base, raw, indoor in ((0x9F, 2, 0), (0xC0, 2, 0), (0xA6, 2, 0),
+                                  (0xA7, 2, 0), (0xB7, 0x42, 0),
+                                  (0xB0, 0x2000, 0), (0xB0, 0xFFFF, 0),
+                                  (0xB0, 0x42, 1), (0xB0, 0x42, 0x80),
+                                  (0xA8, 2, 0), (0xA9, 2, 0),
+                                  (0xAA, 2, 0), (0xAB, 2, 0)):
+            for p in (0x04, 0x05, 0x4C, 0x4D):
+                plans.append((base, raw, p, indoor, 0x1D83))
+        requests, contexts = [], []
+        for ordinal, (base, raw, p, indoor, expected) in enumerate(plans):
+            request, regs, live = self.helper_request(base, raw, p, indoor=indoor,
+                db=(8, 0xBD, 0x7E)[ordinal%3], d=(0, 0x120)[ordinal%2])
+            requests.append(request)
+            contexts.append((base, raw, indoor, expected, regs, live))
+        for row, context in zip(self.run_ice(requests), contexts):
+            base, raw, indoor, expected, regs, live = context
+            with self.subTest(base=base, raw=raw, indoor=indoor, p=regs['p']):
+                self.assertFalse(row.get('mmio_writes'))
+                cpu = row['registers']
+                self.assertEqual(cpu['a'], expected)
+                for field in ('x', 'y', 'sp', 'd', 'db'):
+                    self.assertEqual(cpu[field], regs[field], field)
+                nz = (2 if expected == 0 else 0) | (0x80 if expected&0x8000 else 0)
+                self.assertEqual(cpu['p'], (regs['p']&~0x82)|nz)
+                for at, observed in zip(live, row['reads']):
+                    self.assertEqual(observed['bytes'], list(live[at].to_bytes(2, 'little')))
+                for write in row['writes']:
+                    at = write['address']
+                    if at>>16&127 < 64 and at&65535 < 8192:
+                        at = 0x7E0000|(at&65535)
+                    self.assertIn(at, set(range(0x7E1F80, 0x7E2000)) |
+                                      set(range(0x7E0000, 0x7E0004)))
+
+    def main_request(self, base, raw):
+        # Actual entry checks, VBlank polling, coordinate arithmetic and DMA
+        # routine execute. IO is an explicit byte latch, without PPU side effects.
+        state = {0: ((raw&0x1F80)>>3)+0x10, 2: (raw&0x7E)+0x20,
+                 0x1B: 0, 0x8A: base, 0x8C: 1, 0x303: 0x0606,
+                 0x3A3: 6, 0x700: 0xBF, 0x708: 0x10, 0x70A: 0x03F0,
+                 0x70C: 0x20, 0x70E: 0x007E}
+        regs = dict(a=8, x=4, y=0x67, p=0x30, db=8, d=0, sp=0x1FFF)
+        mmio = {0x4212: 0x80, 0x2116: 0xAA, 0x2117: 0x55, 0x420B: 0}
+        mmio.update({at: 0 for at in range(0x4300, 0x4307)})
+        return dict(entry=self.labels['LyraHost_IceRodStart'], reset_ram=True,
+            registers=regs, writes=[dict(address=0x7E0000+at,
+                bytes=list(word.to_bytes(2, 'little'))) for at, word in state.items()],
+            reads=[dict(address=0x7E2000+raw, length=2),
+                   dict(address=0x7ED000, length=9)],
+            mmio=[dict(address=at, value=value) for at, value in mmio.items()],
+            trace_mmio=True, trace_writes=True, max_steps=1600), regs
+
+    def test_actual_main_target_b7_payload_and_two_native_dma_commands(self):
+        plans = [(base, raw, page) for base, pages in (
+            (0xA0, (0xA0,)*4), (0xA2, (0xA2, 0xA3)*2),
+            (0xA4, (0xA4, 0xA4, 0xAC, 0xAC)),
+            (0xB0, (0xB0, 0xB1, 0xB8, 0xB9)))
+            for raw, page in zip((2, 0x42, 0x1002, 0x1042), pages)]
+        requests = [self.main_request(base, raw)[0] for base, raw, page in plans]
+        dma = [(0x4304, 0x7E), (0x4305, 0), (0x4302, 0), (0x4303, 0xD0),
+               (0x4301, 0x18), (0x4305, 4), (0x4300, 1), (0x420B, 1)]
+        for row, (base, raw, page) in zip(self.run_ice(requests), plans):
+            with self.subTest(base=base, raw=raw, page=page):
+                self.assertEqual(row['reads'][0]['bytes'], [0xB7, 0])
+                expected = list(self.ice_words[page].to_bytes(2, 'little'))*2
+                self.assertEqual(row['reads'][1]['bytes'][:4], expected)
+                self.assertEqual(row['reads'][1]['bytes'][4:7], [4, 0xAA, 0x55])
+                self.assertEqual(row['reads'][1]['bytes'][7:9], [2, 0])
+                observed = [(write['address']&65535, write['value'])
+                            for write in row['mmio_writes']]
+                # Final native restore remains M8 after the second real DMA.
+                self.assertEqual(observed, [(0x2116, 2), (0x2117, 0)]+dma+
+                    [(0x2116, 0x22), (0x2117, 0)]+dma+[(0x2116, 0xAA)])
+                for field, expected in (('x', 4), ('y', 8), ('sp', 0x1FFF),
+                                        ('db', 8), ('d', 0)):
+                    self.assertEqual(row['registers'][field], expected)
+
+    def test_old_literal_control_fails_packed_appearance_and_disabled_bytes_match(self):
+        old = self.folder_path/'ice-old-literal-control.sfc'
+        image = bytearray(self.image.read_bytes())
+        at = L.A.pc(self.labels['LyraCall_IceRodWord'])
+        image[at:at+4] = bytes.fromhex('a9831dea')
+        old.write_bytes(image)
+        request, _ = self.main_request(0xB0, 0x42)
+        row = self.run_ice([request], image=old)[0]
+        self.assertEqual(row['reads'][1]['bytes'][:4], [0x83, 0x1D]*2)
+        with self.assertRaises(AssertionError):
+            self.assertEqual(row['reads'][1]['bytes'][:4],
+                             list(self.ice_words[0xB1].to_bytes(2, 'little'))*2)
+        constants = self.constants.replace('RESIDENT_ENABLED = 1', 'RESIDENT_ENABLED = 0')
+        constants = constants.replace('RESIDENT_RESOURCES_ENABLED = 1',
+                                      'RESIDENT_RESOURCES_ENABLED = 0')
+        off, result = self.assemble('ice-disabled', constants)
+        self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+        expected = bytearray(self.ice_seed())
+        for address, raw in ((0x088A5D, bytes.fromhex('22a0fb0e')),
+                (0x0EFBA0, self.native_main), (0x0EFD00, self.native_dma),
+                (0x07DC9E, bytes.fromhex('2280fc0eea')),
+                (0x07DD1B, bytes.fromhex('2290fc0e60')),
+                (0x0EFC80, bytes.fromhex('a50a0c43030c48036b')),
+                (0x0EFC90, bytes.fromhex('a50a0c5903ad5003c90001d0039c4a036b')),
+                (0x0E95DC, bytes.fromhex('0e5757')),
+                (0x0F85B8, bytes.fromhex('831d')*4)):
+            expected[L.A.pc(address):L.A.pc(address)+len(raw)] = raw
+        self.assertEqual(off.read_bytes(), bytes(expected))
+
+    def test_compiled_adapter_call_extent_and_unchanged_native_dma_body(self):
+        image = self.image.read_bytes()
+        labels = self.labels
+        start, end = labels['LyraHost_IceRodStart'], labels['LyraHost_IceRodEnd']
+        call = labels['LyraCall_IceRodWord']
+        self.assertEqual(end-start, len(self.native_main)+1)
+        self.assertLessEqual(end, 0x0EFC80)
+        self.assertEqual(labels['LyraCall_IceRodWord_End']-call, 4)
+        expected = b'\x22'+labels['Lyra_ResidentIceRodWord'].to_bytes(3, 'little')
+        self.assertEqual(image[L.A.pc(call):L.A.pc(call)+4], expected)
+        self.assertEqual(image[L.A.pc(start):L.A.pc(end)],
+                         self.native_main.replace(bytes.fromhex('a9831d'), expected, 1))
+        self.assertEqual(labels['Lyra_ResidentIceRodWord_End']-
+                         labels['Lyra_ResidentIceRodWord'], 46)
+        self.assertLessEqual(labels['Lyra_ResidentAtlasCodeEnd']-
+                             labels['Lyra_ResidentAtlasCodeStart'], 0x600)
+        dma = labels['LyraHost_IceRodDmaStart']
+        self.assertEqual(labels['LyraHost_IceRodDmaEnd']-dma, len(self.native_dma))
+        self.assertEqual(image[L.A.pc(dma):L.A.pc(dma)+len(self.native_dma)], self.native_dma)
+
+
 if __name__ == '__main__':
     unittest.main()

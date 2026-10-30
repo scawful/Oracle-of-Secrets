@@ -5,11 +5,24 @@
 
 IceRodTileRam = $03EF
 
+!LyraIceRodResidentEnabled = 0
+if defined("LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED")
+  !LyraIceRodResidentEnabled = !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED
+endif
+assert !LyraIceRodResidentEnabled == 0 || !LyraIceRodResidentEnabled == 1
+if !LyraIceRodResidentEnabled == 1
+  assert defined("LYRA_CURRENT_MODE")
+  assert !LYRA_CURRENT_MODE == 1
+  assert defined("LYRA_CURRENT_RESIDENT_ENABLED")
+  assert !LYRA_CURRENT_RESIDENT_ENABLED == 1
+endif
+
 ; Ancilla_CheckTileCollision_Targeted_continue
 org $088A5D ; @hook module=Items
   JSL $0EFBA0
 
 org $0EFBA0 ; main code
+LyraHost_IceRodStart = pc()
 LinkItem_IceRod:
 {
   ; load native value
@@ -47,6 +60,7 @@ LinkItem_IceRod:
   ; wait for vblank to enable dma transfer
   LDA $4212 : AND #$80 : BEQ $F9
 
+  LyraHost_IceRodTargetStart = pc()
   REP #$30
   LDA $2116 : STA $7ED005 ; store native value to regain later
 
@@ -69,8 +83,15 @@ LinkItem_IceRod:
   STA $2116 ; store vram address for upper tile part (8x16) to $2116
   STA $7ED007
 
-  ; Palette set here
+  ; X still names the actual terrain target; keep B7 and both native DMAs.
+  ; The adapter preserves carry for the later ADC #$0020.
+  LyraCall_IceRodWord = pc()
+if !LyraIceRodResidentEnabled == 1
+  JSL Lyra_ResidentIceRodWord
+else
   LDA #$1D83 ; load new ice tiles
+endif
+  LyraCall_IceRodWord_End = pc()
   STA $7ED000
   STA $7ED002
   JSR $FD00 ; jsr to dma vram transfer for upper ice tile part
@@ -87,9 +108,12 @@ LinkItem_IceRod:
   TAX
   RTL
 }
+LyraHost_IceRodEnd = pc()
+assert pc() <= $0EFC80, "Ice Rod main code overlaps its fixed helper"
 
 
 org $0EFD00 ; vram dma transfer
+LyraHost_IceRodDmaStart = pc()
 VramDmaTransfer:
 {
   LDA #$007E ; load origin of bytes to transfer (7E/d000)
@@ -104,6 +128,7 @@ VramDmaTransfer:
   STA $420B ; make dma transfer
   RTS
 }
+LyraHost_IceRodDmaEnd = pc()
 
 ; bug fix to not swim through tiles but jump onto them
 ; TileBehavior_GanonIce
