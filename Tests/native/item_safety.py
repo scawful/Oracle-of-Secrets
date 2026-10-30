@@ -85,11 +85,12 @@ class ItemSafetyFlow(menu.QuestFlow):
         self.tap("Start"); self.wait_screen("gameplay")
         self.ready()
 
-    def enter(self, name, button):
+    def enter(self, name, button, hold=False):
         self.advance("", 2)
         self.input(button)
         cpu = self.run_to({self.symbol(name)})
-        self.input("")
+        if not hold:
+            self.input("")
         return cpu
 
     def call_in(self, name, target, occurrence=0, size=0x200):
@@ -171,10 +172,13 @@ class ItemSafetyFlow(menu.QuestFlow):
         self.write(0x7EF35C, 2, "Empty Bottle1")
         self.equip(6)
         self.tap(direction)
-        self.enter("LinkItem_CatchBottle", "Y")
+        entry = self.enter("LinkItem_CatchBottle", "Y", hold=True)
+        self.result["cases"][-1]["entry"] = dict(cpu=entry, y_latch=self.r(0x7E003A),
+                                                   new_input=self.r(0x7E00F4), doorway=self.r(0x7E006C))
         for address in (0x7E030D, 0x7E0317, 0x7E0321, 0x7E032B):
             self.write(address, 0xA6 if address != 0x7E030D else 3, "Paused animation/counter canary")
         self.run_to({self.symbol("LinkItem_CatchBottle_y_press")})
+        self.input("")
         self.check("catch counter reset", self.r(0x7E030D), 0 if self.fixed or offset == 0 else 3)
         for address in (0x7E0317, 0x7E0321, 0x7E032B):
             expected = 0 if not self.fixed and address == 0x7E030D + offset else 0xA6
