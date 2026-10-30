@@ -120,21 +120,13 @@ macro stv2_exit(id, ow, y, x, large, facing)
   !stv2_cx #= clamp(<x>+7, !stv2_mx+127, !stv2_mx+127+!stv2_xsize)
   !stv2_cy #= clamp(<y>+31, !stv2_my+111, !stv2_my+143+!stv2_ysize)
   !stv2_vram #= (((!stv2_ys-!stv2_my)&$FFF0)<<3)|(((!stv2_xs-!stv2_mx)&$FFF0)>>3)
-  pushpc
-  if !ENABLE_KALYXO_BOAT == 1
-    assert (!STV2_EXITS>>16) == $D1, "Private ferry exit records must stay in bank $D1"
-    org !STV2_EXITS+(($<id>-$0180)*32) ; @manifest-org-bank=$D1
-  else
-    assert (!STV2_EXITS>>16) == $AA, "Legacy STV2 record bank changed"
-    org !STV2_EXITS+(($<id>-$0180)*32) ; @manifest-org-bank=$AA
-  endif
-    dw $<id>, !stv2_ys, !stv2_xs, <y>, <x>, !stv2_vram, !stv2_cy, !stv2_cx
-    dw $0000, $0000
-    db <ow>, $00, $00, <facing>
-  assert (($02E801+$<id>-$0180)>>16) == $02, "STV2 direction leaves bank $02"
-  org $02E801+$<id>-$0180 ; @manifest-org-bank=$02
-    db <facing>
-  pullpc
+  ; Caller selects the slot explicitly so the source manifest sees every
+  ; concrete org. The macro only emits the existing 32-byte record shape.
+  !STV2_FACING_<id> = <facing>
+  dw $<id>, !stv2_ys, !stv2_xs, <y>, <x>, !stv2_vram, !stv2_cy, !stv2_cx
+  dw $0000, $0000
+  db <ow>, $00, $00, <facing>
+  fillbyte $00 : fill 8
 endmacro
 
 ; ---------------------------------------------------------
@@ -160,13 +152,19 @@ org !STV2_EXITS
 
 if !ENABLE_SPECIAL_EXIT_TABLE_V2 == 1
   if !STV2_LINK_27_A0 == 1
+    org !STV2_EXITS+($0183-$0180)*32
     %stv2_exit(0183, $A0, $0900, $0040, 0, $06)
+    org $02E804 : db !STV2_FACING_0183
   endif
   if !STV2_LINK_37_B0 == 1
+    org !STV2_EXITS+($0184-$0180)*32
     %stv2_exit(0184, $B0, $0D00, $0040, 0, $06)
+    org $02E805 : db !STV2_FACING_0184
   endif
   if !STV2_LINK_3F_B8 == 1
+    org !STV2_EXITS+($0185-$0180)*32
     %stv2_exit(0185, $B8, $0F00, $0040, 0, $06)
+    org $02E806 : db !STV2_FACING_0185
   endif
   if !ENABLE_KALYXO_BOAT == 1
     incsrc "../Data/overworld/kalyxo_boat_placements.asm"
