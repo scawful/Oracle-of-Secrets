@@ -51,6 +51,7 @@ from asm_source import (
     DEFINE_ANY_ASSIGN_RE,
     _load_global_defines,
     _iter_active_lines,
+    _is_identical_build_context_assignment,
 )
 
 # Hook scanner (Python source scan; see generate_hooks_json.py)
@@ -178,6 +179,7 @@ OBJECT_ALLOCATION_REGIONS_PC = (
 CANONICAL_LOROM_ROM_END_PC = 0x3F0000
 
 AUDITED_UNRESOLVED_ORG_CONTRACTS = {
+    ("Overworld/lyra_native_loaders.asm", "Oracle_ReadOverworldBackdropColor", 0x34),
     ("Core/message.asm", "!addr+1", 0x0E),
     ("Core/sprite_macros.asm", "$0DB080+!SPRID", 0x0D),
     ("Core/sprite_macros.asm", "$0DB173+!SPRID", 0x0D),
@@ -339,6 +341,8 @@ def collect_reachable_asm_sources(
         for line_index, line, _ in _iter_active_lines(lines, active_defines):
             assignment = DEFINE_ANY_ASSIGN_RE.match(line.split(";", 1)[0])
             if assignment and assignment.group(1) in active_defines:
+                if _is_identical_build_context_assignment(rel, line, active_defines):
+                    continue
                 raise ManifestGenerationError(
                     f"{rel}:{line_index + 1}: reachable source reassigns "
                     f"preloaded global define !{assignment.group(1)} outside "
@@ -2070,10 +2074,10 @@ def generate_manifest(
             f"Exact hook mode requires the editable dev ROM: {dev_rom_path}"
         )
 
-    reachable_sources = collect_reachable_asm_sources(root)
-
-    # Load defines for conditional compilation evaluation
+    # Load defines for conditional compilation evaluation once; a selected
+    # Lyra context re-verifies its full preparation on every load.
     defines = _load_global_defines(root)
+    reachable_sources = collect_reachable_asm_sources(root, defines=defines)
     asm_sources = reachable_sources
 
     exact_spans: list[ExactSpan] = []
@@ -2093,7 +2097,7 @@ def generate_manifest(
     else:
         # Scan only the source graph assembled from Oracle_main.asm. Local
         # ignored assets and archived experiments must not claim ROM ownership.
-        hooks = scan_hooks(root, asm_sources)
+        hooks = scan_hooks(root, asm_sources, defines=defines)
         hook_source = {
             "mode": "python-scan",
             "exact": False,
@@ -2210,7 +2214,8 @@ def generate_manifest(
                 hooks, editor_regions
             )
         _validate_unresolved_org_proofs(
-            scan_org_directives(root, asm_sources), editor_regions
+            scan_org_directives(root, asm_sources, defines=defines),
+            editor_regions,
         )
         manifest["editor_managed_regions"] = {
             "description": (

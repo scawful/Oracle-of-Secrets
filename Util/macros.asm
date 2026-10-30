@@ -76,6 +76,8 @@
 ; Eon Owl one-shot: each Abyss Owl appearance happens once; after its talk and
 ; fly-away it does not respawn (EonOwlFlags $7EF3A7, Sprites/NPCs/eon_owl.asm).
 !ENABLE_EON_OWL_ONE_SHOT             = 1
+; Private expanded-sheet composition; legacy builds retain their pointer table.
+!ENABLE_EXPANDED_GRAPHICS_TABLE      = 0
 ; Abyss respawn lock until the escape: outdoor deaths/continues follow the
 ; saved world ($7EF3CA), so the lock ends at the portal home instead of the
 ; Maku Tree (LoadDarkWorldIntro, Overworld/overworld.asm).
@@ -354,3 +356,23 @@ endif
 if not(defined("ENABLE_EQUIPMENT_MENU"))
   !ENABLE_EQUIPMENT_MENU = 1
 endif
+
+; Special transitions v2 (Overworld/special_transitions_v2.asm); off by default.
+; Private ferry candidate; endpoints use the existing special-exit records.
+!BOAT_SCENE_MARKER = $B047
+if not(defined("ENABLE_KALYXO_BOAT"))
+  !ENABLE_KALYXO_BOAT = 0
+endif
+
+if not(defined("ENABLE_SPECIAL_TRIGGER_TABLE_V2"))
+  !ENABLE_SPECIAL_TRIGGER_TABLE_V2 = 0
+endif
+
+if not(defined("ENABLE_SPECIAL_EXIT_TABLE_V2"))
+  !ENABLE_SPECIAL_EXIT_TABLE_V2 = 0
+endif
+
+; Private joint-candidate checkpoint source; no default runtime activation.
+!ENABLE_OW_AREA_TILESETS = 0
+!ENABLE_REGIONAL_CHECKPOINTS = 0
+!ENABLE_REGIONAL_CHECKPOINT_SOURCE_BINDING = 0

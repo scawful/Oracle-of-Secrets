@@ -588,9 +588,17 @@ ZoraTemple_EntranceAnimation:
     STZ.w $011D
     ; set the overlay
     LDX.b $8A
+    if !LYRA_CURRENT_EVENTS_ENABLED == 1
+    JSL Lyra_TailEvent_Load
+    else
     LDA.l $7EF280,X
+    endif
     ORA.b #$20
+    if !LYRA_CURRENT_EVENTS_ENABLED == 1
+    JSL Lyra_TailEvent_Store
+    else
     STA.l $7EF280,X
+    endif
     .wait
     RTS
   }
@@ -640,9 +648,17 @@ Castle_EntranceAnimation:
     STA.w $012F
     ; set the overlay
     LDX.b $8A
+    if !LYRA_CURRENT_EVENTS_ENABLED == 1
+    JSL Lyra_TailEvent_Load
+    else
     LDA.l $7EF280,X
+    endif
     ORA.b #$20
+    if !LYRA_CURRENT_EVENTS_ENABLED == 1
+    JSL Lyra_TailEvent_Store
+    else
     STA.l $7EF280,X
+    endif
     RTS
   }
 
@@ -963,9 +979,17 @@ TailPalace_EntranceAnimation:
     STZ.w $011D
     ; set the overlay
     LDX.b $8A
+    if !LYRA_CURRENT_EVENTS_ENABLED == 1
+    JSL Lyra_TailEvent_Load
+    else
     LDA.l $7EF280,X
+    endif
     ORA.b #$20
+    if !LYRA_CURRENT_EVENTS_ENABLED == 1
+    JSL Lyra_TailEvent_Store
+    else
     STA.l $7EF280,X
+    endif
     .wait
     RTS
   }
@@ -1097,9 +1121,17 @@ Goron_EntranceAnimation:
   STZ.w $011C
   STZ.w $011D
   LDX.b $8A
+  if !LYRA_CURRENT_EVENTS_ENABLED == 1
+  JSL Lyra_TailEvent_Load
+  else
   LDA.l $7EF280,X
+  endif
   ORA.b #$20
+  if !LYRA_CURRENT_EVENTS_ENABLED == 1
+  JSL Lyra_TailEvent_Store
+  else
   STA.l $7EF280,X
+  endif
   .wait
   RTS
 }
@@ -1113,7 +1145,11 @@ Fortress_CheckSeedGate:
   LDA.l MakuTreeQuest : AND.b #!MakuTree_HasSeed : BEQ .deny
   PHX
   LDX.b $8A
+  if !LYRA_CURRENT_EVENTS_ENABLED == 1
+  JSL Lyra_TailEvent_Load : PLX
+  else
   LDA.l $7EF280,X : PLX
+  endif
   AND.b #$20 : BNE .deny
   LDA.b #$00
   RTL
@@ -1350,9 +1386,17 @@ Fortress_EntranceAnimation:
     STZ.w $011D
     ; set the overlay
     LDX.b $8A
+    if !LYRA_CURRENT_EVENTS_ENABLED == 1
+    JSL Lyra_TailEvent_Load
+    else
     LDA.l $7EF280,X
+    endif
     ORA.b #$20
+    if !LYRA_CURRENT_EVENTS_ENABLED == 1
+    JSL Lyra_TailEvent_Store
+    else
     STA.l $7EF280,X
+    endif
     ; OverworldEntrance_PlayJingle
     #_1BCF40: LDA.b #$1B ; SFX3.1B
 

@@ -113,6 +113,14 @@ Arrival_SpotlightGate:
 ; Module $0C. Entered by JML from Module_MainRouting; must RTL.
 Arrival_Module:
 {
+if !ENABLE_KALYXO_BOAT == 1
+  REP #$20
+  LDA.l Boat_Marker : CMP.w #!BOAT_SCENE_MARKER
+  SEP #$20
+  BNE .arrival
+    JML Boat_Module
+  .arrival
+endif
   PHB : PHK : PLB
   SEP #$30
   LDA.l Arrival_State : ASL A : TAX

@@ -1,6 +1,7 @@
 ; Overworld.asm
 
 incsrc "Overworld/music_cache.asm"
+incsrc "Data/overworld/whirlpool_placements.asm"
 
 ; Random chance of hearts from bush instead of guards
 org $1AFBBF : db $0B ; Heart Index
@@ -69,6 +70,9 @@ incsrc "Overworld/entrances.asm"
 
 incsrc "Overworld/custom_gfx.asm"
 %log_end("Overworld/custom_gfx.asm", !LOG_OVERWORLD)
+if !ENABLE_OW_AREA_TILESETS == 1
+  incsrc "Overworld/area_tilesets.asm"
+endif
 pushpc
 
 incsrc "Overworld/world_map.asm"
@@ -177,6 +181,16 @@ LoadOverworldPitAreas:
   CLC ; allow transition
   RTL
 }
+
+Checkpoint_OrdinaryOverworldEnd = pc()
+if !REGIONAL_CHECKPOINTS_ENABLED == 1
+  assert (Checkpoint_OrdinaryOverworldEnd>>16) == $34
+  assert Checkpoint_OrdinaryOverworldEnd <= $34F900, "Ordinary Overworld prefix overlaps checkpoint reservation"
+  pushpc
+  org $34F900
+  incsrc "Overworld/checkpoint_state.asm"
+  pullpc
+endif
 
 Overworld_GetPitDestination = $1BB860
 

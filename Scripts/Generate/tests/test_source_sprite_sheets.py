@@ -227,21 +227,103 @@ class SourceSheets(unittest.TestCase):
         from generate_hack_manifest import generate_manifest
         fixture=ManifestFixture();self.addCleanup(fixture.close)
         include='Core/Generated/source_sprite_sheets/sheet_overrides.asm'
-        fixture.write_text('Oracle_main.asm',f'incsrc "{include}"\n')
+        fixture.write_text('Oracle_main.asm',f'!ENABLE_EXPANDED_GRAPHICS_TABLE = 1\nincsrc "{include}"\n')
         _,items=sheets.build(self.spec_path,self.base)
         fixture.write_text(include,sheets.asm_text(items))
         manifest=generate_manifest(fixture.root,dev_rom_path=fixture.write_dev_rom())
         self.assertFalse(manifest['protected_regions']['exact'])
-        regions=manifest['protected_regions']['regions']
-        for table in (TBL_BANK,TBL_HIGH,TBL_LOW):
-            pointer=table+0xD7
-            covering=[r for r in regions if int(r['start'],16)<=pointer<int(r['end'],16)]
-            self.assertEqual(len(covering),1)
-            self.assertEqual((int(covering[0]['start'],16),int(covering[0]['end'],16)),
-                             (pointer,pointer+1))
+        # Pointer rows live in relocated arrays in bank $23, which asm ownership covers.
+        bank=next(b for b in manifest['owned_banks']['banks'] if b['bank']=='0x23')
+        starts={int(r['start'],16) for r in bank['regions']}
+        for table in (sheets.NEW_BANK,sheets.NEW_HIGH,sheets.NEW_LOW):
+            self.assertIn(table+0xD7,starts)
             for neighbor in (0xD8,0xD9):
-                self.assertFalse(any(int(r['start'],16)<=table+neighbor<int(r['end'],16)
-                                     for r in regions),f'Follower sheet ${neighbor:02X} pointer is protected')
+                self.assertNotIn(table+neighbor,starts,f'Follower sheet ${neighbor:02X} pointer is protected')
+
+    def test_new_globals_survive_generated_include_without_legacy_pointer(self):
+        # Synthetic artwork only; no production ID or payload interval is allocated.
+        legacy = dict(self.spec['sheets'][0])
+        self.spec['sheets'] = [dict(legacy, sprite_sheet=hex(g-0x73)) for g in (0xD7,0xB3,0xB6,0xBA,0x96)]
+        self.write_spec()
+        _, old_items = sheets.build(self.spec_path, self.base)
+        self.spec['schema_version'] = 2
+        for g in (0xDF, 0xFE):
+            self.spec['sheets'].append(dict(global_sheet=hex(g), source='sheet.txt',
+                decoded_sha256=hashlib.sha256(self.raw).hexdigest(), why='synthetic source preservation vector'))
+        self.write_spec()
+        self.reservation_root()
+        original_ptr = sheets.ptr
+        def legacy_only(rom, g):
+            self.assertLess(g, 0xDF, 'new sheet queried a nonexistent legacy pointer')
+            return original_ptr(rom, g)
+        with mock.patch.object(sheets, 'ptr', side_effect=legacy_only):
+            _, items = sheets.build(self.spec_path, self.base, self.root, rom_role='editable_base')
+        self.assertEqual(old_items, items[:len(old_items)])
+        outputs = sheets.generated_files(items)
+        out = self.root/'generated'
+        sheets.write_outputs(out, outputs, [self.spec_path, self.base, self.root/'sheet.txt'])
+        _, rebuilt = sheets.build(self.spec_path, self.base, self.root, rom_role='editable_base')
+        self.assertEqual(outputs, sheets.generated_files(rebuilt))
+        for name, payload in outputs.items():
+            self.assertEqual((out/name).read_bytes(), payload)
+        include = outputs[Path('sheet_overrides.asm')].decode()
+        for item in items:
+            self.assertIn(f'org ${sheets.NEW_BANK+item["g"]:06X}', include)
+            self.assertEqual(lz2.decompress(item['stream'], max_output=0x600)[0], self.raw)
+        # The normal build checks tracked output and includes it after initialization.
+        main = (ROOT/'Oracle_main.asm').read_text()
+        self.assertLess(main.index('incsrc "Core/gfx_sheet_table.asm"'),
+                        main.index('incsrc "Core/Generated/source_sprite_sheets/sheet_overrides.asm"'))
+        wrapper = (ROOT/'Scripts/Build/build_rom.sh').read_text()
+        self.assertIn('--check --respect-flags', wrapper)
+        self.assertEqual(self.base.read_bytes(), self.rom)
+
+    def test_new_global_schema_guards_and_unsupported_roles(self):
+        new = dict(global_sheet='0xDF', source='sheet.txt',
+                   decoded_sha256=hashlib.sha256(self.raw).hexdigest(), why='synthetic')
+        self.spec['schema_version'] = 2
+        self.spec['sheets'] = [new]
+        self.write_spec()
+        for role in ('compiled_rom', 'development_editor', 'unknown'):
+            with self.subTest(role=role), self.assertRaisesRegex(ValueError, 'editable_base role'):
+                sheets.build(self.spec_path, self.base, rom_role=role)
+            with self.assertRaisesRegex(ValueError, 'provenance only'):
+                sheets.source_metadata(self.root, rom_role=role)
+        for g in ('0xDE', '0xFF'):
+            self.spec['sheets'] = [dict(new, global_sheet=g)]; self.write_spec()
+            with self.assertRaisesRegex(ValueError, 'DF-.*FE'):
+                sheets.build(self.spec_path, self.base)
+        self.spec['sheets'] = [dict(new, decoded_sha256='0'*64)]; self.write_spec()
+        with self.assertRaisesRegex(ValueError, 'decoded source changed'):
+            sheets.build(self.spec_path, self.base)
+        self.spec['sheets'] = [dict(new), dict(new)]; self.write_spec()
+        with self.assertRaisesRegex(ValueError, 'duplicate'):
+            sheets.build(self.spec_path, self.base)
+        self.spec['sheets'] = [dict(new, source='../outside.txt')]; self.write_spec()
+        with self.assertRaisesRegex(ValueError, 'inside'):
+            sheets.build(self.spec_path, self.base)
+        self.spec['schema_version'] = 1; self.spec['sheets'] = [new]; self.write_spec()
+        with self.assertRaisesRegex(ValueError, 'schema 2'):
+            sheets.build(self.spec_path, self.base)
+
+    def test_new_global_explicit_placement_preserves_reserved_gap(self):
+        legacy = dict(self.spec['sheets'][0])
+        new = dict(global_sheet='0xDF', source='sheet.txt',
+                   decoded_sha256=hashlib.sha256(self.raw).hexdigest(),
+                   why='synthetic reviewed slot', snes_address='0x40E5DB')
+        self.spec.update(schema_version=2, sheets=[legacy, new])
+        self.write_spec()
+        _, items = sheets.build(self.spec_path, self.base)
+        self.assertEqual(items[0]['snes'], sheets.START)
+        self.assertEqual(items[1]['snes'], 0x40E5DB)
+        include = sheets.asm_text(items)
+        self.assertIn('org $40E5DB\nSourceSpriteSheet_6C:', include)
+        for at in ('0x40D000', '0x40FFFF', '0x238000', '0xC0E5DB'):
+            with self.subTest(at=at):
+                self.spec['sheets'][1]['snes_address'] = at
+                self.write_spec()
+                with self.assertRaisesRegex(ValueError, 'placement|allocation is full'):
+                    sheets.build(self.spec_path, self.base)
 
     def test_actual_build_guard_refuses_wrong_or_truncated_base_before_output(self):
         # Real build wrapper/receipt/guard in a portable disposable repository.

@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+# Internal source-scanner context starts legacy even if inherited by the shell.
+# Current selected preparation below is the only path that changes it to1.
+export OOS_LYRA_BUILD_CONTEXT=0
+
 usage() {
   echo "Usage: $(basename "$0") <version> [asar_binary] [--reload] [--no-symbols] [--mesen-sync] [--skip-tests] [--asar=<path>] [--enable <csv>] [--disable <csv>] [--profile <defaults|all-on|all-off>] [--persist-flags] [--help]" >&2
   echo "Base ROM: Roms/oos<version>.sfc (unpatched edit target; override with OOS_BASE_ROM)." >&2
@@ -15,6 +19,8 @@ usage() {
   echo "  Names: flags,menu,overlap,hooks,sprites,analysis,smoke,annotations." >&2
   echo "  OOS_ANALYZER=<path> selects an analyzer; OOS_TEST_SOCKET=<owned socket> enables exact-ROM current-state smoke." >&2
   echo "  Receipt: Roms/oos<version>x.build.json (override OOS_BUILD_RECEIPT)." >&2
+  echo "  Lyra: OOS_LYRA_PROJECT selects a saved dev project; OOS_LYRA_REQUEST optionally overrides its [files] lyra_build_request_file." >&2
+  echo "  Current Lyra: OOS_LYRA_CANDIDATE selects the authenticated fresh generation target; all output metadata follows its directory." >&2
   exit "${1:-1}"
 }
 
@@ -152,6 +158,8 @@ mlb_rel="Roms/oos${version}x.mlb"
 mlb_path="$rom_dir/oos${version}x.mlb"
 
 source "$repo_root/Scripts/Build/build_checks.sh"
+configure_current_output
+configure_current_tools
 init_build_receipt
 current_stage="base_rom"
 
@@ -191,7 +199,7 @@ fi
 # Source sheets must match the selected editable base and tracked generated
 # streams. Refuse a changed base sheet before replacing any prior build output.
 run_check source_sprite_sheets 1 python3 "$repo_root/Scripts/Generate/sheet_overrides.py" \
-  --root "$repo_root" --base-rom "$base_rom" --check --respect-flags
+  --root "$repo_root" --base-rom "$base_rom" --check --respect-flags --rom-role editable_base
 
 # Prototype HUD icons preserve every unallocated tile in the editable base.
 run_check menu_icon_sheets 1 python3 "$repo_root/Scripts/Generate/menu_icon_overrides.py" \
@@ -210,8 +218,44 @@ echo "[*] Validating expanded message source contract..."
 run_check message_source 1 python3 "$repo_root/Scripts/Generate/validate_expanded_message_source.py" \
   --root "$repo_root"
 
+run_check joint_palette_source 1 python3 "$repo_root/Scripts/Generate/joint_palette_directory.py" \
+  --root "$repo_root" --check
+
+# Shared checkpoints use the existing source/receipt route. Feature defaults off;
+# active candidates require the exact native source-control record and symbols.
+checkpoint_args=(--root "$repo_root" --base-rom "$base_rom")
+if [[ "$emit_symbols" != "1" ]]; then
+  checkpoint_args+=(--no-symbols)
+fi
+run_check checkpoint_source 1 python3 "$repo_root/Scripts/Build/checkpoint_registry.py" "${checkpoint_args[@]}"
+
 current_stage="output_snapshot"
 snapshot_build_outputs
+
+# Only this invocation can select generated Lyra inputs. An unselected build
+# emits disabled context and does not pass the internal assembler define.
+lyra_args=(--candidate "$patched_rom")
+lyra_assembler_args=()
+if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
+  if [[ "$emit_symbols" != "1" ]]; then
+    echo "ERROR: Selected Lyra publication requires symbols for compiled-reader verification." >&2
+    exit 1
+  fi
+  lyra_args+=(--project "$OOS_LYRA_PROJECT" --base-rom "$base_rom")
+  if [[ -n "${OOS_LYRA_REQUEST:-}" ]]; then
+    lyra_args+=(--request "$OOS_LYRA_REQUEST")
+  fi
+elif [[ -n "${OOS_LYRA_REQUEST:-}" ]]; then
+  echo "ERROR: OOS_LYRA_REQUEST requires OOS_LYRA_PROJECT." >&2
+  exit 1
+fi
+run_check lyra_prepare 1 python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" prepare \
+  ${lyra_args[@]+"${lyra_args[@]}"}
+if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
+  lyra_assembler_args+=("-DLYRA_BUILD_CONTEXT=1")
+  export OOS_LYRA_BUILD_CONTEXT=1
+fi
+receipt artifact --name lyra_prepare --path "$repo_root/Data/Generated/lyra_project/prepare.json"
 
 # Keep water-gate runtime tables synced with the validated editor-authored base
 # ROM. The tracked custom-collision source contract guarantees that marker
@@ -243,7 +287,11 @@ if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" ]]; then
         --out-asm "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
     )
   }
-  run_check water_tables 1 generate_water_gate_tables
+  if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
+    run_check water_tables 1 python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" check-water --kind gate --rom "$water_table_rom"
+  else
+    run_check water_tables 1 generate_water_gate_tables
+  fi
 else
   omit_check water_tables skipped 0 "OOS_SKIP_WATER_TABLE_GEN=1; tracked generated input retained"
 fi
@@ -258,7 +306,11 @@ if [[ "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
         --out-asm "$repo_root/Dungeons/generated/water_fill_table.asm"
     )
   }
-  run_check water_fill 1 generate_water_fill_tables
+  if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
+    run_check water_fill 1 python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" check-water --kind fill --rom "$water_table_rom"
+  else
+    run_check water_fill 1 generate_water_fill_tables
+  fi
 else
   omit_check water_fill skipped 0 "OOS_SKIP_WATER_FILL_TABLE_GEN=1; tracked generated input retained"
 fi
@@ -272,15 +324,7 @@ if [[ "${OOS_SKIP_MENU_VALIDATE:-0}" == "1" ]]; then
   # An explicit diagnostic skip may disable the default, never an explicit requirement.
   omit_check menu skipped "$(check_required menu "${OOS_MENU_VALIDATE_FATAL:-0}")" "OOS_SKIP_MENU_VALIDATE=1"
 else
-  z3ed_cli="${OOS_Z3ED_BIN:-}"
-  if [[ -z "$z3ed_cli" ]]; then
-    local_z3ed="$repo_root/../yaze/scripts/z3ed"
-    if [[ -x "$local_z3ed" ]]; then
-      z3ed_cli="$local_z3ed"
-    elif command -v z3ed >/dev/null 2>&1; then
-      z3ed_cli="$(command -v z3ed)"
-    fi
-  fi
+  z3ed_cli="$(select_z3ed_cli)"
   if [[ -n "$z3ed_cli" ]] && command -v "$z3ed_cli" >/dev/null 2>&1; then
     receipt tool --name z3ed --path "$(command -v "$z3ed_cli")"
     menu_validate_args=(oracle-menu-validate --project "$repo_root")
@@ -376,7 +420,16 @@ receipt tool --name assembler --path "$(command -v "$asar_bin")"
 receipt tool --name python --path "$(command -v python3)"
 
 current_stage="prepare_output"
-cp -f "$base_rom" "$patched_rom"
+if [[ -n "${OOS_LYRA_PROJECT:-}" ]] && python3 - "$repo_root/Data/Generated/lyra_project/prepare.json" <<'PY_CURRENT'
+import json,sys
+sys.exit(0 if json.load(open(sys.argv[1])).get('kind') == 'lyra.current_build_prepare.v1' else 1)
+PY_CURRENT
+then
+  run_check lyra_stage 1 python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" stage --rom "$patched_rom"
+  receipt artifact --name staged_input_transform --path "$patched_rom.stage-input.json"
+else
+  cp -f "$base_rom" "$patched_rom"
+fi
 
 # Stamp Config/version.json into the in-game version line (message $C7) before
 # assembly. z3asm records the final output ROM hash in hooks.json, so post-build
@@ -391,29 +444,40 @@ current_stage="source_snapshot"
 receipt snapshot --phase pre_assembly
 
 # z3asm writes hooks.json from the bytes it assembles (see z3dk docs/Z3DK_HOOKS.md).
-hooks_json="$repo_root/Roms/hooks.json"
+hooks_json="$rom_dir/hooks.json"
 assembler_emits=()
 # Never accept symbols or hook metadata left by a prior build at these paths.
 rm -f "$hooks_json" "$symbols_path" "$mlb_path"
 current_stage="assembly"
 if [[ "$asar_bin" == *"z3asm"* ]]; then
-  assembler_emits+=("--emit=sourcemap:$repo_root/Roms/sourcemap.json" "--emit=hooks:$hooks_json")
+  assembler_emits+=("--emit=sourcemap:$rom_dir/sourcemap.json" "--emit=hooks:$hooks_json")
 fi
 
 assemble_rom() {
   if [[ $emit_symbols -eq 1 ]]; then
     (
       cd "$repo_root"
-      "$asar_bin" --symbols=wla --symbols-path="$symbols_path" ${assembler_emits[@]+"${assembler_emits[@]}"} Oracle_main.asm "$patched_rom"
+      "$asar_bin" --symbols=wla --symbols-path="$symbols_path" ${assembler_emits[@]+"${assembler_emits[@]}"} ${lyra_assembler_args[@]+"${lyra_assembler_args[@]}"} Oracle_main.asm "$patched_rom"
     )
   else
     (
       cd "$repo_root"
-      "$asar_bin" ${assembler_emits[@]+"${assembler_emits[@]}"} Oracle_main.asm "$patched_rom"
+      "$asar_bin" ${assembler_emits[@]+"${assembler_emits[@]}"} ${lyra_assembler_args[@]+"${lyra_assembler_args[@]}"} Oracle_main.asm "$patched_rom"
     )
   fi
 }
 run_check assembly 1 assemble_rom
+
+# Verify actual assembled data and native readers before hashes or hook receipts
+# are published. This step never patches the assembled ROM.
+if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
+  lyra_verification="$rom_dir/oos${version}x.lyra-verification.json"
+  run_check lyra_verify 1 python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" verify \
+    --rom "$patched_rom" --symbols "$symbols_path" --receipt "$lyra_verification"
+  receipt artifact --name lyra_verification --path "$lyra_verification"
+fi
+run_check checkpoint_compiled 1 python3 "$repo_root/Scripts/Build/checkpoint_registry.py" \
+  --root "$repo_root" --base-rom "$base_rom" --rom "$patched_rom" --symbols "$symbols_path"
 
 receipt artifact --name output_rom --path "$patched_rom"
 if [[ "$emit_symbols" == "1" ]]; then
@@ -435,7 +499,7 @@ echo "Assembled patched ROM: $patched_rom"
 echo "[*] Generating Yaze hack manifest..."
 manifest_args=(
   --root "$repo_root"
-  --output "$repo_root/Roms/hack_manifest.json"
+  --output "$rom_dir/hack_manifest.json"
   --dev-rom "$base_rom"
   --rom "$patched_rom"
 )
@@ -466,7 +530,7 @@ run_check manifest 1 python3 "$repo_root/Scripts/Generate/generate_hack_manifest
   "${manifest_args[@]}" \
   "${manifest_hook_args[@]}"
 
-receipt artifact --name manifest --path "$repo_root/Roms/hack_manifest.json"
+receipt artifact --name manifest --path "$rom_dir/hack_manifest.json"
 
 # Export symbols for yaze + Mesen2.
 if [[ $emit_symbols -eq 1 && -f "$symbols_path" ]]; then
@@ -480,14 +544,18 @@ fi
 
 # Run ZScream overlap check
 if [[ $emit_symbols -eq 1 ]]; then
-  run_check overlap 1 python3 "$repo_root/Scripts/Build/check_zscream_overlap.py" --symbols "$symbols_path"
+  overlap_args=(--symbols "$symbols_path")
+  if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
+    overlap_args+=(--lyra-verification "$lyra_verification" --rom "$patched_rom")
+  fi
+  run_check overlap 1 python3 "$repo_root/Scripts/Build/check_zscream_overlap.py" "${overlap_args[@]}"
 else
   omit_check overlap skipped "$(check_required overlap 0)" "--no-symbols requested; no fresh emission map"
 fi
 
 # Generate annotations.json if requested (ASM @watch/@assert tags)
 if [[ "${OOS_GENERATE_ANNOTATIONS:-0}" == "1" || "$(check_required annotations 0)" == "1" ]]; then
-  annotations_out="$repo_root/.cache/annotations.json"
+  annotations_out="${annotations_out:-$repo_root/.cache/annotations.json}"
   run_check annotations 1 python3 "$repo_root/Scripts/Generate/generate_annotations.py" --root "$repo_root" --out "$annotations_out"
   receipt artifact --name annotations --path "$annotations_out"
 fi

@@ -4,6 +4,7 @@ Source-contract/generator internals have their own suites. These tests exercise
 exit propagation, provenance dispatch and cleanup without real ROMs or emulators.
 """
 from pathlib import Path
+import hashlib
 import json
 import os
 import shutil
@@ -30,7 +31,14 @@ class BuildPipelineReceiptTest(unittest.TestCase):
         for name in ('build_rom.sh', 'build_checks.sh', 'build_receipt.py',
                      'verify_feature_flags.py', 'set_feature_flags.py'):
             self.copy(f'Scripts/Build/{name}')
-        for name in ('generate_hooks_json.py', 'asm_source.py'):
+        # Keep required Lyra preparation real, including its import closure.
+        # Unselected preparation consumes no project, ledger or ROM data.
+        for name in ('lyra_project_publisher.py', 'lyra_project_admission.py',
+                     'lyra_project_allocation.py', 'lyra_project_composition.py',
+                     'lyra_project_delta.py', 'lyra_native_streams.py',
+                     'lyra_project_tile32.py', 'lyra_project_terrain.py', 'lyra_native_state.py'):
+            self.copy(f'Scripts/Build/{name}')
+        for name in ('generate_hooks_json.py', 'asm_source.py', 'allocation_contracts.py'):
             self.copy(f'Scripts/Generate/{name}')
         self.copy('Scripts/Validate/verify_hooks_json.py')
         self.write('Util/macros.asm', '!ENABLE_FIXTURE = 1\n')
@@ -41,8 +49,11 @@ class BuildPipelineReceiptTest(unittest.TestCase):
         self.write('Roms/oos999.sfc', 'disposable fixture bytes')
         for name in ('sheet_overrides.py', 'menu_icon_overrides.py',
                      'validate_custom_collision_source.py',
-                     'validate_expanded_message_source.py'):
+                     'validate_expanded_message_source.py', 'joint_palette_directory.py'):
             self.write(f'Scripts/Generate/{name}', 'import os,sys\nsys.exit(int(os.getenv("FIXTURE_SOURCE_EXIT", "0")))\n')
+        # These source guards have independent suites; keep their child-process
+        # transport explicit, like the generators above and fixture assembler.
+        self.write('Scripts/Build/checkpoint_registry.py', 'import sys\nsys.exit(0)\n')
         self.write('Scripts/Generate/generate_hack_manifest.py',
                    'import json,sys,pathlib\n'
                    'pathlib.Path(sys.argv[sys.argv.index("--output")+1]).write_text(json.dumps({"fixture":True,"argv":sys.argv[1:]}))\n')
@@ -99,6 +110,26 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.assertTrue(self.check('source_sprite_sheets')['required'])
         self.assertEqual(self.check('menu_icon_sheets')['status'], 'passed')
         self.assertTrue(self.check('menu_icon_sheets')['required'])
+        for name in ('joint_palette_source', 'checkpoint_source'):
+            self.assertEqual(self.check(name)['status'], 'passed')
+            self.assertTrue(self.check(name)['required'])
+        self.assertEqual(self.check('lyra_prepare')['status'], 'passed')
+        self.assertTrue(self.check('lyra_prepare')['required'])
+        generated = self.root / 'Data/Generated/lyra_project'
+        prepared = json.loads((generated / 'prepare.json').read_bytes())
+        self.assertEqual(prepared['kind'], 'lyra.ordinary_build_prepare.v1')
+        self.assertIs(prepared['selected'], False)
+        self.assertEqual(set(prepared['generated_files']), {'runtime_constants.asm',
+                         'runtime_data.asm', 'descriptor.json', 'binaries/payload.bin'})
+        for name, digest in prepared['generated_files'].items():
+            self.assertEqual(hashlib.sha256((generated / name).read_bytes()).hexdigest(), digest, name)
+        constants = (generated / 'runtime_constants.asm').read_text()
+        self.assertIn('!LYRA_PROJECT_DATA_PRESENT = 0', constants)
+        self.assertIn('!LYRA_NATIVE_A1_ENABLED = 0', constants)
+        self.assertEqual(json.loads((generated / 'descriptor.json').read_bytes()), {'selected': False})
+        self.assertEqual((generated / 'binaries/payload.bin').read_bytes(), b'')
+        self.assertEqual(self.receipt['artifacts']['lyra_prepare']['sha256'],
+                         hashlib.sha256((generated / 'prepare.json').read_bytes()).hexdigest())
         self.assertEqual(self.receipt['state'], 'completed_with_gaps')
         self.assertEqual(self.check('smoke')['status'], 'unavailable')
         hooks = json.loads((self.root / 'Roms/hooks.json').read_text())

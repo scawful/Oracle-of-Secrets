@@ -5,6 +5,23 @@
 
 LoadCheckpointOrWorld:
 {
+if !ENABLE_KALYXO_BOAT == 1
+  JSL Boat_ResetSession
+endif
+  if defined("PROJECT_BG128_ENABLED")
+    if !PROJECT_BG128_ENABLED == 1
+      JSL ProjectBGPalette_RestoreAndInvalidate ; Warm file/Continue: restore before invalidating.
+    endif
+  endif
+  if !LYRA_CURRENT_EVENTS_ENABLED == 1
+    JSL Lyra_TailEvent_MigrateSave
+  endif
+  if !REGIONAL_CHECKPOINTS_ENABLED == 1
+    JSL Checkpoint_Load
+    BCC .not_regional
+      RTL
+    .not_regional
+  endif
   LDA.l SpawnPoint : CMP.b #!Spawn_GoronCheckpoint : BNE .legacy
     ; Consume even a malformed marker before the seven-record spawn arrays.
     LDA.b #!Spawn_LinksHouse : STA.l SpawnPoint
@@ -36,6 +53,7 @@ LoadCheckpointOrWorld:
     LDA.w #!GoronCheckpoint_CacheRoom : STA.b $A0
     PLP
 
+Checkpoint_EnterPreparedCache:
     STZ.w $010A
     STZ.w $04AA
     LDA.b #$80 : STA.b $13
@@ -47,13 +65,15 @@ LoadCheckpointOrWorld:
     RTL
 }
 
+LyraHost_LoadCheckpointOrWorld_End = pc()
+
 ; Native cached-exit image, consumed by $02E5D4. Public-side floor east of
 ; the Goron on large area36; keep the ordinary room98 exit unchanged.
 ; Scroll = position -120/-80; triggers = position +7/+31. Bounds come from
 ; area's Pool tables and are recomputed by NewOverworld_SetCameraBounds.
 ; AA1/AA2=20/62; AA3 is overwritten from7EFCC0,36 by02AB0D before GFX use.
 ; Zero modifiers initialize fresh camera-stripe progress, like SwordWarp_Cache.
-GoronCheckpoint_Cache:
+macro RegionalCheckpoint_GoronControlCache()
   dw $0036, $0016               ; Area, main/subscreen
   dw $0DD8, $0CA8               ; Scroll Y/X
   dw $0E28, $0D20               ; Link Y/X
@@ -64,4 +84,7 @@ GoronCheckpoint_Cache:
   dw $2000, $0062               ; Graphics bytes0AA0-0AA3
   dw $0000                      ; Unused cache word
   dw $0000, $0000, $0000, $0000 ; Fresh scroll modifiers
+endmacro
+GoronCheckpoint_Cache:
+  %RegionalCheckpoint_GoronControlCache()
 assert pc()-GoronCheckpoint_Cache == $32
