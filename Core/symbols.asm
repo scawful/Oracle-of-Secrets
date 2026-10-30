@@ -45,6 +45,13 @@ CurrentDream   = $0426
 ; reloaded through the Dream Hut entrance. Vanilla-unused byte (Core/ram.asm).
 DreamReturnTimer = $0427
 
+; Pending consumable action requested from menu (0 = none, 1 = Honeycomb swarm, 2 = Deku Stick).
+; Uses former vanilla-unused byte $0434; Core/ram.asm records this owner.
+PendingSupplyAction      = $0434
+!SUPPLY_ACTION_NONE      = $00
+!SUPPLY_ACTION_HONEYCOMB = $01
+!SUPPLY_ACTION_DEKUSTICK = $02
+
 ; Wisdom dream scene (!ENABLE_DREAM_WISDOM_SCENE, Sprites/NPCs/dream_wisdom.asm).
 ; Subtypes of the two staged $73 actors; room data never produces them.
 ; WRAM $7FF370-$7FF37F is taken (vanilla-free UNUSED_7FF180, Core/ram.asm;

@@ -548,6 +548,7 @@ Menu_Exit:
   INC.b $16
 
   SEP #$20 ; Restore M=8 before return (REP #$20 at line 432 set M=16)
+  JSL Supply_ProcessPendingExitAction
   RTS
 }
 
@@ -788,12 +789,23 @@ MagicBag_ConsumeItem:
     JSL Link_ConsumeMagicBagItem
     BCC .failed_use_dbr
 
+    ; Check if handler queued a deferred action for menu exit (A=1)
+    CMP.b #$01 : BEQ .deferred_use
+
     ; Success -> Decrement
     LDA ($00) : DEC A : STA ($00)
     PLB
 
     ; Sound
     LDA.b #$35 : STA.w $012F
+    BRA .exit
+
+.deferred_use
+    PLB
+    ; Selection sound
+    LDA.b #$20 : STA.w $012F
+    ; Trigger menu scroll up to return to gameplay
+    LDA.b #!MENU_STATE_SCROLL_UP : STA.w $0200
     BRA .exit
 
 .failed_use_dbr

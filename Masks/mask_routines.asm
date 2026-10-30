@@ -40,6 +40,7 @@ StartupMasks:
 
   ; set links sprite bank
   LDA #$10 : STA $BC
+  JSL DekuStick_Drop
   ; Volatile state shared by the Garo/Bombchu/Switch Hook prototypes.
   PHX
   LDX.b #$11
@@ -78,6 +79,7 @@ ResetToLinkGraphics:
 
 ForceResetMask_GameOver:
 {
+  JSL DekuStick_Drop
   LDA $02B2 : BEQ .still_link
     CMP.b #$06 : BEQ .gbc_link
       JSL ResetToLinkGraphics
@@ -93,6 +95,7 @@ ForceResetMask_GameOver:
 
 ForceResetMask_SaveAndQuit:
 {
+  JSL DekuStick_Drop
   LDA !CurrentMask : BEQ .still_link
     JSL ResetToLinkGraphics
   .still_link
@@ -312,6 +315,21 @@ pullpc
 
 LinkItem_CheckForSwordSwing_Masks:
 {
+  ; Check if a Deku Stick is currently drawn
+  LDA.l DekuStick_State : BEQ .check_masks
+
+  ; Stick is drawn: sword swing is suppressed while holding a stick
+  ; Check if B was newly pressed ($F4 bit 7) to stow the stick
+  BIT.b $F4 : BPL .skip_sword
+
+  ; B newly pressed -> stow the stick!
+  JSL DekuStick_Stow
+
+.skip_sword
+  LDA.b #$10 ; Non-zero ensures BNE branches to EXIT_079CBE (skipping sword swing)
+  RTL
+
+.check_masks
   LDA.w !CurrentMask : CMP.b #$08 : BNE +
     JSL GaroMask_CounterInput
     BRA .return
@@ -1607,6 +1625,7 @@ if !ENABLE_MINISH_AUTO_PORTAL == 1
   JSL MinishPortal_Maintain
 endif
   JSL GaroMask_FrameTick
+  JSL DekuStick_Main
   PLB
   %m16()
   PLY : PLX : PLA

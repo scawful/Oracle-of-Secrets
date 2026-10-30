@@ -404,12 +404,34 @@ class PartitionTests(unittest.TestCase):
 
 
 class AgentsDocTests(unittest.TestCase):
-    def test_every_load_rules_pointer_in_agents_md_names_board_rules(self):
-        lines = (REPO / "AGENTS.md").read_text(encoding="utf-8").splitlines()
-        pointers = [ln for ln in lines if re.search(r"load rules", ln, re.IGNORECASE)]
-        self.assertGreaterEqual(len(pointers), 3)
+    def assert_current_routes(self, text):
+        for path in ("scratchpad/inbox.md", "scratchpad/agent_handoff.md",
+                     "memory/agent_rules.md", "scratchpad/board_rules.md"):
+            self.assertIn(path, text)
+        pointers = [ln for ln in text.splitlines() if re.search(r"load rules", ln, re.IGNORECASE)]
         for line in pointers:
             self.assertIn(cc.RULES, line, line)
+
+    def test_agents_md_routes_to_current_inbox_handoff_and_rules(self):
+        self.assert_current_routes((REPO / "AGENTS.md").read_text(encoding="utf-8"))
+
+    def test_missing_current_route_is_rejected(self):
+        text = (REPO / "AGENTS.md").read_text(encoding="utf-8")
+        for path in ("scratchpad/inbox.md", "scratchpad/agent_handoff.md",
+                     "memory/agent_rules.md", "scratchpad/board_rules.md"):
+            with self.subTest(path=path), self.assertRaises(self.failureException):
+                self.assert_current_routes(text.replace(path, ""))
+
+    def test_wrong_resource_route_is_rejected(self):
+        text = (REPO / "AGENTS.md").read_text(encoding="utf-8")
+        with self.assertRaises(self.failureException):
+            self.assert_current_routes(text.replace("scratchpad/board_rules.md", "scratchpad/old_rules.md"))
+
+    def test_remaining_legacy_load_rules_pointer_must_name_board_rules(self):
+        text = (REPO / "AGENTS.md").read_text(encoding="utf-8")
+        self.assert_current_routes(text + f"\nLoad rules: {cc.RULES}\n")
+        with self.assertRaises(self.failureException):
+            self.assert_current_routes(text + "\nLoad rules: scratchpad/old_rules.md\n")
 
 
 def tree_state(root: Path) -> dict:

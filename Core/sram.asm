@@ -451,6 +451,7 @@ RockMeatCount           = $7EF38F   ; For Goron quest (legacy RingSlotsNum alias
 Seashells               = $7EF391
 Honeycomb               = $7EF393
 DekuSticks              = $7EF395
+DekuStickWear           = $7EF39F   ; Stored burn ticks of stowed worn stick (1-75, 0=none)
 
 ; ---------------------------------------------------------
 ; Tingle Maps ($7EF396-397)
@@ -758,12 +759,13 @@ FreeBlock_Story    = $7EF307  ; 8 bytes ($7EF307-30E)
 FreeBlock_Items    = $7EF310  ; 48 bytes ($7EF310-33F)
 
 ; ---------------------------------------------------------
-; Collectibles Extension ($7EF39F-3A0) - 2 bytes
+; Collectibles Extension ($7EF3A0) - 1 byte
 ; ---------------------------------------------------------
 ; Purpose: Reserved for additional collectible tracking
 ; Note: Small block, use for single-byte counters
+; Allocated: $7EF39F = DekuStickWear (2026-10-30, remaining burn ticks)
 ;
-FreeBlock_Collect  = $7EF39F  ; 2 bytes ($7EF39F-3A0)
+FreeBlock_Collect  = $7EF3A0  ; 1 byte ($7EF3A0)
 
 ; ---------------------------------------------------------
 ; Reserved Block ($7EF3AB-3C4) - 26 bytes
@@ -846,7 +848,7 @@ FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 ; |----------|----------|-------|--------------------|
 ; | $7EF307  | $7EF30E  | 8     | Story extension    |
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
-; | $7EF39F  | $7EF3A0  | 2     | Collectibles ext   |
+; | $7EF3A0  | $7EF3A0  | 1     | Collectibles ext   |
 ; | $7EF3B2  | $7EF3B3  | 2     | Large prefix       |
 ; | $7EF3B9  | $7EF3C4  | 12    | Large remainder    |
 ; | $7EF412  | $7EF4BF  | 174   | Dreams prefix      |

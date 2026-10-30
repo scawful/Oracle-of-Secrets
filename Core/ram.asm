@@ -2069,8 +2069,8 @@ ONSWITCHH       = $7E0431
 STARINDEX       = $7E0432
 STARINDEXH      = $7E0433
 
-; FREE RAM: 0x02
-UNUSED_7E0434   = $7E0434
+; $7E0434 is PendingSupplyAction (Core/symbols.asm), a volatile menu-exit request.
+; FREE RAM: 0x01
 UNUSED_7E0435   = $7E0435
 
 ; Seems to flag the eye door to Turtle Rock compass.
@@ -2182,10 +2182,10 @@ FLOOR1H         = $7E046B
 ; TODO "collision"
 BG1FX           = $7E046C
 
-; FREE RAM: 0x03
-UNUSED_7E046D   = $7E046D
-UNUSED_7E046E   = $7E046E
-UNUSED_7E046F   = $7E046F
+; Deku Stick transient state ($7E046D-46F)
+DekuStick_State       = $7E046D ; 0 = none, 1 = held unlit, 2 = held lit, 3 = swiping
+DekuStick_BurnTimer   = $7E046E ; Active burn countdown ticks (1 tick = 16 frames; 75 = 20s)
+DekuStick_SwipeTimer  = $7E046F ; 0 = idle; 1–14 swipe animation/hit window frames
 
 ; Used for timing and indexing the dam flood. Counts up to 0x40
 DAMTIME         = $7E0470
