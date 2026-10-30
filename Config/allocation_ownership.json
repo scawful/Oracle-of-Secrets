@@ -20,7 +20,7 @@
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "0c1e6cab6031d1279c4e1fdfbcde52db3213e9f19a818d7d04d9231d5f41526b"
+      "sha256": "6f978fb2e5f5317d5719830ee1962a23e2de7283ba413ddfe281c1c6ff63ddc3"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -35,7 +35,7 @@
     "shared:Core/ram.asm": {
       "source_set": "shared",
       "path": "Core/ram.asm",
-      "sha256": "a0d5f72ddbf9b2937b94a10bbb08b1d7575b28cf3f794c80a19af75c5d2f59f3"
+      "sha256": "6c28f2b751ff5b89d469c47d76818e4f84a831285d205a8ffaaa074cc5b0bc8a"
     },
     "shared:Overworld/overlays.asm": {
       "source_set": "shared",
@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "95c5787976d0a76c7c48afdd2122eb3947caf3ca4ac13da866cadec57dcb2fbb"
+      "sha256": "b8e99713a9e5cba6661fff7d76678bcc09f842daa8c0d72fee4db12962552dc5"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -165,7 +165,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "4c0dbcc572d26ae32505c57c6cd37f4b2fc3b399f2d73f9d3cda0248d5cddf37"
+      "sha256": "bcc6df2404dc097f25f9b547699359f924387c7cdaa1c70e87fd571b9f317475"
     }
   },
   "claims": [
@@ -1172,6 +1172,119 @@
       ],
       "count": 64,
       "stride": 1
+    },
+    {
+      "id": "DekuStick_State",
+      "owner": "Deku Stick active state",
+      "space": "wram",
+      "base": 8258669,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Volatile active stick state (0=none, 1=held unlit, 2=held lit); state 3 is reserved for a later swipe milestone. Never saved.",
+      "reset": "Cleared to 0 on boot, save/quit, game over, or damage/interruption. Set to 1 on menu draw and 2 on ignition; no swipe path is implemented.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Core/ram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/ram.asm",
+        "symbol": "DekuStick_State",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "DekuStick_BurnTimer",
+      "owner": "Deku Stick active burn timer",
+      "space": "wram",
+      "base": 8258670,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Volatile burn countdown ticks for active held stick; never saved directly.",
+      "reset": "Cleared to 0 on stow/drop. Initialized to stored wear budget (or 75 if fresh) on draw. Ticks down every 16 frames when lit.",
+      "save": "Volatile WRAM; not saved directly (remaining ticks copied to DekuStickWear on stow).",
+      "provenance": [
+        "shared:Core/ram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/ram.asm",
+        "symbol": "DekuStick_BurnTimer",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "DekuStick_SwipeTimer",
+      "owner": "Deku Stick swipe animation timer",
+      "space": "wram",
+      "base": 8258671,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved volatile swipe timer; the current draw/stow/wear milestone keeps it at zero. Never saved.",
+      "reset": "Cleared to 0 on draw, stow, drop, and boot. No Y-swipe initialization or completion path is implemented.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Core/ram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/ram.asm",
+        "symbol": "DekuStick_SwipeTimer",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "DekuStickWear",
+      "owner": "Deku Stick stowed wear budget",
+      "space": "save_buffer",
+      "base": 8319903,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file; persists remaining burn ticks (1-74) of a stowed lit stick across sessions.",
+      "reset": "Zeroed on new file initialization, on fresh stick draw, or when a fresh unlit stick is stowed. Populated with BurnTimer on stowing a partially burned stick.",
+      "save": "Inside vanilla EF000-EF4FF save buffer; physical slot/checksum mapping is separate.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "DekuStickWear",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "PendingSupplyAction",
+      "owner": "Consumable menu-exit request",
+      "space": "wram",
+      "base": 8258612,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Volatile Honeycomb or Deku Stick request queued during menu scroll-up and consumed by Menu_Exit; never saved.",
+      "reset": "InitializeMemoryAndSRAM clears WRAM on boot. Supply_ProcessPendingExitAction clears recognized requests before validating or executing them; no additional transition reset is implemented.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Core/symbols.asm",
+        "shared:Core/ram.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "PendingSupplyAction"
+      ],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "PendingSupplyAction",
+        "bank00_mirror": true
+      }
     }
   ],
   "lifetime_aliases": [],
