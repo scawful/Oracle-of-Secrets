@@ -5,6 +5,9 @@
 
 LoadCheckpointOrWorld:
 {
+if !ENABLE_KALYXO_BOAT == 1
+  JSL Boat_ResetSession
+endif
   if defined("PROJECT_BG128_ENABLED")
     if !PROJECT_BG128_ENABLED == 1
       JSL ProjectBGPalette_RestoreAndInvalidate ; Warm file/Continue: restore before invalidating.

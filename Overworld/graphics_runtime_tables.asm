@@ -209,13 +209,13 @@ SharedGraphicsProfile_4a6277d84cb4aa68c2a53945c7346da9eb7d983a855b7c66b56ecd0aaf
   dw $0001,SharedGraphicsProfile_4a6277d84cb4aa68c2a53945c7346da9eb7d983a855b7c66b56ecd0aafdb5acb_Normal&$FFFF
   db $78,$01
   dw $2C00,$3C00
-  dl KalyxoDocksBackgroundGraphics+$0000
+  dl SharedGraphicsResource_263549d5a7b3fd6209dfea60fbb46736c05388f5a2a67957125db9f90f3b4030+$0000
   dw $0000,$0000
   db $00,$00
   dl $000000
 assert pc()-SharedGraphicsProfile_4a6277d84cb4aa68c2a53945c7346da9eb7d983a855b7c66b56ecd0aafdb5acb == !GfxRT_HeaderSize
 SharedGraphicsProfile_4a6277d84cb4aa68c2a53945c7346da9eb7d983a855b7c66b56ecd0aafdb5acb_Normal:
-  dl KalyxoDocksBackgroundGraphics+$0000
+  dl SharedGraphicsResource_263549d5a7b3fd6209dfea60fbb46736c05388f5a2a67957125db9f90f3b4030+$0000
   dw $2C00,$2000
 assert pc()-SharedGraphicsProfile_4a6277d84cb4aa68c2a53945c7346da9eb7d983a855b7c66b56ecd0aafdb5acb_Normal == $0007
 assert (SharedGraphicsProfile_4a6277d84cb4aa68c2a53945c7346da9eb7d983a855b7c66b56ecd0aafdb5acb>>16) == !GfxRT_Bank
@@ -487,6 +487,10 @@ assert pc()-SharedGraphicsProfile_771eb1ec7424f5b3fa37cfb76306f6bee93c54f0756a0f
 assert (SharedGraphicsProfile_771eb1ec7424f5b3fa37cfb76306f6bee93c54f0756a0f3f31523170c2dda7ce_Staging>>16) == !GfxRT_Bank
 assert (SharedGraphicsProfile_771eb1ec7424f5b3fa37cfb76306f6bee93c54f0756a0f3f31523170c2dda7ce>>16) == !GfxRT_Bank
 assert (SharedGraphicsProfile_771eb1ec7424f5b3fa37cfb76306f6bee93c54f0756a0f3f31523170c2dda7ce_Normal>>16) == !GfxRT_Bank
+SharedGraphicsResource_263549d5a7b3fd6209dfea60fbb46736c05388f5a2a67957125db9f90f3b4030:
+  incbin "gfx/source-263549d5a7b3fd6209dfea60fbb46736c05388f5a2a67957125db9f90f3b4030.4bpp.bin"
+SharedGraphicsResource_263549d5a7b3fd6209dfea60fbb46736c05388f5a2a67957125db9f90f3b4030_End:
+assert SharedGraphicsResource_263549d5a7b3fd6209dfea60fbb46736c05388f5a2a67957125db9f90f3b4030_End-SharedGraphicsResource_263549d5a7b3fd6209dfea60fbb46736c05388f5a2a67957125db9f90f3b4030 == $2000
 SharedGraphicsResource_b7db5e904ca0ad98f9c5268846efb2da0668a2e160a40a554c99747e65d659a8:
   incbin "gfx/lyra_sky_tower_87.bin"
 SharedGraphicsResource_b7db5e904ca0ad98f9c5268846efb2da0668a2e160a40a554c99747e65d659a8_End:
@@ -495,10 +499,10 @@ SharedGraphicsResource_cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67
   incbin "gfx/lyra_stepped_fort_83.bin"
 SharedGraphicsResource_cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447_End:
 assert SharedGraphicsResource_cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447_End-SharedGraphicsResource_cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447 == $0C00
+assert ((SharedGraphicsResource_263549d5a7b3fd6209dfea60fbb46736c05388f5a2a67957125db9f90f3b4030&$FFFF)+$2000) <= $10000
 assert ((KalyxoDocksSlot3Graphics&$FFFF)+$0800) <= $10000
 assert ((ShipExtendedGraphics&$FFFF)+$2000) <= $10000
 assert ((ShipBackgroundGraphics&$FFFF)+$2000) <= $10000
-assert ((KalyxoDocksBackgroundGraphics&$FFFF)+$2000) <= $10000
 assert ((SharedGraphicsResource_b7db5e904ca0ad98f9c5268846efb2da0668a2e160a40a554c99747e65d659a8&$FFFF)+$0800) <= $10000
 assert ((SharedGraphicsResource_cc6939c8aab9e9ba9ccd6cef6ebe850cf63d8b156ea9cf8dbcc851f67f5ae447&$FFFF)+$0C00) <= $10000
 SharedGraphicsTablesEnd:

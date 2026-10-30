@@ -358,6 +358,12 @@ if not(defined("ENABLE_EQUIPMENT_MENU"))
 endif
 
 ; Special transitions v2 (Overworld/special_transitions_v2.asm); off by default.
+; Private ferry candidate; endpoints use the existing special-exit records.
+!BOAT_SCENE_MARKER = $B047
+if not(defined("ENABLE_KALYXO_BOAT"))
+  !ENABLE_KALYXO_BOAT = 0
+endif
+
 if not(defined("ENABLE_SPECIAL_TRIGGER_TABLE_V2"))
   !ENABLE_SPECIAL_TRIGGER_TABLE_V2 = 0
 endif

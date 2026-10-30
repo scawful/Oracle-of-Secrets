@@ -27,6 +27,11 @@ else
     PHB : PHK : PLB
     JSR ApplyGraphics1
     JSR ApplyGraphics2
+if !ENABLE_KALYXO_BOAT == 1
+    ; Reuse the catalog consumer after the native dock/ship sheet owner.
+    ; Only the explicitly bound docks profile is selected in native mode.
+    JSL SharedGraphicsNormalLoad
+endif
     PLB
   .boat_area
   RTL
@@ -34,9 +39,8 @@ endif
 }
 CheckForChangeGraphicsNormalLoadBoat_End:
 
-; These callbacks exist only in the explicitly selected current composition.
-; Native mode retains the original load routine and payload placement below.
-if !LYRA_CURRENT_MODE == 1
+; Shared graphics callbacks retain the native upload schedule.
+if !LYRA_CURRENT_MODE == 1 || !ENABLE_KALYXO_BOAT == 1
 InvalidateCustomGraphicsCache:
 {
   JML SharedGraphicsInvalidateCache

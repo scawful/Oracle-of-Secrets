@@ -53,7 +53,12 @@
 ; =========================================================
 
 if not(defined("STV2_BASE"))
-  !STV2_BASE = $AA8000
+  if !ENABLE_KALYXO_BOAT == 1
+    ; Private 4MiB candidate. Bank2A stays editor-owned.
+    !STV2_BASE = $D18000
+  else
+    !STV2_BASE = $AA8000
+  endif
 endif
 
 ; Link rows. $B0/$B8 stay 0: Lyra_PrivatePilotFullFrameGate ($02A475) and
@@ -101,11 +106,19 @@ macro stv2_exit(id, ow, y, x, large, facing)
   !STV2_EXIT_<id> = 1
   !stv2_mx #= (<ow>&$07)<<9
   !stv2_my #= ((<ow>&$38)>>3)<<9
-  !stv2_size #= select(<large>, 768, 256)
-  !stv2_xs #= clamp(<x>-120, !stv2_mx, !stv2_mx+!stv2_size)
-  !stv2_ys #= clamp(<y>-80, !stv2_my, !stv2_my+!stv2_size+32)
-  !stv2_cx #= clamp(<x>+7, !stv2_mx+127, !stv2_mx+127+!stv2_size)
-  !stv2_cy #= clamp(<y>+31, !stv2_my+111, !stv2_my+143+!stv2_size)
+  assert <large> >= 0 && <large> <= 3, "STV2 exit <id>: size must be small/large/wide/tall"
+  !stv2_xsize #= 256
+  !stv2_ysize #= 256
+  if <large> == 1 || <large> == 2
+    !stv2_xsize #= 768
+  endif
+  if <large> == 1 || <large> == 3
+    !stv2_ysize #= 768
+  endif
+  !stv2_xs #= clamp(<x>-120, !stv2_mx, !stv2_mx+!stv2_xsize)
+  !stv2_ys #= clamp(<y>-80, !stv2_my, !stv2_my+!stv2_ysize+32)
+  !stv2_cx #= clamp(<x>+7, !stv2_mx+127, !stv2_mx+127+!stv2_xsize)
+  !stv2_cy #= clamp(<y>+31, !stv2_my+111, !stv2_my+143+!stv2_ysize)
   !stv2_vram #= (((!stv2_ys-!stv2_my)&$FFF0)<<3)|(((!stv2_xs-!stv2_mx)&$FFF0)>>3)
   pushpc
   org !STV2_EXITS+(($<id>-$0180)*32)
@@ -147,6 +160,9 @@ if !ENABLE_SPECIAL_EXIT_TABLE_V2 == 1
   endif
   if !STV2_LINK_3F_B8 == 1
     %stv2_exit(0185, $B8, $0F00, $0040, 0, $06)
+  endif
+  if !ENABLE_KALYXO_BOAT == 1
+    incsrc "../Data/overworld/kalyxo_boat_placements.asm"
   endif
 endif
 
