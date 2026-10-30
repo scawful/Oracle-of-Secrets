@@ -1,5 +1,10 @@
 ; Boat sheets for wide $38/$39 (Dragon Ship) and wide $30/$31 (Kalyxo Docks,
 ; which held the ship before the 2026-10-19 split). $8A = parent area.
+if not(defined("LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED"))
+  !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED = 0
+endif
+assert !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 0 || !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+
 CheckForChangeGraphicsNormalLoadBoat:
 {
 if !LYRA_CURRENT_MODE == 1
@@ -46,13 +51,17 @@ InvalidateCustomGraphicsCache:
   JML SharedGraphicsInvalidateCache
 }
 
-; A8/XY16, X=auxiliary slot. Preserve P/X/Y/DBR/D and hidden B. Reads only.
+; A8/XY16, X=native slot. Preserve P/X/Y/DBR/D and hidden B. Reads only.
 ; This recovery also runs after leaving a catalog profile: a native $FF must
 ; restore the saved underlying sheet while the prior cache holds our sentinel.
 ResolveCustomGraphicsTransitionSheet:
 {
   PHP
   CMP.b #$FF : BNE .done
+if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+  CPX.w #$0003 : BCC .main
+  CPX.w #$0007 : BEQ .main7
+endif
   CPX.w #$0003 : BCC .done
   CPX.w #$0007 : BCS .done
   LDA.l $7E04CB, X : CMP.b #$FF : BEQ .restore
@@ -60,6 +69,20 @@ ResolveCustomGraphicsTransitionSheet:
     BRA .done
   .restore
     LDA.l $7EC2F5, X
+if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    BRA .done
+  .main
+    LDA.l $7E04CB, X : CMP.b #$FF : BNE .invalid
+    ; $FF is an invalid backing ID and deliberately remains native inherit.
+    LDA.l !LYRA_CURRENT_RESIDENT_MAIN_CACHE_BASE, X
+    BRA .done
+  .main7
+    LDA.l $7E04D2 : CMP.b #$FF : BNE .invalid
+    LDA.l !LYRA_CURRENT_RESIDENT_MAIN_CACHE_BASE+3
+    BRA .done
+  .invalid
+    LDA.b #$FF
+endif
   .done
   PLP
   RTL

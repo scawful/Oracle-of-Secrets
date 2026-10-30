@@ -1,6 +1,25 @@
 ; One catalog-backed consumer for normal entry, scrolling, cache restoration,
 ; native postconversion staging and incremental uploads. Records and new art
 ; share one audited LoROM bank. Existing ship/docks payloads retain their labels.
+if not(defined("LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED"))
+  !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED = 0
+endif
+assert !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 0 || !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+  assert !LYRA_CURRENT_MODE == 1
+  assert defined("LYRA_CURRENT_RESIDENT_ENABLED")
+  assert !LYRA_CURRENT_RESIDENT_ENABLED == 1
+  assert defined("LYRA_CURRENT_RESIDENT_ABI_VERSION")
+  assert !LYRA_CURRENT_RESIDENT_ABI_VERSION == 1
+  assert defined("LYRA_CURRENT_RESIDENT_MAIN_CACHE_BASE"), "Resident main cache origin is unbound"
+  assert defined("LYRA_CURRENT_RESIDENT_MAIN_CACHE_END"), "Resident main cache bound is unbound"
+  assert defined("LYRA_CURRENT_RESIDENT_MAIN_CACHE_RESET_BOUND"), "Resident main cache reset is unbound"
+  assert !LYRA_CURRENT_RESIDENT_MAIN_CACHE_RESET_BOUND == 1
+  assert !LYRA_CURRENT_RESIDENT_MAIN_CACHE_BASE >= $7E0000
+  assert !LYRA_CURRENT_RESIDENT_MAIN_CACHE_END <= $800000
+  assert !LYRA_CURRENT_RESIDENT_MAIN_CACHE_END-!LYRA_CURRENT_RESIDENT_MAIN_CACHE_BASE == 4
+  assert (!LYRA_CURRENT_RESIDENT_MAIN_CACHE_BASE>>16) == ((!LYRA_CURRENT_RESIDENT_MAIN_CACHE_END-1)>>16)
+endif
 pushpc
 if not(defined("LYRA_CURRENT_MODE"))
   !LYRA_CURRENT_MODE = 0
@@ -115,9 +134,53 @@ SharedGraphicsMarkCache:
     REP #$20
     .skip
     INX : CPX.w #$0007 : BCC .next
+if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+  JSR ResidentGraphicsMarkMainCache
+endif
   .done
   RTS
 }
+
+if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+; Four constructor-owned bytes, in slot order 0/1/2/7. Never alias the native
+; auxiliary or sprite caches. Any M/X; preserve full A/P/X/Y/DB/D.
+; Fresh identity transactions must reset BEFORE setting prior native sheets.
+ResidentGraphicsResetMainCache:
+{
+  PHP : REP #$20 : PHA : SEP #$20
+  LDA.b #$FF
+  STA.l !LYRA_CURRENT_RESIDENT_MAIN_CACHE_BASE
+  STA.l !LYRA_CURRENT_RESIDENT_MAIN_CACHE_BASE+1
+  STA.l !LYRA_CURRENT_RESIDENT_MAIN_CACHE_BASE+2
+  STA.l !LYRA_CURRENT_RESIDENT_MAIN_CACHE_BASE+3
+  REP #$20 : PLA : PLP
+  RTL
+}
+
+; Internal M16/XY16. A resolved sheet is 0..254; FF means invalid backup.
+; Repeated invalidation must not replace an underlying ID with our sentinel.
+macro ResidentGraphicsMarkMain(slot, offset, mask)
+  LDA.l !GfxRT_DataBank+!GfxRT_CacheMask, X : AND.w #<mask> : BEQ ?skip
+  LDA.l $7E04CB+<slot> : AND.w #$00FF : CMP.w #$00FF : BEQ ?skip
+  SEP #$20
+  STA.l !LYRA_CURRENT_RESIDENT_MAIN_CACHE_BASE+<offset>
+  LDA.b #$FF : STA.l $7E04CB+<slot>
+  REP #$20
+?skip:
+endmacro
+
+ResidentGraphicsMarkMainCache:
+{
+  JSR SharedGraphicsLookup : BNE .profile
+  RTS
+  .profile
+  %ResidentGraphicsMarkMain(0, 0, $0001)
+  %ResidentGraphicsMarkMain(1, 1, $0002)
+  %ResidentGraphicsMarkMain(2, 2, $0004)
+  %ResidentGraphicsMarkMain(7, 3, $0080)
+  RTS
+}
+endif
 
 ; NMI source substitution only: retain native destination/count/schedule.
 ; A16/XY8 in/out; preserve original A, P/X/Y/DB/D and all scratch memory.
@@ -152,6 +215,17 @@ SharedGraphicsTransitionSource:
 ; Called after vanilla PrepTransAuxGfx converts native BG slots, before the
 ; existing caller arms $17/$0710. Copy only sparse declared glyphs; native
 ; filler and NMI DMA counts remain intact. No extra NMI transfers.
+if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+; Same preserved ABI as the auxiliary callback. Called only after main
+; conversion, including static sheet7's upper half at $7F3C00.
+SharedGraphicsStageNativeMain:
+{
+  PHP : REP #$30 : PHX : PHY : PHA : PHD
+  LDY.w #$0001
+  BRL SharedGraphicsStageNative_Setup
+}
+endif
+
 SharedGraphicsStageNative:
 {
   PHP : REP #$30 : PHX : PHY
@@ -159,10 +233,19 @@ if !LYRA_CURRENT_MODE == 1
   PHA
 endif
   PHD
+if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+  LDY.w #$0000
+SharedGraphicsStageNative_Setup:
+  ; Frame and extent arithmetic are binary; saved P restores caller decimal.
+  CLD
+endif
   ; Private stack frame: src[3], dst[3], byte count[2], records left[2].
   ; NMI saves D and sets D=0 at $0080CF..$0080D4; its own stack grows below
   ; these locals. Both the caller's D and stack are restored on every exit.
   TSC : SEC : SBC.w #$0010 : TCS : INC : TCD
+if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+  STY.b $0A
+endif
   JSR SharedGraphicsLookup : BNE .profile
   JMP .done
   .profile
@@ -175,6 +258,25 @@ endif
     LDA.l !GfxRT_DataBank, X : STA.b $00
     LDA.l !GfxRT_DataBank+$0003, X : STA.b $03
     LDA.l !GfxRT_DataBank+$0006, X : STA.b $06
+if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    ; Both conversion owners share records. Patch only their own $7F half;
+    ; native filler, animation buffers and every DMA register stay untouched.
+    LDA.l !GfxRT_DataBank+$0005, X : AND.w #$00FF
+    CMP.w #$007F : BNE .skipRecord
+    LDA.b $06 : BEQ .skipRecord
+    AND.w #$0001 : BNE .skipRecord
+    LDA.b $03 : CMP.w #$4000 : BCS .skipRecord
+    CMP.w #$2000 : BCC .auxiliary
+      LDA.b $0A : BEQ .skipRecord
+      LDA.b $03 : CLC : ADC.b $06 : BCS .skipRecord
+      CMP.w #$4001 : BCS .skipRecord
+      BRA .selectedRecord
+    .auxiliary
+      LDA.b $0A : BNE .skipRecord
+      LDA.b $03 : CLC : ADC.b $06 : BCS .skipRecord
+      CMP.w #$2001 : BCS .skipRecord
+    .selectedRecord
+endif
     SEP #$20
     LDA.l !GfxRT_DataBank+$0002, X : STA.b $02
     LDA.l !GfxRT_DataBank+$0005, X : STA.b $05
@@ -183,6 +285,9 @@ endif
     .copy
       LDA [$00], Y : STA [$03], Y
       INY #2 : CPY.b $06 : BCC .copy
+if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    .skipRecord
+endif
     TXA : CLC : ADC.w #!GfxRT_StagingRecordSize : TAX
     DEC.b $08 : BNE .next
   .done

@@ -1339,15 +1339,17 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     return dict(kind='lyra.current_build_prepare.v1',selected=True,current_files=files,inputs=bindings)
 
 
-def current_bg128(source, document, profile, ledger, binding, *, private_pilot=None):
+def current_bg128(source, document, profile, ledger, binding, *, private_pilot=None,
+                  resident_native_plan=None):
     """Bind existing BG data/restore code inside the same current allocation."""
     selected = set(V.FULL_MAPS)
     if private_pilot is not None:
         import lyra_native_loaders as native
         native.private_pilot_document(document, private_pilot)
         selected = set(private_pilot['allowed_tail_maps'])
-    required=any('background_palette' in row for area,row in enumerate(document.properties,0xA0)
-                 if area in selected)
+    required=resident_native_plan is not None or any(
+        'background_palette' in row for area,row in enumerate(document.properties,0xA0)
+        if area in selected)
     R.require(not required or binding is not None,
               'CURRENT_RUNTIME_BG128_UNADMITTED: saved palettes require explicit restore/code binding')
     if binding is None:
@@ -1375,8 +1377,13 @@ def current_bg128(source, document, profile, ledger, binding, *, private_pilot=N
     import lyra_project_bg_palette as bg
     from types import SimpleNamespace
     data=profile['origins']['bg_palette'];lo,hi=data['pc']
-    plan=bg.plan_bg128([SimpleNamespace(map_id=0xA0+i,properties=row)
-        for i,row in enumerate(document.properties)],data_snes=data['snes'][0],capacity=hi-lo,
+    if resident_native_plan is None:
+        palette_rows = [SimpleNamespace(map_id=0xA0+i, properties=row)
+                        for i, row in enumerate(document.properties)]
+    else:
+        from lyra_resident_graphics import resident_bg128_rows
+        palette_rows = [SimpleNamespace(**row) for row in resident_bg128_rows(resident_native_plan)]
+    plan=bg.plan_bg128(palette_rows,data_snes=data['snes'][0],capacity=hi-lo,
         preimage=A.expanded_rom(source)[lo:hi])
     return plan,dict(restore_bound=True,code_snes=list(code))
 

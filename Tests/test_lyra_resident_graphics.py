@@ -598,6 +598,105 @@ class ResidentNativeAbiTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'NATIVE_ORIGIN_PREIMAGE_REQUIRED'):
             R.emit_native_resident_abi(native, data_pc=0, capacity=256, preimage=bytes(255))
 
+    def test_animation_directory_binds_three_sources_per_physical_page(self):
+        fixture = Fixture((((2 << 10) | 448,) * 4,))
+        native = R.plan_native_resident_abi(plan(fixture.inputs()), tile16_count=1)
+        emission = R.emit_native_resident_abi(native, data_pc=0x7D00, capacity=0x20000,
+                                             preimage=bytes(0x20000))
+        rows = {row['label']: row for row in emission['placements']}
+        directory = rows['LyraResidentAnimationDirectory']
+        self.assertEqual(directory['byte_count'], 32 * 11)
+        self.assertEqual(native['byte_counts']['animation_directory'], 352)
+        self.assertEqual(directory['snes'] >> 16, (directory['snes'] + 351) >> 16)
+        data = bytes.fromhex(emission['payload_hex'])
+        for page in native['pages']:
+            at = directory['binary_offset'] + (page['map_id'] - 0xA0) * 11
+            area = native['areas'][page['area_index']]
+            self.assertEqual(int.from_bytes(data[at + 9:at + 11], 'little'),
+                             area['animation_byte_count'])
+            for frame, label in enumerate(area['animation_labels']):
+                self.assertEqual(int.from_bytes(data[at + frame * 3:at + frame * 3 + 3], 'little'),
+                                 rows[label]['snes'])
+        empty = R.plan_native_resident_abi(plan(Fixture().inputs()), tile16_count=1)
+        emitted = R.emit_native_resident_abi(empty, data_pc=0, capacity=0x20000,
+                                            preimage=bytes(0x20000))
+        row = next(row for row in emitted['placements'] if row['role'] == 'animation_directory')
+        self.assertEqual(bytes.fromhex(emitted['payload_hex'])[row['binary_offset']:
+                         row['binary_offset'] + 352], bytes(352))
+
+    def test_runtime_bridge_uses_exact_static_slot_runs_and_external_sources(self):
+        resident = plan(Fixture().inputs())
+        raw = bytes(range(256)) * 60
+        for area in resident['areas']:
+            area['static_slots'] = list(R.STATIC_SLOTS)
+            area['static_chr'] = dict(payload_hex=raw.hex(), byte_count=len(raw), sha256=sha(raw))
+        self.rehash(resident, 'plan_sha256')
+        native = R.plan_native_resident_abi(resident, tile16_count=1)
+        preimage = bytes(0x20000)
+        emission = R.emit_native_resident_abi(native, data_pc=0x300000,
+                                             capacity=len(preimage), preimage=preimage)
+        bridge = R.resident_runtime_inputs(native, emission, preimage=preimage)
+        self.assertEqual(set(bridge['parents']), {str(page) for page in range(0xA0, 0xC0)})
+        self.assertEqual(len(bridge['resources']), 1)
+        resource = next(iter(bridge['resources'].values()))
+        self.assertEqual(resource['sha256'], sha(raw))
+        profile = bridge['profiles'][bridge['parents'][str(0xA0)]['profile_id']]
+        self.assertEqual(profile['cache_slot_mask'], 255)
+        self.assertEqual([row['wram_address'] for row in profile['staging']],
+            [0x7F2000, 0x7F2800, 0x7F3000, 0x7F0000, 0x7F0800, 0x7F1000, 0x7F1800, 0x7F3C00])
+        self.assertEqual([row['vram_word_address'] for row in profile['normal']],
+            [0x2000, 0x2400, 0x2800, 0x2C00, 0x3000, 0x3400, 0x3800, 0x3E00])
+        self.assertEqual([row['byte_count'] for row in profile['normal']], [2048] * 7 + [1024])
+        self.assertEqual(profile['normal'][-1]['source_offset'], 14336)
+        self.assertEqual(profile['transition']['mode'], 'native_staging')
+        self.assertIs(bridge['selected'], False)
+        self.assertIs(bridge['ordinary_build_ready'], False)
+
+    def test_bridge_rederives_placement_payload_and_complete_preimage(self):
+        native = R.plan_native_resident_abi(plan(Fixture().inputs()), tile16_count=1)
+        preimage = bytes(0x10000)
+        emission = R.emit_native_resident_abi(native, data_pc=0x300000,
+                                             capacity=len(preimage), preimage=preimage)
+        for mutate in (lambda value: value['placements'][-1].update(snes=0x908000),
+                       lambda value: value.update(payload_sha256='0' * 64),
+                       lambda value: value.update(selected=True)):
+            changed = copy.deepcopy(emission)
+            mutate(changed)
+            with self.assertRaisesRegex(ValueError, 'NATIVE_EMISSION_MISMATCH'):
+                R.resident_runtime_inputs(native, changed, preimage=preimage)
+        with self.assertRaisesRegex(ValueError, 'NATIVE_EMISSION_MISMATCH'):
+            R.resident_runtime_inputs(native, emission, preimage=bytes([1]) * len(preimage))
+        with self.assertRaisesRegex(ValueError, 'NATIVE_ORIGIN_PREIMAGE_REQUIRED'):
+            R.resident_runtime_inputs(native, emission, preimage=preimage[:-1])
+
+    def test_rehashed_static_destination_mutant_is_not_a_resident_authority(self):
+        native = R.plan_native_resident_abi(plan(Fixture().inputs()), tile16_count=1)
+        for field, value in (('wram_address', 0x7F4000), ('vram_word_address', 0x3C00),
+                             ('byte_count', 2048), ('native_sheet', 7)):
+            changed = copy.deepcopy(native)
+            changed['areas'][0]['static_runs'][0][field] = value
+            self.rehash(changed, 'abi_sha256')
+            with self.assertRaisesRegex(ValueError, 'NATIVE_RESOURCE_LAYOUT_INVALID'):
+                R.validate_native_resident_abi(changed)
+
+    def test_derived_bg_rows_cover_shared_area_without_mutating_saved_properties(self):
+        fixture = Fixture()
+        members = [0xB0, 0xB1, 0xB8, 0xB9]
+        fixture.areas = [row for row in fixture.areas if row['parent_map_id'] not in members]
+        fixture.areas.append(dict(parent_map_id=0xB0, size='large', maps=members))
+        inputs = fixture.inputs()
+        properties = copy.deepcopy(inputs[1].properties)
+        native = R.plan_native_resident_abi(plan(inputs), tile16_count=1)
+        before = copy.deepcopy(native)
+        rows = R.resident_bg128_rows(native)
+        self.assertEqual([row['map_id'] for row in rows], list(range(0xA0, 0xC0)))
+        palettes = {row['map_id']: row['properties']['background_palette'] for row in rows}
+        self.assertTrue(all(palettes[page] == palettes[0xB0] for page in members))
+        palettes[0xB1][0] ^= 1
+        self.assertNotEqual(palettes[0xB1], palettes[0xB0])
+        self.assertEqual(inputs[1].properties, properties)
+        self.assertEqual(native, before)
+
 
 if __name__ == '__main__':
     unittest.main()

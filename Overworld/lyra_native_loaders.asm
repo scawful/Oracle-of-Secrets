@@ -375,6 +375,7 @@ pullpc
 
 ; Source-only resident atlas readers have a separate, default-off allocation.
 incsrc "lyra_resident_atlas.asm"
+incsrc "lyra_resident_resources.asm"
 
 ; Fixed original-engine hook sites keep their original preimage assertions.
 pushpc

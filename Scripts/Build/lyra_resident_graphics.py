@@ -25,6 +25,7 @@ NATIVE_ABI_VERSION = 1
 NATIVE_DIRECTORY_STRIDE = 8
 NATIVE_BLOCK_SHIFT = 5
 NATIVE_BLOCK_DIRECTORY_BYTES = 128
+NATIVE_ANIMATION_DIRECTORY_STRIDE = 11
 FIRST, END = 0xA0, 0xC0
 STATIC_SLOTS = tuple(range(448)) + tuple(range(480, 512))
 ANIMATED_SLOTS = tuple(range(448, 480))
@@ -398,6 +399,30 @@ def _native_blob(raw, label, role):
     return dict(label=label, role=role, **_payload(raw))
 
 
+def _native_static_runs(tile_count):
+    """Describe the exact resident prefix in the existing native sheet buffers."""
+    _require(type(tile_count) is int and 0 <= tile_count <= len(STATIC_SLOTS),
+             'NATIVE_STATIC_EXTENT_INVALID')
+    runs = []
+    native_bases = (0x7F2000, 0x7F2800, 0x7F3000, 0x7F0000,
+                    0x7F0800, 0x7F1000, 0x7F1800, 0x7F3800)
+    for index, slot in enumerate(STATIC_SLOTS[:tile_count]):
+        sheet, tile_in_sheet = divmod(slot, 64)
+        record = dict(source_offset=index * 32, byte_count=32,
+                      vram_word_address=0x2000 + slot * 16,
+                      wram_address=native_bases[sheet] + tile_in_sheet * 32,
+                      native_sheet=sheet)
+        previous = runs[-1] if runs else None
+        if previous is not None and previous['native_sheet'] == sheet and all(
+                previous[key] + previous['byte_count'] // divisor == record[key]
+                for key, divisor in (('source_offset', 1), ('vram_word_address', 2),
+                                     ('wram_address', 1))):
+            previous['byte_count'] += 32
+        else:
+            runs.append(record)
+    return runs
+
+
 def _verified_payload(value):
     _require(type(value) is dict and type(value.get('payload_hex')) is str,
              'NATIVE_PAYLOAD_INVALID')
@@ -481,24 +506,7 @@ def plan_native_resident_abi(resident_plan, *, tile16_count):
         palette_label = blob(palette, prefix + '_Palette', 'palette')
         frame_labels = [blob(raw, prefix + f'_Frame{index}', 'animation') if raw else None
                         for index, raw in enumerate(frames)]
-        runs = []
-        for index, slot in enumerate(slots):
-            # Native main/aux conversion uses this existing non-linear buffer.
-            sheet, tile_in_sheet = divmod(slot, 64)
-            native_bases = (0x7F2000, 0x7F2800, 0x7F3000, 0x7F0000,
-                            0x7F0800, 0x7F1000, 0x7F1800, 0x7F3800)
-            record = dict(source_offset=index * 32, byte_count=32,
-                          vram_word_address=0x2000 + slot * 16,
-                          wram_address=native_bases[sheet] + tile_in_sheet * 32,
-                          native_sheet=sheet)
-            previous = runs[-1] if runs else None
-            if previous is not None and previous['native_sheet'] == sheet and all(
-                    previous[key] + previous['byte_count'] // divisor == record[key]
-                    for key, divisor in (('source_offset', 1), ('vram_word_address', 2),
-                                         ('wram_address', 1))):
-                previous['byte_count'] += 32
-            else:
-                runs.append(record)
+        runs = _native_static_runs(len(slots))
         areas.append(dict(area_index=area_index, parent_map_id=parent,
             maps=list(area['maps']), static_label=static_label, static_runs=runs,
             palette_label=palette_label, palette_byte_count=256,
@@ -544,9 +552,12 @@ def plan_native_resident_abi(resident_plan, *, tile16_count):
     counts = {role: sum(row['byte_count'] for row in blobs if row['role'] == role)
               for role in ('page_index', 'page_words', 'static_chr', 'animation', 'palette')}
     counts['page_directory'] = (END - FIRST) * NATIVE_DIRECTORY_STRIDE
+    counts['animation_directory'] = (END - FIRST) * NATIVE_ANIMATION_DIRECTORY_STRIDE
     result = dict(kind=NATIVE_KIND, abi_version=NATIVE_ABI_VERSION,
         source_plan_sha256=supplied, tile16_count=tile16_count,
         directory_label='LyraResidentPageDirectory', directory_stride=NATIVE_DIRECTORY_STRIDE,
+        animation_directory_label='LyraResidentAnimationDirectory',
+        animation_directory_stride=NATIVE_ANIMATION_DIRECTORY_STRIDE,
         block_shift=NATIVE_BLOCK_SHIFT, block_directory_bytes=NATIVE_BLOCK_DIRECTORY_BYTES,
         first_map=FIRST, end_map=END, row_limit=255, pages=pages, areas=areas, blobs=blobs,
         byte_counts=counts, unaligned_byte_count=sum(counts.values()),
@@ -572,6 +583,8 @@ def validate_native_resident_abi(native_plan):
              and native_plan.get('block_shift') == 5
              and native_plan.get('block_directory_bytes') == 128
              and native_plan.get('directory_label') == 'LyraResidentPageDirectory'
+             and native_plan.get('animation_directory_label') == 'LyraResidentAnimationDirectory'
+             and native_plan.get('animation_directory_stride') == NATIVE_ANIMATION_DIRECTORY_STRIDE
              and native_plan.get('first_map') == FIRST and native_plan.get('end_map') == END
              and type(native_plan.get('tile16_count')) is int
              and 0 < native_plan['tile16_count'] <= 4096
@@ -617,6 +630,15 @@ def validate_native_resident_abi(native_plan):
                          (by_role.get(label) == 'animation'
                           and len(by_label[label]) == area['animation_byte_count'])
                          for label in area['animation_labels']), 'NATIVE_AREA_EXTENT_INVALID')
+        static = by_label[area['static_label']] if area['static_label'] is not None else b''
+        _require(len(static) % 32 == 0
+                 and area.get('static_runs') == _native_static_runs(len(static) // 32)
+                 and area.get('animation_wram') == [0x7EA680, 0x7EAA80, 0x7EAE80]
+                 and area.get('animation_vram_word_address') == 0x3C00
+                 and area.get('native_animation_upload_byte_count') == 0x400
+                 and area['animation_byte_count'] % 32 == 0
+                 and all(word <= 0x7FFF for word in struct.unpack('<128H', by_label[area['palette_label']])),
+                 'NATIVE_RESOURCE_LAYOUT_INVALID')
     for page in pages:
         index, words = (by_label.get(page.get(key)) for key in ('index_label', 'words_label'))
         count, blocks, area = (page.get(key) for key in ('row_count', 'block_count', 'area_index'))
@@ -643,6 +665,7 @@ def validate_native_resident_abi(native_plan):
     expected_counts = {role: sum(row['byte_count'] for row in blobs if row['role'] == role)
                        for role in ('page_index', 'page_words', 'static_chr', 'animation', 'palette')}
     expected_counts['page_directory'] = 256
+    expected_counts['animation_directory'] = (END - FIRST) * NATIVE_ANIMATION_DIRECTORY_STRIDE
     _require(native_plan.get('byte_counts') == expected_counts
              and native_plan.get('unaligned_byte_count') == sum(expected_counts.values()),
              'NATIVE_BYTE_COUNT_INVALID')
@@ -684,6 +707,8 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
         return record
 
     directory = place(native_plan['directory_label'], bytes(256), 'page_directory')
+    animation_directory = place(native_plan['animation_directory_label'],
+        bytes((END - FIRST) * NATIVE_ANIMATION_DIRECTORY_STRIDE), 'animation_directory')
     for blob in native_plan['blobs']:
         place(blob['label'], by_label[blob['label']], blob['role'])
     addresses = {row['label']: row['snes'] for row in placements}
@@ -692,6 +717,15 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
         + bytes((page['area_index'], page['row_count'])) for page in native_plan['pages'])
     binary[:256] = directory_raw
     directory['sha256'] = _sha(directory_raw)
+    animation_raw = bytearray()
+    for page in native_plan['pages']:
+        area = native_plan['areas'][page['area_index']]
+        animation_raw.extend(b''.join((addresses[label] if label else 0).to_bytes(3, 'little')
+                                     for label in area['animation_labels']))
+        animation_raw.extend(area['animation_byte_count'].to_bytes(2, 'little'))
+    offset = animation_directory['binary_offset']
+    binary[offset:offset + len(animation_raw)] = animation_raw
+    animation_directory['sha256'] = _sha(animation_raw)
     lines = ['; Generated resident ABI v1; unselected terrain census only.', 'pushpc']
     for row in placements:
         start, size = row['binary_offset'], row['byte_count']
@@ -708,11 +742,66 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
     constants = (f'!LYRA_CURRENT_RESIDENT_ABI_VERSION = {NATIVE_ABI_VERSION}\n'
         + f'!LYRA_CURRENT_RESIDENT_TILE16_COUNT = {native_plan["tile16_count"]}\n'
         + f'!LYRA_CURRENT_RESIDENT_DIRECTORY = ${directory["snes"]:06X}\n')
+    constants += (f'!LYRA_CURRENT_RESIDENT_ANIMATION_DIRECTORY = ${animation_directory["snes"]:06X}\n')
     return dict(kind='lyra.resident_atlas_native_emission.v1',
         abi_sha256=native_plan['abi_sha256'], data_pc=[data_pc, data_pc + capacity],
         preimage_sha256=_sha(preimage), used_pc_end=cursor,
         used_extent_bytes=cursor-data_pc, bank_padding_bytes=cursor-data_pc-len(binary),
         binary_path=binary_path, payload_hex=bytes(binary).hex(), payload_sha256=_sha(binary),
-        placements=placements, runtime_data_asm='\n'.join(lines), constants_asm=constants,
+        placements=placements, animation_directory_byte_count=len(animation_raw),
+        runtime_data_asm='\n'.join(lines), constants_asm=constants,
+        selected=False, allocation_granted=False, publication_authorized=False,
+        ordinary_build_ready=False, runtime_admission=False)
+
+
+def resident_bg128_rows(native_plan):
+    """Return derived BG inputs for every physical page, never saved properties."""
+    payloads = validate_native_resident_abi(native_plan)
+    return [dict(map_id=page['map_id'], properties=dict(background_palette=list(
+        struct.unpack('<128H', payloads[native_plan['areas'][page['area_index']]['palette_label']]))))
+        for page in native_plan['pages']]
+
+
+def resident_runtime_inputs(native_plan, emission, *, preimage):
+    """Bridge verified resident placements to the existing SharedGraphics ABI.
+
+    The resident emitter remains the sole payload writer. Its complete output
+    is rederived before any external address is used; neither this bridge nor
+    its fixed22B upload profiles grants allocation or activation authority.
+    """
+    _require(type(emission) is dict
+             and emission.get('kind') == 'lyra.resident_atlas_native_emission.v1'
+             and type(emission.get('data_pc')) is list and len(emission['data_pc']) == 2
+             and all(type(value) is int for value in emission['data_pc']),
+             'NATIVE_EMISSION_INVALID')
+    first, end = emission['data_pc']
+    expected = emit_native_resident_abi(native_plan, data_pc=first, capacity=end-first,
+        preimage=preimage, binary_path=emission.get('binary_path'))
+    _require(expected == emission, 'NATIVE_EMISSION_MISMATCH')
+    placements = {row['label']: row for row in expected['placements']}
+    resources, profiles, parents = {}, {}, {}
+    for area in native_plan['areas']:
+        profile_id = f"resident_{area['parent_map_id']:02X}"
+        resource_id = area['static_label']
+        if resource_id is not None:
+            row = placements[resource_id]
+            resources[resource_id] = {key: row[key] for key in (
+                'label', 'snes', 'byte_count', 'sha256')}
+        normal, staging = [], []
+        for run in area['static_runs']:
+            transfer = dict(resource_id=resource_id, **{key: run[key] for key in (
+                'source_offset', 'vram_word_address', 'byte_count')})
+            normal.append(transfer)
+            staging.append(dict(transfer, wram_address=run['wram_address']))
+        slots = [run['native_sheet'] for run in area['static_runs']]
+        profiles[profile_id] = dict(runtime_enabled=True, normal=normal, staging=staging,
+            transition=dict(mode='native_staging', source_bank=0x7F),
+            cache_slots=slots, cache_slot_mask=sum(1 << slot for slot in slots), late=None)
+        for page in native_plan['pages']:
+            if page['area_index'] == area['area_index']:
+                parents[str(page['map_id'])] = dict(profile_id=profile_id, runtime_enabled=True)
+    return dict(kind='lyra.resident_shared_graphics_bridge.v1',
+        abi_sha256=native_plan['abi_sha256'], payload_sha256=expected['payload_sha256'],
+        resources=resources, profiles=profiles, parents=parents,
         selected=False, allocation_granted=False, publication_authorized=False,
         ordinary_build_ready=False, runtime_admission=False)

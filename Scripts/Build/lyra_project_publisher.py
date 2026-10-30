@@ -349,7 +349,8 @@ def validate_current_source_set(contract):
 
 def render_current_source_outputs(table_plan, *, contract, graphics_source, graphics_report,
                                   current_source_profile=None, bg128_plan=None, actor_storage_plan=None, private_pilot=None,
-                                  resident_graphics_plan=None, resource_inspection=None):
+                                  resident_graphics_plan=None, resource_inspection=None,
+                                  resident_native_emission=None):
     """Compose reviewable source through the existing generated-input layout.
 
     A source plan remains unselected and cannot pass the build-context loader.
@@ -471,6 +472,44 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
     if actor_storage_plan is not None:
         constants += f"!LYRA_CURRENT_ACTOR_BANK = ${actor_storage_plan['bank']:02X}\n"
         data += native.emit_current_actor_data(actor_storage_plan)
+    # Reconstruct resident resources before deriving packed palette inputs.
+    # The saved document and its property hashes remain the authored source.
+    R.require((resident_graphics_plan is None) == (resource_inspection is None),
+              'CURRENT_COMPOSER_RESIDENT_UNBOUND: plan and retained inspection must be supplied together')
+    resident_review = resident_native = None
+    if resource_inspection is not None:
+        resident_review = current.resident_graphics_plan(profile['review']['transfer']['path'],
+            profile['project'], profile['base_rom'], resource_inspection)
+        R.require(resident_graphics_plan == resident_review['appearance']['resident_graphics'],
+                  'CURRENT_COMPOSER_RESIDENT_MISMATCH: derived resource data differs from saved inputs')
+    if resident_native_emission is not None:
+        R.require(resident_review is not None,
+                  'CURRENT_COMPOSER_RESIDENT_UNBOUND: emission requires authenticated resident review')
+        import lyra_resident_graphics as resident
+        resident_native = resident.plan_native_resident_abi(resident_graphics_plan, tile16_count=4096)
+        interval = resident_native_emission.get('data_pc') if type(resident_native_emission) is dict else None
+        R.require(type(interval) is list and len(interval) == 2
+                  and all(type(value) is int for value in interval)
+                  and 0 <= interval[0] < interval[1] <= 0x400000,
+                  'CURRENT_COMPOSER_RESIDENT_ORIGIN_UNBOUND: explicit data interval required')
+        for name, origin in origins.items():
+            if origin is None:
+                continue
+            reserved = origin['pc']
+            R.require(not (interval[0] < reserved[1] and reserved[0] < interval[1]),
+                      'CURRENT_COMPOSER_RESIDENT_ORIGIN_CONFLICT: ' + name)
+        for reserved in profile['review']['preimages']:
+            lo, hi = reserved['pc']
+            R.require(not (interval[0] < hi and lo < interval[1]),
+                      'CURRENT_COMPOSER_RESIDENT_ORIGIN_CONFLICT: reviewed terrain output')
+        preimage = A.expanded_rom(source)[slice(*interval)]
+        bridge = resident.resident_runtime_inputs(resident_native, resident_native_emission, preimage=preimage)
+        R.require(graphics_report.get('resident_bridge') == bridge,
+                  'CURRENT_COMPOSER_RESIDENT_GRAPHICS_UNBOUND: graphics must use the same resource emission')
+        data += resident_native_emission['runtime_data_asm']
+        constants += resident_native_emission['constants_asm']
+    # Source composition never activates either consumer or allocates its code/cache.
+    constants += '!LYRA_CURRENT_RESIDENT_ENABLED = 0\n!LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED = 0\n'
     remaining = list(table_plan['remaining_consumers'])
     if actor_storage_plan is None:
         remaining.append('actor stream storage/bank binding')
@@ -483,8 +522,11 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
         bg_origin = origins['bg_palette']
         lo, hi = bg_origin['pc']
         expanded_source = A.expanded_rom(source)
-        expected_bg = bg.plan_bg128([SimpleNamespace(map_id=0xA0+index, properties=properties)
-            for index, properties in enumerate(document.properties)],
+        palette_rows = ([SimpleNamespace(**row) for row in resident.resident_bg128_rows(resident_native)]
+            if resident_native is not None else
+            [SimpleNamespace(map_id=0xA0+index, properties=properties)
+             for index, properties in enumerate(document.properties)])
+        expected_bg = bg.plan_bg128(palette_rows,
             data_snes=bg_origin['snes'][0], capacity=hi-lo, preimage=expanded_source[lo:hi])
         R.require(type(bg128_plan) is dict and bg128_plan.get('publication_authorized') is False
                   and bg128_plan == expected_bg,
@@ -495,16 +537,12 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
     files = {'runtime_constants.asm': constants.encode(), 'runtime_data.asm': data.encode(),
              'graphics_runtime_tables.asm': graphics_source.encode(),
              'descriptor.json': encoded(dict(kind=native.CURRENT_KIND, payload_hex=table_plan['descriptor_hex']))}
-    R.require((resident_graphics_plan is None) == (resource_inspection is None),
-              'CURRENT_COMPOSER_RESIDENT_UNBOUND: plan and retained inspection must be supplied together')
-    resident_review = None
-    if resource_inspection is not None:
-        resident_review = current.resident_graphics_plan(profile['review']['transfer']['path'],
-            profile['project'], profile['base_rom'], resource_inspection)
-        R.require(resident_graphics_plan == resident_review['appearance']['resident_graphics'],
-                  'CURRENT_COMPOSER_RESIDENT_MISMATCH: derived resource data differs from saved inputs')
+    if resident_review is not None:
         files.update(render_resident_data_outputs(resident_review))
         remaining.append('resident page-word remap and full resource closure')
+    if resident_native_emission is not None:
+        files[resident_native_emission['binary_path']] = bytes.fromhex(resident_native_emission['payload_hex'])
+        files['resident_native_emission.json'] = encoded(resident_native_emission)
     prepared = dict(kind='lyra.current_source_prepare.v1', selected=False, source_bindings=source_bindings,
         source_rom_sha256=table_plan['source_rom_sha256'], source_profile_sha256=table_plan['source_profile_sha256'],
         source_size=len(source), document_sha256=profile['document_sha256'],
@@ -521,6 +559,8 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
         ordinary_build_ready=False, runtime_admission=False, rom_written=False)
     if resident_review is not None:
         prepared['resident_graphics_review'] = resident_review
+    if resident_native_emission is not None:
+        prepared['resident_native_emission'] = resident_native_emission
     files['prepare.json'] = encoded(prepared)
     for row in source_bindings:
         R.require(R.sha(Path(row['path']).read_bytes()) == row['sha256'],

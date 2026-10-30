@@ -230,6 +230,60 @@ class CurrentRuntimeGraphicsTests(unittest.TestCase):
         self.assertIn('incsrc "Overworld/graphics_runtime_tables.asm"', asm)
         self.assertNotIn("LDA.l $5B", asm)
 
+    def resident_input(self, *, data_pc=0x300000):
+        sys.path.insert(0, str(runtime.ROOT / "Tests"))
+        import test_lyra_resident_graphics as cases
+        resident = cases.plan(cases.Fixture().inputs())
+        native = cases.R.plan_native_resident_abi(resident, tile16_count=1)
+        preimage = bytes(0x10000)
+        emission = cases.R.emit_native_resident_abi(native, data_pc=data_pc,
+            capacity=len(preimage), preimage=preimage)
+        return dict(plan=native, emission=emission, preimage=preimage)
+
+    def test_resident_bridge_reuses_external_bytes_and_preserves_native_directory(self):
+        before = copy.deepcopy((self.catalog, self.assets, self.policy))
+        native_text, _ = self.render()
+        selected = self.resident_input()
+        text, report = runtime.render(self.catalog, self.assets, self.policy,
+            self.root, self.root, current_contract=self.contract, source_root=self.root,
+            resident_native=selected)
+        self.assertEqual(self.parent_rows(text)[:160], self.parent_rows(native_text))
+        self.assertEqual(len(self.parent_rows(text)), 192)
+        self.assertEqual(report['external_resource_count'], 1)
+        self.assertEqual(report['new_payload_count'], 1)  # Only the original native9F fixture.
+        bridge = report['resident_bridge']
+        resource = next(iter(bridge['resources'].values()))
+        self.assertIn(f"dl ${resource['snes']:06X}+$0000", text)
+        self.assertEqual(text.count('incbin'), 1)
+        self.assertEqual(report['normal_counts']['resident_A0'], 1)
+        self.assertEqual(report['staging_counts']['resident_A0'], 1)
+        self.assertIn('dw $0001,SharedGraphicsProfile_', text)
+        self.assertTrue('db $01,$03' in text)  # Packed static slot0, native-staging mode.
+        self.assertIs(bridge['selected'], False)
+        self.assertEqual((self.catalog, self.assets, self.policy), before)
+
+    def test_resident_external_placement_or_overlap_refuses(self):
+        selected = self.resident_input()
+        selected['emission']['placements'][-1]['snes'] ^= 1
+        with self.assertRaisesRegex(pack.PackError, 'NATIVE_EMISSION_MISMATCH'):
+            runtime.render(self.catalog, self.assets, self.policy, self.root, self.root,
+                current_contract=self.contract, source_root=self.root, resident_native=selected)
+        with self.assertRaisesRegex(pack.PackError, 'overlaps the current graphics interval'):
+            runtime.render(self.catalog, self.assets, self.policy, self.root, self.root,
+                current_contract=self.contract, source_root=self.root,
+                resident_native=self.resident_input(data_pc=0x2D0000))
+        with self.assertRaisesRegex(pack.PackError, 'explicit current source contract'):
+            runtime.render(self.catalog, self.assets, self.policy, self.root, self.root,
+                           resident_native=self.resident_input())
+
+    def test_resident_path_does_not_loosen_saved_catalog_cache_policy(self):
+        self.catalog['profiles']['fixture']['transfers'][0]['vram_word_address'] = 0x2000
+        self.policy['profiles']['fixture']['cache_slots'] = [0]
+        with self.assertRaisesRegex(pack.PackError, 'runtime cache slots must lie in 3..6'):
+            runtime.render(self.catalog, self.assets, self.policy, self.root, self.root,
+                current_contract=self.contract, source_root=self.root,
+                resident_native=self.resident_input())
+
 
 if __name__ == "__main__":
     unittest.main()

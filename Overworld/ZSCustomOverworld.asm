@@ -1419,7 +1419,11 @@ AnimateMirrorWarp_DecompressAnimatedTiles:
 
     PLX
 
+    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    JSL Oracle_ResidentAnimationDecompress
+    else
     JSL.l DecompOwAnimatedTiles
+    endif
             
     RTL
 }
@@ -1806,7 +1810,11 @@ PreOverworld_LoadProperties_Interupt:
     
     ; The decompression function increases it by 1 so subtract 1 here.
     JSL.l ReadAnimatedTable : DEC : TAY
+    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    JSL Oracle_ResidentAnimationDecompress
+    else
     JSL.l DecompOwAnimatedTiles
+    endif
 
     ; Decompress all other graphics.
     JSL.l InitTilesets
@@ -2058,7 +2066,11 @@ Credits_LoadScene_Overworld_PrepGFX_Interupt:
     LyraHost_Credits_LoadScene_Overworld_PrepGFX_Interupt = pc()
     ; The decompression function increases it by 1 so subtract 1 here.
     JSL.l ReadAnimatedTable : DEC : TAY
+    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    JSL Oracle_ResidentAnimationDecompress
+    else
     JSL.l DecompOwAnimatedTiles
+    endif
         
     ; The current scene of the Module_EndSequence module. Example: 0x04 is
     ; the shot of kakariko and 0x06 is the shot of the desert palace.
@@ -3109,6 +3121,9 @@ NewOverworld_FinishTransGfx:
             ; Saves about a frame.
             LDA.b $04 : BEQ .dontPrep
                 JSR.w PrepTransMainGFX
+                if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+                JSL Oracle_SharedGraphicsStageNativeMain
+                endif
 
             .dontPrep
 
@@ -3152,6 +3167,9 @@ NewOverworld_FinishTransGfx:
             ; Saves about a frame.
             LDA.b $04 : BEQ .dontPrep2
                 JSR.w PrepTransMainGFX
+                if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+                JSL Oracle_SharedGraphicsStageNativeMain
+                endif
 
             .dontPrep2
 
@@ -3345,16 +3363,29 @@ CheckForChangeGraphicsTransitionLoad:
             ; Are we leaving a special area?
             CMP.b #$26 : BEQ .mosaic
                 ; Just a normal transition, Not a mosaic.
+                if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+                JSL Oracle_ResidentAnimationForceTransition : BEQ .nativeAnimatedDecision1
+                JSL.l ReadAnimatedTable
+                BRA .loadAnimated1
+                .nativeAnimatedDecision1
+                endif
                 LDA.l Pool_EnableAnimated : BEQ .dontUpdateAnimated1
                     ; Check to see if we need to update the animated tiles
                     ; by checking what was previously loaded.
                     JSL.l ReadAnimatedTable : CMP.w AnimatedTileGFXSet : BEQ .dontUpdateAnimated1
+                    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+                    .loadAnimated1
+                    endif
                         STA.w AnimatedTileGFXSet
                         DEC : TAY
 
                         ; This forces the game toupdate the animated tiles
                         ; when going from one area to another.
+                        if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+                        JSL Oracle_ResidentAnimationDecompress
+                        else
                         JSL.l DecompOwAnimatedTiles
+                        endif
 
                 .dontUpdateAnimated1
 
@@ -3404,13 +3435,26 @@ CheckForChangeGraphicsTransitionLoad:
 
     ; Check to see if we need to update the animated tiles by checking what
     ; was previously loaded.
+    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    JSL Oracle_ResidentAnimationForceTransition : BEQ .nativeAnimatedDecision2
+    JSL.l ReadAnimatedTable
+    BRA .loadAnimated2
+    .nativeAnimatedDecision2
+    endif
     JSL.l ReadAnimatedTable : CMP.w AnimatedTileGFXSet : BEQ .dontUpdateAnimated2
+    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    .loadAnimated2
+    endif
         STA.w AnimatedTileGFXSet
         DEC : TAY
 
         ; This forces the game to update the animated tiles when going
         ; from one area to another.
+        if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+        JSL Oracle_ResidentAnimationDecompress
+        else
         JSL.l DecompOwAnimatedTiles
+        endif
 
     .dontUpdateAnimated2
 
@@ -3600,6 +3644,9 @@ Palette_MultiLoad_NonBuffer:
 LoadTransMainGFX:
 {
     LyraHost_LoadTransMainGFX = pc()
+    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    JSL Oracle_InvalidateCustomGraphicsCache
+    endif
     ; Setup the decompression buffer address.
     ; $00[3] = $7E4000
                  STZ.b $00
@@ -3620,6 +3667,11 @@ LoadTransMainGFX:
     JSL.l Lyra_ReadGfx0
     else
     LDA.w Pool_OWGFXGroupTable_sheet0, X
+    endif
+    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0000
+    JSL Oracle_ResolveCustomGraphicsTransitionSheet
+    PLX
     endif
     CMP.b #$FF : BEQ .noBgGfxChange0
         SEP #$10
@@ -3646,6 +3698,11 @@ LoadTransMainGFX:
     else
     LDA.w Pool_OWGFXGroupTable_sheet1, X
     endif
+    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0001
+    JSL Oracle_ResolveCustomGraphicsTransitionSheet
+    PLX
+    endif
     CMP.b #$FF : BEQ .noBgGfxChange1
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+1 : BEQ .noBgGfxChange1
@@ -3671,6 +3728,11 @@ LoadTransMainGFX:
     else
     LDA.w Pool_OWGFXGroupTable_sheet2, X
     endif
+    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0002
+    JSL Oracle_ResolveCustomGraphicsTransitionSheet
+    PLX
+    endif
     CMP.b #$FF : BEQ .noBgGfxChange2
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+2 : BEQ .noBgGfxChange2
@@ -3695,6 +3757,11 @@ LoadTransMainGFX:
     JSL.l Lyra_ReadGfx7
     else
     LDA.w Pool_OWGFXGroupTable_sheet7, X
+    endif
+    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0007
+    JSL Oracle_ResolveCustomGraphicsTransitionSheet
+    PLX
     endif
     CMP.b #$FF : BEQ .noBgGfxChange7
         SEP #$10
@@ -3766,6 +3833,9 @@ CheckForChangeGraphicsNormalLoad:
     JSL.l InitTilesets ; Replaced code.
 
     JSL.l ReadAnimatedTable : STA.w AnimatedTileGFXSet
+    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    JSL Oracle_ResidentAnimationStage
+    endif
     DEC                     : TAY
 
     ; This function is not needed here and is handled somewhere else. This
@@ -3798,10 +3868,17 @@ org $0AB8F5 ; $0538F5 ; @hook module=Overworld
 BirdTravel_LoadTargetArea_Interupt:
 {
     JSL.l ReadAnimatedTable : STA.w AnimatedTileGFXSet
+    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    JSL Oracle_ResidentAnimationStage
+    endif
     DEC                     : TAY
     
     ; From this point on it is the vanilla function.
+    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    JSL Oracle_ResidentAnimationDecompress
+    else
     JSL.l DecompOwAnimatedTiles
+    endif
     JSL.l Overworld_SetFixedColorAndScroll
         
     STZ.w $0AA9
@@ -4655,6 +4732,9 @@ InitTilesetsLongCalls:
 
     .outdoors
 
+    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    JSL Oracle_ResidentGraphicsResetMainCache
+    endif
     PHB : PHK : PLB
 
     REP #$30
@@ -4793,6 +4873,9 @@ InitTilesetsLongCalls:
 AnimateMirrorWarp_DecompressNewTileSetsLongCalls:
 {
     LyraHost_AnimateMirrorWarp_DecompressNewTileSetsLongCalls = pc()
+    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    JSL Oracle_ResidentGraphicsResetMainCache
+    endif
     PHB : PHK : PLB
 
     LDA.b $8A : AND.w #$00FF : ASL #3 : TAX
@@ -4981,6 +5064,9 @@ AnimateMirrorWarp_DecompressBackgroundsCLongCalls:
     STA.b $08
     STA.w AnimatedTileGFXSet
     STA.w TransGFXModule_PriorSheets+7
+    if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1
+    JSL Oracle_ResidentAnimationStage
+    endif
 
     if !LYRA_PROJECT_DATA_PRESENT == 1
     LyraCall_Gfx6_3 = pc()

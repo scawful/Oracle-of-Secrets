@@ -164,12 +164,34 @@ def validate_authoring_contracts(catalog: dict, assets: dict[str, bytes]) -> Non
 def render(catalog: dict, assets: dict[str, bytes], policy: dict,
            catalog_dir: Path, output_dir: Path, *, legacy_root: Path = ROOT,
            current_contract: dict | None = None,
-           source_root: Path = ROOT) -> tuple[str, dict]:
+           source_root: Path = ROOT,
+           resident_native: dict | None = None) -> tuple[str, dict]:
     current = (current_graphics_contract(current_contract, source_root=source_root)
                if current_contract is not None else None)
     parent_count = current["parent_count"] if current else 160
     lowered = pack.lower_runtime_policy(catalog, assets, policy,
                                         parent_count=parent_count)
+    resident = None
+    external = {}
+    if resident_native is not None:
+        if current is None:
+            raise pack.PackError("resident resources require the explicit current source contract")
+        pack._fields(resident_native, {"plan", "emission", "preimage"}, "resident native input")
+        build_modules = str(ROOT / "Scripts/Build")
+        if build_modules not in sys.path:
+            sys.path.insert(0, build_modules)
+        from lyra_resident_graphics import resident_runtime_inputs
+        try:
+            resident = resident_runtime_inputs(resident_native["plan"],
+                resident_native["emission"], preimage=resident_native["preimage"])
+        except ValueError as exc:
+            raise pack.PackError(str(exc)) from exc
+        if (set(lowered["profiles"]) & set(resident["profiles"]) or
+                set(catalog["resources"]) & set(resident["resources"])):
+            raise pack.PackError("resident resource/profile identifier collides with saved catalog")
+        lowered["profiles"].update(resident["profiles"])
+        lowered["parents"].update(resident["parents"])
+        external = resident["resources"]
     if current:
         missing = [parent for parent in range(current["first_map"], current["end_map"])
                    if str(parent) not in lowered["parents"]]
@@ -179,6 +201,9 @@ def render(catalog: dict, assets: dict[str, bytes], policy: dict,
     validate_authoring_contracts(catalog, assets)
     profiles = {key: value for key, value in lowered["profiles"].items()
                 if value["runtime_enabled"]}
+    if resident is not None:
+        bound_profiles = {row["profile_id"] for row in lowered["parents"].values()}
+        profiles = {key: value for key, value in profiles.items() if key in bound_profiles}
     used = {t["resource_id"] for p in profiles.values() for t in p["normal"]}
     # Current c19 owns these two existing payload labels. Historical docks
     # labels at $448000/$44A000 are not current grants: emit those resources
@@ -187,6 +212,11 @@ def render(catalog: dict, assets: dict[str, bytes], policy: dict,
                if current else LEGACY_ALIASES)
     labels, payloads = {}, {}
     for resource_id in sorted(used):
+        if resource_id in external:
+            # The authenticated resident emitter already owns these bytes.
+            # Long addresses need no duplicate incbin or same-bank relocation.
+            labels[resource_id] = f"${external[resource_id]['snes']:06X}"
+            continue
         resource = catalog["resources"][resource_id]
         path = resource["path"]
         if path in aliases:
@@ -213,6 +243,11 @@ def render(catalog: dict, assets: dict[str, bytes], policy: dict,
     capacity = current["end"] - current["origin"] if current else 0x8000
     if table_bytes + payload_bytes > capacity:
         raise pack.PackError("runtime tables and new resources exceed bank $5B")
+    if resident is not None:
+        pc = current_contract["origins"]["graphics"]["pc"]
+        if any(pc[0] < row["pc"][1] and row["pc"][0] < pc[1]
+               for row in resident_native["emission"]["placements"]):
+            raise pack.PackError("resident payload overlaps the current graphics interval")
 
     def source(t):
         return f"{labels[t['resource_id']]}+${t['source_offset']:04X}"
@@ -266,7 +301,9 @@ def render(catalog: dict, assets: dict[str, bytes], policy: dict,
     # Each resource fits one CPU bank. Every normal/source/staging/late DMA is
     # a validated slice of that resource; none can wrap the 16-bit DMA source.
     for resource_id in sorted(used):
-        label, count = labels[resource_id], len(assets[resource_id])
+        label = labels[resource_id]
+        count = (external[resource_id]["byte_count"] if resource_id in external
+                 else len(assets[resource_id]))
         lines += [f"assert (({label}&$FFFF)+${count:04X}) <= $10000"]
     lines += ["SharedGraphicsTablesEnd:",
               "assert (SharedGraphicsTablesEnd>>16) == !GfxRT_Bank",
@@ -279,7 +316,11 @@ def render(catalog: dict, assets: dict[str, bytes], policy: dict,
                   staging_counts={key: len(p["staging"]) for key, p in profiles.items()},
                   table_bytes=table_bytes, new_payload_bytes=payload_bytes,
                   new_payload_count=len(payloads), aliases={key: labels[key] for key in sorted(used)
-                  if catalog["resources"][key]["path"] in aliases})
+                  if key not in external and catalog["resources"][key]["path"] in aliases})
+    if resident is not None:
+        report.update(resident_bridge=resident,
+                      external_resource_count=len(external),
+                      external_resource_bytes=sum(row["byte_count"] for row in external.values()))
     if current:
         report.update(current_mode=True, parent_count=parent_count,
                       source_contract_sha256=pack.sha256(pack.json_bytes(current_contract)),

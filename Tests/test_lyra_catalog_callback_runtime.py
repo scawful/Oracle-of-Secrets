@@ -5,6 +5,7 @@ cover cache and DMA lifetime examples; they are not an assembler or emulator.
 """
 from pathlib import Path
 import copy
+import hashlib
 import re
 import sys
 import unittest
@@ -25,16 +26,18 @@ def routine(source, name):
     return match.group(1)
 
 
-def mode_body(body, current):
-    """Select only local CURRENT_MODE branches; this is not an Asar evaluator."""
+def mode_body(body, current, *, resident=False):
+    """Select local current/resident gates; this is not an Asar evaluator."""
     result, stack, active = [], [], True
     for raw in body.splitlines():
         line = raw.split(";", 1)[0].strip()
         if line.startswith("if "):
-            known = re.fullmatch(r"if !LYRA_CURRENT_MODE\s*==\s*1", line) is not None
-            stack.append((active, known, current))
+            match = re.fullmatch(r"if !(LYRA_CURRENT_MODE|LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED)\s*==\s*1", line)
+            known = match is not None
+            selected = (current if match[1] == "LYRA_CURRENT_MODE" else resident) if known else False
+            stack.append((active, known, selected))
             if known:
-                active = active and current
+                active = active and selected
             elif active:
                 result.append(line)
         elif line == "else" and stack:
@@ -100,6 +103,79 @@ def stage_after_conversion(converted, records, assets, native):
         start, count = record["source_offset"], record["byte_count"]
         output[at:at + count] = assets[record["resource_id"]][start:start + count]
     return bytes(output)
+
+
+def resident_main_resolve(raw, slot, prior, backup):
+    if raw != 0xFF or slot not in (0, 1, 2, 7) or prior[slot] != 0xFF:
+        return raw
+    return backup[(0, 1, 2, 7).index(slot)]
+
+
+def resident_main_invalidate(mask, prior, backup):
+    for index, slot in enumerate((0, 1, 2, 7)):
+        if mask & (1 << slot) and prior[slot] != 0xFF:
+            backup[index], prior[slot] = prior[slot], 0xFF
+
+
+class ResidentMainCacheProtocolTest(unittest.TestCase):
+    def test_fresh_invalid_backing_never_creates_a_native_sheet(self):
+        backup = [0xFF] * 4
+        prior = [0xFF] * 8
+        for slot in (0, 1, 2, 7):
+            self.assertEqual(resident_main_resolve(0xFF, slot, prior, backup), 0xFF)
+        resident_main_invalidate(0x87, prior, backup)
+        self.assertEqual(backup, [0xFF] * 4)
+        self.assertEqual(prior, [0xFF] * 8)
+
+    def test_repeat_mark_retains_native_zero_and_slot7_without_aux_sprite_alias(self):
+        prior, backup = list(range(8)), [0xFF] * 4
+        resident_main_invalidate(0x87, prior, backup)
+        resident_main_invalidate(0x87, prior, backup)
+        self.assertEqual(backup, [0, 1, 2, 7])
+        self.assertEqual(prior, [0xFF, 0xFF, 0xFF, 3, 4, 5, 6, 0xFF])
+        self.assertEqual([resident_main_resolve(0xFF, slot, prior, backup)
+                          for slot in (0, 1, 2, 7)], [0, 1, 2, 7])
+
+    def test_same_source_new_atlas_forces_next_upload_and_native_departure_restores(self):
+        prior, backup = [0x31] * 8, [0xFF] * 4
+        for _ in range(2):
+            resident_main_invalidate(0x87, prior, backup)
+            for slot in (0, 1, 2, 7):
+                sheet = resident_main_resolve(0xFF, slot, prior, backup)
+                self.assertNotEqual(sheet, prior[slot])
+                prior[slot] = sheet
+            resident_main_invalidate(0x87, prior, backup)
+        # A native departure does not mark again after scheduling its source.
+        for slot in (0, 1, 2, 7):
+            prior[slot] = resident_main_resolve(0xFF, slot, prior, backup)
+        self.assertEqual(prior, [0x31] * 8)
+
+    def test_gate_off_cache_and_staging_bodies_equal_frozen_control(self):
+        # Exact normalized current-branch instructions from released source
+        # 0a3a8a6612a407d290f44da6f620ca97f01a8abf, before this unit.
+        expected = {
+            "SharedGraphicsMarkCache": "64c9fcea38ddded893b3461ebab541471c058faabaeb21b6455e349031d27c37",
+            "SharedGraphicsStageNative": "92046c31d2dc2ec9662ba81f7e23118827a7cc32a16a0c76f0d2dcb2a83f70de",
+            "ResolveCustomGraphicsTransitionSheet": "8ca4051f0f7e036412c9c47f685e87f5b2c21511757ebaf3c088d672d21cffa0",
+        }
+        for path, names in (("graphics_runtime.asm", ("SharedGraphicsMarkCache", "SharedGraphicsStageNative")),
+                            ("custom_gfx.asm", ("ResolveCustomGraphicsTransitionSheet",))):
+            current = (ROOT / "Overworld" / path).read_text()
+            for name in names:
+                actual = tokens(mode_body(routine(current, name), True))
+                self.assertEqual(hashlib.sha256(actual.encode()).hexdigest(), expected[name])
+
+    def test_constructor_requires_owned_four_bytes_and_reset_binding(self):
+        text = (ROOT / "Overworld/graphics_runtime.asm").read_text()
+        for name in ("BASE", "END", "RESET_BOUND"):
+            self.assertIn(f'assert defined("LYRA_CURRENT_RESIDENT_MAIN_CACHE_{name}")', text)
+        self.assertIn("!LYRA_CURRENT_RESIDENT_MAIN_CACHE_END-!LYRA_CURRENT_RESIDENT_MAIN_CACHE_BASE == 4", text)
+        reset = routine(text, "ResidentGraphicsResetMainCache")
+        self.assertIn("PHP : REP #$20 : PHA : SEP #$20", reset)
+        self.assertIn("REP #$20 : PLA : PLP", reset)
+        self.assertEqual(reset.count("STA.l !LYRA_CURRENT_RESIDENT_MAIN_CACHE_BASE"), 4)
+        for forbidden in ("$7EC2F5", "$7EC2F6", "$7EC2F7", "$7EC2FC"):
+            self.assertNotIn(forbidden, reset)
 
 
 class CatalogCallbackSourceTests(unittest.TestCase):

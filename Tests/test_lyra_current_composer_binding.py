@@ -80,7 +80,9 @@ class ComposerFixture:
             capacity=hi-lo if capacity is None else capacity,
             preimage=X.A.expanded_rom(self.source)[lo:lo+(hi-lo if capacity is None else capacity)])
 
-    def compose(self, *, table_plan=None, profile=None, contract=None, bg128_plan=None, actor_storage_plan=None):
+    def compose(self, *, table_plan=None, profile=None, contract=None, bg128_plan=None, actor_storage_plan=None,
+                resident_graphics_plan=None, resource_inspection=None, resident_native_emission=None,
+                resident_bridge=None):
         contract = self.contract if contract is None else contract
         profile = self.profile if profile is None else profile
         graphics = '; Explicit host graphics source; no real catalog resources qualified.\n'
@@ -88,9 +90,13 @@ class ComposerFixture:
             source_contract_sha256=P.R.sha(P.encoded(contract)),
             generated_sha256=P.R.sha(graphics.encode()),
             graphics_origin_snes=contract['origins']['graphics']['snes'])
+        if resident_bridge is not None:
+            report['resident_bridge'] = resident_bridge
         return P.render_current_source_outputs(self.table_plan if table_plan is None else table_plan,
             contract=contract, graphics_source=graphics, graphics_report=report,
-            current_source_profile=profile, bg128_plan=bg128_plan, actor_storage_plan=actor_storage_plan)
+            current_source_profile=profile, bg128_plan=bg128_plan, actor_storage_plan=actor_storage_plan,
+            resident_graphics_plan=resident_graphics_plan, resource_inspection=resource_inspection,
+            resident_native_emission=resident_native_emission)
 
 
 class CurrentComposerBindingTest(unittest.TestCase):
@@ -291,6 +297,105 @@ class CurrentComposerBindingTest(unittest.TestCase):
         with mock.patch.object(B, 'emit_bg128_data', side_effect=later_save):
             with self.assertRaisesRegex(ValueError, 'retired'):
                 self.f.compose(bg128_plan=self.f.bg())
+
+
+class ResidentComposerResourceTest(unittest.TestCase):
+    """Exercise composition with an explicit stub at the inspection-review seam.
+
+    Save/source-profile checks are real host fixtures. The stub is not native
+    inspection evidence; these controls cover joining already reviewed bytes.
+    """
+    def setUp(self):
+        import lyra_resident_graphics as resident
+        import test_lyra_resident_graphics as resources
+        self.resident = resident
+        self.f = ComposerFixture(self)
+        self.plan = resources.plan(resources.Fixture().inputs())
+        self.native = resident.plan_native_resident_abi(self.plan, tile16_count=4096)
+        self.inspection = 'explicit-host-inspection-seam'
+        self.review = dict(kind='lyra.current_resident_graphics_review.v1',
+            project=self.f.profile['project'], base_rom=self.f.profile['base_rom'],
+            request=dict(path=self.f.profile['review']['transfer']['path']),
+            inspection=dict(path=self.inspection),
+            appearance=dict(resident_graphics=self.plan))
+        patch = mock.patch.object(X, 'resident_graphics_plan', return_value=self.review)
+        patch.start()
+        self.addCleanup(patch.stop)
+
+    def emission(self, start=0x310000):
+        preimage = X.A.expanded_rom(self.f.source)[start:start+0x20000]
+        emitted = self.resident.emit_native_resident_abi(self.native, data_pc=start,
+            capacity=len(preimage), preimage=preimage)
+        bridge = self.resident.resident_runtime_inputs(self.native, emitted, preimage=preimage)
+        return emitted, bridge
+
+    def compose(self, emission, bridge, *, bg128_plan=None):
+        return self.f.compose(resident_graphics_plan=self.plan, resource_inspection=self.inspection,
+            resident_native_emission=emission, resident_bridge=bridge, bg128_plan=bg128_plan)
+
+    def test_emitted_resources_and_packed_palette_join_without_mutating_saved_properties(self):
+        before = copy.deepcopy(self.f.document.properties)
+        emission, bridge = self.emission()
+        rows = [SimpleNamespace(**row) for row in self.resident.resident_bg128_rows(self.native)]
+        palette = self.f.bg(maps=rows)
+        files = self.compose(emission, bridge, bg128_plan=palette)
+        self.assertEqual(files[emission['binary_path']], bytes.fromhex(emission['payload_hex']))
+        self.assertIn(emission['runtime_data_asm'].encode(), files['runtime_data.asm'])
+        self.assertIn(B.emit_bg128_data(palette).encode(), files['runtime_data.asm'])
+        constants = files['runtime_constants.asm']
+        self.assertIn(b'!LYRA_CURRENT_RESIDENT_ENABLED = 0', constants)
+        self.assertIn(b'!LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED = 0', constants)
+        self.assertNotIn(b'MAIN_CACHE_BASE', constants)
+        prepared = json.loads(files['prepare.json'])
+        self.assertFalse(prepared['selected'])
+        self.assertFalse(prepared['ordinary_build_ready'])
+        self.assertIn('resident page-word remap and full resource closure', prepared['remaining_consumers'])
+        self.assertEqual(self.f.document.properties, before)
+        self.assertFalse(self.f.contract_fixture.case.candidate.exists())
+
+    def test_each_existing_generated_origin_refuses_resident_overlap(self):
+        for name, origin in self.f.profile['origins'].items():
+            if origin is None:
+                continue
+            emission, bridge = self.emission(origin['pc'][0])
+            with self.subTest(origin=name), self.assertRaisesRegex(ValueError,
+                    'CURRENT_COMPOSER_RESIDENT_ORIGIN_CONFLICT'):
+                self.compose(emission, bridge)
+        for reserved in self.f.profile['review']['preimages']:
+            emission, bridge = self.emission(reserved['pc'][0])
+            with self.subTest(terrain=reserved['pc']), self.assertRaisesRegex(ValueError,
+                    'CURRENT_COMPOSER_RESIDENT_ORIGIN_CONFLICT'):
+                self.compose(emission, bridge)
+
+    def test_stale_preimage_or_missing_graphics_bridge_cannot_join(self):
+        emission, bridge = self.emission()
+        with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_RESIDENT_GRAPHICS_UNBOUND'):
+            self.compose(emission, None)
+        changed = copy.deepcopy(emission)
+        changed['preimage_sha256'] = '0' * 64
+        with self.assertRaisesRegex(ValueError, 'NATIVE_EMISSION_MISMATCH'):
+            self.compose(changed, bridge)
+        with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_BG128_MISMATCH'):
+            self.compose(emission, bridge, bg128_plan=self.f.bg())
+
+    def test_resident_palette_requires_existing_owned_restoration_binding(self):
+        with self.assertRaisesRegex(ValueError, 'CURRENT_RUNTIME_BG128_UNADMITTED'):
+            X.current_bg128(self.f.source, self.f.document, self.f.profile, {}, None,
+                           resident_native_plan=self.native)
+        origin = self.f.profile['origins']['code']['snes']
+        binding = dict(restore_bound=True, code_snes=[origin[0]+0x800, origin[1]])
+        ledger = dict(claims=[dict(id='ProjectBGPaletteNativeUnderlay', space='wram',
+            base=0x7ECA00, size=514, status='shared', aliases=[],
+            condition=dict(PROJECT_BG128_ENABLED=1))])
+        palette, actual_binding = X.current_bg128(self.f.source, self.f.document,
+            self.f.profile, ledger, binding, resident_native_plan=self.native)
+        rows = [SimpleNamespace(**row) for row in self.resident.resident_bg128_rows(self.native)]
+        self.assertEqual(palette, self.f.bg(maps=rows))
+        self.assertEqual(actual_binding, binding)
+        ledger['claims'].append(dict(id='foreign', space='wram', base=0x7ECA01, size=1))
+        with self.assertRaisesRegex(ValueError, 'CURRENT_BG128_WRAM_CONFLICT'):
+            X.current_bg128(self.f.source, self.f.document, self.f.profile, ledger, binding,
+                           resident_native_plan=self.native)
 
 
 if __name__ == '__main__':
