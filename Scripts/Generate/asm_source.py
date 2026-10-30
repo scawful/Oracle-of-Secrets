@@ -27,6 +27,7 @@ LYRA_CONTEXT_ENV = "OOS_LYRA_BUILD_CONTEXT"
 LYRA_CONSTANTS = "Data/Generated/lyra_project/runtime_constants.asm"
 LYRA_CONTEXT_NAMES = {"LYRA_BUILD_CONTEXT", "LYRA_PROJECT_DATA_PRESENT", "LYRA_NATIVE_A1_ENABLED",
                       "LYRA_CURRENT_MODE", "LYRA_CURRENT_FIRST", "LYRA_CURRENT_END", "LYRA_CURRENT_PARENT_COUNT",
+                      "LYRA_CURRENT_RESIDENT_ENABLED", "LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED",
                       "LYRA_CURRENT_EVENTS_ENABLED", "LYRA_CURRENT_EVENTS_BOUND",
                       "LYRA_CURRENT_ACTORS_ENABLED", "LYRA_CURRENT_ACTORS_BOUND",
                       "LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED", "LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND",
@@ -76,6 +77,7 @@ def _load_global_defines(root: Path) -> dict[str, int]:
     defines.update(LYRA_BUILD_CONTEXT=int(context), LYRA_PROJECT_DATA_PRESENT=0, LYRA_NATIVE_A1_ENABLED=0,
                    LYRA_CURRENT_MODE=0, LYRA_CURRENT_FIRST=0xA0, LYRA_CURRENT_END=0xC0,
                    LYRA_CURRENT_PARENT_COUNT=0xC0, LYRA_CURRENT_EVENTS_ENABLED=0, LYRA_CURRENT_EVENTS_BOUND=0,
+                   LYRA_CURRENT_RESIDENT_ENABLED=0, LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED=0,
                    LYRA_CURRENT_ACTORS_ENABLED=0, LYRA_CURRENT_ACTORS_BOUND=0,
                    LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED=0, LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND=0,
                    LYRA_PRIVATE_CHECKPOINT_ENABLED=0, LYRA_AREA_TILESETS_BOUND=0, LYRA_AREA_FERRY_BOUND=0,
@@ -102,6 +104,11 @@ def _load_global_defines(root: Path) -> dict[str, int]:
         current = defines['LYRA_CURRENT_MODE']
         if current not in (0, 1) or defines["LYRA_PROJECT_DATA_PRESENT"] != 1:
             raise ValueError("Selected Lyra context requires enabled prepared data")
+        resident = (defines["LYRA_CURRENT_RESIDENT_ENABLED"],
+                    defines["LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED"])
+        if (any(value not in (0, 1) for value in resident)
+                or resident[1] > resident[0] or (any(resident) and current != 1)):
+            raise ValueError("Resident Lyra source context requires current full32 admission")
         if current == 1:
             if (prepared.get('kind') != 'lyra.current_build_prepare.v1'
                     or defines['LYRA_NATIVE_A1_ENABLED'] != 0

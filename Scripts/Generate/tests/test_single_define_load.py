@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -116,6 +118,75 @@ class SingleDefineLoadTest(unittest.TestCase):
                 generate_hack_manifest.generate_manifest(self.fixture.root)
         self.assertEqual(len(calls), 2)
         self.assertFalse(output.exists())
+
+
+class ResidentSourceContextTest(unittest.TestCase):
+    NAMES = ("LYRA_CURRENT_RESIDENT_ENABLED",
+             "LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED")
+
+    def setUp(self) -> None:
+        self.fixture = SourceFixture()
+        self.addCleanup(self.fixture.close)
+        self.environment = mock.patch.dict(os.environ, {asm_source.LYRA_CONTEXT_ENV: "0"})
+        self.environment.start()
+        self.addCleanup(self.environment.stop)
+
+    def prepare(self, constants: str, *, current: bool) -> None:
+        self.fixture.write(asm_source.LYRA_CONSTANTS, constants)
+        self.fixture.write("Data/Generated/lyra_project/prepare.json", json.dumps({
+            "kind": "lyra.current_build_prepare.v1" if current else "lyra.ordinary_build_prepare.v1",
+            "selected": True,
+            "generated_files": {"runtime_constants.asm": hashlib.sha256(constants.encode()).hexdigest()},
+            "allocation_granted": True,
+            "producer_enforcement_verified": True,
+            "runtime_admission": True,
+        }))
+
+    def test_unselected_resident_files_do_not_enable_direct_or_entry_scans(self) -> None:
+        self.prepare("!LYRA_CURRENT_RESIDENT_ENABLED = 1\n"
+                     "!LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED = 1\n", current=True)
+        self.fixture.write("Oracle_main.asm", "\n".join(
+            f'if not(defined("{name}"))\n!{name} = 0\nendif' for name in self.NAMES)
+            + '\nincsrc "Core/hooks.asm"\n')
+        self.fixture.write("Core/hooks.asm",
+            "if !LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED == 1\n"
+            "org $028000 : JSL Resident\nelse\norg $028000 : JSL Native\nendif\n")
+        defines = asm_source._load_global_defines(self.fixture.root)
+        self.assertEqual(tuple(defines[name] for name in self.NAMES), (0, 0))
+        hooks = generate_hooks_json.scan_hooks(self.fixture.root)
+        self.assertEqual([(hook.address, hook.name) for hook in hooks], [(0x028000, "Native")])
+
+    def test_identical_defaults_are_root_only_and_never_authorize_one(self) -> None:
+        for name in self.NAMES:
+            with self.subTest(name=name):
+                self.fixture.write("Oracle_main.asm", f'!{name} = 0\nincsrc "Core/hooks.asm"\n')
+                self.fixture.write("Core/hooks.asm", "org $028000 : JSL Native\n")
+                asm_source.collect_reachable_asm_sources(self.fixture.root)
+                self.fixture.write("Core/hooks.asm", f"!{name} = 0\n")
+                with self.assertRaisesRegex(asm_source.SourceGraphError, "reassigns preloaded global define"):
+                    asm_source.collect_reachable_asm_sources(self.fixture.root)
+                self.fixture.write("Oracle_main.asm", f"!{name} = 1\n")
+                with self.assertRaisesRegex(asm_source.SourceGraphError, "reassigns preloaded global define"):
+                    asm_source.collect_reachable_asm_sources(self.fixture.root)
+
+    def test_historical_context_cannot_enable_resident_consumers(self) -> None:
+        for enabled, resources in ((1, 0), (1, 1), (0, 1), (2, 0)):
+            with self.subTest(enabled=enabled, resources=resources):
+                self.prepare("!LYRA_PROJECT_DATA_PRESENT = 1\n!LYRA_NATIVE_A1_ENABLED = 1\n"
+                    f"!LYRA_CURRENT_RESIDENT_ENABLED = {enabled}\n"
+                    f"!LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED = {resources}\n", current=False)
+                with mock.patch.dict(os.environ, {asm_source.LYRA_CONTEXT_ENV: "1"}), \
+                     self.assertRaisesRegex(ValueError, "requires current full32 admission"):
+                    asm_source._load_global_defines(self.fixture.root)
+
+    def test_forged_current_booleans_still_reach_actual_context_verifier(self) -> None:
+        self.prepare("!LYRA_PROJECT_DATA_PRESENT = 1\n!LYRA_NATIVE_A1_ENABLED = 0\n"
+            "!LYRA_CURRENT_MODE = 1\n!LYRA_CURRENT_RESIDENT_ENABLED = 1\n"
+            "!LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED = 1\n", current=True)
+        with mock.patch.object(sys, "path", [str(REPO_ROOT / "Scripts/Build"), *sys.path]), \
+             mock.patch.dict(os.environ, {asm_source.LYRA_CONTEXT_ENV: "1"}), \
+             self.assertRaisesRegex(ValueError, "Current context uses another source root"):
+            asm_source._load_global_defines(self.fixture.root)
 
 
 class RepositoryEquivalenceTest(unittest.TestCase):
