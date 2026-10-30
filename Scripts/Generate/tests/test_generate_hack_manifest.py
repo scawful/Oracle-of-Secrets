@@ -1626,7 +1626,7 @@ class RepositoryProjectSafetyTest(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertEqual(
-            build.count('--output "$repo_root/Roms/hack_manifest.json"'),
+            build.count('--output "$rom_dir/hack_manifest.json"'),
             1,
         )
         self.assertEqual(
@@ -1634,6 +1634,7 @@ class RepositoryProjectSafetyTest(unittest.TestCase):
             1,
         )
         self.assertIn('if [[ -n "${OOS_MANIFEST_ROOT:-}" ]]', build)
+        self.assertIn('rom_dir="$repo_root/Roms"', build)
         self.assertNotIn(
             'manifest_root="${OOS_MANIFEST_ROOT:-$repo_root}"', build
         )
@@ -1710,7 +1711,7 @@ class RepositoryMessageSourceTest(unittest.TestCase):
             project.splitlines(),
         )
         self.assertIn("Scripts/Generate/generate_hack_manifest.py", build)
-        self.assertIn('--output "$repo_root/Roms/hack_manifest.json"', build)
+        self.assertIn('--output "$rom_dir/hack_manifest.json"', build)
         self.assertIn('--dev-rom "$base_rom"', build)
         self.assertIn('--rom "$patched_rom"', build)
         self.assertLess(
