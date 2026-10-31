@@ -1,10 +1,10 @@
 {
   "allocation_granted": false,
-  "base_head": "c19cf98873c0d409043b1d59016633f415b72dba",
-  "engine_head": "8b004e65efacbd0777121c49a36f09a43759c922",
+  "base_head": "a7ad0b593b933218a5a9ef4b8760796531d5f9f4",
+  "engine_head": "a7ad0b593b933218a5a9ef4b8760796531d5f9f4",
   "kind": "lyra.current_engine_source_contract.v1",
   "ledger": {
-    "engine_ledger_sha256": "6bc162723d33d3589b076cbc7726fc6022d73732f2f5cecf75c9952098d485d6",
+    "engine_ledger_sha256": "31cb74db34f0e105219b4f60795f4ccd2f22b233e8738cb4bdaace8bc23db8f6",
     "path": "Config/allocation_ownership.json",
     "sha256": "872a9e5ebc4c5386f99728a844aacaf03f1906179e2f65bd36ed2ebf8d145e29",
     "source_set": "lyra_current_save_admission_diagnostics_58"

@@ -27,6 +27,9 @@ BASELINE_LEDGER_VALUE_SHA256 = (
     '0a36cd0a58f8d600ea92a040f01a1785b769ae420cb7471192778f598568a3d8')
 BASELINE_CONTRACT_PROJECTION_SHA256 = (
     '0baebfafb92b7cf8fc72e9cd353c7e803abb4071916319d8eaf5062102428c30')
+SELECTED_INTAKE_HEAD = 'a7ad0b593b933218a5a9ef4b8760796531d5f9f4'
+SELECTED_ENGINE_LEDGER_SHA256 = (
+    '31cb74db34f0e105219b4f60795f4ccd2f22b233e8738cb4bdaace8bc23db8f6')
 AUTHORITY_FLAGS = ('allocation_granted', 'publication_authorized',
                    'producer_enforcement_verified', 'ordinary_build_ready',
                    'runtime_admission')
@@ -81,9 +84,20 @@ class SaveAdmissionSourceContractTest(unittest.TestCase):
         self.assertEqual(len(previous['source_sets']), 40)
         self.assertEqual(len(previous['sources']), 1406)
         self.assertEqual(value_digest(previous), BASELINE_LEDGER_VALUE_SHA256)
+        self.assertEqual(self.contract['engine_head'], SELECTED_INTAKE_HEAD)
+        self.assertEqual(self.contract['base_head'], SELECTED_INTAKE_HEAD)
+        self.assertEqual(self.contract['ledger']['engine_ledger_sha256'],
+                         SELECTED_ENGINE_LEDGER_SHA256)
         projection = copy.deepcopy(self.contract)
         projection['ledger'].pop('sha256')
         projection['ledger'].pop('source_set')
+        # Permit only this explicit lineage correction. Normalize those three
+        # asserted values to their old metadata before checking the unchanged
+        # baseline digest, so unrelated contract changes still fail.
+        projection['engine_head'] = '8b004e65efacbd0777121c49a36f09a43759c922'
+        projection['base_head'] = 'c19cf98873c0d409043b1d59016633f415b72dba'
+        projection['ledger']['engine_ledger_sha256'] = (
+            '6bc162723d33d3589b076cbc7726fc6022d73732f2f5cecf75c9952098d485d6')
         self.assertEqual(value_digest(projection),
                          BASELINE_CONTRACT_PROJECTION_SHA256)
         self.assertEqual(self.contract['ledger']['sha256'],
@@ -104,20 +118,28 @@ class SaveAdmissionSourceContractTest(unittest.TestCase):
                     P.validate_current_source_set(self.contract)
 
     def test_source58_preserves_exact_source56_e3_reservation(self):
-        claim = X._hidden_streams_reservation(self.contract, self.ledger)
         source_id = X.HIDDEN_STREAMS_SOURCE_SET + ':Overworld/lyra_native_loaders.asm'
-        self.assertEqual(claim['provenance'], [source_id])
-        self.assertEqual(claim['binding']['source'], source_id)
-        self.assertEqual((claim['base'], claim['size']), (0xE38000, 0x8000))
-        changed = copy.deepcopy(self.ledger)
-        next(row for row in changed['claims']
-             if row['id'] == X.HIDDEN_STREAMS_CLAIM)['base'] += 1
-        with self.assertRaisesRegex(ValueError, 'HIDDEN_STREAM_RESERVATION_MISMATCH'):
-            X._hidden_streams_reservation(self.contract, changed)
-        changed_contract = copy.deepcopy(self.contract)
-        changed_contract['origins']['hidden_streams']['pc'][1] -= 1
-        with self.assertRaisesRegex(ValueError, 'HIDDEN_STREAM_ORIGIN_UNBOUND'):
-            X._hidden_streams_reservation(changed_contract, self.ledger)
+        bound = self.ledger['sources'][source_id]
+        with staged_source_set(ROOT, self.ledger_raw, SOURCE_SET, None) as root:
+            contract = copy.deepcopy(self.contract)
+            # The selected contract records its original Mac checkout. Bind
+            # the same historical bytes to this owned fixture on every host.
+            contract['origins']['hidden_streams']['source_binding']['path'] = str(
+                root / bound['path'])
+            with mock.patch.object(P, 'ROOT', root):
+                claim = X._hidden_streams_reservation(contract, self.ledger)
+                self.assertEqual(claim['provenance'], [source_id])
+                self.assertEqual(claim['binding']['source'], source_id)
+                self.assertEqual((claim['base'], claim['size']), (0xE38000, 0x8000))
+                changed = copy.deepcopy(self.ledger)
+                next(row for row in changed['claims']
+                     if row['id'] == X.HIDDEN_STREAMS_CLAIM)['base'] += 1
+                with self.assertRaisesRegex(ValueError, 'HIDDEN_STREAM_RESERVATION_MISMATCH'):
+                    X._hidden_streams_reservation(contract, changed)
+                changed_contract = copy.deepcopy(contract)
+                changed_contract['origins']['hidden_streams']['pc'][1] -= 1
+                with self.assertRaisesRegex(ValueError, 'HIDDEN_STREAM_ORIGIN_UNBOUND'):
+                    X._hidden_streams_reservation(changed_contract, self.ledger)
 
     def test_source58_uses_full_completeness_guard_and_rejects_missing_consumer(self):
         host = source_fixtures.CurrentSourceContractTest()
