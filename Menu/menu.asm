@@ -7,6 +7,8 @@
 ;  - Detailed quest status screen
 ;  - Player name, location names
 ;  - Custom HUD with new magic meter
+;
+;  Significant thanks to Kan for helping me craft this menu!
 ; =========================================================
 
 pushpc

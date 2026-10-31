@@ -1,6 +1,6 @@
 ; Menu Palette
 
-function hexto555(h) = ((((h&$FF)/8)<<10)|(((h>>8&$FF)/8)<<5)|(((h>>16&$FF)/8)<<0))
+function hexto555(h) = ((((h&$FF)/8)<<10)|(((h>>8&$FF)/8)<<5)|(((h>>16&$FF)/8)<<0)) ; kan
 
 pushpc
 ; HUD palette data lives in bank $1B; bank $1D here contains sprite code.
