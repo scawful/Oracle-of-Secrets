@@ -211,7 +211,7 @@ class CurrentPortIntegrationTest(unittest.TestCase):
         ledger = json.loads((ROOT/'Config/allocation_ownership.json').read_bytes())
         contract = json.loads((ROOT/'Config/lyra_current_source_contract.json').read_bytes())
         source_set = contract['ledger']['source_set']
-        self.assertEqual(source_set, 'lyra_current_hidden_streams_56')
+        self.assertEqual(source_set, X.PERSISTENT_REWARD_SOURCE_SET)
         records = [r for r in ledger['sources'].values() if r['source_set']==source_set]
         self.assertTrue(records)
         self.assertEqual(contract['ledger']['sha256'], P.R.sha((ROOT/'Config/allocation_ownership.json').read_bytes()))

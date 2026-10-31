@@ -1401,5 +1401,53 @@ class HiddenStreamsCodecTest(unittest.TestCase):
             self.lower(filled(10903))
 
 
+class PersistentRewardIdentityTest(unittest.TestCase):
+    def inputs(self):
+        inputs = list(NativeResourcePlanTest().fixture(counter=3))
+        state = dict(enabled=True, namespace='ab' * 16, epoch=1,
+            capacity=256, next_bit=1, assignments=[dict(id=1, bit=0)])
+        inputs[1] = replace(inputs[1], persistent_reward_state=state)
+        inputs[4] = copy.deepcopy(inputs[4])
+        inputs[4]['save_identity']['document_sha256'] = R.conditional_document_identity(inputs[1])
+        return inputs
+
+    def test_journal_only_changes_retire_both_document_identities(self):
+        import lyra_current_transfer as transfer
+        _, document, _, _, _ = self.inputs()
+        legacy = replace(document, persistent_reward_state=None)
+        for identity in (R.conditional_document_identity, transfer._document_identity):
+            self.assertNotEqual(identity(legacy), identity(document))
+            for field, value in (('enabled', False), ('namespace', 'cd' * 16),
+                    ('next_bit', 2)):
+                state = copy.deepcopy(document.persistent_reward_state)
+                state[field] = value
+                if field == 'next_bit':
+                    state['assignments'].append(dict(id=2, bit=1))
+                with self.subTest(identity=identity.__name__, field=field):
+                    self.assertNotEqual(identity(document), identity(replace(document,
+                        persistent_reward_state=state)))
+
+    def test_typed_resource_report_preserves_state_without_runtime_admission(self):
+        inputs = self.inputs()
+        report = NativeResourcePlanTest().derive(inputs)
+        self.assertEqual(report['persistent_reward_state'], inputs[1].persistent_reward_state)
+        self.assertIn('authored_reward_bitmap_runtime_unqualified',
+                      {row['reason'] for row in report['blockers']})
+        report['persistent_reward_state']['assignments'].clear()
+        self.assertEqual(len(inputs[1].persistent_reward_state['assignments']), 1)
+        for field in ('selected', 'allocation_granted', 'publication_authorized',
+                      'ordinary_build_ready', 'runtime_admission', 'resource_closure_verified'):
+            self.assertIs(report[field], False)
+
+    def test_disabled_history_cannot_enter_generic_runtime_preparation(self):
+        import lyra_current_transfer as transfer
+        source, document, _, _, _ = self.inputs()
+        state = copy.deepcopy(document.persistent_reward_state)
+        state['enabled'] = False
+        document = replace(document, persistent_reward_state=state)
+        with self.assertRaisesRegex(ValueError, 'CURRENT_NATIVE_RESOURCES_UNBOUND'):
+            transfer.verify_current_native_source_profile({}, source, document)
+
+
 if __name__ == '__main__':
     unittest.main()

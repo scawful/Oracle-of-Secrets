@@ -467,7 +467,7 @@ class LyraProjectTerrainTest(unittest.TestCase):
             with self.subTest(domain=domain), self.assertRaisesRegex(ValueError, "Malformed"):
                 self.parse_transport(data)
         data = self.transport_document()
-        data["schema_version"] = 10
+        data["schema_version"] = 11
         with self.assertRaisesRegex(ValueError, "Expected Yaze Lyra schema"):
             self.parse_transport(data)
 
@@ -862,6 +862,198 @@ class LyraProjectTerrainTest(unittest.TestCase):
             link = root / "opened.yaze"
             link.symlink_to(target)
             self.assertEqual(T.resolve_project_terrain(link), terrain.resolve())
+
+
+class PersistentRewardStateParserTest(unittest.TestCase):
+    """Schema-10 parity: preserve the journal, never allocate or repair it."""
+
+    @staticmethod
+    def document():
+        data = LyraProjectTerrainTest().resource_document()
+        data.update(schema_version=10, next_native_resource_id=30,
+                    persistent_reward_state={
+                        "enabled": True, "namespace": "0123456789abcdef0123456789abcdef",
+                        "epoch": 1, "capacity": 256, "next_bit": 3,
+                        "assignments": [{"id": 20, "bit": 0},
+                                        {"id": 9, "bit": 1},
+                                        {"id": 7, "bit": 2}]})
+        # Deleted ID20 is a tombstone; ID7 is noncollectible. Neither is removed.
+        data["maps"][0]["authoring"]["native_resources"]["secrets"][0]["secret_id"] = 1
+        return data
+
+    @staticmethod
+    def parse_document(data):
+        return T.parse_terrain_document(json.dumps(data), profile(),
+                                        allow_authoring_drafts=True)
+
+    def test_shared_shape_preserves_tombstones_order_and_copy(self):
+        data = self.document()
+        before = copy.deepcopy(data)
+        parsed = self.parse_document(data)
+        self.assertEqual(parsed.persistent_reward_state, before["persistent_reward_state"])
+        self.assertEqual(parsed.authoring, tuple(row["authoring"] for row in before["maps"]))
+        self.assertEqual(data, before)
+        data["persistent_reward_state"]["assignments"][0]["id"] = 21
+        self.assertEqual(parsed.persistent_reward_state["assignments"][0]["id"], 20)
+        parsed.persistent_reward_state["assignments"][1]["id"] = 22
+        self.assertEqual(data["persistent_reward_state"]["assignments"][1]["id"], 9)
+
+    def test_enabled_covers_each_collectible_selector_across_pages(self):
+        data = self.document()
+        selectors = (1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 19, 20, 21)
+        for row in data["maps"]:
+            row["authoring"]["native_resources"] = None
+        for index, selector in enumerate(selectors):
+            data["maps"][index * 2]["authoring"]["native_resources"] = {
+                "secrets": [{"id": index + 1, "x": 0, "y": 31,
+                             "secret_id": selector}], "event_behavior": None}
+        state = data["persistent_reward_state"]
+        state.update(next_bit=len(selectors), assignments=[
+            {"id": index + 1, "bit": index} for index in range(len(selectors))])
+        self.assertEqual(self.parse_document(data).persistent_reward_state, state)
+        for index, selector in enumerate(selectors):
+            missing = copy.deepcopy(data)
+            # Retain density and all other coverage; replace this identity by a tombstone.
+            missing["persistent_reward_state"]["assignments"][index]["id"] = 29
+            with self.subTest(selector=selector), self.assertRaisesRegex(ValueError, "every collectible"):
+                self.parse_document(missing)
+
+    def test_noncollectible_entities_need_no_assignment_and_disabled_keeps_empty_journal(self):
+        data = self.document()
+        state = data["persistent_reward_state"]
+        state.update(enabled=False, next_bit=0, assignments=[])
+        self.assertEqual(self.parse_document(data).persistent_reward_state, state)
+        state["enabled"] = True
+        secrets = data["maps"][0]["authoring"]["native_resources"]["secrets"]
+        secrets[:] = [{"id": index + 1, "x": index % 32, "y": 0, "secret_id": selector}
+                      for index, selector in enumerate((0, 2, 3, 14, 15, 16, 17, 18, 22, 128, 130, 132, 134, 255))]
+        self.assertEqual(self.parse_document(data).persistent_reward_state, state)
+
+    def test_full_256_assignments_and_uint32_exhaustion_sentinel(self):
+        data = self.document()
+        data["next_native_resource_id"] = 0x100000000
+        state = data["persistent_reward_state"]
+        state.update(enabled=False, next_bit=256, assignments=[
+            {"id": 0xFFFFFFFF - bit, "bit": bit} for bit in range(256)])
+        self.assertEqual(self.parse_document(data).persistent_reward_state, state)
+        state["next_bit"] = 257
+        state["assignments"].append({"id": 1, "bit": 256})
+        with self.assertRaisesRegex(ValueError, "next_bit"):
+            self.parse_document(data)
+
+    def test_required_closed_objects_and_exact_scalar_types(self):
+        base = self.document()
+        cases = []
+        missing = copy.deepcopy(base)
+        del missing["persistent_reward_state"]
+        cases.append(("missing", missing))
+        for value in (None, [], True, "state"):
+            data = copy.deepcopy(base)
+            data["persistent_reward_state"] = value
+            cases.append((repr(value), data))
+        state_values = {
+            "enabled": (0, 1, "true", None),
+            "namespace": ("0" * 32, "A" * 32, "1" * 31, "1" * 33,
+                          "g" * 32, "1" * 31 + "\n", 1, None),
+            "epoch": (True, 1.0, 0, 2, "1"),
+            "capacity": (True, 256.0, 255, 257, "256"),
+            "next_bit": (True, 3.0, -1, 257, "3"),
+            "assignments": (None, {}, "assignments"),
+        }
+        for key, values in state_values.items():
+            for value in values:
+                data = copy.deepcopy(base)
+                data["persistent_reward_state"][key] = value
+                cases.append((f"{key}={value!r}", data))
+        for key in base["persistent_reward_state"]:
+            data = copy.deepcopy(base)
+            del data["persistent_reward_state"][key]
+            cases.append((f"missing {key}", data))
+        extra = copy.deepcopy(base)
+        extra["persistent_reward_state"]["future"] = 0
+        cases.append(("extra state key", extra))
+        for label, data in cases:
+            with self.subTest(case=label), self.assertRaises(ValueError):
+                self.parse_document(data)
+
+    def test_assignment_ids_bits_density_and_closed_keys_even_when_disabled(self):
+        base = self.document()
+        base["persistent_reward_state"]["enabled"] = False
+        mutations = [
+            ("short", lambda s: s["assignments"].pop()),
+            ("long", lambda s: s["assignments"].append({"id": 1, "bit": 3})),
+            ("reordered", lambda s: s["assignments"].reverse()),
+            ("duplicate id", lambda s: s["assignments"][1].update(id=20)),
+            ("missing bit", lambda s: s["assignments"][0].pop("bit")),
+            ("extra key", lambda s: s["assignments"][0].update(future=0)),
+            ("null", lambda s: s["assignments"].__setitem__(0, None)),
+        ]
+        for key, values in (("id", (True, 1.0, 0, -1, 30, 0x100000000, "1")),
+                            ("bit", (True, 0.0, -1, 1, 256, "0"))):
+            for value in values:
+                mutations.append((f"{key}={value!r}",
+                                  lambda s, k=key, v=value: s["assignments"][0].update({k: v})))
+        for label, mutate in mutations:
+            data = copy.deepcopy(base)
+            mutate(data["persistent_reward_state"])
+            before = copy.deepcopy(data)
+            with self.subTest(case=label), self.assertRaises(ValueError):
+                self.parse_document(data)
+            self.assertEqual(data, before)
+
+    def test_duplicate_json_keys_refuse_in_state_and_assignment(self):
+        text = json.dumps(self.document())
+        for original, duplicate in (( '"epoch": 1', '"epoch": 1, "epoch": 1'),
+                                     ('"id": 20', '"id": 20, "id": 20')):
+            with self.subTest(key=original), self.assertRaisesRegex(ValueError, "Duplicate"):
+                T.parse_terrain_document(text.replace(original, duplicate, 1), profile(),
+                                         allow_authoring_drafts=True)
+
+    def test_state_is_draft_only_and_disabled_state_is_history(self):
+        from dataclasses import replace
+        for enabled in (False, True):
+            data = self.document()
+            data["persistent_reward_state"]["enabled"] = enabled
+            with self.subTest(enabled=enabled), self.assertRaisesRegex(ValueError, "Unsupported runtime metadata"):
+                T.parse_terrain_document(json.dumps(data), profile())
+            self.assertTrue(T.has_native_resource_history(self.parse_document(data)))
+        legacy = parse(fixture())
+        self.assertFalse(T.has_native_resource_history(legacy))
+        self.assertTrue(T.has_native_resource_history(replace(
+            legacy, persistent_reward_state={**self.document()["persistent_reward_state"], "enabled": False})))
+
+    def test_legacy_schema3_through9_preserve_input_and_default_absence(self):
+        helper = LyraProjectTerrainTest()
+        for version in range(3, 10):
+            if version == 3:
+                data, bindings = fixture(), None
+            elif version == 4:
+                data, bindings = helper.palette_document()
+            else:
+                data, bindings = helper.resource_document(), None
+                data["schema_version"] = version
+                if version < 9:
+                    del data["next_native_resource_id"]
+                    for entry in data["maps"]:
+                        del entry["authoring"]["native_resources"]
+                if version < 8:
+                    del data["whirlpool_transport"]
+                if version < 7:
+                    del data["boat_transport"], data["next_flight_point_id"]
+                if version < 6:
+                    for entry in data["maps"]:
+                        for key in T.RUNTIME_PROPERTY_DEFAULTS:
+                            del entry["authoring"]["properties"][key]
+                    data["gameplay_areas"] = [{"parent_map_id": 0xA0, "size": "small", "maps": [0xA0]}]
+            serialized = json.dumps(data)
+            with self.subTest(version=version):
+                parsed = helper.parse_transport(data, expected_asset_bindings=bindings)
+                self.assertIsNone(parsed.persistent_reward_state)
+                self.assertEqual(parsed.authoring, tuple(row["authoring"] for row in data["maps"]))
+                self.assertEqual(json.dumps(data), serialized)
+                data["persistent_reward_state"] = self.document()["persistent_reward_state"]
+                with self.assertRaisesRegex(ValueError, "Malformed"):
+                    helper.parse_transport(data, expected_asset_bindings=bindings)
 
 
 if __name__ == "__main__":

@@ -168,6 +168,8 @@ def conditional_document_identity(document):
         gameplay_areas=document.gameplay_areas)
     if has_native_resource_history(document):
         value['next_native_resource_id'] = document.next_native_resource_id
+    if document.persistent_reward_state is not None:
+        value['persistent_reward_state'] = document.persistent_reward_state
     return _sha(_json_bytes(value))
 
 
@@ -577,6 +579,10 @@ def derive_native_resources(source, document, inspection, *, source_policy):
         selected=False, allocation_granted=False, publication_authorized=False,
         ordinary_build_ready=False, runtime_admission=False,
         compiled_consumers_verified=False, resource_closure_verified=False, rom_written=False)
+    if document.persistent_reward_state is not None:
+        result['persistent_reward_state'] = copy.deepcopy(document.persistent_reward_state)
+        if document.persistent_reward_state['enabled']:
+            block('authored_reward_bitmap_runtime_unqualified')
     result['plan_sha256'] = _sha(_json_bytes(result))
     return result
 

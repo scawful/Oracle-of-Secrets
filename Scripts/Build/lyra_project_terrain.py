@@ -161,18 +161,64 @@ class TerrainDocument:
     whirlpool_transport: dict | None = None
     # Schema-9 document-owned high-water mark; parsing never allocates IDs.
     next_native_resource_id: int = 1
+    # Schema-10 allocation journal is preserved, never allocated by the parser.
+    persistent_reward_state: dict | None = None
 
 
 def has_native_resource_history(document: TerrainDocument) -> bool:
-    """Recognize schema9 history without interpreting or dropping resource drafts."""
+    """Recognize native-resource history without dropping drafts or journals."""
     _require(isinstance(document, TerrainDocument), "Expected parsed TerrainDocument")
     _require(_integer(document.next_native_resource_id, 1, 0x100000000),
              "Invalid next_native_resource_id")
     _require(type(document.authoring) is tuple
              and all(type(row) is dict for row in document.authoring),
              "Invalid parsed Lyra authoring")
-    return (document.next_native_resource_id != 1
+    return (document.persistent_reward_state is not None
+            or document.next_native_resource_id != 1
             or any("native_resources" in row for row in document.authoring))
+
+
+_COLLECTIBLE_SECRET_SELECTORS = frozenset({
+    0x01, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A,
+    0x0B, 0x0C, 0x0D, 0x13, 0x14, 0x15,
+})
+
+
+def _persistent_reward_state(value, next_native_resource_id: int,
+                             collectible_ids: set[int]) -> dict:
+    """Validate the schema-10 journal without changing identity or bit order."""
+    _keys(value, {"enabled", "namespace", "epoch", "capacity", "next_bit",
+                  "assignments"}, "Lyra persistent_reward_state")
+    _require(type(value["enabled"]) is bool,
+             "Invalid persistent_reward_state enabled")
+    namespace = value["namespace"]
+    _require(type(namespace) is str
+             and re.fullmatch(r"[0-9a-f]{32}", namespace) is not None
+             and namespace != "0" * 32,
+             "Invalid persistent_reward_state namespace")
+    _require(_integer(value["epoch"], 1, 1),
+             "Invalid persistent_reward_state epoch")
+    _require(_integer(value["capacity"], 256, 256),
+             "Invalid persistent_reward_state capacity")
+    _require(_integer(value["next_bit"], 0, 256),
+             "Invalid persistent_reward_state next_bit")
+    assignments = value["assignments"]
+    _require(type(assignments) is list and len(assignments) == value["next_bit"],
+             "Invalid persistent_reward_state assignments")
+    assigned_ids = set()
+    for bit, assignment in enumerate(assignments):
+        _keys(assignment, {"id", "bit"}, "Lyra persistent reward assignment")
+        resource_id = assignment["id"]
+        _require(_integer(resource_id, 1, 0xFFFFFFFF)
+                 and resource_id < next_native_resource_id
+                 and resource_id not in assigned_ids,
+                 "Invalid or duplicate persistent reward assignment id")
+        _require(_integer(assignment["bit"], 0, 255) and assignment["bit"] == bit,
+                 "Persistent reward assignments require dense bit order")
+        assigned_ids.add(resource_id)
+    _require(not value["enabled"] or collectible_ids <= assigned_ids,
+             "Enabled persistent_reward_state requires every collectible secret assignment")
+    return copy.deepcopy(value)
 
 
 @dataclass(frozen=True)
@@ -380,7 +426,7 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
                            expected_asset_bindings: Mapping[int, tuple[str, str, str]] | None = None,
                            allow_authoring_drafts: bool = False,
                            ) -> TerrainDocument:
-    """Parse schema 3/4/5/6/7/8/9 against independently verified native assets.
+    """Parse schema 3/4/5/6/7/8/9/10 against independently verified native assets.
 
     The historical strict runtime policy remains the default. A read-only
     admission planner may preserve valid drafts and apply consumer checks to
@@ -394,8 +440,8 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
     data = json.loads(text, object_pairs_hook=_unique_object,
                       parse_constant=_invalid_constant)
     _require(type(data) is dict and data.get("schema") == "yaze.lyra-terrain"
-             and _integer(data.get("schema_version"), 3, 9),
-             "Expected Yaze Lyra schema 3, 4, 5, 6, 7, 8 or 9")
+             and _integer(data.get("schema_version"), 3, 10),
+             "Expected Yaze Lyra schema 3, 4, 5, 6, 7, 8, 9 or 10")
     version = data["schema_version"]
     _keys(data, {"schema", "schema_version", "columns", "rows", "map_width",
                  "map_height", "tile_pixels", "profile", "maps",
@@ -403,8 +449,9 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
                 | ({"gameplay_areas"} if version >= 5 else set())
                 | ({"boat_transport", "next_flight_point_id"} if version >= 7 else set())
                 | ({"whirlpool_transport"} if version >= 8 else set())
-                | ({"next_native_resource_id"} if version >= 9 else set()),
-             "Lyra schema 3/4/5/6/7/8/9 header")
+                | ({"next_native_resource_id"} if version >= 9 else set())
+                | ({"persistent_reward_state"} if version >= 10 else set()),
+             "Lyra schema 3/4/5/6/7/8/9/10 header")
     if version >= 9:
         _require(allow_authoring_drafts,
                  "Unsupported runtime metadata: native_resources")
@@ -473,6 +520,7 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
     has_background_palette = False
     entity_ids = {key: set() for key in ("sprites", "doors", "exits")}
     native_resource_ids = set()
+    collectible_ids = set()
     for entry in data["maps"]:
         _keys(entry, {"map_id", "tiles16", "authoring"}, "Lyra map")
         area = entry["map_id"]
@@ -501,6 +549,8 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
                          and _integer(secret["secret_id"], 0, 255),
                          "Invalid or duplicate Lyra native secret")
                 native_resource_ids.add(secret["id"])
+                if secret["secret_id"] in _COLLECTIBLE_SECRET_SELECTORS:
+                    collectible_ids.add(secret["id"])
             behavior = resources["event_behavior"]
             if behavior is not None:
                 _keys(behavior, {"kind"}, "Lyra native event behavior")
@@ -590,12 +640,16 @@ def parse_terrain_document(text: str | bytes, expected_profile: Mapping, *,
     _require(_integer(next_native_resource_id, 1, 0x100000000)
              and next_native_resource_id > max(native_resource_ids, default=0),
              "Invalid next_native_resource_id")
+    persistent_reward_state = (
+        _persistent_reward_state(data["persistent_reward_state"],
+                                 next_native_resource_id, collectible_ids)
+        if version >= 10 else None)
     ids = range(FIRST_MAP, FIRST_MAP + MAP_COUNT)
     return TerrainDocument(expected, tuple(maps[i] for i in ids),
                            tuple(properties[i] for i in ids), tuple(copy.deepcopy(edges)),
                            tuple(authoring[i] for i in ids), tuple(copy.deepcopy(flights)), gameplay_areas,
                            boat_transport, next_flight_point_id, whirlpool_transport,
-                           next_native_resource_id)
+                           next_native_resource_id, persistent_reward_state)
 
 
 def quadrant_map_plan(map_id: int) -> Quad:

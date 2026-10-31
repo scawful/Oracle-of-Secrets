@@ -252,6 +252,34 @@ class CatalogCallersContractTest(unittest.TestCase):
                 operation()
 
 
+class HiddenStreamsSourceHistoryTest(unittest.TestCase):
+    HEAD = '86f6be686acc18afbfee4e752e45f7cf4e2700ac'
+    SOURCE_SET = 'lyra_current_hidden_streams_56'
+
+    def test_frozen56_consumers_bind_without_repinning_to_schema10(self):
+        raw = snapshots.read_snapshot(self.HEAD, LEDGER)
+        contract = json.loads(snapshots.read_snapshot(self.HEAD, CONTRACT))
+        records = [row for row in json.loads(raw)['sources'].values()
+                   if row['source_set'] == self.SOURCE_SET]
+        self.assertEqual(len(records), 72)
+        with snapshots.staged_source_set(ROOT, raw, self.SOURCE_SET, self.HEAD) as root:
+            with mock.patch.object(P, 'ROOT', root):
+                self.assertEqual(len(P.validate_current_source_set(contract)), 73)
+
+    def test_old56_records_and_claims_stay_exact_and_refuse_changed_current_consumer(self):
+        old = json.loads(snapshots.read_snapshot(self.HEAD, LEDGER))
+        raw = (ROOT / LEDGER).read_bytes()
+        current = json.loads(raw)
+        for key, value in old['sources'].items():
+            self.assertEqual(current['sources'][key], value, key)
+        self.assertEqual(current['claims'], old['claims'])
+        contract = json.loads(snapshots.read_snapshot(self.HEAD, CONTRACT))
+        contract['ledger']['sha256'] = P.R.sha(raw)
+        with self.assertRaisesRegex(ValueError,
+                'Current source-set consumer changed: Scripts/Build/lyra_current_transfer.py'):
+            P.validate_current_source_set(contract)
+
+
 class SourceSnapshotIntegrityTest(unittest.TestCase):
     def test_original17_manifest_entries_remain_exact(self):
         manifest = json.loads((ROOT / 'Tests/fixtures/lyra_source_snapshots/manifest.json').read_bytes())
@@ -280,8 +308,15 @@ class SourceSnapshotIntegrityTest(unittest.TestCase):
         self.assertEqual(hashlib.sha256(raw).hexdigest(),
                          '1b33d70d07d387bc409609a7df67782531d0ca8ecc045f797419befc908fdb0c')
 
-    def test_all48_pinned_snapshots_load_without_git_or_network(self):
-        self.assertEqual(len(snapshots.SNAPSHOT_KEYS), 48)
+    def test_original48_manifest_entries_remain_exact(self):
+        manifest = json.loads((ROOT / 'Tests/fixtures/lyra_source_snapshots/manifest.json').read_bytes())
+        raw = (json.dumps(dict(kind=manifest['kind'], snapshots=manifest['snapshots'][:48]),
+                          indent=2, sort_keys=True) + '\n').encode()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(),
+                         'b30b8b29fe6f28e6989ef25a3f72882a4d8e76e8ab64b617691dfe79aed84c79')
+
+    def test_all53_pinned_snapshots_load_without_git_or_network(self):
+        self.assertEqual(len(snapshots.SNAPSHOT_KEYS), 53)
         with mock.patch('subprocess.check_output', side_effect=AssertionError('Unexpected Git call')):
             for commit, path in snapshots.SNAPSHOT_KEYS:
                 with self.subTest(commit=commit, path=path):

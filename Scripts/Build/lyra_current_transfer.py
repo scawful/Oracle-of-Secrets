@@ -44,6 +44,7 @@ CURRENT_CONTRACT_KIND = 'lyra.current_engine_source_contract.v1'
 CURRENT_PROFILE_KIND = 'lyra.current_native_source_profile.v1'
 RESIDENT_SOURCE_SET = 'lyra_current_resident_conditional_55'
 HIDDEN_STREAMS_SOURCE_SET = 'lyra_current_hidden_streams_56'
+PERSISTENT_REWARD_SOURCE_SET = 'lyra_current_persistent_reward_authoring_57'
 HIDDEN_STREAMS_CLAIM = 'LyraCurrentHiddenStreamsE3'
 RESIDENT_ADDITIONAL_SOURCES = (
     'Overworld/lyra_resident_atlas.asm', 'Overworld/lyra_resident_resources.asm',
@@ -1011,6 +1012,8 @@ def _document_identity(document):
         value['gameplay_areas'] = document.gameplay_areas
     if has_native_resource_history(document):
         value['next_native_resource_id'] = document.next_native_resource_id
+    if document.persistent_reward_state is not None:
+        value['persistent_reward_state'] = document.persistent_reward_state
     return T.digest(value)
 
 
@@ -1100,7 +1103,8 @@ def validate_current_source_contract(review, project, base_rom, *, contract_path
     current_bindings = P.validate_current_source_set(value)
     relatives = [Path(row['path']).relative_to(root).as_posix() for row in current_bindings]
     source_ledger = _json(Q.read_bound(context['ledger']))
-    if ledger['source_set'] in (RESIDENT_SOURCE_SET, HIDDEN_STREAMS_SOURCE_SET):
+    if ledger['source_set'] in (RESIDENT_SOURCE_SET, HIDDEN_STREAMS_SOURCE_SET,
+                               PERSISTENT_REWARD_SOURCE_SET):
         historical = {row['path'] for row in source_ledger['sources'].values()
                       if row.get('source_set') == 'lyra_ferry_visual_boundary_53'}
         R.require(historical and set(relatives) == historical | set(RESIDENT_ADDITIONAL_SOURCES)
@@ -1155,7 +1159,8 @@ def current_native_source_profile(review, project, base_rom, *, contract_path=No
 
 def _hidden_streams_reservation(contract, ledger):
     """Match the one human-released bank; no generic allocation exception."""
-    R.require(contract['ledger']['source_set'] == HIDDEN_STREAMS_SOURCE_SET,
+    R.require(contract['ledger']['source_set'] in (HIDDEN_STREAMS_SOURCE_SET,
+                                                 PERSISTENT_REWARD_SOURCE_SET),
               'HIDDEN_STREAM_SOURCE_SET_REQUIRED')
     origin = contract['origins'].get('hidden_streams')
     R.require(type(origin) is dict and origin.get('pc') == [0x318000, 0x320000]
@@ -1467,7 +1472,8 @@ def current_resident_inputs(profile, source, document, selection):
               'CURRENT_CONDITIONAL_RECIPE_REQUIRED')
     verify_current_native_source_profile(profile, source, document)
     contract = _json(Q.read_bound(profile['contract']))
-    R.require(contract['ledger']['source_set'] == RESIDENT_SOURCE_SET,
+    R.require(contract['ledger']['source_set'] in (RESIDENT_SOURCE_SET,
+              HIDDEN_STREAMS_SOURCE_SET, PERSISTENT_REWARD_SOURCE_SET),
               'CURRENT_RESIDENT_SOURCE_SET_REQUIRED: inactive resident consumers and compiler must be engine-bound')
     origins = profile['origins']
     R.require(all(name in origins for name in
