@@ -45,6 +45,7 @@ CURRENT_PROFILE_KIND = 'lyra.current_native_source_profile.v1'
 RESIDENT_SOURCE_SET = 'lyra_current_resident_conditional_55'
 HIDDEN_STREAMS_SOURCE_SET = 'lyra_current_hidden_streams_56'
 PERSISTENT_REWARD_SOURCE_SET = 'lyra_current_persistent_reward_authoring_57'
+SAVE_ADMISSION_SOURCE_SET = 'lyra_current_save_admission_diagnostics_58'
 HIDDEN_STREAMS_CLAIM = 'LyraCurrentHiddenStreamsE3'
 RESIDENT_ADDITIONAL_SOURCES = (
     'Overworld/lyra_resident_atlas.asm', 'Overworld/lyra_resident_resources.asm',
@@ -1109,7 +1110,7 @@ def validate_current_source_contract(review, project, base_rom, *, contract_path
     relatives = [Path(row['path']).relative_to(root).as_posix() for row in current_bindings]
     source_ledger = _json(Q.read_bound(context['ledger']))
     if ledger['source_set'] in (RESIDENT_SOURCE_SET, HIDDEN_STREAMS_SOURCE_SET,
-                               PERSISTENT_REWARD_SOURCE_SET):
+                               PERSISTENT_REWARD_SOURCE_SET, SAVE_ADMISSION_SOURCE_SET):
         historical = {row['path'] for row in source_ledger['sources'].values()
                       if row.get('source_set') == 'lyra_ferry_visual_boundary_53'}
         R.require(historical and set(relatives) == historical | set(RESIDENT_ADDITIONAL_SOURCES)
@@ -1165,7 +1166,8 @@ def current_native_source_profile(review, project, base_rom, *, contract_path=No
 def _hidden_streams_reservation(contract, ledger):
     """Match the one human-released bank; no generic allocation exception."""
     R.require(contract['ledger']['source_set'] in (HIDDEN_STREAMS_SOURCE_SET,
-                                                 PERSISTENT_REWARD_SOURCE_SET),
+                                                 PERSISTENT_REWARD_SOURCE_SET,
+                                                 SAVE_ADMISSION_SOURCE_SET),
               'HIDDEN_STREAM_SOURCE_SET_REQUIRED')
     origin = contract['origins'].get('hidden_streams')
     R.require(type(origin) is dict and origin.get('pc') == [0x318000, 0x320000]
@@ -1478,7 +1480,8 @@ def current_resident_inputs(profile, source, document, selection):
     verify_current_native_source_profile(profile, source, document)
     contract = _json(Q.read_bound(profile['contract']))
     R.require(contract['ledger']['source_set'] in (RESIDENT_SOURCE_SET,
-              HIDDEN_STREAMS_SOURCE_SET, PERSISTENT_REWARD_SOURCE_SET),
+              HIDDEN_STREAMS_SOURCE_SET, PERSISTENT_REWARD_SOURCE_SET,
+              SAVE_ADMISSION_SOURCE_SET),
               'CURRENT_RESIDENT_SOURCE_SET_REQUIRED: inactive resident consumers and compiler must be engine-bound')
     origins = profile['origins']
     R.require(all(name in origins for name in
