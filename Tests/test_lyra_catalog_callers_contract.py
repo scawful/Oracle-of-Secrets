@@ -174,7 +174,7 @@ class CatalogCallersContractTest(unittest.TestCase):
                           lambda: self.compose(self.bound_contract())):
             with self.assertRaisesRegex(ValueError,
                     re.escape('Current source-set consumer changed: '
-                              'Scripts/Build/lyra_current_transfer.py')):
+                              'Overworld/lyra_resident_atlas.asm')):
                 operation()
 
     def test_frozen_ledger_and_frozen_source_set_refuse_the_changed_child(self):
@@ -264,8 +264,15 @@ class SourceSnapshotIntegrityTest(unittest.TestCase):
         self.assertEqual(hashlib.sha256(raw).hexdigest(),
                          '02ce8cabb2a1efb3cd07bda943df62b8e955410493ba5216f7ea607f27d4b63c')
 
-    def test_all42_pinned_snapshots_load_without_git_or_network(self):
-        self.assertEqual(len(snapshots.SNAPSHOT_KEYS), 42)
+    def test_original42_manifest_entries_remain_exact(self):
+        manifest = json.loads((ROOT / 'Tests/fixtures/lyra_source_snapshots/manifest.json').read_bytes())
+        original = dict(kind=manifest['kind'], snapshots=manifest['snapshots'][:42])
+        raw = (json.dumps(original, indent=2, sort_keys=True) + '\n').encode()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(),
+                         'fef064079785a6d9322908e9c342dac58920cffb4eb697f73573fcb2805f0fed')
+
+    def test_all43_pinned_snapshots_load_without_git_or_network(self):
+        self.assertEqual(len(snapshots.SNAPSHOT_KEYS), 43)
         with mock.patch('subprocess.check_output', side_effect=AssertionError('Unexpected Git call')):
             for commit, path in snapshots.SNAPSHOT_KEYS:
                 with self.subTest(commit=commit, path=path):

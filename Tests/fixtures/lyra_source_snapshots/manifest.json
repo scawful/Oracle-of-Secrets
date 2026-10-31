@@ -378,6 +378,15 @@
       "gzip_sha256": "cf6acfc9f3f2a57603870cd8fd9dbf72ce5a936dd74a22c61b82de4cd1b385f0",
       "path": "Tests/test_lyra_current_transfer.py",
       "sha256": "ee3605ffb022c4c7e4f559f73042398be7df851dbe87c8b30ceba65b008834dc"
+    },
+    {
+      "byte_count": 12807,
+      "commit": "4f837962377b133f6bf01f5ecd8cb623f921fa71",
+      "git_blob": "edeec19f92372d7aee9b48f3810f2e5917d0c21e",
+      "gzip_byte_count": 3551,
+      "gzip_sha256": "8a8e94777d83ee0d670a98af864fe7978d7846e5636b357e24cc40525e1e3e9b",
+      "path": "Overworld/lyra_resident_atlas.asm",
+      "sha256": "493765e16dbc8aa60fbf812a05529acf90ed3609fc5491969f649c98187be797"
     }
   ]
 }
