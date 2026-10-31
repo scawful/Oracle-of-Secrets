@@ -279,41 +279,92 @@ pullpc
 
 ; Full: a three-byte LDA.w plus four-byte STA.l. Each stripe replaces
 ; only its four-byte LDA.l, leaving the native following store untouched.
-macro LyraResidentFullHook(site, old, destination, target)
-assert read3(<site>) == ((<old><<8)|$B9), "Native full Tile16 reader moved"
-assert read4(<site>+3) == ((<destination><<8)|$9F), "Native full Tile16 store moved"
-org <site> ; @hook module=Overworld kind=jsl target=<target> expected_m=16 expected_x=16
-    JSL <target> : NOP #3
-assert pc() == <site>+7
-endmacro
-macro LyraResidentStripeHook(site, old, target)
-assert read4(<site>) == ((<old><<8)|$BF), "Native stripe Tile16 reader moved"
-org <site> ; @hook module=Overworld kind=jsl target=<target> expected_m=16 expected_x=16
-    JSL <target>
-assert pc() == <site>+4
-endmacro
 pushpc
-%LyraResidentFullHook($02FE1B, $8000, $7F2000, Lyra_ResidentFull0)
-%LyraResidentFullHook($02FE22, $8004, $7F2040, Lyra_ResidentFull2)
-%LyraResidentFullHook($02FE2B, $8002, $7F2000, Lyra_ResidentFull1)
-%LyraResidentFullHook($02FE32, $8006, $7F2040, Lyra_ResidentFull3)
-%LyraResidentStripeHook($02F456, $BD8000, Lyra_ResidentHorizontal0)
-%LyraResidentStripeHook($02F45D, $BD8002, Lyra_ResidentHorizontal1)
-%LyraResidentStripeHook($02F466, $BD8004, Lyra_ResidentHorizontal2)
-%LyraResidentStripeHook($02F46D, $BD8006, Lyra_ResidentHorizontal3)
-%LyraResidentStripeHook($02F51E, $BD8000, Lyra_ResidentVertical0)
-%LyraResidentStripeHook($02F525, $BD8004, Lyra_ResidentVertical2)
-%LyraResidentStripeHook($02F52E, $BD8002, Lyra_ResidentVertical1)
-%LyraResidentStripeHook($02F535, $BD8006, Lyra_ResidentVertical3)
+assert read3($02FE1B) == (($8000<<8)|$B9), "Native full Tile16 reader moved"
+assert read4($02FE1B+3) == (($7F2000<<8)|$9F), "Native full Tile16 store moved"
+org $02FE1B ; @hook module=Overworld kind=jsl target=Lyra_ResidentFull0 expected_m=16 expected_x=16 protected_size=7
+    JSL Lyra_ResidentFull0 : NOP #3
+assert pc() == $02FE1B+7
+assert read3($02FE22) == (($8004<<8)|$B9), "Native full Tile16 reader moved"
+assert read4($02FE22+3) == (($7F2040<<8)|$9F), "Native full Tile16 store moved"
+org $02FE22 ; @hook module=Overworld kind=jsl target=Lyra_ResidentFull2 expected_m=16 expected_x=16 protected_size=7
+    JSL Lyra_ResidentFull2 : NOP #3
+assert pc() == $02FE22+7
+assert read3($02FE2B) == (($8002<<8)|$B9), "Native full Tile16 reader moved"
+assert read4($02FE2B+3) == (($7F2000<<8)|$9F), "Native full Tile16 store moved"
+org $02FE2B ; @hook module=Overworld kind=jsl target=Lyra_ResidentFull1 expected_m=16 expected_x=16 protected_size=7
+    JSL Lyra_ResidentFull1 : NOP #3
+assert pc() == $02FE2B+7
+assert read3($02FE32) == (($8006<<8)|$B9), "Native full Tile16 reader moved"
+assert read4($02FE32+3) == (($7F2040<<8)|$9F), "Native full Tile16 store moved"
+org $02FE32 ; @hook module=Overworld kind=jsl target=Lyra_ResidentFull3 expected_m=16 expected_x=16 protected_size=7
+    JSL Lyra_ResidentFull3 : NOP #3
+assert pc() == $02FE32+7
+assert read4($02F456) == (($BD8000<<8)|$BF), "Native stripe Tile16 reader moved"
+org $02F456 ; @hook module=Overworld kind=jsl target=Lyra_ResidentHorizontal0 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_ResidentHorizontal0
+assert pc() == $02F456+4
+assert read4($02F45D) == (($BD8002<<8)|$BF), "Native stripe Tile16 reader moved"
+org $02F45D ; @hook module=Overworld kind=jsl target=Lyra_ResidentHorizontal1 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_ResidentHorizontal1
+assert pc() == $02F45D+4
+assert read4($02F466) == (($BD8004<<8)|$BF), "Native stripe Tile16 reader moved"
+org $02F466 ; @hook module=Overworld kind=jsl target=Lyra_ResidentHorizontal2 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_ResidentHorizontal2
+assert pc() == $02F466+4
+assert read4($02F46D) == (($BD8006<<8)|$BF), "Native stripe Tile16 reader moved"
+org $02F46D ; @hook module=Overworld kind=jsl target=Lyra_ResidentHorizontal3 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_ResidentHorizontal3
+assert pc() == $02F46D+4
+assert read4($02F51E) == (($BD8000<<8)|$BF), "Native stripe Tile16 reader moved"
+org $02F51E ; @hook module=Overworld kind=jsl target=Lyra_ResidentVertical0 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_ResidentVertical0
+assert pc() == $02F51E+4
+assert read4($02F525) == (($BD8004<<8)|$BF), "Native stripe Tile16 reader moved"
+org $02F525 ; @hook module=Overworld kind=jsl target=Lyra_ResidentVertical2 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_ResidentVertical2
+assert pc() == $02F525+4
+assert read4($02F52E) == (($BD8002<<8)|$BF), "Native stripe Tile16 reader moved"
+org $02F52E ; @hook module=Overworld kind=jsl target=Lyra_ResidentVertical1 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_ResidentVertical1
+assert pc() == $02F52E+4
+assert read4($02F535) == (($BD8006<<8)|$BF), "Native stripe Tile16 reader moved"
+org $02F535 ; @hook module=Overworld kind=jsl target=Lyra_ResidentVertical3 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_ResidentVertical3
+assert pc() == $02F535+4
 ; Mutable draws replace only their four-byte global word loads. Keep the
 ; following stripe stores, target coordinates and native update scheduling.
-%LyraResidentStripeHook($1BC9B2, $BD8000, Lyra_ResidentMutable0)
-%LyraResidentStripeHook($1BC9B9, $BD8002, Lyra_ResidentMutable1)
-%LyraResidentStripeHook($1BC9C0, $BD8004, Lyra_ResidentMutable2)
-%LyraResidentStripeHook($1BC9C7, $BD8006, Lyra_ResidentMutable3)
-%LyraResidentStripeHook($1BCA3F, $BD8000, Lyra_ResidentMutable0)
-%LyraResidentStripeHook($1BCA46, $BD8002, Lyra_ResidentMutable1)
-%LyraResidentStripeHook($1BCA4D, $BD8004, Lyra_ResidentMutable2)
-%LyraResidentStripeHook($1BCA54, $BD8006, Lyra_ResidentMutable3)
+assert read4($1BC9B2) == (($BD8000<<8)|$BF), "Native stripe Tile16 reader moved"
+org $1BC9B2 ; @hook module=Overworld kind=jsl target=Lyra_ResidentMutable0 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_ResidentMutable0
+assert pc() == $1BC9B2+4
+assert read4($1BC9B9) == (($BD8002<<8)|$BF), "Native stripe Tile16 reader moved"
+org $1BC9B9 ; @hook module=Overworld kind=jsl target=Lyra_ResidentMutable1 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_ResidentMutable1
+assert pc() == $1BC9B9+4
+assert read4($1BC9C0) == (($BD8004<<8)|$BF), "Native stripe Tile16 reader moved"
+org $1BC9C0 ; @hook module=Overworld kind=jsl target=Lyra_ResidentMutable2 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_ResidentMutable2
+assert pc() == $1BC9C0+4
+assert read4($1BC9C7) == (($BD8006<<8)|$BF), "Native stripe Tile16 reader moved"
+org $1BC9C7 ; @hook module=Overworld kind=jsl target=Lyra_ResidentMutable3 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_ResidentMutable3
+assert pc() == $1BC9C7+4
+assert read4($1BCA3F) == (($BD8000<<8)|$BF), "Native stripe Tile16 reader moved"
+org $1BCA3F ; @hook module=Overworld kind=jsl target=Lyra_ResidentMutable0 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_ResidentMutable0
+assert pc() == $1BCA3F+4
+assert read4($1BCA46) == (($BD8002<<8)|$BF), "Native stripe Tile16 reader moved"
+org $1BCA46 ; @hook module=Overworld kind=jsl target=Lyra_ResidentMutable1 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_ResidentMutable1
+assert pc() == $1BCA46+4
+assert read4($1BCA4D) == (($BD8004<<8)|$BF), "Native stripe Tile16 reader moved"
+org $1BCA4D ; @hook module=Overworld kind=jsl target=Lyra_ResidentMutable2 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_ResidentMutable2
+assert pc() == $1BCA4D+4
+assert read4($1BCA54) == (($BD8006<<8)|$BF), "Native stripe Tile16 reader moved"
+org $1BCA54 ; @hook module=Overworld kind=jsl target=Lyra_ResidentMutable3 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_ResidentMutable3
+assert pc() == $1BCA54+4
 pullpc
 endif

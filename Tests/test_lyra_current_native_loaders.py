@@ -1049,5 +1049,437 @@ class CurrentResidentIceRodCpuTest(unittest.TestCase):
         self.assertEqual(image[L.A.pc(dma):L.A.pc(dma)+len(self.native_dma)], self.native_dma)
 
 
+class CurrentWholeCompositionMeasurementTest(unittest.TestCase):
+    """Opt-in, retained host measurement; never an ordinary build admission.
+
+    LYRA_MEASUREMENT_OUTPUT selects a NEW evidence directory. PREPARE, API,
+    LIBRARY, HEADER, CLI and PREVIEW require LYRA_MEASUREMENT_<ROLE> and <ROLE>_SHA256.
+    PREPARE is the retained historical generated packet, not a current grant.
+    PREVIEW is an external independently reviewed seeded checkpoint binding.
+    No external API import, probe, file write or assembly occurs on import.
+    """
+
+    def test_whole_source_cli_and_library_have_identical_bytes_and_no_e3_writes(self):
+        if not os.environ.get('LYRA_MEASUREMENT_OUTPUT'):
+            self.skipTest('Select LYRA_MEASUREMENT_OUTPUT and six hashed measurement inputs')
+        import importlib.util
+        import re
+        from types import SimpleNamespace
+        import build_receipt as receipt
+        import lyra_project_bg_palette as bg
+        import lyra_resident_graphics as resident
+        from test_lyra_resident_constructor import resource_plan
+
+        root = Path(__file__).resolve().parents[1]
+        output = Path(os.environ['LYRA_MEASUREMENT_OUTPUT']).absolute()
+        self.assertFalse(output.exists(), 'Retained measurement output must be new')
+        self.assertEqual(output.resolve(), output, 'Output must not traverse a symlink')
+        self.assertFalse(output.is_relative_to(root) or root.is_relative_to(output))
+
+        def identity(path):
+            return receipt.identity(Path(path))
+
+        inputs = {}
+        for role in ('PREPARE', 'API', 'LIBRARY', 'HEADER', 'CLI', 'PREVIEW'):
+            path = Path(os.environ['LYRA_MEASUREMENT_' + role]).resolve(strict=True)
+            binding = identity(path)
+            self.assertEqual(binding['sha256'], os.environ['LYRA_MEASUREMENT_' + role + '_SHA256'], role)
+            self.assertFalse(output.is_relative_to(path.parent), role)
+            inputs[role] = binding
+        reviewed_preview = json.loads(Path(inputs['PREVIEW']['path']).read_bytes())
+        api_root = Path(inputs['API']['path']).parents[3]
+        api_revision = subprocess.run(['git', '-C', str(api_root), 'rev-parse', 'HEAD'],
+            capture_output=True, text=True, check=True, timeout=10).stdout.strip()
+        self.assertEqual(api_revision, '5fd539cd510e4a26afef66fc14e35ca6d8ff0497')
+        original = json.loads(Path(inputs['PREPARE']['path']).read_bytes())
+        saved = Path(original['base_rom']).resolve(strict=True)
+        inputs['saved_source'] = identity(saved)
+        self.assertEqual(inputs['saved_source']['sha256'], original['saved_rom_sha256'])
+        source = saved.read_bytes()
+        seed = L.A.expanded_rom(source)
+        self.assertEqual(len(seed), 0x400000)
+        old_generated = Path(inputs['PREPARE']['path']).parent
+        for relative, digest in original['generated_files'].items():
+            path = (old_generated / relative).resolve(strict=True)
+            self.assertTrue(path.is_relative_to(old_generated))
+            inputs['retained:' + relative] = identity(path)
+            self.assertEqual(inputs['retained:' + relative]['sha256'], digest, relative)
+
+        # Reuse the conservative source/asset snapshot and retained packet;
+        # no symlinks, Git checkout, production generated output or cache.
+        snapshot = receipt.source_snapshot(root, output / 'full-current.build.json')
+        output.mkdir(parents=True)
+        tree = output / 'source'
+        for relative, binding in snapshot['files'].items():
+            original_path = root / relative
+            self.assertTrue(original_path.resolve().is_relative_to(root))
+            raw = original_path.read_bytes()
+            self.assertEqual(hashlib.sha256(raw).hexdigest(), binding['sha256'])
+            target = tree / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(raw)
+        generated = tree / 'Data/Generated/lyra_project'
+        for relative in original['generated_files']:
+            target = generated / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(Path(inputs['retained:' + relative]['path']).read_bytes())
+        (output / 'retained-prepare.json').write_bytes(Path(inputs['PREPARE']['path']).read_bytes())
+
+        def write_json(path, value):
+            path.write_text(json.dumps(value, sort_keys=True, indent=2) + '\n')
+
+        # All32 small tail rows are explicit HOST values. Historical native160
+        # prefixes are reconstructed from the selected source by the real builder.
+        old_tables = {row['name']: row for row in original['tables']['tables']}
+        # The retained packet authored only A0/A1. Bind zero-only HOST aliases
+        # to its actual emitted A0 streams, not to unmapped placeholder zero.
+        retained_suffix = (generated / 'runtime_data.asm').read_text().split(
+            '; Ungranted source-profile actor data; no activation.', 1)[1]
+        placements = re.findall(r'^org \$([0-9A-Fa-f]+)\n'
+            r'incbin "binaries/payload.bin":\$([0-9A-Fa-f]+)\.\.\$([0-9A-Fa-f]+)$',
+            retained_suffix, re.M)
+        terrain_payload = (generated / 'binaries/payload.bin').read_bytes()
+        anchors, terrain_aliases = {}, []
+        for name, plane in (('map32_high', 0), ('map32_low', 1)):
+            raw = bytes.fromhex(old_tables[name]['payload_hex'])
+            anchor = int.from_bytes(raw[0xA0 * 3:0xA1 * 3], 'little')
+            at = L.A.pc(anchor)
+            streams = [row for row in original['terrain_plan']['streams']
+                       if row['map_id'] == 0xA0 and row['plane'] == plane]
+            self.assertEqual(len(streams), 1)
+            lo, hi = streams[0]['pc']
+            self.assertTrue(at == lo < hi <= 0x400000)
+            emitted = [(int(a, 16), int(b, 16)) for address, a, b in placements
+                       if int(address, 16) == anchor]
+            self.assertEqual(len(emitted), 1, 'Host terrain anchor has no unique retained payload write')
+            begin, end = emitted[0]
+            self.assertTrue(0 <= begin < end <= len(terrain_payload))
+            self.assertEqual(end - begin, hi - lo)
+            self.assertEqual(hashlib.sha256(terrain_payload[begin:end]).hexdigest(),
+                             streams[0]['payload_sha256'])
+            anchors[name] = anchor
+        rows = {}
+        for area in range(0xA0, 0xC0):
+            values = {}
+            for spec in L.current_table_layout(0xE08000):
+                name, stride = spec['name'], spec['stride']
+                fallback = re.sub(r'_phase[12]$', '', name)
+                table = old_tables[name if name in old_tables else fallback]
+                raw = bytes.fromhex(table['payload_hex'])[area * stride:(area + 1) * stride]
+                self.assertEqual(len(raw), stride)
+                values[name] = list(raw) if stride == 8 else int.from_bytes(raw, 'little')
+                if name in anchors and values[name] == 0:
+                    values[name] = anchors[name]
+                    terrain_aliases.append(dict(map_id=area, table=name, original_pointer=0,
+                        host_anchor_map_id=0xA0, host_pointer=anchors[name]))
+            values.update(parent=area, area_size=0)
+            rows[area] = values
+        self.assertEqual(len(terrain_aliases), 60)
+        write_json(output / 'host-terrain-aliases.json', terrain_aliases)
+        tables = L.plan_current_tables(source, rows,
+            origins=dict(table_base=0xE08000, code_base=0xE0C000,
+                         code_end=0xE0D000, descriptor_base=0xE18000),
+            policy=dict(source_rom_sha256=hashlib.sha256(source).hexdigest(),
+                source_profile_sha256=hashlib.sha256(json.dumps(snapshot, sort_keys=True).encode()).hexdigest(),
+                allocation_granted=False, publication_authorized=False))
+        self.assertEqual(len(tables['tables']), 38)
+        self.assertEqual(tables['tables_pc'], [0x300000, 0x3030C0])
+        write_json(output / 'current-table-plan.json', tables)
+
+        # Existing pure resident builders supply a small explicit resource
+        # fixture. These candidate ROM/RAM intervals grant no ownership.
+        native = resident.plan_native_resident_abi(resource_plan(), tile16_count=4096)
+        preimage = seed[0x340000:0x350000]
+        emission = resident.emit_native_resident_abi(native, data_pc=0x340000,
+            capacity=0x10000, preimage=preimage)
+        (generated / emission['binary_path']).write_bytes(bytes.fromhex(emission['payload_hex']))
+        palette = bg.plan_bg128([SimpleNamespace(**row) for row in resident.resident_bg128_rows(native)],
+            data_snes=0xE18100, capacity=0x400, preimage=seed[0x308100:0x308500])
+        write_json(output / 'resident-emission.json', emission)
+
+        constants_path = generated / 'runtime_constants.asm'
+        def assignments(text):
+            return {name: int(value[1:], 16) if value.startswith('$') else int(value)
+                    for name, value in re.findall(r'^!([A-Za-z0-9_]+)\s*=\s*(\$[0-9A-Fa-f]+|[0-9]+)\s*$', text, re.M)}
+        constants = assignments(constants_path.read_text())
+        constants.update(assignments(tables['constants_assembler']))
+        constants.update(assignments(emission['constants_asm']))
+        constants.update(LYRA_PROJECT_DATA_PRESENT=1, LYRA_NATIVE_A1_ENABLED=0,
+            LYRA_CURRENT_MODE=1, LYRA_CURRENT_ACTORS_ENABLED=1, LYRA_CURRENT_ACTORS_BOUND=1,
+            LYRA_CURRENT_EVENTS_ENABLED=1, LYRA_CURRENT_EVENTS_BOUND=1,
+            LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED=1, LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND=1,
+            LYRA_PRIVATE_PILOT_INGRESS_ENABLED=1, LYRA_PRIVATE_CHECKPOINT_ENABLED=1,
+            LYRA_CURRENT_RESIDENT_ENABLED=1, LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED=1,
+            LYRA_CURRENT_RESIDENT_CODE_BASE=0xF88000, LYRA_CURRENT_RESIDENT_CODE_END=0xF88600,
+            LYRA_CURRENT_RESIDENT_RESOURCE_CODE_BASE=0xF88600,
+            LYRA_CURRENT_RESIDENT_RESOURCE_CODE_END=0xF88700,
+            LYRA_CURRENT_RESIDENT_MAIN_CACHE_BASE=0x7E1E20,
+            LYRA_CURRENT_RESIDENT_MAIN_CACHE_END=0x7E1E24,
+            LYRA_CURRENT_RESIDENT_MAIN_CACHE_RESET_BOUND=1,
+            PROJECT_BG128_ENABLED=1, PROJECT_BG128_RESTORE_BOUND=1,
+            PROJECT_BG128_CODE_BASE=0xE0D000, PROJECT_BG128_CODE_END=0xE10000,
+            LYRA_CURRENT_GFX_ORIGIN=0xE28000, LYRA_CURRENT_GFX_END=0xE2E000,
+            LYRA_AREA_TILESETS_BOUND=1, LYRA_AREA_FERRY_BOUND=1,
+            LYRA_AREA_TILESETS_ORIGIN=0xE2E000, LYRA_AREA_TILESETS_END=0xE30000,
+            JOINT_PALETTE_DIRECTORY_ENABLED=1)
+        constants_path.write_text('; HOST measurement only; not a prepared publication context.\n' +
+            ''.join(f'!{key} = ${value:X}\n' for key, value in sorted(constants.items())))
+        runtime = (generated / 'runtime_data.asm').read_text()
+        marker = '; Ungranted source-profile actor data; no activation.'
+        self.assertEqual(runtime.count(marker), 1)
+        (generated / 'runtime_data.asm').write_text(tables['tables_assembler'] +
+            tables['descriptor_assembler'] + marker + runtime.split(marker, 1)[1] +
+            emission['runtime_data_asm'] + bg.emit_bg128_data(palette))
+        overrides = dict(ENABLE_OW_AREA_TILESETS=1, ENABLE_SPECIAL_TRIGGER_TABLE_V2=0,
+                         ENABLE_SPECIAL_EXIT_TABLE_V2=0, ENABLE_KALYXO_BOAT=0)
+        feature_path = tree / 'Config/feature_flags.asm'
+        feature_path.write_text(feature_path.read_text() + '\n; Explicit host measurement options.\n' +
+            ''.join(f'!{key} = {value}\n' for key, value in overrides.items()))
+
+        graphics_directory = str(root / 'Scripts/Graphics')
+        sys.path.insert(0, graphics_directory)
+        try:
+            import compile_runtime_graphics as graphics
+        finally:
+            sys.path.remove(graphics_directory)
+        catalog_path = tree / 'Overworld/graphics_catalog.json'
+        catalog, assets = graphics.pack.load(catalog_path, parent_count=192)
+        policy = graphics.pack.read_json(tree / 'Overworld/graphics_runtime_policy.json')
+        # Validate the ACTUAL unchanged contract against its actual source root.
+        # This low-level renderer never calls ordinary/publication preparation.
+        contract = json.loads((root / 'Config/lyra_current_source_contract.json').read_bytes())
+        graphics_source, graphics_report = graphics.render(catalog, assets, policy,
+            catalog_path.parent, generated, legacy_root=tree, current_contract=contract,
+            source_root=root, resident_native=dict(plan=native, emission=emission, preimage=preimage))
+        (generated / 'graphics_runtime_tables.asm').write_text(graphics_source)
+        write_json(output / 'graphics-report.json', graphics_report)
+
+        driver = tree / 'full-current.asm'
+        driver.write_text('lorom\n!LYRA_BUILD_CONTEXT = 1\n'
+            '!REGIONAL_CHECKPOINTS_ENABLED = 1\n!REGIONAL_CHECKPOINTS_BOUND = 1\n'
+            'incsrc "Oracle_main.asm"\n')
+        image = output / 'full-current.sfc'
+        base = output / 'input.sfc'
+        image.write_bytes(seed)
+        base.write_bytes(seed)
+        receipt_path = output / 'full-current.build.json'
+        def record(*args):
+            self.assertEqual(receipt.main([*args, '--receipt', str(receipt_path)]), 0)
+        record('init', '--root', str(tree), '--base-rom', str(base), '--version', 'fixture',
+            '--requested-profile', 'unallocated whole-current host measurement',
+            '--assembler', inputs['CLI']['path'])
+        for role in ('API', 'LIBRARY', 'CLI'):
+            record('tool', '--name', role, '--path', inputs[role]['path'])
+        record('artifact', '--name', 'api_header', '--path', inputs['HEADER']['path'])
+        record('artifact', '--name', 'preview_binding', '--path', inputs['PREVIEW']['path'])
+        record('snapshot', '--phase', 'pre_assembly')
+        completed = False
+        try:
+            spec = importlib.util.spec_from_file_location('lyra_measurement_asar', inputs['API']['path'])
+            api = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(api)
+            self.assertTrue(api.init(inputs['LIBRARY']['path']))
+            self.addCleanup(api.close)
+            self.assertEqual(api.apiversion(), 303)
+            self.assertEqual(api.version(), 10901)
+
+            def run(name, command):
+                result = subprocess.run(command, cwd=tree, capture_output=True, text=True,
+                    timeout=180, env=dict(os.environ, OOS_LYRA_BUILD_CONTEXT='0', PYTHONDONTWRITEBYTECODE='1'))
+                write_json(output / (name + '.json'), dict(argv=command, cwd=str(tree),
+                    exit_code=result.returncode, stdout=result.stdout, stderr=result.stderr))
+                record('check', '--name', name, '--status', 'passed' if result.returncode == 0 else 'failed',
+                    '--required', '1', '--detail', str(output / (name + '.json')),
+                    '--exit-code', str(result.returncode))
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                return result
+
+            version = run('cli-version', [inputs['CLI']['path'], '--version'])
+            self.assertRegex(version.stdout, r'^Asar 1\.91(?:,|\s)')
+            write_json(output / 'measurement-inputs.json', dict(inputs=inputs,
+                source_snapshot=snapshot, constants=constants, feature_overrides=overrides,
+                synthetic_host_terrain_aliases=terrain_aliases,
+                api_source=dict(root=str(api_root), git_head=api_revision),
+                api_version=api.apiversion(), assembler_version=api.version(),
+                cli_version_stdout=version.stdout, cli_version_stderr=version.stderr,
+                authority=dict(allocation_granted=False, publication_authorized=False,
+                               ordinary_build_ready=False, runtime_admission=False),
+                scope='host composition measurement; synthetic tail/resident/cache; no pickup state'))
+
+            def library_patch(name, patch, original_bytes):
+                previous = Path.cwd()
+                try:
+                    os.chdir(tree)
+                    success, compiled = api.patch(str(patch), original_bytes,
+                        includepaths=[str(tree).encode()], should_reset=True, override_checksum=False)
+                finally:
+                    os.chdir(previous)
+                blocks = [dict(pcoffset=b.pcoffset, snesoffset=b.snesoffset, numbytes=b.numbytes)
+                          for b in api.getwrittenblocks()]
+                # Preserve the API's order and values before validation/union.
+                write_json(output / (name + '-raw-blocks.json'), dict(success=success,
+                    input_sha256=hashlib.sha256(original_bytes).hexdigest(),
+                    output_sha256=hashlib.sha256(compiled).hexdigest(), written_blocks=blocks,
+                    errors=[e.fullerrdata.decode() for e in api.geterrors()],
+                    warnings=[e.fullerrdata.decode() for e in api.getwarnings()], prints=api.getprints()))
+                self.assertTrue(success, api.geterrors())
+                self.assertEqual(len(compiled), 0x400000)
+                for block in blocks:
+                    a, count, address = (block[k] for k in ('pcoffset', 'numbytes', 'snesoffset'))
+                    self.assertTrue(type(a) is int and type(count) is int and
+                                    0 <= a < a + count <= 0x400000, block)
+                    self.assertTrue(0 <= address <= 0xFFFFFF and address & 0x8000, block)
+                    self.assertNotIn(address >> 16, (0x7E, 0x7F))
+                    self.assertEqual(L.A.pc(address), a, block)
+                return compiled, blocks, api.getsymbolsfile('wla').encode()
+
+            # One byte-identical control tests both unchanged-FF write tracking
+            # and the real start after a non-writing skip, through the SAME API.
+            control = tree / 'raw-block-control.asm'
+            control.write_text('lorom\norg $E38000\nskip $10\ndb $FF\n')
+            unchanged = b'\xFF' * 0x400000
+            controlled, blocks, _ = library_patch('skip-ff-control', control, unchanged)
+            self.assertEqual(controlled, unchanged)
+            self.assertEqual(blocks, [dict(pcoffset=0x318010, snesoffset=0xE38010, numbytes=1)])
+            # Snapshot already covers the driver/source; the control is an
+            # independent source file and must not change the measured snapshot.
+            control.rename(output / control.name)
+            command = [inputs['CLI']['path'], '--no-title-check', '--fix-checksum=off',
+                       '--symbols=wla', str(driver), str(image)]
+            run('cli-assembly', command)
+            compiled, blocks, api_symbols = library_patch('full-current', driver, seed)
+            # Capture the WHOLE patch's actual define table before any other
+            # patch can replace API state. Intended source/metadata is not proof
+            # that Asar selected every required feature and origin.
+            actual_defines = api.getalldefines()
+            write_json(output / 'full-current-raw-defines.json', actual_defines)
+            expected_defines = dict(receipt.profile(tree)['effective_flags'])
+            expected_defines.update(constants, **overrides, LYRA_BUILD_CONTEXT=1,
+                REGIONAL_CHECKPOINTS_ENABLED=1, REGIONAL_CHECKPOINTS_BOUND=1)
+            self.assertTrue(all(type(value) is int for value in expected_defines.values()),
+                            'Expected measurement profile has unresolved source values')
+            resolved_defines = {}
+            for name, expected in sorted(expected_defines.items()):
+                self.assertIn(name, actual_defines, 'Assembled profile omitted !' + name)
+                expression = actual_defines[name].strip()
+                self.assertRegex(expression, r'\A(?:\$[0-9A-Fa-f]+|[0-9]+)\Z',
+                                 'Assembled profile is not literal at !' + name)
+                value = api.math(expression)
+                resolved_defines[name] = dict(expected=expected, resolved_expression=expression,
+                                              evaluated_value=value)
+                write_json(output / 'full-current-resolved-defines.json', resolved_defines)
+                self.assertEqual(value, expected, 'Assembled profile differs at !' + name)
+            (output / 'full-current-library.sfc').write_bytes(compiled)
+            (output / 'full-current-library.sym').write_bytes(api_symbols)
+            self.assertEqual(compiled, image.read_bytes(), 'Whole library ROM differs from CLI output')
+            cli_symbols = image.with_suffix('.sym').read_bytes()
+            def all_labels(raw):
+                result, active = {}, False
+                for line in raw.decode().splitlines():
+                    if line.startswith('['):
+                        active = line == '[labels]'
+                    match = re.fullmatch(r'([0-9A-Fa-f]{2}):([0-9A-Fa-f]{4})\s+(\S+)', line)
+                    if active and match:
+                        value = int(match[1] + match[2], 16)
+                        self.assertTrue(match[3] not in result or result[match[3]] == value)
+                        result[match[3]] = value
+                self.assertTrue(result)
+                return result
+            labels = all_labels(cli_symbols)
+            self.assertEqual(all_labels(api_symbols), labels, 'CLI/API symbol maps differ')
+            self.assertTrue(blocks, 'Empty raw write coverage cannot prove the composition')
+            e3 = [b for b in blocks if b['pcoffset'] < 0x320000 and
+                  b['pcoffset'] + b['numbytes'] > 0x318000]
+            write_json(output / 'e3-write-intersections.json', e3)
+            self.assertEqual(e3, [], 'Selected composition already writes the proposed E3 interval')
+            pairs = (
+                ('native_readers', 'Lyra_CurrentNativeCodeStart', 'Lyra_CurrentNativeCodeEnd', 0xE0C000, 0xE0D000),
+                ('bg128', 'Oracle_ProjectBGPalette_CodeStart', 'Oracle_ProjectBGPalette_CodeEnd', 0xE0D000, 0xE10000),
+                ('graphics', 'Oracle_SharedGraphicsRuntimeStart', 'Oracle_SharedGraphicsRuntimeEnd', 0xE28000, 0xE2E000),
+                ('area', 'Oracle_AreaTileset_CodeStart', 'Oracle_AreaTileset_CodeEnd', 0xE2E000, 0xE2E200),
+                ('atlas', 'Lyra_ResidentAtlasCodeStart', 'Lyra_ResidentAtlasCodeEnd', 0xF88000, 0xF88600),
+                ('resources', 'Oracle_ResidentResourceCodeStart', 'Oracle_ResidentResourceCodeEnd', 0xF88600, 0xF88700))
+            extents = {}
+            for owner, start, end, lo, hi in pairs:
+                self.assertEqual(labels[start], lo)
+                self.assertTrue(lo < labels[end] <= hi, (owner, labels[end], hi))
+                extents[owner] = dict(snes=[lo, labels[end]],
+                    pc=[L.A.pc(lo), L.A.pc(labels[end] - 1) + 1],
+                    byte_count=labels[end] - lo, remaining_bytes=hi - labels[end])
+            self.assertEqual(labels['Oracle_FerryArea30BitmapEnd'], 0xE2ED79)
+            write_json(output / 'compiled-extents.json', extents)
+            for row in tables['tables']:
+                a, b = row['pc']
+                self.assertEqual(compiled[a:b], bytes.fromhex(row['payload_hex']), row['name'])
+            for row in emission['placements']:
+                a, b = row['pc']; offset = row['binary_offset']
+                payload = bytes.fromhex(emission['payload_hex'])[offset:offset + b - a]
+                self.assertEqual(compiled[a:b], payload, row['label'])
+                self.assertEqual(labels[row['label']], row['snes'])
+            consumers = L.inspect_current_consumers(compiled, cli_symbols, require_resident=True,
+                checkpoint_preview=dict(mode='seeded_checkpoint_preview', source=source,
+                                        reviewed=reviewed_preview))
+            self.assertEqual(consumers['kind'], L.PREVIEW_CONSUMER_KIND)
+            self.assertIs(consumers['current_core_inspected'], True)
+            guards = consumers['preview_guards']
+            self.assertIs(guards['guards_verified'], True)
+            self.assertEqual(guards['scope'], 'seeded_A0_A1_only')
+            self.assertIs(consumers['broad_six_role_qualification'], False)
+            for flag in ('ordinary_build_ready', 'runtime_admission', 'production_admission',
+                         'native_gameplay_verified', 'save_reopen_verified'):
+                self.assertIs(consumers[flag], False, flag)
+                self.assertIs(guards[flag], False, flag)
+            for flag in ('allocation_granted', 'producer_enforcement_verified'):
+                self.assertIs(guards[flag], False, flag)
+            write_json(output / 'compiled-consumers.json', consumers)
+
+            # Source graph metadata is supplementary and estimated. Supply the
+            # explicit fixture defines to these READ-ONLY metadata producers;
+            # never forge selected prepare.json or invoke publication admission.
+            sys.path.insert(0, str(root / 'Scripts/Generate'))
+            try:
+                import generate_hooks_json as hooks
+                import generate_hack_manifest as manifest
+                import asm_source
+            finally:
+                sys.path.remove(str(root / 'Scripts/Generate'))
+            with mock.patch.dict(os.environ, OOS_LYRA_BUILD_CONTEXT='0'):
+                defines = asm_source._load_global_defines(tree)
+            defines.update(constants)
+            defines.update(LYRA_BUILD_CONTEXT=1, REGIONAL_CHECKPOINTS_ENABLED=1, REGIONAL_CHECKPOINTS_BOUND=1)
+            with mock.patch.object(hooks, '_load_global_defines', return_value=defines), \
+                 mock.patch.object(manifest, '_load_global_defines', return_value=defines):
+                reachable = manifest.collect_reachable_asm_sources(tree, defines=defines)
+                self.assertTrue({
+                    'Oracle_main.asm', 'Overworld/lyra_native_loaders.asm',
+                    'Overworld/lyra_actor_stream.asm', 'Overworld/lyra_tail_events.asm',
+                    'Overworld/lyra_private_pilot.asm', 'Overworld/lyra_resident_atlas.asm',
+                    'Overworld/lyra_resident_resources.asm', 'Overworld/graphics_runtime.asm',
+                    'Overworld/area_tilesets.asm', 'Overworld/project_bg_palette.asm',
+                    'Overworld/goron_checkpoint.asm', 'Items/ice_rod.asm'
+                } <= {p.relative_to(tree).as_posix() for p in reachable})
+                write_json(output / 'source-graph.json', [identity(p) for p in reachable])
+                args = ['generate_hooks_json.py', '--root', str(tree), '--rom', str(image),
+                        '--output', str(output / 'hooks.json')]
+                with mock.patch.object(sys, 'argv', args):
+                    self.assertEqual(hooks.main(), 0)
+                metadata = manifest.generate_manifest(tree, rom_path=image, dev_rom_path=base)
+                self.assertFalse(metadata['hook_source']['exact'])
+                write_json(output / 'hack_manifest.json', metadata)
+            for role, binding in inputs.items():
+                self.assertEqual(identity(binding['path']), binding, role)
+            self.assertEqual(receipt.source_snapshot(root, receipt_path)['files'], snapshot['files'])
+            for path in sorted(output.iterdir()):
+                if path.is_file() and path != receipt_path and not path.name.endswith('.source.json'):
+                    record('artifact', '--name', path.name, '--path', str(path))
+            record('check', '--name', 'whole_output_and_raw_write_coverage', '--status', 'passed',
+                '--required', '1', '--detail', 'CLI/API whole ROM and symbols equal; raw E3 intersections empty')
+            completed = True
+        finally:
+            finish = receipt.main(['finish', '--receipt', str(receipt_path),
+                '--exit-code', '0' if completed else '1', '--stage', 'host_measurement'])
+            self.assertEqual(finish, 0 if completed else 1)
+
+
 if __name__ == '__main__':
     unittest.main()
