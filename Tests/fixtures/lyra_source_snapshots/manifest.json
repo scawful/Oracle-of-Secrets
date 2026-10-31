@@ -333,6 +333,51 @@
       "gzip_sha256": "81ff6f0684897ebd5047c1a38c687671f005136e73ad63f0634d919470e20ae3",
       "path": "Tests/routines/regional_checkpoints.py",
       "sha256": "2a485052827e2cbb466f13611e5e0254282b2ea39f6fcc07128a7152d5048d33"
+    },
+    {
+      "byte_count": 119071,
+      "commit": "4f837962377b133f6bf01f5ecd8cb623f921fa71",
+      "git_blob": "a38bfc976af409b3d678208a0a8106d661e35a15",
+      "gzip_byte_count": 29416,
+      "gzip_sha256": "b7961ed37cc3debfbc62665cdbbaf5076ed069abfea8168d6cbd4f0b4bc325d9",
+      "path": "Scripts/Build/lyra_current_transfer.py",
+      "sha256": "cd8e33d6f3f0036e41da28b262dded90e3d4d399eb3fea751a9334eb15a4ea22"
+    },
+    {
+      "byte_count": 43725,
+      "commit": "4f837962377b133f6bf01f5ecd8cb623f921fa71",
+      "git_blob": "c0190c398f690f46e64bb3b8fc78e67e99fa896e",
+      "gzip_byte_count": 12837,
+      "gzip_sha256": "7891e915e4554ec095435963ae0c62e6feeebb61c668792b4447e5827fbf1ffd",
+      "path": "Scripts/Build/lyra_project_admission.py",
+      "sha256": "293f837bd849886d6c5e7773b213b077d8038f84d8d0aaa295f7586e5e475c97"
+    },
+    {
+      "byte_count": 37097,
+      "commit": "4f837962377b133f6bf01f5ecd8cb623f921fa71",
+      "git_blob": "5c7fc87b970f621db3d9f8dd333e5d1c3e534362",
+      "gzip_byte_count": 10433,
+      "gzip_sha256": "07c4a454f650e70a626370ba5ea283d8b9e995c671fd0ca9dc625f0763f2b15c",
+      "path": "Scripts/Build/lyra_project_terrain.py",
+      "sha256": "b444d80de3b78cab98ab7defc36ce38c91b444348e5d5d2d08e86e3abbeda999"
+    },
+    {
+      "byte_count": 64075,
+      "commit": "4f837962377b133f6bf01f5ecd8cb623f921fa71",
+      "git_blob": "f200b764149f7081bc7e4bd1719701e816ba190e",
+      "gzip_byte_count": 16974,
+      "gzip_sha256": "dfa8323f6633baa3273a77761ce7a4f67f767925333b353df34fbc4696455cd2",
+      "path": "Scripts/Build/lyra_resident_graphics.py",
+      "sha256": "8ec1ebb9706d2b560f9c90e2f8f4b78bab9ecf9da73c6edc76b50fc5c1d58a02"
+    },
+    {
+      "byte_count": 49271,
+      "commit": "4f837962377b133f6bf01f5ecd8cb623f921fa71",
+      "git_blob": "462c1d51826dd5294f7c26f9114b797c60bcd26a",
+      "gzip_byte_count": 10178,
+      "gzip_sha256": "cf6acfc9f3f2a57603870cd8fd9dbf72ce5a936dd74a22c61b82de4cd1b385f0",
+      "path": "Tests/test_lyra_current_transfer.py",
+      "sha256": "ee3605ffb022c4c7e4f559f73042398be7df851dbe87c8b30ceba65b008834dc"
     }
   ]
 }

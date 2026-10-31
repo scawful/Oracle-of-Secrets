@@ -7,7 +7,7 @@ import sys
 import unittest
 from unittest import mock
 
-from lyra_source_snapshots import read_snapshot_text
+from lyra_source_snapshots import read_snapshot_text, staged_source_set
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'Scripts/Generate'))
@@ -21,6 +21,7 @@ import test_lyra_current_native_loaders as reader_fixtures
 
 
 FROZEN = 'c19cf98873c0d409043b1d59016633f415b72dba'
+SOURCE55_HEAD = '4f837962377b133f6bf01f5ecd8cb623f921fa71'
 INTEGRATED_INCLUDES = {
     'Core/Generated/menu_icons/menu_icon_overrides.asm': 'Menu/menu.asm',
     'Data/overworld/whirlpool_placements.asm': 'Overworld/overworld.asm',
@@ -132,6 +133,12 @@ def statements(text, defines):
 
 
 class CurrentPortIntegrationTest(unittest.TestCase):
+    def source_fixture(self):
+        # Source55 describes this frozen epoch, not today's schema9 consumers.
+        return staged_source_set(ROOT,
+            (ROOT / 'Config/allocation_ownership.json').read_bytes(),
+            'lyra_current_resident_conditional_55', SOURCE55_HEAD)
+
     def test_ordinary_context_is_disabled_and_has_original_source_domain(self):
         defines = disabled_defines()
         for key in ('LYRA_BUILD_CONTEXT', 'LYRA_CURRENT_MODE', 'LYRA_PROJECT_DATA_PRESENT',
@@ -208,12 +215,13 @@ class CurrentPortIntegrationTest(unittest.TestCase):
         records = [r for r in ledger['sources'].values() if r['source_set']==source_set]
         self.assertTrue(records)
         self.assertEqual(contract['ledger']['sha256'], P.R.sha((ROOT/'Config/allocation_ownership.json').read_bytes()))
-        bindings = P.validate_current_source_set(contract)
-        self.assertEqual(len(bindings), len(records) + 1)
-        self.assertEqual({row['path']: row['sha256'] for row in bindings[1:]},
-                         {str(ROOT/row['path']): row['sha256'] for row in records})
-        for row in records:
-            self.assertEqual(P.R.sha((ROOT/row['path']).read_bytes()), row['sha256'], row['path'])
+        with self.source_fixture() as root, mock.patch.object(P, 'ROOT', root):
+            bindings = P.validate_current_source_set(contract)
+            self.assertEqual(len(bindings), len(records) + 1)
+            self.assertEqual({row['path']: row['sha256'] for row in bindings[1:]},
+                             {str(root/row['path']): row['sha256'] for row in records})
+            for row in records:
+                self.assertEqual(P.R.sha((root/row['path']).read_bytes()), row['sha256'], row['path'])
         claim, = [r for r in ledger['claims'] if r['id']=='ProjectBGPaletteNativeUnderlay']
         # Selected source binding advances independently of historical claim
         # provenance; changing the selection grants no new physical authority.
@@ -234,7 +242,8 @@ class CurrentPortIntegrationTest(unittest.TestCase):
         contract = json.loads((ROOT/'Config/lyra_current_source_contract.json').read_bytes())
         # Establish valid source binding first. With a bound ledger, an empty
         # review now reaches the real review guard; it still cannot publish.
-        self.assertTrue(P.validate_current_source_set(contract))
+        with self.source_fixture() as root, mock.patch.object(P, 'ROOT', root):
+            self.assertTrue(P.validate_current_source_set(contract))
         self.assertEqual(contract['status'], 'proposed')
         self.assertEqual(contract['scope'], 'source_review_only')
         for key in AUTHORITY_FLAGS:
@@ -250,9 +259,10 @@ class CurrentPortIntegrationTest(unittest.TestCase):
         table_plan = reader_fixtures.CurrentNativeLoaderTests.plan
         contract = json.loads((ROOT/'Config/lyra_current_source_contract.json').read_bytes())
         contract['ledger']['sha256'] = P.R.sha((ROOT/'Config/allocation_ownership.json').read_bytes())
-        with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_PROFILE_REQUIRED'):
-            P.render_current_source_outputs(table_plan, contract=contract,
-                graphics_source='; loose host fixture\n', graphics_report={})
+        with self.source_fixture() as root, mock.patch.object(P, 'ROOT', root):
+            with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_PROFILE_REQUIRED'):
+                P.render_current_source_outputs(table_plan, contract=contract,
+                    graphics_source='; loose host fixture\n', graphics_report={})
 
 
 if __name__ == '__main__':

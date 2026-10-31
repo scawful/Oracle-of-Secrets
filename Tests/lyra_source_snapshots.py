@@ -8,11 +8,13 @@ never consults Git, the network or the current production source.
 import gzip
 import hashlib
 import json
+from contextlib import contextmanager
 from pathlib import Path
+import tempfile
 
 
 _FIXTURE_ROOT = Path(__file__).resolve().parent / 'fixtures/lyra_source_snapshots'
-_MANIFEST_SHA256 = '02ce8cabb2a1efb3cd07bda943df62b8e955410493ba5216f7ea607f27d4b63c'
+_MANIFEST_SHA256 = 'fef064079785a6d9322908e9c342dac58920cffb4eb697f73573fcb2805f0fed'
 
 
 def _load_pins():
@@ -58,3 +60,35 @@ def read_snapshot(commit, path):
 def read_snapshot_text(commit, path):
     """Return the pinned source bytes as strict UTF-8, without normalization."""
     return read_snapshot(commit, path).decode('utf-8')
+
+
+@contextmanager
+def staged_source_set(source_root, ledger_raw, source_set, snapshot_commit):
+    """Stage exact ledger-bound bytes without importing historical code.
+
+    Explicit snapshots supply changed consumers. Unchanged files may come from
+    the checkout only when their bytes still match the historical ledger hash.
+    The real validator and composer run against this temporary source root.
+    """
+    ledger = json.loads(ledger_raw)
+    records = [row for row in ledger['sources'].values()
+               if row['source_set'] == source_set]
+    if not records:
+        raise ValueError('No fixture source-set consumers: ' + source_set)
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory).resolve()
+        (root / 'Config').mkdir()
+        (root / 'Config/allocation_ownership.json').write_bytes(ledger_raw)
+        for row in records:
+            relative = Path(row['path'])
+            if relative.is_absolute() or '..' in relative.parts:
+                raise ValueError('Fixture consumer escaped its root')
+            key = (snapshot_commit, row['path'])
+            raw = (read_snapshot(*key) if key in _PINS
+                   else (source_root / relative).read_bytes())
+            if hashlib.sha256(raw).hexdigest() != row['sha256']:
+                raise ValueError('Fixture consumer differs from ledger: ' + row['path'])
+            target = root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(raw)
+        yield root

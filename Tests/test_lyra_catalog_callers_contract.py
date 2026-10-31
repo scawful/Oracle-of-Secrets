@@ -1,4 +1,4 @@
-"""Current source-set checks retain cut01/02 and require a profile at composition.
+"""Historical source-set checks retain cut01/02 and require a composition profile.
 
 The loose reader/table and graphics fixtures are deliberately refused by the
 composer. Real common-profile composition lives in test_lyra_current_composer_binding.
@@ -26,6 +26,7 @@ import test_lyra_current_source_contract as contract_fixtures
 FROZEN = '6e7e5f15d555dffb9f4b3d8807595c9e3f13305f'
 HISTORICAL_GAMEPLAY_SET = 'lyra_current_gameplay_areas_05'
 SELECTED_SET = 'lyra_current_resident_conditional_55'
+SOURCE55_HEAD = '4f837962377b133f6bf01f5ecd8cb623f921fa71'
 PREVIOUS_RESIDENT_SET = 'lyra_current_resident_constructor_54'
 PREVIOUS_SET = 'lyra_ferry_visual_boundary_53'
 RESIDENT_ADDITIONS = {
@@ -94,13 +95,17 @@ class CatalogCallersContractTest(unittest.TestCase):
         contract['ledger']['sha256'] = P.R.sha(self.ledger_raw)
         return contract
 
-    def composable_contract(self):
+    def source_fixture(self):
+        return snapshots.staged_source_set(
+            ROOT, self.ledger_raw, SELECTED_SET, SOURCE55_HEAD)
+
+    def composable_contract(self, root=ROOT):
         contract = self.bound_contract()
-        # Host fixture graphics origin only; the canonical origin stays null.
+        # Host fixture graphics origin only; canonical contract bytes stay exact.
         contract['origins']['graphics'] = dict(pc=[0x300000, 0x307000],
             snes=[0x608000, 0x60F000], source_binding=dict(
-                path=str(ROOT / 'Overworld/custom_gfx.asm'),
-                sha256=P.R.sha((ROOT / 'Overworld/custom_gfx.asm').read_bytes())))
+                path=str(root / 'Overworld/custom_gfx.asm'),
+                sha256=P.R.sha((root / 'Overworld/custom_gfx.asm').read_bytes())))
         return contract
 
     def compose(self, contract):
@@ -157,10 +162,20 @@ class CatalogCallersContractTest(unittest.TestCase):
         self.assertEqual({row['path'] for row in self.records},
                          previous_paths | RESIDENT_ADDITIONS)
         self.assertEqual(self.contract['ledger']['sha256'], P.R.sha(self.ledger_raw))
-        # Exact inactive source bindings are not a verified engine/Save profile.
-        self.assert_selected_bindings(P.validate_current_source_set(self.contract), ROOT)
-        with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_PROFILE_REQUIRED'):
-            self.compose(self.composable_contract())
+        # Historical source55 bytes bind, but are not a verified engine/Save profile.
+        with self.source_fixture() as root, mock.patch.object(P, 'ROOT', root):
+            self.assert_selected_bindings(P.validate_current_source_set(self.contract), root)
+            with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_PROFILE_REQUIRED'):
+                self.compose(self.composable_contract(root))
+
+    def test_current_tree_refuses_historical_source55_before_profile_or_output(self):
+        # A historical fixture must not make changed production bytes admissible.
+        for operation in (lambda: P.validate_current_source_set(self.contract),
+                          lambda: self.compose(self.bound_contract())):
+            with self.assertRaisesRegex(ValueError,
+                    re.escape('Current source-set consumer changed: '
+                              'Scripts/Build/lyra_current_transfer.py')):
+                operation()
 
     def test_frozen_ledger_and_frozen_source_set_refuse_the_changed_child(self):
         stale = copy.deepcopy(self.frozen_contract)
@@ -172,18 +187,9 @@ class CatalogCallersContractTest(unittest.TestCase):
             P.validate_current_source_set(stale)
 
     def test_real_selected_consumer_mutation_refuses_validation_and_composition(self):
-        contract = self.composable_contract()
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory).resolve()
-            # Copy only the selected consumer/resource files and exact ledger;
-            # neither validator nor composer is replaced by a test double.
-            for row in self.records:
-                target = root / row['path']
-                target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_bytes((ROOT / row['path']).read_bytes())
-            (root / LEDGER).write_bytes(self.ledger_raw)
-            contract['origins']['graphics']['source_binding']['path'] = str(
-                root / 'Overworld/custom_gfx.asm')
+        with self.source_fixture() as root:
+            # Only the source locator changes; both real guards remain active.
+            contract = self.composable_contract(root)
             with mock.patch.object(P, 'ROOT', root):
                 self.assert_selected_bindings(P.validate_current_source_set(contract), root)
                 with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_PROFILE_REQUIRED'):
@@ -224,8 +230,9 @@ class CatalogCallersContractTest(unittest.TestCase):
         for key in ('resident_data', 'resident_code', 'resident_resource_code'):
             self.assertNotIn(key, self.contract['origins'])
         # Bound proposal metadata cannot supply a verified source profile.
-        with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_PROFILE_REQUIRED'):
-            self.compose(self.bound_contract())
+        with self.source_fixture() as root, mock.patch.object(P, 'ROOT', root):
+            with self.assertRaisesRegex(ValueError, 'CURRENT_COMPOSER_PROFILE_REQUIRED'):
+                self.compose(self.bound_contract())
 
     def test_null_ledger_host_fixture_refuses_both_real_validators(self):
         # Generic committed HOST source/Save fixture, not genuine all32/native
@@ -250,8 +257,15 @@ class SourceSnapshotIntegrityTest(unittest.TestCase):
         self.assertEqual(hashlib.sha256(raw).hexdigest(),
                          '44f90940bae6da46e1abb496a4fa13e8c985d29137aa0ec49783d34bc6677d5a')
 
-    def test_all37_pinned_snapshots_load_without_git_or_network(self):
-        self.assertEqual(len(snapshots.SNAPSHOT_KEYS), 37)
+    def test_original37_manifest_entries_remain_exact(self):
+        manifest = json.loads((ROOT / 'Tests/fixtures/lyra_source_snapshots/manifest.json').read_bytes())
+        original = dict(kind=manifest['kind'], snapshots=manifest['snapshots'][:37])
+        raw = (json.dumps(original, indent=2, sort_keys=True) + '\n').encode()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(),
+                         '02ce8cabb2a1efb3cd07bda943df62b8e955410493ba5216f7ea607f27d4b63c')
+
+    def test_all42_pinned_snapshots_load_without_git_or_network(self):
+        self.assertEqual(len(snapshots.SNAPSHOT_KEYS), 42)
         with mock.patch('subprocess.check_output', side_effect=AssertionError('Unexpected Git call')):
             for commit, path in snapshots.SNAPSHOT_KEYS:
                 with self.subTest(commit=commit, path=path):
