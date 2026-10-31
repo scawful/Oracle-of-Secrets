@@ -584,14 +584,19 @@ class ResidentNativeAbiTest(unittest.TestCase):
             self.assertEqual(row['snes'] >> 16, (row['snes'] + row['byte_count'] - 1) >> 16)
             raw = binary[row['binary_offset']:row['binary_offset'] + row['byte_count']]
             self.assertEqual(sha(raw), row['sha256'])
+        source_lines = emission['runtime_data_asm'].splitlines()
         for offset, page in enumerate(native['pages']):
             raw = binary[offset * 8:offset * 8 + 8]
             self.assertEqual(int.from_bytes(raw[:3], 'little'), labels[page['index_label']]['snes'])
             self.assertEqual(int.from_bytes(raw[3:6], 'little'), labels[page['words_label']]['snes'])
             self.assertEqual(tuple(raw[6:]), (page['area_index'], page['row_count']))
+            for alias, label in ((page['index_alias'], page['index_label']),
+                                 (page['words_alias'], page['words_label'])):
+                if alias != label:
+                    self.assertIn(f'{alias} = ${labels[label]["snes"]:06X}', source_lines)
+                    self.assertNotIn(f'{alias} = {label}', source_lines)
         self.assertNotIn('ENABLED', emission['constants_asm'])
         self.assertNotIn('BOUND', emission['constants_asm'])
-        self.assertIn('LyraResidentPageIndex_BF = LyraResidentPageIndex_A0', emission['runtime_data_asm'])
         self.assertIs(emission['allocation_granted'], False)
         with self.assertRaisesRegex(ValueError, 'NATIVE_ALLOCATION_CAPACITY'):
             R.emit_native_resident_abi(native, data_pc=0, capacity=255, preimage=bytes(255))

@@ -1225,7 +1225,7 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
         for alias, label in ((page['index_alias'], page['index_label']),
                              (page['words_alias'], page['words_label'])):
             if alias != label:
-                lines.append(f'{alias} = {label}')
+                lines.append(f'{alias} = ${addresses[label]:06X}')
     lines += ['pullpc', '']
     constants = (f'!LYRA_CURRENT_RESIDENT_ABI_VERSION = {NATIVE_ABI_VERSION}\n'
         + f'!LYRA_CURRENT_RESIDENT_TILE16_COUNT = {native_plan["tile16_count"]}\n'
