@@ -11,6 +11,8 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import compile_graphics_pack as pack
 import compile_runtime_graphics as runtime
+sys.path.insert(0, str(runtime.ROOT / "Scripts/Generate"))
+import asm_source
 
 
 class CurrentRuntimeGraphicsTests(unittest.TestCase):
@@ -161,6 +163,41 @@ class CurrentRuntimeGraphicsTests(unittest.TestCase):
         with self.assertRaisesRegex(pack.PackError, "provenance changed"):
             self.render(current=True)
 
+    def test_only_exact_historical_and_selected_provenance_pairs_are_accepted(self):
+        pairs = (
+            ("8b004e65efacbd0777121c49a36f09a43759c922",
+             "c19cf98873c0d409043b1d59016633f415b72dba"),
+            ("a7ad0b593b933218a5a9ef4b8760796531d5f9f4",
+             "a7ad0b593b933218a5a9ef4b8760796531d5f9f4"),
+        )
+        for engine, base in pairs:
+            with self.subTest(engine=engine, base=base):
+                contract = copy.deepcopy(self.contract)
+                contract.update(engine_head=engine, base_head=base)
+                self.assertEqual(runtime.current_graphics_contract(
+                    contract, source_root=self.root), dict(
+                        parent_count=192, first_map=160, end_map=192,
+                        origin=0x5A8000, end=0x5B0000, bank=0x5A))
+
+    def test_mixed_and_arbitrary_provenance_pairs_refuse(self):
+        historical_engine = "8b004e65efacbd0777121c49a36f09a43759c922"
+        historical_base = "c19cf98873c0d409043b1d59016633f415b72dba"
+        selected = "a7ad0b593b933218a5a9ef4b8760796531d5f9f4"
+        pairs = (
+            (historical_engine, selected), (selected, historical_base),
+            (selected, historical_engine), (historical_base, selected),
+            (historical_engine, historical_engine),
+            (historical_base, historical_base),
+            ("1" * 40, "2" * 40), ("1" * 40, "1" * 40),
+            (None, selected), (selected, None),
+        )
+        for engine, base in pairs:
+            with self.subTest(engine=engine, base=base):
+                contract = copy.deepcopy(self.contract)
+                contract.update(engine_head=engine, base_head=base)
+                with self.assertRaisesRegex(pack.PackError, "provenance changed"):
+                    runtime.current_graphics_contract(contract, source_root=self.root)
+
     def test_same_bank_capacity_refuses_before_output(self):
         self.bind_tail()
         self.contract["origins"]["graphics"].update(
@@ -192,7 +229,14 @@ class CurrentRuntimeGraphicsTests(unittest.TestCase):
     def test_native_custom_load_branch_retains_original_c19_instructions(self):
         asm = (runtime.ROOT / "Overworld/custom_gfx.asm").read_text()
         body = asm.split("CheckForChangeGraphicsNormalLoadBoat:", 1)[1].split("\n}", 1)[0]
-        current, native = body.split("if !LYRA_CURRENT_MODE", 1)[1].split("endif", 1)
+
+        def active_branch(current_mode):
+            defines = dict(LYRA_CURRENT_MODE=current_mode,
+                           ENABLE_OW_AREA_TILESETS=0, ENABLE_KALYXO_BOAT=0)
+            return "\n".join(line for _, line, _ in asm_source._iter_active_lines(
+                body.splitlines(), defines) if line.strip() not in ("{", "}")).strip()
+
+        current, native = active_branch(1), active_branch(0)
         self.assertIn("JML SharedGraphicsNormalLoad", current)
         self.assertIn("CMP.w #!LYRA_CURRENT_FIRST : BCC .native", current)
         self.assertIn("CMP.w #!LYRA_CURRENT_END : BCS .native", current)
@@ -208,12 +252,16 @@ class CurrentRuntimeGraphicsTests(unittest.TestCase):
 
     def test_actual_unbound_source_contract_write_refuses_without_output(self):
         output = self.root / "never-created.asm"
+        contract = pack.read_json(runtime.ROOT / "Config/lyra_current_source_contract.json")
+        contract["origins"]["graphics"] = None
+        unbound_contract = self.root / "unbound-contract.json"
+        unbound_contract.write_bytes(pack.json_bytes(contract))
         stderr = io.StringIO()
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(stderr):
             code = runtime.main([
                 "--catalog", str(runtime.ROOT / "Overworld/graphics_catalog.json"),
                 "--policy", str(runtime.ROOT / "Overworld/graphics_runtime_policy.json"),
-                "--current-contract", str(runtime.ROOT / "Config/lyra_current_source_contract.json"),
+                "--current-contract", str(unbound_contract),
                 "--output", str(output), "--write"])
         self.assertEqual(code, 1)
         self.assertIn("origin is unbound", stderr.getvalue())

@@ -14,7 +14,7 @@ import tempfile
 
 
 _FIXTURE_ROOT = Path(__file__).resolve().parent / 'fixtures/lyra_source_snapshots'
-_MANIFEST_SHA256 = '190dfa530ee3172b73be4b3860db2abb20c6d0e7c7f67a9822d5a36ddc9dfa2c'
+_MANIFEST_SHA256 = 'e9a468bd57e69a13f0d5d29c0e468186af382b8df3b6b9226d9e5c6372d976d0'
 
 
 def _load_pins():

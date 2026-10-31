@@ -68,8 +68,11 @@ def current_graphics_contract(contract: dict, *, source_root: Path = ROOT) -> di
             any(type(domain[k]) is not int or domain[k] != v
                 for k, v in expected.items())):
         raise pack.PackError("current graphics domain must be native160 plus A0..BF")
-    if (contract.get("engine_head") != "8b004e65efacbd0777121c49a36f09a43759c922" or
-            contract.get("base_head") != "c19cf98873c0d409043b1d59016633f415b72dba"):
+    if (contract.get("engine_head"), contract.get("base_head")) not in (
+            ("8b004e65efacbd0777121c49a36f09a43759c922",
+             "c19cf98873c0d409043b1d59016633f415b72dba"),
+            ("a7ad0b593b933218a5a9ef4b8760796531d5f9f4",
+             "a7ad0b593b933218a5a9ef4b8760796531d5f9f4")):
         raise pack.PackError("current graphics engine/base provenance changed")
     for flag in ("allocation_granted", "publication_authorized",
                  "producer_enforcement_verified", "ordinary_build_ready",

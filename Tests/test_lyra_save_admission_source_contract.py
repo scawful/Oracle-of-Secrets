@@ -60,6 +60,7 @@ class SaveAdmissionSourceContractTest(unittest.TestCase):
         self.assertEqual({path for path in current
                           if current[path]['sha256'] != previous[path]['sha256']},
                          {'Scripts/Build/lyra_current_transfer.py',
+                          'Scripts/Graphics/compile_runtime_graphics.py',
                           'Scripts/Generate/tests/test_authoring_project_bundle.py',
                           'Tests/test_lyra_current_transfer.py'})
         bindings = P.validate_current_source_set(self.contract)

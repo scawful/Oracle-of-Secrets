@@ -7383,7 +7383,7 @@
     "lyra_current_save_admission_diagnostics_58:Scripts/Graphics/compile_runtime_graphics.py": {
       "source_set": "lyra_current_save_admission_diagnostics_58",
       "path": "Scripts/Graphics/compile_runtime_graphics.py",
-      "sha256": "cd5d896a786d62e7a43f5f0dc6cfbe26fce7667e44c6dadf4d28a659194abd66"
+      "sha256": "0e5a8a7a8d4ffb1c48bdd984e91a62f43ce5b94f3ea1f2d5ae3e94986225790e"
     },
     "lyra_current_save_admission_diagnostics_58:Scripts/Validate/verify_joint_palette_directory.py": {
       "source_set": "lyra_current_save_admission_diagnostics_58",

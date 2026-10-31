@@ -477,6 +477,51 @@
       "gzip_sha256": "4e41c91b256534aa955ed216de5e1143ead1c4b24797ef43ac385ee04824c154",
       "path": "Scripts/Build/lyra_resident_graphics.py",
       "sha256": "4649ef51c81ecebd4a95e2bf5cc25b798f56604a20b0a8fe936f6563bec91643"
+    },
+    {
+      "byte_count": 43333,
+      "commit": "4f837962377b133f6bf01f5ecd8cb623f921fa71",
+      "git_blob": "967c632e03b4aae6c1c90fc7b5a13683b5435e94",
+      "gzip_byte_count": 8871,
+      "gzip_sha256": "755aaa1cf33fa53b50f5e3df2bb9debe5220b40d79fc05a912702e8c5954d1d8",
+      "path": "Scripts/Generate/tests/test_authoring_project_bundle.py",
+      "sha256": "8aac57e6a5335668e1876acfa87fb089ce08aa00e3ac09d6ccfa79314badda29"
+    },
+    {
+      "byte_count": 23296,
+      "commit": "4f837962377b133f6bf01f5ecd8cb623f921fa71",
+      "git_blob": "e635ec5a608fc034f08b2686511c248632b42dcd",
+      "gzip_byte_count": 6926,
+      "gzip_sha256": "dced779f1ee4deb0c7d092dc55eee9753935e5ac17ad182c569a2b597022be82",
+      "path": "Scripts/Graphics/compile_runtime_graphics.py",
+      "sha256": "cd5d896a786d62e7a43f5f0dc6cfbe26fce7667e44c6dadf4d28a659194abd66"
+    },
+    {
+      "byte_count": 43333,
+      "commit": "86f6be686acc18afbfee4e752e45f7cf4e2700ac",
+      "git_blob": "967c632e03b4aae6c1c90fc7b5a13683b5435e94",
+      "gzip_byte_count": 8871,
+      "gzip_sha256": "755aaa1cf33fa53b50f5e3df2bb9debe5220b40d79fc05a912702e8c5954d1d8",
+      "path": "Scripts/Generate/tests/test_authoring_project_bundle.py",
+      "sha256": "8aac57e6a5335668e1876acfa87fb089ce08aa00e3ac09d6ccfa79314badda29"
+    },
+    {
+      "byte_count": 23296,
+      "commit": "86f6be686acc18afbfee4e752e45f7cf4e2700ac",
+      "git_blob": "e635ec5a608fc034f08b2686511c248632b42dcd",
+      "gzip_byte_count": 6926,
+      "gzip_sha256": "dced779f1ee4deb0c7d092dc55eee9753935e5ac17ad182c569a2b597022be82",
+      "path": "Scripts/Graphics/compile_runtime_graphics.py",
+      "sha256": "cd5d896a786d62e7a43f5f0dc6cfbe26fce7667e44c6dadf4d28a659194abd66"
+    },
+    {
+      "byte_count": 52736,
+      "commit": "86f6be686acc18afbfee4e752e45f7cf4e2700ac",
+      "git_blob": "ce21008c5e15419a1629e2d4c7fa8848e3f783cb",
+      "gzip_byte_count": 10848,
+      "gzip_sha256": "ce30740b93e5b5e803b018ab41b075dec368225b43c060bf2a93cef2c68d830f",
+      "path": "Tests/test_lyra_current_transfer.py",
+      "sha256": "1a66b6ae7a3975856e0628679199c7026948bfbca7800aab3d1a99b23698a9a7"
     }
   ]
 }
