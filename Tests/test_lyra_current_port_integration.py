@@ -1,5 +1,6 @@
 """Current-engine source composition checks; no assembler or CPU execution."""
 import json
+from contextlib import nullcontext
 import os
 from pathlib import Path
 import re
@@ -7,7 +8,7 @@ import sys
 import unittest
 from unittest import mock
 
-from lyra_source_snapshots import read_snapshot_text, staged_source_set
+from lyra_source_snapshots import read_snapshot_text
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'Scripts/Generate'))
@@ -134,17 +135,16 @@ def statements(text, defines):
 
 class CurrentPortIntegrationTest(unittest.TestCase):
     def source_fixture(self):
-        # Source55 describes this frozen epoch, not today's schema9 consumers.
-        return staged_source_set(ROOT,
-            (ROOT / 'Config/allocation_ownership.json').read_bytes(),
-            'lyra_current_resident_conditional_55', SOURCE55_HEAD)
+        # This module checks the actual selected source56. Source55's exact
+        # historical consumers remain separately frozen in CatalogCallersContractTest.
+        return nullcontext(ROOT)
 
     def test_ordinary_context_is_disabled_and_has_original_source_domain(self):
         defines = disabled_defines()
         for key in ('LYRA_BUILD_CONTEXT', 'LYRA_CURRENT_MODE', 'LYRA_PROJECT_DATA_PRESENT',
                     'LYRA_CURRENT_RESIDENT_ENABLED', 'LYRA_CURRENT_RESIDENT_RESOURCES_ENABLED',
                     'LYRA_CURRENT_EVENTS_ENABLED', 'LYRA_CURRENT_ACTORS_ENABLED',
-                    'PROJECT_BG128_ENABLED', 'PROJECT_BG128_RESTORE_BOUND',
+                    'LYRA_CURRENT_HIDDEN_STREAMS_BOUND', 'PROJECT_BG128_ENABLED', 'PROJECT_BG128_RESTORE_BOUND',
                     'ENABLE_OW_AREA_TILESETS', 'ENABLE_KALYXO_BOAT', 'REGIONAL_CHECKPOINTS_ENABLED'):
             self.assertEqual(defines[key], 0, key)
         paths = H.collect_reachable_asm_sources(ROOT, defines=defines)
@@ -211,7 +211,7 @@ class CurrentPortIntegrationTest(unittest.TestCase):
         ledger = json.loads((ROOT/'Config/allocation_ownership.json').read_bytes())
         contract = json.loads((ROOT/'Config/lyra_current_source_contract.json').read_bytes())
         source_set = contract['ledger']['source_set']
-        self.assertEqual(source_set, 'lyra_current_resident_conditional_55')
+        self.assertEqual(source_set, 'lyra_current_hidden_streams_56')
         records = [r for r in ledger['sources'].values() if r['source_set']==source_set]
         self.assertTrue(records)
         self.assertEqual(contract['ledger']['sha256'], P.R.sha((ROOT/'Config/allocation_ownership.json').read_bytes()))

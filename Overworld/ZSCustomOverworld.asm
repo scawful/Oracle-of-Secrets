@@ -6422,6 +6422,23 @@ pushpc
 
 if !Func1BC8B1 == $01
 
+; BEGIN CURRENT HIDDEN STREAM GUARD
+if not(defined("LYRA_CURRENT_HIDDEN_STREAMS_BOUND"))
+  !LYRA_CURRENT_HIDDEN_STREAMS_BOUND = 0
+endif
+assert !LYRA_CURRENT_HIDDEN_STREAMS_BOUND == 0 || !LYRA_CURRENT_HIDDEN_STREAMS_BOUND == 1
+if !LYRA_CURRENT_HIDDEN_STREAMS_BOUND == 1
+assert defined("LYRA_CURRENT_MODE"), "Hidden streams require current mode"
+assert !LYRA_CURRENT_MODE == 1, "Hidden streams require current mode"
+assert read3($1BC8B1) == $0080C9, "Hidden item native map cutoff moved"
+assert read2($1BC8B4) == $7DB0 || read2($1BC8B4) == $EAEA, "Hidden item native no-match branch moved"
+org $1BC8B1 ; @hook module=Overworld name=Lyra_HiddenStreamsGuard kind=patch expected_m=16 expected_x=16 protected_size=5 skip_abi=true
+Lyra_HiddenStreamsGuard:
+    CMP.w #$00C0
+Overworld_RevealSecret_Interupt:
+    db $B0, $7D ; BCS $1BC933: signed +$7D from $1BC8B6.
+assert pc() == $1BC8B6
+else
 ; Remove the SW overworld item check.
 org $1BC8B4 ; $0DC8B4
 Overworld_RevealSecret_Interupt:
@@ -6429,6 +6446,8 @@ Overworld_RevealSecret_Interupt:
     NOP : NOP
 }
 assert pc() <= $1BC8B6 ; $0DC8B6
+endif
+; END CURRENT HIDDEN STREAM GUARD
 
 org $02EF64 ; $016F64
 if !LYRA_PROJECT_DATA_PRESENT == 1

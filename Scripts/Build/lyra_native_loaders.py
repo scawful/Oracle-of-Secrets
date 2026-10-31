@@ -1864,7 +1864,46 @@ RESIDENT_EXTERNAL_LABELS = {
     'CheckForChangeGraphicsNormalLoad', 'BirdTravel_LoadTargetArea_Interupt'}
 
 
-def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None, require_resident=False):
+CURRENT_HIDDEN_STREAMS_BANK_BYTES = bytes.fromhex(
+    '08a58a29e0ffc9a000d00728a9e30085026b28a99b0085026b')
+CURRENT_HIDDEN_STREAMS_GUARD_BYTES = bytes.fromhex('c9c000b07d')
+
+
+def inspect_current_hidden_streams_adapter(compiled, labels, *, required=False):
+    """Bind optional bank/guard bytes without granting resource admission."""
+    R.require(type(required) is bool, 'CURRENT_HIDDEN_STREAMS_SELECTION_INVALID')
+    markers = {'Lyra_HiddenStreamsBank', 'Lyra_HiddenStreamsBank_End',
+               'LyraCall_HiddenStreamsBank', 'Lyra_HiddenStreamsGuard'}
+    present = markers & set(labels)
+    R.require(not required or present, 'CURRENT_HIDDEN_STREAMS_COMPILED_BINDING_REQUIRED')
+    if not present:
+        return None
+    R.require(present == markers, 'CURRENT_HIDDEN_STREAMS_SYMBOLS_INCOMPLETE')
+    start, end = labels['Lyra_HiddenStreamsBank'], labels['Lyra_HiddenStreamsBank_End']
+    R.require(labels.get('Lyra_CurrentNativeCodeStart') == 0xE0C000
+              and end == labels.get('Lyra_CurrentNativeCodeEnd')
+              and 0xE0C000 <= start < end <= 0xE0D000
+              and end-start == len(CURRENT_HIDDEN_STREAMS_BANK_BYTES),
+              'CURRENT_HIDDEN_STREAMS_HELPER_EXTENT')
+    R.require(compiled[A.pc(start):A.pc(start)+end-start] == CURRENT_HIDDEN_STREAMS_BANK_BYTES,
+              'CURRENT_HIDDEN_STREAMS_HELPER_BODY')
+    call, guard = labels['LyraCall_HiddenStreamsBank'], labels['Lyra_HiddenStreamsGuard']
+    bank_hook = b'\x22'+start.to_bytes(3, 'little')+b'\xea'
+    R.require(call == 0x1BC8BE and compiled[A.pc(call):A.pc(call)+5] == bank_hook,
+              'CURRENT_HIDDEN_STREAMS_BANK_HOOK')
+    R.require(guard == 0x1BC8B1 and
+              compiled[A.pc(guard):A.pc(guard)+5] == CURRENT_HIDDEN_STREAMS_GUARD_BYTES,
+              'CURRENT_HIDDEN_STREAMS_PREACCESS_GUARD')
+    return dict(scope='bank_selection_only', helper_snes=[start, end],
+        helper_hex=CURRENT_HIDDEN_STREAMS_BANK_BYTES.hex(),
+        bank_hook_snes=call, bank_hook_hex=bank_hook.hex(),
+        guard_snes=guard, guard_hex=CURRENT_HIDDEN_STREAMS_GUARD_BYTES.hex(),
+        physical_selector_dp=0x8A, native_bank=0x9B, tail_bank=0xE3,
+        tail_stream_snes=[0xE38000, 0xE40000], pickup_state_implemented=False)
+
+
+def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None, require_resident=False,
+                              require_hidden_streams=False):
     """Exact inspection for independent review; not a self-issued approval."""
     preview=None
     if checkpoint_preview is not None:
@@ -1894,6 +1933,8 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None, req
             value = int(match[1]+match[2],16)
             R.require(name not in labels or labels[name] == value,'Conflicting current consumer symbol')
             labels[name] = value
+    hidden_streams = inspect_current_hidden_streams_adapter(
+        compiled, labels, required=require_hidden_streams)
     def address(name):
         R.require(name in labels,'Missing current consumer symbol: '+name)
         return labels[name]
@@ -2033,6 +2074,11 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None, req
             window('ResidentHost_NormalLoad', address('CheckForChangeGraphicsNormalLoad'),
                    address('CheckForChangeGraphicsNormalLoad')+26)))
     calls=[]
+    if hidden_streams is not None:
+        start, end = hidden_streams['helper_snes']
+        regions.append(window('Lyra_HiddenStreamsBank', start, end))
+        calls.append(dict(label='LyraCall_HiddenStreamsBank', snes=0x1BC8BE,
+            target='Lyra_HiddenStreamsBank', payload_hex=hidden_streams['bank_hook_hex']))
     for name,target in [r for r in SOURCE_CALLS if r[0]!='LyraCall_SpritePointer']+[('LyraCall_CurrentActors','Lyra_LoadCurrentSprites')]:
         at=address(name);opcode=0x5C if name=='LyraCall_CurrentActors' else 0x22
         R.require(address('Lyra_CurrentNativeCodeStart') <= address(target) < address('Lyra_CurrentNativeCodeEnd'),
@@ -2117,6 +2163,8 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None, req
     fixed.update({a:12 for a in (0x02F59D,0x02F5C8,0x02F7E3,0x02F80E)})
     fixed.update({a:4 for a in (*state.TAIL_LOAD_SITES,*[r[0] for r in state.TAIL_STORE_SITES])})
     fixed[0x1BC906]=3
+    if hidden_streams is not None:
+        fixed.update({0x1BC8B1:5, 0x1BC8BE:5})
     if resident:
         fixed.update({site:4+pad for site, _, pad in RESIDENT_WORD_HOOKS})
         fixed[0x088A5D] = 4
@@ -2162,6 +2210,8 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None, req
         hook(address('LoadCheckpointOrWorld'),'Lyra_TailEvent_MigrateSave')
     R.require(compiled[A.pc(0x1BC906):A.pc(0x1BC906)+3]==bytes.fromhex('290200'), 'Current M16 event mask differs')
     result=dict(kind='lyra.current_compiled_consumers.v1',regions=regions,source_calls=calls,fixed_hooks=hooks)
+    if hidden_streams is not None:
+        result['hidden_streams_adapter'] = hidden_streams
     pilot='Lyra_PrivatePilotCanScroll' in labels
     R.require(pilot == ('LyraCall_PrivatePilotBoundary' in labels)
               == ('LyraPilot_BoundaryBlocked' in labels), 'Incomplete private pilot boundary symbols')

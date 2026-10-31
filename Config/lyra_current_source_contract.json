@@ -6,8 +6,8 @@
   "ledger": {
     "engine_ledger_sha256": "6bc162723d33d3589b076cbc7726fc6022d73732f2f5cecf75c9952098d485d6",
     "path": "Config/allocation_ownership.json",
-    "sha256": "d2ab3ea14ad09f34ad20cb24b97963d9d92505a339068261eb643b82a6e67b3e",
-    "source_set": "lyra_current_resident_conditional_55"
+    "sha256": "54b4209bbca23bd4d20c8580ca4d50b0c48d08de777e6245815d6de40361d110",
+    "source_set": "lyra_current_hidden_streams_56"
   },
   "native_readers": {
     "decoder_spans": [
@@ -40,7 +40,7 @@
       ],
       "source_binding": {
         "path": "/Users/scawful/.codex/worktrees/items-menu-daily-20261030/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
-        "sha256": "9bb9f0ae180128bdf8ce461ae0f0d760699f5c78f9d2c33112ab91d7650cf6c2"
+        "sha256": "669a61cbdb562332ce4f46c9b531b84bd215f022b907eb0945833748066ff6a3"
       }
     },
     "bg_palette": {
@@ -54,7 +54,7 @@
       ],
       "source_binding": {
         "path": "/Users/scawful/.codex/worktrees/items-menu-daily-20261030/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
-        "sha256": "9bb9f0ae180128bdf8ce461ae0f0d760699f5c78f9d2c33112ab91d7650cf6c2"
+        "sha256": "669a61cbdb562332ce4f46c9b531b84bd215f022b907eb0945833748066ff6a3"
       }
     },
     "code": {
@@ -68,7 +68,7 @@
       ],
       "source_binding": {
         "path": "/Users/scawful/.codex/worktrees/items-menu-daily-20261030/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
-        "sha256": "9bb9f0ae180128bdf8ce461ae0f0d760699f5c78f9d2c33112ab91d7650cf6c2"
+        "sha256": "669a61cbdb562332ce4f46c9b531b84bd215f022b907eb0945833748066ff6a3"
       }
     },
     "descriptor": {
@@ -82,7 +82,7 @@
       ],
       "source_binding": {
         "path": "/Users/scawful/.codex/worktrees/items-menu-daily-20261030/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
-        "sha256": "9bb9f0ae180128bdf8ce461ae0f0d760699f5c78f9d2c33112ab91d7650cf6c2"
+        "sha256": "669a61cbdb562332ce4f46c9b531b84bd215f022b907eb0945833748066ff6a3"
       }
     },
     "graphics": {
@@ -99,6 +99,20 @@
         "sha256": "287a087964ceea27169112107efe551caefb185eeed9290eab8c75b407ad495b"
       }
     },
+    "hidden_streams": {
+      "pc": [
+        3244032,
+        3276800
+      ],
+      "snes": [
+        14909440,
+        14942208
+      ],
+      "source_binding": {
+        "path": "/Users/scawful/.codex/worktrees/items-menu-daily-20261030/oracle-of-secrets/Overworld/lyra_native_loaders.asm",
+        "sha256": "1acf56da36ca1207d0dddf0c3f26bec808d36c3c462f3f5312a746981c152cff"
+      }
+    },
     "tables": {
       "pc": [
         3145728,
@@ -110,7 +124,7 @@
       ],
       "source_binding": {
         "path": "/Users/scawful/.codex/worktrees/items-menu-daily-20261030/oracle-of-secrets/Overworld/ZSCustomOverworld.asm",
-        "sha256": "9bb9f0ae180128bdf8ce461ae0f0d760699f5c78f9d2c33112ab91d7650cf6c2"
+        "sha256": "669a61cbdb562332ce4f46c9b531b84bd215f022b907eb0945833748066ff6a3"
       }
     }
   },

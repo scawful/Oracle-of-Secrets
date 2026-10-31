@@ -22,6 +22,9 @@ import test_lyra_resident_graphics as resources
 import lyra_current_transfer as X
 import lyra_native_loaders as L
 import lyra_resident_graphics as R
+import test_lyra_current_source_contract as source_fixtures
+import test_lyra_current_transfer as save_fixtures
+from test_lyra_project_admission import observation
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'Scripts/Graphics'))
@@ -625,6 +628,115 @@ class NativeResourceBindingTest(unittest.TestCase):
                         self.review()
             finally:
                 path.write_bytes(original)
+
+
+class CurrentHiddenStreamsBindingTest(unittest.TestCase):
+    """Real Save/source reconstruction, with an explicitly synthetic producer."""
+    def setUp(self):
+        original_prepare = save_fixtures.CurrentSaveTransferTest.prepare
+        def prepare(case, **kwargs):
+            data = json.loads(case.terrain.read_bytes())
+            data.update(schema_version=9, gameplay_areas=[dict(parent_map_id=page,
+                        size='small', maps=[page]) for page in range(0xA0, 0xC0)], boat_transport=None,
+                        next_flight_point_id=1, whirlpool_transport=None, next_native_resource_id=2)
+            for row in data['maps']:
+                row['authoring']['properties'].update(mosaic=0, subscreen_overlay=255,
+                                                     area_specific_bg_color=None)
+                row['authoring']['native_resources'] = dict(secrets=[],
+                    event_behavior=dict(kind='native_secret_v1'))
+            data['maps'][0]['authoring']['native_resources']['secrets'] = [
+                dict(id=1, x=3, y=4, secret_id=0x82)]
+            case.terrain.write_bytes(X.P.encoded(data))
+            case.inputs['terrain'] = X.Q.bound(case.terrain)
+            case.save['artifacts'] = case.artifacts(case.inputs)
+            case.receipt.write_bytes(X.P.encoded(case.save))
+            case.proof.clear(); case.proof.update(observation(case.rom.read_bytes(), data)[1])
+            case.proof['terrain_sha256'] = X.R.sha(case.terrain.read_bytes())
+            return original_prepare(case, **kwargs)
+        self.c = source_fixtures.CurrentSourceContractTest()
+        with mock.patch.object(save_fixtures.CurrentSaveTransferTest, 'prepare', prepare):
+            self.c.setUp()
+        self.addCleanup(self.c.doCleanups)
+        self.root = self.c.fixture.root
+        self.ledger_path = self.root / 'Config/allocation_ownership.json'
+        self.ledger = json.loads(self.ledger_path.read_bytes())
+        native = self.root / 'Overworld/lyra_native_loaders.asm'
+        native.write_bytes((ROOT / 'Overworld/lyra_native_loaders.asm').read_bytes())
+        base_set = 'lyra_ferry_visual_boundary_53'
+        self.ledger['sources'][base_set + ':' + native.relative_to(self.root).as_posix()] = dict(
+            source_set=base_set, path=native.relative_to(self.root).as_posix(),
+            sha256=X.R.sha(native.read_bytes()))
+        relatives = {row['path'] for row in self.ledger['sources'].values()} | set(X.RESIDENT_ADDITIONAL_SOURCES)
+        for relative in X.RESIDENT_ADDITIONAL_SOURCES:
+            path = self.root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes((ROOT / relative).read_bytes())
+        name = X.HIDDEN_STREAMS_SOURCE_SET
+        self.ledger['source_sets'][name] = 'Synthetic committed host bank-binding fixture'
+        for relative in sorted(relatives):
+            self.ledger['sources'][name + ':' + relative] = dict(source_set=name,
+                path=relative, sha256=X.R.sha((self.root / relative).read_bytes()))
+        source_id = name + ':Overworld/lyra_native_loaders.asm'
+        self.claim = dict(id=X.HIDDEN_STREAMS_CLAIM, owner='Host E3 fixture',
+            space='snes_rom', base=0xE38000, size=0x8000, status='shared', condition={},
+            lifetime='Host only', reset='ROM', save='No saved flags', provenance=[source_id],
+            binding=dict(source=source_id, symbol='Lyra_CurrentHiddenStreamsReservationBase',
+                         bank00_mirror=False))
+        self.ledger['claims'].append(self.claim)
+        self.c.value['origins']['hidden_streams'] = dict(pc=[0x318000, 0x320000],
+            snes=[0xE38000, 0xE40000], source_binding=X.Q.bound(native))
+        self.c.value['ledger']['source_set'] = name
+        self.refresh()
+        self.source, self.document = self.c.inputs()
+
+    def refresh(self):
+        self.ledger_path.write_bytes(X.P.encoded(self.ledger))
+        self.c.fixture.commit()
+        self.c.fixture.head = self.c.fixture.git('rev-parse', 'HEAD').strip()
+        self.c.fixture.refresh_proposal_source()
+        self.c.review = self.c.fixture.review()
+        self.c.value['ledger']['sha256'] = X.Q.bound(self.ledger_path)['sha256']
+        self.c.write()
+
+    def test_saved_source_and_exclusive_bank_bind_storage_without_gameplay_admission(self):
+        profile = self.c.profile()
+        result = X.current_hidden_streams(profile, self.source, self.document)
+        self.assertEqual(result['payload_bytes'], 67)
+        self.assertEqual(bytes.fromhex(result['payload_hex'])[:5], bytes.fromhex('060282ffff'))
+        self.assertEqual(result['reservation_claim'], self.claim)
+        self.assertEqual(result['source_contract'], profile['contract'])
+        for flag in ('publication_authorized', 'ordinary_build_ready', 'runtime_admission',
+                     'resource_closure_verified', 'pickup_state_selected', 'rom_written'):
+            self.assertIs(result[flag], False)
+        with self.assertRaisesRegex(ValueError, 'CURRENT_NATIVE_RESOURCES_UNBOUND'):
+            X.verify_current_native_source_profile(profile, self.source, self.document)
+
+    def test_wrong_bank_or_missing_claim_or_competing_owner_refuses(self):
+        for mode in ('bank', 'claim', 'competing_owner', 'old_source_set'):
+            contract, ledger = copy.deepcopy(self.c.value), copy.deepcopy(self.ledger)
+            if mode == 'bank': contract['origins']['hidden_streams']['pc'][0] += 1
+            elif mode == 'claim': ledger['claims'].clear()
+            elif mode == 'competing_owner': ledger['claims'].append(dict(
+                id='OtherOwner', space='pc_rom', base=0x318010, size=1))
+            else: contract['ledger']['source_set'] = X.RESIDENT_SOURCE_SET
+            with self.subTest(mode=mode), self.assertRaisesRegex(ValueError, 'HIDDEN_STREAM_'):
+                X._hidden_streams_reservation(contract, ledger)
+
+    def test_forged_or_stale_profile_source_document_and_contract_refuse(self):
+        from dataclasses import replace
+        profile = self.c.profile()
+        stale = copy.deepcopy(profile); stale['runtime_admission'] = True
+        changed = replace(self.document, next_native_resource_id=3)
+        for candidate, source, document in ((stale, self.source, self.document),
+                (profile, self.source[:-1] + b'\x42', self.document),
+                (profile, self.source, changed)):
+            with self.subTest(profile=candidate is stale), self.assertRaisesRegex(ValueError,
+                    'CURRENT_SOURCE_PROFILE_STALE'):
+                X.current_hidden_streams(candidate, source, document)
+        self.c.value['origins']['hidden_streams']['snes'][0] += 1
+        self.c.write()
+        with self.assertRaises(ValueError):
+            X.current_hidden_streams(profile, self.source, self.document)
 
 
 if __name__ == '__main__':

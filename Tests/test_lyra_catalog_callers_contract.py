@@ -77,7 +77,10 @@ class CatalogCallersContractTest(unittest.TestCase):
     def setUp(self):
         self.ledger_raw = (ROOT / LEDGER).read_bytes()
         self.ledger = json.loads(self.ledger_raw)
-        self.contract = json.loads((ROOT / CONTRACT).read_bytes())
+        self.contract = json.loads(snapshots.read_snapshot('6abf6b069128a559a2a34914d42ee50589c967c1', CONTRACT))
+        # Select the frozen55 records inside today's exact ledger. This does
+        # not repin any historical consumer or make the current tree match it.
+        self.contract['ledger']['sha256'] = P.R.sha(self.ledger_raw)
         self.historical_records = [row for row in self.ledger['sources'].values()
                                    if row['source_set'] == HISTORICAL_GAMEPLAY_SET]
         self.records = [row for row in self.ledger['sources'].values()
@@ -174,7 +177,7 @@ class CatalogCallersContractTest(unittest.TestCase):
                           lambda: self.compose(self.bound_contract())):
             with self.assertRaisesRegex(ValueError,
                     re.escape('Current source-set consumer changed: '
-                              'Overworld/lyra_resident_atlas.asm')):
+                              'Overworld/ZSCustomOverworld.asm')):
                 operation()
 
     def test_frozen_ledger_and_frozen_source_set_refuse_the_changed_child(self):
@@ -271,8 +274,14 @@ class SourceSnapshotIntegrityTest(unittest.TestCase):
         self.assertEqual(hashlib.sha256(raw).hexdigest(),
                          'fef064079785a6d9322908e9c342dac58920cffb4eb697f73573fcb2805f0fed')
 
-    def test_all43_pinned_snapshots_load_without_git_or_network(self):
-        self.assertEqual(len(snapshots.SNAPSHOT_KEYS), 43)
+    def test_original43_manifest_entries_remain_exact(self):
+        manifest = json.loads((ROOT / 'Tests/fixtures/lyra_source_snapshots/manifest.json').read_bytes())
+        raw = (json.dumps(dict(kind=manifest['kind'], snapshots=manifest['snapshots'][:43]), indent=2, sort_keys=True) + '\n').encode()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(),
+                         '1b33d70d07d387bc409609a7df67782531d0ca8ecc045f797419befc908fdb0c')
+
+    def test_all48_pinned_snapshots_load_without_git_or_network(self):
+        self.assertEqual(len(snapshots.SNAPSHOT_KEYS), 48)
         with mock.patch('subprocess.check_output', side_effect=AssertionError('Unexpected Git call')):
             for commit, path in snapshots.SNAPSHOT_KEYS:
                 with self.subTest(commit=commit, path=path):

@@ -1,6 +1,7 @@
 """Resident terrain packing checks using real 3bpp streams, without a game ROM."""
 
 import copy
+from dataclasses import replace
 import hashlib
 import json
 from pathlib import Path
@@ -1146,6 +1147,258 @@ class NativeResourcePlanTest(unittest.TestCase):
             inspection_sha256=sha(R._json_bytes(bad[2])))
         with self.assertRaisesRegex(ValueError, 'NATIVE_PREIMAGE_MISMATCH'):
             self.derive(bad)
+
+
+class HiddenStreamsCodecTest(unittest.TestCase):
+    """Pure native-list encoding; no saved ROM, assembler or runtime claim."""
+
+    @classmethod
+    def setUpClass(cls):
+        source = bytearray(b'\x5A' * 0x200000)
+        cls.native_directory = b''.join(struct.pack('<H', 0x9000 + 3 * page)
+                                        for page in range(160))
+        at = sheet_table.pc(0x82A784)
+        source[at:at + 320] = cls.native_directory
+        cls.source = bytes(source)
+
+    @staticmethod
+    def document(*, size='small', parent=0xA0, counter=1):
+        members = T.gameplay_area_footprint(parent, size)
+        areas = [dict(parent_map_id=parent, size=size, maps=list(members))]
+        areas.extend(dict(parent_map_id=page, size='small', maps=[page])
+                     for page in range(0xA0, 0xC0) if page not in members)
+        authoring = tuple(dict(native_resources=dict(secrets=[], event_behavior=None))
+                          for _ in range(32))
+        return T.TerrainDocument(dict(test='pure hidden-list codec'),
+            (tuple([0] * 1024),) * 32, tuple({} for _ in range(32)),
+            authoring=authoring, gameplay_areas=tuple(areas),
+            next_native_resource_id=counter)
+
+    @staticmethod
+    def add(document, page, *records):
+        document.authoring[page - 0xA0]['native_resources']['secrets'].extend(records)
+
+    def lower(self, document, *, source=None, capacity=0x8000, **overrides):
+        source = self.source if source is None else source
+        expanded = source + b'\xFF' * (0x400000 - len(source))
+        args = dict(data_snes=0xE38000, capacity=capacity,
+                    preimage=expanded[0x318000:0x318000 + capacity])
+        args.update(overrides)
+        return R.lower_hidden_streams(source, document, **args)
+
+    def test_explicit_empty_lists_keep_one_terminator_per_parent_and_native_prefix(self):
+        document = self.document()
+        before = copy.deepcopy(document)
+        with mock.patch.object(Path, 'read_bytes', side_effect=AssertionError('no reads')), \
+             mock.patch.object(Path, 'write_bytes', side_effect=AssertionError('no writes')), \
+             mock.patch.object(Path, 'write_text', side_effect=AssertionError('no writes')):
+            result = self.lower(document)
+        self.assertEqual(document, before)
+        self.assertEqual(bytes.fromhex(result['payload_hex']), b'\xFF\xFF' * 32)
+        self.assertEqual(result['payload_bytes'], 64)
+        self.assertEqual(result['native_prefix_hex'], self.native_directory.hex())
+        pointers = struct.unpack('<32H', bytes.fromhex(result['directory_tail_hex']))
+        self.assertEqual(pointers, tuple(0x8000 + 2 * index for index in range(32)))
+        self.assertEqual(bytes.fromhex(result['directory_hex']),
+                         self.native_directory + struct.pack('<32H', *pointers))
+        self.assertEqual(len(result['streams']), 32)
+        self.assertEqual(result['record_identity_order'], [])
+        self.assertEqual(result['preimage_sha256'], sha(b'\xFF' * 0x8000))
+        for index, stream in enumerate(result['streams']):
+            self.assertEqual(stream['pc'], [0x318000 + 2 * index, 0x318002 + 2 * index])
+            self.assertEqual((stream['record_count'], stream['byte_count']), (0, 2))
+        for key in ('allocation_granted', 'publication_authorized', 'ordinary_build_ready',
+                    'runtime_admission', 'resource_closure_verified',
+                    'pickup_state_selected', 'rom_written'):
+            self.assertIs(result[key], False)
+        self.assertEqual(result, self.lower(document))
+
+    def test_every_page_requires_explicit_selection_and_complete_area_ownership(self):
+        for page in (0xA0, 0xBF):
+            for missing in (False, True):
+                document = self.document()
+                if missing:
+                    document.authoring[page - 0xA0].pop('native_resources')
+                else:
+                    document.authoring[page - 0xA0]['native_resources'] = None
+                with self.subTest(page=page, missing=missing), self.assertRaisesRegex(
+                        ValueError, f'HIDDEN_STREAM_PAGE_UNSELECTED: {page:02X}'):
+                    self.lower(document)
+        document = self.document()
+        with self.assertRaisesRegex(ValueError, 'HIDDEN_STREAM_PAGES_INCOMPLETE'):
+            self.lower(replace(document, authoring=document.authoring[:-1]))
+        with self.assertRaisesRegex(ValueError, 'HIDDEN_STREAM_GAMEPLAY_AREAS_INCOMPLETE'):
+            self.lower(replace(document, gameplay_areas=document.gameplay_areas[:-1]))
+        with self.assertRaisesRegex(ValueError, 'cannot share ownership'):
+            self.lower(replace(document, gameplay_areas=document.gameplay_areas[:-1] +
+                               (document.gameplay_areas[0],)))
+
+    def test_member_coordinates_and_directory_aliases_cover_four_area_sizes(self):
+        for parent, size, page, offset in (
+                (0xA0, 'small', 0xA0, 0x0FBE),
+                (0xA0, 'wide', 0xA1, 0x0FFE),
+                (0xA0, 'tall', 0xA8, 0x1FBE),
+                (0xB0, 'large', 0xB9, 0x1FFE)):
+            with self.subTest(size=size):
+                document = self.document(parent=parent, size=size, counter=2)
+                self.add(document, page, dict(id=1, x=31, y=31, secret_id=0x80))
+                result = self.lower(document)
+                stream = next(row for row in result['streams'] if row['parent_map_id'] == parent)
+                at = stream['binary_offset']
+                self.assertEqual(bytes.fromhex(result['payload_hex'])[at:at + 5],
+                                 struct.pack('<HB', offset, 0x80) + b'\xFF\xFF')
+                pointers = struct.unpack('<32H', bytes.fromhex(result['directory_tail_hex']))
+                self.assertEqual({pointers[member - 0xA0] for member in stream['maps']},
+                                 {stream['snes'] & 0xFFFF})
+                self.assertEqual(len(set(pointers)), len(result['streams']))
+                self.assertEqual(result['payload_bytes'], 3 + 2 * len(result['streams']))
+                self.assertEqual(result['record_identity_order'][0]['native_raw_offset'], offset)
+
+    def test_same_local_position_on_two_members_is_distinct_in_parent_stream(self):
+        document = self.document(size='wide', counter=3)
+        self.add(document, 0xA0, dict(id=1, x=0, y=0, secret_id=1))
+        self.add(document, 0xA1, dict(id=2, x=0, y=0, secret_id=0x86))
+        result = self.lower(document)
+        self.assertEqual(bytes.fromhex(result['payload_hex'])[:8],
+                         bytes.fromhex('000001400086ffff'))
+        self.assertEqual(result['streams'][0]['maps'], [0xA0, 0xA1])
+        self.assertEqual(result['streams'][0]['byte_count'], 8)
+
+    def test_selector_whitelist_is_exact_and_unknown_draft_bytes_do_not_lower(self):
+        allowed = list(range(1, 0x16)) + [0x80, 0x82, 0x86]
+        document = self.document(counter=len(allowed) + 1)
+        for index, code in enumerate(allowed):
+            self.add(document, 0xA0, dict(id=index + 1, x=index, y=0, secret_id=code))
+        result = self.lower(document)
+        expected = b''.join(struct.pack('<HB', index * 2, code)
+                            for index, code in enumerate(allowed)) + b'\xFF\xFF'
+        self.assertEqual(bytes.fromhex(result['payload_hex'])[:len(expected)], expected)
+        for code in (0, 0x16, 0x7F, 0x81, 0x83, 0x84, 0x85, 0x87, 0xFF):
+            document = self.document(counter=2)
+            self.add(document, 0xA0, dict(id=1, x=0, y=0, secret_id=code))
+            with self.subTest(selector=code), self.assertRaisesRegex(
+                    ValueError, 'HIDDEN_STREAM_SECRET_UNSUPPORTED'):
+                self.lower(document)
+
+    def test_record_order_and_ids_survive_as_parallel_metadata_without_native_flag_mapping(self):
+        document = self.document(counter=8)
+        self.add(document, 0xA0, dict(id=7, x=2, y=1, secret_id=1),
+                 dict(id=1, x=1, y=0, secret_id=0x86))
+        result = self.lower(document)
+        self.assertEqual(bytes.fromhex(result['payload_hex'])[:8], bytes.fromhex('840001020086ffff'))
+        records = result['record_identity_order']
+        self.assertEqual([(row['id'], row['ordinal'], row['binary_offset']) for row in records],
+                         [(7, 0, 0), (1, 1, 3)])
+        self.assertTrue(all(row['map_id'] == row['parent_map_id'] == 0xA0 for row in records))
+        changed = self.lower(replace(document, next_native_resource_id=9))
+        self.assertEqual(result['payload_hex'], changed['payload_hex'])
+        self.assertNotEqual(result['document_sha256'], changed['document_sha256'])
+        self.assertNotEqual(result['plan_sha256'], changed['plan_sha256'])
+        reordered = copy.deepcopy(document)
+        reordered.authoring[0]['native_resources']['secrets'].reverse()
+        self.assertNotEqual(result['payload_hex'], self.lower(reordered)['payload_hex'])
+
+    def test_ids_are_global_unique_and_counter_preserves_exhaustion_sentinel(self):
+        for value in (0, -1, True, 0x100000000):
+            document = self.document(counter=2)
+            self.add(document, 0xA0, dict(id=value, x=0, y=0, secret_id=1))
+            with self.subTest(id=value), self.assertRaisesRegex(ValueError, 'HIDDEN_STREAM_RECORD_INVALID'):
+                self.lower(document)
+        document = self.document(counter=3)
+        for page in (0xA0, 0xBF):
+            self.add(document, page, dict(id=1, x=0, y=0, secret_id=1))
+        with self.assertRaisesRegex(ValueError, 'HIDDEN_STREAM_DUPLICATE_ID'):
+            self.lower(document)
+        document = self.document(counter=0x100000000)
+        self.add(document, 0xBF, dict(id=0xFFFFFFFF, x=31, y=31, secret_id=1))
+        result = self.lower(document)
+        self.assertEqual(result['record_identity_order'][0]['id'], 0xFFFFFFFF)
+        for counter in (1, 0xFFFFFFFF):
+            with self.subTest(counter=counter), self.assertRaisesRegex(
+                    ValueError, 'HIDDEN_STREAM_COUNTER_INVALID'):
+                self.lower(replace(document, next_native_resource_id=counter))
+        for counter in (0, True, 0x100000001):
+            with self.subTest(counter=counter), self.assertRaisesRegex(
+                    ValueError, 'Invalid next_native_resource_id'):
+                self.lower(replace(document, next_native_resource_id=counter))
+
+    def test_record_shape_coordinates_and_duplicate_parent_positions_refuse(self):
+        record = dict(id=1, x=0, y=0, secret_id=1)
+        invalid = [dict(record, **{key: value})
+                   for key in ('x', 'y') for value in (-1, 32, True)]
+        invalid.extend((dict(record, secret_id=True), dict(record, extra=0),
+                        {key: value for key, value in record.items() if key != 'x'}))
+        for value in invalid:
+            document = self.document(counter=2)
+            self.add(document, 0xA0, value)
+            with self.subTest(record=value), self.assertRaisesRegex(
+                    ValueError, 'HIDDEN_STREAM_RECORD_INVALID'):
+                self.lower(document)
+        document = self.document(counter=3)
+        self.add(document, 0xA0, record, dict(record, id=2))
+        with self.assertRaisesRegex(ValueError, 'HIDDEN_STREAM_POSITION_CONFLICT'):
+            self.lower(document)
+
+    def test_event_draft_identity_does_not_promote_runtime_or_pickup_admission(self):
+        document = self.document()
+        first = self.lower(document)
+        document.authoring[0]['native_resources']['event_behavior'] = {'kind': 'native_secret_v1'}
+        second = self.lower(document)
+        self.assertEqual(first['payload_hex'], second['payload_hex'])
+        self.assertNotEqual(first['document_sha256'], second['document_sha256'])
+        self.assertIs(second['pickup_state_selected'], False)
+        self.assertIs(second['runtime_admission'], False)
+        for event in ({'kind': 'unknown'}, {'kind': 'native_secret_v1', 'flag': 2}, True):
+            document.authoring[0]['native_resources']['event_behavior'] = event
+            with self.subTest(event=event), self.assertRaisesRegex(ValueError, 'HIDDEN_STREAM_EVENT_INVALID'):
+                self.lower(document)
+
+    def test_origin_capacity_source_and_preimage_are_explicit_and_exact(self):
+        document = self.document()
+        for origin in (True, 0xE38001, 0xE40000, 0xE48000):
+            with self.subTest(origin=origin), self.assertRaisesRegex(ValueError, 'HIDDEN_STREAM_ORIGIN_INVALID'):
+                self.lower(document, data_snes=origin)
+        for capacity in (0, -1, True, 0x8001):
+            with self.subTest(capacity=capacity), self.assertRaisesRegex(ValueError, 'HIDDEN_STREAM_ORIGIN_INVALID'):
+                R.lower_hidden_streams(self.source, document, data_snes=0xE38000,
+                                       capacity=capacity, preimage=b'')
+        for preimage in (b'\x00' * 0x8000, b'\xFF' * 0x7FFF, bytearray(b'\xFF' * 0x8000)):
+            with self.subTest(length=len(preimage)), self.assertRaisesRegex(
+                    ValueError, 'HIDDEN_STREAM_PREIMAGE_MISMATCH'):
+                self.lower(document, preimage=preimage)
+        for source in (self.source[:-1], bytearray(self.source)):
+            with self.subTest(source_type=type(source)), self.assertRaisesRegex(
+                    ValueError, 'HIDDEN_STREAM_DOCUMENT_REQUIRED'):
+                self.lower(document, source=source)
+        with self.assertRaisesRegex(ValueError, 'HIDDEN_STREAM_CAPACITY_EXCEEDED'):
+            self.lower(document, capacity=63)
+        self.assertEqual(self.lower(document, capacity=64)['payload_bytes'], 64)
+        expanded = self.source + b'\xA5' * 0x200000
+        result = self.lower(document, source=expanded)
+        self.assertEqual(result['preimage_sha256'], sha(b'\xA5' * 0x8000))
+        self.assertEqual(result['native_prefix_hex'], self.native_directory.hex())
+
+    def test_full_bank_fit_has_final_terminator_at_fffe_and_overflow_refuses(self):
+        def filled(count):
+            document = self.document(size='wide', counter=count + 1)
+            for index in range(count):
+                page, local = divmod(index, 1024)
+                y, x = divmod(local, 32)
+                self.add(document, 0xA0 + page, dict(id=index + 1, x=x, y=y, secret_id=1))
+            return document
+        document = filled(10902)
+        result = self.lower(document)
+        self.assertEqual(len(result['streams']), 31)
+        self.assertEqual(result['payload_bytes'], 3 * 10902 + 2 * 31)
+        self.assertEqual(result['payload_bytes'], 0x8000)
+        self.assertEqual(result['streams'][-1]['pc'], [0x31FFFE, 0x320000])
+        self.assertEqual(result['streams'][-1]['snes'], 0xE3FFFE)
+        self.assertEqual(bytes.fromhex(result['payload_hex'])[-2:], b'\xFF\xFF')
+        self.assertEqual(struct.unpack('<32H', bytes.fromhex(result['directory_tail_hex']))[-1], 0xFFFE)
+        with self.assertRaisesRegex(ValueError, 'HIDDEN_STREAM_CAPACITY_EXCEEDED'):
+            self.lower(document, capacity=0x7FFF)
+        with self.assertRaisesRegex(ValueError, 'HIDDEN_STREAM_CAPACITY_EXCEEDED'):
+            self.lower(filled(10903))
 
 
 if __name__ == '__main__':

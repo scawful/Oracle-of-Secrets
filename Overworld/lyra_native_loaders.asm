@@ -5,7 +5,22 @@ if defined("LYRA_CURRENT_MODE")
   !LyraNativeCurrentBranch = !LYRA_CURRENT_MODE
 endif
 assert !LyraNativeCurrentBranch == 0 || !LyraNativeCurrentBranch == 1
+if not(defined("LYRA_CURRENT_HIDDEN_STREAMS_BOUND"))
+  !LYRA_CURRENT_HIDDEN_STREAMS_BOUND = 0
+endif
+assert !LYRA_CURRENT_HIDDEN_STREAMS_BOUND == 0 || !LYRA_CURRENT_HIDDEN_STREAMS_BOUND == 1
+if !LYRA_CURRENT_HIDDEN_STREAMS_BOUND == 1
+  assert !LyraNativeCurrentBranch == 1, "Hidden streams require current mode"
+  assert defined("LYRA_CURRENT_HIDDEN_STREAMS_BANK"), "Hidden stream bank is unbound"
+  assert defined("LYRA_CURRENT_HIDDEN_STREAMS_BASE"), "Hidden stream origin is unbound"
+  assert defined("LYRA_CURRENT_HIDDEN_STREAMS_END"), "Hidden stream bound is unbound"
+  assert !LYRA_CURRENT_HIDDEN_STREAMS_BANK == $E3
+  assert !LYRA_CURRENT_HIDDEN_STREAMS_BASE == $E38000
+  assert !LYRA_CURRENT_HIDDEN_STREAMS_END == $E40000
+endif
 if !LyraNativeCurrentBranch == 1
+; Physical ownership marker only; selected runtime origins remain explicit.
+Lyra_CurrentHiddenStreamsReservationBase = $E38000
 assert !LYRA_CURRENT_FIRST == $A0
 assert !LYRA_CURRENT_END == $C0
 assert !LYRA_CURRENT_PARENT_COUNT == $C0
@@ -369,6 +384,19 @@ macro LyraHookshotSubtract(name, old, selected)
 endmacro
 %LyraHookshotSubtract(Lyra_HookshotSubtractY, $288F38, !LYRA_CURRENT_TABLE_transition_y)
 %LyraHookshotSubtract(Lyra_HookshotSubtractX, $289078, !LYRA_CURRENT_TABLE_transition_x)
+; M16/X16. Raw physical DP8A selects only full-word A0..BF, independently
+; of parent040A. Restore P before the final bank load: C/V and all other
+; flags survive except native LDA N/Z. A and DP02/03 hold the bank word;
+; X/Y/DBR/D, DP00/04 and the stack retain their caller values.
+if !LYRA_CURRENT_HIDDEN_STREAMS_BOUND == 1
+Lyra_HiddenStreamsBank:
+    PHP
+    LDA.b $8A : AND.w #$FFE0 : CMP.w #$00A0 : BNE .native
+    PLP : LDA.w #!LYRA_CURRENT_HIDDEN_STREAMS_BANK : STA.b $02 : RTL
+.native:
+    PLP : LDA.w #$009B : STA.b $02 : RTL
+Lyra_HiddenStreamsBank_End:
+endif
 Lyra_CurrentNativeCodeEnd:
 assert pc() <= !LYRA_CURRENT_CODE_END, "Current reader code exceeds explicit origin"
 pullpc
@@ -435,6 +463,16 @@ org $02F394 ; @hook module=Overworld name=Lyra_Size02F394 kind=jsl target=Lyra_R
 assert read4($1BC8B8) == $82A784BF, "Hidden item directory moved"
 org $1BC8B8 ; @hook module=Overworld name=Lyra_HiddenItems kind=jsl target=Lyra_ReadHiddenItems expected_m=16 expected_x=16
     JSL Lyra_ReadHiddenItems
+; BEGIN CURRENT HIDDEN STREAM BANK HOOK
+if !LYRA_CURRENT_HIDDEN_STREAMS_BOUND == 1
+assert read3($1BC8BE) == $009BA9, "Hidden item native bank load moved"
+assert read2($1BC8C1) == $0285, "Hidden item bank pointer store moved"
+org $1BC8BE ; @hook module=Overworld name=Lyra_HiddenStreamsBank kind=jsl target=Lyra_HiddenStreamsBank expected_m=16 expected_x=16 protected_size=5
+LyraCall_HiddenStreamsBank:
+    JSL Lyra_HiddenStreamsBank : NOP
+assert pc() == $1BC8C3
+endif
+; END CURRENT HIDDEN STREAM BANK HOOK
 assert read4($02C4BC) == $6BAB10E2, "Music initializer tail moved"
 org $02C4BC ; @hook module=Overworld name=Lyra_InitMusic kind=jml target=Lyra_InitMusicTail expected_m=8 expected_x=16
     JML Lyra_InitMusicTail

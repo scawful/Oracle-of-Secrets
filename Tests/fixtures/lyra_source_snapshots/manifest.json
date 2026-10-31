@@ -387,6 +387,51 @@
       "gzip_sha256": "8a8e94777d83ee0d670a98af864fe7978d7846e5636b357e24cc40525e1e3e9b",
       "path": "Overworld/lyra_resident_atlas.asm",
       "sha256": "493765e16dbc8aa60fbf812a05529acf90ed3609fc5491969f649c98187be797"
+    },
+    {
+      "byte_count": 195299,
+      "commit": "4f837962377b133f6bf01f5ecd8cb623f921fa71",
+      "git_blob": "f864024807fb97531c8de0ee2dedaf784132a462",
+      "gzip_byte_count": 43483,
+      "gzip_sha256": "0c523782bad993149b77df5448440c3cc335cac9f535343f80e621cc48e221a0",
+      "path": "Overworld/ZSCustomOverworld.asm",
+      "sha256": "9bb9f0ae180128bdf8ce461ae0f0d760699f5c78f9d2c33112ab91d7650cf6c2"
+    },
+    {
+      "byte_count": 30899,
+      "commit": "4f837962377b133f6bf01f5ecd8cb623f921fa71",
+      "git_blob": "32532534c4fa2d7704775c91fdfa2bdda5ef4211",
+      "gzip_byte_count": 6191,
+      "gzip_sha256": "79df9062c6625d8dea725a671dd6975cb57e6734aaa923bdef33f9efa2d2c8fb",
+      "path": "Overworld/lyra_native_loaders.asm",
+      "sha256": "5fcbbaa4ab6fa356216270853b68afc19dcb9aaaae0c68d3c3b200a696c11bce"
+    },
+    {
+      "byte_count": 119551,
+      "commit": "4f837962377b133f6bf01f5ecd8cb623f921fa71",
+      "git_blob": "f97f9042d99771af5173539824dab8b1d5f73b0f",
+      "gzip_byte_count": 32076,
+      "gzip_sha256": "da15f8a4ec545bac83f9f070dacbb1fc83eaeba47f63c61f629ce00d71ff6c11",
+      "path": "Scripts/Build/lyra_native_loaders.py",
+      "sha256": "93d46ce82d33ccd4ac7a45e5bfd771f1ad64af037a22ee52d427db9475c3b099"
+    },
+    {
+      "byte_count": 4348,
+      "commit": "6abf6b069128a559a2a34914d42ee50589c967c1",
+      "git_blob": "f563be3752d4e30432888672fd8a959f61ddbb76",
+      "gzip_byte_count": 1226,
+      "gzip_sha256": "66183c78ef0f23517b70caac27aa8cdfbd375529fa21e2f596afdc52157bb81e",
+      "path": "Config/lyra_current_source_contract.json",
+      "sha256": "2e14797865500905c5fc08eb5433da75510a6e69f37ff734062e4a599e469933"
+    },
+    {
+      "byte_count": 21941,
+      "commit": "4f837962377b133f6bf01f5ecd8cb623f921fa71",
+      "git_blob": "de5e4c9e3491acfac833673a349f49816c8d6f7d",
+      "gzip_byte_count": 5732,
+      "gzip_sha256": "ee75c80e3851063d4d4a97539dc0e517b3f50326e29f785a0e935f1ad7e38ef9",
+      "path": "Scripts/Generate/asm_source.py",
+      "sha256": "189a1a66b9ebf307c0c5437c5ea78384590fa39cf4aab7f6562097e989797f50"
     }
   ]
 }

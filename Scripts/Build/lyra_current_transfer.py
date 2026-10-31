@@ -43,6 +43,8 @@ CURRENT_SOURCE_CONTRACT = Path(__file__).resolve().parents[2] / 'Config/lyra_cur
 CURRENT_CONTRACT_KIND = 'lyra.current_engine_source_contract.v1'
 CURRENT_PROFILE_KIND = 'lyra.current_native_source_profile.v1'
 RESIDENT_SOURCE_SET = 'lyra_current_resident_conditional_55'
+HIDDEN_STREAMS_SOURCE_SET = 'lyra_current_hidden_streams_56'
+HIDDEN_STREAMS_CLAIM = 'LyraCurrentHiddenStreamsE3'
 RESIDENT_ADDITIONAL_SOURCES = (
     'Overworld/lyra_resident_atlas.asm', 'Overworld/lyra_resident_resources.asm',
     'Scripts/Build/lyra_native_streams.py', 'Scripts/Build/lyra_project_allocation.py',
@@ -1097,8 +1099,8 @@ def validate_current_source_contract(review, project, base_rom, *, contract_path
     # separately selected source set to this exact engine revision as well.
     current_bindings = P.validate_current_source_set(value)
     relatives = [Path(row['path']).relative_to(root).as_posix() for row in current_bindings]
-    if ledger['source_set'] == RESIDENT_SOURCE_SET:
-        source_ledger = _json(Q.read_bound(context['ledger']))
+    source_ledger = _json(Q.read_bound(context['ledger']))
+    if ledger['source_set'] in (RESIDENT_SOURCE_SET, HIDDEN_STREAMS_SOURCE_SET):
         historical = {row['path'] for row in source_ledger['sources'].values()
                       if row.get('source_set') == 'lyra_ferry_visual_boundary_53'}
         R.require(historical and set(relatives) == historical | set(RESIDENT_ADDITIONAL_SOURCES)
@@ -1109,7 +1111,8 @@ def validate_current_source_contract(review, project, base_rom, *, contract_path
         R.require(Q.read_bound(row) == committed[relative],
                   'CURRENT_SOURCE_SET_ENGINE_MISMATCH: ' + relative)
     origins = value['origins']
-    optional_origins = {'actors', 'resident_data', 'resident_code', 'resident_resource_code'}
+    optional_origins = {'actors', 'resident_data', 'resident_code', 'resident_resource_code',
+                        'hidden_streams'}
     _keys(origins, {'tables', 'code', 'descriptor', 'bg_palette', 'graphics'}
           | (optional_origins & set(origins)), 'current source origins')
     missing = [key for key, origin in origins.items() if origin is None]
@@ -1130,6 +1133,8 @@ def validate_current_source_contract(review, project, base_rom, *, contract_path
         R.require(not any(pc_span[0] < hi and lo < pc_span[1] for lo, hi in origin_spans),
                   'Current source origin ranges overlap')
         origin_spans.append(tuple(pc_span))
+    if 'hidden_streams' in origins:
+        _hidden_streams_reservation(value, source_ledger)
     R.require(origins['tables']['pc'][1] - origins['tables']['pc'][0] >= table_bytes,
               'CURRENT_SOURCE_TABLES_INCOMPLETE: table origin cannot hold every192-row family')
     Q.read_bound(binding)
@@ -1146,6 +1151,83 @@ def current_native_source_profile(review, project, base_rom, *, contract_path=No
     contract = validate_current_source_contract(review, project, base_rom, contract_path=contract_path)
     return dict(contract, kind=CURRENT_PROFILE_KIND, review=review, project=str(Path(project).resolve()),
         base_rom=str(Path(base_rom).resolve()))
+
+
+def _hidden_streams_reservation(contract, ledger):
+    """Match the one human-released bank; no generic allocation exception."""
+    R.require(contract['ledger']['source_set'] == HIDDEN_STREAMS_SOURCE_SET,
+              'HIDDEN_STREAM_SOURCE_SET_REQUIRED')
+    origin = contract['origins'].get('hidden_streams')
+    R.require(type(origin) is dict and origin.get('pc') == [0x318000, 0x320000]
+              and origin.get('snes') == [0xE38000, 0xE40000], 'HIDDEN_STREAM_ORIGIN_UNBOUND')
+    claims = [row for row in ledger['claims'] if row['id'] == HIDDEN_STREAMS_CLAIM]
+    source_id = HIDDEN_STREAMS_SOURCE_SET + ':Overworld/lyra_native_loaders.asm'
+    R.require(len(claims) == 1, 'HIDDEN_STREAM_RESERVATION_UNBOUND')
+    claim = claims[0]
+    R.require(claim.get('space') == 'snes_rom' and claim.get('base') == 0xE38000
+              and claim.get('size') == 0x8000 and claim.get('status') == 'shared'
+              and claim.get('condition') == {} and claim.get('provenance') == [source_id]
+              and claim.get('binding') == dict(source=source_id,
+                  symbol='Lyra_CurrentHiddenStreamsReservationBase', bank00_mirror=False),
+              'HIDDEN_STREAM_RESERVATION_MISMATCH')
+    bound = ledger['sources'].get(source_id)
+    R.require(type(bound) is dict and bound.get('source_set') == HIDDEN_STREAMS_SOURCE_SET
+              and bound.get('path') == 'Overworld/lyra_native_loaders.asm'
+              and origin['source_binding'] == dict(path=str(Path(P.ROOT) / bound['path']),
+                                                  sha256=bound['sha256']),
+              'HIDDEN_STREAM_RESERVATION_SOURCE_MISMATCH')
+    raw = Q.read_bound(origin['source_binding']).decode('utf-8')
+    R.require(re.findall(r'^\s*Lyra_CurrentHiddenStreamsReservationBase\s*=\s*\$([0-9A-Fa-f]+)\b',
+                        raw, re.M) == ['E38000'], 'HIDDEN_STREAM_RESERVATION_SYMBOL_MISMATCH')
+    # Physical reservation and broad runtime/publication authority are separate.
+    # All other owners, even conditional ones, must remain disjoint from E3.
+    for other in ledger['claims']:
+        if other is claim or other.get('base') is None or other.get('size') is None:
+            continue
+        if other.get('space') == 'pc_rom':
+            lo, hi = other['base'], other['base'] + other['size']
+        elif other.get('space') == 'snes_rom':
+            lo = A.pc(other['base'])
+            hi = A.pc(other['base'] + other['size'] - 1) + 1
+        else:
+            continue
+        R.require(not (lo < 0x320000 and 0x318000 < hi),
+                  'HIDDEN_STREAM_RESERVATION_CONFLICT: ' + other['id'])
+    return claim
+
+
+def current_hidden_streams(profile, source, document):
+    """Authenticate saved inputs and encode E3 storage without admitting gameplay.
+
+    Generic current/resident preparation still refuses unclosed schema9
+    resources. This narrow review supplies bank bytes and directory pointers;
+    it grants no event, emitter, pickup-state or ordinary-build admission.
+    """
+    import lyra_resident_graphics as resident
+    R.require(type(profile) is dict and profile.get('kind') == CURRENT_PROFILE_KIND,
+              'CURRENT_SOURCE_PROFILE_REQUIRED')
+    fresh = current_native_source_profile(profile['review'], profile['project'], profile['base_rom'],
+                                         contract_path=profile['contract']['path'])
+    R.require(profile == fresh and profile['source_rom_sha256'] == R.sha(source)
+              and profile['source_size'] == len(source)
+              and profile['document_sha256'] == _document_identity(document),
+              'CURRENT_SOURCE_PROFILE_STALE: hidden-stream inputs changed')
+    contract = _json(Q.read_bound(profile['contract']))
+    ledger = _json(Q.read_bound(profile['selected_source']['ledger']))
+    claim = _hidden_streams_reservation(contract, ledger)
+    origin = contract['origins']['hidden_streams']
+    lo, hi = origin['pc']
+    result = resident.lower_hidden_streams(source, document, data_snes=origin['snes'][0],
+        capacity=hi - lo, preimage=A.expanded_rom(source)[lo:hi])
+    result.update(source_contract=profile['contract'], reservation_claim=dict(claim),
+                  current_source_bindings=profile['current_source_bindings'])
+    result.pop('plan_sha256')
+    result['plan_sha256'] = R.sha(P.encoded(result))
+    # Re-read authority and Save bindings after the pure codec as well.
+    R.require(profile == current_native_source_profile(profile['review'], profile['project'],
+              profile['base_rom'], contract_path=profile['contract']['path']),
+              'CURRENT_SOURCE_PROFILE_STALE: hidden-stream review changed')
+    return result
 
 
 def verify_current_native_source_profile(profile, source, document, *, allocation=None,

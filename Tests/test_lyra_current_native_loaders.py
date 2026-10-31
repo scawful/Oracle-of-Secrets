@@ -293,6 +293,251 @@ class CurrentNativeLoaderTests(unittest.TestCase):
                          '0700b57cfa3b594160c63d46ecff6dfbcc40b518ead16ff114b01ba64da7c97d')
 
 
+class CurrentHiddenStreamsInspectorTest(unittest.TestCase):
+    """Synthetic byte windows exercise the real optional compiled inspector."""
+    @staticmethod
+    def fixture():
+        compiled = bytearray(0x400000)
+        helper = 0xE0CDCE
+        labels = dict(Lyra_CurrentNativeCodeStart=0xE0C000,
+            Lyra_CurrentNativeCodeEnd=helper+25, Lyra_HiddenStreamsBank=helper,
+            Lyra_HiddenStreamsBank_End=helper+25, LyraCall_HiddenStreamsBank=0x1BC8BE,
+            Lyra_HiddenStreamsGuard=0x1BC8B1)
+        for site, raw in ((helper, L.CURRENT_HIDDEN_STREAMS_BANK_BYTES),
+                (0x1BC8BE, b'\x22'+helper.to_bytes(3, 'little')+b'\xea'),
+                (0x1BC8B1, L.CURRENT_HIDDEN_STREAMS_GUARD_BYTES)):
+            compiled[L.A.pc(site):L.A.pc(site)+len(raw)] = raw
+        return compiled, labels
+
+    def test_optional_off_is_absent_and_required_or_partial_binding_refuses(self):
+        self.assertIsNone(L.inspect_current_hidden_streams_adapter(b'', {}))
+        with self.assertRaisesRegex(ValueError, 'COMPILED_BINDING_REQUIRED'):
+            L.inspect_current_hidden_streams_adapter(b'', {}, required=True)
+        for required in (0, 1, None):
+            with self.subTest(required=required), self.assertRaisesRegex(ValueError, 'SELECTION_INVALID'):
+                L.inspect_current_hidden_streams_adapter(b'', {}, required=required)
+        compiled, labels = self.fixture()
+        for name in ('Lyra_HiddenStreamsBank', 'Lyra_HiddenStreamsBank_End',
+                     'LyraCall_HiddenStreamsBank', 'Lyra_HiddenStreamsGuard'):
+            with self.subTest(missing=name), self.assertRaisesRegex(ValueError, 'SYMBOLS_INCOMPLETE'):
+                L.inspect_current_hidden_streams_adapter(compiled,
+                    {k:v for k,v in labels.items() if k != name})
+
+    def test_exact_selected_binding_reports_only_the_bank_adapter(self):
+        compiled, labels = self.fixture()
+        result = L.inspect_current_hidden_streams_adapter(compiled, labels, required=True)
+        self.assertEqual(result['helper_snes'], [0xE0CDCE, 0xE0CDE7])
+        self.assertEqual((result['native_bank'], result['tail_bank']), (0x9B, 0xE3))
+        self.assertEqual(result['physical_selector_dp'], 0x8A)
+        self.assertEqual(result['tail_stream_snes'], [0xE38000, 0xE40000])
+        self.assertEqual(result['scope'], 'bank_selection_only')
+        self.assertIs(result['pickup_state_implemented'], False)
+
+    def test_wrong_native_bank_tail_bank_guard_hook_or_helper_owner_refuses(self):
+        compiled, labels = self.fixture()
+        for offset in (0, 2, 5, 10, 13, 16, 20, 23, 24):
+            changed = bytearray(compiled)
+            changed[L.A.pc(labels['Lyra_HiddenStreamsBank'])+offset] ^= 1
+            with self.subTest(helper_byte=offset), self.assertRaisesRegex(ValueError, 'HELPER_BODY'):
+                L.inspect_current_hidden_streams_adapter(changed, labels)
+        for site, failure in ((0x1BC8B1, 'PREACCESS_GUARD'), (0x1BC8BE, 'BANK_HOOK')):
+            changed = bytearray(compiled)
+            changed[L.A.pc(site)+1] ^= 1
+            with self.subTest(site=site), self.assertRaisesRegex(ValueError, failure):
+                L.inspect_current_hidden_streams_adapter(changed, labels)
+        for name, value in (('Lyra_CurrentNativeCodeStart', 0xF88600),
+                            ('Lyra_CurrentNativeCodeEnd', 0xE0D001),
+                            ('Lyra_HiddenStreamsBank_End', 0xE0CDE8)):
+            with self.subTest(symbol=name), self.assertRaisesRegex(ValueError, 'HELPER_EXTENT'):
+                L.inspect_current_hidden_streams_adapter(compiled, dict(labels, **{name:value}))
+
+
+class CurrentHiddenStreamsCpuTest(unittest.TestCase):
+    """Sparse actual-source CPU checks; synthetic continuations are not gameplay.
+
+    An explicit LYRA_HIDDEN_STREAMS_CPU_OUTPUT directory retains every fixture
+    under the coordinator's selected private evidence root. Nothing runs on
+    import, and ordinary test runs without this opt-in write no ROM.
+    """
+    @classmethod
+    def setUpClass(cls):
+        output = os.environ.get('LYRA_HIDDEN_STREAMS_CPU_OUTPUT')
+        cls.asar = os.environ.get('ASAR_BIN') or shutil.which('asar')
+        cls.runner = os.environ.get('OOS_CPU_RUNNER')
+        if not output or not cls.asar or not cls.runner:
+            raise unittest.SkipTest('Select LYRA_HIDDEN_STREAMS_CPU_OUTPUT, ASAR_BIN and OOS_CPU_RUNNER')
+        root = Path(__file__).resolve().parents[1]
+        cls.folder = Path(output).absolute()
+        if (cls.folder.exists() or cls.folder.resolve() != cls.folder
+                or cls.folder.is_relative_to(root) or root.is_relative_to(cls.folder)):
+            raise AssertionError('Hidden-stream CPU output must be new, external and canonical')
+        native = (root/'Overworld/lyra_native_loaders.asm').read_text()
+        zsc = (root/'Overworld/ZSCustomOverworld.asm').read_text()
+        cls.validation = native.split('if not(defined("LYRA_CURRENT_HIDDEN_STREAMS_BOUND"))', 1)[1]
+        cls.validation = 'if not(defined("LYRA_CURRENT_HIDDEN_STREAMS_BOUND"))'+cls.validation.split(
+            'if !LyraNativeCurrentBranch == 1', 1)[0]
+        cls.helper = native[native.index('if !LYRA_CURRENT_HIDDEN_STREAMS_BOUND == 1\nLyra_HiddenStreamsBank:'):
+                            native.index('Lyra_CurrentNativeCodeEnd:')]
+        cls.guard = zsc.split('; BEGIN CURRENT HIDDEN STREAM GUARD\n', 1)[1].split(
+            '; END CURRENT HIDDEN STREAM GUARD', 1)[0]
+        cls.bank_hook = native.split('; BEGIN CURRENT HIDDEN STREAM BANK HOOK\n', 1)[1].split(
+            '; END CURRENT HIDDEN STREAM BANK HOOK', 1)[0]
+        cls.constants = ('!LyraNativeCurrentBranch = 1\n!LYRA_CURRENT_MODE = 1\n'
+            '!LYRA_CURRENT_HIDDEN_STREAMS_BOUND = 1\n!LYRA_CURRENT_HIDDEN_STREAMS_BANK = $E3\n'
+            '!LYRA_CURRENT_HIDDEN_STREAMS_BASE = $E38000\n!LYRA_CURRENT_HIDDEN_STREAMS_END = $E40000\n')
+        seed = bytearray(0x400000)
+        def put(site, raw):
+            seed[L.A.pc(site):L.A.pc(site)+len(raw)] = raw
+        # Original saved preimages; only the two maintained hook blocks patch them.
+        put(0x1BC8B1, bytes.fromhex('c98000b07d0aaabf84a7828500a99b008502'))
+        put(0x1BC8C3, b'\x6b')  # Synthetic valid continuation returns to the runner.
+        put(0x1BC933, b'\x18\x6b')  # Synthetic native no-match CLC/RTL continuation.
+        cls.directory = b''.join((0x8000+i*3).to_bytes(2, 'little') for i in range(192))
+        put(0x82A784, cls.directory)
+        cls.native_data = bytes((i*7+3)&255 for i in range(0x2000))
+        put(0x9B8000, cls.native_data)
+        cls.seed = bytes(seed)
+        cls.folder.mkdir(parents=True)
+        cls.image, result = cls.assemble('enabled', cls.constants)
+        if result.returncode:
+            raise AssertionError(result.stdout+result.stderr)
+        cls.labels = L._labels(cls.image.with_suffix('.sym').read_bytes())
+
+    @classmethod
+    def assemble(cls, name, constants, *, seed=None):
+        image, driver = cls.folder/(name+'.sfc'), cls.folder/(name+'.asm')
+        image.write_bytes(cls.seed if seed is None else seed)
+        driver.write_text('lorom\n'+constants+cls.validation+'\norg $E0CDCE\n'+cls.helper+
+                          cls.guard+cls.bank_hook)
+        result = subprocess.run([cls.asar, '--no-title-check', '--fix-checksum=off',
+            '--symbols=wla', str(driver), str(image)], capture_output=True, text=True, timeout=20)
+        (cls.folder/(name+'-asar.log')).write_text(result.stdout+result.stderr)
+        return image, result
+
+    def run_cpu(self, name, requests):
+        raw = ''.join(json.dumps(row)+'\n' for row in requests)
+        (self.folder/(name+'-requests.jsonl')).write_text(raw)
+        result = subprocess.run([self.runner, str(self.image)], input=raw,
+                                capture_output=True, text=True, timeout=20)
+        (self.folder/(name+'-results.jsonl')).write_text(result.stdout)
+        (self.folder/(name+'-stderr.log')).write_text(result.stderr)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        rows = [json.loads(line) for line in result.stdout.splitlines()]
+        self.assertEqual(len(rows), len(requests))
+        return rows
+
+    def test_unbound_disabled_invalid_flag_mode_and_bank_origin_controls(self):
+        for name, constants in (('disabled', self.constants.replace('BOUND = 1', 'BOUND = 0')),
+                                ('undefined', '!LyraNativeCurrentBranch = 0\n')):
+            image, result = self.assemble(name, constants)
+            self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+            expected = bytearray(self.seed)
+            expected[L.A.pc(0x1BC8B4):L.A.pc(0x1BC8B6)] = b'\xea\xea'
+            self.assertEqual(image.read_bytes(), bytes(expected))
+        for name, constants in (
+                ('flag', self.constants.replace('BOUND = 1', 'BOUND = 2')),
+                ('mode', self.constants.replace('LyraNativeCurrentBranch = 1', 'LyraNativeCurrentBranch = 0')),
+                ('missing-bank', self.constants.replace('!LYRA_CURRENT_HIDDEN_STREAMS_BANK = $E3\n', '')),
+                ('bank', self.constants.replace('BANK = $E3', 'BANK = $9B')),
+                ('base', self.constants.replace('BASE = $E38000', 'BASE = $E38001')),
+                ('end', self.constants.replace('END = $E40000', 'END = $E48000'))):
+            with self.subTest(gate=name):
+                _, result = self.assemble(name, constants)
+                self.assertNotEqual(result.returncode, 0)
+        legacy = bytearray(self.seed)
+        at = L.A.pc(0x1BC8B4)
+        legacy[at:at+2] = b'\xea\xea'
+        image, result = self.assemble('enabled-legacy-nops', self.constants, seed=bytes(legacy))
+        self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+        self.assertEqual(image.read_bytes(), self.image.read_bytes())
+        guard = L.A.pc(0x1BC8B1)
+        self.assertEqual(image.read_bytes()[guard:guard+5], L.CURRENT_HIDDEN_STREAMS_GUARD_BYTES)
+        for name, branch in (('unknown-zero-branch', b'\x00\x00'),
+                             ('unknown-displacement', b'\xb0\x7c')):
+            changed = bytearray(self.seed)
+            changed[at:at+2] = branch
+            with self.subTest(preimage=name):
+                _, result = self.assemble(name, self.constants, seed=bytes(changed))
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('Hidden item native no-match branch moved', result.stdout+result.stderr)
+
+    def test_helper_preserves_abi_scratch_and_resets_native_after_tail(self):
+        contexts, requests = [], []
+        for raw in (0, 0x7F, 0x80, 0x9F, 0xA0, 0xBF, 0xC0, 0x0100, 0x8000, 0xFFFF):
+            for p in (0, 1, 0x40, 0x41, 0x08, 0x49, 0x82, 0xCB):
+                d = 0x120 if p&1 else 0
+                regs = dict(a=0xABCD, x=0x4567, y=0x7654, p=p, db=8, d=d, sp=0x1FFF)
+                values = {d:0xA55A, d+2:0xFEFF, d+4:0xBCDE, d+0x8A:raw,
+                          0x040A:0x9F if raw == 0xA0 else 0xA0}
+                requests.append(dict(entry=self.labels['Lyra_HiddenStreamsBank'], reset_ram=True,
+                    registers=regs, writes=[dict(address=0x7E0000+at, bytes=list(value.to_bytes(2, 'little')))
+                                           for at,value in values.items()],
+                    reads=[dict(address=0x7E0000+at, length=2) for at in values],
+                    trace_writes=True, max_steps=50))
+                contexts.append((raw, regs, values))
+        # Keep DP02 from the previous call, so a native lookup must actively reset E3 to9B.
+        for i, raw in enumerate((0xA0, 0x9F, 0xBF, 0, 0xC0)):
+            regs = dict(a=0x9876, x=0x4567, y=0x7654, p=0x41, db=0x7E, d=0, sp=0x1FFF)
+            values = {0:0xA55A, 4:0xBCDE, 0x8A:raw, 0x040A:0xA0}
+            requests.append(dict(entry=self.labels['Lyra_HiddenStreamsBank'], reset_ram=i == 0,
+                registers=regs, writes=[dict(address=0x7E0000+at, bytes=list(value.to_bytes(2, 'little')))
+                                       for at,value in values.items()],
+                reads=[dict(address=0x7E0000+at, length=2) for at in (0, 2, 4, 0x8A, 0x040A)],
+                trace_writes=True, max_steps=50))
+            contexts.append((raw, regs, values))
+        for (raw, regs, values), row in zip(contexts, self.run_cpu('helper', requests)):
+            with self.subTest(raw=raw, p=regs['p'], d=regs['d']):
+                self.assertTrue(row['returned'], row)
+                self.assertFalse(row.get('stub_calls'))
+                self.assertFalse(row.get('mmio_writes'))
+                expected = 0xE3 if 0xA0 <= raw < 0xC0 else 0x9B
+                cpu = row['registers']
+                self.assertEqual(cpu['a'], expected)
+                self.assertEqual(cpu['p'], regs['p']&~0x82)
+                for name in ('x', 'y', 'db', 'd', 'sp'):
+                    self.assertEqual(cpu[name], regs[name])
+                observed = {read['address']&65535:int.from_bytes(bytes(read['bytes']), 'little')
+                            for read in row['reads']}
+                self.assertEqual(observed[regs['d']+2], expected)
+                for at,value in values.items():
+                    if at != regs['d']+2:
+                        self.assertEqual(observed[at], value)
+                allowed = {regs['d']+2, regs['d']+3} | set(range(0x1F80, 0x2000))
+                for write in row['writes']:
+                    self.assertIn(write['address']&65535, allowed)
+
+    def test_preaccess_guard_rejects_fullword_aliases_and_native_regions_are_unchanged(self):
+        requests, values = [], []
+        checkpoints = [0x1BC8B6, 0x1BC8B8, 0x1BC8BE]
+        for raw in (0, 0x9F, 0xA0, 0xBF, 0xC0, 0x0100, 0xFFFF):
+            requests.append(dict(entry=0x1BC8B1, reset_ram=True,
+                registers=dict(a=raw, x=0x7777, y=0x7654, p=0x41, db=8, d=0, sp=0x1FFF),
+                writes=[dict(address=0x7E0000, bytes=list(bytes.fromhex('5aa5effedebc'))),
+                        dict(address=0x7E008A, bytes=list(raw.to_bytes(2, 'little'))),
+                        dict(address=0x7E040A, bytes=[0xA0, 0])],
+                reads=[dict(address=0x7E0000, length=6)], checkpoints=checkpoints,
+                trace_writes=True, max_steps=100))
+            values.append(raw)
+        for raw, row in zip(values, self.run_cpu('guard', requests)):
+            with self.subTest(raw=raw):
+                self.assertTrue(row['returned'], row)
+                observed = bytes(row['reads'][0]['bytes'])
+                hits = [hit['address'] for hit in row['checkpoint_trace']]
+                if raw >= 0xC0:
+                    self.assertEqual(hits, [], 'Invalid selector reached the table/bank path')
+                    self.assertEqual(observed, bytes.fromhex('5aa5effedebc'))
+                    self.assertEqual(row['registers']['x'], 0x7777)
+                    self.assertEqual(row['registers']['p']&1, 0)
+                else:
+                    self.assertEqual(hits, checkpoints, 'Valid control must traverse every checkpoint')
+                    self.assertEqual(int.from_bytes(observed[:2], 'little'), 0x8000+raw*3)
+                    self.assertEqual(int.from_bytes(observed[2:4], 'little'), 0xE3 if raw >= 0xA0 else 0x9B)
+                    self.assertEqual(observed[4:], bytes.fromhex('debc'))
+        compiled = self.image.read_bytes()
+        self.assertEqual(compiled[L.A.pc(0x82A784):L.A.pc(0x82A784)+320], self.directory[:320])
+        self.assertEqual(compiled[L.A.pc(0x9B8000):L.A.pc(0x9B8000)+len(self.native_data)], self.native_data)
+
+
 class CurrentSpritePhaseCpuTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -1056,10 +1301,22 @@ class CurrentWholeCompositionMeasurementTest(unittest.TestCase):
     LIBRARY, HEADER, CLI and PREVIEW require LYRA_MEASUREMENT_<ROLE> and <ROLE>_SHA256.
     PREPARE is the retained historical generated packet, not a current grant.
     PREVIEW is an external independently reviewed seeded checkpoint binding.
+    LYRA_MEASUREMENT_HIDDEN_STREAMS=1 selects the separate E3 case; each
+    case requires its own new output directory. Both remain HOST fixtures.
     No external API import, probe, file write or assembly occurs on import.
     """
 
     def test_whole_source_cli_and_library_have_identical_bytes_and_no_e3_writes(self):
+        if os.environ.get('LYRA_MEASUREMENT_HIDDEN_STREAMS') == '1':
+            self.skipTest('The E3 case needs its own retained measurement output')
+        self._measure()
+
+    def test_whole_source_cli_and_library_bind_e3_hidden_streams(self):
+        if os.environ.get('LYRA_MEASUREMENT_HIDDEN_STREAMS') != '1':
+            self.skipTest('Set LYRA_MEASUREMENT_HIDDEN_STREAMS=1 for the separate E3 case')
+        self._measure(hidden_streams=True)
+
+    def _measure(self, hidden_streams=False):
         if not os.environ.get('LYRA_MEASUREMENT_OUTPUT'):
             self.skipTest('Select LYRA_MEASUREMENT_OUTPUT and six hashed measurement inputs')
         import importlib.util
@@ -1176,6 +1433,56 @@ class CurrentWholeCompositionMeasurementTest(unittest.TestCase):
             rows[area] = values
         self.assertEqual(len(terrain_aliases), 60)
         write_json(output / 'host-terrain-aliases.json', terrain_aliases)
+        hidden_plan, native_list_spans = None, []
+        if hidden_streams:
+            from lyra_project_terrain import TerrainDocument
+            # Explicit HOST values, never an authenticated saved resource document.
+            # Keep seeded-preview A0/A1 small; A2/A3 exercises a child-directory alias.
+            areas = [dict(parent_map_id=0xA2, size='wide', maps=[0xA2, 0xA3])]
+            areas.extend(dict(parent_map_id=page, size='small', maps=[page])
+                         for page in range(0xA0, 0xC0) if page not in (0xA2, 0xA3))
+            authoring = tuple(dict(native_resources=dict(secrets=[], event_behavior=None))
+                              for _ in range(32))
+            for page, record in (
+                    (0xA0, dict(id=1, x=8, y=8, secret_id=1)),
+                    (0xA2, dict(id=2, x=2, y=3, secret_id=0x80)),
+                    (0xA3, dict(id=3, x=2, y=3, secret_id=2)),
+                    (0xBF, dict(id=4, x=31, y=31, secret_id=0x86))):
+                authoring[page-0xA0]['native_resources']['secrets'].append(record)
+            document = TerrainDocument(dict(test='synthetic all32 hidden-stream host measurement'),
+                (tuple([0]*1024),)*32, tuple({} for _ in range(32)), authoring=authoring,
+                gameplay_areas=tuple(areas), next_native_resource_id=5)
+            hidden_plan = resident.lower_hidden_streams(source, document, data_snes=0xE38000,
+                capacity=0x8000, preimage=seed[0x318000:0x320000])
+            self.assertEqual(hidden_plan['payload_bytes'], 3*4+2*31)
+            self.assertEqual(len(hidden_plan['streams']), 31)
+            tail = bytes.fromhex(hidden_plan['directory_tail_hex'])
+            self.assertEqual(len(tail), 64)
+            self.assertEqual(tail[4:6], tail[6:8])
+            for area in areas:
+                for page in area['maps']:
+                    rows[page].update(parent=area['parent_map_id'],
+                        area_size=2 if area['size'] == 'wide' else 0,
+                        hidden_items=int.from_bytes(tail[(page-0xA0)*2:(page-0x9F)*2], 'little'))
+            native_prefix = bytes.fromhex(hidden_plan['native_prefix_hex'])
+            self.assertEqual(native_prefix, source[L.A.pc(0x82A784):L.A.pc(0x82A784)+320])
+            # Protect the actual native list data, rather than the whole9B bank:
+            # that physical bank also contains intentional hook code changes.
+            for pointer in sorted({int.from_bytes(native_prefix[i:i+2], 'little')
+                                   for i in range(0, 320, 2)}):
+                self.assertTrue(0x8000 <= pointer <= 0xFFFE)
+                begin = cursor = L.A.pc(0x9B0000 | pointer)
+                limit = L.A.pc(0x9BFFFF)+1
+                while True:
+                    self.assertLessEqual(cursor+2, limit, 'Native hidden list lacks a same-bank terminator')
+                    if source[cursor:cursor+2] == b'\xFF\xFF':
+                        cursor += 2
+                        break
+                    cursor += 3
+                native_list_spans.append(dict(pc=[begin, cursor], payload_hex=source[begin:cursor].hex()))
+            write_json(output / 'host-hidden-streams.json', dict(synthetic_host_document=True,
+                authenticated_save=False, gameplay_areas=areas, authoring=authoring,
+                next_native_resource_id=5, plan=hidden_plan, native_list_spans=native_list_spans))
         tables = L.plan_current_tables(source, rows,
             origins=dict(table_base=0xE08000, code_base=0xE0C000,
                          code_end=0xE0D000, descriptor_base=0xE18000),
@@ -1204,6 +1511,9 @@ class CurrentWholeCompositionMeasurementTest(unittest.TestCase):
         constants = assignments(constants_path.read_text())
         constants.update(assignments(tables['constants_assembler']))
         constants.update(assignments(emission['constants_asm']))
+        constants['LYRA_CURRENT_HIDDEN_STREAMS_BOUND'] = 0
+        if hidden_plan is not None:
+            constants.update(assignments(hidden_plan['constants_asm']))
         constants.update(LYRA_PROJECT_DATA_PRESENT=1, LYRA_NATIVE_A1_ENABLED=0,
             LYRA_CURRENT_MODE=1, LYRA_CURRENT_ACTORS_ENABLED=1, LYRA_CURRENT_ACTORS_BOUND=1,
             LYRA_CURRENT_EVENTS_ENABLED=1, LYRA_CURRENT_EVENTS_BOUND=1,
@@ -1229,7 +1539,8 @@ class CurrentWholeCompositionMeasurementTest(unittest.TestCase):
         self.assertEqual(runtime.count(marker), 1)
         (generated / 'runtime_data.asm').write_text(tables['tables_assembler'] +
             tables['descriptor_assembler'] + marker + runtime.split(marker, 1)[1] +
-            emission['runtime_data_asm'] + bg.emit_bg128_data(palette))
+            emission['runtime_data_asm'] + bg.emit_bg128_data(palette) +
+            (hidden_plan['runtime_data_asm'] if hidden_plan is not None else ''))
         overrides = dict(ENABLE_OW_AREA_TILESETS=1, ENABLE_SPECIAL_TRIGGER_TABLE_V2=0,
                          ENABLE_SPECIAL_EXIT_TABLE_V2=0, ENABLE_KALYXO_BOAT=0)
         feature_path = tree / 'Config/feature_flags.asm'
@@ -1266,7 +1577,8 @@ class CurrentWholeCompositionMeasurementTest(unittest.TestCase):
         def record(*args):
             self.assertEqual(receipt.main([*args, '--receipt', str(receipt_path)]), 0)
         record('init', '--root', str(tree), '--base-rom', str(base), '--version', 'fixture',
-            '--requested-profile', 'unallocated whole-current host measurement',
+            '--requested-profile', ('E3 hidden-stream whole-current HOST measurement' if hidden_streams
+                                    else 'unallocated whole-current host measurement'),
             '--assembler', inputs['CLI']['path'])
         for role in ('API', 'LIBRARY', 'CLI'):
             record('tool', '--name', role, '--path', inputs[role]['path'])
@@ -1299,6 +1611,7 @@ class CurrentWholeCompositionMeasurementTest(unittest.TestCase):
             write_json(output / 'measurement-inputs.json', dict(inputs=inputs,
                 source_snapshot=snapshot, constants=constants, feature_overrides=overrides,
                 synthetic_host_terrain_aliases=terrain_aliases,
+                synthetic_host_hidden_streams=hidden_streams, authenticated_resource_save=False,
                 api_source=dict(root=str(api_root), git_head=api_revision),
                 api_version=api.apiversion(), assembler_version=api.version(),
                 cli_version_stdout=version.stdout, cli_version_stderr=version.stderr,
@@ -1391,7 +1704,41 @@ class CurrentWholeCompositionMeasurementTest(unittest.TestCase):
             e3 = [b for b in blocks if b['pcoffset'] < 0x320000 and
                   b['pcoffset'] + b['numbytes'] > 0x318000]
             write_json(output / 'e3-write-intersections.json', e3)
-            self.assertEqual(e3, [], 'Selected composition already writes the proposed E3 interval')
+            if hidden_plan is None:
+                self.assertEqual(e3, [], 'BOUND0 composition writes the reserved E3 interval')
+            else:
+                payload = bytes.fromhex(hidden_plan['payload_hex'])
+                end = 0x318000+len(payload)
+                intervals = sorted((max(b['pcoffset'], 0x318000),
+                    min(b['pcoffset']+b['numbytes'], 0x320000)) for b in e3)
+                coverage = []
+                for lo, hi in intervals:
+                    if coverage and lo <= coverage[-1][1]:
+                        coverage[-1][1] = max(coverage[-1][1], hi)
+                    else:
+                        coverage.append([lo, hi])
+                self.assertEqual(coverage, [[0x318000, end]], 'E3 raw writes differ from the exact payload')
+                self.assertEqual(compiled[0x318000:end], payload)
+                self.assertEqual(compiled[end:0x320000], seed[end:0x320000])
+                self.assertEqual(labels['Lyra_CurrentHiddenStreamsStart'], 0xE38000)
+                self.assertEqual(labels['Lyra_CurrentHiddenStreamsEnd'], 0xE38000+len(payload))
+                self.assertEqual(labels['Lyra_CurrentHiddenStreamsReservationBase'], 0xE38000)
+                for stream in hidden_plan['streams']:
+                    self.assertEqual(labels[stream['label']], stream['snes'])
+                    self.assertEqual(labels[stream['label']+'_End'], stream['snes']+stream['byte_count'])
+                directory = next(row for row in tables['tables'] if row['name'] == 'hidden_items')
+                lo, hi = directory['pc']
+                self.assertEqual(compiled[lo:hi], bytes.fromhex(hidden_plan['directory_hex']))
+                self.assertEqual(compiled[lo:lo+320], bytes.fromhex(hidden_plan['native_prefix_hex']))
+                self.assertEqual(compiled[L.A.pc(0x82A784):L.A.pc(0x82A784)+320],
+                                 bytes.fromhex(hidden_plan['native_prefix_hex']))
+                for span in native_list_spans:
+                    lo, hi = span['pc']
+                    self.assertEqual(compiled[lo:hi], bytes.fromhex(span['payload_hex']), span['pc'])
+                for flag in ('allocation_granted', 'publication_authorized', 'ordinary_build_ready',
+                             'runtime_admission', 'resource_closure_verified', 'pickup_state_selected',
+                             'rom_written'):
+                    self.assertIs(hidden_plan[flag], False, flag)
             pairs = (
                 ('native_readers', 'Lyra_CurrentNativeCodeStart', 'Lyra_CurrentNativeCodeEnd', 0xE0C000, 0xE0D000),
                 ('bg128', 'Oracle_ProjectBGPalette_CodeStart', 'Oracle_ProjectBGPalette_CodeEnd', 0xE0D000, 0xE10000),
@@ -1417,9 +1764,15 @@ class CurrentWholeCompositionMeasurementTest(unittest.TestCase):
                 self.assertEqual(compiled[a:b], payload, row['label'])
                 self.assertEqual(labels[row['label']], row['snes'])
             consumers = L.inspect_current_consumers(compiled, cli_symbols, require_resident=True,
+                require_hidden_streams=hidden_streams,
                 checkpoint_preview=dict(mode='seeded_checkpoint_preview', source=source,
                                         reviewed=reviewed_preview))
             self.assertEqual(consumers['kind'], L.PREVIEW_CONSUMER_KIND)
+            if hidden_streams:
+                self.assertEqual(consumers['hidden_streams_adapter']['tail_bank'], 0xE3)
+                self.assertEqual(consumers['hidden_streams_adapter']['native_bank'], 0x9B)
+            else:
+                self.assertNotIn('hidden_streams_adapter', consumers)
             self.assertIs(consumers['current_core_inspected'], True)
             guards = consumers['preview_guards']
             self.assertIs(guards['guards_verified'], True)
@@ -1473,7 +1826,8 @@ class CurrentWholeCompositionMeasurementTest(unittest.TestCase):
                 if path.is_file() and path != receipt_path and not path.name.endswith('.source.json'):
                     record('artifact', '--name', path.name, '--path', str(path))
             record('check', '--name', 'whole_output_and_raw_write_coverage', '--status', 'passed',
-                '--required', '1', '--detail', 'CLI/API whole ROM and symbols equal; raw E3 intersections empty')
+                '--required', '1', '--detail', ('CLI/API whole ROM and symbols equal; exact E3 payload coverage'
+                    if hidden_streams else 'CLI/API whole ROM and symbols equal; raw E3 intersections empty'))
             completed = True
         finally:
             finish = receipt.main(['finish', '--receipt', str(receipt_path),

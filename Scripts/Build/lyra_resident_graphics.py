@@ -581,6 +581,124 @@ def derive_native_resources(source, document, inspection, *, source_policy):
     return result
 
 
+def lower_hidden_streams(source, document, *, data_snes, capacity, preimage):
+    """Encode selected authored lists into the explicitly reserved E3 bank.
+
+    This pure codec does not authenticate a Save, select an origin, publish a
+    ROM, or qualify reward/event/pickup behavior. The current-source wrapper
+    independently binds those inputs and the ledger's specific reservation.
+    Empty lists are explicit; an unselected page is never an empty list.
+    """
+    _require(type(source) is bytes and len(source) in (0x200000, 0x400000)
+             and isinstance(document, TerrainDocument)
+             and has_native_resource_history(document), 'HIDDEN_STREAM_DOCUMENT_REQUIRED')
+    _require(type(data_snes) is int and data_snes == 0xE38000
+             and type(capacity) is int and 0 < capacity <= 0x8000,
+             'HIDDEN_STREAM_ORIGIN_INVALID')
+    base = sheet_table.pc(data_snes)
+    expanded = source + bytes([0xFF]) * (0x400000 - len(source))
+    _require(type(preimage) is bytes and len(preimage) == capacity
+             and preimage == expanded[base:base + capacity], 'HIDDEN_STREAM_PREIMAGE_MISMATCH')
+    _require(len(document.authoring) == 32, 'HIDDEN_STREAM_PAGES_INCOMPLETE')
+    areas = sorted(validated_gameplay_areas(document.gameplay_areas),
+                   key=lambda row: row['parent_map_id'])
+    _require({page for area in areas for page in area['maps']} == set(range(FIRST, END)),
+             'HIDDEN_STREAM_GAMEPLAY_AREAS_INCOMPLETE')
+    payload, streams, identity_order = bytearray(), [], []
+    pointers, ids = {}, set()
+    for area in areas:
+        parent = area['parent_map_id']
+        start = len(payload)
+        positions, count = set(), 0
+        width, height = {'small': (32, 32), 'wide': (64, 32),
+                         'tall': (32, 64), 'large': (64, 64)}[area['size']]
+        for page in sorted(area['maps']):
+            auth = document.authoring[page - FIRST]
+            _require(type(auth) is dict, 'HIDDEN_STREAM_RESOURCE_INVALID')
+            resource = auth.get('native_resources')
+            _require(resource is not None, 'HIDDEN_STREAM_PAGE_UNSELECTED: ' + f'{page:02X}')
+            _require(type(resource) is dict and set(resource) == {'secrets', 'event_behavior'}
+                     and type(resource['secrets']) is list, 'HIDDEN_STREAM_RESOURCE_INVALID')
+            event = resource['event_behavior']
+            _require(event is None or (type(event) is dict and set(event) == {'kind'}
+                     and event['kind'] == 'native_secret_v1'), 'HIDDEN_STREAM_EVENT_INVALID')
+            qy, qx = divmod(page - parent, 8)
+            for ordinal, record in enumerate(resource['secrets']):
+                _require(type(record) is dict and set(record) == {'id', 'x', 'y', 'secret_id'}
+                         and all(type(record[key]) is int and lo <= record[key] <= hi
+                             for key, lo, hi in (('id', 1, 0xFFFFFFFF), ('x', 0, 31),
+                                                ('y', 0, 31), ('secret_id', 0, 255))),
+                         'HIDDEN_STREAM_RECORD_INVALID')
+                _require(record['id'] not in ids, 'HIDDEN_STREAM_DUPLICATE_ID')
+                ids.add(record['id'])
+                code = record['secret_id']
+                _require(1 <= code <= 0x15 or code in (0x80, 0x82, 0x86),
+                         'HIDDEN_STREAM_SECRET_UNSUPPORTED')
+                column, line = record['x'] + 32 * qx, record['y'] + 32 * qy
+                _require(0 <= column < width and 0 <= line < height,
+                         'HIDDEN_STREAM_QUADRANT_INVALID')
+                offset = 128 * line + 2 * column
+                _require(offset not in positions, 'HIDDEN_STREAM_POSITION_CONFLICT')
+                positions.add(offset)
+                identity_order.append(dict(id=record['id'], map_id=page, ordinal=ordinal,
+                    parent_map_id=parent, native_raw_offset=offset, secret_id=code,
+                    binary_offset=len(payload)))
+                payload.extend(struct.pack('<HB', offset, code))
+                count += 1
+        payload.extend(b'\xFF\xFF')
+        _require(len(payload) <= capacity and data_snes + len(payload) <= 0xE40000,
+                 'HIDDEN_STREAM_CAPACITY_EXCEEDED')
+        address = data_snes + start
+        _require(0xE38000 <= address <= 0xE3FFFE,
+                 'HIDDEN_STREAM_START_OUTSIDE_BANK')
+        for page in area['maps']:
+            _require(page not in pointers, 'HIDDEN_STREAM_MEMBER_DUPLICATE')
+            pointers[page] = address & 0xFFFF
+        streams.append(dict(parent_map_id=parent, maps=list(sorted(area['maps'])),
+            area_size=area['size'], record_count=count, binary_offset=start,
+            byte_count=len(payload) - start, snes=address,
+            pc=[base + start, base + len(payload)],
+            label=f'Lyra_CurrentHiddenStream_{parent:02X}'))
+    _require(type(document.next_native_resource_id) is int
+             and max(ids, default=0) < document.next_native_resource_id <= 0x100000000,
+             'HIDDEN_STREAM_COUNTER_INVALID')
+    _require(len(payload) == 3 * len(ids) + 2 * len(areas), 'HIDDEN_STREAM_BUDGET_MISMATCH')
+    native_at = sheet_table.pc(0x82A784)
+    native = source[native_at:native_at + FIRST * 2]
+    _require(len(native) == FIRST * 2, 'HIDDEN_STREAM_NATIVE_DIRECTORY_MISSING')
+    tail = b''.join(struct.pack('<H', pointers[page]) for page in range(FIRST, END))
+    constants = ('!LYRA_CURRENT_HIDDEN_STREAMS_BOUND = 1\n'
+                 '!LYRA_CURRENT_HIDDEN_STREAMS_BANK = $00E3\n'
+                 '!LYRA_CURRENT_HIDDEN_STREAMS_BASE = $E38000\n'
+                 '!LYRA_CURRENT_HIDDEN_STREAMS_END = $E40000\n')
+    lines = ['; Source-bound hidden lists; reward/event/pickup admission is separate.',
+             'pushpc', 'org !LYRA_CURRENT_HIDDEN_STREAMS_BASE',
+             'Lyra_CurrentHiddenStreamsStart:']
+    for stream in streams:
+        lo = stream['binary_offset']
+        raw = payload[lo:lo + stream['byte_count']]
+        lines.append(stream['label'] + ':')
+        lines.extend('db ' + ','.join(f'${v:02X}' for v in raw[i:i + 16])
+                     for i in range(0, len(raw), 16))
+        lines.append(stream['label'] + '_End:')
+    lines += ['Lyra_CurrentHiddenStreamsEnd:',
+              'assert pc() <= !LYRA_CURRENT_HIDDEN_STREAMS_END', 'pullpc']
+    result = dict(kind='lyra.current_hidden_streams.v1', scope='hidden_list_storage_only',
+        source_rom_sha256=_sha(source), document_sha256=conditional_document_identity(document),
+        data_snes=data_snes, data_pc=base, capacity=capacity,
+        preimage_sha256=_sha(preimage), payload_hex=bytes(payload).hex(),
+        payload_bytes=len(payload), payload_sha256=_sha(bytes(payload)),
+        native_prefix_hex=native.hex(), directory_tail_hex=tail.hex(),
+        directory_hex=(native + tail).hex(), streams=streams,
+        record_identity_order=identity_order, constants_asm=constants,
+        runtime_data_asm='\n'.join(lines) + '\n',
+        allocation_granted=False, publication_authorized=False, ordinary_build_ready=False,
+        runtime_admission=False, resource_closure_verified=False,
+        pickup_state_selected=False, rom_written=False)
+    result['plan_sha256'] = _sha(_json_bytes(result))
+    return result
+
+
 def _inspection_rows(source, document, inspection, terrain_sha256, read_sheet):
     _require(type(inspection) is dict
              and inspection.get('source_rom_sha256') == _sha(source), 'SOURCE_MISMATCH')
