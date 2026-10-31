@@ -85,6 +85,32 @@ class CurrentSaveTransferTest(unittest.TestCase):
                                              operation_id=self.save['operation_id'])
         self.context_path.write_bytes(X.P.encoded(self.context))
 
+    def test_stale_selected_producer_identifies_role_without_publishing_or_mutating(self):
+        stale = copy.deepcopy(self.producer)
+        old_editor = self.root / 'old-editor'
+        old_editor.write_bytes(b'old editor')
+        stale['editor'] = X.Q.bound(old_editor)
+        self.producer_path.write_bytes(X.P.encoded(stale))
+        # Every saved artifact is still current; only the separately selected
+        # producer identity disagrees with the editor that completed this Save.
+        for artifact in self.save['artifacts']:
+            current = X.Q.read_bound({key: artifact[key] for key in ('path', 'sha256')})
+            self.assertEqual(len(current), artifact['bytes'])
+        before = {path: path.read_bytes() for path in self.root.rglob('*') if path.is_file()}
+        with self.assertRaises(ValueError) as refusal:
+            self.prepare()
+        self.assertEqual(str(refusal.exception),
+            'Native save receipt does not bind this project, inputs and selected producer: '
+            "artifact role 'producer' differs; select an identity matching the actual native "
+            'Save producer, or complete a new native Save with the selected producer before '
+            'preparing a transfer')
+        X.A.native_verify.assert_not_called()
+        self.assertFalse(self.output.exists())
+        self.assertFalse(self.enforcement.exists())
+        self.assertFalse(self.candidate.exists())
+        self.assertEqual(before,
+            {path: path.read_bytes() for path in self.root.rglob('*') if path.is_file()})
+
     def test_explicit_actual_producer_preserves_saved_descriptor_and_receipt(self):
         external = self.root / 'actual-producer.json'
         external.write_bytes(self.producer_path.read_bytes())

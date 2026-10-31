@@ -541,6 +541,89 @@ flagged_sheets=0xD4,0xD6
                 self.assertEqual(kwargs["env"]["OOS_BACKUP_ROOT"], "backups")
                 self.assertEqual(kwargs["env"]["OOS_MANIFEST_ROOT"], ".")
 
+    def test_authoring_build_delegates_authenticated_current_selection(self):
+        from unittest import mock
+        import lyra_project_publisher as publisher
+
+        self.capture()
+        project = self.bundle / "project.yaze"
+        before = {
+            p.relative_to(self.bundle): p.read_bytes()
+            for p in self.bundle.rglob("*")
+            if p.is_file()
+        }
+        target = {
+            "engine": str(self.bundle / "project"),
+            "base_rom": str(self.bundle / "rom"),
+            "request": str(self.bundle / "transfer/current/request.json"),
+            "candidate": str(self.bundle / "project/Roms/current-2/oos168x.sfc"),
+        }
+        context = str(self.root / "appdata/native-saves/current.json")
+        inherited = {
+            key: "/foreign/project"
+            for key in (
+                "OOS_LYRA_PROJECT", "OOS_LYRA_REQUEST", "OOS_LYRA_CANDIDATE",
+                "OOS_LYRA_BUILD_CONTEXT",
+            )
+        }
+        inherited["YAZE_NATIVE_SAVE_CONTEXT"] = context
+        # Authentication itself has current-transfer fixtures. This test covers
+        # the bundle wrapper's handoff to the real shell entry point.
+        with (
+            mock.patch.dict(build_guard.os.environ, inherited),
+            mock.patch.object(publisher, "resolve_current_target", return_value=target)
+            as resolve,
+            mock.patch.object(build_guard.subprocess, "run",
+                              return_value=mock.Mock(returncode=7)) as delegate,
+        ):
+            self.assertEqual(build_guard.build_project(project), 7)
+        resolve.assert_called_once_with(project)
+        args, kwargs = delegate.call_args
+        self.assertEqual(args[0], [
+            "bash", str(self.bundle / "project/Scripts/Build/build_rom.sh"), "168"
+        ])
+        self.assertEqual(kwargs["cwd"], self.bundle)
+        environment = kwargs["env"]
+        self.assertEqual(environment["OOS_BASE_ROM"], target["base_rom"])
+        self.assertEqual(environment["OOS_LYRA_PROJECT"], str(project))
+        self.assertEqual(environment["OOS_LYRA_REQUEST"], target["request"])
+        self.assertEqual(environment["OOS_LYRA_CANDIDATE"], target["candidate"])
+        self.assertEqual(environment["YAZE_NATIVE_SAVE_CONTEXT"], context)
+        self.assertNotIn("OOS_LYRA_BUILD_CONTEXT", environment)
+        self.assertEqual(before, {
+            p.relative_to(self.bundle): p.read_bytes()
+            for p in self.bundle.rglob("*")
+            if p.is_file()
+        })
+
+    def test_authoring_build_refuses_foreign_reviewed_engine_without_writes(self):
+        from unittest import mock
+        import lyra_project_publisher as publisher
+
+        self.capture()
+        foreign = self.root / "foreign-engine"
+        foreign.mkdir()
+        before = {
+            p.relative_to(self.bundle): p.read_bytes()
+            for p in self.bundle.rglob("*")
+            if p.is_file()
+        }
+        with (
+            mock.patch.object(publisher, "resolve_current_target",
+                              return_value={"engine": str(foreign)}),
+            mock.patch.object(build_guard.subprocess, "run") as delegate,
+        ):
+            with self.assertRaisesRegex(
+                ValueError, "Reviewed current source differs from this bundled build engine"
+            ):
+                build_guard.build_project(self.bundle / "project.yaze")
+        delegate.assert_not_called()
+        self.assertEqual(before, {
+            p.relative_to(self.bundle): p.read_bytes()
+            for p in self.bundle.rglob("*")
+            if p.is_file()
+        })
+
     def test_export_preserves_supported_build_refs_without_rewriting_save_identity(self):
         controls = ('lyra_build_request_file', 'native_save_receipt_file',
                     'native_save_producer_file', 'native_save_transfer_proof_file')

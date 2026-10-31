@@ -180,8 +180,13 @@ def _live(project, *, producer_identity=None):
         binding = dict(path=row['path'], sha256=row['sha256'])
         content = Q.read_bound(binding)
         R.require(type(row['bytes']) is int and row['bytes'] == len(content), 'Native Save artifact byte count differs')
+        recovery = ('select an identity matching the actual native Save producer, or '
+                    'complete a new native Save with the selected producer'
+                    if role == 'producer' else
+                    'complete a new native Save for the selected project inputs')
         R.require(role not in expected or binding == expected[role],
-                  'Native save receipt does not bind this project, inputs and selected producer')
+                  'Native save receipt does not bind this project, inputs and selected producer: '
+                  f'artifact role {role!r} differs; {recovery} before preparing a transfer')
         artifacts[role] = binding
         if role not in expected:
             inputs[role] = binding
