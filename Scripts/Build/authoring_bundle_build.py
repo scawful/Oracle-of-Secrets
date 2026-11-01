@@ -36,7 +36,7 @@ def build_project(project: Path) -> int:
     project = project.resolve(strict=True)
     config = configparser.ConfigParser(interpolation=None)
     config.optionxform = str
-    with project.open(encoding="utf-8") as stream:
+    with project.open(encoding="utf-8-sig") as stream:
         config.read_file(stream)
     config.defaults().clear()
     terrain = config.get("files", "lyra_terrain_file", fallback="").strip()

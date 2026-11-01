@@ -276,7 +276,7 @@ class HiddenStreamsSourceHistoryTest(unittest.TestCase):
         contract = json.loads(snapshots.read_snapshot(self.HEAD, CONTRACT))
         contract['ledger']['sha256'] = P.R.sha(raw)
         with self.assertRaisesRegex(ValueError,
-                'Current source-set consumer changed: Scripts/Build/lyra_current_transfer.py'):
+                'Current source-set consumer changed: Scripts/Build/authoring_bundle_build.py'):
             P.validate_current_source_set(contract)
 
 
@@ -322,8 +322,15 @@ class SourceSnapshotIntegrityTest(unittest.TestCase):
         self.assertEqual(hashlib.sha256(raw).hexdigest(),
                          '190dfa530ee3172b73be4b3860db2abb20c6d0e7c7f67a9822d5a36ddc9dfa2c')
 
-    def test_all58_pinned_snapshots_load_without_git_or_network(self):
-        self.assertEqual(len(snapshots.SNAPSHOT_KEYS), 58)
+    def test_original58_manifest_entries_remain_exact(self):
+        manifest = json.loads((ROOT / 'Tests/fixtures/lyra_source_snapshots/manifest.json').read_bytes())
+        raw = (json.dumps(dict(kind=manifest['kind'], snapshots=manifest['snapshots'][:58]),
+                          indent=2, sort_keys=True) + '\n').encode()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(),
+                         'e9a468bd57e69a13f0d5d29c0e468186af382b8df3b6b9226d9e5c6372d976d0')
+
+    def test_all64_pinned_snapshots_load_without_git_or_network(self):
+        self.assertEqual(len(snapshots.SNAPSHOT_KEYS), 64)
         with mock.patch('subprocess.check_output', side_effect=AssertionError('Unexpected Git call')):
             for commit, path in snapshots.SNAPSHOT_KEYS:
                 with self.subTest(commit=commit, path=path):

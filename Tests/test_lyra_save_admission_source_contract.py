@@ -13,7 +13,7 @@ import sys
 import unittest
 from unittest import mock
 
-from lyra_source_snapshots import staged_source_set
+from lyra_source_snapshots import read_snapshot, staged_source_set
 import test_lyra_current_source_contract as source_fixtures
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +23,7 @@ import lyra_project_publisher as P
 
 
 SOURCE_SET = 'lyra_current_save_admission_diagnostics_58'
+SOURCE58_HEAD = '766660b0494b40b2cfd813ac21f4c82ad4540eb8'
 BASELINE_LEDGER_VALUE_SHA256 = (
     '0a36cd0a58f8d600ea92a040f01a1785b769ae420cb7471192778f598568a3d8')
 BASELINE_CONTRACT_PROJECTION_SHA256 = (
@@ -42,10 +43,10 @@ def value_digest(value):
 
 class SaveAdmissionSourceContractTest(unittest.TestCase):
     def setUp(self):
-        self.ledger_raw = (ROOT / 'Config/allocation_ownership.json').read_bytes()
+        self.ledger_raw = read_snapshot(SOURCE58_HEAD, 'Config/allocation_ownership.json')
         self.ledger = json.loads(self.ledger_raw)
         self.contract = json.loads(
-            (ROOT / 'Config/lyra_current_source_contract.json').read_bytes())
+            read_snapshot(SOURCE58_HEAD, 'Config/lyra_current_source_contract.json'))
 
     def test_canonical_successor_binds_all72_current_consumers(self):
         self.assertEqual(X.SAVE_ADMISSION_SOURCE_SET, SOURCE_SET)
@@ -63,16 +64,18 @@ class SaveAdmissionSourceContractTest(unittest.TestCase):
                           'Scripts/Graphics/compile_runtime_graphics.py',
                           'Scripts/Generate/tests/test_authoring_project_bundle.py',
                           'Tests/test_lyra_current_transfer.py'})
-        bindings = P.validate_current_source_set(self.contract)
-        self.assertEqual(len(bindings), 73)
-        self.assertEqual({row['path']: row['sha256'] for row in bindings[1:]},
-                         {str(ROOT / path): row['sha256']
-                          for path, row in current.items()})
-        for path, row in current.items():
-            self.assertEqual(set(row), {'source_set', 'path', 'sha256'})
-            self.assertEqual(self.ledger['sources'][SOURCE_SET + ':' + path], row)
-            self.assertEqual(hashlib.sha256((ROOT / path).read_bytes()).hexdigest(),
-                             row['sha256'], path)
+        with staged_source_set(ROOT, self.ledger_raw, SOURCE_SET, SOURCE58_HEAD) as root:
+            with mock.patch.object(P, 'ROOT', root):
+                bindings = P.validate_current_source_set(self.contract)
+                self.assertEqual(len(bindings), 73)
+                self.assertEqual({row['path']: row['sha256'] for row in bindings[1:]},
+                                 {str(root / path): row['sha256']
+                                  for path, row in current.items()})
+                for path, row in current.items():
+                    self.assertEqual(set(row), {'source_set', 'path', 'sha256'})
+                    self.assertEqual(self.ledger['sources'][SOURCE_SET + ':' + path], row)
+                    self.assertEqual(hashlib.sha256((root / path).read_bytes()).hexdigest(),
+                                     row['sha256'], path)
 
     def test_all_historical_ledger_values_and_contract_authority_are_preserved(self):
         previous = copy.deepcopy(self.ledger)
@@ -109,7 +112,7 @@ class SaveAdmissionSourceContractTest(unittest.TestCase):
         self.assertEqual(self.contract['scope'], 'source_review_only')
 
     def test_changed_current_consumer_refuses_in_owned_staged_source(self):
-        with staged_source_set(ROOT, self.ledger_raw, SOURCE_SET, None) as root:
+        with staged_source_set(ROOT, self.ledger_raw, SOURCE_SET, SOURCE58_HEAD) as root:
             with mock.patch.object(P, 'ROOT', root):
                 self.assertEqual(len(P.validate_current_source_set(self.contract)), 73)
                 consumer = root / 'Scripts/Build/lyra_current_transfer.py'
@@ -121,7 +124,7 @@ class SaveAdmissionSourceContractTest(unittest.TestCase):
     def test_source58_preserves_exact_source56_e3_reservation(self):
         source_id = X.HIDDEN_STREAMS_SOURCE_SET + ':Overworld/lyra_native_loaders.asm'
         bound = self.ledger['sources'][source_id]
-        with staged_source_set(ROOT, self.ledger_raw, SOURCE_SET, None) as root:
+        with staged_source_set(ROOT, self.ledger_raw, SOURCE_SET, SOURCE58_HEAD) as root:
             contract = copy.deepcopy(self.contract)
             # The selected contract records its original Mac checkout. Bind
             # the same historical bytes to this owned fixture on every host.

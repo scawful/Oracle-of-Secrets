@@ -522,6 +522,60 @@
       "gzip_sha256": "ce30740b93e5b5e803b018ab41b075dec368225b43c060bf2a93cef2c68d830f",
       "path": "Tests/test_lyra_current_transfer.py",
       "sha256": "1a66b6ae7a3975856e0628679199c7026948bfbca7800aab3d1a99b23698a9a7"
+    },
+    {
+      "byte_count": 469664,
+      "commit": "766660b0494b40b2cfd813ac21f4c82ad4540eb8",
+      "git_blob": "66090ebbc00abe41777c0c88b336059cc66e5dae",
+      "gzip_byte_count": 43059,
+      "gzip_sha256": "a9939b1bc08be546962db16ed463609695032e78078dd2287f0dd66fb2affb47",
+      "path": "Config/allocation_ownership.json",
+      "sha256": "c247c7f068c307097850a0c1566ff2f464189d15052c53f152f8f91b510c51b8"
+    },
+    {
+      "byte_count": 4749,
+      "commit": "766660b0494b40b2cfd813ac21f4c82ad4540eb8",
+      "git_blob": "4dda5acf2a91668271ebbd4dbd421c6a5e87c9be",
+      "gzip_byte_count": 1289,
+      "gzip_sha256": "bf13fe8f3e168eb5d8fc39612e8c6dee99090b23aa56fc4110a19a08f9c8e532",
+      "path": "Config/lyra_current_source_contract.json",
+      "sha256": "6e4afb5c2d92c7e1761e722434b4f7caf7286d9e44403095b55a242f29f789ca"
+    },
+    {
+      "byte_count": 2996,
+      "commit": "766660b0494b40b2cfd813ac21f4c82ad4540eb8",
+      "git_blob": "4e91ebb94520507b826c873def76c9dbf525436b",
+      "gzip_byte_count": 1380,
+      "gzip_sha256": "6448141bb3dd1639b5acec0f091ae16f551e35fe30fe95cb330e52d1a184bade",
+      "path": "Scripts/Build/authoring_bundle_build.py",
+      "sha256": "385e46c619ae85589e8b8ad32dd851547b908ba13ff0687c53b667f88ce21d2c"
+    },
+    {
+      "byte_count": 131908,
+      "commit": "766660b0494b40b2cfd813ac21f4c82ad4540eb8",
+      "git_blob": "d839ed9de91d0ef882ae3f89eeeb89e065c2edb4",
+      "gzip_byte_count": 31522,
+      "gzip_sha256": "95f480b03d26421410f1d2bec5cdee69a790cef7ed023d5451af899ae8bbc5be",
+      "path": "Scripts/Build/lyra_current_transfer.py",
+      "sha256": "0ea9f6248bcdd62835d772368718267ef4b76967903b4512646c56e929ebfde6"
+    },
+    {
+      "byte_count": 2996,
+      "commit": "4f837962377b133f6bf01f5ecd8cb623f921fa71",
+      "git_blob": "4e91ebb94520507b826c873def76c9dbf525436b",
+      "gzip_byte_count": 1380,
+      "gzip_sha256": "6448141bb3dd1639b5acec0f091ae16f551e35fe30fe95cb330e52d1a184bade",
+      "path": "Scripts/Build/authoring_bundle_build.py",
+      "sha256": "385e46c619ae85589e8b8ad32dd851547b908ba13ff0687c53b667f88ce21d2c"
+    },
+    {
+      "byte_count": 2996,
+      "commit": "86f6be686acc18afbfee4e752e45f7cf4e2700ac",
+      "git_blob": "4e91ebb94520507b826c873def76c9dbf525436b",
+      "gzip_byte_count": 1380,
+      "gzip_sha256": "6448141bb3dd1639b5acec0f091ae16f551e35fe30fe95cb330e52d1a184bade",
+      "path": "Scripts/Build/authoring_bundle_build.py",
+      "sha256": "385e46c619ae85589e8b8ad32dd851547b908ba13ff0687c53b667f88ce21d2c"
     }
   ]
 }

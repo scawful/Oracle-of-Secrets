@@ -70,5 +70,25 @@ class BundleAdmissionTest(unittest.TestCase):
         self.assertEqual(run.call_args.kwargs['cwd'], self.root)
 
 
+    def test_bom_native_descriptor_routes_without_changing_project(self):
+        self.write_project(terrain='')
+        before = b'\xef\xbb\xbf' + self.descriptor.read_bytes()
+        self.descriptor.write_bytes(before)
+        with mock.patch.object(bundle.subprocess, 'run', return_value=mock.Mock(returncode=7)) as run:
+            self.assertEqual(bundle.build_project(self.descriptor), 7)
+        run.assert_called_once()
+        self.assertEqual(self.descriptor.read_bytes(), before)
+
+    def test_bom_lyra_descriptor_still_requires_request(self):
+        self.write_project()
+        before = b'\xef\xbb\xbf' + self.descriptor.read_bytes()
+        self.descriptor.write_bytes(before)
+        with mock.patch.object(bundle.subprocess, 'run') as run:
+            with self.assertRaisesRegex(ValueError, 'lyra_build_request_file'):
+                bundle.build_project(self.descriptor)
+        run.assert_not_called()
+        self.assertEqual(self.descriptor.read_bytes(), before)
+
+
 if __name__ == '__main__':
     unittest.main()

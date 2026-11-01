@@ -6,8 +6,8 @@
   "ledger": {
     "engine_ledger_sha256": "31cb74db34f0e105219b4f60795f4ccd2f22b233e8738cb4bdaace8bc23db8f6",
     "path": "Config/allocation_ownership.json",
-    "sha256": "c247c7f068c307097850a0c1566ff2f464189d15052c53f152f8f91b510c51b8",
-    "source_set": "lyra_current_save_admission_diagnostics_58"
+    "sha256": "dda2f7083c395fd109f10238bb6faf8def1738d929a6ffe8d5cd2f5be6666651",
+    "source_set": "lyra_current_bom_wrapper_admission_59"
   },
   "native_readers": {
     "decoder_spans": [
