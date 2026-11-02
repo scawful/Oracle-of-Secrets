@@ -1,6 +1,6 @@
 # Story Canon Beat Sheet
 
-Date: 2026-10-20 (revision 12; reconciled Lyra, Abyss, Sky and Lupo/Fortress planning)
+Date: 2026-10-21 (revision 15; internal Power Glove, cut seed-forge quest, optional Lupo and local Lyra Meat)
 Authority: scawful's rulings, normalized from the decision log and story reviews.
 This sheet supersedes conflicting claims in older narrative documents.
 
@@ -47,7 +47,7 @@ Accepted by scawful during the opening storyboard discussion; implementation rem
 - `[DECIDED 2026-09-26/27]` Intro exit: picking up the sword in the Forest of Dreams cuts Link home (short flash/slash, scripted warp to `$2A`), replacing the DW `$6A` warp-tile exit; feasibility `[TO-VERIFY]`. The Abyss opens as six enforced chunks plus the separate underwater route. Keep one Kalyxo pad into the finale region; remove or restrict the other volcano pads. The way back from any chunk is a return portal at Link's arrival spot `[TO-BUILD]`. Seal geography: the pyramid is the lock, the volcano is the prison mouth. One dream follows each pendant and ends in the Dream Hut. Exact maps and gates are in `decisions.org` ("Abyss chunk layout and warp pads").
 - `[PROPOSED interpretation]` Pearl steadies Link's form in the Abyss; console generations are not established as literal in-world history. Exact explanatory wording remains draft.
 
-Implementation order and storyboard: [Opening and RC development plan](Plans/opening_and_rc_development_2026-09-23.md). New-game experiment hook comes last; title, summons/arrival, and village sprites come first.
+Implementation order and storyboard: [Opening and RC development plan](/Users/scawful/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/opening_and_rc_development_2026-09-23.md). New-game experiment hook comes last; title, summons/arrival, and village sprites come first.
 
 ## Core rulings (the seven cruxes)
 
@@ -107,13 +107,30 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
    Farore's exact final scene remain open. Multi-character combat
    choreography is not a requirement; fixed NPC transition scenes are the
    bounded proposal.
-5. **The three pendant shrines move to Lyra Sea islands; their dreams return
+5. **The three pendant shrines move to the Lyra Sea / East Kalyxo region; their dreams return
    Link to Maple's Abyss hut** `[DECIDED 2026-10-19]`:
-   - **Shrine of Wisdom** + the Sea Zora's Flippers gift → before **D4 Zora Temple**.
+   - **Shrine of Wisdom** → pendant → Sea Zora Flippers gift → **D4 Zora Temple**.
+     A scripted boat from Kalyxo Docks reaches the Sea Zora before Flippers.
+     Wisdom is their shrine, in a separate building from their homes.
+     Its dry approach may connect a nearby islet to their settlement. The
+     pendant proves Link's heroism: the suspicious Sea Zora grant Flippers
+     and warn of River Zora aggression/conflict. Link retains the pendant.
+     Flippers allow ordinary swimming toward Kalyxo and limited Lyra exploration;
+     rough currents require Zora Link `[DECIDED 2026-10-20]`.
    - **Shrine of Power** → before **D6 Goron Mines**. The guest shrine does
      not contain the Eon Gorons; their story and Rock Meat route are separate.
+     Place it east of the desert, accessible with D6-stage items and no
+     Hammer `[DECIDED 2026-10-21]`. Shrine of Power is the Power Glove-focused
+     dungeon. Keep its internal Power Glove grant; no early Glove or Ember
+     Seed/forge grant quest `[DECIDED current direction 2026-10-21]`.
+     Rock Meat is hidden on nearby Lyra maps; Eon Goron/Lupo Mountain is optional.
+     Exact Meat placement/return is `[OPEN]`; no Mitt/Hammer/Lupo prerequisite.
    - **Shrine of Courage** requires the Somaria Rod (D7 item) → post-D7 only.
-   Reuse the guest interiors; each ends in its pendant, with no free item.
+     Place it on the jungle island, superseding the glacier suggestion
+     `[DECIDED regional direction 2026-10-20]`; exact map/entrance remains open.
+   Reuse the guest interiors; each ends in its pendant, distinct from its
+   internal item chests. Power keeps its separate Glove and pendant chests;
+   the early-Glove/Mitt replacement proposal is superseded by this direction.
    Exact island gates and the revised Goron route remain `[OPEN]`; physical
    relocation and gating require verification. Maku Tree's seven-essence
    direction must distinguish late Courage from Sky's eighth essence.
@@ -138,8 +155,10 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
    garrison later reused the lower floors and abandoned them. Remove the Korok
    Cove test bridge. `cloud_bridge.asm` is existing traversal support; new Sky
    puzzles, item and boss remain `[TO-BUILD]` / `[OPEN]`.
-   Resolve the pre-Flippers Sea Zora approach and revised pre-D6 Rock Meat
-   route before writing directions; do not require D6's Hammer to enter D6.
+   Implement the scripted Sea Zora boat approach. Power and D6 have no Hammer
+   requirement `[DECIDED 2026-10-21]`. Collect Rock Meat near Power in Lyra
+   and return to the desert Goron for the existing Mines opening. Lupo/Eon
+   Gorons remain optional; exact hiding places/return still need design.
 7. **The Ranch Girl is a required Ocarina-path witness; D5 ends her curse
    automatically** `[DECIDED 2026-09-02]`.
    The inherited ALTTP Magic-Powder-on-a-Cucco Easter egg can remain as a
@@ -176,17 +195,19 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
 | 12 | **Book of Secrets**: library dash knockdown; preserve its gameplay function | item code exists; Journal `[DEFERRED 2026-09-29]` | `Items/book_of_secrets.asm`. The later Journal ruling supersedes the earlier Book-unlocks-Journal plan: remove X:LOG and suspend Journal menu entry points. No replacement Journal access or new pickup setter is selected. Deliver required lore through NPCs, dreams and the environment; Librarian lore `0x199–0x19F` remains material for review. |
 | 13 | **D3 Kalyxo Castle** → **Meadow Blade** + essence 3; **Farore's voice calls out** | built; framing `[DECIDED]`; callout text `[TO-VERIFY / TO-REVISE]` | maiden msg `0x134`. Canon name "Meadow Blade". Keep callouts location-vague until Farore helps Link during D7; the older `0x70` inventory currently discloses the vessel (see ruling 1). |
 
+**Glove direction reconciled, 2026-10-21:** no early Glove and no Ember Seed/forge grant quest. The required D3 garden/Compass Glove gate is superseded; required D3 progress must work with Gloves=0. Preserve current Compass placement until any new garden design is chosen. Book remains the library dash pickup. Power grants the Glove; nearby Lyra Meat supports the existing Goron opening without a mandatory Abyss/Lupo trip.
+
 ## Act II — The Conspiracy Unravels
 
 | # | Beat | Status | Evidence / notes |
 |---|------|--------|------------------|
-| 14 | **Lyra Sea / Sea Zora Flippers gift → Shrine of Wisdom → Pendant of Wisdom → Dream 1** | sea relocation `[DECIDED 2026-10-19]`; staging `[TO-BUILD]` | Guest shrine interior is reused. Dream 1 reveals the Captain's guardianship and temptation; revise the appointment text so Farore's power is not already in his sword. Each pendant dream returns Link to Maple's Abyss hut; the current hut entrance is `$68` to `$0F` on `$5D`. Exact sea approach and island gates need level review. |
+| 14 | **Docks boat → Sea Zora / dry Wisdom approach → Pendant of Wisdom → Sea Zora trust / Flippers gift**; **Dream 1 via Maple** | gift order `[DECIDED 2026-10-20]`; dream timing/route `[OPEN]`; staging `[TO-BUILD]` | Separate shrine and homes; a connected islet is allowed. The pendant proves heroism; Sea Zora grant Flippers and warn of River Zora aggression/conflict. Link retains it. Current dreams start by speaking to Maple, not by automatic pendant transport; bind a reachable visit and hut wake (`$68` to `$0F` on `$5D`) without assuming a pre-Flippers journey. Dream 1 shows the Captain's guardianship/temptation; revise appointment text so Farore's power is not already in his sword. Ordinary swimming allows Kalyxo return/limited sea; currents require Zora Link. Temporary island Save/Exit respawn stays `[PROPOSED]`. |
 | 15 | **D4 Zora Temple** → Zora Mask; Zora conspiracy reveal | built | Requires Shrine of Wisdom + Flippers `[DECIDED]`. Msg `0x135` |
 | 16 | Post-D4: Song of Storms; whirlpool dive-warps between worlds | `[IMPLEMENTED]` | `Sprites/Objects/deku_leaf.asm:85-118` → vanilla mirror-warp. `[PROPOSED]` one NPC line: whirlpools = cracks in the weakening seal |
 | 17 | **D5 Glacia Estate**: Twinrova — "HE will rise" | `[IMPLEMENTED]` | msgs `0x123`, `0x136` |
 | 18 | Defeating Twinrova permanently breaks the Ranch Girl's Cucco curse | `[DECIDED]`, `[TO-BUILD]` | Automatic D5 world-state consequence. No Song of Healing and no instructed return trip. If the player revisits naturally, short reactive dialogue may confirm the change. The former Lost Voice quest and Ranch Girl dream are `[CUT]`; `$1FA` is now allocated to the Eon Owl arrival line. D5 reaction and world-state behavior still need implementation review. |
-| 19 | **Lyra Sea Shrine of Power → Pendant of Power → Dream 2: Farore's appeal to Hyrule** | relocation and dream `[DECIDED]`; island gate `[OPEN]` | Required before D6. No Eon Gorons inside the guest shrine. Dream 2 uses Farore, the king and the garrison reply (`0x206–0x20B`); the removed Ranch Girl dream does not remove this pendant dream. |
-| 20 | **D6 Goron Mines**: Rock Meat trust, minecarts → essence 6 | built (carts WIP) | Requires Shrine of Power `[DECIDED]`. Maiden msg `0x137` |
+| 19 | **Shrine of Power east of the desert → Pendant of Power → Dream 2: Farore's appeal to Hyrule** | internal-Glove/no-forge/optional-Lupo direction `[DECIDED 2026-10-21]`; exact exterior/Meat layout `[OPEN]` | Accessible with D6-stage items and no Hammer. Keep Glove chest `$74` and pendant big chest `$73`; nearby Lyra maps supply Rock Meat using basic Glove. No mandatory Mitt/Lupo trip and no Eon Gorons inside. Dream 2 keeps Farore/king/garrison (`0x206–0x20B`). |
+| 20 | **D6 Goron Mines**: Goron story, minecarts → essence 6 | built core (carts WIP); Lyra Meat placement `[TO-BUILD]` | No Hammer requirement. Keep the five-Meat opening as working baseline; Meat is near Power in Lyra, with Lupo/Eon Gorons optional `[DECIDED current direction 2026-10-21]`. Shrine of Power precedes D6. Maiden msg `0x137`. |
 | 21 | East Kalyxo opens (Hammer); River Zora reconciliation; approach to the **Sky tower** | WIP; Sky D8 order `[DECIDED 2026-10-19]`, `[TO-BUILD]` | The tower east of Korok Cove is the only first Sky entrance. Required Sky progression follows the Ship and needs Somaria. Lower floors are Hylian garrison ruins; upper floors expose Watcher construction. |
 
 ## Act III — The Endgame
@@ -195,7 +216,7 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
 |---|------|--------|------------------|
 | 22 | Kaepora → **Song of Soaring** → the Dragon Ship | `[IMPLEMENTED]` | msg `0x146`; `Items/ocarina.asm` song 03 |
 | 23 | **D7 Dragon Ship**: Farore helps Link and reveals the blade's hidden power to Kydrog → pirate-Kydrog defeated → **Farore freed**; his spirit flees to the Abyss; Somaria Rod | reveal and partnership `[DECIDED 2026-10-20]`; `[TO-BUILD]` | No dragonification here. Finish `kydrog_boss.asm:335-382` scaffold (gated OFF): crystal 7, GameState→3, real rescue scene (replace temp `0x138`). Rescue begins Farore's playable partnership through Sky D8. Her POWER remains in the Blade until beat 25. Exact intervention and Kydrog's revised plan need design. |
-| 24 | **Lyra Sea Shrine of Courage** (needs Somaria Rod) → **Pendant of Courage** → **Dream 3: the healing revelation** | late gate `[DECIDED]`; Captain speaker/text `[DECIDED 2026-10-19]` | Post-D7. The Captain himself speaks; the dream teaches Link that Kydrog can be reached through the Song of Healing. Each pendant dream returns to Maple's Abyss hut. |
+| 24 | **Jungle-island Shrine of Courage** (needs Somaria Rod) → **Pendant of Courage** → **Dream 3: the healing revelation** | jungle direction `[DECIDED 2026-10-20]`; late gate/Captain text `[DECIDED]` | Post-D7. Jungle supersedes the glacier suggestion. Exact map/entry remains open. The Captain himself teaches Link that Kydrog can be reached through the Song of Healing. Each pendant dream returns to Maple's Abyss hut. |
 | 25 | **Farore reclaims her power and keeps the Meadow Blade; Link draws the Master Sword** (post-D7, pre-D8) | handoff `[DECIDED 2026-10-20]`, `[TO-BUILD]`; sword pull `[IMPLEMENTED-vanilla]` | Not forged — pulled. Meadow Blade caps at L3; the pull grants L4. Farore's power returns to herself, replacing the earlier transfer-into-Master-Sword proposal. Exact staging and the blade's later role remain design work. The old explanation that Kydrog knowingly lured the blade to D7 is superseded by his learning its contents during her D7 intervention. |
 | 26 | **D8 Sky tower and islands** -> eighth main-dungeon essence; **Farore participates at selected encounters** | `[DECIDED 2026-10-19/20]`, `[TO-BUILD]` | Somaria is required. Farore uses fixed scene placements rather than continuous following; exact stops and a useful interaction remain design work. Earlier Soaring remains useful through this longer late game and later revisits. Exact puzzles, item and boss remain open; the separate one- or two-room Watchers building is not automatically the boss arena. |
 | 27 | **Maku Tree → Maku Seed → shorter Fortress of Secrets**: the Seed clears its visible entrance obstruction; Dark Link is Kydrog | Seed entry and identity `[DECIDED 2026-10-20]`; redesign `[TO-BUILD]` | Return to the Tree after Sky's eighth essence. The Seed replaces the old Master Sword entrance barrier. Plan the Fortress on Abyss `$4B`, mirroring Kalyxo Castle; Lupo moves to old Fortress `$5E`. Exact approaches and physical relocation remain to build/verify. Kydrog becomes Kydreeok at the volcano before room `$00`. The route from Fortress to prison remains design work. |
@@ -245,4 +266,4 @@ Question numbers remain stable because other planning documents refer to them.
    village Yesterwind.
 7. `[REVIEW OPEN 2026-10-20]` Kydrog's restored human appearance remains the established direction; the older "living human self" wording needs a ruling on biological life versus a spirit's Abyss form. Do not infer a general resurrection power or his crew's restoration.
 
-Late-route open work (2026-10-20): implement the eighth essence award/display/readers, Seed receipt/entry and pedestal handoff scenes; author the required Sky Somaria route; settle Kydrog's post-D7 plan and post-healing choice, the Meadow Blade's later role, relocation approaches and Fortress-to-prison transition. Resolve the early Sea Zora and pre-D6 Goron route dependencies before writing directions. Roc's Cape and Heliarch remain unconfirmed concepts. Current plot and Ridoyie/Yaze writer packet: `~/.context/projects/oracle-of-secrets/scratchpad/handoffs/ridoyie_messages_2026-10-20/`.
+Late-route open work (2026-10-20): implement the eighth essence award/display/readers, Seed receipt/entry and pedestal handoff scenes; author the required Sky Somaria route; settle Kydrog's post-D7 plan and post-healing choice, the Meadow Blade's later role, relocation approaches and Fortress-to-prison transition. Build the scripted Sea Zora arrival/dry Wisdom/gift route and resolve the pre-D6 Goron route before writing directions. Roc's Cape and Heliarch remain unconfirmed concepts. Current delivery plan: `~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_completion_2026-10-20/PLAN.md`. Current plot and Ridoyie/Yaze writer packet: `~/.context/projects/oracle-of-secrets/scratchpad/handoffs/ridoyie_messages_2026-10-20/`.

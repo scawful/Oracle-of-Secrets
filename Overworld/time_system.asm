@@ -83,20 +83,20 @@ DrawClockToHud:
   .draw
   ADC #$90 : CPX #$01 : BEQ .minutes_low
     STA.l !hud_hours_low
-    LDA #$30 : STA.l !hud_hours_low+1 ; white palette
+    LDA #$24 : STA.l !hud_hours_low+1 ; white palette
     BRA .continue_draw ; 04
   .minutes_low
   STA.l !hud_min_low
-  LDA #$30 : STA.l !hud_min_low+1 ; white palette
+  LDA #$24 : STA.l !hud_min_low+1 ; white palette
   .continue_draw
   TYA
   CLC : ADC #$90 : CPX #$01 : BEQ .minutes_high
     STA.l !hud_hours_high
-    LDA #$30 : STA.l !hud_hours_high+1 ; white palette
+    LDA #$24 : STA.l !hud_hours_high+1 ; white palette
     BRA .finish_draw ; 04
   .minutes_high
   STA.l !hud_min_high
-  LDA #$30 : STA.l !hud_min_high+1 ; white palette
+  LDA #$24 : STA.l !hud_min_high+1 ; white palette
   .finish_draw
   INX : CPX #$02 : BMI .debut
   RTS

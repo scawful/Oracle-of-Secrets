@@ -1,9 +1,13 @@
 # Shrines
 
-**Current design (2026-10-20):** three required pendant shrines move to
-Lyra Sea islands, reusing their guest interiors. Wisdom and the Sea Zora
-Flippers gift precede D4; Power precedes D6; Courage requires Ship Somaria
-and remains after D7. Each pendant dream returns Link to Maple's Abyss hut.
+**Current design (2026-10-20):** retain three required guest interiors in
+the sea/east region. Wisdom is a separate shrine on a dry connection near
+the Sea Zora homes, possibly an adjacent islet. Docks boat -> Wisdom pendant
+proof -> Sea Zora trust/Flippers and River Zora warning -> D4. Power uses the
+volcanic shelf near Goron Mines before D6; Courage uses the jungle island
+and requires Ship Somaria after D7. Each pendant dream wakes Link in Maple's
+Abyss hut; the reachable Wisdom visit/timing needs level review. Temporary
+island Save/Exit respawn remains a proposal, not a required save change.
 
 The six-entry directory below is an older location snapshot. Its Abyss map
 IDs are not planned sea destinations, and its Sky/Sea entries do not establish

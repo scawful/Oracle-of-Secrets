@@ -8,6 +8,24 @@ Flag defaults: since 2026-09-29 RC features default to 1 in Util/macros.asm; "(d
 
 Docs/Planning/Plans, Docs/Planning/Status (except decisions.org), Docs/Debugging and several audits were removed from git on 2026-10-06; find them at ~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/<same path>.
 
+* Current Task Focus — October 21
+  :PROPERTIES:
+  :ID: delivery-christmas-2026-current
+  :END:
+
+Execution plan: [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_completion_2026-10-20/PLAN.md][tasks, dependencies and editor sessions]].
+Current owners/model/editor routing: [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_completion_2026-10-20/TASK_ROUTING.md][task routing]].
+Area evidence: [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_completion_2026-10-20/WORK_PACKAGES.md][W01–W12]].
+Progression reconciliation: [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_completion_2026-10-20/POWER_GLOVE_ROUTE.md][Power Glove, forge, Lupo and Goron Mines]].
+
+1. Existing owners finish current graphics fixtures and R9 harness correction/review; use their actual receipts before adding more work.
+2. Prepare the generated coastal map for scawful's next editor session; native Lyra integration and useful generator controls proceed as bounded tasks.
+3. Power is east of the desert and keeps its internal Power Glove; no early Glove or Ember Seed/forge grant quest. Eon Goron/Lupo is optional. Hide the five Rock Meat on nearby Lyra maps, reachable with basic Glove; no Hammer requirement for Power or D6, and no Mitt/Lupo prerequisite for the Meat trip. Supersede the planned required D3 Glove gate.
+4. Keep required dungeons/shrines/ending and reliable saves in scope. Pull the next concrete task when its inputs are ready; no dated playthrough quotas or remaining-hours countdown.
+5. Codex handles focused integration/diagnosis; Cursor/Flash handle bounded implementation; scawful shapes maps and judges design; Claude remains reserved fallback.
+
+Historical TODOs below are not current completion claims or settled directions for the reopened progression chain. Canon is the beat sheet and exact answers in decisions.org.
+
 * Project Dashboard & Epics
 
 This section provides a high-level overview of the major development efforts (Epics). Each epic groups together numerous smaller tasks from the sections below.
@@ -367,7 +385,7 @@ CLOSED: [2025-12-08 Mon 22:34]
     - *Cause:* Likely related to menu refactoring in commit 52a5ed4.
     - *File:* =Menu/menu.asm=
 
-*** ACTIVE [#B] Zora Temple Tasks [2/6] :code:bugfix:
+*** ACTIVE [#A] Zora Temple: natural Baby Zora puzzle and water persistence :code:bugfix:
     :PROPERTIES:
     :ID: bug-zora-temple
     :END:
@@ -378,22 +396,20 @@ CLOSED: [2025-12-08 Mon 22:34]
     - [X] Create Water Collision System: Generic system to update collision tilemaps when water fills.
       - *File:* =Dungeons/Collision/water_collision.asm=
       - *Features:* Room-indexed collision tables, SRAM persistence flags, hooks into =$01F3D2=
-    - [ ] *BLOCKED* Room 0x27 Water Gate Puzzle Collision Shape
+    - [ ] Verify Room 0x27 Water Gate Puzzle Collision Shape on the current integrated candidate
       - *Puzzle:* Player throws Zora Baby to switch, she pulls it, water fills upside-T section, Link swims to chest.
-      - *Problem:* AI agent couldn't determine correct custom collision fill shape. Used =analyze_rooms= script but got wrong offsets.
-      - *Blocker:* Need better approach - either manual collision editing, improved 2D spatial communication with agent, or multimodal via yaze screenshot.
-      - *Future:* yaze needs custom collision editor (ZScream has one, need feature parity).
-      - *Note:* Offsets in =WaterGate_Room27_Data= are placeholder estimates based on =NewWaterOverlayData=.
-    - [ ] Add Room Entry Persistence Hook: When re-entering room, restore water collision if SRAM flag set.
-    - [ ] Fix Room 0x25 Water Grate Position Bug
+      - *Evidence update (2026-10-20):* source now has water masks, switch targets and room-entry restoration; earlier bounded native fill/swim/door checks exist. Natural throw/recovery and ordinary Save/Quit/fresh reopen remain to qualify. See W05 in the delivery work packages.
+      - *Next:* inspect a collision overlay against the visible upside-T, then repair only a demonstrated mismatch; use the current Yaze collision editor.
+    - [X] Room-entry restore support exists in source; activation/global default and normal-save persistence still need current-candidate qualification.
+    - [ ] Recheck Room 0x25 grate placement on the current integrated candidate
       - *Symptom:* The grate sprite appears in top-left corner instead of correct position, but the moving water expansion works correctly in lower quadrants.
       - *Analysis:* Sprite 0x21 (WaterSwitch) triggers room tag 0x1A (WaterGate). Grate position vs water fill are desynced.
       - *Possible Causes:* (1) Room 0x25 missing tag 0x1A in ZScream (2) Sprite X/Y initialization wrong
       - *Note:* May want to revisit puzzle design here - need general strategy for adapting custom collision for future rooms.
-    - [ ] General: Develop reusable custom collision workflow for water puzzles
+    - [ ] Complete natural pickup/throw/switch, bad-throw recovery, chest route, door re-entry and Save/Quit/fresh reopen for the intended water states.
 
 **** Zora Baby Quest (D4 Main Mechanic)
-     - *Narrative:* Territory dispute between Sea Zora and River Zora. Sea Zora Princess kidnapped - Link gets Big Key to unlock her cell, but she dies (broken heart/injuries). Song of Healing -> Zora Mask.
+     - *Current objective:* rescue Baby Zora and Princess Zora after boat -> Wisdom pendant -> Sea Zora Flippers. The older princess-death/Healing-mask account remains an existing version; exact mask donor and outcome are under review before new dialogue is written.
      - *Mechanic:* Zora Baby (little girl) follows Link as follower sprite. Can pick up and throw her (OoT style). She pulls switches to solve puzzles.
      - *Key Puzzle (Room 0x27):* Throw Zora Baby to switch, she pulls it, water fills upside-T section, Link swims to previously unreachable chest.
 
@@ -513,7 +529,7 @@ CLOSED: [2025-12-08 Mon 22:34]
     :PROPERTIES:
     :ID: content-shrine-wisdom
     :END:
-    - *Superseded (2026-10-19/20):* all three guest pendant shrines move to Lyra Sea islands. Flippers are a Sea Zora gift; the home is on the first island, with initial pre-Flippers access still open. Retain the old swamp ideas below as historical options, not the current shrine route.
+    - *Current (2026-10-20):* docks scripted boat -> dry Sea Zora/Wisdom route -> pendant -> Sea Zora Flippers gift -> D4. Wisdom is separate from the homes, possibly a connected islet. Power is east of the desert, grants Power Glove internally and needs no Hammer; seed-forge is cut, Lupo optional and nearby Lyra maps supply Rock Meat. Courage uses the jungle island. Retain the old swamp/all-islands ideas below as historical options.
     - *Historical goal:* Make the swamp area less frustrating and more rewarding to explore.
     - *Ideas:*
       - [ ] Add warp zones that return the player to the start of a section if they fall.
@@ -699,16 +715,17 @@ CLOSED: [2025-12-08 Mon 22:34]
       - Fixes: Restored `overlays.asm` camera logic and added palette refresh (`INC $15`) to `ocarina.asm`.
     - *RC status (2026-10-06, Claude):* in RC =2f1582e2= (=Items/ocarina.asm:315-356=, =Overworld/overlays.asm:53=). Code only: not run on the RC ROM. Hint message $1A6 is still a placeholder (TODO at =ocarina.asm:307-311=). Report: =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/tracker_reconciliation_2026-10-06/=.
 
-*** TODO [#A] Kalyxo Castle Prison Sequence [0/4] :sequence:code:
+*** ACTIVE [#A] Kalyxo Castle Prison Sequence [3/5] :sequence:code:
     :PROPERTIES:
     :ID: quest-kalyxo-prison
     :END:
     - *Goal:* Create a stealth-based escape sequence after obtaining the Meadow Blade.
     - *Tasks:*
-      - [ ] Implement Overlord logic to swarm the player with guards after they get the Lv2 sword, triggering a warp to a dungeon room (prison cell).
-      - [ ] Implement guard AI using =probe_ref.asm=. Some guards should have a simple "reset on sight" behavior, while others should give chase.
-      - [ ] Design the prison escape path, requiring the use of Minish form to slip through small passages.
-      - [ ] Create custom dungeon objects for Minish-only pathways.
+      - [X] Private capture/unarm/cell/reclaim behavior has focused native evidence.
+      - [X] Private pot shrink/hidden maze/patrol recapture route has controller evidence. Caught means reset to cell until blade reclaim, then normal combat; chase AI is not required.
+      - [X] Draft204 includes approved capture/exit dialogue and focused native save/reopen evidence; source =9e535e9f=.
+      - [ ] Pair final approved art/collision/actors with source and base recipe; keep later render-only art separate from V14 behavior proof.
+      - [ ] Keep required D3 Compass/Big Key/blade access usable without Glove; the early-Glove garden gate is superseded. Verify the selected capture/escape route on its actual integrated candidate. See W04.
 
 *** ACTIVE [#B] Goron Mines Quest [2/4] :quest:
     :PROPERTIES:
@@ -716,7 +733,7 @@ CLOSED: [2025-12-08 Mon 22:34]
     :END:
     - [X] Collectible Goron Rock Meat from Lupo Mountain.
     - [X] Kalyxian Goron NPC in the desert asks for five sirloins to open the mines.
-    - *Planning update (2026-10-20):* current source uses five Rock Meat, but the route/Mitt delivery is reopened by sea shrines and Lupo's move to old Fortress $5E. No Eon Gorons inside the guest Shrine of Power. Resolve the pre-D6 approach before writing new directions.
+    - *Current direction (2026-10-21):* keep five-Meat opening, hide Meat on Lyra maps near Power, and allow collection with its basic Glove. Eon Goron/Lupo Mountain is optional. Cut seed-forge/early Glove and the required D3 Glove-garden proposal; do not integrate the conflicting Mitt-only pickup policy. Exact map/hiding places remain to design.
     - [ ] Implement Garo NPC. This will be a dialogue-heavy NPC with mysterious warping behavior. (Depends on [[infra-dialogue-docs]]).
     - [ ] Add Gossip Stones that provide hints related to the Shrines or other world lore.
 

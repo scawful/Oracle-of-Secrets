@@ -56,10 +56,19 @@ SpriteDraw_RaceGameLady =  $1AF92C
 !ImpervSwordHammer  = 01  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 
+SpriteModule_Active_Bank1E = $1E8B11
+
 %Set_Sprite_Properties(Sprite_WindmillGuy_Prep, Sprite_WindmillGuy_Long)
 
 Sprite_WindmillGuy_Long:
 {
+  ; Safe sprite multiplexing: Sprite ID $B2 is shared between Sprite_WindmillGuy
+  ; (NPC) and vanilla PlayerBee (spawned by Honeycomb swarm or player bottle bee).
+  ; When spawned as a bee, $0D80,X is set to 1 (active player bee state).
+  ; Windmill Guy has $0D80,X == 0.
+  LDA.w $0D80, X : BEQ +
+    JML SpriteModule_Active_Bank1E
+  +
   PHB : PHK : PLB
   LDA.b #$01 : STA.w SprMiscC, X
   JSL SpriteDraw_RaceGameLady
@@ -72,8 +81,6 @@ Sprite_WindmillGuy_Long:
 
 Sprite_WindmillGuy_Prep:
 {
-  PHB : PHK : PLB
-  PLB
   RTL
 }
 
@@ -88,20 +95,19 @@ Sprite_WindmillGuy_Main:
 
   %ShowSolicitedMessage($1D7) : BCC .done
     LDA.b #$03 : STA.l $7EF34C
-    LDA.b #$13
-    STA.w $0CF8
+    LDA.b #$13 : STA.w $0CF8
     JSL $0DBB67 ; Link_CalculateSFXPan
     ORA.w $0CF8
     STA $012E ; Play the song learned sound
-    BRA .done
+    RTS
 
   .no_ocarina
   %ShowSolicitedMessage($1D5)
-  BRA .done
+  RTS
 
   .need_healing
   %ShowSolicitedMessage($1D6)
-  BRA .done
+  RTS
 
   .already
   %ShowSolicitedMessage($1D8)

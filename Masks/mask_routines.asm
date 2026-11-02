@@ -40,6 +40,14 @@ StartupMasks:
 
   ; set links sprite bank
   LDA #$10 : STA $BC
+  JSL DekuStick_Drop
+  ; Volatile state shared by the Garo/Bombchu/Switch Hook prototypes.
+  PHX
+  LDX.b #$11
+  .clear_prototypes
+  STZ.w $07EE, X
+  DEX : BPL .clear_prototypes
+  PLX
   RTL
 }
 
@@ -56,6 +64,7 @@ PlayerTransform:
 
 ResetToLinkGraphics:
 {
+  JSL GaroMask_Clear
   LDA $0FFF : BNE +
     STZ !CurrentMask
     LDA.b #$10 : STA.w !LinkGraphics
@@ -70,6 +79,7 @@ ResetToLinkGraphics:
 
 ForceResetMask_GameOver:
 {
+  JSL DekuStick_Drop
   LDA $02B2 : BEQ .still_link
     CMP.b #$06 : BEQ .gbc_link
       JSL ResetToLinkGraphics
@@ -85,6 +95,7 @@ ForceResetMask_GameOver:
 
 ForceResetMask_SaveAndQuit:
 {
+  JSL DekuStick_Drop
   LDA !CurrentMask : BEQ .still_link
     JSL ResetToLinkGraphics
   .still_link
@@ -103,6 +114,7 @@ Palette_ArmorAndGloves:
                      CMP.b #$05 : BEQ .minish_form
                      CMP.b #$06 : BEQ .gbc_form
                      CMP.b #$07 : BEQ .moosh_form
+                     CMP.b #$08 : BEQ .garo_form
                         JMP   .original_sprite
 
   .deku_mask
@@ -134,6 +146,11 @@ Palette_ArmorAndGloves:
 
   .moosh_form
   JSL UpdateMooshPalette
+  RTL
+
+  .garo_form
+  LDA.b #$42 : STA.b $BC
+  JSL UpdateGaroPalette
   RTL
 
   .original_sprite
@@ -298,6 +315,25 @@ pullpc
 
 LinkItem_CheckForSwordSwing_Masks:
 {
+  ; Check if a Deku Stick is currently drawn
+  LDA.l DekuStick_State : BEQ .check_masks
+
+  ; Stick is drawn: sword swing is suppressed while holding a stick
+  ; Check if B was newly pressed ($F4 bit 7) to stow the stick
+  BIT.b $F4 : BPL .skip_sword
+
+  ; B newly pressed -> stow the stick!
+  JSL DekuStick_Stow
+
+.skip_sword
+  LDA.b #$10 ; Non-zero ensures BNE branches to EXIT_079CBE (skipping sword swing)
+  RTL
+
+.check_masks
+  LDA.w !CurrentMask : CMP.b #$08 : BNE +
+    JSL GaroMask_CounterInput
+    BRA .return
+  +
   LDA !CurrentMask : BEQ .return
     CMP.b #$02 : BEQ .return  ; zora mask can use sword
       CMP.b #$06 : BEQ .return ; gbc link can use sword
@@ -1564,20 +1600,8 @@ CheckNewRButtonPress:
   RTL
 }
 
-if !ENABLE_MINISH_AUTO_PORTAL == 1
-; =========================================================
-; Minish portal, automatic. User steering 2026-10-18 changes the earlier
-; stand-still dwell to walk-on activation with leave-tile rearming.
-; Called from LinkState_CheckForMinishForm (tile $64 handler, 8-bit A/X/Y).
-; The tile handler can run several times in one frame (one call per touching
-; detection point), so contact is handled once per frame ($1A).
-; $80 is latched contact. LinkMain_FrameHook advances it before collision;
-; four eligible frames without a contact rearm it. Pauses and action states
-; freeze this absence count; GBC state $17 remains eligible.
-; No new WRAM or second collision scan is required.
-
 pushpc
-org $07800F ; @hook module=Masks name=LinkMain_FrameHook kind=jsl target=LinkMain_FrameHook expected_m=16
+org $07800F ; @hook module=Masks name=LinkMain_FrameHook kind=jsl target=LinkMain_FrameHook expected_m=16 expected_exit_m=8
 ; usdasm/bank_07.asm:Link_Main ($07800F-$078013). M=16, DBR=$07; the inherited
 ; index width is preserved. Replaces SEP #$20 / STZ $0FC1, replayed by the helper. Single owner of this
 ; site: other per-frame Link work must chain from LinkMain_FrameHook.
@@ -1597,13 +1621,29 @@ LinkMain_FrameHook:
   %m16()
   PHA : PHX : PHY : PHB
   %m8()
+if !ENABLE_MINISH_AUTO_PORTAL == 1
   JSL MinishPortal_Maintain
+endif
+  JSL GaroMask_FrameTick
+  JSL DekuStick_Main
   PLB
   %m16()
   PLY : PLX : PLA
   PLP
   RTL
 }
+
+if !ENABLE_MINISH_AUTO_PORTAL == 1
+; =========================================================
+; Minish portal, automatic. User steering 2026-10-18 changes the earlier
+; stand-still dwell to walk-on activation with leave-tile rearming.
+; Called from LinkState_CheckForMinishForm (tile $64 handler, 8-bit A/X/Y).
+; The tile handler can run several times in one frame (one call per touching
+; detection point), so contact is handled once per frame ($1A).
+; $80 is latched contact. LinkMain_FrameHook advances it before collision;
+; four eligible frames without a contact rearm it. Pauses and action states
+; freeze this absence count; GBC state $17 remains eligible.
+; No new WRAM or second collision scan is required.
 
 MinishPortal_Maintain:
 {

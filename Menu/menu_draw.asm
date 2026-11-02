@@ -244,54 +244,30 @@ endif
 Menu_DrawMusicNotes:
 {
   SEP #$30
-  LDA.b #$7E : STA.b $0A ; Set up the bank of our indirect address
+  LDA.b #$7E : STA.b $0A
+  JSL UpdateFluteSong_Long
+  LDY.b #$00
+.notes
+  PHY
+  TYA : INC #2 : CMP.l $7EF34C : BCC .learned : BEQ .learned
+  LDA.b #$01 : BRA .variant
+.learned
+  TYA : INC #2
+.variant
+  STA.w MusicNoteValue
   REP #$30
-
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0002 : BCC .no_healing
-    LDA.w #$0002 : BRA .draw_healing
-  .no_healing
-  LDA.w #$0001
-  .draw_healing
-  STA.w MusicNoteValue
+  TYA : AND.w #$00FF : ASL : TAX
+  LDA.w .positions,X : TAX
   LDA.w #MusicNoteValue
-  LDX.w #menu_offset(9,5)
   LDY.w #QuarterNoteGFX
   JSR DrawMenuItem
-
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0003 : BCC .no_storms
-    LDA.w #$03 : BRA .draw_storms
-  .no_storms
-  LDA.w #$01
-  .draw_storms
-  STA.w MusicNoteValue
-  LDA.w #MusicNoteValue
-  LDX.w #menu_offset(9,9)
-  LDY.w #QuarterNoteGFX
-  JSR DrawMenuItem
-
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0004 : BCC .no_soaring
-    LDA.w #$04 : BRA .draw_soaring
-  .no_soaring
-  LDA.w #$01
-  .draw_soaring
-  STA.w MusicNoteValue
-  LDA.w #MusicNoteValue
-  LDX.w #menu_offset(9,13)
-  LDY.w #QuarterNoteGFX
-  JSR DrawMenuItem
-
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0005 : BCC .no_songs
-    LDA.w #$05 : BRA .draw_songs
-  .no_songs
-  LDA.w #$01
-  .draw_songs
-  STA.w MusicNoteValue
-  LDA.w #MusicNoteValue
-  LDX.w #menu_offset(9,17)
-  LDY.w #QuarterNoteGFX
-  JSR DrawMenuItem
-
+  SEP #$30
+  PLY : INY : CPY.b #$06 : BCC .notes
+  REP #$30
   RTS
+.positions
+  dw menu_offset(9,3),menu_offset(9,6),menu_offset(9,9)
+  dw menu_offset(9,13),menu_offset(9,16),menu_offset(9,19)
 }
 
 ; =========================================================
@@ -299,6 +275,7 @@ Menu_DrawMusicNotes:
 DrawYItems:
 {
   SEP #$30
+  JSL UpdateFluteSong_Long
   LDA.b #$7E : STA.b $0A ; Set up the bank of our indirect address
   REP #$30
 
@@ -383,9 +360,9 @@ endif
 
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0000 : BEQ .no_ocarina
 if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
-    ; Ocarina owned, no song learned ($7EF34C = 1): grey icon (entry 5).
+    ; Ocarina owned, no song learned ($7EF34C = 1): grey icon (entry 7).
     CMP.w #$0002 : BCS .ocarina_has_songs
-      LDA.w #$0005 : BRA .spoof_ocarina
+      LDA.w #$0007 : BRA .spoof_ocarina
     .ocarina_has_songs
     LDA.w $030F : AND.w #$00FF : BNE .spoof_ocarina
 else
@@ -421,10 +398,24 @@ else
     INC A
 endif
     STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
+if !ENABLE_GOLDSTAR_CELL == 1
+    LDX.w #menu_offset(16,6)
+else
     LDX.w #menu_offset(13,13)
+endif
     LDY.w #FishingRodGFX
     JSR DrawMenuItem
   .no_rods
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.l ByrnaOwned : AND.w #$00FF : CMP.w #$0001 : BEQ .byrna_value
+    LDA.w #$0000
+  .byrna_value
+  STA.w MenuItemValueSpoof
+  LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(13,13)
+  LDY.w #ByrnaGFX
+  JSR DrawMenuItem
+endif
 
   LDA.w #$7EF34D
   LDX.w #menu_offset(13,16)
@@ -467,17 +458,39 @@ if !ENABLE_MENU_PAGE3 == 0
 endif
 
 if !ENABLE_PORTAL_ROD_CELL == 1
-  ; Portal Rod: row 4, first cell (the Deku cell; $0202 = $19).
+  ; Portal Rod: row 4, fifth cell with the custom grid; logical ID stays $19.
   LDA.w #PortalRodOwned&$FFFF
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDX.w #menu_offset(16,16)
+else
   LDX.w #menu_offset(16,3)
+endif
   LDY.w #PortalRodGFX
   JSR DrawMenuItem
 endif
 
 if !ENABLE_GOLDSTAR_CELL == 1
   LDA.w #GoldstarOwned&$FFFF
-  LDX.w #menu_offset(16,6)
+  LDX.w #menu_offset(16,3)
   LDY.w #HookGFX+8
+  JSR DrawMenuItem
+
+  LDA.l SwitchHookOwned : AND.w #$00FF : CMP.w #$0001 : BEQ .switchhookowned_value
+    LDA.w #$0000
+  .switchhookowned_value
+  STA.w MenuItemValueSpoof
+  LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(16,9)
+  LDY.w #SwitchHookGFX
+  JSR DrawMenuItem
+
+  LDA.l BombchuOwned : AND.w #$00FF : CMP.w #$0001 : BEQ .bombchuowned_value
+    LDA.w #$0000
+  .bombchuowned_value
+  STA.w MenuItemValueSpoof
+  LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(16,13)
+  LDY.w #BombchuGFX
   JSR DrawMenuItem
 endif
 

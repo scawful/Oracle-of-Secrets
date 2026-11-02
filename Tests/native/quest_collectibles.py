@@ -22,6 +22,7 @@ import portal_rod_spawn_return as native
 COUNTS = (0x7EF38B, 0x7EF38D, 0x7EF38F, 0x7EF391, 0x7EF393, 0x7EF395)
 BOUNDARIES = (0, 59, 60, 99, 100, 255)
 SUPPLY_NAMES = ("BANANA", "PINEAPPLE", "ROCK MEAT", "SEASHELL", "HONEYCOMB", "DEKU STICK")
+SUPPLY_FIRST, SUPPLY_LAST = 16, 21
 HP, MAXHP, MAGIC = 0x7EF36D, 0x7EF36C, 0x7EF36E
 CURSOR, MENU, PAGE = 0x7E020B, 0x7E0200, 0x7E1E71
 PROTECTED = (0x7E0202, 0x7E0303, 0x7E0304, 0x7EF3A3, 0x7EF3A4, 0x7EF3A5,
@@ -40,7 +41,7 @@ def describe():
                  "R/L loop Items/Quest/Equipment; Quest gear, green Tunic=0, held Sword=FF and Pearl",
                  "Equipment Start and informational Quest A close; Y/mask/ring selections retained"],
         "fixtures": "Only ALLOWED inventory/HP/magic bytes, recorded with readback; caller supplies existing Y/mask/ring selections.",
-        "counts": list(BOUNDARIES), "cursor": "7E020B, supply slots15..20", "native_executed": False,
+        "counts": list(BOUNDARIES), "cursor": "7E020B, supply slots16..21", "native_executed": False,
     }
 
 
@@ -152,15 +153,15 @@ class QuestFlow(native.Fixture):
         # Reach the supply row by ordinary vertical navigation; do not test or
         # change the existing mask/ring/song actions on the way.
         for _ in range(4):
-            if 15 <= self.r(CURSOR) <= 20:
+            if SUPPLY_FIRST <= self.r(CURSOR) <= SUPPLY_LAST:
                 break
             self.tap("Up")
-        native.require(15 <= self.r(CURSOR) <= 20, "Supply row was not reachable")
+        native.require(SUPPLY_FIRST <= self.r(CURSOR) <= SUPPLY_LAST, "Supply row was not reachable")
         for _ in range(6):
-            if self.r(CURSOR) == slot + 15:
+            if self.r(CURSOR) == slot + SUPPLY_FIRST:
                 break
             self.tap("Right")
-        self.check("selected supply slot", self.r(CURSOR), slot + 15)
+        self.check("selected supply slot", self.r(CURSOR), slot + SUPPLY_FIRST)
 
     def use(self, label, slot, count, hp, magic, result_count, result_hp, result_magic):
         self.select(slot)
@@ -171,7 +172,7 @@ class QuestFlow(native.Fixture):
         self.supply_footer(slot)
         self.tap("A")
         self.check(label + " stays on Equipment", self.screen(), "equipment")
-        self.check(label + " restores supply cursor", self.r(CURSOR), slot + 15)
+        self.check(label + " restores supply cursor", self.r(CURSOR), slot + SUPPLY_FIRST)
         counts[slot] = result_count
         self.check(label + " counts", [self.r(a) for a in COUNTS], counts)
         self.check(label + " HP/magic", [self.r(HP), self.r(MAGIC)], [result_hp, result_magic])
@@ -194,9 +195,9 @@ class QuestFlow(native.Fixture):
         for slot in range(6):
             self.select(slot)
             self.supply_footer(slot)
-        self.tap("Right"); self.check("Supply row wraps through empty Banana", self.r(CURSOR), 15)
+        self.tap("Right"); self.check("Supply row wraps through empty Banana", self.r(CURSOR), SUPPLY_FIRST)
         self.icon("Empty Banana remains visible", 7, 22, "BananaGFX")
-        self.tap("Left"); self.check("Supply row wraps left", self.r(CURSOR), 20)
+        self.tap("Left"); self.check("Supply row wraps left", self.r(CURSOR), SUPPLY_LAST)
         self.select(1)
         self.shot("equipment-pineapple-name-count-action")
 

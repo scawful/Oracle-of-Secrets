@@ -298,6 +298,7 @@ Goldstar_SetChainProperties:
   LDA.w GoldstarOrHookshot : CMP #$02 : BEQ .ball_chain
     LDA HookshotSpriteData.prop, X
     ORA.b #$02 : ORA.b $65
+    JSL SwitchHook_ChainProperties
     RTL
   .ball_chain ; 22D860
   LDA HookshotSpriteData.prop, X
@@ -917,6 +918,7 @@ pullpc
 BallChain_Finish:
 {
   STZ.w $0300 : STZ.w $037B ; Restore vanilla
+  JSL SwitchHook_Clear
   LDA $037A : CMP #$04 : BNE .not_done ; We are hookshotting
     STZ $0112 ; Clear animation flag
   .not_done
@@ -955,6 +957,7 @@ Hookshot_Init:
 
 BeginGoldstarOrHookshot:
 {
+  JSL SwitchHook_Init
 if !ENABLE_GOLDSTAR_CELL == 1
   ; Latch the selected weapon only at launch. Ancilla draw/collision and
   ; retract continue using this value even if the menu is opened in flight.

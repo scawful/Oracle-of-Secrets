@@ -8,7 +8,7 @@ and counts. They are reference observations, not the current story route.
 
 - **Eight main dungeons:** Dragon Ship remains D7 with Somaria; required Sky is D8.
 - **Late route:** Ship -> late Courage / Dream 3 -> Master Sword -> Sky's eighth essence -> Maku Tree / Maku Seed -> Fortress. The Seed clears its entrance obstruction.
-- **Pendant shrines:** move Wisdom, Power, and Courage to Lyra Sea islands. Their old Abyss map numbers below are not the planned island destinations.
+- **Pendant shrines:** Wisdom near the Sea Zora homes on a dry connection; Power on the volcanic shelf near Goron Mines; Courage on the jungle island. Their old Abyss numbers below are historical, not assigned new destinations. Docks boat -> Wisdom pendant proof -> Sea Zora trust/Flippers -> D4; rough currents require Zora Link.
 - **Planned swap:** Fortress to `$4B`, Lupo Mountain toward `$5E`. The table's Fortress `$5E` row remains a snapshot until the relocation is implemented and verified.
 - **Abyss:** retains the Origins tutorial, GBC interior direction, Maple/dream returns, exploration, and volcano finale. See [the current beat sheet](../Planning/story_canon_beat_sheet.md) for narrative authority.
 

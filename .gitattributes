@@ -3,3 +3,5 @@ Core/Generated/expanded_messages.asm text eol=lf
 Core/Generated/source_sprite_sheets/sheet_overrides.asm text eol=lf
 Data/dungeons/custom_collision.json text eol=lf
 Oracle-of-Secrets.yaze text eol=lf
+Core/Generated/menu_icons/menu_icon_overrides.asm text eol=lf
+Data/graphics/menu_icons.json text eol=lf

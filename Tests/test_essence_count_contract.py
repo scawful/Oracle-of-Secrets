@@ -1,7 +1,7 @@
-"""Source contract and exhaustive model for the eight-essence counter.
+"""Source contracts and exhaustive model for the progression helpers.
 
-Executes the assembly text of GetCrystalCount and GetEssenceCount in
-Core/progression.asm on a width-aware model of the 65816 subset they use,
+Executes the counters and reaction-message selector in Core/progression.asm
+on a width-aware model of the 65816 subset they use,
 for all 256 Crystals values and every entry M/X width. No build, no emulator.
 """
 from pathlib import Path
@@ -24,7 +24,7 @@ def routine_lines(text, name):
     for raw in match.group(1).splitlines():
         line = raw.split(";", 1)[0].strip()
         if line:
-            lines.append(line)
+            lines.extend(part.strip() for part in line.split(" : "))
     return lines
 
 
@@ -53,13 +53,13 @@ class Cpu:
             self.p |= FLAG_N
 
     def push(self, value, size):
-        for shift in ((8, 0) if size == 2 else (0,)):
+        for shift in range((size - 1) * 8, -1, -8):
             self.stack[self.sp] = (value >> shift) & 0xFF
             self.sp -= 1
 
     def pull(self, size):
         value = 0
-        for shift in ((0, 8) if size == 2 else (0,)):
+        for shift in range(0, size * 8, 8):
             self.sp += 1
             value |= self.stack.pop(self.sp) << shift
         return value
@@ -76,7 +76,7 @@ class Cpu:
             raise AssertionError(f"immediate {operand} does not match register width")
         return int(digits, 16)
 
-    def run(self, lines):
+    def run(self, lines, routines=None):
         labels = {line: i for i, line in enumerate(lines) if line.startswith(".")}
         pc, steps = 0, 0
         while True:
@@ -106,6 +106,12 @@ class Cpu:
                     self.x = value
                 else:
                     self.y = value
+            elif op == "PHA":
+                self.push(self.a, 2 if wide_a else 1)
+            elif op == "PLA":
+                value = self.pull(2 if wide_a else 1)
+                self.set_a(value)
+                self.nz(value, wide_a)
             elif op == "LDA.l":
                 if arg != "Crystals":
                     raise AssertionError(f"unexpected load {arg}")
@@ -114,16 +120,36 @@ class Cpu:
                     value |= self.memory[CRYSTALS + 1] << 8
                 self.set_a(value)
                 self.nz(value, wide_a)
-            elif op == "LDX":
-                self.x = self.immediate(arg, wide_x)
-                self.nz(self.x, wide_x)
+            elif op == "LDA" and arg == "[$00], Y":
+                pointer = sum(self.memory[i] << (8 * i) for i in range(3))
+                value = self.memory[(pointer + self.y) & 0xFFFFFF]
+                if wide_a:
+                    value |= self.memory[(pointer + self.y + 1) & 0xFFFFFF] << 8
+                self.set_a(value)
+                self.nz(value, wide_a)
+            elif op == "STA.b" and arg == "$04":
+                self.memory[4] = self.a & 0xFF
+                if wide_a:
+                    self.memory[5] = self.a >> 8
+            elif op in ("LDX", "LDY"):
+                value = self.immediate(arg, wide_x)
+                if op == "LDX":
+                    self.x = value
+                else:
+                    self.y = value
+                self.nz(value, wide_x)
             elif op == "AND":
                 value = self.a & self.immediate(arg, wide_a)
                 self.set_a(value)
                 self.nz(value, wide_a)
-            elif op == "CMP":
+            elif op in ("CMP", "CMP.b"):
                 value = self.a & (0xFFFF if wide_a else 0xFF)
-                operand = self.immediate(arg, wide_a)
+                if op == "CMP.b" and arg == "$04":
+                    operand = self.memory[4]
+                    if wide_a:
+                        operand |= self.memory[5] << 8
+                else:
+                    operand = self.immediate(arg, wide_a)
                 self.p = (self.p | FLAG_C) if value >= operand else (self.p & ~FLAG_C)
                 self.nz(value - operand, wide_a)
             elif op == "LSR":
@@ -131,16 +157,32 @@ class Cpu:
                 self.p = (self.p | FLAG_C) if value & 1 else (self.p & ~FLAG_C)
                 self.set_a(value >> 1)
                 self.nz(value >> 1, wide_a)
-            elif op == "INX":
-                self.x = (self.x + 1) & (0xFFFF if wide_x else 0xFF)
-                self.nz(self.x, wide_x)
+            elif op in ("INX", "INY"):
+                value = ((self.x if op == "INX" else self.y) + 1) & (0xFFFF if wide_x else 0xFF)
+                if op == "INX":
+                    self.x = value
+                else:
+                    self.y = value
+                self.nz(value, wide_x)
             elif op == "TXA":
                 self.set_a(self.x)
                 self.nz(self.x, wide_a)
-            elif op in ("BCC", "BNE"):
-                taken = not self.flag(FLAG_C if op == "BCC" else FLAG_Z)
+            elif op == "TAY":
+                self.y = self.a & (0xFFFF if wide_x else 0xFF)
+                self.nz(self.y, wide_x)
+            elif op in ("BCC", "BNE", "BEQ", "BRA"):
+                taken = (op == "BRA" or
+                         (self.flag(FLAG_Z) if op == "BEQ" else
+                          not self.flag(FLAG_C if op == "BCC" else FLAG_Z)))
                 if taken:
                     pc = labels[arg]
+            elif op == "JSL":
+                if routines is None or arg not in routines:
+                    raise AssertionError(f"unexpected call {arg}")
+                self.push(0xABCDEF, 3)
+                self.run(routines[arg], routines)
+                if self.pull(3) != 0xABCDEF:
+                    raise AssertionError(f"{arg} corrupted its return address")
             elif op == "RTL":
                 return
             else:
@@ -204,12 +246,37 @@ class EssenceCountContract(unittest.TestCase):
     def test_get_crystal_count_stays_seven_bit(self):
         def check(cpu, crystals, x, y, label):
             self.assertEqual(cpu.a, bin(crystals & 0x7F).count("1"), label)
-            self.assertEqual(cpu.x & 0xFF, x & 0xFF, label)
-            self.assertEqual(cpu.y & 0xFF, y & 0xFF, label)
+            self.assertEqual((cpu.x, cpu.y), (x, y), label)
         self.run_routine("GetCrystalCount", check)
         self.assertIn("AND #$7F", routine_lines(self.progression, "GetCrystalCount"))
 
-    def test_legacy_helpers_keep_addresses_and_count(self):
+    def test_reaction_message_thresholds_and_register_contract(self):
+        lines = routine_lines(self.progression, "SelectReactionMessage")
+        routines = {"GetCrystalCount": routine_lines(self.progression, "GetCrystalCount")}
+        # Include zero and nonzero message bytes and two different ROM banks.
+        tables = (
+            (0x32A1F8, ((7, 0x01CA), (5, 0x82A5), (3, 0), (1, 0x0100), (0, 0xFF42))),
+            (0x0E8100, ((0, 0x0734),)),
+        )
+        for pointer, table in tables:
+            for crystals in range(256):
+                count = bin(crystals & 0x7F).count("1")
+                expected = next(message for threshold, message in table if count >= threshold)
+                for p, a, x, y in entry_states():
+                    cpu = Cpu(p, a, x, y, crystals)
+                    cpu.memory.update({i: (pointer >> (8 * i)) & 0xFF for i in range(3)})
+                    for offset, (threshold, message) in enumerate(table):
+                        address = pointer + 3 * offset
+                        cpu.memory.update({address: threshold, address + 1: message & 0xFF,
+                                           address + 2: message >> 8})
+                    cpu.run(lines, routines)
+                    label = f"reaction table=${pointer:06X} crystals=${crystals:02X} P=${p:02X}"
+                    self.assertEqual((cpu.a & 0xFF, cpu.y), (expected & 0xFF, expected >> 8), label)
+                    self.assertEqual(cpu.x, x, label)
+                    self.assertEqual(cpu.p, p, label)
+                    self.assertEqual((cpu.sp, cpu.stack), (0x1FF0, {}), label)
+
+    def test_legacy_helpers_keep_order_and_count(self):
         order = [self.progression.index(f"\n{name}:\n") for name in (
             "GetCrystalCount", "UpdateMapIcon", "SelectReactionMessage", "GetEssenceCount")]
         self.assertEqual(order, sorted(order))
