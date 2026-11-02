@@ -66,6 +66,11 @@ import goron97_cart_gate as goron  # noqa: E402
 
 require = native.require
 SCENE_DEADLINE = 900  # seconds; the Fixture default (120 s) is too short for a take
+# Determinism: the first pause after launch lands on a wall-clock-dependent emulated frame
+# (5..8 seen live), which shifted every later input by a few frames and changed one take
+# frame in 64 between identical runs. Cold boots first step, input-free, to this absolute
+# emulated frame, so every scene input lands on the same frame since power-on.
+BOOT_ALIGN_FRAME = 60
 
 
 class SceneFailed(RuntimeError):
@@ -275,9 +280,21 @@ def _wait(s: SceneSession, predicate, frames, what):
     raise RuntimeError(f"boot: {what} not reached after {frames} frames; last {s.last}")
 
 
+def _align_boot(s: SceneSession, target: int = BOOT_ALIGN_FRAME):
+    """Advance input-free, one frame at a time, until the absolute emulated frame is `target`."""
+    now = native.number(s.b.get_rom_info()["frameCount"])
+    if now > target:
+        raise RuntimeError(f"boot: first pause at emulated frame {now}, past the align frame {target}")
+    s.frame_count = now
+    while s.frame_count < target:
+        s.advance("", 1)
+    s.snap()
+    require(s.frame_count == target, f"boot align ended on frame {s.frame_count}, wanted {target}")
+
+
 def _cold_boot(s: SceneSession):
     """Title -> file select -> file 1, by controller only (boot_native.py pattern)."""
-    s.snap()
+    _align_boot(s)
     _wait(s, lambda v: v["module"] == 0 and v["submodule"] == 8, 2700, "title (module 0/8)")
     s.tap("Start", 120)
     _wait(s, lambda v: v["module"] == 1 and v["submodule"] == 5, 300, "file select (module 1/5)")

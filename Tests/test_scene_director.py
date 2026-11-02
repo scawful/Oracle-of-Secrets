@@ -270,6 +270,31 @@ class SceneFiles(unittest.TestCase):
         self.assertEqual(cfg["Preferences"]["SaveDataFolder"], "/tmp/p/Saves")
         self.assertEqual(cfg["Oracle"]["PersistentSaveName"], "scene")
 
+    def test_boot_aligns_to_fixed_frame(self):
+        from types import SimpleNamespace
+        from scene_director import runner
+
+        class Fake:
+            def __init__(self, start):
+                self.emulated, self.frame_count, self.calls = start, None, []
+                self.b = SimpleNamespace(get_rom_info=lambda: {"frameCount": str(self.emulated)})
+
+            def advance(self, button, frames):
+                self.calls.append((button, frames))
+                self.emulated += frames
+                self.frame_count = self.emulated
+
+            def snap(self):
+                pass
+
+        for start in (5, 8):
+            fake = Fake(start)
+            runner._align_boot(fake, 60)
+            self.assertEqual(fake.frame_count, 60)
+            self.assertEqual(set(fake.calls), {("", 1)})
+        with self.assertRaisesRegex(RuntimeError, "past the align frame"):
+            runner._align_boot(Fake(61), 60)
+
     def test_cli_exit_codes(self):
         with tempfile.TemporaryDirectory() as tmp:
             good, bad = Path(tmp) / "good.json", Path(tmp) / "bad.json"
@@ -282,6 +307,55 @@ class SceneFiles(unittest.TestCase):
                                  capture_output=True, text=True)
             self.assertEqual(rec.returncode, 1)
             self.assertIn("ROM not found", rec.stderr)
+
+
+class SrmEdit(unittest.TestCase):
+    @staticmethod
+    def valid_srm(file_no=1):
+        from scene_director import srm
+        data = bytearray(srm.SRM_SIZE)
+        primary, backup = srm.block_offsets(file_no)
+        block = bytearray(srm.BLOCK_SIZE)
+        block[0x360:0x364] = (999).to_bytes(2, "little") * 2
+        block[0x36C], block[0x36D] = 0xA0, 0x50
+        block[srm.CHECKSUM:] = ((srm.VALID_SUM - srm.word_sum(block)) & 0xFFFF).to_bytes(2, "little")
+        data[primary:primary + srm.BLOCK_SIZE] = block
+        data[backup:backup + srm.BLOCK_SIZE] = block
+        return bytes(data)
+
+    def test_edit_fixes_checksum_and_backup(self):
+        from scene_director import srm
+        data = self.valid_srm(1)
+        writes = [srm.parse_set("7EF360:u16=87"), srm.parse_set("7EF362:u16=87"), srm.parse_set("0x7EF36C=0x50")]
+        out = srm.edit(data, 1, writes)
+        self.assertEqual(srm.word_sum(out[:0x500]), 0x5A5A)
+        self.assertEqual(out[:0x500], out[0xF00:0x1400])
+        self.assertEqual(int.from_bytes(out[0x360:0x362], "little"), 87)
+        self.assertEqual(out[0x36C], 0x50)
+        changed = {i for i, (a, b) in enumerate(zip(data, out)) if a != b}
+        self.assertTrue(changed <= {base + o for base in (0, 0xF00) for o in (0x360, 0x361, 0x362, 0x363, 0x36C, 0x4FE, 0x4FF)})
+
+    def test_edit_refuses_bad_input(self):
+        from scene_director import srm
+        data = bytearray(self.valid_srm(1))
+        with self.assertRaises(srm.SrmError):
+            srm.edit(bytes(data), 2, [])  # file 2 is empty: checksum 0
+        data[0xF10] ^= 1
+        with self.assertRaises(srm.SrmError):
+            srm.edit(bytes(data), 1, [])  # backup differs
+        for bad in ("7EF4FE:u16=1", "7EEFFF=1", "7EF360=300", "7EF360:u32=1", "nonsense"):
+            with self.subTest(bad=bad), self.assertRaises(srm.SrmError):
+                srm.edit(self.valid_srm(1), 1, [srm.parse_set(bad)])
+
+    def test_cli_never_overwrites(self):
+        cli = [sys.executable, str(REPO / "Scripts" / "Agents" / "scene.py"), "srm"]
+        with tempfile.TemporaryDirectory() as tmp:
+            src, dst = Path(tmp) / "in.srm", Path(tmp) / "out.srm"
+            src.write_bytes(self.valid_srm(1))
+            ok = subprocess.run(cli + [str(src), str(dst), "--set", "7EF360:u16=87"], capture_output=True, text=True)
+            self.assertEqual(ok.returncode, 0, ok.stderr)
+            again = subprocess.run(cli + [str(src), str(dst), "--set", "7EF360:u16=88"], capture_output=True, text=True)
+            self.assertEqual(again.returncode, 2)
 
 
 class ShippedScenes(unittest.TestCase):
