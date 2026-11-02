@@ -41,6 +41,15 @@ SETTINGS_TEMPLATES = (
     Path.home() / "Library/Application Support/Mesen2/settings.json",
 )
 FORBIDDEN = "oos-rc-play"
+# Determinism: Mesen fills WRAM/VRAM/ARAM/OAM/CGRAM at power-on from Snes.RamPowerOnState
+# (Core/SNES/SnesConsole.cpp InitializeRam -> BaseCartridge::GetRamPowerOnState; the
+# shared template says "Random", which made two identical runs end on different WRAM
+# hashes in slice 1). EnableRandomPowerOnState randomizes PPU/CPU registers (SnesPpu.cpp).
+POWER_ON = {"RamPowerOnState": "AllZeros", "EnableRandomPowerOnState": False}
+# Entrance reload pokes, copied from mesen2-oos oracle_cheats.warp_entrance(method="reload").
+ENTRANCE, CONTINUE_FLAG, RESPAWN_FLAG, FOLLOWER = 0x7E010E, 0x7E010A, 0x7E04AA, 0x7EF3CC
+MENU = 0x7E0200  # Tests/native/quest_collectibles.py: 4 = Items screen while module $0E
+EQUIPPED = 0x7E0202
 # $2F DIR (Core/ram.asm:154): 0 up, 2 down, 4 left, 6 right.
 FACING = {"up": 0, "down": 2, "left": 4, "right": 6}
 
@@ -79,6 +88,8 @@ class SceneSession(native.Fixture):
         self.route = {"paths": {}}
         self.last, self.phase = None, "boot"
         self.frame_count, self.last_advance = None, 0
+        self.recorder = None
+        self.watch = {}
         self.result.update(checks=[], steps=[], walks=[])
         self.log = log_path.open("w")
 
@@ -106,6 +117,8 @@ class SceneSession(native.Fixture):
 
     def advance(self, button="", frames=1):
         require(type(frames) is int and 1 <= frames <= 4, "advance takes 1..4 frames per FRAME call")
+        if self.recorder is not None:
+            frames = 1  # one PNG per emulated frame; callers count self.last_advance
         info = self.check_owner()
         require(self.paused(), "FRAME requires paused owned CPU")
         self.input(button)
@@ -124,8 +137,13 @@ class SceneSession(native.Fixture):
         finally:
             self.input("")
         self.frame_count, self.last_advance = after, after - before
+        if self.recorder is not None:
+            self.recorder.capture(self.b, after)
         s = self.snap()
-        self.log.write(json.dumps({"phase": self.phase, "button": button, "frames": frames, **s}) + "\n")
+        row = {"phase": self.phase, "button": button, "frames": frames, **s}
+        if self.watch:
+            row["watch"] = {name: self.evaluate(expr) for name, expr in self.watch.items()}
+        self.log.write(json.dumps(row) + "\n")
         return s
 
     def hold(self, button, frames):
@@ -149,6 +167,17 @@ def _settings_template():
             return path
     raise RuntimeError("no Mesen2 settings.json template found; looked in "
                        + ", ".join(map(str, SETTINGS_TEMPLATES)))
+
+
+def profile_settings(cfg: dict, profile: Path) -> dict:
+    """Private-profile settings: own save folders, fixed save name, deterministic power-on."""
+    prefs = cfg.setdefault("Preferences", {})
+    for kind, folder in (("SaveData", "Saves"), ("SaveState", "SaveStates")):
+        prefs["Override" + kind + "Folder"] = True
+        prefs[kind + "Folder"] = str(profile / folder)
+    cfg.setdefault("Oracle", {})["PersistentSaveName"] = "scene"
+    cfg.setdefault("Snes", {}).update(POWER_ON)
+    return cfg
 
 
 def _owned(pid, rom):
@@ -177,12 +206,7 @@ class PrivateMesen:
         for folder in ("Saves", "SaveStates"):
             (self.profile / folder).mkdir(parents=True, exist_ok=True)
         cfg = json.loads(_settings_template().read_text(encoding="utf-8-sig"))
-        prefs = cfg.setdefault("Preferences", {})
-        for kind, folder in (("SaveData", "Saves"), ("SaveState", "SaveStates")):
-            prefs["Override" + kind + "Folder"] = True
-            prefs[kind + "Folder"] = str(self.profile / folder)
-        cfg.setdefault("Oracle", {})["PersistentSaveName"] = "scene"
-        (self.profile / "settings.json").write_text(json.dumps(cfg))
+        (self.profile / "settings.json").write_text(json.dumps(profile_settings(cfg, self.profile)))
         if seed_srm is not None:
             require(seed_srm.stat().st_size == 8192, f"{seed_srm}: expected an 8192-byte SRM")
             shutil.copy2(seed_srm, self.profile / "Saves" / "scene.srm")
@@ -262,17 +286,89 @@ def _cold_boot(s: SceneSession):
 
 
 def _apply_fixtures(s: SceneSession, paths):
-    require(s.paused(), "fixtures need a paused CPU")
     for path in paths:
-        for addr, kind, value in load_fixture(path):
-            size = 1 if kind == "u8" else 2
-            before = s.read(addr, size)
-            for i in range(size):
-                require(s.b.write_memory(addr + i, (value >> (8 * i)) & 0xFF), f"write {addr:06X} rejected")
-            after = s.read(addr, size)
-            s.result["writes"].append({"fixture": str(path), "addr": f"{addr:06X}", "before": before,
-                                       "value": value, "readback": after})
-            require(after == value, f"fixture {path}: readback {addr:06X}={after:#x}, wanted {value:#x}")
+        _poke(s, load_fixture(path), str(path))
+
+
+def _poke(s: SceneSession, writes, source):
+    require(s.paused(), "RAM writes need a paused CPU")
+    for addr, kind, value in writes:
+        size = 1 if kind == "u8" else 2
+        before = s.read(addr, size)
+        for i in range(size):
+            require(s.b.write_memory(addr + i, (value >> (8 * i)) & 0xFF), f"write {addr:06X} rejected")
+        after = s.read(addr, size)
+        s.result["writes"].append({"source": source, "addr": f"{addr:06X}", "before": before,
+                                   "value": value, "readback": after})
+        require(after == value, f"{source}: readback {addr:06X}={after:#x}, wanted {value:#x}")
+
+
+def _load_entrance(s: SceneSession, entrance: int):
+    """oracle_cheats warp_entrance(method="reload") pokes, then wait for room play.
+
+    Same-world only: the pokes keep $7EF3CA/$0FFF (the scene's save decides the world).
+    Follower $02 makes Underworld_LoadEntrance load the spawn point instead.
+    """
+    if s.r8(FOLLOWER) == 0x02:
+        raise SceneFailed(f"entrance {entrance:#04x}: follower $02 loads the spawn point; clear $7EF3CC")
+    _poke(s, [(ENTRANCE, "u16", entrance), (CONTINUE_FLAG, "u8", 1), (RESPAWN_FLAG, "u8", 0),
+              (0x7E001B, "u8", 1), (0x7E0011, "u8", 0), (0x7E00B0, "u8", 0), (0x7E0010, "u8", 0x05)],
+          f"entrance {entrance:#04x}")
+    s.neutral(4)
+    _wait(s, lambda v: v["module"] in (7, 9) and v["submodule"] == 0, 900,
+          f"entrance {entrance:#04x} room play (module 7/9, sub 0)")
+
+
+def _menu_tap(s: SceneSession, button):
+    s.advance(button, 2)
+    s.neutral(6)
+
+
+def _equip(s: SceneSession, step):
+    """new_items_prototype.equip by controller: Start, Right until $0202 = item, Start."""
+    item = step.args["item"]
+    if s.r8(EQUIPPED) == item:
+        return
+    _menu_tap(s, "Start")
+    _wait(s, lambda v: v["module"] == 0x0E and s.r8(MENU) == 4, 240, "Items screen (module $0E, $0200=4)")
+    for _ in range(24):
+        if s.r8(EQUIPPED) == item:
+            break
+        _menu_tap(s, "Right")
+    else:
+        raise SceneFailed(f"{step.label()}: item {item:#04x} not reachable on the Items screen")
+    _menu_tap(s, "Start")
+    _wait(s, lambda v: v["module"] in (7, 9) and v["submodule"] == 0, 240, "gameplay after the menu")
+
+
+class Recorder:
+    """Every emulated frame between record start/stop as PNG; ffmpeg encodes the mp4.
+
+    No audio: the socket has SCREENSHOT but no AVI/WAV command (Core/Shared/SocketServer.cpp).
+    """
+
+    def __init__(self, frames_dir: Path, mp4: Path):
+        self.dir, self.mp4, self.count, self.first = frames_dir, mp4, 0, None
+        self.dir.mkdir(parents=True, exist_ok=True)
+
+    def capture(self, bridge, frame):
+        shot = bridge.screenshot()
+        require(shot and shot[:8] == b"\x89PNG\r\n\x1a\n", f"SCREENSHOT failed at frame {frame}")
+        (self.dir / f"{self.count:06d}.png").write_bytes(shot)
+        self.first = frame if self.first is None else self.first
+        self.count += 1
+
+    def encode(self):
+        """60 fps capture decimated to a real 30 fps mp4 (every other frame)."""
+        require(self.count > 0, "record captured no frames")
+        ffmpeg = shutil.which("ffmpeg") or "/opt/homebrew/bin/ffmpeg"
+        self.mp4.parent.mkdir(parents=True, exist_ok=True)
+        cmd = [ffmpeg, "-y", "-loglevel", "error", "-framerate", "60", "-i", str(self.dir / "%06d.png"),
+               "-vf", "fps=30,scale=iw*4:ih*4:flags=neighbor", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+               "-crf", "14", str(self.mp4)]
+        subprocess.run(cmd, check=True, timeout=600)
+        return {"mp4": str(self.mp4), "frames_dir": str(self.dir), "captured_frames": self.count,
+                "first_frame": self.first, "capture_fps": 60, "mp4_fps": 30, "audio": False}
 
 
 # ---------------------------------------------------------------- steps ----
@@ -312,6 +408,10 @@ def _run_step(s: SceneSession, step):
         s.neutral(2)
         if s.last["dir"] != FACING[a["dir"]]:
             raise SceneFailed(f"{step.label()}: $2F DIR={s.last['dir']}, wanted {FACING[a['dir']]}")
+    elif step.kind == "equip":
+        _equip(s, step)
+    elif step.kind == "poke":
+        _poke(s, a["writes"], step.label())
     elif step.kind == "press":
         s.hold(a["button"], a["frames"])
         s.neutral(2)
@@ -330,18 +430,18 @@ def _run_step(s: SceneSession, step):
             raise SceneFailed(f"{step.label()}: check failed: {a['label']!r} (state {s.last})")
         s.result["checks"].append({"phase": s.phase, "name": a["label"], "passed": True})
     elif step.kind == "record":
-        raise SceneError(RECORD_STUB)
+        if a["action"] == "start":
+            if s.recorder is None:
+                s.recorder = s.pending_recorder
+        elif s.recorder is not None:
+            s.result["record"] = s.recorder.encode()
+            s.recorder = None
     else:  # load is handled before the loop
         raise SceneError(f"{step.label()}: unexpected step")
 
 
-RECORD_STUB = "record is not implemented in slice 1 (scene director slice 2 adds video capture)"
-
-
 def run_scene(scene: Scene, rom: Path, out: Path | None = None, record: Path | None = None, log=print):
     """Run `scene` on a copy of `rom`. Returns the result dict; raises SceneFailed on a failed check."""
-    if record is not None or scene.uses_record():
-        raise SceneError(RECORD_STUB)
     load = scene.load
     if load is None:
         raise SceneError("the first step must be load (srm or state)")
@@ -366,6 +466,11 @@ def run_scene(scene: Scene, rom: Path, out: Path | None = None, record: Path | N
         args = SimpleNamespace(socket=mesen.socket, pid=mesen.pid, status_file=mesen.status,
                                owner_file=slot / "owner", owner=owner, rom_sha1=sha1, output=work)
         session = SceneSession(args, bridge, work / "frames.jsonl")
+        session.pending_recorder = None
+        session.watch = scene.watch or {}
+        if record is not None or scene.uses_record():
+            mp4 = Path(record).resolve() if record is not None else work / f"{scene.name}.mp4"
+            session.pending_recorder = Recorder(work / "take-frames", mp4)
         session.check_owner()
         if "state" in load.args:
             require(bridge.load_state(path=str(load.args["state"])), f"load_state failed: {load.args['state']}")
@@ -375,6 +480,10 @@ def run_scene(scene: Scene, rom: Path, out: Path | None = None, record: Path | N
             _cold_boot(session)
         _apply_fixtures(session, load.args["fixtures"])
         session.neutral(2)
+        if "entrance" in load.args:
+            _load_entrance(session, load.args["entrance"])
+        if record is not None and not scene.uses_record():
+            session.recorder = session.pending_recorder  # --record alone: everything after load
         start = dict(session.last)
         result["start"] = start
         if start["module"] == 7 and start["indoors"]:
@@ -389,6 +498,9 @@ def run_scene(scene: Scene, rom: Path, out: Path | None = None, record: Path | N
             _run_step(session, step)
             session.result["steps"].append({"step": step.index, "kind": step.kind,
                                             "before": before, "after": dict(session.last)})
+        if session.recorder is not None:  # no "record stop": capture ran to the end
+            session.result["record"] = session.recorder.encode()
+            session.recorder = None
         wram = hashlib.sha256()
         for offset in range(0, 0x20000, 0x4000):
             wram.update(session.block(0x7E0000 + offset, 0x4000))
@@ -396,7 +508,7 @@ def run_scene(scene: Scene, rom: Path, out: Path | None = None, record: Path | N
         if shot:
             (work / "final.png").write_bytes(shot)
         result.update(passed=True, final=session.last, frame_count=session.frame_count,
-                      wram_sha256=wram.hexdigest())
+                      wram_sha256=wram.hexdigest(), record=session.result.get("record"))
         return result
     finally:
         if session is not None:

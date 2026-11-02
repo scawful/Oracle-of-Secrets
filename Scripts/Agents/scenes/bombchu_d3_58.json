@@ -1,0 +1,36 @@
+{
+ "scene": "bombchu_d3_58",
+ "description": "Bombchu promo take, D3 room $58 (BOMBCHU.md backup room; $19 has no reachable entrance). Link stands in the NE quadrant facing right; the chu crawls to the east wall, follows the top wall west, turns down the west wall and its fuse ends beside the $F0 bombable door (door slot 0 type $2E), which opens. The spot (380,112) comes from an offline Bombchu_Crawl model that reproduces a live probe frame for frame (AFS scene_director_2026-11-02/live-bombchu/sim); the explosion lands at (303,135), and Link errors up to 8 px still open the door.",
+ "watch": {
+  "slot": "u8(0x7E07F1)",
+  "chu_dir": "u8(0x7E07F2)",
+  "chu_y": "u8(0x7E0BFA + u8(0x7E07F1) - 1) | u8(0x7E0C0E + u8(0x7E07F1) - 1) << 8",
+  "chu_x": "u8(0x7E0C04 + u8(0x7E07F1) - 1) | u8(0x7E0C18 + u8(0x7E07F1) - 1) << 8",
+  "fuse": "u8(0x7E039F + u8(0x7E07F1) - 1)",
+  "door_tile": "u8(0x7F2423)",
+  "door_flags": "u16(0x7E0400)"
+ },
+ "steps": [
+  {"load": {
+    "srm": "~/.context/projects/oracle-of-secrets/scratchpad/handoffs/new_items_prototype_2026-10-18/native/save/native-save.srm",
+    "fixtures": ["~/.context/projects/oracle-of-secrets/scratchpad/handoffs/bombchu_crawl_2026-10-18/grant-bombchu-supply.json"],
+    "entrance": "0x2A"}},
+  {"check": {"expr": "room == 0x58", "label": "D3 room $58"}},
+  {"check": {"expr": "u8(0x7E1980) == 0x2E", "label": "door slot 0 is bombable ($2E, Bomb_CheckForUWDestructibles)"}},
+  {"check": {"expr": "u8(0x7F2423) == 0xF0", "label": "door tile (35,16) closed ($F0)"}},
+  {"poke": {"writes": [{"addr": "0x7E0DD0", "type": "u8", "value": 0, "count": 16}]}},
+  {"equip": "0x1C"},
+  {"walk_to": {"x": 380, "y": 112, "allow_doors": true}},
+  {"face": "right"},
+  {"hold": {"frames": 4}},
+  {"record": "start"},
+  {"hold": {"frames": 30}},
+  {"press": {"button": "Y", "frames": 2}},
+  {"wait_until": {"expr": "u8(0x7E07F1) != 0", "max_frames": 30}},
+  {"wait_until": {"expr": "u8(0x7F2423) != 0xF0", "max_frames": 420}},
+  {"wait_until": {"expr": "u8(0x7E07F1) == 0", "max_frames": 120}},
+  {"hold": {"frames": 60}},
+  {"record": "stop"},
+  {"check": {"expr": "u8(0x7F2423) != 0xF0", "label": "door (35,16) open after the explosion"}}
+ ]
+}
