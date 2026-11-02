@@ -207,11 +207,68 @@ class SceneFiles(unittest.TestCase):
             with self.assertRaisesRegex(SceneError, message):
                 parse_scene(self.scene(steps), Path("/tmp/x.json"))
 
-    def test_record_is_a_clear_stub(self):
+    def test_record_needs_a_rom_not_a_stub(self):
         from scene_director import runner
         scene = parse_scene(self.scene([{"load": {"srm": "a"}}, {"record": "start"}]), Path("/tmp/x.json"))
-        with self.assertRaisesRegex(SceneError, "not implemented in slice 1"):
+        self.assertTrue(scene.uses_record())
+        with self.assertRaisesRegex(RuntimeError, "ROM not found"):
             runner.run_scene(scene, Path("/nonexistent.sfc"))
+
+    def test_entrance_equip_poke(self):
+        scene = parse_scene(self.scene([
+            {"load": {"srm": "a", "entrance": "0x2A"}},
+            {"equip": "0x1C"},
+            {"poke": {"writes": [{"addr": "0x7E0DD0", "type": "u8", "value": 0, "count": 16},
+                                 {"addr": "0x7E010E", "type": "u16", "value": "0x2A"}]}},
+        ]), Path("/tmp/x.json"))
+        self.assertEqual(scene.load.args["entrance"], 0x2A)
+        self.assertEqual(scene.steps[1].args, {"item": 0x1C})
+        writes = scene.steps[2].args["writes"]
+        self.assertEqual(len(writes), 17)
+        self.assertEqual(writes[0], (0x7E0DD0, "u8", 0))
+        self.assertEqual(writes[15], (0x7E0DDF, "u8", 0))
+        self.assertEqual(writes[16], (0x7E010E, "u16", 0x2A))
+
+    def test_watch_expressions(self):
+        data = self.scene([{"load": {"srm": "a"}}])
+        data["watch"] = {"chu_x": "u8(0x7E0C04 + u8(0x7E07F1) - 1) | u8(0x7E0C18 + u8(0x7E07F1) - 1) << 8"}
+        scene = parse_scene(data, Path("/tmp/x.json"))
+        mem = {0x7E07F1: 1, 0x7E0C04: 0x10, 0x7E0C18: 0x01}
+        read = lambda addr, size: mem.get(addr, 0)  # noqa: E731
+        self.assertEqual(scene.watch["chu_x"].evaluate(read, {}), 0x110)
+        data["watch"] = {"bad": "open('x')"}
+        with self.assertRaisesRegex(SceneError, "watch bad"):
+            parse_scene(data, Path("/tmp/x.json"))
+
+    def test_poke_errors(self):
+        bad = [
+            ([{"poke": {"writes": [{"addr": "0x700000", "type": "u8", "value": 0}]}}], "WRAM"),
+            ([{"poke": {"writes": [{"addr": "0x7FFFFF", "type": "u8", "value": 0, "count": 2}]}}], "WRAM"),
+            ([{"poke": {"writes": []}}], "writes"),
+            ([{"equip": "0x00"}], "equip"),
+            ([{"load": {"srm": "a", "entrance": "0x200"}}], "entrance"),
+        ]
+        for steps, message in bad:
+            with self.assertRaisesRegex(SceneError, message):
+                parse_scene(self.scene(steps), Path("/tmp/x.json"))
+
+    def test_fixture_rejects_count(self):
+        from scene_director.scenefile import load_fixture
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "f.json"
+            path.write_text(json.dumps({"writes": [{"addr": "0x7EF3AD", "type": "u8", "value": 1, "count": 2}]}))
+            with self.assertRaisesRegex(SceneError, "count"):
+                load_fixture(path)
+
+    def test_profile_pins_power_on_ram(self):
+        from scene_director import runner
+        cfg = runner.profile_settings({"Snes": {"RamPowerOnState": "Random", "EnableRandomPowerOnState": True,
+                                                "Region": "Ntsc"}}, Path("/tmp/p"))
+        self.assertEqual(cfg["Snes"]["RamPowerOnState"], "AllZeros")
+        self.assertIs(cfg["Snes"]["EnableRandomPowerOnState"], False)
+        self.assertEqual(cfg["Snes"]["Region"], "Ntsc")
+        self.assertEqual(cfg["Preferences"]["SaveDataFolder"], "/tmp/p/Saves")
+        self.assertEqual(cfg["Oracle"]["PersistentSaveName"], "scene")
 
     def test_cli_exit_codes(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -223,8 +280,19 @@ class SceneFiles(unittest.TestCase):
             self.assertEqual(subprocess.run(cli + ["check", str(bad)], capture_output=True).returncode, 2)
             rec = subprocess.run(cli + ["run", str(good), "--rom", "/nonexistent.sfc", "--record", "o.mp4"],
                                  capture_output=True, text=True)
-            self.assertEqual(rec.returncode, 2)
-            self.assertIn("not implemented in slice 1", rec.stderr)
+            self.assertEqual(rec.returncode, 1)
+            self.assertIn("ROM not found", rec.stderr)
+
+
+class ShippedScenes(unittest.TestCase):
+    def test_shipped_scenes_validate(self):
+        scenes = sorted((REPO / "Scripts" / "Agents" / "scenes").glob("*.json"))
+        self.assertGreaterEqual(len(scenes), 1)
+        for path in scenes:
+            with self.subTest(scene=path.name):
+                scene = load_scene(path)
+                self.assertEqual(scene.name, path.stem)
+                self.assertEqual(scene.steps[0].kind, "load")
 
 
 if __name__ == "__main__":

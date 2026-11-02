@@ -6,8 +6,11 @@
 
 `run` takes one heavy-lock slot, launches a private headless Mesen2 OOS
 instance on a copy of ROM, runs the steps, writes DIR/result.json and stops
-the instance. Exit codes: 0 pass, 1 failed check/wait/walk or runtime error,
-2 bad scene file or unsupported step (record), 3 heavy lock busy.
+the instance. `--record OUT` (or record start/stop steps) captures every frame
+as PNG and encodes a 30 fps mp4 with ffmpeg (no audio). Power-on RAM is pinned
+to zeros so the same scene ends on the same WRAM hash.
+Exit codes: 0 pass, 1 failed check/wait/walk or runtime error,
+2 bad scene file, 3 heavy lock busy.
 See Scripts/Agents/scene_director/scenefile.py for the format.
 """
 from __future__ import annotations
@@ -28,7 +31,7 @@ def main(argv=None) -> int:
     run = sub.add_parser("run", help="run a scene in a private headless Mesen")
     run.add_argument("scene", type=Path)
     run.add_argument("--rom", type=Path, required=True, help="patched ROM, e.g. Roms/oos168x.sfc")
-    run.add_argument("--record", type=Path, help="video output (slice 2; errors in slice 1)")
+    run.add_argument("--record", type=Path, help="mp4 output (every frame between record start/stop, or all after load)")
     run.add_argument("--out", type=Path, help="work/result directory (default: a new temp dir)")
     chk = sub.add_parser("check", help="validate a scene file offline")
     chk.add_argument("scene", type=Path)
@@ -56,7 +59,7 @@ def main(argv=None) -> int:
     except Exception as error:  # noqa: BLE001 - any setup/runtime failure is exit 1
         print(f"ERROR: {type(error).__name__}: {error}", file=sys.stderr)
         return 3 if "heavy lock is busy" in str(error) else 1
-    print(json.dumps({k: result[k] for k in ("scene", "passed", "frame_count", "wram_sha256", "work")
+    print(json.dumps({k: result[k] for k in ("scene", "passed", "frame_count", "wram_sha256", "work", "record")
                       if k in result}, indent=2))
     return 0 if result.get("passed") else 1
 

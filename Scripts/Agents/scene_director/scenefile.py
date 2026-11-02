@@ -6,9 +6,11 @@ A scene is one JSON object:
       "scene": "house-walk",
       "description": "optional",
       "steps": [
-        {"load": {"srm": "save.srm", "fixtures": ["grant.json"]}},
+        {"load": {"srm": "save.srm", "fixtures": ["grant.json"], "entrance": "0x2A"}},
         {"walk_to": {"x": 120, "y": 200}},
         {"face": "up"},
+        {"equip": "0x1C"},
+        {"poke": {"writes": [{"addr": "0x7E0DD0", "type": "u8", "value": 0, "count": 16}]}},
         {"press": {"button": "Y", "frames": 2}},
         {"wait_until": {"expr": "u8(0x7E0010) == 7", "max_frames": 120}},
         {"check": {"expr": "room == 0x104", "label": "still in the house"}},
@@ -22,15 +24,25 @@ Steps:
               "state" loads a Mesen savestate instead. "fixtures" are existing fixture
               JSON files ({"writes": [{"addr", "type": u8|u16, "value"}]}), applied
               after the load with readback. Paths are relative to the scene file.
+              "entrance" (0x00..0x84, optional) then loads that entrance with the
+              oracle_cheats "reload" pokes and waits for module 7/9, submodule 0.
   walk_to     Room-local Link (x, y) as in goron97_cart_gate walk(): $22/$20 minus the
               room base. Optional: allow_doors, allow_hazard_edge, blocked [[col,row]...].
               The walker stops within 2 px (goron97 axis() tolerance).
   face        up|down|left|right: a one-frame D-pad tap (sets $2F; may nudge Link 1-2 px).
+  equip       Item id (e.g. "0x1C" Bombchu): Start, Right until $0202 is the item, Start
+              (new_items_prototype.equip by controller, so the HUD updates natively).
+  poke        {"writes": [{"addr", "type"?, "value", "count"?}]}: fixture-format RAM
+              writes with readback; "count" repeats a u8/u16 write over consecutive cells.
   press       {"button": "Y" | ["A","Up"], "frames": N (default 2)}, then 2 neutral frames.
   wait_until  {"expr", "max_frames"}: advance neutral frames until expr is true; fails otherwise.
   check       {"expr", "label"?}: fails the scene (nonzero exit) when false.
   hold        {"frames": N, "button"?}: hold a button, or nothing, for N frames.
-  record      "start" | "stop". Not implemented in slice 1 (runner errors clearly).
+  record      "start" | "stop". Between them every frame is captured (1-frame advances)
+              to PNG and encoded to mp4. Without "stop", capture runs to the end.
+
+Top-level "watch" (optional): {name: expr}, up to 32, evaluated after every frame
+and logged as "watch" in frames.jsonl (diagnostics only; never changes the run).
 
 Expressions: integers, + - * // % & | ^ << >> ~, comparisons, and/or/not,
 u8(addr), u16(addr), and names: room lx ly x y layer module submodule hp frame
@@ -46,7 +58,7 @@ from pathlib import Path
 
 BUTTONS = frozenset({"A", "B", "X", "Y", "L", "R", "Start", "Select", "Up", "Down", "Left", "Right"})
 DIRECTIONS = {"up": "Up", "down": "Down", "left": "Left", "right": "Right"}
-STEP_KINDS = ("load", "walk_to", "face", "press", "wait_until", "check", "hold", "record")
+STEP_KINDS = ("load", "walk_to", "face", "equip", "poke", "press", "wait_until", "check", "hold", "record")
 NAMES = frozenset({"room", "lx", "ly", "x", "y", "layer", "module", "submodule", "hp", "frame",
                    "indoors", "dir"})
 MAX_FRAMES = 36000  # ten minutes at 60 fps; scenes are short takes
@@ -148,6 +160,7 @@ class Scene:
     path: Path
     steps: list
     description: str = ""
+    watch: dict = None  # name -> Expr, logged every frame in frames.jsonl
 
     @property
     def load(self):
@@ -162,6 +175,16 @@ def _int(value, where, low=None, high=None):
         raise SceneError(f"{where}: expected integer, got {value!r}")
     if (low is not None and value < low) or (high is not None and value > high):
         raise SceneError(f"{where}: {value} outside {low}..{high}")
+    return value
+
+
+def _hex(value, where):
+    """Accept 28 or "0x1C" (scene files use hex strings for RAM and item ids)."""
+    if isinstance(value, str):
+        try:
+            return int(value, 0)
+        except ValueError:
+            raise SceneError(f"{where}: bad integer {value!r}") from None
     return value
 
 
@@ -184,7 +207,7 @@ def _normalize(index, kind, raw, base: Path):
     if kind == "load":
         if not isinstance(raw, dict) or ("srm" in raw) == ("state" in raw):
             raise SceneError(f"{where}: give exactly one of 'srm' or 'state'")
-        unknown = set(raw) - {"srm", "state", "fixtures"}
+        unknown = set(raw) - {"srm", "state", "fixtures", "entrance"}
         if unknown:
             raise SceneError(f"{where}: unknown keys {sorted(unknown)}")
         out = {k: _path(base, raw[k], where) for k in ("srm", "state") if k in raw}
@@ -192,6 +215,8 @@ def _normalize(index, kind, raw, base: Path):
         if not isinstance(fixtures, list):
             raise SceneError(f"{where}: fixtures must be a list")
         out["fixtures"] = [_path(base, f, where) for f in fixtures]
+        if "entrance" in raw:
+            out["entrance"] = _int(_hex(raw["entrance"], where + ".entrance"), where + ".entrance", 0, 0x84)
         return out
     if kind == "walk_to":
         if not isinstance(raw, dict):
@@ -211,6 +236,13 @@ def _normalize(index, kind, raw, base: Path):
         if value not in DIRECTIONS:
             raise SceneError(f"{where}: direction must be one of {sorted(DIRECTIONS)}")
         return {"dir": value, "button": DIRECTIONS[value]}
+    if kind == "equip":
+        value = raw.get("item") if isinstance(raw, dict) else raw
+        return {"item": _int(_hex(value, where + ".item"), where + ".item", 1, 0xFF)}
+    if kind == "poke":
+        if not isinstance(raw, dict) or set(raw) != {"writes"}:
+            raise SceneError(f"{where}: expected {{'writes': [...]}}")
+        return {"writes": parse_writes(raw["writes"], where, allow_count=True)}
     if kind == "press":
         if not isinstance(raw, dict) or "button" not in raw:
             raise SceneError(f"{where}: expected {{'button': .., 'frames': N}}")
@@ -240,7 +272,7 @@ def _normalize(index, kind, raw, base: Path):
 def parse_scene(data: dict, path: Path) -> Scene:
     if not isinstance(data, dict):
         raise SceneError("scene file must be a JSON object")
-    unknown = set(data) - {"scene", "description", "steps", "version"}
+    unknown = set(data) - {"scene", "description", "steps", "version", "watch"}
     if unknown:
         raise SceneError(f"unknown top-level keys {sorted(unknown)}")
     if data.get("version", 1) != 1:
@@ -261,7 +293,17 @@ def parse_scene(data: dict, path: Path) -> Scene:
         if kind == "load" and index != 0:
             raise SceneError(f"step {index}: load must be the first step")
         steps.append(Step(index, kind, _normalize(index, kind, args, path.parent)))
-    return Scene(name=name, path=path, steps=steps, description=str(data.get("description", "")))
+    raw_watch = data.get("watch", {})
+    if not isinstance(raw_watch, dict) or len(raw_watch) > 32:
+        raise SceneError("'watch' must be an object of at most 32 {name: expr}")
+    watch = {}
+    for key, text in raw_watch.items():
+        try:
+            watch[str(key)] = Expr(text)
+        except SceneError as error:
+            raise SceneError(f"watch {key}: {error}") from None
+    return Scene(name=name, path=path, steps=steps, description=str(data.get("description", "")),
+                 watch=watch)
 
 
 def load_scene(path) -> Scene:
@@ -273,20 +315,32 @@ def load_scene(path) -> Scene:
     return parse_scene(data, path)
 
 
+def parse_writes(writes, where, allow_count=False):
+    """[{"addr": "0x7EF3AD", "type": "u8", "value": 1, "count"?: N}] -> [(addr, kind, value)]."""
+    if not isinstance(writes, list) or not writes:
+        raise SceneError(f"{where}: needs a non-empty 'writes' list")
+    out = []
+    for i, write in enumerate(writes):
+        if not isinstance(write, dict):
+            raise SceneError(f"{where}: write {i}: expected an object")
+        kind = write.get("type", "u8")
+        if kind not in ("u8", "u16"):
+            raise SceneError(f"{where}: write {i}: type must be u8 or u16")
+        addr = _hex(write.get("addr"), f"{where}: write {i}")
+        value = _hex(write.get("value"), f"{where}: write {i}")
+        if type(addr) is not int or type(value) is not int or not 0 <= value < (256 if kind == "u8" else 65536):
+            raise SceneError(f"{where}: write {i}: bad addr/value")
+        if "count" in write and not allow_count:
+            raise SceneError(f"{where}: write {i}: count is only allowed in poke steps")
+        count = _int(write.get("count", 1), f"{where}: write {i}.count", 1, 256)
+        size = 1 if kind == "u8" else 2
+        if allow_count and not 0x7E0000 <= addr <= 0x800000 - count * size:
+            raise SceneError(f"{where}: write {i}: {addr:#x} is outside WRAM $7E0000-$7FFFFF")
+        out.extend((addr + n * size, kind, value) for n in range(count))
+    return out
+
+
 def load_fixture(path: Path):
     """Existing fixture JSON: {"writes": [{"addr": "0x7EF3AD", "type": "u8", "value": 1}]}."""
     data = json.loads(Path(path).read_text())
-    writes = data.get("writes") if isinstance(data, dict) else None
-    if not isinstance(writes, list) or not writes:
-        raise SceneError(f"{path}: fixture needs a non-empty 'writes' list")
-    out = []
-    for i, write in enumerate(writes):
-        kind = write.get("type", "u8")
-        if kind not in ("u8", "u16"):
-            raise SceneError(f"{path}: write {i}: type must be u8 or u16")
-        addr = int(write["addr"], 0) if isinstance(write.get("addr"), str) else write.get("addr")
-        value = write.get("value")
-        if type(addr) is not int or type(value) is not int or not 0 <= value < (256 if kind == "u8" else 65536):
-            raise SceneError(f"{path}: write {i}: bad addr/value")
-        out.append((addr, kind, value))
-    return out
+    return parse_writes(data.get("writes") if isinstance(data, dict) else None, str(path))
