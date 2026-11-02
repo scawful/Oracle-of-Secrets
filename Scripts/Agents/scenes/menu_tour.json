@@ -1,0 +1,246 @@
+{
+ "scene": "menu_tour",
+ "description": "Menu tour (promo SHOT_LIST row 17) on a copy of Codex's partial-inventory fixture menu-tour-partial-8276151b.srm. The fixture spawns in Link's house ($104), so Link walks out the south door to the yard (area $33) first. Rupees are poked to 87 in WRAM (the fixture holds 9999; the file is not edited). Take: 1 s idle, Start (Items) 1.5 s, L to page 3 (Masks & Rings), cursor Zora -> Bunny -> Armor -> Power (worn) at 0.5 s per step, R back to Items, R to Quest 1.5 s, Start closes, 1 s idle.",
+ "watch": {
+  "menu": "u8(0x7E0200)",
+  "hpage": "u8(0x7E1E71)",
+  "cursor": "u8(0x7E020B)",
+  "y_item": "u8(0x7E0202)",
+  "area": "u8(0x7E008A)"
+ },
+ "steps": [
+  {
+   "load": {
+    "srm": "~/.context/projects/oracle-of-secrets/scratchpad/handoffs/scene_director_2026-11-02/live-menu-tour/input/menu-tour-partial-8276151b.srm"
+   }
+  },
+  {
+   "check": {
+    "expr": "room == 0x104 and indoors == 1",
+    "label": "fixture spawns in Link's house ($104); walk out the south door"
+   }
+  },
+  {
+   "check": {
+    "expr": "u8(0x7EF347) == 1 and u8(0x7EF348) == 1 and u8(0x7EF349) == 0 and u8(0x7EF352) == 0 and u8(0x7EF358) == 0",
+    "label": "masks: Zora and Bunny owned; Deku, Stone, Wolf cleared"
+   }
+  },
+  {
+   "check": {
+    "expr": "u8(0x7EF3A2) == 0x30 and u8(0x7EF3A3) == 2",
+    "label": "rings: Power and Armor owned, Power worn"
+   }
+  },
+  {
+   "check": {
+    "expr": "u8(0x7EF342) == 0 and u8(0x7EF34C) == 0 and u8(0x7EF35D) == 0",
+    "label": "Hookshot, Ocarina, Bottle 2 cleared"
+   }
+  },
+  {
+   "poke": {
+    "writes": [
+     {
+      "addr": "0x7EF360",
+      "type": "u16",
+      "value": 87
+     },
+     {
+      "addr": "0x7EF362",
+      "type": "u16",
+      "value": 87
+     }
+    ]
+   }
+  },
+  {
+   "hold": {
+    "frames": 90,
+    "button": "Down"
+   }
+  },
+  {
+   "wait_until": {
+    "expr": "module == 9 and submodule == 0 and indoors == 0",
+    "max_frames": 600
+   }
+  },
+  {
+   "hold": {
+    "frames": 20,
+    "button": "Down"
+   }
+  },
+  {
+   "hold": {
+    "frames": 10
+   }
+  },
+  {
+   "check": {
+    "expr": "u8(0x7E008A) == 0x33 and indoors == 0",
+    "label": "outdoors, area $33 (Link's house yard)"
+   }
+  },
+  {
+   "record": "start"
+  },
+  {
+   "hold": {
+    "frames": 60
+   }
+  },
+  {
+   "press": {
+    "button": "Start",
+    "frames": 2
+   }
+  },
+  {
+   "wait_until": {
+    "expr": "module == 0x0E and u8(0x7E0200) == 4",
+    "max_frames": 240
+   }
+  },
+  {
+   "hold": {
+    "frames": 90
+   }
+  },
+  {
+   "press": {
+    "button": "L",
+    "frames": 2
+   }
+  },
+  {
+   "wait_until": {
+    "expr": "module == 0x0E and u8(0x7E0200) == 6 and u8(0x7E1E71) != 0",
+    "max_frames": 120
+   }
+  },
+  {
+   "check": {
+    "expr": "u8(0x7E020B) == 1",
+    "label": "page 3 cursor starts on the Zora mask (slot 1)"
+   }
+  },
+  {
+   "hold": {
+    "frames": 30
+   }
+  },
+  {
+   "press": {
+    "button": "Right",
+    "frames": 2
+   }
+  },
+  {
+   "check": {
+    "expr": "u8(0x7E020B) == 3",
+    "label": "cursor Right -> slot 3 (Bunny Hood; Wolf skipped)"
+   }
+  },
+  {
+   "hold": {
+    "frames": 26
+   }
+  },
+  {
+   "press": {
+    "button": "Down",
+    "frames": 2
+   }
+  },
+  {
+   "check": {
+    "expr": "u8(0x7E020B) == 7",
+    "label": "cursor Down -> slot 7 (Armor ring)"
+   }
+  },
+  {
+   "hold": {
+    "frames": 26
+   }
+  },
+  {
+   "press": {
+    "button": "Left",
+    "frames": 2
+   }
+  },
+  {
+   "check": {
+    "expr": "u8(0x7E020B) == 6",
+    "label": "cursor Left -> slot 6 (Power ring, worn)"
+   }
+  },
+  {
+   "hold": {
+    "frames": 26
+   }
+  },
+  {
+   "press": {
+    "button": "R",
+    "frames": 2
+   }
+  },
+  {
+   "wait_until": {
+    "expr": "module == 0x0E and u8(0x7E0200) == 4",
+    "max_frames": 120
+   }
+  },
+  {
+   "hold": {
+    "frames": 20
+   }
+  },
+  {
+   "press": {
+    "button": "R",
+    "frames": 2
+   }
+  },
+  {
+   "wait_until": {
+    "expr": "module == 0x0E and u8(0x7E0200) == 6 and u8(0x7E1E71) == 0",
+    "max_frames": 120
+   }
+  },
+  {
+   "hold": {
+    "frames": 90
+   }
+  },
+  {
+   "press": {
+    "button": "Start",
+    "frames": 2
+   }
+  },
+  {
+   "wait_until": {
+    "expr": "module == 9 and submodule == 0",
+    "max_frames": 240
+   }
+  },
+  {
+   "hold": {
+    "frames": 60
+   }
+  },
+  {
+   "record": "stop"
+  },
+  {
+   "check": {
+    "expr": "u8(0x7EF3A3) == 2 and u8(0x7EF3A2) == 0x30",
+    "label": "rings unchanged after the tour"
+   }
+  }
+ ]
+}
