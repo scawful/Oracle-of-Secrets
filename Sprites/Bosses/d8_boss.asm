@@ -231,6 +231,8 @@ D8Boss_Open:
   BCC .no_credit
     ; $0301 & $0A: hammer in use (same test as $06F2DD). Not credited.
     LDA.w $0301 : AND.b #$0A : BNE .no_credit
+    ; $037A & $10: fist/net swing (Items/fist_damage.asm FistBump2). Not credited.
+    LDA.w $037A : AND.b #$10 : BNE .no_credit
       JSR D8Boss_ShatterBlock
       INC.w D8Boss_Hits, X
       STZ.w D8Boss_Qualified, X
@@ -399,12 +401,18 @@ D8Boss_FindSocketedBlock:
 }
 
 ; ---------------------------------------------------------
-; Credited hit: shatter the block on the socket. Mirrors
+; Credited hit: shatter the live Somaria block wherever it is. Link may have
+; lifted and moved it after the cycle qualified; it still shatters. Mirrors
 ; SomariaBlock_FizzleAway ($08E9B2-$08E9E5) on that ancilla slot.
 
 D8Boss_ShatterBlock:
 {
-  JSR D8Boss_FindSocketedBlock : BCC .none
+  LDY.b #$04
+  .next_slot
+    LDA.w $0C4A, Y : CMP.b #!D8Boss_SomariaBlock : BEQ .found
+    DEY : BPL .next_slot
+  RTS
+  .found
   PHX
   TYX
   LDA.b $5E : CMP.b #$12 : BNE .keep_speed
@@ -424,7 +432,6 @@ D8Boss_ShatterBlock:
     LDA.w $0308 : AND.b #$80 : STA.w $0308
   .not_tracked
   PLX
-  .none
   RTS
 }
 
