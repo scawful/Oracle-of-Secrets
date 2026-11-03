@@ -41,3 +41,26 @@ jobs:
 
       - name: Run sprite pose tests
         run: node --test Tests/graphics/sprite_pose.test.js
+
+  python:
+    name: Python graphics tool tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Pillow
+        run: python3 -m pip install Pillow
+
+      - name: Run normalize, tile type and tile placement tests
+        run: |
+          python3 Tests/graphics/normalize_sprite_test.py
+          python3 Tests/graphics/tile_types_test.py
+          python3 Tests/graphics/place_tiles_test.py
