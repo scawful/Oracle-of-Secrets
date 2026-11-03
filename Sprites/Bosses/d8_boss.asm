@@ -22,7 +22,12 @@
 ;     at a closed neutral pose followed by a full tell (D8Boss_Long).
 ;   - Death hands off to the existing Sky award (Dungeons/sky_d8_award.asm).
 ; Proposals (named constants below): socket position, all frame timings,
-; beam geometry, recoil time, sprite ID $C3, placeholder CHR.
+; beam geometry, recoil time, lane B art (mirrored lane A frames).
+; Allocation A (scawful 2026-11-03): sprite $C3, dungeon spriteset $2D
+; (sheets $1F/$0D/$61/$61) on room $96. Graphics_Transfer DMAs the stage 1
+; CHR over spriteset slots 2-3 (VRAM $5800, chars $80-$DF, OAM name table 1)
+; on the scroll into room $96. Prep writes sprite palette row 6.
+; Stages 2-3, break and death art stream later: they show stage 1 frames.
 ;
 ; Credit mechanism: !ImperviousAll = 01 keeps HP untouched
 ; (Sprite_CalculateSwordDamage $06ED3F returns at once when $0E60 bit 6 is
@@ -42,6 +47,13 @@ Sprite_D8Boss = $C3
 ; Named constants (proposals unless noted)
 
 !D8Boss_TellTime       = 40   ; frames, every stage
+; SprFrame values (Sprite_D8Boss_Draw). Lane frames: +0 lane A, +1 lane B.
+!D8Boss_FrameIdle      = 0
+!D8Boss_FrameRecovery  = 1
+!D8Boss_FrameSlam      = 2
+!D8Boss_FrameTell      = 4
+!D8Boss_FrameRise      = 6
+!D8Boss_FrameHit       = 8
 !D8Boss_BreakHoldTime  = 30   ; frames of stable silhouette after a break
 !D8Boss_RecoilTime     = 32   ; frames of shuttered recoil after a credit
 !D8Boss_HitsPerStage   = 2    ; decided
@@ -88,7 +100,7 @@ D8Boss_Lane      = SprMiscE   ; $0EB0: weight lane 0/1, flips every cycle
 ; Sprite properties
 
 !SPRID              = Sprite_D8Boss
-!NbrTiles           = 11  ; Max OAM entries per frame (body 4 + beam 7)
+!NbrTiles           = 19  ; Max OAM entries per frame (16 body + 3 weight)
 !Harmless           = 00
 !HVelocity          = 00
 !Health             = 100 ; Unused: ImperviousAll keeps HP untouched
@@ -161,6 +173,7 @@ Sprite_D8Boss_Prep:
   STZ.w D8Boss_Qualified, X
   STZ.w D8Boss_Lane, X
   LDA.w D8Boss_RestTime : STA.w SprTimerA, X ; stage 0 rest
+  JSR D8Boss_LoadPalette
   PLB
   RTL
 }
@@ -220,7 +233,7 @@ D8Boss_Closed:
 
 D8Boss_Tell:
 {
-  JSR D8Boss_SetAttackFrame
+  JSR D8Boss_SetTellFrame
   JSR D8Boss_UpdateSocket
   JSL Sprite_CheckDamageFromPlayer ; tink feedback only; carry ignored
   LDA.w SprTimerA, X : BNE .wait
@@ -256,7 +269,7 @@ D8Boss_Active:
 
 D8Boss_Open:
 {
-  LDA.b #$01 : STA.w SprFrame, X
+  LDA.b #!D8Boss_FrameRecovery : STA.w SprFrame, X
   ; Accept one sword hit: clear "impervious to sword/hammer" for this call.
   LDA.w SprDefl, X : AND.b #$FB : STA.w SprDefl, X
   JSL Sprite_CheckDamageFromPlayer
@@ -285,8 +298,8 @@ D8Boss_Open:
 
 D8Boss_Recoil:
 {
-  STZ.w SprFrame, X
-  ; Placeholder hit feedback: cycle the OAM palette bits every 2 frames.
+  LDA.b #!D8Boss_FrameHit : STA.w SprFrame, X
+  ; Hit feedback: cycle the OAM palette bits every 2 frames.
   LDA.b $1A : AND.b #$0E : STA.w SprFlash, X
   LDA.w SprTimerA, X : BNE .wait
     STZ.w SprFlash, X
@@ -357,15 +370,24 @@ D8Boss_ToClosed:
 }
 
 ; ---------------------------------------------------------
-; Frame for Tell/Active: weight lane A/B in stages 0-1, beam in stage 2.
+; Frame for Active: lane A/B slam. The beam stage reuses the slam frames
+; until the stage 3 art streams.
 
 D8Boss_SetAttackFrame:
 {
-  LDA.w D8Boss_Stage, X : CMP.b #!D8Boss_LastStage : BCC .weight
-    LDA.b #$04 : STA.w SprFrame, X
-    RTS
-  .weight
-  LDA.w D8Boss_Lane, X : CLC : ADC.b #$02 : STA.w SprFrame, X
+  LDA.w D8Boss_Lane, X : CLC : ADC.b #!D8Boss_FrameSlam : STA.w SprFrame, X
+  RTS
+}
+
+; Frame for Tell: the lane weight glows for the first half, then rises.
+
+D8Boss_SetTellFrame:
+{
+  LDA.w D8Boss_Lane, X : CLC : ADC.b #!D8Boss_FrameTell
+  LDY.w SprTimerA, X : CPY.b #!D8Boss_TellTime/2 : BCS +
+    ADC.b #!D8Boss_FrameRise-!D8Boss_FrameTell
+  +
+  STA.w SprFrame, X
   RTS
 }
 
@@ -533,54 +555,133 @@ D8Boss_DropJar:
 }
 
 ; =========================================================
-; Placeholder draw. CHR/palette are not allocated (spriteset unapproved).
-; Names follow the boss art SEGMENT_LABELS indices:
-;   0 BODY, 1 S1_PART_NW, 2 LID, 3 S2_PART_SE, 4 S3_PART_SW, 5 BEAM,
-;   6 B1_DROP_NE, 7 B1_DROP_SW, 8 B2_DROP_NW, 9 B2_DROP_SE, 10 DEATH_CORE,
-;   11-15 DEATH_SHARD_SW/NW/NE/S/SE, 16-19 DEATH_CELL_NW/NE/SW/SE.
-; Frames:
-;   0 closed : BODY (seg 0) top + LID (seg 2) bottom, 4 tiles
-;   1 open   : BODY (seg 0) with open eye, 4 tiles
-;   2 lane A : closed body + weight S1_PART_NW (seg 1) over lane A
-;   3 lane B : closed body + weight S2_PART_SE (seg 3) over lane B
-;   4 beam   : closed body + BEAM (seg 5) x7, body bottom to floor edge
+; Tile and palette loaders
+
+; Long: called from Graphics_Transfer (Sprites/all_sprites.asm) on every
+; underworld scroll transition; returns at once outside room $96. The room
+; check lives here because bank $30 has no room for it. The screen is
+; forced blank for the DMA like ApplyManhandlaGraphics. Any A/X/Y width.
+D8Boss_LoadGfx:
+{
+  PHP
+  SEP #$30
+  LDA.b $A0 : CMP.b #$96 : BNE .done
+  LDA.b $A1 : BNE .done
+  REP #$20
+  LDX.b #$80 : STX.w $2100
+  LDX.b #$80 : STX.w $2115
+  LDA.w #$5800 : STA.w $2116 ; word address: name table 1, char $80
+  LDA.w #$1801 : STA.w $4300
+  LDA.w #D8Boss_Stage1Gfx : STA.w $4302
+  LDX.b #D8Boss_Stage1Gfx>>16 : STX.w $4304
+  LDA.w #D8Boss_Stage1Gfx_end-D8Boss_Stage1Gfx : STA.w $4305
+  LDX.b #$01 : STX.w $420B
+  LDX.b #$0F : STX.w $2100
+  .done
+  PLP
+  RTL
+}
+
+; Sprite palette row 6 (CGRAM $E0): colours 1-15 into the fade target
+; ($7EC4C0) and the CGRAM mirror ($7EC6C0), then request the upload.
+; Row 5 is not used: its high half holds the sword and shield colours.
+D8Boss_LoadPalette:
+{
+  PHX
+  REP #$20
+  LDX.b #$1C
+  .loop
+    LDA.l D8Boss_Palette, X
+    STA.l $7EC4C2, X
+    STA.l $7EC6C2, X
+    DEX #2
+  BPL .loop
+  SEP #$20
+  INC.b $15
+  PLX
+  RTS
+}
+
+D8Boss_Palette:
+  dw $1043, $1C85, $314C, $1548, $36F5, $1915, $21DC
+  dw $2279, $435D, $24C8, $220E, $18AC, $1591, $1A7E, $57DF
+
+; 96 4bpp tiles from the AFS boss art lane (export_d8.py --src pass9).
+; Bank $2C has no room for 3 KB, so the tiles sit in a fixed slot at the
+; tail of the items bank. Items/all_items.asm asserts its stream ends
+; before $2BE400 when this flag is on.
+pushpc
+org $2BE400
+D8Boss_Stage1Gfx:
+  incbin d8_boss_stage1.bin
+.end
+assert pc() <= $2BF000, "D8 boss tiles reached the dream entry FX region ($2BF000)"
+pullpc
+
+; =========================================================
+; Draw: tables generated by export_d8.py (AFS gfx37). Props $3D = priority
+; 3, palette 6, name table 1. Lane B frames are lane A mirrored (props
+; $7D). Frames:
+;   0 idle (Closed, Break, Death)   1 recovery (Open: eye open)
+;   2/3 slam lane A/B (Active)      4/5 tell lane A/B (Tell, first half)
+;   6/7 rise lane A/B (Tell, second half)   8 hit (Recoil)
 
 Sprite_D8Boss_Draw:
 {
   %DrawSprite()
 
   .start_index
-    db $00, $04, $08, $0D, $12
+    db $00, $13, $24, $37, $4A, $5D, $70, $83, $96
   .nbr_of_tiles
-    db 3, 3, 4, 4, 10
+    db 18, 16, 18, 18, 18, 18, 18, 18, 18
   .x_offsets
-    dw -8, 8, -8, 8                      ; 0 closed
-    dw -8, 8, -8, 8                      ; 1 open
-    dw -8, 8, -8, 8, -16                 ; 2 lane A
-    dw -8, 8, -8, 8, 16                  ; 3 lane B
-    dw -8, 8, -8, 8, 0, 0, 0, 0, 0, 0, 0 ; 4 beam
+    dw 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -19, 0, 0 ; 0 idle
+    dw 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -19 ; 1 recovery
+    dw 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -25, 0, 0 ; 2 slam
+    dw -24, -24, -24, -24, -8, -8, -8, -8, 8, 8, 8, 8, 24, 24, 24, 24, 25, 0, 0 ; 3 slam_mirror
+    dw 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -19, 0, 0 ; 4 tell
+    dw -24, -24, -24, -24, -8, -8, -8, -8, 8, 8, 8, 8, 24, 24, 24, 24, 19, 0, 0 ; 5 tell_mirror
+    dw 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -20, 0, 0 ; 6 rise
+    dw -24, -24, -24, -24, -8, -8, -8, -8, 8, 8, 8, 8, 24, 24, 24, 24, 20, 0, 0 ; 7 rise_mirror
+    dw 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -19, 0, 0 ; 8 hit
   .y_offsets
-    dw -8, -8, 8, 8
-    dw -8, -8, 8, 8
-    dw -8, -8, 8, 8, 32
-    dw -8, -8, 8, 8, 32
-    dw -8, -8, 8, 8, 24, 40, 56, 72, 88, 104, 120
+    dw 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -35, -12, -28 ; 0 idle
+    dw 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -35 ; 1 recovery
+    dw 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -38, -12, -28 ; 2 slam
+    dw 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -38, -12, -28 ; 3 slam_mirror
+    dw 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -36, -12, -28 ; 4 tell
+    dw 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -36, -12, -28 ; 5 tell_mirror
+    dw 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -41, -12, -28 ; 6 rise
+    dw 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -41, -12, -28 ; 7 rise_mirror
+    dw 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -35, -12, -28 ; 8 hit
   .chr
-    db $00, $02, $20, $22                ; seg 0 BODY / seg 2 LID
-    db $04, $06, $24, $26                ; seg 0 BODY, eye open
-    db $00, $02, $20, $22, $08           ; + seg 1 S1_PART_NW
-    db $00, $02, $20, $22, $0A           ; + seg 3 S2_PART_SE
-    db $00, $02, $20, $22, $0C, $0C, $0C, $0C, $0C, $0C, $0C ; + seg 5 BEAM
+    db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $A0, $8E, $8C, $8A, $88, $86, $84, $82, $80 ; 0 idle
+    db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $A0, $8E, $8C, $8A, $88, $86, $84 ; 1 recovery
+    db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $CC, $CA, $8C, $8A, $C8, $86, $84, $82, $80 ; 2 slam
+    db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $CC, $CA, $8C, $8A, $C8, $86, $84, $82, $80 ; 3 slam_mirror
+    db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $CC, $CA, $8C, $8A, $C8, $86, $C6, $82, $80 ; 4 tell
+    db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $CC, $CA, $8C, $8A, $C8, $86, $C6, $82, $80 ; 5 tell_mirror
+    db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $CC, $CA, $8C, $8A, $C8, $86, $84, $82, $80 ; 6 rise
+    db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $CC, $CA, $8C, $8A, $C8, $86, $84, $82, $80 ; 7 rise_mirror
+    db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $A0, $8E, $8C, $8A, $88, $86, $84, $CE, $80 ; 8 hit
   .properties
-    db $3B, $3B, $3B, $3B
-    db $3B, $3B, $3B, $3B
-    db $3B, $3B, $3B, $3B, $3B
-    db $3B, $3B, $3B, $3B, $3B
-    db $3B, $3B, $3B, $3B, $3B, $3B, $3B, $3B, $3B, $3B, $3B
+    db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD, $BD, $3D ; 0 idle
+    db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD ; 1 recovery
+    db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD, $BD, $3D ; 2 slam
+    db $BD, $BD, $3D, $3D, $BD, $BD, $3D, $3D, $FD, $FD, $7D, $7D, $FD, $FD, $3D, $BD, $BD, $FD, $7D ; 3 slam_mirror
+    db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD, $BD, $3D ; 4 tell
+    db $BD, $BD, $3D, $3D, $BD, $BD, $3D, $3D, $FD, $FD, $7D, $7D, $FD, $FD, $3D, $BD, $BD, $FD, $7D ; 5 tell_mirror
+    db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD, $BD, $3D ; 6 rise
+    db $BD, $BD, $3D, $3D, $BD, $BD, $3D, $3D, $FD, $FD, $7D, $7D, $FD, $FD, $3D, $BD, $BD, $FD, $7D ; 7 rise_mirror
+    db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD, $BD, $3D ; 8 hit
   .sizes
-    db $02, $02, $02, $02
-    db $02, $02, $02, $02
-    db $02, $02, $02, $02, $02
-    db $02, $02, $02, $02, $02
-    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 0 idle
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 1 recovery
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 2 slam
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 3 slam_mirror
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 4 tell
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 5 tell_mirror
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 6 rise
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 7 rise_mirror
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 8 hit
 }

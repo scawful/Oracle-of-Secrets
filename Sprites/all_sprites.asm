@@ -159,6 +159,10 @@ Graphics_Transfer:
     JSR ApplyManhandlaPalette
   +
 
+  if !ENABLE_D8_BOSS == 1
+    JSL D8Boss_LoadGfx ; room $96 only (Sprites/Bosses/d8_boss.asm)
+  endif
+
   PLB
   PLY
   PLX

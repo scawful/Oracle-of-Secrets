@@ -102,6 +102,10 @@ Link_ConsumeMagicBagItem:
 
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
 assert pc() <= $2BF000, "Items bank $2B reached the dream entry FX region ($2BF000)"
+if !ENABLE_D8_BOSS == 1
+  ; Sprites/Bosses/d8_boss.asm owns $2BE400-$2BEFFF (stage 1 tiles).
+  assert pc() <= $2BE400, "Items bank $2B reached the D8 boss tile slot ($2BE400)"
+endif
 
 pushpc
 ; League of its own
