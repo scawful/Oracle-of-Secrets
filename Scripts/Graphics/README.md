@@ -230,3 +230,58 @@ They preserve source SHA256s, exact Ganondorf replay, source timer windows,
 Link comparison pixels, contact sheets and GIF timing receipts. These are
 read-only art/tooling fixtures; no new game art, tile allocation, ASM, AI, ROM
 write, native behavior or merge is implied.
+
+# Tile placement by tile type
+
+A background tile's behavior (water, wall, ledge, stairs) belongs to its VRAM
+char, not its pixels: `char = slot * $40 + index`. `place_tiles.py` puts each
+labelled 8x8 tile at a free sheet index whose type fits, so new art keeps the
+collision the engine already reads. Neither tool writes a ROM or game asset.
+
+1. Extract the types once per ROM. The sym resolves the dungeon blockset groups
+   (`Oracle_group_offsets`, `Oracle_offs`); without it, dungeon slots 5 and 6
+   are unknown.
+
+   ```sh
+   python3 Scripts/Graphics/tile_types.py --rom Roms/oos168x.sfc --sym Roms/oos168x.sym --out new_slot_types.json
+   ```
+
+2. Write a spec beside an indexed source PNG (pixel values 0-7). Each tile names
+   a `cell` (column, row in 8x8 units) and either a `class` from
+   `tile_type_classes.json` or explicit `types`. `index` pins a tile.
+
+   ```sh
+   python3 Scripts/Graphics/place_tiles.py \
+     --spec Scripts/Graphics/examples/tile-placement/spec.json \
+     --types Scripts/Graphics/examples/tile-placement/slot_types.fixture.json \
+     --classes Scripts/Graphics/examples/tile-placement/tile_type_classes.fixture.json \
+     --out new-placement
+   ```
+
+3. Inspect `preview.png`: one 4x panel per slot (and blockset), each index framed
+   in its type-class colour, placed indices marked with a white corner.
+
+| Spec field | Meaning |
+|---|---|
+| `world` | `overworld` (one global table) or `dungeon`. |
+| `slots` | Every slot the sheet will load into; a tile must fit all of them. |
+| `blocksets` | Dungeon only, required when slot 5 or 6 is listed (those chars come from the blockset group). |
+| `base_sheet` | Optional 128x32 PNG or 0x600-byte `.bin`; untouched indices keep its pixels. |
+| `free` | Indices that may be written. Default: blank tiles of the base sheet, or all 64. |
+| `dedupe_flips` | Identical tiles, including H/V/HV mirrors, share one index; `placement.json` records the flip bits. |
+
+Matching is deterministic (pins first, then spec order, lowest index). If that
+grouping leaves a tile unplaced, an exact per-tile search retries, sharing an
+index only between tiles that all accept it (`report.json` `search`: `complete`
+= no placement exists, `exhausted` = node budget hit). Success
+writes `sheet.png`, `sheet.bin` (3bpp via `Scripts/Generate/sheet_codec.py`),
+`placement.json`, `report.json` with input/output SHA256s, and `preview.png`.
+If any tile has no fitting index, the tool exits 2 and writes only
+`report.json`, with per-class demand and capacity per slot. Validation errors
+exit 1. An empty `tiles` list with a base sheet is an audit: preview and report
+only. The output directory must be new.
+
+```sh
+python3 Tests/graphics/tile_types_test.py
+python3 Tests/graphics/place_tiles_test.py
+```
