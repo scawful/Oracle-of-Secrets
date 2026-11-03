@@ -100,4 +100,4 @@ function renderArtifacts(result, scale = 8) {
   return artifacts;
 }
 
-module.exports = { renderArtifacts, encodePng };
+module.exports = { renderArtifacts, encodePng, canvas, rect, text, sprite, png };

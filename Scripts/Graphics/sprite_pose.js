@@ -167,7 +167,9 @@ function evaluateRecipe(recipe) {
     if (name === recipe.baselinePose && output.some((color, i) => color !== pixels[i])) fail(`baseline pose ${name}: differs from source pixels`);
     frames[name] = { pixels: output, pixelSha256: hash, placements, repairs, ownerByPixel: outputOwners };
   }
-  return { schema: 1, name: recipe.name ?? 'Sprite poses', width, height, palette: palette.map(rgb => [...rgb]), transparentIndex, sourcePixels: [...pixels], sourcePixelSha256: pixelSha256(pixels), ownershipRule: 'Higher priority wins; later definition wins equal priority', segments: segments.map(segment => ({ ...structuredClone(segment), pixels: extracted.get(segment.id).map(pixel => [...pixel]) })), ownerByPixel, layerOrder: [...layerOrder], frames, sequence: structuredClone(recipe.sequence ?? []), tickRate };
+  const result = { schema: 1, name: recipe.name ?? 'Sprite poses', width, height, palette: palette.map(rgb => [...rgb]), transparentIndex, sourcePixels: [...pixels], sourcePixelSha256: pixelSha256(pixels), ownershipRule: 'Higher priority wins; later definition wins equal priority', segments: segments.map(segment => ({ ...structuredClone(segment), pixels: extracted.get(segment.id).map(pixel => [...pixel]) })), ownerByPixel, layerOrder: [...layerOrder], frames, sequence: structuredClone(recipe.sequence ?? []), tickRate };
+  if (recipe.rig !== undefined) result.rig = require('./sprite_rig').evaluateRig(recipe.rig, result);
+  return result;
 }
 
 const HELP = `Usage: node Scripts/Graphics/sprite_pose.js --recipe FILE.json --out NEW_DIRECTORY [--scale 8] [--gif]
@@ -178,7 +180,7 @@ labelled segment atlas. No packages, ROM access or image editor are required.
   --recipe FILE   Self-contained indexed source and rectangle/pose recipe
   --out DIR       Required new directory; existing paths are never overwritten
   --scale N       Integer nearest-neighbor scale, 1..32 (default 8)
-  --gif           Also make a sequence GIF using an existing ffmpeg executable
+  --gif           Also make sequence/state GIFs using an existing ffmpeg executable
   --help          Show this help
 
 Start with Scripts/Graphics/examples/tiny.recipe.json.
@@ -203,14 +205,16 @@ function main(argv) {
   if (fs.existsSync(outputPath)) fail('--out: path already exists; choose a new directory');
   const recipe = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
   const result = evaluateRecipe(recipe);
-  if (options.gif && result.sequence.length === 0) fail('--gif: recipe needs a nonempty sequence');
+  if (options.gif && result.sequence.length === 0 && !result.rig) fail('--gif: recipe needs a nonempty sequence');
   if (options.gif && spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' }).status !== 0) fail('--gif: ffmpeg is unavailable; install nothing or rerun without --gif');
   const { renderArtifacts } = require('./sprite_pose_render');
-  const artifacts = renderArtifacts(result, options.scale);
+  const { renderRigArtifacts, writeRigGifs } = require('./sprite_rig');
+  const artifacts = { ...renderArtifacts(result, options.scale), ...renderRigArtifacts(result) };
   fs.mkdirSync(outputPath); // No recursive or replace mode; protects all input artifacts.
   for (const [filename, data] of Object.entries(artifacts)) fs.writeFileSync(path.join(outputPath, filename), data, { flag: 'wx' });
   fs.writeFileSync(path.join(outputPath, 'poses.json'), JSON.stringify(result, null, 2) + '\n', { flag: 'wx' });
-  if (options.gif) {
+  if (options.gif && result.rig) writeRigGifs(result, outputPath);
+  if (options.gif && result.sequence.length) {
     let concat = result.sequence.map(step => `file pose-${step.pose}.png\nduration ${step.ticks / result.tickRate}\n`).join('');
     concat += `file pose-${result.sequence[0].pose}.png\n`;
     fs.writeFileSync(path.join(outputPath, 'sequence.ffconcat'), concat, { flag: 'wx' });

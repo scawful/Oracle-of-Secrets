@@ -1,0 +1,155 @@
+{
+  "schema": 1,
+  "name": "Non-boss indexed test fixture (3x2)",
+  "width": 3,
+  "height": 2,
+  "palette": [
+    [
+      0,
+      0,
+      0
+    ],
+    [
+      230,
+      160,
+      30
+    ],
+    [
+      30,
+      40,
+      50
+    ]
+  ],
+  "transparentIndex": 2,
+  "pixels": [
+    2,
+    1,
+    2,
+    1,
+    0,
+    1
+  ],
+  "segments": [
+    {
+      "id": "body",
+      "rect": [
+        0,
+        0,
+        3,
+        2
+      ]
+    }
+  ],
+  "poses": {
+    "rest": {}
+  },
+  "rig": {
+    "schema": 1,
+    "frames": {
+      "rest": {
+        "pose": "rest",
+        "anchor": [
+          1,
+          1
+        ],
+        "feet": [
+          1,
+          1
+        ],
+        "hand": null,
+        "projectile_origin": null,
+        "hurtbox": null,
+        "parts": [
+          {
+            "id": "unclassified",
+            "kind": "unknown",
+            "rect": [
+              0,
+              0,
+              3,
+              2
+            ]
+          }
+        ]
+      },
+      "same": {
+        "alias_of": "rest"
+      },
+      "other": {
+        "pixels": [
+          2,
+          1,
+          2,
+          2,
+          0,
+          2
+        ],
+        "anchor": [
+          1,
+          1
+        ],
+        "feet": [
+          1,
+          1
+        ],
+        "hand": null,
+        "projectile_origin": null,
+        "hurtbox": null,
+        "parts": [
+          {
+            "id": "unclassified",
+            "kind": "unknown",
+            "rect": [
+              0,
+              0,
+              3,
+              2
+            ]
+          }
+        ]
+      }
+    },
+    "states": {
+      "test": {
+        "source": "Portable test fixture; author-defined 3/2/4 ticks, no game timing claim",
+        "sequence": [
+          {
+            "frame": "rest",
+            "ticks": 3
+          },
+          {
+            "frame": "same",
+            "ticks": 2
+          },
+          {
+            "frame": "other",
+            "ticks": 4
+          }
+        ]
+      }
+    },
+    "reference": {
+      "name": "Test reference",
+      "source": "Synthetic 1x2 fixture; replace with an extracted native reference for art review",
+      "width": 1,
+      "height": 2,
+      "palette": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          255,
+          255,
+          255
+        ]
+      ],
+      "transparentIndex": 0,
+      "pixels": [
+        1,
+        1
+      ]
+    }
+  }
+}
