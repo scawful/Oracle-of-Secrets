@@ -22,7 +22,7 @@
 ;     at a closed neutral pose followed by a full tell (D8Boss_Long).
 ;   - Death hands off to the existing Sky award (Dungeons/sky_d8_award.asm).
 ; Proposals (named constants below): socket position, all frame timings,
-; lane geometry, recoil time, sprite ID $C3, placeholder CHR.
+; beam geometry, recoil time, sprite ID $C3, placeholder CHR.
 ;
 ; Credit mechanism: !ImperviousAll = 01 keeps HP untouched
 ; (Sprite_CalculateSwordDamage $06ED3F returns at once when $0E60 bit 6 is
@@ -49,6 +49,19 @@ Sprite_D8Boss = $C3
 !D8Boss_SocketX        = 64   ; room-relative pixel, Somaria block center
 !D8Boss_SocketY        = 440  ; room-relative pixel, Somaria block center
 !D8Boss_SocketTol      = 8    ; pixels, per axis
+; Weight lanes = the two halves of the room $96 arena floor (scawful
+; 2026-11-03: "Floor halves"). Room-relative pixels like the socket, so
+; they do not move with boss placement. Floor measured from the sky test
+; render: x 48-207, y 320-463 (bottom-left quadrant y 64-207). Lanes run
+; from the boss body bottom (quadrant y 96) to the floor edge.
+!D8Boss_LaneAX         = 48   ; lane A left edge
+!D8Boss_LaneBX         = 128  ; lane B left edge (floor center)
+!D8Boss_LaneY          = 352  ; top edge, both lanes
+!D8Boss_LaneW          = 80
+!D8Boss_LaneH          = 112
+!D8Boss_BeamY          = 24   ; boss-relative; beam under the eye
+!D8Boss_BeamW          = 16
+!D8Boss_BeamH          = 64
 !D8Boss_SomariaBlock   = $2C  ; ancilla ID, Ancilla2C_SomariaBlock
 !D8Boss_SomariaFizz    = $2D  ; ancilla ID, Ancilla2D_SomariaBlockFizz
 !D8Boss_SocketSFX      = $25  ; SFX3, same as the socket door open sound
@@ -448,8 +461,8 @@ D8Boss_ShatterBlock:
 ; =========================================================
 ; Attack hit test (Active state only)
 ;
-; Lane box relative to the boss origin (SprX/SprY), 16-bit signed offsets.
-; Index 0 = weight lane A, 1 = weight lane B, 2 = stage 3 beam lane.
+; Weight lanes A/B: fixed floor halves in room pixels (!D8Boss_Lane*).
+; Stage 3 beam: boss-relative box under the eye (!D8Boss_Beam*).
 ; Overlap test: Link_SetupHitBox (Core/sprite_functions.asm) as pos1,
 ; CheckIfHitBoxesOverlap ($0683E6). Damage: Sprite_AttemptDamageToLink-
 ; PlusRecoil ($06F41F) reads SprBump ($0CD2) as the damage class and
@@ -458,40 +471,38 @@ D8Boss_ShatterBlock:
 D8Boss_AttackHitTest:
 {
   LDA.b $EE : CMP.w SprFloor, X : BNE .miss ; Link on another layer
-  LDA.w D8Boss_Stage, X : CMP.b #!D8Boss_LastStage : BCC .weight
-    LDY.b #$02
-    LDA.b #!D8Boss_BeamBump
-    BRA .have_lane
-  .weight
-  LDY.w D8Boss_Lane, X
-  LDA.b #!D8Boss_WeightBump
-  .have_lane
-  STA.w SprBump, X
   JSL Link_SetupHitBox
-  LDA.w SprX, X  : CLC : ADC.w .x_low, Y  : STA.b pos2_x_low
-  LDA.w SprXH, X :       ADC.w .x_high, Y : STA.b pos2_x_high
-  LDA.w SprY, X  : CLC : ADC.w .y_low, Y  : STA.b pos2_y_low
-  LDA.w SprYH, X :       ADC.w .y_high, Y : STA.b pos2_y_high
-  LDA.w .width, Y  : STA.b pos2_size
-  LDA.w .height, Y : STA.b pos2_height
+  LDA.w D8Boss_Stage, X : CMP.b #!D8Boss_LastStage : BCC .weight
+    ; Beam: boss-relative, same column as the drawn beam cells.
+    LDA.b #!D8Boss_BeamBump : STA.w SprBump, X
+    LDA.w SprX, X  : STA.b pos2_x_low
+    LDA.w SprXH, X : STA.b pos2_x_high
+    LDA.w SprY, X  : CLC : ADC.b #!D8Boss_BeamY : STA.b pos2_y_low
+    LDA.w SprYH, X :       ADC.b #$00           : STA.b pos2_y_high
+    LDA.b #!D8Boss_BeamW : STA.b pos2_size
+    LDA.b #!D8Boss_BeamH : STA.b pos2_height
+    BRA .test
+  .weight
+  ; Weight lane: a fixed floor half. Room base = boss coordinate high
+  ; byte with bit 0 cleared (rooms are 512 px, as in the socket test).
+  LDA.b #!D8Boss_WeightBump : STA.w SprBump, X
+  LDY.w D8Boss_Lane, X
+  LDA.w .lane_x_low, Y : STA.b pos2_x_low
+  LDA.w SprXH, X : AND.b #$FE : CLC : ADC.w .lane_x_high, Y : STA.b pos2_x_high
+  LDA.b #!D8Boss_LaneY&$FF : STA.b pos2_y_low
+  LDA.w SprYH, X : AND.b #$FE : CLC : ADC.b #!D8Boss_LaneY>>8 : STA.b pos2_y_high
+  LDA.b #!D8Boss_LaneW : STA.b pos2_size
+  LDA.b #!D8Boss_LaneH : STA.b pos2_height
+  .test
   JSL CheckIfHitBoxesOverlap : BCC .miss
     JSL Sprite_AttemptDamageToPlayerPlusRecoil
   .miss
   RTS
 
-  ;        lane A      lane B      beam
-  .x_low
-    db $E8,        $08,        $00   ; -24, +8, 0
-  .x_high
-    db $FF,        $00,        $00
-  .y_low
-    db $10,        $10,        $18   ; +16, +16, +24
-  .y_high
-    db $00,        $00,        $00
-  .width
-    db 32,         32,         16
-  .height
-    db 80,         80,         64
+  .lane_x_low
+    db !D8Boss_LaneAX, !D8Boss_LaneBX
+  .lane_x_high
+    db !D8Boss_LaneAX>>8, !D8Boss_LaneBX>>8
 }
 
 ; ---------------------------------------------------------
