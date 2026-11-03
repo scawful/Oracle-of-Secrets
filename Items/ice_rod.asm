@@ -44,17 +44,25 @@ LinkItem_IceRod:
   TXA
   STA $7ED004 ; store native x value into ram to regain after code
 
-  ; wait for vblank to enable dma transfer
-  LDA $4212 : AND #$80 : BEQ $F9
-
   REP #$30
-  LDA $2116 : STA $7ED005 ; store native value to regain later
-
   ; calculation procedure to get correct x,y coordinates for new tile
   LDA $00 : SEC : SBC $0708 : AND $070A
   ASL A : ASL A : ASL A : STA $06
   LDA $02 : SEC : SBC $070C : AND $070E : ORA $06
   TAX
+
+  ; The type check above reads only the 8x8 under the shot. Freeze only
+  ; tiles that are water in all four 8x8s, so half-water tiles (vines,
+  ; shores) keep their art.
+  JSR IceRod_TileIsAllWater : BCC .exit
+
+  ; wait for vblank to enable dma transfer
+  SEP #$20
+  LDA $4212 : AND #$80 : BEQ $F9
+
+  REP #$30
+  LDA $2116 : STA $7ED005 ; store native value to regain later
+
   LDA #$00B7 : STA $7E2000, X ; store new 16x16 ice tile into ram (property of tile!)
   CLC : STZ $02 ; calculation procedure to get 8x8 vram map address (look of tile)
   TXA
@@ -82,11 +90,44 @@ LinkItem_IceRod:
   JSR $FD00 ; jsr to dma vram transfer for lower ice tile part
   LDA $7ED005 ; regain native register value
   STA $2116
+  .exit
   SEP #$30
   LDA $7ED004 ; regain native x-value
   TAX
   RTL
 }
+assert pc() <= $0EFC80, "LinkItem_IceRod overruns $0EFC80"
+
+org $0EFCB0
+; In: 16-bit A/X/Y, X = map16 buffer index of the target tile.
+; Out: carry set if all four 8x8s of that tile16 are type $08 or $03.
+; Same tables as Overworld_GetTileTypeAtLocation ($00884A-$00886E):
+; ZS expanded tile16 at $BD8000, 8x8 types at $0E9459.
+IceRod_TileIsAllWater:
+{
+  PHX : PHY
+  LDA.l $7E2000, X : ASL A : ASL A : ASL A : TAX
+  LDY.w #$0004
+  .next_quarter
+    LDA.l $BD8000, X : AND.w #$01FF
+    PHX : TAX
+    LDA.l $0E9459, X : AND.w #$00FF
+    PLX
+    CMP.w #$0008 : BEQ .freezable
+    CMP.w #$0003 : BNE .not_water
+    .freezable
+    INX : INX
+    DEY : BNE .next_quarter
+  PLY : PLX
+  SEC
+  RTS
+
+  .not_water
+  PLY : PLX
+  CLC
+  RTS
+}
+assert pc() <= $0EFD00, "IceRod_TileIsAllWater overruns VramDmaTransfer"
 
 
 org $0EFD00 ; vram dma transfer
