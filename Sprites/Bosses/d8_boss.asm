@@ -17,7 +17,9 @@
 ;   - Stage 1 one marked weight slam, stage 2 one remaining weight shunt,
 ;     stage 3 one fixed lane beam. Weights bump class $05, beam $06.
 ;   - Each stage break drops one vanilla small magic jar ($DF).
-;   - A fairy revival keeps the stage (sprite RAM is not reset).
+;   - A fairy revival keeps the stage, hit count and credited damage
+;     (sprite RAM is not reset). It cancels the current attack and resumes
+;     at a closed neutral pose followed by a full tell (D8Boss_Long).
 ;   - Death hands off to the existing Sky award (Dungeons/sky_d8_award.asm).
 ; Proposals (named constants below): socket position, all frame timings,
 ; lane geometry, recoil time, sprite ID $C3, placeholder CHR.
@@ -101,6 +103,14 @@ Sprite_D8Boss_Long:
   PHB : PHK : PLB
   ; Only draw while active ($0DD0 == $09); the explode module owns death.
   LDA.w SprState, X : CMP.b #$09 : BNE .skip_draw
+    ; Link died this frame: Link_Main stores HP 0 before Sprite_Main runs,
+    ; and module $12 never runs sprites, so this pose holds through a fairy
+    ; revival. This runs before Sprite_CheckActive, which fails while $11
+    ; is set. Recoil, Break and Death (4-6) finish so a credit is not lost.
+    LDA.l CurrentHealth : BNE .link_alive
+      LDA.w SprAction, X : CMP.b #$04 : BCS .link_alive
+        JSR D8Boss_ToClosed
+    .link_alive
     JSR Sprite_D8Boss_Draw
   .skip_draw
   JSL Sprite_CheckActive : BCC .inactive
