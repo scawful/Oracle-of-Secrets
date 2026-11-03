@@ -22,7 +22,8 @@
 ;     at a closed neutral pose followed by a full tell (D8Boss_Long).
 ;   - Death hands off to the existing Sky award (Dungeons/sky_d8_award.asm).
 ; Proposals (named constants below): socket position, all frame timings,
-; beam geometry, recoil time, lane B art (mirrored lane A frames).
+; beam geometry, recoil time.
+; Lane B art = lane A frames mirrored (scawful 2026-11-03: "Yes, mirror is fine").
 ; Allocation A (scawful 2026-11-03): sprite $C3, dungeon spriteset $2D
 ; (sheets $1F/$0D/$61/$61) on room $96. Graphics_Transfer DMAs the stage 1
 ; CHR over spriteset slots 2-3 (VRAM $5800, chars $80-$DF, OAM name table 1)
