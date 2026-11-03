@@ -28,9 +28,12 @@
 ; (sheets $1F/$0D/$61/$61) on room $96. The boss uses all 4 sheets of OAM
 ; name table 1 (scawful 2026-11-03: "all 4"). On the scroll into room $96
 ; Graphics_Transfer DMAs stage 2 to slots 0-1 (VRAM $5000, chars $00-$5F)
-; and stage 1 + beam to slots 2-3 (VRAM $5800, chars $80-$FF). Break 2
-; DMAs stage 3 over the stage 1 chars ($80-$DF); the beam chars stay.
-; Prep writes sprite palette row 6. Break and death art stream later.
+; break 1 blocks to chars $60-$7F (VRAM $5600), and stage 1 + beam + more
+; break 1 blocks to slots 2-3 (VRAM $5800, chars $80-$FF). Break 2 DMAs
+; chars $60-$FF once (stage 3 over stage 1, break 2 blocks; the beam chars
+; stay). Death DMAs the death blocks over chars $00-$44 (stage 2 is done).
+; Prep writes sprite palette row 6. Static loads (scawful 2026-11-03:
+; "1: Static loads"); tiles and tables from AFS bd_d8.py (bd47).
 ;
 ; Credit mechanism: !ImperviousAll = 01 keeps HP untouched
 ; (Sprite_CalculateSwordDamage $06ED3F returns at once when $0E60 bit 6 is
@@ -59,6 +62,10 @@ Sprite_D8Boss = $C3
 !D8Boss_FrameHit       = 8
 !D8Boss_FrameBeam      = 9
 !D8Boss_BreakHoldTime  = 30   ; frames of stable silhouette after a break
+!D8Boss_BreakStepTime  = 8    ; frames per break art step
+!D8Boss_BreakSteps     = 7    ; shut, lift/fling/drop lane A, lane B; then hold
+!D8Boss_DeathStepTime  = 8    ; frames per death art step
+!D8Boss_DeathSteps     = 6    ; shut, shed, scatter, core, split, burst
 !D8Boss_RecoilTime     = 32   ; frames of shuttered recoil after a credit
 !D8Boss_HitsPerStage   = 2    ; decided
 !D8Boss_LastStage      = 2    ; stages 0,1,2 (decided: 3 stages)
@@ -315,18 +322,27 @@ D8Boss_Recoil:
     .quota
     LDA.w D8Boss_Stage, X : CMP.b #!D8Boss_LastStage : BCS .dead
       INC.w D8Boss_Stage, X
-      ; Break 2: stage 3 tiles replace the stage 1 tiles. This frame draws
-      ; stage 2 art (chars $00-$5F), so the swap shows no torn frame.
+      ; Break 2: stage 3 + break 2 tiles replace chars $60-$FF. This frame
+      ; draws stage 2 art (chars $00-$5F), so the swap shows no torn frame.
       LDA.w D8Boss_Stage, X : CMP.b #!D8Boss_LastStage : BNE +
         JSR D8Boss_LoadStage3Gfx
       +
       STZ.w D8Boss_Hits, X
       STZ.w D8Boss_Qualified, X
       JSR D8Boss_DropJar
-      LDA.b #!D8Boss_BreakHoldTime : STA.w SprTimerA, X
+      STZ.w SprFrame, X ; next frame draws break frame 0 (Draw runs first)
+      LDA.b #!D8Boss_BreakSteps*!D8Boss_BreakStepTime+!D8Boss_BreakHoldTime
+      STA.w SprTimerA, X
       %GotoAction(5)
       RTS
     .dead
+    ; This frame draws stage 3 art (chars $80-$DF), so the death tiles can
+    ; replace chars $00-$44 now.
+    JSR D8Boss_LoadDeathGfx
+    JSL Sprite_KillFriends
+    INC.w $0FFC
+    STZ.w SprFrame, X
+    LDA.b #!D8Boss_DeathSteps*!D8Boss_DeathStepTime : STA.w SprTimerA, X
     %GotoAction(6)
   .wait
   RTS
@@ -336,19 +352,27 @@ D8Boss_Recoil:
 
 D8Boss_Break:
 {
-  ; Harmless hold: no socket check, no attack box. Shell still tinks.
-  STZ.w SprFrame, X
+  ; Harmless: no socket check, no attack box. Shell still tinks.
+  ; SprFrame = elapsed / step time, capped at the hold frame.
+  LDA.b #!D8Boss_BreakSteps*!D8Boss_BreakStepTime+!D8Boss_BreakHoldTime
+  SEC : SBC.w SprTimerA, X : LSR #3
+  CMP.b #!D8Boss_BreakSteps : BCC +
+    LDA.b #!D8Boss_BreakSteps
+  +
+  STA.w SprFrame, X
   JSL Sprite_CheckDamageFromPlayer ; tink feedback only; carry ignored
   LDA.w SprTimerA, X : BNE .wait
     LDA.w D8Boss_Lane, X : EOR.b #$01 : STA.w D8Boss_Lane, X
     LDA.b #!D8Boss_TellTime : STA.w SprTimerA, X
+    JSR D8Boss_SetTellFrame ; next frame draws the tell, not the hold frame
     %GotoAction(1)
   .wait
   RTS
 }
 
 ; ---------------------------------------------------------
-; Mirrors the vanilla boss death branch (Sprite_KillFriends at $06F05E,
+; Death art plays first (D8Boss_Recoil .dead started it: tiles, friends
+; killed, menu off). Then this mirrors the vanilla boss death branch (Sprite_KillFriends at $06F05E,
 ; $06F062-$06F06F, Sprite_BossScreamAndDisableMenu $06F087-$06F093).
 ; SpriteModule_Explode ($09ED9F) then runs; Explode_VerifyPrizing ($09EE0F)
 ; spawns the heart container ($EA) once the screen is clear (type $C3 is
@@ -358,12 +382,16 @@ D8Boss_Break:
 
 D8Boss_Death:
 {
-  JSL Sprite_KillFriends
+  LDA.w SprTimerA, X : BEQ .explode
+    LDA.b #!D8Boss_DeathSteps*!D8Boss_DeathStepTime
+    SEC : SBC.w SprTimerA, X : LSR #3
+    STA.w SprFrame, X
+    RTS
+  .explode
   LDA.b #$04 : STA.w SprState, X
   STZ.w SprFrame, X
   STZ.w SprFlash, X
   LDA.b #$FF : STA.w SprTimerA, X : STA.w SprDeath, X
-  INC.w $0FFC
   STZ.w $012F
   LDA.b #$22 : JSL SpriteSFX_QueueSFX3WithPan
   RTS
@@ -598,13 +626,14 @@ D8Boss_LoadGfx:
   LDA.w #$1801 : STA.w $4300
   %D8Boss_DmaObj($5800, D8Boss_Stage1Gfx) ; name table 1, char $80
   %D8Boss_DmaObj($5000, D8Boss_Stage2Gfx) ; name table 1, char $00
+  %D8Boss_DmaObj($5600, D8Boss_Row6B1Gfx) ; name table 1, char $60
   LDX.b #$0F : STX.w $2100
   .done
   PLP
   RTL
 }
 
-; Break 2, in game: forced blank for one 3 KB DMA (about 18 black lines on
+; Break 2, in game: forced blank for one 5 KB DMA (about 30 black lines on
 ; one frame), then the brightness from $13 comes back. Called with 8-bit
 ; A/X/Y.
 D8Boss_LoadStage3Gfx:
@@ -614,7 +643,22 @@ D8Boss_LoadStage3Gfx:
   LDX.b #$80 : STX.w $2100
   LDX.b #$80 : STX.w $2115
   LDA.w #$1801 : STA.w $4300
-  %D8Boss_DmaObj($5800, D8Boss_Stage3Gfx) ; over the stage 1 chars $80-$DF
+  %D8Boss_DmaObj($5600, D8Boss_Break2Gfx) ; chars $60-$FF
+  LDX.b $13 : STX.w $2100
+  SEP #$20
+  PLX
+  RTS
+}
+
+; Death, in game: same as break 2 with one 2.2 KB DMA (about 13 lines).
+D8Boss_LoadDeathGfx:
+{
+  PHX
+  REP #$20
+  LDX.b #$80 : STX.w $2100
+  LDX.b #$80 : STX.w $2115
+  LDA.w #$1801 : STA.w $4300
+  %D8Boss_DmaObj($5000, D8Boss_DeathGfx) ; chars $00-$44
   LDX.b $13 : STX.w $2100
   SEP #$20
   PLX
@@ -646,7 +690,8 @@ D8Boss_Palette:
   dw $2279, $435D, $24C8, $220E, $18AC, $1591, $1A7E, $57DF
 
 ; 96 4bpp tiles from the AFS boss art lane (export_d8.py --src pass9), then
-; 32 beam tiles (chars $E0-$FF, beam_d8.py). One 4 KB DMA fills chars
+; 32 tiles for chars $E0-$FF (beam $E0-$E3/$F0-$F3 from beam_d8.py, break 1
+; blocks from bd_d8.py). One 4 KB DMA fills chars
 ; $80-$FF. Bank $2C has no room, so the tiles sit in a fixed slot at the
 ; tail of the items bank. Items/all_items.asm asserts its stream ends
 ; before $2BE000 when this flag is on.
@@ -654,47 +699,66 @@ pushpc
 org $2BE000
 D8Boss_Stage1Gfx:
   incbin d8_boss_stage1.bin
-  incbin d8_boss_beam.bin
+  incbin d8_boss_rowE_b1.bin
 .end
 assert pc() <= $2BF000, "D8 boss tiles reached the dream entry FX region ($2BF000)"
 pullpc
 
-; Stage 2 tiles (chars $00-$5F), stage 3 tiles (chars $80-$DF, export_d8.py
-; export15) and the draw tables of all 3 stages (stage23_d8.py, AFS
-; stage23_46). Fixed slot at the tail of the HUD bank; Menu/menu_hud.asm
-; asserts its stream ends before $2EC000 when this flag is on.
+; Stage 2 tiles (chars $00-$5F), break 1 chars $60-$7F, the break 2 set
+; (chars $60-$FF: break 2 blocks, stage 3 from export_d8.py export15, beam +
+; break 2 blocks), death chars $00-$44 and the draw tables (bd_d8.py, AFS
+; bd47). Fixed slot at the tail of the HUD bank; Menu/menu_hud.asm asserts
+; its stream ends before $2EC000 when this flag is on.
 pushpc
 org $2EC000
 D8Boss_Stage2Gfx:
   incbin d8_boss_stage2.bin
 .end
-D8Boss_Stage3Gfx:
+D8Boss_Row6B1Gfx:
+  incbin d8_boss_row6_b1.bin
+.end
+D8Boss_Break2Gfx:
+  incbin d8_boss_row6_b2.bin
   incbin d8_boss_stage3.bin
+  incbin d8_boss_rowE_b2.bin
+.end
+D8Boss_DeathGfx:
+  incbin d8_boss_death.bin
 .end
 incsrc d8_boss_draw.asm
-assert pc() <= $2F0000, "D8 boss stage 2/3 slot left bank $2E"
+assert pc() <= $2F0000, "D8 boss tile and table slot left bank $2E"
 pullpc
 
 ; =========================================================
-; Draw: tables generated by stage23_d8.py (AFS stage23_46), 10 frames per
-; stage, frame number = stage * 10 + SprFrame. Props $3D = priority 3,
+; Draw: tables generated by bd_d8.py (AFS bd47). Frame number = stage * 10
+; + SprFrame (0-29); Break = 20 + stage * 10 + SprFrame (stage already
+; counts the break: 30-37 break 1, 40-47 break 2); Death = 50 + SprFrame.
+; Props $3D = priority 3,
 ; palette 6, name table 1. Lane B frames are lane A mirrored (props $7D).
 ; Frames:
-;   0 idle (Closed, Break, Death)   1 recovery (Open: eye open)
+;   0 idle (Closed)                 1 recovery (Open: eye open)
 ;   2/3 slam lane A/B (Active)      4/5 tell lane A/B (Tell, first half)
 ;   6/7 rise lane A/B (Tell, second half)   8 hit (Recoil)
 ;   9 beam (stage 3 Active: aligned body + beam to the floor edge)
 ; Stage 2 rise frames hold the shunt pose. Stage 3 has no mirror: its slam
 ; and rise frames hold the aligned pose.
+; Break SprFrame: 0 shut, 1-3 lift/fling/drop lane A, 4-6 lane B, 7 hold.
+; Death SprFrame: 0 shut, 1 shed, 2 scatter, 3 core, 4 split, 5 burst.
 
 Sprite_D8Boss_Draw:
 {
-  ; %DrawSprite with signed byte x/y offsets, 16-bit entry index (the 3
-  ; stages hold about 500 entries) and long table reads (bank $2E).
+  ; %DrawSprite with signed byte x/y offsets, 16-bit entry index (the
+  ; tables hold about 860 entries) and long table reads (bank $2E).
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
   LDA.w SprFlash, X : STA $08
+  LDA.w SprAction, X : CMP.b #$06 : BNE +
+    LDA.b #50 : BRA .frame
+  +
   LDA.w D8Boss_Stage, X : ASL : STA $0A : ASL #2 : CLC : ADC $0A
+  LDY.w SprAction, X : CPY.b #$05 : BNE .frame
+    CLC : ADC.b #20
+  .frame
   CLC : ADC.w SprFrame, X
   PHX
   REP #$30
