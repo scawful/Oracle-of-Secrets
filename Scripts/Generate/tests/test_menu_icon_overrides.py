@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT/'Scripts/Generate'))
 import lz2
 import menu_icon_overrides as icons
-from sheet_table import TBL_BANK, TBL_HIGH, TBL_LOW, pc
+from sheet_table import TBL_BANK, TBL_HIGH, TBL_LOW, NEW_BANK, NEW_HIGH, NEW_LOW, pc
 
 
 class MenuIconOverrides(unittest.TestCase):
@@ -77,8 +77,11 @@ class MenuIconOverrides(unittest.TestCase):
         self.assertEqual(source.count('assert read1('), 9)
         self.assertEqual(source.count('assert pc() =='), 9)
         for sheet in icons.SHEETS:
-            for table in (TBL_BANK, TBL_HIGH, TBL_LOW):
+            for table in (NEW_BANK, NEW_HIGH, NEW_LOW):
                 self.assertIn(f'org ${table+sheet+0x73:06X} ', source)
+            for table in (TBL_BANK, TBL_HIGH, TBL_LOW):
+                self.assertNotIn(f'org ${table+sheet+0x73:06X} ', source)
+        self.assertIn('defined("GfxSheet_TableDone")', source)
         self.assertIn('assert pc() <= $43A000', source)
 
     def test_changed_base_sheet_refused(self):

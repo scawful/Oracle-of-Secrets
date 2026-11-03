@@ -11,7 +11,7 @@ import sys
 
 import lz2
 from sheet_overrides import require, number, write_outputs
-from sheet_table import N, TBL_BANK, TBL_HIGH, TBL_LOW, decomp, pc, ptr
+from sheet_table import N, TBL_BANK, TBL_HIGH, TBL_LOW, NEW_BANK, NEW_HIGH, NEW_LOW, decomp, pc, ptr
 
 START, CAPACITY = 0x438000, 0x2000
 SPEC = Path('Data/graphics/menu_icons.json')
@@ -142,15 +142,17 @@ def generated_files(items):
     for item in items:
         lines.append(f'MenuIconSheet_{item["s"]:02X}: incbin "sheets/spr{item["s"]:02X}.bin"')
     lines.append('assert pc() <= $43A000, "Menu icon sheets exceeded their 8 KiB allocation"')
+    # The game reads the relocated arrays; the old arrays only witness the base pointer.
+    lines += ['if not(defined("GfxSheet_TableDone"))', '  error "menu_icon_overrides.asm must follow Core/gfx_sheet_table.asm"', 'endif']
     for item in items:
         address, old = item['snes'] | 0x800000, item['base_pointer']
         lines += [f'; Sheet ${item["s"]:02X}; decoded base SHA256 {item["base_sha256"]}']
-        for table, shift in ((TBL_BANK, 16), (TBL_HIGH, 8), (TBL_LOW, 0)):
-            entry = table+item['g']
+        for table, new, shift in ((TBL_BANK, NEW_BANK, 16), (TBL_HIGH, NEW_HIGH, 8), (TBL_LOW, NEW_LOW, 0)):
+            entry, row = table+item['g'], new+item['g']
             lines += [f'assert read1(${entry:06X}) == ${(old >> shift)&255:02X}, "HUD sheet base pointer changed"',
-                      f'org ${entry:06X} ; @hook module=Menu kind=data protected_size=1',
+                      f'org ${row:06X} ; @hook module=Menu kind=data protected_size=1',
                       f'  db ${(address >> shift)&255:02X}',
-                      f'assert pc() == ${entry+1:06X}']
+                      f'assert pc() == ${row+1:06X}']
     files = {Path('sheets')/f'spr{i["s"]:02X}.bin': i['stream'] for i in items}
     files[Path('menu_icon_overrides.asm')] = ('\n'.join(lines+['pullpc', ''])).encode()
     return files

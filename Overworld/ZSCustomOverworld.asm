@@ -90,7 +90,7 @@ ExpandedSpritePalArray     = $7EFDC0 ; [0x40]
 ; Hooks
 Sound_LoadLightWorldSongBank               = $008913 ; $000913
 EnableForceBlank                           = $00893D ; $00093D
-GFXSheetPointers_sprite_bank               = $00CFF3 ; $004FF3
+GFXSheetPointers_sprite_bank               = $00CFF3 ; legacy copy, relocated to $23FD00; $004FF3
 GFXSheetPointers_sprite_high               = $00D0D2 ; $0050D2
 GFXSheetPointers_sprite_low                = $00D1B1 ; $0051B1
 DecompOwAnimatedTiles                      = $00D394 ; $005394
@@ -1489,10 +1489,8 @@ AnimateMirrorWarp_LoadSubscreen:
     LDA.l SheetsTable_0AA4, X : TAY
         
     ; Get the pointer for one of the 2 Global sprite #2 sheets.
-    LDA.w GFXSheetPointers_sprite_low, Y  : STA.b $00
-    LDA.w GFXSheetPointers_sprite_high, Y : STA.b $01
-    LDA.w GFXSheetPointers_sprite_bank, Y : STA.b $02
-                                            STA.b $05
+    JSL.l GfxSheet_GetPtr_Spr ; relocated sheet table (Core/gfx_sheet_table.asm)
+    LDA.b $02 : STA.b $05
 
     PLB
         

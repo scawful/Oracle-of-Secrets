@@ -232,16 +232,123 @@ class SourceSheets(unittest.TestCase):
         fixture.write_text(include,sheets.asm_text(items))
         manifest=generate_manifest(fixture.root,dev_rom_path=fixture.write_dev_rom())
         self.assertFalse(manifest['protected_regions']['exact'])
-        regions=manifest['protected_regions']['regions']
-        for table in (TBL_BANK,TBL_HIGH,TBL_LOW):
-            pointer=table+0xD7
-            covering=[r for r in regions if int(r['start'],16)<=pointer<int(r['end'],16)]
-            self.assertEqual(len(covering),1)
-            self.assertEqual((int(covering[0]['start'],16),int(covering[0]['end'],16)),
-                             (pointer,pointer+1))
+        # Pointer rows live in relocated arrays in bank $23, which asm ownership covers.
+        bank=next(b for b in manifest['owned_banks']['banks'] if b['bank']=='0x23')
+        starts={int(r['start'],16) for r in bank['regions']}
+        for table in (sheets.NEW_BANK,sheets.NEW_HIGH,sheets.NEW_LOW):
+            self.assertIn(table+0xD7,starts)
             for neighbor in (0xD8,0xD9):
-                self.assertFalse(any(int(r['start'],16)<=table+neighbor<int(r['end'],16)
-                                     for r in regions),f'Follower sheet ${neighbor:02X} pointer is protected')
+                self.assertNotIn(table+neighbor,starts,f'Follower sheet ${neighbor:02X} pointer is protected')
+
+    def test_new_globals_survive_generated_include_without_legacy_pointer(self):
+        # Synthetic artwork only; no production ID or payload interval is allocated.
+        legacy = dict(self.spec['sheets'][0])
+        self.spec['sheets'] = [dict(legacy, sprite_sheet=hex(g-0x73)) for g in (0xD7,0xB3,0xB6,0xBA,0x96)]
+        self.write_spec()
+        _, old_items = sheets.build(self.spec_path, self.base)
+        self.spec['schema_version'] = 2
+        for g in (0xDF, 0xFE):
+            self.spec['sheets'].append(dict(global_sheet=hex(g), source='sheet.txt',
+                decoded_sha256=hashlib.sha256(self.raw).hexdigest(), why='synthetic source preservation vector'))
+        self.write_spec()
+        self.reservation_root()
+        original_ptr = sheets.ptr
+        def legacy_only(rom, g):
+            self.assertLess(g, 0xDF, 'new sheet queried a nonexistent legacy pointer')
+            return original_ptr(rom, g)
+        with mock.patch.object(sheets, 'ptr', side_effect=legacy_only):
+            _, items = sheets.build(self.spec_path, self.base, self.root, rom_role='editable_base')
+        self.assertEqual(old_items, items[:len(old_items)])
+        outputs = sheets.generated_files(items)
+        out = self.root/'generated'
+        sheets.write_outputs(out, outputs, [self.spec_path, self.base, self.root/'sheet.txt'])
+        _, rebuilt = sheets.build(self.spec_path, self.base, self.root, rom_role='editable_base')
+        self.assertEqual(outputs, sheets.generated_files(rebuilt))
+        for name, payload in outputs.items():
+            self.assertEqual((out/name).read_bytes(), payload)
+        include = outputs[Path('sheet_overrides.asm')].decode()
+        for item in items:
+            self.assertIn(f'org ${sheets.NEW_BANK+item["g"]:06X}', include)
+            self.assertEqual(lz2.decompress(item['stream'], max_output=0x600)[0], self.raw)
+        # The normal build checks tracked output and includes it after initialization.
+        main = (ROOT/'Oracle_main.asm').read_text()
+        self.assertLess(main.index('incsrc "Core/gfx_sheet_table.asm"'),
+                        main.index('incsrc "Core/Generated/source_sprite_sheets/sheet_overrides.asm"'))
+        wrapper = (ROOT/'Scripts/Build/build_rom.sh').read_text()
+        self.assertIn('--check --respect-flags', wrapper)
+        self.assertEqual(self.base.read_bytes(), self.rom)
+
+    def test_new_globals_pack_in_bank_47_and_legacy_stays_in_bank_40(self):
+        def new(g):
+            return dict(global_sheet=hex(g), source='sheet.txt',
+                        decoded_sha256=hashlib.sha256(self.raw).hexdigest(), why='synthetic bank $47 vector')
+        # Legacy-only output never writes bank $47, so ordinary builds keep their size.
+        _, legacy = sheets.build(self.spec_path, self.base)
+        include = sheets.generated_files(legacy)[Path('sheet_overrides.asm')].decode()
+        self.assertNotIn('$478000', include)
+        self.assertEqual(sorted(map(str, sheets.generated_files(legacy))), ['sheet_overrides.asm', 'sheets/spr64.bin'])
+        self.spec['schema_version'] = 2
+        self.spec['sheets'] += [new(0xDF), new(0xFE)]; self.write_spec()
+        _, items = sheets.build(self.spec_path, self.base)
+        self.assertEqual(items[:1], legacy)
+        self.assertEqual([i['snes'] for i in items[1:]], [0x478000, 0x478000+len(items[1]['stream'])])
+        files = sheets.generated_files(items)
+        self.assertIn(Path('sheets/gDF.bin'), files); self.assertIn(Path('sheets/gFE.bin'), files)
+        include = files[Path('sheet_overrides.asm')].decode()
+        self.assertIn('org $478000\nSourceGlobalSheet_DF: incbin "sheets/gDF.bin"\nSourceGlobalSheet_FE: incbin "sheets/gFE.bin"', include)
+        for item in items[1:]:
+            self.assertIn(f'org ${sheets.NEW_BANK+item["g"]:06X} ; @hook module=Core kind=data protected_size=1\n  db $C7', include)
+            self.assertEqual(lz2.decompress(item['stream'], max_output=0x600), (self.raw, len(item['stream'])))
+        self.assertNotIn(f'${sheets.NEW_BANK+0xFF:06X}', include)
+
+    def test_bank_47_capacity_occupancy_and_owner_refused(self):
+        self.spec.update(schema_version=2, encoding='stored')
+        fit = 0x8000 // len(lz2.stored(self.raw))
+        self.assertLess(fit, 0xFE-0xDF+1, 'stored 3bpp sheets must not all fit one bank')
+        def globals_(n):
+            return [dict(global_sheet=hex(0xDF+i), source='sheet.txt', decoded_sha256=hashlib.sha256(self.raw).hexdigest(),
+                         why='synthetic') for i in range(n)]
+        self.spec['sheets'] = globals_(fit); self.write_spec()
+        _, items = sheets.build(self.spec_path, self.base)
+        self.assertLessEqual(items[-1]['snes']+len(items[-1]['stream']), 0x480000)
+        self.spec['sheets'] = globals_(fit+1); self.write_spec()
+        with self.assertRaisesRegex(ValueError, 'bank \\$47 is full'):
+            sheets.build(self.spec_path, self.base)
+        self.reservation_root(); sheets.validate_reservation(self.root, self.rom)
+        extended = self.rom+bytearray(0x40000); extended[0x238010] = 1
+        with self.assertRaisesRegex(ValueError, 'bank \\$47 is occupied'):
+            sheets.validate_reservation(self.root, extended)
+        (self.root/'Overworld/world_map.asm').write_text('org $408000\norg $C7C000\n')
+        with self.assertRaisesRegex(ValueError, 'owns bank \\$47'):
+            sheets.validate_reservation(self.root, self.rom)
+
+    def test_new_global_schema_guards_and_unsupported_roles(self):
+        new = dict(global_sheet='0xDF', source='sheet.txt',
+                   decoded_sha256=hashlib.sha256(self.raw).hexdigest(), why='synthetic')
+        self.spec['schema_version'] = 2
+        self.spec['sheets'] = [new]
+        self.write_spec()
+        for role in ('compiled_rom', 'development_editor', 'unknown'):
+            with self.subTest(role=role), self.assertRaisesRegex(ValueError, 'editable_base role'):
+                sheets.build(self.spec_path, self.base, rom_role=role)
+            with self.assertRaisesRegex(ValueError, 'provenance only'):
+                sheets.source_metadata(self.root, rom_role=role)
+        for g in ('0xDE', '0xFF'):
+            self.spec['sheets'] = [dict(new, global_sheet=g)]; self.write_spec()
+            with self.assertRaisesRegex(ValueError, 'DF-.*FE'):
+                sheets.build(self.spec_path, self.base)
+        self.spec['sheets'] = [dict(new, decoded_sha256='0'*64)]; self.write_spec()
+        with self.assertRaisesRegex(ValueError, 'decoded source changed'):
+            sheets.build(self.spec_path, self.base)
+        self.spec['sheets'] = [dict(new), dict(new)]; self.write_spec()
+        with self.assertRaisesRegex(ValueError, 'duplicate'):
+            sheets.build(self.spec_path, self.base)
+        self.spec['sheets'] = [dict(new, source='../outside.txt')]; self.write_spec()
+        with self.assertRaisesRegex(ValueError, 'inside'):
+            sheets.build(self.spec_path, self.base)
+        self.spec['schema_version'] = 1; self.spec['sheets'] = [new]; self.write_spec()
+        with self.assertRaisesRegex(ValueError, 'schema 2'):
+            sheets.build(self.spec_path, self.base)
 
     def test_actual_build_guard_refuses_wrong_or_truncated_base_before_output(self):
         # Real build wrapper/receipt/guard in a portable disposable repository.

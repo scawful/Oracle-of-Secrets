@@ -191,7 +191,7 @@ fi
 # Source sheets must match the selected editable base and tracked generated
 # streams. Refuse a changed base sheet before replacing any prior build output.
 run_check source_sprite_sheets 1 python3 "$repo_root/Scripts/Generate/sheet_overrides.py" \
-  --root "$repo_root" --base-rom "$base_rom" --check --respect-flags
+  --root "$repo_root" --base-rom "$base_rom" --rom-role editable_base --check --respect-flags
 
 # Prototype HUD icons preserve every unallocated tile in the editable base.
 run_check menu_icon_sheets 1 python3 "$repo_root/Scripts/Generate/menu_icon_overrides.py" \

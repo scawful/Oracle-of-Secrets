@@ -23,7 +23,7 @@
 D7Farore_Bank00RTL = $00E33A ; RTL (end of InitializeTilesets)
 
 assert read1($00E33A) == $6B, "Bank $00 RTL trampoline moved"
-assert read1($00E772) == $B9 || read1($00E772) == $5C, "Decompress_sprite_arbitrary moved"
+assert read1($00E772) == $B9 || read1($00E772) == $5C || read1($00E772) == $22, "Decompress_sprite_arbitrary moved"
 assert read2($00DFB8) == $0C84, "Do3To4Low16Bit moved"
 assert read1($00DEFF) == $AE, "Graphics_IncrementalVRAMUpload moved"
 assert read2($1BECC5) == $31C2, "Palettes_Load_SpriteAux1 moved"

@@ -69,17 +69,10 @@ if !ENABLE_EON_OWL_ONE_SHOT == 1
 ; existing Eon Owl sheet $42. Area $7A shares spriteset $18 and is untouched.
 ; All vanilla sprite load paths reach this decompressor, including room exits
 ; and mosaic transitions. Do not write VRAM from the per-frame sprite draw.
-pushpc
-org $00E772 ; @hook module=Sprites name=EonOwl_ArrivalSheet kind=jml target=EonOwl_ArrivalSheet expected_m=8
-  JML EonOwl_ArrivalSheet
-  NOP
-assert pc() == $00E777
-pullpc
 
-; Original entry: M=8, Y=sheet, DB=$00, DP destination=$00-$02.
-; X and DB are preserved. Decompress resets Y before consuming its stream.
-; Displaced: LDA.w $CFF3,Y : STA.b $CA. Return to the original high/low
-; pointer loads, retaining the bank-$00 JSR/RTS return path.
+; Called by GfxSheet_GetPtr_SprCA (Core/gfx_sheet_table.asm), the pointer
+; lookup in Decompress_sprite_arbitrary, before the lookup.
+; Entry: M=8, X=8, Y=sheet, DB=$00, DP destination=$00-$02. Only Y changes.
 EonOwl_ArrivalSheet:
 {
   TYA : CMP.b #$16 : BNE .original
@@ -98,8 +91,9 @@ EonOwl_ArrivalSheet:
     LDY.b #$42
     LDA.b #$42 : STA.l $7EC2FC
   .original
-  LDA.w $CFF3,Y : STA.b $CA
-  JML $00E777
+  RTL
+  ; Keeps later sprite code at its old addresses (the displaced tail was 8 bytes longer).
+  padbyte $EA : fill 8
 }
 endif
 

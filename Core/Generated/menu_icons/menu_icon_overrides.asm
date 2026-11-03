@@ -7,43 +7,46 @@ MenuIconSheet_69: incbin "sheets/spr69.bin"
 MenuIconSheet_6A: incbin "sheets/spr6A.bin"
 MenuIconSheet_6B: incbin "sheets/spr6B.bin"
 assert pc() <= $43A000, "Menu icon sheets exceeded their 8 KiB allocation"
+if not(defined("GfxSheet_TableDone"))
+  error "menu_icon_overrides.asm must follow Core/gfx_sheet_table.asm"
+endif
 ; Sheet $69; decoded base SHA256 41e06e3fd6c96961825cf5fd0696383c0183d1986de2cd610be939a79a2f65c1
 assert read1($00D05C) == $98, "HUD sheet base pointer changed"
-org $00D05C ; @hook module=Menu kind=data protected_size=1
+org $23FDDC ; @hook module=Menu kind=data protected_size=1
   db $C3
-assert pc() == $00D05D
+assert pc() == $23FDDD
 assert read1($00D13B) == $A9, "HUD sheet base pointer changed"
-org $00D13B ; @hook module=Menu kind=data protected_size=1
+org $23FEDC ; @hook module=Menu kind=data protected_size=1
   db $80
-assert pc() == $00D13C
+assert pc() == $23FEDD
 assert read1($00D21A) == $67, "HUD sheet base pointer changed"
-org $00D21A ; @hook module=Menu kind=data protected_size=1
+org $23FFDC ; @hook module=Menu kind=data protected_size=1
   db $00
-assert pc() == $00D21B
+assert pc() == $23FFDD
 ; Sheet $6A; decoded base SHA256 db98e83d87c1dcbaac87c9b11a0b46603146a9408f19e9fd129cd3dc155d45c6
 assert read1($00D05D) == $98, "HUD sheet base pointer changed"
-org $00D05D ; @hook module=Menu kind=data protected_size=1
+org $23FDDD ; @hook module=Menu kind=data protected_size=1
   db $C3
-assert pc() == $00D05E
+assert pc() == $23FDDE
 assert read1($00D13C) == $AF, "HUD sheet base pointer changed"
-org $00D13C ; @hook module=Menu kind=data protected_size=1
+org $23FEDD ; @hook module=Menu kind=data protected_size=1
   db $85
-assert pc() == $00D13D
+assert pc() == $23FEDE
 assert read1($00D21B) == $1A, "HUD sheet base pointer changed"
-org $00D21B ; @hook module=Menu kind=data protected_size=1
+org $23FFDD ; @hook module=Menu kind=data protected_size=1
   db $A9
-assert pc() == $00D21C
+assert pc() == $23FFDE
 ; Sheet $6B; decoded base SHA256 a6f1d7bb754f7493eb2eec27d8ac437db3a4aa09d282d7aaba369ac61ce8d188
 assert read1($00D05E) == $98, "HUD sheet base pointer changed"
-org $00D05E ; @hook module=Menu kind=data protected_size=1
+org $23FDDE ; @hook module=Menu kind=data protected_size=1
   db $C3
-assert pc() == $00D05F
+assert pc() == $23FDDF
 assert read1($00D13D) == $B3, "HUD sheet base pointer changed"
-org $00D13D ; @hook module=Menu kind=data protected_size=1
+org $23FEDE ; @hook module=Menu kind=data protected_size=1
   db $8A
-assert pc() == $00D13E
+assert pc() == $23FEDF
 assert read1($00D21C) == $F8, "HUD sheet base pointer changed"
-org $00D21C ; @hook module=Menu kind=data protected_size=1
+org $23FFDE ; @hook module=Menu kind=data protected_size=1
   db $AC
-assert pc() == $00D21D
+assert pc() == $23FFDF
 pullpc

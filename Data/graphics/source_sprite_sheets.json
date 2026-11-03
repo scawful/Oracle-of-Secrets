@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "start": "0x40D000",
   "capacity": 12288,
   "encoding": "lz2",
