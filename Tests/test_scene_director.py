@@ -269,6 +269,33 @@ class SceneFiles(unittest.TestCase):
         self.assertEqual(cfg["Snes"]["Region"], "Ntsc")
         self.assertEqual(cfg["Preferences"]["SaveDataFolder"], "/tmp/p/Saves")
         self.assertEqual(cfg["Oracle"]["PersistentSaveName"], "scene")
+        self.assertIs(cfg["Audio"]["EnableAudio"], True)
+        self.assertIs(cfg["Audio"]["MuteSoundInBackground"], False)
+
+    def test_record_status_checks(self):
+        from scene_director import runner
+        avi = Path("/tmp/take.avi")
+        good = {"video": {"active": True, "camera": False, "path": "/tmp/take.avi"},
+                "audio": {"active": True, "path": "/tmp/take.wav"}}
+        runner.check_record_status(good, avi)
+        bad = [
+            ({"video": {**good["video"], "active": False}}, "video not active"),
+            ({"video": {**good["video"], "camera": True}}, "through the camera"),
+            ({"video": {**good["video"], "path": "/tmp/other.avi"}}, "video path"),
+            ({"audio": {"active": False, "path": "/tmp/take.wav"}}, "WAV not active"),
+            ({"audio": {"active": True, "path": "/tmp/take-2.wav"}}, "WAV path"),
+            ({"audio": None}, "WAV not active"),
+        ]
+        for change, message in bad:
+            with self.assertRaisesRegex(RuntimeError, message):
+                runner.check_record_status({**good, **change}, avi)
+        runner.check_record_stopped({"video": {"active": False}, "audio": {"active": False}})
+        with self.assertRaisesRegex(RuntimeError, "still active"):
+            runner.check_record_stopped({"video": {"active": False}, "audio": {"active": True}})
+        log = "[Parsed_volumedetect_0 @ 0x1] mean_volume: -27.1 dB\n[...] max_volume: -9.6 dB\n"
+        self.assertEqual(runner.mean_volume(log), -27.1)
+        with self.assertRaisesRegex(RuntimeError, "no mean_volume"):
+            runner.mean_volume("max_volume: -inf dB")
 
     def test_boot_aligns_to_fixed_frame(self):
         from types import SimpleNamespace

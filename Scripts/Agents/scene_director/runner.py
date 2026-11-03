@@ -25,6 +25,7 @@ import sys
 import tempfile
 import time
 from pathlib import Path
+from fractions import Fraction
 from types import SimpleNamespace
 
 from . import pathfind
@@ -175,13 +176,14 @@ def _settings_template():
 
 
 def profile_settings(cfg: dict, profile: Path) -> dict:
-    """Private-profile settings: own save folders, fixed save name, deterministic power-on."""
+    """Private-profile settings: own save folders, fixed save name, deterministic power-on, audio on."""
     prefs = cfg.setdefault("Preferences", {})
     for kind, folder in (("SaveData", "Saves"), ("SaveState", "SaveStates")):
         prefs["Override" + kind + "Folder"] = True
         prefs[kind + "Folder"] = str(profile / folder)
     cfg.setdefault("Oracle", {})["PersistentSaveName"] = "scene"
     cfg.setdefault("Snes", {}).update(POWER_ON)
+    cfg.setdefault("Audio", {}).update(AUDIO)
     return cfg
 
 
@@ -358,34 +360,195 @@ def _equip(s: SceneSession, step):
     _wait(s, lambda v: v["module"] in (7, 9) and v["submodule"] == 0, 240, "gameplay after the menu")
 
 
-class Recorder:
-    """Every emulated frame between record start/stop as PNG; ffmpeg encodes the mp4.
+# Native recording route: Codex's accepted capture (promo_campaign_2026-11-02/
+# codex-full-frame-assist-20261102/init-gated-full-frame/sunset_init_gated.py:151-190):
+# `mesen_studio.py record start <avi> --wav` with no preset/size, so camera=false and the
+# whole 256x224 framebuffer goes to the AVI, plus a separate 48 kHz stereo WAV.
+STUDIO = Path(os.environ.get("OOS_MESEN_STUDIO") or Path.home() / (
+    ".context/projects/oracle-of-secrets/scratchpad/handoffs/promo_capture_2026-10-26/"
+    "capture-host-recovery/source/tools/studio/mesen_studio.py"))
+NATIVE_SIZE = (256, 224)
+AV_TOLERANCE = 0.1   # seconds, WAV vs video duration
+MIN_MEAN_DB = -60.0  # volumedetect mean_volume floor (silence is about -91 dB)
+# Audio on, no background/fast-forward ducking (same values as Codex's producer profile).
+AUDIO = {"EnableAudio": True, "MasterVolume": 100, "MuteSoundInBackground": False,
+         "ReduceSoundInBackground": False, "ReduceSoundInFastForward": False}
 
-    No audio: the socket has SCREENSHOT but no AVI/WAV command (Core/Shared/SocketServer.cpp).
+
+def _tool(name):
+    return shutil.which(name) or f"/opt/homebrew/bin/{name}"
+
+
+def png_size(blob):
+    require(len(blob) >= 24 and blob[:16] == b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR", "not a PNG")
+    return int.from_bytes(blob[16:20], "big"), int.from_bytes(blob[20:24], "big")
+
+
+def check_record_status(status, avi: Path):
+    """Raise unless the recorder took the native full-frame route with its WAV."""
+    video, audio = (status or {}).get("video") or {}, (status or {}).get("audio") or {}
+    require(video.get("active") is True, f"recorder video not active: {status}")
+    require(video.get("camera") is False, f"recorder video went through the camera: {status}")
+    require(video.get("path") == str(avi), f"recorder video path {video.get('path')!r}, wanted {str(avi)!r}")
+    require(audio.get("active") is True, f"recorder WAV not active: {status}")
+    require(audio.get("path") == str(avi.with_suffix(".wav")),
+            f"recorder WAV path {audio.get('path')!r}, wanted {str(avi.with_suffix('.wav'))!r}")
+
+
+def check_record_stopped(status):
+    video, audio = (status or {}).get("video") or {}, (status or {}).get("audio") or {}
+    require(video.get("active") is not True and audio.get("active") is not True,
+            f"recorder still active after stop: {status}")
+
+
+def mean_volume(log):
+    """mean_volume in dB from an ffmpeg volumedetect log."""
+    for line in log.splitlines():
+        if "mean_volume:" in line:
+            return float(line.split("mean_volume:")[1].split()[0])
+    raise RuntimeError("volumedetect printed no mean_volume")
+
+
+class Recorder:
+    """Native Mesen AVI (ZMBV, 256x224) + WAV between record start/stop, muxed to mp4.
+
+    The mp4 keeps every AVI frame (no trim, crop or frame-rate change), scaled 4x
+    nearest-neighbour to 1024x896, with the WAV as AAC audio. The AVI and WAV stay.
     """
 
-    def __init__(self, frames_dir: Path, mp4: Path):
-        self.dir, self.mp4, self.count, self.first = frames_dir, mp4, 0, None
-        self.dir.mkdir(parents=True, exist_ok=True)
+    def __init__(self, work: Path, mp4: Path):
+        self.work, self.mp4 = work, mp4
+        self.avi, self.wav = mp4.with_suffix(".avi"), mp4.with_suffix(".wav")
+        self.count, self.first, self.active, self.report = 0, None, False, {}
+        for path in (self.mp4, self.avi, self.wav):
+            require(not path.exists(), f"{path} exists; record never overwrites")
+
+    def studio(self, socket, *args):
+        result = subprocess.run([sys.executable, str(STUDIO), "--socket", socket, *args], capture_output=True,
+                                text=True, timeout=15, env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
+        with (self.work / "studio.log").open("a") as log:
+            log.write(f"$ studio {' '.join(args)}\nrc={result.returncode}\n{result.stdout}{result.stderr}\n")
+        if result.returncode != 0:
+            raise RuntimeError(f"studio {' '.join(args)} failed rc={result.returncode}: "
+                               f"{(result.stderr or result.stdout).strip()}")
+        return result.stdout
+
+    def start(self, s):
+        require(STUDIO.is_file(), f"mesen_studio.py not found: {STUDIO} (set OOS_MESEN_STUDIO)")
+        s.check_owner()
+        require(s.paused(), "record start needs a paused CPU")
+        before = native.number(s.b.get_rom_info()["frameCount"])
+        shot = s.b.screenshot()
+        require(shot, "pre-record SCREENSHOT failed")
+        (self.work / "record-viewport.png").write_bytes(shot)
+        require(png_size(shot) == NATIVE_SIZE, f"pre-record viewport is {png_size(shot)}, wanted {NATIVE_SIZE}")
+        self.studio(s.a.socket, "record", "start", str(self.avi), "--wav")
+        status = json.loads(self.studio(s.a.socket, "record", "status"))
+        (self.work / "record-status-start.json").write_text(json.dumps(status, indent=2) + "\n")
+        self.report.update(status_start=status, start_frame=before)
+        check_record_status(status, self.avi)
+        s.check_owner()
+        require(s.paused() and native.number(s.b.get_rom_info()["frameCount"]) == before,
+                "record start advanced emulated frames")
+        self.active = True
 
     def capture(self, bridge, frame):
-        shot = bridge.screenshot()
-        require(shot and shot[:8] == b"\x89PNG\r\n\x1a\n", f"SCREENSHOT failed at frame {frame}")
-        (self.dir / f"{self.count:06d}.png").write_bytes(shot)
         self.first = frame if self.first is None else self.first
         self.count += 1
 
-    def encode(self):
-        """60 fps capture decimated to a real 30 fps mp4 (every other frame)."""
+    def stop(self, s):
+        if not self.active:
+            return
+        self.active = False
+        self.studio(s.a.socket, "record", "stop")
+        status = json.loads(self.studio(s.a.socket, "record", "status"))
+        (self.work / "record-status-stop.json").write_text(json.dumps(status, indent=2) + "\n")
+        self.report["status_stop"] = status
+        check_record_stopped(status)
+
+    def finish(self):
+        """Media checks on the AVI/WAV, then the mp4 mux and its checks. Call after stop()."""
         require(self.count > 0, "record captured no frames")
-        ffmpeg = shutil.which("ffmpeg") or "/opt/homebrew/bin/ffmpeg"
-        self.mp4.parent.mkdir(parents=True, exist_ok=True)
-        cmd = [ffmpeg, "-y", "-loglevel", "error", "-framerate", "60", "-i", str(self.dir / "%06d.png"),
-               "-vf", "fps=30,scale=iw*4:ih*4:flags=neighbor", "-c:v", "libx264", "-pix_fmt", "yuv420p",
-               "-crf", "14", str(self.mp4)]
-        subprocess.run(cmd, check=True, timeout=600)
-        return {"mp4": str(self.mp4), "frames_dir": str(self.dir), "captured_frames": self.count,
-                "first_frame": self.first, "capture_fps": 60, "mp4_fps": 30, "audio": False}
+        ffprobe, ffmpeg = _tool("ffprobe"), _tool("ffmpeg")
+
+        def probe(path):
+            out = subprocess.run([ffprobe, "-v", "error", "-count_frames", "-show_entries",
+                                  "stream=codec_type,codec_name,width,height,sample_rate,channels,"
+                                  "nb_read_frames,avg_frame_rate,start_time,duration",
+                                  "-show_entries", "format=duration", "-of", "json", str(path)],
+                                 capture_output=True, text=True, timeout=120, check=True)
+            return json.loads(out.stdout)
+
+        def stream(data, kind):
+            return next((x for x in data["streams"] if x["codec_type"] == kind), None)
+
+        def volume(path):
+            out = subprocess.run([ffmpeg, "-hide_banner", "-nostdin", "-i", str(path), "-map", "0:a:0",
+                                  "-af", "volumedetect", "-f", "null", "-"],
+                                 capture_output=True, text=True, timeout=120)
+            require(out.returncode == 0, f"volumedetect failed on {path}")
+            return out.stderr
+
+        avi_probe, wav_probe = probe(self.avi), probe(self.wav)
+        video, wav_audio = stream(avi_probe, "video"), stream(wav_probe, "audio")
+        require(video is not None, "AVI has no video stream")
+        require((int(video["width"]), int(video["height"])) == NATIVE_SIZE,
+                f"AVI is {video['width']}x{video['height']}, wanted {NATIVE_SIZE}")
+        frames = int(video["nb_read_frames"])
+        require(abs(frames - self.count) <= 2, f"AVI has {frames} frames, scene advanced {self.count}")
+        require(stream(avi_probe, "audio") is not None, "AVI has no audio stream")
+        require(wav_audio is not None and int(wav_audio["sample_rate"]) == 48000 and int(wav_audio["channels"]) == 2,
+                f"WAV is not 48 kHz stereo: {wav_audio}")
+        fps = Fraction(video["avg_frame_rate"])
+        video_s, wav_s = frames / float(fps), float(wav_audio["duration"])
+        require(abs(wav_s - video_s) < AV_TOLERANCE, f"WAV {wav_s:.3f}s vs video {video_s:.3f}s")
+        wav_log = volume(self.wav)
+        (self.work / "volumedetect-wav.log").write_text(wav_log)
+        framemd5 = subprocess.run([ffmpeg, "-v", "error", "-nostdin", "-i", str(self.avi), "-map", "0:v:0",
+                                   "-f", "framemd5", "-"], capture_output=True, text=True, timeout=300, check=True)
+        (self.work / "avi-video.framemd5").write_text(framemd5.stdout)
+        frame_hashes = "\n".join(line.rsplit(",", 1)[-1].strip() for line in framemd5.stdout.splitlines()
+                                 if line and not line.startswith("#"))
+        stills = {}
+        for label, index in (("first", 0), ("last", frames - 1)):
+            path = self.work / f"{label}-recorded-frame.png"
+            subprocess.run([ffmpeg, "-v", "error", "-nostdin", "-i", str(self.avi), "-map", "0:v:0",
+                            "-vf", f"select=eq(n\\,{index})", "-fps_mode", "passthrough", "-frames:v", "1",
+                            str(path)], capture_output=True, timeout=60, check=True)
+            require(png_size(path.read_bytes()) == NATIVE_SIZE, f"{path} is not 256x224")
+            stills[label] = {"index": index, "path": str(path), "sha256": _sha(path)}
+
+        cmd = [ffmpeg, "-hide_banner", "-loglevel", "warning", "-nostdin", "-i", str(self.avi), "-i", str(self.wav),
+               "-map", "0:v:0", "-map", "1:a:0", "-vf", "scale=iw*4:ih*4:flags=neighbor,format=yuv420p",
+               "-c:v", "libx264", "-preset", "slow", "-crf", "14", "-c:a", "aac", "-b:a", "192k",
+               "-ar", "48000", "-ac", "2", "-movflags", "+faststart", str(self.mp4)]
+        subprocess.run(cmd, check=True, timeout=900)
+        mp4_probe = probe(self.mp4)
+        mv, ma = stream(mp4_probe, "video"), stream(mp4_probe, "audio")
+        require(ma is not None and ma["codec_name"] == "aac", "mp4 has no AAC audio stream")
+        require(mv is not None and int(mv["nb_read_frames"]) == frames, "mp4 frame count differs from the AVI")
+        mp4_video_s, mp4_audio_s = float(mv["duration"]), float(ma["duration"])
+        require(abs(mp4_audio_s - mp4_video_s) < AV_TOLERANCE,
+                f"mp4 audio {mp4_audio_s:.3f}s vs video {mp4_video_s:.3f}s")
+        mp4_log = volume(self.mp4)
+        (self.work / "volumedetect.log").write_text(mp4_log)
+        mean = mean_volume(mp4_log)
+        require(mean > MIN_MEAN_DB, f"mp4 mean volume {mean} dB is at or below {MIN_MEAN_DB} dB (silence)")
+        self.report.update(
+            mp4=str(self.mp4), avi=str(self.avi), wav=str(self.wav), audio=True, route="native-avi-wav",
+            mp4_sha256=_sha(self.mp4), avi_sha256=_sha(self.avi), wav_sha256=_sha(self.wav),
+            captured_frames=self.count, first_frame=self.first, avi_frames=frames, avi_fps=str(fps),
+            video_seconds=video_s, wav_seconds=wav_s, wav_minus_video_seconds=wav_s - video_s,
+            mp4_video_seconds=mp4_video_s, mp4_audio_seconds=mp4_audio_s,
+            mp4_av_difference_seconds=mp4_audio_s - mp4_video_s, mean_volume_db=mean,
+            wav_mean_volume_db=mean_volume(wav_log), mp4_size=f"{mv['width']}x{mv['height']}",
+            video_frames_sha256=hashlib.sha256(frame_hashes.encode()).hexdigest(), stills=stills,
+            export_command=cmd)
+        return self.report
+
+
+def _sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
 # ---------------------------------------------------------------- steps ----
@@ -448,10 +611,11 @@ def _run_step(s: SceneSession, step):
         s.result["checks"].append({"phase": s.phase, "name": a["label"], "passed": True})
     elif step.kind == "record":
         if a["action"] == "start":
-            if s.recorder is None:
+            if s.recorder is None and s.pending_recorder is not None and not s.pending_recorder.active:
+                s.pending_recorder.start(s)
                 s.recorder = s.pending_recorder
         elif s.recorder is not None:
-            s.result["record"] = s.recorder.encode()
+            s.recorder.stop(s)
             s.recorder = None
     else:  # load is handled before the loop
         raise SceneError(f"{step.label()}: unexpected step")
@@ -487,7 +651,7 @@ def run_scene(scene: Scene, rom: Path, out: Path | None = None, record: Path | N
         session.watch = scene.watch or {}
         if record is not None or scene.uses_record():
             mp4 = Path(record).resolve() if record is not None else work / f"{scene.name}.mp4"
-            session.pending_recorder = Recorder(work / "take-frames", mp4)
+            session.pending_recorder = Recorder(work, mp4)
         session.check_owner()
         if "state" in load.args:
             require(bridge.load_state(path=str(load.args["state"])), f"load_state failed: {load.args['state']}")
@@ -500,7 +664,8 @@ def run_scene(scene: Scene, rom: Path, out: Path | None = None, record: Path | N
         if "entrance" in load.args:
             _load_entrance(session, load.args["entrance"])
         if record is not None and not scene.uses_record():
-            session.recorder = session.pending_recorder  # --record alone: everything after load
+            session.pending_recorder.start(session)  # --record alone: everything after load
+            session.recorder = session.pending_recorder
         start = dict(session.last)
         result["start"] = start
         if start["module"] == 7 and start["indoors"]:
@@ -516,7 +681,7 @@ def run_scene(scene: Scene, rom: Path, out: Path | None = None, record: Path | N
             session.result["steps"].append({"step": step.index, "kind": step.kind,
                                             "before": before, "after": dict(session.last)})
         if session.recorder is not None:  # no "record stop": capture ran to the end
-            session.result["record"] = session.recorder.encode()
+            session.recorder.stop(session)
             session.recorder = None
         wram = hashlib.sha256()
         for offset in range(0, 0x20000, 0x4000):
@@ -524,8 +689,11 @@ def run_scene(scene: Scene, rom: Path, out: Path | None = None, record: Path | N
         shot = bridge.screenshot()
         if shot:
             (work / "final.png").write_bytes(shot)
-        result.update(passed=True, final=session.last, frame_count=session.frame_count,
-                      wram_sha256=wram.hexdigest(), record=session.result.get("record"))
+        result.update(final=session.last, frame_count=session.frame_count, wram_sha256=wram.hexdigest())
+        if session.pending_recorder is not None:
+            mesen.stop()  # the AVI/WAV are closed by record stop; check and mux them offline
+            result["record"] = session.pending_recorder.finish()
+        result["passed"] = True
         return result
     finally:
         if session is not None:
@@ -535,6 +703,12 @@ def run_scene(scene: Scene, rom: Path, out: Path | None = None, record: Path | N
                 session.input("")
             except BaseException:  # noqa: BLE001 - cleanup must continue
                 pass
+            if session.pending_recorder is not None:
+                try:
+                    session.pending_recorder.stop(session)  # failed mid-take: close the AVI/WAV
+                except BaseException as error:  # noqa: BLE001 - cleanup must continue
+                    result["record_stop_error"] = str(error)
+                result.setdefault("record", session.pending_recorder.report)
             session.log.close()
         if mesen is not None:
             mesen.stop()

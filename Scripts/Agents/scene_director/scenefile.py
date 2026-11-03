@@ -38,8 +38,9 @@ Steps:
   wait_until  {"expr", "max_frames"}: advance neutral frames until expr is true; fails otherwise.
   check       {"expr", "label"?}: fails the scene (nonzero exit) when false.
   hold        {"frames": N, "button"?}: hold a button, or nothing, for N frames.
-  record      "start" | "stop". Between them every frame is captured (1-frame advances)
-              to PNG and encoded to mp4. Without "stop", capture runs to the end.
+  record      "start" | "stop". Between them Mesen records its native AVI + WAV (1-frame
+              advances); the runner muxes them to mp4 with audio. Without "stop",
+              recording runs to the end.
 
 Top-level "watch" (optional): {name: expr}, up to 32, evaluated after every frame
 and logged as "watch" in frames.jsonl (diagnostics only; never changes the run).
