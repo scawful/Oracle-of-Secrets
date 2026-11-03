@@ -68,23 +68,25 @@ Sprite_D8Boss = $C3
 ; 2026-11-03: "Floor halves"). Room-relative pixels like the socket, so
 ; they do not move with boss placement. Floor measured from the sky test
 ; render: x 48-207, y 320-463 (bottom-left quadrant y 64-207). Lanes run
-; from the boss body bottom (quadrant y 96) to the floor edge.
+; from the boss body bottom (quadrant y 120) to the floor edge.
 !D8Boss_LaneAX         = 48   ; lane A left edge
 !D8Boss_LaneBX         = 128  ; lane B left edge (floor center)
-!D8Boss_LaneY          = 352  ; top edge, both lanes
+!D8Boss_LaneY          = 376  ; top edge, both lanes
 !D8Boss_LaneW          = 80
-!D8Boss_LaneH          = 112
+!D8Boss_LaneH          = 88
 ; Stage 3 beam: boss column (x origin, 16 wide), same rows as the lanes
-; (scawful 2026-11-03: "Yes, extend beam"). The 7 drawn beam cells reach
-; the floor edge with the boss origin at room y 328 (body bottom on the
+; (scawful 2026-11-03: "Yes, extend beam"). The 6 drawn beam cells reach
+; the floor edge with the boss origin at room y 352 (body bottom on the
 ; lane top), which the room $96 placement below gives.
 !D8Boss_BeamW          = 16
 !D8Boss_BeamX          = 3    ; beam lane left edge, px right of SprX (drawn cells)
 ; Room $96 placement (scawful 2026-11-03: "Yes, place it"): sprite data
 ; is on a 16 px grid, so the room places tile (7,20) = (112,320) and prep
-; shifts the origin to (120,328): body centered on floor x 128, body
-; bottom on the lane top.
-!D8Boss_PlaceShift     = 8    ; pixels added to X and Y in prep
+; shifts the origin to (120,352): body centered on floor x 128, body
+; bottom on the lane top, body top (origin y -40) below the HUD
+; (scawful 2026-11-03: "Move boss down").
+!D8Boss_PlaceShiftX    = 8    ; pixels added to X in prep
+!D8Boss_PlaceShiftY    = 32   ; pixels added to Y in prep
 !D8Boss_SomariaBlock   = $2C  ; ancilla ID, Ancilla2C_SomariaBlock
 !D8Boss_SomariaFizz    = $2D  ; ancilla ID, Ancilla2D_SomariaBlockFizz
 !D8Boss_SocketSFX      = $25  ; SFX3, same as the socket door open sound
@@ -104,7 +106,7 @@ D8Boss_Lane      = SprMiscE   ; $0EB0: weight lane 0/1, flips every cycle
 ; Sprite properties
 
 !SPRID              = Sprite_D8Boss
-!NbrTiles           = 27  ; Max OAM entries per frame (19 idle + 8 beam)
+!NbrTiles           = 25  ; Max OAM entries per frame (19 idle + 6 beam)
 !Harmless           = 00
 !HVelocity          = 00
 !Health             = 100 ; Unused: ImperviousAll keeps HP untouched
@@ -164,9 +166,9 @@ Sprite_D8Boss_Prep:
   %BossPrep_ExitIfDefeated()
   PHB : PHK : PLB
   LDA.w SprDefl, X : ORA.b #$80 : STA.w SprDefl, X ; keep running offscreen
-  LDA.w SprX, X  : CLC : ADC.b #!D8Boss_PlaceShift : STA.w SprX, X
+  LDA.w SprX, X  : CLC : ADC.b #!D8Boss_PlaceShiftX : STA.w SprX, X
   LDA.w SprXH, X :       ADC.b #$00                : STA.w SprXH, X
-  LDA.w SprY, X  : CLC : ADC.b #!D8Boss_PlaceShift : STA.w SprY, X
+  LDA.w SprY, X  : CLC : ADC.b #!D8Boss_PlaceShiftY : STA.w SprY, X
   LDA.w SprYH, X :       ADC.b #$00                : STA.w SprYH, X
   STZ.w SprAction, X
   STZ.w SprGfx, X
@@ -684,7 +686,7 @@ Sprite_D8Boss_Draw:
   .start_index
     db $00, $13, $24, $37, $4A, $5D, $70, $83, $96, $A9
   .nbr_of_tiles
-    db 18, 16, 18, 18, 18, 18, 18, 18, 18, 26
+    db 18, 16, 18, 18, 18, 18, 18, 18, 18, 24
   .x_offsets
     db 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -19, 0, 0 ; 0 idle
     db 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -19 ; 1 recovery
@@ -695,7 +697,7 @@ Sprite_D8Boss_Draw:
     db 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -20, 0, 0 ; 6 rise
     db -24, -24, -24, -24, -8, -8, -8, -8, 8, 8, 8, 8, 24, 24, 24, 24, 20, 0, 0 ; 7 rise_mirror
     db 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -19, 0, 0 ; 8 hit
-    db 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -19, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3 ; 9 beam
+    db 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -19, 0, 0, 3, 3, 3, 3, 3, 3 ; 9 beam
   .y_offsets
     db 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -35, -12, -28 ; 0 idle
     db 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -35 ; 1 recovery
@@ -706,7 +708,7 @@ Sprite_D8Boss_Draw:
     db 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -41, -12, -28 ; 6 rise
     db 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -41, -12, -28 ; 7 rise_mirror
     db 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -35, -12, -28 ; 8 hit
-    db 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -35, -12, -28, 127, 111, 95, 79, 63, 47, 31, 15 ; 9 beam
+    db 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -35, -12, -28, 95, 79, 63, 47, 31, 15 ; 9 beam
   .chr
     db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $A0, $8E, $8C, $8A, $88, $86, $84, $82, $80 ; 0 idle
     db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $A0, $8E, $8C, $8A, $88, $86, $84 ; 1 recovery
@@ -717,7 +719,7 @@ Sprite_D8Boss_Draw:
     db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $CC, $CA, $8C, $8A, $C8, $86, $84, $82, $80 ; 6 rise
     db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $CC, $CA, $8C, $8A, $C8, $86, $84, $82, $80 ; 7 rise_mirror
     db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $A0, $8E, $8C, $8A, $88, $86, $84, $CE, $80 ; 8 hit
-    db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $A0, $8E, $8C, $8A, $88, $86, $84, $82, $80, $E2, $E0, $E0, $E0, $E0, $E0, $E0, $E0 ; 9 beam
+    db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $A0, $8E, $8C, $8A, $88, $86, $84, $82, $80, $E2, $E0, $E0, $E0, $E0, $E0 ; 9 beam
   .properties
     db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD, $BD, $3D ; 0 idle
     db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD ; 1 recovery
@@ -728,7 +730,7 @@ Sprite_D8Boss_Draw:
     db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD, $BD, $3D ; 6 rise
     db $BD, $BD, $3D, $3D, $BD, $BD, $3D, $3D, $FD, $FD, $7D, $7D, $FD, $FD, $3D, $BD, $BD, $FD, $7D ; 7 rise_mirror
     db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD, $BD, $3D ; 8 hit
-    db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD, $BD, $3D, $3D, $3D, $3D, $3D, $3D, $3D, $3D, $3D ; 9 beam
+    db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD, $BD, $3D, $3D, $3D, $3D, $3D, $3D, $3D ; 9 beam
   .sizes
     db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 0 idle
     db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 1 recovery
@@ -739,5 +741,5 @@ Sprite_D8Boss_Draw:
     db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 6 rise
     db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 7 rise_mirror
     db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 8 hit
-    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 9 beam
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 9 beam
 }
