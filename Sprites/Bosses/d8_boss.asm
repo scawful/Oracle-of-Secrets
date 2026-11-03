@@ -29,6 +29,7 @@
 ; CHR over spriteset slots 2-3 (VRAM $5800, chars $80-$DF, OAM name table 1)
 ; on the scroll into room $96. Prep writes sprite palette row 6.
 ; Stages 2-3, break and death art stream later: they show stage 1 frames.
+; Stage 3 draws the beam (frame 9, chars $E0-$FF) under the stage 1 body.
 ;
 ; Credit mechanism: !ImperviousAll = 01 keeps HP untouched
 ; (Sprite_CalculateSwordDamage $06ED3F returns at once when $0E60 bit 6 is
@@ -55,6 +56,7 @@ Sprite_D8Boss = $C3
 !D8Boss_FrameTell      = 4
 !D8Boss_FrameRise      = 6
 !D8Boss_FrameHit       = 8
+!D8Boss_FrameBeam      = 9
 !D8Boss_BreakHoldTime  = 30   ; frames of stable silhouette after a break
 !D8Boss_RecoilTime     = 32   ; frames of shuttered recoil after a credit
 !D8Boss_HitsPerStage   = 2    ; decided
@@ -77,6 +79,7 @@ Sprite_D8Boss = $C3
 ; the floor edge with the boss origin at room y 328 (body bottom on the
 ; lane top), which the room $96 placement below gives.
 !D8Boss_BeamW          = 16
+!D8Boss_BeamX          = 3    ; beam lane left edge, px right of SprX (drawn cells)
 ; Room $96 placement (scawful 2026-11-03: "Yes, place it"): sprite data
 ; is on a 16 px grid, so the room places tile (7,20) = (112,320) and prep
 ; shifts the origin to (120,328): body centered on floor x 128, body
@@ -101,7 +104,7 @@ D8Boss_Lane      = SprMiscE   ; $0EB0: weight lane 0/1, flips every cycle
 ; Sprite properties
 
 !SPRID              = Sprite_D8Boss
-!NbrTiles           = 19  ; Max OAM entries per frame (16 body + 3 weight)
+!NbrTiles           = 27  ; Max OAM entries per frame (19 idle + 8 beam)
 !Harmless           = 00
 !HVelocity          = 00
 !Health             = 100 ; Unused: ImperviousAll keeps HP untouched
@@ -371,11 +374,14 @@ D8Boss_ToClosed:
 }
 
 ; ---------------------------------------------------------
-; Frame for Active: lane A/B slam. The beam stage reuses the slam frames
-; until the stage 3 art streams.
+; Frame for Active: lane A/B slam, or the beam in the last stage.
 
 D8Boss_SetAttackFrame:
 {
+  LDA.w D8Boss_Stage, X : CMP.b #!D8Boss_LastStage : BCC .slam
+    LDA.b #!D8Boss_FrameBeam : STA.w SprFrame, X
+    RTS
+  .slam
   LDA.w D8Boss_Lane, X : CLC : ADC.b #!D8Boss_FrameSlam : STA.w SprFrame, X
   RTS
 }
@@ -513,10 +519,10 @@ D8Boss_AttackHitTest:
   LDA.w SprYH, X : AND.b #$FE : CLC : ADC.b #!D8Boss_LaneY>>8 : STA.b pos2_y_high
   LDA.b #!D8Boss_LaneH : STA.b pos2_height
   LDA.w D8Boss_Stage, X : CMP.b #!D8Boss_LastStage : BCC .weight
-    ; Beam: the boss column, same x as the drawn beam cells.
+    ; Beam: the drawn beam lane (frame 9 cells at SprX + !D8Boss_BeamX).
     LDA.b #!D8Boss_BeamBump : STA.w SprBump, X
-    LDA.w SprX, X  : STA.b pos2_x_low
-    LDA.w SprXH, X : STA.b pos2_x_high
+    LDA.w SprX, X  : CLC : ADC.b #!D8Boss_BeamX : STA.b pos2_x_low
+    LDA.w SprXH, X : ADC.b #$00 : STA.b pos2_x_high
     LDA.b #!D8Boss_BeamW : STA.b pos2_size
     BRA .test
   .weight
@@ -607,14 +613,16 @@ D8Boss_Palette:
   dw $1043, $1C85, $314C, $1548, $36F5, $1915, $21DC
   dw $2279, $435D, $24C8, $220E, $18AC, $1591, $1A7E, $57DF
 
-; 96 4bpp tiles from the AFS boss art lane (export_d8.py --src pass9).
-; Bank $2C has no room for 3 KB, so the tiles sit in a fixed slot at the
+; 96 4bpp tiles from the AFS boss art lane (export_d8.py --src pass9), then
+; 32 beam tiles (chars $E0-$FF, beam_d8.py). One 4 KB DMA fills chars
+; $80-$FF. Bank $2C has no room, so the tiles sit in a fixed slot at the
 ; tail of the items bank. Items/all_items.asm asserts its stream ends
-; before $2BE400 when this flag is on.
+; before $2BE000 when this flag is on.
 pushpc
-org $2BE400
+org $2BE000
 D8Boss_Stage1Gfx:
   incbin d8_boss_stage1.bin
+  incbin d8_boss_beam.bin
 .end
 assert pc() <= $2BF000, "D8 boss tiles reached the dream entry FX region ($2BF000)"
 pullpc
@@ -626,11 +634,12 @@ pullpc
 ;   0 idle (Closed, Break, Death)   1 recovery (Open: eye open)
 ;   2/3 slam lane A/B (Active)      4/5 tell lane A/B (Tell, first half)
 ;   6/7 rise lane A/B (Tell, second half)   8 hit (Recoil)
+;   9 beam (stage 3 Active: idle body + beam to the floor edge)
 
 Sprite_D8Boss_Draw:
 {
   ; %DrawSprite with signed byte x/y offsets. Its index is the entry number
-  ; doubled in 8 bits, and these 169 entries wrap past 128 (frames 6-8).
+  ; doubled in 8 bits, and these 196 entries wrap past 128 (frames 6-8).
   ; Here every table is indexed by entry number, so 255 entries fit.
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
@@ -673,9 +682,9 @@ Sprite_D8Boss_Draw:
   RTS
 
   .start_index
-    db $00, $13, $24, $37, $4A, $5D, $70, $83, $96
+    db $00, $13, $24, $37, $4A, $5D, $70, $83, $96, $A9
   .nbr_of_tiles
-    db 18, 16, 18, 18, 18, 18, 18, 18, 18
+    db 18, 16, 18, 18, 18, 18, 18, 18, 18, 26
   .x_offsets
     db 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -19, 0, 0 ; 0 idle
     db 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -19 ; 1 recovery
@@ -686,6 +695,7 @@ Sprite_D8Boss_Draw:
     db 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -20, 0, 0 ; 6 rise
     db -24, -24, -24, -24, -8, -8, -8, -8, 8, 8, 8, 8, 24, 24, 24, 24, 20, 0, 0 ; 7 rise_mirror
     db 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -19, 0, 0 ; 8 hit
+    db 24, 24, 24, 24, 8, 8, 8, 8, -8, -8, -8, -8, -24, -24, -24, -24, -19, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3 ; 9 beam
   .y_offsets
     db 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -35, -12, -28 ; 0 idle
     db 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -35 ; 1 recovery
@@ -696,6 +706,7 @@ Sprite_D8Boss_Draw:
     db 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -41, -12, -28 ; 6 rise
     db 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -41, -12, -28 ; 7 rise_mirror
     db 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -35, -12, -28 ; 8 hit
+    db 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, 8, -8, -24, -40, -35, -12, -28, 127, 111, 95, 79, 63, 47, 31, 15 ; 9 beam
   .chr
     db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $A0, $8E, $8C, $8A, $88, $86, $84, $82, $80 ; 0 idle
     db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $A0, $8E, $8C, $8A, $88, $86, $84 ; 1 recovery
@@ -706,6 +717,7 @@ Sprite_D8Boss_Draw:
     db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $CC, $CA, $8C, $8A, $C8, $86, $84, $82, $80 ; 6 rise
     db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $CC, $CA, $8C, $8A, $C8, $86, $84, $82, $80 ; 7 rise_mirror
     db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $A0, $8E, $8C, $8A, $88, $86, $84, $CE, $80 ; 8 hit
+    db $C4, $C2, $C0, $AE, $AC, $AA, $A8, $A6, $A4, $A2, $A0, $8E, $8C, $8A, $88, $86, $84, $82, $80, $E2, $E0, $E0, $E0, $E0, $E0, $E0, $E0 ; 9 beam
   .properties
     db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD, $BD, $3D ; 0 idle
     db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD ; 1 recovery
@@ -716,6 +728,7 @@ Sprite_D8Boss_Draw:
     db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD, $BD, $3D ; 6 rise
     db $BD, $BD, $3D, $3D, $BD, $BD, $3D, $3D, $FD, $FD, $7D, $7D, $FD, $FD, $3D, $BD, $BD, $FD, $7D ; 7 rise_mirror
     db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD, $BD, $3D ; 8 hit
+    db $FD, $FD, $7D, $7D, $FD, $FD, $7D, $7D, $BD, $BD, $3D, $3D, $BD, $BD, $7D, $FD, $FD, $BD, $3D, $3D, $3D, $3D, $3D, $3D, $3D, $3D, $3D ; 9 beam
   .sizes
     db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 0 idle
     db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 1 recovery
@@ -726,4 +739,5 @@ Sprite_D8Boss_Draw:
     db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 6 rise
     db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 7 rise_mirror
     db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 8 hit
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02 ; 9 beam
 }
