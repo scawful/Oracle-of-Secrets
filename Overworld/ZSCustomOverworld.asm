@@ -2474,8 +2474,9 @@ endif
     ; Puts OBJ, BG2, and BG3 on the main screen.
     LDA.b #$16 : STA.b $1C
         
-    ; Puts BG1 on the subscreen.
-    LDA.b #$01 : STA.b $1D
+    ; Puts BG1 on the subscreen. Y holds the $1D value until the overlay is
+    ; built (see .loadOverlay).
+    LDY.b #$01
 
     ; Recover the selected overlay ID from the mirror set above.
     ; Using $8C avoids width-dependent PHX/PLX stack pops here.
@@ -2508,15 +2509,23 @@ endif
         ; scroll handling for other overlay IDs.
         LDX.b $11 : CPX.b #$23 : BEQ .loadOverlay
                     CPX.b #$2C : BEQ .loadOverlay
-            STZ.b $1D
-    
+            LDY.b #$00
+
     .loadOverlay
-    
-    ; Apply the selected settings to CGADSUB's mirror ($9A).
-    STA.b $9A
-        
+
+    ; Write $1D and CGADSUB's mirror ($9A) only after LoadSubscreenOverlay.
+    ; Its decompression runs for several lag frames, and NMI writes TS and
+    ; CGADSUB from $1D/$9A even on lag frames, so setting them first blended
+    ; the stale BG1 tilemap into the screen (brown flash on Song of Storms,
+    ; ~7 frames in area $33). The new tilemap uploads ($17 = $04) in the
+    ; same NMI that first applies the new $1D/$9A.
+    PHY : PHA
+
     JSR.w LoadSubscreenOverlay
-        
+
+    PLA : STA.b $9A
+    PLA : STA.b $1D
+
     ; This is the "under the bridge" area.
 if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 0 || !SKY_CLOUD_OVERLAY != $94
     LDA.b $8C : CMP.b #$94 : BNE .notUnderBridge
