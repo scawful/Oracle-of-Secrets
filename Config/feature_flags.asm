@@ -9,6 +9,7 @@
 !ENABLE_CUTSCENE_FRAMEWORK            = 1
 !ENABLE_D3_PRISON_SEQUENCE            = 0
 !ENABLE_D7_FARORE_RESCUE_SEQUENCE     = 1
+!ENABLE_D8_BOSS                       = 0
 !ENABLE_DREAM_BED_WAKE                = 1
 !ENABLE_DREAM_ENTRY_FX                = 1
 !ENABLE_DREAM_POWER_SCENE             = 1

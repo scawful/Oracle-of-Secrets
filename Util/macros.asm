@@ -221,6 +221,10 @@
 ; $0E/$0F by char). The cell Link steps off cracks and becomes a pit after a
 ; 40-frame fuse (Dungeons/crumblefloor_tag.asm).
 !ENABLE_THIN_ICE                    = 1
+; D8 Sky boss mechanics prototype (sprite $C3, Sprites/Bosses/d8_boss.asm):
+; Somaria-socket qualified cycles, credited-hit counter, three stages.
+; Off until native proof; no room places the sprite yet.
+!ENABLE_D8_BOSS                     = 0
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
