@@ -59,9 +59,11 @@ Sprite_D8Boss = $C3
 !D8Boss_LaneY          = 352  ; top edge, both lanes
 !D8Boss_LaneW          = 80
 !D8Boss_LaneH          = 112
-!D8Boss_BeamY          = 24   ; boss-relative; beam under the eye
+; Stage 3 beam: boss column (x origin, 16 wide), same rows as the lanes
+; (scawful 2026-11-03: "Yes, extend beam"). The 7 drawn beam cells reach
+; the floor edge only when the boss origin sits at room y 328 (body bottom
+; on the lane top); placement in room $96 is not approved yet.
 !D8Boss_BeamW          = 16
-!D8Boss_BeamH          = 64
 !D8Boss_SomariaBlock   = $2C  ; ancilla ID, Ancilla2C_SomariaBlock
 !D8Boss_SomariaFizz    = $2D  ; ancilla ID, Ancilla2D_SomariaBlockFizz
 !D8Boss_SocketSFX      = $25  ; SFX3, same as the socket door open sound
@@ -81,7 +83,7 @@ D8Boss_Lane      = SprMiscE   ; $0EB0: weight lane 0/1, flips every cycle
 ; Sprite properties
 
 !SPRID              = Sprite_D8Boss
-!NbrTiles           = 08  ; Max OAM entries per frame (body 4 + beam 4)
+!NbrTiles           = 11  ; Max OAM entries per frame (body 4 + beam 7)
 !Harmless           = 00
 !HVelocity          = 00
 !Health             = 100 ; Unused: ImperviousAll keeps HP untouched
@@ -462,7 +464,7 @@ D8Boss_ShatterBlock:
 ; Attack hit test (Active state only)
 ;
 ; Weight lanes A/B: fixed floor halves in room pixels (!D8Boss_Lane*).
-; Stage 3 beam: boss-relative box under the eye (!D8Boss_Beam*).
+; Stage 3 beam: boss column x, lane rows y (!D8Boss_BeamW, !D8Boss_Lane*).
 ; Overlap test: Link_SetupHitBox (Core/sprite_functions.asm) as pos1,
 ; CheckIfHitBoxesOverlap ($0683E6). Damage: Sprite_AttemptDamageToLink-
 ; PlusRecoil ($06F41F) reads SprBump ($0CD2) as the damage class and
@@ -472,27 +474,26 @@ D8Boss_AttackHitTest:
 {
   LDA.b $EE : CMP.w SprFloor, X : BNE .miss ; Link on another layer
   JSL Link_SetupHitBox
+  ; Rows: lane top to the floor edge, room-relative for weights and beam.
+  ; Room base = boss coordinate high byte with bit 0 cleared (rooms are
+  ; 512 px, as in the socket test).
+  LDA.b #!D8Boss_LaneY&$FF : STA.b pos2_y_low
+  LDA.w SprYH, X : AND.b #$FE : CLC : ADC.b #!D8Boss_LaneY>>8 : STA.b pos2_y_high
+  LDA.b #!D8Boss_LaneH : STA.b pos2_height
   LDA.w D8Boss_Stage, X : CMP.b #!D8Boss_LastStage : BCC .weight
-    ; Beam: boss-relative, same column as the drawn beam cells.
+    ; Beam: the boss column, same x as the drawn beam cells.
     LDA.b #!D8Boss_BeamBump : STA.w SprBump, X
     LDA.w SprX, X  : STA.b pos2_x_low
     LDA.w SprXH, X : STA.b pos2_x_high
-    LDA.w SprY, X  : CLC : ADC.b #!D8Boss_BeamY : STA.b pos2_y_low
-    LDA.w SprYH, X :       ADC.b #$00           : STA.b pos2_y_high
     LDA.b #!D8Boss_BeamW : STA.b pos2_size
-    LDA.b #!D8Boss_BeamH : STA.b pos2_height
     BRA .test
   .weight
-  ; Weight lane: a fixed floor half. Room base = boss coordinate high
-  ; byte with bit 0 cleared (rooms are 512 px, as in the socket test).
+  ; Weight lane: a fixed floor half.
   LDA.b #!D8Boss_WeightBump : STA.w SprBump, X
   LDY.w D8Boss_Lane, X
   LDA.w .lane_x_low, Y : STA.b pos2_x_low
   LDA.w SprXH, X : AND.b #$FE : CLC : ADC.w .lane_x_high, Y : STA.b pos2_x_high
-  LDA.b #!D8Boss_LaneY&$FF : STA.b pos2_y_low
-  LDA.w SprYH, X : AND.b #$FE : CLC : ADC.b #!D8Boss_LaneY>>8 : STA.b pos2_y_high
   LDA.b #!D8Boss_LaneW : STA.b pos2_size
-  LDA.b #!D8Boss_LaneH : STA.b pos2_height
   .test
   JSL CheckIfHitBoxesOverlap : BCC .miss
     JSL Sprite_AttemptDamageToPlayerPlusRecoil
@@ -533,7 +534,7 @@ D8Boss_DropJar:
 ;   1 open   : BODY (seg 0) with open eye, 4 tiles
 ;   2 lane A : closed body + weight S1_PART_NW (seg 1) over lane A
 ;   3 lane B : closed body + weight S2_PART_SE (seg 3) over lane B
-;   4 beam   : closed body + BEAM (seg 5) x4 down the beam lane
+;   4 beam   : closed body + BEAM (seg 5) x7, body bottom to floor edge
 
 Sprite_D8Boss_Draw:
 {
@@ -542,35 +543,35 @@ Sprite_D8Boss_Draw:
   .start_index
     db $00, $04, $08, $0D, $12
   .nbr_of_tiles
-    db 3, 3, 4, 4, 7
+    db 3, 3, 4, 4, 10
   .x_offsets
     dw -8, 8, -8, 8                      ; 0 closed
     dw -8, 8, -8, 8                      ; 1 open
     dw -8, 8, -8, 8, -16                 ; 2 lane A
     dw -8, 8, -8, 8, 16                  ; 3 lane B
-    dw -8, 8, -8, 8, 0, 0, 0, 0          ; 4 beam
+    dw -8, 8, -8, 8, 0, 0, 0, 0, 0, 0, 0 ; 4 beam
   .y_offsets
     dw -8, -8, 8, 8
     dw -8, -8, 8, 8
     dw -8, -8, 8, 8, 32
     dw -8, -8, 8, 8, 32
-    dw -8, -8, 8, 8, 24, 40, 56, 72
+    dw -8, -8, 8, 8, 24, 40, 56, 72, 88, 104, 120
   .chr
     db $00, $02, $20, $22                ; seg 0 BODY / seg 2 LID
     db $04, $06, $24, $26                ; seg 0 BODY, eye open
     db $00, $02, $20, $22, $08           ; + seg 1 S1_PART_NW
     db $00, $02, $20, $22, $0A           ; + seg 3 S2_PART_SE
-    db $00, $02, $20, $22, $0C, $0C, $0C, $0C ; + seg 5 BEAM
+    db $00, $02, $20, $22, $0C, $0C, $0C, $0C, $0C, $0C, $0C ; + seg 5 BEAM
   .properties
     db $3B, $3B, $3B, $3B
     db $3B, $3B, $3B, $3B
     db $3B, $3B, $3B, $3B, $3B
     db $3B, $3B, $3B, $3B, $3B
-    db $3B, $3B, $3B, $3B, $3B, $3B, $3B, $3B
+    db $3B, $3B, $3B, $3B, $3B, $3B, $3B, $3B, $3B, $3B, $3B
   .sizes
     db $02, $02, $02, $02
     db $02, $02, $02, $02
     db $02, $02, $02, $02, $02
     db $02, $02, $02, $02, $02
-    db $02, $02, $02, $02, $02, $02, $02, $02
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
 }
