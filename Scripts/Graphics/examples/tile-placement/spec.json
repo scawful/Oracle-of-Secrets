@@ -1,0 +1,73 @@
+{
+ "schema": 1,
+ "world": "overworld",
+ "slots": [
+  7
+ ],
+ "blocksets": [],
+ "source": "tiles.png",
+ "base_sheet": null,
+ "free": null,
+ "dedupe_flips": true,
+ "tiles": [
+  {
+   "id": "water_a",
+   "cell": [
+    0,
+    0
+   ],
+   "class": "deep_water"
+  },
+  {
+   "id": "water_a_mirror",
+   "cell": [
+    1,
+    0
+   ],
+   "class": "deep_water"
+  },
+  {
+   "id": "shallow_edge",
+   "cell": [
+    2,
+    0
+   ],
+   "class": "shallow_water"
+  },
+  {
+   "id": "ledge_lip",
+   "cell": [
+    3,
+    0
+   ],
+   "class": "ledge",
+   "index": 34
+  },
+  {
+   "id": "bush",
+   "cell": [
+    0,
+    1
+   ],
+   "class": "grass_bush_rock"
+  },
+  {
+   "id": "ground",
+   "cell": [
+    1,
+    1
+   ],
+   "types": [
+    0
+   ]
+  },
+  {
+   "id": "water_repeat",
+   "cell": [
+    2,
+    1
+   ],
+   "class": "deep_water"
+  }
+ ]
+}
