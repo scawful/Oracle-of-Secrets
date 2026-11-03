@@ -61,9 +61,14 @@ Sprite_D8Boss = $C3
 !D8Boss_LaneH          = 112
 ; Stage 3 beam: boss column (x origin, 16 wide), same rows as the lanes
 ; (scawful 2026-11-03: "Yes, extend beam"). The 7 drawn beam cells reach
-; the floor edge only when the boss origin sits at room y 328 (body bottom
-; on the lane top); placement in room $96 is not approved yet.
+; the floor edge with the boss origin at room y 328 (body bottom on the
+; lane top), which the room $96 placement below gives.
 !D8Boss_BeamW          = 16
+; Room $96 placement (scawful 2026-11-03: "Yes, place it"): sprite data
+; is on a 16 px grid, so the room places tile (7,20) = (112,320) and prep
+; shifts the origin to (120,328): body centered on floor x 128, body
+; bottom on the lane top.
+!D8Boss_PlaceShift     = 8    ; pixels added to X and Y in prep
 !D8Boss_SomariaBlock   = $2C  ; ancilla ID, Ancilla2C_SomariaBlock
 !D8Boss_SomariaFizz    = $2D  ; ancilla ID, Ancilla2D_SomariaBlockFizz
 !D8Boss_SocketSFX      = $25  ; SFX3, same as the socket door open sound
@@ -143,6 +148,10 @@ Sprite_D8Boss_Prep:
   %BossPrep_ExitIfDefeated()
   PHB : PHK : PLB
   LDA.w SprDefl, X : ORA.b #$80 : STA.w SprDefl, X ; keep running offscreen
+  LDA.w SprX, X  : CLC : ADC.b #!D8Boss_PlaceShift : STA.w SprX, X
+  LDA.w SprXH, X :       ADC.b #$00                : STA.w SprXH, X
+  LDA.w SprY, X  : CLC : ADC.b #!D8Boss_PlaceShift : STA.w SprY, X
+  LDA.w SprYH, X :       ADC.b #$00                : STA.w SprYH, X
   STZ.w SprAction, X
   STZ.w SprGfx, X
   STZ.w SprFrame, X
