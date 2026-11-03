@@ -187,6 +187,26 @@ class PlaceTilesTests(unittest.TestCase):
         self.assertEqual(result['unique_tiles'], 5)
         self.assertFalse(any(t['h_flip'] or t['v_flip'] for t in result['tiles']))
 
+    def test_dedupe_split_finds_full_placement(self):
+        # Codex repro: greedy dedupe joined a+b at index 0 and left c unplaced.
+        types = copy.deepcopy(self.types)
+        types['overworld'][0x1C0:0x1C3] = [1, 2, 3]
+        self.spec['free'] = [0, 1, 2]
+        self.spec['tiles'] = [{'id': 'a', 'cell': [0, 0], 'types': [1, 2]},
+                              {'id': 'b', 'cell': [1, 0], 'types': [1, 3]},
+                              {'id': 'c', 'cell': [2, 0], 'types': [1]}]
+        result = p.place(self.spec, types, self.classes, cells_grid([tile(1), tile(1), tile(2)]))
+        self.assertEqual(result['status'], 'placed')
+        self.assertEqual({t['id']: t['index'] for t in result['tiles']}, {'a': 1, 'b': 2, 'c': 0})
+        self.assertEqual(result['unique_tiles'], 3)
+        # Four tiles fit three indices only if e shares with a: the fallback keeps that dedupe.
+        self.spec['tiles'].append({'id': 'e', 'cell': [3, 0], 'types': [2]})
+        result = p.place(self.spec, types, self.classes, cells_grid([tile(1), tile(1), tile(2), hflip(tile(1))]))
+        tiles = {t['id']: t for t in result['tiles']}
+        self.assertEqual({k: t['index'] for k, t in tiles.items()}, {'a': 1, 'b': 2, 'c': 0, 'e': 1})
+        self.assertEqual((tiles['e']['h_flip'], result['unique_tiles']), (True, 3))
+        self.assertEqual(p.share_search(['x', 'x', 'y'], [[0, 1], [0, 2], [0]], budget=1), (None, 'exhausted'))
+
     def test_capacity_failure_exit_2(self):
         self.spec['tiles'] = [{'id': 'pit%d' % n, 'cell': [n, 0], 'class': 'pit'} for n in range(2)]
         result, out = self.run_cli(self.spec, [tile(1), tile(2)])
@@ -195,6 +215,7 @@ class PlaceTilesTests(unittest.TestCase):
         report = json.loads((out / 'report.json').read_text())
         self.assertEqual(report['status'], 'unplaced')
         self.assertEqual(report['unplaced'], [{'ids': ['pit1'], 'classes': ['pit'], 'candidates': [44]}])
+        self.assertEqual(report['search'], 'complete')
         pit = report['capacity'][0]
         self.assertEqual((pit['class'], pit['demand'], pit['slots'][0]['indices'], pit['slots'][0]['free']), ('pit', 2, [44], [44]))
 

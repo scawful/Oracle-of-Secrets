@@ -25,6 +25,8 @@ COLORS = {'floor': (236, 232, 220), 'solid': (90, 90, 96), 'deep_water': (40, 90
           'grass_bush_rock': (70, 160, 70), 'ice': (120, 230, 230), 'spike': (210, 50, 50)}
 OTHER = (220, 80, 200)
 SCALE = 4
+# Node limit for the exact fallback search; past it the run reports unplaced with search='exhausted'.
+SEARCH_BUDGET = 20000
 
 
 def integer(value):
@@ -203,6 +205,80 @@ def check_spec(spec):
     return slots, blocksets
 
 
+def share_search(keys, cands, budget=SEARCH_BUDGET):
+    """Exact fallback: give each pixel key a set of indices so every tile has a candidate owned by its key.
+
+    Tiles with equal keys share an index; different keys never do. Returns ({index: key}, None) on
+    success, or (None, 'complete'|'exhausted') when no placement exists or the node budget ran out.
+    """
+    owner, failed, nodes = {}, set(), [0]
+
+    def hall(open_tiles):
+        # Each key with an unsatisfied tile needs its own new index: a key matching must cover them all.
+        need = {}
+        for t in open_tiles:
+            need.setdefault(keys[t], set()).update(i for i in cands[t] if i not in owner)
+        match = {}
+
+        def augment(key, seen):
+            for i in sorted(need[key]):
+                if i not in seen:
+                    seen.add(i)
+                    if i not in match or augment(match[i], seen):
+                        match[i] = key
+                        return True
+            return False
+
+        return all(augment(key, set()) for key in need)
+
+    def solve():
+        state = frozenset(owner.items())
+        if state in failed:
+            return False
+        nodes[0] += 1
+        if nodes[0] > budget:
+            raise OverflowError
+        open_tiles = [t for t in range(len(keys)) if not any(owner.get(i) == keys[t] for i in cands[t])]
+        if not open_tiles:
+            return True
+        best = None
+        for t in open_tiles:
+            opts = [i for i in cands[t] if i not in owner]
+            if not opts:
+                failed.add(state)
+                return False
+            if best is None or len(opts) < len(best[1]):
+                best = (t, opts)
+        if hall(open_tiles):
+            t, opts = best
+            for i in opts:
+                owner[i] = keys[t]
+                if solve():
+                    return True
+                del owner[i]
+        failed.add(state)
+        return False
+
+    try:
+        return (dict(owner), None) if solve() else (None, 'complete')
+    except OverflowError:
+        return None, 'exhausted'
+
+
+def regroup(entries, owner):
+    """Groups for a share_search result: each tile takes its lowest owned candidate; unused indices stay free."""
+    groups = {}
+    for e in entries:
+        index = min(i for i in e['candidates'] if owner.get(i) == e['key'])
+        if index not in groups:
+            groups[index] = {'index': index, 'pixels': e['pixels'], 'labels': [], 'members': []}
+        group = groups[index]
+        h, v = next((h, v) for h, v, view in oriented(e['pixels']) if view == group['pixels'])
+        group['labels'].append(e['label'])
+        group['members'].append({'id': e['tile']['id'], 'cell': e['tile']['cell'], 'h_flip': h, 'v_flip': v})
+    return list(groups.values())
+
+
 def place(spec, types, classes, source=None, base=None):
     """Return a JSON-safe result; result['grid'] is the 32x128 sheet when every tile is placed.
 
@@ -221,6 +297,7 @@ def place(spec, types, classes, source=None, base=None):
         raise ValueError('source is required when tiles are given')
     labels = {}
     groups = []
+    entries = []
     for tile in tiles:
         label, tset = label_types(tile, classes)
         labels.setdefault(label, tset)
@@ -234,6 +311,8 @@ def place(spec, types, classes, source=None, base=None):
             raise ValueError(f'tile {tile["id"]} pin {pin} is not a candidate (free indices of its type: {cands})')
         if pin is not None:
             cands = [pin]
+        views = list(oriented(pixels)) if spec.get('dedupe_flips', True) else [(False, False, pixels)]
+        entries.append({'tile': tile, 'label': label, 'pixels': pixels, 'key': min(v for _, _, v in views), 'candidates': cands})
         member = None
         for group in groups:
             shared = [i for i in group['candidates'] if i in cands]
@@ -298,7 +377,19 @@ def place(spec, types, classes, source=None, base=None):
               'capacity': capacity, 'types_by_index': [{'slot': s, 'blockset': b, 'types': t} for s, b, t in ctx]}
     unplaced = [g for n, g in enumerate(order) if n not in where]
     if unplaced:
+        # Greedy grouping can join tiles whose shared index blocks another tile; search per tile instead.
+        owner, search = share_search([e['key'] for e in entries], [e['candidates'] for e in entries])
+        if owner is not None:
+            order = regroup(entries, owner)
+            where = {n: g['index'] for n, g in enumerate(order)}
+            unplaced = []
+            result['unique_tiles'] = len(order)
+            demand = {label: sum(1 for g in order if label in g['labels']) for label in labels}
+            for entry in result['capacity']:
+                entry['demand'] = demand.get(entry['class'], 0)
+    if unplaced:
         result['status'] = 'unplaced'
+        result['search'] = search
         result['unplaced'] = [{'ids': [m['id'] for m in g['members']], 'classes': sorted(set(g['labels'])),
                                'candidates': g['candidates']} for g in unplaced]
         return result

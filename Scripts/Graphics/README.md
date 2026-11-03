@@ -270,7 +270,10 @@ collision the engine already reads. Neither tool writes a ROM or game asset.
 | `free` | Indices that may be written. Default: blank tiles of the base sheet, or all 64. |
 | `dedupe_flips` | Identical tiles, including H/V/HV mirrors, share one index; `placement.json` records the flip bits. |
 
-Matching is deterministic (pins first, then spec order, lowest index). Success
+Matching is deterministic (pins first, then spec order, lowest index). If that
+grouping leaves a tile unplaced, an exact per-tile search retries, sharing an
+index only between tiles that all accept it (`report.json` `search`: `complete`
+= no placement exists, `exhausted` = node budget hit). Success
 writes `sheet.png`, `sheet.bin` (3bpp via `Scripts/Generate/sheet_codec.py`),
 `placement.json`, `report.json` with input/output SHA256s, and `preview.png`.
 If any tile has no fitting index, the tool exits 2 and writes only
