@@ -8,8 +8,9 @@
 
 `run` takes one heavy-lock slot, launches a private headless Mesen2 OOS
 instance on a copy of ROM, runs the steps, writes DIR/result.json and stops
-the instance. `--record OUT` (or record start/stop steps) captures every frame
-as PNG and encodes a 30 fps mp4 with ffmpeg (no audio). Power-on RAM is pinned
+the instance. `--record OUT.mp4` (or record start/stop steps) records Mesen's
+native 256x224 AVI plus a 48 kHz stereo WAV (OUT.avi, OUT.wav) and muxes them
+into OUT.mp4 (every frame, 4x nearest, AAC audio). Power-on RAM is pinned
 to zeros so the same scene ends on the same WRAM hash.
 Exit codes: 0 pass, 1 failed check/wait/walk or runtime error,
 2 bad scene file, 3 heavy lock busy.
@@ -33,7 +34,7 @@ def main(argv=None) -> int:
     run = sub.add_parser("run", help="run a scene in a private headless Mesen")
     run.add_argument("scene", type=Path)
     run.add_argument("--rom", type=Path, required=True, help="patched ROM, e.g. Roms/oos168x.sfc")
-    run.add_argument("--record", type=Path, help="mp4 output (every frame between record start/stop, or all after load)")
+    run.add_argument("--record", type=Path, help="mp4 output; OUT.avi/OUT.wav are kept beside it (record start/stop, or all after load)")
     run.add_argument("--out", type=Path, help="work/result directory (default: a new temp dir)")
     chk = sub.add_parser("check", help="validate a scene file offline")
     chk.add_argument("scene", type=Path)
