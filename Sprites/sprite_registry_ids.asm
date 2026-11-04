@@ -44,3 +44,5 @@ Sprite_EonOwl = $0A
 Sprite_KaeporaGaebora = $0A
 Sprite_ZoraPrincess = $B8
 Sprite_VampireBat = $11 ; Keese subtype 02 miniboss
+Sprite_Ganondorf = $D3 ; Finale phase 1 (code spawn in room $00)
+Sprite_GanonBall = $46 ; Ganondorf energy ball (volley)
