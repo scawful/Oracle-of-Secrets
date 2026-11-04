@@ -159,6 +159,10 @@ Graphics_Transfer:
     JSR ApplyManhandlaPalette
   +
 
+  if !ENABLE_D8_BOSS == 1
+    JSL D8Boss_LoadGfx ; room $96 only (Sprites/Bosses/d8_boss.asm)
+  endif
+
   PLB
   PLY
   PLX
@@ -371,6 +375,12 @@ incsrc "Sprites/NPCs/tingle.asm"
 %log_start("goron", !LOG_DUNGEON)
 incsrc "Sprites/NPCs/goron.asm"
 %log_end("goron", !LOG_DUNGEON)
+
+if !ENABLE_D8_BOSS == 1
+  %log_start("d8_boss", !LOG_DUNGEON)
+  incsrc "Sprites/Bosses/d8_boss.asm"
+  %log_end("d8_boss", !LOG_DUNGEON)
+endif
 
 if !ENABLE_MINECART_CART_SHUTTERS
   assert pc() <= $2CFA00, "Bank $2C sprite stream overlaps localized cart drag"

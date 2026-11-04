@@ -1166,3 +1166,7 @@ incsrc "menu_hud.asm"
 %log_end("Menu/menu_hud.asm", !LOG_MENU)
 incsrc "menu_journal.asm"
 %log_end("Menu/menu_journal.asm", !LOG_MENU)
+if !ENABLE_D8_BOSS == 1
+  ; Sprites/Bosses/d8_boss.asm owns $2EC000-$2EFFFF (stage 2/3 tiles, draw tables).
+  assert pc() <= $2EC000, "Menu bank $2E reached the D8 boss stage 2/3 slot ($2EC000)"
+endif

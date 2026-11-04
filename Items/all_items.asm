@@ -296,6 +296,10 @@ incsrc "Items/deku_stick.asm"
 
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
 assert pc() <= $2BF000, "Items bank $2B reached the dream entry FX region ($2BF000)"
+if !ENABLE_D8_BOSS == 1
+  ; Sprites/Bosses/d8_boss.asm owns $2BE000-$2BEFFF (stage 1 + beam tiles).
+  assert pc() <= $2BE000, "Items bank $2B reached the D8 boss tile slot ($2BE000)"
+endif
 
 pushpc
 ; League of its own

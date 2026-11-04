@@ -276,13 +276,17 @@ SomePublicFunction:
 Use these macros for clarity:
 
 ```asm
-%m8()                   ; SEP #$20 - 8-bit accumulator
-%m16()                  ; REP #$20 - 16-bit accumulator
-%a8()                   ; SEP #$20 - 8-bit A (alias)
-%a16()                  ; REP #$20 - 16-bit A (alias)
+%m8()                   ; SEP #$30 - 8-bit A and X/Y
+%m16()                  ; REP #$30 - 16-bit A and X/Y
+%a8()                   ; SEP #$20 - 8-bit A only
+%a16()                  ; REP #$20 - 16-bit A only
 %index8()               ; SEP #$10 - 8-bit X/Y
 %index16()              ; REP #$10 - 16-bit X/Y
 ```
+
+`%m8()` and `%index8()` clear the high bytes of both X and Y. Save full
+indexes before narrowing them when the caller requires preservation. `PLP`
+restores the width flags, but cannot recover discarded register bytes.
 
 ---
 
