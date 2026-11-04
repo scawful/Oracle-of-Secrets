@@ -71,7 +71,8 @@
 !Kyd_Wounded = $0A
 !Kyd_Healing = $0B
 !Kyd_Freed   = $0C
-!Kyd_Gone    = $0D
+!Kyd_Dissolve = $0D
+!Kyd_Gone    = $0E
 
 ; Head actions (Sprite_KydreeokHead_Main order, kydreeok_head.asm).
 !KydHead_Rise    = $00
@@ -126,11 +127,12 @@ Kydreeok_HomeY    = BossDir_Var+6 ; word
 Sprite_Kydreeok_Long:
 {
   PHB : PHK : PLB
-  ; The OAM parts follow the BG2 body: they blink with it while it heals
-  ; and are gone once it is.
-  LDA.w SprAction, X : CMP.b #!Kyd_Freed : BCS .no_draw
-  CMP.b #!Kyd_Healing : BNE .draw
-  LDA.w SprTimerA, X : AND.b #$01 : BNE .no_draw
+  ; The OAM parts follow the BG2 body: they stay through Kydrog's first
+  ; line, blink with it at the end of the dissolve and are gone after.
+  LDA.w SprAction, X : CMP.b #!Kyd_Gone : BCS .no_draw
+  CMP.b #!Kyd_Dissolve : BNE .draw
+  LDA.w SprTimerA, X : CMP.b #$10 : BCS .draw
+  AND.b #$01 : BNE .no_draw
   .draw
   JSR Sprite_Kydreeok_Draw
   .no_draw
@@ -312,6 +314,7 @@ Sprite_Kydreeok_Main:
                   Kydreeok_Wounded,
                   Kydreeok_Healing,
                   Kydreeok_Freed,
+                  Kydreeok_Dissolve,
                   Kydreeok_Gone)
 
   ; -------------------------------------------------------
@@ -589,22 +592,23 @@ Sprite_Kydreeok_Main:
   }
 
   ; -------------------------------------------------------
-  ; 0x0B - the song lands: the body fades out the way the old death did,
-  ; without the explosions.
+  ; 0x0B - the song lands: it washes the dragon white, then its own
+  ; colors come back. The body stays for Kydrog's first line.
   Kydreeok_Healing:
   {
     LDA $1C : ORA.b #$01 : STA $1C
-    LDA.w SprTimerA, X : AND.b #$01 : BEQ .shown
-      LDA $1C : AND.b #$FE : STA $1C
-    .shown
+    if !ENABLE_GANONDORF_VOLLEY == 1 ; the fade code lives in ganondorf.asm
+    LDA.b $1A : AND.b #$03 : BNE .no_step
+      LDA.w SprTimerA, X : CMP.b #$40 : LDA.b #$00 : ROL A ; 1 = toward white
+      JSL Kydreeok_FinalePal
+    .no_step
+    endif
 
     LDA.w SprTimerA, X : BNE .continue
-      LDA $1C : AND.b #$FE : STA $1C ;dismiss the body (BG2) for good: Ganondorf reuses its VRAM
+      JSR ApplyPalette ; exact colors under the message
       ; BossKit_FrameEnd stops with the body: end a running quake here.
       LDA.b #$00 : STA.l BossKit_Quake
       REP #$20
-      STZ.w $0422
-      STZ.w $0424
       STZ.w $011A : STZ.w $011C
       SEP #$20
       %ShowUnconditionalMessage($20F)
@@ -614,20 +618,49 @@ Sprite_Kydreeok_Main:
   }
 
   ; -------------------------------------------------------
-  ; 0x0C - runs once the first message box closes.
+  ; 0x0C - runs once the first message box closes: start the dissolve.
   Kydreeok_Freed:
   {
-    %ShowUnconditionalMessage($210)
-    %GotoAction(!Kyd_Gone)
+    LDA.b #$50 : STA.w SprTimerA, X
+    %GotoAction(!Kyd_Dissolve)
     RTS
   }
 
   ; -------------------------------------------------------
-  ; 0x0D - second box closed: hand over to Ganondorf_DoorGate after a
-  ; short pause.
+  ; 0x0D - the freed dragon fades to white, blinks out, and Kydrog
+  ; speaks his second line over the empty room.
+  Kydreeok_Dissolve:
+  {
+    LDA $1C : ORA.b #$01 : STA $1C
+    LDA.w SprTimerA, X : CMP.b #$10 : BCS .shown
+      AND.b #$01 : BEQ .shown
+        LDA $1C : AND.b #$FE : STA $1C
+    .shown
+    if !ENABLE_GANONDORF_VOLLEY == 1
+    LDA.b $1A : AND.b #$03 : BNE .no_step
+      LDA.b #$01 : JSL Kydreeok_FinalePal
+    .no_step
+    endif
+
+    LDA.w SprTimerA, X : BNE .continue
+      LDA $1C : AND.b #$FE : STA $1C ;dismiss the body (BG2) for good: Ganondorf reuses its VRAM
+      REP #$20
+      STZ.w $0422
+      STZ.w $0424
+      SEP #$20
+      %ShowUnconditionalMessage($210)
+      %GotoAction(!Kyd_Gone)
+    .continue
+    RTS
+  }
+
+  ; -------------------------------------------------------
+  ; 0x0E - second box closed: hand over to Ganondorf_DoorGate. Its beat
+  ; rumbles the room for the last $40 frames before he appears.
   Kydreeok_Gone:
   {
-    LDA.b #$40 : STA.w FinaleBeat
+    JSR ApplyPartPalette ; sprite palette 4 back from white
+    LDA.b #$60 : STA.w FinaleBeat
     STZ.w SprState, X
     RTS
   }
@@ -789,7 +822,31 @@ ApplyPalette:
 
   SEP #$20 ;Set A in 8bit mode
 
+  ; Wings, legs and heads (sprite palette 4): the room loads the Dark World
+  ; row there when entered from a Dark World area, which turns them green.
+  JSR ApplyPartPalette
+
   RTS
+}
+
+; Sprite palette 4 colors 1-7, main and fade buffers, Light World row.
+ApplyPartPalette:
+{
+  PHX
+  REP #$20
+  LDX.b #$0C
+  .color
+    LDA.l .colors, X
+    STA.l $7EC682, X
+    STA.l $7EC482, X
+    DEX : DEX : BPL .color
+  SEP #$20
+  LDA.b #$01 : STA.b $15
+  PLX
+  RTS
+
+  .colors
+  dw $7FFF, $319B, $1596, $369E, $14A5, $7E56, $65CA
 }
 
 ApplyEndPalette:

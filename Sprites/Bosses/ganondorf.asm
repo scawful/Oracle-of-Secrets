@@ -128,6 +128,17 @@ Sprite_Ganondorf_Prep:
   LDA.b #$40 : STA.w SprTimerA, X
   JSL ApplyGanondorfGraphics
   JSL ApplyGanondorfPalette
+  ; Start black on screen; Ganondorf_Intro fades the live row up to the
+  ; fade-target copy that ApplyGanondorfPalette also wrote.
+  PHX
+  REP #$20
+  LDA.w #$0000
+  LDX.b #$1C
+  .black
+    STA.l $7EC6C2, X
+    DEX : DEX : BPL .black
+  SEP #$20
+  PLX
   LDA.b #$1F : STA.w $012C ; final-boss theme, independent of Kydreeok's death fanfare
   STZ.w BossReinject
   PLB
@@ -150,6 +161,9 @@ Ganondorf_Main:
   Ganondorf_Intro:
   {
     JSR Ganondorf_Bob
+    LDA.b $1A : AND.b #$01 : BNE .hold
+      JSR Ganondorf_FadeIn
+    .hold
     LDA.w SprTimerA, X : BNE .wait
       %GotoAction(1)
       LDA.b #$40 : STA.w SprTimerA, X
@@ -1144,6 +1158,7 @@ Ganondorf_DoorGate:
       LDA.w SprType, X : CMP.b #Sprite_Ganondorf : BEQ .wait
       .next
       DEX : BPL .scan
+    JSR Finale_BeatRumble
     LDA.w FinaleBeat : CMP.b #$01 : BEQ .go
       DEC.w FinaleBeat
       BRA .wait
@@ -1167,6 +1182,29 @@ Ganondorf_DoorGate:
   .open
   CLC
   RTL
+}
+
+; Last $40 frames of the beat: the room rumbles, then stops as he appears.
+; M=8 X=8; clobbers A and X.
+Finale_BeatRumble:
+{
+  LDA.w FinaleBeat : CMP.b #$41 : BCS .done
+  CMP.b #$01 : BNE .shake
+    REP #$20
+    STZ.w $011A : STZ.w $011C
+    SEP #$20
+    RTS
+  .shake
+  CMP.b #$40 : BNE .no_sfx
+    LDA.b #$35 : STA.w $012E ; same rumble as Kydreeok's intro
+  .no_sfx
+  REP #$20
+  LDA.b $1A : AND.w #$0001 : ASL A : TAX
+  LDA.l $01C961, X : STA.w $011A ; vanilla quake offsets
+  LDA.l $01C965, X : STA.w $011C
+  SEP #$20
+  .done
+  RTS
 }
 
 if !ENABLE_DREAM_RETURN == 0
@@ -1227,6 +1265,93 @@ ApplyGanondorfGraphics:
   SEP #$30
   PLX
   RTL
+}
+
+; =========================================================
+; Finale palette fades.
+
+; Steps each 5-bit channel of A colors in the live buffer ($7EC500+X) by 2
+; toward the colors at [$00],Y.
+; In: M=16 X=16, DBR=$2A, A=color count, X=buffer offset of the first color,
+;     $00-$02 = long pointer to the target colors. Scratch $04-$0F.
+Finale_PalStepN:
+{
+  STA.b $0E
+  LDY.w #$0000
+  .color
+    LDA.l $7EC500, X : STA.b $04
+    LDA.b [$00], Y : STA.b $06
+    STZ.b $08
+    PHY
+    LDY.w #$0004
+    .channel
+      LDA.b $06 : AND.w .mask, Y : STA.b $0C
+      LDA.b $04 : AND.w .mask, Y
+      CMP.b $0C : BEQ .set
+      BCS .down
+        CLC : ADC.w .step, Y
+        CMP.b $0C : BCC .set
+        BRA .target
+      .down
+        SEC : SBC.w .step, Y : BCC .target
+        CMP.b $0C : BCS .set
+      .target
+      LDA.b $0C
+      .set
+      ORA.b $08 : STA.b $08
+      DEY : DEY : BPL .channel
+    PLY
+    LDA.b $08 : STA.l $7EC500, X
+    INX : INX : INY : INY
+    DEC.b $0E : BNE .color
+  RTS
+
+  .mask : dw $001F, $03E0, $7C00
+  .step : dw $0002, $0040, $0800
+}
+
+; One fade step for the freed Kydreeok: body (BG2 palette 7) and parts
+; (sprite palette 4), colors 1-7. Called every 4th frame by kydreeok.asm.
+; In: A (8-bit) = 0 toward its own colors, nonzero toward white.
+Kydreeok_FinalePal:
+{
+  PHP : PHB : PHK : PLB
+  REP #$30
+  PHX
+  AND.w #$00FF : BEQ .own
+    LDA.w #.white : STA.b $00 : PHA
+    BRA .go
+  .own
+    LDA.w #.parts : PHA
+    LDA.w #.body : STA.b $00
+  .go
+  LDA.w #.body>>16 : STA.b $02
+  LDX.w #$00E2 : LDA.w #$0007 : JSR Finale_PalStepN
+  PLA : STA.b $00
+  LDX.w #$0182 : LDA.w #$0007 : JSR Finale_PalStepN
+  PLX
+  SEP #$20
+  LDA.b #$01 : STA.b $15
+  PLB : PLP
+  RTL
+
+  .body  : dw $7FFF, $319B, $15B6, $369E, $14A5, $7E56, $65CA ; kydreeok.asm ApplyPalette
+  .parts : dw $7FFF, $319B, $1596, $369E, $14A5, $7E56, $65CA ; kydreeok.asm ApplyPartPalette
+  .white : dw $7FFF, $7FFF, $7FFF, $7FFF, $7FFF, $7FFF, $7FFF
+}
+
+; One fade step for Ganondorf's live row toward the fade-target copy.
+Ganondorf_FadeIn:
+{
+  PHX
+  REP #$30
+  LDA.w #$C4C2 : STA.b $00
+  LDA.w #$007E : STA.b $02
+  LDX.w #$01C2 : LDA.w #$000F : JSR Finale_PalStepN
+  SEP #$30
+  LDA.b #$01 : STA.b $15
+  PLX
+  RTS
 }
 
 ; OBJ palette 6, colors 1-15. Palette 4 belongs to the vanilla shadows.
