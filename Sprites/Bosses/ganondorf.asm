@@ -289,7 +289,8 @@ Ganondorf_Main:
 
     .die
     %GotoAction(6)
-    LDA.b #$80 : STA.w SprTimerA, X
+    LDA.b #$C0 : STA.w SprTimerA, X
+    LDA.b #$35 : STA.w $012E ; room rumble, same as the arrival
     LDA.w SprGfxProps, X : ORA.b #$40 : STA.w SprGfxProps, X
     JSL Sprite_KillFriends
     RTS
@@ -328,14 +329,32 @@ Ganondorf_Main:
     RTS
   }
 
-  ; 6: flicker out, then let the door open
+  ; 6: death scene, $C0 frames. Frozen in the hurt pose the whole time.
+  ;   $C0-$A9 flash white, room rumbles
+  ;   $A8-$30 fade to a black silhouette (one step every other frame)
+  ;   $2F-$01 rumble stops, silhouette flickers out (Ganondorf_Draw)
+  ;   $00     door opens
   Ganondorf_Dead:
   {
     LDA.b #$02 : STA.w SprFrame, X
-    LDA.w SprTimerA, X : BNE .exit
+    LDA.w SprTimerA, X : BNE .run
+      JSR Ganondorf_StopQuake
       LDA.b #$02 : STA.l GanondorfFight
       STZ.w SprState, X
+      RTS
+    .run
+    CMP.b #$30 : BCC .quiet
+    JSR Ganondorf_Quake
+    LDA.w SprTimerA, X : CMP.b #$A9 : BCC .to_black
+      LDA.b #$00 : JSR Ganondorf_DeathPal
+      RTS
+    .to_black
+    LDA.b $1A : AND.b #$01 : BNE .exit
+      LDA.b #$01 : JSR Ganondorf_DeathPal
     .exit
+    RTS
+    .quiet
+    JSR Ganondorf_StopQuake
     RTS
   }
 }
@@ -715,16 +734,15 @@ Ganondorf_SpawnBall:
 
 Ganondorf_Draw:
 {
-  LDY.w SprAction, X
-  LDA.w .flicker, Y : BEQ .draw
+  ; Death scene: flicker only in the last $30 frames.
+  LDA.w SprAction, X : CMP.b #$06 : BNE .draw
+  LDA.w SprTimerA, X : CMP.b #$30 : BCS .draw
     LDA.b $1A : AND.b #$02 : BEQ .skip
   .draw
   JSR Ganon_DrawFrame
   JSL Sprite_DrawShadow
   .skip
   RTS
-
-  .flicker : db 0, 0, 0, 0, 0, 0, 1, 0
 }
 
 ; Vary the glide while the ball is active. Never teleport during a live volley.
@@ -1353,6 +1371,54 @@ Ganondorf_FadeIn:
   PLX
   RTS
 }
+
+; Death scene palette step for Ganondorf's live row (OBJ palette 6, colors 1-15).
+; In: M=8 X=8, A=0 step toward white, else toward black. Keeps X.
+Ganondorf_DeathPal:
+{
+  PHX
+  REP #$30
+  AND.w #$00FF : BEQ .white
+    LDA.w #Ganondorf_DeathBlack : BRA .target
+  .white
+  LDA.w #Ganondorf_DeathWhite
+  .target
+  STA.b $00
+  LDA.w #Ganondorf_DeathWhite>>16 : STA.b $02
+  LDX.w #$01C2 : LDA.w #$000F : JSR Finale_PalStepN
+  SEP #$30
+  LDA.b #$01 : STA.b $15
+  PLX
+  RTS
+}
+
+; Vanilla quake offsets on BG layers, same as Finale_BeatRumble. M=8 X=8, keeps X.
+Ganondorf_Quake:
+{
+  PHX
+  REP #$20
+  LDA.b $1A : AND.w #$0001 : ASL A : TAX
+  LDA.l $01C961, X : STA.w $011A
+  LDA.l $01C965, X : STA.w $011C
+  SEP #$20
+  PLX
+  RTS
+}
+
+Ganondorf_StopQuake:
+{
+  REP #$20
+  STZ.w $011A : STZ.w $011C
+  SEP #$20
+  RTS
+}
+
+Ganondorf_DeathWhite:
+  dw $7FFF, $7FFF, $7FFF, $7FFF, $7FFF, $7FFF, $7FFF, $7FFF
+  dw $7FFF, $7FFF, $7FFF, $7FFF, $7FFF, $7FFF, $7FFF
+Ganondorf_DeathBlack:
+  dw $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000
+  dw $0000, $0000, $0000, $0000, $0000, $0000, $0000
 
 ; OBJ palette 6, colors 1-15. Palette 4 belongs to the vanilla shadows.
 ; Update both live and fade-target buffers;
