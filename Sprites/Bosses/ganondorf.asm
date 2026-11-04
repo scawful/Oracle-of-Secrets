@@ -1438,6 +1438,9 @@ ApplyGanondorfPalette:
   RTL
 }
 
+; Triforce room: Link raises the Maku Seed before the credits.
+incsrc "../../Core/finale_seed_raise.asm"
+
 GanondorfPalette:
   incbin ganondorf.pal
 
