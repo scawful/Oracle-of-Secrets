@@ -103,6 +103,9 @@ OracleCredits_LoadNextScene:
   RTL
 }
 
+; Tile sheets: ZS InitTilesetsLongCalls also treats module $1A as outdoors, so
+; each scene loads its area's own sheets (see ZSCustomOverworld.asm).
+
 pushpc
 
 org $02E4D4 ; @hook module=Overworld name=OracleCredits_ExitHook kind=jml target=OracleCredits_ExitHook expected_m=16 expected_x=8
@@ -120,6 +123,15 @@ org $0E9889 ; @hook module=Overworld name=OracleCredits_LoadNextScene kind=jsl t
 ; Module1A sub vectors: scene 1 (vanilla Sanctuary) is an overworld scene here.
 org $0E9824 ; @hook module=Overworld kind=data name=OracleCreditsSubVectors
   dw $9889, $9958
+
+; Credits_LoadScene_Overworld_PrepGFX sends subs $0C and $1E (vanilla Zora's
+; Domain / Master Sword) to LoadSpecialOverworld, which overwrites the area's
+; tile sheets and palette after the camera hook. All Oracle scenes are normal
+; overworld areas, so compare against $FF (load subs are even; never matches).
+org $02861D ; @hook module=Overworld kind=data name=OracleCreditsNoSpecialA
+  db $FF
+org $028621 ; @hook module=Overworld kind=data name=OracleCreditsNoSpecialB
+  db $FF
 
 ; Credits_LoadScene_Overworld .sprite_gfx / .sprite_palette for scene 1.
 org $0285E3 ; @hook module=Overworld kind=data name=OracleCreditsSpriteGfx
