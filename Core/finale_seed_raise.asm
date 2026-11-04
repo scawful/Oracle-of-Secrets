@@ -83,7 +83,7 @@ FinaleSeed_LoadTiles:
     LDA.l MagicBeanGfx+$000, X : STA.l $7EBD40, X
     LDA.l MagicBeanGfx+$100, X : STA.l $7EBD80, X
     DEX : DEX : BPL .copy
-  ; Seed colors into sprite palette 6 (unused in this room). Both buffers, so the
+  ; Seed colors (brown seed) into sprite palette 6 (unused in this room). Both buffers, so the
   ; vanilla white fade (it moves $7EC500 toward $7EC300) keeps them.
   LDX.w #$000E
   .pal
@@ -98,7 +98,7 @@ FinaleSeed_LoadTiles:
 
 ; Colors 0-7 of the seed palette (BGR555). 5 outline, 6 rim, 7 body, 1-4 shine.
 FinaleSeed_Palette:
-  dw $0000, $7FFF, $53DA, $3374, $67FD, $08A2, $19E6, $22CB ; f8f8f8 d0f0a0 a0d860 e8f8c8 102810 307830 58b040
+  dw $0000, $7FFF, $4F3D, $3A99, $639E, $0887, $194F, $25F5 ; f8f8f8 e8c898 c8a070 f0e0c0 382010 785030 a87848
 
 ; Seed sits where an item-receipt ancilla does: Link X, Link Y - 14.
 FinaleSeed_Draw:
