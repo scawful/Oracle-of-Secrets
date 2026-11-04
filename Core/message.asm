@@ -76,6 +76,7 @@ MessageExpandedData:
 ; These three vanilla IDs remain stable while their source-owned tutorials
 ; replace base-ROM text after the pointer walker reaches the generated $FF.
 incsrc "Core/minish_tutorials.asm"
+incsrc "Core/finale_triforce_speech.asm"
 
 print "End of expanded dialogue          ", pc
 
