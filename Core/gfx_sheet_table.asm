@@ -51,7 +51,7 @@ GfxSheet_GetPtr_Spr:
 ; sequence); with it compiled in, Y is the selected sheet on exit.
 GfxSheet_GetPtr_SprCA:
 {
-  if !ENABLE_EON_OWL_ONE_SHOT == 1
+  if !ENABLE_EON_OWL_ONE_SHOT == 1 && !DISABLE_SPRITES == 0
     JSL Oracle_EonOwl_ArrivalSheet
   endif
   PHP : SEP #$30 : PHX : REP #$10
@@ -96,7 +96,7 @@ GfxSheet_Bank:
     !i #= !i+1
   endwhile
   while !i < !GfxSheet_Rows
-    db GfxSheet_EmptyStream>>16
+    db (GfxSheet_EmptyStream>>16)&$FF
     !i #= !i+1
   endwhile
 GfxSheet_High:
@@ -106,7 +106,7 @@ GfxSheet_High:
     !i #= !i+1
   endwhile
   while !i < !GfxSheet_Rows
-    db GfxSheet_EmptyStream>>8
+    db (GfxSheet_EmptyStream>>8)&$FF
     !i #= !i+1
   endwhile
 GfxSheet_Low:
@@ -116,7 +116,7 @@ GfxSheet_Low:
     !i #= !i+1
   endwhile
   while !i < !GfxSheet_Rows
-    db GfxSheet_EmptyStream
+    db GfxSheet_EmptyStream&$FF
     !i #= !i+1
   endwhile
 assert pc() == $240000, "Gfx sheet pointer arrays must end at the bank boundary"

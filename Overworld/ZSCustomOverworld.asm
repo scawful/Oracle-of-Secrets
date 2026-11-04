@@ -1524,6 +1524,14 @@ db $B9, $F3, $CF, $85, $02, $85, $05, $AB
 db $C2, $31, $A2, $00, $00, $A0, $40, $00
 db $A5, $00, $20, $4F, $DF, $E2, $30, $6B
 
+; The vanilla pointer lookup at $00DA99 read the old $00:CF80 arrays; read the
+; relocated table instead (Core/gfx_sheet_table.asm).
+org $00DA99
+JSL.l GfxSheet_GetPtr_Spr
+LDA.b $02 : STA.b $05
+db $EA, $EA, $EA, $EA, $EA, $EA, $EA, $EA, $EA
+assert pc() == $00DAAA
+
 endif
 
 pullpc
