@@ -20,6 +20,9 @@
 ;   - A fairy revival keeps the stage, hit count and credited damage
 ;     (sprite RAM is not reset). It cancels the current attack and resumes
 ;     at a closed neutral pose followed by a full tell (D8Boss_Long).
+;     The revival reloads sprite palette row 6 colours 9-15 (vanilla
+;     GameOver_Restore0D -> Graphics_LoadChrHalfSlot), so the boss reloads
+;     its palette on the first frame Link is alive again.
 ;   - Death hands off to the existing Sky award (Dungeons/sky_d8_award.asm).
 ; Proposals (named constants below): socket position, all frame timings,
 ; beam geometry, recoil time.
@@ -109,6 +112,7 @@ D8Boss_Stage     = SprMiscA   ; $0DA0: 0..2
 D8Boss_Hits      = SprMiscB   ; $0DB0: credited punishes in this stage
 D8Boss_Qualified = SprMiscC   ; $0DE0: 1 while a block rests on the socket
 D8Boss_Lane      = SprMiscE   ; $0EB0: weight lane 0/1, flips every cycle
+D8Boss_Revive    = SprMiscD   ; $0E90: 1 after Link's HP hit 0 (palette reload due)
 
 ; =========================================================
 ; Sprite properties
@@ -154,9 +158,17 @@ Sprite_D8Boss_Long:
     ; revival. This runs before Sprite_CheckActive, which fails while $11
     ; is set. Recoil, Break and Death (4-6) finish so a credit is not lost.
     LDA.l CurrentHealth : BNE .link_alive
-      LDA.w SprAction, X : CMP.b #$04 : BCS .link_alive
+      LDA.b #$01 : STA.w D8Boss_Revive, X
+      LDA.w SprAction, X : CMP.b #$04 : BCS .draw
         JSR D8Boss_ToClosed
+      BRA .draw
     .link_alive
+    ; First frame after a fairy revival: module $12 overwrote row 6
+    ; colours 9-15 with the sprite environment palette.
+    LDA.w D8Boss_Revive, X : BEQ .draw
+      STZ.w D8Boss_Revive, X
+      JSR D8Boss_LoadPalette
+    .draw
     JSR Sprite_D8Boss_Draw
   .skip_draw
   JSL Sprite_CheckActive : BCC .inactive
@@ -186,6 +198,7 @@ Sprite_D8Boss_Prep:
   STZ.w D8Boss_Hits, X
   STZ.w D8Boss_Qualified, X
   STZ.w D8Boss_Lane, X
+  STZ.w D8Boss_Revive, X
   LDA.w D8Boss_RestTime : STA.w SprTimerA, X ; stage 0 rest
   JSR D8Boss_LoadPalette
   PLB
