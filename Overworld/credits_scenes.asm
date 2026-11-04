@@ -17,9 +17,11 @@
 ;   2 Hall of Secrets  area $0E  pan right
 ;   3 Kalyxo Castle    area $0B  pan up to the gate
 ;   4 Loom Beach       area $33  pan left
+;   5 Zora island house area $1E  pan down
+;   6 Goron mine door  area $36  pan up
 ; Included from Overworld/overworld.asm (bank $34 free space).
 
-!OracleCredits_SceneCount = 5
+!OracleCredits_SceneCount = 7
 
 ; Camera values as Oracle's ZScream exits compute them from the scroll position.
 function credits_map_x(area) = (area&$07)<<9
@@ -28,17 +30,19 @@ function credits_vram(area, sy, sx) = (((sy-credits_map_y(area))&$FFF0)<<3)|(((s
 
 ; Start scroll (top-left of the camera), per scene.
 OracleCredits_Area:
-  db $00, $23, $0E, $0B, $33
+  db $00, $23, $0E, $0B, $33, $1E, $36
 OracleCredits_ScrollY:
-  dw $00C0, $08E0, $0220, $0380, $0EA0
+  dw $00C0, $08E0, $0220, $0380, $0EA0, $0630, $0E00
 OracleCredits_ScrollX:
-  dw $01A0, $0700, $0C20, $0740, $0760
+  dw $01A0, $0700, $0C20, $0740, $0760, $0C30, $0C80
 OracleCredits_Vram:
   dw credits_vram($00, $00C0, $01A0)
   dw credits_vram($23, $08E0, $0700)
   dw credits_vram($0E, $0220, $0C20)
   dw credits_vram($0B, $0380, $0740)
   dw credits_vram($33, $0EA0, $0760)
+  dw credits_vram($1E, $0630, $0C30)
+  dw credits_vram($36, $0E00, $0C80)
 
 ; Replaces `LDX.b #$9E : DEX : DEX` at LoadOverworldFromUnderworld_custom_exit.
 ; M=16, X=8, DBR=$02, A = $A0 (exit room id).
@@ -126,25 +130,25 @@ org $0285F4 ; @hook module=Overworld kind=data name=OracleCreditsSpritePalette
 ; Credits_PrepAndLoadSprites .vectors: no actors.
 org $0E9899 ; @hook module=Overworld kind=data name=OracleCreditsLoadSprites
   dw !OracleCredits_NoActor, !OracleCredits_NoActor, !OracleCredits_NoActor
-  dw !OracleCredits_NoActor, !OracleCredits_NoActor
+  dw !OracleCredits_NoActor, !OracleCredits_NoActor, !OracleCredits_NoActor, !OracleCredits_NoActor
 
 ; Credits_ScrollScene .target_y / .target_x / .movement_y / .movement_x.
 org $0E98D8 ; @hook module=Overworld kind=data name=OracleCreditsTargetY
-  dw $00C0, $0940, $0220, $0320, $0EA0
+  dw $00C0, $0940, $0220, $0320, $0EA0, $0690, $0DA0
 org $0E98F8 ; @hook module=Overworld kind=data name=OracleCreditsTargetX
-  dw $0200, $0700, $0C80, $0740, $0700
+  dw $0200, $0700, $0C80, $0740, $0700, $0C30, $0C80
 org $0E9918 ; @hook module=Overworld kind=data name=OracleCreditsMoveY
-  dw 0, 1, 0, -1, 0
+  dw 0, 1, 0, -1, 0, 1, -1
 org $0E9938 ; @hook module=Overworld kind=data name=OracleCreditsMoveX
-  dw 1, 0, 1, 0, -1
+  dw 1, 0, 1, 0, -1, 0, 0
 
 ; Credits_SpriteDraw_vectors: nothing to draw.
 org $0E99A5 ; @hook module=Overworld kind=data name=OracleCreditsSpriteDraw
   dw !OracleCredits_NoActor, !OracleCredits_NoActor, !OracleCredits_NoActor
-  dw !OracleCredits_NoActor, !OracleCredits_NoActor
+  dw !OracleCredits_NoActor, !OracleCredits_NoActor, !OracleCredits_NoActor, !OracleCredits_NoActor
 
 ; Credits_HandleSceneFade .timer: frames before the fade-out starts.
 org $0E9A0A ; @hook module=Overworld kind=data name=OracleCreditsTimer
-  dw $02C0, $02C0, $02C0, $02C0, $02C0
+  dw $02C0, $02C0, $02C0, $02C0, $02C0, $02C0, $02C0
 
 pullpc
