@@ -80,6 +80,7 @@
 Sprite_Goron_Long:
 {
   PHB : PHK : PLB
+  JSL D6ChuActor_IsRoom : BCS .kalyxo
   LDA.w WORLDFLAG : BEQ .kalyxo
     JSR Sprite_EonGoron_Draw
     JMP +
@@ -97,6 +98,14 @@ Sprite_Goron_Long:
 Sprite_Goron_Prep:
 {
   PHB : PHK : PLB
+  JSL D6ChuActor_IsLoadedRoom : BCC .ordinary_prep
+    LDA.w $0E60,X : ORA.b #$40 : STA.w $0E60,X
+    LDA.w SprDefl,X : ORA.b #$80 : STA.w SprDefl,X
+    LDA.w $0F60,X : ORA.b #$20 : STA.w $0F60,X
+    STZ.w SprAction,X
+    STZ.w SprFrame,X
+    PLB : RTL
+  .ordinary_prep
   LDA.w WORLDFLAG : BEQ +
     LDA.w AreaIndex : CMP.b #$55 : BNE .not_sing
       LDA.b #$04 : STA.w SprAction, X
@@ -126,6 +135,10 @@ Sprite_Goron_Prep:
 Sprite_Goron_Main:
 {
   JSL Sprite_PlayerCantPassThrough
+  JSL D6ChuActor_IsRoom : BCC .ordinary_action
+    STZ.w SprFrame,X
+    RTS
+  .ordinary_action
 
   LDA.w SprAction, X
   JSL JumpTableLocal

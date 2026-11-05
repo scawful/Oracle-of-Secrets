@@ -85,6 +85,18 @@
 
 | WolfDig_RanchCache | $7EF3A0 | $01 | WolfDig_SpawnPrize at Ranch world $00, area $00, dig target ($0130,$0090) | New-file initialization only | One-time 20-rupee Wolf cache collected; bits 1-7 reserved | Core/sram.asm; Masks/wolf_mask.asm | 2026-11-04 (source candidate; native save/reopen pending) | Ordinary digs elsewhere retain DigGame_SpawnPrize; existing save block size unchanged |
 
+## D6 room-state composition (2026-11-05 source proposal)
+
+These are existing native room-save words in the unchanged save block. They do not allocate a new SRAM byte.
+
+| State | Native saved word | Mask | Setter / guard | Reset | Evidence boundary |
+| --- | --- | --- | --- | --- | --- |
+| D7 Chu condition | $7EF1AE | $1000 | D7Chu_Earn in Dungeons/d6_cart_circuit.asm; matching same-room Bombchu receipt and actor conditions | New-file room-state initialization | Released private full-circuit save recorded D7 $900F; physical D7 door 0 uses $8000 independently |
+| D8 boss door | $7EF1B0 | $4000 | Native Big Key opening, gated by earned D7 $1000; D6BossDoor_LoadFlag clears an old opening while D7 is unearned | Native room-state initialization / guarded load | Released private save recorded D8 $600F; Big Key alone does not earn the D7 condition |
+| D9 Chu nook | $7EF1B2 | $1000 | D9KeyGate_Main in Dungeons/d9_key_gate.asm | New-file room-state initialization | Separate from the native Small Key chest bit $0010; released manual save proof recorded D9 $101F and corrected the old $1100 chest assertion |
+
+The released private manual gameplay, native save and cold-reopen receipts remain qualified as manual closure. The cold-reopen current-dungeon key counter is $FF in the overworld house; the saved dungeon key count was $00. These observations do not claim a new automatic PASS or qualification of a later composed ROM.
+
 ## Update Workflow
 
 1) Identify flag usage in disassembly (primary).

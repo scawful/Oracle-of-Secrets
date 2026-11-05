@@ -29,6 +29,14 @@ pullpc
 CustomTag:
 {
   PHX
+  JSL D6CartCircuit_IsRoom : BCC .not_circuit
+    JSR D6CartCircuit_Main
+    BRA .game_has_begun
+  .not_circuit
+  JSL D9KeyGate_IsRoom : BCC .ordinary_room
+    JSR D9KeyGate_Main
+    BRA .game_has_begun
+  .ordinary_room
   LDA $7EF3C6 : BNE .game_has_begun
     JSR HouseTag_Main
   .game_has_begun
@@ -38,6 +46,9 @@ CustomTag:
 
 ; =========================================================
 ; Room tag to initialize the game without the Uncle sprite.
+
+incsrc "Dungeons/d9_key_gate.asm"
+incsrc "Dungeons/d6_cart_circuit.asm"
 
 HouseTag_Main:
 {

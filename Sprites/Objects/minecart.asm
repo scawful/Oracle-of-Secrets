@@ -105,6 +105,11 @@ Right = $03
 ; used which is all free ram.
 !MinecartTrackY = $07A8
 
+; Forward-resolvable aliases for the earlier dungeon-tag include.
+MinecartTrackRoom = !MinecartTrackRoom
+MinecartTrackX = !MinecartTrackX
+MinecartTrackY = !MinecartTrackY
+
 ; This is used to keep track of which track we are on while riding
 ; the cart. We can only use one cart at a time so this is only 1 byte.
 !MinecartTrackCache = $07E8
@@ -160,6 +165,7 @@ assert MenuScrollLevelV >= $7E0000+!MinecartCurrent+$02 || SongTintColor < $7E00
 Sprite_Minecart_Long:
 {
   PHB : PHK : PLB
+  LDA.w SprAction,X : CMP.b #$07 : BEQ .SpriteIsNotActive
   JSR Sprite_Minecart_DrawTop    ; Draw behind Link
   JSR Sprite_Minecart_DrawBottom ; Draw in front of Link
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
@@ -203,10 +209,12 @@ Sprite_Minecart_Prep:
   .trackAlreadySetUp
 
   ; Check if we are currently in the room where the track was left.
-  CMP.b $A0 : BEQ .inRoom
+  JSL D6CartCircuit_PrepRoomCompare : BEQ .inRoom
     .killMinecart
     SEP #$20
+    JSL D6CartCircuit_ParkDormant : BCS .keepDormant
     STZ.w SprState, X
+    .keepDormant
     PLB
     RTL
   .inRoom

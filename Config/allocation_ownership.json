@@ -10,7 +10,7 @@
     "shared:Sprites/Objects/minecart.asm": {
       "source_set": "shared",
       "path": "Sprites/Objects/minecart.asm",
-      "sha256": "7be68b425080cff1fc6f6b03cd2088d21210f5eae27f949beac2bd45b4551666"
+      "sha256": "01a29cdfadabbc7d207f7d39520f987d3b8080fbcde2a008517e575185b017c3"
     },
     "shared:Masks/all_masks.asm": {
       "source_set": "shared",
@@ -80,7 +80,7 @@
     "shared:Sprites/Objects/data/minecart_tracks.asm": {
       "source_set": "shared",
       "path": "Sprites/Objects/data/minecart_tracks.asm",
-      "sha256": "d988514d5060217d00ecc98d9c3a394826c08a91022327c800c1d290ad14fd6c"
+      "sha256": "e6bfbbadd40cbe7d25692fa054524c4dab135076fae07b167b57d6248c20ffd4"
     },
     "shared:Util/macros.asm": {
       "source_set": "shared",
