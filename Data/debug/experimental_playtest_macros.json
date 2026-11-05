@@ -7,7 +7,12 @@
       "label": "Fortress open (8 essences + Maku Seed)",
       "primary": true,
       "steps": [
-        { "action": "checkpoint", "args": { "id": "fortress-open" } }
+        {
+          "action": "checkpoint",
+          "args": {
+            "id": "fortress-open"
+          }
+        }
       ]
     },
     {
@@ -15,7 +20,12 @@
       "label": "Maku Seed hand-over (talk to the Maku Tree)",
       "primary": true,
       "steps": [
-        { "action": "checkpoint", "args": { "id": "maku-seed-ready" } }
+        {
+          "action": "checkpoint",
+          "args": {
+            "id": "maku-seed-ready"
+          }
+        }
       ]
     },
     {
@@ -23,29 +33,60 @@
       "label": "Finale: Kydreeok, then Ganondorf (drop into the hole)",
       "primary": true,
       "steps": [
-        { "action": "checkpoint", "args": { "id": "kydreeok-fight" } }
+        {
+          "action": "checkpoint",
+          "args": {
+            "id": "kydreeok-fight"
+          }
+        }
       ]
     },
     {
       "id": "spawn_d8_boss",
-      "label": "Spawn D8 Sky boss ($C3) next to Link",
+      "label": "D8 Sky boss: room $96 + spawn $C3",
       "steps": [
-        { "action": "spawn", "args": { "sprite": "C3" } }
+        {
+          "action": "checkpoint",
+          "args": {
+            "id": "d8-sky-boss-room"
+          }
+        },
+        {
+          "action": "spawn",
+          "args": {
+            "sprite": "C3",
+            "x": "70",
+            "y": "140"
+          }
+        }
       ]
     },
     {
       "id": "spawn_ganondorf",
       "label": "Spawn Ganondorf ($D3) next to Link",
       "steps": [
-        { "action": "spawn", "args": { "sprite": "D3" } }
+        {
+          "action": "spawn",
+          "args": {
+            "sprite": "D3"
+          }
+        }
       ]
     },
     {
       "id": "deku_sticks_10",
       "label": "10 Deku Sticks",
       "steps": [
-        { "action": "write", "args": { "addr": "7EF395", "value": "10" } },
-        { "action": "sync_sram" }
+        {
+          "action": "write",
+          "args": {
+            "addr": "7EF395",
+            "value": "10"
+          }
+        },
+        {
+          "action": "sync_sram"
+        }
       ]
     }
   ]
