@@ -48,11 +48,17 @@ OracleCredits_Vram:
 
 ; Replaces `LDX.b #$9E : DEX : DEX` at LoadOverworldFromUnderworld_custom_exit.
 ; M=16, X=8, DBR=$02, A = $A0 (exit room id).
+; The vanilla scan loop branches back to $02E4D6, which is inside the JML
+; operand, so the whole scan runs here and returns past the BNE at $02E4DD.
 OracleCredits_ExitHook:
 {
   LDX.b $10 : CPX.b #$1A : BEQ .credits
-    LDX.b #$9C
-    JML $02E4D8 ; vanilla record scan (CMP UnderworldExitData_room_id,X)
+    LDX.b #$9E
+    .next_room_check
+    DEX : DEX
+    CMP.l $02DD8A, X ; UnderworldExitData room id
+    BNE .next_room_check
+    JML $02E4DD
 
   .credits
   LDA.b $11 : AND.w #$00FE : TAX
