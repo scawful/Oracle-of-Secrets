@@ -149,6 +149,8 @@ jobs:
           python3 .github/scripts/seed_sky_award_preimages.py Dungeons/sky_d8_award.asm test.sfc
           # Same for the D7 crystal-ceremony hooks (Dungeons/d7_farore_rescue.asm).
           python3 .github/scripts/seed_sky_award_preimages.py Dungeons/d7_farore_rescue.asm test.sfc
+          # Same for the D6 native door-condition hooks; keep the ASM guards active.
+          python3 .github/scripts/seed_sky_award_preimages.py Dungeons/d6_cart_circuit.asm test.sfc
 
           # Run Asar against the synthetic headerless ROM.
           set -o pipefail

@@ -17,7 +17,7 @@ import re
 import sys
 
 ROM_SIZE = 2 * 1024 * 1024
-WIDTHS = (1, 2, 4)
+WIDTHS = (1, 2, 3, 4)
 
 _READ = re.compile(r"\bread\w*\s*\(", re.IGNORECASE)
 _TERM = re.compile(

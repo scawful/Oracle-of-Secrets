@@ -82,14 +82,29 @@ class RealSource(unittest.TestCase):
             self.assertEqual(data[offset], byte)
         self.assertEqual(data[0xE9E6:0xE9E9], b"\x73\x80\x39")
 
+    def test_d6_door_guards_match_native_preimages(self):
+        source = ROOT / "Dungeons" / "d6_cart_circuit.asm"
+        guards = seeder.parse_guards(source.read_text(), str(source))
+        self.assertEqual(len(guards), 5)
+        expected = {}
+        for address, data in (
+            (0x01B0F3, bytes.fromhex("AD8C0639C098")),
+            (0x01CF22, bytes.fromhex("AF66F37E39C098D040")),
+        ):
+            start = seeder.lorom_offset(address)
+            expected.update({start + i: value for i, value in enumerate(data)})
+        self.assertEqual(seeder.guard_bytes(guards), expected)
+
 
 class Parsing(unittest.TestCase):
     def test_widths_little_endian_and_offset(self):
         seed = seed_of('assert read4($018000) == $44332211, "a"\n'
                        'assert read2($018004+$2) == $6655, "b"\n'
-                       'assert read1($808008) == $77, "c" ; mirror bank\n')
+                       'assert read1($808008) == $77, "c" ; mirror bank\n'
+                       'assert read3($018009) == $CCBBAA, "d"\n')
         self.assertEqual(seed, {0x8000: 0x11, 0x8001: 0x22, 0x8002: 0x33, 0x8003: 0x44,
-                                0x8006: 0x55, 0x8007: 0x66, 0x0008: 0x77})
+                                0x8006: 0x55, 0x8007: 0x66, 0x0008: 0x77,
+                                0x8009: 0xAA, 0x800A: 0xBB, 0x800B: 0xCC})
 
     def test_comments_and_pc_asserts_are_ignored(self):
         text = ('; assert read1($018000) == $12, "commented"\n'
@@ -123,11 +138,12 @@ class FailClosed(unittest.TestCase):
                 self.assertRejects(text, "")
 
     def test_unsupported_width(self):
-        self.assertRejects('assert read3($018000) == $123456, "w"', "unsupported read width")
+        self.assertRejects('assert read5($018000) == $123456, "w"', "unsupported read width")
 
     def test_value_too_wide(self):
         self.assertRejects('assert read1($018000) == $123, "v"', "does not fit")
         self.assertRejects('assert read2($018000) == $00001234, "v"', "does not fit")
+        self.assertRejects('assert read3($018000) == $1000000, "v"', "does not fit")
 
     def test_or_alternatives_must_share_site(self):
         self.assertRejects('assert read1($018000) == $8F || read1($018001) == $22, "o"',
@@ -144,6 +160,7 @@ class FailClosed(unittest.TestCase):
         self.assertRejects('assert read1($7E8000) == $12, "wram"', "not a mapped")
         self.assertRejects('assert read1($408000) == $12, "past 2 MiB"', "past")
         self.assertRejects('assert read2($01FFFF) == $1234, "bank cross"', "crosses a bank")
+        self.assertRejects('assert read3($01FFFE) == $123456, "bank cross"', "crosses a bank")
         self.assertRejects('assert read1($01FFFF+$1) == $12, "offset wrap"', "not a mapped")
 
 
