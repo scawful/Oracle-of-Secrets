@@ -25,10 +25,10 @@
     {
       "start": "0x1BD",
       "end": "0x1BD",
-      "status": "placeholder-pool",
-      "expected_content": "placeholder",
-      "owner": "unallocated",
-      "purpose": "Available contiguous slots; draft documents make non-binding claims here"
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "bombchu-receipt",
+      "purpose": "Dedicated Bombchu receipt $4C (Items/bombchu_receipt.asm); exact option A approved by scawful 2026-11-04 in Claude session 2636ea2e-80df-4634-b546-4edef36a52a1, user turn 4ec8bd83-2ff9-4db3-8217-4408d981f5ae (\"A (my pick)\"). Reuses the explicitly unallocated placeholder; unrelated draft claims remain non-binding."
     },
     {
       "start": "0x1BE",

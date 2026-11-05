@@ -1064,6 +1064,19 @@ Goldstar_GetDragged:
 ItemReceipt_KeepGoldstar:
 {
   BMI .done
+  ; Dedicated receipt $4C is valid for chests and other normal rewards.
+  ; Keep the native regular-bomb refill byte and sword ownership untouched.
+  CPY.b #BombchuReceipt_Id : BNE .not_bombchu_receipt
+  LDA.b #$01 : STA.l BombchuOwned
+  LDA.l BombchuAmmo : CMP.b #!BOMBCHU_AMMO_MAX+1 : BCC .valid_bombchu_ammo
+    LDA.b #$00
+  .valid_bombchu_ammo
+  CLC : ADC.b #$0A : CMP.b #!BOMBCHU_AMMO_MAX+1 : BCC .store_bombchu_ammo
+    LDA.b #!BOMBCHU_AMMO_MAX
+  .store_bombchu_ammo
+  STA.l BombchuAmmo
+  RTL
+  .not_bombchu_receipt
 if !ENABLE_GOLDSTAR_CELL == 1
   PHA
   JSL GoldstarInventory_Migrate
