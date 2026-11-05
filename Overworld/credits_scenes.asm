@@ -108,8 +108,8 @@ OracleCredits_LoadNextScene:
 ; Scene 7 actor: a sapling grows from a magic bean on the grass patch.
 ; Reuses the bean vendor's frames (Sprites/NPCs/bean_vendor.asm), no new tiles.
 ; Called through OracleCredits_SaplingVector in bank $0E. M=8, X=8, DBR=$0E.
-!OracleCredits_SaplingX = $0CF8 ; area $46 map px (248,268)
-!OracleCredits_SaplingY = $010C
+!OracleCredits_SaplingX = $0CF8 ; area $46 map px (248,260)
+!OracleCredits_SaplingY = $0104
 
 OracleCredits_SaplingDraw:
 {
