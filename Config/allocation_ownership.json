@@ -330,13 +330,13 @@
     },
     {
       "id": "symbols_wram_block",
-      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..SongTintColor)",
+      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..FinaleBeat)",
       "space": "wram",
       "base": 8265328,
-      "size": 24,
+      "size": 27,
       "status": "shared",
       "condition": {},
-      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint.",
+      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint, finale GanondorfFight/BossReinject/FinaleBeat.",
       "reset": "No block-wide reset is claimed. Not in ResetTrackVars' arrays since PR 211 moved it from $7E0730 (inside cart_room) to vanilla-free $7E1E70.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
