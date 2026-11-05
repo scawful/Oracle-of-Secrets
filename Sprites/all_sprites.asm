@@ -320,6 +320,9 @@ incsrc "Sprites/NPCs/garo.asm"
 ; Unconditional Darknut weapon publication; DBR remains bank $30.
 incsrc "Sprites/Enemies/darknut_weapon_hitbox.asm"
 
+; Local pea-shot contact wrapper: keeps the bank $30 callsite size unchanged.
+incsrc "Sprites/Enemies/business_scrub_shield.asm"
+
 ; A file that orgs into a vanilla bank must pushpc/pullpc, or the next incsrc
 ; lands on vanilla code (fortune_teller.asm put ranch_girl/cloud_bridge on the
 ; vanilla fortune teller at $0DC92E until 2026-09-26).
