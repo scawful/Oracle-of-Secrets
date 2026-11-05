@@ -43,7 +43,7 @@ FLOOR_COUNTS = 0x575D9      # 14 words: low nibble basements, high nibble floors
 ROOM_PTRS = 0x57605         # 14 words: bank $0A pointer to 25-byte floor grids
 TMPL_PTRS = 0x57BE4         # 14 words: bank $0A pointer to template bytes
 BOSS_ROOMS = 0x56807        # 14 words, $000F = none
-BOSS_FLOORS = 0x56E79       # 14 words, signed floor from 1F
+BOSS_FLOORS = 0x56E79       # 14 pairs: signed floor byte from 1F + icon flags byte
 DATA_START, DATA_END = 0x57039, 0x57CE0
 # Tables inside the data region: floor counts + floor-grid pointers, shape-list pointers.
 RESERVED = ((0x575D9, 0x57621), (TMPL_PTRS, TMPL_PTRS + 28))
