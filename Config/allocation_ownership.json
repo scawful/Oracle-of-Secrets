@@ -20,7 +20,7 @@
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "6f978fb2e5f5317d5719830ee1962a23e2de7283ba413ddfe281c1c6ff63ddc3"
+      "sha256": "d2614e655f6a7b602a0c480222c90acd8a32032eb8083c8ecf7215074268ef64"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -30,7 +30,7 @@
     "shared:Items/fishing_rod.asm": {
       "source_set": "shared",
       "path": "Items/fishing_rod.asm",
-      "sha256": "3c456abd3c2ea7f0173ed1ce3dfdc845198e6a68390fd26ed432f7a7e9246e21"
+      "sha256": "59501b12be983a0cd98dfa771e2a620ff42b5789f4dd278a715ca7a9e949f577"
     },
     "shared:Core/ram.asm": {
       "source_set": "shared",
@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "b8e99713a9e5cba6661fff7d76678bcc09f842daa8c0d72fee4db12962552dc5"
+      "sha256": "4b49b129bdc7123ba4b8f56e4c7c177be3d9fe2fc30fa5fa30245ada8f5e37eb"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -166,6 +166,11 @@
       "source_set": "shared",
       "path": "Core/symbols.asm",
       "sha256": "bcc6df2404dc097f25f9b547699359f924387c7cdaa1c70e87fd571b9f317475"
+    },
+    "shared:Masks/wolf_mask.asm": {
+      "source_set": "shared",
+      "path": "Masks/wolf_mask.asm",
+      "sha256": "f2435f1738736e43a01f4be2e48831f60e666961d6503dea17101c69507fb782"
     }
   },
   "claims": [
@@ -1284,6 +1289,32 @@
         "source": "shared:Core/symbols.asm",
         "symbol": "PendingSupplyAction",
         "bank00_mirror": true
+      }
+    },
+    {
+      "id": "WolfDigFlags",
+      "owner": "Wolf dig events; Ranch cache uses bit 0, other bits reserved",
+      "space": "save_buffer",
+      "base": 8319904,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file; Ranch cache remains collected across normal Save and Quit.",
+      "reset": "Vanilla new-file initialization clears the existing $500-byte save block. No gameplay reset.",
+      "save": "Existing vanilla $7EF000-$7EF4FF save block, primary/backup checksum unchanged.",
+      "provenance": [
+        "shared:Core/sram.asm",
+        "shared:Masks/wolf_mask.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "!WolfDig_RanchCache = $01",
+        "STA.l WolfDigFlags"
+      ],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "WolfDigFlags",
+        "bank00_mirror": false
       }
     }
   ],

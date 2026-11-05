@@ -24,6 +24,7 @@ Verifies:
 7. Sword lockout & B stow in LinkItem_CheckForSwordSwing_Masks.
 """
 
+import json
 from pathlib import Path
 import re
 import unittest
@@ -34,6 +35,7 @@ DEKU_STICK = ROOT / "Items" / "deku_stick.asm"
 MASK_ROUTINES = ROOT / "Masks" / "mask_routines.asm"
 RAM_ASM = ROOT / "Core" / "ram.asm"
 SRAM_ASM = ROOT / "Core" / "sram.asm"
+ALLOCATION_LEDGER = ROOT / "Config" / "allocation_ownership.json"
 
 
 class DekuStickContractTest(unittest.TestCase):
@@ -44,8 +46,32 @@ class DekuStickContractTest(unittest.TestCase):
         self.assertIn("DekuStick_SwipeTimer  = $7E046F", ram_text)
 
         sram_text = SRAM_ASM.read_text(encoding="utf-8")
-        self.assertIn("DekuStickWear           = $7EF39F", sram_text)
-        self.assertIn("FreeBlock_Collect  = $7EF3A0", sram_text)
+        symbols = {
+            name: int(address, 16)
+            for name, address in re.findall(
+                r"(?m)^\s*(\w+)\s*=\s*\$([0-9A-Fa-f]+)\b", sram_text
+            )
+        }
+        self.assertEqual(symbols["DekuStickWear"], 0x7EF39F)
+        self.assertEqual(symbols["WolfDigFlags"], 0x7EF3A0)
+
+        claims = {
+            claim["id"]: claim
+            for claim in json.loads(ALLOCATION_LEDGER.read_text(encoding="utf-8"))["claims"]
+        }
+        wear, wolf = claims["DekuStickWear"], claims["WolfDigFlags"]
+        for claim in (wear, wolf):
+            self.assertEqual(claim["space"], "save_buffer")
+            self.assertEqual(claim["size"], 1)
+            self.assertEqual(claim["base"], symbols[claim["id"]])
+        self.assertEqual(wear["base"] + wear["size"], wolf["base"])
+
+        # Wear ends at Wolf's byte; neither byte may be advertised as free.
+        for name, address in symbols.items():
+            if name.startswith("FreeBlock_"):
+                self.assertFalse(
+                    wear["base"] <= address < wolf["base"] + wolf["size"], name
+                )
 
     def test_link_deku_sticks_routine_structure(self):
         items_text = ALL_ITEMS.read_text(encoding="utf-8")

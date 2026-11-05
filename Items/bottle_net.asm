@@ -61,7 +61,8 @@ LinkItem_CatchBottle:
       LDA.w pose_id, X : STA $0300
       LDA.b #$03 : STA $3D
 
-      STZ $030D, X
+      ; X selects a direction-specific pose; the animation phase is unindexed.
+      STZ $030D
 
       LDA.b #$10 : STA $037A
       LDA.b #$01 : TSB $50
