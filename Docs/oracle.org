@@ -439,6 +439,18 @@ CLOSED: [2025-12-08 Mon 22:34]
     - [ ] Runtime check of variant B in the patched ROM (Link no longer walks behind the fence at (40,42)).
     - If =Roms/oos168.sfc= changes before approval, regenerate the candidate with =revert_room05.py=.
     - *RC status (2026-10-06, Claude):* variant B is in the RC (=Data/dungeons/custom_collision.json= =04f53709=). The 10f9966e opening run does a shrine round trip but did not test the fence; the box above (walk test at (40,42)) is still open. Report: =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/tracker_reconciliation_2026-10-06/=.
+*** TODO [#B] Lyra Sea tile16 art: apply queued recipes, then the shape work [0/5] :gfx:overworld:
+    :PROPERTIES:
+    :ID: lyra-tile16-art
+    :END:
+    - *Goal (scawful, 2026-11-05):* "improving the actual patterns and construction of the islands"; "the zora cliffs are more for the sea zora area to the north".
+    - *Done 2026-11-05 (Claude, analysis only, no ROM writes):* grass-sand straight edges and corners, grow AD, kit outline, Sea Zora cliff kit and map 90 join swaps. All queued to Codex over AFS.
+    - Handoff and queue IDs: =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/lyra_tile16_workflow_2026-11-04/HANDOFF.md=.
+    - [ ] Codex applies the queued recipes, builds, and runs a native check.
+    - [ ] Sea Zora shape work: map 90 (60 joins) and map 98 (18 joins) need cliff beside the bridge and lips above the falls; tile swaps cannot fix them.
+    - [ ] Far-east raised cliff ground on AD/B3/B4 and the jungle island (Minish Cap cliff tiles), after grow AD lands.
+    - [ ] Finish the 8 Lyra kit cells that are still edged (=kit_outline_recipe.json=).
+    - [ ] Audit maps 60-6D; their tile16 sets do not render on the read copy.
 *** TODO [#A] Dark World warp after Kydrog: broken graphics in the pyramid area :bug:gfx:overworld:
     :PROPERTIES:
     :ID: dw-warp-pyramid-gfx
