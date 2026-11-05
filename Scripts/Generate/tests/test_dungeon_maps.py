@@ -53,6 +53,35 @@ class DungeonMapFloorTest(unittest.TestCase):
         self.assertEqual(changed, [maps.BOSS_FLOORS + 10])
         self.assertEqual(after[maps.BOSS_FLOORS + 10:maps.BOSS_FLOORS + 12], bytes((0xFC, 0x80)))
 
+    def test_repack_empty_boss_sets_icon_hide_bit(self):
+        data = map_rom()
+        decoded = [maps.MapRom(data).dungeon(slot) for slot in range(14)]
+        slot = 0
+        data[maps.BOSS_FLOORS + slot * 2:maps.BOSS_FLOORS + slot * 2 + 2] = bytes((0xFC, 0x00))
+        decoded[slot] = maps.MapRom(data).dungeon(slot)
+        decoded[slot]["boss_room"] = maps.EMPTY
+        after = maps.repack(data, decoded)
+        self.assertEqual(after[maps.BOSS_FLOORS + slot * 2:maps.BOSS_FLOORS + slot * 2 + 2],
+                         bytes((0xFF, 0x80)))
+
+    def test_repack_empty_boss_preserves_lower_icon_flag_bits(self):
+        data = map_rom()
+        decoded = [maps.MapRom(data).dungeon(slot) for slot in range(14)]
+        slot = 3
+        data[maps.BOSS_FLOORS + slot * 2:maps.BOSS_FLOORS + slot * 2 + 2] = bytes((0xFC, 0x12))
+        decoded[slot] = maps.MapRom(data).dungeon(slot)
+        decoded[slot]["boss_room"] = maps.EMPTY
+        after = maps.repack(data, decoded)
+        self.assertEqual(after[maps.BOSS_FLOORS + slot * 2 + 1], 0x92)
+
+    def test_repack_retained_boss_preserves_icon_flags(self):
+        data = map_rom()
+        slot = 2
+        data[maps.BOSS_FLOORS + slot * 2 + 1] = 0x37
+        decoded = [maps.MapRom(data).dungeon(s) for s in range(14)]
+        after = maps.repack(data, decoded)
+        self.assertEqual(after[maps.BOSS_FLOORS + slot * 2 + 1], 0x37)
+
     def test_preview_honors_native_icon_disable_bit(self):
         data = map_rom()
         with patch.object(maps, "map_chars", return_value=[]), patch.object(

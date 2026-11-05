@@ -497,8 +497,10 @@ def repack(rom_data: bytes, maps: list[dict], full: bool = False) -> bytearray:
             word((ROOM_PTRS, TMPL_PTRS)[kind] + slot * 2, 0x8000 | (at & 0x7FFF))
         word(BOSS_ROOMS + slot * 2, m["boss_room"])
         # Floor and icon visibility are separate bytes (bank_0A EE0A).
-        # Generating map floors must preserve the original icon flags.
+        # The skull icon keys off the icon-flag high bit, not boss_room == EMPTY.
         out[BOSS_FLOORS + slot * 2] = m["boss_floor"] & 0xFF if m["boss_room"] != EMPTY else 0xFF
+        if m["boss_room"] == EMPTY:
+            out[BOSS_FLOORS + slot * 2 + 1] |= 0x80
     return out
 
 
