@@ -5,13 +5,15 @@
 ; Midi by Zaggarum
 ; ASM Framework by Zarby89
 ; Ported by Letterbomb
+; Mix 2026-11-05: ostinato on the square wave (the NES pulse channels),
+; melody on strings, pitched snare muted, echo and pan added. Notes unchanged.
 ;=====================================================================================
 
 lorom
 
-org $1B9C0F; Sections?
+; org $1B9C0F; Sections?
 DungeonTheme: 
-!ARAMAddr = $EC0B
+!ARAMAddr = uwaux_aram(DungeonTheme)
 dw !ARAMAddr+$08
 dw $00FF
 dw !ARAMAddr
@@ -30,9 +32,14 @@ dw $0000
 
 
 .Channel0
-%SetMasterVolume($9F)
+%SetMasterVolume($B0)
 %SetTempo(97);
-%SetInstrument($09) ; Strings
+%EchoVBits($FF, $00, $00) ; echo on all channels
+%EchoParams($02, $40, $02) ; delay, feedback, filter
+%EchoVolumeFade($30, $20, $20) ; echo fade-in
+%SetChannelVolume($C0)
+%SetPan($07)
+%SetInstrument($03) ; Square wave
 %SetDurationN($48, $7F) ; 1/4
 %CallSubroutine(.sub1+!ARAMC, 4)
 %CallSubroutine(.sub2+!ARAMC, 4)
@@ -74,7 +81,9 @@ db $00 ; End
 
 
 .Channel1
-%SetInstrument($09) ; Strings
+%SetChannelVolume($C0)
+%SetPan($0D)
+%SetInstrument($03) ; Square wave
 %SetDurationN($24, $7F) ; 1/8
 db Rest, $48
 %CallSubroutine(.sub8+!ARAMC, 4)
@@ -107,7 +116,8 @@ db $00 ; End
 
 
 .Channel2
-%SetChannelVolume($CF)
+%SetChannelVolume($B8)
+%SetPan($08)
 %SetInstrument($09) ; Strings
 %SetDurationN($48, $7F) ; 1/4
 db G4, Tie, Tie, Tie, A4s, Tie, D5, Tie, C5s, Tie, F4s
@@ -129,7 +139,8 @@ db $00 ; End
 
 
 .Channel3
-%SetInstrument($18) ; Guitar
+%SetChannelVolume($A0)
+%SetInstrument($18) ; Piano
 %SetDurationN($24, $7F) ; 1/8
 db Rest, $48, G4
 %CallSubroutine(.sub13+!ARAMC, 7)
@@ -149,7 +160,7 @@ db $00 ; End of the channel
 
 
 .Channel4
-%SetChannelVolume($CB)
+%SetChannelVolume($00) ; muted: the NES original has no drums
 %SetInstrument($13) ; Snare
 %SetDurationN($48, $7F) ; 1/4
 %CallSubroutine(.sub14+!ARAMC, 4)
@@ -178,7 +189,8 @@ db $00 ; End
 
 
 .Channel5
-%SetChannelVolume($CF)
+%SetChannelVolume($B8)
+%SetPan($0C)
 %SetInstrument($09) ; Strings
 %SetDurationN($48, $7F) ; 1/4
 db G3, Tie, Tie, Tie, A3s, Tie, D4, Tie, C4s, Tie, F3s

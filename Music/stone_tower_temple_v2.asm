@@ -8,9 +8,9 @@
 ; Size 0x01DC (476 Decimal)
 ;=====================================================================================
 
-org $1AA763; Sections?
+; org $1AA763; Sections?
 StoneTowerTempleTheme: 
-!ARAMAddr = $D86A
+!ARAMAddr = uwmain_aram(StoneTowerTempleTheme)
 dw !ARAMAddr+$08
 dw $00FF
 dw !ARAMAddr
@@ -33,7 +33,13 @@ dw $0000
 
 .Channel0
 %SetMasterVolume($C8)
+; Mix pass 2 2026-11-05: echo on the strings pad and harp only (bits 2, 5);
+; the arpeggio and ocarina lead stay dry so they read in front.
+; Delay 2 = ARAM $C000-$CFFF, below the song block.
+%EchoVBits($24, $18, $18)
+%EchoParams($02, $14, $02)
 %SetChannelVolume($C4)
+%SetPan($0A)
 %SetTempo(62);
 %SetInstrument($02) ; Tympani
 %SetDurationN($48, $7F) ; 1/4
@@ -49,6 +55,8 @@ db $00 ; End
 
 
 .Channel1
+%SetChannelVolume($98)
+%SetPan($10)
 %SetInstrument($18) ; Guitar
 %SetDurationN($48, $7F) ; 1/4
 %CallSubroutine(.subA01+!ARAMC, 8)
@@ -81,7 +89,8 @@ db $00 ; End
 
 
 .Channel2
-%SetChannelVolume($C4)
+%SetChannelVolume($80)
+%SetPan($04)
 %SetInstrument($09) ; Strings
 %SetDurationN($48, $7F) ; 1/4
 %CallSubroutine(.subA01+!ARAMC, 8)
@@ -114,8 +123,10 @@ db $00 ; End
 
 
 .Channel3
+%SetChannelVolume($D0)
+%SetPan($0D)
 %SetInstrument($09) ; Strings
-%SetDurationN($24, $7F) ; 1/8
+%SetDurationN($24, $5D) ; 1/8, staccato
 %CallSubroutine(.subA01+!ARAMC, 48)
 %CallSubroutine(.sub301+!ARAMC, 5)
 %CallSubroutine(.subA01+!ARAMC, 32)
@@ -131,7 +142,8 @@ db $00 ; End
 
 
 .Channel4
-%SetChannelVolume($C4)
+%SetChannelVolume($D0)
+%SetPan($0A)
 %SetInstrument($0D) ; Ocarina
 %SetDurationN($48, $7F) ; 1/4
 %CallSubroutine(.subA01+!ARAMC, 32)
@@ -184,7 +196,8 @@ db $00 ; End
 
 
 .Channel5
-%SetChannelVolume($C4)
+%SetChannelVolume($C8)
+%SetPan($07)
 %SetInstrument($0F) ; Harp
 %SetDurationN($48, $7F) ; 1/4
 %CallSubroutine(.subA01+!ARAMC, 48)
@@ -207,4 +220,4 @@ db $00 ; End
 
 
 
-assert pc() <= $1AB4D5
+; assert pc() <= $1AB4D5 (placement asserts: Music/all_music.asm)

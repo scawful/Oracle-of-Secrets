@@ -65,7 +65,7 @@
     "pending_rc:Items/goldstar.asm": {
       "source_set": "pending_rc",
       "path": "Items/goldstar.asm",
-      "sha256": "69c617df245b786febde3ac9a512c91089f38dda851c56c5bb23726cc5a89f98"
+      "sha256": "199aa00c758b1616cd07984ce02e79443441294aa17d6828b0b3bfaa4dd219f0"
     },
     "pending_rc:Items/ocarina.asm": {
       "source_set": "pending_rc",

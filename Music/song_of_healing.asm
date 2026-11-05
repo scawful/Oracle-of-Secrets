@@ -5,8 +5,11 @@
 ; Midi by RSD and Chris Lakatos
 ; ASM Framework by Zarby89
 ; Ported by Letterbomb
-; Size 0x0275 (629 Decimal)
+; Size 0x027B (635 Decimal)
 ;=====================================================================================
+; Mix (2026-11-05): master $98 -> $78; per-channel velocity (piano lead F,
+; string double B, arpeggio C, pads 8); pan on arpeggio and two pads. Notes
+; unchanged. Only 7 bytes are free before song $1A ($1BA584), so no echo.
 
 org $1BA308; Sections?
 SongOfHealingTheme: 
@@ -32,7 +35,7 @@ dw $0000
 
 
 .Channel0
-%SetMasterVolume($98)
+%SetMasterVolume($78) ; was $98
 %SetTempo(56)
 %SetInstrument($18) ; Guitar
 %SetDurationN($48, $7F) ; 1/4
@@ -51,7 +54,7 @@ db $00 ; End of the channel
 
 .Channel1
 %SetInstrument($09) ; Strings
-%SetDurationN($48, $7F) ; 1/4
+%SetDurationN($48, $7B) ; 1/4, velocity B: melody double under the piano
 %CallSubroutine(.sub0101+!ARAMC, 2)
 %CallSubroutine(.sub0102+!ARAMC, 1)
 %CallSubroutine(.sub0103+!ARAMC, 1)
@@ -96,7 +99,8 @@ db $00 ; End
 
 .Channel2
 %SetInstrument($18) ; Guitar
-%SetDurationN($24, $7F) ; 1/8
+%SetPan($0C)
+%SetDurationN($24, $7C) ; 1/8, velocity C: arpeggio
 %CallSubroutine(.sub201+!ARAMC, 3)
 %CallSubroutine(.sub202+!ARAMC, 1)
 %CallSubroutine(.sub201+!ARAMC, 3)
@@ -151,7 +155,8 @@ db $00 ; End
 
 .Channel3
 %SetInstrument($09) ; Strings
-%SetDurationN($48, $7F) ; 1/4
+%SetPan($07)
+%SetDurationN($48, $78) ; 1/4, velocity 8: pad
 db Rest
 %CallSubroutine(.sub301+!ARAMC, 2)
 %CallSubroutine(.sub302+!ARAMC, 2)
@@ -184,7 +189,7 @@ db $00 ; End
 
 .Channel4
 %SetInstrument($09) ; Strings
-%SetDurationN($24, $7F) ; 1/8
+%SetDurationN($24, $78) ; 1/8, velocity 8: pad
 db Rest, $48
 %CallSubroutine(.sub401+!ARAMC, 2)
 %CallSubroutine(.sub402+!ARAMC, 2)
@@ -217,7 +222,8 @@ db $00 ; End
 
 .Channel5
 %SetInstrument($09) ; Strings
-%SetDurationN($48, $7F) ; 1/4
+%SetPan($0D)
+%SetDurationN($48, $78) ; 1/4, velocity 8: pad
 %CallSubroutine(.sub501+!ARAMC, 2)
 %CallSubroutine(.sub502+!ARAMC, 2)
 %CallSubroutine(.sub503+!ARAMC, 1)

@@ -223,7 +223,7 @@ Experiment_Script:
   ; Shot 1: Tail Pond. Researchers face the Mirror held by Zora A; Farore apart.
   %exp_area(0)
   %exp_sfx1($05)                        ; no rain ambience from the load
-  %exp_song($F1)                        ; fade out the load's music
+  %exp_song($03)                        ; Deku Theme throughout the intro
   %exp_look(ExpLook_Kalyxo)
   %exp_actor(!ExpA_ZoraA, !ExpP_ZoraLeft, !ExpX_ZoraA, !ExpY_ZoraA)
   %exp_actor(!ExpA_ZoraB, !ExpP_ZoraRight, !ExpX_ZoraB, !ExpY_ZoraB)
@@ -238,12 +238,12 @@ Experiment_Script:
   ; Shot 2: Zora A steps to the edge; the Mirror opens.
   %exp_walk(!ExpA_ZoraA, !ExpX_ZoraA, !ExpY_ZoraA+8)
   %exp_wait(30)
-  %exp_song($08)
+  %exp_song($03)
   %exp_flash(10)
   %exp_look(ExpLook_Black)
   %exp_wait(20)
 
-  ; Shot 3: the Abyss. Same spot, Zora A alone, near silence.
+  ; Shot 3: the Abyss. Same spot, Zora A alone; Deku Theme continues.
   %exp_actor(!ExpA_ZoraB, !ExpP_Hide, 0, 0)
   %exp_actor(!ExpA_Farore, !ExpP_Hide, 0, 0)
   %exp_actor(!ExpA_ZoraA, !ExpP_ZoraFront, !ExpX_ZoraA, !ExpY_ZoraA+8)
@@ -266,7 +266,7 @@ Experiment_Script:
   %exp_pose(!ExpA_ZoraA, !ExpP_ZoraFront)
   %exp_walk(!ExpA_ZoraA, !ExpX_ZoraA, !ExpY_ZoraA)   ; backs away
   %exp_wait(20)
-  %exp_song($08)
+  %exp_song($03)
   %exp_flash(10)
   %exp_look(ExpLook_Black)
   %exp_wait(20)
@@ -309,8 +309,8 @@ Experiment_Script:
   %exp_text(!ExpMsg_ZoraA_WontClose)
   %exp_wait(20)
 
-  ; Shot 5d: Stalfos rise all around the pond. Music out, rattles only.
-  %exp_song($F1)
+  ; Shot 5d: Stalfos rise around the pond; keep Deku Theme beneath the rattles.
+  %exp_song($03)
   %exp_rise(!ExpA_Stal1, 24, 128, !ExpP_StalEast)
   %exp_wait(4)
   %exp_rise(!ExpA_Stal2, 226, 112, !ExpP_StalWest)
@@ -808,6 +808,8 @@ Exp_LoadStep:
   JSL Experiment_OverworldLoad
   PLB
   SEP #$30
+  ; Each load step can queue its area song before the visible scene returns.
+  LDA.b #$03 : STA.w $012C                ; keep the selected intro theme
   LDA.b $10 : CMP.b #$10 : BEQ .loaded
     LDA.b #$0D : STA.b $10
     LDA.l Exp_Tries : INC A : STA.l Exp_Tries

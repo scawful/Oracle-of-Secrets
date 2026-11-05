@@ -6,6 +6,9 @@
 ; ASM Framework by Zarby89
 ; Ported by Letterbomb
 ; Size 0x037F (895 Decimal)
+; Mix 2026-11-05: arpeggio lead and its 1/16 echo copy on the square wave
+; (the Game Boy pulse channels), echo copy 10 dB down and panned apart,
+; hardware echo added, master $6F by ear. Notes unchanged.
 ;=====================================================================================
 
 ; org $1A9FF8; Sections?
@@ -37,7 +40,12 @@ dw $0000
 .Channel0
 %SetMasterVolume($6F)
 %SetTempo(93);
-%SetInstrument($09) ; Strings
+%EchoVBits($FF, $00, $00) ; echo on all channels
+%EchoParams($02, $40, $02) ; delay, feedback, filter
+%EchoVolumeFade($30, $20, $20) ; echo fade-in
+%SetChannelVolume($FF)
+%SetPan($08)
+%SetInstrument($03) ; Square wave
 %SetDurationN($24, $7F) ; 1/8
 %CallSubroutine(.sub001+!ARAMC, 4)    ;]
 %CallSubroutine(.sub002+!ARAMC, 4)    ;]_____ D6, D6s Row
@@ -118,7 +126,8 @@ db $00 ; End                          ;]
 
 
 .Channel1
-%SetInstrument($18) ; Guitar
+%SetChannelVolume($C7)
+%SetInstrument($18) ; Piano
 %SetDurationN($48, $7F) ; 1/4
 %CallSubroutine(.sub101+!ARAMC, 1)      ;]----- Melody
 %CallSubroutine(.sub102+!ARAMC, 1)      ;]----- Upscale
@@ -155,7 +164,9 @@ db $00 ; End                                                                    
 
 
 .Channel2
-%SetInstrument($18) ; Guitar
+%SetChannelVolume($B7)
+%SetPan($0B)
+%SetInstrument($18) ; Piano
 %SetDurationN($24, $7F) ; 1/8
 %CallSubroutine(.sub201+!ARAMC, 4)    ;]
 %CallSubroutine(.sub202+!ARAMC, 4)    ;]_____ D6, D6s Row
@@ -218,7 +229,7 @@ db $00 ; End                                                                    
 
 
 .Channel3
-%SetChannelVolume($9D)
+%SetChannelVolume($81)
 %SetInstrument($13) ; Snare
 %SetDurationN($48, $7F) ; 1/4
 %CallSubroutine(.sub301+!ARAMC, 4)
@@ -268,6 +279,7 @@ db $00 ; End
 
 
 .Channel4
+%SetChannelVolume($C7)
 %SetInstrument($09) ; Strings
 %SetDurationN($48, $7F) ; 1/4
 %CallSubroutine(.sub401+!ARAMC, 1)      ;]----- Melody
@@ -325,7 +337,9 @@ db $00 ; End                          ;]
 
 
 .Channel5
-%SetInstrument($09) ; Strings
+%SetChannelVolume($90) ; echo copy, 10 dB under ch0
+%SetPan($0D)
+%SetInstrument($03) ; Square wave
 %SetDurationN($12, $7F) ; 1/16
 db Rest, $24
 %CallSubroutine(.sub001+!ARAMC, 4)    ;]

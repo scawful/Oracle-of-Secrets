@@ -13,7 +13,7 @@ TransferGFXinRAM:
   PHP
   REP #$20
 
-  LDX #$80
+  LDX #$7E
   --
     LDA.l .morningstargfx, X : STA.l $7EA180, X
     DEX : DEX : BPL --

@@ -31,6 +31,18 @@ OWNED_REGIONS = (
     ("Core/gfx_sheet_table.asm", 0x11FC00, 0x11FFFF),
     ("Core/Generated/source_sprite_sheets/sheet_overrides.asm", 0x11FD00, 0x11FFFF),
     ("Core/Generated/menu_icons/menu_icon_overrides.asm", 0x11FD00, 0x11FFFF),
+    # Overworld song upload chain, moved to bank $20 ($20B000-$20EFFF) by
+    # Music/song_banks.asm. The ZS map lists 0x100000-0x107FFF as unused;
+    # lost woods owns 0x107000+. all_music.asm asserts the chain ends by $20F000.
+    *((source, 0x103000, 0x106FFF) for source in (
+        "Music/song_banks.asm",
+        "Music/all_music.asm",
+        "Core/music_macros.asm",
+        "Music/lost_woods_v2.asm",
+        "Music/deku_theme.asm",
+        "Music/great_sea.asm",
+        "Music/frozen_hyrule.asm",
+    )),
 )
 
 

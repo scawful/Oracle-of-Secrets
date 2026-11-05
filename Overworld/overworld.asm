@@ -178,6 +178,8 @@ LoadOverworldPitAreas:
   RTL
 }
 
+incsrc "Overworld/great_sea_music.asm"
+
 Overworld_GetPitDestination = $1BB860
 
 ; DetermineConsequencesOfFalling
