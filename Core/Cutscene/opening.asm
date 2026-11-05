@@ -22,7 +22,7 @@
 ;   never reach the gate.
 ;
 ;   Keep in sync with HouseTag_TelepathicPlea (Dungeons/custom_tag.asm):
-;   it sets the clock to 8:00 and plays song $03; the arrival does the same.
+;   it sets the clock to 8:00 and plays !Song_DekuTheme; Rain is HouseTag wake-up.
 ; =========================================================
 
 Arrival_LinkOAM_Main      = $0DA18E ; RTL, draws Link from $20/$22 and pose vars
@@ -164,7 +164,7 @@ Arrival_Init:
   LDA.b #$06 : STA.b $5A                  ; spin frames 6-9
 
   LDA.b #$08 : STA.l TimeState.Hours      ; same as HouseTag_TelepathicPlea
-  LDA.b #$03 : STA.w $012C                ; song $03, same as the plea
+  LDA.b #!Song_DekuTheme : STA.w $012C
   STZ.b $13                               ; display on, brightness 0
 
   LDA.b #$01 : STA.l Arrival_State

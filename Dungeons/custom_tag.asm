@@ -37,6 +37,9 @@ CustomTag:
     JSR D9KeyGate_Main
     BRA .game_has_begun
   .ordinary_room
+if !DISABLE_MUSIC == 0
+  JSR HouseTag_ControlMusic
+endif
   LDA $7EF3C6 : BNE .game_has_begun
     JSR HouseTag_Main
   .game_has_begun
@@ -69,7 +72,7 @@ HouseTag_Main:
   HouseTag_TelepathicPlea:
   {
     LDA.b #$08 : STA.l TimeState.Hours ; Set the time to 8:00am
-    LDA.b #$03 : STA.w $012C ; Play the deku tree music
+    LDA.b #!Song_DekuTheme : STA.w $012C
 
     ; Set Link's coordinates to this specific position.
     LDA.b #$40 : STA $0FC2
@@ -130,6 +133,32 @@ endif
     RTS
   }
 }
+
+if !DISABLE_MUSIC == 0
+; M=8, DB=$00, DP=$00; A/flags scratch, X/Y unchanged, JSR/RTS.
+; Wake sets the legacy house flag, so this must run before that flag's gate.
+; Keep Deku through the bed/jump sequence; request Rain once Link can walk.
+HouseTag_ControlMusic:
+{
+  LDA.w $00A0 : CMP.b #$04 : BNE .done
+  LDA.w $00A1 : CMP.b #$01 : BNE .done
+  LDA.l StoryState : CMP.b #$02 : BNE .done
+  LDA.l GameState : BNE .done
+  LDA.l MODE : CMP.b #$07 : BNE .done
+  LDA.l SUBMODE : BNE .done
+  LDA.l LINKDO : BNE .done
+  LDA.l CUTSCENE : BNE .done
+  LDA.l FORCEMOVE : BNE .done
+  LDA.l JUMPING : BNE .done
+  LDA.l INPAIN : BNE .done
+  LDA.w $0136 : BNE .done
+  ; Logical current song changes after NMI consumes the request.
+  LDA.w $0133 : CMP.b #!Song_DekuTheme : BNE .done
+    LDA.b #!Song_Rain : STA.w $012C
+  .done
+  RTS
+}
+endif
 
 print  "End of house_tag.asm              ", pc
 

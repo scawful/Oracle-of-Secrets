@@ -21,6 +21,8 @@ OWNED_REGIONS = (
     ("Overworld/lost_woods.asm", 0x107000, 0x107FFF),
     ("Masks/bunny_hood.asm", 0x102F20, 0x102F6F),
     ("Masks/bunny_hood.asm", 0x102F70, 0x102F8D),
+    # Bounded NMI song-alias handler between OW music data and the cold loader.
+    ("Overworld/great_sea_music.asm", 0x106E00, 0x106F7F),
     # generate_water_fill_table.py reserves this tail of custom collision data
     # and rejects tables that exceed it. The collision source contract excludes
     # this area from the editor's per-room collision streams.

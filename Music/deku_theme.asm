@@ -11,10 +11,8 @@
 ; channel volume, master $C8 -> $90, channel volumes, pan and light echo
 ; added. Notes unchanged. Great Sea follows this song (GreatDekuTreeThemeEnd).
 
-org $20B86E : assert pc() == owrom($1AA763)
-
 GreatDekuTreeTheme: 
-!ARAMAddr = $D86A
+!ARAMAddr = owaux_aram(GreatDekuTreeTheme)
 dw !ARAMAddr+$08
 dw $00FF
 dw !ARAMAddr

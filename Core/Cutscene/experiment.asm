@@ -223,7 +223,7 @@ Experiment_Script:
   ; Shot 1: Tail Pond. Researchers face the Mirror held by Zora A; Farore apart.
   %exp_area(0)
   %exp_sfx1($05)                        ; no rain ambience from the load
-  %exp_song($03)                        ; Deku Theme throughout the intro
+  %exp_song(!Song_DekuTheme)
   %exp_look(ExpLook_Kalyxo)
   %exp_actor(!ExpA_ZoraA, !ExpP_ZoraLeft, !ExpX_ZoraA, !ExpY_ZoraA)
   %exp_actor(!ExpA_ZoraB, !ExpP_ZoraRight, !ExpX_ZoraB, !ExpY_ZoraB)
@@ -238,7 +238,7 @@ Experiment_Script:
   ; Shot 2: Zora A steps to the edge; the Mirror opens.
   %exp_walk(!ExpA_ZoraA, !ExpX_ZoraA, !ExpY_ZoraA+8)
   %exp_wait(30)
-  %exp_song($03)
+  %exp_song(!Song_DekuTheme)
   %exp_flash(10)
   %exp_look(ExpLook_Black)
   %exp_wait(20)
@@ -266,7 +266,7 @@ Experiment_Script:
   %exp_pose(!ExpA_ZoraA, !ExpP_ZoraFront)
   %exp_walk(!ExpA_ZoraA, !ExpX_ZoraA, !ExpY_ZoraA)   ; backs away
   %exp_wait(20)
-  %exp_song($03)
+  %exp_song(!Song_DekuTheme)
   %exp_flash(10)
   %exp_look(ExpLook_Black)
   %exp_wait(20)
@@ -310,7 +310,7 @@ Experiment_Script:
   %exp_wait(20)
 
   ; Shot 5d: Stalfos rise around the pond; keep Deku Theme beneath the rattles.
-  %exp_song($03)
+  %exp_song(!Song_DekuTheme)
   %exp_rise(!ExpA_Stal1, 24, 128, !ExpP_StalEast)
   %exp_wait(4)
   %exp_rise(!ExpA_Stal2, 226, 112, !ExpP_StalWest)
@@ -809,7 +809,7 @@ Exp_LoadStep:
   PLB
   SEP #$30
   ; Each load step can queue its area song before the visible scene returns.
-  LDA.b #$03 : STA.w $012C                ; keep the selected intro theme
+  LDA.b #!Song_DekuTheme : STA.w $012C
   LDA.b $10 : CMP.b #$10 : BEQ .loaded
     LDA.b #$0D : STA.b $10
     LDA.l Exp_Tries : INC A : STA.l Exp_Tries

@@ -147,6 +147,7 @@ jobs:
           # Original music-loader instructions and upload headers guarded by
           # Music/song_banks.asm and Overworld/great_sea_music.asm. These are
           # synthetic preimages; all source assertions remain active.
+          printf '\xA9\x00\x85\x00\xA9\x80\x85\x01\xA9\x19\x85\x02\x78\x20\x88\x88\x58\x60' | dd of=test.sfc bs=1 seek=$((0x00901)) conv=notrunc 2>/dev/null  # $008901 original cold loader, 18 bytes
           printf '\xA9\xF5' | dd of=test.sfc bs=1 seek=$((0x00913)) conv=notrunc 2>/dev/null  # $008913 LDA.b #$F5
           printf '\x9E' | dd of=test.sfc bs=1 seek=$((0x00918)) conv=notrunc 2>/dev/null  # $008918 OW chain high byte
           printf '\x1A' | dd of=test.sfc bs=1 seek=$((0x0091C)) conv=notrunc 2>/dev/null  # $00891C OW chain bank

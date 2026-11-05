@@ -28,22 +28,12 @@
 ;   STA $2140 : STA $0133 : STA $0130
 ;   RTL
 
-; Placement (2026-11-05): new overworld-bank song ID $10.
-; No vanilla song is replaced. The data sits in the unused tail of the
-; old Rain slot right after the Deku theme (label GreatDekuTreeThemeEnd)
-; up to ROM $1AAB9F (no other song references these bytes). It starts at
-; ROM $1AA7FB / ARAM $D902 when Deku is its original 152 bytes; the
-; org below must equal Deku's end (asserted); the ARAM pointers follow it.
-; ID $10 pointer = ARAM $D01E = ROM $1A9EF9 + 2*($10-1).
-; IDs $10+ are underworld songs once the dungeon bank loads, so play
-; $10 only while the overworld bank is loaded.
-org $20B022 : assert pc() == owrom($1A9F17)
-  dw owmain_aram(GreatSea) ; song $10 = Great Sea
-
-org $20B91E : assert pc() == GreatDekuTreeThemeEnd, "Great Sea must start where Deku ends; update this org"
+; Placement (2026-11-05): overworld aux song ID $10, after Deku in the OW aux chain.
+; ID $10 pointer = ROM $1A9EF9 + 2*($10-1). Play only while the overworld bank is loaded.
+assert pc() == GreatDekuTreeThemeEnd, "Great Sea must start where Deku ends"
 GreatSea:
 {
-  !ARAMAddr = owmain_aram(GreatSea)
+  !ARAMAddr = owaux_aram(GreatSea)
   dw !ARAMAddr+$0A ; Intro
   dw !ARAMAddr+$1A ; Looping
   dw $00FF
@@ -382,4 +372,3 @@ GreatSea:
 }
 
 print "End of WW Great Sea ", pc
-assert pc() <= owrom($1AABA0), "Great Sea overruns the free gap before song $04"

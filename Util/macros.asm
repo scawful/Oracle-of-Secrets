@@ -9,6 +9,16 @@
 ; WARNING: Disabling a module may cause linker errors if other modules
 ;          reference its symbols. See Oracle_main.asm for dependency notes.
 !DISABLE_MUSIC     = 0
+
+; Intro cutscene song IDs ($012C). Rain stays vanilla $03; Deku uses OW aux $12.
+if !DISABLE_MUSIC == 0
+  !Song_Rain       = $03
+  !Song_DekuTheme  = $12
+else
+  !Song_Rain       = $03
+  !Song_DekuTheme  = $03
+endif
+
 !DISABLE_OVERWORLD = 0
 !DISABLE_DUNGEON   = 0
 !DISABLE_SPRITES   = 0

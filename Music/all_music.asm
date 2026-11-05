@@ -10,28 +10,37 @@ incsrc "Music/song_banks.asm"
 incsrc "Music/lost_woods_v2.asm"
 print  "End of Music/lost_woods_v2.asm    ", pc
 
-incsrc "Music/deku_theme.asm"
-print  "End of Music/deku_theme.asm       ", pc
-
-incsrc "Music/great_sea.asm"
-print  "End of Music/great_sea.asm        ", pc
-
 ; ---------------------------------------------------------
 ; Overworld auxiliary block (ARAM $2B00+): new songs after the old data.
 
 org $20E43E : assert pc() == owrom($1AD333)
 incsrc "Music/frozen_hyrule.asm"
 print  "End of Music/frozen_hyrule.asm    ", pc
+
+incsrc "Music/deku_theme.asm"
+print  "End of Music/deku_theme.asm       ", pc
+
+incsrc "Music/great_sea.asm"
+print  "End of Music/great_sea.asm        ", pc
+
 OWSongChainEnd:
   dw $0000, $0800
-assert owaux_aram(OWSongChainEnd) <= !SongAuxAramLimit, "OW aux block overruns ARAM"
+assert owaux_aram(OWSongChainEnd) <= !SongAuxAramOWLimit, "OW aux block overruns sample-pointer ARAM"
 assert pc() <= $20F000, "OW chain overruns $20F000 (ZS lost woods data)"
+assert pc() <= $20EE00, "OW aux songs overrun the NMI area-song remap"
+assert pc() <= LoadIntroSongBankExpanded, "OW aux songs overrun cold-loader reservation"
 
 org $20DDB2 : assert pc() == owrom($1ACCA7)
   dw OWSongChainEnd-owrom($1ACCAB)
 
+org $20B022 : assert pc() == owrom($1A9F17)
+  dw owaux_aram(GreatSea) ; OW $10
+
 org $20B024 : assert pc() == owrom($1A9EF9+$20)
    dw owaux_aram(FrozenHyruleTheme) ; OW $11
+
+org $20B026 : assert pc() == owrom($1A9EF9+$22)
+  dw owaux_aram(GreatDekuTreeTheme) ; OW $12
 
 ; ---------------------------------------------------------
 ; Underworld main block (ROM $1B8004+, ARAM $D000+)
