@@ -255,7 +255,12 @@ org $0E99A5 ; @hook module=Overworld kind=data name=OracleCreditsSpriteDraw
   dw OracleCredits_SaplingVector
 
 ; Credits_HandleSceneFade .timer: frames before the fade-out starts.
+; Synced to ending song $21 (measured in Mesen2 from the N-SPC pattern
+; pointer): each fade lands ~20 frames before a pattern starts, so the next
+; scene opens on the new phrase, and the staff roll (song $22) starts when
+; song $21 ends. A scene lasts timer + ~88 frames (fade out, load, fade in).
+; Cuts at song patterns 3, 5, 7, 10, 12, 13, 14; scene 7 holds pattern 14.
 org $0E9A0A ; @hook module=Overworld kind=data name=OracleCreditsTimer
-  dw $02C0, $02C0, $02C0, $02C0, $02C0, $02C0, $02C0, $02C0
+  dw $06C0, $0814, $0700, $06CC, $04FC, $0488, $0368, $06C8
 
 pullpc
