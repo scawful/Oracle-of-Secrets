@@ -116,7 +116,7 @@ class OwnershipTests(unittest.TestCase):
         self.assertEqual(ownership_conflicts(data,{'DISABLE_SPRITES':0})[0],[])
         block['base']=0x7E0730
         conflicts=ownership_conflicts(data,{'DISABLE_SPRITES':0})[0]
-        self.assertEqual([(c['owners'],c['start'],c['end'],c['classification']) for c in conflicts],[(['cart_room','symbols_wram_block'],0x7E0730,0x7E0748,'active_profile_conflict')])
+        self.assertEqual([(c['owners'],c['start'],c['end'],c['classification']) for c in conflicts],[(['cart_room','symbols_wram_block'],0x7E0730,0x7E074B,'active_profile_conflict')])
 
 
 class TableTests(unittest.TestCase):
