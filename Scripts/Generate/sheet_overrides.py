@@ -228,19 +228,21 @@ def write_outputs(out, files, inputs):
             temporary.unlink(missing_ok=True)
 
 
-def source_metadata(root, *, rom_role="build_output"):
+def source_metadata(root, *, rom_role="build_output", spec_path=SPEC,
+                    output=OUTPUT, feature_flag=FLAG):
     # This is build-output provenance/reservations, never writable source-origin
     # metadata. No development/compiled editor write contract exists here.
     require(rom_role == 'build_output', 'source metadata supports build_output provenance only; editor source origins are unsupported')
-    spec_path = Path(root)/SPEC
-    spec = read_spec(spec_path)
+    spec_path = Path(spec_path)
+    spec_file = Path(root)/spec_path
+    spec = read_spec(spec_file)
     globals_ = [number(e['global_sheet']) if 'global_sheet' in e else number(e['sprite_sheet'])+0x73 for e in spec['sheets']]
-    return dict(schema_version=1, spec=SPEC.as_posix(), spec_sha256=hashlib.sha256(spec_path.read_bytes()).hexdigest(),
-                feature_flag=FLAG, sprite_sheet_ids=[f'0x{g-0x73:02X}' for g in globals_],
+    return dict(schema_version=1, spec=spec_path.as_posix(), spec_sha256=hashlib.sha256(spec_file.read_bytes()).hexdigest(),
+                feature_flag=feature_flag, sprite_sheet_ids=[f'0x{g-0x73:02X}' for g in globals_],
                 global_sheet_ids=[f'0x{g:02X}' for g in globals_],
                 owned_region=dict(start='0x40D000', end='0x418000', end_exclusive=True, pc_start='0x205000', pc_end='0x208000', size=CAPACITY),
                 global_region=dict(start='0x478000', end='0x480000', end_exclusive=True, pc_start='0x238000', pc_end='0x240000', size=GLOBAL_CAPACITY, global_sheet_ids='0xDF-0xFE'),
-                generated_include=(OUTPUT/'sheet_overrides.asm').as_posix())
+                generated_include=(Path(output)/'sheet_overrides.asm').as_posix())
 
 
 def main():
