@@ -7,8 +7,8 @@
 ; This file:
 ;   1. Hooks LoadOverworldFromUnderworld's record scan: during credits ($10 =
 ;      $1A) the camera comes from OracleCredits_* tables below instead.
-;   2. Plays !OracleCredits_SceneCount scenes, all overworld, with no actors and
-;      a blank caption, then jumps to the staff roll.
+;   2. Plays !OracleCredits_SceneCount scenes, all overworld, with a blank
+;      caption, then jumps to the staff roll. Only scene 7 has an actor.
 ;   3. Patches the vanilla per-scene tables for those scenes (pan, timer).
 ;
 ; Scenes (camera pans 96 px and ends on the chosen view):
@@ -19,7 +19,7 @@
 ;   4 Loom Beach       area $33  pan left
 ;   5 Zora island house area $1E  pan down
 ;   6 Goron mine door  area $36  pan up
-;   7 Abyss grass patch area $46  pan down (sapling spot)
+;   7 Abyss grass patch area $46  pan down; a sapling grows on the grass
 ; Included from Overworld/overworld.asm (bank $34 free space).
 
 !OracleCredits_SceneCount = 8
@@ -105,6 +105,75 @@ OracleCredits_LoadNextScene:
   RTL
 }
 
+; Scene 7 actor: a sapling grows from a magic bean on the grass patch.
+; Reuses the bean vendor's frames (Sprites/NPCs/bean_vendor.asm), no new tiles.
+; Called through OracleCredits_SaplingVector in bank $0E. M=8, X=8, DBR=$0E.
+!OracleCredits_SaplingX = $0CF8 ; area $46 map px (248,268)
+!OracleCredits_SaplingY = $010C
+
+OracleCredits_SaplingDraw:
+{
+  PHB : PHK : PLB
+  LDX.b #$00                                        ; sprite slot 0 (cleared at scene load)
+  LDA.b #!OracleCredits_SaplingX : STA.w $0D10, X
+  LDA.b #!OracleCredits_SaplingX>>8 : STA.w $0D30, X
+  LDA.b #!OracleCredits_SaplingY : STA.w $0D00, X
+  LDA.b #!OracleCredits_SaplingY>>8 : STA.w $0D20, X
+
+  ; Growth stage by scene time ($C8): the bean, then the vine swaying
+  ; between its two frames every 32 frames.
+  REP #$20
+  LDY.b #$00 : LDA.b $C8 : CMP.w #$0170 : BCC .frame
+  INY : AND.w #$0020 : BEQ .frame
+  INY
+  .frame
+  SEP #$20
+  STY.b $07
+
+  LDA.b #$18 : JSL OAM_AllocateFromRegionA ; up to 6 tiles
+  JSL Sprite_Get_16_bit_Coords
+  JSL Sprite_PrepOamCoord : BCS .done
+
+  LDX.b $07
+  LDA.w .stage_start, X : STA.b $06
+  LDA.w .stage_last, X : TAX
+  LDY.b #$00
+  .next_tile
+  PHX
+  TXA : CLC : ADC.b $06 : PHA
+  ASL A : TAX
+  REP #$20
+  LDA.b $00 : CLC : ADC.l Sprite_BeanVendor_Draw_x_offsets, X : STA.b ($90), Y
+  AND.w #$0100 : STA.b $0E
+  INY
+  LDA.b $02 : CLC : ADC.l Sprite_BeanVendor_Draw_y_offsets, X : STA.b ($90), Y
+  CLC : ADC.w #$0010 : CMP.w #$0100
+  SEP #$20
+  BCC .on_screen_y
+    LDA.b #$F0 : STA.b ($90), Y
+  .on_screen_y
+  PLX
+  INY
+  LDA.l Sprite_BeanVendor_Draw_chr, X : STA.b ($90), Y
+  INY
+  LDA.l Sprite_BeanVendor_Draw_properties, X : STA.b ($90), Y
+  PHY
+  TYA : LSR #2 : TAY
+  LDA.l Sprite_BeanVendor_Draw_sizes, X : ORA.b $0F : STA.b ($92), Y
+  PLY : INY
+  PLX : DEX : BPL .next_tile
+
+  .done
+  PLB
+  RTL
+
+  ; First tile and tile count-1 in the bean vendor tables for each stage:
+  ; bean (frame 1), vine A (frame 2), vine B (frame 3). The sprout frames
+  ; (5/6) use sprite page 0 chars, which hold other art in this scene.
+  .stage_start : db $04, $05, $0B
+  .stage_last  : db 0, 5, 5
+}
+
 ; Tile sheets: ZS InitTilesetsLongCalls also treats module $1A as outdoors, so
 ; each scene loads its area's own sheets (see ZSCustomOverworld.asm).
 
@@ -140,6 +209,21 @@ org $0285E3 ; @hook module=Overworld kind=data name=OracleCreditsSpriteGfx
   db $28
 org $0285F4 ; @hook module=Overworld kind=data name=OracleCreditsSpritePalette
   db $01
+; Scene 7 uses the Ranch sprite set and palette (set $06, palette $01), which
+; hold the bean vendor's tiles.
+org $0285E9 ; @hook module=Overworld kind=data name=OracleCreditsSaplingGfx
+  db $06
+org $0285FA ; @hook module=Overworld kind=data name=OracleCreditsSaplingPalette
+  db $01
+
+; Credits_LoadNextScene_Underworld ($0E9891) only ran for vanilla subs $02,
+; $14 and $16; $02 is an overworld scene here and $14/$16 come after the last
+; scene, so its 8 bytes hold the scene 7 draw vector.
+org $0E9891 ; @hook module=Overworld name=OracleCredits_SaplingVector kind=jsl target=OracleCredits_SaplingDraw expected_m=8 expected_x=8
+OracleCredits_SaplingVector:
+  JSL OracleCredits_SaplingDraw
+  RTS
+  assert pc() <= $0E9899
 
 ; Credits_PrepAndLoadSprites .vectors: no actors.
 org $0E9899 ; @hook module=Overworld kind=data name=OracleCreditsLoadSprites
@@ -156,10 +240,11 @@ org $0E9918 ; @hook module=Overworld kind=data name=OracleCreditsMoveY
 org $0E9938 ; @hook module=Overworld kind=data name=OracleCreditsMoveX
   dw 1, 0, 1, 0, -1, 0, 0, 0
 
-; Credits_SpriteDraw_vectors: nothing to draw.
+; Credits_SpriteDraw_vectors: only scene 7 draws (the sapling).
 org $0E99A5 ; @hook module=Overworld kind=data name=OracleCreditsSpriteDraw
   dw !OracleCredits_NoActor, !OracleCredits_NoActor, !OracleCredits_NoActor
-  dw !OracleCredits_NoActor, !OracleCredits_NoActor, !OracleCredits_NoActor, !OracleCredits_NoActor, !OracleCredits_NoActor
+  dw !OracleCredits_NoActor, !OracleCredits_NoActor, !OracleCredits_NoActor, !OracleCredits_NoActor
+  dw OracleCredits_SaplingVector
 
 ; Credits_HandleSceneFade .timer: frames before the fade-out starts.
 org $0E9A0A ; @hook module=Overworld kind=data name=OracleCreditsTimer
