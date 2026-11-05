@@ -120,7 +120,7 @@ OracleCredits_SaplingDraw:
   LDA.b #!OracleCredits_SaplingY : STA.w $0D00, X
   LDA.b #!OracleCredits_SaplingY>>8 : STA.w $0D20, X
 
-  ; Growth stage by scene time ($C8): the bean, then the vine swaying
+  ; Growth stage by scene time ($C8): the bean, then the sprout swaying
   ; between its two frames every 32 frames.
   REP #$20
   LDY.b #$00 : LDA.b $C8 : CMP.w #$0170 : BCC .frame
@@ -136,6 +136,7 @@ OracleCredits_SaplingDraw:
 
   LDX.b $07
   LDA.w .stage_start, X : STA.b $06
+  LDA.w .stage_pal, X : STA.b $08
   LDA.w .stage_last, X : TAX
   LDY.b #$00
   .next_tile
@@ -156,7 +157,11 @@ OracleCredits_SaplingDraw:
   INY
   LDA.l Sprite_BeanVendor_Draw_chr, X : STA.b ($90), Y
   INY
-  LDA.l Sprite_BeanVendor_Draw_properties, X : STA.b ($90), Y
+  LDA.l Sprite_BeanVendor_Draw_properties, X
+  BIT.b $08 : BPL .keep_palette
+    AND.b #$F1 : ORA.b $08 : AND.b #$7F             ; bit 7 of $08 = override flag
+  .keep_palette
+  STA.b ($90), Y
   PHY
   TYA : LSR #2 : TAY
   LDA.l Sprite_BeanVendor_Draw_sizes, X : ORA.b $0F : STA.b ($92), Y
@@ -168,10 +173,13 @@ OracleCredits_SaplingDraw:
   RTL
 
   ; First tile and tile count-1 in the bean vendor tables for each stage:
-  ; bean (frame 1), vine A (frame 2), vine B (frame 3). The sprout frames
-  ; (5/6) use sprite page 0 chars, which hold other art in this scene.
-  .stage_start : db $04, $05, $0B
-  .stage_last  : db 0, 5, 5
+  ; bean (frame 1), sprout B and sprout A (tiles $17 and $15; chars $C8-$CA
+  ; from global sheet $07). The sprout props use palette 1, which is orange
+  ; in this scene, so the sprout stages force palette 4 (green here):
+  ; .stage_pal = $80 (override) | palette<<1; $00 keeps the table palette.
+  .stage_start : db $04, $17, $15
+  .stage_last  : db 0, 1, 1
+  .stage_pal   : db $00, $88, $88
 }
 
 ; Tile sheets: ZS InitTilesetsLongCalls also treats module $1A as outdoors, so
