@@ -20,7 +20,7 @@
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "6f978fb2e5f5317d5719830ee1962a23e2de7283ba413ddfe281c1c6ff63ddc3"
+      "sha256": "d2614e655f6a7b602a0c480222c90acd8a32032eb8083c8ecf7215074268ef64"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",

@@ -25,6 +25,21 @@ Link_HoverIfMooshWantsToDash:
   JSL Link_HandleMovingAnimation_FullLongEntry
   RTL
 }
+
+; Shared hover cancellation enters with M=8. Keep the ordinary Deku path;
+; Moosh must not enter vanilla recoil with a zero timer or the takeoff bounce.
+Moosh_EndHover:
+{
+  STZ.b $5D
+  LDA.w !CurrentMask : CMP.b #$07 : BNE .done
+    STZ.b DekuFloating
+    STZ.b FallTimer
+    LDA.b #$01 : STA.b $46
+    LDA.b #$FF : STA.b $29
+    STZ.w $02C7
+  .done
+  RTL
+}
 print "End of Masks/moosh.asm            ", pc
 
 org $079093 ; @hook module=Masks

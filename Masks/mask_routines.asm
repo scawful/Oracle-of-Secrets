@@ -720,7 +720,7 @@ DekuLink_HoverBasedOnInput:
   LDA $F0 : AND #%10000000 : BEQ .no_cancel
     .auto_cancel
     ; Reset LinkState to Default
-    STZ $5D
+    JSL Moosh_EndHover
 
     LDA.b #$01 : STA.w $0AAA
     STZ.w $0324 : STZ.w $031C : STZ.w $031D
