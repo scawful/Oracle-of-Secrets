@@ -15,6 +15,44 @@
 
 ---
 
+## Special-overworld domain model
+
+Updated 2026-11-05 from scawful's direct terminology and map-layout clarification.
+**Special overworld** names the shared technical system. **Lyra Sea** and
+**East Kalyxo** are names for the same 64-map region within that system.
+Kalyxo Coast describes its coastal geography; it is not a second loader or atlas.
+**Tail maps** describes an implementation range, not the whole region.
+
+| Concept | Meaning and source |
+|---|---|
+| Technical container | Special-overworld loading and transitions; `Overworld/special_areas.asm`, `LoadSpecialOverworld` and `Overworld_CheckForSpecialOverworldTrigger`. |
+| Region and map budget | One 64-map overworld connected through Korok Cove and the lower areas, with eight maps reserved for overlays and another eight for the Sky Islands. This describes intended roles; existing payloads must be reconciled before reallocating any page. |
+| Coastal geography | Scawful identifies physical maps `0x90`, `0x98`, `0xA0`, `0xA8`, `0xB0`, `0xB8`, `0x91`, `0x92`, `0x82` and `0x83` as East Kalyxo/Kalyxo Coast. Remaining water maps are Lyra Sea; the upper-right area contains the Sky Islands. All belong to the same region. |
+| Physical map identity | The selected Lyra implementation's `Scripts/Build/lyra_project_terrain.py` uses `FIRST_MAP = 0xA0`, `MAP_COUNT = 32`; `Overworld/lyra_native_loaders.asm` asserts first `$A0` and exclusive end `$C0`. Those 32 tail pages are only part of the 64-map region. They are map IDs, not ROM or CPU addresses. |
+| Gameplay area | A parent area can contain multiple physical pages. `Overworld/lyra_resident_atlas.asm` describes a page directory and area index; page count does not establish gameplay-area count. |
+| Regional map presentation | One atlas covers the shared region. The selected cloud cover conceals `0x94–0x97`, `0x9C–0x9F` and the Sky Islands; it does not create a separate region or new discovery flag. |
+| Legacy aliases | Search `tail maps`, `Lyra`, `Lyra Sea`, `East Kalyxo` and `expanded maps` when tracing older docs. Preserve existing symbols, filenames and historical evidence. |
+
+The branch-specific implementation anchors were originally checked at Oracle
+commit `4f837962` (`codex/lyra-stage1-source-20261030`). They describe source
+contracts, not enabled runtime behavior or completed all-map Save/Build/Test.
+Read them in the selected Lyra checkout; the maintained source may not yet
+contain those files. A blank main-checkout terrain sidecar is not authority over
+the authored sidecar selected by the user's project.
+
+Special-entry/exit IDs such as `0x182`, RAM locations such as `$A0`, physical
+map IDs such as `0xA0`, dungeon-room IDs and story dungeon numbers are different
+identifier kinds. Before architectural changes, establish the exact identifier,
+container, current authored membership and invariant. Keep this vocabulary in
+repo docs and the existing AFS reference/index rather than creating another
+glossary. Older region ranges are historical labels, not allocation authority.
+
+Source navigation: [special-area loader](../../Overworld/special_areas.asm),
+[overworld guide](../World/Overworld/Overworld.md),
+[location registry](../World/LocationRegistry.md).
+
+---
+
 ## Characters & NPCs
 
 ### Major Characters
@@ -70,9 +108,9 @@
 | **Loom Beach** | LW 0x33 | `AreaIndex = $33` | Intro wake-up location |
 | **Mount Snowpeak** | LW northern | TBD | Goron territory |
 | **Zora Sanctuary** | LW eastern | TBD | Sea Zora settlement |
-| **Korok Cove** | SW 0x182 | Exit ID `0x182` | Waterfall area behind graveyard; leads to East Kalyxo via expanded maps |
-| **East Kalyxo** | LW 0x90-9B | `AreaIndex = $90-$9B` | River Zora territory (new) |
-| **Sky Islands** | LW 0x84-8F | `AreaIndex = $84-$8F` | Post-D7 weather puzzles |
+| **Korok Cove** | Special-overworld connection | Exit ID `0x182` is an exit identifier | Connects to the shared Lyra Sea/East Kalyxo region and lower areas |
+| **Lyra Sea / East Kalyxo** | One 64-map special-overworld region | See the domain model above | Coastal and sea labels describe geography within the same region |
+| **Sky Islands** | Eight reserved maps within the special-overworld region | Current authored map roles and reservations | Upper-right geography; the older `0x84–0x8F` label is not a current allocation list |
 | **Kalyxo Castle** | LW D3 area | TBD | Hylian occupation HQ |
 | **Glacia Estate** | LW D5 area | TBD | Twinrova's lair |
 
