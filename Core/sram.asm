@@ -762,10 +762,12 @@ FreeBlock_Items    = $7EF310  ; 48 bytes ($7EF310-33F)
 ; Collectibles Extension ($7EF3A0) - 1 byte
 ; ---------------------------------------------------------
 ; Purpose: Reserved for additional collectible tracking
-; Note: Small block, use for single-byte counters
+; Bit 0: Ranch one-time Wolf dig cache; bits 1-7 reserved.
 ; Allocated: $7EF39F = DekuStickWear (2026-10-30, remaining burn ticks)
 ;
-FreeBlock_Collect  = $7EF3A0  ; 1 byte ($7EF3A0)
+WolfDigFlags = $7EF3A0
+!WolfDig_RanchCache = $01
+assert WolfDigFlags == $7EF3A0
 
 ; ---------------------------------------------------------
 ; Reserved Block ($7EF3AB-3C4) - 26 bytes
@@ -848,7 +850,7 @@ FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 ; |----------|----------|-------|--------------------|
 ; | $7EF307  | $7EF30E  | 8     | Story extension    |
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
-; | $7EF3A0  | $7EF3A0  | 1     | Collectibles ext   |
+; | $7EF3A0  | $7EF3A0  | bits  | Wolf dig: bit 0 used |
 ; | $7EF3B2  | $7EF3B3  | 2     | Large prefix       |
 ; | $7EF3B9  | $7EF3C4  | 12    | Large remainder    |
 ; | $7EF412  | $7EF4BF  | 174   | Dreams prefix      |
