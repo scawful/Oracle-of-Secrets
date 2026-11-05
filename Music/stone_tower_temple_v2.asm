@@ -32,7 +32,9 @@ dw $0000
 
 
 .Channel0
-%SetMasterVolume($C8)
+%SetMasterVolume($9E) ; was $C8
+; Mix pass 3 2026-11-05: master down to sit with the other dungeon songs
+; (D8 Sky, entrance $29). Notes unchanged.
 ; Mix pass 2 2026-11-05: echo on the strings pad and harp only (bits 2, 5);
 ; the arpeggio and ocarina lead stay dry so they read in front.
 ; Delay 2 = ARAM $C000-$CFFF, below the song block.

@@ -76,3 +76,12 @@ org $1BACC3
 org $1B8004+$16 : dw uwaux_aram(GanondorfBattle)          ; UW $0C
 org $1B8004+$18 : dw uwaux_aram(DungeonTheme)             ; UW $0D
 org $1B8004+$1C : dw uwmain_aram(StoneTowerTempleTheme)   ; UW $0F
+
+; ---------------------------------------------------------
+; Entrance songs: base table $0F9F00, one byte per entrance ID.
+; The assert fails the build if the base ROM byte changes (yaze edit), so
+; this override never silently replaces an editor choice.
+
+; D8 Sky (entrance $29, room $90): vanilla dungeon $11 -> Stone Tower $0F.
+assert read1($0F9F00+$29) == $11, "entrance $29 song changed in the base ROM"
+org $0F9F00+$29 : db $0F
