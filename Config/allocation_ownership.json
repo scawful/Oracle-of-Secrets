@@ -30,7 +30,7 @@
     "shared:Items/fishing_rod.asm": {
       "source_set": "shared",
       "path": "Items/fishing_rod.asm",
-      "sha256": "3c456abd3c2ea7f0173ed1ce3dfdc845198e6a68390fd26ed432f7a7e9246e21"
+      "sha256": "59501b12be983a0cd98dfa771e2a620ff42b5789f4dd278a715ca7a9e949f577"
     },
     "shared:Core/ram.asm": {
       "source_set": "shared",

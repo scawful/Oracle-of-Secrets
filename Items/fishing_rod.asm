@@ -8,6 +8,8 @@
 ; $7F5BA0 RAM for fishing power
 ; $7F5BA2 RAM for fishing mode - 1 = rod out, 2 = pull
 ; $7F5BA3 RAM Index for the fishing floater
+; Mode 3 owns the rod graphics during the cast wind-up; $FF means no floater.
+!FishingFloaterSignature = $F1 ; SprMiscA, reset by native sprite allocation
 ; Modify the code of the sprite "RunningBoy" 0x74
 ; ====================================================
 
@@ -86,6 +88,8 @@ LinkItem_FishingRod:
     LDA.b $67 : AND.b #$F0 : STA.b $67
 
     JSL FishingSwapCaneBlockHammerGfx
+    LDA.b #$03 : STA.l $7F5BA2
+    LDA.b #$FF : STA.l $7F5BA3
 
     STZ.b $69
     STZ.b $68
@@ -124,12 +128,17 @@ LinkItem_FishingRod:
     PHX
     LDA.b #$2D
     JSL Sprite_SpawnDynamically
+    BPL .spawned
+      PLX
+      JMP EndFishing
+    .spawned
 
     LDA.b $22 : STA.w SprX, Y
     LDA.b $23 : STA.w SprXH, Y
     LDA.b $20 : STA.w SprY, Y
     LDA.b $21 : STA.w SprYH, Y
     LDA.b #$01 : STA.w SprCollision, Y ; is floater
+    LDA.b #!FishingFloaterSignature : STA.w SprMiscA, Y
     TYA : STA.l $7F5BA3 ; keep the index of the sprite
     TYX
     JSL SpritePrep_Floater ; just call it there
@@ -142,9 +151,11 @@ LinkItem_FishingRod:
   .waitforend
 
   LDA.b $F4 : AND #$40 : BEQ .exit
+  JSR Fishing_GetFloater : BCS .reel
+    JMP EndFishing
+  .reel
   LDA.b #$08 : STA $3D ;set timer to 8 frames
   STZ.w $0300 ; set animation frame to 0 (pull back)
-  LDA.l $7F5BA3 : TAX
 
   LDY.b $66
   LDA.w DirSpeedsY, Y : STA.w SprYSpeed, X ; YSpeed
@@ -158,6 +169,7 @@ LinkItem_FishingRod:
   LDA.w SprMiscB, X : BEQ .noPrize
   JSL GetRandomInt : AND #$0F : TAY : LDA Prizes, Y : BEQ .noPrize
     JSL Sprite_SpawnDynamically
+    BMI .noPrize
     JSL Sprite_SetSpawnedCoordinates
 
     LDA.w $0E20, Y : CMP.b #$D2 : BNE .notafish
@@ -186,10 +198,33 @@ LinkItem_FishingRod:
 
 EndFishing:
 {
-  LDA #$00
-  STA.l $7F5BA2
-  LDA.l $7F5BA3 : TAX
-  STZ.w SprState, X
+  JSR Fishing_ClearSession
+  PLB
+  RTL
+}
+
+; C set and X = our live floater; a remembered slot alone is not ownership.
+Fishing_GetFloater:
+{
+  LDA.l $7F5BA3 : CMP.b #$10 : BCS .none
+  TAX
+  LDA.w SprState, X : CMP.b #$09 : BNE .none
+  LDA.w SprType, X : CMP.b #$2D : BNE .none
+  LDA.w SprMiscA, X : CMP.b #!FishingFloaterSignature : BNE .none
+  SEC : RTS
+  .none
+  CLC : RTS
+}
+
+Fishing_ClearSession:
+{
+  LDA.l $7F5BA2 : BEQ .return
+  PHX
+  JSR Fishing_GetFloater : BCC .clear
+    STZ.w SprState, X
+  .clear
+  LDA.b #$00 : STA.l $7F5BA2
+  LDA.b #$FF : STA.l $7F5BA3
   STZ.b $5E
   STZ.w $0300
   STZ.b $3D
@@ -199,8 +234,9 @@ EndFishing:
   AND.b #$BF
   STA.b $3A
   JSL RestoreCaneBlockHammerGfx
-  PLB
-  RTL
+  PLX
+  .return
+  RTS
 }
 
 RodAndCaneAnimationTimer:
@@ -515,20 +551,7 @@ WigglingTable:
 
 DismissRodFromMenu:
 {
-  STZ.w $0300
-  STZ.b $3D
-  LDA #$00
-  STA.l $7F5BA2
-  LDA.l $7F5BA3 : TAX
-  STZ.w SprState, X
-  STZ.b $5E
-  STZ.w $0300
-  STZ.b $3D
-  STZ.w $0350
-  STZ.w $037A
-  LDA.b $3A
-  AND.b #$BF
-  STA.b $3A
+  JSR Fishing_ClearSession
   RTL
 }
 
