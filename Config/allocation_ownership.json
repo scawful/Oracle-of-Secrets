@@ -165,7 +165,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "bcc6df2404dc097f25f9b547699359f924387c7cdaa1c70e87fd571b9f317475"
+      "sha256": "d84d9ed060503addcd32fb75eba136d6931611a932ff79577d4e39d9ff052007"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",

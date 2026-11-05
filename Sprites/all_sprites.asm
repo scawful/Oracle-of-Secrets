@@ -280,6 +280,9 @@ incsrc "Sprites/NPCs/garo.asm"
 ; Unconditional Darknut weapon publication; DBR remains bank $30.
 incsrc "Sprites/Enemies/darknut_weapon_hitbox.asm"
 
+; Local pea-shot contact wrapper: keeps the bank $30 callsite size unchanged.
+incsrc "Sprites/Enemies/business_scrub_shield.asm"
+
 assert pc() <= $328000, "Bank $31 sprite region overflow"
 assert pc() >= $318000, "Bank $31 sprite code left its bank (org without pushpc/pullpc?)"
 print "Bank31 Free Space: ", dec($320000-pc()), " bytes"
@@ -335,9 +338,6 @@ incsrc "Sprites/NPCs/ranch_girl.asm"
 %log_start("cloud_bridge", !LOG_SPRITES)
 incsrc "Sprites/Objects/cloud_bridge.asm"
 %log_end("cloud_bridge", !LOG_SPRITES)
-
-; Local pea-shot contact wrapper: keeps the bank $30 callsite size unchanged.
-incsrc "Sprites/Enemies/business_scrub_shield.asm"
 
 ; A file that orgs into a vanilla bank must pushpc/pullpc, or the next incsrc
 ; lands on vanilla code (fortune_teller.asm put ranch_girl/cloud_bridge on the
