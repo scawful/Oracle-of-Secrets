@@ -180,12 +180,17 @@
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "09590b6f54b127cb425a1f8f806d34ccb4a83d2bea5c5ad92a1b3f3a22d3258b"
+      "sha256": "60f3d6d08220061bf13f0ceef7ea3abccd877685287e865eb04b43401abb53b5"
     },
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
       "path": "Scripts/Generate/sheet_overrides.py",
       "sha256": "a5e77dbeb89121649328406d32d5427a4eb39bc1fb21ba738a95e13a4d55c275"
+    },
+    "shared:Scripts/Build/native_overworld_authoring_metadata.py": {
+      "source_set": "shared",
+      "path": "Scripts/Build/native_overworld_authoring_metadata.py",
+      "sha256": "8ad596b4992a42eba40f8c7cbee6d6bc26f799a680e34ee23bfe467a55866d81"
     }
   },
   "claims": [
@@ -1673,6 +1678,29 @@
       ],
       "anchors": [
         "RESIDENT_DATA_CAPACITY = 0x10000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_authoring_metadata",
+      "owner": "Native special-overworld placement identity and pending endpoint drafts",
+      "space": "snes_rom",
+      "base": 5099520,
+      "size": 8192,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Optional ID412 authoring metadata; one header and255 fixed32-byte slots. No duplicated live terrain or actor coordinates.",
+      "reset": "One-time import preserves nonzero stable IDs, explicit draft optionals and monotonic next ID; tombstones prevent reuse.",
+      "save": "Authoring metadata binds to the same ordered sprite batch. Until that model/writer exists, changed sprite Save is refused; unchanged payload remains exact.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py",
+        "shared:Scripts/Build/native_overworld_authoring_metadata.py"
+      ],
+      "anchors": [
+        "AUTHORING_METADATA_BASE = 0x4DD000",
+        "MAGIC = b'OWPLAC1\\0'"
       ],
       "aliases": []
     }

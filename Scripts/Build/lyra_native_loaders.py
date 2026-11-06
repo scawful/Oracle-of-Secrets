@@ -17,6 +17,8 @@ import struct
 import sys
 import zlib
 
+import native_overworld_authoring_metadata as authoring_metadata
+
 
 FIRST_TAIL_MAP = 0xA0
 MAP_CAPACITY = 0xC0
@@ -33,6 +35,7 @@ ACTORS_BASE = 0x4C8000
 # not write, expand or activate a ROM. Bank47 belongs to graphics sheets DF-FE.
 APPEARANCE_FLAGS_BASE = 0x4D8000
 APPEARANCE_PALETTES_BASE = 0x4D8100
+AUTHORING_METADATA_BASE = 0x4DD000
 RESIDENT_DATA_PC = 0x270000
 RESIDENT_DATA_CAPACITY = 0x10000
 
@@ -150,6 +153,13 @@ def initial_appearance_entries(capacity):
             'Expected160 or192 materialized maps')
     return ((410, APPEARANCE_FLAGS_BASE, capacity),
             (411, APPEARANCE_PALETTES_BASE, 64))
+
+
+def initial_authoring_entry(capacity):
+    """Return the selected412 extent; caller supplies its validated payload."""
+    require(type(capacity) is int and capacity in (160, 192),
+            'Expected160 or192 materialized maps')
+    return 412, AUTHORING_METADATA_BASE, 256
 
 
 def _row_bytes(value, stride, name):
@@ -280,6 +290,8 @@ def entry_spec(entry_id, capacity, revision=3):
         return 8, capacity, 1
     if revision == 4 and entry_id == 411:
         return 8, 64, 256
+    if revision == 4 and entry_id == 412:
+        return 9, 256, 32
     raise ValueError('Unknown native directory entry')
 
 
@@ -315,13 +327,16 @@ def _encode_native_directory(image, entries, *, tail_actor_bank, capacity, revis
                                  300, 301, 400, 401, 402, 403, 404}
     if revision == 4:
         expected |= {410, 411}
+    authoring = revision == 4 and any(row[0] == 412 for row in entries)
+    if authoring:
+        expected.add(412)
     require(len(entries) == len(expected) and {row[0] for row in entries} == expected,
             f'Expected exactly{len(expected)} unique native directory entries')
     directory = bytearray(DIRECTORY_SIZE)
     directory[:8] = MAGIC
     struct.pack_into('<6HBBHII', directory, 8, revision, 32, 32 + 16 * len(entries),
                      capacity, capacity, len(entries), tail_actor_bank,
-                     0x0C if revision == 3 else 0x1C,
+                     0x0C if revision == 3 else (0x3C if authoring else 0x1C),
                      2 * capacity, len(image), 0)
     spans = [(DIRECTORY_PC, DIRECTORY_PC + DIRECTORY_SIZE)]
     for index, (entry_id, address, count) in enumerate(sorted(entries)):
@@ -349,6 +364,8 @@ def _encode_native_directory(image, entries, *, tail_actor_bank, capacity, revis
         if entry_id == 411:
             require(all(word <= 0x7FFF for word in struct.unpack('<8192H', image[start:start + length])),
                     'Invalid native BGR555 appearance color')
+        if entry_id == 412:
+            authoring_metadata.decode(image[start:start + length], capacity)
         spans.append((start, start + length))
         struct.pack_into('<HHIHHI', directory, 32 + index * 16, entry_id, kind,
                          address, count, stride, zlib.crc32(image[start:start + length]))
@@ -370,14 +387,17 @@ def read_native_directory(image):
         return None
     fingerprint = ((raw[8:14], raw[18:20]) in (
         (b'\x03\x00\x20\x00\x80\x03', b'\x36\x00'),
-        (b'\x04\x00\x20\x00\xA0\x03', b'\x38\x00')))
+        (b'\x04\x00\x20\x00\xA0\x03', b'\x38\x00'),
+        (b'\x04\x00\x20\x00\xB0\x03', b'\x39\x00')))
     if not raw.startswith(b'OOSOW') and not fingerprint:
         return None
     require(raw[:8] == MAGIC and struct.unpack_from('<H', raw, 8)[0] in (3, 4),
             'Ordinary Build requires the installed revision3 or revision4 special-overworld format')
     revision, header_size, used_size, capacity, materialized, count, bank, flags, stride, size, _ = (
         struct.unpack_from('<6HBBHII', raw, 8))
-    expected_count, expected_flags = (54, 0x0C) if revision == 3 else (56, 0x1C)
+    authoring = revision == 4 and flags & 0x20 != 0
+    expected_count, expected_flags = ((54, 0x0C) if revision == 3 else
+                                      (57, 0x3C) if authoring else (56, 0x1C))
     require(header_size == 32 and used_size == 32 + expected_count * 16 and count == expected_count
             and materialized == capacity and flags == expected_flags and stride == 2 * capacity
             and size == len(image), 'Invalid installed native directory header')

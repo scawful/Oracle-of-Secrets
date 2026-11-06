@@ -8,6 +8,7 @@ import unittest
 import zlib
 
 SOURCE = Path(__file__).resolve().parents[1] / 'lyra_native_loaders.py'
+sys.path.insert(0, str(SOURCE.parent))
 SPEC = importlib.util.spec_from_file_location('native_overworld_producer', SOURCE)
 N = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = N
