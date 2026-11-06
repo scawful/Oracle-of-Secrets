@@ -3133,3 +3133,21 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Options shown: "Yes, use 4.2 (pick)", "Change some first".
   Answer: "yes 4.2 works but some of these like bombchu will need a gated
   randomized grant or way to buy/get more" (scawful, 2026-11-05).
+
+* DECIDED Consumable refills after the first grant (PLAN 4.2a) (2026-11-05)
+  :PROPERTIES:
+  :ASKED_BY: Claude (consumables + Vasu evaluation)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/consumables_vasu_2026-11-05/PLAN.md (4.2a)
+  :END:
+  A native prize drop turns into the consumable only after its first grant
+  (the built Bombchu $DD pattern); before it the drop stays vanilla.
+  1. Bombchu: $DD gives +5 after ownership (built); some $DD drops stay regular
+     bombs (split is a Codex check); 5-pack in Village shop 0x46.
+  2. Deku Stick: one prize drop gives 1 stick in forest/Deku areas; Business Scrub sells.
+  3. Honeycomb: bee tree refills once per area entry; no drop.
+  4. Pineapple: rare Kalyxo bush drop after the first pickup; no shop.
+  5. Banana: Village shop (built); no drop.
+  6. Seashell, Rock Meat: fixed count, no refill.
+  Prices are a separate approval.
+  Options shown: "Table 4.2a (pick)", "Shops only", "Drops only".
+  Answer: "Table 4.2a (pick)" (scawful, 2026-11-05).
