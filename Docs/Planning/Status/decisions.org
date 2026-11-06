@@ -3991,3 +3991,17 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   1. The goal cave on the north horn (B4) gives a magic ring (Items/magic_rings.asm).
   2. The ring is not needed for the main route (fits 7dcb9fc5, optional quest).
   3. Still open: which ring. Codex checks a free ring slot.
+
+* DECIDED Crescent island: the grotto ring is the Light Ring (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Courage island plan), follows 83463335 (the grotto gives a magic ring)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+  :END:
+  Question: "Which ring does the grotto give?"
+  Options shown: "Light Ring (pick)" (fixed reward), "New 7th ring" (free bit $40/$80),
+  plus a random MagicRing_GrantUnfound grant in chat (rejected: it can grant nothing).
+  Answer: "Light Ring (pick)" (scawful, 2026-11-06)
+  1. The north horn grotto always gives the Light Ring (!RingID_Light, bit $04).
+     It pays off the sword Link just won back: beams below full health.
+  2. Codex: keep the Light Ring out of the random ring pool (Eon Zora $1AE, Error $121)
+     or handle a duplicate; pick FOUNDRINGS (Vasu appraises) vs MAGICRINGS (owned).
