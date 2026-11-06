@@ -3206,3 +3206,19 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      across the / land. Vasu can tell you more."
   Options shown: "Approve all 7 (pick)", "Change some".
   Answer: "Approve all 7 (pick)" (scawful, 2026-11-05).
+
+* DECIDED Boss Key / Treasure Key rename text (provisional; ridoyie later) (2026-11-05)
+  :PROPERTIES:
+  :ASKED_BY: Claude (consumables + Vasu evaluation)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/key_rename_2026-11-05/DRAFT.md
+  :END:
+  Direction: "i think boss key and treasure key might be better rebrandings" (scawful).
+  Big Key -> Boss Key; Big Chest Key -> Treasure Key. Final once proven on screen.
+  1. $6C: "You got the Boss Key! It / opens the dungeon's big / locked doors, the boss's too."
+  2. $5F: "You found the Treasure Key! / Use it to unlock the big / treasure chest of the dungeon!"
+  3. $7A: "Eh?  It's locked! / If you had the Boss Key, you / might be able to open it!"
+  4. $B8 lines 4-6: "Treasure Key - Enable users / to hide their valuables without /
+     compromising Boss Key security."
+  Write route, $7A use at big chests, Spanish copies and menu labels are Codex checks.
+  Options shown: "Approve all 4 (pick)", "Change some".
+  Answer: "Approve all 4 (pick)" (scawful, 2026-11-05).
