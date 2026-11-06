@@ -4305,3 +4305,22 @@ Answer: "Briefing only" (scawful, 2026-11-06)
   Not decided: which Storyteller pair stays; what freed rooms become; exact new door spots.
   Codex checks before each removal: exit-table entries for shared rooms, 0x21 costs the $F9
   corridor, Lyra needs tail-map entrance rows first.
+
+* DECIDED After D4, D5 and the desert/Power/D6 chain run in either order (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude, progression review
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/progression_review_2026-11-06/README.md
+  :END:
+  scawful before the ask: "analyze the map, plot and the game progression and give suggestions".
+  Question: Which gap should get a decision first?
+  Options shown: 1 Parallel D5/D6 (pick): after D4, D5 and desert -> Shrine of Power -> Rock Meat
+  -> D6 are two branches in either order, no D5 gate; 2 Return ferry Docks <-> Sea Zora island.
+  Answer: "Parallel D5/D6 (pick)" (scawful, 2026-11-06)
+  Follow-up: "yeah i think nonlinear works at that stage and some players were promised nonlinear elements years ago so this works and will make the midgame better and if we have item dependencies we can make fixes" (scawful, 2026-11-06)
+  Effect: closes the open post-D5 Power/Goron gate question as "no D5 gate". Song of Soaring,
+  the Sky and later beats still follow both D5 and D6.
+  Item dependencies get fixed, not used as a reason to reorder: Shrine of Power, the Lyra Rock Meat
+  path and D6 must work without D5 items (Fire Rod, Twinrova's death, Ranch Girl curse lift),
+  and D5 must work without the Power Glove, Hammer or Bombchu.
+  Not decided: what opens the desert after D4 (the "D4-D6 after D3" map-icon gate stays as is);
+  whether D6 difficulty 7 changes when it can come before D5 (difficulty 6).
