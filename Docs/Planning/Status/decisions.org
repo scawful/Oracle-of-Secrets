@@ -3887,3 +3887,18 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      for now but it'll likely great a proper structure similar to palace of darkness and how
      it's placed in its vanilla map". scawful authors that layout manually.
   4. Unchanged: QUEUE row 28 (Wizzrobe/Sluggula class restore) still applies to S3's rooms.
+
+* DECIDED Courage island arrival: wreck look only, no stranded quest (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Courage jungle island plan), after scawful asked for island ideas
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+  :END:
+  Context (scawful, 2026-11-06): "the shrine itself probably should have a structure of some kind, not just like a cave that you walk into. But I wanted to use the cliffs to be the borders of the top and the right edge of this map."
+  Question: "Which arrival should the island have?"
+  Options shown: "Wreck look only (pick)", "Stranded quest" (Oracle of Ages Crescent Island style).
+  Answer: "Wreck look only" (scawful, 2026-11-06)
+  1. The south-beach landing on Lyra $AF gets a shipwreck look (hull, driftwood, camp).
+     No item loss, no stranded quest, no new story beat.
+  2. The Shrine of Courage gets a structure in the NE corner, placed like Palace of Darkness
+     on vanilla $5E; the top and right cliffs stay the map borders. scawful authors the layout.
+  3. Open: temple art source, Somaria gate mechanic, and the tail-map entrance row (Codex).
