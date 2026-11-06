@@ -3384,3 +3384,17 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   F2 $A7 Vigil mirror walk.
   Answer: "B1 archive (pick)" (scawful, 2026-11-06).
   Pad rules and room layouts are a concept, not decided. Farore Hold stays for still plates.
+
+* DECIDED D8 F2 works floor layouts kept as drawn (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (D8 design lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d8_vision_2026-11-05/F2_LAYOUTS.md
+  :END:
+  Ask: "Keep F2 as drawn, or rework one room?" (d8_f2_works_layouts.png).
+  Options shown: "Keep (pick)", "Rework $A0".
+  Answer: "Keep (pick)" (scawful, 2026-11-06).
+  Kept: $A0 three weights (Farore, Somaria block, swapped statue) open the S shutter;
+  $B0 Link alone to the Boss Key (swaps, Stalfos Knight, junction ride, Feather hop);
+  $A7 Bari kill room, Watcher statue ring, 4 Bow eyes -> dais stair to $A6. The K door to
+  $A7 sits in $A0 NE; the built $95 stair (8,4) is the shortcut; the $95 stair to $A6 goes.
+  Positions are approximate until Codex checks (QUEUE.md row 19).
