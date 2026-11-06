@@ -266,6 +266,87 @@ def lower_actor_lists(streams, *, data_snes, capacity):
     return bytes(payload), pointers
 
 
+def lower_authored_actor_lists(authored, geometry):
+    """One-time legacy actor import, using explicit gameplay-area assignments.
+
+    ``authored`` is an insertion-ordered map->sprites/doors/exits projection;
+    terrain, profiles and asset binding validation belong to their import seams.
+    Traverse its maps and each sprite list in source order, never ID order.
+    Return all96 explicit runtime lists and ID412 bytes, without ROM writes.
+    Endpoints remain pending: a destination ID is never an invented row.
+    """
+    maps = set(range(FIRST_TAIL_MAP, MAP_CAPACITY))
+    require(type(authored) is dict and type(geometry) is dict
+            and all(type(k) is int for k in authored)
+            and all(type(k) is int for k in geometry)
+            and set(authored) == maps and set(geometry) == maps,
+            'Actor import requires all32 explicit maps and gameplay assignments')
+    require(all(type(row) is dict and set(row) == {'parent', 'area_size'}
+                for row in geometry.values()), 'Invalid actor import geometry')
+    _validate_tail_areas(geometry)
+    require(all(type(row) is dict and set(row) == {'sprites', 'doors', 'exits'}
+                and all(type(value) is list for value in row.values())
+                for row in authored.values()), 'Invalid actor import collections')
+    lists = {(m, phase): bytearray() for m in authored for phase in range(3)}
+    placements = []
+
+    def integer(value, maximum, name):
+        require(type(value) is int and 0 <= value <= maximum,
+                f'Invalid authored {name}')
+        return value
+
+    def common(value, keys):
+        require(type(value) is dict and set(value) == keys,
+                'Unknown or missing authored placement field')
+        identity = integer(value['id'], 0xFFFFFFFE, 'placement ID')
+        require(identity != 0, 'Authored placement ID must be nonzero')
+        return dict(id=identity), integer(value['x'], 31, 'X'), integer(value['y'], 31, 'Y')
+
+    # Sprites precede endpoints in ID412. Each category preserves the saved
+    # source traversal order; runtime rows preserve order within each owner.
+    for map_id, row in authored.items():
+        parent = geometry[map_id]['parent']
+        for sprite in row['sprites']:
+            value, x, y = common(sprite, {'id', 'x', 'y', 'state', 'sprite_id'})
+            phase = integer(sprite['state'], 2, 'sprite phase')
+            code = integer(sprite['sprite_id'], 255, 'sprite code')
+            x += (map_id % 8 - parent % 8) * 32
+            y += (map_id // 8 - parent // 8) * 32
+            stream = lists[(parent, phase)]
+            ordinal = len(stream) // 3
+            require(ordinal < 128, 'Authored owner/phase exceeds128 sprites')
+            packed = [y, x, code]
+            stream.extend(packed)
+            value.update(kind=1, state=1, phase=phase, owner_map=parent,
+                         ordinal=ordinal, packed=packed)
+            placements.append(value)
+    for kind, collection in ((2, 'doors'), (3, 'exits')):
+        for map_id, row in authored.items():
+            for endpoint in row[collection]:
+                fields = ({'id', 'x', 'y', 'entrance_id'} if kind == 2
+                          else {'id', 'x', 'y', 'room_id', 'exit_row'})
+                value, x, y = common(endpoint, fields)
+                target = endpoint['entrance_id' if kind == 2 else 'room_id']
+                if target is not None:
+                    integer(target, 255 if kind == 2 else 65535, 'endpoint target')
+                require(kind == 2 or target is not None,
+                        'Authored return requires its destination room')
+                assigned_row = None if kind == 2 else endpoint['exit_row']
+                if assigned_row is not None:
+                    integer(assigned_row, 0x4E, 'return row')
+                value.update(kind=kind, state=2, map=map_id, x=x, y=y,
+                             target=target, row=assigned_row)
+                placements.append(value)
+    metadata = dict(next_placement_id=max((p['id'] for p in placements), default=0) + 1,
+                    placements=placements)
+    encoded = authoring_metadata.encode(metadata, MAP_CAPACITY)
+    streams = {key: bytes(value) + b'\xFF' for key, value in lists.items()}
+    # Reuse the production stream validator, including all96 lists and its
+    # exact bank capacity; a child page has an explicit empty dormant list.
+    lower_actor_lists(streams, data_snes=ACTORS_BASE, capacity=0x8000)
+    return streams, encoded
+
+
 def entry_spec(entry_id, capacity, revision=3):
     require(revision in (3, 4), 'Unsupported native source revision')
     strides = (2, 1, 1, 1, 2, 8, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3,

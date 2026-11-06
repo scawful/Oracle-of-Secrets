@@ -180,7 +180,7 @@
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "60f3d6d08220061bf13f0ceef7ea3abccd877685287e865eb04b43401abb53b5"
+      "sha256": "5814d7f8254804b8e8415fe0a18775cfc253f43b4cb3b64029c836b091205712"
     },
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
