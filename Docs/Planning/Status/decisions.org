@@ -4085,3 +4085,15 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   1. Direction only: open sea maps get objects and small islands; full islands keep dedicated maps.
   2. Moving full islands a little is allowed.
   3. Open: what goes on each open map. Claude drafts a sketch for scawful.
+
+* DECIDED Lyra Sea islets hold small finds (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (sea-fill sketch, renders/05_sea_fill.png)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+  :END:
+  Question: Should the small islets hold small finds, or be scenery only?
+  Options shown: Small finds (pick) / Scenery only
+  Answer: "Small finds (pick)" (scawful, 2026-11-06)
+  1. The sea-fill islets and objects (sketch: $A3 $A5 $AA $AC $B2 $B5 $B6 $BA $BD) carry small finds, such as a seashell at a fixed pickup spot.
+  2. Rock Meat stays near $B0/$B8 under its own ruling.
+  3. Open: which map gets which find, and the per-map sketch itself (draft, not yet approved).
