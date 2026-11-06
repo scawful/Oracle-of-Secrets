@@ -4262,3 +4262,20 @@ Answer: "Briefing only" (scawful, 2026-11-06)
   its piece. The $127 piece is not one of the 36 (rewards_inventory_2026-11-06/INVENTORY.md:18),
   so re-homing it would make 37. FIX_PLAN step 5 for $127 becomes a delete, not a route fix.
   Room $127 as the Sky temple stays a tentative pick (cave audit, not DECIDED).
+
+* DECIDED Lone-cave thieves move into the Toadstool hideout (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude, Kalyxo cave evaluation
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/kalyxo_cave_audit_2026-11-06/EVALUATION.md
+  :END:
+  scawful before the ask: "some of these hints may be better off moved anyway"
+  Question: Which hints move?
+  Options shown: 1 Thieves into the hideout (pick): the $124 mask-shop thief and the $11E
+  rupee-gift thief move into Toadstool $E1; 2 Each hint moves to where it points (Zeniea's
+  Heart Piece has no spot); 3 Empty caves only; 4 Hold until the needs list is final.
+  Answer: "Thieves home (pick)" (scawful, 2026-11-06)
+  Scope: NPC placement only. Their text is unchanged (0x177 mask shop hint, 0x176 rupee gift).
+  Effect: Kalyxo markers 0x6D and 0x55 and rooms $124 and $11E become reclaim candidates.
+  Not decided: Zeniea $10A and the Storyteller $10E stay; what the freed rooms become.
+  Codex checks before freeing a room: vanilla ShopMan picks the thief subtype by room ID
+  (usdasm bank_06:2474), and $124 also has the Abyss entrance 0x6E.
