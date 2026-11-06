@@ -268,7 +268,9 @@ def main():
     # remains resident for rigged charge; omit only that standalone table entry
     # when preparing a future combined binding, retaining the current 8-bit ABI.
     omitted=['warden_idle_side']
-    if args.body_motion:omitted+=['protector_idle_front','protector_idle_side']
+    # Keep the side-facing protector entry for the selected valve assist;
+    # front can share the identical healing-pose table later.
+    if args.body_motion:omitted+=['protector_idle_front']
     runtime_frames={name:f for name,f in kept.items() if name not in omitted}
     runtime_frames.update({'warden_slam_'+name:f for name,f in frames.items()})
     entries=sum(len(f['oam']) for f in runtime_frames.values())
@@ -277,7 +279,7 @@ def main():
     result['runtime_table_plan']=dict(omitted_preview_frames=omitted,art_cells_removed=False,
                                       frame_names=list(runtime_frames),entries=entries,coordinate_bytes_per_axis=entries*2,
                                       sprite_oam_count_minus_one=max(len(f['oam']) for f in runtime_frames.values())-1,
-                                      legacy_frame_aliases={'warden_brace':'warden_slam_held','warden_vent':'warden_slam_recover'} if args.body_motion else {},installed=False)
+                                      legacy_frame_aliases={'warden_brace':'warden_slam_windup','warden_vent':'warden_slam_recover','protector_idle_front':'protector_healing'} if args.body_motion else {},installed=False)
     (out/'RECEIPT.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({k:result[k] for k in ('status','baseline_obj_cells','new_obj_cells','total_obj_cells','free_obj_cells','rom_written')},indent=2))
 
