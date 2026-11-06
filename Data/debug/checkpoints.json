@@ -992,7 +992,7 @@
     },
     {
       "id": "d8-sky-boss-room",
-      "label": "D8 Sky boss room $96 (fall in from the Fortress; spawn the boss with the macro)",
+      "label": "D8 Sky boss room $96 (authored arena and boss)",
       "beat": 27,
       "after": "maku-seed-ready",
       "location": {
@@ -1006,7 +1006,7 @@
         "room": "0x0096"
       },
       "writes": [],
-      "notes": "Room $96 is where D8Boss_LoadGfx loads the boss sheets (Sprites/Bosses/d8_boss.asm:634). No room places sprite $C3 yet, and the tower rooms $90-$96 exist only in the private D8 project ROM, so this ROM's room $96 layout is a stand-in. The location 'room' needs Mesen2 OOS 19ab830c or newer. Not natively checked on the experimental ROM."
+      "notes": "The main test ROM includes the authored D8 tower rooms and sprite $C3 in room $96. D8Boss_LoadGfx supplies its custom graphics with D8_BOSS enabled. Do not spawn a second boss. This checkpoint uses Mesen2 OOS 19ab830c or newer for location.room. Native entry and reload acceptance remain pending."
     },
     {
       "id": "kydreeok-fight",
