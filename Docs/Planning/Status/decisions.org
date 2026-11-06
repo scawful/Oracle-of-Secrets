@@ -3182,3 +3182,27 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Spanish copies; the new first-pickup, ring-found and Eon Zora after-gift lines.
   Options shown: "Approve fixes (pick)", "Show full messages".
   Answer: "Approve fixes (pick)" (scawful, 2026-11-05).
+
+* DECIDED Consumable, ring-found and Eon Zora lines (provisional; ridoyie later) (2026-11-05)
+  :PROPERTIES:
+  :ASKED_BY: Claude (consumables + Vasu evaluation)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/consumables_vasu_2026-11-05/PLAN.md (4.5)
+  :END:
+  Seven new messages, exact text in PLAN 4.5 (each line <= 30 chars). Final once
+  proven on screen; message IDs are a Codex check.
+  1. Deku Stick: "You got Deku Sticks! Use one / from the Magic Bag to light /
+     torches. It burns out in time."
+  2. Honeycomb: "You got a Honeycomb! Use it / from the Magic Bag, and three /
+     friendly bees fight for you."
+  3. Seashell: "You found a Seashell! The / map-maker on the coast / trades
+     secrets for shells."
+  4. Pineapple: "You got a Pineapple! Eat it / from the Magic Bag to fill /
+     your magic meter."
+  5. Bombchu: "You got Bombchus! They run / along the ground and blow up /
+     when they hit something."
+  6. Ring found: "You found a ring! Its power is / unknown until it is appraised. /
+     Vasu, the jeweler, can help."
+  7. Eon Zora after the gift: "That ring came from the shore. / Others are hidden
+     across the / land. Vasu can tell you more."
+  Options shown: "Approve all 7 (pick)", "Change some".
+  Answer: "Approve all 7 (pick)" (scawful, 2026-11-05).
