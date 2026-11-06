@@ -93,6 +93,10 @@ WaterGate_CompleteRoom:
     BRA .done
 
   .legacy_fallback
+if !ENABLE_WATER_FILL_V2 == 1
+  ; A saved v2 table is authoritative, including omitted rooms and header $80.
+  LDA.l Oracle_WaterFillTable : BMI .done
+endif
   ; Back-compat: if the table is missing/uninitialized, fall back to the
   ; original hardcoded D4 room data.
   LDA.b $A0
@@ -366,6 +370,10 @@ WaterGate_CheckRoomEntry:
       BRA .done
 
   .legacy_fallback
+if !ENABLE_WATER_FILL_V2 == 1
+  ; A saved v2 table is authoritative, including omitted rooms and header $80.
+  LDA.l Oracle_WaterFillTable : BMI .done
+endif
   ; Back-compat: if the table is missing/uninitialized, fall back to the
   ; original hardcoded D4 room data.
   LDA.b $A0

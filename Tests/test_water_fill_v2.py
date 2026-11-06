@@ -89,6 +89,33 @@ class WaterFillV2Test(unittest.TestCase):
         data[0x12E000] = 0x80
         self.assertEqual(water.read_saved_v2_table(data), ({}, {}))
 
+    def test_saved_omission_and_empty_set_do_not_regenerate_marker_room(self):
+        for empty in (False, True):
+            with self.subTest(empty=empty), tempfile.TemporaryDirectory() as tmp:
+                data = self.make_saved_table()
+                # A real custom-collision stream still authors room $27's F5
+                # marker, but the saved v2 set omits that room.
+                entry = 0x128090 + 0x27 * 3
+                data[entry:entry + 3] = bytes([0x50, 0x84, 0x25])
+                data[0x128450:0x128459] = bytes(
+                    [0, 0, 1, 1, 0xF5, 0xF0, 0xF0, 0xFF, 0xFF])
+                self.assertEqual(water.collect_marker_offsets(data, 255, 0xF5),
+                                 {0x27: [0]})
+                if empty:
+                    data[0x12E000:0x130000] = bytes([0x80]) + bytes(0x1FFF)
+                rom, output = Path(tmp) / "saved.sfc", Path(tmp) / "water.asm"
+                rom.write_bytes(data)
+                with patch("sys.argv", ["generate_water_fill_table.py", "--rom", str(rom),
+                                        "--out-asm", str(output), "--format-version", "2"]):
+                    self.assertEqual(water.main(), 0)
+                text = output.read_text()
+                self.assertNotIn("WaterFillData_Room27", text)
+                if empty:
+                    self.assertIn("db $80", text)
+                    self.assertNotIn("WaterFillData_Room25", text)
+                else:
+                    self.assertIn("WaterFillData_Room25", text)
+
     def test_saved_bad_word_count_refuses(self):
         data = self.make_saved_table()
         struct.pack_into("<H", data, 0x12E005, 0xFFFF)
