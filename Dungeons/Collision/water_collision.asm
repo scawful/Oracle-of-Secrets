@@ -30,13 +30,13 @@
 ; ROM location (PC):   $12E000..$12FFFF
 ;
 ; Format:
-;   db zone_count
+;   db zone_count (bit 7 selects v2 when ENABLE_WATER_FILL_V2 is enabled)
 ;   repeat zone_count:
 ;     db room_id
 ;     db sram_bit_mask
 ;     dw data_offset (relative to table start)
 ;   then data sections:
-;     db tile_count
+;     db tile_count (v1), or dw tile_count (v2)
 ;     dw offsets...
 ;
 Oracle_WaterFillTable = $25E000
@@ -175,8 +175,9 @@ WaterGate_Room25Tag_Hook:
 ;   A (8-bit) = room id ($A0)
 ; Output:
 ;   C=1 if found, C=0 if not found/invalid
-;   $00-$02 = 24-bit pointer to tile data (db tile_count, dw offsets...)
+;   $00-$02 = 24-bit pointer to tile data (count, dw offsets...)
 ;   $03     = SRAM bit mask for this room (single bit in WaterGateStates)
+;   $04     = count-width flag ($80 for v2, $00 for v1 or legacy fallback)
 ;
 ; Clobbers: A, X, $04-$05
 ; Requires: Direct Page (D) = $0000
@@ -187,6 +188,9 @@ WaterFill_FindRoomInTable:
 
   ; zone_count (0 means absent). Treat >8 as absent for safety.
   LDA.l Oracle_WaterFillTable
+if !ENABLE_WATER_FILL_V2 == 1
+  AND.b #$7F
+endif
   BEQ .not_found
   CMP.b #$09 : BCS .not_found
   STA.b $04
@@ -215,6 +219,10 @@ WaterFill_FindRoomInTable:
     STA.b $00
     LDA.b #$25 : STA.b $02
 
+if !ENABLE_WATER_FILL_V2 == 1
+    ; The scan no longer needs $04. Return the count width in that scratch byte.
+    LDA.l Oracle_WaterFillTable : AND.b #$80 : STA.b $04
+endif
     SEP #$10
     SEC
     RTS
@@ -226,6 +234,10 @@ WaterFill_FindRoomInTable:
   STZ.b $01
   STZ.b $02
   STZ.b $03
+if !ENABLE_WATER_FILL_V2 == 1
+  ; All hardcoded fallback records retain their original one-byte count.
+  STZ.b $04
+endif
   CLC
   RTS
 }
@@ -237,7 +249,7 @@ WaterFill_FindRoomInTable:
 ; deep water collision (type $08) to $7F2000
 ;
 ; Data format:
-;   db <tile_count>
+;   db <tile_count> (v1/legacy), or dw <tile_count> (v2)
 ;   dw <offset1>, <offset2>, ...  ; Offsets into $7F2000
 ;
 WaterGate_ApplyCollision:
@@ -253,12 +265,31 @@ WaterGate_ApplyCollision:
   PEA.w $7F7F : PLB : PLB  ; Set bank to $7F for collision writes
 
   SEP #$20
+if !ENABLE_WATER_FILL_V2 == 1
+  LDA.b $04 : BMI .word_count
+  LDA.b [$00] : STA.b $04
+  STZ.b $05
+  REP #$30
+  INC.b $00
+  BRA .count_ready
+
+  .word_count
+  REP #$30
+  LDA.b [$00] : STA.b $04
+  INC.b $00 : INC.b $00
+
+  .count_ready
+  LDA.b $04 : BEQ .done
+  ; A zone cannot address more than the 64x64 collision grid.
+  CMP.w #$1001 : BCS .done
+else
   LDA.b [$00] : STA.b $04  ; Tile count
   STZ.b $05                 ; Clear high byte for 16-bit decrement
   BEQ .done
 
   REP #$30                  ; 16-bit A and X/Y
   INC.b $00  ; Advance past tile count byte
+endif
 
   LDY.w #$0000
 

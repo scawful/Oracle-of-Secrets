@@ -153,6 +153,44 @@ def validate_mask(mask: int) -> bool:
     return mask in {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80}
 
 
+def read_saved_v2_table(data: bytes) -> tuple[Dict[int, List[int]], Dict[int, int]] | None:
+    """Read the normal editor's authoritative v2 zones, if present.
+
+    Legacy bases have no editor table and continue using painted F5 markers.
+    A v2 header with zero rooms is an explicitly saved empty zone set.
+    """
+    start = snes_to_pc(WATER_FILL_TABLE_SNES)
+    if start >= len(data) or not data[start] & 0x80:
+        return None
+    if start + 0x2000 > len(data):
+        raise ValueError("Saved v2 WaterFill table region is truncated")
+    count = data[start] & 0x7F
+    if count > 8:
+        raise ValueError("Saved v2 WaterFill table has more than 8 rooms")
+    header_size = 1 + 4 * count
+    zones: Dict[int, List[int]] = {}
+    masks: Dict[int, int] = {}
+    used_masks = set()
+    for i in range(count):
+        entry = start + 1 + 4 * i
+        room, mask = data[entry], data[entry + 1]
+        offset = read16(data, entry + 2)
+        if room in zones or not validate_mask(mask) or mask in used_masks:
+            raise ValueError("Saved v2 WaterFill room/mask assignment is invalid")
+        if not header_size <= offset <= 0x1FFE:
+            raise ValueError("Saved v2 WaterFill count overlaps header or region end")
+        tile_count = read16(data, start + offset)
+        if tile_count > 64 * 64 or offset + 2 + 2 * tile_count > 0x2000:
+            raise ValueError("Saved v2 WaterFill tile data exceeds grid or reserved region")
+        values = [read16(data, start + offset + 2 + 2 * j) for j in range(tile_count)]
+        if any(value > 0x0FFF for value in values):
+            raise ValueError("Saved v2 WaterFill tile offset exceeds the collision grid")
+        zones[room] = sorted(set(values))
+        masks[room] = mask
+        used_masks.add(mask)
+    return zones, masks
+
+
 def assign_room_masks(
     marker_rooms: Sequence[int],
     explicit_masks: Dict[int, int],
@@ -188,7 +226,13 @@ def assign_room_masks(
     return assigned
 
 
-def build_layout(marker_offsets: Dict[int, List[int]], room_masks: Dict[int, int]) -> Dict[int, int]:
+def build_layout(
+    marker_offsets: Dict[int, List[int]],
+    room_masks: Dict[int, int],
+    format_version: int = 1,
+) -> Dict[int, int]:
+    if format_version not in (1, 2):
+        raise ValueError("WaterFill format version must be 1 or 2")
     rooms = sorted(marker_offsets)
     if len(rooms) > 8:
         raise ValueError(f"Found {len(rooms)} water fill rooms, runtime max is 8")
@@ -199,9 +243,11 @@ def build_layout(marker_offsets: Dict[int, List[int]], room_masks: Dict[int, int
 
     for room_id in rooms:
         offsets = marker_offsets[room_id]
-        if len(offsets) > 0xFF:
+        limit = 0xFF if format_version == 1 else 64 * 64
+        if len(offsets) > limit:
             raise ValueError(
-                f"Room {room_id:02X}: {len(offsets)} marker tiles, runtime max per room is 255 (db tile_count)"
+                f"Room {room_id:02X}: {len(offsets)} marker tiles, "
+                f"format v{format_version} max per room is {limit}"
             )
         for off in offsets:
             if off < 0 or off > 0x0FFF:
@@ -209,7 +255,7 @@ def build_layout(marker_offsets: Dict[int, List[int]], room_masks: Dict[int, int
                     f"Room {room_id:02X}: marker offset {off:#06x} out of 64x64 collision bounds (0x0000..0x0FFF)"
                 )
         data_offsets[room_id] = running
-        running += 1 + (len(offsets) * 2)
+        running += format_version + (len(offsets) * 2)
 
     table_span = running
     if table_span > 0x2000:
@@ -235,7 +281,10 @@ def write_asm(
     marker_offsets: Dict[int, List[int]],
     room_masks: Dict[int, int],
     data_offsets: Dict[int, int],
+    format_version: int = 1,
 ) -> None:
+    if format_version not in (1, 2):
+        raise ValueError("WaterFill format version must be 1 or 2")
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     rooms = sorted(marker_offsets)
@@ -246,15 +295,22 @@ def write_asm(
     lines.append(f"; Source ROM filename: {rom_path.name}")
     lines.append(f"; Marker tile: {fmt_hex(marker_tile)}")
     lines.append("; Format at $25E000:")
-    lines.append(";   db zone_count")
+    if format_version == 1:
+        lines.append(";   db zone_count")
+    else:
+        lines.append(";   db $80|zone_count (v2)")
     lines.append(";   repeat zone_count: db room_id, mask, dw data_offset")
-    lines.append(";   data: db tile_count, dw offsets...")
+    count_directive = "db" if format_version == 1 else "dw"
+    lines.append(f";   data: {count_directive} tile_count, dw offsets...")
     lines.append("")
     lines.append("pushpc")
     lines.append(f"org {fmt_hex(WATER_FILL_TABLE_SNES, 6)}")
+    if format_version == 2:
+        lines.append('assert !ENABLE_WATER_FILL_V2 == 1, "v2 water-fill table requires ENABLE_WATER_FILL_V2"')
     lines.append("WaterFillTable_Generated:")
     lines.append("{")
-    lines.append(f"  db {fmt_hex(len(rooms))}")
+    header = len(rooms) | (0x80 if format_version == 2 else 0)
+    lines.append(f"  db {fmt_hex(header)}")
     for room_id in rooms:
         mask = room_masks[room_id]
         data_off = data_offsets[room_id]
@@ -270,7 +326,8 @@ def write_asm(
         offsets = marker_offsets[room_id]
         lines.append(f"WaterFillData_Room{room_id:02X}:")
         lines.append("{")
-        lines.append(f"  db {fmt_hex(len(offsets))} ; mask={fmt_hex(room_masks[room_id])}")
+        width = 2 if format_version == 1 else 4
+        lines.append(f"  {count_directive} {fmt_hex(len(offsets), width)} ; mask={fmt_hex(room_masks[room_id])}")
         for i in range(0, len(offsets), 10):
             chunk = offsets[i : i + 10]
             lines.append("  dw " + ", ".join(fmt_hex(off, 4) for off in chunk))
@@ -287,6 +344,10 @@ def main() -> int:
         description="Generate WaterFillTable from custom collision marker tiles."
     )
     parser.add_argument("--rom", type=Path, required=True, help="Source ROM path (typically Yaze-edited ROM).")
+    parser.add_argument(
+        "--format-version", type=int, choices=(1, 2), default=1,
+        help="Runtime table format; v2 uses 16-bit counts and requires ENABLE_WATER_FILL_V2.",
+    )
     parser.add_argument(
         "--out-asm",
         type=Path,
@@ -329,14 +390,20 @@ def main() -> int:
             raise SystemExit(f"Invalid mask for room {room_id:#x}: {mask:#x} (must be single bit 0x01..0x80)")
 
     rom_data = rom_path.read_bytes()
-    marker_offsets = collect_marker_offsets(
-        rom_data,
-        room_max=args.room_max,
-        marker_tile=args.marker_tile,
-    )
+    saved_table = read_saved_v2_table(rom_data)
+    if saved_table is not None:
+        if args.format_version != 2:
+            raise ValueError("Editor-saved v2 WaterFill zones require --format-version=2 / ENABLE_WATER_FILL_V2")
+        marker_offsets, room_masks = saved_table
+    else:
+        marker_offsets = collect_marker_offsets(
+            rom_data,
+            room_max=args.room_max,
+            marker_tile=args.marker_tile,
+        )
+        room_masks = assign_room_masks(sorted(marker_offsets), explicit_masks)
     rooms = sorted(marker_offsets)
-    room_masks = assign_room_masks(rooms, explicit_masks)
-    data_offsets = build_layout(marker_offsets, room_masks)
+    data_offsets = build_layout(marker_offsets, room_masks, args.format_version)
 
     write_asm(
         out_path=args.out_asm,
@@ -345,6 +412,7 @@ def main() -> int:
         marker_offsets=marker_offsets,
         room_masks=room_masks,
         data_offsets=data_offsets,
+        format_version=args.format_version,
     )
 
     print(f"Wrote {args.out_asm}")

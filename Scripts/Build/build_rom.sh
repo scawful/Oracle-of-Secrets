@@ -253,8 +253,17 @@ if [[ "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
   generate_water_fill_tables() {
     (
       cd "$repo_root"
+      # Read the generated effective flag, including this build's overrides.
+      water_fill_format=1
+      while read -r flag_name flag_equals flag_value _; do
+        if [[ "$flag_name" == "!ENABLE_WATER_FILL_V2" && "$flag_equals" == "=" && "$flag_value" == "1" ]]; then
+          water_fill_format=2
+          break
+        fi
+      done < "$feature_flags_path"
       python3 "$repo_root/Scripts/Generate/generate_water_fill_table.py" \
         --rom "$water_table_rom_arg" \
+        --format-version "$water_fill_format" \
         --out-asm "$repo_root/Dungeons/generated/water_fill_table.asm"
     )
   }
