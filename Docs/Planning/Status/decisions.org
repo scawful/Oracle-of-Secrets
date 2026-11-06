@@ -4208,3 +4208,22 @@ Answer: "Briefing only" (scawful, 2026-11-06)
 2. Message 0x20 never mentions a gift (Core/messages.org:62-104), so no dialogue change.
 3. Codex: Sprites/NPCs/maku_tree.asm state 2 MakuTree_SpawnHeartContainer (`LDY #$3E : JSL Link_ReceiveItem`, :148-151) is skipped or removed; MeetLink goes to HasMetLink. T2: one native first meeting showing no receipt and max HP unchanged.
 4. The Maku Seed (beat 27) becomes the tree's first gift.
+
+* DECIDED Lyra Sea lore: the twins' sea (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude, Lyra hidden-finds session
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+  :END:
+  Question: How does the Lyra Sea fit into Kalyxo lore?
+  Options shown: 1 Twins' sea (pick): Koume on the volcanic west shore, Kotake on the glacier,
+  their storms sank the salvage ships, the Lost Sea is where they joined; 2 Outer isles, plain:
+  Kalyxo's outer islands, Twinrova origin only at the two shores, wrecks have no story;
+  3 A separate sea people apart from Kalyxo and Hyrule.
+  Answer: "Twins' sea (pick)" (scawful, 2026-11-06)
+  1. Extends "The Lyra Sea tells Twinrova's origin" (2026-10-18). Koume grew up on the
+     volcanic west shore (B0/B8); Kotake grew up on the glacier (BE/BF) (map roles 66b56ce6).
+  2. Storms from the twins' rivalry sank the ships whose wrecks the Zora Link salvage spots find.
+  3. The Lost Sea $A5 is where the twins first joined forces. This gives the held $A5 role a
+     meaning; its map content stays open.
+  4. Any NPC, sign or dialogue text that tells this needs scawful's OK; ridoyie does the later
+     wording pass.
