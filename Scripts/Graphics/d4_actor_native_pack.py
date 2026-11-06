@@ -140,6 +140,7 @@ def main():
     ap.add_argument('--base-rom',type=Path,required=True)
     ap.add_argument('--link-reference',type=Path,required=True)
     ap.add_argument('--emit-binding',action='store_true',help='emit private-room source inputs after visual acceptance')
+    ap.add_argument('--rig-charge',action='store_true',help='reuse side-pose tiles at shifted OAM positions; accepted charge pixels stay exact')
     ap.add_argument('--output',type=Path,required=True)
     args=ap.parse_args();out=args.output;assert not out.exists(),'fresh output required'
     raw=args.concept.read_bytes();assert hashlib.sha256(raw).hexdigest()==CONCEPT_SHA
@@ -176,6 +177,10 @@ def main():
     out.mkdir(parents=True)
     for name,(kind,grid) in frames.items():
         tiles=tiles_for_warden(grid) if kind=='warden' else tiles_for_protector(grid)
+        if args.rig_charge and name=='warden_charge':
+            tiles=tiles_for_warden(side)
+            for piece in tiles:
+                if piece['y']<32:piece['x']-=1
         entries=[]
         for piece in tiles:
             tile=piece.pop('tile');key=bytes(v for row in tile for v in row)
@@ -253,6 +258,7 @@ def main():
                 palette_rows_assigned=False,global_sheets_assigned=False,rom_written=False,
                 palettes={n:[f'{w:04X}' for w in p] for n,p in PALETTES.items()},frames=frame_data,sheets=sheet_report,
                 unique_obj_cells=cursor,capacity=len(cells),reserved_cells=sorted(RESERVED),
+                charge_rig_reuses_side_tiles=args.rig_charge,
                 princess_cells_exact=True,baby_cells_reserved=True,all_compositions_exact=True,
                 native_runtime_qualified=False)
     if args.emit_binding:emit_binding(out,report)
