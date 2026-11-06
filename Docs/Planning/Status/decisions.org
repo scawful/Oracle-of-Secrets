@@ -3505,3 +3505,22 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   3. $0D: one bare quarter for Dark Link, mask faces on the rim, no props. If the ROM boss room
      uses another quarter, the ROM quarter stays.
   4. Flat walls, no diagonals, no layer 2 (decision 2.6 stands).
+
+* DECIDED Difficulty target curve: vanilla-level early game, stronger late ramp (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (difficulty scaling lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/difficulty_scaling_2026-11-06/ANALYSIS.md
+  :END:
+  Request (scawful, 2026-11-06): "harder than the original but easier than parallel worlds.
+  similar level of early game difficulty with a stronger ramp up as the game progresses."
+  Question: "Accept this target curve?" (image difficulty_curve.png; 1-10 estimates, not playtested).
+  Options shown: "Yes (pick)", "Change it".
+  Answer (scawful, 2026-11-06): "Yes (pick)"
+  1. Target per stop: D1 2, D2 3, D3 4, S1 3, D4 5, D5 6, S2 5, D6 7, D7 7, S3 7, D8 8,
+     Fortress 9, Finale 9.
+  2. D1-S1 stay at their current level (vanilla Eastern-to-Hera). From D4 on, the target rises
+     toward the midpoint of the vanilla and Parallel Worlds late game; shrines sit one step
+     under the dungeons around them.
+  3. The Fortress stays under Parallel Worlds' Parallel Tower (10) and over vanilla Turtle Rock (8).
+  4. Scores are design estimates. Per-dungeon changes need their own decisions; the read-only
+     enemy and heart census (QUEUE row 27) comes first.
