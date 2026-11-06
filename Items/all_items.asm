@@ -293,6 +293,9 @@ Supply_ProcessPendingExitAction:
 
 incsrc "Items/deku_stick.asm"
 
+; Dedicated receipt $4C; all existing receipt IDs retain their native rows.
+incsrc "Items/bombchu_receipt.asm"
+
 
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
 assert pc() <= $2BF000, "Items bank $2B reached the dream entry FX region ($2BF000)"

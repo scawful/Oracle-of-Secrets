@@ -76,6 +76,15 @@ jobs:
           printf '\x89\xCC' | dd of=test.sfc bs=1 seek=$((0xC2C5)) conv=notrunc 2>/dev/null  # $01C2C5 vector -> $01CC89
           printf '\xC2\x30\x20\xCC\xCD\x90\xF6\xA0\x05\x00\x80\xD9' | dd of=test.sfc bs=1 seek=$((0xCC89)) conv=notrunc 2>/dev/null  # $01CC89 RoomTag_Holes2
 
+          # Original Somaria offscreen deletion pair, continuation and draw RTS.
+          printf '\x9C\x46\x06\x9E\x4A\x0C\x8A' | dd of=test.sfc bs=1 seek=$((0x46731)) conv=notrunc 2>/dev/null
+          printf '\x60' | dd of=test.sfc bs=1 seek=$((0x4674B)) conv=notrunc 2>/dev/null
+
+          # Native per-slot Somaria cleanup prologue, branch and continuations.
+          printf '\x8B\x4B\xAB\xA2' | dd of=test.sfc bs=1 seek=$((0x4AC6B)) conv=notrunc 2>/dev/null
+          printf '\xBD\x4A\x0C\xC9\x2C\xD0\x0D\x9C\x46\x06\xA5\x48\x29\x80' | dd of=test.sfc bs=1 seek=$((0x4AC7A)) conv=notrunc 2>/dev/null
+          printf '\xCA' | dd of=test.sfc bs=1 seek=$((0x4ACA9)) conv=notrunc 2>/dev/null
+
           # Original desert-statue contact/prep instructions inspected by Garo's guards.
           printf '\x22\x29\xF1\x06' | dd of=test.sfc bs=1 seek=$((0x29573)) conv=notrunc 2>/dev/null  # $059573 JSL $06F129
           printf '\xAD\x6A\x0B\x9D\x90\x0D' | dd of=test.sfc bs=1 seek=$((0x30F4D)) conv=notrunc 2>/dev/null  # $068F4D LDA $0B6A : STA $0D90,X
@@ -144,11 +153,28 @@ jobs:
           printf '\xC0\x60\x00' | dd of=test.sfc bs=1 seek=$((0x144B1)) conv=notrunc 2>/dev/null  # $02C4B1 CPY.w #$0060
           printf '\x8F\x80\x5B\x7F' | dd of=test.sfc bs=1 seek=$((0x144B8)) conv=notrunc 2>/dev/null  # $02C4B8 STA.l $7F5B80 (storm opt-out guard)
 
+          # Original music-loader instructions and upload headers guarded by
+          # Music/song_banks.asm and Overworld/great_sea_music.asm. These are
+          # synthetic preimages; all source assertions remain active.
+          printf '\xA9\x00\x85\x00\xA9\x80\x85\x01\xA9\x19\x85\x02\x78\x20\x88\x88\x58\x60' | dd of=test.sfc bs=1 seek=$((0x00901)) conv=notrunc 2>/dev/null  # $008901 original cold loader, 18 bytes
+          printf '\xA9\xF5' | dd of=test.sfc bs=1 seek=$((0x00913)) conv=notrunc 2>/dev/null  # $008913 LDA.b #$F5
+          printf '\x9E' | dd of=test.sfc bs=1 seek=$((0x00918)) conv=notrunc 2>/dev/null  # $008918 OW chain high byte
+          printf '\x1A' | dd of=test.sfc bs=1 seek=$((0x0091C)) conv=notrunc 2>/dev/null  # $00891C OW chain bank
+          printf '\xAE\x2D\x00\xD0' | dd of=test.sfc bs=1 seek=$((0xD1EF5)) conv=notrunc 2>/dev/null  # $1A9EF5 OW main size/ARAM
+          printf '\x88\x06\x00\x2B' | dd of=test.sfc bs=1 seek=$((0xD4CA7)) conv=notrunc 2>/dev/null  # $1ACCA7 OW aux size/ARAM
+          printf '\x0C\x05\x00\x2B' | dd of=test.sfc bs=1 seek=$((0xDACC3)) conv=notrunc 2>/dev/null  # $1BACC3 UW aux size/ARAM
+          printf '\x8D\x40\x21\x8D\x33\x01' | dd of=test.sfc bs=1 seek=$((0x000F3)) conv=notrunc 2>/dev/null  # $0080F3 STA.w APUIO0 : STA.w $0133
+
           # Preimage bytes taken from the readN() guards in Dungeons/sky_d8_award.asm.
           # Synthetic only; fails on unparsed read guards or conflicting bytes.
+          python3 .github/scripts/test_seed_sky_award_preimages.py
           python3 .github/scripts/seed_sky_award_preimages.py Dungeons/sky_d8_award.asm test.sfc
           # Same for the D7 crystal-ceremony hooks (Dungeons/d7_farore_rescue.asm).
           python3 .github/scripts/seed_sky_award_preimages.py Dungeons/d7_farore_rescue.asm test.sfc
+          # Same for the D6 native door-condition hooks; keep the ASM guards active.
+          python3 .github/scripts/seed_sky_award_preimages.py Dungeons/d6_cart_circuit.asm test.sfc
+          # Same for all 25 receipt hooks; validate the macro and keep every guard active.
+          python3 .github/scripts/seed_sky_award_preimages.py Items/bombchu_receipt.asm test.sfc
 
           # Run Asar against the synthetic headerless ROM.
           set -o pipefail

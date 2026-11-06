@@ -165,7 +165,7 @@ Sprite_BusinessScrub_Main:
 
     ; Play the spinning animation for a bit before proceeding
     LDA.w SprTimerA, X : BNE .not_done
-      LDA #$40 : STA.w SprTimerA, X
+      LDA #$20 : STA.w SprTimerA, X ; Brief daze after the short spin.
       INC.w SprAction, X
     .not_done
 
@@ -211,7 +211,7 @@ Sprite_BusinessScrub_Main:
     %StartOnFrame(10)
     %PlayAnimation(10,12,3)
 
-    %DoDamageToPlayerSameLayerOnContact()
+    JSL BusinessScrub_PeaShotContact
 
     JSL Sprite_MoveVert
     JSL Sprite_CheckTileCollision
@@ -272,8 +272,8 @@ CheckForPeaShotRedirect:
   PLX
 
   JSL CheckIfHitBoxesOverlap : BCC .no_dano
-    JSR KillPeaShot
-    %GotoAction(3)
+    JSL BusinessScrub_BeginRecoil
+    NOP #4 ; Keep the existing call/action span and following labels fixed.
     RTS
   .no_dano
   ; If the pea shot and deku scrub hitboxes intersect
@@ -283,8 +283,8 @@ CheckForPeaShotRedirect:
   JSL Sprite_SetupHitBox
   PLX
   JSL CheckIfHitBoxesOverlap : BCC .not_done2
-    JSR KillPeaShot
-    %GotoAction(3)
+    JSL BusinessScrub_BeginRecoil
+    NOP #4 ; Keep the existing call/action span and following labels fixed.
     RTS
   .not_done2
   RTS

@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "name": "Experimental playtest (Finale, D8 Sky, Deku Stick)",
+  "macros": [
+    {
+      "id": "fortress_open",
+      "label": "Fortress open (8 essences + Maku Seed)",
+      "primary": true,
+      "steps": [
+        {
+          "action": "checkpoint",
+          "args": {
+            "id": "fortress-open"
+          }
+        }
+      ]
+    },
+    {
+      "id": "maku_seed_ready",
+      "label": "Maku Seed hand-over (talk to the Maku Tree)",
+      "primary": true,
+      "steps": [
+        {
+          "action": "checkpoint",
+          "args": {
+            "id": "maku-seed-ready"
+          }
+        }
+      ]
+    },
+    {
+      "id": "finale_kydreeok",
+      "label": "Finale: Kydreeok, then Ganondorf (drop into the hole)",
+      "primary": true,
+      "steps": [
+        {
+          "action": "checkpoint",
+          "args": {
+            "id": "kydreeok-fight"
+          }
+        }
+      ]
+    },
+    {
+      "id": "spawn_d8_boss",
+      "label": "D8 Sky boss: room $96 (authored boss placement)",
+      "steps": [
+        {
+          "action": "checkpoint",
+          "args": {
+            "id": "d8-sky-boss-room"
+          }
+        }
+      ]
+    },
+    {
+      "id": "spawn_ganondorf",
+      "label": "Spawn Ganondorf ($D3) next to Link",
+      "steps": [
+        {
+          "action": "spawn",
+          "args": {
+            "sprite": "D3"
+          }
+        }
+      ]
+    },
+    {
+      "id": "deku_sticks_10",
+      "label": "10 Deku Sticks",
+      "steps": [
+        {
+          "action": "write",
+          "args": {
+            "addr": "7EF395",
+            "value": "10"
+          }
+        },
+        {
+          "action": "sync_sram"
+        }
+      ]
+    }
+  ]
+}

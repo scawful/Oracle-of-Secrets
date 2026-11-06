@@ -48,6 +48,8 @@ Sprite_LeverSwitch_Long:
 ; =========================================================
 
 Sprite_LeverSwitch_Prep:
+  JML D9Actor_PrepDispatch
+Sprite_LeverSwitch_Prep_Ordinary:
 {
   PHB : PHK : PLB
 
@@ -85,6 +87,9 @@ Sprite_LeverSwitch_Prep:
 
 Sprite_LeverSwitch_Main:
 {
+  JSL D9Actor_MainHandled : BCC .ordinary_action
+    RTS
+  .ordinary_action
   JSL Sprite_PlayerCantPassThrough
 
   LDA.w SprAction, X

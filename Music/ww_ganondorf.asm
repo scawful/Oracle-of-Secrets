@@ -3,26 +3,26 @@
 ; Kenta Nagata, Hajime Wakai, Toru Minegishi, and Koji Kondo
 
 ; Test code to play the song as the game start (Only for Testing)
-!n = $7F
-org $00FFD7 ; Set rom on 16mb
-  db #$0B
+; !n = $7F
+; org $00FFD7 ; Set rom on 16mb
+;   db #$0B
 
-org $3FFFFF ; write at the last position to expand on 2mb
-  db #$00
+; org $3FFFFF ; write at the last position to expand on 2mb
+;   db #$00
 
-org $0CC120
-  LDA #$02 : STA $012C
-  STA $2140 : STA $0133 : STA $0130
-  RTL
+; org $0CC120
+;   LDA #$02 : STA $012C
+;   STA $2140 : STA $0133 : STA $0130
+;   RTL
 
 ; org $1BAD7A
 ; GanondorfBattle:  
 ; ARAMAddr = $2BB3
-org $1A9FF8
+; org $1A9FF8
 print pc
 GanondorfBattle: 
 {
-  !ARAMAddr = $D0FF
+  !ARAMAddr = uwaux_aram(GanondorfBattle)
   dw !ARAMAddr+$0A ; Intro
   dw !ARAMAddr+$1A ; Looping
   dw $00FF
@@ -109,7 +109,8 @@ GanondorfBattle:
       %Cymbal()
       %SetChannelVolume($F8)
       %SetDurationN(!4th, $7F) ; 1/4
-      %EchoVBits($FF, $1E, $1E)
+      ; Mix pass 2026-11-05: echo on slots 0,1,2,4,5; timpani/snare dry.
+      %EchoVBits($37, $1E, $1E)
       %EchoParams($01, $14, $02)
       %CallSubroutine(.silence+!ARAMC, 3)
       %CallSubroutine(.drums+!ARAMC, 1)
@@ -125,10 +126,14 @@ GanondorfBattle:
       %SetMasterVolume($C8)
       %Piano()
 
-      %SetChannelVolume($F8)
+      ; Mix pass 2026-11-05: the bass ostinato was ~11 dB over each brass
+      ; part. Lowered and dry; echo on horn, trumpet, trombone/cymbal and
+      ; timpani/choir only (bits 1-4).
+      %SetChannelVolume($C0)
+      %SetPan($0A)
       %SetDurationN(!4th, $7F) ; 1/4
 
-      %EchoVBits($FF, $1E, $1E)
+      %EchoVBits($1E, $1E, $1E)
       %EchoParams($02, $14, $02)
 
       %CallSubroutine(.piano01+!ARAMC, 2)
@@ -150,7 +155,8 @@ GanondorfBattle:
 
     .Channel1_Horn
       %Horn()
-      %SetChannelVolume($DC)
+      %SetChannelVolume($E0)
+      %SetPan($06)
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.silence+!ARAMC, 4)
 
@@ -166,6 +172,7 @@ GanondorfBattle:
     .Channel2_Trumpet
       %Trumpet()
       %SetChannelVolume($E8)
+      %SetPan($0E)
       %SetDurationN(!4th, $7F) ; 1/4
       
       %CallSubroutine(.silence+!ARAMC, 4)
@@ -183,7 +190,8 @@ GanondorfBattle:
 
     .Channel3_TromboneAndCymbal
       %Trombone()
-      %SetChannelVolume($BC)
+      %SetChannelVolume($C8)
+      %SetPan($0A)
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.silence+!ARAMC, 4)
       ; %TremoloOn(10, 4, 50)
@@ -197,7 +205,7 @@ GanondorfBattle:
         %Cymbal()
         %SetChannelVolume($F8)
         %SetDurationN(!4th, $7F) ; 1/4
-        %EchoVBits($FF, $1E, $1E)
+        %EchoVBits($1E, $1E, $1E)
         %EchoParams($01, $14, $02)
       %CallSubroutine(.drums+!ARAMC, 1)
       db !4th, G2, Tie, Tie
@@ -209,6 +217,7 @@ GanondorfBattle:
     .Channel4_Timpani
       %Tympani()
       %SetChannelVolume($78)
+      %SetPan($09)
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.timpani01+!ARAMC, 12)
       %Choir()
@@ -220,6 +229,7 @@ GanondorfBattle:
     .Channel5_Snare
       %Snare()
       %SetChannelVolume($8C)
+      %SetPan($0C)
       %SetDurationN(!32nd, $7F) ; 1/32
       %CallSubroutine(.snare01+!ARAMC, 24)
       %SetDurationN(!4th, $7F) ; 1/4

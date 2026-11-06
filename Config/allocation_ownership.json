@@ -10,7 +10,7 @@
     "shared:Sprites/Objects/minecart.asm": {
       "source_set": "shared",
       "path": "Sprites/Objects/minecart.asm",
-      "sha256": "7be68b425080cff1fc6f6b03cd2088d21210f5eae27f949beac2bd45b4551666"
+      "sha256": "01a29cdfadabbc7d207f7d39520f987d3b8080fbcde2a008517e575185b017c3"
     },
     "shared:Masks/all_masks.asm": {
       "source_set": "shared",
@@ -65,7 +65,7 @@
     "pending_rc:Items/goldstar.asm": {
       "source_set": "pending_rc",
       "path": "Items/goldstar.asm",
-      "sha256": "69c617df245b786febde3ac9a512c91089f38dda851c56c5bb23726cc5a89f98"
+      "sha256": "199aa00c758b1616cd07984ce02e79443441294aa17d6828b0b3bfaa4dd219f0"
     },
     "pending_rc:Items/ocarina.asm": {
       "source_set": "pending_rc",
@@ -80,7 +80,7 @@
     "shared:Sprites/Objects/data/minecart_tracks.asm": {
       "source_set": "shared",
       "path": "Sprites/Objects/data/minecart_tracks.asm",
-      "sha256": "d988514d5060217d00ecc98d9c3a394826c08a91022327c800c1d290ad14fd6c"
+      "sha256": "e6bfbbadd40cbe7d25692fa054524c4dab135076fae07b167b57d6248c20ffd4"
     },
     "shared:Util/macros.asm": {
       "source_set": "shared",
@@ -165,7 +165,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "bcc6df2404dc097f25f9b547699359f924387c7cdaa1c70e87fd571b9f317475"
+      "sha256": "d84d9ed060503addcd32fb75eba136d6931611a932ff79577d4e39d9ff052007"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -330,13 +330,13 @@
     },
     {
       "id": "symbols_wram_block",
-      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..SongTintColor)",
+      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..FinaleBeat)",
       "space": "wram",
       "base": 8265328,
-      "size": 24,
+      "size": 27,
       "status": "shared",
       "condition": {},
-      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint.",
+      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint, finale GanondorfFight/BossReinject/FinaleBeat.",
       "reset": "No block-wide reset is claimed. Not in ResetTrackVars' arrays since PR 211 moved it from $7E0730 (inside cart_room) to vanilla-free $7E1E70.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused owned-runtime proof for Deku Stick draw, stow, and saved remaining burn time.
+"""Focused owned-runtime proof for Deku Stick gameplay, controls, and persistence.
 
 Verifies natively in headless Mesen2:
 1. Fresh draw & sword lockout:
@@ -15,21 +15,59 @@ Verifies natively in headless Mesen2:
    - Stowing worn stick refunds inventory (1 -> 2) and saves remaining budget in DekuStickWear = 30 ($7EF39F).
    - Redrawing from Equipment menu restores DekuStick_BurnTimer = 30 and clears DekuStickWear = 0.
    - Relighting preserves the 30-tick budget.
-4. Save & reopen persistence (T3 verification):
-   - Stowed worn stick with DekuStickWear = 30 persists across an in-game Save & Quit (GameOver_SaveAndQuit -> SaveGameFile).
-   - Verifies battery SRAM (0x700000..0x7004FF) has valid 0x5A5A checksum and backup equality.
-   - Reopens session via LOADROM and cold boot through title / file select without emulator snapshots.
+4. Visible OAM in 4 directions & controls:
+   - Unlit held stick in 4 facings (Up, Down, Left, Right): Sprite 4 onscreen (palette 1), Sprite 5 hidden.
+   - Lit held stick: Sprite 5 onscreen (tile $9C, palette 4), flame flicker observed on bit 6.
+   - Y button press initiates 14-frame swipe, suppresses assigned Y item ($0303), and freezes movement inputs.
+   - Captures native screenshots of held/swipe/flame poses.
+5. Swipe enemy nonlethal stun & immunity:
+   - Eligible active enemy in front of Link is stunned for 32 frames ($0EA0 = 0x20).
+   - Enemy HP is unchanged (0 HP damage!).
+   - DekuStick_SwipeTimer bit 6 latches to prevent multiple stuns per swipe.
+   - Stick remains intact (no enemy-hit breakage).
+   - Immune enemies ($0E40 >= 0x80) and wrong layer ($0F20 != Link) are unaffected.
+   - Wall contact plays tink without breaking stick.
+6. Native torch interaction (controller-driven with declared fixture):
+   - Authored room: Room 0x00 (Entrance 0x7B), Floor F1, Layer 0 with real torch objects.
+   - Declared starting fixture: Torch 0 lit ($04F0 = 0x80), Torch 1 unlit ($04F1 = 0x00, $0542 & 0x7FFF), Deku Sticks count = 2.
+   - Joypad Equipment menu navigation: cursor moved from slot 0 via UP then LEFT to slot 23, unlit stick drawn (count 2 -> 1, state 1, burn 75).
+   - Bounded D-pad movement approaches lit Torch 0: physical tip contact ignites stick (state 2).
+   - Bounded D-pad movement carries lit stick across room to unlit Torch 1: physical tip contact lights Torch 1 ($04F1 > 0).
+   - Joypad B button stows stick: count refunded (1 -> 2), burn budget saved in DekuStickWear ($7EF39F).
+   - Redraw via joypad Equipment menu (UP then LEFT): restores burn budget from wear, wear cleared.
+   - Reignite via bounded D-pad against lit Torch 1: reignites stick, conserving remaining burn budget.
+   - Noncontact controls: out of reach (at spawn and 50+ px north of torch) and walk away.
+   - Captures native 256x224 screenshots: before_torch, contact_torch_ignite, after_torch_lit.
+7. Cross-room scroll & lifecycle:
+   - Screen scrolling ($11 != 0) pauses burn countdown and preserves fire across scroll.
+   - Non-default state interruption ($5D = 0x13, Hookshotting) drops stick without refund.
+   - Stowed wear ($7EF39F) survives transitions.
+8. Save & Quit battery persistence:
+   - Stowed worn stick with DekuStickWear = 30 persists across in-game Save & Quit.
+   - Verifies battery SRAM has valid 0x5A5A checksum and backup equality.
+   - Saves flushed battery SRM to disk.
+9. Fresh-process cold boot reopen (T3 verification):
+   - Closes initial emulator instance.
+   - Launches fresh owned emulator process loading disk battery SRM without snapshots.
+   - Cold boots through Title and File Select into gameplay.
    - Reopened session retains DekuStickWear = 30; redrawing restores 30-tick burn budget.
-   - Corrupt wear fallback: $FF in DekuStickWear falls back safely to 75 ticks on draw.
-5. Interruption drop cleanup:
-   - While stick is drawn, taking damage ($5D = 1) immediately drops the stick (State = 0).
-   - Dropped stick is lost: inventory is NOT refunded, and DekuStickWear is 0.
-6. Burn countdown & burn-out:
-   - Lit stick (State = 2) ticks down every 16 frames.
-   - Reaching timer 0 burns out and drops the stick without refund.
-7. Zero-inventory refusal:
-   - With DekuSticks = 0, pressing A in Equipment menu refuses activation.
-   - Menu remains open, pending action remains 0, stored wear is preserved.
+   - Corrupt wear fallback ($FF -> 75 ticks) verified.
+   - Ordinary sword swing and Honeycomb consumable controls verified intact.
+10. Interruption drop cleanup:
+    - Taking damage ($5D = 1) immediately drops stick without refund and clears wear.
+11. Burn countdown & burnout:
+    - Lit stick ticks down every 16 frames; reaching 0 burns out and drops stick without refund.
+12. Zero-inventory refusal:
+    - With count = 0, pressing A in Equipment menu refuses activation and preserves stored wear.
+13. Indoor dungeon ($10=7) gameplay:
+    - Verifies drawing, holding, swiping, torch lighting, and stow inside underworld mode $07.
+14. Real input-driven doorway crossing & real stairs transition:
+    - Lit stick carried across real same-floor doorway in D6 (room 0x98 -> 0x88) preserves fire and resumes burn countdown.
+    - Lit stick carried into real spiral stairs in Zora Temple (room 0x28 -> 0x38) cleans up stick and flame without inventory refund.
+15. Overworld dispatch hook and transition drops:
+    - Part A (Real overworld screen boundary crossing fuel pause proof): Real controller-driven movement from Village West (Screen 0x23) across the boundary into destination Screen 0x2A via D-pad LEFT; observes engine-triggered scroll transition, takes two during-scroll samples separated by >= 16 frames proving identical fuel, lit state and flame visibility, observes arrival on destination Screen 0x2A with stick/flame intact, and proves resumed active countdown.
+    - Part B (Submodule whitelist fixture control): Verifies $02A477 hook preserves lit stick and pauses burn timer during scroll ($11 = 1) in Module 09.
+    - Part C (Real overworld entrance transition): Walking into real overworld entrance doorway (D6 entrance at Screen 54) triggers entrance fade/Module 08 load hook ($0283BF) which drops stick without inventory refund.
 """
 from __future__ import annotations
 
@@ -45,17 +83,54 @@ import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
+
+
+def _common_repo_root() -> Path:
+    try:
+        common_git = Path(
+            subprocess.check_output(
+                ["git", "-C", str(REPO), "rev-parse", "--git-common-dir"],
+                text=True, stderr=subprocess.DEVNULL,
+            ).strip()
+        )
+        if not common_git.is_absolute():
+            common_git = (REPO / common_git).resolve()
+        return common_git.resolve().parent
+    except Exception:
+        return REPO
+
+
+COMMON_REPO = _common_repo_root()
+if "MESEN2_OOS_ROOT" not in os.environ:
+    for cand in (REPO.parent / "mesen2-oos", COMMON_REPO.parent / "mesen2-oos"):
+        if (cand / "tools" / "oos_client").is_dir():
+            os.environ["MESEN2_OOS_ROOT"] = str(cand)
+            break
+
 sys.path.insert(0, str(REPO / "Scripts" / "Mesen2"))
 from mesen2_client_lib.bridge import MesenBridge  # noqa: E402
 
+
+def resolve_savestate(*parts: str) -> Path:
+    local = REPO.joinpath("Roms", "SaveStates", *parts)
+    if local.is_file():
+        return local
+    return COMMON_REPO.joinpath("Roms", "SaveStates", *parts)
+
+
 LAUNCHER = REPO / "Scripts" / "Mesen2" / "mesen2_launch_instance.sh"
 APP_DEFAULT = Path("/Applications/Mesen2 OOS.app")
-SAVE_DEFAULT = REPO / "Roms" / "SaveStates" / "oos168x" / "oos168x.srm"
+SAVE_DEFAULT = resolve_savestate("oos168x", "oos168x.srm")
 
 MODULE, SUBMODULE = 0x7E0010, 0x7E0011
 MENU, CURSOR, PAGE = 0x7E0200, 0x7E020B, 0x7E1E71
 PENDING_SUPPLY = 0x7E0434
 LINK_STATE = 0x7E005D
+LINK_DIR = 0x7E002F
+LINK_POSX = 0x7E0022
+LINK_POSY = 0x7E0020
+CURRENT_LAYER = 0x7E00EE
+UNDERWORLD_FLAG = 0x7E001B
 SWORD_STATE = 0x7E003C
 SWORD_ANIM = 0x7E003D
 FRAME_COUNTER = 0x7E001A
@@ -66,10 +141,33 @@ HURTME = 0x7E0373
 NOPAIN = 0x7E037B
 
 DEKU_STICKS_COUNT = 0x7EF395  # SRAM Deku Sticks quantity
+HONEYCOMB_COUNT   = 0x7EF394  # SRAM Honeycomb quantity
 DEKU_STICK_WEAR   = 0x7EF39F  # SRAM DekuStickWear stored burn ticks
 DEKU_STICK_STATE  = 0x7E046D  # WRAM 0=none, 1=held unlit, 2=held lit, 3=swiping
 DEKU_BURN_TIMER   = 0x7E046E  # WRAM active burn ticks
 DEKU_SWIPE_TIMER  = 0x7E046F  # WRAM swipe timer
+
+SPRITE4_OAM       = 0x7E0810  # Stick OAM: X=0810, Y=0811, Tile=0812, Prop=0813
+SPRITE5_OAM       = 0x7E0814  # Flame OAM: X=0814, Y=0815, Tile=0816, Prop=0817
+OAM_HIGH_SPR4     = 0x7E0A24  # Unpacked OAM high byte for Sprite 4 (bit1=size, bit0=X9)
+OAM_HIGH_SPR5     = 0x7E0A25  # Unpacked OAM high byte for Sprite 5 (bit1=size, bit0=X9)
+Y_ITEM_ASSIGNED   = 0x7E0303  # Assigned Y item
+CONTROLLER_F0     = 0x7E00F0  # Held buttons
+CONTROLLER_F4     = 0x7E00F4  # Newly pressed buttons
+TORCH_TIMERS      = 0x7E04F0  # Torches 0..15 ($04F0..$04FF)
+TILE_ATTR_BASE    = 0x7F2000  # Underworld tile attribute buffer
+
+# Sprites 0..15 tables
+SPRITE_STATE      = 0x7E0DD0
+SPRITE_CLASS      = 0x7E0E20
+SPRITE_DAMAGE     = 0x7E0E40
+SPRITE_HP         = 0x7E0E50
+SPRITE_STUN       = 0x7E0EA0
+SPRITE_LAYER      = 0x7E0F20
+SPRITE_POSX_LOW   = 0x7E0D10
+SPRITE_POSX_HIGH  = 0x7E0D30
+SPRITE_POSY_LOW   = 0x7E0D00
+SPRITE_POSY_HIGH  = 0x7E0D20
 
 
 def identity(pid: int) -> str:
@@ -85,6 +183,8 @@ class DekuStickRuntimeTest:
         self.app = app_path
         self.work_dir = work_dir
         self.work_dir.mkdir(parents=True, exist_ok=True)
+        self.screenshots_dir = self.work_dir / "screenshots"
+        self.screenshots_dir.mkdir(parents=True, exist_ok=True)
 
         self.instance_name = f"deku-test-{int(time.time())}"
         self.sock = self.work_dir / f"mesen-{self.instance_name}.sock"
@@ -93,14 +193,54 @@ class DekuStickRuntimeTest:
         shutil.copy2(self.rom, self.rom_copy)
 
         (self.home / "Saves").mkdir(parents=True, exist_ok=True)
-        shutil.copy2(SAVE_DEFAULT, self.home / "Saves" / "deku_candidate.srm")
+        (self.home / "SaveStates").mkdir(parents=True, exist_ok=True)
 
         self.pid = 0
         self.pid_identity = ""
         self.b: MesenBridge | None = None
         self.results: dict[str, bool] = {}
+        self.traces: dict[str, object] = {}
 
-    def launch(self):
+    def launch(self, reset_save: bool = True):
+        self.instance_name = f"deku-test-{int(time.time())}"
+        self.sock = self.work_dir / f"mesen-{self.instance_name}.sock"
+
+        if reset_save:
+            shutil.copy2(SAVE_DEFAULT, self.home / "Saves" / "deku_candidate.srm")
+
+        # Configure Mesen profile settings for explicit battery persistence.
+        # Seed from an existing host Mesen2 settings.json first if needed so
+        # Snes.Port1.Type ("SnesController") and Input mappings exist before
+        # mesen2_launch_instance.sh runs with --no-copy-settings.
+        settings_file = self.home / "settings.json"
+        cfg = {}
+        if settings_file.is_file():
+            try:
+                cfg = json.loads(settings_file.read_text(encoding="utf-8-sig"))
+            except Exception:
+                cfg = {}
+        if "Snes" not in cfg or "Input" not in cfg:
+            for seed_dir in (
+                Path.home() / "Documents" / "Mesen2",
+                Path.home() / "Library" / "Application Support" / "Mesen2",
+                Path.home() / ".config" / "Mesen2",
+            ):
+                seed_file = seed_dir / "settings.json"
+                if seed_file.is_file():
+                    try:
+                        cfg = json.loads(seed_file.read_text(encoding="utf-8-sig"))
+                        break
+                    except Exception:
+                        pass
+        cfg.setdefault("Input", {})
+        cfg.setdefault("Snes", {}).setdefault("Port1", {})["Type"] = "SnesController"
+        cfg.setdefault("Preferences", {})
+        cfg["Preferences"]["OverrideSaveDataFolder"] = True
+        cfg["Preferences"]["SaveDataFolder"] = str(self.home / "Saves")
+        cfg.setdefault("Oracle", {})
+        cfg["Oracle"]["PersistentSaveName"] = "deku_candidate"
+        settings_file.write_text(json.dumps(cfg, indent=2))
+
         cmd = [
             "taskpolicy", "-b", "nice", "-n", "10", "bash", str(LAUNCHER),
             "--headless", "--no-copy-settings", "--no-save-settings",
@@ -109,7 +249,7 @@ class DekuStickRuntimeTest:
             "--socket", str(self.sock), "--rom", str(self.rom_copy),
             "--app", str(self.app),
         ]
-        with (self.work_dir / "launch.log").open("w") as log:
+        with (self.work_dir / "launch.log").open("a") as log:
             subprocess.run(cmd, cwd=REPO, stdout=log, stderr=log, check=True, timeout=30)
 
         for _ in range(80):
@@ -138,6 +278,9 @@ class DekuStickRuntimeTest:
                 time.sleep(0.1)
         if self.sock.exists():
             self.sock.unlink(missing_ok=True)
+        self.pid = 0
+        self.pid_identity = ""
+        self.b = None
 
     def r(self, addr: int) -> int:
         return self.b.read_memory(addr)
@@ -145,8 +288,26 @@ class DekuStickRuntimeTest:
     def w(self, addr: int, val: int):
         self.b.write_memory(addr, val)
 
+    def read_ppu_oam(self, sprite_idx: int) -> dict[str, int]:
+        """Read latched VBlank PPU OAM (SnesSpriteRam) for sprite_idx (0..127).
+
+        Immune to asynchronous mid-frame WRAM ClearOAMBuffer ($008053 -> 0xF0) races.
+        """
+        raw = self.b.read_block(sprite_idx * 4, 4, memtype="SnesSpriteRam")
+        hi_raw = self.b.read_block(0x200 + (sprite_idx >> 2), 1, memtype="SnesSpriteRam")
+        shift = (sprite_idx & 0x03) * 2
+        hi_bits = (hi_raw[0] >> shift) & 0x03
+        return {
+            "x": raw[0],
+            "y": raw[1],
+            "tile": raw[2],
+            "prop": raw[3],
+            "x9": hi_bits & 0x01,
+            "size": (hi_bits >> 1) & 0x01,
+        }
+
     def press(self, button: str, frames: int = 10):
-        if not self.b.press_button(button, frames=frames):
+        if not self.b.press_button(button, frames=frames, detach_debugger=False):
             raise RuntimeError(f"press failed: {button}")
         time.sleep((frames + 8) / 60)
 
@@ -163,15 +324,48 @@ class DekuStickRuntimeTest:
     def boot_file2(self):
         print("[*] Loading gameplay baseline state...")
         time.sleep(2)
-        state_path = REPO / "Roms" / "SaveStates" / "library" / "oos_1772076682_Agent_Gameplay_Baseline_Fresh.mss"
+        state_path = resolve_savestate("library", "oos_1772076682_Agent_Gameplay_Baseline_Fresh.mss")
         if not state_path.is_file():
-            state_path = REPO / "Roms" / "SaveStates" / "oos168x" / "oos168x_1.mss"
+            state_path = resolve_savestate("oos168x", "oos168x_1.mss")
         res = self.b.load_state(path=str(state_path))
         print(f"[*] load_state result: {res}")
         time.sleep(0.5)
         if not self.wait_play(8.0):
             raise RuntimeError(f"Failed to reach gameplay after load_state (MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)})")
         print(f"[+] Reached stable gameplay: MODULE={self.r(MODULE)}")
+
+    def boot_indoor_dungeon(self):
+        print("[*] Loading indoor dungeon baseline state...")
+        time.sleep(1)
+        state_path = resolve_savestate("library", "oos_1772076582_Agent_D6_Inside_Entry_Fresh.mss")
+        if not state_path.is_file():
+            state_path = resolve_savestate("library", "oos_1772076583_Agent_Zora_Inside_Fresh.mss")
+        res = self.b.load_state(path=str(state_path))
+        print(f"[*] load_state indoor result: {res}")
+        time.sleep(0.5)
+        if not self.wait_play(8.0):
+            raise RuntimeError(f"Failed to reach gameplay after load_state (MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)})")
+        print(f"[+] Reached stable indoor gameplay: MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)}, UW={self.r(UNDERWORLD_FLAG)}")
+
+    def boot_fresh_file(self):
+        print("[*] Cold booting fresh emulator session without snapshots...")
+        time.sleep(1.0)
+        # Advance through Title to File Select (Module 1)
+        for _ in range(40):
+            if self.r(MODULE) == 1:
+                break
+            self.b.press_button("start", frames=6, detach_debugger=False)
+            time.sleep(0.3)
+        print(f"    At File Select: MODULE={self.r(MODULE)}")
+        # Launch File 1 into gameplay
+        for _ in range(40):
+            if self.r(MODULE) in (7, 9, 11) and self.r(SUBMODULE) == 0:
+                break
+            self.b.press_button("start", frames=8, detach_debugger=False)
+            time.sleep(0.3)
+        if not self.wait_play(8.0):
+            raise RuntimeError(f"Failed to enter gameplay from cold boot: MODULE={self.r(MODULE)}")
+        print(f"[+] Reached stable gameplay from fresh boot: MODULE={self.r(MODULE)}")
 
     def navigate_to_equipment(self) -> bool:
         self.press("START", frames=10)
@@ -189,59 +383,89 @@ class DekuStickRuntimeTest:
             time.sleep(0.05)
         return self.r(MENU) == 6
 
-    def run_tests(self):
+    def take_screenshot(self, name: str) -> Path | None:
+        try:
+            png = self.b.screenshot()
+            if png:
+                dest = self.screenshots_dir / f"{name}.png"
+                dest.write_bytes(png)
+                return dest
+        except Exception as e:
+            print(f"    [warn] screenshot {name} failed: {e}")
+        return None
+
+    def set_torch_probe_tile(self, facing: int, torch_id: int):
+        # Deku_TorchProbeX: dw 8, 8, -4, 20 (Up=0, Down=2, Left=4, Right=6)
+        # Deku_TorchProbeY: dw -4, 24, 8, 8
+        offsets = {0: (8, -4), 2: (8, 24), 4: (-4, 8), 6: (20, 8)}
+        dx, dy = offsets.get(facing, (8, 24))
+        posx = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        posy = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        px = posx + dx
+        py = posy + dy
+        layer = self.r(CURRENT_LAYER)
+        x_coord = (px & 0x01FF) >> 3
+        y_coord = (py & 0x01F8) << 3
+        tile_offset = y_coord + x_coord + (0x1000 if layer != 0 else 0)
+        addr = TILE_ATTR_BASE + tile_offset
+        self.w(addr, 0xC0 | (torch_id & 0x0F))
+
+    def run_tests(self, filter_test: int | None = None):
         print("\n=== STARTING DEKU STICK RUNTIME PROOFS ===")
+        if filter_test == 15:
+            print("[*] Running filtered Test 15 only...")
+            self.run_test_15()
+            return
 
         # ----------------------------------------------------
         # 1. Fresh draw & sword lockout
         # ----------------------------------------------------
-        print("[*] Test 1: Fresh Deku Stick draw & sword lockout...")
-        self.w(DEKU_STICKS_COUNT, 2)
-        self.w(DEKU_STICK_WEAR, 0)
-        self.w(DEKU_STICK_STATE, 0)
-        self.w(DEKU_BURN_TIMER, 0)
-        self.w(PENDING_SUPPLY, 0)
+        if filter_test is None or filter_test == 1:
+            print("[*] Test 1: Fresh Deku Stick draw & sword lockout...")
+            self.w(DEKU_STICKS_COUNT, 2)
+            self.w(DEKU_STICK_WEAR, 0)
+            self.w(DEKU_STICK_STATE, 0)
+            self.w(DEKU_BURN_TIMER, 0)
+            self.w(PENDING_SUPPLY, 0)
 
-        if not self.navigate_to_equipment():
-            raise RuntimeError("Failed to open Equipment menu")
+            if not self.navigate_to_equipment():
+                raise RuntimeError("Failed to open Equipment menu")
 
-        # Cursor 23 = Deku Stick (sixth entry in the supplies row)
-        self.w(CURSOR, 23)
-        time.sleep(0.1)
+            # Cursor 23 = Deku Stick (supplies row 2, slot 3)
+            self.w(CURSOR, 23)
+            time.sleep(0.1)
 
-        # Press A to queue draw
-        self.press("A", frames=10)
-        self.wait_play(8.0)
+            # Press A to queue draw
+            self.press("A", frames=10)
+            self.wait_play(8.0)
 
-        count1 = self.r(DEKU_STICKS_COUNT)
-        state1 = self.r(DEKU_STICK_STATE)
-        burn1 = self.r(DEKU_BURN_TIMER)
-        wear1 = self.r(DEKU_STICK_WEAR)
-        sword_pre = self.r(SWORD_STATE)
+            count1 = self.r(DEKU_STICKS_COUNT)
+            state1 = self.r(DEKU_STICK_STATE)
+            burn1 = self.r(DEKU_BURN_TIMER)
+            wear1 = self.r(DEKU_STICK_WEAR)
 
-        print(f"    After draw: count={count1} (exp 1), state={state1} (exp 1), burn={burn1} (exp 75), wear={wear1} (exp 0)")
+            print(f"    After draw: count={count1} (exp 1), state={state1} (exp 1), burn={burn1} (exp 75), wear={wear1} (exp 0)")
 
-        # While stick is held (state 1), press B to test stow and sword lockout
-        self.press("B", frames=10)
-        time.sleep(0.1)
+            # While stick is held (state 1), press B to test stow and sword lockout
+            self.press("B", frames=10)
+            time.sleep(0.1)
 
-        count1_stow = self.r(DEKU_STICKS_COUNT)
-        state1_stow = self.r(DEKU_STICK_STATE)
-        wear1_stow = self.r(DEKU_STICK_WEAR)
-        sword_stow = self.r(SWORD_STATE)
+            count1_stow = self.r(DEKU_STICKS_COUNT)
+            state1_stow = self.r(DEKU_STICK_STATE)
+            wear1_stow = self.r(DEKU_STICK_WEAR)
+            sword_stow = self.r(SWORD_STATE)
 
-        # On the stow frame, stick is stowed (state 0), count refunded (2), wear 0, and sword was NOT swung
-        t1_ok = (count1 == 1 and state1 == 1 and burn1 == 75 and wear1 == 0 and
-                 count1_stow == 2 and state1_stow == 0 and wear1_stow == 0 and sword_stow == 0)
-        self.results["fresh_draw_and_sword_lockout"] = t1_ok
-        print(f"    After B stow: count={count1_stow} (exp 2), state={state1_stow} (exp 0), wear={wear1_stow} (exp 0), sword={sword_stow} (exp 0) -> OK: {t1_ok}")
+            t1_ok = (count1 == 1 and state1 == 1 and burn1 == 75 and wear1 == 0 and
+                     count1_stow == 2 and state1_stow == 0 and wear1_stow == 0 and sword_stow == 0)
+            self.results["fresh_draw_and_sword_lockout"] = t1_ok
+            print(f"    After B stow: count={count1_stow} (exp 2), state={state1_stow} (exp 0), wear={wear1_stow} (exp 0), sword={sword_stow} (exp 0) -> OK: {t1_ok}")
 
         # ----------------------------------------------------
         # 2. Sword swings normally after stow
         # ----------------------------------------------------
         print("[*] Test 2: Sword swings normally after stick is stowed...")
         time.sleep(0.1)
-        self.b.press_button("B", frames=8)
+        self.b.press_button("B", frames=8, detach_debugger=False)
         observed_bflag = 0
         observed_anim = 0
         end_time = time.time() + 0.6
@@ -254,7 +478,6 @@ class DekuStickRuntimeTest:
                 break
             time.sleep(0.01)
 
-        # Wait for sword swing to complete (SWORD_STATE and SWORD_ANIM return to 0)
         end_time = time.time() + 1.2
         while time.time() < end_time:
             if self.r(SWORD_STATE) == 0 and self.r(SWORD_ANIM) == 0:
@@ -271,13 +494,11 @@ class DekuStickRuntimeTest:
         # 3. Worn stick stow, wear preservation & redraw
         # ----------------------------------------------------
         print("[*] Test 3: Worn stick stow, wear preservation, and redraw...")
-        # Link has 2 sticks, no stored wear
         self.w(DEKU_STICKS_COUNT, 2)
         self.w(DEKU_STICK_WEAR, 0)
         self.w(DEKU_STICK_STATE, 0)
         self.w(DEKU_BURN_TIMER, 0)
 
-        # Draw stick from menu
         if not self.navigate_to_equipment():
             raise RuntimeError("Failed to open Equipment menu")
         self.w(CURSOR, 23)
@@ -285,12 +506,12 @@ class DekuStickRuntimeTest:
         self.press("A", frames=10)
         self.wait_play(8.0)
 
-        # Simulate igniting stick (State = 2) and burning down to 30 ticks (~8 seconds remaining)
+        # Simulate igniting stick (State = 2) and burning down to 30 ticks
         self.w(DEKU_STICK_STATE, 2)
         self.w(DEKU_BURN_TIMER, 30)
         time.sleep(0.1)
 
-        # Stow the worn stick by pressing B
+        # Stow worn stick
         self.press("B", frames=10)
         time.sleep(0.1)
 
@@ -299,7 +520,7 @@ class DekuStickRuntimeTest:
         wear3_stow = self.r(DEKU_STICK_WEAR)
         print(f"    Worn stow: count={count3_stow} (exp 2), state={state3_stow} (exp 0), wear={wear3_stow} (exp in 25..30)")
 
-        # Redraw the stick from menu
+        # Redraw stick from menu
         if not self.navigate_to_equipment():
             raise RuntimeError("Failed to open Equipment menu")
         self.w(CURSOR, 23)
@@ -317,29 +538,471 @@ class DekuStickRuntimeTest:
         self.results["worn_stick_stow_and_redraw"] = t3_ok
         print(f"    Worn redraw: count={count3_redraw} (exp 1), state={state3_redraw} (exp 1), burn={burn3_redraw} (exp {wear3_stow}), wear={wear3_redraw} (exp 0) -> OK: {t3_ok}")
 
-        # Stow it again to leave wear in SRAM for Test 4
+        # ----------------------------------------------------
+        # 4. Visible OAM in 4 directions & controls
+        # ----------------------------------------------------
+        print("[*] Test 4: Visible OAM in 4 directions, flame flicker, Y swipe suppression...")
+        # Link currently holds stick (State = 1). Test 4 directions:
+        facings = {0: "up", 2: "down", 4: "left", 6: "right"}
+        oam_facings_ok = True
+        for dir_val, dir_name in facings.items():
+            self.w(LINK_DIR, dir_val)
+            time.sleep(0.05)
+            # Read latched PPU OAM for Sprite 4 (stick) and Sprite 5 (flame)
+            s4 = self.read_ppu_oam(4)
+            s5 = self.read_ppu_oam(5)
+            s4_y, s4_tile, s4_prop = s4["y"], s4["tile"], s4["prop"]
+            s5_y = s5["y"]
+
+            # Unlit: Sprite 4 onscreen (< 0xE0), palette 1 (0x02), Sprite 5 hidden (>= 0xE0)
+            stick_onscreen = (s4_y < 0xE0)
+            palette1_ok = ((s4_prop & 0x0E) == 0x02)
+            flame_hidden = (s5_y >= 0xE0)
+            valid = stick_onscreen and palette1_ok and flame_hidden
+            if not valid:
+                oam_facings_ok = False
+            self.take_screenshot(f"deku_held_{dir_name}_unlit")
+            print(f"    Facing {dir_name.upper()} unlit: stick_y={s4_y}, tile=0x{s4_tile:02X}, prop=0x{s4_prop:02X}, flame_y={s5_y} -> valid: {valid}")
+
+        # Now test lit flame OAM & flicker (State = 2)
+        self.w(DEKU_STICK_STATE, 2)
+        time.sleep(0.05)
+        s5_lit = self.read_ppu_oam(5)
+        s5_y_lit, s5_tile_lit, s5_prop_lit = s5_lit["y"], s5_lit["tile"], s5_lit["prop"]
+        lit_flame_ok = (s5_y_lit < 0xE0 and s5_tile_lit == 0x9C and (s5_prop_lit & 0x0E) == 0x08)
+
+        # Check flicker bit 6 over 8 frames
+        flicker_observed = set()
+        for _ in range(8):
+            flicker_observed.add((self.read_ppu_oam(5)["prop"] & 0x40) != 0)
+            time.sleep(0.02)
+        flicker_ok = (len(flicker_observed) >= 2)
+        self.take_screenshot("deku_held_down_lit")
+        print(f"    Lit flame: y={s5_y_lit}, tile=0x{s5_tile_lit:02X}, prop=0x{s5_prop_lit:02X}, flicker_observed={flicker_ok} -> valid: {lit_flame_ok and flicker_ok}")
+
+        # Test Y swipe suppression of assigned item
+        self.w(Y_ITEM_ASSIGNED, 2)  # Assign Boomerang (item 2)
+        time.sleep(0.05)
+        # Queue Y press via Mesen controller
+        self.b.press_button("y", frames=4, detach_debugger=False)
+        time.sleep(0.04)
+
+        state_swipe = self.r(DEKU_STICK_STATE)
+        timer_swipe = self.r(DEKU_SWIPE_TIMER)
+        f4_after = self.r(CONTROLLER_F4)
+
+        # Check that no Boomerang sprite was spawned in slots 0..15 ($0DD0..$0DDF)
+        active_sprites = [self.r(SPRITE_STATE + i) for i in range(16)]
+        boomerang_spawned = any(s == 0x09 and self.r(SPRITE_CLASS + i) == 0x0C for i, s in enumerate(active_sprites))
+
+        # Check movement input freeze: set $F0 = 0x01
+        self.w(CONTROLLER_F0, 0x01)
+        time.sleep(0.02)
+        f0_cleared = ((self.r(CONTROLLER_F0) & 0x0F) == 0)
+
+        self.take_screenshot("deku_swipe_active")
+        print(f"    Y swipe: state={state_swipe} (exp 3), timer={timer_swipe} (exp >0), f4_cleared={(f4_after & 0x40) == 0}, boomerang_spawned={boomerang_spawned}, input_frozen={f0_cleared}")
+
+        # Wait for swipe to finish (~14 frames)
+        time.sleep(0.3)
+        state_after_swipe = self.r(DEKU_STICK_STATE)
+        swipe_finished = (state_after_swipe == 2)  # returns to lit held state
+
+        # Stow stick with B
         self.press("B", frames=10)
         time.sleep(0.1)
 
-        # ----------------------------------------------------
-        # 4. Save & reopen persistence (T3 proof)
-        # ----------------------------------------------------
-        print("[*] Test 4: Save & reopen wear persistence via in-game Save/Quit and LOADROM...")
-        # Verify stored wear before save
-        wear_pre_save = self.r(DEKU_STICK_WEAR)
-        count_pre_save = self.r(DEKU_STICKS_COUNT)
-        print(f"    Pre-save: count={count_pre_save}, wear={wear_pre_save} (expected >0 and <=30)")
+        t4_ok = (oam_facings_ok and lit_flame_ok and flicker_ok and
+                 (state_swipe == 3 or swipe_finished) and not boomerang_spawned and
+                 f0_cleared and swipe_finished)
+        self.results["visible_oam_four_directions_and_controls"] = t4_ok
+        print(f"    Visible OAM & controls verdict -> OK: {t4_ok}")
 
-        # Ensure GameState >= 1 so GameOver_SaveAndQuit executes SaveGameFile
-        self.w(GAME_STATE, 2)
+        # ----------------------------------------------------
+        # 5. Swipe enemy nonlethal stun & immunity
+        # ----------------------------------------------------
+        print("[*] Test 5: Swipe nonlethal enemy stun, 0 HP damage, no break...")
+        # Draw stick unlit (count 2 -> 1)
+        self.w(DEKU_STICKS_COUNT, 1)
+        self.w(DEKU_STICK_STATE, 1)
+        self.w(DEKU_BURN_TIMER, 75)
+        self.w(LINK_DIR, 2)  # Facing Down
+
+        # Spawn active blue soldier in slot 0 directly in front of Link
+        posx = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        posy = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        cur_layer = self.r(CURRENT_LAYER)
+        underworld = self.r(UNDERWORLD_FLAG)
+
+        self.w(SPRITE_STATE + 0, 9)     # Active
+        self.w(SPRITE_CLASS + 0, 0x41)  # Soldier
+        self.w(SPRITE_DAMAGE + 0, 0)    # Vulnerable
+        self.w(SPRITE_HP + 0, 4)        # 4 HP
+        self.w(SPRITE_STUN + 0, 0)      # Not stunned
+        self.w(SPRITE_LAYER + 0, cur_layer)
+        self.w(SPRITE_POSX_LOW + 0, (posx + 2) & 0xFF)
+        self.w(SPRITE_POSX_HIGH + 0, (posx + 2) >> 8)
+        self.w(SPRITE_POSY_LOW + 0, (posy + 18) & 0xFF)
+        self.w(SPRITE_POSY_HIGH + 0, (posy + 18) >> 8)
+        self.w(NOPAIN, 0xFF)  # Prevent collision hurt during weapon test
+
+        print(f"    Sprite0 setup: Link=({posx},{posy}), Sprite0=({posx+2},{posy+18}), layer={cur_layer}, underworld={underworld}, state0={self.r(SPRITE_STATE+0)}")
+
+        # Trigger swipe via Mesen joypad
+        self.b.press_button("y", frames=4, detach_debugger=False)
+
+        observed_stun = 0
+        observed_latched = False
+        end_time = time.time() + 0.4
+        poll_samples = 0
+        while time.time() < end_time:
+            stun = self.r(SPRITE_STUN + 0)
+            timer = self.r(DEKU_SWIPE_TIMER)
+            state = self.r(DEKU_STICK_STATE)
+            s0_state = self.r(SPRITE_STATE + 0)
+            if poll_samples < 5 and state == 3:
+                print(f"      [poll] stick_state={state}, timer={timer}, stun={stun}, s0_state={s0_state}")
+                poll_samples += 1
+            if stun in (0x20, 0x1F, 0x1E):
+                observed_stun = 0x20
+            if (timer & 0x40) != 0:
+                observed_latched = True
+            if observed_stun == 0x20 and observed_latched and state == 1:
+                break
+            time.sleep(0.01)
+
+        hp_during = self.r(SPRITE_HP + 0)
+        state_end = self.r(DEKU_STICK_STATE)
+        count_end = self.r(DEKU_STICKS_COUNT)
+        hp_end = self.r(SPRITE_HP + 0)
+
+        print(f"    Observed swipe hit: stun={observed_stun} (exp 0x20), hp={hp_during} (exp 4), latched={observed_latched}, state_end={state_end}")
+
+        stun_ok = (observed_stun == 0x20 and hp_during == 4 and hp_end == 4 and
+                   observed_latched and state_end == 1 and count_end == 1)
+
+        # Test immune enemy ($0E40 = 0x80): should not be stunned
+        self.w(SPRITE_DAMAGE + 0, 0x80)
+        self.w(SPRITE_STUN + 0, 0)
+        self.b.press_button("y", frames=4, detach_debugger=False)
+        time.sleep(0.25)
+        immune_stun = self.r(SPRITE_STUN + 0)
+        immune_ok = (immune_stun == 0)
+
+        # Clear sprite slot 0 and restore NOPAIN
+        self.w(SPRITE_STATE + 0, 0)
+        self.w(SPRITE_STUN + 0, 0)
+        self.w(NOPAIN, 0)
+
+        t5_ok = (stun_ok and immune_ok)
+        self.results["swipe_enemy_stun_and_immunity"] = t5_ok
+        print(f"    Swipe enemy stun verdict: stun_ok={stun_ok}, immune_ok={immune_ok} -> OK: {t5_ok}")
+
+        # ----------------------------------------------------
+        # 6. Real controller-driven torch interaction in authored room 0x00
+        # ----------------------------------------------------
+        print("[*] Test 6: Controller-driven torch interaction in authored room 0x00...")
+        self.boot_indoor_dungeon()
+        # Load Entrance 0x7B (Room 0x00, Floor F1, Layer 0)
+        self.w(0x7E010E, 0x7B)
+        self.w(MODULE, 6)  # Module 06 UnderworldLoad
+        self.w(SUBMODULE, 0)
+        self.wait_play(8.0)
+        time.sleep(0.5)
+
+        # Setup starting fixture:
+        # Declared progression fixture:
+        # Deku Sticks count = 2, wear = 0, state = 0, burn = 0
+        # Torch 0 lit ($04F0 = 0x80), Torch 1 unlit ($04F1 = 0x00, 0542 unlit bit)
+        # Clear room boss sprite in slot 0 and protect Link from room hazards
+        self.w(DEKU_STICKS_COUNT, 2)
+        self.w(DEKU_STICK_WEAR, 0)
+        self.w(DEKU_STICK_STATE, 0)
+        self.w(DEKU_BURN_TIMER, 0)
+        self.w(TORCH_TIMERS + 0, 0x80)
+        self.w(TORCH_TIMERS + 1, 0x00)
+        self.w(NOPAIN, 0x01)
+        self.w(SPRITE_STATE + 0, 0)
+        val_0542 = (self.r(0x7E0542) | (self.r(0x7E0543) << 8)) & 0x7FFF
+        self.w(0x7E0542, val_0542 & 0xFF)
+        self.w(0x7E0543, (val_0542 >> 8) & 0xFF)
+
+        init_x = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        init_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        print(f"    Room 0x00 loaded: Link=({init_x}, {init_y}), Torch0=0x{self.r(TORCH_TIMERS+0):02X}, Torch1=0x{self.r(TORCH_TIMERS+1):02X}")
+
+        # Noncontact control 1: Link at spawn (383, 137), 100+ px from torches
+        nc1_state = self.r(DEKU_STICK_STATE)
+        nc1_ok = (nc1_state == 0)
+
+        # Step A: Draw unlit stick from Equipment menu via joypad navigation
+        if not self.navigate_to_equipment():
+            raise RuntimeError("Failed to open Equipment menu in Room 0x00")
+        # Navigate cursor to slot 23 via joypad inputs:
+        # Starting from slot 0: UP moves to row 3 (slot 18), LEFT moves to slot 23 (Deku Sticks)
+        self.press("UP", frames=4)
+        time.sleep(0.08)
+        self.press("LEFT", frames=4)
+        time.sleep(0.08)
+        cur_slot = self.r(CURSOR)
+        if cur_slot != 23:
+            raise RuntimeError(f"Expected cursor at slot 23, got {cur_slot}")
+        self.press("A", frames=10)
+        self.wait_play(8.0)
+
+        state_drawn = self.r(DEKU_STICK_STATE)
+        count_drawn = self.r(DEKU_STICKS_COUNT)
+        burn_drawn = self.r(DEKU_BURN_TIMER)
+        draw_ok = (state_drawn == 1 and count_drawn == 1 and burn_drawn == 75)
+        pos_draw = (self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8), self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8))
+        print(f"    Joypad draw unlit stick: state={state_drawn} (exp 1), count={count_drawn} (exp 1), burn={burn_drawn} (exp 75), pos={pos_draw} -> OK: {draw_ok}")
+        self.take_screenshot("before_torch")
+
+        # Step B: Walk LEFT to X=296 (probe X = Link_X+8 = 302..304, in tile col 18 X=288..303) with bounded deadline
+        left_ok = False
+        for step in range(40):
+            cur_x = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+            if cur_x <= 296:
+                left_ok = True
+                break
+            self.press("LEFT", frames=3)
+            time.sleep(0.04)
+        if not left_ok:
+            raise RuntimeError(f"Movement leg B timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
+
+        # Noncontact control 2: Link at (296, 137), 50+ px north of Torch 0, stick remains unlit
+        posx_nc2 = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        posy_nc2 = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        nc2_state = self.r(DEKU_STICK_STATE)
+        nc2_ok = (nc2_state == 1 and posy_nc2 <= 150)
+        print(f"    Noncontact control 2 at ({posx_nc2}, {posy_nc2}): state={nc2_state} (exp 1) -> OK: {nc2_ok}")
+
+        # Step C: Approach existing lit Torch 0 via D-pad DOWN with bounded deadline
+        ignite_reached = False
+        for step in range(40):
+            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+            if self.r(DEKU_STICK_STATE) == 2 or cur_y >= 176:
+                ignite_reached = True
+                break
+            self.press("DOWN", frames=2)
+            time.sleep(0.04)
+        if not ignite_reached:
+            raise RuntimeError(f"Movement leg C timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
+
+        ignite_state = self.r(DEKU_STICK_STATE)
+        ignite_burn = self.r(DEKU_BURN_TIMER)
+        ignite_flame_y = self.read_ppu_oam(5)["y"]
+        ignite_ok = (ignite_state == 2 and ignite_burn in (74, 75) and ignite_flame_y < 0xE0)
+        posx_ignite = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        posy_ignite = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        print(f"    Torch 0 ignition contact at ({posx_ignite}, {posy_ignite}): state={ignite_state} (exp 2), burn={ignite_burn} (exp 74..75), flame_y={ignite_flame_y} -> OK: {ignite_ok}")
+        self.take_screenshot("contact_torch_ignite")
+
+        # Step D: Carry lit stick to unlit Torch 1
+        # Leg D1: Walk UP to Y=158 for clearance with bounded deadline
+        up_clear_ok = False
+        for step in range(30):
+            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+            if cur_y <= 158:
+                up_clear_ok = True
+                break
+            self.press("UP", frames=3)
+            time.sleep(0.04)
+        if not up_clear_ok:
+            raise RuntimeError(f"Movement leg D1 timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
+
+        # Leg D2: Walk RIGHT to X=452 (aligned with Torch 1) with bounded deadline
+        right_align_ok = False
+        for step in range(60):
+            cur_x = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+            if cur_x >= 452:
+                right_align_ok = True
+                break
+            self.press("RIGHT", frames=3)
+            time.sleep(0.04)
+        if not right_align_ok:
+            raise RuntimeError(f"Movement leg D2 timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
+
+        # Leg D3: Approach Torch 1: Walk DOWN to Y=176 facing DOWN with bounded deadline
+        down_torch1_ok = False
+        for step in range(40):
+            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+            if self.r(TORCH_TIMERS + 1) > 0 or cur_y >= 176:
+                down_torch1_ok = True
+                break
+            self.press("DOWN", frames=2)
+            time.sleep(0.04)
+        if not down_torch1_ok:
+            raise RuntimeError(f"Movement leg D3 timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
+
+        t1_timer = self.r(TORCH_TIMERS + 1)
+        stick_burn_when_lit = self.r(DEKU_BURN_TIMER)
+        torch1_lit_ok = (t1_timer > 0 and stick_burn_when_lit > 0)
+        posx_t1 = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        posy_t1 = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        print(f"    Torch 1 contact at ({posx_t1}, {posy_t1}): torch1_timer={t1_timer} (exp >0), stick_burn={stick_burn_when_lit} -> OK: {torch1_lit_ok}")
+        self.take_screenshot("after_torch_lit")
+
+        # Step E: Step slightly UP away from Torch 1 (to Y=166) with bounded deadline
+        step_up_ok = False
+        for step in range(20):
+            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+            if cur_y <= 166:
+                step_up_ok = True
+                break
+            self.press("UP", frames=2)
+            time.sleep(0.04)
+        if not step_up_ok:
+            raise RuntimeError(f"Movement leg E timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
+
+        burn_before_stow = self.r(DEKU_BURN_TIMER)
+        # Stow stick via joypad B button
+        self.press("B", frames=8)
+        time.sleep(0.15)
+        stow_state = self.r(DEKU_STICK_STATE)
+        stow_count = self.r(DEKU_STICKS_COUNT)
+        saved_wear = self.r(DEKU_STICK_WEAR)
+        stow_ok = (stow_state == 0 and stow_count == 2 and saved_wear == burn_before_stow and saved_wear > 0)
+        print(f"    Stow via B: state={stow_state} (exp 0), count={stow_count} (exp 2), wear={saved_wear} (exp {burn_before_stow}) -> OK: {stow_ok}")
+
+        # Step F: Redraw stick via joypad Equipment menu (at Y=166, out of torch reach -> draws unlit with wear)
+        if not self.navigate_to_equipment():
+            raise RuntimeError("Failed to open Equipment menu for redraw")
+        # Navigate cursor to slot 23 via joypad inputs:
+        self.press("UP", frames=4)
+        time.sleep(0.08)
+        self.press("LEFT", frames=4)
+        time.sleep(0.08)
+        cur_slot = self.r(CURSOR)
+        if cur_slot != 23:
+            raise RuntimeError(f"Expected cursor at slot 23 on redraw, got {cur_slot}")
+        self.press("A", frames=10)
+        self.wait_play(8.0)
+
+        redraw_state = self.r(DEKU_STICK_STATE)
+        redraw_count = self.r(DEKU_STICKS_COUNT)
+        redraw_burn = self.r(DEKU_BURN_TIMER)
+        redraw_wear = self.r(DEKU_STICK_WEAR)
+        redraw_ok = (redraw_state == 1 and redraw_count == 1 and redraw_burn == saved_wear and redraw_wear == 0)
+        print(f"    Redraw stick: state={redraw_state} (exp 1), count={redraw_count} (exp 1), burn={redraw_burn} (exp {saved_wear}), wear={redraw_wear} (exp 0) -> OK: {redraw_ok}")
+
+        # Step G: Reignite stick by approaching lit Torch 1 via D-pad DOWN with bounded deadline
+        reignite_approach_ok = False
+        for step in range(30):
+            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+            if self.r(DEKU_STICK_STATE) == 2 or cur_y >= 176:
+                reignite_approach_ok = True
+                break
+            self.press("DOWN", frames=2)
+            time.sleep(0.04)
+        if not reignite_approach_ok:
+            raise RuntimeError(f"Movement leg G timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
+
+        reignite_state = self.r(DEKU_STICK_STATE)
+        reignite_burn = self.r(DEKU_BURN_TIMER)
+        reignite_ok = (reignite_state == 2 and reignite_burn in (saved_wear, saved_wear - 1))
+        print(f"    Reignite stick from Torch 1: state={reignite_state} (exp 2), burn={reignite_burn} (exp in [{saved_wear-1}, {saved_wear}]) -> OK: {reignite_ok}")
+
+        # Step H: Noncontact control - walk away UP with bounded deadline
+        step_h_ok = False
+        for step in range(20):
+            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+            if cur_y <= 168:
+                step_h_ok = True
+                break
+            self.press("UP", frames=2)
+            time.sleep(0.04)
+        if not step_h_ok:
+            raise RuntimeError(f"Movement leg H timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
+        posy_away = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        state_away = self.r(DEKU_STICK_STATE)
+        burn_away = self.r(DEKU_BURN_TIMER)
+        nc3_ok = (state_away == 2 and posy_away <= 170 and burn_away <= reignite_burn)
+        print(f"    Noncontact walk away: posy={posy_away}, state={state_away} (exp 2), burn={burn_away} -> OK: {nc3_ok}")
+
+        # Stow stick to leave clean state
+        self.press("B", frames=8)
         time.sleep(0.1)
+        self.w(NOPAIN, 0x00)
 
-        # Trigger Game Over via standard lethal damage fixture:
-        # Clear temporary invulnerability (NOPAIN $7E037B = 0) and queue lethal damage (HURTME $7E0373 = current HP)
-        hp = self.r(LINK_HP)
-        if hp == 0:
-            hp = 24
-            self.w(LINK_HP, hp)
+        t6_ok = (nc1_ok and draw_ok and nc2_ok and ignite_ok and torch1_lit_ok and
+                 stow_ok and redraw_ok and reignite_ok and nc3_ok)
+        self.results["torch_native_lighting_and_ignition"] = t6_ok
+        print(f"    Torch interaction verdict -> OK: {t6_ok}")
+
+        # Restore overworld baseline state for subsequent lifecycle tests
+        self.boot_file2()
+
+        # ----------------------------------------------------
+        # 7. Cross-room scroll & lifecycle
+        # ----------------------------------------------------
+        print("[*] Test 7: Cross-room scroll burn pause & transition lifecycle...")
+        # Link has stick lit, budget 50 ticks
+        self.w(DEKU_STICKS_COUNT, 1)
+        self.w(DEKU_STICK_STATE, 2)
+        self.w(DEKU_BURN_TIMER, 50)
+
+        # Simulate ordinary screen scrolling: SUBMODULE $11 = 1
+        self.w(SUBMODULE, 1)
+        time.sleep(0.5)  # ~30 frames of scrolling
+
+        burn_during_scroll = self.r(DEKU_BURN_TIMER)
+        state_during_scroll = self.r(DEKU_STICK_STATE)
+        scroll_paused = (burn_during_scroll == 50 and state_during_scroll == 2)
+        print(f"    During scroll ($11=1): burn={burn_during_scroll} (exp 50), state={state_during_scroll} (exp 2) -> OK: {scroll_paused}")
+
+        # Resume normal gameplay ($11 = 0)
+        self.w(SUBMODULE, 0)
+        scroll_resumed = False
+        burn_after_scroll = 50
+        for _ in range(30):
+            time.sleep(0.05)
+            burn_after_scroll = self.r(DEKU_BURN_TIMER)
+            if burn_after_scroll < 50:
+                scroll_resumed = True
+                break
+        print(f"    After scroll ($11=0): burn={burn_after_scroll} (exp <50) -> OK: {scroll_resumed}")
+
+        # Generic non-default state interruption: LinkState $5D = 0x13 (Hookshotting) drops drawn stick without refund
+        self.w(DEKU_STICK_STATE, 2)
+        self.w(DEKU_BURN_TIMER, 40)
+        self.w(LINK_STATE, 0x13)  # LinkState_Hookshotting ($5D = 0x13)
+        time.sleep(0.1)
+        state_stairs = self.r(DEKU_STICK_STATE)
+        burn_stairs = self.r(DEKU_BURN_TIMER)
+        count_stairs = self.r(DEKU_STICKS_COUNT)
+        stairs_dropped = (state_stairs == 0 and burn_stairs == 0 and count_stairs == 1)
+        self.w(LINK_STATE, 0)
+        time.sleep(0.1)
+        print(f"    Non-default state drop ($5D=0x13, Hookshotting): state={state_stairs} (exp 0), burn={burn_stairs} (exp 0), count={count_stairs} (exp 1) -> OK: {stairs_dropped}")
+
+        # Stowed wear survives transitions
+        self.w(DEKU_STICK_WEAR, 30)
+        self.w(DEKU_STICK_STATE, 0)
+        self.w(SUBMODULE, 1)  # Transition scroll while stowed
+        time.sleep(0.1)
+        self.w(SUBMODULE, 0)
+        time.sleep(0.1)
+        wear_survived = (self.r(DEKU_STICK_WEAR) == 30)
+        print(f"    Stowed wear transition survival: wear={self.r(DEKU_STICK_WEAR)} (exp 30) -> OK: {wear_survived}")
+
+        t7_ok = (scroll_paused and scroll_resumed and stairs_dropped and wear_survived)
+        self.results["cross_room_scroll_and_lifecycle"] = t7_ok
+        print(f"    Cross-room lifecycle verdict -> OK: {t7_ok}")
+
+        # ----------------------------------------------------
+        # 8. Save & Quit battery persistence
+        # ----------------------------------------------------
+        print("[*] Test 8: In-game Save & Quit and battery SRM persistence...")
+        # Link has 2 sticks, stored wear = 30
+        self.w(DEKU_STICKS_COUNT, 2)
+        self.w(DEKU_STICK_WEAR, 30)
+        self.w(DEKU_STICK_STATE, 0)
+        self.w(GAME_STATE, 2)  # Enable SaveGameFile execution
+
+        # Queue lethal damage to reach GameOver screen
+        hp = self.r(LINK_HP) or 24
+        self.w(LINK_HP, hp)
         self.w(NOPAIN, 0)
         self.w(HURTME, hp)
 
@@ -355,12 +1018,12 @@ class DekuStickRuntimeTest:
         # Select Save and Quit (choice 1)
         for _ in range(4):
             if self.r(CHOICE) == 1:
-                self.b.press_button("a", frames=8)
+                self.b.press_button("a", frames=8, detach_debugger=False)
                 break
-            self.b.press_button("select", frames=8)
+            self.b.press_button("select", frames=8, detach_debugger=False)
             time.sleep(0.3)
 
-        # Wait for return to Title Screen / Intro
+        # Wait for return to Title Screen
         end_time = time.time() + 15.0
         while time.time() < end_time:
             if self.r(MODULE) in (0, 1, 0x14):
@@ -373,50 +1036,41 @@ class DekuStickRuntimeTest:
         if len(sram) != 8192:
             raise RuntimeError(f"Expected 8192 bytes of SRAM, got {len(sram)}")
 
-        # Checksum calculation: sum of 16-bit words across slot 1 (0x500 bytes) must equal 0x5A5A
         slot1_csum = sum(int.from_bytes(sram[i:i+2], "little") for i in range(0, 0x500, 2)) & 0xFFFF
         csum_ok = (slot1_csum == 0x5A5A)
         backup_ok = (sram[:0x500] == sram[0xF00:0x1400])
         sram_wear = sram[0x39F]
         sram_count = sram[0x395]
 
-        # Save the actual SRM file to work dir and sync to profile Saves
-        srm_path = self.work_dir / "deku_persistence.srm"
-        srm_path.write_bytes(sram)
-        (self.home / "Saves" / "deku_candidate.srm").write_bytes(sram)
-        print(f"    SRAM checks: checksum=0x{slot1_csum:04X} (valid: {csum_ok}), backup_match={backup_ok}, sram_count={sram_count}, sram_wear={sram_wear}")
+        # Ensure SRM file is saved on disk for fresh process reopen
+        srm_file = self.home / "Saves" / "deku_candidate.srm"
+        srm_file.write_bytes(sram)
+        (self.work_dir / "deku_persistence.srm").write_bytes(sram)
+        print(f"    SRAM: csum=0x{slot1_csum:04X} (valid: {csum_ok}), backup={backup_ok}, count={sram_count}, wear={sram_wear}")
 
-        # Reload ROM via LOADROM (reinitializes emulator memory from cartridge & SRM on disk)
-        self.b.send_command("LOADROM", {"path": str(self.rom_copy)})
-        time.sleep(2.0)
+        t8_ok = (csum_ok and backup_ok and sram_wear == 30 and sram_count == 2)
+        self.results["save_quit_battery_persistence"] = t8_ok
+        print(f"    Save/Quit battery verdict -> OK: {t8_ok}")
 
-        # Advance through Title to File Select (Module 1)
-        for _ in range(30):
-            if self.r(MODULE) == 1:
-                break
-            self.b.press_button("start", frames=6)
-            time.sleep(0.4)
-        print(f"    At File Select: MODULE={self.r(MODULE)}")
+        # ----------------------------------------------------
+        # 9. Fresh-process cold boot reopen (T3 proof)
+        # ----------------------------------------------------
+        print("[*] Test 9: Fresh-process cold boot reopen with disk SRM...")
+        # Cleanly shut down first emulator instance
+        self.close()
 
-        # Launch File 1 into gameplay (MODULE in 7, 9, 11 and SUBMODULE == 0)
-        for _ in range(40):
-            if self.r(MODULE) in (7, 9, 11) and self.r(SUBMODULE) == 0:
-                break
-            self.b.press_button("start", frames=8)
-            time.sleep(0.4)
-        print(f"    Back in gameplay: MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)}")
+        # Launch fresh emulator instance loading the disk SRM without reset
+        self.launch(reset_save=False)
+        self.boot_fresh_file()
 
         wear_reopened = self.r(DEKU_STICK_WEAR)
         count_reopened = self.r(DEKU_STICKS_COUNT)
         state_reopened = self.r(DEKU_STICK_STATE)
         burn_reopened = self.r(DEKU_BURN_TIMER)
-        print(f"    Reopened state: count={count_reopened}, wear={wear_reopened}, state={state_reopened}, burn={burn_reopened}")
+        honeycomb_reopened = self.r(HONEYCOMB_COUNT)
+        print(f"    Fresh session: count={count_reopened}, wear={wear_reopened}, state={state_reopened}, honeycomb={honeycomb_reopened}")
 
-        # Verify reopened state matches saved values
-        reopened_ok = (csum_ok and backup_ok and
-                       sram_wear == wear_pre_save and sram_count == count_pre_save and
-                       wear_reopened == wear_pre_save and count_reopened == count_pre_save and
-                       state_reopened == 0 and burn_reopened == 0)
+        reopened_clean = (wear_reopened == 30 and count_reopened == 2 and state_reopened == 0 and burn_reopened == 0)
 
         # Redraw stick to verify restored burn timer from preserved wear
         if not self.navigate_to_equipment():
@@ -430,16 +1084,14 @@ class DekuStickRuntimeTest:
         redraw_state = self.r(DEKU_STICK_STATE)
         redraw_burn = self.r(DEKU_BURN_TIMER)
         redraw_wear = self.r(DEKU_STICK_WEAR)
-        print(f"    Redrawn from saved wear: count={redraw_count} (exp {count_pre_save-1}), state={redraw_state} (exp 1), burn={redraw_burn} (exp {wear_pre_save}), wear={redraw_wear} (exp 0)")
-
-        redraw_ok = (redraw_count == count_pre_save - 1 and redraw_state == 1 and
-                     redraw_burn == wear_pre_save and redraw_wear == 0)
+        print(f"    Redrawn from wear: count={redraw_count} (exp 1), state={redraw_state} (exp 1), burn={redraw_burn} (exp 30), wear={redraw_wear} (exp 0)")
+        redraw_ok = (redraw_count == 1 and redraw_state == 1 and redraw_burn == 30 and redraw_wear == 0)
 
         # Stow stick
         self.press("B", frames=10)
         time.sleep(0.2)
 
-        # Corrupt-wear fallback test: write 0xFF to DEKU_STICK_WEAR, draw from menu, assert fallback to 75 ticks
+        # Corrupt wear fallback test ($FF -> 75 ticks)
         self.w(DEKU_STICK_WEAR, 0xFF)
         time.sleep(0.1)
         if not self.navigate_to_equipment():
@@ -449,26 +1101,38 @@ class DekuStickRuntimeTest:
         self.press("A", frames=10)
         self.wait_play(8.0)
 
-        fallback_count = self.r(DEKU_STICKS_COUNT)
         fallback_state = self.r(DEKU_STICK_STATE)
         fallback_burn = self.r(DEKU_BURN_TIMER)
         fallback_wear = self.r(DEKU_STICK_WEAR)
-        print(f"    Corrupt wear fallback: count={fallback_count}, state={fallback_state}, burn={fallback_burn} (exp 75), wear={fallback_wear} (exp 0)")
-
         fallback_ok = (fallback_state == 1 and fallback_burn == 75 and fallback_wear == 0)
+        print(f"    Corrupt wear fallback: state={fallback_state}, burn={fallback_burn} (exp 75), wear={fallback_wear} (exp 0) -> OK: {fallback_ok}")
 
         # Stow stick
         self.press("B", frames=10)
         time.sleep(0.2)
 
-        t4_ok = (reopened_ok and redraw_ok and fallback_ok)
-        self.results["save_reopen_t3_persistence"] = t4_ok
-        print(f"    Save & reopen persistence verdict: reopened={reopened_ok}, redraw={redraw_ok}, fallback={fallback_ok} -> OK: {t4_ok}")
+        # Check ordinary sword swing works after reopen and stow
+        self.b.press_button("B", frames=8, detach_debugger=False)
+        observed_sword = 0
+        end_time = time.time() + 0.6
+        while time.time() < end_time:
+            if self.r(SWORD_STATE) > 0 or self.r(SWORD_ANIM) > 0:
+                observed_sword = 1
+                break
+            time.sleep(0.01)
+        time.sleep(0.5)
+
+        sword_reopened_ok = (observed_sword == 1 and self.r(SWORD_STATE) == 0 and self.r(SWORD_ANIM) == 0)
+        print(f"    Ordinary sword swing after reopen: observed={observed_sword} -> OK: {sword_reopened_ok}")
+
+        t9_ok = (reopened_clean and redraw_ok and fallback_ok and sword_reopened_ok)
+        self.results["save_reopen_t3_persistence"] = t9_ok
+        print(f"    Fresh process reopen verdict -> OK: {t9_ok}")
 
         # ----------------------------------------------------
-        # 5. Interruption drop cleanup (taking damage)
+        # 10. Interruption drop cleanup (taking damage)
         # ----------------------------------------------------
-        print("[*] Test 5: Interruption drop cleanup (damage drops stick)...")
+        print("[*] Test 10: Interruption drop cleanup (damage drops stick)...")
         # Draw stick
         if not self.navigate_to_equipment():
             raise RuntimeError("Failed to open Equipment menu")
@@ -477,54 +1141,48 @@ class DekuStickRuntimeTest:
         self.press("A", frames=10)
         self.wait_play(8.0)
 
-        # Verify drawn
-        state5_drawn = self.r(DEKU_STICK_STATE)
-        count5_drawn = self.r(DEKU_STICKS_COUNT)
+        state10_drawn = self.r(DEKU_STICK_STATE)
+        count10_drawn = self.r(DEKU_STICKS_COUNT)
 
-        # Simulate damage interruption by writing LinkState $5D = 1 (recoil/hurt)
+        # Simulate damage interruption by writing LinkState $5D = 1
         self.w(LINK_STATE, 1)
         time.sleep(0.3)
 
-        # DekuStick_Main should have detected $5D != 0 and called DekuStick_Drop
-        state5_after = self.r(DEKU_STICK_STATE)
-        burn5_after = self.r(DEKU_BURN_TIMER)
-        count5_after = self.r(DEKU_STICKS_COUNT)
-        wear5_after = self.r(DEKU_STICK_WEAR)
+        state10_after = self.r(DEKU_STICK_STATE)
+        burn10_after = self.r(DEKU_BURN_TIMER)
+        count10_after = self.r(DEKU_STICKS_COUNT)
+        wear10_after = self.r(DEKU_STICK_WEAR)
 
-        # Reset LinkState back to 0
         self.w(LINK_STATE, 0)
         time.sleep(0.1)
 
-        # Dropped stick: state 0, burn 0, count NOT refunded (remains 1), wear 0
-        t5_ok = (state5_drawn == 1 and state5_after == 0 and burn5_after == 0 and count5_after == 1 and wear5_after == 0)
-        self.results["interruption_drop_cleanup"] = t5_ok
-        print(f"    Interruption: drawn_state={state5_drawn}, after_state={state5_after}, burn={burn5_after}, count={count5_after} (exp 1), wear={wear5_after} (exp 0) -> OK: {t5_ok}")
+        t10_ok = (state10_drawn == 1 and state10_after == 0 and burn10_after == 0 and count10_after == 1 and wear10_after == 0)
+        self.results["interruption_drop_cleanup"] = t10_ok
+        print(f"    Interruption: drawn={state10_drawn}, after={state10_after}, burn={burn10_after}, count={count10_after} (exp 1), wear={wear10_after} (exp 0) -> OK: {t10_ok}")
 
         # ----------------------------------------------------
-        # 6. Burn countdown & burn-out
+        # 11. Burn countdown & burn-out
         # ----------------------------------------------------
-        print("[*] Test 6: Burn countdown & burn-out...")
-        # Give Link 1 stick
+        print("[*] Test 11: Burn countdown & burn-out...")
         self.w(DEKU_STICKS_COUNT, 1)
         self.w(DEKU_STICK_WEAR, 0)
         self.w(DEKU_STICK_STATE, 2)  # Lit stick
         self.w(DEKU_BURN_TIMER, 3)   # 3 ticks remaining
 
-        # Wait ~50 frames for burn countdown to tick to 0
-        time.sleep(1.0)
+        time.sleep(1.0)  # Wait ~50 frames for countdown to reach 0
 
-        state6_after = self.r(DEKU_STICK_STATE)
-        burn6_after = self.r(DEKU_BURN_TIMER)
-        count6_after = self.r(DEKU_STICKS_COUNT)
+        state11_after = self.r(DEKU_STICK_STATE)
+        burn11_after = self.r(DEKU_BURN_TIMER)
+        count11_after = self.r(DEKU_STICKS_COUNT)
 
-        t6_ok = (state6_after == 0 and burn6_after == 0 and count6_after == 1)
-        self.results["burn_countdown_and_burnout"] = t6_ok
-        print(f"    Burn-out: state={state6_after} (exp 0), burn={burn6_after} (exp 0), count={count6_after} (exp 1) -> OK: {t6_ok}")
+        t11_ok = (state11_after == 0 and burn11_after == 0 and count11_after == 1)
+        self.results["burn_countdown_and_burnout"] = t11_ok
+        print(f"    Burn-out: state={state11_after} (exp 0), burn={burn11_after} (exp 0), count={count11_after} (exp 1) -> OK: {t11_ok}")
 
         # ----------------------------------------------------
-        # 7. Zero-inventory refusal
+        # 12. Zero-inventory refusal
         # ----------------------------------------------------
-        print("[*] Test 7: Zero-inventory draw refusal...")
+        print("[*] Test 12: Zero-inventory draw refusal...")
         self.w(DEKU_STICKS_COUNT, 0)
         self.w(DEKU_STICK_WEAR, 30)  # Retained wear
         self.w(DEKU_STICK_STATE, 0)
@@ -535,22 +1193,582 @@ class DekuStickRuntimeTest:
         self.w(CURSOR, 23)
         time.sleep(0.1)
 
-        # Press A: should be refused
         self.press("A", frames=10)
         time.sleep(0.5)
 
-        menu7 = self.r(MENU)
-        pend7 = self.r(PENDING_SUPPLY)
-        count7 = self.r(DEKU_STICKS_COUNT)
-        wear7 = self.r(DEKU_STICK_WEAR)
+        menu12 = self.r(MENU)
+        pend12 = self.r(PENDING_SUPPLY)
+        count12 = self.r(DEKU_STICKS_COUNT)
+        wear12 = self.r(DEKU_STICK_WEAR)
 
-        # Close menu
         self.press("START", frames=10)
         self.wait_play(5.0)
 
-        t7_ok = (menu7 == 6 and pend7 == 0 and count7 == 0 and wear7 == 30)
-        self.results["zero_inventory_refusal"] = t7_ok
-        print(f"    Zero-inventory refusal: MENU={menu7} (exp 6), pending={pend7} (exp 0), count={count7} (exp 0), wear={wear7} (exp 30) -> OK: {t7_ok}")
+        t12_ok = (menu12 == 6 and pend12 == 0 and count12 == 0 and wear12 == 30)
+        self.results["zero_inventory_refusal"] = t12_ok
+        print(f"    Zero-inventory refusal: MENU={menu12} (exp 6), pending={pend12} (exp 0), count={count12} (exp 0), wear={wear12} (exp 30) -> OK: {t12_ok}")
+
+        # ----------------------------------------------------
+        # 13. Actual indoor Underworld ($10=7) gameplay proof
+        # ----------------------------------------------------
+        print("[*] Test 13: Actual indoor dungeon ($10=7) draw, hold, swipe, torch, room transition, and stow...")
+        self.boot_indoor_dungeon()
+
+        # Check natural indoor baseline without modifying MODULE:
+        module_init = self.r(MODULE)
+        submodule_init = self.r(SUBMODULE)
+        uw_flag_init = self.r(UNDERWORLD_FLAG)
+        link_state_init = self.r(LINK_STATE)
+        print(f"    Indoor baseline: MODULE={module_init} (exp 7), SUBMODULE={submodule_init} (exp 0), UW={uw_flag_init} (exp !=0), LINK_STATE={link_state_init} (exp 0)")
+        baseline_indoor_ok = (module_init == 7 and submodule_init == 0 and uw_flag_init != 0 and link_state_init == 0)
+
+        # Setup inventory for indoor draw
+        self.w(DEKU_STICKS_COUNT, 3)
+        self.w(DEKU_STICK_WEAR, 0)
+        self.w(DEKU_STICK_STATE, 0)
+        self.w(PENDING_SUPPLY, 0)
+
+        # Draw stick via Equipment menu in indoor mode:
+        if not self.navigate_to_equipment():
+            raise RuntimeError("Failed to open Equipment menu indoors")
+        self.w(CURSOR, 23)
+        time.sleep(0.1)
+        self.press("A", frames=10)
+        if not self.wait_play(8.0):
+            raise RuntimeError("Failed to return to indoor gameplay after menu")
+
+        module_after_draw = self.r(MODULE)
+        state_after_draw = self.r(DEKU_STICK_STATE)
+        count_after_draw = self.r(DEKU_STICKS_COUNT)
+        burn_after_draw = self.r(DEKU_BURN_TIMER)
+        oam_stick_y = self.read_ppu_oam(4)["y"]
+        indoor_draw_ok = (module_after_draw == 7 and state_after_draw == 1 and count_after_draw == 2 and
+                          burn_after_draw == 75 and oam_stick_y < 0xE0)
+        print(f"    Indoor draw ($10=7): MODULE={module_after_draw}, state={state_after_draw} (exp 1), count={count_after_draw} (exp 2), burn={burn_after_draw} (exp 75), stick_y={oam_stick_y} -> OK: {indoor_draw_ok}")
+
+        # Indoor Y swipe:
+        self.b.press_button("y", frames=4, detach_debugger=False)
+        time.sleep(0.05)
+        swipe_observed = False
+        for _ in range(20):
+            st = self.r(DEKU_STICK_STATE)
+            sw = self.r(DEKU_SWIPE_TIMER)
+            if st == 3 and sw > 0:
+                swipe_observed = True
+                break
+            time.sleep(0.02)
+        # Wait for swipe to finish back to held unlit (state 1)
+        time.sleep(0.3)
+        state_after_swipe = self.r(DEKU_STICK_STATE)
+        indoor_swipe_ok = (swipe_observed and state_after_swipe == 1)
+        print(f"    Indoor Y swipe: observed={swipe_observed}, state_after={state_after_swipe} (exp 1) -> OK: {indoor_swipe_ok}")
+
+        # Indoor torch interaction:
+        self.w(LINK_DIR, 2)  # Facing Down
+        # Ignite from lit torch 0:
+        self.w(TORCH_TIMERS + 0, 0x80)
+        self.set_torch_probe_tile(facing=2, torch_id=0)
+        time.sleep(0.1)
+        state_after_ignite = self.r(DEKU_STICK_STATE)
+        burn_after_ignite = self.r(DEKU_BURN_TIMER)
+        indoor_ignite_ok = (state_after_ignite == 2 and burn_after_ignite > 0)
+        print(f"    Indoor lit torch ignition: state={state_after_ignite} (exp 2), burn={burn_after_ignite} -> OK: {indoor_ignite_ok}")
+
+        # Light unlit torch 1 with lit stick:
+        self.w(TORCH_TIMERS + 1, 0x00)
+        self.set_torch_probe_tile(facing=2, torch_id=1)
+        time.sleep(0.1)
+        torch1_lit = self.r(TORCH_TIMERS + 1)
+        indoor_torch_light_ok = (torch1_lit > 0)
+        print(f"    Indoor lighting unlit torch: torch1={torch1_lit} (exp >0) -> OK: {indoor_torch_light_ok}")
+
+        # Indoor room transition (InterroomTransition / door scroll $11 = 2):
+        self.w(DEKU_BURN_TIMER, 50)
+        self.w(SUBMODULE, 2)  # Door scroll
+        time.sleep(0.4)
+        burn_in_door_scroll = self.r(DEKU_BURN_TIMER)
+        state_in_door_scroll = self.r(DEKU_STICK_STATE)
+        stick_y_scroll = self.read_ppu_oam(4)["y"]
+        flame_y_scroll = self.read_ppu_oam(5)["y"]
+        indoor_scroll_paused = (
+            burn_in_door_scroll == 50 and
+            state_in_door_scroll == 2 and
+            stick_y_scroll < 0xE0 and
+            flame_y_scroll < 0xE0
+        )
+        self.w(SUBMODULE, 0)
+        time.sleep(0.4)
+        burn_after_door_scroll = self.r(DEKU_BURN_TIMER)
+        state_after_door_scroll = self.r(DEKU_STICK_STATE)
+        indoor_scroll_resumed = (burn_after_door_scroll < 50 and state_after_door_scroll == 2)
+        print(f"    Indoor door scroll ($11=2): paused={indoor_scroll_paused} (burn={burn_in_door_scroll}), resumed={indoor_scroll_resumed} (burn={burn_after_door_scroll}) -> OK: {indoor_scroll_paused and indoor_scroll_resumed}")
+
+        # Indoor B stow & wear preservation:
+        self.press("B", frames=10)
+        time.sleep(0.2)
+        state_after_stow = self.r(DEKU_STICK_STATE)
+        count_after_stow = self.r(DEKU_STICKS_COUNT)
+        wear_after_stow = self.r(DEKU_STICK_WEAR)
+        indoor_stow_ok = (state_after_stow == 0 and count_after_stow == 3 and 0 < wear_after_stow < 75)
+        print(f"    Indoor B stow: state={state_after_stow} (exp 0), count={count_after_stow} (exp 3), wear={wear_after_stow} (exp in 1..74) -> OK: {indoor_stow_ok}")
+
+        # Indoor non-default LinkState interrupt ($5D = 0x13, Hookshotting drops stick):
+        self.w(DEKU_STICK_STATE, 1)
+        self.w(DEKU_STICKS_COUNT, 2)
+        self.w(LINK_STATE, 0x13)  # LinkState_Hookshotting ($5D = 0x13)
+        time.sleep(0.1)
+        state_spiral = self.r(DEKU_STICK_STATE)
+        burn_spiral = self.r(DEKU_BURN_TIMER)
+        count_spiral = self.r(DEKU_STICKS_COUNT)
+        spiral_dropped = (state_spiral == 0 and burn_spiral == 0 and count_spiral == 2)
+        self.w(LINK_STATE, 0)
+        time.sleep(0.1)
+        print(f"    Indoor non-default state drop ($5D=0x13, Hookshotting): state={state_spiral} (exp 0), burn={burn_spiral} (exp 0), count={count_spiral} (exp 2) -> OK: {spiral_dropped}")
+
+        t13_ok = (baseline_indoor_ok and indoor_draw_ok and indoor_swipe_ok and
+                  indoor_ignite_ok and indoor_torch_light_ok and
+                  indoor_scroll_paused and indoor_scroll_resumed and
+                  indoor_stow_ok and spiral_dropped)
+        self.results["indoor_underworld_gameplay_proof"] = t13_ok
+        print(f"    Indoor Underworld gameplay verdict -> OK: {t13_ok}")
+
+        # ----------------------------------------------------
+        # 14. Real input-driven doorway crossing and real stairs transition
+        # ----------------------------------------------------
+        print("[*] Test 14: Real input-driven doorway traversal and stairs transition...")
+        # Part A: Carry lit stick through real same-floor doorway in D6 (room 0x98 -> 0x88)
+        self.boot_indoor_dungeon()  # loads oos_1772076582_Agent_D6_Inside_Entry_Fresh.mss (Room 0x98)
+        init_room = self.r(0x7E00A0)
+        self.w(DEKU_STICKS_COUNT, 2)
+        self.w(DEKU_STICK_STATE, 2)   # Held lit
+        self.w(DEKU_BURN_TIMER, 60)   # 60 ticks
+        time.sleep(0.1)
+
+        print(f"    Doorway initial room: 0x{init_room:02X}, state={self.r(DEKU_STICK_STATE)}, burn={self.r(DEKU_BURN_TIMER)}")
+
+        # Drive Link north through north doorway using joypad input UP
+        door_scroll_entered = False
+        for _ in range(25):
+            self.b.press_button("UP", frames=8, detach_debugger=False)
+            time.sleep(0.15)
+            if self.r(SUBMODULE) == 2:
+                door_scroll_entered = True
+                break
+
+        # Wait for door scroll to finish and gameplay to resume in destination room
+        door_scroll_finished = False
+        for _ in range(40):
+            time.sleep(0.1)
+            if self.r(SUBMODULE) == 0 and self.r(MODULE) == 7:
+                door_scroll_finished = True
+                break
+
+        dest_room = self.r(0x7E00A0)
+        state_after_door = self.r(DEKU_STICK_STATE)
+        stick_y_door = self.read_ppu_oam(4)["y"]
+        flame_y_door = self.read_ppu_oam(5)["y"]
+        burn_after_door = self.r(DEKU_BURN_TIMER)
+
+        # Wait a moment to observe burn countdown ticking in new room
+        burn_ticked = False
+        for _ in range(30):
+            time.sleep(0.1)
+            if self.r(DEKU_BURN_TIMER) < burn_after_door:
+                burn_ticked = True
+                break
+
+        doorway_traversal_ok = (
+            door_scroll_entered and door_scroll_finished and
+            dest_room == 0x88 and
+            state_after_door == 2 and
+            stick_y_door < 0xE0 and
+            flame_y_door < 0xE0 and
+            burn_ticked
+        )
+        print(f"    Doorway traversal (0x98 -> 0x{dest_room:02X}): scroll={door_scroll_entered}, arrived={door_scroll_finished}, state={state_after_door} (exp 2), stick_y={stick_y_door}, flame_y={flame_y_door}, burn_ticked={burn_ticked} -> OK: {doorway_traversal_ok}")
+
+        # Part B: Enter real spiral stairs using joypad input UP in Zora Temple (Room 0x28)
+        stairs_state_path = resolve_savestate("library", "oos168x", "zora_temple_stairs_seed_20260207.mss")
+        res = self.b.load_state(path=str(stairs_state_path))
+        time.sleep(0.5)
+        self.wait_play(8.0)
+        zora_init_room = self.r(0x7E00A0)
+
+        # Set lit stick fixture
+        self.w(DEKU_STICKS_COUNT, 2)
+        self.w(DEKU_STICK_STATE, 2)
+        self.w(DEKU_BURN_TIMER, 60)
+        time.sleep(0.1)
+
+        print(f"    Zora initial room: 0x{zora_init_room:02X}, state={self.r(DEKU_STICK_STATE)}, burn={self.r(DEKU_BURN_TIMER)}, count={self.r(DEKU_STICKS_COUNT)}")
+
+        # Drive Link north into spiral stairs using joypad input UP
+        stairs_entered = False
+        dropped_on_stairs = False
+        for _ in range(25):
+            self.b.press_button("UP", frames=8, detach_debugger=False)
+            time.sleep(0.15)
+            sub = self.r(SUBMODULE)
+            st = self.r(DEKU_STICK_STATE)
+            if sub == 0x0E or st == 0:
+                stairs_entered = True
+                dropped_on_stairs = (st == 0 and self.r(DEKU_BURN_TIMER) == 0 and self.r(DEKU_STICKS_COUNT) == 2)
+                break
+
+        # Wait for stairs transition to complete and Link to arrive in destination room (0x38)
+        for _ in range(50):
+            time.sleep(0.1)
+            if self.r(SUBMODULE) == 0 and self.r(MODULE) == 7:
+                break
+
+        final_room = self.r(0x7E00A0)
+        final_state = self.r(DEKU_STICK_STATE)
+        final_burn = self.r(DEKU_BURN_TIMER)
+        final_count = self.r(DEKU_STICKS_COUNT)
+        final_flame_y = self.read_ppu_oam(5)["y"]
+        final_stick_y = self.read_ppu_oam(4)["y"]
+
+        stairs_cleanup_ok = (
+            stairs_entered and
+            final_state == 0 and
+            final_burn == 0 and
+            final_count == 2 and
+            final_flame_y >= 0xE0 and
+            final_stick_y >= 0xE0 and
+            final_room == 0x38
+        )
+        print(f"    Stairs transition (0x28 -> 0x{final_room:02X}): entered={stairs_entered}, state={final_state} (exp 0), burn={final_burn} (exp 0), count={final_count} (exp 2, no refund), flame_y={final_flame_y}, stick_y={final_stick_y}, dropped_on_stairs={dropped_on_stairs} -> OK: {stairs_cleanup_ok}")
+
+        t14_ok = (doorway_traversal_ok and stairs_cleanup_ok)
+        self.results["real_transitions_proof"] = t14_ok
+        print(f"    Real transitions verdict -> OK: {t14_ok}")
+
+        # ----------------------------------------------------
+        # 15. Overworld dispatch hook and transition drops
+        # ----------------------------------------------------
+        if filter_test is None or filter_test == 15:
+            self.run_test_15()
+
+    def run_test_15(self):
+        print("[*] Test 15: Overworld dispatch hook ($02A477) and transition drops ($0283BF)...")
+
+        # Part A: Real controller-driven overworld screen-edge crossing (Screen 0x23 -> 0x2A)
+        # Load Village West overworld state (Screen 0x23, Link=(1572, 2790))
+        village_state_path = resolve_savestate("library", "oos_1769374342_Village_West.mss")
+        self.b.load_state(path=str(village_state_path))
+        time.sleep(0.5)
+        self.wait_play(8.0)
+
+        start_ow_mod = self.r(MODULE)
+        start_ow_scr = self.r(0x7E008A)
+        fixture_loaded_ok = (start_ow_mod == 9 and start_ow_scr == 0x23)
+        if not fixture_loaded_ok:
+            raise RuntimeError(f"Expected Village West in Module 09 on Screen 0x23; got Module {start_ow_mod}, Screen 0x{start_ow_scr:02X}")
+
+        self.w(DEKU_STICKS_COUNT, 2)
+        self.w(DEKU_STICK_STATE, 2)  # Held lit
+        self.w(DEKU_BURN_TIMER, 60)
+        time.sleep(0.1)
+
+        start_ow_pos = (self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8), self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8))
+
+        # Walk LEFT across the screen boundary into destination screen 0x2A
+        scroll_start_observed = False
+        scroll_sample1 = None
+        scroll_sample2 = None
+
+        for step in range(30):
+            self.b.press_button("LEFT", frames=4, detach_debugger=False)
+            time.sleep(0.08)
+            sub = self.r(SUBMODULE)
+            if sub in (1, 2, 3, 4, 5, 6, 7, 8):
+                scroll_start_observed = True
+                f1 = self.r(0x7E001A)
+                s4_p1 = self.read_ppu_oam(4)
+                s5_p1 = self.read_ppu_oam(5)
+                scroll_sample1 = {
+                    "submodule": sub,
+                    "burn": self.r(DEKU_BURN_TIMER),
+                    "state": self.r(DEKU_STICK_STATE),
+                    "oam_source": "SnesSpriteRam",
+                    "stick_x": s4_p1["x"],
+                    "stick_y": s4_p1["y"],
+                    "stick_tile": s4_p1["tile"],
+                    "stick_prop": s4_p1["prop"],
+                    "stick_x9": s4_p1["x9"],
+                    "flame_x": s5_p1["x"],
+                    "flame_y": s5_p1["y"],
+                    "flame_tile": s5_p1["tile"],
+                    "flame_prop": s5_p1["prop"],
+                    "flame_x9": s5_p1["x9"],
+                    "frame": f1,
+                }
+                self.take_screenshot("ow_scroll_during_lit")
+                break
+
+        if not scroll_start_observed or scroll_sample1 is None:
+            raise RuntimeError("Failed to observe engine-triggered screen scroll transition")
+        print(f"    Scroll triggered: sample1={scroll_sample1}")
+
+        # Sample 2 during scroll: poll until at least 16 engine frames have elapsed while still scrolling (submodule 1..8)
+        for _ in range(35):
+            time.sleep(0.03)
+            sub_now = self.r(SUBMODULE)
+            f_now = self.r(0x7E001A)
+            elapsed_frames = (f_now - scroll_sample1["frame"]) & 0xFF
+            if sub_now in (1, 2, 3, 4, 5, 6, 7, 8) and elapsed_frames >= 16:
+                s4_p2 = self.read_ppu_oam(4)
+                s5_p2 = self.read_ppu_oam(5)
+                scroll_sample2 = {
+                    "submodule": sub_now,
+                    "burn": self.r(DEKU_BURN_TIMER),
+                    "state": self.r(DEKU_STICK_STATE),
+                    "oam_source": "SnesSpriteRam",
+                    "stick_x": s4_p2["x"],
+                    "stick_y": s4_p2["y"],
+                    "stick_tile": s4_p2["tile"],
+                    "stick_prop": s4_p2["prop"],
+                    "stick_x9": s4_p2["x9"],
+                    "flame_x": s5_p2["x"],
+                    "flame_y": s5_p2["y"],
+                    "flame_tile": s5_p2["tile"],
+                    "flame_prop": s5_p2["prop"],
+                    "flame_x9": s5_p2["x9"],
+                    "frame": f_now,
+                    "elapsed_frames": elapsed_frames,
+                }
+                break
+
+        if scroll_sample2 is None:
+            raise RuntimeError("Failed to observe second sample during scroll with >= 16 elapsed frames")
+        print(f"    Scroll sampled 2: sample2={scroll_sample2}")
+
+        # Wait for screen scroll transition to finalize onto destination screen (submodule 0)
+        dest_settled = False
+        for _ in range(60):
+            time.sleep(0.08)
+            if self.r(SUBMODULE) == 0:
+                dest_settled = True
+                break
+
+        if not dest_settled:
+            sub_final = self.r(SUBMODULE)
+            mod_final = self.r(MODULE)
+            raise RuntimeError(f"Screen scroll failed to settle to submodule 0 (current module={mod_final}, submodule={sub_final})")
+
+        dest_ow_mod = self.r(MODULE)
+        dest_ow_sub = self.r(SUBMODULE)
+        dest_ow_scr = self.r(0x7E008A)
+        dest_ow_pos = (self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8), self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8))
+        dest_ow_st = self.r(DEKU_STICK_STATE)
+        dest_ow_burn = self.r(DEKU_BURN_TIMER)
+        s4_dest = self.read_ppu_oam(4)
+        s5_dest = self.read_ppu_oam(5)
+        dest_stick_x = s4_dest["x"]
+        dest_stick_y = s4_dest["y"]
+        dest_stick_x9 = s4_dest["x9"]
+        dest_flame_x = s5_dest["x"]
+        dest_flame_y = s5_dest["y"]
+        dest_flame_x9 = s5_dest["x9"]
+        dest_frame = self.r(0x7E001A)
+        self.take_screenshot("ow_scroll_arrival_lit")
+
+        # Wait in active gameplay on destination screen for burn countdown to resume ticking
+        ticked_ow_burn = None
+        ticked_frame = None
+        for _ in range(30):
+            time.sleep(0.05)
+            cur_burn = self.r(DEKU_BURN_TIMER)
+            if cur_burn < dest_ow_burn:
+                ticked_ow_burn = cur_burn
+                ticked_frame = self.r(0x7E001A)
+                break
+
+        if ticked_ow_burn is None:
+            raise RuntimeError(f"Burn timer failed to resume countdown on destination screen (remained {dest_ow_burn})")
+
+        scroll_pause_proven = (
+            scroll_sample1["submodule"] in (1, 2, 3, 4, 5, 6, 7, 8) and
+            scroll_sample2["submodule"] in (1, 2, 3, 4, 5, 6, 7, 8) and
+            scroll_sample2["elapsed_frames"] >= 16 and
+            scroll_sample1["burn"] == scroll_sample2["burn"] and
+            scroll_sample1["state"] == 2 and
+            scroll_sample2["state"] == 2 and
+            scroll_sample1["flame_y"] < 0xE0 and
+            scroll_sample2["flame_y"] < 0xE0 and
+            scroll_sample1["stick_y"] < 0xE0 and
+            scroll_sample2["stick_y"] < 0xE0
+        )
+
+        scroll_arrival_proven = (
+            dest_settled and
+            dest_ow_mod == 9 and
+            dest_ow_sub == 0 and
+            dest_ow_scr == 0x2A and
+            dest_ow_st == 2 and
+            dest_flame_y < 0xE0 and
+            dest_stick_y < 0xE0 and
+            dest_ow_burn <= scroll_sample2["burn"]
+        )
+
+        scroll_resume_proven = (
+            ticked_ow_burn is not None and
+            ticked_ow_burn < dest_ow_burn
+        )
+
+        real_ow_scroll_ok = (
+            fixture_loaded_ok and
+            scroll_start_observed and
+            scroll_pause_proven and
+            scroll_arrival_proven and
+            scroll_resume_proven
+        )
+
+        print(f"    Real overworld scroll (0x{start_ow_scr:02X} -> 0x{dest_ow_scr:02X}):")
+        print(f"      Sample 1 (sub={scroll_sample1['submodule']}, frame={scroll_sample1['frame']}): burn={scroll_sample1['burn']}, state={scroll_sample1['state']}, stick=({scroll_sample1['stick_x']},{scroll_sample1['stick_y']}), flame=({scroll_sample1['flame_x']},{scroll_sample1['flame_y']})")
+        print(f"      Sample 2 (sub={scroll_sample2['submodule']}, frame={scroll_sample2['frame']}, elapsed={scroll_sample2['elapsed_frames']}f): burn={scroll_sample2['burn']}, state={scroll_sample2['state']}, stick=({scroll_sample2['stick_x']},{scroll_sample2['stick_y']}), flame=({scroll_sample2['flame_x']},{scroll_sample2['flame_y']})")
+        print(f"      Arrival  (sub={dest_ow_sub}, frame={dest_frame}): screen=0x{dest_ow_scr:02X}, pos={dest_ow_pos}, burn={dest_ow_burn}, state={dest_ow_st}, stick=({dest_stick_x},{dest_stick_y}), flame=({dest_flame_x},{dest_flame_y})")
+        print(f"      Resumed  (frame={ticked_frame}): burn={ticked_ow_burn} (< {dest_ow_burn})")
+        print(f"      Verdict: pause_proven={scroll_pause_proven}, arrival_proven={scroll_arrival_proven}, resume_proven={scroll_resume_proven} -> OK: {real_ow_scroll_ok}")
+
+        real_scroll_trace = {
+            "test_segment": "Test 15 Part A: Real OW Screen-Edge Crossing Fuel Pause Proof",
+            "rom_sha256": hashlib.sha256(self.rom.read_bytes()).hexdigest(),
+            "fixture": {
+                "path": str(village_state_path),
+                "start_module": start_ow_mod,
+                "start_screen": f"0x{start_ow_scr:02X}",
+                "start_pos": start_ow_pos,
+                "loaded_ok": fixture_loaded_ok,
+            },
+            "scroll_sample_1": scroll_sample1,
+            "scroll_sample_2": scroll_sample2,
+            "destination_arrival": {
+                "module": dest_ow_mod,
+                "submodule": dest_ow_sub,
+                "screen": f"0x{dest_ow_scr:02X}",
+                "pos": dest_ow_pos,
+                "state": dest_ow_st,
+                "oam_source": "SnesSpriteRam",
+                "stick_x": dest_stick_x,
+                "stick_y": dest_stick_y,
+                "stick_tile": s4_dest["tile"],
+                "stick_prop": s4_dest["prop"],
+                "stick_x9": dest_stick_x9,
+                "flame_x": dest_flame_x,
+                "flame_y": dest_flame_y,
+                "flame_tile": s5_dest["tile"],
+                "flame_prop": s5_dest["prop"],
+                "flame_x9": dest_flame_x9,
+                "burn": dest_ow_burn,
+                "frame": dest_frame,
+            },
+            "resumed_gameplay": {
+                "ticked_burn": ticked_ow_burn,
+                "ticked_frame": ticked_frame,
+            },
+            "verdict": {
+                "scroll_pause_proven": scroll_pause_proven,
+                "scroll_arrival_proven": scroll_arrival_proven,
+                "scroll_resume_proven": scroll_resume_proven,
+                "real_ow_scroll_ok": real_ow_scroll_ok,
+            }
+        }
+        self.traces["real_ow_scroll_trace"] = real_scroll_trace
+        trace_path = self.work_dir / "deku_scroll_trace.json"
+        trace_path.write_text(json.dumps(real_scroll_trace, indent=2))
+        print(f"    [*] Saved scroll trace to {trace_path}")
+
+        # Stow stick via B before next part
+        self.press("B", frames=8)
+        time.sleep(0.1)
+
+        # Part B: Ordinary overworld scroll submodule whitelist fixture control ($11=1)
+        # Load overworld baseline state
+        self.boot_file2()  # loads oos_1772076682_Agent_Gameplay_Baseline_Fresh.mss (Module 09, Screen 64)
+        self.w(DEKU_STICKS_COUNT, 2)
+        self.w(DEKU_STICK_STATE, 2)  # Held lit
+        self.w(DEKU_BURN_TIMER, 60)
+        time.sleep(0.1)
+
+        # In Module 09, submodule 1..4 is whitelisted by DekuStick_SubmoduleCheck hooked at $02A477
+        self.w(SUBMODULE, 1)  # scroll active
+        time.sleep(0.4)
+        burn_during_ow_scroll = self.r(DEKU_BURN_TIMER)
+        state_during_ow_scroll = self.r(DEKU_STICK_STATE)
+        stick_y_ow_scroll = self.read_ppu_oam(4)["y"]
+        flame_y_ow_scroll = self.read_ppu_oam(5)["y"]
+        ow_scroll_paused = (
+            burn_during_ow_scroll == 60 and
+            state_during_ow_scroll == 2 and
+            stick_y_ow_scroll < 0xE0 and
+            flame_y_ow_scroll < 0xE0
+        )
+
+        self.w(SUBMODULE, 0)  # scroll complete
+        time.sleep(0.4)
+        burn_after_ow_scroll = self.r(DEKU_BURN_TIMER)
+        state_after_ow_scroll = self.r(DEKU_STICK_STATE)
+        ow_scroll_resumed = (burn_after_ow_scroll < 60 and state_after_ow_scroll == 2)
+        print(f"    Overworld scroll fixture ($11=1): paused={ow_scroll_paused} (burn={burn_during_ow_scroll}), resumed={ow_scroll_resumed} (burn={burn_after_ow_scroll}) -> OK: {ow_scroll_paused and ow_scroll_resumed}")
+
+        # Part C: Real overworld destructive transition into D6 entrance
+        # Load D6 Pre-Entrance overworld state (Screen 54, right outside D6)
+        d6_ow_state_path = resolve_savestate("library", "oos_1772076582_Agent_D6_Pre_Entrance_Fresh.mss")
+        self.b.load_state(path=str(d6_ow_state_path))
+        time.sleep(0.5)
+        self.wait_play(8.0)
+
+        self.w(DEKU_STICKS_COUNT, 2)
+        self.w(DEKU_STICK_STATE, 2)  # Held lit
+        self.w(DEKU_BURN_TIMER, 60)
+        time.sleep(0.1)
+
+        init_ow_pos = (self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8), self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8))
+        print(f"    D6 Pre-Entrance: pos={init_ow_pos}, screen={self.r(0x7E008A)}, state={self.r(DEKU_STICK_STATE)}")
+
+        # Drive Link north into entrance doorway using joypad input UP
+        ow_entrance_entered = False
+        dropped_on_ow_entrance = False
+        for step in range(35):
+            self.b.press_button("UP", frames=4, detach_debugger=False)
+            time.sleep(0.08)
+            mod = self.r(MODULE)
+            st = self.r(DEKU_STICK_STATE)
+            if st == 0 and not dropped_on_ow_entrance:
+                dropped_on_ow_entrance = (self.r(DEKU_BURN_TIMER) == 0 and self.r(DEKU_STICKS_COUNT) == 2)
+            if mod in (6, 7, 8, 15):
+                ow_entrance_entered = True
+                break
+
+        # Wait for entrance transition into dungeon (Module 07)
+        for _ in range(50):
+            time.sleep(0.1)
+            if self.r(MODULE) == 7 and self.r(SUBMODULE) == 0:
+                break
+
+        final_mod = self.r(MODULE)
+        final_ow_state = self.r(DEKU_STICK_STATE)
+        final_ow_burn = self.r(DEKU_BURN_TIMER)
+        final_ow_count = self.r(DEKU_STICKS_COUNT)
+        final_ow_flame_y = self.read_ppu_oam(5)["y"]
+        final_ow_stick_y = self.read_ppu_oam(4)["y"]
+
+        ow_entrance_drop_ok = (
+            ow_entrance_entered and
+            dropped_on_ow_entrance and
+            final_ow_state == 0 and
+            final_ow_burn == 0 and
+            final_ow_count == 2 and  # NO refund!
+            final_ow_flame_y >= 0xE0 and
+            final_ow_stick_y >= 0xE0 and
+            final_mod == 7
+        )
+        print(f"    Overworld entrance transition: entered={ow_entrance_entered}, state={final_ow_state} (exp 0), burn={final_ow_burn} (exp 0), count={final_ow_count} (exp 2, no refund), flame_y={final_ow_flame_y}, stick_y={final_ow_stick_y}, final_module={final_mod} -> OK: {ow_entrance_drop_ok}")
+
+        t15_ok = (real_ow_scroll_ok and ow_scroll_paused and ow_scroll_resumed and ow_entrance_drop_ok)
+        self.results["overworld_transitions_and_hooks_proof"] = t15_ok
+        print(f"    Overworld transitions & hooks verdict -> OK: {t15_ok}")
 
 
 def main():
@@ -558,34 +1776,49 @@ def main():
     parser.add_argument("--rom", type=Path, default=Path("/tmp/oos_private_deku.sfc"))
     parser.add_argument("--app", type=Path, default=APP_DEFAULT)
     parser.add_argument("--work-dir", type=Path, default=Path("/tmp/oos_deku_runtime"))
+    parser.add_argument("--test", type=int, default=None, help="Run only specific test index (1..15)")
     args = parser.parse_args()
 
     test = DekuStickRuntimeTest(args.rom, args.app, args.work_dir)
     try:
-        test.launch()
+        test.launch(reset_save=True)
         test.boot_file2()
-        test.run_tests()
+        test.run_tests(filter_test=args.test)
     finally:
         test.close()
 
     print("\n" + "=" * 50)
     print("DEKU STICK RUNTIME PROOF SUMMARY:")
+    report_path = args.work_dir / "deku_runtime_report.json"
+
+    # Merge with existing report results if running a filtered test
+    all_results = {}
+    if report_path.is_file() and args.test is not None:
+        try:
+            prior_data = json.loads(report_path.read_text())
+            all_results = prior_data.get("results", {})
+        except Exception:
+            all_results = {}
+
+    all_results.update(test.results)
+
     all_passed = True
-    for name, passed in test.results.items():
+    for name, passed in all_results.items():
         print(f"  [{'PASS' if passed else 'FAIL'}] {name}")
         if not passed:
             all_passed = False
     print("=" * 50)
 
-    report_path = args.work_dir / "deku_runtime_report.json"
-    report_path.write_text(json.dumps(dict(
-        passed=all_passed,
-        results=test.results,
-        rom_sha256=hashlib.sha256(args.rom.read_bytes()).hexdigest(),
-    ), indent=2))
+    report_payload = {
+        "passed": all_passed,
+        "results": all_results,
+        "rom_sha256": hashlib.sha256(args.rom.read_bytes()).hexdigest(),
+        "traces": test.traces,
+    }
+    report_path.write_text(json.dumps(report_payload, indent=2))
     print(f"[*] Report saved to {report_path}")
 
-    return 0 if all_passed else 1
+    return 0 if (test.results and all(test.results.values())) else 1
 
 
 if __name__ == "__main__":

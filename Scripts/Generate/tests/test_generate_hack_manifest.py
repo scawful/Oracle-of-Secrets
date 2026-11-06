@@ -41,7 +41,7 @@ from generate_hack_manifest import (  # noqa: E402
     generate_manifest,
     scan_room_tags,
 )
-from generate_hooks_json import HookEntry, scan_hooks  # noqa: E402
+from generate_hooks_json import HookEntry, scan_hooks, scan_org_directives  # noqa: E402
 from export_yazeproj_bundle import (  # noqa: E402
     PORTABLE_BUILD_COMMAND,
     PORTABLE_HACK_MANIFEST,
@@ -1220,6 +1220,81 @@ class ReachableSourceTest(unittest.TestCase):
 
 
 class RepositorySourceRegressionTest(unittest.TestCase):
+    # Actual displaced native spans; includes the common art entry in bank $00.
+    BOMBCHU_HOOKS = {
+        0x07B594: ("jsl", "BombchuReceipt_LoadOverflow", 5),
+        0x07B5A0: ("jsl", "BombchuReceipt_SramLow", 4),
+        0x07B5A6: ("jsl", "BombchuReceipt_SramHigh", 4),
+        0x098617: ("jsl", "BombchuReceipt_LoadLow", 5),
+        0x09861C: ("jsl", "BombchuReceipt_LoadHigh", 5),
+        0x098625: ("jsl", "BombchuReceipt_UncleValue", 5),
+        0x09862D: ("jsl", "BombchuReceipt_LoadLow", 5),
+        0x098632: ("jsl", "BombchuReceipt_LoadHigh", 5),
+        0x098637: ("jsl", "BombchuReceipt_LoadValue", 7),
+        0x09877D: ("jsl", "BombchuReceipt_LoadGfx", 5),
+        0x098861: ("jsl", "BombchuReceipt_LoadOffsetY", 6),
+        0x09886F: ("jsl", "BombchuReceipt_LoadOffsetX", 6),
+        0x0988CB: ("jml", "BombchuReceipt_WidthBranch", 5),
+        0x098903: ("jsl", "BombchuReceipt_LoadOffsetY", 6),
+        0x09891C: ("jsl", "BombchuReceipt_LoadOffsetX", 6),
+        0x098A4A: ("jsl", "BombchuReceipt_LoadGfx", 5),
+        0x098AFD: ("jsl", "BombchuReceipt_LoadGfx", 5),
+        0x098BE1: ("jsl", "BombchuReceipt_LoadGfx", 5),
+        0x08C5C1: ("jsl", "BombchuReceipt_LoadMessage", 6),
+        0x08C6A4: ("jsl", "BombchuReceipt_Prop", 4),
+        0x08C6BA: ("jsl", "BombchuReceipt_WidthX", 4),
+        0x08C6D5: ("jsl", "BombchuReceipt_Prop", 4),
+        0x06C4D6: ("jsl", "BombchuReceipt_Prop", 4),
+        0x06C4E6: ("jsl", "BombchuReceipt_WidthX", 4),
+        0x00D4ED: ("jml", "BombchuReceipt_LoadArt", 4),
+    }
+
+    def bombchu_fixture(self) -> tuple[ManifestFixture, Path]:
+        fixture = ManifestFixture()
+        self.addCleanup(fixture.close)
+        fixture.write_text(
+            "Oracle_main.asm", 'incsrc "Items/bombchu_receipt.asm"\n'
+        )
+        fixture.write_text(
+            "Items/bombchu_receipt.asm",
+            (REPO_ROOT / "Items/bombchu_receipt.asm").read_text(),
+        )
+        return fixture, fixture.write_dev_rom()
+
+    def test_actual_bombchu_multibank_hooks_are_fully_protected(self) -> None:
+        fixture, rom = self.bombchu_fixture()
+        # Supplying the real dungeon shape exercises the org-proof guard that
+        # source-only manifest generation (without a dev ROM) does not reach.
+        manifest = generate_manifest(fixture.root, dev_rom_path=rom)
+        sources = collect_reachable_asm_sources(fixture.root)
+        directives = scan_org_directives(fixture.root, sources)
+        self.assertEqual(len(directives), len(self.BOMBCHU_HOOKS))
+        self.assertEqual({d.address for d in directives}, self.BOMBCHU_HOOKS.keys())
+        self.assertTrue(all(d.macro_name is None for d in directives))
+        self.assertEqual({d.address >> 16 for d in directives}, {0, 6, 7, 8, 9})
+        hooks = scan_hooks(fixture.root, sources)
+        self.assertEqual(
+            {h.address: (h.kind, h.target, h.protected_size) for h in hooks},
+            self.BOMBCHU_HOOKS,
+        )
+        regions = manifest["protected_regions"]["regions"]
+        for address, (_, _, size) in self.BOMBCHU_HOOKS.items():
+            with self.subTest(address=f"0x{address:06X}"):
+                self.assertTrue(any(
+                    int(region["start"], 16) <= address
+                    and int(region["end"], 16) >= address + size
+                    for region in regions
+                ))
+
+    def test_actual_bombchu_hook_moved_to_editor_bank_is_refused(self) -> None:
+        fixture, rom = self.bombchu_fixture()
+        source = fixture.root / "Items/bombchu_receipt.asm"
+        text = source.read_text()
+        self.assertEqual(text.count("org $07B594"), 1)
+        source.write_text(text.replace("org $07B594", "org $25B594"))
+        with self.assertRaisesRegex(ManifestGenerationError, "editor-managed"):
+            generate_manifest(fixture.root, dev_rom_path=rom)
+
     def test_real_fastrom_orgs_use_physical_manifest_ranges(self) -> None:
         manifest = generate_manifest(REPO_ROOT)
         protected_starts = {
@@ -1485,10 +1560,15 @@ class PortableAllocationLedgerCliTest(unittest.TestCase):
                 capture_output=True,
                 check=True,
             ).stdout.split(b"\0")
-            for raw_path in tracked:
-                if not raw_path:
-                    continue
-                relative = Path(raw_path.decode())
+            # A reviewed working candidate can have a new, untracked include.
+            # Copy only the existing validator's reachable in-root ASM graph,
+            # rather than admitting arbitrary untracked fixture contents.
+            source_paths = {Path(p.decode()) for p in tracked if p}
+            source_paths.update(
+                path.relative_to(REPO_ROOT.resolve())
+                for path in collect_reachable_asm_sources(REPO_ROOT)
+            )
+            for relative in sorted(source_paths):
                 source = REPO_ROOT / relative
                 if source.is_file():
                     destination = repo / relative
@@ -1677,7 +1757,7 @@ class RepositoryMessageSourceTest(unittest.TestCase):
         self.assertEqual(messages["data_end"], "0x2FFDFF")
         self.assertEqual(
             messages["expanded_range"],
-            {"first": "0x18D", "last": "0x20E", "count": 130},
+            {"first": "0x18D", "last": "0x210", "count": 132},
         )
         self.assertEqual(
             messages["source"],

@@ -51,6 +51,7 @@ from asm_source import (
     DEFINE_ANY_ASSIGN_RE,
     _load_global_defines,
     _iter_active_lines,
+    _is_identical_build_context_assignment,
 )
 
 # Hook scanner (Python source scan; see generate_hooks_json.py)
@@ -178,6 +179,7 @@ OBJECT_ALLOCATION_REGIONS_PC = (
 CANONICAL_LOROM_ROM_END_PC = 0x3F0000
 
 AUDITED_UNRESOLVED_ORG_CONTRACTS = {
+    ("Overworld/lyra_native_loaders.asm", "Oracle_ReadOverworldBackdropColor", 0x34),
     ("Core/message.asm", "!addr+1", 0x0E),
     ("Core/sprite_macros.asm", "$0DB080+!SPRID", 0x0D),
     ("Core/sprite_macros.asm", "$0DB173+!SPRID", 0x0D),
@@ -339,6 +341,8 @@ def collect_reachable_asm_sources(
         for line_index, line, _ in _iter_active_lines(lines, active_defines):
             assignment = DEFINE_ANY_ASSIGN_RE.match(line.split(";", 1)[0])
             if assignment and assignment.group(1) in active_defines:
+                if _is_identical_build_context_assignment(rel, line, active_defines):
+                    continue
                 raise ManifestGenerationError(
                     f"{rel}:{line_index + 1}: reachable source reassigns "
                     f"preloaded global define !{assignment.group(1)} outside "
@@ -2070,10 +2074,10 @@ def generate_manifest(
             f"Exact hook mode requires the editable dev ROM: {dev_rom_path}"
         )
 
-    reachable_sources = collect_reachable_asm_sources(root)
-
-    # Load defines for conditional compilation evaluation
+    # Load defines for conditional compilation evaluation once; a selected
+    # Lyra context re-verifies its full preparation on every load.
     defines = _load_global_defines(root)
+    reachable_sources = collect_reachable_asm_sources(root, defines=defines)
     asm_sources = reachable_sources
 
     exact_spans: list[ExactSpan] = []
@@ -2093,7 +2097,7 @@ def generate_manifest(
     else:
         # Scan only the source graph assembled from Oracle_main.asm. Local
         # ignored assets and archived experiments must not claim ROM ownership.
-        hooks = scan_hooks(root, asm_sources)
+        hooks = scan_hooks(root, asm_sources, defines=defines)
         hook_source = {
             "mode": "python-scan",
             "exact": False,
@@ -2210,7 +2214,8 @@ def generate_manifest(
                 hooks, editor_regions
             )
         _validate_unresolved_org_proofs(
-            scan_org_directives(root, asm_sources), editor_regions
+            scan_org_directives(root, asm_sources, defines=defines),
+            editor_regions,
         )
         manifest["editor_managed_regions"] = {
             "description": (
@@ -2286,11 +2291,18 @@ def generate_manifest(
         ],
         "reserved_sheets": ["0x7B", "0x7C", "0x6F", "0x70"],
     }
-    source_sheet_spec = root / "Data/graphics/source_sprite_sheets.json"
-    if source_sheet_spec.is_file():
+    sheet_sources = [("source_sprite_sheets", Path("Data/graphics/source_sprite_sheets.json"),
+                      Path("Core/Generated/source_sprite_sheets"), "ENABLE_SOURCE_SPRITE_SHEETS")]
+    if defines.get("ENABLE_EXPANDED_GRAPHICS_TABLE") == 1 and defines.get("ENABLE_SOURCE_SPRITE_SHEETS") == 1:
+        sheet_sources.append(("snowpeak_graphics", Path("Data/graphics/snowpeak_sheet.json"),
+                              Path("Core/Generated/source_sprite_sheets/snowpeak"), "ENABLE_EXPANDED_GRAPHICS_TABLE"))
+    for metadata_key, source_sheet_spec, source_output, source_flag in sheet_sources:
+        if not (root / source_sheet_spec).is_file():
+            continue
         from sheet_overrides import source_metadata
         try:
-            source_sheets = source_metadata(root)
+            source_sheets = source_metadata(root, spec_path=source_sheet_spec,
+                                            output=source_output, feature_flag=source_flag)
         except (OSError, ValueError, KeyError, TypeError) as exc:
             raise ManifestGenerationError(f"Source sprite sheet metadata invalid: {exc}") from exc
         for field in ("spec", "generated_include"):
@@ -2301,7 +2313,7 @@ def generate_manifest(
         # Yaze's reservations use global sheet IDs (sprite $64 + $73 = $D7).
         # Keep extra metadata outside graphics_sheet_regions: its schema is strict.
         manifest["graphics_sheet_regions"]["reserved_sheets"].extend(source_sheets["global_sheet_ids"])
-        manifest["source_sprite_sheets"] = source_sheets
+        manifest[metadata_key] = source_sheets
 
     manifest["protected_regions"] = {
         "description": protected_description,

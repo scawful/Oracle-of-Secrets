@@ -31,7 +31,7 @@ Source: `tingle.asm:101-217`. `Sprite_Tingle_Main` runs `Sprite_PlayerCantPassTh
 | 1 | `Tingle_Right` (`:121-126`) | Plays animation `(1,1,10)`, then `Sprite_Tingle_TrackPlayer`. |
 | 2 | `Tingle_Left` (`:128-133`) | Plays animation `(2,2,10)`, then `Sprite_Tingle_TrackPlayer`. |
 | 3 | `Tingle_MapPrompt` (`:135-163`) | If `$1CE8` is nonzero, goes to 5. Otherwise shows the offer message for `TingleId` (see Messages), then goes to 4 when `TingleId` is not 7, or to 0 when it is 7. |
-| 4 | `Tingle_MapSales` (`:165-191`) | If `$1CE8` is nonzero, goes to 5. Otherwise, if rupees are at least the cost for `TingleId`, subtracts the cost, ORs the map bit into `TingleMaps` (see the Bitfield note), increments `TingleId`, shows `$018E`, and sets SprAction to 0. If rupees are short, shows `$018F` and sets SprAction to 0. |
+| 4 | `Tingle_MapSales` (`:165-191`) | If `$1CE8` is nonzero, goes to 5. Otherwise, if rupees are at least the cost for `TingleId`, subtracts the cost, grants dungeon map ownership and ORs the purchase bit into `TingleMaps` (see Purchased-map flags), increments `TingleId`, shows `$018E`, and sets SprAction to 0. If rupees are short, shows `$018F` and sets SprAction to 0. |
 | 5 | `Tingle_PlayerSaidNo` (`:211-216`) | Shows `$0198`; sets SprAction to 0. |
 
 ## Tracking (`Sprite_Tingle_TrackPlayer`)
@@ -66,20 +66,19 @@ When `TingleId` is 7 (all maps sold), the offer message is `$0190`.
 | `$0191`-`$0197` | Offers for `TingleId` 0-6 |
 | `$0198` | Player declined |
 
-## Bitfield (per code, runtime unverified)
-`Tingle_MapSales` sets `Y` = `2 * TingleId` (`ASL`). That index reads the word `.cost` correctly. It also reads the byte table `.dungeon` (`tingle.asm:201-208`) at the same offset, so the bit ORed into `TingleMaps` is `.dungeon[2 * TingleId]`:
+## Purchased-map flags (source-reviewed, purchase runtime check pending)
+The price and map-mask word tables use `2 * TingleId`. Before reading the byte `.dungeon` table, the purchase path reloads `Y = TingleId`, so `TingleMaps` receives bits `$01`, `$02`, `$04`, `$08`, `$10`, `$20`, `$40` in order.
 
-*   TingleId 0: `$01`.
-*   TingleId 1: `$04`. TingleId 2: `$10`. TingleId 3: `$40`.
-*   TingleId 4-6: bytes past the end of the table.
+A successful purchase also ORs the corresponding 16-bit dungeon map mask into `DungeonMapSet1` / `DungeonMapSet2` (`$7EF368–$7EF369`): `$0200`, `$0400`, `$0080`, `$0010`, `$0040`, `$0100`, `$0008`. These match the existing `CheckForTingleMaps` dungeon order. Rupees are debited before both ownership fields are updated; decline and insufficient-money paths do not grant a map.
 
-The header comments expect `$01`, `$02`, `$04`, `$08`, `$10`, `$20`, `$40`. This mismatch is not fixed here; it is a code change for a separate item.
+The pending focused runtime check covers an actual successful purchase, the rupee debit and both ownership fields, plus decline/insufficient-money controls. Source/build evidence does not establish that gameplay result.
 
 ## Flags
 
 | Address | Use |
 | --- | --- |
 | `$7EF360` | Rupees (read and decremented) |
+| `$7EF368–$7EF369` | 16-bit dungeon map ownership |
 | `$7EF396` | `TingleMaps` (purchased-maps bitfield) |
 | `$7EF397` | `TingleId` (next map index) |
 | `$1CE8` | Player response (0 = yes) |

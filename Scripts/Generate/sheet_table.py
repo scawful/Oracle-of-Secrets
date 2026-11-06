@@ -41,10 +41,12 @@ def ptr(rom, g):
 
 def survey(rom):
     rows = []
-    for g in range(N):
+    # $FF remains the default sentinel. Expanded background rows are 3bpp;
+    # only the seven named legacy ranges use the native 2bpp loader.
+    for g in range(0xFF if relocated(rom) else N):
         a = ptr(rom, g)
         unc = 115 <= g <= 126
-        two = g in (113, 114) or g >= 218
+        two = g in (113, 114) or 218 <= g < N
         if unc:
             data, clen = bytes(rom[pc(a):pc(a)+0x600]), 0x600
         else:
@@ -240,8 +242,15 @@ def main():
     van = survey(open(a.vanilla, 'rb').read()) if a.vanilla else None
     base = survey(open(a.base, 'rb').read()) if a.base else None
     for r in rows:
-        if van: r['ptr_eq_vanilla'] = van[r['g']]['ptr'] == r['ptr']; r['data_eq_vanilla'] = van[r['g']]['data'] == r['data']; r['vanilla_clen'] = van[r['g']]['clen']
-        if base: r['ptr_eq_base'] = base[r['g']]['ptr'] == r['ptr']; r['data_eq_base'] = base[r['g']]['data'] == r['data']
+        if van:
+            prior = van[r['g']] if r['g'] < len(van) else None
+            r['ptr_eq_vanilla'] = prior['ptr'] == r['ptr'] if prior else None
+            r['data_eq_vanilla'] = prior['data'] == r['data'] if prior else None
+            r['vanilla_clen'] = prior['clen'] if prior else None
+        if base:
+            prior = base[r['g']] if r['g'] < len(base) else None
+            r['ptr_eq_base'] = prior['ptr'] == r['ptr'] if prior else None
+            r['data_eq_base'] = prior['data'] == r['data'] if prior else None
     spr = [r for r in rows if r['g'] >= 0x73]
     sel = [int(x, 16) for x in a.sheets.split(',')] if a.sheets else None
     print(f"{'spr':>4} {'glob':>4} {'ptr':>8} {'clen':>5} {'gap':>5} {'slack':>5} {'dlen':>5} van base")

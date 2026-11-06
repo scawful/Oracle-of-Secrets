@@ -24,6 +24,8 @@ OWNED_REGIONS = (
     ("Overworld/lost_woods.asm", 0x107000, 0x107FFF),
     ("Masks/bunny_hood.asm", 0x102F20, 0x102F6F),
     ("Masks/bunny_hood.asm", 0x102F70, 0x102F8D),
+    # Bounded NMI song-alias handler between OW music data and the cold loader.
+    ("Overworld/great_sea_music.asm", 0x106E00, 0x106F7F),
     # generate_water_fill_table.py reserves this tail of custom collision data
     # and rejects tables that exceed it. The collision source contract excludes
     # this area from the editor's per-room collision streams.
@@ -34,6 +36,18 @@ OWNED_REGIONS = (
     ("Core/gfx_sheet_table.asm", 0x11FC00, 0x11FFFF),
     ("Core/Generated/source_sprite_sheets/sheet_overrides.asm", 0x11FD00, 0x11FFFF),
     ("Core/Generated/menu_icons/menu_icon_overrides.asm", 0x11FD00, 0x11FFFF),
+    # Overworld song upload chain, moved to bank $20 ($20B000-$20EFFF) by
+    # Music/song_banks.asm. The ZS map lists 0x100000-0x107FFF as unused;
+    # lost woods owns 0x107000+. all_music.asm asserts the chain ends by $20F000.
+    *((source, 0x103000, 0x106FFF) for source in (
+        "Music/song_banks.asm",
+        "Music/all_music.asm",
+        "Core/music_macros.asm",
+        "Music/lost_woods_v2.asm",
+        "Music/deku_theme.asm",
+        "Music/great_sea.asm",
+        "Music/frozen_hyrule.asm",
+    )),
 )
 
 

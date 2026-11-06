@@ -175,7 +175,6 @@ print  "End of sky_d8_award.asm           ", pc
 if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
 incsrc "Dungeons/d7_farore_rescue.asm"
 print  "End of d7_farore_rescue.asm       ", pc
-assert pc() <= $2CFD00 ; do not overlap RoomTag_SomariaSocketDoor
 endif
 
 if !ENABLE_ATTRACT_ROYAL_SCENES == 1
@@ -183,6 +182,7 @@ incsrc "Dungeons/attract_royal_graphics.asm"
 print "End of attract_royal_graphics.asm  ", pc
 endif
 
+assert pc() <= $2CF700 ; Somaria internal-landing helper owns the fixed tail
 print "End of dungeons.asm               ", pc
 
 pushpc

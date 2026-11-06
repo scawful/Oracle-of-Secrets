@@ -29,9 +29,7 @@ org $02C32F : db (read1($02C32F)&$0F)|$50 ; Area $2C: Wayward Village ; @hook mo
 ; Replace SprState == 04 -> .exit
 org $01C769 : LDA.w SprState, X : CMP.b #$02
 
-; Credits_LoadNextScene_Overworld
-; Skip end cutscene until it's ready
-org $0E9889 : LDA #$20 : STA $11 : RTS
+; Credits_LoadNextScene_Overworld: Oracle scenes (Overworld/credits_scenes.asm)
 
 ; =========================================================
 ; Special Area Properties
@@ -69,6 +67,9 @@ incsrc "Overworld/entrances.asm"
 
 incsrc "Overworld/custom_gfx.asm"
 %log_end("Overworld/custom_gfx.asm", !LOG_OVERWORLD)
+
+incsrc "Overworld/credits_scenes.asm"
+%log_end("Overworld/credits_scenes.asm", !LOG_OVERWORLD)
 pushpc
 
 incsrc "Overworld/world_map.asm"
@@ -177,6 +178,8 @@ LoadOverworldPitAreas:
   CLC ; allow transition
   RTL
 }
+
+incsrc "Overworld/great_sea_music.asm"
 
 Overworld_GetPitDestination = $1BB860
 

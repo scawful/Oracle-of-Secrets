@@ -131,6 +131,79 @@ class DekuStickContractTest(unittest.TestCase):
         self.assertLess(hook_idx, minish_idx)
         self.assertIn("JSL DekuStick_Main", mask_text[hook_idx:minish_idx])
 
+    def test_y_interception_hook(self):
+        mask_text = MASK_ROUTINES.read_text(encoding="utf-8")
+        y_hook_idx = mask_text.find("MaskControl_CheckYItem:")
+        r_bind_idx = mask_text.find("if !ENABLE_MASK_R_BINDING == 1", y_hook_idx)
+        self.assertNotEqual(y_hook_idx, -1)
+        self.assertNotEqual(r_bind_idx, -1)
+        # DekuStick_CheckYPress must precede R binding dispatch in MaskControl_CheckYItem
+        self.assertIn("JSL DekuStick_CheckYPress", mask_text[y_hook_idx:r_bind_idx])
+
+    def test_swipe_and_torch_source_contracts(self):
+        stick_text = DEKU_STICK.read_text(encoding="utf-8")
+        self.assertIn("DekuStick_CheckYPress:", stick_text)
+        self.assertIn("DekuStick_CheckTorch:", stick_text)
+        self.assertIn("DekuStick_CheckHit:", stick_text)
+        self.assertIn("DekuStick_DrawOAM:", stick_text)
+        self.assertIn("Entity_GetTileAttr  = $06E87B", stick_text)
+        self.assertIn("Dungeon_LightTorch  = $01F3EC", stick_text)
+        self.assertIn("JSL Entity_GetTileAttr", stick_text)
+        self.assertIn("JSL Dungeon_LightTorch", stick_text)
+
+    def test_gameplay_modes_and_submodule_guards(self):
+        stick_text = DEKU_STICK.read_text(encoding="utf-8")
+        # Both Underworld ($07) and Overworld ($09) gameplay modes must be accepted
+        self.assertIn("CMP.b #$07 : BEQ .check_underworld_submodules", stick_text)
+        self.assertIn("CMP.b #$09 : BEQ .check_overworld_submodules", stick_text)
+        # Destructive Underworld submodules
+        self.assertIn("CMP.b #$06 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$07 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$0E : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$11 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$12 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$13 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$14 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$15 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$19 : BEQ .interrupted", stick_text)
+        # Destructive Overworld submodules
+        self.assertIn("CMP.b #$0D : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$17 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$23 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$24 : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$2A : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$2C : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$2E : BEQ .interrupted", stick_text)
+
+    def test_submodule_transition_hooks(self):
+        stick_text = DEKU_STICK.read_text(encoding="utf-8")
+        self.assertIn("DekuStick_SubmoduleCheck:", stick_text)
+        self.assertIn("DekuStick_OWLoadCheck:", stick_text)
+        self.assertIn(".preserve_and_draw", stick_text)
+        self.assertIn("LDA.b $11 : BEQ .done", stick_text)
+        self.assertIn("JSR DekuStick_DrawOAM", stick_text)
+        self.assertIn("org $0287A8", stick_text)
+        self.assertIn("JSL DekuStick_SubmoduleCheck", stick_text)
+        self.assertIn("assert pc() == $0287AC", stick_text)
+        self.assertIn("org $0283BF", stick_text)
+        self.assertIn("JSL DekuStick_OWLoadCheck", stick_text)
+        self.assertIn("assert pc() == $0283C3", stick_text)
+        self.assertIn("org $02A477", stick_text)
+        self.assertIn("assert pc() == $02A47B", stick_text)
+
+    def test_oam_viewport_and_unpacked_high_table_contract(self):
+        stick_text = DEKU_STICK.read_text(encoding="utf-8")
+        draw_idx = stick_text.index("DekuStick_DrawOAM:")
+        stow_idx = stick_text.index("DekuStick_Stow:")
+        draw_body = stick_text[draw_idx:stow_idx]
+        # Must match LinkOAM_Main ($0DA1D1-$0DA1DD) 8-bit camera delta and unpacked $0A24/$0A25
+        self.assertIn("LDA.b $22 : SEC : SBC.b $E2 : STA.b $04", draw_body)
+        self.assertIn("LDA.b $20 : SEC : SBC.b $E8 : STA.b $06", draw_body)
+        self.assertIn("STA.w $0A24", draw_body)
+        self.assertIn("STA.w $0A25", draw_body)
+        self.assertNotIn("$0A21", draw_body)
+        self.assertNotIn("CMP.b #$FF : BNE .hide", draw_body)
+
 
 class DekuStickLogicModelTest(unittest.TestCase):
     """Simulates the ASM state machine logic for Deku Stick draw, stow, and wear."""
@@ -203,6 +276,88 @@ class DekuStickLogicModelTest(unittest.TestCase):
         if self.stick_state == 1:
             self.stick_state = 2  # Lit
 
+    def press_y(self):
+        if self.stick_state == 0:
+            return "NORMAL_ITEM"
+        # Stick is held or swiping: suppress assigned item
+        if self.stick_state in (1, 2):
+            was_lit = 0x80 if self.stick_state == 2 else 0
+            self.swipe_timer = 14 | was_lit
+            self.stick_state = 3
+            return "SWIPE_STARTED"
+        return "SWIPE_ACTIVE"
+
+    def advance_swipe_frame(self, enemy=None, torch_state=None):
+        if self.stick_state != 3:
+            return
+        timer = self.swipe_timer & 0x1F
+        was_lit = bool(self.swipe_timer & 0x80)
+        hit_latched = bool(self.swipe_timer & 0x40)
+
+        # Active window: frames 10 down to 7
+        if 7 <= timer <= 10:
+            if enemy and not hit_latched and enemy.get("active") and not enemy.get("boss"):
+                if enemy.get("stun_timer", 0) == 0:
+                    enemy["stun_timer"] = 32  # Nonlethal stun
+                    self.swipe_timer |= 0x40  # Latch hit bit
+
+            if torch_state == "LIT" and not was_lit:
+                self.swipe_timer |= 0x80  # Ignite swipe
+                was_lit = True
+            elif torch_state == "UNLIT" and was_lit:
+                torch_state = "LIT"
+
+        timer -= 1
+        if timer == 0:
+            self.stick_state = 2 if was_lit else 1
+            self.swipe_timer = 0
+        else:
+            self.swipe_timer = timer | (0x80 if was_lit else 0) | (0x40 if hit_latched else 0)
+
+    def test_swipe_controls_and_stun(self):
+        # 1. Draw fresh stick
+        self.assertTrue(self.menu_press_a())
+        self.assertTrue(self.process_exit_action())
+        self.assertEqual(self.stick_state, 1)
+
+        # 2. Press Y -> starts swipe and suppresses assigned item
+        self.assertEqual(self.press_y(), "SWIPE_STARTED")
+        self.assertEqual(self.stick_state, 3)
+        self.assertEqual(self.swipe_timer & 0x1F, 14)
+
+        # 3. Simulate 14 frames with an enemy present
+        enemy = {"active": True, "hp": 4, "boss": False, "stun_timer": 0}
+        initial_hp = enemy["hp"]
+
+        for f in range(14, 0, -1):
+            self.advance_swipe_frame(enemy=enemy)
+
+        # Verify enemy was stunned, HP was NOT damaged, stick was NOT broken
+        self.assertEqual(enemy["stun_timer"], 32)
+        self.assertEqual(enemy["hp"], initial_hp)  # 0 HP damage!
+        self.assertEqual(self.stick_state, 1)      # Returned cleanly to held unlit!
+        self.assertEqual(self.deku_sticks, 1)      # No stick loss!
+
+    def test_swipe_while_lit_maintains_burn_budget(self):
+        self.assertTrue(self.menu_press_a())
+        self.assertTrue(self.process_exit_action())
+        self.ignite()
+        self.assertEqual(self.stick_state, 2)
+        self.burn_timer = 50
+
+        # Press Y while lit -> starts lit swipe (bit 7 set)
+        self.assertEqual(self.press_y(), "SWIPE_STARTED")
+        self.assertEqual(self.stick_state, 3)
+        self.assertTrue(bool(self.swipe_timer & 0x80))
+
+        # Advance 14 frames
+        for _ in range(14):
+            self.advance_swipe_frame()
+
+        # Returns to lit state 2, burn budget preserved
+        self.assertEqual(self.stick_state, 2)
+        self.assertEqual(self.burn_timer, 50)
+
     def test_fresh_draw_and_stow(self):
         # 1. Draw fresh stick
         self.assertTrue(self.menu_press_a())
@@ -264,6 +419,35 @@ class DekuStickLogicModelTest(unittest.TestCase):
         self.assertTrue(self.process_exit_action())
         self.assertEqual(self.burn_timer, 75)  # Falls back to safe fresh 75
         self.assertEqual(self.deku_wear, 0)
+
+    @staticmethod
+    def simulate_draw_oam(posx: int, posy: int, bg2h: int, bg2v: int, off_x: int, off_y: int):
+        """Models DekuStick_DrawOAM 8-bit viewport delta + 9-bit signed OAM X high byte."""
+        scr_x = ((posx & 0xFF) - (bg2h & 0xFF)) & 0xFF
+        scr_y = ((posy & 0xFF) - (bg2v & 0xFF)) & 0xFF
+        spr_x_16 = (scr_x + off_x) & 0xFFFF
+        oam_x = spr_x_16 & 0xFF
+        oam_x9 = (spr_x_16 >> 8) & 0x01
+        oam_y = (scr_y + off_y) & 0xFF
+        return oam_x, oam_y, oam_x9
+
+    def test_oam_non_adjacent_overworld_transition_and_edge_wrap(self):
+        # Screen 0x23 -> 0x2A arrival (POSX=736=0x02E0, POSY=2790=0x0AE6, BG2H=0x0500, BG2V=0x0A68)
+        # Facing Left held offsets: Stick (-6, +8), Flame (-12, +8)
+        sx, sy, sx9 = self.simulate_draw_oam(0x02E0, 0x0AE6, 0x0500, 0x0A68, -6, 8)
+        fx, fy, fx9 = self.simulate_draw_oam(0x02E0, 0x0AE6, 0x0500, 0x0A68, -12, 8)
+        self.assertEqual((sx, sy, sx9), (218, 134, 0))
+        self.assertEqual((fx, fy, fx9), (212, 134, 0))
+        self.assertLess(sy, 0xE0)
+        self.assertLess(fy, 0xE0)
+
+        # Left screen edge clip (Link at scr_x = 4, Flame offset = -12 -> -8 = 0x1F8, x9 = 1)
+        fx_left, _, fx9_left = self.simulate_draw_oam(0x0604, 0x0AE6, 0x0600, 0x0A68, -12, 8)
+        self.assertEqual((fx_left, fx9_left), (0xF8, 1))
+
+        # Right screen edge clip (Link at scr_x = 248, Flame offset = +20 -> 268 = 0x10C, x9 = 1)
+        fx_right, _, fx9_right = self.simulate_draw_oam(0x06F8, 0x0AE6, 0x0600, 0x0A68, 20, 8)
+        self.assertEqual((fx_right, fx9_right), (0x0C, 1))
 
 
 if __name__ == "__main__":

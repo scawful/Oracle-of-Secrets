@@ -4344,6 +4344,9 @@ InitTilesetsLongCalls:
     ; Modes 0x08 through 0x0B are outdoor related modes.
     LDA.b $10 : CMP.b #$08 : BCC .regularLoad
         CMP.b #$0C : BCC .outdoors
+        ; Oracle: ending credits scenes are overworld areas too
+        ; (Overworld/credits_scenes.asm).
+        CMP.b #$1A : BEQ .outdoors
             .regularLoad
 
             REP #$30

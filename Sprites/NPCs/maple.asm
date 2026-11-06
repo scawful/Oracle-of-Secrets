@@ -484,8 +484,12 @@ DreamReturn_GanonDoorGate:
 {
   JSL DreamReturn_IsDreaming : BCS .skip
   LDA.b $5D : CMP.b #$01 : BEQ .skip
+if !ENABLE_GANONDORF_VOLLEY == 1
+    JML Ganondorf_DoorGate
+else
     CLC
     RTL
+endif
   .skip
   SEC
   RTL

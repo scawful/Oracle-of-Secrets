@@ -8,7 +8,7 @@
   ;  2: 0x87 West Hall (F1)      — ACTIVE  10: 0x89 East Hall (F1) — ACTIVE
   ;  3: 0x88 Big Chest (F1)      — ACTIVE  11: 0xDA B2 East        — planned HIGH
   ;  4: 0x77 NW Hall (F1)        — planned HIGH  12: 0xD9 B2 Mid   — planned HIGH
-  ;  5: 0xA8 B1 NW               — planned HIGH  13: 0xD7 B2 West  — planned
+  ;  5: 0xA8 B1 NW               — planned HIGH  13: D8→D7 lower shuttle — private active
   ;  6: 0xB8 B1 SW               — planned HIGH  14: 0x79 NE  — BLOCKED (no collision)
   ;  7: 0xB8 B1 SW #2            — planned HIGH  15: 0x97 SW  — planned
   ;                                               16: 0xD8 Pre-Boss — planned HIGH
@@ -28,7 +28,7 @@
   if !ENABLE_MINECART_PLANNED_TRACK_TABLE == 1
     dw $0077, $00A8, $00B8, $00B8  ; Tracks 4-7  (planned: NW Hall, B1 NW, B1 SW x2)
     dw $00B9, $0078, $0089, $00DA  ; Tracks 8-11 (planned: B1 SE, Miniboss, E Hall, B2 E)
-    dw $00D9, $00D7, $0079, $0097  ; Tracks 12-15(planned: B2 Mid, B2 West, NE Hall, SW Hall)
+    dw $00D9, $00D8, $0079, $0097  ; Tracks 12-15(planned: B2 Mid, B2 West, NE Hall, SW Hall)
     dw $00D8, $0000, $0000, $0000  ; Track 16 (Pre-Boss), 17-19 reserved
     dw $0000, $0000, $0000, $0000  ; Tracks 20-23 reserved
     dw $0000, $0000, $0000, $0000  ; Tracks 24-27 reserved
@@ -71,7 +71,7 @@
   ;    10    0x89  (14,34)         (14, 34)   B8 STOP_N
   ;    11    0xDA  (52,10)         (52, 10)   B7 STOP_S
   ;    12    0xD9  (11,16)         (11, 16)   B9 STOP_E
-  ;    13    0xD7  (53,12)         (53, 12)   BA STOP_W
+  ;    13    0xD8  (56,54)         (56, 54)   BA STOP_W; paired D7(34,42)
   ;    14    0x79  BLOCKED         ( —,  —)   no collision data
   ;    15    0x97  ( 8,44)         ( 8, 44)   B7 STOP_S
   ;    16    0xD8  (14,14)         (14, 14)   B9 STOP_E
@@ -84,7 +84,7 @@
   if !ENABLE_MINECART_PLANNED_TRACK_TABLE == 1
     dw $0E80, $1070, $1070, $1070  ; Tracks 4-7  (0x77 t16, 0xA8 t14, 0xB8 t14 x2)
     dw $1310, $0F80, $1270, $15A0  ; Tracks 8-11 (0xB9 t34, 0x78 TBD, 0x89 t14, 0xDA t52)
-    dw $1258, $0FA8, $1200, $0E40  ; Tracks 12-15(0xD9 t11, 0xD7 t53, 0x79 TBD, 0x97 t8)
+    dw $1258, $11C0, $1200, $0E40  ; Tracks 12-15(0xD9 t11, D8 SE t56, 0x79 TBD, 0x97 t8)
     dw $1070, $0000, $0000, $0000  ; Track 16 (0xD8 t14), 17-19 reserved
     dw $0000, $0000, $0000, $0000  ; Tracks 20-23 reserved
     dw $0000, $0000, $0000, $0000  ; Tracks 24-27 reserved
@@ -107,7 +107,7 @@
   if !ENABLE_MINECART_PLANNED_TRACK_TABLE == 1
     dw $0EA8, $1560, $1610, $1700  ; Tracks 4-7  (0x77 t21, 0xA8 t44, 0xB8 t2, 0xB8 t32)
     dw $1660, $0F00, $1110, $1A50  ; Tracks 8-11 (0xB9 t12, 0x78 TBD, 0x89 t34, 0xDA t10)
-    dw $1A80, $1A60, $0F80, $1360  ; Tracks 12-15(0xD9 t16, 0xD7 t12, 0x79 TBD, 0x97 t44)
+    dw $1A80, $1BB0, $0F80, $1360  ; Tracks 12-15(0xD9 t16, D8 SE t54, 0x79 TBD, 0x97 t44)
     dw $1A70, $0000, $0000, $0000  ; Track 16 (0xD8 t14), 17-19 reserved
     dw $0000, $0000, $0000, $0000  ; Tracks 20-23 reserved
     dw $0000, $0000, $0000, $0000  ; Tracks 24-27 reserved

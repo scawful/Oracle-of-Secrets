@@ -292,7 +292,21 @@ class LocalCartShutter(unittest.TestCase):
                              else "RoomTag_ShutterDoorRequiresCart")
 
     def test_lever_prep_resets_only_locked_room97_group1(self):
-        lines = body(ROOT / "Sprites/Objects/mineswitch.asm", "Sprite_LeverSwitch_Prep")
+        lever = ROOT / "Sprites/Objects/mineswitch.asm"
+        self.assertIn("%Set_Sprite_Properties(Sprite_LeverSwitch_Prep, Sprite_LeverSwitch_Long);",
+                      lever.read_text())
+        self.assertRegex(lever.read_text(), r"(?m)^Sprite_LeverSwitch_Prep:\n"
+                                          r"\s+JML D9Actor_PrepDispatch\n")
+        # Check the actual loaded-room dispatch before executing the ordinary
+        # shutter slice. Adapt its long predicate call to this model's existing
+        # local-call stack; this remains source-model, not CPU/ABI proof.
+        dispatch = body(ROOT / "Dungeons/d9_key_gate.asm", "D9Actor_PrepDispatch")
+        dispatch = [line.replace("JSL D6ChuActor_IsLoadedRoom", "JSR .loaded_room")
+                    for line in dispatch]
+        predicate = body(ROOT / "Dungeons/d6_cart_circuit.asm", "D6ChuActor_IsLoadedRoom")
+        dispatch += [".loaded_room"] + ["RTS" if line == "RTL" else line for line in predicate]
+        dispatch_code, dispatch_labels = program(dispatch)
+        lines = body(lever, "Sprite_LeverSwitch_Prep_Ordinary")
         start = lines.index("if !ENABLE_MINECART_CART_SHUTTERS") + 1
         lines = lines[start:lines.index("endif", start)] + ["JML $01CC5A"]
         code, labels = program(lines)
@@ -300,6 +314,13 @@ class LocalCartShutter(unittest.TestCase):
                                              (0x97, 0, 0, {}), (0x77, 1, 0, {}),
                                              (0x197, 1, 0, {}), (0x97, 1, 0x4000, {})):
             m = room(); word(m, 0xA0, room_id); word(m, 0x0400, flags)
+            word(m, 0x048E, room_id)
+            dispatched = Machine(m, y=group)
+            self.assertEqual(dispatched.run(dispatch_code, dispatch_labels),
+                             "Sprite_LeverSwitch_Prep_Ordinary")
+            self.assertFalse(dispatched.writes)
+            self.assertEqual((dispatched.y, dispatched.sp, dispatched.p & 0x30),
+                             (group, 0x01FB, 0x30))
             machine = Machine(m, y=group)
             self.assertEqual(machine.run(code, labels), "$01CC5A")
             self.assertEqual(machine.writes, writes)
