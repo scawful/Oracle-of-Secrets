@@ -3151,3 +3151,17 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Prices are a separate approval.
   Options shown: "Table 4.2a (pick)", "Shops only", "Drops only".
   Answer: "Table 4.2a (pick)" (scawful, 2026-11-05).
+
+* DECIDED Ring appraisal and consumable prices (2026-11-05)
+  :PROPERTIES:
+  :ASKED_BY: Claude (consumables + Vasu evaluation)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/consumables_vasu_2026-11-05/PLAN.md (4.3)
+  :END:
+  1. Vasu, per ring appraised: 1st free, then 30 / 40 / 50 / 60 / 70 rupees
+     (250 total). The price follows the count of rings already owned.
+  2. Bombchu 5-pack (Village shop 0x46): 50 rupees.
+  3. Deku Stick (Business Scrub): 3 for 20 rupees.
+  4. Banana: 30 rupees (unchanged).
+  Options shown: "Price set 1 (pick)" (above), "Cheaper set" (Vasu 20 each,
+  Bombchu 30, sticks 3 for 10).
+  Answer: "Price set 1 (pick)" (scawful, 2026-11-05).
