@@ -3066,3 +3066,20 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   also be a valid inclusion no ?"; "fishing rod is a separate item from the
   portal rod, that code should prob be changed"; "Switch Hook (pick)"
   (scawful, 2026-11-05).
+
+* DECIDED D8 Sky Tower: Farore is a D8-only follower (2026-11-05)
+  :PROPERTIES:
+  :ASKED_BY: Claude (D8 Sky Tower vision v3)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d8_vision_2026-11-05/VISION.md
+  :END:
+  1. Farore follows Link through D8 Sky Tower only: she joins in $90 and stays
+     until $96. She is not a follower in the Fortress or the finale, which keeps
+     "Farore at selected story locations" (2026-10-20).
+  2. She uses the D4 Zora Baby follower pattern (Sprites/NPCs/followers.asm):
+     Hold = a star tile stops her and she holds that plate until Link touches
+     her; Reveal = at a glyph panel she shows a hidden floor (once, $9D).
+  3. She is not a Switch Hook target (targets stay ice blocks + statues).
+  4. Her talk-spot lines are separate dialogue approvals; none are written.
+  Options shown: "D8-only follower" (Zora Baby code, Hold + Reveal puzzles) or
+  "Placed NPC only" (talk spots, no puzzles).
+  Answer: "D8-only follower" (scawful, 2026-11-05).
