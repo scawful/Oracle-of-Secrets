@@ -3979,3 +3979,15 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      the Feather hops a gap. Exact order of returns is open.
   3. Codex: confirm Link owns the Feather by the time the crescent can be reached;
      if not, the island needs another gate first. Still open: the goal cave reward.
+
+* DECIDED Crescent island: the north horn grotto gives a magic ring (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Courage island plan), follows 107bfa4a (third item is Roc's Feather)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+  :END:
+  Question: "What does the north horn grotto give as its reward?"
+  Options shown: "Magic ring (pick)", "Heart Piece".
+  Answer: "Magic ring (pick)" (scawful, 2026-11-06)
+  1. The goal cave on the north horn (B4) gives a magic ring (Items/magic_rings.asm).
+  2. The ring is not needed for the main route (fits 7dcb9fc5, optional quest).
+  3. Still open: which ring. Codex checks a free ring slot.
