@@ -4279,3 +4279,29 @@ Answer: "Briefing only" (scawful, 2026-11-06)
   Not decided: Zeniea $10A and the Storyteller $10E stay; what the freed rooms become.
   Codex checks before freeing a room: vanilla ShopMan picks the thief subtype by room ID
   (usdasm bank_06:2474), and $124 also has the Abyss entrance 0x6E.
+
+* DECIDED Kalyxo caves follow zone jobs (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude, Kalyxo cave evaluation
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/kalyxo_cave_audit_2026-11-06/EVALUATION.md
+  :END:
+  scawful before the ask: "be a little more proactive in terms of which cave systems are kept,
+  which are moved around, for the purpose of the story and the progression"; "the cliffs region
+  near the Hall of Secrets ... feels a bit dense"; caves wanted in the Sky Islands and Lyra Islands.
+  Question: Use zone jobs as the Kalyxo cave plan?
+  Options shown: 1 Zone jobs (pick): cliffs = secrets zone with fewer caves, central road stays
+  open field, freed doors go to docks/Sky/Lyra/Abyss; 2 Spread caves onto the empty central
+  screens; 3 Cliffs untouched (frees about 4); 4 Hold until a yaze walk.
+  Answer: "Zone jobs (pick)" (scawful, 2026-11-06)
+  Zone jobs: Hall of Secrets cliffs ($0D $0E $0F $15 $16 $17 $1D) = secrets zone, 16 -> 12 doors,
+  every cave holds a find; central road ($0A $0B $12 $1A $1B $1C $22 $25 $2A) = travel and services,
+  no filler caves; ranch + west woods = early forest; north peaks, village, east water unchanged;
+  south coast gains the docks doors.
+  Cave plan (cave_plan_board.png): free $124 thief, $10C, $11E thief, Developer's Den $03;
+  trim Deluxe 0x3A and 0x13, Village Road 0x21, stray 0x71, one Storyteller pair.
+  Budget: 6 free markers + 10 freed = 16; needs 11-13 (docks 2-3, special overworld 2-3,
+  Lyra Sea 5, Eon Abyss 2).
+  Accepted side effect: $1D Fairy Fountain South ends with 0 doors.
+  Not decided: which Storyteller pair stays; what freed rooms become; exact new door spots.
+  Codex checks before each removal: exit-table entries for shared rooms, 0x21 costs the $F9
+  corridor, Lyra needs tail-map entrance rows first.
