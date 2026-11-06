@@ -1,0 +1,192 @@
+"""Synthetic native-source compiler controls; no production allocation proof."""
+import copy
+import hashlib
+import importlib.util
+from pathlib import Path
+import struct
+import sys
+import unittest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import special_overworld_resources as R
+
+SPEC = importlib.util.spec_from_file_location(
+    'native_resource_fixture', Path(__file__).with_name('test_lyra_native_loaders.py'))
+F = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(F)
+
+
+class SavedNativeTerrainResourcesTest(unittest.TestCase):
+    def setUp(self):
+        self.fixture = F.Revision4AppearanceDirectoryTest()
+        self.fixture.setUp()
+        image = self.fixture.image
+        records = {entry_id: R.native.pc(address) for entry_id, address, _ in self.fixture.entries}
+        image[self.fixture.flags_pc:self.fixture.flags_pc + 192] = bytes(192)
+        image[self.fixture.colors_pc:self.fixture.colors_pc + 64 * 256] = bytes(64 * 256)
+        for page in range(128, 192):
+            image[records[7] + page] = page
+            image[records[4] + page] = 1
+        for page, color in zip((0xB0, 0xB1, 0xB8, 0xB9), (0, 0x1234, 0x2345, 0x3456)):
+            image[records[7] + page] = 0xB0
+            image[records[30] + page] = 1
+            image[self.fixture.flags_pc + page] = 3
+            struct.pack_into('<H', image, self.fixture.colors_pc + (page - 128) * 256 + 82, color)
+        # Every definition uses char0 in palette bank2. The graphics stream is
+        # real LC-LZ2 literal data decoded through the retained sheet codec.
+        for tile in range(4096):
+            struct.pack_into('<4H', image, records[400] + tile * 8, *([2 << 10] * 4))
+        raw = R.sheet_codec.grid_to_sheet([[1] * 128 for _ in range(32)])
+        compressed = bytearray()
+        for chunk in (raw[:1024], raw[1024:]):
+            size = len(chunk) - 1
+            compressed.extend((0xE0 | (size >> 8), size & 255))
+            compressed.extend(chunk)
+        compressed.append(255)
+        image[0x280000:0x280000 + len(compressed)] = compressed
+        for sheet in (0, 1):
+            for table, value in zip((R.sheet_table.TBL_BANK, R.sheet_table.TBL_HIGH,
+                                     R.sheet_table.TBL_LOW), (0x50, 0x80, 0)):
+                image[R.native.pc(table) + sheet] = value
+        self.source = self.fixture.installed()
+        self.exported = self.make_export(self.source)
+
+    @staticmethod
+    def seal(value):
+        return dict(native_source=value, native_source_sha256=R._sha(R._json_bytes(value)))
+
+    def make_export(self, source):
+        capacity, _, entries = R.native.read_native_directory(source)
+        read, _ = R._source_sheets(source)
+        decoded = read(0)[0]
+        animated = read(1)[0]
+        pages, areas = [], {}
+        for page in range(128, capacity):
+            def row(entry_id, width=1, index=page):
+                at = R.native.pc(entries[entry_id][0]) + index * width
+                return source[at:at + width]
+            flags = row(410)[0]
+            words = list(struct.unpack('<128H', row(411, 256, page - 128)))
+            palette = words + [0] * 128
+            states = []
+            for state in range(3):
+                slots = []
+                for slot in range(16):
+                    pixels = bytes((v + (0x88 if slot in (0, 3, 4, 5) else 0)) & 255
+                                   for v in decoded)
+                    if slot == 7:
+                        pixels = animated[:0x800] + pixels[0x800:]
+                    slots.append(dict(slot=slot, sheet_id=0,
+                        decoded_sheet_sha256=R._sha(decoded),
+                        resolved_slot_sha256=R._sha(pixels), empty=slot >= 8))
+                states.append(dict(state=state, slots=slots,
+                    palette=dict(words=list(palette), uint16le_sha256=R._sha(struct.pack('<256H', *palette))),
+                    animation=dict(sheet_id=1, decoded_sheet_sha256=R._sha(animated))))
+            parent, size = row(7)[0], row(30)[0]
+            profile = dict(background_color=int.from_bytes(row(1, 2), 'little'),
+                main_palette=row(2)[0], palette_set=row(31)[0], area_graphics=row(27)[0],
+                graphics_sheets=list(row(6, 8)), animated_sheet=row(4)[0],
+                subscreen_overlay=int.from_bytes(row(5, 2), 'little'),
+                mosaic=[bool(row(3)[0] & (8 >> bit)) for bit in range(4)],
+                appearance_flags=flags, background_palette_words=words)
+            pages.append(dict(map_id=page, parent_map_id=parent, role=row(29)[0],
+                              source_profile=profile, tiles=[0] * 1024, resolved_states=states))
+            area = areas.setdefault(parent, dict(parent_map_id=parent,
+                size=('small', 'large', 'wide', 'tall')[size], maps=[], resident_required=False))
+            area['maps'].append(page)
+            area['resident_required'] |= bool(flags)
+        address, count = entries[400]
+        value = dict(schema=R.SOURCE_SCHEMA, resolution_scope='resident_gameplay_areas',
+            source_rom_sha256=R._sha(source),
+            source_byte_count=len(source), directory_revision=4,
+            materialized_map_count=capacity, first_special_map=128,
+            special_map_count=capacity - 128, rom_address_overrides={},
+            directory_sha256=R._sha(source[R.native.DIRECTORY_PC:R.native.DIRECTORY_PC + 1024]),
+            tile16_dictionary=dict(snes_address=address, pc_address=R.native.pc(address),
+                count=count, stride=8, sha256=R._sha(source[R.native.pc(address):R.native.pc(address) + count * 8])),
+            pages=pages, gameplay_areas=[areas[key] for key in sorted(areas)])
+        return self.seal(value)
+
+    def test_native_large_area_packs_physical_page_colors_without_sidecar(self):
+        before = hashlib.sha256(self.source).hexdigest()
+        result = R.plan_saved_native_terrain(self.source, self.exported)
+        self.assertEqual(len(result['areas']), 1)
+        area = result['areas'][0]
+        self.assertEqual(area['maps'], [0xB0, 0xB1, 0xB8, 0xB9])
+        self.assertTrue(result['terrain_plan_ready'])
+        self.assertEqual(area['witness']['source_colors_sha256'],
+                         area['witness']['reconstructed_colors_sha256'])
+        self.assertGreater(area['witness']['pixel_comparisons'], 0)
+        self.assertFalse(result['ordinary_build_ready'])
+        self.assertFalse(result['allocation_granted'])
+        self.assertEqual(result, R.plan_saved_native_terrain(self.source, self.exported))
+        self.assertEqual(hashlib.sha256(self.source).hexdigest(), before)
+
+    def test_export_identity_raw_profile_and_topology_cannot_be_substituted(self):
+        for change, message in (
+            (lambda v: v.__setitem__('source_rom_sha256', '0' * 64), 'SOURCE_MISMATCH'),
+            (lambda v: v.__setitem__('rom_address_overrides', {'overworld_gfx_ptr1': 42}), 'OVERRIDES_UNSUPPORTED'),
+            (lambda v: v['pages'][0]['source_profile'].__setitem__('main_palette', 9), 'PROFILE_MISMATCH'),
+            (lambda v: v['pages'][0].__setitem__('parent_map_id', 0xB0), 'AREA_MISMATCH'),
+            (lambda v: v['pages'][0]['tiles'].__setitem__(0, 4096), 'TILE16_MAP_INVALID')):
+            with self.subTest(message=message):
+                value = copy.deepcopy(self.exported['native_source'])
+                change(value)
+                with self.assertRaisesRegex(ValueError, message):
+                    R.plan_saved_native_terrain(self.source, self.seal(value))
+        changed = copy.deepcopy(self.exported)
+        changed['native_source']['pages'][0]['tiles'][0] = 1
+        with self.assertRaisesRegex(ValueError, 'EXPORT_HASH_MISMATCH'):
+            R.plan_saved_native_terrain(self.source, changed)
+
+    def test_resolved_bytes_and_phase_variation_are_checked_before_packing(self):
+        for target, field, message in (
+            ('slot', 'decoded_sheet_sha256', 'SHEET_HASH_MISMATCH'),
+            ('slot', 'resolved_slot_sha256', 'RESOLVED_SLOT_HASH_MISMATCH'),
+            ('animation', 'decoded_sheet_sha256', 'ANIMATION_HASH_MISMATCH')):
+            with self.subTest(field=field, target=target):
+                value = copy.deepcopy(self.exported['native_source'])
+                state = value['pages'][0xB1 - 128]['resolved_states'][0]
+                row = state['slots'][0] if target == 'slot' else state['animation']
+                row[field] = '0' * 64
+                with self.assertRaisesRegex(ValueError, message):
+                    R.plan_saved_native_terrain(self.source, self.seal(value))
+        value = copy.deepcopy(self.exported['native_source'])
+        for state in value['pages'][0xB1 - 128]['resolved_states']:
+            palette = state['palette']
+            palette['words'][41] ^= 1
+            palette['uint16le_sha256'] = R._sha(struct.pack('<256H', *palette['words']))
+        with self.assertRaisesRegex(ValueError, 'BG128_SOURCE_MISMATCH'):
+            R.plan_saved_native_terrain(self.source, self.seal(value))
+        self.fixture.image[self.fixture.flags_pc + 0xB1] = 1
+        source = self.fixture.installed()
+        value = self.make_export(source)['native_source']
+        palette = value['pages'][0xB1 - 128]['resolved_states'][2]['palette']
+        palette['words'][41] ^= 1
+        palette['uint16le_sha256'] = R._sha(struct.pack('<256H', *palette['words']))
+        with self.assertRaisesRegex(ValueError, 'BG_PHASE_VARIATION_UNSUPPORTED'):
+            R.plan_saved_native_terrain(source, self.seal(value))
+
+    def test_source_zero_in_biased_bg_is_opaque_and_empty_slot_stays_transparent(self):
+        image = self.fixture.image
+        # A compressed all-zero source sheet: source0 becomes index8 in a
+        # present biased BG slot; a genuinely empty slot has no bias.
+        image[0x280000:0x280005] = bytes((0xE7, 0xFF, 0, 0xE5, 0xFF))
+        image[0x280005:0x280007] = bytes((0, 0xFF))
+        source = self.fixture.installed()
+        exported = self.make_export(source)
+        opaque = R.plan_saved_native_terrain(source, exported)['areas'][0]
+        self.assertTrue(any(bytes.fromhex(opaque['static_chr']['payload_hex'])))
+        value = copy.deepcopy(exported['native_source'])
+        for page in value['pages']:
+            for state in page['resolved_states']:
+                state['slots'][0]['empty'] = True
+                state['slots'][0]['resolved_slot_sha256'] = R._sha(bytes(0x1000))
+        transparent = R.plan_saved_native_terrain(source, self.seal(value))['areas'][0]
+        self.assertEqual(set(bytes.fromhex(transparent['static_chr']['payload_hex'])), {0})
+        self.assertNotEqual(opaque['witness']['source_colors_sha256'],
+                            transparent['witness']['source_colors_sha256'])
+
+
+if __name__ == '__main__':
+    unittest.main()
