@@ -180,7 +180,7 @@
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "5814d7f8254804b8e8415fe0a18775cfc253f43b4cb3b64029c836b091205712"
+      "sha256": "79407bc7ca69949997b62389105969a9ec126b89df84e82222af5d7c84bb1758"
     },
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
@@ -191,6 +191,11 @@
       "source_set": "shared",
       "path": "Scripts/Build/native_overworld_authoring_metadata.py",
       "sha256": "8ad596b4992a42eba40f8c7cbee6d6bc26f799a680e34ee23bfe467a55866d81"
+    },
+    "shared:Overworld/special_overworld_resident.asm": {
+      "source_set": "shared",
+      "path": "Overworld/special_overworld_resident.asm",
+      "sha256": "c5aa111291a02865de4811714f9528cea95cecc27373baf62d74723544854345"
     }
   },
   "claims": [
@@ -1703,6 +1708,28 @@
         "MAGIC = b'OWPLAC1\\0'"
       ],
       "aliases": []
+    },
+    {
+      "id": "native_special_resident_word_code",
+      "space": "snes_rom",
+      "base": 5095936,
+      "size": 1536,
+      "status": "proposed",
+      "condition": {},
+      "owner": "Native special-overworld resident Tile16 word readers; derived Build code",
+      "lifetime": "Compiled code for full-load, horizontal/vertical stripe and mutable draws; disabled until resources/readers are bound",
+      "reset": "No WRAM or SRAM allocation; preserves caller state and uses stack-local scratch saves",
+      "save": "Derived code is not authored source; normal Save does not grant writes here. Runtime Build activation requires separate compiler/consumer qualification.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py",
+        "shared:Overworld/special_overworld_resident.asm"
+      ],
+      "anchors": [
+        "RESIDENT_WORD_CODE_BASE = 0x4DC200",
+        "RESIDENT_WORD_CODE_LIMIT = 0x4DC800",
+        "Lyra_ResidentAtlasCodeStart:",
+        "Lyra_ResidentAtlasCodeEnd:"
+      ]
     }
   ],
   "lifetime_aliases": [],

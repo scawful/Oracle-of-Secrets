@@ -207,4 +207,5 @@ endif
 if !SPECIAL_OVERWORLD_NATIVE == 1
   assert !DISABLE_OVERWORLD == 0, "Native special overworld requires the overworld module"
   incsrc "Overworld/lyra_native_loaders.asm"
+  incsrc "Overworld/special_overworld_resident.asm"
 endif
