@@ -28,6 +28,13 @@ BINDINGS_BASE = 0x46B180
 CODE_BASE = 0x46C000
 CODE_LIMIT = 0x470000
 ACTORS_BASE = 0x4C8000
+# Selected source reservations for initial native appearance import. Generic
+# directory codecs still require caller-supplied entries; these constants do
+# not write, expand or activate a ROM. Bank47 belongs to graphics sheets DF-FE.
+APPEARANCE_FLAGS_BASE = 0x4D8000
+APPEARANCE_PALETTES_BASE = 0x4D8100
+RESIDENT_DATA_PC = 0x270000
+RESIDENT_DATA_CAPACITY = 0x10000
 
 # Existing dictionaries in the selected Oracle engine. Initial import reuses
 # these owned bodies; arbitrary relocation needs a separately bound reader ABI.
@@ -135,6 +142,14 @@ def current_table_layout(table_base):
     require((table_base & 0xFFFF) + cursor - table_base <= 0x10000,
             'Native tables cross a LoROM bank')
     return tuple(result)
+
+
+def initial_appearance_entries(capacity):
+    """Return the selected410/411 extents, without allocating or writing."""
+    require(type(capacity) is int and capacity in (160, 192),
+            'Expected160 or192 materialized maps')
+    return ((410, APPEARANCE_FLAGS_BASE, capacity),
+            (411, APPEARANCE_PALETTES_BASE, 64))
 
 
 def _row_bytes(value, stride, name):

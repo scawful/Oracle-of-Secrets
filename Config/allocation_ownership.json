@@ -180,7 +180,12 @@
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "547104735082096635b33d2fb7859e6a4897bbca60ecbc2cd0df7598bfe27358"
+      "sha256": "09590b6f54b127cb425a1f8f806d34ccb4a83d2bea5c5ad92a1b3f3a22d3258b"
+    },
+    "shared:Scripts/Generate/sheet_overrides.py": {
+      "source_set": "shared",
+      "path": "Scripts/Generate/sheet_overrides.py",
+      "sha256": "a5e77dbeb89121649328406d32d5427a4eb39bc1fb21ba738a95e13a4d55c275"
     }
   },
   "claims": [
@@ -1567,6 +1572,109 @@
         "symbol": "LyraCurrentTailVersion",
         "bank00_mirror": false
       }
+    },
+    {
+      "id": "global_graphics_bank_47",
+      "owner": "Source graphics sheets",
+      "space": "snes_rom",
+      "base": 4685824,
+      "size": 32768,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Existing global graphics sheets DF-FE; entire bank reserved, including unused bytes.",
+      "reset": "Selected source reservation only; no implicit free-space discovery, ROM materialization or runtime activation.",
+      "save": "Normal Save owns appearance source; Build rederives only its named cache and preserves source bodies. Graphics bank47 remains owned by the existing sheet generator.",
+      "provenance": [
+        "shared:Scripts/Generate/sheet_overrides.py"
+      ],
+      "anchors": [
+        "GLOBAL_START, GLOBAL_CAPACITY = 0x478000, 0x8000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_appearance_flags",
+      "owner": "Native special-overworld appearance source and derived resources",
+      "space": "snes_rom",
+      "base": 5079040,
+      "size": 192,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "ROM-owned physical-screen appearance flags410.",
+      "reset": "Selected source reservation only; no implicit free-space discovery, ROM materialization or runtime activation.",
+      "save": "Normal Save owns appearance source; Build rederives only its named cache and preserves source bodies. Graphics bank47 remains owned by the existing sheet generator.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "APPEARANCE_FLAGS_BASE = 0x4D8000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_appearance_palettes",
+      "owner": "Native special-overworld appearance source and derived resources",
+      "space": "snes_rom",
+      "base": 5079296,
+      "size": 16384,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "ROM-owned64 physical-screen BG128 rows411, including dormant source colors.",
+      "reset": "Selected source reservation only; no implicit free-space discovery, ROM materialization or runtime activation.",
+      "save": "Normal Save owns appearance source; Build rederives only its named cache and preserves source bodies. Graphics bank47 remains owned by the existing sheet generator.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "APPEARANCE_PALETTES_BASE = 0x4D8100"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_resident_cache_0",
+      "owner": "Native special-overworld appearance source and derived resources",
+      "space": "snes_rom",
+      "base": 5144576,
+      "size": 32768,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "First derived resident graphics/cache bank; Build-only data, never terrain authority.",
+      "reset": "Selected source reservation only; no implicit free-space discovery, ROM materialization or runtime activation.",
+      "save": "Normal Save owns appearance source; Build rederives only its named cache and preserves source bodies. Graphics bank47 remains owned by the existing sheet generator.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "RESIDENT_DATA_PC = 0x270000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_resident_cache_1",
+      "owner": "Native special-overworld appearance source and derived resources",
+      "space": "snes_rom",
+      "base": 5210112,
+      "size": 32768,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Second derived resident graphics/cache bank; Build-only data, never terrain authority.",
+      "reset": "Selected source reservation only; no implicit free-space discovery, ROM materialization or runtime activation.",
+      "save": "Normal Save owns appearance source; Build rederives only its named cache and preserves source bodies. Graphics bank47 remains owned by the existing sheet generator.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "RESIDENT_DATA_CAPACITY = 0x10000"
+      ],
+      "aliases": []
     }
   ],
   "lifetime_aliases": [],

@@ -388,6 +388,7 @@ def plan_saved_native_terrain(source, exported):
     planned = [_plan_area(area, tiles, assets, definitions, read_sheet)
                for area in areas if area['resident_required']]
     result = dict(schema=PLAN_SCHEMA, source_rom_sha256=_sha(source),
+        materialized_map_count=value['materialized_map_count'],
         native_source_sha256=exported['native_source_sha256'],
         tile16_definition_sha256=_sha(definitions), areas=planned,
         terrain_plan_ready=all(area['terrain_plan_ready'] for area in planned),

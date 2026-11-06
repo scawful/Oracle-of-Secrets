@@ -394,9 +394,9 @@ class Revision4AppearanceDirectoryTest(unittest.TestCase):
         self.image = bytearray(fixture.image)
         self.image[0x140145] = 3
         # Synthetic storage only: these addresses grant no production allocation.
-        self.entries = fixture.entries + [(410, 0x478000, 192), (411, 0x47A000, 64)]
-        self.flags_pc = N.pc(0x478000)
-        self.colors_pc = N.pc(0x47A000)
+        self.entries = fixture.entries + list(N.initial_appearance_entries(192))
+        self.flags_pc = N.pc(N.APPEARANCE_FLAGS_BASE)
+        self.colors_pc = N.pc(N.APPEARANCE_PALETTES_BASE)
         for page in range(0xA0, 0xC0):
             self.image[self.flags_pc + page] = 1
         for page, color in ((0xB0, 0x1234), (0xB8, 0x1234),
@@ -449,7 +449,7 @@ class Revision4AppearanceDirectoryTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, message):
                     self.encode()
                 self.image[offset] = before
-        self.entries[-1] = (411, 0x478000, 64)
+        self.entries[-1] = (411, N.APPEARANCE_FLAGS_BASE, 64)
         with self.assertRaisesRegex(ValueError, 'overlap'):
             self.encode()
         self.setUp()
