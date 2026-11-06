@@ -3237,3 +3237,18 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Message ID ($198 is taken), TingleId 7 / bit $80 and sale order are Codex checks.
   Options shown: "Approve (pick)", "Change some".
   Answer: "Approve (pick)" (scawful, 2026-11-05).
+
+* DECIDED D8 Sky Tower Secret Scroll translation (provisional; ridoyie later) (2026-11-05)
+  :PROPERTIES:
+  :ASKED_BY: Claude (consumables + Vasu evaluation)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d8_scroll_2026-11-05/DRAFT.md
+  :END:
+  Librarian translation for the D8 scroll (Scrolls bit $80), same pattern as $199-$19F.
+  Grounded in "Sky Islands timing and the Watchers"; motives and fate stay vague; the
+  Farore/Ganon prison reveal is left to the dreams. Final once proven on screen.
+  "In an age long past, the / Watchers raised towers of / stepped stone to the sky."
+  "From those heights they shaped / a realm apart from the world: / the land we call the Abyss."
+  "Why they built it, and where / they went, no scroll can say. / Only their statues still watch."
+  Librarian code (DNGMAP bit, 8th table entry, all-scrolls check $7F -> $FF) is a Codex check.
+  Options shown: "Approve (pick)", "Change some".
+  Answer: "Approve (pick)" (scawful, 2026-11-05).
