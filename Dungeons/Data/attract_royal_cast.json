@@ -1,0 +1,627 @@
+{
+  "schema": 1,
+  "scope": "Accepted attract cast, exact native indexed pixels; no new dialogue",
+  "sourceROM": "668ace0e2804ee65542a4def93e96c3f8af650c542cc59dda1d0bcacc97fe9f9",
+  "actorWindowSha256": "83686acbf50b05e0eab14d10186b506bb19285d739fea19abbacc4185c73c9e6",
+  "poses": {
+    "commander_south_0": {
+      "origin": [
+        16,
+        16
+      ],
+      "pieces": [
+        {
+          "oam": 0,
+          "sheet": "49",
+          "char": 64,
+          "x": 0,
+          "y": -7,
+          "size": 16,
+          "flip": 0,
+          "palette": 3,
+          "kind": "head"
+        },
+        {
+          "oam": 6,
+          "sheet": "49",
+          "char": 72,
+          "x": -4,
+          "y": 0,
+          "size": 16,
+          "flip": 0,
+          "palette": 3,
+          "kind": "body"
+        },
+        {
+          "oam": 5,
+          "sheet": "49",
+          "char": 73,
+          "x": 4,
+          "y": 0,
+          "size": 16,
+          "flip": 0,
+          "palette": 3,
+          "kind": "body"
+        },
+        {
+          "oam": 4,
+          "sheet": "49",
+          "char": 109,
+          "x": 10,
+          "y": 2,
+          "size": 8,
+          "flip": 0,
+          "palette": 4,
+          "kind": "body"
+        },
+        {
+          "oam": 3,
+          "sheet": "49",
+          "char": 125,
+          "x": 10,
+          "y": 10,
+          "size": 8,
+          "flip": 0,
+          "palette": 4,
+          "kind": "body"
+        },
+        {
+          "oam": 2,
+          "sheet": "49",
+          "char": 123,
+          "x": -3,
+          "y": 11,
+          "size": 8,
+          "flip": 128,
+          "palette": 3,
+          "kind": "weapon"
+        },
+        {
+          "oam": 1,
+          "sheet": "49",
+          "char": 107,
+          "x": -3,
+          "y": 19,
+          "size": 8,
+          "flip": 128,
+          "palette": 3,
+          "kind": "weapon"
+        }
+      ],
+      "indexedPixelSha256": "c022330ea1b045966d537f8dd689da1e2a8ec5ed37a165128055b1cc446f19e1"
+    },
+    "farore": {
+      "origin": [
+        12,
+        7
+      ],
+      "pieces": [
+        {
+          "oam": 0,
+          "sheet": "55",
+          "char": 40,
+          "x": 4,
+          "y": 0,
+          "size": 16,
+          "flip": 0,
+          "palette": 6
+        },
+        {
+          "oam": 1,
+          "sheet": "55",
+          "char": 42,
+          "x": 4,
+          "y": 12,
+          "size": 16,
+          "flip": 0,
+          "palette": 6
+        }
+      ],
+      "indexedPixelSha256": "fb3880390a9944cb1b63a5899cd6879c2a62eeb66c1f0a6c3e25ba71147cc74b"
+    },
+    "ground_shadow": {
+      "origin": [
+        16,
+        26
+      ],
+      "pieces": [
+        {
+          "oam": 0,
+          "sheet": "0A",
+          "char": 108,
+          "x": 0,
+          "y": 0,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "paletteHalf": 8,
+          "kind": "native_common_shadow"
+        }
+      ],
+      "indexedPixelSha256": "7d30d8cbe97da5715f96cebda8445f84c0bc472dfb72b6895946811f1bd7064f"
+    },
+    "guard_north_0": {
+      "origin": [
+        16,
+        16
+      ],
+      "pieces": [
+        {
+          "oam": 0,
+          "sheet": "49",
+          "char": 68,
+          "x": 0,
+          "y": -7,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "head"
+        },
+        {
+          "oam": 4,
+          "sheet": "49",
+          "char": 109,
+          "x": -3,
+          "y": -5,
+          "size": 8,
+          "flip": 0,
+          "palette": 4,
+          "kind": "body"
+        },
+        {
+          "oam": 3,
+          "sheet": "49",
+          "char": 125,
+          "x": -3,
+          "y": 3,
+          "size": 8,
+          "flip": 0,
+          "palette": 4,
+          "kind": "body"
+        },
+        {
+          "oam": 2,
+          "sheet": "49",
+          "char": 100,
+          "x": -4,
+          "y": 0,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "body"
+        },
+        {
+          "oam": 1,
+          "sheet": "49",
+          "char": 100,
+          "x": 4,
+          "y": 0,
+          "size": 16,
+          "flip": 64,
+          "palette": 4,
+          "kind": "body"
+        },
+        {
+          "oam": 6,
+          "sheet": "49",
+          "char": 110,
+          "x": 12,
+          "y": -10,
+          "size": 8,
+          "flip": 0,
+          "palette": 4,
+          "kind": "weapon"
+        },
+        {
+          "oam": 5,
+          "sheet": "49",
+          "char": 126,
+          "x": 12,
+          "y": -2,
+          "size": 8,
+          "flip": 0,
+          "palette": 4,
+          "kind": "weapon"
+        }
+      ],
+      "indexedPixelSha256": "8fc499630fea7b79e4513710e30259fa89d6390d77ca414cb422ad6d3fda5efc"
+    },
+    "guard_south_0": {
+      "origin": [
+        16,
+        16
+      ],
+      "pieces": [
+        {
+          "oam": 0,
+          "sheet": "49",
+          "char": 64,
+          "x": 0,
+          "y": -7,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "head"
+        },
+        {
+          "oam": 6,
+          "sheet": "49",
+          "char": 72,
+          "x": -4,
+          "y": 0,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "body"
+        },
+        {
+          "oam": 5,
+          "sheet": "49",
+          "char": 73,
+          "x": 4,
+          "y": 0,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "body"
+        },
+        {
+          "oam": 4,
+          "sheet": "49",
+          "char": 109,
+          "x": 10,
+          "y": 2,
+          "size": 8,
+          "flip": 0,
+          "palette": 4,
+          "kind": "body"
+        },
+        {
+          "oam": 3,
+          "sheet": "49",
+          "char": 125,
+          "x": 10,
+          "y": 10,
+          "size": 8,
+          "flip": 0,
+          "palette": 4,
+          "kind": "body"
+        },
+        {
+          "oam": 2,
+          "sheet": "49",
+          "char": 126,
+          "x": -3,
+          "y": 11,
+          "size": 8,
+          "flip": 128,
+          "palette": 4,
+          "kind": "weapon"
+        },
+        {
+          "oam": 1,
+          "sheet": "49",
+          "char": 110,
+          "x": -3,
+          "y": 19,
+          "size": 8,
+          "flip": 128,
+          "palette": 4,
+          "kind": "weapon"
+        }
+      ],
+      "indexedPixelSha256": "c88ca1f1d23dc3575292f36986fb818b339a51d34e0b8a8cd17872a3c32be432"
+    },
+    "king": {
+      "origin": [
+        16,
+        16
+      ],
+      "pieces": [
+        {
+          "oam": 0,
+          "sheet": "NPC",
+          "char": 136,
+          "x": -8,
+          "y": -16,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "living_king"
+        },
+        {
+          "oam": 1,
+          "sheet": "NPC",
+          "char": 136,
+          "x": 8,
+          "y": -16,
+          "size": 16,
+          "flip": 64,
+          "palette": 4,
+          "kind": "living_king"
+        },
+        {
+          "oam": 2,
+          "sheet": "NPC",
+          "char": 138,
+          "x": -8,
+          "y": 0,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "living_king"
+        },
+        {
+          "oam": 3,
+          "sheet": "NPC",
+          "char": 138,
+          "x": 8,
+          "y": 0,
+          "size": 16,
+          "flip": 64,
+          "palette": 4,
+          "kind": "living_king"
+        }
+      ],
+      "indexedPixelSha256": "662a3ce39da9fa224be4706d8a7be0695de2e6361cd4e51ea1eae9cd012b0e8f"
+    },
+    "resident_red_mage": {
+      "origin": [
+        16,
+        16
+      ],
+      "pieces": [
+        {
+          "oam": 0,
+          "sheet": "NPC",
+          "char": 128,
+          "x": 0,
+          "y": -9,
+          "size": 16,
+          "flip": 0,
+          "palette": 3,
+          "kind": "head"
+        },
+        {
+          "oam": 1,
+          "sheet": "NPC",
+          "char": 130,
+          "x": 0,
+          "y": 0,
+          "size": 16,
+          "flip": 0,
+          "palette": 3,
+          "kind": "body"
+        }
+      ],
+      "indexedPixelSha256": "fb1bdd755e626b6df963619fe8d52c3be0bfebcb0547acd785442bd0e7d33fab"
+    },
+    "resident_youth": {
+      "origin": [
+        16,
+        16
+      ],
+      "pieces": [
+        {
+          "oam": 0,
+          "sheet": "NPC",
+          "char": 132,
+          "x": 0,
+          "y": -10,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "head"
+        },
+        {
+          "oam": 1,
+          "sheet": "NPC",
+          "char": 134,
+          "x": 0,
+          "y": 0,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "body"
+        }
+      ],
+      "indexedPixelSha256": "1f74798525ac28bf77b37582c6630c18dfa47c262fe013305c2bcf9f13e022d7"
+    },
+    "royal_visitor": {
+      "origin": [
+        16,
+        6
+      ],
+      "pieces": [
+        {
+          "oam": 0,
+          "sheet": "NPC",
+          "char": 140,
+          "x": 0,
+          "y": 0,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "native_head"
+        },
+        {
+          "oam": 1,
+          "sheet": "NPC",
+          "char": 142,
+          "x": 0,
+          "y": 16,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "native_body"
+        }
+      ],
+      "indexedPixelSha256": "86c2d1a418e3d3c95397c99726bff6be22e202a16caea9d3e041fa0e9a0b07cd"
+    },
+    "zora_left": {
+      "origin": [
+        16,
+        16
+      ],
+      "pieces": [
+        {
+          "oam": 0,
+          "sheet": "56",
+          "char": 220,
+          "x": 0,
+          "y": -8,
+          "size": 16,
+          "flip": 0,
+          "palette": 2,
+          "kind": "head"
+        },
+        {
+          "oam": 1,
+          "sheet": "56",
+          "char": 236,
+          "x": 0,
+          "y": 0,
+          "size": 16,
+          "flip": 0,
+          "palette": 2,
+          "kind": "body"
+        }
+      ],
+      "indexedPixelSha256": "a05b767d78f49f15dddffd0ed0d60086fa9fc472e02ab651cf2670f1d49e7b20"
+    },
+    "zora_right": {
+      "origin": [
+        16,
+        16
+      ],
+      "pieces": [
+        {
+          "oam": 0,
+          "sheet": "56",
+          "char": 220,
+          "x": 0,
+          "y": -8,
+          "size": 16,
+          "flip": 64,
+          "palette": 2,
+          "kind": "head"
+        },
+        {
+          "oam": 1,
+          "sheet": "56",
+          "char": 236,
+          "x": 0,
+          "y": 0,
+          "size": 16,
+          "flip": 64,
+          "palette": 2,
+          "kind": "body"
+        }
+      ],
+      "indexedPixelSha256": "a6e380e3174e51429e1f3ab736c96e267d4a0b62e999ce10fa00e6e5e9e24038"
+    }
+  },
+  "scenes": [
+    {
+      "id": "audience",
+      "room": "0x51",
+      "camera": [
+        128,
+        64,
+        256,
+        224
+      ],
+      "actors": [
+        [
+          "king",
+          224,
+          128
+        ],
+        [
+          "farore",
+          244,
+          164
+        ],
+        [
+          "commander_south_0",
+          276,
+          164
+        ],
+        [
+          "guard_north_0",
+          240,
+          232
+        ],
+        [
+          "guard_north_0",
+          272,
+          232
+        ]
+      ]
+    },
+    {
+      "id": "visit",
+      "room": "0x61",
+      "camera": [
+        128,
+        80,
+        256,
+        224
+      ],
+      "actors": [
+        [
+          "royal_visitor",
+          256,
+          238
+        ],
+        [
+          "guard_north_0",
+          224,
+          264
+        ],
+        [
+          "guard_north_0",
+          288,
+          264
+        ],
+        [
+          "zora_right",
+          168,
+          224
+        ],
+        [
+          "zora_left",
+          344,
+          224
+        ],
+        [
+          "resident_red_mage",
+          184,
+          272
+        ],
+        [
+          "resident_youth",
+          328,
+          272
+        ]
+      ]
+    },
+    {
+      "id": "empty",
+      "room": "0x61",
+      "camera": [
+        128,
+        80,
+        256,
+        224
+      ],
+      "actors": [
+        [
+          "guard_south_0",
+          256,
+          272
+        ]
+      ]
+    }
+  ]
+}

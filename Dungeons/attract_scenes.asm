@@ -58,6 +58,9 @@ else
   !AttractFrames_Altar  = $00C0
 endif
 
+if !ENABLE_ATTRACT_ROYAL_SCENES == 1
+  incsrc "Dungeons/attract_royal_scenes.asm"
+else
 org $0CF9E6
   db $3D
   db $3D
@@ -1861,3 +1864,4 @@ AttractTelebubbleOAM:
   .step1_prop
   #_0CF9B3: db $35, $75
 }
+endif ; ENABLE_ATTRACT_ROYAL_SCENES

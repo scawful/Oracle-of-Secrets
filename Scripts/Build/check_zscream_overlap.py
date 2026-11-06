@@ -17,6 +17,9 @@ from pathlib import Path
 # emitting source as well as the PC range; never exempt an entire bank for all
 # Oracle code. Bounds are inclusive, in unheadered PC offsets.
 OWNED_REGIONS = (
+    # Scene-only attract cast in zero padding of the custom-ASM bank.
+    # The emitting source guards every input word and its exact 8 KiB end.
+    ("Dungeons/attract_royal_graphics.asm", 0x1E4000, 0x1E5FFF),
     ("Overworld/ZSCustomOverworld.asm", 0x140000, 0x147FFF),
     ("Overworld/lost_woods.asm", 0x107000, 0x107FFF),
     ("Masks/bunny_hood.asm", 0x102F20, 0x102F6F),

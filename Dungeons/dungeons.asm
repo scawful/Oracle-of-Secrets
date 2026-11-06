@@ -178,6 +178,11 @@ print  "End of d7_farore_rescue.asm       ", pc
 assert pc() <= $2CFD00 ; do not overlap RoomTag_SomariaSocketDoor
 endif
 
+if !ENABLE_ATTRACT_ROYAL_SCENES == 1
+incsrc "Dungeons/attract_royal_graphics.asm"
+print "End of attract_royal_graphics.asm  ", pc
+endif
+
 print "End of dungeons.asm               ", pc
 
 pushpc
