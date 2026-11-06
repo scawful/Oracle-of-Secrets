@@ -3117,3 +3117,19 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   and Vasu prices are separate approvals.
   Options shown: "Table above (pick)", "All cave chests", "All seashell-trader rewards".
   Answer: "Table above (pick)" (scawful, 2026-11-05).
+
+* DECIDED Consumable sources (PLAN 4.2) + every reusable item can be refilled (2026-11-05)
+  :PROPERTIES:
+  :ASKED_BY: Claude (consumables + Vasu evaluation)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/consumables_vasu_2026-11-05/PLAN.md (4.2, 4.2a)
+  :END:
+  1. First grants: Deku Stick = Business Scrub gives 3, then sells them;
+     Honeycomb = bee tree on the Kalyxo overworld; Seashell = fixed pickup spots
+     (pickup fix); Pineapple = Kalyxo pickups; Banana = Village shop; Bombchu =
+     D6 chest sets BombchuOwned + 10 ammo; Rock Meat = Lyra spots (DEC 10-21).
+  2. A reusable item (Bombchu, Deku Stick, Honeycomb, Pineapple, Banana) needs a
+     gated random drop or a way to buy more after its first grant.
+  3. The per-item refill table (PLAN 4.2a) and prices are separate approvals.
+  Options shown: "Yes, use 4.2 (pick)", "Change some first".
+  Answer: "yes 4.2 works but some of these like bombchu will need a gated
+  randomized grant or way to buy/get more" (scawful, 2026-11-05).
