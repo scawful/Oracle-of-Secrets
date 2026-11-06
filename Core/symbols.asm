@@ -28,6 +28,8 @@ Kydreeok_Id:              skip 1
 FishingOrPortalRod:       skip 1
 SongTintTimer:            skip 1  ; Frames remaining for song color tint
 SongTintColor:            skip 1  ; Color value to apply to $9A during tint
+; Persistent across graphics loads; reset/restore owner joins gated resources.
+SpecialOverworldMainCache: skip 4 ; Underlying native sheets for slots 0/1/2/7
 assert pc() <= $7E1F00, "Core/symbols.asm WRAM block overflows free RAM $7E1E70-$7E1EFF"
 }
 base off

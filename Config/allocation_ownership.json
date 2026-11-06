@@ -165,7 +165,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "bcc6df2404dc097f25f9b547699359f924387c7cdaa1c70e87fd571b9f317475"
+      "sha256": "3e2e82d124a270d6e0a1c4a084d5c43c8f57d2b762989749f80f83f22b7365df"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -355,14 +355,14 @@
     },
     {
       "id": "symbols_wram_block",
-      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..SongTintColor)",
+      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..SpecialOverworldMainCache)",
       "space": "wram",
       "base": 8265328,
-      "size": 24,
+      "size": 28,
       "status": "shared",
       "condition": {},
-      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint.",
-      "reset": "No block-wide reset is claimed. Not in ResetTrackVars' arrays since PR 211 moved it from $7E0730 (inside cart_room) to vanilla-free $7E1E70.",
+      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint. Last four bytes reserve native sheet backups for special-overworld resource slots0/1/2/7; volatile across graphics loads.",
+      "reset": "No block-wide reset is claimed. Not in ResetTrackVars' arrays since PR 211 moved it from $7E0730 (inside cart_room) to vanilla-free $7E1E70. SpecialOverworldMainCache reset/restoration callbacks remain unbound until resource activation; declaration alone grants no runtime qualification.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
         "shared:Core/symbols.asm"
