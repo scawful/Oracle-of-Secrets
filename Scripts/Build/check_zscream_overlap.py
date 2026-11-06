@@ -33,6 +33,11 @@ OWNED_REGIONS = (
     # rows inside the arrays.
     ("Core/gfx_sheet_table.asm", 0x11FC00, 0x11FFFF),
     ("Core/Generated/source_sprite_sheets/sheet_overrides.asm", 0x11FD00, 0x11FFFF),
+    # The default-off D4 include replaces the standard include. Admit only
+    # its four inherited rows and four private global rows, one byte each.
+    *(("Core/Generated/d4_zora_sprite_sheets/sheet_overrides.asm", table+row, table+row)
+      for table in (0x11FD00, 0x11FE00, 0x11FF00)
+      for row in (0xB3, 0xB6, 0xBA, 0xD7, 0xDF, 0xE0, 0xE1, 0xE2)),
     ("Core/Generated/menu_icons/menu_icon_overrides.asm", 0x11FD00, 0x11FFFF),
 )
 

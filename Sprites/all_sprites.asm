@@ -376,6 +376,11 @@ incsrc "Sprites/NPCs/tingle.asm"
 incsrc "Sprites/NPCs/goron.asm"
 %log_end("goron", !LOG_DUNGEON)
 
+if !ENABLE_D4_ZORA_REDESIGN == 1
+  assert !ENABLE_SOURCE_SPRITE_SHEETS == 1, "D4 actors require their source sheets"
+  incsrc "Sprites/Bosses/d4_pressure_warden.asm"
+endif
+
 if !ENABLE_D8_BOSS == 1
   %log_start("d8_boss", !LOG_DUNGEON)
   incsrc "Sprites/Bosses/d8_boss.asm"

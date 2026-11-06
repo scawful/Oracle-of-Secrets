@@ -25,6 +25,8 @@
 !ENABLE_GRAPHICS_TRANSFER_SCROLL_HOOK = 1
 ; Source-built sprite sheets; identity sheet $64 owns the audited bank $40 tail.
 !ENABLE_SOURCE_SPRITE_SHEETS        = 1
+; Private D4 room-scoped actor/art prototype; no default behavior change.
+!ENABLE_D4_ZORA_REDESIGN            = 0
 !ENABLE_WATER_GATE_HOOKS            = 1
 !ENABLE_WATER_GATE_ROOMENTRY_RESTORE = 0
 !ENABLE_WATER_GATE_OVERLAY_REDIRECT = 1

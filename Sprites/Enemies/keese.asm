@@ -36,6 +36,13 @@
 
 Sprite_Keese_Long:
 {
+if !ENABLE_D4_ZORA_REDESIGN == 1
+  LDA.w SprSubtype, X : CMP.b #$03 : BNE .legacy_d4
+  LDA.w ROOM : CMP.b #$46 : BNE .legacy_d4
+  LDA.w ROOM+1 : BNE .legacy_d4
+  JML D4Warden_Long
+  .legacy_d4
+endif
   PHB : PHK : PLB
   ; Skip the Keese / Vampire Bat body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
   ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
@@ -61,6 +68,13 @@ Sprite_Keese_Long:
 
 Sprite_Keese_Prep:
 {
+if !ENABLE_D4_ZORA_REDESIGN == 1
+  LDA.w SprSubtype, X : CMP.b #$03 : BNE .legacy_d4
+  LDA.w ROOM : CMP.b #$46 : BNE .legacy_d4
+  LDA.w ROOM+1 : BNE .legacy_d4
+  JML D4Warden_Prep
+  .legacy_d4
+endif
   PHB : PHK : PLB
   LDA.b #$80 : STA.w SprDefl, X
   LDA.b #$30 : STA.w SprTimerC, X

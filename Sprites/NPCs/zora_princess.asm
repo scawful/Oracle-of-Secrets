@@ -73,6 +73,18 @@ Sprite_ZoraPrincess_Long:
 
 Sprite_ZoraPrincess_Prep:
 {
+if !ENABLE_D4_ZORA_REDESIGN == 1
+  JSL D4Zora_IsRescueActor : BCC .legacy_d4
+  JML D4Zora_Prep
+  .legacy_d4
+  ; The former Princess placement becomes an unpopulated refuge in this
+  ; mechanics prototype; it must never remain a second Mask donor.
+  LDA.w ROOM : CMP.b #$05 : BNE .not_refuge_d4
+  LDA.w ROOM+1 : CMP.b #$01 : BNE .not_refuge_d4
+  STZ.w SprState, X
+  RTL
+  .not_refuge_d4
+endif
   PHB : PHK : PLB
   LDA.l $7EF302 : BEQ .doesnt_have_mask
     STZ.w SprState, X ; Kill the sprite
