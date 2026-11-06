@@ -3369,3 +3369,18 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Answer: "Light touch (pick)" (scawful, 2026-11-06).
   Room placements are a concept, not decided (d8_vision_board_v4.png): Fire Rod $91/$92/$9B,
   Bow $9C/$A7, Roc's Feather $93/$95/$B0, Hookshot $8C, Hammer $93, Bombs $94, Storms $95.
+
+* DECIDED D8 twin Link: the copy-of-Link pads live on the B1 archive floor (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Fortress GBC design lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d8_vision_2026-11-05/TWIN_LINK.md
+  :END:
+  Source (scawful, 2026-11-06): "using the dual swords multiple links could be interesting
+  for D8 too, kinda like those platforms in minish cap" and "not explicitly multiplayer,
+  but our own multiple links mechanic".
+  Concept: twin pads spawn one copy of Link that follows P1's D-pad (parallel or mirrored),
+  presses plates and swings the sword; built on the native 2P actor, not pad-2 play.
+  Options shown: "B1 archive (pick)" ($9C/$9B/$8C, not drawn yet), "F1 $91 swap",
+  F2 $A7 Vigil mirror walk.
+  Answer: "B1 archive (pick)" (scawful, 2026-11-06).
+  Pad rules and room layouts are a concept, not decided. Farore Hold stays for still plates.
