@@ -4017,3 +4017,12 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   1. One item comes back by a trade, one as the prize of a game at the camp, one by a duel.
   2. Still open: which item each method returns (this sets the barrier order).
   3. Thief lines need scawful's OK. Codex queue rows 65-67 cover the technical checks.
+
+* DECIDED Direction: Lyra Sea islands host minigames (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: scawful, unprompted, after 7d41b58f (crescent trade, game, duel)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+  :END:
+  Answer: "One of the islands could be something similar to like the rupee digging mini game in Link to the Past. We don't have a lot of those types of mini game setups. So I think that the islands in the Lyra Sea could be a good opportunity for those. Since you saying the trade game and duel thing made me think of other ways we could use islands for unique things like that." (scawful, 2026-11-06)
+  1. Direction only: Lyra Sea islands are the home for minigames, one like the ALttP digging game.
+  2. Open: which islands, which games, rewards. Claude drafts a slate for scawful to pick from.
