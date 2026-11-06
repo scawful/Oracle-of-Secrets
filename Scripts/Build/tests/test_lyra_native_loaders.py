@@ -260,6 +260,16 @@ class Revision3DirectoryEncodingTest(unittest.TestCase):
             edited[offset] ^= 1
             with self.assertRaisesRegex(ValueError, message):
                 N.verify_saved_payload(baseline, bytes(edited))
+        # Relocated property CRCs remain valid if assembly changes only the
+        # original slots. Native readers would nevertheless see the overwrite.
+        for name, address, rows, _, stride in N.CURRENT_TABLE_SPECS:
+            if name in ('map32_high', 'map32_low'):
+                continue
+            with self.subTest(native_family=name):
+                edited = bytearray(baseline)
+                edited[N.pc(address) + rows * stride - 1] ^= 1
+                with self.assertRaisesRegex(ValueError, 'saved native prefix'):
+                    N.verify_saved_payload(baseline, bytes(edited))
 
     def test_cli_failure_keeps_rom_and_existing_generated_constants(self):
         import subprocess

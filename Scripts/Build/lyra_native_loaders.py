@@ -403,6 +403,15 @@ def verify_saved_payload(source, compiled):
                 'Saved native pointer mirrors disagree')
         require(compiled[start:start + len(authoritative)] == authoritative,
                 'Build replaced saved native pointer mirrors')
+    # Existing maps still use the original native property/actor slots. The
+    # directory copies alone are not proof that an edited prefix survives
+    # assembly. Keep every native family at its exact saved bytes as well.
+    for name, address, rows, _, stride in CURRENT_TABLE_SPECS:
+        if name in ('map32_high', 'map32_low'):
+            continue  # Their authoritative copied-prefix equality is above.
+        start, length = pc(address), rows * stride
+        require(source[start:start + length] == compiled[start:start + length],
+                f'Build replaced saved native prefix {name}')
     # Binding records are unchanged, so each installed call must still match.
     address, count = entries[301]
     for index in range(count):
