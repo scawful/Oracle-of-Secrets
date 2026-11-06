@@ -4156,3 +4156,16 @@ Answer: "Rupees + Heart Pieces" (scawful, 2026-11-06)
 1. Most Zora Link salvage spots (176fb356, bubbles de88accd) hold rupees; a few hold Heart Pieces.
 2. Codex: count current Heart Pieces against the game's heart total before placing new ones (Hidden Grave 0x5B already gains one, 822136f2).
 3. Open: which maps get spots and which spots get the Heart Pieces.
+
+* DECIDED Max hearts capped at 20 (2026-11-06)
+:PROPERTIES:
+:ASKED_BY: claude (review of Cursor rewards inventory)
+:DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/rewards_inventory_2026-11-06/REVIEW_CLAUDE.md
+:END:
+Question: Should max hearts stay at 20?
+Options shown: "Cap at 20" (pick) / "Allow 3rd row".
+Answer: "Cap at 20" (scawful, 2026-11-06)
+1. Max hearts = 20, the vanilla two HUD rows. `HUD_UpdateHearts` (Menu/menu_hud.asm:490) has no cap and would start a third row at heart 21.
+2. Budget: 3 start + heart containers + hearts from pieces = 20. With 10 containers that is 7 hearts = 28 pieces.
+3. Planned pieces today: 33 obtainable (rewards_inventory_2026-11-06) + D8 $8B x2 + D3 garden + Hidden Grave 0x5B (822136f2) = 37, plus salvage pieces (3bc72959). Over budget; how to trim is open.
+4. Salvage Heart Pieces should come from moved pieces (duplicates/orphans in FIX_PLAN Steps 1, 2, 5), not new ones.
