@@ -3675,3 +3675,17 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      answer: the Secret Scroll (0x33), since D3 has none and the Librarian already reads
      Kalyxo's scroll bit.
   The garden teaches the shrink portal before the prison escape ($65 crack) needs it.
+
+* DECIDED D3 boss structure: Armos Knights become the boss-gate mini-boss; a new boss (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (dungeon design pass)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d3_kalyxo_castle_stepup_2026-11-06/PROPOSAL.md
+  :END:
+  scawful context: "bosses currently are the Armos Knights from the vanilla game. I'm not sure if
+  maybe we want to improve that or use them as a mini boss and come up with a new one?"
+  Question: "Which D3 boss structure?"
+  Options shown: "Armos mini + new (pick)", "Improve Armos" ("Tune only" in the text).
+  Answer (scawful, 2026-11-06): "Armos mini + new (pick)"
+  1. The vanilla Armos Knights move to the gate before the D3 boss, which opens only after the
+     escape ("Kalyxo Castle prison break" item 9), so Link fights them with the Meadow Blade.
+  2. D3 gets a new boss behind that gate. Which boss: open (story-tied; canon needs scawful).
