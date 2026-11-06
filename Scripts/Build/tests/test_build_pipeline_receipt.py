@@ -28,7 +28,7 @@ class BuildPipelineReceiptTest(unittest.TestCase):
                         OOS_SKIP_MENU_VALIDATE='1', OOS_SKIP_VERSION_STAMP='1',
                         OOS_BACKUP_ROOT=str(self.root / 'Roms/backups'))
         for name in ('build_rom.sh', 'build_checks.sh', 'build_receipt.py',
-                     'verify_feature_flags.py', 'set_feature_flags.py'):
+                     'verify_feature_flags.py', 'set_feature_flags.py', 'lyra_native_loaders.py'):
             self.copy(f'Scripts/Build/{name}')
         for name in ('generate_hooks_json.py', 'asm_source.py'):
             self.copy(f'Scripts/Generate/{name}')
@@ -99,6 +99,8 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.assertTrue(self.check('source_sprite_sheets')['required'])
         self.assertEqual(self.check('menu_icon_sheets')['status'], 'passed')
         self.assertTrue(self.check('menu_icon_sheets')['required'])
+        self.assertEqual(self.check('native_overworld_constants')['status'], 'passed')
+        self.assertEqual(self.check('native_overworld_preservation')['status'], 'passed')
         self.assertEqual(self.receipt['state'], 'completed_with_gaps')
         self.assertEqual(self.check('smoke')['status'], 'unavailable')
         hooks = json.loads((self.root / 'Roms/hooks.json').read_text())
@@ -222,6 +224,23 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.assertEqual((self.root / 'Config/feature_flags.asm').read_bytes(), before)
         flags = self.receipt['snapshots']['pre_assembly']['profile']['effective_flags']
         self.assertEqual(flags['ENABLE_FIXTURE'], 0)
+
+    def test_generated_native_constants_restore_after_failed_assembly(self):
+        path = self.root / '.cache/special_overworld_reader_constants.asm'
+        for existed in (True, False):
+            with self.subTest(existed=existed):
+                if existed:
+                    self.write('.cache/special_overworld_reader_constants.asm', 'previous constants')
+                elif path.exists():
+                    path.unlink()
+                self.env['FIXTURE_ASM_EXIT'] = '9'
+                self.assertEqual(self.build().returncode, 9)
+                self.assertEqual(self.check('native_overworld_constants')['status'], 'passed')
+                self.assertEqual(self.check('output_rollback')['status'], 'passed')
+                if existed:
+                    self.assertEqual(path.read_text(), 'previous constants')
+                else:
+                    self.assertFalse(path.exists())
 
     def test_flags_restore_after_success(self):
         before = (self.root / 'Config/feature_flags.asm').read_bytes()

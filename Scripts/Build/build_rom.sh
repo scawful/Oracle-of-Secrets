@@ -213,6 +213,11 @@ run_check message_source 1 python3 "$repo_root/Scripts/Generate/validate_expande
 current_stage="output_snapshot"
 snapshot_build_outputs
 
+# Native special-overworld data belongs to the editable ROM. The generated
+# include contains constants only; initial data import is a separate operation.
+run_check native_overworld_constants 1 python3 "$repo_root/Scripts/Build/lyra_native_loaders.py" \
+  --rom "$base_rom" --constants "$repo_root/.cache/special_overworld_reader_constants.asm"
+
 # Keep water-gate runtime tables synced with the validated editor-authored base
 # ROM. The tracked custom-collision source contract guarantees that marker
 # tiles ($F5) are present there, so never implicitly reuse stale patched output.
@@ -414,6 +419,11 @@ assemble_rom() {
   fi
 }
 run_check assembly 1 assemble_rom
+
+# Catch old table/sidecar emission before publishing artifacts or a manifest.
+# The existing output transaction restores the previous candidate on failure.
+run_check native_overworld_preservation 1 python3 "$repo_root/Scripts/Build/lyra_native_loaders.py" \
+  --rom "$base_rom" --compiled "$patched_rom"
 
 receipt artifact --name output_rom --path "$patched_rom"
 if [[ "$emit_symbols" == "1" ]]; then

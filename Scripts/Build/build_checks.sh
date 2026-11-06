@@ -55,6 +55,7 @@ snapshot_build_outputs() {
     "$patched_rom" "$symbols_path" "$mlb_path"
     "$rom_dir/hooks.json" "$rom_dir/hack_manifest.json" "$rom_dir/sourcemap.json"
     "$repo_root/.cache/annotations.json"
+    "$repo_root/.cache/special_overworld_reader_constants.asm"
     "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
     "$repo_root/Dungeons/generated/water_fill_table.asm"
   )
