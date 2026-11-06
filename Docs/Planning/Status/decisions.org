@@ -3303,3 +3303,6 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Answer: "also maybe a small mushroom grotto style forest grove apart of the route, like
   an overworld map that lives in the ether or uses some special overworld spot maybe if we
   can free up a small map somewhere otherwise it's prob fine as is" (scawful, 2026-11-05).
+  Map source: "it would be a reclaimed lyra map probably from somewhere, like near the
+  overlays" (scawful, 2026-11-05). Which tail map ($A0-$BF) is free to reclaim is a
+  Codex check; Lyra Sea and Eon Abyss claims come first.
