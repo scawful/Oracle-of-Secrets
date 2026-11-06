@@ -3083,3 +3083,19 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Options shown: "D8-only follower" (Zora Baby code, Hold + Reveal puzzles) or
   "Placed NPC only" (talk spots, no puzzles).
   Answer: "D8-only follower" (scawful, 2026-11-05).
+
+* DECIDED Rings are found in the world; Vasu appraises (2026-11-05)
+  :PROPERTIES:
+  :ASKED_BY: Claude (consumables + Vasu evaluation)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/consumables_vasu_2026-11-05/PLAN.md
+  :END:
+  1. Each of the six rings has one fixed spot in the world (a secret, minigame
+     or side quest). No ring is in a dungeon main chest.
+  2. A found ring shows as unappraised on the Masks & Rings page (built).
+  3. Vasu appraises every found ring in one visit: first free, then a price per ring.
+  4. The repeat-talk random grant (Eon Zora $1AE, Error NPC $121) ends. Eon Zora
+     gives one ring once; the Error NPC stays an Easter egg with no ring.
+  5. Spot list, prices and Vasu text are separate approvals.
+  Options shown: "Found in world + Vasu appraises", "Keep the talk grant,
+  appraise all at once", "Vasu sells rings directly".
+  Answer: "Found in world (pick)" (scawful, 2026-11-05).
