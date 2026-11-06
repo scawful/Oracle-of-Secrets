@@ -43,20 +43,12 @@
     },
     {
       "id": "spawn_d8_boss",
-      "label": "D8 Sky boss: room $96 + spawn $C3",
+      "label": "D8 Sky boss: room $96 (authored boss placement)",
       "steps": [
         {
           "action": "checkpoint",
           "args": {
             "id": "d8-sky-boss-room"
-          }
-        },
-        {
-          "action": "spawn",
-          "args": {
-            "sprite": "C3",
-            "x": "70",
-            "y": "140"
           }
         }
       ]
