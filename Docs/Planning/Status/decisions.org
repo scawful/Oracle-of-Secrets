@@ -4005,3 +4005,15 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      It pays off the sword Link just won back: beams below full health.
   2. Codex: keep the Light Ring out of the random ring pool (Eon Zora $1AE, Error $121)
      or handle a duplicate; pick FOUNDRINGS (Vasu appraises) vs MAGICRINGS (owned).
+
+* DECIDED Crescent island: the thieves return the items by trade, game and duel (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Courage island plan), follows a2d6b088 (grotto ring is the Light Ring)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+  :END:
+  Question: "How do the thieves give Link's three items back?"
+  Options shown: "Trade, game, duel (pick)", "All trades", plus a chase (new thief AI) in chat.
+  Answer: "Trade, game, duel (pick)" (scawful, 2026-11-06)
+  1. One item comes back by a trade, one as the prize of a game at the camp, one by a duel.
+  2. Still open: which item each method returns (this sets the barrier order).
+  3. Thief lines need scawful's OK. Codex queue rows 65-67 cover the technical checks.
