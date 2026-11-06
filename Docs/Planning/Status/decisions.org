@@ -3398,3 +3398,17 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   $A7 Bari kill room, Watcher statue ring, 4 Bow eyes -> dais stair to $A6. The K door to
   $A7 sits in $A0 NE; the built $95 stair (8,4) is the shortcut; the $95 stair to $A6 goes.
   Positions are approximate until Codex checks (QUEUE.md row 19).
+
+* DECIDED D8 F3 $A6 Antechamber layout accepted as a starting point (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (D8 design lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d8_vision_2026-11-05/F3_LAYOUTS.md
+  :END:
+  Intent ask: "Is that $A6's purpose?" (refill, practice, Farore waits). Answer: "Yes (pick)".
+  Layout shown in Yaze Nightly Proposal Preview: proposals/a6_antechamber.overlay.json (4 steps).
+  Answer (scawful, 2026-11-06): "This looks fine, I guess ... it's a design to start with. It
+  puts something in the room, and then I can have Codex fix it later."
+  Accepted as a first pass: stair arrival from $A7, 6 pots + fairy refill, floor inlay with a
+  practice socket and eye, Farore waits at the Boss Key door to $96. Codex refines positions
+  and art (QUEUE.md D8 group). $96 F3 marks follow the 2026-11-03 boss decisions 1-11.
+  Method note: scawful said the Proposal Preview is busy and the preview is too small to judge.
