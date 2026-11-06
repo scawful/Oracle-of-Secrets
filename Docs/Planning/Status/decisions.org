@@ -4097,3 +4097,25 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   1. The sea-fill islets and objects (sketch: $A3 $A5 $AA $AC $B2 $B5 $B6 $BA $BD) carry small finds, such as a seashell at a fixed pickup spot.
   2. Rock Meat stays near $B0/$B8 under its own ruling.
   3. Open: which map gets which find, and the per-map sketch itself (draft, not yet approved).
+
+* DECIDED Crescent thieves' camp game: shell game (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (crescent stranded quest, camp game returns Roc's Feather)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+  :END:
+  Question: Which game does the thieves' camp run to return the Feather?
+  Options shown: Shell game (pick) / Dig for Feather / Footrace or tag with a thief
+  Answer: "shell game is smart" (scawful, 2026-11-06)
+  1. The thieves hide the Feather under one of three cups; win it back.
+  2. Build note: reuse the chest game logic (house 0x67) where it fits; the cup shuffle is new work (Codex).
+  3. Open: rules, cost, and thief lines (lines need scawful's OK).
+
+* DECIDED Sea fill reference: Wind Waker, Phantom Hourglass, early Lyra concepts (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: scawful, reply to the sea-fill sketch (renders/05_sea_fill.png)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md; ~/.context/projects/oracle-of-secrets/scratchpad/lyra_revival_2026-09-29/lyra-sea-coast-transit-v4.png
+  :END:
+  Answer: "similar to wind waker, phantom hourglass, and some of the early concepts in lyra islands" (scawful, 2026-11-06)
+  1. Reference for the open-sea maps: Wind Waker and Phantom Hourglass seas, and the 09-29 concept art (rock clusters, palm islets, reef chains, rough-strait foam, ice floes).
+  2. Matches the 09-29 correction: "Natural reefs, rocks and steep shorelines do much of the enclosure"; "Add more small islands".
+  3. Open: the per-map content; Claude redraws the sketch denser.
