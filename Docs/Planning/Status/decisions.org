@@ -3165,3 +3165,20 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Options shown: "Price set 1 (pick)" (above), "Cheaper set" (Vasu 20 each,
   Bombchu 30, sticks 3 for 10).
   Answer: "Price set 1 (pick)" (scawful, 2026-11-05).
+
+* DECIDED Vasu text fixes (provisional text; ridoyie wording pass later) (2026-11-05)
+  :PROPERTIES:
+  :ASKED_BY: Claude (consumables + Vasu evaluation)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/consumables_vasu_2026-11-05/PLAN.md (4.4)
+  :END:
+  Text approved; the write route is not ($A9-$AD and $1AE are vanilla-range,
+  so the text lives in Roms/oos168.sfc: a base-ROM write needs scawful's OK for
+  that action, or an ASM override like Core/minish_tutorials.asm).
+  1. $AB: "20 Rupees per ring." -> "a bit more for each ring."
+  2. $AA: "one does grant its powers." -> "one does not grant its power."
+  3. $AA: drop the second "That is all."
+  4. $1AE: "Village of Echoes" -> "Village of Yesterwind" (rewrap; DEC 09-26 rename).
+  Not covered: "Ring Box" / "([X] in Menu)" in $AA/$AC (menu input check first);
+  Spanish copies; the new first-pickup, ring-found and Eon Zora after-gift lines.
+  Options shown: "Approve fixes (pick)", "Show full messages".
+  Answer: "Approve fixes (pick)" (scawful, 2026-11-05).
