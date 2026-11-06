@@ -3965,3 +3965,17 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      (south arm -> west side -> north arm).
   3. Still open: which tool is the third item, the goal cave reward.
   4. Codex: take/return is save-data work (T3); it must not block the main route (7dcb9fc5).
+
+* DECIDED Crescent island: the third item is Roc's Feather (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Courage island plan), follows 93352a90 (the thieves take three items)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+  :END:
+  Question: "Which tool is the third item the thieves take?"
+  Options shown: "Roc's Feather (pick)", "Hookshot" (shares a slot with the Goldstar).
+  Answer: "Roc's Feather (pick)" (scawful, 2026-11-06)
+  1. The thieves take the sword, the shield and Roc's Feather (Items/jump_feather.asm).
+  2. Barrier order on the spine: sword cuts brush, shield blocks a projectile lane,
+     the Feather hops a gap. Exact order of returns is open.
+  3. Codex: confirm Link owns the Feather by the time the crescent can be reached;
+     if not, the island needs another gate first. Still open: the goal cave reward.
