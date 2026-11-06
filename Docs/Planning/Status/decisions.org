@@ -3771,3 +3771,18 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      any text needs scawful's OK.
   5. Lands after the paused route rooms ($88 reseal, $78 encounter, $69 -> $88 -> $78 circuit).
      Not part of this decision: King Dodongo HP or phases (40 HP today; target 7 stop).
+
+* DECIDED D6 boss: King Dodongo gets a second phase (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Goron desert pass)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/goron_desert_power_2026-11-06/PROPOSAL.md (section 3)
+  :END:
+  Question: "King Dodongo: add a second phase, or only raise HP?"
+  Options shown: "Two phases (pick)", "HP only", "Wait for the census".
+  Answer: "Two phases (pick)" (scawful, 2026-11-06)
+  1. Phase 1: the swallowed bomb (boss plan "A: swallowed bomb", D6 RULINGS.md 11-02/11-03).
+  2. Phase 2: King Dodongo stops opening his mouth while Link is close, so the Bombchu (D6's
+     item) has to reach him from range.
+  3. Today: 40 HP (`Sprites/Bosses/king_dodongo.asm:3`, 10-entry HP-to-phase table); the
+     stop's peers sit near 90. Codex sets phase HP after a native fight and checks that the
+     phase change cannot be skipped (the D7 Kydrog refill bug, QUEUE row 37).
