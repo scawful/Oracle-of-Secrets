@@ -3718,3 +3718,30 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      when Link fights them: open. This replaces "move to the gate before the D3 boss" in item 1 of
      "D3 boss structure" (e84bbd7f).
   3. Room $51 (great hall) belongs to the cutscenes and the Hyrule Castle dream, not Kalyxo Castle.
+
+* DECIDED D3 Armos fight: on the prison escape route, in the $54 top-left quadrant (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (dungeon design pass)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d3_kalyxo_castle_stepup_2026-11-06/PROPOSAL.md
+  :VISUAL: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d3_kalyxo_castle_stepup_2026-11-06/escape_armos_v2.png
+  :END:
+  Question: "Does this sheet match what you meant?" (escape_armos_v2.png, pins 6-10)
+  Options shown: "Yes, record it", "Not quite".
+  Answer (scawful, 2026-11-06): "yeah 1 might be a better choice but i feel like armos knights would
+  be in the lower lower prison rather than the basement cellars right ? from a world building
+  perspective", then "it would need a new room, maybe specifically apart of the prison escape route
+  ?", then "might just move grow pad down into the other room, move sword table down one, and have
+  armos fight in top left quadrant of that room ? and door opens right to escape", then "in the
+  original boss fight 6 worked fine, though it had a slightly larger boss chamber if i recall
+  correctly, it's fine if we need to do that so yes this is a good idea"
+  1. The grow pad moves from $54 into $64, by the $64 north door.
+  2. The blade table moves down one quadrant: $54 top-left to $54 bottom-left.
+  3. The Armos Knights fight in the $54 top-left quadrant, after Link reclaims the blade.
+     Target: 6 knights, as in the vanilla fight. If 6 do not fit, the fight area may be made
+     larger.
+  4. The top-left quadrant's east door opens when the knights fall; Link goes on through $54
+     top-right into $55 and out.
+  5. No new room. This replaces item 2 of "D3 boss rooms" (9bff3b46): the Armos do not move to
+     the B1 basement.
+  6. Open for Codex: shutter tag on that door, moving the placed $54 sprites, guard sight near the
+     new $64 pad, and whether a death in the fight returns Link to the cell or to the blade table.
