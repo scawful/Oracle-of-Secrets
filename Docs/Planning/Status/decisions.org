@@ -3854,3 +3854,18 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   4. No Mitt gate before D6 (2026-10-21). Rock Meat stays Glove-pickup; open PR 205
      (Mitt-only pickup) conflicts and needs review against this.
   5. Gift text needs scawful's OK.
+
+* DECIDED Tail Palace Deku link: Deku flowers to a Mad Scrub grove on Lyra $A8 (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Goron desert pass), from scawful's "tail palace deku connection to the lyra sea"
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/goron_desert_power_2026-11-06/PROPOSAL.md (section 4)
+  :END:
+  Question: "What shape is the Tail Palace Deku link to the Lyra Sea?"
+  Options shown: "Scrub grove (pick)", "Wait for sea maps", "Plain path or cave".
+  Answer: "Scrub grove (pick)" (scawful, 2026-11-06)
+  1. Deku flowers launch Link from the Tail Palace coast ($2F) to a Mad Scrub grove on tail
+     map $A8 (row rule: B0 lines up with $37, B8 with $3F). This is the grove the Mad Scrub
+     idea wanted (QUEUE row 16).
+  2. Direction only: scawful lays out $A8 when authoring the sea maps (decisions.org:1114).
+  3. Uses the trigger table's 1 free exit slot (4/4 rows,
+     lyra_tail_full_support_2026-10-29/PLAN.md); Codex checks no other Lyra link needs it.
