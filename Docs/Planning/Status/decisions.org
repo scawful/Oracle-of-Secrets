@@ -3524,3 +3524,19 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   3. The Fortress stays under Parallel Worlds' Parallel Tower (10) and over vanilla Turtle Rock (8).
   4. Scores are design estimates. Per-dungeon changes need their own decisions; the read-only
      enemy and heart census (QUEUE row 27) comes first.
+
+* DECIDED Restore Wizzrobe and Sluggula damage if no D1 room uses them (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (difficulty scaling lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/difficulty_scaling_2026-11-06/ANALYSIS.md
+  :END:
+  Question: "If the census finds no D1 room uses them, restore full Wizzrobe and Sluggula damage?"
+  Options shown: "Yes (pick)", "Keep the nerf".
+  Answer (scawful, 2026-11-06): "Yes (pick)"
+  1. Condition: the read-only census (QUEUE row 27) finds no real D1 (Mushroom Grotto) room that
+     places Wizzrobe $9B or Sluggula $20.
+  2. Then Core/early_game_balance.asm drops its two class lines (Wizzrobe 6 -> 3, Sluggula 6 -> 4),
+     so both use their vanilla class 6 (4 hearts on green mail) in S3 and the Fortress.
+  3. If the census finds a D1 room that uses them, this does not apply; the lane brings the
+     placements back for a new question.
+  4. Red Bari and the Stalfos Knight room $33 HP override are not part of this decision.
