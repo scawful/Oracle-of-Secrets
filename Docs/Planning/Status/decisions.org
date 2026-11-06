@@ -3936,3 +3936,18 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   1. $B3/$B4/$BB/$BC holds an optional stranded quest. The main route does not pass through it.
   2. A gear take/return bug must not block the main game (Codex T3 check).
   3. Still open: who takes the gear, which gear, the goal cave reward.
+
+* DECIDED Crescent island: the thieves take Link's gear (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Courage island plan), follows 7dcb9fc5 (crescent quest is optional)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+  :END:
+  Question: "Who takes Link's gear on the crescent island?"
+  Options shown: "Piratians (pick)", "Goriyas", plus Business Scrubs in chat.
+  Rejected: Piratians.
+  Answer: "the piratians are eon abyss enemies they dont exist in the lyra sea fidelity wise. thieves are probably the best choice here, it adds more to the thieves we meet in toadstool woods and the idea that they are a real faction in kalyxo and the area" (scawful, 2026-11-06)
+  1. Piratians are Eon Abyss only. They do not appear in the Lyra Sea.
+  2. The crescent camp (B3/B4/BB/BC) belongs to the thieves, the same faction as the
+     thieves' cave on the way to Mushroom Grotto and the prison cellmate (2026-10-18/19 entries).
+  3. Fits the 2026-10-18 ruling that Kydrog's pirates are at war with the thieves.
+  4. Still open: which gear is taken, the goal cave reward. Thief lines need scawful's OK.
