@@ -4195,3 +4195,16 @@ Answer: "Cut $124" (scawful, 2026-11-06)
 1. Room $124 (entrance $6D on OW $33; $6E on OW $4D, $73) loses its Heart Piece chest. Pieces: 37 planned -> 36 (budget 0d62c93d).
 2. Cursor's inventory flags the $124 chest data as a likely over-read; the cut also clears that question.
 3. Codex/Cursor: what the chest holds instead (or removing it) is a base-ROM write and needs scawful's OK for that step; fold it into FIX_PLAN Step 4 or 5.
+
+* DECIDED Maku Tree first meeting: briefing only, no heart container (2026-11-06)
+:PROPERTIES:
+:ASKED_BY: claude (review of Cursor rewards inventory)
+:DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/rewards_inventory_2026-11-06/REVIEW_CLAUDE.md
+:END:
+Question: What does the Maku Tree give at the first meeting now?
+Options shown: "Briefing only" (pick) / "Something else".
+Answer: "Briefing only" (scawful, 2026-11-06)
+1. Beat 8 keeps message 0x20 and the D1 MapIcon; the heart container receipt goes (container drop 0d62c93d).
+2. Message 0x20 never mentions a gift (Core/messages.org:62-104), so no dialogue change.
+3. Codex: Sprites/NPCs/maku_tree.asm state 2 MakuTree_SpawnHeartContainer (`LDY #$3E : JSL Link_ReceiveItem`, :148-151) is skipped or removed; MeetLink goes to HasMetLink. T2: one native first meeting showing no receipt and max HP unchanged.
+4. The Maku Seed (beat 27) becomes the tree's first gift.
