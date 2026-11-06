@@ -8,12 +8,13 @@ SourceSpriteSheet_64: incbin "sheets/spr64.bin"
 SourceSpriteSheet_40: incbin "sheets/spr40.bin"
 SourceSpriteSheet_43: incbin "sheets/spr43.bin"
 SourceSpriteSheet_47: incbin "sheets/spr47.bin"
+SourceSpriteSheet_55: incbin "sheets/spr55.bin"
 assert pc() <= $410000 || pc() == $418000, "Source sprite sheets crossed bank $40"
 if not(defined("GfxSheet_TableDone"))
   error "sheet_overrides.asm must follow Core/gfx_sheet_table.asm"
 endif
 assert GfxSheet_Bank == $23FD00 && GfxSheet_High == $23FE00 && GfxSheet_Low == $23FF00, "sheet_overrides.asm must follow Core/gfx_sheet_table.asm"
-; Sprite $64, global $D7: Identity override: Impa follower sheet; no pixel or palette change.
+; Sprite $64, global $D7: Impa: selected small rear hair, shoulder, boot and rear-collar/nape polish (scawful 2026-11-05).
 org $23FDD7 ; @hook module=Core kind=data protected_size=1
   db $C0
 org $23FED7 ; @hook module=Core kind=data protected_size=1
@@ -26,19 +27,26 @@ org $23FDB3 ; @hook module=Core kind=data protected_size=1
 org $23FEB3 ; @hook module=Core kind=data protected_size=1
   db $D2
 org $23FFB3 ; @hook module=Core kind=data protected_size=1
-  db $75
+  db $6E
 ; Sprite $43, global $B6: Kydrog boss, old pirate art (scawful 2026-10-19): dark outline around the collar and neck; tile $39 kept (not Kydrog).
 org $23FDB6 ; @hook module=Core kind=data protected_size=1
   db $C0
 org $23FEB6 ; @hook module=Core kind=data protected_size=1
   db $D6
 org $23FFB6 ; @hook module=Core kind=data protected_size=1
-  db $79
+  db $72
 ; Sprite $47, global $BA: Kydrog boss, old pirate art (scawful 2026-10-19): dark outline around the collar and neck; room $A4 only.
 org $23FDBA ; @hook module=Core kind=data protected_size=1
   db $C0
 org $23FEBA ; @hook module=Core kind=data protected_size=1
   db $DA
 org $23FFBA ; @hook module=Core kind=data protected_size=1
-  db $70
+  db $69
+; Sprite $55, global $C8: Farore: selected subtle original-style rear neck/back-cloth and retained shape-v9 polish (scawful 2026-11-05).
+org $23FDC8 ; @hook module=Core kind=data protected_size=1
+  db $C0
+org $23FEC8 ; @hook module=Core kind=data protected_size=1
+  db $DE
+org $23FFC8 ; @hook module=Core kind=data protected_size=1
+  db $61
 pullpc

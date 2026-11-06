@@ -8,8 +8,8 @@
       "sprite_sheet": "0x64",
       "source": "spr64.png",
       "base_sha256": "82e96ef7c766cdaba10516effb28ddfc1c5beb74817cdaadf421168cf74b42fa",
-      "identity": true,
-      "why": "Identity override: Impa follower sheet; no pixel or palette change."
+      "identity": false,
+      "why": "Impa: selected small rear hair, shoulder, boot and rear-collar/nape polish (scawful 2026-11-05)."
     },
     {
       "sprite_sheet": "0x40",
@@ -31,6 +31,13 @@
       "base_sha256": "5f4c7db15b9d3d1ee094d812724ef91eb86fa4d27e6f13fab3fcfaf778b946e7",
       "identity": false,
       "why": "Kydrog boss, old pirate art (scawful 2026-10-19): dark outline around the collar and neck; room $A4 only."
+    },
+    {
+      "sprite_sheet": "0x55",
+      "source": "spr55.txt",
+      "base_sha256": "a550fff60551082d05f1b2e5976c5e0631c5aa9f655ffc8a47210a67467e30c4",
+      "identity": false,
+      "why": "Farore: selected subtle original-style rear neck/back-cloth and retained shape-v9 polish (scawful 2026-11-05)."
     }
   ]
 }
