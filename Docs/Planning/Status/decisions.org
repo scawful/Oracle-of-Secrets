@@ -3275,3 +3275,15 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Options shown: "Cut $4D $5D $6C (pick)", "Keep $4D too" ("Keep $6C" in the text).
   Answer: "we can leave fortress rooms cut for now i guess yeah they were your picks lol"
   (scawful, 2026-11-05).
+
+* DECIDED Lost Woods volume cue: directional (2026-11-05)
+  :PROPERTIES:
+  :ASKED_BY: Claude (consumables + Vasu evaluation)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/forest_ideas_2026-11-05/IDEAS.md
+  :END:
+  Direction: "we should add audio based volume cues to lost woods areas" (scawful, from
+  the OoT remake). The Lost Woods music gets louder as Link walks toward the correct exit
+  for the current combo step ($1CF7) in area $29; full volume again on leaving. Needs a
+  new APU master-volume command (Codex route). Other forest mazes may reuse it later.
+  Options shown: "Directional (pick)", "Step feedback" ("Panned call" in the text).
+  Answer: "Directional (pick)" (scawful, 2026-11-05).
