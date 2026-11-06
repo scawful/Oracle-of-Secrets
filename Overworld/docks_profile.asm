@@ -64,6 +64,23 @@ DocksMarkNativeCache:
 ; A=table ID, X=slot, M/X8. Preserve X/Y and leave ordinary IDs unchanged.
 DocksResolveTransitionSheet:
 {
+  ; Native destination sheets can corrupt the still-visible beach too.
+  ; Hold its actual native sheets until stage08 commits the full raw profile.
+  CPX.b #$03 : BCC .requested
+  CPX.b #$07 : BCS .requested
+  PHA
+  LDA.b $1B : BNE .restoreRequested
+  LDA.b $10 : CMP.b #$09 : BNE .restoreRequested
+  LDA.b $8A : CMP.b #$30 : BNE .restoreRequested
+  LDA.b $11 : CMP.b #$01 : BCC .restoreRequested
+  CMP.b #$08 : BCS .restoreRequested
+  PLA
+  LDA.w $04CB, X : CMP.b #$FF : BNE .done
+  LDA.l $7EC2F5, X
+  RTL
+  .restoreRequested
+  PLA
+  .requested
   CMP.b #$FF : BNE .done
   CPX.b #$03 : BCC .done
   CPX.b #$07 : BCS .done
