@@ -3099,3 +3099,21 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Options shown: "Found in world + Vasu appraises", "Keep the talk grant,
   appraise all at once", "Vasu sells rings directly".
   Answer: "Found in world (pick)" (scawful, 2026-11-05).
+
+* DECIDED Ring spots: one gift, two secrets, one minigame, two quest rewards (2026-11-05)
+  :PROPERTIES:
+  :ASKED_BY: Claude (consumables + Vasu evaluation)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/consumables_vasu_2026-11-05/PLAN.md (4.1a)
+  :END:
+  Power grows with the effort of the spot.
+  1. Steadfast: Eon Zora gives it once.
+  2. Light: Hidden Grave 0x5B (graveyard, OW $0F).
+  3. Blast: Kalyxo Field Cave 0x21-0x23 (OW $25), bombable cache.
+  4. Heart: Deluxe Fairy Fountain 0x13/0x14 (OW $15), Great Fairy.
+  5. Power: Archery Minigame 0x59 (OW $1A), top score prize (Bow needed).
+  6. Armor: seashell trader, the 30-shell reward slot (was "Item upgrade (TBD)").
+  Not used: Ranch Girl (gives the Ocarina), Korok rewards (heart pieces stay),
+  Error NPC (no ring). Slot availability per room is a Codex check; reward text
+  and Vasu prices are separate approvals.
+  Options shown: "Table above (pick)", "All cave chests", "All seashell-trader rewards".
+  Answer: "Table above (pick)" (scawful, 2026-11-05).
