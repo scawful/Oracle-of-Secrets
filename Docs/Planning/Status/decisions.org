@@ -3654,3 +3654,24 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   DRAFT until the Codex ice-block analysis (QUEUE row 45) reports. In that draft scawful picked
   "Cutting spot (pick)" and "Poof + sound (pick)".
   Related: the damage restore is QUEUE row 28 (97e5c6e9).
+
+* DECIDED D3 garden gate: a Minish crack replaces the Glove rocks (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (dungeon design pass)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d3_kalyxo_castle_stepup_2026-11-06/PROPOSAL.md
+  :END:
+  Settles the open garden design left by "Glove direction reconciled" (2026-10-21; beat sheet
+  :198): required D3 progress must work with Gloves=0.
+  Question: "How should the D3 garden be gated now that the Glove arrives after D5?"
+  Options shown: "Minish crack (pick)", "Boots dash rocks", "Leave it optional".
+  Answer (scawful, 2026-11-06): "Minish crack (pick)"
+  1. A Minish portal by the gray rocks in the walled garden (OW $0B, reached from room $68 BR,
+     exit 0x10) shrinks Link; a crack path past the rocks leads to cave $E3; Link grows back
+     before the cave. The gray rocks stay (a Glove revisit is not needed).
+  2. Cave $E3 holds the Treasure Key (item 0x25, the Big Chest Key for the Meadow Blade big chest
+     in $56). This carries out "D3 garden holds the Compass" (2026-10-19) item 2, where
+     "Compass" was z3ed's label for 0x25. The heart piece stays in $E3.
+  3. The $66 chest gets another item (2026-10-19 item 2). Claude's proposal, not part of this
+     answer: the Secret Scroll (0x33), since D3 has none and the Librarian already reads
+     Kalyxo's scroll bit.
+  The garden teaches the shrink portal before the prison escape ($65 crack) needs it.
