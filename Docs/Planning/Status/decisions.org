@@ -3484,3 +3484,24 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      SE bank-shot vault, arrow through portals into the eye statue behind a block row (heart
      piece 2).
   4. Flat walls, no diagonals, no layer 2 (decision 2.6 stands).
+
+* DECIDED Fortress act 4 room shapes ($2D, $1D, $0D) (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Fortress GBC design lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/fortress_gbc_2026-11-05/act4_shapes.png
+  :END:
+  Question: "Are these act 4 room shapes right?" (image act4_shapes.png, concept; $2D on Fire
+  0x42 tiles, $1D and $0D on Rites 0x46 tiles).
+  Options shown: "Yes (pick)", "Change a room".
+  Answer (scawful, 2026-11-06): "Yes (pick)"
+  1. $2D: SW lava path from the $3D NW door with one Hop gap; SE two 2x2 lava islands, the
+     switch on the far island opens the N shutter; NE bank shot, arrow through portals into
+     the eye walled in behind a statue, the orange blocks around the Boss Key chest drop; last
+     1-row Hop, N door to $1D.
+  2. $1D: SE arrival with magic pots and a spike row; SW optional P5 shrine, sealed eye switch
+     in a wall pocket, 1-tile block ring around the Red Mail chest, Hop in and out; NE seed
+     altar arch between 4 statues; NW mask faces that shoot fire, two offset spike rows, Boss
+     Key door N to $0D.
+  3. $0D: one bare quarter for Dark Link, mask faces on the rim, no props. If the ROM boss room
+     uses another quarter, the ROM quarter stays.
+  4. Flat walls, no diagonals, no layer 2 (decision 2.6 stands).
