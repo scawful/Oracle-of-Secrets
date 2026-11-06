@@ -3252,3 +3252,15 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Librarian code (DNGMAP bit, 8th table entry, all-scrolls check $7F -> $FF) is a Codex check.
   Options shown: "Approve (pick)", "Change some".
   Answer: "Approve (pick)" (scawful, 2026-11-05).
+
+* DECIDED Fortress of Secrets: Portal Rod in $5C, mid-route (2026-11-05)
+  :PROPERTIES:
+  :ASKED_BY: Claude (consumables + Vasu evaluation)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/fortress_gbc_2026-11-05/VISION.md
+  :END:
+  Portal Rod big chest in $5C (existing NW dais), room 4 of 9 on the main route; the
+  exit is the first Hop (10-18 P1 gate). Rooms after it are rod rooms; Silver Arrows in
+  $3D add arrow-through-portal shots. The 10-room route, cut rooms ($4D/$5D/$6C),
+  $6B heart pieces and key homes in VISION.md stay proposals.
+  Options shown: "$5C mid-route (pick)", "$1C at start" ($4C late in the text).
+  Answer: "$5C mid-route (pick)" (scawful, 2026-11-05).
