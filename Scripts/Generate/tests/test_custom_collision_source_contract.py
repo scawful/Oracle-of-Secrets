@@ -483,7 +483,9 @@ class CustomCollisionSourceContractTest(unittest.TestCase):
         )
 
         self.assertEqual(build.count(validator_call), 1)
-        self.assertEqual(build.count('--rom "$base_rom"'), 1)
+        validator_args = build[build.index(validator_call):].split("\n\n", 1)[0]
+        self.assertEqual(validator_args.count('--rom "$base_rom"'), 1)
+        self.assertNotIn('--rom "$patched_rom"', validator_args)
         self.assertIn(
             'water_table_rom="${OOS_WATER_TABLE_ROM:-$base_rom}"',
             build,
