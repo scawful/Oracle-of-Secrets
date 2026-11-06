@@ -4026,3 +4026,19 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Answer: "One of the islands could be something similar to like the rupee digging mini game in Link to the Past. We don't have a lot of those types of mini game setups. So I think that the islands in the Lyra Sea could be a good opportunity for those. Since you saying the trade game and duel thing made me think of other ways we could use islands for unique things like that." (scawful, 2026-11-06)
   1. Direction only: Lyra Sea islands are the home for minigames, one like the ALttP digging game.
   2. Open: which islands, which games, rewards. Claude drafts a slate for scawful to pick from.
+
+* DECIDED Crescent island: sword last, won back in a fist fight (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Courage island plan), follows 7d41b58f (trade, game, duel)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+  :END:
+  Question: "Which item comes back by which method?"
+  Options shown: "Sword last (pick)" (trade = shield, game = Roc's Feather, fist duel = sword),
+  "Sword first" (trade = sword, game = Feather, duel = shield).
+  Answer: "and yes def sword and fist fight hahahhaaha" (scawful, 2026-11-06)
+  1. Trade returns the shield; the camp game returns Roc's Feather; a fist fight with
+     the thieves returns the sword.
+  2. Barriers: shield lane (south arm), Feather gap (west side), sword brush (north arm),
+     then the north horn grotto and the Light Ring (a2d6b088).
+  3. Fists already exist (Items/fist_damage.asm, always built). Codex checks the thief
+     takes fist damage and island enemies are beatable or avoidable without a sword.
