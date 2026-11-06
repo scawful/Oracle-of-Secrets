@@ -3902,3 +3902,25 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   2. The Shrine of Courage gets a structure in the NE corner, placed like Palace of Darkness
      on vanilla $5E; the top and right cliffs stay the map borders. scawful authors the layout.
   3. Open: temple art source, Somaria gate mechanic, and the tail-map entrance row (Codex).
+
+* DECIDED Lyra Sea map roles: A8 Deku, west coast B0/B1/B8/B9, A0/A1 village, B3/B4/BB/BC crescent (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: scawful, unprompted, during the Courage island plan
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+  :END:
+  scawful (2026-11-06): "A8 will be the deku area now, i think the coast will be B0, B1, B8, B9 with B0 and B8 being like mines/volcanic cliff, A0 and A1 are the fishing village and river zora connections"
+  scawful (2026-11-06): "B3,B4,BB,BC are the crescent island"
+  1. $A8 = Deku area (matches the d219a9d8 Mad Scrub grove on $A8).
+  2. West coast = $B0 $B1 $B8 $B9; $B0/$B8 are mines/volcanic cliff (desert crossing side).
+  3. $A0/$A1 = fishing village and River Zora connections.
+  4. $B3/$B4/$BB/$BC = crescent island (yaze plan label "Moon island").
+
+* OPEN Crescent island gets the Ages-style stranded quest (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: scawful, after "Wreck look only" for the Courage jungle
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/renders/03_crescent_concept.png
+  :END:
+  scawful (2026-11-06): "we could use the other island concept for our island that's shaped like a crescent, more references hehe"
+  1. The stranded quest declined for the jungle (Oracle of Ages Crescent Island style) moves to $B3/$B4/$BB/$BC.
+  2. Open: its place in the game (optional or main route), who takes the gear, the goal cave.
+  3. Codex items: tail-map entrance row for the goal cave; gear take/return is save-data work (T3).
