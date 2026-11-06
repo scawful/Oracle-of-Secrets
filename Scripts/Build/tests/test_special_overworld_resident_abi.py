@@ -163,6 +163,46 @@ class ResidentAbiTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'PAGE_EXTENT_INVALID|BLOBS_INVALID'):
                     A.validate_native_resident_abi(abi)
 
+    def test_shared_graphics_table_matches_retained_twenty_two_byte_abi(self):
+        for capacity in (160, 192):
+            with self.subTest(capacity=capacity):
+                abi = A.plan_native_resident_abi(self.plan(capacity), tile16_count=4096)
+                emitted = A.emit_native_resident_abi(abi, data_pc=0x307FF0,
+                    capacity=0x10000, preimage=bytes(0x10000))
+                rows = {row['label']: row for row in emitted['placements']}
+                table = rows['SharedGraphicsParentProfiles']
+                payload = bytes.fromhex(emitted['payload_hex'])
+                raw = payload[table['binary_offset']:table['binary_offset'] + table['byte_count']]
+                pointer = emitted['transfer_table_snes']
+                self.assertEqual(pointer, table['snes'])
+                area = abi['areas'][0]
+                runs = area['static_runs']
+                selected = {page['map_id'] for page in abi['pages']}
+                profile_word = (pointer + capacity * 2) & 65535
+                for page in range(capacity):
+                    self.assertEqual(struct.unpack_from('<H', raw, page * 2)[0],
+                                     profile_word if page in selected else 0)
+                header = raw[capacity * 2:capacity * 2 + 22]
+                normal_count, normal_word, mask, mode = struct.unpack_from('<HHBB', header)
+                staging_count, staging_word = struct.unpack_from('<HH', header, 13)
+                self.assertEqual((normal_count, staging_count), (len(runs), len(runs)))
+                self.assertEqual((mask, mode), (sum(1 << r['native_sheet'] for r in runs), 3))
+                self.assertEqual(header[6:13] + header[17:22], bytes(12))
+                for index, run in enumerate(runs):
+                    offset = normal_word - (pointer & 65535) + index * 7
+                    source = rows[area['static_label']]['snes'] + run['source_offset']
+                    self.assertEqual(int.from_bytes(raw[offset:offset + 3], 'little'), source)
+                    self.assertEqual(struct.unpack_from('<HH', raw, offset + 3),
+                                     (run['vram_word_address'], run['byte_count']))
+                    offset = staging_word - (pointer & 65535) + index * 8
+                    self.assertEqual(int.from_bytes(raw[offset:offset + 3], 'little'), source)
+                    self.assertEqual(int.from_bytes(raw[offset + 3:offset + 6], 'little'), run['wram_address'])
+                    self.assertEqual(struct.unpack_from('<H', raw, offset + 6)[0], run['byte_count'])
+                self.assertEqual(len(raw), capacity * 2 + 22 + len(runs) * 15)
+                self.assertEqual(table['pc'][0] // 0x8000, (table['pc'][1] - 1) // 0x8000)
+                self.assertIn(f'!GfxRT_Bank = ${pointer >> 16:04X}', emitted['constants_asm'])
+                self.assertFalse(emitted['runtime_admission'])
+
 
 if __name__ == '__main__':
     unittest.main()

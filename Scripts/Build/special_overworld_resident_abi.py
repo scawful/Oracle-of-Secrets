@@ -22,6 +22,14 @@ NATIVE_ANIMATION_DIRECTORY_STRIDE = 11
 NATIVE_BLOCK_SHIFT = 5
 NATIVE_BLOCK_DIRECTORY_BYTES = 128
 FIRST = 0x80
+TRANSFER_CONSTANTS = {
+    'ABIVersion': 1, 'HeaderSize': 22, 'NormalCount': 0, 'NormalPtr': 2,
+    'CacheMask': 4, 'TransitionMode': 5, 'TransitionStart': 6, 'TransitionEnd': 8,
+    'TransitionSource': 10, 'StagingCount': 13, 'StagingPtr': 15,
+    'LateFirst': 17, 'LateEnd': 18, 'LateSource': 19,
+    'NormalRecordSize': 7, 'StagingRecordSize': 8,
+    'ModeNone': 0, 'ModeRange': 1, 'ModeStart': 2, 'ModeNative': 3,
+}
 
 
 def _checked_areas(areas, end):
@@ -322,6 +330,52 @@ def validate_native_resident_abi(native_plan):
     return by_label
 
 
+def _transfer_tables(native_plan, addresses, origin):
+    """Retained SharedGraphics22B ABI, with same-bank absolute word pointers.
+
+    Uses only the already validated static runs and assigned resource origins.
+    This is derived data; it does not enable uploads, cache mutation or hooks.
+    """
+    parent_count = native_plan['end_map']
+    raw = bytearray(parent_count * 2)
+    profiles = {}
+    by_area = {}
+    for area in native_plan['areas']:
+        runs = area['static_runs']
+        start = len(raw)
+        normal = start + 22
+        staging = normal + len(runs) * 7
+        size = 22 + len(runs) * 15
+        _require((origin & 0xFFFF) + start + size <= 0x10000,
+                 'TRANSFER_TABLE_BANK_CROSSING')
+        address = origin + start
+        profiles[area['parent_map_id']] = address
+        by_area[area['area_index']] = address
+        mask = sum(1 << run['native_sheet'] for run in runs)
+        header = bytearray(22)
+        struct.pack_into('<HHBB', header, 0, len(runs),
+            (origin + normal) & 0xFFFF if runs else 0, mask, 3)
+        struct.pack_into('<HH', header, 13, len(runs),
+            (origin + staging) & 0xFFFF if runs else 0)
+        raw.extend(header)
+        sources = []
+        for run in runs:
+            source = addresses[area['static_label']] + run['source_offset']
+            _require((source & 0xFFFF) + run['byte_count'] <= 0x10000,
+                     'TRANSFER_RESOURCE_BANK_CROSSING')
+            sources.append(source)
+            raw.extend(source.to_bytes(3, 'little'))
+            raw.extend(struct.pack('<HH', run['vram_word_address'], run['byte_count']))
+        for run, source in zip(runs, sources):
+            raw.extend(source.to_bytes(3, 'little'))
+            raw.extend(run['wram_address'].to_bytes(3, 'little'))
+            raw.extend(struct.pack('<H', run['byte_count']))
+    for page in native_plan['pages']:
+        struct.pack_into('<H', raw, page['map_id'] * 2,
+                         by_area[page['area_index']] & 0xFFFF)
+    return bytes(raw), profiles
+
+
 def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
                              binary_path='binaries/resident-atlas.bin'):
     """Emit bytes/source for an explicit caller-owned ROM interval, without I/O.
@@ -364,6 +418,15 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
     for blob in native_plan['blobs']:
         place(blob['label'], by_label[blob['label']], blob['role'])
     addresses = {row['label']: row['snes'] for row in placements}
+    transfer_size = (end * 2 + sum(22 + len(area['static_runs']) * 15
+                                  for area in native_plan['areas']))
+    transfer_pc = cursor
+    if transfer_pc % 0x8000 + transfer_size > 0x8000:
+        transfer_pc = (transfer_pc // 0x8000 + 1) * 0x8000
+    transfer_raw, transfer_profiles = _transfer_tables(native_plan, addresses, snes(transfer_pc))
+    _require(not any(row['label'] == 'SharedGraphicsParentProfiles' for row in placements),
+             'TRANSFER_LABEL_COLLISION')
+    transfer = place('SharedGraphicsParentProfiles', transfer_raw, 'graphics_transfer_tables')
     directory_raw = bytearray(page_count * NATIVE_DIRECTORY_STRIDE)
     animation_raw = bytearray(page_count * NATIVE_ANIMATION_DIRECTORY_STRIDE)
     for page in native_plan['pages']:
@@ -403,12 +466,17 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
         + f'!LYRA_CURRENT_RESIDENT_TILE16_COUNT = {native_plan["tile16_count"]}\n'
         + f'!LYRA_CURRENT_RESIDENT_DIRECTORY = ${directory["snes"]:06X}\n')
     constants += (f'!LYRA_CURRENT_RESIDENT_ANIMATION_DIRECTORY = ${animation_directory["snes"]:06X}\n')
+    constants += ''.join(f'!GfxRT_{key} = ${value:04X}\n' for key, value in dict(
+        TRANSFER_CONSTANTS, Bank=transfer['snes'] >> 16, ParentCount=end).items())
+    constants += f'!SPECIAL_OVERWORLD_TRANSFER_DIRECTORY = ${transfer["snes"]:06X}\n'
     return dict(kind='lyra.resident_atlas_native_emission.v1',
         abi_sha256=native_plan['abi_sha256'], data_pc=[data_pc, data_pc + capacity],
         preimage_sha256=_sha(preimage), used_pc_end=cursor,
         used_extent_bytes=cursor-data_pc, bank_padding_bytes=cursor-data_pc-len(binary),
         binary_path=binary_path, payload_hex=bytes(binary).hex(), payload_sha256=_sha(binary),
         placements=placements, animation_directory_byte_count=len(animation_raw),
+        transfer_table_snes=transfer['snes'], transfer_table_byte_count=len(transfer_raw),
+        transfer_profile_snes={str(parent): address for parent, address in transfer_profiles.items()},
         runtime_data_asm='\n'.join(lines), constants_asm=constants,
         selected=False, allocation_granted=False, publication_authorized=False,
         ordinary_build_ready=False, runtime_admission=False)
