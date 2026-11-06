@@ -306,6 +306,12 @@ def collect_reachable_asm_sources(
                 None,
             )
             if included is None:
+                # This one include is derived from the selected ROM by Build.
+                # A clean legacy source export has no cache and stays disabled.
+                # Never skip another missing source, or missing native state.
+                if (asm_path == entry and include_text == '.cache/special_overworld_reader_constants.asm'
+                        and active_defines.get('SPECIAL_OVERWORLD_NATIVE') == 0):
+                    continue
                 rel = asm_path.relative_to(resolved_root)
                 raise ManifestGenerationError(
                     f"{rel}:{line_number}: unresolved incsrc "
@@ -323,6 +329,7 @@ def collect_reachable_asm_sources(
         "Util/macros.asm",
         "Config/module_flags.asm",
         "Config/feature_flags.asm",
+        ".cache/special_overworld_reader_constants.asm",
     }
     for asm_path in sorted(reachable):
         rel = asm_path.relative_to(resolved_root).as_posix()

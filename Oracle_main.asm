@@ -41,7 +41,6 @@ incsrc    "Config/module_flags.asm"
 incsrc    "Config/feature_flags.asm"
 ; The input descriptor selects native readers; stale cache files cannot
 ; activate them for a direct legacy assembly. Build regenerates this include.
-!SPECIAL_OVERWORLD_NATIVE = 0
 if read4($28F000) == $4F534F4F && read4($28F004) == $32393157 && read2($28F008) == $0003
   assert canreadfile1(".cache/special_overworld_reader_constants.asm", 0), "Run build_rom.sh to generate native reader constants"
   incsrc ".cache/special_overworld_reader_constants.asm"

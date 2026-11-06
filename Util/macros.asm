@@ -360,3 +360,6 @@ endif
 if not(defined("ENABLE_EQUIPMENT_MENU"))
   !ENABLE_EQUIPMENT_MENU = 1
 endif
+
+; Build-derived native reader mode. Direct legacy assembly stays disabled.
+!SPECIAL_OVERWORLD_NATIVE = 0

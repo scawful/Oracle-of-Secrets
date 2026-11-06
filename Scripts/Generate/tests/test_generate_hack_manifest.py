@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 GENERATE_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = GENERATE_DIR.parents[1]
@@ -42,6 +43,11 @@ from generate_hack_manifest import (  # noqa: E402
     scan_room_tags,
 )
 from generate_hooks_json import HookEntry, scan_hooks  # noqa: E402
+import generate_hooks_json  # noqa: E402
+from asm_source import (  # noqa: E402
+    SourceGraphError,
+    collect_reachable_asm_sources as collect_shared_sources,
+)
 from export_yazeproj_bundle import (  # noqa: E402
     PORTABLE_BUILD_COMMAND,
     PORTABLE_HACK_MANIFEST,
@@ -309,6 +315,84 @@ class ReachableSourceTest(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.fixture.close()
+
+    def native_entry(self):
+        self.fixture.write_text('Util/macros.asm', '!SPECIAL_OVERWORLD_NATIVE = 0\n')
+        self.fixture.write_text('Oracle_main.asm',
+                                'incsrc "Util/macros.asm"\n'
+                                'if read4($28F000) == $4F534F4F\n'
+                                'incsrc ".cache/special_overworld_reader_constants.asm"\n'
+                                'endif\n'
+                                'if !SPECIAL_OVERWORLD_NATIVE == 1\n'
+                                'incsrc "Overworld/native.asm"\nendif\n')
+
+    def test_fresh_legacy_source_needs_no_generated_native_include(self):
+        self.native_entry()
+        sources = {p.relative_to(self.fixture.root.resolve()).as_posix()
+                   for p in collect_reachable_asm_sources(self.fixture.root)}
+        self.assertEqual(sources, {'Oracle_main.asm', 'Util/macros.asm'})
+        with self.assertRaisesRegex(ManifestGenerationError, 'unresolved incsrc'):
+            collect_reachable_asm_sources(self.fixture.root,
+                                          defines={'SPECIAL_OVERWORLD_NATIVE': 1})
+
+    def test_generated_native_constants_select_the_complete_source_graph(self):
+        self.native_entry()
+        self.fixture.write_text('.cache/special_overworld_reader_constants.asm',
+                                '!SPECIAL_OVERWORLD_NATIVE = 1\n'
+                                '!LYRA_CURRENT_CODE_BASE = $46C000\n')
+        self.fixture.write_text('Overworld/native.asm', 'org $46C000\nRTL\n')
+        sources = {p.relative_to(self.fixture.root.resolve()).as_posix()
+                   for p in collect_reachable_asm_sources(self.fixture.root)}
+        self.assertEqual(sources, {'Oracle_main.asm', 'Util/macros.asm',
+                                  '.cache/special_overworld_reader_constants.asm',
+                                  'Overworld/native.asm'})
+
+    def test_shared_hook_source_graph_handles_legacy_and_native_constants(self):
+        self.native_entry()
+        sources = {p.relative_to(self.fixture.root.resolve()).as_posix()
+                   for p in collect_shared_sources(self.fixture.root)}
+        self.assertEqual(sources, {'Oracle_main.asm', 'Util/macros.asm'})
+        self.fixture.write_text('Oracle_main.asm',
+                                'incsrc "missing.asm"\n')
+        with self.assertRaisesRegex(SourceGraphError, 'unresolved incsrc'):
+            collect_shared_sources(self.fixture.root)
+        self.native_entry()
+        with self.assertRaisesRegex(SourceGraphError, 'unresolved incsrc'):
+            collect_shared_sources(self.fixture.root,
+                                   defines={'SPECIAL_OVERWORLD_NATIVE': 1})
+        self.fixture.write_text('.cache/special_overworld_reader_constants.asm',
+                                '!SPECIAL_OVERWORLD_NATIVE = 1\n')
+        self.fixture.write_text('Overworld/native.asm', 'org $46C000\nRTL\n')
+        sources = {p.relative_to(self.fixture.root.resolve()).as_posix()
+                   for p in collect_shared_sources(self.fixture.root)}
+        self.assertEqual(sources, {'Oracle_main.asm', 'Util/macros.asm',
+                                  '.cache/special_overworld_reader_constants.asm',
+                                  'Overworld/native.asm'})
+
+    def test_hook_generator_cli_accepts_clean_legacy_and_native_source(self):
+        self.native_entry()
+        self.fixture.write_text('Roms/test.sfc', 'test ROM identity')
+        for native in (None, 0, 1):
+            with self.subTest(native=native):
+                if native is not None:
+                    self.fixture.write_text('.cache/special_overworld_reader_constants.asm',
+                                            f'!SPECIAL_OVERWORLD_NATIVE = {native}\n')
+                    self.fixture.write_text('Overworld/native.asm', 'org $46C000\nRTL\n')
+                with (self.fixture.root / 'Oracle_main.asm').open('a') as source:
+                    source.write('\norg $008000\nJSL $018000\n')
+                with patch.object(sys, 'argv', ['generate_hooks_json.py',
+                        '--root', str(self.fixture.root), '--rom', 'Roms/test.sfc',
+                        '--output', 'hooks.json']):
+                    self.assertEqual(generate_hooks_json.main(), 0)
+                data = json.loads((self.fixture.root / 'hooks.json').read_text())
+                self.assertTrue(data['hooks'])
+
+    def test_native_constants_cannot_override_other_global_defines(self):
+        self.native_entry()
+        for text in ('!ENABLE_SOURCE_SPRITE_SHEETS = 0\n', 'org $468000\n'):
+            self.fixture.write_text('.cache/special_overworld_reader_constants.asm', text)
+            with self.assertRaisesRegex(ValueError, 'owned numeric defines'):
+                collect_reachable_asm_sources(self.fixture.root)
 
     def test_collects_nested_and_root_relative_includes(self) -> None:
         self.fixture.write_text(

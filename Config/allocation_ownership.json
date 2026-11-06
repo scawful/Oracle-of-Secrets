@@ -85,7 +85,7 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "e9f0ef67aa7829232ed37fd5caebcbf4a452763099b0c2b43b7171d97479d165"
+      "sha256": "83d79168ce4a8c4f88dc0d7e3bed1c14b52de70acba4856ead07094cbd21ef33"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
