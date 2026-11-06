@@ -4248,3 +4248,17 @@ Answer: "Briefing only" (scawful, 2026-11-06)
      the $1D Crossroads overworld piece, and the $10C fairy room chest.
   4. Flags: Lyra pieces use LyraCurrentTailFlags $7EF4C0; Codex picks flags for the special
      areas. Exact tile spots inside each map are Codex/scawful layout work.
+
+* DECIDED $127 Heart Piece: delete it (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude, Kalyxo cave audit review
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/kalyxo_cave_audit_2026-11-06/REVIEW_CLAUDE.md
+  :END:
+  Question: Delete the $127 Heart Piece when its room becomes the Sky temple?
+  Options shown: 1 Delete it (pick): the piece is outside the 36, so the 20-heart total is
+  unchanged; 2 Re-home it and drop another counted piece.
+  Answer: "Delete it (pick)" (scawful, 2026-11-06)
+  Context: the cave audit's tentative pick reuses room $127 for the Sky temple and re-homes
+  its piece. The $127 piece is not one of the 36 (rewards_inventory_2026-11-06/INVENTORY.md:18),
+  so re-homing it would make 37. FIX_PLAN step 5 for $127 becomes a delete, not a route fix.
+  Room $127 as the Sky temple stays a tentative pick (cave audit, not DECIDED).
