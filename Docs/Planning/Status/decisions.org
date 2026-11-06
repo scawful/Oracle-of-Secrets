@@ -4119,3 +4119,16 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   1. Reference for the open-sea maps: Wind Waker and Phantom Hourglass seas, and the 09-29 concept art (rock clusters, palm islets, reef chains, rough-strait foam, ice floes).
   2. Matches the 09-29 correction: "Natural reefs, rocks and steep shorelines do much of the enclosure"; "Add more small islands".
   3. Open: the per-map content; Claude redraws the sketch denser.
+
+* DECIDED Lyra Sea salvage spots for Zora Link (2026-11-06)
+:PROPERTIES:
+:ASKED_BY: claude (courage island plan, sea fill)
+:DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+:END:
+Question: Should open water get Wind Waker-style salvage spots, or keep finds on islets?
+Options shown: "Islets only (pick)" / "Add salvage spots".
+Answer: "zora link can dive, we can add salvage for zora link !!" (scawful, 2026-11-06)
+1. Open-sea maps get salvage spots that Zora Link reaches by diving (Y in deep water, Masks/zora_mask.asm). Islet small finds stay (4c73471b).
+2. The Zora Mask comes from D4 (beat sheet row 15), so salvage is a revisit reward once Link has it.
+3. Codex: the salvage pickup is new logic, a find that collects only while !ZoraDiving ($0AAB) is set; check that the dive cape flag $55 does not block the pickup.
+4. Open: which maps get spots, what the loot is, and how a spot is marked on the surface.
