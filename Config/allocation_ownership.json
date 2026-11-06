@@ -165,7 +165,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "bcc6df2404dc097f25f9b547699359f924387c7cdaa1c70e87fd571b9f317475"
+      "sha256": "d84d9ed060503addcd32fb75eba136d6931611a932ff79577d4e39d9ff052007"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -330,13 +330,13 @@
     },
     {
       "id": "symbols_wram_block",
-      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..SongTintColor)",
+      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..FinaleBeat)",
       "space": "wram",
       "base": 8265328,
-      "size": 24,
+      "size": 27,
       "status": "shared",
       "condition": {},
-      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint.",
+      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint, finale GanondorfFight/BossReinject/FinaleBeat.",
       "reset": "No block-wide reset is claimed. Not in ResetTrackVars' arrays since PR 211 moved it from $7E0730 (inside cart_room) to vanilla-free $7E1E70.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [

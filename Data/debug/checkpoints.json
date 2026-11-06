@@ -935,6 +935,104 @@
           "why": "full health"
         }
       ]
+    },
+    {
+      "id": "maku-seed-ready",
+      "label": "All 8 essences (D8 Sky done): Maku Tree gives the Maku Seed",
+      "beat": 27,
+      "after": "d8-entrance",
+      "location": {
+        "area": "0x0E"
+      },
+      "expect": {
+        "modules": [
+          "0x09"
+        ],
+        "area": "0x0E"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF37A",
+          "set_bits": "0x80",
+          "name": "Crystals",
+          "evidence": "Core/sram.asm:130 (!Crystal_D8_Sky)"
+        },
+        {
+          "addr": "0x7EF3D4",
+          "clear_bits": "0x02",
+          "name": "MakuTreeQuest",
+          "evidence": "Core/sram.asm:278 (!MakuTree_HasSeed); Sprites/NPCs/maku_tree.asm:166 grants it when Crystals = $FF and the bit is clear"
+        }
+      ],
+      "notes": "Lands outside the Hall of Secrets (same area as kalyxo-return); talk to the Maku Tree for the seed message. Not natively checked on the experimental ROM."
+    },
+    {
+      "id": "fortress-open",
+      "label": "Maku Seed held: Fortress of Secrets open (entrance $37)",
+      "beat": 27,
+      "after": "maku-seed-ready",
+      "location": {
+        "entrance": "0x37"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x000C"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF3D4",
+          "set_bits": "0x02",
+          "name": "MakuTreeQuest",
+          "evidence": "Overworld/overlays.asm:1113 opens the Fortress only with !MakuTree_HasSeed"
+        }
+      ],
+      "notes": "d8-entrance predates the D8 Sky essence and the seed gate; this applies both. Not natively checked on the experimental ROM."
+    },
+    {
+      "id": "d8-sky-boss-room",
+      "label": "D8 Sky boss room $96 (fall in from the Fortress; spawn the boss with the macro)",
+      "beat": 27,
+      "after": "maku-seed-ready",
+      "location": {
+        "entrance": "0x37",
+        "room": "0x96"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x0096"
+      },
+      "writes": [],
+      "notes": "Room $96 is where D8Boss_LoadGfx loads the boss sheets (Sprites/Bosses/d8_boss.asm:634). No room places sprite $C3 yet, and the tower rooms $90-$96 exist only in the private D8 project ROM, so this ROM's room $96 layout is a stand-in. The location 'room' needs Mesen2 OOS 19ab830c or newer. Not natively checked on the experimental ROM."
+    },
+    {
+      "id": "kydreeok-fight",
+      "label": "Kydreeok fight: outside the room $00 hole (walk left 8 tiles, then up)",
+      "beat": 27,
+      "after": "d8-entrance",
+      "location": {
+        "area": "0x57"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x57"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF36D",
+          "value": "0x58",
+          "name": "CurrentHealth",
+          "inferred": true,
+          "why": "full health for the boss test"
+        }
+      ],
+      "notes": "The area warp lands outside the D8 Final Boss Route door at ($0F70,$04F0) (Data/debug/warps.json area 0x57). The room $00 hole is about 120 px left and 10 px up; from ($0EF8,$04E8) holding up drops Link into room $00, where Kydreeok (sprite $7A) starts (b45 run, AFS handoffs/kydreeok_dragon_2026-10-19/evidence/log.txt). The hole and the room $00 layout are placeholders (the finale room plan is open)."
     }
   ],
   "todo": [

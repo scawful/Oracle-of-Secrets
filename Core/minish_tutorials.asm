@@ -21,10 +21,12 @@ MinishTutorialPointers:
   LDA.w #MinishTutorial_038 : STA.l $7F71C0+($038*3)
   LDA.w #MinishTutorial_15B : STA.l $7F71C0+($15B*3)
   LDA.w #MinishTutorial_15C : STA.l $7F71C0+($15C*3)
+  LDA.w #FinaleTriforceSpeech_173 : STA.l $7F71C0+($173*3) ; Core/finale_triforce_speech.asm
   SEP #$20
   LDA.b #MinishTutorial_038>>16 : STA.l $7F71C2+($038*3)
   LDA.b #MinishTutorial_15B>>16 : STA.l $7F71C2+($15B*3)
   LDA.b #MinishTutorial_15C>>16 : STA.l $7F71C2+($15C*3)
+  LDA.b #FinaleTriforceSpeech_173>>16 : STA.l $7F71C2+($173*3)
   REP #$20
   PLA
   ; Replay SEP #$30 / PLB / RTL; PLB consumes the original routine's PHB.

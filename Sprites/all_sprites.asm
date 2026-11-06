@@ -95,6 +95,11 @@ if !ENABLE_INTRO_STALFOS_PATROL == 1
   incsrc "Sprites/Enemies/stalfos_patrol.asm"
 endif
 
+; Ganondorf finale phase 1: own org in bank $2A, no bank $30 bytes.
+if !ENABLE_GANONDORF_VOLLEY == 1
+  incsrc "Sprites/Bosses/ganondorf.asm"
+endif
+
 %log_start("sea_urchin", !LOG_SPRITES)
 incsrc "Sprites/Enemies/sea_urchin.asm"
 %log_end("sea_urchin", !LOG_SPRITES)
@@ -266,6 +271,18 @@ incsrc "Sprites/Bosses/wolfos.asm"
 ; ice_block moved to the end of Bank $30 (2026-09-26): Bank $31 had 10 bytes
 ; free and Bank $30 had ~4.4 KB. Append new sprites to Bank $30 or $32 first.
 
+%log_start("garo", !LOG_SPRITES)
+incsrc "Sprites/NPCs/garo.asm"
+%log_end("garo", !LOG_SPRITES)
+
+; Moved from bank $32 (full after the Finale boss code, 2026-11-04). Both are
+; bank-neutral: JSL entry; Garo sets DBR via PHK/PLB and reads WRAM only.
+; Unconditional Darknut weapon publication; DBR remains bank $30.
+incsrc "Sprites/Enemies/darknut_weapon_hitbox.asm"
+
+; Local pea-shot contact wrapper: keeps the bank $30 callsite size unchanged.
+incsrc "Sprites/Enemies/business_scrub_shield.asm"
+
 assert pc() <= $328000, "Bank $31 sprite region overflow"
 assert pc() >= $318000, "Bank $31 sprite code left its bank (org without pushpc/pullpc?)"
 print "Bank31 Free Space: ", dec($320000-pc()), " bytes"
@@ -276,6 +293,15 @@ print "Bank31 Free Space: ", dec($320000-pc()), " bytes"
 ; Bank $32
 org $328000
 %log_start("Bank 32", !LOG_SPRITES)
+
+; Shared boss code (JSL only) comes first: its macros are used by the
+; Kydreeok files below. Bank $31 has no room for it.
+%log_start("boss_kit", !LOG_SPRITES)
+incsrc "Sprites/Bosses/boss_kit.asm"
+%log_end("boss_kit", !LOG_SPRITES)
+
+; Boss pacing (its code is in bank $3A; only labels land here).
+incsrc "Sprites/Bosses/boss_director.asm"
 
 %log_start("twinrova", !LOG_SPRITES)
 incsrc "Sprites/Bosses/twinrova.asm"
@@ -312,16 +338,6 @@ incsrc "Sprites/NPCs/ranch_girl.asm"
 %log_start("cloud_bridge", !LOG_SPRITES)
 incsrc "Sprites/Objects/cloud_bridge.asm"
 %log_end("cloud_bridge", !LOG_SPRITES)
-
-%log_start("garo", !LOG_SPRITES)
-incsrc "Sprites/NPCs/garo.asm"
-%log_end("garo", !LOG_SPRITES)
-
-; Unconditional Darknut weapon publication; DBR remains bank $30.
-incsrc "Sprites/Enemies/darknut_weapon_hitbox.asm"
-
-; Local pea-shot contact wrapper: keeps the bank $30 callsite size unchanged.
-incsrc "Sprites/Enemies/business_scrub_shield.asm"
 
 ; A file that orgs into a vanilla bank must pushpc/pullpc, or the next incsrc
 ; lands on vanilla code (fortune_teller.asm put ranch_girl/cloud_bridge on the
