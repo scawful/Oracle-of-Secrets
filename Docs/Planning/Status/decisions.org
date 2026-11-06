@@ -3356,3 +3356,16 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Layout is a concept, not decided (d8_somaria_rails_A0_B0.png): $A0 straight ride over a
   sky gap, then a block on the plate (16,52) holds the S shutter; $B0 SW floor becomes sky
   with a junction rail to the Big Key chest island (14,44).
+
+* DECIDED D8 old items: light touch, one per room at most (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Fortress GBC design lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d8_vision_2026-11-05/VISION_v4.md
+  :END:
+  Ask: how much D1-D7 items show up in D8 (whole-dungeon pass v4, after scawful's
+  "Whole D8 pass").
+  Options shown: "Light touch (pick)" (one old item per room at most, Switch Hook stays the
+  main item), "Hook only" (no old-item callbacks).
+  Answer: "Light touch (pick)" (scawful, 2026-11-06).
+  Room placements are a concept, not decided (d8_vision_board_v4.png): Fire Rod $91/$92/$9B,
+  Bow $9C/$A7, Roc's Feather $93/$95/$B0, Hookshot $8C, Hammer $93, Bombs $94, Storms $95.
