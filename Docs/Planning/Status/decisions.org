@@ -3540,3 +3540,23 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   3. If the census finds a D1 room that uses them, this does not apply; the lane brings the
      placements back for a new question.
   4. Red Bari and the Stalfos Knight room $33 HP override are not part of this decision.
+
+* DECIDED D2 Tail Palace step-up package: all four changes (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (difficulty scaling lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d2_tail_palace_stepup_2026-11-06/PROPOSAL.md
+  :END:
+  Question: "Which D2 package should Codex queue?"
+  Options shown: "All four (pick)", "Boss + Feather only".
+  Answer (scawful, 2026-11-06): "All four (pick)"
+  Goal: D2 moves from difficulty 2 to 3 (curve entry "Difficulty target curve"). D2 rooms already
+  carry more enemies than D1, so the change is structure, not more enemies.
+  1. Boss room $DE: Moldorm HP 12 -> 18 in room $DE only (EnemyBalance_HPOverrides row), plus a
+     dark palette as the tell of Kydrog's corruption. Moldorm stays the D2 boss (message $1B9).
+  2. Room $5E: Knight duo mini-boss. Shutters close until both Stalfos Knights fall; the Small Key
+     stays in $5E.
+  3. Rooms $8E/$8F: Roc's Feather test before the Big Key (spike rows, 1-tile gaps). The Feather is
+     the $7F big chest (item 0x21, Bug Net slot hooked by Items/jump_feather.asm).
+  4. Room $2E: observatory star-chart wall and a corruption mark at the boss hole. Visual only;
+     any added text still needs scawful's own OK.
+  Not part of this decision: sprite $0A (Eon Owl/Kaepora) in $7E is a check, not a change.
