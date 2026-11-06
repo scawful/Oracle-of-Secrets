@@ -4132,3 +4132,15 @@ Answer: "zora link can dive, we can add salvage for zora link !!" (scawful, 2026
 2. The Zora Mask comes from D4 (beat sheet row 15), so salvage is a revisit reward once Link has it.
 3. Codex: the salvage pickup is new logic, a find that collects only while !ZoraDiving ($0AAB) is set; check that the dive cape flag $55 does not block the pickup.
 4. Open: which maps get spots, what the loot is, and how a spot is marked on the surface.
+
+* DECIDED Lyra Sea salvage spot marker: bubbles (2026-11-06)
+:PROPERTIES:
+:ASKED_BY: claude (courage island plan, sea fill)
+:DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+:END:
+Question: How should a salvage spot show on the water?
+Options shown: "Bubbles (pick)" / "Hidden, hint only".
+Answer: "Bubbles (pick)" (scawful, 2026-11-06)
+1. Each Zora Link salvage spot (176fb356) shows rising bubbles on the surface.
+2. Bubbles stay distinct from the islet small-find pickups (4c73471b).
+3. Codex: pick the bubble source (existing ripple/splash frames first) and whether bubbles stop after the find is taken.
