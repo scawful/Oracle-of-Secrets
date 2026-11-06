@@ -3343,3 +3343,16 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   socket; $96 ring rail around the orrery pit to the stage 3 socket
   (d8_somaria_rails_v1.png). The minecart already uses the Somaria track tiles; Codex
   checks the vanilla platform sprite $ED and its spriteset graphics.
+
+* DECIDED D8 Somaria rail rooms: $A0 + $B0 (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Fortress GBC design lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/somaria_rails_2026-11-06/NOTES.md
+  :END:
+  Ask: which D8 rooms hold the Somaria rails. scawful rejected the $90 + $96 proposal with
+  "Other rooms".
+  Options shown: "1: $A0+$B0" (pick), "2: $93 pegs", "3: $95 hub", "4: $90 W".
+  Answer: "1: $A0+$B0" (scawful, 2026-11-06). Supersedes the $90/$96 placement above.
+  Layout is a concept, not decided (d8_somaria_rails_A0_B0.png): $A0 straight ride over a
+  sky gap, then a block on the plate (16,52) holds the S shutter; $B0 SW floor becomes sky
+  with a junction rail to the Big Key chest island (14,44).
