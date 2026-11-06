@@ -4169,3 +4169,17 @@ Answer: "Cap at 20" (scawful, 2026-11-06)
 2. Budget: 3 start + heart containers + hearts from pieces = 20. With 10 containers that is 7 hearts = 28 pieces.
 3. Planned pieces today: 33 obtainable (rewards_inventory_2026-11-06) + D8 $8B x2 + D3 garden + Hidden Grave 0x5B (822136f2) = 37, plus salvage pieces (3bc72959). Over budget; how to trim is open.
 4. Salvage Heart Pieces should come from moved pieces (duplicates/orphans in FIX_PLAN Steps 1, 2, 5), not new ones.
+
+* DECIDED 20-heart budget: drop 2 heart containers (2026-11-06)
+:PROPERTIES:
+:ASKED_BY: claude (review of Cursor rewards inventory)
+:DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/rewards_inventory_2026-11-06/REVIEW_CLAUDE.md
+:END:
+Question: How should we trim to fit 20 hearts?
+Options shown: "Drop 2 containers" (pick: overworld $EA on OW $38 and the Maku Tree first-meeting container; then trim 1 piece, 37 -> 36) / "Trim 9 pieces" (37 -> 28).
+Answer: "i think drop containers yes" (scawful, 2026-11-06)
+1. Containers: 10 -> 8 (bosses). Dropped: $EA on OW $38 and the Maku Tree container (Sprites/NPCs/maku_tree.asm, item $3E).
+2. Budget: 3 start + 8 containers + 9 hearts from 36 pieces = 20 (cap 5fe10b8f).
+3. Pieces: 37 planned -> 36. Which piece is cut is open.
+4. Correction to 5fe10b8f point 4: the stacked duplicates on OW $00/$6A share one flag, so they are not extra pieces. Salvage Heart Pieces (3bc72959) replace counted spots inside the 36. Re-homing the orphaned $4D or route-less $127 piece adds to the count.
+5. Open (story, scawful's OK): what the Maku Tree gives at the first meeting instead.
