@@ -3924,3 +3924,15 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   1. The stranded quest declined for the jungle (Oracle of Ages Crescent Island style) moves to $B3/$B4/$BB/$BC.
   2. Open: its place in the game (optional or main route), who takes the gear, the goal cave.
   3. Codex items: tail-map entrance row for the goal cave; gear take/return is save-data work (T3).
+
+* DECIDED Crescent island stranded quest is an optional side quest (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Courage island plan), follows the OPEN crescent entry above (66b56ce6)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/renders/03_crescent_concept.png
+  :END:
+  Question: "Where does the crescent stranded quest sit in the game?"
+  Options shown: "Optional (pick)", "Main route", plus "Look and layout only, no gear taken" in chat.
+  Answer: "Optional (pick)" (scawful, 2026-11-06)
+  1. $B3/$B4/$BB/$BC holds an optional stranded quest. The main route does not pass through it.
+  2. A gear take/return bug must not block the main game (Codex T3 check).
+  3. Still open: who takes the gear, which gear, the goal cave reward.
