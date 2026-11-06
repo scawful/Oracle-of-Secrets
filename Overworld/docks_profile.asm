@@ -142,10 +142,16 @@ DocksDeferAuxPalette:
 ; uploads C500, so commit only these six seven-color rows before requesting it.
 DocksCommitAuxPalettes:
 {
+  ; Normal callers may select C500 directly with offset0200. Always build
+  ; these targets at C300, commit once, and restore the caller's mode exactly.
+  REP #$30
+  LDA.w $0AA8 : PHA
+  STZ.w $0AA8
+  SEP #$30
   JSL $1BEEE8
   JSL $1BEF0C
   REP #$30
-  LDX.w $0AA8
+  LDX.w #$0000
   LDY.w #$0006
   .next
     LDA.l $7EC352, X : STA.l $7EC552, X
@@ -156,6 +162,7 @@ DocksCommitAuxPalettes:
     LDA.l $7EC3F2, X : STA.l $7EC5F2, X
     INX : INX
     DEY : BPL .next
+  PLA : STA.w $0AA8
   SEP #$30
   INC.b $15
   RTL
@@ -167,7 +174,15 @@ DocksCommitAuxPalettes:
 DocksFinishTransition:
 {
   LDA.b $1B : BNE .native
-  LDA.b $8A : CMP.b #$30 : BNE .native
+  LDA.b $8A : CMP.b #$30 : BEQ .docks
+  CMP.b #$32 : BNE .native
+  ; Slot3 still contains six custom low-half characters after returning32.
+  ; Mark it dirty once so later same-ID/inherited loads restore native data.
+  LDA.w $0CF3 : CMP.b #$FF : BEQ .native
+  JSL DocksMarkNativeCache
+  LDA.b #$FF : STA.w $0CF3
+  BRA .native
+  .docks
   LDA.w $0CF3 : CMP.b #$FF : BEQ .native
   CMP.b #$01 : BEQ .second
   CMP.b #$08 : BCS .first

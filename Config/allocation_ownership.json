@@ -180,7 +180,7 @@
     "shared:Overworld/docks_profile.asm": {
       "source_set": "shared",
       "path": "Overworld/docks_profile.asm",
-      "sha256": "52daaafbaabec858071c3eb753e71eb5d358b9076dc97c5b918272960e0d863c"
+      "sha256": "d8fb2882d99ba8d23894b8812e6d994144ec9b1c3db689020291c68f8d28afe8"
     }
   },
   "claims": [
