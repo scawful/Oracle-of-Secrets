@@ -3869,3 +3869,21 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   2. Direction only: scawful lays out $A8 when authoring the sea maps (decisions.org:1114).
   3. Uses the trigger table's 1 free exit slot (4/4 rows,
      lyra_tail_full_support_2026-10-29/PLAN.md); Codex checks no other Lyra link needs it.
+
+* DECIDED Shrine step-up: guest shrine layouts stay as built; plan Courage's jungle island instead (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (shrine step-up pass), from scawful's "Shrines (pick)"
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/shrines_stepup_2026-11-06/PROPOSAL.md
+  :END:
+  Question: "Queue the S2 Shrine of Power package?"
+  Options shown: "Queue all (pick)" ($86 Lanmolas shutter fight, Glove-lift gate after $74,
+  35 Baris -> ~15), "Lanmolas only", "Bari trim only". S3 package (pendant after Vitreous,
+  Mirror Shield laser lane) was shown for a later ask.
+  Answer: "none of these really fit in these complex shrine layouts currently. our best bet would be planning out the lyra sea jungle island courage is on rather than trying to force this in" (scawful, 2026-11-06)
+  1. Rejected: the S2 and S3 in-room step-up packages. No QUEUE rows.
+  2. Next: plan the Lyra Sea jungle island where the Shrine of Courage sits (Lyra maps
+     $A6/$A7/$AE/$AF, courage_jungle_2026-10-24/PLAN.md).
+  3. Kept from 2026-10-24 (scawful, courage_jungle_2026-10-24/LOG.md): "leave it at the cave
+     for now but it'll likely great a proper structure similar to palace of darkness and how
+     it's placed in its vanilla map". scawful authors that layout manually.
+  4. Unchanged: QUEUE row 28 (Wizzrobe/Sluggula class restore) still applies to S3's rooms.
