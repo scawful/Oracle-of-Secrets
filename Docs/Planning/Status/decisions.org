@@ -3837,3 +3837,20 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      no new mask code. The mask is earned at the stair before D6 (babe5394).
   3. D6's required tools stay one per floor (F1 carts, B1 falls + Hammer, B2 Bombchu).
   4. Codex picks the smelter room and reward with the row 58 census.
+
+* DECIDED Titan's Mitt: the Gorons' gift after D6 (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Goron desert pass)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/goron_desert_power_2026-11-06/PROPOSAL.md
+  :END:
+  Question: "Where does the Titan's Mitt come from?"
+  Options shown: "Goron gift (pick)", "Eon Gorons" (optional Lupo camp), "D7 or S3 chest".
+  Answer: "Goron gift (pick)" (scawful, 2026-11-06)
+  1. Fills the Mitt home left open by "Power Glove stays inside Shrine of Power" (2026-10-29).
+  2. The Goron chief gives the Titan's Mitt once D6 is cleared and the trapped B1 miners
+     (e3b4f2cb) are free.
+  3. The smith's-partner trip (Abyss beach behind Mitt rubble, opens after the Hammer, L3
+     blade between D6 and D7; 2026-10-19) then opens right after D6.
+  4. No Mitt gate before D6 (2026-10-21). Rock Meat stays Glove-pickup; open PR 205
+     (Mitt-only pickup) conflicts and needs review against this.
+  5. Gift text needs scawful's OK.
