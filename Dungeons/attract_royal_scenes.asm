@@ -39,8 +39,12 @@ AttractRoyal_LoadCard:
   PLA : STA.b $20
   SEP #$20
 
-  ; Preserve the entrance/room's main blockset, room blockset and BG palette.
-  ; The legacy attract helper overwrites $0AA1/$0AA2 with old scene indices.
+  ; Keep each room's sub-blockset and palette. Entrance $04 uses cave main
+  ; group $04 (sheets $02/$03/$12); the royal/empty hall needs the audience
+  ; hall's castle main group $02 ($00/$01/$10), with identical room geometry.
+  LDA.b $23 : CMP.b #$02 : BEQ .main_gfx_ready
+    LDA.b #$02 : STA.w $0AA1
+  .main_gfx_ready
   STZ.w $0AAC
   LDA.b #$0E : STA.w $0AAD
   LDA.b #$03 : STA.w $0AAE
