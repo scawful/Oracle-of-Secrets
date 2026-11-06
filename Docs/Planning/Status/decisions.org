@@ -3464,3 +3464,23 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   3. $4D: track up from $5D turns west over the void (blade traps), stop ledge with a pot,
      W door to $4C SE.
   4. Flat walls, no diagonals, no layer 2 (decision 2.6 stands).
+
+* DECIDED Fortress act 3 room shapes ($4C, $3D, $6B) (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Fortress GBC design lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/fortress_gbc_2026-11-05/act3_shapes.png
+  :END:
+  Question: "Are these act 3 room shapes right?" (image act3_shapes.png, concept; $3D on Fire 0x42 tiles).
+  Options shown: "Yes (pick)", "Change a room".
+  Answer (scawful, 2026-11-06): "Yes (pick)"
+  1. $4C: SE arrival from the $4D cart stop onto a crumble bridge over pits; SW Hop down over a
+     pit row to the orb, orange blocks at the N door drop; NW Hop chain of 2x2 pit islands, one
+     island switch opens the E shutter, side island with a magic pot; NE key block (key 2) and
+     stairs to $3D.
+  2. $3D: SE arrival stairs + Wizzrobe kill room with lava pools (N shutter); NE lava-ring dais
+     with the big chest (Silver Arrows, drops the $0C shortcut bar); NW lava river with one
+     bridge to the N door to $2D; SW shortcut stairs to $0C. The dais keeps its ROM position.
+  3. $6B: NW hall with stairs from $5C; NE corner hall; SW island vault (Hop, heart piece 1);
+     SE bank-shot vault, arrow through portals into the eye statue behind a block row (heart
+     piece 2).
+  4. Flat walls, no diagonals, no layer 2 (decision 2.6 stands).
