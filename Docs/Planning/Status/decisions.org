@@ -4144,3 +4144,15 @@ Answer: "Bubbles (pick)" (scawful, 2026-11-06)
 1. Each Zora Link salvage spot (176fb356) shows rising bubbles on the surface.
 2. Bubbles stay distinct from the islet small-find pickups (4c73471b).
 3. Codex: pick the bubble source (existing ripple/splash frames first) and whether bubbles stop after the find is taken.
+
+* DECIDED Lyra Sea salvage loot: rupees + Heart Pieces (2026-11-06)
+:PROPERTIES:
+:ASKED_BY: claude (courage island plan, sea fill)
+:DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+:END:
+Question: What should salvage spots hold?
+Options shown: "Rupees + Heart Pieces" (pick) / "Seashells".
+Answer: "Rupees + Heart Pieces" (scawful, 2026-11-06)
+1. Most Zora Link salvage spots (176fb356, bubbles de88accd) hold rupees; a few hold Heart Pieces.
+2. Codex: count current Heart Pieces against the game's heart total before placing new ones (Hidden Grave 0x5B already gains one, 822136f2).
+3. Open: which maps get spots and which spots get the Heart Pieces.
