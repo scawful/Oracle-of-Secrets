@@ -3786,3 +3786,23 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   3. Today: 40 HP (`Sprites/Bosses/king_dodongo.asm:3`, 10-entry HP-to-phase table); the
      stop's peers sit near 90. Codex sets phase HP after a native fight and checks that the
      phase change cannot be skipped (the D7 Kydrog refill bug, QUEUE row 37).
+
+* DECIDED Goron desert region: a working Goron mining town (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Goron desert pass)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/goron_desert_power_2026-11-06/PROPOSAL.md (section 1)
+  :END:
+  Question: "Accept the mining-town region plan as direction?"
+  Options shown: "Accept (pick)", "Desert only", "Different theme".
+  Answer: "Accept (pick)" (scawful, 2026-11-06)
+  1. Desert $36/$3E: mining town. Gorons haul ore, carts sit on the tracks; Geldman, Vultures
+     and Goriya ($2C) stay as the desert enemies.
+  2. Desert east $37/$3F: the tracks run into the Lyra Sea (approved crossing); Garo watches
+     the stair to the Shrine of Power island.
+  3. Lyra coast $B0/$B8: Rock Meat sites; a cart line from the desert reaches the outer ones,
+     Glove rocks hide the rest. Waits on scawful's sea maps and the trigger table (1 exit slot).
+  4. Shrine of Power: strength theme, Power Glove mid-shrine (10-29), pendant at the end.
+  5. D6: the town's mine, same tools as the town (carts, rocks, bombs).
+  6. Route: desert -> Garo -> Shrine (Glove, pendant) -> Lyra Rock Meat -> five-Meat Goron -> D6.
+  Direction only. Codex first lists the object/sprite swaps per area (census) before edits.
+  NPC text needs scawful's OK.
