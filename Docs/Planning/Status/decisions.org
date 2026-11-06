@@ -4227,3 +4227,24 @@ Answer: "Briefing only" (scawful, 2026-11-06)
      meaning; its map content stays open.
   4. Any NPC, sign or dialogue text that tells this needs scawful's OK; ridoyie does the later
      wording pass.
+
+* DECIDED Hidden finds: salvage maps and the six moved Heart Pieces (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude, Lyra hidden-finds session
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/renders/07_hidden_finds.png
+  :END:
+  Question: Keep the board's Heart Piece split (6 moved, total 36)?
+  Options shown: 1 Keep split (pick): 3 to Lyra salvage, 1 each to Korok Cove, the garrison
+  and the sky islands; 2 Fewer moves: only the 3 day-only pieces go to sea salvage.
+  Answer: "Keep split (pick)" (scawful, 2026-11-06)
+  Context: scawful asked to "consider stuff like korok cove, the garrison, and the sky islands
+  since we may wanna hide stuff there too not just the islands".
+  1. Salvage spots on the 9 open-sea maps: $A3 $A5 $AA $AC $B2 $B5 $B6 $BA $BD.
+     Heart Pieces at $B2 (Koume side), $A5 (Lost Sea), $BD (Kotake side); the other 6 give rupees.
+  2. One Heart Piece each in Korok Cove (large area $81/$82/$89/$8A), the garrison $83
+     (overworld place, not D8) and the sky islands (on the $8C -> $8F walk).
+  3. Sources, so the total stays 36 (cap 20 hearts, 5fe10b8f / 0d62c93d): overworld pieces
+     $0A Inn, $18 Toadstool Woods, $25 Village Road (all day-only), the $11B right-half piece,
+     the $1D Crossroads overworld piece, and the $10C fairy room chest.
+  4. Flags: Lyra pieces use LyraCurrentTailFlags $7EF4C0; Codex picks flags for the special
+     areas. Exact tile spots inside each map are Codex/scawful layout work.
