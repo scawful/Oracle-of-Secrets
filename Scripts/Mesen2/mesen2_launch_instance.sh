@@ -482,17 +482,23 @@ if [[ "${NO_SAVE_SETTINGS}" -eq 1 ]]; then
   launch_args+=("--doNotSaveSettings")
 fi
 
+open_args=(-n -a "${APP_PATH}")
+if [[ "${HEADLESS}" -eq 1 ]]; then
+  # Headless agents must not activate an app or switch the user's Space.
+  open_args=(-n -g -a "${APP_PATH}")
+fi
+
 if [[ "${REUSE}" -eq 0 ]]; then
   if command -v nohup >/dev/null 2>&1; then
     if [[ "$(uname -s)" == "Darwin" ]]; then
       # Launch the app bundle; it inherits our exported env (socket path, home).
-      nohup open -n -a "${APP_PATH}" --args "${launch_args[@]}" >/tmp/mesen2_"${INSTANCE}".log 2>&1 &
+      nohup open "${open_args[@]}" --args "${launch_args[@]}" >/tmp/mesen2_"${INSTANCE}".log 2>&1 &
     else
       nohup "${MESEN_BIN}" "${launch_args[@]}" >/tmp/mesen2_"${INSTANCE}".log 2>&1 &
     fi
   else
     if [[ "$(uname -s)" == "Darwin" ]]; then
-      open -n -a "${APP_PATH}" --args "${launch_args[@]}" >/tmp/mesen2_"${INSTANCE}".log 2>&1 &
+      open "${open_args[@]}" --args "${launch_args[@]}" >/tmp/mesen2_"${INSTANCE}".log 2>&1 &
     else
       "${MESEN_BIN}" "${launch_args[@]}" >/tmp/mesen2_"${INSTANCE}".log 2>&1 &
     fi
