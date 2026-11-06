@@ -1,0 +1,522 @@
+{
+  "status": "ACCEPTED_PRIVATE_BINDING",
+  "source_generator": "Scripts/Graphics/d4_actor_native_pack.py",
+  "candidate_receipt_sha256": "f134bd49f2ac3c37924998d317ebf76e688ad7b4c567a22f1e844a5e0f179b1b",
+  "binding": {
+    "palette_rows": {
+      "protector_head": 3,
+      "protector_body": 4,
+      "warden_armor": 5,
+      "warden_iron": 6
+    },
+    "colour_indices": [
+      1,
+      7
+    ],
+    "spriteset": "4F",
+    "sprite_relative_sheets": [
+      "6C",
+      "6D",
+      "6E",
+      "6F"
+    ],
+    "global_sheets": [
+      "DF",
+      "E0",
+      "E1",
+      "E2"
+    ],
+    "asm_entries": 65,
+    "source_installed": true
+  },
+  "frames": {
+    "warden_idle_front": {
+      "canvas": [
+        32,
+        48
+      ],
+      "oam": [
+        {
+          "char": 0,
+          "x": 0,
+          "y": 0,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 2,
+          "x": 16,
+          "y": 0,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 4,
+          "x": 0,
+          "y": 16,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 6,
+          "x": 16,
+          "y": 16,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 8,
+          "x": 0,
+          "y": 32,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 10,
+          "x": 16,
+          "y": 32,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 12,
+          "x": 0,
+          "y": 0,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 14,
+          "x": 16,
+          "y": 0,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 36,
+          "x": 0,
+          "y": 16,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 38,
+          "x": 16,
+          "y": 16,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 40,
+          "x": 0,
+          "y": 32,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 42,
+          "x": 16,
+          "y": 32,
+          "palette": "warden_iron"
+        }
+      ],
+      "composition_exact": true,
+      "max_scanline_objects": 4
+    },
+    "warden_idle_side": {
+      "canvas": [
+        32,
+        48
+      ],
+      "oam": [
+        {
+          "char": 44,
+          "x": 0,
+          "y": 0,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 46,
+          "x": 16,
+          "y": 0,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 64,
+          "x": 0,
+          "y": 16,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 66,
+          "x": 16,
+          "y": 16,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 68,
+          "x": 0,
+          "y": 32,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 70,
+          "x": 16,
+          "y": 32,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 72,
+          "x": 16,
+          "y": 0,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 74,
+          "x": 0,
+          "y": 16,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 76,
+          "x": 16,
+          "y": 16,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 78,
+          "x": 0,
+          "y": 32,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 96,
+          "x": 16,
+          "y": 32,
+          "palette": "warden_iron"
+        }
+      ],
+      "composition_exact": true,
+      "max_scanline_objects": 4
+    },
+    "warden_brace": {
+      "canvas": [
+        32,
+        48
+      ],
+      "oam": [
+        {
+          "char": 98,
+          "x": 0,
+          "y": 0,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 100,
+          "x": 16,
+          "y": 0,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 102,
+          "x": 0,
+          "y": 16,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 104,
+          "x": 16,
+          "y": 16,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 106,
+          "x": 0,
+          "y": 32,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 108,
+          "x": 16,
+          "y": 32,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 110,
+          "x": 0,
+          "y": 0,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 128,
+          "x": 16,
+          "y": 0,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 130,
+          "x": 0,
+          "y": 16,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 132,
+          "x": 16,
+          "y": 16,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 134,
+          "x": 0,
+          "y": 32,
+          "palette": "warden_iron"
+        }
+      ],
+      "composition_exact": true,
+      "max_scanline_objects": 4
+    },
+    "warden_charge": {
+      "canvas": [
+        32,
+        48
+      ],
+      "oam": [
+        {
+          "char": 136,
+          "x": 0,
+          "y": 0,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 138,
+          "x": 16,
+          "y": 0,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 140,
+          "x": 0,
+          "y": 16,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 142,
+          "x": 16,
+          "y": 16,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 68,
+          "x": 0,
+          "y": 32,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 70,
+          "x": 16,
+          "y": 32,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 160,
+          "x": 16,
+          "y": 0,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 162,
+          "x": 0,
+          "y": 16,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 164,
+          "x": 16,
+          "y": 16,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 78,
+          "x": 0,
+          "y": 32,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 96,
+          "x": 16,
+          "y": 32,
+          "palette": "warden_iron"
+        }
+      ],
+      "composition_exact": true,
+      "max_scanline_objects": 4
+    },
+    "warden_vent": {
+      "canvas": [
+        32,
+        48
+      ],
+      "oam": [
+        {
+          "char": 98,
+          "x": 0,
+          "y": 0,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 166,
+          "x": 16,
+          "y": 0,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 168,
+          "x": 0,
+          "y": 16,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 170,
+          "x": 16,
+          "y": 16,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 8,
+          "x": 0,
+          "y": 32,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 10,
+          "x": 16,
+          "y": 32,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 110,
+          "x": 0,
+          "y": 0,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 128,
+          "x": 16,
+          "y": 0,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 172,
+          "x": 0,
+          "y": 16,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 174,
+          "x": 16,
+          "y": 16,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 40,
+          "x": 0,
+          "y": 32,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 42,
+          "x": 16,
+          "y": 32,
+          "palette": "warden_iron"
+        }
+      ],
+      "composition_exact": true,
+      "max_scanline_objects": 4
+    },
+    "protector_idle_front": {
+      "canvas": [
+        16,
+        24
+      ],
+      "oam": [
+        {
+          "char": 196,
+          "x": 0,
+          "y": 0,
+          "palette": "protector_head"
+        },
+        {
+          "char": 198,
+          "x": 0,
+          "y": 8,
+          "palette": "protector_body"
+        }
+      ],
+      "composition_exact": true,
+      "max_scanline_objects": 2
+    },
+    "protector_idle_side": {
+      "canvas": [
+        16,
+        24
+      ],
+      "oam": [
+        {
+          "char": 200,
+          "x": 0,
+          "y": 0,
+          "palette": "protector_head"
+        },
+        {
+          "char": 202,
+          "x": 0,
+          "y": 8,
+          "palette": "protector_body"
+        }
+      ],
+      "composition_exact": true,
+      "max_scanline_objects": 2
+    },
+    "protector_rest": {
+      "canvas": [
+        16,
+        24
+      ],
+      "oam": [
+        {
+          "char": 204,
+          "x": 0,
+          "y": 0,
+          "palette": "protector_head"
+        },
+        {
+          "char": 206,
+          "x": 0,
+          "y": 8,
+          "palette": "protector_body"
+        }
+      ],
+      "composition_exact": true,
+      "max_scanline_objects": 2
+    },
+    "protector_healing": {
+      "canvas": [
+        16,
+        24
+      ],
+      "oam": [
+        {
+          "char": 196,
+          "x": 0,
+          "y": 0,
+          "palette": "protector_head"
+        },
+        {
+          "char": 198,
+          "x": 0,
+          "y": 8,
+          "palette": "protector_body"
+        }
+      ],
+      "composition_exact": true,
+      "max_scanline_objects": 2
+    }
+  },
+  "pose_derivation": {
+    "warden_brace": "front torso lowered one pixel",
+    "warden_charge": "side torso moved left one pixel",
+    "warden_vent": "front torso lowered one pixel plus five steam pixels",
+    "protector_rest": "front head lowered one pixel",
+    "protector_healing": "reuses idle front"
+  },
+  "native_runtime_qualified": false
+}
