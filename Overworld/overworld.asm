@@ -1,6 +1,7 @@
 ; Overworld.asm
 
 incsrc "Overworld/music_cache.asm"
+incsrc "Overworld/aux_palette_extension.asm"
 
 ; Random chance of hearts from bush instead of guards
 org $1AFBBF : db $0B ; Heart Index
@@ -69,6 +70,7 @@ incsrc "Overworld/entrances.asm"
 
 incsrc "Overworld/custom_gfx.asm"
 %log_end("Overworld/custom_gfx.asm", !LOG_OVERWORLD)
+incsrc "Overworld/docks_profile.asm"
 pushpc
 
 incsrc "Overworld/world_map.asm"
