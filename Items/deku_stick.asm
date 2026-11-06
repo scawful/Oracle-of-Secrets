@@ -727,4 +727,3 @@ org $02A477 ; @hook module=Items name=DekuStick_OWSubmoduleHook kind=jsl target=
   JSL DekuStick_SubmoduleCheck
 assert pc() == $02A47B
 pullpc
-
