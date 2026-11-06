@@ -3951,3 +3951,17 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      thieves' cave on the way to Mushroom Grotto and the prison cellmate (2026-10-18/19 entries).
   3. Fits the 2026-10-18 ruling that Kydrog's pirates are at war with the thieves.
   4. Still open: which gear is taken, the goal cave reward. Thief lines need scawful's OK.
+
+* DECIDED Crescent island: the thieves take three items (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Courage island plan), follows 1a9fdaed (the thieves take Link's gear)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+  :END:
+  Question: "Which gear do the thieves take?"
+  Options shown: "Three items (pick)" (sword, shield and one tool), "Everything" (Ages-style full inventory).
+  Answer: "Three items (pick)" (scawful, 2026-11-06)
+  1. The thieves take the sword, the shield and one tool. Link keeps everything else.
+  2. Each returned item opens one of the three barriers on the island spine
+     (south arm -> west side -> north arm).
+  3. Still open: which tool is the third item, the goal cave reward.
+  4. Codex: take/return is save-data work (T3); it must not block the main route (7dcb9fc5).
