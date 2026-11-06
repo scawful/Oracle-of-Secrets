@@ -3626,3 +3626,31 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Not part of this decision: the exact wording of $135 and the new Sea Zora / waterfall hint
   messages (drafts need scawful's own OK; ridoyie does the later wording pass) and the role of the
   "Windmill Guy / Song of Storms" placeholders ($1D5-$1D8, Core/message.asm:53).
+
+* DECIDED D5 Glacia Estate step-up package: queue items 1-7 (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (difficulty scaling lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d5_glacia_stepup_2026-11-06/PROPOSAL.md
+  :END:
+  scawful context: "yeah leave the haunting be that's the upper floors we can always fill out the
+  main dungeon lower levels with more enemies" and "we can always make them stronger too".
+  Question: "Queue D5 package rows 1-7 to Codex now?"
+  Options shown: "Queue 1-7 (pick)", "Not yet".
+  Answer (scawful, 2026-11-06): "Queue 1-7 (pick)"
+  Goal: D5 moves from difficulty 5 to 6 (curve entry "Difficulty target curve").
+  1. All 44 Poltergeists stay on the estate floors. The cellar rooms (spriteset 41) get about 22
+     more enemies, using species already placed on spriteset 41.
+  2. Damage: check Pengator/Babasu classes (candidate Pengator class 5 -> 6). Poltergeists may get
+     stronger (candidates: damage half -> 1 heart, health 1 -> 2); these are global sprite
+     properties, so list every $EF placement outside D5 first.
+  3. Room CF: mini-boss arena. 2 Stalfos Knights and a Freezor; the shutter holds until all fall;
+     the Big Chest Key chest appears.
+  4. Oracle chests: 9E Compass -> Secret Scroll; new Big Chest Key chest in CF; the CC big chest
+     (Fire Rod) needs it.
+  5. Fire Rod second half: a torch shutter before CE (Big Key); 2 Freezors in BC.
+  6. Room AC: check that Twinrova's phase 2 runs and that Kotake takes Fire Rod damage.
+  7. Ranch Girl curse lift on Twinrova's death (decided 2026-09-26, not built yet).
+  Not part of this decision: the ice-block additions (proposal section 4, package row 8) stay a
+  DRAFT until the Codex ice-block analysis (QUEUE row 45) reports. In that draft scawful picked
+  "Cutting spot (pick)" and "Poof + sound (pick)".
+  Related: the damage restore is QUEUE row 28 (97e5c6e9).
