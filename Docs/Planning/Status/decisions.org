@@ -3222,3 +3222,18 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Write route, $7A use at big chests, Spanish copies and menu labels are Codex checks.
   Options shown: "Approve all 4 (pick)", "Change some".
   Answer: "Approve all 4 (pick)" (scawful, 2026-11-05).
+
+* DECIDED Tingle D8 Sky Tower map line, 150 rupees (provisional; ridoyie later) (2026-11-05)
+  :PROPERTIES:
+  :ASKED_BY: Claude (consumables + Vasu evaluation)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/tingle_d8_2026-11-05/DRAFT.md
+  :END:
+  Same pattern as $191-$197. Price 150 (D7 is 120). Final once proven on screen.
+  "Tingle, Tingle, Koolo-Limpah! / Ah, the Sky Tower!"
+  "An old tower in the clouds, / guarded by stone Watchers / that never blink!"
+  "Its floors are cracked, so / mind your step. A fall may / take you somewhere new!"
+  "How does 150 rupees sound? > Sounds good / I'll take my chances"
+  Box 3 (cracked floors) depends on the D8 v3 hub-floor drop; cut it if v3 changes.
+  Message ID ($198 is taken), TingleId 7 / bit $80 and sale order are Codex checks.
+  Options shown: "Approve (pick)", "Change some".
+  Answer: "Approve (pick)" (scawful, 2026-11-05).
