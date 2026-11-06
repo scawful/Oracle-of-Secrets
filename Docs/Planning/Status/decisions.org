@@ -4324,3 +4324,19 @@ Answer: "Briefing only" (scawful, 2026-11-06)
   and D5 must work without the Power Glove, Hammer or Bombchu.
   Not decided: what opens the desert after D4 (the "D4-D6 after D3" map-icon gate stays as is);
   whether D6 difficulty 7 changes when it can come before D5 (difficulty 6).
+
+* DECIDED Toto Ranch sells milk after the curse lifts; no horse for now (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude, progression review (gap C: the west goes quiet)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/progression_review_2026-11-06/README.md
+  :END:
+  scawful before the ask: "agreed about the western region needing more reason to visit that's why i added the docks and considered a new route into the toadstool woods"; "thought maybe milk sales and potential horse could help the ranch but idk".
+  Question: What should the ranch get?
+  Options shown: 1 Milk after curse (pick): the ranch sells milk once D5's Twinrova defeat lifts
+  the curse; 2 Milk + horse cost: Codex costs a horse mount first; 3 Neither.
+  Answer: "Milk after curse (pick)" (scawful, 2026-11-06)
+  Builds on "Beat sheet crux 7: Ranch Girl ruling": the curse still lifts automatically with no
+  return quest; milk is a shop at the ranch, not a quest. With D5 and D6 in either order
+  (8cade37c), milk is a west reward the player sees third or fourth.
+  Not decided: price, what milk does (bottle refill, heal amount), who sells it, the shop text
+  (story/dialogue text needs scawful's OK). Horse: not selected; not costed.
