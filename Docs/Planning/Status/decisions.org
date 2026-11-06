@@ -4058,3 +4058,20 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   3. Ring spots now: Steadfast Eon Zora, Light crescent grotto, Blast Kalyxo Field Cave,
      Heart Great Fairy, Power archery, Armor seashell trader.
   4. Codex: Heart Piece slot and save flag for Hidden Grave 0x5B (QUEUE row 67).
+
+* DECIDED Lyra Sea island minigame slate (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Courage island plan), follows 1dc30df2 (islands host minigames)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/renders/04_minigame_slate.png
+  :END:
+  Question: "Keep the whole minigame slate as the island plan?"
+  Options shown: "Keep slate (pick)", "Digging only".
+  Answer: "Keep slate (pick)" (scawful, 2026-11-06)
+  1. $B7 digging beach: ALttP-style digging game (lent shovel via YOVERRIDE $7E03FC, DIGS $7FFE00).
+  2. $AB chest hut: island cousin of the chest game (house 0x67).
+  3. $A4 fairy/bug catch with the bottle net against a timer.
+  4. $AD Roc's Feather hop trial on raised ground against a timer.
+  5. The crescent thieves' camp game (returns Roc's Feather) is the fifth game; which game is open.
+  6. $A2 stays held for the open Sea Zora / Wisdom island.
+  7. Open: rewards, NPCs and prices per game; entrance rows on tail maps (Codex).
+     Codex: ice_block.asm notes it may sit on the digging-game NPC's sprite slot.
