@@ -3822,3 +3822,18 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   3. Cost: one sprite slot, ~24-32 chars; Codex checks the desert spriteset ($00DB57 table)
      and picks free message IDs together with the Garo $1BE vs Ranch Girl conflict.
   4. Lore lines need scawful's OK.
+
+* DECIDED Garo form room: optional hot-floor side room in the D6 smelter (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Goron desert pass)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/goron_desert_power_2026-11-06/PROPOSAL.md (section 2.3)
+  :END:
+  Question: "Where does the optional Garo-form hot-floor room go?"
+  Options shown: "D6 smelter (pick)", "Shrine of Power", "None".
+  Answer: "D6 smelter (pick)" (scawful, 2026-11-06)
+  1. One optional side room off the D6 smelter (room role from e3b4f2cb) with a hot floor
+     only Garo form can cross; it holds a reward. Not on the required route.
+  2. Garo form is already hot-floor safe (`Dungeons/hot_floor.asm:30`), so this is room data,
+     no new mask code. The mask is earned at the stair before D6 (babe5394).
+  3. D6's required tools stay one per floor (F1 carts, B1 falls + Hammer, B2 Bombchu).
+  4. Codex picks the smelter room and reward with the row 58 census.
