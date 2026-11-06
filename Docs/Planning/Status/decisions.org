@@ -3044,3 +3044,25 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   shrine entrance (Byrna inside), and the west corner becomes more of the
   village."
   Answer: "Guard the shrine" (scawful, 2026-10-28).
+
+* DECIDED D8 Sky Tower item: the Switch Hook; the Fishing Rod and Portal Rod are separate (2026-11-05)
+  :PROPERTIES:
+  :ASKED_BY: Claude (D8 Sky Tower whole-dungeon vision)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d8_vision_2026-11-05/VISION.md
+  :END:
+  1. The Switch Hook (Items/switch_hook.asm; targets: ice blocks + statues,
+     ruling 2026-10-19) is the D8 Sky Tower item. This replaces its 10-18 home,
+     the Sea Zora temple ("Item homes: Byrna, Switch Hook, Garo").
+  2. The 10-18 "Portal Rod in D8" ruling meant the Fortress (Sky became D8 on
+     10-19). The Portal Rod stays the Fortress item.
+  3. D8 has one entrance (the $87 tower door) and one interior type (Watcher);
+     the garrison is the separate $83 building. This supersedes the garrison
+     lower floors in "Sky tower theme: from familiar to strange" (2026-09-27).
+  4. The Fishing Rod and Portal Rod are separate items: Maple's Fishing Rod
+     upgrade must stop granting the Portal Rod. Code spec:
+     handoffs/d8_vision_2026-11-05/ROD_DECOUPLE.md.
+  Answers: "i thought we decided it would have 1 entrance and interior type, the
+  garrison is a separate building. portal rod is a maybe, but switch hook could
+  also be a valid inclusion no ?"; "fishing rod is a separate item from the
+  portal rod, that code should prob be changed"; "Switch Hook (pick)"
+  (scawful, 2026-11-05).
