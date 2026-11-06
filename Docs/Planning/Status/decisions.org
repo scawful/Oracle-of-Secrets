@@ -3752,3 +3752,22 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      the B1 basement.
   6. Open for Codex: shutter tag on that door, moving the placed $54 sprites, guard sight near the
      new $64 pad, and whether a death in the fight returns Link to the cell or to the blade table.
+
+* DECIDED D6 Goron Mines: four counters to TP's mines, all accepted as direction (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Goron desert pass)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/goron_desert_power_2026-11-06/PROPOSAL.md (section 3)
+  :END:
+  Request (scawful, 2026-11-06): "let's work to escape the bad reputation of TP goron mines lol".
+  Question: "D6 counters to TP's mines: accept all four as direction?"
+  Options shown: "Accept all (pick)", "Room roles only", "Wait until the route lands".
+  Answer: "Accept all (pick)" (scawful, 2026-11-06)
+  1. Room roles: each room is a working-mine role (loading dock $98, ore sorting, smelter,
+     shaft, flooded lower tunnels). Object swaps only, like the D7 ship rooms.
+  2. One main tool per floor: F1 carts, B1 falls + Hammer, B2 Bombchu.
+  3. Movement: the falls shaft ($69 -> $88 -> $B8 -> $D8) doubles as shortcuts back up; rail
+     gates replace extra rides (11-05 "Fewer rides + dedicated rail gates").
+  4. Story beat: trapped Goron miners on B1, freed in a Hammer or Bombchu room. Visual first;
+     any text needs scawful's OK.
+  5. Lands after the paused route rooms ($88 reseal, $78 encounter, $69 -> $88 -> $78 circuit).
+     Not part of this decision: King Dodongo HP or phases (40 HP today; target 7 stop).
