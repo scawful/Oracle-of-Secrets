@@ -3264,3 +3264,14 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   $6B heart pieces and key homes in VISION.md stay proposals.
   Options shown: "$5C mid-route (pick)", "$1C at start" ($4C late in the text).
   Answer: "$5C mid-route (pick)" (scawful, 2026-11-05).
+
+* DECIDED Fortress of Secrets: cut $4D, $5D, $6C for the GBC direction (for now) (2026-11-05)
+  :PROPERTIES:
+  :ASKED_BY: Claude (consumables + Vasu evaluation)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/fortress_gbc_2026-11-05/VISION.md
+  :END:
+  Reading of "the larger boss rush chambers ... can be removed": cut $4D (Moldorm),
+  $5D (Manhandla), $6C (Lanmolas). 10 rooms remain; $6D->$5C and $4C->$3D become stairs.
+  Options shown: "Cut $4D $5D $6C (pick)", "Keep $4D too" ("Keep $6C" in the text).
+  Answer: "we can leave fortress rooms cut for now i guess yeah they were your picks lol"
+  (scawful, 2026-11-05).
