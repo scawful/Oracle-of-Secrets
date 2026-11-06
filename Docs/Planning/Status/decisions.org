@@ -3318,3 +3318,28 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   2026-11-05 cut ruling; $6C stays cut. Lever island and junction layout stay concept.
   Options shown: "Fortress $5D/$4D (pick)", "Abyss overworld".
   Answer: "Fortress $5D/$4D (pick)" (scawful, 2026-11-06).
+
+* DECIDED Minecart art: one shared sprite, Fortress-only GBC sheet (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Fortress GBC design lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/fortress_gbc_2026-11-05/minecart/cart_sprite/CART_SPRITE.md
+  :END:
+  Question: "Should D6 and the Fortress share one cart?" (GBC cart v1 render shown).
+  Answer: "share it but different graphics ?" (scawful, 2026-11-06).
+  Plan: one Minecart sprite $A3 and code. The Fortress cart rooms load their own copy of
+  sprite sheet $0F holding the GBC cart chars, through a new spriteset row (no shared-row
+  edits). D6 keeps its current cart. Room $4D (spriteset $0C) lacks sheet $0F today and
+  needs the new row for any cart; Codex checks rows and free sheet space.
+
+* DECIDED Somaria rails go in D8 Sky (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Fortress GBC design lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/somaria_rails_2026-11-06/NOTES.md
+  :END:
+  Ask (scawful, 2026-11-06): "also need somewhere in the game to use somaria rails".
+  Options shown: "Shrine of Courage" (pick), "D8 Sky", "D7 Ship back half", "Fortress".
+  Answer: "D8 Sky" (scawful, 2026-11-06).
+  Room placement is a proposal, not decided: $90 platform ride over the sky gap to the
+  socket; $96 ring rail around the orrery pit to the stage 3 socket
+  (d8_somaria_rails_v1.png). The minecart already uses the Somaria track tiles; Codex
+  checks the vanilla platform sprite $ED and its spriteset graphics.
