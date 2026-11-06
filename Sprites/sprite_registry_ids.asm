@@ -36,6 +36,7 @@ Sprite_Poltergeist = $EF
 Sprite_PolsVoice = $A4
 Sprite_Wolfos = $A9
 Sprite_IceBlock = $D5
+Sprite_Octoboss = $2F ; Overworld boss on DW $75 (was Kholdstare $A2 hook)
 Sprite_Twinrova = $CE
 Sprite_Kydreeok = $7A
 Sprite_KydreeokHead = $CF
