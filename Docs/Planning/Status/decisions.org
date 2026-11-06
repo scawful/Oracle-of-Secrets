@@ -4183,3 +4183,15 @@ Answer: "i think drop containers yes" (scawful, 2026-11-06)
 3. Pieces: 37 planned -> 36. Which piece is cut is open.
 4. Correction to 5fe10b8f point 4: the stacked duplicates on OW $00/$6A share one flag, so they are not extra pieces. Salvage Heart Pieces (3bc72959) replace counted spots inside the 36. Re-homing the orphaned $4D or route-less $127 piece adds to the count.
 5. Open (story, scawful's OK): what the Maku Tree gives at the first meeting instead.
+
+* DECIDED 20-heart budget: cut the $124 cave chest Heart Piece (2026-11-06)
+:PROPERTIES:
+:ASKED_BY: claude (review of Cursor rewards inventory)
+:DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/rewards_inventory_2026-11-06/REVIEW_CLAUDE.md
+:END:
+Question: Cut the $124 cave chest piece as the one trim?
+Options shown: "Cut $124" (pick) / "Pick another".
+Answer: "Cut $124" (scawful, 2026-11-06)
+1. Room $124 (entrance $6D on OW $33; $6E on OW $4D, $73) loses its Heart Piece chest. Pieces: 37 planned -> 36 (budget 0d62c93d).
+2. Cursor's inventory flags the $124 chest data as a likely over-read; the cut also clears that question.
+3. Codex/Cursor: what the chest holds instead (or removing it) is a base-ROM write and needs scawful's OK for that step; fold it into FIX_PLAN Step 4 or 5.
