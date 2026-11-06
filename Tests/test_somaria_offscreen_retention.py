@@ -260,7 +260,7 @@ class SomariaInternalLandingRetention(unittest.TestCase):
 
     def test_gateway_and_native_loop_guards(self):
         start = offset(TERM_HOOK)
-        self.assertEqual(self.rom[start:start + 5], bytes.fromhex("5c00fc2cea"))
+        self.assertEqual(self.rom[start:start + 5], bytes.fromhex("5c00f72cea"))
         for address, raw in ((0x09AC6B, "8b4baba205"), (0x09AC7A, "bd4a0cc92cd00d"),
                              (TERM_FALLBACK, "2980f0046448645e"), (0x09ACA6, "9e4a0cca10c4")):
             expected = bytes.fromhex(raw)
@@ -331,7 +331,7 @@ class SomariaInternalLandingRetention(unittest.TestCase):
 
     def test_mutation_internal_missing_status_pop_is_rejected(self):
         mutant = bytearray(self.rom)
-        restore = mutant.find(bytes.fromhex("68285ca9ac09"), offset(0x2CFC00), offset(0x2CFD00))
+        restore = mutant.find(bytes.fromhex("68285ca9ac09"), offset(0x2CF700), offset(0x2CF800))
         self.assertNotEqual(restore, -1)
         mutant[restore + 1] = 0xEA
         with self.assertRaises(AssertionError):

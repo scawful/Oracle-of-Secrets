@@ -401,6 +401,8 @@ if !ENABLE_D8_BOSS == 1
   %log_end("d8_boss", !LOG_DUNGEON)
 endif
 
+assert pc() <= $2CF700, "Bank $2C sprite stream overlaps Somaria internal landing"
+
 if !ENABLE_MINECART_CART_SHUTTERS
   assert pc() <= $2CFA00, "Bank $2C sprite stream overlaps localized cart drag"
 endif

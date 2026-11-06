@@ -382,21 +382,21 @@ endif
 ; across all layers, one owner of the shutter state, and no transit lines.
 ; The caller must keep the vanilla once-per-frame, $11==$00 room-tag cadence.
 ;
-; Allocation: fixed bank $2C tail $2CFC00-$2CFDFF, so the bank $2C
-; continuation used by the code before and after this file is unchanged.
-; Neighbors: main bank $2C stream is bounded below $2CFC00;
-; CustomRoomCollision at $2CFE00-$2CFEFF, JumpTableLocal_Guard at
-; $2CFF00. Each fixed helper has its own guarded vanilla gateway.
+; Allocation: internal landing owns $2CF700-$2CF7FF; tag and cull helpers
+; own $2CFD00-$2CFDFF. Both dynamic bank $2C streams stay below $2CF700.
+; Thin ice owns $2CF800-$2CF9FF; optional cart helpers own $2CFA00-$2CFCFF;
+; collision owns $2CFE00-$2CFEFF and JumpTableLocal_Guard starts $2CFF00.
+; Each fixed helper has its own guarded vanilla gateway.
 
 ; Refuse an occupied tail even when its bytes have no project symbol.
-!SomariaSocket_InternalGuard #= $2CFC00
-while !SomariaSocket_InternalGuard < $2CFD00
+!SomariaSocket_InternalGuard #= $2CF700
+while !SomariaSocket_InternalGuard < $2CF800
   assert read4(!SomariaSocket_InternalGuard) == $00000000, "Somaria internal-landing allocation is occupied"
   !SomariaSocket_InternalGuard #= !SomariaSocket_InternalGuard+4
 endwhile
 
 pushpc
-org $2CFC00
+org $2CF700
 SomariaSocket_InternalLanding:
 {
   ; Entry: M/X=8, DBR=$09, D=$0000, X=native slot, A=$2C. PHP/PHA
@@ -429,7 +429,7 @@ SomariaSocket_InternalLanding:
   LDA.b $48
   JML $09AC86
 }
-assert pc() <= $2CFD00 ; original tag and draw-cull helper start here
+assert pc() <= $2CF800 ; thin ice owns the next fixed slot
 pullpc
 
 pushpc

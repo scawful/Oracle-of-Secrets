@@ -177,7 +177,7 @@ incsrc "Dungeons/d7_farore_rescue.asm"
 print  "End of d7_farore_rescue.asm       ", pc
 endif
 
-assert pc() <= $2CFC00 ; Somaria internal-landing helper owns the fixed tail
+assert pc() <= $2CF700 ; Somaria internal-landing helper owns the fixed tail
 print "End of dungeons.asm               ", pc
 
 pushpc
