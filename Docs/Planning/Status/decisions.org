@@ -3702,3 +3702,19 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      garrison armor, fought as a sword duel with the Meadow Blade.
   2. Concept only. Arena, duel rules, art and any text stay open; text needs scawful's OK.
   3. Canon limit kept: nothing in the fight tells Kydrog where Farore's power is before D7.
+
+* DECIDED D3 boss rooms: the Captain's phantom fights in $29; the Armos Knights move to the basement (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (dungeon design pass)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d3_kalyxo_castle_stepup_2026-11-06/PROPOSAL.md
+  :END:
+  Question: "Where does the Captain's phantom fight?"
+  Options shown: "$29, Armos in $39", "Great hall $51" ("Both in $29, two waves" in the text).
+  Answer (scawful, 2026-11-06): "great hall is apart of cutscenes and hyrule castle dream, not
+  kalyxo castle. might be better in the basements" then "i mean the captains fight happens in the
+  armos fight room that currently exists, armos moved to basement ?"
+  1. The Captain's phantom fights in room $29, the current Armos Knights room.
+  2. The Armos Knights move to a D3 basement room (B1: $70/$71/$72/$80/$81/$82). Which room and
+     when Link fights them: open. This replaces "move to the gate before the D3 boss" in item 1 of
+     "D3 boss structure" (e84bbd7f).
+  3. Room $51 (great hall) belongs to the cutscenes and the Hyrule Castle dream, not Kalyxo Castle.
