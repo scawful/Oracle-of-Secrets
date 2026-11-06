@@ -3430,3 +3430,20 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      square per quarter. Diagonal walls and layer 2 are not covered by this answer.
   3. The Fortress may get more than 12 rooms if room IDs can be spared after the rest of the
      game's needs are known (Codex room-budget check).
+
+* DECIDED Fortress act 1 room shapes ($0C, $1C, $6D) (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Fortress GBC design lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/fortress_gbc_2026-11-05/act1_shapes.png
+  :END:
+  Question: "Are these act 1 room shapes right?" (image act1_shapes.png, concept on Onox tiles).
+  Options shown: "Yes (pick)", "Change a room".
+  Answer (scawful, 2026-11-06): "Yes (pick)"
+  1. $0C: cross-shaped entry hall (2 torches on islands past pits, dome door north), U wall
+     block around the stairs to $1C, pillar hall with the barred $3D shortcut stairs.
+  2. $1C: L-shaped arrival, color floor quarter unchanged, pit trench + Hookshot + Somaria plate
+     shutter, Armos pit field with one walkway to the $6D stairs.
+  3. $6D: water island with the Treasure Key (Hookshot post back), spiked-water zigzag to the
+     key block and $5C stairs, 4-pillar pot room (key 2).
+  4. Flat walls, no diagonals, no layer 2 (decision 2.6 stands). Codex maps the concept to ALTTP
+     objects; exact tile positions may move to fit object sizes.
