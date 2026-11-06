@@ -219,7 +219,19 @@ class Revision3DirectoryEncodingTest(unittest.TestCase):
         directory[28:32] = bytes(4)
         struct.pack_into('<I', directory, 28, zlib.crc32(directory))
         image[N.DIRECTORY_PC:N.DIRECTORY_PC + N.DIRECTORY_SIZE] = directory
-        self.assertEqual(N.reader_constants(bytes(image)), N.reader_constants(self.installed_image()))
+        # Record order is not a table ABI, but its raw directory CRC changes.
+        def table_constants(data):
+            return [line for line in N.reader_constants(data).splitlines()
+                    if not line.startswith('!SPECIAL_OVERWORLD_DIRECTORY_CRC')]
+        self.assertEqual(table_constants(bytes(image)), table_constants(self.installed_image()))
+        self.assertIn(f'!SPECIAL_OVERWORLD_DIRECTORY_CRC = ${zlib.crc32(directory[:28] + bytes(4) + directory[32:]):08X}',
+                      N.reader_constants(bytes(image)))
+
+    def test_reader_source_refuses_other_code_reservations(self):
+        self.entries = [(entry_id, 0x528000 if entry_id == 300 else address, count)
+                        for entry_id, address, count in self.entries]
+        with self.assertRaisesRegex(ValueError, 'selected ROM reservations'):
+            N.reader_constants(self.installed_image())
 
     def test_build_rejects_payload_mirror_or_call_changes(self):
         # Build-verification fixture supplies five actual four-byte call bindings.

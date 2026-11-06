@@ -39,6 +39,15 @@
 incsrc    "Util/macros.asm"
 incsrc    "Config/module_flags.asm"
 incsrc    "Config/feature_flags.asm"
+; The input descriptor selects native readers; stale cache files cannot
+; activate them for a direct legacy assembly. Build regenerates this include.
+!SPECIAL_OVERWORLD_NATIVE = 0
+if read4($28F000) == $4F534F4F && read4($28F004) == $32393157 && read2($28F008) == $0003
+  assert canreadfile1(".cache/special_overworld_reader_constants.asm", 0), "Run build_rom.sh to generate native reader constants"
+  incsrc ".cache/special_overworld_reader_constants.asm"
+  assert !SPECIAL_OVERWORLD_NATIVE == 1, "Native reader constants do not match the selected ROM"
+  assert read4($28F01C) == !SPECIAL_OVERWORLD_DIRECTORY_CRC, "Native reader constants are stale; run build_rom.sh"
+endif
 if !ENABLE_MASK_R_BINDING == 1
   assert !ENABLE_MASK_Y_TRANSFORM == 1, "Mask R binding requires mask_y_transform"
   assert !ENABLE_TRUTHFUL_CONTROLS == 1, "Mask R binding requires truthful_controls"
@@ -193,4 +202,10 @@ if !ENABLE_SOURCE_SPRITE_SHEETS == 1
 endif
 if !DISABLE_MENU == 0
   incsrc "Core/Generated/menu_icons/menu_icon_overrides.asm"
+endif
+
+; Readers are emitted after the current source callers and graphics overrides.
+if !SPECIAL_OVERWORLD_NATIVE == 1
+  assert !DISABLE_OVERWORLD == 0, "Native special overworld requires the overworld module"
+  incsrc "Overworld/lyra_native_loaders.asm"
 endif

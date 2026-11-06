@@ -130,9 +130,17 @@ endif
 
   ; Skip story events, test goron mines
   LDX.b #$36
+  if !SPECIAL_OVERWORLD_NATIVE == 1
+  JSL Lyra_TailEvent_Load
+  else
   LDA.l $7EF280, X
+  endif
   ORA.b #$20
+  if !SPECIAL_OVERWORLD_NATIVE == 1
+  JSL Lyra_TailEvent_Store
+  else
   STA.l $7EF280, X
+  endif
 
   LDA.b #$02 : STA $7EF3C5
   LDA.b #$01 : STA MakuTreeQuest

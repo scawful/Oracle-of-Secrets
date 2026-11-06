@@ -40,7 +40,7 @@
     "shared:Overworld/overlays.asm": {
       "source_set": "shared",
       "path": "Overworld/overlays.asm",
-      "sha256": "fb08e0fa9557c59673e0b5ae3179d73466dcbf7f3879d047db29724baff4a489"
+      "sha256": "6f8b172ebc52196146a07a9ba6cff2989419a655b9898b8a7413dc1c09e5378f"
     },
     "shared:Core/sram.asm": {
       "source_set": "shared",
@@ -75,7 +75,7 @@
     "shared:Overworld/ZSCustomOverworld.asm": {
       "source_set": "shared",
       "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "94d7d7704faf916236b019ced369b49a8e7899fcf9ff73b8c78b6f29c54e91eb"
+      "sha256": "a8c8a3f27da3bd4555c72783754c21b06a7b34ca178e13992898d200f88ebc4f"
     },
     "shared:Sprites/Objects/data/minecart_tracks.asm": {
       "source_set": "shared",
@@ -171,6 +171,16 @@
       "source_set": "shared",
       "path": "Masks/wolf_mask.asm",
       "sha256": "f2435f1738736e43a01f4be2e48831f60e666961d6503dea17101c69507fb782"
+    },
+    "shared:Overworld/lyra_native_loaders.asm": {
+      "source_set": "shared",
+      "path": "Overworld/lyra_native_loaders.asm",
+      "sha256": "60f98b4e9cf1202c2186749f2c56f6aac9cb8fa566b0df990e1ad8fabd3f5407"
+    },
+    "shared:Scripts/Build/lyra_native_loaders.py": {
+      "source_set": "shared",
+      "path": "Scripts/Build/lyra_native_loaders.py",
+      "sha256": "ce22ef7b2cd56764b6ca7072676ef53fa302d6b1a3cf20a8025d329a56900ff2"
     }
   },
   "claims": [
@@ -1314,6 +1324,247 @@
       "binding": {
         "source": "shared:Core/sram.asm",
         "symbol": "WolfDigFlags",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "native_special_directory",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 2682880,
+      "size": 1024,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "DIRECTORY_PC = 0x147000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_tables",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 4620288,
+      "size": 12672,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "def current_table_layout(table_base):"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_bindings",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 4632960,
+      "size": 3712,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "def encode_revision3_directory("
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_readers",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 4636672,
+      "size": 16384,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Overworld/lyra_native_loaders.asm"
+      ],
+      "anchors": [
+        "Lyra_CurrentNativeCodeStart:"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_terrain_0",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 4751360,
+      "size": 32768,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "def verify_saved_payload("
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_terrain_1",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 4816896,
+      "size": 32768,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "def verify_saved_payload("
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_terrain_2",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 4882432,
+      "size": 32768,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "def verify_saved_payload("
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_terrain_3",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 4947968,
+      "size": 32768,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "def verify_saved_payload("
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_actors",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 5013504,
+      "size": 32768,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "def lower_actor_lists("
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_event_flags",
+      "owner": "Native special-overworld tail event state",
+      "space": "save_buffer",
+      "base": 8320192,
+      "size": 32,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Persistent A0-BF event flags and schema marker in the existing Core reservation.",
+      "reset": "New-file clear and versioned file-load migration initialize tail flags.",
+      "save": "Covered by existing five-page native save/checksum loops; focused native verification still required.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "anchors": [
+        "LyraCurrentTailFlags"
+      ],
+      "aliases": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "LyraCurrentTailFlags",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "native_special_event_version",
+      "owner": "Native special-overworld tail event state",
+      "space": "save_buffer",
+      "base": 8320224,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Persistent A0-BF event flags and schema marker in the existing Core reservation.",
+      "reset": "New-file clear and versioned file-load migration initialize tail flags.",
+      "save": "Covered by existing five-page native save/checksum loops; focused native verification still required.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "anchors": [
+        "LyraCurrentTailVersion"
+      ],
+      "aliases": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "LyraCurrentTailVersion",
         "bank00_mirror": false
       }
     }

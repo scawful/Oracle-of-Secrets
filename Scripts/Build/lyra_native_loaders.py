@@ -23,6 +23,11 @@ MAP_CAPACITY = 0xC0
 DIRECTORY_PC = 0x147000
 DIRECTORY_SIZE = 1024
 MAGIC = b'OOSOW192'
+TABLE_BASE = 0x468000
+BINDINGS_BASE = 0x46B180
+CODE_BASE = 0x46C000
+CODE_LIMIT = 0x470000
+ACTORS_BASE = 0x4C8000
 
 # name, native SNES table, native row count, native first map, row stride.
 # Compact special tables have structural zero prefixes in the expanded copy;
@@ -341,13 +346,26 @@ def reader_constants(image):
         return '; Ordinary160-map source path.\n!SPECIAL_OVERWORLD_NATIVE = 0\n'
     capacity, bank, entries = installed
     require(capacity == MAP_CAPACITY, 'Retained native readers require192 materialized maps')
+    require(all(entries[family.id][0] == family.snes
+                for family in current_table_layout(TABLE_BASE))
+            and entries[300][0] == CODE_BASE and entries[300][1] <= CODE_LIMIT - CODE_BASE
+            and entries[301][0] == BINDINGS_BASE
+            and entries[301][1] * 16 <= CODE_BASE - BINDINGS_BASE
+            and entries[100][0] == ACTORS_BASE and entries[100][1] <= 0x8000
+            and all(entries[210 + i] == (((0x48 + i) << 16) | 0x8000, 0x8000)
+                    for i in range(4)),
+            'Installed native layout differs from this engine\'s selected ROM reservations')
     lines = ['; Generated from the saved ROM; contains no authored data.',
              '!SPECIAL_OVERWORLD_NATIVE = 1', '!LYRA_CURRENT_MODE = 1',
+             f'!SPECIAL_OVERWORLD_DIRECTORY_CRC = ${struct.unpack_from("<I", image, DIRECTORY_PC + 28)[0]:08X}',
              '!LYRA_CURRENT_FIRST = $00A0', '!LYRA_CURRENT_END = $00C0',
              '!LYRA_CURRENT_PARENT_COUNT = $00C0',
              '!LYRA_CURRENT_ACTORS_ENABLED = 1', '!LYRA_CURRENT_ACTORS_BOUND = 1',
+             '!LYRA_CURRENT_EVENTS_ENABLED = 1', '!LYRA_CURRENT_EVENTS_BOUND = 1',
+             '!LYRA_CURRENT_EVENT_BASE = $7EF4C0',
+             '!LYRA_CURRENT_EVENT_VERSION = $7EF4E0', '!LYRA_CURRENT_EVENT_MARKER = $A1',
              f'!LYRA_CURRENT_ACTOR_BANK = ${bank:02X}']
-    for family in current_table_layout(0x468000):
+    for family in current_table_layout(TABLE_BASE):
         if family.id != 29:
             lines.append(f'!LYRA_CURRENT_TABLE_{family.name} = ${entries[family.id][0]:06X}')
     code, code_bytes = entries[300]

@@ -350,9 +350,20 @@ OverworldLoadScreensPaletteSet = $02C692
 RomToPaletteBuffer:
 {
   LDX.b $8A
-  LDA.l $7EFD40,X : STA.b $00
+  if !SPECIAL_OVERWORLD_NATIVE == 1
+  LyraCall_SpritePalette_0 = pc()
+  JSL.l Lyra_ReadSpritePalette
+  else
+  LDA.l $7EFD40,X
+  endif
+  STA.b $00
 
+  if !SPECIAL_OVERWORLD_NATIVE == 1
+  LyraCall_PaletteSet_0 = pc()
+  JSL.l Lyra_ReadPaletteSet
+  else
   LDA.l OverworldPalettesScreenToSet_New,X
+  endif
   JSL OverworldPalettesLoader
   JSR Overworld_CopyPalettesToCache
   JSR OverworldLoadScreensPaletteSet 
@@ -505,6 +516,7 @@ RefreshOverworldBackdrop:
 ReadOverworldBackdropColor:
 {
   LDA.b $8A : AND.w #$00FF
+Lyra_CurrentBackdropLegacy:
   CMP.w #$00A0 : BCS .invalid_area
   CMP.w #$0080 : BNE .area_color
     LDA.b $A0 : CMP.w #$0181 : BNE .reload_area
