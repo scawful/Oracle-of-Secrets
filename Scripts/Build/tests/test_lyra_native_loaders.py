@@ -141,15 +141,31 @@ class NativeActorsTest(unittest.TestCase):
 
 class Revision3DirectoryEncodingTest(unittest.TestCase):
     def setUp(self):
-        self.image = bytes(0x400000)
+        image = bytearray(0x400000)
+        # Synthetic instruction fixtures, not a runnable game. The independent
+        # canonical-ROM census covers actual installed source operands.
+        for entry_id, address, offset in (
+                tuple((400, address, offset) for address, offset in N.TILE16_LONG_READERS)
+                + N.TILE32_LONG_READERS):
+            at = N.pc(address)
+            image[at - 1] = 0xBF
+            image[at:at + 3] = (N.CURRENT_DICTIONARIES[entry_id] + offset).to_bytes(3, 'little')
+        for address in N.TILE16_BANK_READERS:
+            at = N.pc(address)
+            image[at - 1:at + 1] = bytes([0xA9, 0x3D])
+        for address, offset in N.TILE16_WORD_READERS:
+            at = N.pc(address)
+            image[at - 1] = 0xB9
+            image[at:at + 2] = (0x8000 + offset).to_bytes(2, 'little')
+        self.image = bytes(image)
         self.entries = [(f.id, f.snes, 192) for f in N.current_table_layout(0x468000)]
         self.entries += [(100, 0x4C8000, 0x8000),
                          (200, 0x0B8000, 0x7E70), (201, 0x0C8000, 0x411F),
                          (202, 0x268000, 0x8000),
                          (300, 0x46C000, 0x2000), (301, 0x46B180, 5),
-                         (400, 0x3D8000, 4096), (401, 0x3E8000, 4432),
-                         (402, 0x3F8000, 4432), (403, 0x508000, 4432),
-                         (404, 0x518000, 4432)]
+                         (400, 0x3D8000, 4096), (401, 0x038000, 4432),
+                         (402, 0x048000, 4432), (403, 0x3E8000, 4432),
+                         (404, 0x3F8000, 4432)]
         self.entries += [(210 + i, (0x48 + i) << 16 | 0x8000, 32768) for i in range(4)]
 
     def encode(self):
@@ -200,6 +216,7 @@ class Revision3DirectoryEncodingTest(unittest.TestCase):
         self.assertIn('!LYRA_CURRENT_TABLE_area_size = $46A940', text)
         self.assertIn('!LYRA_CURRENT_ACTOR_BANK = $4C', text)
         self.assertIn('!LYRA_CURRENT_CODE_BASE = $46C000', text)
+        self.assertIn('!LYRA_CURRENT_MAP16_DEFINITIONS = $3D8000', text)
         self.assertFalse(any(line.startswith(('org ', 'db ', 'incbin ')) for line in text.splitlines()))
         self.assertEqual(N.reader_constants(bytes(0x220000)),
                          '; Ordinary160-map source path.\n!SPECIAL_OVERWORLD_NATIVE = 0\n')
@@ -233,6 +250,35 @@ class Revision3DirectoryEncodingTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'selected ROM reservations'):
             N.reader_constants(self.installed_image())
 
+    def test_reader_source_refuses_dictionary_relocation_or_operand_mismatch(self):
+        baseline = self.installed_image()
+        sites = [(N.pc(address), 3) for address, _ in N.TILE16_LONG_READERS]
+        sites += [(N.pc(address), 3) for _, address, _ in N.TILE32_LONG_READERS]
+        sites += [(N.pc(address), 1) for address in N.TILE16_BANK_READERS]
+        sites += [(N.pc(address), 2) for address, _ in N.TILE16_WORD_READERS]
+        self.assertEqual(len(sites), 56)
+        for at, width in sites:
+            for changed in (at - 1, at + width - 1):
+                with self.subTest(operand_pc=at, changed_pc=changed):
+                    image = bytearray(baseline)
+                    image[changed] ^= 1
+                    with self.assertRaises(ValueError):
+                        N.reader_constants(bytes(image))
+        self.entries = [(entry_id, 0x508000 if entry_id == 401 else address, count)
+                        for entry_id, address, count in self.entries]
+        with self.assertRaisesRegex(ValueError, 'dictionary ID401'):
+            N.reader_constants(self.installed_image())
+
+    def test_dictionary_readers_accept_mapped_fast_rom_aliases(self):
+        image = bytearray(self.installed_image())
+        for _, address, _ in (
+                tuple((400, address, offset) for address, offset in N.TILE16_LONG_READERS)
+                + N.TILE32_LONG_READERS):
+            image[N.pc(address) + 2] |= 0x80
+        for address in N.TILE16_BANK_READERS:
+            image[N.pc(address)] |= 0x80
+        self.assertIn('!SPECIAL_OVERWORLD_NATIVE = 1', N.reader_constants(bytes(image)))
+
     def test_build_rejects_payload_mirror_or_call_changes(self):
         # Build-verification fixture supplies five actual four-byte call bindings.
         # Helper bodies are synthetic here: no engine or terrain proof is claimed.
@@ -254,6 +300,11 @@ class Revision3DirectoryEncodingTest(unittest.TestCase):
         unrelated = bytearray(baseline)
         unrelated[0x2B000] ^= 1
         N.verify_saved_payload(baseline, bytes(unrelated))
+        for address in (0x02F6AC, 0x008865, 0x02FD28, 0x02FE1C):
+            edited = bytearray(baseline)
+            edited[N.pc(address)] ^= 1
+            with self.assertRaises(ValueError):
+                N.verify_saved_payload(baseline, bytes(edited))
         for offset, message in ((0x240000, 'payload'), (N.DIRECTORY_PC + 40, 'directory'),
                                 (0x1794D, 'mirrors'), (N.pc(sites[0]), 'reader call')):
             edited = bytearray(baseline)

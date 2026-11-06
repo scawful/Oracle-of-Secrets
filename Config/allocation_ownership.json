@@ -180,7 +180,7 @@
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "4c7d373b10de2c331c7dcacedf304fa56186bd3277c82966b06bf9ca53236513"
+      "sha256": "547104735082096635b33d2fb7859e6a4897bbca60ecbc2cd0df7598bfe27358"
     }
   },
   "claims": [

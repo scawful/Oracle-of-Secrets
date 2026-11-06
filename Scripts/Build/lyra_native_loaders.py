@@ -29,6 +29,28 @@ CODE_BASE = 0x46C000
 CODE_LIMIT = 0x470000
 ACTORS_BASE = 0x4C8000
 
+# Existing dictionaries in the selected Oracle engine. Initial import reuses
+# these owned bodies; arbitrary relocation needs a separately bound reader ABI.
+CURRENT_DICTIONARIES = {400: 0x3D8000, 401: 0x038000, 402: 0x048000,
+                        403: 0x3E8000, 404: 0x3F8000}
+TILE16_LONG_READERS = (
+    (0x008865, 0), (0x0EDE4F, 0), (0x0EDEE9, 0),
+    (0x1BBC2D, 2), (0x1BBC4C, 0), (0x1BBCC2, 4), (0x1BBCCB, 6),
+    (0x1BBEF6, 0), (0x1BBF23, 0), (0x1BC041, 0),
+    (0x1BC9B3, 0), (0x1BC9BA, 2), (0x1BC9C1, 4), (0x1BC9C8, 6),
+    (0x1BCA40, 0), (0x1BCA47, 2), (0x1BCA4E, 4), (0x1BCA55, 6),
+    (0x02F457, 0), (0x02F45E, 2), (0x02F467, 4), (0x02F46E, 6),
+    (0x02F51F, 0), (0x02F526, 4), (0x02F52F, 2), (0x02F536, 6),
+)
+TILE32_LONG_READERS = tuple(
+    (401 + quadrant, operand + quadrant * 0x40, offset)
+    for quadrant in range(4)
+    for operand, offset in ((0x02F6AC, 0), (0x02F6B3, 1), (0x02F6BA, 2),
+                            (0x02F6C1, 3), (0x02F6C8, 4), (0x02F6DA, 5)))
+TILE16_WORD_READERS = ((0x02FE1C, 0), (0x02FE23, 4),
+                       (0x02FE2C, 2), (0x02FE33, 6))
+TILE16_BANK_READERS = (0x02FD28, 0x02FD39)
+
 # name, native SNES table, native row count, native first map, row stride.
 # Compact special tables have structural zero prefixes in the expanded copy;
 # their original readers continue to own the existing native maps.
@@ -335,6 +357,38 @@ def read_revision3_directory(image):
     return capacity, bank, {entry_id: (address, rows) for entry_id, address, rows in entries}
 
 
+def verify_dictionary_readers(image, entries):
+    """Bind the first producer to all56 existing dictionary operand sites.
+
+    Locations below are operand addresses, with their opcode immediately
+    before them. Compare mapped addresses so legitimate FastROM aliases work.
+    The four active custom entrance reads use the emitted Map16 constant.
+    """
+    for entry_id, expected in CURRENT_DICTIONARIES.items():
+        require(pc(entries[entry_id][0]) == pc(expected),
+                f'Native dictionary ID{entry_id} differs from this engine profile')
+    readers = tuple((400, address, offset) for address, offset in TILE16_LONG_READERS)
+    for entry_id, address, offset in readers + TILE32_LONG_READERS:
+        at = pc(address)
+        require(at + 3 <= len(image) and image[at - 1] == 0xBF,
+                f'Native dictionary reader opcode changed at {address:06X}')
+        actual = int.from_bytes(image[at:at + 3], 'little')
+        require(pc(actual) == pc(entries[entry_id][0] + offset),
+                f'Native dictionary reader operand disagrees at {address:06X}')
+    target = entries[400][0]
+    for address in TILE16_BANK_READERS:
+        at = pc(address)
+        require(at < len(image) and image[at - 1] == 0xA9
+                and pc((image[at] << 16) | 0x8000) == pc(target),
+                f'Native Tile16 bank reader disagrees at {address:06X}')
+    for address, offset in TILE16_WORD_READERS:
+        at = pc(address)
+        require(at + 2 <= len(image) and image[at - 1] == 0xB9
+                and int.from_bytes(image[at:at + 2], 'little')
+                == ((target + offset) & 0xFFFF),
+                f'Native Tile16 word reader disagrees at {address:06X}')
+
+
 def reader_constants(image):
     """Emit constants only: never org/db/incbin or a saved data body.
 
@@ -355,12 +409,14 @@ def reader_constants(image):
             and all(entries[210 + i] == (((0x48 + i) << 16) | 0x8000, 0x8000)
                     for i in range(4)),
             'Installed native layout differs from this engine\'s selected ROM reservations')
+    verify_dictionary_readers(image, entries)
     lines = ['; Generated from the saved ROM; contains no authored data.',
              '!SPECIAL_OVERWORLD_NATIVE = 1', '!LYRA_CURRENT_MODE = 1',
              f'!SPECIAL_OVERWORLD_DIRECTORY_CRC = ${struct.unpack_from("<I", image, DIRECTORY_PC + 28)[0]:08X}',
              '!LYRA_CURRENT_FIRST = $00A0', '!LYRA_CURRENT_END = $00C0',
              '!LYRA_CURRENT_PARENT_COUNT = $00C0',
              '!LYRA_CURRENT_ACTORS_ENABLED = 1', '!LYRA_CURRENT_ACTORS_BOUND = 1',
+             f'!LYRA_CURRENT_MAP16_DEFINITIONS = ${CURRENT_DICTIONARIES[400]:06X}',
              '!LYRA_CURRENT_EVENTS_ENABLED = 1', '!LYRA_CURRENT_EVENTS_BOUND = 1',
              '!LYRA_CURRENT_EVENT_BASE = $7EF4C0',
              '!LYRA_CURRENT_EVENT_VERSION = $7EF4E0', '!LYRA_CURRENT_EVENT_MARKER = $A1',
@@ -391,6 +447,7 @@ def verify_saved_payload(source, compiled):
             == compiled[DIRECTORY_PC:DIRECTORY_PC + DIRECTORY_SIZE],
             'Build replaced the saved native directory')
     capacity, _, entries = installed
+    verify_dictionary_readers(source, entries)
     for entry_id, (address, count) in entries.items():
         _, _, stride = entry_spec(entry_id, capacity)
         start, length = pc(address), count * stride
@@ -431,6 +488,7 @@ def verify_saved_payload(source, compiled):
                 and compiled[site_pc:site_pc + 4] == instruction,
                 'Build changed an installed native reader call')
     read_revision3_directory(compiled)
+    verify_dictionary_readers(compiled, entries)
 
 
 def main(argv=None):
