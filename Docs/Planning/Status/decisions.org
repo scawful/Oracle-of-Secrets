@@ -2995,7 +2995,7 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Cheapest; reopens the Glove/Mitt swap.
   Answer: "Shrine of Power: Option A. Garo guards the stair, Mitt mid-shrine, pendant at the end." (scawful, 2026-10-23).
 
-* OPEN Garo quest shape: the last watchman? (2026-10-23)
+* DECIDED Garo quest shape: the last watchman, with the duel (2026-10-23, decided 2026-11-06)
   :PROPERTIES:
   :ASKED_BY: Claude-GaroPower (scawful's 2026-10-23 request: "dialogue/quest for garo sprite in the desert")
   :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/garo_power_2026-10-23/README.md]]
@@ -3007,7 +3007,14 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   yet; lines come back for approval.
   A (Claude's pick). With the duel.
   B. Without the duel: blink, talk, Healing.
-  Answer:
+  Re-asked 2026-11-06 (Goron desert pass, handoffs/goron_desert_power_2026-11-06/PROPOSAL.md)
+  with options "Duel (pick)", "No duel", and "Duel plus desert sentries" (text only).
+  Answer: "Duel (pick)" (scawful, 2026-11-06)
+  1. Garo duels Link (three hits) at the Shrine of Power stair, then asks for the Song of
+     Healing; Healing gives the Garo Mask and opens the stair.
+  2. Desert sentries are not part of this decision.
+  3. All Garo text still needs scawful's OK. Open for Codex: $57 placement on $37,
+     Garo_IsMinesNPC map check, duel behavior, a free message ID (1BE is the Ranch Girl).
 
 * DECIDED Fortress island block $7B-$9D leaves the Fortress, unclaimed; $4D open (2026-10-28)
   :PROPERTIES:
