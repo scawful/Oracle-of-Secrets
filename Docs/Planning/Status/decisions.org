@@ -3412,3 +3412,21 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   practice socket and eye, Farore waits at the Boss Key door to $96. Codex refines positions
   and art (QUEUE.md D8 group). $96 F3 marks follow the 2026-11-03 boss decisions 1-11.
   Method note: scawful said the Proposal Preview is busy and the preview is too small to judge.
+
+* DECIDED Fortress of Secrets 4-act shape; rooms get real shapes; room count may grow (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Fortress GBC design lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/fortress_gbc_2026-11-05/INTENT.md
+  :END:
+  Question: "Is that the Fortress's shape?" (intent card: 1 before the rod $0C $1C $6D;
+  2 the rod $5C $5D $4D; 3 rod + arrows $4C $3D $6B; 4 the end $2D $1D $0D).
+  Options shown: "Yes (pick)", "Change an act".
+  Answer (scawful, 2026-11-06): "yes but not all rooms should be perfect squares, use alttp
+  objects for more shape and challenge. we may want more rooms if we can spare them depending
+  on what's needed for the rest of the game"
+  1. The 4 acts stand as shown.
+  2. Room layouts are not all square screens: ALTTP objects (inner walls, pits, water, ledges,
+     blocks and similar) give rooms shape and challenge. This replaces the v2 mocks' one flat
+     square per quarter. Diagonal walls and layer 2 are not covered by this answer.
+  3. The Fortress may get more than 12 rooms if room IDs can be spared after the rest of the
+     game's needs are known (Codex room-budget check).
