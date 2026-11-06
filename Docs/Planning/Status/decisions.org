@@ -3583,3 +3583,24 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Not part of this decision: the $C1 empty-cell story beat and any new text (needs scawful's own
   OK); the $C0 powder magazine and $C2 pump puzzle stay optional. The damage restore is QUEUE
   row 28 (97e5c6e9). The $B5 light ("maybe that light isnt a bad idea") is not yet decided.
+
+* DECIDED D7 Dragon Ship step-up package: queue all five items (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (difficulty scaling lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d7_dragon_ship_stepup_2026-11-06/PROPOSAL.md
+  :END:
+  Question: "Queue the rest of the D7 package for Codex too?"
+  Options shown: "Queue all (pick)", "Boss phases only".
+  Answer (scawful, 2026-11-06): "Queue all (pick)"
+  Goal: D7 moves from difficulty 6 to 7 (curve entry "Difficulty target curve").
+  1. Boss room $A4: Kydrog gets three real phases. Fix CheckForNextPhase (kydrog_boss.asm) so both
+     HP refills run. Phase 3 opens with Farore's intervention (the blade glows); any text needs
+     scawful's own OK.
+  2. Room $A5: Wizzrobe coven mini-boss. The N shutter holds until all 4 Wizzrobes fall.
+  3. Oracle chests: $B7 Map -> Treasure Key; $A2 Compass -> Secret Scroll; Boss Key in a new
+     chest in $C3.
+  4. Room $C3: Somaria test. A Somaria block holds the floor switch and the Boss Key chest appears.
+  5. Room $B5: Farore's light leads Link through the dark room toward the boss. Visual only.
+     scawful earlier: "i have had people complain about the jumping in B5 a bit so maybe that
+     light isnt a bad idea".
+  Related: the damage restore is QUEUE row 28 (97e5c6e9); the ship-room redesign is 7c784b3d.
