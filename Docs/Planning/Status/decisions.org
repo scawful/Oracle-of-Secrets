@@ -3689,3 +3689,16 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   1. The vanilla Armos Knights move to the gate before the D3 boss, which opens only after the
      escape ("Kalyxo Castle prison break" item 9), so Link fights them with the Meadow Blade.
   2. D3 gets a new boss behind that gate. Which boss: open (story-tied; canon needs scawful).
+
+* DECIDED D3 new boss concept: the Captain's phantom (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (dungeon design pass)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d3_kalyxo_castle_stepup_2026-11-06/PROPOSAL.md
+  :END:
+  Question: "Which new D3 boss concept?"
+  Options shown: "Captain's phantom", "Pirate raid captain" ("Garrison commander duel" in the text).
+  Answer (scawful, 2026-11-06): "Captain's phantom"
+  1. The new D3 boss (behind the Armos gate) is the Captain's phantom: a ghost knight in his old
+     garrison armor, fought as a sword duel with the Meadow Blade.
+  2. Concept only. Arena, duel rules, art and any text stay open; text needs scawful's OK.
+  3. Canon limit kept: nothing in the fight tells Kydrog where Farore's power is before D7.
