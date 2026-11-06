@@ -3287,3 +3287,19 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   new APU master-volume command (Codex route). Other forest mazes may reuse it later.
   Options shown: "Directional (pick)", "Step feedback" ("Panned call" in the text).
   Answer: "Directional (pick)" (scawful, 2026-11-05).
+
+* DECIDED Mad Scrubs on the D1 approach, in a small forest grove if a map is free (2026-11-05)
+  :PROPERTIES:
+  :ASKED_BY: Claude (consumables + Vasu evaluation)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/forest_ideas_2026-11-05/IDEAS.md
+  :END:
+  Direction: "deku scrubs that dont give an item but move from their spot and can be killed
+  like in the sacred grove" (scawful, from the OoT remake). New Mad Scrub enemy; the
+  Business Scrub stays the Deku Stick merchant.
+  Placement: the forest route to D1 Mushroom Grotto. A small Mushroom Grotto style grove
+  map on the route if a free map exists (special overworld $80-$9F or another free small
+  map; Codex checks); otherwise the existing approach screens.
+  Options shown: "D1 approach (pick)", "Lost Woods screens" (D1 rooms, Kalyxo in the text).
+  Answer: "also maybe a small mushroom grotto style forest grove apart of the route, like
+  an overworld map that lives in the ether or uses some special overworld spot maybe if we
+  can free up a small map somewhere otherwise it's prob fine as is" (scawful, 2026-11-05).
