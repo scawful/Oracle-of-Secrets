@@ -3806,3 +3806,19 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   6. Route: desert -> Garo -> Shrine (Glove, pendant) -> Lyra Rock Meat -> five-Meat Goron -> D6.
   Direction only. Codex first lists the object/sprite swaps per area (census) before edits.
   NPC text needs scawful's OK.
+
+* DECIDED Garo sentries: night duels in the Goron desert (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Goron desert pass)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/goron_desert_power_2026-11-06/PROPOSAL.md (section 2.2)
+  :END:
+  Question: "Add Garo sentries to the desert at night?"
+  Options shown: "Add sentries (pick)", "No sentries".
+  Answer: "Add sentries (pick)" (scawful, 2026-11-06)
+  1. Two or three Garo sentries in the desert at night (phase 2, which has no $57 today).
+     Each drops in, fights a short duel, bursts into smoke and leaves one line of shrine lore,
+     so the watchman's story is told before the stair duel (babe5394).
+  2. Art: extract tiles from the existing Garo resprite of the $57 Desert Statue; no redraw.
+  3. Cost: one sprite slot, ~24-32 chars; Codex checks the desert spriteset ($00DB57 table)
+     and picks free message IDs together with the Garo $1BE vs Ranch Girl conflict.
+  4. Lore lines need scawful's OK.
