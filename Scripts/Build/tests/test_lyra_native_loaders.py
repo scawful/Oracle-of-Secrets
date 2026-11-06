@@ -88,7 +88,7 @@ class NativeTableLoweringTest(unittest.TestCase):
     def test_already_imported_rom_is_not_relowered(self):
         source = bytearray(self.source)
         source[N.DIRECTORY_PC:N.DIRECTORY_PC + 8] = N.MAGIC
-        with self.assertRaisesRegex(ValueError, 'must not be regenerated'):
+        with self.assertRaisesRegex(ValueError, 'revision3'):
             self.lower(bytes(source))
 
     def test_storage_bounds_and_strict_numeric_inputs(self):
@@ -265,6 +265,28 @@ class Revision3DirectoryEncodingTest(unittest.TestCase):
             self.assertIn('CRC', result.stderr)
             self.assertEqual(rom.read_bytes(), bytes(image))
             self.assertEqual(output.read_text(), 'previous constants')
+
+    def test_initial_import_and_cli_refuse_existing_or_aliased_rom_data(self):
+        import os
+        import subprocess
+        import tempfile
+        image = self.installed_image()
+        with self.assertRaisesRegex(ValueError, 'must not be regenerated'):
+            N.lower_tables(image, {}, table_base=0x468000, legacy_roles=[255] * 160)
+        broken = bytearray(image)
+        broken[N.DIRECTORY_PC] ^= 1
+        with self.assertRaises(ValueError):
+            N.lower_tables(bytes(broken), {}, table_base=0x468000, legacy_roles=[255] * 160)
+        with tempfile.TemporaryDirectory() as temp:
+            rom = Path(temp) / 'saved.sfc'
+            output = Path(temp) / 'constants.asm'
+            rom.write_bytes(image)
+            os.link(rom, output)
+            result = subprocess.run([sys.executable, str(SOURCE), '--rom', str(rom),
+                                     '--constants', str(output)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 1)
+            self.assertIn('must not overwrite', result.stderr)
+            self.assertEqual(rom.read_bytes(), image)
 
     def test_normal_build_refuses_unrequested_native_installation(self):
         with self.assertRaisesRegex(ValueError, 'unrequested'):
