@@ -3604,3 +3604,25 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      scawful earlier: "i have had people complain about the jumping in B5 a bit so maybe that
      light isnt a bad idea".
   Related: the damage restore is QUEUE row 28 (97e5c6e9); the ship-room redesign is 7c784b3d.
+
+* DECIDED D4 ending: Sea Zora teach Song of Storms, then Link revisits Zora Falls (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (difficulty scaling lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/difficulty_scaling_2026-11-06/ANALYSIS.md
+  :END:
+  scawful context: "blue mail is a post D4 reward actually, the waterfall event that works with
+  song of storms." and "if it's post D4, the player would need to learn the song then come back to
+  river zora map to play the song even tho the maiden crystal dialogue says to do it right after,
+  should we change dialogue to make this work ? as a reason to revisit zora river ?"
+  Question: "How should D4's ending lead to the waterfall?"
+  Options shown: "Revisit via Sea Zora (pick)", "Song at D4 end".
+  Answer (scawful, 2026-11-06): "Revisit via Sea Zora (pick)"
+  1. Blue Mail stays a post-D4 reward. All of D4 is played on green mail.
+  2. The D4 maiden's crystal message ($135) ends by saying the falls open only to a storm's song
+     and pointing Link to the Sea Zora, instead of "head directly west" right away.
+  3. The Sea Zora teach Song of Storms after D4, as thanks for clearing the River Zora's name.
+  4. Link returns to Zora Falls (area $1E), plays the song, and the waterfall opens to the Blue
+     Mail room. This makes the River Zora revisit a deliberate trip.
+  Not part of this decision: the exact wording of $135 and the new Sea Zora / waterfall hint
+  messages (drafts need scawful's own OK; ridoyie does the later wording pass) and the role of the
+  "Windmill Guy / Song of Storms" placeholders ($1D5-$1D8, Core/message.asm:53).
