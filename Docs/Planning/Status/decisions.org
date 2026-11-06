@@ -4042,3 +4042,19 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      then the north horn grotto and the Light Ring (a2d6b088).
   3. Fists already exist (Items/fist_damage.asm, always built). Codex checks the thief
      takes fist damage and island enemies are beatable or avoidable without a sword.
+
+* DECIDED Light Ring: the crescent grotto keeps it; Hidden Grave gets a Heart Piece (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Courage island plan), conflict between a2d6b088 and the 2026-11-05 ring spots table
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+  :END:
+  Question: "Which spot keeps the Light Ring?"
+  Options shown: "Crescent keeps it" (pick; Hidden Grave becomes a Heart Piece spot),
+  "Hidden Grave keeps it" (crescent gets a new 7th ring on free bit $40).
+  Answer: "Crescent keeps it" (scawful, 2026-11-06)
+  1. The crescent north horn grotto (B4) gives the Light Ring (a2d6b088 stands).
+  2. This replaces line 2 of "Ring spots: one gift, two secrets, one minigame, two quest
+     rewards" (2026-11-05): Hidden Grave 0x5B (OW $0F) now gives a Heart Piece, not a ring.
+  3. Ring spots now: Steadfast Eon Zora, Light crescent grotto, Blast Kalyxo Field Cave,
+     Heart Great Fairy, Power archery, Armor seashell trader.
+  4. Codex: Heart Piece slot and save flag for Hidden Grave 0x5B (QUEUE row 67).
