@@ -3447,3 +3447,20 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
      key block and $5C stairs, 4-pillar pot room (key 2).
   4. Flat walls, no diagonals, no layer 2 (decision 2.6 stands). Codex maps the concept to ALTTP
      objects; exact tile positions may move to fit object sizes.
+
+* DECIDED Fortress act 2 room shapes ($5C, $5D, $4D) (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Fortress GBC design lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/fortress_gbc_2026-11-05/act2_shapes.png
+  :END:
+  Question: "Are these act 2 room shapes right?" (image act2_shapes.png, concept on Onox tiles).
+  Options shown: "Yes (pick)", "Change a room".
+  Answer (scawful, 2026-11-06): "Yes (pick)"
+  1. $5C: T-shaped arrival from the $6D key stairs (optional stairs to $6B), dais room with
+     stepped corners (Portal Rod big chest), first-Hop room: pit line wall to wall, portal floor
+     mark, magic pots on the near side.
+  2. $5D: lever island in a 1-tile pit moat (Hop over and back), cart stop, track east over the
+     void, junction: lever on = north to $4D, lever off = dead-end ledge.
+  3. $4D: track up from $5D turns west over the void (blade traps), stop ledge with a pot,
+     W door to $4C SE.
+  4. Flat walls, no diagonals, no layer 2 (decision 2.6 stands).
