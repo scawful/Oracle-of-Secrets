@@ -11,7 +11,7 @@ import warden_anchor_slam_preview as slam
 pack=slam.pack
 
 TANK=(
-    '.....111111.....','....12233221....','...1233333321...',
+    '....11111111....','....12233221....','...1233333321...',
     '..123333333321..','..145555555541..',
     '..146666666641..','..145555555541..','..123333333321..',
     '..123332333321..','..123332333321..','..145555555541..',
@@ -125,7 +125,9 @@ def main():
             e=dict(e)
             if e['part']=='head':e['char']=rear_char
             rear.append(e)
-        rear.extend(dict(char=c,x=8,y=16+i*16-bob,palette='warden_iron',part='back_tank') for i,c in enumerate(tank_chars))
+        # Three pixels higher matches the tank cap in the accepted side view.
+        # Earlier OAM wins: tank rim must occlude the lower skull and neck.
+        rear=[dict(char=c,x=8,y=13+i*16-bob,palette='warden_iron',part='back_tank') for i,c in enumerate(tank_chars)]+rear
         frames[f'rear_{phase}']=mirror(rear)
         side=copy.deepcopy(base['frames']['warden_idle_side']['oam'])
         for e in side:
@@ -172,6 +174,7 @@ def main():
     result=dict(status='NATIVE_GAIT_AND_REAR_DRAFT_ONLY',body_pack_receipt_sha256=hashlib.sha256((args.body_pack/'RECEIPT.json').read_bytes()).hexdigest(),baseline_cells=len(protected),added_cells=[f'{c:02X}' for c in added],total_cells=total,capacity=58,free_cells=58-total,
                 frames={n:dict(oam=e,peak_scanline_objects=max(sum(p['y']<=y<p['y']+16 for p in e) for y in range(-16,48))) for n,e in frames.items()},
                 old_cells_exact=True,princess_cells_exact=True,baby_slots_reserved=True,right_flip_exact=True,rear_art_accepted=False,
+                rear_tank_adjustment=dict(raised_native_pixels=3,origin_y=13,foreground_over_lower_skull=True,top_rim='eight continuous dark-outline pixels'),
                 rom_written=False,source_binding_installed=False,native_runtime_qualified=False)
     (out/'RECEIPT.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({k:result[k] for k in ('status','baseline_cells','added_cells','total_cells','free_cells','rom_written')},indent=2))
