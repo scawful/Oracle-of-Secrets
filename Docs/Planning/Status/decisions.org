@@ -4075,3 +4075,13 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   6. $A2 stays held for the open Sea Zora / Wisdom island.
   7. Open: rewards, NPCs and prices per game; entrance rows on tail maps (Codex).
      Codex: ice_block.asm notes it may sit on the digging-game NPC's sprite slot.
+
+* DECIDED Direction: fill the open Lyra Sea maps with objects and small islands (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: scawful, unprompted, after the island minigame slate
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/courage_island_plan_2026-11-06/PLAN.md
+  :END:
+  Answer: "we also need objects and smaller islands in the other maps so the sea doesnt feel like an empty unending blue mess, while having these dedicated maps (or rearranging them a bit) for the full islands" (scawful, 2026-11-06)
+  1. Direction only: open sea maps get objects and small islands; full islands keep dedicated maps.
+  2. Moving full islands a little is allowed.
+  3. Open: what goes on each open map. Claude drafts a sketch for scawful.
