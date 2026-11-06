@@ -3306,3 +3306,15 @@ probably get pendant from shrine, give to the sea zora guy and they give u the f
   Map source: "it would be a reclaimed lyra map probably from somewhere, like near the
   overlays" (scawful, 2026-11-05). Which tail map ($A0-$BF) is free to reclaim is a
   Codex check; Lyra Sea and Eon Abyss claims come first.
+
+* DECIDED Fortress of Secrets: GBC minecart in $5D/$4D (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude (consumables + Vasu evaluation)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/fortress_gbc_2026-11-05/minecart/MINECART.md
+  :END:
+  Idea (scawful, 2026-11-05): "was also considering a GBC world minecart".
+  Placement: cut rooms $5D and $4D return as a cart ride from $5C (Portal Rod dais) to $4C.
+  Existing Minecart engine with Onox 0x44 track art. Replaces the $5D/$4D part of the
+  2026-11-05 cut ruling; $6C stays cut. Lever island and junction layout stay concept.
+  Options shown: "Fortress $5D/$4D (pick)", "Abyss overworld".
+  Answer: "Fortress $5D/$4D (pick)" (scawful, 2026-11-06).
