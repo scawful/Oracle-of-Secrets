@@ -123,7 +123,6 @@ DocksPatchSharedDeckBuffer:
 ; palette while the outgoing beach remains visible in a normal scroll.
 DocksDeferAuxPalette:
 {
-  CMP.w #$0015 : BNE .load
   PHA
   LDA.b $1B : AND.w #$00FF : BNE .restore
   LDA.b $10 : AND.w #$00FF : CMP.w #$0009 : BNE .restore
@@ -136,6 +135,29 @@ DocksDeferAuxPalette:
   PLA
   .load
   CLC
+  RTL
+}
+
+; The public loaders write tinted target colors to C300. The ordinary NMI
+; uploads C500, so commit only these six seven-color rows before requesting it.
+DocksCommitAuxPalettes:
+{
+  JSL $1BEEE8
+  JSL $1BEF0C
+  REP #$30
+  LDX.w $0AA8
+  LDY.w #$0006
+  .next
+    LDA.l $7EC352, X : STA.l $7EC552, X
+    LDA.l $7EC372, X : STA.l $7EC572, X
+    LDA.l $7EC392, X : STA.l $7EC592, X
+    LDA.l $7EC3B2, X : STA.l $7EC5B2, X
+    LDA.l $7EC3D2, X : STA.l $7EC5D2, X
+    LDA.l $7EC3F2, X : STA.l $7EC5F2, X
+    INX : INX
+    DEY : BPL .next
+  SEP #$30
+  INC.b $15
   RTL
 }
 
@@ -152,8 +174,7 @@ DocksFinishTransition:
   .native
   JML !DocksFinishOriginal
   .first
-  JSL $1BEEE8
-  INC.b $15
+  JSL DocksCommitAuxPalettes
   REP #$30
   LDX.w #$0000
   .copyFirst

@@ -175,12 +175,12 @@
     "shared:Overworld/aux_palette_extension.asm": {
       "source_set": "shared",
       "path": "Overworld/aux_palette_extension.asm",
-      "sha256": "b4e436e70aed6ef7e380792cfe6e0476de4a3b6d5d8929d3de368b5c30d03b30"
+      "sha256": "a78e5eca3f06f81d16ead1d9f7e730d67ed9245118fbe610b52a14076d0c1891"
     },
     "shared:Overworld/docks_profile.asm": {
       "source_set": "shared",
       "path": "Overworld/docks_profile.asm",
-      "sha256": "8f9f194967baaf4b91239db3b237c06c5ef88f3806ade2242c8971d87c1eed6d"
+      "sha256": "52daaafbaabec858071c3eb753e71eb5d358b9076dc97c5b918272960e0d863c"
     }
   },
   "claims": [
