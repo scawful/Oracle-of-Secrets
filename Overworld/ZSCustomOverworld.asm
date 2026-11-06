@@ -1925,7 +1925,11 @@ Overworld_LoadMusicIfNeeded:
     .no_music_load_needed
 
     ; PLACE CUSTOM GFX LOAD HERE!
+if !ENABLE_KALYXO_DOCKS_PROFILE == 1
+    JSL Oracle_DocksNormalLoad
+else
     JSL Oracle_CheckForChangeGraphicsNormalLoadBoat
+endif
 
     RTS
 }
@@ -3114,6 +3118,11 @@ BlockGFXCheck:
         SEP #$20
         LDA.l Pool_OWGFXGroupTable_sheet0, X : STA.b $00
         SEP #$10
+if !ENABLE_KALYXO_DOCKS_PROFILE == 1
+        LDX.b $02
+        JSL Oracle_DocksResolveTransitionSheet
+        STA.b $00
+endif
 
         ; Check if it is #$FF.
         CMP.b #$FF : BEQ .dontLoadThisSheet
@@ -3307,7 +3316,11 @@ CheckForChangeGraphicsTransitionLoad:
     ;INC.b $15
 
     ; PLACE CUSTOM GFX LOAD HERE!
+if !ENABLE_KALYXO_DOCKS_PROFILE == 1
+    JSL Oracle_DocksNormalLoad
+else
     JSL Oracle_CheckForChangeGraphicsNormalLoadBoat
+endif
 
     CheckForChangeGraphicsTransitionLoadRetrun:
 
@@ -3557,7 +3570,11 @@ CheckForChangeGraphicsNormalLoad:
     ;JSL.l DecompOwAnimatedTiles 
 
     ; PLACE CUSTOM GFX LOAD HERE!
+if !ENABLE_KALYXO_DOCKS_PROFILE == 1
+    JSL Oracle_DocksNormalLoad
+else
     JSL Oracle_CheckForChangeGraphicsNormalLoadBoat
+endif
 
     ; TODO: Instead of the place custom gfx load here, pre-allocate a function.
     ; Some free space 
@@ -3615,7 +3632,11 @@ BirdTravel_LoadTargetArea_Interupt:
     STX.w $012C
 
     ; PLACE CUSTOM GFX LOAD HERE!
+if !ENABLE_KALYXO_DOCKS_PROFILE == 1
+    JSL Oracle_DocksNormalLoad
+else
     JSL Oracle_CheckForChangeGraphicsNormalLoadBoat
+endif
         
     RTL
 }
@@ -4133,7 +4154,13 @@ NewLoadTransAuxGFX:
 
     ; Sheet 3 (variable 0)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet3, X : CMP.b #$FF : BEQ .noBgGfxChange3
+    LDA.w Pool_OWGFXGroupTable_sheet3, X
+if !ENABLE_KALYXO_DOCKS_PROFILE == 1
+    PHX : SEP #$10
+    LDX.b #$03 : JSL Oracle_DocksResolveTransitionSheet
+    REP #$10 : PLX
+endif
+    CMP.b #$FF : BEQ .noBgGfxChange3
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+3 : BEQ .noBgGfxChange3
             TAY
@@ -4151,7 +4178,13 @@ NewLoadTransAuxGFX:
 
     ; Sheet 4 (variable 1)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet4, X : CMP.b #$FF : BEQ .noBgGfxChange4
+    LDA.w Pool_OWGFXGroupTable_sheet4, X
+if !ENABLE_KALYXO_DOCKS_PROFILE == 1
+    PHX : SEP #$10
+    LDX.b #$04 : JSL Oracle_DocksResolveTransitionSheet
+    REP #$10 : PLX
+endif
+    CMP.b #$FF : BEQ .noBgGfxChange4
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+4 : BEQ .noBgGfxChange4
             TAY
@@ -4169,7 +4202,13 @@ NewLoadTransAuxGFX:
 
     ; Sheet 5 (variable 2)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet5, X : CMP.b #$FF : BEQ .noBgGfxChange5
+    LDA.w Pool_OWGFXGroupTable_sheet5, X
+if !ENABLE_KALYXO_DOCKS_PROFILE == 1
+    PHX : SEP #$10
+    LDX.b #$05 : JSL Oracle_DocksResolveTransitionSheet
+    REP #$10 : PLX
+endif
+    CMP.b #$FF : BEQ .noBgGfxChange5
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+5 : BEQ .noBgGfxChange5
             TAY
@@ -4187,7 +4226,13 @@ NewLoadTransAuxGFX:
 
     ; Sheet 6 (variable 3)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet6, X : CMP.b #$FF : BEQ .noBgGfxChange6
+    LDA.w Pool_OWGFXGroupTable_sheet6, X
+if !ENABLE_KALYXO_DOCKS_PROFILE == 1
+    PHX : SEP #$10
+    LDX.b #$06 : JSL Oracle_DocksResolveTransitionSheet
+    REP #$10 : PLX
+endif
+    CMP.b #$FF : BEQ .noBgGfxChange6
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+6 : BEQ .noBgGfxChange6
             TAY
@@ -4271,6 +4316,9 @@ NewPrepTransAuxGFX:
 {
     LDA.b $04 : BEQ .dontPrep
         JSL.l PrepTransAuxGFX
+if !ENABLE_KALYXO_DOCKS_PROFILE == 1
+        JSL Oracle_DocksPatchSharedDeckBuffer
+endif
 
     .dontPrep
 

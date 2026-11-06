@@ -171,6 +171,16 @@
       "source_set": "shared",
       "path": "Masks/wolf_mask.asm",
       "sha256": "f2435f1738736e43a01f4be2e48831f60e666961d6503dea17101c69507fb782"
+    },
+    "shared:Overworld/aux_palette_extension.asm": {
+      "source_set": "shared",
+      "path": "Overworld/aux_palette_extension.asm",
+      "sha256": "a78e5eca3f06f81d16ead1d9f7e730d67ed9245118fbe610b52a14076d0c1891"
+    },
+    "shared:Overworld/docks_profile.asm": {
+      "source_set": "shared",
+      "path": "Overworld/docks_profile.asm",
+      "sha256": "d8fb2882d99ba8d23894b8812e6d994144ec9b1c3db689020291c68f8d28afe8"
     }
   },
   "claims": [
@@ -1316,6 +1326,108 @@
         "symbol": "WolfDigFlags",
         "bank00_mirror": false
       }
+    },
+    {
+      "id": "ow_aux_extension_code",
+      "owner": "Aux ABI 1 public loader hooks",
+      "space": "snes_rom",
+      "base": 4583424,
+      "size": 2048,
+      "status": "shared",
+      "condition": {
+        "ENABLE_OW_AUX_EXTENSION": 1,
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "ROM storage under the explicitly bound auxiliary palette ABI.",
+      "reset": "Code is assembled; palette table is initialized only in the private authoring input and retained by rebuilds.",
+      "save": "Palette edits persist in the authoring ROM; no SRAM format change.",
+      "provenance": [
+        "shared:Overworld/aux_palette_extension.asm"
+      ],
+      "aliases": [],
+      "anchors": []
+    },
+    {
+      "id": "ow_aux_extension_table",
+      "owner": "Aux ABI 1 authoring-owned palette records",
+      "space": "snes_rom",
+      "base": 4585728,
+      "size": 1344,
+      "status": "shared",
+      "condition": {
+        "ENABLE_OW_AUX_EXTENSION": 1,
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "ROM storage under the explicitly bound auxiliary palette ABI.",
+      "reset": "Code is assembled; palette table is initialized only in the private authoring input and retained by rebuilds.",
+      "save": "Palette edits persist in the authoring ROM; no SRAM format change.",
+      "provenance": [
+        "shared:Overworld/aux_palette_extension.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "count": 32,
+      "stride": 42
+    },
+    {
+      "id": "docks_bg_asset",
+      "owner": "Accepted raw docks BG graphics",
+      "space": "snes_rom",
+      "base": 4489216,
+      "size": 8192,
+      "status": "shared",
+      "condition": {
+        "ENABLE_KALYXO_DOCKS_PROFILE": 1,
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "ROM storage for the explicitly selected Docks profile.",
+      "reset": "Graphics/helpers assembled; streams lowered once in private authoring input.",
+      "save": "No SRAM format change; map data remains authoring input.",
+      "provenance": [
+        "shared:Overworld/docks_profile.asm"
+      ],
+      "aliases": [],
+      "anchors": []
+    },
+    {
+      "id": "docks_profile_helpers",
+      "owner": "Docks shared-deck and transition finish helpers",
+      "space": "snes_rom",
+      "base": 4497408,
+      "size": 4096,
+      "status": "shared",
+      "condition": {
+        "ENABLE_KALYXO_DOCKS_PROFILE": 1,
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "ROM storage for the explicitly selected Docks profile.",
+      "reset": "Graphics/helpers assembled; streams lowered once in private authoring input.",
+      "save": "No SRAM format change; map data remains authoring input.",
+      "provenance": [
+        "shared:Overworld/docks_profile.asm"
+      ],
+      "aliases": [],
+      "anchors": []
+    },
+    {
+      "id": "docks_map_streams",
+      "owner": "Private exact70 Docks map streams",
+      "space": "snes_rom",
+      "base": 4505600,
+      "size": 1036,
+      "status": "shared",
+      "condition": {
+        "ENABLE_KALYXO_DOCKS_PROFILE": 1,
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "ROM storage for the explicitly selected Docks profile.",
+      "reset": "Graphics/helpers assembled; streams lowered once in private authoring input.",
+      "save": "No SRAM format change; map data remains authoring input.",
+      "provenance": [
+        "shared:Overworld/docks_profile.asm"
+      ],
+      "aliases": [],
+      "anchors": []
     }
   ],
   "lifetime_aliases": [],

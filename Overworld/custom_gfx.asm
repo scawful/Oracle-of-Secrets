@@ -14,6 +14,11 @@ CheckForChangeGraphicsNormalLoadBoat:
 }
 
 macro ApplyGraphicsSheet(sheet, dest)
+  %ApplyGraphicsSpan(<sheet>, <dest>, $2000)
+endmacro
+
+; Same normal-load DMA path, also used for the six shared deck characters.
+macro ApplyGraphicsSpan(sheet, dest, count)
   REP #$20                ; A = 16, XY = 8
   LDX #$80 : STX $2115    ; Set the video port register every time we write it increase by 1
   LDA #<dest> : STA $2116 ; Destination of the DMA $7800 in vram <- this need to be divided by 2
@@ -21,7 +26,7 @@ macro ApplyGraphicsSheet(sheet, dest)
                           ; "001 => 2 registers write once (2 bytes: p, p+1)"
   LDA.w #<sheet>     : STA $4302
   LDX.b #<sheet>>>16 : STX $4304
-  LDA #$2000 : STA $4305  ; Size of the transfer 4 sheets of $800 each
+  LDA #<count> : STA $4305
   LDX #$01 : STX $420B    ; Execute the DMA
   SEP #$30
 endmacro
