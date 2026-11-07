@@ -55,6 +55,12 @@
       "source": "d4_zora/atlas-E2.txt",
       "decoded_sha256": "d5391dec772bb7d7dd5be5615a09230bc39538079a391560dc92147089d0b8ad",
       "why": "D4 complete private warden/protector fight; preserves Princess and Baby upload slots."
+    },
+    {
+      "global_sheet": "0xE7",
+      "source": "d4_zora/refuge-E7.txt",
+      "decoded_sha256": "b1250177792f4b885eaa8942ab23e491d21c0b6983240266ccbe8012e4148aa5",
+      "why": "Private105 refuge: preserves Sea Zora DE/EE cells; accepted River front head/body in C0/C2, with room-specific spriteset4E."
     }
   ]
 }

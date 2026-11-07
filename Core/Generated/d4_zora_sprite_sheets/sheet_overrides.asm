@@ -14,6 +14,7 @@ SourceGlobalSheet_DF: incbin "sheets/gDF.bin"
 SourceGlobalSheet_E0: incbin "sheets/gE0.bin"
 SourceGlobalSheet_E1: incbin "sheets/gE1.bin"
 SourceGlobalSheet_E2: incbin "sheets/gE2.bin"
+SourceGlobalSheet_E7: incbin "sheets/gE7.bin"
 assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
 if not(defined("GfxSheet_TableDone"))
   error "sheet_overrides.asm must follow Core/gfx_sheet_table.asm"
@@ -75,4 +76,11 @@ org $23FEE2 ; @hook module=Core kind=data protected_size=1
   db $88
 org $23FFE2 ; @hook module=Core kind=data protected_size=1
   db $13
+; Global $E7 (sprite-relative $74): Private105 refuge: preserves Sea Zora DE/EE cells; accepted River front head/body in C0/C2, with room-specific spriteset4E.
+org $23FDE7 ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEE7 ; @hook module=Core kind=data protected_size=1
+  db $8A
+org $23FFE7 ; @hook module=Core kind=data protected_size=1
+  db $B0
 pullpc

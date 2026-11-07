@@ -213,7 +213,7 @@ class SourceSheets(unittest.TestCase):
         import asm_source
         with mock.patch.object(asm_source, '_load_global_defines', return_value={'ENABLE_D4_ZORA_REDESIGN':1}):
             metadata=sheets.source_metadata(ROOT)
-        self.assertEqual(metadata['global_sheet_ids'][-4:],['0xDF','0xE0','0xE1','0xE2'])
+        self.assertEqual(metadata['global_sheet_ids'][-5:],['0xDF','0xE0','0xE1','0xE2','0xE7'])
         self.assertEqual(metadata['generated_include'],'Core/Generated/d4_zora_sprite_sheets/sheet_overrides.asm')
         standard=sheets.read_spec(ROOT/sheets.SPEC)
         changed=sheets.read_spec(ROOT/sheets.D4_SPEC)
@@ -232,6 +232,9 @@ class SourceSheets(unittest.TestCase):
             return any(source==s and begin<=pc<=end for s,begin,end in overlap.OWNED_REGIONS)
         self.assertTrue(allowed(owner,0x11FDDF))
         self.assertTrue(allowed(owner,0x11FFE2))
+        self.assertTrue(allowed(owner,0x11FDE7))
+        self.assertTrue(allowed(owner,0x11FFE7))
+        self.assertFalse(allowed(owner,0x11FDE8))
         self.assertFalse(allowed(owner,0x11FDE3))
         self.assertFalse(allowed(owner,0x11FDDE))
         self.assertFalse(allowed('Sprites/Bosses/d4_pressure_warden.asm',0x11FDDF))
