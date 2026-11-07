@@ -37,6 +37,7 @@ endif
 !ENABLE_SOURCE_SPRITE_SHEETS        = 1
 ; Private D4 room-scoped actor/art prototype; no default behavior change.
 !ENABLE_D4_ZORA_REDESIGN            = 0
+!ENABLE_D4_WATER_CONTROLS           = 0
 ; BF-only ice block pit reset and reset feedback; room-layout adoption is separate.
 !ENABLE_D5_BF_PIT_RESET             = 0
 ; AF transfer-room pit reset; independent of BF and off until private qualification.

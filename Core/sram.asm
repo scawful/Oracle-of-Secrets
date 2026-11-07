@@ -544,6 +544,8 @@ EonOwlFlags             = $7EF3A7
 ; ---------------------------------------------------------
 ; Water Gate States ($7EF411)
 ; ---------------------------------------------------------
+; 01/02: legacy gates27/25. Private D4:04 reservoirHigh,08 serviceReleased
+; (same meaning as prototype220/221),10 inletReleased; no automatic migration.
 WaterGateStates         = $7EF411
 
 ; =========================================================

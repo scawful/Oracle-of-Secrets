@@ -1,5 +1,9 @@
 ; Dungeons
 
+if !ENABLE_D4_WATER_CONTROLS == 1
+  incsrc "Dungeons/d4_water_control.asm"
+endif
+
 incsrc "Dungeons/keyblock.asm"
 print  "End of keyblock.asm               ", pc
 
