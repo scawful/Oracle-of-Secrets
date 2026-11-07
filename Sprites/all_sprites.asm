@@ -182,7 +182,7 @@ Graphics_Transfer:
 incsrc "Sprites/Objects/ice_block.asm"
 %log_end("ice_block", !LOG_SPRITES)
 
-assert pc() <= $318000, "Bank $30 sprite region overflow"
+assert pc() <= $310000, "Bank $30 sprite code crossed its LoROM executable boundary"
 assert pc() >= $308000, "Bank $30 sprite code left its bank (org without pushpc/pullpc?)"
 print "Bank30 Free Space: ", dec($310000-pc()), " bytes"
 
