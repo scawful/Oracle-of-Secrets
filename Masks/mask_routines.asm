@@ -1771,6 +1771,7 @@ CheckNewLButtonPress:
   RTL
 }
 
+assert pc() <= $3AA000, "Mask routines reached the ice block code allocation"
 print "End of mask_routines.asm          ", pc
 
 ; LinkOAM_DrawShield _0DA780
