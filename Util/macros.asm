@@ -39,6 +39,8 @@ endif
 !ENABLE_D4_ZORA_REDESIGN            = 0
 ; BF-only ice block pit reset and reset feedback; room-layout adoption is separate.
 !ENABLE_D5_BF_PIT_RESET             = 0
+; AF transfer-room pit reset; independent of BF and off until private qualification.
+!ENABLE_D5_AF_PIT_RESET             = 0
 !ENABLE_WATER_GATE_HOOKS            = 1
 !ENABLE_WATER_GATE_ROOMENTRY_RESTORE = 0
 !ENABLE_WATER_GATE_OVERLAY_REDIRECT = 1
