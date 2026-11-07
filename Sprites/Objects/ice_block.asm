@@ -1,7 +1,7 @@
 ; =========================================================
 ; Pushable Ice Block
 ; =========================================================
-; Room BF pit-reset pilot; !ENABLE_D5_BF_PIT_RESET is default off.
+; Room BF and AF pit-reset pilots; each room has a default-off feature flag.
 ; A sliding puzzle block that Link can push in cardinal directions.
 ; The block slides until it hits a wall or lands on a switch tile.
 ;
@@ -101,12 +101,12 @@ Sprite_IceBlock_Prep:
   ; which deletes a sprite 64px off camera. Bit 7 keeps the block active
   ; off camera, so a slide continues out of view instead of freezing.
   LDA.b #$80 : STA.w SprDefl, X
-if !ENABLE_D5_BF_PIT_RESET == 1
+if !ENABLE_D5_BF_PIT_RESET == 1 || !ENABLE_D5_AF_PIT_RESET == 1
   STZ.w SprMiscB, X
   STZ.w SprTimerC, X
   JSR IceBlock_IsPitRoom : BNE .ordinary_deflection
     LDA.b #$84 : STA.w SprDefl, X
-    ; BF uses the native simplified collision table: walls, slopes and fixed
+    ; Pit-reset rooms use the native simplified collision table: walls, slopes and fixed
     ; stops remain solid while pit20 is traversable. The center probe owns fall.
     ; CanFall stays0, so vanilla never deletes this puzzle actor as falling.
     LDA.w $0CAA, X : ORA.b #$08 : STA.w $0CAA, X
@@ -124,7 +124,7 @@ endif
 ; =========================================================
 Sprite_IceBlock_Main:
 {
-if !ENABLE_D5_BF_PIT_RESET == 1
+if !ENABLE_D5_BF_PIT_RESET == 1 || !ENABLE_D5_AF_PIT_RESET == 1
   JSR IceBlock_IsPitRoom : BNE .ordinary_main
     JSR IceBlock_PitStep : BCC .ordinary_main
       RTS
@@ -133,7 +133,7 @@ endif
   %PlayAnimation(0, 0, 1)
 
   JSR Statue_BlockSprites
-if !ENABLE_D5_BF_PIT_RESET == 1
+if !ENABLE_D5_BF_PIT_RESET == 1 || !ENABLE_D5_AF_PIT_RESET == 1
   JSR IceBlock_IsPitRoom : BEQ .no_damage
 endif
   JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
@@ -160,7 +160,7 @@ endif
 
   JSL Sprite_Move
   JSL Sprite_Get_16_bit_Coords
-if !ENABLE_D5_BF_PIT_RESET == 1
+if !ENABLE_D5_BF_PIT_RESET == 1 || !ENABLE_D5_AF_PIT_RESET == 1
   JSR IceBlock_IsPitRoom : BNE .ordinary_collision
     JSR IceBlock_PitStep : BCC .ordinary_collision
       RTS
@@ -338,7 +338,7 @@ IceBlock_ValidatePushSide:
 ; Helper Routines
 ; =========================================================
 
-if !ENABLE_D5_BF_PIT_RESET == 0
+if !ENABLE_D5_BF_PIT_RESET == 0 && !ENABLE_D5_AF_PIT_RESET == 0
 ; Check if the tile beneath the sprite is the sliding ice
 ; Currently unused as it doesnt play well with the hitbox choices
 IceBlock_CheckForGround:
@@ -362,10 +362,22 @@ IceBlock_CheckForGround:
   RTS
 }
 else
-; M8/X8, DBR30. Z is set only for room00BF; no register or stack width change.
+; M8/X8, DBR3A. Z is set only for an enabled room00BF/00AF.
+; With AF disabled, the BF-only instruction sequence remains byte-identical.
 IceBlock_IsPitRoom:
 {
-  LDA.b $A0 : CMP.b #$BF : BNE .done
+  LDA.b $A0
+if !ENABLE_D5_BF_PIT_RESET == 1
+  CMP.b #$BF
+if !ENABLE_D5_AF_PIT_RESET == 1
+  BEQ .matching_low
+  CMP.b #$AF
+endif
+else
+  CMP.b #$AF
+endif
+  BNE .done
+  .matching_low
     LDA.b $A1
   .done
   RTS
@@ -383,7 +395,7 @@ IceBlock_GetCenterAttr:
   RTS
 }
 
-; BF only. MiscB=1 hides a returning block once TimerC reaches zero.
+; Enabled pit-reset rooms only. MiscB=1 hides a returning block once TimerC reaches zero.
 ; Carry set means the ordinary push/damage/switch path must not run this frame.
 IceBlock_PitStep:
 {
@@ -429,7 +441,7 @@ endif
 
 Sprite_IceBlock_CheckForSwitch:
 {
-if !ENABLE_D5_BF_PIT_RESET == 1
+if !ENABLE_D5_BF_PIT_RESET == 1 || !ENABLE_D5_AF_PIT_RESET == 1
   JSR IceBlock_GetCenterAttr
 else
   ; Check center point of block for switch tile
@@ -511,7 +523,7 @@ Statue_BlockSprites:
 Sprite_IceBlock_Draw:
 {
   JSL Sprite_PrepOamCoord
-if !ENABLE_D5_BF_PIT_RESET == 1
+if !ENABLE_D5_BF_PIT_RESET == 1 || !ENABLE_D5_AF_PIT_RESET == 1
   LDA.w SprMiscB, X : BEQ .visible
     LDA.w SprTimerC, X : BNE .sink
       ; This sprite reserves four deferred entries. Hide them explicitly;
