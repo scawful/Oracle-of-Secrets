@@ -165,6 +165,32 @@ def check_camera_cache(lib,rom,labels):
     return len(cases)
 
 
+def check_palette_handoff(lib,rom,labels):
+    """Fade setup owns display colours; ordinary-play prep updates both."""
+    phases=((6,0),(7,14),(7,1),(7,0))
+    rows=(('protector_head',0x62),('protector_body',0x82),('warden_armor',0xA2),('warden_iron',0xC2))
+    for module,submodule in phases:
+        f=Fixture(lib,rom,labels)
+        f.ram[0xC400:0xC700]=bytes([0x55])*0x300
+        f.put(0x10,module);f.put(0x11,submodule)
+        before=bytes(f.ram);f.cpu.y=0x37
+        f.call('D4Zora_LoadPalettes')
+        immediate=(module,submodule)==(7,0)
+        allowed=set(range(0x100,0x200))|{0x15}
+        for name,offset in rows:
+            address=f.addr('D4Zora_Palette_'+name)
+            expected=bytes(f.read(address+i) for i in range(14))
+            assert f.ram[0xC400+offset:0xC400+offset+14]==expected
+            allowed.update(range(0xC400+offset,0xC400+offset+14))
+            if immediate:
+                assert f.ram[0xC600+offset:0xC600+offset+14]==expected
+                allowed.update(range(0xC600+offset,0xC600+offset+14))
+        if not immediate:assert f.ram[0xC600:0xC700]==before[0xC600:0xC700],'Display buffer filled before fade'
+        assert f.cpu.y==0x37 and all(a in allowed or old==new for a,(old,new) in enumerate(zip(before,f.ram)))
+        f.close()
+    return len(phases)
+
+
 
 def check_real_allocator(lib,rom,labels,candidate):
     """Exercise actual region/defer code with normal and every fallback slot."""
@@ -302,7 +328,7 @@ def check(lib,rom,labels,candidate):
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
     for n in ('rom','symbols','candidate','lakesnes','output'):ap.add_argument('--'+n,type=Path,required=True)
-    ap.add_argument('--camera-only',action='store_true')
+    ap.add_argument('--handoff-only','--camera-only',dest='handoff_only',action='store_true')
     a=ap.parse_args();assert not a.output.exists()
     labels={m[3]:int(m[1]+m[2],16) for m in re.finditer(r'(?m)^([0-9A-Fa-f]{2}):([0-9A-Fa-f]{4}) (\S+)$',a.symbols.read_text())}
     labels.update({n:int(v,16) for n,v in re.findall(r'(?m)^(\w+)\s*=\s*\$([0-9A-Fa-f]+)',(ROOT/'Core/symbols.asm').read_text())})
@@ -313,7 +339,8 @@ def main():
         lib=C.CDLL(str(library));lib.cpu_init.restype=C.POINTER(Cpu)
         lib.cpu_runOpcode.argtypes=[C.POINTER(Cpu)];lib.cpu_free.argtypes=[C.POINTER(Cpu)]
         results={'camera_cache_cases':check_camera_cache(lib,a.rom.read_bytes(),labels)}
-        if not a.camera_only:
+        results['palette_handoff_cases']=check_palette_handoff(lib,a.rom.read_bytes(),labels)
+        if not a.handoff_only:
             results.update(check(lib,a.rom.read_bytes(),labels,json.loads((a.candidate/'RECEIPT.json').read_text())))
     report=dict(status='COMPILED_CPU_FIXTURE_PASS',rom_sha256=hashlib.sha256(a.rom.read_bytes()).hexdigest(),
         core_sources={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in sources},results=results,

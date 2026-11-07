@@ -467,7 +467,10 @@ D4Warden_TryValveAssist:
   RTS
 }
 
-; Write only colours1..7 in lower OBJ rows3–6, both source/display buffers.
+; Write colours1..7 in lower OBJ rows3–6. During room loading/fades, vanilla
+; builds C6 display colours additively from C4 targets. Filling both early
+; doubles each colour on the natural spiral-stair fade-in. Ordinary-play
+; sprite preparation still needs an immediate display update.
 D4Zora_LoadPalettes:
 {
   PHX
@@ -475,15 +478,27 @@ D4Zora_LoadPalettes:
   LDX.b #$0C
   .next
   LDA.l D4Zora_Palette_protector_head, X
-  STA.l $7EC462, X : STA.l $7EC662, X
+  STA.l $7EC462, X
   LDA.l D4Zora_Palette_protector_body, X
-  STA.l $7EC482, X : STA.l $7EC682, X
+  STA.l $7EC482, X
   LDA.l D4Zora_Palette_warden_armor, X
-  STA.l $7EC4A2, X : STA.l $7EC6A2, X
+  STA.l $7EC4A2, X
   LDA.l D4Zora_Palette_warden_iron, X
-  STA.l $7EC4C2, X : STA.l $7EC6C2, X
+  STA.l $7EC4C2, X
   DEX : DEX : BPL .next
   SEP #$20
+  LDA.l $7E0010 : CMP.b #$07 : BNE .done
+  LDA.l $7E0011 : BNE .done
+  REP #$20
+  LDX.b #$0C
+  .display
+  LDA.l D4Zora_Palette_protector_head, X : STA.l $7EC662, X
+  LDA.l D4Zora_Palette_protector_body, X : STA.l $7EC682, X
+  LDA.l D4Zora_Palette_warden_armor, X : STA.l $7EC6A2, X
+  LDA.l D4Zora_Palette_warden_iron, X : STA.l $7EC6C2, X
+  DEX : DEX : BPL .display
+  SEP #$20
+  .done
   INC.b $15
   PLX
   RTS
