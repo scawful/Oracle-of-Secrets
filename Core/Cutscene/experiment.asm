@@ -232,6 +232,7 @@ Experiment_Script:
   %exp_wait(40)
   %exp_text(!ExpMsg_ZoraA_Resonance)
   %exp_text(!ExpMsg_ZoraB_Report)
+  .still_water
   %exp_text(!ExpMsg_Farore_Still)
   %exp_wait(30)
 
@@ -385,18 +386,18 @@ Exp_Poses:
   db 0, 10, $6C, $38, $02
   .farore_front
   db 3
-  db 0, 0, $AA, $3B, $02
-  db 0, -12, $A8, $3B, $02
+  db 0, 4, $AA, $3B, $02
+  db 0, -8, $A8, $3B, $02
   db 0, 10, $6C, $38, $02
   .farore_step
   db 3
-  db 0, 0, $88, $7B, $02
-  db 0, -12, $A8, $3B, $02
+  db 0, 4, $88, $7B, $02
+  db 0, -8, $A8, $3B, $02
   db 0, 10, $6C, $38, $02
   .farore_back
   db 3
-  db 0, 0, $8C, $3B, $02
-  db 0, -12, $8A, $3B, $02
+  db 0, 4, $8C, $3B, $02
+  db 0, -8, $8A, $3B, $02
   db 0, 10, $6C, $38, $02
   .stal_low                               ; skull only, at the ground line
   db 1
@@ -502,9 +503,27 @@ Exp_Run:
   JSR Exp_ShakeStep
   JSR Exp_RunScript
   LDA.l Exp_State : CMP.b #$01 : BNE .done
+    JSR Exp_HoldWater
     JSR Exp_MoveActors
     JSR Exp_DrawActors
   .done
+  RTS
+}
+
+; Hold the animated BG sheet from Farore's still-water line until this module
+; ends. The module runs before NMI_PrepareSprites decrements BGANMTIME; 2
+; becomes 1 there, so the current frame never advances. Loads own their timer.
+; Entry/exit M8/X8, DB = $3A. No index, stack or scratch-memory changes.
+Exp_HoldWater:
+{
+  LDA.l Exp_Block : CMP.b #$07 : BEQ .done
+  REP #$20
+  LDA.l Exp_PC : CMP.w #Experiment_Script_still_water-Experiment_Script
+  BCC .done
+  BEQ .done                              ; the preceding message is still open
+  LDA.w #$0002 : STA.l BGANMTIME
+  .done
+  SEP #$20
   RTS
 }
 
