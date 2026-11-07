@@ -213,7 +213,7 @@ endmacro
 !ExpY_ZoraB  = 146
 !ExpX_Farore = 206
 !ExpY_Farore = 142
-!ExpX_Behind = 158 ; the Stalfos that follows Zora A home
+!ExpX_Behind = 136 ; returning Stalfos stays on the paved island (footprint X 130-155)
 !ExpY_Behind = 128
 
 ; ---------------------------------------------------------
