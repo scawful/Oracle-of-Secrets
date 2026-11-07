@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Execute compiled private D4 routines with Lakesnes' existing 65816 core.
 
-Engine calls are explicit stubs; JumpTableLocal executes its real ROM bytes.
+Most engine calls are explicit stubs; dedicated allocation controls execute real
+vanilla region/defer routines. JumpTableLocal also executes its real ROM bytes.
 This proves bounded CPU behavior, not SNES rendering, collision or controller play.
 No emulator process, socket, save, shared ROM or ROM file write is used.
 """
@@ -38,7 +39,7 @@ class Fixture:
         for n in ('c','z','v','n','i','d','e','waiting','stopped','irqWanted','nmiWanted','intWanted','resetWanted'):setattr(self.cpu,n,False)
         self.cpu.mf=self.cpu.xf=True;self.cpu.dp=0;self.cpu.sp=0x1FF
         self.cpu.a=self.cpu.x=self.cpu.y=0;self.cpu.db=0x2C
-        for name in ('Sprite_PrepOamCoord','Sprite_OAM_AllocateDeferToPlayer',
+        for name in ('Sprite_PrepOamCoord','Sprite_OAM_AllocateDeferToPlayer','OAM_AllocateFromRegionA',
                      'Sprite_CheckDamageFromPlayer','Sprite_PlayerCantPassThrough',
                      'Sprite_DirectionToFacePlayer','Sprite_ApplySpeedTowardsPlayer',
                      'Sprite_CheckTileCollision','Sprite_Move','GetDistance8bit_Long',
@@ -84,7 +85,7 @@ class Fixture:
         self.calls.append(name);x=self.cpu.x
         if name=='Sprite_PrepOamCoord':
             self.word(0,self.screen[0]&65535);self.word(2,self.screen[1]&65535)
-        elif name=='Sprite_OAM_AllocateDeferToPlayer':self.word(0x90,0x800);self.word(0x92,0xA00)
+        elif name in ('Sprite_OAM_AllocateDeferToPlayer','OAM_AllocateFromRegionA'):self.word(0x90,0x800);self.word(0x92,0xA00)
         elif name=='Sprite_DirectionToFacePlayer':self.cpu.y=self.direction
         elif name=='Sprite_ApplySpeedTowardsPlayer':
             speed=self.cpu.a&255;self.speed_calls.append(speed)
@@ -118,6 +119,42 @@ class Fixture:
     def close(self):self.lib.cpu_free(self.p)
 
 
+
+def check_real_allocator(lib,rom,labels,candidate):
+    """Exercise actual region/defer code with normal and every fallback slot."""
+    cases=0
+    for index,(name,frame) in enumerate(candidate['frames'].items()):
+        for fallback in range(-1,8):
+            for near in (False,True):
+                f=Fixture(lib,rom,labels)
+                for routine in ('Sprite_OAM_AllocateDeferToPlayer','OAM_AllocateFromRegionA'):
+                    del f.stubs[f.addr(routine)]
+                f.spr('SprFrame',index)
+                f.spr('SprNbrOAM',1 if name.startswith('protector_') else 14)
+                f.spr('SprX',128);f.spr('SprY',128)
+                f.word(0x22,128 if near else 192);f.word(0x20,128)
+                # Sprite dispatch supplies a normal OAM cursor before drawing.
+                f.word(0x90,0x830);f.word(0x92,0xA2C)
+                f.word(0xFE0,0x30 if fallback<0 else 0x170)
+                f.word(0xFE2,0x1D0 if fallback<0 else 0x1F0)
+                f.word(0xFEC,max(0,fallback));f.word(0xFEE,max(0,fallback))
+                sentinel=bytes(range(0x20))
+                f.ram[0xAA0:0xAC0]=sentinel
+                f.writes.clear()
+                f.call('D4Zora_Draw')
+                overflow=[(a,v) for a,v in f.writes if 0xAA0<=(a&0xFFFF)<0xB00]
+                assert not overflow,(name,fallback,near,'OAM overflow into graphics/mask state',overflow)
+                assert f.ram[0xAA0:0xAC0]==sentinel,(name,'resource/dive canary')
+                low=f.get(0x90)|(f.get(0x91)<<8)
+                high=f.get(0x92)|(f.get(0x93)<<8)
+                n=len(frame['oam'])
+                assert 0x800<=low and low+n*4<=0xA00,(name,'OAM low bounds',low,n)
+                assert 0xA20<=high and high+n<=0xAA0,(name,'OAM auxiliary bounds',high,n)
+                assert not f.bad_writes
+                cases+=1;f.close()
+    return cases
+
+
 def check(lib,rom,labels,candidate):
     results={};f=Fixture(lib,rom,labels)
     # All signed offsets, X flip properties, OAM size/X9, clipping and cursors
@@ -135,6 +172,7 @@ def check(lib,rom,labels,candidate):
                 assert f.ram[0x800+i*4:0x804+i*4]==expected,(name,sx,sy,i,'OAM')
                 assert f.ram[0xA00+i]==2|((x>>8)&1),(name,'X9/size')
             n=len(frame['oam']);assert f.ram[0x800+n*4]==0xA5 and f.ram[0xA00+n]==0xA5
+    results['real_allocator_cases']=check_real_allocator(lib,rom,labels,candidate)
     results['compiled_draw_cases']=len(candidate['frames'])*len(screens)
     for direction in range(4):
         f.spr('SprMiscC',direction)
@@ -230,7 +268,7 @@ def main():
         results=check(lib,a.rom.read_bytes(),labels,json.loads((a.candidate/'RECEIPT.json').read_text()))
     report=dict(status='COMPILED_CPU_FIXTURE_PASS',rom_sha256=hashlib.sha256(a.rom.read_bytes()).hexdigest(),
         core_sources={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in sources},results=results,
-        scope='Compiled 65816 routines; stubbed engine services. Real JumpTableLocal. Not native gameplay.',native_runtime_qualified=False)
+        scope='Compiled 65816 routines; real allocator bounds controls and JumpTableLocal; other engine services stubbed. Not native gameplay.',native_runtime_qualified=False)
     a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
 
 

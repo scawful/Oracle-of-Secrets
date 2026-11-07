@@ -422,7 +422,11 @@ D4Zora_LoadPalettes:
 D4Zora_Draw:
 {
   JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  ; Region B's player-defer fallback has only two safe entries at $01F8.
+  ; This body needs up to15: reserve from large Region A so size/X9 writes
+  ; remain below $0AA0 (graphics state and the Zora dive flag follow OAM).
+  LDA.w SprNbrOAM, X : AND.b #$1F : INC A : ASL #2
+  JSL OAM_AllocateFromRegionA
   PHX
   LDA.w SprFrame, X : TAX
   LDA.l D4Zora_FrameCounts, X : STA $0D
