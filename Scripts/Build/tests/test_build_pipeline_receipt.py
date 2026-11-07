@@ -4,6 +4,7 @@ Source-contract/generator internals have their own suites. These tests exercise
 exit propagation, provenance dispatch and cleanup without real ROMs or emulators.
 """
 from pathlib import Path
+import hashlib
 import json
 import os
 import shutil
@@ -110,6 +111,81 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         argv = json.loads((self.root / 'Roms/analyzer-args.json').read_text())
         self.assertEqual(argv[argv.index('--sym')+1], str(self.root / 'Roms/oos999x.sym'))
         self.assertIn('pre_assembly', self.receipt['snapshots'])
+        manifest = self.root / 'Roms/hack_manifest.json'
+        self.assertEqual(Path(self.receipt['artifacts']['manifest']['path']),
+                         manifest.resolve())
+        self.assertEqual(self.receipt['artifacts']['manifest']['sha256'],
+                         hashlib.sha256(manifest.read_bytes()).hexdigest())
+
+    def test_redirected_manifest_keeps_policy_and_records_actual_output(self):
+        policy = self.write('Roms/hack_manifest.json', 'saved editor policy')
+        output = self.root / 'Roms/oos999x.manifest.json'
+        self.env['OOS_MANIFEST_OUTPUT'] = str(output)
+        result = self.build()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(policy.read_text(), 'saved editor policy')
+        manifest = json.loads(output.read_text())
+        self.assertEqual(manifest['argv'][manifest['argv'].index('--output') + 1],
+                         str(output.resolve()))
+        self.assertEqual(Path(self.receipt['artifacts']['manifest']['path']),
+                         output.resolve())
+        self.assertEqual(self.receipt['artifacts']['manifest']['sha256'],
+                         hashlib.sha256(output.read_bytes()).hexdigest())
+
+    def test_redirected_manifest_rollback_preserves_foreign_policy_update(self):
+        policy = self.write('Roms/hack_manifest.json', 'saved editor policy')
+        output = self.write('Roms/oos999x.manifest.json', 'previous compiled manifest')
+        self.env.update(OOS_MANIFEST_OUTPUT=str(output), OOS_ANALYSIS_FATAL='1')
+        self.analyzer.write_text('import pathlib,sys\n'
+            'pathlib.Path("Roms/hack_manifest.json").write_text("foreign policy update")\n'
+            'sys.exit(7)\n')
+        result = self.build()
+        self.assertEqual(result.returncode, 7, result.stderr)
+        self.assertEqual(self.check('output_rollback')['status'], 'passed')
+        self.assertEqual(output.read_text(), 'previous compiled manifest')
+        self.assertEqual(policy.read_text(), 'foreign policy update')
+
+    def test_manifest_override_refuses_foreign_paths_aliases_before_receipt(self):
+        policy = self.write('Roms/hack_manifest.json', 'saved editor policy')
+        foreign = self.write('Core/foreign.asm', '; retain foreign source\n')
+        output = self.root / 'Roms/oos999x.manifest.json'
+        receipt = self.root / 'Roms/oos999x.build.json'
+        saved_inputs = {'project_alias': 'YAZE_PROJECT_FILE',
+                        'native_receipt_alias': 'YAZE_NATIVE_SAVE_RECEIPT',
+                        'native_context_alias': 'YAZE_NATIVE_SAVE_CONTEXT'}
+        for kind in ('foreign', 'symlink', 'symlink_target', 'hardlink',
+                     'receipt_alias', *saved_inputs):
+            env = dict(self.env)
+            if kind == 'foreign':
+                env['OOS_MANIFEST_OUTPUT'] = str(policy)
+            else:
+                env['OOS_MANIFEST_OUTPUT'] = str(output)
+                if kind == 'symlink':
+                    output.symlink_to(policy)
+                elif kind == 'symlink_target':
+                    output.symlink_to(foreign)
+                    env['OOS_MANIFEST_OUTPUT'] = str(foreign)
+                elif kind == 'hardlink':
+                    output.hardlink_to(policy)
+                elif kind == 'receipt_alias':
+                    env['OOS_BUILD_RECEIPT'] = str(output)
+                else:
+                    output.write_text('saved native input')
+                    env[saved_inputs[kind]] = str(output)
+            with self.subTest(kind=kind):
+                result = subprocess.run(['bash', str(self.root / 'Scripts/Build/build_rom.sh'),
+                    '999', str(self.assembler)], cwd=self.temp.name, env=env,
+                    capture_output=True, text=True)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('OOS_MANIFEST_OUTPUT', result.stderr)
+                self.assertFalse(receipt.exists())
+                self.assertFalse((self.root / 'Roms/oos999x.sfc').exists())
+                self.assertEqual(policy.read_text(), 'saved editor policy')
+                self.assertEqual(foreign.read_text(), '; retain foreign source\n')
+                if kind in saved_inputs:
+                    self.assertEqual(output.read_text(), 'saved native input')
+            if output.exists() or output.is_symlink():
+                output.unlink()
 
     def test_source_sheet_guard_failure_preserves_previous_output(self):
         output = self.write('Roms/oos999x.sfc', 'previous candidate')

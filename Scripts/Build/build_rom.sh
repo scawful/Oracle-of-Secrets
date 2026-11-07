@@ -16,6 +16,7 @@ usage() {
   echo "  Names: flags,menu,overlap,hooks,sprites,analysis,smoke,annotations." >&2
   echo "  OOS_ANALYZER=<path> selects an analyzer; OOS_TEST_SOCKET=<owned socket> enables exact-ROM current-state smoke." >&2
   echo "  Receipt: Roms/oos<version>x.build.json (override OOS_BUILD_RECEIPT)." >&2
+  echo "  OOS_MANIFEST_OUTPUT selects only Roms/oos<version>x.manifest.json; default Roms/hack_manifest.json." >&2
   exit "${1:-1}"
 }
 
@@ -152,6 +153,34 @@ symbols_rel="Roms/oos${version}x.sym"
 symbols_path="$rom_dir/oos${version}x.sym"
 mlb_rel="Roms/oos${version}x.mlb"
 mlb_path="$rom_dir/oos${version}x.mlb"
+manifest_output="$rom_dir/hack_manifest.json"
+if [[ -n "${OOS_MANIFEST_OUTPUT:-}" ]]; then
+  # Check before receipt creation or source generation. The per-output artifact
+  # must not overwrite policy, saved inputs, or another managed output.
+  manifest_output="$(python3 - "$OOS_MANIFEST_OUTPUT" \
+    "$rom_dir/oos${version}x.manifest.json" "$base_rom" "$patched_rom" \
+    "$symbols_path" "$mlb_path" "$rom_dir/hack_manifest.json" \
+    "$rom_dir/hooks.json" "$rom_dir/sourcemap.json" \
+    "${OOS_BUILD_RECEIPT:-$rom_dir/oos${version}x.build.json}" \
+    "${YAZE_PROJECT_FILE:-}" "${YAZE_NATIVE_SAVE_RECEIPT:-}" \
+    "${YAZE_NATIVE_SAVE_CONTEXT:-}" <<'PY'
+from pathlib import Path
+import sys
+try:
+    requested, expected = map(Path, sys.argv[1:3])
+    if expected.is_symlink() or requested.is_symlink() or requested.resolve() != expected.resolve():
+        raise ValueError('OOS_MANIFEST_OUTPUT must be the per-output Roms/oos<version>x.manifest.json')
+    if requested.exists() and (not requested.is_file() or requested.stat().st_nlink != 1):
+        raise ValueError('OOS_MANIFEST_OUTPUT must be an unaliased regular file')
+    if any(requested.resolve() == Path(value).resolve() for value in sys.argv[3:] if value):
+        raise ValueError('OOS_MANIFEST_OUTPUT aliases an input or managed artifact')
+    print(expected.resolve())
+except (OSError, ValueError) as error:
+    print(f'ERROR: {error}', file=sys.stderr)
+    sys.exit(1)
+PY
+  )"
+fi
 
 source "$repo_root/Scripts/Build/build_checks.sh"
 init_build_receipt
@@ -479,7 +508,7 @@ echo "Assembled patched ROM: $patched_rom"
 echo "[*] Generating Yaze hack manifest..."
 manifest_args=(
   --root "$repo_root"
-  --output "$repo_root/Roms/hack_manifest.json"
+  --output "$manifest_output"
   --dev-rom "$base_rom"
   --rom "$patched_rom"
 )
@@ -510,7 +539,7 @@ run_check manifest 1 python3 "$repo_root/Scripts/Generate/generate_hack_manifest
   "${manifest_args[@]}" \
   "${manifest_hook_args[@]}"
 
-receipt artifact --name manifest --path "$repo_root/Roms/hack_manifest.json"
+receipt artifact --name manifest --path "$manifest_output"
 
 # Export symbols for yaze + Mesen2.
 if [[ $emit_symbols -eq 1 && -f "$symbols_path" ]]; then

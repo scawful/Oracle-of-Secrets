@@ -33,6 +33,7 @@ class AuthoringBundleBuildTest(unittest.TestCase):
         self.text = ('[files]\ncode_folder=current engine\n'
             'rom_filename=saved editing rom\nrom_backup_folder=backups\n'
             'output_folder=current engine/Roms\nlyra_terrain_file=\n'
+            'hack_manifest_file=current engine/Roms/hack_manifest.json\n'
             'lyra_build_request_file=\nnative_save_producer_file=transfer/producer.json\n'
             'native_save_transfer_proof_file=transfer/proof.json\n'
             '[rom]\nexpected_hash=unchanged-identity\nwrite_policy=block\n'
@@ -64,6 +65,8 @@ class AuthoringBundleBuildTest(unittest.TestCase):
             self.assertEqual(env[key], value)
         self.assertNotIn('OOS_BASE_ROM', env)
         self.assertEqual(env['OOS_MANIFEST_ROOT'], str(self.root))
+        self.assertEqual(env['OOS_MANIFEST_OUTPUT'],
+                         str(self.target.with_suffix('.manifest.json')))
         self.assertEqual(env['OOS_BACKUP_ROOT'], str(self.root / 'backups'))
         self.assertEqual(self.project.read_text(), self.text)
         self.assertEqual(self.rom.read_bytes(), b'actual saved ROM fixture')
@@ -133,6 +136,39 @@ class AuthoringBundleBuildTest(unittest.TestCase):
         self.project.write_text(self.text.replace('output_folder=current engine/Roms',
                                                   'output_folder=foreign'))
         with self.assertRaisesRegex(ValueError, 'output_folder differs'):
+            self.invoke()
+
+    def test_foreign_compiled_manifest_override_refuses_before_child(self):
+        self.env['OOS_MANIFEST_OUTPUT'] = str(self.code / 'Roms/hack_manifest.json')
+        with mock.patch.dict(os.environ, self.env, clear=True), \
+                mock.patch.object(B.subprocess, 'run') as run:
+            with self.assertRaisesRegex(ValueError, 'OOS_MANIFEST_OUTPUT differs'):
+                B.build_project(self.project)
+            run.assert_not_called()
+
+    def test_compiled_manifest_aliases_cannot_overwrite_policy_or_receipts(self):
+        policy = self.code / 'Roms/hack_manifest.json'
+        policy.parent.mkdir()
+        policy.write_text('saved editor policy')
+        manifest = self.target.with_suffix('.manifest.json')
+        for kind in ('symlink', 'hardlink'):
+            if kind == 'symlink':
+                manifest.symlink_to(policy)
+            else:
+                manifest.hardlink_to(policy)
+            with self.subTest(kind=kind), self.assertRaisesRegex(ValueError,
+                    'Compiled manifest must'):
+                self.invoke()
+            self.assertEqual(policy.read_text(), 'saved editor policy')
+            manifest.unlink()
+        self.env['OOS_BUILD_RECEIPT'] = str(manifest)
+        with self.assertRaisesRegex(ValueError, 'aliases project policy or saved inputs'):
+            self.invoke()
+        self.env.pop('OOS_BUILD_RECEIPT')
+        self.project.write_text(self.text.replace(
+            'hack_manifest_file=current engine/Roms/hack_manifest.json',
+            'hack_manifest_file=current engine/Roms/oos178x.manifest.json'))
+        with self.assertRaisesRegex(ValueError, 'aliases project policy or saved inputs'):
             self.invoke()
 
 

@@ -53,7 +53,7 @@ snapshot_build_outputs() {
   # source, receipt and diagnostic reports outside it.
   build_output_paths=(
     "$patched_rom" "$symbols_path" "$mlb_path"
-    "$rom_dir/hooks.json" "$rom_dir/hack_manifest.json" "$rom_dir/sourcemap.json"
+    "$rom_dir/hooks.json" "${manifest_output:-$rom_dir/hack_manifest.json}" "$rom_dir/sourcemap.json"
     "$repo_root/.cache/annotations.json"
     "$repo_root/.cache/special_overworld_reader_constants.asm"
     "$repo_root/.cache/special_overworld_native_source.json"

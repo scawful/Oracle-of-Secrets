@@ -80,10 +80,28 @@ def build_project(project: Path) -> int:
     backups = config.get("files", "rom_backup_folder", fallback="backups").strip()
     backup_root = _bound(root, backups, "OOS_BACKUP_ROOT", environment)
     manifest_root = _bound(root, str(root), "OOS_MANIFEST_ROOT", environment)
+    compiled_manifest = output.with_suffix(".manifest.json")
+    if compiled_manifest.is_symlink():
+        raise ValueError("Compiled manifest must not be a symlink")
+    manifest_output = _bound(root, str(compiled_manifest),
+                             "OOS_MANIFEST_OUTPUT", environment)
+    if manifest_output.exists() and (
+            not manifest_output.is_file() or manifest_output.stat().st_nlink != 1):
+        raise ValueError("Compiled manifest must be an unaliased regular file")
+    policy = config.get("files", "hack_manifest_file", fallback="").strip()
+    protected = [project, rom, output, code / "Roms/hack_manifest.json"]
+    if policy:
+        protected.append(_path(root, policy))
+    for key in ("YAZE_NATIVE_SAVE_RECEIPT", "YAZE_NATIVE_SAVE_CONTEXT", "OOS_BUILD_RECEIPT"):
+        if environment.get(key, "").strip():
+            protected.append(_path(root, environment[key]))
+    if manifest_output in [path.resolve() for path in protected]:
+        raise ValueError("Compiled manifest aliases project policy or saved inputs")
     environment.update(YAZE_PROJECT_FILE=str(project),
         YAZE_PROJECT_CODE_FOLDER=str(code), YAZE_PROJECT_ROM=str(rom),
         YAZE_PROJECT_OUTPUT=str(output), OOS_BACKUP_ROOT=str(backup_root),
-        OOS_MANIFEST_ROOT=str(manifest_root))
+        OOS_MANIFEST_ROOT=str(manifest_root),
+        OOS_MANIFEST_OUTPUT=str(manifest_output))
     # No OOS_BASE_ROM injection: build_rom.sh consumes YAZE_PROJECT_ROM directly.
     # Save receipt/context, producer controls and tool selection pass unchanged.
     return subprocess.run(["bash", str(script), match[1]], cwd=root,
