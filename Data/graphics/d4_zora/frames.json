@@ -1,522 +1,6437 @@
 {
-  "status": "ACCEPTED_PRIVATE_BINDING",
-  "source_generator": "Scripts/Graphics/d4_actor_native_pack.py",
-  "candidate_receipt_sha256": "f134bd49f2ac3c37924998d317ebf76e688ad7b4c567a22f1e844a5e0f179b1b",
-  "binding": {
-    "palette_rows": {
-      "protector_head": 3,
-      "protector_body": 4,
-      "warden_armor": 5,
-      "warden_iron": 6
-    },
-    "colour_indices": [
-      1,
-      7
-    ],
-    "spriteset": "4F",
-    "sprite_relative_sheets": [
-      "6C",
-      "6D",
-      "6E",
-      "6F"
-    ],
-    "global_sheets": [
-      "DF",
-      "E0",
-      "E1",
-      "E2"
-    ],
-    "asm_entries": 65,
-    "source_installed": true
-  },
+  "schema_version": 2,
+  "status": "FULL_FIGHT_BINDING_INPUT",
   "frames": {
-    "warden_idle_front": {
-      "canvas": [
-        32,
-        48
-      ],
+    "right_walk_0": {
       "oam": [
         {
-          "char": 0,
-          "x": 0,
-          "y": 0,
-          "palette": "warden_armor"
-        },
-        {
-          "char": 2,
+          "char": 44,
           "x": 16,
           "y": 0,
-          "palette": "warden_armor"
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
         },
         {
-          "char": 4,
-          "x": 0,
-          "y": 16,
-          "palette": "warden_armor"
-        },
-        {
-          "char": 6,
-          "x": 16,
-          "y": 16,
-          "palette": "warden_armor"
-        },
-        {
-          "char": 8,
-          "x": 0,
-          "y": 32,
-          "palette": "warden_armor"
-        },
-        {
-          "char": 10,
-          "x": 16,
-          "y": 32,
-          "palette": "warden_armor"
-        },
-        {
-          "char": 12,
+          "char": 46,
           "x": 0,
           "y": 0,
-          "palette": "warden_iron"
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
         },
         {
-          "char": 14,
+          "char": 64,
           "x": 16,
+          "y": 16,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 66,
+          "x": 0,
+          "y": 16,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 68,
+          "x": 16,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 70,
+          "x": -1,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 72,
+          "x": 0,
           "y": 0,
-          "palette": "warden_iron"
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
         },
         {
-          "char": 36,
-          "x": 0,
-          "y": 16,
-          "palette": "warden_iron"
-        },
-        {
-          "char": 38,
+          "char": 74,
           "x": 16,
           "y": 16,
-          "palette": "warden_iron"
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
         },
         {
-          "char": 40,
+          "char": 76,
           "x": 0,
-          "y": 32,
-          "palette": "warden_iron"
+          "y": 16,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
         },
         {
-          "char": 42,
+          "char": 78,
           "x": 16,
           "y": 32,
-          "palette": "warden_iron"
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 96,
+          "x": -1,
+          "y": 32,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -3,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -3,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg",
+          "flip_x": true
         }
       ],
-      "composition_exact": true,
-      "max_scanline_objects": 4
-    },
-    "warden_idle_side": {
+      "kind": "warden",
       "canvas": [
-        32,
-        48
+        64,
+        64
       ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "right_walk_1": {
+      "oam": [
+        {
+          "char": 44,
+          "x": 16,
+          "y": -1,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 46,
+          "x": 0,
+          "y": -1,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 64,
+          "x": 16,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 66,
+          "x": 0,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 68,
+          "x": 16,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 70,
+          "x": 1,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 72,
+          "x": 0,
+          "y": -1,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 74,
+          "x": 16,
+          "y": 15,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 76,
+          "x": 0,
+          "y": 15,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 78,
+          "x": 16,
+          "y": 32,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 96,
+          "x": 1,
+          "y": 31,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -3,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "rear_leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -3,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "rear_leg",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "right_walk_2": {
+      "oam": [
+        {
+          "char": 44,
+          "x": 16,
+          "y": 0,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 46,
+          "x": 0,
+          "y": 0,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 64,
+          "x": 16,
+          "y": 16,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 66,
+          "x": 0,
+          "y": 16,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 68,
+          "x": 16,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 70,
+          "x": 1,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 72,
+          "x": 0,
+          "y": 0,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 74,
+          "x": 16,
+          "y": 16,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 76,
+          "x": 0,
+          "y": 16,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 78,
+          "x": 16,
+          "y": 32,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 96,
+          "x": 1,
+          "y": 32,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -1,
+          "y": 33,
+          "palette": "warden_armor",
+          "part": "rear_leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -1,
+          "y": 33,
+          "palette": "warden_iron",
+          "part": "rear_leg",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "right_walk_3": {
+      "oam": [
+        {
+          "char": 44,
+          "x": 16,
+          "y": -1,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 46,
+          "x": 0,
+          "y": -1,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 64,
+          "x": 16,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 66,
+          "x": 0,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 68,
+          "x": 16,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 70,
+          "x": -1,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 72,
+          "x": 0,
+          "y": -1,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 74,
+          "x": 16,
+          "y": 15,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 76,
+          "x": 0,
+          "y": 15,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 78,
+          "x": 16,
+          "y": 32,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 96,
+          "x": -1,
+          "y": 32,
+          "palette": "warden_iron",
+          "part": "side_base",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -1,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "rear_leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -1,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "rear_leg",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "left_walk_0": {
       "oam": [
         {
           "char": 44,
           "x": 0,
           "y": 0,
-          "palette": "warden_armor"
+          "palette": "warden_armor",
+          "part": "side_base"
         },
         {
           "char": 46,
           "x": 16,
           "y": 0,
-          "palette": "warden_armor"
+          "palette": "warden_armor",
+          "part": "side_base"
         },
         {
           "char": 64,
           "x": 0,
           "y": 16,
-          "palette": "warden_armor"
+          "palette": "warden_armor",
+          "part": "side_base"
         },
         {
           "char": 66,
           "x": 16,
           "y": 16,
-          "palette": "warden_armor"
+          "palette": "warden_armor",
+          "part": "side_base"
         },
         {
           "char": 68,
           "x": 0,
           "y": 32,
-          "palette": "warden_armor"
+          "palette": "warden_armor",
+          "part": "side_base"
         },
         {
           "char": 70,
-          "x": 16,
+          "x": 17,
           "y": 32,
-          "palette": "warden_armor"
+          "palette": "warden_armor",
+          "part": "side_base"
         },
         {
           "char": 72,
           "x": 16,
           "y": 0,
-          "palette": "warden_iron"
+          "palette": "warden_iron",
+          "part": "side_base"
         },
         {
           "char": 74,
           "x": 0,
           "y": 16,
-          "palette": "warden_iron"
+          "palette": "warden_iron",
+          "part": "side_base"
         },
         {
           "char": 76,
           "x": 16,
           "y": 16,
-          "palette": "warden_iron"
+          "palette": "warden_iron",
+          "part": "side_base"
         },
         {
           "char": 78,
           "x": 0,
           "y": 32,
-          "palette": "warden_iron"
+          "palette": "warden_iron",
+          "part": "side_base"
         },
         {
           "char": 96,
-          "x": 16,
+          "x": 17,
           "y": 32,
-          "palette": "warden_iron"
+          "palette": "warden_iron",
+          "part": "side_base"
+        },
+        {
+          "char": 228,
+          "x": 19,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg"
+        },
+        {
+          "char": 230,
+          "x": 19,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg"
         }
       ],
-      "composition_exact": true,
-      "max_scanline_objects": 4
-    },
-    "warden_brace": {
+      "kind": "warden",
       "canvas": [
-        32,
-        48
+        64,
+        64
       ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "left_walk_1": {
       "oam": [
         {
-          "char": 98,
+          "char": 44,
           "x": 0,
-          "y": 0,
-          "palette": "warden_armor"
+          "y": -1,
+          "palette": "warden_armor",
+          "part": "side_base"
         },
         {
-          "char": 100,
+          "char": 46,
           "x": 16,
-          "y": 0,
-          "palette": "warden_armor"
+          "y": -1,
+          "palette": "warden_armor",
+          "part": "side_base"
         },
         {
-          "char": 102,
+          "char": 64,
           "x": 0,
-          "y": 16,
-          "palette": "warden_armor"
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "side_base"
         },
         {
-          "char": 104,
+          "char": 66,
           "x": 16,
-          "y": 16,
-          "palette": "warden_armor"
-        },
-        {
-          "char": 106,
-          "x": 0,
-          "y": 32,
-          "palette": "warden_armor"
-        },
-        {
-          "char": 108,
-          "x": 16,
-          "y": 32,
-          "palette": "warden_armor"
-        },
-        {
-          "char": 110,
-          "x": 0,
-          "y": 0,
-          "palette": "warden_iron"
-        },
-        {
-          "char": 128,
-          "x": 16,
-          "y": 0,
-          "palette": "warden_iron"
-        },
-        {
-          "char": 130,
-          "x": 0,
-          "y": 16,
-          "palette": "warden_iron"
-        },
-        {
-          "char": 132,
-          "x": 16,
-          "y": 16,
-          "palette": "warden_iron"
-        },
-        {
-          "char": 134,
-          "x": 0,
-          "y": 32,
-          "palette": "warden_iron"
-        }
-      ],
-      "composition_exact": true,
-      "max_scanline_objects": 4
-    },
-    "warden_charge": {
-      "canvas": [
-        32,
-        48
-      ],
-      "oam": [
-        {
-          "char": 136,
-          "x": 0,
-          "y": 0,
-          "palette": "warden_armor"
-        },
-        {
-          "char": 138,
-          "x": 16,
-          "y": 0,
-          "palette": "warden_armor"
-        },
-        {
-          "char": 140,
-          "x": 0,
-          "y": 16,
-          "palette": "warden_armor"
-        },
-        {
-          "char": 142,
-          "x": 16,
-          "y": 16,
-          "palette": "warden_armor"
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "side_base"
         },
         {
           "char": 68,
           "x": 0,
           "y": 32,
-          "palette": "warden_armor"
+          "palette": "warden_armor",
+          "part": "side_base"
         },
         {
           "char": 70,
-          "x": 16,
-          "y": 32,
-          "palette": "warden_armor"
+          "x": 15,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "side_base"
         },
         {
-          "char": 160,
+          "char": 72,
           "x": 16,
-          "y": 0,
-          "palette": "warden_iron"
+          "y": -1,
+          "palette": "warden_iron",
+          "part": "side_base"
         },
         {
-          "char": 162,
+          "char": 74,
           "x": 0,
-          "y": 16,
-          "palette": "warden_iron"
+          "y": 15,
+          "palette": "warden_iron",
+          "part": "side_base"
         },
         {
-          "char": 164,
+          "char": 76,
           "x": 16,
-          "y": 16,
-          "palette": "warden_iron"
+          "y": 15,
+          "palette": "warden_iron",
+          "part": "side_base"
         },
         {
           "char": 78,
           "x": 0,
           "y": 32,
-          "palette": "warden_iron"
+          "palette": "warden_iron",
+          "part": "side_base"
         },
         {
           "char": 96,
-          "x": 16,
-          "y": 32,
-          "palette": "warden_iron"
+          "x": 15,
+          "y": 31,
+          "palette": "warden_iron",
+          "part": "side_base"
+        },
+        {
+          "char": 228,
+          "x": 19,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "rear_leg"
+        },
+        {
+          "char": 230,
+          "x": 19,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "rear_leg"
         }
       ],
-      "composition_exact": true,
-      "max_scanline_objects": 4
-    },
-    "warden_vent": {
+      "kind": "warden",
       "canvas": [
-        32,
-        48
+        64,
+        64
       ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "left_walk_2": {
+      "oam": [
+        {
+          "char": 44,
+          "x": 0,
+          "y": 0,
+          "palette": "warden_armor",
+          "part": "side_base"
+        },
+        {
+          "char": 46,
+          "x": 16,
+          "y": 0,
+          "palette": "warden_armor",
+          "part": "side_base"
+        },
+        {
+          "char": 64,
+          "x": 0,
+          "y": 16,
+          "palette": "warden_armor",
+          "part": "side_base"
+        },
+        {
+          "char": 66,
+          "x": 16,
+          "y": 16,
+          "palette": "warden_armor",
+          "part": "side_base"
+        },
+        {
+          "char": 68,
+          "x": 0,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "side_base"
+        },
+        {
+          "char": 70,
+          "x": 15,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "side_base"
+        },
+        {
+          "char": 72,
+          "x": 16,
+          "y": 0,
+          "palette": "warden_iron",
+          "part": "side_base"
+        },
+        {
+          "char": 74,
+          "x": 0,
+          "y": 16,
+          "palette": "warden_iron",
+          "part": "side_base"
+        },
+        {
+          "char": 76,
+          "x": 16,
+          "y": 16,
+          "palette": "warden_iron",
+          "part": "side_base"
+        },
+        {
+          "char": 78,
+          "x": 0,
+          "y": 32,
+          "palette": "warden_iron",
+          "part": "side_base"
+        },
+        {
+          "char": 96,
+          "x": 15,
+          "y": 32,
+          "palette": "warden_iron",
+          "part": "side_base"
+        },
+        {
+          "char": 228,
+          "x": 17,
+          "y": 33,
+          "palette": "warden_armor",
+          "part": "rear_leg"
+        },
+        {
+          "char": 230,
+          "x": 17,
+          "y": 33,
+          "palette": "warden_iron",
+          "part": "rear_leg"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "left_walk_3": {
+      "oam": [
+        {
+          "char": 44,
+          "x": 0,
+          "y": -1,
+          "palette": "warden_armor",
+          "part": "side_base"
+        },
+        {
+          "char": 46,
+          "x": 16,
+          "y": -1,
+          "palette": "warden_armor",
+          "part": "side_base"
+        },
+        {
+          "char": 64,
+          "x": 0,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "side_base"
+        },
+        {
+          "char": 66,
+          "x": 16,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "side_base"
+        },
+        {
+          "char": 68,
+          "x": 0,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "side_base"
+        },
+        {
+          "char": 70,
+          "x": 17,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "side_base"
+        },
+        {
+          "char": 72,
+          "x": 16,
+          "y": -1,
+          "palette": "warden_iron",
+          "part": "side_base"
+        },
+        {
+          "char": 74,
+          "x": 0,
+          "y": 15,
+          "palette": "warden_iron",
+          "part": "side_base"
+        },
+        {
+          "char": 76,
+          "x": 16,
+          "y": 15,
+          "palette": "warden_iron",
+          "part": "side_base"
+        },
+        {
+          "char": 78,
+          "x": 0,
+          "y": 32,
+          "palette": "warden_iron",
+          "part": "side_base"
+        },
+        {
+          "char": 96,
+          "x": 17,
+          "y": 32,
+          "palette": "warden_iron",
+          "part": "side_base"
+        },
+        {
+          "char": 228,
+          "x": 17,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "rear_leg"
+        },
+        {
+          "char": 230,
+          "x": 17,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "rear_leg"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "front_walk_0": {
+      "oam": [
+        {
+          "char": 196,
+          "x": -2,
+          "y": 27,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 198,
+          "x": 1,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 102,
+          "x": 11,
+          "y": 5,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 104,
+          "x": 3,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "left_shoulder"
+        },
+        {
+          "char": 106,
+          "x": 22,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "right_shoulder"
+        },
+        {
+          "char": 200,
+          "x": 24,
+          "y": 23,
+          "palette": "warden_armor",
+          "part": "right_arm"
+        },
+        {
+          "char": 202,
+          "x": 25,
+          "y": 25,
+          "palette": "warden_iron",
+          "part": "right_arm"
+        },
+        {
+          "char": 128,
+          "x": 10,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 130,
+          "x": 10,
+          "y": 18,
+          "palette": "warden_iron",
+          "part": "chest"
+        },
+        {
+          "char": 132,
+          "x": 6,
+          "y": 29,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 134,
+          "x": 5,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "left_leg"
+        },
+        {
+          "char": 136,
+          "x": 17,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg"
+        },
+        {
+          "char": 138,
+          "x": 23,
+          "y": 9,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 140,
+          "x": 23,
+          "y": 9,
+          "palette": "warden_iron",
+          "part": "tank"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "front_walk_1": {
+      "oam": [
+        {
+          "char": 196,
+          "x": -2,
+          "y": 26,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 198,
+          "x": 1,
+          "y": 21,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 102,
+          "x": 11,
+          "y": 4,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 104,
+          "x": 3,
+          "y": 13,
+          "palette": "warden_armor",
+          "part": "left_shoulder"
+        },
+        {
+          "char": 106,
+          "x": 22,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "right_shoulder"
+        },
+        {
+          "char": 200,
+          "x": 24,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "right_arm"
+        },
+        {
+          "char": 202,
+          "x": 25,
+          "y": 24,
+          "palette": "warden_iron",
+          "part": "right_arm"
+        },
+        {
+          "char": 128,
+          "x": 10,
+          "y": 17,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 130,
+          "x": 10,
+          "y": 17,
+          "palette": "warden_iron",
+          "part": "chest"
+        },
+        {
+          "char": 132,
+          "x": 6,
+          "y": 28,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 134,
+          "x": 6,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "left_leg"
+        },
+        {
+          "char": 136,
+          "x": 15,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg"
+        },
+        {
+          "char": 138,
+          "x": 23,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 140,
+          "x": 23,
+          "y": 8,
+          "palette": "warden_iron",
+          "part": "tank"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "front_walk_2": {
+      "oam": [
+        {
+          "char": 196,
+          "x": -2,
+          "y": 27,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 198,
+          "x": 1,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 102,
+          "x": 9,
+          "y": 5,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 104,
+          "x": 1,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "left_shoulder"
+        },
+        {
+          "char": 106,
+          "x": 20,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "right_shoulder"
+        },
+        {
+          "char": 200,
+          "x": 22,
+          "y": 23,
+          "palette": "warden_armor",
+          "part": "right_arm"
+        },
+        {
+          "char": 202,
+          "x": 23,
+          "y": 25,
+          "palette": "warden_iron",
+          "part": "right_arm"
+        },
+        {
+          "char": 128,
+          "x": 8,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 130,
+          "x": 8,
+          "y": 18,
+          "palette": "warden_iron",
+          "part": "chest"
+        },
+        {
+          "char": 132,
+          "x": 6,
+          "y": 29,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 134,
+          "x": 7,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "left_leg"
+        },
+        {
+          "char": 136,
+          "x": 15,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg"
+        },
+        {
+          "char": 138,
+          "x": 21,
+          "y": 9,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 140,
+          "x": 21,
+          "y": 9,
+          "palette": "warden_iron",
+          "part": "tank"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "front_walk_3": {
+      "oam": [
+        {
+          "char": 196,
+          "x": -2,
+          "y": 26,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 198,
+          "x": 1,
+          "y": 21,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 102,
+          "x": 9,
+          "y": 4,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 104,
+          "x": 1,
+          "y": 13,
+          "palette": "warden_armor",
+          "part": "left_shoulder"
+        },
+        {
+          "char": 106,
+          "x": 20,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "right_shoulder"
+        },
+        {
+          "char": 200,
+          "x": 22,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "right_arm"
+        },
+        {
+          "char": 202,
+          "x": 23,
+          "y": 24,
+          "palette": "warden_iron",
+          "part": "right_arm"
+        },
+        {
+          "char": 128,
+          "x": 8,
+          "y": 17,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 130,
+          "x": 8,
+          "y": 17,
+          "palette": "warden_iron",
+          "part": "chest"
+        },
+        {
+          "char": 132,
+          "x": 6,
+          "y": 28,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 134,
+          "x": 6,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "left_leg"
+        },
+        {
+          "char": 136,
+          "x": 17,
+          "y": 30,
+          "palette": "warden_armor",
+          "part": "right_leg"
+        },
+        {
+          "char": 138,
+          "x": 21,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 140,
+          "x": 21,
+          "y": 8,
+          "palette": "warden_iron",
+          "part": "tank"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "rear_walk_0": {
+      "oam": [
+        {
+          "char": 206,
+          "x": 8,
+          "y": 13,
+          "palette": "warden_iron",
+          "part": "back_tank",
+          "flip_x": true
+        },
+        {
+          "char": 196,
+          "x": 18,
+          "y": 27,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 198,
+          "x": 15,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 204,
+          "x": 5,
+          "y": 5,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 104,
+          "x": 13,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "left_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 106,
+          "x": -6,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "right_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 200,
+          "x": -8,
+          "y": 23,
+          "palette": "warden_armor",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 202,
+          "x": -9,
+          "y": 25,
+          "palette": "warden_iron",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 132,
+          "x": 10,
+          "y": 29,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 134,
+          "x": 11,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "left_leg",
+          "flip_x": true
+        },
+        {
+          "char": 136,
+          "x": -1,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg",
+          "flip_x": true
+        },
+        {
+          "char": 138,
+          "x": -7,
+          "y": 9,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 140,
+          "x": -7,
+          "y": 9,
+          "palette": "warden_iron",
+          "part": "tank",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "rear_walk_1": {
+      "oam": [
+        {
+          "char": 206,
+          "x": 8,
+          "y": 12,
+          "palette": "warden_iron",
+          "part": "back_tank",
+          "flip_x": true
+        },
+        {
+          "char": 196,
+          "x": 18,
+          "y": 26,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 198,
+          "x": 15,
+          "y": 21,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 204,
+          "x": 5,
+          "y": 4,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 104,
+          "x": 13,
+          "y": 13,
+          "palette": "warden_armor",
+          "part": "left_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 106,
+          "x": -6,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "right_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 200,
+          "x": -8,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 202,
+          "x": -9,
+          "y": 24,
+          "palette": "warden_iron",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 132,
+          "x": 10,
+          "y": 28,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 134,
+          "x": 10,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "left_leg",
+          "flip_x": true
+        },
+        {
+          "char": 136,
+          "x": 1,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg",
+          "flip_x": true
+        },
+        {
+          "char": 138,
+          "x": -7,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 140,
+          "x": -7,
+          "y": 8,
+          "palette": "warden_iron",
+          "part": "tank",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "rear_walk_2": {
+      "oam": [
+        {
+          "char": 206,
+          "x": 8,
+          "y": 13,
+          "palette": "warden_iron",
+          "part": "back_tank",
+          "flip_x": true
+        },
+        {
+          "char": 196,
+          "x": 18,
+          "y": 27,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 198,
+          "x": 15,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 204,
+          "x": 7,
+          "y": 5,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 104,
+          "x": 15,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "left_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 106,
+          "x": -4,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "right_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 200,
+          "x": -6,
+          "y": 23,
+          "palette": "warden_armor",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 202,
+          "x": -7,
+          "y": 25,
+          "palette": "warden_iron",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 132,
+          "x": 10,
+          "y": 29,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 134,
+          "x": 9,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "left_leg",
+          "flip_x": true
+        },
+        {
+          "char": 136,
+          "x": 1,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg",
+          "flip_x": true
+        },
+        {
+          "char": 138,
+          "x": -5,
+          "y": 9,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 140,
+          "x": -5,
+          "y": 9,
+          "palette": "warden_iron",
+          "part": "tank",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "rear_walk_3": {
+      "oam": [
+        {
+          "char": 206,
+          "x": 8,
+          "y": 12,
+          "palette": "warden_iron",
+          "part": "back_tank",
+          "flip_x": true
+        },
+        {
+          "char": 196,
+          "x": 18,
+          "y": 26,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 198,
+          "x": 15,
+          "y": 21,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 204,
+          "x": 7,
+          "y": 4,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 104,
+          "x": 15,
+          "y": 13,
+          "palette": "warden_armor",
+          "part": "left_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 106,
+          "x": -4,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "right_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 200,
+          "x": -6,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 202,
+          "x": -7,
+          "y": 24,
+          "palette": "warden_iron",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 132,
+          "x": 10,
+          "y": 28,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 134,
+          "x": 10,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "left_leg",
+          "flip_x": true
+        },
+        {
+          "char": 136,
+          "x": -1,
+          "y": 30,
+          "palette": "warden_armor",
+          "part": "right_leg",
+          "flip_x": true
+        },
+        {
+          "char": 138,
+          "x": -5,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 140,
+          "x": -5,
+          "y": 8,
+          "palette": "warden_iron",
+          "part": "tank",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "front_charge_brace": {
+      "oam": [
+        {
+          "char": 196,
+          "x": -2,
+          "y": 27,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 198,
+          "x": 1,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 102,
+          "x": 11,
+          "y": 6,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 104,
+          "x": 3,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "left_shoulder"
+        },
+        {
+          "char": 106,
+          "x": 22,
+          "y": 16,
+          "palette": "warden_armor",
+          "part": "right_shoulder"
+        },
+        {
+          "char": 200,
+          "x": 24,
+          "y": 23,
+          "palette": "warden_armor",
+          "part": "right_arm"
+        },
+        {
+          "char": 202,
+          "x": 25,
+          "y": 25,
+          "palette": "warden_iron",
+          "part": "right_arm"
+        },
+        {
+          "char": 128,
+          "x": 10,
+          "y": 19,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 130,
+          "x": 10,
+          "y": 19,
+          "palette": "warden_iron",
+          "part": "chest"
+        },
+        {
+          "char": 132,
+          "x": 6,
+          "y": 29,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 134,
+          "x": 5,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "left_leg"
+        },
+        {
+          "char": 136,
+          "x": 17,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg"
+        },
+        {
+          "char": 138,
+          "x": 23,
+          "y": 9,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 140,
+          "x": 23,
+          "y": 9,
+          "palette": "warden_iron",
+          "part": "tank"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "front_charge_stride_a": {
+      "oam": [
+        {
+          "char": 196,
+          "x": -3,
+          "y": 26,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 198,
+          "x": 0,
+          "y": 21,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 102,
+          "x": 11,
+          "y": 6,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 104,
+          "x": 3,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "left_shoulder"
+        },
+        {
+          "char": 106,
+          "x": 22,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "right_shoulder"
+        },
+        {
+          "char": 200,
+          "x": 24,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "right_arm"
+        },
+        {
+          "char": 202,
+          "x": 25,
+          "y": 24,
+          "palette": "warden_iron",
+          "part": "right_arm"
+        },
+        {
+          "char": 128,
+          "x": 10,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 130,
+          "x": 10,
+          "y": 18,
+          "palette": "warden_iron",
+          "part": "chest"
+        },
+        {
+          "char": 132,
+          "x": 6,
+          "y": 28,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 134,
+          "x": 6,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "left_leg"
+        },
+        {
+          "char": 136,
+          "x": 15,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg"
+        },
+        {
+          "char": 138,
+          "x": 23,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 140,
+          "x": 23,
+          "y": 8,
+          "palette": "warden_iron",
+          "part": "tank"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "front_charge_stride_b": {
+      "oam": [
+        {
+          "char": 196,
+          "x": -3,
+          "y": 27,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 198,
+          "x": 0,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 102,
+          "x": 9,
+          "y": 7,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 104,
+          "x": 1,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "left_shoulder"
+        },
+        {
+          "char": 106,
+          "x": 20,
+          "y": 16,
+          "palette": "warden_armor",
+          "part": "right_shoulder"
+        },
+        {
+          "char": 200,
+          "x": 22,
+          "y": 23,
+          "palette": "warden_armor",
+          "part": "right_arm"
+        },
+        {
+          "char": 202,
+          "x": 23,
+          "y": 25,
+          "palette": "warden_iron",
+          "part": "right_arm"
+        },
+        {
+          "char": 128,
+          "x": 8,
+          "y": 19,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 130,
+          "x": 8,
+          "y": 19,
+          "palette": "warden_iron",
+          "part": "chest"
+        },
+        {
+          "char": 132,
+          "x": 6,
+          "y": 29,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 134,
+          "x": 7,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "left_leg"
+        },
+        {
+          "char": 136,
+          "x": 15,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg"
+        },
+        {
+          "char": 138,
+          "x": 21,
+          "y": 9,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 140,
+          "x": 21,
+          "y": 9,
+          "palette": "warden_iron",
+          "part": "tank"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "front_charge_brake": {
+      "oam": [
+        {
+          "char": 196,
+          "x": -2,
+          "y": 26,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 198,
+          "x": 1,
+          "y": 21,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 102,
+          "x": 9,
+          "y": 5,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 104,
+          "x": 1,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "left_shoulder"
+        },
+        {
+          "char": 106,
+          "x": 20,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "right_shoulder"
+        },
+        {
+          "char": 200,
+          "x": 22,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "right_arm"
+        },
+        {
+          "char": 202,
+          "x": 23,
+          "y": 24,
+          "palette": "warden_iron",
+          "part": "right_arm"
+        },
+        {
+          "char": 128,
+          "x": 8,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 130,
+          "x": 8,
+          "y": 18,
+          "palette": "warden_iron",
+          "part": "chest"
+        },
+        {
+          "char": 132,
+          "x": 6,
+          "y": 28,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 134,
+          "x": 6,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "left_leg"
+        },
+        {
+          "char": 136,
+          "x": 17,
+          "y": 30,
+          "palette": "warden_armor",
+          "part": "right_leg"
+        },
+        {
+          "char": 138,
+          "x": 21,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 140,
+          "x": 21,
+          "y": 8,
+          "palette": "warden_iron",
+          "part": "tank"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "left_slam_windup": {
       "oam": [
         {
           "char": 98,
-          "x": 0,
-          "y": 0,
-          "palette": "warden_armor"
+          "x": -2,
+          "y": 11,
+          "palette": "warden_iron",
+          "part": "anchor"
         },
         {
-          "char": 166,
-          "x": 16,
-          "y": 0,
-          "palette": "warden_armor"
+          "char": 0,
+          "x": 9,
+          "y": 13,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
         },
         {
-          "char": 168,
-          "x": 0,
-          "y": 16,
-          "palette": "warden_armor"
+          "char": 2,
+          "x": 7,
+          "y": 5,
+          "palette": "warden_armor",
+          "part": "head"
         },
         {
-          "char": 170,
-          "x": 16,
-          "y": 16,
-          "palette": "warden_armor"
+          "char": 4,
+          "x": 10,
+          "y": 17,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 6,
+          "x": 10,
+          "y": 26,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 228,
+          "x": 17,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg"
+        },
+        {
+          "char": 230,
+          "x": 17,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg"
         },
         {
           "char": 8,
-          "x": 0,
-          "y": 32,
-          "palette": "warden_armor"
+          "x": 25,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "tank"
         },
         {
           "char": 10,
-          "x": 16,
+          "x": 22,
+          "y": 10,
+          "palette": "warden_armor",
+          "part": "hose"
+        },
+        {
+          "char": 12,
+          "x": 22,
+          "y": 10,
+          "palette": "warden_iron",
+          "part": "hose"
+        },
+        {
+          "char": 228,
+          "x": 18,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg"
+        },
+        {
+          "char": 230,
+          "x": 18,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "right_slam_windup": {
+      "oam": [
+        {
+          "char": 98,
+          "x": 18,
+          "y": 11,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 0,
+          "x": 7,
+          "y": 13,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 2,
+          "x": 9,
+          "y": 5,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 4,
+          "x": 6,
+          "y": 17,
+          "palette": "warden_armor",
+          "part": "chest",
+          "flip_x": true
+        },
+        {
+          "char": 6,
+          "x": 6,
+          "y": 26,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -1,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -1,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 8,
+          "x": -9,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 10,
+          "x": -6,
+          "y": 10,
+          "palette": "warden_armor",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 12,
+          "x": -6,
+          "y": 10,
+          "palette": "warden_iron",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -2,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -2,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "left_slam_held": {
+      "oam": [
+        {
+          "char": 142,
+          "x": 18,
+          "y": 2,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 14,
+          "x": 17,
+          "y": 13,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 2,
+          "x": 6,
+          "y": 3,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 4,
+          "x": 8,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 6,
+          "x": 9,
+          "y": 25,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 228,
+          "x": 17,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg"
+        },
+        {
+          "char": 230,
+          "x": 17,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg"
+        },
+        {
+          "char": 8,
+          "x": 23,
+          "y": 16,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 10,
+          "x": 20,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "hose"
+        },
+        {
+          "char": 12,
+          "x": 20,
+          "y": 8,
+          "palette": "warden_iron",
+          "part": "hose"
+        },
+        {
+          "char": 228,
+          "x": 18,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg"
+        },
+        {
+          "char": 230,
+          "x": 18,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "right_slam_held": {
+      "oam": [
+        {
+          "char": 142,
+          "x": -2,
+          "y": 2,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 14,
+          "x": -1,
+          "y": 13,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 2,
+          "x": 10,
+          "y": 3,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 4,
+          "x": 8,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "chest",
+          "flip_x": true
+        },
+        {
+          "char": 6,
+          "x": 7,
+          "y": 25,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -1,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -1,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 8,
+          "x": -7,
+          "y": 16,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 10,
+          "x": -4,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 12,
+          "x": -4,
+          "y": 8,
+          "palette": "warden_iron",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -2,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -2,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "left_slam_strike": {
+      "oam": [
+        {
+          "char": 196,
+          "x": 1,
+          "y": 28,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 36,
+          "x": 3,
+          "y": 24,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 2,
+          "x": 2,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 4,
+          "x": 6,
+          "y": 19,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 6,
+          "x": 10,
+          "y": 26,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 228,
+          "x": 15,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg"
+        },
+        {
+          "char": 230,
+          "x": 15,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg"
+        },
+        {
+          "char": 8,
+          "x": 21,
+          "y": 19,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 10,
+          "x": 18,
+          "y": 11,
+          "palette": "warden_armor",
+          "part": "hose"
+        },
+        {
+          "char": 12,
+          "x": 18,
+          "y": 11,
+          "palette": "warden_iron",
+          "part": "hose"
+        },
+        {
+          "char": 228,
+          "x": 20,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg"
+        },
+        {
+          "char": 230,
+          "x": 20,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "right_slam_strike": {
+      "oam": [
+        {
+          "char": 196,
+          "x": 15,
+          "y": 28,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 36,
+          "x": 13,
+          "y": 24,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 2,
+          "x": 14,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 4,
+          "x": 10,
+          "y": 19,
+          "palette": "warden_armor",
+          "part": "chest",
+          "flip_x": true
+        },
+        {
+          "char": 6,
+          "x": 6,
+          "y": 26,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": 1,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": 1,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 8,
+          "x": -5,
+          "y": 19,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 10,
+          "x": -2,
+          "y": 11,
+          "palette": "warden_armor",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 12,
+          "x": -2,
+          "y": 11,
+          "palette": "warden_iron",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -4,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -4,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "left_slam_stuck": {
+      "oam": [
+        {
+          "char": 196,
+          "x": 1,
+          "y": 28,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 36,
+          "x": 4,
+          "y": 24,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 2,
+          "x": 3,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 4,
+          "x": 7,
+          "y": 19,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 6,
+          "x": 10,
+          "y": 26,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 228,
+          "x": 15,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg"
+        },
+        {
+          "char": 230,
+          "x": 15,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg"
+        },
+        {
+          "char": 8,
+          "x": 22,
+          "y": 19,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 10,
+          "x": 19,
+          "y": 11,
+          "palette": "warden_armor",
+          "part": "hose"
+        },
+        {
+          "char": 12,
+          "x": 19,
+          "y": 11,
+          "palette": "warden_iron",
+          "part": "hose"
+        },
+        {
+          "char": 228,
+          "x": 20,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg"
+        },
+        {
+          "char": 230,
+          "x": 20,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "right_slam_stuck": {
+      "oam": [
+        {
+          "char": 196,
+          "x": 15,
+          "y": 28,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 36,
+          "x": 12,
+          "y": 24,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 2,
+          "x": 13,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 4,
+          "x": 9,
+          "y": 19,
+          "palette": "warden_armor",
+          "part": "chest",
+          "flip_x": true
+        },
+        {
+          "char": 6,
+          "x": 6,
+          "y": 26,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": 1,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": 1,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 8,
+          "x": -6,
+          "y": 19,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 10,
+          "x": -3,
+          "y": 11,
+          "palette": "warden_armor",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 12,
+          "x": -3,
+          "y": 11,
+          "palette": "warden_iron",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -4,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -4,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "left_slam_recover": {
+      "oam": [
+        {
+          "char": 196,
+          "x": 4,
+          "y": 26,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 36,
+          "x": 6,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 2,
+          "x": 6,
+          "y": 5,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 4,
+          "x": 9,
+          "y": 17,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 6,
+          "x": 9,
+          "y": 25,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 228,
+          "x": 17,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg"
+        },
+        {
+          "char": 230,
+          "x": 17,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg"
+        },
+        {
+          "char": 8,
+          "x": 24,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 10,
+          "x": 21,
+          "y": 10,
+          "palette": "warden_armor",
+          "part": "hose"
+        },
+        {
+          "char": 12,
+          "x": 21,
+          "y": 10,
+          "palette": "warden_iron",
+          "part": "hose"
+        },
+        {
+          "char": 228,
+          "x": 18,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg"
+        },
+        {
+          "char": 230,
+          "x": 18,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "right_slam_recover": {
+      "oam": [
+        {
+          "char": 196,
+          "x": 12,
+          "y": 26,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 36,
+          "x": 10,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 2,
+          "x": 10,
+          "y": 5,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 4,
+          "x": 7,
+          "y": 17,
+          "palette": "warden_armor",
+          "part": "chest",
+          "flip_x": true
+        },
+        {
+          "char": 6,
+          "x": 7,
+          "y": 25,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -1,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -1,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 8,
+          "x": -8,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 10,
+          "x": -5,
+          "y": 10,
+          "palette": "warden_armor",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 12,
+          "x": -5,
+          "y": 10,
+          "palette": "warden_iron",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -2,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -2,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "left_charge_brace": {
+      "oam": [
+        {
+          "char": 196,
+          "x": 5,
+          "y": 27,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 36,
+          "x": 7,
+          "y": 23,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 2,
+          "x": 7,
+          "y": 6,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 4,
+          "x": 9,
+          "y": 17,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 6,
+          "x": 9,
+          "y": 25,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 228,
+          "x": 17,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg"
+        },
+        {
+          "char": 230,
+          "x": 17,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg"
+        },
+        {
+          "char": 8,
+          "x": 24,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 10,
+          "x": 21,
+          "y": 10,
+          "palette": "warden_armor",
+          "part": "hose"
+        },
+        {
+          "char": 12,
+          "x": 21,
+          "y": 10,
+          "palette": "warden_iron",
+          "part": "hose"
+        },
+        {
+          "char": 228,
+          "x": 18,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg"
+        },
+        {
+          "char": 230,
+          "x": 18,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "right_charge_brace": {
+      "oam": [
+        {
+          "char": 196,
+          "x": 11,
+          "y": 27,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 36,
+          "x": 9,
+          "y": 23,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 2,
+          "x": 9,
+          "y": 6,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 4,
+          "x": 7,
+          "y": 17,
+          "palette": "warden_armor",
+          "part": "chest",
+          "flip_x": true
+        },
+        {
+          "char": 6,
+          "x": 7,
+          "y": 25,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -1,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -1,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 8,
+          "x": -8,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 10,
+          "x": -5,
+          "y": 10,
+          "palette": "warden_armor",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 12,
+          "x": -5,
+          "y": 10,
+          "palette": "warden_iron",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -2,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -2,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "left_charge_stride_a": {
+      "oam": [
+        {
+          "char": 196,
+          "x": 2,
+          "y": 28,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 36,
+          "x": 4,
+          "y": 24,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 2,
+          "x": 2,
+          "y": 7,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 4,
+          "x": 6,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 6,
+          "x": 10,
+          "y": 25,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 228,
+          "x": 15,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg"
+        },
+        {
+          "char": 230,
+          "x": 15,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg"
+        },
+        {
+          "char": 8,
+          "x": 21,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 10,
+          "x": 18,
+          "y": 10,
+          "palette": "warden_armor",
+          "part": "hose"
+        },
+        {
+          "char": 12,
+          "x": 18,
+          "y": 10,
+          "palette": "warden_iron",
+          "part": "hose"
+        },
+        {
+          "char": 228,
+          "x": 18,
+          "y": 33,
+          "palette": "warden_armor",
+          "part": "rear_leg"
+        },
+        {
+          "char": 230,
+          "x": 18,
+          "y": 33,
+          "palette": "warden_iron",
+          "part": "rear_leg"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "right_charge_stride_a": {
+      "oam": [
+        {
+          "char": 196,
+          "x": 14,
+          "y": 28,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 36,
+          "x": 12,
+          "y": 24,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 2,
+          "x": 14,
+          "y": 7,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 4,
+          "x": 10,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "chest",
+          "flip_x": true
+        },
+        {
+          "char": 6,
+          "x": 6,
+          "y": 25,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": 1,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": 1,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 8,
+          "x": -5,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 10,
+          "x": -2,
+          "y": 10,
+          "palette": "warden_armor",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 12,
+          "x": -2,
+          "y": 10,
+          "palette": "warden_iron",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -2,
+          "y": 33,
+          "palette": "warden_armor",
+          "part": "rear_leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -2,
+          "y": 33,
+          "palette": "warden_iron",
+          "part": "rear_leg",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "left_charge_stride_b": {
+      "oam": [
+        {
+          "char": 196,
+          "x": 2,
+          "y": 27,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 36,
+          "x": 4,
+          "y": 23,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 2,
+          "x": 2,
+          "y": 6,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 4,
+          "x": 6,
+          "y": 17,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 6,
+          "x": 10,
+          "y": 25,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 228,
+          "x": 17,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "leg"
+        },
+        {
+          "char": 230,
+          "x": 17,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "leg"
+        },
+        {
+          "char": 8,
+          "x": 21,
+          "y": 17,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 10,
+          "x": 18,
+          "y": 9,
+          "palette": "warden_armor",
+          "part": "hose"
+        },
+        {
+          "char": 12,
+          "x": 18,
+          "y": 9,
+          "palette": "warden_iron",
+          "part": "hose"
+        },
+        {
+          "char": 228,
+          "x": 18,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg"
+        },
+        {
+          "char": 230,
+          "x": 18,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "right_charge_stride_b": {
+      "oam": [
+        {
+          "char": 196,
+          "x": 14,
+          "y": 27,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 36,
+          "x": 12,
+          "y": 23,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 2,
+          "x": 14,
+          "y": 6,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 4,
+          "x": 10,
+          "y": 17,
+          "palette": "warden_armor",
+          "part": "chest",
+          "flip_x": true
+        },
+        {
+          "char": 6,
+          "x": 6,
+          "y": 25,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -1,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -1,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 8,
+          "x": -5,
+          "y": 17,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 10,
+          "x": -2,
+          "y": 9,
+          "palette": "warden_armor",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 12,
+          "x": -2,
+          "y": 9,
+          "palette": "warden_iron",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -2,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -2,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "left_charge_brake": {
+      "oam": [
+        {
+          "char": 196,
+          "x": 4,
+          "y": 28,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 36,
+          "x": 6,
+          "y": 24,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 2,
+          "x": 6,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 4,
+          "x": 8,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 6,
+          "x": 9,
+          "y": 26,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 228,
+          "x": 17,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg"
+        },
+        {
+          "char": 230,
+          "x": 17,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg"
+        },
+        {
+          "char": 8,
+          "x": 23,
+          "y": 19,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 10,
+          "x": 20,
+          "y": 11,
+          "palette": "warden_armor",
+          "part": "hose"
+        },
+        {
+          "char": 12,
+          "x": 20,
+          "y": 11,
+          "palette": "warden_iron",
+          "part": "hose"
+        },
+        {
+          "char": 228,
+          "x": 18,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg"
+        },
+        {
+          "char": 230,
+          "x": 18,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "right_charge_brake": {
+      "oam": [
+        {
+          "char": 196,
+          "x": 12,
+          "y": 28,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 36,
+          "x": 10,
+          "y": 24,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 2,
+          "x": 10,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 4,
+          "x": 8,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "chest",
+          "flip_x": true
+        },
+        {
+          "char": 6,
+          "x": 7,
+          "y": 26,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -1,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -1,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 8,
+          "x": -7,
+          "y": 19,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 10,
+          "x": -4,
+          "y": 11,
+          "palette": "warden_armor",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 12,
+          "x": -4,
+          "y": 11,
+          "palette": "warden_iron",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -2,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -2,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "rear_slam_windup": {
+      "oam": [
+        {
+          "char": 206,
+          "x": 6,
+          "y": 13,
+          "palette": "warden_iron",
+          "part": "back_tank",
+          "flip_x": true
+        },
+        {
+          "char": 98,
+          "x": 29,
+          "y": 13,
+          "palette": "warden_iron",
+          "flip_x": true
+        },
+        {
+          "char": 100,
+          "x": 18,
+          "y": 16,
+          "palette": "warden_armor",
+          "flip_x": true
+        },
+        {
+          "char": 204,
+          "x": 3,
+          "y": 4,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 104,
+          "x": 13,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "left_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 106,
+          "x": -8,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "right_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 108,
+          "x": -11,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 110,
+          "x": -13,
+          "y": 23,
+          "palette": "warden_iron",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 128,
+          "x": 5,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "chest",
+          "flip_x": true
+        },
+        {
+          "char": 132,
+          "x": 10,
+          "y": 30,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 134,
+          "x": 12,
           "y": 32,
+          "palette": "warden_armor",
+          "part": "left_leg",
+          "flip_x": true
+        },
+        {
+          "char": 136,
+          "x": -2,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg",
+          "flip_x": true
+        },
+        {
+          "char": 138,
+          "x": -10,
+          "y": 9,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 140,
+          "x": -10,
+          "y": 9,
+          "palette": "warden_iron",
+          "part": "tank",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "rear_slam_held": {
+      "oam": [
+        {
+          "char": 206,
+          "x": 8,
+          "y": 11,
+          "palette": "warden_iron",
+          "part": "back_tank",
+          "flip_x": true
+        },
+        {
+          "char": 142,
+          "x": 17,
+          "y": -2,
+          "palette": "warden_iron",
+          "flip_x": true
+        },
+        {
+          "char": 160,
+          "x": 15,
+          "y": 9,
+          "palette": "warden_armor",
+          "flip_x": true
+        },
+        {
+          "char": 204,
+          "x": 5,
+          "y": 2,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 104,
+          "x": 15,
+          "y": 13,
+          "palette": "warden_armor",
+          "part": "left_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 106,
+          "x": -6,
+          "y": 13,
+          "palette": "warden_armor",
+          "part": "right_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 174,
+          "x": -1,
+          "y": 20,
+          "palette": "warden_armor",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 110,
+          "x": -4,
+          "y": 21,
+          "palette": "warden_iron",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 128,
+          "x": 7,
+          "y": 16,
+          "palette": "warden_armor",
+          "part": "chest",
+          "flip_x": true
+        },
+        {
+          "char": 132,
+          "x": 10,
+          "y": 29,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 134,
+          "x": 12,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "left_leg",
+          "flip_x": true
+        },
+        {
+          "char": 136,
+          "x": -2,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg",
+          "flip_x": true
+        },
+        {
+          "char": 138,
+          "x": -8,
+          "y": 7,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 140,
+          "x": -8,
+          "y": 7,
+          "palette": "warden_iron",
+          "part": "tank",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "rear_slam_strike": {
+      "oam": [
+        {
+          "char": 206,
+          "x": 10,
+          "y": 15,
+          "palette": "warden_iron",
+          "part": "back_tank",
+          "flip_x": true
+        },
+        {
+          "char": 196,
+          "x": 20,
+          "y": 28,
+          "palette": "warden_iron",
+          "flip_x": true
+        },
+        {
+          "char": 198,
+          "x": 17,
+          "y": 23,
+          "palette": "warden_armor",
+          "flip_x": true
+        },
+        {
+          "char": 204,
+          "x": 9,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 104,
+          "x": 17,
+          "y": 17,
+          "palette": "warden_armor",
+          "part": "left_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 106,
+          "x": -4,
+          "y": 17,
+          "palette": "warden_armor",
+          "part": "right_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 108,
+          "x": -7,
+          "y": 20,
+          "palette": "warden_armor",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 110,
+          "x": -9,
+          "y": 25,
+          "palette": "warden_iron",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 128,
+          "x": 9,
+          "y": 20,
+          "palette": "warden_armor",
+          "part": "chest",
+          "flip_x": true
+        },
+        {
+          "char": 132,
+          "x": 9,
+          "y": 30,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 134,
+          "x": 12,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "left_leg",
+          "flip_x": true
+        },
+        {
+          "char": 136,
+          "x": -2,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg",
+          "flip_x": true
+        },
+        {
+          "char": 138,
+          "x": -4,
+          "y": 11,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 140,
+          "x": -4,
+          "y": 11,
+          "palette": "warden_iron",
+          "part": "tank",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "rear_slam_stuck": {
+      "oam": [
+        {
+          "char": 206,
+          "x": 9,
+          "y": 15,
+          "palette": "warden_iron",
+          "part": "back_tank",
+          "flip_x": true
+        },
+        {
+          "char": 196,
+          "x": 20,
+          "y": 28,
+          "palette": "warden_iron",
+          "flip_x": true
+        },
+        {
+          "char": 198,
+          "x": 16,
+          "y": 23,
+          "palette": "warden_armor",
+          "flip_x": true
+        },
+        {
+          "char": 204,
+          "x": 8,
+          "y": 7,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 104,
+          "x": 16,
+          "y": 16,
+          "palette": "warden_armor",
+          "part": "left_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 106,
+          "x": -4,
+          "y": 17,
+          "palette": "warden_armor",
+          "part": "right_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 174,
+          "x": 1,
+          "y": 24,
+          "palette": "warden_armor",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 110,
+          "x": -2,
+          "y": 25,
+          "palette": "warden_iron",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 128,
+          "x": 8,
+          "y": 20,
+          "palette": "warden_armor",
+          "part": "chest",
+          "flip_x": true
+        },
+        {
+          "char": 132,
+          "x": 9,
+          "y": 30,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 134,
+          "x": 12,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "left_leg",
+          "flip_x": true
+        },
+        {
+          "char": 136,
+          "x": -2,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg",
+          "flip_x": true
+        },
+        {
+          "char": 138,
+          "x": -5,
+          "y": 11,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 140,
+          "x": -5,
+          "y": 11,
+          "palette": "warden_iron",
+          "part": "tank",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "rear_slam_recover": {
+      "oam": [
+        {
+          "char": 206,
+          "x": 7,
+          "y": 13,
+          "palette": "warden_iron",
+          "part": "back_tank",
+          "flip_x": true
+        },
+        {
+          "char": 196,
+          "x": 18,
+          "y": 25,
+          "palette": "warden_iron",
+          "flip_x": true
+        },
+        {
+          "char": 198,
+          "x": 15,
+          "y": 20,
+          "palette": "warden_armor",
+          "flip_x": true
+        },
+        {
+          "char": 204,
+          "x": 4,
+          "y": 4,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 104,
+          "x": 13,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "left_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 106,
+          "x": -7,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "right_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 200,
+          "x": -9,
+          "y": 23,
+          "palette": "warden_armor",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 202,
+          "x": -10,
+          "y": 25,
+          "palette": "warden_iron",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 128,
+          "x": 6,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "chest",
+          "flip_x": true
+        },
+        {
+          "char": 132,
+          "x": 10,
+          "y": 29,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 134,
+          "x": 11,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "left_leg",
+          "flip_x": true
+        },
+        {
+          "char": 136,
+          "x": -1,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg",
+          "flip_x": true
+        },
+        {
+          "char": 138,
+          "x": -9,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 140,
+          "x": -9,
+          "y": 8,
+          "palette": "warden_iron",
+          "part": "tank",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "rear_charge_brace": {
+      "oam": [
+        {
+          "char": 206,
+          "x": 8,
+          "y": 13,
+          "palette": "warden_iron",
+          "part": "back_tank",
+          "flip_x": true
+        },
+        {
+          "char": 196,
+          "x": 18,
+          "y": 27,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 198,
+          "x": 15,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 204,
+          "x": 5,
+          "y": 6,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 104,
+          "x": 13,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "left_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 106,
+          "x": -6,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "right_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 200,
+          "x": -8,
+          "y": 23,
+          "palette": "warden_armor",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 202,
+          "x": -9,
+          "y": 25,
+          "palette": "warden_iron",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 132,
+          "x": 10,
+          "y": 29,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 134,
+          "x": 11,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "left_leg",
+          "flip_x": true
+        },
+        {
+          "char": 136,
+          "x": -1,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg",
+          "flip_x": true
+        },
+        {
+          "char": 138,
+          "x": -7,
+          "y": 9,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 140,
+          "x": -7,
+          "y": 9,
+          "palette": "warden_iron",
+          "part": "tank",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "rear_charge_stride_a": {
+      "oam": [
+        {
+          "char": 206,
+          "x": 8,
+          "y": 11,
+          "palette": "warden_iron",
+          "part": "back_tank",
+          "flip_x": true
+        },
+        {
+          "char": 196,
+          "x": 18,
+          "y": 26,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 198,
+          "x": 15,
+          "y": 21,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 204,
+          "x": 5,
+          "y": 6,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 104,
+          "x": 13,
+          "y": 12,
+          "palette": "warden_armor",
+          "part": "left_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 106,
+          "x": -6,
+          "y": 13,
+          "palette": "warden_armor",
+          "part": "right_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 200,
+          "x": -8,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 202,
+          "x": -9,
+          "y": 24,
+          "palette": "warden_iron",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 132,
+          "x": 10,
+          "y": 28,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 134,
+          "x": 10,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "left_leg",
+          "flip_x": true
+        },
+        {
+          "char": 136,
+          "x": 1,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg",
+          "flip_x": true
+        },
+        {
+          "char": 138,
+          "x": -7,
+          "y": 7,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 140,
+          "x": -7,
+          "y": 7,
+          "palette": "warden_iron",
+          "part": "tank",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "rear_charge_stride_b": {
+      "oam": [
+        {
+          "char": 206,
+          "x": 8,
+          "y": 12,
+          "palette": "warden_iron",
+          "part": "back_tank",
+          "flip_x": true
+        },
+        {
+          "char": 196,
+          "x": 18,
+          "y": 27,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 198,
+          "x": 15,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 204,
+          "x": 7,
+          "y": 7,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 104,
+          "x": 15,
+          "y": 13,
+          "palette": "warden_armor",
+          "part": "left_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 106,
+          "x": -4,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "right_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 200,
+          "x": -6,
+          "y": 23,
+          "palette": "warden_armor",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 202,
+          "x": -7,
+          "y": 25,
+          "palette": "warden_iron",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 132,
+          "x": 10,
+          "y": 29,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 134,
+          "x": 9,
+          "y": 32,
+          "palette": "warden_armor",
+          "part": "left_leg",
+          "flip_x": true
+        },
+        {
+          "char": 136,
+          "x": 1,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "right_leg",
+          "flip_x": true
+        },
+        {
+          "char": 138,
+          "x": -5,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 140,
+          "x": -5,
+          "y": 8,
+          "palette": "warden_iron",
+          "part": "tank",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "rear_charge_brake": {
+      "oam": [
+        {
+          "char": 206,
+          "x": 8,
+          "y": 13,
+          "palette": "warden_iron",
+          "part": "back_tank",
+          "flip_x": true
+        },
+        {
+          "char": 196,
+          "x": 18,
+          "y": 26,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 198,
+          "x": 15,
+          "y": 21,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 204,
+          "x": 7,
+          "y": 6,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 104,
+          "x": 15,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "left_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 106,
+          "x": -4,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "right_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 200,
+          "x": -6,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 202,
+          "x": -7,
+          "y": 24,
+          "palette": "warden_iron",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 132,
+          "x": 10,
+          "y": 28,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 134,
+          "x": 10,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "left_leg",
+          "flip_x": true
+        },
+        {
+          "char": 136,
+          "x": -1,
+          "y": 30,
+          "palette": "warden_armor",
+          "part": "right_leg",
+          "flip_x": true
+        },
+        {
+          "char": 138,
+          "x": -5,
+          "y": 9,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 140,
+          "x": -5,
+          "y": 9,
+          "palette": "warden_iron",
+          "part": "tank",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "front_slam_windup": {
+      "oam": [
+        {
+          "char": 98,
+          "x": -13,
+          "y": 13,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 100,
+          "x": -2,
+          "y": 16,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 102,
+          "x": 13,
+          "y": 4,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 104,
+          "x": 3,
+          "y": 14,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 106,
+          "x": 24,
+          "y": 14,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 108,
+          "x": 27,
+          "y": 18,
           "palette": "warden_armor"
         },
         {
           "char": 110,
-          "x": 0,
-          "y": 0,
+          "x": 29,
+          "y": 23,
           "palette": "warden_iron"
         },
         {
           "char": 128,
-          "x": 16,
-          "y": 0,
+          "x": 11,
+          "y": 18,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 130,
+          "x": 11,
+          "y": 18,
           "palette": "warden_iron"
+        },
+        {
+          "char": 132,
+          "x": 6,
+          "y": 30,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 134,
+          "x": 4,
+          "y": 32,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 136,
+          "x": 18,
+          "y": 31,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 138,
+          "x": 26,
+          "y": 9,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 140,
+          "x": 26,
+          "y": 9,
+          "palette": "warden_iron"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "front_slam_held": {
+      "oam": [
+        {
+          "char": 142,
+          "x": -1,
+          "y": -2,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 160,
+          "x": 1,
+          "y": 9,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 102,
+          "x": 11,
+          "y": 2,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 104,
+          "x": 1,
+          "y": 13,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 106,
+          "x": 22,
+          "y": 13,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 174,
+          "x": 17,
+          "y": 20,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 110,
+          "x": 20,
+          "y": 21,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 128,
+          "x": 9,
+          "y": 16,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 130,
+          "x": 9,
+          "y": 16,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 132,
+          "x": 6,
+          "y": 29,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 134,
+          "x": 4,
+          "y": 32,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 136,
+          "x": 18,
+          "y": 31,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 138,
+          "x": 24,
+          "y": 7,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 140,
+          "x": 24,
+          "y": 7,
+          "palette": "warden_iron"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "front_slam_strike": {
+      "oam": [
+        {
+          "char": 196,
+          "x": -4,
+          "y": 28,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 198,
+          "x": -1,
+          "y": 23,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 102,
+          "x": 7,
+          "y": 8,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 104,
+          "x": -1,
+          "y": 17,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 106,
+          "x": 20,
+          "y": 17,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 108,
+          "x": 23,
+          "y": 20,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 110,
+          "x": 25,
+          "y": 25,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 128,
+          "x": 7,
+          "y": 20,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 130,
+          "x": 7,
+          "y": 20,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 132,
+          "x": 7,
+          "y": 30,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 134,
+          "x": 4,
+          "y": 32,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 136,
+          "x": 18,
+          "y": 31,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 138,
+          "x": 20,
+          "y": 11,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 140,
+          "x": 20,
+          "y": 11,
+          "palette": "warden_iron"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "front_slam_stuck": {
+      "oam": [
+        {
+          "char": 196,
+          "x": -4,
+          "y": 28,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 198,
+          "x": 0,
+          "y": 23,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 102,
+          "x": 8,
+          "y": 7,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 104,
+          "x": 0,
+          "y": 16,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 106,
+          "x": 20,
+          "y": 17,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 174,
+          "x": 15,
+          "y": 24,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 110,
+          "x": 18,
+          "y": 25,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 128,
+          "x": 8,
+          "y": 20,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 130,
+          "x": 8,
+          "y": 20,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 132,
+          "x": 7,
+          "y": 30,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 134,
+          "x": 4,
+          "y": 32,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 136,
+          "x": 18,
+          "y": 31,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 138,
+          "x": 21,
+          "y": 11,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 140,
+          "x": 21,
+          "y": 11,
+          "palette": "warden_iron"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "front_slam_recover": {
+      "oam": [
+        {
+          "char": 196,
+          "x": -2,
+          "y": 25,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 198,
+          "x": 1,
+          "y": 20,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 102,
+          "x": 12,
+          "y": 4,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 104,
+          "x": 3,
+          "y": 14,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 106,
+          "x": 23,
+          "y": 14,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 200,
+          "x": 25,
+          "y": 23,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 202,
+          "x": 26,
+          "y": 25,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 128,
+          "x": 10,
+          "y": 18,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 130,
+          "x": 10,
+          "y": 18,
+          "palette": "warden_iron"
+        },
+        {
+          "char": 132,
+          "x": 6,
+          "y": 29,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 134,
+          "x": 5,
+          "y": 32,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 136,
+          "x": 17,
+          "y": 31,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 138,
+          "x": 25,
+          "y": 8,
+          "palette": "warden_armor"
+        },
+        {
+          "char": 140,
+          "x": 25,
+          "y": 8,
+          "palette": "warden_iron"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "protector_idle_front": {
+      "oam": [
+        {
+          "char": 162,
+          "x": 0,
+          "y": 0,
+          "palette": "protector_head"
+        },
+        {
+          "char": 164,
+          "x": 0,
+          "y": 8,
+          "palette": "protector_body"
+        }
+      ],
+      "kind": "protector",
+      "canvas": [
+        16,
+        24
+      ],
+      "runtime_origin": [
+        -8,
+        -16
+      ]
+    },
+    "protector_idle_side": {
+      "oam": [
+        {
+          "char": 166,
+          "x": 0,
+          "y": 0,
+          "palette": "protector_head"
+        },
+        {
+          "char": 168,
+          "x": 0,
+          "y": 8,
+          "palette": "protector_body"
+        }
+      ],
+      "kind": "protector",
+      "canvas": [
+        16,
+        24
+      ],
+      "runtime_origin": [
+        -8,
+        -16
+      ]
+    },
+    "protector_rest": {
+      "oam": [
+        {
+          "char": 170,
+          "x": 0,
+          "y": 0,
+          "palette": "protector_head"
         },
         {
           "char": 172,
           "x": 0,
-          "y": 16,
-          "palette": "warden_iron"
-        },
-        {
-          "char": 174,
-          "x": 16,
-          "y": 16,
-          "palette": "warden_iron"
-        },
-        {
-          "char": 40,
-          "x": 0,
-          "y": 32,
-          "palette": "warden_iron"
-        },
-        {
-          "char": 42,
-          "x": 16,
-          "y": 32,
-          "palette": "warden_iron"
+          "y": 8,
+          "palette": "protector_body"
         }
       ],
-      "composition_exact": true,
-      "max_scanline_objects": 4
-    },
-    "protector_idle_front": {
+      "kind": "protector",
       "canvas": [
         16,
         24
       ],
+      "runtime_origin": [
+        -8,
+        -16
+      ]
+    },
+    "protector_healing": {
       "oam": [
         {
-          "char": 196,
+          "char": 162,
           "x": 0,
           "y": 0,
           "palette": "protector_head"
         },
         {
-          "char": 198,
+          "char": 164,
           "x": 0,
           "y": 8,
           "palette": "protector_body"
         }
       ],
-      "composition_exact": true,
-      "max_scanline_objects": 2
-    },
-    "protector_idle_side": {
+      "kind": "protector",
       "canvas": [
         16,
         24
       ],
+      "runtime_origin": [
+        -8,
+        -16
+      ]
+    },
+    "right_vent": {
       "oam": [
         {
-          "char": 200,
-          "x": 0,
+          "char": 38,
+          "x": -5,
           "y": 0,
-          "palette": "protector_head"
+          "palette": "warden_armor",
+          "part": "vent_steam"
+        },
+        {
+          "char": 196,
+          "x": 12,
+          "y": 28,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
+        },
+        {
+          "char": 36,
+          "x": 10,
+          "y": 24,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 2,
+          "x": 10,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 4,
+          "x": 8,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "chest",
+          "flip_x": true
+        },
+        {
+          "char": 6,
+          "x": 7,
+          "y": 26,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -1,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -1,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg",
+          "flip_x": true
+        },
+        {
+          "char": 8,
+          "x": -7,
+          "y": 19,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 10,
+          "x": -4,
+          "y": 11,
+          "palette": "warden_armor",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 12,
+          "x": -4,
+          "y": 11,
+          "palette": "warden_iron",
+          "part": "hose",
+          "flip_x": true
+        },
+        {
+          "char": 228,
+          "x": -2,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg",
+          "flip_x": true
+        },
+        {
+          "char": 230,
+          "x": -2,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg",
+          "flip_x": true
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "left_vent": {
+      "oam": [
+        {
+          "char": 38,
+          "x": 22,
+          "y": 0,
+          "palette": "warden_armor",
+          "part": "vent_steam"
+        },
+        {
+          "char": 196,
+          "x": 4,
+          "y": 28,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 36,
+          "x": 6,
+          "y": 24,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 2,
+          "x": 6,
+          "y": 8,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 4,
+          "x": 8,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 6,
+          "x": 9,
+          "y": 26,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 228,
+          "x": 17,
+          "y": 35,
+          "palette": "warden_armor",
+          "part": "leg"
+        },
+        {
+          "char": 230,
+          "x": 17,
+          "y": 35,
+          "palette": "warden_iron",
+          "part": "leg"
+        },
+        {
+          "char": 8,
+          "x": 23,
+          "y": 19,
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 10,
+          "x": 20,
+          "y": 11,
+          "palette": "warden_armor",
+          "part": "hose"
+        },
+        {
+          "char": 12,
+          "x": 20,
+          "y": 11,
+          "palette": "warden_iron",
+          "part": "hose"
+        },
+        {
+          "char": 228,
+          "x": 18,
+          "y": 34,
+          "palette": "warden_armor",
+          "part": "rear_leg"
+        },
+        {
+          "char": 230,
+          "x": 18,
+          "y": 34,
+          "palette": "warden_iron",
+          "part": "rear_leg"
+        }
+      ],
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "front_vent": {
+      "oam": [
+        {
+          "char": 38,
+          "x": 23,
+          "y": -4,
+          "palette": "warden_armor",
+          "part": "vent_steam"
+        },
+        {
+          "char": 196,
+          "x": -2,
+          "y": 26,
+          "palette": "warden_iron",
+          "part": "anchor"
+        },
+        {
+          "char": 198,
+          "x": 1,
+          "y": 21,
+          "palette": "warden_armor",
+          "part": "weapon_arm"
+        },
+        {
+          "char": 102,
+          "x": 9,
+          "y": 5,
+          "palette": "warden_armor",
+          "part": "head"
+        },
+        {
+          "char": 104,
+          "x": 1,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "left_shoulder"
+        },
+        {
+          "char": 106,
+          "x": 20,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "right_shoulder"
+        },
+        {
+          "char": 200,
+          "x": 22,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "right_arm"
         },
         {
           "char": 202,
-          "x": 0,
+          "x": 23,
+          "y": 24,
+          "palette": "warden_iron",
+          "part": "right_arm"
+        },
+        {
+          "char": 128,
+          "x": 8,
+          "y": 18,
+          "palette": "warden_armor",
+          "part": "chest"
+        },
+        {
+          "char": 130,
+          "x": 8,
+          "y": 18,
+          "palette": "warden_iron",
+          "part": "chest"
+        },
+        {
+          "char": 132,
+          "x": 6,
+          "y": 28,
+          "palette": "warden_armor",
+          "part": "hips"
+        },
+        {
+          "char": 134,
+          "x": 6,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "left_leg"
+        },
+        {
+          "char": 136,
+          "x": 17,
+          "y": 30,
+          "palette": "warden_armor",
+          "part": "right_leg"
+        },
+        {
+          "char": 138,
+          "x": 21,
           "y": 8,
-          "palette": "protector_body"
+          "palette": "warden_armor",
+          "part": "tank"
+        },
+        {
+          "char": 140,
+          "x": 21,
+          "y": 8,
+          "palette": "warden_iron",
+          "part": "tank"
         }
       ],
-      "composition_exact": true,
-      "max_scanline_objects": 2
-    },
-    "protector_rest": {
+      "kind": "warden",
       "canvas": [
-        16,
-        24
+        64,
+        64
       ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
+    },
+    "rear_vent": {
       "oam": [
         {
-          "char": 204,
-          "x": 0,
-          "y": 0,
-          "palette": "protector_head"
+          "char": 38,
+          "x": 8,
+          "y": -5,
+          "palette": "warden_armor",
+          "part": "vent_steam"
         },
         {
           "char": 206,
-          "x": 0,
-          "y": 8,
-          "palette": "protector_body"
-        }
-      ],
-      "composition_exact": true,
-      "max_scanline_objects": 2
-    },
-    "protector_healing": {
-      "canvas": [
-        16,
-        24
-      ],
-      "oam": [
+          "x": 8,
+          "y": 13,
+          "palette": "warden_iron",
+          "part": "back_tank",
+          "flip_x": true
+        },
         {
           "char": 196,
-          "x": 0,
-          "y": 0,
-          "palette": "protector_head"
+          "x": 18,
+          "y": 26,
+          "palette": "warden_iron",
+          "part": "anchor",
+          "flip_x": true
         },
         {
           "char": 198,
-          "x": 0,
-          "y": 8,
-          "palette": "protector_body"
+          "x": 15,
+          "y": 21,
+          "palette": "warden_armor",
+          "part": "weapon_arm",
+          "flip_x": true
+        },
+        {
+          "char": 204,
+          "x": 7,
+          "y": 6,
+          "palette": "warden_armor",
+          "part": "head",
+          "flip_x": true
+        },
+        {
+          "char": 104,
+          "x": 15,
+          "y": 14,
+          "palette": "warden_armor",
+          "part": "left_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 106,
+          "x": -4,
+          "y": 15,
+          "palette": "warden_armor",
+          "part": "right_shoulder",
+          "flip_x": true
+        },
+        {
+          "char": 200,
+          "x": -6,
+          "y": 22,
+          "palette": "warden_armor",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 202,
+          "x": -7,
+          "y": 24,
+          "palette": "warden_iron",
+          "part": "right_arm",
+          "flip_x": true
+        },
+        {
+          "char": 132,
+          "x": 10,
+          "y": 28,
+          "palette": "warden_armor",
+          "part": "hips",
+          "flip_x": true
+        },
+        {
+          "char": 134,
+          "x": 10,
+          "y": 31,
+          "palette": "warden_armor",
+          "part": "left_leg",
+          "flip_x": true
+        },
+        {
+          "char": 136,
+          "x": -1,
+          "y": 30,
+          "palette": "warden_armor",
+          "part": "right_leg",
+          "flip_x": true
+        },
+        {
+          "char": 138,
+          "x": -5,
+          "y": 9,
+          "palette": "warden_armor",
+          "part": "tank",
+          "flip_x": true
+        },
+        {
+          "char": 140,
+          "x": -5,
+          "y": 9,
+          "palette": "warden_iron",
+          "part": "tank",
+          "flip_x": true
         }
       ],
-      "composition_exact": true,
-      "max_scanline_objects": 2
+      "kind": "warden",
+      "canvas": [
+        64,
+        64
+      ],
+      "runtime_origin": [
+        -8,
+        -24
+      ]
     }
   },
-  "pose_derivation": {
-    "warden_brace": "front torso lowered one pixel",
-    "warden_charge": "side torso moved left one pixel",
-    "warden_vent": "front torso lowered one pixel plus five steam pixels",
-    "protector_rest": "front head lowered one pixel",
-    "protector_healing": "reuses idle front"
+  "frame_ids": {
+    "right_walk_0": 0,
+    "right_walk_1": 1,
+    "right_walk_2": 2,
+    "right_walk_3": 3,
+    "left_walk_0": 4,
+    "left_walk_1": 5,
+    "left_walk_2": 6,
+    "left_walk_3": 7,
+    "front_walk_0": 8,
+    "front_walk_1": 9,
+    "front_walk_2": 10,
+    "front_walk_3": 11,
+    "rear_walk_0": 12,
+    "rear_walk_1": 13,
+    "rear_walk_2": 14,
+    "rear_walk_3": 15,
+    "front_charge_brace": 16,
+    "front_charge_stride_a": 17,
+    "front_charge_stride_b": 18,
+    "front_charge_brake": 19,
+    "left_slam_windup": 20,
+    "right_slam_windup": 21,
+    "left_slam_held": 22,
+    "right_slam_held": 23,
+    "left_slam_strike": 24,
+    "right_slam_strike": 25,
+    "left_slam_stuck": 26,
+    "right_slam_stuck": 27,
+    "left_slam_recover": 28,
+    "right_slam_recover": 29,
+    "left_charge_brace": 30,
+    "right_charge_brace": 31,
+    "left_charge_stride_a": 32,
+    "right_charge_stride_a": 33,
+    "left_charge_stride_b": 34,
+    "right_charge_stride_b": 35,
+    "left_charge_brake": 36,
+    "right_charge_brake": 37,
+    "rear_slam_windup": 38,
+    "rear_slam_held": 39,
+    "rear_slam_strike": 40,
+    "rear_slam_stuck": 41,
+    "rear_slam_recover": 42,
+    "rear_charge_brace": 43,
+    "rear_charge_stride_a": 44,
+    "rear_charge_stride_b": 45,
+    "rear_charge_brake": 46,
+    "front_slam_windup": 47,
+    "front_slam_held": 48,
+    "front_slam_strike": 49,
+    "front_slam_stuck": 50,
+    "front_slam_recover": 51,
+    "protector_idle_front": 52,
+    "protector_idle_side": 53,
+    "protector_rest": 54,
+    "protector_healing": 55,
+    "right_vent": 56,
+    "left_vent": 57,
+    "front_vent": 58,
+    "rear_vent": 59
   },
-  "native_runtime_qualified": false
+  "lookups": {
+    "Walk": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "Charge": [
+      31,
+      33,
+      35,
+      37,
+      30,
+      32,
+      34,
+      36,
+      16,
+      17,
+      18,
+      19,
+      43,
+      44,
+      45,
+      46
+    ],
+    "Slam": [
+      21,
+      23,
+      25,
+      27,
+      29,
+      20,
+      22,
+      24,
+      26,
+      28,
+      47,
+      48,
+      49,
+      50,
+      51,
+      38,
+      39,
+      40,
+      41,
+      42
+    ],
+    "Vent": [
+      56,
+      57,
+      58,
+      59
+    ]
+  },
+  "sheets": [
+    {
+      "page": 0,
+      "sha256": "92467df57fd807f8d30a4da93d4392a6ad49040c6b0bf7fc8b60c693231c5e7a"
+    },
+    {
+      "page": 1,
+      "sha256": "9505e009d4bfe6981065364886921dcd5ee559a09ec8b199c3da61b119a59abd"
+    },
+    {
+      "page": 2,
+      "sha256": "3e4e4b63d8b5036754ae620f5da40f1552db1bdaf607a29b7545e8c6e86c9744"
+    },
+    {
+      "page": 3,
+      "sha256": "d5391dec772bb7d7dd5be5615a09230bc39538079a391560dc92147089d0b8ad"
+    }
+  ],
+  "palettes": {
+    "protector_head": [
+      "0000",
+      "0C63",
+      "2525",
+      "39E5",
+      "46F0",
+      "2F7D",
+      "5B7D",
+      "1ADF"
+    ],
+    "protector_body": [
+      "0000",
+      "0C63",
+      "2525",
+      "39E5",
+      "46F0",
+      "1970",
+      "5B7D",
+      "1ADF"
+    ],
+    "warden_armor": [
+      "0000",
+      "0C63",
+      "0CCA",
+      "1172",
+      "229B",
+      "3AB7",
+      "5BBE",
+      "18D2"
+    ],
+    "warden_iron": [
+      "0000",
+      "0C63",
+      "2929",
+      "4E73",
+      "0CCA",
+      "1172",
+      "3AB7",
+      "5BBE"
+    ]
+  },
+  "directions": [
+    "right",
+    "left",
+    "front",
+    "rear"
+  ],
+  "total_cells": 52,
+  "capacity": 58,
+  "free_cells": 6,
+  "steam_char": "26",
+  "frame_region": [
+    "47C000",
+    "47D000"
+  ],
+  "frame_bytes": 3248,
+  "max_oam": 15,
+  "room_spriteset": "4F",
+  "native_runtime_qualified": false,
+  "rom_written": false
 }
