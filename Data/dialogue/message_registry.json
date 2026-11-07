@@ -236,7 +236,7 @@
       "status": "occupied",
       "expected_content": "authored",
       "owner": "kydreeok-finale",
-      "purpose": "Finale Healing beat: $20F and $210, Kydrog's voice after the Song of Healing frees him from the wounded Kydreeok, before Ganondorf appears (Sprites/Bosses/kydreeok.asm Kydreeok_Healing). DRAFT words pending scawful approval."
+      "purpose": "Finale Healing beat: $20F and $210, Kydrog's voice after the Song of Healing frees him from the wounded Kydreeok, before Ganondorf appears (Sprites/Bosses/kydreeok.asm Kydreeok_Healing). Exact existing Main wording approved by scawful 2026-11-07; preserve the approved text."
     },
     {
       "start": "0x211",
@@ -244,7 +244,7 @@
       "status": "occupied",
       "expected_content": "authored",
       "owner": "d4-refuge",
-      "purpose": "River witness, Sea caretaker and water keeper, three progression states each; exact refuge draft approved by scawful 2026-11-07; private D4 redesign only"
+      "purpose": "River witness, Sea caretaker and water keeper, three progression states each; exact refuge draft approved by scawful 2026-11-07; Main integration approved by scawful 2026-11-07"
     }
   ]
 }
