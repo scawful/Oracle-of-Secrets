@@ -3,6 +3,8 @@
 incsrc "Dungeons/keyblock.asm"
 print  "End of keyblock.asm               ", pc
 
+incsrc "Dungeons/dungeon_map_layout.asm"
+
 ; Pendant from chest position
 org $098823 : LDY.b #$68
 

@@ -249,6 +249,8 @@ endif
 ; Somaria-socket qualified cycles, credited-hit counter, three stages.
 ; Off until native proof; no room places the sprite yet.
 !ENABLE_D8_BOSS                     = 0
+; Optional six-column Sky Tower pause map; requires authored layout metadata.
+!ENABLE_D8_SIX_COLUMN_MAP           = 0
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.

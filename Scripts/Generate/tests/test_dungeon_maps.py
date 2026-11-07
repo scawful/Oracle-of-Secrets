@@ -28,6 +28,70 @@ def map_rom() -> bytearray:
 
 
 class DungeonMapFloorTest(unittest.TestCase):
+    def test_sky_layout_round_trip_preserves_other_thirteen_maps(self):
+        data = map_rom()
+        data.extend(bytes(maps.LAYOUT_PC + maps.LAYOUT_SIZE - len(data)))
+        original = maps.MapRom(data)
+        decoded = [original.dungeon(slot) for slot in range(14)]
+        floors = []
+        for i, name in enumerate(("B2", "B1", "1F")):
+            grid = [maps.EMPTY] * 30
+            grid[17] = 0x90 + i  # sixth column; a different room per floor
+            floors.append({"name": name, "grid": grid, "templates": [0xC5 + i]})
+        decoded[2] = {"columns": 6, "basements": 2, "floors": floors,
+                      "boss_room": 0x92, "boss_floor": 0}
+        after = maps.repack(data, decoded)
+        loaded = maps.MapRom(after)
+        self.assertEqual(loaded.columns, maps.SKY_COLUMNS)
+        self.assertEqual(loaded.dungeon(2)["floors"], floors)
+        self.assertEqual(loaded.dungeon(2)["boss_room"], 0x92)
+        self.assertEqual(after[maps.FLOOR_COUNTS + 4], 0x12)
+        for slot in range(14):
+            if slot == 2:
+                continue
+            self.assertEqual(loaded.dungeon(slot), original.dungeon(slot))
+            for table in (maps.ROOM_PTRS, maps.TMPL_PTRS):
+                self.assertEqual(after[table + slot * 2:table + slot * 2 + 2],
+                                 data[table + slot * 2:table + slot * 2 + 2])
+            for table, key in ((maps.ROOM_PTRS, 0), (maps.TMPL_PTRS, 1)):
+                at = maps.MapRom.pc(original.word(table + slot * 2))
+                block = maps.map_blocks(original.dungeon(slot))[key]
+                self.assertEqual(after[at:at + len(block)], block)
+        self.assertEqual(maps.repack(after, [loaded.dungeon(s) for s in range(14)]), after)
+
+    def test_layout_descriptor_rejects_unknown_version_and_partial_record(self):
+        for offset, value in ((8, 2), (10, 6), (12, 6), (31, 1)):
+            data = bytearray(maps.LAYOUT_PC) + maps.SKY_LAYOUT
+            data[maps.LAYOUT_PC + offset] = value
+            with self.subTest(offset=offset), self.assertRaisesRegex(SystemExit, "descriptor"):
+                maps.MapRom(data)
+        with self.assertRaisesRegex(SystemExit, "descriptor"):
+            maps.MapRom(bytes(maps.LAYOUT_PC) + maps.SKY_LAYOUT[:12])
+
+    def test_repack_refuses_truncated_or_implicitly_downgraded_layout(self):
+        data = map_rom()
+        decoded = [maps.MapRom(data).dungeon(s) for s in range(14)]
+        decoded[2]["columns"] = 6
+        with self.assertRaisesRegex(SystemExit, "complete reserved"):
+            maps.repack(data, decoded)
+        data.extend(bytes(maps.LAYOUT_PC + maps.LAYOUT_SIZE - len(data)))
+        data[maps.LAYOUT_PC:maps.LAYOUT_PC + maps.LAYOUT_SIZE] = maps.SKY_LAYOUT
+        decoded[2]["columns"] = 5
+        with self.assertRaisesRegex(SystemExit, "implicitly"):
+            maps.repack(data, decoded)
+
+    def test_sky_spec_requires_six_cells_in_each_of_five_rows(self):
+        spec = {"dungeon": "D8", "slot": 2, "columns": 6,
+                "floors": [{"name": "1F", "rows": ["0F " * 5 + "95"] + ["0F " * 6] * 4}],
+                "shapes": {"95": "C5"}, "boss": "95"}
+        self.assertEqual(maps.spec_map(spec)["floors"][0]["grid"][5], 0x95)
+        spec["floors"][0]["rows"] = ["0F " * 5] * 6  # still30 cells; wrong row boundaries
+        with self.assertRaisesRegex(SystemExit, "5 rows of 6"):
+            maps.spec_map(spec)
+        spec["slot"] = 3
+        with self.assertRaisesRegex(SystemExit, "only for D8 slot2"):
+            maps.spec_map(spec)
+
     def test_missing_dungeon_inventory_cannot_erase_current_map(self):
         data = map_rom()
         before = bytes(data)

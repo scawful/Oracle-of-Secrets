@@ -14,6 +14,7 @@ Map format (usdasm bank_0A.asm, DungeonMap_*):
     pixel covers 4x4 room tiles, so a room's 16x16 occupancy grid is its map
     silhouette at native size.
   - Floors are 5x5 grids of room IDs ($0F = empty), stored lowest floor first.
+    The versioned Oracle descriptor optionally makes D8 slot2 a 6x5 grid.
     Each non-empty cell has one template byte, in grid order.
   - Boss floor is a signed byte from 1F (0 = 1F, -1 = B1); the game adds
     the basement count to get the grid index. The following byte's bit 7
@@ -50,6 +51,22 @@ RESERVED = ((0x575D9, 0x57621), (TMPL_PTRS, TMPL_PTRS + 28))
 TMPL_VANILLA, TMPL_EXPANDED, EXP_CHECK = 0x57009, 0x109010, 0x56652
 EMPTY_WORD = 0x0B00
 EMPTY = 0x0F
+
+# Config/dungeon_map_layout.asm owns the matching SNES addresses. This is
+# authoring metadata, not the unrelated expanded Tile16 artwork marker.
+LAYOUT_PC, LAYOUT_SIZE = 0x297000, 32
+LEGACY_COLUMNS = (5,) * 14
+SKY_COLUMNS = (5, 5, 6) + (5,) * 11
+SKY_LAYOUT = b"OOSDMAP\0" + bytes((1, 14, 5, 0)) + bytes(SKY_COLUMNS) + bytes(6)
+
+
+def layout_columns(data: bytes) -> tuple[int, ...]:
+    raw = data[LAYOUT_PC:LAYOUT_PC + LAYOUT_SIZE]
+    if not raw or raw == bytes(len(raw)) or raw == b"\xff" * len(raw):
+        return LEGACY_COLUMNS
+    if raw != SKY_LAYOUT:
+        raise SystemExit("unsupported or malformed Oracle dungeon-map layout descriptor")
+    return SKY_COLUMNS
 
 # Registry id -> pause-map dungeon slot ($040C / 2), from the bank $0F entrance table.
 SLOTS = {"SOC": 0, "D8": 2, "SOP": 3, "D2": 5, "D1": 6, "D6": 7, "D3": 8, "D5": 9,
@@ -105,6 +122,7 @@ def template_pixels(chars, words) -> list[list[int]]:
 class MapRom:
     def __init__(self, data: bytes):
         self.data = bytearray(data)
+        self.columns = layout_columns(data)
 
     def word(self, pc: int) -> int:
         return self.data[pc] | self.data[pc + 1] << 8
@@ -122,18 +140,22 @@ class MapRom:
         return [[self.word(base + i * 8 + k * 2) for k in range(4)] for i in range(count)]
 
     def dungeon(self, slot: int) -> dict:
+        if not 0 <= slot < 14:
+            raise SystemExit("dungeon map slot must be in [0, 14)")
+        columns = self.columns[slot]
+        cells = columns * 5
         fc = self.data[FLOOR_COUNTS + slot * 2]
         basements, uppers = fc & 15, fc >> 4
         rp, tp = self.pc(self.word(ROOM_PTRS + slot * 2)), self.pc(self.word(TMPL_PTRS + slot * 2))
         floors, ti = [], 0
         for f in range(basements + uppers):
-            grid = list(self.data[rp + f * 25: rp + f * 25 + 25])
+            grid = list(self.data[rp + f * cells: rp + (f + 1) * cells])
             n = sum(1 for r in grid if r != EMPTY)
             floors.append({"name": floor_name(f, basements), "grid": grid,
                            "templates": list(self.data[tp + ti: tp + ti + n])})
             ti += n
         bf = self.data[BOSS_FLOORS + slot * 2]
-        return {"basements": basements, "floors": floors,
+        return {"columns": columns, "basements": basements, "floors": floors,
                 "boss_room": self.word(BOSS_ROOMS + slot * 2),
                 "boss_floor": bf - 0x100 if bf & 0x80 else bf,
                 "boss_icon_flags": self.data[BOSS_FLOORS + slot * 2 + 1]}
@@ -331,10 +353,11 @@ def draft_spec(rom_data: bytes, dungeon_id: str, inventory: dict, render_dir: Pa
     """Start from the current map, drop rooms outside the registry, then place
     unmapped registry rooms next to a mapped room they share a door with."""
     cur = MapRom(rom_data).dungeon(SLOTS[dungeon_id])
+    columns = cur["columns"]
     rows = {int(r["room"], 16): r for r in inventory["rooms"] if r["dungeon"] == dungeon_id}
     if not rows:
         raise SystemExit(f"{dungeon_id}: no room inventory; provide a reviewed --spec instead of drafting an empty map")
-    floors = [{"name": f["name"], "grid": [EMPTY] * 25} for f in cur["floors"]]
+    floors = [{"name": f["name"], "grid": [EMPTY] * (columns * 5)} for f in cur["floors"]]
     shapes, notes = {}, []
     for fi, f in enumerate(cur["floors"]):
         tmpl = iter(f["templates"])
@@ -360,10 +383,10 @@ def draft_spec(rom_data: bytes, dungeon_id: str, inventory: dict, render_dir: Pa
                 if d not in rows[room]["doors"] and OPPOSITE[d] not in rows[n]["doors"]:
                     continue
                 fi, cell = placed[n]
-                col, row = cell % 5 - dx, cell // 5 - dy
-                if 0 <= col < 5 and 0 <= row < 5 and floors[fi]["grid"][row * 5 + col] == EMPTY:
-                    floors[fi]["grid"][row * 5 + col] = room
-                    placed[room] = (fi, row * 5 + col)
+                col, row = cell % columns - dx, cell // columns - dy
+                if 0 <= col < columns and 0 <= row < 5 and floors[fi]["grid"][row * columns + col] == EMPTY:
+                    floors[fi]["grid"][row * columns + col] = room
+                    placed[room] = (fi, row * columns + col)
                     notes.append(f"placed {room:02X} on {floors[fi]['name']} beside {n:02X} (door {d})")
                     progress = True
                     break
@@ -428,31 +451,49 @@ def draft_spec(rom_data: bytes, dungeon_id: str, inventory: dict, render_dir: Pa
             notes.append(f"check {room:02X}: kept {shapes[room]:02X}, render suggests {best:02X} "
                          f"(overlap {iou(fp, sil[shapes[room]]):.2f} vs {rows[room]['iou']:.2f})")
     boss = cur["boss_room"] if cur["boss_room"] in placed else EMPTY
-    return {"dungeon": dungeon_id, "slot": SLOTS[dungeon_id],
-            "floors": [{"name": f["name"], "rows": [" ".join(f"{r:02X}" for r in f["grid"][y * 5:y * 5 + 5])
+    return {"dungeon": dungeon_id, "slot": SLOTS[dungeon_id], "columns": columns,
+            "floors": [{"name": f["name"], "rows": [" ".join(f"{r:02X}" for r in f["grid"][y * columns:(y + 1) * columns])
                                                     for y in range(5)]} for f in floors],
             "shapes": {f"{r:02X}": f"{t:02X}" for r, t in sorted(shapes.items())},
             "templates": new_templates, "boss": f"{boss:02X}", "notes": notes}
 
 
 def spec_map(spec: dict) -> dict:
+    columns = spec.get("columns", 5)
+    if type(columns) is not int or columns not in (5, 6):
+        raise SystemExit("dungeon-map columns must be 5, or 6 for D8 slot2")
+    if columns == 6 and (spec.get("dungeon") != "D8" or spec.get("slot") != 2):
+        raise SystemExit("six columns are supported only for D8 slot2")
     floors = []
     for f in spec["floors"]:
-        grid = [int(c, 16) for line in f["rows"] for c in line.split()]
-        if len(grid) != 25:
-            raise SystemExit(f"{spec['dungeon']} {f['name']}: a floor needs 5 rows of 5 rooms")
+        rows = [line.split() for line in f["rows"]]
+        if len(rows) != 5 or any(len(row) != columns for row in rows):
+            raise SystemExit(f"{spec['dungeon']} {f['name']}: a floor needs 5 rows of {columns} rooms")
+        grid = [int(c, 16) for row in rows for c in row]
+        if any(not 0 <= room <= 0xFF for room in grid):
+            raise SystemExit("dungeon-map room IDs must fit one byte")
         floors.append({"name": f["name"], "grid": grid,
                        "templates": [int(spec["shapes"][f"{r:02X}"], 16) for r in grid if r != EMPTY]})
     basements = sum(f["name"].startswith("B") for f in floors)
+    if not floors or len(floors) > 16 or basements > 15 or len(floors) - basements > 15:
+        raise SystemExit("dungeon maps need 1 to 16 floors with nibble-sized floor counts")
     if [f["name"] for f in floors] != [floor_name(i, basements) for i in range(len(floors))]:
         raise SystemExit(f"{spec['dungeon']}: floors must run lowest first with no gaps")
     boss = int(spec["boss"], 16)
+    if columns == 6:
+        placed = [r for f in floors for r in f["grid"] if r != EMPTY]
+        if len(set(placed)) != len(placed):
+            raise SystemExit("each D8 room must appear exactly once in the six-column map")
     where = [i for i, f in enumerate(floors) if boss != EMPTY and boss in f["grid"]]
-    return {"basements": basements, "floors": floors, "boss_room": boss,
+    return {"columns": columns, "basements": basements, "floors": floors, "boss_room": boss,
             "boss_floor": where[0] - basements if where else -1}
 
 
 def map_blocks(m: dict) -> tuple[bytes, bytes]:
+    cells = m.get("columns", 5) * 5
+    if any(len(f["grid"]) != cells or
+           len(f["templates"]) != sum(r != EMPTY for r in f["grid"]) for f in m["floors"]):
+        raise SystemExit("dungeon-map floor grid or shape count does not match its dimensions")
     return (b"".join(bytes(f["grid"]) for f in m["floors"]),
             b"".join(bytes(f["templates"]) for f in m["floors"]))
 
@@ -463,6 +504,17 @@ def repack(rom_data: bytes, maps: list[dict], full: bool = False) -> bytearray:
     whose data changed moves: in place if it still fits, else into free space.
     full=True packs everything from the region start, the way yaze saves."""
     out, mr = bytearray(rom_data), MapRom(rom_data)
+    columns = tuple(m.get("columns", 5) for m in maps)
+    if columns not in (LEGACY_COLUMNS, SKY_COLUMNS):
+        raise SystemExit("only D8 slot2 may use a six-column grid")
+    if mr.columns == SKY_COLUMNS and columns != SKY_COLUMNS:
+        raise SystemExit("cannot remove an extended dungeon-map layout implicitly")
+    if columns == SKY_COLUMNS:
+        if len(out) < LAYOUT_PC + LAYOUT_SIZE:
+            raise SystemExit("ROM has no complete reserved dungeon-map descriptor slot")
+        if any(len(m["floors"]) > 16 for m in maps):
+            raise SystemExit("extended dungeon maps support at most 16 floors")
+        out[LAYOUT_PC:LAYOUT_PC + LAYOUT_SIZE] = SKY_LAYOUT
     old = [mr.dungeon(s) for s in range(14)]
     old_ptrs = [(mr.pc(mr.word(ROOM_PTRS + s * 2)), mr.pc(mr.word(TMPL_PTRS + s * 2))) for s in range(14)]
     taken = bytearray(DATA_END - DATA_START)  # 1 = byte belongs to a kept block
@@ -507,6 +559,8 @@ def repack(rom_data: bytes, maps: list[dict], full: bool = False) -> bytearray:
 
 
 def region_of(pc: int) -> str:
+    if LAYOUT_PC <= pc < LAYOUT_PC + LAYOUT_SIZE:
+        return "versioned grid-layout descriptor"
     for start, size, name in ((FLOOR_COUNTS, 28, "floor counts"), (ROOM_PTRS, 28, "floor-grid pointers"),
                               (TMPL_PTRS, 28, "shape-list pointers"), (BOSS_ROOMS, 28, "boss rooms"),
                               (BOSS_FLOORS, 28, "boss floors (signed from 1F)")):
@@ -538,17 +592,18 @@ def render_maps(rom_data: bytes, slot: int, title: str):
     from PIL import Image, ImageDraw
     chars, mr = map_chars(), MapRom(rom_data)
     shapes, d = mr.templates(), mr.dungeon(slot)
+    columns = d["columns"]
     pal = [(20, 20, 32), (72, 72, 120), (130, 130, 190), (190, 190, 230), (250, 250, 250),
            (220, 100, 70), (100, 190, 100), (240, 210, 90)]
     cell, gap = 16 * 3, 12
-    im = Image.new("RGB", (max(1, len(d["floors"])) * (5 * cell + gap) + gap, 5 * cell + 40), (36, 36, 44))
+    im = Image.new("RGB", (max(1, len(d["floors"])) * (columns * cell + gap) + gap, 5 * cell + 40), (36, 36, 44))
     draw = ImageDraw.Draw(im)
     draw.text((gap, 2), title, fill=(230, 230, 230))
     for fi, f in enumerate(d["floors"]):
-        ox, tmpl = gap + fi * (5 * cell + gap), iter(f["templates"])
+        ox, tmpl = gap + fi * (columns * cell + gap), iter(f["templates"])
         draw.text((ox, 16), f["name"], fill=(230, 230, 150))
         for c, room in enumerate(f["grid"]):
-            x0, y0 = ox + (c % 5) * cell, 30 + (c // 5) * cell
+            x0, y0 = ox + (c % columns) * cell, 30 + (c // columns) * cell
             draw.rectangle([x0, y0, x0 + cell - 1, y0 + cell - 1], outline=(52, 52, 64))
             if room == EMPTY:
                 continue
@@ -580,7 +635,11 @@ def cmd_generate(args) -> int:
             print(f"wrote draft spec {args.spec}; review it, then rerun to use it")
     for note in spec["notes"]:
         print(f"  {note}")
+    if spec["dungeon"] != args.dungeon or spec["slot"] != SLOTS[args.dungeon]:
+        raise SystemExit("map spec dungeon/slot does not match the selected --dungeon")
     maps = [MapRom(rom_data).dungeon(s) for s in range(14)]
+    if maps[spec["slot"]]["columns"] == 6 and "columns" not in spec:
+        raise SystemExit("an extended map spec must declare its columns explicitly")
     maps[spec["slot"]] = spec_map(spec)
     if args.fix_boss_floors:  # yaze stored floor indexes; vanilla expects floors from 1F
         for m in maps:

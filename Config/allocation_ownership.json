@@ -85,7 +85,7 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "62026108b82e494ea66429261fc3a6eb4b2226c490fe7177ae908a6181c82cac"
+      "sha256": "9ebc3577db23495d40cf36bf560cab477003967a1f79409fa1fb361b2cfb5591"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
@@ -251,6 +251,16 @@
       "source_set": "shared",
       "path": "Sprites/Objects/ice_block.asm",
       "sha256": "a312424e181f116e29ff7d0ab5fd2f2f40bb743fed60b05b766e6f48f1a85448"
+    },
+    "shared:Config/dungeon_map_layout.asm": {
+      "source_set": "shared",
+      "path": "Config/dungeon_map_layout.asm",
+      "sha256": "b184de37fa3685c508f1f81519ebfb222ce7b5a089c4f97a45e31c57add4fe0e"
+    },
+    "shared:Dungeons/dungeon_map_layout.asm": {
+      "source_set": "shared",
+      "path": "Dungeons/dungeon_map_layout.asm",
+      "sha256": "a0e96ebf66e0eb359aeec72517342b20c9a1561cc9ac2bd3ad7a037e6ee19517"
     }
   },
   "claims": [
@@ -2015,6 +2025,49 @@
         "org $3AA000"
       ],
       "aliases": []
+    },
+    {
+      "id": "d8_map_code",
+      "owner": "D8 six-column pause-map runtime",
+      "space": "snes_rom",
+      "base": 5431296,
+      "size": 4096,
+      "status": "shared",
+      "condition": {
+        "ENABLE_D8_SIX_COLUMN_MAP": 1
+      },
+      "lifetime": "Compiled code when the authored six-column descriptor is present. DBR stays bank0A; bank52 is not a low-WRAM mirror.",
+      "reset": "Build validates the descriptor and source-hook preimages; absent metadata emits no runtime changes.",
+      "save": "No new SRAM. The map and visited-room ownership retain their existing identifiers.",
+      "provenance": [
+        "shared:Dungeons/dungeon_map_layout.asm",
+        "shared:Config/dungeon_map_layout.asm"
+      ],
+      "anchors": [
+        "org $52E000",
+        "assert pc() <= $52F000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "d8_map_layout_descriptor",
+      "owner": "Versioned dungeon-map grid dimensions in the authoring ROM",
+      "space": "snes_rom",
+      "base": 5435392,
+      "size": 32,
+      "status": "shared",
+      "lifetime": "Authoring data persists across Save/reopen and Build. Blank retains all legacy5x5 maps.",
+      "reset": "Only an explicit reviewed authoring conversion installs the descriptor. Runtime assembly validates it and never emits it.",
+      "save": "v1 fixes slot2 to6x5 and the other13slots to5x5; no SRAM change.",
+      "provenance": [
+        "shared:Config/dungeon_map_layout.asm",
+        "shared:Dungeons/dungeon_map_layout.asm"
+      ],
+      "anchors": [
+        "!DUNGEON_MAP_LAYOUT = $52F000"
+      ],
+      "aliases": [],
+      "condition": {}
     }
   ],
   "lifetime_aliases": [],
