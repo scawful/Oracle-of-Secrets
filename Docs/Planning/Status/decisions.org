@@ -4395,3 +4395,19 @@ Answer: "Briefing only" (scawful, 2026-11-06)
   With the return ferry (ca6a51cb): Sea Zora island -> Docks -> $28 -> woods, ranch, D1.
   Not decided: what opens the stairs from the top (lever, ladder, thieves' gate), the exact column
   on the seam, and any crossover pad at the Zora river.
+
+* DECIDED Zora river crossover pad: a river shoal Link swims to, $1E -> $5E (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude, progression review (crossover spots after the west route)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/progression_review_2026-11-06/zora_pad_board.png
+  :END:
+  scawful named the Zora river as one of the places to cross over (2026-11-06, quoted in the
+  west route entry above). Its Abyss mirror is $5E, planned Lupo under the 2026-10-20 swap
+  (the Fortress moves to $4B); the ROM art there is still the old Fortress garden.
+  Question: Which Zora river pad?
+  Options shown: 1 a pad on a new shoal in the river channel on $1E, reached by swimming, so
+  the Flippers gate it with no new gate code, landing outside the $5E walls (pick); 2 a pad on
+  the west grass, open from the start; 3 a return-only pad from $5E; 4 no pad.
+  Answer: "1 Shoal pad (pick)" (scawful, 2026-11-06)
+  Not decided: the exact shoal tiles, the landing spot (it follows the Lupo repaint of $5E),
+  and the seal between $5E and the volcano.
