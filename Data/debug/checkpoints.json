@@ -484,6 +484,30 @@
       ]
     },
     {
+      "id": "d1-boss-ready",
+      "label": "D1 Mushroom Grotto boss ready (Manhandla, room $5A)",
+      "beat": 9,
+      "after": "d1-entrance",
+      "location": {
+        "entrance": "0x26"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x004A"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF0B5",
+          "clear_bits": "0x08",
+          "name": "Room5ABossDefeated",
+          "evidence": "usdasm bank_01 $01B6E5 loads $0402 = (room save & $0FF0) << 4, so save bit $0800 is $0403 bit $80; SpritePrep_Boss $068F1C and Core/sprite_macros.asm BossPrep_DefeatedRemnant skip the boss when it is set"
+        }
+      ],
+      "notes": "Stops at the D1 entrance with the room $5A boss-defeated bit cleared so the fight repeats. Macro boss_d1 then falls into room $5A and places Link at room-local ($178, $1B0) in the Manhandla quadrant. A bare fall keeps the entrance's room-local X/Y and camera, which miss this arena. The macro writes set Link, the camera bytes Underworld_AdjustCameraArbitrary ($02A2F0) moves, the quadrant ($A9/$AA) and the Sprite_CancelHookshot restore point ($0FC2/$0FC4); they assume this entrance's spawn point and camera."
+    },
+    {
       "id": "d2-entrance",
       "label": "D2 Tail Palace entrance (D1 done, Ocarina chain done)",
       "beat": 11,
@@ -569,6 +593,30 @@
       ]
     },
     {
+      "id": "d2-boss-ready",
+      "label": "D2 Tail Palace boss ready (Moldorm, room $DE)",
+      "beat": 11,
+      "after": "d2-entrance",
+      "location": {
+        "entrance": "0x15"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x005F"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF1BD",
+          "clear_bits": "0x08",
+          "name": "RoomDEBossDefeated",
+          "evidence": "usdasm bank_01 $01B6E5 loads $0402 = (room save & $0FF0) << 4, so save bit $0800 is $0403 bit $80; SpritePrep_Boss $068F1C and Core/sprite_macros.asm BossPrep_DefeatedRemnant skip the boss when it is set"
+        }
+      ],
+      "notes": "Stops at the D2 entrance with the room $DE boss-defeated bit cleared so the fight repeats. Macro boss_d2 then falls into room $DE and places Link at room-local ($078, $090) in the Moldorm quadrant. A bare fall keeps the entrance's room-local X/Y and camera, which miss this arena. The macro writes set Link, the camera bytes Underworld_AdjustCameraArbitrary ($02A2F0) moves, the quadrant ($A9/$AA) and the Sprite_CancelHookshot restore point ($0FC2/$0FC4); they assume this entrance's spawn point and camera. Docs/World/Dungeons/TailPalace_Map.md lists the boss as TBD; the dungeon data sheet names Moldorm, and room $DE is the only Tail Palace room with a boss sprite."
+    },
+    {
       "id": "d3-entrance",
       "label": "D3 Kalyxo Castle entrance (D2 done, Book of Secrets)",
       "beat": 13,
@@ -628,6 +676,30 @@
           "why": "full health"
         }
       ]
+    },
+    {
+      "id": "d3-boss-ready",
+      "label": "D3 Kalyxo Castle boss ready (Armos Knights, room $29)",
+      "beat": 13,
+      "after": "d3-entrance",
+      "location": {
+        "entrance": "0x2B"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x0059"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF053",
+          "clear_bits": "0x08",
+          "name": "Room29BossDefeated",
+          "evidence": "usdasm bank_01 $01B6E5 loads $0402 = (room save & $0FF0) << 4, so save bit $0800 is $0403 bit $80; SpritePrep_Boss $068F1C and Core/sprite_macros.asm BossPrep_DefeatedRemnant skip the boss when it is set"
+        }
+      ],
+      "notes": "Stops at the D3 entrance with the room $29 boss-defeated bit cleared so the fight repeats. Macro boss_d3 then falls into room $29 and places Link at room-local ($178, $1B0) in the Armos Knights quadrant. A bare fall keeps the entrance's room-local X/Y and camera, which miss this arena. The macro writes set Link, the camera bytes Underworld_AdjustCameraArbitrary ($02A2F0) moves, the quadrant ($A9/$AA) and the Sprite_CancelHookshot restore point ($0FC2/$0FC4); they assume this entrance's spawn point and camera. DECIDED 2026-11-06: Armos become the boss-gate mini-boss and the Captain's phantom becomes the D3 boss (Docs/Planning/Status/decisions.org); this tests the current Armos room."
     },
     {
       "id": "d4-entrance",
@@ -692,6 +764,30 @@
       ]
     },
     {
+      "id": "d4-boss-ready",
+      "label": "D4 Zora Temple boss ready (Arrghus, room $06)",
+      "beat": 15,
+      "after": "d4-entrance",
+      "location": {
+        "entrance": "0x25"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x0028"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF00D",
+          "clear_bits": "0x08",
+          "name": "Room06BossDefeated",
+          "evidence": "usdasm bank_01 $01B6E5 loads $0402 = (room save & $0FF0) << 4, so save bit $0800 is $0403 bit $80; SpritePrep_Boss $068F1C and Core/sprite_macros.asm BossPrep_DefeatedRemnant skip the boss when it is set"
+        }
+      ],
+      "notes": "Stops at the D4 entrance with the room $06 boss-defeated bit cleared so the fight repeats. Macro boss_d4 then falls into room $06 and places Link at room-local ($078, $1B0) in the Arrghus quadrant. A bare fall keeps the entrance's room-local X/Y and camera, which miss this arena. The macro writes set Link, the camera bytes Underworld_AdjustCameraArbitrary ($02A2F0) moves, the quadrant ($A9/$AA) and the Sprite_CancelHookshot restore point ($0FC2/$0FC4); they assume this entrance's spawn point and camera. The D4 warden redesign is default-off and not in this room; this tests the current Arrghus arena."
+    },
+    {
       "id": "d5-entrance",
       "label": "D5 Glacia Estate entrance (D4 done, Song of Storms)",
       "beat": 17,
@@ -753,6 +849,36 @@
       ]
     },
     {
+      "id": "d5-boss-ready",
+      "label": "D5 Glacia Estate boss ready (Twinrova, room $AC)",
+      "beat": 17,
+      "after": "d5-entrance",
+      "location": {
+        "entrance": "0x34"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x00DB"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF159",
+          "clear_bits": "0x08",
+          "name": "RoomACBossDefeated",
+          "evidence": "usdasm bank_01 $01B6E5 loads $0402 = (room save & $0FF0) << 4, so save bit $0800 is $0403 bit $80; SpritePrep_Boss $068F1C and Core/sprite_macros.asm BossPrep_DefeatedRemnant skip the boss when it is set"
+        },
+        {
+          "addr": "0x7EF3CC",
+          "value": "0x00",
+          "name": "Follower",
+          "evidence": "Sprites/Bosses/twinrova.asm:84 (maiden present kills the Twinrova prep)"
+        }
+      ],
+      "notes": "Stops at the D5 entrance with the room $AC boss-defeated bit cleared so the fight repeats. Macro boss_d5 then falls into room $AC and places Link at room-local ($178, $1B0) in the Twinrova quadrant. A bare fall keeps the entrance's room-local X/Y and camera, which miss this arena. The macro writes set Link, the camera bytes Underworld_AdjustCameraArbitrary ($02A2F0) moves, the quadrant ($A9/$AA) and the Sprite_CancelHookshot restore point ($0FC2/$0FC4); they assume this entrance's spawn point and camera. Twinrova prep removes itself when the Blind Maiden follower ($7EF3CC = $06) is present (Sprites/Bosses/twinrova.asm:84); the follower write selects the direct fight, which opens with Twinrova's text."
+    },
+    {
       "id": "d6-entrance",
       "label": "D6 Goron Mines entrance (D5 done, Shrine of Power done)",
       "beat": 20,
@@ -800,6 +926,30 @@
           "why": "full health"
         }
       ]
+    },
+    {
+      "id": "d6-boss-ready",
+      "label": "D6 Goron Mines boss ready (King Dodongo, room $C8)",
+      "beat": 20,
+      "after": "d6-entrance",
+      "location": {
+        "entrance": "0x27"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x0098"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF191",
+          "clear_bits": "0x08",
+          "name": "RoomC8BossDefeated",
+          "evidence": "usdasm bank_01 $01B6E5 loads $0402 = (room save & $0FF0) << 4, so save bit $0800 is $0403 bit $80; SpritePrep_Boss $068F1C and Core/sprite_macros.asm BossPrep_DefeatedRemnant skip the boss when it is set"
+        }
+      ],
+      "notes": "Stops at the D6 entrance with the room $C8 boss-defeated bit cleared so the fight repeats. Macro boss_d6 then falls into room $C8 and places Link at room-local ($178, $1B0) in the King Dodongo quadrant. A bare fall keeps the entrance's room-local X/Y and camera, which miss this arena. The macro writes set Link, the camera bytes Underworld_AdjustCameraArbitrary ($02A2F0) moves, the quadrant ($A9/$AA) and the Sprite_CancelHookshot restore point ($0FC2/$0FC4); they assume this entrance's spawn point and camera."
     },
     {
       "id": "d7-entrance",
@@ -861,6 +1011,30 @@
           "why": "full health"
         }
       ]
+    },
+    {
+      "id": "d7-boss-ready",
+      "label": "D7 Dragon Ship boss ready (Kydrog, room $A4)",
+      "beat": 23,
+      "after": "d7-entrance",
+      "location": {
+        "entrance": "0x35"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x00D6"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF149",
+          "clear_bits": "0x08",
+          "name": "RoomA4BossDefeated",
+          "evidence": "usdasm bank_01 $01B6E5 loads $0402 = (room save & $0FF0) << 4, so save bit $0800 is $0403 bit $80; SpritePrep_Boss $068F1C and Core/sprite_macros.asm BossPrep_DefeatedRemnant skip the boss when it is set"
+        }
+      ],
+      "notes": "Stops at the D7 entrance with the room $A4 boss-defeated bit cleared so the fight repeats. Macro boss_d7 then falls into room $A4 and places Link at room-local ($078, $1B0) in the Kydrog quadrant. A bare fall keeps the entrance's room-local X/Y and camera, which miss this arena. The macro writes set Link, the camera bytes Underworld_AdjustCameraArbitrary ($02A2F0) moves, the quadrant ($A9/$AA) and the Sprite_CancelHookshot restore point ($0FC2/$0FC4); they assume this entrance's spawn point and camera. Docs/World/Dungeons/DragonShip_Map.md lists the pirate-form fight as to-build (beat 23)."
     },
     {
       "id": "d8-entrance",

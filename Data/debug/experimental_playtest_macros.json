@@ -3,6 +3,853 @@
   "name": "Experimental playtest (Finale, D8 Sky, Deku Stick)",
   "macros": [
     {
+      "id": "boss_d1",
+      "label": "Boss room: D1 Manhandla ($5A)",
+      "steps": [
+        {
+          "action": "checkpoint",
+          "args": {
+            "id": "d1-boss-ready"
+          }
+        },
+        {
+          "action": "fall",
+          "args": {
+            "room": "0x5A"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0609",
+            "value": "0x15"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060B",
+            "value": "0x15"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060D",
+            "value": "0x15"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060F",
+            "value": "0x16"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E1",
+            "value": "0x15"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E3",
+            "value": "0x15"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00A9",
+            "value": "0x01"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E0",
+            "value": "0x00"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E2",
+            "value": "0x00"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0022",
+            "value": "0x78"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0020",
+            "value": "0xB0"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0023",
+            "value": "0x15"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC2",
+            "value": "0x78"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC3",
+            "value": "0x15"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC4",
+            "value": "0xB0"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC5",
+            "value": "0x0B"
+          }
+        }
+      ]
+    },
+    {
+      "id": "boss_d2",
+      "label": "Boss room: D2 Moldorm ($DE)",
+      "steps": [
+        {
+          "action": "checkpoint",
+          "args": {
+            "id": "d2-boss-ready"
+          }
+        },
+        {
+          "action": "fall",
+          "args": {
+            "room": "0xDE"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0609",
+            "value": "0x1E"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060B",
+            "value": "0x1D"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060D",
+            "value": "0x1E"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060F",
+            "value": "0x1E"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E1",
+            "value": "0x1E"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E3",
+            "value": "0x1E"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00A9",
+            "value": "0x00"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0601",
+            "value": "0x0A"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0603",
+            "value": "0x09"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0605",
+            "value": "0x0A"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0607",
+            "value": "0x0A"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E7",
+            "value": "0x0A"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E9",
+            "value": "0x0A"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00AA",
+            "value": "0x00"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0020",
+            "value": "0x90"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0023",
+            "value": "0x1E"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0021",
+            "value": "0x0A"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC2",
+            "value": "0x78"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC3",
+            "value": "0x1C"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC4",
+            "value": "0x90"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC5",
+            "value": "0x1A"
+          }
+        }
+      ]
+    },
+    {
+      "id": "boss_d3",
+      "label": "Boss room: D3 Armos Knights ($29)",
+      "steps": [
+        {
+          "action": "checkpoint",
+          "args": {
+            "id": "d3-boss-ready"
+          }
+        },
+        {
+          "action": "fall",
+          "args": {
+            "room": "0x29"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0609",
+            "value": "0x13"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060B",
+            "value": "0x13"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060D",
+            "value": "0x13"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060F",
+            "value": "0x14"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E1",
+            "value": "0x13"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E3",
+            "value": "0x13"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00A9",
+            "value": "0x01"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0020",
+            "value": "0xB0"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0023",
+            "value": "0x13"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC2",
+            "value": "0x78"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC3",
+            "value": "0x13"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC4",
+            "value": "0xB0"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC5",
+            "value": "0x05"
+          }
+        }
+      ]
+    },
+    {
+      "id": "boss_d4",
+      "label": "Boss room: D4 Arrghus ($06)",
+      "steps": [
+        {
+          "action": "checkpoint",
+          "args": {
+            "id": "d4-boss-ready"
+          }
+        },
+        {
+          "action": "fall",
+          "args": {
+            "room": "0x06"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E0",
+            "value": "0x00"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E2",
+            "value": "0x00"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0022",
+            "value": "0x78"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0020",
+            "value": "0xB0"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC2",
+            "value": "0x78"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC3",
+            "value": "0x0C"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC4",
+            "value": "0xB0"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC5",
+            "value": "0x01"
+          }
+        }
+      ]
+    },
+    {
+      "id": "boss_d5",
+      "label": "Boss room: D5 Twinrova ($AC)",
+      "steps": [
+        {
+          "action": "checkpoint",
+          "args": {
+            "id": "d5-boss-ready"
+          }
+        },
+        {
+          "action": "fall",
+          "args": {
+            "room": "0xAC"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0609",
+            "value": "0x17"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060B",
+            "value": "0x17"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060D",
+            "value": "0x17"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060F",
+            "value": "0x18"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E1",
+            "value": "0x17"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E3",
+            "value": "0x17"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00A9",
+            "value": "0x01"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E0",
+            "value": "0x00"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E2",
+            "value": "0x00"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0022",
+            "value": "0x78"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0020",
+            "value": "0xB0"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0023",
+            "value": "0x17"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC2",
+            "value": "0x78"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC3",
+            "value": "0x19"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC4",
+            "value": "0xB0"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC5",
+            "value": "0x15"
+          }
+        }
+      ]
+    },
+    {
+      "id": "boss_d6",
+      "label": "Boss room: D6 King Dodongo ($C8)",
+      "steps": [
+        {
+          "action": "checkpoint",
+          "args": {
+            "id": "d6-boss-ready"
+          }
+        },
+        {
+          "action": "fall",
+          "args": {
+            "room": "0xC8"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0609",
+            "value": "0x11"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060B",
+            "value": "0x11"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060D",
+            "value": "0x11"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060F",
+            "value": "0x12"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E1",
+            "value": "0x11"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E3",
+            "value": "0x11"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00A9",
+            "value": "0x01"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E0",
+            "value": "0x00"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E2",
+            "value": "0x00"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0022",
+            "value": "0x78"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0020",
+            "value": "0xB0"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0023",
+            "value": "0x11"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC2",
+            "value": "0x78"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC3",
+            "value": "0x11"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC4",
+            "value": "0xB0"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC5",
+            "value": "0x19"
+          }
+        }
+      ]
+    },
+    {
+      "id": "boss_d7",
+      "label": "Boss room: D7 Kydrog ($A4)",
+      "steps": [
+        {
+          "action": "checkpoint",
+          "args": {
+            "id": "d7-boss-ready"
+          }
+        },
+        {
+          "action": "fall",
+          "args": {
+            "room": "0xA4"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0609",
+            "value": "0x0C"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060B",
+            "value": "0x0B"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060D",
+            "value": "0x0C"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E060F",
+            "value": "0x0C"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E1",
+            "value": "0x0C"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00E3",
+            "value": "0x0C"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E00A9",
+            "value": "0x00"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0020",
+            "value": "0xB0"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0023",
+            "value": "0x0C"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC2",
+            "value": "0x78"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC3",
+            "value": "0x08"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC4",
+            "value": "0xB0"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E0FC5",
+            "value": "0x15"
+          }
+        }
+      ]
+    },
+    {
       "id": "fortress_open",
       "label": "Fortress open (8 essences + Maku Seed)",
       "primary": true,
