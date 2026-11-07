@@ -390,7 +390,11 @@ if !ENABLE_DREAM_RETURN == 1
 pushpc
 ; Module07_00_PlayerControl: JSL Link_Main
 org $028947 ; @hook module=Sprites name=DreamReturn_PlayerControl kind=jsl target=DreamReturn_PlayerControl expected_m=8 expected_x=8
-  JSL DreamReturn_PlayerControl
+  if !ENABLE_D4_WATER_CONTROLS == 1
+    JSL D4Water_PlayerControl
+  else
+    JSL DreamReturn_PlayerControl
+  endif
 pullpc
 
 DreamReturn_PlayerControl:

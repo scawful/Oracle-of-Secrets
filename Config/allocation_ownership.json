@@ -241,6 +241,11 @@
       "source_set": "shared",
       "path": "Sprites/Bosses/d8_boss.asm",
       "sha256": "46f7952d50c3271da51c23114af5f6f31f101dcc3c5fefb5b2a31d03b247bf0f"
+    },
+    "shared:Dungeons/d4_water_control.asm": {
+      "source_set": "shared",
+      "path": "Dungeons/d4_water_control.asm",
+      "sha256": "acc821e463c4f1b4371fdd69574dcd9ed4633542e49a3f199e1629eda8fd6305"
     }
   },
   "claims": [
@@ -1980,6 +1985,29 @@
       ],
       "anchors": [
         "org $2EB800"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "d4_water_control_private",
+      "owner": "Private paired D4 reservoir controller and four object streams",
+      "space": "snes_rom",
+      "base": 5275648,
+      "size": 8192,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_D4_WATER_CONTROLS": 1
+      },
+      "lifetime": "Compiled prototype only; no editor writes or default activation.",
+      "reset": "Normal room loader selects streams from saved bits04/08.",
+      "save": "Two reserved bits in existing WaterGateStates byte; no checksum or slot layout change.",
+      "provenance": [
+        "shared:Dungeons/d4_water_control.asm"
+      ],
+      "anchors": [
+        "org $508000",
+        "D4Water_Start:",
+        "D4Water_End:"
       ],
       "aliases": []
     }
