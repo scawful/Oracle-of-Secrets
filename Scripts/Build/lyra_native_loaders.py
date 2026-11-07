@@ -695,10 +695,18 @@ def main(argv=None):
     modes.add_argument('--constants', type=Path)
     modes.add_argument('--compiled', type=Path)
     modes.add_argument('--seal-compiled', type=Path)
+    modes.add_argument('--prepare-initial-import', type=Path,
+                       help='Prepare a complete new editable candidate; never adopt the project')
     parser.add_argument('--build-cache', type=Path)
     parser.add_argument('--symbols', type=Path)
     parser.add_argument('--z3ed')
+    for name in ('import-terrain', 'import-gameplay-areas', 'import-plan', 'import-inspection',
+                 'engine-rom', 'engine-receipt', 'import-receipt'):
+        parser.add_argument('--' + name, type=Path)
     args = parser.parse_args(argv)
+    if args.prepare_initial_import is not None:
+        from special_overworld_initial_import_cli import run_initial_import
+        return run_initial_import(args)
     try:
         source = args.rom.read_bytes()
         installed = read_native_directory(source)
