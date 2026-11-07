@@ -72,6 +72,19 @@ jobs:
           printf '\xA9\x78\x07' | dd of=test.sfc bs=1 seek=$((0x6F80)) conv=notrunc 2>/dev/null  # $00EF80 Module15 HDMA refill LDA.w #$0778 (vanilla)
           printf '\xE2\x30\xAB\x6B' | dd of=test.sfc bs=1 seek=$((0x75447)) conv=notrunc 2>/dev/null  # $0ED447 CreateMessagePointers epilogue SEP #$30/PLB/RTL (Core/minish_tutorials.asm)
 
+          # Original pause-map instructions guarded by dungeon_map_layout.asm.
+          # Synthetic preimages only; all fourteen source assertions stay active.
+          printf '\xB9\x31\xE4\x18' | dd of=test.sfc bs=1 seek=$((0x5644F)) conv=notrunc 2>/dev/null
+          printf '\xA5\x02\xC9\x14\x00' | dd of=test.sfc bs=1 seek=$((0x5649E)) conv=notrunc 2>/dev/null
+          printf '\xB9\x45\xE4\x18' | dd of=test.sfc bs=1 seek=$((0x564B1)) conv=notrunc 2>/dev/null
+          printf '\xA5\x02\x7D\x9A\xE5' | dd of=test.sfc bs=1 seek=$((0x565C7)) conv=notrunc 2>/dev/null
+          printf '\xB9\xF5\xF5\x18' | dd of=test.sfc bs=1 seek=$((0x565E7)) conv=notrunc 2>/dev/null
+          printf '\xB1\x0C\xC9\x0F' | dd of=test.sfc bs=1 seek=$((0x565F0)) conv=notrunc 2>/dev/null
+          printf '\xA5\x02\xC9\x05\x00' | dd of=test.sfc bs=1 seek=$((0x567E8)) conv=notrunc 2>/dev/null
+          printf '\x8B\x4B\xAB\xC2\x10' | dd of=test.sfc bs=1 seek=$((0x56823)) conv=notrunc 2>/dev/null
+          printf '\xA6\x00\xA9\x00' | dd of=test.sfc bs=1 seek=$((0x56B50)) conv=notrunc 2>/dev/null
+          printf '\xA0\x03\xA5\x00' | dd of=test.sfc bs=1 seek=$((0x56BA8)) conv=notrunc 2>/dev/null
+
           # Original tag $24 vector and Holes2 body guarded by custom_tag.asm.
           printf '\x89\xCC' | dd of=test.sfc bs=1 seek=$((0xC2C5)) conv=notrunc 2>/dev/null  # $01C2C5 vector -> $01CC89
           printf '\xC2\x30\x20\xCC\xCD\x90\xF6\xA0\x05\x00\x80\xD9' | dd of=test.sfc bs=1 seek=$((0xCC89)) conv=notrunc 2>/dev/null  # $01CC89 RoomTag_Holes2
