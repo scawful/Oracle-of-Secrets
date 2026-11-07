@@ -48,6 +48,10 @@ def tables(root):
             rectangle(changes, 36, 48, 4, 4, 0)
             rectangle(changes, 41, 49, 2, 2, 0x3b, (0,))
             rectangle(changes, 22, 44, 4, 1, 0, (0,))
+            # The original133 art also contributes two08 cells one row below
+            # its generated water strip. Clear those only while drained;
+            # retain the02 side posts and all stair/layer-switch records.
+            rectangle(changes, 23, 45, 2, 1, 0, (0,))
             for x in (22, 30, 51):
                 rectangle(changes, x, 44, 4, 1, 2, (1,))
             sentinel = 44 * 64 + 22  # native133 forces08; drained approach needs00
