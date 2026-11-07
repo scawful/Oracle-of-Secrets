@@ -651,7 +651,9 @@ D4Refuge_Prep:
   PHB : PHK : PLB
   JSR D4Zora_LoadPalettes
   LDA.b #$81 : STA.w SprNbrOAM, X
-  LDA.b #$42 : STA.w SprHitbox, X
+  ; Match ordinary talkable NPCs (Bean Vendor): the inherited Princess
+  ; box02 leaves a gap at the barrier when approached from above.
+  LDA.b #$43 : STA.w SprHitbox, X
   STZ.w SprDefl, X
   STZ.w SprTileDie, X
   STZ.w SprAction, X
