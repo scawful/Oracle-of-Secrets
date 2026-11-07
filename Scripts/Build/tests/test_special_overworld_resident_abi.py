@@ -203,6 +203,55 @@ class ResidentAbiTest(unittest.TestCase):
                 self.assertIn(f'!GfxRT_Bank = ${pointer >> 16:04X}', emitted['constants_asm'])
                 self.assertFalse(emitted['runtime_admission'])
 
+    def test_palette_directory_uses_sparse_physical_pages_and_existing_blobs(self):
+        for capacity in (160, 192):
+            with self.subTest(capacity=capacity):
+                abi = A.plan_native_resident_abi(self.plan(capacity), tile16_count=4096)
+                before = copy.deepcopy(abi)
+                preimage = bytes(0x10000)
+                emitted = A.emit_native_resident_abi(abi, data_pc=0x307FF0,
+                    capacity=len(preimage), preimage=preimage)
+                self.assertEqual(abi, before)
+                rows = {row['label']: row for row in emitted['placements']}
+                directory = rows['SpecialOverworldPaletteDirectory']
+                payload = bytes.fromhex(emitted['payload_hex'])
+                raw = payload[directory['binary_offset']:
+                              directory['binary_offset'] + directory['byte_count']]
+                self.assertEqual(len(raw), (capacity - 128) * 3)
+                self.assertEqual(emitted['palette_directory_snes'], directory['snes'])
+                self.assertEqual(emitted['palette_directory_stride'], 3)
+                self.assertEqual(emitted['palette_directory_byte_count'], len(raw))
+                selected = {page['map_id']: page for page in abi['pages']}
+                palette_addresses = set()
+                for page in range(128, capacity):
+                    at = (page - 128) * 3
+                    pointer = int.from_bytes(raw[at:at + 3], 'little')
+                    if page not in selected:
+                        self.assertEqual(pointer, 0)
+                        continue
+                    area = abi['areas'][selected[page]['area_index']]
+                    row = rows[area['palette_label']]
+                    self.assertEqual(pointer, row['snes'])
+                    palette_addresses.add(pointer)
+                    self.assertEqual(row['role'], 'palette')
+                    self.assertEqual(row['byte_count'], 256)
+                    self.assertEqual(payload[row['binary_offset']:row['binary_offset'] + 256],
+                                     bytes.fromhex(next(b['payload_hex'] for b in abi['blobs']
+                                                       if b['label'] == area['palette_label'])))
+                # Every member of this large gameplay area shares its one
+                # existing packed palette body; no child palette is invented.
+                self.assertEqual(len(palette_addresses), 1)
+                self.assertEqual(directory['pc'][0] // 0x8000,
+                                 (directory['pc'][1] - 1) // 0x8000)
+                self.assertIn(f'!SPECIAL_OVERWORLD_RESIDENT_PALETTE_DIRECTORY = ${directory["snes"]:06X}',
+                              emitted['constants_asm'])
+                self.assertIn('!SPECIAL_OVERWORLD_RESIDENT_PALETTE_STRIDE = 3', emitted['constants_asm'])
+                changed = copy.deepcopy(emitted)
+                changed['palette_directory_snes'] += 1
+                with self.assertRaisesRegex(ValueError, 'EMISSION_MISMATCH'):
+                    A.resident_runtime_inputs(abi, changed, preimage=preimage)
+                self.assertFalse(emitted['runtime_admission'])
+
 
 if __name__ == '__main__':
     unittest.main()

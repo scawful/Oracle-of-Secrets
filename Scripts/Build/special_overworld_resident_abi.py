@@ -19,6 +19,8 @@ NATIVE_KIND = 'special_overworld.resident_abi.v1'
 NATIVE_ABI_VERSION = 1
 NATIVE_DIRECTORY_STRIDE = 8
 NATIVE_ANIMATION_DIRECTORY_STRIDE = 11
+NATIVE_PALETTE_DIRECTORY_STRIDE = 3
+NATIVE_PALETTE_DIRECTORY_LABEL = 'SpecialOverworldPaletteDirectory'
 NATIVE_BLOCK_SHIFT = 5
 NATIVE_BLOCK_DIRECTORY_BYTES = 128
 FIRST = 0x80
@@ -427,6 +429,21 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
     _require(not any(row['label'] == 'SharedGraphicsParentProfiles' for row in placements),
              'TRANSFER_LABEL_COLLISION')
     transfer = place('SharedGraphicsParentProfiles', transfer_raw, 'graphics_transfer_tables')
+    # Physical special-page keys, not gameplay parent indices. Existing palette
+    # blobs already deduplicate equal area palettes; zero means native fallback.
+    palette_raw = bytearray(page_count * NATIVE_PALETTE_DIRECTORY_STRIDE)
+    for page in native_plan['pages']:
+        area = native_plan['areas'][page['area_index']]
+        source = addresses[area['palette_label']]
+        _require((source & 0xFFFF) + area['palette_byte_count'] <= 0x10000,
+                 'PALETTE_RESOURCE_BANK_CROSSING')
+        at = (page['map_id'] - FIRST) * NATIVE_PALETTE_DIRECTORY_STRIDE
+        palette_raw[at:at + NATIVE_PALETTE_DIRECTORY_STRIDE] = source.to_bytes(3, 'little')
+    # The label cannot alias authenticated blobs (whose names start LyraResident)
+    # or the canonical page aliases. The same emitter owns its bytes/preimage.
+    _require(not any(row['label'] == NATIVE_PALETTE_DIRECTORY_LABEL for row in placements),
+             'PALETTE_DIRECTORY_LABEL_COLLISION')
+    palette_directory = place(NATIVE_PALETTE_DIRECTORY_LABEL, bytes(palette_raw), 'palette_directory')
     directory_raw = bytearray(page_count * NATIVE_DIRECTORY_STRIDE)
     animation_raw = bytearray(page_count * NATIVE_ANIMATION_DIRECTORY_STRIDE)
     for page in native_plan['pages']:
@@ -469,12 +486,17 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
     constants += ''.join(f'!GfxRT_{key} = ${value:04X}\n' for key, value in dict(
         TRANSFER_CONSTANTS, Bank=transfer['snes'] >> 16, ParentCount=end).items())
     constants += f'!SPECIAL_OVERWORLD_TRANSFER_DIRECTORY = ${transfer["snes"]:06X}\n'
+    constants += f'!SPECIAL_OVERWORLD_RESIDENT_PALETTE_DIRECTORY = ${palette_directory["snes"]:06X}\n'
+    constants += f'!SPECIAL_OVERWORLD_RESIDENT_PALETTE_STRIDE = {NATIVE_PALETTE_DIRECTORY_STRIDE}\n'
     return dict(kind='lyra.resident_atlas_native_emission.v1',
         abi_sha256=native_plan['abi_sha256'], data_pc=[data_pc, data_pc + capacity],
         preimage_sha256=_sha(preimage), used_pc_end=cursor,
         used_extent_bytes=cursor-data_pc, bank_padding_bytes=cursor-data_pc-len(binary),
         binary_path=binary_path, payload_hex=bytes(binary).hex(), payload_sha256=_sha(binary),
         placements=placements, animation_directory_byte_count=len(animation_raw),
+        palette_directory_snes=palette_directory['snes'],
+        palette_directory_byte_count=len(palette_raw),
+        palette_directory_stride=NATIVE_PALETTE_DIRECTORY_STRIDE,
         transfer_table_snes=transfer['snes'], transfer_table_byte_count=len(transfer_raw),
         transfer_profile_snes={str(parent): address for parent, address in transfer_profiles.items()},
         runtime_data_asm='\n'.join(lines), constants_asm=constants,

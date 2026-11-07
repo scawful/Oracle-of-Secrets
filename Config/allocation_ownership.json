@@ -90,7 +90,7 @@
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "eebe8dad726ebf69937019204b503b52ca1302e46e2d53ef8b1b18cd8928e50f"
+      "sha256": "4149297a7ef45a64747c504861ad47bb1698f23c8d2a95165d58a214450c9224"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -165,7 +165,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "3e2e82d124a270d6e0a1c4a084d5c43c8f57d2b762989749f80f83f22b7365df"
+      "sha256": "249888f085ac7f50e6e18a831af44b643da59852ac972d81bf7d62ae8e0cb474"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -211,6 +211,11 @@
       "source_set": "shared",
       "path": "Oracle_main.asm",
       "sha256": "abf39806024cf316cfdb8abec58779c5f7f0e637780d547c93d98260923c8d16"
+    },
+    "shared:Scripts/Build/special_overworld_resident_abi.py": {
+      "source_set": "shared",
+      "path": "Scripts/Build/special_overworld_resident_abi.py",
+      "sha256": "49f160fb9b028594036772d08c3c5ef7a4f8b26fb1d723e586235927ee0b5926"
     }
   },
   "claims": [
@@ -370,14 +375,14 @@
     },
     {
       "id": "symbols_wram_block",
-      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..SpecialOverworldMainCache)",
+      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..SpecialOverworldPaletteHoleArea)",
       "space": "wram",
       "base": 8265328,
-      "size": 28,
+      "size": 54,
       "status": "shared",
       "condition": {},
-      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint. Last four bytes retain underlying native sheets for resource slots 0/1/2/7 across graphics loads; not persistent save data.",
-      "reset": "No block-wide reset is claimed. Not in ResetTrackVars arrays since PR 211 moved this block from $7E0730 to vanilla-free $7E1E70. The last four-byte SpecialOverworldMainCache is cleared by the default-off resource callback before fresh native InitTilesets/mirror identities, then retains underlying main-sheet identities for departure restoration. Runtime qualification remains pending.",
+      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint. Last four bytes retain underlying native sheets for resource slots 0/1/2/7 across graphics loads; not persistent save data. Next 26 bytes reserve six native BG column8 reference/effective words plus state/area; no HUD, OBJ or backdrop column0 history.",
+      "reset": "No block-wide reset is claimed. Not in ResetTrackVars arrays since PR 211 moved this block from $7E0730 to vanilla-free $7E1E70. The last four-byte SpecialOverworldMainCache is cleared by the default-off resource callback before fresh native InitTilesets/mirror identities, then retains underlying main-sheet identities for departure restoration. Runtime qualification remains pending. Palette-hole cache reset/capture/restoration remains unbound: before any read reset state to0 and area toFF; native84-color BG refresh and Buffer/Both completion must be bound before palette activation.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
         "shared:Core/symbols.asm",
@@ -1772,6 +1777,34 @@
         "SpecialOverworldGraphicsCodeStart:",
         "SpecialOverworldGraphicsCodeEnd:"
       ]
+    },
+    {
+      "id": "native_special_palette_hole_cache",
+      "owner": "Native special-overworld BG column8 history; palette consumer not yet bound",
+      "space": "wram",
+      "base": 8265356,
+      "size": 26,
+      "status": "proposed",
+      "condition": {},
+      "contained_by": "symbols_wram_block",
+      "lifetime": "Six reference words (12B), six effective words (12B), state byte and area byte. Retain only BG column8 offsets50/70/90/B0/D0/F0 across resident palette overrides. Existing native loaders must explicitly refresh the other84 colors; column0 remains native-owned.",
+      "reset": "UNBOUND. Future palette owner must reset state0/areaFF before reads, validate full16-bit8A and matching area, capture only native words, restore before native departure under Buffer/Both fade ownership, and invalidate on fresh identity. Declaration grants no runtime qualification.",
+      "save": "Volatile WRAM; never saved. No palette consumer or activation is implemented in this slice.",
+      "provenance": [
+        "shared:Core/symbols.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "SpecialOverworldPaletteHoleCache = $7E1E8C",
+        "SpecialOverworldPaletteHoleReference: skip 12",
+        "SpecialOverworldPaletteHoleEffective: skip 12",
+        "SpecialOverworldPaletteHoleState: skip 1",
+        "SpecialOverworldPaletteHoleArea: skip 1"
+      ],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "SpecialOverworldPaletteHoleCache"
+      }
     }
   ],
   "lifetime_aliases": [],
