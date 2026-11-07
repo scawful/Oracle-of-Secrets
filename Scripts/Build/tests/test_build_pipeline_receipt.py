@@ -28,7 +28,8 @@ class BuildPipelineReceiptTest(unittest.TestCase):
                         OOS_SKIP_MENU_VALIDATE='1', OOS_SKIP_VERSION_STAMP='1',
                         OOS_BACKUP_ROOT=str(self.root / 'Roms/backups'))
         for name in ('build_rom.sh', 'build_checks.sh', 'build_receipt.py',
-                     'verify_feature_flags.py', 'set_feature_flags.py', 'lyra_native_loaders.py'):
+                     'verify_feature_flags.py', 'set_feature_flags.py', 'lyra_native_loaders.py',
+                     'native_overworld_authoring_metadata.py'):
             self.copy(f'Scripts/Build/{name}')
         for name in ('generate_hooks_json.py', 'asm_source.py'):
             self.copy(f'Scripts/Generate/{name}')
