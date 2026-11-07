@@ -4358,3 +4358,21 @@ Answer: "Briefing only" (scawful, 2026-11-06)
   only; no sword or items while riding. Candidate form ID $09 (after Garo Master $08).
   Not decided: art (horse sheet size vs Link's body), exact speed, whether the horse jumps fences,
   the horse NPC text. No Ocarina call.
+
+* DECIDED Docks boat repeat trips: a return ferry, Docks <-> Sea Zora island, both ways (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude, progression review (gap B: middle-act travel)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/progression_review_2026-11-06/README.md
+  :END:
+  scawful before the ask: "Ferry (pick)" (which spot to work on next).
+  Question: How should the Docks boat work after the first ride?
+  Options shown: 1 Return ferry (pick): the Docks boatman rides Docks <-> Sea Zora island both
+  ways, any time after the first ride; 2 Growing route: stops added as the sea opens (Sea Zora,
+  crescent, Power/Rock Meat shelf), with a stop picker; 3 No ferry: swim home after Flippers.
+  Answer: "1 Return ferry (pick)" (scawful, 2026-11-06)
+  Fills the repeat-trip behavior left open by "Sea Zora arrival: scripted boat from Kalyxo Docks,
+  then Flippers and current gates" (2026-10-20). Still a scripted ride, not a steerable boat.
+  Swimming and the Zora Link current gates are unchanged; the ferry is a fixed shortcut only.
+  The growing route (option 2) is not selected; it can extend this later.
+  Not decided: the boatman (who, where on the island he waits), fare, whether the island-side
+  boarding exists before the Flippers gift, the boatman text (needs scawful's OK).
