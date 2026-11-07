@@ -4,6 +4,7 @@ Source-contract/generator internals have their own suites. These tests exercise
 exit propagation, provenance dispatch and cleanup without real ROMs or emulators.
 """
 from pathlib import Path
+import hashlib
 import json
 import os
 import shutil
@@ -22,13 +23,15 @@ class BuildPipelineReceiptTest(unittest.TestCase):
         self.root = Path(self.temp.name) / '.context' / 'source with spaces'
         self.root.mkdir(parents=True)
         self.env = {k: v for k, v in os.environ.items()
-                    if not k.startswith(('OOS_', 'SKIP_', 'ASAR_', 'MESEN2_'))}
+                    if not k.startswith(('OOS_', 'SKIP_', 'ASAR_', 'MESEN2_',
+                                         'YAZE_PROJECT_'))}
         self.env.update(PYTHONDONTWRITEBYTECODE='1',
                         OOS_SKIP_WATER_TABLE_GEN='1', OOS_SKIP_WATER_FILL_TABLE_GEN='1',
                         OOS_SKIP_MENU_VALIDATE='1', OOS_SKIP_VERSION_STAMP='1',
                         OOS_BACKUP_ROOT=str(self.root / 'Roms/backups'))
         for name in ('build_rom.sh', 'build_checks.sh', 'build_receipt.py',
-                     'verify_feature_flags.py', 'set_feature_flags.py'):
+                     'verify_feature_flags.py', 'set_feature_flags.py', 'lyra_native_loaders.py',
+                     'native_overworld_authoring_metadata.py'):
             self.copy(f'Scripts/Build/{name}')
         for name in ('generate_hooks_json.py', 'asm_source.py'):
             self.copy(f'Scripts/Generate/{name}')
@@ -99,6 +102,8 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.assertTrue(self.check('source_sprite_sheets')['required'])
         self.assertEqual(self.check('menu_icon_sheets')['status'], 'passed')
         self.assertTrue(self.check('menu_icon_sheets')['required'])
+        self.assertEqual(self.check('native_overworld_constants')['status'], 'passed')
+        self.assertEqual(self.check('native_overworld_preservation')['status'], 'passed')
         self.assertEqual(self.receipt['state'], 'completed_with_gaps')
         self.assertEqual(self.check('smoke')['status'], 'unavailable')
         hooks = json.loads((self.root / 'Roms/hooks.json').read_text())
@@ -106,6 +111,81 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         argv = json.loads((self.root / 'Roms/analyzer-args.json').read_text())
         self.assertEqual(argv[argv.index('--sym')+1], str(self.root / 'Roms/oos999x.sym'))
         self.assertIn('pre_assembly', self.receipt['snapshots'])
+        manifest = self.root / 'Roms/hack_manifest.json'
+        self.assertEqual(Path(self.receipt['artifacts']['manifest']['path']),
+                         manifest.resolve())
+        self.assertEqual(self.receipt['artifacts']['manifest']['sha256'],
+                         hashlib.sha256(manifest.read_bytes()).hexdigest())
+
+    def test_redirected_manifest_keeps_policy_and_records_actual_output(self):
+        policy = self.write('Roms/hack_manifest.json', 'saved editor policy')
+        output = self.root / 'Roms/oos999x.manifest.json'
+        self.env['OOS_MANIFEST_OUTPUT'] = str(output)
+        result = self.build()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(policy.read_text(), 'saved editor policy')
+        manifest = json.loads(output.read_text())
+        self.assertEqual(manifest['argv'][manifest['argv'].index('--output') + 1],
+                         str(output.resolve()))
+        self.assertEqual(Path(self.receipt['artifacts']['manifest']['path']),
+                         output.resolve())
+        self.assertEqual(self.receipt['artifacts']['manifest']['sha256'],
+                         hashlib.sha256(output.read_bytes()).hexdigest())
+
+    def test_redirected_manifest_rollback_preserves_foreign_policy_update(self):
+        policy = self.write('Roms/hack_manifest.json', 'saved editor policy')
+        output = self.write('Roms/oos999x.manifest.json', 'previous compiled manifest')
+        self.env.update(OOS_MANIFEST_OUTPUT=str(output), OOS_ANALYSIS_FATAL='1')
+        self.analyzer.write_text('import pathlib,sys\n'
+            'pathlib.Path("Roms/hack_manifest.json").write_text("foreign policy update")\n'
+            'sys.exit(7)\n')
+        result = self.build()
+        self.assertEqual(result.returncode, 7, result.stderr)
+        self.assertEqual(self.check('output_rollback')['status'], 'passed')
+        self.assertEqual(output.read_text(), 'previous compiled manifest')
+        self.assertEqual(policy.read_text(), 'foreign policy update')
+
+    def test_manifest_override_refuses_foreign_paths_aliases_before_receipt(self):
+        policy = self.write('Roms/hack_manifest.json', 'saved editor policy')
+        foreign = self.write('Core/foreign.asm', '; retain foreign source\n')
+        output = self.root / 'Roms/oos999x.manifest.json'
+        receipt = self.root / 'Roms/oos999x.build.json'
+        saved_inputs = {'project_alias': 'YAZE_PROJECT_FILE',
+                        'native_receipt_alias': 'YAZE_NATIVE_SAVE_RECEIPT',
+                        'native_context_alias': 'YAZE_NATIVE_SAVE_CONTEXT'}
+        for kind in ('foreign', 'symlink', 'symlink_target', 'hardlink',
+                     'receipt_alias', *saved_inputs):
+            env = dict(self.env)
+            if kind == 'foreign':
+                env['OOS_MANIFEST_OUTPUT'] = str(policy)
+            else:
+                env['OOS_MANIFEST_OUTPUT'] = str(output)
+                if kind == 'symlink':
+                    output.symlink_to(policy)
+                elif kind == 'symlink_target':
+                    output.symlink_to(foreign)
+                    env['OOS_MANIFEST_OUTPUT'] = str(foreign)
+                elif kind == 'hardlink':
+                    output.hardlink_to(policy)
+                elif kind == 'receipt_alias':
+                    env['OOS_BUILD_RECEIPT'] = str(output)
+                else:
+                    output.write_text('saved native input')
+                    env[saved_inputs[kind]] = str(output)
+            with self.subTest(kind=kind):
+                result = subprocess.run(['bash', str(self.root / 'Scripts/Build/build_rom.sh'),
+                    '999', str(self.assembler)], cwd=self.temp.name, env=env,
+                    capture_output=True, text=True)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('OOS_MANIFEST_OUTPUT', result.stderr)
+                self.assertFalse(receipt.exists())
+                self.assertFalse((self.root / 'Roms/oos999x.sfc').exists())
+                self.assertEqual(policy.read_text(), 'saved editor policy')
+                self.assertEqual(foreign.read_text(), '; retain foreign source\n')
+                if kind in saved_inputs:
+                    self.assertEqual(output.read_text(), 'saved native input')
+            if output.exists() or output.is_symlink():
+                output.unlink()
 
     def test_source_sheet_guard_failure_preserves_previous_output(self):
         output = self.write('Roms/oos999x.sfc', 'previous candidate')
@@ -118,6 +198,44 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.assertEqual(output.read_text(), 'previous candidate')
         self.assertEqual((self.root / 'Config/feature_flags.asm').read_bytes(), before)
         self.assertNotIn('output_rom', self.receipt['artifacts'])
+
+    def test_yaze_build_uses_the_saved_project_rom(self):
+        source = self.write('project with spaces/edited.sfc', 'saved project edit')
+        self.env['YAZE_PROJECT_ROM'] = str(source)
+        result = self.build()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(Path(self.receipt['base_rom']['path']), source.resolve())
+        self.assertEqual((self.root / 'Roms/oos999x.sfc').read_text(),
+                         'saved project edit assembled')
+        self.assertEqual(source.read_text(), 'saved project edit')
+
+    def test_missing_yaze_project_rom_does_not_fall_back_to_repository_rom(self):
+        self.env['YAZE_PROJECT_ROM'] = str(self.root / 'project/missing.sfc')
+        result = self.build()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Base ROM not found', result.stderr + result.stdout)
+        self.assertFalse((self.root / 'Roms/oos999x.sfc').exists())
+
+    def test_explicit_base_cannot_disagree_with_active_yaze_project(self):
+        source = self.write('project/edited.sfc', 'saved project edit')
+        output = self.write('Roms/oos999x.sfc', 'previous candidate')
+        self.env.update(YAZE_PROJECT_ROM=str(source),
+                        OOS_BASE_ROM=str(self.root / 'Roms/oos999.sfc'))
+        result = self.build()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('does not match the active Yaze project ROM',
+                      result.stderr + result.stdout)
+        self.assertEqual(output.read_text(), 'previous candidate')
+
+    def test_explicit_base_alias_of_yaze_project_rom_is_accepted(self):
+        source = self.write('project/edited.sfc', 'saved project edit')
+        alias = self.root / 'project/source-alias.sfc'
+        alias.symlink_to(source)
+        self.env.update(YAZE_PROJECT_ROM=str(source), OOS_BASE_ROM=str(alias))
+        result = self.build()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((self.root / 'Roms/oos999x.sfc').read_text(),
+                         'saved project edit assembled')
 
     def test_external_cwd_preserves_relative_tool_base_and_manifest_paths(self):
         caller = Path(self.temp.name)
@@ -222,6 +340,39 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.assertEqual((self.root / 'Config/feature_flags.asm').read_bytes(), before)
         flags = self.receipt['snapshots']['pre_assembly']['profile']['effective_flags']
         self.assertEqual(flags['ENABLE_FIXTURE'], 0)
+
+    def test_generated_native_constants_restore_after_failed_assembly(self):
+        path = self.root / '.cache/special_overworld_reader_constants.asm'
+        for existed in (True, False):
+            with self.subTest(existed=existed):
+                if existed:
+                    self.write('.cache/special_overworld_reader_constants.asm', 'previous constants')
+                elif path.exists():
+                    path.unlink()
+                self.env['FIXTURE_ASM_EXIT'] = '9'
+                self.assertEqual(self.build().returncode, 9)
+                self.assertEqual(self.check('native_overworld_constants')['status'], 'passed')
+                self.assertEqual(self.check('output_rollback')['status'], 'passed')
+                if existed:
+                    self.assertEqual(path.read_text(), 'previous constants')
+                else:
+                    self.assertFalse(path.exists())
+
+    def test_native_resource_cache_rolls_back_after_late_failure(self):
+        names = ('.cache/special_overworld_native_source.json',
+                 '.cache/special_overworld_native_data.asm',
+                 '.cache/binaries/resident-atlas.bin',
+                 '.cache/binaries/special-overworld-directory.bin')
+        before = {name: self.write(name, 'previous ' + name).read_bytes() for name in names}
+        # The legacy preparation removes the stale native-source marker. The
+        # fixture assembler changes the remaining managed resource outputs.
+        with self.assembler.open('a') as handle:
+            for name in names[1:]:
+                handle.write(f'\npathlib.Path({name!r}).write_bytes(b"changed resource")\n')
+        self.env.update(FIXTURE_ANALYSIS_EXIT='7', OOS_ANALYSIS_FATAL='1')
+        self.assertEqual(self.build().returncode, 7, self.result.stderr)
+        self.assertEqual({name: (self.root / name).read_bytes() for name in names}, before)
+        self.assertEqual(self.check('output_rollback')['status'], 'passed')
 
     def test_flags_restore_after_success(self):
         before = (self.root / 'Config/feature_flags.asm').read_bytes()

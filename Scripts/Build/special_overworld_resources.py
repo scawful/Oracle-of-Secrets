@@ -1,0 +1,399 @@
+"""Plan terrain resources from z3ed's saved native special-overworld export.
+
+The packing algorithm is retained from lyra_resident_graphics.py@60605572986c,
+with a page-keyed terrain input replacing the old sidecar document dependency.
+This module does not allocate ROM storage or activate runtime consumers.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import re
+import struct
+import sys
+
+import lyra_native_loaders as native
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'Generate'))
+import sheet_codec
+import sheet_table
+
+SOURCE_SCHEMA = 'yaze.special-overworld-native-source.v1'
+PLAN_SCHEMA = 'special_overworld.terrain_resources.v1'
+STATIC_SLOTS = tuple(range(448)) + tuple(range(480, 512))
+ANIMATED_SLOTS = tuple(range(448, 480))
+UNKNOWNS = (
+    'mutable_event_tile_closure', 'overlay_and_shared_bg_resources',
+    'active_obj_follower_ancilla_resources', 'external_scroll_coexistence',
+    'owned_allocation_and_transfer_budget', 'native_remap_palette_animation_consumers',
+    'native_tint_refresh_and_departure_restore',
+)
+
+def _require(value, reason):
+    if not value:
+        raise ValueError('RESIDENT_GRAPHICS_' + reason)
+
+
+def _sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _json_bytes(value):
+    try:
+        return json.dumps(value, sort_keys=True, separators=(',', ':'),
+                          allow_nan=False, ensure_ascii=False).encode('utf-8')
+    except (TypeError, ValueError) as error:
+        raise ValueError('RESIDENT_GRAPHICS_PROVENANCE_INVALID') from error
+
+
+def _digest(value):
+    return type(value) is str and re.fullmatch('[0-9a-f]{64}', value) is not None
+
+
+def _payload(raw, **details):
+    return dict(byte_count=len(raw), payload_hex=raw.hex(), sha256=_sha(raw), **details)
+
+
+def _four_bpp(pixels):
+    """Encode one native-order 8x8 indexed tile, preserving index0."""
+    _require(len(pixels) == 64 and all(0 <= value < 16 for value in pixels),
+             'PIXEL_INDEX_INVALID')
+    raw = bytearray(32)
+    for y in range(8):
+        for x in range(8):
+            value, bit = pixels[y * 8 + x], 1 << (7 - x)
+            for plane in range(4):
+                if value & (1 << plane):
+                    raw[(plane // 2) * 16 + y * 2 + plane % 2] |= bit
+    return bytes(raw)
+
+
+def _color_bytes(colors):
+    return b''.join(b'\x00\x00\x00' if value is None else
+                    b'\x01' + struct.pack('<H', value) for value in colors)
+
+
+def _source_sheets(source):
+    cache, records = {}, {}
+
+    def read(sheet):
+        _require(type(sheet) is int and 0 <= sheet < 255, 'SHEET_SELECTOR_INVALID')
+        if sheet not in cache:
+            try:
+                pointer = sheet_table.ptr(source, sheet)
+                _require(pointer & 0xFFFF >= 0x8000
+                         and (pointer >> 16) & 0x7F < 0x7E, 'SHEET_POINTER_INVALID')
+                start = sheet_table.pc(pointer)
+                if 0x73 <= sheet <= 0x7E:
+                    raw, consumed = source[start:start + 0x600], 0x600
+                else:
+                    raw, consumed = sheet_table.decomp(source, pointer)
+                _require(len(raw) == 0x600 and start + consumed <= len(source),
+                         'SHEET_BYTES_INVALID')
+                grid = sheet_codec.sheet_to_grid(raw)
+            except (IndexError, ValueError) as error:
+                raise ValueError(f'RESIDENT_GRAPHICS_SHEET_DECODE_FAILED: {sheet:02X}') from error
+            flat = bytes(value for row in grid for value in row)
+            tiles = tuple(bytes(grid[t // 16 * 8 + y][t % 16 * 8 + x]
+                                for y in range(8) for x in range(8)) for t in range(64))
+            cache[sheet] = (flat, tiles)
+            records[sheet] = dict(sheet_id=sheet, pointer_snes=pointer,
+                stream_byte_count=consumed, stream_sha256=_sha(source[start:start + consumed]),
+                decoded_3bpp_sha256=_sha(raw), decoded_indexed8_sha256=_sha(flat))
+        return cache[sheet]
+
+    return read, records
+
+
+def _plan_area(area, page_tiles, assets, definitions, read_sheet, conditional_tiles=None):
+    demands, references, claims = {}, [], {}
+    for map_id in area['maps']:
+        data = assets[map_id, 0]
+        palette = data['palette']['words']
+        tiles = set(page_tiles[map_id])
+        if conditional_tiles is not None:
+            tiles.update(conditional_tiles.get(map_id, ()))
+        for tile in sorted(tiles):
+            for quadrant, word in enumerate(struct.unpack_from('<4H', definitions, tile * 8)):
+                references.append((map_id, tile, quadrant, word))
+                key = (map_id, word)
+                if key in demands:
+                    continue
+                char, bank = word & 1023, (word >> 10) & 7
+                slot, index = divmod(char, 64)
+                _require(slot < 8, 'TERRAIN_OBJ_REFERENCE_UNSUPPORTED')
+                animated = 448 <= char < 480
+                if animated:
+                    selector = data['animation']['sheet_id']
+                    before = read_sheet(selector - 1)[1]
+                    current = read_sheet(selector)[1]
+                    frames = (before[index], before[32 + index], current[index])
+                else:
+                    sheet = data['slots'][slot]['sheet_id']
+                    frames = (bytes(64) if sheet is None else read_sheet(sheet)[1][index],)
+                high = slot in (0, 3, 4, 5) and not animated
+                # The normal loader biases every pixel in these BG sheets,
+                # including source index0: it becomes opaque palette index8.
+                # An absent slot stays transparent because no bias is applied.
+                present = animated or data['slots'][slot]['sheet_id'] is not None
+                indices = tuple(bytes(value | 8 if high and present else value
+                                      for value in frame) for frame in frames)
+                colors = tuple(tuple(None if value == 0 else palette[bank * 16 + value]
+                                     for value in frame) for frame in indices)
+                for frame in indices:
+                    for value in frame:
+                        if value:
+                            claims.setdefault(bank * 16 + value, set()).add(palette[bank * 16 + value])
+                demands[key] = dict(animated=animated, colors=colors,
+                    color_set=frozenset(value for frame in colors for value in frame if value is not None))
+    sets = sorted({row['color_set'] for row in demands.values()},
+                  key=lambda values: (-len(values), tuple(sorted(values))))
+    bins, assignment, refused = [], {}, []
+    for colors in sets:
+        choices = [(len(colors - existing), index) for index, existing in enumerate(bins)
+                   if len(existing | colors) <= 15]
+        if choices:
+            _, index = min(choices)
+            bins[index].update(colors)
+        elif len(bins) < 6 and len(colors) <= 15:
+            index = len(bins)
+            bins.append(set(colors))
+        else:
+            refused.append('TERRAIN_PALETTE_PACKING_UNKNOWN')
+            break
+        assignment[colors] = index
+    base_palette = assets[area['parent_map_id'], 0]['palette']['words'][:128]
+    if any(assets[map_id, 0]['palette']['words'][:32] != base_palette[:32]
+           for map_id in area['maps']):
+        refused.append('HUD_PALETTE_CONFLICT')
+    result = dict(parent_map_id=area['parent_map_id'], size=area['size'], maps=list(area['maps']),
+        terrain_plan_ready=False, full_residency_ready=False,
+        full_residency_status='UNKNOWN_RESOURCE_CLOSURE', unknowns=list(UNKNOWNS),
+        refusals=refused, palette_row_color_counts=[len(values) for values in bins],
+        conflicting_original_cgram_entries=[dict(entry=index, colors=sorted(values))
+            for index, values in sorted(claims.items()) if len(values) > 1],
+        remaps=[], static_slots=[], static_chr=None, animation=None, palette=None, witness=None)
+    if refused:
+        result['status'] = 'TERRAIN_PACKING_UNQUALIFIED'
+        return result
+    palettes = [sorted(values) for values in bins]
+    encoded = {}
+    for key, demand in demands.items():
+        row = assignment[demand['color_set']]
+        lookup = {value: index + 1 for index, value in enumerate(palettes[row])}
+        pixels = tuple(bytes(0 if value is None else lookup[value] for value in frame)
+                       for frame in demand['colors'])
+        encoded[key] = (row + 2, tuple(_four_bpp(frame) for frame in pixels), pixels)
+    static = sorted({frames[0] for key, (_, frames, _) in encoded.items() if not demands[key]['animated']})
+    animated = sorted({frames for key, (_, frames, _) in encoded.items() if demands[key]['animated']})
+    if len(static) > len(STATIC_SLOTS):
+        refused.append('STATIC_NAMESPACE_EXHAUSTED')
+    if len(animated) > len(ANIMATED_SLOTS):
+        refused.append('ANIMATION_NAMESPACE_EXHAUSTED')
+    result.update(static_pattern_count=len(static), animated_pattern_count=len(animated))
+    if refused:
+        result['status'] = 'TERRAIN_PACKING_UNQUALIFIED'
+        return result
+    static_ids = {pattern: STATIC_SLOTS[index] for index, pattern in enumerate(static)}
+    animated_ids = {pattern: ANIMATED_SLOTS[index] for index, pattern in enumerate(animated)}
+    source_colors, reconstructed = hashlib.sha256(), hashlib.sha256()
+    comparisons = 0
+    for map_id, tile, quadrant, word in references:
+        key = (map_id, word)
+        bank, patterns, pixels = encoded[key]
+        char = animated_ids[patterns] if demands[key]['animated'] else static_ids[patterns[0]]
+        target_word = (word & 0xE000) | (bank << 10) | char
+        result['remaps'].append(dict(map_id=map_id, tile16_id=tile, quadrant=quadrant,
+                                    source_word=word, target_word=target_word))
+        for original, frame in zip(demands[key]['colors'], pixels):
+            restored = tuple(None if value == 0 else palettes[bank - 2][value - 1] for value in frame)
+            _require(original == restored, 'COLOR_RECONSTRUCTION_FAILED')
+            source_colors.update(_color_bytes(original))
+            reconstructed.update(_color_bytes(restored))
+            comparisons += len(frame)
+    words = list(base_palette)
+    for index, colors in enumerate(palettes, 2):
+        words[index * 16:index * 16 + 16] = [base_palette[index * 16], *colors,
+                                            *([0] * (15 - len(colors)))]
+    result.update(status='TERRAIN_ONLY_CONSTRUCTIVE_FIT', terrain_plan_ready=True,
+        static_slots=list(STATIC_SLOTS[:len(static)]),
+        static_chr=_payload(b''.join(static), tile_count=len(static), format='snes4bpp'),
+        animation=dict(slots=list(ANIMATED_SLOTS[:len(animated)]), frame_count=3,
+            frame_payloads=[_payload(b''.join(pattern[frame] for pattern in animated),
+                                    tile_count=len(animated), format='snes4bpp') for frame in range(3)]),
+        palette=dict(words=words, **_payload(struct.pack('<128H', *words),
+                                           format='bgr555_uint16le', hypothetical_rows=list(range(2, 8)))),
+        witness=dict(pixel_comparisons=comparisons, source_colors_sha256=source_colors.hexdigest(),
+                     reconstructed_colors_sha256=reconstructed.hexdigest(),
+                     transparency='native index0 preserved; opaque black is a distinct color'))
+    return result
+
+
+def _native_source(source, exported):
+    """Check a fresh z3ed export against its saved native ROM, without writes."""
+    _require(type(source) is bytes and 0x200000 <= len(source) <= 0x400000,
+             'SOURCE_INVALID')
+    installed = native.read_native_directory(source)
+    _require(installed is not None, 'NATIVE_DIRECTORY_REQUIRED')
+    capacity, _, entries = installed
+    revision = struct.unpack_from('<H', source, native.DIRECTORY_PC + 8)[0]
+    _require(type(exported) is dict and type(exported.get('native_source')) is dict,
+             'NATIVE_EXPORT_REQUIRED')
+    value = exported['native_source']
+    _require(exported.get('native_source_sha256') == _sha(_json_bytes(value)),
+             'NATIVE_EXPORT_HASH_MISMATCH')
+    _require(value.get('schema') == SOURCE_SCHEMA
+             and value.get('resolution_scope') == 'resident_gameplay_areas'
+             and value.get('source_rom_sha256') == _sha(source)
+             and value.get('source_byte_count') == len(source)
+             and value.get('directory_revision') == revision
+             and value.get('materialized_map_count') == capacity
+             and value.get('first_special_map') == 128
+             and value.get('special_map_count') == capacity - 128
+             and value.get('directory_sha256') == _sha(source[
+                 native.DIRECTORY_PC:native.DIRECTORY_PC + native.DIRECTORY_SIZE]),
+             'NATIVE_EXPORT_SOURCE_MISMATCH')
+    # The current sheet decoder reads the ROM's own pointer layout. Refuse
+    # project relocations rather than silently decoding a different source.
+    _require(value.get('rom_address_overrides') == {},
+             'ADDRESS_OVERRIDES_UNSUPPORTED')
+    address, count = entries[400]
+    definitions = source[native.pc(address):native.pc(address) + count * 8]
+    _require(value.get('tile16_dictionary') == dict(snes_address=address,
+        pc_address=native.pc(address), count=count, stride=8, sha256=_sha(definitions)),
+        'DEFINITION_HASH_MISMATCH')
+    pages = value.get('pages')
+    _require(type(pages) is list and len(pages) == capacity - 128
+             and [p.get('map_id') for p in pages if type(p) is dict]
+                 == list(range(128, capacity)), 'NATIVE_PAGES_INCOMPLETE')
+
+    def row(entry_id, map_id):
+        address, _ = entries[entry_id]
+        _, _, width = native.entry_spec(entry_id, capacity, revision)
+        start = native.pc(address) + map_id * width
+        return source[start:start + width]
+
+    areas, tiles = {}, {}
+    for page in pages:
+        map_id = page['map_id']
+        parent, = row(7, map_id)
+        size, = row(30, map_id)
+        role, = row(29, map_id)
+        _require(128 <= parent < capacity and size in (0, 1, 2, 3)
+                 and page.get('parent_map_id') == parent and page.get('role') == role,
+                 'NATIVE_AREA_MISMATCH')
+        profile = page.get('source_profile')
+        _require(type(profile) is dict, 'NATIVE_PROFILE_INVALID')
+        flags = row(410, map_id)[0] if revision == 4 else 0
+        expected = dict(background_color=int.from_bytes(row(1, map_id), 'little'),
+            main_palette=row(2, map_id)[0], palette_set=row(31, map_id)[0],
+            area_graphics=row(27, map_id)[0], graphics_sheets=list(row(6, map_id)),
+            animated_sheet=row(4, map_id)[0],
+            subscreen_overlay=int.from_bytes(row(5, map_id), 'little'),
+            mosaic=[bool(row(3, map_id)[0] & (8 >> bit)) for bit in range(4)],
+            appearance_flags=flags, background_palette_words=None)
+        if revision == 4:
+            expected['background_palette_words'] = list(struct.unpack('<128H', row(411, map_id - 128)))
+        _require(profile == expected, 'NATIVE_PROFILE_MISMATCH')
+        grid = page.get('tiles')
+        _require(type(grid) is list and len(grid) == 1024
+                 and all(type(tile) is int and 0 <= tile < count for tile in grid),
+                 'TILE16_MAP_INVALID')
+        tiles[map_id] = grid
+        area = areas.setdefault(parent, dict(parent_map_id=parent,
+            size=('small', 'large', 'wide', 'tall')[size], maps=[], resident_required=False))
+        _require(area['size'] == ('small', 'large', 'wide', 'tall')[size],
+                 'NATIVE_AREA_MISMATCH')
+        area['maps'].append(map_id)
+        area['resident_required'] |= flags != 0
+    areas = [areas[key] for key in sorted(areas)]
+    for area in areas:
+        width, height = dict(small=(1, 1), large=(2, 2), wide=(2, 1), tall=(1, 2))[area['size']]
+        parent = area['parent_map_id']
+        _require(parent % 8 + width <= 8
+                 and area['maps'] == [parent + y * 8 + x for y in range(height) for x in range(width)],
+                 'NATIVE_AREA_FOOTPRINT_INVALID')
+    _require(value.get('gameplay_areas') == areas, 'NATIVE_AREAS_MISMATCH')
+    return value, definitions, tiles, areas
+
+
+def plan_saved_native_terrain(source, exported):
+    """Reuse the retained packer with saved-ROM pages, never a terrain sidecar.
+
+    The caller must obtain the export by running z3ed on this exact saved ROM.
+    The exporter validates/decompresses terrain; this adapter rechecks native
+    profiles, topology and ROM-resolved BG bytes before consuming its tile grid.
+    """
+    value, definitions, tiles, areas = _native_source(source, exported)
+    read_sheet, sheets = _source_sheets(source)
+    assets = {}
+    required = {page for area in areas if area['resident_required'] for page in area['maps']}
+    for page in value['pages']:
+        if page['map_id'] not in required:
+            continue
+        states = page.get('resolved_states')
+        _require(type(states) is list and len(states) == 3
+                 and [s.get('state') for s in states if type(s) is dict] == [0, 1, 2],
+                 'NATIVE_PHASES_INVALID')
+        for state in states:
+            palette = state.get('palette')
+            words = palette.get('words') if type(palette) is dict else None
+            _require(type(words) is list and len(words) == 256
+                     and all(type(word) is int and 0 <= word <= 0x7FFF for word in words)
+                     and palette.get('uint16le_sha256') == _sha(struct.pack('<256H', *words)),
+                     'PALETTE_HASH_MISMATCH')
+            if page['source_profile']['appearance_flags'] & 2:
+                _require(words[:128] == page['source_profile']['background_palette_words'],
+                         'BG128_SOURCE_MISMATCH')
+            animation = state.get('animation')
+            selector = animation.get('sheet_id') if type(animation) is dict else None
+            _require(type(selector) is int and 1 <= selector < 255,
+                     'ANIMATION_SELECTOR_INVALID')
+            animated, _ = read_sheet(selector)
+            read_sheet(selector - 1)
+            _require(animation.get('decoded_sheet_sha256') == _sha(animated),
+                     'ANIMATION_HASH_MISMATCH')
+            slots = state.get('slots')
+            _require(type(slots) is list and len(slots) == 16
+                     and [s.get('slot') for s in slots if type(s) is dict] == list(range(16)),
+                     'SLOT_ROWS_INVALID')
+            bg_slots = []
+            for index, slot in enumerate(slots[:8]):
+                sheet = slot.get('sheet_id')
+                empty = slot.get('empty')
+                _require(type(empty) is bool and type(sheet) is int
+                         and (not empty or sheet == 0), 'SLOT_SOURCE_INVALID')
+                decoded, _ = read_sheet(sheet)
+                _require(slot.get('decoded_sheet_sha256') == _sha(decoded),
+                         'SHEET_HASH_MISMATCH')
+                bias = 0x88 if index in (0, 3, 4, 5) else 0
+                resolved = bytes(0x1000) if empty else bytes((v + bias) & 255 for v in decoded)
+                if index == 7:
+                    resolved = animated[:0x800] + resolved[0x800:]
+                _require(slot.get('resolved_slot_sha256') == _sha(resolved),
+                         'RESOLVED_SLOT_HASH_MISMATCH')
+                bg_slots.append(dict(sheet_id=None if empty else sheet,
+                    decoded_sheet_sha256=slot['decoded_sheet_sha256'],
+                    resolved_slot_sha256=slot['resolved_slot_sha256']))
+            assets[page['map_id'], state['state']] = dict(
+                palette=palette, slots=bg_slots, animation=animation)
+        baseline = assets[page['map_id'], 0]
+        for phase in (1, 2):
+            other = assets[page['map_id'], phase]
+            _require(baseline['palette']['words'][:128] == other['palette']['words'][:128]
+                     and baseline['slots'] == other['slots']
+                     and baseline['animation'] == other['animation'],
+                     'BG_PHASE_VARIATION_UNSUPPORTED')
+    planned = [_plan_area(area, tiles, assets, definitions, read_sheet)
+               for area in areas if area['resident_required']]
+    result = dict(schema=PLAN_SCHEMA, source_rom_sha256=_sha(source),
+        materialized_map_count=value['materialized_map_count'],
+        native_source_sha256=exported['native_source_sha256'],
+        tile16_definition_sha256=_sha(definitions), areas=planned,
+        terrain_plan_ready=all(area['terrain_plan_ready'] for area in planned),
+        full_residency_ready=False, allocation_granted=False,
+        ordinary_build_ready=False, unknowns=list(UNKNOWNS),
+        decoded_sheets=[sheets[key] for key in sorted(sheets)])
+    result['plan_sha256'] = _sha(_json_bytes(result))
+    return result

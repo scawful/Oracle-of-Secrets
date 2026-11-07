@@ -39,6 +39,29 @@
 incsrc    "Util/macros.asm"
 incsrc    "Config/module_flags.asm"
 incsrc    "Config/feature_flags.asm"
+; Resource bodies remain opt-in until the saved-ROM compiler binds them.
+if not(defined("SPECIAL_OVERWORLD_RESOURCES_ENABLED"))
+  !SPECIAL_OVERWORLD_RESOURCES_ENABLED = 0
+endif
+; Palette lifecycle remains opt-in until the resident palette compiler binds it.
+if not(defined("SPECIAL_OVERWORLD_PALETTE_ENABLED"))
+  !SPECIAL_OVERWORLD_PALETTE_ENABLED = 0
+endif
+assert !SPECIAL_OVERWORLD_PALETTE_ENABLED == 0 || !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+; The input descriptor selects native readers; stale cache files cannot
+; activate them for a direct legacy assembly. Build regenerates this include.
+if read4($28F000) == $4F534F4F && read4($28F004) == $32393157
+if read2($28F008) == $0003 || read2($28F008) == $0004
+  assert canreadfile1(".cache/special_overworld_reader_constants.asm", 0), "Run build_rom.sh to generate native reader constants"
+  incsrc ".cache/special_overworld_reader_constants.asm"
+  assert !SPECIAL_OVERWORLD_NATIVE == 1, "Native reader constants do not match the selected ROM"
+  assert read4($28F01C) == !SPECIAL_OVERWORLD_DIRECTORY_CRC, "Native reader constants are stale; run build_rom.sh"
+endif
+endif
+if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+  assert !SPECIAL_OVERWORLD_NATIVE == 1, "Native palette lifecycle requires native readers"
+  assert !DISABLE_OVERWORLD == 0, "Native palette lifecycle requires the overworld module"
+endif
 if !ENABLE_MASK_R_BINDING == 1
   assert !ENABLE_MASK_Y_TRANSFORM == 1, "Mask R binding requires mask_y_transform"
   assert !ENABLE_TRUTHFUL_CONTROLS == 1, "Mask R binding requires truthful_controls"
@@ -197,4 +220,20 @@ if !ENABLE_SOURCE_SPRITE_SHEETS == 1
 endif
 if !DISABLE_MENU == 0
   incsrc "Core/Generated/menu_icons/menu_icon_overrides.asm"
+endif
+
+; Readers are emitted after the current source callers and graphics overrides.
+if !SPECIAL_OVERWORLD_NATIVE == 1
+  assert !DISABLE_OVERWORLD == 0, "Native special overworld requires the overworld module"
+  incsrc "Overworld/lyra_native_loaders.asm"
+  incsrc "Overworld/special_overworld_resident.asm"
+  incsrc "Overworld/special_overworld_graphics.asm"
+  incsrc "Overworld/special_overworld_palette.asm"
+  if read2($28F008) == $0004
+    assert defined("SPECIAL_OVERWORLD_NATIVE_COMPILED"), "Run build_rom.sh to compile saved native resources"
+    assert !SPECIAL_OVERWORLD_NATIVE_COMPILED == 1
+  endif
+  if !SPECIAL_OVERWORLD_NATIVE_COMPILED == 1
+    incsrc ".cache/special_overworld_native_data.asm"
+  endif
 endif

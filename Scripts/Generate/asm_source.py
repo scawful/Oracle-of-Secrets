@@ -53,6 +53,20 @@ def _load_global_defines(root: Path) -> dict[str, int]:
                 continue
             name, value = parsed
             defines[name] = value
+    # Build owns this literal-only include. Fresh legacy checkouts have no
+    # cache; installed native builds regenerate it before assembly/manifest.
+    native_constants = root / '.cache/special_overworld_reader_constants.asm'
+    if native_constants.is_file():
+        for line in native_constants.read_text(encoding='utf-8').splitlines():
+            text = line.split(';', 1)[0].strip()
+            if not text:
+                continue
+            parsed = _parse_define_assignment(text, defines)
+            if parsed is None or not parsed[0].startswith(
+                    ('SPECIAL_OVERWORLD_', 'LYRA_CURRENT_', 'GfxRT_')):
+                raise ValueError('Native reader constants must contain only their owned numeric defines')
+            name, value = parsed
+            defines[name] = value
     return defines
 
 
@@ -69,6 +83,7 @@ _ALLOWED_BINOPS = {
     ast.BitXor: lambda a, b: a ^ b,
 }
 _ALLOWED_UNARYOPS = {
+    ast.Not: lambda a: not a,
     ast.UAdd: lambda a: +a,
     ast.USub: lambda a: -a,
     ast.Invert: lambda a: ~a,
@@ -130,6 +145,11 @@ def _eval_condition(expr: str, defines: dict[str, int]) -> Optional[bool]:
     if not raw:
         return None
     raw = raw.replace("&&", " and ").replace("||", " or ")
+    # A preloaded numeric define is certainly defined, including value zero.
+    # Missing names can also have unresolved source assignments, so retain
+    # conservative unknown handling rather than treating absence as false.
+    raw = re.sub(r'''\bdefined\(\s*(["'])([A-Za-z_][A-Za-z0-9_]*)\1\s*\)''',
+                 lambda match: '1' if match.group(2) in defines else match.group(0), raw)
     unknown = False
 
     def repl(m: re.Match) -> str:
@@ -388,6 +408,12 @@ def collect_reachable_asm_sources(
                 None,
             )
             if included is None:
+                # Build derives this include from the selected ROM. A clean
+                # legacy source checkout has no generated native constants.
+                if (asm_path == entry
+                        and include_text == '.cache/special_overworld_reader_constants.asm'
+                        and active_defines.get('SPECIAL_OVERWORLD_NATIVE') == 0):
+                    continue
                 rel = asm_path.relative_to(resolved_root)
                 raise SourceGraphError(
                     f"{rel}:{line_number}: unresolved incsrc "
@@ -405,6 +431,7 @@ def collect_reachable_asm_sources(
         "Util/macros.asm",
         "Config/module_flags.asm",
         "Config/feature_flags.asm",
+        ".cache/special_overworld_reader_constants.asm",
     }
     for asm_path in sorted(reachable):
         rel = asm_path.relative_to(resolved_root).as_posix()

@@ -21,6 +21,9 @@ OWNED_REGIONS = (
     # The emitting source guards every input word and its exact 8 KiB end.
     ("Dungeons/attract_royal_graphics.asm", 0x1E4000, 0x1E5FFF),
     ("Overworld/ZSCustomOverworld.asm", 0x140000, 0x147FFF),
+    # Managed native Build reseals only this existing 1 KiB directory.
+    # The codec, compiled-output verifier and generated end assertion bound it.
+    (".cache/special_overworld_native_data.asm", 0x147000, 0x1473FF),
     ("Overworld/lost_woods.asm", 0x107000, 0x107FFF),
     ("Masks/bunny_hood.asm", 0x102F20, 0x102F6F),
     ("Masks/bunny_hood.asm", 0x102F70, 0x102F8D),

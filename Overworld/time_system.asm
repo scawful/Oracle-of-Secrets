@@ -48,6 +48,9 @@ org $0CC265 ; Intro_FadeLogoIn ; @hook module=Overworld
 pullpc
 LogoFadeInSetClock:
 {
+  if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+  JSL Oracle_SpecialOverworldPaletteReset
+  endif
   JSL $00ED7C ; IntroLogoPaletteFadeIn
   LDA.b #$08 : STA.l TimeState.Hours ; Set the time to 6:00am
   LDA.b #$3F : STA.l TimeState.Speed ; Set the time speed
@@ -60,6 +63,9 @@ org $0CCA59 ; @hook module=Overworld
 pullpc
 ResetClockTriforceRoom:
 {
+  if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+  JSL Oracle_SpecialOverworldPaletteReset
+  endif
   JSL $00E384 ; LoadCommonSprites_long
   LDA.b #$00 : STA.l TimeState.Hours ; low hours for palette?
   LDA.b #$00 : STA.l TimeState.Minutes ; high hours for palette?
@@ -193,12 +199,23 @@ TimeSystem_IncrementTime:
 
 TimeSystem_UpdatePalettes:
 {
+    ; Begin also restores reference holes before an indoor departure.
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL Oracle_SpecialOverworldPaletteBegin
+    endif
     ; check indoors/outdoors
     LDA $1B	: BEQ .outdoors
+      ; Rejected indoor Begin is balanced without touching the fade buffer.
+      if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+      JSL Oracle_SpecialOverworldPaletteCompleteBuffer
+      endif
       RTS
     .outdoors
 
     JSL RomToPaletteBuffer	; update buffer palette
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL Oracle_SpecialOverworldPaletteCompleteBuffer
+    endif
     JSL PaletteBufferToEffective	; update effective palette
 
     ; Refresh explicitly even in diagnostic builds with Masks disabled.
@@ -350,9 +367,20 @@ OverworldLoadScreensPaletteSet = $02C692
 RomToPaletteBuffer:
 {
   LDX.b $8A
-  LDA.l $7EFD40,X : STA.b $00
+  if !SPECIAL_OVERWORLD_NATIVE == 1
+  LyraCall_SpritePalette_0 = pc()
+  JSL.l Lyra_ReadSpritePalette
+  else
+  LDA.l $7EFD40,X
+  endif
+  STA.b $00
 
+  if !SPECIAL_OVERWORLD_NATIVE == 1
+  LyraCall_PaletteSet_0 = pc()
+  JSL.l Lyra_ReadPaletteSet
+  else
   LDA.l OverworldPalettesScreenToSet_New,X
+  endif
   JSL OverworldPalettesLoader
   JSR Overworld_CopyPalettesToCache
   JSR OverworldLoadScreensPaletteSet 
@@ -505,6 +533,7 @@ RefreshOverworldBackdrop:
 ReadOverworldBackdropColor:
 {
   LDA.b $8A : AND.w #$00FF
+Lyra_CurrentBackdropLegacy:
   CMP.w #$00A0 : BCS .invalid_area
   CMP.w #$0080 : BNE .area_color
     LDA.b $A0 : CMP.w #$0181 : BNE .reload_area

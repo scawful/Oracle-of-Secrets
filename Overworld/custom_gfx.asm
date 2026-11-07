@@ -2,6 +2,10 @@
 ; which held the ship before the 2026-10-19 split). $8A = parent area.
 CheckForChangeGraphicsNormalLoadBoat:
 {
+if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+  ; Existing blanked normal/map-close/Soaring callback owns direct VRAM DMA.
+  JSL SpecialOverworldGraphicsNormalLoad
+endif
   LDA $8A : CMP.b #$38 : BEQ .load
   CMP.b #$30 : BNE .boat_area
   .load

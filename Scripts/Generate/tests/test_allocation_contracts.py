@@ -112,11 +112,17 @@ class OwnershipTests(unittest.TestCase):
     def test_symbols_block_back_at_7e0730_conflicts_with_cart_room(self):
         # PR 211 moved Core/symbols.asm out of !MinecartTrackRoom; a move back must be an active conflict.
         real={c['id']:c for c in read_ledger(ROOT/'Config/allocation_ownership.json')['claims']}
+        from allocation_contracts import base_block
         block=copy.deepcopy(real['symbols_wram_block']);data=ledger(real['cart_room'],block)
+        self.assertEqual(base_block((ROOT/'Core/symbols.asm').read_text(),'MenuScrollLevelV'),(block['base'],54))
+        self.assertEqual(block['size'],54)  # Original24B + main cache4B + palette history26B.
+        palette=real['native_special_palette_hole_cache']
+        self.assertEqual((palette['base'],palette['size'],palette['contained_by']),(block['base']+28,26,block['id']))
+        self.assertEqual(palette['base']+palette['size'],block['base']+block['size'])
         self.assertEqual(ownership_conflicts(data,{'DISABLE_SPRITES':0})[0],[])
         block['base']=0x7E0730
         conflicts=ownership_conflicts(data,{'DISABLE_SPRITES':0})[0]
-        self.assertEqual([(c['owners'],c['start'],c['end'],c['classification']) for c in conflicts],[(['cart_room','symbols_wram_block'],0x7E0730,0x7E0748,'active_profile_conflict')])
+        self.assertEqual([(c['owners'],c['start'],c['end'],c['classification']) for c in conflicts],[(['cart_room','symbols_wram_block'],0x7E0730,0x7E0766,'active_profile_conflict')])
 
 
 class TableTests(unittest.TestCase):

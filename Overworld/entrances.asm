@@ -3,7 +3,11 @@
 ; Can use eithe vanilla map16 @ $0F8000
 ; Or ZS Expanded @ $3D8000
 
+if !SPECIAL_OVERWORLD_NATIVE == 1
+Map16Definitions = !LYRA_CURRENT_MAP16_DEFINITIONS
+else
 Map16Definitions = $3D8000
+endif
 Overworld_DrawMap16_Anywhere = $1BC983
 Interface_PrepAndDisplayMessage = $0FFDAA
 Overworld_EntranceTileIndex = $1BBA71

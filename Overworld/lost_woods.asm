@@ -31,14 +31,24 @@ LostWoods:
   LDA.b $8A : CMP.b #$29 : BEQ begincode
 
   ; Else, return standard area ID (Allow entry)
+  if !SPECIAL_OVERWORLD_NATIVE == 1
+  LyraCall_Parent_0 = pc()
+  JSL.l Lyra_ReadParent
+  else
   LDA.l Pool_Overworld_ActualScreenID_New, X
+  endif
   STZ !ComboCounter
   RTL
 
       normalfinish:
       ; Reset coordinates and scroll to fix camera drift/softlocks
       ; JSL LostWoods_ResetCoordinates
+      if !SPECIAL_OVERWORLD_NATIVE == 1
+      LyraCall_Parent_1 = pc()
+      JSL.l Lyra_ReadParent
+      else
       LDA.l Pool_Overworld_ActualScreenID_New, X
+      endif
       STZ !ComboCounter
       RTL
   

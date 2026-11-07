@@ -20,7 +20,7 @@
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "d2614e655f6a7b602a0c480222c90acd8a32032eb8083c8ecf7215074268ef64"
+      "sha256": "d41bc108061d1c87946dbca451551ac03880596535667497f2369667b99ac646"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -40,7 +40,7 @@
     "shared:Overworld/overlays.asm": {
       "source_set": "shared",
       "path": "Overworld/overlays.asm",
-      "sha256": "fb08e0fa9557c59673e0b5ae3179d73466dcbf7f3879d047db29724baff4a489"
+      "sha256": "6f8b172ebc52196146a07a9ba6cff2989419a655b9898b8a7413dc1c09e5378f"
     },
     "shared:Core/sram.asm": {
       "source_set": "shared",
@@ -75,7 +75,7 @@
     "shared:Overworld/ZSCustomOverworld.asm": {
       "source_set": "shared",
       "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "94d7d7704faf916236b019ced369b49a8e7899fcf9ff73b8c78b6f29c54e91eb"
+      "sha256": "52ed6e7c857d52efa27b05c20d4207edac891900206e1ebda2f4f9a679888d97"
     },
     "shared:Sprites/Objects/data/minecart_tracks.asm": {
       "source_set": "shared",
@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "e9f0ef67aa7829232ed37fd5caebcbf4a452763099b0c2b43b7171d97479d165"
+      "sha256": "0044e59bb51b5481cbed26a54a25916cc744459341956ff6a1e43afd9fc1b7ea"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "eebe8dad726ebf69937019204b503b52ca1302e46e2d53ef8b1b18cd8928e50f"
+      "sha256": "856aeb29c3067e1df2c4ddcc265adcea1e7f7708396663ab6d039b1687355a11"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -145,7 +145,7 @@
     "shared:Items/ice_rod.asm": {
       "source_set": "shared",
       "path": "Items/ice_rod.asm",
-      "sha256": "8bcd1f79e44e182728726c49bccd99ff2067d56d63df6552376d1244abd87cd5"
+      "sha256": "533a63f7c60e8cdf2ea3cfa5c0be1d84379a956a3e54bda2d0827bc9cf1be8aa"
     },
     "vanilla:bank_00.asm": {
       "source_set": "vanilla",
@@ -165,12 +165,67 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "bcc6df2404dc097f25f9b547699359f924387c7cdaa1c70e87fd571b9f317475"
+      "sha256": "249888f085ac7f50e6e18a831af44b643da59852ac972d81bf7d62ae8e0cb474"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
       "path": "Masks/wolf_mask.asm",
       "sha256": "f2435f1738736e43a01f4be2e48831f60e666961d6503dea17101c69507fb782"
+    },
+    "shared:Overworld/lyra_native_loaders.asm": {
+      "source_set": "shared",
+      "path": "Overworld/lyra_native_loaders.asm",
+      "sha256": "60f98b4e9cf1202c2186749f2c56f6aac9cb8fa566b0df990e1ad8fabd3f5407"
+    },
+    "shared:Scripts/Build/lyra_native_loaders.py": {
+      "source_set": "shared",
+      "path": "Scripts/Build/lyra_native_loaders.py",
+      "sha256": "88f9d68ae2a203bbe3bcf6003c1f3793cd4612d38fff1737b7436cf183a35f2d"
+    },
+    "shared:Scripts/Generate/sheet_overrides.py": {
+      "source_set": "shared",
+      "path": "Scripts/Generate/sheet_overrides.py",
+      "sha256": "2039e970855974941b0550a7c68009232de83d3afb4110e8cdd1982f4df03ba4"
+    },
+    "shared:Scripts/Build/native_overworld_authoring_metadata.py": {
+      "source_set": "shared",
+      "path": "Scripts/Build/native_overworld_authoring_metadata.py",
+      "sha256": "8ad596b4992a42eba40f8c7cbee6d6bc26f799a680e34ee23bfe467a55866d81"
+    },
+    "shared:Overworld/special_overworld_resident.asm": {
+      "source_set": "shared",
+      "path": "Overworld/special_overworld_resident.asm",
+      "sha256": "c5aa111291a02865de4811714f9528cea95cecc27373baf62d74723544854345"
+    },
+    "shared:Overworld/custom_gfx.asm": {
+      "source_set": "shared",
+      "path": "Overworld/custom_gfx.asm",
+      "sha256": "41277bd430703e4dd6bae043f48c28f81d251979157c0af9a41a808138d8865e"
+    },
+    "shared:Overworld/special_overworld_graphics.asm": {
+      "source_set": "shared",
+      "path": "Overworld/special_overworld_graphics.asm",
+      "sha256": "6db40c945d45c85f2a3d6804d0d79a06996df8a67a5c19011dd1a543c11d41c4"
+    },
+    "shared:Oracle_main.asm": {
+      "source_set": "shared",
+      "path": "Oracle_main.asm",
+      "sha256": "fdf7c340a2dd717138a94bc87011a2b9884065fa3b67d23e63f5102949964e5c"
+    },
+    "shared:Scripts/Build/special_overworld_resident_abi.py": {
+      "source_set": "shared",
+      "path": "Scripts/Build/special_overworld_resident_abi.py",
+      "sha256": "49f160fb9b028594036772d08c3c5ef7a4f8b26fb1d723e586235927ee0b5926"
+    },
+    "shared:Overworld/special_overworld_palette.asm": {
+      "source_set": "shared",
+      "path": "Overworld/special_overworld_palette.asm",
+      "sha256": "a59223d7ed3bfff2511d0b1ce776fd866b607e389308518c51a21c906652647e"
+    },
+    "shared:Overworld/time_system.asm": {
+      "source_set": "shared",
+      "path": "Overworld/time_system.asm",
+      "sha256": "09208a0873a661db1bfb7987799c66784626f14050688a95e0ca0e89c2fbd0ef"
     }
   },
   "claims": [
@@ -330,17 +385,18 @@
     },
     {
       "id": "symbols_wram_block",
-      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..SongTintColor)",
+      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..SpecialOverworldPaletteHoleArea)",
       "space": "wram",
       "base": 8265328,
-      "size": 24,
+      "size": 54,
       "status": "shared",
       "condition": {},
-      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint.",
-      "reset": "No block-wide reset is claimed. Not in ResetTrackVars' arrays since PR 211 moved it from $7E0730 (inside cart_room) to vanilla-free $7E1E70.",
+      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint. Last four bytes retain underlying native sheets for resource slots 0/1/2/7 across graphics loads; not persistent save data. Next 26 bytes reserve six native BG column8 reference/effective words plus state/area; no HUD, OBJ or backdrop column0 history.",
+      "reset": "No block-wide reset is claimed. Not in ResetTrackVars arrays since PR 211 moved this block from $7E0730 to vanilla-free $7E1E70. The last four-byte SpecialOverworldMainCache is cleared by the default-off resource callback before fresh native InitTilesets/mirror identities, then retains underlying main-sheet identities for departure restoration. Runtime qualification remains pending. Palette-hole cache reset/capture/restoration remains unbound: before any read reset state to0 and area toFF; native84-color BG refresh and Buffer/Both completion must be bound before palette activation.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
-        "shared:Core/symbols.asm"
+        "shared:Core/symbols.asm",
+        "shared:Overworld/special_overworld_graphics.asm"
       ],
       "aliases": [],
       "anchors": [],
@@ -1316,6 +1372,478 @@
         "symbol": "WolfDigFlags",
         "bank00_mirror": false
       }
+    },
+    {
+      "id": "native_special_directory",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 2682880,
+      "size": 1024,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "DIRECTORY_PC = 0x147000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_tables",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 4620288,
+      "size": 12672,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "def current_table_layout(table_base):"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_bindings",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 4632960,
+      "size": 3712,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "def encode_revision3_directory("
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_readers",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 4636672,
+      "size": 16384,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Overworld/lyra_native_loaders.asm"
+      ],
+      "anchors": [
+        "Lyra_CurrentNativeCodeStart:"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_terrain_0",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 4751360,
+      "size": 32768,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "def verify_saved_payload("
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_terrain_1",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 4816896,
+      "size": 32768,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "def verify_saved_payload("
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_terrain_2",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 4882432,
+      "size": 32768,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "def verify_saved_payload("
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_terrain_3",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 4947968,
+      "size": 32768,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "def verify_saved_payload("
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_actors",
+      "owner": "Native special-overworld format; Root selected source reservation",
+      "space": "snes_rom",
+      "base": 5013504,
+      "size": 32768,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved for installed revision3 special-overworld data/readers; inactive legacy builds emit no payload here.",
+      "reset": "One-time import requires explicit authored data; subsequent Build preserves ROM-owned payload.",
+      "save": "ROM data, not SRAM. Normal editor Save updates only its supported domains.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "def lower_actor_lists("
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_event_flags",
+      "owner": "Native special-overworld tail event state",
+      "space": "save_buffer",
+      "base": 8320192,
+      "size": 32,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Persistent A0-BF event flags and schema marker in the existing Core reservation.",
+      "reset": "New-file clear and versioned file-load migration initialize tail flags.",
+      "save": "Covered by existing five-page native save/checksum loops; focused native verification still required.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "anchors": [
+        "LyraCurrentTailFlags"
+      ],
+      "aliases": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "LyraCurrentTailFlags",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "native_special_event_version",
+      "owner": "Native special-overworld tail event state",
+      "space": "save_buffer",
+      "base": 8320224,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Persistent A0-BF event flags and schema marker in the existing Core reservation.",
+      "reset": "New-file clear and versioned file-load migration initialize tail flags.",
+      "save": "Covered by existing five-page native save/checksum loops; focused native verification still required.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "anchors": [
+        "LyraCurrentTailVersion"
+      ],
+      "aliases": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "LyraCurrentTailVersion",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "global_graphics_bank_47",
+      "owner": "Source graphics sheets",
+      "space": "snes_rom",
+      "base": 4685824,
+      "size": 32768,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Existing global graphics sheets DF-FE; entire bank reserved, including unused bytes.",
+      "reset": "Selected source reservation only; no implicit free-space discovery, ROM materialization or runtime activation.",
+      "save": "Normal Save owns appearance source; Build rederives only its named cache and preserves source bodies. Graphics bank47 remains owned by the existing sheet generator.",
+      "provenance": [
+        "shared:Scripts/Generate/sheet_overrides.py"
+      ],
+      "anchors": [
+        "GLOBAL_START, GLOBAL_CAPACITY = 0x478000, 0x8000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_appearance_flags",
+      "owner": "Native special-overworld appearance source and derived resources",
+      "space": "snes_rom",
+      "base": 5079040,
+      "size": 192,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "ROM-owned physical-screen appearance flags410.",
+      "reset": "Selected source reservation only; no implicit free-space discovery, ROM materialization or runtime activation.",
+      "save": "Normal Save owns appearance source; Build rederives only its named cache and preserves source bodies. Graphics bank47 remains owned by the existing sheet generator.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "APPEARANCE_FLAGS_BASE = 0x4D8000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_appearance_palettes",
+      "owner": "Native special-overworld appearance source and derived resources",
+      "space": "snes_rom",
+      "base": 5079296,
+      "size": 16384,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "ROM-owned64 physical-screen BG128 rows411, including dormant source colors.",
+      "reset": "Selected source reservation only; no implicit free-space discovery, ROM materialization or runtime activation.",
+      "save": "Normal Save owns appearance source; Build rederives only its named cache and preserves source bodies. Graphics bank47 remains owned by the existing sheet generator.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "APPEARANCE_PALETTES_BASE = 0x4D8100"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_resident_cache_0",
+      "owner": "Native special-overworld appearance source and derived resources",
+      "space": "snes_rom",
+      "base": 5144576,
+      "size": 32768,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "First derived resident graphics/cache bank; Build-only data, never terrain authority.",
+      "reset": "Selected source reservation only; no implicit free-space discovery, ROM materialization or runtime activation.",
+      "save": "Normal Save owns appearance source; Build rederives only its named cache and preserves source bodies. Graphics bank47 remains owned by the existing sheet generator.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "RESIDENT_DATA_PC = 0x270000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_resident_cache_1",
+      "owner": "Native special-overworld appearance source and derived resources",
+      "space": "snes_rom",
+      "base": 5210112,
+      "size": 32768,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Second derived resident graphics/cache bank; Build-only data, never terrain authority.",
+      "reset": "Selected source reservation only; no implicit free-space discovery, ROM materialization or runtime activation.",
+      "save": "Normal Save owns appearance source; Build rederives only its named cache and preserves source bodies. Graphics bank47 remains owned by the existing sheet generator.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "RESIDENT_DATA_CAPACITY = 0x10000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_authoring_metadata",
+      "owner": "Native special-overworld placement identity and pending endpoint drafts",
+      "space": "snes_rom",
+      "base": 5099520,
+      "size": 8192,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Optional ID412 authoring metadata; one header and255 fixed32-byte slots. No duplicated live terrain or actor coordinates.",
+      "reset": "One-time import preserves nonzero stable IDs, explicit draft optionals and monotonic next ID; tombstones prevent reuse.",
+      "save": "Authoring metadata binds to the same ordered sprite batch. Until that model/writer exists, changed sprite Save is refused; unchanged payload remains exact.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py",
+        "shared:Scripts/Build/native_overworld_authoring_metadata.py"
+      ],
+      "anchors": [
+        "AUTHORING_METADATA_BASE = 0x4DD000",
+        "MAGIC = b'OWPLAC1\\0'"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_resident_word_code",
+      "space": "snes_rom",
+      "base": 5095936,
+      "size": 1536,
+      "status": "proposed",
+      "condition": {},
+      "owner": "Native special-overworld resident Tile16 word readers; derived Build code",
+      "lifetime": "Compiled code for full-load, horizontal/vertical stripe and mutable draws; disabled until resources/readers are bound",
+      "reset": "No WRAM or SRAM allocation; preserves caller state and uses stack-local scratch saves",
+      "save": "Derived code is not authored source; normal Save does not grant writes here. Runtime Build activation requires separate compiler/consumer qualification.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py",
+        "shared:Overworld/special_overworld_resident.asm"
+      ],
+      "anchors": [
+        "RESIDENT_WORD_CODE_BASE = 0x4DC200",
+        "RESIDENT_WORD_CODE_LIMIT = 0x4DC800",
+        "Lyra_ResidentAtlasCodeStart:",
+        "Lyra_ResidentAtlasCodeEnd:"
+      ]
+    },
+    {
+      "id": "native_special_resident_resource_code",
+      "space": "snes_rom",
+      "base": 5097472,
+      "size": 2048,
+      "status": "proposed",
+      "condition": {},
+      "owner": "Native special-overworld static graphics, cache and animation callbacks; derived Build code",
+      "lifetime": "Default-off resource consumers. Existing blanked load callback owns direct static DMA; postconversion callbacks patch only declared native WRAM prefixes before the existing NMI schedule. Palette lifecycle remains separate.",
+      "reset": "SpecialOverworldGraphicsResetMainCache clears four named backups before current InitTilesets and first mirror-warp identity setters. Prior-sheet sentinels plus retained main/aux identities force native restoration on departure; no new sprite cache or phase byte.",
+      "save": "Derived code is not authored source. Normal Save grants no code writes; this reservation and disabled source alone do not grant resource activation or runnable native4 Build.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py",
+        "shared:Overworld/special_overworld_graphics.asm",
+        "shared:Overworld/ZSCustomOverworld.asm",
+        "shared:Overworld/custom_gfx.asm",
+        "shared:Oracle_main.asm",
+        "shared:Core/symbols.asm"
+      ],
+      "anchors": [
+        "RESIDENT_RESOURCE_CODE_BASE = 0x4DC800",
+        "RESIDENT_RESOURCE_CODE_LIMIT = 0x4DD000",
+        "SpecialOverworldGraphicsCodeStart:",
+        "SpecialOverworldGraphicsCodeEnd:"
+      ]
+    },
+    {
+      "id": "native_special_palette_hole_cache",
+      "owner": "Native special-overworld BG column8 history; palette consumer not yet bound",
+      "space": "wram",
+      "base": 8265356,
+      "size": 26,
+      "status": "proposed",
+      "condition": {},
+      "contained_by": "symbols_wram_block",
+      "lifetime": "Six reference words (12B), six effective words (12B), state byte and area byte. Retain only BG column8 offsets50/70/90/B0/D0/F0 across resident palette overrides. Existing native loaders must explicitly refresh the other84 colors; column0 remains native-owned.",
+      "reset": "Current default-off palette body/joins bind reference-hole restoration before departure and fresh startup invalidation. State bit7 retains validated native holes and low6 tracks synchronous nesting; Buffer completion never writes C500. Both mirrors native reference holes, never captures a displayed fade. PPU/fade/gameplay proof remains open.",
+      "save": "Volatile WRAM; never saved. No palette consumer or activation is implemented in this slice.",
+      "provenance": [
+        "shared:Core/symbols.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "SpecialOverworldPaletteHoleCache = $7E1E8C",
+        "SpecialOverworldPaletteHoleReference: skip 12",
+        "SpecialOverworldPaletteHoleEffective: skip 12",
+        "SpecialOverworldPaletteHoleState: skip 1",
+        "SpecialOverworldPaletteHoleArea: skip 1"
+      ],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "SpecialOverworldPaletteHoleCache"
+      }
+    },
+    {
+      "id": "native_special_resident_palette_code",
+      "space": "snes_rom",
+      "base": 5107712,
+      "size": 4096,
+      "status": "proposed",
+      "condition": {},
+      "owner": "Native special-overworld palette consumer and lifecycle adapters; default off",
+      "lifetime": "Default-off Begin/CompleteBuffer/CompleteBoth/Reset body only. Sparse physical-page pointers select existing derived palette blobs. Native84 BG words are refreshed before final derived tint; no HUD, OBJ, column0, backdrop, DMA or independent publisher.",
+      "reset": "Current source binds Begin/Complete at normal, scroll, mosaic, mirror, whirlpool, special/flute and hourly owners; fresh scene and StartupMasks reset, indoor departure restores then invalidates. CPU buffer/ABI proof exists; PPU/fade/gameplay qualification remains open.",
+      "save": "Derived code is not authored source and Normal Save grants no writes. Code reservation/default-off body alone does not grant complete native4 Build admission or runtime activation.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py",
+        "shared:Overworld/special_overworld_palette.asm",
+        "shared:Core/symbols.asm",
+        "shared:Oracle_main.asm",
+        "shared:Overworld/ZSCustomOverworld.asm",
+        "shared:Overworld/time_system.asm",
+        "shared:Masks/mask_routines.asm"
+      ],
+      "anchors": [
+        "RESIDENT_PALETTE_CODE_BASE = 0x4DF000",
+        "RESIDENT_PALETTE_CODE_LIMIT = 0x4E0000",
+        "SpecialOverworldPaletteCodeStart:",
+        "SpecialOverworldPaletteCodeEnd:",
+        "SpecialPaletteAdaptersStart:",
+        "SpecialPaletteAdaptersEnd:"
+      ]
     }
   ],
   "lifetime_aliases": [],

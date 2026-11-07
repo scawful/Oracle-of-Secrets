@@ -178,6 +178,9 @@ OBJECT_ALLOCATION_REGIONS_PC = (
 CANONICAL_LOROM_ROM_END_PC = 0x3F0000
 
 AUDITED_UNRESOLVED_ORG_CONTRACTS = {
+    # Native backdrop trampoline patches the existing five-byte bank34 reader;
+    # lyra_native_loaders.asm bounds it with Oracle_Lyra_CurrentBackdropLegacy.
+    ("Overworld/lyra_native_loaders.asm", "Oracle_ReadOverworldBackdropColor", 0x34),
     ("Core/message.asm", "!addr+1", 0x0E),
     ("Core/sprite_macros.asm", "$0DB080+!SPRID", 0x0D),
     ("Core/sprite_macros.asm", "$0DB173+!SPRID", 0x0D),
@@ -306,6 +309,12 @@ def collect_reachable_asm_sources(
                 None,
             )
             if included is None:
+                # This one include is derived from the selected ROM by Build.
+                # A clean legacy source export has no cache and stays disabled.
+                # Never skip another missing source, or missing native state.
+                if (asm_path == entry and include_text == '.cache/special_overworld_reader_constants.asm'
+                        and active_defines.get('SPECIAL_OVERWORLD_NATIVE') == 0):
+                    continue
                 rel = asm_path.relative_to(resolved_root)
                 raise ManifestGenerationError(
                     f"{rel}:{line_number}: unresolved incsrc "
@@ -323,6 +332,7 @@ def collect_reachable_asm_sources(
         "Util/macros.asm",
         "Config/module_flags.asm",
         "Config/feature_flags.asm",
+        ".cache/special_overworld_reader_constants.asm",
     }
     for asm_path in sorted(reachable):
         rel = asm_path.relative_to(resolved_root).as_posix()

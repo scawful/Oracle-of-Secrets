@@ -1419,7 +1419,11 @@ AnimateMirrorWarp_DecompressAnimatedTiles:
 
     PLX
 
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldAnimationDecompress
+    else
     JSL.l DecompOwAnimatedTiles
+    endif
             
     RTL
 }
@@ -1447,7 +1451,13 @@ ReadAnimatedTable:
 
     ; TODO: For the sake of speed, remove these checks.
     ; $00 crashes the game so just double check that.
-    LDA.w Pool_AnimatedTable, X : BNE .not00
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Animated_0 = pc()
+    JSL.l Lyra_ReadAnimated
+    else
+    LDA.w Pool_AnimatedTable, X
+    endif
+    BNE .not00
         LDA.w Pool_DefaultGFXGroups_sheet7, Y
 
         BRA .notFF
@@ -1581,7 +1591,14 @@ endif
     ; Get the overlay value for this overworld area.
     ; ReadOverlayArray 
     LDA.b $8A : ASL : TAX
-    LDA.w Pool_OverlayTable, X : CMP.w #$00FF : BEQ .normal
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Overlay_0 = pc()
+    JSL.l Lyra_ReadOverlay
+    else
+    LDA.w Pool_OverlayTable, X
+    endif
+    CMP.w #$00FF
+    BEQ .normal
         ; If not $FF, assume we want an overlay.
 
         .turnOn
@@ -1620,7 +1637,14 @@ Palette_InitWhiteFilter_Interupt:
     ; By this point $8A is already set to the area we are going to so flip the
     ; #$40 bit to get the one we are currently in.
     LDA.b $8A : EOR.w #$0040 : ASL : TAX
-    LDA.l Pool_OverlayTable, X : CMP.w #$0096 : BNE .notPyramidBG
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Overlay_1 = pc()
+    JSL.l Lyra_ReadOverlay
+    else
+    LDA.l Pool_OverlayTable, X
+    endif
+    CMP.w #$0096
+    BNE .notPyramidBG
         ; If so, don't fade that color to white because then we will get the 
         ; double fading.
         JSL.l EraseBGColors
@@ -1782,23 +1806,46 @@ PreOverworld_LoadProperties_Interupt:
     
     ; The decompression function increases it by 1 so subtract 1 here.
     JSL.l ReadAnimatedTable : DEC : TAY
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldAnimationDecompress
+    else
     JSL.l DecompOwAnimatedTiles
+    endif
 
     ; Decompress all other graphics.
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL SpecialPaletteBeginInitTilesets
+    else
     JSL.l InitTilesets
+    endif
 
     ; Load palettes for overworld.
     JSR.w Overworld_LoadAreaPalettes
         
     LDX.b $8A
-    LDA.l $7EFD40, X : STA.b $00
-    LDA.l OverworldPalettesScreenToSet_New, X 
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_SpritePalette_0 = pc()
+    JSL.l Lyra_ReadSpritePalette
+    else
+    LDA.l $7EFD40, X
+    endif
+    STA.b $00
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_PaletteSet_0 = pc()
+    JSL.l Lyra_ReadPaletteSet
+    else
+    LDA.l OverworldPalettesScreenToSet_New, X
+    endif
     
     ; Load some other palettes.
     JSL.l Overworld_LoadPalettes
 
     ; Sets the background color (changes depending on area).
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL SpecialPaletteBackdropCompleteBuffer
+    else
     JSL.l Palette_SetOwBgColor_Long
+    endif
         
     LDA.b $10 : CMP.b #$08 : BNE .specialArea2
         ; Copies $7EC300[0x200] to $7EC500[0x200].
@@ -2007,7 +2054,11 @@ Credits_LoadScene_Overworld_PrepGFX_Interupt:
 {
     ; The decompression function increases it by 1 so subtract 1 here.
     JSL.l ReadAnimatedTable : DEC : TAY
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldAnimationDecompress
+    else
     JSL.l DecompOwAnimatedTiles
+    endif
         
     ; The current scene of the Module_EndSequence module. Example: 0x04 is
     ; the shot of kakariko and 0x06 is the shot of the desert palace.
@@ -2015,7 +2066,11 @@ Credits_LoadScene_Overworld_PrepGFX_Interupt:
     LDA.l Credits_LoadScene_PrepGFX_sprite_gfx, X     : STA.w $0AA3
     LDA.l Credits_LoadScene_PrepGFX_sprite_palette, X : PHA
         
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL SpecialPaletteResetInitTilesets
+    else
     JSL.l InitTilesets
+    endif
 
     ; Load Palettes.
     JSR.w Overworld_LoadAreaPalettes
@@ -2023,7 +2078,12 @@ Credits_LoadScene_Overworld_PrepGFX_Interupt:
     PLA : STA.b $00
 
     LDX.b $8A
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_PaletteSet_1 = pc()
+    JSL.l Lyra_ReadPaletteSet
+    else
     LDA.l OverworldPalettesScreenToSet_New, X
+    endif
     JSL.l Overworld_LoadPalettes
         
     LDA.b #$01 : STA.w $0AB2
@@ -2532,7 +2592,14 @@ EnableSubScreenCheckForPyramid:
     REP #$20 ; Set A in 16bit mode.
 
     LDA.b $8A : ASL : TAX
-    LDA.w Pool_OverlayTable, X : CMP.w #$0096 : BNE .notPyramidOrCastle
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Overlay_2 = pc()
+    JSL.l Lyra_ReadOverlay
+    else
+    LDA.w Pool_OverlayTable, X
+    endif
+    CMP.w #$0096
+    BNE .notPyramidOrCastle
         SEP #$20 ; Set A in 8bit mode.
 
         LDA.b #$01 : STA.b $1D
@@ -2554,8 +2621,17 @@ if !Func02B391 == 1
 org $02B391 ; $013391
 MirrorWarp_LoadSpritesAndColors_Interupt:
 {
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_PaletteSet_2 = pc()
+    JSL.l Lyra_ReadPaletteSet
+    else
     LDA.l OverworldPalettesScreenToSet_New, X
+    endif
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL SpecialPaletteLoadCompleteBuffer
+    else
     JSL.l Overworld_LoadPalettes
+    endif
 
     JSL.l Overworld_SetScreenBGColorCacheOnly
     JSL.l Overworld_SetFixedColorAndScroll
@@ -2664,7 +2740,12 @@ ReadOverlayArray:
     PHB : PHK : PLB
 
     LDA.b $8A : ASL : TAX
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Overlay_3 = pc()
+    JSL.l Lyra_ReadOverlay
+    else
     LDA.w Pool_OverlayTable, X
+    endif
 
     PLB
 
@@ -2755,7 +2836,13 @@ ReadOverlayArray2:
 
     ; ReadOverlayArray
     LDA.b $8A : ASL : TAX
-    LDA.l Pool_OverlayTable, X : TAY
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Overlay_4 = pc()
+    JSL.l Lyra_ReadOverlay
+    else
+    LDA.l Pool_OverlayTable, X
+    endif
+    TAY
 
     SEP #$10 ; Set X and Y in 8bit mode.
 
@@ -2777,6 +2864,13 @@ org $02A07A ; $01207A ; @hook module=Overworld
 
 assert pc() <= $02A07D ; $01207D
 
+if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+assert read4($02C633) == $0ED5F422 || read4($02C633) == ((SpecialPaletteDepartSetBlack<<8)|$22), "Indoor palette entry changed"
+org $02C633 ; @hook module=Overworld name=SpecialPaletteIndoorDeparture kind=jsl target=SpecialPaletteDepartSetBlack
+    JSL SpecialPaletteDepartSetBlack
+assert pc() <= $02C637
+endif
+
 ; The main overworld palette loading routine un-hardcoded to load the custom
 ; main palette.
 org $02C692 ; $014692
@@ -2789,13 +2883,23 @@ Overworld_LoadAreaPalettes:
     ; 3 - DW death mountain
     ; 4 - triforce room
     LDX.b $8A
-    LDA.l Pool_MainPaletteTable, X : STA.w $0AB3
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_MainPalette_0 = pc()
+    JSL.l Lyra_ReadMainPalette
+    else
+    LDA.l Pool_MainPaletteTable, X
+    endif
+    STA.w $0AB3
 
     ; Reset pal buffer high byte.
     STZ.w $0AA9
         
     ; Load SP1 through SP4.
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL SpecialPaletteBeginMainSpr
+    else
     JSL.l Palette_MainSpr
+    endif
 
     ; Load SP0 (2nd half) and SP6 (2nd half).
     JSL.l Palette_MiscSpr
@@ -2834,7 +2938,11 @@ Overworld_LoadAreaPalettes:
     JSL.l Palette_Hud
 
     ; Load BP2 through BP5 (first halves).
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL SpecialPaletteMainCompleteBuffer
+    else
     JSL.l Palette_OverworldBgMain
+    endif
         
     RTS
 }
@@ -2985,6 +3093,9 @@ NewOverworld_FinishTransGfx:
             ; Saves about a frame.
             LDA.b $04 : BEQ .dontPrep
                 JSR.w PrepTransMainGFX
+                if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+                JSL Oracle_SpecialOverworldGraphicsStageMain
+                endif
 
             .dontPrep
 
@@ -2996,6 +3107,9 @@ NewOverworld_FinishTransGfx:
         LDA.b #$08 : STA.b $06
 
         JSR.w BlockGFXCheck
+        if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+        JSL Oracle_SpecialOverworldGraphicsInvalidateCache
+        endif
 
         ; If we haven't made it to frame 8, don't move on yet.
         CPY.b #$08 : BCC .return
@@ -3022,6 +3136,9 @@ NewOverworld_FinishTransGfx:
             ; Saves about a frame.
             LDA.b $04 : BEQ .dontPrep2
                 JSR.w PrepTransMainGFX
+                if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+                JSL Oracle_SpecialOverworldGraphicsStageMain
+                endif
 
             .dontPrep2
 
@@ -3030,6 +3147,9 @@ NewOverworld_FinishTransGfx:
         LDA.b #$08 : STA.b $06
 
         JSR.w BlockGFXCheck
+        if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+        JSL Oracle_SpecialOverworldGraphicsInvalidateCache
+        endif
 
         ; If we haven't made it to frame 8, don't move on yet.
         CPY.b #$08 : BCS .MoveOn
@@ -3112,7 +3232,18 @@ BlockGFXCheck:
         REP #$30
         AND.w #$00FF : CLC : ADC.b $0E : TAX
         SEP #$20
-        LDA.l Pool_OWGFXGroupTable_sheet0, X : STA.b $00
+        if !SPECIAL_OVERWORLD_NATIVE == 1
+        LyraCall_Gfx0_0 = pc()
+        JSL.l Lyra_ReadGfx0
+        else
+        LDA.l Pool_OWGFXGroupTable_sheet0, X
+        endif
+        if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+        PHX : LDX.b $02
+        JSL Oracle_SpecialOverworldGraphicsResolveSheet
+        PLX
+        endif
+        STA.b $00
         SEP #$10
 
         ; Check if it is #$FF.
@@ -3185,6 +3316,9 @@ BlockGFXCheck:
 
 CheckForChangeGraphicsTransitionLoad:
 {
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL Oracle_SpecialOverworldPaletteBegin
+    endif
     ; Are we currently in a mosaic?
     LDA.b $11 : CMP.b #$0F : BEQ .mosaic
         ; Are we entering a special area?
@@ -3192,16 +3326,29 @@ CheckForChangeGraphicsTransitionLoad:
             ; Are we leaving a special area?
             CMP.b #$26 : BEQ .mosaic
                 ; Just a normal transition, Not a mosaic.
+                if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+                JSL Oracle_SpecialOverworldAnimationForceTransition : BEQ .nativeAnimatedDecision1
+                JSL.l ReadAnimatedTable
+                BRA .loadAnimated1
+                .nativeAnimatedDecision1
+                endif
                 LDA.l Pool_EnableAnimated : BEQ .dontUpdateAnimated1
                     ; Check to see if we need to update the animated tiles
                     ; by checking what was previously loaded.
                     JSL.l ReadAnimatedTable : CMP.w AnimatedTileGFXSet : BEQ .dontUpdateAnimated1
+                if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+                .loadAnimated1
+                endif
                         STA.w AnimatedTileGFXSet
                         DEC : TAY
 
                         ; This forces the game toupdate the animated tiles
                         ; when going from one area to another.
+                        if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+                        JSL Oracle_SpecialOverworldAnimationDecompress
+                        else
                         JSL.l DecompOwAnimatedTiles
+                        endif
 
                 .dontUpdateAnimated1
 
@@ -3209,7 +3356,14 @@ CheckForChangeGraphicsTransitionLoad:
                     ; Check to see if we need to update the main palette by
                     ; checking what was previously loaded.
                     LDX.b $8A
-                    LDA.w Pool_MainPaletteTable, X : CMP.w $0AB3 : BEQ .dontUpdateMain1
+                    if !SPECIAL_OVERWORLD_NATIVE == 1
+                    LyraCall_MainPalette_1 = pc()
+                    JSL.l Lyra_ReadMainPalette
+                    else
+                    LDA.w Pool_MainPaletteTable, X
+                    endif
+                    CMP.w $0AB3
+                    BEQ .dontUpdateMain1
                         STA.w $0AB3
 
                         ; Run the modified routine that loads the buffer
@@ -3233,26 +3387,49 @@ CheckForChangeGraphicsTransitionLoad:
                 
                 .dontUpdateBGColor1
 
+                if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+                JSL Oracle_SpecialOverworldPaletteCompleteBoth
+                endif
                 RTS
 
     .mosaic
 
     ; Check to see if we need to update the animated tiles by checking what
     ; was previously loaded.
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldAnimationForceTransition : BEQ .nativeAnimatedDecision2
+    JSL.l ReadAnimatedTable
+    BRA .loadAnimated2
+    .nativeAnimatedDecision2
+    endif
     JSL.l ReadAnimatedTable : CMP.w AnimatedTileGFXSet : BEQ .dontUpdateAnimated2
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    .loadAnimated2
+    endif
         STA.w AnimatedTileGFXSet
         DEC : TAY
 
         ; This forces the game to update the animated tiles when going
         ; from one area to another.
+        if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+        JSL Oracle_SpecialOverworldAnimationDecompress
+        else
         JSL.l DecompOwAnimatedTiles
+        endif
 
     .dontUpdateAnimated2
 
     ; Check to see if we need to update the main palette by checking
     ; what was previously loaded.
     LDX.b $8A
-    LDA.w Pool_MainPaletteTable, X : CMP.w $0AB3 : BEQ .dontUpdateMain2
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_MainPalette_2 = pc()
+    JSL.l Lyra_ReadMainPalette
+    else
+    LDA.w Pool_MainPaletteTable, X
+    endif
+    CMP.w $0AB3
+    BEQ .dontUpdateMain2
         STA.w $0AB3
 
         ; Run the vanilla routine that only loads the buffer.
@@ -3276,7 +3453,14 @@ CheckForChangeGraphicsTransitionLoad:
     ; Change the fixed color depending on our sub screen overlay.
     ; Lost woods and skull woods.
     LDA.b $8A : ASL : TAX
-    LDA.w Pool_OverlayTable, X : CMP.w #$009D : BEQ .noSpecialColor
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Overlay_5 = pc()
+    JSL.l Lyra_ReadOverlay
+    else
+    LDA.w Pool_OverlayTable, X
+    endif
+    CMP.w #$009D
+    BEQ .noSpecialColor
         CMP.w #$0040 : BEQ .noSpecialColor
             ; Pyramid area.
             CMP.w #$0096 : BEQ .specialColor
@@ -3311,6 +3495,9 @@ CheckForChangeGraphicsTransitionLoad:
 
     CheckForChangeGraphicsTransitionLoadRetrun:
 
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL Oracle_SpecialOverworldPaletteCompleteBuffer
+    endif
     RTS
 
     SkipOverworld_FinishTransGfx_firstHalf:
@@ -3408,6 +3595,9 @@ Palette_MultiLoad_NonBuffer:
 
 LoadTransMainGFX:
 {
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldGraphicsInvalidateCache
+    endif
     ; Setup the decompression buffer address.
     ; $00[3] = $7E4000
                  STZ.b $00
@@ -3423,7 +3613,19 @@ LoadTransMainGFX:
 
     ; Sheet 0 (static 0)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet0, X : CMP.b #$FF : BEQ .noBgGfxChange0
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx0_1 = pc()
+    JSL.l Lyra_ReadGfx0
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet0, X
+    endif
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0000
+    JSL Oracle_SpecialOverworldGraphicsResolveSheet
+    PLX
+    endif
+    CMP.b #$FF
+    BEQ .noBgGfxChange0
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+0 : BEQ .noBgGfxChange0
             TAY
@@ -3442,7 +3644,19 @@ LoadTransMainGFX:
     
     ; Sheet 1 (static 1)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet1, X : CMP.b #$FF : BEQ .noBgGfxChange1 
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx1_0 = pc()
+    JSL.l Lyra_ReadGfx1
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet1, X
+    endif
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0001
+    JSL Oracle_SpecialOverworldGraphicsResolveSheet
+    PLX
+    endif
+    CMP.b #$FF
+    BEQ .noBgGfxChange1
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+1 : BEQ .noBgGfxChange1
             TAY
@@ -3461,7 +3675,19 @@ LoadTransMainGFX:
 
     ; Sheet 2 (static 2)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet2, X : CMP.b #$FF : BEQ .noBgGfxChange2
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx2_0 = pc()
+    JSL.l Lyra_ReadGfx2
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet2, X
+    endif
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0002
+    JSL Oracle_SpecialOverworldGraphicsResolveSheet
+    PLX
+    endif
+    CMP.b #$FF
+    BEQ .noBgGfxChange2
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+2 : BEQ .noBgGfxChange2
             TAY
@@ -3480,7 +3706,19 @@ LoadTransMainGFX:
 
     ; Sheet 7 (animated)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet7, X : CMP.b #$FF : BEQ .noBgGfxChange7
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx7_0 = pc()
+    JSL.l Lyra_ReadGfx7
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet7, X
+    endif
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0007
+    JSL Oracle_SpecialOverworldGraphicsResolveSheet
+    PLX
+    endif
+    CMP.b #$FF
+    BEQ .noBgGfxChange7
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+7 : BEQ .noBgGfxChange7
             TAY
@@ -3549,6 +3787,9 @@ CheckForChangeGraphicsNormalLoad:
     JSL.l InitTilesets ; Replaced code.
 
     JSL.l ReadAnimatedTable : STA.w AnimatedTileGFXSet
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldAnimationStage
+    endif
     DEC                     : TAY
 
     ; This function is not needed here and is handled somewhere else. This
@@ -3581,10 +3822,17 @@ org $0AB8F5 ; $0538F5 ; @hook module=Overworld
 BirdTravel_LoadTargetArea_Interupt:
 {
     JSL.l ReadAnimatedTable : STA.w AnimatedTileGFXSet
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldAnimationStage
+    endif
     DEC                     : TAY
     
     ; From this point on it is the vanilla function.
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldAnimationDecompress
+    else
     JSL.l DecompOwAnimatedTiles
+    endif
     JSL.l Overworld_SetFixedColorAndScroll
         
     STZ.w $0AA9
@@ -4118,6 +4366,10 @@ NewLoadTransAuxGFX:
 
     .notNormalLoad
 
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldGraphicsInvalidateCache
+    endif
+
     ; Setup the decompression buffer address.
     ; $00[3] = $7E6000
                  STZ.b $00
@@ -4133,7 +4385,19 @@ NewLoadTransAuxGFX:
 
     ; Sheet 3 (variable 0)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet3, X : CMP.b #$FF : BEQ .noBgGfxChange3
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx3_0 = pc()
+    JSL.l Lyra_ReadGfx3
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet3, X
+    endif
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0003
+    JSL Oracle_SpecialOverworldGraphicsResolveSheet
+    PLX
+    endif
+    CMP.b #$FF
+    BEQ .noBgGfxChange3
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+3 : BEQ .noBgGfxChange3
             TAY
@@ -4151,7 +4415,19 @@ NewLoadTransAuxGFX:
 
     ; Sheet 4 (variable 1)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet4, X : CMP.b #$FF : BEQ .noBgGfxChange4
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx4_0 = pc()
+    JSL.l Lyra_ReadGfx4
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet4, X
+    endif
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0004
+    JSL Oracle_SpecialOverworldGraphicsResolveSheet
+    PLX
+    endif
+    CMP.b #$FF
+    BEQ .noBgGfxChange4
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+4 : BEQ .noBgGfxChange4
             TAY
@@ -4169,7 +4445,19 @@ NewLoadTransAuxGFX:
 
     ; Sheet 5 (variable 2)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet5, X : CMP.b #$FF : BEQ .noBgGfxChange5
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx5_0 = pc()
+    JSL.l Lyra_ReadGfx5
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet5, X
+    endif
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0005
+    JSL Oracle_SpecialOverworldGraphicsResolveSheet
+    PLX
+    endif
+    CMP.b #$FF
+    BEQ .noBgGfxChange5
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+5 : BEQ .noBgGfxChange5
             TAY
@@ -4187,7 +4475,19 @@ NewLoadTransAuxGFX:
 
     ; Sheet 6 (variable 3)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet6, X : CMP.b #$FF : BEQ .noBgGfxChange6
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx6_0 = pc()
+    JSL.l Lyra_ReadGfx6
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet6, X
+    endif
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0006
+    JSL Oracle_SpecialOverworldGraphicsResolveSheet
+    PLX
+    endif
+    CMP.b #$FF
+    BEQ .noBgGfxChange6
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+6 : BEQ .noBgGfxChange6
             TAY
@@ -4271,6 +4571,9 @@ NewPrepTransAuxGFX:
 {
     LDA.b $04 : BEQ .dontPrep
         JSL.l PrepTransAuxGFX
+        if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+        JSL Oracle_SpecialOverworldGraphicsStageAux
+        endif
 
     .dontPrep
 
@@ -4356,6 +4659,10 @@ InitTilesetsLongCalls:
 
     .outdoors
 
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldGraphicsResetMainCache
+    endif
+
     PHB : PHK : PLB
 
     REP #$30
@@ -4363,7 +4670,14 @@ InitTilesetsLongCalls:
     LDA.b $8A : AND.w #$00C0 : LSR #3 : TAY ; (Area / 8) = LW, DW, or SW *8
     SEP #$20
     
-    LDA.w Pool_OWGFXGroupTable_sheet0, X : CMP.b #$FF : BNE .notFF0
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx0_2 = pc()
+    JSL.l Lyra_ReadGfx0
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet0, X
+    endif
+    CMP.b #$FF
+    BNE .notFF0
         LDA.w Pool_DefaultGFXGroups_sheet0, Y
 
     .notFF0
@@ -4371,7 +4685,14 @@ InitTilesetsLongCalls:
     STA.b $0D
     STA.w TransGFXModule_PriorSheets+0
 
-    LDA.w Pool_OWGFXGroupTable_sheet1, X : CMP.b #$FF : BNE .notFF1
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx1_1 = pc()
+    JSL.l Lyra_ReadGfx1
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet1, X
+    endif
+    CMP.b #$FF
+    BNE .notFF1
         LDA.w Pool_DefaultGFXGroups_sheet1, Y
 
     .notFF1
@@ -4379,7 +4700,14 @@ InitTilesetsLongCalls:
     STA.b $0C
     STA.w TransGFXModule_PriorSheets+1
 
-    LDA.w Pool_OWGFXGroupTable_sheet2, X : CMP.b #$FF : BNE .notFF2
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx2_1 = pc()
+    JSL.l Lyra_ReadGfx2
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet2, X
+    endif
+    CMP.b #$FF
+    BNE .notFF2
         LDA.w Pool_DefaultGFXGroups_sheet2, Y
 
     .notFF2
@@ -4387,7 +4715,14 @@ InitTilesetsLongCalls:
     STA.b $0B
     STA.w TransGFXModule_PriorSheets+2
     
-    LDA.w Pool_OWGFXGroupTable_sheet3, X : CMP.b #$FF : BNE .notFF3
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx3_1 = pc()
+    JSL.l Lyra_ReadGfx3
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet3, X
+    endif
+    CMP.b #$FF
+    BNE .notFF3
         LDA.w Pool_DefaultGFXGroups_sheet3, Y
 
     .notFF3
@@ -4396,7 +4731,14 @@ InitTilesetsLongCalls:
     STA.b $0A
     STA.w TransGFXModule_PriorSheets+3
 
-    LDA.w Pool_OWGFXGroupTable_sheet4, X : CMP.b #$FF : BNE .notFF4
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx4_1 = pc()
+    JSL.l Lyra_ReadGfx4
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet4, X
+    endif
+    CMP.b #$FF
+    BNE .notFF4
         LDA.w Pool_DefaultGFXGroups_sheet4, Y
 
     .notFF4
@@ -4405,7 +4747,14 @@ InitTilesetsLongCalls:
     STA.b $09
     STA.w TransGFXModule_PriorSheets+4
 
-    LDA.w Pool_OWGFXGroupTable_sheet5, X : CMP.b #$FF : BNE .notFF5
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx5_1 = pc()
+    JSL.l Lyra_ReadGfx5
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet5, X
+    endif
+    CMP.b #$FF
+    BNE .notFF5
         LDA.w Pool_DefaultGFXGroups_sheet5, Y
 
     .notFF5
@@ -4414,7 +4763,14 @@ InitTilesetsLongCalls:
     STA.b $08
     STA.w TransGFXModule_PriorSheets+5
 
-    LDA.w Pool_OWGFXGroupTable_sheet6, X : CMP.b #$FF : BNE .notFF6
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx6_1 = pc()
+    JSL.l Lyra_ReadGfx6
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet6, X
+    endif
+    CMP.b #$FF
+    BNE .notFF6
         LDA.w Pool_DefaultGFXGroups_sheet6, Y
 
     .notFF6
@@ -4423,13 +4779,23 @@ InitTilesetsLongCalls:
     STA.b $07
     STA.w TransGFXModule_PriorSheets+6
     
-    LDA.w Pool_OWGFXGroupTable_sheet7, X : CMP.b #$FF : BNE .notFF7
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx7_1 = pc()
+    JSL.l Lyra_ReadGfx7
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet7, X
+    endif
+    CMP.b #$FF
+    BNE .notFF7
         LDA.w Pool_DefaultGFXGroups_sheet7, Y
 
     .notFF7
     
     STA.b $06
     STA.w TransGFXModule_PriorSheets+7
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldGraphicsInvalidateCache
+    endif
 
     PLB
 
@@ -4439,6 +4805,9 @@ InitTilesetsLongCalls:
 
 AnimateMirrorWarp_DecompressNewTileSetsLongCalls:
 {
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldGraphicsResetMainCache
+    endif
     PHB : PHK : PLB
 
     LDA.b $8A : AND.w #$00FF : ASL #3 : TAX
@@ -4446,7 +4815,14 @@ AnimateMirrorWarp_DecompressNewTileSetsLongCalls:
 
     SEP #$20
 
-    LDA.w Pool_OWGFXGroupTable_sheet3, X : CMP.b #$FF : BNE .notFF3
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx3_2 = pc()
+    JSL.l Lyra_ReadGfx3
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet3, X
+    endif
+    CMP.b #$FF
+    BNE .notFF3
         LDA.w Pool_DefaultGFXGroups_sheet3, Y
 
     .notFF3
@@ -4454,7 +4830,14 @@ AnimateMirrorWarp_DecompressNewTileSetsLongCalls:
     STA.l $7EC2F8
     STA.w TransGFXModule_PriorSheets+3
 
-    LDA.w Pool_OWGFXGroupTable_sheet4, X : CMP.b #$FF : BNE .notFF4
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx4_2 = pc()
+    JSL.l Lyra_ReadGfx4
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet4, X
+    endif
+    CMP.b #$FF
+    BNE .notFF4
         LDA.w Pool_DefaultGFXGroups_sheet4, Y
 
     .notFF4
@@ -4462,7 +4845,14 @@ AnimateMirrorWarp_DecompressNewTileSetsLongCalls:
     STA.l $7EC2F9
     STA.w TransGFXModule_PriorSheets+4
 
-    LDA.w Pool_OWGFXGroupTable_sheet5, X : CMP.b #$FF : BNE .notFF5
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx5_2 = pc()
+    JSL.l Lyra_ReadGfx5
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet5, X
+    endif
+    CMP.b #$FF
+    BNE .notFF5
         LDA.w Pool_DefaultGFXGroups_sheet5, Y
 
     .notFF5
@@ -4470,7 +4860,14 @@ AnimateMirrorWarp_DecompressNewTileSetsLongCalls:
     STA.l $7EC2FA
     STA.w TransGFXModule_PriorSheets+5
 
-    LDA.w Pool_OWGFXGroupTable_sheet6, X : CMP.b #$FF : BNE .notFF6
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx6_2 = pc()
+    JSL.l Lyra_ReadGfx6
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet6, X
+    endif
+    CMP.b #$FF
+    BNE .notFF6
         LDA.w Pool_DefaultGFXGroups_sheet6, Y
 
     .notFF6
@@ -4493,7 +4890,14 @@ AnimateMirrorWarp_DecompressNewTileSetsLongCalls2:
     LDA.b $8A : AND.w #$00C0 : LSR #3 : TAY ; (Area / 8) = LW, DW, or SW *8
     SEP #$20
 
-    LDA.w Pool_OWGFXGroupTable_sheet1, X : CMP.b #$FF : BNE .notFF1
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx1_2 = pc()
+    JSL.l Lyra_ReadGfx1
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet1, X
+    endif
+    CMP.b #$FF
+    BNE .notFF1
         LDA.w Pool_DefaultGFXGroups_sheet1, Y
 
     .notFF1
@@ -4501,7 +4905,14 @@ AnimateMirrorWarp_DecompressNewTileSetsLongCalls2:
     STA.b $08
     STA.w TransGFXModule_PriorSheets+1
 
-    LDA.w Pool_OWGFXGroupTable_sheet0, X : CMP.b #$FF : BNE .notFF0
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx0_3 = pc()
+    JSL.l Lyra_ReadGfx0
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet0, X
+    endif
+    CMP.b #$FF
+    BNE .notFF0
         LDA.w Pool_DefaultGFXGroups_sheet0, Y
 
     .notFF0
@@ -4526,7 +4937,14 @@ AnimateMirrorWarp_DecompressBackgroundsALongCalls:
     LDA.b $8A : AND.w #$00C0 : LSR #3 : TAY ; (Area / 8) = LW, DW, or SW *8
     SEP #$20
 
-    LDA.w Pool_OWGFXGroupTable_sheet3, X : CMP.b #$FF : BNE .notFF3
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx3_3 = pc()
+    JSL.l Lyra_ReadGfx3
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet3, X
+    endif
+    CMP.b #$FF
+    BNE .notFF3
         LDA.w Pool_DefaultGFXGroups_sheet3, Y
 
     .notFF3
@@ -4534,7 +4952,14 @@ AnimateMirrorWarp_DecompressBackgroundsALongCalls:
     STA.b $08
     STA.w TransGFXModule_PriorSheets+3
 
-    LDA.w Pool_OWGFXGroupTable_sheet2, X : CMP.b #$FF : BNE .notFF2
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx2_2 = pc()
+    JSL.l Lyra_ReadGfx2
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet2, X
+    endif
+    CMP.b #$FF
+    BNE .notFF2
         LDA.w Pool_DefaultGFXGroups_sheet2, Y
 
     .notFF2
@@ -4559,7 +4984,14 @@ AnimateMirrorWarp_DecompressBackgroundsCLongCalls:
     LDA.b $8A : AND.w #$00C0 : LSR #3 : TAY ; (Area / 8) = LW, DW, or SW *8
     SEP #$20
 
-    LDA.w Pool_OWGFXGroupTable_sheet7, X : CMP.b #$FF : BNE .notFF7
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx7_2 = pc()
+    JSL.l Lyra_ReadGfx7
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet7, X
+    endif
+    CMP.b #$FF
+    BNE .notFF7
         LDA.w Pool_DefaultGFXGroups_sheet7, Y
 
     .notFF7
@@ -4567,8 +4999,18 @@ AnimateMirrorWarp_DecompressBackgroundsCLongCalls:
     STA.b $08
     STA.w AnimatedTileGFXSet
     STA.w TransGFXModule_PriorSheets+7
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldAnimationStage
+    endif
 
-    LDA.w Pool_OWGFXGroupTable_sheet6, X : CMP.b #$FF : BNE .notFF6
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Gfx6_3 = pc()
+    JSL.l Lyra_ReadGfx6
+    else
+    LDA.w Pool_OWGFXGroupTable_sheet6, X
+    endif
+    CMP.b #$FF
+    BNE .notFF6
         LDA.w Pool_DefaultGFXGroups_sheet6, Y
 
     .notFF6
@@ -4635,7 +5077,13 @@ OverworldHandleTransitions:
 
         REP #$10
         LDA.b $8A : ASL : TAX
-        LDA.b $20 : SEC : SBC.l Pool_OverworldTransitionPositionY_New, X
+        LDA.b $20 : SEC
+        if !SPECIAL_OVERWORLD_NATIVE == 1
+        LyraCall_TransitionDeltaY = pc()
+        SBC.l !LYRA_CURRENT_TABLE_transition_y, X
+        else
+        SBC.l Pool_OverworldTransitionPositionY_New, X
+        endif
         SEP #$10
 
         ; Transitioning up.
@@ -4660,7 +5108,13 @@ OverworldHandleTransitions:
 
         REP #$10
         LDA.b $8A : ASL : TAX
-        LDA.b $22 : SEC : SBC.l Pool_OverworldTransitionPositionX_New, X
+        LDA.b $22 : SEC
+        if !SPECIAL_OVERWORLD_NATIVE == 1
+        LyraCall_TransitionDeltaX = pc()
+        SBC.l !LYRA_CURRENT_TABLE_transition_x, X
+        else
+        SBC.l Pool_OverworldTransitionPositionX_New, X
+        endif
         SEP #$10
 
         ; Transitioning left.
@@ -4717,8 +5171,13 @@ OverworldHandleTransitions:
         ; 0x02 - Left
         ; 0x04 - Down
         ; 0x06 - Up
+        if !SPECIAL_OVERWORLD_NATIVE == 1
+        LyraCall_ByScreen = pc()
+        JSL Lyra_ReadByScreen : CLC : ADC.b $84 : STA.b $84
+        else
         CLC : ADC.l .ByScreenAddresses, X : TAX
         LDA.b $84 : CLC : ADC.l Pool_ByScreen1_New, X : STA.b $84
+        endif
 
         LDA.b $04 : LSR : TAX
 
@@ -4778,7 +5237,13 @@ OverworldHandleTransitions:
         ; Check if the area we are in needs a mosaic.
         ; Filter out the the direction of the transition we are looking for.
         PLX
-        LDA.l Pool_MosaicTable, X : AND.w $0416 : BEQ .noMosaic
+        if !SPECIAL_OVERWORLD_NATIVE == 1
+        LyraCall_Mosaic = pc()
+        JSL Lyra_ReadMosaic
+        else
+        LDA.l Pool_MosaicTable, X
+        endif
+        AND.w $0416 : BEQ .noMosaic
             ; Trigger a mosaic transition.
 
             ; Send us to a submodule that will handle a mosaic transition.
@@ -4794,9 +5259,26 @@ OverworldHandleTransitions:
         .noMosaic
 
         LDX.b $8A
-        LDA.l $7EFD40, X : STA.b $00
+        if !SPECIAL_OVERWORLD_NATIVE == 1
+        LyraCall_SpritePalette_1 = pc()
+        JSL.l Lyra_ReadSpritePalette
+        else
+        LDA.l $7EFD40, X
+        endif
+        STA.b $00
+        if !SPECIAL_OVERWORLD_NATIVE == 1
+        LyraCall_PaletteSet_3 = pc()
+        JSL.l Lyra_ReadPaletteSet
+        else
         LDA.l OverworldPalettesScreenToSet_New, X
+        endif
+        ; This auxiliary owner completes now; later-frame main/backdrop
+        ; refresh is a separate transaction, never an open depth across frames.
+        if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+        JSL SpecialPaletteLoadCompleteBoth
+        else
         JSL.l Overworld_LoadPalettes
+        endif
         JSR.w Overworld_CgramAuxToMain
 
         RTS
@@ -4964,22 +5446,51 @@ NewOverworld_SetCameraBounds:
     PHB : PHK : PLB
 
     LDX.b $8A
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Size_0 = pc()
+    JSL.l Lyra_ReadSize
+    else
     LDA.l Pool_BufferAndBuildMap16Stripes_overworldScreenSize, X
+    endif
     AND.w #$00FF : ASL : TAX
 
     REP #$10
 
     LDA.b $8A : ASL : TAY
-    LDA.w Pool_OverworldTransitionPositionY_New, Y : STA.w $0600
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_TransitionYY_0 = pc()
+    JSL.l Lyra_ReadTransitionYY
+    else
+    LDA.w Pool_OverworldTransitionPositionY_New, Y
+    endif
+    STA.w $0600
     CLC : ADC.w .boundary_y_size, X                : STA.w $0602
     
-    LDA.w Pool_OverworldTransitionPositionX_New, Y : STA.w $0604
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_TransitionXY_0 = pc()
+    JSL.l Lyra_ReadTransitionXY
+    else
+    LDA.w Pool_OverworldTransitionPositionX_New, Y
+    endif
+    STA.w $0604
     CLC : ADC.w .boundary_x_size, X                : STA.w $0606
 
-    LDA.w Pool_trans_target_north_new, Y      : STA.w $0610
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_ScrollNorth_0 = pc()
+    JSL.l Lyra_ReadScrollNorth
+    else
+    LDA.w Pool_trans_target_north_new, Y
+    endif
+    STA.w $0610
     CLC : ADC.w .trans_target_south_offset, X : STA.w $0612
 
-    LDA.w Pool_trans_target_west_new, Y      : STA.w $0614
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_ScrollWest_0 = pc()
+    JSL.l Lyra_ReadScrollWest
+    else
+    LDA.w Pool_trans_target_west_new, Y
+    endif
+    STA.w $0614
     CLC : ADC.w .trans_target_east_offset, X : STA.w $0616
 
     SEP #$10
@@ -5036,7 +5547,13 @@ Hookshot_IsCollisionCheckFutile_Interupt:
 {
     LDA.w $0C72, X : AND.w #$0002 : BNE .moving_horizontally
         LDX.w $0700
-        LDA.b $00 : SEC : SBC.l Pool_OverworldTransitionPositionY_New, X
+        LDA.b $00 : SEC
+        if !SPECIAL_OVERWORLD_NATIVE == 1
+        LyraCall_HookshotDeltaY = pc()
+        JSL Lyra_HookshotSubtractY
+        else
+        SBC.l Pool_OverworldTransitionPositionY_New, X
+        endif
         CMP.w #$0004 : BCC .off_screen
             CMP.w OWCameraBoundsS : BCS .off_screen
                 BRA .not_at_screen_edge
@@ -5044,7 +5561,13 @@ Hookshot_IsCollisionCheckFutile_Interupt:
     .moving_horizontally
         
     LDX.w $0700
-    LDA.b $02 : SEC : SBC.l Pool_OverworldTransitionPositionX_New, X
+    LDA.b $02 : SEC
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_HookshotDeltaX = pc()
+    JSL Lyra_HookshotSubtractX
+    else
+    SBC.l Pool_OverworldTransitionPositionX_New, X
+    endif
     CMP.w #$0006 : BCC .off_screen
         CMP.w OWCameraBoundsE : BCC .not_at_screen_edge
         
@@ -5077,7 +5600,12 @@ Overworld_LoadMapProperties_Interupt:
 
     .inSW
 
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_SpriteGfxByArea_0 = pc()
+    JSL.l Lyra_ReadSpriteGfxByArea
+    else
     LDA.l Pool_LoadSpecialOverworld_GFX_0AA3-$80, X
+    endif
 
     .write0AA3
 
@@ -5085,7 +5613,12 @@ Overworld_LoadMapProperties_Interupt:
     STA.w $0AA3
 
     ; $0AA2 is the secondary background graphics index.
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_AreaGfx_0 = pc()
+    JSL.l Lyra_ReadAreaGfx
+    else
     LDA.l GFX0AA2ValsOW, X
+    endif
     
     ; In PrepTransAuxGFX the game checks if $0AA2 is below 0x20, if it is,
     ; it will load 3 of the aux sheets as using the low palette instead of
@@ -5096,7 +5629,13 @@ Overworld_LoadMapProperties_Interupt:
     ; Code from vanilla that is still needed.
     LDA.w $0712 : STA.w $0714
 
-    LDA.l Pool_BufferAndBuildMap16Stripes_overworldScreenSize, X : TAX
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Size_1 = pc()
+    JSL.l Lyra_ReadSize
+    else
+    LDA.l Pool_BufferAndBuildMap16Stripes_overworldScreenSize, X
+    endif
+    TAX
     LDA.l .xSize, X : STA.w $0719
     LDA.l .ySize, X : STA.w $0717
 
@@ -5185,11 +5724,29 @@ AreaSizeCheck:
     PHB : PHK : PLB
 
     LDA.b $8A : ASL : TAX
-    LDA.l Pool_OverworldTransitionPositionY_New, X          : STA.w $0708
-    LDA.l Pool_OverworldTransitionPositionX_New, X : LSR #3 : STA.w $070C
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_TransitionYX_0 = pc()
+    JSL.l Lyra_ReadTransitionYX
+    else
+    LDA.l Pool_OverworldTransitionPositionY_New, X
+    endif
+    STA.w $0708
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_TransitionXX_0 = pc()
+    JSL.l Lyra_ReadTransitionXX
+    else
+    LDA.l Pool_OverworldTransitionPositionX_New, X
+    endif
+    LSR #3
+    STA.w $070C
 
     LDX.b $8A
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Size_2 = pc()
+    JSL.l Lyra_ReadSize
+    else
     LDA.l Pool_BufferAndBuildMap16Stripes_overworldScreenSize, X
+    endif
     AND.w #$00FF : ASL : TAX
     LDA.w .YSize, X : STA.w $070A
     LDA.w .XSize, X : STA.w $070E
@@ -5216,7 +5773,13 @@ org $09C4C7 ; $04C4C7
 LoadOverworldSprites_Interupt:
 {
     LDX.w $040A
-    LDA.l Pool_BufferAndBuildMap16Stripes_overworldScreenSize, X : TAY
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Size_3 = pc()
+    JSL.l Lyra_ReadSize
+    else
+    LDA.l Pool_BufferAndBuildMap16Stripes_overworldScreenSize, X
+    endif
+    TAY
 
     LDA.w .xSize, Y : STA.w $0FB9
                       STZ.w $0FB8 
@@ -5233,11 +5796,17 @@ LoadOverworldSprites_Interupt:
     TXA : ASL : CLC : ADC.w .phaseOffset, Y : TAX
     
     ; Get the overworld sprite pointer based on the overworld area and game phase.
-    LDA.l Pool_Overworld_SpritePointers_state_0_New, X : STA.b $00
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_CurrentActors = pc()
+    JML Lyra_LoadCurrentSprites
+    else
+    LDA.l Pool_Overworld_SpritePointers_state_0_New, X
+    STA.b $00
 
     SEP #$20
 
     BRA .skip
+    endif
 
     .xSize
     db $02, $04, $04, $02
@@ -5418,20 +5987,47 @@ LoadSpecialOverworld_Interupt:
     LDA.b $8A : SEC : SBC.b #$80 : TAX
 
     ; GFX $0AA3
-    LDA.l Pool_LoadSpecialOverworld_GFX_0AA3, X : STA.w $0AA3
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_SpecialSpriteGfx_0 = pc()
+    JSL.l Lyra_ReadSpecialSpriteGfx
+    else
+    LDA.l Pool_LoadSpecialOverworld_GFX_0AA3, X
+    endif
+    STA.w $0AA3
 
     ; GFX $0AA2
-    LDA.l Pool_LoadSpecialOverworld_GFX_0AA2, X : STA.w $0AA2
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_SpecialEntryGfx_0 = pc()
+    JSL.l Lyra_ReadSpecialEntryGfx
+    else
+    LDA.l Pool_LoadSpecialOverworld_GFX_0AA2, X
+    endif
+    STA.w $0AA2
     
     ; Palette property b
-    LDA.l Pool_LoadSpecialOverworld_palette_prop_b, X : STA.b $00
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_SpecialPalette_0 = pc()
+    JSL.l Lyra_ReadSpecialPalette
+    else
+    LDA.l Pool_LoadSpecialOverworld_palette_prop_b, X
+    endif
+    STA.b $00
 
     ; This table call was changed to read from the same one as the rest of the
     ; areas and is no longer SW specific.
     ; Property property a
     LDX.b $8A
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_PaletteSet_4 = pc()
+    JSL.l Lyra_ReadPaletteSet
+    else
     LDA.l OverworldPalettesScreenToSet_New, X
+    endif
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL SpecialPaletteLoadCompleteBuffer
+    else
     JSL.l Overworld_LoadPalettes
+    endif
 
     PLA : STA.b $A0
 
@@ -5442,8 +6038,21 @@ LoadSpecialOverworld_Interupt:
     LDA.b $A0 : CMP.w #$0180 : BEQ .SpecialCameraBounds
                 CMP.w #$0181 : BEQ .SpecialCameraBounds
         LDA.b $8A : AND.w #$00FF : ASL : TAX
-        LDA.l Pool_OverworldTransitionPositionY_New, X          : STA.w $0708
-        LDA.l Pool_OverworldTransitionPositionX_New, X : LSR #3 : STA.w $070C
+        if !SPECIAL_OVERWORLD_NATIVE == 1
+        LyraCall_TransitionYX_1 = pc()
+        JSL.l Lyra_ReadTransitionYX
+        else
+        LDA.l Pool_OverworldTransitionPositionY_New, X
+        endif
+        STA.w $0708
+        if !SPECIAL_OVERWORLD_NATIVE == 1
+        LyraCall_TransitionXX_1 = pc()
+        JSL.l Lyra_ReadTransitionXX
+        else
+        LDA.l Pool_OverworldTransitionPositionX_New, X
+        endif
+        LSR #3
+        STA.w $070C
 
         JSL.l AreaSizeCheck
 
@@ -5567,6 +6176,13 @@ Overworld_PlayerControl_Interupt:
     JSL.l Overworld_Entrance
     JSL.l Overworld_DwDeathMountainPaletteAnimation
 
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    ; Tail rows use the normal transition path, not the native special-return list.
+    LDA.b $8A : CMP.b #!LYRA_CURRENT_FIRST : BCC .nativeSpecialReturn
+    CMP.b #!LYRA_CURRENT_END : BCC .notSpecialOverworld
+    .nativeSpecialReturn
+    endif
+
     ; If not in SW mode skip this part.
     LDA.b $8A : CMP.b #$80 : BCC .notSpecialOverworld
         ; Checks for tiles that lead back to normal overworld.
@@ -5623,19 +6239,76 @@ JSL.l Sprite_LoadGfxProperties_Interupt
 NOP : NOP : NOP
 
 org $0286DB ; $0106DB
+if !SPECIAL_OVERWORLD_NATIVE == 1
+LyraCall_PaletteSet_5 = pc()
+JSL.l Lyra_ReadPaletteSet
+else
 LDA.l OverworldPalettesScreenToSet_New, X
+endif
+
+if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+assert read4($02B0FF) == $0ED5A822 || read4($02B0FF) == ((SpecialPaletteLoadCompleteBuffer<<8)|$22), "Mosaic auxiliary palette entry changed"
+org $02B0FF ; @hook module=Overworld name=SpecialPaletteMosaicAux kind=jsl target=SpecialPaletteLoadCompleteBuffer
+    JSL SpecialPaletteLoadCompleteBuffer
+assert pc() <= $02B103
+endif
 
 org $02B0FB ; $0130FB
+if !SPECIAL_OVERWORLD_NATIVE == 1
+LyraCall_PaletteSet_6 = pc()
+JSL.l Lyra_ReadPaletteSet
+else
 LDA.l OverworldPalettesScreenToSet_New, X
+endif
+
+if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+assert read4($02B4C1) == $1BEEC722 || read4($02B4C1) == ((SpecialPaletteBeginBgMain<<8)|$22), "Whirlpool main palette entry changed"
+org $02B4C1 ; @hook module=Overworld name=SpecialPaletteWhirlpoolBegin kind=jsl target=SpecialPaletteBeginBgMain
+    JSL SpecialPaletteBeginBgMain
+assert pc() <= $02B4C5
+assert read4($02B4D1) == $0ED5A822 || read4($02B4D1) == ((SpecialPaletteLoadFinishBoth<<8)|$22), "Whirlpool auxiliary palette entry changed"
+org $02B4D1 ; @hook module=Overworld name=SpecialPaletteWhirlpoolComplete kind=jsl target=SpecialPaletteLoadFinishBoth
+    JSL SpecialPaletteLoadFinishBoth
+assert pc() <= $02B4D5
+endif
 
 org $02B4CD ; $0134CD
+if !SPECIAL_OVERWORLD_NATIVE == 1
+LyraCall_PaletteSet_7 = pc()
+JSL.l Lyra_ReadPaletteSet
+else
 LDA.l OverworldPalettesScreenToSet_New, X
+endif
+
+if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+assert read4($02EAAF) == $0ED5A822 || read4($02EAAF) == ((SpecialPaletteLoadCompleteBuffer<<8)|$22), "Special return palette entry changed"
+org $02EAAF ; @hook module=Overworld name=SpecialPaletteReturn kind=jsl target=SpecialPaletteLoadCompleteBuffer
+    JSL SpecialPaletteLoadCompleteBuffer
+assert pc() <= $02EAB3
+endif
 
 org $02EAAB ; $016AAB
+if !SPECIAL_OVERWORLD_NATIVE == 1
+LyraCall_PaletteSet_8 = pc()
+JSL.l Lyra_ReadPaletteSet
+else
 LDA.l OverworldPalettesScreenToSet_New, X
+endif
+
+if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+assert read4($02ECEC) == $0ED5A822 || read4($02ECEC) == ((SpecialPaletteLoadCompleteBuffer<<8)|$22), "Flute palette entry changed"
+org $02ECEC ; @hook module=Overworld name=SpecialPaletteFlute kind=jsl target=SpecialPaletteLoadCompleteBuffer
+    JSL SpecialPaletteLoadCompleteBuffer
+assert pc() <= $02ECF0
+endif
 
 org $02ECE8 ; $016CE8
+if !SPECIAL_OVERWORLD_NATIVE == 1
+LyraCall_PaletteSet_9 = pc()
+JSL.l Lyra_ReadPaletteSet
+else
 LDA.l OverworldPalettesScreenToSet_New, X
+endif
 
 else
 
@@ -5670,7 +6343,12 @@ Sprite_LoadGfxProperties_Interupt:
         ; The free RAM used here is right after $7EFD40 which is where
         ; vanilla stores the sprite palettes for the LW and DW. Very convenient
         ; for our needs, we don't even have to update the read.
+        if !SPECIAL_OVERWORLD_NATIVE == 1
+        LyraCall_SpecialPalette_1 = pc()
+        JSL.l Lyra_ReadSpecialPalette
+        else
         LDA.l Pool_LoadSpecialOverworld_palette_prop_b, X
+        endif
         STA.l ExpandedSpritePalArray, X
     DEX : DEX : BPL .loop
 
@@ -5696,7 +6374,12 @@ Overworld_RevealSecret_Interupt:
 assert pc() <= $1BC8B6 ; $0DC8B6
 
 org $02EF64 ; $016F64
+if !SPECIAL_OVERWORLD_NATIVE == 1
+LyraCall_BombDoor_0 = pc()
+JSL.l Lyra_ReadBombDoor
+else
 LDA.l Overworld_HandleOverlaysAndBombDoors_bombable_door_location_New, X
+endif
 
 else
 
@@ -5729,7 +6412,12 @@ Link_Read_Interupt:
     PHB : PHK : PLB
 
     TAY
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    LyraCall_Sign_0 = pc()
+    JSL.l Lyra_ReadSign
+    else
     LDA.w Pool_Overworld_SignText_New, Y
+    endif
 
     PLB
 
@@ -5765,6 +6453,65 @@ MirrorWarp_NoOverlayUploadTable:
 
     RTL
 }
+
+if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+; Same-size lifecycle adapters for bounded vanilla call sites. The native
+; producer keeps its register/flag contract; the palette API preserves it.
+; Keep adapters in the same reserved palette bank, independent of the size
+; of the preceding ZS tables and optional graphics routines.
+pushpc
+org $4DF500
+assert pc() == !SPECIAL_OVERWORLD_PALETTE_CODE_BASE+$0500
+SpecialPaletteAdaptersStart:
+SpecialPaletteBeginInitTilesets:
+    JSL Oracle_SpecialOverworldPaletteBegin
+    JSL InitTilesets
+    RTL
+SpecialPaletteResetInitTilesets:
+    JSL Oracle_SpecialOverworldPaletteReset
+    JSL InitTilesets
+    RTL
+SpecialPaletteBackdropCompleteBuffer:
+    JSL Palette_SetOwBgColor_Long
+    JSL Oracle_SpecialOverworldPaletteCompleteBuffer
+    RTL
+SpecialPaletteBeginMainSpr:
+    JSL Oracle_SpecialOverworldPaletteBegin
+    JSL Palette_MainSpr
+    RTL
+SpecialPaletteMainCompleteBuffer:
+    JSL Palette_OverworldBgMain
+    JSL Oracle_SpecialOverworldPaletteCompleteBuffer
+    RTL
+SpecialPaletteBeginBgMain:
+    JSL Oracle_SpecialOverworldPaletteBegin
+    JSL Palette_OverworldBgMain
+    RTL
+SpecialPaletteLoadCompleteBuffer:
+    JSL Oracle_SpecialOverworldPaletteBegin
+    JSL Overworld_LoadPalettes
+    JSL Oracle_SpecialOverworldPaletteCompleteBuffer
+    RTL
+SpecialPaletteLoadFinishBoth:
+    JSL Overworld_LoadPalettes
+    JSL Oracle_SpecialOverworldPaletteCompleteBoth
+    RTL
+SpecialPaletteLoadCompleteBoth:
+    JSL Oracle_SpecialOverworldPaletteBegin
+    JSL Overworld_LoadPalettes
+    JSL Oracle_SpecialOverworldPaletteCompleteBoth
+    RTL
+SpecialPaletteDepartSetBlack:
+    ; Restore holes first, then discard the outgoing identity even if $1B
+    ; has not switched yet. The following indoor producer owns the new BG.
+    JSL Oracle_SpecialOverworldPaletteBegin
+    JSL Oracle_SpecialOverworldPaletteReset
+    JSL $0ED5F4 ; SetBGandFixedColorBlack; subsequent native indoor loaders own BG.
+    RTL
+SpecialPaletteAdaptersEnd:
+assert pc() <= !SPECIAL_OVERWORLD_PALETTE_CODE_END
+pullpc
+endif
 
 pushpc
 

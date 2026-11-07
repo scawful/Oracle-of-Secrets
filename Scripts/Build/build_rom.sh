@@ -3,7 +3,8 @@ set -euo pipefail
 
 usage() {
   echo "Usage: $(basename "$0") <version> [asar_binary] [--reload] [--no-symbols] [--mesen-sync] [--skip-tests] [--asar=<path>] [--enable <csv>] [--disable <csv>] [--profile <defaults|all-on|all-off>] [--persist-flags] [--help]" >&2
-  echo "Base ROM: Roms/oos<version>.sfc (unpatched edit target; override with OOS_BASE_ROM)." >&2
+  echo "Base ROM: OOS_BASE_ROM, then YAZE_PROJECT_ROM, then Roms/oos<version>.sfc." >&2
+  echo "  An explicit base must match the active Yaze project ROM when both are set." >&2
   echo "  Backward compat: Roms/oos<version>_test2.sfc is used only when the standard base is absent." >&2
   echo "" >&2
   echo "Feature flag overrides:" >&2
@@ -15,6 +16,7 @@ usage() {
   echo "  Names: flags,menu,overlap,hooks,sprites,analysis,smoke,annotations." >&2
   echo "  OOS_ANALYZER=<path> selects an analyzer; OOS_TEST_SOCKET=<owned socket> enables exact-ROM current-state smoke." >&2
   echo "  Receipt: Roms/oos<version>x.build.json (override OOS_BUILD_RECEIPT)." >&2
+  echo "  OOS_MANIFEST_OUTPUT selects only Roms/oos<version>x.manifest.json; default Roms/hack_manifest.json." >&2
   exit "${1:-1}"
 }
 
@@ -133,7 +135,8 @@ fi
 # name used during the ZSCustomOverworld v3 port). Standard is oos${version}.sfc.
 default_base="$rom_dir/oos${version}.sfc"
 legacy_base="$rom_dir/oos${version}_test2.sfc"
-if [[ -z "${OOS_BASE_ROM:-}" ]]; then
+base_override="${OOS_BASE_ROM:-${YAZE_PROJECT_ROM:-}}"
+if [[ -z "$base_override" ]]; then
   if [[ -f "$default_base" ]]; then
     base_rom="$default_base"
   elif [[ -f "$legacy_base" ]]; then
@@ -143,13 +146,41 @@ if [[ -z "${OOS_BASE_ROM:-}" ]]; then
     base_rom="$default_base"
   fi
 else
-  base_rom="$OOS_BASE_ROM"
+  base_rom="$base_override"
 fi
 patched_rom="$rom_dir/oos${version}x.sfc"
 symbols_rel="Roms/oos${version}x.sym"
 symbols_path="$rom_dir/oos${version}x.sym"
 mlb_rel="Roms/oos${version}x.mlb"
 mlb_path="$rom_dir/oos${version}x.mlb"
+manifest_output="$rom_dir/hack_manifest.json"
+if [[ -n "${OOS_MANIFEST_OUTPUT:-}" ]]; then
+  # Check before receipt creation or source generation. The per-output artifact
+  # must not overwrite policy, saved inputs, or another managed output.
+  manifest_output="$(python3 - "$OOS_MANIFEST_OUTPUT" \
+    "$rom_dir/oos${version}x.manifest.json" "$base_rom" "$patched_rom" \
+    "$symbols_path" "$mlb_path" "$rom_dir/hack_manifest.json" \
+    "$rom_dir/hooks.json" "$rom_dir/sourcemap.json" \
+    "${OOS_BUILD_RECEIPT:-$rom_dir/oos${version}x.build.json}" \
+    "${YAZE_PROJECT_FILE:-}" "${YAZE_NATIVE_SAVE_RECEIPT:-}" \
+    "${YAZE_NATIVE_SAVE_CONTEXT:-}" <<'PY'
+from pathlib import Path
+import sys
+try:
+    requested, expected = map(Path, sys.argv[1:3])
+    if expected.is_symlink() or requested.is_symlink() or requested.resolve() != expected.resolve():
+        raise ValueError('OOS_MANIFEST_OUTPUT must be the per-output Roms/oos<version>x.manifest.json')
+    if requested.exists() and (not requested.is_file() or requested.stat().st_nlink != 1):
+        raise ValueError('OOS_MANIFEST_OUTPUT must be an unaliased regular file')
+    if any(requested.resolve() == Path(value).resolve() for value in sys.argv[3:] if value):
+        raise ValueError('OOS_MANIFEST_OUTPUT aliases an input or managed artifact')
+    print(expected.resolve())
+except (OSError, ValueError) as error:
+    print(f'ERROR: {error}', file=sys.stderr)
+    sys.exit(1)
+PY
+  )"
+fi
 
 source "$repo_root/Scripts/Build/build_checks.sh"
 init_build_receipt
@@ -161,6 +192,11 @@ if [[ ! -f "$base_rom" ]]; then
 fi
 if [[ "$base_rom" != /* ]]; then
   base_rom="$(cd "$(dirname "$base_rom")" && pwd -P)/$(basename "$base_rom")"
+fi
+if [[ -n "${OOS_BASE_ROM:-}" && -n "${YAZE_PROJECT_ROM:-}" &&
+      ! "$base_rom" -ef "$YAZE_PROJECT_ROM" ]]; then
+  echo "ERROR: OOS_BASE_ROM does not match the active Yaze project ROM; refusing to build a different source." >&2
+  exit 1
 fi
 
 if [[ -f "$legacy_base" && "$base_rom" != "$legacy_base" ]]; then
@@ -212,6 +248,18 @@ run_check message_source 1 python3 "$repo_root/Scripts/Generate/validate_expande
 
 current_stage="output_snapshot"
 snapshot_build_outputs
+
+# Native special-overworld data belongs to the editable ROM. The generated
+# include contains constants only; initial data import is a separate operation.
+native_build_args=(--build-cache "$repo_root/.cache")
+if [[ -n "${OOS_Z3ED_BIN:-}" ]]; then
+  native_build_args+=(--z3ed "$OOS_Z3ED_BIN")
+elif [[ -x "$repo_root/../yaze/scripts/z3ed" ]]; then
+  native_build_args+=(--z3ed "$repo_root/../yaze/scripts/z3ed")
+fi
+run_check native_overworld_constants 1 python3 "$repo_root/Scripts/Build/lyra_native_loaders.py" \
+  --rom "$base_rom" --constants "$repo_root/.cache/special_overworld_reader_constants.asm" \
+  "${native_build_args[@]}"
 
 # Keep water-gate runtime tables synced with the validated editor-authored base
 # ROM. The tracked custom-collision source contract guarantees that marker
@@ -415,6 +463,31 @@ assemble_rom() {
 }
 run_check assembly 1 assemble_rom
 
+# The saved source stays authoritative. Only a regenerated reader body may
+# need new directory CRCs. Emit those as assembly input and reassemble the
+# original source so the assembler owns the final checksum and hook identity.
+if [[ -f "$repo_root/.cache/special_overworld_native_source.json" ]]; then
+  run_check native_overworld_readers 1 python3 "$repo_root/Scripts/Build/lyra_native_loaders.py" \
+    --rom "$base_rom" --seal-compiled "$patched_rom" \
+    --symbols "$symbols_path" "${native_build_args[@]}"
+  if [[ -f "$repo_root/.cache/binaries/special-overworld-directory.bin" ]]; then
+    reassemble_native_rom() {
+      cp -f "$base_rom" "$patched_rom"
+      if [[ "${OOS_SKIP_VERSION_STAMP:-0}" != "1" ]]; then
+        python3 "$repo_root/Scripts/Build/version_stamp.py" --rom "$patched_rom" || return $?
+      fi
+      assemble_rom
+    }
+    run_check native_overworld_reassembly 1 reassemble_native_rom
+  fi
+fi
+
+# Catch old table/sidecar emission before publishing artifacts or a manifest.
+# The existing output transaction restores the previous candidate on failure.
+run_check native_overworld_preservation 1 python3 "$repo_root/Scripts/Build/lyra_native_loaders.py" \
+  --rom "$base_rom" --compiled "$patched_rom" \
+  --symbols "$symbols_path" "${native_build_args[@]}"
+
 receipt artifact --name output_rom --path "$patched_rom"
 if [[ "$emit_symbols" == "1" ]]; then
   receipt artifact --name symbols --path "$symbols_path"
@@ -435,7 +508,7 @@ echo "Assembled patched ROM: $patched_rom"
 echo "[*] Generating Yaze hack manifest..."
 manifest_args=(
   --root "$repo_root"
-  --output "$repo_root/Roms/hack_manifest.json"
+  --output "$manifest_output"
   --dev-rom "$base_rom"
   --rom "$patched_rom"
 )
@@ -466,7 +539,7 @@ run_check manifest 1 python3 "$repo_root/Scripts/Generate/generate_hack_manifest
   "${manifest_args[@]}" \
   "${manifest_hook_args[@]}"
 
-receipt artifact --name manifest --path "$repo_root/Roms/hack_manifest.json"
+receipt artifact --name manifest --path "$manifest_output"
 
 # Export symbols for yaze + Mesen2.
 if [[ $emit_symbols -eq 1 && -f "$symbols_path" ]]; then

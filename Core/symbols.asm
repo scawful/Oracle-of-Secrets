@@ -28,9 +28,24 @@ Kydreeok_Id:              skip 1
 FishingOrPortalRod:       skip 1
 SongTintTimer:            skip 1  ; Frames remaining for song color tint
 SongTintColor:            skip 1  ; Color value to apply to $9A during tint
+; Persistent across graphics loads; reset/restore owner joins gated resources.
+SpecialOverworldMainCache: skip 4 ; Underlying native sheets for slots 0/1/2/7
+; Native BG column8 history only; palette lifecycle consumer remains unbound.
+; Six words follow BG rows2..7: relative palette offsets50/70/90/B0/D0/F0.
+SpecialOverworldPaletteHoleReference: skip 12
+SpecialOverworldPaletteHoleEffective: skip 12
+SpecialOverworldPaletteHoleState: skip 1 ; Reset to0 before any capture/read.
+SpecialOverworldPaletteHoleArea: skip 1  ; Reset toFF; validate full8A first.
 assert pc() <= $7E1F00, "Core/symbols.asm WRAM block overflows free RAM $7E1E70-$7E1EFF"
 }
 base off
+
+; Explicit bounded aliases for the reserved palette history; no consumer yet.
+SpecialOverworldPaletteHoleCache = $7E1E8C
+SpecialOverworldPaletteHoleCacheEnd = $7E1EA6
+assert SpecialOverworldPaletteHoleCache == SpecialOverworldPaletteHoleReference
+assert SpecialOverworldPaletteHoleCacheEnd == SpecialOverworldPaletteHoleArea+1
+assert SpecialOverworldPaletteHoleCacheEnd-SpecialOverworldPaletteHoleCache == 26
 
 ; =========================================================
 

@@ -35,6 +35,9 @@ org $09F7B5 : JSL ForceResetMask_SaveAndQuit ; @hook module=Masks name=ForceRese
 org $3A8000
 StartupMasks:
 {
+  if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+  JSL Oracle_SpecialOverworldPaletteReset
+  endif
   ; vanilla: bring the screen into force blank after NMI
   LDA.b #$80 : STA $13
 
