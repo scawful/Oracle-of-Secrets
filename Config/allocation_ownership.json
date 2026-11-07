@@ -20,7 +20,7 @@
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "bd5a187f2884a024d2c8279f1f0e637039ce46c522e804d3d7cf97fab89cd05a"
+      "sha256": "f33694be088369f0be6ebae67ce826a30a3c09acd24ae77b9a89fc759c01b106"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -241,6 +241,16 @@
       "source_set": "shared",
       "path": "Sprites/Bosses/d8_boss.asm",
       "sha256": "46f7952d50c3271da51c23114af5f6f31f101dcc3c5fefb5b2a31d03b247bf0f"
+    },
+    "shared:Sprites/all_sprites.asm": {
+      "source_set": "shared",
+      "path": "Sprites/all_sprites.asm",
+      "sha256": "71dee5f9268d63d9ab00b272b5354fdb48a4a96ab3c33d43b70aeb6c0d1854d8"
+    },
+    "shared:Sprites/Objects/ice_block.asm": {
+      "source_set": "shared",
+      "path": "Sprites/Objects/ice_block.asm",
+      "sha256": "a312424e181f116e29ff7d0ab5fd2f2f40bb743fed60b05b766e6f48f1a85448"
     },
     "shared:Dungeons/d4_water_control.asm": {
       "source_set": "shared",
@@ -1985,6 +1995,29 @@
       ],
       "anchors": [
         "org $2EB800"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "ice_block_code",
+      "owner": "Pushable ice block complete sprite unit",
+      "space": "snes_rom",
+      "base": 3842048,
+      "size": 2048,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Compiled ROM code; bounded slot after mask routines and before BossDirector at $3AA800.",
+      "reset": "No new RAM allocation. Prep/Long keep PHK/PLB in a low-WRAM mirror bank.",
+      "save": "No SRAM format or room-data changes. All local short-call helpers and draw tables move together.",
+      "provenance": [
+        "shared:Sprites/all_sprites.asm",
+        "shared:Sprites/Objects/ice_block.asm",
+        "shared:Masks/mask_routines.asm"
+      ],
+      "anchors": [
+        "org $3AA000"
       ],
       "aliases": []
     },

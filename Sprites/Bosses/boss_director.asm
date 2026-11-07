@@ -38,8 +38,8 @@ BossDir_Var    = $7FF396 ; 8 bytes for the boss ($7FF396-$7FF39D)
 !BossDir_HitGrace  = 60
 
 pushpc
-; Bank $3A free run $3A8DC8-$3AB7FF. Manhandla (manhandla.asm) uses
-; $3AA000-$3AA7FF; this block and the Kydreeok turn code use $3AA800-$3AAFFF.
+; Ice block code owns $3AA000-$3AA7FF. This block and the Kydreeok turn code
+; use $3AA800-$3AAFFF; the mask routines are bounded below the ice block slot.
 org $3AA800
 
 BossDirector_Reset:

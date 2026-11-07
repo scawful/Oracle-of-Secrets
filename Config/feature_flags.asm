@@ -11,6 +11,7 @@
 !ENABLE_D3_PRISON_SEQUENCE            = 0
 !ENABLE_D4_ZORA_REDESIGN              = 0
 !ENABLE_D4_WATER_CONTROLS             = 0
+!ENABLE_D5_BF_PIT_RESET               = 0
 !ENABLE_D7_FARORE_RESCUE_SEQUENCE     = 1
 !ENABLE_D8_BOSS                       = 0
 !ENABLE_DREAM_BED_WAKE                = 1

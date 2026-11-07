@@ -177,12 +177,17 @@ Graphics_Transfer:
   RTL
 }
 
-%log_start("ice_block", !LOG_SPRITES)
-; TODO: Change from digging game guy?
-incsrc "Sprites/Objects/ice_block.asm"
-%log_end("ice_block", !LOG_SPRITES)
+; Keep the complete unit and its short-call targets together. Bank $3A mirrors
+; low WRAM like $30, so the sprite's PHK/PLB and absolute RAM accesses still work.
+pushpc
+org $3AA000
+  %log_start("ice_block", !LOG_SPRITES)
+  incsrc "Sprites/Objects/ice_block.asm"
+  assert pc() <= $3AA800, "Ice block code reached the Boss Director allocation"
+  %log_end("ice_block", !LOG_SPRITES)
+pullpc
 
-assert pc() <= $318000, "Bank $30 sprite region overflow"
+assert pc() <= $310000, "Bank $30 sprite code crossed its LoROM executable boundary"
 assert pc() >= $308000, "Bank $30 sprite code left its bank (org without pushpc/pullpc?)"
 print "Bank30 Free Space: ", dec($310000-pc()), " bytes"
 
