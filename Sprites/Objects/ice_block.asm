@@ -1,6 +1,7 @@
 ; =========================================================
 ; Pushable Ice Block
 ; =========================================================
+; Room BF pit-reset pilot; !ENABLE_D5_BF_PIT_RESET is default off.
 ; A sliding puzzle block that Link can push in cardinal directions.
 ; The block slides until it hits a wall or lands on a switch tile.
 ;
@@ -100,6 +101,17 @@ Sprite_IceBlock_Prep:
   ; which deletes a sprite 64px off camera. Bit 7 keeps the block active
   ; off camera, so a slide continues out of view instead of freezing.
   LDA.b #$80 : STA.w SprDefl, X
+if !ENABLE_D5_BF_PIT_RESET == 1
+  STZ.w SprMiscB, X
+  STZ.w SprTimerC, X
+  JSR IceBlock_IsPitRoom : BNE .ordinary_deflection
+    LDA.b #$84 : STA.w SprDefl, X
+    ; BF uses the native simplified collision table: walls, slopes and fixed
+    ; stops remain solid while pit20 is traversable. The center probe owns fall.
+    ; CanFall stays0, so vanilla never deletes this puzzle actor as falling.
+    LDA.w $0CAA, X : ORA.b #$08 : STA.w $0CAA, X
+  .ordinary_deflection
+endif
   ; Tile probe set 9: probes 1px outside the 16x16 graphic (x-1/x+16,
   ; y-1/y+16), so wall stops line up with what the player sees.
   LDA.w SprTileDie, X : AND.b #$0F : ORA.b #$90 : STA.w SprTileDie, X
@@ -112,10 +124,26 @@ Sprite_IceBlock_Prep:
 ; =========================================================
 Sprite_IceBlock_Main:
 {
+if !ENABLE_D5_BF_PIT_RESET == 1
+  JSR IceBlock_IsPitRoom : BNE .ordinary_main
+    JSR IceBlock_PitStep : BCC .ordinary_main
+      RTS
+  .ordinary_main
+endif
   %PlayAnimation(0, 0, 1)
 
   JSR Statue_BlockSprites
+if !ENABLE_D5_BF_PIT_RESET == 1
+  JSR IceBlock_IsPitRoom : BEQ .no_damage
+endif
   JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
+if !ENABLE_D5_BF_PIT_RESET == 1
+  .reset_feedback
+    ; Poof at the old location before restoring the cached spawn. Both native
+    ; helpers preserve X; SFX3 keeps the short reset cue separate from the slash.
+    JSL Sprite_SpawnPoofGarnish
+    LDA.b #$13 : JSL SpriteSFX_QueueSFX3WithPan ; native object toss cue
+endif
     LDA.w SprMiscD, X : STA.w SprX, X
     LDA.w SprMiscE, X : STA.w SprY, X
     LDA.w SprMiscF, X : STA.w SprXH, X
@@ -132,6 +160,12 @@ Sprite_IceBlock_Main:
 
   JSL Sprite_Move
   JSL Sprite_Get_16_bit_Coords
+if !ENABLE_D5_BF_PIT_RESET == 1
+  JSR IceBlock_IsPitRoom : BNE .ordinary_collision
+    JSR IceBlock_PitStep : BCC .ordinary_collision
+      RTS
+  .ordinary_collision
+endif
   JSL Sprite_CheckTileCollision
   ; ----udlr , u = up, d = down, l = left, r = right
   LDA.w SprCollision, X : AND.b #$0F : BEQ +
@@ -304,6 +338,7 @@ IceBlock_ValidatePushSide:
 ; Helper Routines
 ; =========================================================
 
+if !ENABLE_D5_BF_PIT_RESET == 0
 ; Check if the tile beneath the sprite is the sliding ice
 ; Currently unused as it doesnt play well with the hitbox choices
 IceBlock_CheckForGround:
@@ -326,9 +361,77 @@ IceBlock_CheckForGround:
   CLC
   RTS
 }
+else
+; M8/X8, DBR30. Z is set only for room00BF; no register or stack width change.
+IceBlock_IsPitRoom:
+{
+  LDA.b $A0 : CMP.b #$BF : BNE .done
+    LDA.b $A1
+  .done
+  RTS
+}
+
+; Shared center probe, same coordinates/plane as the existing goal check.
+IceBlock_GetCenterAttr:
+{
+  LDA.w SprY, X : CLC : ADC.b #$08 : STA.b $00
+  LDA.w SprYH, X : ADC.b #$00 : STA.b $01
+  LDA.w SprX, X : CLC : ADC.b #$08 : STA.b $02
+  LDA.w SprXH, X : ADC.b #$00 : STA.b $03
+  LDA.w SprFloor, X
+  JSL Sprite_GetTileAttr
+  RTS
+}
+
+; BF only. MiscB=1 hides a returning block once TimerC reaches zero.
+; Carry set means the ordinary push/damage/switch path must not run this frame.
+IceBlock_PitStep:
+{
+  LDA.w SprMiscB, X : BNE .falling
+  JSR IceBlock_GetCenterAttr
+  LDA.w $0FA5 : CMP.b #$20 : BEQ .begin_fall
+    CLC
+    RTS
+  .begin_fall
+  LDA.w SprMiscC, X : ORA.w SprTimerA, X : BEQ .released
+    STZ.b LinkSpeedTbl
+    LDA.b $48 : AND.b #$7B : STA.b $48
+  .released
+  STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+  STZ.w SprXRound, X : STZ.w SprYRound, X
+  STZ.w SprTimerA, X : STZ.w SprMiscA, X : STZ.w SprMiscC, X
+  STZ.w $0642
+  LDA.b #$01 : STA.w SprMiscB, X
+  LDA.b #$10 : STA.w SprTimerC, X
+  .falling
+  LDA.w SprTimerC, X : BNE .waiting
+  LDA.w SprMiscD, X : STA.w SprX, X
+  LDA.w SprMiscE, X : STA.w SprY, X
+  LDA.w SprMiscF, X : STA.w SprXH, X
+  LDA.w SprMiscG, X : STA.w SprYH, X
+  JSL Sprite_Get_16_bit_Coords
+  ; Geometric occupancy is independent of Link's damage/invulnerability flags.
+  REP #$20
+  LDA.b $22 : SEC : SBC.w SprCachedX : CLC : ADC.w #$0018
+  CMP.w #$0031 : BCS .clear
+  LDA.b $20 : SEC : SBC.w SprCachedY : CLC : ADC.w #$0020
+  CMP.w #$0041 : BCC .occupied
+  .clear
+  SEP #$20
+  STZ.w SprMiscB, X
+  .occupied
+  SEP #$20
+  .waiting
+  SEC
+  RTS
+}
+endif
 
 Sprite_IceBlock_CheckForSwitch:
 {
+if !ENABLE_D5_BF_PIT_RESET == 1
+  JSR IceBlock_GetCenterAttr
+else
   ; Check center point of block for switch tile
   LDA.w SprY, X : CLC : ADC.b #$08 : STA.b $00
   LDA.w SprYH, X : ADC.b #$00 : STA.b $01
@@ -337,6 +440,7 @@ Sprite_IceBlock_CheckForSwitch:
   LDA.w SprFloor, X
 
   JSL Sprite_GetTileAttr
+endif
 
   LDA.w $0FA5
   CMP.b #$23 : BEQ .on_switch
@@ -407,6 +511,24 @@ Statue_BlockSprites:
 Sprite_IceBlock_Draw:
 {
   JSL Sprite_PrepOamCoord
+if !ENABLE_D5_BF_PIT_RESET == 1
+  LDA.w SprMiscB, X : BEQ .visible
+    LDA.w SprTimerC, X : BNE .sink
+      ; This sprite reserves four deferred entries. Hide them explicitly;
+      ; an early return alone leaves the preceding sink frame in OAM.
+      JSL Sprite_OAM_AllocateDeferToPlayer
+      LDY.b #$0D
+      LDA.b #$F0
+      .hide_returning
+      STA ($90), Y
+      DEY : DEY : DEY : DEY
+      BPL .hide_returning
+      RTS
+    .sink
+    LDA.b #$10 : SEC : SBC.w SprTimerC, X : LSR A
+    CLC : ADC.b $02 : STA.b $02
+  .visible
+endif
   JSL Sprite_OAM_AllocateDeferToPlayer
 
   LDA $0DC0, X : CLC : ADC.w SprFrame, X : TAY;Animation Frame

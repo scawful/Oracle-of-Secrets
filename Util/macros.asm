@@ -37,6 +37,8 @@ endif
 !ENABLE_SOURCE_SPRITE_SHEETS        = 1
 ; Private D4 room-scoped actor/art prototype; no default behavior change.
 !ENABLE_D4_ZORA_REDESIGN            = 0
+; BF-only ice block pit reset and reset feedback; room-layout adoption is separate.
+!ENABLE_D5_BF_PIT_RESET             = 0
 !ENABLE_WATER_GATE_HOOKS            = 1
 !ENABLE_WATER_GATE_ROOMENTRY_RESTORE = 0
 !ENABLE_WATER_GATE_OVERLAY_REDIRECT = 1

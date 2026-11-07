@@ -250,7 +250,7 @@
     "shared:Sprites/Objects/ice_block.asm": {
       "source_set": "shared",
       "path": "Sprites/Objects/ice_block.asm",
-      "sha256": "b50750f69796a2bd90db33acd77cf8454ef53fd775d620b2de17721e0db7d006"
+      "sha256": "a312424e181f116e29ff7d0ab5fd2f2f40bb743fed60b05b766e6f48f1a85448"
     }
   },
   "claims": [
