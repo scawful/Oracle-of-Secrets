@@ -377,6 +377,37 @@ class SourceSheets(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'schema 2'):
             sheets.build(self.spec_path, self.base)
 
+    def test_d4_streams_stop_before_frame_records(self):
+        self.spec.update(schema_version=2, encoding='stored')
+        count=(sheets.D4_FRAME_START-sheets.GLOBAL_START)//len(lz2.stored(self.raw))
+        self.spec['sheets']=[dict(global_sheet=hex(0xDF+i),source='sheet.txt',
+            decoded_sha256=hashlib.sha256(self.raw).hexdigest(),why='D4 boundary vector') for i in range(count)]
+        self.spec_path=self.root/sheets.D4_SPEC.name;self.write_spec()
+        _,items=sheets.build(self.spec_path,self.base)
+        self.assertLessEqual(items[-1]['snes']+len(items[-1]['stream']),sheets.D4_FRAME_START)
+        self.spec['sheets'].append(dict(self.spec['sheets'][-1],global_sheet=hex(0xDF+count)));self.write_spec()
+        with self.assertRaisesRegex(ValueError,'overlaps D4 frame records'):
+            sheets.build(self.spec_path,self.base)
+        # The same streams still fit the standard bank-wide allocation.
+        self.spec_path=self.root/'standard.json';self.write_spec()
+        _,items=sheets.build(self.spec_path,self.base)
+        self.assertGreater(items[-1]['snes']+len(items[-1]['stream']),sheets.D4_FRAME_START)
+
+    def test_frame_source_copies_exactly_and_check_detects_change(self):
+        _,items=sheets.build(self.spec_path,self.base)
+        frame_source=(ROOT/'Data/graphics/d4_zora/frames.asm').read_bytes()
+        files=sheets.generated_files(items,frame_source)
+        self.assertEqual(files[Path('frame_tables.asm')],frame_source)
+        out=self.root/'generated';sheets.write_outputs(out,files,[self.base,self.spec_path])
+        self.assertEqual((out/'frame_tables.asm').read_bytes(),frame_source)
+        self.assertEqual(sheets.generated_files(items),{k:v for k,v in files.items() if k!=Path('frame_tables.asm')})
+        argv=['sheet_overrides.py',str(ROOT/sheets.D4_SPEC),'--root',str(ROOT),
+              '--base-rom',str(self.base),'--out-dir',str(out),'--check']
+        with mock.patch.object(sys,'argv',argv),mock.patch.object(sheets,'build',return_value=(self.spec,items)):
+            self.assertEqual(sheets.main(),0)
+            (out/'frame_tables.asm').write_bytes(frame_source+b'; stale\n')
+            self.assertEqual(sheets.main(),1)
+
     def test_actual_build_guard_refuses_wrong_or_truncated_base_before_output(self):
         # Real build wrapper/receipt/guard in a portable disposable repository.
         for directory in ('Scripts/Build','Scripts/Generate','Config','Util','Data/graphics','Roms'):

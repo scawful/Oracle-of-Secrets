@@ -47,32 +47,32 @@ org $23FEBA ; @hook module=Core kind=data protected_size=1
   db $DA
 org $23FFBA ; @hook module=Core kind=data protected_size=1
   db $70
-; Global $DF (sprite-relative $6C): Accepted D4 River protector and bronze pirate warden; Princess source cells and Baby upload slots preserved.
+; Global $DF (sprite-relative $6C): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDDF ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEDF ; @hook module=Core kind=data protected_size=1
   db $80
 org $23FFDF ; @hook module=Core kind=data protected_size=1
   db $00
-; Global $E0 (sprite-relative $6D): Accepted D4 River protector and bronze pirate warden; Princess source cells and Baby upload slots preserved.
+; Global $E0 (sprite-relative $6D): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDE0 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE0 ; @hook module=Core kind=data protected_size=1
   db $82
 org $23FFE0 ; @hook module=Core kind=data protected_size=1
-  db $79
-; Global $E1 (sprite-relative $6E): Accepted D4 River protector and bronze pirate warden; Princess source cells and Baby upload slots preserved.
+  db $40
+; Global $E1 (sprite-relative $6E): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDE1 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE1 ; @hook module=Core kind=data protected_size=1
-  db $85
+  db $84
 org $23FFE1 ; @hook module=Core kind=data protected_size=1
-  db $88
-; Global $E2 (sprite-relative $6F): Accepted D4 River protector and bronze pirate warden; Princess source cells and Baby upload slots preserved.
+  db $C1
+; Global $E2 (sprite-relative $6F): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDE2 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE2 ; @hook module=Core kind=data protected_size=1
   db $88
 org $23FFE2 ; @hook module=Core kind=data protected_size=1
-  db $10
+  db $13
 pullpc

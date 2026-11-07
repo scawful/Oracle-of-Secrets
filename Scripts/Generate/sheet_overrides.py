@@ -28,6 +28,7 @@ from sheet_table import N, decomp, pc, ptr
 START, CAPACITY = 0x40D000, 0x3000
 # New globals $DF..$FE: one whole bank (scawful 2026-11-02 "Yes, one bank").
 GLOBAL_START, GLOBAL_CAPACITY = 0x478000, 0x8000
+D4_FRAME_START = 0x47C000
 # Relocated pointer arrays (Core/gfx_sheet_table.asm); the base ROM table is only read.
 NEW_BANK, NEW_HIGH, NEW_LOW = 0x23FD00, 0x23FE00, 0x23FF00
 SPEC = Path('Data/graphics/source_sprite_sheets.json')
@@ -158,7 +159,8 @@ def build(spec_path, base_rom, root=None, *, rom_role="editable_base"):
         require(lz2.decompress(stream, max_output=0x600) == (raw, len(stream)), 'compressed sheet round trip differs')
         address = cursor[new_global]
         if new_global:
-            require(address+len(stream) <= GLOBAL_START+GLOBAL_CAPACITY, 'new global sheet bank $47 is full')
+            end = D4_FRAME_START if spec_path.name == D4_SPEC.name else GLOBAL_START+GLOBAL_CAPACITY
+            require(address+len(stream) <= end, 'new global sheet bank $47 is full or overlaps D4 frame records')
         else:
             require(address+len(stream) <= START+CAPACITY, 'source sprite sheet allocation is full')
         out.append(dict(s=sheet, g=global_id, new=new_global, raw=raw, stream=stream, snes=address, source=entry['source'], why=entry['why']))
@@ -202,9 +204,11 @@ def asm_text(items):
     return '\n'.join(lines+['pullpc', ''])
 
 
-def generated_files(items):
+def generated_files(items, frame_tables=None):
     files = {Path('sheets')/f'{stream_name(item)}.bin': item['stream'] for item in items}
     files[Path('sheet_overrides.asm')] = asm_text(items).encode()
+    if frame_tables is not None:
+        files[Path('frame_tables.asm')] = frame_tables
     return files
 
 
@@ -280,12 +284,14 @@ def main():
         spec_path = args.spec or root/selected_spec
         spec, items = build(spec_path, args.base_rom, root, rom_role=args.rom_role)
         out = args.out_dir or root/selected_output
-        files = generated_files(items)
+        frame_source = root/'Data/graphics/d4_zora/frames.asm'
+        private_frames = spec_path.resolve() == (root/D4_SPEC).resolve()
+        files = generated_files(items, frame_source.read_bytes() if private_frames else None)
         stale = [str(name) for name, data in files.items() if not (out/name).is_file() or (out/name).read_bytes() != data]
         if args.check:
             require(not stale, 'stale generated sprite sheets: '+', '.join(stale))
         else:
-            write_outputs(out, files, [args.base_rom, spec_path]+[spec_path.parent/e['source'] for e in spec['sheets']])
+            write_outputs(out, files, [args.base_rom, spec_path]+([frame_source] if private_frames else [])+[spec_path.parent/e['source'] for e in spec['sheets']])
         print(json.dumps(dict(checked=args.check, sheets=[dict(sprite_sheet=f'{i["s"]:02X}', global_sheet=f'{i["g"]:02X}', bytes=len(i['stream']), decoded_sha256=hashlib.sha256(i['raw']).hexdigest()) for i in items])))
         return 0
     except (OSError, ValueError, KeyError, TypeError, IndexError) as error:

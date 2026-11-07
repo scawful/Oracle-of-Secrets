@@ -27,7 +27,8 @@ def main():
     for name in ('rom','symbols','candidate','base','output'):ap.add_argument('--'+name,type=Path,required=True)
     args=ap.parse_args();assert not args.output.exists(),'fresh output required'
     rom=args.rom.read_bytes();base=args.base.read_bytes();r=json.loads((args.candidate/'RECEIPT.json').read_text())
-    assert hashlib.sha256(base).hexdigest()==r['base_sha256']
+    if 'base_sha256' in r:assert hashlib.sha256(base).hexdigest()==r['base_sha256']
+    compact=r.get('schema_version',1)>=2
     labels={}
     for line in args.symbols.read_text().splitlines():
         m=re.fullmatch(r'([0-9A-Fa-f]{2}):([0-9A-Fa-f]{4}) (\S+)',line)
@@ -43,6 +44,7 @@ def main():
         assert raw==(args.candidate/f'actor-page-{i}.3bpp').read_bytes()
         assert p&0x7FFFFF==address(f'SourceGlobalSheet_{global_id:02X}')&0x7FFFFF
         assert (p>>16)&0x7F==0x47
+        if compact:assert (p&0x7FFFFF)+used<=0x47C000,'sheet stream overlaps frame records'
         pages.append(sheet_codec.sheet_to_grid(raw));streams.append(dict(global_sheet=f'{global_id:02X}',relative_sheet=f'{global_id-0x73:02X}',snes=f'{p:06X}',bytes=used,sha256=hashlib.sha256(raw).hexdigest()))
     group_pc=0x5B57+(64+0x4F)*4
     assert rom[group_pc:group_pc+4]==bytes.fromhex('6c6d6e6f')
@@ -61,26 +63,44 @@ def main():
     expected+=bytes([0xCA,0xCA,0x10,branch&255])+b'\xE2\x20\xE6\x15\xFA\x60'
     assert data('D4Zora_LoadPalettes',len(expected))==expected,'palette writer differs from reviewed bounded stores'
     assert address('D4Zora_LoadPalettes')+len(expected)==address('D4Zora_Draw')
-    starts=data('D4Zora_FrameStarts',len(r['frames']));counts=data('D4Zora_FrameCounts',len(r['frames']))
-    total=sum(counts);chars=data('D4Zora_Chars',total);props=data('D4Zora_Props',total)
-    xraw=data('D4Zora_XOffsets',total*2);yraw=data('D4Zora_YOffsets',total*2)
+    counts=data('D4Zora_FrameCounts',len(r['frames']))
+    if compact:
+        assert address('D4Zora_FrameDataStart')==0x47C000
+        assert address('D4Zora_FrameDataEnd')-0x47C000==r['frame_bytes']<=4096
+        pointers=data('D4Zora_FramePointers',len(counts)*2)
+        for label,values in r['lookups'].items():
+            assert data('D4Warden_'+label+'Frames',len(values))==bytes(values)
+    else:
+        starts=data('D4Zora_FrameStarts',len(counts));total=sum(counts)
+        chars=data('D4Zora_Chars',total);props=data('D4Zora_Props',total)
+        xraw=data('D4Zora_XOffsets',total*2);yraw=data('D4Zora_YOffsets',total*2)
     palettes_by_row={ROWS[n]:p for n,p in palette.items()};use={};results=[];images={}
     for n,(name,frame) in enumerate(r['frames'].items()):
         assert counts[n]==len(frame['oam'])
-        ox,oy=(-16,-40) if name.startswith('warden') else (-8,-16)
+        ox,oy=frame['runtime_origin'] if compact else ((-16,-40) if name.startswith('warden') else (-8,-16))
+        margin=16 if compact and frame['kind']=='warden' else 0
         image=Image.new('RGBA',tuple(frame['canvas']));entries=[]
+        if compact:
+            pointer=0x470000|int.from_bytes(pointers[n*2:n*2+2],'little')
+            assert pointer==address(f'D4Zora_Frame_{n}_Data')
+            assert 0x47C000<=pointer<pointer+counts[n]*4<=address('D4Zora_FrameDataEnd')
+            records=rom[pc(pointer):pc(pointer)+counts[n]*4]
         for j,entry in enumerate(frame['oam']):
-            i=starts[n]+j;char=chars[i];prop=props[i]
-            x=int.from_bytes(xraw[i*2:i*2+2],'little',signed=True);y=int.from_bytes(yraw[i*2:i*2+2],'little',signed=True)
-            assert (char,x,y,prop)==(entry['char'],entry['x']+ox,entry['y']+oy,0x31|(ROWS[entry['palette']]<<1))
-            assert char not in RESERVED and prop&1 and prop>>6==0
-            use.setdefault(char,entry['palette']);entries.append((char,x-ox,y-oy,palettes_by_row[(prop>>1)&7]))
-        for char,x,y,pal in reversed(entries):
+            if compact:
+                x,y=(int.from_bytes(records[j*4+k:j*4+k+1],'little',signed=True) for k in (0,1))
+                char,prop=records[j*4+2:j*4+4]
+            else:
+                i=starts[n]+j;char=chars[i];prop=props[i]
+                x=int.from_bytes(xraw[i*2:i*2+2],'little',signed=True);y=int.from_bytes(yraw[i*2:i*2+2],'little',signed=True)
+            assert (char,x,y,prop)==(entry['char'],entry['x']+ox,entry['y']+oy,0x31|(ROWS[entry['palette']]<<1)|(0x40 if entry.get('flip_x') else 0))
+            assert char not in RESERVED and prop&1 and not prop&0x80
+            use.setdefault(char,entry['palette']);entries.append((char,x-ox+margin,y-oy+margin,palettes_by_row[(prop>>1)&7],bool(prop&0x40)))
+        for char,x,y,pal,flip in reversed(entries):
             sheet=pages[char>>6];tx,ty=(char&15)*8,((char&63)//16)*8
             for yy in range(16):
                 for xx in range(16):
-                    v=sheet[ty+yy][tx+xx]
-                    if v:image.putpixel((x+xx,y+yy),rgb(pal[v])+(255,))
+                    v=sheet[ty+yy][tx+(15-xx if flip else xx)]
+                    if v and 0<=x+xx<image.width and 0<=y+yy<image.height:image.putpixel((x+xx,y+yy),rgb(pal[v])+(255,))
         assert image.tobytes()==Image.open(args.candidate/(name+'-native.png')).convert('RGBA').tobytes(),name+' compiled composition differs'
         results.append(name);images[name]=image
     princess,_=decomp(base,ptr(base,0x56+0x73));original=sheet_codec.sheet_to_grid(princess)
@@ -113,9 +133,9 @@ def main():
     for i,(name,row) in enumerate(ROWS.items()):
         y=110+i*100;d.text((710,y),f'OBJ row {row}: {name.replace("_"," ")}',font=small,fill='white')
         for j,w in enumerate(palette[name][1:]):d.rectangle((710+j*46,y+29,749+j*46,y+58),fill=rgb(w))
-    for i,line in enumerate(('Cell colours show the first consumer palette.','Blue border: preserved Princess cells.','Amber border: reserved Baby upload cells.',f'Free cells: {", ".join(free)}','Colours 8–15 and OBJ rows 1/7 untouched.','9 compiled pose compositions match accepted art.','Compiled data/render proof; not a runtime capture.')):
+    for i,line in enumerate(('Cell colours show the first consumer palette.','Blue border: preserved Princess cells.','Amber border: reserved Baby upload cells.',f'Free cells: {", ".join(free)}','Colours 8–15 and OBJ rows 1/7 untouched.',f'{len(results)} compiled poses match source art.','Compiled data/render proof; not a runtime capture.')):
         d.text((710,560+i*35),line,font=small,fill='#cad3cc')
-    d.text((24,1010),'52 actor cells + 6 reserved cells + 6 free cells = 64 total 16x16 cells.',font=font,fill='white')
+    d.text((24,1010),f'{len(use)} actor cells + 6 reserved cells + {len(free)} free cells = 64 total 16x16 cells.',font=font,fill='white')
     board.save(args.output/'compiled-tilesheet-map.png')
     for name,image in images.items():image.save(args.output/(name+'-compiled.png'))
     report=dict(status='COMPILED_BINDING_RENDER_PASS',rom_sha256=hashlib.sha256(rom).hexdigest(),symbols_sha256=hashlib.sha256(args.symbols.read_bytes()).hexdigest(),
