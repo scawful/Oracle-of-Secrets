@@ -57,38 +57,40 @@ WaterOverlayData_Room25:
 WaterOverlayData_Room26:
 {
   db $8A, $3A, $D9 ; id=$00D9 x=34 y=14 size=10 layer=1
-  db $AF, $9F, $D9 ; id=$00D9 x=43 y=39 size=15 layer=1
   db $99, $32, $D9 ; id=$00D9 x=38 y=12 size=6 layer=1
-  db $97, $9F, $D9 ; id=$00D9 x=37 y=39 size=15 layer=1
-  db $9A, $A2, $C9 ; id=$00C9 x=38 y=40 size=10 layer=1
-  db $C0, $A2, $C9 ; id=$00C9 x=48 y=40 size=2 layer=1
-  db $96, $CC, $C9 ; id=$00C9 x=37 y=51 size=8 layer=1
-  db $C9, $A3, $C9 ; id=$00C9 x=50 y=40 size=7 layer=1
-  db $C0, $C8, $C9 ; id=$00C9 x=48 y=50 size=0 layer=1
   db $2F, $32, $D9 ; id=$00D9 x=11 y=12 size=14 layer=1
   db $2F, $AE, $D9 ; id=$00D9 x=11 y=43 size=14 layer=1
   db $2D, $5F, $D9 ; id=$00D9 x=11 y=23 size=7 layer=1
   db $2D, $6F, $D9 ; id=$00D9 x=11 y=27 size=7 layer=1
   db $35, $5F, $D9 ; id=$00D9 x=13 y=23 size=7 layer=1
   db $35, $7B, $D9 ; id=$00D9 x=13 y=30 size=7 layer=1
-  db $31, $37, $C9 ; id=$00C9 x=12 y=13 size=7 layer=1
-  db $31, $73, $C9 ; id=$00C9 x=12 y=28 size=7 layer=1
-  db $31, $9F, $C9 ; id=$00C9 x=12 y=39 size=7 layer=1
-  db $49, $BD, $C9 ; id=$00C9 x=18 y=47 size=5 layer=1
-  db $49, $48, $C9 ; id=$00C9 x=18 y=18 size=4 layer=1
-  db $97, $DC, $D9 ; id=$00D9 x=37 y=55 size=12 layer=1
-  db $AF, $DC, $D9 ; id=$00D9 x=43 y=55 size=12 layer=1
-  db $9B, $D8, $C9 ; id=$00C9 x=38 y=54 size=12 layer=1
-  db $D8, $D8, $C9 ; id=$00C9 x=54 y=54 size=0 layer=1
   db $57, $B2, $D9 ; id=$00D9 x=21 y=44 size=14 layer=1
   db $5B, $32, $D9 ; id=$00D9 x=22 y=12 size=14 layer=1
   db $57, $3A, $D9 ; id=$00D9 x=21 y=14 size=14 layer=1
+  db $7E, $9F, $D9 ; id=$00D9 x=31 y=39 size=11 layer=1
+  db $BE, $9F, $D9 ; id=$00D9 x=47 y=39 size=11 layer=1
+  db $6F, $CD, $D9 ; id=$00D9 x=27 y=51 size=13 layer=1
+  db $AF, $CD, $D9 ; id=$00D9 x=43 y=51 size=13 layer=1
+  db $A5, $B9, $D9 ; id=$00D9 x=41 y=46 size=5 layer=1
+  db $31, $37, $C9 ; id=$00C9 x=12 y=13 size=7 layer=1
+  db $31, $73, $C9 ; id=$00C9 x=12 y=28 size=7 layer=1
+  db $49, $BD, $C9 ; id=$00C9 x=18 y=47 size=5 layer=1
+  db $49, $48, $C9 ; id=$00C9 x=18 y=18 size=4 layer=1
   db $5B, $36, $C9 ; id=$00C9 x=22 y=13 size=14 layer=1
   db $49, $36, $C9 ; id=$00C9 x=18 y=13 size=6 layer=1
+  db $31, $BD, $C9 ; id=$00C9 x=12 y=47 size=5 layer=1
   db $5B, $B5, $C9 ; id=$00C9 x=22 y=45 size=13 layer=1
   db $49, $B5, $C9 ; id=$00C9 x=18 y=45 size=5 layer=1
   db $57, $BD, $C9 ; id=$00C9 x=21 y=47 size=13 layer=1
   db $77, $36, $C9 ; id=$00C9 x=29 y=13 size=14 layer=1
+  db $31, $9F, $C9 ; id=$00C9 x=12 y=39 size=7 layer=1
+  db $81, $A3, $C9 ; id=$00C9 x=32 y=40 size=7 layer=1
+  db $C9, $A3, $C9 ; id=$00C9 x=50 y=40 size=7 layer=1
+  db $8B, $C9, $C9 ; id=$00C9 x=34 y=50 size=13 layer=1
+  db $71, $C9, $C9 ; id=$00C9 x=28 y=50 size=5 layer=1
+  db $C9, $C9, $C9 ; id=$00C9 x=50 y=50 size=5 layer=1
+  db $A8, $B9, $C9 ; id=$00C9 x=42 y=46 size=1 layer=1
+  db $B0, $B9, $C9 ; id=$00C9 x=44 y=46 size=1 layer=1
   db $FF, $FF
 }
 
