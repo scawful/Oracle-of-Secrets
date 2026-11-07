@@ -205,8 +205,8 @@ class SourceSheets(unittest.TestCase):
 
     def test_manifest_reserves_global_not_sprite_id(self):
         metadata=sheets.source_metadata(ROOT)
-        self.assertEqual(metadata['sprite_sheet_ids'],['0x64','0x40','0x43','0x47','0x70','0x71','0x72','0x73'])
-        self.assertEqual(metadata['global_sheet_ids'],['0xD7','0xB3','0xB6','0xBA','0xE3','0xE4','0xE5','0xE6'])
+        self.assertEqual(metadata['sprite_sheet_ids'],['0x64','0x40','0x43','0x47','0x70','0x71','0x72','0x73','0x75','0x76'])
+        self.assertEqual(metadata['global_sheet_ids'],['0xD7','0xB3','0xB6','0xBA','0xE3','0xE4','0xE5','0xE6','0xE8','0xE9'])
         self.assertEqual(metadata['owned_region']['pc_end'],'0x208000')
 
     def test_d4_manifest_tracks_selected_art_and_preserves_standard_entries(self):
@@ -236,7 +236,9 @@ class SourceSheets(unittest.TestCase):
         self.assertTrue(allowed(owner,0x11FFE6))
         self.assertTrue(allowed(owner,0x11FDE7))
         self.assertTrue(allowed(owner,0x11FFE7))
-        self.assertFalse(allowed(owner,0x11FDE8))
+        self.assertTrue(allowed(owner,0x11FDE8))
+        self.assertTrue(allowed(owner,0x11FFE9))
+        self.assertFalse(allowed(owner,0x11FDEA))
         self.assertFalse(allowed(owner,0x11FDDE))
         self.assertFalse(allowed('Sprites/Bosses/d4_pressure_warden.asm',0x11FDDF))
 
