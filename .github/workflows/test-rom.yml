@@ -52,6 +52,8 @@ jobs:
 
           # Seed the source bytes inspected by guarded patches and the message
           # bank terminator scanned at assembly time.
+          printf '\x41\x00\x31' | dd of=test.sfc bs=1 seek=$((0xE9B3)) conv=notrunc 2>/dev/null
+          printf '\xE8\x00\x0C' | dd of=test.sfc bs=1 seek=$((0xEA5B)) conv=notrunc 2>/dev/null
           printf '\x73\x80\x39' | dd of=test.sfc bs=1 seek=$((0xE9E6)) conv=notrunc 2>/dev/null
           printf '\x7A\x80\x38' | dd of=test.sfc bs=1 seek=$((0xE9F5)) conv=notrunc 2>/dev/null
           printf '\x7F' | dd of=test.sfc bs=1 seek=$((0x773FF)) conv=notrunc 2>/dev/null
