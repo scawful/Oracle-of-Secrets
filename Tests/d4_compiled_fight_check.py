@@ -99,17 +99,21 @@ class Fixture:
         elif name=='Sprite_CheckDamageToPlayerSameLayer':
             self.contact.append(tuple(self.spr(n,slot=x) for n in ('SprX','SprY','SprHitbox')))
 
-    def call(self,name,x=6,a=0,limit=20000):
+    def call(self,name,x=6,a=0,limit=20000,long_return=False,m8=True):
         cpu=self.cpu;cpu.x=x;cpu.a=(cpu.a&0xFF00)|(a&255)
         address=self.addr(name);assert address is not None,name
         cpu.k=address>>16;cpu.pc=address&65535
-        sp=cpu.sp;self.put(sp,0x6F);self.put(sp-1,0xFF);cpu.sp-=2
+        sp=cpu.sp
+        if long_return:
+            self.put(sp,address>>16);self.put(sp-1,0x6F);self.put(sp-2,0xFF);cpu.sp-=3
+        else:
+            self.put(sp,0x6F);self.put(sp-1,0xFF);cpu.sp-=2
         for _ in range(limit):
             address=cpu.k<<16|cpu.pc
             if address==(self.addr(name)&0xFF0000)|0x7000:
                 assert not self.bad_writes,('unexpected non-WRAM writes',self.bad_writes)
                 assert cpu.sp==sp,(name,'stack',cpu.sp,sp)
-                assert cpu.mf and cpu.xf,(name,'M/X exit')
+                assert cpu.mf==m8 and cpu.xf,(name,'M/X exit')
                 assert cpu.x==x,(name,'actor X lost',cpu.x,x)
                 return
             if address in self.stubs:self.stub(self.stubs[address])
@@ -117,6 +121,48 @@ class Fixture:
         raise AssertionError((name,'instruction limit',f'{cpu.k:02X}:{cpu.pc:04X}',cpu.sp))
 
     def close(self):self.lib.cpu_free(self.p)
+
+
+def check_camera_cache(lib,rom,labels):
+    """Run actual cache helper bytes, including its RTL and displaced ABI."""
+    cases=(
+        (0x26,0x14,0,0,3095,2253,3095,2253),
+        (0x46,0x1C,0,0,3095,2253,3095,2253),
+        (0x46,0x14,2,2,3095,2253,3095,2253),
+        (0x46,0x14,2,0,3095,2253,3095,2304),
+        (0x46,0x14,0,0,3095,2323,3072,2320),
+        (0x46,0x14,0,0,3060,2296,3072,2304),
+        (0x46,0x14,0,0,3072,2312,3072,2312),
+    )
+    for room,layout,wide,tall,x,y,ex,ey in cases:
+        f=Fixture(lib,rom,labels)
+        f.word(0xA0,room);f.word(0x40E,layout)
+        f.put(0xA6,wide);f.put(0xA7,tall)
+        f.word(0x600,2304);f.word(0x604,2320)
+        f.word(0x608,3072);f.word(0x60C,3072)
+        f.word(0xE2,x);f.word(0xE0,x-8)
+        f.word(0xE8,y);f.word(0xE6,y-4)
+        for address in (0x11E,0x120):f.word(address,x)
+        for address in (0x122,0x124):f.word(address,y)
+        f.word(0x61C,150);f.word(0x61E,152)
+        f.word(0x618,324);f.word(0x61A,326)
+        f.word(0x20,2359);f.word(0x22,3425);f.word(0,0xBEEF)
+        before=bytes(f.ram);f.cpu.y=0x37;f.cpu.c=True;f.cpu.db=0x7E
+        f.call('D4Zora_CacheRoomCamera',long_return=True,m8=False)
+        word=lambda a:f.get(a)|(f.get(a+1)<<8)
+        assert (word(0xE2),word(0xE8))==(ex,ey),(room,layout,wide,tall,x,y)
+        assert word(0xE0)==ex-8 and word(0xE6)==ey-4,'BG scroll offset lost'
+        assert all(word(a)==ex for a in (0x11E,0x120,0x7EC180))
+        assert all(word(a)==ey for a in (0x122,0x124))
+        assert (word(0x61C),word(0x61E))==((150+ex-x)&65535,(152+ex-x)&65535)
+        assert (word(0x618),word(0x61A))==((324+ey-y)&65535,(326+ey-y)&65535)
+        assert word(0)==0xBEEF and f.cpu.y==0x37 and f.cpu.c and f.cpu.db==0x7E
+        assert f.cpu.a==ex and f.cpu.dp==0,'Displaced LDA/STA ABI changed'
+        allowed=set(range(0x100,0x200))|{0xC180,0xC181}
+        for a in (0xE0,0xE2,0xE6,0xE8,0x11E,0x120,0x122,0x124,0x618,0x61A,0x61C,0x61E):allowed.update((a,a+1))
+        assert all(a in allowed or old==new for a,(old,new) in enumerate(zip(before,f.ram))),'Unexpected Link/actor/progression write'
+        f.close()
+    return len(cases)
 
 
 
@@ -256,6 +302,7 @@ def check(lib,rom,labels,candidate):
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
     for n in ('rom','symbols','candidate','lakesnes','output'):ap.add_argument('--'+n,type=Path,required=True)
+    ap.add_argument('--camera-only',action='store_true')
     a=ap.parse_args();assert not a.output.exists()
     labels={m[3]:int(m[1]+m[2],16) for m in re.finditer(r'(?m)^([0-9A-Fa-f]{2}):([0-9A-Fa-f]{4}) (\S+)$',a.symbols.read_text())}
     labels.update({n:int(v,16) for n,v in re.findall(r'(?m)^(\w+)\s*=\s*\$([0-9A-Fa-f]+)',(ROOT/'Core/symbols.asm').read_text())})
@@ -265,7 +312,9 @@ def main():
         subprocess.run(['cc','-shared','-fPIC','-O2',str(sources[0]),str(sources[2]),'-o',str(library)],check=True)
         lib=C.CDLL(str(library));lib.cpu_init.restype=C.POINTER(Cpu)
         lib.cpu_runOpcode.argtypes=[C.POINTER(Cpu)];lib.cpu_free.argtypes=[C.POINTER(Cpu)]
-        results=check(lib,a.rom.read_bytes(),labels,json.loads((a.candidate/'RECEIPT.json').read_text()))
+        results={'camera_cache_cases':check_camera_cache(lib,a.rom.read_bytes(),labels)}
+        if not a.camera_only:
+            results.update(check(lib,a.rom.read_bytes(),labels,json.loads((a.candidate/'RECEIPT.json').read_text())))
     report=dict(status='COMPILED_CPU_FIXTURE_PASS',rom_sha256=hashlib.sha256(a.rom.read_bytes()).hexdigest(),
         core_sources={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in sources},results=results,
         scope='Compiled 65816 routines; real allocator bounds controls and JumpTableLocal; other engine services stubbed. Not native gameplay.',native_runtime_qualified=False)

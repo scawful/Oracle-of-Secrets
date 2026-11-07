@@ -5,6 +5,78 @@
 D4Zora_CodeStart:
 incsrc "Core/Generated/d4_zora_sprite_sheets/frame_tables.asm"
 
+; Reuse the native room-entry cache boundary after stairs and doors. A spiral
+; stair from the tall basin can retain a scroll offset outside room46's small
+; vertical view. The next door scroll then ends before Link crosses quadrants.
+; This file is included only with ENABLE_D4_ZORA_REDESIGN; flag0 leaves the
+; original eight bytes untouched. Other rooms replay the original cache code.
+pushpc
+org $028D81 ; @hook module=Dungeons name=D4Zora_CacheRoomCamera kind=jsl target=D4Zora_CacheRoomCamera expected_m=8 expected_x=8 expected_exit_m=16 expected_exit_x=8 protected_size=8
+  assert read4($028D81) == $E2A520C2, "D4 camera cache preimage changed"
+  assert read4($028D85) == $7EC1808F, "D4 camera cache store preimage changed"
+  JSL D4Zora_CacheRoomCamera
+  NOP #4
+assert pc() == $028D89
+pullpc
+
+D4Zora_CacheRoomCamera:
+{
+  PHP
+  REP #$30
+  PHA : PHX : PHY
+  LDA.l $7E00A0 : CMP.w #$0046 : BNE .restore
+  LDA.l $7E040E : AND.w #$001F : CMP.w #$0014 : BNE .restore
+  ; Preserve the vanilla scratch word. No Link/actor/progression writes.
+  LDA.l $7E0000 : PHA
+  LDA.l $7E00A7 : AND.w #$00FF : BNE .horizontal
+  LDA.l $7E00E8 : CMP.l $7E0600 : BCC .vertical_min
+  CMP.l $7E0604 : BCC .horizontal
+  BEQ .horizontal
+  LDA.l $7E0604 : BRA .vertical_shift
+  .vertical_min
+  LDA.l $7E0600
+  .vertical_shift
+  SEC : SBC.l $7E00E8 : STA.l $7E0000
+  JSR .shift_vertical
+  .horizontal
+  LDA.l $7E00A6 : AND.w #$00FF : BNE .scratch_done
+  LDA.l $7E00E2 : CMP.l $7E0608 : BCC .horizontal_min
+  CMP.l $7E060C : BCC .scratch_done
+  BEQ .scratch_done
+  LDA.l $7E060C : BRA .horizontal_shift
+  .horizontal_min
+  LDA.l $7E0608
+  .horizontal_shift
+  SEC : SBC.l $7E00E2 : STA.l $7E0000
+  JSR .shift_horizontal
+  .scratch_done
+  PLA : STA.l $7E0000
+  .restore
+  PLY : PLX : PLA : PLP
+  ; Exact displaced REP/LDA/STA; vanilla continues caching Link and bounds.
+  REP #$20
+  LDA.b $E2 : STA.l $7EC180
+  RTL
+
+  .shift_vertical
+  LDA.l $7E0000 : CLC : ADC.l $7E00E8 : STA.l $7E00E8
+  LDA.l $7E0000 : CLC : ADC.l $7E00E6 : STA.l $7E00E6
+  LDA.l $7E0000 : CLC : ADC.l $7E0122 : STA.l $7E0122
+  LDA.l $7E0000 : CLC : ADC.l $7E0124 : STA.l $7E0124
+  LDA.l $7E0000 : CLC : ADC.l $7E0618 : STA.l $7E0618
+  LDA.l $7E0000 : CLC : ADC.l $7E061A : STA.l $7E061A
+  RTS
+
+  .shift_horizontal
+  LDA.l $7E0000 : CLC : ADC.l $7E00E2 : STA.l $7E00E2
+  LDA.l $7E0000 : CLC : ADC.l $7E00E0 : STA.l $7E00E0
+  LDA.l $7E0000 : CLC : ADC.l $7E011E : STA.l $7E011E
+  LDA.l $7E0000 : CLC : ADC.l $7E0120 : STA.l $7E0120
+  LDA.l $7E0000 : CLC : ADC.l $7E061C : STA.l $7E061C
+  LDA.l $7E0000 : CLC : ADC.l $7E061E : STA.l $7E061E
+  RTS
+}
+
 D4Zora_IsRescueActor:
 {
   LDA.w ROOM : CMP.b #$46 : BNE .no
