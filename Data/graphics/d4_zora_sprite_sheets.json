@@ -1,0 +1,60 @@
+{
+  "schema_version": 2,
+  "start": "0x40D000",
+  "capacity": 12288,
+  "encoding": "lz2",
+  "sheets": [
+    {
+      "sprite_sheet": "0x64",
+      "source": "spr64.png",
+      "base_sha256": "82e96ef7c766cdaba10516effb28ddfc1c5beb74817cdaadf421168cf74b42fa",
+      "identity": true,
+      "why": "Identity override: Impa follower sheet; no pixel or palette change."
+    },
+    {
+      "sprite_sheet": "0x40",
+      "source": "spr40.txt",
+      "base_sha256": "3cd29a81d938ef9841460724c1dc4d05627544436924b52404303b28e8fddb08",
+      "identity": false,
+      "why": "Kydrog boss, old pirate art (scawful 2026-10-19): dark outline around the collar and neck; room $A4 only."
+    },
+    {
+      "sprite_sheet": "0x43",
+      "source": "spr43.txt",
+      "base_sha256": "3c23d176e898473ea140ca182636fe189ca1b1c9015fecb64a30c6c070649f05",
+      "identity": false,
+      "why": "Kydrog boss, old pirate art (scawful 2026-10-19): dark outline around the collar and neck; tile $39 kept (not Kydrog)."
+    },
+    {
+      "sprite_sheet": "0x47",
+      "source": "spr47.txt",
+      "base_sha256": "5f4c7db15b9d3d1ee094d812724ef91eb86fa4d27e6f13fab3fcfaf778b946e7",
+      "identity": false,
+      "why": "Kydrog boss, old pirate art (scawful 2026-10-19): dark outline around the collar and neck; room $A4 only."
+    },
+    {
+      "global_sheet": "0xDF",
+      "source": "d4_zora/atlas-DF.txt",
+      "decoded_sha256": "f7276c6904d5d41e9890710f12182bc109b6742d811b8b12576ce0f149a690f4",
+      "why": "Accepted D4 River protector and bronze pirate warden; Princess source cells and Baby upload slots preserved."
+    },
+    {
+      "global_sheet": "0xE0",
+      "source": "d4_zora/atlas-E0.txt",
+      "decoded_sha256": "d2ac984153c2cbf79b42cfb15bd76b76a22c2bdcf947b4ed6139615e1d8b4052",
+      "why": "Accepted D4 River protector and bronze pirate warden; Princess source cells and Baby upload slots preserved."
+    },
+    {
+      "global_sheet": "0xE1",
+      "source": "d4_zora/atlas-E1.txt",
+      "decoded_sha256": "8045468f3cfaf583093d0b277ee825f79ed46e145f47e2dfa2b9b1dd948a3acf",
+      "why": "Accepted D4 River protector and bronze pirate warden; Princess source cells and Baby upload slots preserved."
+    },
+    {
+      "global_sheet": "0xE2",
+      "source": "d4_zora/atlas-E2.txt",
+      "decoded_sha256": "f76bddebad49c2a28feea04ae5e60d9f69490bce69bfa554791a4608ca844f54",
+      "why": "Accepted D4 River protector and bronze pirate warden; Princess source cells and Baby upload slots preserved."
+    }
+  ]
+}

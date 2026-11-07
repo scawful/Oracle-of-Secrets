@@ -209,6 +209,33 @@ class SourceSheets(unittest.TestCase):
         self.assertEqual(metadata['global_sheet_ids'],['0xD7','0xB3','0xB6','0xBA'])
         self.assertEqual(metadata['owned_region']['pc_end'],'0x208000')
 
+    def test_d4_manifest_tracks_selected_art_and_preserves_standard_entries(self):
+        import asm_source
+        with mock.patch.object(asm_source, '_load_global_defines', return_value={'ENABLE_D4_ZORA_REDESIGN':1}):
+            metadata=sheets.source_metadata(ROOT)
+        self.assertEqual(metadata['global_sheet_ids'][-4:],['0xDF','0xE0','0xE1','0xE2'])
+        self.assertEqual(metadata['generated_include'],'Core/Generated/d4_zora_sprite_sheets/sheet_overrides.asm')
+        standard=sheets.read_spec(ROOT/sheets.SPEC)
+        changed=sheets.read_spec(ROOT/sheets.D4_SPEC)
+        changed['sheets'][0]['why']='unauthorized inherited change'
+        with mock.patch.object(asm_source, '_load_global_defines', return_value={'ENABLE_D4_ZORA_REDESIGN':1}), \
+             mock.patch.object(sheets,'read_spec',side_effect=[standard,changed]), \
+             self.assertRaisesRegex(ValueError,'preserve every standard'):
+            sheets.selected_sources(ROOT)
+
+    def test_d4_overlap_policy_rejects_neighbor_and_foreign_emissions(self):
+        module_path=ROOT/'Scripts/Build/check_zscream_overlap.py'
+        spec=importlib.util.spec_from_file_location('d4_overlap',module_path)
+        overlap=importlib.util.module_from_spec(spec);spec.loader.exec_module(overlap)
+        owner='Core/Generated/d4_zora_sprite_sheets/sheet_overrides.asm'
+        def allowed(source,pc):
+            return any(source==s and begin<=pc<=end for s,begin,end in overlap.OWNED_REGIONS)
+        self.assertTrue(allowed(owner,0x11FDDF))
+        self.assertTrue(allowed(owner,0x11FFE2))
+        self.assertFalse(allowed(owner,0x11FDE3))
+        self.assertFalse(allowed(owner,0x11FDDE))
+        self.assertFalse(allowed('Sprites/Bosses/d4_pressure_warden.asm',0x11FDDF))
+
     def test_manifest_integration_keeps_strict_yaze_keys_and_portable_paths(self):
         from test_generate_hack_manifest import ManifestFixture
         from generate_hack_manifest import generate_manifest

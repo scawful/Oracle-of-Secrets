@@ -49,6 +49,11 @@
 
 Sprite_Zora_Long:
 {
+if !ENABLE_D4_ZORA_REDESIGN == 1
+  JSL D4Zora_IsRescueActor : BCC .legacy_d4
+  JML D4Zora_Long
+  .legacy_d4
+endif
   PHB : PHK : PLB
 
   ; Check what Zora we are drawing
