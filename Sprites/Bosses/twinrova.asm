@@ -1089,6 +1089,11 @@ org $068841 ; @hook module=Sprites
 org $1AFC52
   db $06 ; check for maiden instead of zelda
 
+; The escorted maiden opens the library passage; no Lamp prerequisite.
+org $1AFC55 ; @hook module=Sprites name=LibraryMantle_MaidenOnly kind=patch expected_m=8 expected_x=8
+  NOP #6 ; Remove LDA.l $7EF34A : BEQ .exit; retain follower/contact/push checks.
+assert pc() == $1AFC5B
+
 org $1AFCA7
   ; Tiles
   db $0C, $0E, $0C, $2C, $2E, $2C
@@ -1124,7 +1129,7 @@ CheckForMaidenInLibrary:
   LDA $A0 : CMP.b #$BD : BNE .notTheLibrary
     LDA $11 : BNE .notTheLibrary
       LDA $7FF9D2 : BNE .dialogue_played
-        LDA #$1D : LDY #$00
+        LDA #$BD : LDY #$01 ; $1BD: escorted maiden asks for help.
         JSL Sprite_ShowMessageUnconditional
         LDA #$01 : STA $7FF9D2
       .dialogue_played

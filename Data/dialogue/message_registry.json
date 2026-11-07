@@ -25,10 +25,10 @@
     {
       "start": "0x1BD",
       "end": "0x1BD",
-      "status": "placeholder-pool",
-      "expected_content": "placeholder",
-      "owner": "unallocated",
-      "purpose": "Available contiguous slots; draft documents make non-binding claims here"
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "glacia-maiden-library",
+      "purpose": "Glacia escorted maiden asks for help pushing the library bookcase; CheckForMaidenInLibrary. User requested replacement of the wrong Korok hint on 2026-11-06; private173 only until integration."
     },
     {
       "start": "0x1BE",
