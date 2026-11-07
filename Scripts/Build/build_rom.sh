@@ -3,7 +3,8 @@ set -euo pipefail
 
 usage() {
   echo "Usage: $(basename "$0") <version> [asar_binary] [--reload] [--no-symbols] [--mesen-sync] [--skip-tests] [--asar=<path>] [--enable <csv>] [--disable <csv>] [--profile <defaults|all-on|all-off>] [--persist-flags] [--help]" >&2
-  echo "Base ROM: Roms/oos<version>.sfc (unpatched edit target; override with OOS_BASE_ROM)." >&2
+  echo "Base ROM: OOS_BASE_ROM, then YAZE_PROJECT_ROM, then Roms/oos<version>.sfc." >&2
+  echo "  An explicit base must match the active Yaze project ROM when both are set." >&2
   echo "  Backward compat: Roms/oos<version>_test2.sfc is used only when the standard base is absent." >&2
   echo "" >&2
   echo "Feature flag overrides:" >&2
@@ -133,7 +134,8 @@ fi
 # name used during the ZSCustomOverworld v3 port). Standard is oos${version}.sfc.
 default_base="$rom_dir/oos${version}.sfc"
 legacy_base="$rom_dir/oos${version}_test2.sfc"
-if [[ -z "${OOS_BASE_ROM:-}" ]]; then
+base_override="${OOS_BASE_ROM:-${YAZE_PROJECT_ROM:-}}"
+if [[ -z "$base_override" ]]; then
   if [[ -f "$default_base" ]]; then
     base_rom="$default_base"
   elif [[ -f "$legacy_base" ]]; then
@@ -143,7 +145,7 @@ if [[ -z "${OOS_BASE_ROM:-}" ]]; then
     base_rom="$default_base"
   fi
 else
-  base_rom="$OOS_BASE_ROM"
+  base_rom="$base_override"
 fi
 patched_rom="$rom_dir/oos${version}x.sfc"
 symbols_rel="Roms/oos${version}x.sym"
@@ -161,6 +163,11 @@ if [[ ! -f "$base_rom" ]]; then
 fi
 if [[ "$base_rom" != /* ]]; then
   base_rom="$(cd "$(dirname "$base_rom")" && pwd -P)/$(basename "$base_rom")"
+fi
+if [[ -n "${OOS_BASE_ROM:-}" && -n "${YAZE_PROJECT_ROM:-}" &&
+      ! "$base_rom" -ef "$YAZE_PROJECT_ROM" ]]; then
+  echo "ERROR: OOS_BASE_ROM does not match the active Yaze project ROM; refusing to build a different source." >&2
+  exit 1
 fi
 
 if [[ -f "$legacy_base" && "$base_rom" != "$legacy_base" ]]; then

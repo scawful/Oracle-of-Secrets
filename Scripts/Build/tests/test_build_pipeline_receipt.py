@@ -22,7 +22,8 @@ class BuildPipelineReceiptTest(unittest.TestCase):
         self.root = Path(self.temp.name) / '.context' / 'source with spaces'
         self.root.mkdir(parents=True)
         self.env = {k: v for k, v in os.environ.items()
-                    if not k.startswith(('OOS_', 'SKIP_', 'ASAR_', 'MESEN2_'))}
+                    if not k.startswith(('OOS_', 'SKIP_', 'ASAR_', 'MESEN2_',
+                                         'YAZE_PROJECT_'))}
         self.env.update(PYTHONDONTWRITEBYTECODE='1',
                         OOS_SKIP_WATER_TABLE_GEN='1', OOS_SKIP_WATER_FILL_TABLE_GEN='1',
                         OOS_SKIP_MENU_VALIDATE='1', OOS_SKIP_VERSION_STAMP='1',
@@ -121,6 +122,44 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.assertEqual(output.read_text(), 'previous candidate')
         self.assertEqual((self.root / 'Config/feature_flags.asm').read_bytes(), before)
         self.assertNotIn('output_rom', self.receipt['artifacts'])
+
+    def test_yaze_build_uses_the_saved_project_rom(self):
+        source = self.write('project with spaces/edited.sfc', 'saved project edit')
+        self.env['YAZE_PROJECT_ROM'] = str(source)
+        result = self.build()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(Path(self.receipt['base_rom']['path']), source.resolve())
+        self.assertEqual((self.root / 'Roms/oos999x.sfc').read_text(),
+                         'saved project edit assembled')
+        self.assertEqual(source.read_text(), 'saved project edit')
+
+    def test_missing_yaze_project_rom_does_not_fall_back_to_repository_rom(self):
+        self.env['YAZE_PROJECT_ROM'] = str(self.root / 'project/missing.sfc')
+        result = self.build()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Base ROM not found', result.stderr + result.stdout)
+        self.assertFalse((self.root / 'Roms/oos999x.sfc').exists())
+
+    def test_explicit_base_cannot_disagree_with_active_yaze_project(self):
+        source = self.write('project/edited.sfc', 'saved project edit')
+        output = self.write('Roms/oos999x.sfc', 'previous candidate')
+        self.env.update(YAZE_PROJECT_ROM=str(source),
+                        OOS_BASE_ROM=str(self.root / 'Roms/oos999.sfc'))
+        result = self.build()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('does not match the active Yaze project ROM',
+                      result.stderr + result.stdout)
+        self.assertEqual(output.read_text(), 'previous candidate')
+
+    def test_explicit_base_alias_of_yaze_project_rom_is_accepted(self):
+        source = self.write('project/edited.sfc', 'saved project edit')
+        alias = self.root / 'project/source-alias.sfc'
+        alias.symlink_to(source)
+        self.env.update(YAZE_PROJECT_ROM=str(source), OOS_BASE_ROM=str(alias))
+        result = self.build()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((self.root / 'Roms/oos999x.sfc').read_text(),
+                         'saved project edit assembled')
 
     def test_external_cwd_preserves_relative_tool_base_and_manifest_paths(self):
         caller = Path(self.temp.name)
