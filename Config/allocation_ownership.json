@@ -236,6 +236,11 @@
       "source_set": "shared",
       "path": "Overworld/docks_profile.asm",
       "sha256": "d8fb2882d99ba8d23894b8812e6d994144ec9b1c3db689020291c68f8d28afe8"
+    },
+    "shared:Sprites/Bosses/d8_boss.asm": {
+      "source_set": "shared",
+      "path": "Sprites/Bosses/d8_boss.asm",
+      "sha256": "46f7952d50c3271da51c23114af5f6f31f101dcc3c5fefb5b2a31d03b247bf0f"
     }
   },
   "claims": [
@@ -1956,6 +1961,27 @@
       ],
       "aliases": [],
       "anchors": []
+    },
+    {
+      "id": "d8_boss_code",
+      "owner": "D8 Sky boss compiled sprite routines",
+      "space": "snes_rom",
+      "base": 3061760,
+      "size": 2048,
+      "status": "shared",
+      "condition": {
+        "ENABLE_D8_BOSS": 1
+      },
+      "lifetime": "Compiled ROM code; fixed slot before existing D8 graphics at $2EC000.",
+      "reset": "Build owns this slot; no runtime allocation or SRAM.",
+      "save": "No saved data. The menu stream must end at or before $2EB800.",
+      "provenance": [
+        "shared:Sprites/Bosses/d8_boss.asm"
+      ],
+      "anchors": [
+        "org $2EB800"
+      ],
+      "aliases": []
     }
   ],
   "lifetime_aliases": [],

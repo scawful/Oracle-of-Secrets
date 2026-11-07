@@ -401,6 +401,7 @@ if !ENABLE_D4_ZORA_REDESIGN == 1
 endif
 
 if !ENABLE_D8_BOSS == 1
+  ; The D8 include owns a fixed bank $2E code slot and restores this cursor.
   %log_start("d8_boss", !LOG_DUNGEON)
   incsrc "Sprites/Bosses/d8_boss.asm"
   %log_end("d8_boss", !LOG_DUNGEON)

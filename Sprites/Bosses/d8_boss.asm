@@ -1,9 +1,9 @@
 ; =========================================================
 ; D8 Sky boss — mechanics prototype (first playable slice)
 ;
-; Gated by !ENABLE_D8_BOSS (default 0). Included from the bank $2C sprite
-; stream in Sprites/all_sprites.asm. No room places this sprite: native
-; tests spawn it by savestate + RAM poke (see the AFS mech17 NOTES.md).
+; Gated by !ENABLE_D8_BOSS (default 0). Included from Sprites/all_sprites.asm;
+; code owns $2EB800-$2EBFFF beside its existing graphics bank. The include
+; restores the bank $2C sprite stream cursor after its final draw routine.
 ;
 ; Decided rules (scawful 2026-11-03):
 ;   - A Somaria block resting on one fixed socket qualifies the cycle.
@@ -49,6 +49,12 @@
 ; The boss never calls Sprite_CheckDamageToPlayer: the shell has no contact
 ; damage. Only the marked lane / beam boxes hurt Link.
 ; =========================================================
+
+; Keep every short call and local data table in one bank. Both long sprite
+; entries establish DBR from PHK; fixed graphics allocations below are unchanged.
+pushpc
+org $2EB800
+D8Boss_CodeStart:
 
 Sprite_D8Boss = $C3
 
@@ -708,6 +714,8 @@ D8Boss_Palette:
 ; $80-$FF. Bank $2C has no room, so the tiles sit in a fixed slot at the
 ; tail of the items bank. Items/all_items.asm asserts its stream ends
 ; before $2BE000 when this flag is on.
+assert pc() <= $2EC000, "D8 boss code reached its graphics allocation"
+
 pushpc
 org $2BE000
 D8Boss_Stage1Gfx:
@@ -812,3 +820,7 @@ Sprite_D8Boss_Draw:
   PLX
   RTS
 }
+
+D8Boss_CodeEnd:
+assert pc() <= $2EC000, "D8 boss code exceeded its 2 KiB slot"
+pullpc
