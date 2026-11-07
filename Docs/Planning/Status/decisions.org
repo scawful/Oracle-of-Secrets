@@ -4340,3 +4340,21 @@ Answer: "Briefing only" (scawful, 2026-11-06)
   (8cade37c), milk is a west reward the player sees third or fourth.
   Not decided: price, what milk does (bottle refill, heal amount), who sells it, the shop text
   (story/dialogue text needs scawful's OK). Horse: not selected; not costed.
+
+* DECIDED Ranch horse: a horse sprite at Toto Ranch turns Link into a horse form (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude, progression review (gap B midgame travel, gap C west)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/progression_review_2026-11-06/README.md
+  :END:
+  scawful before the ask: "the bunny hood helps a bit with travel, the horse could help fill in where the song of soaring doesnt in the mid game but still idk could get complex hahaha, maybe it's like a mask form that's faster than bunny hood but idk"; "it couldnt be selected from the menu bc we got six masks though it'd have to be like a mask form to sprite situation maybe"; "moosh is song of soaring dark world only".
+  Question: How does Link get on the horse?
+  Options shown: 1 Ranch horse sprite (pick): after the curse lifts, talk to the horse at the
+  ranch to become a horse form; dismount with a button or at any door; 2 Ranch sprite plus an
+  Ocarina call outdoors in Kalyxo; 3 Park the horse.
+  Answer: "1" (scawful, 2026-11-06)
+  Updates "Toto Ranch sells milk after the curse lifts" (cc54d9f0): the horse is now selected.
+  Shape: no menu slot (six masks stay); entered from a ranch sprite, like Moosh is entered from
+  Song of Soaring in the Dark World (Items/ocarina.asm:225). Faster than the Bunny Hood; outdoors
+  only; no sword or items while riding. Candidate form ID $09 (after Garo Master $08).
+  Not decided: art (horse sheet size vs Link's body), exact speed, whether the horse jumps fences,
+  the horse NPC text. No Ocarina call.
