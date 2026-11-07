@@ -1,7 +1,9 @@
-; Private paired reservoir prototype. Default off; authored stairs/keys retained.
-; WaterGateStates bits0/1 retain legacy rooms27/25. Bits2/3 belong only here.
+; Private reservoir/service bay and one-time inlet. Default off.
+; Preserve legacy bits01/02.08 retains the earlier maintenance-latch meaning;
+; 220/221 prototype04/08 saves do not grant inlet10 until a new High release.
 !D4Water_High = $04
 !D4Water_Latch = $08
+!D4Water_Inlet = $10
 
 pushpc
 org $018745 ; @hook module=Dungeons name=D4Water_SelectObjects kind=jsl target=D4Water_SelectObjects expected_m=16 expected_x=16 expected_exit_m=16 expected_exit_x=16 protected_size=12
@@ -31,13 +33,14 @@ D4Water_SelectObjects:
   ; Entry D=0, M16/X16; X=room*3. Preserve X/Y/DBR and reproduce pointer result.
   LDA.l $7E00A0 : CMP.w #$0025 : BEQ .dam
   CMP.w #$0037 : BEQ .spillway
+  .original
   LDA.l !D4Water_ObjectTable+1,X : STA.b $B8
   LDA.l !D4Water_ObjectTable,X : STA.b $B7
   RTL
   .dam
   SEP #$20
+  STZ.b $AD ; still water in both states; inherited effect03 adds a left current
   LDA.l WaterGateStates : AND.b #!D4Water_High : BEQ .dam_low
-  LDA.b #$03 : STA.b $AD
   REP #$20
   LDA.w #D4Water25High>>8 : STA.b $B8
   LDA.w #D4Water25High : STA.b $B7
@@ -50,16 +53,15 @@ D4Water_SelectObjects:
   RTL
   .spillway
   SEP #$20
-  LDA.l WaterGateStates : AND.b #!D4Water_High : BEQ .spill_low
+  LDA.l WaterGateStates : AND.b #!D4Water_Inlet : BNE .spill_open
   REP #$20
-  LDA.w #D4Water37High>>8 : STA.b $B8
-  LDA.w #D4Water37High : STA.b $B7
+  LDA.w #D4Water37Closed>>8 : STA.b $B8
+  LDA.w #D4Water37Closed : STA.b $B7
   RTL
-  .spill_low
+  .spill_open
   REP #$20
-  LDA.w #D4Water37Low>>8 : STA.b $B8
-  LDA.w #D4Water37Low : STA.b $B7
-  RTL
+  JMP .original ; restore the original flooded room, not another water state
+
 }
 
 D4Water_PlayerControl:
@@ -90,32 +92,33 @@ D4Water_Tick:
   JMP .done
   .spill
   JSR D4Water_ApplyCollision
-  .check_relay
-  REP #$20
-  ; Player's local top-left standing box below lever(13,20), facing north.
-  LDA.b $22 : AND.w #$01FF : CMP.w #$0060 : BCC .relay_done
-  CMP.w #$0078 : BCS .relay_done
-  LDA.b $20 : AND.w #$01FF : CMP.w #$00B0 : BCC .relay_done
-  CMP.w #$00C4 : BCS .relay_done
-  JMP .valve
-  .relay_done
   JMP .done
   .dam
   JSR D4Water_ApplyCollision
+  SEP #$20
+  LDA.l WaterGateStates : AND.b #!D4Water_High : BEQ +
+  JMP .check_main
+  +
+  LDA.w $0AAB : BEQ +
+  JMP .check_main
+  +
+  REP #$20
   ; Step on the maintenance star once. Coordinates use Link's centre/feet.
   LDA.b $22 : AND.w #$01FF : CLC : ADC.w #$0008
   CMP.w #$0148 : BCC .check_main
   CMP.w #$0158 : BCS .check_main
   LDA.b $20 : AND.w #$01FF : CLC : ADC.w #$0014
-  CMP.w #$0198 : BCC .check_main
-  CMP.w #$01A8 : BCS .check_main
+  CMP.w #$0188 : BCC .check_main
+  CMP.w #$0198 : BCS .check_main
   SEP #$20
   LDA.l WaterGateStates : AND.b #!D4Water_Latch : BNE .check_main
   LDA.l WaterGateStates : ORA.b #!D4Water_Latch : STA.l WaterGateStates
   LDA.b #$25 : STA.w $012F
   .check_main
   REP #$20
-  LDA.b $22 : AND.w #$01FF : CMP.w #$0060 : BCC .done_jump
+  LDA.b $22 : AND.w #$01FF : CMP.w #$0060 : BCS +
+  JMP .done
+  +
   CMP.w #$0078 : BCS .done_jump
   LDA.b $20 : AND.w #$01FF : CMP.w #$0058 : BCC .done_jump
   CMP.w #$006C : BCS .done_jump
@@ -128,7 +131,11 @@ D4Water_Tick:
   BNE .done_jump
   LDA.b $F6 : AND.b #$80 : BEQ .done_jump
   LDA.l WaterGateStates : AND.b #!D4Water_Latch : BEQ .locked
-  LDA.l WaterGateStates : EOR.b #!D4Water_High : STA.l WaterGateStates
+  LDA.l WaterGateStates : EOR.b #!D4Water_High
+  BIT.b #!D4Water_High : BEQ .store_water
+  ORA.b #!D4Water_Inlet ; monotonic: lowering never clears the released inlet
+  .store_water
+  STA.l WaterGateStates
   LDA.b #$25 : STA.w $012F
   ; Reproduce Underworld_SaveRoomData before the normal same-room warp reload.
   ; Keep collected chests/keys and open doors; no room flag or inventory reset.
@@ -154,7 +161,8 @@ D4Water_Tick:
 
 ; M16/X16, D0/DBR7E from Tick. Preserve its DP scratch, leave M16/X16.
 ; One native collision cell is a load sentinel, avoiding a full replay per frame.
-; All four sentinels differ from the native room-load value (receipt pinned).
+; Each table starts with a deliberate native-load control cell; the focused
+; native caller checks every run, not just this fast-path sentinel.
 D4Water_ApplyCollision:
 {
   LDA.b $08 : PHA
@@ -170,12 +178,11 @@ D4Water_ApplyCollision:
   LDA.w #D4Water25LowCollision : BRA .pointer
   .room37
   SEP #$20
-  LDA.l WaterGateStates : AND.b #!D4Water_High : BEQ .low37
+  LDA.l WaterGateStates : AND.b #!D4Water_Inlet : BEQ .closed37
+  JMP .done ; open37 uses the original stream and native collision unchanged
+  .closed37
   REP #$20
-  LDA.w #D4Water37HighCollision : BRA .pointer
-  .low37
-  REP #$20
-  LDA.w #D4Water37LowCollision
+  LDA.w #D4Water37ClosedCollision
   .pointer
   STA.b $08
   SEP #$20
@@ -208,13 +215,11 @@ D4Water_ApplyCollision:
 }
 D4Water25LowCollision:  incbin "Data/Rooms/d4_water/25-low-collision.bin"
 D4Water25HighCollision: incbin "Data/Rooms/d4_water/25-high-collision.bin"
-D4Water37LowCollision:  incbin "Data/Rooms/d4_water/37-low-collision.bin"
-D4Water37HighCollision: incbin "Data/Rooms/d4_water/37-high-collision.bin"
+D4Water37ClosedCollision: incbin "Data/Rooms/d4_water/37-closed-collision.bin"
 
 D4Water25Low:  incbin "Data/Rooms/d4_water/25-low.bin"
 D4Water25High: incbin "Data/Rooms/d4_water/25-high.bin"
-D4Water37Low:  incbin "Data/Rooms/d4_water/37-low.bin"
-D4Water37High: incbin "Data/Rooms/d4_water/37-high.bin"
+D4Water37Closed: incbin "Data/Rooms/d4_water/37-closed.bin"
 D4Water_End:
 assert D4Water_End <= $50A000, "D4 paired water controller exceeds its slot"
 pullpc

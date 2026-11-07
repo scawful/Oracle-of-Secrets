@@ -255,7 +255,7 @@
     "shared:Dungeons/d4_water_control.asm": {
       "source_set": "shared",
       "path": "Dungeons/d4_water_control.asm",
-      "sha256": "acc821e463c4f1b4371fdd69574dcd9ed4633542e49a3f199e1629eda8fd6305"
+      "sha256": "23931d2f385843dc98dfe1413c5ab7d5662e78426d4464fc5dd1749e4f9963a5"
     }
   },
   "claims": [
@@ -2023,7 +2023,7 @@
     },
     {
       "id": "d4_water_control_private",
-      "owner": "Private paired D4 reservoir controller and four object streams",
+      "owner": "Private D4 reservoir service and one-time inlet controller",
       "space": "snes_rom",
       "base": 5275648,
       "size": 8192,
@@ -2032,8 +2032,8 @@
         "ENABLE_D4_WATER_CONTROLS": 1
       },
       "lifetime": "Compiled prototype only; no editor writes or default activation.",
-      "reset": "Normal room loader selects streams from saved bits04/08.",
-      "save": "Two reserved bits in existing WaterGateStates byte; no checksum or slot layout change.",
+      "reset": "Normal loader selects25Low/High by04 and37closed/original by10.08 remains maintenanceReleased.",
+      "save": "WaterGateStates04 reservoirHigh,08 maintenanceReleased,10 inletReleased; preserve01/02. No automatic220/221-save migration to10.",
       "provenance": [
         "shared:Dungeons/d4_water_control.asm"
       ],

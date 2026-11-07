@@ -1,51 +1,106 @@
 #!/usr/bin/env python3
-"""Private D4 collision recipe; no ROM writes, preserves object/door cells."""
+"""Emit bounded D4 water/service/gate collision runs; never write a ROM.
+
+Format: dw offset, db positive count, value; FFFF end. Offsets address
+COLMAPA then COLMAPB, and no existing interroom stair/door/key cell is changed.
+"""
 from pathlib import Path
-import json,struct
 import argparse
-import sky_d8_room_writer as r
-parser=argparse.ArgumentParser(description='Generate private paired water collision runs from native object footprints and rendered object bookkeeping.')
-parser.add_argument('--tile-reports',type=Path,required=True)
-parser.add_argument('--output',type=Path,required=True)
-args=parser.parse_args()
-O=args.tile_reports.resolve();W=Path(__file__).resolve().parents[2]
-args.output.mkdir(parents=True,exist_ok=True)
-def dec(rec):
- if rec[0]>=0xfc or rec[2]>=0xf8:
-  a,x,y=r.decode_object(rec);return a,x,y,0
- return rec[2],rec[0]>>2,rec[1]>>2,((rec[0]&3)<<2)|(rec[1]&3)
-audit=[]
-for room in [0x25,0x37]:
- raw=(W/f'Data/Rooms/d4_water/{room:02x}-high.bin').read_bytes()
- high=r.parse_object_stream(raw,0,len(raw)).lists
- water=set()
- for rec in high[1]:
-  a,x,y,n=dec(rec)
-  if a in (0xc9,0xe7):
-   for yy in range(y,y+4*((n&3)+1)):
-    for xx in range(x,x+4*((n>>2)+1)):
-     assert xx<64 and yy<64;water.add(yy*64+xx)
- for state in ['low','high']:
-  d=json.loads((O/f'room-{room:02x}-{state}.tiles.json').read_text());attrs=d['attributes'];sources=d['attribute_sources'];changes={}
-  for cell in water:
-   # Object/door bookkeeping owns special cells; never flatten their attributes.
-   if sources[4096+cell]==0:changes[4096+cell]=8 if state=='high' else 0
-  if state=='low':
-   # Native133 adds a deep-water approach even after the visual pool drains.
-   for cell in range(4096):
-    if sources[cell]==4 and attrs[cell]==8:changes[cell]=0
-  if room==0x37 and state=='high':
-   for yy in range(32,35):
-    for xx in range(34,42):
-     changes[yy*64+xx]=0;changes[4096+yy*64+xx]=1
-  # Paused native220 failure02 proves25 C9/E7 tiles resolve to02.
-  # Editor replay labels that native custom type08; retain the native preimage.
-  first=min(changes);native_first=2 if room==0x25 and state=='high' else attrs[first];assert native_first!=changes[first], (room,state,'sentinel already native value')
-  runs=[]
-  for offset,value in sorted(changes.items()):
-   if runs and offset==runs[-1][0]+runs[-1][1] and value==runs[-1][2] and runs[-1][1]<255:runs[-1][1]+=1
-   else:runs.append([offset,1,value])
-  raw=b''.join(struct.pack('<HBB',*run)for run in runs)+b'\xff\xff'
-  (args.output/f'{room:02x}-{state}-collision.bin').write_bytes(raw)
-  audit.append(dict(room=room,state=state,cells=len(changes),runs=len(runs),bytes=len(raw),sentinel=[first,native_first,changes[first]],specialCellsExcluded=sum(sources[4096+c]!=0 for c in water)))
-(args.output/'COLLISION_RECEIPT.json').write_text(json.dumps(audit,indent=2)+'\n');print(json.dumps(audit,indent=2))
+import hashlib
+import json
+import struct
+
+import sky_d8_room_writer as rooms
+
+
+def decode(rec):
+    if rec[0] >= 0xfc or rec[2] >= 0xf8:
+        a, x, y = rooms.decode_object(rec)
+        return a, x, y, 0
+    return rec[2], rec[0] >> 2, rec[1] >> 2, ((rec[0] & 3) << 2) | (rec[1] & 3)
+
+
+def rectangle(changes, x, y, width, height, value, layers=(0, 1)):
+    for layer in layers:
+        for yy in range(y, y + height):
+            for xx in range(x, x + width):
+                assert 0 <= xx < 64 and 0 <= yy < 64
+                changes[layer * 4096 + yy * 64 + xx] = value
+
+
+def tables(root):
+    data = (root / 'Data/Rooms/d4_water/25-high.bin').read_bytes()
+    high = rooms.parse_object_stream(data, 0, len(data))
+    water = set()
+    for rec in high.lists[1]:
+        a, x, y, n = decode(rec)
+        if a in (0xc9, 0xe7):
+            water.update(yy * 64 + xx for yy in range(y, y + 4 * ((n & 3) + 1))
+                         for xx in range(x, x + 4 * ((n >> 2) + 1)))
+    result = {}
+    for state in ('low', 'high'):
+        changes = {4096 + cell: 8 if state == 'high' else 0 for cell in water}
+        rectangle(changes, 38, 47, 8, 5, 0)
+        rectangle(changes, 36, 47, 2, 6, 1)
+        rectangle(changes, 46, 47, 2, 6, 1)
+        rectangle(changes, 36, 52, 12, 3, 1)
+        if state == 'low':
+            rectangle(changes, 36, 48, 4, 4, 0)
+            rectangle(changes, 41, 49, 2, 2, 0x3b, (0,))
+            rectangle(changes, 22, 44, 4, 1, 0, (0,))
+            for x in (22, 30, 51):
+                rectangle(changes, x, 44, 4, 1, 2, (1,))
+            sentinel = 44 * 64 + 22  # native133 forces08; drained approach needs00
+        else:
+            rectangle(changes, 38, 47, 8, 5, 1)  # sealed maintenance cover
+            # Intended vanilla135 water-hop flags at the unchanged two anchors.
+            # The old mixed133/135 list order overwrites the native hop count.
+            for x in (30, 51):
+                for dx, value in enumerate((3, 0, 0, 3)):
+                    changes[43 * 64 + x + dx] = value
+                for dx, value in enumerate((3, 10, 10, 3)):
+                    changes[4096 + 43 * 64 + x + dx] = value
+            sentinel = 4096 + 45 * 64 + 6  # native E7 custom tile02; surface08
+        result['25-' + state] = changes, sentinel
+    closed = {}
+    rectangle(closed, 22, 32, 24, 3, 1)
+    result['37-closed'] = closed, 33 * 64 + 30  # original underwater floor00
+    return result
+
+
+def encode(changes, sentinel):
+    # Put the sentinel first, once. It is a fast-path control, not an acceptance
+    # test: the native caller independently compares every encoded cell.
+    runs = [[sentinel, 1, changes[sentinel]]]
+    for offset, value in sorted(changes.items()):
+        if offset == sentinel:
+            continue
+        if len(runs) > 1 and offset == runs[-1][0] + runs[-1][1] and value == runs[-1][2] and runs[-1][1] < 255:
+            runs[-1][1] += 1
+        else:
+            runs.append([offset, 1, value])
+    assert len(changes) == sum(run[1] for run in runs)
+    assert all(0 <= off < off + count <= 8192 for off, count, _ in runs)
+    return b''.join(struct.pack('<HBB', *run) for run in runs) + b'\xff\xff', runs
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--receipt', type=Path, required=True)
+    args = parser.parse_args()
+    args.output.mkdir(parents=True, exist_ok=True)
+    root = Path(__file__).resolve().parents[2]
+    audit = []
+    for name, (changes, sentinel) in tables(root).items():
+        raw, runs = encode(changes, sentinel)
+        (args.output / (name + '-collision.bin')).write_bytes(raw)
+        audit.append(dict(name=name, cells=len(changes), runs=len(runs), bytes=len(raw),
+                          sentinel=[sentinel, changes[sentinel]],
+                          sha256=hashlib.sha256(raw).hexdigest()))
+    args.receipt.write_text(json.dumps(audit, indent=2) + '\n')
+    print(json.dumps(audit, indent=2))
+
+
+if __name__ == '__main__':
+    main()
