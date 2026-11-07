@@ -14,6 +14,8 @@ SourceGlobalSheet_E3: incbin "sheets/gE3.bin"
 SourceGlobalSheet_E4: incbin "sheets/gE4.bin"
 SourceGlobalSheet_E5: incbin "sheets/gE5.bin"
 SourceGlobalSheet_E6: incbin "sheets/gE6.bin"
+SourceGlobalSheet_E8: incbin "sheets/gE8.bin"
+SourceGlobalSheet_E9: incbin "sheets/gE9.bin"
 assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
 if not(defined("GfxSheet_TableDone"))
   error "sheet_overrides.asm must follow Core/gfx_sheet_table.asm"
@@ -75,4 +77,18 @@ org $23FEE6 ; @hook module=Core kind=data protected_size=1
   db $8F
 org $23FFE6 ; @hook module=Core kind=data protected_size=1
   db $17
+; Global $E8 (sprite-relative $75): Selected Minish Cap A Sky Tower normal background sheet; clone of legacy 15; normal graphics group binding follows separately.
+org $23FDE8 ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEE8 ; @hook module=Core kind=data protected_size=1
+  db $93
+org $23FFE8 ; @hook module=Core kind=data protected_size=1
+  db $5F
+; Global $E9 (sprite-relative $76): Selected Minish Cap A Sky Tower normal background sheet; clone of legacy 08; normal graphics group binding follows separately.
+org $23FDE9 ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEE9 ; @hook module=Core kind=data protected_size=1
+  db $98
+org $23FFE9 ; @hook module=Core kind=data protected_size=1
+  db $B9
 pullpc
