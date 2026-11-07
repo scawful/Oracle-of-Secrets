@@ -215,8 +215,15 @@ snapshot_build_outputs
 
 # Native special-overworld data belongs to the editable ROM. The generated
 # include contains constants only; initial data import is a separate operation.
+native_build_args=(--build-cache "$repo_root/.cache")
+if [[ -n "${OOS_Z3ED_BIN:-}" ]]; then
+  native_build_args+=(--z3ed "$OOS_Z3ED_BIN")
+elif [[ -x "$repo_root/../yaze/scripts/z3ed" ]]; then
+  native_build_args+=(--z3ed "$repo_root/../yaze/scripts/z3ed")
+fi
 run_check native_overworld_constants 1 python3 "$repo_root/Scripts/Build/lyra_native_loaders.py" \
-  --rom "$base_rom" --constants "$repo_root/.cache/special_overworld_reader_constants.asm"
+  --rom "$base_rom" --constants "$repo_root/.cache/special_overworld_reader_constants.asm" \
+  "${native_build_args[@]}"
 
 # Keep water-gate runtime tables synced with the validated editor-authored base
 # ROM. The tracked custom-collision source contract guarantees that marker
@@ -420,10 +427,30 @@ assemble_rom() {
 }
 run_check assembly 1 assemble_rom
 
+# The saved source stays authoritative. Only a regenerated reader body may
+# need new directory CRCs. Emit those as assembly input and reassemble the
+# original source so the assembler owns the final checksum and hook identity.
+if [[ -f "$repo_root/.cache/special_overworld_native_source.json" ]]; then
+  run_check native_overworld_readers 1 python3 "$repo_root/Scripts/Build/lyra_native_loaders.py" \
+    --rom "$base_rom" --seal-compiled "$patched_rom" \
+    --symbols "$symbols_path" "${native_build_args[@]}"
+  if [[ -f "$repo_root/.cache/binaries/special-overworld-directory.bin" ]]; then
+    reassemble_native_rom() {
+      cp -f "$base_rom" "$patched_rom"
+      if [[ "${OOS_SKIP_VERSION_STAMP:-0}" != "1" ]]; then
+        python3 "$repo_root/Scripts/Build/version_stamp.py" --rom "$patched_rom" || return $?
+      fi
+      assemble_rom
+    }
+    run_check native_overworld_reassembly 1 reassemble_native_rom
+  fi
+fi
+
 # Catch old table/sidecar emission before publishing artifacts or a manifest.
 # The existing output transaction restores the previous candidate on failure.
 run_check native_overworld_preservation 1 python3 "$repo_root/Scripts/Build/lyra_native_loaders.py" \
-  --rom "$base_rom" --compiled "$patched_rom"
+  --rom "$base_rom" --compiled "$patched_rom" \
+  --symbols "$symbols_path" "${native_build_args[@]}"
 
 receipt artifact --name output_rom --path "$patched_rom"
 if [[ "$emit_symbols" == "1" ]]; then

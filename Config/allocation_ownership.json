@@ -180,7 +180,7 @@
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "6bf92d5758404086ac08ea3903591a77fee51521eb0fa2b4ee853f9bbf4969f2"
+      "sha256": "477fcd5b7f7812cc928a5c38c18f015c3ef9a620baf8ddc299be9b91ac2a2fa1"
     },
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
@@ -210,7 +210,7 @@
     "shared:Oracle_main.asm": {
       "source_set": "shared",
       "path": "Oracle_main.asm",
-      "sha256": "22a95b632afff269e335d9835bd725c615b1e39c9e08fca7549fdd5c59c66183"
+      "sha256": "b2a7247d6faaf70c45c752ea90e9c6097447ce76dd3b349ea05463fb8e78fbba"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",

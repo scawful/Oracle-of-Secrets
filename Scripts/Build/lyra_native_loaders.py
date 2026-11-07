@@ -523,9 +523,9 @@ def read_revision3_directory(image):
 
 
 def require_native_runtime_resources(image):
-    # Revision4 stores editable source intent. The retained revision3 renderer
-    # does not implement physical-page profiles/full BG128; never publish it as
-    # a current runnable build while that compiler/consumer is unavailable.
+    # The constants-only/preservation seam has no resource compiler context.
+    # Revision4 must use the managed Build adapter, which rederives resources
+    # and verifies the complete compiled output rather than reusing revision3.
     require(struct.unpack_from('<H', image, DIRECTORY_PC + 8)[0] == 3,
             'Native per-page appearance requires resident resource compilation; '
             'this Build cannot publish revision4 source as runnable output')
@@ -573,6 +573,18 @@ def reader_constants(image):
     if installed is None:
         return '; Ordinary160-map source path.\n!SPECIAL_OVERWORLD_NATIVE = 0\n'
     require_native_runtime_resources(image)
+    return native_reader_constants(image)
+
+
+def native_reader_constants(image):
+    """Emit bound reader constants without asserting resource compilation.
+
+    The revision4 compiler uses these only alongside its rederived resource
+    input and compiled-output validation. This function grants no runtime or
+    publication admission; the standalone reader_constants seam stays strict.
+    """
+    installed = read_native_directory(image)
+    require(installed is not None, 'Native reader constants require installed storage')
     capacity, bank, entries = installed
     require(capacity == MAP_CAPACITY, 'Retained native readers require192 materialized maps')
     require(all(entries[family.id][0] == family.snes
@@ -586,7 +598,8 @@ def reader_constants(image):
             'Installed native layout differs from this engine\'s selected ROM reservations')
     verify_dictionary_readers(image, entries)
     lines = ['; Generated from the saved ROM; contains no authored data.',
-             '!SPECIAL_OVERWORLD_NATIVE = 1', '!LYRA_CURRENT_MODE = 1',
+             '!SPECIAL_OVERWORLD_NATIVE = 1', '!SPECIAL_OVERWORLD_NATIVE_COMPILED = 0',
+             '!LYRA_CURRENT_MODE = 1',
              f'!SPECIAL_OVERWORLD_DIRECTORY_CRC = ${struct.unpack_from("<I", image, DIRECTORY_PC + 28)[0]:08X}',
              '!LYRA_CURRENT_FIRST = $00A0', '!LYRA_CURRENT_END = $00C0',
              '!LYRA_CURRENT_PARENT_COUNT = $00C0',
@@ -667,22 +680,49 @@ def verify_saved_payload(source, compiled):
     verify_dictionary_readers(compiled, entries)
 
 
+def require_generated_output(path, source_path):
+    """Check a managed cache path before either replacement or cleanup."""
+    require(path.resolve() != source_path.resolve()
+            and not path.is_symlink()
+            and (not path.exists() or (path.is_file() and not path.samefile(source_path))),
+            f'Invalid generated native Build output: {path}')
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--rom', required=True, type=Path)
     modes = parser.add_mutually_exclusive_group(required=True)
     modes.add_argument('--constants', type=Path)
     modes.add_argument('--compiled', type=Path)
+    modes.add_argument('--seal-compiled', type=Path)
+    parser.add_argument('--build-cache', type=Path)
+    parser.add_argument('--symbols', type=Path)
+    parser.add_argument('--z3ed')
     args = parser.parse_args(argv)
     try:
         source = args.rom.read_bytes()
+        installed = read_native_directory(source)
+        if args.build_cache is not None and installed is not None and struct.unpack_from(
+                '<H', source, DIRECTORY_PC + 8)[0] == 4:
+            from special_overworld_native_build_cli import run_native_build_stage
+            return run_native_build_stage(args, source)
+        if args.seal_compiled is not None:
+            require(args.build_cache is not None,
+                    'Reader resealing requires the managed Build cache')
+            return 0
         if args.constants is not None:
             text = reader_constants(source)
+            marker = None
+            if args.build_cache is not None:
+                marker = args.build_cache / 'special_overworld_native_source.json'
+                require_generated_output(marker, args.rom)
             require(args.constants.resolve() != args.rom.resolve()
                     and not (args.constants.exists() and args.constants.samefile(args.rom)),
                     'Constants must not overwrite the ROM')
             args.constants.parent.mkdir(parents=True, exist_ok=True)
             args.constants.write_text(text)
+            if marker is not None:
+                marker.unlink(missing_ok=True)
         else:
             verify_saved_payload(source, args.compiled.read_bytes())
     except (ValueError, OSError) as error:

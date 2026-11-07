@@ -178,6 +178,9 @@ OBJECT_ALLOCATION_REGIONS_PC = (
 CANONICAL_LOROM_ROM_END_PC = 0x3F0000
 
 AUDITED_UNRESOLVED_ORG_CONTRACTS = {
+    # Native backdrop trampoline patches the existing five-byte bank34 reader;
+    # lyra_native_loaders.asm bounds it with Oracle_Lyra_CurrentBackdropLegacy.
+    ("Overworld/lyra_native_loaders.asm", "Oracle_ReadOverworldBackdropColor", 0x34),
     ("Core/message.asm", "!addr+1", 0x0E),
     ("Core/sprite_macros.asm", "$0DB080+!SPRID", 0x0D),
     ("Core/sprite_macros.asm", "$0DB173+!SPRID", 0x0D),

@@ -243,6 +243,22 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
                 else:
                     self.assertFalse(path.exists())
 
+    def test_native_resource_cache_rolls_back_after_late_failure(self):
+        names = ('.cache/special_overworld_native_source.json',
+                 '.cache/special_overworld_native_data.asm',
+                 '.cache/binaries/resident-atlas.bin',
+                 '.cache/binaries/special-overworld-directory.bin')
+        before = {name: self.write(name, 'previous ' + name).read_bytes() for name in names}
+        # The legacy preparation removes the stale native-source marker. The
+        # fixture assembler changes the remaining managed resource outputs.
+        with self.assembler.open('a') as handle:
+            for name in names[1:]:
+                handle.write(f'\npathlib.Path({name!r}).write_bytes(b"changed resource")\n')
+        self.env.update(FIXTURE_ANALYSIS_EXIT='7', OOS_ANALYSIS_FATAL='1')
+        self.assertEqual(self.build().returncode, 7, self.result.stderr)
+        self.assertEqual({name: (self.root / name).read_bytes() for name in names}, before)
+        self.assertEqual(self.check('output_rollback')['status'], 'passed')
+
     def test_flags_restore_after_success(self):
         before = (self.root / 'Config/feature_flags.asm').read_bytes()
         self.assertEqual(self.build('--disable', 'fixture').returncode, 0, self.result.stderr)

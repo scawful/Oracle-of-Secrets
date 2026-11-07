@@ -62,7 +62,8 @@ def _load_global_defines(root: Path) -> dict[str, int]:
             if not text:
                 continue
             parsed = _parse_define_assignment(text, defines)
-            if parsed is None or not parsed[0].startswith(('SPECIAL_OVERWORLD_', 'LYRA_CURRENT_')):
+            if parsed is None or not parsed[0].startswith(
+                    ('SPECIAL_OVERWORLD_', 'LYRA_CURRENT_', 'GfxRT_')):
                 raise ValueError('Native reader constants must contain only their owned numeric defines')
             name, value = parsed
             defines[name] = value
@@ -82,6 +83,7 @@ _ALLOWED_BINOPS = {
     ast.BitXor: lambda a, b: a ^ b,
 }
 _ALLOWED_UNARYOPS = {
+    ast.Not: lambda a: not a,
     ast.UAdd: lambda a: +a,
     ast.USub: lambda a: -a,
     ast.Invert: lambda a: ~a,
@@ -143,6 +145,11 @@ def _eval_condition(expr: str, defines: dict[str, int]) -> Optional[bool]:
     if not raw:
         return None
     raw = raw.replace("&&", " and ").replace("||", " or ")
+    # A preloaded numeric define is certainly defined, including value zero.
+    # Missing names can also have unresolved source assignments, so retain
+    # conservative unknown handling rather than treating absence as false.
+    raw = re.sub(r'''\bdefined\(\s*(["'])([A-Za-z_][A-Za-z0-9_]*)\1\s*\)''',
+                 lambda match: '1' if match.group(2) in defines else match.group(0), raw)
     unknown = False
 
     def repl(m: re.Match) -> str:

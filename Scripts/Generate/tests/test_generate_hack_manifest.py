@@ -339,6 +339,8 @@ class ReachableSourceTest(unittest.TestCase):
         self.native_entry()
         self.fixture.write_text('.cache/special_overworld_reader_constants.asm',
                                 '!SPECIAL_OVERWORLD_NATIVE = 1\n'
+                                '!GfxRT_Bank = $CF\n'
+                                '!GfxRT_HeaderSize = 22\n'
                                 '!LYRA_CURRENT_CODE_BASE = $46C000\n')
         self.fixture.write_text('Overworld/native.asm', 'org $46C000\nRTL\n')
         sources = {p.relative_to(self.fixture.root.resolve()).as_posix()
@@ -389,10 +391,44 @@ class ReachableSourceTest(unittest.TestCase):
 
     def test_native_constants_cannot_override_other_global_defines(self):
         self.native_entry()
-        for text in ('!ENABLE_SOURCE_SPRITE_SHEETS = 0\n', 'org $468000\n'):
+        for text in ('!ENABLE_SOURCE_SPRITE_SHEETS = 0\n', 'org $468000\n',
+                     '!GfxUnknown = 1\n', '!GfxRT_Bank = read4($008000)\n'):
             self.fixture.write_text('.cache/special_overworld_reader_constants.asm', text)
             with self.assertRaisesRegex(ValueError, 'owned numeric defines'):
                 collect_reachable_asm_sources(self.fixture.root)
+
+    def test_native_constants_respect_existing_defined_default_guards(self):
+        self.native_entry()
+        self.fixture.write_text('.cache/special_overworld_reader_constants.asm',
+            '!SPECIAL_OVERWORLD_NATIVE = 1\n!SPECIAL_OVERWORLD_RESOURCES_ENABLED = 1\n')
+        self.fixture.write_text('Overworld/native.asm',
+            'if not(defined("SPECIAL_OVERWORLD_RESOURCES_ENABLED"))\n'
+            '!SPECIAL_OVERWORLD_RESOURCES_ENABLED = 0\nendif\n'
+            'if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1\n'
+            'incsrc "Overworld/resources.asm"\nendif\n')
+        self.fixture.write_text('Overworld/resources.asm', 'org $4DC800\nRTL\n')
+        sources = {p.relative_to(self.fixture.root.resolve()).as_posix()
+                   for p in collect_shared_sources(self.fixture.root)}
+        self.assertIn('Overworld/resources.asm', sources)
+
+    def test_defined_known_numeric_names_resolve_without_guessing_unknown_names(self):
+        from asm_source import _eval_condition
+        for value in (0, 1):
+            self.assertIs(_eval_condition('defined("KNOWN")', {'KNOWN': value}), True)
+            self.assertIs(_eval_condition('not(defined("KNOWN"))', {'KNOWN': value}), False)
+        self.assertIsNone(_eval_condition('defined("UNRESOLVED")', {}))
+
+    def test_native_revision3_does_not_require_generated_resident_data(self):
+        self.native_entry()
+        self.fixture.write_text('.cache/special_overworld_reader_constants.asm',
+            '!SPECIAL_OVERWORLD_NATIVE = 1\n!SPECIAL_OVERWORLD_NATIVE_COMPILED = 0\n')
+        self.fixture.write_text('Overworld/native.asm',
+            'if !SPECIAL_OVERWORLD_NATIVE_COMPILED == 1\n'
+            'incsrc ".cache/special_overworld_native_data.asm"\nendif\norg $46C000\nRTL\n')
+        sources = {p.relative_to(self.fixture.root.resolve()).as_posix()
+                   for p in collect_shared_sources(self.fixture.root)}
+        self.assertIn('Overworld/native.asm', sources)
+        self.assertNotIn('.cache/special_overworld_native_data.asm', sources)
 
     def test_collects_nested_and_root_relative_includes(self) -> None:
         self.fixture.write_text(
@@ -1086,6 +1122,22 @@ class ReachableSourceTest(unittest.TestCase):
             r"not an audited source/expression/bank contract",
         ):
             generate_manifest(self.fixture.root, dev_rom_path=rom_path)
+
+    def test_native_backdrop_org_contract_is_source_expression_and_bank_specific(self):
+        self.fixture.write_text('Oracle_main.asm',
+                                'incsrc "Overworld/lyra_native_loaders.asm"\n')
+        rom_path = self.fixture.write_dev_rom()
+        for expression, bank, accepted in (
+                ('Oracle_ReadOverworldBackdropColor', '$34', True),
+                ('Oracle_ReadOverworldBackdropColor', '$35', False),
+                ('UnknownBackdropColor', '$34', False)):
+            self.fixture.write_text('Overworld/lyra_native_loaders.asm',
+                f'org {expression} ; @manifest-org-bank={bank}\nJML $46C100\nNOP\n')
+            if accepted:
+                generate_manifest(self.fixture.root, dev_rom_path=rom_path)
+            else:
+                with self.assertRaisesRegex(ManifestGenerationError, 'not an audited'):
+                    generate_manifest(self.fixture.root, dev_rom_path=rom_path)
 
     def test_invoked_unresolved_macro_org_requires_proof(self) -> None:
         self.fixture.write_text(

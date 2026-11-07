@@ -56,6 +56,10 @@ snapshot_build_outputs() {
     "$rom_dir/hooks.json" "$rom_dir/hack_manifest.json" "$rom_dir/sourcemap.json"
     "$repo_root/.cache/annotations.json"
     "$repo_root/.cache/special_overworld_reader_constants.asm"
+    "$repo_root/.cache/special_overworld_native_source.json"
+    "$repo_root/.cache/special_overworld_native_data.asm"
+    "$repo_root/.cache/binaries/resident-atlas.bin"
+    "$repo_root/.cache/binaries/special-overworld-directory.bin"
     "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
     "$repo_root/Dungeons/generated/water_fill_table.asm"
   )
