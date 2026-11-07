@@ -17,6 +17,14 @@ org $028D81 ; @hook module=Dungeons name=D4Zora_CacheRoomCamera kind=jsl target=
   JSL D4Zora_CacheRoomCamera
   NOP #4
 assert pc() == $028D89
+
+; Follower_BasicMover has already reset its timed-message counter and stored
+; TEXTID. Its PHY/PLY remain outside this four-byte call. Entry/exit M8/X8,
+; DBR=$09 and D=0; pass-through tail-calls the original interface routine.
+org $09A01F ; @hook module=Sprites name=D4Zora_FilterBabyReminder kind=jsl target=D4Zora_FilterBabyReminder expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8 protected_size=4
+  assert read4($09A01F) == $0FFDAA22, "D4 timed follower message preimage changed"
+  JSL D4Zora_FilterBabyReminder
+assert pc() == $09A023
 pullpc
 
 D4Zora_CacheRoomCamera:
@@ -563,5 +571,41 @@ D4Zora_Draw:
   DEC $0D : BNE .next
   PLX
   RTS
+}
+; Filter only Baby09's timed108 reminder. Keep the follower and native timer,
+; carry/throw/switch paths untouched. No new rescue flag or dialogue is needed.
+D4Zora_FilterBabyReminder:
+{
+  PHP : PHA : PHX : PHY
+  LDA.l $7EF3CC : CMP.b #$09 : BNE .display
+  LDA.l $7E1CF0 : CMP.b #$08 : BNE .display
+  LDA.l $7E1CF1 : CMP.b #$01 : BNE .display
+  LDA.l $7EF302 : AND.b #$01 : BNE .suppress
+  LDA.l $7E00A0 : CMP.b #$46 : BNE .display
+  LDA.l $7E00A1 : BNE .display
+
+  LDY.b #$00
+  LDX.b #$0F
+  .scan
+  LDA.l $7E0DD0, X : BEQ .next
+  LDA.l $7E0E20, X : CMP.b #$11 : BEQ .warden
+  CMP.b #$B8 : BNE .next
+  LDA.l $7E0E30, X : CMP.b #$03 : BNE .next
+  LDA.l $7E0DD0, X : CMP.b #$09 : BNE .next
+  LDY.b #$01
+  BRA .next
+  .warden
+  ; Include state6 death poof, matching the protector's Healing gate.
+  LDA.l $7E0E30, X : CMP.b #$03 : BEQ .display
+  .next
+  DEX : BPL .scan
+  CPY.b #$01 : BEQ .suppress
+
+  .display
+  PLY : PLX : PLA : PLP
+  JML Interface_PrepAndDisplayMessage
+  .suppress
+  PLY : PLX : PLA : PLP
+  RTL
 }
 D4Zora_CodeEnd:

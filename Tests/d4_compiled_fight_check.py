@@ -191,6 +191,55 @@ def check_palette_handoff(lib,rom,labels):
     return len(phases)
 
 
+def check_baby_reminder(lib,rom,labels):
+    """Real message-interface bytes versus the compiled, read-only filter."""
+    cases=(
+        # follower, message, quest, room, warden state, princess state, suppress
+        (9,0x108,0,0x46,9,9,False),
+        (9,0x108,0,0x46,6,9,False),
+        (9,0x108,0,0x46,0,9,True),
+        (9,0x108,0,0x46,0,0,False),
+        (9,0x108,0,0x46,0,6,False),
+        (9,0x108,0,0x146,0,9,False),
+        (9,0x108,0,0x26,0,9,False),
+        (9,0x108,1,0x26,0,0,True),
+        (9,0x108,0x80,0x26,0,0,False),
+        (5,0x020,1,0x46,0,9,False),
+        (10,0x11D,1,0x46,0,9,False),
+        (9,0x109,1,0x46,0,9,False),
+        (9,0x008,1,0x46,0,9,False),
+    )
+    count=0
+    for follower,message,quest,room,warden,princess,suppress in cases:
+        for wslot,pslot in ((0,15),(15,0),(6,12)):
+            f=Fixture(lib,rom,labels)
+            f.put(0x10,7);f.put(0x11,0);f.put(0x7EF3CC,follower)
+            f.word(0x1CF0,message);f.put(0x7EF302,quest);f.word(0xA0,room)
+            for slot,kind,subtype,state in ((wslot,0x11,3,warden),(pslot,0xB8,3,princess)):
+                for name,value in (('SprType',kind),('SprSubtype',subtype),('SprState',state)):
+                    f.spr(name,value,slot)
+            # Hidden accumulator high byte and caller's Y/register flags matter:
+            # the caller still has an eight-bit PLY after the hook returns.
+            f.cpu.a=0x0108;f.cpu.y=2;f.cpu.db=9
+            f.cpu.c=True;f.cpu.v=True
+            before=bytes(f.ram)
+            baseline=Fixture(lib,rom,labels);baseline.ram[:]=f.ram
+            baseline.cpu.a=0x0108;baseline.cpu.y=2;baseline.cpu.db=9
+            baseline.cpu.c=True;baseline.cpu.v=True
+            baseline.call('Interface_PrepAndDisplayMessage',long_return=True,a=8)
+            f.call('D4Zora_FilterBabyReminder',long_return=True,a=8)
+            assert (f.cpu.y,f.cpu.db,f.cpu.dp)==(2,9,0)
+            allowed=set(range(0x100,0x200))
+            if suppress:
+                assert (f.get(0x10),f.get(0x11),f.cpu.a,f.cpu.c,f.cpu.v)==(7,0,0x108,True,True)
+                assert all(i in allowed or a==b for i,(a,b) in enumerate(zip(before,f.ram))),'Suppression changed follower/quest/timer data'
+            else:
+                assert all(i in allowed or a==b for i,(a,b) in enumerate(zip(baseline.ram,f.ram))),'Pass-through differs from actual message interface'
+                assert (f.cpu.a,f.cpu.c,f.cpu.z,f.cpu.n,f.cpu.v)==(baseline.cpu.a,baseline.cpu.c,baseline.cpu.z,baseline.cpu.n,baseline.cpu.v)
+            count+=1;f.close();baseline.close()
+    return count
+
+
 
 def check_real_allocator(lib,rom,labels,candidate):
     """Exercise actual region/defer code with normal and every fallback slot."""
@@ -340,6 +389,8 @@ def main():
         lib.cpu_runOpcode.argtypes=[C.POINTER(Cpu)];lib.cpu_free.argtypes=[C.POINTER(Cpu)]
         results={'camera_cache_cases':check_camera_cache(lib,a.rom.read_bytes(),labels)}
         results['palette_handoff_cases']=check_palette_handoff(lib,a.rom.read_bytes(),labels)
+        if 'Oracle_D4Zora_FilterBabyReminder' in labels:
+            results['baby_reminder_cases']=check_baby_reminder(lib,a.rom.read_bytes(),labels)
         if not a.handoff_only:
             results.update(check(lib,a.rom.read_bytes(),labels,json.loads((a.candidate/'RECEIPT.json').read_text())))
     report=dict(status='COMPILED_CPU_FIXTURE_PASS',rom_sha256=hashlib.sha256(a.rom.read_bytes()).hexdigest(),
