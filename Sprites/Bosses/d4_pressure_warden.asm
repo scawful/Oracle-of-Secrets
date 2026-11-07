@@ -124,7 +124,7 @@ D4Zora_Long:
   LDA.w SprSubtype, X : CMP.b #$03 : BNE .protector
   JSR Sprite_ZoraPrincess_Draw
   JSL Sprite_CheckActive : BCC .done
-  JSL Sprite_PlayerCantPassThrough
+  JSR D4Zora_PrincessMain
   BRA .done
   .protector
   LDA.b #!D4Zora_Frame_protector_rest : STA.w SprFrame, X
@@ -139,6 +139,28 @@ D4Zora_Long:
   JSR D4Zora_ProtectorMain
   .done
   PLB : RTL
+}
+
+D4Zora_PrincessMain:
+{
+  JSL Sprite_PlayerCantPassThrough
+  ; The living Princess can introduce herself after the rescue. Never enter
+  ; her legacy Healing/Mask actions or show the soul-freed message ($C6).
+  ; As with the protector, a warden death poof still blocks this interaction.
+  PHX
+  LDX.b #$0F
+  .scan
+  LDA.w SprState, X : BEQ .next
+  LDA.w SprType, X : CMP.b #$11 : BNE .next
+  LDA.w SprSubtype, X : CMP.b #$03 : BEQ .blocked
+  .next
+  DEX : BPL .scan
+  PLX
+  %ShowSolicitedMessage($0C5)
+  RTS
+  .blocked
+  PLX
+  RTS
 }
 
 D4Zora_ProtectorMain:
