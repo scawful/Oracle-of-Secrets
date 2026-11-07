@@ -10,7 +10,7 @@
     "shared:Sprites/Objects/minecart.asm": {
       "source_set": "shared",
       "path": "Sprites/Objects/minecart.asm",
-      "sha256": "7be68b425080cff1fc6f6b03cd2088d21210f5eae27f949beac2bd45b4551666"
+      "sha256": "01a29cdfadabbc7d207f7d39520f987d3b8080fbcde2a008517e575185b017c3"
     },
     "shared:Masks/all_masks.asm": {
       "source_set": "shared",
@@ -20,7 +20,7 @@
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "d41bc108061d1c87946dbca451551ac03880596535667497f2369667b99ac646"
+      "sha256": "bd5a187f2884a024d2c8279f1f0e637039ce46c522e804d3d7cf97fab89cd05a"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -65,7 +65,7 @@
     "pending_rc:Items/goldstar.asm": {
       "source_set": "pending_rc",
       "path": "Items/goldstar.asm",
-      "sha256": "69c617df245b786febde3ac9a512c91089f38dda851c56c5bb23726cc5a89f98"
+      "sha256": "199aa00c758b1616cd07984ce02e79443441294aa17d6828b0b3bfaa4dd219f0"
     },
     "pending_rc:Items/ocarina.asm": {
       "source_set": "pending_rc",
@@ -75,22 +75,22 @@
     "shared:Overworld/ZSCustomOverworld.asm": {
       "source_set": "shared",
       "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "52ed6e7c857d52efa27b05c20d4207edac891900206e1ebda2f4f9a679888d97"
+      "sha256": "4869387a87614f95fd8f28a53fc64907bc7f45ad93501454913a83e31c12e5c4"
     },
     "shared:Sprites/Objects/data/minecart_tracks.asm": {
       "source_set": "shared",
       "path": "Sprites/Objects/data/minecart_tracks.asm",
-      "sha256": "d988514d5060217d00ecc98d9c3a394826c08a91022327c800c1d290ad14fd6c"
+      "sha256": "e6bfbbadd40cbe7d25692fa054524c4dab135076fae07b167b57d6248c20ffd4"
     },
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "0044e59bb51b5481cbed26a54a25916cc744459341956ff6a1e43afd9fc1b7ea"
+      "sha256": "62026108b82e494ea66429261fc3a6eb4b2226c490fe7177ae908a6181c82cac"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "856aeb29c3067e1df2c4ddcc265adcea1e7f7708396663ab6d039b1687355a11"
+      "sha256": "e61f05a370652f171f46eb8df781c96b32b7fcaea3af3ddbdc4d2d25a90a5a52"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -125,7 +125,7 @@
     "shared:Overworld/overworld.asm": {
       "source_set": "shared",
       "path": "Overworld/overworld.asm",
-      "sha256": "8aeb91bae68c28de6506d744dbecfc098c6692310f6765e82c93f4fab65f25d8"
+      "sha256": "14056cdd94ede530bd2ce95cedd64d51d5b105eac13db8ea0ea25192a3f86f21"
     },
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
@@ -135,7 +135,7 @@
     "shared:Core/Cutscene/experiment.asm": {
       "source_set": "shared",
       "path": "Core/Cutscene/experiment.asm",
-      "sha256": "b57321d56f4f8982b097205c9fbd61eb2b76843012e93c2c6a3589f2ba10e9ea"
+      "sha256": "83c576ece765a92dccacab6da03426ba357aff95d0144f4266810886f44036c9"
     },
     "shared:Sprites/Players/player2.asm": {
       "source_set": "shared",
@@ -165,7 +165,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "249888f085ac7f50e6e18a831af44b643da59852ac972d81bf7d62ae8e0cb474"
+      "sha256": "6c85e45905c718ee9e9a03294a20993c5aff3039e26a98375f1c2bbd60863483"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -185,7 +185,7 @@
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
       "path": "Scripts/Generate/sheet_overrides.py",
-      "sha256": "2039e970855974941b0550a7c68009232de83d3afb4110e8cdd1982f4df03ba4"
+      "sha256": "ec6cacd03b0a35bef51e33fbc0e6e90a7a90e40cc634da75dc1cfcfcf418c34f"
     },
     "shared:Scripts/Build/native_overworld_authoring_metadata.py": {
       "source_set": "shared",
@@ -200,7 +200,7 @@
     "shared:Overworld/custom_gfx.asm": {
       "source_set": "shared",
       "path": "Overworld/custom_gfx.asm",
-      "sha256": "41277bd430703e4dd6bae043f48c28f81d251979157c0af9a41a808138d8865e"
+      "sha256": "6b9b33526461047973d251dfaf45a1b3cff97aa13f025f197b8287bbb49f8c3c"
     },
     "shared:Overworld/special_overworld_graphics.asm": {
       "source_set": "shared",
@@ -210,7 +210,7 @@
     "shared:Oracle_main.asm": {
       "source_set": "shared",
       "path": "Oracle_main.asm",
-      "sha256": "fdf7c340a2dd717138a94bc87011a2b9884065fa3b67d23e63f5102949964e5c"
+      "sha256": "6cd879f3ce0c412e7e3ed02e98d5dce560130739b8e60cc48228d367aeb065b6"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
@@ -226,6 +226,16 @@
       "source_set": "shared",
       "path": "Overworld/time_system.asm",
       "sha256": "09208a0873a661db1bfb7987799c66784626f14050688a95e0ca0e89c2fbd0ef"
+    },
+    "shared:Overworld/aux_palette_extension.asm": {
+      "source_set": "shared",
+      "path": "Overworld/aux_palette_extension.asm",
+      "sha256": "a78e5eca3f06f81d16ead1d9f7e730d67ed9245118fbe610b52a14076d0c1891"
+    },
+    "shared:Overworld/docks_profile.asm": {
+      "source_set": "shared",
+      "path": "Overworld/docks_profile.asm",
+      "sha256": "d8fb2882d99ba8d23894b8812e6d994144ec9b1c3db689020291c68f8d28afe8"
     }
   },
   "claims": [
@@ -385,14 +395,14 @@
     },
     {
       "id": "symbols_wram_block",
-      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..SpecialOverworldPaletteHoleArea)",
+      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..FinaleBeat; native cache/palette history retained)",
       "space": "wram",
       "base": 8265328,
-      "size": 54,
+      "size": 57,
       "status": "shared",
       "condition": {},
-      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint. Last four bytes retain underlying native sheets for resource slots 0/1/2/7 across graphics loads; not persistent save data. Next 26 bytes reserve six native BG column8 reference/effective words plus state/area; no HUD, OBJ or backdrop column0 history.",
-      "reset": "No block-wide reset is claimed. Not in ResetTrackVars arrays since PR 211 moved this block from $7E0730 to vanilla-free $7E1E70. The last four-byte SpecialOverworldMainCache is cleared by the default-off resource callback before fresh native InitTilesets/mirror identities, then retains underlying main-sheet identities for departure restoration. Runtime qualification remains pending. Palette-hole cache reset/capture/restoration remains unbound: before any read reset state to0 and area toFF; native84-color BG refresh and Buffer/Both completion must be bound before palette activation.",
+      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint. Last four bytes retain underlying native sheets for resource slots 0/1/2/7 across graphics loads; not persistent save data. Next 26 bytes reserve six native BG column8 reference/effective words plus state/area; no HUD, OBJ or backdrop column0 history. Finale GanondorfFight/BossReinject/FinaleBeat append at $7E1EA6-$7E1EA8 without changing native cache aliases.",
+      "reset": "No block-wide reset is claimed. Not in ResetTrackVars arrays since PR 211 moved this block from $7E0730 to vanilla-free $7E1E70. The last four-byte SpecialOverworldMainCache is cleared by the default-off resource callback before fresh native InitTilesets/mirror identities, then retains underlying main-sheet identities for departure restoration. Runtime qualification remains pending. Palette-hole cache reset/capture/restoration remains unbound: before any read reset state to0 and area toFF; native84-color BG refresh and Buffer/Both completion must be bound before palette activation. Main file-load entry clears the three appended Finale state bytes after native tail migration.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
         "shared:Core/symbols.asm",
@@ -1844,6 +1854,108 @@
         "SpecialPaletteAdaptersStart:",
         "SpecialPaletteAdaptersEnd:"
       ]
+    },
+    {
+      "id": "ow_aux_extension_code",
+      "owner": "Aux ABI 1 public loader hooks",
+      "space": "snes_rom",
+      "base": 4583424,
+      "size": 2048,
+      "status": "shared",
+      "condition": {
+        "ENABLE_OW_AUX_EXTENSION": 1,
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "ROM storage under the explicitly bound auxiliary palette ABI.",
+      "reset": "Code is assembled; palette table is initialized only in the private authoring input and retained by rebuilds.",
+      "save": "Palette edits persist in the authoring ROM; no SRAM format change.",
+      "provenance": [
+        "shared:Overworld/aux_palette_extension.asm"
+      ],
+      "aliases": [],
+      "anchors": []
+    },
+    {
+      "id": "ow_aux_extension_table",
+      "owner": "Aux ABI 1 authoring-owned palette records",
+      "space": "snes_rom",
+      "base": 4585728,
+      "size": 1344,
+      "status": "shared",
+      "condition": {
+        "ENABLE_OW_AUX_EXTENSION": 1,
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "ROM storage under the explicitly bound auxiliary palette ABI.",
+      "reset": "Code is assembled; palette table is initialized only in the private authoring input and retained by rebuilds.",
+      "save": "Palette edits persist in the authoring ROM; no SRAM format change.",
+      "provenance": [
+        "shared:Overworld/aux_palette_extension.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "count": 32,
+      "stride": 42
+    },
+    {
+      "id": "docks_bg_asset",
+      "owner": "Accepted raw docks BG graphics",
+      "space": "snes_rom",
+      "base": 4489216,
+      "size": 8192,
+      "status": "shared",
+      "condition": {
+        "ENABLE_KALYXO_DOCKS_PROFILE": 1,
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "ROM storage for the explicitly selected Docks profile.",
+      "reset": "Graphics/helpers assembled; streams lowered once in private authoring input.",
+      "save": "No SRAM format change; map data remains authoring input.",
+      "provenance": [
+        "shared:Overworld/docks_profile.asm"
+      ],
+      "aliases": [],
+      "anchors": []
+    },
+    {
+      "id": "docks_profile_helpers",
+      "owner": "Docks shared-deck and transition finish helpers",
+      "space": "snes_rom",
+      "base": 4497408,
+      "size": 4096,
+      "status": "shared",
+      "condition": {
+        "ENABLE_KALYXO_DOCKS_PROFILE": 1,
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "ROM storage for the explicitly selected Docks profile.",
+      "reset": "Graphics/helpers assembled; streams lowered once in private authoring input.",
+      "save": "No SRAM format change; map data remains authoring input.",
+      "provenance": [
+        "shared:Overworld/docks_profile.asm"
+      ],
+      "aliases": [],
+      "anchors": []
+    },
+    {
+      "id": "docks_map_streams",
+      "owner": "Private exact70 Docks map streams",
+      "space": "snes_rom",
+      "base": 4505600,
+      "size": 1036,
+      "status": "shared",
+      "condition": {
+        "ENABLE_KALYXO_DOCKS_PROFILE": 1,
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "ROM storage for the explicitly selected Docks profile.",
+      "reset": "Graphics/helpers assembled; streams lowered once in private authoring input.",
+      "save": "No SRAM format change; map data remains authoring input.",
+      "provenance": [
+        "shared:Overworld/docks_profile.asm"
+      ],
+      "aliases": [],
+      "anchors": []
     }
   ],
   "lifetime_aliases": [],

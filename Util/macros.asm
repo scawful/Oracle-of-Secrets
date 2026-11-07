@@ -9,6 +9,16 @@
 ; WARNING: Disabling a module may cause linker errors if other modules
 ;          reference its symbols. See Oracle_main.asm for dependency notes.
 !DISABLE_MUSIC     = 0
+
+; Intro cutscene song IDs ($012C). Rain stays vanilla $03; Deku uses OW aux $12.
+if !DISABLE_MUSIC == 0
+  !Song_Rain       = $03
+  !Song_DekuTheme  = $12
+else
+  !Song_Rain       = $03
+  !Song_DekuTheme  = $03
+endif
+
 !DISABLE_OVERWORLD = 0
 !DISABLE_DUNGEON   = 0
 !DISABLE_SPRITES   = 0
@@ -43,6 +53,9 @@
 !ENABLE_CUSTOM_ATTRACT_SEQUENCE      = 1
 ; Accepted royal attract cards; kept off until focused playback passes.
 !ENABLE_ATTRACT_ROYAL_SCENES          = 0
+; Aux ABI 1 needs an explicitly bound authoring table; preserve ordinary ROMs.
+!ENABLE_OW_AUX_EXTENSION              = 0
+!ENABLE_KALYXO_DOCKS_PROFILE          = 0
 !ENABLE_ORACLE_ARRIVAL_SEQUENCE      = 1
 ; New-file Mirror experiment scene before the arrival (Core/Cutscene/experiment.asm).
 ; Requires ORACLE_ARRIVAL_SEQUENCE (asserted in Oracle_main.asm).
@@ -107,6 +120,11 @@
 ; a few seconds after one of Maple's dreams lands, Link is reloaded through the
 ; Dream Hut entrance ($68) so a dream cannot strand him (Sprites/NPCs/maple.asm).
 !ENABLE_DREAM_RETURN                = 1
+; Ganondorf volley finale, slice 1 (DESIGN.md Option A, phase 1): after Kydreeok
+; dies in room $00 the tag $3D gate spawns Ganondorf ($D3); his energy ball ($46)
+; is rallied with the Master Sword, stuns him, and his death opens the Triforce
+; door (Sprites/Bosses/ganondorf.asm). Diagnostic opt-out.
+!ENABLE_GANONDORF_VOLLEY            = 1
 ; Wisdom dream, shots 1-2 (decisions.org pendant dreams; Sealing War
 ; storyboard): D1.01 ($204) in the hut, then the great hall (room $51) with
 ; the Captain and Farore and D1.02 ($205) before the dream return

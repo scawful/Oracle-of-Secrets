@@ -13,7 +13,19 @@ older nonzero-only tools do not satisfy this contract.
 
 ## Current provenance
 
-The 2026-10-18 Goron Mines safe-rails fix (scawful: "Safe rails first: fix the 313 derail
+The 2026-11-05 private Goron B2 composition changes only rooms `$D7`, `$D8`
+and `$D9`. A normal bound-project Save and fresh reopen preserved every other
+room's collision, including explicit floor overrides. The paired private edit
+base below contains the selected objects, doors, actors and graphics bindings;
+the shared base has not been synchronized to this candidate.
+
+- source: 20 rooms, 3,338 explicit tiles (3,192 nonzero and 146 floor tiles)
+- source SHA-256:
+  `f7c0c35a797186a884d1188ea08d655d42bd59406bfa2406491b01bc584afd8a`
+- matching private edit-base SHA-256:
+  `837bd18c988b43476df0b79c856f345d6a7e7080d3ad6d0f12868b0f560b785b`
+
+The 2026-10-18 Goron Mines safe-rails fix is retained as history (scawful: "Safe rails first: fix the 313 derail
 tiles in the 7 rooms, no layout change.") gives every lane tile of a plain straight rail
 piece in rooms `$77`, `$89`, `$97`, `$98`, `$B9`, `$D7` and `$D8` an explicit straight:
 `$B0` on horizontal pieces and `$B1` on vertical ones (313 cells). There the drawn rail's
@@ -77,6 +89,11 @@ These ROM hashes are recovery evidence, not permanent build requirements. The
 tracked JSON and validator are the durable contract.
 
 ## Safe base-ROM synchronization
+
+The commands and capacity figures below record the October recovery procedure.
+They are historical. Current authoring uses the paired project Save/reopen
+contract and its selected edit base. Follow the current agent storage policy
+for durable work paths and obtain the named approval before a canonical-base write.
 
 First check whether synchronization is needed:
 

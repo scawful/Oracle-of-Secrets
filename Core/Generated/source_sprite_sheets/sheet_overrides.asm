@@ -9,6 +9,12 @@ SourceSpriteSheet_40: incbin "sheets/spr40.bin"
 SourceSpriteSheet_43: incbin "sheets/spr43.bin"
 SourceSpriteSheet_47: incbin "sheets/spr47.bin"
 assert pc() <= $410000 || pc() == $418000, "Source sprite sheets crossed bank $40"
+org $478000
+SourceGlobalSheet_E3: incbin "sheets/gE3.bin"
+SourceGlobalSheet_E4: incbin "sheets/gE4.bin"
+SourceGlobalSheet_E5: incbin "sheets/gE5.bin"
+SourceGlobalSheet_E6: incbin "sheets/gE6.bin"
+assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
 if not(defined("GfxSheet_TableDone"))
   error "sheet_overrides.asm must follow Core/gfx_sheet_table.asm"
 endif
@@ -41,4 +47,32 @@ org $23FEBA ; @hook module=Core kind=data protected_size=1
   db $DA
 org $23FFBA ; @hook module=Core kind=data protected_size=1
   db $70
+; Global $E3 (sprite-relative $70): Kalyxo Docks ordinary 3bpp background; shared Secret Beach LOW deck sheet.
+org $23FDE3 ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEE3 ; @hook module=Core kind=data protected_size=1
+  db $80
+org $23FFE3 ; @hook module=Core kind=data protected_size=1
+  db $00
+; Global $E4 (sprite-relative $71): Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload.
+org $23FDE4 ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEE4 ; @hook module=Core kind=data protected_size=1
+  db $85
+org $23FFE4 ; @hook module=Core kind=data protected_size=1
+  db $3E
+; Global $E5 (sprite-relative $72): Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload.
+org $23FDE5 ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEE5 ; @hook module=Core kind=data protected_size=1
+  db $8A
+org $23FFE5 ; @hook module=Core kind=data protected_size=1
+  db $0D
+; Global $E6 (sprite-relative $73): Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload.
+org $23FDE6 ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEE6 ; @hook module=Core kind=data protected_size=1
+  db $8F
+org $23FFE6 ; @hook module=Core kind=data protected_size=1
+  db $17
 pullpc

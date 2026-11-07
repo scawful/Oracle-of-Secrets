@@ -5,12 +5,14 @@
 ; Midi by Loeder
 ; ASM Framework by Zarby89
 ; Ported by Letterbomb
-; Size 0x0098 (152 Decimal)
+; Size 0x00B0 (176 Decimal)
 ;==========================================================
+; Mix (2026-11-05): drone moved from trumpet $11 to choir $15 at low
+; channel volume, master $C8 -> $90, channel volumes, pan and light echo
+; added. Notes unchanged. Great Sea follows this song (GreatDekuTreeThemeEnd).
 
-org $1AA763; Sections?
 GreatDekuTreeTheme: 
-!ARAMAddr = $D86A
+!ARAMAddr = owaux_aram(GreatDekuTreeTheme)
 dw !ARAMAddr+$08
 dw $00FF
 dw !ARAMAddr
@@ -30,8 +32,13 @@ dw $0000
 
 
 .Channel0
-%SetMasterVolume($C8)
+%SetMasterVolume($90)
 %SetTempo(45)
+%EchoVBits($07, $00, $00) ; echo on channels 0-2
+%EchoParams($02, $40, $02) ; delay, feedback, filter
+%EchoVolumeFade($30, $20, $20) ; echo fade-in
+%SetChannelVolume($E0)
+%SetPan($0B)
 %SetInstrument($09) ; Strings
 %SetDurationN($48, $7F) ; 1/4
 db Rest
@@ -49,6 +56,8 @@ db $00 ; End
 
 
 .Channel1
+%SetChannelVolume($D0)
+%SetPan($08)
 %SetInstrument($09) ; Strings
 %SetDurationN($48, $7F) ; 1/4
 db Rest
@@ -66,7 +75,9 @@ db $00 ; End
 
 
 .Channel2
-%SetInstrument($11) ; Trumpet
+%SetChannelVolume($90)
+%SetPan($0A)
+%SetInstrument($15) ; Choir (was trumpet $11)
 %SetDurationN($48, $7F) ; 1/4
 db C3
 %CallSubroutine(.subA01+!ARAMC, 7)
@@ -81,3 +92,5 @@ db $00 ; End of the channel
 .subA01
 db Tie
 db $00 ; End
+
+GreatDekuTreeThemeEnd:

@@ -205,8 +205,8 @@ class SourceSheets(unittest.TestCase):
 
     def test_manifest_reserves_global_not_sprite_id(self):
         metadata=sheets.source_metadata(ROOT)
-        self.assertEqual(metadata['sprite_sheet_ids'],['0x64','0x40','0x43','0x47'])
-        self.assertEqual(metadata['global_sheet_ids'],['0xD7','0xB3','0xB6','0xBA'])
+        self.assertEqual(metadata['sprite_sheet_ids'],['0x64','0x40','0x43','0x47','0x70','0x71','0x72','0x73'])
+        self.assertEqual(metadata['global_sheet_ids'],['0xD7','0xB3','0xB6','0xBA','0xE3','0xE4','0xE5','0xE6'])
         self.assertEqual(metadata['owned_region']['pc_end'],'0x208000')
 
     def test_d4_manifest_tracks_selected_art_and_preserves_standard_entries(self):
@@ -232,7 +232,9 @@ class SourceSheets(unittest.TestCase):
             return any(source==s and begin<=pc<=end for s,begin,end in overlap.OWNED_REGIONS)
         self.assertTrue(allowed(owner,0x11FDDF))
         self.assertTrue(allowed(owner,0x11FFE2))
-        self.assertFalse(allowed(owner,0x11FDE3))
+        self.assertTrue(allowed(owner,0x11FDE3))
+        self.assertTrue(allowed(owner,0x11FFE6))
+        self.assertFalse(allowed(owner,0x11FDE7))
         self.assertFalse(allowed(owner,0x11FDDE))
         self.assertFalse(allowed('Sprites/Bosses/d4_pressure_warden.asm',0x11FDDF))
 

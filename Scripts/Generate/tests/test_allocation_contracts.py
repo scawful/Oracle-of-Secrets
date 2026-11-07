@@ -114,15 +114,15 @@ class OwnershipTests(unittest.TestCase):
         real={c['id']:c for c in read_ledger(ROOT/'Config/allocation_ownership.json')['claims']}
         from allocation_contracts import base_block
         block=copy.deepcopy(real['symbols_wram_block']);data=ledger(real['cart_room'],block)
-        self.assertEqual(base_block((ROOT/'Core/symbols.asm').read_text(),'MenuScrollLevelV'),(block['base'],54))
-        self.assertEqual(block['size'],54)  # Original24B + main cache4B + palette history26B.
+        self.assertEqual(base_block((ROOT/'Core/symbols.asm').read_text(),'MenuScrollLevelV'),(block['base'],57))
+        self.assertEqual(block['size'],57)  # Original24B + cache4B + palette26B + Finale3B.
         palette=real['native_special_palette_hole_cache']
         self.assertEqual((palette['base'],palette['size'],palette['contained_by']),(block['base']+28,26,block['id']))
-        self.assertEqual(palette['base']+palette['size'],block['base']+block['size'])
+        self.assertEqual(palette['base']+palette['size'],block['base']+block['size']-3)
         self.assertEqual(ownership_conflicts(data,{'DISABLE_SPRITES':0})[0],[])
         block['base']=0x7E0730
         conflicts=ownership_conflicts(data,{'DISABLE_SPRITES':0})[0]
-        self.assertEqual([(c['owners'],c['start'],c['end'],c['classification']) for c in conflicts],[(['cart_room','symbols_wram_block'],0x7E0730,0x7E0766,'active_profile_conflict')])
+        self.assertEqual([(c['owners'],c['start'],c['end'],c['classification']) for c in conflicts],[(['cart_room','symbols_wram_block'],0x7E0730,0x7E0768,'active_profile_conflict')])
 
 
 class TableTests(unittest.TestCase):

@@ -46,7 +46,8 @@ org $2F8026
 MessageExpandedData:
   ; Allocation notes retained from the former inline message table:
   ; $1BC: Maku Seed receipt (maku_tree.asm !MakuSeed_Message)
-  ; $1BD-$1C4, $1C8-$1C9, $1CB: sequential-walker/reserved padding
+  ; $1BD: Bombchu receipt (Items/bombchu_receipt.asm)
+  ; $1BE-$1C4, $1C8-$1C9, $1CB: sequential-walker/reserved padding
   ; $1C5/$1C6/$1C7/$1CA: Maku Tree hints at 1+/3+/5+/7 crystals
   ; $1CC-$1D1: D3 prison sequence placeholders
   ; $1D2-$1D4: Gossip Stone placeholders
@@ -66,6 +67,7 @@ MessageExpandedData:
   ;   the king, $20A D2.05 Farore's remembered voice, $20B D2.06 Maple in the hut
   ; $20C-$20E: Wisdom pendant dream (D1), shots 4-6: $20C D1.03 and $20D D1.04
   ;   the prison's voice in the great hall, $20E D1.05 Maple in the hut
+  ; $20F-$210: Kydreeok finale, Kydrog's voice after the Song of Healing
   ; $1BE: Ranch Girl Ocarina gift (replaces vanilla $17D)
   ; $1CB: Village Elder post-D1 ranch hint (replaces vanilla $177)
   ; Vanilla text region 2 ($0E:DF40, $167-$18C) is length-pinned by the
@@ -75,6 +77,7 @@ MessageExpandedData:
 ; These three vanilla IDs remain stable while their source-owned tutorials
 ; replace base-ROM text after the pointer walker reaches the generated $FF.
 incsrc "Core/minish_tutorials.asm"
+incsrc "Core/finale_triforce_speech.asm"
 
 print "End of expanded dialogue          ", pc
 

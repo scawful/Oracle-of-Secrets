@@ -10,6 +10,10 @@ SourceSpriteSheet_43: incbin "sheets/spr43.bin"
 SourceSpriteSheet_47: incbin "sheets/spr47.bin"
 assert pc() <= $410000 || pc() == $418000, "Source sprite sheets crossed bank $40"
 org $478000
+SourceGlobalSheet_E3: incbin "sheets/gE3.bin"
+SourceGlobalSheet_E4: incbin "sheets/gE4.bin"
+SourceGlobalSheet_E5: incbin "sheets/gE5.bin"
+SourceGlobalSheet_E6: incbin "sheets/gE6.bin"
 SourceGlobalSheet_DF: incbin "sheets/gDF.bin"
 SourceGlobalSheet_E0: incbin "sheets/gE0.bin"
 SourceGlobalSheet_E1: incbin "sheets/gE1.bin"
@@ -47,32 +51,60 @@ org $23FEBA ; @hook module=Core kind=data protected_size=1
   db $DA
 org $23FFBA ; @hook module=Core kind=data protected_size=1
   db $70
+; Global $E3 (sprite-relative $70): Kalyxo Docks ordinary 3bpp background; shared Secret Beach LOW deck sheet.
+org $23FDE3 ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEE3 ; @hook module=Core kind=data protected_size=1
+  db $80
+org $23FFE3 ; @hook module=Core kind=data protected_size=1
+  db $00
+; Global $E4 (sprite-relative $71): Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload.
+org $23FDE4 ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEE4 ; @hook module=Core kind=data protected_size=1
+  db $85
+org $23FFE4 ; @hook module=Core kind=data protected_size=1
+  db $3E
+; Global $E5 (sprite-relative $72): Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload.
+org $23FDE5 ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEE5 ; @hook module=Core kind=data protected_size=1
+  db $8A
+org $23FFE5 ; @hook module=Core kind=data protected_size=1
+  db $0D
+; Global $E6 (sprite-relative $73): Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload.
+org $23FDE6 ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEE6 ; @hook module=Core kind=data protected_size=1
+  db $8F
+org $23FFE6 ; @hook module=Core kind=data protected_size=1
+  db $17
 ; Global $DF (sprite-relative $6C): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDDF ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEDF ; @hook module=Core kind=data protected_size=1
-  db $80
+  db $93
 org $23FFDF ; @hook module=Core kind=data protected_size=1
-  db $00
+  db $5F
 ; Global $E0 (sprite-relative $6D): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDE0 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE0 ; @hook module=Core kind=data protected_size=1
-  db $82
+  db $95
 org $23FFE0 ; @hook module=Core kind=data protected_size=1
-  db $40
+  db $9F
 ; Global $E1 (sprite-relative $6E): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDE1 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE1 ; @hook module=Core kind=data protected_size=1
-  db $84
+  db $98
 org $23FFE1 ; @hook module=Core kind=data protected_size=1
-  db $C1
+  db $20
 ; Global $E2 (sprite-relative $6F): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDE2 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE2 ; @hook module=Core kind=data protected_size=1
-  db $88
+  db $9B
 org $23FFE2 ; @hook module=Core kind=data protected_size=1
-  db $13
+  db $72
 pullpc

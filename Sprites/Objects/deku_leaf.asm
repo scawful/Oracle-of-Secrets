@@ -127,7 +127,7 @@ Sprite_DekuLeaf_Main:
 Sprite_DekuLeaf_Draw:
 {
   JSL Sprite_PrepOamCoord
-  LDA #$08
+  LDA #$10
   JSL OAM_AllocateFromRegionB
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame

@@ -36,6 +36,9 @@ SpecialOverworldPaletteHoleReference: skip 12
 SpecialOverworldPaletteHoleEffective: skip 12
 SpecialOverworldPaletteHoleState: skip 1 ; Reset to0 before any capture/read.
 SpecialOverworldPaletteHoleArea: skip 1  ; Reset toFF; validate full8A first.
+GanondorfFight:           skip 1  ; $7E1EA6 finale: 0 none, 1 Ganondorf spawned, 2 defeated
+BossReinject:             skip 1  ; $7E1EA7 fairy revive in room $00: bosses re-inject their graphics next frame, then clear it
+FinaleBeat:               skip 1  ; $7E1EA8 0 Kydreeok not dead yet, N>1 placeholder beat counting down, 1 Ganondorf may spawn
 assert pc() <= $7E1F00, "Core/symbols.asm WRAM block overflows free RAM $7E1E70-$7E1EFF"
 }
 base off
@@ -46,6 +49,11 @@ SpecialOverworldPaletteHoleCacheEnd = $7E1EA6
 assert SpecialOverworldPaletteHoleCache == SpecialOverworldPaletteHoleReference
 assert SpecialOverworldPaletteHoleCacheEnd == SpecialOverworldPaletteHoleArea+1
 assert SpecialOverworldPaletteHoleCacheEnd-SpecialOverworldPaletteHoleCache == 26
+
+; PLACEHOLDER for the Song of Healing beat between Kydreeok and Ganondorf (decisions.org canon
+; order: Kydreeok, Song frees Kydrog, Ganon). Until that scene exists, Ganondorf waits this many
+; door-gate frames (3 s) after the Kydreeok body is dismissed. Replace with the real beat's flag.
+!FinaleBeat_Frames = $B4
 
 ; =========================================================
 
@@ -92,6 +100,11 @@ if !ENABLE_DREAM_POWER_SCENE == 1
 !DreamPower_SubSilhouette = $D8
 DreamPower_WakeLine  = $7FF37A ; word: !DreamPower_WakeLive = Maple says D2.06 in the hut
 endif
+
+; BossKit (Sprites/Bosses/boss_kit.asm) uses WRAM $7FF380-$7FF384 in the same
+; vanilla-free UNUSED_7FF180 block: the boss frame load meter and earthquake.
+; BossDirector (Sprites/Bosses/boss_director.asm) uses $7FF388-$7FF39D after
+; it: the boss attack token, rest, hit grace, cooldowns and 8 boss bytes.
 
 ; Current Song
 CurrentSong    = $030F

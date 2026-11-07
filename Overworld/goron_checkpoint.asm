@@ -8,6 +8,11 @@ LoadCheckpointOrWorld:
   if !SPECIAL_OVERWORLD_NATIVE == 1
     JSL Lyra_TailEvent_MigrateSave
   endif
+  ; Finale state is WRAM only: a new file load starts the Kydreeok/Ganondorf fight clean.
+  ; STZ leaves A/N/Z alone (Module05 branches on them).
+  STZ.w GanondorfFight
+  STZ.w BossReinject
+  STZ.w FinaleBeat
   LDA.l SpawnPoint : CMP.b #!Spawn_GoronCheckpoint : BNE .legacy
     ; Consume even a malformed marker before the seven-record spawn arrays.
     LDA.b #!Spawn_LinksHouse : STA.l SpawnPoint

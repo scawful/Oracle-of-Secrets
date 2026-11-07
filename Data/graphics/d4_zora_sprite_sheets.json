@@ -33,6 +33,30 @@
       "why": "Kydrog boss, old pirate art (scawful 2026-10-19): dark outline around the collar and neck; room $A4 only."
     },
     {
+      "decoded_sha256": "705208a1541b6ffb1d84cd05b00e284c2b6bfcf08a1ad5b14d72088b3205cd24",
+      "global_sheet": "0xE3",
+      "source": "docks/docks_gE3_slot6.txt",
+      "why": "Kalyxo Docks ordinary 3bpp background; shared Secret Beach LOW deck sheet."
+    },
+    {
+      "decoded_sha256": "a06f575732f4a3c3bb619d782985bb53deaa3dfa70eed37124fc628a28675515",
+      "global_sheet": "0xE4",
+      "source": "docks/docks_gE4_slot3.txt",
+      "why": "Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload."
+    },
+    {
+      "decoded_sha256": "924d4327d683073743b168a655dfc5ac22ab19d9c8c4fce478833715fba543b7",
+      "global_sheet": "0xE5",
+      "source": "docks/docks_gE5_slot4.txt",
+      "why": "Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload."
+    },
+    {
+      "decoded_sha256": "933d8f5dcea66c62f839a1b1ac37b27ee411c7f8d41e73204193d036555d40d5",
+      "global_sheet": "0xE6",
+      "source": "docks/docks_gE6_slot5.txt",
+      "why": "Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload."
+    },
+    {
       "global_sheet": "0xDF",
       "source": "d4_zora/atlas-DF.txt",
       "decoded_sha256": "92467df57fd807f8d30a4da93d4392a6ad49040c6b0bf7fc8b60c693231c5e7a",

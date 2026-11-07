@@ -447,6 +447,7 @@ def filter_active_asm_sources(
 def scan_org_directives(
     root: Path,
     asm_paths: Optional[Iterable[Path]] = None,
+    defines: Optional[dict[str, int]] = None,
 ) -> list[OrgDirective]:
     """Scan active literal/computed org directives with explicit proofs.
 
@@ -454,12 +455,19 @@ def scan_org_directives(
     that macro is reachable from a real invocation in active source. This
     keeps unused macro templates from becoming false hooks while ensuring an
     invoked unresolved template cannot silently bypass manifest validation.
+
+    `defines` must come from `_load_global_defines(root)` for this same root;
+    a selected Lyra context re-verifies its full preparation on every load.
     """
     root = root.resolve()
+    global_defines = (
+        _load_global_defines(root) if defines is None else defines
+    )
     if asm_paths is None and (root / "Oracle_main.asm").is_file():
-        asm_paths = collect_reachable_asm_sources(root)
+        asm_paths = collect_reachable_asm_sources(
+            root, defines=global_defines
+        )
     explicit_sources = asm_paths is not None
-    global_defines = _load_global_defines(root)
     source_paths = list(root.rglob("*.asm") if asm_paths is None else asm_paths)
     active_sources = (
         list(source_paths)
@@ -557,14 +565,19 @@ def scan_org_directives(
 def scan_hooks(
     root: Path,
     asm_paths: Optional[Iterable[Path]] = None,
+    defines: Optional[dict[str, int]] = None,
 ) -> list[HookEntry]:
     root = root.resolve()
+    global_defines = (
+        _load_global_defines(root) if defines is None else defines
+    )
     if asm_paths is None and (root / "Oracle_main.asm").is_file():
-        asm_paths = collect_reachable_asm_sources(root)
+        asm_paths = collect_reachable_asm_sources(
+            root, defines=global_defines
+        )
     hooks_by_addr: dict[int, HookEntry] = {}
     explicit_sources = asm_paths is not None
 
-    global_defines = _load_global_defines(root)
     source_paths = root.rglob('*.asm') if asm_paths is None else asm_paths
     active_sources = (
         list(source_paths)
@@ -573,7 +586,9 @@ def scan_hooks(
     )
     active_macros = {
         directive.macro_name
-        for directive in scan_org_directives(root, active_sources)
+        for directive in scan_org_directives(
+            root, active_sources, defines=global_defines
+        )
         if directive.macro_name is not None
     }
     for source_path in active_sources:
@@ -722,7 +737,12 @@ def main() -> int:
 
     rom_path = (root / args.rom).resolve()
     try:
-        hooks = scan_hooks(root, asm_paths=collect_reachable_asm_sources(root))
+        defines = _load_global_defines(root)
+        hooks = scan_hooks(
+            root,
+            asm_paths=collect_reachable_asm_sources(root, defines=defines),
+            defines=defines,
+        )
         if not hooks:
             raise ValueError("No hooks found in reachable Oracle ASM sources")
         rom_bytes = rom_path.read_bytes()

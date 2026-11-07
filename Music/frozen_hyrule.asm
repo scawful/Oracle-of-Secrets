@@ -11,7 +11,7 @@
 
 ; org $1ACCAB; Sections?
 FrozenHyruleTheme: 
-!ARAMAddr = $EF6D
+!ARAMAddr = owaux_aram(FrozenHyruleTheme)
 dw !ARAMAddr+$0A ; Intro
 dw !ARAMAddr+$1A ; Looping
 dw $00FF
@@ -42,8 +42,11 @@ dw $0000
 
 
 .Channel0Intro
-%SetMasterVolume($80)
+%SetMasterVolume($68) ; pass 2: $80 was still loud in play
 %SetTempo(80);
+; Loudness pass 2026-11-05: every channel was at $FF. Levels follow
+; vanilla overworld songs (lead $C8-$D0, pads $A0-$C8).
+%SetChannelVolume($C0) ; choir pad
 %SetInstrument($15) ; Choir
 %SetDurationN($48, $7F) ; 1/4
 db $E3, $EF, $EF, $CF
@@ -53,6 +56,7 @@ db $00 ; End of the channel
 
 
 .Channel1Intro
+%SetChannelVolume($C8) ; harp
 %SetInstrument($0F) ; Harp
 %SetDurationN($48, $7F) ; 1/4
 db Rest
@@ -63,6 +67,7 @@ db $00 ; End of the channel
 
 
 .Channel2Intro
+%SetChannelVolume($B8) ; strings arpeggio
 %SetInstrument($09) ; Strings
 %SetDurationN($12, $7F) ; 1/16
 db Rest
@@ -231,6 +236,7 @@ db $00 ; End
 
 
 .Channel3
+%SetChannelVolume($D0) ; ocarina lead
 %SetInstrument($0D) ; Ocarina
 %SetDurationN($24, $7F) ; 1/8
 %CallSubroutine(.sub10+!ARAMC, 2)
@@ -276,6 +282,7 @@ db $00 ; End
 
 
 .Channel4
+%SetChannelVolume($C8) ; strings pad
 %SetInstrument($09) ; Strings
 %SetDurationN($48, $7F) ; 1/4
 db Rest

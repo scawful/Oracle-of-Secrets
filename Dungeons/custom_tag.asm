@@ -25,10 +25,47 @@ assert read4($01CC91) == $D9800005, "RoomTag_Holes2 body moved"
 org $01CC89 : JML RoomTag_SomariaSocketDoor ; @hook module=Dungeons name=RoomTag_SomariaSocketDoor kind=jml target=RoomTag_SomariaSocketDoor expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8
 assert pc() == $01CC8D
 
+; Vanilla draw culling must not delete a grounded cube holding a tag $24 plate.
+; Keep the six-byte deletion pair together; $08E724 is another branch target.
+assert read3($08E731) == $06469C, "Somaria culled pressure clear moved"
+assert read3($08E734) == $0C4A9E, "Somaria culled actor clear moved"
+assert read1($08E737) == $8A, "Somaria culled cleanup continuation moved"
+assert read1($08E74B) == $60, "Somaria draw return moved"
+org $08E731 ; @hook module=Dungeons name=SomariaSocket_CulledBlock kind=jml target=SomariaSocket_CulledBlock expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8 protected_size=6
+  JML SomariaSocket_CulledBlock
+  NOP #2
+assert pc() == $08E737
+
+; Only type $2C reaches this five-byte span in the native per-slot terminator.
+; Keep its loop and all other actors intact; preserve a socket cube only during
+; an internal landing in the same loaded room, never an external room unload.
+assert read4($09AC6B) == $A2AB4B8B, "Ancilla terminator bank prologue moved"
+assert read3($09AC7A) == $0C4ABD, "Ancilla terminator actor load moved"
+assert read4($09AC7D) == $0DD02CC9, "Ancilla terminator Somaria branch moved"
+assert read3($09AC81) == $06469C, "Ancilla terminator pressure clear moved"
+assert read2($09AC84) == $48A5, "Ancilla terminator dash load moved"
+assert read2($09AC86) == $8029, "Ancilla terminator dash mask moved"
+assert read1($09ACA9) == $CA, "Ancilla terminator next-slot continuation moved"
+org $09AC81 ; @hook module=Dungeons name=SomariaSocket_InternalLanding kind=jml target=SomariaSocket_InternalLanding expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8 protected_size=5
+  JML SomariaSocket_InternalLanding
+  NOP
+assert pc() == $09AC86
+
 pullpc
 CustomTag:
 {
   PHX
+  JSL D6CartCircuit_IsRoom : BCC .not_circuit
+    JSR D6CartCircuit_Main
+    BRA .game_has_begun
+  .not_circuit
+  JSL D9KeyGate_IsRoom : BCC .ordinary_room
+    JSR D9KeyGate_Main
+    BRA .game_has_begun
+  .ordinary_room
+if !DISABLE_MUSIC == 0
+  JSR HouseTag_ControlMusic
+endif
   LDA $7EF3C6 : BNE .game_has_begun
     JSR HouseTag_Main
   .game_has_begun
@@ -38,6 +75,9 @@ CustomTag:
 
 ; =========================================================
 ; Room tag to initialize the game without the Uncle sprite.
+
+incsrc "Dungeons/d9_key_gate.asm"
+incsrc "Dungeons/d6_cart_circuit.asm"
 
 HouseTag_Main:
 {
@@ -58,7 +98,7 @@ HouseTag_Main:
   HouseTag_TelepathicPlea:
   {
     LDA.b #$08 : STA.l TimeState.Hours ; Set the time to 8:00am
-    LDA.b #$03 : STA.w $012C ; Play the deku tree music
+    LDA.b #!Song_DekuTheme : STA.w $012C
 
     ; Set Link's coordinates to this specific position.
     LDA.b #$40 : STA $0FC2
@@ -119,6 +159,32 @@ endif
     RTS
   }
 }
+
+if !DISABLE_MUSIC == 0
+; M=8, DB=$00, DP=$00; A/flags scratch, X/Y unchanged, JSR/RTS.
+; Wake sets the legacy house flag, so this must run before that flag's gate.
+; Keep Deku through the bed/jump sequence; request Rain once Link can walk.
+HouseTag_ControlMusic:
+{
+  LDA.w $00A0 : CMP.b #$04 : BNE .done
+  LDA.w $00A1 : CMP.b #$01 : BNE .done
+  LDA.l StoryState : CMP.b #$02 : BNE .done
+  LDA.l GameState : BNE .done
+  LDA.l MODE : CMP.b #$07 : BNE .done
+  LDA.l SUBMODE : BNE .done
+  LDA.l LINKDO : BNE .done
+  LDA.l CUTSCENE : BNE .done
+  LDA.l FORCEMOVE : BNE .done
+  LDA.l JUMPING : BNE .done
+  LDA.l INPAIN : BNE .done
+  LDA.w $0136 : BNE .done
+  ; Logical current song changes after NMI consumes the request.
+  LDA.w $0133 : CMP.b #!Song_DekuTheme : BNE .done
+    LDA.b #!Song_Rain : STA.w $012C
+  .done
+  RTS
+}
+endif
 
 print  "End of house_tag.asm              ", pc
 
@@ -316,11 +382,55 @@ endif
 ; across all layers, one owner of the shutter state, and no transit lines.
 ; The caller must keep the vanilla once-per-frame, $11==$00 room-tag cadence.
 ;
-; Allocation: fixed bank $2C tail $2CFD00-$2CFDFF, so the bank $2C
-; continuation used by the code before and after this file is unchanged.
-; Neighbors: main bank $2C stream below (ended at $2CE113 in the control
-; build), CustomRoomCollision at $2CFE00-$2CFEFF, JumpTableLocal_Guard at
-; $2CFF00. This org places code only; the $01CC89 gateway is its only entry.
+; Allocation: internal landing owns $2CF700-$2CF7FF; tag and cull helpers
+; own $2CFD00-$2CFDFF. Both dynamic bank $2C streams stay below $2CF700.
+; Thin ice owns $2CF800-$2CF9FF; optional cart helpers own $2CFA00-$2CFCFF;
+; collision owns $2CFE00-$2CFEFF and JumpTableLocal_Guard starts $2CFF00.
+; Each fixed helper has its own guarded vanilla gateway.
+
+; Refuse an occupied tail even when its bytes have no project symbol.
+!SomariaSocket_InternalGuard #= $2CF700
+while !SomariaSocket_InternalGuard < $2CF800
+  assert read4(!SomariaSocket_InternalGuard) == $00000000, "Somaria internal-landing allocation is occupied"
+  !SomariaSocket_InternalGuard #= !SomariaSocket_InternalGuard+4
+endwhile
+
+pushpc
+org $2CF700
+SomariaSocket_InternalLanding:
+{
+  ; Entry: M/X=8, DBR=$09, D=$0000, X=native slot, A=$2C. PHP/PHA
+  ; preserve the complete incoming state; staying M=8 also preserves hidden B.
+  ; Keep jumps to the native DEX loop; reject replays STZ $0646 / LDA $48.
+  PHP : PHA
+  LDA.b $10 : CMP.b #$07 : BNE .vanilla
+  LDA.b $11 : CMP.b #$01 : BNE .vanilla
+  LDA.b $A0 : CMP.w $048E : BNE .vanilla
+  LDA.b $A1 : CMP.w $048F : BNE .vanilla
+  CPX.b #$05 : BCS .vanilla
+  LDA.b $1B : BEQ .vanilla
+  LDA.b $AE : CMP.b #$24 : BEQ .tag24
+  LDA.b $AF : CMP.b #$24 : BNE .vanilla
+  .tag24
+  LDA.w $0C4A,X : CMP.b #$2C : BNE .vanilla
+  LDA.w $0646 : BEQ .vanilla
+  BIT.w $0308 : BMI .vanilla
+  LDA.w $03F4 : BNE .vanilla
+  LDA.w $0394,X : ORA.w $03C5,X : ORA.w $0380,X : BNE .vanilla
+  LDA.w $03DB,X : CMP.b #$04 : BNE .vanilla
+  LDA.w $029E,X : BEQ .keep
+  CMP.b #$FF : BNE .vanilla
+  .keep
+  PLA : PLP
+  JML $09ACA9
+  .vanilla
+  PLA : PLP
+  STZ.w $0646
+  LDA.b $48
+  JML $09AC86
+}
+assert pc() <= $2CF800 ; thin ice owns the next fixed slot
+pullpc
 
 pushpc
 org $2CFD00
@@ -365,6 +475,37 @@ RoomTag_SomariaSocketDoor:
   .exit
   SEP #$30
   JML RoomTag_Return
+}
+
+; JML entry from $08E731: M/X=8, DBR=$08, X=original ancilla slot.
+; The draw routine has already restored X; its inherited JSR return stays put.
+; Preserve A/P, X/Y, DBR and D. All absolute data accesses use the WRAM mirror.
+; Only the original cull/delete path changes: lift, split, pit and room unload
+; still remove the block normally. Fizz shares the draw routine, so require $2C.
+SomariaSocket_CulledBlock:
+{
+  PHP : PHA
+  CPX.b #$05 : BCS .vanilla
+  LDA.w $001B : BEQ .vanilla
+  LDA.w $00AE : CMP.b #$24 : BEQ .tag24
+  LDA.w $00AF : CMP.b #$24 : BNE .vanilla
+  .tag24
+  LDA.w $0C4A,X : CMP.b #$2C : BNE .vanilla
+  LDA.w $0646 : BEQ .vanilla
+  BIT.w $0308 : BMI .vanilla
+  LDA.w $03F4 : BNE .vanilla
+  LDA.w $0394,X : ORA.w $03C5,X : ORA.w $0380,X : BNE .vanilla
+  LDA.w $03DB,X : CMP.b #$04 : BNE .vanilla
+  LDA.w $029E,X : BEQ .keep
+  CMP.b #$FF : BNE .vanilla
+  .keep
+  PLA : PLP
+  JML $08E74B
+  .vanilla
+  PLA : PLP
+  STZ.w $0646
+  STZ.w $0C4A,X
+  JML $08E737
 }
 assert pc() <= $2CFE00 ; do not overlap CustomRoomCollision
 pullpc
