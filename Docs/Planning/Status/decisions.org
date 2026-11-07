@@ -4376,3 +4376,22 @@ Answer: "Briefing only" (scawful, 2026-11-06)
   The growing route (option 2) is not selected; it can extend this later.
   Not decided: the boatman (who, where on the island he waits), fare, whether the island-side
   boarding exists before the Flippers gift, the boatman text (needs scawful's OK).
+
+* DECIDED West route into Toadstool Woods: Docks stairs up into $28, opened from the woods side (2026-11-06)
+  :PROPERTIES:
+  :ASKED_BY: Claude, progression review (gap C: the west half has no required stop)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/progression_review_2026-11-06/west_route_board.png
+  :END:
+  scawful before the ask: "agreed about the western region needing more reason to visit that's why
+  i added the docks and considered a new route into the toadstool woods"; then "then that should
+  provide decently fast access to different parts of kalyxo from the opposite end of the map +
+  places to cross over in the desert, deku swamp, zora river, korok cove/graveyard" (2026-11-06).
+  Question: Where does the new Toadstool route enter?
+  Options shown: A Docks stairs up the cliff into $28, locked from below until Link opens them from
+  the woods side (pick); A2 the same stairs, always open; B a gate from Smith's yard on $22.
+  Answer: "A yeah i wanted to do that connect to the map west of the lost woods" (scawful, 2026-11-06)
+  The stairs join the Docks boardwalk ($30/$31) to $28, the map west of Lost Woods $29. Today a
+  cliff and a tree wall close the whole south edge of the woods (yaze project ROM f27b91c2).
+  With the return ferry (ca6a51cb): Sea Zora island -> Docks -> $28 -> woods, ranch, D1.
+  Not decided: what opens the stairs from the top (lever, ladder, thieves' gate), the exact column
+  on the seam, and any crossover pad at the Zora river.
