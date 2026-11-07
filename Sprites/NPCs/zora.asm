@@ -50,6 +50,9 @@
 Sprite_Zora_Long:
 {
 if !ENABLE_D4_ZORA_REDESIGN == 1
+  JSL D4Refuge_IsActor : BCC .not_refuge_actor_d4
+  JML D4Refuge_Long
+  .not_refuge_actor_d4
   JSL D4Zora_IsRescueActor : BCC .legacy_d4
   JML D4Zora_Long
   .legacy_d4

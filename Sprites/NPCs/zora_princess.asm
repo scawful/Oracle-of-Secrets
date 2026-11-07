@@ -74,6 +74,9 @@ Sprite_ZoraPrincess_Long:
 Sprite_ZoraPrincess_Prep:
 {
 if !ENABLE_D4_ZORA_REDESIGN == 1
+  JSL D4Refuge_IsActor : BCC .not_refuge_actor_d4
+  JML D4Refuge_Prep
+  .not_refuge_actor_d4
   JSL D4Zora_IsRescueActor : BCC .legacy_d4
   JML D4Zora_Prep
   .legacy_d4

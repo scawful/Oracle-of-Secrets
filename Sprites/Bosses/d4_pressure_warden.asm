@@ -552,6 +552,9 @@ D4Zora_Draw:
   LDA.l D4Zora_FramePointers, X : STA $06
   SEP #$20
   LDA.b #!D4Zora_FrameBank : STA $08
+  ; Shared record loop also draws the two-piece refuge River NPC. Both
+  ; entries have already reserved OAM and pushed the original sprite X.
+D4Zora_DrawEntries:
   STZ $09
   LDY.b #$00
   .next
@@ -629,5 +632,98 @@ D4Zora_FilterBabyReminder:
   .suppress
   PLY : PLX : PLA : PLP
   RTL
+}
+; Peaceful refuge roles are explicit B8 subtypes, separate from the legacy
+; room105 Princess and the room46 protector/Princess. M/X=8 throughout.
+D4Refuge_IsActor:
+{
+  LDA.w ROOM : CMP.b #$05 : BNE .no
+  LDA.w ROOM+1 : CMP.b #$01 : BNE .no
+  LDA.w SprSubtype, X : CMP.b #$04 : BCC .no
+  CMP.b #$07 : BCS .no
+  SEC : RTL
+  .no
+  CLC : RTL
+}
+
+D4Refuge_Prep:
+{
+  PHB : PHK : PLB
+  JSR D4Zora_LoadPalettes
+  LDA.b #$81 : STA.w SprNbrOAM, X
+  ; Match ordinary talkable NPCs (Bean Vendor): the inherited Princess
+  ; box02 leaves a gap at the barrier when approached from above.
+  LDA.b #$43 : STA.w SprHitbox, X
+  STZ.w SprDefl, X
+  STZ.w SprTileDie, X
+  STZ.w SprAction, X
+  STZ.w SprFrame, X
+  STZ.w SprMiscA, X
+  STZ.w $0DC0, X
+  PLB : RTL
+}
+
+D4Refuge_Long:
+{
+  PHB : PHK : PLB
+  LDA.w SprSubtype, X : CMP.b #$04 : BNE .sea
+  ; Cave entry rebuilds the display palette after sprite preparation. Wait
+  ; for ordinary active gameplay, then bind the River colours once.
+  LDA.w SprMiscA, X : BNE .river_draw
+  JSL Sprite_CheckActive : BCC .river_draw
+  JSR D4Zora_LoadPalettes
+  LDA.b #$01 : STA.w SprMiscA, X
+  .river_draw
+  JSR D4Refuge_DrawRiver
+  BRA .active
+  .sea
+  JSR Sprite_Zora_Draw
+  .active
+  JSL Sprite_CheckActive : BCC .done
+  JSL Sprite_PlayerCantPassThrough
+  JSR D4Refuge_Talk
+  .done
+  PLB : RTL
+}
+
+D4Refuge_Talk:
+{
+  ; D4 clear takes priority over the earned protector reward. The refuge
+  ; only reads progression: it never consumes Healing or changes followers.
+  LDA.w SprSubtype, X : SEC : SBC.b #$04
+  STA $00
+  ASL : CLC : ADC $00 : STA $00
+  LDA.l Crystals : AND.b #$20 : BNE .cleared
+  LDA.l $7EF302 : BEQ .select
+  INC $00
+  BRA .select
+  .cleared
+  INC $00 : INC $00
+  .select
+  LDY $00
+  LDA.w .message_low, Y
+  LDY.b #$02
+  JSL Sprite_ShowSolicitedMessageIfPlayerFacing
+  RTS
+  .message_low
+  db $11, $12, $13 ; River witness: before Healing / healed / D4 clear
+  db $14, $15, $16 ; Sea caretaker
+  db $17, $18, $19 ; Sea water keeper
+}
+
+D4Refuge_DrawRiver:
+{
+  JSL Sprite_PrepOamCoord
+  LDA.b #$08 : JSL OAM_AllocateFromRegionA
+  PHX
+  LDA.b #$02 : STA $0D
+  REP #$20
+  LDA.w #.pieces : STA $06
+  SEP #$20
+  PHK : PLA : STA $08
+  JMP D4Zora_DrawEntries
+  .pieces
+  db $F8, $F0, $C0, $37
+  db $F8, $F8, $C2, $39
 }
 D4Zora_CodeEnd:

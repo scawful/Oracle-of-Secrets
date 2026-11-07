@@ -39,11 +39,11 @@ OWNED_REGIONS = (
     ("Core/gfx_sheet_table.asm", 0x11FC00, 0x11FFFF),
     ("Core/Generated/source_sprite_sheets/sheet_overrides.asm", 0x11FD00, 0x11FFFF),
     # The default-off D4 include replaces the standard include. Admit only
-    # its inherited ordinary rows and four private global rows, one byte each.
+    # its inherited ordinary rows and five private global rows, one byte each.
     *(("Core/Generated/d4_zora_sprite_sheets/sheet_overrides.asm", table+row, table+row)
       for table in (0x11FD00, 0x11FE00, 0x11FF00)
       for row in (0xB3, 0xB6, 0xBA, 0xD7, 0xDF, 0xE0, 0xE1, 0xE2,
-                  0xE3, 0xE4, 0xE5, 0xE6)),
+                  0xE3, 0xE4, 0xE5, 0xE6, 0xE7)),
     ("Core/Generated/menu_icons/menu_icon_overrides.asm", 0x11FD00, 0x11FFFF),
     # Overworld song upload chain, moved to bank $20 ($20B000-$20EFFF) by
     # Music/song_banks.asm. The ZS map lists 0x100000-0x107FFF as unused;
