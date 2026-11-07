@@ -28,6 +28,13 @@ def map_rom() -> bytearray:
 
 
 class DungeonMapFloorTest(unittest.TestCase):
+    def test_missing_dungeon_inventory_cannot_erase_current_map(self):
+        data = map_rom()
+        before = bytes(data)
+        with self.assertRaisesRegex(SystemExit, "no room inventory"):
+            maps.draft_spec(data, "D8", {"rooms": []})
+        self.assertEqual(bytes(data), before)
+
     def test_native_floor_byte_is_signed_independently_of_icon_flags(self):
         data = map_rom()
         for raw, expected, flags in ((0xFC, -4, 0), (0xFC, -4, 0xFF),

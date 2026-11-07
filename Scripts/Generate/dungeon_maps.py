@@ -52,7 +52,7 @@ EMPTY_WORD = 0x0B00
 EMPTY = 0x0F
 
 # Registry id -> pause-map dungeon slot ($040C / 2), from the bank $0F entrance table.
-SLOTS = {"SOC": 0, "SOP": 3, "D2": 5, "D1": 6, "D6": 7, "D3": 8, "D5": 9,
+SLOTS = {"SOC": 0, "D8": 2, "SOP": 3, "D2": 5, "D1": 6, "D6": 7, "D3": 8, "D5": 9,
          "SOW": 10, "D4": 11, "D7": 12, "FOS": 13}
 QUADS = ("NW", "NE", "SW", "SE")
 MATCH, CLOSE = 0.85, 0.70
@@ -332,6 +332,8 @@ def draft_spec(rom_data: bytes, dungeon_id: str, inventory: dict, render_dir: Pa
     unmapped registry rooms next to a mapped room they share a door with."""
     cur = MapRom(rom_data).dungeon(SLOTS[dungeon_id])
     rows = {int(r["room"], 16): r for r in inventory["rooms"] if r["dungeon"] == dungeon_id}
+    if not rows:
+        raise SystemExit(f"{dungeon_id}: no room inventory; provide a reviewed --spec instead of drafting an empty map")
     floors = [{"name": f["name"], "grid": [EMPTY] * 25} for f in cur["floors"]]
     shapes, notes = {}, []
     for fi, f in enumerate(cur["floors"]):
