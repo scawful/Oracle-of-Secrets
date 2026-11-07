@@ -11,7 +11,8 @@
       "Room types: entrance/boss/mini_boss/connector/normal",
       "Room names from oracle_room_labels.json (corrected 2026-02-08)",
       "2026-04-25 manual registry correction: align D5/D6/S1 room ownership with RC checklist, location_registry.json, and dungeon map docs; remove stale D2 claims for D5 Glacia rooms; keeps S3/D4 disputed rooms unchanged pending a separate runtime audit",
-      "2026-09-26 room-census correction: D1/D2/D3/D4/D7/FOS/SOC room lists follow ROM connectivity (mutual doors + stair objects) and the ZScream entrance table in bank $0F (yaze dungeon-get-entrance reads the old $02:C813 table). Moved: 0x5B FOS->D1, 0xA5 FOS->D7, 0x54/0x66 D4->D3, 0x76 D4->SOP, 0x04/0x13/0x14/0x15/0x23/0x24 D7->none (Master Sword Cave / Final Boss Route, entrances 0x18/0x19/0x2D/0x24). Removed empty rooms 0x1F (D2) and 0x95/0x96/0xA6 (FOS). Added D2 0x6F/0x8F, D3 prison+basement, D4 0x44/0x45/0x10B, D7 lower hold, FOS 0x2D, SOC 0x07/0x17/0x32. Entrances corrected: D2 0x15->0x5F, SOP 0x03/0x05/0x09/0x0B, D3 0x28->0x56 and 0x32->0x55, SOC 0x0C->0x53 (0x0C is not a FOS entrance; FOS is 0x37->0x0C). Stairs/holewarps/doors of the changed dungeons regenerated with extract_room_connectivity.py functions; holewarps are header values only (rooms in RoomsWithPitDamage $00:990C never use them). The pause-map room grids (bank $0A) still list 0x5B/0x95/0x96/0xA5/0xA6 under FOS and 0x33/0x43/0x53/0x63 under S2."
+      "2026-09-26 room-census correction: D1/D2/D3/D4/D7/FOS/SOC room lists follow ROM connectivity (mutual doors + stair objects) and the ZScream entrance table in bank $0F (yaze dungeon-get-entrance reads the old $02:C813 table). Moved: 0x5B FOS->D1, 0xA5 FOS->D7, 0x54/0x66 D4->D3, 0x76 D4->SOP, 0x04/0x13/0x14/0x15/0x23/0x24 D7->none (Master Sword Cave / Final Boss Route, entrances 0x18/0x19/0x2D/0x24). Removed empty rooms 0x1F (D2) and 0x95/0x96/0xA6 (FOS). Added D2 0x6F/0x8F, D3 prison+basement, D4 0x44/0x45/0x10B, D7 lower hold, FOS 0x2D, SOC 0x07/0x17/0x32. Entrances corrected: D2 0x15->0x5F, SOP 0x03/0x05/0x09/0x0B, D3 0x28->0x56 and 0x32->0x55, SOC 0x0C->0x53 (0x0C is not a FOS entrance; FOS is 0x37->0x0C). Stairs/holewarps/doors of the changed dungeons regenerated with extract_room_connectivity.py functions; holewarps are header values only (rooms in RoomsWithPitDamage $00:990C never use them). The pause-map room grids (bank $0A) still list 0x5B/0x95/0x96/0xA5/0xA6 under FOS and 0x33/0x43/0x53/0x63 under S2.",
+      "2026-11-07 room-label correction: Oracle owner and established role; reserved/released assignments are named explicitly. Room membership, geometry, rewards and connectivity are unchanged. Source/provenance review: AFS layout_core_2/ORACLE_ROOM_LABELS.md."
     ]
   },
   "dungeons": [
@@ -23,7 +24,7 @@
       "rooms": [
         {
           "id": "0x09",
-          "name": "Mushroom Grotto",
+          "name": "Mushroom Grotto — Room $009",
           "floor": "F1",
           "grid_row": 0,
           "grid_col": 9,
@@ -36,7 +37,7 @@
         },
         {
           "id": "0x0A",
-          "name": "Stalfos Trap",
+          "name": "Mushroom Grotto — Room $00A",
           "floor": "F1",
           "grid_row": 0,
           "grid_col": 10,
@@ -49,7 +50,7 @@
         },
         {
           "id": "0x0B",
-          "name": "Turtle",
+          "name": "Mushroom Grotto — Room $00B",
           "floor": "F1",
           "grid_row": 0,
           "grid_col": 11,
@@ -62,7 +63,7 @@
         },
         {
           "id": "0x19",
-          "name": "Dark Maze",
+          "name": "Mushroom Grotto — Room $019",
           "floor": "F1",
           "grid_row": 1,
           "grid_col": 9,
@@ -75,7 +76,7 @@
         },
         {
           "id": "0x1A",
-          "name": "Big Chest",
+          "name": "Mushroom Grotto — Room $01A",
           "floor": "F1",
           "grid_row": 1,
           "grid_col": 10,
@@ -88,7 +89,7 @@
         },
         {
           "id": "0x1B",
-          "name": "Mimics / Moving Wall",
+          "name": "Mushroom Grotto — Room $01B",
           "floor": "F1",
           "grid_row": 1,
           "grid_col": 11,
@@ -101,7 +102,7 @@
         },
         {
           "id": "0x2A",
-          "name": "Big Hub",
+          "name": "Mushroom Grotto — Room $02A",
           "floor": "F1",
           "grid_row": 2,
           "grid_col": 10,
@@ -114,7 +115,7 @@
         },
         {
           "id": "0x2B",
-          "name": "Map Chest / Fairy",
+          "name": "Mushroom Grotto — Room $02B",
           "floor": "F1",
           "grid_row": 2,
           "grid_col": 11,
@@ -127,7 +128,7 @@
         },
         {
           "id": "0x3A",
-          "name": "Bombable Floor",
+          "name": "Mushroom Grotto — Room $03A",
           "floor": "F1",
           "grid_row": 3,
           "grid_col": 10,
@@ -140,7 +141,7 @@
         },
         {
           "id": "0x3B",
-          "name": "Spike Block / Conveyor",
+          "name": "Mushroom Grotto — Room $03B",
           "floor": "F1",
           "grid_row": 3,
           "grid_col": 11,
@@ -153,7 +154,7 @@
         },
         {
           "id": "0x4A",
-          "name": "Entrance",
+          "name": "Mushroom Grotto — Entrance",
           "floor": "F1",
           "grid_row": 4,
           "grid_col": 10,
@@ -166,7 +167,7 @@
         },
         {
           "id": "0x4B",
-          "name": "Warps / South Mimics",
+          "name": "Mushroom Grotto — Room $04B",
           "floor": "F1",
           "grid_row": 4,
           "grid_col": 11,
@@ -179,7 +180,7 @@
         },
         {
           "id": "0x5A",
-          "name": "Helmasaur King (Boss)",
+          "name": "Mushroom Grotto — Boss Chamber",
           "grid_row": 5,
           "grid_col": 10,
           "type": "boss",
@@ -191,7 +192,7 @@
         },
         {
           "id": "0x5B",
-          "name": "Spike Pit",
+          "name": "Mushroom Grotto — Room $05B",
           "floor": "F1",
           "grid_row": 5,
           "grid_col": 11,
@@ -204,7 +205,7 @@
         },
         {
           "id": "0x6A",
-          "name": "Rupee",
+          "name": "Mushroom Grotto — Room $06A",
           "floor": "F1",
           "grid_row": 6,
           "grid_col": 10,
@@ -220,104 +221,104 @@
         {
           "from": "0x09",
           "to": "0x4A",
-          "label": "Mushroom Grotto \u2194 Entrance"
+          "label": "Mushroom Grotto ↔ Entrance"
         },
         {
           "from": "0x09",
           "to": "0x5B",
-          "label": "Mushroom Grotto \u2194 Spike Pit"
+          "label": "Mushroom Grotto ↔ Spike Pit"
         },
         {
           "from": "0x0A",
           "to": "0x3A",
-          "label": "Stalfos Trap \u2194 Bombable Floor"
+          "label": "Stalfos Trap ↔ Bombable Floor"
         },
         {
           "from": "0x0B",
           "to": "0x6A",
-          "label": "Turtle \u2194 Rupee"
+          "label": "Turtle ↔ Rupee"
         },
         {
           "from": "0x1A",
           "to": "0x3B",
-          "label": "Big Chest \u2194 Spike Block / Conveyor"
+          "label": "Big Chest ↔ Spike Block / Conveyor"
         },
         {
           "from": "0x1B",
           "to": "0x0B",
-          "label": "Mimics / Moving Wall \u2194 Turtle"
+          "label": "Mimics / Moving Wall ↔ Turtle"
         },
         {
           "from": "0x1B",
           "to": "0x1A",
-          "label": "Mimics / Moving Wall \u2194 Big Chest"
+          "label": "Mimics / Moving Wall ↔ Big Chest"
         },
         {
           "from": "0x2A",
           "to": "0x2B",
-          "label": "Big Hub \u2194 Map Chest / Fairy"
+          "label": "Big Hub ↔ Map Chest / Fairy"
         },
         {
           "from": "0x3A",
           "to": "0x09",
-          "label": "Bombable Floor \u2194 Mushroom Grotto"
+          "label": "Bombable Floor ↔ Mushroom Grotto"
         },
         {
           "from": "0x3A",
           "to": "0x6A",
-          "label": "Bombable Floor \u2194 Rupee"
+          "label": "Bombable Floor ↔ Rupee"
         },
         {
           "from": "0x5A",
           "to": "0x0A",
-          "label": "Helmasaur King (Boss) \u2194 Stalfos Trap"
+          "label": "Helmasaur King (Boss) ↔ Stalfos Trap"
         }
       ],
       "holewarps": [
         {
           "from": "0x09",
           "to": "0x4A",
-          "label": "Mushroom Grotto \u2192 Entrance"
+          "label": "Mushroom Grotto → Entrance"
         },
         {
           "from": "0x0A",
           "to": "0x09",
-          "label": "Stalfos Trap \u2192 Mushroom Grotto"
+          "label": "Stalfos Trap → Mushroom Grotto"
         },
         {
           "from": "0x2A",
           "to": "0x3A",
-          "label": "Big Hub \u2192 Bombable Floor"
+          "label": "Big Hub → Bombable Floor"
         },
         {
           "from": "0x3A",
           "to": "0x5B",
-          "label": "Bombable Floor \u2192 Spike Pit"
+          "label": "Bombable Floor → Spike Pit"
         },
         {
           "from": "0x3B",
           "to": "0x09",
-          "label": "Spike Block / Conveyor \u2192 Mushroom Grotto"
+          "label": "Spike Block / Conveyor → Mushroom Grotto"
         },
         {
           "from": "0x4A",
           "to": "0x3B",
-          "label": "Entrance \u2192 Spike Block / Conveyor"
+          "label": "Entrance → Spike Block / Conveyor"
         },
         {
           "from": "0x4B",
           "to": "0x5B",
-          "label": "Warps / South Mimics \u2192 Spike Pit"
+          "label": "Warps / South Mimics → Spike Pit"
         },
         {
           "from": "0x5B",
           "to": "0x3A",
-          "label": "Spike Pit \u2192 Bombable Floor"
+          "label": "Spike Pit → Bombable Floor"
         },
         {
           "from": "0x6A",
           "to": "0x4A",
-          "label": "Rupee \u2192 Entrance"
+          "label": "Rupee → Entrance"
         }
       ],
       "doors": [
@@ -439,7 +440,7 @@
       "rooms": [
         {
           "id": "0x0E",
-          "name": "Entrance",
+          "name": "Tail Palace — Room $00E",
           "floor": "F1",
           "grid_row": 0,
           "grid_col": 14,
@@ -452,7 +453,7 @@
         },
         {
           "id": "0x1E",
-          "name": "Bomb Floor / Bari",
+          "name": "Tail Palace — Room $01E",
           "floor": "F1",
           "grid_row": 1,
           "grid_col": 14,
@@ -465,7 +466,7 @@
         },
         {
           "id": "0x2E",
-          "name": "Compass",
+          "name": "Tail Palace — Room $02E",
           "floor": "F1",
           "grid_row": 2,
           "grid_col": 14,
@@ -478,7 +479,7 @@
         },
         {
           "id": "0x3E",
-          "name": "Stalfos Knights / Conveyor Hellway",
+          "name": "Tail Palace — Room $03E",
           "floor": "F1",
           "grid_row": 3,
           "grid_col": 14,
@@ -491,7 +492,7 @@
         },
         {
           "id": "0x3F",
-          "name": "Map Chest",
+          "name": "Tail Palace — Room $03F",
           "floor": "F1",
           "grid_row": 3,
           "grid_col": 15,
@@ -504,7 +505,7 @@
         },
         {
           "id": "0x4E",
-          "name": "Bomb-Jump",
+          "name": "Tail Palace — Room $04E",
           "floor": "F1",
           "grid_row": 4,
           "grid_col": 14,
@@ -517,7 +518,7 @@
         },
         {
           "id": "0x4F",
-          "name": "Fairy",
+          "name": "Tail Palace — Room $04F",
           "floor": "F1",
           "grid_row": 4,
           "grid_col": 15,
@@ -530,7 +531,7 @@
         },
         {
           "id": "0x5E",
-          "name": "Lonely Firebar",
+          "name": "Tail Palace — Room $05E",
           "floor": "F1",
           "grid_row": 5,
           "grid_col": 14,
@@ -543,7 +544,7 @@
         },
         {
           "id": "0x5F",
-          "name": "Hidden Chest / Spike Floor",
+          "name": "Tail Palace — Entrance",
           "floor": "F1",
           "grid_row": 5,
           "grid_col": 15,
@@ -556,7 +557,7 @@
         },
         {
           "id": "0x6E",
-          "name": "Pengators",
+          "name": "Tail Palace — Room $06E",
           "floor": "F1",
           "grid_row": 6,
           "grid_col": 14,
@@ -569,7 +570,7 @@
         },
         {
           "id": "0x6F",
-          "name": "Room 0x6F",
+          "name": "Tail Palace — Room $06F",
           "grid_row": 6,
           "grid_col": 15,
           "type": "normal",
@@ -581,7 +582,7 @@
         },
         {
           "id": "0x7E",
-          "name": "Hidden Chest / Bombable Floor",
+          "name": "Tail Palace — Room $07E",
           "floor": "F1",
           "grid_row": 7,
           "grid_col": 14,
@@ -594,7 +595,7 @@
         },
         {
           "id": "0x7F",
-          "name": "Big Spike Traps",
+          "name": "Tail Palace — Room $07F",
           "grid_row": 7,
           "grid_col": 15,
           "type": "normal",
@@ -606,7 +607,7 @@
         },
         {
           "id": "0x8E",
-          "name": "Connector",
+          "name": "Tail Palace — Connector",
           "grid_row": 8,
           "grid_col": 14,
           "type": "connector",
@@ -618,7 +619,7 @@
         },
         {
           "id": "0x8F",
-          "name": "Room 0x8F",
+          "name": "Tail Palace — Room $08F",
           "grid_row": 8,
           "grid_col": 15,
           "type": "normal",
@@ -630,7 +631,7 @@
         },
         {
           "id": "0xDE",
-          "name": "Kholdstare (Boss)",
+          "name": "Tail Palace — Boss Chamber",
           "floor": "F1",
           "grid_row": 13,
           "grid_col": 14,
@@ -646,89 +647,89 @@
         {
           "from": "0x0E",
           "to": "0x6E",
-          "label": "Entrance \u2194 Pengators"
+          "label": "Entrance ↔ Pengators"
         },
         {
           "from": "0x1E",
           "to": "0x5F",
-          "label": "Bomb Floor / Bari \u2194 Hidden Chest / Spike Floor"
+          "label": "Bomb Floor / Bari ↔ Hidden Chest / Spike Floor"
         },
         {
           "from": "0x2E",
           "to": "0x6F",
-          "label": "Compass \u2194 Room 0x6F"
+          "label": "Compass ↔ Room 0x6F"
         },
         {
           "from": "0x3E",
           "to": "0x6F",
-          "label": "Stalfos Knights / Conveyor Hellway \u2194 Room 0x6F"
+          "label": "Stalfos Knights / Conveyor Hellway ↔ Room 0x6F"
         },
         {
           "from": "0x3F",
           "to": "0x6F",
-          "label": "Map Chest \u2194 Room 0x6F"
+          "label": "Map Chest ↔ Room 0x6F"
         },
         {
           "from": "0x4E",
           "to": "0x7E",
-          "label": "Bomb-Jump \u2194 Hidden Chest / Bombable Floor"
+          "label": "Bomb-Jump ↔ Hidden Chest / Bombable Floor"
         },
         {
           "from": "0x5F",
           "to": "0x0E",
-          "label": "Hidden Chest / Spike Floor \u2194 Entrance"
+          "label": "Hidden Chest / Spike Floor ↔ Entrance"
         },
         {
           "from": "0x5F",
           "to": "0x7F",
-          "label": "Hidden Chest / Spike Floor \u2194 Big Spike Traps"
+          "label": "Hidden Chest / Spike Floor ↔ Big Spike Traps"
         },
         {
           "from": "0x8E",
           "to": "0x8F",
-          "label": "Connector \u2194 Room 0x8F"
+          "label": "Connector ↔ Room 0x8F"
         }
       ],
       "holewarps": [
         {
           "from": "0x1E",
           "to": "0x8F",
-          "label": "Bomb Floor / Bari \u2192 Room 0x8F"
+          "label": "Bomb Floor / Bari → Room 0x8F"
         },
         {
           "from": "0x2E",
           "to": "0xDE",
-          "label": "Compass \u2192 Kholdstare (Boss)"
+          "label": "Compass → Kholdstare (Boss)"
         },
         {
           "from": "0x3E",
           "to": "0x5E",
-          "label": "Stalfos Knights / Conveyor Hellway \u2192 Lonely Firebar"
+          "label": "Stalfos Knights / Conveyor Hellway → Lonely Firebar"
         },
         {
           "from": "0x4E",
           "to": "0x7E",
-          "label": "Bomb-Jump \u2192 Hidden Chest / Bombable Floor"
+          "label": "Bomb-Jump → Hidden Chest / Bombable Floor"
         },
         {
           "from": "0x5E",
           "to": "0x3E",
-          "label": "Lonely Firebar \u2192 Stalfos Knights / Conveyor Hellway"
+          "label": "Lonely Firebar → Stalfos Knights / Conveyor Hellway"
         },
         {
           "from": "0x7F",
           "to": "0x8F",
-          "label": "Big Spike Traps \u2192 Room 0x8F"
+          "label": "Big Spike Traps → Room 0x8F"
         },
         {
           "from": "0x8E",
           "to": "0x8F",
-          "label": "Connector \u2192 Room 0x8F"
+          "label": "Connector → Room 0x8F"
         },
         {
           "from": "0x8F",
           "to": "0x8E",
-          "label": "Room 0x8F \u2192 Connector"
+          "label": "Room 0x8F → Connector"
         }
       ],
       "doors": [
@@ -846,7 +847,7 @@
       "rooms": [
         {
           "id": "0x29",
-          "name": "Mothula (Boss)",
+          "name": "Kalyxo Castle — Boss Chamber",
           "floor": "F1",
           "grid_row": 2,
           "grid_col": 9,
@@ -859,7 +860,7 @@
         },
         {
           "id": "0x39",
-          "name": "Gibdo Key / Mothula Hole",
+          "name": "Kalyxo Castle — Room $039",
           "floor": "F1",
           "grid_row": 3,
           "grid_col": 9,
@@ -872,7 +873,7 @@
         },
         {
           "id": "0x47",
-          "name": "Room 0x47",
+          "name": "Kalyxo Castle — Room $047",
           "grid_row": 4,
           "grid_col": 7,
           "type": "normal",
@@ -884,7 +885,7 @@
         },
         {
           "id": "0x48",
-          "name": "Room 0x48",
+          "name": "Kalyxo Castle — Room $048",
           "grid_row": 4,
           "grid_col": 8,
           "type": "normal",
@@ -896,7 +897,7 @@
         },
         {
           "id": "0x49",
-          "name": "Gibdo Torch Puzzle",
+          "name": "Kalyxo Castle — Room $049",
           "floor": "F1",
           "grid_row": 4,
           "grid_col": 9,
@@ -909,7 +910,7 @@
         },
         {
           "id": "0x54",
-          "name": "Upstairs Pits",
+          "name": "Kalyxo Castle — Room $054",
           "grid_row": 5,
           "grid_col": 4,
           "type": "normal",
@@ -921,7 +922,7 @@
         },
         {
           "id": "0x55",
-          "name": "Room 0x55",
+          "name": "Kalyxo Castle — Entrance",
           "grid_row": 5,
           "grid_col": 5,
           "type": "entrance",
@@ -933,7 +934,7 @@
         },
         {
           "id": "0x56",
-          "name": "Key Pot / Trap",
+          "name": "Kalyxo Castle — Entrance",
           "floor": "F1",
           "grid_row": 5,
           "grid_col": 6,
@@ -946,7 +947,7 @@
         },
         {
           "id": "0x57",
-          "name": "Big Key",
+          "name": "Kalyxo Castle — Room $057",
           "floor": "F1",
           "grid_row": 5,
           "grid_col": 7,
@@ -959,7 +960,7 @@
         },
         {
           "id": "0x58",
-          "name": "Big Chest",
+          "name": "Kalyxo Castle — Entrance",
           "floor": "F1",
           "grid_row": 5,
           "grid_col": 8,
@@ -972,7 +973,7 @@
         },
         {
           "id": "0x59",
-          "name": "Final Section Entrance",
+          "name": "Kalyxo Castle — Entrance",
           "floor": "F1",
           "grid_row": 5,
           "grid_col": 9,
@@ -985,7 +986,7 @@
         },
         {
           "id": "0x64",
-          "name": "Room 0x64",
+          "name": "Kalyxo Castle — Room $064",
           "grid_row": 6,
           "grid_col": 4,
           "type": "normal",
@@ -997,7 +998,7 @@
         },
         {
           "id": "0x65",
-          "name": "Room 0x65",
+          "name": "Kalyxo Castle — Room $065",
           "grid_row": 6,
           "grid_col": 5,
           "type": "normal",
@@ -1009,7 +1010,7 @@
         },
         {
           "id": "0x66",
-          "name": "Hidden Chest / Hidden Door",
+          "name": "Kalyxo Castle — Room $066",
           "floor": "F1",
           "grid_row": 6,
           "grid_col": 6,
@@ -1022,7 +1023,7 @@
         },
         {
           "id": "0x67",
-          "name": "Compass Chest",
+          "name": "Kalyxo Castle — Room $067",
           "floor": "F1",
           "grid_row": 6,
           "grid_col": 7,
@@ -1035,7 +1036,7 @@
         },
         {
           "id": "0x68",
-          "name": "Key Chest / Trap",
+          "name": "Kalyxo Castle — Entrance",
           "floor": "F1",
           "grid_row": 6,
           "grid_col": 8,
@@ -1048,7 +1049,7 @@
         },
         {
           "id": "0x70",
-          "name": "Room 0x70",
+          "name": "Kalyxo Castle — Room $070",
           "grid_row": 7,
           "grid_col": 0,
           "type": "normal",
@@ -1060,7 +1061,7 @@
         },
         {
           "id": "0x71",
-          "name": "Room 0x71",
+          "name": "Kalyxo Castle — Room $071",
           "grid_row": 7,
           "grid_col": 1,
           "type": "normal",
@@ -1072,7 +1073,7 @@
         },
         {
           "id": "0x72",
-          "name": "Room 0x72",
+          "name": "Kalyxo Castle — Room $072",
           "grid_row": 7,
           "grid_col": 2,
           "type": "normal",
@@ -1084,7 +1085,7 @@
         },
         {
           "id": "0x80",
-          "name": "Room 0x80",
+          "name": "Kalyxo Castle — Room $080",
           "grid_row": 8,
           "grid_col": 0,
           "type": "normal",
@@ -1096,7 +1097,7 @@
         },
         {
           "id": "0x81",
-          "name": "Room 0x81",
+          "name": "Kalyxo Castle — Room $081",
           "grid_row": 8,
           "grid_col": 1,
           "type": "normal",
@@ -1108,7 +1109,7 @@
         },
         {
           "id": "0x82",
-          "name": "Room 0x82",
+          "name": "Kalyxo Castle — Room $082",
           "grid_row": 8,
           "grid_col": 2,
           "type": "normal",
@@ -1123,99 +1124,99 @@
         {
           "from": "0x39",
           "to": "0x29",
-          "label": "Gibdo Key / Mothula Hole \u2194 Mothula (Boss)"
+          "label": "Gibdo Key / Mothula Hole ↔ Mothula (Boss)"
         },
         {
           "from": "0x47",
           "to": "0x68",
-          "label": "Room 0x47 \u2194 Key Chest / Trap"
+          "label": "Room 0x47 ↔ Key Chest / Trap"
         },
         {
           "from": "0x57",
           "to": "0x56",
-          "label": "Big Key \u2194 Key Pot / Trap"
+          "label": "Big Key ↔ Key Pot / Trap"
         },
         {
           "from": "0x58",
           "to": "0x66",
-          "label": "Big Chest \u2194 Hidden Chest / Hidden Door"
+          "label": "Big Chest ↔ Hidden Chest / Hidden Door"
         },
         {
           "from": "0x58",
           "to": "0x72",
-          "label": "Big Chest \u2194 Room 0x72"
+          "label": "Big Chest ↔ Room 0x72"
         },
         {
           "from": "0x59",
           "to": "0x67",
-          "label": "Final Section Entrance \u2194 Compass Chest"
+          "label": "Final Section Entrance ↔ Compass Chest"
         },
         {
           "from": "0x64",
           "to": "0x54",
-          "label": "Room 0x64 \u2194 Upstairs Pits"
+          "label": "Room 0x64 ↔ Upstairs Pits"
         },
         {
           "from": "0x70",
           "to": "0x71",
-          "label": "Room 0x70 \u2194 Room 0x71"
+          "label": "Room 0x70 ↔ Room 0x71"
         },
         {
           "from": "0x70",
           "to": "0x80",
-          "label": "Room 0x70 \u2194 Room 0x80"
+          "label": "Room 0x70 ↔ Room 0x80"
         },
         {
           "from": "0x71",
           "to": "0x81",
-          "label": "Room 0x71 \u2194 Room 0x81"
+          "label": "Room 0x71 ↔ Room 0x81"
         },
         {
           "from": "0x72",
           "to": "0x82",
-          "label": "Room 0x72 \u2194 Room 0x82"
+          "label": "Room 0x72 ↔ Room 0x82"
         }
       ],
       "holewarps": [
         {
           "from": "0x39",
           "to": "0x29",
-          "label": "Gibdo Key / Mothula Hole \u2192 Mothula (Boss)"
+          "label": "Gibdo Key / Mothula Hole → Mothula (Boss)"
         },
         {
           "from": "0x48",
           "to": "0x59",
-          "label": "Room 0x48 \u2192 Final Section Entrance"
+          "label": "Room 0x48 → Final Section Entrance"
         },
         {
           "from": "0x54",
           "to": "0x64",
-          "label": "Upstairs Pits \u2192 Room 0x64"
+          "label": "Upstairs Pits → Room 0x64"
         },
         {
           "from": "0x55",
           "to": "0x80",
-          "label": "Room 0x55 \u2192 Room 0x80"
+          "label": "Room 0x55 → Room 0x80"
         },
         {
           "from": "0x56",
           "to": "0x39",
-          "label": "Key Pot / Trap \u2192 Gibdo Key / Mothula Hole"
+          "label": "Key Pot / Trap → Gibdo Key / Mothula Hole"
         },
         {
           "from": "0x59",
           "to": "0x49",
-          "label": "Final Section Entrance \u2192 Gibdo Torch Puzzle"
+          "label": "Final Section Entrance → Gibdo Torch Puzzle"
         },
         {
           "from": "0x65",
           "to": "0x66",
-          "label": "Room 0x65 \u2192 Hidden Chest / Hidden Door"
+          "label": "Room 0x65 → Hidden Chest / Hidden Door"
         },
         {
           "from": "0x80",
           "to": "0x55",
-          "label": "Room 0x80 \u2192 Room 0x55"
+          "label": "Room 0x80 → Room 0x55"
         }
       ],
       "doors": [
@@ -1402,7 +1403,7 @@
       "rooms": [
         {
           "id": "0x06",
-          "name": "Arrghus Boss",
+          "name": "Zora Temple — Boss Chamber",
           "floor": "F1",
           "grid_row": 0,
           "grid_col": 6,
@@ -1415,7 +1416,7 @@
         },
         {
           "id": "0x16",
-          "name": "Swimming Treadmill",
+          "name": "Zora Temple — Room $016",
           "floor": "F1",
           "grid_row": 1,
           "grid_col": 6,
@@ -1428,7 +1429,7 @@
         },
         {
           "id": "0x18",
-          "name": "Cave / Stairwell",
+          "name": "Zora Temple — Room $018",
           "floor": "F1",
           "grid_row": 1,
           "grid_col": 8,
@@ -1441,7 +1442,7 @@
         },
         {
           "id": "0x25",
-          "name": "Water Grate Room",
+          "name": "Zora Temple — Room $025",
           "floor": "F1",
           "grid_row": 2,
           "grid_col": 5,
@@ -1454,7 +1455,7 @@
         },
         {
           "id": "0x26",
-          "name": "Statue Room",
+          "name": "Zora Temple — Room $026",
           "floor": "F1",
           "grid_row": 2,
           "grid_col": 6,
@@ -1467,7 +1468,7 @@
         },
         {
           "id": "0x27",
-          "name": "Water Gate Room",
+          "name": "Zora Temple — Room $027",
           "floor": "F1",
           "grid_row": 2,
           "grid_col": 7,
@@ -1480,7 +1481,7 @@
         },
         {
           "id": "0x28",
-          "name": "Entrance",
+          "name": "Zora Temple — Entrance",
           "floor": "F1",
           "grid_row": 2,
           "grid_col": 8,
@@ -1493,7 +1494,7 @@
         },
         {
           "id": "0x34",
-          "name": "Push Block / Pre-Big Key",
+          "name": "Zora Temple — Room $034",
           "floor": "F1",
           "grid_row": 3,
           "grid_col": 4,
@@ -1506,7 +1507,7 @@
         },
         {
           "id": "0x35",
-          "name": "Big Key",
+          "name": "Zora Temple — Room $035",
           "floor": "F1",
           "grid_row": 3,
           "grid_col": 5,
@@ -1519,7 +1520,7 @@
         },
         {
           "id": "0x36",
-          "name": "Big Chest Room",
+          "name": "Zora Temple — Room $036",
           "floor": "F1",
           "grid_row": 3,
           "grid_col": 6,
@@ -1532,7 +1533,7 @@
         },
         {
           "id": "0x37",
-          "name": "Map Chest / Water Fill Hub",
+          "name": "Zora Temple — Room $037",
           "floor": "F1",
           "grid_row": 3,
           "grid_col": 7,
@@ -1545,7 +1546,7 @@
         },
         {
           "id": "0x38",
-          "name": "Key Pot",
+          "name": "Zora Temple — Room $038",
           "floor": "F1",
           "grid_row": 3,
           "grid_col": 8,
@@ -1558,7 +1559,7 @@
         },
         {
           "id": "0x44",
-          "name": "Room 0x44",
+          "name": "Zora Temple — Room $044",
           "grid_row": 4,
           "grid_col": 4,
           "type": "normal",
@@ -1570,7 +1571,7 @@
         },
         {
           "id": "0x45",
-          "name": "Room 0x45",
+          "name": "Zora Temple — Room $045",
           "grid_row": 4,
           "grid_col": 5,
           "type": "normal",
@@ -1582,7 +1583,7 @@
         },
         {
           "id": "0x46",
-          "name": "Compass Chest",
+          "name": "Zora Temple — Room $046",
           "floor": "F1",
           "grid_row": 4,
           "grid_col": 6,
@@ -1595,7 +1596,7 @@
         },
         {
           "id": "0x10B",
-          "name": "Room 0x10B",
+          "name": "Zora Temple — Entrance",
           "grid_row": 16,
           "grid_col": 11,
           "type": "entrance",
@@ -1610,79 +1611,79 @@
         {
           "from": "0x06",
           "to": "0x25",
-          "label": "Arrghus Boss \u2194 Water Grate Room"
+          "label": "Arrghus Boss ↔ Water Grate Room"
         },
         {
           "from": "0x16",
           "to": "0x18",
-          "label": "Swimming Treadmill \u2194 Cave / Stairwell"
+          "label": "Swimming Treadmill ↔ Cave / Stairwell"
         },
         {
           "from": "0x18",
           "to": "0x45",
-          "label": "Cave / Stairwell \u2194 Room 0x45"
+          "label": "Cave / Stairwell ↔ Room 0x45"
         },
         {
           "from": "0x25",
           "to": "0x34",
-          "label": "Water Grate Room \u2194 Push Block / Pre-Big Key"
+          "label": "Water Grate Room ↔ Push Block / Pre-Big Key"
         },
         {
           "from": "0x28",
           "to": "0x38",
-          "label": "Entrance \u2194 Key Pot"
+          "label": "Entrance ↔ Key Pot"
         },
         {
           "from": "0x35",
           "to": "0x25",
-          "label": "Big Key \u2194 Water Grate Room"
+          "label": "Big Key ↔ Water Grate Room"
         },
         {
           "from": "0x37",
           "to": "0x28",
-          "label": "Map Chest / Water Fill Hub \u2194 Entrance"
+          "label": "Map Chest / Water Fill Hub ↔ Entrance"
         },
         {
           "from": "0x37",
           "to": "0x06",
-          "label": "Map Chest / Water Fill Hub \u2194 Arrghus Boss"
+          "label": "Map Chest / Water Fill Hub ↔ Arrghus Boss"
         },
         {
           "from": "0x38",
           "to": "0x06",
-          "label": "Key Pot \u2194 Arrghus Boss"
+          "label": "Key Pot ↔ Arrghus Boss"
         },
         {
           "from": "0x46",
           "to": "0x25",
-          "label": "Compass Chest \u2194 Water Grate Room"
+          "label": "Compass Chest ↔ Water Grate Room"
         }
       ],
       "holewarps": [
         {
           "from": "0x28",
           "to": "0x45",
-          "label": "Entrance \u2192 Room 0x45"
+          "label": "Entrance → Room 0x45"
         },
         {
           "from": "0x35",
           "to": "0x44",
-          "label": "Big Key \u2192 Room 0x44"
+          "label": "Big Key → Room 0x44"
         },
         {
           "from": "0x36",
           "to": "0x26",
-          "label": "Big Chest Room \u2192 Statue Room"
+          "label": "Big Chest Room → Statue Room"
         },
         {
           "from": "0x44",
           "to": "0x35",
-          "label": "Room 0x44 \u2192 Big Key"
+          "label": "Room 0x44 → Big Key"
         },
         {
           "from": "0x10B",
           "to": "0x06",
-          "label": "Room 0x10B \u2192 Arrghus Boss"
+          "label": "Room 0x10B → Arrghus Boss"
         }
       ],
       "doors": [
@@ -1825,7 +1826,7 @@
       "rooms": [
         {
           "id": "0x9E",
-          "name": "Big Chest Key",
+          "name": "Glacia Estate — Big Chest Key Chamber",
           "floor": "F1",
           "grid_row": 9,
           "grid_col": 14,
@@ -1838,7 +1839,7 @@
         },
         {
           "id": "0x9F",
-          "name": "Connector",
+          "name": "Glacia Estate — Connector",
           "floor": "F1",
           "grid_row": 9,
           "grid_col": 15,
@@ -1851,7 +1852,7 @@
         },
         {
           "id": "0xAC",
-          "name": "Blind The Thief (Boss)",
+          "name": "Glacia Estate — Boss Chamber",
           "floor": "F1",
           "grid_row": 10,
           "grid_col": 12,
@@ -1864,7 +1865,7 @@
         },
         {
           "id": "0xAD",
-          "name": "Room 0xAD",
+          "name": "Glacia Estate — Room $0AD",
           "floor": "F1",
           "grid_row": 10,
           "grid_col": 13,
@@ -1877,7 +1878,7 @@
         },
         {
           "id": "0xAE",
-          "name": "Room 0xAE",
+          "name": "Glacia Estate — Room $0AE",
           "floor": "F1",
           "grid_row": 10,
           "grid_col": 14,
@@ -1890,7 +1891,7 @@
         },
         {
           "id": "0xAF",
-          "name": "Room 0xAF",
+          "name": "Glacia Estate — Room $0AF",
           "floor": "F1",
           "grid_row": 10,
           "grid_col": 15,
@@ -1903,7 +1904,7 @@
         },
         {
           "id": "0xBB",
-          "name": "Hellway",
+          "name": "Glacia Estate — Room $0BB",
           "floor": "F1",
           "grid_row": 11,
           "grid_col": 11,
@@ -1916,7 +1917,7 @@
         },
         {
           "id": "0xBC",
-          "name": "Conveyor Toilet",
+          "name": "Glacia Estate — Room $0BC",
           "floor": "F1",
           "grid_row": 11,
           "grid_col": 12,
@@ -1929,7 +1930,7 @@
         },
         {
           "id": "0xBD",
-          "name": "Room 0xBD",
+          "name": "Glacia Estate — Room $0BD",
           "floor": "F1",
           "grid_row": 11,
           "grid_col": 13,
@@ -1942,7 +1943,7 @@
         },
         {
           "id": "0xBE",
-          "name": "Room 0xBE",
+          "name": "Glacia Estate — Room $0BE",
           "floor": "F1",
           "grid_row": 11,
           "grid_col": 14,
@@ -1955,7 +1956,7 @@
         },
         {
           "id": "0xBF",
-          "name": "Room 0xBF",
+          "name": "Glacia Estate — Room $0BF",
           "floor": "F1",
           "grid_row": 11,
           "grid_col": 15,
@@ -1968,7 +1969,7 @@
         },
         {
           "id": "0xCB",
-          "name": "North West Entrance",
+          "name": "Glacia Estate — Entrance",
           "floor": "F1",
           "grid_row": 12,
           "grid_col": 11,
@@ -1981,7 +1982,7 @@
         },
         {
           "id": "0xCC",
-          "name": "North East Entrance",
+          "name": "Glacia Estate — Fire Rod Chamber",
           "floor": "F1",
           "grid_row": 12,
           "grid_col": 12,
@@ -1994,7 +1995,7 @@
         },
         {
           "id": "0xCD",
-          "name": "Room 0xCD",
+          "name": "Glacia Estate — Room $0CD",
           "floor": "F1",
           "grid_row": 12,
           "grid_col": 13,
@@ -2007,7 +2008,7 @@
         },
         {
           "id": "0xCE",
-          "name": "Room 0xCE",
+          "name": "Glacia Estate — Big Key Chamber",
           "floor": "F1",
           "grid_row": 12,
           "grid_col": 14,
@@ -2020,7 +2021,7 @@
         },
         {
           "id": "0xCF",
-          "name": "Room 0xCF",
+          "name": "Glacia Estate — Room $0CF",
           "floor": "F1",
           "grid_row": 12,
           "grid_col": 15,
@@ -2033,7 +2034,7 @@
         },
         {
           "id": "0xDB",
-          "name": "Main (South West) Entrance",
+          "name": "Glacia Estate — Entrance",
           "floor": "F1",
           "grid_row": 13,
           "grid_col": 11,
@@ -2046,7 +2047,7 @@
         },
         {
           "id": "0xDC",
-          "name": "South East Entrance",
+          "name": "Glacia Estate — Entrance",
           "floor": "F1",
           "grid_row": 13,
           "grid_col": 12,
@@ -2059,7 +2060,7 @@
         },
         {
           "id": "0xDD",
-          "name": "Room 0xDD",
+          "name": "Glacia Estate — Room $0DD",
           "floor": "F1",
           "grid_row": 13,
           "grid_col": 13,
@@ -2075,19 +2076,19 @@
         {
           "from": "0xCC",
           "to": "0xDC",
-          "label": "North East Entrance \u2194 South East Entrance"
+          "label": "North East Entrance ↔ South East Entrance"
         },
         {
           "from": "0xDB",
           "to": "0xDC",
-          "label": "Main (South West) Entrance \u2194 South East Entrance"
+          "label": "Main (South West) Entrance ↔ South East Entrance"
         }
       ],
       "holewarps": [
         {
           "from": "0xBC",
           "to": "0xAC",
-          "label": "Conveyor Toilet \u2192 Blind The Thief (Boss)"
+          "label": "Conveyor Toilet → Blind The Thief (Boss)"
         }
       ],
       "doors": [
@@ -2270,7 +2271,7 @@
       "rooms": [
         {
           "id": "0x69",
-          "name": "B1 Side",
+          "name": "Goron Mines — Big Chest Key Chamber",
           "floor": "B1",
           "grid_row": 6,
           "grid_col": 9,
@@ -2283,7 +2284,7 @@
         },
         {
           "id": "0x77",
-          "name": "Northwest Hall",
+          "name": "Goron Mines — Room $077",
           "floor": "F1",
           "grid_row": 7,
           "grid_col": 7,
@@ -2296,7 +2297,7 @@
         },
         {
           "id": "0x78",
-          "name": "Lanmolas Mini-boss",
+          "name": "Goron Mines — Miniboss Chamber",
           "floor": "F1",
           "grid_row": 7,
           "grid_col": 8,
@@ -2309,7 +2310,7 @@
         },
         {
           "id": "0x79",
-          "name": "Northeast Hall",
+          "name": "Goron Mines — Room $079",
           "floor": "F1",
           "grid_row": 7,
           "grid_col": 9,
@@ -2322,7 +2323,7 @@
         },
         {
           "id": "0x87",
-          "name": "West Hall",
+          "name": "Goron Mines — Room $087",
           "floor": "F1",
           "grid_row": 8,
           "grid_col": 7,
@@ -2335,7 +2336,7 @@
         },
         {
           "id": "0x88",
-          "name": "Hammer Chest",
+          "name": "Goron Mines — Big Chest Chamber",
           "floor": "F1",
           "grid_row": 8,
           "grid_col": 8,
@@ -2348,7 +2349,7 @@
         },
         {
           "id": "0x89",
-          "name": "East Hall",
+          "name": "Goron Mines — Room $089",
           "floor": "F1",
           "grid_row": 8,
           "grid_col": 9,
@@ -2361,7 +2362,7 @@
         },
         {
           "id": "0x97",
-          "name": "Torch Puzzle / Moving Wall",
+          "name": "Goron Mines — Room $097",
           "floor": "F1",
           "grid_row": 9,
           "grid_col": 7,
@@ -2374,7 +2375,7 @@
         },
         {
           "id": "0x98",
-          "name": "Main Entrance",
+          "name": "Goron Mines — Entrance",
           "floor": "F1",
           "grid_row": 9,
           "grid_col": 8,
@@ -2387,7 +2388,7 @@
         },
         {
           "id": "0x99",
-          "name": "Southeast Hall",
+          "name": "Goron Mines — Room $099",
           "floor": "F1",
           "grid_row": 9,
           "grid_col": 9,
@@ -2400,7 +2401,7 @@
         },
         {
           "id": "0xA8",
-          "name": "Stalfos Spawn / Track Room",
+          "name": "Goron Mines — Map Chamber",
           "floor": "B1",
           "grid_row": 10,
           "grid_col": 8,
@@ -2413,7 +2414,7 @@
         },
         {
           "id": "0xA9",
-          "name": "Upper Big Chest",
+          "name": "Goron Mines — Room $0A9",
           "floor": "B1",
           "grid_row": 10,
           "grid_col": 9,
@@ -2426,7 +2427,7 @@
         },
         {
           "id": "0xB8",
-          "name": "Big Key / L-Shaped Rail",
+          "name": "Goron Mines — Room $0B8",
           "floor": "B1",
           "grid_row": 11,
           "grid_col": 8,
@@ -2439,7 +2440,7 @@
         },
         {
           "id": "0xB9",
-          "name": "Lobby Cannonballs",
+          "name": "Goron Mines — Room $0B9",
           "floor": "B1",
           "grid_row": 11,
           "grid_col": 9,
@@ -2452,7 +2453,7 @@
         },
         {
           "id": "0xC8",
-          "name": "Armos Knights (Boss)",
+          "name": "Goron Mines — Boss Chamber",
           "floor": "B2",
           "grid_row": 12,
           "grid_col": 8,
@@ -2465,7 +2466,7 @@
         },
         {
           "id": "0xD7",
-          "name": "Basement West",
+          "name": "Goron Mines — Room $0D7",
           "floor": "B2",
           "grid_row": 13,
           "grid_col": 7,
@@ -2478,7 +2479,7 @@
         },
         {
           "id": "0xD8",
-          "name": "3-Network Rail / Pre-Armos Knights",
+          "name": "Goron Mines — Room $0D8",
           "floor": "B2",
           "grid_row": 13,
           "grid_col": 8,
@@ -2491,7 +2492,7 @@
         },
         {
           "id": "0xD9",
-          "name": "Cannonball",
+          "name": "Goron Mines — Room $0D9",
           "floor": "B2",
           "grid_row": 13,
           "grid_col": 9,
@@ -2504,7 +2505,7 @@
         },
         {
           "id": "0xDA",
-          "name": "U-Shape Rail Room",
+          "name": "Goron Mines — Room $0DA",
           "floor": "B2",
           "grid_row": 13,
           "grid_col": 10,
@@ -2520,64 +2521,64 @@
         {
           "from": "0x77",
           "to": "0xA8",
-          "label": "Northwest Hall \u2194 Stalfos Spawn / Track Room"
+          "label": "Northwest Hall ↔ Stalfos Spawn / Track Room"
         },
         {
           "from": "0x78",
           "to": "0x88",
-          "label": "Lanmolas Mini-boss \u2194 Hammer Chest"
+          "label": "Lanmolas Mini-boss ↔ Hammer Chest"
         },
         {
           "from": "0x87",
           "to": "0x77",
-          "label": "West Hall \u2194 Northwest Hall"
+          "label": "West Hall ↔ Northwest Hall"
         },
         {
           "from": "0x97",
           "to": "0xB8",
-          "label": "Torch Puzzle / Moving Wall \u2194 Big Key / L-Shaped Rail"
+          "label": "Torch Puzzle / Moving Wall ↔ Big Key / L-Shaped Rail"
         },
         {
           "from": "0x99",
           "to": "0xDA",
-          "label": "Southeast Hall \u2194 U-Shape Rail Room"
+          "label": "Southeast Hall ↔ U-Shape Rail Room"
         },
         {
           "from": "0xA9",
           "to": "0xDA",
-          "label": "Upper Big Chest \u2194 U-Shape Rail Room"
+          "label": "Upper Big Chest ↔ U-Shape Rail Room"
         },
         {
           "from": "0xC8",
           "to": "0xD8",
-          "label": "Armos Knights (Boss) \u2194 3-Network Rail / Pre-Armos Knights"
+          "label": "Armos Knights (Boss) ↔ 3-Network Rail / Pre-Armos Knights"
         },
         {
           "from": "0x79",
           "to": "0x69",
-          "label": "Northeast Hall \u2194 B1 Side"
+          "label": "Northeast Hall ↔ B1 Side"
         }
       ],
       "holewarps": [
         {
           "from": "0x88",
           "to": "0xD8",
-          "label": "Hammer Chest \u2192 3-Network Rail / Pre-Armos Knights"
+          "label": "Hammer Chest → 3-Network Rail / Pre-Armos Knights"
         },
         {
           "from": "0x89",
           "to": "0xD7",
-          "label": "East Hall \u2192 Basement West"
+          "label": "East Hall → Basement West"
         },
         {
           "from": "0x97",
           "to": "0xB8",
-          "label": "Torch Puzzle / Moving Wall \u2192 Big Key / L-Shaped Rail"
+          "label": "Torch Puzzle / Moving Wall → Big Key / L-Shaped Rail"
         },
         {
           "from": "0x98",
           "to": "0xB9",
-          "label": "Main Entrance \u2192 Lobby Cannonballs"
+          "label": "Main Entrance → Lobby Cannonballs"
         }
       ],
       "doors": [
@@ -2760,7 +2761,7 @@
       "rooms": [
         {
           "id": "0xA1",
-          "name": "Room 0xA1",
+          "name": "Dragon Ship — Room $0A1",
           "grid_row": 10,
           "grid_col": 1,
           "type": "normal",
@@ -2772,7 +2773,7 @@
         },
         {
           "id": "0xA2",
-          "name": "Room 0xA2",
+          "name": "Dragon Ship — Room $0A2",
           "grid_row": 10,
           "grid_col": 2,
           "type": "normal",
@@ -2784,7 +2785,7 @@
         },
         {
           "id": "0xA3",
-          "name": "Room 0xA3",
+          "name": "Dragon Ship — Room $0A3",
           "grid_row": 10,
           "grid_col": 3,
           "type": "normal",
@@ -2796,7 +2797,7 @@
         },
         {
           "id": "0xA4",
-          "name": "Trinexx (Boss)",
+          "name": "Dragon Ship — Boss Chamber",
           "grid_row": 10,
           "grid_col": 4,
           "type": "boss",
@@ -2808,7 +2809,7 @@
         },
         {
           "id": "0xA5",
-          "name": "Wizzrobes",
+          "name": "Dragon Ship — Room $0A5",
           "grid_row": 10,
           "grid_col": 5,
           "type": "normal",
@@ -2820,7 +2821,7 @@
         },
         {
           "id": "0xB1",
-          "name": "Room 0xB1",
+          "name": "Dragon Ship — Room $0B1",
           "grid_row": 11,
           "grid_col": 1,
           "type": "normal",
@@ -2832,7 +2833,7 @@
         },
         {
           "id": "0xB2",
-          "name": "Room 0xB2",
+          "name": "Dragon Ship — Room $0B2",
           "grid_row": 11,
           "grid_col": 2,
           "type": "normal",
@@ -2844,7 +2845,7 @@
         },
         {
           "id": "0xB3",
-          "name": "Room 0xB3",
+          "name": "Dragon Ship — Room $0B3",
           "grid_row": 11,
           "grid_col": 3,
           "type": "normal",
@@ -2856,7 +2857,7 @@
         },
         {
           "id": "0xB4",
-          "name": "Pre-Trinexx",
+          "name": "Dragon Ship — Room $0B4",
           "grid_row": 11,
           "grid_col": 4,
           "type": "normal",
@@ -2868,7 +2869,7 @@
         },
         {
           "id": "0xB5",
-          "name": "Dark Maze",
+          "name": "Dragon Ship — Room $0B5",
           "grid_row": 11,
           "grid_col": 5,
           "type": "normal",
@@ -2880,7 +2881,7 @@
         },
         {
           "id": "0xB6",
-          "name": "Chain Chomps",
+          "name": "Dragon Ship — Room $0B6",
           "grid_row": 11,
           "grid_col": 6,
           "type": "normal",
@@ -2892,7 +2893,7 @@
         },
         {
           "id": "0xB7",
-          "name": "Map Chest / Key Chest / Roller",
+          "name": "Dragon Ship — Room $0B7",
           "floor": "F1",
           "grid_row": 11,
           "grid_col": 7,
@@ -2905,7 +2906,7 @@
         },
         {
           "id": "0xC0",
-          "name": "Room 0xC0",
+          "name": "Dragon Ship — Room $0C0",
           "grid_row": 12,
           "grid_col": 0,
           "type": "normal",
@@ -2917,7 +2918,7 @@
         },
         {
           "id": "0xC1",
-          "name": "Room 0xC1",
+          "name": "Dragon Ship — Room $0C1",
           "grid_row": 12,
           "grid_col": 1,
           "type": "normal",
@@ -2929,7 +2930,7 @@
         },
         {
           "id": "0xC2",
-          "name": "Room 0xC2",
+          "name": "Dragon Ship — Room $0C2",
           "grid_row": 12,
           "grid_col": 2,
           "type": "normal",
@@ -2941,7 +2942,7 @@
         },
         {
           "id": "0xC3",
-          "name": "Room 0xC3",
+          "name": "Dragon Ship — Room $0C3",
           "grid_row": 12,
           "grid_col": 3,
           "type": "normal",
@@ -2953,7 +2954,7 @@
         },
         {
           "id": "0xC4",
-          "name": "Final Crystal Switch Puzzle",
+          "name": "Dragon Ship — Room $0C4",
           "grid_row": 12,
           "grid_col": 4,
           "type": "normal",
@@ -2965,7 +2966,7 @@
         },
         {
           "id": "0xC5",
-          "name": "Laser Bridge",
+          "name": "Dragon Ship — Room $0C5",
           "grid_row": 12,
           "grid_col": 5,
           "type": "normal",
@@ -2977,7 +2978,7 @@
         },
         {
           "id": "0xC6",
-          "name": "Connector",
+          "name": "Dragon Ship — Connector",
           "floor": "F1",
           "grid_row": 12,
           "grid_col": 6,
@@ -2990,7 +2991,7 @@
         },
         {
           "id": "0xC7",
-          "name": "Torch Puzzle",
+          "name": "Dragon Ship — Room $0C7",
           "floor": "F1",
           "grid_row": 12,
           "grid_col": 7,
@@ -3003,7 +3004,7 @@
         },
         {
           "id": "0xD5",
-          "name": "Laser Key",
+          "name": "Dragon Ship — Room $0D5",
           "floor": "F1",
           "grid_row": 13,
           "grid_col": 5,
@@ -3016,7 +3017,7 @@
         },
         {
           "id": "0xD6",
-          "name": "Entrance",
+          "name": "Dragon Ship — Entrance",
           "floor": "F1",
           "grid_row": 13,
           "grid_col": 6,
@@ -3032,59 +3033,59 @@
         {
           "from": "0xA1",
           "to": "0xB6",
-          "label": "Room 0xA1 \u2194 Chain Chomps"
+          "label": "Room 0xA1 ↔ Chain Chomps"
         },
         {
           "from": "0xB1",
           "to": "0xB6",
-          "label": "Room 0xB1 \u2194 Chain Chomps"
+          "label": "Room 0xB1 ↔ Chain Chomps"
         },
         {
           "from": "0xB2",
           "to": "0xB6",
-          "label": "Room 0xB2 \u2194 Chain Chomps"
+          "label": "Room 0xB2 ↔ Chain Chomps"
         },
         {
           "from": "0xC4",
           "to": "0xB4",
-          "label": "Final Crystal Switch Puzzle \u2194 Pre-Trinexx"
+          "label": "Final Crystal Switch Puzzle ↔ Pre-Trinexx"
         },
         {
           "from": "0xC5",
           "to": "0xD5",
-          "label": "Laser Bridge \u2194 Laser Key"
+          "label": "Laser Bridge ↔ Laser Key"
         }
       ],
       "holewarps": [
         {
           "from": "0xA5",
           "to": "0xB7",
-          "label": "Wizzrobes \u2192 Map Chest / Key Chest / Roller"
+          "label": "Wizzrobes → Map Chest / Key Chest / Roller"
         },
         {
           "from": "0xB7",
           "to": "0xA5",
-          "label": "Map Chest / Key Chest / Roller \u2192 Wizzrobes"
+          "label": "Map Chest / Key Chest / Roller → Wizzrobes"
         },
         {
           "from": "0xC1",
           "to": "0xA5",
-          "label": "Room 0xC1 \u2192 Wizzrobes"
+          "label": "Room 0xC1 → Wizzrobes"
         },
         {
           "from": "0xC3",
           "to": "0xB7",
-          "label": "Room 0xC3 \u2192 Map Chest / Key Chest / Roller"
+          "label": "Room 0xC3 → Map Chest / Key Chest / Roller"
         },
         {
           "from": "0xC5",
           "to": "0xB4",
-          "label": "Laser Bridge \u2192 Pre-Trinexx"
+          "label": "Laser Bridge → Pre-Trinexx"
         },
         {
           "from": "0xD6",
           "to": "0xB4",
-          "label": "Entrance \u2192 Pre-Trinexx"
+          "label": "Entrance → Pre-Trinexx"
         }
       ],
       "doors": [
@@ -3305,7 +3306,7 @@
       "rooms": [
         {
           "id": "0x0C",
-          "name": "Entrance",
+          "name": "Fortress of Secrets — Entrance",
           "grid_row": 0,
           "grid_col": 12,
           "type": "entrance",
@@ -3317,7 +3318,7 @@
         },
         {
           "id": "0x0D",
-          "name": "Agahnim2 (Boss)",
+          "name": "Fortress of Secrets — Boss Chamber",
           "grid_row": 0,
           "grid_col": 13,
           "type": "boss",
@@ -3329,7 +3330,7 @@
         },
         {
           "id": "0x1C",
-          "name": "Ice Armos",
+          "name": "Fortress of Secrets — Room $01C",
           "grid_row": 1,
           "grid_col": 12,
           "type": "normal",
@@ -3341,7 +3342,7 @@
         },
         {
           "id": "0x1D",
-          "name": "Final Hallway",
+          "name": "Fortress of Secrets — Room $01D",
           "floor": "F1",
           "grid_row": 1,
           "grid_col": 13,
@@ -3354,7 +3355,7 @@
         },
         {
           "id": "0x2D",
-          "name": "Room 0x2D",
+          "name": "Fortress of Secrets — Room $02D",
           "grid_row": 2,
           "grid_col": 13,
           "type": "normal",
@@ -3366,7 +3367,7 @@
         },
         {
           "id": "0x3D",
-          "name": "Torch 2",
+          "name": "Fortress of Secrets — Room $03D",
           "grid_row": 3,
           "grid_col": 13,
           "type": "normal",
@@ -3378,7 +3379,7 @@
         },
         {
           "id": "0x4C",
-          "name": "Mini-Helmasaur Conveyor",
+          "name": "Fortress of Secrets — Room $04C",
           "grid_row": 4,
           "grid_col": 12,
           "type": "normal",
@@ -3390,7 +3391,7 @@
         },
         {
           "id": "0x4D",
-          "name": "Moldorm",
+          "name": "Fortress of Secrets — Room $04D",
           "grid_row": 4,
           "grid_col": 13,
           "type": "normal",
@@ -3402,7 +3403,7 @@
         },
         {
           "id": "0x5C",
-          "name": "Ganon-Ball Z",
+          "name": "Fortress of Secrets — Room $05C",
           "grid_row": 5,
           "grid_col": 12,
           "type": "normal",
@@ -3414,7 +3415,7 @@
         },
         {
           "id": "0x5D",
-          "name": "Gauntlet 1/2/3",
+          "name": "Fortress of Secrets — Room $05D",
           "grid_row": 5,
           "grid_col": 13,
           "type": "normal",
@@ -3426,7 +3427,7 @@
         },
         {
           "id": "0x6B",
-          "name": "Mimics",
+          "name": "Fortress of Secrets — Room $06B",
           "grid_row": 6,
           "grid_col": 11,
           "type": "normal",
@@ -3438,7 +3439,7 @@
         },
         {
           "id": "0x6C",
-          "name": "Lanmolas",
+          "name": "Unassigned — Room $06C",
           "grid_row": 6,
           "grid_col": 12,
           "type": "normal",
@@ -3450,7 +3451,7 @@
         },
         {
           "id": "0x6D",
-          "name": "Gauntlet 4/5",
+          "name": "Fortress of Secrets — Room $06D",
           "grid_row": 6,
           "grid_col": 13,
           "type": "normal",
@@ -3462,7 +3463,7 @@
         },
         {
           "id": "0x7B",
-          "name": "Fortress of Secrets",
+          "name": "Unassigned — Room $07B",
           "grid_row": 7,
           "grid_col": 11,
           "type": "normal",
@@ -3474,7 +3475,7 @@
         },
         {
           "id": "0x7C",
-          "name": "Collapsing Bridge / Exploding Wall",
+          "name": "Unassigned — Room $07C",
           "grid_row": 7,
           "grid_col": 12,
           "type": "normal",
@@ -3486,7 +3487,7 @@
         },
         {
           "id": "0x7D",
-          "name": "Winder / Warp Maze",
+          "name": "Unassigned — Room $07D",
           "grid_row": 7,
           "grid_col": 13,
           "type": "normal",
@@ -3498,7 +3499,7 @@
         },
         {
           "id": "0x8B",
-          "name": "Block Puzzle / Spike Skip / Map Chest",
+          "name": "Unassigned — Room $08B",
           "grid_row": 8,
           "grid_col": 11,
           "type": "normal",
@@ -3510,7 +3511,7 @@
         },
         {
           "id": "0x8C",
-          "name": "East and West Downstairs / Big Chest",
+          "name": "Sky Tower — Reserved Room $08C",
           "grid_row": 8,
           "grid_col": 12,
           "type": "normal",
@@ -3522,7 +3523,7 @@
         },
         {
           "id": "0x8D",
-          "name": "Tile / Torch Puzzle",
+          "name": "Unassigned — Room $08D",
           "grid_row": 8,
           "grid_col": 13,
           "type": "normal",
@@ -3534,7 +3535,7 @@
         },
         {
           "id": "0x9B",
-          "name": "Many Spikes / Warp Maze",
+          "name": "Sky Tower — Reserved Room $09B",
           "grid_row": 9,
           "grid_col": 11,
           "type": "normal",
@@ -3546,7 +3547,7 @@
         },
         {
           "id": "0x9C",
-          "name": "Invisible Floor Maze",
+          "name": "Sky Tower — Reserved Room $09C",
           "grid_row": 9,
           "grid_col": 12,
           "type": "normal",
@@ -3558,7 +3559,7 @@
         },
         {
           "id": "0x9D",
-          "name": "Compass Chest / Invisible Floor",
+          "name": "Sky Tower — Reserved Room $09D",
           "grid_row": 9,
           "grid_col": 13,
           "type": "normal",
@@ -3573,139 +3574,139 @@
         {
           "from": "0x0C",
           "to": "0x9D",
-          "label": "Entrance \u2194 Compass Chest / Invisible Floor"
+          "label": "Entrance ↔ Compass Chest / Invisible Floor"
         },
         {
           "from": "0x0C",
           "to": "0x1C",
-          "label": "Entrance \u2194 Ice Armos"
+          "label": "Entrance ↔ Ice Armos"
         },
         {
           "from": "0x0D",
           "to": "0x1C",
-          "label": "Agahnim2 (Boss) \u2194 Ice Armos"
+          "label": "Agahnim2 (Boss) ↔ Ice Armos"
         },
         {
           "from": "0x1C",
           "to": "0x6D",
-          "label": "Ice Armos \u2194 Gauntlet 4/5"
+          "label": "Ice Armos ↔ Gauntlet 4/5"
         },
         {
           "from": "0x1D",
           "to": "0x2D",
-          "label": "Final Hallway \u2194 Room 0x2D"
+          "label": "Final Hallway ↔ Room 0x2D"
         },
         {
           "from": "0x2D",
           "to": "0x3D",
-          "label": "Room 0x2D \u2194 Torch 2"
+          "label": "Room 0x2D ↔ Torch 2"
         },
         {
           "from": "0x4C",
           "to": "0x1D",
-          "label": "Mini-Helmasaur Conveyor \u2194 Final Hallway"
+          "label": "Mini-Helmasaur Conveyor ↔ Final Hallway"
         },
         {
           "from": "0x4D",
           "to": "0x9C",
-          "label": "Moldorm \u2194 Invisible Floor Maze"
+          "label": "Moldorm ↔ Invisible Floor Maze"
         },
         {
           "from": "0x5C",
           "to": "0x5D",
-          "label": "Ganon-Ball Z \u2194 Gauntlet 1/2/3"
+          "label": "Ganon-Ball Z ↔ Gauntlet 1/2/3"
         },
         {
           "from": "0x5D",
           "to": "0x7C",
-          "label": "Gauntlet 1/2/3 \u2194 Collapsing Bridge / Exploding Wall"
+          "label": "Gauntlet 1/2/3 ↔ Collapsing Bridge / Exploding Wall"
         },
         {
           "from": "0x6B",
           "to": "0x8B",
-          "label": "Mimics \u2194 Block Puzzle / Spike Skip / Map Chest"
+          "label": "Mimics ↔ Block Puzzle / Spike Skip / Map Chest"
         },
         {
           "from": "0x7D",
           "to": "0x1C",
-          "label": "Winder / Warp Maze \u2194 Ice Armos"
+          "label": "Winder / Warp Maze ↔ Ice Armos"
         },
         {
           "from": "0x8C",
           "to": "0x0C",
-          "label": "East and West Downstairs / Big Chest \u2194 Entrance"
+          "label": "East and West Downstairs / Big Chest ↔ Entrance"
         },
         {
           "from": "0x8C",
           "to": "0x1C",
-          "label": "East and West Downstairs / Big Chest \u2194 Ice Armos"
+          "label": "East and West Downstairs / Big Chest ↔ Ice Armos"
         },
         {
           "from": "0x8D",
           "to": "0x1C",
-          "label": "Tile / Torch Puzzle \u2194 Ice Armos"
+          "label": "Tile / Torch Puzzle ↔ Ice Armos"
         }
       ],
       "holewarps": [
         {
           "from": "0x0C",
           "to": "0x0D",
-          "label": "Entrance \u2192 Agahnim2 (Boss)"
+          "label": "Entrance → Agahnim2 (Boss)"
         },
         {
           "from": "0x0D",
           "to": "0x4C",
-          "label": "Agahnim2 (Boss) \u2192 Mini-Helmasaur Conveyor"
+          "label": "Agahnim2 (Boss) → Mini-Helmasaur Conveyor"
         },
         {
           "from": "0x2D",
           "to": "0x3D",
-          "label": "Room 0x2D \u2192 Torch 2"
+          "label": "Room 0x2D → Torch 2"
         },
         {
           "from": "0x4C",
           "to": "0x1D",
-          "label": "Mini-Helmasaur Conveyor \u2192 Final Hallway"
+          "label": "Mini-Helmasaur Conveyor → Final Hallway"
         },
         {
           "from": "0x4D",
           "to": "0x9C",
-          "label": "Moldorm \u2192 Invisible Floor Maze"
+          "label": "Moldorm → Invisible Floor Maze"
         },
         {
           "from": "0x7B",
           "to": "0x7D",
-          "label": "Fortress of Secrets \u2192 Winder / Warp Maze"
+          "label": "Fortress of Secrets → Winder / Warp Maze"
         },
         {
           "from": "0x7C",
           "to": "0x0C",
-          "label": "Collapsing Bridge / Exploding Wall \u2192 Entrance"
+          "label": "Collapsing Bridge / Exploding Wall → Entrance"
         },
         {
           "from": "0x7D",
           "to": "0x7B",
-          "label": "Winder / Warp Maze \u2192 Fortress of Secrets"
+          "label": "Winder / Warp Maze → Fortress of Secrets"
         },
         {
           "from": "0x8B",
           "to": "0x6B",
-          "label": "Block Puzzle / Spike Skip / Map Chest \u2192 Mimics"
+          "label": "Block Puzzle / Spike Skip / Map Chest → Mimics"
         },
         {
           "from": "0x8C",
           "to": "0x1C",
-          "label": "East and West Downstairs / Big Chest \u2192 Ice Armos"
+          "label": "East and West Downstairs / Big Chest → Ice Armos"
         },
         {
           "from": "0x9B",
           "to": "0x7D",
-          "label": "Many Spikes / Warp Maze \u2192 Winder / Warp Maze"
+          "label": "Many Spikes / Warp Maze → Winder / Warp Maze"
         },
         {
           "from": "0x9D",
           "to": "0x0C",
-          "label": "Compass Chest / Invisible Floor \u2192 Entrance"
+          "label": "Compass Chest / Invisible Floor → Entrance"
         }
       ],
       "doors": [
@@ -3911,7 +3912,7 @@
       "rooms": [
         {
           "id": "0x73",
-          "name": "Big Chest",
+          "name": "Shrine of Power — Pendant Chamber",
           "grid_row": 7,
           "grid_col": 3,
           "type": "normal",
@@ -3923,7 +3924,7 @@
         },
         {
           "id": "0x74",
-          "name": "Map Chest",
+          "name": "Shrine of Power — Power Glove Chamber",
           "grid_row": 7,
           "grid_col": 4,
           "type": "normal",
@@ -3935,7 +3936,7 @@
         },
         {
           "id": "0x75",
-          "name": "Big Key Chest",
+          "name": "Shrine of Power — Big Key Chamber",
           "grid_row": 7,
           "grid_col": 5,
           "type": "normal",
@@ -3947,7 +3948,7 @@
         },
         {
           "id": "0x76",
-          "name": "Water Drain",
+          "name": "Shrine of Power — Entrance",
           "grid_row": 7,
           "grid_col": 6,
           "type": "entrance",
@@ -3959,7 +3960,7 @@
         },
         {
           "id": "0x83",
-          "name": "West Entrance",
+          "name": "Shrine of Power — Entrance",
           "grid_row": 8,
           "grid_col": 3,
           "type": "entrance",
@@ -3971,7 +3972,7 @@
         },
         {
           "id": "0x84",
-          "name": "Main Entrance",
+          "name": "Shrine of Power — Entrance",
           "grid_row": 8,
           "grid_col": 4,
           "type": "entrance",
@@ -3983,7 +3984,7 @@
         },
         {
           "id": "0x85",
-          "name": "East Entrance",
+          "name": "Shrine of Power — Big Chest Key Chamber",
           "grid_row": 8,
           "grid_col": 5,
           "type": "normal",
@@ -3995,7 +3996,7 @@
         },
         {
           "id": "0x86",
-          "name": "Another Entrance",
+          "name": "Shrine of Power — Entrance",
           "grid_row": 8,
           "grid_col": 6,
           "type": "entrance",
@@ -4010,64 +4011,64 @@
         {
           "from": "0x73",
           "to": "0x84",
-          "label": "Big Chest \u2194 Main Entrance"
+          "label": "Big Chest ↔ Main Entrance"
         },
         {
           "from": "0x74",
           "to": "0x75",
-          "label": "Map Chest \u2194 Big Key Chest"
+          "label": "Map Chest ↔ Big Key Chest"
         },
         {
           "from": "0x83",
           "to": "0x85",
-          "label": "West Entrance \u2194 East Entrance"
+          "label": "West Entrance ↔ East Entrance"
         },
         {
           "from": "0x84",
           "to": "0x86",
-          "label": "Main Entrance \u2194 Another Entrance"
+          "label": "Main Entrance ↔ Another Entrance"
         },
         {
           "from": "0x86",
           "to": "0x74",
-          "label": "Another Entrance \u2194 Map Chest"
+          "label": "Another Entrance ↔ Map Chest"
         }
       ],
       "holewarps": [
         {
           "from": "0x73",
           "to": "0x84",
-          "label": "Big Chest \u2192 Main Entrance"
+          "label": "Big Chest → Main Entrance"
         },
         {
           "from": "0x74",
           "to": "0x75",
-          "label": "Map Chest \u2192 Big Key Chest"
+          "label": "Map Chest → Big Key Chest"
         },
         {
           "from": "0x75",
           "to": "0x74",
-          "label": "Big Key Chest \u2192 Map Chest"
+          "label": "Big Key Chest → Map Chest"
         },
         {
           "from": "0x83",
           "to": "0x85",
-          "label": "West Entrance \u2192 East Entrance"
+          "label": "West Entrance → East Entrance"
         },
         {
           "from": "0x84",
           "to": "0x73",
-          "label": "Main Entrance \u2192 Big Chest"
+          "label": "Main Entrance → Big Chest"
         },
         {
           "from": "0x85",
           "to": "0x83",
-          "label": "East Entrance \u2192 West Entrance"
+          "label": "East Entrance → West Entrance"
         },
         {
           "from": "0x86",
           "to": "0x74",
-          "label": "Another Entrance \u2192 Map Chest"
+          "label": "Another Entrance → Map Chest"
         }
       ],
       "doors": [
@@ -4154,7 +4155,7 @@
       "rooms": [
         {
           "id": "0x07",
-          "name": "Room 0x07",
+          "name": "Shrine of Courage — Pendant Chamber",
           "grid_row": 0,
           "grid_col": 7,
           "type": "normal",
@@ -4166,7 +4167,7 @@
         },
         {
           "id": "0x17",
-          "name": "Room 0x17",
+          "name": "Shrine of Courage — Big Chest Key Chamber",
           "grid_row": 1,
           "grid_col": 7,
           "type": "normal",
@@ -4178,7 +4179,7 @@
         },
         {
           "id": "0x32",
-          "name": "Room 0x32",
+          "name": "Shrine of Courage — Big Key Chamber",
           "grid_row": 3,
           "grid_col": 2,
           "type": "normal",
@@ -4190,7 +4191,7 @@
         },
         {
           "id": "0x33",
-          "name": "Trial Chamber",
+          "name": "Shrine of Courage — Room $033",
           "floor": "F1",
           "grid_row": 3,
           "grid_col": 3,
@@ -4203,7 +4204,7 @@
         },
         {
           "id": "0x43",
-          "name": "Torch Puzzle / Moving Wall",
+          "name": "Shrine of Courage — Room $043",
           "floor": "F1",
           "grid_row": 4,
           "grid_col": 3,
@@ -4216,7 +4217,7 @@
         },
         {
           "id": "0x53",
-          "name": "Popos 2 / Beamos Hellway",
+          "name": "Shrine of Courage — Entrance / Mirror Shield Chamber",
           "floor": "F1",
           "grid_row": 5,
           "grid_col": 3,
@@ -4229,7 +4230,7 @@
         },
         {
           "id": "0x63",
-          "name": "Final Section Entrance",
+          "name": "Shrine of Courage — Room $063",
           "floor": "F1",
           "grid_row": 6,
           "grid_col": 3,
@@ -4245,34 +4246,34 @@
         {
           "from": "0x07",
           "to": "0x17",
-          "label": "Room 0x07 \u2194 Room 0x17"
+          "label": "Room 0x07 ↔ Room 0x17"
         },
         {
           "from": "0x17",
           "to": "0x43",
-          "label": "Room 0x17 \u2194 Torch Puzzle / Moving Wall"
+          "label": "Room 0x17 ↔ Torch Puzzle / Moving Wall"
         },
         {
           "from": "0x32",
           "to": "0x33",
-          "label": "Room 0x32 \u2194 Trial Chamber"
+          "label": "Room 0x32 ↔ Trial Chamber"
         },
         {
           "from": "0x33",
           "to": "0x43",
-          "label": "Trial Chamber \u2194 Torch Puzzle / Moving Wall"
+          "label": "Trial Chamber ↔ Torch Puzzle / Moving Wall"
         },
         {
           "from": "0x53",
           "to": "0x63",
-          "label": "Popos 2 / Beamos Hellway \u2194 Final Section Entrance"
+          "label": "Popos 2 / Beamos Hellway ↔ Final Section Entrance"
         }
       ],
       "holewarps": [
         {
           "from": "0x07",
           "to": "0x63",
-          "label": "Room 0x07 \u2192 Final Section Entrance"
+          "label": "Room 0x07 → Final Section Entrance"
         }
       ],
       "doors": [
@@ -4319,7 +4320,7 @@
       "rooms": [
         {
           "id": "0x7A",
-          "name": "Pendant",
+          "name": "Shrine of Wisdom — Room $07A",
           "grid_row": 7,
           "grid_col": 10,
           "type": "normal",
@@ -4331,7 +4332,7 @@
         },
         {
           "id": "0x8A",
-          "name": "Penultimate",
+          "name": "Shrine of Wisdom — Room $08A",
           "grid_row": 8,
           "grid_col": 10,
           "type": "normal",
@@ -4343,7 +4344,7 @@
         },
         {
           "id": "0x9A",
-          "name": "Flippers",
+          "name": "Shrine of Wisdom — Room $09A",
           "grid_row": 9,
           "grid_col": 10,
           "type": "entrance",
@@ -4355,7 +4356,7 @@
         },
         {
           "id": "0xAA",
-          "name": "Map Chest",
+          "name": "Shrine of Wisdom — Room $0AA",
           "grid_row": 10,
           "grid_col": 10,
           "type": "normal",
@@ -4367,7 +4368,7 @@
         },
         {
           "id": "0xBA",
-          "name": "Dark Antifairy / Key Pot",
+          "name": "Shrine of Wisdom — Room $0BA",
           "grid_row": 11,
           "grid_col": 10,
           "type": "normal",
@@ -4379,7 +4380,7 @@
         },
         {
           "id": "0xC9",
-          "name": "Lower Entrance",
+          "name": "Shrine of Wisdom — Entrance",
           "grid_row": 12,
           "grid_col": 9,
           "type": "entrance",
@@ -4391,7 +4392,7 @@
         },
         {
           "id": "0xCA",
-          "name": "Unidentified",
+          "name": "Shrine of Wisdom — Room $0CA",
           "grid_row": 12,
           "grid_col": 10,
           "type": "normal",
