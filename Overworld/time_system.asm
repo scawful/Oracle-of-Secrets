@@ -48,6 +48,9 @@ org $0CC265 ; Intro_FadeLogoIn ; @hook module=Overworld
 pullpc
 LogoFadeInSetClock:
 {
+  if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+  JSL Oracle_SpecialOverworldPaletteReset
+  endif
   JSL $00ED7C ; IntroLogoPaletteFadeIn
   LDA.b #$08 : STA.l TimeState.Hours ; Set the time to 6:00am
   LDA.b #$3F : STA.l TimeState.Speed ; Set the time speed
@@ -60,6 +63,9 @@ org $0CCA59 ; @hook module=Overworld
 pullpc
 ResetClockTriforceRoom:
 {
+  if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+  JSL Oracle_SpecialOverworldPaletteReset
+  endif
   JSL $00E384 ; LoadCommonSprites_long
   LDA.b #$00 : STA.l TimeState.Hours ; low hours for palette?
   LDA.b #$00 : STA.l TimeState.Minutes ; high hours for palette?
@@ -193,12 +199,23 @@ TimeSystem_IncrementTime:
 
 TimeSystem_UpdatePalettes:
 {
+    ; Begin also restores reference holes before an indoor departure.
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL Oracle_SpecialOverworldPaletteBegin
+    endif
     ; check indoors/outdoors
     LDA $1B	: BEQ .outdoors
+      ; Rejected indoor Begin is balanced without touching the fade buffer.
+      if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+      JSL Oracle_SpecialOverworldPaletteCompleteBuffer
+      endif
       RTS
     .outdoors
 
     JSL RomToPaletteBuffer	; update buffer palette
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL Oracle_SpecialOverworldPaletteCompleteBuffer
+    endif
     JSL PaletteBufferToEffective	; update effective palette
 
     ; Refresh explicitly even in diagnostic builds with Masks disabled.

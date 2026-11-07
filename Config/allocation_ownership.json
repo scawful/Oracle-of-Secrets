@@ -20,7 +20,7 @@
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "d2614e655f6a7b602a0c480222c90acd8a32032eb8083c8ecf7215074268ef64"
+      "sha256": "d41bc108061d1c87946dbca451551ac03880596535667497f2369667b99ac646"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -75,7 +75,7 @@
     "shared:Overworld/ZSCustomOverworld.asm": {
       "source_set": "shared",
       "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "ec86525fecccc30b29242c5b340dda11e9e0af05dc721f48afdd7925b6c2c4ee"
+      "sha256": "52ed6e7c857d52efa27b05c20d4207edac891900206e1ebda2f4f9a679888d97"
     },
     "shared:Sprites/Objects/data/minecart_tracks.asm": {
       "source_set": "shared",
@@ -180,7 +180,7 @@
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "85915d4eddca42d995141a68d4b0d5cbcbc5d4d6bd885d40f1c21acb26518b57"
+      "sha256": "6bf92d5758404086ac08ea3903591a77fee51521eb0fa2b4ee853f9bbf4969f2"
     },
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
@@ -210,12 +210,22 @@
     "shared:Oracle_main.asm": {
       "source_set": "shared",
       "path": "Oracle_main.asm",
-      "sha256": "abf39806024cf316cfdb8abec58779c5f7f0e637780d547c93d98260923c8d16"
+      "sha256": "22a95b632afff269e335d9835bd725c615b1e39c9e08fca7549fdd5c59c66183"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
       "path": "Scripts/Build/special_overworld_resident_abi.py",
       "sha256": "49f160fb9b028594036772d08c3c5ef7a4f8b26fb1d723e586235927ee0b5926"
+    },
+    "shared:Overworld/special_overworld_palette.asm": {
+      "source_set": "shared",
+      "path": "Overworld/special_overworld_palette.asm",
+      "sha256": "a59223d7ed3bfff2511d0b1ce776fd866b607e389308518c51a21c906652647e"
+    },
+    "shared:Overworld/time_system.asm": {
+      "source_set": "shared",
+      "path": "Overworld/time_system.asm",
+      "sha256": "09208a0873a661db1bfb7987799c66784626f14050688a95e0ca0e89c2fbd0ef"
     }
   },
   "claims": [
@@ -1788,7 +1798,7 @@
       "condition": {},
       "contained_by": "symbols_wram_block",
       "lifetime": "Six reference words (12B), six effective words (12B), state byte and area byte. Retain only BG column8 offsets50/70/90/B0/D0/F0 across resident palette overrides. Existing native loaders must explicitly refresh the other84 colors; column0 remains native-owned.",
-      "reset": "UNBOUND. Future palette owner must reset state0/areaFF before reads, validate full16-bit8A and matching area, capture only native words, restore before native departure under Buffer/Both fade ownership, and invalidate on fresh identity. Declaration grants no runtime qualification.",
+      "reset": "Current default-off palette body/joins bind reference-hole restoration before departure and fresh startup invalidation. State bit7 retains validated native holes and low6 tracks synchronous nesting; Buffer completion never writes C500. Both mirrors native reference holes, never captures a displayed fade. PPU/fade/gameplay proof remains open.",
       "save": "Volatile WRAM; never saved. No palette consumer or activation is implemented in this slice.",
       "provenance": [
         "shared:Core/symbols.asm"
@@ -1805,6 +1815,35 @@
         "source": "shared:Core/symbols.asm",
         "symbol": "SpecialOverworldPaletteHoleCache"
       }
+    },
+    {
+      "id": "native_special_resident_palette_code",
+      "space": "snes_rom",
+      "base": 5107712,
+      "size": 4096,
+      "status": "proposed",
+      "condition": {},
+      "owner": "Native special-overworld palette consumer and lifecycle adapters; default off",
+      "lifetime": "Default-off Begin/CompleteBuffer/CompleteBoth/Reset body only. Sparse physical-page pointers select existing derived palette blobs. Native84 BG words are refreshed before final derived tint; no HUD, OBJ, column0, backdrop, DMA or independent publisher.",
+      "reset": "Current source binds Begin/Complete at normal, scroll, mosaic, mirror, whirlpool, special/flute and hourly owners; fresh scene and StartupMasks reset, indoor departure restores then invalidates. CPU buffer/ABI proof exists; PPU/fade/gameplay qualification remains open.",
+      "save": "Derived code is not authored source and Normal Save grants no writes. Code reservation/default-off body alone does not grant complete native4 Build admission or runtime activation.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py",
+        "shared:Overworld/special_overworld_palette.asm",
+        "shared:Core/symbols.asm",
+        "shared:Oracle_main.asm",
+        "shared:Overworld/ZSCustomOverworld.asm",
+        "shared:Overworld/time_system.asm",
+        "shared:Masks/mask_routines.asm"
+      ],
+      "anchors": [
+        "RESIDENT_PALETTE_CODE_BASE = 0x4DF000",
+        "RESIDENT_PALETTE_CODE_LIMIT = 0x4E0000",
+        "SpecialOverworldPaletteCodeStart:",
+        "SpecialOverworldPaletteCodeEnd:",
+        "SpecialPaletteAdaptersStart:",
+        "SpecialPaletteAdaptersEnd:"
+      ]
     }
   ],
   "lifetime_aliases": [],

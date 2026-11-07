@@ -1813,7 +1813,11 @@ PreOverworld_LoadProperties_Interupt:
     endif
 
     ; Decompress all other graphics.
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL SpecialPaletteBeginInitTilesets
+    else
     JSL.l InitTilesets
+    endif
 
     ; Load palettes for overworld.
     JSR.w Overworld_LoadAreaPalettes
@@ -1837,7 +1841,11 @@ PreOverworld_LoadProperties_Interupt:
     JSL.l Overworld_LoadPalettes
 
     ; Sets the background color (changes depending on area).
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL SpecialPaletteBackdropCompleteBuffer
+    else
     JSL.l Palette_SetOwBgColor_Long
+    endif
         
     LDA.b $10 : CMP.b #$08 : BNE .specialArea2
         ; Copies $7EC300[0x200] to $7EC500[0x200].
@@ -2058,7 +2066,11 @@ Credits_LoadScene_Overworld_PrepGFX_Interupt:
     LDA.l Credits_LoadScene_PrepGFX_sprite_gfx, X     : STA.w $0AA3
     LDA.l Credits_LoadScene_PrepGFX_sprite_palette, X : PHA
         
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL SpecialPaletteResetInitTilesets
+    else
     JSL.l InitTilesets
+    endif
 
     ; Load Palettes.
     JSR.w Overworld_LoadAreaPalettes
@@ -2615,7 +2627,11 @@ MirrorWarp_LoadSpritesAndColors_Interupt:
     else
     LDA.l OverworldPalettesScreenToSet_New, X
     endif
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL SpecialPaletteLoadCompleteBuffer
+    else
     JSL.l Overworld_LoadPalettes
+    endif
 
     JSL.l Overworld_SetScreenBGColorCacheOnly
     JSL.l Overworld_SetFixedColorAndScroll
@@ -2848,6 +2864,13 @@ org $02A07A ; $01207A ; @hook module=Overworld
 
 assert pc() <= $02A07D ; $01207D
 
+if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+assert read4($02C633) == $0ED5F422 || read4($02C633) == ((SpecialPaletteDepartSetBlack<<8)|$22), "Indoor palette entry changed"
+org $02C633 ; @hook module=Overworld name=SpecialPaletteIndoorDeparture kind=jsl target=SpecialPaletteDepartSetBlack
+    JSL SpecialPaletteDepartSetBlack
+assert pc() <= $02C637
+endif
+
 ; The main overworld palette loading routine un-hardcoded to load the custom
 ; main palette.
 org $02C692 ; $014692
@@ -2872,7 +2895,11 @@ Overworld_LoadAreaPalettes:
     STZ.w $0AA9
         
     ; Load SP1 through SP4.
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL SpecialPaletteBeginMainSpr
+    else
     JSL.l Palette_MainSpr
+    endif
 
     ; Load SP0 (2nd half) and SP6 (2nd half).
     JSL.l Palette_MiscSpr
@@ -2911,7 +2938,11 @@ Overworld_LoadAreaPalettes:
     JSL.l Palette_Hud
 
     ; Load BP2 through BP5 (first halves).
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL SpecialPaletteMainCompleteBuffer
+    else
     JSL.l Palette_OverworldBgMain
+    endif
         
     RTS
 }
@@ -3285,6 +3316,9 @@ BlockGFXCheck:
 
 CheckForChangeGraphicsTransitionLoad:
 {
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL Oracle_SpecialOverworldPaletteBegin
+    endif
     ; Are we currently in a mosaic?
     LDA.b $11 : CMP.b #$0F : BEQ .mosaic
         ; Are we entering a special area?
@@ -3353,6 +3387,9 @@ CheckForChangeGraphicsTransitionLoad:
                 
                 .dontUpdateBGColor1
 
+                if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+                JSL Oracle_SpecialOverworldPaletteCompleteBoth
+                endif
                 RTS
 
     .mosaic
@@ -3458,6 +3495,9 @@ CheckForChangeGraphicsTransitionLoad:
 
     CheckForChangeGraphicsTransitionLoadRetrun:
 
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL Oracle_SpecialOverworldPaletteCompleteBuffer
+    endif
     RTS
 
     SkipOverworld_FinishTransGfx_firstHalf:
@@ -5232,7 +5272,13 @@ OverworldHandleTransitions:
         else
         LDA.l OverworldPalettesScreenToSet_New, X
         endif
+        ; This auxiliary owner completes now; later-frame main/backdrop
+        ; refresh is a separate transaction, never an open depth across frames.
+        if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+        JSL SpecialPaletteLoadCompleteBoth
+        else
         JSL.l Overworld_LoadPalettes
+        endif
         JSR.w Overworld_CgramAuxToMain
 
         RTS
@@ -5977,7 +6023,11 @@ LoadSpecialOverworld_Interupt:
     else
     LDA.l OverworldPalettesScreenToSet_New, X
     endif
+    if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+    JSL SpecialPaletteLoadCompleteBuffer
+    else
     JSL.l Overworld_LoadPalettes
+    endif
 
     PLA : STA.b $A0
 
@@ -6196,12 +6246,30 @@ else
 LDA.l OverworldPalettesScreenToSet_New, X
 endif
 
+if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+assert read4($02B0FF) == $0ED5A822 || read4($02B0FF) == ((SpecialPaletteLoadCompleteBuffer<<8)|$22), "Mosaic auxiliary palette entry changed"
+org $02B0FF ; @hook module=Overworld name=SpecialPaletteMosaicAux kind=jsl target=SpecialPaletteLoadCompleteBuffer
+    JSL SpecialPaletteLoadCompleteBuffer
+assert pc() <= $02B103
+endif
+
 org $02B0FB ; $0130FB
 if !SPECIAL_OVERWORLD_NATIVE == 1
 LyraCall_PaletteSet_6 = pc()
 JSL.l Lyra_ReadPaletteSet
 else
 LDA.l OverworldPalettesScreenToSet_New, X
+endif
+
+if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+assert read4($02B4C1) == $1BEEC722 || read4($02B4C1) == ((SpecialPaletteBeginBgMain<<8)|$22), "Whirlpool main palette entry changed"
+org $02B4C1 ; @hook module=Overworld name=SpecialPaletteWhirlpoolBegin kind=jsl target=SpecialPaletteBeginBgMain
+    JSL SpecialPaletteBeginBgMain
+assert pc() <= $02B4C5
+assert read4($02B4D1) == $0ED5A822 || read4($02B4D1) == ((SpecialPaletteLoadFinishBoth<<8)|$22), "Whirlpool auxiliary palette entry changed"
+org $02B4D1 ; @hook module=Overworld name=SpecialPaletteWhirlpoolComplete kind=jsl target=SpecialPaletteLoadFinishBoth
+    JSL SpecialPaletteLoadFinishBoth
+assert pc() <= $02B4D5
 endif
 
 org $02B4CD ; $0134CD
@@ -6212,12 +6280,26 @@ else
 LDA.l OverworldPalettesScreenToSet_New, X
 endif
 
+if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+assert read4($02EAAF) == $0ED5A822 || read4($02EAAF) == ((SpecialPaletteLoadCompleteBuffer<<8)|$22), "Special return palette entry changed"
+org $02EAAF ; @hook module=Overworld name=SpecialPaletteReturn kind=jsl target=SpecialPaletteLoadCompleteBuffer
+    JSL SpecialPaletteLoadCompleteBuffer
+assert pc() <= $02EAB3
+endif
+
 org $02EAAB ; $016AAB
 if !SPECIAL_OVERWORLD_NATIVE == 1
 LyraCall_PaletteSet_8 = pc()
 JSL.l Lyra_ReadPaletteSet
 else
 LDA.l OverworldPalettesScreenToSet_New, X
+endif
+
+if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+assert read4($02ECEC) == $0ED5A822 || read4($02ECEC) == ((SpecialPaletteLoadCompleteBuffer<<8)|$22), "Flute palette entry changed"
+org $02ECEC ; @hook module=Overworld name=SpecialPaletteFlute kind=jsl target=SpecialPaletteLoadCompleteBuffer
+    JSL SpecialPaletteLoadCompleteBuffer
+assert pc() <= $02ECF0
 endif
 
 org $02ECE8 ; $016CE8
@@ -6371,6 +6453,65 @@ MirrorWarp_NoOverlayUploadTable:
 
     RTL
 }
+
+if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+; Same-size lifecycle adapters for bounded vanilla call sites. The native
+; producer keeps its register/flag contract; the palette API preserves it.
+; Keep adapters in the same reserved palette bank, independent of the size
+; of the preceding ZS tables and optional graphics routines.
+pushpc
+org $4DF500
+assert pc() == !SPECIAL_OVERWORLD_PALETTE_CODE_BASE+$0500
+SpecialPaletteAdaptersStart:
+SpecialPaletteBeginInitTilesets:
+    JSL Oracle_SpecialOverworldPaletteBegin
+    JSL InitTilesets
+    RTL
+SpecialPaletteResetInitTilesets:
+    JSL Oracle_SpecialOverworldPaletteReset
+    JSL InitTilesets
+    RTL
+SpecialPaletteBackdropCompleteBuffer:
+    JSL Palette_SetOwBgColor_Long
+    JSL Oracle_SpecialOverworldPaletteCompleteBuffer
+    RTL
+SpecialPaletteBeginMainSpr:
+    JSL Oracle_SpecialOverworldPaletteBegin
+    JSL Palette_MainSpr
+    RTL
+SpecialPaletteMainCompleteBuffer:
+    JSL Palette_OverworldBgMain
+    JSL Oracle_SpecialOverworldPaletteCompleteBuffer
+    RTL
+SpecialPaletteBeginBgMain:
+    JSL Oracle_SpecialOverworldPaletteBegin
+    JSL Palette_OverworldBgMain
+    RTL
+SpecialPaletteLoadCompleteBuffer:
+    JSL Oracle_SpecialOverworldPaletteBegin
+    JSL Overworld_LoadPalettes
+    JSL Oracle_SpecialOverworldPaletteCompleteBuffer
+    RTL
+SpecialPaletteLoadFinishBoth:
+    JSL Overworld_LoadPalettes
+    JSL Oracle_SpecialOverworldPaletteCompleteBoth
+    RTL
+SpecialPaletteLoadCompleteBoth:
+    JSL Oracle_SpecialOverworldPaletteBegin
+    JSL Overworld_LoadPalettes
+    JSL Oracle_SpecialOverworldPaletteCompleteBoth
+    RTL
+SpecialPaletteDepartSetBlack:
+    ; Restore holes first, then discard the outgoing identity even if $1B
+    ; has not switched yet. The following indoor producer owns the new BG.
+    JSL Oracle_SpecialOverworldPaletteBegin
+    JSL Oracle_SpecialOverworldPaletteReset
+    JSL $0ED5F4 ; SetBGandFixedColorBlack; subsequent native indoor loaders own BG.
+    RTL
+SpecialPaletteAdaptersEnd:
+assert pc() <= !SPECIAL_OVERWORLD_PALETTE_CODE_END
+pullpc
+endif
 
 pushpc
 

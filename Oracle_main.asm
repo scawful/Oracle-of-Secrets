@@ -43,6 +43,11 @@ incsrc    "Config/feature_flags.asm"
 if not(defined("SPECIAL_OVERWORLD_RESOURCES_ENABLED"))
   !SPECIAL_OVERWORLD_RESOURCES_ENABLED = 0
 endif
+; Palette lifecycle remains opt-in until the resident palette compiler binds it.
+if not(defined("SPECIAL_OVERWORLD_PALETTE_ENABLED"))
+  !SPECIAL_OVERWORLD_PALETTE_ENABLED = 0
+endif
+assert !SPECIAL_OVERWORLD_PALETTE_ENABLED == 0 || !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
 ; The input descriptor selects native readers; stale cache files cannot
 ; activate them for a direct legacy assembly. Build regenerates this include.
 if read4($28F000) == $4F534F4F && read4($28F004) == $32393157 && read2($28F008) == $0003
@@ -50,6 +55,10 @@ if read4($28F000) == $4F534F4F && read4($28F004) == $32393157 && read2($28F008) 
   incsrc ".cache/special_overworld_reader_constants.asm"
   assert !SPECIAL_OVERWORLD_NATIVE == 1, "Native reader constants do not match the selected ROM"
   assert read4($28F01C) == !SPECIAL_OVERWORLD_DIRECTORY_CRC, "Native reader constants are stale; run build_rom.sh"
+endif
+if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+  assert !SPECIAL_OVERWORLD_NATIVE == 1, "Native palette lifecycle requires native readers"
+  assert !DISABLE_OVERWORLD == 0, "Native palette lifecycle requires the overworld module"
 endif
 if !ENABLE_MASK_R_BINDING == 1
   assert !ENABLE_MASK_Y_TRANSFORM == 1, "Mask R binding requires mask_y_transform"
@@ -213,4 +222,5 @@ if !SPECIAL_OVERWORLD_NATIVE == 1
   incsrc "Overworld/lyra_native_loaders.asm"
   incsrc "Overworld/special_overworld_resident.asm"
   incsrc "Overworld/special_overworld_graphics.asm"
+  incsrc "Overworld/special_overworld_palette.asm"
 endif
