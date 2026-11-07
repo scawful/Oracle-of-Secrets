@@ -679,10 +679,34 @@ D4Refuge_Long:
   .active
   JSL Sprite_CheckActive : BCC .done
   JSL Sprite_PlayerCantPassThrough
-  ; Dialogue is not authored in this placement build. These actors never
-  ; enter a Healing/reward state or consume the song/follower flags.
+  JSR D4Refuge_Talk
   .done
   PLB : RTL
+}
+
+D4Refuge_Talk:
+{
+  ; D4 clear takes priority over the earned protector reward. The refuge
+  ; only reads progression: it never consumes Healing or changes followers.
+  LDA.w SprSubtype, X : SEC : SBC.b #$04
+  STA $00
+  ASL : CLC : ADC $00 : STA $00
+  LDA.l Crystals : AND.b #$20 : BNE .cleared
+  LDA.l $7EF302 : BEQ .select
+  INC $00
+  BRA .select
+  .cleared
+  INC $00 : INC $00
+  .select
+  LDY $00
+  LDA.w .message_low, Y
+  LDY.b #$02
+  JSL Sprite_ShowSolicitedMessageIfPlayerFacing
+  RTS
+  .message_low
+  db $11, $12, $13 ; River witness: before Healing / healed / D4 clear
+  db $14, $15, $16 ; Sea caretaker
+  db $17, $18, $19 ; Sea water keeper
 }
 
 D4Refuge_DrawRiver:

@@ -1,6 +1,6 @@
 {
   "counts": {
-    "expanded": 130,
+    "expanded": 141,
     "vanilla": 0
   },
   "format": "yaze-message-bundle",
@@ -654,6 +654,61 @@
       "bank": "expanded",
       "id": 129,
       "text": "Bad dream? You were[2]talking in your sleep...[3]about a sword.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 130,
+      "text": "[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 131,
+      "text": "[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 132,
+      "text": "They blame us for taking[2]the princess. Our protector[3]went in to bring her back.[K][V]If you find his spirit,[V]play the Song of Healing.[V]Please... don't leave him.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 133,
+      "text": "That mask...[2]I hoped he'd come through[3]that door again.[K][V]Thank you for finding him.[V]Let his courage live on[V]in what you do.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 134,
+      "text": "You gave them a reason[2]to listen. I hope they do.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 135,
+      "text": "The princess is somewhere[2]inside the temple. The[3]little one went after her.[K][V]He knows the water gates.[V]Let him help you, but[V]please keep him safe.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 136,
+      "text": "She's alive... Thank you![2]There's a place here for[3]her and the little one.[K][V]A river guard protected[V]her when we could not.[V]I'll remember that.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 137,
+      "text": "You've given us a chance[2]to welcome them home.[3]We'll be ready.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 138,
+      "text": "The temple feeds the old[2]water channels. Its gates[3]still work, even now.[K][V]Watch what each switch[V]fills or drains. Water can[V]open a different way.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 139,
+      "text": "With that mask, you can[2]explore beneath the water.[3]The lower halls await.[K][V]The princess is free.[V]Make the temple safe,[V]so she can leave it.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 140,
+      "text": "Ask at the settlement for[2]the song that calls storms.[3]Then return to Zora Falls.[K]"
     }
   ],
   "version": 1
