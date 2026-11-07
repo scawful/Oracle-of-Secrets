@@ -39,6 +39,10 @@
 incsrc    "Util/macros.asm"
 incsrc    "Config/module_flags.asm"
 incsrc    "Config/feature_flags.asm"
+; Resource bodies remain opt-in until the saved-ROM compiler binds them.
+if not(defined("SPECIAL_OVERWORLD_RESOURCES_ENABLED"))
+  !SPECIAL_OVERWORLD_RESOURCES_ENABLED = 0
+endif
 ; The input descriptor selects native readers; stale cache files cannot
 ; activate them for a direct legacy assembly. Build regenerates this include.
 if read4($28F000) == $4F534F4F && read4($28F004) == $32393157 && read2($28F008) == $0003
@@ -208,4 +212,5 @@ if !SPECIAL_OVERWORLD_NATIVE == 1
   assert !DISABLE_OVERWORLD == 0, "Native special overworld requires the overworld module"
   incsrc "Overworld/lyra_native_loaders.asm"
   incsrc "Overworld/special_overworld_resident.asm"
+  incsrc "Overworld/special_overworld_graphics.asm"
 endif

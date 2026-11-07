@@ -1419,7 +1419,11 @@ AnimateMirrorWarp_DecompressAnimatedTiles:
 
     PLX
 
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldAnimationDecompress
+    else
     JSL.l DecompOwAnimatedTiles
+    endif
             
     RTL
 }
@@ -1802,7 +1806,11 @@ PreOverworld_LoadProperties_Interupt:
     
     ; The decompression function increases it by 1 so subtract 1 here.
     JSL.l ReadAnimatedTable : DEC : TAY
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldAnimationDecompress
+    else
     JSL.l DecompOwAnimatedTiles
+    endif
 
     ; Decompress all other graphics.
     JSL.l InitTilesets
@@ -2038,7 +2046,11 @@ Credits_LoadScene_Overworld_PrepGFX_Interupt:
 {
     ; The decompression function increases it by 1 so subtract 1 here.
     JSL.l ReadAnimatedTable : DEC : TAY
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldAnimationDecompress
+    else
     JSL.l DecompOwAnimatedTiles
+    endif
         
     ; The current scene of the Module_EndSequence module. Example: 0x04 is
     ; the shot of kakariko and 0x06 is the shot of the desert palace.
@@ -3050,6 +3062,9 @@ NewOverworld_FinishTransGfx:
             ; Saves about a frame.
             LDA.b $04 : BEQ .dontPrep
                 JSR.w PrepTransMainGFX
+                if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+                JSL Oracle_SpecialOverworldGraphicsStageMain
+                endif
 
             .dontPrep
 
@@ -3061,6 +3076,9 @@ NewOverworld_FinishTransGfx:
         LDA.b #$08 : STA.b $06
 
         JSR.w BlockGFXCheck
+        if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+        JSL Oracle_SpecialOverworldGraphicsInvalidateCache
+        endif
 
         ; If we haven't made it to frame 8, don't move on yet.
         CPY.b #$08 : BCC .return
@@ -3087,6 +3105,9 @@ NewOverworld_FinishTransGfx:
             ; Saves about a frame.
             LDA.b $04 : BEQ .dontPrep2
                 JSR.w PrepTransMainGFX
+                if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+                JSL Oracle_SpecialOverworldGraphicsStageMain
+                endif
 
             .dontPrep2
 
@@ -3095,6 +3116,9 @@ NewOverworld_FinishTransGfx:
         LDA.b #$08 : STA.b $06
 
         JSR.w BlockGFXCheck
+        if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+        JSL Oracle_SpecialOverworldGraphicsInvalidateCache
+        endif
 
         ; If we haven't made it to frame 8, don't move on yet.
         CPY.b #$08 : BCS .MoveOn
@@ -3183,6 +3207,11 @@ BlockGFXCheck:
         else
         LDA.l Pool_OWGFXGroupTable_sheet0, X
         endif
+        if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+        PHX : LDX.b $02
+        JSL Oracle_SpecialOverworldGraphicsResolveSheet
+        PLX
+        endif
         STA.b $00
         SEP #$10
 
@@ -3263,16 +3292,29 @@ CheckForChangeGraphicsTransitionLoad:
             ; Are we leaving a special area?
             CMP.b #$26 : BEQ .mosaic
                 ; Just a normal transition, Not a mosaic.
+                if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+                JSL Oracle_SpecialOverworldAnimationForceTransition : BEQ .nativeAnimatedDecision1
+                JSL.l ReadAnimatedTable
+                BRA .loadAnimated1
+                .nativeAnimatedDecision1
+                endif
                 LDA.l Pool_EnableAnimated : BEQ .dontUpdateAnimated1
                     ; Check to see if we need to update the animated tiles
                     ; by checking what was previously loaded.
                     JSL.l ReadAnimatedTable : CMP.w AnimatedTileGFXSet : BEQ .dontUpdateAnimated1
+                if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+                .loadAnimated1
+                endif
                         STA.w AnimatedTileGFXSet
                         DEC : TAY
 
                         ; This forces the game toupdate the animated tiles
                         ; when going from one area to another.
+                        if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+                        JSL Oracle_SpecialOverworldAnimationDecompress
+                        else
                         JSL.l DecompOwAnimatedTiles
+                        endif
 
                 .dontUpdateAnimated1
 
@@ -3317,13 +3359,26 @@ CheckForChangeGraphicsTransitionLoad:
 
     ; Check to see if we need to update the animated tiles by checking what
     ; was previously loaded.
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldAnimationForceTransition : BEQ .nativeAnimatedDecision2
+    JSL.l ReadAnimatedTable
+    BRA .loadAnimated2
+    .nativeAnimatedDecision2
+    endif
     JSL.l ReadAnimatedTable : CMP.w AnimatedTileGFXSet : BEQ .dontUpdateAnimated2
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    .loadAnimated2
+    endif
         STA.w AnimatedTileGFXSet
         DEC : TAY
 
         ; This forces the game to update the animated tiles when going
         ; from one area to another.
+        if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+        JSL Oracle_SpecialOverworldAnimationDecompress
+        else
         JSL.l DecompOwAnimatedTiles
+        endif
 
     .dontUpdateAnimated2
 
@@ -3500,6 +3555,9 @@ Palette_MultiLoad_NonBuffer:
 
 LoadTransMainGFX:
 {
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldGraphicsInvalidateCache
+    endif
     ; Setup the decompression buffer address.
     ; $00[3] = $7E4000
                  STZ.b $00
@@ -3520,6 +3578,11 @@ LoadTransMainGFX:
     JSL.l Lyra_ReadGfx0
     else
     LDA.w Pool_OWGFXGroupTable_sheet0, X
+    endif
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0000
+    JSL Oracle_SpecialOverworldGraphicsResolveSheet
+    PLX
     endif
     CMP.b #$FF
     BEQ .noBgGfxChange0
@@ -3547,6 +3610,11 @@ LoadTransMainGFX:
     else
     LDA.w Pool_OWGFXGroupTable_sheet1, X
     endif
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0001
+    JSL Oracle_SpecialOverworldGraphicsResolveSheet
+    PLX
+    endif
     CMP.b #$FF
     BEQ .noBgGfxChange1
         SEP #$10
@@ -3573,6 +3641,11 @@ LoadTransMainGFX:
     else
     LDA.w Pool_OWGFXGroupTable_sheet2, X
     endif
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0002
+    JSL Oracle_SpecialOverworldGraphicsResolveSheet
+    PLX
+    endif
     CMP.b #$FF
     BEQ .noBgGfxChange2
         SEP #$10
@@ -3598,6 +3671,11 @@ LoadTransMainGFX:
     JSL.l Lyra_ReadGfx7
     else
     LDA.w Pool_OWGFXGroupTable_sheet7, X
+    endif
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0007
+    JSL Oracle_SpecialOverworldGraphicsResolveSheet
+    PLX
     endif
     CMP.b #$FF
     BEQ .noBgGfxChange7
@@ -3669,6 +3747,9 @@ CheckForChangeGraphicsNormalLoad:
     JSL.l InitTilesets ; Replaced code.
 
     JSL.l ReadAnimatedTable : STA.w AnimatedTileGFXSet
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldAnimationStage
+    endif
     DEC                     : TAY
 
     ; This function is not needed here and is handled somewhere else. This
@@ -3701,10 +3782,17 @@ org $0AB8F5 ; $0538F5 ; @hook module=Overworld
 BirdTravel_LoadTargetArea_Interupt:
 {
     JSL.l ReadAnimatedTable : STA.w AnimatedTileGFXSet
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldAnimationStage
+    endif
     DEC                     : TAY
     
     ; From this point on it is the vanilla function.
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldAnimationDecompress
+    else
     JSL.l DecompOwAnimatedTiles
+    endif
     JSL.l Overworld_SetFixedColorAndScroll
         
     STZ.w $0AA9
@@ -4238,6 +4326,10 @@ NewLoadTransAuxGFX:
 
     .notNormalLoad
 
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldGraphicsInvalidateCache
+    endif
+
     ; Setup the decompression buffer address.
     ; $00[3] = $7E6000
                  STZ.b $00
@@ -4258,6 +4350,11 @@ NewLoadTransAuxGFX:
     JSL.l Lyra_ReadGfx3
     else
     LDA.w Pool_OWGFXGroupTable_sheet3, X
+    endif
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0003
+    JSL Oracle_SpecialOverworldGraphicsResolveSheet
+    PLX
     endif
     CMP.b #$FF
     BEQ .noBgGfxChange3
@@ -4284,6 +4381,11 @@ NewLoadTransAuxGFX:
     else
     LDA.w Pool_OWGFXGroupTable_sheet4, X
     endif
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0004
+    JSL Oracle_SpecialOverworldGraphicsResolveSheet
+    PLX
+    endif
     CMP.b #$FF
     BEQ .noBgGfxChange4
         SEP #$10
@@ -4309,6 +4411,11 @@ NewLoadTransAuxGFX:
     else
     LDA.w Pool_OWGFXGroupTable_sheet5, X
     endif
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0005
+    JSL Oracle_SpecialOverworldGraphicsResolveSheet
+    PLX
+    endif
     CMP.b #$FF
     BEQ .noBgGfxChange5
         SEP #$10
@@ -4333,6 +4440,11 @@ NewLoadTransAuxGFX:
     JSL.l Lyra_ReadGfx6
     else
     LDA.w Pool_OWGFXGroupTable_sheet6, X
+    endif
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    PHX : LDX.w #$0006
+    JSL Oracle_SpecialOverworldGraphicsResolveSheet
+    PLX
     endif
     CMP.b #$FF
     BEQ .noBgGfxChange6
@@ -4419,6 +4531,9 @@ NewPrepTransAuxGFX:
 {
     LDA.b $04 : BEQ .dontPrep
         JSL.l PrepTransAuxGFX
+        if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+        JSL Oracle_SpecialOverworldGraphicsStageAux
+        endif
 
     .dontPrep
 
@@ -4503,6 +4618,10 @@ InitTilesetsLongCalls:
             JML.l $00E227 ; $006227
 
     .outdoors
+
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldGraphicsResetMainCache
+    endif
 
     PHB : PHK : PLB
 
@@ -4634,6 +4753,9 @@ InitTilesetsLongCalls:
     
     STA.b $06
     STA.w TransGFXModule_PriorSheets+7
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldGraphicsInvalidateCache
+    endif
 
     PLB
 
@@ -4643,6 +4765,9 @@ InitTilesetsLongCalls:
 
 AnimateMirrorWarp_DecompressNewTileSetsLongCalls:
 {
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldGraphicsResetMainCache
+    endif
     PHB : PHK : PLB
 
     LDA.b $8A : AND.w #$00FF : ASL #3 : TAX
@@ -4834,6 +4959,9 @@ AnimateMirrorWarp_DecompressBackgroundsCLongCalls:
     STA.b $08
     STA.w AnimatedTileGFXSet
     STA.w TransGFXModule_PriorSheets+7
+    if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+    JSL Oracle_SpecialOverworldAnimationStage
+    endif
 
     if !SPECIAL_OVERWORLD_NATIVE == 1
     LyraCall_Gfx6_3 = pc()

@@ -75,7 +75,7 @@
     "shared:Overworld/ZSCustomOverworld.asm": {
       "source_set": "shared",
       "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "a8c8a3f27da3bd4555c72783754c21b06a7b34ca178e13992898d200f88ebc4f"
+      "sha256": "ec86525fecccc30b29242c5b340dda11e9e0af05dc721f48afdd7925b6c2c4ee"
     },
     "shared:Sprites/Objects/data/minecart_tracks.asm": {
       "source_set": "shared",
@@ -180,7 +180,7 @@
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "79407bc7ca69949997b62389105969a9ec126b89df84e82222af5d7c84bb1758"
+      "sha256": "85915d4eddca42d995141a68d4b0d5cbcbc5d4d6bd885d40f1c21acb26518b57"
     },
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
@@ -196,6 +196,21 @@
       "source_set": "shared",
       "path": "Overworld/special_overworld_resident.asm",
       "sha256": "c5aa111291a02865de4811714f9528cea95cecc27373baf62d74723544854345"
+    },
+    "shared:Overworld/custom_gfx.asm": {
+      "source_set": "shared",
+      "path": "Overworld/custom_gfx.asm",
+      "sha256": "41277bd430703e4dd6bae043f48c28f81d251979157c0af9a41a808138d8865e"
+    },
+    "shared:Overworld/special_overworld_graphics.asm": {
+      "source_set": "shared",
+      "path": "Overworld/special_overworld_graphics.asm",
+      "sha256": "6db40c945d45c85f2a3d6804d0d79a06996df8a67a5c19011dd1a543c11d41c4"
+    },
+    "shared:Oracle_main.asm": {
+      "source_set": "shared",
+      "path": "Oracle_main.asm",
+      "sha256": "abf39806024cf316cfdb8abec58779c5f7f0e637780d547c93d98260923c8d16"
     }
   },
   "claims": [
@@ -361,11 +376,12 @@
       "size": 28,
       "status": "shared",
       "condition": {},
-      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint. Last four bytes reserve native sheet backups for special-overworld resource slots0/1/2/7; volatile across graphics loads.",
-      "reset": "No block-wide reset is claimed. Not in ResetTrackVars' arrays since PR 211 moved it from $7E0730 (inside cart_room) to vanilla-free $7E1E70. SpecialOverworldMainCache reset/restoration callbacks remain unbound until resource activation; declaration alone grants no runtime qualification.",
+      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint. Last four bytes retain underlying native sheets for resource slots 0/1/2/7 across graphics loads; not persistent save data.",
+      "reset": "No block-wide reset is claimed. Not in ResetTrackVars arrays since PR 211 moved this block from $7E0730 to vanilla-free $7E1E70. The last four-byte SpecialOverworldMainCache is cleared by the default-off resource callback before fresh native InitTilesets/mirror identities, then retains underlying main-sheet identities for departure restoration. Runtime qualification remains pending.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
-        "shared:Core/symbols.asm"
+        "shared:Core/symbols.asm",
+        "shared:Overworld/special_overworld_graphics.asm"
       ],
       "aliases": [],
       "anchors": [],
@@ -1729,6 +1745,32 @@
         "RESIDENT_WORD_CODE_LIMIT = 0x4DC800",
         "Lyra_ResidentAtlasCodeStart:",
         "Lyra_ResidentAtlasCodeEnd:"
+      ]
+    },
+    {
+      "id": "native_special_resident_resource_code",
+      "space": "snes_rom",
+      "base": 5097472,
+      "size": 2048,
+      "status": "proposed",
+      "condition": {},
+      "owner": "Native special-overworld static graphics, cache and animation callbacks; derived Build code",
+      "lifetime": "Default-off resource consumers. Existing blanked load callback owns direct static DMA; postconversion callbacks patch only declared native WRAM prefixes before the existing NMI schedule. Palette lifecycle remains separate.",
+      "reset": "SpecialOverworldGraphicsResetMainCache clears four named backups before current InitTilesets and first mirror-warp identity setters. Prior-sheet sentinels plus retained main/aux identities force native restoration on departure; no new sprite cache or phase byte.",
+      "save": "Derived code is not authored source. Normal Save grants no code writes; this reservation and disabled source alone do not grant resource activation or runnable native4 Build.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py",
+        "shared:Overworld/special_overworld_graphics.asm",
+        "shared:Overworld/ZSCustomOverworld.asm",
+        "shared:Overworld/custom_gfx.asm",
+        "shared:Oracle_main.asm",
+        "shared:Core/symbols.asm"
+      ],
+      "anchors": [
+        "RESIDENT_RESOURCE_CODE_BASE = 0x4DC800",
+        "RESIDENT_RESOURCE_CODE_LIMIT = 0x4DD000",
+        "SpecialOverworldGraphicsCodeStart:",
+        "SpecialOverworldGraphicsCodeEnd:"
       ]
     }
   ],
