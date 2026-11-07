@@ -116,6 +116,11 @@ Sprite_IceBlock_Main:
 
   JSR Statue_BlockSprites
   JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
+  .reset_feedback
+    ; Poof at the old location before restoring the cached spawn. Both native
+    ; helpers preserve X; SFX3 keeps the short reset cue separate from the slash.
+    JSL Sprite_SpawnPoofGarnish
+    LDA.b #$13 : JSL SpriteSFX_QueueSFX3WithPan ; native object toss cue
     LDA.w SprMiscD, X : STA.w SprX, X
     LDA.w SprMiscE, X : STA.w SprY, X
     LDA.w SprMiscF, X : STA.w SprXH, X
