@@ -1,5 +1,7 @@
 ; Private D4: $11 subtype3 warden, $B8 subtype2 protector/3 living Princess.
 ; No dialogue/new SRAM. Room46 tag0A opens shutters after normal enemy death.
+; Warden death sets room46 boss-defeated bit (word $7EF08C bit11=$0403 bit7),
+; so it stays gone after the four-room dead-sprite list forgets room46.
 ; Warden A=gait,B=attack choice,C=facing R/L/D/U,D=valve-used latch.
 ; Protector A=valve latch,TimerB=gesture; Action=Healing only.
 D4Zora_CodeStart:
@@ -224,7 +226,9 @@ D4Warden_Prep:
   STZ.w SprYSpeed, X
   LDA.b #$02 : STA.w SprMiscC, X
   LDA.b #!D4Zora_Frame_front_walk_0 : STA.w SprFrame, X
-  LDA.l $7EF302 : BEQ .done
+  LDA.l $7EF302 : BNE .cleared
+  LDA.w $0403 : BPL .done
+  .cleared
   STZ.w SprState, X
   .done
   PLB : RTL
@@ -233,7 +237,12 @@ D4Warden_Prep:
 D4Warden_Long:
 {
   PHB : PHK : PLB
-  LDA.w SprState, X : CMP.b #$06 : BEQ .done
+  LDA.w SprState, X : CMP.b #$06 : BNE .alive
+  ; Native room exit copies $0403 to SRAM; Save and Quit in room does not.
+  %SetBossDefeated()
+  LDA.l $7EF08D : ORA.b #$08 : STA.l $7EF08D
+  BRA .done
+  .alive
   JSR D4Zora_Draw
   JSL Sprite_CheckActive : BCC .done
   JSR D4Warden_Main
