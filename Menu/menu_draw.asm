@@ -1119,8 +1119,8 @@ Menu_CheckItemHasSubmenu:
   LDA.w $0202  ; Current cursor position/item index
 if !ENABLE_EQUIPMENT_MENU == 0
   CMP.b #$05 : BEQ .has_submenu  ; Legacy Magic Bag
-  CMP.b #$0D : BEQ .has_submenu  ; Ocarina (song selection)
 endif
+  CMP.b #$0D : BEQ .has_submenu  ; Ocarina: A opens the remembered song selection
 if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
   CMP.b #$0E : BEQ .book         ; Book (Journal): only once unlocked
 else

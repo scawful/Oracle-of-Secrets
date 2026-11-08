@@ -1,6 +1,12 @@
 ; Functional Equipment: slots 0-5 masks, 6-11 rings, 12-17 songs, 18-23 supplies.
 ; $020B is only the cursor; BoundMask, RingSlot1 and CurrentSong are selections.
 ; No preview fixture or ownership spoof controls availability. DBR = $2D.
+; Supplies retain slots/counts but stay hidden until their menu is enabled.
+; This is a build policy, not a new save byte or an inventory migration.
+if not(defined("MENU_EQUIPMENT_SUPPLIES_VISIBLE"))
+  !MENU_EQUIPMENT_SUPPLIES_VISIBLE = 0
+endif
+
 Menu_Equipment_Init:
 {
   SEP #$30
@@ -21,7 +27,7 @@ Menu_Equipment_Init:
 }
 
 ; A = slot; returns the bounded icon variant, zero when unavailable.
-; Keeps X/Y, 8-bit A/X/Y. Rings require appraisal; supplies remain selectable at 0.
+; Keeps X/Y, 8-bit A/X/Y. Rings require appraisal; hidden supplies are unavailable.
 Menu_Equipment_Owned:
 {
   PHX
@@ -45,8 +51,10 @@ Menu_Equipment_Owned:
   CMP.l $7EF34C : BCS .none
   INC : BRA .done                    ; colored note variants 2-7
 .supplies
+if !MENU_EQUIPMENT_SUPPLIES_VISIBLE == 1
   CMP.b #$18 : BCS .none
   LDA.b #$01 : BRA .done             ; count never indexes the one-variant icon
+endif
 .none
   LDA.b #$00
 .done
@@ -69,12 +77,13 @@ Menu_Equipment_SupplyCount:
   RTS
 }
 
-; Horizontal movement wraps within the row and skips unowned entries.
+; Horizontal movement skips unowned entries, then turns the page at the row edge.
 ; Vertical movement finds the nearest owned column in the next nonempty row.
 Menu_Equipment_Move:
 {
   SEP #$30
   LDA.w $020B : CMP.b #$18 : BCC .valid
+  LDA.b $F4 : AND.b #$03 : BNE .turn
   JMP Menu_Equipment_Init
 .valid
   LDA.b $F4 : AND.b #$0F : BNE +
@@ -88,14 +97,20 @@ Menu_Equipment_Move:
 .horizontal
   LDX.b $02
   LDA.b $04 : AND.b #$01 : BEQ .left
+  LDA.w Menu_Equipment_Columns,X : CMP.b #$17 : BEQ .turn ; last column
   LDA.w .next,X : BRA .candidate
 .left
+  LDA.w Menu_Equipment_Columns,X : CMP.b #$07 : BEQ .turn ; first column
   LDA.w .prev,X
 .candidate
   STA.b $02
-  CMP.w $020B : BEQ .done
   JSR Menu_Equipment_Owned : BEQ .horizontal
   BRA .accept
+.turn
+  LDA.b $F4 : AND.b #$01 : BNE .right
+  LDA.b #$FF
+.right
+  JMP Menu_Page3_Turn
 .vertical
   LDA.w Menu_Equipment_Columns,X : STA.b $06
   LDA.b #$03 : STA.b $07              ; inspect other three rows only
@@ -192,10 +207,12 @@ Menu_Equipment_Draw:
   LDA.w .rings,X : STA.w $1000+menu_offset(13,6),X
   LDA.w .songs,X : STA.w $1000+menu_offset(17,6),X
   DEX #2 : BPL .labels
+if !MENU_EQUIPMENT_SUPPLIES_VISIBLE == 1
   LDX.w #$000E
 .supplies_label
   LDA.w .supplies,X : STA.w $1000+menu_offset(21,6),X
   DEX #2 : BPL .supplies_label
+endif
   SEP #$30
   LDA.b #$7E : STA.b $0A
   LDY.b #$00
@@ -261,6 +278,9 @@ Menu_Equipment_Draw:
 ; Menu_DrawBackground clears the prompt when another cell is selected.
 Menu_Equipment_UsePrompt:
 {
+if !MENU_EQUIPMENT_SUPPLIES_VISIBLE == 0
+  RTS
+endif
   LDA.w $020B : SEC : SBC.b #$12 : CMP.b #$06 : BCS .done
   CMP.b #$02 : BCC .count
   CMP.b #$04 : BNE .done
