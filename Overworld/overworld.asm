@@ -193,7 +193,7 @@ org $0794D9 ; @hook module=Overworld
     RTS
   .overworld_pit_transition
 
-org $1AF5C3 : CMP.b #$5E
+org $1AF5C3 : CMP.b #$4B ; Fortress ceremony waterfall (Fortress moved $5E -> $4B)
 
 org $0EF581
 EXIT_0EF581:
