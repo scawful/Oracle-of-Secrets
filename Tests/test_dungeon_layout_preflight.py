@@ -194,6 +194,95 @@ class DungeonLayoutPreflight(unittest.TestCase):
         plan["provenance"]["candidate_trace_sha256"] = sha(path)
         self.assertEqual(self.run_check(plan, path)["status"], "UNSUPPORTED")
 
+    def wall_boundary(self):
+        reference = FIXTURES / "oracle25_closed_walls.json"
+        data = json.loads(reference.read_text())
+        path = self.save("walls.json", data)
+        plan = contract(path)
+        plan.update(room_id=37, owner_expectations=[], required_object_indices=list(range(40, 50)))
+        plan["wall_boundaries"] = [{"name": "Oracle25 inset basin", "reference": {
+            "trace": str(reference), "sha256": sha(reference), "object_indices": list(range(40, 50))},
+            "candidate": {"object_indices": list(range(40, 50))}}]
+        return plan, path, data
+
+    def changed_wall_trace(self, plan, data):
+        path = self.save("changed-walls.json", data)
+        plan["provenance"]["candidate_trace_sha256"] = sha(path)
+        return self.run_check(plan, path)
+
+    @staticmethod
+    def move_wall(c, dx, dy):
+        c["object_x"] += dx
+        c["object_y"] += dy
+        for t in c["tiles"]:
+            t["x_tile"] += dx
+            t["y_tile"] += dy
+
+    def test_actual_oracle25_wall_surround_is_one_closed_cycle(self):
+        plan, path, _ = self.wall_boundary()
+        result = self.run_check(plan, path)
+        self.assertEqual(result["status"], "PASS")
+        self.assertEqual(result["checked"]["wall_boundaries"], [
+            {"name": "Oracle25 inset basin", "objects": 10, "joins": 10, "closed": True}])
+
+    def test_whole_wall_cycle_translation_remains_connected(self):
+        plan, _, data = self.wall_boundary()
+        for c in data["cases"]:
+            self.move_wall(c, 2, 3)
+        self.assertEqual(self.changed_wall_trace(plan, data)["status"], "PASS")
+
+    def test_floating_corner_exposes_its_unconnected_faces(self):
+        plan, _, data = self.wall_boundary()
+        self.move_wall(data["cases"][0], -4, -4)
+        result = self.changed_wall_trace(plan, data)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertTrue(any(e["code"] == "WALL_UNCONNECTED_PORT" and
+                            any(o["object_index"] == 40 for o in e["objects"])
+                            for e in result["errors"]))
+
+    def test_wrong_facing_native_corner_cannot_fill_same_rectangle(self):
+        plan, _, data = self.wall_boundary()
+        wrong = copy.deepcopy(data["cases"][1])  # Actual northeast10A at northwest108 spot.
+        wrong["object_index"] = 40
+        self.move_wall(wrong, -40, 0)
+        data["cases"][0] = wrong
+        result = self.changed_wall_trace(plan, data)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertEqual(result["errors"][0]["code"], "WALL_OBJECT_MISMATCH")
+
+    def test_removed_wall_cannot_satisfy_closed_boundary(self):
+        plan, _, data = self.wall_boundary()
+        data["cases"] = [c for c in data["cases"] if c["object_index"] != 44]
+        plan["required_object_indices"].remove(44)
+        plan["wall_boundaries"][0]["candidate"]["object_indices"].remove(44)
+        result = self.changed_wall_trace(plan, data)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertEqual(result["errors"][0]["code"], "WALL_MEMBER_COUNT")
+
+    def test_wall_gap_and_overlap_are_reported(self):
+        for dx, code in [(1, "WALL_UNCONNECTED_PORT"), (-1, "WALL_OVERLAP")]:
+            with self.subTest(dx=dx):
+                plan, _, data = self.wall_boundary()
+                self.move_wall(next(c for c in data["cases"] if c["object_index"] == 45), dx, 0)
+                result = self.changed_wall_trace(plan, data)
+                self.assertEqual(result["status"], "BLOCKED")
+                self.assertTrue(any(e["code"] == code for e in result["errors"]))
+
+    def test_open_reference_stair_mouth_needs_explicit_port_evidence(self):
+        plan, _, data = self.wall_boundary()
+        reference = copy.deepcopy(data)
+        reference["cases"] = [c for c in reference["cases"] if c["object_index"] != 44]
+        path = self.save("open-reference.json", reference)
+        boundary = plan["wall_boundaries"][0]
+        boundary["reference"].update(trace=str(path), sha256=sha(path))
+        boundary["reference"]["object_indices"].remove(44)
+        boundary["candidate"]["object_indices"].remove(44)
+        plan["required_object_indices"].remove(44)
+        data["cases"] = reference["cases"]
+        result = self.changed_wall_trace(plan, data)
+        self.assertEqual(result["status"], "UNSUPPORTED")
+        self.assertTrue(any("explicit port" in e["reason"] for e in result["unsupported"]))
+
     def test_cli_returns_nonzero_and_never_changes_inputs(self):
         for label, expected in [("v10_bad", 1), ("v11_good", 0)]:
             path = FIXTURES / f"{label}.json"

@@ -145,6 +145,148 @@ def object_signature(c, dx=0, dy=0):
             c["object_x"] + dx, c["object_y"] + dy, tiles)
 
 
+def wall_rectangle(c):
+    """Recognize measured rectangular wall footprints, never selection bounds."""
+    wall_ids = {1, 2, 3, 4, 0x61, 0x62, 0x63, 0x64, *range(0x100, 0x118)}
+    if c["object_id_dec"] not in wall_ids or not c["tiles"]:
+        return None
+    by_bg = defaultdict(set)
+    for (bg, x, y), values in cells(c).items():
+        if len(values) != 1:
+            return None
+        by_bg[bg].add((x, y))
+    boxes = []
+    for points in by_bg.values():
+        x0, y0 = min(x for x, _ in points), min(y for _, y in points)
+        x1, y1 = max(x for x, _ in points) + 1, max(y for _, y in points) + 1
+        if points != {(x, y) for x in range(x0, x1) for y in range(y0, y1)}:
+            return None
+        boxes.append((x0, y0, x1, y1))
+    # Mixed BG footprints need explicit ports, not a merged bounding rectangle.
+    return boxes[0] if len(set(boxes)) == 1 else None
+
+
+def contact(a, b):
+    """A complete shared face in an observed rectangular reference assembly."""
+    ax0, ay0, ax1, ay1 = a
+    bx0, by0, bx1, by1 = b
+    if (ay0, ay1) == (by0, by1):
+        if ax1 == bx0:
+            return ("E", "W", ("x", ax1, ay0, ay1))
+        if bx1 == ax0:
+            return ("W", "E", ("x", ax0, ay0, ay1))
+    if (ax0, ax1) == (bx0, bx1):
+        if ay1 == by0:
+            return ("S", "N", ("y", ay1, ax0, ax1))
+        if by1 == ay0:
+            return ("N", "S", ("y", ay0, ax0, ax1))
+    return None
+
+
+def overlaps(a, b):
+    return max(a[0], b[0]) < min(a[2], b[2]) and max(a[1], b[1]) < min(a[3], b[3])
+
+
+def connected(graph):
+    if not graph:
+        return False
+    visited, pending = set(), [next(iter(graph))]
+    while pending:
+        node = pending.pop()
+        if node not in visited:
+            visited.add(node)
+            pending.extend(graph[node] - visited)
+    return len(visited) == len(graph)
+
+
+def translate_port(port, dx, dy):
+    axis, line, start, end = port
+    return (axis, line + (dx if axis == "x" else dy),
+            start + (dy if axis == "x" else dx), end + (dy if axis == "x" else dx))
+
+
+def check_wall_boundary(boundary, objects, contract_directory, actual_state):
+    """Check a single closed cycle using reference-measured connective faces.
+
+    Reference/candidate index arrays map one to one. Each object's displacement
+    may differ, but its measured native orientation/size/tile writes may not.
+    Open mouths, overlapping and diagonal contacts require later explicit-port
+    evidence. They are not certified by this rectangular closed-cycle subset.
+    """
+    name, ref = boundary["name"], boundary["reference"]
+    errors, unsupported = [], []
+    issue = lambda reason: [{"name": name, "reason": reason}]
+    ref_objects, _, ref_state, _ = read_trace(contract_directory / ref["trace"], ref["sha256"])
+    if ref_state != actual_state:
+        raise InputError(f"reference state profile differs: {name}")
+    ref_ids = indices(ref["object_indices"], name)
+    candidate_ids = indices(boundary["candidate"]["object_indices"], name)
+    reference = selected(ref_objects, ref_ids, name)
+    candidate = selected(objects, candidate_ids, name)
+    if len(ref_ids) != len(candidate_ids):
+        return ([{"code": "WALL_MEMBER_COUNT", "name": name,
+                  "expected": len(ref_ids), "actual": len(candidate_ids)}], [], None)
+    boxes = {i: wall_rectangle(c) for i, c in reference.items()}
+    if len(boxes) < 4 or any(b is None for b in boxes.values()):
+        return [], issue("Reference needs measured rectangular wall objects; unknown/diagonal/mixed footprints need explicit ports"), None
+    ports = defaultdict(list)
+    graph = {i: set() for i in ref_ids}
+    for n, i in enumerate(ref_ids):
+        for j in ref_ids[n + 1:]:
+            if overlaps(boxes[i], boxes[j]):
+                return [], issue("Overlapping reference wall contacts need explicit measured ports"), None
+            join = contact(boxes[i], boxes[j])
+            if join:
+                side_i, side_j, edge = join
+                ports[i].append((side_i, edge))
+                ports[j].append((side_j, edge))
+                graph[i].add(j)
+                graph[j].add(i)
+    if any(len(graph[i]) != 2 for i in ref_ids) or not connected(graph):
+        return [], issue("Reference is not one closed wall cycle; open mouths and junctions need explicit port evidence"), None
+    candidate_ports = defaultdict(list)
+    candidate_boxes = {}
+    uncertain = late_table_cells(objects)
+    reference_uncertain = late_table_cells(ref_objects)
+    for ri, ci in zip(ref_ids, candidate_ids):
+        r, c = reference[ri], candidate[ci]
+        dx, dy = c["object_x"] - r["object_x"], c["object_y"] - r["object_y"]
+        if object_signature(r, dx, dy) != object_signature(c):
+            errors.append({"code": "WALL_OBJECT_MISMATCH", "name": name, "object_index": ci,
+                           "reason": "Wall/corner native orientation, size, stream list, or tile writes differ from reference"})
+            continue
+        candidate_boxes[ci] = tuple(v + (dx if k % 2 == 0 else dy) for k, v in enumerate(boxes[ri]))
+        if not all(0 <= v <= 64 for v in candidate_boxes[ci]):
+            errors.append({"code": "WALL_OUT_OF_BOUNDS", "name": name, "object_index": ci})
+        if set(cells(c)) & uncertain or set(cells(r)) & reference_uncertain:
+            unsupported.extend(issue("Global-table draw pass/source flags are absent at wall contacts"))
+        for side, port in ports[ri]:
+            candidate_ports[translate_port(port, dx, dy)].append((ci, side))
+    if errors:
+        return errors, unsupported, None
+    candidate_graph = {i: set() for i in candidate_ids}
+    opposite = {"N": "S", "S": "N", "E": "W", "W": "E"}
+    for port, ends in candidate_ports.items():
+        if len(ends) != 2 or ends[0][0] == ends[1][0] or opposite[ends[0][1]] != ends[1][1]:
+            errors.append({"code": "WALL_UNCONNECTED_PORT" if len(ends) == 1 else "WALL_INVALID_JOIN",
+                           "name": name, "port": list(port),
+                           "objects": [{"object_index": i, "face": side} for i, side in ends]})
+            continue
+        a, b = ends[0][0], ends[1][0]
+        candidate_graph[a].add(b)
+        candidate_graph[b].add(a)
+    for n, i in enumerate(candidate_ids):
+        for j in candidate_ids[n + 1:]:
+            if overlaps(candidate_boxes[i], candidate_boxes[j]):
+                errors.append({"code": "WALL_OVERLAP", "name": name, "object_indices": [i, j]})
+    if not errors and (any(len(v) != 2 for v in candidate_graph.values()) or not connected(candidate_graph)):
+        errors.append({"code": "WALL_NOT_ONE_CYCLE", "name": name,
+                       "reason": "Boundary must be one connected cycle, not disconnected loops or branches"})
+    result = None if errors or unsupported else {"name": name, "objects": len(candidate_ids),
+                                                "joins": len(candidate_ports), "closed": True}
+    return errors, unsupported, result
+
+
 def check(contract, trace_path, contract_directory):
     if type(contract.get("schema_version")) is not int or contract["schema_version"] != 1:
         raise InputError("schema_version must be 1")
@@ -226,6 +368,14 @@ def check(contract, trace_path, contract_directory):
                                "cell": list(target), "expected_object_index": mapping[rc["object_index"]],
                                "actual": describe(actual)})
         checked.append(name)
+    checked_boundaries = []
+    for boundary in contract.get("wall_boundaries", []):
+        wall_errors, wall_unsupported, result = check_wall_boundary(boundary, objects, contract_directory, actual_state)
+        errors.extend(wall_errors)
+        unsupported.extend(wall_unsupported)
+        bound.update(indices(boundary["candidate"]["object_indices"], boundary["name"]))
+        if result is not None:
+            checked_boundaries.append(result)
     for index in sorted(set(required) - bound):
         unsupported.append({"name": f"object[{index}]", "reason": "Changed structural object has no reference assembly binding"})
     expectations = contract.get("owner_expectations", [])
@@ -246,14 +396,15 @@ def check(contract, trace_path, contract_directory):
         elif actual is None or actual[0]["object_id_dec"] not in allowed:
             errors.append({"code": "WRONG_FINAL_OWNER", "name": expectation["name"],
                            "cell": list(key), "allowed_object_ids": allowed, "actual": describe(actual)})
-    if not checked and not expectations:
+    if not checked and not checked_boundaries and not expectations:
         unsupported.append({"name": "evidence", "reason": "No native assembly or tile-owner assertion was checked"})
     return {"schema_version": 1, "status": "BLOCKED" if errors else "UNSUPPORTED" if unsupported else "PASS",
             "room_id": room, "state_profile": state, "candidate_trace_sha256": sha,
-            "scope": "Declared native object-trace assemblies and tile-owner assertions only; not room approval",
+            "scope": "Declared native assemblies, closed wall boundaries, and tile-owner assertions only; not room approval",
             "excluded": ["unlisted geometry", "global-table draw passes", "collision/routes", "reveal masks/composite", "doors/layout", "native gameplay"],
             "checked": {"assemblies": checked, "owner_expectations": len(expectations),
-                        "required_objects": len(required)}, "errors": errors, "unsupported": unsupported}
+                        "wall_boundaries": checked_boundaries, "required_objects": len(required)},
+            "errors": errors, "unsupported": unsupported}
 
 
 def main(argv=None):
