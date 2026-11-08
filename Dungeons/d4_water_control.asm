@@ -15,6 +15,16 @@ org $018745 ; @hook module=Dungeons name=D4Water_SelectObjects kind=jsl target=D
   NOP #8
 assert pc() == $018751
 
+; LoadRoom restores the ROM-table pointer after drawing the shared layout.
+; Select again here so the object lists use the same state as the floor header.
+; M16/X16, D0, X=room*3; selector preserves X/Y/DBR and returns M16/X16.
+org $01883E ; @hook module=Dungeons name=D4Water_SelectObjectLists kind=jsl target=D4Water_SelectObjects expected_m=16 expected_x=16 expected_exit_m=16 expected_exit_x=16 protected_size=12
+  assert read4($01883E) == $1F8001BF && read2($018842) == $B885
+  assert read4($018844) == $1F8000BF && read2($018848) == $B785
+  JSL D4Water_SelectObjects
+  NOP #8
+assert pc() == $01884A
+
 if !ENABLE_DREAM_RETURN == 0
 org $028947 ; @hook module=Dungeons name=D4Water_PlayerControl kind=jsl target=D4Water_PlayerControl expected_m=8 expected_x=8 protected_size=4
   assert read4($028947) == $07800022
