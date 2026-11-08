@@ -190,6 +190,11 @@ pullpc
   ; Otherwise, eject the player back to the surface
   LDA $0114 : BNE .remove_dive
 
+if !ENABLE_DIVE_GATE != 0
+  ; Dive gate rooms: Y surfaces only over deep water on map b
+  JSL DiveGate_CanSurface : BCC .return_default
+endif
+
   ; Check the Y button and clear state if activated
   JSR Link_CheckNewY_ButtonPress : BCC .return_default
   LDA $3A : AND.b #$BF : STA $3A

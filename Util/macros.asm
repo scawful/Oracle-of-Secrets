@@ -250,6 +250,10 @@ endif
 ; takes the table path for tail maps and for rain, and the event overlay
 ; is a no-op for $8A >= $A0 (Overworld/lyra_overlay_fix.asm).
 !ENABLE_LYRA_OVERLAY_FIX            = 1
+; Dive gate (Dungeons/dive_gate.asm): room 0x44 Zora Temple deck/under-deck
+; crossing on tag 0x39: per-frame map-a gate cells, one-time map-b strip and
+; south cap, diver hide, resurface guard. Inert until the room has tag1 0x39.
+!ENABLE_DIVE_GATE                   = 1
 ; Hot floor (underworld tile type $DE): hurts like spike floor except in
 ; Garo Master form, airborne (feather/cape hop, Deku hover) or in a minecart.
 ; Sprites walk on it (Dungeons/hot_floor.asm).

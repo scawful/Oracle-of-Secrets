@@ -59,9 +59,19 @@ CustomTag:
     JSR D6CartCircuit_Main
     BRA .game_has_begun
   .not_circuit
+if !ENABLE_DIVE_GATE != 0
+  JSL D9KeyGate_IsRoom : BCC .not_d9
+else
   JSL D9KeyGate_IsRoom : BCC .ordinary_room
+endif
     JSR D9KeyGate_Main
     BRA .game_has_begun
+if !ENABLE_DIVE_GATE != 0
+  .not_d9
+  JSL DiveGate_IsRoom : BCC .ordinary_room
+    JSR DiveGate_Main
+    BRA .game_has_begun
+endif
   .ordinary_room
 if !DISABLE_MUSIC == 0
   JSR HouseTag_ControlMusic
@@ -78,6 +88,9 @@ endif
 
 incsrc "Dungeons/d9_key_gate.asm"
 incsrc "Dungeons/d6_cart_circuit.asm"
+if !ENABLE_DIVE_GATE != 0
+incsrc "Dungeons/dive_gate.asm"
+endif
 
 HouseTag_Main:
 {
