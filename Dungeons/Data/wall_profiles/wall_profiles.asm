@@ -212,6 +212,7 @@ WallSel_Data_End:
 ; ---- kit graphics routes (Dungeons/Data/kits/kits.asm writes the rows,
 ; palettes and sheets; Dungeons/wall_profile_selector.asm swaps them in)
 ; kit d1_grotto_v6 [partial] profile d1_a3052e1d: row $19 (kit 2), palette $22
+; kit dragon_ship_timber [in_base] profile -: no route
 ; kit glacia_cave_art17 [partial] profile glacia_cave_art17: row $18 (kit 1), palette $24
 ; kit glacia_estate_timber [routed] profile glacia_frozen_timber: row $17 (kit 0), palette $26
 !WALLSEL_GFX = 1

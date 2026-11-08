@@ -30,6 +30,7 @@
 ;   blocked object 081 glyphs: candidate changed chars 145 155 that this object draws; the kit only replaces carried class chars
 ;   blocked object 082 glyphs: candidate changed chars 145 155 that this object draws; the kit only replaces carried class chars
 ;   blocked object 08A glyphs: candidate changed chars 0E1 0E3 that this object draws; the kit only replaces carried class chars
+; dragon_ship_timber (N5) [in_base]: Dragon ship timber (b9296cc0) is identical to base 5d6b461b for these rooms: 0 edited selector classes, 0 slot-3 glyph changes, 0 palette words (extract-kit probe 2026-11-08). Nothing to route; the base already draws it.
 ; glacia_cave_art17 (N9) [partial]: Glacia ice-house cave ART17 walls (glacia-minish-matched-v1 phase-v17-thin-pits, manifest 8dea8bff)
 ;   blocked object 00D: not a selector class: the candidate draws other words in rooms 09E 0BF 0DD
 ;   blocked object 00E: not a selector class: the candidate draws other words in rooms 0AE 0BE 0DD
