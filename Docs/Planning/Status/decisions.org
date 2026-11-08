@@ -1592,6 +1592,21 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   "Option A: Secrets gold, Time's note becomes purple to match its tint,
   Stone bronze." (scawful, 2026-10-18).
 
+* DECIDED Song of Tides replaces Song of Secrets as the sixth song (gold); Book of Secrets stays the main secret revealer
+  :PROPERTIES:
+  :ASKED_BY: Claude (Lyra Sea + Sky overworld pass)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/lyra_sky_overworld_2026-11-07/LOG.md
+  :END:
+  Amends "Two new ocarina songs" (2026-10-18): Song of Secrets is dropped,
+  because the Book of Secrets already reveals hidden things. Song of Tides
+  takes its slot and the gold note. Elegy of Stone and the purple Time note
+  are unchanged. Proposed mechanic (not decided): on Lyra Sea maps it toggles
+  high/low tide, and low tide exposes shoals, cave mouths and wreck chests.
+  Teacher, maps, flag and tile cost are open.
+  Answers: "not sure about song of secrets i thought we had other song ideas",
+  "yeah let's do a different song, book should stay as the main secrets
+  revealer" and "1 Song of Tides" (scawful, 2026-11-08).
+
 * DECIDED Goron Mines safe rails: straight collision on the 313 drawn-rail tiles in seven rooms; no layout change
   :PROPERTIES:
   :ASKED_BY: Claude (D6 redesign, first scope)
