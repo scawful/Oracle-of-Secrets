@@ -220,7 +220,7 @@ class DungeonLayoutPreflight(unittest.TestCase):
             t["x_tile"] += dx
             t["y_tile"] += dy
 
-    def test_actual_oracle25_wall_surround_is_one_closed_cycle(self):
+    def test_captured_wall_subset_forms_cycle_without_full_room_claim(self):
         plan, path, _ = self.wall_boundary()
         result = self.run_check(plan, path)
         self.assertEqual(result["status"], "PASS")
@@ -297,6 +297,39 @@ class DungeonLayoutPreflight(unittest.TestCase):
         result = self.changed_wall_trace(plan, data)
         self.assertEqual(result["status"], "UNSUPPORTED")
         self.assertTrue(any("explicit port" in e["reason"] for e in result["unsupported"]))
+
+    def add_ceiling_overlay(self, data):
+        captured = json.loads((FIXTURES / "v11_good.json").read_text())
+        c = copy.deepcopy(next(c for c in captured["cases"] if c["object_id_dec"] == 0xC0))
+        self.move_wall(c, 9 - c["object_x"], 25 - c["object_y"])
+        c.update(object_index=3000, object_layer=2, room_id=data["cases"][0]["room_id"])
+        data["cases"].append(c)
+
+    def test_closed_boundary_cannot_be_erased_by_later_ordinary_overlay(self):
+        plan, _, data = self.wall_boundary()
+        self.add_ceiling_overlay(data)
+        result = self.changed_wall_trace(plan, data)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertTrue(any(e["code"] == "WALL_OVERWRITTEN" for e in result["errors"]))
+
+    def test_reference_overlay_context_cannot_be_dropped_for_boundary_pass(self):
+        plan, _, data = self.wall_boundary()
+        self.add_ceiling_overlay(data)
+        ref = self.save("context-reference.json", data)
+        plan["wall_boundaries"][0]["reference"].update(trace=str(ref), sha256=sha(ref))
+        result = self.changed_wall_trace(plan, data)
+        self.assertEqual(result["status"], "UNSUPPORTED")
+        self.assertTrue(any("unbound reference" in e["reason"] for e in result["unsupported"]))
+
+    def test_disjoint_physical_backgrounds_cannot_form_one_wall_cycle(self):
+        plan, _, data = self.wall_boundary()
+        for i, c in enumerate(data["cases"]):
+            c["tiles"] = [t for t in c["tiles"] if t["layer"] == i % 2]
+        ref = self.save("disjoint-bg-reference.json", data)
+        plan["wall_boundaries"][0]["reference"].update(trace=str(ref), sha256=sha(ref))
+        result = self.changed_wall_trace(plan, data)
+        self.assertEqual(result["status"], "UNSUPPORTED")
+        self.assertTrue(any("BG domain" in e["reason"] for e in result["unsupported"]))
 
     def test_cli_returns_nonzero_and_never_changes_inputs(self):
         for label, expected in [("v10_bad", 1), ("v11_good", 0)]:

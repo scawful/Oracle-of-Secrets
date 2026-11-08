@@ -130,6 +130,22 @@ def describe(write):
             "tile_values": [list(v) for v in sorted(values)]}
 
 
+def compare_visible_cell(name, target, reference_write, actual, mapping, error_code):
+    """Shared final ordinary-stream ownership gate for assemblies and walls."""
+    rc, rv = reference_write
+    if len(rv) != 1 or (actual is not None and len(actual[1]) != 1):
+        return [], [{"name": name, "reason": "Trace loses intra-object write order",
+                     "cell": list(target)}]
+    if rc["object_index"] not in mapping:
+        return [], [{"name": name, "reason": "Reference footprint is covered by an unbound reference object",
+                     "cell": list(target)}]
+    expected = mapping[rc["object_index"]]
+    if actual is None or (actual[0]["object_index"], actual[1]) != (expected, rv):
+        return [{"code": error_code, "name": name, "cell": list(target),
+                 "expected_object_index": expected, "actual": describe(actual)}], []
+    return [], []
+
+
 def selected(objects, wanted, name):
     if not wanted:
         raise InputError(f"{name} must select at least one object")
@@ -231,6 +247,9 @@ def check_wall_boundary(boundary, objects, contract_directory, actual_state):
     boxes = {i: wall_rectangle(c) for i, c in reference.items()}
     if len(boxes) < 4 or any(b is None for b in boxes.values()):
         return [], issue("Reference needs measured rectangular wall objects; unknown/diagonal/mixed footprints need explicit ports"), None
+    domains = {frozenset(t["layer"] for t in c["tiles"]) for c in reference.values()}
+    if len(domains) != 1:
+        return [], issue("Reference wall BG domains differ; explicit per-background ports are required"), None
     ports = defaultdict(list)
     graph = {i: set() for i in ref_ids}
     for n, i in enumerate(ref_ids):
@@ -250,6 +269,8 @@ def check_wall_boundary(boundary, objects, contract_directory, actual_state):
     candidate_boxes = {}
     uncertain = late_table_cells(objects)
     reference_uncertain = late_table_cells(ref_objects)
+    reference_owners, actual_owners = final_writes(ref_objects), final_writes(objects)
+    mapping = dict(zip(ref_ids, candidate_ids))
     for ri, ci in zip(ref_ids, candidate_ids):
         r, c = reference[ri], candidate[ci]
         dx, dy = c["object_x"] - r["object_x"], c["object_y"] - r["object_y"]
@@ -262,9 +283,17 @@ def check_wall_boundary(boundary, objects, contract_directory, actual_state):
             errors.append({"code": "WALL_OUT_OF_BOUNDS", "name": name, "object_index": ci})
         if set(cells(c)) & uncertain or set(cells(r)) & reference_uncertain:
             unsupported.extend(issue("Global-table draw pass/source flags are absent at wall contacts"))
+        for bg, x, y in cells(r):
+            target = (bg, x + dx, y + dy)
+            if (bg, x, y) in reference_uncertain or target in uncertain:
+                continue
+            cell_errors, cell_unsupported = compare_visible_cell(
+                name, target, reference_owners[(bg, x, y)], actual_owners.get(target), mapping, "WALL_OVERWRITTEN")
+            errors.extend(cell_errors)
+            unsupported.extend(cell_unsupported)
         for side, port in ports[ri]:
             candidate_ports[translate_port(port, dx, dy)].append((ci, side))
-    if errors:
+    if len(candidate_boxes) != len(candidate_ids):
         return errors, unsupported, None
     candidate_graph = {i: set() for i in candidate_ids}
     opposite = {"N": "S", "S": "N", "E": "W", "W": "E"}
@@ -353,22 +382,10 @@ def check(contract, trace_path, contract_directory):
                 unsupported.append({"name": name, "reason": "Global-table draw pass/source flags are absent from trace",
                                     "cell": list(target)})
                 continue
-            ref_write, actual = ref_owners[(bg, x, y)], owners.get(target)
-            rc, rv = ref_write
-            if len(rv) != 1 or (actual is not None and len(actual[1]) != 1):
-                unsupported.append({"name": name, "reason": "Trace loses intra-object write order",
-                                    "cell": list(target)})
-                continue
-            # External reference owners are context, not evidence of this
-            # assembly's visible shape. They need their own assembly binding.
-            if rc["object_index"] not in mapping:
-                unsupported.append({"name": name, "reason": "Reference assembly footprint is covered by an unbound reference object",
-                                    "cell": list(target)})
-                continue
-            if actual is None or (actual[0]["object_index"], actual[1]) != (mapping[rc["object_index"]], rv):
-                errors.append({"code": "ASSEMBLY_OVERWRITTEN", "name": name,
-                               "cell": list(target), "expected_object_index": mapping[rc["object_index"]],
-                               "actual": describe(actual)})
+            cell_errors, cell_unsupported = compare_visible_cell(
+                name, target, ref_owners[(bg, x, y)], owners.get(target), mapping, "ASSEMBLY_OVERWRITTEN")
+            errors.extend(cell_errors)
+            unsupported.extend(cell_unsupported)
         checked.append(name)
     checked_boundaries, boundary_objects = [], set()
     for boundary in contract.get("wall_boundaries", []):
