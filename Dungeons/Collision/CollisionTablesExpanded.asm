@@ -5,7 +5,11 @@
 ; -----------------------------------------------------------------------------------
 
 org $0E942A ; @hook module=Dungeons
+if !ENABLE_WALL_PROFILE_SELECTOR == 1
+    JSL WallSel_LoadTileAttr ; Dungeons/wall_profile_selector.asm
+else
     JSL Dungeon_LoadCustomTileAttr
+endif
     RTL
 
 pullpc

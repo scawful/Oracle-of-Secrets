@@ -222,6 +222,11 @@ endif
 if !DISABLE_MENU == 0
   incsrc "Core/Generated/menu_icons/menu_icon_overrides.asm"
 endif
+if !ENABLE_WALL_PROFILE_SELECTOR == 1
+  if !WALLSEL_GFX == 1
+    incsrc "Dungeons/wall_profile_gfx.asm"
+  endif
+endif
 
 ; Readers are emitted after the current source callers and graphics overrides.
 if !SPECIAL_OVERWORLD_NATIVE == 1

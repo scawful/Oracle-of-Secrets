@@ -245,7 +245,12 @@
     "shared:Dungeons/wall_profile_selector.asm": {
       "source_set": "shared",
       "path": "Dungeons/wall_profile_selector.asm",
-      "sha256": "7c50caaba70e5b4c641e41c6d3ab7267b38c146b8603e55043c29905f9af5b41"
+      "sha256": "aac55f247e44393e6b66ce1501343289d44bde7ae3b66eae0d25d87c4d8332c2"
+    },
+    "shared:Dungeons/wall_profile_gfx.asm": {
+      "source_set": "shared",
+      "path": "Dungeons/wall_profile_gfx.asm",
+      "sha256": "f4c9eb90ef3e7cef99609abf8944d17abdb0dc56a9806dc55a98825c6fd97e79"
     },
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
@@ -2013,14 +2018,16 @@
       "condition": {
         "ENABLE_WALL_PROFILE_SELECTOR": 1
       },
-      "lifetime": "Compiled ROM code and generated tables; fixed slot at the end of bank $44, clear of docks_map_streams ($44C000, 1036 B). Banks $40/$43/$47 are exclusive to sheet tools.",
+      "lifetime": "Compiled ROM code and generated tables ($44E000-$44EFFF) plus the profile gfx sheet $FE stream ($44F000-$44FFFF, Dungeons/wall_profile_gfx.asm); fixed slot at the end of bank $44, clear of docks_map_streams ($44C000, 1036 B). Banks $40/$43/$47 are exclusive to sheet tools.",
       "reset": "Build owns this slot; no runtime allocation or SRAM.",
       "save": "No saved data. Runtime span window is symbols_wram_block WallSel_Buffer.",
       "provenance": [
-        "shared:Dungeons/wall_profile_selector.asm"
+        "shared:Dungeons/wall_profile_selector.asm",
+        "shared:Dungeons/wall_profile_gfx.asm"
       ],
       "anchors": [
-        "org $44E000"
+        "org $44E000",
+        "org $44F000"
       ],
       "aliases": []
     },

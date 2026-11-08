@@ -118,44 +118,77 @@ WallSel_Data:  ; 712 words
   dw $50C5, $50CF, $509A, $10AC, $50CE, $509C, $50AB, $50AC
   dw $D0AF, $D0AD, $50AD, $D0AD, $D0AC, $D0D1, $D0C3, $D0C7
   dw $90AC, $D09A, $D0CF, $D0C5, $D0AC, $D0AB, $D09C, $D0CE
-  dw $542B, $1432, $D433, $10AD, $542B, $143A, $543B, $90AD
-  dw $50AD, $9433, $5432, $142B, $D0AD, $143B, $543A, $142B
-  dw $D41E, $149F, $D422, $10AC, $941E, $1423, $942A, $50AC
-  dw $90AC, $5422, $D41F, $141E, $D0AC, $142A, $9423, $541E
-  dw $8C57, $0C32, $4C58, $90AD, $0C5C, $0C3A, $4C58, $10AD
-  dw $D0AD, $0C58, $4C32, $CC57, $50AD, $0C58, $4C3A, $4C5C
-  dw $4C53, $4C1F, $CC54, $50AC, $0C56, $0C23, $CC54, $10AC
-  dw $D0AC, $4C54, $CC1F, $CC53, $90AC, $4C54, $8C23, $8C56
-  dw $5440, $D440, $5441, $542B, $1440, $9440, $9442, $143A
-  dw $9443, $5444, $1447, $1448, $D41E, $1423, $D449, $10AE
-  dw $542B, $D441, $5440, $D440, $143A, $1442, $1440, $9440
-  dw $9448, $9447, $D444, $1443, $90AE, $5449, $9423, $541E
-  dw $D41E, $541F, $9449, $50AE, $D443, $1444, $5447, $5448
-  dw $5440, $D440, $D442, $543A, $1440, $9440, $1441, $142B
-  dw $D0AE, $1449, $D41F, $541E, $D448, $D447, $9444, $5443
-  dw $5432, $5442, $5440, $D440, $142B, $9441, $1440, $9440
-  dw $544A, $541F, $D422, $10AC, $1432, $544B, $942A, $50AC
-  dw $D433, $543B, $D452, $10AC, $10AD, $90AD, $10AD, $10AF
-  dw $90AC, $5422, $D41F, $D44A, $D0AC, $142A, $D44B, $143A
-  dw $90AC, $5452, $D433, $543B, $90AF, $90AD, $10AD, $10AD
-  dw $50AD, $D0AD, $50AD, $50AF, $9433, $143B, $9452, $50AC
-  dw $5432, $144B, $D422, $10AC, $144A, $1423, $942A, $50AC
-  dw $D0AF, $D0AD, $50AD, $D0AD, $D0AC, $1452, $9433, $143B
-  dw $90AC, $5422, $944B, $543A, $D0AC, $142A, $9423, $944A
-  dw $0C60, $8C57, $0C5C, $8C57, $4C53, $4C44, $0C3A, $0C32
-  dw $0C56, $0C23, $0C47, $4C58, $4C53, $4C1F, $CC54, $10AE
-  dw $0C5C, $8C57, $0C5C, $8C60, $0C3A, $0C32, $CC44, $CC53
-  dw $4C58, $8C47, $8C23, $8C56, $90AE, $4C54, $CC1F, $CC53
-  dw $0C56, $0C23, $CC54, $50AE, $4C53, $4C1F, $4C47, $0C58
-  dw $0C56, $0C44, $4C3A, $4C32, $4C60, $CC57, $4C5C, $CC57
-  dw $D0AE, $4C54, $8C23, $8C56, $0C58, $CC47, $CC1F, $CC53
-  dw $4C3A, $4C32, $8C44, $8C56, $4C5C, $CC57, $4C5C, $CC60
-  dw $4C1F, $0C23, $CC54, $10AC, $0C3A, $0C48, $CC54, $50AC
-  dw $4C58, $4C58, $CC61, $10AC, $10AD, $90AD, $10AD, $10AF
-  dw $90AC, $4C54, $8C23, $CC1F, $D0AC, $4C54, $8C48, $0C32
-  dw $90AC, $4C61, $4C58, $4C58, $90AF, $90AD, $10AD, $90AD
-  dw $50AD, $D0AD, $50AD, $50AF, $0C58, $0C58, $8C61, $50AC
-  dw $4C3A, $4C48, $CC54, $10AC, $0C1F, $4C1F, $CC54, $50AC
-  dw $D0AF, $D0AD, $50AD, $D0AD, $D0AC, $0C61, $0C58, $0C58
-  dw $90AC, $4C54, $CC48, $4C32, $D0AC, $4C54, $CC1F, $8C1F
+  dw $54C5, $14C7, $D4C8, $10AD, $54C5, $14CA, $54CB, $90AD
+  dw $50AD, $94C8, $54C7, $14C5, $D0AD, $14CB, $54CA, $14C5
+  dw $D4C0, $14EF, $D4C2, $10AC, $94C0, $14C3, $94C4, $50AC
+  dw $90AC, $54C2, $D4C1, $14C0, $D0AC, $14C4, $94C3, $54C0
+  dw $8CE4, $0CC7, $4CE5, $90AD, $0CE8, $0CCA, $4CE5, $10AD
+  dw $D0AD, $0CE5, $4CC7, $CCE4, $50AD, $0CE5, $4CCA, $4CE8
+  dw $4CE1, $4CC1, $CCE2, $50AC, $0CE3, $0CC3, $CCE2, $10AC
+  dw $D0AC, $4CE2, $CCC1, $CCE1, $90AC, $4CE2, $8CC3, $8CE3
+  dw $54D1, $D4D1, $54D2, $54C5, $14D1, $94D1, $94D3, $14CA
+  dw $94D4, $54D5, $14D6, $14D7, $D4C0, $14C3, $D4D8, $10AE
+  dw $54C5, $D4D2, $54D1, $D4D1, $14CA, $14D3, $14D1, $94D1
+  dw $94D7, $94D6, $D4D5, $14D4, $90AE, $54D8, $94C3, $54C0
+  dw $D4C0, $54C1, $94D8, $50AE, $D4D4, $14D5, $54D6, $54D7
+  dw $54D1, $D4D1, $D4D3, $54CA, $14D1, $94D1, $14D2, $14C5
+  dw $D0AE, $14D8, $D4C1, $54C0, $D4D7, $D4D6, $94D5, $54D4
+  dw $54C7, $54D3, $54D1, $D4D1, $14C5, $94D2, $14D1, $94D1
+  dw $54DA, $54C1, $D4C2, $10AC, $14C7, $54DB, $94C4, $50AC
+  dw $D4C8, $54CB, $D4E0, $10AC, $10AD, $90AD, $10AD, $10AF
+  dw $90AC, $54C2, $D4C1, $D4DA, $D0AC, $14C4, $D4DB, $14CA
+  dw $90AC, $54E0, $D4C8, $54CB, $90AF, $90AD, $10AD, $10AD
+  dw $50AD, $D0AD, $50AD, $50AF, $94C8, $14CB, $94E0, $50AC
+  dw $54C7, $14DB, $D4C2, $10AC, $14DA, $14C3, $94C4, $50AC
+  dw $D0AF, $D0AD, $50AD, $D0AD, $D0AC, $14E0, $94C8, $14CB
+  dw $90AC, $54C2, $94DB, $54CA, $D0AC, $14C4, $94C3, $94DA
+  dw $0CEB, $8CE4, $0CE8, $8CE4, $4CE1, $4CD5, $0CCA, $0CC7
+  dw $0CE3, $0CC3, $0CD6, $4CE5, $4CE1, $4CC1, $CCE2, $10AE
+  dw $0CE8, $8CE4, $0CE8, $8CEB, $0CCA, $0CC7, $CCD5, $CCE1
+  dw $4CE5, $8CD6, $8CC3, $8CE3, $90AE, $4CE2, $CCC1, $CCE1
+  dw $0CE3, $0CC3, $CCE2, $50AE, $4CE1, $4CC1, $4CD6, $0CE5
+  dw $0CE3, $0CD5, $4CCA, $4CC7, $4CEB, $CCE4, $4CE8, $CCE4
+  dw $D0AE, $4CE2, $8CC3, $8CE3, $0CE5, $CCD6, $CCC1, $CCE1
+  dw $4CCA, $4CC7, $8CD5, $8CE3, $4CE8, $CCE4, $4CE8, $CCEB
+  dw $4CC1, $0CC3, $CCE2, $10AC, $0CCA, $0CD7, $CCE2, $50AC
+  dw $4CE5, $4CE5, $CCEE, $10AC, $10AD, $90AD, $10AD, $10AF
+  dw $90AC, $4CE2, $8CC3, $CCC1, $D0AC, $4CE2, $8CD7, $0CC7
+  dw $90AC, $4CEE, $4CE5, $4CE5, $90AF, $90AD, $10AD, $90AD
+  dw $50AD, $D0AD, $50AD, $50AF, $0CE5, $0CE5, $8CEE, $50AC
+  dw $4CCA, $4CD7, $CCE2, $10AC, $0CC1, $4CC1, $CCE2, $50AC
+  dw $D0AF, $D0AD, $50AD, $D0AD, $D0AC, $0CEE, $0CE5, $0CE5
+  dw $90AC, $4CE2, $CCD7, $4CC7, $D0AC, $4CE2, $CCC1, $8CC1
 WallSel_Data_End:
+
+; per-profile graphics route ($FF = keep the room header's blockset/palette)
+; gfx profile 2 glacia_frozen_timber: 30 glyph chars -> slot-3 sheet 0xFE (decoded fc674c59)
+!WALLSEL_GFX = 1
+!WALLSEL_GFX_MAIN = $0B
+!WALLSEL_GFX_BLOCKSET = $17
+!WALLSEL_GFX_SHEET = $FE
+!WALLSEL_GFX_SLOT3_COPY = $0B
+!WALLSEL_GFX_PALETTE = $26
+!WALLSEL_GFX_PALETTE_SRC = $08
+!WALLSEL_GFX_PAL_FIRST = 23
+!WALLSEL_GFX_SLOT3_BIN = "Dungeons/Data/wall_profiles/glacia_frozen_timber.slot3.lz2"
+!WALLSEL_GFX_PAL_COUNT = 7
+!WALLSEL_GFX_PAL_WORDS = $1462, $24C4, $3127, $41AA, $522E, $6AF4, $7B99
+; every room bound to the gfx profile must load the copied main blockset and palette
+; (asar evaluates left to right without precedence: keep the parentheses)
+assert read1(($220000|read2($228000+$158))+2) == !WALLSEL_GFX_MAIN && read1($0ED460+(read1(($220000|read2($228000+$158))+1)*4)) == !WALLSEL_GFX_PALETTE_SRC, "room $0AC header no longer matches the gfx profile copy source"
+assert read1(($220000|read2($228000+$15A))+2) == !WALLSEL_GFX_MAIN && read1($0ED460+(read1(($220000|read2($228000+$15A))+1)*4)) == !WALLSEL_GFX_PALETTE_SRC, "room $0AD header no longer matches the gfx profile copy source"
+assert read1(($220000|read2($228000+$176))+2) == !WALLSEL_GFX_MAIN && read1($0ED460+(read1(($220000|read2($228000+$176))+1)*4)) == !WALLSEL_GFX_PALETTE_SRC, "room $0BB header no longer matches the gfx profile copy source"
+assert read1(($220000|read2($228000+$178))+2) == !WALLSEL_GFX_MAIN && read1($0ED460+(read1(($220000|read2($228000+$178))+1)*4)) == !WALLSEL_GFX_PALETTE_SRC, "room $0BC header no longer matches the gfx profile copy source"
+assert read1(($220000|read2($228000+$17A))+2) == !WALLSEL_GFX_MAIN && read1($0ED460+(read1(($220000|read2($228000+$17A))+1)*4)) == !WALLSEL_GFX_PALETTE_SRC, "room $0BD header no longer matches the gfx profile copy source"
+assert read1(($220000|read2($228000+$196))+2) == !WALLSEL_GFX_MAIN && read1($0ED460+(read1(($220000|read2($228000+$196))+1)*4)) == !WALLSEL_GFX_PALETTE_SRC, "room $0CB header no longer matches the gfx profile copy source"
+assert read1(($220000|read2($228000+$198))+2) == !WALLSEL_GFX_MAIN && read1($0ED460+(read1(($220000|read2($228000+$198))+1)*4)) == !WALLSEL_GFX_PALETTE_SRC, "room $0CC header no longer matches the gfx profile copy source"
+assert read1(($220000|read2($228000+$1B6))+2) == !WALLSEL_GFX_MAIN && read1($0ED460+(read1(($220000|read2($228000+$1B6))+1)*4)) == !WALLSEL_GFX_PALETTE_SRC, "room $0DB header no longer matches the gfx profile copy source"
+WallSel_ProfileBlockset:  ; indexed by profile-1
+  db $FF, $17
+WallSel_ProfilePalette:  ; BG palette id*2 for $0AB6, indexed by profile-1
+  db $FF, $26
+WallSel_Slot3TileTypes:  ; 64 class bytes for chars $C0-$FF of the gfx blockset
+  db $01, $01, $04, $01, $04, $01, $00, $01, $04, $00, $01, $04, $00, $00, $62, $62
+  db $00, $01, $01, $01, $01, $01, $04, $01, $01, $00, $01, $01, $00, $00, $62, $62
+  db $04, $28, $04, $28, $2A, $04, $01, $00, $2A, $00, $00, $01, $00, $00, $04, $01
+  db $27, $27, $27, $27, $27, $10, $02, $01, $00, $00, $00, $24, $00, $00, $00, $00

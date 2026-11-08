@@ -2,7 +2,8 @@
  "_doc": "Per-dungeon wall object tile patterns for Dungeons/wall_profile_selector.asm. A group binds a dungeon (or a named room group outside any dungeon) to one profile; a room may be in one group only. Rooms in no group draw the build's own words. Regenerate: python3 Scripts/Generate/gen_wall_profiles.py build",
  "profiles": [
   {"id": 1, "name": "d1_a3052e1d", "words": "d1_a3052e1d.words.json"},
-  {"id": 2, "name": "glacia_frozen_timber", "words": "glacia_frozen_timber.words.json"}
+  {"id": 2, "name": "glacia_frozen_timber", "words": "glacia_frozen_timber.words.json",
+   "gfx": "glacia_frozen_timber.gfx.json"}
  ],
  "groups": [
   {"name": "d1", "kind": "dungeon", "profile": "d1_a3052e1d",
