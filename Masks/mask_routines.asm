@@ -83,6 +83,9 @@ ResetToLinkGraphics:
 ForceResetMask_GameOver:
 {
   JSL DekuStick_Drop
+  if !ENABLE_DIVE_GATE != 0
+  STZ.w !ZoraDiving
+  endif
   LDA $02B2 : BEQ .still_link
     CMP.b #$06 : BEQ .gbc_link
       JSL ResetToLinkGraphics
@@ -99,6 +102,9 @@ ForceResetMask_GameOver:
 ForceResetMask_SaveAndQuit:
 {
   JSL DekuStick_Drop
+  if !ENABLE_DIVE_GATE != 0
+  STZ.w !ZoraDiving
+  endif
   LDA !CurrentMask : BEQ .still_link
     JSL ResetToLinkGraphics
   .still_link
