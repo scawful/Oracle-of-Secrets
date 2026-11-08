@@ -40,7 +40,7 @@
    "sheet": "0xFC",
    "copy_of": "0x0C",
    "source": "d1_grotto_v6.slot3.txt",
-   "decoded_sha256": "0a80960ada2395d3754f3e929fbb77d73d343ed7a7e594602fba23344467333c"
+   "decoded_sha256": "dfec2e2560eb83d3bf378432be3c47b576c2874a2c3f5076c6f06b8eeb4f155d"
   }
  ],
  "char_map": {
@@ -49,28 +49,31 @@
   "09A": "0D4",
   "09B": "0D5",
   "09C": "0D6",
-  "0AB": "0D7"
+  "0AB": "0D7",
+  "0C0": "0D8",
+  "0C2": "0DC",
+  "0C3": "0DD",
+  "0C4": "0DE",
+  "0C5": "0DF",
+  "0D1": "0EB"
  },
  "in_place": [
-  "0C0",
-  "0C2",
-  "0C3",
-  "0C4",
-  "0C5",
   "0C7",
   "0C8",
   "0CC",
   "0CD",
   "0CE",
-  "0CF",
-  "0D1"
+  "0CF"
  ],
  "tile_types": {
   "0D2": "0x01",
   "0D3": "0x01",
   "0D4": "0x18",
   "0D5": "0x10",
-  "0D6": "0x10"
+  "0D6": "0x10",
+  "0DE": "0x00",
+  "0DF": "0x00",
+  "0EB": "0x00"
  },
  "palette": {
   "id": "0x22",
@@ -244,6 +247,6 @@
    "reason": "candidate changed chars 0E1 0E3 that this object draws; the kit only replaces carried class chars"
   }
  ],
- "free_slot3_left": 10,
+ "free_slot3_left": 2,
  "note": "D1 Mushroom Grotto moss-selected completion-v6 (68b30bef, latent-door-safe; cut from approved a3052e1d, origin 8d615784). Bound to profile d1_a3052e1d: its 24 carried classes equal this candidate's words; the other 6 profile classes (03A 03B 076 077 081 082) draw slot-5 chars only and touch no kit char."
 }

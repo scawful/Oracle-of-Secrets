@@ -57,6 +57,7 @@ PAL_SETS = 0x0ED460        # 4 bytes per palette set; byte 0 = BG palette id*2
 PAL_WORDS = 90
 ROOM_HEADERS = 0x228000    # dw per room; header = $220000|word
 DOOR_OFFSETS = (0x00CD9E, 0x00CF44)  # DoorGFXDataOffset_* + DoorAnimGFXDataOffset_*
+FANCY_EXIT_BLOCK = (0x00C1A8, 80)  # obj2656: south fancy dungeon exit, 10 words x 8 rows
 
 # Private ids. Rows $17-$1A and palette ids $22-$26 are not used by any room
 # header (kits.asm asserts it on every build). Each row keeps its vanilla
@@ -144,6 +145,11 @@ def door_chars(base: bytes) -> set[int]:
     for p in range(snes_pc(DOOR_OFFSETS[0]), snes_pc(DOOR_OFFSETS[1]), 2):
         for k in range(12):
             out.add(rom_word(base, OBJ_TABLE_PC + rom_word(base, p) + 2 * k) & 0x3FF)
+    # The south "fancy dungeon exit" (door types $0A/$0C, $01:A9DB/$01:AA01) draws a
+    # fixed 10x8 block obj2656 through RoomDraw_SomeBigDecors, not the offset tables.
+    first, count = FANCY_EXIT_BLOCK
+    for k in range(count):
+        out.add(rom_word(base, snes_pc(first) + 2 * k) & 0x3FF)
     return out
 
 
