@@ -15,6 +15,9 @@ from pathlib import Path
 import sys
 
 
+WALL_OBJECT_IDS = {1, 2, 3, 4, 0x61, 0x62, 0x63, 0x64, *range(0x100, 0x118)}
+
+
 class InputError(ValueError):
     """An invalid, stale, or ambiguous input contract."""
 
@@ -147,8 +150,7 @@ def object_signature(c, dx=0, dy=0):
 
 def wall_rectangle(c):
     """Recognize measured rectangular wall footprints, never selection bounds."""
-    wall_ids = {1, 2, 3, 4, 0x61, 0x62, 0x63, 0x64, *range(0x100, 0x118)}
-    if c["object_id_dec"] not in wall_ids or not c["tiles"]:
+    if c["object_id_dec"] not in WALL_OBJECT_IDS or not c["tiles"]:
         return None
     by_bg = defaultdict(set)
     for (bg, x, y), values in cells(c).items():
@@ -368,16 +370,21 @@ def check(contract, trace_path, contract_directory):
                                "cell": list(target), "expected_object_index": mapping[rc["object_index"]],
                                "actual": describe(actual)})
         checked.append(name)
-    checked_boundaries = []
+    checked_boundaries, boundary_objects = [], set()
     for boundary in contract.get("wall_boundaries", []):
         wall_errors, wall_unsupported, result = check_wall_boundary(boundary, objects, contract_directory, actual_state)
         errors.extend(wall_errors)
         unsupported.extend(wall_unsupported)
-        bound.update(indices(boundary["candidate"]["object_indices"], boundary["name"]))
+        members = indices(boundary["candidate"]["object_indices"], boundary["name"])
+        bound.update(members)
+        boundary_objects.update(members)
         if result is not None:
             checked_boundaries.append(result)
     for index in sorted(set(required) - bound):
         unsupported.append({"name": f"object[{index}]", "reason": "Changed structural object has no reference assembly binding"})
+    for index in sorted(set(required) - boundary_objects):
+        if objects[index]["object_id_dec"] in WALL_OBJECT_IDS:
+            unsupported.append({"name": f"object[{index}]", "reason": "Changed wall/corner has no verified boundary; an exact object copy does not prove connectivity"})
     expectations = contract.get("owner_expectations", [])
     for expectation in expectations:
         key = (integer(expectation["bg"], "bg", 0, 1),

@@ -62,11 +62,13 @@ class DungeonLayoutPreflight(unittest.TestCase):
         path = self.save("candidate.json", data)
         plan = contract(path)
         plan["owner_expectations"] = []
-        plan["required_object_indices"] = [i + 1000 for i in reference_indices]
+        # These tests scope native write comparison only. Changed wall placement
+        # admission is exercised by the separate required-boundary controls.
+        candidate_indices = [i + 1000 for i in reference_indices]
         plan["assemblies"] = [{"name": "captured native write group (test only)",
                               "reference": {"trace": str(reference), "sha256": sha(reference),
                                             "object_indices": reference_indices},
-                              "candidate": {"object_indices": plan["required_object_indices"]},
+                              "candidate": {"object_indices": candidate_indices},
                               "translation": [dx, dy]}]
         return plan, path, data
 
@@ -224,6 +226,19 @@ class DungeonLayoutPreflight(unittest.TestCase):
         self.assertEqual(result["status"], "PASS")
         self.assertEqual(result["checked"]["wall_boundaries"], [
             {"name": "Oracle25 inset basin", "objects": 10, "joins": 10, "closed": True}])
+
+    def test_exact_copied_corner_still_needs_wall_connectivity_evidence(self):
+        plan, _, data = self.wall_boundary()
+        boundary = plan.pop("wall_boundaries")[0]
+        plan["required_object_indices"] = [40]
+        plan["assemblies"] = [{"name": "Exact native corner copy", "reference": {
+            **boundary["reference"], "object_indices": [40]},
+            "candidate": {"object_indices": [40]}, "translation": [-4, -4]}]
+        self.move_wall(data["cases"][0], -4, -4)
+        result = self.changed_wall_trace(plan, data)
+        self.assertEqual(result["checked"]["assemblies"], ["Exact native corner copy"])
+        self.assertEqual(result["status"], "UNSUPPORTED")
+        self.assertTrue(any("no verified boundary" in e["reason"] for e in result["unsupported"]))
 
     def test_whole_wall_cycle_translation_remains_connected(self):
         plan, _, data = self.wall_boundary()
