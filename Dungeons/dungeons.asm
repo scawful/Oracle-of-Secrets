@@ -186,6 +186,10 @@ incsrc "Dungeons/attract_royal_graphics.asm"
 print "End of attract_royal_graphics.asm  ", pc
 endif
 
+if !ENABLE_SKY_TOWER_GRAPHICS == 1
+incsrc "Dungeons/sky_tower_graphics.asm"
+endif
+
 assert pc() <= $2CF700 ; Somaria internal-landing helper owns the fixed tail
 print "End of dungeons.asm               ", pc
 

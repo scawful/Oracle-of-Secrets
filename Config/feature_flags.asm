@@ -9,8 +9,8 @@
 !ENABLE_CUSTOM_ROOM_COLLISION         = 1
 !ENABLE_CUTSCENE_FRAMEWORK            = 1
 !ENABLE_D3_PRISON_SEQUENCE            = 0
-!ENABLE_D4_ZORA_REDESIGN              = 0
 !ENABLE_D4_WATER_CONTROLS             = 0
+!ENABLE_D4_ZORA_REDESIGN              = 0
 !ENABLE_D5_AF_PIT_RESET               = 0
 !ENABLE_D5_BF_PIT_RESET               = 0
 !ENABLE_D7_FARORE_RESCUE_SEQUENCE     = 1
@@ -66,6 +66,7 @@
 !ENABLE_PART0_STORM                   = 1
 !ENABLE_PORTAL_ROD_CELL               = 1
 !ENABLE_RING_SRAM_RELOCATE            = 1
+!ENABLE_SKY_TOWER_GRAPHICS            = 0
 !ENABLE_SOURCE_SPRITE_SHEETS          = 1
 !ENABLE_SWORD_WARP_HOME               = 1
 !ENABLE_TEXT_BOX_SHADE                = 1

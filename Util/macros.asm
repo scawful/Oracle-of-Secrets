@@ -35,6 +35,8 @@ endif
 !ENABLE_GRAPHICS_TRANSFER_SCROLL_HOOK = 1
 ; Source-built sprite sheets; identity sheet $64 owns the audited bank $40 tail.
 !ENABLE_SOURCE_SPRITE_SHEETS        = 1
+; Selected Sky Minish Cap sheets; normal group/palette binding awaits qualification.
+!ENABLE_SKY_TOWER_GRAPHICS          = 0
 ; Private D4 room-scoped actor/art prototype; no default behavior change.
 !ENABLE_D4_ZORA_REDESIGN            = 0
 !ENABLE_D4_WATER_CONTROLS           = 0
