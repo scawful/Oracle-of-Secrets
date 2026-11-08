@@ -268,7 +268,6 @@ incsrc "menu_select_item.asm"
 
 Menu_CheckForSpecialMenus:
 {
-  LDA.w $0202 : ASL : TAY ; Menu_DeleteCursor requires the old logical item's index
 if !ENABLE_EQUIPMENT_MENU == 0
     LDA.w $0202 : CMP.b #!MENU_STATE_SCROLL_TO : BNE +
       LDA.b $F6 : BIT.b #$80 : BEQ +
@@ -277,17 +276,16 @@ if !ENABLE_EQUIPMENT_MENU == 0
         JSR Menu_DeleteCursor ; Ensure cursor is deleted
         SEC : RTS             ; Return Carry Set
     +
-endif
     LDA.w $0202 : CMP.b #!MENU_STATE_SONG_MENU : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
         LDA.b #!MENU_STATE_SONG_MENU : STA.w $0200
-        JSL UpdateFluteSong_Long ; retain and validate the remembered selection
-        SEP #$30
+        LDA.b #$01 : STA.w CurrentSong ; Initialize song selection
           JSR Menu_DeleteCursor
           JSR Menu_DrawSongMenu
           SEP #$30
           SEC : RTS ; Return Carry Set
     ++
+endif
     LDA.w $0202 : CMP.b #!MENU_STATE_JOURNAL : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
 if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
@@ -337,14 +335,6 @@ endif
 Menu_ItemScreen:
 {
   SEP #$30
-  ; Start and shoulder buttons own their frame. With no D-pad movement,
-  ; allow the existing A submenus before the generic A-to-close check.
-  LDA.b $F4 : AND.b #$1F : BNE .scroll_input
-  LDA.b $F6 : AND.b #$30 : BNE .scroll_input
-  LDA.w $0202 : BEQ .scroll_input ; no old cursor exists to delete
-  JSR Menu_CheckForSpecialMenus : BCC .scroll_input
-  JMP .exit
-.scroll_input
   JSR Menu_CheckHScroll
   SEP #$30
   LDA.w $0200 : CMP.b #!MENU_STATE_ITEM_SCREEN : BEQ .active
