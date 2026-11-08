@@ -245,12 +245,17 @@
     "shared:Dungeons/wall_profile_selector.asm": {
       "source_set": "shared",
       "path": "Dungeons/wall_profile_selector.asm",
-      "sha256": "aac55f247e44393e6b66ce1501343289d44bde7ae3b66eae0d25d87c4d8332c2"
+      "sha256": "d8d0597276d6e8cbbd9e5fbea3cfbaee53a159708f827762bea1c6df35e5e6d4"
     },
     "shared:Dungeons/wall_profile_gfx.asm": {
       "source_set": "shared",
       "path": "Dungeons/wall_profile_gfx.asm",
-      "sha256": "f4c9eb90ef3e7cef99609abf8944d17abdb0dc56a9806dc55a98825c6fd97e79"
+      "sha256": "f39f14a7836d599de948363e8982e7bfc8249fbdea75a915c7b6fdc4e40be1a2"
+    },
+    "shared:Dungeons/Data/kits/kits.asm": {
+      "source_set": "shared",
+      "path": "Dungeons/Data/kits/kits.asm",
+      "sha256": "401cfd4314c382137fb5335d860682ba314b271f2bcaccbf08e114a482a64ba1"
     },
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
@@ -2018,16 +2023,36 @@
       "condition": {
         "ENABLE_WALL_PROFILE_SELECTOR": 1
       },
-      "lifetime": "Compiled ROM code and generated tables ($44E000-$44EFFF) plus the profile gfx sheet $FE stream ($44F000-$44FFFF, Dungeons/wall_profile_gfx.asm); fixed slot at the end of bank $44, clear of docks_map_streams ($44C000, 1036 B). Banks $40/$43/$47 are exclusive to sheet tools.",
+      "lifetime": "Compiled ROM code and generated profile/kit tables in the fixed 8 KiB slot $44E000-$44FFFF at the end of bank $44, clear of docks_map_streams ($44C000, 1036 B). Kit sheet streams live in wall_profile_kit_sheets. Banks $40/$43/$47 are exclusive to sheet tools.",
       "reset": "Build owns this slot; no runtime allocation or SRAM.",
       "save": "No saved data. Runtime span window is symbols_wram_block WallSel_Buffer.",
       "provenance": [
-        "shared:Dungeons/wall_profile_selector.asm",
-        "shared:Dungeons/wall_profile_gfx.asm"
+        "shared:Dungeons/wall_profile_selector.asm"
       ],
       "anchors": [
-        "org $44E000",
-        "org $44F000"
+        "org $44E000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "wall_profile_kit_sheets",
+      "owner": "Wall-profile graphics kit sheet streams (spare global sheets $EA-$FE)",
+      "space": "snes_rom",
+      "base": 4554752,
+      "size": 28672,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_WALL_PROFILE_SELECTOR": 1
+      },
+      "lifetime": "Generated 3bpp LC-LZ2 sheet streams ($458000-$45EFFF) written by Dungeons/Data/kits/kits.asm from Dungeons/Data/kits/*.kit.json; ends before ow_aux_extension_code ($45F000). The same file writes the private blockset rows $17-$1A and palettes $22/$24/$26 that no room header uses (asserted at build).",
+      "reset": "Build owns this slot; no runtime allocation or SRAM.",
+      "save": "No saved data. Kit rows and palettes are selected per room at load by WallSel_HeaderGfx.",
+      "provenance": [
+        "shared:Dungeons/wall_profile_gfx.asm",
+        "shared:Dungeons/Data/kits/kits.asm"
+      ],
+      "anchors": [
+        "org $458000"
       ],
       "aliases": []
     },

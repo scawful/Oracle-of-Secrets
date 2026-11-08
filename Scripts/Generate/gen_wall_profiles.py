@@ -2,15 +2,25 @@
 """Per-dungeon wall-profile tables for Dungeons/wall_profile_selector.asm.
 
 Authoring is per dungeon: Dungeons/Data/wall_profiles/wall_profiles.json lists
-profiles (id + word file) and groups (a dungeon, or a named room group such as
-the Glacia estate interiors) that bind a room list to one profile. The output
-is the same per-room ($A0) lookup table the selector reads.
+profiles (id + word file + optional kit) and groups (a dungeon, or a named room
+group such as the Glacia estate interiors) that bind a room list to one
+profile. The output is the same per-room ($A0) lookup table the selector reads.
 
-Two steps:
-  extract  read one profile's class words from a private candidate ROM into
-           Dungeons/Data/wall_profiles/<profile>.words.json (needs the ROM).
-  build    wall_profiles.json + *.words.json -> wall_profiles.asm (no ROM).
-           --check fails if the committed asm is stale.
+A kit (Dungeons/Data/kits/<kit>.kit.json) registers the graphics that belong to
+one accepted wall set: its private blockset row (slot sheets copied into new
+global sheets), its private BG palette (a copy of the rooms' palette with the
+kit's words spliced in), the char remap applied to the profile words, and the
+tile types of the relocated chars. A kit without a private row or palette is a
+registry entry only (words-only, or already in the base ROM).
+
+Steps:
+  extract      read one profile's class words from a candidate ROM into
+               Dungeons/Data/wall_profiles/<profile>.words.json (needs the ROM).
+  extract-kit  read one kit (class words, glyphs, tile types, palette) from a
+               candidate ROM and fit it into a private row (needs the ROM).
+  build        wall_profiles.json + *.words.json + *.kit.json ->
+               wall_profiles.asm + kits.asm + kit sheet streams (no ROM).
+               --check fails if any committed output is stale.
 
 A class is one wall object whose drawer reads a fixed 8/12/16-word span from
 RoomDrawObjectData ($00:9B52 + offset). The selector supports exactly CLASSES.
@@ -18,6 +28,7 @@ RoomDrawObjectData ($00:9B52 + offset). The selector supports exactly CLASSES.
 from __future__ import annotations
 
 import argparse
+import collections
 import hashlib
 import json
 import struct
@@ -28,6 +39,8 @@ REPO = Path(__file__).resolve().parents[2]
 DATA_DIR = REPO / "Dungeons/Data/wall_profiles"
 CONFIG = DATA_DIR / "wall_profiles.json"
 OUT_ASM = DATA_DIR / "wall_profiles.asm"
+KITS_DIR = REPO / "Dungeons/Data/kits"
+KITS_ASM = KITS_DIR / "kits.asm"
 
 SUB1 = [0x061, 0x062, 0x001, 0x002, 0x063, 0x064, 0x003, 0x004,
         0x03A, 0x03B, 0x076, 0x077, 0x081, 0x082]
@@ -35,6 +48,26 @@ SUB2 = list(range(0x100, 0x110))
 CLASSES = SUB1 + SUB2  # class index = position (0..29)
 ROOM_COUNT = 0x128
 OBJ_TABLE_PC = 0x1B52  # PC of $00:9B52 (RoomDrawObjectData) in a headerless LoROM
+
+MAIN_GROUPS = 0x00E073     # 8 sheets per main blockset ($0AA1)
+AA2_ROWS = 0x00DD97        # 4 sheets (slots 3-6) per secondary blockset row ($0AA2)
+TILE_TYPES = 0x0E9659      # UnderworldTileTypes (chars 0-$13F, then $1C0-$1FF)
+PAL_DATA, PAL_INDEX = 0x1BD734, 0x1BEC4B
+PAL_SETS = 0x0ED460        # 4 bytes per palette set; byte 0 = BG palette id*2
+PAL_WORDS = 90
+ROOM_HEADERS = 0x228000    # dw per room; header = $220000|word
+DOOR_OFFSETS = (0x00CD9E, 0x00CF44)  # DoorGFXDataOffset_* + DoorAnimGFXDataOffset_*
+
+# Private ids. Rows $17-$1A and palette ids $22-$26 are not used by any room
+# header (kits.asm asserts it on every build). Each row keeps its vanilla
+# bytes in the base ROM until a kit claims it.
+KIT_ROW0 = 0x17
+PRIVATE_ROWS = {0x17: (0x09, 0x00, 0x24, 0x1B), 0x18: (0x08, 0x00, 0x22, 0x1B),
+                0x19: (0x09, 0x00, 0x25, 0x1B), 0x1A: (0x09, 0x00, 0x26, 0x1B)}
+PRIVATE_PALETTES = {0x22: 0x0BF4, 0x24: 0x0CA8, 0x26: 0x0D5C}
+KIT_SHEETS = range(0xEA, 0xFF)          # spare global sheet rows (empty streams)
+KIT_SHEET_ORG, KIT_SHEET_END = 0x458000, 0x45F000
+VERDICTS = ("routed", "partial", "words_only", "in_base")
 
 
 def span_words(obj: int) -> int:
@@ -57,6 +90,63 @@ def sha8(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()[:8]
 
 
+def snes_pc(a: int) -> int:
+    return ((a >> 16) & 0x7F) * 0x8000 + (a & 0x7FFF)
+
+
+def hx(v) -> int | None:
+    """'0x0B' / '$0B' / '0B' / int -> int; None stays None."""
+    if v is None or isinstance(v, int):
+        return v
+    s = str(v).strip().lstrip("$")
+    return int(s[2:] if s.lower().startswith("0x") else s, 16)
+
+
+def class_words(d: bytes, base: bytes, obj: int) -> list[int]:
+    pc = OBJ_TABLE_PC + obj_offset(base, obj)
+    return [rom_word(d, pc + 2 * k) for k in range(span_words(obj))]
+
+
+def room_header(d: bytes, room: int) -> int:
+    return snes_pc(0x220000 | rom_word(d, snes_pc(ROOM_HEADERS) + room * 2))
+
+
+def room_blockset_palette(d: bytes, room: int) -> tuple[int, int]:
+    h = room_header(d, room)
+    return d[h + 2], d[snes_pc(PAL_SETS) + d[h + 1] * 4]
+
+
+def effective_slots(d: bytes, blockset: int) -> list[int]:
+    """Global sheet per slot 0-7 with main group = header blockset (editor view)."""
+    m = list(d[snes_pc(MAIN_GROUPS) + blockset * 8:][:8])
+    row = d[snes_pc(AA2_ROWS) + blockset * 4:][:4]
+    for i, s in enumerate(row):
+        if s:
+            m[3 + i] = s
+    return m
+
+
+def tile_type(d: bytes, c: int) -> int | None:
+    if c < 0x140:
+        return d[snes_pc(TILE_TYPES) + c]
+    if c >= 0x1C0:
+        return d[snes_pc(TILE_TYPES) + c - 0x80]
+    return None  # $140-$1BF: per-blockset custom attributes
+
+
+def palette(d: bytes, pid: int) -> list[int]:
+    off = rom_word(d, snes_pc(PAL_INDEX) + pid)
+    return [rom_word(d, snes_pc(PAL_DATA) + off + 2 * i) for i in range(PAL_WORDS)]
+
+
+def door_chars(base: bytes) -> set[int]:
+    out = set()
+    for p in range(snes_pc(DOOR_OFFSETS[0]), snes_pc(DOOR_OFFSETS[1]), 2):
+        for k in range(12):
+            out.add(rom_word(base, OBJ_TABLE_PC + rom_word(base, p) + 2 * k) & 0x3FF)
+    return out
+
+
 # ----------------------------------------------------------------- extract
 def cmd_extract(a: argparse.Namespace) -> int:
     src_path, base_path = Path(a.rom), Path(a.base)
@@ -72,9 +162,8 @@ def cmd_extract(a: argparse.Namespace) -> int:
     for o in CLASSES:
         if only is not None and o not in only:
             continue
-        pc = OBJ_TABLE_PC + obj_offset(base, o)
-        got = [rom_word(src, pc + 2 * k) for k in range(span_words(o))]
-        if ref is not None and got == [rom_word(ref, pc + 2 * k) for k in range(span_words(o))]:
+        got = class_words(src, base, o)
+        if ref is not None and got == class_words(ref, base, o):
             continue  # --reference: keep only classes the candidate changed
         words[f"{o:03X}"] = [f"${v:04X}" for v in got]
     doc = {
@@ -92,105 +181,306 @@ def cmd_extract(a: argparse.Namespace) -> int:
     return 0
 
 
-# ------------------------------------------------------------- extract-gfx
-# Per-room graphics route for one profile. The profile's rooms get their own
-# secondary blockset row (slot 3 = a new global sheet) and their own palette
-# id. Changed glyph chars that the vanilla words fetch from shared main-group
-# sheets are copied into free chars of the new slot-3 sheet, and the profile
-# words are remapped to them. Shared sheets are never edited.
-MAIN_GROUPS = 0x00E073     # 8 sheets per main blockset
-TILE_TYPES = 0x0E9659      # UnderworldTileTypes (global classes, chars 0-$13F)
-PAL_DATA, PAL_INDEX = 0x1BD734, 0x1BEC4B
-DOOR_OFFSETS = (0x00CD9E, 0x00CF44)  # DoorGFXDataOffset_* + DoorAnimGFXDataOffset_*
-
-
-def snes_pc(a: int) -> int:
-    return ((a >> 16) & 0x7F) * 0x8000 + (a & 0x7FFF)
-
-
-def cmd_extract_gfx(a: argparse.Namespace) -> int:
+# ------------------------------------------------------------- extract-kit
+# Fit one candidate's wall set into a private blockset row. Changed glyph
+# chars of shared slots 0-2 move into free chars of a private copy of the
+# slot-3 sheet (VRAM half rule: slots 0-3 share the high palette half), and
+# the profile words are remapped to them. Shared sheets are never edited.
+# A class is included only if all of its chars fit; the rest are recorded as
+# blocked. Free = slot-3 chars no other object in the kit rooms draws (z3ed
+# traces), no door draws, and the kit's own words do not keep in place.
+def cmd_extract_kit(a: argparse.Namespace) -> int:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import sheet_codec
     from sheet_table import decomp, ptr
-    src, base = Path(a.rom).read_bytes(), Path(a.base).read_bytes()
-    words = json.loads((DATA_DIR / f"{a.name}.words.json").read_text())
-    census = json.loads(Path(a.census).read_text())
-    main_b = base[snes_pc(MAIN_GROUPS) + a.main * 8:][:8]
-    if main_b != src[snes_pc(MAIN_GROUPS) + a.main * 8:][:8]:
-        sys.exit("main group differs between candidate and base; refusing")
-    sheet = lambda rom, g: decomp(rom, ptr(rom, g))[0]
-    tile = lambda d, t: d[t * 24:(t + 1) * 24]
-    chars = sorted({int(v.lstrip("$"), 16) & 0x3FF
-                    for vals in words["classes"].values() for v in vals})
-    glyphs = []
-    for c in chars:
-        if c >= 0x100:
-            sys.exit(f"char {c:03X} is outside main slots 0-3; not supported")
-        g = main_b[c >> 6]
-        if tile(sheet(src, g), c & 0x3F) != tile(sheet(base, g), c & 0x3F):
-            glyphs.append(c)
-    # Free slot-3 chars: not drawn by the rooms' other objects (z3ed traces)
-    # and not drawn by any door or door animation.
-    w = lambda rom, p: struct.unpack_from("<H", rom, p)[0]
-    door_chars = set()
-    for p in range(snes_pc(DOOR_OFFSETS[0]), snes_pc(DOOR_OFFSETS[1]), 2):
-        for k in range(12):
-            door_chars.add(w(base, OBJ_TABLE_PC + w(base, p) + 2 * k) & 0x3FF)
-    drawn = set(census["slot3_drawn"])
-    free = [c for c in range(0xC0, 0x100) if c not in drawn and c not in door_chars]
-    if len(free) < len(glyphs):
-        sys.exit(f"{len(glyphs)} glyphs but only {len(free)} free slot-3 chars")
-    slot3_src = main_b[3]
-    grid = sheet_codec.sheet_to_grid(sheet(base, slot3_src))
-    char_map = {}
-    for c, n in zip(glyphs, free):
-        g = sheet_codec.sheet_to_grid(sheet(src, main_b[c >> 6]))
+    C, T = Path(a.rom).read_bytes(), Path(a.base).read_bytes()
+    O = Path(a.origin).read_bytes() if a.origin else None
+    rooms = [int(x, 16) for x in a.rooms.split(",")]
+    for o in CLASSES:
+        if obj_offset(C, o) != obj_offset(T, o):
+            sys.exit(f"offset table differs from base for object {o:03X}; refusing")
+    bps = {room_blockset_palette(T, r) for r in rooms}
+    if len(bps) != 1:
+        sys.exit(f"kit rooms use more than one blockset/palette in base: {sorted(bps)}")
+    bs, pid = bps.pop()
+    slots = effective_slots(T, bs)
+    if effective_slots(C, bs) != slots:
+        sys.exit("candidate and base load different sheets for the kit blockset; refusing")
+    if T[snes_pc(AA2_ROWS) + bs * 4] != slots[3] or not slots[3]:
+        # A $00 row byte shows the entrance's main-group sheet ($0AA1), which a
+        # private row cannot copy reliably; build asserts the same rule.
+        sys.exit("slot-3 row byte is $00 or disagrees with the effective sheet")
+
+    cache: dict = {}
+
+    def sheet(d: bytes, g: int) -> bytes:
+        if (id(d), g) not in cache:
+            cache[(id(d), g)] = decomp(d, ptr(d, g))[0]
+        return cache[(id(d), g)]
+
+    def glyph(d: bytes, c: int) -> bytes:
+        return sheet(d, slots[c >> 6])[(c & 0x3F) * 24:][:24]
+
+    def status(c_val, t_val, o_val) -> str:
+        if O is None or t_val == o_val:
+            return "edit"
+        return "drift" if c_val == o_val else "conflict"
+
+    # traced usage in the kit rooms
+    usage: collections.Counter = collections.Counter()
+    drawn_by: dict[int, set[int]] = collections.defaultdict(set)
+    for r in rooms:
+        doc = json.loads((Path(a.traces) / f"{r:03X}-traces.json").read_text())
+        for case in doc["cases"]:
+            o = int(case["object_id"], 16)
+            usage[o] += 1
+            for t in case["tiles"]:
+                drawn_by[o].add(int(t["tile_id"], 16) & 0x3FF)
+
+    blocked: list[dict] = []
+    edit: dict[int, list[int]] = {}
+    for o in CLASSES:
+        cw, tw = class_words(C, T, o), class_words(T, T, o)
+        if cw == tw:
+            continue
+        st = status(cw, tw, class_words(O, T, o) if O else None)
+        if st != "edit":
+            blocked.append({"item": f"class {o:03X}",
+                            "reason": f"{st}: the base changed these words after the candidate"})
+            continue
+        edit[o] = cw
+
+    doors = door_chars(T)
+    drawn = set(doors)
+    for o, chars in drawn_by.items():
+        if o not in edit:
+            drawn |= chars
+    for o in edit:  # base words of edited classes: keep them drawable (conservative)
+        drawn |= {w & 0x3FF for w in class_words(T, T, o)}
+    keep3 = {w & 0x3FF for ws in edit.values() for w in ws if 0xC0 <= (w & 0x3FF) < 0x100}
+
+    def needed(o: int) -> tuple[list[int], list[int], str | None]:
+        """(relocate, in_place, blocked reason) for one class."""
+        rel, inplace = [], []
+        for c in sorted({w & 0x3FF for w in edit[o]}):
+            g_diff = glyph(C, c) != glyph(T, c)
+            tc, tt = tile_type(C, c), tile_type(T, c)
+            t_diff = tc != tt
+            if not (g_diff or t_diff):
+                continue
+            if O is not None:
+                if g_diff and status(glyph(C, c), glyph(T, c), glyph(O, c)) != "edit":
+                    return [], [], f"char {c:03X} glyph changed in base after the candidate"
+                if t_diff and status(tc, tt, tile_type(O, c)) != "edit":
+                    return [], [], f"char {c:03X} tile type changed in base after the candidate"
+            slot = c >> 6
+            if slot <= 2:
+                rel.append(c)
+            elif slot == 3:
+                (inplace if c not in drawn else rel).append(c)
+            else:
+                return [], [], f"char {c:03X} is in slot {slot}; slot 4-7 kit sheets are not implemented"
+        return rel, inplace, None
+
+    free = [c for c in range(0xC0, 0x100) if c not in drawn and c not in keep3]
+    order = sorted(edit, key=lambda o: (-usage[o], CLASSES.index(o)))
+    char_map: dict[int, int] = {}
+    in_place: set[int] = set()
+    included: list[int] = []
+    for o in order:
+        rel, inplace, why = needed(o)
+        if why:
+            blocked.append({"item": f"class {o:03X}", "reason": why})
+            continue
+        new = [c for c in rel if c not in char_map]
+        if len(new) > len(free):
+            blocked.append({"item": f"class {o:03X}",
+                            "reason": f"budget: needs {len(new)} more slot-3 chars, {len(free)} free"})
+            continue
+        for c in new:
+            char_map[c] = free.pop(0)
+        in_place |= set(inplace)
+        included.append(o)
+
+    grid = sheet_codec.sheet_to_grid(sheet(T, slots[3]))
+    for c, n in list(char_map.items()) + [(c, c) for c in sorted(in_place)]:
+        g = sheet_codec.sheet_to_grid(sheet(C, slots[c >> 6]))
         tx, ty = (c & 0xF) * 8, ((c & 0x3F) >> 4) * 8
         nx, ny = (n & 0xF) * 8, ((n & 0x3F) >> 4) * 8
         for y in range(8):
             grid[ny + y][nx:nx + 8] = g[ty + y][tx:tx + 8]
-        char_map[f"{c:03X}"] = f"{n:03X}"
     raw = sheet_codec.grid_to_sheet(grid)
-    txt = DATA_DIR / f"{a.name}.slot3.txt"
+    types = {}
+    for c, n in list(char_map.items()) + [(c, c) for c in sorted(in_place)]:
+        if tile_type(C, c) != tile_type(T, n):
+            types[n] = tile_type(C, c)
+
+    # What the selector cannot carry: other objects whose words or glyphs differ.
+    if a.candidate_traces:
+        carried = set(included)
+        words_diff: dict[int, set[str]] = collections.defaultdict(set)
+        glyph_diff: dict[int, set[int]] = collections.defaultdict(set)
+        for r in rooms:
+            tb = json.loads((Path(a.traces) / f"{r:03X}-traces.json").read_text())["cases"]
+            tc = json.loads((Path(a.candidate_traces) / f"{r:03X}-traces.json").read_text())["cases"]
+            if [c["object_id"] for c in tb] != [c["object_id"] for c in tc]:
+                sys.exit(f"room {r:03X}: candidate and base object lists differ; trace the same rooms")
+            for cb, cc in zip(tb, tc):
+                o = int(cc["object_id"], 16)
+                if o in carried:
+                    continue
+                wb = [t["tile_id"] for t in cb["tiles"]]
+                wc = [t["tile_id"] for t in cc["tiles"]]
+                if wb != wc:
+                    words_diff[o].add(f"{r:03X}")
+                # The kit sheet keeps base glyphs at every char other objects draw.
+                for t in cc["tiles"]:
+                    c = int(t["tile_id"], 16) & 0x3FF
+                    if c < 0x200 and glyph(C, c) != glyph(T, c):
+                        glyph_diff[o].add(c)
+        for o in sorted(words_diff):
+            blocked.append({"item": f"object {o:03X}",
+                            "reason": "not a selector class: the candidate draws other words in rooms "
+                                      + " ".join(sorted(words_diff[o]))})
+        for o in sorted(set(glyph_diff) - set(words_diff)):
+            blocked.append({"item": f"object {o:03X} glyphs",
+                            "reason": "candidate changed chars " + " ".join(f"{c:03X}" for c in sorted(glyph_diff[o]))
+                                      + " that this object draws; the kit only replaces carried class chars"})
+
+    pal_c, pal_t = palette(C, pid), palette(T, pid)
+    pal_o = palette(O, pid) if O else pal_t
+    idx = []
+    for i in range(PAL_WORDS):
+        if pal_c[i] == pal_t[i]:
+            continue
+        st = status(pal_c[i], pal_t[i], pal_o[i])
+        if st == "edit":
+            idx.append(i)
+        else:
+            blocked.append({"item": f"palette word {i}", "reason": f"{st}: base changed it after the candidate"})
+    splices = []
+    for i in idx:
+        if splices and splices[-1]["first"] + len(splices[-1]["words"]) == i:
+            splices[-1]["words"].append(f"${pal_c[i]:04X}")
+        else:
+            splices.append({"first": i, "words": [f"${pal_c[i]:04X}"]})
+
+    txt = KITS_DIR / f"{a.kit}.slot3.txt"
+    KITS_DIR.mkdir(exist_ok=True)
     txt.write_text(sheet_codec.grid_to_text(grid))
-    types = bytearray(base[snes_pc(TILE_TYPES) + 0xC0:][:0x40])
-    for c, n in zip(glyphs, free):
-        types[n - 0xC0] = src[snes_pc(TILE_TYPES) + c]
-    pal_src = w(base, snes_pc(PAL_INDEX) + a.palette_src)
-    first, count = a.palette_words.split(":")
-    first, count = int(first), int(count)
-    pal = [w(src, snes_pc(PAL_DATA) + pal_src + 2 * (first + i)) for i in range(count)]
-    doc = {
-        "profile": a.name,
-        "source_rom_sha256": hashlib.sha256(src).hexdigest(),
-        "base_rom_sha256": hashlib.sha256(base).hexdigest(),
-        "main_group": f"0x{a.main:02X}",
-        "blockset_row": f"0x{a.blockset:02X}",
-        "blockset_row_copy_of": f"0x{a.main:02X}",
-        "slot3_global_sheet": f"0x{a.sheet:02X}",
-        "slot3_copy_of": f"0x{slot3_src:02X}",
-        "slot3_source": txt.name,
-        "slot3_decoded_sha256": hashlib.sha256(raw).hexdigest(),
-        "palette_id": f"0x{a.palette:02X}",
-        "palette_copy_of": f"0x{a.palette_src:02X}",
-        "palette_first_word": first,
-        "palette_words": [f"${v:04X}" for v in pal],
-        "char_map": char_map,
-        "slot3_tile_types": base64_hex(types),
+    words_doc = {
+        "profile": a.profile,
+        "source_rom_sha256": hashlib.sha256(C).hexdigest(),
+        "base_rom_sha256": hashlib.sha256(T).hexdigest(),
+        "reference_rom_sha256": None,
+        "note": f"kit {a.kit}: classes the candidate edited that fit the private row",
+        "classes": {f"{o:03X}": [f"${v:04X}" for v in edit[o]] for o in CLASSES if o in included},
+    }
+    (DATA_DIR / f"{a.profile}.words.json").write_text(json.dumps(words_doc, indent=1) + "\n")
+    kit = {
+        "kit": a.kit,
+        "inventory_id": a.inventory_id,
+        "verdict": "partial" if blocked else "routed",
+        "profile": a.profile,
+        "source_rom_sha256": hashlib.sha256(C).hexdigest(),
+        "origin_rom_sha256": hashlib.sha256(O).hexdigest() if O else None,
+        "base_rom_sha256": hashlib.sha256(T).hexdigest(),
+        "rooms": [f"{r:03X}" for r in rooms],
+        "base_blockset": f"0x{bs:02X}",
+        "base_palette": f"0x{pid:02X}",
+        "private_row": f"0x{a.row:02X}",
+        "sheets": [{"slot": 3, "sheet": f"0x{a.sheet:02X}", "copy_of": f"0x{slots[3]:02X}",
+                    "source": txt.name, "decoded_sha256": hashlib.sha256(raw).hexdigest()}],
+        "char_map": {f"{c:03X}": f"{n:03X}" for c, n in sorted(char_map.items())},
+        "in_place": [f"{c:03X}" for c in sorted(in_place)],
+        "tile_types": {f"{n:03X}": f"0x{t:02X}" for n, t in sorted(types.items())},
+        "palette": ({"id": f"0x{a.palette:02X}", "copy_of": f"0x{pid:02X}",
+                     "copy_offset": f"0x{rom_word(T, snes_pc(PAL_INDEX) + pid):04X}",
+                     "splices": splices} if splices else None),
+        "classes": [f"{o:03X}" for o in CLASSES if o in included],
+        "blocked": blocked,
+        "free_slot3_left": len(free),
         "note": a.note or "",
     }
-    out = DATA_DIR / f"{a.name}.gfx.json"
-    out.write_text(json.dumps(doc, indent=1) + "\n")
-    print(f"{out.relative_to(REPO)}: {len(glyphs)} glyphs -> slot-3 chars "
-          f"{' '.join(char_map.values())}; {len(free) - len(glyphs)} free left")
+    out = KITS_DIR / f"{a.kit}.kit.json"
+    out.write_text(json.dumps(kit, indent=1) + "\n")
+    print(f"{out.relative_to(REPO)}: {len(included)}/{len(edit)} edited classes, "
+          f"{len(char_map)} relocated + {len(in_place)} in place, {len(free)} free left, "
+          f"{len(types)} tile types, {sum(len(s['words']) for s in splices)} palette words, "
+          f"{len(blocked)} blocked")
+    for b in blocked:
+        print(f"  blocked {b['item']}: {b['reason']}")
     return 0
 
 
-def base64_hex(b: bytes) -> list[str]:
-    return [b[i:i + 16].hex().upper() for i in range(0, len(b), 16)]
-
-
 # ------------------------------------------------------------------- build
+def load_kits() -> list[dict]:
+    """Every registered kit, validated; routed kits sorted by private row."""
+    kits = []
+    sheets_seen: dict[int, str] = {}
+    pal_seen: dict[int, str] = {}
+    for f in sorted(KITS_DIR.glob("*.kit.json")):
+        k = json.loads(f.read_text())
+        name = f.name[: -len(".kit.json")]
+        if k.get("kit") != name:
+            raise SystemExit(f"{f.name}: kit name must match the file name")
+        if k.get("verdict") not in VERDICTS:
+            raise SystemExit(f"{f.name}: verdict must be one of {VERDICTS}")
+        row = hx(k.get("private_row"))
+        pal = k.get("palette")
+        sheets = k.get("sheets") or []
+        cmap = {int(c, 16): int(n, 16) for c, n in (k.get("char_map") or {}).items()}
+        types = {int(c, 16): hx(t) for c, t in (k.get("tile_types") or {}).items()}
+        if (sheets or cmap or types) and row is None:
+            raise SystemExit(f"{f.name}: sheets, char_map and tile_types need a private_row")
+        if row is not None and row not in PRIVATE_ROWS:
+            raise SystemExit(f"{f.name}: private_row must be one of "
+                             + ", ".join(f"${r:02X}" for r in PRIVATE_ROWS))
+        if (row is not None or pal) and not k.get("profile"):
+            raise SystemExit(f"{f.name}: a kit with a private row or palette needs a profile")
+        if (row is not None or pal) and k["verdict"] not in ("routed", "partial"):
+            raise SystemExit(f"{f.name}: only routed/partial kits may claim a row or palette")
+        slots_seen = set()
+        for s in sheets:
+            sid, slot = hx(s["sheet"]), int(s["slot"])
+            if sid not in KIT_SHEETS:
+                raise SystemExit(f"{f.name}: sheet ${sid:02X} is not a spare row $EA-$FE")
+            if sid in sheets_seen:
+                raise SystemExit(f"{f.name}: sheet ${sid:02X} is also used by {sheets_seen[sid]}")
+            if not 3 <= slot <= 6 or slot in slots_seen:
+                raise SystemExit(f"{f.name}: sheet slot must be a unique 3-6")
+            sheets_seen[sid] = name
+            slots_seen.add(slot)
+        for c, n in cmap.items():
+            if c >= 0x200 or (n >> 6) not in slots_seen:
+                raise SystemExit(f"{f.name}: char {c:03X} -> {n:03X} needs a kit sheet in slot {n >> 6}")
+        if len(set(cmap.values())) != len(cmap):
+            raise SystemExit(f"{f.name}: two chars map to one target")
+        for n, t in types.items():
+            if not 0 <= n < 0x200 or not 0 <= t <= 0xFF:
+                raise SystemExit(f"{f.name}: bad tile type {n:03X}={t}")
+        if pal:
+            pid = hx(pal["id"])
+            if pid not in PRIVATE_PALETTES or pid in pal_seen:
+                raise SystemExit(f"{f.name}: palette ${pid:02X} is not a free private palette id")
+            pal_seen[pid] = name
+            used = set()
+            for sp in pal["splices"]:
+                rng = set(range(sp["first"], sp["first"] + len(sp["words"])))
+                if used & rng or max(rng) >= PAL_WORDS:
+                    raise SystemExit(f"{f.name}: palette splices overlap or exceed {PAL_WORDS} words")
+                used |= rng
+        k["_row"], k["_cmap"], k["_types"] = row, cmap, types
+        kits.append(k)
+    routed = sorted((k for k in kits if k["_row"] is not None), key=lambda k: k["_row"])
+    rows = [k["_row"] for k in routed]
+    if rows != list(range(KIT_ROW0, KIT_ROW0 + len(rows))):
+        raise SystemExit(f"kit rows must be contiguous from ${KIT_ROW0:02X}, got {rows}")
+    for i, k in enumerate(routed):
+        k["_index"] = i
+    return kits
+
+
 def load_config() -> tuple[list[dict], list[dict], list[int], dict[int, str]]:
     cfg = json.loads(CONFIG.read_text())
     profiles = sorted(cfg["profiles"], key=lambda p: p["id"])
@@ -214,8 +504,32 @@ def load_config() -> tuple[list[dict], list[dict], list[int], dict[int, str]]:
     return profiles, cfg["groups"], room_profile, owner
 
 
+def bind_kits(profiles: list[dict], kits: list[dict]) -> dict[str, dict]:
+    """profile name -> kit; every kit with a route must be bound to its profile."""
+    by_kit = {k["kit"]: k for k in kits}
+    bound: dict[str, dict] = {}
+    for p in profiles:
+        if not p.get("kit"):
+            continue
+        k = by_kit.get(p["kit"])
+        if k is None:
+            raise SystemExit(f"profile {p['name']}: unknown kit {p['kit']}")
+        if k.get("profile") != p["name"]:
+            raise SystemExit(f"kit {k['kit']} names profile {k.get('profile')}, not {p['name']}")
+        if any(b is k for b in bound.values()):
+            raise SystemExit(f"kit {k['kit']} is bound to two profiles")
+        bound[p["name"]] = k
+    for k in kits:
+        if (k["_row"] is not None or k.get("palette")) and k.get("profile") not in bound:
+            raise SystemExit(f"kit {k['kit']} has a route but no profile binds it")
+    return bound
+
+
 def render() -> str:
     profiles, groups, room_profile, _ = load_config()
+    kits = load_kits()
+    bound = bind_kits(profiles, kits)
+    routed = sorted((k for k in kits if k["_row"] is not None), key=lambda k: k["_row"])
     words_by_profile = []
     for p in profiles:
         doc = json.loads((DATA_DIR / p["words"]).read_text())
@@ -226,24 +540,22 @@ def render() -> str:
                 raise SystemExit(f"{p['words']}: object {o:03X} is not a selector class")
             if len(vals) != span_words(o):
                 raise SystemExit(f"{p['words']}: object {o:03X} needs {span_words(o)} words")
-        gfx = None
-        if p.get("gfx"):
-            gfx = json.loads((DATA_DIR / p["gfx"]).read_text())
-            cmap = {int(k, 16): int(v, 16) for k, v in gfx["char_map"].items()}
+        kit = bound.get(p["name"])
+        if kit and kit["_cmap"]:
+            cmap = kit["_cmap"]
             cls = {o: [(w & ~0x3FF) | cmap.get(w & 0x3FF, w & 0x3FF) for w in vals]
                    for o, vals in cls.items()}
-        words_by_profile.append((p, doc, cls, gfx))
-    gfx_profiles = [(p, g) for p, _d, _c, g in words_by_profile if g]
-    if len(gfx_profiles) > 1:
-        raise SystemExit("only one profile may route gfx (one AA2 row / sheet / palette)")
+        words_by_profile.append((p, doc, cls, kit))
 
     out: list[str] = []
     E = out.append
     E("; GENERATED by Scripts/Generate/gen_wall_profiles.py build - do not edit by hand.")
-    E("; Input: Dungeons/Data/wall_profiles/wall_profiles.json + *.words.json")
-    for p, doc, cls, _g in words_by_profile:
+    E("; Input: Dungeons/Data/wall_profiles/wall_profiles.json + *.words.json,")
+    E(";        Dungeons/Data/kits/*.kit.json")
+    for p, doc, cls, kit in words_by_profile:
         E(f"; profile {p['id']} {p['name']}: {len(cls)} classes, "
-          f"source ROM {doc['source_rom_sha256'][:8]}, base {doc['base_rom_sha256'][:8]}")
+          f"source ROM {doc['source_rom_sha256'][:8]}, base {doc['base_rom_sha256'][:8]}"
+          + (f", kit {kit['kit']}" if kit else ""))
     for g in groups:
         E(f"; group {g['name']} -> {g['profile']}: {' '.join(g['rooms'])}")
     E(f"!WALLSEL_CLASS_COUNT = {len(CLASSES)}")
@@ -272,7 +584,7 @@ def render() -> str:
     data: list[int] = []
     src: list[int] = []
     ln: list[int] = []
-    for _p, _doc, cls, _g in words_by_profile:
+    for _p, _doc, cls, _k in words_by_profile:
         for o in CLASSES:
             if o in cls:
                 start = len(data) * 2
@@ -295,84 +607,217 @@ def render() -> str:
         E("  dw " + ", ".join(f"${v:04X}" for v in data[i:i + 8]))
     E("WallSel_Data_End:")
     E("")
-    E("; per-profile graphics route ($FF = keep the room header's blockset/palette)")
-    if gfx_profiles:
-        gp, g = gfx_profiles[0]
-        E(f"; gfx profile {gp['id']} {gp['name']}: {len(g['char_map'])} glyph chars -> "
-          f"slot-3 sheet {g['slot3_global_sheet']} (decoded {g['slot3_decoded_sha256'][:8]})")
-        E("!WALLSEL_GFX = 1")
-        E(f"!WALLSEL_GFX_MAIN = ${int(g['main_group'], 16):02X}")
-        E(f"!WALLSEL_GFX_BLOCKSET = ${int(g['blockset_row'], 16):02X}")
-        E(f"!WALLSEL_GFX_SHEET = ${int(g['slot3_global_sheet'], 16):02X}")
-        E(f"!WALLSEL_GFX_SLOT3_COPY = ${int(g['slot3_copy_of'], 16):02X}")
-        E(f"!WALLSEL_GFX_PALETTE = ${int(g['palette_id'], 16):02X}")
-        E(f"!WALLSEL_GFX_PALETTE_SRC = ${int(g['palette_copy_of'], 16):02X}")
-        E(f"!WALLSEL_GFX_PAL_FIRST = {g['palette_first_word']}")
-        E(f"!WALLSEL_GFX_SLOT3_BIN = \"Dungeons/Data/wall_profiles/{gp['name']}.slot3.lz2\"")
-        E(f"!WALLSEL_GFX_PAL_COUNT = {len(g['palette_words'])}")
-        E("!WALLSEL_GFX_PAL_WORDS = " + ", ".join(g["palette_words"]))
-        E("; every room bound to the gfx profile must load the copied main blockset and palette")
-        E("; (asar evaluates left to right without precedence: keep the parentheses)")
-        for r in (r for r in range(ROOM_COUNT) if room_profile[r] == gp["id"]):
-            hdr = f"($220000|read2($228000+${r * 2:03X}))"
-            E(f"assert read1({hdr}+2) == !WALLSEL_GFX_MAIN && "
-              f"read1($0ED460+(read1({hdr}+1)*4)) == !WALLSEL_GFX_PALETTE_SRC, "
-              f"\"room ${r:03X} header no longer matches the gfx profile copy source\"")
-    else:
-        E("!WALLSEL_GFX = 0")
+    E("; ---- kit graphics routes (Dungeons/Data/kits/kits.asm writes the rows,")
+    E("; palettes and sheets; Dungeons/wall_profile_selector.asm swaps them in)")
+    for k in kits:
+        route = []
+        if k["_row"] is not None:
+            route.append(f"row ${k['_row']:02X} (kit {k['_index']})")
+        if k.get("palette"):
+            route.append(f"palette ${hx(k['palette']['id']):02X}")
+        E(f"; kit {k['kit']} [{k['verdict']}] profile {k.get('profile') or '-'}: "
+          + (", ".join(route) if route else "no route"))
+    has_route = any(k["_row"] is not None or k.get("palette") for k in kits)
+    E(f"!WALLSEL_GFX = {1 if has_route else 0}")
+    E(f"!WALLSEL_KIT_ROW0 = ${KIT_ROW0:02X}")
+    E(f"!WALLSEL_KIT_COUNT = {len(routed)}")
     bs = [0xFF] * len(profiles)
     pl = [0xFF] * len(profiles)
-    for gp, g in gfx_profiles:
-        bs[gp["id"] - 1] = int(g["blockset_row"], 16)
-        pl[gp["id"] - 1] = int(g["palette_id"], 16)
-    E("WallSel_ProfileBlockset:  ; indexed by profile-1")
+    for p, _doc, _cls, k in words_by_profile:
+        if k and k["_row"] is not None:
+            bs[p["id"] - 1] = k["_row"]
+        if k and k.get("palette"):
+            pl[p["id"] - 1] = hx(k["palette"]["id"])
+    E("WallSel_ProfileBlockset:  ; private row per profile-1, $FF = keep the header blockset")
     E("  db " + ", ".join(f"${v:02X}" for v in bs))
-    E("WallSel_ProfilePalette:  ; BG palette id*2 for $0AB6, indexed by profile-1")
+    E("WallSel_ProfilePalette:  ; BG palette id*2 for $0AB6 per profile-1, $FF = keep")
     E("  db " + ", ".join(f"${v:02X}" for v in pl))
-    if gfx_profiles:
-        g = gfx_profiles[0][1]
-        E("WallSel_Slot3TileTypes:  ; 64 class bytes for chars $C0-$FF of the gfx blockset")
-        for row in g["slot3_tile_types"]:
-            E("  db " + ", ".join(f"${row[i:i + 2]}" for i in range(0, 32, 2)))
+    if not routed:
+        return "\n".join(out) + "\n"
+    E("WallSel_KitBase:  ; base blockset per kit (row-!WALLSEL_KIT_ROW0)")
+    E("  db " + ", ".join(f"${hx(k['base_blockset']):02X}" for k in routed))
+    E("")
+    E("; Tile types. Called from WallSel_LoadTileAttr with M=8 X=8 (X/Y untouched).")
+    E("; Chars $C0-$FF are restored from the ROM table on every room by the")
+    E("; selector; $140-$1BF reload per room from the custom attributes. Any other")
+    E("; char a kit patches is restored here from the ROM table on every room.")
+    extra = sorted({n for k in routed for n in k["_types"]
+                    if not (0xC0 <= n < 0x100 or 0x140 <= n < 0x1C0)})
+    E("WallSel_RestoreExtra:")
+    for n in extra:
+        rom_i = n if n < 0x140 else n - 0x80
+        E(f"  LDA.l read3($0E97F6)-$C0+${rom_i:03X} : STA.l $7EFE00+${n:03X}")
+    E("  RTS")
+    for k in routed:
+        E(f"WallSel_KitPatch{k['_index']}:  ; {k['kit']}: {len(k['_types'])} chars")
+        by_type: dict[int, list[int]] = collections.defaultdict(list)
+        for n, t in sorted(k["_types"].items()):
+            by_type[t].append(n)
+        for t in sorted(by_type):
+            E(f"  LDA.b #${t:02X}")
+            for n in by_type[t]:
+                E(f"  STA.l $7EFE00+${n:03X}")
+        E("  RTS")
+    E("WallSel_KitPatchPtr:")
+    E("  dw " + ", ".join(f"WallSel_KitPatch{k['_index']}" for k in routed))
     return "\n".join(out) + "\n"
 
 
-def slot3_streams() -> dict[Path, bytes]:
-    """lz2 stream per gfx profile, rebuilt from the tracked text grid."""
+def render_kits() -> str:
+    """kits.asm: private rows, palettes, sheet streams and their guards."""
+    profiles, groups, room_profile, _ = load_config()
+    kits = load_kits()
+    bound = bind_kits(profiles, kits)
+    pid_of = {p["name"]: p["id"] for p in profiles}
+    out: list[str] = []
+    E = out.append
+    E("; GENERATED by Scripts/Generate/gen_wall_profiles.py build - do not edit by hand.")
+    E("; Input: Dungeons/Data/kits/*.kit.json. Global scope; included from")
+    E("; Dungeons/wall_profile_gfx.asm after Core/gfx_sheet_table.asm.")
+    E("; asar evaluates left to right without precedence: keep the parentheses.")
+    E("")
+    for k in kits:
+        E(f"; {k['kit']} ({k.get('inventory_id') or '-'}) [{k['verdict']}]: {k.get('note', '')}")
+        for b in k.get("blocked") or []:
+            E(f";   blocked {b['item']}: {b['reason']}")
+    E("")
+    E("; ---- private ids: vanilla spare rows, palette offsets, no room uses them ----")
+    for r, vb in PRIVATE_ROWS.items():
+        a = AA2_ROWS + r * 4
+        E(f"assert " + " && ".join(f"read1(${a + i:06X}) == ${v:02X}" for i, v in enumerate(vb))
+          + f", \"blockset row ${r:02X} is not the vanilla spare row\"")
+    for pid, off in PRIVATE_PALETTES.items():
+        E(f"assert read2(${PAL_INDEX + pid:06X}) == ${off:04X}, \"palette ${pid:02X} offset moved\"")
+    hdr = "($220000|read2($228000+(!wsk_r*2)))"
+    E("!wsk_r = 0")
+    E("while !wsk_r < $128")
+    E(f"  assert read1({hdr}+2) < ${KIT_ROW0:02X} || read1({hdr}+2) > ${max(PRIVATE_ROWS):02X}, "
+      f"\"a room header uses a private kit row\"")
+    pal_expr = f"read1($0ED460+(read1({hdr}+1)*4))"
+    E(f"  assert " + " && ".join(f"{pal_expr} != ${pid:02X}" for pid in PRIVATE_PALETTES)
+      + ", \"a room palette set uses a private kit palette\"")
+    E("  !wsk_r #= !wsk_r+1")
+    E("endwhile")
+    E("")
+    routed = [k for k in kits if k["_row"] is not None or k.get("palette")]
+    for k in routed:
+        base_bs = hx(k.get("base_blockset"))
+        base_pal = hx(k["palette"]["copy_of"]) if k.get("palette") else None
+        pid = pid_of[k["profile"]]
+        E(f"; ---- kit {k['kit']} -> profile {pid} {k['profile']} ----")
+        for r in (r for r in range(ROOM_COUNT) if room_profile[r] == pid):
+            h = f"($220000|read2($228000+${r * 2:03X}))"
+            conds = []
+            if k["_row"] is not None:
+                conds.append(f"read1({h}+2) == ${base_bs:02X}")
+            if base_pal is not None:
+                conds.append(f"read1($0ED460+(read1({h}+1)*4)) == ${base_pal:02X}")
+            E(f"assert {' && '.join(conds)}, \"room ${r:03X} header no longer matches kit {k['kit']}\"")
+        if k["_row"] is not None:
+            row_a = AA2_ROWS + k["_row"] * 4
+            src_a = AA2_ROWS + base_bs * 4
+            sheets = {int(s["slot"]): s for s in k.get("sheets") or []}
+            for slot, s in sorted(sheets.items()):
+                cp = hx(s["copy_of"])
+                # Strict: a $00 row byte would show the room's main-group sheet,
+                # which depends on the entrance ($0AA1), so it is not accepted.
+                E(f"assert read1(${src_a + slot - 3:06X}) == ${cp:02X}, "
+                  f"\"kit {k['kit']} slot {slot} source is not sheet ${cp:02X}\"")
+            E("pushpc")
+            E(f"org ${row_a:06X} ; @hook module=Dungeons kind=data protected_size=4")
+            vals = []
+            for i in range(4):
+                s = sheets.get(3 + i)
+                vals.append(f"${hx(s['sheet']):02X}" if s else f"read1(${src_a + i:06X})")
+            E("  db " + ", ".join(vals))
+            E("pullpc")
+        if k.get("palette"):
+            p = k["palette"]
+            ppid, cp, cp_off = hx(p["id"]), hx(p["copy_of"]), hx(p["copy_offset"])
+            E(f"assert read2(${PAL_INDEX + cp:06X}) == ${cp_off:04X}, "
+              f"\"kit {k['kit']} palette source ${cp:02X} offset moved\"")
+            words: list[str | None] = [None] * PAL_WORDS
+            for sp in p["splices"]:
+                for i, w in enumerate(sp["words"]):
+                    words[sp["first"] + i] = w
+            dst = PAL_DATA + PRIVATE_PALETTES[ppid]
+            E("pushpc")
+            E(f"org ${dst:06X} ; @hook module=Dungeons kind=data protected_size={PAL_WORDS * 2}")
+            for i in range(0, PAL_WORDS, 6):
+                E("  dw " + ", ".join(
+                    w if w else f"read2(${PAL_DATA + cp_off + 2 * j:06X})"
+                    for j, w in ((j, words[j]) for j in range(i, min(i + 6, PAL_WORDS)))))
+            E(f"assert pc() == ${dst + PAL_WORDS * 2:06X}, \"kit palette must be exactly {PAL_WORDS} words\"")
+            E("pullpc")
+        E("")
+    all_sheets = [(k, s) for k in kits for s in sorted(k.get("sheets") or [], key=lambda s: int(s["slot"]))]
+    if all_sheets:
+        E("; ---- kit sheet streams (3bpp LC-LZ2) and their pointer rows ----")
+        E("assert GfxSheet_Bank == $23FD00 && GfxSheet_High == $23FE00 && GfxSheet_Low == $23FF00, "
+          "\"gfx sheet arrays moved\"")
+        E("pushpc")
+        E(f"org ${KIT_SHEET_ORG:06X}")
+        for k, s in all_sheets:
+            E(f"WallSel_KitSheet_{hx(s['sheet']):02X}:  ; {k['kit']} slot {s['slot']}")
+            E(f"  incbin \"Dungeons/Data/kits/{stream_name(k, s)}\"")
+        E(f"assert pc() <= ${KIT_SHEET_END:06X}, \"kit sheet streams exceeded ${KIT_SHEET_ORG:06X}-${KIT_SHEET_END - 1:06X}\"")
+        for k, s in all_sheets:
+            sid = hx(s["sheet"])
+            E(f"assert ${sid:02X} < !GfxSheet_Rows, \"kit sheet ${sid:02X} is past the sheet table\"")
+            for arr, shift in ((0x23FD00, 16), (0x23FE00, 8), (0x23FF00, 0)):
+                E(f"org ${arr + sid:06X} ; @hook module=Dungeons kind=data protected_size=1")
+                E(f"  db WallSel_KitSheet_{sid:02X}>>{shift}" if shift else f"  db WallSel_KitSheet_{sid:02X}")
+        E("pullpc")
+    return "\n".join(out) + "\n"
+
+
+def stream_name(k: dict, s: dict) -> str:
+    return f"{k['kit']}.slot{int(s['slot'])}.lz2"
+
+
+def kit_streams() -> dict[Path, bytes]:
+    """lz2 stream per kit sheet, rebuilt from the tracked text grid."""
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import lz2
     import sheet_codec
     out: dict[Path, bytes] = {}
-    for p in json.loads(CONFIG.read_text())["profiles"]:
-        if not p.get("gfx"):
-            continue
-        g = json.loads((DATA_DIR / p["gfx"]).read_text())
-        raw = bytes(sheet_codec.grid_to_sheet(
-            sheet_codec.text_to_grid((DATA_DIR / g["slot3_source"]).read_text())))
-        if hashlib.sha256(raw).hexdigest() != g["slot3_decoded_sha256"]:
-            raise SystemExit(f"{g['slot3_source']}: decoded sheet does not match slot3_decoded_sha256")
-        comp = bytes(lz2.compress(raw))
-        dec, used = lz2.decompress(comp)
-        if dec != raw or used != len(comp):
-            raise SystemExit(f"{g['slot3_source']}: lz2 round trip failed")
-        out[DATA_DIR / f"{p['name']}.slot3.lz2"] = comp
+    for k in load_kits():
+        for s in k.get("sheets") or []:
+            raw = bytes(sheet_codec.grid_to_sheet(
+                sheet_codec.text_to_grid((KITS_DIR / s["source"]).read_text())))
+            if hashlib.sha256(raw).hexdigest() != s["decoded_sha256"]:
+                raise SystemExit(f"{s['source']}: decoded sheet does not match decoded_sha256")
+            comp = bytes(lz2.compress(raw))
+            dec, used = lz2.decompress(comp)
+            if dec != raw or used != len(comp):
+                raise SystemExit(f"{s['source']}: lz2 round trip failed")
+            out[KITS_DIR / stream_name(k, s)] = comp
     return out
 
 
 def cmd_build(a: argparse.Namespace) -> int:
-    text = render()
-    bins = slot3_streams()
+    texts = {OUT_ASM: render(), KITS_ASM: render_kits()}
+    bins = kit_streams()
     if a.check:
-        stale = [] if OUT_ASM.exists() and OUT_ASM.read_text() == text else [OUT_ASM]
+        stale = [f for f, t in texts.items() if not f.exists() or f.read_text() != t]
         stale += [f for f, b in bins.items() if not f.exists() or f.read_bytes() != b]
+        known = set(bins) | {KITS_ASM}
+        stale += [f for f in KITS_DIR.glob("*.lz2") if f not in known]
         for f in stale:
             print(f"{f.relative_to(REPO)} is stale; run gen_wall_profiles.py build")
         if stale:
             return 1
-        print(f"{OUT_ASM.relative_to(REPO)} + {len(bins)} slot-3 stream(s) up to date")
+        print(f"{OUT_ASM.relative_to(REPO)} + {KITS_ASM.relative_to(REPO)} + "
+              f"{len(bins)} kit sheet stream(s) up to date")
         return 0
-    OUT_ASM.write_text(text)
-    print(f"wrote {OUT_ASM.relative_to(REPO)}")
+    KITS_DIR.mkdir(exist_ok=True)
+    for f, t in texts.items():
+        f.write_text(t)
+        print(f"wrote {f.relative_to(REPO)}")
+    for f in KITS_DIR.glob("*.lz2"):
+        if f not in bins:
+            f.unlink()
+            print(f"removed stale {f.relative_to(REPO)}")
     for f, b in bins.items():
         f.write_bytes(b)
         print(f"wrote {f.relative_to(REPO)} ({len(b)} bytes)")
@@ -391,21 +836,25 @@ def main() -> int:
     ex.add_argument("--classes", help="comma list of hex objects to keep (default all)")
     ex.add_argument("--note", help="provenance note stored in the words file")
     ex.set_defaults(fn=cmd_extract)
-    eg = sub.add_parser("extract-gfx", help="read one profile's glyph chars, classes and palette")
-    eg.add_argument("--name", required=True, help="profile name (words file stem)")
-    eg.add_argument("--rom", required=True, help="candidate ROM (read only)")
-    eg.add_argument("--base", required=True, help="unpatched base ROM (read only)")
-    eg.add_argument("--census", required=True, help="estate_census.json (slot3_drawn chars)")
-    eg.add_argument("--main", type=lambda s: int(s, 16), required=True, help="main blockset (hex)")
-    eg.add_argument("--blockset", type=lambda s: int(s, 16), required=True, help="unused AA2 row (hex)")
-    eg.add_argument("--sheet", type=lambda s: int(s, 16), required=True, help="new global sheet (hex)")
-    eg.add_argument("--palette", type=lambda s: int(s, 16), required=True, help="unused palette id*2 (hex)")
-    eg.add_argument("--palette-src", type=lambda s: int(s, 16), required=True, help="cloned palette id*2 (hex)")
-    eg.add_argument("--palette-words", required=True, help="first:count words taken from the candidate")
-    eg.add_argument("--note", help="provenance note")
-    eg.set_defaults(fn=cmd_extract_gfx)
-    bd = sub.add_parser("build", help="emit wall_profiles.asm")
-    bd.add_argument("--check", action="store_true", help="fail if the asm is stale")
+    ek = sub.add_parser("extract-kit", help="fit one candidate wall set into a private row")
+    ek.add_argument("--kit", required=True, help="kit name (kit file stem)")
+    ek.add_argument("--profile", required=True, help="profile name (words file stem)")
+    ek.add_argument("--inventory-id", help="WALL_GFX_INVENTORY id, e.g. N9")
+    ek.add_argument("--rom", required=True, help="candidate ROM (read only)")
+    ek.add_argument("--base", required=True, help="unpatched base ROM (read only)")
+    ek.add_argument("--origin", help="ROM the candidate was cut from: changes the base made "
+                                     "after it are blocked, not routed (read only)")
+    ek.add_argument("--rooms", required=True, help="comma list of hex room ids")
+    ek.add_argument("--traces", required=True, help="dir of <ROOM>-traces.json (z3ed, base ROM)")
+    ek.add_argument("--row", type=lambda s: int(s, 16), required=True, help="private row (hex)")
+    ek.add_argument("--sheet", type=lambda s: int(s, 16), required=True, help="spare global sheet (hex)")
+    ek.add_argument("--palette", type=lambda s: int(s, 16), required=True, help="private palette id*2 (hex)")
+    ek.add_argument("--candidate-traces", help="dir of <ROOM>-traces.json traced on the candidate: "
+                    "objects outside the carried classes that draw differently are listed as blocked")
+    ek.add_argument("--note", help="provenance note")
+    ek.set_defaults(fn=cmd_extract_kit)
+    bd = sub.add_parser("build", help="emit wall_profiles.asm, kits.asm and kit streams")
+    bd.add_argument("--check", action="store_true", help="fail if any output is stale")
     bd.set_defaults(fn=cmd_build)
     a = ap.parse_args()
     return a.fn(a)

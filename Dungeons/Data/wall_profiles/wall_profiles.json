@@ -3,7 +3,7 @@
  "profiles": [
   {"id": 1, "name": "d1_a3052e1d", "words": "d1_a3052e1d.words.json"},
   {"id": 2, "name": "glacia_frozen_timber", "words": "glacia_frozen_timber.words.json",
-   "gfx": "glacia_frozen_timber.gfx.json"}
+   "kit": "glacia_estate_timber"}
  ],
  "groups": [
   {"name": "d1", "kind": "dungeon", "profile": "d1_a3052e1d",
