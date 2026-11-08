@@ -64,7 +64,10 @@ def tables(root):
                     changes[43 * 64 + x + dx] = value
                 for dx, value in enumerate((3, 10, 10, 3)):
                     changes[4096 + 43 * 64 + x + dx] = value
-            sentinel = 4096 + 45 * 64 + 6  # native E7 custom tile02; surface08
+            # The selected High stream already gives E7 water its target08.
+            # Use the maintenance star beneath the sealed cover instead:
+            # native3B must become solid01, so the first High tick cannot skip.
+            sentinel = 49 * 64 + 41
         result['25-' + state] = changes, sentinel
     closed = {}
     rectangle(closed, 22, 32, 24, 3, 1)
