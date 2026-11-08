@@ -58,6 +58,7 @@ PAL_WORDS = 90
 ROOM_HEADERS = 0x228000    # dw per room; header = $220000|word
 DOOR_OFFSETS = (0x00CD9E, 0x00CF44)  # DoorGFXDataOffset_* + DoorAnimGFXDataOffset_*
 FANCY_EXIT_BLOCK = (0x00C1A8, 80)  # obj2656: south fancy dungeon exit, 10 words x 8 rows
+OBJ_PTR_LOAD = 0x01874B  # LDA.l RoomData_ObjectDataPointers+0,X (operand = the table)
 
 # Private ids. Rows $17-$1A and palette ids $22-$26 are not used by any room
 # header (kits.asm asserts it on every build). Each row keeps its vanilla
@@ -66,7 +67,7 @@ KIT_ROW0 = 0x17
 PRIVATE_ROWS = {0x17: (0x09, 0x00, 0x24, 0x1B), 0x18: (0x08, 0x00, 0x22, 0x1B),
                 0x19: (0x09, 0x00, 0x25, 0x1B), 0x1A: (0x09, 0x00, 0x26, 0x1B)}
 PRIVATE_PALETTES = {0x22: 0x0BF4, 0x24: 0x0CA8, 0x26: 0x0D5C}
-KIT_SHEETS = range(0xEA, 0xFF)          # spare global sheet rows (empty streams)
+KIT_SHEETS = range(0xF0, 0xFF)          # spare global sheet rows (empty streams); $EA-$EF = Sky port
 KIT_SHEET_ORG, KIT_SHEET_END = 0x458000, 0x45F000
 VERDICTS = ("routed", "partial", "words_only", "in_base")
 
@@ -153,6 +154,27 @@ def door_chars(base: bytes) -> set[int]:
     return out
 
 
+def floor_chars(base: bytes, rooms: list[int]) -> set[int]:
+    """Chars of the two floor fills (RoomDraw_DrawFloors) of each room.
+
+    Byte 0 of a room's object data holds floor 1 (high nibble, BG2) and floor 2
+    (low nibble, BG1); each draws the 8 words at RoomDrawObjectData + nibble*16.
+    z3ed object traces do not include these fills.
+    """
+    op = snes_pc(OBJ_PTR_LOAD)
+    if base[op] != 0xBF:
+        sys.exit(f"${OBJ_PTR_LOAD:06X} is not LDA.l long,X; cannot find the room object pointers")
+    table = int.from_bytes(base[op + 1:op + 4], "little")
+    out = set()
+    for r in rooms:
+        p = snes_pc(table + 3 * r)
+        b = base[snes_pc(int.from_bytes(base[p:p + 3], "little"))]
+        for f in (b >> 4, b & 0xF):
+            for k in range(8):
+                out.add(rom_word(base, OBJ_TABLE_PC + f * 16 + 2 * k) & 0x3FF)
+    return out
+
+
 # ----------------------------------------------------------------- extract
 def cmd_extract(a: argparse.Namespace) -> int:
     src_path, base_path = Path(a.rom), Path(a.base)
@@ -194,7 +216,9 @@ def cmd_extract(a: argparse.Namespace) -> int:
 # the profile words are remapped to them. Shared sheets are never edited.
 # A class is included only if all of its chars fit; the rest are recorded as
 # blocked. Free = slot-3 chars no other object in the kit rooms draws (z3ed
-# traces), no door draws, and the kit's own words do not keep in place.
+# traces), no door or fancy exit draws, and the kit's own words do not keep
+# in place. Room floor fills are not traced: --protect-floors keeps them too;
+# without it a kit that replaces a floor char is reported as a warning.
 def cmd_extract_kit(a: argparse.Namespace) -> int:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import sheet_codec
@@ -257,10 +281,13 @@ def cmd_extract_kit(a: argparse.Namespace) -> int:
         edit[o] = cw
 
     doors = door_chars(T)
-    drawn = set(doors)
+    floors = floor_chars(T, rooms)
+    drawn = set(doors) | (floors if a.protect_floors else set())
+    traced = set()
     for o, chars in drawn_by.items():
         if o not in edit:
-            drawn |= chars
+            traced |= chars
+    drawn |= traced
     for o in edit:  # base words of edited classes: keep them drawable (conservative)
         drawn |= {w & 0x3FF for w in class_words(T, T, o)}
     keep3 = {w & 0x3FF for ws in edit.values() for w in ws if 0xC0 <= (w & 0x3FF) < 0x100}
@@ -289,6 +316,16 @@ def cmd_extract_kit(a: argparse.Namespace) -> int:
         return rel, inplace, None
 
     free = [c for c in range(0xC0, 0x100) if c not in drawn and c not in keep3]
+    s3 = lambda cs: len({c for c in cs if 0xC0 <= c < 0x100})
+    need_all = set()
+    for o in edit:
+        rel, _, why = needed(o)
+        if not why:
+            need_all |= set(rel)
+    print(f"slot 3: {len(free)}/64 chars free; all {len(edit)} edited classes need {len(need_all)}. "
+          f"Kept out: door+fancy exit {s3(doors)}, floor fill {s3(floors)}"
+          f"{'' if a.protect_floors else ' (not protected)'}, other traced objects {s3(traced)}, "
+          f"edited-class base words and kept chars {s3(drawn - set(doors) - floors - traced) + len(keep3 - drawn)}")
     order = sorted(edit, key=lambda o: (-usage[o], CLASSES.index(o)))
     char_map: dict[int, int] = {}
     in_place: set[int] = set()
@@ -374,15 +411,29 @@ def cmd_extract_kit(a: argparse.Namespace) -> int:
     txt = KITS_DIR / f"{a.kit}.slot3.txt"
     KITS_DIR.mkdir(exist_ok=True)
     txt.write_text(sheet_codec.grid_to_text(grid))
-    words_doc = {
-        "profile": a.profile,
-        "source_rom_sha256": hashlib.sha256(C).hexdigest(),
-        "base_rom_sha256": hashlib.sha256(T).hexdigest(),
-        "reference_rom_sha256": None,
-        "note": f"kit {a.kit}: classes the candidate edited that fit the private row",
-        "classes": {f"{o:03X}": [f"${v:04X}" for v in edit[o]] for o in CLASSES if o in included},
-    }
-    (DATA_DIR / f"{a.profile}.words.json").write_text(json.dumps(words_doc, indent=1) + "\n")
+    words_path = DATA_DIR / f"{a.profile}.words.json"
+    kit_note = f"kit {a.kit}: classes the candidate edited that fit the private row"
+    carried = {f"{o:03X}": [f"${v:04X}" for v in edit[o]] for o in CLASSES if o in included}
+    old = json.loads(words_path.read_text()) if words_path.exists() else None
+    if old is not None and old.get("note") != kit_note:
+        # A profile authored elsewhere (extract): keep its header and every class the
+        # kit does not carry; only the carried classes take the candidate's words.
+        changed = sorted(c for c, v in carried.items() if old["classes"].get(c) not in (None, v))
+        merged = dict(old["classes"], **carried)
+        old["classes"] = {f"{o:03X}": merged[f"{o:03X}"] for o in CLASSES if f"{o:03X}" in merged}
+        words_doc = old
+        print(f"{words_path.relative_to(REPO)}: kept {len(merged) - len(carried)} uncarried classes; "
+              f"{len(changed)} carried classes changed words" + (": " + " ".join(changed) if changed else ""))
+    else:
+        words_doc = {
+            "profile": a.profile,
+            "source_rom_sha256": hashlib.sha256(C).hexdigest(),
+            "base_rom_sha256": hashlib.sha256(T).hexdigest(),
+            "reference_rom_sha256": None,
+            "note": kit_note,
+            "classes": carried,
+        }
+    words_path.write_text(json.dumps(words_doc, indent=1) + "\n")
     kit = {
         "kit": a.kit,
         "inventory_id": a.inventory_id,
@@ -416,6 +467,10 @@ def cmd_extract_kit(a: argparse.Namespace) -> int:
           f"{len(blocked)} blocked")
     for b in blocked:
         print(f"  blocked {b['item']}: {b['reason']}")
+    hit = sorted((set(char_map.values()) | in_place) & floors)
+    if hit:
+        print(f"  warning: kit art replaces floor-fill chars {' '.join(f'{c:03X}' for c in hit)}; "
+              f"rooms whose floor uses them draw kit art (--protect-floors keeps them)")
     return 0
 
 
@@ -450,7 +505,7 @@ def load_kits() -> list[dict]:
         for s in sheets:
             sid, slot = hx(s["sheet"]), int(s["slot"])
             if sid not in KIT_SHEETS:
-                raise SystemExit(f"{f.name}: sheet ${sid:02X} is not a spare row $EA-$FE")
+                raise SystemExit(f"{f.name}: sheet ${sid:02X} is not a spare row $F0-$FE")
             if sid in sheets_seen:
                 raise SystemExit(f"{f.name}: sheet ${sid:02X} is also used by {sheets_seen[sid]}")
             if not 3 <= slot <= 6 or slot in slots_seen:
@@ -858,6 +913,8 @@ def main() -> int:
     ek.add_argument("--candidate-traces", help="dir of <ROOM>-traces.json traced on the candidate: "
                     "objects outside the carried classes that draw differently are listed as blocked")
     ek.add_argument("--note", help="provenance note")
+    ek.add_argument("--protect-floors", action="store_true",
+                    help="also keep the kit rooms' floor-fill chars (RoomDraw_DrawFloors) out of the free set")
     ek.set_defaults(fn=cmd_extract_kit)
     bd = sub.add_parser("build", help="emit wall_profiles.asm, kits.asm and kit streams")
     bd.add_argument("--check", action="store_true", help="fail if any output is stale")

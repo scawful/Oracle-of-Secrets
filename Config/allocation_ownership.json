@@ -2036,7 +2036,7 @@
     },
     {
       "id": "wall_profile_kit_sheets",
-      "owner": "Wall-profile graphics kit sheet streams (spare global sheets $EA-$FE)",
+      "owner": "Wall-profile graphics kit sheet streams (spare global sheets $F0-$FE; $EA-$EF belong to the Sky port)",
       "space": "snes_rom",
       "base": 4554752,
       "size": 28672,
