@@ -16,7 +16,7 @@ SCRIPT = ROOT / "Scripts/Rooms/dungeon_layout_preflight.py"
 SPEC = importlib.util.spec_from_file_location("dungeon_layout_preflight", SCRIPT)
 preflight = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(preflight)
-FIXTURES = Path(__file__).parent / "fixtures/dungeon_layout"
+FIXTURES = ROOT / "Scripts/Rooms/tests/fixtures/dungeon_layout"
 SITES = [("northwest", 31, 39, 0x108), ("northeast", 58, 39, 0x10A),
          ("left_bend", 31, 44, 0x063), ("bottom_left_turn", 27, 55, 0x109)]
 
