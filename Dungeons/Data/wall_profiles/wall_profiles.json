@@ -3,7 +3,9 @@
  "profiles": [
   {"id": 1, "name": "d1_a3052e1d", "words": "d1_a3052e1d.words.json"},
   {"id": 2, "name": "glacia_frozen_timber", "words": "glacia_frozen_timber.words.json",
-   "kit": "glacia_estate_timber"}
+   "kit": "glacia_estate_timber"},
+  {"id": 3, "name": "glacia_cave_art17", "words": "glacia_cave_art17.words.json",
+   "kit": "glacia_cave_art17"}
  ],
  "groups": [
   {"name": "d1", "kind": "dungeon", "profile": "d1_a3052e1d",
@@ -11,6 +13,8 @@
   {"name": "d1_shrine23_extra", "kind": "room_group", "profile": "d1_a3052e1d",
    "rooms": ["007", "017", "032", "033", "043", "053", "063"]},
   {"name": "glacia_estate", "kind": "room_group", "profile": "glacia_frozen_timber",
-   "rooms": ["0DB", "0CB", "0BB", "0BC", "0BD", "0AD", "0AC", "0CC"]}
+   "rooms": ["0DB", "0CB", "0BB", "0BC", "0BD", "0AD", "0AC", "0CC"]},
+  {"name": "glacia_cave", "kind": "room_group", "profile": "glacia_cave_art17",
+   "rooms": ["09E", "09F", "0AE", "0AF", "0BE", "0BF", "0CD", "0CE", "0CF", "0DC", "0DD"]}
  ]
 }

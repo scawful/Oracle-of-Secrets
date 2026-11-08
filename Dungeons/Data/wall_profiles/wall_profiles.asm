@@ -3,11 +3,13 @@
 ;        Dungeons/Data/kits/*.kit.json
 ; profile 1 d1_a3052e1d: 30 classes, source ROM a3052e1d, base 8d615784
 ; profile 2 glacia_frozen_timber: 24 classes, source ROM ce525155, base 8d615784, kit glacia_estate_timber
+; profile 3 glacia_cave_art17: 24 classes, source ROM 63809fc2, base 5d6b461b, kit glacia_cave_art17
 ; group d1 -> d1_a3052e1d: 009 00A 00B 019 01A 01B 02A 02B 031 03A 03B 04A 04B 05A 05B 06A
 ; group d1_shrine23_extra -> d1_a3052e1d: 007 017 032 033 043 053 063
 ; group glacia_estate -> glacia_frozen_timber: 0DB 0CB 0BB 0BC 0BD 0AD 0AC 0CC
+; group glacia_cave -> glacia_cave_art17: 09E 09F 0AE 0AF 0BE 0BF 0CD 0CE 0CF 0DC 0DD
 !WALLSEL_CLASS_COUNT = 30
-!WALLSEL_PROFILE_COUNT = 2
+!WALLSEL_PROFILE_COUNT = 3
 
 ; class index per subtype-1 object ($FF = vanilla). Indexed by obj.
 WallSel_Sub1Class:
@@ -43,18 +45,18 @@ WallSel_RoomProfile:
   db $00, $00, $00, $01, $00, $00, $00, $00, $00, $00, $01, $00, $00, $00, $00, $00
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-  db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-  db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $02, $02, $00, $00
-  db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $02, $02, $02, $00, $00
-  db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $02, $02, $00, $00, $00
-  db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $02, $00, $00, $00, $00
+  db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $03, $03
+  db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $02, $02, $03, $03
+  db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $02, $02, $02, $03, $03
+  db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $02, $02, $03, $03, $03
+  db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $02, $03, $03, $00, $00
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
   db $00, $00, $00, $00, $00, $00, $00, $00
 WallSel_ProfileBase:  ; (profile-1)*CLASS_COUNT*2
-  dw $0000, $003C
+  dw $0000, $003C, $0078
 WallSel_SlotSrc:  ; byte offset of LAST word in WallSel_Data, $FFFF = vanilla
   dw $000E, $001E, $002E, $003E, $004E, $005E, $006E, $007E, $0096, $00AE
   dw $00C6, $00DE, $00F6, $010E, $012E, $014E, $016E, $018E, $01AE, $01CE
@@ -62,6 +64,9 @@ WallSel_SlotSrc:  ; byte offset of LAST word in WallSel_Data, $FFFF = vanilla
   dw $031E, $032E, $033E, $034E, $035E, $036E, $037E, $038E, $FFFF, $FFFF
   dw $FFFF, $FFFF, $FFFF, $FFFF, $03AE, $03CE, $03EE, $040E, $042E, $044E
   dw $046E, $048E, $04AE, $04CE, $04EE, $050E, $052E, $054E, $056E, $058E
+  dw $059E, $05AE, $05BE, $05CE, $05DE, $05EE, $05FE, $060E, $FFFF, $FFFF
+  dw $FFFF, $FFFF, $FFFF, $FFFF, $062E, $064E, $066E, $068E, $06AE, $06CE
+  dw $06EE, $070E, $072E, $074E, $076E, $078E, $07AE, $07CE, $07EE, $080E
 WallSel_SlotLen:  ; span bytes - 2
   dw $000E, $000E, $000E, $000E, $000E, $000E, $000E, $000E, $0016, $0016
   dw $0016, $0016, $0016, $0016, $001E, $001E, $001E, $001E, $001E, $001E
@@ -69,7 +74,10 @@ WallSel_SlotLen:  ; span bytes - 2
   dw $000E, $000E, $000E, $000E, $000E, $000E, $000E, $000E, $FFFF, $FFFF
   dw $FFFF, $FFFF, $FFFF, $FFFF, $001E, $001E, $001E, $001E, $001E, $001E
   dw $001E, $001E, $001E, $001E, $001E, $001E, $001E, $001E, $001E, $001E
-WallSel_Data:  ; 712 words
+  dw $000E, $000E, $000E, $000E, $000E, $000E, $000E, $000E, $FFFF, $FFFF
+  dw $FFFF, $FFFF, $FFFF, $FFFF, $001E, $001E, $001E, $001E, $001E, $001E
+  dw $001E, $001E, $001E, $001E, $001E, $001E, $001E, $001E, $001E, $001E
+WallSel_Data:  ; 1032 words
   dw $08C0, $08C2, $08C3, $0CAD, $08C4, $08C5, $08C7, $8CAD
   dw $4CAD, $48C3, $48C2, $48C0, $CCAD, $48C7, $48C5, $48C4
   dw $0880, $0881, $089A, $0CAC, $089B, $089C, $08AB, $4CAC
@@ -159,20 +167,61 @@ WallSel_Data:  ; 712 words
   dw $4CCA, $4CD7, $CCE2, $10AC, $0CC1, $4CC1, $CCE2, $50AC
   dw $D0AF, $D0AD, $50AD, $D0AD, $D0AC, $0CEE, $0CE5, $0CE5
   dw $90AC, $4CE2, $CCD7, $4CC7, $D0AC, $4CE2, $CCC1, $8CC1
+  dw $14C0, $94C1, $54C2, $14C3, $D4C7, $94C4, $D4C5, $94C8
+  dw $54C3, $14C2, $D4C1, $54C0, $D4C8, $94C5, $D4C4, $94C7
+  dw $D4CA, $54CB, $94CC, $D4CD, $94F5, $D4CE, $D4CF, $54D1
+  dw $54CD, $14CC, $D4CB, $54CA, $D4D1, $54CF, $54CE, $14F5
+  dw $CCE8, $4CE9, $0CEA, $8CC3, $CCE8, $CCEC, $0CEA, $0CC3
+  dw $CCC3, $4CEA, $0CE9, $8CE8, $4CC3, $4CEA, $8CEC, $8CE8
+  dw $8CED, $8CEE, $CCEF, $8CCD, $CCF6, $CCF7, $CCEF, $CCCD
+  dw $0CCD, $4CEF, $0CEE, $4CF6, $4CCD, $4CEF, $4CF7, $0CED
+  dw $C89E, $489E, $54D7, $14C0, $889E, $089E, $D4D8, $94C4
+  dw $D4DA, $14DB, $94DC, $14DD, $D4CA, $D4CE, $D4DE, $94DF
+  dw $14C0, $D4D7, $C89E, $489E, $94C4, $54D8, $889E, $089E
+  dw $94DD, $14DC, $94DB, $54DA, $14DF, $54DE, $54CE, $54CA
+  dw $D4CA, $54CB, $94DE, $D4DF, $94DA, $54DB, $D4DC, $54DD
+  dw $C89E, $489E, $94D8, $D4C4, $889E, $089E, $14D7, $54C0
+  dw $54DF, $14DE, $D4CB, $54CA, $D4DD, $54DC, $D4DB, $14DA
+  dw $D4C1, $14D8, $C89E, $489E, $54C0, $94D7, $889E, $089E
+  dw $94E6, $54CB, $94CC, $D4CD, $94C1, $94E7, $D4CF, $94CD
+  dw $54C2, $D4C5, $94DC, $D4CD, $14C3, $94C3, $14C3, $94DF
+  dw $54CD, $14CC, $D4CB, $14E6, $14CD, $54CF, $14E7, $94C4
+  dw $54CD, $14DC, $54C2, $D4C5, $14DF, $94C3, $14C3, $14C3
+  dw $54C3, $D4C3, $54C3, $D4DF, $14C2, $94C5, $D4DC, $94CD
+  dw $D4C1, $D4E7, $94CC, $D4CD, $D4E6, $D4CE, $D4CF, $94CD
+  dw $54DF, $D4C3, $54C3, $D4C3, $14CD, $54DC, $14C2, $94C5
+  dw $54CD, $14CC, $54E7, $D4C4, $14CD, $54CF, $54CE, $54E6
+  dw $0CF8, $0CF9, $4CFA, $CCE8, $0CFC, $0CF8, $CCD8, $CCEC
+  dw $8CFD, $0CDB, $8CDC, $0CFE, $8CED, $CCF7, $CCFF, $8CDF
+  dw $CCE8, $4CFA, $0CF9, $8CF8, $CCEC, $CCD8, $8CF8, $8CFC
+  dw $0CFE, $0CDC, $8CDB, $0CFD, $0CDF, $4CFF, $4CF7, $0CED
+  dw $8CED, $8CEE, $CCFF, $CCDF, $8CFD, $0CDB, $CCDC, $4CFE
+  dw $0CFC, $4CF8, $8CD8, $8CEC, $4CF8, $4CF9, $0CFA, $8CE8
+  dw $4CDF, $4CFF, $0CEE, $0CED, $4CFE, $4CDC, $8CDB, $0CFD
+  dw $0CE9, $8CD8, $CCF8, $8CFC, $8CE8, $0CFA, $4CF9, $CCF8
+  dw $8CE6, $8CEE, $CCEF, $CCCD, $4CE9, $8CE7, $CCEF, $8CCD
+  dw $0CEA, $0CEA, $8CDC, $CCCD, $0CC3, $8CC3, $0CC3, $8CDF
+  dw $4CCD, $4CEF, $0CEE, $0CE6, $0CCD, $4CEF, $0CE7, $CCEC
+  dw $4CCD, $0CDC, $0CEA, $0CEA, $0CDF, $8CC3, $0CC3, $8CC3
+  dw $4CC3, $CCC3, $4CC3, $CCDF, $4CEA, $4CEA, $CCDC, $8CCD
+  dw $0CE9, $CCE7, $CCEF, $CCCD, $CCE6, $CCF7, $CCEF, $8CCD
+  dw $4CDF, $CCC3, $4CC3, $CCC3, $0CCD, $4CDC, $4CEA, $4CEA
+  dw $4CCD, $4CEF, $4CE7, $8CEC, $0CCD, $4CEF, $4CF7, $4CE6
 WallSel_Data_End:
 
 ; ---- kit graphics routes (Dungeons/Data/kits/kits.asm writes the rows,
 ; palettes and sheets; Dungeons/wall_profile_selector.asm swaps them in)
+; kit glacia_cave_art17 [partial] profile glacia_cave_art17: row $18 (kit 1), palette $24
 ; kit glacia_estate_timber [routed] profile glacia_frozen_timber: row $17 (kit 0), palette $26
 !WALLSEL_GFX = 1
 !WALLSEL_KIT_ROW0 = $17
-!WALLSEL_KIT_COUNT = 1
+!WALLSEL_KIT_COUNT = 2
 WallSel_ProfileBlockset:  ; private row per profile-1, $FF = keep the header blockset
-  db $FF, $17
+  db $FF, $17, $18
 WallSel_ProfilePalette:  ; BG palette id*2 for $0AB6 per profile-1, $FF = keep
-  db $FF, $26
+  db $FF, $26, $24
 WallSel_KitBase:  ; base blockset per kit (row-!WALLSEL_KIT_ROW0)
-  db $0B
+  db $0B, $0B
 
 ; Tile types. Called from WallSel_LoadTileAttr with M=8 X=8 (X/Y untouched).
 ; Chars $C0-$FF are restored from the ROM table on every room by the
@@ -216,5 +265,48 @@ WallSel_KitPatch0:  ; glacia_estate_timber: 30 chars
   STA.l $7EFE00+$0E4
   STA.l $7EFE00+$0E8
   RTS
+WallSel_KitPatch1:  ; glacia_cave_art17: 36 chars
+  LDA.b #$00
+  STA.l $7EFE00+$0DF
+  LDA.b #$01
+  STA.l $7EFE00+$0C0
+  STA.l $7EFE00+$0C1
+  STA.l $7EFE00+$0C4
+  STA.l $7EFE00+$0C7
+  STA.l $7EFE00+$0CA
+  STA.l $7EFE00+$0CB
+  STA.l $7EFE00+$0CE
+  STA.l $7EFE00+$0D7
+  STA.l $7EFE00+$0D8
+  STA.l $7EFE00+$0DA
+  STA.l $7EFE00+$0DB
+  STA.l $7EFE00+$0DD
+  STA.l $7EFE00+$0DE
+  STA.l $7EFE00+$0E7
+  STA.l $7EFE00+$0E9
+  STA.l $7EFE00+$0EC
+  STA.l $7EFE00+$0EE
+  STA.l $7EFE00+$0F5
+  STA.l $7EFE00+$0F8
+  LDA.b #$04
+  STA.l $7EFE00+$0C2
+  STA.l $7EFE00+$0C5
+  STA.l $7EFE00+$0CC
+  STA.l $7EFE00+$0CF
+  STA.l $7EFE00+$0DC
+  STA.l $7EFE00+$0EA
+  STA.l $7EFE00+$0EF
+  STA.l $7EFE00+$0FE
+  STA.l $7EFE00+$0FF
+  LDA.b #$28
+  STA.l $7EFE00+$0ED
+  STA.l $7EFE00+$0F6
+  STA.l $7EFE00+$0FC
+  STA.l $7EFE00+$0FD
+  LDA.b #$2A
+  STA.l $7EFE00+$0E8
+  STA.l $7EFE00+$0F9
+  STA.l $7EFE00+$0FA
+  RTS
 WallSel_KitPatchPtr:
-  dw WallSel_KitPatch0
+  dw WallSel_KitPatch0, WallSel_KitPatch1

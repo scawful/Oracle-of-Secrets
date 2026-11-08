@@ -3,6 +3,22 @@
 ; Dungeons/wall_profile_gfx.asm after Core/gfx_sheet_table.asm.
 ; asar evaluates left to right without precedence: keep the parentheses.
 
+; glacia_cave_art17 (N9) [partial]: Glacia ice-house cave ART17 walls (glacia-minish-matched-v1 phase-v17-thin-pits, manifest 8dea8bff)
+;   blocked object 00D: not a selector class: the candidate draws other words in rooms 09E 0BF 0DD
+;   blocked object 00E: not a selector class: the candidate draws other words in rooms 0AE 0BE 0DD
+;   blocked object 00F: not a selector class: the candidate draws other words in rooms 09E 0DD
+;   blocked object 010: not a selector class: the candidate draws other words in rooms 0AE 0BF
+;   blocked object 011: not a selector class: the candidate draws other words in rooms 0BE
+;   blocked object 014: not a selector class: the candidate draws other words in rooms 0DD
+;   blocked object 090: not a selector class: the candidate draws other words in rooms 09E 09F 0AE 0AF 0BE 0CD 0CF 0DC 0DD
+;   blocked object 091: not a selector class: the candidate draws other words in rooms 09E 09F 0AE 0AF 0BE 0BF 0CD 0DC 0DD
+;   blocked object 0B6: not a selector class: the candidate draws other words in rooms 09E 09F 0AE 0AF 0BE 0CD 0CE 0CF 0DC 0DD
+;   blocked object 0B7: not a selector class: the candidate draws other words in rooms 09E 09F 0BE 0BF 0CD 0DC 0DD
+;   blocked object 114: not a selector class: the candidate draws other words in rooms 0CE
+;   blocked object 115: not a selector class: the candidate draws other words in rooms 0CE
+;   blocked object 116: not a selector class: the candidate draws other words in rooms 0CE
+;   blocked object 117: not a selector class: the candidate draws other words in rooms 0CE
+;   blocked object FE7: not a selector class: the candidate draws other words in rooms 0AE
 ; glacia_estate_timber (N8) [routed]: Glacia estate frozen timber (ce525155); glyphs copied into free slot-3 chars of a sheet-0B copy. Ported from the single-kit route 9a2f131d unchanged.
 
 ; ---- private ids: vanilla spare rows, palette offsets, no room uses them ----
@@ -19,6 +35,44 @@ while !wsk_r < $128
   assert read1($0ED460+(read1(($220000|read2($228000+(!wsk_r*2)))+1)*4)) != $22 && read1($0ED460+(read1(($220000|read2($228000+(!wsk_r*2)))+1)*4)) != $24 && read1($0ED460+(read1(($220000|read2($228000+(!wsk_r*2)))+1)*4)) != $26, "a room palette set uses a private kit palette"
   !wsk_r #= !wsk_r+1
 endwhile
+
+; ---- kit glacia_cave_art17 -> profile 3 glacia_cave_art17 ----
+assert read1(($220000|read2($228000+$13C))+2) == $0B && read1($0ED460+(read1(($220000|read2($228000+$13C))+1)*4)) == $08, "room $09E header no longer matches kit glacia_cave_art17"
+assert read1(($220000|read2($228000+$13E))+2) == $0B && read1($0ED460+(read1(($220000|read2($228000+$13E))+1)*4)) == $08, "room $09F header no longer matches kit glacia_cave_art17"
+assert read1(($220000|read2($228000+$15C))+2) == $0B && read1($0ED460+(read1(($220000|read2($228000+$15C))+1)*4)) == $08, "room $0AE header no longer matches kit glacia_cave_art17"
+assert read1(($220000|read2($228000+$15E))+2) == $0B && read1($0ED460+(read1(($220000|read2($228000+$15E))+1)*4)) == $08, "room $0AF header no longer matches kit glacia_cave_art17"
+assert read1(($220000|read2($228000+$17C))+2) == $0B && read1($0ED460+(read1(($220000|read2($228000+$17C))+1)*4)) == $08, "room $0BE header no longer matches kit glacia_cave_art17"
+assert read1(($220000|read2($228000+$17E))+2) == $0B && read1($0ED460+(read1(($220000|read2($228000+$17E))+1)*4)) == $08, "room $0BF header no longer matches kit glacia_cave_art17"
+assert read1(($220000|read2($228000+$19A))+2) == $0B && read1($0ED460+(read1(($220000|read2($228000+$19A))+1)*4)) == $08, "room $0CD header no longer matches kit glacia_cave_art17"
+assert read1(($220000|read2($228000+$19C))+2) == $0B && read1($0ED460+(read1(($220000|read2($228000+$19C))+1)*4)) == $08, "room $0CE header no longer matches kit glacia_cave_art17"
+assert read1(($220000|read2($228000+$19E))+2) == $0B && read1($0ED460+(read1(($220000|read2($228000+$19E))+1)*4)) == $08, "room $0CF header no longer matches kit glacia_cave_art17"
+assert read1(($220000|read2($228000+$1B8))+2) == $0B && read1($0ED460+(read1(($220000|read2($228000+$1B8))+1)*4)) == $08, "room $0DC header no longer matches kit glacia_cave_art17"
+assert read1(($220000|read2($228000+$1BA))+2) == $0B && read1($0ED460+(read1(($220000|read2($228000+$1BA))+1)*4)) == $08, "room $0DD header no longer matches kit glacia_cave_art17"
+assert read1($00DDC3) == $0B, "kit glacia_cave_art17 slot 3 source is not sheet $0B"
+pushpc
+org $00DDF7 ; @hook module=Dungeons kind=data protected_size=4
+  db $FD, read1($00DDC4), read1($00DDC5), read1($00DDC6)
+pullpc
+assert read2($1BEC53) == $02D0, "kit glacia_cave_art17 palette source $08 offset moved"
+pushpc
+org $1BE3DC ; @hook module=Dungeons kind=data protected_size=180
+  dw read2($1BDA04), read2($1BDA06), read2($1BDA08), read2($1BDA0A), read2($1BDA0C), read2($1BDA0E)
+  dw read2($1BDA10), read2($1BDA12), read2($1BDA14), read2($1BDA16), read2($1BDA18), read2($1BDA1A)
+  dw read2($1BDA1C), read2($1BDA1E), read2($1BDA20), read2($1BDA22), read2($1BDA24), read2($1BDA26)
+  dw read2($1BDA28), read2($1BDA2A), read2($1BDA2C), read2($1BDA2E), read2($1BDA30), $1CA5
+  dw $28E8, $352A, $49AE, $5A32, $6AD6, $7B9B
+  dw read2($1BDA40), read2($1BDA42), read2($1BDA44), read2($1BDA46), read2($1BDA48), read2($1BDA4A)
+  dw read2($1BDA4C), read2($1BDA4E), read2($1BDA50), read2($1BDA52), read2($1BDA54), read2($1BDA56)
+  dw read2($1BDA58), read2($1BDA5A), read2($1BDA5C), read2($1BDA5E), read2($1BDA60), read2($1BDA62)
+  dw read2($1BDA64), read2($1BDA66), read2($1BDA68), read2($1BDA6A), read2($1BDA6C), read2($1BDA6E)
+  dw read2($1BDA70), read2($1BDA72), read2($1BDA74), read2($1BDA76), read2($1BDA78), read2($1BDA7A)
+  dw read2($1BDA7C), read2($1BDA7E), read2($1BDA80), read2($1BDA82), read2($1BDA84), read2($1BDA86)
+  dw read2($1BDA88), read2($1BDA8A), read2($1BDA8C), read2($1BDA8E), read2($1BDA90), read2($1BDA92)
+  dw read2($1BDA94), read2($1BDA96), read2($1BDA98), read2($1BDA9A), read2($1BDA9C), read2($1BDA9E)
+  dw read2($1BDAA0), read2($1BDAA2), read2($1BDAA4), read2($1BDAA6), read2($1BDAA8), read2($1BDAAA)
+  dw read2($1BDAAC), read2($1BDAAE), read2($1BDAB0), read2($1BDAB2), read2($1BDAB4), read2($1BDAB6)
+assert pc() == $1BE490, "kit palette must be exactly 90 words"
+pullpc
 
 ; ---- kit glacia_estate_timber -> profile 2 glacia_frozen_timber ----
 assert read1(($220000|read2($228000+$158))+2) == $0B && read1($0ED460+(read1(($220000|read2($228000+$158))+1)*4)) == $08, "room $0AC header no longer matches kit glacia_estate_timber"
@@ -59,9 +113,18 @@ pullpc
 assert GfxSheet_Bank == $23FD00 && GfxSheet_High == $23FE00 && GfxSheet_Low == $23FF00, "gfx sheet arrays moved"
 pushpc
 org $458000
+WallSel_KitSheet_FD:  ; glacia_cave_art17 slot 3
+  incbin "Dungeons/Data/kits/glacia_cave_art17.slot3.lz2"
 WallSel_KitSheet_FE:  ; glacia_estate_timber slot 3
   incbin "Dungeons/Data/kits/glacia_estate_timber.slot3.lz2"
 assert pc() <= $45F000, "kit sheet streams exceeded $458000-$45EFFF"
+assert $FD < !GfxSheet_Rows, "kit sheet $FD is past the sheet table"
+org $23FDFD ; @hook module=Dungeons kind=data protected_size=1
+  db WallSel_KitSheet_FD>>16
+org $23FEFD ; @hook module=Dungeons kind=data protected_size=1
+  db WallSel_KitSheet_FD>>8
+org $23FFFD ; @hook module=Dungeons kind=data protected_size=1
+  db WallSel_KitSheet_FD
 assert $FE < !GfxSheet_Rows, "kit sheet $FE is past the sheet table"
 org $23FDFE ; @hook module=Dungeons kind=data protected_size=1
   db WallSel_KitSheet_FE>>16
