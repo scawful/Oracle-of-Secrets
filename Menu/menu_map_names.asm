@@ -76,16 +76,16 @@ DarkWorldLocationNames:
   dw "TEMPORAL_GATE__" ; 08
   dw "TEMPORAL_GATE__" ; 09
   dw "LUPO_WATERFALL_" ; 0A
-  dw "LUPO_MOUNTAIN__" ; 0B
-  dw "LUPO_MOUNTAIN__" ; 0C
+  dw "THE_FORTRESS___" ; 0B
+  dw "THE_FORTRESS___" ; 0C
   dw "LUPO_MOUNTAIN__" ; 0D
   dw "LAVA_LANDS_____" ; 0E
   dw "LAVA_LANDS_____" ; 0F
   dw "SHRINE_COURAGE_" ; 10
   dw "_______________" ; 11
   dw "_______________" ; 12 
-  dw "LUPO_MOUNTAIN__" ; 13
-  dw "LUPO_MOUNTAIN__" ; 14
+  dw "THE_FORTRESS___" ; 13
+  dw "THE_FORTRESS___" ; 14
   dw "LUPO_MOUNTAIN__" ; 15
   dw "LAVA_LANDS_____" ; 16
   dw "LAVA_LANDS_____" ; 17
@@ -95,16 +95,16 @@ DarkWorldLocationNames:
   dw "_______________" ; 1B
   dw "_______________" ; 1C
   dw "_______________" ; 1D
-  dw "THE_FORTRESS___" ; 1E
-  dw "THE_FORTRESS___" ; 1F
+  dw "LUPO_MOUNTAIN__" ; 1E
+  dw "LUPO_MOUNTAIN__" ; 1F
   dw "_______________" ; 20
   dw "_______________" ; 21
   dw "_______________" ; 22
   dw "WISDOM_SWAMP___" ; 23
   dw "WISDOM_SWAMP___" ; 24
   dw "_______________" ; 25
-  dw "THE_FORTRESS___" ; 26
-  dw "THE_FORTRESS___" ; 27
+  dw "LUPO_MOUNTAIN__" ; 26
+  dw "LUPO_MOUNTAIN__" ; 27
   dw "_______________" ; 28
   dw "_______________" ; 29
   dw "_______________" ; 2A
