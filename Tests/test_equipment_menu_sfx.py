@@ -57,7 +57,7 @@ class Menu:
         self.n, self.z = bool(value & 0x80), value == 0
 
     def value(self, arg):
-        immediate = re.fullmatch(r"#\$([0-9A-F]{2})", arg)
+        immediate = re.fullmatch(r"#\$([0-9A-F]{2,4})", arg)
         return int(immediate.group(1), 16) if immediate else self.memory.get(arg, 0)
 
     def write(self, arg, value):
@@ -126,7 +126,9 @@ class Menu:
             elif op == "INC" and not arg:
                 self.a = (self.a + 1) & 0xFF
                 self.nz(self.a)
-            elif op == "SEP" and arg == "#$30":
+            elif op in ("REP", "SEP") and arg in ("#$20", "#$30"):
+                # Values are mathematical integers in this source-level model.
+                # Page-turn tests use full-word stores, not width-sensitive arithmetic.
                 continue
             else:
                 raise AssertionError(f"opcode {lines[pc - 1]} not modeled")
@@ -228,6 +230,42 @@ class EquipmentMenuSfxContract(unittest.TestCase):
             menu.run("Menu_Equipment_Move", ".accept")
             self.assertEqual(menu.sounds, [("$012F", MENU_CURSOR)])
             self.assertEqual((menu.memory["$020B"], menu.memory["$0207"]), (target, 0))
+
+    def test_horizontal_page_turn_reuses_targets_without_changing_selections(self):
+        states = {"#!MENU_STATE_ITEM_SCREEN": 4, "#!MENU_STATE_SCROLL_TO": 5,
+                  "#!MENU_STATE_STATS_SCREEN": 6, "#!MENU_STATE_SCROLL_FROM": 7}
+        selections = {"$0202": 0x0D, "$020B": 14, "BoundMask": 3,
+                      "RingSlot1": 2, "SavedOcarinaSong": 4, "CurrentSong": 4}
+        for loop in (0, 1):
+            flags = dict(self.flags, ENABLE_MENU_PAGE_LOOP=loop)
+            routines = {"Menu_Page3_Turn": routine_lines(
+                self.page3, "Menu_Page3_Turn", flags)}
+            for page, state, target in (("items", 4, 0), ("quest", 6, 0),
+                                        ("equipment", 6, 0x20)):
+                for direction in (1, 0xFF):
+                    with self.subTest(loop=loop, page=page, direction=direction):
+                        memory = dict(states, **selections)
+                        memory.update({"$0200": state, "MenuScrollLevelH": target})
+                        menu = Menu(routines, memory, {})
+                        menu.a = direction
+                        menu.run("Menu_Page3_Turn")
+                        expected_state, expected_target = 7, target
+                        if page == "items":
+                            expected_state = 5
+                            expected_target = 0 if direction == 1 else 0x20
+                        elif loop and ((page == "quest" and direction == 1) or
+                                       (page == "equipment" and direction == 0xFF)):
+                            expected_state = 5
+                            expected_target = 0x20 if page == "quest" else 0
+                        self.assertEqual(menu.memory["$0200"], expected_state)
+                        self.assertEqual(menu.memory["MenuScrollLevelH"], expected_target)
+                        self.assertEqual(menu.memory["MenuScrollHDirection"],
+                                         8 if direction == 1 else 0xFFF8)
+                        self.assertEqual({key: menu.memory[key] for key in selections},
+                                         selections)
+                        self.assertEqual(menu.sounds, [("$012F", 6)])
+                        self.assertTrue(menu.c)
+                        self.assertEqual(menu.stack, [])
 
     def test_pre_fix_boss_sound_fails_contract(self):
         mutants = [

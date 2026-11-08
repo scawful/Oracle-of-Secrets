@@ -268,6 +268,7 @@ incsrc "menu_select_item.asm"
 
 Menu_CheckForSpecialMenus:
 {
+  LDA.w $0202 : ASL : TAY ; Menu_DeleteCursor requires the old logical item's index
 if !ENABLE_EQUIPMENT_MENU == 0
     LDA.w $0202 : CMP.b #!MENU_STATE_SCROLL_TO : BNE +
       LDA.b $F6 : BIT.b #$80 : BEQ +
@@ -276,16 +277,17 @@ if !ENABLE_EQUIPMENT_MENU == 0
         JSR Menu_DeleteCursor ; Ensure cursor is deleted
         SEC : RTS             ; Return Carry Set
     +
+endif
     LDA.w $0202 : CMP.b #!MENU_STATE_SONG_MENU : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
         LDA.b #!MENU_STATE_SONG_MENU : STA.w $0200
-        LDA.b #$01 : STA.w CurrentSong ; Initialize song selection
+        JSL UpdateFluteSong_Long ; retain and validate the remembered selection
+        SEP #$30
           JSR Menu_DeleteCursor
           JSR Menu_DrawSongMenu
           SEP #$30
           SEC : RTS ; Return Carry Set
     ++
-endif
     LDA.w $0202 : CMP.b #!MENU_STATE_JOURNAL : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
 if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
@@ -334,9 +336,33 @@ endif
 
 Menu_ItemScreen:
 {
+  SEP #$30
+  ; Start and shoulder buttons own their frame. With no D-pad movement,
+  ; allow the existing A submenus before the generic A-to-close check.
+  LDA.b $F4 : AND.b #$1F : BNE .scroll_input
+  LDA.b $F6 : AND.b #$30 : BNE .scroll_input
+  LDA.w $0202 : BEQ .scroll_input ; no old cursor exists to delete
+  JSR Menu_CheckForSpecialMenus : BCC .scroll_input
+  JMP .exit
+.scroll_input
   JSR Menu_CheckHScroll
-
+  SEP #$30
+  LDA.w $0200 : CMP.b #!MENU_STATE_ITEM_SCREEN : BEQ .active
+  JMP .exit                           ; no cursor/equipment edits after a turn/close
+.active
   INC $0207
+if !ENABLE_MENU_PAGE3 == 1
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.w $0202 : BNE .have_item
+  LDA.b $F4 : AND.b #$03 : BEQ .do_no_input
+  AND.b #$01 : BNE .empty_turn
+  LDA.b #$FF
+.empty_turn
+  JSR Menu_Page3_Turn
+  JMP .exit
+.have_item
+endif
+endif
   LDA.w $0202 : BEQ .do_no_input
     ; Scroll through joypad 1 inputs
     ASL : TAY : LDA.b $F4
@@ -350,11 +376,25 @@ Menu_ItemScreen:
   BRA .no_inputs
 
   .move_right
+if !ENABLE_MENU_PAGE3 == 1
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.b #$01 : JSR Menu_CustomGridTryPageTurn : BCC .right_in_row
+  JMP .exit
+.right_in_row
+endif
+endif
   JSR Menu_DeleteCursor
   JSR Menu_FindNextItem
   BRA .draw_cursor
 
   .move_left
+if !ENABLE_MENU_PAGE3 == 1
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.b #$FF : JSR Menu_CustomGridTryPageTurn : BCC .left_in_row
+  JMP .exit
+.left_in_row
+endif
+endif
   JSR Menu_DeleteCursor
   JSR Menu_FindPrevItem
   BRA .draw_cursor

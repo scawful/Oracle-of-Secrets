@@ -68,9 +68,58 @@ else
 endif
 
 ; ---------------------------------------------------------
+; A = $01 right or $FF left. Reuses the L/R page targets and scroll states.
+; In/out M/X=8, DBR=$2D; destroys A, keeps X/Y. C set means a turn began.
+; The caller must give Start and L/R priority before calling this routine.
+Menu_Page3_Turn:
+{
+  SEP #$30
+  CMP.b #$01 : BEQ .right
+  REP #$20
+  LDA.w #$FFF8 : STA.w MenuScrollHDirection
+  SEP #$20
+  LDA.w $0200 : CMP.b #!MENU_STATE_ITEM_SCREEN : BEQ .items_left
+if !ENABLE_MENU_PAGE_LOOP == 1
+  LDA.w MenuScrollLevelH : BNE .equipment_left
+endif
+  BRA .to_items
+.items_left
+  LDA.b #$20 : STA.w MenuScrollLevelH
+  BRA .to_right_half
+if !ENABLE_MENU_PAGE_LOOP == 1
+.equipment_left
+  STZ.w MenuScrollLevelH
+  BRA .to_right_half
+endif
+.right
+  REP #$20
+  LDA.w #$0008 : STA.w MenuScrollHDirection
+  SEP #$20
+  LDA.w $0200 : CMP.b #!MENU_STATE_ITEM_SCREEN : BEQ .items_right
+if !ENABLE_MENU_PAGE_LOOP == 1
+  LDA.w MenuScrollLevelH : BEQ .quest_right
+endif
+  BRA .to_items
+.items_right
+  STZ.w MenuScrollLevelH
+  BRA .to_right_half
+if !ENABLE_MENU_PAGE_LOOP == 1
+.quest_right
+  LDA.b #$20 : STA.w MenuScrollLevelH
+endif
+.to_right_half
+  LDA.b #!MENU_STATE_SCROLL_TO
+  BRA .begin
+.to_items
+  LDA.b #!MENU_STATE_SCROLL_FROM
+.begin
+  STA.w $0200
+  LDA.b #$06 : STA.w $012F
+  SEC : RTS
+}
+
 ; State $04 wrapper: record the L/R target, Y opens page 3 on the rings,
-; then run the item screen.
-; In: DBR = $2D.
+; then run the item screen. In: DBR=$2D.
 Menu_Page3_ItemScreen:
 {
   SEP #$30
@@ -104,7 +153,11 @@ if !ENABLE_PORTAL_ROD_CELL == 1
 else
     JSR Menu_Page3_GridHasItem : BCS .items
 endif
+if !ENABLE_GOLDSTAR_CELL == 1
+      LDA.b $F4 : AND.b #$F3 : STA.b $F4 ; empty grid may still turn pages
+else
       LDA.b $F4 : AND.b #$F0 : STA.b $F4
+endif
 if !ENABLE_PORTAL_ROD_CELL == 1
       BRA .items
     .grid_move
@@ -189,6 +242,14 @@ Menu_Page3_StatsScreen:
 {
   SEP #$30
   LDA.w MenuScrollLevelH : BNE .page3
+  LDA.b $F4 : BIT.b #$10 : BNE .quest_input
+  LDA.b $F6 : AND.b #$B0 : BNE .quest_input
+  LDA.b $F4 : AND.b #$03 : BEQ .quest_input
+  AND.b #$01 : BNE .quest_turn
+  LDA.b #$FF
+.quest_turn
+  JMP Menu_Page3_Turn
+.quest_input
 if !ENABLE_MENU_PAGE_LOOP == 1
     ; Quest. R goes on to page 3; Start and L retain their priority (same order as
     ; Menu_CheckHScroll: Start, L, R).
@@ -255,6 +316,10 @@ endif
   .no_x
 
   JSR Menu_Page3_Move
+  SEP #$30
+  LDA.w $0200 : CMP.b #!MENU_STATE_STATS_SCREEN : BEQ .select
+  RTS                                  ; page turn owns the rest of this frame
+.select
   JSR Menu_Page3_Select
   INC.w $0207                            ; cursor blink
   JSR Menu_Page3_Draw

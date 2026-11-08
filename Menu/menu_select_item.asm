@@ -546,6 +546,37 @@ Menu_CustomGridOwned:
   PLX : CLC : RTS
 }
 
+if !ENABLE_MENU_PAGE3 == 1
+; A = $01 right or $FF left. C clear: an owned cell remains before the edge;
+; C set: the existing page turn began. Never changes the logical Y item.
+; Uses $00-$01, destroys A/X, keeps Y for Menu_DeleteCursor, M/X=8, DBR=$2D.
+Menu_CustomGridTryPageTurn:
+{
+  SEP #$30
+  STA.b $00
+  LDX.b #$00
+.locate
+  LDA.w Menu_CustomGridItems,X : CMP.w $0202 : BEQ .scan
+  INX : CPX.b #$18 : BCC .locate
+  BRA .turn                           ; no cursor/empty grid still has page access
+.scan
+  LDA.b $00 : CMP.b #$01 : BNE .left
+  LDA.w .columns,X : CMP.b #$05 : BEQ .turn
+  INX : BRA .owned
+.left
+  LDA.w .columns,X : BEQ .turn
+  DEX
+.owned
+  JSR Menu_CustomGridOwned : BCC .scan
+  CLC : RTS
+.turn
+  LDA.b $00
+  JMP Menu_Page3_Turn
+.columns
+  db 0,1,2,3,4,5, 0,1,2,3,4,5, 0,1,2,3,4,5, 0,1,2,3,4,5
+}
+endif
+
 ; A = +1/-1/+6/-6. The vertical empty-cell fallback remains a forward scan.
 ; Search is bounded to 24 cells; an empty inventory leaves selection intact.
 ; Uses $00-$01, destroys X/Y; entry and exit M/X=8 like the old helpers.
