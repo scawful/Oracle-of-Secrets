@@ -4,7 +4,7 @@
 ; Room 0x44 (Zora Temple): an upper deck sits over an underwater passage.
 ; The deck walker and the Zora diver both use collision map a ($7F2000,
 ; $EE=0). While !ZoraDiving is set, this tag swaps a short list of map-a
-; cells (rails and caps at x32-37 y49-52) and restores them when the dive ends.
+; cells (rails and caps at x41-48 y49-52) and restores them when the dive ends.
 ; It also hides the diver while the surface map b ($7F3000) cell under
 ; him is 02 (under the deck), using LinkVisible ($4B=$0C).
 ;
@@ -16,7 +16,7 @@
 ; Static room collision lives here, not in the custom-collision table: the
 ; deck strip is on map b (offsets $1000+), which the frozen custom-collision
 ; reader and yaze reject or drop. DiveGate_ApplyRoomCollision writes it once
-; per room load; a room reload rebuilds both maps and clears the sentinel.
+; per room load; a room reload rebuilds map b and clears the sentinel.
 
 DiveGate_IsRoom:
 {
@@ -43,7 +43,7 @@ DiveGate_Main:
   PEA.w $7F7F : PLB : PLB       ; DBR = $7F for the collision maps
   JSR DiveGate_ApplyRoomCollision
 
-  ; Write the selected column every frame (12 cells, idempotent).
+  ; Write the selected column every frame (16 cells, idempotent).
   .cell
     REP #$20
     LDA.l DiveGate_Room44_Normal,X : BMI .cells_done   ; $FFFF ends a list
@@ -71,14 +71,14 @@ DiveGate_Main:
   RTS
 }
 
-; Once per room load: map-b deck strip x32-37 y40-58 = 02, map-a south cap
-; row 57 x32-37 = 01. Needs DBR=$7F, M=8, X/Y=16. Preserves X; clobbers A, Y.
-; The sentinel is the first cap cell, written last.
+; Once per room load: map-b deck strip x42-47 y44-57 = 02. The deck's south wall
+; is already map-a row 56 (02) on layout rO, so no south cap. Needs DBR=$7F, M=8,
+; X/Y=16. Preserves X; clobbers A, Y. Sentinel: the first strip cell (authored 1C).
 DiveGate_ApplyRoomCollision:
 {
-  LDA.w $2E60 : CMP.b #$01 : BEQ .done
+  LDA.w $3B2A : CMP.b #$02 : BEQ .done
   PHX
-  LDX.w #$3A20                  ; map b x32 y40
+  LDX.w #$3B2A                  ; map b x42 y44
   .row
     LDA.b #$02
     LDY.w #$0006
@@ -86,14 +86,9 @@ DiveGate_ApplyRoomCollision:
       STA.w $0000,X : INX
       DEY : BNE .column
     REP #$21
-    TXA : ADC.w #$003A : TAX    ; next row, x32
+    TXA : ADC.w #$003A : TAX    ; next row, x42
     SEP #$20
-    CPX.w #$3EE0 : BNE .row     ; past y58
-  LDA.b #$01
-  LDX.w #$2E60                  ; map a x32 y57
-  .cap
-    STA.w $0000,X : INX
-    CPX.w #$2E66 : BNE .cap
+    CPX.w #$3EAA : BNE .row     ; past y57
   PLX
   .done
   RTS
@@ -134,33 +129,43 @@ DiveGate_ProbeIndex:
 }
 
 ; Map-a cells, offset = y*64 + x. Format: dw offset : db value.
-; Normal: rails block x32/x37 at y50-51, the north/south caps are open.
-; Dive: the rails open and the caps close (12 cells, written every frame).
+; Layout rO, values read from z3ed dungeon-tile-types map a. Rails are two cells
+; thick (2A + 02) on each side of the 4-wide deck x43-46.
+; Normal: rails block x41-42/x47-48 at y50-51, the north/south caps are open.
+; Dive: the rails open and the caps close (16 cells, written every frame).
 DiveGate_Room44_Normal:
-  dw $0CA0 : db $02   ; rail x32 y50
-  dw $0CE0 : db $02   ; rail x32 y51
-  dw $0CA5 : db $02   ; rail x37 y50
-  dw $0CE5 : db $02   ; rail x37 y51
-  dw $0C61 : db $00   ; cap x33 y49
-  dw $0C62 : db $00   ; cap x34 y49
-  dw $0C63 : db $00   ; cap x35 y49
-  dw $0C64 : db $00   ; cap x36 y49
-  dw $0D21 : db $00   ; cap x33 y52
-  dw $0D22 : db $00   ; cap x34 y52
-  dw $0D23 : db $00   ; cap x35 y52
-  dw $0D24 : db $00   ; cap x36 y52
+  dw $0CA9 : db $2A   ; rail x41 y50
+  dw $0CAA : db $02   ; rail x42 y50
+  dw $0CE9 : db $2A   ; rail x41 y51
+  dw $0CEA : db $02   ; rail x42 y51
+  dw $0CAF : db $02   ; rail x47 y50
+  dw $0CB0 : db $2A   ; rail x48 y50
+  dw $0CEF : db $02   ; rail x47 y51
+  dw $0CF0 : db $2A   ; rail x48 y51
+  dw $0C6B : db $00   ; cap x43 y49
+  dw $0C6C : db $00   ; cap x44 y49
+  dw $0C6D : db $00   ; cap x45 y49
+  dw $0C6E : db $00   ; cap x46 y49
+  dw $0D2B : db $00   ; cap x43 y52
+  dw $0D2C : db $00   ; cap x44 y52
+  dw $0D2D : db $00   ; cap x45 y52
+  dw $0D2E : db $00   ; cap x46 y52
   dw $FFFF
 DiveGate_Room44_Dive:
-  dw $0CA0 : db $00
-  dw $0CE0 : db $00
-  dw $0CA5 : db $00
-  dw $0CE5 : db $00
-  dw $0C61 : db $02
-  dw $0C62 : db $02
-  dw $0C63 : db $02
-  dw $0C64 : db $02
-  dw $0D21 : db $02
-  dw $0D22 : db $02
-  dw $0D23 : db $02
-  dw $0D24 : db $02
+  dw $0CA9 : db $00
+  dw $0CAA : db $00
+  dw $0CE9 : db $00
+  dw $0CEA : db $00
+  dw $0CAF : db $00
+  dw $0CB0 : db $00
+  dw $0CEF : db $00
+  dw $0CF0 : db $00
+  dw $0C6B : db $02
+  dw $0C6C : db $02
+  dw $0C6D : db $02
+  dw $0C6E : db $02
+  dw $0D2B : db $02
+  dw $0D2C : db $02
+  dw $0D2D : db $02
+  dw $0D2E : db $02
   dw $FFFF
