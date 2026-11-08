@@ -4411,3 +4411,34 @@ Answer: "Briefing only" (scawful, 2026-11-06)
   Answer: "1 Shoal pad (pick)" (scawful, 2026-11-06)
   Not decided: the exact shoal tiles, the landing spot (it follows the Lupo repaint of $5E),
   and the seal between $5E and the volcano.
+
+* DECIDED Wayward Village lost-dog quest: new dog lady at the pond, Heart Piece reward (2026-11-07)
+  :PROPERTIES:
+  :ASKED_BY: Claude, Wayward Village scope
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/wayward_village_scope_2026-11-07/SCOPE.md
+  :END:
+  scawful before the asks: "adding a new one who doesnt call the guards but is looking for her dog";
+  "she would need room to walk back n forth".
+  1. Question: Who owns Richard? Answer: "New lady, no guards" (scawful, 2026-11-07).
+     The snitch lady $3D stays a snitch. The dog lady is a new NPC on the snitch-lady body with
+     another palette, no new art.
+  2. Question: Where does she pace? Answer: "C, around the pond" (scawful, 2026-11-07).
+     Lane C on area $23, tiles 12-20, rows 31-37, at night. Richard is handed over there; no house.
+  3. Question: What does she give for Richard? Answer: "Heart Piece" (scawful, 2026-11-07).
+  Not decided: her name and dialogue (scawful's OK; ridoyie wording pass later).
+
+* DECIDED Richard's Heart Piece is the $25 Village Road piece; $A5 salvage gives rupees (2026-11-07)
+  :PROPERTIES:
+  :ASKED_BY: Claude, Wayward Village scope
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/wayward_village_scope_2026-11-07/SCOPE.md
+  :END:
+  scawful before the ask: "there is a heart piece plan we need to align with".
+  Question: Which spot gives up its Heart Piece so Richard can have the $25 one?
+  Options shown: "Drop $A5 salvage" (pick) / "Drop sky islands".
+  Answer: "Drop $A5 salvage" (scawful, 2026-11-07)
+  1. The total stays 36 pieces (20-heart cap, 5fe10b8f / 0d62c93d). Richard adds no 37th piece.
+  2. The day-only $25 Village Road overworld piece moves to Richard's owner instead of to a
+     hidden-finds spot (amends "Hidden finds: salvage maps and the six moved Heart Pieces").
+  3. Lyra salvage Heart Pieces: $B2 (Koume side) and $BD (Kotake side) only. $A5 Lost Sea
+     salvage gives rupees; its map content stays open.
+  4. Korok Cove, the garrison $83 and the sky islands keep their pieces.
