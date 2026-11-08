@@ -90,3 +90,16 @@ slot):
 ```bash
 python3 tools/oracle_cheats/test_cheats_headless.py --socket /tmp/mesen2-<instance>.sock --boot
 ```
+
+## Moosh debug macro
+
+`experimental_playtest_macros.json` includes `moosh_soaring_here`: **grant all six
+songs and select Song of Soaring**. It writes Ocarina progression `$7EF34C=07`,
+saved song `$7EF3AB=03`, and current song `$7E030F=03`. This is an intentional
+debug grant, not a song-acquisition check; it does not change position, world,
+health or mask form, and adds no `sync_sram` step.
+
+Use it outdoors in the Dark World, equip the Ocarina in the normal menu, then
+press Y to transform into Moosh. Moosh's A flight requires the Pegasus Boots;
+this macro does not grant them. Playing Soaring indoors or in the Light World does not
+prove the Dark World transformation.

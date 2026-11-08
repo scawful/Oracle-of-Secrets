@@ -927,6 +927,33 @@
           "action": "sync_sram"
         }
       ]
+    },
+    {
+      "id": "moosh_soaring_here",
+      "label": "Moosh here: grant all 6 songs + select Soaring (debug)",
+      "steps": [
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7EF34C",
+            "value": "0x07"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7EF3AB",
+            "value": "0x03"
+          }
+        },
+        {
+          "action": "write",
+          "args": {
+            "addr": "0x7E030F",
+            "value": "0x03"
+          }
+        }
+      ]
     }
   ]
 }
