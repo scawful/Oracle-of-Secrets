@@ -40,6 +40,20 @@ Moosh_EndHover:
   .done
   RTL
 }
+
+; The OAM hook enters with M/X=8, Y=$1C and DBR=$0D. Each direction in
+; that animation family has three frames; $02 still contains the walking
+; step ($2E), which can exceed two. Use a 0,1,2,1 wing cycle instead, leaving
+; $2F to select the direction. Direct-page scratch is owned by the OAM caller.
+Moosh_SelectHoverFrame:
+{
+  LDA.b $1A : LSR #3 : AND.b #$03
+  CMP.b #$03 : BNE .store
+    LDA.b #$01
+  .store
+  STA.b $02
+  JML $0DA435 ; LinkOAM_ContinueWithAnimation
+}
 print "End of Masks/moosh.asm            ", pc
 
 org $079093 ; @hook module=Masks

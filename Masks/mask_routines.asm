@@ -595,7 +595,7 @@ DekuLink_SpinOrRecoil:
   LDA.w DekuFloating : BEQ .spin
     LDA.w !CurrentMask : CMP.b #$07 : BNE +
       LDY.b #$1C
-      JML $0DA435 ; JML $0DA40B
+      JML Moosh_SelectHoverFrame
     +
     LDY.b #$05 ; Recoil
     JML $0DA435 ; JML $0DA40B
