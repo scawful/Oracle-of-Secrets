@@ -255,7 +255,7 @@
     "shared:Dungeons/d4_water_control.asm": {
       "source_set": "shared",
       "path": "Dungeons/d4_water_control.asm",
-      "sha256": "23931d2f385843dc98dfe1413c5ab7d5662e78426d4464fc5dd1749e4f9963a5"
+      "sha256": "f581f3ea6af89dd9a28ba1c7e397098c638724e9343c5f7f59137b57814628b4"
     }
   },
   "claims": [
@@ -2032,7 +2032,7 @@
         "ENABLE_D4_WATER_CONTROLS": 1
       },
       "lifetime": "Compiled prototype only; no editor writes or default activation.",
-      "reset": "Normal loader selects25Low/High by04 and37closed/original by10.08 remains maintenanceReleased.",
+      "reset": "Both native room-stream reads select25/26Low/High by04 and37closed/original by10.08 remains maintenanceReleased.",
       "save": "WaterGateStates04 reservoirHigh,08 maintenanceReleased,10 inletReleased; preserve01/02. No automatic220/221-save migration to10.",
       "provenance": [
         "shared:Dungeons/d4_water_control.asm"
