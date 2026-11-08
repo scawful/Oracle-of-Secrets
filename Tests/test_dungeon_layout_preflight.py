@@ -165,6 +165,35 @@ class DungeonLayoutPreflight(unittest.TestCase):
         plan["owner_expectations"][0]["allowed_object_ids"] = [0xF9B]
         self.assertEqual(self.run_check(plan, path)["status"], "PASS")
 
+    def test_global_table_contact_is_unsupported_even_if_stream_overlay_wins_sort(self):
+        original = FIXTURES / "v11_good.json"
+        for object_id in (0x120, 0x150, 0xE00):
+            with self.subTest(object_id=object_id):
+                data = json.loads(original.read_text())
+                # Model a table record at the corner, followed in trace index
+                # order by a BG1 overlay. Actual table-pass order is omitted.
+                c = copy.deepcopy(next(c for c in data["cases"] if c["object_index"] == 84))
+                c.update(object_id_dec=object_id, object_id=hex(object_id), object_index=2)
+                c["tiles"] = []  # Empty ordinary trace cannot clear table uncertainty.
+                data["cases"].append(c)
+                path = self.save(f"global-{object_id}.json", data)
+                plan = contract(path)
+                result = self.run_check(plan, path)
+                self.assertEqual(result["status"], "UNSUPPORTED")
+                self.assertEqual(len(result["unsupported"]), 1)
+                plan["owner_expectations"] = plan["owner_expectations"][1:]
+                self.assertEqual(self.run_check(plan, path)["status"], "PASS")
+
+    def test_global_table_contact_cannot_certify_reference_assembly(self):
+        plan, path, data = self.assembly()
+        c = copy.deepcopy(next(c for c in data["cases"] if c["object_id_dec"] == 0x108))
+        c.update(object_id_dec=0x120, object_id="0x120", object_index=2)
+        c["tiles"] = []
+        data["cases"].append(c)
+        path = self.save("table-over-assembly.json", data)
+        plan["provenance"]["candidate_trace_sha256"] = sha(path)
+        self.assertEqual(self.run_check(plan, path)["status"], "UNSUPPORTED")
+
     def test_cli_returns_nonzero_and_never_changes_inputs(self):
         for label, expected in [("v10_bad", 1), ("v11_good", 0)]:
             path = FIXTURES / f"{label}.json"

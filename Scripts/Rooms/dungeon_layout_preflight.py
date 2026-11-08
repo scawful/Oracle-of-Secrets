@@ -100,6 +100,24 @@ def final_writes(objects):
     return result
 
 
+def late_table_cells(objects):
+    """Conservative contacts for untagged global-table records in CLI traces.
+
+    Frozen reference traces expose torches as 0x120. Current Room loaders use
+    0x150 for torches and 0xE00 for blocks. The trace omits ObjectOption flags,
+    so these records cannot be placed in ordinary stream-pass order reliably.
+    Include the native 2x2 table footprint on both BGs when routing is unknown.
+    """
+    result = set()
+    for c in objects.values():
+        if c["object_id_dec"] in {0x120, 0x150, 0xE00}:
+            result.update(cells(c))
+            result.update((bg, x, y) for bg in (0, 1)
+                          for x in range(c["object_x"], c["object_x"] + 2)
+                          for y in range(c["object_y"], c["object_y"] + 2))
+    return result
+
+
 def describe(write):
     if write is None:
         return None
@@ -150,6 +168,7 @@ def check(contract, trace_path, contract_directory):
     if set(required) - objects.keys():
         raise InputError("required_object_indices includes an absent trace object")
     owners = final_writes(objects)
+    late_cells = late_table_cells(objects)
     bound = set()
     for assembly in contract.get("assemblies", []):
         name = assembly["name"]
@@ -174,6 +193,7 @@ def check(contract, trace_path, contract_directory):
                            "reason": "Native objects, relative positions, draw order, or tile writes differ"})
             continue
         ref_owners = final_writes(ref_objects)
+        ref_late_cells = late_table_cells(ref_objects)
         assembly_cells = {key for c in reference.values() for key in cells(c)}
         if not assembly_cells:
             unsupported.append({"name": name, "reason": "Assembly has no native tile writes"})
@@ -184,6 +204,10 @@ def check(contract, trace_path, contract_directory):
             if not (0 <= target[1] < 64 and 0 <= target[2] < 64):
                 errors.append({"code": "ASSEMBLY_OUT_OF_BOUNDS", "name": name,
                                "cell": list(target)})
+                continue
+            if target in late_cells or (bg, x, y) in ref_late_cells:
+                unsupported.append({"name": name, "reason": "Global-table draw pass/source flags are absent from trace",
+                                    "cell": list(target)})
                 continue
             ref_write, actual = ref_owners[(bg, x, y)], owners.get(target)
             rc, rv = ref_write
@@ -213,7 +237,10 @@ def check(contract, trace_path, contract_directory):
         if not allowed:
             raise InputError("allowed_object_ids must not be empty")
         actual = owners.get(key)
-        if actual is not None and len(actual[1]) != 1:
+        if key in late_cells:
+            unsupported.append({"name": expectation["name"], "reason": "Global-table draw pass/source flags are absent from trace",
+                                "cell": list(key)})
+        elif actual is not None and len(actual[1]) != 1:
             unsupported.append({"name": expectation["name"], "reason": "Trace loses intra-object write order",
                                 "cell": list(key)})
         elif actual is None or actual[0]["object_id_dec"] not in allowed:
@@ -224,7 +251,7 @@ def check(contract, trace_path, contract_directory):
     return {"schema_version": 1, "status": "BLOCKED" if errors else "UNSUPPORTED" if unsupported else "PASS",
             "room_id": room, "state_profile": state, "candidate_trace_sha256": sha,
             "scope": "Declared native object-trace assemblies and tile-owner assertions only; not room approval",
-            "excluded": ["unlisted geometry", "collision/routes", "reveal masks/composite", "doors/layout", "native gameplay"],
+            "excluded": ["unlisted geometry", "global-table draw passes", "collision/routes", "reveal masks/composite", "doors/layout", "native gameplay"],
             "checked": {"assemblies": checked, "owner_expectations": len(expectations),
                         "required_objects": len(required)}, "errors": errors, "unsupported": unsupported}
 
