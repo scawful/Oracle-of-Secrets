@@ -21,6 +21,8 @@ assert pc() == $018751
 org $01883E ; @hook module=Dungeons name=D4Water_SelectObjectLists kind=jsl target=D4Water_SelectObjects expected_m=16 expected_x=16 expected_exit_m=16 expected_exit_x=16 protected_size=12
   assert read4($01883E) == $1F8001BF && read2($018842) == $B885
   assert read4($018844) == $1F8000BF && read2($018848) == $B785
+  assert read3($01883F) == !D4Water_ObjectTable+1
+  assert read3($018845) == !D4Water_ObjectTable
   JSL D4Water_SelectObjects
   NOP #8
 assert pc() == $01884A
