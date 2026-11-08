@@ -1,4 +1,5 @@
 """Cross-consumer structural metadata controls, without live sprite binding."""
+import copy
 import hashlib
 import importlib.util
 from pathlib import Path
@@ -27,6 +28,15 @@ def placements():
     return dict(next_placement_id=0x6003, placements=rows)
 
 
+def bound_placements():
+    # Protocol-only golden, not a recipe against the current authoring ROM.
+    value = placements()
+    value['schema_version'] = 2
+    value['placements'][5].update(state=1, x=22, y=8, row=53)
+    value['placements'][6].update(state=1, row=41)
+    return value
+
+
 class NativeAuthoringMetadataTest(unittest.TestCase):
     def test_round_trip_order_targets_and_present_zero(self):
         value = placements()
@@ -45,6 +55,117 @@ class NativeAuthoringMetadataTest(unittest.TestCase):
         self.assertEqual(zeros[32 * 6 + 7], 3)
         self.assertEqual(zeros[32 * 7 + 7], 2)
         self.assertEqual(M.decode(zeros, 192), value)
+
+    def test_explicit_v1_preserves_bytes_and_legacy_decoded_shape(self):
+        value = placements()
+        legacy = M.encode(value, 192)
+        value['schema_version'] = 1
+        self.assertEqual(M.encode(value, 192), legacy)
+        self.assertEqual(value['schema_version'], 1)
+        self.assertNotIn('schema_version', M.decode(legacy, 192))
+        self.assertEqual(hashlib.sha256(legacy).hexdigest(),
+                         'f4a8e2cd3c1fede254883fc646b0faa6d9c93389cb85b71c74e8fe58a7597781')
+
+    def test_v2_bound_golden_preserves_order_and_round_trips(self):
+        value = bound_placements()
+        raw = M.encode(value, 192)
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), 'b61a938b1dbccf52ea0d29f222b340f0cabea30f4a8214023ce3af133759e278')
+        self.assertEqual(struct.unpack_from('<4H', raw, 8), (2, 32, 255, 7))
+        self.assertEqual(M.decode(raw, 192), value)
+        self.assertEqual(M.encode(M.decode(raw, 192), 192), raw)
+        self.assertEqual([r['id'] for r in M.decode(raw, 192)['placements']],
+                         [r['id'] for r in value['placements']])
+        self.assertEqual(raw[32 * 6 + 7], 3)
+        self.assertEqual(raw[32 * 7 + 7], 3)
+
+    def test_v2_bound_rows_require_both_fields_and_preserve_present_zero(self):
+        for kind in (2, 3):
+            index = 5 if kind == 2 else 6
+            for target, row in ((None, None), (0, None), (None, 0)):
+                with self.subTest(kind=kind, target=target, row=row):
+                    value = bound_placements()
+                    value['placements'][index].update(target=target, row=row)
+                    with self.assertRaises(ValueError):
+                        M.encode(value, 192)
+        value = bound_placements()
+        for row in value['placements'][5:]:
+            row.update(target=0, row=0)
+        raw = M.encode(value, 192)
+        self.assertEqual(M.decode(raw, 192), value)
+        self.assertEqual(raw[32 * 6 + 7], 3)
+        self.assertEqual(raw[32 * 7 + 7], 3)
+        # Different kinds may own the same row0; a bound wire record may not
+        # omit its row-presence bit even when the stored row word is zero.
+        broken = bytearray(raw)
+        broken[32 * 6 + 7] = 1
+        with self.assertRaises(ValueError):
+            M.decode(bytes(broken), 192)
+
+    def test_v2_live_row_ownership_is_per_kind_and_ignores_tombstones(self):
+        for kind in (2, 3):
+            with self.subTest(kind=kind):
+                value = bound_placements()
+                old = value['placements'][5 if kind == 2 else 6]
+                duplicate = dict(old, id=0x6003, x=23)
+                value['next_placement_id'] = 0x6004
+                value['placements'].append(duplicate)
+                with self.assertRaises(ValueError):
+                    M.encode(value, 192)
+                old['state'] = 3
+                before = copy.deepcopy(value)
+                raw = M.encode(value, 192)
+                self.assertEqual(M.decode(raw, 192), before)
+                self.assertEqual(value, before)
+                # Pending placements also retain witnesses without owning a row.
+                old['state'] = 2
+                self.assertEqual(M.decode(M.encode(value, 192), 192), value)
+        value = bound_placements()
+        value['placements'][6].update(kind=2, row=53)
+        with self.assertRaises(ValueError):
+            M.encode(value, 192)
+
+    def test_schema_is_explicit_and_unknown_versions_are_rejected(self):
+        for version in (None, 0, 3, -1, True, 1.0, '2'):
+            with self.subTest(version=version):
+                value = placements()
+                value['schema_version'] = version
+                with self.assertRaises(ValueError):
+                    M.encode(value, 192)
+        for version in (0, 3, 0xFFFF):
+            raw = bytearray(M.encode(placements(), 192))
+            struct.pack_into('<H', raw, 8, version)
+            with self.assertRaises(ValueError):
+                M.decode(bytes(raw), 192)
+        value = bound_placements()
+        value.pop('schema_version')
+        with self.assertRaises(ValueError):
+            M.encode(value, 192)
+        value['schema_version'] = 1
+        with self.assertRaises(ValueError):
+            M.encode(value, 192)
+
+    def test_v2_retains_ranges_reserved_bytes_and_pending_records(self):
+        value = placements()
+        value['schema_version'] = 2
+        self.assertEqual(M.decode(M.encode(value, 192), 192), value)
+        raw = M.encode(bound_placements(), 192)
+        for at in (20, 31, 32 * 6 + 11, 32 * 6 + 16, 8191):
+            broken = bytearray(raw)
+            broken[at] = 1
+            with self.assertRaises(ValueError):
+                M.decode(bytes(broken), 192)
+        for index, field, invalid in ((5, 'target', 256), (5, 'row', 256),
+                                      (6, 'row', 0x4F), (6, 'x', 32),
+                                      (5, 'map', 192)):
+            value = bound_placements()
+            value['placements'][index][field] = invalid
+            with self.assertRaises(ValueError):
+                M.encode(value, 192)
+        with self.assertRaises(ValueError):
+            M.encode(bound_placements(), 160)
+        value = bound_placements()
+        value['placements'][6]['target'] = 0xFFFF  # Existing return target range.
+        self.assertEqual(M.decode(M.encode(value, 192), 192), value)
 
     def test_deleted_locator_can_be_reused_but_identity_cannot(self):
         value = placements()
