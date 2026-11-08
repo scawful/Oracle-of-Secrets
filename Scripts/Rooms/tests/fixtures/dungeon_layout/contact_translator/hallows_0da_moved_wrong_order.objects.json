@@ -1,0 +1,67 @@
+{
+ "schema_version": 1,
+ "tool": "dungeon_contact_translator v0",
+ "room_id": "0x0DA",
+ "status": "OK",
+ "unsupported": [],
+ "contacts": [
+  {
+   "name": "da_mouth",
+   "family": "hallows_0da_south_stair_wall_cut",
+   "anchor": [
+    38,
+    47
+   ],
+   "translation_from_source": [
+    8,
+    0
+   ],
+   "source_room_id": "0x0DA"
+  }
+ ],
+ "removals": [
+  {
+   "index": 57,
+   "object_id": "0xF9D",
+   "x": 30,
+   "y": 47,
+   "size": 7,
+   "list": 0
+  },
+  {
+   "index": 56,
+   "object_id": "0x004",
+   "x": 25,
+   "y": 47,
+   "size": 6,
+   "list": 0
+  }
+ ],
+ "objects": [
+  {
+   "order": 0,
+   "contact": "da_mouth",
+   "family": "hallows_0da_south_stair_wall_cut",
+   "role": "stair",
+   "source_index": 57,
+   "object_id": "0xF9D",
+   "size": 7,
+   "list": 0,
+   "x": 38,
+   "y": 47
+  },
+  {
+   "order": 1,
+   "contact": "da_mouth",
+   "family": "hallows_0da_south_stair_wall_cut",
+   "role": "wall",
+   "source_index": 56,
+   "object_id": "0x004",
+   "size": 6,
+   "list": 0,
+   "x": 33,
+   "y": 47
+  }
+ ],
+ "control": "wrong_order: stair placed before its wall"
+}

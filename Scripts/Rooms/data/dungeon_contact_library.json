@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "unit": "tile8",
+  "anchor": "position of the stair member",
+  "families": [
+    {
+      "name": "oracle_cc_spiral_wall_cut",
+      "facing": "north",
+      "mirror": false,
+      "source": {
+        "label": "Oracle of Secrets inlet-service private v1",
+        "rom_sha256_prefix": "e48a192c",
+        "room_id": "0x0CC",
+        "graphics_entrance": null,
+        "trace": "reference-consistency-2026-11-08/oracle-alttp/oracle-cc.trace.json",
+        "trace_sha256": "5acc05004645430b3c16590fb17d386ea80f88ff6a3aeed4a3fce6f7d6bfccc3",
+        "anchor": [
+          9,
+          6
+        ]
+      },
+      "members": [
+        {
+          "role": "wall",
+          "source_index": 21,
+          "object_id": "0x001",
+          "size": 4,
+          "list": 0,
+          "dx": -3,
+          "dy": 0,
+          "tile_box": [
+            -3,
+            0,
+            5,
+            4
+          ],
+          "backgrounds": [
+            0
+          ],
+          "tile_writes": 32
+        },
+        {
+          "role": "flair",
+          "source_index": 45,
+          "object_id": "0x0B6",
+          "size": 3,
+          "list": 0,
+          "dx": -1,
+          "dy": 0,
+          "tile_box": [
+            -1,
+            0,
+            5,
+            4
+          ],
+          "backgrounds": [
+            0
+          ],
+          "tile_writes": 24
+        },
+        {
+          "role": "stair",
+          "source_index": 52,
+          "object_id": "0x139",
+          "size": 0,
+          "list": 0,
+          "dx": 0,
+          "dy": 0,
+          "tile_box": [
+            0,
+            0,
+            4,
+            3
+          ],
+          "backgrounds": [
+            0
+          ],
+          "tile_writes": 12
+        }
+      ],
+      "excluded": [
+        {
+          "object_index": 11,
+          "reason": "Adjoins the mouth at x=14 but writes none of its cells; source cells are overwritten by later objects 25 (0x104), 26 (0x055) and 61 (0xF93)."
+        },
+        {
+          "object_index": 24,
+          "reason": "Corner 0x100 at (2,6) closes the wall run outside the mouth; not part of the cut."
+        }
+      ],
+      "note": "Wall 0x001 then flair 0x0B6, then spiral stair 0x139 overwrites the wall band."
+    },
+    {
+      "name": "hallows_0da_south_stair_wall_cut",
+      "facing": "south",
+      "mirror": false,
+      "source": {
+        "label": "All Hallows Eve Main 53",
+        "rom_sha256_prefix": "b198daba",
+        "room_id": "0x0DA",
+        "graphics_entrance": "0x08",
+        "trace": "reference-consistency-2026-11-08/meadow-hallows/hallows/0DA/trace.json",
+        "trace_sha256": "4d81cc6272dc5acc5a10046c398d37357e0a86d24ccf2ea5d6fdfbdfe07f44ed",
+        "anchor": [
+          30,
+          47
+        ]
+      },
+      "members": [
+        {
+          "role": "wall",
+          "source_index": 56,
+          "object_id": "0x004",
+          "size": 6,
+          "list": 0,
+          "dx": -5,
+          "dy": 0,
+          "tile_box": [
+            -5,
+            0,
+            9,
+            4
+          ],
+          "backgrounds": [
+            0,
+            1
+          ],
+          "tile_writes": 112
+        },
+        {
+          "role": "stair",
+          "source_index": 57,
+          "object_id": "0xF9D",
+          "size": 7,
+          "list": 0,
+          "dx": 0,
+          "dy": 0,
+          "tile_box": [
+            0,
+            0,
+            4,
+            4
+          ],
+          "backgrounds": [
+            0
+          ],
+          "tile_writes": 16
+        }
+      ],
+      "excluded": [],
+      "note": "Wall 0x004 writes BG1+BG2; stair 0xF9D overwrites only BG1, so BG2 under the stair stays wall."
+    },
+    {
+      "name": "alttp_61_dais_cutin_north",
+      "facing": "north",
+      "mirror": false,
+      "source": {
+        "label": "ALTTP (USA)",
+        "rom_sha256_prefix": "66871d66",
+        "room_id": "0x061",
+        "graphics_entrance": null,
+        "trace": "reference-consistency-2026-11-08/oracle-alttp/alttp-61.trace.json",
+        "trace_sha256": "e74ddeaa5713b7fcf55f1045bea1b52c3312ba6b7cb6f4fd4063a3f1ad8b244a",
+        "anchor": [
+          10,
+          20
+        ]
+      },
+      "members": [
+        {
+          "role": "corner",
+          "source_index": 20,
+          "object_id": "0x108",
+          "size": 0,
+          "list": 0,
+          "dx": -5,
+          "dy": 0,
+          "tile_box": [
+            -5,
+            0,
+            -1,
+            4
+          ],
+          "backgrounds": [
+            0,
+            1
+          ],
+          "tile_writes": 32
+        },
+        {
+          "role": "wall",
+          "source_index": 21,
+          "object_id": "0x003",
+          "size": 2,
+          "list": 0,
+          "dx": -1,
+          "dy": 0,
+          "tile_box": [
+            -1,
+            0,
+            5,
+            4
+          ],
+          "backgrounds": [
+            0,
+            1
+          ],
+          "tile_writes": 48
+        },
+        {
+          "role": "corner",
+          "source_index": 22,
+          "object_id": "0x10C",
+          "size": 0,
+          "list": 0,
+          "dx": 5,
+          "dy": 0,
+          "tile_box": [
+            5,
+            0,
+            9,
+            4
+          ],
+          "backgrounds": [
+            0,
+            1
+          ],
+          "tile_writes": 32
+        },
+        {
+          "role": "wall",
+          "source_index": 23,
+          "object_id": "0x063",
+          "size": 2,
+          "list": 0,
+          "dx": 5,
+          "dy": -6,
+          "tile_box": [
+            5,
+            -6,
+            9,
+            0
+          ],
+          "backgrounds": [
+            0,
+            1
+          ],
+          "tile_writes": 48
+        },
+        {
+          "role": "corner",
+          "source_index": 24,
+          "object_id": "0x108",
+          "size": 0,
+          "list": 0,
+          "dx": 5,
+          "dy": -9,
+          "tile_box": [
+            5,
+            -9,
+            9,
+            -5
+          ],
+          "backgrounds": [
+            0,
+            1
+          ],
+          "tile_writes": 32
+        },
+        {
+          "role": "stair",
+          "source_index": 52,
+          "object_id": "0x132",
+          "size": 0,
+          "list": 0,
+          "dx": 0,
+          "dy": 0,
+          "tile_box": [
+            0,
+            0,
+            4,
+            4
+          ],
+          "backgrounds": [
+            0
+          ],
+          "tile_writes": 16
+        }
+      ],
+      "excluded": [
+        {
+          "object_index": 25,
+          "reason": "Run 0x003 size 12 continues the elbow, but 8 of its source cells are overwritten by later 0x11C objects 86/87; its cut-in 53 is excluded with it."
+        },
+        {
+          "object_index": 53,
+          "reason": "Cut-in 0x132 into run 25, excluded with 25."
+        },
+        {
+          "object_index": 54,
+          "reason": "Cut-in 0x132 into east wall 29, a different elbow (27-30)."
+        }
+      ],
+      "note": "Dais elbow 0x108/0x003/0x10C/0x063/0x108, then cut-in stair 0x132 overwrites wall 21."
+    }
+  ]
+}
