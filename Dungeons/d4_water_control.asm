@@ -32,6 +32,7 @@ D4Water_SelectObjects:
 {
   ; Entry D=0, M16/X16; X=room*3. Preserve X/Y/DBR and reproduce pointer result.
   LDA.l $7E00A0 : CMP.w #$0025 : BEQ .dam
+  CMP.w #$0026 : BEQ .reservoir
   CMP.w #$0037 : BEQ .spillway
   .original
   LDA.l !D4Water_ObjectTable+1,X : STA.b $B8
@@ -50,6 +51,18 @@ D4Water_SelectObjects:
   REP #$20
   LDA.w #D4Water25Low>>8 : STA.b $B8
   LDA.w #D4Water25Low : STA.b $B7
+  RTL
+  .reservoir
+  SEP #$20
+  LDA.l WaterGateStates : AND.b #!D4Water_High : BEQ .reservoir_low
+  REP #$20
+  LDA.w #D4Water26High>>8 : STA.b $B8
+  LDA.w #D4Water26High : STA.b $B7
+  RTL
+  .reservoir_low
+  REP #$20
+  LDA.w #D4Water26Low>>8 : STA.b $B8
+  LDA.w #D4Water26Low : STA.b $B7
   RTL
   .spillway
   SEP #$20
@@ -87,10 +100,11 @@ D4Water_Tick:
   LDA.b $A0 : CMP.w #$0025 : BNE +
   JMP .dam
   +
-  CMP.w #$0037 : BEQ .spill
+  CMP.w #$0026 : BEQ .collision_only
+  CMP.w #$0037 : BEQ .collision_only
   .done_near
   JMP .done
-  .spill
+  .collision_only
   JSR D4Water_ApplyCollision
   JMP .done
   .dam
@@ -168,7 +182,7 @@ D4Water_ApplyCollision:
   LDA.b $08 : PHA
   LDA.b $0A : PHA
   LDA.b $0C : PHA
-  LDA.b $A0 : CMP.w #$0025 : BNE .room37
+  LDA.b $A0 : CMP.w #$0025 : BNE .check26
   SEP #$20
   LDA.l WaterGateStates : AND.b #!D4Water_High : BEQ .low25
   REP #$20
@@ -176,6 +190,14 @@ D4Water_ApplyCollision:
   .low25
   REP #$20
   LDA.w #D4Water25LowCollision : BRA .pointer
+  .check26
+  CMP.w #$0026 : BNE .room37
+  SEP #$20
+  LDA.l WaterGateStates : AND.b #!D4Water_High : BEQ .low26
+  JMP .done ; High26 keeps freshly loaded native collision
+  .low26
+  REP #$20
+  LDA.w #D4Water26LowCollision : BRA .pointer
   .room37
   SEP #$20
   LDA.l WaterGateStates : AND.b #!D4Water_Inlet : BEQ .closed37
@@ -213,10 +235,13 @@ D4Water_ApplyCollision:
   PLA : STA.b $08
   RTS
 }
+D4Water26LowCollision: incbin "Data/Rooms/d4_water/26-low-collision.bin"
 D4Water25LowCollision:  incbin "Data/Rooms/d4_water/25-low-collision.bin"
 D4Water25HighCollision: incbin "Data/Rooms/d4_water/25-high-collision.bin"
 D4Water37ClosedCollision: incbin "Data/Rooms/d4_water/37-closed-collision.bin"
 
+D4Water26Low:  incbin "Data/Rooms/d4_water/26-low.bin"
+D4Water26High: incbin "Data/Rooms/d4_water/26-high.bin"
 D4Water25Low:  incbin "Data/Rooms/d4_water/25-low.bin"
 D4Water25High: incbin "Data/Rooms/d4_water/25-high.bin"
 D4Water37Closed: incbin "Data/Rooms/d4_water/37-closed.bin"
