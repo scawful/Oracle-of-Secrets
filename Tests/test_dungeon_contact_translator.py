@@ -137,10 +137,17 @@ class Contract(unittest.TestCase):
         self.assertEqual(contract["assemblies"][0]["candidate"]["object_indices"], [123, 124])
         self.assertEqual(result["status"], "PASS")
 
-    def test_wall_scope_reports_the_boundary_gap(self):
-        _, result = self.check("hallows_0da_moved.objects.json",
-                               "hallows_0da_moved_good.trace.json", "all")
-        self.assertEqual(result["status"], "UNSUPPORTED")
+    def test_wall_scope_passes_through_stair_mouth_boundary(self):
+        contract, result = self.check("hallows_0da_moved.objects.json",
+                                      "hallows_0da_moved_good.trace.json", "all")
+        self.assertEqual([b["kind"] for b in contract["wall_boundaries"]], ["stair_mouth"])
+        self.assertEqual(result["status"], "PASS", result["errors"] + result["unsupported"])
+
+    def test_wall_scope_blocks_stair_before_wall(self):
+        _, result = self.check("hallows_0da_moved_wrong_order.objects.json",
+                               "hallows_0da_moved_wrong_order.trace.json", "all")
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("STAIR_MOUTH_ORDER", [e["code"] for e in result["errors"]])
 
     def test_stair_before_wall_is_blocked(self):
         contract, result = self.check("hallows_0da_moved_wrong_order.objects.json",

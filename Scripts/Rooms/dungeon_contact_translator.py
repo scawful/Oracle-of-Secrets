@@ -227,7 +227,7 @@ def build_contract(objects_doc, candidate_trace, out_path, library, reference_ro
     cases = trace_cases(candidate_trace)
     out_dir = Path(out_path).resolve().parent
     room_id = parse_int(objects_doc["room_id"], "room_id")
-    assemblies, required = [], []
+    assemblies, required, boundaries = [], [], []
     for record in objects_doc["contacts"]:
         family = library[record["family"]]
         # Family member order, not object-list order: the checker compares the two orders.
@@ -252,13 +252,16 @@ def build_contract(objects_doc, candidate_trace, out_path, library, reference_ro
             if c is None or (c["object_id_dec"], c["size"], c["object_layer"], c["object_x"], c["object_y"]) != (
                     int(m["object_id"], 16), m["size"], m["list"], sx + m["dx"], sy + m["dy"]):
                 raise InputError(f"{record['family']}: reference index {m['source_index']} differs from library")
-        assemblies.append({"name": record["name"],
-                           "reference": {"trace": os.path.relpath(ref_path, out_dir), "sha256": ref_sha,
-                                         "object_indices": [m["source_index"] for m in family["members"]]},
+        reference = {"trace": os.path.relpath(ref_path, out_dir), "sha256": ref_sha,
+                     "object_indices": [m["source_index"] for m in family["members"]]}
+        assemblies.append({"name": record["name"], "reference": reference,
                            "candidate": {"object_indices": candidate},
                            "translation": record["translation_from_source"]})
         if require == "all":
             required.extend(candidate)
+            # The checker certifies the cut walls only as this measured stair-mouth contact.
+            boundaries.append({"name": record["name"], "kind": "stair_mouth", "family": record["family"],
+                               "reference": dict(reference), "candidate": {"object_indices": candidate}})
         else:
             required.extend(i for i, m in zip(candidate, family["members"]) if m["role"] == "stair")
     profiles = {c["state_profile"] for c in cases}
@@ -268,6 +271,7 @@ def build_contract(objects_doc, candidate_trace, out_path, library, reference_ro
             "provenance": {"candidate_trace_sha256": sha256(candidate_trace),
                            "source_note": f"dungeon_contact_translator v0 contract (require={require})"},
             "required_object_indices": required, "assemblies": assemblies,
+            **({"wall_boundaries": boundaries} if boundaries else {}),
             "owner_expectations": [], "unsupported": []}
 
 

@@ -88,7 +88,8 @@
           "reason": "Corner 0x100 at (2,6) closes the wall run outside the mouth; not part of the cut."
         }
       ],
-      "note": "Wall 0x001 then flair 0x0B6, then spiral stair 0x139 overwrites the wall band."
+      "note": "Wall 0x001 then flair 0x0B6, then spiral stair 0x139 overwrites the wall band.",
+      "contact_sha256": "f2eb0308f340f9154c5b7c54d5740dff2cf9a6e731ddc26079956c0b380d3cf9"
     },
     {
       "name": "hallows_0da_south_stair_wall_cut",
@@ -148,7 +149,8 @@
         }
       ],
       "excluded": [],
-      "note": "Wall 0x004 writes BG1+BG2; stair 0xF9D overwrites only BG1, so BG2 under the stair stays wall."
+      "note": "Wall 0x004 writes BG1+BG2; stair 0xF9D overwrites only BG1, so BG2 under the stair stays wall.",
+      "contact_sha256": "8af62ddce03e0a50e6e2e7e9dfa7a04dc2e663d8ed2b9ececb9e6371e3eb63f4"
     },
     {
       "name": "alttp_61_dais_cutin_north",
@@ -301,7 +303,8 @@
           "reason": "Cut-in 0x132 into east wall 29, a different elbow (27-30)."
         }
       ],
-      "note": "Dais elbow 0x108/0x003/0x10C/0x063/0x108, then cut-in stair 0x132 overwrites wall 21."
+      "note": "Dais elbow 0x108/0x003/0x10C/0x063/0x108, then cut-in stair 0x132 overwrites wall 21.",
+      "contact_sha256": "b99df6ff661ce1f6d12715ab3e2eac881dc54472a55261516ed8cdf1fef44691"
     }
   ]
 }

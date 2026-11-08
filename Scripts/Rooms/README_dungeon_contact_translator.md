@@ -41,12 +41,21 @@ orientation. `--relocate-source` (packet room = source room) removes the source 
 with `e1e6fb5b`. It only calls `z3ed dungeon-remove-object` (expect-guarded) and
 `dungeon-place-object`; it never encodes room bytes.
 
-## Checker gap (reported, not forked)
+## Checker: `stair_mouth` boundaries
 
-`--require all` gives `UNSUPPORTED`: the checker requires a `wall_boundaries` entry for
-every changed wall/corner, and boundaries support only closed rectangular cycles. A wall
-with a stair mouth is open by design. `--require stair` checks the stair's final owners and
-the assembly order/signature; that is the v0 gate. Fixtures:
+`--require all` adds a `wall_boundaries` entry `{"kind": "stair_mouth", "family": ...}`.
+The checker (`dungeon_layout_preflight.py`) passes it only when:
+
+1. the family is in this library (fixed repo path; a contract cannot add families);
+2. the reference trace's member writes hash to the family's `contact_sha256`;
+3. the candidate is a rigid copy: one shared offset, same IDs/sizes/lists/tile words
+   (rotated or mirrored copies are `UNSUPPORTED`);
+4. the stair draws after the walls it cuts (else `BLOCKED STAIR_MOUTH_ORDER`);
+5. every mouth cell's final owner is the stair (else `BLOCKED STAIR_MOUTH_OWNER`), and
+   other contact cells keep their measured owners (`WALL_OVERWRITTEN`).
+
+Not certified: where the cut wall run meets the rest of the room (`ends_certified:
+false`, listed under `excluded`). Closed-cycle boundaries are unchanged. Fixtures:
 `tests/fixtures/dungeon_layout/contact_translator/`.
 
 ## Controls (2026-11-08, private scratch ROMs)

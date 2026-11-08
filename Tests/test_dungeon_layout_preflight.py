@@ -347,5 +347,144 @@ class DungeonLayoutPreflight(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout)["status"], "INPUT_ERROR")
 
 
+CONTACTS = FIXTURES / "contact_translator"
+# (family, reference fixture, reference members, candidate fixture, candidate members)
+MOUTHS = {
+    "oracle_cc_spiral_wall_cut": ("oracle_cc_reference", [21, 45, 52], "oracle_cc_moved_good", [78, 79, 80]),
+    "hallows_0da_south_stair_wall_cut": ("hallows_0da_reference", [56, 57], "hallows_0da_moved_good", [123, 124]),
+    "alttp_61_dais_cutin_north": ("alttp_61_reference", [20, 21, 22, 23, 24, 52],
+                                  "alttp_61_moved_good", [97, 98, 99, 100, 101, 102]),
+}
+HALLOWS = "hallows_0da_south_stair_wall_cut"
+
+
+class StairMouthBoundary(unittest.TestCase):
+    """Fixtures are cut from real z3ed round-trip traces (private scratch ROMs, 2026-11-08).
+
+    Candidate cuts keep every object that writes a contact cell, so final owners
+    match the full room trace."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.directory = Path(self.temp.name)
+
+    def plan(self, family, candidate_path, candidate_ids=None, reference_path=None):
+        ref_name, ref_ids, _, default_ids = MOUTHS[family]
+        reference_path = reference_path or CONTACTS / f"{ref_name}.trace.json"
+        data = json.loads(candidate_path.read_text())
+        ids = candidate_ids or default_ids
+        return {"schema_version": 1, "room_id": data["cases"][0]["room_id"],
+                "state_profile": data["cases"][0]["state_profile"],
+                "provenance": {"candidate_trace_sha256": sha(candidate_path)},
+                "required_object_indices": list(ids), "assemblies": [], "owner_expectations": [],
+                "wall_boundaries": [{"name": "mouth", "kind": "stair_mouth", "family": family,
+                                     "reference": {"trace": str(reference_path), "sha256": sha(reference_path),
+                                                   "object_indices": ref_ids},
+                                     "candidate": {"object_indices": list(ids)}}]}
+
+    def run_plan(self, plan, path):
+        return preflight.check(plan, path, self.directory)
+
+    def edited(self, family, edit, name="edited.json"):
+        source = CONTACTS / f"{MOUTHS[family][2]}.trace.json"
+        data = json.loads(source.read_text())
+        edit(data)
+        path = self.directory / name
+        path.write_text(json.dumps(data))
+        return path
+
+    def test_round_trip_contacts_pass(self):
+        for family, (_, _, candidate, ids) in MOUTHS.items():
+            with self.subTest(family=family):
+                path = CONTACTS / f"{candidate}.trace.json"
+                result = self.run_plan(self.plan(family, path), path)
+                self.assertEqual(result["status"], "PASS", result["errors"] + result["unsupported"])
+                [checked] = result["checked"]["wall_boundaries"]
+                self.assertEqual((checked["kind"], checked["family"], checked["objects"], checked["ends_certified"]),
+                                 ("stair_mouth", family, len(ids), False))
+
+    def test_stair_before_wall_is_blocked(self):
+        path = CONTACTS / "hallows_0da_moved_wrong_order.trace.json"
+        result = self.run_plan(self.plan(HALLOWS, path, [124, 123]), path)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertEqual([e["code"] for e in result["errors"]], ["STAIR_MOUTH_ORDER"])
+
+    def test_rotated_and_mirrored_contacts_stay_unsupported(self):
+        def rotate(data):  # Transpose every member about the stair origin.
+            stair = next(c for c in data["cases"] if c["object_index"] == 124)
+            ax, ay = stair["object_x"], stair["object_y"]
+            for c in data["cases"]:
+                c["object_x"], c["object_y"] = ax + c["object_y"] - ay, ay + c["object_x"] - ax
+                for t in c["tiles"]:
+                    t["x_tile"], t["y_tile"] = ax + t["y_tile"] - ay, ay + t["x_tile"] - ax
+
+        def mirror(data):
+            for c in data["cases"]:
+                for t in c["tiles"]:
+                    t["flags"] ^= 0x4000
+
+        for label, edit in [("rotated", rotate), ("mirrored", mirror)]:
+            with self.subTest(label):
+                path = self.edited(HALLOWS, edit, f"{label}.json")
+                result = self.run_plan(self.plan(HALLOWS, path), path)
+                self.assertEqual(result["status"], "UNSUPPORTED")
+                self.assertTrue(any("rigid copy" in u["reason"] for u in result["unsupported"]))
+
+    def test_respaced_member_is_unsupported(self):
+        def shift_wall(data):
+            wall = next(c for c in data["cases"] if c["object_index"] == 123)
+            wall["object_x"] += 1
+            for t in wall["tiles"]:
+                t["x_tile"] += 1
+        path = self.edited(HALLOWS, shift_wall)
+        self.assertEqual(self.run_plan(self.plan(HALLOWS, path), path)["status"], "UNSUPPORTED")
+
+    def test_later_overlay_on_mouth_is_blocked(self):
+        def overlay(data):
+            wall = copy.deepcopy(next(c for c in data["cases"] if c["object_index"] == 123))
+            wall["object_index"] = 500
+            data["cases"].append(wall)
+        path = self.edited(HALLOWS, overlay)
+        result = self.run_plan(self.plan(HALLOWS, path), path)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("STAIR_MOUTH_OWNER", {e["code"] for e in result["errors"]})
+
+    def test_unmeasured_family_or_reference_is_unsupported(self):
+        path = CONTACTS / "hallows_0da_moved_good.trace.json"
+        plan = self.plan(HALLOWS, path)
+        plan["wall_boundaries"][0]["family"] = "hallows_0da_north_stair_wall_cut"
+        self.assertEqual(self.run_plan(plan, path)["status"], "UNSUPPORTED")
+        # A reference with the same IDs but altered writes is not the measured contact.
+        reference = json.loads((CONTACTS / "hallows_0da_reference.trace.json").read_text())
+        reference["cases"][0]["tiles"][0]["tile_id_dec"] ^= 1
+        reference["cases"][0]["tiles"][0]["tile_id"] = f"0x{reference['cases'][0]['tiles'][0]['tile_id_dec']:X}"
+        ref_path = self.directory / "fake-reference.json"
+        ref_path.write_text(json.dumps(reference))
+        result = self.run_plan(self.plan(HALLOWS, path, reference_path=ref_path), path)
+        self.assertEqual(result["status"], "UNSUPPORTED")
+        self.assertTrue(any("measured contact" in u["reason"] for u in result["unsupported"]))
+
+    def test_malformed_family_and_shared_members_are_input_errors(self):
+        path = CONTACTS / "hallows_0da_moved_good.trace.json"
+        plan = self.plan(HALLOWS, path)
+        plan["wall_boundaries"][0]["family"] = [HALLOWS]
+        with self.assertRaises(preflight.InputError):
+            self.run_plan(plan, path)
+        plan = self.plan(HALLOWS, path)
+        plan["wall_boundaries"].append(dict(plan["wall_boundaries"][0], name="again"))
+        with self.assertRaises(preflight.InputError):
+            self.run_plan(plan, path)
+
+    def test_closed_cycle_still_rejects_stair_mouth_without_kind(self):
+        path = CONTACTS / "hallows_0da_moved_good.trace.json"
+        plan = self.plan(HALLOWS, path)
+        del plan["wall_boundaries"][0]["kind"]
+        self.assertEqual(self.run_plan(plan, path)["status"], "UNSUPPORTED")
+        plan["wall_boundaries"][0]["kind"] = "open_run"
+        with self.assertRaises(preflight.InputError):
+            self.run_plan(plan, path)
+
+
 if __name__ == "__main__":
     unittest.main()
