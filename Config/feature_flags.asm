@@ -39,6 +39,7 @@
 !ENABLE_KALYXO_DOCKS_PROFILE          = 0
 !ENABLE_KOROK_POLISH                  = 1
 !ENABLE_LUPO_PAD_GATE                 = 1
+!ENABLE_LYRA_OVERLAY_FIX              = 1
 !ENABLE_MAP_ICON_TIMELINE             = 1
 !ENABLE_MASK_R_BINDING                = 1
 !ENABLE_MASK_Y_TRANSFORM              = 1

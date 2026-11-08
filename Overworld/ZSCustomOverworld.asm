@@ -2280,7 +2280,16 @@ Overworld_ReloadSubscreenOverlay_Interupt:
         REP #$20 ; Set A in 16bit mode.
 
         ; Check to see if we are in a SW overworld area.
+if !ENABLE_LYRA_OVERLAY_FIX == 1
+        ; Lyra/Sky overlay fix (Overworld/lyra_overlay_fix.asm): tail maps
+        ; ($A0-$BF) and Song of Storms rain on a Sky map take the overlay
+        ; table path below. Same 7 bytes as LDA/CMP/BCC; A is reloaded by
+        ; both paths, M stays 16, X/Y are untouched.
+        JSL Oracle_LyraOverlay_UseTablePath : BCC .notExtendedArea
+        NOP
+else
         LDA.b $8A : CMP.w #$0080 : BCC .notExtendedArea
+endif
             ; $0182 is the exit room number used for getting to Zora's Domain.
             LDA.b $A0 : CMP.w #$0182 : BNE .notZoraFalls   
                 SEP #$20 ; Set A in 8bit mode.

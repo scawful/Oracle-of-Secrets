@@ -242,6 +242,14 @@ endif
 ; Every other pad, including LW $25 -> $65 (Yesterwind), is unchanged
 ; (Overworld/lupo_pad_gate.asm).
 !ENABLE_LUPO_PAD_GATE               = 1
+; Lyra/Sky overlay fix: Overworld_ReloadSubscreenOverlay (ZSCustomOverworld,
+; $02AF58) skipped the subscreen-overlay table for every area >= $80, so a
+; reload on a tail map ($A0-$BF) or during Song of Storms rain on a Sky map
+; lost its overlay; and the map16 event overlay jump ($02EF50) indexes a
+; 160-entry vector table that tail maps ($A0-$BF) overrun. The reload now
+; takes the table path for tail maps and for rain, and the event overlay
+; is a no-op for $8A >= $A0 (Overworld/lyra_overlay_fix.asm).
+!ENABLE_LYRA_OVERLAY_FIX            = 1
 ; Hot floor (underworld tile type $DE): hurts like spike floor except in
 ; Garo Master form, airborne (feather/cape hop, Deku hover) or in a minecart.
 ; Sprites walk on it (Dungeons/hot_floor.asm).

@@ -182,6 +182,11 @@ LoadOverworldPitAreas:
   RTL
 }
 
+; Appended after the existing bank $34 free-space code so nothing moves.
+if !ENABLE_LYRA_OVERLAY_FIX == 1
+  incsrc "Overworld/lyra_overlay_fix.asm"
+endif
+
 incsrc "Overworld/great_sea_music.asm"
 
 Overworld_GetPitDestination = $1BB860
