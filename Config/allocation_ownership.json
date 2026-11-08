@@ -255,7 +255,7 @@
     "shared:Dungeons/Data/kits/kits.asm": {
       "source_set": "shared",
       "path": "Dungeons/Data/kits/kits.asm",
-      "sha256": "615a1f47107d6d09667b1b56ad1ef91c7113a35c5c648c90b2bba40940289da7"
+      "sha256": "083b42261c9d16bf6c6ddc954b0b7118ee3158d30701f0d5d6b649d31cdeb91d"
     },
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
