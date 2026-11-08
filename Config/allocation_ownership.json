@@ -165,7 +165,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "6c85e45905c718ee9e9a03294a20993c5aff3039e26a98375f1c2bbd60863483"
+      "sha256": "9d38a1d42fc05f6d1ebac9ea79707a533088b1441d29c05f4eae316d289db067"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -241,6 +241,11 @@
       "source_set": "shared",
       "path": "Sprites/Bosses/d8_boss.asm",
       "sha256": "46f7952d50c3271da51c23114af5f6f31f101dcc3c5fefb5b2a31d03b247bf0f"
+    },
+    "shared:Dungeons/wall_profile_selector.asm": {
+      "source_set": "shared",
+      "path": "Dungeons/wall_profile_selector.asm",
+      "sha256": "7c50caaba70e5b4c641e41c6d3ab7267b38c146b8603e55043c29905f9af5b41"
     },
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
@@ -415,13 +420,13 @@
     },
     {
       "id": "symbols_wram_block",
-      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..FinaleBeat; native cache/palette history retained)",
+      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..WallSel_Buffer; native cache/palette history retained)",
       "space": "wram",
       "base": 8265328,
-      "size": 57,
+      "size": 89,
       "status": "shared",
       "condition": {},
-      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint. Last four bytes retain underlying native sheets for resource slots 0/1/2/7 across graphics loads; not persistent save data. Next 26 bytes reserve six native BG column8 reference/effective words plus state/area; no HUD, OBJ or backdrop column0 history. Finale GanondorfFight/BossReinject/FinaleBeat append at $7E1EA6-$7E1EA8 without changing native cache aliases.",
+      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint. Last four bytes retain underlying native sheets for resource slots 0/1/2/7 across graphics loads; not persistent save data. Next 26 bytes reserve six native BG column8 reference/effective words plus state/area; no HUD, OBJ or backdrop column0 history. Finale GanondorfFight/BossReinject/FinaleBeat append at $7E1EA6-$7E1EA8 without changing native cache aliases. WallSel_Buffer $7E1EA9-$7E1EC8 (32B) is the wall-profile selector span window: written by WallSel_Common immediately before the drawer reads it through the $01:1EA9 mirror; no state carries between draws; only used when !ENABLE_WALL_PROFILE_SELECTOR == 1.",
       "reset": "No block-wide reset is claimed. Not in ResetTrackVars arrays since PR 211 moved this block from $7E0730 to vanilla-free $7E1E70. The last four-byte SpecialOverworldMainCache is cleared by the default-off resource callback before fresh native InitTilesets/mirror identities, then retains underlying main-sheet identities for departure restoration. Runtime qualification remains pending. Palette-hole cache reset/capture/restoration remains unbound: before any read reset state to0 and area toFF; native84-color BG refresh and Buffer/Both completion must be bound before palette activation. Main file-load entry clears the three appended Finale state bytes after native tail migration.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
@@ -1995,6 +2000,27 @@
       ],
       "anchors": [
         "org $2EB800"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "wall_profile_selector_code",
+      "owner": "Per-dungeon wall-profile selector code and tables",
+      "space": "snes_rom",
+      "base": 4513792,
+      "size": 8192,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_WALL_PROFILE_SELECTOR": 1
+      },
+      "lifetime": "Compiled ROM code and generated tables; fixed slot at the end of bank $44, clear of docks_map_streams ($44C000, 1036 B). Banks $40/$43/$47 are exclusive to sheet tools.",
+      "reset": "Build owns this slot; no runtime allocation or SRAM.",
+      "save": "No saved data. Runtime span window is symbols_wram_block WallSel_Buffer.",
+      "provenance": [
+        "shared:Dungeons/wall_profile_selector.asm"
+      ],
+      "anchors": [
+        "org $44E000"
       ],
       "aliases": []
     },
