@@ -165,6 +165,18 @@ jobs:
           printf '\x0C\x05\x00\x2B' | dd of=test.sfc bs=1 seek=$((0xDACC3)) conv=notrunc 2>/dev/null  # $1BACC3 UW aux size/ARAM
           printf '\x8D\x40\x21\x8D\x33\x01' | dd of=test.sfc bs=1 seek=$((0x000F3)) conv=notrunc 2>/dev/null  # $0080F3 STA.w APUIO0 : STA.w $0133
 
+          # Original overlay call guarded by Overworld/lyra_overlay_fix.asm.
+          printf '\x22\x52\xF6\x0E' | dd of=test.sfc bs=1 seek=$((0x16F50)) conv=notrunc 2>/dev/null  # $02EF50 JSL $0EF652
+
+          # Both native room-object pointer loads guarded by Dungeons/d4_water_control.asm.
+          for d4_object_pointer_pc in 0x8745 0x883E; do
+            printf '\xBF\x01\x80\x1F\x85\xB8\xBF\x00\x80\x1F\x85\xB7' | dd of=test.sfc bs=1 seek=$((d4_object_pointer_pc)) conv=notrunc 2>/dev/null  # LDA.l $1F8001,X : STA $B8 : LDA.l $1F8000,X : STA $B7
+          done
+
+          # Native camera-cache and follower-message bytes guarded by Sprites/Bosses/d4_pressure_warden.asm.
+          printf '\xC2\x20\xA5\xE2\x8F\x80\xC1\x7E' | dd of=test.sfc bs=1 seek=$((0x10D81)) conv=notrunc 2>/dev/null  # $028D81 REP #$20 : LDA $E2 : STA.l $7EC180
+          printf '\x22\xAA\xFD\x0F' | dd of=test.sfc bs=1 seek=$((0x4A01F)) conv=notrunc 2>/dev/null  # $09A01F JSL $0FFDAA
+
           # Preimage bytes taken from the readN() guards in Dungeons/sky_d8_award.asm.
           # Synthetic only; fails on unparsed read guards or conflicting bytes.
           python3 .github/scripts/test_seed_sky_award_preimages.py
@@ -175,6 +187,11 @@ jobs:
           python3 .github/scripts/seed_sky_award_preimages.py Dungeons/d6_cart_circuit.asm test.sfc
           # Same for all 25 receipt hooks; validate the macro and keep every guard active.
           python3 .github/scripts/seed_sky_award_preimages.py Items/bombchu_receipt.asm test.sfc
+
+          # Grow to the real 4 MiB base size after the seeders, which validate the
+          # 2 MiB image. Keeps zero-filled bank $50 in bounds for the D4 water slot
+          # guard at $508000-$50A000 (PC $280000).
+          dd if=/dev/zero of=test.sfc bs=1024 count=2048 seek=2048 conv=notrunc 2>/dev/null
 
           # Run Asar against the synthetic headerless ROM.
           set -o pipefail
