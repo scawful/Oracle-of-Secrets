@@ -975,14 +975,16 @@ MinecartFollower_TransitionToSprite:
   CMP.b #$00 : BEQ .vert_adjust
                              CMP.b #$02 : BEQ .vert_adjust
     LDA.w POSY : CLC : ADC #$08 : STA.w SprY, X
+    LDA.w POSYH : ADC.b #$00    : STA.w SprYH, X
     LDA.w POSX                  : STA.w SprX, X
+    LDA.w POSXH                 : STA.w SprXH, X
     JMP .finish_prep
   .vert_adjust
   LDA.w POSY : STA.w SprY, X
   LDA.w POSX : CLC : ADC #$02 : STA.w SprX, X
-  .finish_prep
   LDA.w POSYH : STA.w SprYH, X
   LDA.w POSXH : STA.w SprXH, X
+  .finish_prep
   LDA.w !MinecartDirection, X
   CLC : ADC.b #$04 : STA.w SprMiscB, X
 

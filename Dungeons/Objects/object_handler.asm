@@ -273,6 +273,14 @@ CustomObjectHandler2:
     dw .IceFurnace-.ObjData       ; 00
     dw .Firewood-.ObjData         ; 01
     dw .IceChair-.ObjData         ; 02
+    dw .FloorTN-.ObjData ; 03
+    dw .FloorTS-.ObjData ; 04
+    dw .FloorTE-.ObjData ; 05
+    dw .FloorTW-.ObjData ; 06
+    dw .PitTN-.ObjData ; 07
+    dw .PitTS-.ObjData ; 08
+    dw .PitTE-.ObjData ; 09
+    dw .PitTW-.ObjData ; 0A
 
   .ObjData
     .IceFurnace
@@ -281,6 +289,22 @@ CustomObjectHandler2:
       incbin Data/firewood.bin
     .IceChair
       incbin Data/ice_chair.bin
+    .FloorTN
+      incbin Data/track_floor_T_N.bin
+    .FloorTS
+      incbin Data/track_floor_T_S.bin
+    .FloorTE
+      incbin Data/track_floor_T_E.bin
+    .FloorTW
+      incbin Data/track_floor_T_W.bin
+    .PitTN
+      incbin Data/track_T_N.bin
+    .PitTS
+      incbin Data/track_T_S.bin
+    .PitTE
+      incbin Data/track_T_E.bin
+    .PitTW
+      incbin Data/track_T_W.bin
 }
 
 pushpc
