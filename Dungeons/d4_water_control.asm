@@ -121,25 +121,6 @@ D4Water_Tick:
   JMP .done
   .dam
   JSR D4Water_ApplyCollision
-  SEP #$20
-  LDA.l WaterGateStates : AND.b #!D4Water_High : BEQ +
-  JMP .check_main
-  +
-  LDA.w $0AAB : BEQ +
-  JMP .check_main
-  +
-  REP #$20
-  ; Step on the maintenance star once. Coordinates use Link's centre/feet.
-  LDA.b $22 : AND.w #$01FF : CLC : ADC.w #$0008
-  CMP.w #$0148 : BCC .check_main
-  CMP.w #$0158 : BCS .check_main
-  LDA.b $20 : AND.w #$01FF : CLC : ADC.w #$0014
-  CMP.w #$0188 : BCC .check_main
-  CMP.w #$0198 : BCS .check_main
-  SEP #$20
-  LDA.l WaterGateStates : AND.b #!D4Water_Latch : BNE .check_main
-  LDA.l WaterGateStates : ORA.b #!D4Water_Latch : STA.l WaterGateStates
-  LDA.b #$25 : STA.w $012F
   .check_main
   REP #$20
   LDA.b $22 : AND.w #$01FF : CMP.w #$0060 : BCS +

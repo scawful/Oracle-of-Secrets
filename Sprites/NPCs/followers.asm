@@ -130,6 +130,15 @@ CheckForZoraBabyTransitionToSprite:
     LDA.w $0114 : CMP.b #$3B : BNE +
       LDA.b #$00
       JSR ZoraBaby_RevertToSprite
+if !ENABLE_D4_WATER_CONTROLS == 1
+      ; Baby dropped on the room $25 star unlocks the D4 maintenance valve.
+      LDA.b $A0 : CMP.b #$25 : BNE .no_valve_latch
+      LDA.b $A1 : BNE .no_valve_latch
+      LDA.l WaterGateStates : AND.b #!D4Water_Latch : BNE .no_valve_latch
+      LDA.l WaterGateStates : ORA.b #!D4Water_Latch : STA.l WaterGateStates
+      LDA.b #$25 : STA.w $012F
+      .no_valve_latch
+endif
     +
 
     ; If we are outdoors, clear the follower
