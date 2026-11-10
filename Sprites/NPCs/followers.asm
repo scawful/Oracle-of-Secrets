@@ -1202,8 +1202,12 @@ CheckForFollowerInterroomTransition:
   .not_in_cart
 
   PLP
+if !ENABLE_SKY_ROOM_SKY == 1
+  JML SkyRoom_LoadRoom ; Underworld_LoadRoom + Sky room BG1 fill, then RTL
+else
   JSL $01873A ; Underworld_LoadRoom
   RTL
+endif
 }
 
 CheckForFollowerIntraroomTransition:
@@ -1353,7 +1357,11 @@ if !ENABLE_FOLLOWER_TRANSITION_HOOKS
   JSL CheckForFollowerInterroomTransition
 else
   ; Vanilla (USDASM #_028A5B): JSL Underworld_LoadRoom ($01873A)
+if !ENABLE_SKY_ROOM_SKY == 1
+  JSL SkyRoom_LoadRoom
+else
   JSL $01873A
+endif
 endif
 
 ; UnderworldTransition_Intraroom_PrepTransition

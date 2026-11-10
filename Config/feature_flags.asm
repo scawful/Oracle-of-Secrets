@@ -68,6 +68,7 @@
 !ENABLE_PART0_STORM                   = 1
 !ENABLE_PORTAL_ROD_CELL               = 1
 !ENABLE_RING_SRAM_RELOCATE            = 1
+!ENABLE_SKY_ROOM_SKY                  = 0
 !ENABLE_SKY_TOWER_GRAPHICS            = 0
 !ENABLE_SOURCE_SPRITE_SHEETS          = 1
 !ENABLE_SWORD_WARP_HOME               = 1

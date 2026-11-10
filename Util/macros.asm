@@ -37,6 +37,8 @@ endif
 !ENABLE_SOURCE_SPRITE_SHEETS        = 1
 ; Selected Sky Minish Cap sheets; normal group/palette binding awaits qualification.
 !ENABLE_SKY_TOWER_GRAPHICS          = 0
+; Sky room sky layer ($A0 proof): sheet EA slot6, row6 colours, BG1 fill. Needs SKY_TOWER_GRAPHICS.
+!ENABLE_SKY_ROOM_SKY                = 0
 ; Private D4 room-scoped actor/art prototype; no default behavior change.
 !ENABLE_D4_ZORA_REDESIGN            = 1
 !ENABLE_D4_WATER_CONTROLS           = 1

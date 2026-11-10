@@ -16,6 +16,7 @@ SourceGlobalSheet_E5: incbin "sheets/gE5.bin"
 SourceGlobalSheet_E6: incbin "sheets/gE6.bin"
 SourceGlobalSheet_E8: incbin "sheets/gE8.bin"
 SourceGlobalSheet_E9: incbin "sheets/gE9.bin"
+SourceGlobalSheet_EA: incbin "sheets/gEA.bin"
 SourceGlobalSheet_DF: incbin "sheets/gDF.bin"
 SourceGlobalSheet_E0: incbin "sheets/gE0.bin"
 SourceGlobalSheet_E1: incbin "sheets/gE1.bin"
@@ -95,40 +96,47 @@ org $23FDE9 ; @hook module=Core kind=data protected_size=1
 org $23FEE9 ; @hook module=Core kind=data protected_size=1
   db $98
 org $23FFE9 ; @hook module=Core kind=data protected_size=1
-  db $B9
+  db $B8
+; Global $EA (sprite-relative $77): Sky room sky layer: legacy 1B with tiles 00-18 replaced by the picked candidate-A cloud chars (scawful 2026-11-10 'Sky in $A0'); 30-3F kept; binding is flag-gated.
+org $23FDEA ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEEA ; @hook module=Core kind=data protected_size=1
+  db $9D
+org $23FFEA ; @hook module=Core kind=data protected_size=1
+  db $49
 ; Global $DF (sprite-relative $6C): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDDF ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEDF ; @hook module=Core kind=data protected_size=1
-  db $9D
+  db $9F
 org $23FFDF ; @hook module=Core kind=data protected_size=1
-  db $4A
+  db $DD
 ; Global $E0 (sprite-relative $6D): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDE0 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE0 ; @hook module=Core kind=data protected_size=1
-  db $9F
+  db $A2
 org $23FFE0 ; @hook module=Core kind=data protected_size=1
-  db $8A
+  db $1D
 ; Global $E1 (sprite-relative $6E): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDE1 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE1 ; @hook module=Core kind=data protected_size=1
-  db $A2
+  db $A4
 org $23FFE1 ; @hook module=Core kind=data protected_size=1
-  db $0B
+  db $9E
 ; Global $E2 (sprite-relative $6F): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDE2 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE2 ; @hook module=Core kind=data protected_size=1
-  db $A5
+  db $A7
 org $23FFE2 ; @hook module=Core kind=data protected_size=1
-  db $5D
+  db $F0
 ; Global $E7 (sprite-relative $74): Private105 refuge: preserves Sea Zora DE/EE cells; accepted River front head/body in C0/C2, with room-specific spriteset4E.
 org $23FDE7 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE7 ; @hook module=Core kind=data protected_size=1
-  db $A7
+  db $AA
 org $23FFE7 ; @hook module=Core kind=data protected_size=1
-  db $FA
+  db $8D
 pullpc

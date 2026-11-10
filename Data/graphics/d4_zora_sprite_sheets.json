@@ -59,7 +59,7 @@
     {
       "global_sheet": "0xE8",
       "source": "sky_tower/mcA-sheet-15.txt",
-      "decoded_sha256": "7925c3249c7c442654e22d9d9e8d26eef4d3f86231724c98147bb3986e7c4954",
+      "decoded_sha256": "3303a4b86b2fed4f408839a1d63bc281dee23002448e30a965f360564206aca3",
       "why": "Selected Minish Cap A Sky Tower normal background sheet; clone of legacy 15; normal graphics group binding follows separately."
     },
     {
@@ -67,6 +67,12 @@
       "source": "sky_tower/mcA-sheet-08.txt",
       "decoded_sha256": "0ecb8f764a9116fd8f079b4ea77f90f5a831cbe2e40f02a836a6c83e5ad7064c",
       "why": "Selected Minish Cap A Sky Tower normal background sheet; clone of legacy 08; normal graphics group binding follows separately."
+    },
+    {
+      "global_sheet": "0xEA",
+      "source": "sky_tower/sky-clouds-EA.txt",
+      "decoded_sha256": "195d38a16e60c936de8eacac4d67ffb042f3bccd92f02b9a55b3d90b08dc20d2",
+      "why": "Sky room sky layer: legacy 1B with tiles 00-18 replaced by the picked candidate-A cloud chars (scawful 2026-11-10 'Sky in $A0'); 30-3F kept; binding is flag-gated."
     },
     {
       "global_sheet": "0xDF",

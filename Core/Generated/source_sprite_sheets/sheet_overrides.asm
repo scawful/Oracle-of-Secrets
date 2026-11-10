@@ -16,6 +16,7 @@ SourceGlobalSheet_E5: incbin "sheets/gE5.bin"
 SourceGlobalSheet_E6: incbin "sheets/gE6.bin"
 SourceGlobalSheet_E8: incbin "sheets/gE8.bin"
 SourceGlobalSheet_E9: incbin "sheets/gE9.bin"
+SourceGlobalSheet_EA: incbin "sheets/gEA.bin"
 assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
 if not(defined("GfxSheet_TableDone"))
   error "sheet_overrides.asm must follow Core/gfx_sheet_table.asm"
@@ -90,5 +91,12 @@ org $23FDE9 ; @hook module=Core kind=data protected_size=1
 org $23FEE9 ; @hook module=Core kind=data protected_size=1
   db $98
 org $23FFE9 ; @hook module=Core kind=data protected_size=1
-  db $B9
+  db $B8
+; Global $EA (sprite-relative $77): Sky room sky layer: legacy 1B with tiles 00-18 replaced by the picked candidate-A cloud chars (scawful 2026-11-10 'Sky in $A0'); 30-3F kept; binding is flag-gated.
+org $23FDEA ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEEA ; @hook module=Core kind=data protected_size=1
+  db $9D
+org $23FFEA ; @hook module=Core kind=data protected_size=1
+  db $49
 pullpc
