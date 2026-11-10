@@ -1,5 +1,5 @@
 ; =========================================================
-; Per-dungeon wall-profile selector (flag !ENABLE_WALL_PROFILE_SELECTOR, default 0)
+; Per-dungeon wall-profile selector (flag !ENABLE_WALL_PROFILE_SELECTOR, default 1)
 ;
 ; Remaps the data offset of 30 wall object classes per room. Rooms are bound
 ; to profiles per dungeon / room group in Dungeons/Data/wall_profiles/

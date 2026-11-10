@@ -2019,7 +2019,7 @@
       "space": "snes_rom",
       "base": 4513792,
       "size": 8192,
-      "status": "proposed",
+      "status": "shared",
       "condition": {
         "ENABLE_WALL_PROFILE_SELECTOR": 1
       },
@@ -2040,7 +2040,7 @@
       "space": "snes_rom",
       "base": 4554752,
       "size": 28672,
-      "status": "proposed",
+      "status": "shared",
       "condition": {
         "ENABLE_WALL_PROFILE_SELECTOR": 1
       },

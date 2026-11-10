@@ -45,8 +45,8 @@ endif
 ; AF transfer-room pit reset; independent of BF and off until private qualification.
 !ENABLE_D5_AF_PIT_RESET             = 0
 ; Per-dungeon wall object tile patterns (Dungeons/wall_profile_selector.asm);
-; pattern words only, sheets/palettes not routed. Off until T3 qualification.
-!ENABLE_WALL_PROFILE_SELECTOR       = 0
+; kit rows/palettes route per room (H3). Default on (scawful 2026-11-10).
+!ENABLE_WALL_PROFILE_SELECTOR       = 1
 !ENABLE_WATER_GATE_HOOKS            = 1
 !ENABLE_WATER_GATE_ROOMENTRY_RESTORE = 0
 !ENABLE_WATER_GATE_OVERLAY_REDIRECT = 1

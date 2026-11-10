@@ -45,7 +45,7 @@ OWNED_REGIONS = (
       for row in (0xB3, 0xB6, 0xBA, 0xD7, 0xDF, 0xE0, 0xE1, 0xE2,
                   0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9)),
     ("Core/Generated/menu_icons/menu_icon_overrides.asm", 0x11FD00, 0x11FFFF),
-    # Default-off wall-profile selector kits: spare global sheet rows $F0-$FE
+    # Wall-profile selector kits (default on): spare global sheet rows $F0-$FE
     # ($EA-$EF belong to the Sky port)
     # (gen_wall_profiles.py KIT_SHEETS), one byte per row in each pointer array.
     *(("Dungeons/Data/kits/kits.asm", table+row, table+row)
