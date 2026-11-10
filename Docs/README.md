@@ -7,17 +7,10 @@ evidence, debugging guides, status reports) lives in the private AFS context
 
 | Path | What it is |
 |---|---|
-| `oracle.org` | Task tracker |
-| `Planning/Status/decisions.org` | scawful's design and story rulings (DECIDED / OPEN) |
-| `Planning/story_canon_beat_sheet.md` | Story canon |
-| `Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md` | Approved dialogue text |
 | `Technical/` | Contracts the code depends on: memory map, flag ledger, table formats, inventories |
 | `World/` | Dungeon, overworld, lore, NPC and quest references |
 | `Dev/Planning/*.json` | yaze project registry data (labels, rooms, story events) |
 | `schemas/` | JSON schema for dungeon annotations |
-
-Current private plot and writer handoff (2026-10-20):
-`~/.context/projects/oracle-of-secrets/scratchpad/handoffs/ridoyie_messages_2026-10-20/`.
 Start with `CURRENT_PLOT.md`, then `RIDOYIE_WRITER_PACKET.md` and
 `YAZE_DIALOGUE_GUIDE.md`. These reconcile Lyra Sea shrines, Sky D8, the Abyss
 story role, fixed Farore meetings and the planned Lupo/Fortress swap. World
