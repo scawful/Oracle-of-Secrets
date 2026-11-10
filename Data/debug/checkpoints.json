@@ -1,12 +1,12 @@
 {
   "schema": "oracle-debug-checkpoints/1",
-  "description": "Story checkpoints for the Mesen2-OOS Cheats & Warps panel and mesen2_client.py checkpoint. Order follows Docs/Planning/story_canon_beat_sheet.md. See Data/debug/README.md.",
+  "description": "Story checkpoints for the Mesen2-OOS Cheats & Warps panel and mesen2_client.py checkpoint. Order follows AFS knowledge/planning/story_canon_beat_sheet.md. See Data/debug/README.md.",
   "rom_tested": {
     "path": "Roms/Playtest/oos-v0.9.0-b17.sfc",
     "sha256": "a0fdd4220d4da24b9c8cd087f5cb68a9758b85fbf733655f7888d0fa844b008c"
   },
   "apply": "Resolve the 'after' chain (oldest first) and apply every write in order to WRAM $7EF000-$7EF4FF. 'value' stores the byte, 'set_bits' ORs, 'clear_bits' ANDs out. Then copy $7EF000-$7EF4FF to the active SRAM slot (main + mirror, new inverse checksum at +$4FE); other slots are untouched. Then warp to 'location' (an entrance id, or an overworld area from warps.json).",
-  "evidence_legend": "Each write cites file:line (with the symbol for Core/sram.asm) or a beat-sheet row. Line numbers were read on 2026-09-26 from the working tree. inferred=true: the docs are silent or disagree, and the value is a best guess; 'why' says what it rests on.",
+  "evidence_legend": "Each write cites file:line (with the symbol for Core/sram.asm) or a beat-sheet row. Line numbers were read on 2026-09-26 from the working tree; Core/sram.asm symbol lines rechecked 2026-11-10. AFS paths are under ~/.context/projects/oracle-of-secrets. inferred=true: the docs are silent or disagree, and the value is a best guess; 'why' says what it rests on.",
   "checkpoints": [
     {
       "id": "intro-bed",
@@ -23,7 +23,7 @@
         ],
         "room": "0x0104"
       },
-      "notes": "Warping into room $104 with GameState 0 and OOSPROG2 bit $10 clear re-runs the bed block (Docs/Planning/Plans/intro_plan_2026-09-24.md:33); with IntroState 0 the arrival gate then starts the new-game scenes (Core/Cutscene/opening.asm:84-96). On b17 (arrival + experiment flags on) the scene waits for text input; Start skips it (Core/Cutscene/experiment.asm:18).",
+      "notes": "Warping into room $104 with GameState 0 and OOSPROG2 bit $10 clear re-runs the bed block (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/intro_plan_2026-09-24.md:33); with IntroState 0 the arrival gate then starts the new-game scenes (Core/Cutscene/opening.asm:84-96). On b17 (arrival + experiment flags on) the scene waits for text input; Start skips it (Core/Cutscene/experiment.asm:18).",
       "writes": [
         {
           "addr": "0x7EF3C5",
@@ -35,127 +35,127 @@
           "addr": "0x7EF39E",
           "value": "0x00",
           "name": "IntroState",
-          "evidence": "Core/sram.asm:467 (IntroState); Core/Cutscene/opening.asm:87 (plea not delivered)"
+          "evidence": "Core/sram.asm:480 (IntroState); Core/Cutscene/opening.asm:87 (plea not delivered)"
         },
         {
           "addr": "0x7EF3D6",
           "value": "0x00",
           "name": "OOSPROG",
-          "evidence": "Core/sram.asm:259 (StoryProgress)"
+          "evidence": "Core/sram.asm:267 (StoryProgress)"
         },
         {
           "addr": "0x7EF3C6",
           "value": "0x00",
           "name": "OOSPROG2",
-          "evidence": "Core/sram.asm:262 (StoryProgress2); intro_plan_2026-09-24.md:33 (bed block needs bit $10 clear)"
+          "evidence": "Core/sram.asm:270 (StoryProgress2); intro_plan_2026-09-24.md:33 (bed block needs bit $10 clear)"
         },
         {
           "addr": "0x7EF3D4",
           "value": "0x00",
           "name": "MakuTreeQuest",
-          "evidence": "Core/sram.asm:266 (MakuTreeQuest)"
+          "evidence": "Core/sram.asm:276 (MakuTreeQuest)"
         },
         {
           "addr": "0x7EF3C7",
           "value": "0x00",
           "name": "MapIcon",
-          "evidence": "Core/sram.asm:186 (!MapIcon_MakuTree)"
+          "evidence": "Core/sram.asm:193 (!MapIcon_MakuTree)"
         },
         {
           "addr": "0x7EF37A",
           "value": "0x00",
           "name": "Crystals",
-          "evidence": "Core/sram.asm:373 (Crystals)"
+          "evidence": "Core/sram.asm:385 (Crystals)"
         },
         {
           "addr": "0x7EF374",
           "value": "0x00",
           "name": "Pendants",
-          "evidence": "Core/sram.asm:372 (Pendants)"
+          "evidence": "Core/sram.asm:384 (Pendants)"
         },
         {
           "addr": "0x7EF3D7",
           "value": "0x00",
           "name": "SideQuestProgress",
-          "evidence": "Core/sram.asm:284 (SideQuestProgress)"
+          "evidence": "Core/sram.asm:296 (SideQuestProgress)"
         },
         {
           "addr": "0x7EF3D8",
           "value": "0x00",
           "name": "SideQuestProgress2",
-          "evidence": "Core/sram.asm:285 (SideQuestProgress2)"
+          "evidence": "Core/sram.asm:297 (SideQuestProgress2)"
         },
         {
           "addr": "0x7EF300",
           "value": "0x00",
           "name": "KydrogFaroreRemoved",
-          "evidence": "Core/sram.asm:219 (KydrogFaroreRemoved)"
+          "evidence": "Core/sram.asm:227 (KydrogFaroreRemoved)"
         },
         {
           "addr": "0x7EF301",
           "value": "0x00",
           "name": "DekuMaskQuestDone",
-          "evidence": "Core/sram.asm:223 (DekuMaskQuestDone)"
+          "evidence": "Core/sram.asm:231 (DekuMaskQuestDone)"
         },
         {
           "addr": "0x7EF302",
           "value": "0x00",
           "name": "ZoraMaskQuestDone",
-          "evidence": "Core/sram.asm:227 (ZoraMaskQuestDone)"
+          "evidence": "Core/sram.asm:235 (ZoraMaskQuestDone)"
         },
         {
           "addr": "0x7EF3A7",
           "value": "0x00",
           "name": "EonOwlFlags",
-          "evidence": "Core/sram.asm:499 (EonOwlFlags) (zero on new files)"
+          "evidence": "Core/sram.asm:540 (EonOwlFlags) (zero on new files)"
         },
         {
           "addr": "0x7EF3CC",
           "value": "0x00",
           "name": "FollowerId",
-          "evidence": "Core/sram.asm:585 (FollowerId); Dungeons/custom_tag.asm:100"
+          "evidence": "Core/sram.asm:628 (FollowerId); Dungeons/custom_tag.asm:100"
         },
         {
           "addr": "0x7EF3CA",
           "value": "0x00",
           "name": "SavedWorld",
-          "evidence": "Core/sram.asm:523 (SavedWorld) (bit 6 = Abyss)"
+          "evidence": "Core/sram.asm:566 (SavedWorld) (bit 6 = Abyss)"
         },
         {
           "addr": "0x7EF359",
           "value": "0x00",
           "name": "Sword",
-          "evidence": "Core/sram.asm:325 (Sword); Docs/Planning/story_canon_beat_sheet.md line 43 (sword comes from the Abyss tutorial)"
+          "evidence": "Core/sram.asm:337 (Sword); AFS knowledge/planning/story_canon_beat_sheet.md line 43 (sword comes from the Abyss tutorial)"
         },
         {
           "addr": "0x7EF35A",
           "value": "0x00",
           "name": "Shield",
-          "evidence": "Core/sram.asm:326 (Shield); Docs/Planning/story_canon_beat_sheet.md line 43"
+          "evidence": "Core/sram.asm:338 (Shield); AFS knowledge/planning/story_canon_beat_sheet.md line 43"
         },
         {
           "addr": "0x7EF357",
           "value": "0x00",
           "name": "MoonPearl",
-          "evidence": "Core/sram.asm:323 (MoonPearl); Docs/Planning/story_canon_beat_sheet.md row 7"
+          "evidence": "Core/sram.asm:335 (MoonPearl); AFS knowledge/planning/story_canon_beat_sheet.md row 7"
         },
         {
           "addr": "0x7EF356",
           "value": "0x00",
           "name": "Flippers",
-          "evidence": "Core/sram.asm:322 (Flippers)"
+          "evidence": "Core/sram.asm:334 (Flippers)"
         },
         {
           "addr": "0x7EF340",
           "value": "0x00",
           "name": "Bow",
-          "evidence": "Core/sram.asm:296 (Bow)"
+          "evidence": "Core/sram.asm:308 (Bow)"
         },
         {
           "addr": "0x7EF344",
           "value": "0x00",
           "name": "MagicPowder",
-          "evidence": "Core/sram.asm:300 (MagicPowder)"
+          "evidence": "Core/sram.asm:312 (MagicPowder)"
         },
         {
           "addr": "0x7EF34C",
@@ -167,43 +167,43 @@
           "addr": "0x7EF349",
           "value": "0x00",
           "name": "DekuMask",
-          "evidence": "Core/sram.asm:305 (DekuMask)"
+          "evidence": "Core/sram.asm:317 (DekuMask)"
         },
         {
           "addr": "0x7EF347",
           "value": "0x00",
           "name": "ZoraMask",
-          "evidence": "Core/sram.asm:303 (ZoraMask)"
+          "evidence": "Core/sram.asm:315 (ZoraMask)"
         },
         {
           "addr": "0x7EF34E",
           "value": "0x00",
           "name": "Book",
-          "evidence": "Core/sram.asm:310 (Book)"
+          "evidence": "Core/sram.asm:322 (Book)"
         },
         {
           "addr": "0x7EF355",
           "value": "0x00",
           "name": "Boots",
-          "evidence": "Core/sram.asm:321 (Boots)"
+          "evidence": "Core/sram.asm:333 (Boots)"
         },
         {
           "addr": "0x7EF34B",
           "value": "0x00",
           "name": "Hammer",
-          "evidence": "Core/sram.asm:307 (Hammer)"
+          "evidence": "Core/sram.asm:319 (Hammer)"
         },
         {
           "addr": "0x7EF354",
           "value": "0x00",
           "name": "Gloves",
-          "evidence": "Core/sram.asm:320 (Gloves)"
+          "evidence": "Core/sram.asm:332 (Gloves)"
         },
         {
           "addr": "0x7EF350",
           "value": "0x00",
           "name": "Somaria",
-          "evidence": "Core/sram.asm:312 (Somaria)"
+          "evidence": "Core/sram.asm:324 (Somaria)"
         },
         {
           "addr": "0x7EF36C",
@@ -279,13 +279,13 @@
         ],
         "area": "0x23"
       },
-      "notes": "Lands at the exit of cave room $00FE, next to the village hole (entrance $80, Docs/Planning/Plans/impa_follower_hints_2026-09-25.md:23); Impa's hint $1C8 may open (module $0E). This is also the Farore-meeting state (beat 6): Farore's sprite stands on area $2A, one screen west (impa_follower_hints_2026-09-25.md:24). $2A has no exit-table room, and the beat sheet's special area $80 cannot be warp-loaded (Data/debug/README.md, Limits). Kydrog and Farore spawn while KydrogFaroreRemoved = 0 (Sprites/Bosses/kydrog.asm:95).",
+      "notes": "Lands at the exit of cave room $00FE, next to the village hole (entrance $80, AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_follower_hints_2026-09-25.md:23); Impa's hint $1C8 may open (module $0E). This is also the Farore-meeting state (beat 6): Farore's sprite stands on area $2A, one screen west (impa_follower_hints_2026-09-25.md:24). $2A has no exit-table room, and the beat sheet's special area $80 cannot be warp-loaded (Data/debug/README.md, Limits). Kydrog and Farore spawn while KydrogFaroreRemoved = 0 (Sprites/Bosses/kydrog.asm:95).",
       "writes": [
         {
           "addr": "0x7EF3CC",
           "value": "0x01",
           "name": "FollowerId",
-          "evidence": "Docs/Planning/Plans/impa_follower_hints_2026-09-25.md:16 (Impa = follower $01)"
+          "evidence": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_follower_hints_2026-09-25.md:16 (Impa = follower $01)"
         }
       ]
     },
@@ -370,19 +370,19 @@
         ],
         "area": "0x50"
       },
-      "notes": "The second Owl appearance (msg $E6) is on map $50 and only spawns while Sword = 0 (Sprites/NPCs/eon_owl.asm:73-76); decisions.org 'Abyss segment', item 2. The area warp lands outside the Shrine of Courage door (room $53).",
+      "notes": "The second Owl appearance (msg $E6) is on map $50 and only spawns while Sword = 0 (Sprites/NPCs/eon_owl.asm:73-76); AFS knowledge/planning/decisions.org 'Abyss segment', item 2. The area warp lands outside the Shrine of Courage door (room $53).",
       "writes": [
         {
           "addr": "0x7EF357",
           "value": "0x01",
           "name": "MoonPearl",
-          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 7; Docs/Planning/story_canon_beat_sheet.md line 47 (Pearl from Origins)"
+          "evidence": "AFS knowledge/planning/story_canon_beat_sheet.md row 7; AFS knowledge/planning/story_canon_beat_sheet.md line 47 (Pearl from Origins)"
         },
         {
           "addr": "0x7EF3A7",
           "set_bits": "0x01",
           "name": "EonOwlFlags",
-          "evidence": "Core/sram.asm:500 (!EonOwl_ArrivalTalked) (first Owl comes before the Pearl; the flag is read only when !ENABLE_EON_OWL_ONE_SHOT = 1)"
+          "evidence": "Core/sram.asm:541 (!EonOwl_ArrivalTalked) (first Owl comes before the Pearl; the flag is read only when !ENABLE_EON_OWL_ONE_SHOT = 1)"
         }
       ]
     },
@@ -407,19 +407,19 @@
           "addr": "0x7EF359",
           "value": "0x01",
           "name": "Sword",
-          "evidence": "Docs/Planning/story_canon_beat_sheet.md line 43; runtime save slot 1 = 1"
+          "evidence": "AFS knowledge/planning/story_canon_beat_sheet.md line 43; runtime save slot 1 = 1"
         },
         {
           "addr": "0x7EF35A",
           "value": "0x01",
           "name": "Shield",
-          "evidence": "Docs/Planning/story_canon_beat_sheet.md line 43; runtime save slot 1 = 1"
+          "evidence": "AFS knowledge/planning/story_canon_beat_sheet.md line 43; runtime save slot 1 = 1"
         },
         {
           "addr": "0x7EF3A7",
           "set_bits": "0x02",
           "name": "EonOwlFlags",
-          "evidence": "Core/sram.asm:501 (!EonOwl_SwordTalked) ($E6 Owl done)"
+          "evidence": "Core/sram.asm:542 (!EonOwl_SwordTalked) ($E6 Owl done)"
         },
         {
           "addr": "0x7EF3C6",
@@ -431,7 +431,7 @@
           "addr": "0x7EF3CA",
           "value": "0x00",
           "name": "SavedWorld",
-          "evidence": "Core/sram.asm:523 (SavedWorld) (back on Kalyxo)"
+          "evidence": "Core/sram.asm:566 (SavedWorld) (back on Kalyxo)"
         }
       ]
     },
@@ -526,7 +526,7 @@
           "addr": "0x7EF37A",
           "value": "0x02",
           "name": "Crystals",
-          "evidence": "Core/sram.asm:118 (!Crystal_D1_MushroomGrotto); Docs/Debugging/Issues/world_map_icons_2026-09-26.md section 5.0 (ROM: entrance $26 = dungeon $0C -> bit $02, entrance $27 = dungeon $0E -> bit $01)"
+          "evidence": "Core/sram.asm:118 (!Crystal_D1_MushroomGrotto); AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Debugging/Issues/world_map_icons_2026-09-26.md section 5.0 (ROM: entrance $26 = dungeon $0C -> bit $02, entrance $27 = dungeon $0E -> bit $01)"
         },
         {
           "addr": "0x7EF3C7",
@@ -538,31 +538,31 @@
           "addr": "0x7EF340",
           "value": "0x01",
           "name": "Bow",
-          "evidence": "Docs/Planning/item_flow_balance_check.md:13 (D1 yields Bow + Mushroom)"
+          "evidence": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/item_flow_balance_check.md:13 (D1 yields Bow + Mushroom)"
         },
         {
           "addr": "0x7EF344",
           "value": "0x02",
           "name": "MagicPowder",
-          "evidence": "Docs/Planning/item_flow_balance_check.md:13 (Mushroom -> Witches -> Magic Powder); Core/sram.asm:300 (MagicPowder) (2 = Powder); Docs/Planning/story_canon_beat_sheet.md row 10"
+          "evidence": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/item_flow_balance_check.md:13 (Mushroom -> Witches -> Magic Powder); Core/sram.asm:312 (MagicPowder) (2 = Powder); AFS knowledge/planning/story_canon_beat_sheet.md row 10"
         },
         {
           "addr": "0x7EF34C",
           "value": "0x02",
           "name": "Ocarina",
-          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 10 (Ocarina, Song of Healing); Items/ocarina.asm:440 (2 = Healing)"
+          "evidence": "AFS knowledge/planning/story_canon_beat_sheet.md row 10 (Ocarina, Song of Healing); Items/ocarina.asm:440 (2 = Healing)"
         },
         {
           "addr": "0x7EF349",
           "value": "0x01",
           "name": "DekuMask",
-          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 10"
+          "evidence": "AFS knowledge/planning/story_canon_beat_sheet.md row 10"
         },
         {
           "addr": "0x7EF301",
           "value": "0x01",
           "name": "DekuMaskQuestDone",
-          "evidence": "Core/sram.asm:223 (DekuMaskQuestDone) (set by deku_scrub.asm)"
+          "evidence": "Core/sram.asm:231 (DekuMaskQuestDone) (set by deku_scrub.asm)"
         },
         {
           "addr": "0x7EF3D7",
@@ -647,19 +647,19 @@
           "addr": "0x7EF34E",
           "value": "0x01",
           "name": "Book",
-          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 12 (Book of Secrets before D3)"
+          "evidence": "AFS knowledge/planning/story_canon_beat_sheet.md row 12 (Book of Secrets before D3)"
         },
         {
           "addr": "0x7EF355",
           "value": "0x01",
           "name": "Boots",
-          "evidence": "Docs/Planning/item_flow_balance_check.md:88 (sick child -> boots -> Book of Secrets -> D3)"
+          "evidence": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/item_flow_balance_check.md:88 (sick child -> boots -> Book of Secrets -> D3)"
         },
         {
           "addr": "0x7EF379",
           "set_bits": "0x04",
           "name": "AbilityFlags",
-          "evidence": "Core/sram.asm:321 (Boots) (Boots also need the Ability bit); Core/sram.asm:381 (AbilityFlags) ('lrtu pbsh', b = Run = $04)"
+          "evidence": "Core/sram.asm:333 (Boots) (Boots also need the Ability bit); Core/sram.asm:393 (AbilityFlags) ('lrtu pbsh', b = Run = $04)"
         },
         {
           "addr": "0x7EF36C",
@@ -699,7 +699,7 @@
           "evidence": "usdasm bank_01 $01B6E5 loads $0402 = (room save & $0FF0) << 4, so save bit $0800 is $0403 bit $80; SpritePrep_Boss $068F1C and Core/sprite_macros.asm BossPrep_DefeatedRemnant skip the boss when it is set"
         }
       ],
-      "notes": "Stops at the D3 entrance with the room $29 boss-defeated bit cleared so the fight repeats. Macro boss_d3 then falls into room $29 and places Link at room-local ($178, $1B0) in the Armos Knights quadrant. A bare fall keeps the entrance's room-local X/Y and camera, which miss this arena. The macro writes set Link, the camera bytes Underworld_AdjustCameraArbitrary ($02A2F0) moves, the quadrant ($A9/$AA) and the Sprite_CancelHookshot restore point ($0FC2/$0FC4); they assume this entrance's spawn point and camera. DECIDED 2026-11-06: Armos become the boss-gate mini-boss and the Captain's phantom becomes the D3 boss (Docs/Planning/Status/decisions.org); this tests the current Armos room."
+      "notes": "Stops at the D3 entrance with the room $29 boss-defeated bit cleared so the fight repeats. Macro boss_d3 then falls into room $29 and places Link at room-local ($178, $1B0) in the Armos Knights quadrant. A bare fall keeps the entrance's room-local X/Y and camera, which miss this arena. The macro writes set Link, the camera bytes Underworld_AdjustCameraArbitrary ($02A2F0) moves, the quadrant ($A9/$AA) and the Sprite_CancelHookshot restore point ($0FC2/$0FC4); they assume this entrance's spawn point and camera. DECIDED 2026-11-06: Armos become the boss-gate mini-boss and the Captain's phantom becomes the D3 boss (AFS knowledge/planning/decisions.org); this tests the current Armos room."
     },
     {
       "id": "d4-entrance",
@@ -733,19 +733,19 @@
           "value": "0x02",
           "name": "Sword",
           "inferred": true,
-          "why": "Meadow Blade from D3 (Docs/Planning/story_canon_beat_sheet.md row 13); level 2 from Overworld/overworld.asm:76 'Get Lv2 Sword from chest'. The beat sheet says the blade caps at L3; how it reaches L3 is not documented"
+          "why": "Meadow Blade from D3 (AFS knowledge/planning/story_canon_beat_sheet.md row 13); level 2 from Overworld/overworld.asm:76 'Get Lv2 Sword from chest'. The beat sheet says the blade caps at L3; how it reaches L3 is not documented"
         },
         {
           "addr": "0x7EF356",
           "value": "0x01",
           "name": "Flippers",
-          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 14; Docs/Planning/item_flow_balance_check.md:17"
+          "evidence": "AFS knowledge/planning/story_canon_beat_sheet.md row 14; AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/item_flow_balance_check.md:17"
         },
         {
           "addr": "0x7EF374",
           "value": "0x01",
           "name": "Pendants",
-          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 14; Core/sram.asm:150 (!Pendant_Wisdom)"
+          "evidence": "AFS knowledge/planning/story_canon_beat_sheet.md row 14; Core/sram.asm:157 (!Pendant_Wisdom)"
         },
         {
           "addr": "0x7EF36C",
@@ -818,19 +818,19 @@
           "addr": "0x7EF347",
           "value": "0x01",
           "name": "ZoraMask",
-          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 15"
+          "evidence": "AFS knowledge/planning/story_canon_beat_sheet.md row 15"
         },
         {
           "addr": "0x7EF302",
           "value": "0x01",
           "name": "ZoraMaskQuestDone",
-          "evidence": "Core/sram.asm:227 (ZoraMaskQuestDone) (set by zora_princess.asm)"
+          "evidence": "Core/sram.asm:235 (ZoraMaskQuestDone) (set by zora_princess.asm)"
         },
         {
           "addr": "0x7EF34C",
           "value": "0x03",
           "name": "Ocarina",
-          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 16 (Song of Storms post-D4); Items/ocarina.asm:441 (3 = Healing, Storms)"
+          "evidence": "AFS knowledge/planning/story_canon_beat_sheet.md row 16 (Song of Storms post-D4); Items/ocarina.asm:441 (3 = Healing, Storms)"
         },
         {
           "addr": "0x7EF36C",
@@ -909,7 +909,7 @@
           "addr": "0x7EF374",
           "value": "0x03",
           "name": "Pendants",
-          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 19; Core/sram.asm:151 (!Pendant_Power)"
+          "evidence": "AFS knowledge/planning/story_canon_beat_sheet.md row 19; Core/sram.asm:158 (!Pendant_Power)"
         },
         {
           "addr": "0x7EF36C",
@@ -970,7 +970,7 @@
           "addr": "0x7EF37A",
           "value": "0x77",
           "name": "Crystals",
-          "evidence": "Core/sram.asm:117 (!Crystal_D6_GoronMines); Docs/Debugging/Issues/world_map_icons_2026-09-26.md section 5.0 (ROM: entrance $26 = dungeon $0C -> bit $02, entrance $27 = dungeon $0E -> bit $01)"
+          "evidence": "Core/sram.asm:117 (!Crystal_D6_GoronMines); AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Debugging/Issues/world_map_icons_2026-09-26.md section 5.0 (ROM: entrance $26 = dungeon $0C -> bit $02, entrance $27 = dungeon $0E -> bit $01)"
         },
         {
           "addr": "0x7EF3C7",
@@ -982,19 +982,19 @@
           "addr": "0x7EF34B",
           "value": "0x01",
           "name": "Hammer",
-          "evidence": "Docs/Planning/item_flow_balance_check.md:18 (D6 reward is Hammer)"
+          "evidence": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/item_flow_balance_check.md:18 (D6 reward is Hammer)"
         },
         {
           "addr": "0x7EF354",
           "value": "0x02",
           "name": "Gloves",
-          "evidence": "Docs/Planning/item_flow_balance_check.md:93 (Titan's Mitt is the immediate post-D6 reward); Core/sram.asm:320 (Gloves) (2 = Titan's Mitt)"
+          "evidence": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/item_flow_balance_check.md:93 (Titan's Mitt is the immediate post-D6 reward); Core/sram.asm:332 (Gloves) (2 = Titan's Mitt)"
         },
         {
           "addr": "0x7EF34C",
           "value": "0x04",
           "name": "Ocarina",
-          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 22 (Song of Soaring before the Dragon Ship); Items/ocarina.asm:442"
+          "evidence": "AFS knowledge/planning/story_canon_beat_sheet.md row 22 (Song of Soaring before the Dragon Ship); Items/ocarina.asm:442"
         },
         {
           "addr": "0x7EF36C",
@@ -1061,7 +1061,7 @@
           "addr": "0x7EF3C7",
           "value": "0x08",
           "name": "MapIcon",
-          "evidence": "Core/sram.asm:194 (!MapIcon_Fortress); Core/progression.asm:28"
+          "evidence": "Core/sram.asm:201 (!MapIcon_Fortress); Core/progression.asm:28"
         },
         {
           "addr": "0x7EF3C5",
@@ -1074,19 +1074,19 @@
           "addr": "0x7EF350",
           "value": "0x01",
           "name": "Somaria",
-          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 23 (D7 gives the Somaria Rod)"
+          "evidence": "AFS knowledge/planning/story_canon_beat_sheet.md row 23 (D7 gives the Somaria Rod)"
         },
         {
           "addr": "0x7EF374",
           "value": "0x07",
           "name": "Pendants",
-          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 24; Core/sram.asm:152 (!Pendant_Courage)"
+          "evidence": "AFS knowledge/planning/story_canon_beat_sheet.md row 24; Core/sram.asm:159 (!Pendant_Courage)"
         },
         {
           "addr": "0x7EF359",
           "value": "0x04",
           "name": "Sword",
-          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 25 (the pedestal pull grants L4)"
+          "evidence": "AFS knowledge/planning/story_canon_beat_sheet.md row 25 (the pedestal pull grants L4)"
         },
         {
           "addr": "0x7EF3CA",
@@ -1206,7 +1206,7 @@
           "why": "full health for the boss test"
         }
       ],
-      "notes": "The area warp lands outside the D8 Final Boss Route door at ($0F70,$04F0) (Data/debug/warps.json area 0x57). The room $00 hole is about 120 px left and 10 px up; from ($0EF8,$04E8) holding up drops Link into room $00, where Kydreeok (sprite $7A) starts (b45 run, AFS handoffs/kydreeok_dragon_2026-10-19/evidence/log.txt). The hole and the room $00 layout are placeholders (the finale room plan is open)."
+      "notes": "The area warp lands outside the D8 Final Boss Route door at ($0F70,$04F0) (Data/debug/warps.json area 0x57). The room $00 hole is about 120 px left and 10 px up; from ($0EF8,$04E8) holding up drops Link into room $00, where Kydreeok (sprite $7A) starts (b45 run, AFS scratchpad/handoffs/kydreeok_dragon_2026-10-19/evidence/log.txt). The hole and the room $00 layout are placeholders (the finale room plan is open)."
     }
   ],
   "todo": [
@@ -1214,7 +1214,7 @@
       "id": "abyss-owl-arrival",
       "label": "Eon Owl, first appearance on the Abyss arrival area (points to the Shrine of Origins)",
       "beat": 7,
-      "reason": "Decided 2026-09-26 (Docs/Planning/Status/decisions.org 'Abyss segment', item 2). The flag exists (Core/sram.asm:500 (!EonOwl_ArrivalTalked)) but the Owl is not placed yet; add the checkpoint when it is."
+      "reason": "Decided 2026-09-26 (AFS knowledge/planning/decisions.org 'Abyss segment', item 2). The flag exists (Core/sram.asm:541 (!EonOwl_ArrivalTalked)) but the Owl is not placed yet; add the checkpoint when it is."
     }
   ]
 }

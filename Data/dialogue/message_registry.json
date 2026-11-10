@@ -36,7 +36,7 @@
       "status": "occupied",
       "expected_content": "authored",
       "owner": "ranch-girl",
-      "purpose": "Ranch Girl powder reveal / Ocarina gift (Sprites/NPCs/ranch_girl.asm); dialogue-audit draft D4 approved by scawful 2026-09-26; replaces vanilla 0x17D at runtime because vanilla text region 2 is length-pinned (Docs/Planning/Reviews/dialogue_audit_2026-09-26.md)"
+      "purpose": "Ranch Girl powder reveal / Ocarina gift (Sprites/NPCs/ranch_girl.asm); dialogue-audit draft D4 approved by scawful 2026-09-26; replaces vanilla 0x17D at runtime because vanilla text region 2 is length-pinned (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Reviews/dialogue_audit_2026-09-26.md)"
     },
     {
       "start": "0x1BF",
@@ -44,7 +44,7 @@
       "status": "occupied",
       "expected_content": "authored",
       "owner": "impa-follower",
-      "purpose": "Impa follower hint: village arrival (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)"
+      "purpose": "Impa follower hint: village arrival (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)"
     },
     {
       "start": "0x1C0",
@@ -52,7 +52,7 @@
       "status": "occupied",
       "expected_content": "authored",
       "owner": "attract-history",
-      "purpose": "Title/attract island-history narration (storybook, throne, soldiers, altar); used only with ENABLE_CUSTOM_ATTRACT_SEQUENCE; text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md, Attract narration)"
+      "purpose": "Title/attract island-history narration (storybook, throne, soldiers, altar); used only with ENABLE_CUSTOM_ATTRACT_SEQUENCE; text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md, Attract narration)"
     },
     {
       "start": "0x1C4",
@@ -60,7 +60,7 @@
       "status": "occupied",
       "expected_content": "authored",
       "owner": "impa-follower",
-      "purpose": "Impa follower hint: east exit blockade (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)"
+      "purpose": "Impa follower hint: east exit blockade (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)"
     },
     {
       "start": "0x1C5",
@@ -76,7 +76,7 @@
       "status": "occupied",
       "expected_content": "authored",
       "owner": "impa-follower",
-      "purpose": "Impa follower hint: village hole (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)"
+      "purpose": "Impa follower hint: village hole (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)"
     },
     {
       "start": "0x1C9",
@@ -84,7 +84,7 @@
       "status": "occupied",
       "expected_content": "authored",
       "owner": "impa-follower",
-      "purpose": "Impa follower hint: western forest ($2A) (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)"
+      "purpose": "Impa follower hint: western forest ($2A) (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)"
     },
     {
       "start": "0x1CA",
@@ -132,7 +132,7 @@
       "status": "occupied",
       "expected_content": "authored",
       "owner": "experiment-scene",
-      "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims"
+      "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims"
     },
     {
       "start": "0x1E0",
@@ -180,7 +180,7 @@
       "status": "occupied",
       "expected_content": "authored",
       "owner": "eon-owl",
-      "purpose": "Eon Owl first Abyss appearance, arrival map $40, before the Pearl (Sprites/NPCs/eon_owl.asm, !ENABLE_EON_OWL_ONE_SHOT); text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md)"
+      "purpose": "Eon Owl first Abyss appearance, arrival map $40, before the Pearl (Sprites/NPCs/eon_owl.asm, !ENABLE_EON_OWL_ONE_SHOT); text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md)"
     },
     {
       "start": "0x1FB",
@@ -188,7 +188,7 @@
       "status": "occupied",
       "expected_content": "authored",
       "owner": "abyss-area-signs",
-      "purpose": "Abyss area signs, one per area: $1FB $40 Temporal Pyramid, $1FC $50 Hollow of Echoes, $1FD $58 Forest of Dreams, $1FE $5D Dreamer's Rest, $1FF $6A The Rift Shore; shown through the ZS area message table ($2897F8) once each area has a signpost tile; text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md)"
+      "purpose": "Abyss area signs, one per area: $1FB $40 Temporal Pyramid, $1FC $50 Hollow of Echoes, $1FD $58 Forest of Dreams, $1FE $5D Dreamer's Rest, $1FF $6A The Rift Shore; shown through the ZS area message table ($2897F8) once each area has a signpost tile; text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md)"
     },
     {
       "start": "0x200",
@@ -196,7 +196,7 @@
       "status": "occupied",
       "expected_content": "authored",
       "owner": "yesterwind-villager",
-      "purpose": "Yesterwind villager reveal line (first talk with a Yesterwind villager); text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md, Yesterwind names); not wired to an NPC yet"
+      "purpose": "Yesterwind villager reveal line (first talk with a Yesterwind villager); text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md, Yesterwind names); not wired to an NPC yet"
     },
     {
       "start": "0x201",
@@ -204,7 +204,7 @@
       "status": "occupied",
       "expected_content": "authored",
       "owner": "part00-arrival",
-      "purpose": "Part00 arrival lines approved by scawful 2026-09-26 (Docs/Planning/Status/decisions.org, 'Arrival lines A/B/C approved, with a repeat line for B'): $201 A (Impa's voice on black after the fall; Core/Cutscene/opening.asm, !ENABLE_ORACLE_ARRIVAL_SEQUENCE), $202 B (villager, first wake) and $203 B2 (villager, after a death; Sprites/NPCs/house_villager.asm, !ENABLE_PART00_VILLAGER_LINES)"
+      "purpose": "Part00 arrival lines approved by scawful 2026-09-26 (AFS knowledge/planning/decisions.org, 'Arrival lines A/B/C approved, with a repeat line for B'): $201 A (Impa's voice on black after the fall; Core/Cutscene/opening.asm, !ENABLE_ORACLE_ARRIVAL_SEQUENCE), $202 B (villager, first wake) and $203 B2 (villager, after a death; Sprites/NPCs/house_villager.asm, !ENABLE_PART00_VILLAGER_LINES)"
     },
     {
       "start": "0x204",
