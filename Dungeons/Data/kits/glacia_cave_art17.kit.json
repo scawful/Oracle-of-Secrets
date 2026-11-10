@@ -1,0 +1,227 @@
+{
+ "kit": "glacia_cave_art17",
+ "inventory_id": "N9",
+ "verdict": "partial",
+ "profile": "glacia_cave_art17",
+ "source_rom_sha256": "63809fc2457221db8713c9fb4074e6154712205eca1c9f2f0a7ef3672257679a",
+ "origin_rom_sha256": "8d6157840e402f98d5c4b1d61da90be072531fa661bc1608ae0eeab1b898e721",
+ "base_rom_sha256": "5d6b461b3058a5e277fdd55a634660a5e10bd6d518df9a34ba2abaf7af19cdee",
+ "rooms": [
+  "09E",
+  "09F",
+  "0AE",
+  "0AF",
+  "0BE",
+  "0BF",
+  "0CD",
+  "0CE",
+  "0CF",
+  "0DC",
+  "0DD"
+ ],
+ "base_blockset": "0x0B",
+ "base_palette": "0x08",
+ "private_row": "0x18",
+ "sheets": [
+  {
+   "slot": 3,
+   "sheet": "0xFD",
+   "copy_of": "0x0B",
+   "source": "glacia_cave_art17.slot3.txt",
+   "decoded_sha256": "93e206eab3bb9da54a824bfbeaad1e15c259eff6f5f9b5c727f1c77b020df57b"
+  }
+ ],
+ "char_map": {
+  "01E": "0CA",
+  "01F": "0CB",
+  "022": "0CC",
+  "023": "0CD",
+  "02A": "0CE",
+  "02B": "0CF",
+  "032": "0ED",
+  "033": "0EE",
+  "03A": "0EF",
+  "03B": "0F6",
+  "040": "0F7",
+  "041": "0C0",
+  "042": "0C1",
+  "043": "0C2",
+  "044": "0C3",
+  "047": "0C4",
+  "048": "0C5",
+  "049": "0E8",
+  "04A": "0E9",
+  "04B": "0EA",
+  "052": "0EC",
+  "053": "0D7",
+  "054": "0D8",
+  "056": "0DA",
+  "057": "0DB",
+  "058": "0DC",
+  "05C": "0DD",
+  "060": "0DE",
+  "061": "0DF",
+  "062": "0E6",
+  "063": "0E7",
+  "069": "0F8",
+  "070": "0F9",
+  "071": "0FA",
+  "080": "0D1",
+  "081": "0C7",
+  "094": "0FC",
+  "095": "0FD",
+  "09A": "0C8",
+  "09C": "0FE",
+  "09F": "0FF"
+ },
+ "in_place": [
+  "0F5"
+ ],
+ "tile_types": {
+  "0C0": "0x01",
+  "0C1": "0x01",
+  "0C2": "0x04",
+  "0C4": "0x01",
+  "0C5": "0x04",
+  "0C7": "0x01",
+  "0CA": "0x01",
+  "0CB": "0x01",
+  "0CC": "0x04",
+  "0CE": "0x01",
+  "0CF": "0x04",
+  "0D7": "0x01",
+  "0D8": "0x01",
+  "0DA": "0x01",
+  "0DB": "0x01",
+  "0DC": "0x04",
+  "0DD": "0x01",
+  "0DE": "0x01",
+  "0DF": "0x00",
+  "0E7": "0x01",
+  "0E8": "0x2A",
+  "0E9": "0x01",
+  "0EA": "0x04",
+  "0EC": "0x01",
+  "0ED": "0x28",
+  "0EE": "0x01",
+  "0EF": "0x04",
+  "0F5": "0x01",
+  "0F6": "0x28",
+  "0F8": "0x01",
+  "0F9": "0x2A",
+  "0FA": "0x2A",
+  "0FC": "0x28",
+  "0FD": "0x28",
+  "0FE": "0x04",
+  "0FF": "0x04"
+ },
+ "palette": {
+  "id": "0x24",
+  "copy_of": "0x08",
+  "copy_offset": "0x02D0",
+  "splices": [
+   {
+    "first": 23,
+    "words": [
+     "$1CA5",
+     "$28E8",
+     "$352A",
+     "$49AE",
+     "$5A32",
+     "$6AD6",
+     "$7B9B"
+    ]
+   }
+  ]
+ },
+ "classes": [
+  "061",
+  "062",
+  "001",
+  "002",
+  "063",
+  "064",
+  "003",
+  "004",
+  "100",
+  "101",
+  "102",
+  "103",
+  "104",
+  "105",
+  "106",
+  "107",
+  "108",
+  "109",
+  "10A",
+  "10B",
+  "10C",
+  "10D",
+  "10E",
+  "10F"
+ ],
+ "blocked": [
+  {
+   "item": "object 00D",
+   "reason": "not a selector class: the candidate draws other words in rooms 09E 0BF 0DD"
+  },
+  {
+   "item": "object 00E",
+   "reason": "not a selector class: the candidate draws other words in rooms 0AE 0BE 0DD"
+  },
+  {
+   "item": "object 00F",
+   "reason": "not a selector class: the candidate draws other words in rooms 09E 0DD"
+  },
+  {
+   "item": "object 010",
+   "reason": "not a selector class: the candidate draws other words in rooms 0AE 0BF"
+  },
+  {
+   "item": "object 011",
+   "reason": "not a selector class: the candidate draws other words in rooms 0BE"
+  },
+  {
+   "item": "object 014",
+   "reason": "not a selector class: the candidate draws other words in rooms 0DD"
+  },
+  {
+   "item": "object 090",
+   "reason": "not a selector class: the candidate draws other words in rooms 09E 09F 0AE 0AF 0BE 0CD 0CF 0DC 0DD"
+  },
+  {
+   "item": "object 091",
+   "reason": "not a selector class: the candidate draws other words in rooms 09E 09F 0AE 0AF 0BE 0BF 0CD 0DC 0DD"
+  },
+  {
+   "item": "object 0B6",
+   "reason": "not a selector class: the candidate draws other words in rooms 09E 09F 0AE 0AF 0BE 0CD 0CE 0CF 0DC 0DD"
+  },
+  {
+   "item": "object 0B7",
+   "reason": "not a selector class: the candidate draws other words in rooms 09E 09F 0BE 0BF 0CD 0DC 0DD"
+  },
+  {
+   "item": "object 114",
+   "reason": "not a selector class: the candidate draws other words in rooms 0CE"
+  },
+  {
+   "item": "object 115",
+   "reason": "not a selector class: the candidate draws other words in rooms 0CE"
+  },
+  {
+   "item": "object 116",
+   "reason": "not a selector class: the candidate draws other words in rooms 0CE"
+  },
+  {
+   "item": "object 117",
+   "reason": "not a selector class: the candidate draws other words in rooms 0CE"
+  },
+  {
+   "item": "object FE7",
+   "reason": "not a selector class: the candidate draws other words in rooms 0AE"
+  }
+ ],
+ "free_slot3_left": 0,
+ "note": "Glacia ice-house cave ART17 walls (glacia-minish-matched-v1 phase-v17-thin-pits, manifest 8dea8bff)"
+}

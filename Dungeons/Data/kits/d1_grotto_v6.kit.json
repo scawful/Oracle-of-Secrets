@@ -1,0 +1,252 @@
+{
+ "kit": "d1_grotto_v6",
+ "inventory_id": "N1",
+ "verdict": "partial",
+ "profile": "d1_a3052e1d",
+ "source_rom_sha256": "68b30beffd704ec074367e5d81250fc36ab6dc205d7710c9da28a9b9b052cbb3",
+ "origin_rom_sha256": "8d6157840e402f98d5c4b1d61da90be072531fa661bc1608ae0eeab1b898e721",
+ "base_rom_sha256": "5d6b461b3058a5e277fdd55a634660a5e10bd6d518df9a34ba2abaf7af19cdee",
+ "rooms": [
+  "009",
+  "00A",
+  "00B",
+  "019",
+  "01A",
+  "01B",
+  "02A",
+  "02B",
+  "031",
+  "03A",
+  "03B",
+  "04A",
+  "04B",
+  "05A",
+  "05B",
+  "06A",
+  "007",
+  "017",
+  "032",
+  "033",
+  "043",
+  "053",
+  "063"
+ ],
+ "base_blockset": "0x07",
+ "base_palette": "0x10",
+ "private_row": "0x19",
+ "sheets": [
+  {
+   "slot": 3,
+   "sheet": "0xFC",
+   "copy_of": "0x0C",
+   "source": "d1_grotto_v6.slot3.txt",
+   "decoded_sha256": "dfec2e2560eb83d3bf378432be3c47b576c2874a2c3f5076c6f06b8eeb4f155d"
+  }
+ ],
+ "char_map": {
+  "080": "0D2",
+  "081": "0D3",
+  "09A": "0D4",
+  "09B": "0D5",
+  "09C": "0D6",
+  "0AB": "0D7",
+  "0C0": "0D8",
+  "0C2": "0DC",
+  "0C3": "0DD",
+  "0C4": "0DE",
+  "0C5": "0DF",
+  "0D1": "0EB"
+ },
+ "in_place": [
+  "0C7",
+  "0C8",
+  "0CC",
+  "0CD",
+  "0CE",
+  "0CF"
+ ],
+ "tile_types": {
+  "0D2": "0x01",
+  "0D3": "0x01",
+  "0D4": "0x18",
+  "0D5": "0x10",
+  "0D6": "0x10",
+  "0DE": "0x00",
+  "0DF": "0x00",
+  "0EB": "0x00"
+ },
+ "palette": {
+  "id": "0x22",
+  "copy_of": "0x10",
+  "copy_offset": "0x05A0",
+  "splices": [
+   {
+    "first": 1,
+    "words": [
+     "$14C4",
+     "$2147",
+     "$2DCB",
+     "$3E70"
+    ]
+   },
+   {
+    "first": 9,
+    "words": [
+     "$14C4",
+     "$3E70",
+     "$31ED",
+     "$4292",
+     "$2147",
+     "$2DCB"
+    ]
+   },
+   {
+    "first": 43,
+    "words": [
+     "$0C83",
+     "$14C5"
+    ]
+   },
+   {
+    "first": 88,
+    "words": [
+     "$360E"
+    ]
+   }
+  ]
+ },
+ "classes": [
+  "061",
+  "062",
+  "001",
+  "002",
+  "063",
+  "064",
+  "003",
+  "004",
+  "100",
+  "101",
+  "102",
+  "103",
+  "104",
+  "105",
+  "106",
+  "107",
+  "108",
+  "109",
+  "10A",
+  "10B",
+  "10C",
+  "10D",
+  "10E",
+  "10F"
+ ],
+ "blocked": [
+  {
+   "item": "class 03A",
+   "reason": "char 152 is in slot 5; slot 4-7 kit sheets are not implemented"
+  },
+  {
+   "item": "class 077",
+   "reason": "char 145 is in slot 5; slot 4-7 kit sheets are not implemented"
+  },
+  {
+   "item": "class 076",
+   "reason": "char 145 is in slot 5; slot 4-7 kit sheets are not implemented"
+  },
+  {
+   "item": "class 03B",
+   "reason": "char 152 is in slot 5; slot 4-7 kit sheets are not implemented"
+  },
+  {
+   "item": "class 082",
+   "reason": "char 145 is in slot 5; slot 4-7 kit sheets are not implemented"
+  },
+  {
+   "item": "class 081",
+   "reason": "char 145 is in slot 5; slot 4-7 kit sheets are not implemented"
+  },
+  {
+   "item": "object 110",
+   "reason": "not a selector class: the candidate draws other words in rooms 033"
+  },
+  {
+   "item": "object 112",
+   "reason": "not a selector class: the candidate draws other words in rooms 017"
+  },
+  {
+   "item": "object 114",
+   "reason": "not a selector class: the candidate draws other words in rooms 007 053"
+  },
+  {
+   "item": "object 115",
+   "reason": "not a selector class: the candidate draws other words in rooms 033"
+  },
+  {
+   "item": "object 116",
+   "reason": "not a selector class: the candidate draws other words in rooms 007 033 053"
+  },
+  {
+   "item": "object 117",
+   "reason": "not a selector class: the candidate draws other words in rooms 033"
+  },
+  {
+   "item": "object 005 glyphs",
+   "reason": "candidate changed chars 140 150 160 170 that this object draws; the kit only replaces carried class chars"
+  },
+  {
+   "item": "object 006 glyphs",
+   "reason": "candidate changed chars 140 150 160 170 that this object draws; the kit only replaces carried class chars"
+  },
+  {
+   "item": "object 022 glyphs",
+   "reason": "candidate changed chars 0E1 0E2 that this object draws; the kit only replaces carried class chars"
+  },
+  {
+   "item": "object 03A glyphs",
+   "reason": "candidate changed chars 152 153 that this object draws; the kit only replaces carried class chars"
+  },
+  {
+   "item": "object 03B glyphs",
+   "reason": "candidate changed chars 152 153 that this object draws; the kit only replaces carried class chars"
+  },
+  {
+   "item": "object 05F glyphs",
+   "reason": "candidate changed chars 0E1 0E2 that this object draws; the kit only replaces carried class chars"
+  },
+  {
+   "item": "object 065 glyphs",
+   "reason": "candidate changed chars 141 151 161 171 that this object draws; the kit only replaces carried class chars"
+  },
+  {
+   "item": "object 066 glyphs",
+   "reason": "candidate changed chars 141 151 161 171 that this object draws; the kit only replaces carried class chars"
+  },
+  {
+   "item": "object 069 glyphs",
+   "reason": "candidate changed chars 0E1 0E3 that this object draws; the kit only replaces carried class chars"
+  },
+  {
+   "item": "object 076 glyphs",
+   "reason": "candidate changed chars 145 155 that this object draws; the kit only replaces carried class chars"
+  },
+  {
+   "item": "object 077 glyphs",
+   "reason": "candidate changed chars 145 155 that this object draws; the kit only replaces carried class chars"
+  },
+  {
+   "item": "object 081 glyphs",
+   "reason": "candidate changed chars 145 155 that this object draws; the kit only replaces carried class chars"
+  },
+  {
+   "item": "object 082 glyphs",
+   "reason": "candidate changed chars 145 155 that this object draws; the kit only replaces carried class chars"
+  },
+  {
+   "item": "object 08A glyphs",
+   "reason": "candidate changed chars 0E1 0E3 that this object draws; the kit only replaces carried class chars"
+  }
+ ],
+ "free_slot3_left": 2,
+ "note": "D1 Mushroom Grotto moss-selected completion-v6 (68b30bef, latent-door-safe; cut from approved a3052e1d, origin 8d615784). Bound to profile d1_a3052e1d: its 24 carried classes equal this candidate's words; the other 6 profile classes (03A 03B 076 077 081 082) draw slot-5 chars only and touch no kit char."
+}
