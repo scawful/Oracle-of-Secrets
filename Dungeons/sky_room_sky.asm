@@ -1,5 +1,5 @@
 ; =========================================================
-; Sky room sky layer (proof: room $A0 only)
+; Sky room sky layer (Sky Tower rooms $90-$93 and $A0)
 ;
 ; The room header selects layer type 1 (editor-owned, private input), which
 ; puts BG1 on the subscreen. CGADSUB stays $20 (add on the backdrop only), so
@@ -8,11 +8,11 @@
 ;
 ; After Underworld_LoadRoom has drawn the BG2 buffer ($7E2000), this fills the
 ; BG1 buffer ($7E4000): under each BG2 $1E9 cell and each pit-lip cell
-; ($1DB-$1DE) a sky word from a 32x32 lattice (sheet EA in slot 6, palette 6
+; ($1DB-$1DF) a sky word from a 32x32 lattice (sheet EA in slot 6, palette 6
 ; colours 1-3); every other cell gets the blank $01E9. The fill runs before
 ; any tilemap upload in every caller.
 ;
-; Scope: room $00A0 only. Sheet EA rides Sky secondary group 0A slot 6 (only
+; Scope: rooms $0090-$0093 and $00A0 (each needs header layer type 1). Sheet EA rides Sky secondary group 0A slot 6 (only
 ; Sky rooms select group 0A); the colours are Sky palette14 row 6 colours 1-3
 ; (only Sky palette set 08 selects palette14).
 ; =========================================================
@@ -51,19 +51,23 @@ SkyRoom_LoadRoom:
   PHP
   REP #$30
   PHA : PHX : PHY
-  LDA.b $A0 : CMP.w #$00A0 : BNE .done
+  LDA.b $A0 : CMP.w #$00A0 : BEQ .sky_room
+  SEC : SBC.w #$0090 : CMP.w #$0004 : BCC .sky_room
+  BRL .done
+  .sky_room
   PHB
   SEP #$20 : LDA.b #$7E : PHA : PLB : REP #$20
 
   ; Pass 1: plain sky (EA tile 0, palette 6) under BG2 $1E9 pit cells and
-  ; under the pit-lip chars $1DB-$1DE (sheet 0F, slot 7), whose colour-0
-  ; pixels (tooth gaps, side strips) would otherwise show the blank backdrop.
+  ; under the pit-lip chars $1DB-$1DF (sheet 0F, slot 7), whose colour-0
+  ; pixels (tooth gaps, side strips, convex corners) would otherwise show
+  ; the blank backdrop.
   ; Blank elsewhere.
   LDY.w #$1FFE
   .cell
     LDA.w $2000,Y : AND.w #$03FF : CMP.w #$01E9 : BEQ .sky
     CMP.w #$01DB : BCC .blank
-    CMP.w #$01DF : BCC .sky
+    CMP.w #$01E0 : BCC .sky
   .blank
     LDA.w #$01E9 : BRA .put
   .sky
