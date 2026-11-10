@@ -73,7 +73,12 @@ group_offsets:
 ;          00            01            02            03             04            05            06           07
     dw group00-offs, group01-offs, group02-offs, group03-offs, group04-offs, group05-offs, group06-offs, group07-offs
 ;          08            09            10            11             12            13            14           15
+if !ENABLE_SKY_TOWER_GRAPHICS == 1
+    ; Sky Tower secondary 0A keeps group01 attributes (Dungeons/sky_tower_graphics.asm).
+    dw group08-offs, group09-offs, group01-offs, group0B-offs, group0C-offs, group0D-offs, group0E-offs, group0F-offs
+else
     dw group08-offs, group09-offs, group0A-offs, group0B-offs, group0C-offs, group0D-offs, group0E-offs, group0F-offs
+endif
 ;          16            17            18            19             20            21            22           23
     dw group10-offs, group11-offs, group12-offs, group13-offs, group14-offs, group15-offs, group16-offs, group17-offs
 
