@@ -6,8 +6,10 @@ test batches. Every native run should go through one NativeSession:
   - a unique instance ID per run;
   - the heavy lock (Scripts/Agents/heavy_lock.py), held by this process;
   - an owned-PID registry file. A Mesen is registered only when the status
-    file beside a socket this run chose names it, and the process started
-    after the launch began. The PID's start time is recorded with it;
+    file beside a socket this run chose names it, the process started after
+    the launch began, and its executable name is Mesen. The PID's start time
+    is recorded with it. A launch not identified in time stays pending and
+    is checked again at teardown;
   - a deadline (SIGALRM), and SIGTERM/SIGINT/SIGHUP handlers that raise
     SessionInterrupted, so teardown runs and the caller starts no next case;
   - teardown: stop and wait for every registered PID whose start time still
@@ -57,6 +59,7 @@ LAUNCHER = REPO / "Scripts" / "Mesen2" / "mesen2_launch_instance.sh"
 REGISTRY_ENV = "OOS_NATIVE_SESSION_REGISTRY"
 INSTANCE_ENV = "OOS_NATIVE_SESSION_INSTANCE"
 CANCEL_SIGNALS = (signal.SIGTERM, signal.SIGINT, signal.SIGHUP)
+PROCESS_NAME = "mesen"  # a registered PID's executable name must contain this
 TERM_WAIT = 5.0  # seconds between SIGTERM and SIGKILL for an owned PID
 GROUP_WAIT = 15.0  # seconds a cancelled CMD gets to run its own teardown
 
@@ -90,6 +93,12 @@ def _start_epoch(start: str) -> float | None:
         return None
 
 
+def process_name(pid: int) -> str:
+    """Executable name only (`ps -o comm=`), never the arguments."""
+    out = subprocess.run(["/bin/ps", "-p", str(pid), "-o", "comm="], capture_output=True, text=True)
+    return Path(out.stdout.strip()).name
+
+
 def status_path(socket: Path) -> Path:
     """Mesen writes <socket minus .sock>.status with its pid and socketPath."""
     text = str(socket)
@@ -97,7 +106,9 @@ def status_path(socket: Path) -> Path:
 
 
 class Registry:
-    """Append-only JSON lines: one entry per owned PID."""
+    """Append-only JSON lines: one entry per owned PID, plus a pending entry
+    (socket and launch time, no pid) for each launch that could not be
+    identified in time."""
 
     def __init__(self, path: Path):
         self.path = Path(path)
@@ -110,7 +121,7 @@ class Registry:
             handle.flush()
             fcntl.flock(handle, fcntl.LOCK_UN)
 
-    def entries(self) -> list[dict]:
+    def _read(self) -> list[dict]:
         try:
             lines = self.path.read_text(encoding="utf-8").splitlines()
         except FileNotFoundError:
@@ -121,9 +132,15 @@ class Registry:
                 entry = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            if isinstance(entry, dict) and isinstance(entry.get("pid"), int):
+            if isinstance(entry, dict):
                 out.append(entry)
         return out
+
+    def entries(self) -> list[dict]:
+        return [e for e in self._read() if isinstance(e.get("pid"), int)]
+
+    def pending(self) -> list[dict]:
+        return [e for e in self._read() if e.get("pending") and e.get("socket")]
 
 
 def find_owned_pid(socket: Path, since: float, timeout: float) -> tuple[int, str]:
@@ -150,6 +167,8 @@ def find_owned_pid(socket: Path, since: float, timeout: float) -> tuple[int, str
                     reason = f"pid {pid} from the status file has exited"
                 elif started is None or started < since - 1:
                     reason = f"pid {pid} started before this launch"
+                elif PROCESS_NAME not in process_name(pid).lower():
+                    reason = f"pid {pid} is not a {PROCESS_NAME} process"
                 else:
                     return pid, start
         if time.monotonic() >= deadline:
@@ -158,10 +177,35 @@ def find_owned_pid(socket: Path, since: float, timeout: float) -> tuple[int, str
 
 
 def register(registry: Registry, socket: Path, since: float, timeout: float, instance: str) -> int:
-    pid, start = find_owned_pid(Path(socket), since, timeout)
+    """Register the Mesen serving `socket`. On failure the socket is kept as a
+    pending entry, so teardown can still stop a Mesen that came up late."""
+    try:
+        pid, start = find_owned_pid(Path(socket), since, timeout)
+    except LaunchError as error:
+        registry.add({"pending": True, "socket": str(socket), "since": since,
+                      "instance": instance, "reason": str(error), "at": _now()})
+        raise
     registry.add({"pid": pid, "pid_start": start, "socket": str(socket),
                   "instance": instance, "registered_at": _now()})
     return pid
+
+
+def resolve_pending(registry: Registry, log=print) -> None:
+    """Look at each pending socket's status file once more and register the
+    Mesen it names when that process started after the launch."""
+    known = {e.get("socket") for e in registry.entries()}
+    for entry in registry.pending():
+        if entry["socket"] in known:
+            continue
+        try:
+            pid, start = find_owned_pid(Path(entry["socket"]), float(entry.get("since", 0)), 0)
+        except LaunchError as error:
+            log(f"pending launch still unidentified: {error}")
+            continue
+        registry.add({"pid": pid, "pid_start": start, "socket": entry["socket"],
+                      "instance": entry.get("instance"), "registered_at": _now(), "late": True})
+        known.add(entry["socket"])
+        log(f"late registration: pid {pid} ({entry['socket']})")
 
 
 def stop_owned(entries: list[dict], log=print, term_wait: float = TERM_WAIT) -> dict:
@@ -306,7 +350,7 @@ class NativeSession:
         try:
             pid = register(self.registry, Path(socket), since, timeout, self.instance)
         except LaunchError as error:
-            self.log(f"register failed: {error}. Check `pgrep -il mesen` before the next run.")
+            self.log(f"register failed: {error}. Kept as pending; teardown checks it again.")
             raise
         self.log(f"registered pid {pid} ({socket})")
         return pid
@@ -319,6 +363,7 @@ class NativeSession:
         signal.setitimer(signal.ITIMER_REAL, 0)
         self.defer_cancels()
         try:
+            resolve_pending(self.registry, log=self.log)
             result = stop_owned(self.registry.entries(), log=self.log, term_wait=self.term_wait)
             if self.nested:
                 lock = "lock held by the parent session"
@@ -397,7 +442,9 @@ def cmd_register(args) -> int:
 
 
 def cmd_teardown(args) -> int:
-    result = stop_owned(Registry(args.registry).entries(), log=lambda m: print(m, file=sys.stderr))
+    registry = Registry(args.registry)
+    resolve_pending(registry, log=lambda m: print(m, file=sys.stderr))
+    result = stop_owned(registry.entries(), log=lambda m: print(m, file=sys.stderr))
     print(f"teardown: stopped {result['stopped']} pids ({result['gone']} already exited, "
           f"{result['reused']} reused, {len(result['running'])} still running)")
     return 1 if result["running"] else 0

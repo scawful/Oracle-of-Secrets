@@ -9,6 +9,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -27,9 +28,15 @@ spec.loader.exec_module(ns)
 hl = ns.heavy_lock
 
 
-def spawn_orphan() -> int:
-    """A sleep whose parent exits at once, so init reaps it (like `open -n`)."""
-    out = subprocess.run(["sh", "-c", "sleep 120 >/dev/null 2>&1 & echo $!"],
+FAKE_DIR = tempfile.TemporaryDirectory()
+FAKE_MESEN = Path(FAKE_DIR.name) / "fake-mesen"  # a sleep whose name passes the Mesen check
+shutil.copyfile(shutil.which("sleep"), FAKE_MESEN)
+FAKE_MESEN.chmod(0o755)
+
+
+def spawn_orphan(binary: Path | str = FAKE_MESEN) -> int:
+    """A process whose parent exits at once, so init reaps it (like `open -n`)."""
+    out = subprocess.run(["sh", "-c", f"'{binary}' 120 >/dev/null 2>&1 & echo $!"],
                          capture_output=True, text=True, check=True)
     return int(out.stdout.strip())
 
@@ -100,17 +107,26 @@ class NativeSessionTest(unittest.TestCase):
         self.assertEqual(session.teardown_result["reused"], 1)
         self.assertIn("teardown: stopped 0 pids, lock released", self.log_text())
 
-    def test_status_file_for_another_socket_or_older_process_is_refused(self):
+    def test_status_file_for_another_socket_older_or_non_mesen_process_is_refused(self):
+        since = time.time()
         pid, socket = self.fake_mesen("mismatch")
         write_status(socket, pid, socket_field="/tmp/mesen2-someone-else.sock")
+        older, older_socket = self.fake_mesen("older")
+        stranger = spawn_orphan("sleep")
+        self.strays.append(stranger)
+        stranger_socket = self.root / "mesen2-stranger.sock"
+        write_status(stranger_socket, stranger)
         with self.session() as session:
             with self.assertRaisesRegex(ns.LaunchError, "another socket"):
-                session.register(socket, since=time.time() - 5, timeout=0.5)
-            write_status(socket, os.getppid())
+                session.register(socket, since=since, timeout=0.5)
             with self.assertRaisesRegex(ns.LaunchError, "before this launch"):
-                session.register(socket, since=time.time() + 3600, timeout=0.5)
-        self.assertTrue(alive(pid))
+                session.register(older_socket, since=time.time() + 3600, timeout=0.5)
+            with self.assertRaisesRegex(ns.LaunchError, "not a mesen process"):
+                session.register(stranger_socket, since=since, timeout=0.5)
+        for survivor in (pid, older, stranger):
+            self.assertTrue(alive(survivor))
         self.assertEqual(session.registry.entries(), [])
+        self.assertIn("pending launch still unidentified", self.log_text())
 
     def test_deadline_interrupts_and_tears_down(self):
         since = time.time()
@@ -146,7 +162,7 @@ class NativeSessionTest(unittest.TestCase):
                 with open({str(marker)!r}, "a") as out:
                     out.write(f"case {{case}} start\\n")
                 since = time.time()
-                fake = subprocess.Popen(["sleep", "120"], start_new_session=True,
+                fake = subprocess.Popen([{str(FAKE_MESEN)!r}, "120"], start_new_session=True,
                                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 socket = Path({str(self.root)!r}) / f"mesen2-case{{case}}.sock"
                 socket.with_suffix(".status").write_text(
@@ -184,6 +200,20 @@ class NativeSessionTest(unittest.TestCase):
         log = (run_dir / "session.log").read_text(encoding="utf-8")
         self.assertIn("interrupted: signal SIGTERM", log)
         self.assertIn("teardown: stopped 1 pids, lock released", log)
+
+    def test_mesen_that_comes_up_after_a_failed_register_is_stopped(self):
+        since = time.time()
+        socket = self.root / "mesen2-late.sock"
+        with self.session() as session:
+            with self.assertRaises(ns.LaunchError):
+                session.register(socket, since=since, timeout=0.3)
+            self.assertEqual(len(session.registry.pending()), 1)
+            pid = spawn_orphan()
+            self.strays.append(pid)
+            write_status(socket, pid)
+        self.assertFalse(alive(pid))
+        self.assertIn(f"late registration: pid {pid}", self.log_text())
+        self.assertIn("teardown: stopped 1 pids, lock released", self.log_text())
 
     def test_teardown_command_cleans_up_after_a_killed_wrapper(self):
         since = time.time()

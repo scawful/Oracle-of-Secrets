@@ -514,7 +514,8 @@ if [[ "${REUSE}" -eq 0 ]]; then
     if ! python3 "${ROOT_DIR}/Scripts/Agents/native_session.py" register \
         --registry "${OOS_NATIVE_SESSION_REGISTRY}" --socket "${SOCKET_PATH}" \
         --since "${LAUNCH_SINCE}" --timeout 30; then
-      echo "Native session: could not register the launched Mesen; check pgrep -il mesen." >&2
+      echo "Native session: could not identify the launched Mesen yet; its socket is" \
+        "recorded as pending and session teardown checks it again." >&2
       exit 1
     fi
   fi
