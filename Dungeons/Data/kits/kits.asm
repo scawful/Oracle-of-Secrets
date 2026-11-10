@@ -134,9 +134,9 @@ pullpc
 assert read2($1BEC53) == $02D0, "kit glacia_cave_art17 palette source $08 offset moved"
 pushpc
 org $1BE3DC ; @hook module=Dungeons kind=data protected_size=180
-  dw read2($1BDA04), read2($1BDA06), read2($1BDA08), read2($1BDA0A), read2($1BDA0C), read2($1BDA0E)
-  dw read2($1BDA10), read2($1BDA12), read2($1BDA14), read2($1BDA16), read2($1BDA18), read2($1BDA1A)
-  dw read2($1BDA1C), read2($1BDA1E), read2($1BDA20), read2($1BDA22), read2($1BDA24), read2($1BDA26)
+  dw read2($1BDA04), $51AA, $6AD2, $7B99, $7FFE, $5E51
+  dw $55EE, read2($1BDA12), read2($1BDA14), $51AA, $6AD2, $7B99
+  dw $7FFE, $5E51, $4DAC, read2($1BDA22), read2($1BDA24), read2($1BDA26)
   dw read2($1BDA28), read2($1BDA2A), read2($1BDA2C), read2($1BDA2E), read2($1BDA30), $1CA5
   dw $28E8, $352A, $49AE, $5A32, $6AD6, $7B9B
   dw read2($1BDA40), read2($1BDA42), read2($1BDA44), read2($1BDA46), read2($1BDA48), read2($1BDA4A)
@@ -169,9 +169,9 @@ pullpc
 assert read2($1BEC53) == $02D0, "kit glacia_estate_timber palette source $08 offset moved"
 pushpc
 org $1BE490 ; @hook module=Dungeons kind=data protected_size=180
-  dw read2($1BDA04), read2($1BDA06), read2($1BDA08), read2($1BDA0A), read2($1BDA0C), read2($1BDA0E)
-  dw read2($1BDA10), read2($1BDA12), read2($1BDA14), read2($1BDA16), read2($1BDA18), read2($1BDA1A)
-  dw read2($1BDA1C), read2($1BDA1E), read2($1BDA20), read2($1BDA22), read2($1BDA24), read2($1BDA26)
+  dw read2($1BDA04), $51AA, $6AD2, $7B99, $7FFE, $5E51
+  dw $55EE, read2($1BDA12), read2($1BDA14), $51AA, $6AD2, $7B99
+  dw $7FFE, $5E51, $4DAC, read2($1BDA22), read2($1BDA24), read2($1BDA26)
   dw read2($1BDA28), read2($1BDA2A), read2($1BDA2C), read2($1BDA2E), read2($1BDA30), $1462
   dw $24C4, $3127, $41AA, $522E, $6AF4, $7B99
   dw read2($1BDA40), read2($1BDA42), read2($1BDA44), read2($1BDA46), read2($1BDA48), read2($1BDA4A)
