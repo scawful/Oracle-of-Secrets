@@ -30,14 +30,18 @@ hl = ns.heavy_lock
 
 FAKE_DIR = tempfile.TemporaryDirectory()
 FAKE_MESEN = Path(FAKE_DIR.name) / "fake-mesen"  # a sleep whose name passes the Mesen check
-shutil.copyfile(shutil.which("sleep"), FAKE_MESEN)
+if sys.platform == "darwin":  # macOS names a script's process after its interpreter
+    shutil.copyfile("/bin/sleep", FAKE_MESEN)
+else:  # a copied multi-call coreutils binary refuses to run as "fake-mesen"
+    FAKE_MESEN.write_text(f"#!{sys.executable}\nimport sys, time\ntime.sleep(float(sys.argv[1]))\n",
+                          encoding="utf-8")
 FAKE_MESEN.chmod(0o755)
 
 
 def spawn_orphan(binary: Path | str = FAKE_MESEN) -> int:
     """`sleep 120` run from `binary`, whose parent exits at once so init reaps
-    it (like `open -n`). argv[0] stays `sleep` for multi-call coreutils; the
-    executable name, which the Mesen check reads, comes from `binary`."""
+    it (like `open -n`). The executable file's name, which the Mesen check
+    reads, comes from `binary`."""
     helper = ("import subprocess, sys; p = subprocess.Popen(['sleep', '120'], executable=sys.argv[1], "
               "stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, "
               "start_new_session=True); print(p.pid)")

@@ -62,6 +62,9 @@ CANCEL_SIGNALS = (signal.SIGTERM, signal.SIGINT, signal.SIGHUP)
 PROCESS_NAME = "mesen"  # a registered PID's executable name must contain this
 TERM_WAIT = 5.0  # seconds between SIGTERM and SIGKILL for an owned PID
 GROUP_WAIT = 15.0  # seconds a cancelled CMD gets to run its own teardown
+# `ps` start times are whole seconds, and Linux adds them to a boot time that
+# is also whole seconds, so a fresh process can read up to ~2 s early.
+START_SLACK = 2.0
 
 _spec = importlib.util.spec_from_file_location("heavy_lock", Path(__file__).with_name("heavy_lock.py"))
 heavy_lock = importlib.util.module_from_spec(_spec)
@@ -166,7 +169,7 @@ def find_owned_pid(socket: Path, since: float, timeout: float) -> tuple[int, str
                 started = _start_epoch(start) if start else None
                 if start is None:
                     reason = f"pid {pid} from the status file has exited"
-                elif started is None or started < since - 1:
+                elif started is None or started < since - START_SLACK:
                     reason = f"pid {pid} started before this launch"
                 elif PROCESS_NAME not in process_name(pid).lower():
                     reason = f"pid {pid} is not a {PROCESS_NAME} process"
