@@ -1499,6 +1499,110 @@ def _find_custom_collision_stream_end(data: bytes, room_id: int, start_pc: int) 
     )
 
 
+# Directory ID 412 is yaze-owned native-overworld authoring metadata. The ASM
+# resource code ends at $4DD000 and the next org is $4DF000, so only this exact
+# extent is editable; the rest of bank $4D stays ASM-owned.
+NATIVE_AUTHORING_METADATA_ID = 412
+NATIVE_AUTHORING_METADATA_SNES = 0x4DD000
+NATIVE_AUTHORING_METADATA_ROWS = 256
+NATIVE_AUTHORING_METADATA_PC = 0x26D000
+NATIVE_AUTHORING_METADATA_END_PC = 0x26F000
+
+
+# In asar builds a hook has no recorded end. These two hooks precede table 412
+# in the same LoROM bank, and each has an assembler-enforced end at or below the
+# table start. Each entry: (source, physical address) -> (maximum end, required
+# assert lines). Anything else in the bank keeps the ordinary refusal.
+BOUNDED_HOOKS_BEFORE_NATIVE_AUTHORING_METADATA = {
+    ("Overworld/special_overworld_resident.asm", 0x4DC200): (
+        0x4DC800,
+        (
+            r"assert\s+!LYRA_CURRENT_RESIDENT_CODE_END-!LYRA_CURRENT_RESIDENT_CODE_BASE\s*<=\s*\$0600\b",
+            r"assert\s+pc\(\)\s*<=\s*!LYRA_CURRENT_RESIDENT_CODE_END\b",
+        ),
+    ),
+    ("Overworld/special_overworld_graphics.asm", 0x4DC800): (
+        0x4DD000,
+        (
+            r"assert\s+!SPECIAL_OVERWORLD_RESOURCE_CODE_END\s*==\s*\$4DD000\b",
+            r"assert\s+pc\(\)\s*<=\s*!SPECIAL_OVERWORLD_RESOURCE_CODE_END\b",
+        ),
+    ),
+}
+
+
+def _bounded_before_native_authoring_metadata(
+    root: Path,
+    hook: HookEntry,
+    physical: int,
+    region_start: int,
+    region_end: int,
+) -> bool:
+    """Return True only for a named hook whose end is proven below table 412."""
+    if (region_start, region_end) != (
+        NATIVE_AUTHORING_METADATA_PC,
+        NATIVE_AUTHORING_METADATA_END_PC,
+    ):
+        return False
+    source = hook.source.rpartition(":")[0]
+    bound = BOUNDED_HOOKS_BEFORE_NATIVE_AUTHORING_METADATA.get((source, physical))
+    if bound is None:
+        return False
+    maximum_end, required_asserts = bound
+    if _strict_lorom_to_pc(maximum_end, f"Bounded hook {source}") > region_start:
+        raise ManifestGenerationError(
+            f"bounded hook {source} at 0x{physical:06X} declares end "
+            f"0x{maximum_end:06X} past editor range start"
+        )
+    try:
+        lines = (root / source).read_text(errors="replace").splitlines()
+    except OSError as exc:
+        raise ManifestGenerationError(
+            f"bounded hook {source} source is unreadable: {exc}"
+        ) from exc
+    for pattern in required_asserts:
+        if not any(re.match(pattern, line.strip()) for line in lines):
+            raise ManifestGenerationError(
+                f"bounded hook {source} at 0x{physical:06X} lost its bounding "
+                f"assert matching {pattern}"
+            )
+    return True
+
+
+def _native_authoring_metadata_range(
+    dev_rom_path: Path,
+) -> Optional[tuple[str, int, int]]:
+    """Return the named table 412 range, or None if the ROM does not have one."""
+    build_scripts = str(Path(__file__).resolve().parents[1] / "Build")
+    if build_scripts not in sys.path:
+        sys.path.insert(0, build_scripts)
+    import lyra_native_loaders
+
+    try:
+        directory = lyra_native_loaders.read_native_directory(
+            dev_rom_path.read_bytes()
+        )
+    except ValueError as exc:
+        raise ManifestGenerationError(
+            f"Invalid native overworld directory in {dev_rom_path}: {exc}"
+        ) from exc
+    if directory is None:
+        return None
+    entry = directory[2].get(NATIVE_AUTHORING_METADATA_ID)
+    if entry is None:
+        return None
+    if entry != (NATIVE_AUTHORING_METADATA_SNES, NATIVE_AUTHORING_METADATA_ROWS):
+        raise ManifestGenerationError(
+            f"Native authoring metadata table 412 moved: address "
+            f"0x{entry[0]:06X}, {entry[1]} rows"
+        )
+    return (
+        "native_overworld_authoring_metadata",
+        NATIVE_AUTHORING_METADATA_PC,
+        NATIVE_AUTHORING_METADATA_END_PC,
+    )
+
+
 def derive_editor_managed_regions(dev_rom_path: Path) -> list[dict]:
     """Derive exact dungeon metadata and collision ranges from the dev ROM."""
     try:
@@ -1617,6 +1721,9 @@ def derive_editor_managed_regions(dev_rom_path: Path) -> list[dict]:
             CUSTOM_COLLISION_DATA_END_PC,
         ),
     ]
+    native_authoring_metadata = _native_authoring_metadata_range(dev_rom_path)
+    if native_authoring_metadata is not None:
+        named_regions.append(native_authoring_metadata)
     _validate_disjoint_named_ranges(named_regions, "editor-managed regions")
 
     return [
@@ -1626,7 +1733,7 @@ def derive_editor_managed_regions(dev_rom_path: Path) -> list[dict]:
 
 
 def _validate_expanded_hooks_disjoint_from_editor_regions(
-    hooks: list[HookEntry], editor_regions: list[dict]
+    hooks: list[HookEntry], editor_regions: list[dict], root: Path
 ) -> None:
     """Reject expanded hooks that may extend into editor-owned bytes.
 
@@ -1656,6 +1763,10 @@ def _validate_expanded_hooks_disjoint_from_editor_regions(
             hook_bank_end = hook_bank_start + 0x8000
             region_segment_start = max(region_start, hook_bank_start)
             region_segment_end = min(region_end, hook_bank_end)
+            if _bounded_before_native_authoring_metadata(
+                root, hook, physical, region_start, region_end
+            ):
+                continue
             if (
                 region_segment_start < region_segment_end
                 and hook_start < region_segment_end
@@ -2220,7 +2331,7 @@ def generate_manifest(
         else:
             # Estimated spans: start-address rule for expanded hooks.
             _validate_expanded_hooks_disjoint_from_editor_regions(
-                hooks, editor_regions
+                hooks, editor_regions, root
             )
         _validate_unresolved_org_proofs(
             scan_org_directives(root, asm_sources, defines=defines),
@@ -2228,8 +2339,9 @@ def generate_manifest(
         )
         manifest["editor_managed_regions"] = {
             "description": (
-                "Exact yaze-owned dungeon metadata and custom-collision "
-                "ranges derived from the editable dev ROM. The WaterFill "
+                "Exact yaze-owned dungeon metadata, custom-collision and "
+                "native-overworld authoring-metadata (table 412) ranges "
+                "derived from the editable dev ROM. The WaterFill "
                 "tail beginning at $25:E000 remains ASM-owned, and protected "
                 "hooks still take precedence."
             ),
