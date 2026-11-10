@@ -7,7 +7,7 @@ test batches. Every native run should go through one NativeSession:
   - the heavy lock (Scripts/Agents/heavy_lock.py), held by this process;
   - an owned-PID registry file. A Mesen is registered only when the status
     file beside a socket this run chose names it, the process started after
-    the launch began, and its executable name is Mesen. The PID's start time
+    the launch began, and its executable file is Mesen. The PID's start time
     is recorded with it. A launch not identified in time stays pending and
     is checked again at teardown;
   - a deadline (SIGALRM), and SIGTERM/SIGINT/SIGHUP handlers that raise
@@ -94,8 +94,9 @@ def _start_epoch(start: str) -> float | None:
 
 
 def process_name(pid: int) -> str:
-    """Executable name only (`ps -o comm=`), never the arguments."""
-    out = subprocess.run(["/bin/ps", "-p", str(pid), "-o", "comm="], capture_output=True, text=True)
+    """The executable file's name (`ps -o ucomm=`), never the arguments.
+    `comm` on macOS follows argv[0], which a caller can set to anything."""
+    out = subprocess.run(["/bin/ps", "-p", str(pid), "-o", "ucomm="], capture_output=True, text=True)
     return Path(out.stdout.strip()).name
 
 

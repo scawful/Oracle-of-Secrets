@@ -35,8 +35,13 @@ FAKE_MESEN.chmod(0o755)
 
 
 def spawn_orphan(binary: Path | str = FAKE_MESEN) -> int:
-    """A process whose parent exits at once, so init reaps it (like `open -n`)."""
-    out = subprocess.run(["sh", "-c", f"'{binary}' 120 >/dev/null 2>&1 & echo $!"],
+    """`sleep 120` run from `binary`, whose parent exits at once so init reaps
+    it (like `open -n`). argv[0] stays `sleep` for multi-call coreutils; the
+    executable name, which the Mesen check reads, comes from `binary`."""
+    helper = ("import subprocess, sys; p = subprocess.Popen(['sleep', '120'], executable=sys.argv[1], "
+              "stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, "
+              "start_new_session=True); print(p.pid)")
+    out = subprocess.run([sys.executable, "-c", helper, str(binary)],
                          capture_output=True, text=True, check=True)
     return int(out.stdout.strip())
 
@@ -112,7 +117,7 @@ class NativeSessionTest(unittest.TestCase):
         pid, socket = self.fake_mesen("mismatch")
         write_status(socket, pid, socket_field="/tmp/mesen2-someone-else.sock")
         older, older_socket = self.fake_mesen("older")
-        stranger = spawn_orphan("sleep")
+        stranger = spawn_orphan(shutil.which("sleep"))
         self.strays.append(stranger)
         stranger_socket = self.root / "mesen2-stranger.sock"
         write_status(stranger_socket, stranger)
@@ -162,7 +167,8 @@ class NativeSessionTest(unittest.TestCase):
                 with open({str(marker)!r}, "a") as out:
                     out.write(f"case {{case}} start\\n")
                 since = time.time()
-                fake = subprocess.Popen([{str(FAKE_MESEN)!r}, "120"], start_new_session=True,
+                fake = subprocess.Popen(["sleep", "120"], executable={str(FAKE_MESEN)!r},
+                                        start_new_session=True,
                                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 socket = Path({str(self.root)!r}) / f"mesen2-case{{case}}.sock"
                 socket.with_suffix(".status").write_text(
