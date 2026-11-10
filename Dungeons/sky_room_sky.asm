@@ -7,9 +7,10 @@
 ; (all colour 0); their collision ($20) is untouched.
 ;
 ; After Underworld_LoadRoom has drawn the BG2 buffer ($7E2000), this fills the
-; BG1 buffer ($7E4000): under each BG2 $1E9 cell a sky word from a 32x32
-; lattice (sheet EA in slot 6, palette 6 colours 1-3); every other cell gets
-; the blank $01E9. The fill runs before any tilemap upload in every caller.
+; BG1 buffer ($7E4000): under each BG2 $1E9 cell and each pit-lip cell
+; ($1DB-$1DE) a sky word from a 32x32 lattice (sheet EA in slot 6, palette 6
+; colours 1-3); every other cell gets the blank $01E9. The fill runs before
+; any tilemap upload in every caller.
 ;
 ; Scope: room $00A0 only. Sheet EA rides Sky secondary group 0A slot 6 (only
 ; Sky rooms select group 0A); the colours are Sky palette14 row 6 colours 1-3
@@ -54,10 +55,16 @@ SkyRoom_LoadRoom:
   PHB
   SEP #$20 : LDA.b #$7E : PHA : PLB : REP #$20
 
-  ; Pass 1: plain sky (EA tile 0, palette 6) under BG2 $1E9 cells, blank elsewhere.
+  ; Pass 1: plain sky (EA tile 0, palette 6) under BG2 $1E9 pit cells and
+  ; under the pit-lip chars $1DB-$1DE (sheet 0F, slot 7), whose colour-0
+  ; pixels (tooth gaps, side strips) would otherwise show the blank backdrop.
+  ; Blank elsewhere.
   LDY.w #$1FFE
   .cell
     LDA.w $2000,Y : AND.w #$03FF : CMP.w #$01E9 : BEQ .sky
+    CMP.w #$01DB : BCC .blank
+    CMP.w #$01DF : BCC .sky
+  .blank
     LDA.w #$01E9 : BRA .put
   .sky
     LDA.w #$1980
