@@ -965,7 +965,7 @@
     {
       "id": "0x37",
       "name": "Fortress of Secrets",
-      "label": "D8 Fortress of Secrets",
+      "label": "D9 Fortress of Secrets",
       "group": "dungeon",
       "room": "0x000C",
       "exit": "table",
@@ -1982,7 +1982,7 @@
       "exit_index": "0x0B",
       "x": "0x0EA8",
       "y": "0x0638",
-      "landing": "outside D8 Fortress of Secrets"
+      "landing": "outside D9 Fortress of Secrets"
     },
     {
       "area": "0x63",

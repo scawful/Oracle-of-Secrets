@@ -201,7 +201,7 @@ Prioritize AFTER Kydrog complete:
 | D5: Glacia Estate | [ ] |
 | D6: Goron Mines | [ ] |
 | D7: Dragon Ship | [ ] |
-| D8: Fortress of Secrets | [ ] |
+| D9: Fortress of Secrets | [ ] |
 | S1: Shrine of Wisdom | [ ] |
 | S2: Shrine of Power | [ ] |
 | S3: Shrine of Courage | [ ] |

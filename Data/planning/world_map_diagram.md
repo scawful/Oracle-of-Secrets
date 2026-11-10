@@ -163,7 +163,7 @@ The Eon Abyss is the mirror dimension of Kalyxo Island. It represents a corrupte
 | 0x51 | `51` | Connector | Links Shrine of Courage to Pyramid |
 | 0x57 | `57` | Final Boss Chamber | Hole to Ganon/Kydreeok fight |
 | 0x58-59, 60-61, 68-6A | | Forest of Dreams | Intro area, connects to S3 later |
-| 0x5E | `5E` | Fortress of Secrets | **D8 Entrance** - Portal Rod |
+| 0x5E | `5E` | Fortress of Secrets | **D9 Entrance** - Portal Rod |
 | 0x63-64, 6B-6C | | Swamp | Swampy area with **S1 (Shrine of Wisdom)** |
 | 0x70-74, 78-7D | | Underwater Area | Access via Mermaid NPC whirlpool on LW 0x3D (Zora Mask required) |
 | 0x75 | `75` | Octobos Area | Octobos enemy location |
@@ -267,7 +267,7 @@ These are special expanded maps accessed via triggers on the main overworld. The
 | **D5** | Glacia Estate | 0x06 | LW | Twinrova | Fire Rod |
 | **D6** | Goron Mines | 0x36 | LW | King Dodongo | Hammer |
 | **D7** | Dragon Ship | 0x30 | LW | Kydrog (Pirate) | Somaria Rod |
-| **D8** | Fortress of Secrets | 0x5E | DW | Dark Link | Portal Rod |
+| **D9** | Fortress of Secrets | 0x5E | DW | Dark Link | Portal Rod |
 
 ### Shrines (S1-S3)
 
@@ -302,7 +302,7 @@ Extracted from `Overworld/entrances.asm`:
 | 0x2B | 0x0B | Kalyxo Castle Main (D3) |
 | 0x34 | 0x06 | Glacia Estate (D5) |
 | 0x35 | 0x30 | Dragon Ship (D7) |
-| 0x37 | 0x5E | Fortress of Secrets (D8) |
+| 0x37 | 0x5E | Fortress of Secrets (D9) |
 
 ### Shrine Entrances
 

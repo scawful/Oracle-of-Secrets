@@ -136,7 +136,7 @@ Source navigation: [special-area loader](../../Overworld/special_areas.asm),
 | **Glacia Estate** | D5 | Ebon Ember | Twinrova boss |
 | **Goron Mines** | D6 | Seismic Whisper | Rock Meat quest |
 | **Dragon Ship** | D7 | Demise's Thorn | Kydrog (pirate form) |
-| **Fortress of Secrets** | D8 | N/A | Dark Link, Kydreeok |
+| **Fortress of Secrets** | D9 | N/A | Dark Link, Kydreeok |
 
 ### Shrines
 

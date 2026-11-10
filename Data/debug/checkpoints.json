@@ -1038,7 +1038,7 @@
     },
     {
       "id": "d8-entrance",
-      "label": "D8 Fortress of Secrets entrance (D7, Shrine of Courage, Master Sword)",
+      "label": "D9 Fortress of Secrets entrance (D7, Shrine of Courage, Master Sword)",
       "beat": 27,
       "after": "d7-entrance",
       "location": {

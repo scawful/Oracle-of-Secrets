@@ -226,7 +226,7 @@ The Shrine bosses and endgame dungeons are found in the Eon Abyss:
 | S1 - Shrine of Wisdom | Shrine challenge (flooded) |
 | S2 - Shrine of Power | Shrine challenge (volcanic) |
 | S3 - Shrine of Courage | Shrine challenge (shadowed) |
-| D8 - Fortress of Secrets | Modified Temple of Seasons, contains Dark Link |
+| D9 - Fortress of Secrets | Modified Temple of Seasons, contains Dark Link |
 | Temporal Pyramid | Final pre-boss dungeon, visions of past/future |
 | Lava Lands | Ganondorf's stronghold, location of Kydreeok encounter |
 
@@ -357,7 +357,7 @@ Masks in Oracle of Secrets are vessels for **trapped spirits or echoes**. The So
 
 ### Part 5: End Game
 - Return to Eon Abyss with Master Sword
-- D8: Fortress of Secrets - battle Dark Link
+- D9: Fortress of Secrets - battle Dark Link
 - Pursue shadow-bat through Temporal Pyramid to Lava Lands
 - Final boss: Kydreeok (Kydrog's dragon form)
 - Seal restored, Kalyxo saved

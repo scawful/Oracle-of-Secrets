@@ -671,7 +671,7 @@ Menu_OracleTreasureOwned:
   db $56 ; $14 S1 Shrine of Wisdom: Flippers, room $09A (item $1E)
   db $42 ; $16 D4 Zora Temple: Hookshot, room $036 (item $0A)
   db $50 ; $18 D7 Dragon Ship: Cane of Somaria, room $0B3 (item $15)
-  db $5B ; $1A D8 Fortress of Secrets: Red Mail, room $05C (item $23)
+  db $5B ; $1A D9 Fortress of Secrets: Red Mail, room $05C (item $23)
   ; Owned when the SRAM byte is at least this value (0 = no treasure).
   .value
   db $03, $00, $00, $01, $00, $01, $01, $01, $02, $01, $01, $01, $01, $02

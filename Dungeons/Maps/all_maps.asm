@@ -25,7 +25,7 @@
 ; D7: Dragon Ship
 ; incbin "Maps/d7_dragon_ship.bin"
 
-; D8: Fortress of Secrets
+; D9: Fortress of Secrets
 ; incbin "Maps/d8_fortress_of_secrets.bin"
 
 ; S1: Shrine of Wisdom

@@ -153,7 +153,7 @@ Hardcoded IDs:
 | `$14` | S1 Shrine of Wisdom |
 | `$16` | D4, plus Master Sword Cave `$2D` |
 | `$18` | D7, plus Master Sword Cave `$18`/`$19` |
-| `$1A` | D8 Fortress of Secrets |
+| `$1A` | D9 Fortress of Secrets |
 | `$1C` | Planned keyless underwater shrine |
 
 The Master Sword Cave rooms have no key doors or dungeon items. Their only key,

@@ -315,7 +315,7 @@ Farore is now at the Hall of Secrets. She:
 - Acknowledges the shrines' importance
 - When Link has the Master Sword: "You carry hope now, [L]. The blade remembers what it's for."
 
-### Fortress of Secrets (D8)
+### Fortress of Secrets (D9)
 
 **Entry:** Requires all seven essences
 **Boss:** Dark Link

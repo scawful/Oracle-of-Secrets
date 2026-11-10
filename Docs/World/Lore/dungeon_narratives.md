@@ -490,7 +490,7 @@ The REAL enemy waits below.
 
 ---
 
-### D8: Fortress of Secrets
+### D9: Fortress of Secrets
 
 **Essence:** None (final dungeon)
 
@@ -609,7 +609,7 @@ When Kydreeok falls, there may be a moment of clarity—the hero he once was sur
 | D5 Glacia Estate | Ebon Ember | Duality | Fire Rod | Twinrova | Excellent |
 | D6 Goron Mines | Seismic Whisper | Foundation/trust | Hammer | Goron Elder | Good |
 | D7 Dragon Ship | Demise's Thorn | Endings | — | Kydrog, Farore | Excellent |
-| D8 Fortress | — | Memory/identity | — | Dark Link | Excellent |
+| D9 Fortress | — | Memory/identity | — | Dark Link | Excellent |
 | S1 Wisdom | Pendant | Memory | — | Guardian echo | — |
 | S2 Power | Pendant | Strength | — | Guardian echo | — |
 | S3 Courage | Pendant | Future | — | Guardian echo | — |
