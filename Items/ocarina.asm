@@ -229,7 +229,14 @@ endif
   .light_world
 
   ; Also doesn't work in special areas like Master Sword area.
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
+  LDA.b $10 : CMP.b #$0B : BNE .normal_soaring
+    JSL SpecialSoaring_Open
+    RTS
+  .normal_soaring
+else
   LDA.b $10 : CMP.b #$0B : BEQ .return
+endif
 
   LDX.b #$04
 
@@ -534,6 +541,9 @@ else
 endif
 }
 incsrc "Items/song_secrets_stone.asm"
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
+  incsrc "Items/special_soaring.asm"
+endif
 %log_end("Items/ocarina.asm", !LOG_ITEMS)
 
 pushpc ; Bank2B freespace
