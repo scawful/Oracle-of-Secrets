@@ -770,8 +770,10 @@ Sprite_D8Boss_Draw:
 {
   ; %DrawSprite with signed byte x/y offsets, 16-bit entry index (the
   ; tables hold about 860 entries) and long table reads (bank $2E).
+  ; No Sprite_OAM_AllocateDeferToPlayer: with Link at the eye it moves the
+  ; boss into region B/C (12 entries) and frames draw up to 28.
+  ; Sprite_TimersAndOAM ($0683F2) already reserved !NbrTiles+1 entries.
   JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
   LDA.w SprFlash, X : STA $08
   LDA.w SprAction, X : CMP.b #$06 : BNE +
     LDA.b #50 : BRA .frame
