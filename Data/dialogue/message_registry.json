@@ -2,8 +2,8 @@
   "format": "oos-message-registry",
   "version": 1,
   "expanded_base": "0x18D",
-  "current_expanded_end": "0x219",
-  "next_append_id": "0x21A",
+  "current_expanded_end": "0x21A",
+  "next_append_id": "0x21B",
   "renumber_policy": "freeze-published-ids",
   "ranges": [
     {
@@ -245,6 +245,14 @@
       "expected_content": "authored",
       "owner": "d4-refuge",
       "purpose": "River witness, Sea caretaker and water keeper, three progression states each; exact refuge draft approved by scawful 2026-11-07; Main integration approved by scawful 2026-11-07"
+    },
+    {
+      "start": "0x21A",
+      "end": "0x21A",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "switch-hook-receipt",
+      "purpose": "Dedicated Switch Hook receipt $4D (Items/bombchu_receipt.asm, SwitchHookReceipt_Message). Exact pickup text approved by scawful 2026-11-11: Yes, use it. Preserve the approved wording; chest binding and playtest staging remain separate."
     }
   ]
 }

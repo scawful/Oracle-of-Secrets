@@ -295,7 +295,7 @@ class BombchuReceiptTests(unittest.TestCase):
                 for site in (0x07B5A0,0x098617,0x09862D): row[site] = 0xAE
                 for site in (0x09877D,0x098A4A,0x098AFD,0x098BE1): row[site] = 0x3A
                 for site in (0x08C6A4,0x08C6D5,0x06C4D6): row[site] = 1
-                row[0x08C5C1] = 0xFFFF  # Explicit unapproved presentation marker.
+                row[0x08C5C1] = 0x021A  # Exact pickup text approved by scawful.
             for site,raw,reg,scale,width,db in READERS:
                 # Independently execute the displaced native instruction with
                 # just this new row injected into its original table address.

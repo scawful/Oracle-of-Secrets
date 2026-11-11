@@ -1,6 +1,6 @@
 {
   "counts": {
-    "expanded": 141,
+    "expanded": 142,
     "vanilla": 0
   },
   "format": "yaze-message-bundle",
@@ -709,6 +709,11 @@
       "bank": "expanded",
       "id": 140,
       "text": "Ask at the settlement for[2]the song that calls storms.[3]Then return to Zora Falls.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 141,
+      "text": "You got the Switch Hook![2]Aim it at a block or statue to[3]trade places with it!"
     }
   ],
   "version": 1

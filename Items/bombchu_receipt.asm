@@ -8,8 +8,8 @@ BombchuReceipt_GfxId = $39
 BombchuReceipt_Message = $01BD
 SwitchHookReceipt_Id = $4D
 SwitchHookReceipt_GfxId = $3A
-; Preparation marker only: no pickup text or chest binding is approved here.
-SwitchHookReceipt_Message = $FFFF
+; Exact pickup text approved by scawful 2026-11-11; chest binding remains separate.
+SwitchHookReceipt_Message = $021A
 BombchuReceipt_CodeStart = pc()
 
 ; Extend one table read without moving/changing any native row. Callers use
