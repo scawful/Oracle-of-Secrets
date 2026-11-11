@@ -96,9 +96,9 @@ pullpc
 assert read2($1BEC5B) == $05A0, "kit d1_grotto_v6 palette source $10 offset moved"
 pushpc
 org $1BE328 ; @hook module=Dungeons kind=data protected_size=180
-  dw read2($1BDCD4), $14C4, $2147, $2DCB, $3E70, read2($1BDCDE)
-  dw read2($1BDCE0), read2($1BDCE2), read2($1BDCE4), $14C4, $3E70, $31ED
-  dw $4292, $2147, $2DCB, read2($1BDCF2), read2($1BDCF4), read2($1BDCF6)
+  dw read2($1BDCD4), read2($1BDCD6), read2($1BDCD8), read2($1BDCDA), read2($1BDCDC), read2($1BDCDE)
+  dw read2($1BDCE0), read2($1BDCE2), read2($1BDCE4), read2($1BDCE6), read2($1BDCE8), read2($1BDCEA)
+  dw read2($1BDCEC), read2($1BDCEE), read2($1BDCF0), read2($1BDCF2), read2($1BDCF4), read2($1BDCF6)
   dw read2($1BDCF8), read2($1BDCFA), read2($1BDCFC), read2($1BDCFE), read2($1BDD00), read2($1BDD02)
   dw read2($1BDD04), read2($1BDD06), read2($1BDD08), read2($1BDD0A), read2($1BDD0C), read2($1BDD0E)
   dw read2($1BDD10), read2($1BDD12), read2($1BDD14), read2($1BDD16), read2($1BDD18), read2($1BDD1A)
@@ -110,7 +110,7 @@ org $1BE328 ; @hook module=Dungeons kind=data protected_size=180
   dw read2($1BDD58), read2($1BDD5A), read2($1BDD5C), read2($1BDD5E), read2($1BDD60), read2($1BDD62)
   dw read2($1BDD64), read2($1BDD66), read2($1BDD68), read2($1BDD6A), read2($1BDD6C), read2($1BDD6E)
   dw read2($1BDD70), read2($1BDD72), read2($1BDD74), read2($1BDD76), read2($1BDD78), read2($1BDD7A)
-  dw read2($1BDD7C), read2($1BDD7E), read2($1BDD80), read2($1BDD82), $360E, read2($1BDD86)
+  dw read2($1BDD7C), read2($1BDD7E), read2($1BDD80), read2($1BDD82), read2($1BDD84), read2($1BDD86)
 assert pc() == $1BE3DC, "kit palette must be exactly 90 words"
 pullpc
 
@@ -169,11 +169,11 @@ pullpc
 assert read2($1BEC53) == $02D0, "kit glacia_estate_timber palette source $08 offset moved"
 pushpc
 org $1BE490 ; @hook module=Dungeons kind=data protected_size=180
-  dw read2($1BDA04), $51AA, $6AD2, $7B99, $7FFE, $5E51
-  dw $55EE, read2($1BDA12), read2($1BDA14), $51AA, $6AD2, $7B99
-  dw $7FFE, $5E51, $4DAC, read2($1BDA22), read2($1BDA24), read2($1BDA26)
-  dw read2($1BDA28), read2($1BDA2A), read2($1BDA2C), read2($1BDA2E), read2($1BDA30), $1462
-  dw $24C4, $3127, $41AA, $522E, $6AF4, $7B99
+  dw read2($1BDA04), read2($1BDA06), read2($1BDA08), read2($1BDA0A), read2($1BDA0C), read2($1BDA0E)
+  dw read2($1BDA10), read2($1BDA12), read2($1BDA14), read2($1BDA16), read2($1BDA18), read2($1BDA1A)
+  dw read2($1BDA1C), read2($1BDA1E), read2($1BDA20), read2($1BDA22), read2($1BDA24), read2($1BDA26)
+  dw read2($1BDA28), read2($1BDA2A), read2($1BDA2C), read2($1BDA2E), read2($1BDA30), read2($1BDA32)
+  dw read2($1BDA34), read2($1BDA36), read2($1BDA38), read2($1BDA3A), read2($1BDA3C), read2($1BDA3E)
   dw read2($1BDA40), read2($1BDA42), read2($1BDA44), read2($1BDA46), read2($1BDA48), read2($1BDA4A)
   dw read2($1BDA4C), read2($1BDA4E), read2($1BDA50), read2($1BDA52), read2($1BDA54), read2($1BDA56)
   dw read2($1BDA58), read2($1BDA5A), read2($1BDA5C), read2($1BDA5E), read2($1BDA60), read2($1BDA62)
@@ -181,8 +181,8 @@ org $1BE490 ; @hook module=Dungeons kind=data protected_size=180
   dw read2($1BDA70), read2($1BDA72), read2($1BDA74), read2($1BDA76), read2($1BDA78), read2($1BDA7A)
   dw read2($1BDA7C), read2($1BDA7E), read2($1BDA80), read2($1BDA82), read2($1BDA84), read2($1BDA86)
   dw read2($1BDA88), read2($1BDA8A), read2($1BDA8C), read2($1BDA8E), read2($1BDA90), read2($1BDA92)
-  dw read2($1BDA94), read2($1BDA96), read2($1BDA98), read2($1BDA9A), $4D89, $6290
-  dw $7336, read2($1BDAA2), read2($1BDAA4), read2($1BDAA6), read2($1BDAA8), read2($1BDAAA)
+  dw read2($1BDA94), read2($1BDA96), read2($1BDA98), read2($1BDA9A), read2($1BDA9C), read2($1BDA9E)
+  dw read2($1BDAA0), read2($1BDAA2), read2($1BDAA4), read2($1BDAA6), read2($1BDAA8), read2($1BDAAA)
   dw read2($1BDAAC), read2($1BDAAE), read2($1BDAB0), read2($1BDAB2), read2($1BDAB4), read2($1BDAB6)
 assert pc() == $1BE544, "kit palette must be exactly 90 words"
 pullpc
