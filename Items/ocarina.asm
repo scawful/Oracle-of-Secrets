@@ -187,9 +187,7 @@ endif
     LDA.b #$27 : JSR $802F ; Player_DoSfx3
     LDA.b #$02 : STA.b SongFlag
 if !ENABLE_OCARINA_SONG_TINT == 1
-    ; Purple tint for Song of Time (~32 frames)
-    LDA.b #$20 : STA.l SongTintTimer
-    LDA.b #$62 : STA.l SongTintColor : STA.b $9A
+    LDA.b #!SongTint_Time : JSL SongTint_Start
 endif
     RTS
 
@@ -197,9 +195,7 @@ endif
     LDA.b #$13 : JSR Player_DoSfx2
     LDA.b #$01 : STA.b SongFlag
 if !ENABLE_OCARINA_SONG_TINT == 1
-    ; Green tint for Song of Healing (~32 frames)
-    LDA.b #$20 : STA.l SongTintTimer
-    LDA.b #$52 : STA.l SongTintColor : STA.b $9A
+    LDA.b #!SongTint_Healing : JSL SongTint_Start
 endif
     RTS
 
@@ -214,9 +210,7 @@ endif
   .song_of_soaring
   LDA.b #$3E : JSR Player_DoSfx2
 if !ENABLE_OCARINA_SONG_TINT == 1
-  ; White flash for Song of Soaring (~16 frames)
-  LDA.b #$10 : STA.l SongTintTimer
-  LDA.b #$32 : STA.l SongTintColor : STA.b $9A
+  LDA.b #!SongTint_Soaring : JSL SongTint_Start
 endif
 
   ; Are we indoors?
@@ -434,29 +428,144 @@ PlayThunderAndRain:
   RTL
 }
 
-; Tick the song tint timer each frame.
-; Decrements SongTintTimer; while active, applies SongTintColor to $9A.
-; When timer expires, restores $9A to $00 (unless rain is active).
-; Safe to call from any M/X width (forces 8-bit A).
-SongTintTick:
+; Song tints add a fixed color to BG1, BG2 and the backdrop, then put back the
+; color math the area or room had. CGWSEL ($99) is left alone: a subscreen
+; overlay keeps drawing, and its transparent pixels add the fixed color.
+; $9A/$9C-$9E are the NMI mirrors of CGADSUB/COLDATA.
+SongTint_Table:
+  ; frames, red, green, blue (0-31)
+  db $20, $02, $09, $03 ; !SongTint_Healing: green
+  db $20, $08, $02, $0A ; !SongTint_Time: purple
+  db $10, $0C, $0C, $0C ; !SongTint_Soaring: white flash
+  db $20, $09, $07, $01 ; !SongTint_Secrets: gold
+  db $10, $04, $06, $0A ; !SongTint_Stone: pale blue
+
+; A (8-bit) = !SongTint_* index. A tint already running keeps the color math
+; it saved, so a second song never restores tinted values.
+; Safe to call from any M/X width.
+SongTint_Start:
+{
+  PHP
+  REP #$10 : PHX
+  SEP #$30
+  PHA
+  LDA.l SongTintTimer : BNE .running
+    LDA.b $9A : STA.l SongTintSaved
+    LDA.b $9C : STA.l SongTintSaved+1
+    LDA.b $9D : STA.l SongTintSaved+2
+    LDA.b $9E : STA.l SongTintSaved+3
+    LDA.b $1B : STA.l SongTintContext
+    JSR SongTint_ReadPlace : STA.l SongTintContext+1
+  .running
+  PLA : STA.l SongTintColor
+  ASL : ASL : TAX
+  LDA.l SongTint_Table,X : STA.l SongTintTimer
+  JSR SongTint_Apply
+  REP #$10 : PLX
+  PLP
+  RTL
+}
+
+; Ends a running tint now and restores the saved color math.
+; Safe to call from any M/X width.
+SongTint_Cancel:
 {
   PHP
   SEP #$20
+  LDA.l SongTintTimer : BEQ .done
+    LDA.b #$00 : STA.l SongTintTimer
+    JSR SongTint_Restore
+  .done
+  PLP
+  RTL
+}
+
+; Tick the song tint each frame (HUD_ClockDisplay).
+; Safe to call from any M/X width.
+SongTintTick:
+{
+  PHP
+  REP #$10 : PHX
+  SEP #$30
 if !ENABLE_OCARINA_SONG_TINT == 0
   LDA.b #$00 : STA.l SongTintTimer
   BRA .done
 endif
   LDA.l SongTintTimer : BEQ .done
-    DEC : STA.l SongTintTimer : BNE .apply
-      ; Timer just expired — clear tint (unless storms keep it)
-      LDA.l $7EE00E : BNE .done
-      STZ.b $9A
-      BRA .done
-    .apply
-    LDA.l SongTintColor : STA.b $9A
+  LDA.b $1B : CMP.l SongTintContext : BNE .moved
+  JSR SongTint_ReadPlace : CMP.l SongTintContext+1 : BNE .moved
+  LDA.l SongTintTimer : DEC : STA.l SongTintTimer : BEQ .expired
+    JSR SongTint_Apply
+    BRA .done
+  .moved
+  ; The new area or room may have set its own color math; keep those writes.
+  LDA.b #$00 : STA.l SongTintTimer
+  JSR SongTint_RestoreUntouched
+  BRA .done
+  .expired
+  JSR SongTint_Restore
   .done
+  REP #$10 : PLX
   PLP
   RTL
+}
+
+; 8-bit A/X from here down.
+SongTint_Apply:
+{
+  LDA.l SongTintColor : ASL : ASL : TAX
+  LDA.l SongTint_Table+1,X : ORA.b #$20 : STA.b $9C
+  LDA.l SongTint_Table+2,X : ORA.b #$40 : STA.b $9D
+  LDA.l SongTint_Table+3,X : ORA.b #$80 : STA.b $9E
+  JSR SongTint_Math : STA.b $9A
+  RTS
+}
+
+; A = saved CGADSUB set to add (a subtracting room would invert the tint)
+; to BG1, BG2 and the backdrop, keeping its other layers and half-math bit.
+SongTint_Math:
+{
+  LDA.l SongTintSaved : AND.b #$7F : ORA.b #$23
+  RTS
+}
+
+SongTint_Restore:
+{
+  LDA.l SongTintSaved   : STA.b $9A
+  LDA.l SongTintSaved+1 : STA.b $9C
+  LDA.l SongTintSaved+2 : STA.b $9D
+  LDA.l SongTintSaved+3 : STA.b $9E
+  RTS
+}
+
+; Restores only the mirrors that still hold the values SongTint_Apply wrote.
+SongTint_RestoreUntouched:
+{
+  LDA.l SongTintColor : ASL : ASL : TAX
+  JSR SongTint_Math : CMP.b $9A : BNE +
+    LDA.l SongTintSaved : STA.b $9A
+  +
+  LDA.l SongTint_Table+1,X : ORA.b #$20 : CMP.b $9C : BNE +
+    LDA.l SongTintSaved+1 : STA.b $9C
+  +
+  LDA.l SongTint_Table+2,X : ORA.b #$40 : CMP.b $9D : BNE +
+    LDA.l SongTintSaved+2 : STA.b $9D
+  +
+  LDA.l SongTint_Table+3,X : ORA.b #$80 : CMP.b $9E : BNE +
+    LDA.l SongTintSaved+3 : STA.b $9E
+  +
+  RTS
+}
+
+; A = overworld area ($8A) outdoors, room ($A0) indoors.
+SongTint_ReadPlace:
+{
+  LDA.b $1B : BEQ .outdoors
+    LDA.b $A0
+    RTS
+  .outdoors
+  LDA.b $8A
+  RTS
 }
 
 ; Rain animation (lightning, thunder, overlay scroll) handled natively
