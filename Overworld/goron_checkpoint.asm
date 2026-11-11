@@ -1,5 +1,5 @@
-; Prepared file2 start outside Goron Mines. Module05 enters M8/X8, DB/DP
-; unchanged. Selector07 is one-shot: native Save & Quit persists House00.
+; File-load routing shares the native Module05 entry: M8/X8, DB/DP unchanged.
+; Prepared Goron File2 selector07 is one-shot: Save & Quit persists House00.
 ; The original factory SRAM repeats the outside start until that first save.
 !GoronCheckpoint_CacheRoom = $0151 ; Native cached-exit room; no entrance owns it
 
@@ -13,6 +13,22 @@ LoadCheckpointOrWorld:
   STZ.w GanondorfFight
   STZ.w BossReinject
   STZ.w FinaleBeat
+if !ENABLE_D3_PRISON_SEQUENCE == 1
+  ; Spawn_Prison is a saved selector, not an entrance number. Its vanilla
+  ; record still names room80. A captured D3 file must use the complete
+  ; current entrance32 record, as the original capture transition does.
+  LDA.l SpawnPoint : CMP.b #!Spawn_Prison : BNE .not_prison
+  LDA.l CastleAmbushFlags : AND.b #!CastleAmbush_HasBeenCaptured
+  BEQ .not_prison
+    LDA.b #$32 : STA.w $010E
+    STZ.w $010F
+    LDA.b #$01 : STA.w $010A ; Skip recaching a nonexistent overworld exit
+    STZ.w $04AA : STZ.w $04AB ; Select EntranceData, not SpawnPointData
+    ; Reuse the native HUD and Module06 loader. The hook is a JML, so the
+    ; existing Module05 long return stays on the stack unchanged.
+    JML $028208 ; LoadUnderworldRoomRebuildHUD
+  .not_prison
+endif
   LDA.l SpawnPoint : CMP.b #!Spawn_GoronCheckpoint : BNE .legacy
     ; Consume even a malformed marker before the seven-record spawn arrays.
     LDA.b #!Spawn_LinksHouse : STA.l SpawnPoint

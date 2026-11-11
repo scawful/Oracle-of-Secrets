@@ -821,7 +821,13 @@ BombchuAmmo       = $7EF3B0   ; 0..20; independent of Bombs ($7EF343)
 ; AC..B0 contain the published Items ownership/ammo fields above.
 ; B1 remains excluded for pending SongBits; preserve checkpoint fences.
 ; Two separate unassigned ranges remain around the granted checkpoint state.
-FreeBlock_LargePrefix = $7EF3B2 ; 2 bytes [B2,B4); not an allocation grant
+; Root-selected 2026-11-11: engine reads only. The future approved garrison
+; teaching actor owns the setter; no migration or implicit grant is performed.
+; Vanilla new-file init clears this byte, SaveGameFile copies/checksums it.
+; Exact A5 is learned; every other old-save value is locked, without rewriting it.
+SkySoaringLearned = $7EF3B2
+!SKY_SOARING_LEARNED = $A5
+FreeBlock_LargePrefix = $7EF3B3 ; 1 byte [B3,B4); not an allocation grant
 
 ; Central checkpoint reservation: root CURRENT_RESOURCE_GRANTS, 2026-10-28.
 ; Separate from native SpawnPoint, scripted overrides and dungeon entrances.
@@ -853,7 +859,7 @@ FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 ; | $7EF307  | $7EF30E  | 8     | Story extension    |
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF3A0  | $7EF3A0  | bits  | Wolf dig: bit 0 used |
-; | $7EF3B2  | $7EF3B3  | 2     | Large prefix       |
+; | $7EF3B3  | $7EF3B3  | 1     | Large prefix       |
 ; | $7EF3B9  | $7EF3C4  | 12    | Large remainder    |
 ; | $7EF412  | $7EF4BF  | 174   | Dreams prefix      |
 ; | $7EF4E1  | $7EF4FD  | 29    | Dreams remainder   |

@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "4b49b129bdc7123ba4b8f56e4c7c177be3d9fe2fc30fa5fa30245ada8f5e37eb"
+      "sha256": "4e9d336eadace6bf56fd3ec84d036e932d4aaf65823a207cea1927fcab9a03e1"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -55,7 +55,7 @@
     "pending_rc:Core/sram.asm": {
       "source_set": "pending_rc",
       "path": "Core/sram.asm",
-      "sha256": "14bb6d7fcd3b10c15a22f373052ed4391f4ba35a8c8ed820b1dc7eb0baac3cbf"
+      "sha256": "4e9d336eadace6bf56fd3ec84d036e932d4aaf65823a207cea1927fcab9a03e1"
     },
     "pending_rc:Masks/mask_binding.asm": {
       "source_set": "pending_rc",
@@ -70,7 +70,7 @@
     "pending_rc:Items/ocarina.asm": {
       "source_set": "pending_rc",
       "path": "Items/ocarina.asm",
-      "sha256": "c0099ff6d43c98c692416439cd798dfe3cd24db2e5ea1a289bf6a65d03bd65da"
+      "sha256": "4e2bbf60ae767a4c2a363cf450be53e34658e2433a2bf9a87a71d767d2cb1cab"
     },
     "shared:Overworld/ZSCustomOverworld.asm": {
       "source_set": "shared",
@@ -271,6 +271,11 @@
       "source_set": "shared",
       "path": "Dungeons/d4_water_control.asm",
       "sha256": "f581f3ea6af89dd9a28ba1c7e397098c638724e9343c5f7f59137b57814628b4"
+    },
+    "shared:Items/special_soaring.asm": {
+      "source_set": "shared",
+      "path": "Items/special_soaring.asm",
+      "sha256": "818ead727820b1989a4bcf0c858db9d15e1e09f9ba297818570d756b9bdd1e7f"
     }
   },
   "claims": [
@@ -2101,6 +2106,31 @@
         "D4Water_End:"
       ],
       "aliases": []
+    },
+    {
+      "id": "SkySoaringLearned",
+      "owner": "Special-overworld Soaring engine reads; future approved garrison teaching actor writes",
+      "space": "save_buffer",
+      "base": 8319922,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "ENABLE_SPECIAL_OVERWORLD_SOARING": 1
+      },
+      "lifetime": "Save file; native five-page save and checksum block.",
+      "reset": "Vanilla new-file initialization zeros it. Engine never grants, migrates or rewrites it; only exact A5 is learned, every other old-save value is locked.",
+      "save": "SaveGameFile 00897B copies the F300 page to primary and backup; checksum loop 00899C covers offsets0000-04FD; new-file 0CC321 clears the F300 page.",
+      "provenance": [
+        "shared:Items/special_soaring.asm",
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "SkySoaringLearned",
+        "bank00_mirror": false
+      }
     }
   ],
   "lifetime_aliases": [],
