@@ -9,7 +9,8 @@ incsrc "Core/Generated/d4_zora_sprite_sheets/frame_tables.asm"
 
 ; Reuse the native room-entry cache boundary after stairs and doors. A spiral
 ; stair from the tall basin can retain a scroll offset outside room46's small
-; vertical view. The next door scroll then ends before Link crosses quadrants.
+; vertical view. Clamp before the stair fade-in; retain the entry-cache clamp
+; so subsequent door scrolls still cross the correct quadrant boundary.
 ; This file is included only with ENABLE_D4_ZORA_REDESIGN; flag0 leaves the
 ; original eight bytes untouched. Other rooms replay the original cache code.
 pushpc
@@ -20,6 +21,13 @@ org $028D81 ; @hook module=Dungeons name=D4Zora_CacheRoomCamera kind=jsl target=
   NOP #4
 assert pc() == $028D89
 
+; Spiral stage07 establishes the destination layout while the screen is black.
+; Clamp after that call, before fade-in exposes the stair exit animation.
+org $029122 ; @hook module=Dungeons name=D4Zora_SpiralCameraLayout kind=jsl target=D4Zora_SpiralCameraLayout expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8 protected_size=4
+  assert read4($029122) == $02B5DC22, "D4 spiral layout preimage changed"
+  JSL D4Zora_SpiralCameraLayout
+assert pc() == $029126
+
 ; Follower_BasicMover has already reset its timed-message counter and stored
 ; TEXTID. Its PHY/PLY remain outside this four-byte call. Entry/exit M8/X8,
 ; DBR=$09 and D=0; pass-through tail-calls the original interface routine.
@@ -29,7 +37,23 @@ org $09A01F ; @hook module=Sprites name=D4Zora_FilterBabyReminder kind=jsl targe
 assert pc() == $09A023
 pullpc
 
+D4Zora_SpiralCameraLayout:
+{
+  JSL $02B5DC ; Underworld_AdjustForRoomLayout, displaced original call.
+  JSL D4Zora_ClampRoomCamera
+  RTL
+}
+
 D4Zora_CacheRoomCamera:
+{
+  JSL D4Zora_ClampRoomCamera
+  ; Exact displaced REP/LDA/STA; vanilla continues caching Link and bounds.
+  REP #$20
+  LDA.b $E2 : STA.l $7EC180
+  RTL
+}
+
+D4Zora_ClampRoomCamera:
 {
   PHP
   REP #$30
@@ -63,9 +87,6 @@ D4Zora_CacheRoomCamera:
   PLA : STA.l $7E0000
   .restore
   PLY : PLX : PLA : PLP
-  ; Exact displaced REP/LDA/STA; vanilla continues caching Link and bounds.
-  REP #$20
-  LDA.b $E2 : STA.l $7EC180
   RTL
 
   .shift_vertical
