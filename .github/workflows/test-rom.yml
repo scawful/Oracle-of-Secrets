@@ -173,8 +173,9 @@ jobs:
             printf '\xBF\x01\x80\x1F\x85\xB8\xBF\x00\x80\x1F\x85\xB7' | dd of=test.sfc bs=1 seek=$((d4_object_pointer_pc)) conv=notrunc 2>/dev/null  # LDA.l $1F8001,X : STA $B8 : LDA.l $1F8000,X : STA $B7
           done
 
-          # Native camera-cache and follower-message bytes guarded by Sprites/Bosses/d4_pressure_warden.asm.
+          # Native camera-cache, spiral-layout and follower-message bytes guarded by Sprites/Bosses/d4_pressure_warden.asm.
           printf '\xC2\x20\xA5\xE2\x8F\x80\xC1\x7E' | dd of=test.sfc bs=1 seek=$((0x10D81)) conv=notrunc 2>/dev/null  # $028D81 REP #$20 : LDA $E2 : STA.l $7EC180
+          printf '\x22\xDC\xB5\x02' | dd of=test.sfc bs=1 seek=$((0x11122)) conv=notrunc 2>/dev/null  # $029122 JSL Underworld_AdjustForRoomLayout
           printf '\x22\xAA\xFD\x0F' | dd of=test.sfc bs=1 seek=$((0x4A01F)) conv=notrunc 2>/dev/null  # $09A01F JSL $0FFDAA
 
           # Preimage bytes taken from the readN() guards in Dungeons/sky_d8_award.asm.
@@ -211,8 +212,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Lua
-        run: sudo apt-get update && sudo apt-get install -y lua5.4
+      - name: Build Lua compiler
+        run: |
+          # Byte-identical official release, cached by Buildroot to avoid apt DNS.
+          # Published checksum: https://www.lua.org/ftp/
+          LUA_VERSION=5.4.8
+          LUA_SHA256=4f18ddae154e793e46eeab727c59ef1c0c0c2b744e7b94219710d76f530629ae
+          LUA_BUILD="$RUNNER_TEMP/lua-source"
+          mkdir -p "$LUA_BUILD" "$RUNNER_TEMP/lua-bin"
+          curl --fail --location --connect-timeout 15 --max-time 120 \
+            "https://sources.buildroot.net/lua/lua-${LUA_VERSION}.tar.gz" -o "$LUA_BUILD/lua.tar.gz"
+          echo "$LUA_SHA256  $LUA_BUILD/lua.tar.gz" | sha256sum -c -
+          tar -xzf "$LUA_BUILD/lua.tar.gz" -C "$LUA_BUILD"
+          # Only luac with generic flags: no readline or other apt package.
+          make -C "$LUA_BUILD/lua-${LUA_VERSION}/src" --jobs=2 luac
+          cp "$LUA_BUILD/lua-${LUA_VERSION}/src/luac" "$RUNNER_TEMP/lua-bin/luac5.4"
+          "$RUNNER_TEMP/lua-bin/luac5.4" -v
+          echo "$RUNNER_TEMP/lua-bin" >> "$GITHUB_PATH"
 
       - name: Check Lua Syntax
         run: |
