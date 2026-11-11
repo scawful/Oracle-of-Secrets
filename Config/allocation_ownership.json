@@ -210,7 +210,7 @@
     "shared:Oracle_main.asm": {
       "source_set": "shared",
       "path": "Oracle_main.asm",
-      "sha256": "6cd879f3ce0c412e7e3ed02e98d5dce560130739b8e60cc48228d367aeb065b6"
+      "sha256": "2a47eb9f236b99d2774416d3e60965e8d834e5662d0c7b0b71da412943a11e43"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
@@ -245,7 +245,7 @@
     "shared:Dungeons/wall_profile_selector.asm": {
       "source_set": "shared",
       "path": "Dungeons/wall_profile_selector.asm",
-      "sha256": "d8d0597276d6e8cbbd9e5fbea3cfbaee53a159708f827762bea1c6df35e5e6d4"
+      "sha256": "dde40d5fdf7fdb4076a544adb030e5787c8a8cf3ca276a50261d3140391a397b"
     },
     "shared:Dungeons/wall_profile_gfx.asm": {
       "source_set": "shared",
@@ -255,7 +255,7 @@
     "shared:Dungeons/Data/kits/kits.asm": {
       "source_set": "shared",
       "path": "Dungeons/Data/kits/kits.asm",
-      "sha256": "8a10f7a782194b5de0617e0b14ed3808262cb7600f83f4192611279d3d7b3813"
+      "sha256": "e91b903aabcf07fed5776f33c4bbace339885667786cbfe5a23e64f82c7e21e5"
     },
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
