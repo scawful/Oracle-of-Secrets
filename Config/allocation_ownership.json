@@ -75,7 +75,7 @@
     "shared:Overworld/ZSCustomOverworld.asm": {
       "source_set": "shared",
       "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "4869387a87614f95fd8f28a53fc64907bc7f45ad93501454913a83e31c12e5c4"
+      "sha256": "7f14be2124538dacc823c25c5b85469f873173d93ebc85c68e1df7b346d84a1e"
     },
     "shared:Sprites/Objects/data/minecart_tracks.asm": {
       "source_set": "shared",

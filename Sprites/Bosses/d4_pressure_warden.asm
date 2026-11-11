@@ -111,6 +111,7 @@ D4Zora_Prep:
   STZ.w SprFrame, X
   STZ.w $0DC0, X
   STZ.w SprMiscA, X
+  STZ.w SprMiscG, X
   STZ.w SprTimerB, X
   LDA.w SprSubtype, X : CMP.b #$02 : BNE .done
   LDA.b #$81 : STA.w SprNbrOAM, X
@@ -136,6 +137,7 @@ D4Zora_Long:
   LDA.w SprAction, X : CMP.b #$01 : BNE .draw
   LDA.b #!D4Zora_Frame_protector_healing : STA.w SprFrame, X
   .draw
+  JSR D4Zora_RefreshPalettesOnce
   JSR D4Zora_Draw
   JSL Sprite_CheckActive : BCC .done
   JSR D4Zora_ProtectorMain
@@ -222,6 +224,7 @@ D4Warden_Prep:
   STZ.w SprMiscA, X
   STZ.w SprMiscB, X
   STZ.w SprMiscD, X
+  STZ.w SprMiscG, X
   STZ.w SprXSpeed, X
   STZ.w SprYSpeed, X
   LDA.b #$02 : STA.w SprMiscC, X
@@ -243,6 +246,7 @@ D4Warden_Long:
   LDA.l $7EF08D : ORA.b #$08 : STA.l $7EF08D
   BRA .done
   .alive
+  JSR D4Zora_RefreshPalettesOnce
   JSR D4Zora_Draw
   JSL Sprite_CheckActive : BCC .done
   JSR D4Warden_Main
@@ -540,6 +544,18 @@ D4Zora_LoadPalettes:
   .done
   INC.b $15
   PLX
+  RTS
+}
+
+; Room46 entry rebuilds rows3–6 after sprite preparation, as in refuge105.
+; Rebind once in ordinary active gameplay. SprMiscG is cleared by both preps.
+D4Zora_RefreshPalettesOnce:
+{
+  LDA.w SprMiscG, X : BNE .done
+  JSL Sprite_CheckActive : BCC .done
+  JSR D4Zora_LoadPalettes
+  INC.w SprMiscG, X
+  .done
   RTS
 }
 

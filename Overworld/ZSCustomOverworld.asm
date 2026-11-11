@@ -3974,6 +3974,10 @@ Overworld_LoadBGColorAndSubscreenOverlay:
     LDA.w #$4020 : STA.b $9C
     LDA.w #$8040 : STA.b $9D
 
+    JSL.l Docks_ShouldHideSubscreen : BCC .keepSubscreen
+        JMP.w .noSubscreenAndReturn
+    .keepSubscreen
+
     ; Check if we need to load the rain in the misery mire.
     LDA.l Pool_EnableRainMireEvent : BEQ .notMire
         LDA.b $8A : CMP.w #$0070 : BNE .notMire
@@ -4075,6 +4079,14 @@ Overworld_LoadBGColorAndSubscreenOverlay:
         
     ; Put BG0 on the subscreen.
     LDA.b #$01 : STA.b $1D
+
+    BRA .updatePaletteAndReturn
+
+    .noSubscreenAndReturn
+    SEP #$30
+    STZ.b $1D
+
+    .updatePaletteAndReturn
         
     ; Update palette.
     INC.b $15
@@ -6564,6 +6576,37 @@ SpecialPaletteAdaptersEnd:
 assert pc() <= !SPECIAL_OVERWORLD_PALETTE_CODE_END
 pullpc
 endif
+
+; Scrolls retain the loaded BG1 overlay. Hide the forest canopy on the docks
+; and adjoining beach after the storm, but keep $8C and BG1 for the north return.
+; M/X and DB are preserved; A is scratch. Carry set means no subscreen here.
+Docks_ShouldHideSubscreen:
+{
+    PHP
+    SEP #$20
+
+    LDA.b $8A : CMP.b #$30 : BCC .keep_overlay
+    CMP.b #$33 : BCS .keep_overlay
+
+    ; Explicit weather still uses the normal overlay path.
+    LDA.l $7EE00E : BNE .keep_overlay ; Song of Storms
+if !ENABLE_PART0_STORM == 1
+    JSL Oracle_Part0Storm_CarryClearIfStorm : BCC .keep_overlay
+else
+    LDA.l Pool_EnableBeginningRain : BEQ .hide_overlay
+    LDA.l $7EF3C5 : CMP.b #$02 : BCC .keep_overlay
+endif
+
+    .hide_overlay
+    PLP
+    SEC
+    RTL
+
+    .keep_overlay
+    PLP
+    CLC
+    RTL
+}
 
 pushpc
 
