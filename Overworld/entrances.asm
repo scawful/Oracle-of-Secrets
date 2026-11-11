@@ -269,7 +269,7 @@ OverworldDoorStyles:
   dw $00FB, $00FC, $0DA4, $0DA6 ; house door
   dw $075D, $075E, $0DA4, $0DA6 ; house door, palette 6 panel ($06, $4B)
   dw $05D8, $05D9, $0DA4, $0DA6 ; house door, palette 7 ($23 entrance $42)
-  dw $0B82, $0B83, $0DA4, $0DA6 ; Kalyxo boat cabin ($38)
+  dw $0B82, $0B83, $0FFC, $0FFD ; Kalyxo boat cabin ($38); $38's sheet lacks FE/FF
 OverworldDoorStyles_end:
 
 ; $02EEE8 opens the exit door at $0696 with fixed house tiles $0DA4/$0DA6.
