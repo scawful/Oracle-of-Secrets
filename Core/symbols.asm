@@ -40,8 +40,7 @@ GanondorfFight:           skip 1  ; $7E1EA6 finale: 0 none, 1 Ganondorf spawned,
 BossReinject:             skip 1  ; $7E1EA7 fairy revive in room $00: bosses re-inject their graphics next frame, then clear it
 FinaleBeat:               skip 1  ; $7E1EA8 0 Kydreeok not dead yet, N>1 placeholder beat counting down, 1 Ganondorf may spawn
 WallSel_Buffer:           skip 32 ; $7E1EA9-$7E1EC8 Dungeons/wall_profile_selector.asm span window (read via $01:1EA9 mirror)
-SongTintSaved:            skip 4  ; $7E1EC9 $9A/$9C/$9D/$9E before the running tint
-SongTintContext:          skip 2  ; $7E1ECD $1B and area ($8A) or room ($A0) the tint started in
+SongTintContext:          skip 2  ; $7E1EC9 $1B and area ($8A) or room ($A0) the tint started in
 assert pc() <= $7E1F00, "Core/symbols.asm WRAM block overflows free RAM $7E1E70-$7E1EFF"
 }
 base off

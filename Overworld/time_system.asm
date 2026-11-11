@@ -23,8 +23,8 @@ pullpc
 HUD_ClockDisplay:
 {
   PHP ; Preserve caller M/X flags
-  JSL SongTintTick ; Per-frame song tint decay (safe for any M/X width)
   JSR RunClock
+  JSL SongTintTick ; After RunClock: repaints over an hourly palette refresh
   if !ENABLE_DREAM_WISDOM_SCENE == 1
     JSL DreamWisdom_HUDHidden : BCS .no_clock ; Wisdom scene: HUD blank
   endif
