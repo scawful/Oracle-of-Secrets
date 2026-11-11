@@ -178,6 +178,40 @@ jobs:
             printf '\xBF\x01\x80\x1F\x85\xB8\xBF\x00\x80\x1F\x85\xB7' | dd of=test.sfc bs=1 seek=$((d4_object_pointer_pc)) conv=notrunc 2>/dev/null  # LDA.l $1F8001,X : STA $B8 : LDA.l $1F8000,X : STA $B7
           done
 
+          # Vanilla hook-site bytes guarded by Dungeons/wall_profile_selector.asm.
+          printf '\xBF\x00\x80\x01\xAA' | dd of=test.sfc bs=1 seek=$((0x8979)) conv=notrunc 2>/dev/null  # $018979 H1 LDA.l $018000,X : TAX
+          printf '\xBF\xF0\x83\x01\xAA' | dd of=test.sfc bs=1 seek=$((0x89AE)) conv=notrunc 2>/dev/null  # $0189AE H2 LDA.l $0183F0,X : TAX
+          printf '\xBF\x19\x97\x0E\x9F\xC0\xFE\x7E' | dd of=test.sfc bs=1 seek=$((0x717F5)) conv=notrunc 2>/dev/null  # $0E97F5 LoadDefaultTileTypes slot-3 copy
+          printf '\xC8\xB7\x0D\x8D\xA2\x0A' | dd of=test.sfc bs=1 seek=$((0xB641)) conv=notrunc 2>/dev/null  # $01B641 H3 INY : LDA [$0D],Y : STA $0AA2
+
+          # Vanilla spare blockset rows, palette offsets and slot-3 sheet guarded by
+          # Dungeons/Data/kits/kits.asm (real base-ROM bytes).
+          printf '\x09\x00\x24\x1B\x08\x00\x22\x1B\x09\x00\x25\x1B\x09\x00\x26\x1B' | dd of=test.sfc bs=1 seek=$((0x5DF3)) conv=notrunc 2>/dev/null  # $00DDF3 rows $17-$1A
+          printf '\x0B' | dd of=test.sfc bs=1 seek=$((0x5DC3)) conv=notrunc 2>/dev/null  # $00DDC3 slot-3 sheet $0B
+          printf '\xF4\x0B\xA8\x0C\x5C\x0D' | dd of=test.sfc bs=1 seek=$((0xDEC6D)) conv=notrunc 2>/dev/null  # $1BEC6D palette $22/$24/$26 offsets
+          printf '\xA0\x05' | dd of=test.sfc bs=1 seek=$((0xDEC5B)) conv=notrunc 2>/dev/null  # $1BEC5B palette $10 offset
+          printf '\xD0\x02' | dd of=test.sfc bs=1 seek=$((0xDEC53)) conv=notrunc 2>/dev/null  # $1BEC53 palette $08 offset
+          # Room headers: three synthetic records with the real header bytes of a default
+          # room, D1 room $007 (palette set $0F -> $10, blockset $07) and Glacia room $09E
+          # (palette set $13 -> $08, blockset $0B). Each kit room points at its record.
+          python3 - <<'PY'
+          import re
+          src = open('Dungeons/Data/kits/kits.asm').read()
+          d1 = {int(m, 16) for m in re.findall(r'read2\(\$228000\+\$([0-9A-F]+)\)\)\+1\)\*4\)\) == \$10', src)}
+          gl = {int(m, 16) for m in re.findall(r'read2\(\$228000\+\$([0-9A-F]+)\)\)\+2\) == \$0B', src)}
+          with open('test.sfc', 'r+b') as f:
+              for room in range(0x128):
+                  off = room * 2
+                  ptr = 0x8310 if off in d1 else 0x8320 if off in gl else 0x8300
+                  f.seek(0x110000 + off); f.write(ptr.to_bytes(2, 'little'))  # $228000 header pointers
+              f.seek(0x110300); f.write(bytes([0x00, 0x00, 0x00]))  # $228300 default
+              f.seek(0x110310); f.write(bytes([0xC0, 0x0F, 0x07]))  # $228310 D1 grotto
+              f.seek(0x110320); f.write(bytes([0x20, 0x13, 0x0B]))  # $228320 Glacia
+              f.seek(0x7549C); f.write(b'\x10')  # $0ED49C palette set $0F
+              f.seek(0x754AC); f.write(b'\x08')  # $0ED4AC palette set $13
+          print(f'kit header fixture: {len(d1)} D1 rooms, {len(gl)} Glacia rooms')
+          PY
+
           # Common item-receipt completion guarded by Sprites/Enemies/custom_guard.asm.
           printf '\x9C\xE9\x02\xBD\x5E\x0C' | dd of=test.sfc bs=1 seek=$((0x4443B)) conv=notrunc 2>/dev/null  # $08C43B STZ $02E9 : LDA $0C5E,X
 
@@ -196,6 +230,31 @@ jobs:
           python3 .github/scripts/seed_sky_award_preimages.py Dungeons/d6_cart_circuit.asm test.sfc
           # Same for all 25 receipt hooks; validate the macro and keep every guard active.
           python3 .github/scripts/seed_sky_award_preimages.py Items/bombchu_receipt.asm test.sfc
+
+          # Sky Tower graphics, sky layer and pit-damage guards (ENABLE_SKY_* default on).
+          # Real base-ROM bytes for every readN() assert in Dungeons/sky_tower_graphics.asm,
+          # sky_room_sky.asm and sky_pit_damage.asm; the bank $33 free-slot checks read zero.
+          printf '\x73\xE0' | dd of=test.sfc bs=1 seek=$((0x6237)) conv=notrunc 2>/dev/null  # $00E237 Sky main graphics table pointer
+          printf '\x0A\x01\x15\x08\x0E\x22\x1B\x0F' | dd of=test.sfc bs=1 seek=$((0x607B)) conv=notrunc 2>/dev/null  # $00E07B Sky source main group
+          printf '\x61\x01\x10\x62\x0E\x26\x1B\x0F' | dd of=test.sfc bs=1 seek=$((0x60B3)) conv=notrunc 2>/dev/null  # $00E0B3 Sky destination main group
+          printf '\x5D\x5D\x5D\x5D\x5D\x5D\x5F\x5D' | dd of=test.sfc bs=1 seek=$((0x1011F)) conv=notrunc 2>/dev/null  # $02811F Sky animation group bytes $02811F/$028126
+          printf '\x01' | dd of=test.sfc bs=1 seek=$((0x79629)) conv=notrunc 2>/dev/null  # $0F9629 Sky entrance $29 main group
+          printf '\x08\x00\x22\x1B' | dd of=test.sfc bs=1 seek=$((0x5D9B)) conv=notrunc 2>/dev/null  # $00DD9B Sky source secondary group
+          printf '\x0C\x00\x26\x1B' | dd of=test.sfc bs=1 seek=$((0x5DBF)) conv=notrunc 2>/dev/null  # $00DDBF Sky destination secondary group
+          printf '\x1B' | dd of=test.sfc bs=1 seek=$((0x5DC2)) conv=notrunc 2>/dev/null  # $00DDC2 Sky secondary group0A slot6
+          printf '\x04\x04\x03\x0A' | dd of=test.sfc bs=1 seek=$((0x75474)) conv=notrunc 2>/dev/null  # $0ED474 Sky source palette set
+          printf '\x02\x00\x0F\x14' | dd of=test.sfc bs=1 seek=$((0x75480)) conv=notrunc 2>/dev/null  # $0ED480 Sky destination palette set
+          printf '\xD8\x09' | dd of=test.sfc bs=1 seek=$((0xDEC67)) conv=notrunc 2>/dev/null  # $1BEC67 Sky global palette14 pointer
+          printf '\xA7\x14' | dd of=test.sfc bs=1 seek=$((0xDD89C)) conv=notrunc 2>/dev/null  # $1BD89C Sky palette word 0 source
+          printf '\x08\x0A' | dd of=test.sfc bs=1 seek=$((0x110A61)) conv=notrunc 2>/dev/null  # $228A61 Room $090 graphics input
+          printf '\x08\x0A' | dd of=test.sfc bs=1 seek=$((0x110A6F)) conv=notrunc 2>/dev/null  # $228A6F Room $091 graphics input
+          printf '\x08\x0A' | dd of=test.sfc bs=1 seek=$((0x110A7D)) conv=notrunc 2>/dev/null  # $228A7D Room $092 graphics input
+          printf '\x08\x0A' | dd of=test.sfc bs=1 seek=$((0x110A8B)) conv=notrunc 2>/dev/null  # $228A8B Room $093 graphics input
+          printf '\x22\x3A\x87\x01' | dd of=test.sfc bs=1 seek=$((0x10CE5)) conv=notrunc 2>/dev/null  # $028CE5 Underworld_InitializeRoomFromSpecial JSL LoadRoom
+          printf '\x22\x3A\x87\x01' | dd of=test.sfc bs=1 seek=$((0x11407)) conv=notrunc 2>/dev/null  # $029407 Module07_11_02 JSL LoadRoom
+          printf '\x22\x3A\x87\x01' | dd of=test.sfc bs=1 seek=$((0x14583)) conv=notrunc 2>/dev/null  # $02C583 Underworld_LoadAndDrawRoom JSL LoadRoom
+          printf '\x0B\x00\x0E\x00\x14\x00\x1A\x00\x1C\x00\x1E\x00\x3C\x00\x3F\x00\x45\x00\x47\x00\x48\x00\x49\x00\x56\x00\x59\x00\x5F\x00\x66\x00\x67\x00\x69\x00\x6E\x00\x71\x00\x73\x00\x74\x00\x75\x00\x76\x00\x77\x00\x7B\x00\x7D\x00\x7E\x00\x7F\x00\x83\x00\x84\x00\x85\x00\x86\x00\x87\x00\x89\x00\x8C\x00\x8E\x00\x8F\x00\xAC\x00\xB1\x00\xB4\x00\xB5\x00\xB9\x00\xC4\x00\xC6\x00\xC7\x00\xCB\x00\xD6\x00\xD7\x00\xD8\x00\xDE\x00\x0B\x01' | dd of=test.sfc bs=1 seek=$((0x190C)) conv=notrunc 2>/dev/null  # $00990C RoomsWithPitDamage base table (52 words)
+          printf '\xA2\x70\x00\xA5\xA0\xDF\x0C\x99\x00' | dd of=test.sfc bs=1 seek=$((0x394A5)) conv=notrunc 2>/dev/null  # $0794A5 Pit-damage scan LDX #imm + CMP.l table
 
           # Grow to the real 4 MiB base size after the seeders, which validate the
           # 2 MiB image. Keeps zero-filled bank $50 in bounds for the D4 water slot

@@ -16,7 +16,7 @@ class NativeDirectoryEmissionTest(unittest.TestCase):
             for table in (0x23FD00, 0x23FE00, 0x23FF00):
                 for row, emitting_source, accepted in (
                         (0xE8, source, True), (0xE9, source, True),
-                        (0xEA, source, False),
+                        (0xEA, source, True), (0xEB, source, False),
                         (0xE8, 'Dungeons/unrelated.asm', False)):
                     with self.subTest(table=table, row=row, source=emitting_source):
                         address = table + row

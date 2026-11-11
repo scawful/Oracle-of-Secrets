@@ -22,6 +22,16 @@ SourceGlobalSheet_E1: incbin "sheets/gE1.bin"
 SourceGlobalSheet_E2: incbin "sheets/gE2.bin"
 SourceGlobalSheet_E7: incbin "sheets/gE7.bin"
 assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+if !ENABLE_SKY_ROOM_SKY
+  org $47AC66
+SourceGlobalSheet_E8_sky_room_sky: incbin "sheets/gE8_sky_room_sky.bin"
+  assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+endif
+if !ENABLE_SKY_ROOM_SKY
+  org $47B1BF
+SourceGlobalSheet_EA_sky_room_sky: incbin "sheets/gEA_sky_room_sky.bin"
+  assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+endif
 if not(defined("GfxSheet_TableDone"))
   error "sheet_overrides.asm must follow Core/gfx_sheet_table.asm"
 endif
@@ -83,12 +93,25 @@ org $23FEE6 ; @hook module=Core kind=data protected_size=1
 org $23FFE6 ; @hook module=Core kind=data protected_size=1
   db $17
 ; Global $E8 (sprite-relative $75): Selected Minish Cap A Sky Tower normal background sheet; clone of legacy 15; normal graphics group binding follows separately.
+; Global $E8 (sprite-relative $75): [ENABLE_SKY_ROOM_SKY] Sky room sky layer: mcA sheet 15 with tile $2F colour 6->3 and 7->4 (blue/white inner corner, joints 104-107); replaces the $E8 pointer under the flag.
 org $23FDE8 ; @hook module=Core kind=data protected_size=1
+if !ENABLE_SKY_ROOM_SKY
   db $C7
+else
+  db $C7
+endif
 org $23FEE8 ; @hook module=Core kind=data protected_size=1
+if !ENABLE_SKY_ROOM_SKY
+  db $AC
+else
   db $93
+endif
 org $23FFE8 ; @hook module=Core kind=data protected_size=1
+if !ENABLE_SKY_ROOM_SKY
+  db $66
+else
   db $5F
+endif
 ; Global $E9 (sprite-relative $76): Selected Minish Cap A Sky Tower normal background sheet; clone of legacy 08; normal graphics group binding follows separately.
 org $23FDE9 ; @hook module=Core kind=data protected_size=1
   db $C7
@@ -131,4 +154,13 @@ org $23FEE7 ; @hook module=Core kind=data protected_size=1
   db $A7
 org $23FFE7 ; @hook module=Core kind=data protected_size=1
   db $FA
+; Global $EA (sprite-relative $77): [ENABLE_SKY_ROOM_SKY] Sky room sky layer: legacy 1B with tiles 00-18 replaced by the picked candidate-A cloud chars (scawful 2026-11-10 'Sky in $A0'); 30-3F kept; binding is flag-gated.
+if !ENABLE_SKY_ROOM_SKY
+org $23FDEA ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEEA ; @hook module=Core kind=data protected_size=1
+  db $B1
+org $23FFEA ; @hook module=Core kind=data protected_size=1
+  db $BF
+endif
 pullpc

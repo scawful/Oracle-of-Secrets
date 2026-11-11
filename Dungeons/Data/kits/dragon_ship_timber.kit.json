@@ -1,0 +1,27 @@
+{
+ "kit": "dragon_ship_timber",
+ "inventory_id": "N5",
+ "verdict": "in_base",
+ "profile": null,
+ "source_rom_sha256": "b9296cc0c0288ef37ff985a391f3cf606434afa352d75f97f255e1ef99eeecd2",
+ "origin_rom_sha256": null,
+ "base_rom_sha256": "5d6b461b3058a5e277fdd55a634660a5e10bd6d518df9a34ba2abaf7af19cdee",
+ "rooms": [
+  "0B7",
+  "0C6",
+  "0C7",
+  "0D5",
+  "0D6"
+ ],
+ "base_blockset": "0x09",
+ "base_palette": "0x04",
+ "private_row": null,
+ "sheets": [],
+ "char_map": {},
+ "in_place": [],
+ "tile_types": {},
+ "palette": null,
+ "classes": [],
+ "blocked": [],
+ "note": "Dragon ship timber (b9296cc0) is identical to base 5d6b461b for these rooms: 0 edited selector classes, 0 slot-3 glyph changes, 0 palette words (extract-kit probe 2026-11-08). Nothing to route; the base already draws it."
+}

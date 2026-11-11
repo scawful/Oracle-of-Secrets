@@ -69,6 +69,20 @@
       "why": "Selected Minish Cap A Sky Tower normal background sheet; clone of legacy 08; normal graphics group binding follows separately."
     },
     {
+      "global_sheet": "0xE8",
+      "source": "sky_tower/mcA-sheet-15-sky.txt",
+      "decoded_sha256": "3303a4b86b2fed4f408839a1d63bc281dee23002448e30a965f360564206aca3",
+      "why": "Sky room sky layer: mcA sheet 15 with tile $2F colour 6->3 and 7->4 (blue/white inner corner, joints 104-107); replaces the $E8 pointer under the flag.",
+      "flag": "ENABLE_SKY_ROOM_SKY"
+    },
+    {
+      "global_sheet": "0xEA",
+      "source": "sky_tower/sky-clouds-EA.txt",
+      "decoded_sha256": "195d38a16e60c936de8eacac4d67ffb042f3bccd92f02b9a55b3d90b08dc20d2",
+      "why": "Sky room sky layer: legacy 1B with tiles 00-18 replaced by the picked candidate-A cloud chars (scawful 2026-11-10 'Sky in $A0'); 30-3F kept; binding is flag-gated.",
+      "flag": "ENABLE_SKY_ROOM_SKY"
+    },
+    {
       "global_sheet": "0xDF",
       "source": "d4_zora/atlas-DF.txt",
       "decoded_sha256": "92467df57fd807f8d30a4da93d4392a6ad49040c6b0bf7fc8b60c693231c5e7a",

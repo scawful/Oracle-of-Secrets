@@ -36,7 +36,11 @@ endif
 ; Source-built sprite sheets; identity sheet $64 owns the audited bank $40 tail.
 !ENABLE_SOURCE_SPRITE_SHEETS        = 1
 ; Selected Sky Minish Cap sheets; normal group/palette binding awaits qualification.
-!ENABLE_SKY_TOWER_GRAPHICS          = 0
+!ENABLE_SKY_TOWER_GRAPHICS          = 1
+; Sky room sky layer ($A0 proof): sheet EA slot6, row6 colours, BG1 fill. Needs SKY_TOWER_GRAPHICS.
+!ENABLE_SKY_ROOM_SKY                = 1
+; Sky Tower void falls = damage pits (one heart, room entry); extended RoomsWithPitDamage copy.
+!ENABLE_SKY_PIT_DAMAGE              = 1
 ; Private D4 room-scoped actor/art prototype; no default behavior change.
 !ENABLE_D4_ZORA_REDESIGN            = 1
 !ENABLE_D4_WATER_CONTROLS           = 1
@@ -44,6 +48,9 @@ endif
 !ENABLE_D5_BF_PIT_RESET             = 0
 ; AF transfer-room pit reset; independent of BF and off until private qualification.
 !ENABLE_D5_AF_PIT_RESET             = 0
+; Per-dungeon wall object tile patterns (Dungeons/wall_profile_selector.asm);
+; kit rows/palettes route per room (H3). Default on (scawful 2026-11-10).
+!ENABLE_WALL_PROFILE_SELECTOR       = 1
 !ENABLE_WATER_GATE_HOOKS            = 1
 !ENABLE_WATER_GATE_ROOMENTRY_RESTORE = 0
 !ENABLE_WATER_GATE_OVERLAY_REDIRECT = 1
