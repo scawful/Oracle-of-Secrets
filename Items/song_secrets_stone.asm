@@ -28,8 +28,7 @@ OcarinaEffect_Secrets:
   LDA.w $0403 : AND.b #$10 : BNE .no_target
   LDA.b #$04 : STA.b SongFlag
 if !ENABLE_OCARINA_SONG_TINT == 1
-  LDA.b #$20 : STA.l SongTintTimer
-  LDA.b #$3A : STA.l SongTintColor : STA.b $9A
+  LDA.b #!SongTint_Secrets : JSL SongTint_Start
 endif
   RTL
 .no_target
@@ -176,8 +175,7 @@ OcarinaEffect_Stone:
   LDA.b #$0D : STA.w SprProps,X ; native palette6 + OBJ page1, no global flips
   LDA.b #$1B : STA.w $012D
 if !ENABLE_OCARINA_SONG_TINT == 1
-  LDA.b #$10 : STA.l SongTintTimer
-  LDA.b #$31 : STA.l SongTintColor : STA.b $9A
+  LDA.b #!SongTint_Stone : JSL SongTint_Start
 endif
   BRA .done
 .error

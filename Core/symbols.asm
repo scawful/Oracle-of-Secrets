@@ -27,7 +27,7 @@ Offspring3_Id:            skip 1
 Kydreeok_Id:              skip 1
 FishingOrPortalRod:       skip 1
 SongTintTimer:            skip 1  ; Frames remaining for song color tint
-SongTintColor:            skip 1  ; Color value to apply to $9A during tint
+SongTintColor:            skip 1  ; SongTint_Table entry index of the running tint
 ; Persistent across graphics loads; reset/restore owner joins gated resources.
 SpecialOverworldMainCache: skip 4 ; Underlying native sheets for slots 0/1/2/7
 ; Native BG column8 history only; palette lifecycle consumer remains unbound.
@@ -40,6 +40,8 @@ GanondorfFight:           skip 1  ; $7E1EA6 finale: 0 none, 1 Ganondorf spawned,
 BossReinject:             skip 1  ; $7E1EA7 fairy revive in room $00: bosses re-inject their graphics next frame, then clear it
 FinaleBeat:               skip 1  ; $7E1EA8 0 Kydreeok not dead yet, N>1 placeholder beat counting down, 1 Ganondorf may spawn
 WallSel_Buffer:           skip 32 ; $7E1EA9-$7E1EC8 Dungeons/wall_profile_selector.asm span window (read via $01:1EA9 mirror)
+SongTintSaved:            skip 4  ; $7E1EC9 $9A/$9C/$9D/$9E before the running tint
+SongTintContext:          skip 2  ; $7E1ECD $1B and area ($8A) or room ($A0) the tint started in
 assert pc() <= $7E1F00, "Core/symbols.asm WRAM block overflows free RAM $7E1E70-$7E1EFF"
 }
 base off
@@ -50,6 +52,13 @@ SpecialOverworldPaletteHoleCacheEnd = $7E1EA6
 assert SpecialOverworldPaletteHoleCache == SpecialOverworldPaletteHoleReference
 assert SpecialOverworldPaletteHoleCacheEnd == SpecialOverworldPaletteHoleArea+1
 assert SpecialOverworldPaletteHoleCacheEnd-SpecialOverworldPaletteHoleCache == 26
+
+; SongTint_Table entry indexes (Items/ocarina.asm).
+!SongTint_Healing = $00
+!SongTint_Time    = $01
+!SongTint_Soaring = $02
+!SongTint_Secrets = $03
+!SongTint_Stone   = $04
 
 ; PLACEHOLDER for the Song of Healing beat between Kydreeok and Ganondorf (decisions.org canon
 ; order: Kydreeok, Song frees Kydrog, Ganon). Until that scene exists, Ganondorf waits this many
