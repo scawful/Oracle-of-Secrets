@@ -127,10 +127,12 @@ class CPU:
                 else: self.db = v
                 self.nz(v, n)
             elif op == 0xBB: self.x = self.y & ((1 << (8*ix))-1); self.nz(self.x,ix)
-            elif op in (0xC9, 0xE0, 0xC0, 0xC7):
-                n = m if op in (0xC9, 0xC7) else ix
-                v = self.read(self.read(self.d+self.take(),3),m) if op == 0xC7 else self.take(n)
-                original = self.a if op in (0xC9,0xC7) else self.x if op == 0xE0 else self.y
+            elif op in (0xC9, 0xE0, 0xC0, 0xC7, 0xD9):
+                n = m if op in (0xC9, 0xC7, 0xD9) else ix
+                if op == 0xC7: v = self.read(self.read(self.d+self.take(),3),m)
+                elif op == 0xD9: v = self.read((self.db << 16 | self.take(2))+self.y,m)
+                else: v = self.take(n)
+                original = self.a if op in (0xC9,0xC7,0xD9) else self.x if op == 0xE0 else self.y
                 original &= (1 << (8*n))-1
                 self.p = self.p & ~1 | int(original >= v)
                 self.nz(original-v,n)
@@ -163,6 +165,18 @@ class CPU:
                     elif op == 0x87: address = self.read(self.d+self.take(),3)
                     else: address = self.d+self.take()
                     self.put(address,self.a,m)
+            elif op == 0xBE:
+                self.x = self.read((self.db << 16 | self.take(2))+self.y,ix); self.nz(self.x,ix)
+            elif op == 0xA8: self.y = self.a & ((1 << (8*ix))-1); self.nz(self.y,ix)
+            elif op == 0x4A:
+                self.p = self.p & ~1 | (self.a & 1)
+                self.load((self.a & ((1 << (8*m))-1)) >> 1)
+            elif op in (0x64,0xE6):
+                address = self.d+self.take()
+                value = 0 if op == 0x64 else (self.read(address,m)+1)&((1 << (8*m))-1)
+                self.put(address,value,m)
+                if op == 0xE6: self.nz(value,m)
+            elif op == 0x60: self.pc = self.pc & 0xFF0000 | ((self.pop(2)+1)&0xFFFF)
             elif op == 0x29: self.load(self.a & self.take(m))
             elif op == 0x18: self.p &= ~1
             elif op == 0x69:
@@ -204,14 +218,18 @@ class BombchuReceiptTests(unittest.TestCase):
             return text[start:text.index('\npushpc\n',start)]
         cls.old_grant = grant(old).replace('ItemReceipt_KeepGoldstar','OriginalReceipt').replace('GoldstarInventory_Migrate','OriginalMigrate')
         cls.new_grant = grant(current)
+        menu = (ROOT/'Menu/menu_draw.asm').read_text()
+        start = menu.index('Menu_OracleTreasureOwned:\n')
+        menu = menu[start:menu.index('\nendif',start)]
         cls.images = {}
         for enabled in (0,1):
             asm = (f'lorom\n!ENABLE_GOLDSTAR_CELL = {enabled}\n!BOMBCHU_AMMO_MAX = 20\n'
-                   'BombchuOwned = $7EF3AD\nBombchuAmmo = $7EF3B0\nGoldstarOwned = $7EF3A6\nGoldstarInventoryVersion = $7EF3A7\n'
+                   'SwitchHookOwned = $7EF3AE\nBombchuOwned = $7EF3AD\nBombchuAmmo = $7EF3B0\nGoldstarOwned = $7EF3A6\nGoldstarInventoryVersion = $7EF3A7\n'
                    'org $2B8000\n'+cls.old_grant+'OriginalEnd:\norg $2B8200\n'+cls.new_grant+'NewEnd:\n'
                    'org $09863E\nJSL ItemReceipt_KeepGoldstar\n'
                    'org $2BB400\nincsrc "'+str(ROOT/'Items/bombchu_receipt.asm')+'"\n'
-                   'org $2BE000\nBombchuWorldGfx:\nincbin "'+str(ROOT/'Data/graphics/items/bombchu_world.4bpp')+'"\n')
+                   'org $2BE000\nBombchuWorldGfx:\nincbin "'+str(ROOT/'Data/graphics/items/bombchu_world.4bpp')+'"\n'
+                   'org $2BE300\n'+menu+'\n')
             cls.images[enabled] = cls.assemble(seed,asm,str(enabled))
 
     @classmethod
@@ -271,12 +289,33 @@ class BombchuReceiptTests(unittest.TestCase):
                   0x0988CB:2,0x098903:0xFC,0x09891C:0,0x098A4A:0x39,
                   0x098AFD:0x39,0x098BE1:0x39,0x08C5C1:0x01BD,
                   0x08C6A4:2,0x08C6BA:2,0x08C6D5:2,0x06C4D6:2,0x06C4E6:2}
-        for site,raw,reg,scale,width,db in READERS:
-            kwargs=dict(p=0x10|(0x20 if width==8 else 0),db=db);kwargs[reg]=0x4C*scale
-            cpu=CPU(rom,**kwargs);cpu.put(0,0x7EF359,3)
-            cpu.run(site,{site+len(bytes.fromhex(raw)),0x0988DC} if site==0x0988CB else {site+len(bytes.fromhex(raw))})
-            self.assertEqual(cpu.a,(0xAB00 if width==8 else 0)|expected[site],hex(site))
-            self.assertEqual(cpu.stack,[])
+        for item in (0x4C, 0x4D):
+            row = dict(expected)
+            if item == 0x4D:
+                for site in (0x07B5A0,0x098617,0x09862D): row[site] = 0xAE
+                for site in (0x09877D,0x098A4A,0x098AFD,0x098BE1): row[site] = 0x3A
+                for site in (0x08C6A4,0x08C6D5,0x06C4D6): row[site] = 1
+                row[0x08C5C1] = 0xFFFF  # Explicit unapproved presentation marker.
+            for site,raw,reg,scale,width,db in READERS:
+                # Independently execute the displaced native instruction with
+                # just this new row injected into its original table address.
+                ops = bytes.fromhex(raw)
+                offset = 4 if site == 0x098637 else 0
+                naddr = 3 if ops[offset] == 0xBF else 2
+                address = int.from_bytes(ops[offset+1:offset+1+naddr], 'little')
+                if naddr == 2: address |= db << 16
+                address += item * scale
+                oracle = bytearray(self.seed)
+                oracle[pc(address):pc(address)+width//8] = row[site].to_bytes(width//8, 'little')
+                for flags in (0,1,0x40,0x41):
+                    kwargs=dict(p=0x10|(0x20 if width==8 else 0)|flags,db=db)
+                    kwargs[reg]=item*scale
+                    a,b=CPU(bytes(oracle),**kwargs),CPU(rom,**kwargs)
+                    for cpu in (a,b): cpu.put(0,0x7EF359,3)
+                    stops={site+len(ops),0x0988DC} if site==0x0988CB else {site+len(ops)}
+                    a.run(site,stops);b.run(site,stops)
+                    self.assertEqual(a.state(),b.state(),(hex(site),hex(item),flags))
+        self.assertEqual(labels['SwitchHookReceiptGfxEnd']-labels['SwitchHookReceiptGfx'],128)
         self.assertLess(labels['BombchuReceipt_CodeEnd'],0x2BF000)
         # The synthetic origin reserves 189 bytes for the earlier grant delta.
         for rom,labels,_ in self.images.values():
@@ -297,6 +336,18 @@ class BombchuReceiptTests(unittest.TestCase):
                 self.assertEqual([cpu.read(a,1) for a in (0x7EF359,0x7EF343,0x7EF375)],[3,17,8])
                 self.assertEqual((cpu.x,cpu.y,cpu.db,cpu.d,cpu.stack),(0x56,0x4C,9,0,[]))
 
+    def test_switch_hook_generic_grant_changes_only_existing_ownership(self):
+        for enabled,(rom,labels,_) in self.images.items():
+            cpu=CPU(rom,a=0xAB01,y=0x4D,p=0x30);cpu.put(0,0x7EF3AE,3)
+            # Already-migrated inventory: migration itself is covered above/below.
+            for at,value in ((0x7EF342,2),(0x7EF3A7,0xA5),(0x7EF3AD,1),(0x7EF3B0,17),(0x7EF359,3)):
+                cpu.put(at,value)
+            before=dict(cpu.mem)
+            cpu.push(0x00FFEF,3);cpu.run(labels['ItemReceipt_KeepGoldstar'],{0x00FFF0})
+            self.assertEqual(cpu.read(0x7EF3AE,1),1)
+            self.assertEqual(cpu.mem,{**before,0x7EF3AE:1})
+            self.assertEqual((cpu.a,cpu.x,cpu.y,cpu.db,cpu.d,cpu.stack),(0xAB01,0x56,0x4D,9,0,[]))
+
     def test_existing_goldstar_hook_behavior_is_exact_for_every_legacy_id(self):
         for enabled,(rom,labels,_) in self.images.items():
             for item in range(0x4C):
@@ -311,18 +362,57 @@ class BombchuReceiptTests(unittest.TestCase):
 
     def test_art_copies_exact_existing_frame_and_legacy_entry_is_unchanged(self):
         rom,labels,_=self.images[1]
-        cpu=CPU(rom,a=0xAB39,x=0x34,y=0x56,p=0x71,db=0x17)
-        cpu.put(0x7EBD3F,0xAA);cpu.put(0x7EBDC0,0xBB)
-        cpu.push(0x00FFEF,3);cpu.run(0x00D4ED,{0x00FFF0})
-        art=(ROOT/'Data/graphics/items/bombchu_world.4bpp').read_bytes()[:128]
-        self.assertEqual(bytes(cpu.read(0x7EBD40+i,1) for i in range(128)),art)
-        self.assertEqual((cpu.read(0x7EBD3F,1),cpu.read(0x7EBDC0,1)),(0xAA,0xBB))
-        self.assertEqual((cpu.a,cpu.x,cpu.y,cpu.p,cpu.db,cpu.stack),(0xAB39,0x34,0x56,0x71,0x17,[]))
-        for selector in range(0x39):
+        for selector,filename in ((0x39,'bombchu_world.4bpp'),(0x3A,'switch_hook_receipt.4bpp')):
+            for flags in (0x30,0x31,0x70,0x71):
+                cpu=CPU(rom,a=0xAB00|selector,x=0x34,y=0x56,p=flags,db=0x17)
+                cpu.put(0x7EBD3F,0xAA);cpu.put(0x7EBDC0,0xBB)
+                cpu.push(0x00FFEF,3);cpu.run(0x00D4ED,{0x00FFF0})
+                art=(ROOT/'Data/graphics/items'/filename).read_bytes()[:128]
+                self.assertEqual(bytes(cpu.read(0x7EBD40+i,1) for i in range(128)),art)
+                self.assertEqual((cpu.read(0x7EBD3F,1),cpu.read(0x7EBDC0,1)),(0xAA,0xBB))
+                self.assertEqual((cpu.a,cpu.x,cpu.y,cpu.p,cpu.db,cpu.d,cpu.stack),
+                                 (0xAB00|selector,0x34,0x56,flags,0x17,0,[]))
+        for selector in range(256):
+            if selector in (0x39,0x3A): continue
             for flags in (0x30,0x31,0x70,0x71):
                 a,b=CPU(self.seed,a=0xAB00|selector,p=flags,db=0x17),CPU(rom,a=0xAB00|selector,p=flags,db=0x17)
                 a.run(0x00D4ED,{0x00D4F1});b.run(0x00D4ED,{0x00D4F1})
                 self.assertEqual(a.state(),b.state(),(selector,flags))
+
+    def test_menu_boolean_and_equipment_levels_from_assembled_body(self):
+        rom,labels,_ = self.images[1]
+        # Explicit boundary vectors, executing production ASM (no Python predicate).
+        cases = [(4,0xAE,0,0),(4,0xAE,1,1),(4,0xAE,2,0),(4,0xAE,255,0),
+                 (0,0x5A,2,0),(0,0x5A,3,1),(0,0x5A,255,1),
+                 (0x10,0x59,1,0),(0x10,0x59,2,1),(0x10,0x59,3,1),
+                 (6,0x54,0,0),(6,0x54,1,1),(6,0x54,2,1)]
+        for dungeon,sram,value,want in cases:
+            cpu=CPU(rom,p=0x31,db=0x17)
+            cpu.put(0x040C,dungeon);cpu.put(0x7EF300+sram,value)
+            cpu.put(2,0xAA);cpu.put(3,0xBB)
+            cpu.push(0xFFEF,2)
+            cpu.run(labels['Menu_OracleTreasureOwned'],{0x2BFFF0})
+            self.assertEqual((cpu.read(2,1),cpu.read(3,1)),(want,0),(dungeon,value))
+            self.assertEqual((cpu.db,cpu.d,cpu.stack,cpu.p&0x30),(0x17,0,[],0x30))
+
+    def test_menu_executor_opcodes_have_direct_controls(self):
+        rom=bytearray(0x200000);at=0x2FE000
+        # LSR A; TAY; LDX $1000,Y; CMP $1001,Y; STZ $02; INC $02; RTS.
+        raw=bytes.fromhex('4aa8be0010d901106402e60260')
+        rom[pc(at):pc(at)+len(raw)]=raw
+        cpu=CPU(bytes(rom),a=0xAB05,p=0x70,db=0x17)
+        cpu.put(0x171002,0x81);cpu.put(0x171003,2)
+        cpu.put(2,0xFF);cpu.push(0xFFEF,2)
+        cpu.run(at,{at+2})
+        self.assertEqual((cpu.a,cpu.y,cpu.p&1),(0xAB02,2,1))
+        cpu.run(at+2,{at+5})
+        self.assertEqual((cpu.x,cpu.p&0x80),(0x81,0x80))
+        cpu.run(at+5,{at+8})
+        self.assertEqual((cpu.a,cpu.p&0x83),(0xAB02,3))
+        cpu.run(at+8,{at+10})
+        self.assertEqual((cpu.read(2,1),cpu.p&0x83),(0,3))
+        cpu.run(at+10,{0x2FFFF0})
+        self.assertEqual((cpu.read(2,1),cpu.p&0x83,cpu.stack),(1,1,[]))
 
     def test_every_stale_hook_preimage_refuses_assembly(self):
         _,_,asm=self.images[1]

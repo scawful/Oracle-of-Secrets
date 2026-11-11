@@ -1,11 +1,15 @@
-; Dedicated Bombchu receipt. $00-$4B remain the original ROM-backed rows;
-; $4C is an additional row, never a reassignment of an existing reward.
+; Dedicated receipt extensions. $00-$4B remain the original ROM-backed rows;
+; Bombchu $4C and candidate Switch Hook $4D never reassign an existing reward.
 ;@source: usdasm banks00/06/07/08/09 item-receipt readers listed below.
 ; No chest placement, SRAM allocation or palette edit is made here.
 ; Message $1BD owns the exact approved Bombchu receipt text in the registry.
 BombchuReceipt_Id = $4C
 BombchuReceipt_GfxId = $39
 BombchuReceipt_Message = $01BD
+SwitchHookReceipt_Id = $4D
+SwitchHookReceipt_GfxId = $3A
+; Preparation marker only: no pickup text or chest binding is approved here.
+SwitchHookReceipt_Message = $FFFF
 BombchuReceipt_CodeStart = pc()
 
 ; Extend one table read without moving/changing any native row. Callers use
@@ -13,14 +17,17 @@ BombchuReceipt_CodeStart = pc()
 ; byte for M8, X/Y/DBR/D and all flags except the original LDA's N/Z. The
 ; native absolute readers have DBR equal to their documented table bank.
 ; reg=0 is X, reg=1 is Y. New word values serve M16 callers too.
-macro BombchuReceiptReader(name, old, index, value, reg)
+macro BombchuReceiptReader(name, old, index, value, switch_index, switch_value, reg)
 <name>:
   PHP : REP #$30 : PHA : PHX
 if <reg> == 1
   TYX
 endif
   LDA $05,S : BIT.w #$0020 : BNE ?byte
-  CPX.w #<index> : BNE ?native_word
+  CPX.w #<index> : BEQ ?bombchu_word
+  CPX.w #<switch_index> : BNE ?native_word
+  LDA.w #<switch_value> : BRA ?word_ready
+?bombchu_word:
   LDA.w #<value> : BRA ?word_ready
 ?native_word:
   LDA.l <old>,X
@@ -28,7 +35,10 @@ endif
   STA $03,S : BRA ?restore
 ?byte:
   SEP #$20
-  CPX.w #<index> : BNE ?native_byte
+  CPX.w #<index> : BEQ ?bombchu_byte
+  CPX.w #<switch_index> : BNE ?native_byte
+  LDA.b #<switch_value>&$FF : BRA ?byte_ready
+?bombchu_byte:
   LDA.b #<value>&$FF : BRA ?byte_ready
 ?native_byte:
   LDA.l <old>,X
@@ -41,17 +51,17 @@ endif
 <name>_End:
 endmacro
 
-%BombchuReceiptReader(BombchuReceipt_OffsetY, $09836C, $4C, $00FC, 1)
-%BombchuReceiptReader(BombchuReceipt_OffsetX, $0983B8, $4C, $0000, 1)
-%BombchuReceiptReader(BombchuReceipt_Gfx, $098404, $4C, BombchuReceipt_GfxId, 1)
-%BombchuReceiptReader(BombchuReceipt_WidthY, $098450, $4C, $0002, 1)
-%BombchuReceiptReader(BombchuReceipt_WidthX, $098450, $4C, $0002, 0)
-%BombchuReceiptReader(BombchuReceipt_Prop, $09849C, $4C, $0002, 0)
-%BombchuReceiptReader(BombchuReceipt_SramLow, $0984E8, $98, BombchuOwned&$FFFF, 0)
-%BombchuReceiptReader(BombchuReceipt_SramHigh, $0984E9, $98, BombchuOwned>>8, 0)
-%BombchuReceiptReader(BombchuReceipt_Value, $098580, $4C, $0001, 1)
-%BombchuReceiptReader(BombchuReceipt_Overflow, $07B528, $4C, $00FF, 1)
-%BombchuReceiptReader(BombchuReceipt_MessageRead, $08C2DD, $98, BombchuReceipt_Message, 1)
+%BombchuReceiptReader(BombchuReceipt_OffsetY, $09836C, $4C, $00FC, SwitchHookReceipt_Id, $00FC, 1)
+%BombchuReceiptReader(BombchuReceipt_OffsetX, $0983B8, $4C, $0000, SwitchHookReceipt_Id, $0000, 1)
+%BombchuReceiptReader(BombchuReceipt_Gfx, $098404, $4C, BombchuReceipt_GfxId, SwitchHookReceipt_Id, SwitchHookReceipt_GfxId, 1)
+%BombchuReceiptReader(BombchuReceipt_WidthY, $098450, $4C, $0002, SwitchHookReceipt_Id, $0002, 1)
+%BombchuReceiptReader(BombchuReceipt_WidthX, $098450, $4C, $0002, SwitchHookReceipt_Id, $0002, 0)
+%BombchuReceiptReader(BombchuReceipt_Prop, $09849C, $4C, $0002, SwitchHookReceipt_Id, $0001, 0)
+%BombchuReceiptReader(BombchuReceipt_SramLow, $0984E8, $98, BombchuOwned&$FFFF, $9A, SwitchHookOwned&$FFFF, 0)
+%BombchuReceiptReader(BombchuReceipt_SramHigh, $0984E9, $98, BombchuOwned>>8, $9A, SwitchHookOwned>>8, 0)
+%BombchuReceiptReader(BombchuReceipt_Value, $098580, $4C, $0001, SwitchHookReceipt_Id, $0001, 1)
+%BombchuReceiptReader(BombchuReceipt_Overflow, $07B528, $4C, $00FF, SwitchHookReceipt_Id, $00FF, 1)
+%BombchuReceiptReader(BombchuReceipt_MessageRead, $08C2DD, $98, BombchuReceipt_Message, $9A, SwitchHookReceipt_Message, 1)
 
 ; Each short native LDA is widened through its complete displaced span.
 BombchuReceipt_LoadLow:
@@ -83,13 +93,14 @@ BombchuReceipt_WidthBranch:
 .zero
   JML $0988DC
 
-; Gfx selector $39 is new. Every original selector takes the untouched native
+; Gfx selectors $39/$3A are additional. Every original selector takes the native
 ; decompression/conversion path. Replaying PHK must select BANK00, not ours.
 ; Native entry requires M8/X8. New art is the same four tile order as the
 ; existing 128-byte item-get buffer: top pair then bottom pair.
 BombchuReceipt_LoadArt:
   PHP
   CMP.b #BombchuReceipt_GfxId : BEQ .bombchu
+  CMP.b #SwitchHookReceipt_GfxId : BEQ .switch_hook
   PLP
   PHB : PEA.w $0000 : PLB : PLB : PHA
   JML $00D4F1
@@ -101,6 +112,20 @@ BombchuReceipt_LoadArt:
   DEX : DEX : BPL .copy
   PLY : PLX : PLA : PLP
   RTL
+.switch_hook
+  REP #$30 : PHA : PHX : PHY
+  LDX.w #$007E
+.copy_switch_hook
+  LDA.l SwitchHookReceiptGfx,X : STA.l $7EBD40,X
+  DEX : DEX : BPL .copy_switch_hook
+  PLY : PLX : PLA : PLP
+  RTL
+
+SwitchHookReceiptGfx:
+  incbin "../Data/graphics/items/switch_hook_receipt.4bpp"
+SwitchHookReceiptGfxEnd:
+assert SwitchHookReceiptGfxEnd-SwitchHookReceiptGfx == $0080, "Switch Hook receipt needs one 16x16 frame"
+assert (SwitchHookReceiptGfx>>16) == ((SwitchHookReceiptGfxEnd-1)>>16), "Switch Hook receipt art crosses bank"
 BombchuReceipt_CodeEnd = pc()
 assert pc() <= $2BF000, "Bombchu receipt overlaps dream-entry owner"
 
