@@ -48,6 +48,9 @@ endif
 !ENABLE_D5_BF_PIT_RESET             = 0
 ; AF transfer-room pit reset; independent of BF and off until private qualification.
 !ENABLE_D5_AF_PIT_RESET             = 0
+; Per-dungeon wall object tile patterns (Dungeons/wall_profile_selector.asm);
+; kit rows/palettes route per room (H3). Default on (scawful 2026-11-10).
+!ENABLE_WALL_PROFILE_SELECTOR       = 1
 !ENABLE_WATER_GATE_HOOKS            = 1
 !ENABLE_WATER_GATE_ROOMENTRY_RESTORE = 0
 !ENABLE_WATER_GATE_OVERLAY_REDIRECT = 1
@@ -254,6 +257,8 @@ endif
 ; takes the table path for tail maps and for rain, and the event overlay
 ; is a no-op for $8A >= $A0 (Overworld/lyra_overlay_fix.asm).
 !ENABLE_LYRA_OVERLAY_FIX            = 1
+; Garrison/Sky fly list; source preview until T3 native and save proof.
+!ENABLE_SPECIAL_OVERWORLD_SOARING   = 0
 ; Dive gate (Dungeons/dive_gate.asm): room 0x44 Zora Temple deck/under-deck
 ; crossing on tag 0x39: per-frame map-a gate cells, one-time map-b strip and
 ; south cap, diver hide, resurface guard. Inert until the room has tag1 0x39.

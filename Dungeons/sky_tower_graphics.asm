@@ -37,8 +37,8 @@ assert pc() == $00DDC3, "Sky secondary group size changed"
 ; Reuse the existing mapping instead of inheriting group0A's old attributes.
 assert group01-offs == $0080 && group0A-offs == $0500, "Sky collision group layout changed"
 ; The group0A entry itself is selected in Collision/CollisionTablesExpanded.asm
-; under this flag: group_offsets moved from $2C8F21 to $2C8FF1 when bank $2C
-; code grew, so a fixed org here no longer reached it.
+; under this flag. group_offsets floats with bank $2C code size ($2C8F21 when
+; the fixed org was written, $2C9071 at fdb829d9), so a fixed org no longer reached it.
 
 assert read4($0ED474) == $0A030404, "Sky source palette set changed"
 assert read4($0ED480) == $140F0002, "Sky destination palette set changed"

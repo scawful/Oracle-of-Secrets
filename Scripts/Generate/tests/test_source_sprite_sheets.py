@@ -420,7 +420,7 @@ class SourceSheets(unittest.TestCase):
         # Real build wrapper/receipt/guard in a portable disposable repository.
         for directory in ('Scripts/Build','Scripts/Generate','Config','Util','Data/graphics','Roms'):
             (self.root/directory).mkdir(parents=True,exist_ok=True)
-        for name in ('build_rom.sh','build_checks.sh','build_receipt.py'):
+        for name in ('build_rom.sh','build_checks.sh','z3ed_locator.sh','build_receipt.py'):
             shutil.copy2(ROOT/'Scripts/Build'/name,self.root/'Scripts/Build'/name)
         for path in GEN.glob('*.py'):shutil.copy2(path,self.root/'Scripts/Generate'/path.name)
         (self.root/'Oracle_main.asm').write_text('')

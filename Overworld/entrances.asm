@@ -9,6 +9,7 @@ else
 Map16Definitions = $3D8000
 endif
 Overworld_DrawMap16_Anywhere = $1BC983
+Overworld_MemorizeMap16Change = $0EDD40
 Interface_PrepAndDisplayMessage = $0FFDAA
 Overworld_EntranceTileIndex = $1BBA71
 Overworld_EntranceScreens = $1BB96F
@@ -74,9 +75,14 @@ Overworld_UseEntrance:
     .open_door
     TYX
 
-    LDA.w #$0DA4 : JSL Overworld_DrawMap16_Persist
+    JSL OverworldDoor_FindOpenStyle : BCS .styled
+      LDA.w #$0DA6 : TAY
+      LDA.w #$0DA4
+    .styled
+    PHY
+    JSL Overworld_DrawMap16_Persist
 
-    LDA.w #$0DA6 : STA.l $7E2002, X
+    PLA : STA.l $7E2002, X
 
     LDY.w #$0002
     JSL Overworld_DrawMap16_Anywhere
@@ -226,6 +232,69 @@ FindEntrance:
   RTL
 }
 
+; Open-door art keyed by the closed map16 pair at $7E2000,X / $7E2002,X.
+; Entry (.open_door) and the overworld load after an exit ($0696) share it.
+; In: M=16 X=16, X = map16 index of the left half.
+; Out: carry set with A = open left, Y = open right; carry clear if unknown.
+OverworldDoor_FindOpenStyle:
+{
+  PHX
+  LDA.l $7E2002, X : PHA
+  LDA.l $7E2000, X : PHA
+  LDX.w #OverworldDoorStyles_end-OverworldDoorStyles-8
+  .next
+    LDA.l OverworldDoorStyles+0, X : CMP 1, S : BNE .skip
+    LDA.l OverworldDoorStyles+2, X : CMP 3, S : BEQ .found
+  .skip
+    TXA : SEC : SBC.w #$0008 : TAX
+  BPL .next
+  PLA : PLA : PLX
+  CLC
+  RTL
+
+  .found
+  PLA : PLA
+  LDA.l OverworldDoorStyles+6, X : TAY
+  LDA.l OverworldDoorStyles+4, X
+  PLX
+  SEC
+  RTL
+}
+
+; Each $0696 exit door must name its closed pair here, or the open door is
+; skipped: stale exit/entrance positions would otherwise paste a doorway over
+; unrelated tiles.
+OverworldDoorStyles:
+  ;  closed L, closed R, open L, open R
+  dw $00FB, $00FC, $0DA4, $0DA6 ; house door
+  dw $075D, $075E, $0DA4, $0DA6 ; house door, palette 6 panel ($06, $4B)
+  dw $05D8, $05D9, $0DA4, $0DA6 ; house door, palette 7 ($23 entrance $42)
+  dw $0B82, $0B83, $0FFC, $0FFD ; Kalyxo boat cabin ($38); $38's sheet lacks FE/FF
+OverworldDoorStyles_end:
+
+; $02EEE8 opens the exit door at $0696 with fixed house tiles $0DA4/$0DA6.
+; M=16 X=16; X = $0696 (below $8000). The bit-15 $0DB4/$0DB5 path is unchanged.
+OverworldDoor_ExitOpen:
+{
+  JSL OverworldDoor_FindOpenStyle : BCC .skip
+  PHY
+  STA.l $7E2000, X
+  JSL Overworld_MemorizeMap16Change
+  PLA
+  JML $02EF1A ; STA $7E2002,X, memorize, STZ $0696
+
+  .skip
+  JML $02EF26 ; STZ $0696
+}
+
+pushpc
+assert read4($02EEF7) == $9F0DA4A9 && read3($02EEFB) == $7E2000, "Exit open-door draw $02EEF7 moved"
+assert read4($02EF1A) == $7E20029F && read3($02EF26) == $06969C, "Exit open-door return sites moved"
+org $02EEF7 ; @hook module=Overworld name=OverworldDoor_ExitOpen kind=jml target=OverworldDoor_ExitOpen expected_m=16 expected_x=16 protected_size=7
+  JML OverworldDoor_ExitOpen : NOP #3
+assert pc() == $02EEFE
+pullpc
+
 
 ; $DB8BF-$DB916 - chr types indicating door entrances
 
@@ -241,7 +310,7 @@ ValidDoorTypesExpanded_low:
  dw $01C6, $015E, $0167, $0128 ; 08: Waterfall, ???, ???, ???
  dw $0131, $0112, $016D, $0163 ; 09:
  dw $0173, $00FE, $0113, $0177 ; 10:
- dw $00EA, $013B, $0174, $FFFF ; 11: Lava Land Large, Lava Land Small, Goron Mines, unused
+ dw $00EA, $013B, $0174, $011B ; 11: Lava Land Large, Lava Land Small, Goron Mines, Docks Boat Door
  dw $FFFF                       ; 12: unused; fills the 49-entry scan contract
 
 ValidDoorTypesExpanded_high:
@@ -256,7 +325,7 @@ ValidDoorTypesExpanded_high:
  dw $01C6, $0131, $0051, $014E ; Waterfall, ???, ???, ???
  dw $0131, $0112, $017A, $0163 ; 09:
  dw $0172, $01BD, $0152, $0167 ; 10:
- dw $00EB, $013A, $0174, $FFFF
+ dw $00EB, $013A, $0174, $011A
  dw $FFFF
 ValidDoorTypesExpanded_end:
 

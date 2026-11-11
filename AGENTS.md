@@ -54,6 +54,8 @@ Playtest/versioning, Dev builds, Zelda menu parity, Emacs and knowledge referenc
 AFS `scratchpad/operations/oracle.md`; load only the needed section.
 Yaze: its `AGENTS.md` and current `docs/internal/agents/operating-rules.md`;
 if absent locally, read `git -C ~/src/hobby/yaze show origin/master:docs/internal/agents/operating-rules.md`.
-Canon: `Docs/Planning/story_canon_beat_sheet.md` and newer DECIDED `decisions.org` rulings.
+Canon (AFS, not in git): `knowledge/planning/story_canon_beat_sheet.md` and newer DECIDED
+`knowledge/planning/decisions.org` rulings; task tracker `knowledge/planning/oracle.org`.
+Never commit story, decision or planning text to this repo.
 Preserve approved `Answer:` and quoted user text verbatim.
 Plans/reviews/evidence/patches/handoffs go in AFS; routing: `.context/CONTEXT_INDEX.md`.

@@ -252,14 +252,11 @@ __pycache__/
 # These directories may contain screenshots, memory dumps and copied script snapshots.
 /Docs/Planning/Status/runtime_*/
 
-# Agent plans, reviews, sketches, and debug evidence live in AFS
-# (~/.context/projects/oracle-of-secrets). Canon stays tracked:
-# story_canon_beat_sheet.md, Status/decisions.org, oracle.org,
-# Reviews/approved_dialogue_rewrites_*.md.
-/Docs/Planning/Plans/
-/Docs/Planning/Sketches/
-/Docs/Planning/Reviews/**
-!/Docs/Planning/Reviews/approved_dialogue_rewrites_*.md
+# Plans, reviews, story canon, decisions and the task tracker live in AFS
+# (~/.context/projects/oracle-of-secrets/knowledge/planning/). Local
+# checkouts may keep symlinks at the old paths.
+/Docs/Planning/
+/Docs/oracle.org
 /Docs/Debugging/Issues/evidence/
 
 # Local tool scratch (2026-10-06 repo cleanup)

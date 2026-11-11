@@ -36,7 +36,7 @@ Checkpoints (Jump asks for confirmation), Items, Flags.
   copied to the **active** SRAM slot (main + mirror, new checksum). Other slots
   are untouched. The panel asks before it writes.
 - Crystal bits follow the 2026-09-26 fix: D1 = `$02`, D6 = `$01`
-  (`Docs/Debugging/Issues/world_map_icons_2026-09-26.md` section 5.0).
+  (`AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Debugging/Issues/world_map_icons_2026-09-26.md` section 5.0).
 - The storm bit (`OOSPROG2` `$80`) stays set in the Abyss and is cleared at
   `kalyxo-return`, as in the current `Overworld/storm.asm`. On b17 and older
   builds the Abyss checkpoints therefore show rain.

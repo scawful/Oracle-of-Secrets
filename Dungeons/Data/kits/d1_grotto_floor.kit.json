@@ -1,0 +1,56 @@
+{
+ "kit": "d1_grotto_floor",
+ "inventory_id": "N1",
+ "verdict": "routed",
+ "profile": "d1_grotto_floor",
+ "note": "Palette only: D1 grass floor (chars 0EE/0EF/0FE/0FF body, 0AC-0AF fringe, row 3) in the overworld main green $2669 with its dark shade $19C6. Walls, walkways and water keep palette $10.",
+ "source_rom_sha256": "5d6b461b3058a5e277fdd55a634660a5e10bd6d518df9a34ba2abaf7af19cdee",
+ "origin_rom_sha256": "5d6b461b3058a5e277fdd55a634660a5e10bd6d518df9a34ba2abaf7af19cdee",
+ "base_rom_sha256": "5d6b461b3058a5e277fdd55a634660a5e10bd6d518df9a34ba2abaf7af19cdee",
+ "rooms": [
+  "009",
+  "00A",
+  "00B",
+  "019",
+  "01A",
+  "01B",
+  "02A",
+  "02B",
+  "031",
+  "03A",
+  "03B",
+  "04A",
+  "04B",
+  "05A",
+  "05B",
+  "06A",
+  "007",
+  "017",
+  "032",
+  "033",
+  "043",
+  "053",
+  "063"
+ ],
+ "base_blockset": "0x07",
+ "base_palette": "0x10",
+ "palette": {
+  "id": "0x22",
+  "copy_of": "0x10",
+  "copy_offset": "0x05A0",
+  "splices": [
+   {
+    "first": 24,
+    "words": [
+     "$19C6"
+    ]
+   },
+   {
+    "first": 27,
+    "words": [
+     "$2669"
+    ]
+   }
+  ]
+ }
+}

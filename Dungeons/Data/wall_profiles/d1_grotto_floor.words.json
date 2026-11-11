@@ -1,0 +1,8 @@
+{
+ "profile": "d1_grotto_floor",
+ "source_rom_sha256": "8d6157840e402f98d5c4b1d61da90be072531fa661bc1608ae0eeab1b898e721",
+ "base_rom_sha256": "8d6157840e402f98d5c4b1d61da90be072531fa661bc1608ae0eeab1b898e721",
+ "reference_rom_sha256": null,
+ "note": "No class words: the D1 rooms draw the build's own (original grotto) walls. The profile exists only to route the private floor palette. Replaces d1_a3052e1d (kit walls rejected 2026-11-11).",
+ "classes": {}
+}

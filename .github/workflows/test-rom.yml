@@ -72,6 +72,11 @@ jobs:
           printf '\xA9\x78\x07' | dd of=test.sfc bs=1 seek=$((0x6F80)) conv=notrunc 2>/dev/null  # $00EF80 Module15 HDMA refill LDA.w #$0778 (vanilla)
           printf '\xE2\x30\xAB\x6B' | dd of=test.sfc bs=1 seek=$((0x75447)) conv=notrunc 2>/dev/null  # $0ED447 CreateMessagePointers epilogue SEP #$30/PLB/RTL (Core/minish_tutorials.asm)
 
+          # Original exit open-door draw and return sites guarded by Overworld/entrances.asm.
+          printf '\xA9\xA4\x0D\x9F\x00\x20\x7E' | dd of=test.sfc bs=1 seek=$((0x16EF7)) conv=notrunc 2>/dev/null  # $02EEF7 LDA #$0DA4 : STA $7E2000,X
+          printf '\x9F\x02\x20\x7E' | dd of=test.sfc bs=1 seek=$((0x16F1A)) conv=notrunc 2>/dev/null  # $02EF1A STA $7E2002,X
+          printf '\x9C\x96\x06' | dd of=test.sfc bs=1 seek=$((0x16F26)) conv=notrunc 2>/dev/null  # $02EF26 STZ $0696
+
           # Original tag $24 vector and Holes2 body guarded by custom_tag.asm.
           printf '\x89\xCC' | dd of=test.sfc bs=1 seek=$((0xC2C5)) conv=notrunc 2>/dev/null  # $01C2C5 vector -> $01CC89
           printf '\xC2\x30\x20\xCC\xCD\x90\xF6\xA0\x05\x00\x80\xD9' | dd of=test.sfc bs=1 seek=$((0xCC89)) conv=notrunc 2>/dev/null  # $01CC89 RoomTag_Holes2
@@ -173,8 +178,46 @@ jobs:
             printf '\xBF\x01\x80\x1F\x85\xB8\xBF\x00\x80\x1F\x85\xB7' | dd of=test.sfc bs=1 seek=$((d4_object_pointer_pc)) conv=notrunc 2>/dev/null  # LDA.l $1F8001,X : STA $B8 : LDA.l $1F8000,X : STA $B7
           done
 
-          # Native camera-cache and follower-message bytes guarded by Sprites/Bosses/d4_pressure_warden.asm.
+          # Vanilla hook-site bytes guarded by Dungeons/wall_profile_selector.asm.
+          printf '\xBF\x00\x80\x01\xAA' | dd of=test.sfc bs=1 seek=$((0x8979)) conv=notrunc 2>/dev/null  # $018979 H1 LDA.l $018000,X : TAX
+          printf '\xBF\xF0\x83\x01\xAA' | dd of=test.sfc bs=1 seek=$((0x89AE)) conv=notrunc 2>/dev/null  # $0189AE H2 LDA.l $0183F0,X : TAX
+          printf '\xBF\x19\x97\x0E\x9F\xC0\xFE\x7E' | dd of=test.sfc bs=1 seek=$((0x717F5)) conv=notrunc 2>/dev/null  # $0E97F5 LoadDefaultTileTypes slot-3 copy
+          printf '\xC8\xB7\x0D\x8D\xA2\x0A' | dd of=test.sfc bs=1 seek=$((0xB641)) conv=notrunc 2>/dev/null  # $01B641 H3 INY : LDA [$0D],Y : STA $0AA2
+
+          # Vanilla spare blockset rows, palette offsets and slot-3 sheet guarded by
+          # Dungeons/Data/kits/kits.asm (real base-ROM bytes).
+          printf '\x09\x00\x24\x1B\x08\x00\x22\x1B\x09\x00\x25\x1B\x09\x00\x26\x1B' | dd of=test.sfc bs=1 seek=$((0x5DF3)) conv=notrunc 2>/dev/null  # $00DDF3 rows $17-$1A
+          printf '\x0B' | dd of=test.sfc bs=1 seek=$((0x5DC3)) conv=notrunc 2>/dev/null  # $00DDC3 slot-3 sheet $0B
+          printf '\xF4\x0B\xA8\x0C\x5C\x0D' | dd of=test.sfc bs=1 seek=$((0xDEC6D)) conv=notrunc 2>/dev/null  # $1BEC6D palette $22/$24/$26 offsets
+          printf '\xA0\x05' | dd of=test.sfc bs=1 seek=$((0xDEC5B)) conv=notrunc 2>/dev/null  # $1BEC5B palette $10 offset
+          printf '\xD0\x02' | dd of=test.sfc bs=1 seek=$((0xDEC53)) conv=notrunc 2>/dev/null  # $1BEC53 palette $08 offset
+          # Room headers: three synthetic records with the real header bytes of a default
+          # room, D1 room $007 (palette set $0F -> $10, blockset $07) and Glacia room $09E
+          # (palette set $13 -> $08, blockset $0B). Each kit room points at its record.
+          python3 - <<'PY'
+          import re
+          src = open('Dungeons/Data/kits/kits.asm').read()
+          d1 = {int(m, 16) for m in re.findall(r'read2\(\$228000\+\$([0-9A-F]+)\)\)\+1\)\*4\)\) == \$10', src)}
+          gl = {int(m, 16) for m in re.findall(r'read2\(\$228000\+\$([0-9A-F]+)\)\)\+2\) == \$0B', src)}
+          with open('test.sfc', 'r+b') as f:
+              for room in range(0x128):
+                  off = room * 2
+                  ptr = 0x8310 if off in d1 else 0x8320 if off in gl else 0x8300
+                  f.seek(0x110000 + off); f.write(ptr.to_bytes(2, 'little'))  # $228000 header pointers
+              f.seek(0x110300); f.write(bytes([0x00, 0x00, 0x00]))  # $228300 default
+              f.seek(0x110310); f.write(bytes([0xC0, 0x0F, 0x07]))  # $228310 D1 grotto
+              f.seek(0x110320); f.write(bytes([0x20, 0x13, 0x0B]))  # $228320 Glacia
+              f.seek(0x7549C); f.write(b'\x10')  # $0ED49C palette set $0F
+              f.seek(0x754AC); f.write(b'\x08')  # $0ED4AC palette set $13
+          print(f'kit header fixture: {len(d1)} D1 rooms, {len(gl)} Glacia rooms')
+          PY
+
+          # Common item-receipt completion guarded by Sprites/Enemies/custom_guard.asm.
+          printf '\x9C\xE9\x02\xBD\x5E\x0C' | dd of=test.sfc bs=1 seek=$((0x4443B)) conv=notrunc 2>/dev/null  # $08C43B STZ $02E9 : LDA $0C5E,X
+
+          # Native camera-cache, spiral-layout and follower-message bytes guarded by Sprites/Bosses/d4_pressure_warden.asm.
           printf '\xC2\x20\xA5\xE2\x8F\x80\xC1\x7E' | dd of=test.sfc bs=1 seek=$((0x10D81)) conv=notrunc 2>/dev/null  # $028D81 REP #$20 : LDA $E2 : STA.l $7EC180
+          printf '\x22\xDC\xB5\x02' | dd of=test.sfc bs=1 seek=$((0x11122)) conv=notrunc 2>/dev/null  # $029122 JSL Underworld_AdjustForRoomLayout
           printf '\x22\xAA\xFD\x0F' | dd of=test.sfc bs=1 seek=$((0x4A01F)) conv=notrunc 2>/dev/null  # $09A01F JSL $0FFDAA
 
           # Preimage bytes taken from the readN() guards in Dungeons/sky_d8_award.asm.
@@ -211,8 +254,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Lua
-        run: sudo apt-get update && sudo apt-get install -y lua5.4
+      - name: Build Lua compiler
+        run: |
+          # Byte-identical official release, cached by Buildroot to avoid apt DNS.
+          # Published checksum: https://www.lua.org/ftp/
+          LUA_VERSION=5.4.8
+          LUA_SHA256=4f18ddae154e793e46eeab727c59ef1c0c0c2b744e7b94219710d76f530629ae
+          LUA_BUILD="$RUNNER_TEMP/lua-source"
+          mkdir -p "$LUA_BUILD" "$RUNNER_TEMP/lua-bin"
+          curl --fail --location --connect-timeout 15 --max-time 120 \
+            "https://sources.buildroot.net/lua/lua-${LUA_VERSION}.tar.gz" -o "$LUA_BUILD/lua.tar.gz"
+          echo "$LUA_SHA256  $LUA_BUILD/lua.tar.gz" | sha256sum -c -
+          tar -xzf "$LUA_BUILD/lua.tar.gz" -C "$LUA_BUILD"
+          # Only luac with generic flags: no readline or other apt package.
+          make -C "$LUA_BUILD/lua-${LUA_VERSION}/src" --jobs=2 luac
+          cp "$LUA_BUILD/lua-${LUA_VERSION}/src/luac" "$RUNNER_TEMP/lua-bin/luac5.4"
+          "$RUNNER_TEMP/lua-bin/luac5.4" -v
+          echo "$RUNNER_TEMP/lua-bin" >> "$GITHUB_PATH"
 
       - name: Check Lua Syntax
         run: |

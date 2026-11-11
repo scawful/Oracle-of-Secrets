@@ -9,7 +9,8 @@ incsrc "Core/Generated/d4_zora_sprite_sheets/frame_tables.asm"
 
 ; Reuse the native room-entry cache boundary after stairs and doors. A spiral
 ; stair from the tall basin can retain a scroll offset outside room46's small
-; vertical view. The next door scroll then ends before Link crosses quadrants.
+; vertical view. Clamp before the stair fade-in; retain the entry-cache clamp
+; so subsequent door scrolls still cross the correct quadrant boundary.
 ; This file is included only with ENABLE_D4_ZORA_REDESIGN; flag0 leaves the
 ; original eight bytes untouched. Other rooms replay the original cache code.
 pushpc
@@ -20,6 +21,13 @@ org $028D81 ; @hook module=Dungeons name=D4Zora_CacheRoomCamera kind=jsl target=
   NOP #4
 assert pc() == $028D89
 
+; Spiral stage07 establishes the destination layout while the screen is black.
+; Clamp after that call, before fade-in exposes the stair exit animation.
+org $029122 ; @hook module=Dungeons name=D4Zora_SpiralCameraLayout kind=jsl target=D4Zora_SpiralCameraLayout expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8 protected_size=4
+  assert read4($029122) == $02B5DC22, "D4 spiral layout preimage changed"
+  JSL D4Zora_SpiralCameraLayout
+assert pc() == $029126
+
 ; Follower_BasicMover has already reset its timed-message counter and stored
 ; TEXTID. Its PHY/PLY remain outside this four-byte call. Entry/exit M8/X8,
 ; DBR=$09 and D=0; pass-through tail-calls the original interface routine.
@@ -29,7 +37,23 @@ org $09A01F ; @hook module=Sprites name=D4Zora_FilterBabyReminder kind=jsl targe
 assert pc() == $09A023
 pullpc
 
+D4Zora_SpiralCameraLayout:
+{
+  JSL $02B5DC ; Underworld_AdjustForRoomLayout, displaced original call.
+  JSL D4Zora_ClampRoomCamera
+  RTL
+}
+
 D4Zora_CacheRoomCamera:
+{
+  JSL D4Zora_ClampRoomCamera
+  ; Exact displaced REP/LDA/STA; vanilla continues caching Link and bounds.
+  REP #$20
+  LDA.b $E2 : STA.l $7EC180
+  RTL
+}
+
+D4Zora_ClampRoomCamera:
 {
   PHP
   REP #$30
@@ -63,9 +87,6 @@ D4Zora_CacheRoomCamera:
   PLA : STA.l $7E0000
   .restore
   PLY : PLX : PLA : PLP
-  ; Exact displaced REP/LDA/STA; vanilla continues caching Link and bounds.
-  REP #$20
-  LDA.b $E2 : STA.l $7EC180
   RTL
 
   .shift_vertical
@@ -111,6 +132,7 @@ D4Zora_Prep:
   STZ.w SprFrame, X
   STZ.w $0DC0, X
   STZ.w SprMiscA, X
+  STZ.w SprMiscG, X
   STZ.w SprTimerB, X
   LDA.w SprSubtype, X : CMP.b #$02 : BNE .done
   LDA.b #$81 : STA.w SprNbrOAM, X
@@ -136,6 +158,7 @@ D4Zora_Long:
   LDA.w SprAction, X : CMP.b #$01 : BNE .draw
   LDA.b #!D4Zora_Frame_protector_healing : STA.w SprFrame, X
   .draw
+  JSR D4Zora_RefreshPalettesOnce
   JSR D4Zora_Draw
   JSL Sprite_CheckActive : BCC .done
   JSR D4Zora_ProtectorMain
@@ -222,6 +245,7 @@ D4Warden_Prep:
   STZ.w SprMiscA, X
   STZ.w SprMiscB, X
   STZ.w SprMiscD, X
+  STZ.w SprMiscG, X
   STZ.w SprXSpeed, X
   STZ.w SprYSpeed, X
   LDA.b #$02 : STA.w SprMiscC, X
@@ -243,6 +267,7 @@ D4Warden_Long:
   LDA.l $7EF08D : ORA.b #$08 : STA.l $7EF08D
   BRA .done
   .alive
+  JSR D4Zora_RefreshPalettesOnce
   JSR D4Zora_Draw
   JSL Sprite_CheckActive : BCC .done
   JSR D4Warden_Main
@@ -540,6 +565,18 @@ D4Zora_LoadPalettes:
   .done
   INC.b $15
   PLX
+  RTS
+}
+
+; Room46 entry rebuilds rows3–6 after sprite preparation, as in refuge105.
+; Rebind once in ordinary active gameplay. SprMiscG is cleared by both preps.
+D4Zora_RefreshPalettesOnce:
+{
+  LDA.w SprMiscG, X : BNE .done
+  JSL Sprite_CheckActive : BCC .done
+  JSR D4Zora_LoadPalettes
+  INC.w SprMiscG, X
+  .done
   RTS
 }
 

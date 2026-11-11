@@ -46,7 +46,9 @@ def _remove_generated(path, source_path):
 def _export_source(rom, command):
     resolved = shutil.which(command or 'z3ed')
     native.require(resolved is not None,
-                   'Native resource compilation requires z3ed; set OOS_Z3ED_BIN')
+                   'Native resource compilation requires z3ed; none found on PATH, '
+                   'in the Yaze Nightly bundle or ~/.local/yaze. '
+                   'Set OOS_Z3ED_BIN to a z3ed binary')
     result = subprocess.run([resolved, 'overworld-export-native-source', '--rom',
                              str(rom.resolve()), '--format', 'json'],
                             capture_output=True, text=True, timeout=120)
