@@ -39,6 +39,8 @@ endif
 !ENABLE_SKY_TOWER_GRAPHICS          = 0
 ; Sky room sky layer ($A0 proof): sheet EA slot6, row6 colours, BG1 fill. Needs SKY_TOWER_GRAPHICS.
 !ENABLE_SKY_ROOM_SKY                = 0
+; Sky Tower void falls = damage pits (one heart, room entry); extended RoomsWithPitDamage copy.
+!ENABLE_SKY_PIT_DAMAGE              = 0
 ; Private D4 room-scoped actor/art prototype; no default behavior change.
 !ENABLE_D4_ZORA_REDESIGN            = 1
 !ENABLE_D4_WATER_CONTROLS           = 1
