@@ -19,8 +19,15 @@
 
 assert !ENABLE_SKY_TOWER_GRAPHICS == 1, "Sky room sky requires Sky Tower graphics"
 
-; Colour defines + SkyRoom_Clouds (emitted here, bank $2C stream).
+; Colour defines + SkyRoom_Clouds. The v3d lattice (370 cells, 1110 bytes) no
+; longer fits the bank $2C slack under the Somaria/thin-ice tail asserts, so the
+; table lives in the free tail of bank $33 (after Moosh, $33F073; read with LDA.l).
+pushpc
+org $33F400 ; @hook module=Dungeons kind=data protected_size=1110 name=SkyRoomClouds
+assert read4($33F400) == 0 && read4($33F800) == 0, "Sky cloud table slot in bank $33 is not free"
 incsrc "Dungeons/sky_room_sky_data.asm"
+assert pc() <= $340000, "Sky cloud table overflows bank $33"
+pullpc
 
 pushpc
 
