@@ -118,6 +118,24 @@ Oracle_PrisonSequence_PostMeadowBlade:
 ; - Carry / $0FDC semantics match vanilla, except when we intentionally suppress.
 Guard_CheckDamageToLink_CaptureWrapper:
 {
+  ; Guard_Main also runs outside D3. Preserve its incoming A/P before the
+  ; scope check, then tail-call native contact logic outside dungeon $10.
+  PHP
+  PHA
+  LDA.b $1B
+  BEQ .outside_d3
+  LDA.l $7E040C ; DUNGEON
+  CMP.b #$10
+  BEQ .in_d3
+
+.outside_d3
+  PLA
+  PLP
+  JML $06F121 ; Sprite_CheckDamageToLink_long; uses the original JSL return
+
+.in_d3
+  PLA
+  PLP
   ; Only D3 prison guards participate in the special logic.
   LDA.w SprSubtype, X
   AND.b #$07
