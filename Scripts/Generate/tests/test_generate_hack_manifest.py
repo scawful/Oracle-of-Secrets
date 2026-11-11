@@ -32,6 +32,8 @@ from generate_hack_manifest import (  # noqa: E402
     SPRITE_DATA_END_PC,
     SPRITE_TABLE_POINTER_OPERAND_PC,
     ManifestGenerationError,
+    BOUNDED_HOOKS_BEFORE_NATIVE_AUTHORING_METADATA,
+    _validate_expanded_hooks_disjoint_from_editor_regions,
     _pc_to_snes,
     _snes_to_pc,
     _strict_lorom_to_pc,
@@ -2285,6 +2287,106 @@ class EditorManagedRegionsTest(unittest.TestCase):
                 {"start": "0x258450", "end": "0x25E000"},
             ],
         )
+
+    def test_native_authoring_table_is_exact_editor_managed_range(self) -> None:
+        rom_path = self.fixture.write_dev_rom()
+        self.assertNotIn(
+            {"start": "0x4DD000", "end": "0x4DF000"},
+            derive_editor_managed_regions(rom_path),
+        )
+
+        with patch(
+            "lyra_native_loaders.read_native_directory",
+            return_value=(192, 0x4E, {412: (0x4DD000, 256)}),
+        ):
+            regions = derive_editor_managed_regions(rom_path)
+        self.assertEqual(regions[-1], {"start": "0x4DD000", "end": "0x4DF000"})
+        self.assertEqual(len(regions), 5)
+
+        for entry in ((0x4DD100, 256), (0x4DD000, 257)):
+            with patch(
+                "lyra_native_loaders.read_native_directory",
+                return_value=(192, 0x4E, {412: entry}),
+            ):
+                with self.assertRaisesRegex(
+                    ManifestGenerationError, "table 412 moved"
+                ):
+                    derive_editor_managed_regions(rom_path)
+
+    def _bounded_hook_fixture(self) -> tuple[list[HookEntry], list[dict]]:
+        self.fixture.write_text(
+            "Overworld/special_overworld_resident.asm",
+            "assert !LYRA_CURRENT_RESIDENT_CODE_END-!LYRA_CURRENT_RESIDENT_CODE_BASE <= $0600\n"
+            'assert pc() <= !LYRA_CURRENT_RESIDENT_CODE_END, "bound"\n',
+        )
+        self.fixture.write_text(
+            "Overworld/special_overworld_graphics.asm",
+            "assert !SPECIAL_OVERWORLD_RESOURCE_CODE_END == $4DD000\n"
+            "assert pc() <= !SPECIAL_OVERWORLD_RESOURCE_CODE_END\n",
+        )
+        hooks = [
+            HookEntry(0x4DC200, "resident", "data", None,
+                      "Overworld/special_overworld_resident.asm:77"),
+            HookEntry(0x4DC800, "graphics", "data", None,
+                      "Overworld/special_overworld_graphics.asm:47"),
+        ]
+        return hooks, [{"start": "0x4DD000", "end": "0x4DF000"}]
+
+    def _assert_refused(self, hooks, regions, message) -> None:
+        with self.assertRaisesRegex(ManifestGenerationError, message):
+            _validate_expanded_hooks_disjoint_from_editor_regions(
+                hooks, regions, self.fixture.root
+            )
+
+    def test_named_bounded_hooks_pass_before_native_authoring_table(self) -> None:
+        hooks, regions = self._bounded_hook_fixture()
+        _validate_expanded_hooks_disjoint_from_editor_regions(
+            hooks, regions, self.fixture.root
+        )
+
+    def test_third_hook_before_native_authoring_table_is_refused(self) -> None:
+        hooks, regions = self._bounded_hook_fixture()
+        hooks.append(HookEntry(0x4DC900, "third", "data", None,
+                               "Overworld/other.asm:1"))
+        self._assert_refused(hooks, regions, "exact end is unknown")
+
+    def test_moved_named_hooks_are_refused(self) -> None:
+        for index, moved in ((0, 0x4DC300), (1, 0x4DC900)):
+            with self.subTest(moved=hex(moved)):
+                hooks, regions = self._bounded_hook_fixture()
+                hooks[index].address = moved
+                self._assert_refused(hooks, regions, "exact end is unknown")
+
+    def test_named_hook_without_bounding_assert_is_refused(self) -> None:
+        for index, path in enumerate((
+            "Overworld/special_overworld_resident.asm",
+            "Overworld/special_overworld_graphics.asm",
+        )):
+            for replacement in ("", "; assert pc() <= !DISABLED\n"):
+                with self.subTest(path=path, replacement=replacement):
+                    hooks, regions = self._bounded_hook_fixture()
+                    self.fixture.write_text(path, replacement)
+                    self._assert_refused(
+                        hooks[index:index + 1], regions, "lost its bounding assert"
+                    )
+
+    def test_bounded_hook_exemption_covers_only_table_412(self) -> None:
+        hooks, _ = self._bounded_hook_fixture()
+        self._assert_refused(
+            hooks[:1],
+            [{"start": "0x4DCF00", "end": "0x4DD000"}],
+            "exact end is unknown",
+        )
+
+    def test_bounded_hook_end_past_table_start_is_refused(self) -> None:
+        hooks, regions = self._bounded_hook_fixture()
+        key = ("Overworld/special_overworld_graphics.asm", 0x4DC800)
+        original = BOUNDED_HOOKS_BEFORE_NATIVE_AUTHORING_METADATA[key]
+        with patch.dict(
+            BOUNDED_HOOKS_BEFORE_NATIVE_AUTHORING_METADATA,
+            {key: (0x4DD001, original[1])},
+        ):
+            self._assert_refused(hooks[1:], regions, "past editor range start")
 
     def test_manifest_v3_includes_derived_editor_ranges(self) -> None:
         self.fixture.write_dev_rom()

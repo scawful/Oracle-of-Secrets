@@ -183,6 +183,7 @@ PY
 fi
 
 source "$repo_root/Scripts/Build/build_checks.sh"
+source "$repo_root/Scripts/Build/z3ed_locator.sh"
 init_build_receipt
 current_stage="base_rom"
 
@@ -252,10 +253,9 @@ snapshot_build_outputs
 # Native special-overworld data belongs to the editable ROM. The generated
 # include contains constants only; initial data import is a separate operation.
 native_build_args=(--build-cache "$repo_root/.cache")
-if [[ -n "${OOS_Z3ED_BIN:-}" ]]; then
-  native_build_args+=(--z3ed "$OOS_Z3ED_BIN")
-elif [[ -x "$repo_root/../yaze/scripts/z3ed" ]]; then
-  native_build_args+=(--z3ed "$repo_root/../yaze/scripts/z3ed")
+# Without a located z3ed the stage fails with the checked locations above.
+if native_z3ed="$(oos_find_z3ed "$repo_root")"; then
+  native_build_args+=(--z3ed "$native_z3ed")
 fi
 run_check native_overworld_constants 1 python3 "$repo_root/Scripts/Build/lyra_native_loaders.py" \
   --rom "$base_rom" --constants "$repo_root/.cache/special_overworld_reader_constants.asm" \
@@ -320,15 +320,7 @@ if [[ "${OOS_SKIP_MENU_VALIDATE:-0}" == "1" ]]; then
   # An explicit diagnostic skip may disable the default, never an explicit requirement.
   omit_check menu skipped "$(check_required menu "${OOS_MENU_VALIDATE_FATAL:-0}")" "OOS_SKIP_MENU_VALIDATE=1"
 else
-  z3ed_cli="${OOS_Z3ED_BIN:-}"
-  if [[ -z "$z3ed_cli" ]]; then
-    local_z3ed="$repo_root/../yaze/scripts/z3ed"
-    if [[ -x "$local_z3ed" ]]; then
-      z3ed_cli="$local_z3ed"
-    elif command -v z3ed >/dev/null 2>&1; then
-      z3ed_cli="$(command -v z3ed)"
-    fi
-  fi
+  z3ed_cli="$(oos_find_z3ed "$repo_root" 2>/dev/null || true)"
   if [[ -n "$z3ed_cli" ]] && command -v "$z3ed_cli" >/dev/null 2>&1; then
     receipt tool --name z3ed --path "$(command -v "$z3ed_cli")"
     menu_validate_args=(oracle-menu-validate --project "$repo_root")
