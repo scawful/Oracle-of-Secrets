@@ -211,8 +211,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Lua
-        run: sudo apt-get update && sudo apt-get install -y lua5.4
+      - name: Build Lua compiler
+        run: |
+          # Byte-identical official release, cached by Buildroot to avoid apt DNS.
+          # Published checksum: https://www.lua.org/ftp/
+          LUA_VERSION=5.4.8
+          LUA_SHA256=4f18ddae154e793e46eeab727c59ef1c0c0c2b744e7b94219710d76f530629ae
+          LUA_BUILD="$RUNNER_TEMP/lua-source"
+          mkdir -p "$LUA_BUILD" "$RUNNER_TEMP/lua-bin"
+          curl --fail --location --connect-timeout 15 --max-time 120 \
+            "https://sources.buildroot.net/lua/lua-${LUA_VERSION}.tar.gz" -o "$LUA_BUILD/lua.tar.gz"
+          echo "$LUA_SHA256  $LUA_BUILD/lua.tar.gz" | sha256sum -c -
+          tar -xzf "$LUA_BUILD/lua.tar.gz" -C "$LUA_BUILD"
+          # Only luac with generic flags: no readline or other apt package.
+          make -C "$LUA_BUILD/lua-${LUA_VERSION}/src" --jobs=2 luac
+          cp "$LUA_BUILD/lua-${LUA_VERSION}/src/luac" "$RUNNER_TEMP/lua-bin/luac5.4"
+          "$RUNNER_TEMP/lua-bin/luac5.4" -v
+          echo "$RUNNER_TEMP/lua-bin" >> "$GITHUB_PATH"
 
       - name: Check Lua Syntax
         run: |
