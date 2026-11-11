@@ -142,12 +142,12 @@ org $1BE3DC ; @hook module=Dungeons kind=data protected_size=180
   dw read2($1BDA40), read2($1BDA42), read2($1BDA44), read2($1BDA46), read2($1BDA48), read2($1BDA4A)
   dw read2($1BDA4C), read2($1BDA4E), read2($1BDA50), read2($1BDA52), read2($1BDA54), read2($1BDA56)
   dw read2($1BDA58), read2($1BDA5A), read2($1BDA5C), read2($1BDA5E), read2($1BDA60), read2($1BDA62)
-  dw read2($1BDA64), read2($1BDA66), read2($1BDA68), read2($1BDA6A), read2($1BDA6C), read2($1BDA6E)
-  dw read2($1BDA70), read2($1BDA72), read2($1BDA74), read2($1BDA76), read2($1BDA78), read2($1BDA7A)
+  dw read2($1BDA64), read2($1BDA66), read2($1BDA68), read2($1BDA6A), read2($1BDA6C), $3928
+  dw $51AA, $5A0D, $626F, $6EF3, $7B78, read2($1BDA7A)
   dw read2($1BDA7C), read2($1BDA7E), read2($1BDA80), read2($1BDA82), read2($1BDA84), read2($1BDA86)
   dw read2($1BDA88), read2($1BDA8A), read2($1BDA8C), read2($1BDA8E), read2($1BDA90), read2($1BDA92)
-  dw read2($1BDA94), read2($1BDA96), read2($1BDA98), read2($1BDA9A), read2($1BDA9C), read2($1BDA9E)
-  dw read2($1BDAA0), read2($1BDAA2), read2($1BDAA4), read2($1BDAA6), read2($1BDAA8), read2($1BDAAA)
+  dw read2($1BDA94), read2($1BDA96), read2($1BDA98), read2($1BDA9A), $4D89, $6290
+  dw $7336, read2($1BDAA2), read2($1BDAA4), read2($1BDAA6), read2($1BDAA8), read2($1BDAAA)
   dw read2($1BDAAC), read2($1BDAAE), read2($1BDAB0), read2($1BDAB2), read2($1BDAB4), read2($1BDAB6)
 assert pc() == $1BE490, "kit palette must be exactly 90 words"
 pullpc
@@ -181,8 +181,8 @@ org $1BE490 ; @hook module=Dungeons kind=data protected_size=180
   dw read2($1BDA70), read2($1BDA72), read2($1BDA74), read2($1BDA76), read2($1BDA78), read2($1BDA7A)
   dw read2($1BDA7C), read2($1BDA7E), read2($1BDA80), read2($1BDA82), read2($1BDA84), read2($1BDA86)
   dw read2($1BDA88), read2($1BDA8A), read2($1BDA8C), read2($1BDA8E), read2($1BDA90), read2($1BDA92)
-  dw read2($1BDA94), read2($1BDA96), read2($1BDA98), read2($1BDA9A), read2($1BDA9C), read2($1BDA9E)
-  dw read2($1BDAA0), read2($1BDAA2), read2($1BDAA4), read2($1BDAA6), read2($1BDAA8), read2($1BDAAA)
+  dw read2($1BDA94), read2($1BDA96), read2($1BDA98), read2($1BDA9A), $4D89, $6290
+  dw $7336, read2($1BDAA2), read2($1BDAA4), read2($1BDAA6), read2($1BDAA8), read2($1BDAAA)
   dw read2($1BDAAC), read2($1BDAAE), read2($1BDAB0), read2($1BDAB2), read2($1BDAB4), read2($1BDAB6)
 assert pc() == $1BE544, "kit palette must be exactly 90 words"
 pullpc
