@@ -431,6 +431,8 @@ PlayThunderAndRain:
 ; Song tints add a fixed color to BG1, BG2 and the backdrop, then put back the
 ; color math the area or room had. CGWSEL ($99) is left alone: a subscreen
 ; overlay keeps drawing, and its transparent pixels add the fixed color.
+; Under rain, RainAnimation owns $9A (its $72/$32 already add to BG2 and the
+; backdrop), so the tint only sets the fixed color.
 ; $9A/$9C-$9E are the NMI mirrors of CGADSUB/COLDATA.
 SongTint_Table:
   ; frames, red, green, blue (0-31)
@@ -446,7 +448,7 @@ SongTint_Table:
 SongTint_Start:
 {
   PHP
-  REP #$10 : PHX
+  REP #$10 : PHX : PHY
   SEP #$30
   PHA
   LDA.l SongTintTimer : BNE .running
@@ -461,21 +463,22 @@ SongTint_Start:
   ASL : ASL : TAX
   LDA.l SongTint_Table,X : STA.l SongTintTimer
   JSR SongTint_Apply
-  REP #$10 : PLX
+  REP #$10 : PLY : PLX
   PLP
   RTL
 }
 
-; Ends a running tint now and restores the saved color math.
+; Ends a running tint now. Used when a scene loads its own color math.
 ; Safe to call from any M/X width.
 SongTint_Cancel:
 {
   PHP
-  SEP #$20
+  REP #$10 : PHX : PHY
+  SEP #$30
   LDA.l SongTintTimer : BEQ .done
-    LDA.b #$00 : STA.l SongTintTimer
-    JSR SongTint_Restore
+    JSR SongTint_End
   .done
+  REP #$10 : PLY : PLX
   PLP
   RTL
 }
@@ -485,27 +488,22 @@ SongTint_Cancel:
 SongTintTick:
 {
   PHP
-  REP #$10 : PHX
+  REP #$10 : PHX : PHY
   SEP #$30
 if !ENABLE_OCARINA_SONG_TINT == 0
   LDA.b #$00 : STA.l SongTintTimer
   BRA .done
 endif
   LDA.l SongTintTimer : BEQ .done
-  LDA.b $1B : CMP.l SongTintContext : BNE .moved
-  JSR SongTint_ReadPlace : CMP.l SongTintContext+1 : BNE .moved
-  LDA.l SongTintTimer : DEC : STA.l SongTintTimer : BEQ .expired
+  LDA.b $1B : CMP.l SongTintContext : BNE .end
+  JSR SongTint_ReadPlace : CMP.l SongTintContext+1 : BNE .end
+  LDA.l SongTintTimer : DEC : STA.l SongTintTimer : BEQ .end
     JSR SongTint_Apply
     BRA .done
-  .moved
-  ; The new area or room may have set its own color math; keep those writes.
-  LDA.b #$00 : STA.l SongTintTimer
-  JSR SongTint_RestoreUntouched
-  BRA .done
-  .expired
-  JSR SongTint_Restore
+  .end
+  JSR SongTint_End
   .done
-  REP #$10 : PLX
+  REP #$10 : PLY : PLX
   PLP
   RTL
 }
@@ -517,7 +515,9 @@ SongTint_Apply:
   LDA.l SongTint_Table+1,X : ORA.b #$20 : STA.b $9C
   LDA.l SongTint_Table+2,X : ORA.b #$40 : STA.b $9D
   LDA.l SongTint_Table+3,X : ORA.b #$80 : STA.b $9E
-  JSR SongTint_Math : STA.b $9A
+  JSR SongTint_RainOwnsMath : BCS +
+    JSR SongTint_Math : STA.b $9A
+  +
   RTS
 }
 
@@ -529,21 +529,21 @@ SongTint_Math:
   RTS
 }
 
-SongTint_Restore:
+; Stops the tint and restores only the mirrors that still hold the values
+; SongTint_Apply wrote: a new area, room, scene or weather keeps its writes.
+SongTint_End:
 {
-  LDA.l SongTintSaved   : STA.b $9A
-  LDA.l SongTintSaved+1 : STA.b $9C
-  LDA.l SongTintSaved+2 : STA.b $9D
-  LDA.l SongTintSaved+3 : STA.b $9E
-  RTS
-}
-
-; Restores only the mirrors that still hold the values SongTint_Apply wrote.
-SongTint_RestoreUntouched:
-{
+  LDA.b #$00 : STA.l SongTintTimer
   LDA.l SongTintColor : ASL : ASL : TAX
   JSR SongTint_Math : CMP.b $9A : BNE +
-    LDA.l SongTintSaved : STA.b $9A
+    JSR SongTint_RainOwnsMath : BCS .rain
+      LDA.l SongTintSaved
+      BRA .math
+    .rain
+    ; Rain began during the tint; it writes $9A only on its event frames.
+    JSR SongTint_RainMath
+    .math
+    STA.b $9A
   +
   LDA.l SongTint_Table+1,X : ORA.b #$20 : CMP.b $9C : BNE +
     LDA.l SongTintSaved+1 : STA.b $9C
@@ -554,6 +554,40 @@ SongTint_RestoreUntouched:
   LDA.l SongTint_Table+3,X : ORA.b #$80 : CMP.b $9E : BNE +
     LDA.l SongTintSaved+3 : STA.b $9E
   +
+  RTS
+}
+
+; Carry set when RainAnimation (ZSCustomOverworld.asm) runs: outdoors with the
+; rain overlay or the Song of Storms flag.
+SongTint_RainOwnsMath:
+{
+  LDA.b $1B : BNE .no
+  LDA.b $8C : CMP.b #$9F : BEQ .yes
+  LDA.l $7EE00E : BNE .yes
+  .no
+  CLC
+  RTS
+  .yes
+  SEC
+  RTS
+}
+
+; A = the $9A RainAnimation holds at this frame counter ($1A): lightning $32
+; from frames $03, $24 and $58 until normal light $72 at $05, $2C and $5A.
+SongTint_RainMath:
+{
+  LDA.b $1A
+  CMP.b #$03 : BCC .normal
+  CMP.b #$05 : BCC .lightning
+  CMP.b #$24 : BCC .normal
+  CMP.b #$2C : BCC .lightning
+  CMP.b #$58 : BCC .normal
+  CMP.b #$5A : BCC .lightning
+  .normal
+  LDA.b #$72
+  RTS
+  .lightning
+  LDA.b #$32
   RTS
 }
 
