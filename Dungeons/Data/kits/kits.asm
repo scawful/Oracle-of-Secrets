@@ -103,7 +103,7 @@ org $1BE328 ; @hook module=Dungeons kind=data protected_size=180
   dw read2($1BDD04), read2($1BDD06), read2($1BDD08), read2($1BDD0A), read2($1BDD0C), read2($1BDD0E)
   dw read2($1BDD10), read2($1BDD12), read2($1BDD14), read2($1BDD16), read2($1BDD18), read2($1BDD1A)
   dw read2($1BDD1C), read2($1BDD1E), read2($1BDD20), read2($1BDD22), read2($1BDD24), read2($1BDD26)
-  dw read2($1BDD28), $0C83, $14C5, read2($1BDD2E), read2($1BDD30), read2($1BDD32)
+  dw read2($1BDD28), $19C6, $2628, read2($1BDD2E), read2($1BDD30), read2($1BDD32)
   dw read2($1BDD34), read2($1BDD36), read2($1BDD38), read2($1BDD3A), read2($1BDD3C), read2($1BDD3E)
   dw read2($1BDD40), read2($1BDD42), read2($1BDD44), read2($1BDD46), read2($1BDD48), read2($1BDD4A)
   dw read2($1BDD4C), read2($1BDD4E), read2($1BDD50), read2($1BDD52), read2($1BDD54), read2($1BDD56)
