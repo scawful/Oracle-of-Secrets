@@ -52,3 +52,7 @@ And an additional 3 banks at the end of the 2.0MB 0x1E8000 to 0x1FFFFF
 
 0x1F0000 - 0x1FFFFF: 2 Banks
     Edpanded Tile32 space
+
+0x240000 - 0x25FFFF: 4 Banks
+    Native special-overworld terrain streams (descriptor entries 210-213), editor-owned
+    Yaze native Save reuses every byte no live stream covers: no ASM or other allocation
