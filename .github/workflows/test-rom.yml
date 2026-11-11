@@ -231,6 +231,31 @@ jobs:
           # Same for all 25 receipt hooks; validate the macro and keep every guard active.
           python3 .github/scripts/seed_sky_award_preimages.py Items/bombchu_receipt.asm test.sfc
 
+          # Sky Tower graphics, sky layer and pit-damage guards (ENABLE_SKY_* default on).
+          # Real base-ROM bytes for every readN() assert in Dungeons/sky_tower_graphics.asm,
+          # sky_room_sky.asm and sky_pit_damage.asm; the bank $33 free-slot checks read zero.
+          printf '\x73\xE0' | dd of=test.sfc bs=1 seek=$((0x6237)) conv=notrunc 2>/dev/null  # $00E237 Sky main graphics table pointer
+          printf '\x0A\x01\x15\x08\x0E\x22\x1B\x0F' | dd of=test.sfc bs=1 seek=$((0x607B)) conv=notrunc 2>/dev/null  # $00E07B Sky source main group
+          printf '\x61\x01\x10\x62\x0E\x26\x1B\x0F' | dd of=test.sfc bs=1 seek=$((0x60B3)) conv=notrunc 2>/dev/null  # $00E0B3 Sky destination main group
+          printf '\x5D\x5D\x5D\x5D\x5D\x5D\x5F\x5D' | dd of=test.sfc bs=1 seek=$((0x1011F)) conv=notrunc 2>/dev/null  # $02811F Sky animation group bytes $02811F/$028126
+          printf '\x01' | dd of=test.sfc bs=1 seek=$((0x79629)) conv=notrunc 2>/dev/null  # $0F9629 Sky entrance $29 main group
+          printf '\x08\x00\x22\x1B' | dd of=test.sfc bs=1 seek=$((0x5D9B)) conv=notrunc 2>/dev/null  # $00DD9B Sky source secondary group
+          printf '\x0C\x00\x26\x1B' | dd of=test.sfc bs=1 seek=$((0x5DBF)) conv=notrunc 2>/dev/null  # $00DDBF Sky destination secondary group
+          printf '\x1B' | dd of=test.sfc bs=1 seek=$((0x5DC2)) conv=notrunc 2>/dev/null  # $00DDC2 Sky secondary group0A slot6
+          printf '\x04\x04\x03\x0A' | dd of=test.sfc bs=1 seek=$((0x75474)) conv=notrunc 2>/dev/null  # $0ED474 Sky source palette set
+          printf '\x02\x00\x0F\x14' | dd of=test.sfc bs=1 seek=$((0x75480)) conv=notrunc 2>/dev/null  # $0ED480 Sky destination palette set
+          printf '\xD8\x09' | dd of=test.sfc bs=1 seek=$((0xDEC67)) conv=notrunc 2>/dev/null  # $1BEC67 Sky global palette14 pointer
+          printf '\xA7\x14' | dd of=test.sfc bs=1 seek=$((0xDD89C)) conv=notrunc 2>/dev/null  # $1BD89C Sky palette word 0 source
+          printf '\x08\x0A' | dd of=test.sfc bs=1 seek=$((0x110A61)) conv=notrunc 2>/dev/null  # $228A61 Room $090 graphics input
+          printf '\x08\x0A' | dd of=test.sfc bs=1 seek=$((0x110A6F)) conv=notrunc 2>/dev/null  # $228A6F Room $091 graphics input
+          printf '\x08\x0A' | dd of=test.sfc bs=1 seek=$((0x110A7D)) conv=notrunc 2>/dev/null  # $228A7D Room $092 graphics input
+          printf '\x08\x0A' | dd of=test.sfc bs=1 seek=$((0x110A8B)) conv=notrunc 2>/dev/null  # $228A8B Room $093 graphics input
+          printf '\x22\x3A\x87\x01' | dd of=test.sfc bs=1 seek=$((0x10CE5)) conv=notrunc 2>/dev/null  # $028CE5 Underworld_InitializeRoomFromSpecial JSL LoadRoom
+          printf '\x22\x3A\x87\x01' | dd of=test.sfc bs=1 seek=$((0x11407)) conv=notrunc 2>/dev/null  # $029407 Module07_11_02 JSL LoadRoom
+          printf '\x22\x3A\x87\x01' | dd of=test.sfc bs=1 seek=$((0x14583)) conv=notrunc 2>/dev/null  # $02C583 Underworld_LoadAndDrawRoom JSL LoadRoom
+          printf '\x0B\x00\x0E\x00\x14\x00\x1A\x00\x1C\x00\x1E\x00\x3C\x00\x3F\x00\x45\x00\x47\x00\x48\x00\x49\x00\x56\x00\x59\x00\x5F\x00\x66\x00\x67\x00\x69\x00\x6E\x00\x71\x00\x73\x00\x74\x00\x75\x00\x76\x00\x77\x00\x7B\x00\x7D\x00\x7E\x00\x7F\x00\x83\x00\x84\x00\x85\x00\x86\x00\x87\x00\x89\x00\x8C\x00\x8E\x00\x8F\x00\xAC\x00\xB1\x00\xB4\x00\xB5\x00\xB9\x00\xC4\x00\xC6\x00\xC7\x00\xCB\x00\xD6\x00\xD7\x00\xD8\x00\xDE\x00\x0B\x01' | dd of=test.sfc bs=1 seek=$((0x190C)) conv=notrunc 2>/dev/null  # $00990C RoomsWithPitDamage base table (52 words)
+          printf '\xA2\x70\x00\xA5\xA0\xDF\x0C\x99\x00' | dd of=test.sfc bs=1 seek=$((0x394A5)) conv=notrunc 2>/dev/null  # $0794A5 Pit-damage scan LDX #imm + CMP.l table
+
           # Grow to the real 4 MiB base size after the seeders, which validate the
           # 2 MiB image. Keeps zero-filled bank $50 in bounds for the D4 water slot
           # guard at $508000-$50A000 (PC $280000).
