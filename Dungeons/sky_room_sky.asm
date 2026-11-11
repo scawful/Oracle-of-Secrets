@@ -51,8 +51,13 @@ SkyRoom_LoadRoom:
   PHP
   REP #$30
   PHA : PHX : PHY
-  LDA.b $A0 : CMP.w #$00A0 : BEQ .sky_room
-  SEC : SBC.w #$0090 : CMP.w #$0004 : BCC .sky_room
+  ; Open-air Sky Tower rooms (v3 board): every room with a sky opening.
+  ; $A6, $96 and the B1 rooms ($8C $9B $9C $9D) stay enclosed and are not listed.
+  LDA.b $A0
+  LDX.w #SkyRoom_List_end-SkyRoom_List-2
+  .scan
+    CMP.l SkyRoom_List,X : BEQ .sky_room
+    DEX #2 : BPL .scan
   BRL .done
   .sky_room
   PHB
@@ -103,3 +108,7 @@ SkyRoom_LoadRoom:
     ..skip
     RTS
 }
+
+SkyRoom_List:
+  dw $0090, $0091, $0092, $0093, $0094, $0095, $00A0, $00B0, $00A7
+SkyRoom_List_end:
