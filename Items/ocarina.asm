@@ -428,62 +428,39 @@ PlayThunderAndRain:
   RTL
 }
 
-; Song tints add a fixed color to BG1, BG2 and the backdrop, then put back the
-; color math the area or room had. CGWSEL ($99) is left alone: a subscreen
-; overlay keeps drawing, and its transparent pixels add the fixed color.
-; Under rain, RainAnimation owns $9A (its $72/$32 already add to BG2 and the
-; backdrop), so the tint only sets the fixed color.
-; $9A/$9C-$9E are the NMI mirrors of CGADSUB/COLDATA.
+; Song tints add a color to the BG palette: the backdrop and BG1/BG2 colors
+; $20-$7F, not the BG3 HUD or sprites. Colors are painted from the palette
+; buffer ($7EC300), which already holds the day/night shade, into the uploaded
+; palette ($7EC500); ending a tint puts the buffer colors back. Color math is
+; left alone, so overlays, rain and lightning keep their own blending.
 SongTint_Table:
-  ; frames, red, green, blue (0-31)
+  ; frames, red, green, blue added to each color (0-31)
   db $20, $02, $09, $03 ; !SongTint_Healing: green
   db $20, $08, $02, $0A ; !SongTint_Time: purple
   db $10, $0C, $0C, $0C ; !SongTint_Soaring: white flash
   db $20, $09, $07, $01 ; !SongTint_Secrets: gold
   db $10, $04, $06, $0A ; !SongTint_Stone: pale blue
 
-; A (8-bit) = !SongTint_* index. A tint already running keeps the color math
-; it saved, so a second song never restores tinted values.
+; A (8-bit) = !SongTint_* index. A second song repaints with its own color.
 ; Safe to call from any M/X width.
 SongTint_Start:
 {
   PHP
   REP #$10 : PHX : PHY
   SEP #$30
-  PHA
-  LDA.l SongTintTimer : BNE .running
-    LDA.b $9A : STA.l SongTintSaved
-    LDA.b $9C : STA.l SongTintSaved+1
-    LDA.b $9D : STA.l SongTintSaved+2
-    LDA.b $9E : STA.l SongTintSaved+3
-    LDA.b $1B : STA.l SongTintContext
-    JSR SongTint_ReadPlace : STA.l SongTintContext+1
-  .running
-  PLA : STA.l SongTintColor
+  STA.l SongTintColor
   ASL : ASL : TAX
   LDA.l SongTint_Table,X : STA.l SongTintTimer
-  JSR SongTint_Apply
+  LDA.b $1B : STA.l SongTintContext
+  JSR SongTint_ReadPlace : STA.l SongTintContext+1
+  LDA.b #$00 : JSR SongTint_Colors
   REP #$10 : PLY : PLX
   PLP
   RTL
 }
 
-; Ends a running tint now. Used when a scene loads its own color math.
-; Safe to call from any M/X width.
-SongTint_Cancel:
-{
-  PHP
-  REP #$10 : PHX : PHY
-  SEP #$30
-  LDA.l SongTintTimer : BEQ .done
-    JSR SongTint_End
-  .done
-  REP #$10 : PLY : PLX
-  PLP
-  RTL
-}
-
-; Tick the song tint each frame (HUD_ClockDisplay).
+; Tick the song tint each frame (HUD_ClockDisplay, after RunClock). It waits
+; while a submodule ($11) owns the palette: transitions, fades, warps.
 ; Safe to call from any M/X width.
 SongTintTick:
 {
@@ -495,99 +472,80 @@ if !ENABLE_OCARINA_SONG_TINT == 0
   BRA .done
 endif
   LDA.l SongTintTimer : BEQ .done
-  LDA.b $1B : CMP.l SongTintContext : BNE .end
-  JSR SongTint_ReadPlace : CMP.l SongTintContext+1 : BNE .end
-  LDA.l SongTintTimer : DEC : STA.l SongTintTimer : BEQ .end
-    JSR SongTint_Apply
-    BRA .done
+  LDA.b $11 : BNE .done
+  JSR SongTint_InPlace : BCC .end
+  ; Outdoors a pending upload ($15) means the day/night refresh or another
+  ; writer rebuilt the palette from the buffer this frame: paint over it.
+  LDA.b $1B : BNE +
+  LDA.b $15 : BEQ +
+    LDA.b #$00 : JSR SongTint_Colors
+  +
+  LDA.l SongTintTimer : DEC : STA.l SongTintTimer : BNE .done
   .end
-  JSR SongTint_End
+  LDA.b #$00 : STA.l SongTintTimer
+  LDA.b #$01 : JSR SongTint_Colors
   .done
   REP #$10 : PLY : PLX
   PLP
   RTL
 }
 
-; 8-bit A/X from here down.
-SongTint_Apply:
+; 8-bit A/X/Y from here down.
+; Carry set while Link is still in the area or room the tint started in.
+SongTint_InPlace:
 {
-  LDA.l SongTintColor : ASL : ASL : TAX
-  LDA.l SongTint_Table+1,X : ORA.b #$20 : STA.b $9C
-  LDA.l SongTint_Table+2,X : ORA.b #$40 : STA.b $9D
-  LDA.l SongTint_Table+3,X : ORA.b #$80 : STA.b $9E
-  JSR SongTint_RainOwnsMath : BCS +
-    JSR SongTint_Math : STA.b $9A
-  +
-  RTS
-}
-
-; A = saved CGADSUB set to add (a subtracting room would invert the tint)
-; to BG1, BG2 and the backdrop, keeping its other layers and half-math bit.
-SongTint_Math:
-{
-  LDA.l SongTintSaved : AND.b #$7F : ORA.b #$23
-  RTS
-}
-
-; Stops the tint and restores only the mirrors that still hold the values
-; SongTint_Apply wrote: a new area, room, scene or weather keeps its writes.
-SongTint_End:
-{
-  LDA.b #$00 : STA.l SongTintTimer
-  LDA.l SongTintColor : ASL : ASL : TAX
-  JSR SongTint_Math : CMP.b $9A : BNE +
-    JSR SongTint_RainOwnsMath : BCS .rain
-      LDA.l SongTintSaved
-      BRA .math
-    .rain
-    ; Rain began during the tint; it writes $9A only on its event frames.
-    JSR SongTint_RainMath
-    .math
-    STA.b $9A
-  +
-  LDA.l SongTint_Table+1,X : ORA.b #$20 : CMP.b $9C : BNE +
-    LDA.l SongTintSaved+1 : STA.b $9C
-  +
-  LDA.l SongTint_Table+2,X : ORA.b #$40 : CMP.b $9D : BNE +
-    LDA.l SongTintSaved+2 : STA.b $9D
-  +
-  LDA.l SongTint_Table+3,X : ORA.b #$80 : CMP.b $9E : BNE +
-    LDA.l SongTintSaved+3 : STA.b $9E
-  +
-  RTS
-}
-
-; Carry set when RainAnimation (ZSCustomOverworld.asm) runs: outdoors with the
-; rain overlay or the Song of Storms flag.
-SongTint_RainOwnsMath:
-{
-  LDA.b $1B : BNE .no
-  LDA.b $8C : CMP.b #$9F : BEQ .yes
-  LDA.l $7EE00E : BNE .yes
-  .no
-  CLC
-  RTS
-  .yes
+  LDA.b $1B : CMP.l SongTintContext : BNE .moved
+  JSR SongTint_ReadPlace : CMP.l SongTintContext+1 : BNE .moved
   SEC
   RTS
+  .moved
+  CLC
+  RTS
 }
 
-; A = the $9A RainAnimation holds at this frame counter ($1A): lightning $32
-; from frames $03, $24 and $58 until normal light $72 at $05, $2C and $5A.
-SongTint_RainMath:
+; A = 0 paints the tint over the buffer colors. A = 1 restores the buffer
+; color wherever the uploaded color still holds the tint, so a new area,
+; room or scene palette is kept. Uses $00-$09 as scratch and puts them back.
+SongTint_Colors:
 {
-  LDA.b $1A
-  CMP.b #$03 : BCC .normal
-  CMP.b #$05 : BCC .lightning
-  CMP.b #$24 : BCC .normal
-  CMP.b #$2C : BCC .lightning
-  CMP.b #$58 : BCC .normal
-  CMP.b #$5A : BCC .lightning
-  .normal
-  LDA.b #$72
-  RTS
-  .lightning
-  LDA.b #$32
+  REP #$30
+  PEI ($00) : PEI ($02) : PEI ($04) : PEI ($06) : PEI ($08)
+  AND.w #$00FF : STA.b $08
+  LDA.l SongTintColor : AND.w #$00FF : ASL : ASL : TAX
+  LDA.l SongTint_Table+1,X : AND.w #$001F : STA.b $00
+  LDA.l SongTint_Table+2,X : AND.w #$001F
+  ASL : ASL : ASL : ASL : ASL : STA.b $02
+  LDA.l SongTint_Table+3,X : AND.w #$001F
+  XBA : ASL : ASL : STA.b $04
+  LDX.w #$0000
+  .color
+    ; Add each channel to the buffer color, saturating at 31.
+    LDA.l $7EC300,X : AND.w #$001F : CLC : ADC.b $00
+    CMP.w #$0020 : BCC + : LDA.w #$001F : +
+    STA.b $06
+    LDA.l $7EC300,X : AND.w #$03E0 : CLC : ADC.b $02
+    CMP.w #$0400 : BCC + : LDA.w #$03E0 : +
+    TSB.b $06
+    LDA.l $7EC300,X : AND.w #$7C00 : CLC : ADC.b $04
+    CMP.w #$8000 : BCC + : LDA.w #$7C00 : +
+    ORA.b $06
+    LDY.b $08 : BNE .restore
+      STA.l $7EC500,X
+      BRA .next
+    .restore
+    CMP.l $7EC500,X : BNE .next
+      LDA.l $7EC300,X : STA.l $7EC500,X
+    .next
+    INX : INX
+    CPX.w #$0002 : BNE + : LDX.w #$0040 : + ; skip the BG3 HUD colors
+    CPX.w #$0100 : BCC .color
+  PLA : STA.b $08
+  PLA : STA.b $06
+  PLA : STA.b $04
+  PLA : STA.b $02
+  PLA : STA.b $00
+  SEP #$30
+  INC.b $15
   RTS
 }
 
