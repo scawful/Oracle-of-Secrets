@@ -77,7 +77,10 @@ def check(lib,rom,labels):
 def loader_fixture(lib,rom,labels,selector=2,captured=1,state=2,world=0,follower=0):
     f=ReceiptFixture(lib,rom,labels)
     for a,v in ((0x7EF3C8,selector),(0x7EF306,captured),(0x7EF3C5,state),
-                (0x7EF3CA,world),(0x7EF3CC,follower),(0x7EF359,2),(0x1B,1)):
+                (0x7EF3CA,world),(0x7EF3CC,follower),(0x7EF359,2),(0x1B,1),
+                # Exact current marker in earned File2 battery ce0c9cd7.
+                # Keep the existing migration call; this file is migrated.
+                (0x7EF4E0,0xA1)):
         f.put(a,v)
     f.word(0x10E,0x9876);f.word(0x04AA,0xBEEF)
     f.cpu.db=2;f.cpu.a=0xAB00;f.cpu.x=5;f.cpu.y=0x42;f.cpu.c=True;f.cpu.v=True
