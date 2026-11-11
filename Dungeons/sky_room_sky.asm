@@ -1,5 +1,5 @@
 ; =========================================================
-; Sky room sky layer (Sky Tower rooms $90-$93 and $A0)
+; Sky room sky layer (open-air Sky Tower rooms; see SkyRoom_List below)
 ;
 ; The room header selects layer type 1 (editor-owned, private input), which
 ; puts BG1 on the subscreen. CGADSUB stays $20 (add on the backdrop only), so
@@ -8,13 +8,14 @@
 ;
 ; After Underworld_LoadRoom has drawn the BG2 buffer ($7E2000), this fills the
 ; BG1 buffer ($7E4000): under each BG2 $1E9 cell and each pit-lip cell
-; ($1DB-$1DF) a sky word from a 32x32 lattice (sheet EA in slot 6, palette 6
+; ($1DB-$1DF) a sky word from a 32x32 lattice (sheet EA in slot 6, palette 7
 ; colours 1-3); every other cell gets the blank $01E9. The fill runs before
 ; any tilemap upload in every caller.
 ;
-; Scope: rooms $0090-$0093 and $00A0 (each needs header layer type 1). Sheet EA rides Sky secondary group 0A slot 6 (only
-; Sky rooms select group 0A); the colours are Sky palette14 row 6 colours 1-3
-; (only Sky palette set 08 selects palette14).
+; Scope: rooms $90-$95, $A0, $A7 and $B0 (header layer type 1).
+; Sheet EA rides Sky secondary group 0A slot 6. The colours use global
+; palette14 row 7 entries 1-3; row 6 is retained for chests and common objects.
+; Existing row 7 room graphics use entries 13-14, outside the sky entries.
 ; =========================================================
 
 assert !ENABLE_SKY_TOWER_GRAPHICS == 1, "Sky room sky requires Sky Tower graphics"
@@ -36,8 +37,9 @@ assert read1($00DDC2) == $1B, "Sky secondary group0A slot6 changed"
 org $00DDC2 ; @hook module=Dungeons kind=data protected_size=1 name=SkyRoomSkySheetSlot6
   db $EA
 
-; Sky palette14 row 6 colours 1-3 (word index 60-62 of the 90-word clone).
-org $1BE184 ; @hook module=Dungeons kind=data protected_size=6 name=SkyRoomSkyColors
+; Sky palette14 row 7 colours 1-3 (word index 75-77 of the 90-word clone).
+; Keep row 6 colours 1-3 from the global2 clone: ordinary chests use them.
+org $1BE1A2 ; @hook module=Dungeons kind=data protected_size=6 name=SkyRoomSkyColors
   dw !SKY_ROOM_COLOR1, !SKY_ROOM_COLOR2, !SKY_ROOM_COLOR3
 
 ; Callers of Underworld_LoadRoom. $028A5B belongs to followers.asm, whose tail
@@ -70,7 +72,7 @@ SkyRoom_LoadRoom:
   PHB
   SEP #$20 : LDA.b #$7E : PHA : PLB : REP #$20
 
-  ; Pass 1: plain sky (EA tile 0, palette 6) under BG2 $1E9 pit cells and
+  ; Pass 1: plain sky (EA tile 0, palette 7) under BG2 $1E9 pit cells and
   ; under the pit-lip chars $1DB-$1DF (sheet 0F, slot 7), whose colour-0
   ; pixels (tooth gaps, side strips, convex corners) would otherwise show
   ; the blank backdrop.
@@ -83,7 +85,7 @@ SkyRoom_LoadRoom:
   .blank
     LDA.w #$01E9 : BRA .put
   .sky
-    LDA.w #$1980
+    LDA.w #$1D80
   .put
     STA.w $4000,Y
     DEY : DEY : BPL .cell
@@ -91,7 +93,7 @@ SkyRoom_LoadRoom:
   ; Pass 2: cloud cells, four copies of the 32x32 period, only over sky cells.
   LDX.w #$0000
   .cloud
-    LDA.l SkyRoom_Clouds+2,X : AND.w #$003F : ORA.w #$1980 : PHA
+    LDA.l SkyRoom_Clouds+2,X : AND.w #$003F : ORA.w #$1D80 : PHA
     LDA.l SkyRoom_Clouds+2,X : AND.w #$00C0 : XBA : ORA 1,S : STA 1,S
     LDA.l SkyRoom_Clouds,X : TAY
     JSR .stamp

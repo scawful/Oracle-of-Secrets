@@ -1,8 +1,9 @@
 ; Selected Minish Cap A art through ordinary indoor graphics/palette tables.
 ; Main08 is inherited from Sky entrance29. Secondary0A changes only the
 ; first four rooms' floor sheet; the original collision group is retained.
-; Rooms94/95/96/A0/B0/A6 retain their secondary groups and palettes. Their
-; inherited wall-sheet changes require visual qualification with this profile.
+; Other Sky rooms retain their header assignments; headers already selecting
+; group0A or palette set08 share those remapped tables. Their inherited
+; wall-sheet changes require visual qualification with this profile.
 
 assert !ENABLE_SOURCE_SPRITE_SHEETS == 1, "Sky graphics require source sheets E8/E9"
 
