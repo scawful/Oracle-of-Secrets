@@ -1,5 +1,6 @@
 """Bundle adapter bindings; the real compiler is never launched by these tests."""
 import importlib.util
+import io
 import os
 from pathlib import Path
 import sys
@@ -47,11 +48,83 @@ class AuthoringBundleBuildTest(unittest.TestCase):
             YAZE_NATIVE_SAVE_CONTEXT='current save context',
             OOS_Z3ED_BIN='matching producer CLI')
 
-    def invoke(self, exit_code=0):
+    def invoke(self, exit_code=0, *, cli_args=None, **features):
         with mock.patch.dict(os.environ, self.env, clear=True), mock.patch.object(
                 B.subprocess, 'run', return_value=SimpleNamespace(returncode=exit_code)) as run:
-            result = B.build_project(self.project)
+            result = (B.build_project(self.project, **features) if cli_args is None else
+                      B.main(['--project', str(self.project), *cli_args]))
         return result, run
+
+    def test_cli_profile_b_forwards_exact_168_command_and_preserves_controls(self):
+        self.text = self.text.replace('oos178x.sfc', 'oos168x.sfc')
+        self.project.write_text(self.text)
+        self.target = self.code / 'Roms/oos168x.sfc'
+        self.env['YAZE_PROJECT_OUTPUT'] = str(self.target)
+        enabled = ('d8_boss,d3_prison_sequence,minecart_cart_shutters,'
+                   'ocarina_song_tint,ow_aux_extension')
+        result, run = self.invoke(19, cli_args=[
+            '--enable', enabled, '--disable', 'kalyxo_docks_profile'])
+        self.assertEqual(result, 19)
+        run.assert_called_once()
+        self.assertEqual(run.call_args.args[0], [
+            'bash', str(self.code / 'Scripts/Build/build_rom.sh'), '168',
+            '--enable', enabled, '--disable', 'kalyxo_docks_profile'])
+        self.assertEqual(run.call_args.kwargs['cwd'], self.root)
+        self.assertFalse(run.call_args.kwargs['check'])
+        forwarded = run.call_args.kwargs['env']
+        for key, value in self.env.items():
+            self.assertEqual(forwarded[key], value)
+        self.assertNotIn('OOS_BASE_ROM', forwarded)
+        self.assertEqual(forwarded['OOS_MANIFEST_ROOT'], str(self.root))
+        self.assertEqual(forwarded['OOS_MANIFEST_OUTPUT'],
+                         str(self.target.with_suffix('.manifest.json')))
+        self.assertEqual(self.project.read_text(), self.text)
+        self.assertEqual(self.rom.read_bytes(), b'actual saved ROM fixture')
+
+    def test_cli_default_and_empty_selections_keep_original_child_command(self):
+        for args in ([], ['--enable', '', '--disable', '']):
+            with self.subTest(args=args):
+                result, run = self.invoke(cli_args=args)
+                self.assertEqual(result, 0)
+                self.assertEqual(run.call_args.args[0], [
+                    'bash', str(self.code / 'Scripts/Build/build_rom.sh'), '178'])
+        _, run = self.invoke(enable='', disable='')
+        self.assertEqual(run.call_args.args[0][-1], '178')
+
+    def test_api_csv_passes_feature_spelling_and_overlap_to_compiler(self):
+        # The compiler discovers feature names and already defines precedence.
+        # Keep these as literal argv values, with no registry or shell parsing.
+        enabled = 'future-feature,ENABLE_D8_BOSS;literal'
+        result, run = self.invoke(2, enable=enabled, disable='d8_boss')
+        self.assertEqual(result, 2)
+        self.assertEqual(run.call_args.args[0][-4:], [
+            '--enable', enabled, '--disable', 'd8_boss'])
+
+    def test_cli_feature_selection_cannot_bypass_saved_input_admission(self):
+        self.env['YAZE_PROJECT_ROM'] = str(self.root / 'foreign')
+        with mock.patch('sys.stderr', new_callable=io.StringIO) as errors:
+            result, run = self.invoke(cli_args=['--enable', 'd8_boss'])
+        self.assertEqual(result, 2)
+        self.assertIn('YAZE_PROJECT_ROM differs', errors.getvalue())
+        run.assert_not_called()
+        self.assertEqual(self.project.read_text(), self.text)
+        self.assertEqual(self.rom.read_bytes(), b'actual saved ROM fixture')
+
+    def test_cli_feature_selection_cannot_bypass_manifest_admission(self):
+        self.env['OOS_MANIFEST_OUTPUT'] = str(self.code / 'Roms/hack_manifest.json')
+        with mock.patch('sys.stderr', new_callable=io.StringIO) as errors:
+            result, run = self.invoke(cli_args=['--disable', 'kalyxo_docks_profile'])
+        self.assertEqual(result, 2)
+        self.assertIn('OOS_MANIFEST_OUTPUT differs', errors.getvalue())
+        run.assert_not_called()
+
+    def test_cli_feature_option_requires_a_value_before_adapter_runs(self):
+        with mock.patch.object(B, 'build_project') as build, \
+                mock.patch('sys.stderr', new_callable=io.StringIO), \
+                self.assertRaises(SystemExit) as error:
+            B.main(['--project', str(self.project), '--enable'])
+        self.assertEqual(error.exception.code, 2)
+        build.assert_not_called()
 
     def test_current_bindings_delegate_exact_rom_and_version_preserving_controls(self):
         result, run = self.invoke(7)

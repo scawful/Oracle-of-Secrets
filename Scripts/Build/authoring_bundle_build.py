@@ -32,7 +32,7 @@ def _bound(root: Path, configured: str, key: str,
     return result
 
 
-def build_project(project: Path) -> int:
+def build_project(project: Path, *, enable: str = "", disable: str = "") -> int:
     project = project.resolve(strict=True)
     root = project.parent
     config = configparser.ConfigParser(interpolation=None)
@@ -112,16 +112,25 @@ def build_project(project: Path) -> int:
         OOS_MANIFEST_OUTPUT=str(manifest_output))
     # No OOS_BASE_ROM injection: build_rom.sh consumes YAZE_PROJECT_ROM directly.
     # Save receipt/context, producer controls and tool selection pass unchanged.
-    return subprocess.run(["bash", str(script), match[1]], cwd=root,
+    command = ["bash", str(script), match[1]]
+    # Forward explicit CSV selections; build_rom.sh owns feature validation,
+    # normalization and precedence. Empty selections keep the default command.
+    if enable:
+        command.extend(["--enable", enable])
+    if disable:
+        command.extend(["--disable", disable])
+    return subprocess.run(command, cwd=root,
                           env=environment, check=False).returncode
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project", type=Path, required=True)
+    parser.add_argument("--enable", default="", help="Comma-separated features for build_rom.sh to enable")
+    parser.add_argument("--disable", default="", help="Comma-separated features for build_rom.sh to disable")
     args = parser.parse_args(argv)
     try:
-        return build_project(args.project)
+        return build_project(args.project, enable=args.enable, disable=args.disable)
     except (OSError, ValueError, configparser.Error) as error:
         print(error, file=sys.stderr)
         return 2
