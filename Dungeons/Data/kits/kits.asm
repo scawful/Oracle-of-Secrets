@@ -3,33 +3,7 @@
 ; Dungeons/wall_profile_gfx.asm after Core/gfx_sheet_table.asm.
 ; asar evaluates left to right without precedence: keep the parentheses.
 
-; d1_grotto_v6 (N1) [partial]: D1 Mushroom Grotto moss-selected completion-v6 (68b30bef, latent-door-safe; cut from approved a3052e1d, origin 8d615784). Bound to profile d1_a3052e1d: its 24 carried classes equal this candidate's words; the other 6 profile classes (03A 03B 076 077 081 082) draw slot-5 chars only and touch no kit char.
-;   blocked class 03A: char 152 is in slot 5; slot 4-7 kit sheets are not implemented
-;   blocked class 077: char 145 is in slot 5; slot 4-7 kit sheets are not implemented
-;   blocked class 076: char 145 is in slot 5; slot 4-7 kit sheets are not implemented
-;   blocked class 03B: char 152 is in slot 5; slot 4-7 kit sheets are not implemented
-;   blocked class 082: char 145 is in slot 5; slot 4-7 kit sheets are not implemented
-;   blocked class 081: char 145 is in slot 5; slot 4-7 kit sheets are not implemented
-;   blocked object 110: not a selector class: the candidate draws other words in rooms 033
-;   blocked object 112: not a selector class: the candidate draws other words in rooms 017
-;   blocked object 114: not a selector class: the candidate draws other words in rooms 007 053
-;   blocked object 115: not a selector class: the candidate draws other words in rooms 033
-;   blocked object 116: not a selector class: the candidate draws other words in rooms 007 033 053
-;   blocked object 117: not a selector class: the candidate draws other words in rooms 033
-;   blocked object 005 glyphs: candidate changed chars 140 150 160 170 that this object draws; the kit only replaces carried class chars
-;   blocked object 006 glyphs: candidate changed chars 140 150 160 170 that this object draws; the kit only replaces carried class chars
-;   blocked object 022 glyphs: candidate changed chars 0E1 0E2 that this object draws; the kit only replaces carried class chars
-;   blocked object 03A glyphs: candidate changed chars 152 153 that this object draws; the kit only replaces carried class chars
-;   blocked object 03B glyphs: candidate changed chars 152 153 that this object draws; the kit only replaces carried class chars
-;   blocked object 05F glyphs: candidate changed chars 0E1 0E2 that this object draws; the kit only replaces carried class chars
-;   blocked object 065 glyphs: candidate changed chars 141 151 161 171 that this object draws; the kit only replaces carried class chars
-;   blocked object 066 glyphs: candidate changed chars 141 151 161 171 that this object draws; the kit only replaces carried class chars
-;   blocked object 069 glyphs: candidate changed chars 0E1 0E3 that this object draws; the kit only replaces carried class chars
-;   blocked object 076 glyphs: candidate changed chars 145 155 that this object draws; the kit only replaces carried class chars
-;   blocked object 077 glyphs: candidate changed chars 145 155 that this object draws; the kit only replaces carried class chars
-;   blocked object 081 glyphs: candidate changed chars 145 155 that this object draws; the kit only replaces carried class chars
-;   blocked object 082 glyphs: candidate changed chars 145 155 that this object draws; the kit only replaces carried class chars
-;   blocked object 08A glyphs: candidate changed chars 0E1 0E3 that this object draws; the kit only replaces carried class chars
+; d1_grotto_floor (N1) [routed]: Palette only: D1 grass floor (chars 0EE/0EF/0FE/0FF body, 0AC-0AF fringe, row 3) in the overworld main green $2669 with its dark shade $19C6. Walls, walkways and water keep palette $10.
 ; dragon_ship_timber (N5) [in_base]: Dragon ship timber (b9296cc0) is identical to base 5d6b461b for these rooms: 0 edited selector classes, 0 slot-3 glyph changes, 0 palette words (extract-kit probe 2026-11-08). Nothing to route; the base already draws it.
 ; glacia_cave_art17 (N9) [partial]: Glacia ice-house cave ART17 walls (glacia-minish-matched-v1 phase-v17-thin-pits, manifest 8dea8bff)
 ;   blocked object 00D: not a selector class: the candidate draws other words in rooms 09E 0BF 0DD
@@ -64,46 +38,41 @@ while !wsk_r < $128
   !wsk_r #= !wsk_r+1
 endwhile
 
-; ---- kit d1_grotto_v6 -> profile 1 d1_a3052e1d ----
-assert read1(($220000|read2($228000+$00E))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$00E))+1)*4)) == $10, "room $007 header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$012))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$012))+1)*4)) == $10, "room $009 header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$014))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$014))+1)*4)) == $10, "room $00A header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$016))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$016))+1)*4)) == $10, "room $00B header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$02E))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$02E))+1)*4)) == $10, "room $017 header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$032))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$032))+1)*4)) == $10, "room $019 header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$034))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$034))+1)*4)) == $10, "room $01A header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$036))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$036))+1)*4)) == $10, "room $01B header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$054))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$054))+1)*4)) == $10, "room $02A header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$056))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$056))+1)*4)) == $10, "room $02B header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$062))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$062))+1)*4)) == $10, "room $031 header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$064))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$064))+1)*4)) == $10, "room $032 header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$066))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$066))+1)*4)) == $10, "room $033 header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$074))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$074))+1)*4)) == $10, "room $03A header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$076))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$076))+1)*4)) == $10, "room $03B header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$086))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$086))+1)*4)) == $10, "room $043 header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$094))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$094))+1)*4)) == $10, "room $04A header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$096))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$096))+1)*4)) == $10, "room $04B header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$0A6))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$0A6))+1)*4)) == $10, "room $053 header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$0B4))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$0B4))+1)*4)) == $10, "room $05A header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$0B6))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$0B6))+1)*4)) == $10, "room $05B header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$0C6))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$0C6))+1)*4)) == $10, "room $063 header no longer matches kit d1_grotto_v6"
-assert read1(($220000|read2($228000+$0D4))+2) == $07 && read1($0ED460+(read1(($220000|read2($228000+$0D4))+1)*4)) == $10, "room $06A header no longer matches kit d1_grotto_v6"
-assert read1($00DDB3) == $0C, "kit d1_grotto_v6 slot 3 source is not sheet $0C"
-pushpc
-org $00DDFB ; @hook module=Dungeons kind=data protected_size=4
-  db $FC, read1($00DDB4), read1($00DDB5), read1($00DDB6)
-pullpc
-assert read2($1BEC5B) == $05A0, "kit d1_grotto_v6 palette source $10 offset moved"
+; ---- kit d1_grotto_floor -> profile 1 d1_grotto_floor ----
+assert read1($0ED460+(read1(($220000|read2($228000+$00E))+1)*4)) == $10, "room $007 header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$012))+1)*4)) == $10, "room $009 header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$014))+1)*4)) == $10, "room $00A header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$016))+1)*4)) == $10, "room $00B header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$02E))+1)*4)) == $10, "room $017 header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$032))+1)*4)) == $10, "room $019 header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$034))+1)*4)) == $10, "room $01A header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$036))+1)*4)) == $10, "room $01B header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$054))+1)*4)) == $10, "room $02A header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$056))+1)*4)) == $10, "room $02B header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$062))+1)*4)) == $10, "room $031 header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$064))+1)*4)) == $10, "room $032 header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$066))+1)*4)) == $10, "room $033 header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$074))+1)*4)) == $10, "room $03A header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$076))+1)*4)) == $10, "room $03B header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$086))+1)*4)) == $10, "room $043 header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$094))+1)*4)) == $10, "room $04A header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$096))+1)*4)) == $10, "room $04B header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$0A6))+1)*4)) == $10, "room $053 header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$0B4))+1)*4)) == $10, "room $05A header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$0B6))+1)*4)) == $10, "room $05B header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$0C6))+1)*4)) == $10, "room $063 header no longer matches kit d1_grotto_floor"
+assert read1($0ED460+(read1(($220000|read2($228000+$0D4))+1)*4)) == $10, "room $06A header no longer matches kit d1_grotto_floor"
+assert read2($1BEC5B) == $05A0, "kit d1_grotto_floor palette source $10 offset moved"
 pushpc
 org $1BE328 ; @hook module=Dungeons kind=data protected_size=180
   dw read2($1BDCD4), read2($1BDCD6), read2($1BDCD8), read2($1BDCDA), read2($1BDCDC), read2($1BDCDE)
   dw read2($1BDCE0), read2($1BDCE2), read2($1BDCE4), read2($1BDCE6), read2($1BDCE8), read2($1BDCEA)
   dw read2($1BDCEC), read2($1BDCEE), read2($1BDCF0), read2($1BDCF2), read2($1BDCF4), read2($1BDCF6)
   dw read2($1BDCF8), read2($1BDCFA), read2($1BDCFC), read2($1BDCFE), read2($1BDD00), read2($1BDD02)
-  dw read2($1BDD04), read2($1BDD06), read2($1BDD08), read2($1BDD0A), read2($1BDD0C), read2($1BDD0E)
+  dw $19C6, read2($1BDD06), read2($1BDD08), $2669, read2($1BDD0C), read2($1BDD0E)
   dw read2($1BDD10), read2($1BDD12), read2($1BDD14), read2($1BDD16), read2($1BDD18), read2($1BDD1A)
   dw read2($1BDD1C), read2($1BDD1E), read2($1BDD20), read2($1BDD22), read2($1BDD24), read2($1BDD26)
-  dw read2($1BDD28), $0C83, $14C5, read2($1BDD2E), read2($1BDD30), read2($1BDD32)
+  dw read2($1BDD28), read2($1BDD2A), read2($1BDD2C), read2($1BDD2E), read2($1BDD30), read2($1BDD32)
   dw read2($1BDD34), read2($1BDD36), read2($1BDD38), read2($1BDD3A), read2($1BDD3C), read2($1BDD3E)
   dw read2($1BDD40), read2($1BDD42), read2($1BDD44), read2($1BDD46), read2($1BDD48), read2($1BDD4A)
   dw read2($1BDD4C), read2($1BDD4E), read2($1BDD50), read2($1BDD52), read2($1BDD54), read2($1BDD56)
@@ -191,20 +160,11 @@ pullpc
 assert GfxSheet_Bank == $23FD00 && GfxSheet_High == $23FE00 && GfxSheet_Low == $23FF00, "gfx sheet arrays moved"
 pushpc
 org $458000
-WallSel_KitSheet_FC:  ; d1_grotto_v6 slot 3
-  incbin "Dungeons/Data/kits/d1_grotto_v6.slot3.lz2"
 WallSel_KitSheet_FD:  ; glacia_cave_art17 slot 3
   incbin "Dungeons/Data/kits/glacia_cave_art17.slot3.lz2"
 WallSel_KitSheet_FE:  ; glacia_estate_timber slot 3
   incbin "Dungeons/Data/kits/glacia_estate_timber.slot3.lz2"
 assert pc() <= $45F000, "kit sheet streams exceeded $458000-$45EFFF"
-assert $FC < !GfxSheet_Rows, "kit sheet $FC is past the sheet table"
-org $23FDFC ; @hook module=Dungeons kind=data protected_size=1
-  db WallSel_KitSheet_FC>>16
-org $23FEFC ; @hook module=Dungeons kind=data protected_size=1
-  db WallSel_KitSheet_FC>>8
-org $23FFFC ; @hook module=Dungeons kind=data protected_size=1
-  db WallSel_KitSheet_FC
 assert $FD < !GfxSheet_Rows, "kit sheet $FD is past the sheet table"
 org $23FDFD ; @hook module=Dungeons kind=data protected_size=1
   db WallSel_KitSheet_FD>>16

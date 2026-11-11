@@ -1,17 +1,17 @@
 {
  "_doc": "Per-dungeon wall object tile patterns for Dungeons/wall_profile_selector.asm. A group binds a dungeon (or a named room group outside any dungeon) to one profile; a room may be in one group only. Rooms in no group draw the build's own words. Regenerate: python3 Scripts/Generate/gen_wall_profiles.py build",
  "profiles": [
-  {"id": 1, "name": "d1_a3052e1d", "words": "d1_a3052e1d.words.json",
-   "kit": "d1_grotto_v6"},
+  {"id": 1, "name": "d1_grotto_floor", "words": "d1_grotto_floor.words.json",
+   "kit": "d1_grotto_floor"},
   {"id": 2, "name": "glacia_frozen_timber", "words": "glacia_frozen_timber.words.json",
    "kit": "glacia_estate_timber"},
   {"id": 3, "name": "glacia_cave_art17", "words": "glacia_cave_art17.words.json",
    "kit": "glacia_cave_art17"}
  ],
  "groups": [
-  {"name": "d1", "kind": "dungeon", "profile": "d1_a3052e1d",
+  {"name": "d1", "kind": "dungeon", "profile": "d1_grotto_floor",
    "rooms": ["009", "00A", "00B", "019", "01A", "01B", "02A", "02B", "031", "03A", "03B", "04A", "04B", "05A", "05B", "06A"]},
-  {"name": "d1_shrine23_extra", "kind": "room_group", "profile": "d1_a3052e1d",
+  {"name": "d1_shrine23_extra", "kind": "room_group", "profile": "d1_grotto_floor",
    "rooms": ["007", "017", "032", "033", "043", "053", "063"]},
   {"name": "glacia_estate", "kind": "room_group", "profile": "glacia_frozen_timber",
    "rooms": ["0DB", "0CB", "0BB", "0BC", "0BD", "0AD", "0AC", "0CC"]},
