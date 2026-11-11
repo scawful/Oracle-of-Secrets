@@ -173,6 +173,9 @@ jobs:
             printf '\xBF\x01\x80\x1F\x85\xB8\xBF\x00\x80\x1F\x85\xB7' | dd of=test.sfc bs=1 seek=$((d4_object_pointer_pc)) conv=notrunc 2>/dev/null  # LDA.l $1F8001,X : STA $B8 : LDA.l $1F8000,X : STA $B7
           done
 
+          # Common item-receipt completion guarded by Sprites/Enemies/custom_guard.asm.
+          printf '\x9C\xE9\x02\xBD\x5E\x0C' | dd of=test.sfc bs=1 seek=$((0x4443B)) conv=notrunc 2>/dev/null  # $08C43B STZ $02E9 : LDA $0C5E,X
+
           # Native camera-cache, spiral-layout and follower-message bytes guarded by Sprites/Bosses/d4_pressure_warden.asm.
           printf '\xC2\x20\xA5\xE2\x8F\x80\xC1\x7E' | dd of=test.sfc bs=1 seek=$((0x10D81)) conv=notrunc 2>/dev/null  # $028D81 REP #$20 : LDA $E2 : STA.l $7EC180
           printf '\x22\xDC\xB5\x02' | dd of=test.sfc bs=1 seek=$((0x11122)) conv=notrunc 2>/dev/null  # $029122 JSL Underworld_AdjustForRoomLayout
