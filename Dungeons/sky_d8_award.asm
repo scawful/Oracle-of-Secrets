@@ -76,8 +76,13 @@ assert read4($00F959) == $A0A50CA2, "Boss exit search moved"
 assert read1($00F95D) == $CA, "Boss exit search loop moved"
 assert read2($00F96A) == $20C9, "Boss exit Agahnim check moved"
 assert read2($02DD8A+$84) == $0090, "Exit entry $42 is no longer room $0090"
-; Shared base: area $7A. D8 private base: special area $83 (entrance $29 moved).
-assert read1($02DE28+$42) == $7A || read1($02DE28+$42) == $83, "Room $0090 exit no longer leads to area $7A or special area $83"
+; Shared base: area $7A. Older D8 private base: special area $83.
+; The selected tower return ($87) requires the Sky route's collision/entry hooks.
+if !ENABLE_SKY_OVERWORLD_ROUTE == 1
+assert read1($02DE28+$42) == $7A || read1($02DE28+$42) == $83 || read1($02DE28+$42) == $87, "Room $0090 exit must lead to $7A/$83/$87 with the Sky route enabled"
+else
+assert read1($02DE28+$42) == $7A || read1($02DE28+$42) == $83, "Room $0090 exit must lead to $7A/$83 without the Sky route"
+endif
 org $00F959 : JML SkyD8_BossExit ; @hook module=Dungeons name=SkyD8_BossExit kind=jml target=SkyD8_BossExit expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8 protected_size=4
 assert pc() == $00F95D
 
@@ -213,7 +218,8 @@ SkyD8_CrystalTilemap:
 ; Entry $00F959 (JSL caller's return on the stack), M=8 X=8, after the
 ; native death-count, key and room-flag saves. Boss-room list $00F92D has no
 ; $96, so Sky does not search it: exit room $90 (entrance $29's room; exit
-; entry $42 -> area $7A or special area $83). X only feeds CPX #$03 at $00F9BF; $04 selects
+; entry $42 -> $7A/$83, or $87 with the Sky route enabled). X only feeds
+; CPX #$03 at $00F9BF; $04 selects
 ; the crystal victory (module $16, song fade).
 ; Exit: $00F96A (A = $A0 = $90) or $00F95D (legacy, X=$0C, A=$A0).
 SkyD8_BossExit:
