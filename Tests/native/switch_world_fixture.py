@@ -183,7 +183,7 @@ class WorldFlow(combined.NewItemsFlow):
         slot = 0 if self.slot is None else self.slot   # actor fields are unused when no fixture is owned
         result = switch_hook.snapshot(lambda address: ram[address - 0x7E0000]
                                       if address < 0x7E1000 else self.r(address), slot)
-        result.update(facing=ram[0x2F], link_state=ram[0x5D],
+        result.update(facing=ram[0x2F], link_state=ram[0x5D], door=ram[0x468],
                       speed=[ram[a + slot] for a in (0xD40, 0xD50, 0xF80)],
                       height=ram[0xF70 + slot], timer=ram[0xDF0 + slot],
                       heads=[dict(slot=i, position=(ram[0xC04 + i] | ram[0xC18 + i] << 8,
@@ -201,6 +201,19 @@ class WorldFlow(combined.NewItemsFlow):
         self.result["writes"].append(entry)
         native.require(self.b.write_memory(address, value), "World fixture write rejected")
         self.check("Fixture readback", self.r(address), value)
+
+    def hold_tag(self, value, reason):
+        """Declared room-tag fixture. Room 5F's plate runs tag1 $17 (toggle door), which
+        never reads $0642 or the $01C568 hold hook. Setting $AE (tag1) to $16 routes the
+        same plate and shutter through the vanilla hold-door tag, so hold/release can be
+        proven; the case restores $17 afterwards."""
+        self.check_owner()
+        native.require(self.r(0x7E00A0) == 0x5F and value in (0x16, 0x17) and self.paused()
+                       and self.r(0x7E00AE) in (0x16, 0x17), "Tag fixture outside the 5F plate contract")
+        entry = dict(address="7E00AE", before=self.r(0x7E00AE), value=value, reason=reason)
+        self.result["writes"].append(entry)
+        native.require(self.b.write_memory(0x7E00AE, value), "Tag fixture write rejected")
+        self.check("Tag fixture readback", self.r(0x7E00AE), value)
 
     def spawn(self, x, y, layer, kind=0xD5):
         self.ready()
@@ -289,7 +302,7 @@ class WorldFlow(combined.NewItemsFlow):
             for _ in range(240):
                 now = self.snap()
                 switch_hook.check_minish(now)
-                stun.append(dict(state=now["state"], stun=now["stun"], timer=now["timer"],
+                stun.append(dict(state=now["state"], stun=now["stun"], timer=now["timer"], door=now["door"],
                                  block=now["block"], link_health=now["link_health"], frame=now["frame"]))
                 if now["state"] != switch_hook.STUNNED:
                     break
@@ -567,26 +580,116 @@ class WorldFlow(combined.NewItemsFlow):
         self.cast_enemy("enemy-refuse-unsafe", frames=False)
         self.clear_actor()
 
-    def case_enemy_plate(self):
-        """(b) Room 5F hold plate: a Hardhat (native to 5F) stands on the plate.
-        Records whether an enemy presses $0642, then swaps Link onto the plate."""
+    def case_plate_link(self):
+        """Control: Link on and off the 5F plate under the hold-door tag fixture, no other actor."""
         self.enter(0x5F)
+        self.hold_tag(0x16, "Route the 5F plate through the hold-door tag ($16)")
         self.walk("Up", lambda x, y: y <= 0x0BB8)
         self.walk("Right", lambda x, y: x >= 0x1F7E)
-        self.face("Up")
-        self.spawn_enemy(0x1F80, 0x0B80, 0, 0x26)
-        self.advance("", 2)
-        record = self.result["enemy_plate"] = dict(enemy_on_plate_0642=self.r(0x7E0642),
-                                                   enemy=self.snap()["block"])
-        self.shot("enemy-plate-on")
-        before, after = self.cast_enemy("enemy-plate-swap", accepted=True)
+        self.settle(); self.advance("", 2)
+        record = self.result["plate_link"] = dict(off=self.r(0x7E0468), off_0642=self.r(0x7E0642))
+        self.walk("Up", lambda x, y: y <= 0x0B76)
+        self.settle(); self.advance("", 2)
+        record.update(on=self.r(0x7E0468), on_link=self.link(), on_0642=self.r(0x7E0642))
+        self.shot("plate-link-on")
+        trace = []
+        self.walk("Down", lambda x, y: y >= 0x0BB8)
+        for _ in range(60):
+            trace.append((self.r(0x7E0468), self.r(0x7E0011)))
+            self.advance("", 1)
+        record.update(off_again=self.r(0x7E0468), off_link=self.link(), trace=sorted(set(trace)))
+        self.shot("plate-link-off")
+        # Vanilla hold tag reads Link's tiles for $23/$3A/$3B only; the 5F plate is $24,
+        # so Link does not open it under the hold tag. Recorded, compared base vs candidate.
+        self.check("Control: Link off shut", record["off"], 1)
+        self.check("Control: Link off again shut", record["off_again"], 1)
+        self.hold_tag(0x17, "Restore the 5F toggle tag")
+
+    def case_enemy_plate(self):
+        """(b) Room 5F hold plate. Controls: Link off the plate keeps the hold door
+        shut ($0468=1), Link on it opens it ($0468=0). Then Link on the plate swaps
+        with a Hardhat (native to 5F) below him: the landed enemy holds the plate
+        through the beat, the stun and while awake; once it leaves, the plate
+        releases. The enemy hold is read at the $01C568 hold-door hook, so $0642
+        (the statue/block byte) stays 0 throughout. 5F's real tag is $17 (toggle),
+        so the case runs under the declared hold-tag fixture (hold_tag)."""
+        self.enter(0x5F)
+        self.hold_tag(0x16, "Route the 5F plate through the hold-door tag ($16)")
+        self.walk("Up", lambda x, y: y <= 0x0BB8)
+        self.walk("Right", lambda x, y: x >= 0x1F7E)
         self.settle()
         self.advance("", 2)
-        record.update(link_after=after["link"], link_on_plate_0642=self.r(0x7E0642),
-                      trace_submodules=sorted({s["submodule"] for s in
-                                               self.result["world_cases"][-1]["trace"]}))
-        self.shot("enemy-plate-link")
+        record = self.result["enemy_plate"] = dict(link_off_door=self.r(0x7E0468))
+        self.check("Control: Link off the plate, hold door shut", record["link_off_door"], 1)
+        self.walk("Up", lambda x, y: y <= 0x0B76)
+        self.settle()
+        self.face("Down")
+        self.settle()
+        x, y = self.link()
+        native.require(0x0B75 <= y <= 0x0B7B, f"Link Y {y:04X} would not put the enemy on the plate")
+        record.update(link_on=(x, y), link_on_door=self.r(0x7E0468))
+        # $24 plate tile: vanilla hold tag ignores Link here, so the door stays shut.
+        self.check("Control: Link on the $24 plate leaves the hold door shut", record["link_on_door"], 1)
+        spot = next((p for p in ((x, y + 0x28), (x, y + 0x30), (x, y + 0x20))
+                     if self.floors("enemy-plate-probe", p)["target_safe"]), None)
+        native.require(spot is not None, "No safe spot below the plate for the Hardhat")
+        self.spawn_enemy(*spot, 0, 0x26)
+        self.shot("enemy-plate-link-on")
+        before, after = self.cast_enemy("enemy-plate-swap", accepted=True)
+        case = self.result["world_cases"][-1]
+        doors = [s["door"] for s in case["trace"]] + [s["door"] for s in case["stun_trace"]]
+        native.require(0 in doors, "Landed enemy never opened the hold door")
+        first = doors.index(0)
+        opened_at = case["trace"][first]["block"] if first < len(case["trace"]) else None
+        record.update(beat_and_stun_doors=sorted(set(doors)), door_opened_frame=first,
+                      door_opened_block=opened_at, link_after=after["link"], enemy_landed=after["block"])
+        self.check("Door shut until the enemy lands", set(doors[:first]) <= {1}, True)
+        self.check("Door opens at the landing spot (Y exact, X within 2px of the awake drift)",
+                   opened_at is not None and opened_at[1] == after["block"][1]
+                   and abs(opened_at[0] - after["block"][0]) <= 2, True)
+        self.check("Door stays open through the rest of the beat and the stun", sorted(set(doors[first:])), [0])
+        native.require(after["link"][1] + 8 > 0x0B8F, "Link feet still on the plate after the swap")
+        self.settle()
+        now = self.snap()
+        record.update(awake_door=now["door"], awake_0642=self.r(0x7E0642), awake_state=now["state"],
+                      awake_block=now["block"])
+        self.check("Awake enemy on the plate holds the door open", (now["state"], now["door"]), (9, 0))
+        self.check("Enemy hold leaves $0642 untouched", record["awake_0642"], 0)
+        # The swap already left Link below the plate (asserted above). Do not
+        # walk farther before this check: an awake Hardhat can leave the plate
+        # during that walk, which is a valid release rather than a hold failure.
+        now = self.snap()
+        record.update(link_clear=now["link"], enemy_alone_door=now["door"], enemy_alone_block=now["block"],
+                      enemy_alone_floor=self.floors("enemy-plate-held-floor", now["block"]))
+        self.check("Enemy alone holds the door open", now["door"], 0)
+        self.shot("enemy-plate-held")
+        # (b) release: give the Hardhat 3 s to walk off on its own; else move it.
+        off = None
+        for frame in range(180):
+            now = self.snap()
+            if now["door"] == 1:
+                off = frame
+                break
+            self.advance("", 1)
+        record["walked_off_frame"] = off
+        if off is None:
+            ex, ey = now["block"]
+            for offset, value in ((0xD00, (ey + 0x20) & 255), (0xD20, (ey + 0x20) >> 8)):
+                self.fixture_write(offset, value, "Move the landed enemy 32px off the plate")
+            for _ in range(8):
+                self.advance("", 1)
+                if self.r(0x7E0468) == 1:
+                    break
+        self.settle()
+        self.advance("", 2)
+        now = self.snap()
+        record.update(release_door=now["door"], release_block=now["block"], moved_by_fixture=off is None,
+                      release_marker=[self.r(0x7E026D + i) for i in range(3)],
+                      release_slot=self.slot, release_floor=self.floors("enemy-plate-release", now["block"]))
+        self.check("Enemy off the plate releases the hold door", now["door"], 1)
+        self.shot("enemy-plate-released")
         self.clear_actor()
+        self.hold_tag(0x17, "Restore the 5F toggle tag")
 
     def case_ow_enemy(self):
         """(c) Area 33: Buzzblob (native to 33) on sand below Link; swap down."""

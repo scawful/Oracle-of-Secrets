@@ -341,6 +341,7 @@ Stone_BlockSprites:
 ; Held-door tags read the echo after ALL sprite AI. An ordinary statue or ice
 ; block may clear $0642 later in the frame, so publishing that byte from the
 ; echo's own update would be order-dependent. No sticky shared flag is written.
+; Also reports a Switch Hook enemy standing on a plate (switch_hook.asm).
 ; Replays native LDA $0642 / AND #00FF, M/X=16; preserves X/Y and scratch0..7.
 Stone_ReadHoldSwitch:
 {
@@ -352,7 +353,10 @@ Stone_ReadHoldSwitch:
   LDA.b $06 : PHA
   SEP #$30
   JSR Stone_FindPressedSwitch
+  BCS .pressed
+  JSL SwitchHook_EnemyHoldsPlate      ; swapped enemy standing on a plate
   BCC .not_pressed
+.pressed
   REP #$30
   PLA : STA.b $06
   PLA : STA.b $04
