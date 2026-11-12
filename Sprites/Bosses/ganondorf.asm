@@ -51,6 +51,15 @@ Ganon_SetupActionHitbox = $06F57E ; SetupActionHitbox_long (Link's weapon box ->
 !Ganon_FrameBat      = 19
 
 pushpc
+
+; Sprite_SpawnSecret's terrain secret $10 still selects vanilla Stal ($D3).
+; This include replaces that slot with Ganondorf, so retire the old terrain
+; spawn while the finale is enabled. Zero takes the existing no-actor exit
+; before Sprite_SpawnDynamically; other secrets and the finale gate are intact.
+assert read1($068203) == Sprite_Ganondorf, "Terrain Stal secret sprite changed"
+org $068203 ; @hook module=Sprites kind=data protected_size=1 name=GanondorfRetireTerrainStal
+  db $00
+
 org $2A8000
 
 ; =========================================================
