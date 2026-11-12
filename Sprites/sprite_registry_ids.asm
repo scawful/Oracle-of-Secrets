@@ -36,6 +36,7 @@ Sprite_Poltergeist = $EF
 Sprite_PolsVoice = $A4
 Sprite_Wolfos = $A9
 Sprite_IceBlock = $D5
+Sprite_SwapDiamond = $8E ; Switch Hook target
 Sprite_Twinrova = $CE
 Sprite_Kydreeok = $7A
 Sprite_KydreeokHead = $CF

@@ -17,6 +17,8 @@ CLING, RISE = 17, 16
 SWAP = CLING + RISE + 1
 LAND = SWAP + 16
 LINK_STATE_HOOK = 0x13
+# Swappable types (Items/switch_hook.asm SwitchHook_Targets): ice, statue, diamond.
+TARGETS = (0xD5, 0x1C, 0x8E)
 
 
 def require(value, message):
@@ -60,7 +62,7 @@ def check_exchange(before, after, camera_may_move=False):
 
     camera_may_move: the Ages beat steps the camera toward Link after landing.
     The settle itself is checked by check_beat() and the caller's idle frames."""
-    require(before["type"] in (0xD5, 0x1C) and before["type"] == after["type"],
+    require(before["type"] in TARGETS and before["type"] == after["type"],
             "Exchange changed/wrong sprite type")
     require(before["state"] == after["state"] == 9, "Exchange target is not a live block")
     require(before["floor"] == before["layer"], "Fixture is on a different layer")

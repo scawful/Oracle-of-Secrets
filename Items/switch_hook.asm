@@ -486,17 +486,33 @@ SwitchHook_ContextValid:
   CLC : RTS
 }
 
+; Swappable sprite types: type, hit height above the 16x16 base ($08).
+SwitchHook_Targets:
+  db Sprite_IceBlock, $00
+  db !SwitchHookStatue, $08                ; statue head
+  db Sprite_SwapDiamond, $00               ; Ages Swap Diamond
+.end
+
 ; Y=sprite, X=ancilla. Read-only validation until TryExchange commits.
-; $08 = hit height above the 16x16 base: 0 for ice, 8 for the statue head.
+; $08 = hit height from SwitchHook_Targets.
 ; Statue SprFrame is its 0/1 grab flag; its own reset path clears it.
 SwitchHook_TargetValid:
 {
   LDA.w SprState,Y : CMP.b #$09 : BNE .no
-  STZ.b $08 : STZ.b $09
-  LDA.w SprType,Y : CMP.b #Sprite_IceBlock : BEQ .kind
-  CMP.b #!SwitchHookStatue : BNE .no
+  STZ.b $09
+  PHX
+  LDX.b #SwitchHook_Targets_end-SwitchHook_Targets-2
+  LDA.w SprType,Y
+  .scan
+  CMP.l SwitchHook_Targets,X : BEQ .found
+  DEX : DEX : BPL .scan
+  PLX
+  BRA .no
+  .found
+  LDA.l SwitchHook_Targets+1,X : STA.b $08
+  PLX
+  LDA.w SprType,Y : CMP.b #!SwitchHookStatue : BNE .kind
   LDA.w SprFrame,Y : CMP.b #!Stone_Marker : BEQ .no
-  LDA.b #$08 : STA.b $08
   .kind
   LDA.w SprFloor,Y : CMP.b $EE : BNE .no
   LDA.w SprY,Y : STA.b $0A

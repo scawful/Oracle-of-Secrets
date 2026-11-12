@@ -127,7 +127,7 @@ class WorldFlow(combined.NewItemsFlow):
 
     def spawn(self, x, y, layer, kind=0xD5):
         self.ready()
-        native.require(kind in (0xD5, 0x1C), "Fixture supports ice blocks and native statues")
+        native.require(kind in switch_hook.TARGETS, "Fixture supports ice blocks, native statues and diamonds")
         if self.slot is None:
             unused = [i for i in range(15, -1, -1) if self.r(0x7E0DD0 + i) == 0]
             native.require(bool(unused), "No unused sprite slot; do not evict a native actor")
@@ -321,6 +321,29 @@ class WorldFlow(combined.NewItemsFlow):
         self.check("Pit band between Link and target", all(t == 0x20 for t in gap), True)
         self.place("pit", (x, 0x0B60))
         self.cast("ages-pit", accepted=True, frames=True)
+        self.clear_actor()
+
+    def case_diamond(self):
+        """(d) Room 59: Swap Diamond across the pit band, then swap it back.
+        After the first swap the diamond stands at Link's old spot and the
+        Ages turn-around already faces it, so the return cast needs no input."""
+        self.enter(0x59)
+        x, y = self.walk("Up", lambda x, y: y <= 0x0BA8)
+        self.face("Up")
+        x, y = (word(self.block(0x7E0000, 0x100), o) for o in (0x22, 0x20))
+        tiles = self.block(0x7F2000, 0x2000)
+        gap = [tiles[floor_index(x + 8, row, 0)] for row in range(0x0B80, 0x0B98, 8)]
+        self.result["pit_gap"] = gap
+        self.check("Pit band between Link and diamond", all(t == 0x20 for t in gap), True)
+        self.place("diamond", (x, 0x0B60), kind=switch_hook.TARGETS[2])
+        before, after = self.cast("ages-diamond", accepted=True, frames=True)
+        self.check("Diamond re-placed at Link's old spot", after["block"],
+                   (before["link"][0], (before["link"][1] + 8) & 0xFFFF))
+        self.check("Return cast faces the diamond", self.r(0x7E002F), 2)
+        self.check("Return target safe", safe(self.floors("diamond-back", after["block"])["target"]), True)
+        back, again = self.cast("ages-diamond-back", accepted=True, frames=True)
+        self.check("Second swap restores the start", (again["link"], again["block"]),
+                   (before["link"], before["block"]))
         self.clear_actor()
 
     def clear_actor(self):

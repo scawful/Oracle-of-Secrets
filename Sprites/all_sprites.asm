@@ -187,6 +187,10 @@ org $3AA000
   %log_end("ice_block", !LOG_SPRITES)
 pullpc
 
+%log_start("swap_diamond", !LOG_SPRITES)
+incsrc "Sprites/Objects/swap_diamond.asm"
+%log_end("swap_diamond", !LOG_SPRITES)
+
 assert pc() <= $310000, "Bank $30 sprite code crossed its LoROM executable boundary"
 assert pc() >= $308000, "Bank $30 sprite code left its bank (org without pushpc/pullpc?)"
 print "Bank30 Free Space: ", dec($310000-pc()), " bytes"
