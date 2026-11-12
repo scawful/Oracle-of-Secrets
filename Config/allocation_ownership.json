@@ -185,7 +185,7 @@
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
       "path": "Scripts/Generate/sheet_overrides.py",
-      "sha256": "ec6cacd03b0a35bef51e33fbc0e6e90a7a90e40cc634da75dc1cfcfcf418c34f"
+      "sha256": "916ea44f0816aeb370043589dd82ed58acb2b88f5375c3f2bf354cd2d36d3ea7"
     },
     "shared:Scripts/Build/native_overworld_authoring_metadata.py": {
       "source_set": "shared",
