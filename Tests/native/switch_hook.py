@@ -19,6 +19,11 @@ LAND = SWAP + 16
 LINK_STATE_HOOK = 0x13
 # Swappable types (Items/switch_hook.asm SwitchHook_Targets): ice, statue, diamond.
 TARGETS = (0xD5, 0x1C, 0x8E)
+# Step 4 enemies (SwitchHook_Enemies): Buzzblob, Moblin, Sluggula, Hardhat,
+# Popo x2, Rat, Rope, Gibdo. Frozen in vanilla stun state $0B during the beat,
+# then stunned with $0B58 = STUN.
+ENEMIES = (0x0D, 0x12, 0x20, 0x26, 0x4E, 0x4F, 0x6D, 0x6E, 0x8B)
+STUNNED, STUN = 0x0B, 0x20
 
 
 def require(value, message):
@@ -50,7 +55,8 @@ def snapshot(read8, slot):
                 beat=read8(0x7E0268), z=word(0x7E0024), target_height=read8(0x7E0F70 + slot),
                 link_state=read8(0x7E005D), unhittable=read8(0x7E037B),
                 plate=read8(0x7E0642), gbc=read8(0x7E0FFF), facing=read8(0x7E002F),
-                frame=read8(0x7E001A))
+                frame=read8(0x7E001A), enemy=read8(0x7E026C), stun=read8(0x7E0B58 + slot),
+                health=read8(0x7E0E50 + slot), link_health=read8(0x7EF36D))
 
 
 def check_minish(snap):
@@ -138,11 +144,92 @@ def check_beat(before, trace):
                 swap_beat=SWAP, land_beat=LAND, last_beat=counters[-1])
 
 
+def latch(trace):
+    """First beat frame: the enemy is frozen here, so it is the swap reference."""
+    beat = [snap for snap in trace if snap["beat"]]
+    require(bool(beat) and beat[0]["beat"] <= 2, "No latch frame traced")
+    return beat[0]
+
+
+def check_enemy_beat(start, trace):
+    """Enemy frozen from latch to the end of the beat: stun state $0B with the
+    shake-free timer, latched as an enemy, no health loss on either side."""
+    require(start["type"] in ENEMIES and start["state"] == 9, "Enemy case did not start on a live enemy")
+    beat = [snap for snap in trace if snap["beat"]]
+    require(bool(beat), "No swap beat frames traced")
+    for snap in beat:
+        require(snap["type"] == start["type"], "Enemy slot changed type during the beat")
+        require(snap["state"] == STUNNED and snap["enemy"] == 1, "Enemy not frozen during the beat")
+        require(snap["stun"] >= 0x38, "Enemy stun timer fell into the wake-up shake during the beat")
+        require(snap["health"] == start["health"], "Enemy lost health during the beat")
+        require(snap["link_health"] == start["link_health"], "Link took damage during the beat")
+    return check_beat(latch(trace), trace)
+
+
+def check_enemy_exchange(start, trace, after):
+    """Positions swapped against the latch frame; enemy left stunned ~1 s."""
+    held = latch(trace)
+    require(after["type"] == held["type"] and after["enemy"] == 0, "Enemy latch not released")
+    require(after["state"] == STUNNED and 0 < after["stun"] <= STUN,
+            "Enemy not left in the post-landing stun")
+    swapped_link = (held["block"][0], (held["block"][1] - 8) & 0xFFFF)
+    swapped_enemy = (held["link"][0], (held["link"][1] + 8) & 0xFFFF)
+    # Only the enemy is frozen; a plate under Link's landing runs the vanilla
+    # sink submodule ($11=$17), which nudges Link's Y and returns it.
+    for snap in trace:
+        if snap["beat"] >= SWAP:
+            require(snap["block"] == swapped_enemy, "Frozen enemy moved after the swap frame")
+    require(after["link"] == swapped_link, "Link did not receive the enemy position/standing offset")
+    # Vanilla SpriteModule_Stunned shakes X by one pixel while $0B58 < $38.
+    require(after["block"][1] == swapped_enemy[1] and abs(after["block"][0] - swapped_enemy[0]) <= 1,
+            "Enemy did not receive Link's position/standing offset")
+    for name in ("room", "area", "module", "layer", "floor", "slot", "selected", "effective",
+                 "owned", "mask", "health", "link_health"):
+        require(start[name] == after[name], f"Enemy exchange unexpectedly changed {name}")
+    require(after["active"] == 0 and after["drag"] == 0 and 0x1F not in after["ancilla"],
+            "Enemy exchange left a shot, pull or chain behind")
+    return check_enemy_beat(start, trace)
+
+
 def check_rejected(before, after):
     for name in ("link", "block", "block_origin", "room", "area", "module", "layer", "floor",
                  "camera", "slot", "type", "state", "owned", "mask"):
         require(before[name] == after[name], f"Rejected target changed {name}")
     require(after["drag"] == 0, "Rejected target started a vanilla hookshot pull")
+
+
+def enemy_self_test(before, trace):
+    start = dict(copy.deepcopy(before), type=0x26, state=9, enemy=0, stun=0, health=3,
+                 link_health=0x18)
+    start["block"] = (0x0B0C, 0x0C1A)          # enemy walks before the latch
+    good = []
+    for snap in trace:
+        frame = dict(copy.deepcopy(snap), type=0x26, state=STUNNED, enemy=1, stun=0x40,
+                     health=3, link_health=0x18)
+        good.append(frame)
+    held = good[0]
+    after = dict(copy.deepcopy(good[-1]), beat=0, enemy=0, active=0, stun=STUN - 2, z=0,
+                 link=(held["block"][0], (held["block"][1] - 8) & 0xFFFF),
+                 block=(held["link"][0], (held["link"][1] + 8) & 0xFFFF))
+    check_enemy_exchange(start, good, after)
+    failures = 0
+    bad_frames = (("state", 9), ("enemy", 0), ("stun", 0x20), ("health", 2), ("link_health", 0x10))
+    for key, value in bad_frames:
+        broken = copy.deepcopy(good)
+        broken[CLING + 4][key] = value
+        try:
+            check_enemy_exchange(start, broken, after)
+        except AssertionError:
+            failures += 1
+    for key, value in (("state", 9), ("stun", 0), ("enemy", 1), ("link", start["block"]),
+                       ("type", 0x41)):
+        broken = dict(copy.deepcopy(after), **{key: value})
+        try:
+            check_enemy_exchange(start, good, broken)
+        except AssertionError:
+            failures += 1
+    require(failures == 10, "Enemy assertions missed a bad result")
+    return failures
 
 
 def describe():
@@ -261,12 +348,14 @@ def self_test():
         pass
     else:
         raise AssertionError("Minish check accepted GBC Link")
+    enemy_failures = enemy_self_test(before, trace)
     check_rejected(before, before)
     try:
         check_rejected(before, after)
     except AssertionError:
         return {"helper_self_test": "passed", "native_executed": False,
-                "bad_exchange_results_rejected": failures, "unexpected_warp_rejected": True}
+                "bad_exchange_results_rejected": failures, "unexpected_warp_rejected": True,
+                "bad_enemy_results_rejected": enemy_failures}
     raise AssertionError("Rejection assertions accepted a position exchange")
 
 
