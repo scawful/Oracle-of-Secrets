@@ -45,12 +45,12 @@ OWNED_REGIONS = (
       for row in (0xB3, 0xB6, 0xBA, 0xD7, 0xDF, 0xE0, 0xE1, 0xE2,
                   0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA)),
     ("Core/Generated/menu_icons/menu_icon_overrides.asm", 0x11FD00, 0x11FFFF),
-    # Wall-profile selector kits (default on): spare global sheet rows $F0-$FE
-    # ($EA-$EF belong to the Sky port)
+    # Wall-profile selector kits (default on): spare global sheet rows $F3-$FE
+    # ($EA is Sky room sky; $EB-$F2 belong to the Sky port)
     # (gen_wall_profiles.py KIT_SHEETS), one byte per row in each pointer array.
     *(("Dungeons/Data/kits/kits.asm", table+row, table+row)
       for table in (0x11FD00, 0x11FE00, 0x11FF00)
-      for row in range(0xF0, 0xFF)),
+      for row in range(0xF3, 0xFF)),
     # Overworld song upload chain, moved to bank $20 ($20B000-$20EFFF) by
     # Music/song_banks.asm. The ZS map lists 0x100000-0x107FFF as unused;
     # lost woods owns 0x107000+. all_music.asm asserts the chain ends by $20F000.

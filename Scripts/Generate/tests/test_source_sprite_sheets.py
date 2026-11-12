@@ -243,6 +243,25 @@ class SourceSheets(unittest.TestCase):
         self.assertFalse(allowed(owner,0x11FDEB))
         self.assertFalse(allowed(owner,0x11FDDE))
         self.assertFalse(allowed('Sprites/Bosses/d4_pressure_warden.asm',0x11FDDF))
+        kit_owner='Dungeons/Data/kits/kits.asm'
+        for row in (0xEA,0xEB,0xF0,0xF1,0xF2):
+            for table in (0x11FD00,0x11FE00,0x11FF00):
+                self.assertFalse(allowed(kit_owner,table+row))
+        for row in (0xF3,0xFD,0xFE):
+            for table in (0x11FD00,0x11FE00,0x11FF00):
+                self.assertTrue(allowed(kit_owner,table+row))
+        import gen_wall_profiles
+        self.assertEqual(gen_wall_profiles.KIT_SHEETS,range(0xF3,0xFF))
+        kits_dir=self.root/'kits';kits_dir.mkdir(exist_ok=True)
+        for bad_sheet in ('0xEA','0xEB','0xF0','0xF1','0xF2'):
+            (kits_dir/'bad.kit.json').write_text(json.dumps({
+                'kit':'bad','verdict':'partial','profile':'p',
+                'private_row':'0x19','base_blockset':'0x0B',
+                'sheets':[{'slot':3,'sheet':bad_sheet,'copy_of':'0x0B','source':'s.txt','decoded_sha256':'0'*64}],
+            }))
+            with mock.patch.object(gen_wall_profiles,'KITS_DIR',kits_dir), \
+                 self.assertRaisesRegex(SystemExit,r'is not a spare row \$F3-\$FE'):
+                gen_wall_profiles.load_kits()
 
     def test_manifest_integration_keeps_strict_yaze_keys_and_portable_paths(self):
         from test_generate_hack_manifest import ManifestFixture
