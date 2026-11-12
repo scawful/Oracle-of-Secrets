@@ -2,6 +2,7 @@
 import copy
 import importlib.util
 import json
+import re
 from pathlib import Path
 import tempfile
 import unittest
@@ -46,7 +47,20 @@ class RandomizerProfileTest(unittest.TestCase):
     def test_receipt_domains_and_version_boundary(self):
         known = {item['id']: item for item in self.release['receipts']['known']}
         self.assertEqual(known[0x21]['catalog_item_id'], 0x15)
-        self.assertEqual(known[0x4D]['equipment_id'], 4)
+        self.assertNotIn('equipment_id', known[0x4D])
+        # Independent source trace: ownership row's annotated selected index
+        # must resolve to the same handler as the native Hookshot menu entry.
+        source = module.source_file(module.SOURCE, 'Menu/menu_select_item.asm').decode()
+        selected = int(re.search(r'db SwitchHookOwned&\$FF ; \$([0-9A-Fa-f]+)', source)[1], 16)
+        self.assertEqual(known[0x4D]['menu_selection_id'], selected)
+        table = source.split('Menu_ItemIndex:', 1)[1].split('Menu_ItemIndex_End:', 1)[0]
+        values = [int(token, 16) for line in table.splitlines() if line.strip().startswith('db ')
+                  for token in re.findall(r'\$([0-9A-Fa-f]+)', line.split(';')[0])]
+        self.assertEqual(known[0x4D]['engine_action_id'], values[selected])
+        self.assertEqual(values[selected], values[3])  # Native Hookshot/chain handler.
+        ownership = module.source_file(module.SOURCE, 'Menu/menu_draw.asm').decode()
+        self.assertIn('LDA.w $040C : LSR A', ownership)
+        self.assertIn('db SwitchHookOwned&$FF ; $04 D8 Sky Tower', ownership)
         b49, authoring = self.release['artifacts']
         self.assertNotIn(0x4D, b49['receipt_reader_supported_ids'])
         self.assertEqual(authoring['receipt_reader_supported_ids'], [])

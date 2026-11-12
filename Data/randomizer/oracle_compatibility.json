@@ -10,12 +10,16 @@
   "identifier_domains": {
     "item_receipt": "Chest byte / Link_ReceiveItem ID",
     "item": "Editor item catalog; not interchangeable with item_receipt",
-    "equipment": "Menu ownership row; not interchangeable with item_receipt",
+    "menu_selection": "Items menu selected index ($0202); not the Equipment page",
+    "engine_action": "Menu_ItemIndex result selecting native item-use handler",
+    "dungeon_id": "Runtime $040C; treasure ownership lookup indexes this value divided by two",
     "room_id": "Underworld room number; all numeric JSON values are decimal"
   },
   "source_snapshot": {
     "commit": "2bffad6ab6118301f125e49e414a4447260ac689",
     "files_sha256": {
+      "Menu/menu_select_item.asm": "feae5f74dc19351bad1fe427d0e2f031bfd28b769b2f556fd114143b94b628dc",
+      "Menu/menu_draw.asm": "fafc75f2808858cd31f33bef94ab21553dcf1629285dd4372d2322ec945af8c8",
       "Items/bombchu_receipt.asm": "b3e40173895e4e269fc97484002a42404f6811cc7b905c3c39d31257ff4e7ea3",
       "Core/sram.asm": "4e9d336eadace6bf56fd3ec84d036e932d4aaf65823a207cea1927fcab9a03e1",
       "Core/patches.asm": "5b175b696677d022d320db0a8110620f2c89d58ff451c9b0730474d41ea32148",
@@ -689,7 +693,9 @@
         "ownership_wram": 8319918,
         "value": 1,
         "message_id": 538,
-        "equipment_id": 4,
+        "menu_selection_id": 29,
+        "engine_action_id": 14,
+        "menu_binding_source": "Menu/menu_select_item.asm:Menu_ItemIndex",
         "supported_artifacts": [],
         "source_capability_commit": "2bffad6ab6118301f125e49e414a4447260ac689",
         "status": "Requires separately hash-qualified compiled successor; absent in b49"
@@ -710,6 +716,9 @@
       4096,
       8192
     ],
+    "slot_masks_rom_pc": 6400,
+    "slot_masks_rom_hex": "000100020004000800100020",
+    "slot_index_provenance": "OpenItemChest $01EB7D ASL slot, $01EB7F TAY; $01EC3E ORA RoomFlagMask,Y",
     "live_room_flags_wram": 1026,
     "saved_room_flags_base_wram": 8318976,
     "saved_room_flags_stride": 2,

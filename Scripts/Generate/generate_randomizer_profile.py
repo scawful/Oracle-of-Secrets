@@ -7,6 +7,7 @@ The authoring ROM is intentionally NOT admitted as a playable randomizer input.
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 import subprocess
 
@@ -60,7 +61,21 @@ def generate(b49_path, authoring_path):
             raise ValueError('Bombchu source contract changed')
     if 'SwitchHookReceipt_Id = $4D' not in current or 'SwitchHookReceipt_Id' in old:
         raise ValueError('Switch Hook version boundary changed')
-    files = ['Items/bombchu_receipt.asm', 'Core/sram.asm', 'Core/patches.asm',
+    menu = source_file(SOURCE, 'Menu/menu_select_item.asm').decode()
+    actions = []
+    switch_selection = None
+    for line in menu.split('Menu_ItemIndex:', 1)[1].split('Menu_ItemIndex_End:', 1)[0].splitlines():
+        code = line.split(';', 1)[0].strip()
+        if code.startswith('db '):
+            if 'Switch Hook' in line:
+                switch_selection = len(actions)
+            actions.extend(int(value, 16) for value in re.findall(r'\$([0-9A-Fa-f]+)', code))
+    if switch_selection is None:
+        raise ValueError('Switch Hook menu selection missing')
+    masks = [int.from_bytes(b49[i:i + 2], 'little') for i in range(0x1900, 0x190C, 2)]
+    if authoring[0x1900:0x190C] != b49[0x1900:0x190C]:
+        raise ValueError('RoomFlagMask differs across pinned artifacts')
+    files = ['Menu/menu_select_item.asm', 'Menu/menu_draw.asm', 'Items/bombchu_receipt.asm', 'Core/sram.asm', 'Core/patches.asm',
              'Sprites/NPCs/maku_tree.asm', 'Sprites/NPCs/farore.asm',
              'Dungeons/custom_tag.asm', 'Docs/Technical/Dungeon_Tables_Expansion.md']
     return {
@@ -70,7 +85,9 @@ def generate(b49_path, authoring_path):
                   'placement_safety_certified': False, 'rom_mutation_supported': False},
         'identifier_domains': {'item_receipt': 'Chest byte / Link_ReceiveItem ID',
             'item': 'Editor item catalog; not interchangeable with item_receipt',
-            'equipment': 'Menu ownership row; not interchangeable with item_receipt',
+            'menu_selection': 'Items menu selected index ($0202); not the Equipment page',
+            'engine_action': 'Menu_ItemIndex result selecting native item-use handler',
+            'dungeon_id': 'Runtime $040C; treasure ownership lookup indexes this value divided by two',
             'room_id': 'Underworld room number; all numeric JSON values are decimal'},
         'source_snapshot': {'commit': SOURCE, 'files_sha256': {
             f: digest(source_file(SOURCE, f)) for f in files}},
@@ -108,16 +125,22 @@ def generate(b49_path, authoring_path):
                 {'id': 0x4C, 'name': 'Bombchu', 'ownership_wram': 0x7EF3AD,
                  'value': 1, 'message_id': 0x1BD, 'supported_artifacts': ['beta-b49']},
                 {'id': 0x4D, 'name': 'Switch Hook', 'ownership_wram': 0x7EF3AE,
-                 'value': 1, 'message_id': 0x21A, 'equipment_id': 4,
+                 'value': 1, 'message_id': 0x21A,
+                 'menu_selection_id': switch_selection,
+                 'engine_action_id': actions[switch_selection],
+                 'menu_binding_source': 'Menu/menu_select_item.asm:Menu_ItemIndex',
                  'supported_artifacts': [], 'source_capability_commit': SOURCE,
                  'status': 'Requires separately hash-qualified compiled successor; absent in b49'}]},
         'chest_persistence': {
             'table_pc': 0xE96E, 'record_bytes': 3, 'table_bytes': 504,
             'room_big_chest_mask': 0x8000, 'max_chests_and_locks_per_room': 6,
-            'slot_masks': [0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000],
+            'slot_masks': masks,
+            'slot_masks_rom_pc': 0x1900,
+            'slot_masks_rom_hex': b49[0x1900:0x190C].hex(),
+            'slot_index_provenance': 'OpenItemChest $01EB7D ASL slot, $01EB7F TAY; $01EC3E ORA RoomFlagMask,Y',
             'live_room_flags_wram': 0x0402, 'saved_room_flags_base_wram': 0x7EF000,
             'saved_room_flags_stride': 2, 'house_room_id': 0x104,
-            'house_saved_word_wram': 0x7EF208, 'house_first_chest_mask': 0x100,
+            'house_saved_word_wram': 0x7EF208, 'house_first_chest_mask': masks[0],
             'requirements': ['Preserve chest-object and room-matching record order.',
                 'Preserve slot flags across exit/re-entry and actual Save/cold load.',
                 'Do not clear house chest flags as part of NPC/story initialization.',
