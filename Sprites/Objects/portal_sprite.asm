@@ -70,6 +70,25 @@ OrangeActive      = $7E06FD
 OrangeSpriteIndex = $7E0633
 BlueSpriteIndex   = $7E0632
 
+; Portal Rod bolt. LinkItem_FirePortal spawns the portal sprite at Link's
+; position in this action; the bolt flies straight in Link's facing direction
+; and opens the portal on the last safe floor it crossed.
+!PortalShotAction = $07
+!PortalShotSpeed  = 3      ; px per frame
+!PortalShotRange  = 96     ; px (6 tiles); must stay below $80 (bit 7 = found)
+
+; Bolt state, per slot:
+;   SprMiscA = bit 0: color of this cast (the $0FA6 value after the toggle)
+;              bit 1: $0FA6 before the cast, restored by a fizzle
+;   SprMiscB = distance flown (bits 0-6) | last-safe-found flag (bit 7)
+;   SprMiscC = direction 0 up, 1 down, 2 left, 3 right
+;   SprMiscD/E = last safe X lo/hi, SprMiscF/G = last safe Y lo/hi
+PortalShot_Dist  = SprMiscB
+PortalShot_SafeX = SprMiscD
+PortalShot_SafeXH = SprMiscE
+PortalShot_SafeY = SprMiscF
+PortalShot_SafeYH = SprMiscG
+
 Sprite_Portal_Main:
 {
   LDA.w SprAction, X
@@ -84,6 +103,8 @@ Sprite_Portal_Main:
 
   dw BluePortal_WarpOverworld
   dw OrangePortal_WarpOverworld
+
+  dw PortalShot ; !PortalShotAction
 
   StateHandler:
   {
@@ -259,6 +280,16 @@ Sprite_Portal_Main:
     %GotoAction(2)
     RTS
   }
+}
+
+; Action 7: the bolt in flight. The flight code lives in the Items bank
+; (PortalShot_Fly, Items/portal_rod.asm); bank $31 has no room for it.
+PortalShot:
+{
+  JSL PortalShot_Fly : BCC .flying
+    JMP StateHandler ; landed: accept with the bolt's own color
+  .flying
+  RTS
 }
 
 ; Carry set only for a live portal of the opposite color in slot Y.

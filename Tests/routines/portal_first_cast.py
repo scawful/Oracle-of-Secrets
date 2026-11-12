@@ -29,6 +29,8 @@ TABLES = (
     0x0F70, 0x0F80, 0x0F90,
 )
 LONG_TABLES = (0x7FF9C2, 0x7FFA1C, 0x7FFA2C, 0x7FFA3C, 0x7FFA4C)
+MAGIC = 0x7EF36E
+SHOT_ACTION = 7
 
 
 def require(ok, message):
@@ -73,6 +75,9 @@ def cases():
         ('outdoor-empty', 1, [], 1, 6, 0),
         ('full-failure-zero', 0, [(s, 9, 4, 0) for s in range(16)], 0, 0, 1),
         ('full-failure-one', 1, [(s, 9, 4, 0) for s in range(16)], 1, 0, 1),
+        # A bolt still in flight (subtype 0, action 7) holds the turn.
+        ('bolt-in-flight-blue', 1, [(3, 9, 3, 0, 7)], 0, 6, 1),
+        ('bolt-in-flight-orange', 0, [(3, 9, 3, 0, 7)], 1, 4, 1),
     ]
     # Opposite source-slot floors expose native sprite-parent inheritance.
     return [case + (0, 1) for case in base_cases] + [
@@ -92,8 +97,11 @@ def fixture(case, entry):
     ram[0xEE], ram[0xF20 + 5] = floor, donor_floor  # Caller X=5 below.
     ram[0x20:0x24] = bytes.fromhex('08230812')  # Link Y=$2308, X=$1208.
     ram[0x0E30:0x0E40] = bytes([2] * 16)
-    for slot, state, kind, subtype in sprites:
-        for table, value in ((0xDD0, state), (0xE20, kind), (0xE30, subtype)):
+    ram[0x0D80:0x0D90] = bytes(16)
+    ram[MAGIC - WRAM], ram[0xF37B] = 0x40, 0  # Known meter; full-cost refunds.
+    for slot, state, kind, subtype, *action in sprites:
+        for table, value in ((0xDD0, state), (0xE20, kind), (0xE30, subtype),
+                             (0xD80, action[0] if action else 0)):
             ram[table + slot] = value
     free = [s for s in range(16) if ram[0xDD0 + s] == 0]
     slot = max(free) if free else None
@@ -131,16 +139,28 @@ def verify(case, before, slot, result, timer):
                 and after[0xE30 + slot] == 0, f'{name}: pending allocation identity wrong')
         require(after[0xF20 + slot] == floor,
                 f'{name}: portal floor {after[0xF20 + slot]}, expected Link floor {floor}')
-        dx, dy = {0: (0, -20), 2: (0, 31), 4: (-20, 0), 6: (20, 0)}[direction]
+        # The bolt starts on Link; PortalShot_Fly moves it on later frames.
         x = after[0xD10 + slot] | after[0xD30 + slot] << 8
         y = after[0xD00 + slot] | after[0xD20 + slot] << 8
-        require((x, y) == (0x1208 + dx, 0x2308 + dy), f'{name}: spawn coordinates wrong')
+        require((x, y) == (0x1208, 0x2308), f'{name}: bolt must start at Link')
+        require(after[0xD80 + slot] == SHOT_ACTION, f'{name}: bolt action missing')
+        require(after[0xDE0 + slot] == direction >> 1, f'{name}: bolt direction wrong')
+        # Bit 0 = this cast's color; bit 1 = the pre-cast selector a fizzle restores.
+        require(after[0xDA0 + slot] == expected | (selector & 1) << 1,
+                f'{name}: bolt color/pre-cast selector {after[0xDA0 + slot]}')
+        require(after[0xD90 + slot] == (0 if expected else 2), f'{name}: bolt frame wrong')
+        require(after[0xDB0 + slot] == 0, f'{name}: bolt distance not cleared')
+        require(after[MAGIC - WRAM] == 0x40, f'{name}: accepted cast refunded magic')
         require(after[0xBA0 + slot] == 255 and after[0xCAA + slot] & 0x80,
                 f'{name}: portal protection/off-camera setup missing')
         require(after[0xD60 + slot] == after[0xD70 + slot] == 0,
                 f'{name}: fractional position was not cleared')
         require((after[0x3D], after[0x2E], after[0x300], after[0x301]) == (timer, 0, 0, 1),
                 f'{name}: item-animation completion changed')
+    else:
+        # Failed allocation refunds the cast (Refund_Magic clobbers $00).
+        allowed.update((WRAM, MAGIC))
+        require(after[MAGIC - WRAM] > 0x40, f'{name}: failed cast kept the magic')
     require(after[0xFA6] == expected, f'{name}: selector {after[0xFA6]}, expected {expected}')
     for offset, (a, b) in enumerate(zip(before, after)):
         require(a == b or WRAM + offset in allowed,
@@ -167,8 +187,10 @@ def main():
     padding = (-len(rom)) % 0x8000
     entry = symbol(text, 'LinkItem_FirePortal')
     timer = raw(rom, symbol(text, 'RodAnimationTimer'), 1)[0]
-    require(raw(rom, entry, 9) == bytes.fromhex('A903225DF61D10016B'),
-            'Unexpected helper allocator/failure-return contract')
+    refund = symbol(text, 'PortalRod_RefundCast')
+    require(raw(rom, entry, 13) == bytes.fromhex('A903225DF61D1005')
+            + bytes((0x22, refund & 255, refund >> 8 & 255, refund >> 16, 0x6B)),
+            'Unexpected helper allocator/failure-refund-return contract')
     require(raw(rom, 0x1DF6C5, 10) == bytes.fromhex('A90099BA0C99300E986B'),
             'Allocator no longer clears pending subtype before returning')
     plans = [(case, *fixture(case, entry)) for case in cases()]
