@@ -66,6 +66,9 @@ incsrc "Overworld/overlays.asm"
 incsrc "Overworld/entrances.asm"
 %log_end("Overworld/entrances.asm", !LOG_OVERWORLD)
 
+incsrc "Overworld/sky_tile_types.asm"
+%log_end("Overworld/sky_tile_types.asm", !LOG_OVERWORLD)
+
 incsrc "Overworld/custom_gfx.asm"
 %log_end("Overworld/custom_gfx.asm", !LOG_OVERWORLD)
 

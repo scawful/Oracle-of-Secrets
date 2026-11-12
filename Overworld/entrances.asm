@@ -129,6 +129,18 @@ Overworld_UseEntrance:
   LDA.l Map16Definitions+4, X : AND.w #$01FF : STA.b $00
   LDA.l Map16Definitions+6, X : AND.w #$01FF : STA.b $02
 
+if !ENABLE_SKY_OVERWORLD_ROUTE == 1
+  ; The selected stone arch is already open. Require its map, trigger cell
+  ; and original dictionary pair before taking the normal registration lookup.
+  ; Source graphics may remap rendered words while retaining these Tile16 IDs.
+  LDA.w $040A : CMP.w #$0087 : BNE .scan_door_types
+  CPY.w #$071E : BNE .scan_door_types
+  LDA.b $00 : CMP.w #$01AD : BNE .scan_door_types
+  LDA.b $02 : CMP.w #$01AE : BNE .scan_door_types
+  JMP FindEntrance
+  .scan_door_types
+endif
+
   ; Size of ValidDoorTypes
   LDX.w #$0060
 

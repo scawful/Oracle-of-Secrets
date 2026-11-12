@@ -85,7 +85,7 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "5dfadec83a3d0ead47c846ed071a6776c4be21c9062ecb2c1fa7b008a4592ec2"
+      "sha256": "057ba7352a01ffa6e7aa2619b59fe39ca407d37f04f65e439b18bf09c97ffe80"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
@@ -125,7 +125,7 @@
     "shared:Overworld/overworld.asm": {
       "source_set": "shared",
       "path": "Overworld/overworld.asm",
-      "sha256": "14056cdd94ede530bd2ce95cedd64d51d5b105eac13db8ea0ea25192a3f86f21"
+      "sha256": "feae0a88242b86c507f6ef62fb97a1ed5f057419ffe7e76e29866ed906ee5cd4"
     },
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
