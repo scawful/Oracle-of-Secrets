@@ -13,15 +13,21 @@
 if !ENABLE_SKY_OVERWORLD_ROUTE == 1
 assert !ENABLE_SKY_OVERWORLD_GRAPHICS == 1, "Sky route requires its source graphics"
 
+; Single source of truth for outdoors selected Sky maps ($84-$87, $8C-$8F).
+; Clobbers 16-bit A; preserves X, Y, DBR, D, and stack (branch target sets N/Z).
+macro SkyTileType_BranchIfSky(sky_label, vanilla_label)
+  LDA.l $7E001B : AND.w #$00FF : BNE <vanilla_label>
+  LDA.l $7E008A : AND.w #$00FF
+  CMP.w #$0084 : BCC <vanilla_label>
+  CMP.w #$0088 : BCC <sky_label>
+  CMP.w #$008C : BCC <vanilla_label>
+  CMP.w #$0090 : BCS <vanilla_label>
+endmacro
+
 SkyTileType:
 {
   PHP
-  LDA.l $7E001B : AND.w #$00FF : BNE .vanilla
-  LDA.l $7E008A : AND.w #$00FF
-  CMP.w #$0084 : BCC .vanilla
-  CMP.w #$0088 : BCC .sky
-  CMP.w #$008C : BCC .vanilla
-  CMP.w #$0090 : BCS .vanilla
+  %SkyTileType_BranchIfSky(.sky, .vanilla)
 .sky
   PLP
   LDA.l SkyTileTypes, X
@@ -75,6 +81,25 @@ assert SkyTileTypesEnd-SkyTileTypes == $0200
   db read1($0E9659)
 assert (SkyTileTypes&$FFFF)+$0201 <= $10000
 
+; Block Shovel / Wolf Mask digging ($037A == $01) from overwriting Sky cloud
+; void tile $0034 with dug ground $0DC9 while keeping ordinary overworld digging.
+; Entered at $1BBE3E with M=16, X=16, X = map16 offset, 1,S = matched Tile16.
+SkyTileType_GuardVoidDig:
+{
+  LDA.l $7E037A : AND.w #$00FF : CMP.w #$0001 : BNE .not_dig
+  LDA 1,S : CMP.w #$0034 : BNE .allow_dig
+  %SkyTileType_BranchIfSky(.block_void_dig, .allow_dig)
+.block_void_dig
+  PLA
+  LDA.w #$0000
+  SEP #$30
+  RTL
+.allow_dig
+  JML $1BBE49
+.not_dig
+  JML $1BBE3B
+}
+
 pushpc
 assert read4($00886E) == $0E9459BF, "GetTileType table read moved"
 org $00886E ; @hook module=Overworld name=SkyTileType_GetTileType kind=jsl target=SkyTileType expected_m=16 expected_x=16 protected_size=4
@@ -92,5 +117,12 @@ assert read4($1BC04E) == $0E9459BF, "SmashRockPile table read moved"
 org $1BC04E ; @hook module=Overworld name=SkyTileType_SmashRockPile kind=jsl target=SkyTileType expected_m=16 expected_x=16 protected_size=4
   JSL SkyTileType
 assert pc() == $1BC052
+assert read4($1BBE3E) == $29037AAD, "TileInteract_DashLift dig gate moved"
+assert read4($1BBE42) == $01C900FF, "TileInteract_DashLift dig gate tail moved"
+assert read3($1BBE46) == $F2D000, "TileInteract_DashLift dig branch moved"
+org $1BBE3E ; @hook module=Overworld name=SkyTileType_GuardVoidDig kind=jml target=SkyTileType_GuardVoidDig expected_m=16 expected_x=16 protected_size=11
+  JML SkyTileType_GuardVoidDig
+  NOP #7
+assert pc() == $1BBE49
 pullpc
 endif
