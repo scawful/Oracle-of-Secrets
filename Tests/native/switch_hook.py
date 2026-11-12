@@ -40,7 +40,8 @@ def snapshot(read8, slot):
                 block_origin=(sprite_word(0xE90, 0xEC0), sprite_word(0xEB0, 0xED0)),
                 slot=slot, type=read8(0x7E0E20 + slot), state=read8(0x7E0DD0 + slot),
                 floor=read8(0x7E0F20 + slot), layer=read8(0x7E00EE),
-                room=word(0x7E00A0), module=read8(0x7E0010), submodule=read8(0x7E0011),
+                room=word(0x7E00A0), area=read8(0x7E008A),
+                module=read8(0x7E0010), submodule=read8(0x7E0011),
                 camera=(word(0x7E00E2), word(0x7E00E8)),
                 selected=read8(0x7E0202), effective=read8(0x7E0304),
                 owned=read8(0x7EF3AE), mask=read8(0x7E02B2),
@@ -48,7 +49,8 @@ def snapshot(read8, slot):
                 ancilla=[read8(0x7E0C4A + index) for index in range(5)],
                 beat=read8(0x7E0268), z=word(0x7E0024), target_height=read8(0x7E0F70 + slot),
                 link_state=read8(0x7E005D), unhittable=read8(0x7E037B),
-                plate=read8(0x7E0642), gbc=read8(0x7E0FFF), facing=read8(0x7E002F))
+                plate=read8(0x7E0642), gbc=read8(0x7E0FFF), facing=read8(0x7E002F),
+                frame=read8(0x7E001A))
 
 
 def check_minish(snap):
@@ -70,7 +72,7 @@ def check_exchange(before, after, camera_may_move=False):
             "Link did not receive the complete block position/standing offset")
     require(after["block"] == (before["link"][0], (before["link"][1] + 8) & 0xFFFF),
             "Block did not receive the complete Link position/standing offset")
-    names = ["room", "module", "layer", "floor", "slot", "block_origin",
+    names = ["room", "area", "module", "layer", "floor", "slot", "block_origin",
              "selected", "effective", "owned", "mask"]
     if not camera_may_move:
         names.append("camera")
@@ -90,19 +92,27 @@ def check_beat(before, trace):
     held = [snap for snap in beat if snap.get("submodule", 0)]
     require(all(snap["submodule"] in (0x05, 0x16, 0x17) for snap in held),
             "Beat survived a transition submodule")
-    # A lag frame during the camera scroll samples one counter twice and then
-    # skips one (0 then 2); only that balanced pair is allowed.
+    # MainGameLoop ($008051) increments $1A once per completed game frame.
+    # With $1A in the trace, each running frame must advance the beat once:
+    # a lag frame (no $1A step, e.g. overworld map streaming) holds it, and a
+    # sample taken mid-frame ($1A stepped, tick not run yet) owes one step
+    # that the next sample repays. Without $1A, only the balanced 0-then-2
+    # pair of one mid-frame sample is allowed.
     lag = 0
+    debt = 0
     for prev, snap in zip(beat, beat[1:]):
         step = snap["beat"] - prev["beat"]
         if snap.get("submodule", 0):
             require(step == 0, "Beat counter advanced during a held submodule")
+        elif "frame" in snap and "frame" in prev:
+            debt += ((snap["frame"] - prev["frame"]) & 0xFF) - step
+            require(debt in (0, 1), "Beat counter did not advance one step per game frame")
         elif step == 0 and not lag:
             lag = 1
         else:
             require(step == 1 + lag, "Beat counter did not advance one step per running frame")
             lag = 0
-    require(not lag, "Beat counter stalled at the end of the trace")
+    require(not lag and debt == 0, "Beat counter stalled at the end of the trace")
     counters = [snap["beat"] for snap in beat]
     require(counters[-1] >= LAND, "Beat ended before the landing frame")
     for snap in beat:
@@ -121,14 +131,15 @@ def check_beat(before, trace):
     require(beat[-1]["z"] == 0 and beat[-1]["target_height"] == 0, "Beat ended in the air")
     settle = [snap for snap in beat if snap["beat"] > LAND]
     for prev, snap in zip(settle, settle[1:]):
-        require(prev["camera"] != snap["camera"] or snap is settle[-1],
+        lagged = "frame" in snap and "frame" in prev and snap["frame"] == prev["frame"]
+        require(prev["camera"] != snap["camera"] or snap is settle[-1] or lagged,
                 "Beat held control after the camera stopped")
     return dict(frames=len(beat), held_frames=len(held), peak=peak, settle_frames=len(settle),
                 swap_beat=SWAP, land_beat=LAND, last_beat=counters[-1])
 
 
 def check_rejected(before, after):
-    for name in ("link", "block", "block_origin", "room", "module", "layer", "floor",
+    for name in ("link", "block", "block_origin", "room", "area", "module", "layer", "floor",
                  "camera", "slot", "type", "state", "owned", "mask"):
         require(before[name] == after[name], f"Rejected target changed {name}")
     require(after["drag"] == 0, "Rejected target started a vanilla hookshot pull")
@@ -160,6 +171,7 @@ def self_test():
     before = snapshot(lambda address: memory.get(address, 0), 0)
     require(before["link"] == (0x0AF0, 0x0BF8), "Reader dropped Link high bytes")
     require(before["block"] == (0x0B08, 0x0C18), "Reader dropped block high bytes")
+    del before["frame"]                   # untimed traces first; $1A traces below
     after = copy.deepcopy(before)
     after.update(link=(0x0B08, 0x0C10), block=(0x0AF0, 0x0C00))
     check_exchange(before, after)
@@ -203,6 +215,29 @@ def self_test():
     lagged = copy.deepcopy(trace)
     lagged[SWAP + 2]["beat"] -= 1
     check_beat(before, lagged)
+    timed = copy.deepcopy(trace)
+    for index, frame in enumerate(timed):
+        frame["frame"] = index & 0xFF
+    check_beat(before, timed)
+    stalled = copy.deepcopy(timed)        # lag frame: $1A and the beat both hold
+    stalled.insert(SWAP + 2, copy.deepcopy(stalled[SWAP + 1]))
+    check_beat(before, stalled)
+    for bad in ("held", "skipped"):
+        broken = copy.deepcopy(timed)
+        if bad == "held":                 # $1A stepped but the beat held, twice
+            for frame in broken[SWAP + 2:]:
+                frame["beat"] -= 1
+            for frame in broken[SWAP + 3:]:
+                frame["beat"] -= 1
+        else:                             # beat stepped twice in one game frame
+            for frame in broken[SWAP + 2:]:
+                frame["beat"] += 1
+        try:
+            check_beat(before, broken)
+        except AssertionError:
+            pass
+        else:
+            raise AssertionError(f"Beat check accepted a {bad} counter with $1A")
     skipped = copy.deepcopy(trace)
     del skipped[SWAP + 2]
     try:

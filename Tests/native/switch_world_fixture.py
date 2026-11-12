@@ -31,7 +31,55 @@ import switch_hook
 
 native = combined.native
 SAFE = {0x00, 0x0E, 0x23, 0x24, 0x25, 0x3B}
+# Items/switch_hook.asm SwitchHook_FootprintSafe_overworld: ground, shallow
+# water, thick grass, diggable ground. Deep water $08 and all else refuse.
+OW_SAFE = {0x00, 0x09, 0x40, 0x48, 0x4A}
+OW_HOOKABLE = 0x27      # usdasm bank_07 TileBehavior_Hookshottables (OW)
 FIELDS = (0xD00, 0xD10, 0xD20, 0xD30, 0xDD0, 0xE20, 0xE30, 0xF20)
+# Ordinary-Hookshot sentinel (ASTRA_REVIEW_18eba8ea.md item 2): beat/target RAM.
+SENTINELS = (0x7E0268, 0x7E0269)
+# Area $33 (Loom Beach): cheat warp_area lands Link at X07B8/Y0D8B. Routes are
+# 8px-grid BFS paths over walkable tiles from that landing (no position writes).
+OW_AREA, OW_LANDING = 0x33, (0x07B8, 0x0D8B)
+ROUTE_HOOK = (("Down", 0xD9B), ("Left", 0x740), ("Up", 0xD83), ("Left", 0x718),
+              ("Up", 0xD03), ("Left", 0x710), ("Up", 0xCF3), ("Left", 0x708),
+              ("Up", 0xCEB), ("Left", 0x6B0), ("Down", 0xD7B), ("Right", 0x6C8), ("Down", 0xD8B))
+ROUTE_SWAP = (("Down", 0xE1B), ("Left", 0x750), ("Down", 0xE5B), ("Left", 0x720),
+              ("Down", 0xE6B), ("Left", 0x6F0), ("Down", 0xEEB))
+ROUTE_EDGE = (("Down", 0xD9B), ("Left", 0x740), ("Up", 0xD83), ("Left", 0x718),
+              ("Up", 0xD03), ("Left", 0x710), ("Up", 0xCF3), ("Left", 0x708),
+              ("Up", 0xCEB), ("Left", 0x6C8), ("Up", 0xC73), ("Right", 0x6D8), ("Up", 0xC6B))
+
+
+def lorom(address):
+    return ((address >> 16) & 0x7F) * 0x8000 + (address & 0x7FFF)
+
+
+def overworld_tables(rom):
+    """Map16Definitions and OverworldTileTypes long addresses, read from the
+    LDA.l operands inside Overworld_GetTileTypeAtLocation ($00882E)."""
+    code = rom[lorom(0x00882E):lorom(0x008888)]
+    first = code.index(bytes([0x0A, 0xAA, 0xBF])) + 3
+    second = code.index(bytes([0xAA, 0xBF]), first) + 2
+    return (int.from_bytes(code[first:first + 3], "little"),
+            int.from_bytes(code[second:second + 3], "little"))
+
+
+def overworld_tile(rom, ram, map16, x, y):
+    """Mirror of Overworld_GetTileTypeAtLocation: ram = 7E0000..0FFF, map16 = 7E2000..3FFF."""
+    definitions, types = overworld_tables(rom)
+    column = x >> 3
+    index = ((((y - word(ram, 0x708)) & word(ram, 0x70A)) << 3)
+             | ((column - word(ram, 0x70C)) & word(ram, 0x70E))) & 0xFFFF
+    tile = word(map16, index)
+    entry = word(rom, lorom(definitions) + ((tile << 2 | (y & 8) >> 2 | column & 1) << 1 & 0xFFFF))
+    kind = rom[lorom(types) + (entry & 0x1FF)]
+    return kind | (1 if 0x10 <= kind < 0x1C and entry & 0x4000 else 0)
+
+
+def overworld_footprint(rom, ram, map16, x, y):
+    return [dict(x=x + dx, y=y + dy, attr=overworld_tile(rom, ram, map16, x + dx, y + dy))
+            for dy in (0, 7, 15) for dx in (0, 7, 15)]
 
 
 def describe():
@@ -58,8 +106,8 @@ def footprint(tiles, x, y, layer):
             for dy in (0, 7, 15) for dx in (0, 7, 15)]
 
 
-def safe(points):
-    return all(point["attr"] in SAFE for point in points)
+def safe(points, allowed=SAFE):
+    return all(point["attr"] in allowed for point in points)
 
 
 def overlap(head, block):
@@ -91,12 +139,40 @@ def dump_plan(directory):
                 probes=probes, note="Runtime re-reads all floor bytes; dump does not authorize position writes.")
 
 
+def switch_hook_labels(text):
+    """Sorted (address, label) pairs from the asar WLA .sym text for writer blame."""
+    labels, section = [], None
+    for line in text.splitlines():
+        if line.startswith("["):
+            section = line.strip()
+            continue
+        parts = line.split()
+        if section != "[labels]":
+            continue
+        if len(parts) == 2 and ":" in parts[0] and not parts[1].startswith(":"):
+            bank, address = parts[0].split(":")
+            labels.append((int(bank, 16) << 16 | int(address, 16), parts[1]))
+    return sorted(labels)
+
+
+def owner(labels, pc):
+    """Nearest preceding label in the same bank, or None."""
+    pc &= 0x7FFFFF if pc >> 16 >= 0x80 else 0xFFFFFF   # FastROM mirror -> sym bank
+    best = None
+    for address, label in labels:
+        if address > pc:
+            break
+        best = (address, label)
+    return best[1] if best and best[0] >> 16 == pc >> 16 else None
+
+
 class WorldFlow(combined.NewItemsFlow):
     def __init__(self, args, bridge):
         super().__init__(args, bridge)
         self.slot = None
         self.saved = {}
         self.room = 0x104
+        self.area = None
         self.result["scope"] = dict(native_world_fixture=True, actor="D5/native state08 prep",
                                     no_link_position_writes=True, acquisition_tested=False,
                                     art_acceptance=False, page_boundary_crossing_tested=False)
@@ -104,11 +180,12 @@ class WorldFlow(combined.NewItemsFlow):
 
     def snap(self):
         ram = self.block(0x7E0000, 0x1000)
+        slot = 0 if self.slot is None else self.slot   # actor fields are unused when no fixture is owned
         result = switch_hook.snapshot(lambda address: ram[address - 0x7E0000]
-                                      if address < 0x7E1000 else self.r(address), self.slot)
+                                      if address < 0x7E1000 else self.r(address), slot)
         result.update(facing=ram[0x2F], link_state=ram[0x5D],
-                      speed=[ram[a + self.slot] for a in (0xD40, 0xD50, 0xF80)],
-                      height=ram[0xF70 + self.slot], timer=ram[0xDF0 + self.slot],
+                      speed=[ram[a + slot] for a in (0xD40, 0xD50, 0xF80)],
+                      height=ram[0xF70 + slot], timer=ram[0xDF0 + slot],
                       heads=[dict(slot=i, position=(ram[0xC04 + i] | ram[0xC18 + i] << 8,
                                                      ram[0xBFA + i] | ram[0xC0E + i] << 8),
                                   retract=ram[0xC54 + i])
@@ -153,14 +230,23 @@ class WorldFlow(combined.NewItemsFlow):
 
     def floors(self, label, block=None):
         ram = self.block(0x7E0000, 0x1000)
-        tiles = self.block(0x7F2000, 0x2000)
         link = (word(ram, 0x22), word(ram, 0x20))
         layer = ram[0xEE]
+        if ram[0x1B] == 0:
+            tiles = self.block(0x7E2000, 0x2000)
+            probe = lambda x, y: overworld_footprint(self.rom, ram, tiles, x, y)
+            allowed = OW_SAFE
+        else:
+            tiles = self.block(0x7F2000, 0x2000)
+            probe = lambda x, y: footprint(tiles, x, y, layer)
+            allowed = SAFE
         record = dict(label=label, tiles_sha256=native.digest(tiles), layer=layer,
-                      source=footprint(tiles, link[0], link[1] + 8, layer))
-        native.require(safe(record["source"]), "Link source footprint is not safe")
+                      overworld=ram[0x1B] == 0, area=ram[0x8A], allowed=sorted(allowed),
+                      source=probe(link[0], link[1] + 8))
+        native.require(safe(record["source"], allowed), "Link source footprint is not safe")
         if block is not None:
-            record["target"] = footprint(tiles, *block, layer)
+            record["target"] = probe(*block)
+            record["target_safe"] = safe(record["target"], allowed)
         self.result.setdefault("floor_reads", []).append(record)
         return record
 
@@ -264,8 +350,8 @@ class WorldFlow(combined.NewItemsFlow):
             self.write(0x7EF3AE, 1, "Declared new-item ownership fixture (private save only)")
         self.equip(0x1D)
 
-    def place(self, label, target, kind=0xD5):
-        self.check(label + " target safe", safe(self.floors(label, target)["target"]), True)
+    def place(self, label, target, kind=0xD5, expect_safe=True):
+        self.check(label + " target safe", self.floors(label, target)["target_safe"], expect_safe)
         self.spawn(*target, 0, kind=kind)
 
     def case_camera(self):
@@ -346,13 +432,236 @@ class WorldFlow(combined.NewItemsFlow):
                    (before["link"], before["block"]))
         self.clear_actor()
 
+    # --- Overworld cases (driver warps to area $33 by cheat before these run) ---
+
+    def enter_area(self, area, item=0x1D):
+        self.area, self.room = area, None
+        self.ready()
+        ram = self.block(0x7E0000, 0x1000)
+        self.check("Case module/area", (ram[0x10], ram[0x1B], ram[0x8A]), (0x09, 0, area))
+        self.check("Area landing", (word(ram, 0x22), word(ram, 0x20)), OW_LANDING)
+        switch_hook.check_minish(dict(gbc=ram[0xFFF], mask=ram[0x2B2]))
+        if self.r(0x7EF3AE) != 1:
+            self.write(0x7EF3AE, 1, "Declared new-item ownership fixture (private save only)")
+        self.equip(item)
+
+    def route(self, segments):
+        """Controller-only walk; each segment holds one direction until its axis passes the goal."""
+        tests = {"Down": lambda x, y, g: y >= g, "Up": lambda x, y, g: y <= g,
+                 "Left": lambda x, y, g: x <= g, "Right": lambda x, y, g: x >= g}
+        for direction, goal in segments:
+            self.walk(direction, lambda x, y: tests[direction](x, y, goal), limit=400)
+            switch_hook.check_minish(self.snap() if self.slot is not None
+                                     else dict(gbc=self.r(0x7E0FFF), mask=self.r(0x7E02B2)))
+        self.ready()
+        position = tuple(word(self.block(0x7E0000, 0x100), o) for o in (0x22, 0x20))
+        self.result.setdefault("routes", []).append(dict(segments=segments, end=position))
+        return position
+
+    def link(self):
+        ram = self.block(0x7E0000, 0x100)
+        return word(ram, 0x22), word(ram, 0x20)
+
+    def case_ow_swap(self):
+        """(a)+(b) Area 33 beach: Link on sand faces down across deep water ($08)
+        to a 16px shallow islet. Deep-water target refuses; islet swap and the
+        return swap are accepted and the camera follows each way."""
+        self.enter_area(OW_AREA)
+        self.route(ROUTE_SWAP)
+        self.face("Down")
+        x, y = self.link()
+        ram, tiles = self.block(0x7E0000, 0x1000), self.block(0x7E2000, 0x2000)
+        lane = [overworld_tile(self.rom, ram, tiles, x + 8, row) for row in range(y + 24, 0x0F28, 8)]
+        self.result["deep_water_lane"] = lane
+        self.check("Deep water between Link and islet", 0x08 in lane and set(lane) <= OW_SAFE | {0x08}, True)
+        self.place("ow-deep-water", (0x06F0, 0x0F13), kind=switch_hook.TARGETS[2], expect_safe=False)
+        self.cast("ow-refuse-deep-water", require_overlap=True)
+        self.place("ow-islet", (0x06F0, 0x0F2B), kind=switch_hook.TARGETS[2])
+        before, after = self.cast("ow-swap", accepted=True, frames=True)
+        self.check("Overworld camera followed Link down", after["camera"][1] > before["camera"][1], True)
+        self.check("Return cast faces the diamond", self.r(0x7E002F), 0)
+        self.check("Return target safe", self.floors("ow-back", after["block"])["target_safe"], True)
+        back, again = self.cast("ow-swap-back", accepted=True, frames=True)
+        self.check("Overworld camera followed Link up", again["camera"][1] < back["camera"][1], True)
+        self.check("Second swap restores the start", (again["link"], again["block"]),
+                   (before["link"], before["block"]))
+        self.clear_actor()
+
+    def case_ow_edge(self):
+        """(c) Area 33 north path: the landing margin is 16px inside the ZS
+        transition threshold (Y-$0708 >= 4). Link landing Y-$0708 = $13 refuses,
+        $14 accepts; then a miss shot and a walk across the top edge."""
+        self.enter_area(OW_AREA)
+        self.route(ROUTE_EDGE)
+        self.face("Up")
+        x = self.link()[0] & 0xFFF8      # 8px column; the hook overlap box tolerates drift
+        origin = self.r(0x7E0708) | self.r(0x7E0709) << 8
+        refuse, accept = (x, origin + 0x13 + 8), (x, origin + 0x14 + 8)
+        self.result["edge_targets"] = dict(area_top=origin, refuse=refuse, accept=accept)
+        self.place("ow-edge-refuse", refuse, kind=switch_hook.TARGETS[2])
+        self.cast("ow-edge-refuse", require_overlap=True)
+        self.place("ow-edge-accept", accept, kind=switch_hook.TARGETS[2])
+        before, after = self.cast("ow-edge-accept", accepted=True, frames=True)
+        self.check("Camera stepped up, inside the area", (after["camera"][1] <= before["camera"][1],
+                                                          after["camera"][1] >= origin), (True, True))
+        self.clear_actor()
+        self.face("Up")
+        self.cast_miss("ow-edge-miss")
+        start = self.snap()
+        transition = []
+        for _ in range(600):
+            ram = self.block(0x7E0000, 0x1000)
+            transition.append(dict(module=ram[0x10], submodule=ram[0x11], area=ram[0x8A],
+                                   active=ram[0x7F8], beat=ram[0x268], link_state=ram[0x5D]))
+            native.require(ram[0x7F8] == 0, "Switch Hook latch set during the area transition")
+            if ram[0x8A] != OW_AREA and ram[0x10] == 0x09 and ram[0x11] == 0:
+                break
+            self.advance("Up", 1)
+        self.input(""); self.ready()
+        end = self.snap()
+        switch_hook.check_minish(end)
+        self.result["edge_transition"] = dict(trace=transition, start=start, end=end)
+        self.check("Area transition happened", end["area"] != OW_AREA and end["module"] == 0x09, True)
+        self.check("No stuck shot or beat after the transition",
+                   (end["active"], end["drag"], 0x1F in end["ancilla"], end["link_state"],
+                    end["z"] in (0, 0xFFFF)), (0, 0, False, 0, True))
+        self.area = end["area"]
+        self.advance("", 30)                 # let the post-transition walk-in finish
+        self.cast_miss("ow-after-transition-miss")
+        self.shot("ow-after-transition")
+
+    def cast_miss(self, label):
+        """Switch Hook with no target: chain extends, retracts, latch releases."""
+        self.ready()
+        before = self.snap()
+        self.tap("Y", 1)
+        saw_chain = False
+        for _ in range(240):
+            now = self.snap()
+            switch_hook.check_minish(now)
+            native.require(now["drag"] == 0 and now["beat"] in (0, before["beat"]),
+                           "Miss shot started a pull or a beat")
+            saw_chain |= bool(now["heads"])
+            if saw_chain and not now["heads"] and now["active"] == 0:
+                break
+            self.advance("", 1)
+        self.ready()
+        after = self.snap()
+        self.check(label + " chain and release", (saw_chain, after["active"], after["link"]),
+                   (True, 0, before["link"]))
+        self.result["world_cases"].append(dict(name=label, before=before, after=after, passed=True))
+
+    def sentinel_write(self, address, value, reason):
+        self.check_owner()
+        native.require(address in SENTINELS and self.paused() and self.r(0x7E07F8) == 0,
+                       "Sentinel write outside the inactive beat/target bytes")
+        entry = dict(address=f"{address:06X}", before=self.r(address), value=value, reason=reason)
+        self.result["writes"].append(entry)
+        native.require(self.b.write_memory(address, value), "Sentinel write rejected")
+        self.check("Sentinel readback", self.r(address), value)
+
+    def case_ow_hook(self):
+        """(e) Ordinary Hookshot on the overworld with the Astra sentinel:
+        $07F8=0, $0268=$30 (>= swap beat 34), $0269 = a live unrelated diamond.
+        The vanilla pull must run and leave sentinel, actor height and latch untouched."""
+        self.enter_area(OW_AREA, item=3)     # from the seed cursor; the custom bottom row has no path up
+        self.route(ROUTE_HOOK)
+        x, y = self.link()
+        spots = [(x, y + 0x28), (x + 0x20, y + 8), (x, y - 0x18), (x + 0x30, y + 8)]
+        spot = next((p for p in spots if self.floors("ow-sentinel-probe", p)["target_safe"]), None)
+        native.require(spot is not None, "No safe off-lane spot for the sentinel actor")
+        self.place("ow-sentinel-actor", spot, kind=switch_hook.TARGETS[2])
+        self.face("Left")
+        self.sentinel_write(0x7E0268, 0x30, "Sentinel: stale beat past the swap frame while inactive")
+        self.sentinel_write(0x7E0269, self.slot, "Sentinel: stale target = declared unrelated actor")
+        ram, tiles = self.block(0x7E0000, 0x1000), self.block(0x7E2000, 0x2000)
+        origin = (word(ram, 0x22), word(ram, 0x20))
+        lane = []
+        for column in range(origin[0] - 8, origin[0] - 128, -8):   # the chain head travels on Link Y+8
+            kind = overworld_tile(self.rom, ram, tiles, column, origin[1] + 8)
+            lane.append(kind)
+            if kind not in OW_SAFE | {0x08}:
+                break
+        self.check("Hookshottable $27 ends a clear lane to the left", lane[-1], OW_HOOKABLE)
+        rows = {f"y+{dy}": [overworld_tile(self.rom, ram, tiles, column, origin[1] + dy)
+                             for column in range(origin[0] - 8, origin[0] - 136, -8)] for dy in range(0, 32, 4)}
+        sprites = [dict(slot=i, kind=ram[0xE20 + i], state=ram[0xDD0 + i],
+                        x=ram[0xD10 + i] | ram[0xD30 + i] << 8, y=ram[0xD00 + i] | ram[0xD20 + i] << 8)
+                   for i in range(16) if ram[0xDD0 + i]]
+        record = self.result["ordinary_hook_control"] = dict(before=origin, lane=lane, trace=[], rows=rows,
+                                                             sprites=sprites, sentinel=(0x30, self.slot))
+        watched = {0x7E0030: "$30 follow-box Y", 0x7E0031: "$31 follow-box X", 0x7E0024: "Link Z",
+                   0x7E0268: "beat", 0x7E0269: "target", 0x7E07F8: "latch",
+                   0x7E0F70 + self.slot: "sentinel actor height"}
+        watches = {address: self.writer_watch(address) for address in watched}
+        self.tap("Y", 1)
+        saw_chain = saw_pull = moved = False
+        for _ in range(240):
+            ram = self.block(0x7E0000, 0x1000)
+            point = (word(ram, 0x22), word(ram, 0x20))
+            chains = [i for i in range(5) if ram[0xC4A + i] == 0x1F]
+            row = dict(link=point, camera=(word(ram, 0xE2), word(ram, 0xE8)), drag=ram[0x37E], frame=ram[0x1A],
+                       chains=chains, active=ram[0x7F8], beat=ram[0x268], target=ram[0x269],
+                       height=ram[0xF70 + self.slot], z=word(ram, 0x24), state=ram[0x5D],
+                       heads=[(ram[0xC04 + i] | ram[0xC18 + i] << 8, ram[0xBFA + i] | ram[0xC0E + i] << 8)
+                              for i in chains])
+            record["trace"].append(row)
+            switch_hook.check_minish(dict(gbc=ram[0xFFF], mask=ram[0x2B2]))
+            native.require(row["active"] == 0, "Ordinary Hookshot acquired Switch Hook latch")
+            native.require((row["beat"], row["target"]) == (0x30, self.slot), "Ordinary Hookshot wrote the sentinel")
+            native.require(row["height"] == 0, "Ordinary Hookshot lifted the sentinel actor")
+            saw_chain |= bool(chains)
+            saw_pull |= row["drag"] != 0
+            moved |= point[0] < origin[0]
+            if saw_chain and not chains and ram[0x5D] == 0:
+                break
+            self.advance("", 1)
+        labels = switch_hook_labels(self.symbols)
+        writers = record["writers"] = {}
+        for address, ident in watches.items():
+            rows = self.writer_blame(ident)
+            writers[f"{address:06X} {watched[address]}"] = sorted({(pc, value, owner(labels, pc)) for pc, value in rows})
+        # Root's fire-time guard: SwitchHook_Init clears the latch (STZ, value 0) on every
+        # Hookshot fire before its item-$1D test. That is the only Switch Hook write allowed.
+        guard = [row for row in writers["7E07F8 latch"]
+                 if row[1] == 0 and row[2] == "Oracle_SwitchHook_Init"]
+        owned = [(name, pc, value, label) for name, rows in writers.items() for pc, value, label in rows
+                 if label and "SwitchHook" in label and (pc, value, label) not in guard]
+        self.check("Ordinary Hookshot frames run no Switch Hook writer (camera step, Clear, Exchange)", owned, [])
+        self.check("Only Root's fire-time Init guard clears the latch", writers["7E07F8 latch"], guard)
+        for name in ("7E0268 beat", "7E0269 target", "7E0F%02X sentinel actor height" % (0x70 + self.slot)):
+            self.check(f"No writer touches {name}", writers[name], [])
+        self.check("Ordinary Hookshot creates chain", saw_chain, True)
+        self.check("Ordinary Hookshot still pulls to the overworld $27 tile", saw_pull and moved, True)
+        self.ready()
+        record["after"] = self.snap()
+        self.shot("ow-ordinary-hookshot-pull")
+        self.clear_actor()
+
+    def writer_watch(self, address):
+        reply = self.b.mem_watch_add(address, 1, 128)
+        native.require(reply.get("success"), "Native watch rejected: " + str(reply))
+        value = reply.get("data", {})
+        value = json.loads(value) if isinstance(value, str) else value
+        return native.number(value["watch_id"])
+
+    def writer_blame(self, ident):
+        reply = self.b.mem_blame(watch_id=ident)
+        value = reply.get("data", {})
+        value = json.loads(value) if isinstance(value, str) else value
+        self.b.mem_watch_remove(ident)
+        return [(native.number(w["pc"]), native.number(w["value"])) for w in (value or {}).get("writes", [])]
+
     def clear_actor(self):
         if self.slot is None:
             return
         self.check_owner()
-        native.require(self.r(0x7E0E20 + self.slot) == self.actor_kind
-                       and (self.r(0x7E00A0) | self.r(0x7E00A1) << 8) == self.room,
-                       "Do not delete an actor after identity/room changed")
+        if self.area is None:
+            same_place = (self.r(0x7E00A0) | self.r(0x7E00A1) << 8) == self.room
+        else:
+            same_place = self.r(0x7E001B) == 0 and self.r(0x7E008A) == self.area
+        native.require(self.r(0x7E0E20 + self.slot) == self.actor_kind and same_place,
+                       "Do not delete an actor after identity/room/area changed")
         self.fixture_write(0xDD0, 0, "Remove only the task-created actor fixture")
         for offset, value in self.saved.items():
             if offset != 0xDD0:
