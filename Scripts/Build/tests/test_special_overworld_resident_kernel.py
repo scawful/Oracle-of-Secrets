@@ -49,7 +49,8 @@ def source_fixture():
 
 def constants(capacity=192):
     tables = {family.name: family.snes for family in N.current_table_layout(N.TABLE_BASE)}
-    return dict(SPECIAL_OVERWORLD_NATIVE=1, SPECIAL_OVERWORLD_RESIDENT_ENABLED=1,
+    return dict(ENABLE_SKY_OVERWORLD_ROUTE=0,
+                SPECIAL_OVERWORLD_NATIVE=1, SPECIAL_OVERWORLD_RESIDENT_ENABLED=1,
                 SPECIAL_OVERWORLD_RESIDENT_FIRST=0x80, SPECIAL_OVERWORLD_RESIDENT_END=capacity,
                 LYRA_CURRENT_RESIDENT_ABI_VERSION=1, LYRA_CURRENT_RESIDENT_TILE16_COUNT=4096,
                 LYRA_CURRENT_RESIDENT_CODE_BASE=N.RESIDENT_WORD_CODE_BASE,
@@ -79,6 +80,28 @@ def assemble(directory, image, values):
 
 @unittest.skipUnless(ASSEMBLER, 'Asar required for compiled kernel checks')
 class SpecialOverworldResidentKernelTest(unittest.TestCase):
+    def test_sky_overlay_variant_keeps_hook_contract_and_code_reservation(self):
+        original = source_fixture()
+        with tempfile.TemporaryDirectory() as directory:
+            values = constants()
+            values['ENABLE_SKY_OVERWORLD_ROUTE'] = 1
+            result, image, labels = assemble(directory, original, values)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertLessEqual(labels['Lyra_ResidentAtlasCodeEnd'],
+                             N.RESIDENT_WORD_CODE_LIMIT)
+        start = labels['Lyra_ResidentAtlasCodeStart']
+        end = labels['Lyra_ResidentAtlasCodeEnd']
+        permitted = [(N.pc(start), N.pc(start) + end - start)]
+        for site, suffix, size in HOOKS:
+            target = labels['Lyra_Resident' + suffix]
+            expected = b'\x22' + target.to_bytes(3, 'little') + b'\xEA' * (size - 4)
+            self.assertEqual(image[N.pc(site):N.pc(site) + size], expected)
+            permitted.append((N.pc(site), N.pc(site) + size))
+        for index, (old, new) in enumerate(zip(original, image)):
+            if old != new:
+                self.assertTrue(any(a <= index < b for a, b in permitted), hex(index))
+        self.assertEqual(len(image), len(original))
+
     def test_disabled_module_emits_nothing(self):
         original = source_fixture()
         with tempfile.TemporaryDirectory() as directory:

@@ -97,7 +97,25 @@ Lyra_ResidentAtlasCodeStart:
 ; At entry:3,S=quadrant,5,S=native Y,7,S=native X,9,S=native word.
 ; $02 is already two bytes beyond the current $0500 entry.
 Lyra_ResidentFullWord:
+if !ENABLE_SKY_OVERWORLD_ROUTE == 1
+    LDA.b $04 : CMP.w #$2000 : BEQ .foreground
+    ; The full renderer also builds BG1 from $7E4000. Its temporary $8A
+    ; identifies the overlay, while ZS retains the actual host at $7EC213.
+    CMP.w #$4000 : BNE .native
+    LDA.b $06 : AND.w #$00FF : CMP.w #$007E : BNE .native
+    LDA.b $1B : AND.w #$00FF : BNE .native
+    LDA.l $7EC213 : CMP.w #$0087 : BNE .native
+    LDA.b $8A : CMP.w #$009C : BEQ .overlay
+    CMP.w #$009F : BNE .native
+.overlay:
+    LDA $05,S : ORA $03,S : TAY
+    TYA : CMP.w #(!LYRA_CURRENT_RESIDENT_TILE16_COUNT*8) : BCS .native
+    LDA.w #$0087
+    JMP Lyra_ResidentPageLookup
+.foreground:
+else
     LDA.b $04 : CMP.w #$2000 : BNE .native
+endif
     LDA.b $06 : AND.w #$00FF : CMP.w #$007E : BNE .native
     LDA.b $86 : ASL : JSR Lyra_ResidentBufferDelta
     CLC : ADC.b $84 : SEC : SBC.w #$0410 : AND.w #$1FFF
@@ -212,6 +230,9 @@ Lyra_ResidentLookup:
     BCS .page_valid
     RTS
 .page_valid:
+; A=qualified physical page; Y=validated Tile16*8+quadrant*2. The
+; host-scoped overlay path shares the same directory and missing-row fallback.
+Lyra_ResidentPageLookup:
     SEC : SBC.w #!SPECIAL_OVERWORLD_RESIDENT_FIRST : ASL : ASL : ASL : TAX
     ; Sparse directories include untouched native pages. A zero row count is
     ; an explicit fallback and must be checked before a null pointer is read.

@@ -24,7 +24,9 @@
 ;         $80-$9F  only while Song of Storms rain ($7EE00E != 0) is active and
 ;                  the exit room is none of $0180/$0181/$0182/$0189 (their
 ;                  mist, bridge, triforce and waterfall flows stay as they are)
-;       Everything else (Sky without rain, areas >= $C0) keeps the special-area path.
+;         $87      ordinary table clouds too, with ENABLE_SKY_OVERWORLD_ROUTE;
+;                  the same four exit-room exceptions retain precedence.
+;       Other Sky without rain and areas >= $C0 keep the special-area path.
 ;
 ;   F2a Map16 event overlay (Overworld_LoadMapData, $02EF50): a set bit $20
 ;       in the area's event byte calls ApplyOverworldOverlay ($0EF652), which
@@ -58,6 +60,18 @@ if !SPECIAL_OVERWORLD_NATIVE == 1
 endif
 
   .sky
+if !ENABLE_SKY_OVERWORLD_ROUTE == 1
+  ; The selected tower approach has ordinary clouds even without Storms.
+  ; Keep the special exit-room pictures ahead of the area-table selection.
+  LDA.b $8A : CMP.w #$0087 : BNE .weather
+  LDA.b $A0
+  CMP.w #$0180 : BEQ .special
+  CMP.w #$0181 : BEQ .special
+  CMP.w #$0182 : BEQ .special
+  CMP.w #$0189 : BEQ .special
+  BRA .table
+  .weather
+endif
   LDA.l $7EE00E : AND.w #$00FF : BEQ .special   ; Song of Storms rain off
   LDA.b $A0
   CMP.w #$0180 : BEQ .special           ; master sword mist

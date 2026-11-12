@@ -128,6 +128,62 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
         self.assertEqual(result, R.plan_saved_native_terrain(self.source, self.exported))
         self.assertEqual(hashlib.sha256(self.source).hexdigest(), before)
 
+    def sky_overlay_export(self, selected=0x9C):
+        image = bytearray(self.source)
+        _, _, entries = R.native.read_native_directory(self.source)
+        image[R.native.pc(entries[410][0]) + 0x87] = 1
+        struct.pack_into('<H', image, R.native.pc(entries[5][0]) + 0x87 * 2,
+                         selected)
+        legacy = {name: (address, width) for name, address, _, _, width
+                  in R.native.CURRENT_TABLE_SPECS}
+        address, width = legacy['overlay']
+        struct.pack_into('<H', image, R.native.pc(address) + 0x87 * width,
+                         selected)
+        for overlay in (0x9C, 0x9F):
+            for name, family in (('map32_high', 20), ('map32_low', 21)):
+                address, width = legacy[name]
+                old = R.native.pc(address) + overlay * width
+                current = R.native.pc(entries[family][0]) + overlay * width
+                image[old:old + width] = image[current:current + width]
+        self.fixture.image = image
+        self.source = self.fixture.installed()
+        value = self.make_export(self.source)['native_source']
+        for page in value['pages']:
+            if page['map_id'] in (0x9C, 0x9F):
+                page['tiles'] = [3 if page['map_id'] == 0x9C else 4] * 1024
+        return self.seal(value)
+
+    def test_sky_host_reserves_cloud_rain_and_mutable_rows_without_changing_source(self):
+        for selected in (0x9C, 0xFF):
+            with self.subTest(selected=selected):
+                exported = self.sky_overlay_export(selected)
+                original = self.source
+                plan = R.plan_saved_native_terrain(self.source, exported)
+                host = next(area for area in plan['areas'] if area['maps'] == [0x87])
+                rows = {row['tile16_id'] for row in host['remaps']}
+                self.assertEqual(rows, {0, 4, 0xDA4, 0xDA6, 0xE54}
+                                 | ({3} if selected == 0x9C else set()))
+                self.assertTrue(host['terrain_plan_ready'])
+                self.assertFalse(plan['full_residency_ready'])
+                self.assertEqual(self.source, original)
+
+    def test_sky_host_refuses_legacy_selection_or_pointer_disagreement(self):
+        exported = self.sky_overlay_export()
+        legacy = {name: (address, width) for name, address, _, _, width
+                  in R.native.CURRENT_TABLE_SPECS}
+        for name, page, reason in (('overlay', 0x87, 'SELECTION'),
+                                   ('map32_high', 0x9C, 'POINTER'),
+                                   ('map32_low', 0x9F, 'POINTER')):
+            with self.subTest(name=name, page=page):
+                image = bytearray(self.source)
+                address, width = legacy[name]
+                image[R.native.pc(address) + page * width] ^= 1
+                changed = bytes(image)
+                value = copy.deepcopy(exported['native_source'])
+                value['source_rom_sha256'] = R._sha(changed)
+                with self.assertRaisesRegex(ValueError, 'SKY_OVERLAY_' + reason + '_MISMATCH'):
+                    R.plan_saved_native_terrain(changed, self.seal(value))
+
     def bound_global(self):
         folder = tempfile.TemporaryDirectory()
         self.addCleanup(folder.cleanup)

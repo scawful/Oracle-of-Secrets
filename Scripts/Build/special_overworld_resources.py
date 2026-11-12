@@ -419,6 +419,41 @@ def _native_source(source, exported):
     return value, definitions, tiles, areas
 
 
+def _sky_overlay_closure(source, value, tiles, areas):
+    """Bind the tower host's BG1 demands to the actual legacy overlay loader.
+
+    Map87 and overlays9C/9F remain below the native readers' A0 threshold.
+    An export of their directory rows alone does not prove the running loader
+    selects the same picture. Refuse disagreement before packing resources.
+    """
+    if not any(0x87 in area['maps'] and area['resident_required'] for area in areas):
+        return {}
+    profile = next(page['source_profile'] for page in value['pages']
+                   if page['map_id'] == 0x87)
+    selected = profile['subscreen_overlay']
+    _require(selected in (0x9C, 0xFF), 'SKY_OVERLAY_UNSUPPORTED')
+    tables = {name: (address, width) for name, address, _, _, width
+              in native.CURRENT_TABLE_SPECS}
+    address, width = tables['overlay']
+    start = native.pc(address) + 0x87 * width
+    _require(int.from_bytes(source[start:start + width], 'little') == selected,
+             'SKY_OVERLAY_SELECTION_MISMATCH')
+    _, _, entries = native.read_native_directory(source)
+    # Storms overrides even an absent ordinary overlay with9F.
+    overlays = (0x9C, 0x9F) if selected == 0x9C else (0x9F,)
+    for overlay in overlays:
+        for name, family in (('map32_high', 20), ('map32_low', 21)):
+            address, width = tables[name]
+            legacy = native.pc(address) + overlay * width
+            current = native.pc(entries[family][0]) + overlay * width
+            _require(source[legacy:legacy + width] == source[current:current + width],
+                     'SKY_OVERLAY_POINTER_MISMATCH')
+    # Reserve the existing door-open/rock-ground results conservatively; this
+    # is not proof that every possible mutable writer has been closed.
+    return {0x87: set().union(*(tiles[overlay] for overlay in overlays),
+                              (0xDA4, 0xDA6, 0xE54))}
+
+
 def plan_saved_native_terrain(source, exported, *, graphics_root=None):
     """Reuse the retained packer with saved-ROM pages, never a terrain sidecar.
 
@@ -492,7 +527,12 @@ def plan_saved_native_terrain(source, exported, *, graphics_root=None):
                      and baseline['slots'] == other['slots']
                      and baseline['animation'] == other['animation'],
                      'BG_PHASE_VARIATION_UNSUPPORTED')
-    planned = [_plan_area(area, tiles, assets, definitions, read_sheet)
+    conditional_tiles = _sky_overlay_closure(source, value, tiles, areas)
+    _require(all(0 <= tile < len(definitions) // 8
+                 for values in conditional_tiles.values() for tile in values),
+             'SKY_OVERLAY_TILE_INVALID')
+    planned = [_plan_area(area, tiles, assets, definitions, read_sheet,
+                          conditional_tiles=conditional_tiles)
                for area in areas if area['resident_required']]
     result = dict(schema=PLAN_SCHEMA, source_rom_sha256=_sha(source),
         materialized_map_count=value['materialized_map_count'],
