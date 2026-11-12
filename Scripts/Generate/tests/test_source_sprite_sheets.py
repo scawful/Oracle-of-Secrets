@@ -385,7 +385,7 @@ class SourceSheets(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'schema 2'):
             sheets.build(self.spec_path, self.base)
 
-    def test_d4_streams_stop_before_frame_records(self):
+    def test_d4_streams_skip_frame_records_without_moving_prior_streams(self):
         self.spec.update(schema_version=2, encoding='stored')
         count=(sheets.D4_FRAME_START-sheets.GLOBAL_START)//len(lz2.stored(self.raw))
         self.spec['sheets']=[dict(global_sheet=hex(0xDF+i),source='sheet.txt',
@@ -393,13 +393,53 @@ class SourceSheets(unittest.TestCase):
         self.spec_path=self.root/sheets.D4_SPEC.name;self.write_spec()
         _,items=sheets.build(self.spec_path,self.base)
         self.assertLessEqual(items[-1]['snes']+len(items[-1]['stream']),sheets.D4_FRAME_START)
+        prior=items
         self.spec['sheets'].append(dict(self.spec['sheets'][-1],global_sheet=hex(0xDF+count)));self.write_spec()
-        with self.assertRaisesRegex(ValueError,'overlaps D4 frame records'):
-            sheets.build(self.spec_path,self.base)
+        _,items=sheets.build(self.spec_path,self.base)
+        self.assertEqual(items[:-1],prior)
+        self.assertEqual(items[-1]['snes'],sheets.D4_FRAME_END)
+        include=sheets.asm_text(items)
+        self.assertIn(f'org ${sheets.D4_FRAME_END:06X}\nSourceGlobalSheet_{items[-1]["g"]:02X}:',include)
+        self.assertIn(f'  db ${(items[-1]["snes"] >> 8) & 255:02X}',include)
         # The same streams still fit the standard bank-wide allocation.
         self.spec_path=self.root/'standard.json';self.write_spec()
         _,items=sheets.build(self.spec_path,self.base)
         self.assertGreater(items[-1]['snes']+len(items[-1]['stream']),sheets.D4_FRAME_START)
+
+    def test_d4_reserved_gap_and_final_bank_capacity_are_both_preserved(self):
+        self.spec.update(schema_version=2,encoding='stored')
+        stream_size=len(lz2.stored(self.raw))
+        before=(sheets.D4_FRAME_START-sheets.GLOBAL_START)//stream_size
+        after=(sheets.GLOBAL_START+sheets.GLOBAL_CAPACITY-sheets.D4_FRAME_END)//stream_size
+        self.spec['sheets']=[dict(global_sheet=hex(0xDF+i),source='sheet.txt',
+            decoded_sha256=hashlib.sha256(self.raw).hexdigest(),why='D4 full-bank vector')
+            for i in range(before+after)]
+        self.spec_path=self.root/sheets.D4_SPEC.name;self.write_spec()
+        _,items=sheets.build(self.spec_path,self.base)
+        for item in items:
+            self.assertFalse(item['snes'] < sheets.D4_FRAME_END and
+                             item['snes']+len(item['stream']) > sheets.D4_FRAME_START)
+        self.assertLessEqual(items[-1]['snes']+len(items[-1]['stream']),
+                             sheets.GLOBAL_START+sheets.GLOBAL_CAPACITY)
+        self.spec['sheets'].append(dict(self.spec['sheets'][-1],
+                                        global_sheet=hex(0xDF+before+after)))
+        self.write_spec()
+        with self.assertRaisesRegex(ValueError,'bank \\$47 is full'):
+            sheets.build(self.spec_path,self.base)
+
+    def test_flagged_d4_stream_can_jump_gap_without_changing_unflagged_output(self):
+        self.spec.update(schema_version=2,encoding='stored')
+        count=(sheets.D4_FRAME_START-sheets.GLOBAL_START)//len(lz2.stored(self.raw))
+        entry=dict(source='sheet.txt',decoded_sha256=hashlib.sha256(self.raw).hexdigest(),why='D4 flagged vector')
+        self.spec['sheets']=[dict(entry,global_sheet=hex(0xDF+i)) for i in range(count)]
+        self.spec_path=self.root/sheets.D4_SPEC.name;self.write_spec()
+        _,prior=sheets.build(self.spec_path,self.base)
+        self.spec['sheets'].append(dict(entry,global_sheet='0xFE',flag='ENABLE_SKY_ROOM_SKY'))
+        self.write_spec()
+        _,items=sheets.build(self.spec_path,self.base)
+        self.assertEqual(items[:-1],prior)
+        self.assertEqual(items[-1]['snes'],sheets.D4_FRAME_END)
+        self.assertIn('if !ENABLE_SKY_ROOM_SKY\n  org $47D000',sheets.asm_text(items))
 
     def test_frame_source_copies_exactly_and_check_detects_change(self):
         _,items=sheets.build(self.spec_path,self.base)

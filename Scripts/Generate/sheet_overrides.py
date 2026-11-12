@@ -33,6 +33,7 @@ START, CAPACITY = 0x40D000, 0x3000
 # New globals $DF..$FE: one whole bank (scawful 2026-11-02 "Yes, one bank").
 GLOBAL_START, GLOBAL_CAPACITY = 0x478000, 0x8000
 D4_FRAME_START = 0x47C000
+D4_FRAME_END = 0x47D000
 # Relocated pointer arrays (Core/gfx_sheet_table.asm); the base ROM table is only read.
 NEW_BANK, NEW_HIGH, NEW_LOW = 0x23FD00, 0x23FE00, 0x23FF00
 SPEC = Path('Data/graphics/source_sprite_sheets.json')
@@ -167,8 +168,11 @@ def build(spec_path, base_rom, root=None, *, rom_role="editable_base"):
         require(lz2.decompress(stream, max_output=0x600) == (raw, len(stream)), 'compressed sheet round trip differs')
         address = cursor[new_global]
         if new_global:
-            end = D4_FRAME_START if spec_path.name == D4_SPEC.name else GLOBAL_START+GLOBAL_CAPACITY
-            require(address+len(stream) <= end, 'new global sheet bank $47 is full or overlaps D4 frame records')
+            if (spec_path.name == D4_SPEC.name and address < D4_FRAME_END
+                    and address+len(stream) > D4_FRAME_START):
+                address = D4_FRAME_END
+            require(address+len(stream) <= GLOBAL_START+GLOBAL_CAPACITY,
+                    'new global sheet bank $47 is full')
         else:
             require(address+len(stream) <= START+CAPACITY, 'source sprite sheet allocation is full')
         out.append(dict(s=sheet, g=global_id, new=new_global, raw=raw, stream=stream, snes=address, source=entry['source'], why=entry['why'], flag=entry.get('flag')))
@@ -201,8 +205,12 @@ def asm_text(items):
     # builds keep their size.
     if new:
         lines.append(f'org ${GLOBAL_START:06X}')
+        address = GLOBAL_START
         for item in new:
+            if item['snes'] != address:
+                lines.append(f'org ${item["snes"]:06X}')
             lines.append(f'{global_label(item)}: incbin "sheets/{stream_name(item)}.bin"')
+            address = item['snes']+len(item['stream'])
         lines.append('assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"')
     for item in flagged:
         lines += [f'if !{item["flag"]}',
