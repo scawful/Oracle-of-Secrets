@@ -38,6 +38,7 @@ def describe():
     return dict(native_executed=False, room="0104", layer=0,
                 initial_link="X0960..0990/Y2178; controller positioning only",
                 fixture="One unused sprite slot; D5 with native initialize state08",
+                ages_cases=["5F camera step (a)", "5F statue hold plate (b)", "59 pit gap (c)"],
                 checks=["Y exchange and return with full-word coordinates and retained reset origin",
                         "Opposite-layer and existing-wall footprint refusals",
                         "Ordinary Hookshot still pulls to the existing pot"],
@@ -95,6 +96,7 @@ class WorldFlow(combined.NewItemsFlow):
         super().__init__(args, bridge)
         self.slot = None
         self.saved = {}
+        self.room = 0x104
         self.result["scope"] = dict(native_world_fixture=True, actor="D5/native state08 prep",
                                     no_link_position_writes=True, acquisition_tested=False,
                                     art_acceptance=False, page_boundary_crossing_tested=False)
@@ -169,15 +171,21 @@ class WorldFlow(combined.NewItemsFlow):
         expected = {"Up": 0, "Down": 2, "Left": 4, "Right": 6}[direction]
         self.check("Controller facing", self.r(0x7E002F), expected)
 
-    def cast(self, label, accepted=False, require_overlap=False):
+    def cast(self, label, accepted=False, require_overlap=False, frames=False):
         before = self.snap()
+        switch_hook.check_minish(before)
         case = dict(name=label, before=before, trace=[])
         self.result["world_cases"].append(case)
+        if frames:
+            self.shot(label + "-before")
         self.tap("Y", 1)
         saw_chain = saw_overlap = saw_retract = False
-        for _ in range(180):
+        for _ in range(400):
             now = self.snap()
+            switch_hook.check_minish(now)
             case["trace"].append(now)
+            if frames and now["beat"] == switch_hook.SWAP - 1:
+                self.shot(label + "-mid")
             saw_chain |= bool(now["heads"])
             saw_overlap |= any(overlap(h["position"], before["block"]) for h in now["heads"])
             saw_retract |= any(h["retract"] for h in now["heads"])
@@ -190,23 +198,137 @@ class WorldFlow(combined.NewItemsFlow):
         after = self.snap()
         case.update(after=after, saw_overlap=saw_overlap, saw_retract=saw_retract)
         if accepted:
-            switch_hook.check_exchange(before, after)
+            switch_hook.check_exchange(before, after, camera_may_move=True)
             self.check(label + " full-word exchange", True, True)
+            case["beat"] = switch_hook.check_beat(before, case["trace"])
+            self.check(label + " Ages turn-around", after["facing"], before["facing"] ^ 2)
+            self.advance("", 4)
+            self.check(label + " camera settled before control", self.snap()["camera"], after["camera"])
         else:
             switch_hook.check_rejected(before, after)
             self.check(label + " retracts and releases its latch", (after["active"], after["heads"]), (0, []))
             self.check(label + " had a retract phase", saw_retract, True)
             if require_overlap:
                 self.check(label + " chain reached actor footprint", saw_overlap, True)
-        self.shot(label)
+        self.shot(label + "-landed" if frames else label)
         case["passed"] = True
+        return before, after
+
+    # --- Ages beat cases (room fixtures reached by entrance warp in the driver) ---
+
+    def settle(self, limit=120):
+        """Wait out an in-room submodule ($11), e.g. the plate sink animation
+        that vanilla PushPressurePlate starts when Link steps on a plate."""
+        for _ in range(limit):
+            if not self.r(0x7E0011):
+                return
+            self.advance("", 1)
+        raise AssertionError("Dungeon submodule did not return to player control")
+
+    def walk(self, direction, done, limit=160):
+        for _ in range(limit):
+            ram = self.block(0x7E0000, 0x100)
+            if done(word(ram, 0x22), word(ram, 0x20)):
+                self.advance("", 2)
+                return word(ram, 0x22), word(ram, 0x20)
+            self.advance(direction, 1)
+        raise AssertionError(f"Walk {direction} did not reach its goal")
+
+    def pick(self, item):
+        """Right at a row end turns to the Equipment page (custom grid), so
+        reach a bottom-row item with Down, then move within the row."""
+        if item not in combined.BOTTOM:
+            return super().pick(item)
+        native.require(self.screen() == "items", "Need Items screen")
+        for _ in range(6):
+            if self.r(0x7E0202) in combined.BOTTOM:
+                break
+            self.tap("Down")
+        row = combined.BOTTOM
+        for _ in range(len(row)):
+            current = self.r(0x7E0202)
+            native.require(self.screen() == "items" and current in row,
+                           f"Cursor left the bottom row at {current:02X}")
+            if current == item:
+                return
+            self.tap("Right" if row.index(current) < row.index(item) else "Left")
+        raise RuntimeError(f"Item {item:02X} is unreachable")
+
+    def enter(self, room):
+        self.room = room
+        self.ready()
+        ram = self.block(0x7E0000, 0x1000)
+        self.check("Case room", word(ram, 0xA0), room)
+        switch_hook.check_minish(dict(gbc=ram[0xFFF], mask=ram[0x2B2]))
+        if self.r(0x7EF3AE) != 1:
+            self.write(0x7EF3AE, 1, "Declared new-item ownership fixture (private save only)")
+        self.equip(0x1D)
+
+    def place(self, label, target, kind=0xD5):
+        self.check(label + " target safe", safe(self.floors(label, target)["target"]), True)
+        self.spawn(*target, 0, kind=kind)
+
+    def case_camera(self):
+        """(a) Room 28 bottom hall scrolls horizontally: a 72px swap left
+        leaves the follow box, so the camera must step after landing."""
+        self.enter(0x28)
+        x, y = self.walk("Up", lambda x, y: y <= 0x05B0)
+        self.face("Left")
+        x, y = (word(self.block(0x7E0000, 0x100), o) for o in (0x22, 0x20))
+        self.place("camera", (x - 0x48, y + 8))
+        before, after = self.cast("ages-camera", accepted=True, frames=True)
+        self.check("Camera stepped toward Link", after["camera"][0] < before["camera"][0], True)
+        self.clear_actor()
+
+    def case_plate(self):
+        """(b) Room 5F: statue presses the hold plate; swaps move it off and back on."""
+        self.enter(0x5F)
+        self.walk("Up", lambda x, y: y <= 0x0BB8)
+        self.walk("Right", lambda x, y: x >= 0x1F7E)
+        self.place("plate-statue", (0x1F80, 0x0B80), kind=0x1C)
+        self.advance("", 2)
+        self.check("Statue presses plate", self.r(0x7E0642), 1)
+        self.face("Up")
+        self.shot("ages-plate-pressed")
+        self.cast("ages-plate-off", accepted=True, frames=True)
+        self.walk("Down", lambda x, y: y >= 0x0B98)
+        self.advance("", 2)
+        self.check("Moved statue releases plate", self.r(0x7E0642), 0)
+        self.shot("ages-plate-released")
+        # face("Down") taps 2 frames and walks ~3 px back down; aim above
+        # the 0B75..0B7B window. The plate sink/shutter submodule runs first.
+        self.walk("Up", lambda x, y: y <= 0x0B76)
+        self.settle()
+        self.face("Down")
+        y = word(self.block(0x7E0000, 0x100), 0x20)
+        native.require(0x0B75 <= y <= 0x0B7B, f"Link Y {y:04X} would not put the statue on the plate")
+        self.cast("ages-plate-on", accepted=True, frames=True)
+        self.advance("", 2)
+        native.require(self.snap()["link"][1] + 8 > 0x0B8F, "Link feet still on the plate")
+        self.check("Swapped statue presses plate", self.r(0x7E0642), 1)
+        self.shot("ages-plate-pressed-again")
+        self.clear_actor()
+
+    def case_pit(self):
+        """(c) Room 59: swap straight up across the pit band (Y 0B80..0B97)."""
+        self.enter(0x59)
+        x, y = self.walk("Up", lambda x, y: y <= 0x0BA8)
+        self.face("Up")
+        x, y = (word(self.block(0x7E0000, 0x100), o) for o in (0x22, 0x20))
+        tiles = self.block(0x7F2000, 0x2000)
+        gap = [tiles[floor_index(x + 8, row, 0)] for row in range(0x0B80, 0x0B98, 8)]
+        self.result["pit_gap"] = gap
+        self.check("Pit band between Link and target", all(t == 0x20 for t in gap), True)
+        self.place("pit", (x, 0x0B60))
+        self.cast("ages-pit", accepted=True, frames=True)
+        self.clear_actor()
 
     def clear_actor(self):
         if self.slot is None:
             return
         self.check_owner()
         native.require(self.r(0x7E0E20 + self.slot) == self.actor_kind
-                       and (self.r(0x7E00A0) | self.r(0x7E00A1) << 8) == 0x104,
+                       and (self.r(0x7E00A0) | self.r(0x7E00A1) << 8) == self.room,
                        "Do not delete an actor after identity/room changed")
         self.fixture_write(0xDD0, 0, "Remove only the task-created actor fixture")
         for offset, value in self.saved.items():
