@@ -433,6 +433,8 @@ PlayThunderAndRain:
 ; buffer ($7EC300), which already holds the day/night shade, into the uploaded
 ; palette ($7EC500); ending a tint puts the buffer colors back. Color math is
 ; left alone, so overlays, rain and lightning keep their own blending.
+; Outdoors the added color shrinks as the day/night shade deepens: full by day,
+; half at the darkest hours (scaled by ColorSubEffect's green step).
 SongTint_Table:
   ; frames, red, green, blue added to each color (0-31)
   db $20, $02, $09, $03 ; !SongTint_Healing: green
@@ -511,12 +513,20 @@ SongTint_Colors:
   REP #$30
   PEI ($00) : PEI ($02) : PEI ($04) : PEI ($06) : PEI ($08)
   AND.w #$00FF : STA.b $08
+  ; $06 = strength in 16ths: 16 indoors, 16 - green shade step (0-8) outdoors.
+  LDA.w #$0010 : STA.b $06
+  LDA.b $1B : AND.w #$00FF : BNE +
+    LDA.l TimeState.Hours : AND.w #$00FF : ASL : TAX
+    LDA.l ColorSubEffect_green,X : LSR : LSR : LSR : LSR : LSR
+    EOR.w #$FFFF : SEC : ADC.w #$0010 : STA.b $06
+  +
   LDA.l SongTintColor : AND.w #$00FF : ASL : ASL : TAX
-  LDA.l SongTint_Table+1,X : AND.w #$001F : STA.b $00
-  LDA.l SongTint_Table+2,X : AND.w #$001F
-  ASL : ASL : ASL : ASL : ASL : STA.b $02
-  LDA.l SongTint_Table+3,X : AND.w #$001F
+  LDA.l SongTint_Table+3,X : AND.w #$001F : JSR .scale
   XBA : ASL : ASL : STA.b $04
+  LDA.l SongTint_Table+2,X : AND.w #$001F : JSR .scale
+  ASL : ASL : ASL : ASL : ASL : STA.b $02
+  LDA.l SongTint_Table+1,X : AND.w #$001F : JSR .scale
+  STA.b $00
   LDX.w #$0000
   .color
     ; Add each channel to the buffer color, saturating at 31.
@@ -546,6 +556,15 @@ SongTint_Colors:
   PLA : STA.b $00
   SEP #$30
   INC.b $15
+  RTS
+
+  ; A = amount (0-31) -> A = amount * $06 / 16. Clobbers Y and $00.
+  .scale
+  STA.b $00
+  LDA.w #$0000
+  LDY.b $06
+  - : CLC : ADC.b $00 : DEY : BNE -
+  LSR : LSR : LSR : LSR
   RTS
 }
 
