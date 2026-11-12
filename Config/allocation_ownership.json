@@ -180,7 +180,7 @@
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "88f9d68ae2a203bbe3bcf6003c1f3793cd4612d38fff1737b7436cf183a35f2d"
+      "sha256": "985b9d86d0ec4b0d24e1828eba64557b438a5153ae3062cf3b7bde47f641126d"
     },
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
@@ -215,7 +215,7 @@
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
       "path": "Scripts/Build/special_overworld_resident_abi.py",
-      "sha256": "49f160fb9b028594036772d08c3c5ef7a4f8b26fb1d723e586235927ee0b5926"
+      "sha256": "2f11598b0c23088f20c0941d8f99b2031b8522062ee9e58699dc945b9c88aa2c"
     },
     "shared:Overworld/special_overworld_palette.asm": {
       "source_set": "shared",
@@ -1768,7 +1768,8 @@
         "shared:Scripts/Build/lyra_native_loaders.py"
       ],
       "anchors": [
-        "RESIDENT_DATA_CAPACITY = 0x10000"
+        "RESIDENT_DATA_CAPACITY = 0x18000",
+        "RESIDENT_DATA_EXCLUDED_PC = ((0x280000, 0x282000),)"
       ],
       "aliases": []
     },
@@ -2157,6 +2158,28 @@
         "!SwitchHookBeat   = $0268",
         "!SwitchHookHeld   = $026D",
         "!SwitchHookHeldRoom = $026F"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_resident_cache_spill",
+      "owner": "Native special-overworld derived resident atlas; explicit bank50 upper spill only",
+      "space": "snes_rom",
+      "base": 5283840,
+      "size": 24576,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Build-derived payload only, bank-bounded. Existing4E/4F reservation retained; D4 owns50:8000-A000 and is always excluded.",
+      "reset": "No generic free-space discovery. Source editable spill must retain exact measured zero preimage; allocation and compiled gap checks fail otherwise.",
+      "save": "No SRAM change or editor publication permission. Build owns derived data; normal Save preserves this source preimage.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "RESIDENT_SPILL_PC = 0x282000",
+        "RESIDENT_SPILL_END = 0x288000"
       ],
       "aliases": []
     }

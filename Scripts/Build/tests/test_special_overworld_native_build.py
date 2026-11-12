@@ -144,6 +144,14 @@ class NativeBuildPreparationTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'RESIDENT_OVERLAPS_READER_CALL'):
             self.prepare()
 
+    def test_spill_refuses_a_changed_editable_source_preimage(self):
+        image = bytearray(self.source)
+        image[N.RESIDENT_SPILL_PC] = 1
+        self.source = bytes(image)
+        self.preimage = self.source[self.origin:self.origin+self.capacity]
+        with self.assertRaisesRegex(ValueError, 'SPILL_PREIMAGE_CHANGED'):
+            self.prepare()
+
     def test_stale_preimage_export_and_reader_reseal_refuse(self):
         with self.assertRaisesRegex(ValueError, 'PREIMAGE_MISMATCH'):
             self.prepare(preimage=bytes([self.preimage[0] ^ 1]) + self.preimage[1:])
@@ -293,6 +301,19 @@ class NativeBuildPreparationTest(unittest.TestCase):
                 image[at] ^= 1
                 with self.assertRaisesRegex(ValueError, error):
                     B.verify_revision4_compiled_output(self.source, self.exported, bytes(image), symbols)
+
+    def test_d4_hole_is_not_atlas_owned_but_spill_gaps_remain_protected(self):
+        compiled, symbols = self.compiled_fixture()
+        prepared = self.prepare()
+        hole_first, hole_end = N.RESIDENT_DATA_EXCLUDED_PC[0]
+        for row in prepared['emission']['placements']:
+            self.assertTrue(row['pc'][1] <= hole_first or row['pc'][0] >= hole_end)
+        image = bytearray(compiled)
+        image[hole_first] ^= 1  # D4 has its own source/compile validation.
+        B.verify_revision4_compiled_output(self.source, self.exported, bytes(image), symbols)
+        image[hole_end] ^= 1
+        with self.assertRaisesRegex(ValueError, 'RESOURCE_GAP_CHANGED'):
+            B.verify_revision4_compiled_output(self.source, self.exported, bytes(image), symbols)
 
 
 if __name__ == '__main__':

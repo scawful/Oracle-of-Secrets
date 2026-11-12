@@ -165,6 +165,11 @@ def prepare_revision4_compilation(source, exported, *, data_pc, capacity,
     _require(type(preimage) is bytes and len(preimage) == capacity
              and source[data_pc:data_pc + capacity] == preimage,
              'NATIVE_BUILD_RESIDENT_PREIMAGE_MISMATCH')
+    # This narrowly selected spill reservation has a measured zero preimage
+    # in the editable source. A later owner/data import must not be overwritten.
+    _require(source[native.RESIDENT_SPILL_PC:native.RESIDENT_SPILL_END]
+             == bytes(native.RESIDENT_SPILL_END-native.RESIDENT_SPILL_PC),
+             'NATIVE_BUILD_RESIDENT_SPILL_PREIMAGE_CHANGED')
     _require(all(data_pc >= end or data_pc + capacity <= first
                  for first, end in call_spans),
              'NATIVE_BUILD_RESIDENT_OVERLAPS_READER_CALL')
@@ -181,7 +186,8 @@ def prepare_revision4_compilation(source, exported, *, data_pc, capacity,
                                                graphics_root=graphics_root)
     abi = resident.plan_native_resident_abi(plan, tile16_count=entries[400][1])
     emission = resident.emit_native_resident_abi(abi, data_pc=data_pc,
-        capacity=capacity, preimage=preimage)
+        capacity=capacity, preimage=preimage,
+        excluded_pc_spans=native.RESIDENT_DATA_EXCLUDED_PC)
     runtime = resident.resident_runtime_inputs(abi, emission, preimage=preimage)
     binary = bytes.fromhex(emission['payload_hex'])
     writes = []
@@ -374,8 +380,16 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
                  f'NATIVE_BUILD_COMPILED_RESOURCE_CHANGED:{write["purpose"]}')
         offset = first - data_pc
         expected_resources[offset:offset + end - first] = write['after']
-    _require(compiled[data_pc:data_pc + data_size] == bytes(expected_resources),
-             'NATIVE_BUILD_COMPILED_RESOURCE_GAP_CHANGED')
+    # Retain the complete old4E/4F gap check and add the new spill interval.
+    # The skipped50:8000-A000 reservation belongs to D4's own source/checks,
+    # not this atlas. It may contain normally compiled water-control code.
+    cursor = data_pc
+    for first, end in (*native.RESIDENT_DATA_EXCLUDED_PC,
+                       (data_pc + data_size, data_pc + data_size)):
+        _require(compiled[cursor:first] == bytes(expected_resources[
+            cursor-data_pc:first-data_pc]),
+                 'NATIVE_BUILD_COMPILED_RESOURCE_GAP_CHANGED')
+        cursor = end
 
     first = native.pc(code_address)
     before, after = source[first:first + code_size], compiled[first:first + code_size]

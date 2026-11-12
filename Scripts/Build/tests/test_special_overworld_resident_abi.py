@@ -119,6 +119,53 @@ class ResidentAbiTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'PREIMAGE_REQUIRED'):
             A.emit_native_resident_abi(abi, data_pc=0x300000, capacity=100, preimage=bytes(99))
 
+    def test_transfer_table_relocates_around_another_owners_reservation(self):
+        abi = A.plan_native_resident_abi(self.plan(), tile16_count=4096)
+        preimage = bytes(0x10000)
+        initial = A.emit_native_resident_abi(
+            abi, data_pc=0x300000, capacity=len(preimage), preimage=preimage)
+        old_table = next(row for row in initial['placements']
+                         if row['role'] == 'graphics_transfer_tables')
+        first = old_table['pc'][0]
+        hole = (first, first + 0x100)
+        emitted = A.emit_native_resident_abi(
+            abi, data_pc=0x300000, capacity=len(preimage), preimage=preimage,
+            excluded_pc_spans=(hole,))
+        for row in emitted['placements']:
+            self.assertTrue(row['pc'][1] <= hole[0] or row['pc'][0] >= hole[1])
+            self.assertEqual(row['pc'][0] // 0x8000, (row['pc'][1]-1) // 0x8000)
+        table = next(row for row in emitted['placements']
+                     if row['role'] == 'graphics_transfer_tables')
+        self.assertGreaterEqual(table['pc'][0], hole[1])
+        first_area = abi['areas'][0]
+        # The table's own 16-bit profile pointers must use the relocated
+        # address, not the cursor from before the excluded reservation.
+        self.assertEqual(emitted['transfer_profile_snes'][str(first_area['parent_map_id'])],
+                         table['snes'] + abi['end_map'] * 2)
+        A.resident_runtime_inputs(abi, emitted, preimage=preimage)
+        self.assertEqual(emitted['excluded_extent_bytes'], 0x100)
+        self.assertGreaterEqual(emitted['bank_padding_bytes'], 0)
+
+    def test_excluded_reservations_are_validated_and_rederived(self):
+        abi = A.plan_native_resident_abi(self.plan(), tile16_count=4096)
+        preimage = bytes(0x10000)
+        arguments = dict(data_pc=0x300000, capacity=len(preimage), preimage=preimage)
+        for spans in (((0x2FFFF0, 0x300100),), ((0x300100, 0x300100),),
+                      ((0x300200, 0x300400), (0x300300, 0x300500)),
+                      ((0x300200, 0x300300), (0x300000, 0x300100))):
+            with self.subTest(spans=spans), self.assertRaisesRegex(
+                    ValueError, 'EXCLUDED_SPANS_INVALID'):
+                A.emit_native_resident_abi(abi, **arguments, excluded_pc_spans=spans)
+        with self.assertRaisesRegex(ValueError, 'ALLOCATION_CAPACITY'):
+            A.emit_native_resident_abi(abi, **arguments,
+                                       excluded_pc_spans=((0x300000, 0x310000),))
+        emitted = A.emit_native_resident_abi(abi, **arguments,
+                                            excluded_pc_spans=((0x300000, 0x300100),))
+        changed = copy.deepcopy(emitted)
+        changed['excluded_pc_spans'] = []
+        with self.assertRaisesRegex(ValueError, 'EMISSION_MISMATCH'):
+            A.resident_runtime_inputs(abi, changed, preimage=preimage)
+
     def test_changed_lookup_bytes_overlapping_areas_and_source_hash_refuse(self):
         plan = self.plan()
         changed = copy.deepcopy(plan)

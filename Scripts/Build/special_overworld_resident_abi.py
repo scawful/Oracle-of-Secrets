@@ -379,7 +379,8 @@ def _transfer_tables(native_plan, addresses, origin):
 
 
 def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
-                             binary_path='binaries/resident-atlas.bin'):
+                             binary_path='binaries/resident-atlas.bin',
+                             excluded_pc_spans=()):
     """Emit bytes/source for an explicit caller-owned ROM interval, without I/O.
 
     This mechanically places each blob inside one LoROM bank. It accepts no
@@ -395,16 +396,38 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
              'NATIVE_ORIGIN_PREIMAGE_REQUIRED')
     _require(type(binary_path) is str and re.fullmatch(r'binaries/[A-Za-z0-9_-]+\.bin', binary_path),
              'NATIVE_BINARY_PATH_INVALID')
+    _require(type(excluded_pc_spans) in (list, tuple),
+             'NATIVE_EXCLUDED_SPANS_INVALID')
+    exclusions = []
+    for span in excluded_pc_spans:
+        _require(type(span) in (list, tuple) and len(span) == 2
+                 and all(type(value) is int for value in span)
+                 and data_pc <= span[0] < span[1] <= data_pc + capacity
+                 and (not exclusions or exclusions[-1][1] <= span[0]),
+                 'NATIVE_EXCLUDED_SPANS_INVALID')
+        exclusions.append(tuple(span))
     cursor, binary, placements = data_pc, bytearray(), []
 
     def snes(pc):
         return 0x800000 | ((pc // 0x8000) << 16) | 0x8000 | (pc % 0x8000)
 
+    def next_pc(size):
+        _require(size <= 0x8000, 'NATIVE_ALLOCATION_BANK_CAPACITY')
+        at = cursor
+        while True:
+            if at % 0x8000 + size > 0x8000:
+                at = (at // 0x8000 + 1) * 0x8000
+            blocked = next((end for first, end in exclusions
+                            if at < end and at + size > first), None)
+            if blocked is None:
+                break
+            at = blocked
+        _require(at + size <= data_pc + capacity, 'NATIVE_ALLOCATION_CAPACITY')
+        return at
+
     def place(label, raw, role):
         nonlocal cursor
-        if cursor % 0x8000 + len(raw) > 0x8000:
-            cursor = (cursor // 0x8000 + 1) * 0x8000
-        _require(cursor + len(raw) <= data_pc + capacity, 'NATIVE_ALLOCATION_CAPACITY')
+        cursor = next_pc(len(raw))
         record = dict(label=label, role=role, pc=[cursor, cursor + len(raw)],
             snes=snes(cursor), byte_count=len(raw), sha256=_sha(raw),
             binary_offset=len(binary), preimage_sha256=_sha(
@@ -422,9 +445,7 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
     addresses = {row['label']: row['snes'] for row in placements}
     transfer_size = (end * 2 + sum(22 + len(area['static_runs']) * 15
                                   for area in native_plan['areas']))
-    transfer_pc = cursor
-    if transfer_pc % 0x8000 + transfer_size > 0x8000:
-        transfer_pc = (transfer_pc // 0x8000 + 1) * 0x8000
+    transfer_pc = next_pc(transfer_size)
     transfer_raw, transfer_profiles = _transfer_tables(native_plan, addresses, snes(transfer_pc))
     _require(not any(row['label'] == 'SharedGraphicsParentProfiles' for row in placements),
              'TRANSFER_LABEL_COLLISION')
@@ -488,10 +509,15 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
     constants += f'!SPECIAL_OVERWORLD_TRANSFER_DIRECTORY = ${transfer["snes"]:06X}\n'
     constants += f'!SPECIAL_OVERWORLD_RESIDENT_PALETTE_DIRECTORY = ${palette_directory["snes"]:06X}\n'
     constants += f'!SPECIAL_OVERWORLD_RESIDENT_PALETTE_STRIDE = {NATIVE_PALETTE_DIRECTORY_STRIDE}\n'
+    excluded_bytes = sum(max(0, min(end, cursor) - first)
+                         for first, end in exclusions if first < cursor)
     return dict(kind='lyra.resident_atlas_native_emission.v1',
         abi_sha256=native_plan['abi_sha256'], data_pc=[data_pc, data_pc + capacity],
+        excluded_pc_spans=[list(span) for span in exclusions],
         preimage_sha256=_sha(preimage), used_pc_end=cursor,
-        used_extent_bytes=cursor-data_pc, bank_padding_bytes=cursor-data_pc-len(binary),
+        used_extent_bytes=cursor-data_pc,
+        bank_padding_bytes=cursor-data_pc-len(binary)-excluded_bytes,
+        excluded_extent_bytes=excluded_bytes,
         binary_path=binary_path, payload_hex=bytes(binary).hex(), payload_sha256=_sha(binary),
         placements=placements, animation_directory_byte_count=len(animation_raw),
         palette_directory_snes=palette_directory['snes'],
@@ -526,7 +552,8 @@ def resident_runtime_inputs(native_plan, emission, *, preimage):
              'NATIVE_EMISSION_INVALID')
     first, end = emission['data_pc']
     expected = emit_native_resident_abi(native_plan, data_pc=first, capacity=end-first,
-        preimage=preimage, binary_path=emission.get('binary_path'))
+        preimage=preimage, binary_path=emission.get('binary_path'),
+        excluded_pc_spans=emission.get('excluded_pc_spans', ()))
     _require(expected == emission, 'NATIVE_EMISSION_MISMATCH')
     placements = {row['label']: row for row in expected['placements']}
     resources, profiles, parents = {}, {}, {}

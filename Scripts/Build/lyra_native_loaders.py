@@ -43,7 +43,12 @@ RESIDENT_RESOURCE_CODE_LIMIT = 0x4DD000
 RESIDENT_PALETTE_CODE_BASE = 0x4DF000
 RESIDENT_PALETTE_CODE_LIMIT = 0x4E0000
 RESIDENT_DATA_PC = 0x270000
-RESIDENT_DATA_CAPACITY = 0x10000
+# Banks4E/4F retain the existing atlas; bank50's lower $2000 belongs to
+# D4 water control, so only its upper $6000 is available for atlas spill.
+RESIDENT_DATA_CAPACITY = 0x18000
+RESIDENT_DATA_EXCLUDED_PC = ((0x280000, 0x282000),)
+RESIDENT_SPILL_PC = 0x282000
+RESIDENT_SPILL_END = 0x288000
 
 # Existing dictionaries in the selected Oracle engine. Initial import reuses
 # these owned bodies; arbitrary relocation needs a separately bound reader ABI.
