@@ -74,7 +74,8 @@ pushpc
 ; @source usdasm/bank_0D.asm:SpritePrep_ResetProperties ($0DB871)
 ; @assumption M/X=8, DBR=$0D, X=slot. Normal and dynamic initialization
 ; share this reset, including same-type reuse before the next gameplay tick.
-assert read3($0DB871) == $0F009E && read3($0DB874) == $0E909E, "Sprite reset entry moved"
+assert read3($0DB871) == $0F009E, "Sprite reset entry moved"
+assert read3($0DB874) == $0E909E, "Sprite reset continuation moved"
 org $0DB871
   JSL SwitchHook_ResetSprite
   NOP #2

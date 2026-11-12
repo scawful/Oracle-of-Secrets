@@ -280,7 +280,7 @@
     "shared:Items/switch_hook.asm": {
       "source_set": "shared",
       "path": "Items/switch_hook.asm",
-      "sha256": "5770c5c426ffb9128cfa1151a24c3755b83db67e4088afc9bec5e1f242f47954"
+      "sha256": "c17862c54d8c8e57b9ffdb227d0c8c23e086aa53794cf0a0e72c4918f2f31652"
     }
   },
   "claims": [
