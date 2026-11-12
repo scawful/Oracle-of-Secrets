@@ -276,6 +276,11 @@
       "source_set": "shared",
       "path": "Items/special_soaring.asm",
       "sha256": "818ead727820b1989a4bcf0c858db9d15e1e09f9ba297818570d756b9bdd1e7f"
+    },
+    "shared:Items/switch_hook.asm": {
+      "source_set": "shared",
+      "path": "Items/switch_hook.asm",
+      "sha256": "5770c5c426ffb9128cfa1151a24c3755b83db67e4088afc9bec5e1f242f47954"
     }
   },
   "claims": [
@@ -2131,6 +2136,29 @@
         "symbol": "SkySoaringLearned",
         "bank00_mirror": false
       }
+    },
+    {
+      "id": "switch_hook_runtime",
+      "owner": "Switch Hook beat, target and one swapped-enemy plate marker",
+      "space": "wram",
+      "base": 8258152,
+      "size": 9,
+      "status": "shared",
+      "condition": {
+        "DISABLE_ITEMS": 0
+      },
+      "lifetime": "Volatile beat/target/camera fields $0268-$026C and held slot+1/type/full-room $026D-$0270. Only a dungeon enemy exchanged by the Switch Hook can create the plate marker. No saved data.",
+      "reset": "Module07 camera-save hook invalidates after every dungeon submodule, independent of masks, item selection and Link state. Outdoor camera processing drops the marker. Common SpritePrep_ResetProperties invalidates a tracked slot before normal or dynamic reuse. The plate reader revalidates full room/context/state/type/health and drops an awake enemy after it walks off. Raw diagnostic slot writes bypass native initialization and are not an actor-lifetime contract.",
+      "save": "Not persisted; normal file/room loading resets actor identities.",
+      "provenance": [
+        "shared:Items/switch_hook.asm"
+      ],
+      "anchors": [
+        "!SwitchHookBeat   = $0268",
+        "!SwitchHookHeld   = $026D",
+        "!SwitchHookHeldRoom = $026F"
+      ],
+      "aliases": []
     }
   ],
   "lifetime_aliases": [],

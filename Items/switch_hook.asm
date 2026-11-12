@@ -7,6 +7,10 @@
 ; within 128px, and safe floor under both footprints. The Elegy of Stone
 ; echo ($1C with SprFrame=!Stone_Marker) is not pushable and is never a target.
 ; Ruling 2026-10-19: "Ice blocks + statues" (no pots, no enemies).
+; Step 4 (2026-11-12, scawful "Go step 4"): ordinary small enemies from
+; SwitchHook_Enemies swap too. An enemy is frozen (vanilla stun state $0B,
+; timers held) from the latch until the beat ends, then stunned ~1 s with
+; the vanilla stun convention ($0DD0=$0B, $0DF0=$40, $0B58 timer).
 ; Overworld (module $09, $1B=0, step 3): the place key is area $8A instead of
 ; room $A0, there is no layer check, every submodule cancels, and the
 ; overworld floor list is plain walkable ground only. Link's landing must sit
@@ -28,6 +32,7 @@
 ; $0268       : beat counter (0 = no beat; read only while shot tag is active)
 ; $0269       : target sprite slot
 ; $026A/$026B : $E2/$E8 low bytes seen on the previous beat frame
+; $026C       : 1 when the latched target is an enemy (step 4)
 ; $07F8       : active-shot tag ($A5, zero otherwise)
 ; $07F9-$07FA : launch place key (dungeon room $A0, or overworld area $8A)
 ; $07FB       : launch layer
@@ -51,6 +56,11 @@ pullpc
 !SwitchHookTarget = $0269
 !SwitchHookCamX   = $026A
 !SwitchHookCamY   = $026B
+!SwitchHookEnemy  = $026C             ; 1 = latched target is an enemy
+!SwitchHookHeld   = $026D             ; slot+1 of the last swapped enemy (0 = none)
+!SwitchHookHeldType = $026E           ; its sprite type at the swap
+!SwitchHookHeldRoom = $026F           ; full dungeon room word at the swap
+!SwitchHookStun   = $20               ; $0B58 after landing: ~64 frames
 !SwitchHookCling  = 17                ; Ages: 1+4+4+4+4 cling frames
 !SwitchHookRise   = 16                ; Ages: z -1/frame for 16 frames
 !SwitchHookSwap   = !SwitchHookCling+!SwitchHookRise+1
@@ -60,6 +70,16 @@ pullpc
 assert !SwitchHookMode < $0800, "Switch Hook exceeds its WRAM reservation"
 
 pushpc
+; @hook SwitchHook_ResetSprite kind=jsl target=SwitchHook_ResetSprite
+; @source usdasm/bank_0D.asm:SpritePrep_ResetProperties ($0DB871)
+; @assumption M/X=8, DBR=$0D, X=slot. Normal and dynamic initialization
+; share this reset, including same-type reuse before the next gameplay tick.
+assert read3($0DB871) == $0F009E && read3($0DB874) == $0E909E, "Sprite reset entry moved"
+org $0DB871
+  JSL SwitchHook_ResetSprite
+  NOP #2
+assert pc() == $0DB877, "Switch Hook sprite reset gateway exceeds six bytes"
+
 ; @hook SwitchHook_AncillaEntry kind=jml target=SwitchHook_AncillaEntry
 ; @source usdasm/bank_08.asm:Ancilla1F_Hookshot ($08BD74)
 ; @assumption M=8, X=8, DBR=$08, X=ancilla slot.
@@ -164,11 +184,19 @@ SwitchHook_Clear:
   ; Abort or finish: put both actors back on the ground.
   LDY.w !SwitchHookTarget
   LDA.b #$00 : STA.w SprHeight,Y
+  LDA.w !SwitchHookEnemy : BEQ .grounded
+  ; Enemy: leave the freeze as a short vanilla stun (only if still frozen).
+  LDA.w SprState,Y : CMP.b #$0B : BNE .grounded
+  LDA.b #!SwitchHookStun : STA.w SprStunTimer,Y
+  LDA.b #$40 : STA.w SprTimerA,Y
+  LDA.b #$00 : STA.w SprTimerF,Y
+  .grounded
   STZ.b $24 : STZ.b $25
   STZ.b $30 : STZ.b $31
   STZ.w !SwitchHookBeat
   .idle
   STZ.w !SwitchHookActive
+  STZ.w !SwitchHookEnemy
   STZ.w !SwitchHookRoom : STZ.w !SwitchHookRoom+1
   STZ.w !SwitchHookLayer : STZ.w !SwitchHookMode
   REP #$30 : PLY : PLX : PLA
@@ -329,6 +357,9 @@ SwitchHook_TryExchange:
   STZ.b $30 : STZ.b $31
   STZ.w $037E
   LDA.b #$01 : STA.w $037B    ; Link stays unhittable for the whole beat
+  LDA.w !SwitchHookEnemy : BEQ .committed
+  JSR SwitchHook_FreezeEnemy  ; no AI or contact damage from this frame on
+  .committed
   PLY : PLX : PLB : SEC : RTL
 }
 
@@ -340,7 +371,15 @@ SwitchHook_Beat:
   PHB : PHK : PLB : PHY
   LDA.b $5D : CMP.b #$13 : BNE .abort
   LDY.w !SwitchHookTarget
+  LDA.w !SwitchHookEnemy : BNE .enemy
   LDA.w SprState,Y : CMP.b #$09 : BNE .abort
+  BRA .alive
+  .enemy
+  ; A killed or otherwise released enemy (state left $0B) cancels the beat.
+  LDA.w SprState,Y : CMP.b #$0B : BNE .abort
+  LDA.w SprHealth,Y : BEQ .abort
+  JSR SwitchHook_FreezeEnemy
+  .alive
   LDA.w !SwitchHookBeat : CMP.b #$FF : BEQ .finish  ; settle safety cap
   INC : STA.w !SwitchHookBeat
   CMP.b #!SwitchHookCling : BCC .cling
@@ -397,6 +436,9 @@ SwitchHook_DungeonCamera:
   PHX : PHY
   PHB : PHK : PLB
   SEP #$30
+  ; Module07 reaches this after every submodule, including transitions and
+  ; non-default Link states. Unlike the item tick, this is not mask-gated.
+  JSR SwitchHook_HeldEnemyValid
   LDA.w !SwitchHookActive : CMP.b #!SwitchHookTag : BNE .done
   LDA.w !SwitchHookBeat : CMP.b #!SwitchHookSwap : BCC .done
   LDA.b $5D : CMP.b #$13 : BNE .done
@@ -432,6 +474,7 @@ SwitchHook_OverworldCamera:
   PHP
   PHB : PHK : PLB
   SEP #$30
+  STZ.w !SwitchHookHeld       ; dungeon weight cannot follow Link outdoors
   LDA.w !SwitchHookActive : CMP.b #!SwitchHookTag : BNE .vanilla
   LDA.w !SwitchHookBeat : CMP.b #!SwitchHookSwap : BCC .vanilla
   LDA.b $5D : CMP.b #$13 : BNE .vanilla
@@ -482,7 +525,20 @@ SwitchHook_Exchange:
   LDA.b #$00
   STA.w SprXSpeed,Y : STA.w SprYSpeed,Y
   STA.w SprXRound,Y : STA.w SprYRound,Y
+  LDA.w !SwitchHookEnemy : BNE .enemy_state  ; enemy AI state stays intact
+  LDA.b #$00
   STA.w SprTimerA,Y : STA.w SprMiscA,Y : STA.w SprMiscC,Y
+  BRA .state_done
+  .enemy_state
+  ; Only dungeon hold plates use the marker; an overworld swap drops it.
+  STZ.w !SwitchHookHeld
+  LDA.b $1B : BEQ .state_done
+  TYA : INC : STA.w !SwitchHookHeld
+  LDA.w SprType,Y : STA.w !SwitchHookHeldType
+  REP #$20
+  LDA.b $A0 : STA.w !SwitchHookHeldRoom
+  SEP #$20
+  .state_done
   ; Cached reset coordinates deliberately stay at the original puzzle origin.
   STZ.w $0642                 ; block recomputes its switch contact next tick
   LDA.b $2F : EOR.b #$02 : STA.b $2F   ; Ages: Link turns around on swap
@@ -621,6 +677,125 @@ SwitchHook_Targets:
   db Sprite_SwapDiamond, $00               ; Ages Swap Diamond
 .end
 
+; Step 4: ordinary small enemies (vanilla IDs, none replaced by Oracle
+; sprites). All use hitbox class 0 (12x14), are not harmless, impervious or
+; deflecting, and their mains stop at Sprite_CheckIfActive outside state 9,
+; so the vanilla stun state $0B freezes their AI and contact damage.
+; Excluded types keep the step-3 pass-through. Reasons: STEP4_ENEMIES.md.
+SwitchHook_Enemies:
+  db $0D                                   ; Buzzblob
+  db $12                                   ; Moblin
+  db $20                                   ; Sluggula
+  db $26                                   ; Hardhat Beetle
+  db $4E, $4F                              ; Popo
+  db $6D                                   ; Rat
+  db $6E                                   ; Rope
+  db $8B                                   ; Gibdo
+.end
+
+; Y = enemy slot; M/X=8. Hold the vanilla stun state with no movement:
+; $0B58 >= $38 skips the wake-up shake, $0DF0 >= $20 skips
+; Sprite_CheckDamageFromLink, zero $0F80 keeps the beat's height.
+SwitchHook_FreezeEnemy:
+{
+  LDA.b #$0B : STA.w SprState,Y
+  LDA.b #$40 : STA.w SprStunTimer,Y : STA.w SprTimerA,Y
+  LDA.b #$00
+  STA.w SprXSpeed,Y : STA.w SprYSpeed,Y
+  STA.w SprTimerF,Y : STA.w SprRecoil,Y
+  RTS
+}
+
+; Replays the two native resets with A/P/X/Y/DBR unchanged. Initializing a
+; tracked slot invalidates its identity before any new sprite can hold it.
+SwitchHook_ResetSprite:
+{
+  PHP : REP #$20 : PHA : SEP #$20
+  TXA : INC : CMP.w !SwitchHookHeld : BNE .done
+  STZ.w !SwitchHookHeld
+  .done
+  REP #$20 : PLA : PLP
+  STZ.w $0F00,X
+  STZ.w $0E90,X
+  RTL
+}
+
+; M/X=8; out C=valid, X=slot. No scratch. Module07's camera-save hook calls
+; this after every submodule even after the chain is gone; the plate reader
+; validates again before use. Pausing in the interface preserves the actor.
+SwitchHook_HeldEnemyValid:
+{
+  LDA.w !SwitchHookHeld : BEQ .no
+  CMP.b #$11 : BCS .drop
+  LDA.b $1B : BEQ .drop
+  LDA.b $10 : CMP.b #$07 : BEQ .dungeon
+  CMP.b #$0E : BNE .drop
+  LDA.w $010C : CMP.b #$07 : BNE .drop
+  BRA .room                 ; interface submodules are not dungeon submodules
+  .dungeon
+  LDA.b $11 : BEQ .room
+  CMP.b #$05 : BEQ .room
+  CMP.b #$16 : BEQ .room
+  CMP.b #$17 : BNE .drop
+  .room
+  REP #$20
+  LDA.b $A0 : CMP.w !SwitchHookHeldRoom
+  SEP #$20
+  BNE .drop
+  LDX.w !SwitchHookHeld : DEX
+  LDA.w SprType,X : CMP.w !SwitchHookHeldType : BNE .drop
+  LDA.w SprHealth,X : BEQ .drop
+  LDA.w SprState,X : CMP.b #$09 : BEQ .valid
+  CMP.b #$0B : BNE .drop
+  .valid
+  SEC : RTS
+  .drop
+  STZ.w !SwitchHookHeld
+  .no
+  CLC : RTS
+}
+
+; A swapped enemy holds a plate only while grounded on the current plane.
+; Match Stone's four-corner footprint; neither a flying enemy nor a partial
+; overlap counts. M/X=8; caller saves A/X/Y/DBR and scratch $00-$07.
+SwitchHook_EnemyHoldsPlate:
+{
+  JSR SwitchHook_HeldEnemyValid : BCC .no
+  LDA.w SprHeight,X : BNE .no
+  LDA.w SprFloor,X : CMP.b $EE : BNE .no
+  LDY.b #$03
+  .corner
+  PHY : PHX
+  REP #$20
+  TYA : AND.w #$00FF : ASL : TAY
+  LDA.w SprX,X : AND.w #$00FF : STA.b $02
+  LDA.w SprXH,X : XBA : AND.w #$FF00 : ORA.b $02
+  CLC : ADC.w Stone_SwitchX,Y : STA.b $02
+  LDA.w SprY,X : AND.w #$00FF : STA.b $00
+  LDA.w SprYH,X : XBA : AND.w #$FF00 : ORA.b $00
+  CLC : ADC.w Stone_SwitchY,Y : STA.b $00
+  SEP #$20
+  LDA.w SprFloor,X : JSL Sprite_GetTileAttr
+  SEP #$30
+  PLX : PLY
+  LDA.w $0FA5
+  CMP.b #$23 : BEQ .next
+  CMP.b #$24 : BEQ .next
+  CMP.b #$25 : BEQ .next
+  CMP.b #$3B : BNE .off_plate
+  .next
+  DEY : BPL .corner
+  SEC : RTL
+  .off_plate
+  ; Keep identity through the airborne beat and stun shake. Once the awake
+  ; enemy walks off, it no longer has a plate interaction to retain.
+  LDA.w !SwitchHookBeat : BNE .no
+  LDA.w SprState,X : CMP.b #$09 : BNE .no
+  STZ.w !SwitchHookHeld
+  .no
+  CLC : RTL
+}
+
 ; Y=sprite, X=ancilla. Read-only validation until TryExchange commits.
 ; $08 = hit height from SwitchHook_Targets.
 ; Statue SprFrame is its 0/1 grab flag; its own reset path clears it.
@@ -628,14 +803,24 @@ SwitchHook_TargetValid:
 {
   LDA.w SprState,Y : CMP.b #$09 : BNE .no
   STZ.b $09
+  STZ.w !SwitchHookEnemy      ; read only once a beat starts
   PHX
   LDX.b #SwitchHook_Targets_end-SwitchHook_Targets-2
   LDA.w SprType,Y
   .scan
   CMP.l SwitchHook_Targets,X : BEQ .found
   DEX : DEX : BPL .scan
+  LDX.b #SwitchHook_Enemies_end-SwitchHook_Enemies-1
+  .enemy_scan
+  CMP.l SwitchHook_Enemies,X : BEQ .enemy
+  DEX : BPL .enemy_scan
   PLX
   BRA .no
+  .enemy
+  PLX
+  INC.w !SwitchHookEnemy      ; enemy: hit box is the 16x16 base
+  STZ.b $08
+  BRA .kind
   .found
   LDA.l SwitchHook_Targets+1,X : STA.b $08
   PLX
@@ -650,10 +835,21 @@ SwitchHook_TargetValid:
   JSR SwitchHook_HeadOverlaps : BCC .no
   BRA .contact
   .no
+  STZ.w !SwitchHookEnemy      ; a refused target leaves no enemy flag
   CLC : RTS
   .contact
+  LDA.w !SwitchHookEnemy : BEQ .object
+  ; Enemy: alive, grounded, not recoiling, dying, bulletproof or impervious.
+  ; Moving and AI timers are allowed: the latch freezes them.
+  LDA.w SprHealth,Y : BEQ .blocked
+  LDA.w SprHeight,Y : ORA.w SprRecoil,Y : ORA.w SprDeath,Y
+  ORA.w SprBulletproof,Y : BNE .blocked
+  LDA.w SprGfxProps,Y : AND.b #$40 : BNE .blocked
+  BRA .landing
+  .object
   LDA.w SprHeight,Y : ORA.w SprXSpeed,Y : ORA.w SprYSpeed,Y
   ORA.w SprTimerA,Y : ORA.w SprMiscC,Y : BNE .blocked
+  .landing
   JSR SwitchHook_LandingVisible : BCC .blocked
   PHY : PHX
   JSR SwitchHook_FootprintSafe
@@ -676,6 +872,7 @@ SwitchHook_TargetValid:
   BCC .blocked
   SEC : RTS
   .blocked
+  STZ.w !SwitchHookEnemy
   JSR SwitchHook_Retract
   CLC : RTS
 }

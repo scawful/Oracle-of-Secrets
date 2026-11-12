@@ -183,7 +183,7 @@ class WorldFlow(combined.NewItemsFlow):
         slot = 0 if self.slot is None else self.slot   # actor fields are unused when no fixture is owned
         result = switch_hook.snapshot(lambda address: ram[address - 0x7E0000]
                                       if address < 0x7E1000 else self.r(address), slot)
-        result.update(facing=ram[0x2F], link_state=ram[0x5D],
+        result.update(facing=ram[0x2F], link_state=ram[0x5D], door=ram[0x468],
                       speed=[ram[a + slot] for a in (0xD40, 0xD50, 0xF80)],
                       height=ram[0xF70 + slot], timer=ram[0xDF0 + slot],
                       heads=[dict(slot=i, position=(ram[0xC04 + i] | ram[0xC18 + i] << 8,
@@ -201,6 +201,19 @@ class WorldFlow(combined.NewItemsFlow):
         self.result["writes"].append(entry)
         native.require(self.b.write_memory(address, value), "World fixture write rejected")
         self.check("Fixture readback", self.r(address), value)
+
+    def hold_tag(self, value, reason):
+        """Declared room-tag fixture. Room 5F's plate runs tag1 $17 (toggle door), which
+        never reads $0642 or the $01C568 hold hook. Setting $AE (tag1) to $16 routes the
+        same plate and shutter through the vanilla hold-door tag, so hold/release can be
+        proven; the case restores $17 afterwards."""
+        self.check_owner()
+        native.require(self.r(0x7E00A0) == 0x5F and value in (0x16, 0x17) and self.paused()
+                       and self.r(0x7E00AE) in (0x16, 0x17), "Tag fixture outside the 5F plate contract")
+        entry = dict(address="7E00AE", before=self.r(0x7E00AE), value=value, reason=reason)
+        self.result["writes"].append(entry)
+        native.require(self.b.write_memory(0x7E00AE, value), "Tag fixture write rejected")
+        self.check("Tag fixture readback", self.r(0x7E00AE), value)
 
     def spawn(self, x, y, layer, kind=0xD5):
         self.ready()
@@ -227,6 +240,91 @@ class WorldFlow(combined.NewItemsFlow):
             self.check("Native D5 prep cached origin", after["block_origin"], (x, y))
         self.check("Actor remains at declared position", after["block"], (x, y))
         self.check("Actor remains stationary", after["speed"] + [after["height"], after["timer"]], [0] * 5)
+
+    def spawn_enemy(self, x, y, layer, kind):
+        """Live enemy fixture: native initialize (state 8 -> LoadProperties resets
+        every AI field) then its own AI runs. Enemies move, so position is only
+        checked to stay within a few pixels of the declared spot."""
+        self.ready()
+        if self.slot is None:
+            unused = [i for i in range(15, -1, -1) if self.r(0x7E0DD0 + i) == 0]
+            native.require(bool(unused), "No unused sprite slot; do not evict a native actor")
+            self.slot = unused[0]
+            self.saved = {offset: self.r(0x7E0000 + offset + self.slot) for offset in FIELDS}
+        self.actor_kind = kind
+        self.fixture_write(0xDD0, 0, "Disable only the task's fixture slot while assigning coordinates")
+        for offset, value in ((0xE20, kind), (0xD10, x & 255), (0xD30, x >> 8),
+                              (0xD00, y & 255), (0xD20, y >> 8), (0xF20, layer), (0xE30, 0)):
+            self.fixture_write(offset, value, "Declared live enemy world fixture")
+        self.fixture_write(0xDD0, 8, "Native initialize module loads enemy properties")
+        self.advance("", 2)
+        after = self.snap()
+        self.check("Native enemy prep produced active state", (after["type"], after["state"]), (kind, 9))
+        drift = max(abs(after["block"][0] - x), abs(after["block"][1] - y))
+        native.require(drift <= 4, f"Enemy drifted {drift}px during prep")
+        return after
+
+    def cast_enemy(self, label, accepted=False, frames=True):
+        """Real Y cast at a live enemy. Accepted: exchange against the latch frame,
+        frozen beat, post-landing stun, then wake-up with no contact damage while
+        stunned. Refused: no beat, no enemy latch, Link unmoved."""
+        before = self.snap()
+        switch_hook.check_minish(before)
+        case = dict(name=label, before=before, trace=[], enemy=True)
+        self.result["world_cases"].append(case)
+        if frames:
+            self.shot(label + "-before")
+        self.tap("Y", 1)
+        saw_chain = saw_overlap = saw_retract = False
+        for _ in range(400):
+            now = self.snap()
+            switch_hook.check_minish(now)
+            case["trace"].append(now)
+            if frames and now["beat"] == switch_hook.SWAP - 1:
+                self.shot(label + "-peak")
+            saw_chain |= bool(now["heads"])
+            saw_overlap |= any(overlap(h["position"], now["block"]) for h in now["heads"])
+            saw_retract |= any(h["retract"] for h in now["heads"])
+            native.require(now["drag"] == 0, "Switch Hook unexpectedly activated vanilla dragging")
+            if saw_chain and not now["heads"] and now["active"] == 0:
+                break
+            self.advance("", 1)
+        self.check(label + " created a real chain", saw_chain, True)
+        after = self.snap()
+        case.update(after=after, saw_overlap=saw_overlap, saw_retract=saw_retract)
+        if accepted:
+            case["beat"] = switch_hook.check_enemy_exchange(before, case["trace"], after)
+            held = switch_hook.latch(case["trace"])
+            self.check(label + " Ages turn-around", after["facing"], held["facing"] ^ 2)
+            if frames:
+                self.shot(label + "-landed")
+            stun = []
+            for _ in range(240):
+                now = self.snap()
+                switch_hook.check_minish(now)
+                stun.append(dict(state=now["state"], stun=now["stun"], timer=now["timer"], door=now["door"],
+                                 block=now["block"], link_health=now["link_health"], frame=now["frame"]))
+                if now["state"] != switch_hook.STUNNED:
+                    break
+                native.require(now["link_health"] == before["link_health"],
+                               "Stunned enemy damaged Link")
+                self.advance("", 1)
+            case["stun_trace"] = stun
+            case["stun_frames"] = len(stun) - 1
+            self.check(label + " enemy wakes to its active state", stun[-1]["state"], 9)
+            native.require(40 <= case["stun_frames"] <= 90,
+                           f"Post-landing stun {case['stun_frames']} frames is not about 1 s")
+            self.shot(label + "-woken")
+        else:
+            beats = [snap for snap in case["trace"] if snap["beat"] or snap["enemy"]]
+            self.check(label + " never started a beat or an enemy latch", beats, [])
+            self.check(label + " Link unmoved and latch released",
+                       (after["link"], after["active"], after["heads"]), (before["link"], 0, []))
+            self.check(label + " enemy never frozen by the hook",
+                       any(s["state"] == switch_hook.STUNNED for s in case["trace"]), False)
+            self.shot(label)
+        case["passed"] = True
+        return before, after
 
     def floors(self, label, block=None):
         ram = self.block(0x7E0000, 0x1000)
@@ -430,6 +528,180 @@ class WorldFlow(combined.NewItemsFlow):
         back, again = self.cast("ages-diamond-back", accepted=True, frames=True)
         self.check("Second swap restores the start", (again["link"], again["block"]),
                    (before["link"], before["block"]))
+        self.clear_actor()
+
+    # --- Step 4 enemy cases (fixture-spawned enemies, no map edits) ---
+
+    def pit_lane(self):
+        self.enter(0x59)
+        self.walk("Up", lambda x, y: y <= 0x0BA8)
+        self.face("Up")
+        x, y = (word(self.block(0x7E0000, 0x100), o) for o in (0x22, 0x20))
+        tiles = self.block(0x7F2000, 0x2000)
+        gap = [tiles[floor_index(x + 8, row, 0)] for row in range(0x0B80, 0x0B98, 8)]
+        self.result["pit_gap"] = gap
+        self.check("Pit band between Link and enemy", all(t == 0x20 for t in gap), True)
+        return x, y
+
+    def case_enemy_pit(self):
+        """(a) Room 59: Hardhat Beetle above the pit band; swap straight up."""
+        x, _ = self.pit_lane()
+        target = (x, 0x0B60)
+        self.check("enemy-pit target safe", self.floors("enemy-pit", target)["target_safe"], True)
+        self.spawn_enemy(*target, 0, 0x26)
+        self.cast_enemy("enemy-pit", accepted=True)
+        self.clear_actor()
+
+    def case_enemy_refuse(self):
+        """(d) Room 59: an excluded Blue Soldier ($41: 12x17 hitbox, sword) and an
+        eligible Hardhat whose footprint overhangs the pit band both refuse."""
+        x, _ = self.pit_lane()
+        self.spawn_enemy(x, 0x0B60, 0, 0x41)
+        self.cast_enemy("enemy-refuse-excluded", frames=False)
+        self.clear_actor()
+        self.advance("", 8)
+        self.face("Up")
+        # An enemy whose own floor probe is over the pit falls (state 5), so the
+        # unsafe footprint overhangs the pit on its top row instead: Y 0B94 samples
+        # rows 0B94 (pit) / 0B9B / 0BA3 (floor). Link backs off below it first.
+        x = self.link()[0]
+        tiles = self.block(0x7F2000, 0x2000)
+        layer = self.r(0x7E00EE)
+        backs = [y for y in range(0x0BA8, 0x0BCC, 4) if safe(footprint(tiles, x, y + 8, layer), SAFE)]
+        self.result["unsafe_backoff"] = backs
+        goal = max(y for y in backs if all(b in backs for b in range(0x0BA8, y + 1, 4)))
+        native.require(goal >= 0x0BB8, f"No room to back off below the pit lane ({goal:04X})")
+        self.walk("Down", lambda x, y: y >= goal)
+        self.face("Up")
+        x = self.link()[0]
+        target = (x, 0x0B94)
+        self.check("enemy-unsafe target unsafe", self.floors("enemy-unsafe", target)["target_safe"], False)
+        self.spawn_enemy(*target, 0, 0x26)
+        self.cast_enemy("enemy-refuse-unsafe", frames=False)
+        self.clear_actor()
+
+    def case_plate_link(self):
+        """Control: Link on and off the 5F plate under the hold-door tag fixture, no other actor."""
+        self.enter(0x5F)
+        self.hold_tag(0x16, "Route the 5F plate through the hold-door tag ($16)")
+        self.walk("Up", lambda x, y: y <= 0x0BB8)
+        self.walk("Right", lambda x, y: x >= 0x1F7E)
+        self.settle(); self.advance("", 2)
+        record = self.result["plate_link"] = dict(off=self.r(0x7E0468), off_0642=self.r(0x7E0642))
+        self.walk("Up", lambda x, y: y <= 0x0B76)
+        self.settle(); self.advance("", 2)
+        record.update(on=self.r(0x7E0468), on_link=self.link(), on_0642=self.r(0x7E0642))
+        self.shot("plate-link-on")
+        trace = []
+        self.walk("Down", lambda x, y: y >= 0x0BB8)
+        for _ in range(60):
+            trace.append((self.r(0x7E0468), self.r(0x7E0011)))
+            self.advance("", 1)
+        record.update(off_again=self.r(0x7E0468), off_link=self.link(), trace=sorted(set(trace)))
+        self.shot("plate-link-off")
+        # Vanilla hold tag reads Link's tiles for $23/$3A/$3B only; the 5F plate is $24,
+        # so Link does not open it under the hold tag. Recorded, compared base vs candidate.
+        self.check("Control: Link off shut", record["off"], 1)
+        self.check("Control: Link off again shut", record["off_again"], 1)
+        self.hold_tag(0x17, "Restore the 5F toggle tag")
+
+    def case_enemy_plate(self):
+        """(b) Room 5F hold plate. Controls: Link off the plate keeps the hold door
+        shut ($0468=1), Link on it opens it ($0468=0). Then Link on the plate swaps
+        with a Hardhat (native to 5F) below him: the landed enemy holds the plate
+        through the beat, the stun and while awake; once it leaves, the plate
+        releases. The enemy hold is read at the $01C568 hold-door hook, so $0642
+        (the statue/block byte) stays 0 throughout. 5F's real tag is $17 (toggle),
+        so the case runs under the declared hold-tag fixture (hold_tag)."""
+        self.enter(0x5F)
+        self.hold_tag(0x16, "Route the 5F plate through the hold-door tag ($16)")
+        self.walk("Up", lambda x, y: y <= 0x0BB8)
+        self.walk("Right", lambda x, y: x >= 0x1F7E)
+        self.settle()
+        self.advance("", 2)
+        record = self.result["enemy_plate"] = dict(link_off_door=self.r(0x7E0468))
+        self.check("Control: Link off the plate, hold door shut", record["link_off_door"], 1)
+        self.walk("Up", lambda x, y: y <= 0x0B76)
+        self.settle()
+        self.face("Down")
+        self.settle()
+        x, y = self.link()
+        native.require(0x0B75 <= y <= 0x0B7B, f"Link Y {y:04X} would not put the enemy on the plate")
+        record.update(link_on=(x, y), link_on_door=self.r(0x7E0468))
+        # $24 plate tile: vanilla hold tag ignores Link here, so the door stays shut.
+        self.check("Control: Link on the $24 plate leaves the hold door shut", record["link_on_door"], 1)
+        spot = next((p for p in ((x, y + 0x28), (x, y + 0x30), (x, y + 0x20))
+                     if self.floors("enemy-plate-probe", p)["target_safe"]), None)
+        native.require(spot is not None, "No safe spot below the plate for the Hardhat")
+        self.spawn_enemy(*spot, 0, 0x26)
+        self.shot("enemy-plate-link-on")
+        before, after = self.cast_enemy("enemy-plate-swap", accepted=True)
+        case = self.result["world_cases"][-1]
+        doors = [s["door"] for s in case["trace"]] + [s["door"] for s in case["stun_trace"]]
+        native.require(0 in doors, "Landed enemy never opened the hold door")
+        first = doors.index(0)
+        opened_at = case["trace"][first]["block"] if first < len(case["trace"]) else None
+        record.update(beat_and_stun_doors=sorted(set(doors)), door_opened_frame=first,
+                      door_opened_block=opened_at, link_after=after["link"], enemy_landed=after["block"])
+        self.check("Door shut until the enemy lands", set(doors[:first]) <= {1}, True)
+        self.check("Door opens at the landing spot (Y exact, X within 2px of the awake drift)",
+                   opened_at is not None and opened_at[1] == after["block"][1]
+                   and abs(opened_at[0] - after["block"][0]) <= 2, True)
+        self.check("Door stays open through the rest of the beat and the stun", sorted(set(doors[first:])), [0])
+        native.require(after["link"][1] + 8 > 0x0B8F, "Link feet still on the plate after the swap")
+        self.settle()
+        now = self.snap()
+        record.update(awake_door=now["door"], awake_0642=self.r(0x7E0642), awake_state=now["state"],
+                      awake_block=now["block"])
+        self.check("Awake enemy on the plate holds the door open", (now["state"], now["door"]), (9, 0))
+        self.check("Enemy hold leaves $0642 untouched", record["awake_0642"], 0)
+        # The swap already left Link below the plate (asserted above). Do not
+        # walk farther before this check: an awake Hardhat can leave the plate
+        # during that walk, which is a valid release rather than a hold failure.
+        now = self.snap()
+        record.update(link_clear=now["link"], enemy_alone_door=now["door"], enemy_alone_block=now["block"],
+                      enemy_alone_floor=self.floors("enemy-plate-held-floor", now["block"]))
+        self.check("Enemy alone holds the door open", now["door"], 0)
+        self.shot("enemy-plate-held")
+        # (b) release: give the Hardhat 3 s to walk off on its own; else move it.
+        off = None
+        for frame in range(180):
+            now = self.snap()
+            if now["door"] == 1:
+                off = frame
+                break
+            self.advance("", 1)
+        record["walked_off_frame"] = off
+        if off is None:
+            ex, ey = now["block"]
+            for offset, value in ((0xD00, (ey + 0x20) & 255), (0xD20, (ey + 0x20) >> 8)):
+                self.fixture_write(offset, value, "Move the landed enemy 32px off the plate")
+            for _ in range(8):
+                self.advance("", 1)
+                if self.r(0x7E0468) == 1:
+                    break
+        self.settle()
+        self.advance("", 2)
+        now = self.snap()
+        record.update(release_door=now["door"], release_block=now["block"], moved_by_fixture=off is None,
+                      release_marker=[self.r(0x7E026D + i) for i in range(3)],
+                      release_slot=self.slot, release_floor=self.floors("enemy-plate-release", now["block"]))
+        self.check("Enemy off the plate releases the hold door", now["door"], 1)
+        self.shot("enemy-plate-released")
+        self.clear_actor()
+        self.hold_tag(0x17, "Restore the 5F toggle tag")
+
+    def case_ow_enemy(self):
+        """(c) Area 33: Buzzblob (native to 33) on sand below Link; swap down."""
+        self.enter_area(OW_AREA)
+        self.route(ROUTE_HOOK)
+        x, y = self.link()
+        spots = [(x, y + 0x28), (x, y + 0x30), (x, y + 0x20)]
+        spot = next((p for p in spots if self.floors("ow-enemy-probe", p)["target_safe"]), None)
+        native.require(spot is not None, "No safe spot below Link for the overworld enemy")
+        self.face("Down")
+        self.spawn_enemy(*spot, 0, 0x0D)
+        self.cast_enemy("ow-enemy", accepted=True)
         self.clear_actor()
 
     # --- Overworld cases (driver warps to area $33 by cheat before these run) ---
