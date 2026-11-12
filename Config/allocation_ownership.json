@@ -265,7 +265,7 @@
     "shared:Sprites/Objects/ice_block.asm": {
       "source_set": "shared",
       "path": "Sprites/Objects/ice_block.asm",
-      "sha256": "a312424e181f116e29ff7d0ab5fd2f2f40bb743fed60b05b766e6f48f1a85448"
+      "sha256": "2fe2c4507868e914acf947c00ce438cce66a77144865d58fc9359deba00e538b"
     },
     "shared:Dungeons/d4_water_control.asm": {
       "source_set": "shared",

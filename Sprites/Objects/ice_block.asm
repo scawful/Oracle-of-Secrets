@@ -173,6 +173,11 @@ endif
     ; Hit a wall - clear direction only if we actually stop
     STZ.w SprMiscA, X
   +
+if !ENABLE_D5_BF_PIT_RESET == 1 || !ENABLE_D5_AF_PIT_RESET == 1
+  JSR IceBlock_IsPitRoom : BNE .no_rail_stop
+    JSR IceBlock_StopAtRail
+  .no_rail_stop
+endif
 
   ; If link is in contact, register a push with the sprite
   ; Must be pushing from correct side for the direction
@@ -395,6 +400,65 @@ IceBlock_GetCenterAttr:
   RTS
 }
 
+; Pit-reset rooms use the simplified tile table, which lets the block cross rail attr $02.
+; Probe 1px past the leading edge on the block's mid-line and stop flush on a rail.
+IceBlock_StopAtRail:
+{
+  LDA.w SprXSpeed, X : BEQ .vertical
+  LDA.w SprY, X : CLC : ADC.b #$08 : STA.b $00
+  LDA.w SprYH, X : ADC.b #$00 : STA.b $01
+  LDA.w SprXSpeed, X : BMI .left
+    LDA.w SprX, X : CLC : ADC.b #$10 : STA.b $02
+    LDA.w SprXH, X : ADC.b #$00 : STA.b $03
+    BRA .probe
+  .left
+    LDA.w SprX, X : SEC : SBC.b #$01 : STA.b $02
+    LDA.w SprXH, X : SBC.b #$00 : STA.b $03
+    BRA .probe
+  .vertical
+  LDA.w SprYSpeed, X : BNE .has_y
+    RTS
+  .has_y
+  LDA.w SprX, X : CLC : ADC.b #$08 : STA.b $02
+  LDA.w SprXH, X : ADC.b #$00 : STA.b $03
+  LDA.w SprYSpeed, X : BMI .up
+    LDA.w SprY, X : CLC : ADC.b #$10 : STA.b $00
+    LDA.w SprYH, X : ADC.b #$00 : STA.b $01
+    BRA .probe
+  .up
+    LDA.w SprY, X : SEC : SBC.b #$01 : STA.b $00
+    LDA.w SprYH, X : SBC.b #$00 : STA.b $01
+  .probe
+  LDA.w SprFloor, X
+  JSL Sprite_GetTileAttr
+  LDY.w $0FA5 : CPY.b #$02 : BEQ .stop
+  ; Inner 8px dungeon wall border (attr $04 in BF) is passable in the projectile table.
+  CPY.b #$04 : BEQ .stop
+  ; An unlifted pot (manipulable attr $70-$7F) also stops the block here.
+  CPY.b #$70 : BCC .done
+  CPY.b #$80 : BCS .done
+  .stop
+    ; Snap toward the free side. Rounding into the rail let a held re-push
+    ; walk the block 8 px per cycle until it crossed the rail.
+    LDA.w SprXSpeed, X : BEQ .snap_y : BMI .snap_x_up
+      LDA.w SprX, X : AND.b #$F8 : STA.w SprX, X : BRA .zero
+    .snap_x_up
+      LDA.w SprX, X : CLC : ADC.b #$07 : AND.b #$F8 : STA.w SprX, X
+      LDA.w SprXH, X : ADC.b #$00 : STA.w SprXH, X : BRA .zero
+    .snap_y
+    LDA.w SprYSpeed, X : BMI .snap_y_up
+      LDA.w SprY, X : AND.b #$F8 : STA.w SprY, X : BRA .zero
+    .snap_y_up
+      LDA.w SprY, X : CLC : ADC.b #$07 : AND.b #$F8 : STA.w SprY, X
+      LDA.w SprYH, X : ADC.b #$00 : STA.w SprYH, X
+    .zero
+    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+    STZ.w SprXRound, X : STZ.w SprYRound, X
+    STZ.w SprMiscA, X
+  .done
+  RTS
+}
+
 ; Enabled pit-reset rooms only. MiscB=1 hides a returning block once TimerC reaches zero.
 ; Carry set means the ordinary push/damage/switch path must not run this frame.
 IceBlock_PitStep:
@@ -431,6 +495,8 @@ IceBlock_PitStep:
   .clear
   SEP #$20
   STZ.w SprMiscB, X
+  JSL Sprite_SpawnPoofGarnish
+  LDA.b #$13 : JSL SpriteSFX_QueueSFX3WithPan
   .occupied
   SEP #$20
   .waiting
