@@ -231,6 +231,8 @@ jobs:
           python3 .github/scripts/seed_sky_award_preimages.py Dungeons/d6_cart_circuit.asm test.sfc
           # Same for all 25 receipt hooks; validate the macro and keep every guard active.
           python3 .github/scripts/seed_sky_award_preimages.py Items/bombchu_receipt.asm test.sfc
+          # Seed the Switch Hook entry and camera guards, including its RTL trampoline.
+          python3 .github/scripts/seed_sky_award_preimages.py Items/switch_hook.asm test.sfc
 
           # Sky Tower graphics, sky layer and pit-damage guards (ENABLE_SKY_* default on).
           # Real base-ROM bytes for every readN() assert in Dungeons/sky_tower_graphics.asm,

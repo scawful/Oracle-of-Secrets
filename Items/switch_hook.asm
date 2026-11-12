@@ -3,7 +3,7 @@
 ; Ordinary Hookshot/Goldstar retain their existing collision path.
 ;
 ; Target contract: live $D5 ice block or native $1C movable statue,
-; grounded, stopped, same dungeon/layer, within 128px, visible landing,
+; grounded, stopped, same dungeon/layer, within 128px,
 ; and safe floor under both footprints. The Elegy of Stone echo ($1C with
 ; SprFrame=!Stone_Marker) is not pushable and is never a target.
 ; Ruling 2026-10-19: "Ice blocks + statues" (no pots, no enemies).
@@ -20,7 +20,7 @@
 ; stops it; only then does the chain end and control return.
 ; Link never moves through space, so no $037E drag is involved.
 ;
-; $0268       : beat counter (0 = no beat)
+; $0268       : beat counter (0 = no beat; read only while shot tag is active)
 ; $0269       : target sprite slot
 ; $026A/$026B : $E2/$E8 low bytes seen on the previous beat frame
 ; $07F8       : active-shot tag ($A5, zero otherwise)
@@ -92,6 +92,7 @@ assert pc() == $08BECF, "Switch Hook anchor gateway exceeds five bytes"
 ; Replaces REP #$21 : LDA $E2; the target ends with the same two instructions.
 assert read2($0287E5) == $21C2, "Vanilla Module07 camera save moved"
 assert read2($0287E7) == $E2A5, "Vanilla Module07 camera save moved"
+assert read1($028053) == $6B, "Switch Hook camera RTL trampoline moved"
 org $0287E5
   JSL SwitchHook_DungeonCamera
 assert pc() == $0287E9, "Switch Hook camera gateway exceeds four bytes"
@@ -107,6 +108,8 @@ SwitchHook_Init:
   LDA.w $0202 : CMP.b #$1D : BNE .done
   LDA.w $0304 : CMP.b #$0E : BNE .done
   LDA.l SwitchHookOwned : CMP.b #$01 : BNE .done
+  STZ.w !SwitchHookBeat
+  STZ.w !SwitchHookTarget
   LDA.b $10 : STA.w !SwitchHookMode
   LDA.b $EE : STA.w !SwitchHookLayer
   %a16()
@@ -123,6 +126,7 @@ SwitchHook_Init:
 SwitchHook_Clear:
 {
   PHP : REP #$30 : PHA : PHX : PHY : SEP #$30
+  LDA.w !SwitchHookActive : CMP.b #!SwitchHookTag : BNE .idle
   LDA.w !SwitchHookBeat : BEQ .idle
   ; Abort or finish: put both actors back on the ground.
   LDY.w !SwitchHookTarget
@@ -212,6 +216,7 @@ SwitchHook_AncillaEntry:
 {
   JSL SwitchHook_Tick
   LDA.w $0C4A,X : CMP.b #$1F : BNE .deleted
+  LDA.w !SwitchHookActive : CMP.b #!SwitchHookTag : BNE .flight
   LDA.w !SwitchHookBeat : BEQ .flight
   LDA.b $11 : BEQ .beat       ; plate/shutter/peg submodule: hold the beat
   LDA.w !SwitchHookBeat : CMP.b #!SwitchHookCling+1 : BCS .deleted
@@ -356,6 +361,7 @@ SwitchHook_DungeonCamera:
   PHX : PHY
   PHB : PHK : PLB
   SEP #$30
+  LDA.w !SwitchHookActive : CMP.b #!SwitchHookTag : BNE .done
   LDA.w !SwitchHookBeat : CMP.b #!SwitchHookSwap : BCC .done
   LDA.b $5D : CMP.b #$13 : BNE .done
   LDA.b $11 : BNE .done
