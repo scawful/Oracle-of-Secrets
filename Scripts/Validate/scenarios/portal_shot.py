@@ -79,6 +79,34 @@ def fly(attr, x, y, d):
             return ('land-range' if found else 'fizzle', found, frames, pit_px, lead)
 
 
+GAP_MIN = 24  # coordinator 2026-11-12: case (a) needs a real 3-4 tile pit between cell and landing
+
+
+def path_attrs(attr, x, y, d, land, every=8):
+    """Lead-probe attribute every `every` px from the cast cell to the landing."""
+    out, px, py = [], x, y
+    while (px, py) != tuple(land):
+        px, py = px + STEP[d][0], py + STEP[d][1]
+        if abs(px - x) + abs(py - y) in range(0, 1000, every) or (px, py) == tuple(land):
+            out.append({'at': [px, py], 'lead': f'{attr(px + LEAD_X[d], py + LEAD_Y[d]):02X}'})
+    return out
+
+
+def gap_px(attr, x, y, d, land):
+    """Longest run (px) between cell and landing where Link's whole body width is over a pit."""
+    cross = [(LEAD_X[d], r) for r in (9, 16, 22)] if d >= 2 else [(c, LEAD_Y[d]) for c in (1, 8, 14)]
+    best = run = 0
+    px, py = x, y
+    while (px, py) != tuple(land):
+        px, py = px + STEP[d][0], py + STEP[d][1]
+        if all(attr(px + cx, py + cy) == PIT for cx, cy in cross):
+            run += 1
+            best = max(best, run)
+        else:
+            run = 0
+    return best
+
+
 class ShotRun(dqf.Run):
     # -- room model --------------------------------------------------------
     def grid(self):
@@ -105,9 +133,15 @@ class ShotRun(dqf.Run):
         """First reachable cell (BFS order = nearest) for each case."""
         found = {}
         for x, y in cells:
+            # Cast only from plain floor away from the entry door: LinkItem_PortalRod ignores Y
+            # while $6C (doorway) is set, and in $059 it stayed set 24 px inside the door (cases11/12).
+            if not all(tiles.attr(x + dx, y + dy) in SAFE for dx, dy in SAFE_PROBES):
+                continue
+            if abs(x - cells[0][0]) + abs(y - cells[0][1]) < 32:
+                continue
             for d in range(4):
                 out, land, frames, pit_px, stop = fly(tiles.attr, x, y, d)
-                if 'pit' not in found and out.startswith('land') and pit_px >= 32:
+                if 'pit' not in found and out.startswith('land') and gap_px(tiles.attr, x, y, d, land) >= GAP_MIN:
                     for bd in (OPPOSITE[d],) + tuple(e for e in range(4) if e not in (d, OPPOSITE[d])):
                         back = fly(tiles.attr, x, y, bd)
                         if back[0].startswith('land') and abs(land[0] - back[1][0]) <= WARP_SPAN[0] \
@@ -222,6 +256,8 @@ class ShotRun(dqf.Run):
         if not spot:
             raise RuntimeError(f'entrance {eid} has no {name} spot')
         self.go_to(spot['cell'], name)
+        if self.r(0x7E006C):
+            raise RuntimeError(f'{name}: Link is in a doorway ($6C={self.r(0x7E006C):02X}); the rod cannot fire here')
         # Re-plan from where Link actually stands (the walk can end 1 px off).
         x, y = self.r16(LINK_X), self.r16(LINK_Y)
         return tiles, spot, x, y
@@ -231,6 +267,11 @@ class ShotRun(dqf.Run):
         out, land, frames, pit_px, _ = fly(tiles.attr, x, y, spot['dir'])
         if not (out.startswith('land') and pit_px >= 32):
             raise RuntimeError(f'pit spot changed after the walk: {out} {pit_px}')
+        gap = gap_px(tiles.attr, x, y, spot['dir'], land)
+        self.event('pit bolt path', cell=[x, y], landing=list(land), gap_px=gap,
+                   attrs=path_attrs(tiles.attr, x, y, spot['dir'], land))
+        self.check('pit: a full-body pit gap of 3+ tiles lies between the cell and the landing',
+                   gap >= GAP_MIN, {'candidate': True})
         self.rod_ready(0x80)
         self.cast(spot['dir'], 'pit_blue', frames)
         p = self.portals()
@@ -247,16 +288,25 @@ class ShotRun(dqf.Run):
                    [[s['x'], s['y']] for s in orange], {'candidate': [list(back[1])]})
         self.shot('pit_portal_pair_open')
         before = [self.r16(LINK_X), self.r16(LINK_Y)]
-        self.walk_to(back[1][0], back[1][1])
-        # The walk stops beside the portal; step into it like a player (warp needs hitbox overlap).
+        # cases13: walk_to kept walking toward the orange x after the warp fired and moved
+        # Link 39 px off the blue. Step toward the orange in short presses like a player and
+        # stop on the first step that puts Link near the blue (the warp) or that stalls.
         toward = NAMES[spot['back_dir']]
-        self.event('pit warp context', link=[self.r16(LINK_X), self.r16(LINK_Y)],
+        self.event('pit warp context', link=before,
                    cam=[self.r16(0x7E00E2), self.r16(0x7E00E8)], pages=[self.r(0x7E0021), self.r(0x7E0023)],
                    blue=land, orange=list(back[1]))
-        for _ in range(10):
-            if abs(self.r16(LINK_X) - land[0]) <= 16 and abs(self.r16(LINK_Y) - land[1]) <= 16:
+        steps, stall, prev = [], 0, before
+        for _ in range(60):
+            self.press(toward, 2)
+            cur = [self.r16(LINK_X), self.r16(LINK_Y)]
+            steps.append(cur)
+            if abs(cur[0] - land[0]) <= 16 and abs(cur[1] - land[1]) <= 16:
                 break
-            self.press(toward, 3)
+            stall = stall + 1 if cur == prev else 0
+            if stall >= 4:
+                break
+            prev = cur
+        self.event('pit warp steps', steps=steps)
         self.wait_play(6)
         time.sleep(0.6)
         after = [self.r16(LINK_X), self.r16(LINK_Y)]
@@ -312,7 +362,10 @@ class ShotRun(dqf.Run):
     # -- scan --------------------------------------------------------------
     def scan(self):
         rows = []
+        only = {int(i, 16) for i in self.args.scan_ids.split(',')} if self.args.scan_ids else None
         for e in self.entrances():
+            if only is not None and int(str(e['id']), 16) not in only:
+                continue
             try:
                 self.enter(e['id'])
                 tiles = self.grid()
@@ -322,6 +375,22 @@ class ShotRun(dqf.Run):
                 rows.append({'id': e['id'], 'name': e['name'], 'room': f'{self.r16(0x7E00A0):03X}',
                              'start': start, 'minish_link': minish, **found})
                 print(e['id'], e['name'], sorted(found), 'minish' if minish else 'GBC', flush=True)
+                if self.args.probe:
+                    px, py, pd, lx, ly = (int(v) for v in self.args.probe.split(','))
+                    pa = path_attrs(tiles.attr, px, py, pd, (lx, ly))
+                    self.event('probe path', entrance=e['id'], gap_px=gap_px(tiles.attr, px, py, pd, (lx, ly)), attrs=pa)
+                    print('  probe EE', self.r(0x7E00EE), 'room', f'{self.r16(0x7E00A0):03X}', 'link',
+                          [self.r16(LINK_X), self.r16(LINK_Y)], ' '.join(f"{a['at'][0]}:{a['lead']}" for a in pa), flush=True)
+                    for base in (0x7F2000, 0x7F3000):
+                        buf = self.b.read_block(base, 0x1000)
+                        row = ((py + LEAD_Y[pd]) & 0x1FF) >> 3
+                        print(f'  {base:06X} row {row} cols 8-39', buf[row * 64 + 8: row * 64 + 40].hex(' '), flush=True)
+                if 'pit' in found:
+                    sp = found['pit']
+                    sp['gap_px'] = gap_px(tiles.attr, *sp['cell'], sp['dir'], sp['land'])
+                    sp['attrs'] = path_attrs(tiles.attr, *sp['cell'], sp['dir'], sp['land'])
+                    print('  pit', sp['cell'], NAMES[sp['dir']], sp['land'], 'gap', sp['gap_px'],
+                          ' '.join(a['lead'] for a in sp['attrs']), flush=True)
             except Exception as exc:
                 rows.append({'id': e['id'], 'name': e['name'], 'error': str(exc)})
                 print(e['id'], 'ERROR', exc, flush=True)
@@ -367,6 +436,8 @@ def main():
     ap.add_argument('--pit', help='entrance id for the pit case')
     ap.add_argument('--wall', help='entrance id for the wall case')
     ap.add_argument('--fizzle', help='entrance id for the fizzle case')
+    ap.add_argument('--probe', help='x,y,dir,landx,landy: log lead-probe attrs on that path in each scanned room')
+    ap.add_argument('--scan-ids', help='comma list of entrance ids to scan (hex)')
     ap.add_argument('--scan-from', default='0x00', help='first entrance id to scan')
     args = ap.parse_args()
     args.variant = 'candidate'
