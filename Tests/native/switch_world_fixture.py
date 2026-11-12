@@ -185,7 +185,7 @@ class WorldFlow(combined.NewItemsFlow):
             switch_hook.check_minish(now)
             case["trace"].append(now)
             if frames and now["beat"] == switch_hook.SWAP - 1:
-                self.shot(label + "-mid")
+                self.shot(label + "-peak")
             saw_chain |= bool(now["heads"])
             saw_overlap |= any(overlap(h["position"], before["block"]) for h in now["heads"])
             saw_retract |= any(h["retract"] for h in now["heads"])
