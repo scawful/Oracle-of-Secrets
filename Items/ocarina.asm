@@ -186,17 +186,11 @@ endif
     .song_of_time
     LDA.b #$27 : JSR $802F ; Player_DoSfx3
     LDA.b #$02 : STA.b SongFlag
-if !ENABLE_OCARINA_SONG_TINT == 1
-    LDA.b #!SongTint_Time : JSL SongTint_Start
-endif
     RTS
 
     .song_of_healing
     LDA.b #$13 : JSR Player_DoSfx2
     LDA.b #$01 : STA.b SongFlag
-if !ENABLE_OCARINA_SONG_TINT == 1
-    LDA.b #!SongTint_Healing : JSL SongTint_Start
-endif
     RTS
 
     .song_of_storms
@@ -209,9 +203,6 @@ endif
 
   .song_of_soaring
   LDA.b #$3E : JSR Player_DoSfx2
-if !ENABLE_OCARINA_SONG_TINT == 1
-  LDA.b #!SongTint_Soaring : JSL SongTint_Start
-endif
 
   ; Are we indoors?
   LDA.b $1B : BNE .return
@@ -437,11 +428,8 @@ PlayThunderAndRain:
 ; half at the darkest hours (scaled by ColorSubEffect's green step).
 SongTint_Table:
   ; frames, red, green, blue added to each color (0-31)
-  db $20, $02, $09, $03 ; !SongTint_Healing: green
-  db $20, $08, $02, $0A ; !SongTint_Time: purple
-  db $10, $0C, $0C, $0C ; !SongTint_Soaring: white flash
-  db $20, $09, $07, $01 ; !SongTint_Secrets: gold
-  db $10, $04, $06, $0A ; !SongTint_Stone: pale blue
+  db $20, $02, $09, $03 ; !SongTint_Healing: green, when a character reacts
+  db $20, $09, $07, $01 ; !SongTint_Secrets: gold, when a secret opens
 
 ; A (8-bit) = !SongTint_* index. A second song repaints with its own color.
 ; Safe to call from any M/X width.
