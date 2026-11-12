@@ -10,9 +10,20 @@
 ; with room to grow). The 52 base rooms are asserted against the base ROM so
 ; a base-table edit cannot drift from this copy.
 
+!PIT_DAMAGE_EXT_WORDS = (63+!ENABLE_D5_AF_PIT_RESET+!ENABLE_D5_BF_PIT_RESET)
+!PIT_DAMAGE_EXT_BYTES = (!PIT_DAMAGE_EXT_WORDS*2)
+
 pushpc
-org $33F860 ; @hook module=Dungeons kind=data protected_size=126 name=RoomsWithPitDamageExt
-assert read4($33F860) == 0 && read4($33F8DA) == 0, "Extended pit-damage table slot in bank $33 is not free"
+if !ENABLE_D5_AF_PIT_RESET == 1 && !ENABLE_D5_BF_PIT_RESET == 1
+  org $33F860 ; @hook module=Dungeons kind=data protected_size=130 name=RoomsWithPitDamageExt
+  assert read4($33F860) == 0 && read4($33F8DA) == 0 && read4($33F8DE) == 0, "Extended pit-damage table slot in bank $33 is not free"
+elseif !ENABLE_D5_AF_PIT_RESET == 1 || !ENABLE_D5_BF_PIT_RESET == 1
+  org $33F860 ; @hook module=Dungeons kind=data protected_size=128 name=RoomsWithPitDamageExt
+  assert read4($33F860) == 0 && read4($33F8DA) == 0 && read2($33F8DE) == 0, "Extended pit-damage table slot in bank $33 is not free"
+else
+  org $33F860 ; @hook module=Dungeons kind=data protected_size=126 name=RoomsWithPitDamageExt
+  assert read4($33F860) == 0 && read4($33F8DA) == 0, "Extended pit-damage table slot in bank $33 is not free"
+endif
 RoomsWithPitDamage_Ext:
   ; base ROM table (oos168 $00:990C..$00:9972), order preserved
   dw $000B, $000E, $0014, $001A, $001C, $001E, $003C, $003F
@@ -24,11 +35,19 @@ RoomsWithPitDamage_Ext:
   dw $00D7, $00D8, $00DE, $010B
   ; D6 (Core/patches.asm $00997A/$00997C)
   dw $0097, $00B8
+  ; D5 Glacia (Core/patches.asm $009976/$009978)
+if !ENABLE_D5_AF_PIT_RESET == 1
+  dw $00AF
+endif
+if !ENABLE_D5_BF_PIT_RESET == 1
+  dw $00BF
+endif
   ; Sky Tower (SkyRoom_List order)
   dw $0090, $0091, $0092, $0093, $0094, $0095, $00A0, $00B0, $00A7
 RoomsWithPitDamage_Ext_end:
 assert pc() <= $340000, "Extended pit-damage table overflows bank $33"
-assert pc() == $33F8DE, "Extended pit-damage table must be 63 words (126 bytes); update protected_size and the LDX"
+assert pc() == $33F860+!PIT_DAMAGE_EXT_BYTES, "Extended pit-damage table size mismatch; update protected_size and the LDX"
+assert RoomsWithPitDamage_Ext_end-RoomsWithPitDamage_Ext == !PIT_DAMAGE_EXT_BYTES, "Extended pit-damage table extent mismatch"
 
 ; base ROM guard: each copied entry must still match $00:990C (read functions see the input ROM)
 assert read2($00990C) == $000B, "Base RoomsWithPitDamage entry 0 changed; update the extended copy"
@@ -85,7 +104,7 @@ assert read2($009970) == $00DE, "Base RoomsWithPitDamage entry 50 changed; updat
 assert read2($009972) == $010B, "Base RoomsWithPitDamage entry 51 changed; update the extended copy"
 
 assert read2($0794A6) == $0070, "Unexpected RoomsWithPitDamage scan length"
-org $0794A5 : LDX.w #126-2 ; @hook module=Dungeons kind=data protected_size=3 name=PitDamageScanLength
+org $0794A5 : LDX.w #(RoomsWithPitDamage_Ext_end-RoomsWithPitDamage_Ext)-2 ; @hook module=Dungeons kind=data protected_size=3 name=PitDamageScanLength
 assert read4($0794AA) == $00990CDF, "Unexpected RoomsWithPitDamage scan compare"
 org $0794AA : CMP.l RoomsWithPitDamage_Ext,X ; @hook module=Dungeons kind=data protected_size=4 name=PitDamageScanTable
 pullpc

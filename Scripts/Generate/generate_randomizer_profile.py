@@ -15,6 +15,11 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE = '2bffad6ab6118301f125e49e414a4447260ac689'
 B49_SOURCE = '313d2c2fbc578bc987c47337d28001fbb9a62c51'
 B49_HASH = 'ed22c3434bd745ffabe18c76c69b5c6ed9dfcae3599491d45aea0051028b8e5e'
+B50_SOURCE = '0a362d43fa80973bbe1bd25f6e9097476d61e388'
+B50_HASH = 'acf7f1e0f3e3c51937f3f7c6a48fec78ffadc496b0114d1fd2924ff18a9304cc'
+# Delivered b50 symbols Oracle_BombchuReceipt_CodeStart/CodeEnd ($2B:B50E..B95C).
+B50_RECEIPT_CODE_PC = 0x15B50E
+B50_RECEIPT_CODE_BYTES = 0x44E
 AUTHORING_HASH = 'c91af2ee0713eefdb2c954230433a6af5c40fb36fc30b9f5eda79da70a311d06'
 DEFAULT_OUTPUT = ROOT / 'Data/randomizer/oracle_compatibility.json'
 
@@ -51,9 +56,10 @@ def chest_binding(data, room):
             'big_chest': bool(data[offset + 1] & 0x80)}
 
 
-def generate(b49_path, authoring_path):
+def generate(b49_path, authoring_path, b50_path):
     b49 = pinned_rom(b49_path, B49_HASH)
     authoring = pinned_rom(authoring_path, AUTHORING_HASH)
+    b50 = pinned_rom(b50_path, B50_HASH)
     current = source_file(SOURCE, 'Items/bombchu_receipt.asm').decode()
     old = source_file(B49_SOURCE, 'Items/bombchu_receipt.asm').decode()
     for text in (old, current):
@@ -73,12 +79,12 @@ def generate(b49_path, authoring_path):
     if switch_selection is None:
         raise ValueError('Switch Hook menu selection missing')
     masks = [int.from_bytes(b49[i:i + 2], 'little') for i in range(0x1900, 0x190C, 2)]
-    if authoring[0x1900:0x190C] != b49[0x1900:0x190C]:
+    if any(data[0x1900:0x190C] != b49[0x1900:0x190C] for data in (authoring, b50)):
         raise ValueError('RoomFlagMask differs across pinned artifacts')
     files = ['Menu/menu_select_item.asm', 'Menu/menu_draw.asm', 'Items/bombchu_receipt.asm', 'Core/sram.asm', 'Core/patches.asm',
              'Sprites/NPCs/maku_tree.asm', 'Sprites/NPCs/farore.asm',
              'Dungeons/custom_tag.asm', 'Docs/Technical/Dungeon_Tables_Expansion.md']
-    return {
+    profile = {
         'schema_version': 1,
         'purpose': 'Oracle of Secrets fan-randomizer interoperability; preserve creator attribution',
         'scope': {'logic_graph': False, 'beatability_certified': False,
@@ -163,6 +169,35 @@ def generate(b49_path, authoring_path):
         'default_policy': 'Reject unrecognized ROMs and receipt IDs; unlisted scripted rewards/story edits require review.'}
 
 
+    # Native rows remain separate from the compiled $4C/$4D reader extension.
+    # Exact whole-ROM admission binds these fingerprints to this release only.
+    profile['artifacts'].append({
+        'id': 'beta-b50', 'role': 'playable', 'version': '0.9.0', 'build': 50,
+        'source_commit': B50_SOURCE, 'sha256': B50_HASH, 'bytes': len(b50),
+        'base_sha256': AUTHORING_HASH,
+        'receipt_reader_supported_ids': list(range(0x4E)),
+        'unsupported_or_unknown_receipt_ids': list(range(0x4E, 256)),
+        'native_receipt_tables': {name: {
+            'pc': table['pc'], 'bytes': table['bytes'],
+            'sha256': digest(b50[table['pc']:table['pc'] + table['bytes']])}
+            for name, table in profile['artifacts'][0]['native_receipt_tables'].items()},
+        'receipt_reader_extension': {
+            'pc': B50_RECEIPT_CODE_PC, 'bytes': B50_RECEIPT_CODE_BYTES,
+            'sha256': digest(b50[B50_RECEIPT_CODE_PC:
+                                 B50_RECEIPT_CODE_PC + B50_RECEIPT_CODE_BYTES]),
+            'source': 'Items/bombchu_receipt.asm',
+            'source_sha256': digest(source_file(B50_SOURCE, 'Items/bombchu_receipt.asm')),
+            'symbols': ['Oracle_BombchuReceipt_CodeStart', 'Oracle_BombchuReceipt_CodeEnd'],
+            'supported_extension_ids': [0x4C, 0x4D]},
+        'first_house_chest': chest_binding(b50, 0x104),
+        'room_94_first_chest': chest_binding(b50, 0x94)})
+    known = {item['id']: item for item in profile['receipts']['known']}
+    known[0x4C]['supported_artifacts'].append('beta-b50')
+    known[0x4D]['supported_artifacts'] = ['beta-b50']
+    known[0x4D]['status'] = 'Qualified in beta-b50 only; absent in b49; authoring ROM is not playable'
+    return profile
+
+
 def inspect_rom(profile, path, receipt=None):
     data = path.read_bytes()
     matches = [a for a in profile['artifacts'] if a['sha256'] == digest(data)
@@ -181,6 +216,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--b49-rom', type=Path)
     parser.add_argument('--authoring-rom', type=Path)
+    parser.add_argument('--b50-rom', type=Path)
     parser.add_argument('--output', type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument('--check-rom', type=Path)
     parser.add_argument('--receipt', type=lambda value: int(value, 0))
@@ -189,9 +225,9 @@ def main():
         if args.check_rom:
             print(json.dumps(inspect_rom(json.loads(args.output.read_text()), args.check_rom, args.receipt), indent=2))
         else:
-            if not args.b49_rom or not args.authoring_rom:
-                parser.error('Generation requires --b49-rom and --authoring-rom')
-            args.output.write_text(json.dumps(generate(args.b49_rom, args.authoring_rom), indent=2) + '\n')
+            if not args.b49_rom or not args.authoring_rom or not args.b50_rom:
+                parser.error('Generation requires --b49-rom, --authoring-rom and --b50-rom')
+            args.output.write_text(json.dumps(generate(args.b49_rom, args.authoring_rom, args.b50_rom), indent=2) + '\n')
     except ValueError as error:
         parser.exit(1, str(error) + '\n')
 
