@@ -83,6 +83,62 @@
       "flag": "ENABLE_SKY_ROOM_SKY"
     },
     {
+      "global_sheet": "0xEB",
+      "source": "sky_overworld/gEB.txt",
+      "decoded_sha256": "061be2cad508703e8f4ec449c62567ed412e6a42406c3e132b2705cafb158b91",
+      "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
+      "why": "Sky port slot 0 (be8a DF): sky void char 17 blank pit, WALKFIX type-00 copies at 16; proposal only; v3: solid ($27) copies of walkable Cloud B rim chars 1D6/1D8/1D9/1DA/1DB/1DC/1CE at 001/002/018/019/01A/028/029, Sky only; v4: copy value 7 -> 5 (slot 0 expands high: 7 read white)."
+    },
+    {
+      "global_sheet": "0xEC",
+      "source": "sky_overworld/gEC.txt",
+      "decoded_sha256": "dd19e9403cf3eda2cffaff2bf6e9a3d0671e5b68ae9adec2788730198f58d1c0",
+      "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
+      "why": "Sky port slot 2 (be8a E0): pit void char 36 blank (black backdrop until the palset 7 move; kit had copy of 30), WALKFIX copies, $8C stake art at 32; proposal only. v5: v11 Meadow rim chars in free indices."
+    },
+    {
+      "global_sheet": "0xED",
+      "source": "sky_overworld/gED.txt",
+      "decoded_sha256": "9f57d2e23ca162a177bd252dba500cbf7090188444b9f6f2b0acb2cec6e1c78e",
+      "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
+      "why": "Sky port slot 3 (be8a E1): pass 2 cloud kit chars A/B copied 1:1 from be8a; proposal only."
+    },
+    {
+      "global_sheet": "0xEE",
+      "source": "sky_overworld/gEE.txt",
+      "decoded_sha256": "9772370e178afcab2e6d577b4913fc3a2988677bf6add27cf57326f9300bd49d",
+      "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
+      "why": "Sky port slot 4 (be8a E2): pack86 rim art; proposal only."
+    },
+    {
+      "global_sheet": "0xEF",
+      "source": "sky_overworld/gEF.txt",
+      "decoded_sha256": "58ea1cf16f50c9c8c4c54eebd24d0a9e7e09a68ddb17fbcfcc3aee442c646782",
+      "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
+      "why": "Sky port slot 5 (be8a E3): pack86 rim art; proposal only."
+    },
+    {
+      "global_sheet": "0xF0",
+      "source": "sky_overworld/gF0.txt",
+      "decoded_sha256": "01ab319f7e69ebbe268f04b65c4d45c8a7a584c32601894f7c3f244297fc4dd8",
+      "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
+      "why": "Sky port slot 6 (be8a E4): pack86 rim art; proposal only."
+    },
+    {
+      "global_sheet": "0xF1",
+      "source": "sky_overworld/gF1.txt",
+      "decoded_sha256": "dce80e0c2664697b356d3bf71cd44473c304cf699ea53509f81a9e1f9caf7494",
+      "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
+      "why": "Sky overlay: clone of 59 with cloud overlay chars in slot-7 free indices; proposal only."
+    },
+    {
+      "global_sheet": "0xF2",
+      "source": "sky_overworld/gF2.txt",
+      "decoded_sha256": "63f6683dc93febaa16057396ef4c57997217994389a6f12619595f563f1e51ae",
+      "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
+      "why": "Sky port slot 1 (replaces 0x3B on the 7 rim maps $84-$87, $8D-$8F; $8C keeps 0x3B): copy of 0x3B with v11 Meadow rim chars in indices no Sky cell uses"
+    },
+    {
       "global_sheet": "0xDF",
       "source": "d4_zora/atlas-DF.txt",
       "decoded_sha256": "92467df57fd807f8d30a4da93d4392a6ad49040c6b0bf7fc8b60c693231c5e7a",

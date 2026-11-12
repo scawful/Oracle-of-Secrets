@@ -68,6 +68,7 @@
 !ENABLE_PART0_STORM                   = 1
 !ENABLE_PORTAL_ROD_CELL               = 1
 !ENABLE_RING_SRAM_RELOCATE            = 1
+!ENABLE_SKY_OVERWORLD_GRAPHICS        = 0
 !ENABLE_SKY_PIT_DAMAGE                = 1
 !ENABLE_SKY_ROOM_SKY                  = 1
 !ENABLE_SKY_TOWER_GRAPHICS            = 1
