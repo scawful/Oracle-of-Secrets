@@ -50,7 +50,7 @@ class RandomizerProfileTest(unittest.TestCase):
         self.assertNotIn('equipment_id', known[0x4D])
         # Independent source trace: ownership row's annotated selected index
         # must resolve to the same handler as the native Hookshot menu entry.
-        source = module.source_file(module.SOURCE, 'Menu/menu_select_item.asm').decode()
+        source = (module.ROOT / 'Menu/menu_select_item.asm').read_text()
         selected = int(re.search(r'db SwitchHookOwned&\$FF ; \$([0-9A-Fa-f]+)', source)[1], 16)
         self.assertEqual(known[0x4D]['menu_selection_id'], selected)
         table = source.split('Menu_ItemIndex:', 1)[1].split('Menu_ItemIndex_End:', 1)[0]
@@ -58,7 +58,7 @@ class RandomizerProfileTest(unittest.TestCase):
                   for token in re.findall(r'\$([0-9A-Fa-f]+)', line.split(';')[0])]
         self.assertEqual(known[0x4D]['engine_action_id'], values[selected])
         self.assertEqual(values[selected], values[3])  # Native Hookshot/chain handler.
-        ownership = module.source_file(module.SOURCE, 'Menu/menu_draw.asm').decode()
+        ownership = (module.ROOT / 'Menu/menu_draw.asm').read_text()
         self.assertIn('LDA.w $040C : LSR A', ownership)
         self.assertIn('db SwitchHookOwned&$FF ; $04 D8 Sky Tower', ownership)
         b49, authoring = self.release['artifacts']
