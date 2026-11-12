@@ -211,6 +211,9 @@ D4Zora_ProtectorMain:
   LDA.w SprFloor, X : CMP.b $EE : BNE .done
   LDA.b SongFlag : CMP.b #$01 : BNE .done
   STZ.b SongFlag
+if !ENABLE_OCARINA_SONG_TINT == 1
+  LDA.b #!SongTint_Healing : JSL SongTint_Start
+endif
   LDA.b #$60 : STA.w SprTimerD, X
   LDA.b #$01 : STA.w SprAction, X
   RTS

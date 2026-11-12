@@ -219,6 +219,9 @@ Sprite_Wolfos_Main:
     ; Wait for Song of Healing before granting the mask.
     LDA.b SongFlag : CMP.b #$01 : BNE .ninguna_cancion
       STZ.b SongFlag
+if !ENABLE_OCARINA_SONG_TINT == 1
+      LDA.b #!SongTint_Healing : JSL SongTint_Start
+endif
       LDA.b #$20 : STA.w SprTimerD, X
       LDA.w POSX : STA.w SprX, X
       LDA.w POSXH : STA.w SprXH, X

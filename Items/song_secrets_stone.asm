@@ -174,9 +174,6 @@ OcarinaEffect_Stone:
   LDA.b #$4D : STA.w SprGfxProps,X ; native statue: invulnerable, palette/sheet
   LDA.b #$0D : STA.w SprProps,X ; native palette6 + OBJ page1, no global flips
   LDA.b #$1B : STA.w $012D
-if !ENABLE_OCARINA_SONG_TINT == 1
-  LDA.b #!SongTint_Stone : JSL SongTint_Start
-endif
   BRA .done
 .error
   LDA.b #$3C : STA.w $012E

@@ -54,10 +54,7 @@ assert SpecialOverworldPaletteHoleCacheEnd-SpecialOverworldPaletteHoleCache == 2
 
 ; SongTint_Table entry indexes (Items/ocarina.asm).
 !SongTint_Healing = $00
-!SongTint_Time    = $01
-!SongTint_Soaring = $02
-!SongTint_Secrets = $03
-!SongTint_Stone   = $04
+!SongTint_Secrets = $01
 
 ; PLACEHOLDER for the Song of Healing beat between Kydreeok and Ganondorf (decisions.org canon
 ; order: Kydreeok, Song frees Kydrog, Ganon). Until that scene exists, Ganondorf waits this many
