@@ -227,8 +227,15 @@ fi
 
 # Source sheets must match the selected editable base and tracked generated
 # streams. Refuse a changed base sheet before replacing any prior build output.
-run_check source_sprite_sheets 1 python3 "$repo_root/Scripts/Generate/sheet_overrides.py" \
-  --root "$repo_root" --base-rom "$base_rom" --rom-role editable_base --check --respect-flags
+check_source_sprite_sheets() {
+  if [[ -n "${YAZE_PROJECT_FILE:-}" ]]; then
+    python3 "$repo_root/Scripts/Build/authoring_bundle_build.py" \
+      --project "$YAZE_PROJECT_FILE" --prepare-source-graphics --base-rom "$base_rom" || return $?
+  fi
+  python3 "$repo_root/Scripts/Generate/sheet_overrides.py" \
+    --root "$repo_root" --base-rom "$base_rom" --rom-role editable_base --check --respect-flags
+}
+run_check source_sprite_sheets 1 check_source_sprite_sheets
 
 # Prototype HUD icons preserve every unallocated tile in the editable base.
 run_check menu_icon_sheets 1 python3 "$repo_root/Scripts/Generate/menu_icon_overrides.py" \

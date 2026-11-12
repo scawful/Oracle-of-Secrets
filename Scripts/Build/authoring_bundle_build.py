@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import configparser
+import hashlib
 import os
 from pathlib import Path
 import re
@@ -30,6 +31,87 @@ def _bound(root: Path, configured: str, key: str,
     if supplied and _path(root, supplied) != result:
         raise ValueError(f"{key} differs from the saved project binding")
     return result
+
+
+def prepare_source_graphics(project: Path, base_rom: Path, *,
+                            compiler_root: Path | None = None) -> int:
+    """Refresh derived sheets for the saved source binding, never the ROM.
+
+    Called after build_rom.sh selects flags. Its mandatory --check still runs
+    afterwards; ordinary builds without a project remain check-only.
+    """
+    project = project.resolve(strict=True)
+    config = configparser.ConfigParser(interpolation=None)
+    config.read(project, encoding="utf-8")
+    spec_name = config.get("graphics_sheets", "source_spec", fallback="").strip()
+    if not spec_name:
+        return 0
+    environment = dict(os.environ)
+    _bound(project.parent, str(project), "YAZE_PROJECT_FILE", environment)
+    code = _bound(project.parent, config.get("files", "code_folder", fallback=""),
+                  "YAZE_PROJECT_CODE_FOLDER", environment)
+    actual_root = (compiler_root or Path(__file__).resolve().parents[2]).resolve(strict=True)
+    if code != actual_root:
+        raise ValueError("Source graphics code_folder differs from the actual compiler root")
+    rom = _bound(project.parent, config.get("files", "rom_filename", fallback=""),
+                 "YAZE_PROJECT_ROM", environment)
+    if not rom.is_file() or not base_rom.resolve(strict=True).samefile(rom):
+        raise ValueError("Source graphics base ROM differs from the saved project ROM")
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "Generate"))
+    try:
+        import sheet_overrides as sheets
+        from asm_source import _load_global_defines
+        if spec_name not in (sheets.SPEC.as_posix(), sheets.D4_SPEC.as_posix()):
+            raise ValueError("Source graphics requires a canonical ordinary or D4 spec")
+        spec_path = code / spec_name
+        if spec_path.resolve(strict=True) != spec_path:
+            raise ValueError("Source graphics spec must not redirect through a symlink")
+        saved_sha1 = config.get("graphics_sheets", "source_spec_sha1", fallback="")
+        if saved_sha1 != hashlib.sha1(spec_path.read_bytes()).hexdigest():
+            raise ValueError("Source graphics saved spec SHA1 differs from the current spec")
+        defines = _load_global_defines(code)
+        enabled = defines.get(sheets.FLAG)
+        if enabled not in (0, 1):
+            raise ValueError("Source sheet feature flag is missing or invalid")
+        if not enabled:
+            return 0
+        if defines.get("ENABLE_D4_ZORA_REDESIGN"):
+            ordinary = code / sheets.SPEC
+            if ordinary.resolve(strict=True) != ordinary:
+                raise ValueError("Source graphics ordinary spec must not redirect through a symlink")
+        selected, output = sheets.selected_sources(code)
+        if selected.as_posix() != spec_name:
+            raise ValueError("Source graphics spec differs from the current build flags")
+        out = code / output
+        if out.resolve() != out:
+            raise ValueError("Source graphics output must stay in the actual compiler root")
+        spec, items = sheets.build(spec_path, rom, code, rom_role="editable_base")
+        frame_source = code / "Data/graphics/d4_zora/frames.asm"
+        frames = frame_source.read_bytes() if selected == sheets.D4_SPEC else None
+        files = sheets.generated_files(items, frames)
+        # Validate every destination before reading stale bytes or publishing any
+        # stream. A canonical output root alone does not protect nested parents.
+        for name in files:
+            target = out / name
+            if not target.is_relative_to(out) or target.resolve() != target or target.is_symlink():
+                raise ValueError("Source graphics destination redirects outside its canonical output path")
+            for parent in target.parents:
+                if parent == out:
+                    break
+                if parent.is_symlink() or (parent.exists() and not parent.is_dir()):
+                    raise ValueError("Source graphics destination parent must be an unredirected directory")
+            if target.exists() and not target.is_file():
+                raise ValueError("Source graphics destination must be a regular file")
+        if any(not (out / name).is_file() or (out / name).read_bytes() != data
+               for name, data in files.items()):
+            inputs = [project, rom, spec_path]
+            if frames is not None:
+                inputs.append(frame_source)
+            inputs.extend(spec_path.parent / entry["source"] for entry in spec["sheets"])
+            sheets.write_outputs(out, files, inputs)
+        return 0
+    finally:
+        sys.path.pop(0)
 
 
 def build_project(project: Path, *, enable: str = "", disable: str = "") -> int:
@@ -128,8 +210,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--project", type=Path, required=True)
     parser.add_argument("--enable", default="", help="Comma-separated features for build_rom.sh to enable")
     parser.add_argument("--disable", default="", help="Comma-separated features for build_rom.sh to disable")
+    parser.add_argument("--prepare-source-graphics", action="store_true",
+                        help="Refresh saved source sheets after compiler flag selection")
+    parser.add_argument("--base-rom", type=Path,
+                        help="Actual compiler base; required by source graphics preparation")
     args = parser.parse_args(argv)
     try:
+        if args.prepare_source_graphics:
+            if args.base_rom is None:
+                raise ValueError("Source graphics preparation requires --base-rom")
+            return prepare_source_graphics(args.project, args.base_rom)
         return build_project(args.project, enable=args.enable, disable=args.disable)
     except (OSError, ValueError, configparser.Error) as error:
         print(error, file=sys.stderr)
