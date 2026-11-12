@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_by": "scripts/extract_resource_labels.py",
+    "generated_by": "Scripts/Generate/extract_resource_labels.py",
     "description": "Unified Oracle of Secrets resource labels for yaze integration",
     "sources": [
       "Docs/Dev/Planning/oracle_room_labels.json",
@@ -350,7 +350,9 @@
     "0xD2": "Cloud Bridge",
     "0x0A": "Eon Owl / Kaepora Gaebora",
     "0xB8": "Zora Princess",
-    "0x11": "Vampire Bat"
+    "0x11": "Vampire Bat",
+    "0xD3": "Ganondorf",
+    "0x46": "Ganon Ball"
   },
   "item": {
     "0x00": "Fighter Sword / Shield",
@@ -427,6 +429,10 @@
     "0x47": "Stone Mask",
     "0x48": "Wolf Mask",
     "0x49": "Minish Mask"
+  },
+  "item_receipt": {
+    "0x4C": "Bombchu",
+    "0x4D": "Switch Hook"
   },
   "entrance": {
     "0x00": "Link's House",

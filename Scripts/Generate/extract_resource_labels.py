@@ -3,7 +3,7 @@
 Extract unified Oracle resource labels from multiple data sources.
 
 Generates oracle_resource_labels.json with sections:
-  room, sprite, item, entrance, overworld_map, music
+  room, sprite, item, item_receipt, entrance, overworld_map, music
 
 Sources:
   - Docs/Dev/Planning/oracle_room_labels.json  -> room
@@ -191,6 +191,19 @@ def extract_item_labels(root: Path) -> dict:
     return dict(ITEM_LABELS)
 
 
+# Custom receipt IDs are separate from the legacy item labels above.
+# Owned by Items/bombchu_receipt.asm; native receipts keep Yaze's labels.
+ITEM_RECEIPT_LABELS = {
+    "0x4C": "Bombchu",
+    "0x4D": "Switch Hook",
+}
+
+
+def extract_item_receipt_labels(root: Path) -> dict:
+    """Return Oracle's extended chest/item receipt labels."""
+    return dict(ITEM_RECEIPT_LABELS)
+
+
 # ── Entrance Labels ──────────────────────────────────────────────────────────
 
 def extract_entrance_labels(root: Path) -> dict:
@@ -323,6 +336,7 @@ def build_resource_labels(root: Path) -> dict:
         "room": extract_room_labels,
         "sprite": extract_sprite_labels,
         "item": extract_item_labels,
+        "item_receipt": extract_item_receipt_labels,
         "entrance": extract_entrance_labels,
         "overworld_map": extract_overworld_labels,
         "music": extract_music_labels,
@@ -339,7 +353,7 @@ def build_resource_labels(root: Path) -> dict:
 def validate_labels(labels: dict) -> bool:
     """Check schema validity of generated labels."""
     ok = True
-    required_sections = ["room", "sprite", "item", "entrance", "overworld_map", "music"]
+    required_sections = ["room", "sprite", "item", "item_receipt", "entrance", "overworld_map", "music"]
 
     for section in required_sections:
         if section not in labels:
