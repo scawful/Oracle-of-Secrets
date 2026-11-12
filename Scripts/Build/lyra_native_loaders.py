@@ -700,6 +700,8 @@ def main(argv=None):
     parser.add_argument('--build-cache', type=Path)
     parser.add_argument('--symbols', type=Path)
     parser.add_argument('--z3ed')
+    parser.add_argument('--project-context', type=Path,
+                       help='Selected .yaze project for source-backed graphics')
     for name in ('import-terrain', 'import-gameplay-areas', 'import-plan', 'import-inspection',
                  'engine-rom', 'engine-receipt', 'import-receipt'):
         parser.add_argument('--' + name, type=Path)

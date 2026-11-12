@@ -253,6 +253,9 @@ snapshot_build_outputs
 # Native special-overworld data belongs to the editable ROM. The generated
 # include contains constants only; initial data import is a separate operation.
 native_build_args=(--build-cache "$repo_root/.cache")
+if [[ -n "${YAZE_PROJECT_FILE:-}" ]]; then
+  native_build_args+=(--project-context "$YAZE_PROJECT_FILE")
+fi
 # Without a located z3ed the stage fails with the checked locations above.
 if native_z3ed="$(oos_find_z3ed "$repo_root")"; then
   native_build_args+=(--z3ed "$native_z3ed")

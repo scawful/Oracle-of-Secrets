@@ -17,6 +17,7 @@ import lyra_native_loaders as native
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'Generate'))
 import sheet_codec
+import sheet_overrides
 import sheet_table
 
 SOURCE_SCHEMA = 'yaze.special-overworld-native-source.v1'
@@ -74,34 +75,134 @@ def _color_bytes(colors):
                     b'\x01' + struct.pack('<H', value) for value in colors)
 
 
-def _source_sheets(source):
+def _graphics_sources(value, graphics_root):
+    """Authenticate the export's complete selected global-source binding."""
+    if 'graphics_source' not in value:
+        return {}
+    _require(graphics_root is not None, 'GRAPHICS_ROOT_REQUIRED')
+    provenance = value['graphics_source']
+    _require(type(provenance) is dict, 'GRAPHICS_SOURCE_INVALID')
+    root = Path(graphics_root).resolve(strict=True)
+    ordinary_name = 'Data/graphics/source_sprite_sheets.json'
+    d4_name = 'Data/graphics/d4_zora_sprite_sheets.json'
+    spec_name = provenance.get('spec')
+    _require(spec_name in (ordinary_name, d4_name), 'GRAPHICS_SPEC_MISMATCH')
+    spec_path = root / spec_name
+    _require(spec_path.resolve(strict=True) == spec_path, 'GRAPHICS_SPEC_PATH_INVALID')
+    _require(provenance.get('spec_sha1') == hashlib.sha1(spec_path.read_bytes()).hexdigest(),
+             'GRAPHICS_SPEC_MISMATCH')
+    spec = sheet_overrides.read_spec(spec_path)
+    globals_ = [entry for entry in spec['sheets'] if 'global_sheet' in entry]
+    names = {entry['flag'] for entry in globals_ if entry.get('flag')}
+    names.update(('ENABLE_SOURCE_SPRITE_SHEETS', 'ENABLE_D4_ZORA_REDESIGN'))
+    defines, define_files = {}, {}
+    for relative in ('Util/macros.asm', 'Config/module_flags.asm', 'Config/feature_flags.asm'):
+        path = root / relative
+        if not path.exists():
+            continue
+        _require(path.resolve(strict=True).is_relative_to(root), 'GRAPHICS_DEFINE_PATH_INVALID')
+        raw = path.read_bytes()
+        define_files[relative] = _sha(raw)
+        for line in raw.decode('utf-8').splitlines():
+            match = re.match(r'^\s*!([A-Za-z0-9_]+)(.*)$', line.split(';', 1)[0])
+            if not match or match[1] not in names:
+                continue
+            rest = match[2].strip()
+            _require(rest.startswith('='), 'GRAPHICS_FLAG_ASSIGNMENT_INVALID')
+            literal = rest[1:].strip()
+            # Match the source adapter: decimal or $hex, at most eight digits;
+            # later include-file assignments replace earlier values.
+            valid = re.fullmatch(r'(?:[0-9]{1,8}|\$[0-9a-fA-F]{1,8})', literal)
+            defines[match[1]] = (int(literal[1:], 16) if literal.startswith('$')
+                                else int(literal)) if valid else None
+    _require(all(name in defines and defines[name] is not None for name in names),
+             'GRAPHICS_FLAG_UNRESOLVED')
+    _require(defines['ENABLE_SOURCE_SPRITE_SHEETS'] == 1,
+             'GRAPHICS_SOURCE_FEATURE_DISABLED')
+    d4_selected = defines['ENABLE_D4_ZORA_REDESIGN'] != 0
+    _require(spec_name == (d4_name if d4_selected else ordinary_name),
+             'GRAPHICS_SPEC_SELECTION_MISMATCH')
+    ordinary_sha1 = None
+    if d4_selected:
+        ordinary_path = root / ordinary_name
+        _require(ordinary_path.resolve(strict=True) == ordinary_path,
+                 'GRAPHICS_SPEC_PATH_INVALID')
+        ordinary = sheet_overrides.read_spec(ordinary_path)
+        _require(spec['sheets'][:len(ordinary['sheets'])] == ordinary['sheets'],
+                 'GRAPHICS_D4_STANDARD_PREFIX_MISMATCH')
+        ordinary_sha1 = hashlib.sha1(ordinary_path.read_bytes()).hexdigest()
+    selected = {sheet_overrides.number(entry['global_sheet']): entry
+                for entry in globals_ if not entry.get('flag')}
+    for entry in globals_:
+        if entry.get('flag') and defines[entry['flag']] != 0:
+            selected[sheet_overrides.number(entry['global_sheet'])] = entry
+    authenticated, expected = {}, []
+    for sheet, entry in sorted(selected.items()):
+        path = spec_path.parent / entry['source']
+        # read_spec checks both lexical traversal and symlink containment.
+        _require(path.suffix == '.txt', 'GRAPHICS_SOURCE_FORMAT_UNSUPPORTED')
+        grid = sheet_codec.text_to_grid(path.read_text())
+        raw = sheet_codec.grid_to_sheet(grid)
+        _require(_sha(raw) == entry['decoded_sha256'], 'GRAPHICS_SOURCE_HASH_MISMATCH')
+        flat = bytes(pixel for row in grid for pixel in row)
+        row = dict(sheet_id=sheet, source=entry['source'], flag=entry.get('flag'),
+                   decoded_sheet_sha256=_sha(flat))
+        expected.append(row)
+        source_record = dict(spec=spec_name,
+            spec_sha1=provenance['spec_sha1'], source=entry['source'],
+            flag=entry.get('flag'), define_files_sha256=define_files)
+        if ordinary_sha1 is not None:
+            source_record['ordinary_spec_sha1'] = ordinary_sha1
+        authenticated[sheet] = (raw, grid, source_record)
+    _require(set(provenance) == {'spec', 'spec_sha1', 'sheets'}
+             and provenance.get('sheets') == expected, 'GRAPHICS_SOURCE_ROWS_MISMATCH')
+    return authenticated
+
+
+def _source_sheets(source, authenticated=None):
     cache, records = {}, {}
+    authenticated = authenticated or {}
 
     def read(sheet):
         _require(type(sheet) is int and 0 <= sheet < 255, 'SHEET_SELECTOR_INVALID')
         if sheet not in cache:
-            try:
-                pointer = sheet_table.ptr(source, sheet)
-                _require(pointer & 0xFFFF >= 0x8000
-                         and (pointer >> 16) & 0x7F < 0x7E, 'SHEET_POINTER_INVALID')
-                start = sheet_table.pc(pointer)
-                if 0x73 <= sheet <= 0x7E:
-                    raw, consumed = source[start:start + 0x600], 0x600
-                else:
-                    raw, consumed = sheet_table.decomp(source, pointer)
-                _require(len(raw) == 0x600 and start + consumed <= len(source),
-                         'SHEET_BYTES_INVALID')
-                grid = sheet_codec.sheet_to_grid(raw)
-            except (IndexError, ValueError) as error:
-                raise ValueError(f'RESIDENT_GRAPHICS_SHEET_DECODE_FAILED: {sheet:02X}') from error
-            flat = bytes(value for row in grid for value in row)
-            tiles = tuple(bytes(grid[t // 16 * 8 + y][t % 16 * 8 + x]
-                                for y in range(8) for x in range(8)) for t in range(64))
-            cache[sheet] = (flat, tiles)
-            records[sheet] = dict(sheet_id=sheet, pointer_snes=pointer,
-                stream_byte_count=consumed, stream_sha256=_sha(source[start:start + consumed]),
-                decoded_3bpp_sha256=_sha(raw), decoded_indexed8_sha256=_sha(flat))
+            if sheet in authenticated:
+                raw, grid, provenance = authenticated[sheet]
+                records[sheet] = dict(sheet_id=sheet, source_provenance=provenance,
+                    decoded_3bpp_sha256=_sha(raw),
+                    decoded_indexed8_sha256=_sha(bytes(v for row in grid for v in row)))
+            else:
+                return read_rom(sheet)
+            return cache_grid(sheet, grid)
         return cache[sheet]
+
+    def cache_grid(sheet, grid):
+        flat = bytes(value for row in grid for value in row)
+        tiles = tuple(bytes(grid[t // 16 * 8 + y][t % 16 * 8 + x]
+                            for y in range(8) for x in range(8)) for t in range(64))
+        cache[sheet] = (flat, tiles)
+        return cache[sheet]
+
+    def read_rom(sheet):
+        try:
+            pointer = sheet_table.ptr(source, sheet)
+            _require(pointer & 0xFFFF >= 0x8000
+                     and (pointer >> 16) & 0x7F < 0x7E, 'SHEET_POINTER_INVALID')
+            start = sheet_table.pc(pointer)
+            if 0x73 <= sheet <= 0x7E:
+                raw, consumed = source[start:start + 0x600], 0x600
+            else:
+                raw, consumed = sheet_table.decomp(source, pointer)
+            _require(len(raw) == 0x600 and start + consumed <= len(source),
+                     'SHEET_BYTES_INVALID')
+            grid = sheet_codec.sheet_to_grid(raw)
+        except (IndexError, ValueError) as error:
+            raise ValueError(f'RESIDENT_GRAPHICS_SHEET_DECODE_FAILED: {sheet:02X}') from error
+        records[sheet] = dict(sheet_id=sheet, pointer_snes=pointer,
+            stream_byte_count=consumed, stream_sha256=_sha(source[start:start + consumed]),
+            decoded_3bpp_sha256=_sha(raw),
+            decoded_indexed8_sha256=_sha(bytes(v for row in grid for v in row)))
+        return cache_grid(sheet, grid)
 
     return read, records
 
@@ -318,15 +419,21 @@ def _native_source(source, exported):
     return value, definitions, tiles, areas
 
 
-def plan_saved_native_terrain(source, exported):
+def plan_saved_native_terrain(source, exported, *, graphics_root=None):
     """Reuse the retained packer with saved-ROM pages, never a terrain sidecar.
 
     The caller must obtain the export by running z3ed on this exact saved ROM.
     The exporter validates/decompresses terrain; this adapter rechecks native
     profiles, topology and ROM-resolved BG bytes before consuming its tile grid.
+    A source-bound export additionally requires its explicit graphics checkout;
+    its selected globals are authenticated against the canonical producer spec.
     """
     value, definitions, tiles, areas = _native_source(source, exported)
-    read_sheet, sheets = _source_sheets(source)
+    try:
+        authenticated = _graphics_sources(value, graphics_root)
+    except (OSError, TypeError, KeyError) as error:
+        raise ValueError('RESIDENT_GRAPHICS_SOURCE_UNAVAILABLE') from error
+    read_sheet, sheets = _source_sheets(source, authenticated)
     assets = {}
     required = {page for area in areas if area['resident_required'] for page in area['maps']}
     for page in value['pages']:

@@ -2,9 +2,11 @@
 import copy
 import hashlib
 import importlib.util
+import json
 from pathlib import Path
 import struct
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -110,6 +112,10 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
     def test_native_large_area_packs_physical_page_colors_without_sidecar(self):
         before = hashlib.sha256(self.source).hexdigest()
         result = R.plan_saved_native_terrain(self.source, self.exported)
+        # Captured from the pre-source-context compiler at HEAD, not recomputed
+        # from the new implementation: no-context serialized output stays exact.
+        self.assertEqual(result['plan_sha256'],
+            '2ef00caabbb191f825bfa247614b6444716e5c1519c47f77b52b430ba5b9b570')
         self.assertEqual(len(result['areas']), 1)
         area = result['areas'][0]
         self.assertEqual(area['maps'], [0xB0, 0xB1, 0xB8, 0xB9])
@@ -121,6 +127,183 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
         self.assertFalse(result['allocation_granted'])
         self.assertEqual(result, R.plan_saved_native_terrain(self.source, self.exported))
         self.assertEqual(hashlib.sha256(self.source).hexdigest(), before)
+
+    def bound_global(self):
+        folder = tempfile.TemporaryDirectory()
+        self.addCleanup(folder.cleanup)
+        root = Path(folder.name)
+        spec_path = root / 'Data/graphics/source_sprite_sheets.json'
+        spec_path.parent.mkdir(parents=True)
+        (root / 'Util').mkdir()
+        (root / 'Config').mkdir()
+        (root / 'Util/macros.asm').write_text('!ENABLE_TEST_SKY = 0\n'
+            '!ENABLE_SOURCE_SPRITE_SHEETS = 1\n!ENABLE_D4_ZORA_REDESIGN = 0\n')
+        (root / 'Config/module_flags.asm').write_text('')
+        (root / 'Config/feature_flags.asm').write_text('!ENABLE_TEST_SKY = $01\n')
+        grid = [[2] * 128 for _ in range(32)]
+        raw = R.sheet_codec.grid_to_sheet(grid)
+        (spec_path.parent / 'sky.txt').write_text(R.sheet_codec.grid_to_text(grid))
+        base_grid = [[1] * 128 for _ in range(32)]
+        (spec_path.parent / 'base.txt').write_text(R.sheet_codec.grid_to_text(base_grid))
+        spec = dict(schema_version=2, start='0x40D000', capacity=12288,
+            encoding='lz2', sheets=[dict(global_sheet='0xEB', source='base.txt',
+                decoded_sha256=R._sha(R.sheet_codec.grid_to_sheet(base_grid)), why='fallback'),
+                dict(global_sheet='0xEB', source='sky.txt',
+                flag='ENABLE_TEST_SKY', decoded_sha256=R._sha(raw), why='test')])
+        spec_path.write_text(json.dumps(spec))
+        value = copy.deepcopy(self.exported['native_source'])
+        flat = bytes([2] * 4096)
+        for page in value['pages']:
+            for state in page['resolved_states']:
+                state['slots'][0].update(sheet_id=0xEB,
+                    decoded_sheet_sha256=R._sha(flat),
+                    resolved_slot_sha256=R._sha(bytes([0x8A] * 4096)))
+        value['graphics_source'] = dict(spec='Data/graphics/source_sprite_sheets.json',
+            spec_sha1=hashlib.sha1(spec_path.read_bytes()).hexdigest(), sheets=[dict(
+                sheet_id=0xEB, source='sky.txt', flag='ENABLE_TEST_SKY',
+                decoded_sheet_sha256=R._sha(flat))])
+        return root, value, raw
+
+    def test_bound_eb_source_authenticates_both_digest_representations(self):
+        root, value, raw = self.bound_global()
+        result = R.plan_saved_native_terrain(self.source, self.seal(value), graphics_root=root)
+        row, = [s for s in result['decoded_sheets'] if s['sheet_id'] == 0xEB]
+        self.assertEqual(row['decoded_3bpp_sha256'], R._sha(raw))
+        self.assertEqual(row['decoded_indexed8_sha256'], R._sha(bytes([2] * 4096)))
+        self.assertEqual(row['source_provenance']['source'], 'sky.txt')
+        self.assertNotIn('pointer_snes', row)
+        self.assertEqual(result, R.plan_saved_native_terrain(
+            self.source, self.seal(value), graphics_root=root))
+        # A context is inert for old exports: preserve their exact plan bytes.
+        self.assertEqual(R._json_bytes(R.plan_saved_native_terrain(self.source, self.exported)),
+            R._json_bytes(R.plan_saved_native_terrain(
+                self.source, self.exported, graphics_root=root)))
+
+    def test_graphics_provenance_needs_context_and_complete_authentic_rows(self):
+        root, original, raw = self.bound_global()
+        with self.assertRaisesRegex(ValueError, 'GRAPHICS_ROOT_REQUIRED'):
+            R.plan_saved_native_terrain(self.source, self.seal(original))
+        mutations = [
+            lambda p: p.__setitem__('spec_sha1', '0' * 40),
+            lambda p: p.__setitem__('spec', 'elsewhere.json'),
+            lambda p: p['sheets'][0].__setitem__('source', 'forged.txt'),
+            lambda p: p['sheets'][0].__setitem__('flag', None),
+            lambda p: p['sheets'][0].__setitem__('sheet_id', 0xEC),
+            lambda p: p['sheets'][0].__setitem__('decoded_sheet_sha256', R._sha(raw)),
+            lambda p: p.__setitem__('sheets', []),
+            lambda p: p['sheets'].append(copy.deepcopy(p['sheets'][0])),
+        ]
+        for mutate in mutations:
+            value = copy.deepcopy(original)
+            mutate(value['graphics_source'])
+            with self.subTest(provenance=value['graphics_source']):
+                with self.assertRaisesRegex(ValueError, 'GRAPHICS_(SPEC|SOURCE_ROWS)_MISMATCH'):
+                    R.plan_saved_native_terrain(self.source, self.seal(value), graphics_root=root)
+
+    def test_stale_artwork_and_disabled_missing_nonliteral_flags_refuse(self):
+        root, value, _ = self.bound_global()
+        flags = root / 'Config/feature_flags.asm'
+        for text in ('!ENABLE_TEST_SKY = 0\n', '!ENABLE_TEST_SKY = other\n',
+                     '!ENABLE_TEST_SKY ?= 1\n'):
+            flags.write_text(text)
+            with self.subTest(flags=text):
+                with self.assertRaisesRegex(ValueError, 'GRAPHICS_(SOURCE_ROWS|FLAG)'):
+                    R.plan_saved_native_terrain(self.source, self.seal(value), graphics_root=root)
+        flags.write_text('')
+        (root / 'Util/macros.asm').write_text('')
+        with self.assertRaisesRegex(ValueError, 'FLAG_UNRESOLVED'):
+            R.plan_saved_native_terrain(self.source, self.seal(value), graphics_root=root)
+        (root / 'Util/macros.asm').write_text(
+            '!ENABLE_SOURCE_SPRITE_SHEETS = 1\n!ENABLE_D4_ZORA_REDESIGN = 0\n')
+        flags.write_text('!ENABLE_TEST_SKY = 1\n')
+        (root / 'Data/graphics/sky.txt').write_text(R.sheet_codec.grid_to_text([[3] * 128 for _ in range(32)]))
+        with self.assertRaisesRegex(ValueError, 'SOURCE_HASH_MISMATCH'):
+            R.plan_saved_native_terrain(self.source, self.seal(value), graphics_root=root)
+
+    def test_source_symlink_cannot_escape_spec_directory(self):
+        root, value, _ = self.bound_global()
+        path = root / 'Data/graphics/sky.txt'
+        outside = root / 'outside.txt'
+        outside.write_bytes(path.read_bytes())
+        path.unlink()
+        path.symlink_to(outside)
+        with self.assertRaisesRegex(ValueError, 'escapes through a symlink'):
+            R.plan_saved_native_terrain(self.source, self.seal(value), graphics_root=root)
+
+    def test_enclosing_source_and_d4_flags_are_explicit_admission_guards(self):
+        root, value, _ = self.bound_global()
+        flags = root / 'Config/module_flags.asm'
+        for text, message in (
+            ('!ENABLE_SOURCE_SPRITE_SHEETS = 0\n', 'SOURCE_FEATURE_DISABLED'),
+            ('!ENABLE_SOURCE_SPRITE_SHEETS = 2\n', 'SOURCE_FEATURE_DISABLED'),
+            ('!ENABLE_D4_ZORA_REDESIGN = 1\n', 'SPEC_SELECTION_MISMATCH'),
+            ('!ENABLE_D4_ZORA_REDESIGN = expression\n', 'FLAG_UNRESOLVED')):
+            flags.write_text(text)
+            with self.subTest(flags=text):
+                with self.assertRaisesRegex(ValueError, message):
+                    R.plan_saved_native_terrain(self.source, self.seal(value), graphics_root=root)
+
+        flags.write_text('')
+        macros = root / 'Util/macros.asm'
+        for missing in ('ENABLE_SOURCE_SPRITE_SHEETS', 'ENABLE_D4_ZORA_REDESIGN'):
+            macros.write_text('!ENABLE_TEST_SKY = 0\n' + ''.join(
+                f'!{name} = {number}\n' for name, number in
+                (('ENABLE_SOURCE_SPRITE_SHEETS', 1), ('ENABLE_D4_ZORA_REDESIGN', 0))
+                if name != missing))
+            with self.subTest(missing=missing):
+                with self.assertRaisesRegex(ValueError, 'FLAG_UNRESOLVED'):
+                    R.plan_saved_native_terrain(self.source, self.seal(value), graphics_root=root)
+
+    def test_d4_source_selection_prefix_and_sha_are_authenticated(self):
+        root, value, _ = self.bound_global()
+        ordinary_path = root / 'Data/graphics/source_sprite_sheets.json'
+        d4_path = ordinary_path.with_name('d4_zora_sprite_sheets.json')
+        d4 = json.loads(ordinary_path.read_text())
+        grid = [[3] * 128 for _ in range(32)]
+        raw = R.sheet_codec.grid_to_sheet(grid)
+        (d4_path.parent / 'd4.txt').write_text(R.sheet_codec.grid_to_text(grid))
+        d4['sheets'].append(dict(global_sheet='0xEC', source='d4.txt',
+            decoded_sha256=R._sha(raw), why='D4 addition'))
+        d4_path.write_text(json.dumps(d4))
+        flags = root / 'Config/module_flags.asm'
+        flags.write_text('!ENABLE_D4_ZORA_REDESIGN = 2\n')
+        provenance = value['graphics_source']
+        provenance.update(spec='Data/graphics/d4_zora_sprite_sheets.json',
+            spec_sha1=hashlib.sha1(d4_path.read_bytes()).hexdigest())
+        provenance['sheets'].append(dict(sheet_id=0xEC, source='d4.txt', flag=None,
+            decoded_sheet_sha256=R._sha(bytes([3] * 4096))))
+        for page in value['pages']:
+            for state in page['resolved_states']:
+                state['slots'][1].update(sheet_id=0xEC,
+                    decoded_sheet_sha256=R._sha(bytes([3] * 4096)),
+                    resolved_slot_sha256=R._sha(bytes([3] * 4096)))
+        result = R.plan_saved_native_terrain(self.source, self.seal(value), graphics_root=root)
+        row, = [s for s in result['decoded_sheets'] if s['sheet_id'] == 0xEC]
+        self.assertEqual(row['decoded_3bpp_sha256'], R._sha(raw))
+        self.assertEqual(row['source_provenance']['ordinary_spec_sha1'],
+                         hashlib.sha1(ordinary_path.read_bytes()).hexdigest())
+        flags.write_text('!ENABLE_D4_ZORA_REDESIGN = 0\n')
+        with self.assertRaisesRegex(ValueError, 'SPEC_SELECTION_MISMATCH'):
+            R.plan_saved_native_terrain(self.source, self.seal(value), graphics_root=root)
+        flags.write_text('!ENABLE_D4_ZORA_REDESIGN = 1\n')
+        stale = copy.deepcopy(value)
+        stale['graphics_source']['spec_sha1'] = '0' * 40
+        with self.assertRaisesRegex(ValueError, 'GRAPHICS_SPEC_MISMATCH'):
+            R.plan_saved_native_terrain(self.source, self.seal(stale), graphics_root=root)
+        d4['sheets'][0]['why'] = 'changed standard prefix'
+        d4_path.write_text(json.dumps(d4))
+        provenance['spec_sha1'] = hashlib.sha1(d4_path.read_bytes()).hexdigest()
+        with self.assertRaisesRegex(ValueError, 'D4_STANDARD_PREFIX_MISMATCH'):
+            R.plan_saved_native_terrain(self.source, self.seal(value), graphics_root=root)
+
+    def test_canonical_spec_cannot_be_an_internal_symlink_alias(self):
+        root, value, _ = self.bound_global()
+        path = root / 'Data/graphics/source_sprite_sheets.json'
+        alias = path.with_name('alias.json')
+        path.rename(alias)
+        path.symlink_to(alias.name)
+        with self.assertRaisesRegex(ValueError, 'GRAPHICS_SPEC_PATH_INVALID'):
+            R.plan_saved_native_terrain(self.source, self.seal(value), graphics_root=root)
 
     def test_export_identity_raw_profile_and_topology_cannot_be_substituted(self):
         for change, message in (

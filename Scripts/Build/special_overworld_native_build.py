@@ -137,7 +137,8 @@ def _code_reseal(source, capacity, bank, entries, replacement):
 
 
 def prepare_revision4_compilation(source, exported, *, data_pc, capacity,
-                                  preimage, reader_code_replacement=None):
+                                  preimage, reader_code_replacement=None,
+                                  graphics_root=None):
     """Return pure compilation inputs and preimage-bound writes, not a ROM.
 
     ``data_pc/capacity`` name the caller-owned current resident reservation;
@@ -176,7 +177,8 @@ def prepare_revision4_compilation(source, exported, *, data_pc, capacity,
                                       reader_code_replacement)
     # This validates fresh export identity/profiles/topology/resolved bytes;
     # the retained packer and emitter own all byte formats and bank placement.
-    plan = resources.plan_saved_native_terrain(source, exported)
+    plan = resources.plan_saved_native_terrain(source, exported,
+                                               graphics_root=graphics_root)
     abi = resident.plan_native_resident_abi(plan, tile16_count=entries[400][1])
     emission = resident.emit_native_resident_abi(abi, data_pc=data_pc,
         capacity=capacity, preimage=preimage)
@@ -259,7 +261,7 @@ def _symbol(symbols, name, *, exclusive_end=False):
 
 
 def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
-                                allow_stale_directory=False):
+                                allow_stale_directory=False, graphics_root=None):
     """Validate compilation and return directory bytes for source reassembly.
 
     Inputs are immutable ROM bytes, a fresh source export and WLA label names
@@ -280,7 +282,8 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
     prep = prepare_revision4_compilation(source, exported,
         data_pc=native.RESIDENT_DATA_PC, capacity=native.RESIDENT_DATA_CAPACITY,
         preimage=source[native.RESIDENT_DATA_PC:
-                        native.RESIDENT_DATA_PC + native.RESIDENT_DATA_CAPACITY])
+                        native.RESIDENT_DATA_PC + native.RESIDENT_DATA_CAPACITY],
+        graphics_root=graphics_root)
     capacity, bank, entries = native.read_native_directory(source)
     code_address, code_size = entries[300]
     code_start = _symbol(symbols, 'Lyra_CurrentNativeCodeStart')
@@ -406,6 +409,8 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
         full_residency_ready=False, runtime_admission=False, publication_authorized=False)
 
 
-def verify_revision4_compiled_output(source, exported, compiled, symbols):
+def verify_revision4_compiled_output(source, exported, compiled, symbols, *,
+                                    graphics_root=None):
     """Strict final composition proof; a stale ID300 seal always refuses."""
-    return plan_revision4_compiled_seal(source, exported, compiled, symbols)
+    return plan_revision4_compiled_seal(source, exported, compiled, symbols,
+                                      graphics_root=graphics_root)
