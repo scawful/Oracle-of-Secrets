@@ -301,6 +301,25 @@ PortalShot_Fly:
     JMP .stop
   .passable
 
+  ; Second shot (orange, with a live blue): keep the pair where
+  ; Portal_CheckWarpContext can warp both ways. SprMiscA bit 2 = the bolt has
+  ; been inside that window. Before it gets there the flight is unchanged; on
+  ; the first step inside, spots recorded outside are dropped; once it leaves,
+  ; it stops and opens on the last safe spot that was inside.
+  LDA.w SprMiscA, X : AND.b #$01 : BNE .window_ok
+  LDY.w BlueSpriteIndex : CPY.b #$10 : BCS .window_ok
+  LDA.w SprType, Y : CMP.b #$03 : BNE .window_ok
+  LDA.w SprState, Y : CMP.b #$09 : BNE .window_ok
+  LDA.w SprSubtype, Y : CMP.b #$02 : BNE .window_ok
+  JSR PortalShot_InPairWindow : BCS .in_window
+    LDA.w SprMiscA, X : AND.b #$04 : BEQ .window_ok
+    JMP .stop
+  .in_window
+  LDA.w SprMiscA, X : AND.b #$04 : BNE .window_ok
+    LDA.w SprMiscA, X : ORA.b #$04 : STA.w SprMiscA, X
+    LDA.w PortalShot_Dist, X : AND.b #$7F : STA.w PortalShot_Dist, X
+  .window_ok
+
   ; Too close to Link would overlap and warp at once (old fixed offsets).
   LDY.w SprMiscC, X
   LDA.w PortalShot_Dist, X : AND.b #$7F : CMP.w .min_distance, Y : BCC .check_range
@@ -379,6 +398,95 @@ PortalShot_ProbeTile:
   LDA.w SprFloor, X : JSL Sprite_GetTileAttr
   PLY
   LDA.w $0FA5
+  RTS
+}
+
+; Carry set when bolt X and live portal Y pass Portal_CheckWarpContext in both
+; directions, with Link standing on the source portal: same 256px pages, and
+; target - camera inside [0,$F1) on X and [0,$D1) on Y. The camera for Link at
+; p is the native scroll's resting point: E + (p & mask) + off - trigger - 1,
+; clamped to the room/area bounds (Underworld_HandleCamera,
+; Overworld_OperateCameraScroll). Floor is not checked: the flight cannot
+; change it. Entry M=8/X=8; preserves X/Y; clobbers A and $00-$0F.
+PortalShot_InPairWindow:
+{
+  LDA.w SprXH, X : CMP.w SprXH, Y : BNE .other_page
+  LDA.w SprYH, X : CMP.w SprYH, Y : BEQ .same_page
+  .other_page
+    CLC
+    RTS
+  .same_page
+  PHX
+  LDA.b $1B : BEQ .overworld
+    LDX.b $A6
+    REP #$20
+    LDA.w $0608, X : STA.b $02
+    LDA.w $060C, X : STA.b $04
+    SEP #$20
+    LDX.b $A7
+    REP #$20
+    LDA.w $0600, X : STA.b $06
+    LDA.w $0604, X : STA.b $08
+    LDA.w #$01FF : STA.b $00
+    BRA .bounds_set
+  .overworld
+    REP #$20
+    LDA.w $0604 : STA.b $02
+    LDA.w $0606 : STA.b $04
+    LDA.w $0600 : STA.b $06
+    LDA.w $0602 : STA.b $08
+    LDA.w #$FFFF : STA.b $00
+  .bounds_set
+  SEP #$20
+  PLX
+
+  LDA.w SprXH, X : XBA : LDA.w SprX, X
+  REP #$20 : STA.b $0A : SEP #$20
+  LDA.w SprXH, Y : XBA : LDA.w SprX, Y
+  REP #$20 : STA.b $0C
+  LDA.b $0A : JSR .cam_x : STA.b $0E
+  LDA.b $0C : SEC : SBC.b $0E : CMP.w #$00F1 : BCS .out16
+  LDA.b $0C : JSR .cam_x : STA.b $0E
+  LDA.b $0A : SEC : SBC.b $0E : CMP.w #$00F1 : BCS .out16
+  SEP #$20
+
+  LDA.w SprYH, X : XBA : LDA.w SprY, X
+  REP #$20 : STA.b $0A : SEP #$20
+  LDA.w SprYH, Y : XBA : LDA.w SprY, Y
+  REP #$20 : STA.b $0C
+  LDA.b $0A : JSR .cam_y : STA.b $0E
+  LDA.b $0C : SEC : SBC.b $0E : CMP.w #$00D1 : BCS .out16
+  LDA.b $0C : JSR .cam_y : STA.b $0E
+  LDA.b $0A : SEC : SBC.b $0E : CMP.w #$00D1 : BCS .out16
+  SEP #$20
+  SEC
+  RTS
+  .out16
+  SEP #$20
+  .out
+  CLC
+  RTS
+
+  ; M=16. In: A = portal X. Out: A = $E2 with Link resting there.
+  .cam_x
+  AND.b $00 : CLC : ADC.w #$0008 : SEC : SBC.w $061C : DEC A : CLC : ADC.b $E2
+  CMP.b $02 : BCS .x_above_min
+    LDA.b $02
+  .x_above_min
+  CMP.b $04 : BCC .x_below_max
+    LDA.b $04
+  .x_below_max
+  RTS
+
+  ; M=16. In: A = portal Y. Out: A = $E8 with Link resting there.
+  .cam_y
+  AND.b $00 : CLC : ADC.w #$000C : SEC : SBC.w $0618 : DEC A : CLC : ADC.b $E8
+  CMP.b $06 : BCS .y_above_min
+    LDA.b $06
+  .y_above_min
+  CMP.b $08 : BCC .y_below_max
+    LDA.b $08
+  .y_below_max
   RTS
 }
 

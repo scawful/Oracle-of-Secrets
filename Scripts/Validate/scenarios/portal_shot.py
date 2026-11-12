@@ -13,6 +13,9 @@ Cases:
   wall  bolt stops at a wall; the portal opens on the last safe floor before it.
   fizzle bolt flies over pit to maximum range with no safe floor; no portal,
         magic returns to the pre-cast value, the next cast keeps the same color.
+  cap   blue opens; the orange bolt is aimed so its normal landing would put the pair
+        outside what Portal_CheckWarpContext accepts; it stops on the last safe step
+        inside that window instead, and Link walks into orange and warps to blue.
 
   python3 Scripts/Validate/scenarios/portal_shot.py --rom Roms/oos168x.sfc \
       --srm <test.srm> --app <Mesen2 OOS.app> --out <dir> [--scan] [--entrance 0x..]
@@ -61,9 +64,11 @@ OPPOSITE = (1, 0, 3, 2)
 NAMES = ('up', 'down', 'left', 'right')
 
 
-def fly(attr, x, y, d):
-    """Return (outcome, landing, frames, pit_px, stop_attr). outcome: land-wall, land-range, fizzle."""
-    dist, found, pit_px, frames = 0, None, 0, 0
+def fly(attr, x, y, d, window=None):
+    """Return (outcome, landing, frames, pit_px, stop_attr). outcome: land-wall, land-range,
+    land-window, fizzle. `window(bx, by)` is the second-shot pair check (orange bolt with a live
+    blue); None for a first shot."""
+    dist, found, pit_px, frames, entered = 0, None, 0, 0, False
     while True:
         x, y = x + STEP[d][0] * SPEED, y + STEP[d][1] * SPEED
         dist += SPEED
@@ -73,10 +78,41 @@ def fly(attr, x, y, d):
             return ('land-wall' if found else 'fizzle', found, frames, pit_px, lead)
         if lead == PIT:
             pit_px += SPEED
+        if window is not None:
+            if window(x, y):
+                if not entered:
+                    entered, found = True, None  # spots recorded outside the window are dropped
+            elif entered:
+                return ('land-window' if found else 'fizzle', found, frames, pit_px, lead)
         if dist >= MIN_DIST[d] and all(attr(x + dx, y + dy) in SAFE for dx, dy in SAFE_PROBES):
             found = (x, y)
         if dist >= RANGE:
             return ('land-range' if found else 'fizzle', found, frames, pit_px, lead)
+
+
+def pair_window(cam, partner):
+    """Mirror of PortalShot_InPairWindow: Portal_CheckWarpContext both ways, with the camera
+    Link would rest at on the source portal (native Underworld/Overworld camera scroll)."""
+    mask = 0x1FF if cam['indoors'] else 0xFFFF
+
+    def clamp(v, lo, hi):
+        v = max(v, lo) if v >= lo else lo
+        return hi if v >= hi else v
+
+    def cam_x(p):
+        return clamp((cam['E2'] + ((p & mask) + 8) - cam['t1C'] - 1) & 0xFFFF, cam['lox'], cam['hix'])
+
+    def cam_y(p):
+        return clamp((cam['E8'] + ((p & mask) + 12) - cam['t18'] - 1) & 0xFFFF, cam['loy'], cam['hiy'])
+
+    px, py = partner
+
+    def inside(bx, by):
+        if bx >> 8 != px >> 8 or by >> 8 != py >> 8:
+            return False
+        return (((px - cam_x(bx)) & 0xFFFF) < 0xF1 and ((bx - cam_x(px)) & 0xFFFF) < 0xF1
+                and ((py - cam_y(by)) & 0xFFFF) < 0xD1 and ((by - cam_y(py)) & 0xFFFF) < 0xD1)
+    return inside
 
 
 GAP_MIN = 24  # coordinator 2026-11-12: case (a) needs a real 3-4 tile pit between cell and landing
@@ -129,9 +165,11 @@ class ShotRun(dqf.Run):
                     queue.append(n)
         return order
 
-    def find_cases(self, tiles, cells):
-        """First reachable cell (BFS order = nearest) for each case."""
+    def find_cases(self, tiles, cells, cam=None):
+        """First reachable cell (BFS order = nearest) for each case. `cam` (live camera
+        registers, see read_cam) enables the cap case."""
         found = {}
+        want = 4 if cam else 3
         for x, y in cells:
             # Cast only from plain floor away from the entry door: LinkItem_PortalRod ignores Y
             # while $6C (doorway) is set, and in $059 it stayed set 24 px inside the door (cases11/12).
@@ -153,9 +191,35 @@ class ShotRun(dqf.Run):
                     found['wall'] = dict(cell=[x, y], dir=d, land=list(land), stop_attr=stop)
                 if 'fizzle' not in found and out == 'fizzle' and pit_px >= RANGE - MIN_DIST[d]:
                     found['fizzle'] = dict(cell=[x, y], dir=d, pit_px=pit_px)
-            if len(found) == 3:
+                if cam and 'cap' not in found and out.startswith('land'):
+                    cap = self.plan_cap(tiles.attr, cam, x, y, d, land)
+                    if cap:
+                        found['cap'] = cap
+            if len(found) == want:
                 break
         return found
+
+    @staticmethod
+    def plan_cap(attr, cam, x, y, d, blue):
+        """An orange direction from (x, y) whose uncapped landing is outside the pair window
+        and whose capped landing is a different, walkable (no pit on the path) spot."""
+        window = pair_window(cam, blue)
+
+        def on_screen(px, py):
+            # Fixture: keep the cell and both portals in view so the frames show them
+            # (cases15: a cell at screen x 240 sat under the right-wall graphic).
+            return 16 <= px - cam['E2'] <= 224 and 24 <= py - cam['E8'] <= 192
+        if not (on_screen(x, y) and on_screen(*blue)):
+            return None
+        for bd in (OPPOSITE[d],) + tuple(e for e in range(4) if e not in (d, OPPOSITE[d])):
+            free = fly(attr, x, y, bd)
+            capped = fly(attr, x, y, bd, window)
+            if free[0].startswith('land') and capped[0] == 'land-window' and capped[3] == 0 \
+                    and tuple(capped[1]) != tuple(free[1]) and not window(*free[1]) \
+                    and on_screen(*capped[1]):
+                return dict(cell=[x, y], dir=d, land=list(blue), back_dir=bd,
+                            back_land=list(capped[1]), free_land=list(free[1]))
+        return None
 
     def entrances(self):
         warps = dqf.OracleCheats(self.b).warps
@@ -173,6 +237,44 @@ class ShotRun(dqf.Run):
         if self.r(0x7E001B) != 1:
             raise RuntimeError(f'entrance {eid} is not indoors')
         return res
+
+    def read_cam(self):
+        """Registers PortalShot_InPairWindow reads ($1B selects Underworld/Overworld bounds)."""
+        indoors = self.r(0x7E001B) != 0
+        if indoors:
+            ax, ay = self.r(0x7E00A6), self.r(0x7E00A7)
+            lox, hix = self.r16(0x7E0608 + ax), self.r16(0x7E060C + ax)
+            loy, hiy = self.r16(0x7E0600 + ay), self.r16(0x7E0604 + ay)
+        else:
+            lox, hix, loy, hiy = (self.r16(a) for a in (0x7E0604, 0x7E0606, 0x7E0600, 0x7E0602))
+        return dict(indoors=indoors, E2=self.r16(0x7E00E2), E8=self.r16(0x7E00E8),
+                    t1C=self.r16(0x7E061C), t18=self.r16(0x7E0618), lox=lox, hix=hix, loy=loy, hiy=hiy)
+
+    def walk_into_portal(self, d, blue, label):
+        """Step toward the portal in direction d in short presses like a player; stop on the
+        first step that puts Link within 16 px of the blue portal (the warp) or that stalls.
+        (cases13: walk_to kept walking after the warp fired and moved Link off the blue.)"""
+        before = [self.r16(LINK_X), self.r16(LINK_Y)]
+        self.event(f'{label} warp context', link=before, cam=self.read_cam(),
+                   pages=[self.r(0x7E0021), self.r(0x7E0023)], blue=list(blue))
+        steps, stall, prev = [], 0, before
+        for _ in range(60):
+            self.press(NAMES[d], 2)
+            cur = [self.r16(LINK_X), self.r16(LINK_Y)]
+            steps.append(cur)
+            if abs(cur[0] - blue[0]) <= 16 and abs(cur[1] - blue[1]) <= 16:
+                break
+            stall = stall + 1 if cur == prev else 0
+            if stall >= 4:
+                break
+            prev = cur
+        self.event(f'{label} warp steps', steps=steps)
+        self.wait_play(6)
+        time.sleep(0.6)
+        after = [self.r16(LINK_X), self.r16(LINK_Y)]
+        self.shot(f'{label}_after_warp')
+        self.event(f'{label} warp', before=before, after=after, blue=list(blue))
+        return after
 
     def assert_minish_link(self, where):
         gbc, form = self.r(GBC_FLAG), self.r(MASK_FORM)
@@ -251,7 +353,8 @@ class ShotRun(dqf.Run):
                 self.w(SPR_STATE + s['slot'], 0, f"{name}: clear sprite {s['id']:02X} slot {s['slot']}")
         tiles = self.grid()
         start = [self.r16(LINK_X), self.r16(LINK_Y)]
-        spot = self.find_cases(tiles, self.reachable(tiles, start)).get(name)
+        cam = self.read_cam() if name == 'cap' else None
+        spot = self.find_cases(tiles, self.reachable(tiles, start), cam).get(name)
         self.event(f'{name} plan', entrance=eid, room=f'{self.r16(0x7E00A0):03X}', start=start, spot=spot)
         if not spot:
             raise RuntimeError(f'entrance {eid} has no {name} spot')
@@ -279,42 +382,63 @@ class ShotRun(dqf.Run):
                    [[s['x'], s['y'], s['action']] for s in p], {'candidate': [[land[0], land[1], 1]]})
         # Link can drift after the first cast; predict the second bolt from where he stands now.
         bx, by = self.r16(LINK_X), self.r16(LINK_Y)
-        back = fly(tiles.attr, bx, by, spot['back_dir'])
-        self.event('pit orange plan', link=[bx, by], outcome=back[0], land=list(back[1]))
+        cam = self.read_cam()
+        back = fly(tiles.attr, bx, by, spot['back_dir'], pair_window(cam, land))
+        self.event('pit orange plan', link=[bx, by], cam=cam, outcome=back[0], land=list(back[1]))
         self.cast(spot['back_dir'], 'pit_orange', back[2])
         p = self.portals()
         orange = [s for s in p if s['action'] == 2]
         self.check('pit: orange portal opens at the planned spot',
                    [[s['x'], s['y']] for s in orange], {'candidate': [list(back[1])]})
         self.shot('pit_portal_pair_open')
-        before = [self.r16(LINK_X), self.r16(LINK_Y)]
-        # cases13: walk_to kept walking toward the orange x after the warp fired and moved
-        # Link 39 px off the blue. Step toward the orange in short presses like a player and
-        # stop on the first step that puts Link near the blue (the warp) or that stalls.
-        toward = NAMES[spot['back_dir']]
-        self.event('pit warp context', link=before,
-                   cam=[self.r16(0x7E00E2), self.r16(0x7E00E8)], pages=[self.r(0x7E0021), self.r(0x7E0023)],
-                   blue=land, orange=list(back[1]))
-        steps, stall, prev = [], 0, before
-        for _ in range(60):
-            self.press(toward, 2)
-            cur = [self.r16(LINK_X), self.r16(LINK_Y)]
-            steps.append(cur)
-            if abs(cur[0] - land[0]) <= 16 and abs(cur[1] - land[1]) <= 16:
-                break
-            stall = stall + 1 if cur == prev else 0
-            if stall >= 4:
-                break
-            prev = cur
-        self.event('pit warp steps', steps=steps)
-        self.wait_play(6)
-        time.sleep(0.6)
-        after = [self.r16(LINK_X), self.r16(LINK_Y)]
-        self.shot('pit_after_warp')
-        self.event('pit warp', before=before, after=after, blue=land)
+        after = self.walk_into_portal(spot['back_dir'], land, 'pit')
         self.check('pit: Link warps across the pit to the blue portal',
                    abs(after[0] - land[0]) <= 16 and abs(after[1] - land[1]) <= 16,
                    {'candidate': True})
+
+    def check_cap(self, eid):
+        tiles, spot, x, y = self.case_room(eid, 'cap')
+        out, land, frames, _, _ = fly(tiles.attr, x, y, spot['dir'])
+        if not out.startswith('land'):
+            raise RuntimeError(f'cap spot changed after the walk: {out}')
+        self.rod_ready(0x80)
+        self.cast(spot['dir'], 'cap_blue', frames)
+        self.check('cap: blue portal opens at the predicted first-shot spot (full range, unchanged)',
+                   [[s['x'], s['y'], s['action']] for s in self.portals()], {'candidate': [[land[0], land[1], 1]]})
+        bx, by = self.r16(LINK_X), self.r16(LINK_Y)
+        cam = self.read_cam()
+        window = pair_window(cam, land)
+        free = fly(tiles.attr, bx, by, spot['back_dir'])
+        capped = fly(tiles.attr, bx, by, spot['back_dir'], window)
+        self.event('cap orange plan', link=[bx, by], cam=cam, blue=list(land), free=[free[0], list(free[1] or [])],
+                   capped=[capped[0], list(capped[1] or []), capped[2]],
+                   attrs=path_attrs(tiles.attr, bx, by, spot['back_dir'], free[1]) if free[1] else [])
+        self.check('cap: without the cap the orange landing would be outside the pair window',
+                   bool(free[1]) and not window(*free[1]), {'candidate': True})
+        self.check('cap: the capped bolt stops on leaving the window, at a different spot',
+                   capped[0] == 'land-window' and tuple(capped[1]) != tuple(free[1]), {'candidate': True})
+        self.cast(spot['back_dir'], 'cap_orange', capped[2])
+        orange = [s for s in self.portals() if s['action'] == 2]
+        self.check('cap: orange portal opens on the last safe step inside the window',
+                   [[s['x'], s['y']] for s in orange], {'candidate': [list(capped[1])]})
+        # Last safe step inside: every later bolt step up to the free landing is outside the window
+        # or not safe (exact, from the live collision map and camera registers).
+        d = spot['back_dir']
+
+        def safe(px, py):
+            return all(tiles.attr(px + dx, py + dy) in SAFE for dx, dy in SAFE_PROBES)
+        later, (px, py) = [], tuple(capped[1])
+        while (px, py) != tuple(free[1]):
+            px, py = px + STEP[d][0] * SPEED, py + STEP[d][1] * SPEED
+            later.append({'at': [px, py], 'safe': safe(px, py), 'in_window': window(px, py)})
+        self.event('cap last-safe-inside rule', landing=list(capped[1]), free_landing=list(free[1]), later=later)
+        self.check('cap: no later safe step is inside the window',
+                   window(*capped[1]) and not any(l['safe'] and l['in_window'] for l in later), {'candidate': True})
+        self.shot('cap_portal_pair_open')
+        self.assert_minish_link('cap before warp')
+        after = self.walk_into_portal(d, land, 'cap')
+        self.check('cap: Link walks into orange and warps to the blue portal',
+                   abs(after[0] - land[0]) <= 16 and abs(after[1] - land[1]) <= 16, {'candidate': True})
 
     def check_wall(self, eid):
         tiles, spot, x, y = self.case_room(eid, 'wall')
@@ -370,7 +494,7 @@ class ShotRun(dqf.Run):
                 self.enter(e['id'])
                 tiles = self.grid()
                 start = [self.r16(LINK_X), self.r16(LINK_Y)]
-                found = self.find_cases(tiles, self.reachable(tiles, start))
+                found = self.find_cases(tiles, self.reachable(tiles, start), self.read_cam())
                 minish = self.r(GBC_FLAG) == 0 and self.r(MASK_FORM) != 6
                 rows.append({'id': e['id'], 'name': e['name'], 'room': f'{self.r16(0x7E00A0):03X}',
                              'start': start, 'minish_link': minish, **found})
@@ -405,7 +529,8 @@ class ShotRun(dqf.Run):
             self.assert_minish_link('file 2 load')
             if self.args.scan:
                 self.scan()
-            for name, eid in (('pit', self.args.pit), ('wall', self.args.wall), ('fizzle', self.args.fizzle)):
+            for name, eid in (('pit', self.args.pit), ('wall', self.args.wall), ('fizzle', self.args.fizzle),
+                              ('cap', self.args.cap)):
                 if not eid:
                     continue
                 try:
@@ -436,6 +561,7 @@ def main():
     ap.add_argument('--pit', help='entrance id for the pit case')
     ap.add_argument('--wall', help='entrance id for the wall case')
     ap.add_argument('--fizzle', help='entrance id for the fizzle case')
+    ap.add_argument('--cap', help='entrance id for the second-shot pair-window case')
     ap.add_argument('--probe', help='x,y,dir,landx,landy: log lead-probe attrs on that path in each scanned room')
     ap.add_argument('--scan-ids', help='comma list of entrance ids to scan (hex)')
     ap.add_argument('--scan-from', default='0x00', help='first entrance id to scan')
