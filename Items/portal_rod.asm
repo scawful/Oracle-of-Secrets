@@ -85,68 +85,58 @@ Ancilla_HandlePortalCollision:
   RTL
 }
 
-macro  SpawnPortal(x_offset, y_offset)
-  REP #$20
-  LDA $22 : CLC : ADC.w #<x_offset>
-  SEP #$20
-  STA.w SprX,       Y                ; SprX
-  XBA : STA.w SprXH, Y                ; SprXH
-
-  REP #$20
-  LDA $20 : CLC : ADC.w #<y_offset>
-  SEP #$20
-  STA.w SprY,       Y                ; SprY
-  XBA : STA.w SprYH, Y                ; SprYH
-endmacro
-
 LinkItem_FirePortal:
 {
   LDA.b #$03
   JSL   Sprite_SpawnDynamically : BPL .continue
+    ; No free slot: the cast already paid, so give the magic back.
+    JSL PortalRod_RefundCast
     RTL
   .continue
 
+  ; Bit 1 of the bolt's SprMiscA keeps the pre-cast selector, so a fizzle can
+  ; restore it exactly (the empty-pair reset below may also change it).
+  LDA.w $0FA6 : AND.b #$01 : ASL A : STA.w SprMiscA, Y
+
   PHX
   ; A room change can leave the last color selected after every portal is gone.
-  ; Start an empty pair with blue; only accepted live portals preserve the turn.
-  ; The allocator clears the new slot's subtype, so this scan excludes it.
+  ; Start an empty pair with blue; only accepted live portals and bolts still
+  ; in flight preserve the turn. The allocator clears the new slot's subtype
+  ; and action, so this scan excludes it.
   LDX.b #$0F
   .find_live_portal
     LDA.w SprState, X : CMP.b #$09 : BNE .next_portal
     LDA.w SprType, X : CMP.b #$03 : BNE .next_portal
     LDA.w SprSubtype, X : CMP.b #$01 : BEQ .toggle_color
                          CMP.b #$02 : BEQ .toggle_color
+    LDA.w SprAction, X : CMP.b #!PortalShotAction : BEQ .toggle_color
   .next_portal
     DEX : BPL .find_live_portal
   STZ.w $0FA6
   .toggle_color
   LDA   $7E0FA6 : BEQ .spawn_blue
     STZ.w $0FA6
-    JMP   .check_direction
+    BRA .spawn_bolt
   .spawn_blue
   LDA #$01 : STA $7E0FA6
-  .check_direction
+  .spawn_bolt
 
-  LDA $2F : CMP.b #$00 : BEQ .facing_up
-    LDA $2F : CMP.b #$02 : BEQ .facing_down
-      LDA $2F : CMP.b #$04 : BEQ .facing_left
-        LDA $2F : CMP.b #$06 : BEQ .facing_right
-  ; Portal Spawn Location
-
-  .facing_up
-    %SpawnPortal($0000, -0020)
-    JMP .finish
-  .facing_down
-    %SpawnPortal($0000, $001F)
-    JMP .finish
-  .facing_left
-    %SpawnPortal(-0020, $0000)
-    JMP .finish
-  .facing_right
-    %SpawnPortal(0020, $0000)
-
-  .finish
   TYX
+  ; The bolt starts on Link and flies in his facing direction (sprite action
+  ; PortalShot). The portal opens where it lands.
+  LDA.b $22 : STA.w SprX, X
+  LDA.b $23 : STA.w SprXH, X
+  LDA.b $20 : STA.w SprY, X
+  LDA.b $21 : STA.w SprYH, X
+  LDA.b $2F : LSR A : AND.b #$03 : STA.w SprMiscC, X
+  LDA.w $0FA6 : ORA.w SprMiscA, X : STA.w SprMiscA, X
+  LDA.w $0FA6 : BNE .blue_frame
+    LDA.b #$02
+  .blue_frame
+  AND.b #$02 : STA.w SprFrame, X ; blue (1) -> frame 0, orange (0) -> frame 2
+  STZ.w SprGfx, X
+  STZ.w PortalShot_Dist, X
+  LDA.b #!PortalShotAction : STA.w SprAction, X
   ; This is Link's cast, not a child of the allocator's source sprite slot.
   LDA.b $EE : STA.w SprFloor, X
   STZ.w SprYRound, X : STZ.w SprXRound, X
@@ -164,6 +154,21 @@ LinkItem_FirePortal:
   STZ $2E
   STZ $0300 : STZ $0301
   LDA.b #$01 : TSB $0301
+  RTL
+}
+
+; Return one Portal Rod cast (magic cost index $00) to the meter.
+; Preserves X/Y. Clobbers A and $00. Caps at a full meter ($80) in case a
+; magic jar was picked up while the bolt was in flight.
+PortalRod_RefundCast:
+{
+  PHX
+  LDX.b #$00
+  JSL Refund_Magic
+  LDA.l $7EF36E : CMP.b #$81 : BCC .in_range
+    LDA.b #$80 : STA.l $7EF36E
+  .in_range
+  PLX
   RTL
 }
 
@@ -250,6 +255,131 @@ ScrollToPortal:
   .exit
 
   RTL
+}
+
+; Portal Rod bolt flight (portal sprite action 7), one frame. Entry X = slot,
+; M/X 8-bit. Returns carry set when the bolt landed and the caller must run
+; StateHandler; carry clear while flying or after a fizzle. Pits and water pass under it; any other tile
+; at its leading edge stops it. It then opens the portal on the last position
+; where Link's whole body (and the portal's own tile) is on safe floor. With
+; no such position on the path it fizzles and refunds the cast.
+PortalShot_Fly:
+{
+  PHB : PHK : PLB
+  LDA.w SprMiscC, X : BEQ .move_up
+    DEC A : BEQ .move_down
+    DEC A : BEQ .move_left
+  ; .move_right
+    LDA.w SprX, X : CLC : ADC.b #!PortalShotSpeed : STA.w SprX, X
+    LDA.w SprXH, X : ADC.b #$00 : STA.w SprXH, X
+    BRA .moved
+  .move_up
+    LDA.w SprY, X : SEC : SBC.b #!PortalShotSpeed : STA.w SprY, X
+    LDA.w SprYH, X : SBC.b #$00 : STA.w SprYH, X
+    BRA .moved
+  .move_down
+    LDA.w SprY, X : CLC : ADC.b #!PortalShotSpeed : STA.w SprY, X
+    LDA.w SprYH, X : ADC.b #$00 : STA.w SprYH, X
+    BRA .moved
+  .move_left
+    LDA.w SprX, X : SEC : SBC.b #!PortalShotSpeed : STA.w SprX, X
+    LDA.w SprXH, X : SBC.b #$00 : STA.w SprXH, X
+  .moved
+  LDA.w PortalShot_Dist, X : CLC : ADC.b #!PortalShotSpeed : STA.w PortalShot_Dist, X
+
+  ; Leading edge of Link's body box in the flight direction.
+  LDY.w SprMiscC, X
+  LDA.w .lead_x, Y : STA.b $06
+  LDA.w .lead_y, Y : STA.b $07
+  JSR PortalShot_ProbeTile
+  CMP.b #$00 : BEQ .passable
+  CMP.b #$08 : BEQ .passable ; deep water
+  CMP.b #$09 : BEQ .passable ; shallow water
+  CMP.b #$20 : BEQ .passable ; pit
+  CMP.b #$40 : BEQ .passable ; grass
+  CMP.b #$48 : BEQ .passable
+    JMP .stop
+  .passable
+
+  ; Too close to Link would overlap and warp at once (old fixed offsets).
+  LDY.w SprMiscC, X
+  LDA.w PortalShot_Dist, X : AND.b #$7F : CMP.w .min_distance, Y : BCC .check_range
+  LDY.b #9 ; .safe_x/.safe_y entries - 1
+  .next_safe_probe
+    PHY
+    LDA.w .safe_x, Y : STA.b $06
+    LDA.w .safe_y, Y : STA.b $07
+    JSR PortalShot_ProbeTile
+    PLY
+    CMP.b #$00 : BEQ .probe_safe
+    CMP.b #$48 : BNE .check_range
+    .probe_safe
+    DEY : BPL .next_safe_probe
+  LDA.w SprX, X  : STA.w PortalShot_SafeX, X
+  LDA.w SprXH, X : STA.w PortalShot_SafeXH, X
+  LDA.w SprY, X  : STA.w PortalShot_SafeY, X
+  LDA.w SprYH, X : STA.w PortalShot_SafeYH, X
+  LDA.w PortalShot_Dist, X : ORA.b #$80 : STA.w PortalShot_Dist, X
+
+  .check_range
+  LDA.w PortalShot_Dist, X : AND.b #$7F : CMP.b #!PortalShotRange : BCS .stop
+    PLB
+    CLC
+    RTL
+
+  .stop
+  LDA.w PortalShot_Dist, X : BMI .land
+    ; Fizzle: no safe floor on the path. Give back this cast's turn and magic.
+    LDA.b #$3C : STA.w $012E ; SFX2.3C error beep
+    STZ.w SprState, X
+    LDA.w SprMiscA, X : LSR A : AND.b #$01 : STA.w $0FA6
+    JSL PortalRod_RefundCast
+    PLB
+    CLC
+    RTL
+  .land
+  LDA.w PortalShot_SafeX, X  : STA.w SprX, X
+  LDA.w PortalShot_SafeXH, X : STA.w SprXH, X
+  LDA.w PortalShot_SafeY, X  : STA.w SprY, X
+  LDA.w PortalShot_SafeYH, X : STA.w SprYH, X
+  ; Accept with this bolt's own color: later casts may have toggled $0FA6.
+  LDA.w SprMiscA, X : AND.b #$01 : STA.w $0FA6 : BEQ .orange_frame
+    STZ.w SprFrame, X
+    BRA .landed
+  .orange_frame
+  LDA.b #$02 : STA.w SprFrame, X
+  .landed
+  PLB
+  SEC ; caller runs StateHandler
+  RTL
+
+  ; Indexed by direction: up, down, left, right.
+  .lead_x
+    db 8, 8, 1, 14
+  .lead_y
+    db 9, 22, 16, 16
+  .min_distance
+    db 20, 32, 20, 20
+  ; Portal tile (as RejectOnTileCollision checks it) plus Link's body box.
+  .safe_x
+    db 0, 1, 8, 14, 1, 8, 14, 1, 8, 14
+  .safe_y
+    db 0, 9, 9, 9, 16, 16, 16, 22, 22, 22
+}
+
+; Tile attribute at (SprX + $06, SprY + $07) on this sprite's floor.
+; Returns A = attribute. Preserves X/Y; clobbers $00-$05.
+PortalShot_ProbeTile:
+{
+  PHY
+  LDA.w SprY, X : CLC : ADC.b $07 : STA.b $00
+  LDA.w SprYH, X : ADC.b #$00 : STA.b $01
+  LDA.w SprX, X : CLC : ADC.b $06 : STA.b $02
+  LDA.w SprXH, X : ADC.b #$00 : STA.b $03
+  LDA.w SprFloor, X : JSL Sprite_GetTileAttr
+  PLY
+  LDA.w $0FA5
+  RTS
 }
 
 %log_end("Items/portal_rod.asm", !LOG_ITEMS)
