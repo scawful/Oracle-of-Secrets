@@ -523,7 +523,8 @@ Sprite_39_ZoraBaby:
     JSL CheckIfLinkIsBusy : BCS .exit
       LDY.b #$01 : LDA.b #$09 ; MESSAGE 0109
       JSL Sprite_ShowSolicitedMessage : BCC .exit
-        INC.w SprAction, X
+        ; Both initial service (2) and an expired wait (4) use this choice.
+        LDA.b #$03 : STA.w SprAction, X
     .exit
     RTS
   }
@@ -558,12 +559,13 @@ Sprite_39_ZoraBaby:
   ZoraBaby_AgreeToWait:
   {
     SEP #$30
+    ; Timer expiry ends the initial waiting cooldown, not the promise to stay put.
+    ; Retain action 4 until a deliberate Follow/Stay choice, so global
+    ; lift/throw movement and water-switch checks remain active while waiting.
+    LDA.w SprTimerB, X : BEQ ZoraBaby_OfferService
     LDA.b #$A0 : STA.w $0AEA
     LDY.b #$01 : LDA.b #$0B ; MESSAGE 010B
     JSL Sprite_ShowSolicitedMessage
-    LDA.w SprTimerB, X : BNE +
-      STZ.w SprAction, X
-    +
     RTS
   }
 
