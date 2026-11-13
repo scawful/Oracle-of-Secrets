@@ -191,6 +191,7 @@ jobs:
           # Dungeons/Data/kits/kits.asm (real base-ROM bytes).
           printf '\x09\x00\x24\x1B\x08\x00\x22\x1B\x09\x00\x25\x1B\x09\x00\x26\x1B' | dd of=test.sfc bs=1 seek=$((0x5DF3)) conv=notrunc 2>/dev/null  # $00DDF3 rows $17-$1A
           printf '\x0B' | dd of=test.sfc bs=1 seek=$((0x5DC3)) conv=notrunc 2>/dev/null  # $00DDC3 slot-3 sheet $0B
+          printf '\x24\x09' | dd of=test.sfc bs=1 seek=$((0xDEC65)) conv=notrunc 2>/dev/null  # $1BEC65 palette $1A offset
           printf '\xF4\x0B\xA8\x0C\x5C\x0D' | dd of=test.sfc bs=1 seek=$((0xDEC6D)) conv=notrunc 2>/dev/null  # $1BEC6D palette $22/$24/$26 offsets
           printf '\xA0\x05' | dd of=test.sfc bs=1 seek=$((0xDEC5B)) conv=notrunc 2>/dev/null  # $1BEC5B palette $10 offset
           printf '\xD0\x02' | dd of=test.sfc bs=1 seek=$((0xDEC53)) conv=notrunc 2>/dev/null  # $1BEC53 palette $08 offset
