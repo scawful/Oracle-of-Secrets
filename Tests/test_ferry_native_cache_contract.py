@@ -65,6 +65,18 @@ class FerryNativeCacheContract(unittest.TestCase):
             self.assertRegex(source, rf"(?m)^!Boat_{name} = \$FFFF$")
 
 
+def recovery_symbols():
+    """Read each declared WRAM base independently, including the ferry tail."""
+    symbols = {}
+    source = (ROOT / "Core/symbols.asm").read_text()
+    for address, body in re.findall(r"(?ms)^base \$([\dA-Fa-f]+)\s*\n(.*?)^base off", source):
+        cursor = int(address, 16)
+        for name, size in re.findall(r"(?m)^(\w+):\s+skip (\d+)", body):
+            symbols[name] = cursor
+            cursor += int(size)
+    return symbols
+
+
 def recovery_machine(source=None, endpoint=0, changes=None, resolved_index=0x04C0):
     """Execute actual recovery/admission/clear ASM through the existing model.
 
@@ -76,11 +88,7 @@ def recovery_machine(source=None, endpoint=0, changes=None, resolved_index=0x04C
     model = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(model)
     source = source or (ROOT / "Overworld/kalyxo_boat.asm").read_text()
-    symbols = {}
-    cursor = 0x7E1E70
-    for name, size in re.findall(r"(?m)^(\w+):\s+skip (\d+)", (ROOT / "Core/symbols.asm").read_text().split("base off", 1)[0]):
-        symbols[name] = cursor
-        cursor += int(size)
+    symbols = recovery_symbols()
     symbols["SavedWorld"] = int(re.search(r"(?m)^SavedWorld\s*=\s*\$([\dA-Fa-f]+)", (ROOT / "Core/sram.asm").read_text())[1], 16)
     symbols["!Boat_Magic"] = int(re.search(r"!Boat_Magic = \$([\dA-Fa-f]+)", (ROOT / "Core/symbols.asm").read_text())[1], 16)
     # Synthetic bound ROM records, separate from the unbound production data.
@@ -140,6 +148,13 @@ def recovery_machine(source=None, endpoint=0, changes=None, resolved_index=0x04C
 
 
 class FerryInterruptedPlankRecovery(unittest.TestCase):
+    def test_recovery_symbols_follow_separate_declared_bases(self):
+        symbols = recovery_symbols()
+        self.assertEqual(symbols["MenuScrollLevelV"], 0x7E1E70)
+        self.assertEqual(symbols["SongTintContext"], 0x7E1EC9)
+        self.assertEqual(symbols["Boat_Marker"], 0x7E1ECB)
+        self.assertEqual(symbols["Boat_TransientEnd"], 0x7E1EDE)
+
     def test_both_source_endpoints_restore_closed_plank_before_clearing(self):
         for endpoint in (0, 2):
             with self.subTest(endpoint=endpoint):
