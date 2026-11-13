@@ -77,6 +77,8 @@ endif
 ; Aux ABI 1 needs an explicitly bound authoring table; preserve ordinary ROMs.
 !ENABLE_OW_AUX_EXTENSION              = 0
 !ENABLE_KALYXO_DOCKS_PROFILE          = 0
+; Native cached-exit ferry prototype; both geography/underlays remain unbound.
+!ENABLE_KALYXO_BOAT                   = 0
 !ENABLE_ORACLE_ARRIVAL_SEQUENCE      = 1
 ; New-file Mirror experiment scene before the arrival (Core/Cutscene/experiment.asm).
 ; Requires ORACLE_ARRIVAL_SEQUENCE (asserted in Oracle_main.asm).

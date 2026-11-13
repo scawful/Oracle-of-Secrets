@@ -97,6 +97,10 @@ namespace Oracle
   incsrc "Core/link.asm"
   incsrc "Core/sram.asm"
   incsrc "Core/symbols.asm"
+  if !ENABLE_KALYXO_BOAT == 1
+    assert !ENABLE_CUTSCENE_FRAMEWORK == 1 && !ENABLE_ORACLE_ARRIVAL_SEQUENCE == 1
+    assert !DISABLE_OVERWORLD == 0
+  endif
   incsrc "Core/message.asm"
   incsrc "Core/progression.asm"
 

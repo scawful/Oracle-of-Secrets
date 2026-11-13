@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "48c55b4332f150bcba7c4e15e8eb2ed4d2b68f6cb2e7127513fbb4f8d398ddf1"
+      "sha256": "cacf7381a218c367fca394330af6175cbaf5d08ccce41b5399e3345d97a6d04d"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "dda9a12b58ba4987c0650f24d64c3c87d3aac033d56f4c8b1621278a046d7a80"
+      "sha256": "315e5865f8026bd84032f040bd1459c413a51958d8d38d08b3b3c718b25ed472"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -165,7 +165,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "9d38a1d42fc05f6d1ebac9ea79707a533088b1441d29c05f4eae316d289db067"
+      "sha256": "d61dc31a83a7e75a07f4bb7c2e3db824cc893e1d0df51b329ac158ae45afb6f0"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -210,7 +210,7 @@
     "shared:Oracle_main.asm": {
       "source_set": "shared",
       "path": "Oracle_main.asm",
-      "sha256": "2a47eb9f236b99d2774416d3e60965e8d834e5662d0c7b0b71da412943a11e43"
+      "sha256": "4520934680df50f66a56e3cea1a42180d8b93d34bdd60c2938218543f6449934"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
@@ -291,6 +291,26 @@
       "source_set": "shared",
       "path": "Dungeons/d6_chu_gate_97.asm",
       "sha256": "fbc7b57efd540595b5fc5486978172197f028fdb1c644183ab0febcd9016911f"
+    },
+    "shared:Overworld/kalyxo_boat.asm": {
+      "source_set": "shared",
+      "path": "Overworld/kalyxo_boat.asm",
+      "sha256": "3e6bf01b292fab0480bb7d091521b7709e0a0d994d0b43c871904b161859aeb2"
+    },
+    "shared:Data/overworld/kalyxo_boat_placements.asm": {
+      "source_set": "shared",
+      "path": "Data/overworld/kalyxo_boat_placements.asm",
+      "sha256": "a2030012cd44dd4b7ffc6524e325885161dd92089eb16f5889bd772e42769efd"
+    },
+    "shared:Core/Cutscene/opening.asm": {
+      "source_set": "shared",
+      "path": "Core/Cutscene/opening.asm",
+      "sha256": "0cfe8773622a7196e697c5749c81b006bebded4b76775ab05555ca671b6d0b87"
+    },
+    "shared:Overworld/goron_checkpoint.asm": {
+      "source_set": "shared",
+      "path": "Overworld/goron_checkpoint.asm",
+      "sha256": "00a6e02cc30ddcb38cbf52b783362e93e3a61e3c9986c7cf433192c91de8b290"
     }
   },
   "claims": [
@@ -2243,6 +2263,55 @@
       "anchors": [
         "$7EF12E",
         "#$1000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "kalyxo_boat_native_code",
+      "owner": "Default-off native cached-exit ferry prototype within opening stream",
+      "space": "snes_rom",
+      "base": 3854336,
+      "size": 4096,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_KALYXO_BOAT": 1
+      },
+      "lifetime": "Code and two unbound native32-byte caches. Opening/experiment must end at or before3AD000; ferry must end at or before3AE000, where native2P owns the next slot. No old3AA000 ice-block overlap. Source-first review; no emitted candidate yet.",
+      "reset": "No runtime ROM writes. Bind only after selected full-boat/current landing approval.",
+      "save": "No save format, entrance/exit ID, actor or sprite allocation. Uses existing synthetic cached-exit selector0151.",
+      "provenance": [
+        "shared:Overworld/kalyxo_boat.asm",
+        "shared:Data/overworld/kalyxo_boat_placements.asm",
+        "shared:Core/Cutscene/opening.asm"
+      ],
+      "anchors": [
+        "org $3AD000",
+        "Boat_CodeStart:",
+        "Boat_CodeEnd:"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "kalyxo_boat_native_transient",
+      "owner": "Ferry-only scene marker, state, cancellation preimage and bounded loader timer",
+      "space": "wram",
+      "base": 8265419,
+      "size": 19,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_KALYXO_BOAT": 1
+      },
+      "lifetime": "Dedicated tail of existing Core/symbols block after SongTintContext; no alias with Arrival/BossKit/BossDirector state. Claimed only with ferry feature enabled.",
+      "reset": "Boat_ResetSession clears marker on Module05 file-load/Continue; Boat_Clear on completion/cancellation/stale scene. Other bytes read only after a successful boarding initializes them.",
+      "save": "Volatile; no SRAM field. Native Save policy is unchanged.",
+      "provenance": [
+        "shared:Core/symbols.asm",
+        "shared:Overworld/kalyxo_boat.asm",
+        "shared:Overworld/goron_checkpoint.asm"
+      ],
+      "anchors": [
+        "Boat_Marker:",
+        "Boat_TransientEnd:"
       ],
       "aliases": []
     }

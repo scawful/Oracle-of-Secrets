@@ -5,6 +5,9 @@
 
 LoadCheckpointOrWorld:
 {
+if !ENABLE_KALYXO_BOAT == 1
+  JSL Boat_ResetSession
+endif
   if !SPECIAL_OVERWORLD_NATIVE == 1
     JSL Lyra_TailEvent_MigrateSave
   endif
