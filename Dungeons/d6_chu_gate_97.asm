@@ -68,7 +68,7 @@ D6ChuGate97_Main:
 +
   LDA.w $0C5E,X : BEQ + : BRL .closed
 +
-  LDA.w $039F,X : BEQ + : BRL .closed
+  LDA.w $039F,X : BNE + : BRL .closed ; positive travelling fuse, not expired
 +
   ; Existing native travelling center / 15x15 footprint against the 16x16
   ; target at world ($0E90,$1340), not placement-grid or camera coordinates.

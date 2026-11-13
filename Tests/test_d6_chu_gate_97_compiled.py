@@ -147,7 +147,7 @@ def main():
             for a, v in ((0x10, 7), (0x1B, 1), (0xA0, 0x97), (0x048E, 0x97),
                          (0xAE, 0x39), (0x0E, 0xA6), (0x7EF3AD, 1),
                          (0x07F1, slot+1), (0x07F3, 1), (0x07F4, 0x97), (0x07F6, 0xBC),
-                         (0x0C4A+slot, 7), (0x03EA+slot, 0xBC),
+                         (0x0C4A+slot, 7), (0x03EA+slot, 0xBC), (0x039F+slot, 0xF0),
                          (0x0C04+slot, 0x90), (0x0C18+slot, 0x0E),
                          (0x0BFA+slot, 0x40), (0x0C0E+slot, 0x13),
                          (0x0DD6, 9), (0x0E26, 0xAF), (0x0D16, 0x90),
@@ -188,12 +188,21 @@ def main():
                       (0x0D06, 0x41), (0x0D26, 0x14), (0x7EF3AD, 0),
                       (0x07F6, 0), (0x07F3, 0), (0x07F4, 0x87), (0x07F5, 1),
                       (0x07F7, 1), (0x07F1, 0), (0x07F1, 3), (0x07F1, 0xFF),
-                      (0x0C4A, 1), (0x03EA, 0), (0x0C5E, 1), (0x039F, 1))
+                      (0x0C4A, 1), (0x03EA, 0), (0x0C5E, 1), (0x039F, 0))
         for a, v in rejections:
             f = fresh(); f.put(a, v); f.writes.clear(); call(f)
             assert word(f, 0x7EF12E) == 0x8AB5 and not word(f, 0x0400) & 0x1000
             assert not [w for w in f.writes if w[0] == 0x7EF12E]
             cases.append('reject-%06x-%02x' % (a, v)); f.close()
+
+        # Bombchu_AddBomb starts the native travelling fuse at F0. Zero is
+        # expired; a positive last frame remains eligible until explosion.
+        for fuse in (0, 1, 2, 239, 240):
+            for exploding in (0, 1):
+                f = fresh(); f.put(0x039F, fuse); f.put(0x0C5E, exploding)
+                call(f)
+                assert bool(word(f, 0x0400) & 0x1000) == (fuse > 0 and not exploding)
+                cases.append('native-fuse-%d-exploding-%d' % (fuse, exploding)); f.close()
 
         for axis, low, high, target in (('x', 0x0C04, 0x0C18, 0x0E90),
                                         ('y', 0x0BFA, 0x0C0E, 0x1340)):
