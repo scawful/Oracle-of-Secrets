@@ -61,8 +61,8 @@ endif
 !ENABLE_WATER_GATE_OVERLAY_REDIRECT = 1
 !ENABLE_MINECART_PLANNED_TRACK_TABLE = 1
 !ENABLE_MINECART_CART_SHUTTERS       = 0
-; Room97 first Bombchu target; inactive until tag39/AF binding and native proof.
-!ENABLE_D6_CHU_GATE_97              = 0
+; Qualified Room97 Bombchu target; tag39/AF binding remains required.
+!ENABLE_D6_CHU_GATE_97              = 1
 !ENABLE_MINECART_LIFT_TOSS           = 0
 !ENABLE_D3_PRISON_SEQUENCE           = 0
 !ENABLE_D7_FARORE_RESCUE_SEQUENCE    = 1

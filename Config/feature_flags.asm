@@ -13,7 +13,7 @@
 !ENABLE_D4_ZORA_REDESIGN              = 1
 !ENABLE_D5_AF_PIT_RESET               = 0
 !ENABLE_D5_BF_PIT_RESET               = 0
-!ENABLE_D6_CHU_GATE_97               = 0
+!ENABLE_D6_CHU_GATE_97                = 1
 !ENABLE_D7_FARORE_RESCUE_SEQUENCE     = 1
 !ENABLE_D8_BOSS                       = 0
 !ENABLE_DIVE_GATE                     = 1
