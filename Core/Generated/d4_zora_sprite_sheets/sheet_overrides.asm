@@ -72,6 +72,11 @@ if !ENABLE_SKY_OVERWORLD_GRAPHICS
 SourceGlobalSheet_F2_sky_overworld_graphics: incbin "sheets/gF2_sky_overworld_graphics.bin"
   assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
 endif
+if !ENABLE_KALYXO_BOAT
+  org $47E75B
+SourceGlobalSheet_E4_kalyxo_boat: incbin "sheets/gE4_kalyxo_boat.bin"
+  assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+endif
 if not(defined("GfxSheet_TableDone"))
   error "sheet_overrides.asm must follow Core/gfx_sheet_table.asm"
 endif
@@ -112,12 +117,25 @@ org $23FEE3 ; @hook module=Core kind=data protected_size=1
 org $23FFE3 ; @hook module=Core kind=data protected_size=1
   db $00
 ; Global $E4 (sprite-relative $71): Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload.
+; Global $E4 (sprite-relative $71): [ENABLE_KALYXO_BOAT] Native ferry berth preservation glyphs; ordinary E4 remains selected while the ferry flag is off.
 org $23FDE4 ; @hook module=Core kind=data protected_size=1
+if !ENABLE_KALYXO_BOAT
   db $C7
+else
+  db $C7
+endif
 org $23FEE4 ; @hook module=Core kind=data protected_size=1
+if !ENABLE_KALYXO_BOAT
+  db $E7
+else
   db $85
+endif
 org $23FFE4 ; @hook module=Core kind=data protected_size=1
+if !ENABLE_KALYXO_BOAT
+  db $5B
+else
   db $3E
+endif
 ; Global $E5 (sprite-relative $72): Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload.
 org $23FDE5 ; @hook module=Core kind=data protected_size=1
   db $C7

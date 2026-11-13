@@ -137,6 +137,13 @@
       "decoded_sha256": "63f6683dc93febaa16057396ef4c57997217994389a6f12619595f563f1e51ae",
       "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
       "why": "Sky port slot 1 (replaces 0x3B on the 7 rim maps $84-$87, $8D-$8F; $8C keeps 0x3B): copy of 0x3B with v11 Meadow rim chars in indices no Sky cell uses"
+    },
+    {
+      "global_sheet": "0xE4",
+      "source": "docks/docks_gE4_ferry_slot3.txt",
+      "decoded_sha256": "47d892a6bcff73dea17935efc41ecc8cd04424bcc6248427c5a3ee73f95b16d4",
+      "flag": "ENABLE_KALYXO_BOAT",
+      "why": "Native ferry berth preservation glyphs; ordinary E4 remains selected while the ferry flag is off."
     }
   ]
 }
