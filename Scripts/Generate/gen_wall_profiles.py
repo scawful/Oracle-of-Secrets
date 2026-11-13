@@ -22,7 +22,7 @@ Steps:
                wall_profiles.asm + kits.asm + kit sheet streams (no ROM).
                --check fails if any committed output is stale.
 
-A class is one wall object whose drawer reads a fixed 8/12/16-word span from
+A class is one wall object whose drawer reads a fixed 5/8/12/16-word span from
 RoomDrawObjectData ($00:9B52 + offset). The selector supports exactly CLASSES.
 """
 from __future__ import annotations
@@ -74,6 +74,8 @@ VERDICTS = ("routed", "partial", "words_only", "in_base")
 
 
 def span_words(obj: int) -> int:
+    if 0x009 <= obj <= 0x014:
+        return 5  # Diagonal columns read only RoomDrawObjectData+0 through +8.
     if obj in (0x03A, 0x03B, 0x076, 0x077, 0x081, 0x082):
         return 12
     return 16 if obj >= 0x100 else 8
