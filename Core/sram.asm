@@ -821,8 +821,9 @@ BombchuAmmo       = $7EF3B0   ; 0..20; independent of Bombs ($7EF343)
 ; AC..B0 contain the published Items ownership/ammo fields above.
 ; B1 remains excluded for pending SongBits; preserve checkpoint fences.
 ; Two separate unassigned ranges remain around the granted checkpoint state.
-; Root-selected 2026-11-11: engine reads only. The future approved garrison
-; teaching actor owns the setter; no migration or implicit grant is performed.
+; The Soaring engine reads this token. An explicitly bound approved watch-log
+; conversation grants it only after its terminator and normal window close.
+; That binding and special Soaring remain off by default; no implicit migration.
 ; Vanilla new-file init clears this byte, SaveGameFile copies/checksums it.
 ; Exact A5 is learned; every other old-save value is locked, without rewriting it.
 SkySoaringLearned = $7EF3B2

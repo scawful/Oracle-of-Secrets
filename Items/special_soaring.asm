@@ -77,3 +77,7 @@ SpecialSoaring_Caches:
   dw $02CF,$08E7,$0200,$031E,$0800,$0900,$0120,$0400,$0700,$0A00
   dw $2000,$1002,$0000,$0000,$0000,$0000,$0000
 assert pc()-SpecialSoaring_Caches == $64
+
+; The selected teaching action uses the native message lifecycle. No hooks or
+; code are emitted until its approved message is explicitly bound in source.
+incsrc "Items/sky_watch_log.asm"

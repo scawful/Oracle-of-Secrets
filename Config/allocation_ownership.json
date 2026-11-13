@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "4e9d336eadace6bf56fd3ec84d036e932d4aaf65823a207cea1927fcab9a03e1"
+      "sha256": "435254eb768cb48998c4981399bb6953453236b8b1f7824359da928cf297d379"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -275,12 +275,17 @@
     "shared:Items/special_soaring.asm": {
       "source_set": "shared",
       "path": "Items/special_soaring.asm",
-      "sha256": "818ead727820b1989a4bcf0c858db9d15e1e09f9ba297818570d756b9bdd1e7f"
+      "sha256": "b18973fd650b792f3adae9300f223c047cf8f1fdc84226165c71df8921d8c52a"
     },
     "shared:Items/switch_hook.asm": {
       "source_set": "shared",
       "path": "Items/switch_hook.asm",
       "sha256": "c17862c54d8c8e57b9ffdb227d0c8c23e086aa53794cf0a0e72c4918f2f31652"
+    },
+    "shared:Items/sky_watch_log.asm": {
+      "source_set": "shared",
+      "path": "Items/sky_watch_log.asm",
+      "sha256": "8e03ea2fcecf01408e834bfc3c3971fae4697cba18889f69a8d259f244ebb62e"
     }
   },
   "claims": [
@@ -2115,7 +2120,7 @@
     },
     {
       "id": "SkySoaringLearned",
-      "owner": "Special-overworld Soaring engine reads; future approved garrison teaching actor writes",
+      "owner": "Special-overworld Soaring reads; explicitly bound watch-log message completion grants",
       "space": "save_buffer",
       "base": 8319922,
       "size": 1,
@@ -2124,11 +2129,12 @@
         "ENABLE_SPECIAL_OVERWORLD_SOARING": 1
       },
       "lifetime": "Save file; native five-page save and checksum block.",
-      "reset": "Vanilla new-file initialization zeros it. Engine never grants, migrates or rewrites it; only exact A5 is learned, every other old-save value is locked.",
+      "reset": "Vanilla new-file initialization zeros it. Only exact A5 is learned; other old-save values stay locked until a bound watch-log conversation reaches its acknowledged terminator and normal window close. No migration.",
       "save": "SaveGameFile 00897B copies the F300 page to primary and backup; checksum loop 00899C covers offsets0000-04FD; new-file 0CC321 clears the F300 page.",
       "provenance": [
         "shared:Items/special_soaring.asm",
-        "shared:Core/sram.asm"
+        "shared:Core/sram.asm",
+        "shared:Items/sky_watch_log.asm"
       ],
       "aliases": [],
       "anchors": [],
@@ -2182,6 +2188,34 @@
         "RESIDENT_SPILL_END = 0x288000"
       ],
       "aliases": []
+    },
+    {
+      "id": "SkyWatchLog_State",
+      "owner": "Bound Sky watch-log native message lifecycle",
+      "space": "wram",
+      "base": 8264939,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "ENABLE_SPECIAL_OVERWORLD_SOARING": 1
+      },
+      "lifetime": "One native message conversation; hooks emit only with an explicit non-helper target binding. Native initialized-but-unused JUNK_7E1CEB is borrowed, not saved.",
+      "reset": "Native RenderText initialization clears1CD0-1CEF; capture resets before checking the original message. Finalize consumes and clears every close; helper09/0A reparses leave this byte unchanged.",
+      "save": "Not SRAM. Only acknowledged terminator plus normal special-overworld message cleanup can grant the existing SkySoaringLearned A5 token. Choice confirmation/refusal never qualifies.",
+      "provenance": [
+        "shared:Items/sky_watch_log.asm",
+        "shared:Core/ram.asm"
+      ],
+      "anchors": [
+        "SkyWatchLog_State = $7E1CEB",
+        "JUNK_7E1CEB     = $7E1CEB"
+      ],
+      "aliases": [],
+      "binding": {
+        "source": "shared:Items/sky_watch_log.asm",
+        "symbol": "SkyWatchLog_State",
+        "bank00_mirror": false
+      }
     }
   ],
   "lifetime_aliases": [],
