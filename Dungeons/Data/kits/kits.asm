@@ -115,8 +115,8 @@ org $1BE3DC ; @hook module=Dungeons kind=data protected_size=180
   dw $51AA, $5A0D, $626F, $6EF3, $7B78, read2($1BDA7A)
   dw read2($1BDA7C), read2($1BDA7E), read2($1BDA80), read2($1BDA82), read2($1BDA84), read2($1BDA86)
   dw read2($1BDA88), read2($1BDA8A), read2($1BDA8C), read2($1BDA8E), read2($1BDA90), read2($1BDA92)
-  dw read2($1BDA94), read2($1BDA96), read2($1BDA98), read2($1BDA9A), $4D89, $6290
-  dw $7336, read2($1BDAA2), read2($1BDAA4), read2($1BDAA6), read2($1BDAA8), read2($1BDAAA)
+  dw read2($1BDA94), read2($1BDA96), read2($1BDA98), read2($1BDA9A), read2($1BDA9C), read2($1BDA9E)
+  dw read2($1BDAA0), read2($1BDAA2), read2($1BDAA4), read2($1BDAA6), read2($1BDAA8), read2($1BDAAA)
   dw read2($1BDAAC), read2($1BDAAE), read2($1BDAB0), read2($1BDAB2), read2($1BDAB4), read2($1BDAB6)
 assert pc() == $1BE490, "kit palette must be exactly 90 words"
 pullpc
