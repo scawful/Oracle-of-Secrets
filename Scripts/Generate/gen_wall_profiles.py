@@ -989,9 +989,10 @@ def verify_kit_glyph_ownership(data: bytes) -> dict:
                 raise ValueError(f"kit {kit['kit']} sheet ${sid:02X} is not 3bpp")
             if hashlib.sha256(actual).hexdigest() != sheet["decoded_sha256"]:
                 raise ValueError(f"kit {kit['kit']} sheet ${sid:02X} differs from source")
+            high = {hx(c) for c in sheet.get("high_palette_chars", [])}
             for tile in range(64):
                 char = slot * 64 + tile
-                if actual[tile * 24:(tile + 1) * 24] == original[tile * 24:(tile + 1) * 24]:
+                if char not in high and actual[tile * 24:(tile + 1) * 24] == original[tile * 24:(tile + 1) * 24]:
                     continue
                 # Existing slot-3 kit cells predate this admission. Their
                 # accepted art is unchanged; the whole global door table also

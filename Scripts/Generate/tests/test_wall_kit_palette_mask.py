@@ -59,6 +59,21 @@ class WallKitMaskSchemaTest(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError,'protected/unowned'):
                         profiles.verify_kit_glyph_ownership(b'')
 
+    def test_palette_only_mask_cannot_recolor_a_door_with_identical_3bpp(self):
+        import sheet_table
+        raw=bytes(1536)
+        kit={'kit':'probe','rooms':[],'_cmap':{1:0x1AC},
+             'sheets':[{'slot':6,'sheet':'F3','copy_of':'1D',
+                        'high_palette_chars':['1AC'],
+                        'decoded_sha256':hashlib.sha256(raw).hexdigest()}]}
+        with mock.patch.object(profiles,'load_kits',return_value=[kit]), \
+             mock.patch.object(profiles,'floor_chars',return_value=set()), \
+             mock.patch.object(profiles,'door_chars',return_value={0x1AC}), \
+             mock.patch.object(sheet_table,'ptr',return_value=0), \
+             mock.patch.object(sheet_table,'decomp',return_value=(raw,0)):
+            with self.assertRaisesRegex(ValueError,'protected/unowned'):
+                profiles.verify_kit_glyph_ownership(b'')
+
     def test_generated_descriptor_reuses_selector_tables_and_preserves_class_count(self):
         asm=profiles.render()
         self.assertIn('db "WSR1"',asm)
