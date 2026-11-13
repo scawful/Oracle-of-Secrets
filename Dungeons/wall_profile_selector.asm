@@ -127,6 +127,125 @@ WallSel_Common:
 ; =========================================================
 if !WALLSEL_GFX == 1
 
+; The existing UW converter chooses a palette half for an entire sheet.
+; Kit slot 6 can now opt individual STATIC glyphs into the high half while
+; inherited furniture stays low. The 3bpp stream and all CGRAM words stay intact.
+; Entry $00:E636: M=16 X=8, DBR=00 DP=0000, Y=63, [$00]=decoded sheet,
+; VMAIN/VMADDR already prepared. Native slot counter $0F=1 is physical slot 6.
+; The native converter clobbers A/X/Y, $00-$01 and $BD-$CE. We use the same
+; scratch, plus 3 stack bytes, and return via the original RTS at $00:E6B6.
+assert read3($00E636) == $E00FA6 && read3($00E639) == $F7B004, "UW palette-half dispatch moved"
+pushpc
+org $00E636 ; @hook module=Dungeons name=WallSel_LoadMaskedGraphics kind=jml target=WallSel_LoadMaskedGraphics expected_m=16 expected_x=8 expected_exit_m=8 expected_exit_x=8
+  JML WallSel_LoadMaskedGraphics
+  NOP #2
+assert pc() == $00E63C, "UW palette-half hook crossed low converter"
+pullpc
+
+WallSel_LoadMaskedGraphics:
+{
+  BRA .entry
+  ; Discovery is tied to the actual hook target, not a new fixed ROM region.
+  db "WKPM", $01
+  dl WallSel_RenderMetadata
+.entry
+  LDA.l $7E001B : AND.w #$00FF : BEQ .vanilla
+  LDX.b $0F : CPX.b #$01 : BNE .vanilla
+  LDA.l $7E0AA2 : AND.w #$00FF
+  SEC : SBC.w #!WALLSEL_KIT_ROW0
+  CMP.w #!WALLSEL_KIT_COUNT : BCS .vanilla
+  ASL #6 : TAX
+  PHX                              ; one-byte mask row base, maximum $C0
+  BRA .tile
+.vanilla
+  LDX.b $0F : CPX.b #$04 : BCS .high
+  JML $00E63C                       ; untouched native low converter
+.high
+  JML $00E5AF                       ; untouched native high converter
+.tile
+  TYA : AND.w #$00FF : EOR.w #$003F
+  CLC : ADC 1,S : AND.w #$00FF : TAX
+  LDA.l WallSel_KitHighPalette,X : AND.w #$00FF
+  PHA                              ; this glyph's high-half opt-in (2 bytes)
+  LDX.b #$0E
+.planes01
+  LDA.b [$00] : STA.w $2118
+  XBA : ORA.b [$00] : AND.w #$00FF : STA.b $BF,X
+  INC.b $00 : INC.b $00
+  DEX : DEX : BPL .planes01
+  LDX.b #$0E
+.planes23
+  LDA.b [$00] : AND.w #$00FF : STA.b $BD
+  LDA 1,S : BEQ .low_pixel
+  LDA.b $BD : ORA.b $BF,X : XBA : ORA.b $BD
+  BRA .write
+.low_pixel
+  LDA.b $BD
+.write
+  STA.w $2118
+  INC.b $00
+  DEX : DEX : BPL .planes23
+  PLA
+  DEY : BPL .tile
+  PLX
+  LDX.b #$FF                        ; same X/Y and width as native conversion
+  SEP #$20
+  JML $00E6B6                       ; RTS to InitializeTilesets' original caller
+}
+
+; Room transitions first expand four auxiliary sheets into $7F0000-$7F1FFF.
+; Replay the displaced entry then call the untouched native continuation, whose
+; RTL returns here. Only slot 6 ($7F1800-$7F1FFF) receives the same glyph mask.
+; Entry/exit M=8 X=8, DBR=00 DP=0000. The post-pass preserves the native return
+; A (including hidden B), X/Y/P and scratch; it writes only selected plane 3.
+assert read4($00DF1A) == $02857EA9, "UW transition converter entry moved"
+pushpc
+org $00DF1A ; @hook module=Dungeons name=WallSel_TransitionGraphics kind=jml target=WallSel_TransitionGraphics expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8
+  JML WallSel_TransitionGraphics
+assert pc() == $00DF1E, "UW transition hook crossed native continuation"
+pullpc
+
+WallSel_TransitionGraphics:
+{
+  LDA.b #$7E : STA.b $02
+  JSL $00DF1E                       ; original conversion, through its RTL
+  JSL WallSel_MaskTransitionGraphics
+  RTL
+}
+
+WallSel_MaskTransitionGraphics:
+{
+  PHP : REP #$30 : PHA : PHX : PHY
+  LDA.l $7E001B : AND.w #$00FF : BEQ .done
+  LDA.l $7E0AA2 : AND.w #$00FF
+  SEC : SBC.w #!WALLSEL_KIT_ROW0
+  CMP.w #!WALLSEL_KIT_COUNT : BCS .done
+  ASL #6 : PHA                      ; existing kit mask row base
+  LDX.w #$1800                      ; physical slot 6 in transition staging
+.tile
+  PHX
+  TXA : SEC : SBC.w #$1800 : LSR #5
+  CLC : ADC 3,S : TAX
+  LDA.l WallSel_KitHighPalette,X : AND.w #$00FF
+  BEQ .unmasked
+  PLX : PHX : LDY.w #$0007
+.row
+  LDA.l $7F0000,X : XBA : ORA.l $7F0000,X
+  ORA.l $7F0010,X : AND.w #$00FF : XBA
+  ORA.l $7F0010,X : STA.l $7F0010,X
+  INX : INX : DEY : BPL .row
+  PLX : BRA .next
+.unmasked
+  PLX
+.next
+  TXA : CLC : ADC.w #$0020 : TAX
+  CPX.w #$2000 : BNE .tile
+  PLA
+.done
+  PLY : PLX : PLA : PLP
+  RTL
+}
+
 ; H3 $01:B641: INY : LDA [$0D],Y : STA $0AA2 (header blockset byte).
 ; Entry: M=8 X=16, Y = header index. $0AB6 was stored at $01B629.
 ; Exit: M=8 X=16, Y advanced by one (as vanilla), X preserved.

@@ -28,7 +28,25 @@
    "sheet": "0xFD",
    "copy_of": "0x0B",
    "source": "glacia_cave_art17.slot3.txt",
-   "decoded_sha256": "93e206eab3bb9da54a824bfbeaad1e15c259eff6f5f9b5c727f1c77b020df57b"
+   "decoded_sha256": "72c735219855d3fd218a767c9c1735ea9542bea827818a7e1204de5c7979231c"
+  },
+  {
+   "slot": 6,
+   "sheet": "0xF4",
+   "copy_of": "0x1D",
+   "source": "glacia_cave_art17.slot6.txt",
+   "high_palette_chars": [
+    "184",
+    "185",
+    "186",
+    "194",
+    "195",
+    "196",
+    "199",
+    "1A4",
+    "1A5"
+   ],
+   "decoded_sha256": "1fb1a788f27e1f7ba30fa8173a3460e38e0bc281d90cd57e4513809237c25bbc"
   }
  ],
  "char_map": {
@@ -38,13 +56,13 @@
   "023": "0CD",
   "02A": "0CE",
   "02B": "0CF",
-  "032": "0ED",
-  "033": "0EE",
-  "03A": "0EF",
+  "032": "186",
+  "033": "194",
+  "03A": "195",
   "03B": "0F6",
   "040": "0F7",
   "041": "0C0",
-  "042": "0C1",
+  "042": "184",
   "043": "0C2",
   "044": "0C3",
   "047": "0C4",
@@ -52,7 +70,7 @@
   "049": "0E8",
   "04A": "0E9",
   "04B": "0EA",
-  "052": "0EC",
+  "052": "185",
   "053": "0D7",
   "054": "0D8",
   "056": "0DA",
@@ -68,18 +86,17 @@
   "071": "0FA",
   "080": "0D1",
   "081": "0C7",
-  "094": "0FC",
-  "095": "0FD",
+  "094": "196",
+  "095": "199",
   "09A": "0C8",
-  "09C": "0FE",
-  "09F": "0FF"
+  "09C": "1A4",
+  "09F": "1A5"
  },
  "in_place": [
   "0F5"
  ],
  "tile_types": {
   "0C0": "0x01",
-  "0C1": "0x01",
   "0C2": "0x04",
   "0C4": "0x01",
   "0C5": "0x04",
@@ -101,19 +118,20 @@
   "0E8": "0x2A",
   "0E9": "0x01",
   "0EA": "0x04",
-  "0EC": "0x01",
-  "0ED": "0x28",
-  "0EE": "0x01",
-  "0EF": "0x04",
   "0F5": "0x01",
   "0F6": "0x28",
   "0F8": "0x01",
   "0F9": "0x2A",
   "0FA": "0x2A",
-  "0FC": "0x28",
-  "0FD": "0x28",
-  "0FE": "0x04",
-  "0FF": "0x04"
+  "186": "0x28",
+  "194": "0x01",
+  "195": "0x04",
+  "184": "0x01",
+  "185": "0x01",
+  "196": "0x28",
+  "199": "0x28",
+  "1A4": "0x04",
+  "1A5": "0x04"
  },
  "palette": {
   "id": "0x24",
@@ -256,5 +274,5 @@
   }
  ],
  "free_slot3_left": 0,
- "note": "Glacia ice-house cave ART17 walls (glacia-minish-matched-v1 phase-v17-thin-pits, manifest 8dea8bff)"
+ "note": "Glacia ice-house cave ART17 walls (glacia-minish-matched-v1 phase-v17-thin-pits, manifest 8dea8bff) Native sheet-0B floor glyphs restored; displaced wall glyphs retain their high palette half in static slot-6 cells. Slot-6 animation $1B0-$1BF is preserved."
 }

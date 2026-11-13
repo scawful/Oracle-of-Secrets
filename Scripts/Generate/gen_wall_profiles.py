@@ -155,6 +155,43 @@ def door_chars(base: bytes) -> set[int]:
     return out
 
 
+def room_object_table(data: bytes, rooms: list[int]) -> int:
+    """Read the vanilla table or the qualified D4 fallback, never its NOP operand.
+
+    Same two exact compiled dispatch shapes as Yaze room.cc's
+    GetObjectPointerTablePc. D4 state rooms need state-specific inspection;
+    a kit claiming one is refused instead of silently using its fallback.
+    """
+    op = snes_pc(OBJ_PTR_LOAD)
+    if data[op] == 0xBF:
+        table = int.from_bytes(data[op + 1:op + 4], "little")
+    else:
+        hook, dispatcher = snes_pc(0x018745), snes_pc(0x508000)
+        if data[hook:hook + 12] != bytes.fromhex("22 00 80 50 EA EA EA EA EA EA EA EA"):
+            raise ValueError("unsupported compiled room-object loader")
+        layouts = (("AF A0 00 7E C9 25 00 F0 12 C9 37 00 F0 35", {0x25, 0x37}),
+                   ("AF A0 00 7E C9 25 00 F0 17 C9 26 00 F0 3A C9 37 00 F0 59", {0x25, 0x26, 0x37}))
+        for prefix, state_rooms in layouts:
+            signature = bytes.fromhex(prefix)
+            if data[dispatcher:dispatcher + len(signature)] != signature:
+                continue
+            if set(rooms) & state_rooms:
+                raise ValueError("kit floor ownership requires D4 state-specific room inspection")
+            p = dispatcher + len(signature)
+            fallback = data[p:p + 13]
+            if len(fallback) != 13 or fallback[0] != 0xBF or fallback[4:7] != bytes.fromhex("85 B8 BF") or fallback[10:] != bytes.fromhex("85 B7 6B"):
+                raise ValueError("unsupported compiled D4 fallback")
+            table = int.from_bytes(fallback[7:10], "little")
+            if int.from_bytes(fallback[1:4], "little") != table + 1:
+                raise ValueError("compiled D4 fallback pointer operands disagree")
+            break
+        else:
+            raise ValueError("unsupported compiled D4 dispatch")
+    if table & 0xFFFF < 0x8000 or table >> 16 & 0x7F >= 0x7E or snes_pc(table) + ROOM_COUNT * 3 > len(data):
+        raise ValueError("room-object pointer table is outside ROM")
+    return table
+
+
 def floor_chars(base: bytes, rooms: list[int]) -> set[int]:
     """Chars of the two floor fills (RoomDraw_DrawFloors) of each room.
 
@@ -162,10 +199,7 @@ def floor_chars(base: bytes, rooms: list[int]) -> set[int]:
     (low nibble, BG1); each draws the 8 words at RoomDrawObjectData + nibble*16.
     z3ed object traces do not include these fills.
     """
-    op = snes_pc(OBJ_PTR_LOAD)
-    if base[op] != 0xBF:
-        sys.exit(f"${OBJ_PTR_LOAD:06X} is not LDA.l long,X; cannot find the room object pointers")
-    table = int.from_bytes(base[op + 1:op + 4], "little")
+    table = room_object_table(base, rooms)
     out = set()
     for r in rooms:
         p = snes_pc(table + 3 * r)
@@ -513,6 +547,11 @@ def load_kits() -> list[dict]:
                 raise SystemExit(f"{f.name}: sheet slot must be a unique 3-6")
             sheets_seen[sid] = name
             slots_seen.add(slot)
+            high = [hx(c) for c in s.get("high_palette_chars", [])]
+            if high and (slot != 6 or any(c < 0x180 or c >= 0x1B0 for c in high)):
+                raise SystemExit(f"{f.name}: high_palette_chars only supports static slot-6 chars $180-$1AF")
+            if len(set(high)) != len(high) or any(c not in cmap.values() or c not in types for c in high):
+                raise SystemExit(f"{f.name}: high_palette_chars needs unique mapped chars with tile types")
         for c, n in cmap.items():
             if c >= 0x200 or (n >> 6) not in slots_seen:
                 raise SystemExit(f"{f.name}: char {c:03X} -> {n:03X} needs a kit sheet in slot {n >> 6}")
@@ -698,6 +737,20 @@ def render() -> str:
         return "\n".join(out) + "\n"
     E("WallSel_KitBase:  ; base blockset per kit (row-!WALLSEL_KIT_ROW0)")
     E("  db " + ", ".join(f"${hx(k['base_blockset']):02X}" for k in routed))
+    E("WallSel_KitHighPalette:  ; 64 bytes per kit; slot-6 tile index, 0=low/1=high")
+    for k in routed:
+        high = {hx(c) & 0x3F for s in k.get("sheets", [])
+                for c in s.get("high_palette_chars", [])}
+        for start in range(0, 64, 16):
+            E("  db " + ", ".join("$01" if i in high else "$00"
+                                  for i in range(start, start + 16)))
+    E("WallSel_RenderMetadata:  ; compiled read-only view of the SAME selector tables")
+    E('  db "WSR1"')
+    E(f"  dw ${ROOM_COUNT:04X}")
+    E(f"  db {len(CLASSES)}, {len(profiles)}, ${KIT_ROW0:02X}, {len(routed)}")
+    for label in ("RoomProfile", "Sub1Class", "Sub2Class", "ProfileBase", "SlotSrc",
+                  "SlotLen", "Data", "ProfileBlockset", "ProfilePalette", "KitHighPalette"):
+        E(f"  dl WallSel_{label}")
     E("")
     E("; Tile types. Called from WallSel_LoadTileAttr with M=8 X=8 (X/Y untouched).")
     E("; Chars $C0-$FF are restored from the ROM table on every room by the")
@@ -919,13 +972,46 @@ def verify_palette_ownership(data: bytes) -> dict:
             "private_palettes": [f"0x{p:02X}" for p in PRIVATE_PALETTES]}
 
 
+def verify_kit_glyph_ownership(data: bytes) -> dict:
+    """Preserve native floors/animation and protect doors in the new mask slot."""
+    from sheet_table import decomp, ptr
+    doors = door_chars(data)
+    sheets_checked = 0
+    for kit in load_kits():
+        rooms = [hx(r) for r in kit.get("rooms", [])]
+        protected = floor_chars(data, rooms) | set(range(0x1B0, 0x1D0))
+        owned = set(kit["_cmap"].values()) | {hx(c) for c in kit.get("in_place", [])}
+        for sheet in kit.get("sheets", []):
+            sid, source, slot = hx(sheet["sheet"]), hx(sheet["copy_of"]), sheet["slot"]
+            actual = bytes(decomp(data, ptr(data, sid))[0])
+            original = bytes(decomp(data, ptr(data, source))[0])
+            if len(actual) != 1536 or len(original) != 1536:
+                raise ValueError(f"kit {kit['kit']} sheet ${sid:02X} is not 3bpp")
+            if hashlib.sha256(actual).hexdigest() != sheet["decoded_sha256"]:
+                raise ValueError(f"kit {kit['kit']} sheet ${sid:02X} differs from source")
+            for tile in range(64):
+                char = slot * 64 + tile
+                if actual[tile * 24:(tile + 1) * 24] == original[tile * 24:(tile + 1) * 24]:
+                    continue
+                # Existing slot-3 kit cells predate this admission. Their
+                # accepted art is unchanged; the whole global door table also
+                # contains unrelated dungeon shapes. Newly allocated slot-6
+                # cells conservatively exclude that entire table.
+                if char in protected or char not in owned or (slot == 6 and char in doors):
+                    raise ValueError(f"kit {kit['kit']} overwrites protected/unowned glyph ${char:03X}")
+            sheets_checked += 1
+    return {"kit_sheets_checked": sheets_checked}
+
+
 def cmd_verify_rom(a: argparse.Namespace) -> int:
     from asm_source import _load_global_defines
     if not _load_global_defines(REPO).get("ENABLE_WALL_PROFILE_SELECTOR", 0):
         print("Wall-profile selector is disabled; private palettes are inactive")
         return 0
     try:
-        facts = verify_palette_ownership(Path(a.rom).read_bytes())
+        data = Path(a.rom).read_bytes()
+        facts = verify_palette_ownership(data)
+        facts.update(verify_kit_glyph_ownership(data))
     except (OSError, ValueError) as error:
         print(f"Wall-kit palette ownership: {error}", file=sys.stderr)
         return 1

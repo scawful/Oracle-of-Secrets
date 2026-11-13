@@ -5,7 +5,7 @@
 
 ; d1_grotto_floor (N1) [routed]: Palette only: D1 grass floor (chars 0EE/0EF/0FE/0FF body, 0AC-0AF fringe, row 3) in the overworld main green $2669 with its dark shade $19C6. Walls, walkways and water keep palette $10.
 ; dragon_ship_timber (N5) [in_base]: Dragon ship timber (b9296cc0) is identical to base 5d6b461b for these rooms: 0 edited selector classes, 0 slot-3 glyph changes, 0 palette words (extract-kit probe 2026-11-08). Nothing to route; the base already draws it.
-; glacia_cave_art17 (N9) [partial]: Glacia ice-house cave ART17 walls (glacia-minish-matched-v1 phase-v17-thin-pits, manifest 8dea8bff)
+; glacia_cave_art17 (N9) [partial]: Glacia ice-house cave ART17 walls (glacia-minish-matched-v1 phase-v17-thin-pits, manifest 8dea8bff) Native sheet-0B floor glyphs restored; displaced wall glyphs retain their high palette half in static slot-6 cells. Slot-6 animation $1B0-$1BF is preserved.
 ;   blocked object 00D: not a selector class: the candidate draws other words in rooms 09E 0BF 0DD
 ;   blocked object 00E: not a selector class: the candidate draws other words in rooms 0AE 0BE 0DD
 ;   blocked object 00F: not a selector class: the candidate draws other words in rooms 09E 0DD
@@ -21,7 +21,7 @@
 ;   blocked object 116: not a selector class: the candidate draws other words in rooms 0CE
 ;   blocked object 117: not a selector class: the candidate draws other words in rooms 0CE
 ;   blocked object FE7: not a selector class: the candidate draws other words in rooms 0AE
-; glacia_estate_timber (N8) [routed]: Glacia estate frozen timber (ce525155); glyphs copied into free slot-3 chars of a sheet-0B copy. Re-extracted on base 5d6b461b (origin 837bd18c) so the fancy-exit chars stay vanilla.
+; glacia_estate_timber (N8) [routed]: Glacia estate frozen timber (ce525155); glyphs copied into free slot-3 chars of a sheet-0B copy. Re-extracted on base 5d6b461b (origin 837bd18c) so the fancy-exit chars stay vanilla. Native sheet-0B floor glyphs restored; displaced wall glyphs retain their high palette half in static slot-6 cells. Slot-6 animation $1B0-$1BF is preserved.
 
 ; ---- private ids: vanilla spare rows, palette offsets, no room uses them ----
 assert read1($00DDF3) == $09 && read1($00DDF4) == $00 && read1($00DDF5) == $24 && read1($00DDF6) == $1B, "blockset row $17 is not the vanilla spare row"
@@ -97,9 +97,10 @@ assert read1(($220000|read2($228000+$19E))+2) == $0B && read1($0ED460+(read1(($2
 assert read1(($220000|read2($228000+$1B8))+2) == $0B && read1($0ED460+(read1(($220000|read2($228000+$1B8))+1)*4)) == $08, "room $0DC header no longer matches kit glacia_cave_art17"
 assert read1(($220000|read2($228000+$1BA))+2) == $0B && read1($0ED460+(read1(($220000|read2($228000+$1BA))+1)*4)) == $08, "room $0DD header no longer matches kit glacia_cave_art17"
 assert read1($00DDC3) == $0B, "kit glacia_cave_art17 slot 3 source is not sheet $0B"
+assert read1($00DDC6) == $1D, "kit glacia_cave_art17 slot 6 source is not sheet $1D"
 pushpc
 org $00DDF7 ; @hook module=Dungeons kind=data protected_size=4
-  db $FD, read1($00DDC4), read1($00DDC5), read1($00DDC6)
+  db $FD, read1($00DDC4), read1($00DDC5), $F4
 pullpc
 assert read2($1BEC53) == $02D0, "kit glacia_cave_art17 palette source $08 offset moved"
 pushpc
@@ -132,9 +133,10 @@ assert read1(($220000|read2($228000+$196))+2) == $0B && read1($0ED460+(read1(($2
 assert read1(($220000|read2($228000+$198))+2) == $0B && read1($0ED460+(read1(($220000|read2($228000+$198))+1)*4)) == $08, "room $0CC header no longer matches kit glacia_estate_timber"
 assert read1(($220000|read2($228000+$1B6))+2) == $0B && read1($0ED460+(read1(($220000|read2($228000+$1B6))+1)*4)) == $08, "room $0DB header no longer matches kit glacia_estate_timber"
 assert read1($00DDC3) == $0B, "kit glacia_estate_timber slot 3 source is not sheet $0B"
+assert read1($00DDC6) == $1D, "kit glacia_estate_timber slot 6 source is not sheet $1D"
 pushpc
 org $00DDF3 ; @hook module=Dungeons kind=data protected_size=4
-  db $FE, read1($00DDC4), read1($00DDC5), read1($00DDC6)
+  db $FE, read1($00DDC4), read1($00DDC5), $F3
 pullpc
 assert read2($1BEC53) == $02D0, "kit glacia_estate_timber palette source $08 offset moved"
 pushpc
@@ -163,8 +165,12 @@ pushpc
 org $458000
 WallSel_KitSheet_FD:  ; glacia_cave_art17 slot 3
   incbin "Dungeons/Data/kits/glacia_cave_art17.slot3.lz2"
+WallSel_KitSheet_F4:  ; glacia_cave_art17 slot 6
+  incbin "Dungeons/Data/kits/glacia_cave_art17.slot6.lz2"
 WallSel_KitSheet_FE:  ; glacia_estate_timber slot 3
   incbin "Dungeons/Data/kits/glacia_estate_timber.slot3.lz2"
+WallSel_KitSheet_F3:  ; glacia_estate_timber slot 6
+  incbin "Dungeons/Data/kits/glacia_estate_timber.slot6.lz2"
 assert pc() <= $45F000, "kit sheet streams exceeded $458000-$45EFFF"
 assert $FD < !GfxSheet_Rows, "kit sheet $FD is past the sheet table"
 org $23FDFD ; @hook module=Dungeons kind=data protected_size=1
@@ -173,6 +179,13 @@ org $23FEFD ; @hook module=Dungeons kind=data protected_size=1
   db WallSel_KitSheet_FD>>8
 org $23FFFD ; @hook module=Dungeons kind=data protected_size=1
   db WallSel_KitSheet_FD
+assert $F4 < !GfxSheet_Rows, "kit sheet $F4 is past the sheet table"
+org $23FDF4 ; @hook module=Dungeons kind=data protected_size=1
+  db WallSel_KitSheet_F4>>16
+org $23FEF4 ; @hook module=Dungeons kind=data protected_size=1
+  db WallSel_KitSheet_F4>>8
+org $23FFF4 ; @hook module=Dungeons kind=data protected_size=1
+  db WallSel_KitSheet_F4
 assert $FE < !GfxSheet_Rows, "kit sheet $FE is past the sheet table"
 org $23FDFE ; @hook module=Dungeons kind=data protected_size=1
   db WallSel_KitSheet_FE>>16
@@ -180,4 +193,11 @@ org $23FEFE ; @hook module=Dungeons kind=data protected_size=1
   db WallSel_KitSheet_FE>>8
 org $23FFFE ; @hook module=Dungeons kind=data protected_size=1
   db WallSel_KitSheet_FE
+assert $F3 < !GfxSheet_Rows, "kit sheet $F3 is past the sheet table"
+org $23FDF3 ; @hook module=Dungeons kind=data protected_size=1
+  db WallSel_KitSheet_F3>>16
+org $23FEF3 ; @hook module=Dungeons kind=data protected_size=1
+  db WallSel_KitSheet_F3>>8
+org $23FFF3 ; @hook module=Dungeons kind=data protected_size=1
+  db WallSel_KitSheet_F3
 pullpc

@@ -25,7 +25,18 @@
    "sheet": "0xFE",
    "copy_of": "0x0B",
    "source": "glacia_estate_timber.slot3.txt",
-   "decoded_sha256": "96c732a46e25d83ae577412d4c15441dc1fbe52839d9095e053ebfcfbefec0a8"
+   "decoded_sha256": "c70f6566cd9ed71403b21c266a39865c74ddfcdf2429225c8ce59af3f562e995"
+  },
+  {
+   "slot": 6,
+   "sheet": "0xF3",
+   "copy_of": "0x1D",
+   "source": "glacia_estate_timber.slot6.txt",
+   "high_palette_chars": [
+    "180",
+    "181"
+   ],
+   "decoded_sha256": "762b71c7aa98f1ccefbd139bd44d032db67719398974274ccc29344c7254e611"
   }
  ],
  "char_map": {
@@ -49,11 +60,11 @@
   "049": "0E3",
   "04A": "0E5",
   "04B": "0EB",
-  "052": "0EE",
+  "052": "180",
   "053": "0F2",
   "054": "0F3",
   "056": "0F4",
-  "057": "0EF",
+  "057": "181",
   "058": "0F0",
   "05C": "0F1",
   "060": "0F5",
@@ -83,15 +94,15 @@
   "0E4": "0x01",
   "0E5": "0x01",
   "0EB": "0x01",
-  "0EE": "0x04",
-  "0EF": "0x2A",
   "0F0": "0x04",
   "0F1": "0x2A",
   "0F2": "0x28",
   "0F3": "0x04",
   "0F4": "0x28",
   "0F5": "0x01",
-  "0FB": "0x04"
+  "0FB": "0x04",
+  "180": "0x04",
+  "181": "0x2A"
  },
  "palette": {
   "id": "0x26",
@@ -127,5 +138,5 @@
  ],
  "blocked": [],
  "free_slot3_left": 2,
- "note": "Glacia estate frozen timber (ce525155); glyphs copied into free slot-3 chars of a sheet-0B copy. Re-extracted on base 5d6b461b (origin 837bd18c) so the fancy-exit chars stay vanilla."
+ "note": "Glacia estate frozen timber (ce525155); glyphs copied into free slot-3 chars of a sheet-0B copy. Re-extracted on base 5d6b461b (origin 837bd18c) so the fancy-exit chars stay vanilla. Native sheet-0B floor glyphs restored; displaced wall glyphs retain their high palette half in static slot-6 cells. Slot-6 animation $1B0-$1BF is preserved."
 }
