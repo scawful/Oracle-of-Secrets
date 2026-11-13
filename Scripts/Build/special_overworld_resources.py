@@ -331,6 +331,23 @@ def _plan_area(area, page_tiles, assets, definitions, read_sheet, conditional_ti
     return result
 
 
+def _validate_address_overrides(source, overrides):
+    """Admit only Oracle's existing fixed aux-palette ABI, not relocations."""
+    _require(type(overrides) is dict, 'ADDRESS_OVERRIDES_UNSUPPORTED')
+    if not overrides:
+        return
+    # Overworld/aux_palette_extension.asm owns SNES45F900..45FE3F.
+    # These describe palette loading; sheet pointers still come from the ROM.
+    expected = dict(overworld_aux_palette_extension_pc=0x22F900,
+                    overworld_aux_palette_extension_count=32,
+                    overworld_aux_palette_extension_abi=1)
+    _require(overrides.keys() == expected.keys()
+             and all(type(value) is int for value in overrides.values())
+             and overrides == expected, 'ADDRESS_OVERRIDES_UNSUPPORTED')
+    _require(0x22F900 + 32 * 21 * 2 <= len(source),
+             'AUX_PALETTE_EXTENSION_TRUNCATED')
+
+
 def _native_source(source, exported):
     """Check a fresh z3ed export against its saved native ROM, without writes."""
     _require(type(source) is bytes and 0x200000 <= len(source) <= 0x400000,
@@ -355,10 +372,8 @@ def _native_source(source, exported):
              and value.get('directory_sha256') == _sha(source[
                  native.DIRECTORY_PC:native.DIRECTORY_PC + native.DIRECTORY_SIZE]),
              'NATIVE_EXPORT_SOURCE_MISMATCH')
-    # The current sheet decoder reads the ROM's own pointer layout. Refuse
-    # project relocations rather than silently decoding a different source.
-    _require(value.get('rom_address_overrides') == {},
-             'ADDRESS_OVERRIDES_UNSUPPORTED')
+    # Palette-only ABI metadata does not relocate the ROM's sheet pointers.
+    _validate_address_overrides(source, value.get('rom_address_overrides'))
     address, count = entries[400]
     definitions = source[native.pc(address):native.pc(address) + count * 8]
     _require(value.get('tile16_dictionary') == dict(snes_address=address,

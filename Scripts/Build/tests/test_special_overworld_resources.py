@@ -361,6 +361,48 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'GRAPHICS_SPEC_PATH_INVALID'):
             R.plan_saved_native_terrain(self.source, self.seal(value), graphics_root=root)
 
+    def test_fixed_aux_palette_context_preserves_resident_color_plan(self):
+        value = copy.deepcopy(self.exported['native_source'])
+        value['rom_address_overrides'] = dict(
+            overworld_aux_palette_extension_pc=0x22F900,
+            overworld_aux_palette_extension_count=32,
+            overworld_aux_palette_extension_abi=1)
+        baseline = R.plan_saved_native_terrain(self.source, self.exported)
+        result = R.plan_saved_native_terrain(self.source, self.seal(value))
+        self.assertEqual(result['source_rom_sha256'], baseline['source_rom_sha256'])
+        self.assertEqual(result['areas'], baseline['areas'])
+        self.assertEqual(result['decoded_sheets'], baseline['decoded_sheets'])
+        self.assertNotEqual(result['native_source_sha256'],
+                            baseline['native_source_sha256'])
+
+    def test_aux_context_rejects_partial_foreign_and_wrong_typed_contracts(self):
+        valid = dict(overworld_aux_palette_extension_pc=0x22F900,
+                     overworld_aux_palette_extension_count=32,
+                     overworld_aux_palette_extension_abi=1)
+        bad = [None, [], {'overworld_gfx_ptr1': 42},
+               {**valid, 'overworld_gfx_ptr1': 42}]
+        for key in valid:
+            bad.append({k: v for k, v in valid.items() if k != key})
+            for replacement in (True, False, str(valid[key]), float(valid[key]),
+                                -1, 0, valid[key] + 1):
+                bad.append({**valid, key: replacement})
+        for overrides in bad:
+            with self.subTest(overrides=overrides):
+                value = copy.deepcopy(self.exported['native_source'])
+                value['rom_address_overrides'] = overrides
+                with self.assertRaisesRegex(ValueError, 'OVERRIDES_UNSUPPORTED'):
+                    R._native_source(self.source, self.seal(value))
+
+    def test_aux_context_requires_complete_fixed_table_extent(self):
+        overrides = dict(overworld_aux_palette_extension_pc=0x22F900,
+                         overworld_aux_palette_extension_count=32,
+                         overworld_aux_palette_extension_abi=1)
+        end = 0x22F900 + 32 * 21 * 2
+        with self.assertRaisesRegex(ValueError, 'AUX_PALETTE_EXTENSION_TRUNCATED'):
+            R._validate_address_overrides(bytes(end - 1), overrides)
+        R._validate_address_overrides(bytes(end), overrides)
+        R._validate_address_overrides(b'', {})
+
     def test_export_identity_raw_profile_and_topology_cannot_be_substituted(self):
         for change, message in (
             (lambda v: v.__setitem__('source_rom_sha256', '0' * 64), 'SOURCE_MISMATCH'),
