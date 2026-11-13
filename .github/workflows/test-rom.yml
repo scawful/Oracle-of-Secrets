@@ -186,11 +186,14 @@ jobs:
           printf '\xBF\xF0\x83\x01\xAA' | dd of=test.sfc bs=1 seek=$((0x89AE)) conv=notrunc 2>/dev/null  # $0189AE H2 LDA.l $0183F0,X : TAX
           printf '\xBF\x19\x97\x0E\x9F\xC0\xFE\x7E' | dd of=test.sfc bs=1 seek=$((0x717F5)) conv=notrunc 2>/dev/null  # $0E97F5 LoadDefaultTileTypes slot-3 copy
           printf '\xC8\xB7\x0D\x8D\xA2\x0A' | dd of=test.sfc bs=1 seek=$((0xB641)) conv=notrunc 2>/dev/null  # $01B641 H3 INY : LDA [$0D],Y : STA $0AA2
+          printf '\xA6\x0F\xE0\x04\xB0\xF7' | dd of=test.sfc bs=1 seek=$((0x6636)) conv=notrunc 2>/dev/null  # $00E636 UW palette-half dispatch
+          printf '\xA9\x7E\x85\x02' | dd of=test.sfc bs=1 seek=$((0x5F1A)) conv=notrunc 2>/dev/null  # $00DF1A PrepTransAuxGfx entry
 
           # Vanilla spare blockset rows, palette offsets and slot-3 sheet guarded by
           # Dungeons/Data/kits/kits.asm (real base-ROM bytes).
           printf '\x09\x00\x24\x1B\x08\x00\x22\x1B\x09\x00\x25\x1B\x09\x00\x26\x1B' | dd of=test.sfc bs=1 seek=$((0x5DF3)) conv=notrunc 2>/dev/null  # $00DDF3 rows $17-$1A
           printf '\x0B' | dd of=test.sfc bs=1 seek=$((0x5DC3)) conv=notrunc 2>/dev/null  # $00DDC3 slot-3 sheet $0B
+          printf '\x1D' | dd of=test.sfc bs=1 seek=$((0x5DC6)) conv=notrunc 2>/dev/null  # $00DDC6 slot-6 sheet $1D
           printf '\x24\x09' | dd of=test.sfc bs=1 seek=$((0xDEC65)) conv=notrunc 2>/dev/null  # $1BEC65 palette $1A offset
           printf '\xF4\x0B\xA8\x0C\x5C\x0D' | dd of=test.sfc bs=1 seek=$((0xDEC6D)) conv=notrunc 2>/dev/null  # $1BEC6D palette $22/$24/$26 offsets
           printf '\xA0\x05' | dd of=test.sfc bs=1 seek=$((0xDEC5B)) conv=notrunc 2>/dev/null  # $1BEC5B palette $10 offset
