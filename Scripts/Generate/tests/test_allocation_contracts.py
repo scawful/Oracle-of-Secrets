@@ -124,6 +124,14 @@ class OwnershipTests(unittest.TestCase):
         conflicts=ownership_conflicts(data,{'DISABLE_SPRITES':0})[0]
         self.assertEqual([(c['owners'],c['start'],c['end'],c['classification']) for c in conflicts],[(['cart_room','symbols_wram_block'],0x7E0730,0x7E0768,'active_profile_conflict')])
 
+    def test_ferry_tail_has_separate_conditional_source_binding(self):
+        from allocation_contracts import base_block
+        real=read_ledger(ROOT/'Config/allocation_ownership.json')
+        claim=next(c for c in real['claims'] if c['id']=='kalyxo_boat_native_transient')
+        self.assertEqual(claim['condition'],{'ENABLE_KALYXO_BOAT':1})
+        self.assertEqual(claim['binding'],{'source':'shared:Core/symbols.asm','symbol':'Boat_Marker','base_block':True})
+        self.assertEqual(base_block((ROOT/'Core/symbols.asm').read_text(),'Boat_Marker'),(0x7E1ECB,19))
+
 
 class TableTests(unittest.TestCase):
     def test_wla_labels_exclude_address_to_line_records(self):

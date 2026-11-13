@@ -165,7 +165,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "d61dc31a83a7e75a07f4bb7c2e3db824cc893e1d0df51b329ac158ae45afb6f0"
+      "sha256": "e71653e2ce0ac1f4763846cc220f027f45ab4f7e5c9a529107496786de7f850f"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -2276,7 +2276,7 @@
       "condition": {
         "ENABLE_KALYXO_BOAT": 1
       },
-      "lifetime": "Code and two unbound native32-byte caches. Opening/experiment must end at or before3AD000; ferry must end at or before3AE000, where native2P owns the next slot. No old3AA000 ice-block overlap. Source-first review; no emitted candidate yet.",
+      "lifetime": "Code and two unbound native50-byte ($32 hexadecimal) caches. Opening/experiment must end at or before3AD000; ferry must end at or before3AE000, where native2P owns the next slot. No old3AA000 ice-block overlap. Source-first review; no emitted candidate yet.",
       "reset": "No runtime ROM writes. Bind only after selected full-boat/current landing approval.",
       "save": "No save format, entrance/exit ID, actor or sprite allocation. Uses existing synthetic cached-exit selector0151.",
       "provenance": [
@@ -2301,7 +2301,7 @@
       "condition": {
         "ENABLE_KALYXO_BOAT": 1
       },
-      "lifetime": "Dedicated tail of existing Core/symbols block after SongTintContext; no alias with Arrival/BossKit/BossDirector state. Claimed only with ferry feature enabled.",
+      "lifetime": "Separate conditional19-byte block immediately after the fixed91-byte Core/symbols block ending at SongTintContext; no alias with Arrival/BossKit/BossDirector state. Claimed only with ferry feature enabled.",
       "reset": "Boat_ResetSession clears marker on Module05 file-load/Continue; Boat_Clear on completion/cancellation/stale scene. Other bytes read only after a successful boarding initializes them.",
       "save": "Volatile; no SRAM field. Native Save policy is unchanged.",
       "provenance": [
@@ -2313,7 +2313,12 @@
         "Boat_Marker:",
         "Boat_TransientEnd:"
       ],
-      "aliases": []
+      "aliases": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "Boat_Marker",
+        "base_block": true
+      }
     }
   ],
   "lifetime_aliases": [],

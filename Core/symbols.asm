@@ -41,8 +41,15 @@ BossReinject:             skip 1  ; $7E1EA7 fairy revive in room $00: bosses re-
 FinaleBeat:               skip 1  ; $7E1EA8 0 Kydreeok not dead yet, N>1 placeholder beat counting down, 1 Ganondorf may spawn
 WallSel_Buffer:           skip 32 ; $7E1EA9-$7E1EC8 Dungeons/wall_profile_selector.asm span window (read via $01:1EA9 mirror)
 SongTintContext:          skip 2  ; $7E1EC9 $1B and area ($8A) or room ($A0) the tint started in
+assert pc() <= $7E1F00, "Core/symbols.asm WRAM block overflows free RAM $7E1E70-$7E1EFF"
+}
+base off
+
+; Separate conditional owner; keep the legacy91-byte block invariant.
 if !ENABLE_KALYXO_BOAT == 1
 !Boat_Magic = $B04F
+base $7E1ECB
+{
 Boat_Marker:             skip 2 ; 7E1ECB; owned only by ferry module0C
 Boat_State:              skip 1
 Boat_Endpoint:           skip 1 ; endpoint word-table offset0 or2
@@ -55,12 +62,12 @@ Boat_PlankIndex:         skip 2
 Boat_PlankTile:          skip 2
 Boat_LoadTries:          skip 2
 Boat_Face:               skip 1
-Boat_TransientEnd:
+Boat_TransientEnd:       skip 0
 assert Boat_Marker == $7E1ECB && Boat_TransientEnd == $7E1EDE
-endif
-assert pc() <= $7E1F00, "Core/symbols.asm WRAM block overflows free RAM $7E1E70-$7E1EFF"
+assert pc() <= $7E1F00, "Ferry transient state exceeds its bounded WRAM tail"
 }
 base off
+endif
 
 ; Explicit bounded aliases for the reserved palette history; no consumer yet.
 SpecialOverworldPaletteHoleCache = $7E1E8C
