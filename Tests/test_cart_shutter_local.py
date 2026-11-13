@@ -35,6 +35,21 @@ def program(lines):
     return base.parse(lines)
 
 
+def default_off_chu_dispatch(lines):
+    """Project this cart fixture onto ENABLE_D6_CHU_GATE_97=0 only.
+
+    Enabled Chu behavior has its compiled CPU fixture. Reject any new or
+    nested condition here instead of silently removing arbitrary directives.
+    """
+    directives = [(i, line) for i, line in enumerate(lines)
+                  if line.split()[0] in ("if", "elseif", "else", "endif")]
+    assert [line for _, line in directives] == [
+        "if !ENABLE_D6_CHU_GATE_97 == 1", "else", "endif"
+    ], "Unexpected conditional in the default-off AF dispatcher fixture"
+    start, alternate, end = [i for i, _ in directives]
+    return lines[:start] + lines[alternate + 1:end] + lines[end + 1:]
+
+
 def with_hold(name):
     lines = body(SOURCE, name) + [".hold_predicate"] + body(SOURCE, "CartShutter97_Hold")
     return program([line.replace("JSR.w CartShutter97_Hold", "JSR.w .hold_predicate") for line in lines])
@@ -300,7 +315,8 @@ class LocalCartShutter(unittest.TestCase):
         # Check the actual loaded-room dispatch before executing the ordinary
         # shutter slice. Adapt its long predicate call to this model's existing
         # local-call stack; this remains source-model, not CPU/ABI proof.
-        dispatch = body(ROOT / "Dungeons/d9_key_gate.asm", "D9Actor_PrepDispatch")
+        dispatch = default_off_chu_dispatch(
+            body(ROOT / "Dungeons/d9_key_gate.asm", "D9Actor_PrepDispatch"))
         dispatch = [line.replace("JSL D6ChuActor_IsLoadedRoom", "JSR .loaded_room")
                     for line in dispatch]
         predicate = body(ROOT / "Dungeons/d6_cart_circuit.asm", "D6ChuActor_IsLoadedRoom")
@@ -325,6 +341,17 @@ class LocalCartShutter(unittest.TestCase):
             self.assertEqual(machine.run(code, labels), "$01CC5A")
             self.assertEqual(machine.writes, writes)
             self.assertEqual(machine.y, group)
+
+    def test_cart_fixture_rejects_unknown_or_nested_dispatch_conditions(self):
+        lines = body(ROOT / "Dungeons/d9_key_gate.asm", "D9Actor_PrepDispatch")
+        for changed in (
+                [line.replace("!ENABLE_D6_CHU_GATE_97", "!UNKNOWN_FEATURE") for line in lines],
+                [line.replace("== 1", "== 0") for line in lines],
+                ["if !ENABLE_D6_CHU_GATE_97 == 1"] + lines + ["endif"],
+                [line for line in lines if line != "else"]):
+            with self.subTest(directives=changed):
+                with self.assertRaisesRegex(AssertionError, "Unexpected conditional"):
+                    default_off_chu_dispatch(changed)
 
     def test_new_code_stays_inside_existing_default_off_guard(self):
         text = SOURCE.read_text()
