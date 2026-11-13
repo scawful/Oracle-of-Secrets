@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TARGET = 0x1234
 STATE = 0x1CEB
 LEARNED = 0x7EF3B2
+SWORD = 0x7EF359
 
 
 class TextFixture(Fixture):
@@ -60,6 +61,7 @@ def assemble(directory, base, source, enabled=True, binding=TARGET):
     asm.write_text('lorom\n!ENABLE_SPECIAL_OVERWORLD_SOARING = %d\n'
                    '!SKY_SOARING_WATCH_LOG_MESSAGE = $%04X\n'
                    'SkySoaringLearned = $7EF3B2\n!SKY_SOARING_LEARNED = $A5\n'
+                   'Sword = $7EF359\n'
                    'org $2B9000\nif !ENABLE_SPECIAL_OVERWORLD_SOARING == 1\n'
                    'incsrc "%s"\nendif\n' %
                    (enabled, binding, source.as_posix()))
@@ -119,7 +121,8 @@ def main():
             f.cpu.a, f.cpu.x, f.cpu.y = 0xAB37, 0x56, 0x78
             f.cpu.c = f.cpu.v = True
             for address, value in ((0x10, 0x0E), (0x11, 2), (0x010C, 0x0B),
-                                   (0x1B, 0), (LEARNED, 0), (STATE, 0xFF)):
+                                   (0x1B, 0), (LEARNED, 0), (STATE, 0xFF),
+                                   (SWORD, 4)):
                 f.put(address, value)
             f.word(0x1CF0, message)
             return f
@@ -156,6 +159,39 @@ def main():
             f = fresh(); f.put(address, value); initialize(f)
             assert f.get(STATE) == 0
             cases.append('initialize-context-%04x' % address); f.close()
+
+        # Oracle's pedestal sword is exactly L4; lower and unknown values
+        # cannot capture a conversation, even if upgraded before its close.
+        for sword in (0, 1, 2, 3, 4, 5, 0xFF):
+            f, control = fresh(), fresh(synthetic)
+            for q in (f, control):
+                q.put(SWORD, sword)
+                run_to(q, 0x0EC491, 0x0EC4A9)
+            assert cpu_state(f) == cpu_state(control), ('sword capture ABI', sword)
+            assert f.get(STATE) == int(sword == 4), ('sword capture', sword)
+            f.cpu.mf = f.cpu.xf = True
+            f.put(SWORD, 4)
+            acknowledge(f); finalize(f)
+            assert f.get(LEARNED) == (0xA5 if sword == 4 else 0)
+            cases.append('capture-sword-%02x-then-L4-close' % sword)
+            f.close(); control.close()
+
+        # A valid original read must still satisfy progression at final grant.
+        for sword in (0, 1, 2, 3, 5, 0xFF):
+            f, control = fresh(), fresh(synthetic)
+            for q in (f, control):
+                initialize(q); acknowledge(q)
+            assert f.get(STATE) == 2
+            for q in (f, control):
+                q.put(STATE, 2); q.put(SWORD, sword)
+            f.writes.clear()
+            run_to(f, 0x0ECA61, 0x0ECA6B)
+            run_to(control, 0x0ECA61, 0x0ECA6B)
+            assert cpu_state(f) == cpu_state(control), ('sword grant ABI', sword)
+            assert f.get(STATE) == 0 and f.get(LEARNED) == 0
+            assert not [w for w in f.writes if w[0] == LEARNED]
+            cases.append('close-required-sword-lost-%02x' % sword)
+            f.close(); control.close()
 
         for previous, pad, helper in ((0, 4, 10), (1, 8, 9)):
             f = fresh(); initialize(f)

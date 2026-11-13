@@ -44,6 +44,8 @@ SkyWatchLog_Initialize:
   LDA.b $11 : CMP.b #$02 : BNE .done
   LDA.b $1B : BNE .done
   LDA.w $010C : CMP.b #$0B : BNE .done
+  ; Oracle's pedestal grants L4; Story_MasterSword only means Elder met.
+  LDA.l Sword : CMP.b #$04 : BNE .done
   REP #$20
   LDA.w $1CF0 : CMP.w #!SKY_SOARING_WATCH_LOG_MESSAGE : BNE .done
   SEP #$20
@@ -81,6 +83,7 @@ SkyWatchLog_Finalize:
   LDA.b $11 : CMP.b #$02 : BNE .done
   LDA.b $1B : BNE .done
   LDA.w $010C : CMP.b #$0B : BNE .done
+  LDA.l Sword : CMP.b #$04 : BNE .done
   LDA.l SkySoaringLearned : CMP.b #!SKY_SOARING_LEARNED : BEQ .done
   LDA.b #!SKY_SOARING_LEARNED : STA.l SkySoaringLearned
   .done

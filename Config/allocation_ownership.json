@@ -285,7 +285,7 @@
     "shared:Items/sky_watch_log.asm": {
       "source_set": "shared",
       "path": "Items/sky_watch_log.asm",
-      "sha256": "8e03ea2fcecf01408e834bfc3c3971fae4697cba18889f69a8d259f244ebb62e"
+      "sha256": "029d77bbd049212b7e1c73ccb401f7a29cc3df39a94315a046c8bb297e319211"
     }
   },
   "claims": [
