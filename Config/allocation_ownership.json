@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "057ba7352a01ffa6e7aa2619b59fe39ca407d37f04f65e439b18bf09c97ffe80"
+      "sha256": "48c55b4332f150bcba7c4e15e8eb2ed4d2b68f6cb2e7127513fbb4f8d398ddf1"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "e61f05a370652f171f46eb8df781c96b32b7fcaea3af3ddbdc4d2d25a90a5a52"
+      "sha256": "dda9a12b58ba4987c0650f24d64c3c87d3aac033d56f4c8b1621278a046d7a80"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -286,6 +286,11 @@
       "source_set": "shared",
       "path": "Items/sky_watch_log.asm",
       "sha256": "029d77bbd049212b7e1c73ccb401f7a29cc3df39a94315a046c8bb297e319211"
+    },
+    "shared:Dungeons/d6_chu_gate_97.asm": {
+      "source_set": "shared",
+      "path": "Dungeons/d6_chu_gate_97.asm",
+      "sha256": "183a0b3a7c15f69353c9a07131597d104f945698c22e834ba14b04ed54167b69"
     }
   },
   "claims": [
@@ -2216,6 +2221,30 @@
         "symbol": "SkyWatchLog_State",
         "bank00_mirror": false
       }
+    },
+    {
+      "id": "d6_chu_gate_97_room_state",
+      "owner": "Optional room97 Bombchu earned bit1000 in the existing native room-state word; other bits retain native owners",
+      "space": "save_buffer",
+      "base": 8319278,
+      "size": 2,
+      "status": "shared",
+      "condition": {
+        "ENABLE_D6_CHU_GATE_97": 1
+      },
+      "lifetime": "Saved room97 state. Only bit1000 is used; conditional on the exact two-door stream 0063,3660,FFFF (door index3 absent), tag1=39/tag2=00 and exact AF target. Runtime mirror is native $0400; shutter live mask is $068C bit4000, not4040.",
+      "reset": "Native new-file initialization; native room load restores high door bits. No new state field or migration. Source refuses a changed door composition. Feature defaults off and current authoring room remains unbound.",
+      "save": "OR1000 preserves all other $7EF12E bits. Native $02B947 saves high $0400 bits and native $01B6D1 restores them; compiled CPU proof preserves chest and low flags. Actual game Save/cold remains an activation gate.",
+      "provenance": [
+        "shared:Dungeons/d6_chu_gate_97.asm",
+        "vanilla:bank_01.asm",
+        "vanilla:bank_02.asm"
+      ],
+      "anchors": [
+        "$7EF12E",
+        "#$1000"
+      ],
+      "aliases": []
     }
   ],
   "lifetime_aliases": [],

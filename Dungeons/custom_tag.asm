@@ -55,6 +55,12 @@ pullpc
 CustomTag:
 {
   PHX
+if !ENABLE_D6_CHU_GATE_97 == 1
+  JSL D6ChuGate97_IsRoom : BCC .not_chu97
+    JSL D6ChuGate97_Main
+    BRA .game_has_begun
+  .not_chu97
+endif
   JSL D6CartCircuit_IsRoom : BCC .not_circuit
     JSR D6CartCircuit_Main
     BRA .game_has_begun
