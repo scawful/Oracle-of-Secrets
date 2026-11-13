@@ -2055,7 +2055,7 @@
       "condition": {
         "ENABLE_WALL_PROFILE_SELECTOR": 1
       },
-      "lifetime": "Generated 3bpp LC-LZ2 sheet streams ($458000-$45EFFF) written by Dungeons/Data/kits/kits.asm from Dungeons/Data/kits/*.kit.json; ends before ow_aux_extension_code ($45F000). The same file writes the private blockset rows $17-$1A and palettes $22/$24/$26 that no room header uses (asserted at build).",
+      "lifetime": "Generated 3bpp LC-LZ2 sheet streams ($458000-$45EFFF) written by Dungeons/Data/kits/kits.asm from Dungeons/Data/kits/*.kit.json; ends before ow_aux_extension_code ($45F000). The same file writes the private blockset rows $17-$1A and palettes $1A/$22/$24/$26 that no ordinary room header uses (input-ROM assertions and final compiled-ROM palette ownership check). Palette $1C is Sky-owned; $28 aliases the next vanilla table and is not a private palette.",
       "reset": "Build owns this slot; no runtime allocation or SRAM.",
       "save": "No saved data. Kit rows and palettes are selected per room at load by WallSel_HeaderGfx.",
       "provenance": [

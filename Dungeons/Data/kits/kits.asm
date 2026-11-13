@@ -28,13 +28,14 @@ assert read1($00DDF3) == $09 && read1($00DDF4) == $00 && read1($00DDF5) == $24 &
 assert read1($00DDF7) == $08 && read1($00DDF8) == $00 && read1($00DDF9) == $22 && read1($00DDFA) == $1B, "blockset row $18 is not the vanilla spare row"
 assert read1($00DDFB) == $09 && read1($00DDFC) == $00 && read1($00DDFD) == $25 && read1($00DDFE) == $1B, "blockset row $19 is not the vanilla spare row"
 assert read1($00DDFF) == $09 && read1($00DE00) == $00 && read1($00DE01) == $26 && read1($00DE02) == $1B, "blockset row $1A is not the vanilla spare row"
+assert read2($1BEC65) == $0924, "palette $1A offset moved"
 assert read2($1BEC6D) == $0BF4, "palette $22 offset moved"
 assert read2($1BEC6F) == $0CA8, "palette $24 offset moved"
 assert read2($1BEC71) == $0D5C, "palette $26 offset moved"
 !wsk_r = 0
 while !wsk_r < $128
   assert read1(($220000|read2($228000+(!wsk_r*2)))+2) < $17 || read1(($220000|read2($228000+(!wsk_r*2)))+2) > $1A, "a room header uses a private kit row"
-  assert read1($0ED460+(read1(($220000|read2($228000+(!wsk_r*2)))+1)*4)) != $22 && read1($0ED460+(read1(($220000|read2($228000+(!wsk_r*2)))+1)*4)) != $24 && read1($0ED460+(read1(($220000|read2($228000+(!wsk_r*2)))+1)*4)) != $26, "a room palette set uses a private kit palette"
+  assert read1($0ED460+(read1(($220000|read2($228000+(!wsk_r*2)))+1)*4)) != $1A && read1($0ED460+(read1(($220000|read2($228000+(!wsk_r*2)))+1)*4)) != $22 && read1($0ED460+(read1(($220000|read2($228000+(!wsk_r*2)))+1)*4)) != $24 && read1($0ED460+(read1(($220000|read2($228000+(!wsk_r*2)))+1)*4)) != $26, "a room palette set uses a private kit palette"
   !wsk_r #= !wsk_r+1
 endwhile
 

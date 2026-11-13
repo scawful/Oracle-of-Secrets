@@ -60,13 +60,14 @@ DOOR_OFFSETS = (0x00CD9E, 0x00CF44)  # DoorGFXDataOffset_* + DoorAnimGFXDataOffs
 FANCY_EXIT_BLOCK = (0x00C1A8, 80)  # obj2656: south fancy dungeon exit, 10 words x 8 rows
 OBJ_PTR_LOAD = 0x01874B  # LDA.l RoomData_ObjectDataPointers+0,X (operand = the table)
 
-# Private ids. Rows $17-$1A and palette ids $22-$26 are not used by any room
-# header (kits.asm asserts it on every build). Each row keeps its vanilla
-# bytes in the base ROM until a kit claims it.
+# Private ids. Rows $17-$1A and palette ids $1A/$22/$24/$26 are unused by
+# ordinary room headers. Verify both the editable input (kits.asm assertions)
+# and the compiled ROM (verify-rom), since source can replace palette sets.
+# $1C belongs to Sky; $28 is outside the UW offset table, not another palette.
 KIT_ROW0 = 0x17
 PRIVATE_ROWS = {0x17: (0x09, 0x00, 0x24, 0x1B), 0x18: (0x08, 0x00, 0x22, 0x1B),
                 0x19: (0x09, 0x00, 0x25, 0x1B), 0x1A: (0x09, 0x00, 0x26, 0x1B)}
-PRIVATE_PALETTES = {0x22: 0x0BF4, 0x24: 0x0CA8, 0x26: 0x0D5C}
+PRIVATE_PALETTES = {0x1A: 0x0924, 0x22: 0x0BF4, 0x24: 0x0CA8, 0x26: 0x0D5C}
 KIT_SHEETS = range(0xF3, 0xFF)          # spare global sheet rows (empty streams); $EA = Sky room sky, $EB-$F2 = Sky port
 KIT_SHEET_ORG, KIT_SHEET_END = 0x458000, 0x45F000
 VERDICTS = ("routed", "partial", "words_only", "in_base")
@@ -885,6 +886,53 @@ def cmd_build(a: argparse.Namespace) -> int:
     return 0
 
 
+def verify_palette_ownership(data: bytes) -> dict:
+    """Private palettes are selected by WallSel, never an ordinary header.
+
+    Read the final palette-set bytes, not just the input ROM: Sky's source
+    override is an example of why an unused input id need not remain unused.
+    """
+    index = snes_pc(PAL_INDEX)
+    headers = snes_pc(ROOM_HEADERS)
+    if len(data) < max(index + max(PRIVATE_PALETTES) + 2,
+                       headers + ROOM_COUNT * 2):
+        raise ValueError("ROM is too short for wall-kit palette ownership")
+    for pid, expected in PRIVATE_PALETTES.items():
+        if rom_word(data, index + pid) != expected:
+            raise ValueError(f"private palette ${pid:02X} offset moved")
+    for room in range(ROOM_COUNT):
+        pointer = rom_word(data, headers + room * 2)
+        if pointer < 0x8000:
+            raise ValueError(f"room ${room:03X} header is not mapped ROM")
+        header = snes_pc(0x220000 | pointer)
+        if header + 3 > len(data):
+            raise ValueError(f"room ${room:03X} header is outside ROM")
+        palette_set = data[header + 1]
+        address = snes_pc(PAL_SETS) + palette_set * 4
+        if address >= len(data):
+            raise ValueError(f"room ${room:03X} palette set is outside ROM")
+        pid = data[address]
+        if pid in PRIVATE_PALETTES:
+            raise ValueError(f"room ${room:03X} uses private kit palette "
+                             f"${pid:02X} through palette set ${palette_set:02X}")
+    return {"rooms_checked": ROOM_COUNT,
+            "private_palettes": [f"0x{p:02X}" for p in PRIVATE_PALETTES]}
+
+
+def cmd_verify_rom(a: argparse.Namespace) -> int:
+    from asm_source import _load_global_defines
+    if not _load_global_defines(REPO).get("ENABLE_WALL_PROFILE_SELECTOR", 0):
+        print("Wall-profile selector is disabled; private palettes are inactive")
+        return 0
+    try:
+        facts = verify_palette_ownership(Path(a.rom).read_bytes())
+    except (OSError, ValueError) as error:
+        print(f"Wall-kit palette ownership: {error}", file=sys.stderr)
+        return 1
+    print(json.dumps(facts, sort_keys=True))
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -919,6 +967,9 @@ def main() -> int:
     bd = sub.add_parser("build", help="emit wall_profiles.asm, kits.asm and kit streams")
     bd.add_argument("--check", action="store_true", help="fail if any output is stale")
     bd.set_defaults(fn=cmd_build)
+    vr = sub.add_parser("verify-rom", help="reject compiled room consumers of private palettes")
+    vr.add_argument("--rom", required=True, help="compiled ROM (read only)")
+    vr.set_defaults(fn=cmd_verify_rom)
     a = ap.parse_args()
     return a.fn(a)
 

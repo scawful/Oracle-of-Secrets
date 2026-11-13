@@ -33,7 +33,7 @@ class BuildPipelineReceiptTest(unittest.TestCase):
                      'verify_feature_flags.py', 'set_feature_flags.py', 'lyra_native_loaders.py',
                      'native_overworld_authoring_metadata.py'):
             self.copy(f'Scripts/Build/{name}')
-        for name in ('generate_hooks_json.py', 'asm_source.py'):
+        for name in ('generate_hooks_json.py', 'asm_source.py', 'gen_wall_profiles.py'):
             self.copy(f'Scripts/Generate/{name}')
         self.copy('Scripts/Validate/verify_hooks_json.py')
         self.write('Util/macros.asm', '!ENABLE_FIXTURE = 1\n')
@@ -104,6 +104,8 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.assertTrue(self.check('menu_icon_sheets')['required'])
         self.assertEqual(self.check('native_overworld_constants')['status'], 'passed')
         self.assertEqual(self.check('native_overworld_preservation')['status'], 'passed')
+        self.assertEqual(self.check('wall_kit_palette_ownership')['status'], 'passed')
+        self.assertTrue(self.check('wall_kit_palette_ownership')['required'])
         self.assertEqual(self.receipt['state'], 'completed_with_gaps')
         self.assertEqual(self.check('smoke')['status'], 'unavailable')
         hooks = json.loads((self.root / 'Roms/hooks.json').read_text())
@@ -340,6 +342,17 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.assertEqual((self.root / 'Config/feature_flags.asm').read_bytes(), before)
         flags = self.receipt['snapshots']['pre_assembly']['profile']['effective_flags']
         self.assertEqual(flags['ENABLE_FIXTURE'], 0)
+
+    def test_private_palette_consumer_failure_rolls_back_output(self):
+        output = self.write('Roms/oos999x.sfc', 'previous candidate')
+        self.write('Scripts/Generate/gen_wall_profiles.py',
+                   'import sys\nprint("room $00C uses private kit palette $1A")\nsys.exit(23)\n')
+        self.assertEqual(self.build().returncode, 23, self.result.stderr)
+        check = self.check('wall_kit_palette_ownership')
+        self.assertTrue(check['required'])
+        self.assertEqual(check['status'], 'failed')
+        self.assertEqual(output.read_text(), 'previous candidate')
+        self.assertEqual(self.check('output_rollback')['status'], 'passed')
 
     def test_generated_native_constants_restore_after_failed_assembly(self):
         path = self.root / '.cache/special_overworld_reader_constants.asm'

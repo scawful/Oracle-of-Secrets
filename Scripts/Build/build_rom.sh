@@ -490,6 +490,11 @@ run_check native_overworld_preservation 1 python3 "$repo_root/Scripts/Build/lyra
   --rom "$base_rom" --compiled "$patched_rom" \
   --symbols "$symbols_path" "${native_build_args[@]}"
 
+# Source patches can change palette-set consumers after kits.asm's input-ROM
+# assertions. Verify the final ROM before publishing its artifacts/manifest.
+run_check wall_kit_palette_ownership 1 python3 "$repo_root/Scripts/Generate/gen_wall_profiles.py" \
+  verify-rom --rom "$patched_rom"
+
 receipt artifact --name output_rom --path "$patched_rom"
 if [[ "$emit_symbols" == "1" ]]; then
   receipt artifact --name symbols --path "$symbols_path"
