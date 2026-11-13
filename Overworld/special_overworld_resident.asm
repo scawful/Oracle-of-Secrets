@@ -281,6 +281,38 @@ Lyra_ResidentPageLookup:
     CLC : RTS
 Lyra_ResidentLookup_End:
 
+; Item query adapter. M16/X16; X=validated even terrain byte offset (<$2000),
+; Y=validated Tile16*8+quarter*2 (<$8000). A returns the same word
+; as the mutable renderer, Y its physical page (or $FFFF for native terrain),
+; C=an explicit resident row supplied the word. C clear still returns the
+; native fallback word: consumers creating new terrain may require a row.
+; Preserve X, D, DBR and P except C/N/Z; no caller scratch survives changed.
+; The caller owns bounds validation, just as the mutable renderer does.
+Lyra_ResidentReadTerrainWord:
+    PHP : PHD : PEA.w $0000 : PLD : CLD
+    PHY : PHX
+    LDA.w #$0000 : PHA                 ; explicit-row result
+    TYX : LDA.l !LYRA_CURRENT_MAP16_DEFINITIONS, X : PHA
+    LDA $05,S                         ; terrain offset
+    JSR Lyra_ResidentLookup
+    BCC .fallback
+    STA $01,S
+    LDA.w #$0001 : STA $03,S
+.fallback:
+    LDA $05,S : JSR Lyra_ResidentPhysicalPage
+    BCS .page
+    LDA.w #$FFFF
+.page:
+    TAY
+    PLA : STA $05,S                   ; replace saved input Y with output word
+    PLA : BEQ .native
+    PLX : PLA : PLD : PLP
+    SEC : RTL
+.native:
+    PLX : PLA : PLD : PLP
+    CLC : RTL
+Lyra_ResidentReadTerrainWord_End:
+
 Lyra_ResidentQuadrantMasks:
     dw $0000, $0009, $0001, $0008 ; small, large, wide, tall
 Lyra_ResidentHorizontalOffsets:
