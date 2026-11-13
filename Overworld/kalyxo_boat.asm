@@ -40,6 +40,7 @@ else
   ; interrupted the scene. No global freeze/input/visibility lock is owned.
   REP #$20
   LDA.l Boat_Marker : CMP.w #!Boat_Magic : BNE .no_stale_scene
+    JSR Boat_RecoverInterrupted
     JSR Boat_Clear
   .no_stale_scene
   SEP #$20
@@ -289,6 +290,88 @@ Boat_RestorePlank:
   SEP #$30
   INC.b $14
   .done
+  RTS
+}
+
+; Only recover a closed plank still owned by this source scene. A native
+; reload/transition may have replaced the resident buffer; never trust the
+; saved byte index alone. Entry is before TryBoard initializes endpoint Y.
+Boat_RecoverInterrupted:
+{
+  PHP : REP #$30
+  JSR Boat_CanRecoverPlank : BCC .done
+    JSR Boat_RestorePlank
+  .done
+  PLP : RTS
+}
+
+; M16/X16; clobbers A/X/$00/$02/$06, returns carry only. State2 is the
+; closed-plank departure phase, before destination loading owns the buffer.
+Boat_CanRecoverPlank:
+{
+  LDA.l Boat_PlankChanged : AND.w #$00FF : CMP.w #$0001 : BEQ .closed
+    CLC : RTS
+  .closed
+  LDA.l Boat_State : AND.w #$00FF : CMP.w #$0002 : BEQ .before_load
+    CLC : RTS
+  .before_load
+  LDA.b $1B : AND.w #$00FF : BEQ .outdoor
+    CLC : RTS
+  .outdoor
+  LDA.l SavedWorld : AND.w #$00FF : BEQ .light_world
+    CLC : RTS
+  .light_world
+  LDA.l Boat_SourceModule : AND.w #$00FF : STA.b $02
+  LDA.b $10 : AND.w #$00FF : CMP.b $02 : BEQ .same_module
+    CLC : RTS
+  .same_module
+  CMP.w #$0009 : BEQ .play_module
+  CMP.w #$000B : BEQ .play_module
+    CLC : RTS
+  .play_module
+  LDA.l Boat_Endpoint : AND.w #$00FF : CMP.w #$0004 : BCC .endpoint_range
+    CLC : RTS
+  .endpoint_range
+  BIT.w #$0001 : BEQ .endpoint_aligned
+    CLC : RTS
+  .endpoint_aligned
+  TAX
+  LDA.l Boat_PlankTile : CMP.l Boat_OpenTiles, X : BEQ .captured_open
+    CLC : RTS
+  .captured_open
+  LDA.l Boat_ClosedTiles, X : STA.b $00
+  LDA.l Boat_CacheOffsets, X : TAX
+  LDA.l Boat_Caches, X : AND.w #$00FF
+  STA.b $02
+  LDA.b $8A : AND.w #$00FF : CMP.b $02 : BEQ .same_area
+    CLC : RTS
+  .same_area
+  JSR Boat_RecoveryIndex
+  CMP.l Boat_PlankIndex : BEQ .same_index
+    CLC : RTS
+  .same_index
+  CMP.w #$2000 : BCC .index_range
+    CLC : RTS
+  .index_range
+  BIT.w #$0001 : BEQ .index_aligned
+    CLC : RTS
+  .index_aligned
+  TAX
+  LDA.l $7E2000, X : CMP.b $00 : BEQ .owned_closed_preimage
+    CLC : RTS
+  .owned_closed_preimage
+  SEC : RTS
+}
+
+; Resolve the selected source anchor through the CURRENT native resident
+; transform. A shifted/reloaded layout must not receive the captured index.
+; X=source cache offset0/$32. Return current byte index in A; X unchanged.
+Boat_RecoveryIndex:
+{
+  LDA.l Boat_Caches+8, X : CLC : ADC.w #12 : SEC : SBC.w $0708
+  AND.w $070A : ASL #3 : STA.b $06
+  LDA.l Boat_Caches+10, X : CLC : ADC.w #8 : LSR #3
+  SEC : SBC.w $070C : AND.w $070E : CLC : ADC.b $06
   RTS
 }
 

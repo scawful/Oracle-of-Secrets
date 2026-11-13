@@ -295,7 +295,7 @@
     "shared:Overworld/kalyxo_boat.asm": {
       "source_set": "shared",
       "path": "Overworld/kalyxo_boat.asm",
-      "sha256": "3e6bf01b292fab0480bb7d091521b7709e0a0d994d0b43c871904b161859aeb2"
+      "sha256": "3813ecc53f5a6f5bc36cab5b8c6cfd2b98a7b32449e8739fcb14ab03e1c0dbd0"
     },
     "shared:Data/overworld/kalyxo_boat_placements.asm": {
       "source_set": "shared",

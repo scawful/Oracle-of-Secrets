@@ -93,6 +93,9 @@ class Machine(base.Machine):
             elif op == "TXA":
                 self.a = self.x if self.m16() else (self.a & 0xFF00) | (self.x & 255)
                 self.flags_nz(self.a & (65535 if self.m16() else 255), self.m16())
+            elif op == "TAX":
+                self.x = self.a & (65535 if self.x16() else 255)
+                self.flags_nz(self.x, self.x16())
             elif op == "XBA":
                 self.a = ((self.a << 8) | (self.a >> 8)) & 0xFFFF
                 self.flags_nz(self.a & 0xFF, False)
