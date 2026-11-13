@@ -6416,10 +6416,25 @@ Sprite_LoadGfxProperties_Interupt:
         STA.l ExpandedSpritePalArray, X
     DEX : DEX : BPL .loop
 
-    ; Replaced code.
+    ; Native00FC67 enters M16/X16;00FC6E consumes A as its LW resource phase.
+    ; Match actor selection, including pre-ambush and peacetime guards. Save
+    ; full indices before SEP truncates them; CheckIfNight requires DP0 and
+    ; does not preserve P. Keep hidden B out of the returned 16-bit selector.
+    PHP : PHB : PHD : PHX : PHY
+    PEA.w $0000 : PLD
+    SEP #$30
+    JSL Oracle_CheckIfNight
+    REP #$30
+    AND.w #$00FF
+if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
+    ; GS3Cap00FC79 compares4 rather than3; resolved phase3 still means night.
+    ; CheckIfNight already caps the rescued-Farore daytime state to2.
+    CMP.w #$0003 : BNE .resource_phase_ready
+    LDA.w #$0004
+.resource_phase_ready
+endif
+    PLY : PLX : PLD : PLB : PLP
     LDY.w #$003E
-    LDA.l $7EF3C5
-
     RTL
 }
 
