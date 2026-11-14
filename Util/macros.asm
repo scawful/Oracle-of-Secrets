@@ -101,6 +101,8 @@ endif
 ; (as Y items, $0202) and equips/unequips rings; X opens the Journal. Masks
 ; leave the item grid. Needs !ENABLE_RING_SRAM_RELOCATE = 1.
 !ENABLE_MENU_PAGE3                   = 1
+; Unhooked dual-item prototype; no production migration or X-map takeover.
+!ENABLE_DUAL_ITEM_BINDING_PROTOTYPE   = 0
 ; Part 0 storm: rain overlay, rain sound and dim world map follow the saved
 ; storm bit (StoryProgress2 bit 7), set at wake-up, cleared when Link is back
 ; on Kalyxo after the Abyss; no rain in the Abyss (Overworld/storm.asm).

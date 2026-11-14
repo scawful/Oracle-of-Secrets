@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "b2f0461a7f02373fca4cbde5551c0b3d468b53f7328faa413e46d79fcaf62d2a"
+      "sha256": "d05065dda0887b2abbd776ea5e324a3cf5719d48c87e0c9eb42bbafda36ab84f"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "315e5865f8026bd84032f040bd1459c413a51958d8d38d08b3b3c718b25ed472"
+      "sha256": "a594aa9e30e28652bd63754fba9cd125e35c374c9cc1bcdc81d1079298a23a05"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",

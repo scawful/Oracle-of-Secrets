@@ -31,7 +31,12 @@ def assemble(folder, adapter, enabled=True):
     (folder/'item_bindings.asm').write_bytes((ROOT/'Items/item_bindings.asm').read_bytes())
     (folder/'adapter.asm').write_text(adapter)
     definitions = '\n'.join(f'ItemBinding{k} = ${v:06X}' for k,v in core.ADDR.items())
-    flag = '!ENABLE_DUAL_ITEM_BINDING_PROTOTYPE = 1\n' if enabled else ''
+    default = re.findall(r'^!ENABLE_DUAL_ITEM_BINDING_PROTOTYPE\s*=\s*(\d+)\b',
+                         (ROOT/'Util/macros.asm').read_text(),re.M)
+    override = re.findall(r'^!ENABLE_DUAL_ITEM_BINDING_PROTOTYPE\s*=\s*(\d+)\b',
+                          (ROOT/'Config/feature_flags.asm').read_text(),re.M)
+    assert default == override == ['0'], 'Prototype default/override must stay off'
+    flag = '!ENABLE_DUAL_ITEM_BINDING_PROTOTYPE = '+('1' if enabled else default[0])+'\n'
     asm = folder/'fixture.asm'
     asm.write_text('lorom\n'+flag+definitions+'\norg $208000\nnamespace Oracle\n'
                    'FixtureStart:\nincsrc "adapter.asm"\nnamespace off\n')

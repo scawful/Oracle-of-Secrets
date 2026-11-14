@@ -1,9 +1,7 @@
 ; Disabled, unhooked prototype adapter. Root memory grant 2026-11-14.
 ; No ORG or production incsrc: code placement and live load/dispatch joins are
 ; separate work. Merely compiling this include never takes X from the map.
-if not(defined("ENABLE_DUAL_ITEM_BINDING_PROTOTYPE"))
-  !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE = 0
-endif
+assert defined("ENABLE_DUAL_ITEM_BINDING_PROTOTYPE"), "Use canonical feature defaults"
 
 if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
 assert ItemBindingSavedVersion == $7EF3B9
