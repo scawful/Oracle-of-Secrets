@@ -15,6 +15,7 @@ Overworld_CheckForSpecialOverworldTrigger:
   JSR GetMap16Tile
 
 if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+  #Lyra_SemanticSpecialEntrySite0:
   JSL Lyra_SemanticEntrance0
 else
   LDA.l Map16Definitions,X
@@ -175,6 +176,7 @@ SpecialOverworld_CheckForReturnTrigger:
   JSR GetMap16Tile
 
 if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+  #Lyra_SemanticSpecialReturnSite0:
   JSL Lyra_SemanticEntrance0
 else
   LDA.l Map16Definitions,X

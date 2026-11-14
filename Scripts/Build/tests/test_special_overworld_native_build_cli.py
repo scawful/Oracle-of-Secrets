@@ -1,6 +1,7 @@
 """Managed compiler adapter controls; production byte formats are reused."""
 import copy
 import importlib.util
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -94,6 +95,11 @@ class NativeBuildCliTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'does not match'):
             C._graphics_root(project, exported)
 
+    def test_legacy_generated_constants_remain_byte_identical(self):
+        prepared = C._preparation(self.fixture.source, self.fixture.exported)
+        raw = C._constants(self.fixture.source, prepared).encode()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), '7dbad2f781620419a43a09e97518014b643af4f356e161c1f46d8e8c5b938fca')
+
     def test_stale_export_keeps_previous_generated_constants(self):
         self.cache.mkdir()
         self.args.constants.write_text('previous constants')
@@ -147,6 +153,88 @@ class NativeBuildCliTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(source.read_bytes(), b'ordinary160 fixture source')
         self.assertEqual(self.args.constants.read_text(), 'previous reader constants')
+
+
+class ExperimentalNativeBuildCliTest(unittest.TestCase):
+    # Reuse the lifecycle fixture without rerunning every legacy test here.
+    def setUp(self):
+        NativeBuildCliTest.setUp(self)
+        self.semantic = F.ManagedSemanticSealTest()
+        self.semantic.setUp()
+        self.fixture.source, self.fixture.exported = self.semantic.source, self.semantic.exported
+        self.rom.write_bytes(self.fixture.source)
+        self.project = self.root / 'experimental project.yaze'
+        self.project.write_text('[files]\ncode_folder=.\n')
+        self.args.project_context = self.project
+        self.args.experimental_page_tile16 = True
+
+    def test_real_experimental_export_flag_and_authenticated_constants(self):
+        command = self.root / 'experimental z3ed'
+        export = self.root / 'experimental.json'
+        export.write_text(json.dumps(self.fixture.exported))
+        command.write_text(f'#!{sys.executable}\nimport sys\n'
+            f'assert sys.argv[1:] == ["overworld-export-native-source", "--rom", {str(self.rom.resolve())!r}, '
+            f'"--format", "json", "--project-context", {str(self.project.resolve())!r}, '
+            f'"--experimental-page-tile16"]\nprint(open({str(export)!r}).read())\n')
+        command.chmod(0o755)
+        result = subprocess.run([sys.executable, str(Path(C.native.__file__)), '--rom', str(self.rom),
+            '--constants', str(self.args.constants), '--build-cache', str(self.cache),
+            '--project-context', str(self.project), '--z3ed', str(command),
+            '--experimental-page-tile16'], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        text = self.args.constants.read_text()
+        self.assertIn('!SPECIAL_OVERWORLD_SEMANTIC_ROWS = $519000', text)
+        self.assertTrue(text.endswith('!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = 1\n'))
+        self.assertEqual(self.rom.read_bytes(), self.fixture.source)
+
+    def test_three_stage_transaction_uses_semantic_final_seal(self):
+        with mock.patch.object(C, '_export_source', return_value=self.fixture.exported):
+            self.assertEqual(C.run_native_build_stage(self.args, self.fixture.source), 0)
+        compiled, symbols = self.semantic.compiled_semantic_fixture()
+        self.args.constants = None
+        self.args.seal_compiled = self.root / 'compiled.sfc'
+        self.args.seal_compiled.write_bytes(compiled)
+        with mock.patch.object(C, '_symbols', return_value=symbols):
+            self.assertEqual(C.run_native_build_stage(self.args, self.fixture.source), 0)
+            self.args.compiled, self.args.seal_compiled = self.args.seal_compiled, None
+            self.assertEqual(C.run_native_build_stage(self.args, self.fixture.source), 0)
+            altered = bytearray(compiled); altered[C.native.pc(0x008864)] = 0xBF
+            self.args.compiled.write_bytes(altered)
+            self.assertEqual(C.run_native_build_stage(self.args, self.fixture.source), 1)
+        self.assertEqual(self.rom.read_bytes(), self.fixture.source)
+
+    def test_missing_optin_context_stale_export_or_occupied_code_never_replace_cache(self):
+        self.cache.mkdir(); self.args.constants.write_text('previous constants')
+        for opted, context in ((False, self.project), (True, None)):
+            self.args.experimental_page_tile16, self.args.project_context = opted, context
+            with mock.patch.object(C, '_export_source', return_value=self.fixture.exported):
+                self.assertEqual(C.run_native_build_stage(self.args, self.fixture.source), 1)
+        self.args.experimental_page_tile16, self.args.project_context = True, self.project
+        occupied = bytearray(self.fixture.source); occupied[C.native.pc(C.native.SEMANTIC_CODE_BASE)] = 0xA5
+        # Bind refuses an occupied code preimage before replacing generated constants.
+        prep = C._preparation(self.fixture.source, self.fixture.exported, experimental_page_tile16=True)
+        with self.assertRaisesRegex(ValueError, 'preimage changed'):
+            C._constants(bytes(occupied), prep, experimental_page_tile16=True)
+        stale = copy.deepcopy(self.fixture.exported)
+        stale['native_source']['source_rom_sha256'] = '0' * 64
+        stale = self.semantic.fixture.fixture.fixture.seal(stale['native_source'])
+        with mock.patch.object(C, '_export_source', return_value=stale):
+            self.assertEqual(C.run_native_build_stage(self.args, self.fixture.source), 1)
+        self.assertEqual(self.args.constants.read_text(), 'previous constants')
+
+    def test_real_cli_refuses_optin_without_cache_or_context_or_on_revision4(self):
+        base = [sys.executable, str(Path(C.native.__file__)), '--rom', str(self.rom),
+                '--constants', str(self.args.constants), '--experimental-page-tile16']
+        for more in ([], ['--build-cache', str(self.cache)]):
+            result = subprocess.run(base + more, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('managed cache and project context', result.stderr)
+        self.rom.write_bytes(self.semantic.fixture.legacy.fixture.source)
+        result = subprocess.run(base + ['--build-cache', str(self.cache),
+            '--project-context', str(self.project)], capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('requires revision5 source', result.stderr)
+        self.assertFalse(self.args.constants.exists())
 
 
 if __name__ == '__main__':

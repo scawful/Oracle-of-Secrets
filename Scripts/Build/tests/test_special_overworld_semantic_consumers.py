@@ -119,6 +119,22 @@ AfterDraw:
   ram=self.ram(mapid=area);word(ram,0x40A,area);word(ram,0x20,0xFFF9 if seam else 0xD9);word(ram,0x22,0x1F0 if seam else 0xF0)
   word(ram,0x2000+raw,7);word(ram,0x2002+raw,7 if seam else 8)
   return a,ram
+ def test_entrance_seal_labels_name_exact_eight_jsl_sites(self):
+  a=self.build([T.row(0x84,7,(1,2,3,4))],entrances=True)
+  sites={'Lyra_SemanticEntranceSite2':'Lyra_SemanticEntrance2',
+         'Lyra_SemanticNeighborSite0':'Lyra_SemanticNeighbor0',
+         'Lyra_SemanticCastleSite4':'Lyra_SemanticEntrance4',
+         'Lyra_SemanticCastleSite6':'Lyra_SemanticEntrance6',
+         'Lyra_SemanticNeighborSite4':'Lyra_SemanticNeighbor4',
+         'Lyra_SemanticNeighborSite6':'Lyra_SemanticNeighbor6',
+         'Lyra_SemanticPlainSite4':'Lyra_SemanticEntrance4',
+         'Lyra_SemanticPlainSite6':'Lyra_SemanticEntrance6'}
+  start=a.labels['Overworld_UseEntrance'];end=a.labels['Lyra_SemanticEntranceConsumersEnd']
+  self.assertEqual(sum(name.startswith('Lyra_Semantic') and 'Site' in name and start<=at<end for name,at in a.labels.items()),8)
+  self.assertEqual(len({a.labels[name] for name in sites}),8)
+  for site,target in sites.items():
+   at=a.labels[site];self.assertTrue(start<=at<end)
+   pc=R.N.pc(at);self.assertEqual(a.image[pc:pc+4],b'\x22'+a.labels[target].to_bytes(3,'little'))
  def test_actual_entrance_arch_recognition(self):
   a,ram=self.entrance_fixture();r,out,b=a.call('Overworld_UseEntranceEntry',p=0,db=0,d=0,ram=ram)
   self.assertEqual((out[0x10],out[0x10E]),(0xF,0x53));self.assertEqual(r['registers']['sp'],b['sp'])

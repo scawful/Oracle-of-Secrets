@@ -317,9 +317,108 @@ def _symbol(symbols, name, *, exclusive_end=False):
     return value
 
 
+
+# Exact native instruction prefixes replaced by the semantic source consumers.
+# The source operands may retain a legal LoROM mirror; compare their PC identity.
+SEMANTIC_READER_HOOKS = (
+    (0x008864, 'Lyra_SemanticCollisionWord', b''),
+    (0x1BBEDF, 'Lyra_SemanticTileActionWord', bytes.fromhex(
+        '0A0A8506A5002908004A4A0406A50229010005060AAA')),
+    (0x1BBF1E, 'Lyra_SemanticHammerWord', bytes.fromhex('0A0A0AAA')),
+    (0x1BC027, 'Lyra_SemanticLiftWord', bytes.fromhex(
+        '0A0A8506A5022908004A4A0406A5004A4A4A29010005060AAA')),
+)
+SEMANTIC_ENTRANCE_SITES = (
+    ('Lyra_SemanticEntranceSite2', 'Lyra_SemanticEntrance2'),
+    ('Lyra_SemanticNeighborSite0', 'Lyra_SemanticNeighbor0'),
+    ('Lyra_SemanticCastleSite4', 'Lyra_SemanticEntrance4'),
+    ('Lyra_SemanticCastleSite6', 'Lyra_SemanticEntrance6'),
+    ('Lyra_SemanticNeighborSite4', 'Lyra_SemanticNeighbor4'),
+    ('Lyra_SemanticNeighborSite6', 'Lyra_SemanticNeighbor6'),
+    ('Lyra_SemanticPlainSite4', 'Lyra_SemanticEntrance4'),
+    ('Lyra_SemanticPlainSite6', 'Lyra_SemanticEntrance6'),
+)
+
+
+SEMANTIC_SPECIAL_SITES = (
+    ('Lyra_SemanticSpecialEntrySite0', 'Lyra_SemanticEntrance0',
+     'Overworld_CheckForSpecialOverworldTrigger', 'GetMap16Tile'),
+    ('Lyra_SemanticSpecialReturnSite0', 'Lyra_SemanticEntrance0',
+     'SpecialOverworld_CheckForReturnTrigger', 'LoadSpecialOverworld'),
+)
+
+
+def _semantic_compiled_readers(source, compiled, entries, symbols, protected):
+    """Validate actual enabled consumers before normalizing a comparison copy."""
+    code_pc = native.pc(native.SEMANTIC_CODE_BASE)
+    code_limit = native.pc(native.SEMANTIC_CODE_LIMIT - 1) + 1
+    native.semantic_reader_constants(source, code_preimage=source[code_pc:code_limit],
+                                     experimental_page_tile16=True)
+    first = _symbol(symbols, 'Lyra_SemanticCodeStart')
+    end = _symbol(symbols, 'Lyra_SemanticCodeEnd', exclusive_end=True)
+    _require(first == native.SEMANTIC_CODE_BASE and first < end <= native.SEMANTIC_CODE_LIMIT,
+             'NATIVE_BUILD_SEMANTIC_CODE_EXTENT_MISMATCH')
+    first_pc, end_pc = native.pc(first), native.pc(end - 1) + 1
+    _require(compiled[first_pc:end_pc] != source[first_pc:end_pc],
+             'NATIVE_BUILD_SEMANTIC_CODE_NOT_EMITTED')
+    _require(compiled[end_pc:code_limit] == source[end_pc:code_limit],
+             'NATIVE_BUILD_SEMANTIC_UNCLAIMED_CODE_CHANGED')
+    _require(all(first_pc >= limit or end_pc <= at for at, limit, _ in protected),
+             'NATIVE_BUILD_SEMANTIC_CODE_OVERLAPS_SAVED_SOURCE')
+    targets, hooks, normalized = {}, [], []
+
+    def hook(site, name, length):
+        target = _symbol(symbols, name)
+        _require(first <= target < end, 'NATIVE_BUILD_SEMANTIC_TARGET_OUTSIDE_CODE:' + name)
+        targets[name] = target
+        at = native.pc(site)
+        _require((site & 0xFFFF) + length <= 0x10000
+                 and all(at >= limit or at + length <= start for start, limit, _ in protected),
+                 'NATIVE_BUILD_SEMANTIC_HOOK_OVERLAPS_SAVED_SOURCE')
+        expected = b'\x22' + target.to_bytes(3, 'little') + b'\xEA' * (length - 4)
+        _require(compiled[at:at + length] == expected,
+                 f'NATIVE_BUILD_SEMANTIC_HOOK_MISMATCH:{site:06X}')
+        hooks.append(dict(site=site, target=target, symbol=name, length=length))
+
+    for site, name, prefix in SEMANTIC_READER_HOOKS:
+        at, length = native.pc(site), len(prefix) + 4
+        original = source[at:at + length]
+        _require(original[:len(prefix)] == prefix and original[len(prefix)] == 0xBF
+                 and native.pc(int.from_bytes(original[-3:], 'little')) == native.pc(entries[400][0]),
+                 f'NATIVE_BUILD_SEMANTIC_SOURCE_PREIMAGE_MISMATCH:{site:06X}')
+        hook(site, name, length)
+        normalized.append((at, at + length))
+    entrance = _symbol(symbols, 'Overworld_UseEntrance')
+    entrance_end = _symbol(symbols, 'Lyra_SemanticEntranceConsumersEnd', exclusive_end=True)
+    _require(entrance < entrance_end and entrance_end - entrance <= 0x2000
+             and entrance >> 16 == (entrance_end - 1) >> 16,
+             'NATIVE_BUILD_SEMANTIC_ENTRANCE_EXTENT_INVALID')
+    previous = entrance - 1
+    for label, name in SEMANTIC_ENTRANCE_SITES:
+        site = _symbol(symbols, label)
+        _require(previous < site and entrance <= site and site + 4 <= entrance_end,
+                 'NATIVE_BUILD_SEMANTIC_ENTRANCE_SITE_INVALID:' + label)
+        hook(site, name, 4)
+        previous = site
+    for label, name, start_name, end_name in SEMANTIC_SPECIAL_SITES:
+        start = _symbol(symbols, start_name)
+        limit = _symbol(symbols, end_name, exclusive_end=True)
+        site = _symbol(symbols, label)
+        _require(start < limit and limit - start <= 0x2000
+                 and start >> 16 == (limit - 1) >> 16
+                 and start <= site and site + 4 <= limit,
+                 'NATIVE_BUILD_SEMANTIC_SPECIAL_SITE_INVALID:' + label)
+        hook(site, name, 4)
+    _require(len(set(targets.values())) == len(targets),
+             'NATIVE_BUILD_SEMANTIC_TARGET_ALIASED')
+    return normalized, dict(code_extent=dict(snes=[first, end], pc=[first_pc, end_pc]),
+        hooks=hooks, hook_count=len(hooks), source_preimages_validated=True,
+        actual_compiled_consumers_verified=True, normalization_comparison_only=True)
+
+
 def plan_native_compiled_seal(source, exported, compiled, symbols, *,
                               allow_stale_directory=False, graphics_root=None,
-                              experimental_page_tile16=False):
+                              experimental_page_tile16=False, semantic_readers=False):
     """Validate compilation and return directory bytes for source reassembly.
 
     Inputs are immutable ROM bytes, a fresh source export and WLA label names
@@ -337,6 +436,8 @@ def plan_native_compiled_seal(source, exported, compiled, symbols, *,
              and len(compiled) == len(source), 'NATIVE_BUILD_COMPILED_EXTENT_MISMATCH')
     _require(type(symbols) is dict and type(allow_stale_directory) is bool,
              'NATIVE_BUILD_COMPILED_ARGUMENT_INVALID')
+    _require(type(semantic_readers) is bool and (not semantic_readers or experimental_page_tile16 is True),
+             'NATIVE_BUILD_SEMANTIC_ADMISSION_INVALID')
     prep = prepare_native_compilation(source, exported,
         data_pc=native.RESIDENT_DATA_PC, capacity=native.RESIDENT_DATA_CAPACITY,
         preimage=source[native.RESIDENT_DATA_PC:
@@ -345,6 +446,7 @@ def plan_native_compiled_seal(source, exported, compiled, symbols, *,
     capacity, bank, entries = native.read_native_directory(
         source, experimental_page_tile16=experimental_page_tile16)
     revision = struct.unpack_from('<H', source, native.DIRECTORY_PC + 8)[0]
+    _require(not semantic_readers or revision == 5, 'NATIVE_BUILD_SEMANTIC_REVISION5_REQUIRED')
     code_address, code_size = entries[300]
     code_start = _symbol(symbols, 'Lyra_CurrentNativeCodeStart')
     code_end = _symbol(symbols, 'Lyra_CurrentNativeCodeEnd', exclusive_end=True)
@@ -407,7 +509,12 @@ def plan_native_compiled_seal(source, exported, compiled, symbols, *,
         extents.append(dict(start_symbol=start_name, end_symbol=end_name,
                             snes=[first, end], pc=[pc_first, pc_end]))
 
+    semantic_spans, semantic_proof = (
+        _semantic_compiled_readers(source, compiled, entries, symbols, protected)
+        if semantic_readers else ([], None))
     restored = bytearray(compiled)
+    for at, end in semantic_spans:
+        restored[at:end] = source[at:end]
     word_start, word_end = extents[0]['snes']
     for site, name, length in RESIDENT_READER_HOOKS:
         target = _symbol(symbols, name)
@@ -480,6 +587,8 @@ def plan_native_compiled_seal(source, exported, compiled, symbols, *,
     if revision == 5:
         result.update(schema='special_overworld.native_compiled_seal.experimental-v2',
                       semantic_source_contract=prep['semantic_source_contract'])
+        if semantic_readers:
+            result['semantic_readers'] = semantic_proof
     return result
 
 
@@ -491,10 +600,12 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
 
 
 def verify_native_compiled_output(source, exported, compiled, symbols, *,
-                                  graphics_root=None, experimental_page_tile16=False):
+                                  graphics_root=None, experimental_page_tile16=False,
+                                  semantic_readers=False):
     """Strict final composition; explicit experimental source admission only."""
     return plan_native_compiled_seal(source, exported, compiled, symbols,
-        graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16)
+        graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16,
+        semantic_readers=semantic_readers)
 
 
 def verify_revision4_compiled_output(source, exported, compiled, symbols, *,

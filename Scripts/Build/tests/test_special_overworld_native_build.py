@@ -491,5 +491,119 @@ class ExperimentalNativeBuildTest(unittest.TestCase):
             preimage=self.legacy.preimage, experimental_page_tile16=True)
         self.assertEqual(old, result)
 
+class ManagedSemanticSealTest(unittest.TestCase):
+    def setUp(self):
+        self.fixture = ExperimentalNativeBuildTest()
+        self.fixture.setUp()
+        self.fixture.fixture.address = N.PAGE_TILE16_BASE
+        self.fixture.source, self.fixture.exported = self.fixture.fixture.install(
+            self.fixture.fixture.rows, count=N.PAGE_TILE16_ROW_CAPACITY, authoring=True)
+        image = bytearray(self.fixture.source)
+        _, _, entries = N.read_native_directory(bytes(image), experimental_page_tile16=True)
+        for site, _, prefix in B.SEMANTIC_READER_HOOKS:
+            raw = prefix + b'\xBF' + entries[400][0].to_bytes(3, 'little')
+            first = N.pc(site)
+            image[first:first + len(raw)] = raw
+        self.source = bytes(image)
+        value = copy.deepcopy(self.fixture.exported['native_source'])
+        value['source_rom_sha256'] = hashlib.sha256(self.source).hexdigest()
+        self.exported = self.fixture.fixture.fixture.seal(value)
+        self.fixture.legacy.source, self.fixture.legacy.exported = self.source, self.exported
+
+    def compiled_semantic_fixture(self):
+        raw, symbols = self.fixture.legacy.compiled_fixture(experimental_page_tile16=True)
+        image = bytearray(raw)
+        first, end = N.SEMANTIC_CODE_BASE, N.SEMANTIC_CODE_BASE + 0x300
+        symbols.update(Lyra_SemanticCodeStart=first, Lyra_SemanticCodeEnd=end,
+                       Overworld_UseEntrance=0x2F9000,
+                       Lyra_SemanticEntranceConsumersEnd=0x2F9100)
+        image[N.pc(first):N.pc(end)] = b'\x6B' * (end-first)
+        names = [name for _, name, _ in B.SEMANTIC_READER_HOOKS]
+        names += [name for _, name in B.SEMANTIC_ENTRANCE_SITES]
+        names += [name for _, name, _, _ in B.SEMANTIC_SPECIAL_SITES]
+        for index, name in enumerate(dict.fromkeys(names)):
+            symbols[name] = first + index * 16
+        for site, name, prefix in B.SEMANTIC_READER_HOOKS:
+            patch = b'\x22' + symbols[name].to_bytes(3, 'little') + b'\xEA' * len(prefix)
+            at = N.pc(site)
+            image[at:at + len(patch)] = patch
+        for index, (label, name) in enumerate(B.SEMANTIC_ENTRANCE_SITES):
+            site = symbols[label] = 0x2F9010 + index * 8
+            at = N.pc(site)
+            image[at:at + 4] = b'\x22' + symbols[name].to_bytes(3, 'little')
+        for index, (label, name, start_name, end_name) in enumerate(B.SEMANTIC_SPECIAL_SITES):
+            start = 0x2F9200 + index * 0x100
+            symbols[start_name], symbols[end_name] = start, start + 0x80
+            site = symbols[label] = start + 0x10
+            at = N.pc(site)
+            image[at:at + 4] = b'\x22' + symbols[name].to_bytes(3, 'little')
+        return bytes(image), symbols
+
+    def verify(self, compiled, symbols, **kwargs):
+        return B.verify_native_compiled_output(self.source, self.exported,
+            compiled, symbols, experimental_page_tile16=True,
+            semantic_readers=True, **kwargs)
+
+    def test_actual_consumers_verify_before_comparison_only_normalization(self):
+        compiled, symbols = self.compiled_semantic_fixture()
+        before = compiled
+        result = self.verify(compiled, symbols)
+        self.assertEqual(result['semantic_readers']['hook_count'], 14)
+        self.assertTrue(result['semantic_readers']['normalization_comparison_only'])
+        self.assertEqual(compiled, before)
+        self.assertFalse(result['runtime_admission'])
+        with self.assertRaises(ValueError):
+            B.verify_native_compiled_output(self.source, self.exported,
+                compiled, symbols, experimental_page_tile16=True)
+
+    def test_missing_changed_calls_bad_extents_and_unclaimed_code_refuse(self):
+        compiled, symbols = self.compiled_semantic_fixture()
+        for site in [row[0] for row in B.SEMANTIC_READER_HOOKS] + [
+                symbols[label] for label, _ in B.SEMANTIC_ENTRANCE_SITES]:
+            image = bytearray(compiled); image[N.pc(site)] = 0xBF
+            with self.subTest(site=site), self.assertRaisesRegex(ValueError, 'SEMANTIC_HOOK_MISMATCH'):
+                self.verify(bytes(image), symbols)
+        for update in ({'Lyra_SemanticCodeEnd': N.SEMANTIC_CODE_LIMIT+1},
+                       {'Lyra_SemanticCollisionWord': N.SEMANTIC_CODE_LIMIT},
+                       {'Lyra_SemanticPlainSite6': symbols['Overworld_UseEntrance']-1}):
+            with self.subTest(update=update), self.assertRaises(ValueError):
+                self.verify(compiled, dict(symbols, **update))
+        image = bytearray(compiled); image[N.pc(N.SEMANTIC_CODE_LIMIT)-1] ^= 1
+        with self.assertRaisesRegex(ValueError, 'UNCLAIMED_CODE_CHANGED'):
+            self.verify(bytes(image), symbols)
+        with self.assertRaisesRegex(ValueError, 'SEMANTIC_ADMISSION_INVALID'):
+            B.verify_native_compiled_output(self.source, self.exported, compiled, symbols,
+                                           semantic_readers=True)
+
+    def test_special_entry_and_return_require_actual_bounded_calls(self):
+        compiled, symbols = self.compiled_semantic_fixture()
+        for label, _, start_name, end_name in B.SEMANTIC_SPECIAL_SITES:
+            site = symbols[label]
+            for offset in (0, 1):
+                altered = bytearray(compiled); altered[N.pc(site)+offset] ^= 1
+                with self.subTest(label=label, offset=offset), self.assertRaisesRegex(
+                        ValueError, 'SEMANTIC_HOOK_MISMATCH'):
+                    self.verify(bytes(altered), symbols)
+            missing = dict(symbols); del missing[label]
+            with self.subTest(label=label, missing=True), self.assertRaisesRegex(
+                    ValueError, 'REQUIRED_SYMBOL_MISSING'):
+                self.verify(compiled, missing)
+            outside = dict(symbols); outside[label] = symbols[end_name]
+            with self.subTest(label=label, outside=True), self.assertRaisesRegex(
+                    ValueError, 'SEMANTIC_SPECIAL_SITE_INVALID'):
+                self.verify(compiled, outside)
+
+    def test_wrong_original_prefix_refuses_instead_of_masking_unknown_code(self):
+        compiled, symbols = self.compiled_semantic_fixture()
+        source = bytearray(self.source)
+        source[N.pc(0x1BBEDF)] = 0xEA
+        self.source = bytes(source)
+        value = copy.deepcopy(self.exported['native_source'])
+        value['source_rom_sha256'] = hashlib.sha256(self.source).hexdigest()
+        self.exported = self.fixture.fixture.fixture.seal(value)
+        with self.assertRaisesRegex(ValueError, 'SEMANTIC_SOURCE_PREIMAGE_MISMATCH'):
+            self.verify(compiled, symbols)
+
+
 if __name__ == '__main__':
     unittest.main()

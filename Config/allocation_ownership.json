@@ -180,7 +180,7 @@
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "c410c037b730226c8d4f5c699160f7e6646967768f74529c78f12a82243a2c9a"
+      "sha256": "dd9c225256032bfaac2821c4af4cdc506d7ccc71ad9e8e789b5fe5c99c1cac2a"
     },
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
@@ -315,7 +315,7 @@
     "shared:Overworld/special_overworld_semantic.asm": {
       "source_set": "shared",
       "path": "Overworld/special_overworld_semantic.asm",
-      "sha256": "632fb82491ad95854bcf4a35c87fb3b857b8524fa899cf6d6aeb9e04458c52f7"
+      "sha256": "7d77ad67bb6789b013da2b5542e4e0edad3670034e5a7091b919fc08daf8f225"
     }
   },
   "claims": [

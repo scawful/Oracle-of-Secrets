@@ -94,6 +94,29 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
     def check(self, name):
         return next(c for c in self.receipt['checks'] if c['name'] == name)
 
+    def test_explicit_semantic_option_reaches_all_three_managed_stages(self):
+        project = self.write('fixture.yaze', '[files]\ncode_folder=.\n')
+        self.env['YAZE_PROJECT_FILE'] = str(project)
+        self.write('Scripts/Build/authoring_bundle_build.py', 'import sys\nsys.exit(0)\n')
+        self.write('Scripts/Build/lyra_native_loaders.py', """import json,pathlib,sys
+args=sys.argv[1:]
+assert '--experimental-page-tile16' in args
+assert '--project-context' in args
+root=pathlib.Path(__file__).resolve().parents[2]
+with (root/'Roms/native-stage-args.jsonl').open('a') as out: out.write(json.dumps(args)+'\\n')
+if '--constants' in args:
+ p=pathlib.Path(args[args.index('--constants')+1]); p.parent.mkdir(parents=True,exist_ok=True);p.write_text('; fixture')
+ (p.parent/'special_overworld_native_source.json').write_text('{}')
+""")
+        result = self.build('--experimental-page-tile16')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        calls = [json.loads(line) for line in (self.root/'Roms/native-stage-args.jsonl').read_text().splitlines()]
+        self.assertEqual(len(calls), 3)
+        for mode, args in zip(('--constants', '--seal-compiled', '--compiled'), calls):
+            self.assertIn(mode, args)
+            self.assertIn('--experimental-page-tile16', args)
+            self.assertEqual(args[args.index('--project-context')+1], str(project))
+
     def test_compile_records_fresh_identity_and_local_symbols(self):
         self.write('Roms/hooks.json', '{"stale":true}')
         result = self.build()

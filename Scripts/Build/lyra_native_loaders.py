@@ -818,6 +818,8 @@ def main(argv=None):
     parser.add_argument('--build-cache', type=Path)
     parser.add_argument('--symbols', type=Path)
     parser.add_argument('--z3ed')
+    parser.add_argument('--experimental-page-tile16', action='store_true',
+                       help='Explicit managed revision5 semantic Build; never upgrades a source')
     parser.add_argument('--project-context', type=Path,
                        help='Selected .yaze project for source-backed graphics')
     for name in ('import-terrain', 'import-gameplay-areas', 'import-plan', 'import-inspection',
@@ -825,13 +827,23 @@ def main(argv=None):
         parser.add_argument('--' + name, type=Path)
     args = parser.parse_args(argv)
     if args.prepare_initial_import is not None:
+        if args.experimental_page_tile16:
+            parser.error('Experimental native Build does not initialize or upgrade a source')
         from special_overworld_initial_import_cli import run_initial_import
         return run_initial_import(args)
     try:
         source = args.rom.read_bytes()
-        installed = read_native_directory(source)
+        if args.experimental_page_tile16:
+            require(args.build_cache is not None and args.project_context is not None,
+                    'Experimental native Build requires managed cache and project context')
+        installed = read_native_directory(
+            source, experimental_page_tile16=args.experimental_page_tile16)
+        if args.experimental_page_tile16:
+            require(installed is not None and struct.unpack_from(
+                '<H', source, DIRECTORY_PC + 8)[0] == 5,
+                'Experimental native Build requires revision5 source; no upgrade is performed')
         if args.build_cache is not None and installed is not None and struct.unpack_from(
-                '<H', source, DIRECTORY_PC + 8)[0] == 4:
+                '<H', source, DIRECTORY_PC + 8)[0] in (4, 5):
             from special_overworld_native_build_cli import run_native_build_stage
             return run_native_build_stage(args, source)
         if args.seal_compiled is not None:

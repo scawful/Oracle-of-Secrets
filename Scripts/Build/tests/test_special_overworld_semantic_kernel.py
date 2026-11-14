@@ -15,8 +15,9 @@ def word(ram,at,value):ram[at:at+2]=value.to_bytes(2,'little')
 def values(count,capacity=192):
  v=R.constants(capacity);v.update(SPECIAL_OVERWORLD_SEMANTIC_ENABLED=1,SPECIAL_OVERWORLD_SEMANTIC_REVISION=5,SPECIAL_OVERWORLD_SEMANTIC_CAPACITY=capacity,SPECIAL_OVERWORLD_SEMANTIC_ROWS=ROWS,SPECIAL_OVERWORLD_SEMANTIC_COUNT=count,SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE=CODE,SPECIAL_OVERWORLD_SEMANTIC_CODE_END=CODE+0x400)
  return v
-# Exact native $00882E..$008887 instructions, with only $008864 redirected
-# in this synthetic probe. Sky source installs its real $00886E continuation.
+# Exact native $00882E..$008887 caller around the real production hook.
+# Do not emit bytes at $008864: the semantic module owns that four-byte site.
+# Sky source installs its real $00886E continuation.
 CALLER='''
 org $00882E
   REP #$30
@@ -27,7 +28,7 @@ org $00882E
   LDA.b $00 : AND.w #$0008 : LSR : LSR : TSB.b $06
   LDA.b $02 : AND.w #$0001 : ORA.b $06 : ASL : TAX
 assert pc() == $008864
-  JSL Lyra_SemanticCollisionWord
+org $008868 ; retain the actual semantic hook (or original LDA when OFF)
   STA.b $06 : AND.w #$01FF : TAX
 assert pc() == $00886E
   JSL SkyTileType
@@ -82,6 +83,7 @@ class SemanticKernelTest(unittest.TestCase):
   r=result['registers']
   for key in ('x','y','db','d','sp'):self.assertEqual(r[key],before[key],key)
   self.assertEqual(r['p']&(~0x82 if nz else 255),before['p']&(~0x82 if nz else 255))
+  if nz:self.assertEqual(r['p']&0x82,(0x80 if r['a']&0x8000 else 0)|(2 if r['a']==0 else 0))
   # Inactive stack bytes may be written by calls, never live stack or scratch.
   self.assertEqual(out[:0x1F80],ram[:0x1F80]);self.assertEqual(out[0x2000:],ram[0x2000:])
  def test_explicit_page_same_id_all_source_bits_and_flags(self):
@@ -113,34 +115,51 @@ class SemanticKernelTest(unittest.TestCase):
  def test_revision_extent_origin_refused(self):
   for kv in [('SPECIAL_OVERWORLD_SEMANTIC_REVISION',4),('SPECIAL_OVERWORLD_SEMANTIC_REVISION',6),('SPECIAL_OVERWORLD_SEMANTIC_ROWS',0x4FFFF8),('SPECIAL_OVERWORLD_SEMANTIC_ROWS',0x7E8000),('SPECIAL_OVERWORLD_SEMANTIC_CODE_END',CODE+4),('SPECIAL_OVERWORLD_SEMANTIC_COUNT',0)]:
    a=Artifact([row(0x84,7,(1,2,3,4))],overrides=dict([kv]));self.addCleanup(a.close);self.assertNotEqual(a.proc.returncode,0)
- def test_only_explicit_code_and_action_spans_change_collision_unhooked(self):
-  a=self.build([row(0x84,7,(1,2,3,4))]);ranges=[(R.N.pc(CODE),R.N.pc(a.labels['Lyra_SemanticCodeEnd'])) ,(R.N.pc(R.N.RESIDENT_WORD_CODE_BASE),R.N.pc(a.labels['Lyra_ResidentAtlasCodeEnd']))]+[(R.N.pc(at),R.N.pc(at)+n) for at,_,n in R.HOOKS]+[(R.N.pc(at),R.N.pc(at)+len(prefix)+4) for at,_,prefix in R.ACTION_PREFIXES]
-  self.assertEqual(a.image[R.N.pc(0x008864):R.N.pc(0x008868)],a.before[R.N.pc(0x008864):R.N.pc(0x008868)])
+ def test_only_explicit_code_and_action_collision_spans_change(self):
+  a=self.build([row(0x84,7,(1,2,3,4))]);ranges=[(R.N.pc(0x008864),R.N.pc(0x008868)),(R.N.pc(CODE),R.N.pc(a.labels['Lyra_SemanticCodeEnd'])) ,(R.N.pc(R.N.RESIDENT_WORD_CODE_BASE),R.N.pc(a.labels['Lyra_ResidentAtlasCodeEnd']))]+[(R.N.pc(at),R.N.pc(at)+n) for at,_,n in R.HOOKS]+[(R.N.pc(at),R.N.pc(at)+len(prefix)+4) for at,_,prefix in R.ACTION_PREFIXES]
+  self.assertEqual(a.image[R.N.pc(0x008864):R.N.pc(0x008868)],b'\x22'+a.labels['Lyra_SemanticCollisionWord'].to_bytes(3,'little'))
   for i,(b,c) in enumerate(zip(a.before,a.image)):
    if b!=c:self.assertTrue(any(lo<=i<hi for lo,hi in ranges),hex(i))
  def test_collision_adapter_parent_quadrants_and_full_abi(self):
-  pages=[0x84,0x85,0x8C,0x8D];a=self.build([row(p,7,(p,0x4000|p,0x8000|p,0xC000|p)) for p in pages])
+  pages=[0x84,0x85,0x8C,0x8D];a=self.build([row(p,7,(p,0x4000|p,0x8000|p,0xC000|p)) for p in pages],extra_source='org $008868\nRTL\n',overrides={'SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE':0x518000,'SPECIAL_OVERWORLD_SEMANTIC_CODE_END':0x519000})
   for raw,page in zip([0,0x40,0x1000,0x1040],pages):
    for q in range(4):
     ram=bytearray(65536);word(ram,0x8A,0x8D);word(ram,0x700,0xB5)
     word(ram,0,(raw&0x1000)>>3);word(ram,2,raw&0x40);word(ram,0x70A,0x200);word(ram,0x70E,0x40)
-    r,out,b=a.call('Lyra_SemanticCollisionWord',x=56+q*2,y=0xABCD,ram=ram)
+    r,out,b=a.call(0x008864,x=56+q*2,y=0xABCD,ram=ram)
     self.assertEqual(r['registers']['a'],page|[0,0x4000,0x8000,0xC000][q]);self.preserved(r,b,ram,out,nz=True)
  def test_collision_small_wide_tall_and_refusal(self):
   for size,expected in [(0,[0x84]*4),(2,[0x84,0x85,0x84,0x85]),(3,[0x84,0x84,0x8C,0x8C]),(4,[None]*4)]:
-   a=self.build([row(p,7,(p,2,3,4)) for p in (0x84,0x85,0x8C,0x8D)],area_size=size)
+   a=self.build([row(p,7,(p,2,3,4)) for p in (0x84,0x85,0x8C,0x8D)],area_size=size,extra_source='org $008868\nRTL\n')
    for raw,page in zip([0,0x40,0x1000,0x1040],expected):
     ram=bytearray(65536);word(ram,0x8A,0x84);word(ram,0,(raw&0x1000)>>3);word(ram,2,raw&0x40);word(ram,0x70A,0x200);word(ram,0x70E,0x40)
-    r,out,b=a.call('Lyra_SemanticCollisionWord',x=56,ram=ram)
+    r,out,b=a.call(0x008864,x=56,ram=ram)
     self.assertEqual(r['registers']['a'],a.global_words[0] if page is None else page);self.preserved(r,b,ram,out,nz=True)
   for variant in ('indoors','raw_offset_outside','parent_outside','ordinary_page','missing_row'):
-   a=self.build([row(0x84,7,(0xAAAA,2,3,4))],parent=0x40 if variant=='parent_outside' else 0x84)
+   a=self.build([row(0x84,7,(0xAAAA,2,3,4))],parent=0x40 if variant=='parent_outside' else 0x84,extra_source='org $008868\nRTL\n')
    ram=bytearray(65536);word(ram,0x8A,0x83 if variant=='ordinary_page' else 0x84);word(ram,0x70A,0x400);word(ram,0x70E,0x40)
    if variant=='indoors':ram[0x1B]=1
    if variant=='raw_offset_outside':word(ram,0,0x400)
    if variant=='missing_row':word(ram,2,0x40)
-   r,out,b=a.call('Lyra_SemanticCollisionWord',x=56,ram=ram)
+   r,out,b=a.call(0x008864,x=56,ram=ram)
    self.assertEqual(r['registers']['a'],a.global_words[0]);self.preserved(r,b,ram,out,nz=True)
+ def test_collision_hook_rejects_moved_read_and_accepts_bank_aliases(self):
+  for data in (bytes.fromhex('BF00803D'),bytes.fromhex('BF0080BD')):
+   a=self.build([row(0x84,7,(1,2,3,4))],image_updates=((0x008864,data),))
+   self.assertEqual(a.image[R.N.pc(0x008864):R.N.pc(0x008868)],b'\x22'+a.labels['Lyra_SemanticCollisionWord'].to_bytes(3,'little'))
+  for data in (bytes.fromhex('AF0080BD'),bytes.fromhex('BF0280BD')):
+   a=Artifact([row(0x84,7,(1,2,3,4))],image_updates=((0x008864,data),));self.addCleanup(a.close)
+   self.assertNotEqual(a.proc.returncode,0)
+   self.assertIn('Semantic collision source read moved',a.proc.stdout+a.proc.stderr)
+ def test_collision_hook_absent_off_executes_original_lda(self):
+  a=Artifact([row(0x84,7,(0xFFFF,2,3,4))],overrides={'SPECIAL_OVERWORLD_SEMANTIC_ENABLED':0},extra_source='org $008868\nRTL\n');self.addCleanup(a.close)
+  self.assertEqual(a.proc.returncode,0,a.proc.stdout+a.proc.stderr)
+  self.assertNotIn('Lyra_SemanticCollisionWord',a.labels)
+  self.assertNotIn('Lyra_ResidentPhysicalPageLong',a.labels)
+  self.assertEqual(a.image[R.N.pc(0x008864):R.N.pc(0x008868)],a.before[R.N.pc(0x008864):R.N.pc(0x008868)])
+  ram=bytearray(65536);word(ram,0x8A,0x84)
+  r,out,b=a.call(0x008864,x=56,ram=ram)
+  self.assertEqual(r['registers']['a'],a.global_words[0]);self.preserved(r,b,ram,out,nz=True)
  def test_actual_collision_continuation_sky_attributes_hflip(self):
   words=(0x0044,0x4044,0x8896,0xCC96);a=self.build([row(0x84,7,words)],sky=True)
   for q in range(4):

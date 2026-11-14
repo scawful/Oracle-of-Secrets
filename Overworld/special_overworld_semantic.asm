@@ -1,8 +1,8 @@
 ; Semantic SOURCE quadrant words, independent of resident VRAM remapping.
 ; Experimental record413: sorted (physical page, local12bit ID, TL,TR,BL,BR),
 ; six LE16 words; all-FF trailing padding. No new runtime data format.
-; Default OFF and unbound; collision adapter remains unhooked. The enabled
-; module installs the guarded action prefixes. Build still refuses revision5.
+; Default OFF and unbound. The enabled module installs guarded collision
+; and action source-word hooks. Ordinary Build still refuses revision5.
 ; A future producer
 ; must authenticate the directory/413 CRC and extents before binding these
 ; constants. Structural assembly checks below do not replace authentication.
@@ -98,13 +98,12 @@ Lyra_SemanticSourceWord:
     PLA : STA $01,S : BRA .search
 Lyra_SemanticSourceWord_End:
 
-; Unhooked adapter for native $008864 (M16/X16, native D=0 context).
-; This is deliberately not installed at that address. It reconstitutes the
-; terrain offset lost when X became Tile16*8+quadrant*2. $00 is pixelY while
+; Adapter for the guarded native $008864 hook (M16/X16, native D=0).
+; It reconstitutes the terrain offset lost when X became Tile16*8+quadrant*2. $00 is pixelY while
 ; $02 is Tile8X: preserve the native masks/shifts, do not use Link's $0700.
 ; Existing resident parent/area_size tables must already be authenticated.
-; Synthetic code binding below qualifies the adapter mechanics only; ordinary
-; Build cannot emit this module or admit revision5 yet.
+; Explicit authenticated code binding is required; ordinary Build does not
+; enable this module or admit revision5.
 if !SPECIAL_OVERWORLD_RESIDENT_ENABLED == 1
 assert !SPECIAL_OVERWORLD_SEMANTIC_CAPACITY == !SPECIAL_OVERWORLD_RESIDENT_END
 assert !SPECIAL_OVERWORLD_SEMANTIC_CODE_END <= !LYRA_CURRENT_RESIDENT_CODE_BASE || !SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE >= !LYRA_CURRENT_RESIDENT_CODE_END
@@ -211,10 +210,16 @@ Lyra_SemanticCodeEnd:
 assert pc() <= !SPECIAL_OVERWORLD_SEMANTIC_CODE_END, "Semantic code exceeds explicit bound"
 pullpc
 
-; Semantic action loads: bind only the existing explicitly enabled module.
+; Semantic source loads: bind only the existing explicitly enabled module.
 ; The visual mutable 1BC9/1BCA loads remain resident VRAM-word consumers.
 if !SPECIAL_OVERWORLD_RESIDENT_ENABLED == 1
 pushpc
+; Replace only LDA.l Map16Definitions,X. The following STA $06, character
+; mask and SkyTileType/H-flip continuation retain their original ownership.
+assert read4($008864) == ((!LYRA_CURRENT_MAP16_DEFINITIONS<<8)|$BF) || read4($008864) == (((!LYRA_CURRENT_MAP16_DEFINITIONS|$800000)<<8)|$BF), "Semantic collision source read moved"
+org $008864 ; @hook module=Overworld kind=jsl target=Lyra_SemanticCollisionWord expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_SemanticCollisionWord
+assert pc() == $008868
 assert read1($1BBEDF) == $0A, "Semantic action prefix moved"
 assert read1($1BBEE0) == $0A, "Semantic action prefix moved"
 assert read1($1BBEE1) == $85, "Semantic action prefix moved"

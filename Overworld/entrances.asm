@@ -52,6 +52,7 @@ Overworld_UseEntrance:
   LDA.b $2F : AND.w #$00FF : BNE .not_facing_up
 
 if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+    #Lyra_SemanticEntranceSite2:
     JSL Lyra_SemanticEntrance2
 else
     LDA.l Map16Definitions+2, X
@@ -67,6 +68,7 @@ endif
     TAX
 
 if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+    #Lyra_SemanticNeighborSite0:
     JSL Lyra_SemanticNeighbor0
 else
     LDA.l Map16Definitions+0, X
@@ -162,18 +164,24 @@ endif
 
 if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
   .check_castle_door_type
+  #Lyra_SemanticCastleSite4:
   JSL Lyra_SemanticEntrance4 : AND.w #$01FF : STA.b $00
+  #Lyra_SemanticCastleSite6:
   JSL Lyra_SemanticEntrance6 : AND.w #$01FF : STA.b $02
   PLY ; rejected castle queries retain legacy Y for registration lookup
   BRA .door_words_ready
   .check_neighbor_door_type
+  #Lyra_SemanticNeighborSite4:
   JSL Lyra_SemanticNeighbor4 : AND.w #$01FF : STA.b $00
+  #Lyra_SemanticNeighborSite6:
   JSL Lyra_SemanticNeighbor6 : AND.w #$01FF : STA.b $02
   BRA .door_words_ready
 endif
   .check_door_type
 if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+  #Lyra_SemanticPlainSite4:
   JSL Lyra_SemanticEntrance4 : AND.w #$01FF : STA.b $00
+  #Lyra_SemanticPlainSite6:
   JSL Lyra_SemanticEntrance6 : AND.w #$01FF : STA.b $02
   .door_words_ready
 else
@@ -212,6 +220,10 @@ endif
 
   RTL
 }
+
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+#Lyra_SemanticEntranceConsumersEnd:
+endif
 
 #Overworld_ForbidEntry:
 {

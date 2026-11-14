@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $(basename "$0") <version> [asar_binary] [--reload] [--no-symbols] [--mesen-sync] [--skip-tests] [--asar=<path>] [--enable <csv>] [--disable <csv>] [--profile <defaults|all-on|all-off>] [--persist-flags] [--help]" >&2
+  echo "Usage: $(basename "$0") <version> [asar_binary] [--reload] [--no-symbols] [--mesen-sync] [--skip-tests] [--asar=<path>] [--enable <csv>] [--disable <csv>] [--profile <defaults|all-on|all-off>] [--persist-flags] [--experimental-page-tile16] [--help]" >&2
   echo "Base ROM: OOS_BASE_ROM, then YAZE_PROJECT_ROM, then Roms/oos<version>.sfc." >&2
   echo "  An explicit base must match the active Yaze project ROM when both are set." >&2
   echo "  Backward compat: Roms/oos<version>_test2.sfc is used only when the standard base is absent." >&2
@@ -12,6 +12,7 @@ usage() {
   echo "  --disable <csv>   Comma-separated feature names to disable." >&2
   echo "  --profile <name>  Preset profile (defaults|all-on|all-off) applied before enable/disable lists." >&2
   echo "  --persist-flags   Keep the generated Config/feature_flags.asm (otherwise it is restored after build)." >&2
+  echo "  --experimental-page-tile16  Explicit revision5 semantic Build; requires the selected Yaze project and managed export." >&2
   echo "Verification: OOS_REQUIRE_CHECKS=analysis,smoke,... requires named checks even when skipped/unavailable." >&2
   echo "  Names: flags,menu,overlap,hooks,sprites,analysis,smoke,annotations." >&2
   echo "  OOS_ANALYZER=<path> selects an analyzer; OOS_TEST_SOCKET=<owned socket> enables exact-ROM current-state smoke." >&2
@@ -44,11 +45,16 @@ feat_enable=""
 feat_disable=""
 feat_profile="defaults"
 persist_flags=0
+experimental_page_tile16=0
 
 while [[ $# -gt 0 ]]; do
   case $1 in
     -h|--help)
       usage 0
+      ;;
+    --experimental-page-tile16)
+      experimental_page_tile16=1
+      shift
       ;;
     --reload)
       reload=1
@@ -260,6 +266,9 @@ snapshot_build_outputs
 # Native special-overworld data belongs to the editable ROM. The generated
 # include contains constants only; initial data import is a separate operation.
 native_build_args=(--build-cache "$repo_root/.cache")
+if [[ "$experimental_page_tile16" == "1" ]]; then
+  native_build_args+=(--experimental-page-tile16)
+fi
 if [[ -n "${YAZE_PROJECT_FILE:-}" ]]; then
   native_build_args+=(--project-context "$YAZE_PROJECT_FILE")
 fi
