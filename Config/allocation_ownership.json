@@ -2319,6 +2319,48 @@
         "symbol": "Boat_Marker",
         "base_block": true
       }
+    },
+    {
+      "id": "native_special_semantic_code",
+      "owner": "Per-map Tile16 source lookup and semantic consumers",
+      "space": "snes_rom",
+      "base": 5341184,
+      "size": 4096,
+      "status": "proposed",
+      "condition": {
+        "SPECIAL_OVERWORLD_SEMANTIC_ENABLED": 1
+      },
+      "lifetime": "Derived Build code only; exact empty-source preimage and compiled extent are required before experimental activation.",
+      "reset": "Stack-local scratch; no new WRAM or SRAM. Physical page comes from the retained parent/size lookup.",
+      "save": "Normal Save has no ownership of this code region. Build must preserve the separately saved record413.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "SEMANTIC_CODE_BASE = 0x518000",
+        "SEMANTIC_CODE_LIMIT = 0x519000"
+      ]
+    },
+    {
+      "id": "native_special_page_tile16_source",
+      "owner": "Authoritative per-map source Tile16 definitions, native record413",
+      "space": "snes_rom",
+      "base": 5345280,
+      "size": 6144,
+      "count": 512,
+      "stride": 12,
+      "status": "proposed",
+      "condition": {},
+      "lifetime": "Selected private initialization reservation; source storage remains owned when runtime is disabled. Other editor users supply their own verified storage. This proposed claim does not initialize or allocate a ROM.",
+      "reset": "Canonical sorted rows with all-FF trailing padding; global dictionary400 remains unchanged.",
+      "save": "Guarded native initializer and ordinary native Save own the declared payload and CRC only; unrelated maps, definitions, placement metadata and code are preserved.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "PAGE_TILE16_BASE = 0x519000",
+        "PAGE_TILE16_ROW_CAPACITY = 512"
+      ]
     }
   ],
   "lifetime_aliases": [],

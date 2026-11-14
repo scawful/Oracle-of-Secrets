@@ -507,5 +507,75 @@ class Revision4AppearanceDirectoryTest(unittest.TestCase):
             N.reader_constants(bytes(image))
 
 
+class SemanticReaderBindingTest(unittest.TestCase):
+    def setUp(self):
+        from test_special_overworld_resources import ExperimentalPageTile16ResourcesTest
+        fixture = ExperimentalPageTile16ResourcesTest()
+        fixture.setUp()
+        fixture.address = N.PAGE_TILE16_BASE
+        self.source, _ = fixture.install(fixture.rows, count=N.PAGE_TILE16_ROW_CAPACITY)
+        self.fixture = fixture
+        self.code_pc = N.pc(N.SEMANTIC_CODE_BASE)
+        self.code_size = N.SEMANTIC_CODE_LIMIT - N.SEMANTIC_CODE_BASE
+        self.preimage = self.source[self.code_pc:self.code_pc+self.code_size]
+
+    def bind(self, source=None, **kwargs):
+        return N.semantic_reader_constants(
+            self.source if source is None else source,
+            code_preimage=kwargs.pop('code_preimage', self.preimage),
+            experimental_page_tile16=kwargs.pop('experimental_page_tile16', True),
+            **kwargs)
+
+    def test_authenticated_rows_bind_without_activation_or_source_writes(self):
+        before = self.source
+        text = self.bind()
+        self.assertIn('!SPECIAL_OVERWORLD_SEMANTIC_ROWS = $519000', text)
+        self.assertIn('!SPECIAL_OVERWORLD_SEMANTIC_COUNT = 512', text)
+        self.assertIn('!SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE = $518000', text)
+        self.assertNotIn('SEMANTIC_ENABLED', text)
+        self.assertFalse(any(line.startswith(('org ', 'db ', 'incbin '))
+                             for line in text.splitlines()))
+        self.assertEqual(self.source, before)
+        self.assertIn('!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = 0',
+                      N.native_reader_constants(self.source,
+                                                experimental_page_tile16=True))
+        with self.assertRaises(ValueError):
+            N.native_reader_constants(self.source)
+
+    def test_optin_crc_and_empty_code_preimage_are_required(self):
+        with self.assertRaisesRegex(ValueError, 'explicit experimental'):
+            self.bind(experimental_page_tile16=False)
+        corrupt = bytearray(self.source)
+        corrupt[N.pc(N.PAGE_TILE16_BASE)] ^= 1
+        with self.assertRaises(ValueError):
+            self.bind(bytes(corrupt))
+        occupied = bytearray(self.source)
+        occupied[self.code_pc] = 0xA5
+        with self.assertRaisesRegex(ValueError, 'preimage changed'):
+            self.bind(bytes(occupied))
+        with self.assertRaisesRegex(ValueError, 'preimage changed'):
+            self.bind(code_preimage=b'\xFF' * self.code_size)
+
+    def test_code_cannot_alias_saved_rows_or_existing_runtime_reservation(self):
+        from unittest import mock
+        for base, limit in ((N.PAGE_TILE16_BASE, N.PAGE_TILE16_BASE + self.code_size),
+                            (N.RESIDENT_RESOURCE_CODE_BASE,
+                             N.RESIDENT_RESOURCE_CODE_LIMIT)):
+            with self.subTest(base=base), mock.patch.object(N, 'SEMANTIC_CODE_BASE', base), \
+                    mock.patch.object(N, 'SEMANTIC_CODE_LIMIT', limit):
+                raw = self.source[N.pc(base):N.pc(base)+limit-base]
+                with self.assertRaisesRegex(ValueError, 'Semantic code reservation'):
+                    self.bind(code_preimage=raw)
+
+    def test_saved_rows_cannot_alias_compiler_owned_runtime_storage(self):
+        for address in (N.RESIDENT_WORD_CODE_BASE, N.RESIDENT_RESOURCE_CODE_BASE,
+                        N.RESIDENT_PALETTE_CODE_BASE, 0x4F8000):
+            with self.subTest(address=address):
+                self.fixture.address = address
+                source, _ = self.fixture.install(self.fixture.rows, count=4)
+                with self.assertRaisesRegex(ValueError, 'source rows overlap'):
+                    self.bind(source)
+
+
 if __name__ == '__main__':
     unittest.main()

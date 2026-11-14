@@ -49,6 +49,12 @@ RESIDENT_DATA_CAPACITY = 0x18000
 RESIDENT_DATA_EXCLUDED_PC = ((0x280000, 0x282000),)
 RESIDENT_SPILL_PC = 0x282000
 RESIDENT_SPILL_END = 0x288000
+# Separate authored definitions from derived code in the next bank. These
+# selected engine reservations do not initialize storage or enable consumers.
+SEMANTIC_CODE_BASE = 0x518000
+SEMANTIC_CODE_LIMIT = 0x519000
+PAGE_TILE16_BASE = 0x519000
+PAGE_TILE16_ROW_CAPACITY = 512
 
 # Existing dictionaries in the selected Oracle engine. Initial import reuses
 # these owned bodies; arbitrary relocation needs a separately bound reader ABI.
@@ -637,14 +643,15 @@ def reader_constants(image):
     return native_reader_constants(image)
 
 
-def native_reader_constants(image):
+def native_reader_constants(image, *, experimental_page_tile16=False):
     """Emit bound reader constants without asserting resource compilation.
 
-    The revision4 compiler uses these only alongside its rederived resource
+    The compiler uses these only alongside its rederived resource
     input and compiled-output validation. This function grants no runtime or
     publication admission; the standalone reader_constants seam stays strict.
     """
-    installed = read_native_directory(image)
+    installed = read_native_directory(
+        image, experimental_page_tile16=experimental_page_tile16)
     require(installed is not None, 'Native reader constants require installed storage')
     capacity, bank, entries = installed
     require(capacity == MAP_CAPACITY, 'Retained native readers require192 materialized maps')
@@ -681,6 +688,53 @@ def native_reader_constants(image):
     lines += [f'!LYRA_CURRENT_CODE_BASE = ${code:06X}',
               f'!LYRA_CURRENT_CODE_END = ${code + code_bytes:06X}']
     return '\n'.join(lines) + '\n'
+
+
+def semantic_reader_constants(image, *, code_preimage,
+                              experimental_page_tile16=False):
+    """Bind authenticated source rows and an empty selected code reservation.
+
+    This emits addresses only. It does not enable the semantic gate, install
+    hooks, grant ordinary Build admission or write the source image.
+    """
+    require(experimental_page_tile16 is True,
+            'Semantic binding requires explicit experimental admission')
+    installed = read_native_directory(image, experimental_page_tile16=True)
+    require(installed is not None and
+            struct.unpack_from('<H', image, DIRECTORY_PC + 8)[0] == 5,
+            'Semantic binding requires revision5 source')
+    capacity, _, entries = installed
+    address, count = entries[413]
+    code_pc = pc(SEMANTIC_CODE_BASE)
+    code_end = pc(SEMANTIC_CODE_LIMIT - 1) + 1
+    require(type(code_preimage) is bytes and len(code_preimage) == code_end-code_pc
+            and image[code_pc:code_end] == code_preimage
+            and code_preimage in (bytes(len(code_preimage)),
+                                  b'\xFF' * len(code_preimage)),
+            'Semantic code reservation preimage changed')
+    runtime = [(RESIDENT_DATA_PC, RESIDENT_DATA_PC + RESIDENT_DATA_CAPACITY),
+                 (pc(RESIDENT_WORD_CODE_BASE), pc(RESIDENT_WORD_CODE_LIMIT)),
+                 (pc(RESIDENT_RESOURCE_CODE_BASE), pc(RESIDENT_RESOURCE_CODE_LIMIT)),
+                 (pc(RESIDENT_PALETTE_CODE_BASE), pc(RESIDENT_PALETTE_CODE_LIMIT-1)+1)]
+    rows_pc = pc(address)
+    rows_end = rows_pc + count * entry_spec(413, capacity, 5)[2]
+    require(all(rows_end <= first or rows_pc >= end for first, end in runtime),
+            'Semantic source rows overlap derived runtime storage')
+    protected = [(DIRECTORY_PC, DIRECTORY_PC + DIRECTORY_SIZE)] + runtime
+    for key, (start, rows) in entries.items():
+        first = pc(start)
+        protected.append((first, first + rows * entry_spec(key, capacity, 5)[2]))
+    require(all(code_end <= first or code_pc >= end for first, end in protected),
+            'Semantic code reservation overlaps saved or runtime storage')
+    # read_native_directory has authenticated the header, exact row extent,
+    # canonical order/padding and every payload CRC before these are emitted.
+    return ('; Authenticated semantic addresses; activation remains separate.\n'
+            f'!SPECIAL_OVERWORLD_SEMANTIC_REVISION = 5\n'
+            f'!SPECIAL_OVERWORLD_SEMANTIC_CAPACITY = {capacity}\n'
+            f'!SPECIAL_OVERWORLD_SEMANTIC_ROWS = ${address:06X}\n'
+            f'!SPECIAL_OVERWORLD_SEMANTIC_COUNT = {count}\n'
+            f'!SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE = ${SEMANTIC_CODE_BASE:06X}\n'
+            f'!SPECIAL_OVERWORLD_SEMANTIC_CODE_END = ${SEMANTIC_CODE_LIMIT:06X}\n')
 
 
 def verify_saved_payload(source, compiled):
