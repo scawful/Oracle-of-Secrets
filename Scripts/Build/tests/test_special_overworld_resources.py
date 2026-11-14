@@ -161,8 +161,10 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
                 plan = R.plan_saved_native_terrain(self.source, exported)
                 host = next(area for area in plan['areas'] if area['maps'] == [0x87])
                 rows = {row['tile16_id'] for row in host['remaps']}
-                self.assertEqual(rows, {0, 4, 0xDA4, 0xDA6, 0xE54}
-                                 | ({3} if selected == 0x9C else set()))
+                self.assertEqual(rows, {0, 0xDA4, 0xDA6, 0xE54})
+                overlay_rows = {(r['overlay_map_id'], r['tile16_id']) for r in host['overlay_remaps']}
+                self.assertEqual(overlay_rows, {(0x9F, 4)} |
+                                 ({(0x9C, 3)} if selected == 0x9C else set()))
                 self.assertTrue(host['terrain_plan_ready'])
                 self.assertFalse(plan['full_residency_ready'])
                 self.assertEqual(self.source, original)
@@ -183,6 +185,41 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
                 value['source_rom_sha256'] = R._sha(changed)
                 with self.assertRaisesRegex(ValueError, 'SKY_OVERLAY_' + reason + '_MISMATCH'):
                     R.plan_saved_native_terrain(changed, self.seal(value))
+
+    def test_overlay862_is_separate_from_bridge862_and_blank_entire_timeline(self):
+        read, _ = R._source_sheets(self.source)
+        blank = bytes(64)
+        opaque = bytes([1] * 64)
+        # Frame0 alone would miss the deliberate third-frame color below.
+        sheets = {0: (bytes(4096), [opaque] * 64),
+                  1: (bytes(4096), [blank] * 64),
+                  2: (bytes(4096), [blank] * 64)}
+        sheets[2][1][3] = opaque
+        palette = list(range(256))
+        assets = {(0x8D, 0): dict(palette=dict(words=palette),
+            slots=[dict(sheet_id=0) for _ in range(8)], animation=dict(sheet_id=2))}
+        area = dict(parent_map_id=0x8D, size='small', maps=[0x8D])
+        definitions = bytes(4096 * 8)
+        pages = {(0x8D, 0x862): (0x0800,) * 4,
+                 (0x9C, 0x862): (0x1DC2,) * 4,
+                 (0x9F, 0x862): (0x1DC3,) * 4}
+        packed = R._plan_area(area, {0x8D: [0x862]}, assets, definitions,
+            sheets.__getitem__, page_definitions=pages,
+            overlay_tiles={0x8D: {0x9C: {0x862}, 0x9F: {0x862}}})
+        self.assertEqual(packed['refusals'], [])
+        self.assertEqual(packed['witness']['source_colors_sha256'],
+                         packed['witness']['reconstructed_colors_sha256'])
+        fg = packed['remaps'][0]['target_word']
+        cloud = packed['overlay_remaps'][0]['target_word']
+        rain = packed['overlay_remaps'][4]['target_word']
+        self.assertNotEqual(fg, cloud)
+        self.assertNotEqual(cloud, rain, 'different animated timelines must not alias')
+        for frame in packed['animation']['frame_payloads']:
+            raw = bytes.fromhex(frame['payload_hex'])
+            offset = ((cloud & 1023) - 448) * 32
+            self.assertEqual(raw[offset:offset + 32], bytes(32))
+        self.assertEqual(packed['remaps'][0]['source_word'], 0x0800)
+        self.assertEqual(packed['overlay_remaps'][0]['source_word'], 0x1DC2)
 
     def bound_global(self):
         folder = tempfile.TemporaryDirectory()

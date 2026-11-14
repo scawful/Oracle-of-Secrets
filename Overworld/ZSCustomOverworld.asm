@@ -3096,6 +3096,11 @@ NewOverworld_FinishTransGfx:
     ; The whirlpool code resuses this code so don't do any of the custom stuff if
     ; we are in the whirlpool module.
     LDA.b $11 : CMP.b #$2E : BEQ .whirpool
+if defined("LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY")
+if !ENABLE_SKY_OVERWORLD_ROUTE == 1 && !ENABLE_LYRA_OVERLAY_FIX == 1
+        JSL Oracle_LyraOverlay_HideStale
+endif
+endif
         LDA.w TransGFXModuleFrame : BNE .notFirstFrame
             JSR.w CheckForChangeGraphicsTransitionLoad
 
@@ -3974,7 +3979,15 @@ Overworld_LoadBGColorAndSubscreenOverlay:
     LDA.w #$4020 : STA.b $9C
     LDA.w #$8040 : STA.b $9D
 
+if defined("LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY")
+if !ENABLE_SKY_OVERWORLD_ROUTE == 1 && !ENABLE_LYRA_OVERLAY_FIX == 1
+    JSL.l Oracle_LyraOverlay_ShouldHideSubscreen : BCC .keepSubscreen
+else
     JSL.l Docks_ShouldHideSubscreen : BCC .keepSubscreen
+endif
+else
+    JSL.l Docks_ShouldHideSubscreen : BCC .keepSubscreen
+endif
         JMP.w .noSubscreenAndReturn
     .keepSubscreen
 

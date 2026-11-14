@@ -216,7 +216,7 @@ def _source_sheets(source, authenticated=None):
 
 
 def _plan_area(area, page_tiles, assets, definitions, read_sheet, conditional_tiles=None,
-               page_definitions=None):
+               page_definitions=None, overlay_tiles=None):
     demands, references, claims = {}, [], {}
     for map_id in area['maps']:
         data = assets[map_id, 0]
@@ -224,41 +224,43 @@ def _plan_area(area, page_tiles, assets, definitions, read_sheet, conditional_ti
         tiles = set(page_tiles[map_id])
         if conditional_tiles is not None:
             tiles.update(conditional_tiles.get(map_id, ()))
-        for tile in sorted(tiles):
-            words = native.effective_tile16_words(
-                definitions, page_definitions or {}, map_id, tile)
-            for quadrant, word in enumerate(words):
-                references.append((map_id, tile, quadrant, word))
-                key = (map_id, word)
-                if key in demands:
-                    continue
-                char, bank = word & 1023, (word >> 10) & 7
-                slot, index = divmod(char, 64)
-                _require(slot < 8, 'TERRAIN_OBJ_REFERENCE_UNSUPPORTED')
-                animated = 448 <= char < 480
-                if animated:
-                    selector = data['animation']['sheet_id']
-                    before = read_sheet(selector - 1)[1]
-                    current = read_sheet(selector)[1]
-                    frames = (before[index], before[32 + index], current[index])
-                else:
-                    sheet = data['slots'][slot]['sheet_id']
-                    frames = (bytes(64) if sheet is None else read_sheet(sheet)[1][index],)
-                high = slot in (0, 3, 4, 5) and not animated
-                # The normal loader biases every pixel in these BG sheets,
-                # including source index0: it becomes opaque palette index8.
-                # An absent slot stays transparent because no bias is applied.
-                present = animated or data['slots'][slot]['sheet_id'] is not None
-                indices = tuple(bytes(value | 8 if high and present else value
-                                      for value in frame) for frame in frames)
-                colors = tuple(tuple(None if value == 0 else palette[bank * 16 + value]
-                                     for value in frame) for frame in indices)
-                for frame in indices:
-                    for value in frame:
-                        if value:
-                            claims.setdefault(bank * 16 + value, set()).add(palette[bank * 16 + value])
-                demands[key] = dict(animated=animated, colors=colors,
-                    color_set=frozenset(value for frame in colors for value in frame if value is not None))
+        contexts = [(None, tiles)] + sorted((overlay_tiles or {}).get(map_id, {}).items())
+        for overlay, context_tiles in contexts:
+            for tile in sorted(context_tiles):
+                words = native.effective_tile16_words(
+                    definitions, page_definitions or {}, map_id if overlay is None else overlay, tile)
+                for quadrant, word in enumerate(words):
+                    references.append((map_id, overlay, tile, quadrant, word))
+                    key = (map_id, word)
+                    if key in demands:
+                        continue
+                    char, bank = word & 1023, (word >> 10) & 7
+                    slot, index = divmod(char, 64)
+                    _require(slot < 8, 'TERRAIN_OBJ_REFERENCE_UNSUPPORTED')
+                    animated = 448 <= char < 480
+                    if animated:
+                        selector = data['animation']['sheet_id']
+                        before = read_sheet(selector - 1)[1]
+                        current = read_sheet(selector)[1]
+                        frames = (before[index], before[32 + index], current[index])
+                    else:
+                        sheet = data['slots'][slot]['sheet_id']
+                        frames = (bytes(64) if sheet is None else read_sheet(sheet)[1][index],)
+                    high = slot in (0, 3, 4, 5) and not animated
+                    # The normal loader biases every pixel in these BG sheets,
+                    # including source index0: it becomes opaque palette index8.
+                    # An absent slot stays transparent because no bias is applied.
+                    present = animated or data['slots'][slot]['sheet_id'] is not None
+                    indices = tuple(bytes(value | 8 if high and present else value
+                                          for value in frame) for frame in frames)
+                    colors = tuple(tuple(None if value == 0 else palette[bank * 16 + value]
+                                         for value in frame) for frame in indices)
+                    for frame in indices:
+                        for value in frame:
+                            if value:
+                                claims.setdefault(bank * 16 + value, set()).add(palette[bank * 16 + value])
+                    demands[key] = dict(animated=animated, colors=colors,
+                        color_set=frozenset(value for frame in colors for value in frame if value is not None))
     sets = sorted({row['color_set'] for row in demands.values()},
                   key=lambda values: (-len(values), tuple(sorted(values))))
     bins, assignment, refused = [], {}, []
@@ -311,13 +313,18 @@ def _plan_area(area, page_tiles, assets, definitions, read_sheet, conditional_ti
     animated_ids = {pattern: ANIMATED_SLOTS[index] for index, pattern in enumerate(animated)}
     source_colors, reconstructed = hashlib.sha256(), hashlib.sha256()
     comparisons = 0
-    for map_id, tile, quadrant, word in references:
+    for map_id, overlay, tile, quadrant, word in references:
         key = (map_id, word)
         bank, patterns, pixels = encoded[key]
         char = animated_ids[patterns] if demands[key]['animated'] else static_ids[patterns[0]]
         target_word = (word & 0xE000) | (bank << 10) | char
-        result['remaps'].append(dict(map_id=map_id, tile16_id=tile, quadrant=quadrant,
-                                    source_word=word, target_word=target_word))
+        row = dict(map_id=map_id, tile16_id=tile, quadrant=quadrant,
+                   source_word=word, target_word=target_word)
+        if overlay is None:
+            result['remaps'].append(row)
+        else:
+            row['overlay_map_id'] = overlay
+            result.setdefault('overlay_remaps', []).append(row)
         for original, frame in zip(demands[key]['colors'], pixels):
             restored = tuple(None if value == 0 else palettes[bank - 2][value - 1] for value in frame)
             _require(original == restored, 'COLOR_RECONSTRUCTION_FAILED')
@@ -474,33 +481,39 @@ def _sky_overlay_closure(source, value, tiles, areas, *, experimental_page_tile1
     An export of their directory rows alone does not prove the running loader
     selects the same picture. Refuse disagreement before packing resources.
     """
-    if not any(0x87 in area['maps'] and area['resident_required'] for area in areas):
-        return {}
-    profile = next(page['source_profile'] for page in value['pages']
-                   if page['map_id'] == 0x87)
-    selected = profile['subscreen_overlay']
-    _require(selected in (0x9C, 0xFF), 'SKY_OVERLAY_UNSUPPORTED')
+    hosts = sorted({page for area in areas if area['resident_required']
+                    for page in area['maps'] if page in (0x87, 0x8D, 0x8E, 0x8F)})
+    conditional, overlays_by_host = {}, {}
+    if not hosts:
+        return conditional, overlays_by_host
     tables = {name: (address, width) for name, address, _, _, width
               in native.CURRENT_TABLE_SPECS}
-    address, width = tables['overlay']
-    start = native.pc(address) + 0x87 * width
-    _require(int.from_bytes(source[start:start + width], 'little') == selected,
-             'SKY_OVERLAY_SELECTION_MISMATCH')
     _, _, entries = native.read_native_directory(
         source, experimental_page_tile16=experimental_page_tile16)
-    # Storms overrides even an absent ordinary overlay with9F.
-    overlays = (0x9C, 0x9F) if selected == 0x9C else (0x9F,)
-    for overlay in overlays:
-        for name, family in (('map32_high', 20), ('map32_low', 21)):
-            address, width = tables[name]
-            legacy = native.pc(address) + overlay * width
-            current = native.pc(entries[family][0]) + overlay * width
-            _require(source[legacy:legacy + width] == source[current:current + width],
-                     'SKY_OVERLAY_POINTER_MISMATCH')
-    # Reserve the existing door-open/rock-ground results conservatively; this
-    # is not proof that every possible mutable writer has been closed.
-    return {0x87: set().union(*(tiles[overlay] for overlay in overlays),
-                              (0xDA4, 0xDA6, 0xE54))}
+    profiles = {page['map_id']: page['source_profile'] for page in value['pages']}
+    for host in hosts:
+        selected = profiles[host]['subscreen_overlay']
+        _require(selected in (0x9C, 0xFF), 'SKY_OVERLAY_UNSUPPORTED')
+        address, width = tables['overlay']
+        start = native.pc(address) + host * width
+        _require(int.from_bytes(source[start:start + width], 'little') == selected,
+                 'SKY_OVERLAY_SELECTION_MISMATCH')
+        overlays = (0x9C, 0x9F) if selected == 0x9C else (0x9F,)
+        for overlay in overlays:
+            for name, family in (('map32_high', 20), ('map32_low', 21)):
+                address, width = tables[name]
+                legacy = native.pc(address) + overlay * width
+                current = native.pc(entries[family][0]) + overlay * width
+                _require(source[legacy:legacy + width] == source[current:current + width],
+                         'SKY_OVERLAY_POINTER_MISMATCH')
+        # Overlay picture definitions have their own page context. Their CHR,
+        # animation and palette still come from the actual physical host.
+        # Never union their logical IDs into terrain: page-local $862 is a
+        # bridge on the islands and the transparent fill in overlay $9C.
+        overlays_by_host[host] = {overlay: set(tiles[overlay]) for overlay in overlays}
+        if host == 0x87:
+            conditional[host] = {0xDA4, 0xDA6, 0xE54}
+    return conditional, overlays_by_host
 
 
 def plan_saved_native_terrain(source, exported, *, graphics_root=None,
@@ -578,13 +591,14 @@ def plan_saved_native_terrain(source, exported, *, graphics_root=None,
                      and baseline['slots'] == other['slots']
                      and baseline['animation'] == other['animation'],
                      'BG_PHASE_VARIATION_UNSUPPORTED')
-    conditional_tiles = _sky_overlay_closure(
+    conditional_tiles, overlay_tiles = _sky_overlay_closure(
         source, value, tiles, areas, experimental_page_tile16=experimental_page_tile16)
     _require(all(0 <= tile < len(definitions) // 8
                  for values in conditional_tiles.values() for tile in values),
              'SKY_OVERLAY_TILE_INVALID')
     planned = [_plan_area(area, tiles, assets, definitions, read_sheet,
-                          conditional_tiles=conditional_tiles, page_definitions=page_definitions)
+                          conditional_tiles=conditional_tiles, page_definitions=page_definitions,
+                          overlay_tiles=overlay_tiles)
                for area in areas if area['resident_required']]
     result = dict(schema=PLAN_SCHEMA, source_rom_sha256=_sha(source),
         materialized_map_count=value['materialized_map_count'],
