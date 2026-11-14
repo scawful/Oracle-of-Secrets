@@ -155,7 +155,7 @@ def plan_native_resident_abi(resident_plan, *, tile16_count,
     _require(type(end) is int and end in (160, 192), 'NATIVE_MAP_CAPACITY_INVALID')
     source_areas = resident_plan.get('areas')
     _checked_areas(source_areas, end)
-    pages, areas, blobs, unique = [], [], [], {}
+    pages, overlay_pages, areas, blobs, unique = [], [], [], [], {}
 
     def blob(raw, label, role):
         # Role separation keeps a resource from aliasing executable lookup data.
@@ -203,21 +203,30 @@ def plan_native_resident_abi(resident_plan, *, tile16_count,
             animation_labels=frame_labels, animation_byte_count=len(frames[0]),
             animation_wram=[0x7EA680, 0x7EAA80, 0x7EAE80],
             animation_vram_word_address=0x3C00, native_animation_upload_byte_count=0x400))
-        page_rows = {page: {} for page in area['maps']}
-        for remap in area['remaps']:
+        page_rows = {(page, None): {} for page in area['maps']}
+        for remap in area['remaps'] + area.get('overlay_remaps', []):
+            overlay = remap.get('overlay_map_id')
+            extra = {'overlay_map_id'} if overlay is not None else set()
+            if extra:
+                _require(remap.get('map_id') in (0x87, 0x8D, 0x8E, 0x8F)
+                         and overlay in (0x9C, 0x9F), 'NATIVE_OVERLAY_CONTEXT_INVALID')
+                page_rows.setdefault((remap['map_id'], overlay), {})
             _require(type(remap) is dict and set(remap) == {
-                'map_id', 'tile16_id', 'quadrant', 'source_word', 'target_word'},
+                'map_id', 'tile16_id', 'quadrant', 'source_word', 'target_word'} | extra,
                 'NATIVE_REMAP_INVALID')
             page, tile, quadrant = (remap[name] for name in ('map_id', 'tile16_id', 'quadrant'))
-            _require(type(page) is int and page in page_rows
+            _require(type(page) is int and page in area['maps']
                      and type(tile) is int and 0 <= tile < tile16_count
                      and type(quadrant) is int and 0 <= quadrant < 4
                      and all(type(remap[name]) is int and 0 <= remap[name] <= 0xFFFF
                              for name in ('source_word', 'target_word')), 'NATIVE_REMAP_INVALID')
-            quadrants = page_rows[page].setdefault(tile, {})
+            quadrants = page_rows[page, overlay].setdefault(tile, {})
             _require(quadrant not in quadrants, 'NATIVE_REMAP_DUPLICATE')
             quadrants[quadrant] = remap['target_word']
-        for page, rows in sorted(page_rows.items()):
+        for (page, overlay), rows in sorted(page_rows.items(),
+                                          key=lambda item: (item[0][0], item[0][1] or 0)):
+            context = f'Page' if overlay is None else f'Overlay{overlay:02X}'
+            destination = pages if overlay is None else overlay_pages
             _require(0 < len(rows) and all(set(values) == set(range(4))
                      for values in rows.values()), 'NATIVE_ROWS_OR_QUADRANTS_INVALID')
             # A page key remains a logical Tile16 identity. Only its display
@@ -243,19 +252,23 @@ def plan_native_resident_abi(resident_plan, *, tile16_count,
                 directory[block] = block_index
                 leaves.extend(raw)
             index = bytes(directory + leaves)
-            index_label = blob(index, f'LyraResidentPageIndex_{page:02X}', 'page_index')
-            words_label = blob(bytes(words), f'LyraResidentPageWords_{page:02X}', 'page_words')
-            pages.append(dict(map_id=page, area_index=area_index, row_count=len(words) // 8 - 1,
+            index_label = blob(index, f'LyraResident{context}Index_{page:02X}', 'page_index')
+            words_label = blob(bytes(words), f'LyraResident{context}Words_{page:02X}', 'page_words')
+            destination.append(dict(map_id=page, area_index=area_index, row_count=len(words) // 8 - 1,
                 block_count=len(leaf_rows), index_label=index_label, words_label=words_label,
-                index_alias=f'LyraResidentPageIndex_{page:02X}',
-                words_alias=f'LyraResidentPageWords_{page:02X}', tile16_ids=sorted(rows)))
+                index_alias=f'LyraResident{context}Index_{page:02X}',
+                words_alias=f'LyraResident{context}Words_{page:02X}', tile16_ids=sorted(rows)))
             if shared_display_rows:
-                pages[-1]['shared_display_rows'] = True
+                destination[-1]['shared_display_rows'] = True
+            if overlay is not None:
+                destination[-1]['overlay_map_id'] = overlay
     pages.sort(key=lambda row: row['map_id'])
     counts = {role: sum(row['byte_count'] for row in blobs if row['role'] == role)
               for role in ('page_index', 'page_words', 'static_chr', 'animation', 'palette')}
     counts['page_directory'] = (end - FIRST) * NATIVE_DIRECTORY_STRIDE
     counts['animation_directory'] = (end - FIRST) * NATIVE_ANIMATION_DIRECTORY_STRIDE
+    if overlay_pages:
+        counts['overlay_directory'] = (end - FIRST) * 16
     result = dict(kind=NATIVE_KIND, abi_version=NATIVE_ABI_VERSION,
         source_plan_sha256=supplied, materialized_map_count=end, tile16_count=tile16_count,
         directory_label='LyraResidentPageDirectory', directory_stride=NATIVE_DIRECTORY_STRIDE,
@@ -271,6 +284,8 @@ def plan_native_resident_abi(resident_plan, *, tile16_count,
         missing_row_semantics='unqualified native fallback; resource closure remains unknown',
         selected=False, allocation_granted=False, publication_authorized=False,
         ordinary_build_ready=False, runtime_admission=False, compiled_consumers_verified=False)
+    if overlay_pages:
+        result['overlay_pages'] = sorted(overlay_pages, key=lambda row: (row['map_id'], row['overlay_map_id']))
     if experimental:
         result.update(kind=EXPERIMENTAL_NATIVE_KIND,
                       experimental_source=_experimental_source(resident_plan))
@@ -353,7 +368,16 @@ def validate_native_resident_abi(native_plan, *, experimental_page_tile16=False)
                  and area['animation_byte_count'] % 32 == 0
                  and all(word <= 0x7FFF for word in struct.unpack('<128H', by_label[area['palette_label']])),
                  'NATIVE_RESOURCE_LAYOUT_INVALID')
-    for page in pages:
+    overlay_pages = native_plan.get('overlay_pages', [])
+    _require(type(overlay_pages) is list and all(type(row) is dict for row in overlay_pages),
+             'NATIVE_OVERLAY_CONTEXT_INVALID')
+    contexts = [(row.get('map_id'), row.get('overlay_map_id')) for row in overlay_pages]
+    _require(contexts == sorted(set(contexts)) and all(host in selected and
+             host in (0x87, 0x8D, 0x8E, 0x8F) and overlay in (0x9C, 0x9F)
+             for host, overlay in contexts), 'NATIVE_OVERLAY_CONTEXT_INVALID')
+    for page in pages + overlay_pages:
+        overlay = page.get('overlay_map_id')
+        context = 'Page' if overlay is None else f'Overlay{overlay:02X}'
         index, words = (by_label.get(page.get(key)) for key in ('index_label', 'words_label'))
         count, blocks, area = (page.get(key) for key in ('row_count', 'block_count', 'area_index'))
         _require(type(count) is int and 0 < count <= 255
@@ -362,8 +386,8 @@ def validate_native_resident_abi(native_plan, *, experimental_page_tile16=False)
                  and page['map_id'] in areas[area]['maps']
                  and by_role.get(page.get('index_label')) == 'page_index'
                  and by_role.get(page.get('words_label')) == 'page_words'
-                 and page.get('index_alias') == f"LyraResidentPageIndex_{page['map_id']:02X}"
-                 and page.get('words_alias') == f"LyraResidentPageWords_{page['map_id']:02X}"
+                 and page.get('index_alias') == f"LyraResident{context}Index_{page['map_id']:02X}"
+                 and page.get('words_alias') == f"LyraResident{context}Words_{page['map_id']:02X}"
                  and index is not None and len(index) == 128 + blocks * 32
                  and words is not None and len(words) == (count + 1) * 8
                  and words[:8] == bytes(8), 'NATIVE_PAGE_EXTENT_INVALID')
@@ -398,6 +422,8 @@ def validate_native_resident_abi(native_plan, *, experimental_page_tile16=False)
                        for role in ('page_index', 'page_words', 'static_chr', 'animation', 'palette')}
     expected_counts['page_directory'] = (end - FIRST) * NATIVE_DIRECTORY_STRIDE
     expected_counts['animation_directory'] = (end - FIRST) * NATIVE_ANIMATION_DIRECTORY_STRIDE
+    if overlay_pages:
+        expected_counts['overlay_directory'] = (end - FIRST) * 16
     _require(native_plan.get('byte_counts') == expected_counts
              and native_plan.get('unaligned_byte_count') == sum(expected_counts.values()),
              'NATIVE_BYTE_COUNT_INVALID')
@@ -513,6 +539,8 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
     directory = place(native_plan['directory_label'], bytes(page_count * NATIVE_DIRECTORY_STRIDE), 'page_directory')
     animation_directory = place(native_plan['animation_directory_label'],
         bytes(page_count * NATIVE_ANIMATION_DIRECTORY_STRIDE), 'animation_directory')
+    overlay_directory = (place('LyraResidentOverlayDirectory', bytes(page_count * 16),
+                               'overlay_directory') if native_plan.get('overlay_pages') else None)
     for blob in native_plan['blobs']:
         place(blob['label'], by_label[blob['label']], blob['role'])
     addresses = {row['label']: row['snes'] for row in placements}
@@ -553,6 +581,16 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
                   + area['animation_byte_count'].to_bytes(2, 'little'))
         at = index * NATIVE_ANIMATION_DIRECTORY_STRIDE
         animation_raw[at:at + NATIVE_ANIMATION_DIRECTORY_STRIDE] = record
+    if overlay_directory is not None:
+        overlay_raw = bytearray(page_count * 16)
+        for page in native_plan['overlay_pages']:
+            at = (page['map_id'] - FIRST) * 16 + (8 if page['overlay_map_id'] == 0x9F else 0)
+            overlay_raw[at:at + 8] = (addresses[page['index_label']].to_bytes(3, 'little')
+                + addresses[page['words_label']].to_bytes(3, 'little')
+                + bytes((page['area_index'], page['row_count'])))
+        offset = overlay_directory['binary_offset']
+        binary[offset:offset + len(overlay_raw)] = overlay_raw
+        overlay_directory['sha256'] = _sha(overlay_raw)
     binary[:len(directory_raw)] = directory_raw
     directory['sha256'] = _sha(directory_raw)
     offset = animation_directory['binary_offset']
@@ -565,7 +603,7 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
                   f'incbin "{binary_path}":${start:X}..${start+size:X}',
                   f'{row["label"]}_End:',
                   f'assert {row["label"]}>>16 == ({row["label"]}_End-1)>>16']
-    for page in native_plan['pages']:
+    for page in native_plan['pages'] + native_plan.get('overlay_pages', []):
         for alias, label in ((page['index_alias'], page['index_label']),
                              (page['words_alias'], page['words_label'])):
             if alias != label:
@@ -576,6 +614,8 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
         + f'!LYRA_CURRENT_RESIDENT_ABI_VERSION = {NATIVE_ABI_VERSION}\n'
         + f'!LYRA_CURRENT_RESIDENT_TILE16_COUNT = {native_plan["tile16_count"]}\n'
         + f'!LYRA_CURRENT_RESIDENT_DIRECTORY = ${directory["snes"]:06X}\n')
+    if overlay_directory is not None:
+        constants += f'!LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY = ${overlay_directory["snes"]:06X}\n'
     constants += (f'!LYRA_CURRENT_RESIDENT_ANIMATION_DIRECTORY = ${animation_directory["snes"]:06X}\n')
     constants += ''.join(f'!GfxRT_{key} = ${value:04X}\n' for key, value in dict(
         TRANSFER_CONSTANTS, Bank=transfer['snes'] >> 16, ParentCount=end).items())

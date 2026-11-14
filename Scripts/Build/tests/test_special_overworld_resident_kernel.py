@@ -97,6 +97,7 @@ class SpecialOverworldResidentKernelTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             values = constants()
             values['ENABLE_SKY_OVERWORLD_ROUTE'] = 1
+            values['LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY'] = 0x4E9000
             result, image, labels = assemble(directory, original, values)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertLessEqual(labels['Lyra_ResidentAtlasCodeEnd'],

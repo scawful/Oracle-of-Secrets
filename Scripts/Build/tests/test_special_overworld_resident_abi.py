@@ -45,6 +45,36 @@ class ResidentAbiTest(unittest.TestCase):
         value[key] = R._sha(R._json_bytes({k: v for k, v in value.items() if k != key}))
         return value
 
+    def test_overlay_directory_is_host_and_picture_scoped_and_refuses_missing_quadrant(self):
+        fixture = F.SavedNativeTerrainResourcesTest()
+        fixture.setUp()
+        exported = fixture.sky_overlay_export()
+        plan = R.plan_saved_native_terrain(fixture.source, exported)
+        abi = A.plan_native_resident_abi(plan, tile16_count=4096)
+        blobs = A.validate_native_resident_abi(abi)
+        self.assertEqual([(p['map_id'], p['overlay_map_id']) for p in abi['overlay_pages']],
+                         [(0x87, 0x9C), (0x87, 0x9F)])
+        emission = A.emit_native_resident_abi(abi, data_pc=0x300000,
+            capacity=0x10000, preimage=bytes(0x10000))
+        records = {p['label']: p for p in emission['placements']}
+        directory = records['LyraResidentOverlayDirectory']
+        payload = bytes.fromhex(emission['payload_hex'])
+        raw = payload[directory['binary_offset']:directory['binary_offset'] + directory['byte_count']]
+        for page in range(128, 192):
+            for ordinal in range(2):
+                record = raw[(page - 128) * 16 + ordinal * 8: (page - 128) * 16 + ordinal * 8 + 8]
+                if page != 0x87:
+                    self.assertEqual(record, bytes(8))
+                else:
+                    expected = abi['overlay_pages'][ordinal]
+                    self.assertEqual(int.from_bytes(record[:3], 'little'), records[expected['index_label']]['snes'])
+                    self.assertEqual(int.from_bytes(record[3:6], 'little'), records[expected['words_label']]['snes'])
+        broken = copy.deepcopy(plan)
+        next(a for a in broken['areas'] if a['parent_map_id'] == 0x87)['overlay_remaps'].pop()
+        self.reseal(broken, 'plan_sha256')
+        with self.assertRaisesRegex(ValueError, 'QUADRANTS_INVALID'):
+            A.plan_native_resident_abi(broken, tile16_count=4096)
+
     def test_both_capacities_keep_physical_page_lookup_and_sparse_fallback(self):
         for capacity in (160, 192):
             with self.subTest(capacity=capacity):
