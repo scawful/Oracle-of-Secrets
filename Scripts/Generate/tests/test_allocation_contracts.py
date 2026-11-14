@@ -133,6 +133,43 @@ class OwnershipTests(unittest.TestCase):
         self.assertEqual(base_block((ROOT/'Core/symbols.asm').read_text(),'Boat_Marker'),(0x7E1ECB,19))
 
 
+    def test_real_palette_history_is_contained_without_hiding_other_owners(self):
+        real=read_ledger(ROOT/'Config/allocation_ownership.json')
+        ids=('symbols_wram_block','native_special_palette_hole_cache')
+        data=copy.deepcopy(real)
+        data['claims']=[c for c in data['claims'] if c['id'] in ids]
+        self.assertEqual(ownership_conflicts(data,{},proposed=True)[0],[])
+        block,field=data['claims']
+        self.assertTrue(block['container'])
+        field['size']=block['base']+block['size']-field['base']+1
+        with self.assertRaisesRegex(AllocationError,'invalid containment'):
+            ownership_conflicts(data,{},proposed=True)
+        field['size']=26
+        data['claims'].append(claim('unrelated',field['base'],1))
+        self.assertEqual(len(ownership_conflicts(data,{},proposed=True)[0]),2)
+
+    def test_current_inventory_and_checkpoint_reservations_are_source_bound(self):
+        data=read_ledger(ROOT/'Config/allocation_ownership.json')
+        expected={'ByrnaOwned':(0x7EF3AC,1),'BombchuOwned':(0x7EF3AD,1),
+                  'SwitchHookOwned':(0x7EF3AE,1),'GaroMaskOwned':(0x7EF3AF,1),
+                  'BombchuAmmo':(0x7EF3B0,1),'RegionalCheckpointSchema':(0x7EF3B4,1),
+                  'RegionalCheckpointEpoch':(0x7EF3B5,1),
+                  'RegionalCheckpointKey':(0x7EF3B6,2),
+                  'RegionalCheckpointResumeIntent':(0x7EF3B8,1)}
+        data['claims']=[c for c in data['claims'] if c['id'] in expected]
+        self.assertEqual({c['id'] for c in data['claims']},set(expected))
+        data['sources']={'shared:Core/sram.asm':data['sources']['shared:Core/sram.asm']}
+        self.assertTrue(source_evidence(data,{'shared':ROOT}))
+        for c in data['claims']:
+            with self.subTest(owner=c['id']):
+                self.assertEqual((c['base'],c['size']),expected[c['id']])
+                self.assertEqual((c['status'],c['condition']),('shared',{}))
+                self.assertEqual(c['binding']['symbol'],c['id'])
+                collision=claim('invalid_new_owner',c['base']+c['size']-1,1)
+                self.assertEqual(len(ownership_conflicts(ledger(c,collision),{})[0]),1)
+        self.assertEqual(ownership_conflicts(data,{})[0],[])
+
+
 class TableTests(unittest.TestCase):
     def test_wla_labels_exclude_address_to_line_records(self):
         with tempfile.TemporaryDirectory() as directory:
