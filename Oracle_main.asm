@@ -51,11 +51,16 @@ assert !SPECIAL_OVERWORLD_PALETTE_ENABLED == 0 || !SPECIAL_OVERWORLD_PALETTE_ENA
 ; The input descriptor selects native readers; stale cache files cannot
 ; activate them for a direct legacy assembly. Build regenerates this include.
 if read4($28F000) == $4F534F4F && read4($28F004) == $32393157
-if read2($28F008) == $0003 || read2($28F008) == $0004
+if read2($28F008) == $0003 || read2($28F008) == $0004 || read2($28F008) == $0005
   assert canreadfile1(".cache/special_overworld_reader_constants.asm", 0), "Run build_rom.sh to generate native reader constants"
   incsrc ".cache/special_overworld_reader_constants.asm"
   assert !SPECIAL_OVERWORLD_NATIVE == 1, "Native reader constants do not match the selected ROM"
   assert read4($28F01C) == !SPECIAL_OVERWORLD_DIRECTORY_CRC, "Native reader constants are stale; run build_rom.sh"
+  if read2($28F008) == $0005
+    assert !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1, "Revision5 requires explicit semantic Build admission"
+    assert defined("SPECIAL_OVERWORLD_SEMANTIC_REVISION"), "Revision5 semantic bindings are missing"
+    assert !SPECIAL_OVERWORLD_SEMANTIC_REVISION == 5, "Revision5 semantic bindings have the wrong format"
+  endif
 endif
 endif
 if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
@@ -239,7 +244,7 @@ if !SPECIAL_OVERWORLD_NATIVE == 1
   incsrc "Overworld/special_overworld_resident.asm"
   incsrc "Overworld/special_overworld_graphics.asm"
   incsrc "Overworld/special_overworld_palette.asm"
-  if read2($28F008) == $0004
+  if read2($28F008) == $0004 || read2($28F008) == $0005
     assert defined("SPECIAL_OVERWORLD_NATIVE_COMPILED"), "Run build_rom.sh to compile saved native resources"
     assert !SPECIAL_OVERWORLD_NATIVE_COMPILED == 1
   endif

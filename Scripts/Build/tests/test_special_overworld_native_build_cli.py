@@ -5,6 +5,8 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
+import shutil
+import struct
 import sys
 import tempfile
 from types import SimpleNamespace
@@ -19,6 +21,64 @@ SPEC = importlib.util.spec_from_file_location('native_build_cli_fixture',
     Path(__file__).with_name('test_special_overworld_native_build.py'))
 F = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(F)
+
+
+@unittest.skipUnless(shutil.which('asar'), 'Asar required for actual entry dispatch')
+class NativeAssemblyEntryTest(unittest.TestCase):
+    def assemble(self, revision, *, semantic=0, semantic_revision=5,
+                 compiled=1, cached=True, stale=False, native=True):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            image = bytearray(0x400000)
+            if native:
+                image[0x147000:0x147008] = b'OOSOW192'
+                struct.pack_into('<H', image, 0x147008, revision)
+                struct.pack_into('<I', image, 0x14701C, 0x12345678)
+            rom = root / 'probe.sfc'
+            rom.write_bytes(image)
+            if cached:
+                (root / '.cache').mkdir()
+                (root / '.cache/special_overworld_reader_constants.asm').write_text(
+                    '!SPECIAL_OVERWORLD_NATIVE = 1\n'
+                    f'!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = {semantic}\n'
+                    f'!SPECIAL_OVERWORLD_SEMANTIC_REVISION = {semantic_revision}\n'
+                    f'!SPECIAL_OVERWORLD_NATIVE_COMPILED = {compiled}\n'
+                    f'!SPECIAL_OVERWORLD_DIRECTORY_CRC = ${0 if stale else 0x12345678:08X}\n')
+            main = (Path(__file__).resolve().parents[3] / 'Oracle_main.asm').read_text()
+            start = main.index('if read4($28F000)')
+            end = main.index('if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1', start)
+            # Execute the actual dispatch and actual later compiled-format guard.
+            # Other game bodies are irrelevant to this hermetic admission proof.
+            compiled_start = main.index('  if read2($28F008)',
+                                        main.index('incsrc "Overworld/special_overworld_palette.asm"'))
+            compiled_end = main.index('  if !SPECIAL_OVERWORLD_NATIVE_COMPILED == 1', compiled_start)
+            source = ('lorom\n!SPECIAL_OVERWORLD_NATIVE = 0\n'
+                      '!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = 0\n'
+                      + main[start:end] + '\n'
+                      + ('assert !SPECIAL_OVERWORLD_NATIVE == 1\n' if native else
+                         'assert !SPECIAL_OVERWORLD_NATIVE == 0\n')
+                      + main[compiled_start:compiled_end]
+                      + '\norg $518000\ndb $A5\n')
+            asm = root / 'probe.asm'
+            asm.write_text(source)
+            result = subprocess.run([shutil.which('asar'), '--no-title-check',
+                                     str(asm), str(rom)], cwd=root,
+                                    capture_output=True, text=True)
+            return result
+
+    def test_actual_entry_admits_legacy_and_explicit_revision5_only(self):
+        for revision in (3, 4):
+            result = self.assemble(revision)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        result = self.assemble(5, semantic=1)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        result = self.assemble(0, native=False)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for options in (dict(semantic=0), dict(semantic=1, semantic_revision=4),
+                        dict(semantic=1, compiled=0), dict(semantic=1, cached=False),
+                        dict(semantic=1, stale=True)):
+            result = self.assemble(5, **options)
+            self.assertNotEqual(result.returncode, 0, options)
 
 
 class NativeBuildCliTest(unittest.TestCase):

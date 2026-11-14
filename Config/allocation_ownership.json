@@ -210,7 +210,7 @@
     "shared:Oracle_main.asm": {
       "source_set": "shared",
       "path": "Oracle_main.asm",
-      "sha256": "4520934680df50f66a56e3cea1a42180d8b93d34bdd60c2938218543f6449934"
+      "sha256": "d76673affda20a9b3b986b6ba540de4a93dfd15fc614fbd3442fcd905f1a06d8"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
