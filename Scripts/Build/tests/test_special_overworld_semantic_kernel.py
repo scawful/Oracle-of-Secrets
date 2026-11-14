@@ -10,6 +10,7 @@ RUNNER=os.environ.get('OOS_65816_RUNNER')
 ROWS=0x4F8000
 CODE=0x4DC800 # synthetic test extent only; NOT a production allocation
 CASES=[]
+WEST_LANDING_TYPES_HEX='01272727272700200101010101010101010101010101002027272701006400010101010120010000272727000000000100000001010100000200020000000000010101011a0127010102016527002727272701181a01272701270227272727272727270101012727022700272727272727272701010102272700002727272727016500000001186501010048006565020101000001011065020122480065650248000000652727002722272700272727000000000044200001220144000000000202020201020202020202000002020002010202000100020202020201000200020102460001020200020201000000000101020201010200020202000200000002024201010202010200002200000000010202020202020202020122000000000202020265020202020100000000000002020202650202020201000000000000010202010201010200010100000001000201000201020101020201000000000001010101010101010202220000000000010243010101010102020200000000005050540e57575656005253004040484850505400572a56560152530040405748270252530201121855550000480002002702525309011a10555500004802020008080909292902010202020202081a020808090902020901090909480901004b0202020008020200000000010100200002290002020202002201010100000800'
 def row(page,tile,words):return struct.pack('<6H',page,tile,*words)
 def word(ram,at,value):ram[at:at+2]=value.to_bytes(2,'little')
 def values(count,capacity=192):
@@ -172,6 +173,34 @@ class SemanticKernelTest(unittest.TestCase):
   a=self.build([row(0x84,7,(1,2,3,4))],sky=True)
   ram=bytearray(65536);word(ram,0x8A,0x83);word(ram,0x70A,0x200);word(ram,0x70E,0x40);word(ram,0x2000,7)
   r,out,b=a.call(0x00882E,p=0,db=0,d=0,ram=ram);self.assertEqual(r['registers']['a']&255,0x27);self.assertEqual(int.from_bytes(out[6:8],'little'),a.global_words[0])
+ def test_actual_collision_west_landing_preserves_old37e(self):
+  # Actual retained $8C tile37E: the new shared Sky attrs would yield
+  # 20/20/27/20 instead of the accepted four walkable40 quarters.
+  words=(0x198C,0x198D,0x199C,0x199D)
+  tables={f.name:f.snes for f in R.N.current_table_layout(R.N.TABLE_BASE)}
+  fixes=[]
+  for page in (0x8C,0x8D):
+   fixes.extend(((tables['parent']+page,bytes([page])),(tables['area_size']+page,b'\0')))
+  a=self.build([row(page,0x37E,words) for page in (0x8C,0x8D,0x8E)],sky=True,image_updates=fixes)
+  self.assertEqual(a.image[R.N.pc(a.labels['SkyTileTypes_WestLanding']):R.N.pc(a.labels['SkyTileTypes_WestLanding'])+512],bytes.fromhex(WEST_LANDING_TYPES_HEX))
+  for page,expected in ((0x8C,(0x40,)*4),(0x8D,(0x20,0x20,0x27,0x20)),(0x8E,(0x20,0x20,0x27,0x20))):
+   for q in range(4):
+    ram=bytearray(65536);word(ram,0x8A,page);word(ram,0x70A,0x200);word(ram,0x70E,0x40);word(ram,0x2000,0x37E)
+    word(ram,0,8 if q>=2 else 0);word(ram,2,q&1)
+    r,out,b=a.call(0x00882E,p=0,db=0,d=0,ram=ram)
+    self.assertEqual(r['registers']['a']&255,expected[q]);self.assertEqual(r['registers']['sp'],b['sp'])
+    self.assertEqual(out[7],words[q]>>8)
+  for page,indoors in ((0x83,0),(0x8C,1)):
+   ram=bytearray(65536);word(ram,0x8A,page);ram[0x1B]=indoors;word(ram,0x70A,0x200);word(ram,0x70E,0x40);word(ram,0x2000,0x37E)
+   r,out,b=a.call(0x00882E,p=0,db=0,d=0,ram=ram)
+   self.assertEqual(r['registers']['a']&255,0x27);self.assertEqual(r['registers']['sp'],b['sp'])
+ def test_west_landing_dispatch_geometry_and_full_abi(self):
+  tables={f.name:f.snes for f in R.N.current_table_layout(R.N.TABLE_BASE)}
+  for parent,size,expected in ((0x8C,0,0x40),(0x84,0,0x20),(0x8C,1,0x20),(0x8C,4,0x20)):
+   a=self.build([row(0x8C,7,(1,2,3,4))],sky=True,image_updates=((tables['parent']+0x8C,bytes([parent])),(tables['area_size']+0x8C,bytes([size]))))
+   ram=bytearray(65536);word(ram,0x8A,0x8C)
+   r,out,b=a.call('SkyTileType',x=0x18C,y=0xABCD,p=0xCD,db=0x42,d=0x120,ram=ram)
+   self.assertEqual(r['registers']['a']&255,expected);self.preserved(r,b,ram,out,nz=True)
 if __name__=='__main__':
  try:unittest.main()
  finally:
