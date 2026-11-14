@@ -306,5 +306,63 @@
       "note": "Dais elbow 0x108/0x003/0x10C/0x063/0x108, then cut-in stair 0x132 overwrites wall 21.",
       "contact_sha256": "b99df6ff661ce1f6d12715ab3e2eac881dc54472a55261516ed8cdf1fef44691"
     }
+  ],
+  "dry_steps": [
+    {
+      "name": "north_merged_dry_step_132",
+      "object_id": "0x132",
+      "anchor": "object origin, tile8 units",
+      "walk_plane": 0,
+      "step_attribute": "0x1D",
+      "landing_attribute": "0x00",
+      "stamp": {
+        "0": [[0, 0, "0x02"], [1, 0, "0x00"], [2, 0, "0x00"], [3, 0, "0x02"],
+              [0, 1, "0x01"], [3, 1, "0x01"],
+              [1, 1, "0x1D"], [2, 1, "0x1D"], [1, 2, "0x1D"], [2, 2, "0x1D"]],
+        "1": [[0, 3, "0x02"], [1, 3, "0x00"], [2, 3, "0x00"], [3, 3, "0x02"],
+              [0, 2, "0x01"], [3, 2, "0x01"],
+              [1, 1, "0x1D"], [2, 1, "0x1D"], [1, 2, "0x1D"], [2, 2, "0x1D"]]
+      },
+      "core": [[1, 1], [2, 1], [1, 2], [2, 2]],
+      "landings": {"north": [[1, 0], [2, 0]], "south": [[1, 3], [2, 3]]},
+      "slots": 4,
+      "may_follow": ["0x136"],
+      "refuse": {
+        "0x130": "North multi-layer stair: $01BB44 picks its 1F stamp before 1D and sets $044A=0 (plane/room change); it also restarts the shared $06B8 slots.",
+        "0x131": "North multi-layer stair: $01BB4E picks its 1E stamp before 1D and sets $044A=1; it also restarts the shared $06B8 slots.",
+        "0x133": "Wet merged stair: outside dam tag 1B it fills $06B8 from $0442=0 (overwrites 0x132 slots) and stamps 03/0A/08 water, not 1D.",
+        "0x135": "Water hop A: outside dam tag 1B it fills $06B8 from $0444, which 0x132 never advances, so it overwrites the first 0x132 slot in either order.",
+        "0xF9B": "South multi-layer stair (usdasm 21B): $01BD30 later sets $044A=0, so 1D crossings would change $EE/room.",
+        "0xF9C": "South multi-layer stair (usdasm 21C): $01BD3A later sets $044A=1, so 1D crossings would change $EE.",
+        "0x0D8": "Water overlay A: $01956D moves wet-stair counters into the 0x132 list by flood flag at runtime.",
+        "0x0DA": "Water overlay B: $019669 moves wet-stair counters into the 0x132 list by flood flag at runtime.",
+        "0x137": "Dam flood gate: RoomTag_OperateWaterFlooring rewrites the room at runtime; a static collision replay does not hold."
+      },
+      "source": [
+        "usdasm bank_01 $0184D4: object 0x132 = RoomDraw_AutoStairs_North_MergedLayer_A",
+        "usdasm bank_01 $01A2C7-$01A2DC: 0x132 appends its collision index at $06B8,$0440 and sets $0446/$0448 to the same count",
+        "usdasm bank_01 $01BB3F-$01BBAA: with $043C=$043E=0 and $0440>0, stamp 1D cores and set $044A=2",
+        "usdasm bank_01 $01BBAC-$01BDA7: only south stairs 0xF9B/0xF9C (usdasm 21B/21C) can later rewrite $044A to 0/1; every other writer stores 2",
+        "usdasm wram $7E06B8-$7E06BF: four NSTAIR slots",
+        "usdasm bank_07 $07D812/$07DC72: 1D = TileBehavior_NorthSingleLayerStairs; $07BCA0 enters module 07/08 on vertical movement",
+        "usdasm bank_02 $028F35-$028F7A: Module07_08 skips $EE writes when $044A=2; no room change",
+        "Oracle source (origin/master 6d0ffbcc): no patch to these routines or the 1D vector"
+      ],
+      "measured": [
+        {
+          "label": "Zora D4 room 0x25 Low v5, scratch RAM collision replay (Codex-Zora-Delivery CONTACT_FACTS_V5)",
+          "stream_sha256": "917d061e96d303b8d34f15cee482083ec77ae9e8784e6a36a3d1778de153963d",
+          "collision_sha256": "fe6a99c9a23cc9c1f8a6997b712d415deb014447ee2a52d9c18fd4f26420b4c3",
+          "steps": [[30, 25], [12, 39]]
+        }
+      ],
+      "not_certified": [
+        "Plane 1 crossings, horizontal entry and any 1D cell outside an admitted 0x132 core",
+        "Wet 0x133/0x135/0x136 contacts, water hops and the High surface collision",
+        "Runtime collision rewrites (Oracle D4 water state, room tags, custom collision tables)",
+        "Wall cuts around the step: use a measured stair-mouth family for those",
+        "Native traversal, climb animation end position, camera, NPC/body, throw arc and hookshot ($07D576 swaps $EE)"
+      ]
+    }
   ]
 }

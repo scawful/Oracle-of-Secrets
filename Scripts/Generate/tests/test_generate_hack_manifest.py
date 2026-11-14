@@ -1901,11 +1901,15 @@ class RepositoryProjectSafetyTest(unittest.TestCase):
                 lines[j].strip() for j in range(i - 1, -1, -1) if lines[j].strip()
             )
             self.assertEqual(previous, 'cd "$repo_root"', lines[i])
-        self.assertIn(
-            '--out-asm "$repo_root/Dungeons/generated/'
-            'water_gate_runtime_tables.asm"',
-            build,
-        )
+        producer_call = 'python3 "$repo_root/Scripts/Rooms/d4_water_rooms.py"'
+        self.assertEqual(build.count(producer_call), 1)
+        producer_args = build[build.index(producer_call):].split("\n    )", 1)[0]
+        for argument in ('--derive-saved', '--root "$repo_root"',
+                         '--source "$water_table_rom_arg"',
+                         '--output "$repo_root/Dungeons/generated"',
+                         '--z3ed "$native_z3ed"'):
+            self.assertIn(argument, producer_args)
+        self.assertNotIn('--source "$patched_rom"', producer_args)
         self.assertIn(
             '--out-asm "$repo_root/Dungeons/generated/water_fill_table.asm"',
             build,

@@ -494,7 +494,7 @@ class CustomCollisionSourceContractTest(unittest.TestCase):
         self.assertNotIn('yaze_rom_rel=', build)
         self.assertLess(
             build.index(validator_call),
-            build.index("generate_water_gate_runtime_tables.py"),
+            build.index("d4_water_rooms.py"),
         )
         self.assertLess(
             build.index(validator_call),

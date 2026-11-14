@@ -72,4 +72,38 @@ ALTTP: 2 corner cells (source 5,22/5,23) render differently after the move altho
 traced final owner and tile words (`0x108`, tiles `0x53`/`0x43`) are identical. The
 difference is renderer content outside the object trace.
 
+## Dry steps: `steps` (library `dry_steps`)
+
+The scene_director pathfinder treats every `1D` cell as a room change. `steps` admits a
+`1D` cell as a same-plane dry step only inside the 2x2 core of a north merged-layer
+stair `0x132`, and only when the source conditions hold for the whole room state:
+
+1. no `0x130`/`0x131` (their `1F`/`1E` stamp wins and sets `$044A` to 0/1) and no south
+   `0xF9B`/`0xF9C` (they later set `$044A` to 0/1). Then `$044A=2`, and
+   `Module07_08` (`$028F35`) climbs without touching `$EE` or the room;
+2. no wet `0x133`/`0x135`: they restart the shared `$06B8` stair slots and overwrite a
+   `0x132` slot in either order. Wet hop `0x136` may follow every `0x132`; drawn before
+   one it is `BLOCKED STEP_SLOT_ORDER`. At most 4 slots;
+3. no `0x0D8`/`0x0DA`/`0x137`: water flags move stair counters or rewrite the room at runtime;
+4. the collision replay matches the native `0x132` stamp on both planes, and both
+   landings are `00` on plane 0.
+
+Any refusal returns `UNSUPPORTED` (or `BLOCKED`) with no admitted cells. Other `1D` cells
+are listed as `unclassified_step_cells` and stay transitions.
+
+```bash
+python3 Scripts/Rooms/dungeon_contact_translator.py steps --stream 25-low.bin \
+  --collision 25-low.collision.bin --route 456,120 112,272 --pathfinder pathfind.py
+```
+
+`--stream` is a room object stream (header, lists, doors). `--collision` is its two-plane
+replay as 8192 bytes or JSON `attributes`. `--route` runs the existing pathfinder's A* on
+plane 0. It blocks every door/stair cell except the admitted ones, keeps the default
+`find_path` result (`NeedsRoomChangeError`) and adds no graph edges. A path that enters
+a step sideways is `UNSUPPORTED`, because the native climb is measured only for vertical moves.
+
+Not certified: plane 1, wet contacts/High surfaces, runtime collision rewrites (Oracle
+D4 water state), the walls around the step, the climb end position, camera, NPC/body,
+throw and hookshot. Fixtures: Zora room 0x25 v5 Low/High streams and RAM replays.
+
 Test: `python3 -m unittest Tests.test_dungeon_contact_translator`.
