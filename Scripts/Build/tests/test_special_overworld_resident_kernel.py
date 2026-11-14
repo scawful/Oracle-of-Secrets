@@ -27,6 +27,16 @@ HOOKS = (
     (0x1BCA4D, 'Mutable2', 4), (0x1BCA54, 'Mutable3', 4))
 
 
+# Native action prefixes before their source-word LDA (not visual word loads).
+ACTION_PREFIXES = (
+    (0x1BBEDF, 'Lyra_SemanticTileActionWord',
+     bytes.fromhex('0a0a8506a5002908004a4a0406a50229010005060aaa')),
+    (0x1BBF1E, 'Lyra_SemanticHammerWord', bytes.fromhex('0a0a0aaa')),
+    (0x1BC027, 'Lyra_SemanticLiftWord',
+     bytes.fromhex('0a0a8506a5022908004a4a0406a5004a4a4a29010005060aaa')),
+)
+
+
 def source_fixture():
     image = bytearray(0x400000)
     readers = [(400, at, offset) for at, offset in N.TILE16_LONG_READERS]
@@ -44,6 +54,8 @@ def source_fixture():
         image[index - 1:index + 2] = bytes([0xB9]) + (0x8000 + offset).to_bytes(2, 'little')
         target = 0x7F2000 if offset < 4 else 0x7F2040
         image[index + 2:index + 6] = bytes([0x9F]) + target.to_bytes(3, 'little')
+    for address, _, prefix in ACTION_PREFIXES:
+        image[N.pc(address):N.pc(address)+len(prefix)] = prefix
     return bytes(image)
 
 

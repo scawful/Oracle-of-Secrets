@@ -41,7 +41,7 @@ assert pc() == $00886E
 assert pc() == $008888
 '''
 class Artifact:
- def __init__(self,rows,capacity=192,sky=False,overrides=None,area_size=1,parent=0x84):
+ def __init__(self,rows,capacity=192,sky=False,overrides=None,area_size=1,parent=0x84,extra_source="",image_updates=()):
   self.tmp=tempfile.TemporaryDirectory();self.dir=Path(self.tmp.name);self.v=values(len(rows),capacity);self.v.update(overrides or {})
   image=bytearray(R.source_fixture());raw=b''.join(rows);image[R.N.pc(ROWS):R.N.pc(ROWS)+len(raw)]=raw
   self.global_words=(0x1011,0x5022,0x9033,0xD044)
@@ -63,7 +63,8 @@ class Artifact:
    image[R.N.pc(0x0E9659)]=0x5A
    image[R.N.pc(0x0E9459):R.N.pc(0x0E9459)+512]=bytes([0x27])*512
    extra=f'org $348000\nincsrc "{R.ROOT / "Overworld/sky_tile_types.asm"}"\n'+CALLER
-  self.before=bytes(image);self.proc,self.image,self.labels=R.assemble(self.dir,self.before,self.v,extra)
+  for address,data in image_updates:image[R.N.pc(address):R.N.pc(address)+len(data)]=data
+  self.before=bytes(image);self.proc,self.image,self.labels=R.assemble(self.dir,self.before,self.v,extra+extra_source)
  def close(self):self.tmp.cleanup()
  def call(self,label,*,a=0xA55A,x=0x84,y=56,p=0xCD,db=0x42,d=0x120,ram=None):
   if ram is None:ram=bytearray((i*37+19)&255 for i in range(65536))
@@ -112,8 +113,8 @@ class SemanticKernelTest(unittest.TestCase):
  def test_revision_extent_origin_refused(self):
   for kv in [('SPECIAL_OVERWORLD_SEMANTIC_REVISION',4),('SPECIAL_OVERWORLD_SEMANTIC_REVISION',6),('SPECIAL_OVERWORLD_SEMANTIC_ROWS',0x4FFFF8),('SPECIAL_OVERWORLD_SEMANTIC_ROWS',0x7E8000),('SPECIAL_OVERWORLD_SEMANTIC_CODE_END',CODE+4),('SPECIAL_OVERWORLD_SEMANTIC_COUNT',0)]:
    a=Artifact([row(0x84,7,(1,2,3,4))],overrides=dict([kv]));self.addCleanup(a.close);self.assertNotEqual(a.proc.returncode,0)
- def test_only_explicit_code_extent_changes_no_hook_installed(self):
-  a=self.build([row(0x84,7,(1,2,3,4))]);ranges=[(R.N.pc(CODE),R.N.pc(a.labels['Lyra_SemanticCodeEnd'])) ,(R.N.pc(R.N.RESIDENT_WORD_CODE_BASE),R.N.pc(a.labels['Lyra_ResidentAtlasCodeEnd']))]+[(R.N.pc(at),R.N.pc(at)+n) for at,_,n in R.HOOKS]
+ def test_only_explicit_code_and_action_spans_change_collision_unhooked(self):
+  a=self.build([row(0x84,7,(1,2,3,4))]);ranges=[(R.N.pc(CODE),R.N.pc(a.labels['Lyra_SemanticCodeEnd'])) ,(R.N.pc(R.N.RESIDENT_WORD_CODE_BASE),R.N.pc(a.labels['Lyra_ResidentAtlasCodeEnd']))]+[(R.N.pc(at),R.N.pc(at)+n) for at,_,n in R.HOOKS]+[(R.N.pc(at),R.N.pc(at)+len(prefix)+4) for at,_,prefix in R.ACTION_PREFIXES]
   self.assertEqual(a.image[R.N.pc(0x008864):R.N.pc(0x008868)],a.before[R.N.pc(0x008864):R.N.pc(0x008868)])
   for i,(b,c) in enumerate(zip(a.before,a.image)):
    if b!=c:self.assertTrue(any(lo<=i<hi for lo,hi in ranges),hex(i))

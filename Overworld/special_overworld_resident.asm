@@ -219,6 +219,15 @@ Lyra_ResidentPhysicalPage:
     CLC : RTS
 Lyra_ResidentPhysicalPage_End:
 
+; Same qualified physical-page ABI for semantic consumers in another bank.
+if defined("SPECIAL_OVERWORLD_SEMANTIC_ENABLED")
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+Lyra_ResidentPhysicalPageLong:
+    JSR Lyra_ResidentPhysicalPage
+    RTL
+endif
+endif
+
 ; Two-level ABI v1 lookup. The saved $00/$02 words cover every byte
 ; written by the temporary long pointer. No other caller scratch is written.
 Lyra_ResidentLookup:
@@ -384,5 +393,5 @@ assert pc() == $1BCA54+4
 pullpc
 endif
 
-; Independent source-word prototype; default OFF, no hook or allocation.
+; Independent source-word prototype; default OFF and unbound.
 incsrc "special_overworld_semantic.asm"

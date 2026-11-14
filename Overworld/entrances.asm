@@ -51,7 +51,11 @@ Overworld_UseEntrance:
 
   LDA.b $2F : AND.w #$00FF : BNE .not_facing_up
 
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+    JSL Lyra_SemanticEntrance2
+else
     LDA.l Map16Definitions+2, X
+endif
     AND.w #$41FF : CMP.w #$00E9 : BEQ .open_door
     CMP.w #$0149 : BEQ .left_side_castle_door
     CMP.w #$0169 : BEQ .left_side_castle_door
@@ -62,12 +66,22 @@ Overworld_UseEntrance:
     ASL #3
     TAX
 
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+    JSL Lyra_SemanticNeighbor0
+else
     LDA.l Map16Definitions+0, X
+endif
     AND.w #$41FF : CMP.w #$4149 : BEQ .right_side_castle_door
 
     CMP.w #$4169 : BEQ .right_side_castle_door
 
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+    CMP.w #$40E9 : BEQ .right_plain_door
+    BRL .check_neighbor_door_type
+    .right_plain_door
+else
     CMP.w #$40E9 :  BNE .check_door_type
+endif
 
     DEY
     DEY
@@ -103,12 +117,33 @@ Overworld_UseEntrance:
   DEY
   DEY
 
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+  ; Y now names the legacy left door/registration cell (original Y-2),
+  ; but X still names the neighbor definition read at original Y+2.
+  ; Keep legacy Y on this call's stack while the gate uses source-query Y.
+  PHY
+  INY : INY : INY : INY
+  BRA .castle_source_context
+endif
+
   .left_side_castle_door
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+  PHY
+  .castle_source_context
+endif
   STZ.w $0692 : AND.w #$03FF : CMP.w #$0169 : BNE .open_this_castle_door
     ; With the D7 rescue flag, GameState 3 behaves like 2 here (decisions.org).
-    LDA.l $7EF3C5 : AND.w #$000F : CMP.w #$0003+!ENABLE_D7_FARORE_RESCUE_SEQUENCE : BCS .check_door_type
+    LDA.l $7EF3C5 : AND.w #$000F : CMP.w #$0003+!ENABLE_D7_FARORE_RESCUE_SEQUENCE
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+    BCS .check_castle_door_type
+else
+    BCS .check_door_type
+endif
       LDA.w #$0018 : STA.w $0692
   .open_this_castle_door
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+  PLY ; restore the original door cell before any native door behavior
+endif
   TYA : SEC : SBC.w #$0080 : STA.w $0698
 
   SEP #$20
@@ -125,9 +160,26 @@ Overworld_UseEntrance:
 
   RTL
 
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+  .check_castle_door_type
+  JSL Lyra_SemanticEntrance4 : AND.w #$01FF : STA.b $00
+  JSL Lyra_SemanticEntrance6 : AND.w #$01FF : STA.b $02
+  PLY ; rejected castle queries retain legacy Y for registration lookup
+  BRA .door_words_ready
+  .check_neighbor_door_type
+  JSL Lyra_SemanticNeighbor4 : AND.w #$01FF : STA.b $00
+  JSL Lyra_SemanticNeighbor6 : AND.w #$01FF : STA.b $02
+  BRA .door_words_ready
+endif
   .check_door_type
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+  JSL Lyra_SemanticEntrance4 : AND.w #$01FF : STA.b $00
+  JSL Lyra_SemanticEntrance6 : AND.w #$01FF : STA.b $02
+  .door_words_ready
+else
   LDA.l Map16Definitions+4, X : AND.w #$01FF : STA.b $00
   LDA.l Map16Definitions+6, X : AND.w #$01FF : STA.b $02
+endif
 
 if !ENABLE_SKY_OVERWORLD_ROUTE == 1
   ; The selected stone arch is already open. Require its map, trigger cell

@@ -14,7 +14,12 @@ Overworld_CheckForSpecialOverworldTrigger:
 
   JSR GetMap16Tile
 
-  LDA.l Map16Definitions,X : AND.w #$01FF : STA.b $00
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+  JSL Lyra_SemanticEntrance0
+else
+  LDA.l Map16Definitions,X
+endif
+  AND.w #$01FF : STA.b $00
 
   LDX.w #$000C ; Size of table
 
@@ -169,7 +174,12 @@ SpecialOverworld_CheckForReturnTrigger:
 
   JSR GetMap16Tile
 
-  LDA.l Map16Definitions,X : AND.w #$01FF : STA.b $00
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+  JSL Lyra_SemanticEntrance0
+else
+  LDA.l Map16Definitions,X
+endif
+  AND.w #$01FF : STA.b $00
 
   LDX.w #$000C ; Size of table
 
