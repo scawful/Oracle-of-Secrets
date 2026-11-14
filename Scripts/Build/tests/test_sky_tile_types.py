@@ -67,6 +67,7 @@ def assemble_sky_tile_types(
         "lorom\n"
         f"!ENABLE_SKY_OVERWORLD_GRAPHICS = {graphics}\n"
         f"!ENABLE_SKY_OVERWORLD_ROUTE = {route}\n"
+        "!SPECIAL_OVERWORLD_NATIVE = 0\n"
         "org $348000\n"
         f'incsrc "{SOURCE}"\n'
         "SkyTileType_TestModuleEnd:\n",
@@ -161,15 +162,35 @@ def _run_contract_routine(
     stack: list[int],
     sky_table: bytes,
     vanilla_table: bytes,
+    native_enabled: bool = False,
+    native_tables: dict[str, int] | None = None,
+    west_table: bytes | None = None,
 ) -> dict[str, object]:
     """Execute the parsed 65816 routine subset under explicit entry registers/stack."""
     labels = {}
     program = []
+    conditions = [True]
     for item in instructions:
+        if re.match(r"^(?:else|elseif)\b", item):
+            raise AssertionError(f"Unhandled assembly condition: {item}")
+        if item.startswith("if "):
+            if item != "if !SPECIAL_OVERWORLD_NATIVE == 1":
+                raise AssertionError(f"Unhandled assembly condition: {item}")
+            conditions.append(conditions[-1] and native_enabled)
+            continue
+        if item == "endif":
+            if len(conditions) == 1:
+                raise AssertionError("Unmatched assembly endif")
+            conditions.pop()
+            continue
+        if not conditions[-1]:
+            continue
         if item.startswith(".") and " " not in item:
             labels[item] = len(program)
         else:
             program.append(item)
+    if len(conditions) != 1:
+        raise AssertionError("Unclosed assembly condition")
 
     sp_idx = len(stack)
     stk = list(stack)
@@ -220,6 +241,17 @@ def _run_contract_routine(
             update_nz16(reg_a)
         elif op == "LDA.l SkyTileTypes, X":
             reg_a = sky_table[reg_x] | (sky_table[reg_x + 1] << 8)
+            update_nz16(reg_a)
+        elif op == "LDA.l SkyTileTypes_WestLanding, X":
+            if west_table is None:
+                raise AssertionError("Native west table fixture required")
+            reg_a = west_table[reg_x] | (west_table[reg_x + 1] << 8)
+            update_nz16(reg_a)
+        elif op.startswith("LDA.l !"):
+            expression = op.removeprefix("LDA.l ")
+            if native_tables is None or expression not in native_tables:
+                raise AssertionError(f"Native table fixture required: {expression}")
+            reg_a = native_tables[expression] & 0xFFFF
             update_nz16(reg_a)
         elif op == "LDA.l $0E9459, X":
             reg_a = vanilla_table[reg_x] | (vanilla_table[reg_x + 1] << 8)
@@ -282,6 +314,18 @@ def _run_contract_routine(
 
 
 class SkyTileTypesTest(unittest.TestCase):
+    def test_contract_model_refuses_unsupported_conditional_branches(self):
+        for native in (False, True):
+            for directive in ("else", "elseif !OTHER == 1"):
+                with self.subTest(native=native, directive=directive):
+                    with self.assertRaisesRegex(AssertionError, "Unhandled assembly condition"):
+                        _run_contract_routine(
+                            ["if !SPECIAL_OVERWORLD_NATIVE == 1", "RTL", directive,
+                             "LDA.w #$1234", "endif", "RTL"],
+                            {}, p=0, a=0, x=0, y=0, stack=[], sky_table=bytes(513),
+                            vanilla_table=bytes(513), native_enabled=native,
+                        )
+
     def test_hook_annotations_match_flag_state(self):
         enabled = scan_hooks(
             ROOT,
@@ -417,6 +461,43 @@ class SkyTileTypesTest(unittest.TestCase):
                 self.assertEqual(res["p"] & 0x7D, 0x45)  # C, I, V, M, X preserved
                 self.assertEqual(res["sp_delta"], 0)
                 self.assertEqual((res["x"], res["y"]), (0x01FF, 0x0377))
+
+    def test_native_west_selector_keeps_full_parent_size_and_legacy_contracts(self):
+        _, routines = _extract_macro_and_routines(SOURCE.read_text(encoding="utf-8"))
+        sky_table = bytes([0x20]) * 512 + b"\x5A"
+        west_table = bytes([0x40]) * 512 + b"\x5A"
+        vanilla_table = bytes([0x01]) * 512 + b"\xA5"
+        # Nonzero adjacent bytes verify that the byte-sized parent/size fields
+        # are masked after their native 16-bit loads, without masking size bits.
+        for native in (False, True):
+            for indoors, area in ((0, 0x8C), (1, 0x8C), (0, 0x87), (0, 0x8D),
+                                  (0, 0x8E), (0, 0x8F), (0, 0x83), (0, 0x90)):
+                for parent, size in ((0x8C, 0), (0x8D, 0), (0x8C, 1),
+                                     (0x8C, 2), (0x8C, 3), (0x8C, 4), (0x8C, 0xFF)):
+                    for index in (0, 0x18C, 0x1FF):
+                        with self.subTest(native=native, indoors=indoors, area=area,
+                                          parent=parent, size=size, index=index):
+                            result = _run_contract_routine(
+                                routines["SkyTileType"],
+                                {0x7E001B: indoors, 0x7E008A: area},
+                                p=0x45, a=0x1234, x=index, y=0x0377, stack=[0x01],
+                                sky_table=sky_table, vanilla_table=vanilla_table,
+                                native_enabled=native, west_table=west_table,
+                                native_tables={
+                                    "!LYRA_CURRENT_TABLE_parent+$008C": 0xA500 | parent,
+                                    "!LYRA_CURRENT_TABLE_area_size+$008C": 0x5A00 | size,
+                                },
+                            )
+                            expected = vanilla_table
+                            if not indoors and area in SKY_AREAS:
+                                expected = (west_table if native and area == 0x8C
+                                            and parent == 0x8C and size == 0 else sky_table)
+                            self.assertEqual(result["exit"], "RTL")
+                            self.assertEqual(result["a"], expected[index] | (expected[index + 1] << 8))
+                            self.assertEqual(result["p"] & 0x7D, 0x45)
+                            self.assertEqual(result["sp_delta"], 0)
+                            self.assertEqual(result["stack"], [0x01])
+                            self.assertEqual((result["x"], result["y"]), (index, 0x0377))
 
     @unittest.skipUnless(ASSEMBLER, "Asar required for compiled Sky tile-type checks")
     def test_disabled_route_emits_zero_bytes(self):
