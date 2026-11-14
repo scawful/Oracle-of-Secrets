@@ -1569,10 +1569,43 @@ def _bounded_before_native_authoring_metadata(
     return True
 
 
-def _native_authoring_metadata_range(
-    dev_rom_path: Path,
-) -> Optional[tuple[str, int, int]]:
-    """Return the named table 412 range, or None if the ROM does not have one."""
+def _bounded_before_native_page_tile16(root, hook, physical, start, end, defines):
+    """Admit only the existing semantic code's enforced bound before table413."""
+    source = hook.source.rpartition(":")[0]
+    if not defines or source != "Overworld/special_overworld_semantic.asm":
+        return False
+    names = ("ENABLED", "REVISION", "CODE_BASE", "CODE_END", "ROWS", "COUNT")
+    values = [defines.get("SPECIAL_OVERWORLD_SEMANTIC_" + name) for name in names]
+    if any(type(value) is not int for value in values):
+        return False
+    enabled, revision, base, limit, rows, count = values
+    if enabled != 1 or revision != 5 or count <= 0:
+        return False
+    base_pc = _strict_lorom_to_pc(base, "Semantic code start")
+    # An exclusive end may be the following bank's $0000: map its last
+    # actual byte, then advance in PC space. FastROM aliases share ownership.
+    limit_pc = _strict_lorom_to_pc(limit - 1, "Semantic code last byte") + 1
+    rows_pc = _strict_lorom_to_pc(rows, "Semantic rows")
+    hook_pc = _strict_lorom_to_pc(physical, "Semantic hook")
+    if (hook_pc != base_pc or not base_pc < limit_pc <= rows_pc
+            or base >> 16 != (limit - 1) >> 16
+            or base_pc // 0x8000 != (limit_pc - 1) // 0x8000
+            or (rows & 0xFFFF) + count * 12 > 0x10000
+            or rows_pc != start or not start < end
+            or start + count * 12 != end):
+        return False
+    lines = (root / source).read_text().splitlines()
+    active = [line.strip() for _, line, _ in _iter_active_lines(lines, defines)]
+    if not any(re.match(r"assert\s+pc\(\)\s*<=\s*!SPECIAL_OVERWORLD_SEMANTIC_CODE_END\b", line)
+               for line in active):
+        raise ManifestGenerationError("Semantic code lost its active bounding assert before table 413")
+    return True
+
+
+def _native_editor_ranges(
+    dev_rom_path: Path, *, experimental_page_tile16: bool = False,
+) -> list[tuple[str, int, int]]:
+    """Authenticate native storage and return its existing editor-owned extents."""
     build_scripts = str(Path(__file__).resolve().parents[1] / "Build")
     if build_scripts not in sys.path:
         sys.path.insert(0, build_scripts)
@@ -1580,30 +1613,37 @@ def _native_authoring_metadata_range(
 
     try:
         directory = lyra_native_loaders.read_native_directory(
-            dev_rom_path.read_bytes()
+            dev_rom_path.read_bytes(), experimental_page_tile16=experimental_page_tile16
         )
     except ValueError as exc:
         raise ManifestGenerationError(
             f"Invalid native overworld directory in {dev_rom_path}: {exc}"
         ) from exc
     if directory is None:
-        return None
+        return []
+    ranges = []
     entry = directory[2].get(NATIVE_AUTHORING_METADATA_ID)
-    if entry is None:
-        return None
-    if entry != (NATIVE_AUTHORING_METADATA_SNES, NATIVE_AUTHORING_METADATA_ROWS):
-        raise ManifestGenerationError(
-            f"Native authoring metadata table 412 moved: address "
-            f"0x{entry[0]:06X}, {entry[1]} rows"
-        )
-    return (
-        "native_overworld_authoring_metadata",
-        NATIVE_AUTHORING_METADATA_PC,
-        NATIVE_AUTHORING_METADATA_END_PC,
-    )
+    if entry is not None:
+        if entry != (NATIVE_AUTHORING_METADATA_SNES, NATIVE_AUTHORING_METADATA_ROWS):
+            raise ManifestGenerationError(
+                f"Native authoring metadata table 412 moved: address "
+                f"0x{entry[0]:06X}, {entry[1]} rows"
+            )
+        ranges.append(("native_overworld_authoring_metadata",
+                       NATIVE_AUTHORING_METADATA_PC, NATIVE_AUTHORING_METADATA_END_PC))
+    entry = directory[2].get(413)
+    if entry is not None:
+        # The admitted directory reader already checks revision5, count, bank
+        # extent, CRC, overlap and sorted page/local-ID rows using its codec.
+        width = lyra_native_loaders.entry_spec(413, directory[0], 5)[2]
+        start = lyra_native_loaders.pc(entry[0])
+        ranges.append(("native_overworld_page_tile16", start, start + entry[1] * width))
+    return ranges
 
 
-def derive_editor_managed_regions(dev_rom_path: Path) -> list[dict]:
+def derive_editor_managed_regions(
+    dev_rom_path: Path, *, experimental_page_tile16: bool = False,
+) -> list[dict]:
     """Derive exact dungeon metadata and collision ranges from the dev ROM."""
     try:
         data = dev_rom_path.read_bytes()
@@ -1721,9 +1761,8 @@ def derive_editor_managed_regions(dev_rom_path: Path) -> list[dict]:
             CUSTOM_COLLISION_DATA_END_PC,
         ),
     ]
-    native_authoring_metadata = _native_authoring_metadata_range(dev_rom_path)
-    if native_authoring_metadata is not None:
-        named_regions.append(native_authoring_metadata)
+    named_regions.extend(_native_editor_ranges(
+        dev_rom_path, experimental_page_tile16=experimental_page_tile16))
     _validate_disjoint_named_ranges(named_regions, "editor-managed regions")
 
     return [
@@ -1733,7 +1772,8 @@ def derive_editor_managed_regions(dev_rom_path: Path) -> list[dict]:
 
 
 def _validate_expanded_hooks_disjoint_from_editor_regions(
-    hooks: list[HookEntry], editor_regions: list[dict], root: Path
+    hooks: list[HookEntry], editor_regions: list[dict], root: Path,
+    *, semantic_defines: Optional[dict[str, int]] = None,
 ) -> None:
     """Reject expanded hooks that may extend into editor-owned bytes.
 
@@ -1765,6 +1805,10 @@ def _validate_expanded_hooks_disjoint_from_editor_regions(
             region_segment_end = min(region_end, hook_bank_end)
             if _bounded_before_native_authoring_metadata(
                 root, hook, physical, region_start, region_end
+            ):
+                continue
+            if _bounded_before_native_page_tile16(
+                root, hook, physical, region_start, region_end, semantic_defines
             ):
                 continue
             if (
@@ -2146,6 +2190,7 @@ def generate_manifest(
     dev_rom_path: Optional[Path] = None,
     hooks_path: Optional[Path] = None,
     manifest_root: Optional[Path] = None,
+    *, experimental_page_tile16: bool = False,
 ) -> dict:
     """Generate the complete hack manifest.
 
@@ -2318,7 +2363,8 @@ def generate_manifest(
         manifest["dungeon_stream_regions"] = derive_dungeon_stream_regions(
             dev_rom_path
         )
-        editor_regions = derive_editor_managed_regions(dev_rom_path)
+        editor_regions = derive_editor_managed_regions(
+            dev_rom_path, experimental_page_tile16=experimental_page_tile16)
         if exact_mode:
             # Exact spans: check every byte, in every bank, against every
             # range Yaze writes.
@@ -2331,7 +2377,8 @@ def generate_manifest(
         else:
             # Estimated spans: start-address rule for expanded hooks.
             _validate_expanded_hooks_disjoint_from_editor_regions(
-                hooks, editor_regions, root
+                hooks, editor_regions, root,
+                semantic_defines=defines if experimental_page_tile16 else None,
             )
         _validate_unresolved_org_proofs(
             scan_org_directives(root, asm_sources, defines=defines),
@@ -2347,6 +2394,11 @@ def generate_manifest(
             ),
             "regions": editor_regions,
         }
+
+    if experimental_page_tile16 and "editor_managed_regions" in manifest:
+        manifest["editor_managed_regions"]["description"] += (
+            " Explicit experimental admission includes authenticated page Tile16 table 413."
+        )
 
     # Protected regions — these are hook addresses in VANILLA banks.
     # Asar overwrites these on build, so yaze edits here are lost.
@@ -2654,6 +2706,8 @@ def main() -> int:
         choices=("python-scan",),
         help="Scan sources for hooks with estimated sizes (asar builds).",
     )
+    parser.add_argument("--experimental-page-tile16", action="store_true",
+                        help="Explicitly admit authenticated revision5 page Tile16 storage")
     args = parser.parse_args()
 
     root = args.root.resolve()
@@ -2678,6 +2732,7 @@ def main() -> int:
             args.dev_rom,
             hooks_path=args.hooks,
             manifest_root=args.manifest_root,
+            experimental_page_tile16=args.experimental_page_tile16,
         )
     except ManifestGenerationError as exc:
         print(f"error: cannot generate hack manifest: {exc}", file=sys.stderr)

@@ -110,6 +110,8 @@ if '--constants' in args:
 """)
         result = self.build('--experimental-page-tile16')
         self.assertEqual(result.returncode, 0, result.stderr)
+        manifest = json.loads((self.root/'Roms/hack_manifest.json').read_text())
+        self.assertEqual(manifest['argv'].count('--experimental-page-tile16'), 1)
         calls = [json.loads(line) for line in (self.root/'Roms/native-stage-args.jsonl').read_text().splitlines()]
         self.assertEqual(len(calls), 3)
         for mode, args in zip(('--constants', '--seal-compiled', '--compiled'), calls):
@@ -137,6 +139,7 @@ if '--constants' in args:
         self.assertEqual(argv[argv.index('--sym')+1], str(self.root / 'Roms/oos999x.sym'))
         self.assertIn('pre_assembly', self.receipt['snapshots'])
         manifest = self.root / 'Roms/hack_manifest.json'
+        self.assertNotIn('--experimental-page-tile16', json.loads(manifest.read_text())['argv'])
         self.assertEqual(Path(self.receipt['artifacts']['manifest']['path']),
                          manifest.resolve())
         self.assertEqual(self.receipt['artifacts']['manifest']['sha256'],

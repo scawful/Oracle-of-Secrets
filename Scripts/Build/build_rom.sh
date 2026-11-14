@@ -528,6 +528,9 @@ manifest_args=(
   --dev-rom "$base_rom"
   --rom "$patched_rom"
 )
+if [[ "$experimental_page_tile16" == "1" ]]; then
+  manifest_args+=(--experimental-page-tile16)
+fi
 if [[ -n "${OOS_MANIFEST_ROOT:-}" ]]; then
   manifest_root="$OOS_MANIFEST_ROOT"
   if [[ "$manifest_root" != /* ]]; then

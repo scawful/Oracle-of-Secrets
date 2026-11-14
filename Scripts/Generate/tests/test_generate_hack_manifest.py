@@ -2805,5 +2805,104 @@ class ExactHookSourceTest(unittest.TestCase):
         self.assertEqual(manifest["build_pipeline"]["assembler"], "asar")
 
 
+
+class ExperimentalNativeManifestTest(unittest.TestCase):
+    def setUp(self):
+        import generate_hack_manifest as G
+        sys.path.insert(0, str(REPO_ROOT / 'Scripts/Build/tests'))
+        import test_special_overworld_resources as F
+        self.G, self.N = G, F.R.native
+        self.native = F.ExperimentalPageTile16ResourcesTest(); self.native.setUp()
+        self.fixture = ManifestFixture(); self.addCleanup(self.fixture.close)
+        self.fixture.write_text('Oracle_main.asm', '')
+        self.path = self.fixture.write_dev_rom()
+        self.dungeon = self.path.read_bytes()
+        self.native.address = 0x519000
+        self.v5, _ = self.native.install(self.native.rows, authoring=True)
+        self.write_native(self.v5)
+
+    def write_native(self, source):
+        image = bytearray(source)
+        directory = image[self.N.DIRECTORY_PC:self.N.DIRECTORY_PC+self.N.DIRECTORY_SIZE]
+        image[:len(self.dungeon)] = self.dungeon
+        image[self.N.DIRECTORY_PC:self.N.DIRECTORY_PC+self.N.DIRECTORY_SIZE] = directory
+        image[0x140145] = 3
+        self.path.write_bytes(self.native.reseal(image))
+
+    def test_explicit_manifest_emits_authenticated_413_default_refuses(self):
+        with self.assertRaisesRegex(ManifestGenerationError, 'revision3 or revision4'):
+            generate_manifest(self.fixture.root)
+        manifest = generate_manifest(self.fixture.root, experimental_page_tile16=True)
+        self.assertEqual(manifest['manifest_version'], 3)
+        self.assertIn({'start':'0x519000', 'end':'0x519030'},
+                      manifest['editor_managed_regions']['regions'])
+        self.assertIn({'start':'0x4DD000', 'end':'0x4DF000'},
+                      manifest['editor_managed_regions']['regions'])
+
+    def test_corrupt_stale_unknown_and_malformed_native_refuse(self):
+        good = self.path.read_bytes(); at=self.N.pc(0x519000)
+        mutations=[]
+        bad=bytearray(good);bad[at+4]^=1;mutations.append(bytes(bad)) # stale payload CRC
+        bad=bytearray(good);bad[self.N.DIRECTORY_PC+28]^=1;mutations.append(bytes(bad))
+        bad=bytearray(good);bad[self.N.DIRECTORY_PC+8]=6;mutations.append(bytes(bad))
+        bad=bytearray(good);bad[at:at+2]=b'\x7F\x00';mutations.append(self.native.reseal(bad))
+        for image in mutations:
+            self.path.write_bytes(image)
+            with self.subTest(), self.assertRaises(ManifestGenerationError):
+                generate_manifest(self.fixture.root, experimental_page_tile16=True)
+
+    def test_cli_explicit_admission_and_failed_output_preservation(self):
+        output=self.fixture.write_text('manifest.json','retain previous manifest')
+        command=[sys.executable,str(GENERATE_DIR/'generate_hack_manifest.py'),
+                 '--root',str(self.fixture.root),'--dev-rom',str(self.path),'--output',str(output),
+                 '--hook-source','python-scan']
+        refused=subprocess.run(command,capture_output=True,text=True)
+        self.assertNotEqual(refused.returncode,0);self.assertEqual(output.read_text(),'retain previous manifest')
+        admitted=subprocess.run(command+['--experimental-page-tile16'],capture_output=True,text=True)
+        self.assertEqual(admitted.returncode,0,admitted.stderr)
+        self.assertIn({'start':'0x519000','end':'0x519030'},json.loads(output.read_text())['editor_managed_regions']['regions'])
+        retained=output.read_bytes();image=bytearray(self.path.read_bytes());image[self.N.pc(0x519000)+4]^=1;self.path.write_bytes(image)
+        failed=subprocess.run(command+['--experimental-page-tile16'],capture_output=True,text=True)
+        self.assertNotEqual(failed.returncode,0);self.assertEqual(output.read_bytes(),retained)
+
+    def test_revision4_manifest_golden_unchanged(self):
+        self.write_native(self.native.fixture.source)
+        manifest=generate_manifest(self.fixture.root)
+        raw=json.dumps(manifest,sort_keys=True,separators=(',',':')).encode()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(),'bcb6e2dff73afe6a5bb59daf7bdeebb4bca5f489ac90357a94844ba3018d6db3')
+
+    def test_semantic_source_bound_is_narrow_and_active(self):
+        root=self.fixture.root
+        path=self.fixture.write_text('Overworld/special_overworld_semantic.asm',
+            (REPO_ROOT/'Overworld/special_overworld_semantic.asm').read_text())
+        regions=[{'start':'0x519000','end':'0x519030'}]
+        hook=HookEntry(0x518000,'semantic','patch',None,'Overworld/special_overworld_semantic.asm:1')
+        defines={f'SPECIAL_OVERWORLD_SEMANTIC_{k}':v for k,v in
+                 dict(ENABLED=1,REVISION=5,CODE_BASE=0x518000,CODE_END=0x519000,ROWS=0x519000,COUNT=4).items()}
+        _validate_expanded_hooks_disjoint_from_editor_regions([hook],regions,root,semantic_defines=defines)
+        # FastROM rows alias the same PC289000 boundary: numerical SNES
+        # ordering must not authorize code crossing that physical boundary.
+        alias=dict(defines, SPECIAL_OVERWORLD_SEMANTIC_ROWS=0xD19000)
+        _validate_expanded_hooks_disjoint_from_editor_regions([hook],regions,root,semantic_defines=alias)
+        crossing=dict(alias, SPECIAL_OVERWORLD_SEMANTIC_CODE_END=0x519100)
+        with self.assertRaises(ManifestGenerationError):
+            _validate_expanded_hooks_disjoint_from_editor_regions([hook],regions,root,semantic_defines=crossing)
+        # The active ASM pc<=end assertion uses one SNES bank, not aliases.
+        alias_end=dict(defines, SPECIAL_OVERWORLD_SEMANTIC_CODE_END=0xD19000)
+        with self.assertRaises(ManifestGenerationError):
+            _validate_expanded_hooks_disjoint_from_editor_regions([hook],regions,root,semantic_defines=alias_end)
+        for key,value in [('ENABLED',0),('REVISION',4),('CODE_BASE',0x518001),('CODE_END',0x519001),('ROWS',0x519001),('COUNT',5)]:
+            changed=dict(defines);changed['SPECIAL_OVERWORLD_SEMANTIC_'+key]=value
+            with self.subTest(key=key),self.assertRaises(ManifestGenerationError):
+                _validate_expanded_hooks_disjoint_from_editor_regions([hook],regions,root,semantic_defines=changed)
+        other=HookEntry(0x518000,'other','patch',None,'Overworld/other.asm:1')
+        with self.assertRaises(ManifestGenerationError):
+            _validate_expanded_hooks_disjoint_from_editor_regions([other],regions,root,semantic_defines=defines)
+        for text in ('; assert pc() <= !SPECIAL_OVERWORLD_SEMANTIC_CODE_END\n',
+                     'if 0\nassert pc() <= !SPECIAL_OVERWORLD_SEMANTIC_CODE_END\nendif\n'):
+            path.write_text(text)
+            with self.assertRaisesRegex(ManifestGenerationError,'active bounding assert'):
+                _validate_expanded_hooks_disjoint_from_editor_regions([hook],regions,root,semantic_defines=defines)
+
 if __name__ == "__main__":
     unittest.main()
