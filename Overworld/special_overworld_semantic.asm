@@ -220,6 +220,16 @@ assert read4($008864) == ((!LYRA_CURRENT_MAP16_DEFINITIONS<<8)|$BF) || read4($00
 org $008864 ; @hook module=Overworld kind=jsl target=Lyra_SemanticCollisionWord expected_m=16 expected_x=16 protected_size=4
     JSL Lyra_SemanticCollisionWord
 assert pc() == $008868
+; Active vanilla special-transition callers retain GetMap16Tile Y=raw offset
+; and X=Tile16*8. The dormant special_areas.asm is not an active caller.
+assert read4($0EDE4E) == ((!LYRA_CURRENT_MAP16_DEFINITIONS<<8)|$BF) || read4($0EDE4E) == (((!LYRA_CURRENT_MAP16_DEFINITIONS|$800000)<<8)|$BF), "Semantic special transition source read moved"
+org $0EDE4E ; @hook module=Overworld kind=jsl target=Lyra_SemanticEntrance0 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_SemanticEntrance0
+assert pc() == $0EDE52
+assert read4($0EDEE8) == ((!LYRA_CURRENT_MAP16_DEFINITIONS<<8)|$BF) || read4($0EDEE8) == (((!LYRA_CURRENT_MAP16_DEFINITIONS|$800000)<<8)|$BF), "Semantic special transition source read moved"
+org $0EDEE8 ; @hook module=Overworld kind=jsl target=Lyra_SemanticEntrance0 expected_m=16 expected_x=16 protected_size=4
+    JSL Lyra_SemanticEntrance0
+assert pc() == $0EDEEC
 assert read1($1BBEDF) == $0A, "Semantic action prefix moved"
 assert read1($1BBEE0) == $0A, "Semantic action prefix moved"
 assert read1($1BBEE1) == $85, "Semantic action prefix moved"

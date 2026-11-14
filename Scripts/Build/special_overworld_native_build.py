@@ -322,6 +322,8 @@ def _symbol(symbols, name, *, exclusive_end=False):
 # The source operands may retain a legal LoROM mirror; compare their PC identity.
 SEMANTIC_READER_HOOKS = (
     (0x008864, 'Lyra_SemanticCollisionWord', b''),
+    (0x0EDE4E, 'Lyra_SemanticEntrance0', b''),
+    (0x0EDEE8, 'Lyra_SemanticEntrance0', b''),
     (0x1BBEDF, 'Lyra_SemanticTileActionWord', bytes.fromhex(
         '0A0A8506A5002908004A4A0406A50229010005060AAA')),
     (0x1BBF1E, 'Lyra_SemanticHammerWord', bytes.fromhex('0A0A0AAA')),
@@ -329,22 +331,14 @@ SEMANTIC_READER_HOOKS = (
         '0A0A8506A5022908004A4A0406A5004A4A4A29010005060AAA')),
 )
 SEMANTIC_ENTRANCE_SITES = (
-    ('Lyra_SemanticEntranceSite2', 'Lyra_SemanticEntrance2'),
-    ('Lyra_SemanticNeighborSite0', 'Lyra_SemanticNeighbor0'),
-    ('Lyra_SemanticCastleSite4', 'Lyra_SemanticEntrance4'),
-    ('Lyra_SemanticCastleSite6', 'Lyra_SemanticEntrance6'),
-    ('Lyra_SemanticNeighborSite4', 'Lyra_SemanticNeighbor4'),
-    ('Lyra_SemanticNeighborSite6', 'Lyra_SemanticNeighbor6'),
-    ('Lyra_SemanticPlainSite4', 'Lyra_SemanticEntrance4'),
-    ('Lyra_SemanticPlainSite6', 'Lyra_SemanticEntrance6'),
-)
-
-
-SEMANTIC_SPECIAL_SITES = (
-    ('Lyra_SemanticSpecialEntrySite0', 'Lyra_SemanticEntrance0',
-     'Overworld_CheckForSpecialOverworldTrigger', 'GetMap16Tile'),
-    ('Lyra_SemanticSpecialReturnSite0', 'Lyra_SemanticEntrance0',
-     'SpecialOverworld_CheckForReturnTrigger', 'LoadSpecialOverworld'),
+    ('Oracle_Lyra_SemanticEntranceSite2', 'Lyra_SemanticEntrance2'),
+    ('Oracle_Lyra_SemanticNeighborSite0', 'Lyra_SemanticNeighbor0'),
+    ('Oracle_Lyra_SemanticCastleSite4', 'Lyra_SemanticEntrance4'),
+    ('Oracle_Lyra_SemanticCastleSite6', 'Lyra_SemanticEntrance6'),
+    ('Oracle_Lyra_SemanticNeighborSite4', 'Lyra_SemanticNeighbor4'),
+    ('Oracle_Lyra_SemanticNeighborSite6', 'Lyra_SemanticNeighbor6'),
+    ('Oracle_Lyra_SemanticPlainSite4', 'Lyra_SemanticEntrance4'),
+    ('Oracle_Lyra_SemanticPlainSite6', 'Lyra_SemanticEntrance6'),
 )
 
 
@@ -388,8 +382,8 @@ def _semantic_compiled_readers(source, compiled, entries, symbols, protected):
                  f'NATIVE_BUILD_SEMANTIC_SOURCE_PREIMAGE_MISMATCH:{site:06X}')
         hook(site, name, length)
         normalized.append((at, at + length))
-    entrance = _symbol(symbols, 'Overworld_UseEntrance')
-    entrance_end = _symbol(symbols, 'Lyra_SemanticEntranceConsumersEnd', exclusive_end=True)
+    entrance = _symbol(symbols, 'Oracle_Overworld_UseEntrance')
+    entrance_end = _symbol(symbols, 'Oracle_Lyra_SemanticEntranceConsumersEnd', exclusive_end=True)
     _require(entrance < entrance_end and entrance_end - entrance <= 0x2000
              and entrance >> 16 == (entrance_end - 1) >> 16,
              'NATIVE_BUILD_SEMANTIC_ENTRANCE_EXTENT_INVALID')
@@ -400,15 +394,6 @@ def _semantic_compiled_readers(source, compiled, entries, symbols, protected):
                  'NATIVE_BUILD_SEMANTIC_ENTRANCE_SITE_INVALID:' + label)
         hook(site, name, 4)
         previous = site
-    for label, name, start_name, end_name in SEMANTIC_SPECIAL_SITES:
-        start = _symbol(symbols, start_name)
-        limit = _symbol(symbols, end_name, exclusive_end=True)
-        site = _symbol(symbols, label)
-        _require(start < limit and limit - start <= 0x2000
-                 and start >> 16 == (limit - 1) >> 16
-                 and start <= site and site + 4 <= limit,
-                 'NATIVE_BUILD_SEMANTIC_SPECIAL_SITE_INVALID:' + label)
-        hook(site, name, 4)
     _require(len(set(targets.values())) == len(targets),
              'NATIVE_BUILD_SEMANTIC_TARGET_ALIASED')
     return normalized, dict(code_extent=dict(snes=[first, end], pc=[first_pc, end_pc]),

@@ -515,12 +515,11 @@ class ManagedSemanticSealTest(unittest.TestCase):
         image = bytearray(raw)
         first, end = N.SEMANTIC_CODE_BASE, N.SEMANTIC_CODE_BASE + 0x300
         symbols.update(Lyra_SemanticCodeStart=first, Lyra_SemanticCodeEnd=end,
-                       Overworld_UseEntrance=0x2F9000,
-                       Lyra_SemanticEntranceConsumersEnd=0x2F9100)
+                       Oracle_Overworld_UseEntrance=0x2F9000,
+                       Oracle_Lyra_SemanticEntranceConsumersEnd=0x2F9100)
         image[N.pc(first):N.pc(end)] = b'\x6B' * (end-first)
         names = [name for _, name, _ in B.SEMANTIC_READER_HOOKS]
         names += [name for _, name in B.SEMANTIC_ENTRANCE_SITES]
-        names += [name for _, name, _, _ in B.SEMANTIC_SPECIAL_SITES]
         for index, name in enumerate(dict.fromkeys(names)):
             symbols[name] = first + index * 16
         for site, name, prefix in B.SEMANTIC_READER_HOOKS:
@@ -529,12 +528,6 @@ class ManagedSemanticSealTest(unittest.TestCase):
             image[at:at + len(patch)] = patch
         for index, (label, name) in enumerate(B.SEMANTIC_ENTRANCE_SITES):
             site = symbols[label] = 0x2F9010 + index * 8
-            at = N.pc(site)
-            image[at:at + 4] = b'\x22' + symbols[name].to_bytes(3, 'little')
-        for index, (label, name, start_name, end_name) in enumerate(B.SEMANTIC_SPECIAL_SITES):
-            start = 0x2F9200 + index * 0x100
-            symbols[start_name], symbols[end_name] = start, start + 0x80
-            site = symbols[label] = start + 0x10
             at = N.pc(site)
             image[at:at + 4] = b'\x22' + symbols[name].to_bytes(3, 'little')
         return bytes(image), symbols
@@ -565,7 +558,7 @@ class ManagedSemanticSealTest(unittest.TestCase):
                 self.verify(bytes(image), symbols)
         for update in ({'Lyra_SemanticCodeEnd': N.SEMANTIC_CODE_LIMIT+1},
                        {'Lyra_SemanticCollisionWord': N.SEMANTIC_CODE_LIMIT},
-                       {'Lyra_SemanticPlainSite6': symbols['Overworld_UseEntrance']-1}):
+                       {'Oracle_Lyra_SemanticPlainSite6': symbols['Oracle_Overworld_UseEntrance']-1}):
             with self.subTest(update=update), self.assertRaises(ValueError):
                 self.verify(compiled, dict(symbols, **update))
         image = bytearray(compiled); image[N.pc(N.SEMANTIC_CODE_LIMIT)-1] ^= 1
@@ -577,21 +570,23 @@ class ManagedSemanticSealTest(unittest.TestCase):
 
     def test_special_entry_and_return_require_actual_bounded_calls(self):
         compiled, symbols = self.compiled_semantic_fixture()
-        for label, _, start_name, end_name in B.SEMANTIC_SPECIAL_SITES:
-            site = symbols[label]
+        for site in (0x0EDE4E, 0x0EDEE8):
             for offset in (0, 1):
                 altered = bytearray(compiled); altered[N.pc(site)+offset] ^= 1
-                with self.subTest(label=label, offset=offset), self.assertRaisesRegex(
+                with self.subTest(site=site, offset=offset), self.assertRaisesRegex(
                         ValueError, 'SEMANTIC_HOOK_MISMATCH'):
                     self.verify(bytes(altered), symbols)
-            missing = dict(symbols); del missing[label]
-            with self.subTest(label=label, missing=True), self.assertRaisesRegex(
-                    ValueError, 'REQUIRED_SYMBOL_MISSING'):
+            source = bytearray(self.source); source[N.pc(site)] = 0xEA
+            _, _, entries = N.read_native_directory(self.source, experimental_page_tile16=True)
+            with self.subTest(site=site, preimage=True), self.assertRaisesRegex(
+                    ValueError, 'SEMANTIC_SOURCE_PREIMAGE_MISMATCH'):
+                B._semantic_compiled_readers(bytes(source), compiled, entries, symbols, [])
+        # No unnamespaced or arbitrary suffix fallback for active Oracle code.
+        for label in ('Oracle_Overworld_UseEntrance', 'Oracle_Lyra_SemanticEntranceConsumersEnd',
+                      *[name for name, _ in B.SEMANTIC_ENTRANCE_SITES]):
+            missing = dict(symbols); missing[label.removeprefix('Oracle_')] = missing.pop(label)
+            with self.subTest(label=label), self.assertRaisesRegex(ValueError, 'REQUIRED_SYMBOL_MISSING'):
                 self.verify(compiled, missing)
-            outside = dict(symbols); outside[label] = symbols[end_name]
-            with self.subTest(label=label, outside=True), self.assertRaisesRegex(
-                    ValueError, 'SEMANTIC_SPECIAL_SITE_INVALID'):
-                self.verify(compiled, outside)
 
     def test_wrong_original_prefix_refuses_instead_of_masking_unknown_code(self):
         compiled, symbols = self.compiled_semantic_fixture()

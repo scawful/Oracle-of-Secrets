@@ -116,7 +116,7 @@ class SemanticKernelTest(unittest.TestCase):
   for kv in [('SPECIAL_OVERWORLD_SEMANTIC_REVISION',4),('SPECIAL_OVERWORLD_SEMANTIC_REVISION',6),('SPECIAL_OVERWORLD_SEMANTIC_ROWS',0x4FFFF8),('SPECIAL_OVERWORLD_SEMANTIC_ROWS',0x7E8000),('SPECIAL_OVERWORLD_SEMANTIC_CODE_END',CODE+4),('SPECIAL_OVERWORLD_SEMANTIC_COUNT',0)]:
    a=Artifact([row(0x84,7,(1,2,3,4))],overrides=dict([kv]));self.addCleanup(a.close);self.assertNotEqual(a.proc.returncode,0)
  def test_only_explicit_code_and_action_collision_spans_change(self):
-  a=self.build([row(0x84,7,(1,2,3,4))]);ranges=[(R.N.pc(0x008864),R.N.pc(0x008868)),(R.N.pc(CODE),R.N.pc(a.labels['Lyra_SemanticCodeEnd'])) ,(R.N.pc(R.N.RESIDENT_WORD_CODE_BASE),R.N.pc(a.labels['Lyra_ResidentAtlasCodeEnd']))]+[(R.N.pc(at),R.N.pc(at)+n) for at,_,n in R.HOOKS]+[(R.N.pc(at),R.N.pc(at)+len(prefix)+4) for at,_,prefix in R.ACTION_PREFIXES]
+  a=self.build([row(0x84,7,(1,2,3,4))]);ranges=[(R.N.pc(0x0EDE4E),R.N.pc(0x0EDE52)),(R.N.pc(0x0EDEE8),R.N.pc(0x0EDEEC)),(R.N.pc(0x008864),R.N.pc(0x008868)),(R.N.pc(CODE),R.N.pc(a.labels['Lyra_SemanticCodeEnd'])) ,(R.N.pc(R.N.RESIDENT_WORD_CODE_BASE),R.N.pc(a.labels['Lyra_ResidentAtlasCodeEnd']))]+[(R.N.pc(at),R.N.pc(at)+n) for at,_,n in R.HOOKS]+[(R.N.pc(at),R.N.pc(at)+len(prefix)+4) for at,_,prefix in R.ACTION_PREFIXES]
   self.assertEqual(a.image[R.N.pc(0x008864):R.N.pc(0x008868)],b'\x22'+a.labels['Lyra_SemanticCollisionWord'].to_bytes(3,'little'))
   for i,(b,c) in enumerate(zip(a.before,a.image)):
    if b!=c:self.assertTrue(any(lo<=i<hi for lo,hi in ranges),hex(i))

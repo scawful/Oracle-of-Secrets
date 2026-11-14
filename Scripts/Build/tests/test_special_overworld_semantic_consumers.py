@@ -12,9 +12,8 @@ class SemanticConsumersTest(unittest.TestCase):
    path=R.ROOT/'Overworld/entrances.asm'
    # Old-reader control assembles the maintained OFF branch of this source.
    if old_entrances:extra+='!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = 0\n'
-   extra+='!ENABLE_D7_FARORE_RESCUE_SEQUENCE = 1\nOverworld_DrawMap16_Persist = $1BC97C\norg $358000\n'+f'incsrc "{path}"\n'
+   extra+='!ENABLE_D7_FARORE_RESCUE_SEQUENCE = 1\nOverworld_DrawMap16_Persist = $1BC97C\norg $358000\nnamespace Oracle\n'+f'incsrc "{path}"\nnamespace off\n'
    if old_entrances:extra+='!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = 1\n'
-   extra+='org $368000\npushpc\n'+f'incsrc "{R.ROOT / "Overworld/special_areas.asm"}"\n'
    updates=tuple(updates)+((0x02EEF7,bytes.fromhex('a9a40d9f00207e')),(0x02EF1A,bytes.fromhex('9f02207e')),(0x02EF26,bytes.fromhex('9c9606')))
   # Actual displaced native prefixes with an explicit RTL probe boundary.
   for i,(at,name,prefix) in enumerate(R.ACTION_PREFIXES):
@@ -121,25 +120,25 @@ AfterDraw:
   return a,ram
  def test_entrance_seal_labels_name_exact_eight_jsl_sites(self):
   a=self.build([T.row(0x84,7,(1,2,3,4))],entrances=True)
-  sites={'Lyra_SemanticEntranceSite2':'Lyra_SemanticEntrance2',
-         'Lyra_SemanticNeighborSite0':'Lyra_SemanticNeighbor0',
-         'Lyra_SemanticCastleSite4':'Lyra_SemanticEntrance4',
-         'Lyra_SemanticCastleSite6':'Lyra_SemanticEntrance6',
-         'Lyra_SemanticNeighborSite4':'Lyra_SemanticNeighbor4',
-         'Lyra_SemanticNeighborSite6':'Lyra_SemanticNeighbor6',
-         'Lyra_SemanticPlainSite4':'Lyra_SemanticEntrance4',
-         'Lyra_SemanticPlainSite6':'Lyra_SemanticEntrance6'}
-  start=a.labels['Overworld_UseEntrance'];end=a.labels['Lyra_SemanticEntranceConsumersEnd']
-  self.assertEqual(sum(name.startswith('Lyra_Semantic') and 'Site' in name and start<=at<end for name,at in a.labels.items()),8)
+  sites={'Oracle_Lyra_SemanticEntranceSite2':'Lyra_SemanticEntrance2',
+         'Oracle_Lyra_SemanticNeighborSite0':'Lyra_SemanticNeighbor0',
+         'Oracle_Lyra_SemanticCastleSite4':'Lyra_SemanticEntrance4',
+         'Oracle_Lyra_SemanticCastleSite6':'Lyra_SemanticEntrance6',
+         'Oracle_Lyra_SemanticNeighborSite4':'Lyra_SemanticNeighbor4',
+         'Oracle_Lyra_SemanticNeighborSite6':'Lyra_SemanticNeighbor6',
+         'Oracle_Lyra_SemanticPlainSite4':'Lyra_SemanticEntrance4',
+         'Oracle_Lyra_SemanticPlainSite6':'Lyra_SemanticEntrance6'}
+  start=a.labels['Oracle_Overworld_UseEntrance'];end=a.labels['Oracle_Lyra_SemanticEntranceConsumersEnd']
+  self.assertEqual(sum(name.startswith('Oracle_Lyra_Semantic') and 'Site' in name and start<=at<end for name,at in a.labels.items()),8)
   self.assertEqual(len({a.labels[name] for name in sites}),8)
   for site,target in sites.items():
    at=a.labels[site];self.assertTrue(start<=at<end)
    pc=R.N.pc(at);self.assertEqual(a.image[pc:pc+4],b'\x22'+a.labels[target].to_bytes(3,'little'))
  def test_actual_entrance_arch_recognition(self):
-  a,ram=self.entrance_fixture();r,out,b=a.call('Overworld_UseEntranceEntry',p=0,db=0,d=0,ram=ram)
+  a,ram=self.entrance_fixture();r,out,b=a.call('Oracle_Overworld_UseEntranceEntry',p=0,db=0,d=0,ram=ram)
   self.assertEqual((out[0x10],out[0x10E]),(0xF,0x53));self.assertEqual(r['registers']['sp'],b['sp'])
  def test_actual_entrance_neighbor_seam_same_local_id(self):
-  a,ram=self.entrance_fixture(seam=True);_,out,_=a.call('Overworld_UseEntranceEntry',p=0,db=0,d=0,ram=ram)
+  a,ram=self.entrance_fixture(seam=True);_,out,_=a.call('Oracle_Overworld_UseEntranceEntry',p=0,db=0,d=0,ram=ram)
   self.assertEqual((out[0x10],out[0x10E]),(0xF,0x53))
  def test_rejected_right_castle_keeps_neighbor_source_and_legacy_y(self):
   # Original Y=$003E, neighbor raw=$0040 (page85), then right-side DEY*2
@@ -152,7 +151,7 @@ AfterDraw:
    a=self.build(rows,entrances=True,old_entrances=old,updates=updates)
    ram=self.ram();word(ram,0x40A,0x84);word(ram,0x20,0xFFF9);word(ram,0x22,0x1F0)
    word(ram,0x203E,7);word(ram,0x2040,7);word(ram,0xF3C5,4);word(ram,0x692,0xA55A)
-   r,out,b=a.call('Overworld_UseEntranceEntry',p=0,db=0,d=0,ram=ram)
+   r,out,b=a.call('Oracle_Overworld_UseEntranceEntry',p=0,db=0,d=0,ram=ram)
    self.assertEqual((out[0x10],out[0x10E]),(0xF,0x53),'global control' if old else 'semantic neighbor context')
    self.assertEqual(int.from_bytes(out[0:2],'little'),0x3C)
    self.assertEqual(int.from_bytes(out[0x692:0x694],'little'),0)
@@ -162,18 +161,45 @@ AfterDraw:
   self.assertEqual(results[0][1][:0x1F80],results[1][1][:0x1F80])
   self.assertEqual(results[0][1][0x2000:],results[1][1][0x2000:])
  def test_original_entrance_global_control_does_not_recognize_override(self):
-  a,ram=self.entrance_fixture(old=True);_,out,_=a.call('Overworld_UseEntranceEntry',p=0,db=0,d=0,ram=ram)
+  a,ram=self.entrance_fixture(old=True);_,out,_=a.call('Oracle_Overworld_UseEntranceEntry',p=0,db=0,d=0,ram=ram)
   self.assertEqual(out[0x10],0)
  def test_actual_open_style_preserves_fixed_pairs(self):
   a=self.build([T.row(0x84,7,(1,2,3,4))],entrances=True)
   for pair,expected in [((0xFB,0xFC),(0xDA4,0xDA6)),((0xB82,0xB83),(0xFFC,0xFFD))]:
-   ram=self.ram();word(ram,0x203E,pair[0]);word(ram,0x2040,pair[1]);r,out,b=a.call('OverworldDoor_FindOpenStyle',x=0x3E,p=0,d=0,db=0,ram=ram)
+   ram=self.ram();word(ram,0x203E,pair[0]);word(ram,0x2040,pair[1]);r,out,b=a.call('Oracle_OverworldDoor_FindOpenStyle',x=0x3E,p=0,d=0,db=0,ram=ram)
    self.assertEqual((r['registers']['a'],r['registers']['y']),expected);self.assertTrue(r['registers']['p']&1);self.assertEqual(out[0x203E:0x2042],ram[0x203E:0x2042])
- def test_actual_special_trigger_uses_source_top_left(self):
-  a=self.build([T.row(0x81,7,(0x00B9,1,2,3))],entrances=True)
-  ram=self.ram(mapid=0x81);word(ram,0x20,0xFFF4);word(ram,0x22,0xFFF8);word(ram,0x2000,7)
-  _,out,_=a.call('Overworld_CheckForSpecialOverworldTrigger',p=0,db=0,d=0,ram=ram)
-  self.assertEqual((out[0x10],out[0x11]),(0xB,0x17));self.assertEqual(int.from_bytes(out[0xA0:0xA2],'little'),0x189)
+ def test_native_special_reads_keep_actual_getmap16_context(self):
+  # Exact native 0EDE9A..0EDECD helper and both REP/JSR prefixes from usdasm.
+  # Byte-matched against Build04 private input aa7091cd; only the existing
+  # four-byte dictionary operands are supplied by the synthetic native fixture.
+  helper=bytes.fromhex('a52018690c00850038ed08072d0a070a0a0a8506a522186908004a4a4a850238ed0c072d0e07186506a8aabf00207e0a0a0aaa60')
+  updates=[(0x0EDE9A,helper)]
+  caller=''
+  for entry,site in ((0x0EDE49,0x0EDE4E),(0x0EDEE3,0x0EDEE8)):
+   updates.append((entry,bytes.fromhex('c231209ade')))
+   # Original AND #01FF / STA $00 followed by a declared RTL probe boundary.
+   caller+=f'org ${site+4:06X}\nAND.w #$01FF : STA.b $00 : RTL\n'
+  rows=[T.row(0x84,7,(0xC044,1,2,3)),T.row(0x85,7,(0xC17C,1,2,3))]
+  for off in (False,True):
+   a=self.build(rows,updates=updates,caller_source=caller,
+       overrides={'SPECIAL_OVERWORLD_SEMANTIC_ENABLED':int(not off)})
+   for entry,site in ((0x0EDE49,0x0EDE4E),(0x0EDEE3,0x0EDEE8)):
+    pc=R.N.pc(site)
+    self.assertEqual(a.image[pc:pc+4],a.before[pc:pc+4] if off else b'\x22'+a.labels['Lyra_SemanticEntrance0'].to_bytes(3,'little'))
+    for area,raw in ((0x84,0x3E),(0x84,0x40),(2,0x40)):
+     ram=self.ram(mapid=area);word(ram,0x70E,0x7E);word(ram,0x20,0xFFF4);word(ram,0x22,raw*8-8);word(ram,0x2000+raw,7)
+     r,out,b=a.call(entry,p=0x30,db=0,d=0,ram=ram)
+     expected=(a.global_words[0] if off or area==2 else (0xC044 if raw==0x3E else 0xC17C))&0x1FF
+     self.assertEqual((r['registers']['a'],r['registers']['x'],r['registers']['y']),(expected,56,raw))
+     self.assertEqual(int.from_bytes(out[:2],'little'),expected)
+     for key in ('sp','db','d'):self.assertEqual(r['registers'][key],b[key])
+     self.assertEqual(out[0x2000:],ram[0x2000:])
+ def test_native_special_read_preimages_refuse(self):
+  for site in (0x0EDE4E,0x0EDEE8):
+   for data in (bytes.fromhex('ea0080bd'),bytes.fromhex('bf0280bd')):
+    a=T.Artifact([T.row(0x84,7,(1,2,3,4))],image_updates=((site,data),));self.addCleanup(a.close)
+    self.assertNotEqual(a.proc.returncode,0)
+    self.assertIn('Semantic special transition source read moved',a.proc.stdout+a.proc.stderr)
 if __name__=='__main__':
  try:unittest.main()
  finally:
