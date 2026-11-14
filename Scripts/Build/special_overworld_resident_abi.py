@@ -11,11 +11,14 @@ import re
 import struct
 
 from special_overworld_resources import (
-    ANIMATED_SLOTS, PLAN_SCHEMA, STATIC_SLOTS,
+    ANIMATED_SLOTS, PLAN_SCHEMA, EXPERIMENTAL_PLAN_SCHEMA,
+    PAGE_TILE16_RUNTIME_REQUIREMENTS, STATIC_SLOTS,
     _digest, _json_bytes, _payload, _require, _sha,
 )
 
 NATIVE_KIND = 'special_overworld.resident_abi.v1'
+EXPERIMENTAL_NATIVE_KIND = 'special_overworld.resident_abi.experimental-v2'
+EXPERIMENTAL_EMISSION_KIND = 'lyra.resident_atlas_native_emission.experimental-v2'
 NATIVE_ABI_VERSION = 1
 NATIVE_DIRECTORY_STRIDE = 8
 NATIVE_ANIMATION_DIRECTORY_STRIDE = 11
@@ -93,7 +96,39 @@ def _verified_payload(value):
     return raw
 
 
-def plan_native_resident_abi(resident_plan, *, tile16_count):
+def _experimental_source(plan):
+    """Retain authenticated producer provenance, never relabel v2 as v1."""
+    _require(plan.get('runtime_supported') is False
+             and plan.get('runtime_requirements') == list(PAGE_TILE16_RUNTIME_REQUIREMENTS)
+             and all(_digest(plan.get(key)) for key in (
+                 'source_rom_sha256', 'native_source_sha256',
+                 'tile16_definition_sha256', 'page_tile16_definitions_sha256')),
+             'NATIVE_EXPERIMENTAL_SOURCE_INVALID')
+    return dict(schema=EXPERIMENTAL_PLAN_SCHEMA,
+        **{key: plan[key] for key in ('source_rom_sha256', 'native_source_sha256',
+            'tile16_definition_sha256', 'page_tile16_definitions_sha256')},
+        runtime_supported=False,
+        runtime_requirements=list(PAGE_TILE16_RUNTIME_REQUIREMENTS))
+
+
+def _experimental_abi(native_plan, enabled):
+    _require(type(native_plan) is dict, 'NATIVE_ABI_MISMATCH')
+    _require(type(enabled) is bool, 'NATIVE_EXPERIMENTAL_ADMISSION_INVALID')
+    experimental = native_plan.get('kind') == EXPERIMENTAL_NATIVE_KIND
+    _require(not experimental or enabled, 'NATIVE_EXPERIMENTAL_ADMISSION_REQUIRED')
+    if experimental:
+        provenance = native_plan.get('experimental_source')
+        _require(type(provenance) is dict
+                 and provenance == _experimental_source(provenance),
+                 'NATIVE_EXPERIMENTAL_SOURCE_INVALID')
+    else:
+        _require('experimental_source' not in native_plan,
+                 'NATIVE_EXPERIMENTAL_SOURCE_INVALID')
+    return experimental
+
+
+def plan_native_resident_abi(resident_plan, *, tile16_count,
+                             experimental_page_tile16=False):
     """Lower authenticated terrain data to relocatable, unselected native ABI.
 
     Each physical page has a 128-byte block directory followed by 32-byte
@@ -101,7 +136,11 @@ def plan_native_resident_abi(resident_plan, *, tile16_count):
     terrain census did not qualify this Tile16. It does not prove resource
     closure. Target word zero is valid. Areas share resources, never page keys.
     """
-    _require(type(resident_plan) is dict and resident_plan.get('schema') == PLAN_SCHEMA
+    _require(type(experimental_page_tile16) is bool, 'NATIVE_EXPERIMENTAL_ADMISSION_INVALID')
+    experimental = type(resident_plan) is dict and resident_plan.get('schema') == EXPERIMENTAL_PLAN_SCHEMA
+    _require(not experimental or experimental_page_tile16, 'NATIVE_EXPERIMENTAL_ADMISSION_REQUIRED')
+    _require(type(resident_plan) is dict and resident_plan.get('schema') in (
+                 PLAN_SCHEMA, EXPERIMENTAL_PLAN_SCHEMA if experimental_page_tile16 else PLAN_SCHEMA)
              and resident_plan.get('terrain_plan_ready') is True,
              'NATIVE_TERRAIN_PLAN_REQUIRED')
     _require(type(tile16_count) is int and 0 < tile16_count <= 4096,
@@ -218,13 +257,18 @@ def plan_native_resident_abi(resident_plan, *, tile16_count):
         missing_row_semantics='unqualified native fallback; resource closure remains unknown',
         selected=False, allocation_granted=False, publication_authorized=False,
         ordinary_build_ready=False, runtime_admission=False, compiled_consumers_verified=False)
+    if experimental:
+        result.update(kind=EXPERIMENTAL_NATIVE_KIND,
+                      experimental_source=_experimental_source(resident_plan))
     result['abi_sha256'] = _sha(_json_bytes(result))
     return result
 
 
-def validate_native_resident_abi(native_plan):
+def validate_native_resident_abi(native_plan, *, experimental_page_tile16=False):
     """Check independently consumable lookup bytes and their semantic page rows."""
-    _require(type(native_plan) is dict and native_plan.get('kind') == NATIVE_KIND
+    _require(type(native_plan) is dict, 'NATIVE_ABI_MISMATCH')
+    experimental = _experimental_abi(native_plan, experimental_page_tile16)
+    _require(native_plan.get('kind') == (EXPERIMENTAL_NATIVE_KIND if experimental else NATIVE_KIND)
              and native_plan.get('abi_version') == NATIVE_ABI_VERSION
              and native_plan.get('abi_sha256') == _sha(_json_bytes({
                  key: value for key, value in native_plan.items() if key != 'abi_sha256'})),
@@ -380,14 +424,15 @@ def _transfer_tables(native_plan, addresses, origin):
 
 def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
                              binary_path='binaries/resident-atlas.bin',
-                             excluded_pc_spans=()):
+                             excluded_pc_spans=(), experimental_page_tile16=False):
     """Emit bytes/source for an explicit caller-owned ROM interval, without I/O.
 
     This mechanically places each blob inside one LoROM bank. It accepts no
     default address and makes no claim that the interval or runtime is granted.
     The owning publisher must authenticate and rederive the complete plan.
     """
-    by_label = validate_native_resident_abi(native_plan)
+    by_label = validate_native_resident_abi(
+        native_plan, experimental_page_tile16=experimental_page_tile16)
     end = native_plan['end_map']
     page_count = end - FIRST
     _require(type(data_pc) is int and type(capacity) is int
@@ -511,7 +556,8 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
     constants += f'!SPECIAL_OVERWORLD_RESIDENT_PALETTE_STRIDE = {NATIVE_PALETTE_DIRECTORY_STRIDE}\n'
     excluded_bytes = sum(max(0, min(end, cursor) - first)
                          for first, end in exclusions if first < cursor)
-    return dict(kind='lyra.resident_atlas_native_emission.v1',
+    return dict(kind=(EXPERIMENTAL_EMISSION_KIND if native_plan['kind'] == EXPERIMENTAL_NATIVE_KIND
+                      else 'lyra.resident_atlas_native_emission.v1'),
         abi_sha256=native_plan['abi_sha256'], data_pc=[data_pc, data_pc + capacity],
         excluded_pc_spans=[list(span) for span in exclusions],
         preimage_sha256=_sha(preimage), used_pc_end=cursor,
@@ -530,30 +576,36 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
         ordinary_build_ready=False, runtime_admission=False)
 
 
-def resident_bg128_rows(native_plan):
+def resident_bg128_rows(native_plan, *, experimental_page_tile16=False):
     """Return derived BG inputs for every physical page, never saved properties."""
-    payloads = validate_native_resident_abi(native_plan)
+    payloads = validate_native_resident_abi(
+        native_plan, experimental_page_tile16=experimental_page_tile16)
     return [dict(map_id=page['map_id'], properties=dict(background_palette=list(
         struct.unpack('<128H', payloads[native_plan['areas'][page['area_index']]['palette_label']]))))
         for page in native_plan['pages']]
 
 
-def resident_runtime_inputs(native_plan, emission, *, preimage):
+def resident_runtime_inputs(native_plan, emission, *, preimage,
+                            experimental_page_tile16=False):
     """Bridge verified resident placements to the existing SharedGraphics ABI.
 
     The resident emitter remains the sole payload writer. Its complete output
     is rederived before any external address is used; neither this bridge nor
     its fixed22B upload profiles grants allocation or activation authority.
     """
+    experimental = type(native_plan) is dict and native_plan.get('kind') == EXPERIMENTAL_NATIVE_KIND
     _require(type(emission) is dict
-             and emission.get('kind') == 'lyra.resident_atlas_native_emission.v1'
+             and emission.get('kind') == (EXPERIMENTAL_EMISSION_KIND if experimental
+                                        else 'lyra.resident_atlas_native_emission.v1')
              and type(emission.get('data_pc')) is list and len(emission['data_pc']) == 2
              and all(type(value) is int for value in emission['data_pc']),
              'NATIVE_EMISSION_INVALID')
+    _experimental_abi(native_plan, experimental_page_tile16)
     first, end = emission['data_pc']
     expected = emit_native_resident_abi(native_plan, data_pc=first, capacity=end-first,
         preimage=preimage, binary_path=emission.get('binary_path'),
-        excluded_pc_spans=emission.get('excluded_pc_spans', ()))
+        excluded_pc_spans=emission.get('excluded_pc_spans', ()),
+        experimental_page_tile16=experimental_page_tile16)
     _require(expected == emission, 'NATIVE_EMISSION_MISMATCH')
     placements = {row['label']: row for row in expected['placements']}
     resources, profiles, parents = {}, {}, {}
@@ -577,7 +629,8 @@ def resident_runtime_inputs(native_plan, emission, *, preimage):
         for page in native_plan['pages']:
             if page['area_index'] == area['area_index']:
                 parents[str(page['map_id'])] = dict(profile_id=profile_id, runtime_enabled=True)
-    return dict(kind='lyra.resident_shared_graphics_bridge.v1',
+    return dict(kind=('lyra.resident_shared_graphics_bridge.experimental-v2' if experimental
+                      else 'lyra.resident_shared_graphics_bridge.v1'),
         abi_sha256=native_plan['abi_sha256'], payload_sha256=expected['payload_sha256'],
         resources=resources, profiles=profiles, parents=parents,
         selected=False, allocation_granted=False, publication_authorized=False,

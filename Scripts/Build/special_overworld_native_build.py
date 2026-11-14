@@ -1,4 +1,4 @@
-"""Offline revision4 resource preparation; ordinary Build admission is unchanged.
+"""Offline native resource preparation; ordinary Build admission is unchanged.
 
 The input is a saved native ROM plus its fresh z3ed resident-gameplay-area
 export. This module performs no file I/O, assembly, sidecar lowering or ROM
@@ -42,7 +42,7 @@ def _write(source, pc, raw, purpose):
     return dict(pc=pc, before=before, after=raw, purpose=purpose)
 
 
-def _validate_reader_bindings(source, entries):
+def _validate_reader_bindings(source, entries, *, capacity=native.MAP_CAPACITY, revision=4):
     """Check installed call witnesses without revision3 runtime admission."""
     code, size = entries[300]
     bindings, count = entries[301]
@@ -68,7 +68,7 @@ def _validate_reader_bindings(source, entries):
                  'NATIVE_BUILD_READER_BINDING_INVALID')
         for key, (address, rows) in entries.items():
             first = native.pc(address)
-            end = first + rows * native.entry_spec(key, native.MAP_CAPACITY, 4)[2]
+            end = first + rows * native.entry_spec(key, capacity, revision)[2]
             _require(site_pc >= end or site_pc + 4 <= first,
                      'NATIVE_BUILD_READER_SITE_OVERLAPS_PAYLOAD')
         _require(site_pc >= native.DIRECTORY_PC + native.DIRECTORY_SIZE
@@ -88,7 +88,7 @@ def _validate_reader_bindings(source, entries):
     return seen
 
 
-def _code_reseal(source, capacity, bank, entries, replacement):
+def _code_reseal(source, capacity, bank, entries, replacement, *, revision=4):
     address, count = entries[300]
     start = native.pc(address)
     before = source[start:start + count]
@@ -111,17 +111,20 @@ def _code_reseal(source, capacity, bank, entries, replacement):
     image = bytearray(source)
     image[start:start + count] = after
     rows = [(key, at, rows) for key, (at, rows) in entries.items()]
-    directory = native.encode_revision4_directory(bytes(image), rows,
-        tail_actor_bank=bank, capacity=capacity)
+    directory = (native.encode_revision4_directory(bytes(image), rows,
+        tail_actor_bank=bank, capacity=capacity) if revision == 4 else
+        native._encode_native_directory(bytes(image), rows, tail_actor_bank=bank,
+                                        capacity=capacity, revision=revision))
     image[native.DIRECTORY_PC:native.DIRECTORY_PC + native.DIRECTORY_SIZE] = directory
-    _require(native.read_native_directory(bytes(image)) == (capacity, bank, entries),
+    _require(native.read_native_directory(bytes(image),
+        experimental_page_tile16=revision == 5) == (capacity, bank, entries),
              'NATIVE_BUILD_RESEAL_CHANGED_LAYOUT')
     # The sole payload exception is explicit code300. Binding records and every
     # authored table/dictionary/stream/appearance/identity payload stay exact.
     for key, (at, rows) in entries.items():
         if key == 300:
             continue
-        width = native.entry_spec(key, capacity, 4)[2]
+        width = native.entry_spec(key, capacity, revision)[2]
         pc, size = native.pc(at), rows * width
         _require(image[pc:pc + size] == source[pc:pc + size],
                  'NATIVE_BUILD_RESEAL_CHANGED_SAVED_PAYLOAD')
@@ -136,9 +139,9 @@ def _code_reseal(source, capacity, bank, entries, replacement):
         compiled_source_evidence_required=True)
 
 
-def prepare_revision4_compilation(source, exported, *, data_pc, capacity,
-                                  preimage, reader_code_replacement=None,
-                                  graphics_root=None):
+def prepare_native_compilation(source, exported, *, data_pc, capacity,
+                               preimage, reader_code_replacement=None,
+                               graphics_root=None, experimental_page_tile16=False):
     """Return pure compilation inputs and preimage-bound writes, not a ROM.
 
     ``data_pc/capacity`` name the caller-owned current resident reservation;
@@ -149,15 +152,18 @@ def prepare_revision4_compilation(source, exported, *, data_pc, capacity,
     enforce the existing ordinary Build/publication gates.
     """
     _require(type(source) is bytes, 'NATIVE_BUILD_SAVED_SOURCE_REQUIRED')
-    installed = native.read_native_directory(source)
-    _require(installed is not None
-             and struct.unpack_from('<H', source, native.DIRECTORY_PC + 8)[0] == 4,
+    _require(type(experimental_page_tile16) is bool, 'NATIVE_BUILD_EXPERIMENTAL_ADMISSION_INVALID')
+    installed = native.read_native_directory(
+        source, experimental_page_tile16=experimental_page_tile16)
+    revision = (struct.unpack_from('<H', source, native.DIRECTORY_PC + 8)[0]
+                if installed is not None else None)
+    _require(installed is not None and revision in ((4, 5) if experimental_page_tile16 else (4,)),
              'NATIVE_BUILD_REVISION4_REQUIRED')
     map_count, bank, entries = installed
     _require(map_count == native.MAP_CAPACITY,
              'NATIVE_BUILD_CURRENT_ENGINE_REQUIRES192')
     native.verify_dictionary_readers(source, entries)
-    call_spans = _validate_reader_bindings(source, entries)
+    call_spans = _validate_reader_bindings(source, entries, capacity=map_count, revision=revision)
     _require(type(data_pc) is int and type(capacity) is int
              and data_pc == native.RESIDENT_DATA_PC
              and capacity == native.RESIDENT_DATA_CAPACITY,
@@ -174,21 +180,24 @@ def prepare_revision4_compilation(source, exported, *, data_pc, capacity,
                  for first, end in call_spans),
              'NATIVE_BUILD_RESIDENT_OVERLAPS_READER_CALL')
     for key, (at, rows) in entries.items():
-        size = rows * native.entry_spec(key, map_count, 4)[2]
+        size = rows * native.entry_spec(key, map_count, revision)[2]
         pc = native.pc(at)
         _require(data_pc >= pc + size or data_pc + capacity <= pc,
                  'NATIVE_BUILD_RESIDENT_OVERLAPS_SAVED_PAYLOAD')
     reseal_writes, code = _code_reseal(source, map_count, bank, entries,
-                                      reader_code_replacement)
+                                      reader_code_replacement, revision=revision)
     # This validates fresh export identity/profiles/topology/resolved bytes;
     # the retained packer and emitter own all byte formats and bank placement.
     plan = resources.plan_saved_native_terrain(source, exported,
-                                               graphics_root=graphics_root)
-    abi = resident.plan_native_resident_abi(plan, tile16_count=entries[400][1])
+        graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16)
+    abi = resident.plan_native_resident_abi(plan, tile16_count=entries[400][1],
+        experimental_page_tile16=experimental_page_tile16)
     emission = resident.emit_native_resident_abi(abi, data_pc=data_pc,
         capacity=capacity, preimage=preimage,
-        excluded_pc_spans=native.RESIDENT_DATA_EXCLUDED_PC)
-    runtime = resident.resident_runtime_inputs(abi, emission, preimage=preimage)
+        excluded_pc_spans=native.RESIDENT_DATA_EXCLUDED_PC,
+        experimental_page_tile16=experimental_page_tile16)
+    runtime = resident.resident_runtime_inputs(abi, emission, preimage=preimage,
+        experimental_page_tile16=experimental_page_tile16)
     binary = bytes.fromhex(emission['payload_hex'])
     writes = []
     for row in emission['placements']:
@@ -197,7 +206,7 @@ def prepare_revision4_compilation(source, exported, *, data_pc, capacity,
         raw = binary[offset:offset + end - first]
         _require(_sha(raw) == row['sha256'], 'NATIVE_BUILD_EMISSION_MISMATCH')
         writes.append(_write(source, first, raw, row['role']))
-    return dict(schema='special_overworld.native_build_preparation.v1',
+    result = dict(schema='special_overworld.native_build_preparation.v1',
         source_rom_sha256=_sha(source),
         native_export_sha256=exported['native_source_sha256'],
         resource_plan=plan, resident_abi=abi, emission=emission,
@@ -212,6 +221,48 @@ def prepare_revision4_compilation(source, exported, *, data_pc, capacity,
         reader_constants_admission_unchanged=True,
         allocation_granted=False, ordinary_build_ready=False,
         runtime_admission=False, publication_authorized=False)
+
+    if revision == 5:
+        result.update(schema='special_overworld.native_build_preparation.experimental-v2',
+                      semantic_source_contract=_semantic_source_contract(source, map_count, entries))
+    return result
+
+
+def _semantic_source_contract(source, capacity, entries):
+    """Expose authenticated existing413 storage, never choose code/allocation."""
+    address, count = entries[413]
+    kind, _, stride = native.entry_spec(413, capacity, 5)
+    first = native.pc(address)
+    raw = source[first:first + count * stride]
+    decoded = native.decode_page_tile16(raw, capacity)
+    records = struct.unpack_from('<H', source, native.DIRECTORY_PC + 18)[0]
+    record_pc = next(native.DIRECTORY_PC + 32 + index * 16 for index in range(records)
+        if struct.unpack_from('<H', source, native.DIRECTORY_PC + 32 + index * 16)[0] == 413)
+    return dict(revision=5, capacity=capacity, table_id=413, kind=kind,
+        rows_snes=address, rows_pc=first, count=count, stride=stride,
+        populated_rows=len(decoded), payload_sha256=_sha(raw),
+        payload_crc32=struct.unpack_from('<I', source, record_pc + 12)[0],
+        directory_record_pc=record_pc, source_rom_sha256=_sha(source),
+        directory_sha256=_sha(source[native.DIRECTORY_PC:
+            native.DIRECTORY_PC + native.DIRECTORY_SIZE]),
+        directory_crc32=struct.unpack_from('<I', source, native.DIRECTORY_PC + 28)[0],
+        consumer_bindings=dict(SPECIAL_OVERWORLD_SEMANTIC_REVISION=5,
+            SPECIAL_OVERWORLD_SEMANTIC_CAPACITY=capacity,
+            SPECIAL_OVERWORLD_SEMANTIC_ROWS=address, SPECIAL_OVERWORLD_SEMANTIC_COUNT=count,
+            SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE=None, SPECIAL_OVERWORLD_SEMANTIC_CODE_END=None),
+        required_semantic_consumers=list(resources.PAGE_TILE16_RUNTIME_REQUIREMENTS),
+        effective_source_lookup='physical_page/local12bit_id/quadrant; global400 fallback',
+        source_word_bits_preserved=True, code_extent_bound=False,
+        runtime_admission=False, allocation_granted=False)
+
+
+def prepare_revision4_compilation(source, exported, *, data_pc, capacity,
+                                  preimage, reader_code_replacement=None,
+                                  graphics_root=None):
+    """Strict legacy API; experimental callers must select the generic API."""
+    return prepare_native_compilation(source, exported, data_pc=data_pc,
+        capacity=capacity, preimage=preimage,
+        reader_code_replacement=reader_code_replacement, graphics_root=graphics_root)
 
 
 # Current resident engine instruction spans, not dictionary operand spans.
@@ -266,8 +317,9 @@ def _symbol(symbols, name, *, exclusive_end=False):
     return value
 
 
-def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
-                                allow_stale_directory=False, graphics_root=None):
+def plan_native_compiled_seal(source, exported, compiled, symbols, *,
+                              allow_stale_directory=False, graphics_root=None,
+                              experimental_page_tile16=False):
     """Validate compilation and return directory bytes for source reassembly.
 
     Inputs are immutable ROM bytes, a fresh source export and WLA label names
@@ -285,12 +337,14 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
              and len(compiled) == len(source), 'NATIVE_BUILD_COMPILED_EXTENT_MISMATCH')
     _require(type(symbols) is dict and type(allow_stale_directory) is bool,
              'NATIVE_BUILD_COMPILED_ARGUMENT_INVALID')
-    prep = prepare_revision4_compilation(source, exported,
+    prep = prepare_native_compilation(source, exported,
         data_pc=native.RESIDENT_DATA_PC, capacity=native.RESIDENT_DATA_CAPACITY,
         preimage=source[native.RESIDENT_DATA_PC:
                         native.RESIDENT_DATA_PC + native.RESIDENT_DATA_CAPACITY],
-        graphics_root=graphics_root)
-    capacity, bank, entries = native.read_native_directory(source)
+        graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16)
+    capacity, bank, entries = native.read_native_directory(
+        source, experimental_page_tile16=experimental_page_tile16)
+    revision = struct.unpack_from('<H', source, native.DIRECTORY_PC + 8)[0]
     code_address, code_size = entries[300]
     code_start = _symbol(symbols, 'Lyra_CurrentNativeCodeStart')
     code_end = _symbol(symbols, 'Lyra_CurrentNativeCodeEnd', exclusive_end=True)
@@ -299,12 +353,12 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
     protected = [(native.DIRECTORY_PC, native.DIRECTORY_PC + native.DIRECTORY_SIZE,
                   'directory')]
     for key, (address, rows) in entries.items():
-        first, length = native.pc(address), rows * native.entry_spec(key, capacity, 4)[2]
+        first, length = native.pc(address), rows * native.entry_spec(key, capacity, revision)[2]
         protected.append((first, first + length, f'ID{key}'))
         if key != 300:
             _require(compiled[first:first + length] == source[first:first + length],
                      f'NATIVE_BUILD_COMPILED_SAVED_PAYLOAD_CHANGED:ID{key}')
-    call_spans = _validate_reader_bindings(source, entries)
+    call_spans = _validate_reader_bindings(source, entries, capacity=capacity, revision=revision)
     for first, end in call_spans:
         _require(compiled[first:end] == source[first:end],
                  'NATIVE_BUILD_COMPILED_READER_CALL_CHANGED')
@@ -394,7 +448,7 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
     first = native.pc(code_address)
     before, after = source[first:first + code_size], compiled[first:first + code_size]
     reseal_writes, code = _code_reseal(source, capacity, bank, entries,
-        ReaderCodeReplacement(_sha(before), after))
+        ReaderCodeReplacement(_sha(before), after), revision=revision)
     directory = source[native.DIRECTORY_PC:native.DIRECTORY_PC + native.DIRECTORY_SIZE]
     expected_directory = next((write['after'] for write in reseal_writes
         if write['pc'] == native.DIRECTORY_PC), directory)
@@ -403,9 +457,10 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
     _require(not needed or (allow_stale_directory and installed == directory),
              'NATIVE_BUILD_COMPILED_DIRECTORY_SEAL_MISMATCH')
     if not needed:
-        _require(native.read_native_directory(compiled) == (capacity, bank, entries),
+        _require(native.read_native_directory(compiled,
+            experimental_page_tile16=experimental_page_tile16) == (capacity, bank, entries),
                  'NATIVE_BUILD_COMPILED_DIRECTORY_LAYOUT_CHANGED')
-    return dict(schema='special_overworld.native_compiled_seal.v1',
+    result = dict(schema='special_overworld.native_compiled_seal.v1',
         source_rom_sha256=_sha(source), compiled_rom_sha256=_sha(compiled),
         native_export_sha256=prep['native_export_sha256'],
         directory_bytes=expected_directory, directory_sha256=_sha(expected_directory),
@@ -421,6 +476,25 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
         resource_writes_verified=True, unclaimed_resource_bytes_preserved=True,
         unresolved_full_residency_unknowns=prep['unresolved_full_residency_unknowns'],
         full_residency_ready=False, runtime_admission=False, publication_authorized=False)
+
+    if revision == 5:
+        result.update(schema='special_overworld.native_compiled_seal.experimental-v2',
+                      semantic_source_contract=prep['semantic_source_contract'])
+    return result
+
+
+def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
+                                allow_stale_directory=False, graphics_root=None):
+    """Strict legacy seal; does not silently admit experimental revision5."""
+    return plan_native_compiled_seal(source, exported, compiled, symbols,
+        allow_stale_directory=allow_stale_directory, graphics_root=graphics_root)
+
+
+def verify_native_compiled_output(source, exported, compiled, symbols, *,
+                                  graphics_root=None, experimental_page_tile16=False):
+    """Strict final composition; explicit experimental source admission only."""
+    return plan_native_compiled_seal(source, exported, compiled, symbols,
+        graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16)
 
 
 def verify_revision4_compiled_output(source, exported, compiled, symbols, *,

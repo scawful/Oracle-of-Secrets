@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import importlib.util
+import json
 from pathlib import Path
 import struct
 import sys
@@ -170,10 +171,11 @@ class NativeBuildPreparationTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'EXPORT_HASH_MISMATCH'):
             self.prepare()
 
-    def compiled_fixture(self):
+    def compiled_fixture(self, *, experimental_page_tile16=False):
         """Synthetic assembly transaction; not an engine execution fixture."""
         image = bytearray(self.source)
-        _, _, entries = N.read_native_directory(self.source)
+        _, _, entries = N.read_native_directory(self.source,
+            experimental_page_tile16=experimental_page_tile16)
         at, size = entries[300]
         symbols = dict(Lyra_CurrentNativeCodeStart=at,
                        Lyra_CurrentNativeCodeEnd=at + size)
@@ -186,7 +188,10 @@ class NativeBuildPreparationTest(unittest.TestCase):
             raw = b'\x22' + target.to_bytes(3, 'little') + b'\xEA' * (size - 4)
             first = N.pc(site)
             image[first:first + size] = raw
-        for write in self.prepare()['resource_writes']:
+        prepared = (B.prepare_native_compilation(self.source, self.exported,
+            data_pc=self.origin, capacity=self.capacity, preimage=self.preimage,
+            experimental_page_tile16=True) if experimental_page_tile16 else self.prepare())
+        for write in prepared['resource_writes']:
             first = write['pc']
             image[first:first + len(write['after'])] = write['after']
         # Exact existing Overworld/overworld.asm intro ambience policy.
@@ -315,6 +320,176 @@ class NativeBuildPreparationTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'RESOURCE_GAP_CHANGED'):
             B.verify_revision4_compiled_output(self.source, self.exported, bytes(image), symbols)
 
+
+
+class ExperimentalNativeBuildTest(unittest.TestCase):
+    def setUp(self):
+        self.legacy = NativeBuildPreparationTest()
+        self.legacy.setUp()
+        self.fixture = F.ExperimentalPageTile16ResourcesTest()
+        self.fixture.setUp()
+        self.fixture.fixture.source = self.legacy.source
+        self.fixture.fixture.exported = self.legacy.exported
+        self.source, self.exported = self.fixture.install(self.fixture.rows, authoring=True)
+
+    def prepare(self, **kwargs):
+        args = dict(data_pc=N.RESIDENT_DATA_PC, capacity=N.RESIDENT_DATA_CAPACITY,
+            preimage=self.source[N.RESIDENT_DATA_PC:
+                N.RESIDENT_DATA_PC + N.RESIDENT_DATA_CAPACITY],
+            experimental_page_tile16=True)
+        args.update(kwargs)
+        return B.prepare_native_compilation(self.source, self.exported, **args)
+
+    def test_default_and_revision4_alias_refuse_experimental_without_activation(self):
+        args = dict(data_pc=N.RESIDENT_DATA_PC, capacity=N.RESIDENT_DATA_CAPACITY,
+                    preimage=self.source[N.RESIDENT_DATA_PC:
+                        N.RESIDENT_DATA_PC + N.RESIDENT_DATA_CAPACITY])
+        for function in (B.prepare_revision4_compilation, B.prepare_native_compilation):
+            with self.subTest(function=function.__name__), self.assertRaisesRegex(
+                    ValueError, 'Ordinary Build requires'):
+                function(self.source, self.exported, **args)
+        with self.assertRaisesRegex(ValueError, 'Ordinary Build requires'):
+            N.reader_constants(self.source)
+        with self.assertRaisesRegex(ValueError, 'EXPERIMENTAL_ADMISSION_INVALID'):
+            self.prepare(experimental_page_tile16=1)
+
+    def test_authenticated413_binding_and_visual_abi_retain_provenance_and_refusals(self):
+        result = self.prepare()
+        binding = result['semantic_source_contract']
+        count, bank, entries = N.read_native_directory(self.source,
+            experimental_page_tile16=True)
+        address, rows = entries[413]
+        raw = self.source[N.pc(address):N.pc(address) + rows * 12]
+        self.assertEqual((binding['revision'], binding['capacity'], binding['table_id'],
+                          binding['kind'], binding['rows_snes'], binding['count'], binding['stride']),
+                         (5, 192, 413, 10, address, rows, 12))
+        self.assertEqual(binding['payload_sha256'], hashlib.sha256(raw).hexdigest())
+        self.assertEqual(binding['payload_crc32'], zlib.crc32(raw))
+        self.assertEqual(binding['populated_rows'], 2)
+        self.assertEqual(binding['consumer_bindings']['SPECIAL_OVERWORLD_SEMANTIC_ROWS'], address)
+        self.assertIsNone(binding['consumer_bindings']['SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE'])
+        self.assertIsNone(binding['consumer_bindings']['SPECIAL_OVERWORLD_SEMANTIC_CODE_END'])
+        self.assertEqual(result['resource_plan']['schema'], F.R.EXPERIMENTAL_PLAN_SCHEMA)
+        self.assertEqual(result['resident_abi']['experimental_source']['page_tile16_definitions_sha256'],
+                         binding['payload_sha256'])
+        for key in ('runtime_admission', 'publication_authorized', 'ordinary_build_ready',
+                    'allocation_granted', 'full_residency_ready'):
+            self.assertFalse(result[key])
+        self.assertNotIn('SEMANTIC_ENABLED = 1', result['constants_asm'])
+        self.assertEqual(result, self.prepare())
+
+    def test_declared413_capacity_is_reported_without_new_allocation(self):
+        self.source, self.exported = self.fixture.install(
+            self.fixture.rows, count=2730, authoring=True)
+        result = self.prepare()
+        binding = result['semantic_source_contract']
+        self.assertEqual((binding['count'], binding['populated_rows'], binding['stride']),
+                         (2730, 2, 12))
+        self.assertFalse(binding['allocation_granted'])
+        self.assertIsNone(binding['consumer_bindings']['SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE'])
+
+    def test_explicit_code_reseal_preserves413_412_and_every_saved_payload(self):
+        capacity, bank, entries = N.read_native_directory(self.source,
+            experimental_page_tile16=True)
+        at, size = entries[300]
+        before = self.source[N.pc(at):N.pc(at) + size]
+        changed = bytes([before[0] ^ 1]) + before[1:]
+        result = self.prepare(reader_code_replacement=B.ReaderCodeReplacement(
+            hashlib.sha256(before).hexdigest(), changed))
+        image = bytearray(self.source)
+        for row in result['source_reseal_writes']:
+            image[row['pc']:row['pc'] + len(row['after'])] = row['after']
+        self.assertEqual(N.read_native_directory(bytes(image), experimental_page_tile16=True),
+                         (capacity, bank, entries))
+        for key, (address, rows) in entries.items():
+            if key == 300:
+                continue
+            first, length = N.pc(address), rows * N.entry_spec(key, capacity, 5)[2]
+            self.assertEqual(image[first:first + length], self.source[first:first + length], key)
+        self.assertTrue(result['reexport_required_after_reseal'])
+        # The original export cannot be relabelled/rehashed to admit the changed source.
+        self.source = bytes(image)
+        with self.assertRaisesRegex(ValueError, 'EXPORT_SOURCE_MISMATCH'):
+            self.prepare()
+
+    def test_rehashed_tampered413_metadata_rows_and_wrong_export_schema_refuse(self):
+        original = copy.deepcopy(self.exported)
+        for field, value in (('count', 3), ('stride', 8), ('sha256', '0' * 64)):
+            exported = copy.deepcopy(original['native_source'])
+            exported['page_tile16_definitions'][field] = value
+            self.exported = self.fixture.fixture.seal(exported)
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, 'PAGE_TILE16_SOURCE_MISMATCH'):
+                self.prepare()
+        exported = copy.deepcopy(original['native_source'])
+        exported['page_tile16_definitions']['rows'][0]['words'][0] ^= 1
+        self.exported = self.fixture.fixture.seal(exported)
+        with self.assertRaisesRegex(ValueError, 'PAGE_TILE16_SOURCE_MISMATCH'):
+            self.prepare()
+        exported = copy.deepcopy(original['native_source'])
+        exported['schema'] = F.R.SOURCE_SCHEMA
+        self.exported = self.fixture.fixture.seal(exported)
+        with self.assertRaisesRegex(ValueError, 'EXPORT_SOURCE_MISMATCH'):
+            self.prepare()
+
+    def test_compiled_sealer_is_revision_aware_and_preserves_required413(self):
+        self.legacy.source, self.legacy.exported = self.source, self.exported
+        compiled, symbols = self.legacy.compiled_fixture(experimental_page_tile16=True)
+        _, _, entries = N.read_native_directory(self.source, experimental_page_tile16=True)
+        image = bytearray(compiled)
+        image[N.pc(entries[300][0])] ^= 1
+        compiled = bytes(image)
+        with self.assertRaisesRegex(ValueError, 'DIRECTORY_SEAL_MISMATCH'):
+            B.verify_native_compiled_output(self.source, self.exported, compiled, symbols,
+                                           experimental_page_tile16=True)
+        first = B.plan_native_compiled_seal(self.source, self.exported, compiled, symbols,
+            allow_stale_directory=True, experimental_page_tile16=True)
+        image[N.DIRECTORY_PC:N.DIRECTORY_PC + N.DIRECTORY_SIZE] = first['directory_bytes']
+        final = B.verify_native_compiled_output(self.source, self.exported, bytes(image), symbols,
+                                                experimental_page_tile16=True)
+        self.assertFalse(final['needed_reassembly'])
+        self.assertFalse(final['runtime_admission'])
+        self.assertEqual(final['semantic_source_contract']['table_id'], 413)
+        # Even a permitted stale directory never waives any saved payload byte.
+        for key in (400, 410, 411, 412, 413):
+            bad = bytearray(compiled)
+            bad[N.pc(entries[key][0])] ^= 1
+            with self.subTest(key=key), self.assertRaisesRegex(ValueError, f'SAVED_PAYLOAD_CHANGED:ID{key}'):
+                B.plan_native_compiled_seal(self.source, self.exported, bytes(bad), symbols,
+                    allow_stale_directory=True, experimental_page_tile16=True)
+        with self.assertRaisesRegex(ValueError, 'Ordinary Build requires'):
+            B.plan_revision4_compiled_seal(self.source, self.exported, compiled, symbols)
+
+    def test_missing413_crc_and_resident_overlap_refuse_without_writes(self):
+        original = self.source
+        _, _, entries = N.read_native_directory(original, experimental_page_tile16=True)
+        image = bytearray(original)
+        image[N.pc(entries[413][0]) + 4] ^= 1
+        self.source = bytes(image)
+        with self.assertRaisesRegex(ValueError, 'CRC'):
+            self.prepare()
+        image = bytearray(original)
+        count = struct.unpack_from('<H', image, N.DIRECTORY_PC + 18)[0]
+        record = next(N.DIRECTORY_PC + 32 + index * 16 for index in range(count)
+            if struct.unpack_from('<H', image, N.DIRECTORY_PC + 32 + index * 16)[0] == 413)
+        struct.pack_into('<H', image, record, 414)
+        self.source = bytes(image)
+        with self.assertRaises(ValueError):
+            self.prepare()
+        self.fixture.address = 0x4E8000  # Synthetic occupied resident interval.
+        self.source, self.exported = self.fixture.install(self.fixture.rows, authoring=True)
+        with self.assertRaisesRegex(ValueError, 'OVERLAPS_SAVED_PAYLOAD'):
+            self.prepare()
+
+    def test_legacy_pinned_preparation_and_opt_in_v1_are_byte_identical(self):
+        expected = '300084904066624eb22e08de5c19b39ff516f26ef735735b3917e6e318a0a4df'
+        old = self.legacy.prepare()
+        raw = json.dumps(old, sort_keys=True, separators=(',', ':'),
+                         default=lambda value: dict(bytes_hex=value.hex())).encode()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), expected)
+        result = B.prepare_native_compilation(self.legacy.source, self.legacy.exported,
+            data_pc=self.legacy.origin, capacity=self.legacy.capacity,
+            preimage=self.legacy.preimage, experimental_page_tile16=True)
+        self.assertEqual(old, result)
 
 if __name__ == '__main__':
     unittest.main()
