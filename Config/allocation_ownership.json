@@ -494,7 +494,8 @@
         "source": "shared:Core/symbols.asm",
         "symbol": "MenuScrollLevelV",
         "base_block": true
-      }
+      },
+      "container": true
     },
     {
       "id": "MinishPortalTimer",
@@ -2391,6 +2392,204 @@
         "RESIDENT_PAGE_TILE16_SPILL_END = 0x290000"
       ],
       "aliases": []
+    },
+    {
+      "id": "ByrnaOwned",
+      "owner": "Independent Cane of Byrna ownership",
+      "space": "save_buffer",
+      "base": 8319916,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Per-file item ownership or ammunition; preserve regardless of current item feature activation.",
+      "reset": "Vanilla new-file initialization clears this saved byte. Ownership requires exact 1; BombchuAmmo validates 0..20 and rejects invalid old-save values.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "ByrnaOwned",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "BombchuOwned",
+      "owner": "Independent Bombchu ownership",
+      "space": "save_buffer",
+      "base": 8319917,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Per-file item ownership or ammunition; preserve regardless of current item feature activation.",
+      "reset": "Vanilla new-file initialization clears this saved byte. Ownership requires exact 1; BombchuAmmo validates 0..20 and rejects invalid old-save values.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "BombchuOwned",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "SwitchHookOwned",
+      "owner": "Independent Switch Hook ownership",
+      "space": "save_buffer",
+      "base": 8319918,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Per-file item ownership or ammunition; preserve regardless of current item feature activation.",
+      "reset": "Vanilla new-file initialization clears this saved byte. Ownership requires exact 1; BombchuAmmo validates 0..20 and rejects invalid old-save values.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "SwitchHookOwned",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "GaroMaskOwned",
+      "owner": "Independent Garo Mask ownership",
+      "space": "save_buffer",
+      "base": 8319919,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Per-file item ownership or ammunition; preserve regardless of current item feature activation.",
+      "reset": "Vanilla new-file initialization clears this saved byte. Ownership requires exact 1; BombchuAmmo validates 0..20 and rejects invalid old-save values.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "GaroMaskOwned",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "BombchuAmmo",
+      "owner": "Bombchu supply, separate from Bombs",
+      "space": "save_buffer",
+      "base": 8319920,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Per-file item ownership or ammunition; preserve regardless of current item feature activation.",
+      "reset": "Vanilla new-file initialization clears this saved byte. Ownership requires exact 1; BombchuAmmo validates 0..20 and rejects invalid old-save values.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "BombchuAmmo",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "RegionalCheckpointSchema",
+      "owner": "Reserved regional checkpoint schema",
+      "space": "save_buffer",
+      "base": 8319924,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved per-file state; Core/sram.asm records the existing grant. No current checkpoint consumer or migration is claimed.",
+      "reset": "Vanilla new-file initialization clears the five-page save buffer. No checkpoint migration or activation is inferred.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "RegionalCheckpointSchema",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "RegionalCheckpointEpoch",
+      "owner": "Reserved regional checkpoint epoch",
+      "space": "save_buffer",
+      "base": 8319925,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved per-file state; Core/sram.asm records the existing grant. No current checkpoint consumer or migration is claimed.",
+      "reset": "Vanilla new-file initialization clears the five-page save buffer. No checkpoint migration or activation is inferred.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "RegionalCheckpointEpoch",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "RegionalCheckpointKey",
+      "owner": "Reserved regional checkpoint key",
+      "space": "save_buffer",
+      "base": 8319926,
+      "size": 2,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved per-file state; Core/sram.asm records the existing grant. No current checkpoint consumer or migration is claimed.",
+      "reset": "Vanilla new-file initialization clears the five-page save buffer. No checkpoint migration or activation is inferred.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "RegionalCheckpointKey",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "RegionalCheckpointResumeIntent",
+      "owner": "Reserved regional checkpoint resume intent",
+      "space": "save_buffer",
+      "base": 8319928,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved per-file state; Core/sram.asm records the existing grant. No current checkpoint consumer or migration is claimed.",
+      "reset": "Vanilla new-file initialization clears the five-page save buffer. No checkpoint migration or activation is inferred.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "RegionalCheckpointResumeIntent",
+        "bank00_mirror": false
+      }
     }
   ],
   "lifetime_aliases": [],
