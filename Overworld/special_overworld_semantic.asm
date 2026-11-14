@@ -212,7 +212,6 @@ endif
 assert !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED == 0 || !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED == 1
 if !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED == 1
 assert !SPECIAL_OVERWORLD_NATIVE == 1 && !SPECIAL_OVERWORLD_RESIDENT_ENABLED == 1
-assert !ENABLE_SKY_OVERWORLD_ROUTE == 1, "Source attributes require the existing SkyTileType hook owner"
 ; M16/X16, X=source character 0..511. SkyTileType has already pushed P.
 ; Long accesses preserve D/DBR/X/Y and all scratch. Restore P before the
 ; full-word table LDA so its N/Z exactly replace the original LDA's N/Z.
@@ -232,10 +231,16 @@ Lyra_SourceTileType:
 .legacy:
     JML Oracle_Lyra_SourceTileTypeLegacy
 Lyra_SourceTileType_End:
+assert defined("SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE")
+assert !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE >= !SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE
+assert !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE+$0201 <= !SPECIAL_OVERWORLD_SEMANTIC_CODE_END
+assert pc() <= !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE, "Semantic code reaches source attribute table"
+org !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE
 Lyra_SourceTileTypes90:
-    ; The source-authenticated compiler supplies the exact 513 bytes, including
-    ; the original sentinel for the native M16 read at character $1FF.
-    %SpecialOverworldSourceAttributeBytes()
+    ; The existing managed native-data include emits the authenticated bytes
+    ; here after code assembly. The compiled seal verifies all513 bytes,
+    ; including the original sentinel for the M16 read at character $1FF.
+    skip $0201
 Lyra_SourceTileTypes90_End:
 assert Lyra_SourceTileTypes90_End-Lyra_SourceTileTypes90 == $0201
 assert (Lyra_SourceTileTypes90&$FFFF)+$0201 <= $10000

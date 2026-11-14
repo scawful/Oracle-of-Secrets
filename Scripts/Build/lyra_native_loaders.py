@@ -53,6 +53,9 @@ RESIDENT_SPILL_END = 0x288000
 # selected engine reservations do not initialize storage or enable consumers.
 SEMANTIC_CODE_BASE = 0x518000
 SEMANTIC_CODE_LIMIT = 0x519000
+# Source attribute bytes share the existing semantic reservation. Explicit
+# code/table separation keeps the managed data include numeric and bounded.
+SOURCE_ATTRIBUTE_TABLE_BASE = 0x518300
 PAGE_TILE16_BASE = 0x519000
 # Complete selected Sky route plus its overlay needs more than 512 rows.
 # Keep source storage in the same bank, separate from the derived reader code.

@@ -229,26 +229,40 @@ def prepare_native_compilation(source, exported, *, data_pc, capacity,
         allocation_granted=False, ordinary_build_ready=False,
         runtime_admission=False, publication_authorized=False)
 
+    result['data_asm'] += source_attribute_data_asm(result)
     if revision == 5:
         result.update(schema='special_overworld.native_build_preparation.experimental-v2',
                       semantic_source_contract=_semantic_source_contract(source, map_count, entries))
     return result
 
 
-def source_attribute_constants(prepared):
-    """Emit only a producer-authenticated page90 table, never accept a sidecar."""
+def _source_attribute_payload(prepared):
     row = prepared['resource_plan'].get('source_attributes')
     if row is None:
-        return ''
+        return None
     raw = resident._verified_payload(row)
     _require(row.get('map_id') == 0x90 and row.get('parent_map_id') == 0x90
              and row.get('area_size') == 0 and len(raw) == 513,
              'NATIVE_BUILD_SOURCE_ATTRIBUTES_INVALID')
-    lines = ['!SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED = 1',
-             'macro SpecialOverworldSourceAttributeBytes()']
+    return raw
+
+
+def source_attribute_constants(prepared):
+    """Keep the managed reader-constants include strictly numeric-only."""
+    return ('!SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED = 1\n'
+            f'!SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE = ${native.SOURCE_ATTRIBUTE_TABLE_BASE:06X}\n'
+            if _source_attribute_payload(prepared) is not None else '')
+
+
+def source_attribute_data_asm(prepared):
+    """Use the existing managed native-data include; no new file/reservation."""
+    raw = _source_attribute_payload(prepared)
+    if raw is None:
+        return ''
+    lines = ['pushpc', f'org ${native.SOURCE_ATTRIBUTE_TABLE_BASE:06X}']
     lines.extend('  db ' + ','.join(f'${byte:02X}' for byte in raw[at:at+16])
                  for at in range(0, len(raw), 16))
-    return '\n'.join(lines + ['endmacro', ''])
+    return '\n'.join(lines + ['assert pc() == Lyra_SourceTileTypes90_End', 'pullpc', ''])
 
 
 def _semantic_source_contract(source, capacity, entries):
@@ -393,7 +407,8 @@ def _semantic_compiled_readers(source, compiled, entries, symbols, protected, so
         wrapper = _symbol(symbols, 'Lyra_SourceTileType')
         sky = _symbol(symbols, 'Oracle_SkyTileType')
         legacy = _symbol(symbols, 'Oracle_Lyra_SourceTileTypeLegacy')
-        _require(first <= wrapper < table and table_end == table + 513 and table_end <= end
+        _require(first <= wrapper < table and table == native.SOURCE_ATTRIBUTE_TABLE_BASE
+                 and table_end == table + 513 and table_end <= end
                  and compiled[native.pc(table):native.pc(table)+513] == expected,
                  'NATIVE_BUILD_SOURCE_ATTRIBUTES_TABLE_MISMATCH')
         _require(legacy == sky + 5 and compiled[native.pc(sky):native.pc(sky)+5]

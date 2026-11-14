@@ -128,6 +128,9 @@ def _load_global_defines(root: Path) -> dict[str, int]:
                 sys.path.remove(build)
         elif defines['LYRA_NATIVE_A1_ENABLED'] != 1 or prepared.get('kind') != 'lyra.ordinary_build_prepare.v1':
             raise ValueError('Historical Lyra context requires its original A1 preparation')
+    # This native-owned opt-in also gates the shared raw attribute hooks.
+    # A missing managed cache must retain the exact legacy hook census.
+    defines.setdefault("SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED", 0)
     # Build owns this literal-only include. Fresh legacy checkouts have no
     # cache; installed native builds regenerate it before assembly/manifest.
     native_constants = root / '.cache/special_overworld_reader_constants.asm'

@@ -120,17 +120,33 @@ class SourceAttributeAuthenticationTest(unittest.TestCase):
         self.assertEqual(B.source_attribute_constants({'resource_plan':{}}),'')
         row = self.compose({0xF6:bytes([1])*64})
         text = B.source_attribute_constants({'resource_plan':{'source_attributes':row}})
-        self.assertIn('macro SpecialOverworldSourceAttributeBytes()',text)
+        self.assertEqual(text,'!SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED = 1\n'
+                         '!SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE = $518300\n')
+        self.assertIn('org $518300',B.source_attribute_data_asm({'resource_plan':{'source_attributes':row}}))
         self.assertIn('!SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED = 1',text)
         for field,value in [('payload_hex','00'),('sha256','0'*64),('area_size',4)]:
             bad = dict(row);bad[field]=value
             with self.assertRaises(ValueError):
                 B.source_attribute_constants({'resource_plan':{'source_attributes':bad}})
 
+    def test_managed_constants_remain_numeric_and_owned_flag_defaults_off(self):
+        import asm_source
+        import tempfile
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);(root/'.cache').mkdir()
+            self.assertEqual(asm_source._load_global_defines(root)['SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED'],0)
+            row=self.compose({0xF6:bytes([1])*64})
+            text=B.source_attribute_constants({'resource_plan':{'source_attributes':row}})
+            cache=root/'.cache/special_overworld_reader_constants.asm';cache.write_text(text)
+            self.assertEqual(asm_source._load_global_defines(root)['SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED'],1)
+            cache.write_text(text+'macro forbidden()\nendmacro\n')
+            with self.assertRaisesRegex(ValueError,'owned numeric defines'):
+                asm_source._load_global_defines(root)
+
 
 @unittest.skipUnless(K.R.ASSEMBLER and K.RUNNER,'Asar and retained OOS_65816_RUNNER required')
 class SourceAttributeKernelTest(unittest.TestCase):
-    def artifact(self, *, enabled=True, parent=0x90, size=0):
+    def artifact(self, *, enabled=True, parent=0x90, size=0, route=1):
         attrs = bytes((i*37+11)&255 for i in range(512)) + b'\x5A'
         row = dict(map_id=0x90,parent_map_id=0x90,area_size=0,
                    byte_count=513,payload_hex=attrs.hex(),sha256=hashlib.sha256(attrs).hexdigest())
@@ -142,11 +158,12 @@ class SourceAttributeKernelTest(unittest.TestCase):
                     (0x0E9459,bytes([0x27])*512+b'\x5A'),
                     (tables['parent']+0x90,bytes([parent])),
                     (tables['area_size']+0x90,bytes([size]))]
-        extra=(f'org $348000\nnamespace Oracle\nincsrc "{K.R.ROOT / "Overworld/sky_tile_types.asm"}"\nnamespace off\n'
+        data = B.source_attribute_data_asm({'resource_plan':{'source_attributes':row}}) if enabled else ''
+        extra=(data + f'org $348000\nnamespace Oracle\nincsrc "{K.R.ROOT / "Overworld/sky_tile_types.asm"}"\nnamespace off\norg $368000\nLegacyVanillaTypeRead:\nLDA.l $0E9459,X\nRTL\n'
                + ''.join(f'org ${site+4:06X}\nRTL\n' for site in
                          (0x00886E,0x1BBEFD,0x1BBF2A,0x1BC04E)))
         a = K.Artifact([K.row(0x90,7,(1,2,3,4))],preamble=preamble,
-                       overrides={'ENABLE_SKY_OVERWORLD_ROUTE':1,'ENABLE_SKY_OVERWORLD_GRAPHICS':1,
+                       overrides={'ENABLE_SKY_OVERWORLD_ROUTE':route,'ENABLE_SKY_OVERWORLD_GRAPHICS':1,
                                   'SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE':0x518000,
                                   'SPECIAL_OVERWORLD_SEMANTIC_CODE_END':0x519000},
                        extra_source=extra,image_updates=updates)
@@ -201,6 +218,49 @@ class SourceAttributeKernelTest(unittest.TestCase):
                 self.assertEqual(r['registers']['a'],int.from_bytes(attrs[ch:ch+2],'little'))
                 K.SemanticKernelTest.preserved(self,r,b,ram,out,nz=True)
 
+    def test_route_and_attributes_matrix_keeps_one_hook_owner(self):
+        preimage=bytes.fromhex('BF59940E')
+        dig=bytes.fromhex('AD7A0329FF00C90100D0F2')
+        for route in (0,1):
+            for enabled in (False,True):
+                a,attrs=self.artifact(route=route,enabled=enabled)
+                self.assertEqual('Lyra_SourceTileType' in a.labels,enabled)
+                self.assertEqual('Oracle_SkyTileTypes' in a.labels,bool(route))
+                at=K.R.N.pc(0x1BBE3E)
+                if route:
+                    self.assertEqual(a.image[at:at+4],b'\x5C'+a.labels['Oracle_SkyTileType_GuardVoidDig'].to_bytes(3,'little'))
+                else:
+                    self.assertEqual(a.image[at:at+len(dig)],dig)
+                for site in (0x00886E,0x1BBEFD,0x1BBF2A,0x1BC04E):
+                    at=K.R.N.pc(site)
+                    expected=(b'\x22'+a.labels['Oracle_SkyTileType'].to_bytes(3,'little')
+                              if route or enabled else preimage)
+                    self.assertEqual(a.image[at:at+4],expected)
+                    for ch in (0x1C,0x1D,0x80,0x81,0x1FF):
+                        ram=self.ram();r,out,b=a.call(site,x=ch,p=0xCD,ram=ram)
+                        value=(int.from_bytes(attrs[ch:ch+2],'little') if enabled else
+                               (0x5A27 if ch==0x1FF else 0x2727))
+                        self.assertEqual(r['registers']['a'],value)
+                        K.SemanticKernelTest.preserved(self,r,b,ram,out,nz=True)
+
+    def test_route_off_excluded_contexts_match_original_vanilla(self):
+        control,_=self.artifact(enabled=False,route=0)
+        contexts=[(0x87,0x87,0,0x90,0),(0x8C,0x8C,0,0x90,0),
+                  (0x8D,0x8D,0,0x90,0),(0x8E,0x8E,0,0x90,0),
+                  (0x8F,0x8F,0,0x90,0),(2,2,0,0x90,0),(0xA0,0xA0,0,0x90,0),
+                  (0x90,0x90,1,0x90,0),(0x190,0x90,0,0x90,0),
+                  (0x90,0x190,0,0x90,0),(0x90,0x90,0,0x8F,0),
+                  (0x90,0x90,0,0x90,1),(0x90,0x90,0,0x90,3),
+                  (0x90,0x90,0,0x90,4)]
+        for page,area,indoor,parent,size in contexts:
+            a,_=self.artifact(route=0,parent=parent,size=size)
+            for ch in (0x1C,0x1D,0x80,0x81,0x1FF):
+                ram=self.ram(page,area,indoor)
+                actual,out,b=a.call('Oracle_SkyTileType',x=ch,p=0xCD,ram=ram)
+                expected,_,_=control.call('LegacyVanillaTypeRead',x=ch,p=0xCD,ram=ram)
+                self.assertEqual(actual['registers'],expected['registers'])
+                K.SemanticKernelTest.preserved(self,actual,b,ram,out,nz=True)
+
 
 class SourceAttributeCompiledSealTest(unittest.TestCase):
     def setUp(self):
@@ -211,10 +271,10 @@ class SourceAttributeCompiledSealTest(unittest.TestCase):
         self.raw=bytes((i*37+11)&255 for i in range(512))+b'\x5A'
         self.row=dict(map_id=0x90,parent_map_id=0x90,area_size=0,
                       byte_count=513,payload_hex=self.raw.hex(),sha256=hashlib.sha256(self.raw).hexdigest())
-        symbols.update(Lyra_SemanticCodeEnd=0x518400,Lyra_SourceTileType=0x5180F0,
-                       Lyra_SourceTileTypes90=0x518100,Lyra_SourceTileTypes90_End=0x518301,
+        symbols.update(Lyra_SemanticCodeEnd=0x518600,Lyra_SourceTileType=0x5180F0,
+                       Lyra_SourceTileTypes90=0x518300,Lyra_SourceTileTypes90_End=0x518501,
                        Oracle_SkyTileType=0x348000,Oracle_Lyra_SourceTileTypeLegacy=0x348005)
-        self.image[K.R.N.pc(0x518100):K.R.N.pc(0x518301)]=self.raw
+        self.image[K.R.N.pc(0x518300):K.R.N.pc(0x518501)]=self.raw
         self.image[K.R.N.pc(0x348000):K.R.N.pc(0x348005)]=b'\x08\x5C'+(0x5180F0).to_bytes(3,'little')
         for site in (0x00886E,0x1BBEFD,0x1BBF2A,0x1BC04E):
             self.image[K.R.N.pc(site):K.R.N.pc(site)+4]=b'\x22'+(0x348000).to_bytes(3,'little')
@@ -232,7 +292,7 @@ class SourceAttributeCompiledSealTest(unittest.TestCase):
         self.assertTrue(spans)
 
     def test_changed_table_sentinel_dispatch_or_caller_refuses(self):
-        for at in (0x518100,0x518300,0x348001,0x00886F,0x1BBEFE,0x1BBF2B,0x1BC04F):
+        for at in (0x518300,0x518500,0x348001,0x00886F,0x1BBEFE,0x1BBF2B,0x1BC04F):
             image=bytearray(self.image);image[K.R.N.pc(at)]^=1
             with self.subTest(at=hex(at)),self.assertRaises(ValueError):self.verify(image)
         with self.assertRaisesRegex(ValueError,'UNAUTHENTICATED_SOURCE_ATTRIBUTES'):

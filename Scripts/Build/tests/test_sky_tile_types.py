@@ -178,6 +178,7 @@ def _run_contract_routine(
         if item.startswith("if "):
             flags = {
                 "if !SPECIAL_OVERWORLD_NATIVE == 1": native_enabled,
+                "if !ENABLE_SKY_OVERWORLD_ROUTE == 1": True,
                 # The enabled source-attribute path is covered by actual CPU tests.
                 "if !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED == 1": False,
                 "if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1": semantic_enabled,
@@ -339,7 +340,8 @@ class SkyTileTypesTest(unittest.TestCase):
         enabled = scan_hooks(
             ROOT,
             [SOURCE],
-            defines={"ENABLE_SKY_OVERWORLD_GRAPHICS": 1, "ENABLE_SKY_OVERWORLD_ROUTE": 1},
+            defines={"ENABLE_SKY_OVERWORLD_GRAPHICS": 1, "ENABLE_SKY_OVERWORLD_ROUTE": 1,
+                     "SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED": 0},
         )
         by_addr = {hook.address: hook for hook in enabled}
         self.assertEqual(set(by_addr), set(TABLE_READ_HOOKS) | {DIG_GATE_ADDR})
@@ -352,9 +354,16 @@ class SkyTileTypesTest(unittest.TestCase):
         disabled = scan_hooks(
             ROOT,
             [SOURCE],
-            defines={"ENABLE_SKY_OVERWORLD_GRAPHICS": 1, "ENABLE_SKY_OVERWORLD_ROUTE": 0},
+            defines={"ENABLE_SKY_OVERWORLD_GRAPHICS": 1, "ENABLE_SKY_OVERWORLD_ROUTE": 0,
+                     "SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED": 0},
         )
         self.assertEqual(disabled, [])
+        for route in (0, 1):
+            attrs = scan_hooks(ROOT, [SOURCE], defines={
+                "ENABLE_SKY_OVERWORLD_GRAPHICS": 1, "ENABLE_SKY_OVERWORLD_ROUTE": route,
+                "SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED": 1})
+            self.assertEqual({h.address for h in attrs},
+                             set(TABLE_READ_HOOKS) | ({DIG_GATE_ADDR} if route else set()))
 
     def test_guard_void_dig_and_sky_selector_contracts(self):
         _, routines = _extract_macro_and_routines(SOURCE.read_text(encoding="utf-8"))
