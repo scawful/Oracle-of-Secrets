@@ -54,7 +54,9 @@ RESIDENT_SPILL_END = 0x288000
 SEMANTIC_CODE_BASE = 0x518000
 SEMANTIC_CODE_LIMIT = 0x519000
 PAGE_TILE16_BASE = 0x519000
-PAGE_TILE16_ROW_CAPACITY = 512
+# Complete selected Sky route plus its overlay needs more than 512 rows.
+# Keep source storage in the same bank, separate from the derived reader code.
+PAGE_TILE16_ROW_CAPACITY = 1024
 
 # Existing dictionaries in the selected Oracle engine. Initial import reuses
 # these owned bodies; arbitrary relocation needs a separately bound reader ABI.

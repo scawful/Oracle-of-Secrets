@@ -180,7 +180,7 @@
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "dd9c225256032bfaac2821c4af4cdc506d7ccc71ad9e8e789b5fe5c99c1cac2a"
+      "sha256": "b09130162164a4e01cf65630fe00a70652dec3131a5cc0235ce5c6f8b9d0fe3a"
     },
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
@@ -2354,8 +2354,8 @@
       "owner": "Authoritative per-map source Tile16 definitions, native record413",
       "space": "snes_rom",
       "base": 5345280,
-      "size": 6144,
-      "count": 512,
+      "size": 12288,
+      "count": 1024,
       "stride": 12,
       "status": "proposed",
       "condition": {},
@@ -2367,7 +2367,7 @@
       ],
       "anchors": [
         "PAGE_TILE16_BASE = 0x519000",
-        "PAGE_TILE16_ROW_CAPACITY = 512"
+        "PAGE_TILE16_ROW_CAPACITY = 1024"
       ]
     }
   ],

@@ -530,7 +530,7 @@ class SemanticReaderBindingTest(unittest.TestCase):
         before = self.source
         text = self.bind()
         self.assertIn('!SPECIAL_OVERWORLD_SEMANTIC_ROWS = $519000', text)
-        self.assertIn('!SPECIAL_OVERWORLD_SEMANTIC_COUNT = 512', text)
+        self.assertIn('!SPECIAL_OVERWORLD_SEMANTIC_COUNT = 1024', text)
         self.assertIn('!SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE = $518000', text)
         self.assertNotIn('SEMANTIC_ENABLED', text)
         self.assertFalse(any(line.startswith(('org ', 'db ', 'incbin '))
