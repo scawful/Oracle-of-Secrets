@@ -188,6 +188,29 @@ jobs:
             printf '\xBF\x01\x80\x1F\x85\xB8\xBF\x00\x80\x1F\x85\xB7' | dd of=test.sfc bs=1 seek=$((d4_object_pointer_pc)) conv=notrunc 2>/dev/null  # LDA.l $1F8001,X : STA $B8 : LDA.l $1F8000,X : STA $B7
           done
 
+          # D4 syntax-only inputs: two guarded hook preimages, the selected
+          # native state streams, empty profiles and an explicit ABI1 binding.
+          # This does not admit a real base or bypass normal Build validation.
+          python3 - <<'PY'
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, '.github/scripts')
+          import d4_hub_ci_fixture as fixture
+          from seed_sky_award_preimages import apply_seed
+          root = Path('.').resolve()
+          seed, outputs = fixture.fixture_inputs(root)
+          target = root/'test.sfc'
+          data = apply_seed(target.read_bytes(), seed)
+          fixture.validate_fixture_inputs(data, outputs, seed, outputs)
+          target.write_bytes(data)
+          for name, raw in outputs.items():
+              path = root/name
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_bytes(raw)
+          fixture.validate_fixture_inputs(target.read_bytes(),
+              {name: (root/name).read_bytes() for name in outputs}, seed, outputs)
+          PY
+
           # Vanilla hook-site bytes guarded by Dungeons/wall_profile_selector.asm.
           printf '\xBF\x00\x80\x01\xAA' | dd of=test.sfc bs=1 seek=$((0x8979)) conv=notrunc 2>/dev/null  # $018979 H1 LDA.l $018000,X : TAX
           printf '\xBF\xF0\x83\x01\xAA' | dd of=test.sfc bs=1 seek=$((0x89AE)) conv=notrunc 2>/dev/null  # $0189AE H2 LDA.l $0183F0,X : TAX

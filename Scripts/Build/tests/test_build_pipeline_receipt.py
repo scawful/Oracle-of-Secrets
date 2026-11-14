@@ -84,6 +84,29 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         p.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / name, p)
 
+    def write_water_producer_fixture(self):
+        """Strict current CLI shape; no game data or actual producer bypass."""
+        self.write('Scripts/Rooms/d4_water_rooms.py', '''import argparse,json,os,pathlib,sys
+p=argparse.ArgumentParser()
+p.add_argument('--derive-saved',action='store_true',required=True)
+p.add_argument('--root',type=pathlib.Path,required=True)
+p.add_argument('--source',type=pathlib.Path,required=True)
+p.add_argument('--output',type=pathlib.Path,required=True)
+p.add_argument('--z3ed',required=True)
+a=p.parse_args()
+root=a.root.resolve();source=a.source.resolve();out=a.output.resolve()
+assert root==pathlib.Path(__file__).resolve().parents[2]
+assert source.is_file()
+assert out==root/'Dungeons/generated'
+(root/'Roms/water-producer-args.json').write_text(json.dumps(dict(argv=sys.argv[1:],source=str(source),output=str(out))))
+names=['d4_water/25-low.bin','d4_water/25-high.bin','d4_water/25-low-collision.bin','d4_water/25-high-collision.bin','water_gate_runtime_tables.asm']
+for index,name in enumerate(names,1):
+ path=out/name;path.parent.mkdir(parents=True,exist_ok=True)
+ path.write_bytes(('new coupled '+name).encode())
+ if index==int(os.getenv('FIXTURE_PRODUCER_FAIL_AFTER','0')):
+  sys.exit(9)
+''')
+
     def build(self, *args):
         self.result = subprocess.run(['bash', str(self.root / 'Scripts/Build/build_rom.sh'),
                                       '999', str(self.assembler), *args],
@@ -260,8 +283,8 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
 
     def test_external_cwd_writes_explicit_water_outputs_in_repository(self):
         self.env.update(OOS_SKIP_WATER_TABLE_GEN='0', OOS_SKIP_WATER_FILL_TABLE_GEN='0')
-        for generator in ('generate_water_gate_runtime_tables.py', 'generate_water_fill_table.py'):
-            self.write('Scripts/Generate/' + generator,
+        self.write_water_producer_fixture()
+        self.write('Scripts/Generate/generate_water_fill_table.py',
                        'import json,pathlib,sys\n'
                        'assert pathlib.Path(sys.argv[sys.argv.index("--rom")+1]).is_file()\n'
                        'out=pathlib.Path(sys.argv[sys.argv.index("--out-asm")+1])\n'
@@ -269,8 +292,15 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
                        'out.write_text("; disposable water output\\n")\n')
         result = self.build()
         self.assertEqual(result.returncode, 0, result.stderr)
-        for output in ('water_gate_runtime_tables.asm', 'water_fill_table.asm'):
+        for output in ('water_gate_runtime_tables.asm', 'water_fill_table.asm',
+                       'd4_water/25-low.bin', 'd4_water/25-high.bin',
+                       'd4_water/25-low-collision.bin', 'd4_water/25-high-collision.bin'):
             self.assertTrue((self.root / 'Dungeons/generated' / output).is_file())
+        args = json.loads((self.root/'Roms/water-producer-args.json').read_text())
+        self.assertIn('--derive-saved', args['argv'])
+        self.assertIn('--z3ed', args['argv'])
+        self.assertEqual(Path(args['source']), (self.root/'Roms/oos999.sfc').resolve())
+        self.assertEqual(Path(args['output']), (self.root/'Dungeons/generated').resolve())
         self.assertEqual(self.check('water_tables')['status'], 'passed')
         self.assertEqual(self.check('water_fill')['status'], 'passed')
         self.assertFalse((Path(self.temp.name) / 'Dungeons').exists())

@@ -12,6 +12,7 @@ class BuildOutputRollbackTest(unittest.TestCase):
     copy = fixtures.BuildPipelineReceiptTest.copy
     build = fixtures.BuildPipelineReceiptTest.build
     check = fixtures.BuildPipelineReceiptTest.check
+    write_water_producer_fixture = fixtures.BuildPipelineReceiptTest.write_water_producer_fixture
 
     OUTPUTS = (
         'Roms/oos999x.sfc', 'Roms/oos999x.sym', 'Roms/oos999x.mlb',
@@ -19,6 +20,10 @@ class BuildOutputRollbackTest(unittest.TestCase):
         '.cache/annotations.json',
         'Dungeons/generated/water_gate_runtime_tables.asm',
         'Dungeons/generated/water_fill_table.asm',
+        'Dungeons/generated/d4_water/25-low.bin',
+        'Dungeons/generated/d4_water/25-high.bin',
+        'Dungeons/generated/d4_water/25-low-collision.bin',
+        'Dungeons/generated/d4_water/25-high-collision.bin',
     )
 
     def setUp(self):
@@ -26,8 +31,8 @@ class BuildOutputRollbackTest(unittest.TestCase):
         self.env.update(OOS_SKIP_WATER_TABLE_GEN='0',
                         OOS_SKIP_WATER_FILL_TABLE_GEN='0',
                         OOS_GENERATE_ANNOTATIONS='1', OOS_ANALYSIS_FATAL='1')
-        for name in ('generate_water_gate_runtime_tables.py', 'generate_water_fill_table.py'):
-            self.write('Scripts/Generate/' + name,
+        self.write_water_producer_fixture()
+        self.write('Scripts/Generate/generate_water_fill_table.py',
                        'import os,pathlib,sys\n'
                        'out=pathlib.Path(sys.argv[sys.argv.index("--out-asm")+1])\n'
                        'out.parent.mkdir(parents=True,exist_ok=True)\n'
@@ -86,6 +91,24 @@ class BuildOutputRollbackTest(unittest.TestCase):
         self.assertNotIn('pre_assembly', self.receipt['snapshots'])
         self.assertNotIn('output_rom', self.receipt['artifacts'])
         self.assert_inputs_preserved()
+
+    def test_partial_state_producer_failure_restores_existing_and_absent_files(self):
+        for existed in (False, True):
+            with self.subTest(existed=existed):
+                before = self.seed_outputs() if existed else None
+                self.env['FIXTURE_PRODUCER_FAIL_AFTER'] = '2'
+                result = self.build()
+                self.assertEqual(result.returncode, 9, result.stderr)
+                self.assertEqual(self.receipt['finish']['stage'], 'water_tables')
+                self.assertEqual(self.check('water_tables')['exit_code'], 9)
+                self.assertEqual(self.check('output_rollback')['status'], 'passed')
+                self.assertNotIn('pre_assembly', self.receipt['snapshots'])
+                if existed:
+                    self.assertEqual({name: (self.root/name).read_bytes()
+                                      for name in self.OUTPUTS}, before)
+                else:
+                    self.assertTrue(all(not (self.root/name).exists() for name in self.OUTPUTS))
+                self.assert_inputs_preserved()
 
     def test_success_publishes_complete_new_set_with_current_receipt(self):
         before = self.seed_outputs()

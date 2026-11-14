@@ -206,6 +206,81 @@ def choose_switch_targets(
     return out
 
 
+def read_hub_roles_strict(data: bytes):
+    """Room25 only; reuse maintained strict object/sprite stream parsers."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from Scripts.Rooms.sky_d8_room_writer import (
+        parse_object_stream, parse_until_ff, snes_to_pc as strict_pc,
+    )
+    def checked_u24(at):
+        if at < 0 or at + 3 > len(data):
+            raise ValueError("D4 hub truncated pointer table")
+        return read24(data, at)
+    table = strict_pc(checked_u24(ROOM_OBJECT_POINTER_PC))
+    pointers = [strict_pc(checked_u24(table + r * 3)) for r in range(ROOM_COUNT)]
+    start = pointers[0x25]
+    limit = min([p for p in pointers if p > start] + [len(data), (start | 0x7FFF) + 1])
+    stream = parse_object_stream(data, start, limit)
+    objects = [decode_room_object(*rec, layer) for layer, records in enumerate(stream.lists) for rec in records]
+    if ROOMS_SPRITE_POINTER_PC + 2 > len(data):
+        raise ValueError("D4 hub truncated sprite pointer root")
+    table = strict_pc(0x090000 | int.from_bytes(data[ROOMS_SPRITE_POINTER_PC:ROOMS_SPRITE_POINTER_PC+2], 'little'))
+    if table + ROOM_COUNT * 2 > len(data):
+        raise ValueError("D4 hub truncated sprite pointer table")
+    pointers = [strict_pc(0x090000 | int.from_bytes(data[table+r*2:table+r*2+2], 'little')) for r in range(ROOM_COUNT)]
+    start = pointers[0x25]
+    limit = min([p for p in pointers if p > start] + [len(data), (start | 0x7FFF) + 1])
+    parse_until_ff(data, start, limit, 'sprite')
+    return objects, parse_room_sprites(data, 0x25)
+
+
+def hub_contact_words(objects, sprites, mouth, catch):
+    """Typed full coordinates: objectTile8, actorTile16; legacy table unchanged.
+
+    The explicit mouth/catch values are room-local pixels from reviewed contact
+    proof. Bounds validation is not collision proof. No inferred hatch approach.
+    """
+    def unique(items, attr, ident):
+        found = [item for item in items if getattr(item, attr) == ident]
+        if len(found) != 1 or found[0].layer != 0:
+            raise ValueError(f"D4 hub role {ident:03X} needs exactly one layer0 record")
+        return found[0]
+    remote = unique(sprites, 'spr_id', 0x21)
+    manual = unique(sprites, 'spr_id', 0x04)
+    hatch = unique(objects, 'obj_id', 0x124)
+    unique(objects, 'obj_id', 0x11F)
+    if remote.subtype or manual.subtype:
+        raise ValueError("D4 hub actors require ordinary subtype0")
+    if mouth is None or catch is None or len(mouth) != 2 or len(catch) != 4:
+        raise ValueError("D4 hub needs reviewed mouthXY and catchXmin,Ymin,Xmax,Ymax")
+    if not all(isinstance(v, int) and 0 <= v <= 511 for v in (*mouth, *catch)):
+        raise ValueError("D4 hub recovery coordinates outside room-local pixels0..511")
+    x0,y0,x1,y1 = catch
+    if not (x0 <= x1 and y0 <= y1 and x0 <= mouth[0] <= x1 and y0 <= mouth[1] <= y1):
+        raise ValueError("D4 hub invalid catch bounds or mouth outside proved catch")
+    if not all(0 <= v <= 31 for v in (remote.x,remote.y,manual.x,manual.y)):
+        raise ValueError("D4 hub actor outside Tile16 grid")
+    if not (0 <= hatch.x <= 63 and 0 <= hatch.y <= 63):
+        raise ValueError("D4 hub hatch outside Tile8 grid")
+    # Room25 origin: low room nibble*512 horizontally, high nibble*512 vertically.
+    ox,oy = (0x25 & 15)*512, (0x25 >> 4)*512
+    return [ox+remote.x*16, oy+remote.y*16+5,
+            ox+manual.x*16, oy+manual.y*16,
+            ox+hatch.x*8, oy+hatch.y*8,
+            ox+mouth[0], oy+mouth[1],
+            ox+x0, ox+x1+1, oy+y0, oy+y1+1]
+
+
+def write_hub_contacts(out_path, words):
+    # Same generated include/pipeline, no new sidecar or global legacy rescaling.
+    with out_path.open('a') as out:
+        out.write('\n; Room25 typed contacts ABI1; Tile8 objects, Tile16 actors.\n')
+        out.write('; RemoteXY,ManualXY,HatchXY,MouthXY,CatchXmin/Xend/Ymin/Yend\nD4HubContacts:\n')
+        out.write(f'D4HubContactsBound = {int(words is not None)}\n')
+        out.write('  db $01, $01\n  dw ' + ', '.join(fmt_hex(v,4) for v in words or [0]*12) + '\n')
+
+
 def fmt_hex(v: int, width: int = 2) -> str:
     return f"${v:0{width}X}"
 
@@ -326,6 +401,11 @@ def main() -> int:
         default="0x124,0x137,0x135",
         help="Comma-separated marker object IDs for Zora Baby switch target lookup (priority order).",
     )
+    parser.add_argument('--d4-hub', action='store_true', help='Require accepted Room25 semantic roles and reviewed recovery contacts.')
+    parser.add_argument('--d4-hub-mouth', type=parse_hex_list,
+                        help='Required reviewed room-local pixel mouth x,y for active Room25 hub.')
+    parser.add_argument('--d4-hub-catch', type=parse_hex_list,
+                        help='Required reviewed inclusive catch xmin,ymin,xmax,ymax for active Room25 hub.')
     args = parser.parse_args()
 
     rom_path = args.rom
@@ -338,6 +418,12 @@ def main() -> int:
     marker_ids = parse_hex_list(args.target_marker_ids)
 
     rom_data = rom_path.read_bytes()
+    hub_words = None
+    if args.d4_hub:
+        hub_objects, hub_sprites = read_hub_roles_strict(rom_data)
+        hub_words = hub_contact_words(hub_objects, hub_sprites, args.d4_hub_mouth, args.d4_hub_catch)
+    elif args.d4_hub_mouth is not None or args.d4_hub_catch is not None:
+        raise ValueError('D4 hub recovery arguments require --d4-hub')
     overlays, targets = generate_tables(
         rom_data,
         room_max=args.room_max,
@@ -353,6 +439,8 @@ def main() -> int:
         overlay_object_ids=overlay_ids,
         target_marker_ids=marker_ids,
     )
+
+    write_hub_contacts(args.out_asm, hub_words)
 
     target_entries = sum(len(v) for v in targets.values())
     print(f"Wrote {args.out_asm}")

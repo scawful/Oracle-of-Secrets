@@ -62,6 +62,10 @@ snapshot_build_outputs() {
     "$repo_root/.cache/binaries/special-overworld-directory.bin"
     "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
     "$repo_root/Dungeons/generated/water_fill_table.asm"
+    "$repo_root/Dungeons/generated/d4_water/25-low.bin"
+    "$repo_root/Dungeons/generated/d4_water/25-high.bin"
+    "$repo_root/Dungeons/generated/d4_water/25-low-collision.bin"
+    "$repo_root/Dungeons/generated/d4_water/25-high-collision.bin"
   )
   local path index
   for path in "${build_output_paths[@]}"; do
@@ -137,7 +141,7 @@ finish_build() {
     if [[ "$rollback_code" == "0" ]]; then
       record_check output_rollback passed 1 \
         "Failed build outputs restored to their pre-build state; files absent before remain absent. Artifact hashes describe the failed attempt, not the restored paths."
-      echo "[*] Restored pre-build outputs and generated water includes after failure." >&2
+      echo "[*] Restored pre-build outputs and generated water states/includes after failure." >&2
     else
       record_check output_rollback failed 1 \
         "Output restoration incomplete; recover prior files from $build_output_backup. Artifact hashes describe the failed attempt." "$rollback_code"

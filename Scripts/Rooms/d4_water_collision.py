@@ -13,6 +13,31 @@ import struct
 import sky_d8_room_writer as rooms
 
 
+def decode_runs(raw, *, allow_empty=False):
+    """Validate the paired-water run codec before publishing generated states."""
+    changes = {}
+    cursor = 0
+    while cursor + 2 <= len(raw):
+        offset = struct.unpack_from('<H', raw, cursor)[0]
+        if offset == 0xffff:
+            if cursor + 2 != len(raw):
+                raise ValueError('paired-water collision has trailing bytes')
+            if not changes and not allow_empty:
+                raise ValueError('paired-water collision has no sentinel cell')
+            return changes
+        if cursor + 4 > len(raw):
+            raise ValueError('paired-water collision run is truncated')
+        offset, count, value = struct.unpack_from('<HBB', raw, cursor)
+        if not count or not 0 <= offset < offset + count <= 8192:
+            raise ValueError('paired-water collision run outside two room maps')
+        for cell in range(offset, offset + count):
+            if cell in changes:
+                raise ValueError('paired-water collision writes a cell twice')
+            changes[cell] = value
+        cursor += 4
+    raise ValueError('paired-water collision has no terminator')
+
+
 def decode(rec):
     if rec[0] >= 0xfc or rec[2] >= 0xf8:
         a, x, y = rooms.decode_object(rec)

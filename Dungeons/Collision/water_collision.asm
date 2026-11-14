@@ -82,6 +82,14 @@ WaterGate_CompleteRoom:
 
   PHB : PHK : PLB
 
+if !ENABLE_D4_WATER_CONTROLS == 1
+  ; The paired controller owns room $25, regardless of old saved bit $02
+  ; or a stale legacy table row. Check the full room ID before either path.
+  REP #$20
+  LDA.l $7E00A0 : CMP.w #$0025 : BNE .legacy_owner
+  JMP .done
+.legacy_owner
+endif
   SEP #$20
   LDA.b $A0
 
@@ -137,6 +145,12 @@ WaterGate_Room25Tag_Hook:
   REP #$20
   LDA.l $7E00A0 : CMP.w #$0025 : BNE .vanilla
   SEP #$30
+
+if !ENABLE_D4_WATER_CONTROLS == 1
+  ; Do not consume the actor-owned $0642 episode or replay the old swim band.
+  ; The selected paired room has tag 0; also make a stale WaterOff tag inert.
+  BRA .exit
+endif
 
   LDA.l WaterGateStates : AND.b #$02 : BNE .open
   LDA.l $7E0642 : BEQ .exit
@@ -322,6 +336,13 @@ WaterGate_CheckRoomEntry:
   LDA.w #$0000
   TCD
 
+if !ENABLE_D4_WATER_CONTROLS == 1
+  ; Keep legacy restore from overwriting the paired room after its loader.
+  ; This also covers callers when ROOMENTRY_RESTORE is enabled for diagnosis.
+  LDA.l $7E00A0 : CMP.w #$0025 : BNE .legacy_owner
+  JMP .done
+.legacy_owner
+endif
   SEP #$20
   LDA.b $A0
 

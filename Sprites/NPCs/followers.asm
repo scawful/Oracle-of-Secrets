@@ -130,15 +130,7 @@ CheckForZoraBabyTransitionToSprite:
     LDA.w $0114 : CMP.b #$3B : BNE +
       LDA.b #$00
       JSR ZoraBaby_RevertToSprite
-if !ENABLE_D4_WATER_CONTROLS == 1
-      ; Baby dropped on the room $25 star unlocks the D4 maintenance valve.
-      LDA.b $A0 : CMP.b #$25 : BNE .no_valve_latch
-      LDA.b $A1 : BNE .no_valve_latch
-      LDA.l WaterGateStates : AND.b #!D4Water_Latch : BNE .no_valve_latch
-      LDA.l WaterGateStates : ORA.b #!D4Water_Latch : STA.l WaterGateStates
-      LDA.b #$25 : STA.w $012F
-      .no_valve_latch
-endif
+      ; Room25 star stages Baby only; owned remote21 completion unlocks controls.
     +
 
     ; If we are outdoors, clear the follower
@@ -240,7 +232,7 @@ ZoraBaby_IsOnTopOfSprite:
 
 ZoraBaby_CheckForWaterSwitchSprite:
 {
-  ; Sprite type $21: generic pull switch (used elsewhere).
+  ; Sprite type $21: native WaterSwitch release animation.
   LDA.b #$21
   JSR ZoraBaby_FindSpriteOfType : BCC .not_on_switch
   JSR ZoraBaby_IsOnTopOfSprite
@@ -252,7 +244,7 @@ ZoraBaby_CheckForWaterSwitchSprite:
 
 ZoraBaby_CheckForWaterGateSwitch:
 {
-  ; Sprite type $04: water gate switch sprite.
+  ; Sprite type $04: correct pull-switch family (Room27 path retained).
   LDA.b #$04
   JSR ZoraBaby_FindSpriteOfType : BCC .not_on_switch
   JSR ZoraBaby_IsOnTopOfSprite
@@ -266,6 +258,11 @@ ZoraBaby_GlobalBehavior:
 {
   JSL Sprite_BehaveAsBarrier
   JSR Follower_WatchLink
+if !ENABLE_D4_WATER_CONTROLS == 1
+  JSL ZoraBaby_Room25Global : BCC .ordinary_room
+  RTL
+  .ordinary_room
+endif
   LDA.w SprAction, X : CMP.b #$02 : BEQ .done
 
   ; Keep normal lift/throw movement active for all live states except action 2.
@@ -361,6 +358,18 @@ ZoraBaby_RunPostSwitchSequence:
 {
   PHB : PHK : PLB
   SEP #$30
+if !ENABLE_D4_WATER_CONTROLS == 1
+  LDA.b $A0 : CMP.b #$25 : BNE .ordinary_target
+  LDA.b $A1 : BNE .ordinary_target
+  LDA.w SprAction, X : CMP.b #$08 : BEQ .room25_target
+  CMP.b #$09 : BEQ .room25_target
+  CMP.b #$0B : BEQ .room25_target
+  CMP.b #$0C : BNE .ordinary_target
+  .room25_target
+  JSL ZoraBaby_Room25Recover
+  BRA .done
+  .ordinary_target
+endif
 
   JSR ZoraBaby_FindSwitchSequenceTarget : BCC .fallback_follow
 
@@ -398,6 +407,38 @@ ZoraBaby_RunPostSwitchSequence:
 
   .done
   PLB
+  RTL
+}
+
+; Generic follower handoff is shared verbatim; Room25-only code lives in the
+; existing D4Water bank50 allocation, not the nearly-full bank2C sprite stream.
+ZoraBaby_EnterFollower:
+{
+  SEP #$30
+  LDA.b #$09 : STA.l $7EF3CC
+  PHX
+  STZ.w $02F9
+  JSL LoadFollowerGraphics
+  JSL Follower_Initialize
+  PLX
+  LDA.b #$40 : STA.w $02CD
+  STZ.w $02CE
+  STZ.w SprState, X
+  RTL
+}
+
+ZoraBaby_PullSwitchDispatch:
+{
+  SEP #$30
+if !ENABLE_D4_WATER_CONTROLS == 1
+  LDA.w SprAction, X : CMP.b #$0A : BNE .ordinary
+  JSL ZoraBaby_Room25AwaitSwitch
+  RTL
+  .ordinary
+endif
+  LDY.b #$01 : LDA.b #$07
+  JSL Sprite_ShowMessageUnconditional
+  INC.w SprAction, X
   RTL
 }
 
@@ -465,6 +506,14 @@ Sprite_39_ZoraBaby:
   dw ZoraBaby_AgreeToWait
   dw ZoraBaby_PullSwitch
   dw ZoraBaby_PostSwitch
+if !ENABLE_D4_WATER_CONTROLS == 1
+  dw ZoraBaby_ThrowAttempt  ; 7: armed carried/released attempt
+  dw ZoraBaby_PostSwitch    ; 8: isolated miss -> verified hatch mouth
+  dw ZoraBaby_PostSwitch    ; 9: missed attempt -> authored hatch
+  dw ZoraBaby_PullSwitch    ; A: owned native21 release, await completion
+  dw ZoraBaby_PostSwitch    ; B: success -> authored return mouth
+  dw ZoraBaby_PostSwitch    ; C: success -> authored hatch
+endif
 
   ; =======================================================
 
@@ -498,20 +547,7 @@ Sprite_39_ZoraBaby:
 
   ZoraBaby_FollowLink:
   {
-    SEP #$30
-    LDA.b #$09 : STA.l $7EF3CC
-
-    PHX
-    STZ.w $02F9
-    JSL LoadFollowerGraphics
-    JSL Follower_Initialize
-    PLX
-
-    LDA.b #$40
-    STA.w $02CD
-    STZ.w $02CE
-    STZ.w SprState, X
-
+    JSL ZoraBaby_EnterFollower
     RTS
   }
 
@@ -573,13 +609,13 @@ Sprite_39_ZoraBaby:
 
   ZoraBaby_PullSwitch:
   {
-    SEP #$30
-    LDY.b #$01 : LDA.b #$07 ; MESSAGE 0107
-    JSL Sprite_ShowMessageUnconditional
-    ; LDA.b #$01 : STA.b $B1
-    ; JSL $01B8BF
-    INC.w SprAction, X
+    JSL ZoraBaby_PullSwitchDispatch
     RTS
+  }
+
+  ZoraBaby_ThrowAttempt:
+  {
+    RTS ; global handler alone owns carried/released movement
   }
 
   ZoraBaby_PostSwitch:

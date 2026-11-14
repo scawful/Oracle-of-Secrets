@@ -296,9 +296,12 @@ if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" ]]; then
   generate_water_gate_tables() {
     (
       cd "$repo_root"
-      python3 "$repo_root/Scripts/Generate/generate_water_gate_runtime_tables.py" \
-        --rom "$water_table_rom_arg" \
-        --out-asm "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
+      # Project Build and source-only Build share one saved-base producer. It
+      # validates all typed Room25 contacts and stages states/runtime include
+      # together; no manual export or stale source-state incbin is consumed.
+      python3 "$repo_root/Scripts/Rooms/d4_water_rooms.py" --derive-saved \
+        --root "$repo_root" --source "$water_table_rom_arg" \
+        --output "$repo_root/Dungeons/generated" --z3ed "$native_z3ed"
     )
   }
   run_check water_tables 1 generate_water_gate_tables
