@@ -18,11 +18,16 @@ endif
   STZ.w FinaleBeat
 if !ENABLE_D3_PRISON_SEQUENCE == 1
   ; Spawn_Prison is a saved selector, not an entrance number. Its vanilla
-  ; record still names room80. A captured D3 file must use the complete
-  ; current entrance32 record, as the original capture transition does.
+  ; record still names room80. Only an unfinished capture owns entrance32.
+  ; Legacy/escaped selector02 saves migrate to the same normal checkpoint
+  ; used by PrisonEscape_CheckAndComplete; do not replay their capture.
   LDA.l SpawnPoint : CMP.b #!Spawn_Prison : BNE .not_prison
-  LDA.l CastleAmbushFlags : AND.b #!CastleAmbush_HasBeenCaptured
-  BEQ .not_prison
+  LDA.l CastleAmbushFlags
+  AND.b #(!CastleAmbush_HasBeenCaptured|!CastleAmbush_HasEscaped)
+  CMP.b #!CastleAmbush_HasBeenCaptured : BEQ .captured_prison
+    LDA.b #!Spawn_Sanctuary : STA.l SpawnPoint
+    BRA .not_prison
+  .captured_prison
     LDA.b #$32 : STA.w $010E
     STZ.w $010F
     LDA.b #$01 : STA.w $010A ; Skip recaching a nonexistent overworld exit

@@ -108,10 +108,10 @@ def run_to(f,stops,start=None,push_return=False):
 def check_spawn_loader(lib,rom,labels,control_rom,control_labels):
     stops={0x028196,0x028208,0x347000}
     # Same saved-selector contract and entire non-stack RAM/CPU result as the
-    # admitted control: every legacy selector, uncaptured prison and valid or
-    # malformed Goron factory checkpoint. Escaped files use Sanctuary selector1.
+    # admitted control: other legacy selectors and valid or malformed Goron
+    # factory checkpoints. Stale prison selectors are covered separately.
     cases=[(n,1,2,0,0) for n in (0,1,3,4,5,6)]
-    cases += [(2,0,2,0,0),(2,2,2,0,0),(1,3,2,0,0),
+    cases += [(1,3,2,0,0),
               (7,0,2,0,0),(7,0,1,0,0),(7,0,2,0x40,0),(7,0,2,0,1)]
     for values in cases:
         fs=[];ends=[]
@@ -126,6 +126,19 @@ def check_spawn_loader(lib,rom,labels,control_rom,control_labels):
         assert all(0x100<=a<0x200 or x==y for a,(x,y) in enumerate(zip(old.ram,new.ram))),(values,'Legacy RAM changed')
         assert new.cpu.sp==(0x1FF if ends[1]==0x347000 else 0x1FC),(values,'JML/RTL stack')
         for f in fs:f.close()
+    # An old uncaptured/escaped selector02 is equivalent to the existing
+    # Sanctuary checkpoint, including the actual legacy world-routing policy.
+    for flags in (0,2,3,0xA4,0xA6,0xA7):
+        for world in (0,0x40):
+            old=loader_fixture(lib,control_rom,control_labels,1,flags,3,world)
+            new=loader_fixture(lib,rom,labels,2,flags,3,world)
+            old_end=run_to(old,stops,old.addr('LoadCheckpointOrWorld'),True)
+            new_end=run_to(new,stops,new.addr('LoadCheckpointOrWorld'),True)
+            assert old_end==new_end,('Migrated continuation',flags,world)
+            assert new.get(0x7EF3C8)==1
+            assert all(getattr(old.cpu,a)==getattr(new.cpu,a) for a in attrs),('Migrated CPU ABI',flags,world)
+            assert all(0x100<=a<0x200 or x==y for a,(x,y) in enumerate(zip(old.ram,new.ram))),('Migrated RAM',flags,world)
+            old.close();new.close()
     # A captured prison file selects the ordinary entrance32 path, not the
     # separate SpawnPointData record. The existing Module05 return is intact.
     f=loader_fixture(lib,rom,labels);save_before=bytes(f.ram[0xF000:0xF500])
@@ -149,6 +162,7 @@ def check_spawn_loader(lib,rom,labels,control_rom,control_labels):
     assert bytes(f.ram[0xF000:0xF500])==save_before
     for q in (f,g):q.close()
     return {'legacy_and_goron_equivalence_cases':len(cases),
+            'stale_prison_sanctuary_equivalence_cases':12,
             'captured_prison_native_entry':1,'complete_native_entrance32_contract':1}
 
 
