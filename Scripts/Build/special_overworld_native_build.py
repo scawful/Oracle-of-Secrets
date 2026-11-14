@@ -262,7 +262,8 @@ def source_attribute_data_asm(prepared):
     lines = ['pushpc', f'org ${native.SOURCE_ATTRIBUTE_TABLE_BASE:06X}']
     lines.extend('  db ' + ','.join(f'${byte:02X}' for byte in raw[at:at+16])
                  for at in range(0, len(raw), 16))
-    return '\n'.join(lines + ['assert pc() == Lyra_SourceTileTypes90_End', 'pullpc', ''])
+    return '\n'.join(lines + [f'assert pc() == ${native.SOURCE_ATTRIBUTE_TABLE_BASE+len(raw):06X}',
+                              'assert pc() == Lyra_SourceTileTypes90_End', 'pullpc', ''])
 
 
 def _semantic_source_contract(source, capacity, entries):
