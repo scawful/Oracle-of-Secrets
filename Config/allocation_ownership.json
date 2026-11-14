@@ -85,7 +85,7 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "cacf7381a218c367fca394330af6175cbaf5d08ccce41b5399e3345d97a6d04d"
+      "sha256": "b2f0461a7f02373fca4cbde5551c0b3d468b53f7328faa413e46d79fcaf62d2a"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
@@ -180,7 +180,7 @@
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "985b9d86d0ec4b0d24e1828eba64557b438a5153ae3062cf3b7bde47f641126d"
+      "sha256": "c410c037b730226c8d4f5c699160f7e6646967768f74529c78f12a82243a2c9a"
     },
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
@@ -195,7 +195,7 @@
     "shared:Overworld/special_overworld_resident.asm": {
       "source_set": "shared",
       "path": "Overworld/special_overworld_resident.asm",
-      "sha256": "c5aa111291a02865de4811714f9528cea95cecc27373baf62d74723544854345"
+      "sha256": "9299d7b69201d43d1f2f85083d156f14b2ec16d34d1ac665cb495ede0db7cbc6"
     },
     "shared:Overworld/custom_gfx.asm": {
       "source_set": "shared",
@@ -215,7 +215,7 @@
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
       "path": "Scripts/Build/special_overworld_resident_abi.py",
-      "sha256": "2f11598b0c23088f20c0941d8f99b2031b8522062ee9e58699dc945b9c88aa2c"
+      "sha256": "d59fcf8b672ebc296ef4b35f635c8ddeba2c138e7e56477bb574c3cf59fe42eb"
     },
     "shared:Overworld/special_overworld_palette.asm": {
       "source_set": "shared",
@@ -311,6 +311,11 @@
       "source_set": "shared",
       "path": "Overworld/goron_checkpoint.asm",
       "sha256": "00a6e02cc30ddcb38cbf52b783362e93e3a61e3c9986c7cf433192c91de8b290"
+    },
+    "shared:Overworld/special_overworld_semantic.asm": {
+      "source_set": "shared",
+      "path": "Overworld/special_overworld_semantic.asm",
+      "sha256": "632fb82491ad95854bcf4a35c87fb3b857b8524fa899cf6d6aeb9e04458c52f7"
     }
   },
   "claims": [
@@ -2334,11 +2339,14 @@
       "reset": "Stack-local scratch; no new WRAM or SRAM. Physical page comes from the retained parent/size lookup.",
       "save": "Normal Save has no ownership of this code region. Build must preserve the separately saved record413.",
       "provenance": [
-        "shared:Scripts/Build/lyra_native_loaders.py"
+        "shared:Scripts/Build/lyra_native_loaders.py",
+        "shared:Overworld/special_overworld_semantic.asm"
       ],
       "anchors": [
         "SEMANTIC_CODE_BASE = 0x518000",
-        "SEMANTIC_CODE_LIMIT = 0x519000"
+        "SEMANTIC_CODE_LIMIT = 0x519000",
+        "Lyra_SemanticCodeStart:",
+        "Lyra_SemanticCodeEnd:"
       ]
     },
     {
