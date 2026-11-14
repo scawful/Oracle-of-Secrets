@@ -68,6 +68,7 @@ def assemble_sky_tile_types(
         f"!ENABLE_SKY_OVERWORLD_GRAPHICS = {graphics}\n"
         f"!ENABLE_SKY_OVERWORLD_ROUTE = {route}\n"
         "!SPECIAL_OVERWORLD_NATIVE = 0\n"
+        "!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = 0\n"
         "org $348000\n"
         f'incsrc "{SOURCE}"\n'
         "SkyTileType_TestModuleEnd:\n",
@@ -163,6 +164,7 @@ def _run_contract_routine(
     sky_table: bytes,
     vanilla_table: bytes,
     native_enabled: bool = False,
+    semantic_enabled: bool = False,
     native_tables: dict[str, int] | None = None,
     west_table: bytes | None = None,
 ) -> dict[str, object]:
@@ -174,9 +176,14 @@ def _run_contract_routine(
         if re.match(r"^(?:else|elseif)\b", item):
             raise AssertionError(f"Unhandled assembly condition: {item}")
         if item.startswith("if "):
-            if item != "if !SPECIAL_OVERWORLD_NATIVE == 1":
+            flags = {
+                "if !SPECIAL_OVERWORLD_NATIVE == 1": native_enabled,
+                "if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1": semantic_enabled,
+                "if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 0": not semantic_enabled,
+            }
+            if item not in flags:
                 raise AssertionError(f"Unhandled assembly condition: {item}")
-            conditions.append(conditions[-1] and native_enabled)
+            conditions.append(conditions[-1] and flags[item])
             continue
         if item == "endif":
             if len(conditions) == 1:

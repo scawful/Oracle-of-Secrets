@@ -201,6 +201,53 @@ class SemanticKernelTest(unittest.TestCase):
    ram=bytearray(65536);word(ram,0x8A,0x8C)
    r,out,b=a.call('SkyTileType',x=0x18C,y=0xABCD,p=0xCD,db=0x42,d=0x120,ram=ram)
    self.assertEqual(r['registers']['a']&255,expected);self.preserved(r,b,ram,out,nz=True)
+ def test_actual_collision_new_bridge_and_cliff_source_quarters(self):
+  # Actual saved-source Tile16 words: $939/$93C left bridge abutment,
+  # $935 north cliff corner, $FE5/$A0F south cliff corner. The original
+  # table returns $64/$65 for their $01D/$081 chars and toggles/allows
+  # Minish behavior on ordinary terrain. All other quarters stay exact.
+  source={0x8D:{0x939:(0x194C,0x194D,0x181D,0x994B),0x93C:(0x1820,0x994B,0x181D,0x994B),0x935:(0x8881,0x18A0,0x1D6C,0x1D6D),0xFE5:(0x1160,0x9161,0x0881,0x18A0)},0x8E:{0x939:(0x194C,0x194D,0x181D,0x994B),0x93C:(0x1820,0x994B,0x181D,0x994B),0x935:(0x8881,0x18A0,0x1D6C,0x1D6D),0xA0F:(0x0D60,0x8D61,0x0881,0x18A0)}}
+  tables={f.name:f.snes for f in R.N.current_table_layout(R.N.TABLE_BASE)}
+  fixes=[]
+  for page in source:
+   fixes.extend(((tables['parent']+page,bytes([page])),(tables['area_size']+page,b'\0')))
+  a=self.build([row(page,tile,words) for page,tiles in source.items() for tile,words in sorted(tiles.items())],sky=True,image_updates=fixes)
+  expected={0x939:(0,0,1,0),0x93C:(1,0,1,0),0x935:(1,0x48,0,0),0xFE5:(1,1,1,0x48),0xA0F:(1,1,1,0x48)}
+  for page,tiles in source.items():
+   for tile,words in tiles.items():
+    for q in range(4):
+     ram=bytearray(65536);word(ram,0x8A,page);word(ram,0x70A,0x200);word(ram,0x70E,0x40);word(ram,0x2000,tile)
+     word(ram,0,8 if q>=2 else 0);word(ram,2,q&1)
+     r,out,b=a.call(0x00882E,p=0,db=0,d=0,ram=ram)
+     self.assertEqual(r['registers']['a']&255,expected[tile][q]);self.assertEqual(r['registers']['sp'],b['sp']);self.assertEqual(out[7],words[q]>>8)
+ def test_bridge_collision_dispatch_controls_and_full_abi(self):
+  tables={f.name:f.snes for f in R.N.current_table_layout(R.N.TABLE_BASE)}
+  fixes=[(tables['parent']+page,bytes([page])) for page in (0x8C,0x8D,0x8E)]
+  fixes += [(tables['area_size']+page,b'\0') for page in (0x8C,0x8D,0x8E)]
+  chars=(0x01C,0x01D,0x080,0x081,0x1FF)
+  # Existing native revision4 and legacy/non-native dispatch stay exact.
+  for mode,overrides in (('revision5',{}),('revision4',{'SPECIAL_OVERWORLD_SEMANTIC_ENABLED':0}),('legacy',{'SPECIAL_OVERWORLD_NATIVE':0,'SPECIAL_OVERWORLD_RESIDENT_ENABLED':0,'SPECIAL_OVERWORLD_SEMANTIC_ENABLED':0})):
+   a=Artifact([row(0x8D,7,(1,2,3,4))],sky=True,image_updates=fixes,overrides=overrides);self.addCleanup(a.close)
+   self.assertEqual(a.proc.returncode,0,a.proc.stdout+a.proc.stderr)
+   sky=R.N.pc(a.labels['SkyTileTypes']);west=R.N.pc(a.labels['SkyTileTypes_WestLanding']);vanilla=R.N.pc(0x0E9459)
+   corrected=bytearray(a.image[sky:sky+513]);corrected[0x01D]=corrected[0x081]=1
+   for page in (0x03,0x51,0x83,0x84,0x85,0x86,0x87,0x8C,0x8D,0x8E,0x8F,0x90):
+    for char in chars:
+     for indoors in (0,1):
+      ram=bytearray(65536);word(ram,0x8A,page);ram[0x1B]=indoors
+      r,out,b=a.call('SkyTileType',x=char,y=0xABCD,p=0xCD,db=0x42,d=0x120,ram=ram)
+      base=vanilla if indoors or page not in (0x84,0x85,0x86,0x87,0x8C,0x8D,0x8E,0x8F) else west if page==0x8C and mode!='legacy' else sky
+      expected=int.from_bytes(corrected[char:char+2] if mode=='revision5' and not indoors and page in (0x8D,0x8E) else a.image[base+char:base+char+2],'little')
+      self.assertEqual(r['registers']['a'],expected);self.preserved(r,b,ram,out,nz=True)
+  # Exact complete size byte and independent parent are required, as for $8C.
+  for page in (0x8D,0x8E):
+   for parent,size in ((0x84,0),(page,1),(page,4)):
+    a=self.build([row(page,7,(1,2,3,4))],sky=True,image_updates=((tables['parent']+page,bytes([parent])),(tables['area_size']+page,bytes([size]))))
+    base=R.N.pc(a.labels['SkyTileTypes'])
+    for char in chars:
+     ram=bytearray(65536);word(ram,0x8A,page)
+     r,out,b=a.call('SkyTileType',x=char,y=0xABCD,p=0xCD,db=0x42,d=0x120,ram=ram)
+     self.assertEqual(r['registers']['a'],int.from_bytes(a.image[base+char:base+char+2],'little'));self.preserved(r,b,ram,out,nz=True)
 if __name__=='__main__':
  try:unittest.main()
  finally:

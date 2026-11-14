@@ -190,6 +190,9 @@ if !ENABLE_LYRA_OVERLAY_FIX == 1
   incsrc "Overworld/lyra_overlay_fix.asm"
 endif
 
+Overworld_Bank34CodeEnd:
+assert pc() <= $34FFFF, "Overworld code exceeds bank $34"
+
 incsrc "Overworld/great_sea_music.asm"
 
 Overworld_GetPitDestination = $1BB860

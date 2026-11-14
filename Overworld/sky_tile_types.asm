@@ -30,6 +30,40 @@ SkyTileType:
   %SkyTileType_BranchIfSky(.sky, .vanilla)
 .sky
 if !SPECIAL_OVERWORLD_NATIVE == 1
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+  ; Revision5's standalone $8D/$8E source art uses $01D/$081 for
+  ; bridge/cliff borders, not Minish gates. Share $8C's exact parent/size
+  ; qualification; retained pages and legacy bindings keep their table.
+  CMP.w #$008C : BCC .current
+  CMP.w #$008F : BCS .current
+  PHA : PHX : TAX
+  LDA.l !LYRA_CURRENT_TABLE_parent, X : AND.w #$00FF
+  CMP 3,S : BNE .bridge_default
+  LDA.l !LYRA_CURRENT_TABLE_area_size, X : AND.w #$00FF
+  BNE .bridge_default
+  PLX : PLA
+  CMP.w #$008C : BNE .bridge_page
+  PLP
+  LDA.l SkyTileTypes_WestLanding, X
+  RTL
+.bridge_page
+  TXA : AND.w #$FFFE
+  CMP.w #$001C : BEQ .bridge_01c
+  CMP.w #$0080 : BEQ .bridge_080
+  BRA .current
+.bridge_default
+  PLX : PLA
+  BRA .current
+.bridge_01c
+  PLP
+  LDA.l SkyTileTypes_Bridge01C-$001C, X
+  RTL
+.bridge_080
+  PLP
+  LDA.l SkyTileTypes_Bridge080-$0080, X
+  RTL
+endif
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 0
   ; $8C is the retained small west landing, not a child quadrant. The
   ; newer Sky material table belongs to the other selected Sky pages.
   CMP.w #$008C : BNE .current
@@ -40,6 +74,7 @@ if !SPECIAL_OVERWORLD_NATIVE == 1
   PLP
   LDA.l SkyTileTypes_WestLanding, X
   RTL
+endif
 .current
 endif
   PLP
@@ -135,6 +170,20 @@ assert SkyTileTypesEnd-SkyTileTypes == $0200
 ; Preserve that last high byte without reading into the following routine.
   db read1($0E9659)
 assert (SkyTileTypes&$FFFF)+$0201 <= $10000
+
+if !SPECIAL_OVERWORLD_NATIVE == 1
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+; Source table slices $01C..$01E and $080..$082: only $01D/$081 change
+; from $64/$65 to solid $01. Adjacent characters retain the table's M16
+; high-byte contract; char $1FF still uses the original sentinel above.
+SkyTileTypes_Bridge01C:
+  db $00, $01, $00
+SkyTileTypes_Bridge080:
+  db $01, $01, $00
+assert (SkyTileTypes_Bridge01C&$FFFF)+$0003 <= $10000
+assert (SkyTileTypes_Bridge080&$FFFF)+$0003 <= $10000
+endif
+endif
 
 ; Block Shovel / Wolf Mask digging ($037A == $01) from overwriting Sky cloud
 ; void tile $0034 with dug ground $0DC9 while keeping ordinary overworld digging.
