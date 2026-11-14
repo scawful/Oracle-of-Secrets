@@ -235,7 +235,9 @@ assert defined("SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE")
 assert !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE >= !SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE
 assert !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE+$0201 <= !SPECIAL_OVERWORLD_SEMANTIC_CODE_END
 assert pc() <= !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE, "Semantic code reaches source attribute table"
-org !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE
+; Keep the untouched gap and table reservation in this bounded semantic block.
+; A second org would create a separate, unbounded manifest hook.
+skip !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE-pc()
 Lyra_SourceTileTypes90:
     ; The existing managed native-data include emits the authenticated bytes
     ; here after code assembly. The compiled seal verifies all513 bytes,

@@ -187,6 +187,10 @@ class SourceAttributeKernelTest(unittest.TestCase):
                 self.assertEqual(r['registers']['a'],int.from_bytes(attrs[ch:ch+2],'little'))
                 K.SemanticKernelTest.preserved(self,r,b,ram,out,nz=True)
         self.assertLessEqual(a.labels['Lyra_SemanticCodeEnd'],0x519000)
+        gap_start=K.R.N.pc(a.labels['Lyra_SourceTileType_End'])
+        gap_end=K.R.N.pc(a.labels['Lyra_SourceTileTypes90'])
+        self.assertEqual(a.image[gap_start:gap_end],a.before[gap_start:gap_end])
+        self.assertEqual(a.labels['Lyra_SourceTileTypes90'],0x518300)
         self.assertEqual(a.labels['Lyra_SourceTileTypes90_End']-a.labels['Lyra_SourceTileTypes90'],513)
 
     def test_every_unqualified_context_matches_existing_Sky_and_vanilla(self):
