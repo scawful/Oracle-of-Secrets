@@ -504,21 +504,46 @@ ZoraBaby_Room25Global:
   LDA.w SprAction, X : CMP.b #$07 : BEQ +
   JMP .handled
   +
-  LDA.w SprFloor, X : BNE .miss
-  LDA.l WaterGateStates : AND.b #!D4Water_Latch : BNE .miss
-  JSR ZoraBaby_Room25FindSwitch : BCC .miss
+  LDA.w SprFloor, X : BEQ + : JMP .miss
+  +
+  LDA.l WaterGateStates : AND.b #!D4Water_Latch : BEQ + : JMP .miss
+  +
+  JSR ZoraBaby_Room25FindSwitch : BCS + : JMP .miss
+  +
   LDA.l D4HubContacts : CMP.b #$02 : BNE .legacy_start
   LDA.w SprHeight, X : ORA.w SprXSpeed, X : ORA.w SprYSpeed, X
-  BNE .handled ; paired contact must be settled, never an airborne overlap
-  LDA.w SprMiscB, X : CMP.b #$D4 : BNE .miss
-  LDA.w SprGfx, Y : BNE .miss
-  JSR D4Hub_BabyAtRemote : BCC .miss
+  BEQ + : JMP .handled
+  + ; paired contact must be settled, never an airborne overlap
+  LDA.w SprMiscB, X : CMP.b #$D4 : BEQ + : JMP .miss
+  +
+  LDA.w SprGfx, Y : BEQ + : JMP .miss
+  +
+  ; Both direct grip and approach must respect another pending owner.
+  LDA.w SprMiscB, Y : BEQ + : JMP .miss
+  +
+  LDA.w SprMiscA, Y : BEQ + : JMP .miss
+  +
+  JSR D4Hub_BabyAtRemote : BCS .paired_grip
+  JSR ZoraBaby_Room25InCatch : BCS + : JMP .miss
+  +
+  ; Action8 owns the short receiver approach. SprMiscA80..8F stores the
+  ; selected upper slot until StartPair replaces it with the reciprocal slot.
+  ; Admission is settled/owned/in-catch; walking never reselects by position.
+  TYA : ORA.b #$80 : STA.w SprMiscA, X
+  TXA : STA.w SprMiscA, Y
+  LDA.b #$D5 : STA.w SprMiscB, Y
+  LDA.b #$08 : STA.w SprAction, X
+  BRA .handled
+  .paired_grip
   JSR D4Hub_StartPair
   BRA .handled
   .legacy_start
-  LDA.w SprAction, Y : BNE .miss
-  LDA.w SprFrame, Y : BNE .miss
-  JSR D4Hub_BabyAtRemote : BCC .miss
+  LDA.w SprAction, Y : BEQ + : JMP .miss
+  +
+  LDA.w SprFrame, Y : BEQ + : JMP .miss
+  +
+  JSR D4Hub_BabyAtRemote : BCS + : JMP .miss
+  +
   STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
   STZ.w $0642
   LDA.b #$00 : STA.w SprTimerA, Y : STA.w SprFrame, Y
@@ -527,7 +552,8 @@ ZoraBaby_Room25Global:
   BRA .handled
   .miss
   LDA.w SprHeight, X : ORA.w SprXSpeed, X : ORA.w SprYSpeed, X
-  BNE .handled
+  BEQ + : JMP .handled
+  +
   ; Only a released, settled miss in the verified isolated catch rectangle
   ; gets NPC recovery. Near-side and out-of-proof-region misses remainwait4.
   LDA.w SprFloor, X : BNE .disarm
@@ -577,6 +603,14 @@ ZoraBaby_Room25Recover:
   LDA.b $11 : ORA.w $02E4 : ORA.w $0FFC : BEQ +
   JMP .done
   +
+  LDA.w SprAction, X : CMP.b #$08 : BNE .ordinary_target
+  LDA.w SprMiscA, X : AND.b #$F0 : CMP.b #$80 : BNE .ordinary_target
+  JSR D4Hub_ReceiverTarget : BCC .cancel_receiver
+  BRA .target_ready
+  .cancel_receiver
+  JSR D4Hub_ClearDepartingPair
+  STZ.w SprMiscA, X
+  .ordinary_target
   REP #$20
   LDA.l D4HubContacts+10 : STA.b $04
   LDA.l D4HubContacts+12 : STA.b $06
@@ -589,6 +623,7 @@ ZoraBaby_Room25Recover:
   LDA.l D4HubContacts+16 : STA.b $06
   SEP #$20
   +
+  .target_ready
   LDA.w SprXH, X : XBA : LDA.w SprX, X
   REP #$20
   SEC : SBC.b $04 : BPL +
@@ -605,6 +640,15 @@ ZoraBaby_Room25Recover:
   SEP #$20
   STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
   LDA.w SprAction, X : CMP.b #$08 : BNE .at_hatch
+  LDA.w SprMiscA, X : AND.b #$F0 : CMP.b #$80 : BNE .at_mouth
+  JSR D4Hub_ReceiverTarget : BCC .cancel_at_grip
+  JSR D4Hub_StartPair
+  JMP .done
+  .cancel_at_grip
+  JSR D4Hub_ClearDepartingPair
+  STZ.w SprMiscA, X
+  JMP .ordinary_target
+  .at_mouth
   LDA.b #$09 : STA.w SprAction, X
   JMP .done
   .at_hatch
@@ -624,11 +668,86 @@ ZoraBaby_Room25Recover:
   .wait
   JMP .done
   .cancel
+  LDA.w SprMiscA, X : AND.b #$F0 : CMP.b #$80 : BNE +
+  JSR D4Hub_ClearDepartingPair
+  STZ.w SprMiscA, X
+  +
   LDA.b #$04 : STA.w SprAction, X
   JMP .done
   .done
   PLB : PLP : SEP #$30
   RTL
+}
+
+; Action8 receiver mode owns SprMiscA80..8F only for a tagged paired Baby.
+; Existing native39 draw/carry code does not use this field in action8. The
+; mode/slot survives movement outside the initial catch rectangle; the target
+; is the fixed first pull grip. Invalid custody/binding returns to recovery.
+; M8/X8/DBR7E, preserve X; Y=exact upper slot, DP04/06=stable world target.
+D4Hub_ReceiverTarget:
+{
+  LDA.w SprAction, X : CMP.b #$08 : BEQ + : JMP .no
+  +
+  LDA.w SprMiscA, X : AND.b #$F0 : CMP.b #$80 : BEQ + : JMP .no
+  +
+  LDA.w SprType, X : CMP.b #$39 : BEQ + : JMP .no
+  +
+  LDA.w SprState, X : CMP.b #$09 : BEQ + : JMP .no
+  +
+  LDA.w SprMiscB, X : CMP.b #$D4 : BEQ + : JMP .no
+  +
+  LDA.w SprHeight, X : ORA.w SprFloor, X : BEQ + : JMP .no
+  +
+  LDA.b $1B : BNE + : JMP .no
+  +
+  LDA.b $A0 : CMP.b #$25 : BEQ + : JMP .no
+  +
+  LDA.b $A1 : BEQ + : JMP .no
+  +
+  LDA.l D4HubContacts : CMP.b #$02 : BEQ + : JMP .no
+  +
+  LDA.l D4HubContacts+1 : CMP.b #$01 : BEQ + : JMP .no
+  +
+  LDA.l WaterGateStates : AND.b #!D4Water_Latch : BEQ + : JMP .no
+  +
+  LDA.l $7EF3CC : BEQ + : JMP .no
+  +
+  LDA.w SprMiscA, X : AND.b #$0F : TAY
+  PHX : TYX
+  JSR D4Hub_IsPairedRemote : BCC .bad_slot
+  LDA.w SprGfx, X : BNE .bad_slot
+  LDA.w SprMiscB, X : CMP.b #$D5 : BNE .bad_slot
+  LDA.w SprMiscA, X : CMP $01,S : BNE .bad_slot
+  PLX
+  REP #$20
+  LDA.l D4HubContacts+2 : STA.b $04
+  LDA.l D4HubContacts+4 : CLC : ADC.w #$0009 : STA.b $06
+  SEP #$20
+  SEC : RTS
+  .bad_slot
+  PLX
+  .no
+  CLC : RTS
+}
+
+; X=upper. Pending receiver ownership is reciprocal but gfx0 never counts as
+; held; validating it here only prevents idle drawing from erasing the owner.
+D4Hub_ValidateReceiver:
+{
+  JSR D4Hub_IsPairedRemote : BCC .no
+  LDA.w SprGfx, X : BNE .no
+  LDA.w SprMiscB, X : CMP.b #$D5 : BNE .no
+  LDA.w SprMiscA, X : CMP.b #$10 : BCS .no
+  PHX
+  TAX
+  JSR D4Hub_ReceiverTarget : BCC .invalid
+  TYA : CMP $01,S : BNE .invalid
+  PLX
+  SEC : RTS
+  .invalid
+  PLX
+  .no
+  CLC : RTS
 }
 
 ; Full-coordinate historic overlap window, retainingY=bound remote actor.
@@ -775,6 +894,7 @@ D4Hub_DrawRemote:
 {
   LDA.l WaterGateStates : AND.b #!D4Water_Latch : BNE .idle
   JSR D4Hub_ValidatePair : BCS .draw
+  JSR D4Hub_ValidateReceiver : BCS .draw
   .idle
   STZ.w SprGfx, X : STZ.w SprTimerA, X : STZ.w SprAction, X
   STZ.w SprMiscA, X : STZ.w SprMiscB, X
@@ -973,6 +1093,7 @@ D4Hub_ClearDepartingPair:
   DEY : BMI .done
   JMP .scan
   .done
+  STZ.w SprMiscA, X ; release the owned Baby receiver/reciprocal slot too
   RTS
 }
 
