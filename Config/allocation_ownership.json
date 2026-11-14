@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "435254eb768cb48998c4981399bb6953453236b8b1f7824359da928cf297d379"
+      "sha256": "1cc0f9ae70daf485d655e9a08075edcdc5a963f74f3d4fa7f02b5cfa1e940f1f"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -165,7 +165,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "e71653e2ce0ac1f4763846cc220f027f45ab4f7e5c9a529107496786de7f850f"
+      "sha256": "4264adfb2ce81b2d763d4ae688845bfeed3264aa2f5f45a979d4261fd6b6d14d"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -2588,6 +2588,160 @@
       "binding": {
         "source": "shared:Core/sram.asm",
         "symbol": "RegionalCheckpointResumeIntent",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ItemBindingSavedVersion",
+      "owner": "Granted disabled dual-item prototype: SavedVersion",
+      "space": "save_buffer",
+      "base": 8319929,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved per-file binding metadata; prototype source only, no live migration hook.",
+      "reset": "Vanilla new-file clear; explicit admitted prototype load validates assignments and commits schema last.",
+      "save": "Covered by vanilla five-page save, backup and checksum; no actual prototype save qualification yet.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "ItemBindingSavedVersion",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ItemBindingSavedY",
+      "owner": "Granted disabled dual-item prototype: SavedY",
+      "space": "save_buffer",
+      "base": 8319930,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved per-file binding metadata; prototype source only, no live migration hook.",
+      "reset": "Vanilla new-file clear; explicit admitted prototype load validates assignments and commits schema last.",
+      "save": "Covered by vanilla five-page save, backup and checksum; no actual prototype save qualification yet.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "ItemBindingSavedY",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ItemBindingSavedX",
+      "owner": "Granted disabled dual-item prototype: SavedX",
+      "space": "save_buffer",
+      "base": 8319931,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved per-file binding metadata; prototype source only, no live migration hook.",
+      "reset": "Vanilla new-file clear; explicit admitted prototype load validates assignments and commits schema last.",
+      "save": "Covered by vanilla five-page save, backup and checksum; no actual prototype save qualification yet.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "ItemBindingSavedX",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ItemBindingCursor",
+      "owner": "Granted disabled dual-item prototype: Cursor",
+      "space": "wram",
+      "base": 8265438,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved prototype cursor/action state; no live dispatcher hook. Separate from ferry and original symbols block.",
+      "reset": "Explicit ItemBindings_AdapterReset clears only four owned bytes. Ordinary load/reset hook not yet installed.",
+      "save": "Volatile WRAM; never saved.",
+      "provenance": [
+        "shared:Core/symbols.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "ItemBindingCursor",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ItemBindingLogical",
+      "owner": "Granted disabled dual-item prototype: Logical",
+      "space": "wram",
+      "base": 8265439,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved prototype cursor/action state; no live dispatcher hook. Separate from ferry and original symbols block.",
+      "reset": "Explicit ItemBindings_AdapterReset clears only four owned bytes. Ordinary load/reset hook not yet installed.",
+      "save": "Volatile WRAM; never saved.",
+      "provenance": [
+        "shared:Core/symbols.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "ItemBindingLogical",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ItemBindingAction",
+      "owner": "Granted disabled dual-item prototype: Action",
+      "space": "wram",
+      "base": 8265440,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved prototype cursor/action state; no live dispatcher hook. Separate from ferry and original symbols block.",
+      "reset": "Explicit ItemBindings_AdapterReset clears only four owned bytes. Ordinary load/reset hook not yet installed.",
+      "save": "Volatile WRAM; never saved.",
+      "provenance": [
+        "shared:Core/symbols.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "ItemBindingAction",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ItemBindingButton",
+      "owner": "Granted disabled dual-item prototype: Button",
+      "space": "wram",
+      "base": 8265441,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved prototype cursor/action state; no live dispatcher hook. Separate from ferry and original symbols block.",
+      "reset": "Explicit ItemBindings_AdapterReset clears only four owned bytes. Ordinary load/reset hook not yet installed.",
+      "save": "Volatile WRAM; never saved.",
+      "provenance": [
+        "shared:Core/symbols.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "ItemBindingButton",
         "bank00_mirror": false
       }
     }

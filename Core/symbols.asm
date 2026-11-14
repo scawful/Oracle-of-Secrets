@@ -69,6 +69,15 @@ assert pc() <= $7E1F00, "Ferry transient state exceeds its bounded WRAM tail"
 base off
 endif
 
+; Root prototype grant 2026-11-14: separate from the original91-byte block
+; and conditional ferry tail. Never extend either owner's bulk clear here.
+; Reset explicitly on admitted load or action cancellation; not persistent.
+ItemBindingCursor  = $7E1EDE
+ItemBindingLogical = $7E1EDF
+ItemBindingAction  = $7E1EE0
+ItemBindingButton  = $7E1EE1
+assert ItemBindingCursor == $7E1EDE && ItemBindingButton+1 == $7E1EE2
+
 ; Explicit bounded aliases for the reserved palette history; no consumer yet.
 SpecialOverworldPaletteHoleCache = $7E1E8C
 SpecialOverworldPaletteHoleCacheEnd = $7E1EA6

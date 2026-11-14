@@ -170,6 +170,30 @@ class OwnershipTests(unittest.TestCase):
         self.assertEqual(ownership_conflicts(data,{})[0],[])
 
 
+    def test_granted_binding_fields_preserve_ferry_and_checkpoint_fences(self):
+        real=read_ledger(ROOT/'Config/allocation_ownership.json')
+        expected={'ItemBindingSavedVersion':0x7EF3B9,'ItemBindingSavedY':0x7EF3BA,
+                  'ItemBindingSavedX':0x7EF3BB,'ItemBindingCursor':0x7E1EDE,
+                  'ItemBindingLogical':0x7E1EDF,'ItemBindingAction':0x7E1EE0,
+                  'ItemBindingButton':0x7E1EE1}
+        data=copy.deepcopy(real)
+        data['claims']=[c for c in real['claims'] if c['id'] in expected]
+        self.assertEqual({c['id'] for c in data['claims']},set(expected))
+        data['sources']={k:v for k,v in data['sources'].items()
+                         if k in ('shared:Core/sram.asm','shared:Core/symbols.asm')}
+        self.assertTrue(source_evidence(data,{'shared':ROOT}))
+        for c in data['claims']:
+            self.assertEqual((c['base'],c['size'],c['status'],c['condition']),
+                             (expected[c['id']],1,'shared',{}))
+        neighbors=('kalyxo_boat_native_transient','RegionalCheckpointResumeIntent')
+        data['claims'] += [c for c in real['claims'] if c['id'] in neighbors]
+        self.assertEqual(ownership_conflicts(data,{'ENABLE_KALYXO_BOAT':1},proposed=True)[0],[])
+        binding=next(c for c in data['claims'] if c['id']=='ItemBindingCursor')
+        binding['base']-=1
+        conflicts=ownership_conflicts(data,{'ENABLE_KALYXO_BOAT':1},proposed=True)[0]
+        self.assertTrue(any('kalyxo_boat_native_transient' in c['owners'] for c in conflicts))
+
+
 class TableTests(unittest.TestCase):
     def test_wla_labels_exclude_address_to_line_records(self):
         with tempfile.TemporaryDirectory() as directory:
