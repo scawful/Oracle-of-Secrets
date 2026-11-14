@@ -108,6 +108,9 @@ ZoraBaby_RevertToSprite:
   LDA.b #$04 : STA.w SprAction, Y
   LDA.b #$FF : STA.w SprTimerB, Y
   PLX
+if !ENABLE_D4_WATER_CONTROLS == 1
+  JSL ZoraBaby_Room25Stage ; Y=new NPC, mark actual follower custody only
+endif
 
   LDA.b #$00 : STA.l $7EF3CC
 
@@ -130,7 +133,7 @@ CheckForZoraBabyTransitionToSprite:
     LDA.w $0114 : CMP.b #$3B : BNE +
       LDA.b #$00
       JSR ZoraBaby_RevertToSprite
-      ; Room25 star stages Baby only; owned remote21 completion unlocks controls.
+      ; Room25 star stages Baby only; the selected valve episode owns unlock08.
     +
 
     ; If we are outdoors, clear the follower
@@ -510,7 +513,7 @@ if !ENABLE_D4_WATER_CONTROLS == 1
   dw ZoraBaby_ThrowAttempt  ; 7: armed carried/released attempt
   dw ZoraBaby_PostSwitch    ; 8: isolated miss -> verified hatch mouth
   dw ZoraBaby_PostSwitch    ; 9: missed attempt -> authored hatch
-  dw ZoraBaby_PullSwitch    ; A: owned native21 release, await completion
+  dw ZoraBaby_PullSwitch    ; A: selected legacy release or paired NPC pull/hold
   dw ZoraBaby_PostSwitch    ; B: success -> authored return mouth
   dw ZoraBaby_PostSwitch    ; C: success -> authored hatch
 endif

@@ -48,6 +48,12 @@ class RoomSprite:
     layer: int
 
 
+@dataclass(frozen=True)
+class HubContacts:
+    abi_version: int
+    words: Tuple[int, ...]
+
+
 def read24(data: bytes, offset: int) -> int:
     return data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16)
 
@@ -235,7 +241,7 @@ def read_hub_roles_strict(data: bytes):
     return objects, parse_room_sprites(data, 0x25)
 
 
-def hub_contact_words(objects, sprites, mouth, catch):
+def hub_contacts(objects, sprites, mouth, catch):
     """Typed full coordinates: objectTile8, actorTile16; legacy table unchanged.
 
     The explicit mouth/catch values are room-local pixels from reviewed contact
@@ -246,8 +252,23 @@ def hub_contact_words(objects, sprites, mouth, catch):
         if len(found) != 1 or found[0].layer != 0:
             raise ValueError(f"D4 hub role {ident:03X} needs exactly one layer0 record")
         return found[0]
-    remote = unique(sprites, 'spr_id', 0x21)
-    manual = unique(sprites, 'spr_id', 0x04)
+    supplies = [s for s in sprites if s.spr_id == 0x21]
+    valves = [s for s in sprites if s.spr_id == 0x04]
+    if len(supplies) == 1 and len(valves) == 1:
+        version = 1
+        remote, manual = supplies[0], valves[0]
+    elif not supplies and len(valves) == 2:
+        version = 2
+        remote, manual = sorted(valves, key=lambda s: (s.y, s.x))
+        if remote.y == manual.y:
+            raise ValueError('D4 paired valves need distinct north/south stations')
+        baby = unique(sprites, 'spr_id', 0x39)
+        if baby.subtype:
+            raise ValueError('D4 paired valves require ordinary Baby39 subtype0')
+    else:
+        raise ValueError('D4 hub needs one supply21 plus valve04, or two paired valve04 records')
+    if remote.layer != 0 or manual.layer != 0:
+        raise ValueError('D4 hub actors require layer0')
     hatch = unique(objects, 'obj_id', 0x124)
     unique(objects, 'obj_id', 0x11F)
     if remote.subtype or manual.subtype:
@@ -265,20 +286,29 @@ def hub_contact_words(objects, sprites, mouth, catch):
         raise ValueError("D4 hub hatch outside Tile8 grid")
     # Room25 origin: low room nibble*512 horizontally, high nibble*512 vertically.
     ox,oy = (0x25 & 15)*512, (0x25 >> 4)*512
-    return [ox+remote.x*16, oy+remote.y*16+5,
-            ox+manual.x*16, oy+manual.y*16,
-            ox+hatch.x*8, oy+hatch.y*8,
-            ox+mouth[0], oy+mouth[1],
-            ox+x0, ox+x1+1, oy+y0, oy+y1+1]
+    # Sprite21's native prep adds five pixels; native04 does not.
+    remote_dy = 5 if version == 1 else 0
+    return HubContacts(version, (
+        ox+remote.x*16, oy+remote.y*16+remote_dy,
+        ox+manual.x*16, oy+manual.y*16,
+        ox+hatch.x*8, oy+hatch.y*8,
+        ox+mouth[0], oy+mouth[1],
+        ox+x0, ox+x1+1, oy+y0, oy+y1+1))
 
 
-def write_hub_contacts(out_path, words):
+def write_hub_contacts(out_path, contacts):
     # Same generated include/pipeline, no new sidecar or global legacy rescaling.
+    version = contacts.abi_version if contacts is not None else 1
+    if type(version) is not int or version not in (1, 2):
+        raise ValueError('Unsupported D4 hub contact ABI')
+    words = contacts.words if contacts is not None else (0,) * 12
+    if len(words) != 12 or any(type(v) is not int or not 0 <= v <= 0xffff for v in words):
+        raise ValueError('D4 hub contacts need twelve unsigned words')
     with out_path.open('a') as out:
-        out.write('\n; Room25 typed contacts ABI1; Tile8 objects, Tile16 actors.\n')
+        out.write(f'\n; Room25 typed contacts ABI{version}; Tile8 objects, Tile16 actors.\n')
         out.write('; RemoteXY,ManualXY,HatchXY,MouthXY,CatchXmin/Xend/Ymin/Yend\nD4HubContacts:\n')
-        out.write(f'D4HubContactsBound = {int(words is not None)}\n')
-        out.write('  db $01, $01\n  dw ' + ', '.join(fmt_hex(v,4) for v in words or [0]*12) + '\n')
+        out.write(f'D4HubContactsBound = {int(contacts is not None)}\n')
+        out.write(f'  db {fmt_hex(version)}, $01\n  dw ' + ', '.join(fmt_hex(v,4) for v in words) + '\n')
 
 
 def fmt_hex(v: int, width: int = 2) -> str:
@@ -418,10 +448,10 @@ def main() -> int:
     marker_ids = parse_hex_list(args.target_marker_ids)
 
     rom_data = rom_path.read_bytes()
-    hub_words = None
+    contacts = None
     if args.d4_hub:
         hub_objects, hub_sprites = read_hub_roles_strict(rom_data)
-        hub_words = hub_contact_words(hub_objects, hub_sprites, args.d4_hub_mouth, args.d4_hub_catch)
+        contacts = hub_contacts(hub_objects, hub_sprites, args.d4_hub_mouth, args.d4_hub_catch)
     elif args.d4_hub_mouth is not None or args.d4_hub_catch is not None:
         raise ValueError('D4 hub recovery arguments require --d4-hub')
     overlays, targets = generate_tables(
@@ -440,7 +470,7 @@ def main() -> int:
         target_marker_ids=marker_ids,
     )
 
-    write_hub_contacts(args.out_asm, hub_words)
+    write_hub_contacts(args.out_asm, contacts)
 
     target_entries = sum(len(v) for v in targets.values())
     print(f"Wrote {args.out_asm}")

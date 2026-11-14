@@ -20,7 +20,10 @@ class D4HubCIFixtureTest(unittest.TestCase):
         data = self.data()
         self.assertEqual(data[0x34003:0x34007], bytes.fromhex('22bcd605'))
         self.assertEqual(data[0x2d9f3:0x2d9f9], bytes.fromhex('a5f21022a5f0'))
-        self.assertEqual(len(self.seed), 10)
+        self.assertEqual(data[0x4f554:0x4f558], bytes.fromhex('c909d006'))
+        self.assertEqual(data[0x2d953:0x2d956], bytes.fromhex('2050fa'))
+        self.assertEqual(data[0x2d6ce], 0x6b)
+        self.assertEqual(len(self.seed), 18)
         self.assertEqual(set(self.expected), {
             'Dungeons/generated/d4_water/25-low.bin',
             'Dungeons/generated/d4_water/25-high.bin',
@@ -30,11 +33,12 @@ class D4HubCIFixtureTest(unittest.TestCase):
         asm = self.expected['Dungeons/generated/water_gate_runtime_tables.asm']
         self.assertIn(b'D4HubContacts:', asm)
         self.assertIn(b'D4HubContactsBound = 1', asm)
-        self.assertIn(b'db $01, $01', asm)
+        self.assertIn(b'db $02, $01', asm)
+        self.assertIn(b'dw $0A70, $0460, $0A70, $04F0', asm)
         fixture.validate_fixture_inputs(data, self.expected, self.seed, self.expected)
 
-    def test_either_missing_hook_preimage_refuses(self):
-        for offset in (0x34003, 0x2d9f3):
+    def test_each_missing_hook_or_draw_preimage_refuses(self):
+        for offset in (0x34003, 0x2d9f3, 0x4f554, 0x2d953, 0x2d6ce):
             with self.subTest(offset=hex(offset)):
                 data = self.data()
                 data[offset] = 0
@@ -52,7 +56,7 @@ class D4HubCIFixtureTest(unittest.TestCase):
         name = 'Dungeons/generated/water_gate_runtime_tables.asm'
         for bad in (self.expected[name].replace(b'D4HubContactsBound = 1',
                                               b'D4HubContactsBound = 0'),
-                    self.expected[name].replace(b'db $01, $01', b'db $00, $01')):
+                    self.expected[name].replace(b'db $02, $01', b'db $00, $01')):
             with self.assertRaisesRegex(ValueError, 'state/type binding missing'):
                 fixture.validate_fixture_inputs(self.data(), {**self.expected, name: bad},
                                                 self.seed, self.expected)
@@ -70,6 +74,13 @@ class D4HubCIFixtureTest(unittest.TestCase):
         data[0x34003] = 0xff
         with self.assertRaises(preimages.SeedError):
             preimages.apply_seed(data, self.seed)
+
+    def test_legacy_fixture_retains_original_prep_offset_and_abi(self):
+        seed, expected = fixture.fixture_inputs(ROOT, paired=False)
+        self.assertEqual(seed, self.seed)
+        asm = expected['Dungeons/generated/water_gate_runtime_tables.asm']
+        self.assertIn(b'db $01, $01', asm)
+        self.assertIn(b'dw $0A70, $0465, $0A70, $04F0', asm)
 
 
 if __name__ == '__main__':

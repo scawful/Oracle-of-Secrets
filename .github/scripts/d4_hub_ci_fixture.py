@@ -11,11 +11,11 @@ import tempfile
 import seed_sky_award_preimages as preimages
 
 
-def fixture_inputs(root):
+def fixture_inputs(root, *, paired=True):
     root = Path(root).resolve()
     source = (root/'Dungeons/d4_water_control.asm').read_text()
     guards, expected = [], set()
-    for site, width in ((0x06c003, 4), (0x05d9f3, 6)):
+    for site, width in ((0x06c003, 4), (0x05d9f3, 6), (0x09f554, 4)):
         block = re.search(r'(?ms)^org \$' + f'{site:06X}' +
                           r'\b(.*?)(?=^org |\Z)', source)
         if not block:
@@ -29,9 +29,22 @@ def fixture_inputs(root):
             guards.append((0, n, address, value))
         pc = preimages.lorom_offset(site)
         expected.update(range(pc, pc + width))
+    draw = re.search(r'(?ms)^D4Hub_DrawRemote:\s*\n\{(.*?)^\}', source)
+    if not draw:
+        raise ValueError('missing D4 remote draw trampoline source')
+    code = '\n'.join(preimages.strip_comment(line) for line in draw.group(1).splitlines())
+    terms = list(preimages._TERM.finditer(code))
+    if len(terms) != len(preimages._READ.findall(code)):
+        raise ValueError('unsupported D4 remote draw preimage guard')
+    for term in terms:
+        n, address, value = preimages.parse_term(term.group(), 'D4 remote draw')
+        guards.append((0, n, address, value))
+    for site, width in ((0x05d953, 3), (0x05d6ce, 1)):
+        pc = preimages.lorom_offset(site)
+        expected.update(range(pc, pc + width))
     seed = preimages.guard_bytes(guards)
     if set(seed) != expected:
-        raise ValueError('D4 synthetic preimages do not cover exactly the two guarded hooks')
+        raise ValueError('D4 synthetic preimages do not cover the guarded hooks and draw trampoline')
 
     sys.path.insert(0, str(root/'Scripts/Rooms'))
     sys.path.insert(0, str(root/'Scripts/Generate'))
@@ -45,15 +58,16 @@ def fixture_inputs(root):
     objects = [runtime.decode_room_object(*record, layer)
                for layer, records in enumerate(stream.lists) for record in records]
     # Only the syntax fixture synthesizes these actors. Real base admission
-    # requires actual saved21/04 records through read_hub_roles_strict.
-    sprites = [runtime.RoomSprite(0x21, 7, 6, 0, 0),
+    # requires actual saved actor records through read_hub_roles_strict.
+    sprites = [runtime.RoomSprite(0x39, 19, 5, 0, 0),
+               runtime.RoomSprite(0x04 if paired else 0x21, 7, 6, 0, 0),
                runtime.RoomSprite(0x04, 7, 15, 0, 0)]
-    words = runtime.hub_contact_words(objects, sprites, (104, 112), (48, 104, 152, 120))
+    contacts = runtime.hub_contacts(objects, sprites, (104, 112), (48, 104, 152, 120))
     with tempfile.TemporaryDirectory(prefix='d4-ci-include-') as temporary:
         include = Path(temporary)/'water_gate_runtime_tables.asm'
         runtime.write_asm(include, Path('test.sfc'), {}, {},
                           [0xc9, 0xd9], [0x124, 0x137, 0x135])
-        runtime.write_hub_contacts(include, words)
+        runtime.write_hub_contacts(include, contacts)
         asm = include.read_bytes()
     files = {'Dungeons/generated/d4_water/25-low.bin': low,
              'Dungeons/generated/d4_water/25-high.bin': high,

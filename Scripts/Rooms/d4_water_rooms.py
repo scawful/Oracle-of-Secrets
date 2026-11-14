@@ -172,7 +172,7 @@ def selected_room25_contacts(low_raw):
     """The selected native Low kit; coordinate changes require a new contract.
 
     These are object anchors in Tile8. Actor roles and pixel recovery bounds
-    remain the existing runtime-table generator's typed ABI1 contract.
+    remain the existing runtime-table generator's typed contact contract.
     """
     stream = parse_stream(low_raw)
     wanted = {0x11f: (24, 8), 0x124: (13, 9), 0x129: (12, 27),
@@ -359,19 +359,22 @@ def validate_legacy_collision(root, base):
     # required backend source change, not a mutation of the saved bits/table.
 
 
-def validated_hub_words(runtime, base):
-    required = ('read_hub_roles_strict', 'hub_contact_words', 'write_hub_contacts')
+def validated_hub_contacts(runtime, base):
+    required = ('read_hub_roles_strict', 'hub_contacts', 'write_hub_contacts')
     if not all(hasattr(runtime, name) for name in required):
-        raise StateDerivationError('typed Room25 ABI1 runtime generator is unavailable')
+        raise StateDerivationError('typed Room25 runtime generator is unavailable')
     objects, sprites = runtime.read_hub_roles_strict(base)
-    words = runtime.hub_contact_words(objects, sprites, (104, 112), (48, 104, 152, 120))
+    contacts = runtime.hub_contacts(objects, sprites, (104, 112), (48, 104, 152, 120))
+    if type(contacts.abi_version) is not int or contacts.abi_version not in (1, 2):
+        raise StateDerivationError('unsupported Room25 contact ABI')
     ox, oy = 5 * 512, 2 * 512
-    expected = [ox + 112, oy + 101, ox + 112, oy + 240,
+    remote_y = 101 if contacts.abi_version == 1 else 96
+    expected = (ox + 112, oy + remote_y, ox + 112, oy + 240,
                 ox + 104, oy + 72, ox + 104, oy + 112,
-                ox + 48, ox + 153, oy + 104, oy + 121]
-    if words != expected:
+                ox + 48, ox + 153, oy + 104, oy + 121)
+    if contacts.words != expected:
         raise StateDerivationError('saved actors/hatch moved outside the qualified recovery contacts')
-    return words
+    return contacts
 
 
 def generate_saved(root, source, output, z3ed):
@@ -382,7 +385,7 @@ def generate_saved(root, source, output, z3ed):
     import generate_water_gate_runtime_tables as runtime
     enabled = asm_source._load_global_defines(root).get('ENABLE_D4_WATER_CONTROLS', 0)
     base = source.read_bytes()
-    words, derived = None, None
+    contacts, derived = None, None
     inputs = [source]
     with tempfile.TemporaryDirectory(prefix='oos-d4-generated-') as temporary:
         stage = Path(temporary)
@@ -394,7 +397,7 @@ def generate_saved(root, source, output, z3ed):
             validate_selected_pair(low, high)
             saved = saved_room25_input(base)
             validate_legacy_collision(root, base)
-            words = validated_hub_words(runtime, base)
+            contacts = validated_hub_contacts(runtime, base)
             if not z3ed or not Path(z3ed).is_file():
                 raise StateDerivationError('maintained z3ed native paint trace is required')
             trace_path = stage / 'native-paint-trace.json'
@@ -416,7 +419,7 @@ def generate_saved(root, source, output, z3ed):
         runtime.write_asm(generated, source, overlays, targets,
                           [0xc9, 0xd9], [0x124, 0x137, 0x135])
         if hasattr(runtime, 'write_hub_contacts'):
-            runtime.write_hub_contacts(generated, words)
+            runtime.write_hub_contacts(generated, contacts)
         if source.read_bytes() != base:
             raise StateDerivationError('saved source ROM changed while deriving water states')
         if enabled:

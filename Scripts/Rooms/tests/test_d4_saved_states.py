@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT / 'Scripts/Generate'))
 import d4_water_rooms as producer
 import d4_water_collision as collision
 import sky_d8_room_writer as rooms
+import generate_water_gate_runtime_tables as runtime
 
 
 def obj(ident, x, y, size=0):
@@ -201,14 +202,79 @@ class SelectedNativeKitTest(unittest.TestCase):
             producer.validate_selected_pair(self.low, changed)
 
     def test_qualified_recovery_roles_and_bad_pose(self):
-        runtime = types.SimpleNamespace(read_hub_roles_strict=lambda base: ([], []),
+        api = types.SimpleNamespace(read_hub_roles_strict=lambda base: ([], []),
             write_hub_contacts=lambda *args: None,
-            hub_contact_words=lambda *args: [2672,1125,2672,1264,2664,1096,
-                                             2664,1136,2608,2713,1128,1145])
-        self.assertEqual(len(producer.validated_hub_words(runtime, b'fixture')), 12)
-        runtime.hub_contact_words = lambda *args: [0]*12
+            hub_contacts=lambda *args: runtime.HubContacts(1, (
+                2672,1125,2672,1264,2664,1096,2664,1136,2608,2713,1128,1145)))
+        self.assertEqual(len(producer.validated_hub_contacts(api, b'fixture').words), 12)
+        api.hub_contacts = lambda *args: runtime.HubContacts(1, (0,)*12)
         with self.assertRaisesRegex(producer.StateDerivationError, 'saved actors/hatch'):
-            producer.validated_hub_words(runtime, b'fixture')
+            producer.validated_hub_contacts(api, b'fixture')
+
+
+class HubContactBindingTest(unittest.TestCase):
+    def setUp(self):
+        self.objects = [runtime.decode_room_object(*obj(0x124, 13, 9), 0),
+                        runtime.decode_room_object(*obj(0x11f, 24, 8), 0)]
+        self.baby = runtime.RoomSprite(0x39, 19, 5, 0, 0)
+        self.remote = runtime.RoomSprite(0x04, 7, 6, 0, 0)
+        self.manual = runtime.RoomSprite(0x04, 7, 15, 0, 0)
+        self.pair = [self.baby, self.remote, self.manual]
+
+    def contacts(self, sprites=None):
+        return runtime.hub_contacts(self.objects, sprites if sprites is not None else self.pair,
+                                    (104, 112), (48, 104, 152, 120))
+
+    def test_legacy_and_paired_have_distinct_prep_coordinates_and_version(self):
+        old = self.contacts([self.baby, runtime.RoomSprite(0x21, 7, 6, 0, 0), self.manual])
+        new = self.contacts()
+        self.assertEqual((old.abi_version, old.words[:4]), (1, (2672,1125,2672,1264)))
+        self.assertEqual((new.abi_version, new.words[:4]), (2, (2672,1120,2672,1264)))
+        self.assertEqual(new.words[4:], old.words[4:])
+
+    def test_pair_roles_follow_north_south_not_sprite_record_order(self):
+        self.assertEqual(self.contacts(self.pair[::-1]), self.contacts())
+
+    def test_ambiguous_mixed_duplicate_or_missing_valves_refuse(self):
+        for sprites in ([self.baby, self.remote],
+                        self.pair + [self.remote],
+                        self.pair + [runtime.RoomSprite(0x21,7,6,0,0)],
+                        [self.baby, self.remote, runtime.RoomSprite(0x04,8,6,0,0)]):
+            with self.subTest(sprites=sprites), self.assertRaises(ValueError):
+                self.contacts(sprites)
+
+    def test_pair_requires_one_ordinary_layer0_baby(self):
+        for sprites in (self.pair[1:], self.pair + [self.baby],
+                        [runtime.RoomSprite(0x39,19,5,0,1), self.remote, self.manual],
+                        [runtime.RoomSprite(0x39,19,5,1,0), self.remote, self.manual]):
+            with self.subTest(sprites=sprites), self.assertRaises(ValueError):
+                self.contacts(sprites)
+
+    def test_valve_floor_and_subtype_refuse(self):
+        for replacement in (runtime.RoomSprite(0x04,7,6,0,1),
+                            runtime.RoomSprite(0x04,7,6,1,0)):
+            with self.subTest(replacement=replacement), self.assertRaises(ValueError):
+                self.contacts([self.baby, replacement, self.manual])
+
+    def test_actual_producer_accepts_pair_and_rejects_moved_stations(self):
+        with patch.object(runtime, 'read_hub_roles_strict', return_value=(self.objects,self.pair)):
+            self.assertEqual(producer.validated_hub_contacts(runtime,b'fixture'), self.contacts())
+        moved = [self.baby, runtime.RoomSprite(0x04,8,6,0,0), self.manual]
+        with patch.object(runtime, 'read_hub_roles_strict', return_value=(self.objects,moved)):
+            with self.assertRaisesRegex(producer.StateDerivationError, 'saved actors/hatch'):
+                producer.validated_hub_contacts(runtime,b'fixture')
+
+    def test_generated_header_preserves_layout_and_rejects_bad_payload_before_write(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary)/'contacts.asm'
+            runtime.write_hub_contacts(path,self.contacts())
+            text = path.read_text()
+            self.assertIn('D4HubContactsBound = 1\n  db $02, $01\n  dw $0A70, $0460',text)
+            for bad in (runtime.HubContacts(3,(0,)*12),runtime.HubContacts(2,(0,)*11),
+                        runtime.HubContacts(2,(65536,)+(0,)*11)):
+                with self.subTest(bad=bad), self.assertRaises(ValueError):
+                    runtime.write_hub_contacts(path,bad)
+                self.assertEqual(path.read_text(),text)
 
 
 class CommonProducerTest(unittest.TestCase):
@@ -236,9 +302,9 @@ class CommonProducerTest(unittest.TestCase):
                                           {'ENABLE_D4_WATER_CONTROLS': 1})
         def write_asm(path, *args):
             path.write_text('new generated runtime include\n')
-        def write_contacts(path, words):
+        def write_contacts(path, contacts):
             with path.open('a') as output:
-                output.write('typed ABI1 bound\n' if words else 'typed ABI1 unbound\n')
+                output.write('typed ABI1 bound\n' if contacts else 'typed ABI1 unbound\n')
         self.runtime = types.SimpleNamespace(generate_tables=lambda *args, **kwargs: ({}, {}),
             write_asm=write_asm, write_hub_contacts=write_contacts)
 
@@ -253,7 +319,8 @@ class CommonProducerTest(unittest.TestCase):
              patch.object(producer, 'validate_native_sources'), \
              patch.object(producer, 'saved_room25_input', return_value=self.low), \
              patch.object(producer, 'validate_legacy_collision'), \
-             patch.object(producer, 'validated_hub_words', return_value=[1]*12), \
+             patch.object(producer, 'validated_hub_contacts',
+                          return_value=runtime.HubContacts(1,(1,)*12)), \
              patch.object(producer.subprocess, 'run', side_effect=paint):
             return producer.generate_saved(self.root, self.source, self.out, sys.executable)
 
