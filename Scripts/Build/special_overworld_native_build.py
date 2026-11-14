@@ -392,7 +392,7 @@ def _semantic_compiled_readers(source, compiled, entries, symbols, protected, so
         table_end = _symbol(symbols, 'Lyra_SourceTileTypes90_End', exclusive_end=True)
         wrapper = _symbol(symbols, 'Lyra_SourceTileType')
         sky = _symbol(symbols, 'Oracle_SkyTileType')
-        legacy = _symbol(symbols, 'Lyra_SourceTileTypeLegacy')
+        legacy = _symbol(symbols, 'Oracle_Lyra_SourceTileTypeLegacy')
         _require(first <= wrapper < table and table_end == table + 513 and table_end <= end
                  and compiled[native.pc(table):native.pc(table)+513] == expected,
                  'NATIVE_BUILD_SOURCE_ATTRIBUTES_TABLE_MISMATCH')

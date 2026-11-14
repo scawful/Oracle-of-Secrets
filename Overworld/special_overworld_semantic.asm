@@ -230,7 +230,7 @@ Lyra_SourceTileType:
     LDA.l Lyra_SourceTileTypes90, X
     RTL
 .legacy:
-    JML Lyra_SourceTileTypeLegacy
+    JML Oracle_Lyra_SourceTileTypeLegacy
 Lyra_SourceTileType_End:
 Lyra_SourceTileTypes90:
     ; The source-authenticated compiler supplies the exact 513 bytes, including

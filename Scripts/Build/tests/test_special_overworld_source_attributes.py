@@ -136,12 +136,20 @@ class SourceAttributeKernelTest(unittest.TestCase):
                    byte_count=513,payload_hex=attrs.hex(),sha256=hashlib.sha256(attrs).hexdigest())
         preamble = B.source_attribute_constants({'resource_plan':{'source_attributes':row}}) if enabled else ''
         tables = {f.name:f.snes for f in K.R.N.current_table_layout(K.R.N.TABLE_BASE)}
-        a = K.Artifact([K.row(0x90,7,(1,2,3,4))],sky=True,preamble=preamble,
-                       overrides={'SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE':0x518000,
+        updates=[(site,bytes.fromhex('BF59940E')) for site in
+                 (0x00886E,0x1BBEFD,0x1BBF2A,0x1BC04E)]
+        updates += [(0x1BBE3E,bytes.fromhex('AD7A0329FF00C90100D0F2')),
+                    (0x0E9459,bytes([0x27])*512+b'\x5A'),
+                    (tables['parent']+0x90,bytes([parent])),
+                    (tables['area_size']+0x90,bytes([size]))]
+        extra=(f'org $348000\nnamespace Oracle\nincsrc "{K.R.ROOT / "Overworld/sky_tile_types.asm"}"\nnamespace off\n'
+               + ''.join(f'org ${site+4:06X}\nRTL\n' for site in
+                         (0x00886E,0x1BBEFD,0x1BBF2A,0x1BC04E)))
+        a = K.Artifact([K.row(0x90,7,(1,2,3,4))],preamble=preamble,
+                       overrides={'ENABLE_SKY_OVERWORLD_ROUTE':1,'ENABLE_SKY_OVERWORLD_GRAPHICS':1,
+                                  'SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE':0x518000,
                                   'SPECIAL_OVERWORLD_SEMANTIC_CODE_END':0x519000},
-                       extra_source=''.join(f'org ${site+4:06X}\nRTL\n' for site in (0x00886E,0x1BBEFD,0x1BBF2A,0x1BC04E)),
-                       image_updates=((tables['parent']+0x90,bytes([parent])),
-                                      (tables['area_size']+0x90,bytes([size]))))
+                       extra_source=extra,image_updates=updates)
         self.addCleanup(a.close)
         self.assertEqual(a.proc.returncode,0,a.proc.stdout+a.proc.stderr)
         return a,attrs
@@ -158,7 +166,7 @@ class SourceAttributeKernelTest(unittest.TestCase):
         # positions, rather than checking only a returned low attribute byte.
         for ch in (0,0x1C,0x1D,0x37,0x38,0x80,0x81,0x1FE,0x1FF):
             for p in (0,0xCD):
-                ram=self.ram();r,out,b=a.call('SkyTileType',x=ch,y=0xABCD,p=p,db=0x42,d=0x120,ram=ram)
+                ram=self.ram();r,out,b=a.call('Oracle_SkyTileType',x=ch,y=0xABCD,p=p,db=0x42,d=0x120,ram=ram)
                 self.assertEqual(r['registers']['a'],int.from_bytes(attrs[ch:ch+2],'little'))
                 K.SemanticKernelTest.preserved(self,r,b,ram,out,nz=True)
         self.assertLessEqual(a.labels['Lyra_SemanticCodeEnd'],0x519000)
@@ -176,8 +184,8 @@ class SourceAttributeKernelTest(unittest.TestCase):
             a,_=self.artifact(parent=parent,size=size)
             for ch in (0x1C,0x1D,0x80,0x81,0x1FF):
                 ram=self.ram(page,area,indoor)
-                actual,out,b=a.call('SkyTileType',x=ch,p=0xCD,ram=ram)
-                expected,_,_=control.call('SkyTileType',x=ch,p=0xCD,ram=ram)
+                actual,out,b=a.call('Oracle_SkyTileType',x=ch,p=0xCD,ram=ram)
+                expected,_,_=control.call('Oracle_SkyTileType',x=ch,p=0xCD,ram=ram)
                 self.assertEqual(actual['registers'],expected['registers'],(page,area,indoor,parent,size,ch))
                 K.SemanticKernelTest.preserved(self,actual,b,ram,out,nz=True)
 
@@ -187,7 +195,7 @@ class SourceAttributeKernelTest(unittest.TestCase):
         # an RTL observation boundary using the maintained assembly seam.
         for site in (0x00886E,0x1BBEFD,0x1BBF2A,0x1BC04E):
             at=K.R.N.pc(site)
-            self.assertEqual(a.image[at:at+4],b'\x22'+a.labels['SkyTileType'].to_bytes(3,'little'))
+            self.assertEqual(a.image[at:at+4],b'\x22'+a.labels['Oracle_SkyTileType'].to_bytes(3,'little'))
             for ch in (0x1C,0x1D,0x80,0x81,0x1FF):
                 ram=self.ram();r,out,b=a.call(site,x=ch,p=0xCD,ram=ram)
                 self.assertEqual(r['registers']['a'],int.from_bytes(attrs[ch:ch+2],'little'))
@@ -205,7 +213,7 @@ class SourceAttributeCompiledSealTest(unittest.TestCase):
                       byte_count=513,payload_hex=self.raw.hex(),sha256=hashlib.sha256(self.raw).hexdigest())
         symbols.update(Lyra_SemanticCodeEnd=0x518400,Lyra_SourceTileType=0x5180F0,
                        Lyra_SourceTileTypes90=0x518100,Lyra_SourceTileTypes90_End=0x518301,
-                       Oracle_SkyTileType=0x348000,Lyra_SourceTileTypeLegacy=0x348005)
+                       Oracle_SkyTileType=0x348000,Oracle_Lyra_SourceTileTypeLegacy=0x348005)
         self.image[K.R.N.pc(0x518100):K.R.N.pc(0x518301)]=self.raw
         self.image[K.R.N.pc(0x348000):K.R.N.pc(0x348005)]=b'\x08\x5C'+(0x5180F0).to_bytes(3,'little')
         for site in (0x00886E,0x1BBEFD,0x1BBF2A,0x1BC04E):
