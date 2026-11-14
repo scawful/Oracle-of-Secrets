@@ -61,13 +61,13 @@ def constants(capacity=192):
                 LYRA_CURRENT_MAP16_DEFINITIONS=0x3D8000)
 
 
-def assemble(directory, image, values):
+def assemble(directory, image, values, extra_source=""):
     directory = Path(directory)
     rom, asm, symbols = (directory / name for name in ('probe.sfc', 'probe.asm', 'probe.sym'))
     rom.write_bytes(image)
     text = 'lorom\n' + ''.join(f'!{key} = ${value:X}\n' for key, value in values.items())
     text += f'incsrc "{ROOT / "Overworld/special_overworld_resident.asm"}"\n'
-    asm.write_text(text)
+    asm.write_text(text + extra_source)
     result = subprocess.run([ASSEMBLER, '--no-title-check', '--fix-checksum=off',
                              '--symbols=wla', f'--symbols-path={symbols}', str(asm), str(rom)],
                             capture_output=True, text=True)

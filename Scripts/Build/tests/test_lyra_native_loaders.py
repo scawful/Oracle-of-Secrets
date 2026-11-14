@@ -222,9 +222,11 @@ class Revision3DirectoryEncodingTest(unittest.TestCase):
         self.assertIn('!LYRA_CURRENT_ACTOR_BANK = $4C', text)
         self.assertIn('!LYRA_CURRENT_CODE_BASE = $46C000', text)
         self.assertIn('!LYRA_CURRENT_MAP16_DEFINITIONS = $3D8000', text)
+        self.assertIn('!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = 0', text)
         self.assertFalse(any(line.startswith(('org ', 'db ', 'incbin ')) for line in text.splitlines()))
         self.assertEqual(N.reader_constants(bytes(0x220000)),
-                         '; Ordinary160-map source path.\n!SPECIAL_OVERWORLD_NATIVE = 0\n')
+                         '; Ordinary160-map source path.\n!SPECIAL_OVERWORLD_NATIVE = 0\n'
+                         '!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = 0\n')
 
     def test_corrupt_crc_magic_header_and_data_never_fall_back_to_legacy(self):
         baseline = self.installed_image()
@@ -431,6 +433,31 @@ class Revision4AppearanceDirectoryTest(unittest.TestCase):
                 self.colors_pc + (page - 0x80) * 256)[0], color)
         with self.assertRaisesRegex(ValueError, 'requires the installed revision3'):
             N.read_revision3_directory(image)
+
+    def test_semantic_gate_is_explicit_and_manifest_inactive(self):
+        import tempfile
+        root = Path(__file__).resolve().parents[3]
+        sys.path.insert(0, str(root / 'Scripts/Generate'))
+        from asm_source import _load_global_defines, _iter_active_lines
+        fixture = Revision3DirectoryEncodingTest()
+        fixture.setUp()
+        variants = (N.reader_constants(bytes(0x220000)),
+                    N.reader_constants(fixture.installed_image()),
+                    N.native_reader_constants(self.installed()))
+        lines = (root / 'Overworld/special_overworld_semantic.asm').read_text().splitlines()
+        for text in variants:
+            with self.subTest(constants=text), tempfile.TemporaryDirectory() as directory:
+                selected = Path(directory)
+                (selected / '.cache').mkdir()
+                (selected / '.cache/special_overworld_reader_constants.asm').write_text(text)
+                defines = _load_global_defines(selected)
+                self.assertEqual(defines['SPECIAL_OVERWORLD_SEMANTIC_ENABLED'], 0)
+                active = [line.strip() for _, line, _ in _iter_active_lines(lines, defines)]
+                self.assertNotIn('org !SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE', active)
+        # The actual scanner conservatively keeps the unbound org reachable
+        # without the generated gate; do not hide it with a guessed bank proof.
+        active = [line.strip() for _, line, _ in _iter_active_lines(lines, {})]
+        self.assertIn('org !SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE', active)
 
     def test_authoring_storage_cannot_publish_as_legacy_runnable_output(self):
         image = self.installed()

@@ -631,7 +631,8 @@ def reader_constants(image):
     """
     installed = read_native_directory(image)
     if installed is None:
-        return '; Ordinary160-map source path.\n!SPECIAL_OVERWORLD_NATIVE = 0\n'
+        return ('; Ordinary160-map source path.\n!SPECIAL_OVERWORLD_NATIVE = 0\n'
+                '!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = 0\n')
     require_native_runtime_resources(image)
     return native_reader_constants(image)
 
@@ -659,6 +660,9 @@ def native_reader_constants(image):
     verify_dictionary_readers(image, entries)
     lines = ['; Generated from the saved ROM; contains no authored data.',
              '!SPECIAL_OVERWORLD_NATIVE = 1', '!SPECIAL_OVERWORLD_NATIVE_COMPILED = 0',
+             # Explicit for Asar and the fail-closed manifest source scanner.
+             # Revision5 semantic binding is not admitted by ordinary Build.
+             '!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = 0',
              '!LYRA_CURRENT_MODE = 1',
              f'!SPECIAL_OVERWORLD_DIRECTORY_CRC = ${struct.unpack_from("<I", image, DIRECTORY_PC + 28)[0]:08X}',
              '!LYRA_CURRENT_FIRST = $00A0', '!LYRA_CURRENT_END = $00C0',

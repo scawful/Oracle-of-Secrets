@@ -383,3 +383,6 @@ org $1BCA54 ; @hook module=Overworld kind=jsl target=Lyra_ResidentMutable3 expec
 assert pc() == $1BCA54+4
 pullpc
 endif
+
+; Independent source-word prototype; default OFF, no hook or allocation.
+incsrc "special_overworld_semantic.asm"
