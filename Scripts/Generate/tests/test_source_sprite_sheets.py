@@ -205,8 +205,8 @@ class SourceSheets(unittest.TestCase):
 
     def test_manifest_reserves_global_not_sprite_id(self):
         metadata=sheets.source_metadata(ROOT)
-        self.assertEqual(metadata['sprite_sheet_ids'],['0x64','0x40','0x43','0x47','0x70','0x71','0x72','0x73','0x75','0x76','0x77','0x78','0x79','0x7A','0x7B','0x7C','0x7D','0x7E','0x7F','0x6C','0x6D','0x6E','0x6F','0x74'])
-        self.assertEqual(metadata['global_sheet_ids'],['0xD7','0xB3','0xB6','0xBA','0xE3','0xE4','0xE5','0xE6','0xE8','0xE9','0xEA','0xEB','0xEC','0xED','0xEE','0xEF','0xF0','0xF1','0xF2','0xDF','0xE0','0xE1','0xE2','0xE7'])
+        self.assertEqual(metadata['sprite_sheet_ids'],['0x64','0x40','0x43','0x47','0x70','0x71','0x72','0x73','0x75','0x76','0x77','0x78','0x79','0x7A','0x7B','0x7C','0x7D','0x7E','0x7F','0x82','0x6C','0x6D','0x6E','0x6F','0x74'])
+        self.assertEqual(metadata['global_sheet_ids'],['0xD7','0xB3','0xB6','0xBA','0xE3','0xE4','0xE5','0xE6','0xE8','0xE9','0xEA','0xEB','0xEC','0xED','0xEE','0xEF','0xF0','0xF1','0xF2','0xF5','0xDF','0xE0','0xE1','0xE2','0xE7'])
         self.assertEqual(metadata['owned_region']['pc_end'],'0x208000')
 
     def test_d4_manifest_tracks_selected_art_and_preserves_standard_entries(self):
@@ -240,7 +240,7 @@ class SourceSheets(unittest.TestCase):
         self.assertTrue(allowed(owner,0x11FFE9))
         self.assertTrue(allowed(owner,0x11FDEA))
         self.assertTrue(allowed(owner,0x11FFEA))
-        for row in range(0xEB,0xF3):
+        for row in (*range(0xEB,0xF3),0xF5):
             for table in (0x11FD00,0x11FE00,0x11FF00):
                 self.assertTrue(allowed(owner,table+row))
         self.assertFalse(allowed(owner,0x11FDF3))
@@ -248,23 +248,23 @@ class SourceSheets(unittest.TestCase):
         self.assertFalse(allowed(owner,0x11FDDE))
         self.assertFalse(allowed('Sprites/Bosses/d4_pressure_warden.asm',0x11FDDF))
         kit_owner='Dungeons/Data/kits/kits.asm'
-        for row in (0xEA,0xEB,0xF0,0xF1,0xF2):
+        for row in (0xEA,0xEB,0xF0,0xF1,0xF2,0xF5):
             for table in (0x11FD00,0x11FE00,0x11FF00):
                 self.assertFalse(allowed(kit_owner,table+row))
-        for row in (0xF3,0xFD,0xFE):
+        for row in (0xF3,0xF4,0xF6,0xFD,0xFE):
             for table in (0x11FD00,0x11FE00,0x11FF00):
                 self.assertTrue(allowed(kit_owner,table+row))
         import gen_wall_profiles
-        self.assertEqual(gen_wall_profiles.KIT_SHEETS,range(0xF3,0xFF))
+        self.assertEqual(gen_wall_profiles.KIT_SHEETS,set(range(0xF3,0xFF))-{0xF5})
         kits_dir=self.root/'kits';kits_dir.mkdir(exist_ok=True)
-        for bad_sheet in ('0xEA','0xEB','0xF0','0xF1','0xF2'):
+        for bad_sheet in ('0xEA','0xEB','0xF0','0xF1','0xF2','0xF5'):
             (kits_dir/'bad.kit.json').write_text(json.dumps({
                 'kit':'bad','verdict':'partial','profile':'p',
                 'private_row':'0x19','base_blockset':'0x0B',
                 'sheets':[{'slot':3,'sheet':bad_sheet,'copy_of':'0x0B','source':'s.txt','decoded_sha256':'0'*64}],
             }))
             with mock.patch.object(gen_wall_profiles,'KITS_DIR',kits_dir), \
-                 self.assertRaisesRegex(SystemExit,r'is not a spare row \$F3-\$FE'):
+                 self.assertRaisesRegex(SystemExit,r'is not an available wall-kit row \(\$F3-\$FE excluding Sky \$F5\)'):
                 gen_wall_profiles.load_kits()
 
     def test_manifest_integration_keeps_strict_yaze_keys_and_portable_paths(self):

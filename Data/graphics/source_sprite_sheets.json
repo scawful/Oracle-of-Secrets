@@ -85,16 +85,16 @@
     {
       "global_sheet": "0xEB",
       "source": "sky_overworld/gEB.txt",
-      "decoded_sha256": "061be2cad508703e8f4ec449c62567ed412e6a42406c3e132b2705cafb158b91",
+      "decoded_sha256": "0723eaf9cc504bf6b801dfda64434840b866517ea219fd638939dfe809a84ac9",
       "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
-      "why": "Sky port slot 0 (be8a DF): sky void char 17 blank pit, WALKFIX type-00 copies at 16; proposal only; v3: solid ($27) copies of walkable Cloud B rim chars 1D6/1D8/1D9/1DA/1DB/1DC/1CE at 001/002/018/019/01A/028/029, Sky only; v4: copy value 7 -> 5 (slot 0 expands high: 7 read white)."
+      "why": "Selected Revision03 Sky material binding; page-local definitions preserve the shared dictionary; private composition."
     },
     {
       "global_sheet": "0xEC",
       "source": "sky_overworld/gEC.txt",
-      "decoded_sha256": "dd19e9403cf3eda2cffaff2bf6e9a3d0671e5b68ae9adec2788730198f58d1c0",
+      "decoded_sha256": "98d94e339e11e6d8881fb728407e83563762bc696e18690caf3de4453d388022",
       "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
-      "why": "Sky port slot 2 (be8a E0): pit void char 36 blank (black backdrop until the palset 7 move; kit had copy of 30), WALKFIX copies, $8C stake art at 32; proposal only. v5: v11 Meadow rim chars in free indices."
+      "why": "Selected Revision03 Sky material binding; page-local definitions preserve the shared dictionary; private composition."
     },
     {
       "global_sheet": "0xED",
@@ -120,16 +120,16 @@
     {
       "global_sheet": "0xF0",
       "source": "sky_overworld/gF0.txt",
-      "decoded_sha256": "01ab319f7e69ebbe268f04b65c4d45c8a7a584c32601894f7c3f244297fc4dd8",
+      "decoded_sha256": "df62b572240fcd59309a6c697e96e36076e4c890755de3cc29e225db46366541",
       "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
-      "why": "Sky port slot 6 (be8a E4): pack86 rim art; proposal only."
+      "why": "Selected Revision03 Sky material binding; page-local definitions preserve the shared dictionary; private composition."
     },
     {
       "global_sheet": "0xF1",
       "source": "sky_overworld/gF1.txt",
-      "decoded_sha256": "dce80e0c2664697b356d3bf71cd44473c304cf699ea53509f81a9e1f9caf7494",
+      "decoded_sha256": "49f2e66174cc7cadd740eec585dac043dcb79910ab4a20c78728d2e6cca148e4",
       "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
-      "why": "Sky overlay: clone of 59 with cloud overlay chars in slot-7 free indices; proposal only."
+      "why": "Selected Revision03 Sky material binding; page-local definitions preserve the shared dictionary; private composition."
     },
     {
       "global_sheet": "0xF2",
@@ -144,6 +144,13 @@
       "decoded_sha256": "47d892a6bcff73dea17935efc41ecc8cd04424bcc6248427c5a3ee73f95b16d4",
       "flag": "ENABLE_KALYXO_BOAT",
       "why": "Native ferry berth preservation glyphs; ordinary E4 remains selected while the ferry flag is off."
+    },
+    {
+      "global_sheet": "0xF5",
+      "source": "sky_overworld/gF5.txt",
+      "decoded_sha256": "47d2798861e8ca6a9e9ec3613766709b998b23522ba757e3218aee0a47038f9f",
+      "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
+      "why": "Private Sky slot-1 material variant; F5 removed from wall-kit eligibility; F3/F4 remain Glacia-owned."
     }
   ]
 }

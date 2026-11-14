@@ -68,7 +68,7 @@ KIT_ROW0 = 0x17
 PRIVATE_ROWS = {0x17: (0x09, 0x00, 0x24, 0x1B), 0x18: (0x08, 0x00, 0x22, 0x1B),
                 0x19: (0x09, 0x00, 0x25, 0x1B), 0x1A: (0x09, 0x00, 0x26, 0x1B)}
 PRIVATE_PALETTES = {0x1A: 0x0924, 0x22: 0x0BF4, 0x24: 0x0CA8, 0x26: 0x0D5C}
-KIT_SHEETS = range(0xF3, 0xFF)          # spare global sheet rows (empty streams); $EA = Sky room sky, $EB-$F2 = Sky port
+KIT_SHEETS = frozenset(range(0xF3, 0xFF)) - {0xF5}  # $F5 is Sky slot 1; $F3/$F4 remain Glacia-owned.
 KIT_SHEET_ORG, KIT_SHEET_END = 0x458000, 0x45F000
 VERDICTS = ("routed", "partial", "words_only", "in_base")
 
@@ -542,7 +542,7 @@ def load_kits() -> list[dict]:
         for s in sheets:
             sid, slot = hx(s["sheet"]), int(s["slot"])
             if sid not in KIT_SHEETS:
-                raise SystemExit(f"{f.name}: sheet ${sid:02X} is not a spare row $F3-$FE")
+                raise SystemExit(f"{f.name}: sheet ${sid:02X} is not an available wall-kit row ($F3-$FE excluding Sky $F5)")
             if sid in sheets_seen:
                 raise SystemExit(f"{f.name}: sheet ${sid:02X} is also used by {sheets_seen[sid]}")
             if not 3 <= slot <= 6 or slot in slots_seen:
