@@ -420,3 +420,6 @@ endif
 
 ; Build-derived native reader mode. Direct legacy assembly stays disabled.
 !SPECIAL_OVERWORLD_NATIVE = 0
+; Entrance and trigger readers also assemble without generated native data.
+; Only the authenticated experimental compiler may override this later.
+!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = 0
