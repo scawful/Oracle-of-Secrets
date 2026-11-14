@@ -309,6 +309,84 @@ class ExperimentalResidentAbiTest(unittest.TestCase):
         self.fixture.setUp()
         self.plan = self.fixture.plan()
 
+    def overflow_plan(self, logical_count=259, display_count=248, *, legacy=False):
+        plan = ResidentAbiTest().plan() if legacy else copy.deepcopy(self.plan)
+        area = plan['areas'][0]
+        page = area['maps'][0]
+        area['remaps'] = [row for row in area['remaps'] if row['map_id'] != page]
+        area['remaps'].extend(dict(map_id=page, tile16_id=tile, quadrant=q,
+                                  source_word=tile * 4 + q,
+                                  target_word=tile % display_count + q * 256)
+                              for tile in range(logical_count) for q in range(4))
+        return ResidentAbiTest.reseal(plan, 'plan_sha256'), page
+
+    def test_overflow_shares_only_display_rows_and_retains_every_logical_key(self):
+        plan, page_id = self.overflow_plan()
+        before = copy.deepcopy(plan)
+        abi = A.plan_native_resident_abi(plan, tile16_count=4096,
+                                       experimental_page_tile16=True)
+        blobs = A.validate_native_resident_abi(abi, experimental_page_tile16=True)
+        page = next(p for p in abi['pages'] if p['map_id'] == page_id)
+        self.assertTrue(page['shared_display_rows'])
+        self.assertEqual(page['row_count'], 248)
+        self.assertEqual(page['tile16_ids'], list(range(259)))
+        index, words = blobs[page['index_label']], blobs[page['words_label']]
+        rows = []
+        for tile in range(259):
+            block = index[tile >> 5]
+            row = index[128 + (block - 1) * 32 + (tile & 31)]
+            self.assertGreater(row, 0)
+            rows.append(row)
+            self.assertEqual(struct.unpack_from('<4H', words, row * 8),
+                             tuple(tile % 248 + q * 256 for q in range(4)))
+        self.assertEqual(rows[0], rows[248])
+        self.assertEqual(plan, before)  # Source words remain distinct and intact.
+        emitted = A.emit_native_resident_abi(
+            abi, data_pc=0x300000, capacity=0x10000, preimage=bytes(0x10000),
+            experimental_page_tile16=True)
+        A.resident_runtime_inputs(abi, emitted, preimage=bytes(0x10000),
+                                  experimental_page_tile16=True)
+
+    def test_display_sharing_does_not_expand_row_limit_or_change_fitting_pages(self):
+        for legacy, logical, display in ((False, 256, 256), (True, 256, 1)):
+            with self.subTest(legacy=legacy, display=display):
+                plan, _ = self.overflow_plan(logical, display, legacy=legacy)
+                with self.assertRaisesRegex(ValueError, 'ROW_CAPACITY_EXCEEDED'):
+                    A.plan_native_resident_abi(plan, tile16_count=4096,
+                                               experimental_page_tile16=True)
+        plan, page_id = self.overflow_plan(255, 1)
+        abi = A.plan_native_resident_abi(plan, tile16_count=4096,
+                                       experimental_page_tile16=True)
+        page = next(p for p in abi['pages'] if p['map_id'] == page_id)
+        self.assertEqual(page['row_count'], 255)
+        self.assertNotIn('shared_display_rows', page)
+        A.validate_native_resident_abi(abi, experimental_page_tile16=True)
+
+    def test_shared_rows_require_explicit_marker_and_complete_logical_keys(self):
+        plan, page_id = self.overflow_plan()
+        original = A.plan_native_resident_abi(plan, tile16_count=4096,
+                                            experimental_page_tile16=True)
+        for mutation in ('missing_marker', 'wrong_marker_type', 'missing_key',
+                         'unreachable_row'):
+            with self.subTest(mutation=mutation):
+                abi = copy.deepcopy(original)
+                page = next(p for p in abi['pages'] if p['map_id'] == page_id)
+                if mutation == 'missing_marker':
+                    del page['shared_display_rows']
+                elif mutation == 'wrong_marker_type':
+                    page['shared_display_rows'] = 1
+                elif mutation == 'missing_key':
+                    page['tile16_ids'].pop()
+                else:
+                    blob = next(b for b in abi['blobs'] if b['label'] == page['index_label'])
+                    raw = bytearray.fromhex(blob['payload_hex'])
+                    block = raw[247 >> 5]
+                    raw[128 + (block - 1) * 32 + (247 & 31)] = 1
+                    blob.update(payload_hex=raw.hex(), sha256=R._sha(raw))
+                ResidentAbiTest.reseal(abi, 'abi_sha256')
+                with self.assertRaisesRegex(ValueError, 'ROW_INDEX_INVALID'):
+                    A.validate_native_resident_abi(abi, experimental_page_tile16=True)
+
     def test_page_scoped_words_and_global_fallback_use_existing_visual_abi(self):
         abi = A.plan_native_resident_abi(self.plan, tile16_count=4096,
                                        experimental_page_tile16=True)

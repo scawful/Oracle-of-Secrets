@@ -220,23 +220,37 @@ def plan_native_resident_abi(resident_plan, *, tile16_count,
         for page, rows in sorted(page_rows.items()):
             _require(0 < len(rows) and all(set(values) == set(range(4))
                      for values in rows.values()), 'NATIVE_ROWS_OR_QUADRANTS_INVALID')
-            _require(len(rows) <= 255, 'NATIVE_ROW_CAPACITY_EXCEEDED')
+            # A page key remains a logical Tile16 identity. Only its display
+            # words may share a resident row; semantic/collision tables still
+            # resolve the original key. Preserve existing encodings when they
+            # fit, and require page-local semantics for the overflow fallback.
+            shared_display_rows = experimental and len(rows) > 255
+            _require(len(rows) <= 255 or shared_display_rows,
+                     'NATIVE_ROW_CAPACITY_EXCEEDED')
             directory, leaves, words = bytearray(128), bytearray(), bytearray(8)
-            leaf_rows = {}
-            for row_index, (tile, quadrants) in enumerate(sorted(rows.items()), 1):
+            leaf_rows, display_rows = {}, {}
+            for tile, quadrants in sorted(rows.items()):
+                encoded = struct.pack('<4H', *(quadrants[q] for q in range(4)))
+                row_index = display_rows.get(encoded) if shared_display_rows else None
+                if row_index is None:
+                    row_index = len(words) // 8
+                    _require(row_index <= 255, 'NATIVE_ROW_CAPACITY_EXCEEDED')
+                    words.extend(encoded)
+                    display_rows[encoded] = row_index
                 block, offset = divmod(tile, 32)
                 leaf_rows.setdefault(block, bytearray(32))[offset] = row_index
-                words.extend(struct.pack('<4H', *(quadrants[q] for q in range(4))))
             for block_index, (block, raw) in enumerate(sorted(leaf_rows.items()), 1):
                 directory[block] = block_index
                 leaves.extend(raw)
             index = bytes(directory + leaves)
             index_label = blob(index, f'LyraResidentPageIndex_{page:02X}', 'page_index')
             words_label = blob(bytes(words), f'LyraResidentPageWords_{page:02X}', 'page_words')
-            pages.append(dict(map_id=page, area_index=area_index, row_count=len(rows),
+            pages.append(dict(map_id=page, area_index=area_index, row_count=len(words) // 8 - 1,
                 block_count=len(leaf_rows), index_label=index_label, words_label=words_label,
                 index_alias=f'LyraResidentPageIndex_{page:02X}',
                 words_alias=f'LyraResidentPageWords_{page:02X}', tile16_ids=sorted(rows)))
+            if shared_display_rows:
+                pages[-1]['shared_display_rows'] = True
     pages.sort(key=lambda row: row['map_id'])
     counts = {role: sum(row['byte_count'] for row in blobs if row['role'] == role)
               for role in ('page_index', 'page_words', 'static_chr', 'animation', 'palette')}
@@ -355,17 +369,31 @@ def validate_native_resident_abi(native_plan, *, experimental_page_tile16=False)
                  and words[:8] == bytes(8), 'NATIVE_PAGE_EXTENT_INVALID')
         _require(sorted(value for value in index[:128] if value) == list(range(1, blocks + 1)),
                  'NATIVE_BLOCK_INDEX_INVALID')
-        observed = {}
+        shared = page.get('shared_display_rows', False)
+        logical_ids = page.get('tile16_ids')
+        _require(type(shared) is bool and type(logical_ids) is list
+                 and all(type(tile) is int for tile in logical_ids)
+                 and (not shared or (experimental and len(logical_ids) > 255)),
+                 'NATIVE_ROW_INDEX_INVALID')
+        observed, used_rows = [], set()
         for tile in range(4096):
             block = index[tile >> 5]
             row = index[128 + (block - 1) * 32 + (tile & 31)] if block else 0
             if row:
                 _require(tile < native_plan['tile16_count'] and row <= count
-                         and row not in observed, 'NATIVE_ROW_INDEX_INVALID')
-                observed[row] = tile
-        _require(sorted(observed) == list(range(1, count + 1))
-                 and [observed[row] for row in range(1, count + 1)] == page.get('tile16_ids'),
+                         and (shared or row not in used_rows), 'NATIVE_ROW_INDEX_INVALID')
+                # First occurrences retain deterministic logical-key order;
+                # aliases may only reuse an already established display row.
+                if row not in used_rows:
+                    _require(row == len(used_rows) + 1, 'NATIVE_ROW_INDEX_INVALID')
+                used_rows.add(row)
+                observed.append(tile)
+        _require(used_rows == set(range(1, count + 1)) and observed == logical_ids,
                  'NATIVE_ROW_INDEX_INVALID')
+        if shared:
+            _require(len({words[offset:offset + 8]
+                          for offset in range(8, len(words), 8)}) == count,
+                     'NATIVE_ROW_INDEX_INVALID')
     expected_counts = {role: sum(row['byte_count'] for row in blobs if row['role'] == role)
                        for role in ('page_index', 'page_words', 'static_chr', 'animation', 'palette')}
     expected_counts['page_directory'] = (end - FIRST) * NATIVE_DIRECTORY_STRIDE
