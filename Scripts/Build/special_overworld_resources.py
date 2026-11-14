@@ -22,6 +22,14 @@ import sheet_table
 
 SOURCE_SCHEMA = 'yaze.special-overworld-native-source.v1'
 PLAN_SCHEMA = 'special_overworld.terrain_resources.v1'
+EXPERIMENTAL_SOURCE_SCHEMA = 'yaze.special-overworld-native-source.experimental-v2'
+EXPERIMENTAL_PLAN_SCHEMA = 'special_overworld.terrain_resources.experimental-v2'
+PAGE_TILE16_RUNTIME_REQUIREMENTS = (
+    'page_qualified_collision_source_words',
+    'page_qualified_entrance_character_comparison',
+    'mutable_and_fixed_tile_id_semantics_and_closure',
+    'page_context_for_overlay_transition_and_refresh_readers',
+)
 STATIC_SLOTS = tuple(range(448)) + tuple(range(480, 512))
 ANIMATED_SLOTS = tuple(range(448, 480))
 UNKNOWNS = (
@@ -207,7 +215,8 @@ def _source_sheets(source, authenticated=None):
     return read, records
 
 
-def _plan_area(area, page_tiles, assets, definitions, read_sheet, conditional_tiles=None):
+def _plan_area(area, page_tiles, assets, definitions, read_sheet, conditional_tiles=None,
+               page_definitions=None):
     demands, references, claims = {}, [], {}
     for map_id in area['maps']:
         data = assets[map_id, 0]
@@ -216,7 +225,9 @@ def _plan_area(area, page_tiles, assets, definitions, read_sheet, conditional_ti
         if conditional_tiles is not None:
             tiles.update(conditional_tiles.get(map_id, ()))
         for tile in sorted(tiles):
-            for quadrant, word in enumerate(struct.unpack_from('<4H', definitions, tile * 8)):
+            words = native.effective_tile16_words(
+                definitions, page_definitions or {}, map_id, tile)
+            for quadrant, word in enumerate(words):
                 references.append((map_id, tile, quadrant, word))
                 key = (map_id, word)
                 if key in demands:
@@ -348,11 +359,12 @@ def _validate_address_overrides(source, overrides):
              'AUX_PALETTE_EXTENSION_TRUNCATED')
 
 
-def _native_source(source, exported):
+def _native_source(source, exported, *, experimental_page_tile16=False):
     """Check a fresh z3ed export against its saved native ROM, without writes."""
     _require(type(source) is bytes and 0x200000 <= len(source) <= 0x400000,
              'SOURCE_INVALID')
-    installed = native.read_native_directory(source)
+    installed = native.read_native_directory(
+        source, experimental_page_tile16=experimental_page_tile16)
     _require(installed is not None, 'NATIVE_DIRECTORY_REQUIRED')
     capacity, _, entries = installed
     revision = struct.unpack_from('<H', source, native.DIRECTORY_PC + 8)[0]
@@ -361,7 +373,8 @@ def _native_source(source, exported):
     value = exported['native_source']
     _require(exported.get('native_source_sha256') == _sha(_json_bytes(value)),
              'NATIVE_EXPORT_HASH_MISMATCH')
-    _require(value.get('schema') == SOURCE_SCHEMA
+    schema = EXPERIMENTAL_SOURCE_SCHEMA if revision == 5 else SOURCE_SCHEMA
+    _require(value.get('schema') == schema
              and value.get('resolution_scope') == 'resident_gameplay_areas'
              and value.get('source_rom_sha256') == _sha(source)
              and value.get('source_byte_count') == len(source)
@@ -379,6 +392,26 @@ def _native_source(source, exported):
     _require(value.get('tile16_dictionary') == dict(snes_address=address,
         pc_address=native.pc(address), count=count, stride=8, sha256=_sha(definitions)),
         'DEFINITION_HASH_MISMATCH')
+    page_definitions = {}
+    if revision == 5:
+        _require(value.get('runtime_supported') is False,
+                 'PAGE_TILE16_RUNTIME_ADMISSION_UNSUPPORTED')
+        address, rows = entries[413]
+        start = native.pc(address)
+        raw = source[start:start + rows * 12]
+        page_definitions = native.decode_page_tile16(raw, capacity)
+        expected = dict(table_id=413, pc_address=start, snes_address=address,
+            count=rows, stride=12, sha256=_sha(raw),
+            rows=[dict(map_id=page, tile_id=tile, words=list(words))
+                  for (page, tile), words in page_definitions.items()])
+        # Compare the complete extent and semantic rows to the CRC-checked ROM,
+        # including JSON types. Rehashing a stale/tampered export cannot admit it.
+        _require(_json_bytes(value.get('page_tile16_definitions')) == _json_bytes(expected),
+                 'PAGE_TILE16_SOURCE_MISMATCH')
+    else:
+        _require('page_tile16_definitions' not in value,
+                 'PAGE_TILE16_REVISION_MISMATCH')
+    override_pages = {page for page, _ in page_definitions}
     pages = value.get('pages')
     _require(type(pages) is list and len(pages) == capacity - 128
              and [p.get('map_id') for p in pages if type(p) is dict]
@@ -401,7 +434,7 @@ def _native_source(source, exported):
                  'NATIVE_AREA_MISMATCH')
         profile = page.get('source_profile')
         _require(type(profile) is dict, 'NATIVE_PROFILE_INVALID')
-        flags = row(410, map_id)[0] if revision == 4 else 0
+        flags = row(410, map_id)[0] if revision >= 4 else 0
         expected = dict(background_color=int.from_bytes(row(1, map_id), 'little'),
             main_palette=row(2, map_id)[0], palette_set=row(31, map_id)[0],
             area_graphics=row(27, map_id)[0], graphics_sheets=list(row(6, map_id)),
@@ -409,7 +442,7 @@ def _native_source(source, exported):
             subscreen_overlay=int.from_bytes(row(5, map_id), 'little'),
             mosaic=[bool(row(3, map_id)[0] & (8 >> bit)) for bit in range(4)],
             appearance_flags=flags, background_palette_words=None)
-        if revision == 4:
+        if revision >= 4:
             expected['background_palette_words'] = list(struct.unpack('<128H', row(411, map_id - 128)))
         _require(profile == expected, 'NATIVE_PROFILE_MISMATCH')
         grid = page.get('tiles')
@@ -422,7 +455,7 @@ def _native_source(source, exported):
         _require(area['size'] == ('small', 'large', 'wide', 'tall')[size],
                  'NATIVE_AREA_MISMATCH')
         area['maps'].append(map_id)
-        area['resident_required'] |= flags != 0
+        area['resident_required'] |= flags != 0 or map_id in override_pages
     areas = [areas[key] for key in sorted(areas)]
     for area in areas:
         width, height = dict(small=(1, 1), large=(2, 2), wide=(2, 1), tall=(1, 2))[area['size']]
@@ -431,10 +464,10 @@ def _native_source(source, exported):
                  and area['maps'] == [parent + y * 8 + x for y in range(height) for x in range(width)],
                  'NATIVE_AREA_FOOTPRINT_INVALID')
     _require(value.get('gameplay_areas') == areas, 'NATIVE_AREAS_MISMATCH')
-    return value, definitions, tiles, areas
+    return value, definitions, tiles, areas, page_definitions
 
 
-def _sky_overlay_closure(source, value, tiles, areas):
+def _sky_overlay_closure(source, value, tiles, areas, *, experimental_page_tile16=False):
     """Bind the tower host's BG1 demands to the actual legacy overlay loader.
 
     Map87 and overlays9C/9F remain below the native readers' A0 threshold.
@@ -453,7 +486,8 @@ def _sky_overlay_closure(source, value, tiles, areas):
     start = native.pc(address) + 0x87 * width
     _require(int.from_bytes(source[start:start + width], 'little') == selected,
              'SKY_OVERLAY_SELECTION_MISMATCH')
-    _, _, entries = native.read_native_directory(source)
+    _, _, entries = native.read_native_directory(
+        source, experimental_page_tile16=experimental_page_tile16)
     # Storms overrides even an absent ordinary overlay with9F.
     overlays = (0x9C, 0x9F) if selected == 0x9C else (0x9F,)
     for overlay in overlays:
@@ -469,7 +503,8 @@ def _sky_overlay_closure(source, value, tiles, areas):
                               (0xDA4, 0xDA6, 0xE54))}
 
 
-def plan_saved_native_terrain(source, exported, *, graphics_root=None):
+def plan_saved_native_terrain(source, exported, *, graphics_root=None,
+                              experimental_page_tile16=False):
     """Reuse the retained packer with saved-ROM pages, never a terrain sidecar.
 
     The caller must obtain the export by running z3ed on this exact saved ROM.
@@ -478,7 +513,8 @@ def plan_saved_native_terrain(source, exported, *, graphics_root=None):
     A source-bound export additionally requires its explicit graphics checkout;
     its selected globals are authenticated against the canonical producer spec.
     """
-    value, definitions, tiles, areas = _native_source(source, exported)
+    value, definitions, tiles, areas, page_definitions = _native_source(
+        source, exported, experimental_page_tile16=experimental_page_tile16)
     try:
         authenticated = _graphics_sources(value, graphics_root)
     except (OSError, TypeError, KeyError) as error:
@@ -542,12 +578,13 @@ def plan_saved_native_terrain(source, exported, *, graphics_root=None):
                      and baseline['slots'] == other['slots']
                      and baseline['animation'] == other['animation'],
                      'BG_PHASE_VARIATION_UNSUPPORTED')
-    conditional_tiles = _sky_overlay_closure(source, value, tiles, areas)
+    conditional_tiles = _sky_overlay_closure(
+        source, value, tiles, areas, experimental_page_tile16=experimental_page_tile16)
     _require(all(0 <= tile < len(definitions) // 8
                  for values in conditional_tiles.values() for tile in values),
              'SKY_OVERLAY_TILE_INVALID')
     planned = [_plan_area(area, tiles, assets, definitions, read_sheet,
-                          conditional_tiles=conditional_tiles)
+                          conditional_tiles=conditional_tiles, page_definitions=page_definitions)
                for area in areas if area['resident_required']]
     result = dict(schema=PLAN_SCHEMA, source_rom_sha256=_sha(source),
         materialized_map_count=value['materialized_map_count'],
@@ -557,5 +594,11 @@ def plan_saved_native_terrain(source, exported, *, graphics_root=None):
         full_residency_ready=False, allocation_granted=False,
         ordinary_build_ready=False, unknowns=list(UNKNOWNS),
         decoded_sheets=[sheets[key] for key in sorted(sheets)])
+    if value['directory_revision'] == 5:
+        # Existing resident ABI accepts only PLAN_SCHEMA. A visual fit here
+        # must not be passed to its runtime lowering/publication path.
+        result.update(schema=EXPERIMENTAL_PLAN_SCHEMA, runtime_supported=False,
+            page_tile16_definitions_sha256=value['page_tile16_definitions']['sha256'],
+            runtime_requirements=list(PAGE_TILE16_RUNTIME_REQUIREMENTS))
     result['plan_sha256'] = _sha(_json_bytes(result))
     return result

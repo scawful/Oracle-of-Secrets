@@ -468,6 +468,203 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
         self.assertNotEqual(opaque['witness']['source_colors_sha256'],
                             transparent['witness']['source_colors_sha256'])
 
+class ExperimentalPageTile16ResourcesTest(unittest.TestCase):
+    """Synthetic revision5 wire bytes; no encoder/allocation/runtime authority."""
+    def setUp(self):
+        self.fixture = SavedNativeTerrainResourcesTest()
+        self.fixture.setUp()
+        self.rows = [(0xB0, 0, (0xE800, 0x4801, 0x8802, 0x2803)),
+                     (0xB1, 0, (0x2804, 0x8805, 0x4806, 0xE807))]
+        self.address = 0x518000  # Synthetic only; not a production reservation.
+        self.source, self.exported = self.install(self.rows)
+
+    @staticmethod
+    def reseal(image):
+        """Wire fixture builder independent of the producer revision5 reader."""
+        import zlib
+        at = R.native.DIRECTORY_PC
+        count, = struct.unpack_from('<H', image, at + 18)
+        for index in range(count):
+            row = at + 32 + index * 16
+            _, _, address, rows, stride, _ = struct.unpack_from('<HHIHHI', image, row)
+            start = R.native.pc(address)
+            struct.pack_into('<I', image, row + 12,
+                             zlib.crc32(image[start:start + rows * stride]))
+        struct.pack_into('<I', image, at + 28, 0)
+        struct.pack_into('<I', image, at + 28,
+                         zlib.crc32(image[at:at + R.native.DIRECTORY_SIZE]))
+        return bytes(image)
+
+    def install(self, rows, count=4, *, authoring=False, capacity=192):
+        image = bytearray(self.fixture.source)
+        at = R.native.DIRECTORY_PC
+        entries = 58 if authoring else 57
+        struct.pack_into('<6HBBH', image, at + 8, 5, 32, 32 + entries * 16,
+                         capacity, capacity, entries, 0x4C,
+                         0x7C if authoring else 0x5C, capacity * 2)
+        for index in range(56):
+            record = at + 32 + index * 16
+            key, = struct.unpack_from('<H', image, record)
+            if key <= 39 or key == 410:
+                struct.pack_into('<H', image, record + 8, capacity)
+        index = 56
+        if authoring:
+            raw = R.native.authoring_metadata.encode(
+                dict(next_placement_id=1, placements=[]), capacity)
+            start = R.native.pc(R.native.AUTHORING_METADATA_BASE)
+            image[start:start + len(raw)] = raw
+            struct.pack_into('<HHIHHI', image, at + 32 + index * 16,
+                412, 9, R.native.AUTHORING_METADATA_BASE, 256, 32, 0)
+            index += 1
+        raw = b''.join(struct.pack('<6H', page, tile, *words)
+                       for page, tile, words in rows) + b'\xFF' * ((count - len(rows)) * 12)
+        start = R.native.pc(self.address)
+        image[start:start + len(raw)] = raw
+        struct.pack_into('<HHIHHI', image, at + 32 + index * 16,
+                         413, 10, self.address, count, 12, 0)
+        source = self.reseal(image)
+        value = copy.deepcopy(self.fixture.exported['native_source'])
+        value.update(schema=R.EXPERIMENTAL_SOURCE_SCHEMA, runtime_supported=False,
+            directory_revision=5, source_rom_sha256=R._sha(source),
+            directory_sha256=R._sha(source[at:at + R.native.DIRECTORY_SIZE]),
+            page_tile16_definitions=dict(table_id=413, snes_address=self.address,
+                pc_address=start, count=count, stride=12, sha256=R._sha(raw),
+                rows=[dict(map_id=page, tile_id=tile, words=list(words))
+                      for page, tile, words in rows]))
+        for page in value['pages']:
+            page['tiles'] = [0, 1] * 512
+        overrides = {page for page, _, _ in rows}
+        for area in value['gameplay_areas']:
+            area['resident_required'] |= bool(overrides.intersection(area['maps']))
+        return source, self.fixture.seal(value)
+
+    def plan(self, source=None, exported=None):
+        return R.plan_saved_native_terrain(
+            self.source if source is None else source,
+            self.exported if exported is None else exported,
+            experimental_page_tile16=True)
+
+    def test_effective_page_words_global_fallback_and_attribute_preservation(self):
+        before = self.source
+        result = self.plan()
+        self.assertEqual(result['schema'], R.EXPERIMENTAL_PLAN_SCHEMA)
+        self.assertTrue(result['terrain_plan_ready'])
+        self.assertFalse(result['runtime_supported'])
+        self.assertFalse(result['ordinary_build_ready'])
+        area = result['areas'][0]
+        remaps = {(row['map_id'], row['tile16_id'], row['quadrant']): row
+                  for row in area['remaps']}
+        for page, tile, words in self.rows:
+            for quadrant, word in enumerate(words):
+                row = remaps[page, tile, quadrant]
+                self.assertEqual(row['source_word'], word)
+                self.assertEqual(row['target_word'] & 0xE000, word & 0xE000)
+                self.assertEqual(remaps[page, 1, quadrant]['source_word'], 0x800)
+        self.assertEqual(remaps[0xB8, 0, 0]['source_word'], 0x800)
+        self.assertEqual(area['witness']['source_colors_sha256'],
+                         area['witness']['reconstructed_colors_sha256'])
+        self.assertEqual(self.source, before)
+
+    def test_zero_appearance_page_still_requires_resources(self):
+        rows = [(0x82, 0, (0x4800,) * 4), *self.rows]
+        source, exported = self.install(rows)
+        area = next(a for a in self.plan(source, exported)['areas'] if a['maps'] == [0x82])
+        self.assertTrue(area['terrain_plan_ready'])
+        self.assertEqual(area['remaps'][0]['source_word'], 0x4800)
+
+    def test_default_admission_and_runtime_lowering_remain_refused(self):
+        import special_overworld_native_build as build
+        import special_overworld_resident_abi as resident
+        for operation in (
+                lambda: R.native.read_native_directory(self.source),
+                lambda: R.native.reader_constants(self.source),
+                lambda: R.plan_saved_native_terrain(self.source, self.exported),
+                lambda: build.prepare_revision4_compilation(self.source, self.exported,
+                    data_pc=R.native.RESIDENT_DATA_PC, capacity=R.native.RESIDENT_DATA_CAPACITY,
+                    preimage=bytes(R.native.RESIDENT_DATA_CAPACITY)),
+                lambda: resident.plan_native_resident_abi(self.plan(), tile16_count=4096)):
+            with self.subTest(operation=operation), self.assertRaises(ValueError):
+                operation()
+
+    def test_export_extent_hash_rows_schema_and_stale_source_refused(self):
+        for field, replacement in [('table_id', 412), ('pc_address', 0),
+                ('snes_address', self.address + 12), ('count', 3), ('stride', 8),
+                ('sha256', '0' * 64), ('rows', []), ('unknown', 1)]:
+            value = copy.deepcopy(self.exported['native_source'])
+            value['page_tile16_definitions'][field] = replacement
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, 'PAGE_TILE16_SOURCE_MISMATCH'):
+                self.plan(exported=self.fixture.seal(value))
+        for schema in (R.SOURCE_SCHEMA, 'unknown.experimental-v3'):
+            value = copy.deepcopy(self.exported['native_source'])
+            value['schema'] = schema
+            with self.assertRaisesRegex(ValueError, 'SOURCE_MISMATCH'):
+                self.plan(exported=self.fixture.seal(value))
+        value = copy.deepcopy(self.exported['native_source'])
+        value['page_tile16_definitions']['rows'][0]['words'][0] = 0
+        with self.assertRaisesRegex(ValueError, 'PAGE_TILE16_SOURCE_MISMATCH'):
+            self.plan(exported=self.fixture.seal(value))
+        value = copy.deepcopy(self.exported['native_source'])
+        value['runtime_supported'] = True
+        with self.assertRaisesRegex(ValueError, 'RUNTIME_ADMISSION'):
+            self.plan(exported=self.fixture.seal(value))
+        changed = bytearray(self.source)
+        struct.pack_into('<H', changed, R.native.pc(self.address) + 4, 0x800)
+        changed = self.reseal(changed)
+        with self.assertRaisesRegex(ValueError, 'SOURCE_MISMATCH'):
+            self.plan(source=changed)
+        value = copy.deepcopy(self.exported['native_source'])
+        value['source_rom_sha256'] = R._sha(changed)
+        value['directory_sha256'] = R._sha(changed[R.native.DIRECTORY_PC:R.native.DIRECTORY_PC + 1024])
+        with self.assertRaisesRegex(ValueError, 'PAGE_TILE16_SOURCE_MISMATCH'):
+            self.plan(source=changed, exported=self.fixture.seal(value))
+
+    def test_resealed_malformed_rows_and_wire_contract_refused(self):
+        start = R.native.pc(self.address)
+        cases = [lambda image: struct.pack_into('<H', image, start, 127),
+                 lambda image: struct.pack_into('<H', image, start, 192),
+                 lambda image: struct.pack_into('<H', image, start + 2, 4096),
+                 lambda image: image.__setitem__(slice(start + 12, start + 24), image[start:start + 12]),
+                 lambda image: image.__setitem__(slice(start, start + 12), b'\xFF' * 12),
+                 lambda image: struct.pack_into('<H', image, start + 24, 0xB2),
+                 lambda image: struct.pack_into('<H', image, R.native.DIRECTORY_PC + 8, 6),
+                 lambda image: struct.pack_into('<H', image, R.native.DIRECTORY_PC + 32 + 56 * 16 + 10, 8),
+                 lambda image: struct.pack_into('<I', image, R.native.DIRECTORY_PC + 32 + 56 * 16 + 4, 0x51FFF0)]
+        for index, mutate in enumerate(cases):
+            image = bytearray(self.source)
+            mutate(image)
+            with self.subTest(case=index), self.assertRaises(ValueError):
+                R.native.read_native_directory(self.reseal(image), experimental_page_tile16=True)
+        image = bytearray(self.source)
+        image[start + 4] ^= 1
+        with self.assertRaisesRegex(ValueError, 'CRC'):
+            R.native.read_native_directory(bytes(image), experimental_page_tile16=True)
+
+    def test_variable_extent_both_capacities_and_optional_authoring(self):
+        rows = [(0x8D, 0xFFF, (0xFFFF, 0x8000, 0x4000, 0x2000))]
+        for capacity in (160, 192):
+            for count in (1, 2730):
+                for authoring in (False, True):
+                    with self.subTest(capacity=capacity, count=count, authoring=authoring):
+                        source, _ = self.install(rows, count=count, capacity=capacity, authoring=authoring)
+                        actual, _, entries = R.native.read_native_directory(source, experimental_page_tile16=True)
+                        self.assertEqual(actual, capacity)
+                        self.assertEqual(entries[413], (self.address, count))
+                        self.assertEqual(412 in entries, authoring)
+                        start = R.native.pc(self.address)
+                        decoded = R.native.decode_page_tile16(source[start:start + count * 12], capacity)
+                        self.assertEqual(decoded, {(rows[0][0], rows[0][1]): rows[0][2]})
+                        global_start = R.native.pc(entries[400][0])
+                        definitions = source[global_start:global_start + 4096 * 8]
+                        self.assertEqual(R.native.effective_tile16_words(definitions, decoded, 0x8D, 0xFFF), rows[0][2])
+
+    def test_legacy_v1_output_is_exact_even_with_opt_in(self):
+        regular = R.plan_saved_native_terrain(self.fixture.source, self.fixture.exported)
+        admitted = R.plan_saved_native_terrain(self.fixture.source, self.fixture.exported,
+                                              experimental_page_tile16=True)
+        self.assertEqual(regular, admitted)
+        self.assertEqual(regular['plan_sha256'],
+                         '2ef00caabbb191f825bfa247614b6444716e5c1519c47f77b52b430ba5b9b570')
+
 
 if __name__ == '__main__':
     unittest.main()

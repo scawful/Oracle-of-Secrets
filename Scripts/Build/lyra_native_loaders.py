@@ -359,7 +359,7 @@ def lower_authored_actor_lists(authored, geometry):
 
 
 def entry_spec(entry_id, capacity, revision=3):
-    require(revision in (3, 4), 'Unsupported native source revision')
+    require(revision in (3, 4, 5), 'Unsupported native source revision')
     strides = (2, 1, 1, 1, 2, 8, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3,
                3, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
     if 1 <= entry_id <= 39:
@@ -378,12 +378,14 @@ def entry_spec(entry_id, capacity, revision=3):
         return 7, 4096, 8
     if 401 <= entry_id <= 404:
         return 7, 4432, 6
-    if revision == 4 and entry_id == 410:
+    if revision >= 4 and entry_id == 410:
         return 8, capacity, 1
-    if revision == 4 and entry_id == 411:
+    if revision >= 4 and entry_id == 411:
         return 8, 64, 256
-    if revision == 4 and entry_id == 412:
+    if revision >= 4 and entry_id == 412:
         return 9, 256, 32
+    if revision == 5 and entry_id == 413:
+        return 10, None, 12
     raise ValueError('Unknown native directory entry')
 
 
@@ -409,7 +411,7 @@ def encode_revision4_directory(image, entries, *, tail_actor_bank, capacity=MAP_
 
 
 def _encode_native_directory(image, entries, *, tail_actor_bank, capacity, revision):
-    require(revision in (3, 4), 'Unsupported native source revision')
+    require(revision in (3, 4, 5), 'Unsupported native source revision')
     require(type(image) is bytes and 0x200000 <= len(image) <= 0x400000,
             'Expected a complete headerless candidate image')
     require(type(capacity) is int and capacity in (160, 192)
@@ -417,9 +419,11 @@ def _encode_native_directory(image, entries, *, tail_actor_bank, capacity, revis
             and tail_actor_bank not in (0x7E, 0x7F), 'Invalid native capacity or actor bank')
     expected = set(range(1, 40)) | {100, 200, 201, 202, 210, 211, 212, 213,
                                  300, 301, 400, 401, 402, 403, 404}
-    if revision == 4:
+    if revision >= 4:
         expected |= {410, 411}
-    authoring = revision == 4 and any(row[0] == 412 for row in entries)
+    if revision == 5:
+        expected.add(413)
+    authoring = revision >= 4 and any(row[0] == 412 for row in entries)
     if authoring:
         expected.add(412)
     require(len(entries) == len(expected) and {row[0] for row in entries} == expected,
@@ -428,7 +432,8 @@ def _encode_native_directory(image, entries, *, tail_actor_bank, capacity, revis
     directory[:8] = MAGIC
     struct.pack_into('<6HBBHII', directory, 8, revision, 32, 32 + 16 * len(entries),
                      capacity, capacity, len(entries), tail_actor_bank,
-                     0x0C if revision == 3 else (0x3C if authoring else 0x1C),
+                     0x0C if revision == 3 else
+                     ((0x3C if authoring else 0x1C) | (0x40 if revision == 5 else 0)),
                      2 * capacity, len(image), 0)
     spans = [(DIRECTORY_PC, DIRECTORY_PC + DIRECTORY_SIZE)]
     for index, (entry_id, address, count) in enumerate(sorted(entries)):
@@ -458,6 +463,8 @@ def _encode_native_directory(image, entries, *, tail_actor_bank, capacity, revis
                     'Invalid native BGR555 appearance color')
         if entry_id == 412:
             authoring_metadata.decode(image[start:start + length], capacity)
+        if entry_id == 413:
+            decode_page_tile16(image[start:start + length], capacity)
         spans.append((start, start + length))
         struct.pack_into('<HHIHHI', directory, 32 + index * 16, entry_id, kind,
                          address, count, stride, zlib.crc32(image[start:start + length]))
@@ -465,14 +472,56 @@ def _encode_native_directory(image, entries, *, tail_actor_bank, capacity, revis
     return bytes(directory)
 
 
-def read_native_directory(image):
+def decode_page_tile16(raw, capacity):
+    """Decode authenticated record413 source words, never resident remap words.
+
+    Callers obtain the raw extent from read_native_directory with explicit
+    experimental admission. Capacity is the directory's physical map count;
+    row capacity is variable and bounded by the directory's one-bank extent.
+    """
+    require(type(raw) is bytes and raw and len(raw) % 12 == 0
+            and type(capacity) is int and capacity in (160, 192),
+            'Invalid page Tile16 extent or map capacity')
+    rows, previous, padding = {}, None, False
+    for at in range(0, len(raw), 12):
+        row = raw[at:at + 12]
+        if row == b'\xFF' * 12:
+            padding = True
+            continue
+        page, tile, *words = struct.unpack('<6H', row)
+        key = page, tile
+        require(not padding and 128 <= page < capacity and tile < 4096
+                and (previous is None or previous < key),
+                'Invalid, duplicate or unsorted page Tile16 row')
+        rows[key] = tuple(words)
+        previous = key
+    return rows
+
+
+def effective_tile16_words(definitions, page_definitions, map_id, tile_id):
+    """Resolve semantic source words in TL/TR/BL/BR order without masking bits.
+
+    definitions is the authenticated global400 payload; page_definitions is
+    decoded413 or empty. No terrain ID, palette, priority or H/V bit changes.
+    """
+    require(type(definitions) is bytes and len(definitions) == 4096 * 8
+            and type(map_id) is int and 0 <= map_id < MAP_CAPACITY
+            and type(tile_id) is int and 0 <= tile_id < 4096,
+            'Invalid effective Tile16 lookup')
+    words = page_definitions.get((map_id, tile_id))
+    return words if words is not None else struct.unpack_from('<4H', definitions, tile_id * 8)
+
+
+def read_native_directory(image, *, experimental_page_tile16=False):
     """Read and CRC-check installed storage without lowering authored payload.
 
     Semantic terrain/parent/actor validation remains the editor inspector's
-    responsibility. This is the Build seam, not a second editor admission API.
+    responsibility. Revision5 is read-only experimental planning admission;
+    default Build readers still refuse it. No public revision5 encoder exists.
     Absent descriptors retain the ordinary160 build. Attributed older or broken
     descriptors fail instead of being mistaken for ordinary native storage.
     """
+    require(type(experimental_page_tile16) is bool, 'Expected explicit experimental admission')
     raw = image[DIRECTORY_PC:DIRECTORY_PC + DIRECTORY_SIZE]
     if len(raw) < DIRECTORY_SIZE:
         require(not raw.startswith(b'OOSOW'), 'Truncated special-overworld directory')
@@ -480,16 +529,22 @@ def read_native_directory(image):
     fingerprint = ((raw[8:14], raw[18:20]) in (
         (b'\x03\x00\x20\x00\x80\x03', b'\x36\x00'),
         (b'\x04\x00\x20\x00\xA0\x03', b'\x38\x00'),
-        (b'\x04\x00\x20\x00\xB0\x03', b'\x39\x00')))
+        (b'\x04\x00\x20\x00\xB0\x03', b'\x39\x00'),
+        (b'\x05\x00\x20\x00\xB0\x03', b'\x39\x00'),
+        (b'\x05\x00\x20\x00\xC0\x03', b'\x3A\x00')))
     if not raw.startswith(b'OOSOW') and not fingerprint:
         return None
-    require(raw[:8] == MAGIC and struct.unpack_from('<H', raw, 8)[0] in (3, 4),
+    require(raw[:8] == MAGIC and struct.unpack_from('<H', raw, 8)[0]
+            in ((3, 4, 5) if experimental_page_tile16 else (3, 4)),
             'Ordinary Build requires the installed revision3 or revision4 special-overworld format')
     revision, header_size, used_size, capacity, materialized, count, bank, flags, stride, size, _ = (
         struct.unpack_from('<6HBBHII', raw, 8))
-    authoring = revision == 4 and flags & 0x20 != 0
+    authoring = revision >= 4 and flags & 0x20 != 0
     expected_count, expected_flags = ((54, 0x0C) if revision == 3 else
                                       (57, 0x3C) if authoring else (56, 0x1C))
+    if revision == 5:
+        expected_count += 1
+        expected_flags |= 0x40
     require(header_size == 32 and used_size == 32 + expected_count * 16 and count == expected_count
             and materialized == capacity and flags == expected_flags and stride == 2 * capacity
             and size == len(image), 'Invalid installed native directory header')
