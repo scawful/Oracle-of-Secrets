@@ -33,6 +33,13 @@ def _bound(root: Path, configured: str, key: str,
     return result
 
 
+def _admits_page_tile16(config: configparser.ConfigParser) -> bool:
+    # Same spellings as Yaze's project ParseBool, so Build follows the editor's
+    # saved revision5 admission exactly; absent or any other value stays off.
+    value = config.get("feature_flags", "experimental_page_tile16", fallback="")
+    return value.strip() in ("true", "1", "yes")
+
+
 def prepare_source_graphics(project: Path, base_rom: Path, *,
                             compiler_root: Path | None = None) -> int:
     """Refresh derived sheets for the saved source binding, never the ROM.
@@ -201,6 +208,8 @@ def build_project(project: Path, *, enable: str = "", disable: str = "") -> int:
         command.extend(["--enable", enable])
     if disable:
         command.extend(["--disable", disable])
+    if _admits_page_tile16(config):
+        command.append("--experimental-page-tile16")
     return subprocess.run(command, cwd=root,
                           env=environment, check=False).returncode
 

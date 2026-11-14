@@ -103,6 +103,40 @@ class AuthoringBundleBuildTest(unittest.TestCase):
         self.assertEqual(run.call_args.args[0][-4:], [
             '--enable', enabled, '--disable', 'd8_boss'])
 
+    def test_saved_page_tile16_opt_in_selects_experimental_compiler_build(self):
+        for value in ('true', '1', 'yes', ' true '):
+            with self.subTest(value=value):
+                self.project.write_text(
+                    self.text + f'[feature_flags]\nexperimental_page_tile16={value}\n')
+                result, run = self.invoke(cli_args=[
+                    '--enable', 'sky_overworld_graphics', '--disable', 'kalyxo_docks_profile'])
+                self.assertEqual(result, 0)
+                self.assertEqual(run.call_args.args[0], [
+                    'bash', str(self.code / 'Scripts/Build/build_rom.sh'), '178',
+                    '--enable', 'sky_overworld_graphics',
+                    '--disable', 'kalyxo_docks_profile', '--experimental-page-tile16'])
+
+    def test_absent_or_other_page_tile16_values_keep_ordinary_build(self):
+        for section in ('', '[feature_flags]\nexperimental_page_tile16=false\n',
+                        '[feature_flags]\nexperimental_page_tile16=True\n',
+                        '[feature_flags]\nexperimental_page_tile16=\n',
+                        '[feature_flags]\nload_custom_overworld=true\n'):
+            with self.subTest(section=section):
+                self.project.write_text(self.text + section)
+                result, run = self.invoke()
+                self.assertEqual(result, 0)
+                self.assertEqual(run.call_args.args[0], [
+                    'bash', str(self.code / 'Scripts/Build/build_rom.sh'), '178'])
+
+    def test_page_tile16_opt_in_cannot_bypass_saved_input_admission(self):
+        self.project.write_text(self.text + '[feature_flags]\nexperimental_page_tile16=true\n')
+        self.env['YAZE_PROJECT_ROM'] = str(self.root / 'foreign')
+        with mock.patch('sys.stderr', new_callable=io.StringIO) as errors:
+            result, run = self.invoke(cli_args=[])
+        self.assertEqual(result, 2)
+        self.assertIn('YAZE_PROJECT_ROM differs', errors.getvalue())
+        run.assert_not_called()
+
     def test_cli_feature_selection_cannot_bypass_saved_input_admission(self):
         self.env['YAZE_PROJECT_ROM'] = str(self.root / 'foreign')
         with mock.patch('sys.stderr', new_callable=io.StringIO) as errors:
