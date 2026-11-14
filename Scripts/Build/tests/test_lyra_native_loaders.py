@@ -569,7 +569,7 @@ class SemanticReaderBindingTest(unittest.TestCase):
 
     def test_saved_rows_cannot_alias_compiler_owned_runtime_storage(self):
         for address in (N.RESIDENT_WORD_CODE_BASE, N.RESIDENT_RESOURCE_CODE_BASE,
-                        N.RESIDENT_PALETTE_CODE_BASE, 0x4F8000):
+                        N.RESIDENT_PALETTE_CODE_BASE, 0x4F8000, 0x508000):
             with self.subTest(address=address):
                 self.fixture.address = address
                 source, _ = self.fixture.install(self.fixture.rows, count=4)

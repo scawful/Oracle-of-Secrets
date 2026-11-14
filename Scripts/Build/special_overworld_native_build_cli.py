@@ -102,7 +102,8 @@ def _graphics_root(project_context, exported):
 
 
 def _preparation(source, exported, graphics_root=None, *, experimental_page_tile16=False):
-    first, size = native.RESIDENT_DATA_PC, native.RESIDENT_DATA_CAPACITY
+    first, size, _ = native.resident_data_reservation(
+        source, experimental_page_tile16=experimental_page_tile16)
     return compiler.prepare_native_compilation(source, exported,
         data_pc=first, capacity=size, preimage=source[first:first + size],
         graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16)

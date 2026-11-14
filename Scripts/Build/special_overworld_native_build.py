@@ -164,9 +164,11 @@ def prepare_native_compilation(source, exported, *, data_pc, capacity,
              'NATIVE_BUILD_CURRENT_ENGINE_REQUIRES192')
     native.verify_dictionary_readers(source, entries)
     call_spans = _validate_reader_bindings(source, entries, capacity=map_count, revision=revision)
+    origin, extent, exclusions = native.resident_data_reservation(
+        source, experimental_page_tile16=experimental_page_tile16)
+    allowed = native.resident_data_spans(origin, extent, exclusions)
     _require(type(data_pc) is int and type(capacity) is int
-             and data_pc == native.RESIDENT_DATA_PC
-             and capacity == native.RESIDENT_DATA_CAPACITY,
+             and data_pc == origin and capacity == extent,
              'NATIVE_BUILD_RESIDENT_RESERVATION_MISMATCH')
     _require(type(preimage) is bytes and len(preimage) == capacity
              and source[data_pc:data_pc + capacity] == preimage,
@@ -176,13 +178,18 @@ def prepare_native_compilation(source, exported, *, data_pc, capacity,
     _require(source[native.RESIDENT_SPILL_PC:native.RESIDENT_SPILL_END]
              == bytes(native.RESIDENT_SPILL_END-native.RESIDENT_SPILL_PC),
              'NATIVE_BUILD_RESIDENT_SPILL_PREIMAGE_CHANGED')
-    _require(all(data_pc >= end or data_pc + capacity <= first
-                 for first, end in call_spans),
+    if extent == native.RESIDENT_PAGE_TILE16_CAPACITY:
+        first, end = (native.RESIDENT_PAGE_TILE16_SPILL_PC,
+                      native.RESIDENT_PAGE_TILE16_SPILL_END)
+        _require(source[first:end] == bytes(end-first),
+                 'NATIVE_BUILD_RESIDENT_PAGE_TILE16_SPILL_PREIMAGE_CHANGED')
+    _require(all(last <= first or begin >= end
+                 for begin, last in allowed for first, end in call_spans),
              'NATIVE_BUILD_RESIDENT_OVERLAPS_READER_CALL')
     for key, (at, rows) in entries.items():
         size = rows * native.entry_spec(key, map_count, revision)[2]
         pc = native.pc(at)
-        _require(data_pc >= pc + size or data_pc + capacity <= pc,
+        _require(all(last <= pc or begin >= pc + size for begin, last in allowed),
                  'NATIVE_BUILD_RESIDENT_OVERLAPS_SAVED_PAYLOAD')
     reseal_writes, code = _code_reseal(source, map_count, bank, entries,
                                       reader_code_replacement, revision=revision)
@@ -194,7 +201,7 @@ def prepare_native_compilation(source, exported, *, data_pc, capacity,
         experimental_page_tile16=experimental_page_tile16)
     emission = resident.emit_native_resident_abi(abi, data_pc=data_pc,
         capacity=capacity, preimage=preimage,
-        excluded_pc_spans=native.RESIDENT_DATA_EXCLUDED_PC,
+        excluded_pc_spans=exclusions,
         experimental_page_tile16=experimental_page_tile16)
     runtime = resident.resident_runtime_inputs(abi, emission, preimage=preimage,
         experimental_page_tile16=experimental_page_tile16)
@@ -423,10 +430,11 @@ def plan_native_compiled_seal(source, exported, compiled, symbols, *,
              'NATIVE_BUILD_COMPILED_ARGUMENT_INVALID')
     _require(type(semantic_readers) is bool and (not semantic_readers or experimental_page_tile16 is True),
              'NATIVE_BUILD_SEMANTIC_ADMISSION_INVALID')
+    data_pc, data_size, exclusions = native.resident_data_reservation(
+        source, experimental_page_tile16=experimental_page_tile16)
     prep = prepare_native_compilation(source, exported,
-        data_pc=native.RESIDENT_DATA_PC, capacity=native.RESIDENT_DATA_CAPACITY,
-        preimage=source[native.RESIDENT_DATA_PC:
-                        native.RESIDENT_DATA_PC + native.RESIDENT_DATA_CAPACITY],
+        data_pc=data_pc, capacity=data_size,
+        preimage=source[data_pc:data_pc + data_size],
         graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16)
     capacity, bank, entries = native.read_native_directory(
         source, experimental_page_tile16=experimental_page_tile16)
@@ -517,7 +525,6 @@ def plan_native_compiled_seal(source, exported, compiled, symbols, *,
     # native operand/opcode must still bind the saved dictionaries exactly.
     native.verify_dictionary_readers(bytes(restored), entries)
 
-    data_pc, data_size = native.RESIDENT_DATA_PC, native.RESIDENT_DATA_CAPACITY
     expected_resources = bytearray(source[data_pc:data_pc + data_size])
     for write in prep['resource_writes']:
         first = write['pc']
@@ -526,11 +533,10 @@ def plan_native_compiled_seal(source, exported, compiled, symbols, *,
                  f'NATIVE_BUILD_COMPILED_RESOURCE_CHANGED:{write["purpose"]}')
         offset = first - data_pc
         expected_resources[offset:offset + end - first] = write['after']
-    # Retain the complete old4E/4F gap check and add the new spill interval.
-    # The skipped50:8000-A000 reservation belongs to D4's own source/checks,
-    # not this atlas. It may contain normally compiled water-control code.
+    # Check every allowed gap; D4 and semantic code/saved rows remain outside
+    # atlas ownership and retain their separate code/payload validation.
     cursor = data_pc
-    for first, end in (*native.RESIDENT_DATA_EXCLUDED_PC,
+    for first, end in (*exclusions,
                        (data_pc + data_size, data_pc + data_size)):
         _require(compiled[cursor:first] == bytes(expected_resources[
             cursor-data_pc:first-data_pc]),

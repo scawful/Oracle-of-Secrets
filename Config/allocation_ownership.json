@@ -180,7 +180,7 @@
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "b09130162164a4e01cf65630fe00a70652dec3131a5cc0235ce5c6f8b9d0fe3a"
+      "sha256": "d5b0e9a93d613fed8bb5878f6e3d37dbc6dfff75da3862ad3c688fff5d13efa8"
     },
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
@@ -2369,6 +2369,28 @@
         "PAGE_TILE16_BASE = 0x519000",
         "PAGE_TILE16_ROW_CAPACITY = 1024"
       ]
+    },
+    {
+      "id": "native_special_resident_page_tile16_spill",
+      "owner": "Native special-overworld derived atlas; selected revision5-1024 bank51 tail",
+      "space": "snes_rom",
+      "base": 5357568,
+      "size": 16384,
+      "status": "proposed",
+      "condition": {
+        "SPECIAL_OVERWORLD_SEMANTIC_ENABLED": 1
+      },
+      "lifetime": "Derived Build storage only for explicitly admitted revision5 record413 at519000/count1024. Legacy revision4 and revision5-512 retain the original reservation. D4 lower bank50 and semantic code/source remain excluded.",
+      "reset": "Complete selected editable tail must retain the measured zero preimage. Bank-bound emission and all allowed-gap checks remain mandatory.",
+      "save": "No SRAM or editor publication permission. Build owns derived data; normal Save preserves the editable source preimage.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "RESIDENT_PAGE_TILE16_SPILL_PC = 0x28C000",
+        "RESIDENT_PAGE_TILE16_SPILL_END = 0x290000"
+      ],
+      "aliases": []
     }
   ],
   "lifetime_aliases": [],

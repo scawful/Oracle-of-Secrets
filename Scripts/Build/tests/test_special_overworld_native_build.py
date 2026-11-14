@@ -188,8 +188,10 @@ class NativeBuildPreparationTest(unittest.TestCase):
             raw = b'\x22' + target.to_bytes(3, 'little') + b'\xEA' * (size - 4)
             first = N.pc(site)
             image[first:first + size] = raw
+        origin, extent, _ = N.resident_data_reservation(self.source,
+            experimental_page_tile16=experimental_page_tile16)
         prepared = (B.prepare_native_compilation(self.source, self.exported,
-            data_pc=self.origin, capacity=self.capacity, preimage=self.preimage,
+            data_pc=origin, capacity=extent, preimage=self.source[origin:origin+extent],
             experimental_page_tile16=True) if experimental_page_tile16 else self.prepare())
         for write in prepared['resource_writes']:
             first = write['pc']
@@ -333,10 +335,10 @@ class ExperimentalNativeBuildTest(unittest.TestCase):
         self.source, self.exported = self.fixture.install(self.fixture.rows, authoring=True)
 
     def prepare(self, **kwargs):
-        args = dict(data_pc=N.RESIDENT_DATA_PC, capacity=N.RESIDENT_DATA_CAPACITY,
-            preimage=self.source[N.RESIDENT_DATA_PC:
-                N.RESIDENT_DATA_PC + N.RESIDENT_DATA_CAPACITY],
+        origin, extent, _ = N.resident_data_reservation(self.source,
             experimental_page_tile16=True)
+        args = dict(data_pc=origin, capacity=extent,
+            preimage=self.source[origin:origin+extent], experimental_page_tile16=True)
         args.update(kwargs)
         return B.prepare_native_compilation(self.source, self.exported, **args)
 
@@ -479,6 +481,79 @@ class ExperimentalNativeBuildTest(unittest.TestCase):
         self.source, self.exported = self.fixture.install(self.fixture.rows, authoring=True)
         with self.assertRaisesRegex(ValueError, 'OVERLAPS_SAVED_PAYLOAD'):
             self.prepare()
+
+    def test_selected1024_uses_tail_without_overwriting_semantic_source(self):
+        self.fixture.address = N.PAGE_TILE16_BASE
+        self.source, self.exported = self.fixture.install(
+            self.fixture.rows, count=1024, authoring=True)
+        origin, extent, holes = N.resident_data_reservation(
+            self.source, experimental_page_tile16=True)
+        self.assertEqual((origin, extent, holes), (0x270000, 0x20000,
+            ((0x280000, 0x282000), (0x288000, 0x28C000))))
+        result = self.prepare()
+        for write in result['resource_writes']:
+            first, end = write['pc'], write['pc'] + len(write['after'])
+            self.assertTrue(all(end <= a or first >= b for a, b in holes))
+        self.legacy.source, self.legacy.exported = self.source, self.exported
+        compiled, symbols = self.legacy.compiled_fixture(experimental_page_tile16=True)
+        B.verify_native_compiled_output(self.source, self.exported, compiled, symbols,
+                                       experimental_page_tile16=True)
+        # Every newly granted gap is protected, including the last byte.
+        for at in (0x28C000, 0x28FFFF):
+            image = bytearray(compiled)
+            image[at] ^= 1
+            with self.subTest(at=at), self.assertRaisesRegex(ValueError, 'RESOURCE_GAP_CHANGED'):
+                B.verify_native_compiled_output(self.source, self.exported, bytes(image),
+                    symbols, experimental_page_tile16=True)
+        _, _, entries = N.read_native_directory(self.source, experimental_page_tile16=True)
+        for key in (412, 413):
+            image = bytearray(compiled)
+            image[N.pc(entries[key][0])] ^= 1
+            with self.subTest(key=key), self.assertRaisesRegex(ValueError,
+                    f'SAVED_PAYLOAD_CHANGED:ID{key}'):
+                B.verify_native_compiled_output(self.source, self.exported, bytes(image),
+                    symbols, experimental_page_tile16=True)
+
+    def test_selected1024_tail_requires_exact_zero_preimage(self):
+        self.fixture.address = N.PAGE_TILE16_BASE
+        original, exported = self.fixture.install(self.fixture.rows, count=1024)
+        for at in (0x28C000, 0x28FFFF):
+            image = bytearray(original)
+            image[at] = 1
+            self.source, self.exported = bytes(image), exported
+            with self.subTest(at=at), self.assertRaisesRegex(ValueError,
+                    'PAGE_TILE16_SPILL_PREIMAGE_CHANGED'):
+                self.prepare()
+
+    def test_selected1024_tail_cannot_replace_reader_call(self):
+        self.fixture.address = N.PAGE_TILE16_BASE
+        self.source, self.exported = self.fixture.install(self.fixture.rows, count=1024)
+        # A valid long-branch witness in the existing allowed atlas interval
+        # must still refuse even though another saved payload is excluded.
+        image = bytearray(self.source)
+        _, _, entries = N.read_native_directory(self.source, experimental_page_tile16=True)
+        record = N.pc(entries[301][0]) + 4 * 16
+        site = 0x4E8000
+        struct.pack_into('<I', image, record, site)
+        image[N.pc(site):N.pc(site)+4] = image[record+12:record+16]
+        self.source = self.fixture.reseal(image)
+        with self.assertRaisesRegex(ValueError, 'OVERLAPS_READER_CALL'):
+            self.prepare()
+
+    def test_old512_and_nonselected1024_keep_legacy_reservation(self):
+        for address, count in ((N.PAGE_TILE16_BASE, 512), (0x528000, 1024)):
+            self.fixture.address = address
+            self.source, self.exported = self.fixture.install(self.fixture.rows, count=count)
+            self.assertEqual(N.resident_data_reservation(self.source,
+                experimental_page_tile16=True), (N.RESIDENT_DATA_PC,
+                N.RESIDENT_DATA_CAPACITY, N.RESIDENT_DATA_EXCLUDED_PC))
+            with self.assertRaisesRegex(ValueError, 'Ordinary Build requires'):
+                N.resident_data_reservation(self.source)
+            if count == 512:
+                raw = json.dumps(self.prepare(), sort_keys=True, separators=(',', ':'),
+                    default=lambda value: dict(bytes_hex=value.hex())).encode()
+                self.assertEqual(hashlib.sha256(raw).hexdigest(),
+                    'fd4528d501d127742579a063ab6132ad7e6afdc454b257d24c605cbcad549948')
 
     def test_legacy_pinned_preparation_and_opt_in_v1_are_byte_identical(self):
         expected = '300084904066624eb22e08de5c19b39ff516f26ef735735b3917e6e318a0a4df'

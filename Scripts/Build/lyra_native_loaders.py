@@ -57,6 +57,13 @@ PAGE_TILE16_BASE = 0x519000
 # Complete selected Sky route plus its overlay needs more than 512 rows.
 # Keep source storage in the same bank, separate from the derived reader code.
 PAGE_TILE16_ROW_CAPACITY = 1024
+# Explicit experimental1024 source only; legacy/v5-512 receipts retain their
+# original interval. D4 and saved semantic code/rows are not atlas storage.
+RESIDENT_PAGE_TILE16_CAPACITY = 0x20000
+RESIDENT_PAGE_TILE16_EXCLUDED_PC = (
+    (0x280000, 0x282000), (0x288000, 0x28C000))
+RESIDENT_PAGE_TILE16_SPILL_PC = 0x28C000
+RESIDENT_PAGE_TILE16_SPILL_END = 0x290000
 
 # Existing dictionaries in the selected Oracle engine. Initial import reuses
 # these owned bodies; arbitrary relocation needs a separately bound reader ABI.
@@ -692,6 +699,43 @@ def native_reader_constants(image, *, experimental_page_tile16=False):
     return '\n'.join(lines) + '\n'
 
 
+def resident_data_spans(data_pc, capacity, excluded_pc_spans):
+    """Return allowed intervals, never an allocation or payload-ID exception."""
+    require(type(data_pc) is int and type(capacity) is int
+            and 0 <= data_pc < data_pc + capacity <= 0x400000,
+            'Invalid resident reservation extent')
+    cursor, spans = data_pc, []
+    for first, end in excluded_pc_spans:
+        require(type(first) is int and type(end) is int
+                and cursor <= first < end <= data_pc + capacity,
+                'Invalid resident reservation exclusions')
+        if cursor < first:
+            spans.append((cursor, first))
+        cursor = end
+    if cursor < data_pc + capacity:
+        spans.append((cursor, data_pc + capacity))
+    return tuple(spans)
+
+
+def resident_data_reservation(image, *, experimental_page_tile16=False):
+    """Select the owned interval from authenticated source, without activation.
+
+    Only explicitly admitted revision5 record413 at the selected1024-row
+    location may use bank51's tail. Older source preparations remain exact.
+    """
+    require(type(experimental_page_tile16) is bool,
+            'Invalid resident experimental admission')
+    installed = read_native_directory(
+        image, experimental_page_tile16=experimental_page_tile16)
+    require(installed is not None, 'Resident reservation requires native source')
+    revision = struct.unpack_from('<H', image, DIRECTORY_PC + 8)[0]
+    if (experimental_page_tile16 and revision == 5
+            and installed[2].get(413) == (PAGE_TILE16_BASE, 1024)):
+        return (RESIDENT_DATA_PC, RESIDENT_PAGE_TILE16_CAPACITY,
+                RESIDENT_PAGE_TILE16_EXCLUDED_PC)
+    return RESIDENT_DATA_PC, RESIDENT_DATA_CAPACITY, RESIDENT_DATA_EXCLUDED_PC
+
+
 def semantic_reader_constants(image, *, code_preimage,
                               experimental_page_tile16=False):
     """Bind authenticated source rows and an empty selected code reservation.
@@ -714,10 +758,13 @@ def semantic_reader_constants(image, *, code_preimage,
             and code_preimage in (bytes(len(code_preimage)),
                                   b'\xFF' * len(code_preimage)),
             'Semantic code reservation preimage changed')
-    runtime = [(RESIDENT_DATA_PC, RESIDENT_DATA_PC + RESIDENT_DATA_CAPACITY),
+    origin, extent, exclusions = resident_data_reservation(
+        image, experimental_page_tile16=True)
+    runtime = (list(resident_data_spans(origin, extent, exclusions))
+               + list(RESIDENT_DATA_EXCLUDED_PC) + [
                  (pc(RESIDENT_WORD_CODE_BASE), pc(RESIDENT_WORD_CODE_LIMIT)),
                  (pc(RESIDENT_RESOURCE_CODE_BASE), pc(RESIDENT_RESOURCE_CODE_LIMIT)),
-                 (pc(RESIDENT_PALETTE_CODE_BASE), pc(RESIDENT_PALETTE_CODE_LIMIT-1)+1)]
+                 (pc(RESIDENT_PALETTE_CODE_BASE), pc(RESIDENT_PALETTE_CODE_LIMIT-1)+1)])
     rows_pc = pc(address)
     rows_end = rows_pc + count * entry_spec(413, capacity, 5)[2]
     require(all(rows_end <= first or rows_pc >= end for first, end in runtime),
