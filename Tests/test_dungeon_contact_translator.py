@@ -162,5 +162,143 @@ class Contract(unittest.TestCase):
             self.check("hallows_0da_moved.objects.json", "hallows_0da_moved_good.trace.json", "stair")
 
 
+PATHFINDER = (Path.home() / ".context/projects/oracle-of-secrets/scratchpad/handoffs/zora_design_review_2026-11-06/"
+              "mask-route-check-2026-11-08/merge-proof/tools/scene-director-9f721704/"
+              "Scripts/Agents/scene_director/pathfind.py")
+ZORA_LOW_STEP_CELLS = [[31, 26, 0], [32, 26, 0], [31, 27, 0], [32, 27, 0],
+                       [13, 40, 0], [14, 40, 0], [13, 41, 0], [14, 41, 0]]
+
+
+def type2(object_id, x, y):
+    return bytes([0xFC | x >> 4, (x & 15) << 4 | y >> 2, (y & 3) << 6 | object_id & 0x3F])
+
+
+class DrySteps(unittest.TestCase):
+    """Zora room 0x25 v5 streams and RAM collision replays (Codex-Zora-Delivery, 2026-11-14)."""
+
+    def setUp(self):
+        self.rule = translator.load_dry_steps()["north_merged_dry_step_132"]
+        self.low = (FIXTURES / "zora25_low_v5.stream.bin").read_bytes()
+        self.low_attrs = translator.read_collision(FIXTURES / "zora25_low_v5.collision.bin")
+        self.writer = translator.load_module("sky_d8_room_writer", ROOMS / "sky_d8_room_writer.py")
+
+    def edit(self, insert):
+        """Low stream with records inserted into list 0 at {position: record}."""
+        stream = self.writer.parse_object_stream(self.low, 0, len(self.low))
+        primary = list(stream.lists[0])
+        for position in sorted(insert, reverse=True):
+            primary.insert(position, insert[position])
+        raw, _ = self.writer.encode_object_stream(stream.header, [primary, *stream.lists[1:]], stream.doors)
+        return raw
+
+    def classify(self, raw=None, attrs=None):
+        return translator.classify_steps(raw or self.low, attrs or self.low_attrs, self.rule)
+
+    def test_low_admits_only_the_two_measured_step_cores(self):
+        result, code = self.classify()
+        self.assertEqual((code, result["status"]), (0, "OK"), result["unsupported"] + result["errors"])
+        self.assertEqual(result["stream_sha256"], self.rule["measured"][0]["stream_sha256"])
+        self.assertEqual([s["origin"] for s in result["steps"]], [[30, 25], [12, 39]])
+        self.assertEqual(result["admitted_cells"], ZORA_LOW_STEP_CELLS)
+        self.assertEqual(result["unclassified_step_cells"], [])
+
+    def test_high_wet_133_and_135_are_refused(self):
+        raw = (FIXTURES / "zora25_high_v5.stream.bin").read_bytes()
+        attrs = translator.read_collision(FIXTURES / "zora25_high_v5.collision.bin")
+        result, code = self.classify(raw, attrs)
+        self.assertEqual((code, result["status"], result["admitted_cells"]), (1, "UNSUPPORTED", []))
+        refused = {(u["object_id"], tuple(u["origin"])) for u in result["unsupported"] if "object_id" in u}
+        self.assertEqual(refused, {("0x133", (30, 25)), ("0x133", (12, 39)), ("0x135", (42, 25)),
+                                   ("0x135", (16, 39)), ("0x135", (51, 39))})
+
+    def test_wet_follower_drawn_before_a_dry_step_is_blocked(self):
+        primary = self.writer.parse_object_stream(self.low, 0, len(self.low)).lists[0]
+        first = next(n for n, r in enumerate(primary) if r[0] >= 0xFC and r[2] & 0x3F == 0x32)
+        for position in (first, first + 1):
+            with self.subTest(position=position):
+                result, code = self.classify(self.edit({position: type2(0x136, 42, 25)}))
+                self.assertEqual((code, result["status"], result["admitted_cells"]), (1, "BLOCKED", []))
+                self.assertEqual([e["code"] for e in result["errors"]], ["STEP_SLOT_ORDER"])
+
+    def test_wet_follower_after_every_dry_step_keeps_the_cells(self):
+        primary = self.writer.parse_object_stream(self.low, 0, len(self.low)).lists[0]
+        result, code = self.classify(self.edit({len(primary): type2(0x136, 42, 25)}))
+        self.assertEqual((code, result["admitted_cells"]), (0, ZORA_LOW_STEP_CELLS))
+        self.assertEqual([w["object_id"] for w in result["wet_followers"]], ["0x136"])
+
+    def test_objects_that_change_044A_or_reuse_the_slots_are_refused(self):
+        records = {"0x130": type2(0x130, 42, 25), "0x131": type2(0x131, 42, 25),
+                   "0x133": type2(0x133, 42, 25), "0x135": type2(0x135, 42, 25),
+                   "0xF9B": self.writer.encode_type3(0xF9B, 42, 25),
+                   "0xF9C": self.writer.encode_type3(0xF9C, 42, 25),
+                   "0x0D8": bytes([42 * 4, 25 * 4, 0xD8]), "0x0DA": bytes([42 * 4, 25 * 4, 0xDA]),
+                   "0x137": type2(0x137, 42, 25)}
+        self.assertEqual(sorted(records), sorted(self.rule["refuse"]))
+        for name, record in records.items():
+            for position in (0, 41):
+                with self.subTest(object_id=name, position=position):
+                    result, code = self.classify(self.edit({position: record}))
+                    self.assertEqual((code, result["status"], result["admitted_cells"]), (1, "UNSUPPORTED", []))
+                    self.assertIn(name, [u.get("object_id") for u in result["unsupported"]])
+
+    def test_slot_overflow_is_refused(self):
+        primary = self.writer.parse_object_stream(self.low, 0, len(self.low)).lists[0]
+        end = len(primary)
+        result, code = self.classify(self.edit({end: type2(0x136, 42, 25), end + 1: type2(0x136, 16, 39),
+                                                end + 2: type2(0x136, 51, 39)}))
+        self.assertEqual((code, result["status"]), (1, "UNSUPPORTED"))
+        self.assertIn("exceed the 4 native slots", result["unsupported"][0]["reason"])
+
+    def test_replay_that_differs_from_the_native_stamp_is_refused(self):
+        for cell, plane in (((31, 26), 0), ((13, 42), 0), ((12, 42), 1)):
+            with self.subTest(cell=cell, plane=plane):
+                attrs = bytearray(self.low_attrs)
+                attrs[plane * 4096 + cell[1] * 64 + cell[0]] ^= 0x1D
+                result, code = self.classify(attrs=bytes(attrs))
+                self.assertEqual((code, result["status"], result["admitted_cells"]), (1, "UNSUPPORTED", []))
+                self.assertEqual(result["unsupported"][0]["cells"][0][:3], [plane, *cell])
+
+    def test_stray_1D_cells_stay_transitions(self):
+        attrs = bytearray(self.low_attrs)
+        attrs[20 * 64 + 40] = 0x1D
+        result, code = self.classify(attrs=bytes(attrs))
+        self.assertEqual((code, result["admitted_cells"]), (0, ZORA_LOW_STEP_CELLS))
+        self.assertEqual(result["unclassified_step_cells"], [[40, 20, 0]])
+
+    def test_route_refuses_an_unclassified_state(self):
+        with self.assertRaises(translator.InputError):
+            translator.route_steps({"status": "UNSUPPORTED"}, self.low_attrs, PATHFINDER, (456, 120), (112, 272))
+
+    @unittest.skipUnless(PATHFINDER.exists(), "pinned scene_director pathfinder copy is not on this host")
+    def test_route_uses_only_admitted_cells_and_keeps_the_default_refusal(self):
+        steps, _ = self.classify()
+        route, code = translator.route_steps(steps, self.low_attrs, PATHFINDER, (456, 120), (112, 272))
+        self.assertEqual((code, route["status"]), (0, "MODEL_PATH"))
+        self.assertEqual(route["default_find_path"], "NeedsRoomChangeError")
+        self.assertEqual(route["waypoints"], [[456, 120], [248, 120], [248, 336], [104, 336], [104, 272], [112, 272]])
+        self.assertEqual([c + [0] for c in route["transition_cells_used"]], ZORA_LOW_STEP_CELLS)
+
+    @unittest.skipUnless(PATHFINDER.exists(), "pinned scene_director pathfinder copy is not on this host")
+    def test_route_avoids_an_unadmitted_1D_on_its_corridor(self):
+        attrs = bytearray(self.low_attrs)
+        attrs[16 * 64 + 45] = 0x1D
+        steps, _ = self.classify(attrs=bytes(attrs))
+        route, code = translator.route_steps(steps, bytes(attrs), PATHFINDER, (456, 120), (112, 272))
+        self.assertEqual((code, route["status"]), (0, "MODEL_PATH"))
+        self.assertEqual([c + [0] for c in route["transition_cells_used"]], ZORA_LOW_STEP_CELLS)
+        self.assertNotEqual(route["waypoints"][1], [248, 120])
+
+    @unittest.skipUnless(PATHFINDER.exists(), "pinned scene_director pathfinder copy is not on this host")
+    def test_route_that_enters_a_step_sideways_is_unsupported(self):
+        attrs = bytearray(self.low_attrs)
+        for x, y in ((10, 41), (11, 41), (12, 41), (12, 42)):
+            attrs[y * 64 + x] = 0x00
+        steps, code = self.classify(attrs=bytes(attrs))
+        self.assertEqual(code, 0)
+        route, code = translator.route_steps(steps, bytes(attrs), PATHFINDER, (80, 320), (104, 288))
+        self.assertEqual((code, route["status"]), (1, "UNSUPPORTED"))
+        self.assertTrue(route["sideways_step_moves"])
+
+
 if __name__ == "__main__":
     unittest.main()
