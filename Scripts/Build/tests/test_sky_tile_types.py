@@ -178,6 +178,8 @@ def _run_contract_routine(
         if item.startswith("if "):
             flags = {
                 "if !SPECIAL_OVERWORLD_NATIVE == 1": native_enabled,
+                # The enabled source-attribute path is covered by actual CPU tests.
+                "if !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED == 1": False,
                 "if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1": semantic_enabled,
                 "if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 0": not semantic_enabled,
             }

@@ -24,9 +24,21 @@ macro SkyTileType_BranchIfSky(sky_label, vanilla_label)
   CMP.w #$0090 : BCS <vanilla_label>
 endmacro
 
+if not(defined("SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED"))
+  !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED = 0
+endif
+assert !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED == 0 || !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED == 1
+
 SkyTileType:
 {
   PHP
+if !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED == 1
+  assert !SPECIAL_OVERWORLD_NATIVE == 1 && !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+  ; Reuse this exact four-caller ABI. The wrapper owns the already-pushed P;
+  ; the legacy continuation retains the existing Sky/vanilla dispatch.
+  JML Lyra_SourceTileType
+  #Lyra_SourceTileTypeLegacy:
+endif
   %SkyTileType_BranchIfSky(.sky, .vanilla)
 .sky
 if !SPECIAL_OVERWORLD_NATIVE == 1

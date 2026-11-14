@@ -43,7 +43,7 @@ assert pc() == $00886E
 assert pc() == $008888
 '''
 class Artifact:
- def __init__(self,rows,capacity=192,sky=False,overrides=None,area_size=1,parent=0x84,extra_source="",image_updates=()):
+ def __init__(self,rows,capacity=192,sky=False,overrides=None,area_size=1,parent=0x84,extra_source="",image_updates=(),preamble=""):
   self.tmp=tempfile.TemporaryDirectory();self.dir=Path(self.tmp.name);self.v=values(len(rows),capacity);self.v.update(overrides or {})
   image=bytearray(R.source_fixture());raw=b''.join(rows);image[R.N.pc(ROWS):R.N.pc(ROWS)+len(raw)]=raw
   self.global_words=(0x1011,0x5022,0x9033,0xD044)
@@ -66,7 +66,7 @@ class Artifact:
    image[R.N.pc(0x0E9459):R.N.pc(0x0E9459)+512]=bytes([0x27])*512
    extra=f'org $348000\nincsrc "{R.ROOT / "Overworld/sky_tile_types.asm"}"\n'+CALLER
   for address,data in image_updates:image[R.N.pc(address):R.N.pc(address)+len(data)]=data
-  self.before=bytes(image);self.proc,self.image,self.labels=R.assemble(self.dir,self.before,self.v,extra+extra_source)
+  self.before=bytes(image);self.proc,self.image,self.labels=R.assemble(self.dir,self.before,self.v,extra+extra_source,preamble=preamble)
  def close(self):self.tmp.cleanup()
  def call(self,label,*,a=0xA55A,x=0x84,y=56,p=0xCD,db=0x42,d=0x120,ram=None):
   if ram is None:ram=bytearray((i*37+19)&255 for i in range(65536))
