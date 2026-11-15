@@ -5,7 +5,7 @@
 ; not call the guards; she wants her dog Richard. Richard is a night-only
 ; palette swap of the village dog. Once Link finds him she runs inside,
 ; excited, with the dog, and afterwards she is inside the house with a
-; reward. The house is the storage shed: entrance $4A on map $23, room $107.
+; reward. Her house is room $106 (new interior), reached from the map $23 house door (entrance $48).
 ;
 ; Pieces (all gated by this file's include, so flag-off bytes are master):
 ; 1. Old Snitch $3D subtype 0 (vanilla bank $05):
@@ -31,7 +31,7 @@
 ; =========================================================
 
 !RichardLadyMap      = $23     ; Wayward Village (large area parent)
-!RichardShedRoom     = $0107   ; storage shed interior (entrance $4A)
+!RichardShedRoom     = $0106   ; Richard lady house interior (entrance $48)
 !RichardRewardItem   = $17     ; Piece of Heart (receipt ID)
 !RichardPaletteXor   = $04     ; OAM vhoopppc: $37 (pal 3) -> $33 (pal 1)
 !RichardLadySpeed    = $18     ; 1.5 px/frame
