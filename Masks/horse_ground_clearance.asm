@@ -37,8 +37,12 @@ HorseForm_ConstrainGroundInput:
   .vertical_edge
     LDA.b $0A : CLC : ADC.b $08 : STA.b $0A
   .query
+if !ENABLE_HORSE_LONG_JUMP == 1
+  JSR .query_side                     ; out-of-area side probe reads clear
+else
   SEP #$20
   JSR Horse_QueryTileAt
+endif
 if !ENABLE_HORSE_LONG_JUMP == 1
   ; A named water gap blocks like a wall unless a valid long jump crosses it
   ; from here (.gap_point: A = $00 clear, $FF block, else the attribute).
@@ -147,6 +151,33 @@ if !ENABLE_HORSE_LONG_JUMP == 1
   ; valid jump: block) or the attribute unchanged (not a gap). Clearing a
   ; jumpable gap point lets the horse keep walking and turn to face the gap,
   ; so CheckFenceJump's probes can reach it (the queue123 freeze class).
+  ; A side probe outside the current area would wrap ($070E/$070A masks in
+  ; Horse_QueryTileAt) to the opposite edge of this area; skip it. Native
+  ; Link collision and the area transition still own the seam itself.
+  ; In: A16/X8, $0A/$0C = probe point, X = edge index. Out: M8/X8, A = tile
+  ; attribute and $04 = Tile16, or A = $00 / $04 = $0000 (clear) when skipped.
+  .query_side
+  CPX.b #$04 : BCC + : JSR .point_outside_area : BCC +
+    STZ.b $04
+    SEP #$20 : LDA.b #$00
+    RTS
+  + SEP #$20
+  JMP Horse_QueryTileAt
+  ; In: A16/X8, $0A/$0C = probe point. Out: carry set when the point lies
+  ; outside the current area (bits above the $070E/$070A masks; the masks
+  ; are contiguous low bits, sub-tile bits are don't-care). Clobbers $04.
+  .point_outside_area
+  LDA.l $7E070E : EOR.w #$FFFF : STA.b $04
+  LDA.b $0C : LSR #3 : SEC : SBC.l $7E070C
+  AND.b $04 : AND.w #$FFFE : BNE .outside_area
+  LDA.l $7E070A : EOR.w #$FFFF : STA.b $04
+  LDA.b $0A : SEC : SBC.l $7E0708
+  AND.b $04 : AND.w #$FFF0 : BNE .outside_area
+  CLC
+  RTS
+  .outside_area
+  SEC
+  RTS
   .gap_point
   PHA
   REP #$20 : JSR HorseLong_IsGap : SEP #$20
