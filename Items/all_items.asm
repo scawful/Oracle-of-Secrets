@@ -310,6 +310,13 @@ incsrc "Items/item_bindings_dispatch.asm"
 assert pc()-ItemBindings_SpanStart <= $600, "Dual-item prototype exceeded its $600 span"
 endif
 
+; Codex HUD layout routines (default off; Menu bank $2E is full).
+if !ENABLE_HUD_LAYOUT_CODEX == 1
+HudCodex_SpanStart:
+incsrc "Menu/menu_hud_codex.asm"
+assert pc()-HudCodex_SpanStart <= $180, "Codex HUD routines exceeded their $180 span"
+endif
+
 
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
 assert pc() <= $2BF000, "Items bank $2B reached the dream entry FX region ($2BF000)"

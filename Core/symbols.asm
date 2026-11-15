@@ -119,6 +119,16 @@ ItemBindingMenuY   = $7E02B7
 assert ItemBindingCursor == $7E02B3 && ItemBindingButton+1 == ItemBindingMenuY
 assert ItemBindingMenuY+1 == $7E02B8
 
+; Codex HUD layout corner cells (!ENABLE_HUD_LAYOUT_CODEX). 14 bytes in the
+; vanilla-free $7EC84A-$7EC87F gap after the RebuildHUD copy ($7EC700+$14A).
+; +0..+8 = rupee icon (2) + 3 digits for BG3 $6342 (screen row 26, cols 2-6);
+; +$0A..+$0D = key icon + digit for BG3 $635C (row 26, cols 28-29).
+; Written by HUD_Update every HUD frame, read by HUD_NMIUpload and the menu
+; close scroll. Not persistent; not cleared by any bulk owner.
+HudCornerBuffer    = $7EC84A
+HudCornerBufferEnd = HudCornerBuffer+14
+assert HudCornerBufferEnd <= $7EC880
+
 ; Explicit bounded aliases for the reserved palette history; no consumer yet.
 SpecialOverworldPaletteHoleCache = $7E1E8C
 SpecialOverworldPaletteHoleCacheEnd = $7E1EA6

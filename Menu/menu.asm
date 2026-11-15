@@ -731,6 +731,19 @@ endif
     LDA $7EC7C2, X : STA $1142, X
   DEX : BNE .loop4
 
+if !ENABLE_HUD_LAYOUT_CODEX == 1
+  ; Bottom corners (rupees row 26 cols 2-6, keys cols 28-29) so the closing
+  ; scroll shows them before HUD_NMIUpload takes over again.
+  LDX.b #$09
+  .loop_rupees
+    LDA.l HudCornerBuffer, X : STA $1684, X
+  DEX : BPL .loop_rupees
+  LDX.b #$03
+  .loop_keys
+    LDA.l HudCornerBuffer+$0A, X : STA $16B8, X
+  DEX : BPL .loop_keys
+endif
+
   LDA.b #$24 : STA.w $0116
   LDA.b #$01 : STA.b $17
   LDA.b #!MENU_STATE_SCROLL_UP : STA.w $0200

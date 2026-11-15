@@ -356,6 +356,11 @@
       "source_set": "shared",
       "path": "Masks/horse_ground_clearance.asm",
       "sha256": "1efddaaec47fd865666e62b5f65994c6e9c6b6be222f99e0621573f437538f0e"
+    },
+    "shared:Menu/menu_hud_codex.asm": {
+      "source_set": "shared",
+      "path": "Menu/menu_hud_codex.asm",
+      "sha256": "1e38946a586a33dbd8ae86404eb9656f73d26c690986eb20d8842a84ad022ea9"
     }
   },
   "claims": [
@@ -2952,6 +2957,30 @@
         "source": "shared:Core/symbols.asm",
         "symbol": "ItemBindingMenuY",
         "bank00_mirror": false
+      }
+    },
+    {
+      "id": "hud_corner_buffer",
+      "owner": "Codex HUD layout bottom corners (rupees + keys)",
+      "space": "wram",
+      "base": 8308810,
+      "size": 14,
+      "status": "shared",
+      "condition": {
+        "ENABLE_HUD_LAYOUT_CODEX": 1
+      },
+      "lifetime": "HUD_CodexCells writes rupee (5 words) and key (2 words) cells after every HUD rebuild/update; HUD_NMIUpload DMAs them to BG3 row 26 (VRAM $6342/$635C) each NMI. Lies in usdasm UNUSED_7EC84A after the $14A-byte HUD template copy, so RebuildHUD never touches it.",
+      "reset": "No reset: fully rewritten from SRAM rupees/keys on each HUD refresh; hidden HUD uploads blanks from $7EC700 instead.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Core/symbols.asm",
+        "shared:Menu/menu_hud_codex.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "HudCornerBuffer"
       }
     }
   ],
