@@ -22,8 +22,8 @@ Scenario (all real controller input):
    (A never binds).
 8. Same item on both buttons: Y on Boomerang shows green left and blue right corners.
 
---codex (ROM built with hud_layout_codex): one corner per button instead of
-four (Y = green top-left, X = blue bottom-right), so the marker counts differ.
+--codex (ROM built with hud_layout_codex): same four-corner marks; the gray
+cursor covers its own cell on blink-on frames, so marks are sampled across a blink.
 """
 from __future__ import annotations
 
@@ -87,11 +87,19 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
         return any(self.r(ANCILLA + i) == ident for i in range(5))
 
     def markers(self):
-        buf = self.b.read_block(MENU_BUF, MENU_BUF_LEN)
-        words = [buf[i] | (buf[i + 1] << 8) for i in range(0, len(buf) - 1, 2)]
-        ys = [0x1000 + 2 * i for i, w in enumerate(words) if w & 0x3FFF == Y_MARKER]
-        xs = [0x1000 + 2 * i for i, w in enumerate(words) if w & 0x3FFF == X_MARKER]
-        return ys, xs
+        # Under --codex the gray cursor covers its own cell's marks on
+        # blink-on frames; sample across a blink and keep the fullest read.
+        best = ([], [])
+        for _ in range(10 if self.codex else 1):
+            buf = self.b.read_block(MENU_BUF, MENU_BUF_LEN)
+            words = [buf[i] | (buf[i + 1] << 8) for i in range(0, len(buf) - 1, 2)]
+            ys = [0x1000 + 2 * i for i, w in enumerate(words) if w & 0x3FFF == Y_MARKER]
+            xs = [0x1000 + 2 * i for i, w in enumerate(words) if w & 0x3FFF == X_MARKER]
+            if len(ys) + len(xs) > len(best[0]) + len(best[1]):
+                best = (ys, xs)
+            if self.codex:
+                time.sleep(0.06)
+        return best
 
     def open_menu(self):
         self.press("START", frames=6)
@@ -144,10 +152,7 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
         ys, xs = self.markers()
         print(f"    markers Y={[hex(a) for a in ys]} X={[hex(a) for a in xs]}")
         # Bow and Boomerang are neighbors: they share one corner column, X shows there.
-        if self.codex:  # one corner each: Y on Bow (cursor cell), X on Boomerang
-            self.check("Y_green_corners_X_blue_corners", len(ys) == 1 and len(xs) == 1)
-        else:
-            self.check("Y_green_corners_X_blue_corners", len(ys) == 2 and len(xs) == 4)
+        self.check("Y_green_corners_X_blue_corners", len(ys) == 2 and len(xs) == 4)
         self.take_screenshot("01_markers_Y_bow_X_boomerang")
 
         # 3. X on Bottle (Y-only) is refused.
@@ -162,7 +167,7 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
         s = self.snap("X_again_clears")
         ys, xs = self.markers()
         self.check("X_cleared_no_X_marker", s["saved"][2] == 0 and len(xs) == 0
-                   and len(ys) == (1 if self.codex else 4))
+                   and len(ys) == 4)
         self.take_screenshot("02_X_cleared")
         self.tap("X")
         s = self.snap("X_rebound")
@@ -203,12 +208,8 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
         ys, xs = self.markers()
         s = self.snap("Y_and_X_on_boomerang")
         print(f"    markers Y={[hex(a) for a in ys]} X={[hex(a) for a in xs]}")
-        if self.codex:  # same cell: Y top-left $1108+X, X bottom-right $11CE+X
-            self.check("both_markers_side_by_side",
-                       s["menu_y"] == 2 and len(ys) == 1 and len(xs) == 1 and xs[0] == ys[0] + 0xC6)
-        else:
-            self.check("both_markers_side_by_side",
-                       s["menu_y"] == 2 and len(ys) == 2 and len(xs) == 2 and min(xs) == min(ys) + 6)
+        self.check("both_markers_side_by_side",
+                   s["menu_y"] == 2 and len(ys) == 2 and len(xs) == 2 and min(xs) == min(ys) + 6)
         self.take_screenshot("05_both_markers_one_item")
         self.check("menu_closed_end", self.close_menu("START"))
         s = self.snap("end")
