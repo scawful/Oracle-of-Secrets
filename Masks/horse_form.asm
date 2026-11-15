@@ -888,6 +888,15 @@ Horse_DrawPlayerOam_Long:
 
   .draw_shadow
   SEP #$20
+  ; Shadow only while airborne (same test as frame select): on the ground it read as Link's own.
+  LDA.l Horse_State : BNE .shadow_on
+  LDA.b $25 : BMI .shadow_neg_z
+    LDA.b $24 : BNE .shadow_on
+    BRL .shadow_done
+  .shadow_neg_z
+  LDA.b $24 : CMP.b #$F0 : BCC .shadow_on
+    BRL .shadow_done
+  .shadow_on
   ; Slots 6..7: Ground hoof shadow (two 8x8 tiles $6C at SX16, SY16+12)
   LDA.b #$6C : STA.b $0B
   LDA.b #$08 : ORA.b $65 : STA.b $0A
@@ -904,6 +913,7 @@ Horse_DrawPlayerOam_Long:
   LDA.b $00 : CLC : ADC.w #$0008 : STA.b $08
   JSR HorseOam_WriteSlot
   INY #4
+  .shadow_done
 
   ; Clear only unused entries; an eight-part horse consumes all twelve slots.
   REP #$30
