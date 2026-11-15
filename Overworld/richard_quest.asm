@@ -57,14 +57,16 @@
 
 ; ---------------------------------------------------------
 ; Data. Field spawn site: open design question (the village study may move
-; it). Placeholder = scawful's 2026-11-15 suggestion: map $24, tile16 (25,7).
+; it to a gated spot). Temporary test spot (scawful 2026-11-15): map $2B,
+; reachable on foot from the village. Old placeholder: map $24 (2448,2172),
+; inside the moat and tree ring, not reachable on foot.
 ; Layout: db area $8A (parent for large areas), dw world X, dw world Y,
 ;         db map/quadrant (documentation for the design table only).
 RichardFieldSpawn:
-  db $23               ; $8A at runtime: large area parent of map $24
-  dw $0800+(25*16)     ; world X (map $24 column 4 -> $0800)
-  dw $0800+124         ; world Y: tile row 7 + 12 px (grass NE of the moat)
-  db $24               ; map $24, tile16 (25,7)
+  db $23               ; $8A at runtime: large area parent of map $2B
+  dw $073A             ; world X 1850
+  dw $0B0E             ; world Y 2830
+  db $2B               ; map $2B, tile16 (19,16)
 
 ; Run path from the lady's pacing row to the shed door (door faces south).
 ; dw X, dw Y, db facing (0 up, 1 down, 2 left, 3 right); $FF ends.
