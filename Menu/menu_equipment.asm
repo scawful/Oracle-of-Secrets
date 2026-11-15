@@ -48,7 +48,11 @@ Menu_Equipment_Owned:
 .song
   CMP.b #$12 : BCS .supplies
   SEC : SBC.b #$0B                    ; song 1-6 < Ocarina progression
+if !ENABLE_EPONA_SONG == 1
+  JSL Ocarina_SongLearned_Long : BCC .none ; song 6 = Epona bit
+else
   CMP.l $7EF34C : BCS .none
+endif
   INC : BRA .done                    ; colored note variants 2-7
 .supplies
 if !MENU_EQUIPMENT_SUPPLIES_VISIBLE == 1

@@ -249,7 +249,11 @@ Menu_DrawMusicNotes:
   LDY.b #$00
 .notes
   PHY
+if !ENABLE_EPONA_SONG == 1
+  TYA : INC : JSL Ocarina_SongLearned_Long : BCS .learned
+else
   TYA : INC #2 : CMP.l $7EF34C : BCC .learned : BEQ .learned
+endif
   LDA.b #$01 : BRA .variant
 .learned
   TYA : INC #2
@@ -361,7 +365,14 @@ endif
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0000 : BEQ .no_ocarina
 if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
     ; Ocarina owned, no song learned ($7EF34C = 1): grey icon (entry 7).
+if !ENABLE_EPONA_SONG == 1
+    SEP #$20
+    JSL Ocarina_ValidSong_Long          ; 0 = no learned song (Epona bit counts)
+    REP #$20
+    AND.w #$00FF : BNE .ocarina_has_songs
+else
     CMP.w #$0002 : BCS .ocarina_has_songs
+endif
       LDA.w #$0007 : BRA .spoof_ocarina
     .ocarina_has_songs
     LDA.w $030F : AND.w #$00FF : BNE .spoof_ocarina

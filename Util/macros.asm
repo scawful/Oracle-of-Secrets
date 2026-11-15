@@ -298,6 +298,12 @@ endif
 ; Off by default on master; this stack enables it for A6 fold proof.
 !ENABLE_HORSE_MOUNTED_BOW           = 1
 
+; Epona's Song (Ranch Girl teaches it with the Ocarina): song 6, the Equipment
+; cell Elegy of Stone used (decisions.org 2026-11-16, "1 Replace Stone").
+; Learned = SideQuestProg2 bit 1 (!SideQuest2_EponaSong), not the $7EF34C count.
+; Off until native save/reopen proof and the song effect is decided.
+!ENABLE_EPONA_SONG                  = 0
+
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
 !LOG_MUSIC     = 1

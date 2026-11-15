@@ -161,7 +161,12 @@ if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
     ; unchanged. Same as vanilla's unusable Mushroom in LinkItem_Powder:
     ; $07A2A8 LDA #$3C : JSR PlaySFX_Set2 ($078028), then $07A30C clears
     ; $3A bit 6 (set by CheckYButtonPress $07B073) so the next Y press works.
+if !ENABLE_EPONA_SONG == 1
+    ; UpdateFluteSong just validated CurrentSong: 0 = no learned song.
+    LDA.w $030F : BNE .has_song
+else
     LDA.l $7EF34C : CMP.b #$02 : BCS .has_song
+endif
       LDA.b #$3C : JSR Player_DoSfx2
       LDA.b $3A : AND.b #$BF : STA.b $3A
       RTS
@@ -179,7 +184,11 @@ endif
                     RTS
                   +
                   CMP.b #$06 : BNE +
+if !ENABLE_EPONA_SONG == 1
+                    JSL OcarinaEffect_Epona
+else
                     JSL OcarinaEffect_Stone
+endif
                     RTS
                   +
                   JMP .song_of_healing
@@ -597,6 +606,16 @@ if !ENABLE_EQUIPMENT_MENU == 1
   ; CurrentSong ($030F) is volatile; SavedOcarinaSong ($7EF3AB) keeps the
   ; choice across save/reload. Restore from it when $030F is 0, validate
   ; against the learned count (garbage or unlearned -> song 1), then sync.
+if !ENABLE_EPONA_SONG == 1
+  ; Learned songs are no longer a contiguous 1..count-1 range (song 6 is
+  ; its own bit), so validation picks the lowest learned song instead.
+  LDA.w CurrentSong : BNE .epona_check
+  LDA.l SavedOcarinaSong : STA.w CurrentSong
+.epona_check
+  JSL Ocarina_ValidSong_Long
+  STA.w CurrentSong : STA.l SavedOcarinaSong
+  RTL
+endif
   LDA.l $7EF34C : CMP.b #$02 : BCC .equipment_none
   CMP.b #$08 : BCC .equipment_count
   LDA.b #$07
@@ -619,6 +638,7 @@ if !ENABLE_EQUIPMENT_MENU == 1
   LDA.b #$00 : STA.l SavedOcarinaSong
   RTL
 else
+  assert !ENABLE_EPONA_SONG == 0, "Epona's Song needs !ENABLE_EQUIPMENT_MENU = 1"
   ; Highest song = min(Flute - 1, 6); keeps the diagnostic legacy selector
   ; compatible with the same saved learned-count contract as Equipment.
   LDA.l $7EF34C : CMP.b #$02 : BCC .no_songs
@@ -648,6 +668,50 @@ else
   RTL
 endif
 }
+
+if !ENABLE_EPONA_SONG == 1
+; In: A = song 1-6, 8-bit A. Out: C set = learned. Keeps A, X, Y.
+; Songs 1-5: learned when song < $7EF34C (the teacher count; unchanged).
+; Song 6 = Epona's Song: learned only by !SideQuest2_EponaSong. A count of 7
+; (old Elegy of Stone saves/cheats) no longer teaches song 6.
+Ocarina_SongLearned_Long:
+{
+  PHA
+  CMP.b #$01 : BCC .no
+  CMP.b #$07 : BCS .no
+  CMP.b #$06 : BEQ .epona
+  CMP.l $7EF34C : BCS .no
+.yes
+  PLA : SEC : RTL
+.epona
+  LDA.l SideQuestProg2 : AND.b #!SideQuest2_EponaSong : BNE .yes
+.no
+  PLA : CLC : RTL
+}
+
+; Out: A = CurrentSong when it is learned, else the lowest learned song,
+; else 0 (no song). 8-bit A. Keeps X, Y. Writes nothing; any data bank.
+Ocarina_ValidSong_Long:
+{
+  LDA.l $7E0000+CurrentSong
+  JSL Ocarina_SongLearned_Long : BCS .done
+  LDA.b #$01
+.next
+  JSL Ocarina_SongLearned_Long : BCS .done
+  INC : CMP.b #$07 : BCC .next
+  LDA.b #$00
+.done
+  RTL
+}
+
+; Epona's Song effect: OPEN (decisions.org 2026-11-16 leaves it undecided).
+; Placeholder: the song plays (Healing jingle SFX) and does nothing else.
+OcarinaEffect_Epona:
+{
+  LDA.b #$13 : STA.l $7E012E
+  RTL
+}
+endif
 incsrc "Items/song_secrets_stone.asm"
 if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
   incsrc "Items/special_soaring.asm"
