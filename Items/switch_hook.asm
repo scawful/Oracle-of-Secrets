@@ -3,17 +3,38 @@
 ; Ordinary Hookshot/Goldstar retain their existing collision path.
 ;
 ; Target contract: live $D5 ice block or native $1C movable statue,
-; grounded, stopped, same dungeon/layer, within 128px, visible landing,
-; and safe floor under both footprints. The Elegy of Stone echo ($1C with
-; SprFrame=!Stone_Marker) is not pushable and is never a target.
+; grounded, stopped, same dungeon room/layer or same overworld area,
+; within 128px, and safe floor under both footprints. The Elegy of Stone
+; echo ($1C with SprFrame=!Stone_Marker) is not pushable and is never a target.
 ; Ruling 2026-10-19: "Ice blocks + statues" (no pots, no enemies).
-; This prototype intentionally has no outdoor or enemy exchange.
+; Step 4 (2026-11-12, scawful "Go step 4"): ordinary small enemies from
+; SwitchHook_Enemies swap too. An enemy is frozen (vanilla stun state $0B,
+; timers held) from the latch until the beat ends, then stunned ~1 s with
+; the vanilla stun convention ($0DD0=$0B, $0DF0=$40, $0B58 timer).
+; Overworld (module $09, $1B=0, step 3): the place key is area $8A instead of
+; room $A0, there is no layer check, every submodule cancels, and the
+; overworld floor list is plain walkable ground only. Link's landing must sit
+; 16px inside the area's transition thresholds, so the camera never needs
+; to cross an area edge; Overworld_OperateCameraScroll stops at the area
+; bounds. Module $0B (special overworld) is refused.
 ; Link's feet occupy sprite Y+8..15, so Link Y = block Y-8.
 ; Both actors recompute $0642 from their own position every active frame,
 ; after Ancilla_Main, so a moved statue presses or releases a plate itself.
 ;
+; Swap beat (Oracle of Ages, oracles-disasm object/switchHook): the hook
+; clings 17 frames, then Link and the target rise 16 frames, exchange in
+; one frame, fall 16 frames. From the swap on, the camera steps (vanilla
+; Underworld_HandleCamera, called from a Module07 hook because the hook
+; state zeroes $30/$31) until Link is in the follow box or the room limit
+; stops it; only then does the chain end and control return.
+; Link never moves through space, so no $037E drag is involved.
+;
+; $0268       : beat counter (0 = no beat; read only while shot tag is active)
+; $0269       : target sprite slot
+; $026A/$026B : $E2/$E8 low bytes seen on the previous beat frame
+; $026C       : 1 when the latched target is an enemy (step 4)
 ; $07F8       : active-shot tag ($A5, zero otherwise)
-; $07F9-$07FA : launch dungeon room
+; $07F9-$07FA : launch place key (dungeon room $A0, or overworld area $8A)
 ; $07FB       : launch layer
 ; $07FC       : launch module
 ; $07FD       : Bombchu wall-following state (owned by Items/bombchu.asm)
@@ -31,10 +52,34 @@ pullpc
 !SwitchHookMode   = $07FC
 !SwitchHookTag    = $A5
 !SwitchHookStatue = $1C               ; usdasm Sprite_1C_Statue ($06C0E8)
+!SwitchHookBeat   = $0268             ; vanilla free RAM $0224-$027F
+!SwitchHookTarget = $0269
+!SwitchHookCamX   = $026A
+!SwitchHookCamY   = $026B
+!SwitchHookEnemy  = $026C             ; 1 = latched target is an enemy
+!SwitchHookHeld   = $026D             ; slot+1 of the last swapped enemy (0 = none)
+!SwitchHookHeldType = $026E           ; its sprite type at the swap
+!SwitchHookHeldRoom = $026F           ; full dungeon room word at the swap
+!SwitchHookStun   = $20               ; $0B58 after landing: ~64 frames
+!SwitchHookCling  = 17                ; Ages: 1+4+4+4+4 cling frames
+!SwitchHookRise   = 16                ; Ages: z -1/frame for 16 frames
+!SwitchHookSwap   = !SwitchHookCling+!SwitchHookRise+1
+!SwitchHookLand   = !SwitchHookSwap+16
 
 assert !SwitchHookMode < $0800, "Switch Hook exceeds its WRAM reservation"
 
 pushpc
+; @hook SwitchHook_ResetSprite kind=jsl target=SwitchHook_ResetSprite
+; @source usdasm/bank_0D.asm:SpritePrep_ResetProperties ($0DB871)
+; @assumption M/X=8, DBR=$0D, X=slot. Normal and dynamic initialization
+; share this reset, including same-type reuse before the next gameplay tick.
+assert read3($0DB871) == $0F009E, "Sprite reset entry moved"
+assert read3($0DB874) == $0E909E, "Sprite reset continuation moved"
+org $0DB871
+  JSL SwitchHook_ResetSprite
+  NOP #2
+assert pc() == $0DB877, "Switch Hook sprite reset gateway exceeds six bytes"
+
 ; @hook SwitchHook_AncillaEntry kind=jml target=SwitchHook_AncillaEntry
 ; @source usdasm/bank_08.asm:Ancilla1F_Hookshot ($08BD74)
 ; @assumption M=8, X=8, DBR=$08, X=ancilla slot.
@@ -64,7 +109,47 @@ org $08BECA
   JML SwitchHook_TileAnchor
   NOP
 assert pc() == $08BECF, "Switch Hook anchor gateway exceeds five bytes"
+
+; @hook SwitchHook_DungeonCamera kind=jsl target=SwitchHook_DungeonCamera
+; @source usdasm/bank_02.asm:Module07_Dungeon ($0287E5)
+; @assumption Runs every Module07 frame after Link and Underworld_HandleCamera,
+; before LDA $E2 : PHA saves the camera around Sprite_Main.
+; Replaces REP #$21 : LDA $E2; the target ends with the same two instructions.
+assert read2($0287E5) == $21C2, "Vanilla Module07 camera save moved"
+assert read2($0287E7) == $E2A5, "Vanilla Module07 camera save moved"
+assert read1($028053) == $6B, "Switch Hook camera RTL trampoline moved"
+org $0287E5
+  JSL SwitchHook_DungeonCamera
+assert pc() == $0287E9, "Switch Hook camera gateway exceeds four bytes"
+
+; @hook SwitchHook_OverworldCamera kind=jsl target=SwitchHook_OverworldCamera
+; @source usdasm/bank_02.asm:Module09_00_PlayerControl ($02A5CC)
+; @assumption M=8, X=8; runs every Module09 player-control frame after
+; Link_Main, before JSR Overworld_OperateCameraScroll and the ZS hook at
+; $02A5D3 (entrances, OverworldHandleTransitions).
+; Replays JSL Graphics_LoadChrHalfSlot; skips the following JSR only on
+; frames where the target already ran Overworld_OperateCameraScroll.
+assert read1($02A5CC) == $22, "Vanilla Module09 chr half-slot call moved"
+assert read3($02A5CD) == $00E3FA, "Vanilla Module09 chr half-slot call moved"
+assert read3($02A5D0) == $BB9020, "Vanilla Module09 camera scroll call moved"
+org $02A5CC
+  JSL SwitchHook_OverworldCamera
+assert pc() == $02A5D0, "Switch Hook overworld camera gateway exceeds four bytes"
 pullpc
+
+; M=8 on entry. Returns M=16, A = place key: dungeon room $A0, or
+; overworld area $8A. X/Y untouched.
+SwitchHook_PlaceKey:
+{
+  LDA.b $1B : BEQ .overworld
+  %a16()
+  LDA.b $A0
+  RTS
+  .overworld
+  %a16()
+  LDA.b $8A : AND.w #$00FF
+  RTS
+}
 
 ; Called once from BeginGoldstarOrHookshot, before ancilla creation.
 ; Entry/exit: preserve full A/X/Y, P and DBR; no caller scratch used.
@@ -76,10 +161,12 @@ SwitchHook_Init:
   LDA.w $0202 : CMP.b #$1D : BNE .done
   LDA.w $0304 : CMP.b #$0E : BNE .done
   LDA.l SwitchHookOwned : CMP.b #$01 : BNE .done
+  STZ.w !SwitchHookBeat
+  STZ.w !SwitchHookTarget
   LDA.b $10 : STA.w !SwitchHookMode
   LDA.b $EE : STA.w !SwitchHookLayer
-  %a16()
-  LDA.b $A0 : STA.w !SwitchHookRoom
+  JSR SwitchHook_PlaceKey
+  STA.w !SwitchHookRoom
   %a8()
   LDA.b #!SwitchHookTag : STA.w !SwitchHookActive
   .done
@@ -91,10 +178,28 @@ SwitchHook_Init:
 ; Entry/exit: A/X/Y/DBR/P preserved, works with either accumulator width.
 SwitchHook_Clear:
 {
-  PHP : %a8()
+  PHP : REP #$30 : PHA : PHX : PHY : SEP #$30
+  LDA.w !SwitchHookActive : CMP.b #!SwitchHookTag : BNE .idle
+  LDA.w !SwitchHookBeat : BEQ .idle
+  ; Abort or finish: put both actors back on the ground.
+  LDY.w !SwitchHookTarget
+  LDA.b #$00 : STA.w SprHeight,Y
+  LDA.w !SwitchHookEnemy : BEQ .grounded
+  ; Enemy: leave the freeze as a short vanilla stun (only if still frozen).
+  LDA.w SprState,Y : CMP.b #$0B : BNE .grounded
+  LDA.b #!SwitchHookStun : STA.w SprStunTimer,Y
+  LDA.b #$40 : STA.w SprTimerA,Y
+  LDA.b #$00 : STA.w SprTimerF,Y
+  .grounded
+  STZ.b $24 : STZ.b $25
+  STZ.b $30 : STZ.b $31
+  STZ.w !SwitchHookBeat
+  .idle
   STZ.w !SwitchHookActive
+  STZ.w !SwitchHookEnemy
   STZ.w !SwitchHookRoom : STZ.w !SwitchHookRoom+1
   STZ.w !SwitchHookLayer : STZ.w !SwitchHookMode
+  REP #$30 : PLY : PLX : PLA
   PLP
   RTL
 }
@@ -112,13 +217,25 @@ SwitchHook_Tick:
   JMP .done
   .active
   LDA.b $10 : CMP.w !SwitchHookMode : BNE .cancel
-  LDA.b $11 : BNE .cancel
+  LDA.b $11 : BEQ .submodule_ok
+  ; A swapped statue or Link can trip a plate room tag mid-beat. Those
+  ; in-room submodules pause the beat (AncillaEntry) instead of cancelling;
+  ; every transition submodule still cancels.
+  LDA.w !SwitchHookBeat : BEQ .cancel
+  LDA.b $10 : CMP.b #$07 : BNE .cancel    ; overworld: every submodule cancels
+  LDA.b $11
+  CMP.b #$05 : BEQ .submodule_ok          ; Module07_05_ControlShutters
+  CMP.b #$16 : BEQ .submodule_ok          ; Module07_16_UpdatePegs
+  CMP.b #$17 : BNE .cancel                ; Module07_17_PressurePlate
+  .submodule_ok
   LDA.w $0202 : CMP.b #$1D : BNE .cancel
   LDA.w $0304 : CMP.b #$0E : BNE .cancel
   LDA.l SwitchHookOwned : CMP.b #$01 : BNE .cancel
+  LDA.b $1B : BEQ .place                  ; layer is a dungeon key only
   LDA.b $EE : CMP.w !SwitchHookLayer : BNE .cancel
-  %a16()
-  LDA.b $A0 : CMP.w !SwitchHookRoom
+  .place
+  JSR SwitchHook_PlaceKey
+  CMP.w !SwitchHookRoom
   %a8()
   BNE .cancel
   LDX.b #$04
@@ -163,10 +280,19 @@ SwitchHook_AncillaEntry:
 {
   JSL SwitchHook_Tick
   LDA.w $0C4A,X : CMP.b #$1F : BNE .deleted
+  LDA.w !SwitchHookActive : CMP.b #!SwitchHookTag : BNE .flight
+  LDA.w !SwitchHookBeat : BEQ .flight
+  LDA.b $11 : BEQ .beat       ; plate/shutter/peg submodule: hold the beat
+  LDA.w !SwitchHookBeat : CMP.b #!SwitchHookCling+1 : BCS .deleted
+  BRA .paused                 ; draw as the beat would: hook only while clinging
+  .beat
+  JSL SwitchHook_Beat
+  BCC .deleted                ; hidden frame, or the beat ended
+  .paused
+  JML $08BD9C                 ; draw the clinging hook only
+  .flight
   LDA.b $11 : BNE .paused
   JML $08BD78
-  .paused
-  JML $08BD9C
   .deleted
   JML $08BDA2
 }
@@ -182,7 +308,7 @@ SwitchHook_SpriteContact:
   .switch
   JSL SwitchHook_TryExchange
   BCC .continue
-  JML $08BDA2                 ; chain was deleted: return to ancilla caller
+  JML $08BD9C                 ; beat started: draw the clinging hook only
 }
 
 SwitchHook_TileAnchor:
@@ -223,8 +349,168 @@ SwitchHook_TryExchange:
   .no_swap
   PLY : PLX : PLB : CLC : RTL
   .exchange
-  STY.b $0E
-  ; The source block footprint is Link X, Link Y+8. Swap both bytes.
+  ; Start the swap beat. Positions change only on the hidden swap frame.
+  TYA : STA.w !SwitchHookTarget
+  LDA.b #$01 : STA.w !SwitchHookBeat
+  LDA.b $E2 : STA.w !SwitchHookCamX
+  LDA.b $E8 : STA.w !SwitchHookCamY
+  STZ.b $30 : STZ.b $31
+  STZ.w $037E
+  LDA.b #$01 : STA.w $037B    ; Link stays unhittable for the whole beat
+  LDA.w !SwitchHookEnemy : BEQ .committed
+  JSR SwitchHook_FreezeEnemy  ; no AI or contact damage from this frame on
+  .committed
+  PLY : PLX : PLB : SEC : RTL
+}
+
+; One beat frame. Entry M/X=8, X=ancilla; exit M/X=8, X preserved.
+; Carry set: draw the clinging hook. Carry clear: draw nothing (the chain
+; may have been deleted). Scratch $00-$0F is free at the ancilla boundary.
+SwitchHook_Beat:
+{
+  PHB : PHK : PLB : PHY
+  LDA.b $5D : CMP.b #$13 : BNE .abort
+  LDY.w !SwitchHookTarget
+  LDA.w !SwitchHookEnemy : BNE .enemy
+  LDA.w SprState,Y : CMP.b #$09 : BNE .abort
+  BRA .alive
+  .enemy
+  ; A killed or otherwise released enemy (state left $0B) cancels the beat.
+  LDA.w SprState,Y : CMP.b #$0B : BNE .abort
+  LDA.w SprHealth,Y : BEQ .abort
+  JSR SwitchHook_FreezeEnemy
+  .alive
+  LDA.w !SwitchHookBeat : CMP.b #$FF : BEQ .finish  ; settle safety cap
+  INC : STA.w !SwitchHookBeat
+  CMP.b #!SwitchHookCling : BCC .cling
+  BEQ .cling
+  CMP.b #!SwitchHookSwap : BCC .rise
+  BEQ .swap
+  CMP.b #!SwitchHookLand+1 : BCC .fall
+  ; Landed: wait until the camera stopped moving on the previous frame.
+  LDA.b $E2 : CMP.w !SwitchHookCamX : BNE .camera
+  LDA.b $E8 : CMP.w !SwitchHookCamY : BNE .camera
+  .finish
+  STZ.w $0C4A,X
+  STZ.w $037B
+  JSL SwitchHook_Clear
+  PLY : PLB : CLC : RTL
+  .abort
+  STZ.w $0C4A,X
+  STZ.w $037B                 ; Link left $13; its exit path will not clear it
+  JSL SwitchHook_Clear
+  PLY : PLB : CLC : RTL
+  .cling
+  PLY : PLB : SEC : RTL
+  .rise
+  SEC : SBC.b #!SwitchHookCling
+  JSR SwitchHook_SetHeight
+  PLY : PLB : CLC : RTL
+  .swap
+  JSR SwitchHook_Exchange
+  BRA .camera
+  .fall
+  EOR.b #$FF : SEC : ADC.b #!SwitchHookLand   ; A = Land - counter
+  JSR SwitchHook_SetHeight
+  .camera
+  ; SwitchHook_DungeonCamera steps the camera before Sprite_Main; record
+  ; this frame's result so the next landed frame can see it stopped.
+  LDA.b $E2 : STA.w !SwitchHookCamX
+  LDA.b $E8 : STA.w !SwitchHookCamY
+  PLY : PLB : CLC : RTL
+}
+
+; Module07 at $0287E5, after Link and the vanilla camera, before the
+; $E2 save/restore around Sprite_Main (an ancilla-side $E2 write is lost).
+; LinkState_Hookshotting zeroes $30/$31, so the vanilla camera never moves
+; during the beat; from the swap frame on, feed it Link's box offset here.
+; Underworld_HandleCamera is JSR-only and ends in RTS: the pushed vanilla
+; RTL at $028053 returns to us. Bank $2B DB maps $06xx.
+; Exit: replaced REP #$21 : LDA $E2 (M=16, carry clear, A=$E2).
+SwitchHook_DungeonCamera:
+{
+  PHP
+  REP #$30
+  PHX : PHY
+  PHB : PHK : PLB
+  SEP #$30
+  ; Module07 reaches this after every submodule, including transitions and
+  ; non-default Link states. Unlike the item tick, this is not mask-gated.
+  JSR SwitchHook_HeldEnemyValid
+  LDA.w !SwitchHookActive : CMP.b #!SwitchHookTag : BNE .done
+  LDA.w !SwitchHookBeat : CMP.b #!SwitchHookSwap : BCC .done
+  LDA.b $5D : CMP.b #$13 : BNE .done
+  LDA.b $11 : BNE .done
+  JSR SwitchHook_CameraStep
+  LDA.b $30 : ORA.b $31 : BEQ .done
+  PHK : PEA.w .return-1
+  PEA.w $8052                 ; $02:8053 RTL - 1
+  JML $02BA31                 ; Underworld_HandleCamera
+  .return
+  SEP #$30
+  STZ.b $30 : STZ.b $31
+  .done
+  PLB
+  REP #$30
+  PLY : PLX
+  PLP
+  REP #$21 : LDA.b $E2
+  RTL
+}
+
+; Module09 at $02A5CC (see hook above). From the swap frame on, this frame's
+; one Overworld_OperateCameraScroll call runs here with Link's follow-box
+; offset in $30/$31, then $30/$31 are zeroed so OverworldHandleTransitions
+; sees no movement and never starts an edge transition. The camera stops at
+; the area bounds ($0600-$0606) on its own; $0416 map streaming is left for
+; OverworldHandleTransitions, as in the vanilla frame (portal_rod.asm uses
+; the same scroll call). Any other frame returns to the vanilla JSR.
+; Exit: M=8, X=8 as the vanilla JSR leaves them; A/X/Y clobbered like it.
+SwitchHook_OverworldCamera:
+{
+  JSL $00E3FA                 ; Graphics_LoadChrHalfSlot (replayed)
+  PHP
+  PHB : PHK : PLB
+  SEP #$30
+  STZ.w !SwitchHookHeld       ; dungeon weight cannot follow Link outdoors
+  LDA.w !SwitchHookActive : CMP.b #!SwitchHookTag : BNE .vanilla
+  LDA.w !SwitchHookBeat : CMP.b #!SwitchHookSwap : BCC .vanilla
+  LDA.b $5D : CMP.b #$13 : BNE .vanilla
+  LDA.b $11 : BNE .vanilla
+  JSR SwitchHook_OverworldCameraStep
+  JSL Overworld_OperateCameraScroll_Long
+  SEP #$30
+  STZ.b $30 : STZ.b $31
+  PLB : PLP
+  ; Return past JSR Overworld_OperateCameraScroll ($02A5D0, 3 bytes).
+  PHP
+  REP #$20
+  LDA.b $02,S : CLC : ADC.w #$0003 : STA.b $02,S
+  PLP
+  RTL
+  .vanilla
+  PLB : PLP
+  RTL
+}
+
+; A = height above the floor; Y = target. Lifts both actors the same amount.
+SwitchHook_SetHeight:
+{
+  STA.w SprHeight,Y
+  STA.b $24 : STZ.b $25
+  RTS
+}
+
+; Hidden swap frame. Y = target, X = ancilla; preserves X/Y.
+; The source block footprint is Link X, Link Y+8. Swap both bytes.
+SwitchHook_Exchange:
+{
+  LDA.b $21 : STA.b $40       ; old high bytes: quadrant delta for camera
+  LDA.b $23 : STA.b $41
+  LDA.w SprY,Y : STA.b $0A
+  LDA.w SprYH,Y : STA.b $0B
+  LDA.w SprX,Y : STA.b $0C
+  LDA.w SprXH,Y : STA.b $0D
   LDA.b $22 : STA.w SprX,Y
   LDA.b $23 : STA.w SprXH,Y
   %a16()
@@ -237,31 +523,144 @@ SwitchHook_TryExchange:
   LDA.b #$00
   STA.w SprXSpeed,Y : STA.w SprYSpeed,Y
   STA.w SprXRound,Y : STA.w SprYRound,Y
+  LDA.w !SwitchHookEnemy : BNE .enemy_state  ; enemy AI state stays intact
+  LDA.b #$00
   STA.w SprTimerA,Y : STA.w SprMiscA,Y : STA.w SprMiscC,Y
+  BRA .state_done
+  .enemy_state
+  ; Only dungeon hold plates use the marker; an overworld swap drops it.
+  STZ.w !SwitchHookHeld
+  LDA.b $1B : BEQ .state_done
+  TYA : INC : STA.w !SwitchHookHeld
+  LDA.w SprType,Y : STA.w !SwitchHookHeldType
+  REP #$20
+  LDA.b $A0 : STA.w !SwitchHookHeldRoom
+  SEP #$20
+  .state_done
   ; Cached reset coordinates deliberately stay at the original puzzle origin.
   STZ.w $0642                 ; block recomputes its switch contact next tick
-  STZ.b $30 : STZ.b $31
-  STZ.w $037E
-  LDX.b $0F : STZ.w $0C4A,X
-  LDA.b #$0F : STA.w $012F    ; SFX3.0F: existing magical effect sound
-  JSL SwitchHook_Clear
-  PLY : PLX : PLB : SEC : RTL
+  LDA.b $2F : EOR.b #$02 : STA.b $2F   ; Ages: Link turns around on swap
+  LDA.b $1B : BEQ .no_quadrant      ; dungeon-only: quadrant + room flags
+  PHX : PHY
+  JSL ApplyLinksMovementToCamera      ; quadrant + camera bounds ($A9/$AA)
+  PLY : PLX
+  .no_quadrant
+  LDA.b $21 : STA.b $40
+  LDA.b $23 : STA.b $41
+  RTS
 }
 
+; Mirrors Underworld_HandleCamera's thresholds: request an 8px step toward
+; Link on each axis where he is outside the follow box. The vanilla loop runs
+; later this frame, scrolls one pixel per step and stops at room limits.
+SwitchHook_CameraStep:
+{
+  STZ.b $30 : STZ.b $31
+  %a16()
+  LDA.b $78 : AND.w #$00FF : BEQ .flat
+  LDA.b $24 : CMP.w #$FFFF : BNE .height
+  .flat
+  LDA.w #$0000
+  .height
+  STA.b $00
+  LDA.b $20 : SEC : SBC.b $00 : AND.w #$01FF : CLC : ADC.w #$000C
+  STA.b $00
+  CMP.w $061A : BCC .not_down
+  %a8()
+  LDA.b #$08 : STA.b $30
+  %a16()
+  BRA .horizontal
+  .not_down
+  LDA.w $0618 : CMP.b $00 : BCC .horizontal
+  %a8()
+  LDA.b #$F8 : STA.b $30
+  %a16()
+  .horizontal
+  LDA.b $22 : AND.w #$01FF : CLC : ADC.w #$0008
+  STA.b $00
+  CMP.w $061E : BCC .not_right
+  %a8()
+  LDA.b #$08 : STA.b $31
+  RTS
+  .not_right
+  LDA.w $061C : CMP.b $00
+  %a8()
+  BCC .done
+  LDA.b #$F8 : STA.b $31
+  .done
+  RTS
+}
+
+; Overworld_OperateCameraScroll ($02BB90) keeps a point, not a box: its
+; boundary check sets the up/left limit 2px past the down/right limit
+; ($0618 = $061A+2, $061C = $061E+2), and only Link's velocity sign picks
+; one side. Walking leaves the reference ($20+12 or $22+8) at limit-1 after
+; a down/right scroll and at limit+3 after an up/left scroll. A step that
+; tested both sides would bounce between them, so request a step only
+; outside that [-1,+3] rest band. Full 16-bit positions; no room mask.
+; Entry/exit M=8. Clobbers $00.
+SwitchHook_OverworldCameraStep:
+{
+  STZ.b $30 : STZ.b $31
+  %a16()
+  LDA.b $78 : AND.w #$00FF : BEQ .flat
+  LDA.b $24 : CMP.w #$FFFF : BNE .height
+  .flat
+  LDA.w #$0000
+  .height
+  STA.b $00
+  LDA.b $20 : SEC : SBC.b $00 : CLC : ADC.w #$000C
+  STA.b $00
+  SEC : SBC.w #$0004 : CMP.w $061A : BCC .not_down   ; ref >= limit+4
+  %a8()
+  LDA.b #$08 : STA.b $30
+  %a16()
+  BRA .horizontal
+  .not_down
+  LDA.b $00 : CLC : ADC.w #$0002 : CMP.w $061A       ; ref <= limit-2
+  BEQ .up : BCS .horizontal
+  .up
+  %a8()
+  LDA.b #$F8 : STA.b $30
+  %a16()
+  .horizontal
+  LDA.b $22 : CLC : ADC.w #$0008
+  STA.b $00
+  SEC : SBC.w #$0004 : CMP.w $061E : BCC .not_right
+  %a8()
+  LDA.b #$08 : STA.b $31
+  RTS
+  .not_right
+  LDA.b $00 : CLC : ADC.w #$0002 : CMP.w $061E
+  %a8()
+  BEQ .left : BCS .done
+  .left
+  LDA.b #$F8 : STA.b $31
+  .done
+  RTS
+}
+
+; Dungeon: module $07, $1B=1, layer and room keys. Overworld: module $09,
+; $1B=0, area key only. X/Y preserved.
 SwitchHook_ContextValid:
 {
-  LDA.b $10 : CMP.b #$07 : BNE .no
-  CMP.w !SwitchHookMode : BNE .no
-  LDA.b $1B : CMP.b #$01 : BNE .no
+  LDA.b $10 : CMP.w !SwitchHookMode : BNE .no
   LDA.b $11 : ORA.w $037E : BNE .no
   LDA.b $5D : CMP.b #$13 : BNE .no
   LDA.w $0304 : CMP.b #$0E : BNE .no
   LDA.w $0202 : CMP.b #$1D : BNE .no
   LDA.l SwitchHookOwned : CMP.b #$01 : BNE .no
+  LDA.b $10 : CMP.b #$09 : BEQ .overworld
+  CMP.b #$07 : BNE .no
+  LDA.b $1B : CMP.b #$01 : BNE .no
   LDA.b $EE : CMP.b #$02 : BCS .no
   CMP.w !SwitchHookLayer : BNE .no
-  %a16()
-  LDA.b $A0 : CMP.w !SwitchHookRoom
+  BRA .place
+  .overworld
+  LDA.b $1B : BNE .no
+  .place
+  JSR SwitchHook_PlaceKey
+  CMP.w !SwitchHookRoom
   %a8()
   BNE .no
   SEC : RTS
@@ -269,17 +668,162 @@ SwitchHook_ContextValid:
   CLC : RTS
 }
 
+; Swappable sprite types: type, hit height above the 16x16 base ($08).
+SwitchHook_Targets:
+  db Sprite_IceBlock, $00
+  db !SwitchHookStatue, $08                ; statue head
+  db Sprite_SwapDiamond, $00               ; Ages Swap Diamond
+.end
+
+; Step 4: ordinary small enemies (vanilla IDs, none replaced by Oracle
+; sprites). All use hitbox class 0 (12x14), are not harmless, impervious or
+; deflecting, and their mains stop at Sprite_CheckIfActive outside state 9,
+; so the vanilla stun state $0B freezes their AI and contact damage.
+; Excluded types keep the step-3 pass-through. Reasons: STEP4_ENEMIES.md.
+SwitchHook_Enemies:
+  db $0D                                   ; Buzzblob
+  db $12                                   ; Moblin
+  db $20                                   ; Sluggula
+  db $26                                   ; Hardhat Beetle
+  db $4E, $4F                              ; Popo
+  db $6D                                   ; Rat
+  db $6E                                   ; Rope
+  db $8B                                   ; Gibdo
+.end
+
+; Y = enemy slot; M/X=8. Hold the vanilla stun state with no movement:
+; $0B58 >= $38 skips the wake-up shake, $0DF0 >= $20 skips
+; Sprite_CheckDamageFromLink, zero $0F80 keeps the beat's height.
+SwitchHook_FreezeEnemy:
+{
+  LDA.b #$0B : STA.w SprState,Y
+  LDA.b #$40 : STA.w SprStunTimer,Y : STA.w SprTimerA,Y
+  LDA.b #$00
+  STA.w SprXSpeed,Y : STA.w SprYSpeed,Y
+  STA.w SprTimerF,Y : STA.w SprRecoil,Y
+  RTS
+}
+
+; Replays the two native resets with A/P/X/Y/DBR unchanged. Initializing a
+; tracked slot invalidates its identity before any new sprite can hold it.
+SwitchHook_ResetSprite:
+{
+  PHP : REP #$20 : PHA : SEP #$20
+  TXA : INC : CMP.w !SwitchHookHeld : BNE .done
+  STZ.w !SwitchHookHeld
+  .done
+  REP #$20 : PLA : PLP
+  STZ.w $0F00,X
+  STZ.w $0E90,X
+  RTL
+}
+
+; M/X=8; out C=valid, X=slot. No scratch. Module07's camera-save hook calls
+; this after every submodule even after the chain is gone; the plate reader
+; validates again before use. Pausing in the interface preserves the actor.
+SwitchHook_HeldEnemyValid:
+{
+  LDA.w !SwitchHookHeld : BEQ .no
+  CMP.b #$11 : BCS .drop
+  LDA.b $1B : BEQ .drop
+  LDA.b $10 : CMP.b #$07 : BEQ .dungeon
+  CMP.b #$0E : BNE .drop
+  LDA.w $010C : CMP.b #$07 : BNE .drop
+  BRA .room                 ; interface submodules are not dungeon submodules
+  .dungeon
+  LDA.b $11 : BEQ .room
+  CMP.b #$05 : BEQ .room
+  CMP.b #$16 : BEQ .room
+  CMP.b #$17 : BNE .drop
+  .room
+  REP #$20
+  LDA.b $A0 : CMP.w !SwitchHookHeldRoom
+  SEP #$20
+  BNE .drop
+  LDX.w !SwitchHookHeld : DEX
+  LDA.w SprType,X : CMP.w !SwitchHookHeldType : BNE .drop
+  LDA.w SprHealth,X : BEQ .drop
+  LDA.w SprState,X : CMP.b #$09 : BEQ .valid
+  CMP.b #$0B : BNE .drop
+  .valid
+  SEC : RTS
+  .drop
+  STZ.w !SwitchHookHeld
+  .no
+  CLC : RTS
+}
+
+; A swapped enemy holds a plate only while grounded on the current plane.
+; Match Stone's four-corner footprint; neither a flying enemy nor a partial
+; overlap counts. M/X=8; caller saves A/X/Y/DBR and scratch $00-$07.
+SwitchHook_EnemyHoldsPlate:
+{
+  JSR SwitchHook_HeldEnemyValid : BCC .no
+  LDA.w SprHeight,X : BNE .no
+  LDA.w SprFloor,X : CMP.b $EE : BNE .no
+  LDY.b #$03
+  .corner
+  PHY : PHX
+  REP #$20
+  TYA : AND.w #$00FF : ASL : TAY
+  LDA.w SprX,X : AND.w #$00FF : STA.b $02
+  LDA.w SprXH,X : XBA : AND.w #$FF00 : ORA.b $02
+  CLC : ADC.w Stone_SwitchX,Y : STA.b $02
+  LDA.w SprY,X : AND.w #$00FF : STA.b $00
+  LDA.w SprYH,X : XBA : AND.w #$FF00 : ORA.b $00
+  CLC : ADC.w Stone_SwitchY,Y : STA.b $00
+  SEP #$20
+  LDA.w SprFloor,X : JSL Sprite_GetTileAttr
+  SEP #$30
+  PLX : PLY
+  LDA.w $0FA5
+  CMP.b #$23 : BEQ .next
+  CMP.b #$24 : BEQ .next
+  CMP.b #$25 : BEQ .next
+  CMP.b #$3B : BNE .off_plate
+  .next
+  DEY : BPL .corner
+  SEC : RTL
+  .off_plate
+  ; Keep identity through the airborne beat and stun shake. Once the awake
+  ; enemy walks off, it no longer has a plate interaction to retain.
+  LDA.w !SwitchHookBeat : BNE .no
+  LDA.w SprState,X : CMP.b #$09 : BNE .no
+  STZ.w !SwitchHookHeld
+  .no
+  CLC : RTL
+}
+
 ; Y=sprite, X=ancilla. Read-only validation until TryExchange commits.
-; $08 = hit height above the 16x16 base: 0 for ice, 8 for the statue head.
+; $08 = hit height from SwitchHook_Targets.
 ; Statue SprFrame is its 0/1 grab flag; its own reset path clears it.
 SwitchHook_TargetValid:
 {
   LDA.w SprState,Y : CMP.b #$09 : BNE .no
-  STZ.b $08 : STZ.b $09
-  LDA.w SprType,Y : CMP.b #Sprite_IceBlock : BEQ .kind
-  CMP.b #!SwitchHookStatue : BNE .no
+  STZ.b $09
+  STZ.w !SwitchHookEnemy      ; read only once a beat starts
+  PHX
+  LDX.b #SwitchHook_Targets_end-SwitchHook_Targets-2
+  LDA.w SprType,Y
+  .scan
+  CMP.l SwitchHook_Targets,X : BEQ .found
+  DEX : DEX : BPL .scan
+  LDX.b #SwitchHook_Enemies_end-SwitchHook_Enemies-1
+  .enemy_scan
+  CMP.l SwitchHook_Enemies,X : BEQ .enemy
+  DEX : BPL .enemy_scan
+  PLX
+  BRA .no
+  .enemy
+  PLX
+  INC.w !SwitchHookEnemy      ; enemy: hit box is the 16x16 base
+  STZ.b $08
+  BRA .kind
+  .found
+  LDA.l SwitchHook_Targets+1,X : STA.b $08
+  PLX
+  LDA.w SprType,Y : CMP.b #!SwitchHookStatue : BNE .kind
   LDA.w SprFrame,Y : CMP.b #!Stone_Marker : BEQ .no
-  LDA.b #$08 : STA.b $08
   .kind
   LDA.w SprFloor,Y : CMP.b $EE : BNE .no
   LDA.w SprY,Y : STA.b $0A
@@ -289,10 +833,21 @@ SwitchHook_TargetValid:
   JSR SwitchHook_HeadOverlaps : BCC .no
   BRA .contact
   .no
+  STZ.w !SwitchHookEnemy      ; a refused target leaves no enemy flag
   CLC : RTS
   .contact
+  LDA.w !SwitchHookEnemy : BEQ .object
+  ; Enemy: alive, grounded, not recoiling, dying, bulletproof or impervious.
+  ; Moving and AI timers are allowed: the latch freezes them.
+  LDA.w SprHealth,Y : BEQ .blocked
+  LDA.w SprHeight,Y : ORA.w SprRecoil,Y : ORA.w SprDeath,Y
+  ORA.w SprBulletproof,Y : BNE .blocked
+  LDA.w SprGfxProps,Y : AND.b #$40 : BNE .blocked
+  BRA .landing
+  .object
   LDA.w SprHeight,Y : ORA.w SprXSpeed,Y : ORA.w SprYSpeed,Y
   ORA.w SprTimerA,Y : ORA.w SprMiscC,Y : BNE .blocked
+  .landing
   JSR SwitchHook_LandingVisible : BCC .blocked
   PHY : PHX
   JSR SwitchHook_FootprintSafe
@@ -315,6 +870,7 @@ SwitchHook_TargetValid:
   BCC .blocked
   SEC : RTS
   .blocked
+  STZ.w !SwitchHookEnemy
   JSR SwitchHook_Retract
   CLC : RTS
 }
@@ -346,7 +902,13 @@ SwitchHook_HeadOverlaps:
   CLC : RTS
 }
 
-; Full-word range and screen bounds prevent arbitrary room-camera jumps.
+; Full-word 128px range only: the swap beat moves the camera to Link, so an
+; off-screen landing is allowed (Ages also swaps with off-screen targets).
+; Overworld: Link's landing (X=$0C, Y=$0A-8) must also sit 16px inside the
+; ZS transition thresholds (OverworldHandleTransitions: Y-$0708 in
+; [4,$0716), X-$070C*8 in [6,$0718+4)), so the camera never needs to cross
+; an area edge and tile lookups never wrap. Clobbers $06 (free after
+; HeadOverlaps).
 SwitchHook_LandingVisible:
 {
   %a16()
@@ -354,12 +916,17 @@ SwitchHook_LandingVisible:
   CMP.w #$0101 : BCS .no
   LDA.b $0A : SEC : SBC.b $20 : CLC : ADC.w #$0078
   CMP.w #$0101 : BCS .no
-  LDA.b $0C : SEC : SBC.b $E2
-  CMP.w #$0008 : BCC .no
-  CMP.w #$00E9 : BCS .no
-  LDA.b $0A : SEC : SBC.w #$0008 : SEC : SBC.b $E8
-  CMP.w #$0018 : BCC .no
-  CMP.w #$00C9 : BCS .no
+  LDA.b $1B : AND.w #$00FF : BNE .yes
+  LDA.b $0A : SEC : SBC.w #$0008 : SEC : SBC.w $0708
+  CMP.w #$0004+16 : BCC .no           ; also rejects a landing above the area
+  CLC : ADC.w #$0010 : CMP.w $0716 : BCS .no
+  LDA.w $070C : ASL A : ASL A : ASL A : STA.b $06
+  LDA.b $0C : SEC : SBC.b $06
+  CMP.w #$0006+16 : BCC .no           ; also rejects a landing left of the area
+  CLC : ADC.w #$0010 : STA.b $06
+  LDA.w $0718 : CLC : ADC.w #$0004
+  CMP.b $06 : BEQ .no : BCC .no
+  .yes
   %a8()
   SEC : RTS
   .no
@@ -381,7 +948,8 @@ SwitchHook_FootprintSafe:
   LDA.b $00 : CLC : ADC.b $0A : STA.b $00
   %a8()
   LDA.b $EE
-  JSL Sprite_GetTileAttr
+  JSL Sprite_GetTileAttr      ; overworld: Overworld_GetTileTypeAtLocation
+  LDA.b $1B : BEQ .overworld
   LDA.w $0FA5 : BEQ .safe
   CMP.b #$0E : BEQ .safe      ; ice
   CMP.b #$23 : BEQ .safe      ; floor switch variants
@@ -393,6 +961,16 @@ SwitchHook_FootprintSafe:
   SEC : RTS
   .no
   CLC : RTS
+  .overworld
+  ; usdasm bank_07 overworld tile behaviors: plainly walkable ground only.
+  ; Deep water $08, pits $20, ledges $28-$2F, slopes, walls $01-$03,
+  ; liftables, chests, stairs, warps and every other type are refused.
+  LDA.w $0FA5 : BEQ .safe     ; ground, sand, bridge
+  CMP.b #$09 : BEQ .safe      ; shallow water
+  CMP.b #$40 : BEQ .safe      ; thick grass
+  CMP.b #$48 : BEQ .safe      ; diggable ground
+  CMP.b #$4A : BEQ .safe      ; diggable ground
+  BRA .no
   .x_offsets
   db 0,7,15,0,7,15,0,7,15
   .y_offsets

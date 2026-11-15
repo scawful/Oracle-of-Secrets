@@ -8,8 +8,6 @@ Source code for all assembly-level hacks in the game. Learn more about the proje
 |---|---|
 | Build the ROM | `Scripts/Build/build_rom.sh 168` (base `Roms/oos168.sfc` -> patched `Roms/oos168x.sfc`) |
 | Edit rooms, maps, graphics, text | open `Oracle-of-Secrets.yaze` in yaze (it pins the base ROM SHA-1) |
-| See what's left to do | `Docs/oracle.org` (task tracker) |
-| Check a story or design ruling | `Docs/Planning/Status/decisions.org`, `Docs/Planning/story_canon_beat_sheet.md` |
 | Look up RAM/SRAM, flags, tables | `Docs/Technical/` (`Flag_Ledger.md`, `MemoryMap.md`) |
 | Read dungeon/world/lore references | `Docs/World/` |
 

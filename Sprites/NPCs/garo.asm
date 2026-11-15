@@ -56,14 +56,15 @@ Garo_Healing:
   LDA.b #$80 : STA.w SprAction, X
   LDA.l GaroMaskOwned : CMP.b #$01 : BNE .unowned
     STZ.w SprState, X
+  .leave
     PLB
     CLC
     RTL
 
   .unowned
   JSL Sprite_PlayerCantPassThrough
-  LDA.b $10 : CMP.b #$09 : BNE .done
-  LDA.w SprFloor, X : CMP.b $EE : BNE .done
+  LDA.b $10 : CMP.b #$09 : BNE .leave
+  LDA.w SprFloor, X : CMP.b $EE : BNE .leave
   ; Wolf shares the flute action but Y digs; it cannot perform Healing.
   LDA.w $02B2 : CMP.b #$03 : BEQ .done ; CurrentMask (Masks assemble later)
   LDA.w $0202 : CMP.b #$0D : BNE .done ; logical Ocarina
@@ -90,6 +91,9 @@ Garo_Healing:
 
   LDA.b #$01 : STA.l GaroMaskOwned
   STZ.b SongFlag ; consume only this successful local Healing interaction
+if !ENABLE_OCARINA_SONG_TINT == 1
+  LDA.b #!SongTint_Healing : JSL SongTint_Start
+endif
   JSL Sprite_SpawnPoofGarnish
   LDA.b #$2D : STA.w $012F ; milestone jingle
   STZ.w SprState, X

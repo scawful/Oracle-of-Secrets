@@ -318,6 +318,99 @@ def check_wall_boundary(boundary, objects, contract_directory, actual_state):
     return errors, unsupported, result
 
 
+CONTACT_LIBRARY = Path(__file__).resolve().parent / "data/dungeon_contact_library.json"
+CUT_ROLES = {"wall", "corner"}
+
+
+def load_contact_library():
+    """Measured stair-mouth contacts. Fixed repo path: a contract cannot add families."""
+    data = json.loads(CONTACT_LIBRARY.read_text())
+    return {f["name"]: f for f in data["families"]}
+
+
+def contact_digest(members, anchor):
+    """Native writes of an ordered contact relative to its stair, independent of trace file."""
+    ax, ay = anchor["object_x"], anchor["object_y"]
+    rows = [[c["object_id_dec"], c["size"], c["object_layer"], c["object_x"] - ax, c["object_y"] - ay,
+             sorted([t["layer"], t["x_tile"] - ax, t["y_tile"] - ay, t["tile_id_dec"], t["flags"]]
+                    for t in c["tiles"])] for c in members]
+    return hashlib.sha256(json.dumps(rows, separators=(",", ":")).encode()).hexdigest()
+
+
+def check_stair_mouth(boundary, objects, contract_directory, actual_state):
+    """Check a rigid copy of one measured wall-cutting stair contact.
+
+    Only families in the repo contact library qualify, and only when the
+    reference members reproduce the library's contact digest. The candidate
+    must keep every native write at one shared offset, draw the stair after
+    the walls it cuts, and keep the stair as final owner of the mouth cells.
+    The run's outer ends are not certified joined to the rest of the room.
+    """
+    name, ref = boundary["name"], boundary["reference"]
+    issue = lambda reason: ([], [{"name": name, "reason": reason}], None)
+    if not isinstance(boundary.get("family"), str):
+        raise InputError(f"stair mouth family must be a string: {name}")
+    family = load_contact_library().get(boundary.get("family"))
+    if family is None:
+        return issue("Stair mouth family is not a measured contact; open mouths need measured evidence")
+    ref_objects, _, ref_state, _ = read_trace(contract_directory / ref["trace"], ref["sha256"])
+    if ref_state != actual_state:
+        raise InputError(f"reference state profile differs: {name}")
+    ref_ids = indices(ref["object_indices"], name)
+    candidate_ids = indices(boundary["candidate"]["object_indices"], name)
+    reference = selected(ref_objects, ref_ids, name)
+    candidate = selected(objects, candidate_ids, name)
+    roles = [m["role"] for m in family["members"]]
+    if len(ref_ids) != len(roles) or roles.count("stair") != 1:
+        return issue("Reference members differ from the measured contact")
+    if len(candidate_ids) != len(ref_ids):
+        return ([{"code": "WALL_MEMBER_COUNT", "name": name,
+                  "expected": len(ref_ids), "actual": len(candidate_ids)}], [], None)
+    stair = roles.index("stair")
+    ref_members = [reference[i] for i in ref_ids]
+    cand_members = [candidate[i] for i in candidate_ids]
+    if (contact_digest(ref_members, ref_members[stair]) != family.get("contact_sha256")
+            or ordered(reference) != ref_members):
+        return issue("Reference trace is not the measured contact in its measured draw order")
+    dx = cand_members[stair]["object_x"] - ref_members[stair]["object_x"]
+    dy = cand_members[stair]["object_y"] - ref_members[stair]["object_y"]
+    if any(object_signature(r, dx, dy) != object_signature(c) for r, c in zip(ref_members, cand_members)):
+        return issue("Candidate is not a rigid copy of the measured contact; rotated, mirrored, "
+                     "resized or re-spaced mouths need measured evidence")
+    if ordered(candidate) != cand_members:
+        return ([{"code": "STAIR_MOUTH_ORDER", "name": name,
+                  "reason": "Stair must be drawn after the walls it cuts, in the measured member order",
+                  "draw_order": [c["object_index"] for c in ordered(candidate)]}], [], None)
+    local_owners = final_writes(reference)
+    stair_index = ref_members[stair]["object_index"]
+    cut_cells = {key for r, role in zip(ref_members, roles) if role in CUT_ROLES for key in cells(r)}
+    mouth = {key for key in cells(ref_members[stair]) if key in cut_cells}
+    if not mouth or any(local_owners[key][0]["object_index"] != stair_index for key in mouth):
+        return issue("Measured contact has no stair-owned mouth over a wall")
+    errors, unsupported = [], []
+    uncertain = late_table_cells(objects)
+    actual_owners = final_writes(objects)
+    mapping = dict(zip(ref_ids, candidate_ids))
+    for bg, x, y in sorted(local_owners):
+        target = (bg, x + dx, y + dy)
+        if not (0 <= target[1] < 64 and 0 <= target[2] < 64):
+            errors.append({"code": "WALL_OUT_OF_BOUNDS", "name": name, "cell": list(target)})
+            continue
+        if target in uncertain:
+            unsupported.append({"name": name, "reason": "Global-table draw pass/source flags are absent at stair mouth",
+                                "cell": list(target)})
+            continue
+        cell_errors, cell_unsupported = compare_visible_cell(
+            name, target, local_owners[(bg, x, y)], actual_owners.get(target), mapping,
+            "STAIR_MOUTH_OWNER" if (bg, x, y) in mouth else "WALL_OVERWRITTEN")
+        errors.extend(cell_errors)
+        unsupported.extend(cell_unsupported)
+    result = None if errors or unsupported else {
+        "name": name, "kind": "stair_mouth", "family": family["name"], "objects": len(candidate_ids),
+        "mouth_cells": len(mouth), "translation": [dx, dy], "closed": False, "ends_certified": False}
+    return errors, unsupported, result
+
+
 def check(contract, trace_path, contract_directory):
     if type(contract.get("schema_version")) is not int or contract["schema_version"] != 1:
         raise InputError("schema_version must be 1")
@@ -387,12 +480,20 @@ def check(contract, trace_path, contract_directory):
             errors.extend(cell_errors)
             unsupported.extend(cell_unsupported)
         checked.append(name)
-    checked_boundaries, boundary_objects = [], set()
+    checked_boundaries, boundary_objects, stair_members = [], set(), set()
     for boundary in contract.get("wall_boundaries", []):
-        wall_errors, wall_unsupported, result = check_wall_boundary(boundary, objects, contract_directory, actual_state)
+        kind = boundary.get("kind", "closed_cycle")
+        if kind not in ("closed_cycle", "stair_mouth"):
+            raise InputError(f"unknown wall boundary kind: {kind!r}")
+        checker = check_stair_mouth if kind == "stair_mouth" else check_wall_boundary
+        wall_errors, wall_unsupported, result = checker(boundary, objects, contract_directory, actual_state)
         errors.extend(wall_errors)
         unsupported.extend(wall_unsupported)
         members = indices(boundary["candidate"]["object_indices"], boundary["name"])
+        if (kind == "stair_mouth" and boundary_objects & set(members)) or stair_members & set(members):
+            raise InputError(f"stair mouth objects shared with another wall boundary: {boundary['name']}")
+        if kind == "stair_mouth":
+            stair_members.update(members)
         bound.update(members)
         boundary_objects.update(members)
         if result is not None:
@@ -424,8 +525,8 @@ def check(contract, trace_path, contract_directory):
         unsupported.append({"name": "evidence", "reason": "No native assembly or tile-owner assertion was checked"})
     return {"schema_version": 1, "status": "BLOCKED" if errors else "UNSUPPORTED" if unsupported else "PASS",
             "room_id": room, "state_profile": state, "candidate_trace_sha256": sha,
-            "scope": "Declared native assemblies, closed wall boundaries, and tile-owner assertions only; not room approval",
-            "excluded": ["unlisted geometry", "global-table draw passes", "collision/routes", "reveal masks/composite", "doors/layout", "native gameplay"],
+            "scope": "Declared native assemblies, closed wall boundaries, measured stair-mouth contacts, and tile-owner assertions only; not room approval",
+            "excluded": ["unlisted geometry", "stair-mouth run ends", "global-table draw passes", "collision/routes", "reveal masks/composite", "doors/layout", "native gameplay"],
             "checked": {"assemblies": checked, "owner_expectations": len(expectations),
                         "wall_boundaries": checked_boundaries, "required_objects": len(required)},
             "errors": errors, "unsupported": unsupported}

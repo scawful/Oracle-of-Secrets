@@ -66,6 +66,9 @@ incsrc "Overworld/overlays.asm"
 incsrc "Overworld/entrances.asm"
 %log_end("Overworld/entrances.asm", !LOG_OVERWORLD)
 
+incsrc "Overworld/sky_tile_types.asm"
+%log_end("Overworld/sky_tile_types.asm", !LOG_OVERWORLD)
+
 incsrc "Overworld/custom_gfx.asm"
 %log_end("Overworld/custom_gfx.asm", !LOG_OVERWORLD)
 
@@ -182,6 +185,14 @@ LoadOverworldPitAreas:
   RTL
 }
 
+; Appended after the existing bank $34 free-space code so nothing moves.
+if !ENABLE_LYRA_OVERLAY_FIX == 1
+  incsrc "Overworld/lyra_overlay_fix.asm"
+endif
+
+Overworld_Bank34CodeEnd:
+assert pc() <= $34FFFF, "Overworld code exceeds bank $34"
+
 incsrc "Overworld/great_sea_music.asm"
 
 Overworld_GetPitDestination = $1BB860
@@ -193,7 +204,7 @@ org $0794D9 ; @hook module=Overworld
     RTS
   .overworld_pit_transition
 
-org $1AF5C3 : CMP.b #$5E
+org $1AF5C3 : CMP.b #$4B ; Fortress ceremony waterfall (Fortress moved $5E -> $4B)
 
 org $0EF581
 EXIT_0EF581:

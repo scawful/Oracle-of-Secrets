@@ -190,6 +190,11 @@ pullpc
   ; Otherwise, eject the player back to the surface
   LDA $0114 : BNE .remove_dive
 
+if !ENABLE_DIVE_GATE != 0
+  ; Dive gate rooms: Y surfaces only over deep water on map b
+  JSL DiveGate_CanSurface : BCC .return_default
+endif
+
   ; Check the Y button and clear state if activated
   JSR Link_CheckNewY_ButtonPress : BCC .return_default
   LDA $3A : AND.b #$BF : STA $3A
@@ -223,6 +228,34 @@ pullpc
   LDA.b #$03 : STA $5B
   JSR $9427
   JMP .return_default
+}
+
+pushpc
+
+; LinkState_Pits entry: STZ $67 : LDA $0302
+org $0792D3 ; @hook module=Masks
+  JSR LinkState_UsingZoraMask_pit_stall_guard
+  NOP : NOP
+
+pullpc
+
+; A dive beside a pit can leave Link in LinkState_Pits with the pull blocked
+; by map-A walls; no input moves him there. Y resurfaces, as it does in water.
+.pit_stall_guard
+{
+  LDA !ZoraDiving : BEQ .run_pits
+    LDA $5B : CMP #$02 : BEQ .run_pits ; already falling
+      JSR Link_CheckNewY_ButtonPress : BCC .run_pits
+        LDA $3A : AND.b #$BF : STA $3A
+        PLA : PLA ; leave LinkState_Pits directly
+        STZ $5B
+        STZ $037B
+        LDA.b #$15 : LDY.b #$00 : JSL AddTransitionSplash
+        JMP .remove_dive
+  .run_pits
+  STZ $67
+  LDA $0302 ; flags consumed by the BEQ after the hook
+  RTS
 }
 
 pushpc

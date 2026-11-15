@@ -263,6 +263,12 @@ Menu_DeleteCursor_AltEntry:
 
 Menu_InitItemScreen:
 {
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
+  JSR Menu_SoaringRequested : BCC .ordinary_item_screen
+    LDA.b #!MENU_STATE_SPECIAL_SOARING : STA.w $0200
+    RTS
+  .ordinary_item_screen
+endif
 if !ENABLE_GOLDSTAR_CELL == 1
   JSR Menu_SplitValidateSelection
   STZ.w $0207

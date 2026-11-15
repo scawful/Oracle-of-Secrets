@@ -42,8 +42,8 @@ Sprite_EonOwl_Long:
   PHB : PHK : PLB
   ; If it is not the Hall of Secrets map
   LDA.b $8A : CMP.b #$0E : BNE .NotGaebora
-    ; If the map doesn't have the 6 crystals
-     LDA.l $7EF37A : AND.b #$7F : CMP.b #$77 : BNE .Despawn
+    ; Require the first six essences; D7 must not remove a missed-song teacher.
+     LDA.l $7EF37A : AND.b #$77 : CMP.b #$77 : BNE .Despawn
         ; If the player has the Song of Soaring, despawn
         LDA.l $7EF34C : CMP.b #$04 : BCS .Despawn
           LDA.b #$01 : STA.w SprSubtype, X

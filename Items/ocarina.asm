@@ -186,21 +186,11 @@ endif
     .song_of_time
     LDA.b #$27 : JSR $802F ; Player_DoSfx3
     LDA.b #$02 : STA.b SongFlag
-if !ENABLE_OCARINA_SONG_TINT == 1
-    ; Purple tint for Song of Time (~32 frames)
-    LDA.b #$20 : STA.l SongTintTimer
-    LDA.b #$62 : STA.l SongTintColor : STA.b $9A
-endif
     RTS
 
     .song_of_healing
     LDA.b #$13 : JSR Player_DoSfx2
     LDA.b #$01 : STA.b SongFlag
-if !ENABLE_OCARINA_SONG_TINT == 1
-    ; Green tint for Song of Healing (~32 frames)
-    LDA.b #$20 : STA.l SongTintTimer
-    LDA.b #$52 : STA.l SongTintColor : STA.b $9A
-endif
     RTS
 
     .song_of_storms
@@ -213,11 +203,6 @@ endif
 
   .song_of_soaring
   LDA.b #$3E : JSR Player_DoSfx2
-if !ENABLE_OCARINA_SONG_TINT == 1
-  ; White flash for Song of Soaring (~16 frames)
-  LDA.b #$10 : STA.l SongTintTimer
-  LDA.b #$32 : STA.l SongTintColor : STA.b $9A
-endif
 
   ; Are we indoors?
   LDA.b $1B : BNE .return
@@ -229,7 +214,14 @@ endif
   .light_world
 
   ; Also doesn't work in special areas like Master Sword area.
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
+  LDA.b $10 : CMP.b #$0B : BNE .normal_soaring
+    JSL SpecialSoaring_Open
+    RTS
+  .normal_soaring
+else
   LDA.b $10 : CMP.b #$0B : BEQ .return
+endif
 
   LDX.b #$04
 
@@ -427,29 +419,152 @@ PlayThunderAndRain:
   RTL
 }
 
-; Tick the song tint timer each frame.
-; Decrements SongTintTimer; while active, applies SongTintColor to $9A.
-; When timer expires, restores $9A to $00 (unless rain is active).
-; Safe to call from any M/X width (forces 8-bit A).
+; Song tints add a color to the BG palette: the backdrop and BG1/BG2 colors
+; $20-$7F, not the BG3 HUD or sprites. Colors are painted from the palette
+; buffer ($7EC300), which already holds the day/night shade, into the uploaded
+; palette ($7EC500); ending a tint puts the buffer colors back. Color math is
+; left alone, so overlays, rain and lightning keep their own blending.
+; Outdoors the added color shrinks as the day/night shade deepens: full by day,
+; half at the darkest hours (scaled by ColorSubEffect's green step).
+SongTint_Table:
+  ; frames, red, green, blue added to each color (0-31)
+  db $20, $02, $09, $03 ; !SongTint_Healing: green, when a character reacts
+  db $20, $09, $07, $01 ; !SongTint_Secrets: gold, when a secret opens
+
+; A (8-bit) = !SongTint_* index. A second song repaints with its own color.
+; Safe to call from any M/X width.
+SongTint_Start:
+{
+  PHP
+  REP #$10 : PHX : PHY
+  SEP #$30
+  STA.l SongTintColor
+  ASL : ASL : TAX
+  LDA.l SongTint_Table,X : STA.l SongTintTimer
+  LDA.b $1B : STA.l SongTintContext
+  JSR SongTint_ReadPlace : STA.l SongTintContext+1
+  LDA.b #$00 : JSR SongTint_Colors
+  REP #$10 : PLY : PLX
+  PLP
+  RTL
+}
+
+; Tick the song tint each frame (HUD_ClockDisplay, after RunClock). It waits
+; while a submodule ($11) owns the palette: transitions, fades, warps.
+; Safe to call from any M/X width.
 SongTintTick:
 {
   PHP
-  SEP #$20
+  REP #$10 : PHX : PHY
+  SEP #$30
 if !ENABLE_OCARINA_SONG_TINT == 0
   LDA.b #$00 : STA.l SongTintTimer
   BRA .done
 endif
   LDA.l SongTintTimer : BEQ .done
-    DEC : STA.l SongTintTimer : BNE .apply
-      ; Timer just expired — clear tint (unless storms keep it)
-      LDA.l $7EE00E : BNE .done
-      STZ.b $9A
-      BRA .done
-    .apply
-    LDA.l SongTintColor : STA.b $9A
+  LDA.b $11 : BNE .done
+  JSR SongTint_InPlace : BCC .end
+  ; Outdoors a pending upload ($15) means the day/night refresh or another
+  ; writer rebuilt the palette from the buffer this frame: paint over it.
+  LDA.b $1B : BNE +
+  LDA.b $15 : BEQ +
+    LDA.b #$00 : JSR SongTint_Colors
+  +
+  LDA.l SongTintTimer : DEC : STA.l SongTintTimer : BNE .done
+  .end
+  LDA.b #$00 : STA.l SongTintTimer
+  LDA.b #$01 : JSR SongTint_Colors
   .done
+  REP #$10 : PLY : PLX
   PLP
   RTL
+}
+
+; 8-bit A/X/Y from here down.
+; Carry set while Link is still in the area or room the tint started in.
+SongTint_InPlace:
+{
+  LDA.b $1B : CMP.l SongTintContext : BNE .moved
+  JSR SongTint_ReadPlace : CMP.l SongTintContext+1 : BNE .moved
+  SEC
+  RTS
+  .moved
+  CLC
+  RTS
+}
+
+; A = 0 paints the tint over the buffer colors. A = 1 restores the buffer
+; color wherever the uploaded color still holds the tint, so a new area,
+; room or scene palette is kept. Uses $00-$09 as scratch and puts them back.
+SongTint_Colors:
+{
+  REP #$30
+  PEI ($00) : PEI ($02) : PEI ($04) : PEI ($06) : PEI ($08)
+  AND.w #$00FF : STA.b $08
+  ; $06 = strength in 16ths: 16 indoors, 16 - green shade step (0-8) outdoors.
+  LDA.w #$0010 : STA.b $06
+  LDA.b $1B : AND.w #$00FF : BNE +
+    LDA.l TimeState.Hours : AND.w #$00FF : ASL : TAX
+    LDA.l ColorSubEffect_green,X : LSR : LSR : LSR : LSR : LSR
+    EOR.w #$FFFF : SEC : ADC.w #$0010 : STA.b $06
+  +
+  LDA.l SongTintColor : AND.w #$00FF : ASL : ASL : TAX
+  LDA.l SongTint_Table+3,X : AND.w #$001F : JSR .scale
+  XBA : ASL : ASL : STA.b $04
+  LDA.l SongTint_Table+2,X : AND.w #$001F : JSR .scale
+  ASL : ASL : ASL : ASL : ASL : STA.b $02
+  LDA.l SongTint_Table+1,X : AND.w #$001F : JSR .scale
+  STA.b $00
+  LDX.w #$0000
+  .color
+    ; Add each channel to the buffer color, saturating at 31.
+    LDA.l $7EC300,X : AND.w #$001F : CLC : ADC.b $00
+    CMP.w #$0020 : BCC + : LDA.w #$001F : +
+    STA.b $06
+    LDA.l $7EC300,X : AND.w #$03E0 : CLC : ADC.b $02
+    CMP.w #$0400 : BCC + : LDA.w #$03E0 : +
+    TSB.b $06
+    LDA.l $7EC300,X : AND.w #$7C00 : CLC : ADC.b $04
+    CMP.w #$8000 : BCC + : LDA.w #$7C00 : +
+    ORA.b $06
+    LDY.b $08 : BNE .restore
+      STA.l $7EC500,X
+      BRA .next
+    .restore
+    CMP.l $7EC500,X : BNE .next
+      LDA.l $7EC300,X : STA.l $7EC500,X
+    .next
+    INX : INX
+    CPX.w #$0002 : BNE + : LDX.w #$0040 : + ; skip the BG3 HUD colors
+    CPX.w #$0100 : BCC .color
+  PLA : STA.b $08
+  PLA : STA.b $06
+  PLA : STA.b $04
+  PLA : STA.b $02
+  PLA : STA.b $00
+  SEP #$30
+  INC.b $15
+  RTS
+
+  ; A = amount (0-31) -> A = amount * $06 / 16. Clobbers Y and $00.
+  .scale
+  STA.b $00
+  LDA.w #$0000
+  LDY.b $06
+  - : CLC : ADC.b $00 : DEY : BNE -
+  LSR : LSR : LSR : LSR
+  RTS
+}
+
+; A = overworld area ($8A) outdoors, room ($A0) indoors.
+SongTint_ReadPlace:
+{
+  LDA.b $1B : BEQ .outdoors
+    LDA.b $A0
+    RTS
+  .outdoors
+  LDA.b $8A
+  RTS
 }
 
 ; Rain animation (lightning, thunder, overlay scroll) handled natively
@@ -534,6 +649,9 @@ else
 endif
 }
 incsrc "Items/song_secrets_stone.asm"
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
+  incsrc "Items/special_soaring.asm"
+endif
 %log_end("Items/ocarina.asm", !LOG_ITEMS)
 
 pushpc ; Bank2B freespace

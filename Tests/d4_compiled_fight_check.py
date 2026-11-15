@@ -165,6 +165,49 @@ def check_camera_cache(lib,rom,labels):
     return len(cases)
 
 
+def check_spiral_camera_layout(lib,rom,labels):
+    """Run the real displaced layout routine and compare its post-call ABI.
+
+    Only the selected small room46 camera may differ from the original call;
+    the cache hook must be idempotent after this earlier correction.
+    """
+    labels=dict(labels,Underworld_AdjustForRoomLayout=0x02B5DC)
+    cases=((0x26,0x14,0,2254),(0x46,0x1C,0,2254),
+           (0x46,0x14,2,2254),(0x46,0x14,0,2304))
+    for room,layout,force_tall,expected_y in cases:
+        fixtures=[]
+        for name in ('Underworld_AdjustForRoomLayout','D4Zora_SpiralCameraLayout'):
+            f=Fixture(lib,rom,labels)
+            f.word(0xA0,room);f.word(0x40E,layout)
+            f.put(0xA9,1);f.put(0xAA,2);f.put(0xA6,2);f.put(0xA7,2)
+            f.put(0xFD,force_tall)
+            f.word(0x600,2304);f.word(0x604,2320)
+            f.word(0x608,3328);f.word(0x60C,3328)
+            for a in (0xE0,0xE2,0x11E,0x120):f.word(a,3304)
+            for a in (0xE6,0xE8,0x122,0x124):f.word(a,2254)
+            f.word(0x618,325);f.word(0x61A,327);f.word(0x61C,359);f.word(0x61E,361)
+            f.word(0x20,2359);f.word(0x22,3425)
+            f.cpu.db=0x7E;f.cpu.y=0x37;f.cpu.c=True
+            f.call(name,x=layout|3,long_return=True)
+            fixtures.append(f)
+        vanilla,early=fixtures
+        word=lambda f,a:f.get(a)|(f.get(a+1)<<8)
+        assert word(early,0xE8)==expected_y,(room,layout,force_tall)
+        attrs=('a','x','y','sp','dp','db','c','z','v','n','i','d','xf','mf')
+        assert all(getattr(early.cpu,a)==getattr(vanilla.cpu,a) for a in attrs),'Layout post-call ABI changed'
+        changed=set(range(0x100,0x200))
+        for a in (0xE6,0xE8,0x122,0x124,0x618,0x61A):changed.update((a,a+1))
+        assert all(a in changed or v==e for a,(v,e) in enumerate(zip(vanilla.ram,early.ram))),'Unrelated layout state changed'
+        if expected_y==2254:
+            assert all(0x100<=a<0x200 or v==e for a,(v,e) in enumerate(zip(vanilla.ram,early.ram))),'Control camera changed'
+        before=bytes(early.ram)
+        early.call('D4Zora_CacheRoomCamera',x=layout|3,long_return=True,m8=False)
+        assert word(early,0x7EC180)==3304
+        assert all(0x100<=a<0x200 or a in (0xC180,0xC181) or v==e for a,(v,e) in enumerate(zip(before,early.ram))),'Final clamp was not idempotent'
+        for f in fixtures:f.close()
+    return len(cases)
+
+
 def check_palette_handoff(lib,rom,labels):
     """Fade setup owns display colours; ordinary-play prep updates both."""
     phases=((6,0),(7,14),(7,1),(7,0))
@@ -388,6 +431,8 @@ def main():
         lib=C.CDLL(str(library));lib.cpu_init.restype=C.POINTER(Cpu)
         lib.cpu_runOpcode.argtypes=[C.POINTER(Cpu)];lib.cpu_free.argtypes=[C.POINTER(Cpu)]
         results={'camera_cache_cases':check_camera_cache(lib,a.rom.read_bytes(),labels)}
+        if 'Oracle_D4Zora_SpiralCameraLayout' in labels:
+            results['spiral_camera_layout_cases']=check_spiral_camera_layout(lib,a.rom.read_bytes(),labels)
         results['palette_handoff_cases']=check_palette_handoff(lib,a.rom.read_bytes(),labels)
         if 'Oracle_D4Zora_FilterBabyReminder' in labels:
             results['baby_reminder_cases']=check_baby_reminder(lib,a.rom.read_bytes(),labels)

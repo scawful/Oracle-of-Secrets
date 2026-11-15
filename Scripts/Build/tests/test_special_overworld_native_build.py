@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import importlib.util
+import json
 from pathlib import Path
 import struct
 import sys
@@ -144,6 +145,14 @@ class NativeBuildPreparationTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'RESIDENT_OVERLAPS_READER_CALL'):
             self.prepare()
 
+    def test_spill_refuses_a_changed_editable_source_preimage(self):
+        image = bytearray(self.source)
+        image[N.RESIDENT_SPILL_PC] = 1
+        self.source = bytes(image)
+        self.preimage = self.source[self.origin:self.origin+self.capacity]
+        with self.assertRaisesRegex(ValueError, 'SPILL_PREIMAGE_CHANGED'):
+            self.prepare()
+
     def test_stale_preimage_export_and_reader_reseal_refuse(self):
         with self.assertRaisesRegex(ValueError, 'PREIMAGE_MISMATCH'):
             self.prepare(preimage=bytes([self.preimage[0] ^ 1]) + self.preimage[1:])
@@ -162,10 +171,11 @@ class NativeBuildPreparationTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'EXPORT_HASH_MISMATCH'):
             self.prepare()
 
-    def compiled_fixture(self):
+    def compiled_fixture(self, *, experimental_page_tile16=False):
         """Synthetic assembly transaction; not an engine execution fixture."""
         image = bytearray(self.source)
-        _, _, entries = N.read_native_directory(self.source)
+        _, _, entries = N.read_native_directory(self.source,
+            experimental_page_tile16=experimental_page_tile16)
         at, size = entries[300]
         symbols = dict(Lyra_CurrentNativeCodeStart=at,
                        Lyra_CurrentNativeCodeEnd=at + size)
@@ -178,7 +188,12 @@ class NativeBuildPreparationTest(unittest.TestCase):
             raw = b'\x22' + target.to_bytes(3, 'little') + b'\xEA' * (size - 4)
             first = N.pc(site)
             image[first:first + size] = raw
-        for write in self.prepare()['resource_writes']:
+        origin, extent, _ = N.resident_data_reservation(self.source,
+            experimental_page_tile16=experimental_page_tile16)
+        prepared = (B.prepare_native_compilation(self.source, self.exported,
+            data_pc=origin, capacity=extent, preimage=self.source[origin:origin+extent],
+            experimental_page_tile16=True) if experimental_page_tile16 else self.prepare())
+        for write in prepared['resource_writes']:
             first = write['pc']
             image[first:first + len(write['after'])] = write['after']
         # Exact existing Overworld/overworld.asm intro ambience policy.
@@ -293,6 +308,371 @@ class NativeBuildPreparationTest(unittest.TestCase):
                 image[at] ^= 1
                 with self.assertRaisesRegex(ValueError, error):
                     B.verify_revision4_compiled_output(self.source, self.exported, bytes(image), symbols)
+
+    def test_d4_hole_is_not_atlas_owned_but_spill_gaps_remain_protected(self):
+        compiled, symbols = self.compiled_fixture()
+        prepared = self.prepare()
+        hole_first, hole_end = N.RESIDENT_DATA_EXCLUDED_PC[0]
+        for row in prepared['emission']['placements']:
+            self.assertTrue(row['pc'][1] <= hole_first or row['pc'][0] >= hole_end)
+        image = bytearray(compiled)
+        image[hole_first] ^= 1  # D4 has its own source/compile validation.
+        B.verify_revision4_compiled_output(self.source, self.exported, bytes(image), symbols)
+        image[hole_end] ^= 1
+        with self.assertRaisesRegex(ValueError, 'RESOURCE_GAP_CHANGED'):
+            B.verify_revision4_compiled_output(self.source, self.exported, bytes(image), symbols)
+
+
+
+class ExperimentalNativeBuildTest(unittest.TestCase):
+    def setUp(self):
+        self.legacy = NativeBuildPreparationTest()
+        self.legacy.setUp()
+        self.fixture = F.ExperimentalPageTile16ResourcesTest()
+        self.fixture.setUp()
+        self.fixture.fixture.source = self.legacy.source
+        self.fixture.fixture.exported = self.legacy.exported
+        self.source, self.exported = self.fixture.install(self.fixture.rows, authoring=True)
+
+    def prepare(self, **kwargs):
+        origin, extent, _ = N.resident_data_reservation(self.source,
+            experimental_page_tile16=True)
+        args = dict(data_pc=origin, capacity=extent,
+            preimage=self.source[origin:origin+extent], experimental_page_tile16=True)
+        args.update(kwargs)
+        return B.prepare_native_compilation(self.source, self.exported, **args)
+
+    def test_default_and_revision4_alias_refuse_experimental_without_activation(self):
+        args = dict(data_pc=N.RESIDENT_DATA_PC, capacity=N.RESIDENT_DATA_CAPACITY,
+                    preimage=self.source[N.RESIDENT_DATA_PC:
+                        N.RESIDENT_DATA_PC + N.RESIDENT_DATA_CAPACITY])
+        for function in (B.prepare_revision4_compilation, B.prepare_native_compilation):
+            with self.subTest(function=function.__name__), self.assertRaisesRegex(
+                    ValueError, 'Ordinary Build requires'):
+                function(self.source, self.exported, **args)
+        with self.assertRaisesRegex(ValueError, 'Ordinary Build requires'):
+            N.reader_constants(self.source)
+        with self.assertRaisesRegex(ValueError, 'EXPERIMENTAL_ADMISSION_INVALID'):
+            self.prepare(experimental_page_tile16=1)
+
+    def test_authenticated413_binding_and_visual_abi_retain_provenance_and_refusals(self):
+        result = self.prepare()
+        binding = result['semantic_source_contract']
+        count, bank, entries = N.read_native_directory(self.source,
+            experimental_page_tile16=True)
+        address, rows = entries[413]
+        raw = self.source[N.pc(address):N.pc(address) + rows * 12]
+        self.assertEqual((binding['revision'], binding['capacity'], binding['table_id'],
+                          binding['kind'], binding['rows_snes'], binding['count'], binding['stride']),
+                         (5, 192, 413, 10, address, rows, 12))
+        self.assertEqual(binding['payload_sha256'], hashlib.sha256(raw).hexdigest())
+        self.assertEqual(binding['payload_crc32'], zlib.crc32(raw))
+        self.assertEqual(binding['populated_rows'], 2)
+        self.assertEqual(binding['consumer_bindings']['SPECIAL_OVERWORLD_SEMANTIC_ROWS'], address)
+        self.assertIsNone(binding['consumer_bindings']['SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE'])
+        self.assertIsNone(binding['consumer_bindings']['SPECIAL_OVERWORLD_SEMANTIC_CODE_END'])
+        self.assertEqual(result['resource_plan']['schema'], F.R.EXPERIMENTAL_PLAN_SCHEMA)
+        self.assertEqual(result['resident_abi']['experimental_source']['page_tile16_definitions_sha256'],
+                         binding['payload_sha256'])
+        for key in ('runtime_admission', 'publication_authorized', 'ordinary_build_ready',
+                    'allocation_granted', 'full_residency_ready'):
+            self.assertFalse(result[key])
+        self.assertNotIn('SEMANTIC_ENABLED = 1', result['constants_asm'])
+        self.assertEqual(result, self.prepare())
+
+    def test_declared413_capacity_is_reported_without_new_allocation(self):
+        self.source, self.exported = self.fixture.install(
+            self.fixture.rows, count=2730, authoring=True)
+        result = self.prepare()
+        binding = result['semantic_source_contract']
+        self.assertEqual((binding['count'], binding['populated_rows'], binding['stride']),
+                         (2730, 2, 12))
+        self.assertFalse(binding['allocation_granted'])
+        self.assertIsNone(binding['consumer_bindings']['SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE'])
+
+    def test_explicit_code_reseal_preserves413_412_and_every_saved_payload(self):
+        capacity, bank, entries = N.read_native_directory(self.source,
+            experimental_page_tile16=True)
+        at, size = entries[300]
+        before = self.source[N.pc(at):N.pc(at) + size]
+        changed = bytes([before[0] ^ 1]) + before[1:]
+        result = self.prepare(reader_code_replacement=B.ReaderCodeReplacement(
+            hashlib.sha256(before).hexdigest(), changed))
+        image = bytearray(self.source)
+        for row in result['source_reseal_writes']:
+            image[row['pc']:row['pc'] + len(row['after'])] = row['after']
+        self.assertEqual(N.read_native_directory(bytes(image), experimental_page_tile16=True),
+                         (capacity, bank, entries))
+        for key, (address, rows) in entries.items():
+            if key == 300:
+                continue
+            first, length = N.pc(address), rows * N.entry_spec(key, capacity, 5)[2]
+            self.assertEqual(image[first:first + length], self.source[first:first + length], key)
+        self.assertTrue(result['reexport_required_after_reseal'])
+        # The original export cannot be relabelled/rehashed to admit the changed source.
+        self.source = bytes(image)
+        with self.assertRaisesRegex(ValueError, 'EXPORT_SOURCE_MISMATCH'):
+            self.prepare()
+
+    def test_rehashed_tampered413_metadata_rows_and_wrong_export_schema_refuse(self):
+        original = copy.deepcopy(self.exported)
+        for field, value in (('count', 3), ('stride', 8), ('sha256', '0' * 64)):
+            exported = copy.deepcopy(original['native_source'])
+            exported['page_tile16_definitions'][field] = value
+            self.exported = self.fixture.fixture.seal(exported)
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, 'PAGE_TILE16_SOURCE_MISMATCH'):
+                self.prepare()
+        exported = copy.deepcopy(original['native_source'])
+        exported['page_tile16_definitions']['rows'][0]['words'][0] ^= 1
+        self.exported = self.fixture.fixture.seal(exported)
+        with self.assertRaisesRegex(ValueError, 'PAGE_TILE16_SOURCE_MISMATCH'):
+            self.prepare()
+        exported = copy.deepcopy(original['native_source'])
+        exported['schema'] = F.R.SOURCE_SCHEMA
+        self.exported = self.fixture.fixture.seal(exported)
+        with self.assertRaisesRegex(ValueError, 'EXPORT_SOURCE_MISMATCH'):
+            self.prepare()
+
+    def test_compiled_sealer_is_revision_aware_and_preserves_required413(self):
+        self.legacy.source, self.legacy.exported = self.source, self.exported
+        compiled, symbols = self.legacy.compiled_fixture(experimental_page_tile16=True)
+        _, _, entries = N.read_native_directory(self.source, experimental_page_tile16=True)
+        image = bytearray(compiled)
+        image[N.pc(entries[300][0])] ^= 1
+        compiled = bytes(image)
+        with self.assertRaisesRegex(ValueError, 'DIRECTORY_SEAL_MISMATCH'):
+            B.verify_native_compiled_output(self.source, self.exported, compiled, symbols,
+                                           experimental_page_tile16=True)
+        first = B.plan_native_compiled_seal(self.source, self.exported, compiled, symbols,
+            allow_stale_directory=True, experimental_page_tile16=True)
+        image[N.DIRECTORY_PC:N.DIRECTORY_PC + N.DIRECTORY_SIZE] = first['directory_bytes']
+        final = B.verify_native_compiled_output(self.source, self.exported, bytes(image), symbols,
+                                                experimental_page_tile16=True)
+        self.assertFalse(final['needed_reassembly'])
+        self.assertFalse(final['runtime_admission'])
+        self.assertEqual(final['semantic_source_contract']['table_id'], 413)
+        # Even a permitted stale directory never waives any saved payload byte.
+        for key in (400, 410, 411, 412, 413):
+            bad = bytearray(compiled)
+            bad[N.pc(entries[key][0])] ^= 1
+            with self.subTest(key=key), self.assertRaisesRegex(ValueError, f'SAVED_PAYLOAD_CHANGED:ID{key}'):
+                B.plan_native_compiled_seal(self.source, self.exported, bytes(bad), symbols,
+                    allow_stale_directory=True, experimental_page_tile16=True)
+        with self.assertRaisesRegex(ValueError, 'Ordinary Build requires'):
+            B.plan_revision4_compiled_seal(self.source, self.exported, compiled, symbols)
+
+    def test_missing413_crc_and_resident_overlap_refuse_without_writes(self):
+        original = self.source
+        _, _, entries = N.read_native_directory(original, experimental_page_tile16=True)
+        image = bytearray(original)
+        image[N.pc(entries[413][0]) + 4] ^= 1
+        self.source = bytes(image)
+        with self.assertRaisesRegex(ValueError, 'CRC'):
+            self.prepare()
+        image = bytearray(original)
+        count = struct.unpack_from('<H', image, N.DIRECTORY_PC + 18)[0]
+        record = next(N.DIRECTORY_PC + 32 + index * 16 for index in range(count)
+            if struct.unpack_from('<H', image, N.DIRECTORY_PC + 32 + index * 16)[0] == 413)
+        struct.pack_into('<H', image, record, 414)
+        self.source = bytes(image)
+        with self.assertRaises(ValueError):
+            self.prepare()
+        self.fixture.address = 0x4E8000  # Synthetic occupied resident interval.
+        self.source, self.exported = self.fixture.install(self.fixture.rows, authoring=True)
+        with self.assertRaisesRegex(ValueError, 'OVERLAPS_SAVED_PAYLOAD'):
+            self.prepare()
+
+    def test_selected1024_uses_tail_without_overwriting_semantic_source(self):
+        self.fixture.address = N.PAGE_TILE16_BASE
+        self.source, self.exported = self.fixture.install(
+            self.fixture.rows, count=1024, authoring=True)
+        origin, extent, holes = N.resident_data_reservation(
+            self.source, experimental_page_tile16=True)
+        self.assertEqual((origin, extent, holes), (0x270000, 0x20000,
+            ((0x280000, 0x282000), (0x288000, 0x28C000))))
+        result = self.prepare()
+        for write in result['resource_writes']:
+            first, end = write['pc'], write['pc'] + len(write['after'])
+            self.assertTrue(all(end <= a or first >= b for a, b in holes))
+        self.legacy.source, self.legacy.exported = self.source, self.exported
+        compiled, symbols = self.legacy.compiled_fixture(experimental_page_tile16=True)
+        B.verify_native_compiled_output(self.source, self.exported, compiled, symbols,
+                                       experimental_page_tile16=True)
+        # Every newly granted gap is protected, including the last byte.
+        for at in (0x28C000, 0x28FFFF):
+            image = bytearray(compiled)
+            image[at] ^= 1
+            with self.subTest(at=at), self.assertRaisesRegex(ValueError, 'RESOURCE_GAP_CHANGED'):
+                B.verify_native_compiled_output(self.source, self.exported, bytes(image),
+                    symbols, experimental_page_tile16=True)
+        _, _, entries = N.read_native_directory(self.source, experimental_page_tile16=True)
+        for key in (412, 413):
+            image = bytearray(compiled)
+            image[N.pc(entries[key][0])] ^= 1
+            with self.subTest(key=key), self.assertRaisesRegex(ValueError,
+                    f'SAVED_PAYLOAD_CHANGED:ID{key}'):
+                B.verify_native_compiled_output(self.source, self.exported, bytes(image),
+                    symbols, experimental_page_tile16=True)
+
+    def test_selected1024_tail_requires_exact_zero_preimage(self):
+        self.fixture.address = N.PAGE_TILE16_BASE
+        original, exported = self.fixture.install(self.fixture.rows, count=1024)
+        for at in (0x28C000, 0x28FFFF):
+            image = bytearray(original)
+            image[at] = 1
+            self.source, self.exported = bytes(image), exported
+            with self.subTest(at=at), self.assertRaisesRegex(ValueError,
+                    'PAGE_TILE16_SPILL_PREIMAGE_CHANGED'):
+                self.prepare()
+
+    def test_selected1024_tail_cannot_replace_reader_call(self):
+        self.fixture.address = N.PAGE_TILE16_BASE
+        self.source, self.exported = self.fixture.install(self.fixture.rows, count=1024)
+        # A valid long-branch witness in the existing allowed atlas interval
+        # must still refuse even though another saved payload is excluded.
+        image = bytearray(self.source)
+        _, _, entries = N.read_native_directory(self.source, experimental_page_tile16=True)
+        record = N.pc(entries[301][0]) + 4 * 16
+        site = 0x4E8000
+        struct.pack_into('<I', image, record, site)
+        image[N.pc(site):N.pc(site)+4] = image[record+12:record+16]
+        self.source = self.fixture.reseal(image)
+        with self.assertRaisesRegex(ValueError, 'OVERLAPS_READER_CALL'):
+            self.prepare()
+
+    def test_old512_and_nonselected1024_keep_legacy_reservation(self):
+        for address, count in ((N.PAGE_TILE16_BASE, 512), (0x528000, 1024)):
+            self.fixture.address = address
+            self.source, self.exported = self.fixture.install(self.fixture.rows, count=count)
+            self.assertEqual(N.resident_data_reservation(self.source,
+                experimental_page_tile16=True), (N.RESIDENT_DATA_PC,
+                N.RESIDENT_DATA_CAPACITY, N.RESIDENT_DATA_EXCLUDED_PC))
+            with self.assertRaisesRegex(ValueError, 'Ordinary Build requires'):
+                N.resident_data_reservation(self.source)
+            if count == 512:
+                raw = json.dumps(self.prepare(), sort_keys=True, separators=(',', ':'),
+                    default=lambda value: dict(bytes_hex=value.hex())).encode()
+                self.assertEqual(hashlib.sha256(raw).hexdigest(),
+                    'fd4528d501d127742579a063ab6132ad7e6afdc454b257d24c605cbcad549948')
+
+    def test_legacy_pinned_preparation_and_opt_in_v1_are_byte_identical(self):
+        expected = '300084904066624eb22e08de5c19b39ff516f26ef735735b3917e6e318a0a4df'
+        old = self.legacy.prepare()
+        raw = json.dumps(old, sort_keys=True, separators=(',', ':'),
+                         default=lambda value: dict(bytes_hex=value.hex())).encode()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), expected)
+        result = B.prepare_native_compilation(self.legacy.source, self.legacy.exported,
+            data_pc=self.legacy.origin, capacity=self.legacy.capacity,
+            preimage=self.legacy.preimage, experimental_page_tile16=True)
+        self.assertEqual(old, result)
+
+class ManagedSemanticSealTest(unittest.TestCase):
+    def setUp(self):
+        self.fixture = ExperimentalNativeBuildTest()
+        self.fixture.setUp()
+        self.fixture.fixture.address = N.PAGE_TILE16_BASE
+        self.fixture.source, self.fixture.exported = self.fixture.fixture.install(
+            self.fixture.fixture.rows, count=N.PAGE_TILE16_ROW_CAPACITY, authoring=True)
+        image = bytearray(self.fixture.source)
+        _, _, entries = N.read_native_directory(bytes(image), experimental_page_tile16=True)
+        for site, _, prefix in B.SEMANTIC_READER_HOOKS:
+            raw = prefix + b'\xBF' + entries[400][0].to_bytes(3, 'little')
+            first = N.pc(site)
+            image[first:first + len(raw)] = raw
+        self.source = bytes(image)
+        value = copy.deepcopy(self.fixture.exported['native_source'])
+        value['source_rom_sha256'] = hashlib.sha256(self.source).hexdigest()
+        self.exported = self.fixture.fixture.fixture.seal(value)
+        self.fixture.legacy.source, self.fixture.legacy.exported = self.source, self.exported
+
+    def compiled_semantic_fixture(self):
+        raw, symbols = self.fixture.legacy.compiled_fixture(experimental_page_tile16=True)
+        image = bytearray(raw)
+        first, end = N.SEMANTIC_CODE_BASE, N.SEMANTIC_CODE_BASE + 0x300
+        symbols.update(Lyra_SemanticCodeStart=first, Lyra_SemanticCodeEnd=end,
+                       Oracle_Overworld_UseEntrance=0x2F9000,
+                       Oracle_Lyra_SemanticEntranceConsumersEnd=0x2F9100)
+        image[N.pc(first):N.pc(end)] = b'\x6B' * (end-first)
+        names = [name for _, name, _ in B.SEMANTIC_READER_HOOKS]
+        names += [name for _, name in B.SEMANTIC_ENTRANCE_SITES]
+        for index, name in enumerate(dict.fromkeys(names)):
+            symbols[name] = first + index * 16
+        for site, name, prefix in B.SEMANTIC_READER_HOOKS:
+            patch = b'\x22' + symbols[name].to_bytes(3, 'little') + b'\xEA' * len(prefix)
+            at = N.pc(site)
+            image[at:at + len(patch)] = patch
+        for index, (label, name) in enumerate(B.SEMANTIC_ENTRANCE_SITES):
+            site = symbols[label] = 0x2F9010 + index * 8
+            at = N.pc(site)
+            image[at:at + 4] = b'\x22' + symbols[name].to_bytes(3, 'little')
+        return bytes(image), symbols
+
+    def verify(self, compiled, symbols, **kwargs):
+        return B.verify_native_compiled_output(self.source, self.exported,
+            compiled, symbols, experimental_page_tile16=True,
+            semantic_readers=True, **kwargs)
+
+    def test_actual_consumers_verify_before_comparison_only_normalization(self):
+        compiled, symbols = self.compiled_semantic_fixture()
+        before = compiled
+        result = self.verify(compiled, symbols)
+        self.assertEqual(result['semantic_readers']['hook_count'], 14)
+        self.assertTrue(result['semantic_readers']['normalization_comparison_only'])
+        self.assertEqual(compiled, before)
+        self.assertFalse(result['runtime_admission'])
+        with self.assertRaises(ValueError):
+            B.verify_native_compiled_output(self.source, self.exported,
+                compiled, symbols, experimental_page_tile16=True)
+
+    def test_missing_changed_calls_bad_extents_and_unclaimed_code_refuse(self):
+        compiled, symbols = self.compiled_semantic_fixture()
+        for site in [row[0] for row in B.SEMANTIC_READER_HOOKS] + [
+                symbols[label] for label, _ in B.SEMANTIC_ENTRANCE_SITES]:
+            image = bytearray(compiled); image[N.pc(site)] = 0xBF
+            with self.subTest(site=site), self.assertRaisesRegex(ValueError, 'SEMANTIC_HOOK_MISMATCH'):
+                self.verify(bytes(image), symbols)
+        for update in ({'Lyra_SemanticCodeEnd': N.SEMANTIC_CODE_LIMIT+1},
+                       {'Lyra_SemanticCollisionWord': N.SEMANTIC_CODE_LIMIT},
+                       {'Oracle_Lyra_SemanticPlainSite6': symbols['Oracle_Overworld_UseEntrance']-1}):
+            with self.subTest(update=update), self.assertRaises(ValueError):
+                self.verify(compiled, dict(symbols, **update))
+        image = bytearray(compiled); image[N.pc(N.SEMANTIC_CODE_LIMIT)-1] ^= 1
+        with self.assertRaisesRegex(ValueError, 'UNCLAIMED_CODE_CHANGED'):
+            self.verify(bytes(image), symbols)
+        with self.assertRaisesRegex(ValueError, 'SEMANTIC_ADMISSION_INVALID'):
+            B.verify_native_compiled_output(self.source, self.exported, compiled, symbols,
+                                           semantic_readers=True)
+
+    def test_special_entry_and_return_require_actual_bounded_calls(self):
+        compiled, symbols = self.compiled_semantic_fixture()
+        for site in (0x0EDE4E, 0x0EDEE8):
+            for offset in (0, 1):
+                altered = bytearray(compiled); altered[N.pc(site)+offset] ^= 1
+                with self.subTest(site=site, offset=offset), self.assertRaisesRegex(
+                        ValueError, 'SEMANTIC_HOOK_MISMATCH'):
+                    self.verify(bytes(altered), symbols)
+            source = bytearray(self.source); source[N.pc(site)] = 0xEA
+            _, _, entries = N.read_native_directory(self.source, experimental_page_tile16=True)
+            with self.subTest(site=site, preimage=True), self.assertRaisesRegex(
+                    ValueError, 'SEMANTIC_SOURCE_PREIMAGE_MISMATCH'):
+                B._semantic_compiled_readers(bytes(source), compiled, entries, symbols, [])
+        # No unnamespaced or arbitrary suffix fallback for active Oracle code.
+        for label in ('Oracle_Overworld_UseEntrance', 'Oracle_Lyra_SemanticEntranceConsumersEnd',
+                      *[name for name, _ in B.SEMANTIC_ENTRANCE_SITES]):
+            missing = dict(symbols); missing[label.removeprefix('Oracle_')] = missing.pop(label)
+            with self.subTest(label=label), self.assertRaisesRegex(ValueError, 'REQUIRED_SYMBOL_MISSING'):
+                self.verify(compiled, missing)
+
+    def test_wrong_original_prefix_refuses_instead_of_masking_unknown_code(self):
+        compiled, symbols = self.compiled_semantic_fixture()
+        source = bytearray(self.source)
+        source[N.pc(0x1BBEDF)] = 0xEA
+        self.source = bytes(source)
+        value = copy.deepcopy(self.exported['native_source'])
+        value['source_rom_sha256'] = hashlib.sha256(self.source).hexdigest()
+        self.exported = self.fixture.fixture.fixture.seal(value)
+        with self.assertRaisesRegex(ValueError, 'SEMANTIC_SOURCE_PREIMAGE_MISMATCH'):
+            self.verify(compiled, symbols)
 
 
 if __name__ == '__main__':

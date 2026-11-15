@@ -650,7 +650,13 @@ Menu_OracleTreasureOwned:
   TAY
   LDA.w .value, Y : BEQ .done            ; no treasure for this ID
   LDX.w .sram, Y
-  LDA.l $7EF300, X : CMP.w .value, Y : BCC .done
+  LDA.l $7EF300, X
+  CPX.b #SwitchHookOwned&$FF : BEQ .switch_hook
+  CMP.w .value, Y : BCC .done            ; equipment keeps minimum-level checks
+  BRA .owned
+  .switch_hook
+  CMP.b #$01 : BNE .done                ; match the Switch Hook engine boolean
+  .owned
     INC.b $02
   .done
   PLB
@@ -660,7 +666,7 @@ Menu_OracleTreasureOwned:
   .sram
   db $5A ; $00 S3 Shrine of Courage: Mirror Shield, room $053 (item $06)
   db $00 ; $02 none (spawn points)
-  db $00 ; $04 none (reserved: Sky tower)
+  db SwitchHookOwned&$FF ; $04 D8 Sky Tower: Switch Hook (candidate receipt $4D)
   db $54 ; $06 S2 Shrine of Power: Power Glove, room $074 (item $1B)
   db $00 ; $08 none (Final Boss Route)
   db $4D ; $0A D2 Tail Palace: Roc's Feather, room $07F (item $21)
@@ -674,7 +680,7 @@ Menu_OracleTreasureOwned:
   db $5B ; $1A D8 Fortress of Secrets: Red Mail, room $05C (item $23)
   ; Owned when the SRAM byte is at least this value (0 = no treasure).
   .value
-  db $03, $00, $00, $01, $00, $01, $01, $01, $02, $01, $01, $01, $01, $02
+  db $03, $00, $01, $01, $00, $01, $01, $01, $02, $01, $01, $01, $01, $02
 }
 endif
 

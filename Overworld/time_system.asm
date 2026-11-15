@@ -23,8 +23,8 @@ pullpc
 HUD_ClockDisplay:
 {
   PHP ; Preserve caller M/X flags
-  JSL SongTintTick ; Per-frame song tint decay (safe for any M/X width)
   JSR RunClock
+  JSL SongTintTick ; After RunClock: repaints over an hourly palette refresh
   if !ENABLE_DREAM_WISDOM_SCENE == 1
     JSL DreamWisdom_HUDHidden : BCS .no_clock ; Wisdom scene: HUD blank
   endif
@@ -162,6 +162,9 @@ TimeSystem_CheckCanRun:
 
 TimeSystem_UpdateGBCLink:
 {
+  ; The clock also runs indoors. Match the dungeon loader and mask-removal
+  ; base-form policy instead of reapplying GBC art from the return's world.
+  JSL LinkGraphics_ApplyD8Base : BCS .light_world
   ; GBC Link code
   LDA $0FFF : CMP #$00 : BEQ .light_world
     LDA $02B2 : BNE .already_gbc_or_minish

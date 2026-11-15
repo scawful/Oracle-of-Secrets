@@ -1,4 +1,4 @@
-"""Offline revision4 resource preparation; ordinary Build admission is unchanged.
+"""Offline native resource preparation; ordinary Build admission is unchanged.
 
 The input is a saved native ROM plus its fresh z3ed resident-gameplay-area
 export. This module performs no file I/O, assembly, sidecar lowering or ROM
@@ -42,7 +42,7 @@ def _write(source, pc, raw, purpose):
     return dict(pc=pc, before=before, after=raw, purpose=purpose)
 
 
-def _validate_reader_bindings(source, entries):
+def _validate_reader_bindings(source, entries, *, capacity=native.MAP_CAPACITY, revision=4):
     """Check installed call witnesses without revision3 runtime admission."""
     code, size = entries[300]
     bindings, count = entries[301]
@@ -68,7 +68,7 @@ def _validate_reader_bindings(source, entries):
                  'NATIVE_BUILD_READER_BINDING_INVALID')
         for key, (address, rows) in entries.items():
             first = native.pc(address)
-            end = first + rows * native.entry_spec(key, native.MAP_CAPACITY, 4)[2]
+            end = first + rows * native.entry_spec(key, capacity, revision)[2]
             _require(site_pc >= end or site_pc + 4 <= first,
                      'NATIVE_BUILD_READER_SITE_OVERLAPS_PAYLOAD')
         _require(site_pc >= native.DIRECTORY_PC + native.DIRECTORY_SIZE
@@ -88,7 +88,7 @@ def _validate_reader_bindings(source, entries):
     return seen
 
 
-def _code_reseal(source, capacity, bank, entries, replacement):
+def _code_reseal(source, capacity, bank, entries, replacement, *, revision=4):
     address, count = entries[300]
     start = native.pc(address)
     before = source[start:start + count]
@@ -111,17 +111,20 @@ def _code_reseal(source, capacity, bank, entries, replacement):
     image = bytearray(source)
     image[start:start + count] = after
     rows = [(key, at, rows) for key, (at, rows) in entries.items()]
-    directory = native.encode_revision4_directory(bytes(image), rows,
-        tail_actor_bank=bank, capacity=capacity)
+    directory = (native.encode_revision4_directory(bytes(image), rows,
+        tail_actor_bank=bank, capacity=capacity) if revision == 4 else
+        native._encode_native_directory(bytes(image), rows, tail_actor_bank=bank,
+                                        capacity=capacity, revision=revision))
     image[native.DIRECTORY_PC:native.DIRECTORY_PC + native.DIRECTORY_SIZE] = directory
-    _require(native.read_native_directory(bytes(image)) == (capacity, bank, entries),
+    _require(native.read_native_directory(bytes(image),
+        experimental_page_tile16=revision == 5) == (capacity, bank, entries),
              'NATIVE_BUILD_RESEAL_CHANGED_LAYOUT')
     # The sole payload exception is explicit code300. Binding records and every
     # authored table/dictionary/stream/appearance/identity payload stay exact.
     for key, (at, rows) in entries.items():
         if key == 300:
             continue
-        width = native.entry_spec(key, capacity, 4)[2]
+        width = native.entry_spec(key, capacity, revision)[2]
         pc, size = native.pc(at), rows * width
         _require(image[pc:pc + size] == source[pc:pc + size],
                  'NATIVE_BUILD_RESEAL_CHANGED_SAVED_PAYLOAD')
@@ -136,8 +139,10 @@ def _code_reseal(source, capacity, bank, entries, replacement):
         compiled_source_evidence_required=True)
 
 
-def prepare_revision4_compilation(source, exported, *, data_pc, capacity,
-                                  preimage, reader_code_replacement=None):
+def prepare_native_compilation(source, exported, *, data_pc, capacity,
+                               preimage, reader_code_replacement=None,
+                               graphics_root=None, experimental_page_tile16=False,
+                               overlay_asset_contexts=None):
     """Return pure compilation inputs and preimage-bound writes, not a ROM.
 
     ``data_pc/capacity`` name the caller-owned current resident reservation;
@@ -148,39 +153,60 @@ def prepare_revision4_compilation(source, exported, *, data_pc, capacity,
     enforce the existing ordinary Build/publication gates.
     """
     _require(type(source) is bytes, 'NATIVE_BUILD_SAVED_SOURCE_REQUIRED')
-    installed = native.read_native_directory(source)
-    _require(installed is not None
-             and struct.unpack_from('<H', source, native.DIRECTORY_PC + 8)[0] == 4,
+    _require(type(experimental_page_tile16) is bool, 'NATIVE_BUILD_EXPERIMENTAL_ADMISSION_INVALID')
+    installed = native.read_native_directory(
+        source, experimental_page_tile16=experimental_page_tile16)
+    revision = (struct.unpack_from('<H', source, native.DIRECTORY_PC + 8)[0]
+                if installed is not None else None)
+    _require(installed is not None and revision in ((4, 5) if experimental_page_tile16 else (4,)),
              'NATIVE_BUILD_REVISION4_REQUIRED')
     map_count, bank, entries = installed
     _require(map_count == native.MAP_CAPACITY,
              'NATIVE_BUILD_CURRENT_ENGINE_REQUIRES192')
     native.verify_dictionary_readers(source, entries)
-    call_spans = _validate_reader_bindings(source, entries)
+    call_spans = _validate_reader_bindings(source, entries, capacity=map_count, revision=revision)
+    origin, extent, exclusions = native.resident_data_reservation(
+        source, experimental_page_tile16=experimental_page_tile16)
+    allowed = native.resident_data_spans(origin, extent, exclusions)
     _require(type(data_pc) is int and type(capacity) is int
-             and data_pc == native.RESIDENT_DATA_PC
-             and capacity == native.RESIDENT_DATA_CAPACITY,
+             and data_pc == origin and capacity == extent,
              'NATIVE_BUILD_RESIDENT_RESERVATION_MISMATCH')
     _require(type(preimage) is bytes and len(preimage) == capacity
              and source[data_pc:data_pc + capacity] == preimage,
              'NATIVE_BUILD_RESIDENT_PREIMAGE_MISMATCH')
-    _require(all(data_pc >= end or data_pc + capacity <= first
-                 for first, end in call_spans),
+    # This narrowly selected spill reservation has a measured zero preimage
+    # in the editable source. A later owner/data import must not be overwritten.
+    _require(source[native.RESIDENT_SPILL_PC:native.RESIDENT_SPILL_END]
+             == bytes(native.RESIDENT_SPILL_END-native.RESIDENT_SPILL_PC),
+             'NATIVE_BUILD_RESIDENT_SPILL_PREIMAGE_CHANGED')
+    if extent == native.RESIDENT_PAGE_TILE16_CAPACITY:
+        first, end = (native.RESIDENT_PAGE_TILE16_SPILL_PC,
+                      native.RESIDENT_PAGE_TILE16_SPILL_END)
+        _require(source[first:end] == bytes(end-first),
+                 'NATIVE_BUILD_RESIDENT_PAGE_TILE16_SPILL_PREIMAGE_CHANGED')
+    _require(all(last <= first or begin >= end
+                 for begin, last in allowed for first, end in call_spans),
              'NATIVE_BUILD_RESIDENT_OVERLAPS_READER_CALL')
     for key, (at, rows) in entries.items():
-        size = rows * native.entry_spec(key, map_count, 4)[2]
+        size = rows * native.entry_spec(key, map_count, revision)[2]
         pc = native.pc(at)
-        _require(data_pc >= pc + size or data_pc + capacity <= pc,
+        _require(all(last <= pc or begin >= pc + size for begin, last in allowed),
                  'NATIVE_BUILD_RESIDENT_OVERLAPS_SAVED_PAYLOAD')
     reseal_writes, code = _code_reseal(source, map_count, bank, entries,
-                                      reader_code_replacement)
+                                      reader_code_replacement, revision=revision)
     # This validates fresh export identity/profiles/topology/resolved bytes;
     # the retained packer and emitter own all byte formats and bank placement.
-    plan = resources.plan_saved_native_terrain(source, exported)
-    abi = resident.plan_native_resident_abi(plan, tile16_count=entries[400][1])
+    plan = resources.plan_saved_native_terrain(source, exported,
+        graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16,
+        overlay_asset_contexts=overlay_asset_contexts)
+    abi = resident.plan_native_resident_abi(plan, tile16_count=entries[400][1],
+        experimental_page_tile16=experimental_page_tile16)
     emission = resident.emit_native_resident_abi(abi, data_pc=data_pc,
-        capacity=capacity, preimage=preimage)
-    runtime = resident.resident_runtime_inputs(abi, emission, preimage=preimage)
+        capacity=capacity, preimage=preimage,
+        excluded_pc_spans=exclusions,
+        experimental_page_tile16=experimental_page_tile16)
+    runtime = resident.resident_runtime_inputs(abi, emission, preimage=preimage,
+        experimental_page_tile16=experimental_page_tile16)
     binary = bytes.fromhex(emission['payload_hex'])
     writes = []
     for row in emission['placements']:
@@ -189,7 +215,7 @@ def prepare_revision4_compilation(source, exported, *, data_pc, capacity,
         raw = binary[offset:offset + end - first]
         _require(_sha(raw) == row['sha256'], 'NATIVE_BUILD_EMISSION_MISMATCH')
         writes.append(_write(source, first, raw, row['role']))
-    return dict(schema='special_overworld.native_build_preparation.v1',
+    result = dict(schema='special_overworld.native_build_preparation.v1',
         source_rom_sha256=_sha(source),
         native_export_sha256=exported['native_source_sha256'],
         resource_plan=plan, resident_abi=abi, emission=emission,
@@ -204,6 +230,48 @@ def prepare_revision4_compilation(source, exported, *, data_pc, capacity,
         reader_constants_admission_unchanged=True,
         allocation_granted=False, ordinary_build_ready=False,
         runtime_admission=False, publication_authorized=False)
+
+    if revision == 5:
+        result.update(schema='special_overworld.native_build_preparation.experimental-v2',
+                      semantic_source_contract=_semantic_source_contract(source, map_count, entries))
+    return result
+
+
+def _semantic_source_contract(source, capacity, entries):
+    """Expose authenticated existing413 storage, never choose code/allocation."""
+    address, count = entries[413]
+    kind, _, stride = native.entry_spec(413, capacity, 5)
+    first = native.pc(address)
+    raw = source[first:first + count * stride]
+    decoded = native.decode_page_tile16(raw, capacity)
+    records = struct.unpack_from('<H', source, native.DIRECTORY_PC + 18)[0]
+    record_pc = next(native.DIRECTORY_PC + 32 + index * 16 for index in range(records)
+        if struct.unpack_from('<H', source, native.DIRECTORY_PC + 32 + index * 16)[0] == 413)
+    return dict(revision=5, capacity=capacity, table_id=413, kind=kind,
+        rows_snes=address, rows_pc=first, count=count, stride=stride,
+        populated_rows=len(decoded), payload_sha256=_sha(raw),
+        payload_crc32=struct.unpack_from('<I', source, record_pc + 12)[0],
+        directory_record_pc=record_pc, source_rom_sha256=_sha(source),
+        directory_sha256=_sha(source[native.DIRECTORY_PC:
+            native.DIRECTORY_PC + native.DIRECTORY_SIZE]),
+        directory_crc32=struct.unpack_from('<I', source, native.DIRECTORY_PC + 28)[0],
+        consumer_bindings=dict(SPECIAL_OVERWORLD_SEMANTIC_REVISION=5,
+            SPECIAL_OVERWORLD_SEMANTIC_CAPACITY=capacity,
+            SPECIAL_OVERWORLD_SEMANTIC_ROWS=address, SPECIAL_OVERWORLD_SEMANTIC_COUNT=count,
+            SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE=None, SPECIAL_OVERWORLD_SEMANTIC_CODE_END=None),
+        required_semantic_consumers=list(resources.PAGE_TILE16_RUNTIME_REQUIREMENTS),
+        effective_source_lookup='physical_page/local12bit_id/quadrant; global400 fallback',
+        source_word_bits_preserved=True, code_extent_bound=False,
+        runtime_admission=False, allocation_granted=False)
+
+
+def prepare_revision4_compilation(source, exported, *, data_pc, capacity,
+                                  preimage, reader_code_replacement=None,
+                                  graphics_root=None):
+    """Strict legacy API; experimental callers must select the generic API."""
+    return prepare_native_compilation(source, exported, data_pc=data_pc,
+        capacity=capacity, preimage=preimage,
+        reader_code_replacement=reader_code_replacement, graphics_root=graphics_root)
 
 
 # Current resident engine instruction spans, not dictionary operand spans.
@@ -258,8 +326,94 @@ def _symbol(symbols, name, *, exclusive_end=False):
     return value
 
 
-def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
-                                allow_stale_directory=False):
+
+# Exact native instruction prefixes replaced by the semantic source consumers.
+# The source operands may retain a legal LoROM mirror; compare their PC identity.
+SEMANTIC_READER_HOOKS = (
+    (0x008864, 'Lyra_SemanticCollisionWord', b''),
+    (0x0EDE4E, 'Lyra_SemanticEntrance0', b''),
+    (0x0EDEE8, 'Lyra_SemanticEntrance0', b''),
+    (0x1BBEDF, 'Lyra_SemanticTileActionWord', bytes.fromhex(
+        '0A0A8506A5002908004A4A0406A50229010005060AAA')),
+    (0x1BBF1E, 'Lyra_SemanticHammerWord', bytes.fromhex('0A0A0AAA')),
+    (0x1BC027, 'Lyra_SemanticLiftWord', bytes.fromhex(
+        '0A0A8506A5022908004A4A0406A5004A4A4A29010005060AAA')),
+)
+SEMANTIC_ENTRANCE_SITES = (
+    ('Oracle_Lyra_SemanticEntranceSite2', 'Lyra_SemanticEntrance2'),
+    ('Oracle_Lyra_SemanticNeighborSite0', 'Lyra_SemanticNeighbor0'),
+    ('Oracle_Lyra_SemanticCastleSite4', 'Lyra_SemanticEntrance4'),
+    ('Oracle_Lyra_SemanticCastleSite6', 'Lyra_SemanticEntrance6'),
+    ('Oracle_Lyra_SemanticNeighborSite4', 'Lyra_SemanticNeighbor4'),
+    ('Oracle_Lyra_SemanticNeighborSite6', 'Lyra_SemanticNeighbor6'),
+    ('Oracle_Lyra_SemanticPlainSite4', 'Lyra_SemanticEntrance4'),
+    ('Oracle_Lyra_SemanticPlainSite6', 'Lyra_SemanticEntrance6'),
+)
+
+
+def _semantic_compiled_readers(source, compiled, entries, symbols, protected):
+    """Validate actual enabled consumers before normalizing a comparison copy."""
+    code_pc = native.pc(native.SEMANTIC_CODE_BASE)
+    code_limit = native.pc(native.SEMANTIC_CODE_LIMIT - 1) + 1
+    native.semantic_reader_constants(source, code_preimage=source[code_pc:code_limit],
+                                     experimental_page_tile16=True)
+    first = _symbol(symbols, 'Lyra_SemanticCodeStart')
+    end = _symbol(symbols, 'Lyra_SemanticCodeEnd', exclusive_end=True)
+    _require(first == native.SEMANTIC_CODE_BASE and first < end <= native.SEMANTIC_CODE_LIMIT,
+             'NATIVE_BUILD_SEMANTIC_CODE_EXTENT_MISMATCH')
+    first_pc, end_pc = native.pc(first), native.pc(end - 1) + 1
+    _require(compiled[first_pc:end_pc] != source[first_pc:end_pc],
+             'NATIVE_BUILD_SEMANTIC_CODE_NOT_EMITTED')
+    _require(compiled[end_pc:code_limit] == source[end_pc:code_limit],
+             'NATIVE_BUILD_SEMANTIC_UNCLAIMED_CODE_CHANGED')
+    _require(all(first_pc >= limit or end_pc <= at for at, limit, _ in protected),
+             'NATIVE_BUILD_SEMANTIC_CODE_OVERLAPS_SAVED_SOURCE')
+    targets, hooks, normalized = {}, [], []
+
+    def hook(site, name, length):
+        target = _symbol(symbols, name)
+        _require(first <= target < end, 'NATIVE_BUILD_SEMANTIC_TARGET_OUTSIDE_CODE:' + name)
+        targets[name] = target
+        at = native.pc(site)
+        _require((site & 0xFFFF) + length <= 0x10000
+                 and all(at >= limit or at + length <= start for start, limit, _ in protected),
+                 'NATIVE_BUILD_SEMANTIC_HOOK_OVERLAPS_SAVED_SOURCE')
+        expected = b'\x22' + target.to_bytes(3, 'little') + b'\xEA' * (length - 4)
+        _require(compiled[at:at + length] == expected,
+                 f'NATIVE_BUILD_SEMANTIC_HOOK_MISMATCH:{site:06X}')
+        hooks.append(dict(site=site, target=target, symbol=name, length=length))
+
+    for site, name, prefix in SEMANTIC_READER_HOOKS:
+        at, length = native.pc(site), len(prefix) + 4
+        original = source[at:at + length]
+        _require(original[:len(prefix)] == prefix and original[len(prefix)] == 0xBF
+                 and native.pc(int.from_bytes(original[-3:], 'little')) == native.pc(entries[400][0]),
+                 f'NATIVE_BUILD_SEMANTIC_SOURCE_PREIMAGE_MISMATCH:{site:06X}')
+        hook(site, name, length)
+        normalized.append((at, at + length))
+    entrance = _symbol(symbols, 'Oracle_Overworld_UseEntrance')
+    entrance_end = _symbol(symbols, 'Oracle_Lyra_SemanticEntranceConsumersEnd', exclusive_end=True)
+    _require(entrance < entrance_end and entrance_end - entrance <= 0x2000
+             and entrance >> 16 == (entrance_end - 1) >> 16,
+             'NATIVE_BUILD_SEMANTIC_ENTRANCE_EXTENT_INVALID')
+    previous = entrance - 1
+    for label, name in SEMANTIC_ENTRANCE_SITES:
+        site = _symbol(symbols, label)
+        _require(previous < site and entrance <= site and site + 4 <= entrance_end,
+                 'NATIVE_BUILD_SEMANTIC_ENTRANCE_SITE_INVALID:' + label)
+        hook(site, name, 4)
+        previous = site
+    _require(len(set(targets.values())) == len(targets),
+             'NATIVE_BUILD_SEMANTIC_TARGET_ALIASED')
+    return normalized, dict(code_extent=dict(snes=[first, end], pc=[first_pc, end_pc]),
+        hooks=hooks, hook_count=len(hooks), source_preimages_validated=True,
+        actual_compiled_consumers_verified=True, normalization_comparison_only=True)
+
+
+def plan_native_compiled_seal(source, exported, compiled, symbols, *,
+                              allow_stale_directory=False, graphics_root=None,
+                              experimental_page_tile16=False, semantic_readers=False,
+                              overlay_asset_contexts=None):
     """Validate compilation and return directory bytes for source reassembly.
 
     Inputs are immutable ROM bytes, a fresh source export and WLA label names
@@ -277,11 +431,19 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
              and len(compiled) == len(source), 'NATIVE_BUILD_COMPILED_EXTENT_MISMATCH')
     _require(type(symbols) is dict and type(allow_stale_directory) is bool,
              'NATIVE_BUILD_COMPILED_ARGUMENT_INVALID')
-    prep = prepare_revision4_compilation(source, exported,
-        data_pc=native.RESIDENT_DATA_PC, capacity=native.RESIDENT_DATA_CAPACITY,
-        preimage=source[native.RESIDENT_DATA_PC:
-                        native.RESIDENT_DATA_PC + native.RESIDENT_DATA_CAPACITY])
-    capacity, bank, entries = native.read_native_directory(source)
+    _require(type(semantic_readers) is bool and (not semantic_readers or experimental_page_tile16 is True),
+             'NATIVE_BUILD_SEMANTIC_ADMISSION_INVALID')
+    data_pc, data_size, exclusions = native.resident_data_reservation(
+        source, experimental_page_tile16=experimental_page_tile16)
+    prep = prepare_native_compilation(source, exported,
+        data_pc=data_pc, capacity=data_size,
+        preimage=source[data_pc:data_pc + data_size],
+        graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16,
+        overlay_asset_contexts=overlay_asset_contexts)
+    capacity, bank, entries = native.read_native_directory(
+        source, experimental_page_tile16=experimental_page_tile16)
+    revision = struct.unpack_from('<H', source, native.DIRECTORY_PC + 8)[0]
+    _require(not semantic_readers or revision == 5, 'NATIVE_BUILD_SEMANTIC_REVISION5_REQUIRED')
     code_address, code_size = entries[300]
     code_start = _symbol(symbols, 'Lyra_CurrentNativeCodeStart')
     code_end = _symbol(symbols, 'Lyra_CurrentNativeCodeEnd', exclusive_end=True)
@@ -290,12 +452,12 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
     protected = [(native.DIRECTORY_PC, native.DIRECTORY_PC + native.DIRECTORY_SIZE,
                   'directory')]
     for key, (address, rows) in entries.items():
-        first, length = native.pc(address), rows * native.entry_spec(key, capacity, 4)[2]
+        first, length = native.pc(address), rows * native.entry_spec(key, capacity, revision)[2]
         protected.append((first, first + length, f'ID{key}'))
         if key != 300:
             _require(compiled[first:first + length] == source[first:first + length],
                      f'NATIVE_BUILD_COMPILED_SAVED_PAYLOAD_CHANGED:ID{key}')
-    call_spans = _validate_reader_bindings(source, entries)
+    call_spans = _validate_reader_bindings(source, entries, capacity=capacity, revision=revision)
     for first, end in call_spans:
         _require(compiled[first:end] == source[first:end],
                  'NATIVE_BUILD_COMPILED_READER_CALL_CHANGED')
@@ -344,7 +506,12 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
         extents.append(dict(start_symbol=start_name, end_symbol=end_name,
                             snes=[first, end], pc=[pc_first, pc_end]))
 
+    semantic_spans, semantic_proof = (
+        _semantic_compiled_readers(source, compiled, entries, symbols, protected)
+        if semantic_readers else ([], None))
     restored = bytearray(compiled)
+    for at, end in semantic_spans:
+        restored[at:end] = source[at:end]
     word_start, word_end = extents[0]['snes']
     for site, name, length in RESIDENT_READER_HOOKS:
         target = _symbol(symbols, name)
@@ -362,7 +529,6 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
     # native operand/opcode must still bind the saved dictionaries exactly.
     native.verify_dictionary_readers(bytes(restored), entries)
 
-    data_pc, data_size = native.RESIDENT_DATA_PC, native.RESIDENT_DATA_CAPACITY
     expected_resources = bytearray(source[data_pc:data_pc + data_size])
     for write in prep['resource_writes']:
         first = write['pc']
@@ -371,13 +537,20 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
                  f'NATIVE_BUILD_COMPILED_RESOURCE_CHANGED:{write["purpose"]}')
         offset = first - data_pc
         expected_resources[offset:offset + end - first] = write['after']
-    _require(compiled[data_pc:data_pc + data_size] == bytes(expected_resources),
-             'NATIVE_BUILD_COMPILED_RESOURCE_GAP_CHANGED')
+    # Check every allowed gap; D4 and semantic code/saved rows remain outside
+    # atlas ownership and retain their separate code/payload validation.
+    cursor = data_pc
+    for first, end in (*exclusions,
+                       (data_pc + data_size, data_pc + data_size)):
+        _require(compiled[cursor:first] == bytes(expected_resources[
+            cursor-data_pc:first-data_pc]),
+                 'NATIVE_BUILD_COMPILED_RESOURCE_GAP_CHANGED')
+        cursor = end
 
     first = native.pc(code_address)
     before, after = source[first:first + code_size], compiled[first:first + code_size]
     reseal_writes, code = _code_reseal(source, capacity, bank, entries,
-        ReaderCodeReplacement(_sha(before), after))
+        ReaderCodeReplacement(_sha(before), after), revision=revision)
     directory = source[native.DIRECTORY_PC:native.DIRECTORY_PC + native.DIRECTORY_SIZE]
     expected_directory = next((write['after'] for write in reseal_writes
         if write['pc'] == native.DIRECTORY_PC), directory)
@@ -386,9 +559,10 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
     _require(not needed or (allow_stale_directory and installed == directory),
              'NATIVE_BUILD_COMPILED_DIRECTORY_SEAL_MISMATCH')
     if not needed:
-        _require(native.read_native_directory(compiled) == (capacity, bank, entries),
+        _require(native.read_native_directory(compiled,
+            experimental_page_tile16=experimental_page_tile16) == (capacity, bank, entries),
                  'NATIVE_BUILD_COMPILED_DIRECTORY_LAYOUT_CHANGED')
-    return dict(schema='special_overworld.native_compiled_seal.v1',
+    result = dict(schema='special_overworld.native_compiled_seal.v1',
         source_rom_sha256=_sha(source), compiled_rom_sha256=_sha(compiled),
         native_export_sha256=prep['native_export_sha256'],
         directory_bytes=expected_directory, directory_sha256=_sha(expected_directory),
@@ -405,7 +579,32 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
         unresolved_full_residency_unknowns=prep['unresolved_full_residency_unknowns'],
         full_residency_ready=False, runtime_admission=False, publication_authorized=False)
 
+    if revision == 5:
+        result.update(schema='special_overworld.native_compiled_seal.experimental-v2',
+                      semantic_source_contract=prep['semantic_source_contract'])
+        if semantic_readers:
+            result['semantic_readers'] = semantic_proof
+    return result
 
-def verify_revision4_compiled_output(source, exported, compiled, symbols):
+
+def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
+                                allow_stale_directory=False, graphics_root=None):
+    """Strict legacy seal; does not silently admit experimental revision5."""
+    return plan_native_compiled_seal(source, exported, compiled, symbols,
+        allow_stale_directory=allow_stale_directory, graphics_root=graphics_root)
+
+
+def verify_native_compiled_output(source, exported, compiled, symbols, *,
+                                  graphics_root=None, experimental_page_tile16=False,
+                                  semantic_readers=False, overlay_asset_contexts=None):
+    """Strict final composition; explicit experimental source admission only."""
+    return plan_native_compiled_seal(source, exported, compiled, symbols,
+        graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16,
+        semantic_readers=semantic_readers, overlay_asset_contexts=overlay_asset_contexts)
+
+
+def verify_revision4_compiled_output(source, exported, compiled, symbols, *,
+                                    graphics_root=None):
     """Strict final composition proof; a stale ID300 seal always refuses."""
-    return plan_revision4_compiled_seal(source, exported, compiled, symbols)
+    return plan_revision4_compiled_seal(source, exported, compiled, symbols,
+                                      graphics_root=graphics_root)

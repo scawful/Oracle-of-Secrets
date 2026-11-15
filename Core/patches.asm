@@ -48,6 +48,20 @@ org $0E9659+$07C : db $20
 assert read2($00997C) == $0123 || read2($00997C) == $00B8, "Unexpected pit-damage table tail"
 org $00997C : dw $00B8
 
+; D5 Glacia rooms $AF and $BF have holewarp $02 (dead-end room). When their
+; pit-reset layouts are enabled, list them as damage-pit rooms so a fall costs
+; one heart and respawns Link in the room. Uses the second and third of five
+; $0123 filler entries in RoomsWithPitDamage ($00:990C, 57 words); mirrored in
+; RoomsWithPitDamage_Ext (Dungeons/sky_pit_damage.asm) when extended scan is on.
+if !ENABLE_D5_AF_PIT_RESET == 1
+  assert read2($009976) == $0123 || read2($009976) == $00AF, "Unexpected pit-damage table slot"
+  org $009976 : dw $00AF
+endif
+if !ENABLE_D5_BF_PIT_RESET == 1
+  assert read2($009978) == $0123 || read2($009978) == $00BF, "Unexpected pit-damage table slot"
+  org $009978 : dw $00BF
+endif
+
 ; D6 room $97 drops into $B8 at the same x/y. Falls from the upper pit's west
 ; edge (beside the first-key Debirando) land on B8's pit band or a walled
 ; ledge: a damage loop or a wedge the wall cannon finishes (2026-10-11 runtime,

@@ -120,7 +120,7 @@ DreamWisdom_Stage:
   ; Palettes_Load_SpriteAux1 reads $0AAD later in this Module07_15 step
   ; ($02A276), so OBJ5 fades in with her colors; the hut header resets it.
   LDA.b #!DW_FaroreAux1 : STA.w $0AAD
-  LDA.b #$00 : STA.l SongTintTimer        ; a running tint rewrites $9A
+  LDA.b #$00 : STA.l SongTintTimer        ; a running tint repaints the BG palette
   STA.l DreamWisdom_Flash
   JSR DreamWisdom_BlankHUD
   JSR DreamWisdom_LoadReachGfx

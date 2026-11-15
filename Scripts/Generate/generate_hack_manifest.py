@@ -1499,7 +1499,151 @@ def _find_custom_collision_stream_end(data: bytes, room_id: int, start_pc: int) 
     )
 
 
-def derive_editor_managed_regions(dev_rom_path: Path) -> list[dict]:
+# Directory ID 412 is yaze-owned native-overworld authoring metadata. The ASM
+# resource code ends at $4DD000 and the next org is $4DF000, so only this exact
+# extent is editable; the rest of bank $4D stays ASM-owned.
+NATIVE_AUTHORING_METADATA_ID = 412
+NATIVE_AUTHORING_METADATA_SNES = 0x4DD000
+NATIVE_AUTHORING_METADATA_ROWS = 256
+NATIVE_AUTHORING_METADATA_PC = 0x26D000
+NATIVE_AUTHORING_METADATA_END_PC = 0x26F000
+
+
+# In asar builds a hook has no recorded end. These two hooks precede table 412
+# in the same LoROM bank, and each has an assembler-enforced end at or below the
+# table start. Each entry: (source, physical address) -> (maximum end, required
+# assert lines). Anything else in the bank keeps the ordinary refusal.
+BOUNDED_HOOKS_BEFORE_NATIVE_AUTHORING_METADATA = {
+    ("Overworld/special_overworld_resident.asm", 0x4DC200): (
+        0x4DC800,
+        (
+            r"assert\s+!LYRA_CURRENT_RESIDENT_CODE_END-!LYRA_CURRENT_RESIDENT_CODE_BASE\s*<=\s*\$0600\b",
+            r"assert\s+pc\(\)\s*<=\s*!LYRA_CURRENT_RESIDENT_CODE_END\b",
+        ),
+    ),
+    ("Overworld/special_overworld_graphics.asm", 0x4DC800): (
+        0x4DD000,
+        (
+            r"assert\s+!SPECIAL_OVERWORLD_RESOURCE_CODE_END\s*==\s*\$4DD000\b",
+            r"assert\s+pc\(\)\s*<=\s*!SPECIAL_OVERWORLD_RESOURCE_CODE_END\b",
+        ),
+    ),
+}
+
+
+def _bounded_before_native_authoring_metadata(
+    root: Path,
+    hook: HookEntry,
+    physical: int,
+    region_start: int,
+    region_end: int,
+) -> bool:
+    """Return True only for a named hook whose end is proven below table 412."""
+    if (region_start, region_end) != (
+        NATIVE_AUTHORING_METADATA_PC,
+        NATIVE_AUTHORING_METADATA_END_PC,
+    ):
+        return False
+    source = hook.source.rpartition(":")[0]
+    bound = BOUNDED_HOOKS_BEFORE_NATIVE_AUTHORING_METADATA.get((source, physical))
+    if bound is None:
+        return False
+    maximum_end, required_asserts = bound
+    if _strict_lorom_to_pc(maximum_end, f"Bounded hook {source}") > region_start:
+        raise ManifestGenerationError(
+            f"bounded hook {source} at 0x{physical:06X} declares end "
+            f"0x{maximum_end:06X} past editor range start"
+        )
+    try:
+        lines = (root / source).read_text(errors="replace").splitlines()
+    except OSError as exc:
+        raise ManifestGenerationError(
+            f"bounded hook {source} source is unreadable: {exc}"
+        ) from exc
+    for pattern in required_asserts:
+        if not any(re.match(pattern, line.strip()) for line in lines):
+            raise ManifestGenerationError(
+                f"bounded hook {source} at 0x{physical:06X} lost its bounding "
+                f"assert matching {pattern}"
+            )
+    return True
+
+
+def _bounded_before_native_page_tile16(root, hook, physical, start, end, defines):
+    """Admit only the existing semantic code's enforced bound before table413."""
+    source = hook.source.rpartition(":")[0]
+    if not defines or source != "Overworld/special_overworld_semantic.asm":
+        return False
+    names = ("ENABLED", "REVISION", "CODE_BASE", "CODE_END", "ROWS", "COUNT")
+    values = [defines.get("SPECIAL_OVERWORLD_SEMANTIC_" + name) for name in names]
+    if any(type(value) is not int for value in values):
+        return False
+    enabled, revision, base, limit, rows, count = values
+    if enabled != 1 or revision != 5 or count <= 0:
+        return False
+    base_pc = _strict_lorom_to_pc(base, "Semantic code start")
+    # An exclusive end may be the following bank's $0000: map its last
+    # actual byte, then advance in PC space. FastROM aliases share ownership.
+    limit_pc = _strict_lorom_to_pc(limit - 1, "Semantic code last byte") + 1
+    rows_pc = _strict_lorom_to_pc(rows, "Semantic rows")
+    hook_pc = _strict_lorom_to_pc(physical, "Semantic hook")
+    if (hook_pc != base_pc or not base_pc < limit_pc <= rows_pc
+            or base >> 16 != (limit - 1) >> 16
+            or base_pc // 0x8000 != (limit_pc - 1) // 0x8000
+            or (rows & 0xFFFF) + count * 12 > 0x10000
+            or rows_pc != start or not start < end
+            or start + count * 12 != end):
+        return False
+    lines = (root / source).read_text().splitlines()
+    active = [line.strip() for _, line, _ in _iter_active_lines(lines, defines)]
+    if not any(re.match(r"assert\s+pc\(\)\s*<=\s*!SPECIAL_OVERWORLD_SEMANTIC_CODE_END\b", line)
+               for line in active):
+        raise ManifestGenerationError("Semantic code lost its active bounding assert before table 413")
+    return True
+
+
+def _native_editor_ranges(
+    dev_rom_path: Path, *, experimental_page_tile16: bool = False,
+) -> list[tuple[str, int, int]]:
+    """Authenticate native storage and return its existing editor-owned extents."""
+    build_scripts = str(Path(__file__).resolve().parents[1] / "Build")
+    if build_scripts not in sys.path:
+        sys.path.insert(0, build_scripts)
+    import lyra_native_loaders
+
+    try:
+        directory = lyra_native_loaders.read_native_directory(
+            dev_rom_path.read_bytes(), experimental_page_tile16=experimental_page_tile16
+        )
+    except ValueError as exc:
+        raise ManifestGenerationError(
+            f"Invalid native overworld directory in {dev_rom_path}: {exc}"
+        ) from exc
+    if directory is None:
+        return []
+    ranges = []
+    entry = directory[2].get(NATIVE_AUTHORING_METADATA_ID)
+    if entry is not None:
+        if entry != (NATIVE_AUTHORING_METADATA_SNES, NATIVE_AUTHORING_METADATA_ROWS):
+            raise ManifestGenerationError(
+                f"Native authoring metadata table 412 moved: address "
+                f"0x{entry[0]:06X}, {entry[1]} rows"
+            )
+        ranges.append(("native_overworld_authoring_metadata",
+                       NATIVE_AUTHORING_METADATA_PC, NATIVE_AUTHORING_METADATA_END_PC))
+    entry = directory[2].get(413)
+    if entry is not None:
+        # The admitted directory reader already checks revision5, count, bank
+        # extent, CRC, overlap and sorted page/local-ID rows using its codec.
+        width = lyra_native_loaders.entry_spec(413, directory[0], 5)[2]
+        start = lyra_native_loaders.pc(entry[0])
+        ranges.append(("native_overworld_page_tile16", start, start + entry[1] * width))
+    return ranges
+
+
+def derive_editor_managed_regions(
+    dev_rom_path: Path, *, experimental_page_tile16: bool = False,
+) -> list[dict]:
     """Derive exact dungeon metadata and collision ranges from the dev ROM."""
     try:
         data = dev_rom_path.read_bytes()
@@ -1617,6 +1761,8 @@ def derive_editor_managed_regions(dev_rom_path: Path) -> list[dict]:
             CUSTOM_COLLISION_DATA_END_PC,
         ),
     ]
+    named_regions.extend(_native_editor_ranges(
+        dev_rom_path, experimental_page_tile16=experimental_page_tile16))
     _validate_disjoint_named_ranges(named_regions, "editor-managed regions")
 
     return [
@@ -1626,7 +1772,8 @@ def derive_editor_managed_regions(dev_rom_path: Path) -> list[dict]:
 
 
 def _validate_expanded_hooks_disjoint_from_editor_regions(
-    hooks: list[HookEntry], editor_regions: list[dict]
+    hooks: list[HookEntry], editor_regions: list[dict], root: Path,
+    *, semantic_defines: Optional[dict[str, int]] = None,
 ) -> None:
     """Reject expanded hooks that may extend into editor-owned bytes.
 
@@ -1656,6 +1803,14 @@ def _validate_expanded_hooks_disjoint_from_editor_regions(
             hook_bank_end = hook_bank_start + 0x8000
             region_segment_start = max(region_start, hook_bank_start)
             region_segment_end = min(region_end, hook_bank_end)
+            if _bounded_before_native_authoring_metadata(
+                root, hook, physical, region_start, region_end
+            ):
+                continue
+            if _bounded_before_native_page_tile16(
+                root, hook, physical, region_start, region_end, semantic_defines
+            ):
+                continue
             if (
                 region_segment_start < region_segment_end
                 and hook_start < region_segment_end
@@ -2035,6 +2190,7 @@ def generate_manifest(
     dev_rom_path: Optional[Path] = None,
     hooks_path: Optional[Path] = None,
     manifest_root: Optional[Path] = None,
+    *, experimental_page_tile16: bool = False,
 ) -> dict:
     """Generate the complete hack manifest.
 
@@ -2207,7 +2363,8 @@ def generate_manifest(
         manifest["dungeon_stream_regions"] = derive_dungeon_stream_regions(
             dev_rom_path
         )
-        editor_regions = derive_editor_managed_regions(dev_rom_path)
+        editor_regions = derive_editor_managed_regions(
+            dev_rom_path, experimental_page_tile16=experimental_page_tile16)
         if exact_mode:
             # Exact spans: check every byte, in every bank, against every
             # range Yaze writes.
@@ -2220,7 +2377,8 @@ def generate_manifest(
         else:
             # Estimated spans: start-address rule for expanded hooks.
             _validate_expanded_hooks_disjoint_from_editor_regions(
-                hooks, editor_regions
+                hooks, editor_regions, root,
+                semantic_defines=defines if experimental_page_tile16 else None,
             )
         _validate_unresolved_org_proofs(
             scan_org_directives(root, asm_sources, defines=defines),
@@ -2228,13 +2386,19 @@ def generate_manifest(
         )
         manifest["editor_managed_regions"] = {
             "description": (
-                "Exact yaze-owned dungeon metadata and custom-collision "
-                "ranges derived from the editable dev ROM. The WaterFill "
+                "Exact yaze-owned dungeon metadata, custom-collision and "
+                "native-overworld authoring-metadata (table 412) ranges "
+                "derived from the editable dev ROM. The WaterFill "
                 "tail beginning at $25:E000 remains ASM-owned, and protected "
                 "hooks still take precedence."
             ),
             "regions": editor_regions,
         }
+
+    if experimental_page_tile16 and "editor_managed_regions" in manifest:
+        manifest["editor_managed_regions"]["description"] += (
+            " Explicit experimental admission includes authenticated page Tile16 table 413."
+        )
 
     # Protected regions — these are hook addresses in VANILLA banks.
     # Asar overwrites these on build, so yaze edits here are lost.
@@ -2542,6 +2706,8 @@ def main() -> int:
         choices=("python-scan",),
         help="Scan sources for hooks with estimated sizes (asar builds).",
     )
+    parser.add_argument("--experimental-page-tile16", action="store_true",
+                        help="Explicitly admit authenticated revision5 page Tile16 storage")
     args = parser.parse_args()
 
     root = args.root.resolve()
@@ -2566,6 +2732,7 @@ def main() -> int:
             args.dev_rom,
             hooks_path=args.hooks,
             manifest_root=args.manifest_root,
+            experimental_page_tile16=args.experimental_page_tile16,
         )
     except ManifestGenerationError as exc:
         print(f"error: cannot generate hack manifest: {exc}", file=sys.stderr)

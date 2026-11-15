@@ -2,7 +2,8 @@
 
 Executes the area $0E branch of Sprite_EonOwl_Long in Sprites/NPCs/eon_owl.asm
 on an 8-bit model of the instructions it uses, for all 256 Crystals values and
-all 256 Flute values. The D8 Sky bit ($80) must not change the outcome. No
+all 256 Flute values. D7 ($08) and D8 ($80) must not remove a missed-song
+teacher once the first six essences have been earned. No
 build, no emulator.
 """
 from pathlib import Path
@@ -68,6 +69,10 @@ def legacy_retains(crystals, flute):
     return (crystals & 0x7F) == 0x77 and flute < 0x04
 
 
+def first_six_earned(crystals):
+    return all(crystals & bit for bit in (0x01, 0x02, 0x04, 0x10, 0x20, 0x40))
+
+
 class EonOwlCrystalCompat(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -78,10 +83,11 @@ class EonOwlCrystalCompat(unittest.TestCase):
         crystals = sram_define(self.sram, r"^Crystals\s*=\s*\$([0-9A-F]{6})")
         flute = sram_define(self.sram, r"^Flute\s*=\s*\$([0-9A-F]{6})")
         sky = sram_define(self.sram, r"^!Crystal_D8_Sky\s*=\s*\$([0-9A-F]{2})")
-        self.assertEqual((crystals, flute, sky), (CRYSTALS, FLUTE, 0x80))
+        ship = sram_define(self.sram, r"^!Crystal_D7_DragonShip\s*=\s*\$([0-9A-F]{2})")
+        self.assertEqual((crystals, flute, ship, sky), (CRYSTALS, FLUTE, 0x08, 0x80))
         self.assertEqual(self.lines[:9], [
             "LDA.b $8A", "CMP.b #$0E", "BNE .NotGaebora",
-            "LDA.l $7EF37A", f"AND.b #${~sky & 0xFF:02X}", "CMP.b #$77", "BNE .Despawn",
+            "LDA.l $7EF37A", f"AND.b #${~(ship | sky) & 0xFF:02X}", "CMP.b #$77", "BNE .Despawn",
             "LDA.l $7EF34C", "CMP.b #$04",
         ])
         self.assertEqual(self.lines[9], "BCS .Despawn")
@@ -91,15 +97,25 @@ class EonOwlCrystalCompat(unittest.TestCase):
             if area != 0x0E:
                 self.assertEqual(run_branch(self.lines, area, 0x77, 0), ".NotGaebora")
 
-    def test_all_crystal_and_flute_bytes_match_legacy(self):
+    def test_all_crystal_and_flute_bytes_require_first_six_and_missed_song(self):
         cases = 0
         for crystals in range(256):
             for flute in range(256):
                 outcome = run_branch(self.lines, 0x0E, crystals, flute)
-                expected = ".HandleSprite" if legacy_retains(crystals, flute) else ".Despawn"
+                expected = ".HandleSprite" if first_six_earned(crystals) and flute < 4 else ".Despawn"
                 self.assertEqual(outcome, expected, f"crystals=${crystals:02X} flute=${flute:02X}")
                 cases += 1
         self.assertEqual(cases, 65536)
+
+    def test_pre_d7_outcomes_are_preserved_and_d7_does_not_remove_teacher(self):
+        for crystals in range(256):
+            if crystals & 0x08:
+                continue
+            for flute in range(256):
+                before = run_branch(self.lines, 0x0E, crystals, flute)
+                expected = ".HandleSprite" if legacy_retains(crystals, flute) else ".Despawn"
+                self.assertEqual(before, expected)
+                self.assertEqual(before, run_branch(self.lines, 0x0E, crystals | 0x08, flute))
 
     def test_sky_bit_invariance_and_boundaries(self):
         for crystals in range(128):
@@ -108,12 +124,12 @@ class EonOwlCrystalCompat(unittest.TestCase):
                     run_branch(self.lines, 0x0E, crystals, flute),
                     run_branch(self.lines, 0x0E, crystals | 0x80, flute),
                     f"crystals=${crystals:02X} flute=${flute:02X}")
-        for crystals in (0x77, 0xF7):
+        for crystals in (0x77, 0x7F, 0xF7, 0xFF):
             for flute in range(4):
                 self.assertEqual(run_branch(self.lines, 0x0E, crystals, flute), ".HandleSprite")
             for flute in range(4, 256):
                 self.assertEqual(run_branch(self.lines, 0x0E, crystals, flute), ".Despawn")
-        for crystals in (0x7F, 0xFF, 0x80, 0x00, 0x37, 0xB7):
+        for crystals in (0x80, 0x00, 0x37, 0xB7):
             for flute in range(256):
                 self.assertEqual(run_branch(self.lines, 0x0E, crystals, flute), ".Despawn")
 

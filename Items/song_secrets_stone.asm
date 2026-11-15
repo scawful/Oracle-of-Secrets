@@ -28,8 +28,7 @@ OcarinaEffect_Secrets:
   LDA.w $0403 : AND.b #$10 : BNE .no_target
   LDA.b #$04 : STA.b SongFlag
 if !ENABLE_OCARINA_SONG_TINT == 1
-  LDA.b #$20 : STA.l SongTintTimer
-  LDA.b #$3A : STA.l SongTintColor : STA.b $9A
+  LDA.b #!SongTint_Secrets : JSL SongTint_Start
 endif
   RTL
 .no_target
@@ -125,6 +124,18 @@ OcarinaEffect_Stone:
   LDA.b $5D : BEQ +
     JMP .error
   +
+if !ENABLE_D8_FARORE_GRAPHICS == 1
+  ; Room90's native stone uses OBJ6 low colors reassigned to Farore. Refuse
+  ; creation/replacement only while this prototype segment is active. An
+  ; existing echo remains untouched; all other rooms retain the normal gate.
+  JSL D8Farore_IsMember : BCC +
+  REP #$20
+  LDA.b $A0 : CMP.w #$0090
+  SEP #$20
+  BNE +
+    JMP .error
+  +
+endif
   JSR Stone_SelectSpawnPoint
   JSR Stone_CheckSpawnFloor : BCS +
     JMP .error
@@ -175,10 +186,6 @@ OcarinaEffect_Stone:
   LDA.b #$4D : STA.w SprGfxProps,X ; native statue: invulnerable, palette/sheet
   LDA.b #$0D : STA.w SprProps,X ; native palette6 + OBJ page1, no global flips
   LDA.b #$1B : STA.w $012D
-if !ENABLE_OCARINA_SONG_TINT == 1
-  LDA.b #$10 : STA.l SongTintTimer
-  LDA.b #$31 : STA.l SongTintColor : STA.b $9A
-endif
   BRA .done
 .error
   LDA.b #$3C : STA.w $012E
@@ -346,6 +353,7 @@ Stone_BlockSprites:
 ; Held-door tags read the echo after ALL sprite AI. An ordinary statue or ice
 ; block may clear $0642 later in the frame, so publishing that byte from the
 ; echo's own update would be order-dependent. No sticky shared flag is written.
+; Also reports a Switch Hook enemy standing on a plate (switch_hook.asm).
 ; Replays native LDA $0642 / AND #00FF, M/X=16; preserves X/Y and scratch0..7.
 Stone_ReadHoldSwitch:
 {
@@ -357,7 +365,10 @@ Stone_ReadHoldSwitch:
   LDA.b $06 : PHA
   SEP #$30
   JSR Stone_FindPressedSwitch
+  BCS .pressed
+  JSL SwitchHook_EnemyHoldsPlate      ; swapped enemy standing on a plate
   BCC .not_pressed
+.pressed
   REP #$30
   PLA : STA.b $06
   PLA : STA.b $04

@@ -128,6 +128,9 @@ Sprite_ZoraPrincess_Main:
     ; ended the Song of Time early and left time running fast.
     LDA.b SongFlag : CMP.b #$01 : BNE .ninguna_cancion
       STZ.b SongFlag
+if !ENABLE_OCARINA_SONG_TINT == 1
+      LDA.b #!SongTint_Healing : JSL SongTint_Start
+endif
       LDA.b #$C0 : STA.w SprTimerD, X
       %GotoAction(2)
     .ninguna_cancion

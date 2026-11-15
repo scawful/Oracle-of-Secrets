@@ -43,6 +43,13 @@ assert !LYRA_CURRENT_RESIDENT_DIRECTORY&$8000
 assert !LYRA_CURRENT_RESIDENT_DIRECTORY >= $008000 && !LYRA_CURRENT_RESIDENT_DIRECTORY <= $FFFFFF
 assert (!LYRA_CURRENT_RESIDENT_DIRECTORY>>16) != $7E && (!LYRA_CURRENT_RESIDENT_DIRECTORY>>16) != $7F
 assert (!LYRA_CURRENT_RESIDENT_DIRECTORY&$FFFF)+((!SPECIAL_OVERWORLD_RESIDENT_END-!SPECIAL_OVERWORLD_RESIDENT_FIRST)*8) < $10000
+if defined("LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY")
+if !LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY != 0
+assert !LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY&$8000
+assert (!LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY>>16) != $7E && (!LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY>>16) != $7F
+assert (!LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY&$FFFF)+((!SPECIAL_OVERWORLD_RESIDENT_END-!SPECIAL_OVERWORLD_RESIDENT_FIRST)*16) <= $10000
+endif
+endif
 assert (!LYRA_CURRENT_MAP16_DEFINITIONS&$7FFFFF) == $3D8000, "Resident fallback dictionary differs from this engine"
 
 ; Every hook enters M16/X16. Preserve X/Y/DBR/D and all caller flags except
@@ -97,7 +104,28 @@ Lyra_ResidentAtlasCodeStart:
 ; At entry:3,S=quadrant,5,S=native Y,7,S=native X,9,S=native word.
 ; $02 is already two bytes beyond the current $0500 entry.
 Lyra_ResidentFullWord:
+if !ENABLE_SKY_OVERWORLD_ROUTE == 1
+    LDA.b $04 : CMP.w #$2000 : BEQ .foreground
+    ; The full renderer also builds BG1 from $7E4000. Its temporary $8A
+    ; identifies the overlay, while ZS retains the actual host at $7EC213.
+    CMP.w #$4000 : BNE .native
+    LDA.b $06 : AND.w #$00FF : CMP.w #$007E : BNE .native
+    LDA.b $1B : AND.w #$00FF : BNE .native
+    LDA.b $8A : CMP.w #$009C : BEQ .overlay
+    CMP.w #$009F : BNE .native
+.overlay:
+    LDA $05,S : ORA $03,S : TAY
+    TYA : CMP.w #(!LYRA_CURRENT_RESIDENT_TILE16_COUNT*8) : BCS .native
+if defined("LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY")
+if !LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY != 0
+    JMP Lyra_ResidentOverlayLookup
+endif
+endif
+    CLC : RTS
+.foreground:
+else
     LDA.b $04 : CMP.w #$2000 : BNE .native
+endif
     LDA.b $06 : AND.w #$00FF : CMP.w #$007E : BNE .native
     LDA.b $86 : ASL : JSR Lyra_ResidentBufferDelta
     CLC : ADC.b $84 : SEC : SBC.w #$0410 : AND.w #$1FFF
@@ -201,6 +229,15 @@ Lyra_ResidentPhysicalPage:
     CLC : RTS
 Lyra_ResidentPhysicalPage_End:
 
+; Same qualified physical-page ABI for semantic consumers in another bank.
+if defined("SPECIAL_OVERWORLD_SEMANTIC_ENABLED")
+if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+Lyra_ResidentPhysicalPageLong:
+    JSR Lyra_ResidentPhysicalPage
+    RTL
+endif
+endif
+
 ; Two-level ABI v1 lookup. The saved $00/$02 words cover every byte
 ; written by the temporary long pointer. No other caller scratch is written.
 Lyra_ResidentLookup:
@@ -212,6 +249,39 @@ Lyra_ResidentLookup:
     BCS .page_valid
     RTS
 .page_valid:
+    JMP Lyra_ResidentPageLookup
+; A=qualified physical page; Y=validated Tile16*8+quadrant*2. The
+; foreground path uses the terrain directory; BG1 has a separate context.
+if defined("LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY")
+if !LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY != 0
+; BG1: temporary $8A selects picture9C/9F; C213 is the physical host.
+; Separate index directories prevent an overlay ID from taking the host's
+; page-local terrain meaning (notably bridge862 versus transparent fill862).
+Lyra_ResidentOverlayLookup:
+    LDA.l $7EC213
+    CMP.w #!SPECIAL_OVERWORLD_RESIDENT_FIRST : BCC .native
+    CMP.w #!SPECIAL_OVERWORLD_RESIDENT_END : BCS .native
+    SEC : SBC.w #!SPECIAL_OVERWORLD_RESIDENT_FIRST
+    ASL : ASL : ASL : ASL : TAX
+    LDA.b $8A : CMP.w #$009C : BEQ .selected_context
+    TXA : CLC : ADC.w #$0008 : TAX
+.selected_context:
+    LDA.l !LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY+7, X : AND.w #$00FF
+    BEQ .native
+    LDA.b $00 : PHA
+    LDA.b $02 : PHA
+    LDA.l !LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY+3, X : PHA
+    LDA.l !LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY+5, X : AND.w #$00FF : PHA
+    LDA.l !LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY+7, X : AND.w #$00FF : PHA
+    LDA.l !LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY, X : STA.b $00
+    LDA.l !LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY+2, X : AND.w #$00FF : STA.b $02
+    BRA Lyra_ResidentIndexedLookup
+.native:
+    CLC : RTS
+endif
+endif
+
+Lyra_ResidentPageLookup:
     SEC : SBC.w #!SPECIAL_OVERWORLD_RESIDENT_FIRST : ASL : ASL : ASL : TAX
     ; Sparse directories include untouched native pages. A zero row count is
     ; an explicit fallback and must be checked before a null pointer is read.
@@ -226,6 +296,7 @@ Lyra_ResidentLookup:
     LDA.l !LYRA_CURRENT_RESIDENT_DIRECTORY+7, X : AND.w #$00FF : PHA
     LDA.l !LYRA_CURRENT_RESIDENT_DIRECTORY, X : STA.b $00
     LDA.l !LYRA_CURRENT_RESIDENT_DIRECTORY+2, X : AND.w #$00FF : STA.b $02
+Lyra_ResidentIndexedLookup:
     TYA : AND.w #$0006 : PHA
     TYA : LSR : LSR : LSR : PHA
     LSR : LSR : LSR : LSR : LSR : TAY
@@ -362,3 +433,6 @@ org $1BCA54 ; @hook module=Overworld kind=jsl target=Lyra_ResidentMutable3 expec
 assert pc() == $1BCA54+4
 pullpc
 endif
+
+; Independent source-word prototype; default OFF and unbound.
+incsrc "special_overworld_semantic.asm"

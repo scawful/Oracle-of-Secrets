@@ -57,35 +57,41 @@ Oracle_CaptureAndWarp:
 
 ; Post-item-get trigger for the prison sequence.
 ;
-; Hooked from the item receipt ancilla (0x22) when the item fanfare finishes.
-; If the player just obtained the Meadow Blade (sword level 2) inside D3
-; (Kalyxo Castle / Skull Woods slot), we immediately capture+warp to the prison
-; entrance.
+; The common receipt exit runs after chest/sprite and text/object receipts.
+; Ancilla22's submodule02 path only draws while a message is open, so this
+; completion point preserves the Meadow Blade message before capture.
+; Entry/exit M8/X8, D=0 and the receipt caller's DBR. Replay the displaced
+; STZ/LDA last: A and N/Z must describe the receipt, other flags stay intact.
 Oracle_PrisonSequence_PostMeadowBlade:
 {
   PHP
-  SEP #$20
 
-  ; Original overwritten instructions at $08C42C.
-  STY.b $5D
-  STZ.w $02D8
+  ; Only the Meadow Blade receipt ($01, sword level2) can trigger capture.
+  LDA.w $0C5E, X
+  CMP.b #$01
+  BNE .done
 
-  ; Only run in the underworld (dungeons).
   LDA.b $1B
   BEQ .done
 
-  ; Only run in D3 (Kalyxo Castle uses the Skull Woods dungeon slot: $0A).
+  ; Entrance$28 and native map data identify D3's dungeon as$10.
   LDA.l $7E040C ; DUNGEON
-  CMP.b #$0A
+  CMP.b #$10
   BNE .done
 
-  ; Meadow Blade: sword level 2 at $7EF359.
   LDA.l $7EF359
   CMP.b #$02
   BNE .done
 
-  ; One-shot: don't trigger if already captured.
   LDA.l CastleAmbushFlags : AND.b #!CastleAmbush_HasBeenCaptured
+  BNE .done
+
+  ; The normal receipt dispatcher reaches this after the message closes.
+  ; Keep other receipt contexts on their original completion path.
+  LDA.b $10
+  CMP.b #$07
+  BNE .done
+  LDA.b $11
   BNE .done
 
   LDA.b #$32
@@ -93,6 +99,9 @@ Oracle_PrisonSequence_PostMeadowBlade:
 
 .done
   PLP
+  ; Exact displaced instructions at$08C43B; continue the native cleanup.
+  STZ.w $02E9
+  LDA.w $0C5E, X
   RTL
 }
 
@@ -178,12 +187,15 @@ Guard_CheckDamageToLink_CaptureWrapper:
 	endif
 
 ; ---------------------------------------------------------
-; Vanilla patch (post-item fanfare hook)
+; Vanilla patch (common receipt completion hook)
 ; ---------------------------------------------------------
-	pushpc
-	org $08C42C ; Ancilla22_ItemReceipt exit (post-fanfare) ; @hook module=Core name=Oracle_PrisonSequence_PostMeadowBlade kind=jsl target=Oracle_PrisonSequence_PostMeadowBlade
-	  JSL Oracle_PrisonSequence_PostMeadowBlade
-	  NOP
-	pullpc
+  pushpc
+  org $08C43B ; @hook module=Core name=Oracle_PrisonSequence_PostMeadowBlade kind=jsl target=Oracle_PrisonSequence_PostMeadowBlade expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8 protected_size=6
+    assert read4($08C43B) == $BD02E99C, "D3 receipt completion preimage changed"
+    assert read2($08C43F) == $0C5E, "D3 receipt item operand preimage changed"
+    JSL Oracle_PrisonSequence_PostMeadowBlade
+    NOP #2
+  assert pc() == $08C441
+  pullpc
 
-	endif
+endif

@@ -29,11 +29,11 @@ class BuildPipelineReceiptTest(unittest.TestCase):
                         OOS_SKIP_WATER_TABLE_GEN='1', OOS_SKIP_WATER_FILL_TABLE_GEN='1',
                         OOS_SKIP_MENU_VALIDATE='1', OOS_SKIP_VERSION_STAMP='1',
                         OOS_BACKUP_ROOT=str(self.root / 'Roms/backups'))
-        for name in ('build_rom.sh', 'build_checks.sh', 'build_receipt.py',
+        for name in ('build_rom.sh', 'build_checks.sh', 'z3ed_locator.sh', 'build_receipt.py',
                      'verify_feature_flags.py', 'set_feature_flags.py', 'lyra_native_loaders.py',
                      'native_overworld_authoring_metadata.py'):
             self.copy(f'Scripts/Build/{name}')
-        for name in ('generate_hooks_json.py', 'asm_source.py'):
+        for name in ('generate_hooks_json.py', 'asm_source.py', 'gen_wall_profiles.py'):
             self.copy(f'Scripts/Generate/{name}')
         self.copy('Scripts/Validate/verify_hooks_json.py')
         self.write('Util/macros.asm', '!ENABLE_FIXTURE = 1\n')
@@ -84,6 +84,29 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         p.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / name, p)
 
+    def write_water_producer_fixture(self):
+        """Strict current CLI shape; no game data or actual producer bypass."""
+        self.write('Scripts/Rooms/d4_water_rooms.py', '''import argparse,json,os,pathlib,sys
+p=argparse.ArgumentParser()
+p.add_argument('--derive-saved',action='store_true',required=True)
+p.add_argument('--root',type=pathlib.Path,required=True)
+p.add_argument('--source',type=pathlib.Path,required=True)
+p.add_argument('--output',type=pathlib.Path,required=True)
+p.add_argument('--z3ed',required=True)
+a=p.parse_args()
+root=a.root.resolve();source=a.source.resolve();out=a.output.resolve()
+assert root==pathlib.Path(__file__).resolve().parents[2]
+assert source.is_file()
+assert out==root/'Dungeons/generated'
+(root/'Roms/water-producer-args.json').write_text(json.dumps(dict(argv=sys.argv[1:],source=str(source),output=str(out))))
+names=['d4_water/25-low.bin','d4_water/25-high.bin','d4_water/25-low-collision.bin','d4_water/25-high-collision.bin','water_gate_runtime_tables.asm']
+for index,name in enumerate(names,1):
+ path=out/name;path.parent.mkdir(parents=True,exist_ok=True)
+ path.write_bytes(('new coupled '+name).encode())
+ if index==int(os.getenv('FIXTURE_PRODUCER_FAIL_AFTER','0')):
+  sys.exit(9)
+''')
+
     def build(self, *args):
         self.result = subprocess.run(['bash', str(self.root / 'Scripts/Build/build_rom.sh'),
                                       '999', str(self.assembler), *args],
@@ -93,6 +116,31 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
 
     def check(self, name):
         return next(c for c in self.receipt['checks'] if c['name'] == name)
+
+    def test_explicit_semantic_option_reaches_all_three_managed_stages(self):
+        project = self.write('fixture.yaze', '[files]\ncode_folder=.\n')
+        self.env['YAZE_PROJECT_FILE'] = str(project)
+        self.write('Scripts/Build/authoring_bundle_build.py', 'import sys\nsys.exit(0)\n')
+        self.write('Scripts/Build/lyra_native_loaders.py', """import json,pathlib,sys
+args=sys.argv[1:]
+assert '--experimental-page-tile16' in args
+assert '--project-context' in args
+root=pathlib.Path(__file__).resolve().parents[2]
+with (root/'Roms/native-stage-args.jsonl').open('a') as out: out.write(json.dumps(args)+'\\n')
+if '--constants' in args:
+ p=pathlib.Path(args[args.index('--constants')+1]); p.parent.mkdir(parents=True,exist_ok=True);p.write_text('; fixture')
+ (p.parent/'special_overworld_native_source.json').write_text('{}')
+""")
+        result = self.build('--experimental-page-tile16')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        manifest = json.loads((self.root/'Roms/hack_manifest.json').read_text())
+        self.assertEqual(manifest['argv'].count('--experimental-page-tile16'), 1)
+        calls = [json.loads(line) for line in (self.root/'Roms/native-stage-args.jsonl').read_text().splitlines()]
+        self.assertEqual(len(calls), 3)
+        for mode, args in zip(('--constants', '--seal-compiled', '--compiled'), calls):
+            self.assertIn(mode, args)
+            self.assertIn('--experimental-page-tile16', args)
+            self.assertEqual(args[args.index('--project-context')+1], str(project))
 
     def test_compile_records_fresh_identity_and_local_symbols(self):
         self.write('Roms/hooks.json', '{"stale":true}')
@@ -104,6 +152,8 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.assertTrue(self.check('menu_icon_sheets')['required'])
         self.assertEqual(self.check('native_overworld_constants')['status'], 'passed')
         self.assertEqual(self.check('native_overworld_preservation')['status'], 'passed')
+        self.assertEqual(self.check('wall_kit_palette_ownership')['status'], 'passed')
+        self.assertTrue(self.check('wall_kit_palette_ownership')['required'])
         self.assertEqual(self.receipt['state'], 'completed_with_gaps')
         self.assertEqual(self.check('smoke')['status'], 'unavailable')
         hooks = json.loads((self.root / 'Roms/hooks.json').read_text())
@@ -112,6 +162,7 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.assertEqual(argv[argv.index('--sym')+1], str(self.root / 'Roms/oos999x.sym'))
         self.assertIn('pre_assembly', self.receipt['snapshots'])
         manifest = self.root / 'Roms/hack_manifest.json'
+        self.assertNotIn('--experimental-page-tile16', json.loads(manifest.read_text())['argv'])
         self.assertEqual(Path(self.receipt['artifacts']['manifest']['path']),
                          manifest.resolve())
         self.assertEqual(self.receipt['artifacts']['manifest']['sha256'],
@@ -258,8 +309,8 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
 
     def test_external_cwd_writes_explicit_water_outputs_in_repository(self):
         self.env.update(OOS_SKIP_WATER_TABLE_GEN='0', OOS_SKIP_WATER_FILL_TABLE_GEN='0')
-        for generator in ('generate_water_gate_runtime_tables.py', 'generate_water_fill_table.py'):
-            self.write('Scripts/Generate/' + generator,
+        self.write_water_producer_fixture()
+        self.write('Scripts/Generate/generate_water_fill_table.py',
                        'import json,pathlib,sys\n'
                        'assert pathlib.Path(sys.argv[sys.argv.index("--rom")+1]).is_file()\n'
                        'out=pathlib.Path(sys.argv[sys.argv.index("--out-asm")+1])\n'
@@ -267,8 +318,15 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
                        'out.write_text("; disposable water output\\n")\n')
         result = self.build()
         self.assertEqual(result.returncode, 0, result.stderr)
-        for output in ('water_gate_runtime_tables.asm', 'water_fill_table.asm'):
+        for output in ('water_gate_runtime_tables.asm', 'water_fill_table.asm',
+                       'd4_water/25-low.bin', 'd4_water/25-high.bin',
+                       'd4_water/25-low-collision.bin', 'd4_water/25-high-collision.bin'):
             self.assertTrue((self.root / 'Dungeons/generated' / output).is_file())
+        args = json.loads((self.root/'Roms/water-producer-args.json').read_text())
+        self.assertIn('--derive-saved', args['argv'])
+        self.assertIn('--z3ed', args['argv'])
+        self.assertEqual(Path(args['source']), (self.root/'Roms/oos999.sfc').resolve())
+        self.assertEqual(Path(args['output']), (self.root/'Dungeons/generated').resolve())
         self.assertEqual(self.check('water_tables')['status'], 'passed')
         self.assertEqual(self.check('water_fill')['status'], 'passed')
         self.assertFalse((Path(self.temp.name) / 'Dungeons').exists())
@@ -340,6 +398,17 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.assertEqual((self.root / 'Config/feature_flags.asm').read_bytes(), before)
         flags = self.receipt['snapshots']['pre_assembly']['profile']['effective_flags']
         self.assertEqual(flags['ENABLE_FIXTURE'], 0)
+
+    def test_private_palette_consumer_failure_rolls_back_output(self):
+        output = self.write('Roms/oos999x.sfc', 'previous candidate')
+        self.write('Scripts/Generate/gen_wall_profiles.py',
+                   'import sys\nprint("room $00C uses private kit palette $1A")\nsys.exit(23)\n')
+        self.assertEqual(self.build().returncode, 23, self.result.stderr)
+        check = self.check('wall_kit_palette_ownership')
+        self.assertTrue(check['required'])
+        self.assertEqual(check['status'], 'failed')
+        self.assertEqual(output.read_text(), 'previous candidate')
+        self.assertEqual(self.check('output_rollback')['status'], 'passed')
 
     def test_generated_native_constants_restore_after_failed_assembly(self):
         path = self.root / '.cache/special_overworld_reader_constants.asm'

@@ -4,7 +4,7 @@
 ; 02 - Castle Bridge (OW 1B)
 ; 03 - Tail Palace (OW 2F)
 ; 04 - Goron Mines Entrance (OW 36)
-; 05 - Fortress of Secrets (OW 5E)
+; 05 - Fortress of Secrets (OW 4B)
 
 ; Trigger Zora Temple from Tablet
 org $1EE061 : CMP.b #$1E ; Zora Temple Map
@@ -38,7 +38,7 @@ JSL Fortress_EntranceAnimation
 RTS
 
 ; AncillaAdd_GTCutscene: replace the vanilla 7-crystal and $7EF2C3 checks
-; with the Maku Seed gate. Waterfall sprite $37 on OW $5E calls this.
+; with the Maku Seed gate. Waterfall sprite $37 on OW $4B calls this.
 org $099B8F ; @hook module=Overworld
 JSL Fortress_CheckSeedGate
 db $D0, $099B81-$099B95 ; BNE EXIT_099B81 (PLB : RTL)

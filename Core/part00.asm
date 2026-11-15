@@ -115,6 +115,9 @@ Part00_RoomSprites:
   if !ENABLE_DREAM_ROOM_SHEETS == 1 && !DISABLE_SPRITES == 0
     JSL DreamRoom_Stage                   ; Power/Courage BG sheets
   endif
+  if !ENABLE_D8_FARORE_GRAPHICS == 1 && !DISABLE_SPRITES == 0
+    JSL D8Farore_Stage                    ; before Part00's story-state gate
+  endif
   LDA.l GameState : BNE .done             ; Part00 only
   if !ENABLE_PART00_CHECKPOINT == 1
     JSR Part00_CheckpointTrigger

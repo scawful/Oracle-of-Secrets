@@ -51,7 +51,7 @@ endif
     JSR Sprite_SwordShield_Draw
     BRA +
   .not_intro_sword
-  LDA.b $8A : CMP.b #$4B : BNE .not_lupo_mountain
+  LDA.b $8A : CMP.b #$5E : BNE .not_lupo_mountain
     JSR Sprite_RockSirloin_Draw
     BRA +
   .not_lupo_mountain
@@ -82,7 +82,7 @@ Sprite_Collectible_Prep:
     +
     LDA.b #$02 : STA.w SprAction, X
   .not_intro_sword
-  LDA.b $8A : CMP.b #$4B : BNE .not_lupo_mountain
+  LDA.b $8A : CMP.b #$5E : BNE .not_lupo_mountain
     LDA.b #$03 : STA.w SprAction, X
   .not_lupo_mountain
 

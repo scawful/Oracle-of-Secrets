@@ -51,11 +51,16 @@ assert !SPECIAL_OVERWORLD_PALETTE_ENABLED == 0 || !SPECIAL_OVERWORLD_PALETTE_ENA
 ; The input descriptor selects native readers; stale cache files cannot
 ; activate them for a direct legacy assembly. Build regenerates this include.
 if read4($28F000) == $4F534F4F && read4($28F004) == $32393157
-if read2($28F008) == $0003 || read2($28F008) == $0004
+if read2($28F008) == $0003 || read2($28F008) == $0004 || read2($28F008) == $0005
   assert canreadfile1(".cache/special_overworld_reader_constants.asm", 0), "Run build_rom.sh to generate native reader constants"
   incsrc ".cache/special_overworld_reader_constants.asm"
   assert !SPECIAL_OVERWORLD_NATIVE == 1, "Native reader constants do not match the selected ROM"
   assert read4($28F01C) == !SPECIAL_OVERWORLD_DIRECTORY_CRC, "Native reader constants are stale; run build_rom.sh"
+  if read2($28F008) == $0005
+    assert !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1, "Revision5 requires explicit semantic Build admission"
+    assert defined("SPECIAL_OVERWORLD_SEMANTIC_REVISION"), "Revision5 semantic bindings are missing"
+    assert !SPECIAL_OVERWORLD_SEMANTIC_REVISION == 5, "Revision5 semantic bindings have the wrong format"
+  endif
 endif
 endif
 if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
@@ -97,6 +102,10 @@ namespace Oracle
   incsrc "Core/link.asm"
   incsrc "Core/sram.asm"
   incsrc "Core/symbols.asm"
+  if !ENABLE_KALYXO_BOAT == 1
+    assert !ENABLE_CUTSCENE_FRAMEWORK == 1 && !ENABLE_ORACLE_ARRIVAL_SEQUENCE == 1
+    assert !DISABLE_OVERWORLD == 0
+  endif
   incsrc "Core/message.asm"
   incsrc "Core/progression.asm"
 
@@ -175,7 +184,7 @@ namespace Oracle
   ; Part00 villager lines and checkpoint (default on; see Util/macros.asm).
   ; The Wisdom dream scene shares its room-sprites hook ($09C2C3), and so does
   ; the dream return (shows Link after Link_WarpToRoom hides him).
-  if !ENABLE_PART00_ARRIVAL_LINES == 1 || !ENABLE_PART00_CHECKPOINT == 1 || !ENABLE_DREAM_WISDOM_SCENE == 1 || !ENABLE_DREAM_ROOM_SHEETS == 1 || !ENABLE_DREAM_RETURN == 1 || !ENABLE_DREAM_ENTRY_FX == 1
+  if !ENABLE_PART00_ARRIVAL_LINES == 1 || !ENABLE_PART00_CHECKPOINT == 1 || !ENABLE_DREAM_WISDOM_SCENE == 1 || !ENABLE_DREAM_ROOM_SHEETS == 1 || !ENABLE_DREAM_RETURN == 1 || !ENABLE_DREAM_ENTRY_FX == 1 || !ENABLE_D8_FARORE_GRAPHICS == 1
     incsrc "Core/part00.asm"
   endif
 
@@ -222,6 +231,11 @@ endif
 if !DISABLE_MENU == 0
   incsrc "Core/Generated/menu_icons/menu_icon_overrides.asm"
 endif
+if !ENABLE_WALL_PROFILE_SELECTOR == 1
+  if !WALLSEL_GFX == 1
+    incsrc "Dungeons/wall_profile_gfx.asm"
+  endif
+endif
 
 ; Readers are emitted after the current source callers and graphics overrides.
 if !SPECIAL_OVERWORLD_NATIVE == 1
@@ -230,7 +244,7 @@ if !SPECIAL_OVERWORLD_NATIVE == 1
   incsrc "Overworld/special_overworld_resident.asm"
   incsrc "Overworld/special_overworld_graphics.asm"
   incsrc "Overworld/special_overworld_palette.asm"
-  if read2($28F008) == $0004
+  if read2($28F008) == $0004 || read2($28F008) == $0005
     assert defined("SPECIAL_OVERWORLD_NATIVE_COMPILED"), "Run build_rom.sh to compile saved native resources"
     assert !SPECIAL_OVERWORLD_NATIVE_COMPILED == 1
   endif

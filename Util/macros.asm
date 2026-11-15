@@ -36,19 +36,35 @@ endif
 ; Source-built sprite sheets; identity sheet $64 owns the audited bank $40 tail.
 !ENABLE_SOURCE_SPRITE_SHEETS        = 1
 ; Selected Sky Minish Cap sheets; normal group/palette binding awaits qualification.
-!ENABLE_SKY_TOWER_GRAPHICS          = 0
+!ENABLE_SKY_TOWER_GRAPHICS          = 1
+; Sky room sky layer ($A0 proof): sheet EA slot6, row6 colours, BG1 fill. Needs SKY_TOWER_GRAPHICS.
+!ENABLE_SKY_ROOM_SKY                = 1
+; Sky Tower void falls = damage pits (one heart, room entry); extended RoomsWithPitDamage copy.
+!ENABLE_SKY_PIT_DAMAGE              = 1
+; Sky overworld source art; keep off until its map/profile import is qualified.
+!ENABLE_SKY_OVERWORLD_GRAPHICS      = 0
+; Selected Sky map collision and tower entrance recognition. Terrain and paired
+; entrance/exit data must be qualified separately before activating this route.
+!ENABLE_SKY_OVERWORLD_ROUTE         = 0
+; Private native Sky calm overlay uses saved page9C graphics/palette; rain stays host.
+!ENABLE_SKY_OVERLAY_SOURCE_PROFILE  = 0
 ; Private D4 room-scoped actor/art prototype; no default behavior change.
-!ENABLE_D4_ZORA_REDESIGN            = 0
-!ENABLE_D4_WATER_CONTROLS           = 0
+!ENABLE_D4_ZORA_REDESIGN            = 1
+!ENABLE_D4_WATER_CONTROLS           = 1
 ; BF-only ice block pit reset and reset feedback; room-layout adoption is separate.
 !ENABLE_D5_BF_PIT_RESET             = 0
 ; AF transfer-room pit reset; independent of BF and off until private qualification.
 !ENABLE_D5_AF_PIT_RESET             = 0
+; Per-dungeon wall object tile patterns (Dungeons/wall_profile_selector.asm);
+; kit rows/palettes route per room (H3). Default on (scawful 2026-11-10).
+!ENABLE_WALL_PROFILE_SELECTOR       = 1
 !ENABLE_WATER_GATE_HOOKS            = 1
 !ENABLE_WATER_GATE_ROOMENTRY_RESTORE = 0
 !ENABLE_WATER_GATE_OVERLAY_REDIRECT = 1
 !ENABLE_MINECART_PLANNED_TRACK_TABLE = 1
 !ENABLE_MINECART_CART_SHUTTERS       = 0
+; Qualified Room97 Bombchu target; tag39/AF binding remains required.
+!ENABLE_D6_CHU_GATE_97              = 1
 !ENABLE_MINECART_LIFT_TOSS           = 0
 !ENABLE_D3_PRISON_SEQUENCE           = 0
 !ENABLE_D7_FARORE_RESCUE_SEQUENCE    = 1
@@ -63,6 +79,8 @@ endif
 ; Aux ABI 1 needs an explicitly bound authoring table; preserve ordinary ROMs.
 !ENABLE_OW_AUX_EXTENSION              = 0
 !ENABLE_KALYXO_DOCKS_PROFILE          = 0
+; Native cached-exit ferry prototype; both geography/underlays remain unbound.
+!ENABLE_KALYXO_BOAT                   = 0
 !ENABLE_ORACLE_ARRIVAL_SEQUENCE      = 1
 ; New-file Mirror experiment scene before the arrival (Core/Cutscene/experiment.asm).
 ; Requires ORACLE_ARRIVAL_SEQUENCE (asserted in Oracle_main.asm).
@@ -242,6 +260,20 @@ endif
 ; Every other pad, including LW $25 -> $65 (Yesterwind), is unchanged
 ; (Overworld/lupo_pad_gate.asm).
 !ENABLE_LUPO_PAD_GATE               = 1
+; Lyra/Sky overlay fix: Overworld_ReloadSubscreenOverlay (ZSCustomOverworld,
+; $02AF58) skipped the subscreen-overlay table for every area >= $80, so a
+; reload on a tail map ($A0-$BF) or during Song of Storms rain on a Sky map
+; lost its overlay; and the map16 event overlay jump ($02EF50) indexes a
+; 160-entry vector table that tail maps ($A0-$BF) overrun. The reload now
+; takes the table path for tail maps and for rain, and the event overlay
+; is a no-op for $8A >= $A0 (Overworld/lyra_overlay_fix.asm).
+!ENABLE_LYRA_OVERLAY_FIX            = 1
+; Garrison/Sky fly list; source preview until T3 native and save proof.
+!ENABLE_SPECIAL_OVERWORLD_SOARING   = 0
+; Dive gate (Dungeons/dive_gate.asm): room 0x44 Zora Temple deck/under-deck
+; crossing on tag 0x39: per-frame map-a gate cells, one-time map-b strip and
+; south cap, diver hide, resurface guard. Inert until the room has tag1 0x39.
+!ENABLE_DIVE_GATE                   = 1
 ; Hot floor (underworld tile type $DE): hurts like spike floor except in
 ; Garo Master form, airborne (feather/cape hop, Deku hover) or in a minecart.
 ; Sprites walk on it (Dungeons/hot_floor.asm).
@@ -254,6 +286,7 @@ endif
 ; Somaria-socket qualified cycles, credited-hit counter, three stages.
 ; Off until native proof; no room places the sprite yet.
 !ENABLE_D8_BOSS                     = 0
+!ENABLE_D8_FARORE_GRAPHICS          = 0 ; Graphics + presence prototype; no companion control
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
@@ -390,3 +423,6 @@ endif
 
 ; Build-derived native reader mode. Direct legacy assembly stays disabled.
 !SPECIAL_OVERWORLD_NATIVE = 0
+; Entrance and trigger readers also assemble without generated native data.
+; Only the authenticated experimental compiler may override this later.
+!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = 0

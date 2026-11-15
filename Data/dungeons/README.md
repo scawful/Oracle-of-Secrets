@@ -13,6 +13,17 @@ older nonzero-only tools do not satisfy this contract.
 
 ## Current provenance
 
+The 2026-11-09 Goron Mines cart loop adds custom collision for rooms `$79`
+and `$99` (scawful: "Write Goron loop", "Push Goron files"). The project ROM
+below carries the matching room data; the shared base has not been
+synchronized to it.
+
+- source: 22 rooms, 3,453 explicit tiles (3,292 nonzero and 161 floor tiles)
+- source SHA-256:
+  `949a3c43fc38689d67324faa29da76ff32dc6f47c3068cd895bda09cc909e521`
+- matching project ROM SHA-256:
+  `2d977eeca2f11acb30a408465b465c3990d72c6a49fff2f12fc111b5b5cde788`
+
 The 2026-11-05 private Goron B2 composition changes only rooms `$D7`, `$D8`
 and `$D9`. A normal bound-project Save and fresh reopen preserved every other
 room's collision, including explicit floor overrides. The paired private edit

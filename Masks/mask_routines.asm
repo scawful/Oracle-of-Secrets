@@ -68,7 +68,9 @@ PlayerTransform:
 ResetToLinkGraphics:
 {
   JSL GaroMask_Clear
+  JSL LinkGraphics_IsD8 : BCS .normal
   LDA $0FFF : BNE +
+  .normal
     STZ !CurrentMask
     LDA.b #$10 : STA.w !LinkGraphics
     JMP ++
@@ -80,9 +82,50 @@ ResetToLinkGraphics:
   RTL
 }
 
+; D8 uses the normal Minish Cap player sheet even while its temporary
+; entrance/return is still bound to the Abyss. Keep the real world/return
+; state intact. The full dungeon ID owns all floors, including the boss.
+; M8; X/Y/DBR/D unchanged. C=1 only indoors with dungeon ID $0004.
+LinkGraphics_IsD8:
+{
+  LDA.b $1B : BEQ .other
+  LDA.w $040D : BNE .other
+  LDA.w $040C : CMP.b #$04 : BNE .other
+  SEC : RTL
+  .other
+  CLC : RTL
+}
+
+; Cosmetic base forms only: never remove an intentional mask, including
+; small Minish. Avoid reloading the palette every frame once normal.
+; M8/X8, matching the native dungeon and clock callers. C reports D8.
+LinkGraphics_ApplyD8Base:
+{
+  JSL LinkGraphics_IsD8 : BCC .other
+  LDA.w !CurrentMask : BEQ .base
+  CMP.b #$06 : BNE .done
+  BRA .restore
+  .base
+  LDA.b !LinkGraphics : CMP.b #$10 : BEQ .done
+  .restore
+  STZ.w !CurrentMask
+  LDA.b #$10 : STA.b !LinkGraphics
+  PHX : PHY
+  JSL Palette_ArmorAndGloves
+  PLY : PLX
+  .done
+  SEC : RTL
+  .other
+  CLC : RTL
+}
+
 ForceResetMask_GameOver:
 {
   JSL DekuStick_Drop
+  JSL LinkGraphics_ApplyD8Base
+  if !ENABLE_DIVE_GATE != 0
+  STZ.w !ZoraDiving
+  endif
   LDA $02B2 : BEQ .still_link
     CMP.b #$06 : BEQ .gbc_link
       JSL ResetToLinkGraphics
@@ -99,6 +142,9 @@ ForceResetMask_GameOver:
 ForceResetMask_SaveAndQuit:
 {
   JSL DekuStick_Drop
+  if !ENABLE_DIVE_GATE != 0
+  STZ.w !ZoraDiving
+  endif
   LDA !CurrentMask : BEQ .still_link
     JSL ResetToLinkGraphics
   .still_link
@@ -227,7 +273,12 @@ Oracle_CgramAuxToMain_Impl:
     LDA $7EC400, X : STA $7EC600, X
     LDA $7EC440, X : STA $7EC640, X
     LDA $7EC480, X : STA $7EC680, X
-    LDA !CurrentMask : BNE .has_mask_palette
+    ; This final 64-byte block contains OBJ palettes 6 AND 7. Only
+    ; Link's palette 7 belongs to the active mask; always refresh palette 6
+    ; for lifted terrain and other environment sprites across world loads.
+    CPX.b #$20 : BCC .copy_environment_palette
+    LDA.w !CurrentMask : AND.w #$00FF : BNE .has_mask_palette
+    .copy_environment_palette
       LDA $7EC4C0, X : STA $7EC6C0, X
     .has_mask_palette
   INX #2 : CPX.b #$40 : BNE .loop
@@ -1771,6 +1822,9 @@ CheckNewLButtonPress:
   RTL
 }
 
+if !ENABLE_D8_FARORE_GRAPHICS == 1
+assert pc() <= $3A9800, "Mask routines reached D8 Farore graphics support"
+endif
 assert pc() <= $3AA000, "Mask routines reached the ice block code allocation"
 print "End of mask_routines.asm          ", pc
 

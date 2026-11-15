@@ -35,7 +35,7 @@ PedestalPlaque:
 {
   LDA.b AreaIndex : CMP.b #$1E : BEQ .zora_temple
                     CMP.b #$36 : BEQ .goron_desert
-                    CMP.b #$5E : BEQ .fortress_secrets
+                    CMP.b #$4B : BEQ .fortress_secrets
                       JMP .return
   .zora_temple
 

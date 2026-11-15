@@ -1,8 +1,9 @@
 ; Selected Minish Cap A art through ordinary indoor graphics/palette tables.
 ; Main08 is inherited from Sky entrance29. Secondary0A changes only the
 ; first four rooms' floor sheet; the original collision group is retained.
-; Rooms94/95/96/A0/B0/A6 retain their secondary groups and palettes. Their
-; inherited wall-sheet changes require visual qualification with this profile.
+; Other Sky rooms retain their header assignments; headers already selecting
+; group0A or palette set08 share those remapped tables. Their inherited
+; wall-sheet changes require visual qualification with this profile.
 
 assert !ENABLE_SOURCE_SPRITE_SHEETS == 1, "Sky graphics require source sheets E8/E9"
 
@@ -36,9 +37,9 @@ assert pc() == $00DDC3, "Sky secondary group size changed"
 ; The secondary group also indexes the source-owned custom collision table.
 ; Reuse the existing mapping instead of inheriting group0A's old attributes.
 assert group01-offs == $0080 && group0A-offs == $0500, "Sky collision group layout changed"
-assert group_offsets == $2C8F21, "Sky collision offset table moved"
-org $2C8F35 ; @hook module=Dungeons kind=data protected_size=2 name=SkyCollisionGroup0A
-  dw group01-offs
+; The group0A entry itself is selected in Collision/CollisionTablesExpanded.asm
+; under this flag. group_offsets floats with bank $2C code size ($2C8F21 when
+; the fixed org was written, $2C9071 at fdb829d9), so a fixed org no longer reached it.
 
 assert read4($0ED474) == $0A030404, "Sky source palette set changed"
 assert read4($0ED480) == $140F0002, "Sky destination palette set changed"

@@ -1,6 +1,8 @@
 """Native resident byte-format checks, without ROM allocation or activation."""
 import copy
 import importlib.util
+import hashlib
+import json
 from pathlib import Path
 import struct
 import sys
@@ -42,6 +44,56 @@ class ResidentAbiTest(unittest.TestCase):
     def reseal(value, key):
         value[key] = R._sha(R._json_bytes({k: v for k, v in value.items() if k != key}))
         return value
+
+    def test_overlay_directory_is_host_and_picture_scoped_and_refuses_missing_quadrant(self):
+        fixture = F.SavedNativeTerrainResourcesTest()
+        fixture.setUp()
+        exported = fixture.sky_overlay_export()
+        plan = R.plan_saved_native_terrain(fixture.source, exported)
+        abi = A.plan_native_resident_abi(plan, tile16_count=4096)
+        blobs = A.validate_native_resident_abi(abi)
+        self.assertEqual([(p['map_id'], p['overlay_map_id']) for p in abi['overlay_pages']],
+                         [(0x87, 0x9C), (0x87, 0x9F)])
+        emission = A.emit_native_resident_abi(abi, data_pc=0x300000,
+            capacity=0x10000, preimage=bytes(0x10000))
+        records = {p['label']: p for p in emission['placements']}
+        directory = records['LyraResidentOverlayDirectory']
+        payload = bytes.fromhex(emission['payload_hex'])
+        raw = payload[directory['binary_offset']:directory['binary_offset'] + directory['byte_count']]
+        for page in range(128, 192):
+            for ordinal in range(2):
+                record = raw[(page - 128) * 16 + ordinal * 8: (page - 128) * 16 + ordinal * 8 + 8]
+                if page != 0x87:
+                    self.assertEqual(record, bytes(8))
+                else:
+                    expected = abi['overlay_pages'][ordinal]
+                    self.assertEqual(int.from_bytes(record[:3], 'little'), records[expected['index_label']]['snes'])
+                    self.assertEqual(int.from_bytes(record[3:6], 'little'), records[expected['words_label']]['snes'])
+        broken = copy.deepcopy(plan)
+        next(a for a in broken['areas'] if a['parent_map_id'] == 0x87)['overlay_remaps'].pop()
+        self.reseal(broken, 'plan_sha256')
+        with self.assertRaisesRegex(ValueError, 'QUADRANTS_INVALID'):
+            A.plan_native_resident_abi(broken, tile16_count=4096)
+
+    def test_landing_overlay_donor_provenance_survives_abi_and_refuses_mixed_rows(self):
+        fixture = F.SavedNativeTerrainResourcesTest()
+        fixture.setUp()
+        exported = fixture.sky_overlay_export(host=0x8C)
+        plan = R.plan_saved_native_terrain(fixture.source, exported,
+                                           overlay_asset_contexts={(0x8C, 0x9C): 0x95})
+        abi = A.plan_native_resident_abi(plan, tile16_count=4096)
+        A.validate_native_resident_abi(abi)
+        self.assertEqual([(r['map_id'], r['overlay_map_id']) for r in abi['overlay_pages']],
+                         [(0x8C, 0x9C), (0x8C, 0x9F)])
+        self.assertEqual(abi['overlay_pages'][0]['asset_source_map_id'], 0x95)
+        self.assertNotIn('asset_source_map_id', abi['overlay_pages'][1])
+        for value in (0x77, True, None, 0x96):
+            broken = copy.deepcopy(plan)
+            rows = next(a for a in broken['areas'] if a['maps'] == [0x8C])['overlay_remaps']
+            rows[0]['asset_source_map_id'] = value
+            self.reseal(broken, 'plan_sha256')
+            with self.assertRaisesRegex(ValueError, 'NATIVE_OVERLAY_ASSET_CONTEXT_'):
+                A.plan_native_resident_abi(broken, tile16_count=4096)
 
     def test_both_capacities_keep_physical_page_lookup_and_sparse_fallback(self):
         for capacity in (160, 192):
@@ -118,6 +170,53 @@ class ResidentAbiTest(unittest.TestCase):
             A.emit_native_resident_abi(abi, data_pc=0x300000, capacity=8, preimage=bytes(8))
         with self.assertRaisesRegex(ValueError, 'PREIMAGE_REQUIRED'):
             A.emit_native_resident_abi(abi, data_pc=0x300000, capacity=100, preimage=bytes(99))
+
+    def test_transfer_table_relocates_around_another_owners_reservation(self):
+        abi = A.plan_native_resident_abi(self.plan(), tile16_count=4096)
+        preimage = bytes(0x10000)
+        initial = A.emit_native_resident_abi(
+            abi, data_pc=0x300000, capacity=len(preimage), preimage=preimage)
+        old_table = next(row for row in initial['placements']
+                         if row['role'] == 'graphics_transfer_tables')
+        first = old_table['pc'][0]
+        hole = (first, first + 0x100)
+        emitted = A.emit_native_resident_abi(
+            abi, data_pc=0x300000, capacity=len(preimage), preimage=preimage,
+            excluded_pc_spans=(hole,))
+        for row in emitted['placements']:
+            self.assertTrue(row['pc'][1] <= hole[0] or row['pc'][0] >= hole[1])
+            self.assertEqual(row['pc'][0] // 0x8000, (row['pc'][1]-1) // 0x8000)
+        table = next(row for row in emitted['placements']
+                     if row['role'] == 'graphics_transfer_tables')
+        self.assertGreaterEqual(table['pc'][0], hole[1])
+        first_area = abi['areas'][0]
+        # The table's own 16-bit profile pointers must use the relocated
+        # address, not the cursor from before the excluded reservation.
+        self.assertEqual(emitted['transfer_profile_snes'][str(first_area['parent_map_id'])],
+                         table['snes'] + abi['end_map'] * 2)
+        A.resident_runtime_inputs(abi, emitted, preimage=preimage)
+        self.assertEqual(emitted['excluded_extent_bytes'], 0x100)
+        self.assertGreaterEqual(emitted['bank_padding_bytes'], 0)
+
+    def test_excluded_reservations_are_validated_and_rederived(self):
+        abi = A.plan_native_resident_abi(self.plan(), tile16_count=4096)
+        preimage = bytes(0x10000)
+        arguments = dict(data_pc=0x300000, capacity=len(preimage), preimage=preimage)
+        for spans in (((0x2FFFF0, 0x300100),), ((0x300100, 0x300100),),
+                      ((0x300200, 0x300400), (0x300300, 0x300500)),
+                      ((0x300200, 0x300300), (0x300000, 0x300100))):
+            with self.subTest(spans=spans), self.assertRaisesRegex(
+                    ValueError, 'EXCLUDED_SPANS_INVALID'):
+                A.emit_native_resident_abi(abi, **arguments, excluded_pc_spans=spans)
+        with self.assertRaisesRegex(ValueError, 'ALLOCATION_CAPACITY'):
+            A.emit_native_resident_abi(abi, **arguments,
+                                       excluded_pc_spans=((0x300000, 0x310000),))
+        emitted = A.emit_native_resident_abi(abi, **arguments,
+                                            excluded_pc_spans=((0x300000, 0x300100),))
+        changed = copy.deepcopy(emitted)
+        changed['excluded_pc_spans'] = []
+        with self.assertRaisesRegex(ValueError, 'EMISSION_MISMATCH'):
+            A.resident_runtime_inputs(abi, changed, preimage=preimage)
 
     def test_changed_lookup_bytes_overlapping_areas_and_source_hash_refuse(self):
         plan = self.plan()
@@ -252,6 +351,185 @@ class ResidentAbiTest(unittest.TestCase):
                     A.resident_runtime_inputs(abi, changed, preimage=preimage)
                 self.assertFalse(emitted['runtime_admission'])
 
+
+
+class ExperimentalResidentAbiTest(unittest.TestCase):
+    def setUp(self):
+        self.fixture = F.ExperimentalPageTile16ResourcesTest()
+        self.fixture.setUp()
+        self.plan = self.fixture.plan()
+
+    def overflow_plan(self, logical_count=259, display_count=248, *, legacy=False):
+        plan = ResidentAbiTest().plan() if legacy else copy.deepcopy(self.plan)
+        area = plan['areas'][0]
+        page = area['maps'][0]
+        area['remaps'] = [row for row in area['remaps'] if row['map_id'] != page]
+        area['remaps'].extend(dict(map_id=page, tile16_id=tile, quadrant=q,
+                                  source_word=tile * 4 + q,
+                                  target_word=tile % display_count + q * 256)
+                              for tile in range(logical_count) for q in range(4))
+        return ResidentAbiTest.reseal(plan, 'plan_sha256'), page
+
+    def test_overflow_shares_only_display_rows_and_retains_every_logical_key(self):
+        plan, page_id = self.overflow_plan()
+        before = copy.deepcopy(plan)
+        abi = A.plan_native_resident_abi(plan, tile16_count=4096,
+                                       experimental_page_tile16=True)
+        blobs = A.validate_native_resident_abi(abi, experimental_page_tile16=True)
+        page = next(p for p in abi['pages'] if p['map_id'] == page_id)
+        self.assertTrue(page['shared_display_rows'])
+        self.assertEqual(page['row_count'], 248)
+        self.assertEqual(page['tile16_ids'], list(range(259)))
+        index, words = blobs[page['index_label']], blobs[page['words_label']]
+        rows = []
+        for tile in range(259):
+            block = index[tile >> 5]
+            row = index[128 + (block - 1) * 32 + (tile & 31)]
+            self.assertGreater(row, 0)
+            rows.append(row)
+            self.assertEqual(struct.unpack_from('<4H', words, row * 8),
+                             tuple(tile % 248 + q * 256 for q in range(4)))
+        self.assertEqual(rows[0], rows[248])
+        self.assertEqual(plan, before)  # Source words remain distinct and intact.
+        emitted = A.emit_native_resident_abi(
+            abi, data_pc=0x300000, capacity=0x10000, preimage=bytes(0x10000),
+            experimental_page_tile16=True)
+        A.resident_runtime_inputs(abi, emitted, preimage=bytes(0x10000),
+                                  experimental_page_tile16=True)
+
+    def test_display_sharing_does_not_expand_row_limit_or_change_fitting_pages(self):
+        for legacy, logical, display in ((False, 256, 256), (True, 256, 1)):
+            with self.subTest(legacy=legacy, display=display):
+                plan, _ = self.overflow_plan(logical, display, legacy=legacy)
+                with self.assertRaisesRegex(ValueError, 'ROW_CAPACITY_EXCEEDED'):
+                    A.plan_native_resident_abi(plan, tile16_count=4096,
+                                               experimental_page_tile16=True)
+        plan, page_id = self.overflow_plan(255, 1)
+        abi = A.plan_native_resident_abi(plan, tile16_count=4096,
+                                       experimental_page_tile16=True)
+        page = next(p for p in abi['pages'] if p['map_id'] == page_id)
+        self.assertEqual(page['row_count'], 255)
+        self.assertNotIn('shared_display_rows', page)
+        A.validate_native_resident_abi(abi, experimental_page_tile16=True)
+
+    def test_shared_rows_require_explicit_marker_and_complete_logical_keys(self):
+        plan, page_id = self.overflow_plan()
+        original = A.plan_native_resident_abi(plan, tile16_count=4096,
+                                            experimental_page_tile16=True)
+        for mutation in ('missing_marker', 'wrong_marker_type', 'missing_key',
+                         'unreachable_row'):
+            with self.subTest(mutation=mutation):
+                abi = copy.deepcopy(original)
+                page = next(p for p in abi['pages'] if p['map_id'] == page_id)
+                if mutation == 'missing_marker':
+                    del page['shared_display_rows']
+                elif mutation == 'wrong_marker_type':
+                    page['shared_display_rows'] = 1
+                elif mutation == 'missing_key':
+                    page['tile16_ids'].pop()
+                else:
+                    blob = next(b for b in abi['blobs'] if b['label'] == page['index_label'])
+                    raw = bytearray.fromhex(blob['payload_hex'])
+                    block = raw[247 >> 5]
+                    raw[128 + (block - 1) * 32 + (247 & 31)] = 1
+                    blob.update(payload_hex=raw.hex(), sha256=R._sha(raw))
+                ResidentAbiTest.reseal(abi, 'abi_sha256')
+                with self.assertRaisesRegex(ValueError, 'ROW_INDEX_INVALID'):
+                    A.validate_native_resident_abi(abi, experimental_page_tile16=True)
+
+    def test_page_scoped_words_and_global_fallback_use_existing_visual_abi(self):
+        abi = A.plan_native_resident_abi(self.plan, tile16_count=4096,
+                                       experimental_page_tile16=True)
+        blobs = A.validate_native_resident_abi(abi, experimental_page_tile16=True)
+        remaps = {(row['map_id'], row['tile16_id'], row['quadrant']): row
+                  for area in self.plan['areas'] for row in area['remaps']}
+        decoded = {}
+        for page in abi['pages']:
+            index, words = blobs[page['index_label']], blobs[page['words_label']]
+            for tile in page['tile16_ids']:
+                block = index[tile >> 5]
+                row = index[128 + (block - 1) * 32 + (tile & 31)]
+                decoded[page['map_id'], tile] = struct.unpack_from('<4H', words, row * 8)
+                for quadrant in range(4):
+                    self.assertEqual(decoded[page['map_id'], tile][quadrant],
+                                     remaps[page['map_id'], tile, quadrant]['target_word'])
+        self.assertNotEqual(decoded[0xB0, 0], decoded[0xB1, 0])
+        for page in (0xB0, 0xB1):
+            self.assertEqual([remaps[page, 1, q]['source_word'] for q in range(4)], [0x800] * 4)
+        emitted = A.emit_native_resident_abi(abi, data_pc=0x300000,
+            capacity=0x10000, preimage=bytes(0x10000), experimental_page_tile16=True)
+        bridge = A.resident_runtime_inputs(abi, emitted, preimage=bytes(0x10000),
+                                          experimental_page_tile16=True)
+        self.assertFalse(bridge['runtime_admission'])
+        self.assertFalse(emitted['ordinary_build_ready'])
+        self.assertEqual(self.plan['schema'], R.EXPERIMENTAL_PLAN_SCHEMA)
+
+    def test_every_experimental_boundary_requires_explicit_admission(self):
+        with self.assertRaisesRegex(ValueError, 'EXPERIMENTAL_ADMISSION_REQUIRED'):
+            A.plan_native_resident_abi(self.plan, tile16_count=4096)
+        abi = A.plan_native_resident_abi(self.plan, tile16_count=4096,
+                                       experimental_page_tile16=True)
+        for function in (A.validate_native_resident_abi, A.resident_bg128_rows):
+            with self.subTest(function=function.__name__), self.assertRaisesRegex(
+                    ValueError, 'EXPERIMENTAL_ADMISSION_REQUIRED'):
+                function(abi)
+        with self.assertRaisesRegex(ValueError, 'EXPERIMENTAL_ADMISSION_REQUIRED'):
+            A.emit_native_resident_abi(abi, data_pc=0x300000,
+                                     capacity=0x10000, preimage=bytes(0x10000))
+        bad = copy.deepcopy(self.plan)
+        bad['runtime_supported'] = True
+        ResidentAbiTest.reseal(bad, 'plan_sha256')
+        with self.assertRaisesRegex(ValueError, 'EXPERIMENTAL_SOURCE_INVALID'):
+            A.plan_native_resident_abi(bad, tile16_count=4096,
+                                       experimental_page_tile16=True)
+
+    def test_experimental160_pages_and_last_page_preserve_emission_guards(self):
+        # Reuse the existing native fixture and160 profile construction.
+        image = bytearray(self.fixture.fixture.source)
+        _, bank, entries = R.native.read_native_directory(bytes(image))
+        for page in range(128, 192):
+            image[R.native.pc(entries[7][0]) + page] = page
+            image[R.native.pc(entries[30][0]) + page] = 0
+        image[self.fixture.fixture.fixture.flags_pc:
+              self.fixture.fixture.fixture.flags_pc + 192] = bytes(192)
+        for page in (0x90, 0x91, 0x98, 0x99):
+            image[R.native.pc(entries[7][0]) + page] = 0x90
+            image[R.native.pc(entries[30][0]) + page] = 1
+            image[self.fixture.fixture.fixture.flags_pc + page] = 3
+        rows = [(key, address, 160 if key <= 39 or key == 410 else count)
+                for key, (address, count) in entries.items()]
+        image[R.native.DIRECTORY_PC:R.native.DIRECTORY_PC + 1024] = R.native.encode_revision4_directory(
+            bytes(image), rows, tail_actor_bank=bank, capacity=160)
+        self.fixture.fixture.source = bytes(image)
+        self.fixture.fixture.exported = self.fixture.fixture.make_export(bytes(image))
+        source, exported = self.fixture.install([
+            (0x90, 0, (0xE800, 0x4801, 0x8802, 0x2803)),
+            (0x9F, 0, (0x2804, 0x8805, 0x4806, 0xE807))], capacity=160)
+        plan = R.plan_saved_native_terrain(source, exported, experimental_page_tile16=True)
+        abi = A.plan_native_resident_abi(plan, tile16_count=4096, experimental_page_tile16=True)
+        self.assertEqual(abi['end_map'], 160)
+        self.assertIn(0x9F, [row['map_id'] for row in abi['pages']])
+        emitted = A.emit_native_resident_abi(abi, data_pc=0x307FF0,
+            capacity=0x10000, preimage=bytes(0x10000), experimental_page_tile16=True,
+            excluded_pc_spans=((0x308100, 0x308200),))
+        for row in emitted['placements']:
+            self.assertEqual(row['pc'][0] // 0x8000, (row['pc'][1] - 1) // 0x8000)
+            self.assertTrue(row['pc'][1] <= 0x308100 or row['pc'][0] >= 0x308200)
+        A.resident_runtime_inputs(abi, emitted, preimage=bytes(0x10000),
+                                  experimental_page_tile16=True)
+
+    def test_legacy_abi_and_emission_pinned_outputs_unchanged(self):
+        plan = ResidentAbiTest().plan()
+        abi = A.plan_native_resident_abi(plan, tile16_count=4096)
+        emitted = A.emit_native_resident_abi(abi, data_pc=0x300000,
+            capacity=0x10000, preimage=bytes(0x10000))
+        canonical = lambda value: json.dumps(value, sort_keys=True, separators=(',', ':')).encode()
+        self.assertEqual(hashlib.sha256(canonical(abi)).hexdigest(),
+                         '070a7a27bb0be8e1d40036014db8d9544e974b0e172c0944a513182e25dcec95')
+        self.assertEqual(hashlib.sha256(canonical(emitted)).hexdigest(),
+                         '638c5b03df00dba0d62115bb0fff82b53195d83bde21559bf668c2c1c2167422')
+        self.assertEqual(abi, A.plan_native_resident_abi(plan, tile16_count=4096,
+                                                      experimental_page_tile16=True))
 
 if __name__ == '__main__':
     unittest.main()

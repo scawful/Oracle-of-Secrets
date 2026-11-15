@@ -790,7 +790,7 @@
         {
           "kind": "message-comment",
           "line": 113,
-          "path": "Docs/Planning/Reviews/rc_intro_2026-09-24/arrival_draft.asm"
+          "path": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Reviews/rc_intro_2026-09-24/arrival_draft.asm"
         },
         {
           "kind": "split-load",
@@ -4850,7 +4850,7 @@
           "kind": "critical-path-draft",
           "line": 823,
           "section": "1",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "rewrite-existing-vanilla",
@@ -7684,7 +7684,7 @@
           "kind": "critical-path-draft",
           "line": 824,
           "section": "18",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "rewrite-existing-vanilla",
@@ -11472,7 +11472,7 @@
           "kind": "critical-path-draft",
           "line": 825,
           "section": "17",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "proposes-placeholder-reuse",
@@ -11513,7 +11513,7 @@
           "kind": "critical-path-draft",
           "line": 826,
           "section": "19",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "proposes-placeholder-reuse",
@@ -11528,7 +11528,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "ranch-girl",
-        "purpose": "Ranch Girl powder reveal / Ocarina gift (Sprites/NPCs/ranch_girl.asm); dialogue-audit draft D4 approved by scawful 2026-09-26; replaces vanilla 0x17D at runtime because vanilla text region 2 is length-pinned (Docs/Planning/Reviews/dialogue_audit_2026-09-26.md)",
+        "purpose": "Ranch Girl powder reveal / Ocarina gift (Sprites/NPCs/ranch_girl.asm); dialogue-audit draft D4 approved by scawful 2026-09-26; replaces vanilla 0x17D at runtime because vanilla text region 2 is length-pinned (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Reviews/dialogue_audit_2026-09-26.md)",
         "status": "occupied"
       },
       "asm_references": [
@@ -11565,7 +11565,7 @@
           "kind": "critical-path-draft",
           "line": 827,
           "section": "20",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "collides-with-authored-message",
@@ -11582,7 +11582,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "impa-follower",
-        "purpose": "Impa follower hint: village arrival (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)",
+        "purpose": "Impa follower hint: village arrival (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)",
         "status": "occupied"
       },
       "asm_references": [
@@ -11619,7 +11619,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "attract-history",
-        "purpose": "Title/attract island-history narration (storybook, throne, soldiers, altar); used only with ENABLE_CUSTOM_ATTRACT_SEQUENCE; text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md, Attract narration)",
+        "purpose": "Title/attract island-history narration (storybook, throne, soldiers, altar); used only with ENABLE_CUSTOM_ATTRACT_SEQUENCE; text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md, Attract narration)",
         "status": "occupied"
       },
       "asm_references": [],
@@ -11650,7 +11650,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "attract-history",
-        "purpose": "Title/attract island-history narration (storybook, throne, soldiers, altar); used only with ENABLE_CUSTOM_ATTRACT_SEQUENCE; text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md, Attract narration)",
+        "purpose": "Title/attract island-history narration (storybook, throne, soldiers, altar); used only with ENABLE_CUSTOM_ATTRACT_SEQUENCE; text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md, Attract narration)",
         "status": "occupied"
       },
       "asm_references": [
@@ -11687,7 +11687,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "attract-history",
-        "purpose": "Title/attract island-history narration (storybook, throne, soldiers, altar); used only with ENABLE_CUSTOM_ATTRACT_SEQUENCE; text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md, Attract narration)",
+        "purpose": "Title/attract island-history narration (storybook, throne, soldiers, altar); used only with ENABLE_CUSTOM_ATTRACT_SEQUENCE; text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md, Attract narration)",
         "status": "occupied"
       },
       "asm_references": [
@@ -11724,7 +11724,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "attract-history",
-        "purpose": "Title/attract island-history narration (storybook, throne, soldiers, altar); used only with ENABLE_CUSTOM_ATTRACT_SEQUENCE; text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md, Attract narration)",
+        "purpose": "Title/attract island-history narration (storybook, throne, soldiers, altar); used only with ENABLE_CUSTOM_ATTRACT_SEQUENCE; text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md, Attract narration)",
         "status": "occupied"
       },
       "asm_references": [
@@ -11763,7 +11763,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "impa-follower",
-        "purpose": "Impa follower hint: east exit blockade (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)",
+        "purpose": "Impa follower hint: east exit blockade (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)",
         "status": "occupied"
       },
       "asm_references": [
@@ -11943,7 +11943,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "impa-follower",
-        "purpose": "Impa follower hint: village hole (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)",
+        "purpose": "Impa follower hint: village hole (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)",
         "status": "occupied"
       },
       "asm_references": [
@@ -11982,7 +11982,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "impa-follower",
-        "purpose": "Impa follower hint: western forest ($2A) (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)",
+        "purpose": "Impa follower hint: western forest ($2A) (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)",
         "status": "occupied"
       },
       "asm_references": [
@@ -12560,7 +12560,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "experiment-scene",
-        "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims",
+        "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims",
         "status": "occupied"
       },
       "asm_references": [
@@ -12592,7 +12592,7 @@
           "kind": "critical-path-draft",
           "line": 828,
           "section": "2",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "collides-with-authored-message",
@@ -12610,7 +12610,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "experiment-scene",
-        "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims",
+        "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims",
         "status": "occupied"
       },
       "asm_references": [
@@ -12642,7 +12642,7 @@
           "kind": "critical-path-draft",
           "line": 829,
           "section": "3a",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "collides-with-authored-message",
@@ -12660,7 +12660,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "experiment-scene",
-        "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims",
+        "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims",
         "status": "occupied"
       },
       "asm_references": [
@@ -12692,7 +12692,7 @@
           "kind": "critical-path-draft",
           "line": 830,
           "section": "3b",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "collides-with-authored-message",
@@ -12710,7 +12710,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "experiment-scene",
-        "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims",
+        "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims",
         "status": "occupied"
       },
       "asm_references": [
@@ -12742,7 +12742,7 @@
           "kind": "critical-path-draft",
           "line": 831,
           "section": "3c",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "collides-with-authored-message",
@@ -12760,7 +12760,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "experiment-scene",
-        "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims",
+        "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims",
         "status": "occupied"
       },
       "asm_references": [
@@ -12792,7 +12792,7 @@
           "kind": "critical-path-draft",
           "line": 832,
           "section": "3d",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "collides-with-authored-message",
@@ -12810,7 +12810,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "experiment-scene",
-        "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims",
+        "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims",
         "status": "occupied"
       },
       "asm_references": [
@@ -12842,7 +12842,7 @@
           "kind": "critical-path-draft",
           "line": 833,
           "section": "4",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "collides-with-authored-message",
@@ -12860,7 +12860,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "experiment-scene",
-        "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims",
+        "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims",
         "status": "occupied"
       },
       "asm_references": [
@@ -12892,7 +12892,7 @@
           "kind": "critical-path-draft",
           "line": 834,
           "section": "5",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "collides-with-authored-message",
@@ -13765,7 +13765,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "eon-owl",
-        "purpose": "Eon Owl first Abyss appearance, arrival map $40, before the Pearl (Sprites/NPCs/eon_owl.asm, !ENABLE_EON_OWL_ONE_SHOT); text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md)",
+        "purpose": "Eon Owl first Abyss appearance, arrival map $40, before the Pearl (Sprites/NPCs/eon_owl.asm, !ENABLE_EON_OWL_ONE_SHOT); text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md)",
         "status": "occupied"
       },
       "asm_references": [
@@ -13802,7 +13802,7 @@
           "kind": "critical-path-draft",
           "line": 835,
           "section": "6",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "collides-with-authored-message"
@@ -13812,7 +13812,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "abyss-area-signs",
-        "purpose": "Abyss area signs, one per area: $1FB $40 Temporal Pyramid, $1FC $50 Hollow of Echoes, $1FD $58 Forest of Dreams, $1FE $5D Dreamer's Rest, $1FF $6A The Rift Shore; shown through the ZS area message table ($2897F8) once each area has a signpost tile; text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md)",
+        "purpose": "Abyss area signs, one per area: $1FB $40 Temporal Pyramid, $1FC $50 Hollow of Echoes, $1FD $58 Forest of Dreams, $1FE $5D Dreamer's Rest, $1FF $6A The Rift Shore; shown through the ZS area message table ($2897F8) once each area has a signpost tile; text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md)",
         "status": "occupied"
       },
       "asm_references": [],
@@ -13833,7 +13833,7 @@
           "kind": "critical-path-draft",
           "line": 836,
           "section": "7a",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "collides-with-authored-message"
@@ -13843,7 +13843,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "abyss-area-signs",
-        "purpose": "Abyss area signs, one per area: $1FB $40 Temporal Pyramid, $1FC $50 Hollow of Echoes, $1FD $58 Forest of Dreams, $1FE $5D Dreamer's Rest, $1FF $6A The Rift Shore; shown through the ZS area message table ($2897F8) once each area has a signpost tile; text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md)",
+        "purpose": "Abyss area signs, one per area: $1FB $40 Temporal Pyramid, $1FC $50 Hollow of Echoes, $1FD $58 Forest of Dreams, $1FE $5D Dreamer's Rest, $1FF $6A The Rift Shore; shown through the ZS area message table ($2897F8) once each area has a signpost tile; text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md)",
         "status": "occupied"
       },
       "asm_references": [],
@@ -13864,7 +13864,7 @@
           "kind": "critical-path-draft",
           "line": 837,
           "section": "7b",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "collides-with-authored-message"
@@ -13874,7 +13874,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "abyss-area-signs",
-        "purpose": "Abyss area signs, one per area: $1FB $40 Temporal Pyramid, $1FC $50 Hollow of Echoes, $1FD $58 Forest of Dreams, $1FE $5D Dreamer's Rest, $1FF $6A The Rift Shore; shown through the ZS area message table ($2897F8) once each area has a signpost tile; text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md)",
+        "purpose": "Abyss area signs, one per area: $1FB $40 Temporal Pyramid, $1FC $50 Hollow of Echoes, $1FD $58 Forest of Dreams, $1FE $5D Dreamer's Rest, $1FF $6A The Rift Shore; shown through the ZS area message table ($2897F8) once each area has a signpost tile; text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md)",
         "status": "occupied"
       },
       "asm_references": [],
@@ -13895,7 +13895,7 @@
           "kind": "critical-path-draft",
           "line": 838,
           "section": "8a",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "collides-with-authored-message"
@@ -13905,7 +13905,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "abyss-area-signs",
-        "purpose": "Abyss area signs, one per area: $1FB $40 Temporal Pyramid, $1FC $50 Hollow of Echoes, $1FD $58 Forest of Dreams, $1FE $5D Dreamer's Rest, $1FF $6A The Rift Shore; shown through the ZS area message table ($2897F8) once each area has a signpost tile; text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md)",
+        "purpose": "Abyss area signs, one per area: $1FB $40 Temporal Pyramid, $1FC $50 Hollow of Echoes, $1FD $58 Forest of Dreams, $1FE $5D Dreamer's Rest, $1FF $6A The Rift Shore; shown through the ZS area message table ($2897F8) once each area has a signpost tile; text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md)",
         "status": "occupied"
       },
       "asm_references": [],
@@ -13926,7 +13926,7 @@
           "kind": "critical-path-draft",
           "line": 839,
           "section": "8b",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "collides-with-authored-message"
@@ -13936,7 +13936,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "abyss-area-signs",
-        "purpose": "Abyss area signs, one per area: $1FB $40 Temporal Pyramid, $1FC $50 Hollow of Echoes, $1FD $58 Forest of Dreams, $1FE $5D Dreamer's Rest, $1FF $6A The Rift Shore; shown through the ZS area message table ($2897F8) once each area has a signpost tile; text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md)",
+        "purpose": "Abyss area signs, one per area: $1FB $40 Temporal Pyramid, $1FC $50 Hollow of Echoes, $1FD $58 Forest of Dreams, $1FE $5D Dreamer's Rest, $1FF $6A The Rift Shore; shown through the ZS area message table ($2897F8) once each area has a signpost tile; text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md)",
         "status": "occupied"
       },
       "asm_references": [],
@@ -13957,7 +13957,7 @@
           "kind": "critical-path-draft",
           "line": 840,
           "section": "8c",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "collides-with-authored-message"
@@ -13967,7 +13967,7 @@
       "allocation": {
         "expected_content": "authored",
         "owner": "yesterwind-villager",
-        "purpose": "Yesterwind villager reveal line (first talk with a Yesterwind villager); text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md, Yesterwind names); not wired to an NPC yet",
+        "purpose": "Yesterwind villager reveal line (first talk with a Yesterwind villager); text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md, Yesterwind names); not wired to an NPC yet",
         "status": "occupied"
       },
       "asm_references": [],
@@ -13988,7 +13988,7 @@
           "kind": "critical-path-draft",
           "line": 841,
           "section": "8d",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "collides-with-authored-message"
@@ -14008,7 +14008,7 @@
           "kind": "critical-path-draft",
           "line": 842,
           "section": "9a",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14028,7 +14028,7 @@
           "kind": "critical-path-draft",
           "line": 843,
           "section": "9b",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14048,7 +14048,7 @@
           "kind": "critical-path-draft",
           "line": 844,
           "section": "9c",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14068,7 +14068,7 @@
           "kind": "critical-path-draft",
           "line": 845,
           "section": "10",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14088,7 +14088,7 @@
           "kind": "critical-path-draft",
           "line": 846,
           "section": "11a",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14108,7 +14108,7 @@
           "kind": "critical-path-draft",
           "line": 847,
           "section": "11b",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14128,7 +14128,7 @@
           "kind": "critical-path-draft",
           "line": 848,
           "section": "12",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14148,7 +14148,7 @@
           "kind": "critical-path-draft",
           "line": 849,
           "section": "13a",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14168,7 +14168,7 @@
           "kind": "critical-path-draft",
           "line": 850,
           "section": "13b",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14188,7 +14188,7 @@
           "kind": "critical-path-draft",
           "line": 851,
           "section": "13c",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14208,7 +14208,7 @@
           "kind": "critical-path-draft",
           "line": 852,
           "section": "14a",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14228,7 +14228,7 @@
           "kind": "critical-path-draft",
           "line": 853,
           "section": "14b",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14248,7 +14248,7 @@
           "kind": "critical-path-draft",
           "line": 854,
           "section": "14c",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14268,7 +14268,7 @@
           "kind": "critical-path-draft",
           "line": 855,
           "section": "15a",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14288,7 +14288,7 @@
           "kind": "critical-path-draft",
           "line": 856,
           "section": "15b",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14308,7 +14308,7 @@
           "kind": "critical-path-draft",
           "line": 857,
           "section": "15c",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14328,7 +14328,7 @@
           "kind": "critical-path-draft",
           "line": 858,
           "section": "16",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14348,7 +14348,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14368,7 +14368,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14388,7 +14388,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14408,7 +14408,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14428,7 +14428,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14448,7 +14448,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14468,7 +14468,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14488,7 +14488,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14508,7 +14508,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14528,7 +14528,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14548,7 +14548,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14568,7 +14568,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14588,7 +14588,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14608,7 +14608,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14628,7 +14628,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14648,7 +14648,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14668,7 +14668,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14688,7 +14688,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14708,7 +14708,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14728,7 +14728,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14748,7 +14748,7 @@
           "kind": "critical-path-range-draft",
           "line": 866,
           "section": "Gossip Stones",
-          "source": "Docs/Planning/Plans/critical_path_dialogue_script.md"
+          "source": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md"
         }
       ],
       "plan_disposition": "requires-expanded-source-extension"
@@ -14775,7 +14775,7 @@
       "end": "0x1BE",
       "expected_content": "authored",
       "owner": "ranch-girl",
-      "purpose": "Ranch Girl powder reveal / Ocarina gift (Sprites/NPCs/ranch_girl.asm); dialogue-audit draft D4 approved by scawful 2026-09-26; replaces vanilla 0x17D at runtime because vanilla text region 2 is length-pinned (Docs/Planning/Reviews/dialogue_audit_2026-09-26.md)",
+      "purpose": "Ranch Girl powder reveal / Ocarina gift (Sprites/NPCs/ranch_girl.asm); dialogue-audit draft D4 approved by scawful 2026-09-26; replaces vanilla 0x17D at runtime because vanilla text region 2 is length-pinned (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Reviews/dialogue_audit_2026-09-26.md)",
       "start": "0x1BE",
       "status": "occupied"
     },
@@ -14783,7 +14783,7 @@
       "end": "0x1BF",
       "expected_content": "authored",
       "owner": "impa-follower",
-      "purpose": "Impa follower hint: village arrival (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)",
+      "purpose": "Impa follower hint: village arrival (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)",
       "start": "0x1BF",
       "status": "occupied"
     },
@@ -14791,7 +14791,7 @@
       "end": "0x1C3",
       "expected_content": "authored",
       "owner": "attract-history",
-      "purpose": "Title/attract island-history narration (storybook, throne, soldiers, altar); used only with ENABLE_CUSTOM_ATTRACT_SEQUENCE; text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md, Attract narration)",
+      "purpose": "Title/attract island-history narration (storybook, throne, soldiers, altar); used only with ENABLE_CUSTOM_ATTRACT_SEQUENCE; text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md, Attract narration)",
       "start": "0x1C0",
       "status": "occupied"
     },
@@ -14799,7 +14799,7 @@
       "end": "0x1C4",
       "expected_content": "authored",
       "owner": "impa-follower",
-      "purpose": "Impa follower hint: east exit blockade (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)",
+      "purpose": "Impa follower hint: east exit blockade (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)",
       "start": "0x1C4",
       "status": "occupied"
     },
@@ -14815,7 +14815,7 @@
       "end": "0x1C8",
       "expected_content": "authored",
       "owner": "impa-follower",
-      "purpose": "Impa follower hint: village hole (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)",
+      "purpose": "Impa follower hint: village hole (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)",
       "start": "0x1C8",
       "status": "occupied"
     },
@@ -14823,7 +14823,7 @@
       "end": "0x1C9",
       "expected_content": "authored",
       "owner": "impa-follower",
-      "purpose": "Impa follower hint: western forest ($2A) (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)",
+      "purpose": "Impa follower hint: western forest ($2A) (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)",
       "start": "0x1C9",
       "status": "occupied"
     },
@@ -14871,7 +14871,7 @@
       "end": "0x1DF",
       "expected_content": "authored",
       "owner": "experiment-scene",
-      "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims",
+      "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims",
       "start": "0x1D9",
       "status": "occupied"
     },
@@ -14919,7 +14919,7 @@
       "end": "0x1FA",
       "expected_content": "authored",
       "owner": "eon-owl",
-      "purpose": "Eon Owl first Abyss appearance, arrival map $40, before the Pearl (Sprites/NPCs/eon_owl.asm, !ENABLE_EON_OWL_ONE_SHOT); text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md)",
+      "purpose": "Eon Owl first Abyss appearance, arrival map $40, before the Pearl (Sprites/NPCs/eon_owl.asm, !ENABLE_EON_OWL_ONE_SHOT); text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md)",
       "start": "0x1FA",
       "status": "occupied"
     },
@@ -14927,7 +14927,7 @@
       "end": "0x1FF",
       "expected_content": "authored",
       "owner": "abyss-area-signs",
-      "purpose": "Abyss area signs, one per area: $1FB $40 Temporal Pyramid, $1FC $50 Hollow of Echoes, $1FD $58 Forest of Dreams, $1FE $5D Dreamer's Rest, $1FF $6A The Rift Shore; shown through the ZS area message table ($2897F8) once each area has a signpost tile; text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md)",
+      "purpose": "Abyss area signs, one per area: $1FB $40 Temporal Pyramid, $1FC $50 Hollow of Echoes, $1FD $58 Forest of Dreams, $1FE $5D Dreamer's Rest, $1FF $6A The Rift Shore; shown through the ZS area message table ($2897F8) once each area has a signpost tile; text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md)",
       "start": "0x1FB",
       "status": "occupied"
     },
@@ -14935,7 +14935,7 @@
       "end": "0x200",
       "expected_content": "authored",
       "owner": "yesterwind-villager",
-      "purpose": "Yesterwind villager reveal line (first talk with a Yesterwind villager); text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md, Yesterwind names); not wired to an NPC yet",
+      "purpose": "Yesterwind villager reveal line (first talk with a Yesterwind villager); text approved by scawful 2026-09-26 (AFS knowledge/planning/approved_dialogue_rewrites_2026-09-26.md, Yesterwind names); not wired to an NPC yet",
       "start": "0x200",
       "status": "occupied"
     }
@@ -14946,7 +14946,7 @@
     "expanded_asm": "Core/Generated/expanded_messages.asm",
     "expanded_json": "Data/dialogue/expanded_messages.json",
     "patched_rom": "Roms/oos168x.sfc",
-    "plan": "Docs/Planning/Plans/critical_path_dialogue_script.md",
+    "plan": "AFS scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/critical_path_dialogue_script.md",
     "registry": "Data/dialogue/message_registry.json",
     "spanish_org": "Core/messages_es.org"
   },

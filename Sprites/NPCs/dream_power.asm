@@ -200,7 +200,7 @@ DreamPower_Stage:
   ; hut header sets $0414 again.
   STZ.w $0414
   LDA.b #!DW_FaroreAux1 : STA.w $0AAD     ; Farore's overworld colors (OBJ5)
-  LDA.b #$00 : STA.l SongTintTimer        ; a running tint rewrites $9A
+  LDA.b #$00 : STA.l SongTintTimer        ; a running tint repaints the BG palette
   STA.l DreamWisdom_Flash
   JSR DreamWisdom_BlankHUD
   PLB

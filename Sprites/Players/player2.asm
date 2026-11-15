@@ -219,6 +219,7 @@ P2_CanAct:
   LDA.b $11 : BNE .no
   LDA.w $0FC1 : BNE .no          ; sprites frozen
   LDA.l InCutScene : BNE .no
+  JSR P2_SlotsBusy : BCS .no
     SEC
     RTS
   .no
@@ -245,6 +246,7 @@ P2_Update:
 
   .joined
   JSR P2_CheckRoomChange
+  JSR P2_SuspendIfHidden
   JSR P2_CanAct : BCC .exit
 
   LDA.l P2_PadHi : AND.b #$20 : BEQ .stay      ; Select held
@@ -700,6 +702,7 @@ P2_ActionGate:
 P2_PunchHitsSprite:
 {
   JSR P2_IsJoined : BCC .no
+  LDA.l P2_Flags : AND.b #$02 : BNE .no
   LDA.l P2_AttackTimer : CMP.b #$0B : BCS .no  ; thrust frames only
                          CMP.b #$04 : BCC .no
   TXA : ASL : TAY
@@ -714,6 +717,7 @@ P2_PunchHitsSprite:
   JSL !P2_Overlap
   PLX
   BCC .no
+  JSR P2_CanAct : BCC .no                       ; only scan owners for a real overlap
   TXA : ASL : TAY
   REP #$20
   LDA.w .bit,Y : ORA.l P2_HitMask : STA.l P2_HitMask
@@ -845,6 +849,7 @@ P2_TryHurt:
   JSL !P2_Overlap
   PLX
   BCC .no
+  JSR P2_CanAct : BCC .no                       ; no invisible contact damage
 
   LDA.w $037B : BNE .no_hearts                 ; Link can't be hurt right now
     LDA.w $0CD2,X : AND.b #$0F : STA.b $00
@@ -1078,6 +1083,9 @@ P2_BuildHalf:
 
 P2_SlotsBusy:
 {
+  ; Called by sprite hooks (X=actor) and NMI (X=16-bit). Keep both ABIs.
+  PHX : PHY : PHP
+  SEP #$10
   LDA.w $0AF4 : BNE .busy                      ; flute bird (head slot)
   LDX.b #$09
   - LDA.w $0C4A,X
@@ -1091,9 +1099,11 @@ P2_SlotsBusy:
       CMP.b #$E7 : BEQ .busy                   ; mushroom item GFX (OW $00/$40)
     .next_sprite
     DEX : BPL -
+  PLP : PLY : PLX
   CLC
   RTS
   .busy
+  PLP : PLY : PLX
   SEC
   RTS
 }
@@ -1108,6 +1118,9 @@ P2_Draw:
   .skip
   RTS
   .joined
+  ; A skipped draw must never leave an older pose/blade DMA request live.
+  LDA.l P2_Flags : AND.b #$FA : STA.l P2_Flags
+  LDA.l InCutScene : BNE .skip
   LDA.l P2_Flags : AND.b #$02 : BNE .skip      ; respawn pending
   ; Module $0E (text box, item menu scroll): Module0E_Interface runs
   ; Sprite_Main and LinkOAM_Main together ($00F82A), so P2 stays drawn,
@@ -1288,9 +1301,25 @@ P2_NmiUpload:
   REP #$20
   LDA.l P2_Magic : CMP.w #!P2_MAGIC            ; power-on WRAM is random
   SEP #$20
-  BNE .done
-  LDA.l P2_Flags : LSR : BCC .done
-    ASL : STA.l P2_Flags                       ; clear bit 0
+  BEQ .joined
+    JMP .done
+  .joined
+  LDA.l P2_Flags : AND.b #$01 : BNE .requested
+    JMP .done
+  .requested
+  LDA.l P2_Flags : AND.b #$02 : BNE .cancel
+  ; Ownership can change after P2_Draw, before NMI. Recheck before DMA.
+  LDA.l InCutScene : BNE .cancel
+  LDA.b $10 : CMP.b #$07 : BEQ .module_ok
+              CMP.b #$09 : BEQ .module_ok
+              CMP.b #$0E : BNE .cancel
+  .module_ok
+  JSR P2_SlotsBusy : BCC .upload
+  .cancel
+  LDA.l P2_Flags : AND.b #$FA : STA.l P2_Flags
+  JMP .done
+  .upload
+  LDA.l P2_Flags : AND.b #$FE : STA.l P2_Flags                       ; clear bit 0
     LDA.b #P2_GfxBuf>>16 : STA.w $4304         ; source: P2_GfxBuf (WRAM)
     REP #$20
 
@@ -1309,6 +1338,10 @@ P2_NmiUpload:
 
     ; blade art (bank $7E, P1's sword level) into the follower head tiles
     LDA.l P2_Flags : AND.b #$04 : BEQ .done
+      LDA.l $7EF3CC : BEQ .blade
+        LDA.l P2_Flags : AND.b #$FB : STA.l P2_Flags
+        BRA .done
+      .blade
       LDA.l P2_Flags : AND.b #$FB : STA.l P2_Flags
       REP #$20
       LDA.w #!P2_SWORD_VRAM : STA.w $2116
@@ -1337,6 +1370,25 @@ assert pc() <= $3AFFFF, "native-2p-poc code overflows bank $3A"
 ; hints start at $3AE800 (Sprites/NPCs/impa_hints.asm), the main P2 block
 ; $3AF000-$3AFFFF.
 org $3AE000
+
+; Shared-OBJ users and cutscenes temporarily own P2's drawing resources.
+; Hide the held terrain too: stash its kind without throwing or generating a
+; second secret. Return via the existing collision-checked regroup placement.
+; Module $0E keeps the ordinary frozen-menu pose when its slots are available.
+P2_SuspendIfHidden:
+{
+  LDA.l InCutScene : BNE .suspend
+  LDA.b $10 : CMP.b #$07 : BEQ .slots
+              CMP.b #$09 : BEQ .slots
+              CMP.b #$0E : BNE .suspend
+  .slots
+  JSR P2_SlotsBusy : BCS .suspend
+  RTS
+  .suspend
+  LDA.l P2_Flags : AND.b #$FA : ORA.b #$02 : STA.l P2_Flags
+  LDA.b #$00 : STA.l P2_AttackTimer : STA.l P2_AttackSword
+  JMP P2_Stash
+}
 
 ; Pick this swing's weapon: P1's sword (P2 is an equal second Link), or the
 ; punch when P1 has none or a follower holds the tile slot the blade uses.
@@ -1711,7 +1763,9 @@ P2_Unstash:
   JSR P2_SpawnHeld
   PLA : STA.w $0B9C
   BCS .done
-    LDA.b #$00 : STA.l P2_CarryKind            ; no free sprite slot: lost
+    ; Suspension must not turn a temporary full sprite table into item loss.
+    ; Spawn clears pending before calling us; re-arm it and retain CarryKind.
+    LDA.l P2_Flags : ORA.b #$02 : STA.l P2_Flags
   .done
   RTS
 }

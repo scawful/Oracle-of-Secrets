@@ -205,8 +205,8 @@ class SourceSheets(unittest.TestCase):
 
     def test_manifest_reserves_global_not_sprite_id(self):
         metadata=sheets.source_metadata(ROOT)
-        self.assertEqual(metadata['sprite_sheet_ids'],['0x64','0x40','0x43','0x47','0x70','0x71','0x72','0x73','0x75','0x76'])
-        self.assertEqual(metadata['global_sheet_ids'],['0xD7','0xB3','0xB6','0xBA','0xE3','0xE4','0xE5','0xE6','0xE8','0xE9'])
+        self.assertEqual(metadata['sprite_sheet_ids'],['0x64','0x40','0x43','0x47','0x70','0x71','0x72','0x73','0x75','0x76','0x77','0x78','0x79','0x7A','0x7B','0x7C','0x7D','0x7E','0x7F','0x82','0x6C','0x6D','0x6E','0x6F','0x74'])
+        self.assertEqual(metadata['global_sheet_ids'],['0xD7','0xB3','0xB6','0xBA','0xE3','0xE4','0xE5','0xE6','0xE8','0xE9','0xEA','0xEB','0xEC','0xED','0xEE','0xEF','0xF0','0xF1','0xF2','0xF5','0xDF','0xE0','0xE1','0xE2','0xE7'])
         self.assertEqual(metadata['owned_region']['pc_end'],'0x208000')
 
     def test_d4_manifest_tracks_selected_art_and_preserves_standard_entries(self):
@@ -238,9 +238,34 @@ class SourceSheets(unittest.TestCase):
         self.assertTrue(allowed(owner,0x11FFE7))
         self.assertTrue(allowed(owner,0x11FDE8))
         self.assertTrue(allowed(owner,0x11FFE9))
-        self.assertFalse(allowed(owner,0x11FDEA))
+        self.assertTrue(allowed(owner,0x11FDEA))
+        self.assertTrue(allowed(owner,0x11FFEA))
+        for row in (*range(0xEB,0xF3),0xF5):
+            for table in (0x11FD00,0x11FE00,0x11FF00):
+                self.assertTrue(allowed(owner,table+row))
+        self.assertFalse(allowed(owner,0x11FDF3))
+        self.assertFalse(allowed(owner,0x11FFFE))
         self.assertFalse(allowed(owner,0x11FDDE))
         self.assertFalse(allowed('Sprites/Bosses/d4_pressure_warden.asm',0x11FDDF))
+        kit_owner='Dungeons/Data/kits/kits.asm'
+        for row in (0xEA,0xEB,0xF0,0xF1,0xF2,0xF5):
+            for table in (0x11FD00,0x11FE00,0x11FF00):
+                self.assertFalse(allowed(kit_owner,table+row))
+        for row in (0xF3,0xF4,0xF6,0xFD,0xFE):
+            for table in (0x11FD00,0x11FE00,0x11FF00):
+                self.assertTrue(allowed(kit_owner,table+row))
+        import gen_wall_profiles
+        self.assertEqual(gen_wall_profiles.KIT_SHEETS,set(range(0xF3,0xFF))-{0xF5})
+        kits_dir=self.root/'kits';kits_dir.mkdir(exist_ok=True)
+        for bad_sheet in ('0xEA','0xEB','0xF0','0xF1','0xF2','0xF5'):
+            (kits_dir/'bad.kit.json').write_text(json.dumps({
+                'kit':'bad','verdict':'partial','profile':'p',
+                'private_row':'0x19','base_blockset':'0x0B',
+                'sheets':[{'slot':3,'sheet':bad_sheet,'copy_of':'0x0B','source':'s.txt','decoded_sha256':'0'*64}],
+            }))
+            with mock.patch.object(gen_wall_profiles,'KITS_DIR',kits_dir), \
+                 self.assertRaisesRegex(SystemExit,r'is not an available wall-kit row \(\$F3-\$FE excluding Sky \$F5\)'):
+                gen_wall_profiles.load_kits()
 
     def test_manifest_integration_keeps_strict_yaze_keys_and_portable_paths(self):
         from test_generate_hack_manifest import ManifestFixture
@@ -383,7 +408,7 @@ class SourceSheets(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'schema 2'):
             sheets.build(self.spec_path, self.base)
 
-    def test_d4_streams_stop_before_frame_records(self):
+    def test_d4_streams_skip_frame_records_without_moving_prior_streams(self):
         self.spec.update(schema_version=2, encoding='stored')
         count=(sheets.D4_FRAME_START-sheets.GLOBAL_START)//len(lz2.stored(self.raw))
         self.spec['sheets']=[dict(global_sheet=hex(0xDF+i),source='sheet.txt',
@@ -391,13 +416,53 @@ class SourceSheets(unittest.TestCase):
         self.spec_path=self.root/sheets.D4_SPEC.name;self.write_spec()
         _,items=sheets.build(self.spec_path,self.base)
         self.assertLessEqual(items[-1]['snes']+len(items[-1]['stream']),sheets.D4_FRAME_START)
+        prior=items
         self.spec['sheets'].append(dict(self.spec['sheets'][-1],global_sheet=hex(0xDF+count)));self.write_spec()
-        with self.assertRaisesRegex(ValueError,'overlaps D4 frame records'):
-            sheets.build(self.spec_path,self.base)
+        _,items=sheets.build(self.spec_path,self.base)
+        self.assertEqual(items[:-1],prior)
+        self.assertEqual(items[-1]['snes'],sheets.D4_FRAME_END)
+        include=sheets.asm_text(items)
+        self.assertIn(f'org ${sheets.D4_FRAME_END:06X}\nSourceGlobalSheet_{items[-1]["g"]:02X}:',include)
+        self.assertIn(f'  db ${(items[-1]["snes"] >> 8) & 255:02X}',include)
         # The same streams still fit the standard bank-wide allocation.
         self.spec_path=self.root/'standard.json';self.write_spec()
         _,items=sheets.build(self.spec_path,self.base)
         self.assertGreater(items[-1]['snes']+len(items[-1]['stream']),sheets.D4_FRAME_START)
+
+    def test_d4_reserved_gap_and_final_bank_capacity_are_both_preserved(self):
+        self.spec.update(schema_version=2,encoding='stored')
+        stream_size=len(lz2.stored(self.raw))
+        before=(sheets.D4_FRAME_START-sheets.GLOBAL_START)//stream_size
+        after=(sheets.GLOBAL_START+sheets.GLOBAL_CAPACITY-sheets.D4_FRAME_END)//stream_size
+        self.spec['sheets']=[dict(global_sheet=hex(0xDF+i),source='sheet.txt',
+            decoded_sha256=hashlib.sha256(self.raw).hexdigest(),why='D4 full-bank vector')
+            for i in range(before+after)]
+        self.spec_path=self.root/sheets.D4_SPEC.name;self.write_spec()
+        _,items=sheets.build(self.spec_path,self.base)
+        for item in items:
+            self.assertFalse(item['snes'] < sheets.D4_FRAME_END and
+                             item['snes']+len(item['stream']) > sheets.D4_FRAME_START)
+        self.assertLessEqual(items[-1]['snes']+len(items[-1]['stream']),
+                             sheets.GLOBAL_START+sheets.GLOBAL_CAPACITY)
+        self.spec['sheets'].append(dict(self.spec['sheets'][-1],
+                                        global_sheet=hex(0xDF+before+after)))
+        self.write_spec()
+        with self.assertRaisesRegex(ValueError,'bank \\$47 is full'):
+            sheets.build(self.spec_path,self.base)
+
+    def test_flagged_d4_stream_can_jump_gap_without_changing_unflagged_output(self):
+        self.spec.update(schema_version=2,encoding='stored')
+        count=(sheets.D4_FRAME_START-sheets.GLOBAL_START)//len(lz2.stored(self.raw))
+        entry=dict(source='sheet.txt',decoded_sha256=hashlib.sha256(self.raw).hexdigest(),why='D4 flagged vector')
+        self.spec['sheets']=[dict(entry,global_sheet=hex(0xDF+i)) for i in range(count)]
+        self.spec_path=self.root/sheets.D4_SPEC.name;self.write_spec()
+        _,prior=sheets.build(self.spec_path,self.base)
+        self.spec['sheets'].append(dict(entry,global_sheet='0xFE',flag='ENABLE_SKY_ROOM_SKY'))
+        self.write_spec()
+        _,items=sheets.build(self.spec_path,self.base)
+        self.assertEqual(items[:-1],prior)
+        self.assertEqual(items[-1]['snes'],sheets.D4_FRAME_END)
+        self.assertIn('if !ENABLE_SKY_ROOM_SKY\n  org $47D000',sheets.asm_text(items))
 
     def test_frame_source_copies_exactly_and_check_detects_change(self):
         _,items=sheets.build(self.spec_path,self.base)
@@ -418,7 +483,7 @@ class SourceSheets(unittest.TestCase):
         # Real build wrapper/receipt/guard in a portable disposable repository.
         for directory in ('Scripts/Build','Scripts/Generate','Config','Util','Data/graphics','Roms'):
             (self.root/directory).mkdir(parents=True,exist_ok=True)
-        for name in ('build_rom.sh','build_checks.sh','build_receipt.py'):
+        for name in ('build_rom.sh','build_checks.sh','z3ed_locator.sh','build_receipt.py'):
             shutil.copy2(ROOT/'Scripts/Build'/name,self.root/'Scripts/Build'/name)
         for path in GEN.glob('*.py'):shutil.copy2(path,self.root/'Scripts/Generate'/path.name)
         (self.root/'Oracle_main.asm').write_text('')

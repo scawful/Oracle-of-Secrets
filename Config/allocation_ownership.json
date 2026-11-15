@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "4b49b129bdc7123ba4b8f56e4c7c177be3d9fe2fc30fa5fa30245ada8f5e37eb"
+      "sha256": "435254eb768cb48998c4981399bb6953453236b8b1f7824359da928cf297d379"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -55,7 +55,7 @@
     "pending_rc:Core/sram.asm": {
       "source_set": "pending_rc",
       "path": "Core/sram.asm",
-      "sha256": "14bb6d7fcd3b10c15a22f373052ed4391f4ba35a8c8ed820b1dc7eb0baac3cbf"
+      "sha256": "4e9d336eadace6bf56fd3ec84d036e932d4aaf65823a207cea1927fcab9a03e1"
     },
     "pending_rc:Masks/mask_binding.asm": {
       "source_set": "pending_rc",
@@ -70,12 +70,12 @@
     "pending_rc:Items/ocarina.asm": {
       "source_set": "pending_rc",
       "path": "Items/ocarina.asm",
-      "sha256": "c0099ff6d43c98c692416439cd798dfe3cd24db2e5ea1a289bf6a65d03bd65da"
+      "sha256": "4e2bbf60ae767a4c2a363cf450be53e34658e2433a2bf9a87a71d767d2cb1cab"
     },
     "shared:Overworld/ZSCustomOverworld.asm": {
       "source_set": "shared",
       "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "4869387a87614f95fd8f28a53fc64907bc7f45ad93501454913a83e31c12e5c4"
+      "sha256": "7f14be2124538dacc823c25c5b85469f873173d93ebc85c68e1df7b346d84a1e"
     },
     "shared:Sprites/Objects/data/minecart_tracks.asm": {
       "source_set": "shared",
@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "62026108b82e494ea66429261fc3a6eb4b2226c490fe7177ae908a6181c82cac"
+      "sha256": "b2f0461a7f02373fca4cbde5551c0b3d468b53f7328faa413e46d79fcaf62d2a"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "e61f05a370652f171f46eb8df781c96b32b7fcaea3af3ddbdc4d2d25a90a5a52"
+      "sha256": "315e5865f8026bd84032f040bd1459c413a51958d8d38d08b3b3c718b25ed472"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -125,7 +125,7 @@
     "shared:Overworld/overworld.asm": {
       "source_set": "shared",
       "path": "Overworld/overworld.asm",
-      "sha256": "14056cdd94ede530bd2ce95cedd64d51d5b105eac13db8ea0ea25192a3f86f21"
+      "sha256": "feae0a88242b86c507f6ef62fb97a1ed5f057419ffe7e76e29866ed906ee5cd4"
     },
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
@@ -165,7 +165,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "6c85e45905c718ee9e9a03294a20993c5aff3039e26a98375f1c2bbd60863483"
+      "sha256": "e71653e2ce0ac1f4763846cc220f027f45ab4f7e5c9a529107496786de7f850f"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -180,12 +180,12 @@
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "88f9d68ae2a203bbe3bcf6003c1f3793cd4612d38fff1737b7436cf183a35f2d"
+      "sha256": "d5b0e9a93d613fed8bb5878f6e3d37dbc6dfff75da3862ad3c688fff5d13efa8"
     },
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
       "path": "Scripts/Generate/sheet_overrides.py",
-      "sha256": "ec6cacd03b0a35bef51e33fbc0e6e90a7a90e40cc634da75dc1cfcfcf418c34f"
+      "sha256": "916ea44f0816aeb370043589dd82ed58acb2b88f5375c3f2bf354cd2d36d3ea7"
     },
     "shared:Scripts/Build/native_overworld_authoring_metadata.py": {
       "source_set": "shared",
@@ -195,7 +195,7 @@
     "shared:Overworld/special_overworld_resident.asm": {
       "source_set": "shared",
       "path": "Overworld/special_overworld_resident.asm",
-      "sha256": "c5aa111291a02865de4811714f9528cea95cecc27373baf62d74723544854345"
+      "sha256": "9299d7b69201d43d1f2f85083d156f14b2ec16d34d1ac665cb495ede0db7cbc6"
     },
     "shared:Overworld/custom_gfx.asm": {
       "source_set": "shared",
@@ -210,12 +210,12 @@
     "shared:Oracle_main.asm": {
       "source_set": "shared",
       "path": "Oracle_main.asm",
-      "sha256": "6cd879f3ce0c412e7e3ed02e98d5dce560130739b8e60cc48228d367aeb065b6"
+      "sha256": "d76673affda20a9b3b986b6ba540de4a93dfd15fc614fbd3442fcd905f1a06d8"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
       "path": "Scripts/Build/special_overworld_resident_abi.py",
-      "sha256": "49f160fb9b028594036772d08c3c5ef7a4f8b26fb1d723e586235927ee0b5926"
+      "sha256": "d59fcf8b672ebc296ef4b35f635c8ddeba2c138e7e56477bb574c3cf59fe42eb"
     },
     "shared:Overworld/special_overworld_palette.asm": {
       "source_set": "shared",
@@ -242,6 +242,21 @@
       "path": "Sprites/Bosses/d8_boss.asm",
       "sha256": "46f7952d50c3271da51c23114af5f6f31f101dcc3c5fefb5b2a31d03b247bf0f"
     },
+    "shared:Dungeons/wall_profile_selector.asm": {
+      "source_set": "shared",
+      "path": "Dungeons/wall_profile_selector.asm",
+      "sha256": "dde40d5fdf7fdb4076a544adb030e5787c8a8cf3ca276a50261d3140391a397b"
+    },
+    "shared:Dungeons/wall_profile_gfx.asm": {
+      "source_set": "shared",
+      "path": "Dungeons/wall_profile_gfx.asm",
+      "sha256": "f39f14a7836d599de948363e8982e7bfc8249fbdea75a915c7b6fdc4e40be1a2"
+    },
+    "shared:Dungeons/Data/kits/kits.asm": {
+      "source_set": "shared",
+      "path": "Dungeons/Data/kits/kits.asm",
+      "sha256": "f4933775da4b0c04ef74b354f0ca9c0ccef0c5a78e9bc7e0849604f9cfc5b32e"
+    },
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
       "path": "Sprites/all_sprites.asm",
@@ -250,12 +265,67 @@
     "shared:Sprites/Objects/ice_block.asm": {
       "source_set": "shared",
       "path": "Sprites/Objects/ice_block.asm",
-      "sha256": "a312424e181f116e29ff7d0ab5fd2f2f40bb743fed60b05b766e6f48f1a85448"
+      "sha256": "2fe2c4507868e914acf947c00ce438cce66a77144865d58fc9359deba00e538b"
     },
     "shared:Dungeons/d4_water_control.asm": {
       "source_set": "shared",
       "path": "Dungeons/d4_water_control.asm",
       "sha256": "f581f3ea6af89dd9a28ba1c7e397098c638724e9343c5f7f59137b57814628b4"
+    },
+    "shared:Items/special_soaring.asm": {
+      "source_set": "shared",
+      "path": "Items/special_soaring.asm",
+      "sha256": "b18973fd650b792f3adae9300f223c047cf8f1fdc84226165c71df8921d8c52a"
+    },
+    "shared:Items/switch_hook.asm": {
+      "source_set": "shared",
+      "path": "Items/switch_hook.asm",
+      "sha256": "c17862c54d8c8e57b9ffdb227d0c8c23e086aa53794cf0a0e72c4918f2f31652"
+    },
+    "shared:Items/sky_watch_log.asm": {
+      "source_set": "shared",
+      "path": "Items/sky_watch_log.asm",
+      "sha256": "029d77bbd049212b7e1c73ccb401f7a29cc3df39a94315a046c8bb297e319211"
+    },
+    "shared:Dungeons/d6_chu_gate_97.asm": {
+      "source_set": "shared",
+      "path": "Dungeons/d6_chu_gate_97.asm",
+      "sha256": "fbc7b57efd540595b5fc5486978172197f028fdb1c644183ab0febcd9016911f"
+    },
+    "shared:Overworld/kalyxo_boat.asm": {
+      "source_set": "shared",
+      "path": "Overworld/kalyxo_boat.asm",
+      "sha256": "3813ecc53f5a6f5bc36cab5b8c6cfd2b98a7b32449e8739fcb14ab03e1c0dbd0"
+    },
+    "shared:Data/overworld/kalyxo_boat_placements.asm": {
+      "source_set": "shared",
+      "path": "Data/overworld/kalyxo_boat_placements.asm",
+      "sha256": "a2030012cd44dd4b7ffc6524e325885161dd92089eb16f5889bd772e42769efd"
+    },
+    "shared:Core/Cutscene/opening.asm": {
+      "source_set": "shared",
+      "path": "Core/Cutscene/opening.asm",
+      "sha256": "0cfe8773622a7196e697c5749c81b006bebded4b76775ab05555ca671b6d0b87"
+    },
+    "shared:Overworld/goron_checkpoint.asm": {
+      "source_set": "shared",
+      "path": "Overworld/goron_checkpoint.asm",
+      "sha256": "00a6e02cc30ddcb38cbf52b783362e93e3a61e3c9986c7cf433192c91de8b290"
+    },
+    "shared:Overworld/special_overworld_semantic.asm": {
+      "source_set": "shared",
+      "path": "Overworld/special_overworld_semantic.asm",
+      "sha256": "c30c9f334960d285db404a907ab152dd4360d51c40dc785fd7c1085e7c5b2354"
+    },
+    "shared:Sprites/NPCs/farore_d8_graphics.asm": {
+      "source_set": "shared",
+      "path": "Sprites/NPCs/farore_d8_graphics.asm",
+      "sha256": "561fb4748234ab3cb8768972c71d1d0bfc0e75fd11b3583aa879b915d58f3e1d"
+    },
+    "shared:Sprites/NPCs/farore_d8_companion.asm": {
+      "source_set": "shared",
+      "path": "Sprites/NPCs/farore_d8_companion.asm",
+      "sha256": "60fe9cacb1cbb7a479b7c2a56fba8ce5e5dbfc9a4558846f4e9c84df01f8de7b"
     }
   },
   "claims": [
@@ -415,13 +485,13 @@
     },
     {
       "id": "symbols_wram_block",
-      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..FinaleBeat; native cache/palette history retained)",
+      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..SongTintContext; native cache/palette history retained)",
       "space": "wram",
       "base": 8265328,
-      "size": 57,
+      "size": 91,
       "status": "shared",
       "condition": {},
-      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint. Last four bytes retain underlying native sheets for resource slots 0/1/2/7 across graphics loads; not persistent save data. Next 26 bytes reserve six native BG column8 reference/effective words plus state/area; no HUD, OBJ or backdrop column0 history. Finale GanondorfFight/BossReinject/FinaleBeat append at $7E1EA6-$7E1EA8 without changing native cache aliases.",
+      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint. Last four bytes retain underlying native sheets for resource slots 0/1/2/7 across graphics loads; not persistent save data. Next 26 bytes reserve six native BG column8 reference/effective words plus state/area; no HUD, OBJ or backdrop column0 history. Finale GanondorfFight/BossReinject/FinaleBeat append at $7E1EA6-$7E1EA8 without changing native cache aliases. WallSel_Buffer $7E1EA9-$7E1EC8 (32B) is the wall-profile selector span window: written by WallSel_Common immediately before the drawer reads it through the $01:1EA9 mirror; no state carries between draws; only used when !ENABLE_WALL_PROFILE_SELECTOR == 1. SongTintContext $7E1EC9-$7E1ECA (2B) holds the $1B and area/room a song tint started in; written by SongTint_Start, read until the tint ends; only used when !ENABLE_OCARINA_SONG_TINT == 1.",
       "reset": "No block-wide reset is claimed. Not in ResetTrackVars arrays since PR 211 moved this block from $7E0730 to vanilla-free $7E1E70. The last four-byte SpecialOverworldMainCache is cleared by the default-off resource callback before fresh native InitTilesets/mirror identities, then retains underlying main-sheet identities for departure restoration. Runtime qualification remains pending. Palette-hole cache reset/capture/restoration remains unbound: before any read reset state to0 and area toFF; native84-color BG refresh and Buffer/Both completion must be bound before palette activation. Main file-load entry clears the three appended Finale state bytes after native tail migration.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
@@ -1743,7 +1813,8 @@
         "shared:Scripts/Build/lyra_native_loaders.py"
       ],
       "anchors": [
-        "RESIDENT_DATA_CAPACITY = 0x10000"
+        "RESIDENT_DATA_CAPACITY = 0x18000",
+        "RESIDENT_DATA_EXCLUDED_PC = ((0x280000, 0x282000),)"
       ],
       "aliases": []
     },
@@ -1999,6 +2070,49 @@
       "aliases": []
     },
     {
+      "id": "wall_profile_selector_code",
+      "owner": "Per-dungeon wall-profile selector code and tables",
+      "space": "snes_rom",
+      "base": 4513792,
+      "size": 8192,
+      "status": "shared",
+      "condition": {
+        "ENABLE_WALL_PROFILE_SELECTOR": 1
+      },
+      "lifetime": "Compiled ROM code and generated profile/kit tables in the fixed 8 KiB slot $44E000-$44FFFF at the end of bank $44, clear of docks_map_streams ($44C000, 1036 B). Kit sheet streams live in wall_profile_kit_sheets. Banks $40/$43/$47 are exclusive to sheet tools.",
+      "reset": "Build owns this slot; no runtime allocation or SRAM.",
+      "save": "No saved data. Runtime span window is symbols_wram_block WallSel_Buffer.",
+      "provenance": [
+        "shared:Dungeons/wall_profile_selector.asm"
+      ],
+      "anchors": [
+        "org $44E000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "wall_profile_kit_sheets",
+      "owner": "Wall-profile graphics kit sheet streams (spare global sheets $F3-$F4/$F6-$FE; $F5 is the private Sky slot-1 variant, $EA is Sky room sky, $EB-$F2 are Sky port)",
+      "space": "snes_rom",
+      "base": 4554752,
+      "size": 28672,
+      "status": "shared",
+      "condition": {
+        "ENABLE_WALL_PROFILE_SELECTOR": 1
+      },
+      "lifetime": "Generated 3bpp LC-LZ2 sheet streams ($458000-$45EFFF) written by Dungeons/Data/kits/kits.asm from Dungeons/Data/kits/*.kit.json; ends before ow_aux_extension_code ($45F000). The same file writes the private blockset rows $17-$1A and palettes $1A/$22/$24/$26 that no ordinary room header uses (input-ROM assertions and final compiled-ROM palette ownership check). Palette $1C is Sky-owned; $28 aliases the next vanilla table and is not a private palette.",
+      "reset": "Build owns this slot; no runtime allocation or SRAM.",
+      "save": "No saved data. Kit rows and palettes are selected per room at load by WallSel_HeaderGfx.",
+      "provenance": [
+        "shared:Dungeons/wall_profile_gfx.asm",
+        "shared:Dungeons/Data/kits/kits.asm"
+      ],
+      "anchors": [
+        "org $458000"
+      ],
+      "aliases": []
+    },
+    {
       "id": "ice_block_code",
       "owner": "Pushable ice block complete sprite unit",
       "space": "snes_rom",
@@ -2041,6 +2155,276 @@
         "org $508000",
         "D4Water_Start:",
         "D4Water_End:"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "SkySoaringLearned",
+      "owner": "Special-overworld Soaring reads; explicitly bound watch-log message completion grants",
+      "space": "save_buffer",
+      "base": 8319922,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "ENABLE_SPECIAL_OVERWORLD_SOARING": 1
+      },
+      "lifetime": "Save file; native five-page save and checksum block.",
+      "reset": "Vanilla new-file initialization zeros it. Only exact A5 is learned; other old-save values stay locked until a bound watch-log conversation reaches its acknowledged terminator and normal window close. No migration.",
+      "save": "SaveGameFile 00897B copies the F300 page to primary and backup; checksum loop 00899C covers offsets0000-04FD; new-file 0CC321 clears the F300 page.",
+      "provenance": [
+        "shared:Items/special_soaring.asm",
+        "shared:Core/sram.asm",
+        "shared:Items/sky_watch_log.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "SkySoaringLearned",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "switch_hook_runtime",
+      "owner": "Switch Hook beat, target and one swapped-enemy plate marker",
+      "space": "wram",
+      "base": 8258152,
+      "size": 9,
+      "status": "shared",
+      "condition": {
+        "DISABLE_ITEMS": 0
+      },
+      "lifetime": "Volatile beat/target/camera fields $0268-$026C and held slot+1/type/full-room $026D-$0270. Only a dungeon enemy exchanged by the Switch Hook can create the plate marker. No saved data.",
+      "reset": "Module07 camera-save hook invalidates after every dungeon submodule, independent of masks, item selection and Link state. Outdoor camera processing drops the marker. Common SpritePrep_ResetProperties invalidates a tracked slot before normal or dynamic reuse. The plate reader revalidates full room/context/state/type/health and drops an awake enemy after it walks off. Raw diagnostic slot writes bypass native initialization and are not an actor-lifetime contract.",
+      "save": "Not persisted; normal file/room loading resets actor identities.",
+      "provenance": [
+        "shared:Items/switch_hook.asm"
+      ],
+      "anchors": [
+        "!SwitchHookBeat   = $0268",
+        "!SwitchHookHeld   = $026D",
+        "!SwitchHookHeldRoom = $026F"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_resident_cache_spill",
+      "owner": "Native special-overworld derived resident atlas; explicit bank50 upper spill only",
+      "space": "snes_rom",
+      "base": 5283840,
+      "size": 24576,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Build-derived payload only, bank-bounded. Existing4E/4F reservation retained; D4 owns50:8000-A000 and is always excluded.",
+      "reset": "No generic free-space discovery. Source editable spill must retain exact measured zero preimage; allocation and compiled gap checks fail otherwise.",
+      "save": "No SRAM change or editor publication permission. Build owns derived data; normal Save preserves this source preimage.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "RESIDENT_SPILL_PC = 0x282000",
+        "RESIDENT_SPILL_END = 0x288000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "SkyWatchLog_State",
+      "owner": "Bound Sky watch-log native message lifecycle",
+      "space": "wram",
+      "base": 8264939,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "ENABLE_SPECIAL_OVERWORLD_SOARING": 1
+      },
+      "lifetime": "One native message conversation; hooks emit only with an explicit non-helper target binding. Native initialized-but-unused JUNK_7E1CEB is borrowed, not saved.",
+      "reset": "Native RenderText initialization clears1CD0-1CEF; capture resets before checking the original message. Finalize consumes and clears every close; helper09/0A reparses leave this byte unchanged.",
+      "save": "Not SRAM. Only acknowledged terminator plus normal special-overworld message cleanup can grant the existing SkySoaringLearned A5 token. Choice confirmation/refusal never qualifies.",
+      "provenance": [
+        "shared:Items/sky_watch_log.asm",
+        "shared:Core/ram.asm"
+      ],
+      "anchors": [
+        "SkyWatchLog_State = $7E1CEB",
+        "JUNK_7E1CEB     = $7E1CEB"
+      ],
+      "aliases": [],
+      "binding": {
+        "source": "shared:Items/sky_watch_log.asm",
+        "symbol": "SkyWatchLog_State",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "d6_chu_gate_97_room_state",
+      "owner": "Optional room97 Bombchu earned bit1000 in the existing native room-state word; other bits retain native owners",
+      "space": "save_buffer",
+      "base": 8319278,
+      "size": 2,
+      "status": "shared",
+      "condition": {
+        "ENABLE_D6_CHU_GATE_97": 1
+      },
+      "lifetime": "Saved room97 state. Only bit1000 is used; conditional on the exact two-door stream 0063,3660,FFFF (door index3 absent), tag1=39/tag2=00 and exact AF target. Runtime mirror is native $0400; shutter live mask is $068C bit4000, not4040.",
+      "reset": "Native new-file initialization; native room load restores high door bits. No new state field or migration. Source refuses a changed door composition. Feature defaults off and current authoring room remains unbound.",
+      "save": "OR1000 preserves all other $7EF12E bits. Native $02B947 saves high $0400 bits and native $01B6D1 restores them; compiled CPU proof preserves chest and low flags. Actual game Save/cold remains an activation gate.",
+      "provenance": [
+        "shared:Dungeons/d6_chu_gate_97.asm",
+        "vanilla:bank_01.asm",
+        "vanilla:bank_02.asm"
+      ],
+      "anchors": [
+        "$7EF12E",
+        "#$1000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "kalyxo_boat_native_code",
+      "owner": "Default-off native cached-exit ferry prototype within opening stream",
+      "space": "snes_rom",
+      "base": 3854336,
+      "size": 4096,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_KALYXO_BOAT": 1
+      },
+      "lifetime": "Code and two unbound native50-byte ($32 hexadecimal) caches. Opening/experiment must end at or before3AD000; ferry must end at or before3AE000, where native2P owns the next slot. No old3AA000 ice-block overlap. Source-first review; no emitted candidate yet.",
+      "reset": "No runtime ROM writes. Bind only after selected full-boat/current landing approval.",
+      "save": "No save format, entrance/exit ID, actor or sprite allocation. Uses existing synthetic cached-exit selector0151.",
+      "provenance": [
+        "shared:Overworld/kalyxo_boat.asm",
+        "shared:Data/overworld/kalyxo_boat_placements.asm",
+        "shared:Core/Cutscene/opening.asm"
+      ],
+      "anchors": [
+        "org $3AD000",
+        "Boat_CodeStart:",
+        "Boat_CodeEnd:"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "kalyxo_boat_native_transient",
+      "owner": "Ferry-only scene marker, state, cancellation preimage and bounded loader timer",
+      "space": "wram",
+      "base": 8265419,
+      "size": 19,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_KALYXO_BOAT": 1
+      },
+      "lifetime": "Separate conditional19-byte block immediately after the fixed91-byte Core/symbols block ending at SongTintContext; no alias with Arrival/BossKit/BossDirector state. Claimed only with ferry feature enabled.",
+      "reset": "Boat_ResetSession clears marker on Module05 file-load/Continue; Boat_Clear on completion/cancellation/stale scene. Other bytes read only after a successful boarding initializes them.",
+      "save": "Volatile; no SRAM field. Native Save policy is unchanged.",
+      "provenance": [
+        "shared:Core/symbols.asm",
+        "shared:Overworld/kalyxo_boat.asm",
+        "shared:Overworld/goron_checkpoint.asm"
+      ],
+      "anchors": [
+        "Boat_Marker:",
+        "Boat_TransientEnd:"
+      ],
+      "aliases": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "Boat_Marker",
+        "base_block": true
+      }
+    },
+    {
+      "id": "native_special_semantic_code",
+      "owner": "Per-map Tile16 source lookup and semantic consumers",
+      "space": "snes_rom",
+      "base": 5341184,
+      "size": 4096,
+      "status": "proposed",
+      "condition": {
+        "SPECIAL_OVERWORLD_SEMANTIC_ENABLED": 1
+      },
+      "lifetime": "Derived Build code only; exact empty-source preimage and compiled extent are required before experimental activation.",
+      "reset": "Stack-local scratch; no new WRAM or SRAM. Physical page comes from the retained parent/size lookup.",
+      "save": "Normal Save has no ownership of this code region. Build must preserve the separately saved record413.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py",
+        "shared:Overworld/special_overworld_semantic.asm"
+      ],
+      "anchors": [
+        "SEMANTIC_CODE_BASE = 0x518000",
+        "SEMANTIC_CODE_LIMIT = 0x519000",
+        "Lyra_SemanticCodeStart:",
+        "Lyra_SemanticCodeEnd:"
+      ]
+    },
+    {
+      "id": "native_special_page_tile16_source",
+      "owner": "Authoritative per-map source Tile16 definitions, native record413",
+      "space": "snes_rom",
+      "base": 5345280,
+      "size": 12288,
+      "count": 1024,
+      "stride": 12,
+      "status": "proposed",
+      "condition": {},
+      "lifetime": "Selected private initialization reservation; source storage remains owned when runtime is disabled. Other editor users supply their own verified storage. This proposed claim does not initialize or allocate a ROM.",
+      "reset": "Canonical sorted rows with all-FF trailing padding; global dictionary400 remains unchanged.",
+      "save": "Guarded native initializer and ordinary native Save own the declared payload and CRC only; unrelated maps, definitions, placement metadata and code are preserved.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "PAGE_TILE16_BASE = 0x519000",
+        "PAGE_TILE16_ROW_CAPACITY = 1024"
+      ]
+    },
+    {
+      "id": "native_special_resident_page_tile16_spill",
+      "owner": "Native special-overworld derived atlas; selected revision5-1024 bank51 tail",
+      "space": "snes_rom",
+      "base": 5357568,
+      "size": 16384,
+      "status": "proposed",
+      "condition": {
+        "SPECIAL_OVERWORLD_SEMANTIC_ENABLED": 1
+      },
+      "lifetime": "Derived Build storage only for explicitly admitted revision5 record413 at519000/count1024. Legacy revision4 and revision5-512 retain the original reservation. D4 lower bank50 and semantic code/source remain excluded.",
+      "reset": "Complete selected editable tail must retain the measured zero preimage. Bank-bound emission and all allowed-gap checks remain mandatory.",
+      "save": "No SRAM or editor publication permission. Build owns derived data; normal Save preserves the editable source preimage.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "RESIDENT_PAGE_TILE16_SPILL_PC = 0x28C000",
+        "RESIDENT_PAGE_TILE16_SPILL_END = 0x290000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "d8_farore_graphics_support",
+      "owner": "Default-off D8 Farore graphics, bounded presence/recovery and native Low4bpp blob",
+      "space": "snes_rom",
+      "base": 3840000,
+      "size": 2048,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_D8_FARORE_GRAPHICS": 1,
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Bounded code/data slot $3A9800-$3A9FFF, between conditionally bounded mask routines and unchanged ice_block_code at $3AA000. Member-only room-load overlay; no global sheet allocation. Root granted prototype placement on 2026-11-15.",
+      "reset": "Build-owned ROM; no new WRAM. Presence uses only the owned actor subtype/Misc fields, initialized by ordinary sprite Prep and discarded at room unload. Native room graphics loads replace staging/VRAM contents.",
+      "save": "No saved fields, migration, or writes. Existing D8 crystal bit only read.",
+      "provenance": [
+        "shared:Sprites/NPCs/farore_d8_graphics.asm",
+        "shared:Sprites/NPCs/farore_d8_companion.asm"
+      ],
+      "anchors": [
+        "org $3A9800",
+        "D8Farore_GraphicsStart:",
+        "D8Farore_GraphicsEnd:",
+        "D8Farore_SupportEnd:"
       ],
       "aliases": []
     }

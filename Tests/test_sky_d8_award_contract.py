@@ -8,6 +8,9 @@ proof. Set OOS_SKY_AWARD_ROM to a built oos168x.sfc to also check every
 preimage assert against real ROM bytes (read-only).
 """
 import os
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 import re
 import sys
@@ -526,6 +529,34 @@ class SkyAwardSource(unittest.TestCase):
         self.assertEqual(self.asserts[0x02DD8A + 0x84], (2, 0x0090))
         self.assertEqual(self.asserts[0x02DE28 + 0x42], (1, 0x7A))
 
+    def test_exit_binding_accepts_selected_sky_route_only(self):
+        asar = os.environ.get("ASAR_BIN") or shutil.which("asar")
+        if not asar:
+            self.skipTest("Asar unavailable for exit-binding admission check")
+        start = self.lines.index("if !ENABLE_SKY_OVERWORLD_ROUTE == 1")
+        end = self.lines.index("endif", start)
+        assertion = "\n".join(self.lines[start:end + 1])
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            script, rom = root / "guard.asm", root / "guard.sfc"
+            for route in (0, 1):
+                for destination in (0x7A, 0x83, 0x87, 0x88):
+                    with self.subTest(route=route, destination=destination):
+                        image = bytearray(0x20000)
+                        image[0x15E6A] = destination
+                        rom.write_bytes(image)
+                        script.write_text(
+                            f"lorom\n!ENABLE_SKY_OVERWORLD_ROUTE = {route}\n"
+                            + assertion + "\n")
+                        result = subprocess.run(
+                            [asar, "--no-title-check", "--fix-checksum=off",
+                             str(script), str(rom)], capture_output=True, text=True)
+                        accepted = destination in (0x7A, 0x83) or (
+                            route == 1 and destination == 0x87)
+                        self.assertEqual(result.returncode == 0, accepted,
+                                         result.stdout + result.stderr)
+                        self.assertEqual(rom.read_bytes(), image)
+
     def test_store_site_and_tables_stay_with_their_owners(self):
         orgs = [line for line in self.lines if line.startswith("org ")]
         self.assertEqual(sorted(int(line[5:11], 16) for line in orgs), sorted(HOOKS))
@@ -539,9 +570,16 @@ class SkyAwardSource(unittest.TestCase):
             for mnemonic in ("STA", "STZ", "STY", "STX"):
                 self.assertFalse(line.startswith(f"{mnemonic}.l"), line)
 
-    def test_no_feature_flag_and_bank_2c_stream_placement(self):
-        self.assertFalse([line for line in self.lines
-                          if re.match(r"(if|else|endif)\b", line) or "!ENABLE" in line])
+    def test_only_exit_validation_is_flagged_and_bank_2c_stream_placement(self):
+        directives = [line for line in self.lines
+                      if re.match(r"(if|else|endif)\b", line)]
+        self.assertEqual(directives, ["if !ENABLE_SKY_OVERWORLD_ROUTE == 1",
+                                      "else", "endif"])
+        start = self.lines.index(directives[0])
+        end = self.lines.index("endif", start)
+        self.assertTrue(all(line == "else" or
+                            line.startswith("assert read1($02DE28+$42)")
+                            for line in self.lines[start + 1:end]))
         self.assertFalse([line for line in self.lines if line.startswith("org $2C")])
         self.assertEqual([line for line in self.lines if line][-1],
                          "assert pc() <= $2CFD00")

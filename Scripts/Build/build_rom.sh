@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $(basename "$0") <version> [asar_binary] [--reload] [--no-symbols] [--mesen-sync] [--skip-tests] [--asar=<path>] [--enable <csv>] [--disable <csv>] [--profile <defaults|all-on|all-off>] [--persist-flags] [--help]" >&2
+  echo "Usage: $(basename "$0") <version> [asar_binary] [--reload] [--no-symbols] [--mesen-sync] [--skip-tests] [--asar=<path>] [--enable <csv>] [--disable <csv>] [--profile <defaults|all-on|all-off>] [--persist-flags] [--experimental-page-tile16] [--help]" >&2
   echo "Base ROM: OOS_BASE_ROM, then YAZE_PROJECT_ROM, then Roms/oos<version>.sfc." >&2
   echo "  An explicit base must match the active Yaze project ROM when both are set." >&2
   echo "  Backward compat: Roms/oos<version>_test2.sfc is used only when the standard base is absent." >&2
@@ -12,6 +12,7 @@ usage() {
   echo "  --disable <csv>   Comma-separated feature names to disable." >&2
   echo "  --profile <name>  Preset profile (defaults|all-on|all-off) applied before enable/disable lists." >&2
   echo "  --persist-flags   Keep the generated Config/feature_flags.asm (otherwise it is restored after build)." >&2
+  echo "  --experimental-page-tile16  Explicit revision5 semantic Build; requires the selected Yaze project and managed export." >&2
   echo "Verification: OOS_REQUIRE_CHECKS=analysis,smoke,... requires named checks even when skipped/unavailable." >&2
   echo "  Names: flags,menu,overlap,hooks,sprites,analysis,smoke,annotations." >&2
   echo "  OOS_ANALYZER=<path> selects an analyzer; OOS_TEST_SOCKET=<owned socket> enables exact-ROM current-state smoke." >&2
@@ -44,11 +45,16 @@ feat_enable=""
 feat_disable=""
 feat_profile="defaults"
 persist_flags=0
+experimental_page_tile16=0
 
 while [[ $# -gt 0 ]]; do
   case $1 in
     -h|--help)
       usage 0
+      ;;
+    --experimental-page-tile16)
+      experimental_page_tile16=1
+      shift
       ;;
     --reload)
       reload=1
@@ -183,6 +189,7 @@ PY
 fi
 
 source "$repo_root/Scripts/Build/build_checks.sh"
+source "$repo_root/Scripts/Build/z3ed_locator.sh"
 init_build_receipt
 current_stage="base_rom"
 
@@ -226,8 +233,15 @@ fi
 
 # Source sheets must match the selected editable base and tracked generated
 # streams. Refuse a changed base sheet before replacing any prior build output.
-run_check source_sprite_sheets 1 python3 "$repo_root/Scripts/Generate/sheet_overrides.py" \
-  --root "$repo_root" --base-rom "$base_rom" --rom-role editable_base --check --respect-flags
+check_source_sprite_sheets() {
+  if [[ -n "${YAZE_PROJECT_FILE:-}" ]]; then
+    python3 "$repo_root/Scripts/Build/authoring_bundle_build.py" \
+      --project "$YAZE_PROJECT_FILE" --prepare-source-graphics --base-rom "$base_rom" || return $?
+  fi
+  python3 "$repo_root/Scripts/Generate/sheet_overrides.py" \
+    --root "$repo_root" --base-rom "$base_rom" --rom-role editable_base --check --respect-flags
+}
+run_check source_sprite_sheets 1 check_source_sprite_sheets
 
 # Prototype HUD icons preserve every unallocated tile in the editable base.
 run_check menu_icon_sheets 1 python3 "$repo_root/Scripts/Generate/menu_icon_overrides.py" \
@@ -252,10 +266,15 @@ snapshot_build_outputs
 # Native special-overworld data belongs to the editable ROM. The generated
 # include contains constants only; initial data import is a separate operation.
 native_build_args=(--build-cache "$repo_root/.cache")
-if [[ -n "${OOS_Z3ED_BIN:-}" ]]; then
-  native_build_args+=(--z3ed "$OOS_Z3ED_BIN")
-elif [[ -x "$repo_root/../yaze/scripts/z3ed" ]]; then
-  native_build_args+=(--z3ed "$repo_root/../yaze/scripts/z3ed")
+if [[ "$experimental_page_tile16" == "1" ]]; then
+  native_build_args+=(--experimental-page-tile16)
+fi
+if [[ -n "${YAZE_PROJECT_FILE:-}" ]]; then
+  native_build_args+=(--project-context "$YAZE_PROJECT_FILE")
+fi
+# Without a located z3ed the stage fails with the checked locations above.
+if native_z3ed="$(oos_find_z3ed "$repo_root")"; then
+  native_build_args+=(--z3ed "$native_z3ed")
 fi
 run_check native_overworld_constants 1 python3 "$repo_root/Scripts/Build/lyra_native_loaders.py" \
   --rom "$base_rom" --constants "$repo_root/.cache/special_overworld_reader_constants.asm" \
@@ -286,9 +305,12 @@ if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" ]]; then
   generate_water_gate_tables() {
     (
       cd "$repo_root"
-      python3 "$repo_root/Scripts/Generate/generate_water_gate_runtime_tables.py" \
-        --rom "$water_table_rom_arg" \
-        --out-asm "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
+      # Project Build and source-only Build share one saved-base producer. It
+      # validates all typed Room25 contacts and stages states/runtime include
+      # together; no manual export or stale source-state incbin is consumed.
+      python3 "$repo_root/Scripts/Rooms/d4_water_rooms.py" --derive-saved \
+        --root "$repo_root" --source "$water_table_rom_arg" \
+        --output "$repo_root/Dungeons/generated" --z3ed "$native_z3ed"
     )
   }
   run_check water_tables 1 generate_water_gate_tables
@@ -320,15 +342,7 @@ if [[ "${OOS_SKIP_MENU_VALIDATE:-0}" == "1" ]]; then
   # An explicit diagnostic skip may disable the default, never an explicit requirement.
   omit_check menu skipped "$(check_required menu "${OOS_MENU_VALIDATE_FATAL:-0}")" "OOS_SKIP_MENU_VALIDATE=1"
 else
-  z3ed_cli="${OOS_Z3ED_BIN:-}"
-  if [[ -z "$z3ed_cli" ]]; then
-    local_z3ed="$repo_root/../yaze/scripts/z3ed"
-    if [[ -x "$local_z3ed" ]]; then
-      z3ed_cli="$local_z3ed"
-    elif command -v z3ed >/dev/null 2>&1; then
-      z3ed_cli="$(command -v z3ed)"
-    fi
-  fi
+  z3ed_cli="$(oos_find_z3ed "$repo_root" 2>/dev/null || true)"
   if [[ -n "$z3ed_cli" ]] && command -v "$z3ed_cli" >/dev/null 2>&1; then
     receipt tool --name z3ed --path "$(command -v "$z3ed_cli")"
     menu_validate_args=(oracle-menu-validate --project "$repo_root")
@@ -488,6 +502,11 @@ run_check native_overworld_preservation 1 python3 "$repo_root/Scripts/Build/lyra
   --rom "$base_rom" --compiled "$patched_rom" \
   --symbols "$symbols_path" "${native_build_args[@]}"
 
+# Source patches can change palette-set consumers after kits.asm's input-ROM
+# assertions. Verify the final ROM before publishing its artifacts/manifest.
+run_check wall_kit_palette_ownership 1 python3 "$repo_root/Scripts/Generate/gen_wall_profiles.py" \
+  verify-rom --rom "$patched_rom"
+
 receipt artifact --name output_rom --path "$patched_rom"
 if [[ "$emit_symbols" == "1" ]]; then
   receipt artifact --name symbols --path "$symbols_path"
@@ -512,6 +531,9 @@ manifest_args=(
   --dev-rom "$base_rom"
   --rom "$patched_rom"
 )
+if [[ "$experimental_page_tile16" == "1" ]]; then
+  manifest_args+=(--experimental-page-tile16)
+fi
 if [[ -n "${OOS_MANIFEST_ROOT:-}" ]]; then
   manifest_root="$OOS_MANIFEST_ROOT"
   if [[ "$manifest_root" != /* ]]; then

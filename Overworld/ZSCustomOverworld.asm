@@ -2280,7 +2280,16 @@ Overworld_ReloadSubscreenOverlay_Interupt:
         REP #$20 ; Set A in 16bit mode.
 
         ; Check to see if we are in a SW overworld area.
+if !ENABLE_LYRA_OVERLAY_FIX == 1
+        ; Lyra/Sky overlay fix (Overworld/lyra_overlay_fix.asm): tail maps
+        ; ($A0-$BF) and Song of Storms rain on a Sky map take the overlay
+        ; table path below. Same 7 bytes as LDA/CMP/BCC; A is reloaded by
+        ; both paths, M stays 16, X/Y are untouched.
+        JSL Oracle_LyraOverlay_UseTablePath : BCC .notExtendedArea
+        NOP
+else
         LDA.b $8A : CMP.w #$0080 : BCC .notExtendedArea
+endif
             ; $0182 is the exit room number used for getting to Zora's Domain.
             LDA.b $A0 : CMP.w #$0182 : BNE .notZoraFalls   
                 SEP #$20 ; Set A in 8bit mode.
@@ -3087,6 +3096,11 @@ NewOverworld_FinishTransGfx:
     ; The whirlpool code resuses this code so don't do any of the custom stuff if
     ; we are in the whirlpool module.
     LDA.b $11 : CMP.b #$2E : BEQ .whirpool
+if defined("LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY")
+if !ENABLE_SKY_OVERWORLD_ROUTE == 1 && !ENABLE_LYRA_OVERLAY_FIX == 1
+        JSL Oracle_LyraOverlay_HideStale
+endif
+endif
         LDA.w TransGFXModuleFrame : BNE .notFirstFrame
             JSR.w CheckForChangeGraphicsTransitionLoad
 
@@ -3965,6 +3979,18 @@ Overworld_LoadBGColorAndSubscreenOverlay:
     LDA.w #$4020 : STA.b $9C
     LDA.w #$8040 : STA.b $9D
 
+if defined("LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY")
+if !ENABLE_SKY_OVERWORLD_ROUTE == 1 && !ENABLE_LYRA_OVERLAY_FIX == 1
+    JSL.l Oracle_LyraOverlay_ShouldHideSubscreen : BCC .keepSubscreen
+else
+    JSL.l Docks_ShouldHideSubscreen : BCC .keepSubscreen
+endif
+else
+    JSL.l Docks_ShouldHideSubscreen : BCC .keepSubscreen
+endif
+        JMP.w .noSubscreenAndReturn
+    .keepSubscreen
+
     ; Check if we need to load the rain in the misery mire.
     LDA.l Pool_EnableRainMireEvent : BEQ .notMire
         LDA.b $8A : CMP.w #$0070 : BNE .notMire
@@ -4066,6 +4092,14 @@ Overworld_LoadBGColorAndSubscreenOverlay:
         
     ; Put BG0 on the subscreen.
     LDA.b #$01 : STA.b $1D
+
+    BRA .updatePaletteAndReturn
+
+    .noSubscreenAndReturn
+    SEP #$30
+    STZ.b $1D
+
+    .updatePaletteAndReturn
         
     ; Update palette.
     INC.b $15
@@ -6395,10 +6429,25 @@ Sprite_LoadGfxProperties_Interupt:
         STA.l ExpandedSpritePalArray, X
     DEX : DEX : BPL .loop
 
-    ; Replaced code.
+    ; Native00FC67 enters M16/X16;00FC6E consumes A as its LW resource phase.
+    ; Match actor selection, including pre-ambush and peacetime guards. Save
+    ; full indices before SEP truncates them; CheckIfNight requires DP0 and
+    ; does not preserve P. Keep hidden B out of the returned 16-bit selector.
+    PHP : PHB : PHD : PHX : PHY
+    PEA.w $0000 : PLD
+    SEP #$30
+    JSL Oracle_CheckIfNight
+    REP #$30
+    AND.w #$00FF
+if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
+    ; GS3Cap00FC79 compares4 rather than3; resolved phase3 still means night.
+    ; CheckIfNight already caps the rescued-Farore daytime state to2.
+    CMP.w #$0003 : BNE .resource_phase_ready
+    LDA.w #$0004
+.resource_phase_ready
+endif
+    PLY : PLX : PLD : PLB : PLP
     LDY.w #$003E
-    LDA.l $7EF3C5
-
     RTL
 }
 
@@ -6555,6 +6604,37 @@ SpecialPaletteAdaptersEnd:
 assert pc() <= !SPECIAL_OVERWORLD_PALETTE_CODE_END
 pullpc
 endif
+
+; Scrolls retain the loaded BG1 overlay. Hide the forest canopy on the docks
+; and adjoining beach after the storm, but keep $8C and BG1 for the north return.
+; M/X and DB are preserved; A is scratch. Carry set means no subscreen here.
+Docks_ShouldHideSubscreen:
+{
+    PHP
+    SEP #$20
+
+    LDA.b $8A : CMP.b #$30 : BCC .keep_overlay
+    CMP.b #$33 : BCS .keep_overlay
+
+    ; Explicit weather still uses the normal overlay path.
+    LDA.l $7EE00E : BNE .keep_overlay ; Song of Storms
+if !ENABLE_PART0_STORM == 1
+    JSL Oracle_Part0Storm_CarryClearIfStorm : BCC .keep_overlay
+else
+    LDA.l Pool_EnableBeginningRain : BEQ .hide_overlay
+    LDA.l $7EF3C5 : CMP.b #$02 : BCC .keep_overlay
+endif
+
+    .hide_overlay
+    PLP
+    SEC
+    RTL
+
+    .keep_overlay
+    PLP
+    CLC
+    RTL
+}
 
 pushpc
 

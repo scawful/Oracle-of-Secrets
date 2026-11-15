@@ -133,7 +133,13 @@ D9KeyGate_IsLoadedRoom:
 ; native long-call stack. Ordinary actors tail into their original wrappers.
 D9Actor_PrepDispatch:
 {
+if !ENABLE_D6_CHU_GATE_97 == 1
+  JSL D6ChuActor_IsLoadedRoom : BCS .stationary
+  JSL D6ChuGate97_IsLoadedTarget : BCC .ordinary
+  .stationary
+else
   JSL D6ChuActor_IsLoadedRoom : BCC .ordinary
+endif
   LDA.w $0E60,X : ORA.b #$40 : STA.w $0E60,X
   LDA.b #$80 : STA.w SprDefl,X
   STZ.w SprTileDie,X : STZ.w SprBulletproof,X
@@ -144,7 +150,14 @@ D9Actor_PrepDispatch:
 }
 D9Actor_MainHandled:
 {
+if !ENABLE_D6_CHU_GATE_97 == 1
+  JSL D6ChuActor_IsRoom : BCS .stationary
+  JSL D6ChuGate97_IsRoom : BCC .ordinary
+  JSL D6ChuGate97_IsTarget : BCC .ordinary
+  .stationary
+else
   JSL D6ChuActor_IsRoom : BCC .ordinary
+endif
   LDA.w $0401 : AND.b #$10
   LSR A : LSR A : LSR A : LSR A
   STA.w SprFrame,X : STA.w SprAction,X

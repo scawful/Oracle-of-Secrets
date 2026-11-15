@@ -11,11 +11,14 @@ import re
 import struct
 
 from special_overworld_resources import (
-    ANIMATED_SLOTS, PLAN_SCHEMA, STATIC_SLOTS,
+    ANIMATED_SLOTS, PLAN_SCHEMA, EXPERIMENTAL_PLAN_SCHEMA,
+    PAGE_TILE16_RUNTIME_REQUIREMENTS, STATIC_SLOTS, SKY_RESIDENT_HOSTS,
     _digest, _json_bytes, _payload, _require, _sha,
 )
 
 NATIVE_KIND = 'special_overworld.resident_abi.v1'
+EXPERIMENTAL_NATIVE_KIND = 'special_overworld.resident_abi.experimental-v2'
+EXPERIMENTAL_EMISSION_KIND = 'lyra.resident_atlas_native_emission.experimental-v2'
 NATIVE_ABI_VERSION = 1
 NATIVE_DIRECTORY_STRIDE = 8
 NATIVE_ANIMATION_DIRECTORY_STRIDE = 11
@@ -93,7 +96,39 @@ def _verified_payload(value):
     return raw
 
 
-def plan_native_resident_abi(resident_plan, *, tile16_count):
+def _experimental_source(plan):
+    """Retain authenticated producer provenance, never relabel v2 as v1."""
+    _require(plan.get('runtime_supported') is False
+             and plan.get('runtime_requirements') == list(PAGE_TILE16_RUNTIME_REQUIREMENTS)
+             and all(_digest(plan.get(key)) for key in (
+                 'source_rom_sha256', 'native_source_sha256',
+                 'tile16_definition_sha256', 'page_tile16_definitions_sha256')),
+             'NATIVE_EXPERIMENTAL_SOURCE_INVALID')
+    return dict(schema=EXPERIMENTAL_PLAN_SCHEMA,
+        **{key: plan[key] for key in ('source_rom_sha256', 'native_source_sha256',
+            'tile16_definition_sha256', 'page_tile16_definitions_sha256')},
+        runtime_supported=False,
+        runtime_requirements=list(PAGE_TILE16_RUNTIME_REQUIREMENTS))
+
+
+def _experimental_abi(native_plan, enabled):
+    _require(type(native_plan) is dict, 'NATIVE_ABI_MISMATCH')
+    _require(type(enabled) is bool, 'NATIVE_EXPERIMENTAL_ADMISSION_INVALID')
+    experimental = native_plan.get('kind') == EXPERIMENTAL_NATIVE_KIND
+    _require(not experimental or enabled, 'NATIVE_EXPERIMENTAL_ADMISSION_REQUIRED')
+    if experimental:
+        provenance = native_plan.get('experimental_source')
+        _require(type(provenance) is dict
+                 and provenance == _experimental_source(provenance),
+                 'NATIVE_EXPERIMENTAL_SOURCE_INVALID')
+    else:
+        _require('experimental_source' not in native_plan,
+                 'NATIVE_EXPERIMENTAL_SOURCE_INVALID')
+    return experimental
+
+
+def plan_native_resident_abi(resident_plan, *, tile16_count,
+                             experimental_page_tile16=False):
     """Lower authenticated terrain data to relocatable, unselected native ABI.
 
     Each physical page has a 128-byte block directory followed by 32-byte
@@ -101,7 +136,11 @@ def plan_native_resident_abi(resident_plan, *, tile16_count):
     terrain census did not qualify this Tile16. It does not prove resource
     closure. Target word zero is valid. Areas share resources, never page keys.
     """
-    _require(type(resident_plan) is dict and resident_plan.get('schema') == PLAN_SCHEMA
+    _require(type(experimental_page_tile16) is bool, 'NATIVE_EXPERIMENTAL_ADMISSION_INVALID')
+    experimental = type(resident_plan) is dict and resident_plan.get('schema') == EXPERIMENTAL_PLAN_SCHEMA
+    _require(not experimental or experimental_page_tile16, 'NATIVE_EXPERIMENTAL_ADMISSION_REQUIRED')
+    _require(type(resident_plan) is dict and resident_plan.get('schema') in (
+                 PLAN_SCHEMA, EXPERIMENTAL_PLAN_SCHEMA if experimental_page_tile16 else PLAN_SCHEMA)
              and resident_plan.get('terrain_plan_ready') is True,
              'NATIVE_TERRAIN_PLAN_REQUIRED')
     _require(type(tile16_count) is int and 0 < tile16_count <= 4096,
@@ -116,7 +155,7 @@ def plan_native_resident_abi(resident_plan, *, tile16_count):
     _require(type(end) is int and end in (160, 192), 'NATIVE_MAP_CAPACITY_INVALID')
     source_areas = resident_plan.get('areas')
     _checked_areas(source_areas, end)
-    pages, areas, blobs, unique = [], [], [], {}
+    pages, overlay_pages, areas, blobs, unique = [], [], [], [], {}
 
     def blob(raw, label, role):
         # Role separation keeps a resource from aliasing executable lookup data.
@@ -164,45 +203,87 @@ def plan_native_resident_abi(resident_plan, *, tile16_count):
             animation_labels=frame_labels, animation_byte_count=len(frames[0]),
             animation_wram=[0x7EA680, 0x7EAA80, 0x7EAE80],
             animation_vram_word_address=0x3C00, native_animation_upload_byte_count=0x400))
-        page_rows = {page: {} for page in area['maps']}
-        for remap in area['remaps']:
+        page_rows = {(page, None): {} for page in area['maps']}
+        asset_contexts = {}
+        for remap in area['remaps'] + area.get('overlay_remaps', []):
+            overlay = remap.get('overlay_map_id')
+            extra = {'overlay_map_id'} if overlay is not None else set()
+            if extra:
+                _require(remap.get('map_id') in SKY_RESIDENT_HOSTS
+                         and overlay in (0x9C, 0x9F), 'NATIVE_OVERLAY_CONTEXT_INVALID')
+                page_rows.setdefault((remap['map_id'], overlay), {})
+            if 'asset_source_map_id' in remap:
+                asset_page = remap['asset_source_map_id']
+                _require(overlay is not None and type(asset_page) is int
+                         and FIRST <= asset_page < end,
+                         'NATIVE_OVERLAY_ASSET_CONTEXT_INVALID')
+                extra.add('asset_source_map_id')
+            else:
+                asset_page = remap['map_id']
+            if overlay is not None:
+                key = (remap['map_id'], overlay)
+                _require(asset_contexts.setdefault(key, asset_page) == asset_page,
+                         'NATIVE_OVERLAY_ASSET_CONTEXT_INCONSISTENT')
             _require(type(remap) is dict and set(remap) == {
-                'map_id', 'tile16_id', 'quadrant', 'source_word', 'target_word'},
+                'map_id', 'tile16_id', 'quadrant', 'source_word', 'target_word'} | extra,
                 'NATIVE_REMAP_INVALID')
             page, tile, quadrant = (remap[name] for name in ('map_id', 'tile16_id', 'quadrant'))
-            _require(type(page) is int and page in page_rows
+            _require(type(page) is int and page in area['maps']
                      and type(tile) is int and 0 <= tile < tile16_count
                      and type(quadrant) is int and 0 <= quadrant < 4
                      and all(type(remap[name]) is int and 0 <= remap[name] <= 0xFFFF
                              for name in ('source_word', 'target_word')), 'NATIVE_REMAP_INVALID')
-            quadrants = page_rows[page].setdefault(tile, {})
+            quadrants = page_rows[page, overlay].setdefault(tile, {})
             _require(quadrant not in quadrants, 'NATIVE_REMAP_DUPLICATE')
             quadrants[quadrant] = remap['target_word']
-        for page, rows in sorted(page_rows.items()):
+        for (page, overlay), rows in sorted(page_rows.items(),
+                                          key=lambda item: (item[0][0], item[0][1] or 0)):
+            context = f'Page' if overlay is None else f'Overlay{overlay:02X}'
+            destination = pages if overlay is None else overlay_pages
             _require(0 < len(rows) and all(set(values) == set(range(4))
                      for values in rows.values()), 'NATIVE_ROWS_OR_QUADRANTS_INVALID')
-            _require(len(rows) <= 255, 'NATIVE_ROW_CAPACITY_EXCEEDED')
+            # A page key remains a logical Tile16 identity. Only its display
+            # words may share a resident row; semantic/collision tables still
+            # resolve the original key. Preserve existing encodings when they
+            # fit, and require page-local semantics for the overflow fallback.
+            shared_display_rows = experimental and len(rows) > 255
+            _require(len(rows) <= 255 or shared_display_rows,
+                     'NATIVE_ROW_CAPACITY_EXCEEDED')
             directory, leaves, words = bytearray(128), bytearray(), bytearray(8)
-            leaf_rows = {}
-            for row_index, (tile, quadrants) in enumerate(sorted(rows.items()), 1):
+            leaf_rows, display_rows = {}, {}
+            for tile, quadrants in sorted(rows.items()):
+                encoded = struct.pack('<4H', *(quadrants[q] for q in range(4)))
+                row_index = display_rows.get(encoded) if shared_display_rows else None
+                if row_index is None:
+                    row_index = len(words) // 8
+                    _require(row_index <= 255, 'NATIVE_ROW_CAPACITY_EXCEEDED')
+                    words.extend(encoded)
+                    display_rows[encoded] = row_index
                 block, offset = divmod(tile, 32)
                 leaf_rows.setdefault(block, bytearray(32))[offset] = row_index
-                words.extend(struct.pack('<4H', *(quadrants[q] for q in range(4))))
             for block_index, (block, raw) in enumerate(sorted(leaf_rows.items()), 1):
                 directory[block] = block_index
                 leaves.extend(raw)
             index = bytes(directory + leaves)
-            index_label = blob(index, f'LyraResidentPageIndex_{page:02X}', 'page_index')
-            words_label = blob(bytes(words), f'LyraResidentPageWords_{page:02X}', 'page_words')
-            pages.append(dict(map_id=page, area_index=area_index, row_count=len(rows),
+            index_label = blob(index, f'LyraResident{context}Index_{page:02X}', 'page_index')
+            words_label = blob(bytes(words), f'LyraResident{context}Words_{page:02X}', 'page_words')
+            destination.append(dict(map_id=page, area_index=area_index, row_count=len(words) // 8 - 1,
                 block_count=len(leaf_rows), index_label=index_label, words_label=words_label,
-                index_alias=f'LyraResidentPageIndex_{page:02X}',
-                words_alias=f'LyraResidentPageWords_{page:02X}', tile16_ids=sorted(rows)))
+                index_alias=f'LyraResident{context}Index_{page:02X}',
+                words_alias=f'LyraResident{context}Words_{page:02X}', tile16_ids=sorted(rows)))
+            if shared_display_rows:
+                destination[-1]['shared_display_rows'] = True
+            if overlay is not None:
+                destination[-1]['overlay_map_id'] = overlay
+                if asset_contexts[page, overlay] != page:
+                    destination[-1]['asset_source_map_id'] = asset_contexts[page, overlay]
     pages.sort(key=lambda row: row['map_id'])
     counts = {role: sum(row['byte_count'] for row in blobs if row['role'] == role)
               for role in ('page_index', 'page_words', 'static_chr', 'animation', 'palette')}
     counts['page_directory'] = (end - FIRST) * NATIVE_DIRECTORY_STRIDE
     counts['animation_directory'] = (end - FIRST) * NATIVE_ANIMATION_DIRECTORY_STRIDE
+    if overlay_pages:
+        counts['overlay_directory'] = (end - FIRST) * 16
     result = dict(kind=NATIVE_KIND, abi_version=NATIVE_ABI_VERSION,
         source_plan_sha256=supplied, materialized_map_count=end, tile16_count=tile16_count,
         directory_label='LyraResidentPageDirectory', directory_stride=NATIVE_DIRECTORY_STRIDE,
@@ -218,13 +299,20 @@ def plan_native_resident_abi(resident_plan, *, tile16_count):
         missing_row_semantics='unqualified native fallback; resource closure remains unknown',
         selected=False, allocation_granted=False, publication_authorized=False,
         ordinary_build_ready=False, runtime_admission=False, compiled_consumers_verified=False)
+    if overlay_pages:
+        result['overlay_pages'] = sorted(overlay_pages, key=lambda row: (row['map_id'], row['overlay_map_id']))
+    if experimental:
+        result.update(kind=EXPERIMENTAL_NATIVE_KIND,
+                      experimental_source=_experimental_source(resident_plan))
     result['abi_sha256'] = _sha(_json_bytes(result))
     return result
 
 
-def validate_native_resident_abi(native_plan):
+def validate_native_resident_abi(native_plan, *, experimental_page_tile16=False):
     """Check independently consumable lookup bytes and their semantic page rows."""
-    _require(type(native_plan) is dict and native_plan.get('kind') == NATIVE_KIND
+    _require(type(native_plan) is dict, 'NATIVE_ABI_MISMATCH')
+    experimental = _experimental_abi(native_plan, experimental_page_tile16)
+    _require(native_plan.get('kind') == (EXPERIMENTAL_NATIVE_KIND if experimental else NATIVE_KIND)
              and native_plan.get('abi_version') == NATIVE_ABI_VERSION
              and native_plan.get('abi_sha256') == _sha(_json_bytes({
                  key: value for key, value in native_plan.items() if key != 'abi_sha256'})),
@@ -295,7 +383,20 @@ def validate_native_resident_abi(native_plan):
                  and area['animation_byte_count'] % 32 == 0
                  and all(word <= 0x7FFF for word in struct.unpack('<128H', by_label[area['palette_label']])),
                  'NATIVE_RESOURCE_LAYOUT_INVALID')
-    for page in pages:
+    overlay_pages = native_plan.get('overlay_pages', [])
+    _require(type(overlay_pages) is list and all(type(row) is dict for row in overlay_pages),
+             'NATIVE_OVERLAY_CONTEXT_INVALID')
+    contexts = [(row.get('map_id'), row.get('overlay_map_id')) for row in overlay_pages]
+    _require(contexts == sorted(set(contexts)) and all(host in selected and
+             host in SKY_RESIDENT_HOSTS and overlay in (0x9C, 0x9F)
+             for host, overlay in contexts), 'NATIVE_OVERLAY_CONTEXT_INVALID')
+    for page in pages + overlay_pages:
+        overlay = page.get('overlay_map_id')
+        if 'asset_source_map_id' in page:
+            _require(overlay is not None and type(page['asset_source_map_id']) is int
+                     and FIRST <= page['asset_source_map_id'] < native_plan['end_map'],
+                     'NATIVE_OVERLAY_ASSET_CONTEXT_INVALID')
+        context = 'Page' if overlay is None else f'Overlay{overlay:02X}'
         index, words = (by_label.get(page.get(key)) for key in ('index_label', 'words_label'))
         count, blocks, area = (page.get(key) for key in ('row_count', 'block_count', 'area_index'))
         _require(type(count) is int and 0 < count <= 255
@@ -304,28 +405,44 @@ def validate_native_resident_abi(native_plan):
                  and page['map_id'] in areas[area]['maps']
                  and by_role.get(page.get('index_label')) == 'page_index'
                  and by_role.get(page.get('words_label')) == 'page_words'
-                 and page.get('index_alias') == f"LyraResidentPageIndex_{page['map_id']:02X}"
-                 and page.get('words_alias') == f"LyraResidentPageWords_{page['map_id']:02X}"
+                 and page.get('index_alias') == f"LyraResident{context}Index_{page['map_id']:02X}"
+                 and page.get('words_alias') == f"LyraResident{context}Words_{page['map_id']:02X}"
                  and index is not None and len(index) == 128 + blocks * 32
                  and words is not None and len(words) == (count + 1) * 8
                  and words[:8] == bytes(8), 'NATIVE_PAGE_EXTENT_INVALID')
         _require(sorted(value for value in index[:128] if value) == list(range(1, blocks + 1)),
                  'NATIVE_BLOCK_INDEX_INVALID')
-        observed = {}
+        shared = page.get('shared_display_rows', False)
+        logical_ids = page.get('tile16_ids')
+        _require(type(shared) is bool and type(logical_ids) is list
+                 and all(type(tile) is int for tile in logical_ids)
+                 and (not shared or (experimental and len(logical_ids) > 255)),
+                 'NATIVE_ROW_INDEX_INVALID')
+        observed, used_rows = [], set()
         for tile in range(4096):
             block = index[tile >> 5]
             row = index[128 + (block - 1) * 32 + (tile & 31)] if block else 0
             if row:
                 _require(tile < native_plan['tile16_count'] and row <= count
-                         and row not in observed, 'NATIVE_ROW_INDEX_INVALID')
-                observed[row] = tile
-        _require(sorted(observed) == list(range(1, count + 1))
-                 and [observed[row] for row in range(1, count + 1)] == page.get('tile16_ids'),
+                         and (shared or row not in used_rows), 'NATIVE_ROW_INDEX_INVALID')
+                # First occurrences retain deterministic logical-key order;
+                # aliases may only reuse an already established display row.
+                if row not in used_rows:
+                    _require(row == len(used_rows) + 1, 'NATIVE_ROW_INDEX_INVALID')
+                used_rows.add(row)
+                observed.append(tile)
+        _require(used_rows == set(range(1, count + 1)) and observed == logical_ids,
                  'NATIVE_ROW_INDEX_INVALID')
+        if shared:
+            _require(len({words[offset:offset + 8]
+                          for offset in range(8, len(words), 8)}) == count,
+                     'NATIVE_ROW_INDEX_INVALID')
     expected_counts = {role: sum(row['byte_count'] for row in blobs if row['role'] == role)
                        for role in ('page_index', 'page_words', 'static_chr', 'animation', 'palette')}
     expected_counts['page_directory'] = (end - FIRST) * NATIVE_DIRECTORY_STRIDE
     expected_counts['animation_directory'] = (end - FIRST) * NATIVE_ANIMATION_DIRECTORY_STRIDE
+    if overlay_pages:
+        expected_counts['overlay_directory'] = (end - FIRST) * 16
     _require(native_plan.get('byte_counts') == expected_counts
              and native_plan.get('unaligned_byte_count') == sum(expected_counts.values()),
              'NATIVE_BYTE_COUNT_INVALID')
@@ -379,14 +496,16 @@ def _transfer_tables(native_plan, addresses, origin):
 
 
 def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
-                             binary_path='binaries/resident-atlas.bin'):
+                             binary_path='binaries/resident-atlas.bin',
+                             excluded_pc_spans=(), experimental_page_tile16=False):
     """Emit bytes/source for an explicit caller-owned ROM interval, without I/O.
 
     This mechanically places each blob inside one LoROM bank. It accepts no
     default address and makes no claim that the interval or runtime is granted.
     The owning publisher must authenticate and rederive the complete plan.
     """
-    by_label = validate_native_resident_abi(native_plan)
+    by_label = validate_native_resident_abi(
+        native_plan, experimental_page_tile16=experimental_page_tile16)
     end = native_plan['end_map']
     page_count = end - FIRST
     _require(type(data_pc) is int and type(capacity) is int
@@ -395,16 +514,38 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
              'NATIVE_ORIGIN_PREIMAGE_REQUIRED')
     _require(type(binary_path) is str and re.fullmatch(r'binaries/[A-Za-z0-9_-]+\.bin', binary_path),
              'NATIVE_BINARY_PATH_INVALID')
+    _require(type(excluded_pc_spans) in (list, tuple),
+             'NATIVE_EXCLUDED_SPANS_INVALID')
+    exclusions = []
+    for span in excluded_pc_spans:
+        _require(type(span) in (list, tuple) and len(span) == 2
+                 and all(type(value) is int for value in span)
+                 and data_pc <= span[0] < span[1] <= data_pc + capacity
+                 and (not exclusions or exclusions[-1][1] <= span[0]),
+                 'NATIVE_EXCLUDED_SPANS_INVALID')
+        exclusions.append(tuple(span))
     cursor, binary, placements = data_pc, bytearray(), []
 
     def snes(pc):
         return 0x800000 | ((pc // 0x8000) << 16) | 0x8000 | (pc % 0x8000)
 
+    def next_pc(size):
+        _require(size <= 0x8000, 'NATIVE_ALLOCATION_BANK_CAPACITY')
+        at = cursor
+        while True:
+            if at % 0x8000 + size > 0x8000:
+                at = (at // 0x8000 + 1) * 0x8000
+            blocked = next((end for first, end in exclusions
+                            if at < end and at + size > first), None)
+            if blocked is None:
+                break
+            at = blocked
+        _require(at + size <= data_pc + capacity, 'NATIVE_ALLOCATION_CAPACITY')
+        return at
+
     def place(label, raw, role):
         nonlocal cursor
-        if cursor % 0x8000 + len(raw) > 0x8000:
-            cursor = (cursor // 0x8000 + 1) * 0x8000
-        _require(cursor + len(raw) <= data_pc + capacity, 'NATIVE_ALLOCATION_CAPACITY')
+        cursor = next_pc(len(raw))
         record = dict(label=label, role=role, pc=[cursor, cursor + len(raw)],
             snes=snes(cursor), byte_count=len(raw), sha256=_sha(raw),
             binary_offset=len(binary), preimage_sha256=_sha(
@@ -417,14 +558,14 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
     directory = place(native_plan['directory_label'], bytes(page_count * NATIVE_DIRECTORY_STRIDE), 'page_directory')
     animation_directory = place(native_plan['animation_directory_label'],
         bytes(page_count * NATIVE_ANIMATION_DIRECTORY_STRIDE), 'animation_directory')
+    overlay_directory = (place('LyraResidentOverlayDirectory', bytes(page_count * 16),
+                               'overlay_directory') if native_plan.get('overlay_pages') else None)
     for blob in native_plan['blobs']:
         place(blob['label'], by_label[blob['label']], blob['role'])
     addresses = {row['label']: row['snes'] for row in placements}
     transfer_size = (end * 2 + sum(22 + len(area['static_runs']) * 15
                                   for area in native_plan['areas']))
-    transfer_pc = cursor
-    if transfer_pc % 0x8000 + transfer_size > 0x8000:
-        transfer_pc = (transfer_pc // 0x8000 + 1) * 0x8000
+    transfer_pc = next_pc(transfer_size)
     transfer_raw, transfer_profiles = _transfer_tables(native_plan, addresses, snes(transfer_pc))
     _require(not any(row['label'] == 'SharedGraphicsParentProfiles' for row in placements),
              'TRANSFER_LABEL_COLLISION')
@@ -459,6 +600,16 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
                   + area['animation_byte_count'].to_bytes(2, 'little'))
         at = index * NATIVE_ANIMATION_DIRECTORY_STRIDE
         animation_raw[at:at + NATIVE_ANIMATION_DIRECTORY_STRIDE] = record
+    if overlay_directory is not None:
+        overlay_raw = bytearray(page_count * 16)
+        for page in native_plan['overlay_pages']:
+            at = (page['map_id'] - FIRST) * 16 + (8 if page['overlay_map_id'] == 0x9F else 0)
+            overlay_raw[at:at + 8] = (addresses[page['index_label']].to_bytes(3, 'little')
+                + addresses[page['words_label']].to_bytes(3, 'little')
+                + bytes((page['area_index'], page['row_count'])))
+        offset = overlay_directory['binary_offset']
+        binary[offset:offset + len(overlay_raw)] = overlay_raw
+        overlay_directory['sha256'] = _sha(overlay_raw)
     binary[:len(directory_raw)] = directory_raw
     directory['sha256'] = _sha(directory_raw)
     offset = animation_directory['binary_offset']
@@ -471,7 +622,7 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
                   f'incbin "{binary_path}":${start:X}..${start+size:X}',
                   f'{row["label"]}_End:',
                   f'assert {row["label"]}>>16 == ({row["label"]}_End-1)>>16']
-    for page in native_plan['pages']:
+    for page in native_plan['pages'] + native_plan.get('overlay_pages', []):
         for alias, label in ((page['index_alias'], page['index_label']),
                              (page['words_alias'], page['words_label'])):
             if alias != label:
@@ -482,16 +633,24 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
         + f'!LYRA_CURRENT_RESIDENT_ABI_VERSION = {NATIVE_ABI_VERSION}\n'
         + f'!LYRA_CURRENT_RESIDENT_TILE16_COUNT = {native_plan["tile16_count"]}\n'
         + f'!LYRA_CURRENT_RESIDENT_DIRECTORY = ${directory["snes"]:06X}\n')
+    if overlay_directory is not None:
+        constants += f'!LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY = ${overlay_directory["snes"]:06X}\n'
     constants += (f'!LYRA_CURRENT_RESIDENT_ANIMATION_DIRECTORY = ${animation_directory["snes"]:06X}\n')
     constants += ''.join(f'!GfxRT_{key} = ${value:04X}\n' for key, value in dict(
         TRANSFER_CONSTANTS, Bank=transfer['snes'] >> 16, ParentCount=end).items())
     constants += f'!SPECIAL_OVERWORLD_TRANSFER_DIRECTORY = ${transfer["snes"]:06X}\n'
     constants += f'!SPECIAL_OVERWORLD_RESIDENT_PALETTE_DIRECTORY = ${palette_directory["snes"]:06X}\n'
     constants += f'!SPECIAL_OVERWORLD_RESIDENT_PALETTE_STRIDE = {NATIVE_PALETTE_DIRECTORY_STRIDE}\n'
-    return dict(kind='lyra.resident_atlas_native_emission.v1',
+    excluded_bytes = sum(max(0, min(end, cursor) - first)
+                         for first, end in exclusions if first < cursor)
+    return dict(kind=(EXPERIMENTAL_EMISSION_KIND if native_plan['kind'] == EXPERIMENTAL_NATIVE_KIND
+                      else 'lyra.resident_atlas_native_emission.v1'),
         abi_sha256=native_plan['abi_sha256'], data_pc=[data_pc, data_pc + capacity],
+        excluded_pc_spans=[list(span) for span in exclusions],
         preimage_sha256=_sha(preimage), used_pc_end=cursor,
-        used_extent_bytes=cursor-data_pc, bank_padding_bytes=cursor-data_pc-len(binary),
+        used_extent_bytes=cursor-data_pc,
+        bank_padding_bytes=cursor-data_pc-len(binary)-excluded_bytes,
+        excluded_extent_bytes=excluded_bytes,
         binary_path=binary_path, payload_hex=bytes(binary).hex(), payload_sha256=_sha(binary),
         placements=placements, animation_directory_byte_count=len(animation_raw),
         palette_directory_snes=palette_directory['snes'],
@@ -504,29 +663,36 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
         ordinary_build_ready=False, runtime_admission=False)
 
 
-def resident_bg128_rows(native_plan):
+def resident_bg128_rows(native_plan, *, experimental_page_tile16=False):
     """Return derived BG inputs for every physical page, never saved properties."""
-    payloads = validate_native_resident_abi(native_plan)
+    payloads = validate_native_resident_abi(
+        native_plan, experimental_page_tile16=experimental_page_tile16)
     return [dict(map_id=page['map_id'], properties=dict(background_palette=list(
         struct.unpack('<128H', payloads[native_plan['areas'][page['area_index']]['palette_label']]))))
         for page in native_plan['pages']]
 
 
-def resident_runtime_inputs(native_plan, emission, *, preimage):
+def resident_runtime_inputs(native_plan, emission, *, preimage,
+                            experimental_page_tile16=False):
     """Bridge verified resident placements to the existing SharedGraphics ABI.
 
     The resident emitter remains the sole payload writer. Its complete output
     is rederived before any external address is used; neither this bridge nor
     its fixed22B upload profiles grants allocation or activation authority.
     """
+    experimental = type(native_plan) is dict and native_plan.get('kind') == EXPERIMENTAL_NATIVE_KIND
     _require(type(emission) is dict
-             and emission.get('kind') == 'lyra.resident_atlas_native_emission.v1'
+             and emission.get('kind') == (EXPERIMENTAL_EMISSION_KIND if experimental
+                                        else 'lyra.resident_atlas_native_emission.v1')
              and type(emission.get('data_pc')) is list and len(emission['data_pc']) == 2
              and all(type(value) is int for value in emission['data_pc']),
              'NATIVE_EMISSION_INVALID')
+    _experimental_abi(native_plan, experimental_page_tile16)
     first, end = emission['data_pc']
     expected = emit_native_resident_abi(native_plan, data_pc=first, capacity=end-first,
-        preimage=preimage, binary_path=emission.get('binary_path'))
+        preimage=preimage, binary_path=emission.get('binary_path'),
+        excluded_pc_spans=emission.get('excluded_pc_spans', ()),
+        experimental_page_tile16=experimental_page_tile16)
     _require(expected == emission, 'NATIVE_EMISSION_MISMATCH')
     placements = {row['label']: row for row in expected['placements']}
     resources, profiles, parents = {}, {}, {}
@@ -550,7 +716,8 @@ def resident_runtime_inputs(native_plan, emission, *, preimage):
         for page in native_plan['pages']:
             if page['area_index'] == area['area_index']:
                 parents[str(page['map_id'])] = dict(profile_id=profile_id, runtime_enabled=True)
-    return dict(kind='lyra.resident_shared_graphics_bridge.v1',
+    return dict(kind=('lyra.resident_shared_graphics_bridge.experimental-v2' if experimental
+                      else 'lyra.resident_shared_graphics_bridge.v1'),
         abi_sha256=native_plan['abi_sha256'], payload_sha256=expected['payload_sha256'],
         resources=resources, profiles=profiles, parents=parents,
         selected=False, allocation_granted=False, publication_authorized=False,

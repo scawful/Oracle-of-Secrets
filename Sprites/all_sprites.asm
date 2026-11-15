@@ -187,6 +187,15 @@ org $3AA000
   %log_end("ice_block", !LOG_SPRITES)
 pullpc
 
+%log_start("swap_diamond", !LOG_SPRITES)
+incsrc "Sprites/Objects/swap_diamond.asm"
+%log_end("swap_diamond", !LOG_SPRITES)
+
+if !ENABLE_D8_FARORE_GRAPHICS == 1
+  ; Append within the existing sprite stream; retain the bank's hard boundary.
+  incsrc "Sprites/NPCs/farore_d8_follow.asm"
+endif
+
 assert pc() <= $310000, "Bank $30 sprite code crossed its LoROM executable boundary"
 assert pc() >= $308000, "Bank $30 sprite code left its bank (org without pushpc/pullpc?)"
 print "Bank30 Free Space: ", dec($310000-pc()), " bytes"
@@ -422,3 +431,6 @@ if !ENABLE_THIN_ICE == 1
 endif
 
 ; =========================================================
+
+; Default-off D8 Farore room graphics support.
+incsrc "Sprites/NPCs/farore_d8_graphics.asm"

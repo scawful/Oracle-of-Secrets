@@ -296,6 +296,12 @@ incsrc "Items/deku_stick.asm"
 ; Dedicated receipt $4C; all existing receipt IDs retain their native rows.
 incsrc "Items/bombchu_receipt.asm"
 
+; Optional Bombchu room gate uses this existing stream: bank $2C has only
+; dispatcher space before Somaria. No existing item or fixed owner is moved.
+if !ENABLE_D6_CHU_GATE_97 == 1
+incsrc "Dungeons/d6_chu_gate_97.asm"
+endif
+
 
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
 assert pc() <= $2BF000, "Items bank $2B reached the dream entry FX region ($2BF000)"

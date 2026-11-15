@@ -108,6 +108,9 @@ ZoraBaby_RevertToSprite:
   LDA.b #$04 : STA.w SprAction, Y
   LDA.b #$FF : STA.w SprTimerB, Y
   PLX
+if !ENABLE_D4_WATER_CONTROLS == 1
+  JSL ZoraBaby_Room25Stage ; Y=new NPC, mark actual follower custody only
+endif
 
   LDA.b #$00 : STA.l $7EF3CC
 
@@ -130,6 +133,7 @@ CheckForZoraBabyTransitionToSprite:
     LDA.w $0114 : CMP.b #$3B : BNE +
       LDA.b #$00
       JSR ZoraBaby_RevertToSprite
+      ; Room25 star stages Baby only; the selected valve episode owns unlock08.
     +
 
     ; If we are outdoors, clear the follower
@@ -231,7 +235,7 @@ ZoraBaby_IsOnTopOfSprite:
 
 ZoraBaby_CheckForWaterSwitchSprite:
 {
-  ; Sprite type $21: generic pull switch (used elsewhere).
+  ; Sprite type $21: native WaterSwitch release animation.
   LDA.b #$21
   JSR ZoraBaby_FindSpriteOfType : BCC .not_on_switch
   JSR ZoraBaby_IsOnTopOfSprite
@@ -243,7 +247,7 @@ ZoraBaby_CheckForWaterSwitchSprite:
 
 ZoraBaby_CheckForWaterGateSwitch:
 {
-  ; Sprite type $04: water gate switch sprite.
+  ; Sprite type $04: correct pull-switch family (Room27 path retained).
   LDA.b #$04
   JSR ZoraBaby_FindSpriteOfType : BCC .not_on_switch
   JSR ZoraBaby_IsOnTopOfSprite
@@ -257,6 +261,11 @@ ZoraBaby_GlobalBehavior:
 {
   JSL Sprite_BehaveAsBarrier
   JSR Follower_WatchLink
+if !ENABLE_D4_WATER_CONTROLS == 1
+  JSL ZoraBaby_Room25Global : BCC .ordinary_room
+  RTL
+  .ordinary_room
+endif
   LDA.w SprAction, X : CMP.b #$02 : BEQ .done
 
   ; Keep normal lift/throw movement active for all live states except action 2.
@@ -352,6 +361,18 @@ ZoraBaby_RunPostSwitchSequence:
 {
   PHB : PHK : PLB
   SEP #$30
+if !ENABLE_D4_WATER_CONTROLS == 1
+  LDA.b $A0 : CMP.b #$25 : BNE .ordinary_target
+  LDA.b $A1 : BNE .ordinary_target
+  LDA.w SprAction, X : CMP.b #$08 : BEQ .room25_target
+  CMP.b #$09 : BEQ .room25_target
+  CMP.b #$0B : BEQ .room25_target
+  CMP.b #$0C : BNE .ordinary_target
+  .room25_target
+  JSL ZoraBaby_Room25Recover
+  BRA .done
+  .ordinary_target
+endif
 
   JSR ZoraBaby_FindSwitchSequenceTarget : BCC .fallback_follow
 
@@ -389,6 +410,38 @@ ZoraBaby_RunPostSwitchSequence:
 
   .done
   PLB
+  RTL
+}
+
+; Generic follower handoff is shared verbatim; Room25-only code lives in the
+; existing D4Water bank50 allocation, not the nearly-full bank2C sprite stream.
+ZoraBaby_EnterFollower:
+{
+  SEP #$30
+  LDA.b #$09 : STA.l $7EF3CC
+  PHX
+  STZ.w $02F9
+  JSL LoadFollowerGraphics
+  JSL Follower_Initialize
+  PLX
+  LDA.b #$40 : STA.w $02CD
+  STZ.w $02CE
+  STZ.w SprState, X
+  RTL
+}
+
+ZoraBaby_PullSwitchDispatch:
+{
+  SEP #$30
+if !ENABLE_D4_WATER_CONTROLS == 1
+  LDA.w SprAction, X : CMP.b #$0A : BNE .ordinary
+  JSL ZoraBaby_Room25AwaitSwitch
+  RTL
+  .ordinary
+endif
+  LDY.b #$01 : LDA.b #$07
+  JSL Sprite_ShowMessageUnconditional
+  INC.w SprAction, X
   RTL
 }
 
@@ -456,6 +509,14 @@ Sprite_39_ZoraBaby:
   dw ZoraBaby_AgreeToWait
   dw ZoraBaby_PullSwitch
   dw ZoraBaby_PostSwitch
+if !ENABLE_D4_WATER_CONTROLS == 1
+  dw ZoraBaby_ThrowAttempt  ; 7: armed carried/released attempt
+  dw ZoraBaby_PostSwitch    ; 8: isolated miss -> verified hatch mouth
+  dw ZoraBaby_PostSwitch    ; 9: missed attempt -> authored hatch
+  dw ZoraBaby_PullSwitch    ; A: selected legacy release or paired NPC pull/hold
+  dw ZoraBaby_PostSwitch    ; B: success -> authored return mouth
+  dw ZoraBaby_PostSwitch    ; C: success -> authored hatch
+endif
 
   ; =======================================================
 
@@ -489,20 +550,7 @@ Sprite_39_ZoraBaby:
 
   ZoraBaby_FollowLink:
   {
-    SEP #$30
-    LDA.b #$09 : STA.l $7EF3CC
-
-    PHX
-    STZ.w $02F9
-    JSL LoadFollowerGraphics
-    JSL Follower_Initialize
-    PLX
-
-    LDA.b #$40
-    STA.w $02CD
-    STZ.w $02CE
-    STZ.w SprState, X
-
+    JSL ZoraBaby_EnterFollower
     RTS
   }
 
@@ -514,7 +562,8 @@ Sprite_39_ZoraBaby:
     JSL CheckIfLinkIsBusy : BCS .exit
       LDY.b #$01 : LDA.b #$09 ; MESSAGE 0109
       JSL Sprite_ShowSolicitedMessage : BCC .exit
-        INC.w SprAction, X
+        ; Both initial service (2) and an expired wait (4) use this choice.
+        LDA.b #$03 : STA.w SprAction, X
     .exit
     RTS
   }
@@ -549,12 +598,13 @@ Sprite_39_ZoraBaby:
   ZoraBaby_AgreeToWait:
   {
     SEP #$30
+    ; Timer expiry ends the initial waiting cooldown, not the promise to stay put.
+    ; Retain action 4 until a deliberate Follow/Stay choice, so global
+    ; lift/throw movement and water-switch checks remain active while waiting.
+    LDA.w SprTimerB, X : BEQ ZoraBaby_OfferService
     LDA.b #$A0 : STA.w $0AEA
     LDY.b #$01 : LDA.b #$0B ; MESSAGE 010B
     JSL Sprite_ShowSolicitedMessage
-    LDA.w SprTimerB, X : BNE +
-      STZ.w SprAction, X
-    +
     RTS
   }
 
@@ -562,13 +612,13 @@ Sprite_39_ZoraBaby:
 
   ZoraBaby_PullSwitch:
   {
-    SEP #$30
-    LDY.b #$01 : LDA.b #$07 ; MESSAGE 0107
-    JSL Sprite_ShowMessageUnconditional
-    ; LDA.b #$01 : STA.b $B1
-    ; JSL $01B8BF
-    INC.w SprAction, X
+    JSL ZoraBaby_PullSwitchDispatch
     RTS
+  }
+
+  ZoraBaby_ThrowAttempt:
+  {
+    RTS ; global handler alone owns carried/released movement
   }
 
   ZoraBaby_PostSwitch:
@@ -966,14 +1016,16 @@ MinecartFollower_TransitionToSprite:
   CMP.b #$00 : BEQ .vert_adjust
                              CMP.b #$02 : BEQ .vert_adjust
     LDA.w POSY : CLC : ADC #$08 : STA.w SprY, X
+    LDA.w POSYH : ADC.b #$00    : STA.w SprYH, X
     LDA.w POSX                  : STA.w SprX, X
+    LDA.w POSXH                 : STA.w SprXH, X
     JMP .finish_prep
   .vert_adjust
   LDA.w POSY : STA.w SprY, X
   LDA.w POSX : CLC : ADC #$02 : STA.w SprX, X
-  .finish_prep
   LDA.w POSYH : STA.w SprYH, X
   LDA.w POSXH : STA.w SprXH, X
+  .finish_prep
   LDA.w !MinecartDirection, X
   CLC : ADC.b #$04 : STA.w SprMiscB, X
 
@@ -1191,8 +1243,12 @@ CheckForFollowerInterroomTransition:
   .not_in_cart
 
   PLP
+if !ENABLE_SKY_ROOM_SKY == 1
+  JML SkyRoom_LoadRoom ; Underworld_LoadRoom + Sky room BG1 fill, then RTL
+else
   JSL $01873A ; Underworld_LoadRoom
   RTL
+endif
 }
 
 CheckForFollowerIntraroomTransition:
@@ -1342,7 +1398,11 @@ if !ENABLE_FOLLOWER_TRANSITION_HOOKS
   JSL CheckForFollowerInterroomTransition
 else
   ; Vanilla (USDASM #_028A5B): JSL Underworld_LoadRoom ($01873A)
+if !ENABLE_SKY_ROOM_SKY == 1
+  JSL SkyRoom_LoadRoom
+else
   JSL $01873A
+endif
 endif
 
 ; UnderworldTransition_Intraroom_PrepTransition

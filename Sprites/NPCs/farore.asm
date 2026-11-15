@@ -84,6 +84,13 @@
 Sprite_Farore_Long:
 {
   PHB : PHK : PLB
+if !ENABLE_D8_FARORE_GRAPHICS == 1
+  LDA.w SprSubtype,X : CMP.b #D8Farore_Subtype : BNE +
+    JSL D8Farore_Frame : BCC .SpriteIsNotActive
+    JSR Sprite_Farore_Draw
+    BRA .SpriteIsNotActive
+  +
+endif
   LDA.b INDOORS : BEQ .outdoors
     JSR Sprite_HyruleDream_Draw
     JSL Sprite_CheckActive : BCC .SpriteIsNotActive
@@ -101,6 +108,12 @@ Sprite_Farore_Long:
 Sprite_Farore_Prep:
 {
   PHB : PHK : PLB
+if !ENABLE_D8_FARORE_GRAPHICS == 1
+  LDA.w SprSubtype,X : CMP.b #D8Farore_Subtype : BNE +
+    JSL D8Farore_Prep
+    BRA .PlayIntro
+  +
+endif
   LDA.b #$80 : STA.w SprDefl, X ; Don't kill Farore when she goes off screen
   LDA.b INDOORS : BEQ .outdoors
     JSR Sprite_HyruleDream_Prep
@@ -289,9 +302,17 @@ Sprite_Farore_Draw:
 
   PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
   INY
-  LDA .chr, X : STA ($90), Y
+  LDA .chr, X
+if !ENABLE_D8_FARORE_GRAPHICS == 1
+  JSL D8Farore_RemapTile
+endif
+  STA ($90), Y
   INY
-  LDA .properties, X : STA ($90), Y
+  LDA .properties, X
+if !ENABLE_D8_FARORE_GRAPHICS == 1
+  JSL D8Farore_RemapPalette
+endif
+  STA ($90), Y
 
   PHY
 

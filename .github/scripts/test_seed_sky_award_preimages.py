@@ -42,7 +42,9 @@ class RealSource(unittest.TestCase):
         lines = [n for n, line in enumerate(self.text.splitlines(), 1)
                  if line.lstrip().startswith("assert read")]
         self.assertEqual([g[0] for g in self.guards], lines)
-        self.assertEqual(len(self.guards), 41)
+        self.assertEqual(len(self.guards), 42)
+        # Both route branches guard the same exit byte; no coverage is lost.
+        self.assertEqual(len(self.seed), 94)
 
     def test_hook_sites_match_usdasm_preimages(self):
         for address, (name, preimage, *_) in contract_hooks().items():
@@ -78,7 +80,7 @@ class RealSource(unittest.TestCase):
             base = bytearray(seeder.ROM_SIZE)
             base[0xE9E6:0xE9E9] = b"\x73\x80\x39"
             rom.write_bytes(base)
-            self.assertEqual(seeder.seed_file(SOURCE, rom), (41, len(self.seed)))
+            self.assertEqual(seeder.seed_file(SOURCE, rom), (42, len(self.seed)))
             data = rom.read_bytes()
         changed = {i for i in range(seeder.ROM_SIZE) if data[i] != base[i]}
         self.assertLessEqual(changed, set(self.seed))

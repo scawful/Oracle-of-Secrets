@@ -17,6 +17,66 @@ SourceGlobalSheet_E6: incbin "sheets/gE6.bin"
 SourceGlobalSheet_E8: incbin "sheets/gE8.bin"
 SourceGlobalSheet_E9: incbin "sheets/gE9.bin"
 assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+if !ENABLE_SKY_ROOM_SKY
+  org $479D4A
+SourceGlobalSheet_E8_sky_room_sky: incbin "sheets/gE8_sky_room_sky.bin"
+  assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+endif
+if !ENABLE_SKY_ROOM_SKY
+  org $47A2A3
+SourceGlobalSheet_EA_sky_room_sky: incbin "sheets/gEA_sky_room_sky.bin"
+  assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+endif
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+  org $47A537
+SourceGlobalSheet_EB_sky_overworld_graphics: incbin "sheets/gEB_sky_overworld_graphics.bin"
+  assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+endif
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+  org $47A9B4
+SourceGlobalSheet_EC_sky_overworld_graphics: incbin "sheets/gEC_sky_overworld_graphics.bin"
+  assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+endif
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+  org $47ADA9
+SourceGlobalSheet_ED_sky_overworld_graphics: incbin "sheets/gED_sky_overworld_graphics.bin"
+  assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+endif
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+  org $47B1BE
+SourceGlobalSheet_EE_sky_overworld_graphics: incbin "sheets/gEE_sky_overworld_graphics.bin"
+  assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+endif
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+  org $47B4A9
+SourceGlobalSheet_EF_sky_overworld_graphics: incbin "sheets/gEF_sky_overworld_graphics.bin"
+  assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+endif
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+  org $47B8A0
+SourceGlobalSheet_F0_sky_overworld_graphics: incbin "sheets/gF0_sky_overworld_graphics.bin"
+  assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+endif
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+  org $47BC26
+SourceGlobalSheet_F1_sky_overworld_graphics: incbin "sheets/gF1_sky_overworld_graphics.bin"
+  assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+endif
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+  org $47BF0A
+SourceGlobalSheet_F2_sky_overworld_graphics: incbin "sheets/gF2_sky_overworld_graphics.bin"
+  assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+endif
+if !ENABLE_KALYXO_BOAT
+  org $47C3FC
+SourceGlobalSheet_E4_kalyxo_boat: incbin "sheets/gE4_kalyxo_boat.bin"
+  assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+endif
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+  org $47C8C6
+SourceGlobalSheet_F5_sky_overworld_graphics: incbin "sheets/gF5_sky_overworld_graphics.bin"
+  assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
+endif
 if not(defined("GfxSheet_TableDone"))
   error "sheet_overrides.asm must follow Core/gfx_sheet_table.asm"
 endif
@@ -57,12 +117,25 @@ org $23FEE3 ; @hook module=Core kind=data protected_size=1
 org $23FFE3 ; @hook module=Core kind=data protected_size=1
   db $00
 ; Global $E4 (sprite-relative $71): Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload.
+; Global $E4 (sprite-relative $71): [ENABLE_KALYXO_BOAT] Native ferry berth preservation glyphs; ordinary E4 remains selected while the ferry flag is off.
 org $23FDE4 ; @hook module=Core kind=data protected_size=1
+if !ENABLE_KALYXO_BOAT
   db $C7
+else
+  db $C7
+endif
 org $23FEE4 ; @hook module=Core kind=data protected_size=1
+if !ENABLE_KALYXO_BOAT
+  db $C3
+else
   db $85
+endif
 org $23FFE4 ; @hook module=Core kind=data protected_size=1
+if !ENABLE_KALYXO_BOAT
+  db $FC
+else
   db $3E
+endif
 ; Global $E5 (sprite-relative $72): Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload.
 org $23FDE5 ; @hook module=Core kind=data protected_size=1
   db $C7
@@ -78,12 +151,25 @@ org $23FEE6 ; @hook module=Core kind=data protected_size=1
 org $23FFE6 ; @hook module=Core kind=data protected_size=1
   db $17
 ; Global $E8 (sprite-relative $75): Selected Minish Cap A Sky Tower normal background sheet; clone of legacy 15; normal graphics group binding follows separately.
+; Global $E8 (sprite-relative $75): [ENABLE_SKY_ROOM_SKY] Sky room sky layer: mcA sheet 15 with tile $2F colour 6->3 and 7->4 (blue/white inner corner, joints 104-107); replaces the $E8 pointer under the flag.
 org $23FDE8 ; @hook module=Core kind=data protected_size=1
+if !ENABLE_SKY_ROOM_SKY
   db $C7
+else
+  db $C7
+endif
 org $23FEE8 ; @hook module=Core kind=data protected_size=1
+if !ENABLE_SKY_ROOM_SKY
+  db $9D
+else
   db $93
+endif
 org $23FFE8 ; @hook module=Core kind=data protected_size=1
+if !ENABLE_SKY_ROOM_SKY
+  db $4A
+else
   db $5F
+endif
 ; Global $E9 (sprite-relative $76): Selected Minish Cap A Sky Tower normal background sheet; clone of legacy 08; normal graphics group binding follows separately.
 org $23FDE9 ; @hook module=Core kind=data protected_size=1
   db $C7
@@ -91,4 +177,94 @@ org $23FEE9 ; @hook module=Core kind=data protected_size=1
   db $98
 org $23FFE9 ; @hook module=Core kind=data protected_size=1
   db $B9
+; Global $EA (sprite-relative $77): [ENABLE_SKY_ROOM_SKY] Sky room sky layer: legacy 1B with tiles 00-18 replaced by the picked candidate-A cloud chars (scawful 2026-11-10 'Sky in $A0'); 30-3F kept; binding is flag-gated.
+if !ENABLE_SKY_ROOM_SKY
+org $23FDEA ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEEA ; @hook module=Core kind=data protected_size=1
+  db $A2
+org $23FFEA ; @hook module=Core kind=data protected_size=1
+  db $A3
+endif
+; Global $EB (sprite-relative $78): [ENABLE_SKY_OVERWORLD_GRAPHICS] Selected Revision03 Sky material binding; page-local definitions preserve the shared dictionary; private composition.
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+org $23FDEB ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEEB ; @hook module=Core kind=data protected_size=1
+  db $A5
+org $23FFEB ; @hook module=Core kind=data protected_size=1
+  db $37
+endif
+; Global $EC (sprite-relative $79): [ENABLE_SKY_OVERWORLD_GRAPHICS] Selected Revision03 Sky material binding; page-local definitions preserve the shared dictionary; private composition.
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+org $23FDEC ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEEC ; @hook module=Core kind=data protected_size=1
+  db $A9
+org $23FFEC ; @hook module=Core kind=data protected_size=1
+  db $B4
+endif
+; Global $ED (sprite-relative $7A): [ENABLE_SKY_OVERWORLD_GRAPHICS] Sky port slot 3 (be8a E1): pass 2 cloud kit chars A/B copied 1:1 from be8a; proposal only.
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+org $23FDED ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEED ; @hook module=Core kind=data protected_size=1
+  db $AD
+org $23FFED ; @hook module=Core kind=data protected_size=1
+  db $A9
+endif
+; Global $EE (sprite-relative $7B): [ENABLE_SKY_OVERWORLD_GRAPHICS] Sky port slot 4 (be8a E2): pack86 rim art; proposal only.
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+org $23FDEE ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEEE ; @hook module=Core kind=data protected_size=1
+  db $B1
+org $23FFEE ; @hook module=Core kind=data protected_size=1
+  db $BE
+endif
+; Global $EF (sprite-relative $7C): [ENABLE_SKY_OVERWORLD_GRAPHICS] Sky port slot 5 (be8a E3): pack86 rim art; proposal only.
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+org $23FDEF ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEEF ; @hook module=Core kind=data protected_size=1
+  db $B4
+org $23FFEF ; @hook module=Core kind=data protected_size=1
+  db $A9
+endif
+; Global $F0 (sprite-relative $7D): [ENABLE_SKY_OVERWORLD_GRAPHICS] Selected Revision03 Sky material binding; page-local definitions preserve the shared dictionary; private composition.
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+org $23FDF0 ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEF0 ; @hook module=Core kind=data protected_size=1
+  db $B8
+org $23FFF0 ; @hook module=Core kind=data protected_size=1
+  db $A0
+endif
+; Global $F1 (sprite-relative $7E): [ENABLE_SKY_OVERWORLD_GRAPHICS] Selected Revision03 Sky material binding; page-local definitions preserve the shared dictionary; private composition.
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+org $23FDF1 ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEF1 ; @hook module=Core kind=data protected_size=1
+  db $BC
+org $23FFF1 ; @hook module=Core kind=data protected_size=1
+  db $26
+endif
+; Global $F2 (sprite-relative $7F): [ENABLE_SKY_OVERWORLD_GRAPHICS] Sky port slot 1 (replaces 0x3B on the 7 rim maps $84-$87, $8D-$8F; $8C keeps 0x3B): copy of 0x3B with v11 Meadow rim chars in indices no Sky cell uses
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+org $23FDF2 ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEF2 ; @hook module=Core kind=data protected_size=1
+  db $BF
+org $23FFF2 ; @hook module=Core kind=data protected_size=1
+  db $0A
+endif
+; Global $F5 (sprite-relative $82): [ENABLE_SKY_OVERWORLD_GRAPHICS] Private Sky slot-1 material variant; F5 removed from wall-kit eligibility; F3/F4 remain Glacia-owned.
+if !ENABLE_SKY_OVERWORLD_GRAPHICS
+org $23FDF5 ; @hook module=Core kind=data protected_size=1
+  db $C7
+org $23FEF5 ; @hook module=Core kind=data protected_size=1
+  db $C8
+org $23FFF5 ; @hook module=Core kind=data protected_size=1
+  db $C6
+endif
 pullpc

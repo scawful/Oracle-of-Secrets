@@ -103,3 +103,7 @@ The released private manual gameplay, native save and cold-reopen receipts remai
 2) Verify with runtime watch or save-state evidence.
 3) Update this ledger with evidence + date.
 4) Link related story events in AFS archive/repo-slim-2026-10-06/repo/Docs/Planning/Story_Event_Graph.md.
+
+## Special-overworld Soaring learning state (2026-11-11)
+
+Root-selected `SkySoaringLearned = $7EF3B2`, exact `$A5` learned; every other value is locked. The engine reads only. The future approved garrison teaching actor owns the setter; no implicit grant, migration or dialogue is included. Vanilla new-file init `$0CC321` clears it, `$00897B` saves both copies, and `$00899C` checksums it. Six retained private test batteries have `$00`; the current user-earned battery is not qualified here. A pre-existing `$A5` would read learned; all other old data remains locked and unchanged. T3 review and learned/locked Save/Quit/cold-load proof are required before adoption.

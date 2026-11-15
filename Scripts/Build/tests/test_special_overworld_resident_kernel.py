@@ -27,6 +27,16 @@ HOOKS = (
     (0x1BCA4D, 'Mutable2', 4), (0x1BCA54, 'Mutable3', 4))
 
 
+# Native action prefixes before their source-word LDA (not visual word loads).
+ACTION_PREFIXES = (
+    (0x1BBEDF, 'Lyra_SemanticTileActionWord',
+     bytes.fromhex('0a0a8506a5002908004a4a0406a50229010005060aaa')),
+    (0x1BBF1E, 'Lyra_SemanticHammerWord', bytes.fromhex('0a0a0aaa')),
+    (0x1BC027, 'Lyra_SemanticLiftWord',
+     bytes.fromhex('0a0a8506a5022908004a4a0406a5004a4a4a29010005060aaa')),
+)
+
+
 def source_fixture():
     image = bytearray(0x400000)
     readers = [(400, at, offset) for at, offset in N.TILE16_LONG_READERS]
@@ -44,12 +54,15 @@ def source_fixture():
         image[index - 1:index + 2] = bytes([0xB9]) + (0x8000 + offset).to_bytes(2, 'little')
         target = 0x7F2000 if offset < 4 else 0x7F2040
         image[index + 2:index + 6] = bytes([0x9F]) + target.to_bytes(3, 'little')
+    for address, _, prefix in ACTION_PREFIXES:
+        image[N.pc(address):N.pc(address)+len(prefix)] = prefix
     return bytes(image)
 
 
 def constants(capacity=192):
     tables = {family.name: family.snes for family in N.current_table_layout(N.TABLE_BASE)}
-    return dict(SPECIAL_OVERWORLD_NATIVE=1, SPECIAL_OVERWORLD_RESIDENT_ENABLED=1,
+    return dict(ENABLE_SKY_OVERWORLD_ROUTE=0,
+                SPECIAL_OVERWORLD_NATIVE=1, SPECIAL_OVERWORLD_RESIDENT_ENABLED=1,
                 SPECIAL_OVERWORLD_RESIDENT_FIRST=0x80, SPECIAL_OVERWORLD_RESIDENT_END=capacity,
                 LYRA_CURRENT_RESIDENT_ABI_VERSION=1, LYRA_CURRENT_RESIDENT_TILE16_COUNT=4096,
                 LYRA_CURRENT_RESIDENT_CODE_BASE=N.RESIDENT_WORD_CODE_BASE,
@@ -60,13 +73,13 @@ def constants(capacity=192):
                 LYRA_CURRENT_MAP16_DEFINITIONS=0x3D8000)
 
 
-def assemble(directory, image, values):
+def assemble(directory, image, values, extra_source=""):
     directory = Path(directory)
     rom, asm, symbols = (directory / name for name in ('probe.sfc', 'probe.asm', 'probe.sym'))
     rom.write_bytes(image)
     text = 'lorom\n' + ''.join(f'!{key} = ${value:X}\n' for key, value in values.items())
     text += f'incsrc "{ROOT / "Overworld/special_overworld_resident.asm"}"\n'
-    asm.write_text(text)
+    asm.write_text(text + extra_source)
     result = subprocess.run([ASSEMBLER, '--no-title-check', '--fix-checksum=off',
                              '--symbols=wla', f'--symbols-path={symbols}', str(asm), str(rom)],
                             capture_output=True, text=True)
@@ -79,6 +92,29 @@ def assemble(directory, image, values):
 
 @unittest.skipUnless(ASSEMBLER, 'Asar required for compiled kernel checks')
 class SpecialOverworldResidentKernelTest(unittest.TestCase):
+    def test_sky_overlay_variant_keeps_hook_contract_and_code_reservation(self):
+        original = source_fixture()
+        with tempfile.TemporaryDirectory() as directory:
+            values = constants()
+            values['ENABLE_SKY_OVERWORLD_ROUTE'] = 1
+            values['LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY'] = 0x4E9000
+            result, image, labels = assemble(directory, original, values)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertLessEqual(labels['Lyra_ResidentAtlasCodeEnd'],
+                             N.RESIDENT_WORD_CODE_LIMIT)
+        start = labels['Lyra_ResidentAtlasCodeStart']
+        end = labels['Lyra_ResidentAtlasCodeEnd']
+        permitted = [(N.pc(start), N.pc(start) + end - start)]
+        for site, suffix, size in HOOKS:
+            target = labels['Lyra_Resident' + suffix]
+            expected = b'\x22' + target.to_bytes(3, 'little') + b'\xEA' * (size - 4)
+            self.assertEqual(image[N.pc(site):N.pc(site) + size], expected)
+            permitted.append((N.pc(site), N.pc(site) + size))
+        for index, (old, new) in enumerate(zip(original, image)):
+            if old != new:
+                self.assertTrue(any(a <= index < b for a, b in permitted), hex(index))
+        self.assertEqual(len(image), len(original))
+
     def test_disabled_module_emits_nothing(self):
         original = source_fixture()
         with tempfile.TemporaryDirectory() as directory:

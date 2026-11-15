@@ -489,6 +489,7 @@ if [[ "${HEADLESS}" -eq 1 ]]; then
 fi
 
 if [[ "${REUSE}" -eq 0 ]]; then
+  LAUNCH_SINCE="$(date +%s)"
   if command -v nohup >/dev/null 2>&1; then
     if [[ "$(uname -s)" == "Darwin" ]]; then
       # Launch the app bundle; it inherits our exported env (socket path, home).
@@ -506,6 +507,17 @@ if [[ "${REUSE}" -eq 0 ]]; then
   # Prevent SIGHUP from killing the background process when the shell exits.
   if [[ -n "${BASH_VERSION:-}" ]]; then
     disown || true
+  fi
+  # Inside `Scripts/Agents/native_session.py run`, record this Mesen as owned
+  # so the session stops it on exit, cancel or deadline.
+  if [[ -n "${OOS_NATIVE_SESSION_REGISTRY:-}" ]]; then
+    if ! python3 "${ROOT_DIR}/Scripts/Agents/native_session.py" register \
+        --registry "${OOS_NATIVE_SESSION_REGISTRY}" --socket "${SOCKET_PATH}" \
+        --since "${LAUNCH_SINCE}" --timeout 30; then
+      echo "Native session: could not identify the launched Mesen yet; its socket is" \
+        "recorded as pending and session teardown checks it again." >&2
+      exit 1
+    fi
   fi
 fi
 

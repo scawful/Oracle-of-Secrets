@@ -169,6 +169,9 @@ Sprite_DekuScrub_Main:
     %PlayAnimation(0, 1, 16)
     LDA.b SongFlag : CMP.b #$01 : BNE .ninguna_cancion
       STZ.b SongFlag
+if !ENABLE_OCARINA_SONG_TINT == 1
+      LDA.b #!SongTint_Healing : JSL SongTint_Start
+endif
       ; Set journal flag: Deku Scrub soul freed
       LDA.l SideQuestProg2 : ORA.b #$10 : STA.l SideQuestProg2
       LDA.b #$C0 : STA.w SprTimerD, X

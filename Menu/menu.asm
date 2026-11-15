@@ -67,6 +67,9 @@ incsrc "menu_palette.asm"
 !MENU_STATE_SONG_MENU           = $0D
 !MENU_STATE_JOURNAL             = $0E
 !MENU_STATE_SUBMENU_RETURN      = $0F
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
+!MENU_STATE_SPECIAL_SOARING     = $10
+endif
 
 ; =========================================================
 ; SUBROUTINE TABLE
@@ -82,6 +85,9 @@ Menu_Entry:
   ; Pair the skip flag with transfer 1: NMI_UploadTilemap clears $0710 after
   ; its DMA. OAM, palettes and HUD still upload; transitions use their old path.
   LDA.w $0200 : CMP.b #!MENU_STATE_ITEM_SCREEN : BEQ .held_page
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
+  CMP.b #!MENU_STATE_SPECIAL_SOARING : BEQ .held_page
+endif
   CMP.b #!MENU_STATE_STATS_SCREEN : BNE .dma_ready
 .held_page
   LDA.b $17 : CMP.b #$01 : BNE .dma_ready
@@ -126,7 +132,14 @@ endif
     dw Menu_SongMenu           ; 0D
     dw Menu_Journal            ; 0E
     dw Menu_SubmenuReturn      ; 0F
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
+    dw Menu_SpecialSoaring     ; 10
+endif
 }
+
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
+  incsrc "special_soaring_menu.asm"
+endif
 
 ; =========================================================
 ; 00 MENU INIT GRAPHICS
@@ -211,11 +224,20 @@ endif
 
 Menu_UploadLeft:
 {
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
+  JSR Menu_SoaringRequested : BCC .ordinary_left
+    JSR Menu_DrawSoaring
+    BRA .left_palette
+  .ordinary_left
+endif
   JSR Menu_DrawBackground
   JSR DrawYItems
   JSR Menu_DrawSelect
   JSR Menu_DrawButtonPrompt
   JSR Menu_DrawItemName
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
+  .left_palette
+endif
   ; INSERT PALETTE -------
 
   REP #$30
@@ -580,6 +602,9 @@ Menu_Exit:
 
   SEP #$20 ; Restore M=8 before return (REP #$20 at line 432 set M=16)
   JSL Supply_ProcessPendingExitAction
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
+  JSL SpecialSoaring_Complete
+endif
   RTS
 }
 

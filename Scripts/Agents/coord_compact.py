@@ -654,7 +654,7 @@ def handoff_index_lines(owners: tuple[str, ...], kept_sections: dict[str, str]) 
         HANDOFF_TITLE,
         "Goal: inbox.md line 1 (scawful sets it).",
         f"Board: agent_board.md (one 5-line section per owner). Load rules: {RULES_POINTER}.",
-        "Decisions: Oracle repo Docs/Planning/Status/decisions.org (OPEN headings).",
+        "Decisions: AFS knowledge/planning/decisions.org (OPEN headings).",
         *[f"{owner}: {handoff_path_of(kept_sections[owner])}" for owner in owners],
         "Archive: archive/coordination/<YYYY-MM-DD>/ (moved verbatim by Scripts/Agents/coord_compact.py).",
     ]

@@ -7,6 +7,9 @@ SickKid_CheckForSongOfHealing:
     INC $0D80, X
     INC $02E4
     STZ.b SongFlag
+if !ENABLE_OCARINA_SONG_TINT == 1
+    LDA.b #!SongTint_Healing : JSL SongTint_Start
+endif
   .no_song
   RTL
 }
