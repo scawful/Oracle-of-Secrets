@@ -118,3 +118,129 @@ HorseForm_MaintainParkedNpc_Long:
   PLB : PLP
   RTL
 }
+
+if !ENABLE_EPONA_SONG == 1
+; Epona's Song call (decisions.org 2026-11-16 "Epona's Song calls Epona").
+; Moves the park anchor beside Link and drops a live Epona; the next
+; HorseForm_MaintainParkedNpc_Long tick respawns her there.
+; Out: C=1 called, C=0 refused (nothing changed). Any M/X/DBR in; A/X/Y,
+; P widths, DBR and DP $04/$08/$0A/$0C/$0E preserved.
+HorseCall_Long:
+{
+  PHP : PHB
+  REP #$30
+  PHA : PHX : PHY
+  LDA.b $04 : PHA
+  LDA.b $08 : PHA
+  LDA.b $0A : PHA
+  LDA.b $0C : PHA
+  LDA.b $0E : PHA
+  SEP #$30
+  LDA.b #$00 : PHA : PLB
+
+  ; Outdoors, Light World, normal play, on foot, not swimming, Epona unlocked.
+  LDA.b $1B : BNE .refuse_near
+  LDA.b $10 : CMP.b #$09 : BNE .refuse_near
+  LDA.b $11 : BNE .refuse_near
+  LDA.b $8A : CMP.b #$40 : BCS .refuse_near
+  LDA.w $02B2 : CMP.b #$09 : BEQ .refuse_near
+  LDA.b $5D : CMP.b #$04 : BEQ .refuse_near
+  LDA.l $7EF3D8 : AND.b #$01 : BEQ .refuse_near
+  JSL Horse_SlotsBusy : BCS .refuse_near
+  BRA .gates_ok
+  .refuse_near
+  BRL .refuse
+  .gates_ok
+
+  LDX.b #$00
+  .candidate
+    REP #$20
+    LDA.b $22 : CLC : ADC.l .cand_dx, X : STA.b $08
+    LDA.b $20 : CLC : ADC.l .cand_dy, X : STA.b $0E
+    ; Whole body on screen (camera is clamped to the area, so no wrap reads).
+    LDA.b $08 : SEC : SBC.b $E2 : BMI .next
+    CMP.w #$0010 : BCC .next
+    CMP.w #$00E0 : BCS .next
+    LDA.b $0E : SEC : SBC.b $E8 : BMI .next
+    CMP.w #$0024 : BCC .next
+    CMP.w #$00C8 : BCS .next
+    SEP #$20
+    PHX
+    LDY.b #(.pt_dy-.pt_dx)-2
+    .point
+      REP #$20
+      TYX
+      LDA.b $08 : CLC : ADC.l .pt_dx, X : STA.b $0C
+      LDA.b $0E : CLC : ADC.l .pt_dy, X : STA.b $0A
+      SEP #$20
+      JSR Horse_QueryTileAt           ; A = tile type; X/Y kept
+      CPY.b #$06 : BCS .body_point
+        CMP.b #$58 : BCS .point_fail  ; feet: walkable ground (mount snaps Link here)
+        TAX
+        LDA.l HorseWalkableAttr, X : BEQ .point_fail
+        BRA .point_ok
+      .body_point
+        CMP.b #$01 : BEQ .point_fail  ; body: no solid tiles
+        CMP.b #$02 : BEQ .point_fail
+      .point_ok
+      DEY : DEY : BPL .point
+    PLX
+    BRA .accept
+    .point_fail
+    PLX
+  .next
+    SEP #$20
+    INX : INX : CPX.b #(.cand_dy-.cand_dx) : BCC .candidate
+
+  .refuse
+  REP #$30
+  PLA : STA.b $0E
+  PLA : STA.b $0C
+  PLA : STA.b $0A
+  PLA : STA.b $08
+  PLA : STA.b $04
+  PLY : PLX : PLA
+  PLB : PLP
+  CLC
+  RTL
+
+  .accept
+  REP #$20
+  LDA.b $08 : STA.l Horse_AnchorX
+  LDA.b $0E : STA.l Horse_AnchorY
+  SEP #$20
+  LDA.b $8A : STA.l Horse_AnchorArea
+  LDA.b #$01 : STA.l Horse_HasAnchor
+  LDX.b #$0F
+  .drop
+    LDA.w $0DD0, X : BEQ .drop_next
+    LDA.w $0E20, X : CMP.b #!HorsePark_SpriteId : BNE .drop_next
+    STZ.w $0DD0, X
+    .drop_next
+    DEX : BPL .drop
+  LDA.b #$00 : STA.l Horse_NpcActive
+  REP #$30
+  PLA : STA.b $0E
+  PLA : STA.b $0C
+  PLA : STA.b $0A
+  PLA : STA.b $08
+  PLA : STA.b $04
+  PLY : PLX : PLA
+  PLB : PLP
+  SEC
+  RTL
+
+  ; Right, left, below, above Link (Link XY = Epona XY when mounting).
+  .cand_dx
+  dw $0020, $FFE0, $0000, $0000
+  .cand_dy
+  dw $0000, $0000, $0018, $FFE0
+  ; First 3 = feet (HorseForm_CheckLandingWalkable points), rest = body grid.
+  .pt_dx
+  dw 4, 11, 8
+  dw -8, 8, 24, -8, 8, 24, -8, 8, 24, -8, 8, 24
+  .pt_dy
+  dw 12, 12, 8
+  dw -28, -28, -28, -12, -12, -12, 4, 4, 4, 16, 16, 16
+}
+endif

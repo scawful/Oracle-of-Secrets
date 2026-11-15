@@ -704,11 +704,17 @@ Ocarina_ValidSong_Long:
   RTL
 }
 
-; Epona's Song effect: OPEN (decisions.org 2026-11-16 leaves it undecided).
-; Placeholder: the song plays (Healing jingle SFX) and does nothing else.
+; Epona's Song calls Epona (decisions.org 2026-11-16). Melody: slot-6 notes
+; ($1B, Elegy's) until Epona's Song is scored. Refused calls play the error chime.
 OcarinaEffect_Epona:
 {
-  LDA.b #$13 : STA.l $7E012E
+  STZ.b SongFlag
+  LDA.b #$1B : STA.l $7E012D
+if !ENABLE_HORSE_FORM == 1 && !ENABLE_HORSE_PARK_ANYWHERE == 1
+  JSL HorseCall_Long : BCS .called
+endif
+  LDA.b #$3C : STA.l $7E012E
+.called
   RTL
 }
 endif
