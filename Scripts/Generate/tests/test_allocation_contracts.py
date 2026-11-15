@@ -175,7 +175,7 @@ class OwnershipTests(unittest.TestCase):
         expected={'ItemBindingSavedVersion':0x7EF3B9,'ItemBindingSavedY':0x7EF3BA,
                   'ItemBindingSavedX':0x7EF3BB,'ItemBindingCursor':0x7E02B3,
                   'ItemBindingLogical':0x7E02B4,'ItemBindingAction':0x7E02B5,
-                  'ItemBindingButton':0x7E02B6}
+                  'ItemBindingButton':0x7E02B6,'ItemBindingMenuY':0x7E02B7}
         data=copy.deepcopy(real)
         data['claims']=[c for c in real['claims'] if c['id'] in expected]
         self.assertEqual({c['id'] for c in data['claims']},set(expected))

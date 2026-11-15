@@ -152,6 +152,9 @@ endif
 if !ENABLE_MASK_R_BINDING == 1
   JSL MaskBinding_MigrateSelection
 endif
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSR Menu_Bindings_Open                ; Y item kept apart from the cursor
+endif
   LDA.w $0780 : STA.w $00
 if !ENABLE_PORTAL_ROD_CELL == 1
   JSR Menu_PortalRod_SyncOwned
@@ -363,6 +366,9 @@ Menu_ItemScreen:
   JMP .exit                           ; no cursor/equipment edits after a turn/close
 .active
   INC $0207
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSR Menu_Bindings_Input              ; Y/X on an item bind it; A never
+endif
 if !ENABLE_MENU_PAGE3 == 1
 if !ENABLE_GOLDSTAR_CELL == 1
   LDA.w $0202 : BNE .have_item
@@ -440,6 +446,9 @@ endif
   JSR Menu_DrawCursor
 if !ENABLE_MENU_PAGE3 == 1
   .no_grid_cursor
+endif
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSR Menu_Bindings_DrawMarkers
 endif
 
   JSR Menu_DrawItemName
@@ -568,6 +577,9 @@ Menu_CheckBottle:
 
 Menu_Exit:
 {
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSR Menu_Bindings_Close              ; before the bottle and $0303 reads
+endif
   JSL LinkState_ResetMaskAnimated
   JSR Menu_CheckBottle
   REP #$20
@@ -664,6 +676,9 @@ Menu_RefreshInventoryScreen:
 
 Menu_InitiateScrollDown:
 {
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSR Menu_Bindings_Close              ; RebuildHUD_long reads $0202
+endif
   REP #$20
 
   ; Clear out the whole buffer.
@@ -1215,6 +1230,10 @@ if !ENABLE_EQUIPMENT_MENU == 1
 endif
 if !ENABLE_MENU_PAGE3 == 1
   incsrc "menu_page3.asm" ; end of bank $2D, after the map names
+endif
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  incsrc "menu_item_bindings.asm"
+  assert pc() <= $2E8000, "Menu/menu_item_bindings.asm overflows bank $2D"
 endif
 %log_end("Menu/menu.asm", !LOG_MENU)
 incsrc "menu_hud.asm"

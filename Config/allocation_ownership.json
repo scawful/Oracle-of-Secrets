@@ -165,7 +165,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "8f1c8ddd6061baa4203e3f1e711e83547c6eb96ff39d56c935d3064547452f4d"
+      "sha256": "794daecd83cc682c5d7bc4ed95abbd4b93ee845d4d43e680ef6d2b3557f8079e"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -2929,6 +2929,28 @@
       "binding": {
         "source": "shared:Core/symbols.asm",
         "symbol": "ItemBindingButton",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ItemBindingMenuY",
+      "owner": "Granted disabled dual-item prototype: menu Y item",
+      "space": "wram",
+      "base": 8258231,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Dual-item prototype menu-session byte at vanilla-unused $7E02B7 (usdasm UNUSED_7E02B7), directly after ItemBindingButton. Holds the Y item while the menu cursor browses in $0202.",
+      "reset": "Menu_Bindings_Open writes it on every menu open (Menu_InitGraphics); Menu_Bindings_Close copies it to $0202 on close. Only when ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1.",
+      "save": "Volatile WRAM; never saved; never read in gameplay.",
+      "provenance": [
+        "shared:Core/symbols.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "ItemBindingMenuY",
         "bank00_mirror": false
       }
     }

@@ -113,7 +113,11 @@ ItemBindingCursor  = $7E02B3
 ItemBindingLogical = $7E02B4
 ItemBindingAction  = $7E02B5
 ItemBindingButton  = $7E02B6
-assert ItemBindingCursor == $7E02B3 && ItemBindingButton+1 == $7E02B7
+; Menu session only: the Y item while the menu cursor browses in $0202.
+; Written on every menu open, read on close; never read in gameplay.
+ItemBindingMenuY   = $7E02B7
+assert ItemBindingCursor == $7E02B3 && ItemBindingButton+1 == ItemBindingMenuY
+assert ItemBindingMenuY+1 == $7E02B8
 
 ; Explicit bounded aliases for the reserved palette history; no consumer yet.
 SpecialOverworldPaletteHoleCache = $7E1E8C
