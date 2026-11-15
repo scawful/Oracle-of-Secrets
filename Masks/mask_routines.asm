@@ -68,7 +68,9 @@ PlayerTransform:
 ResetToLinkGraphics:
 {
   JSL GaroMask_Clear
+  JSL LinkGraphics_IsD8 : BCS .normal
   LDA $0FFF : BNE +
+  .normal
     STZ !CurrentMask
     LDA.b #$10 : STA.w !LinkGraphics
     JMP ++
@@ -80,9 +82,47 @@ ResetToLinkGraphics:
   RTL
 }
 
+; D8 uses the normal Minish Cap player sheet even while its temporary
+; entrance/return is still bound to the Abyss. Keep the real world/return
+; state intact. The full dungeon ID owns all floors, including the boss.
+; M8; X/Y/DBR/D unchanged. C=1 only indoors with dungeon ID $0004.
+LinkGraphics_IsD8:
+{
+  LDA.b $1B : BEQ .other
+  LDA.w $040D : BNE .other
+  LDA.w $040C : CMP.b #$04 : BNE .other
+  SEC : RTL
+  .other
+  CLC : RTL
+}
+
+; Cosmetic base forms only: never remove an intentional mask, including
+; small Minish. Avoid reloading the palette every frame once normal.
+; M8/X8, matching the native dungeon and clock callers. C reports D8.
+LinkGraphics_ApplyD8Base:
+{
+  JSL LinkGraphics_IsD8 : BCC .other
+  LDA.w !CurrentMask : BEQ .base
+  CMP.b #$06 : BNE .done
+  BRA .restore
+  .base
+  LDA.b !LinkGraphics : CMP.b #$10 : BEQ .done
+  .restore
+  STZ.w !CurrentMask
+  LDA.b #$10 : STA.b !LinkGraphics
+  PHX : PHY
+  JSL Palette_ArmorAndGloves
+  PLY : PLX
+  .done
+  SEC : RTL
+  .other
+  CLC : RTL
+}
+
 ForceResetMask_GameOver:
 {
   JSL DekuStick_Drop
+  JSL LinkGraphics_ApplyD8Base
   if !ENABLE_DIVE_GATE != 0
   STZ.w !ZoraDiving
   endif

@@ -48,6 +48,8 @@ GameboyLinkRedMail:
 
 LinkState_GameboyInDungeonEntrance:
 {
+  ; Preserve the actual entrance's world, but never choose GBC base art in D8.
+  JSL LinkGraphics_ApplyD8Base : BCS .return
 if !ENABLE_MASK_R_BINDING == 1
   ; Cosmetic GBC transitions must not replace an active mask form.
   LDA.w !CurrentMask : BEQ +
