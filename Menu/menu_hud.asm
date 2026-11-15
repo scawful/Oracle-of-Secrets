@@ -724,6 +724,14 @@ FloorIndicatorNumberLow:
   dw $E50C, $A50E, $007F
 }
 
+; HUD buffer cells for the floor number: top row and the row below.
+if !ENABLE_HUD_FLOOR_CENTER == 1
+  !FloorTop = $7EC7DE                 ; row 3, col 15 (centered, HUD_LAYOUT_02)
+else
+  !FloorTop = $7EC7F0                 ; row 3, col 24 (vanilla)
+endif
+!FloorBot = !FloorTop+$40
+
 ; *$57D0C-$57DA7 JUMP LOCATION (LONG)
 org $0AFD0C
 FloorIndicator:
@@ -738,10 +746,10 @@ FloorIndicator:
 
   STA   $04A0
   PHB   : PHK : PLB
-  LDA.w #$251E : STA $7EC7F0
-  INC   A        : STA $7EC832
-  INC   A        : STA $7EC830
-  LDA.w #$250F : STA $7EC7F2
+  LDA.w #$251E : STA !FloorTop
+  INC   A        : STA !FloorBot+2
+  INC   A        : STA !FloorBot
+  LDA.w #$250F : STA !FloorTop+2
   LDX.w #$0000
 
   ; check whether $A4[1] has a negative value
@@ -776,8 +784,8 @@ FloorIndicator:
 
   ASL A : TAY
 
-  LDA FloorIndicatorNumberHigh, Y : STA $7EC7F0, X
-  LDA FloorIndicatorNumberLow, Y  : STA $7EC830, X
+  LDA FloorIndicatorNumberHigh, Y : STA !FloorTop, X
+  LDA FloorIndicatorNumberLow, Y  : STA !FloorBot, X
 
   SEP #$30
 
@@ -793,7 +801,7 @@ FloorIndicator:
   REP #$20
 
   ; disable the display of the floor indicator.
-  LDA.w #$007F : STA $7EC7F0 : STA $7EC830 : STA $7EC7F2 : STA $7EC832
+  LDA.w #$007F : STA !FloorTop : STA !FloorBot : STA !FloorTop+2 : STA !FloorBot+2
 
   SEP #$30
 
