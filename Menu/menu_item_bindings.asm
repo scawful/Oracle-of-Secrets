@@ -10,15 +10,18 @@
 ;   already holds X clears X, so the field map returns to X. X on this page
 ;   no longer opens the Journal; Quest and page 3 keep X: Journal.
 ; - A never binds. A and Start still close the menu; L/R still turn pages.
-; - Markers sit in the two blank tiles under each cell's frame: a green "Y"
-;   under the Y item, a blue "X" under the X item (the SFC face-button
-;   colors). One item on both buttons shows both letters side by side.
+; - Markers sit in the two blank tiles under each cell's frame: a green chip
+;   under the left half of the Y item, a blue chip under the right half of
+;   the X item (the SFC face-button colors and sides). One item on both
+;   buttons shows both chips side by side. The menu font draws letters in
+;   color 2, which is white in palettes 1-3 and 7, so a letter cannot carry
+;   the button color; BG3 tile $004 is a 4-pixel bar in color 1.
 ; Assembled at the end of bank $2D, after the page 3 code, so no flag-off
 ; byte moves.
 ; =========================================================
 
-!MB_YMarker = $3D68                 ; 'Y' ($2568) in palette 7 (green)
-!MB_XMarker = $2D67                 ; 'X' ($2567) in palette 3 (blue)
+!MB_YMarker = $3C04                 ; tile $004 bar, palette 7 (green), priority
+!MB_XMarker = $2C04                 ; tile $004 bar, palette 3 (blue), priority
 
 ; Menu_InitGraphics (menu open). Any widths; keeps A/X/Y and P.
 Menu_Bindings_Open:
