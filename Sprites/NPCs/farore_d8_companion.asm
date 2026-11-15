@@ -12,13 +12,13 @@ D8Farore_Subtype = $D8
 D8Farore_CompanionStart:
 
 ; Input A=full room ID, M16; output A=0 absent,1 follows,2 waits, M8.
-; X/Y/DBR untouched. DungeonID08 and existing crystal completion are required.
+; X/Y/DBR untouched. DungeonID04 and existing crystal completion are required.
 D8Farore_Presence:
 {
   PHA
   SEP #$20
   LDA.l $7E001B : BEQ .none
-  LDA.l $7E040C : CMP.b #$08 : BNE .none
+  LDA.l $7E040C : CMP.b #$04 : BNE .none
   LDA.l $7EF37A : AND.b #$80 : BNE .none
   REP #$20 : PLA
   CMP.w #$0090 : BCC .absent

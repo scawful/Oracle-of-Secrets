@@ -42,6 +42,7 @@ D8Farore_IsMember:
   PHP : REP #$20 : PHA
   SEP #$20
   LDA.l $7E001B : BEQ .no
+  LDA.l $7E040C : CMP.b #$04 : BNE .no
   LDA.l $7EF37A : AND.b #$80 : BNE .no
   REP #$20
   LDA.l $7E00A0

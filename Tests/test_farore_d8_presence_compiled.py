@@ -20,7 +20,7 @@ class PresenceFixture(GraphicsFixture):
         self.cpu.x=7;self.cpu.y=9
 
 def setup(f,room=0x90,crystal=0):
-    f.word(0xA0,room);f.word(0x48E,room);f.put(0x1B,1);f.put(0x40C,8);f.put(0x7EF37A,crystal)
+    f.word(0xA0,room);f.word(0x48E,room);f.put(0x1B,1);f.put(0x40C,4);f.put(0x7EF37A,crystal)
     f.word(0x22,0x100);f.word(0x20,0x100);f.put(0x10,7);f.put(0x11,0);f.put(0xEE,0)
     f.put(0x7EF303,0)
 
@@ -59,7 +59,17 @@ StageCaller:
     return rom.read_bytes(),labels
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--lakesnes',type=Path,required=True);ap.add_argument('--output',type=Path,required=True);a=ap.parse_args();checks=[]
+    ap=argparse.ArgumentParser();ap.add_argument('--lakesnes',type=Path,required=True);ap.add_argument('--output',type=Path,required=True);ap.add_argument('--rom',type=Path);a=ap.parse_args();checks=[];admission=None
+    if a.rom:
+        import hashlib
+        data=a.rom.read_bytes();pc=lambda address:(address>>16)*0x8000+(address&0x7FFF)
+        assert data[pc(0x02D99F):pc(0x02D99F)+4]==bytes.fromhex('2208f00f')
+        assert data[pc(0x0FF008):pc(0x0FF008)+13]==bytes.fromhex('aa0a0aa8e220a90f48abc2206b')
+        assert data[pc(0x02DA96):pc(0x02DA96)+6]==bytes.fromhex('bd00988d0c04')
+        assert data[pc(0x0F8000)+0x29*2:pc(0x0F8000)+0x29*2+2]==bytes.fromhex('9000')
+        assert data[pc(0x0F9800)+0x29]==4, 'actual entrance29 runtime dungeon ID differs'
+        admission={'rom_sha256':hashlib.sha256(data).hexdigest(),'entrance':0x29,'room':0x90,'selected_dbr':0x0F,'dungeon_table':0x0F9800,'runtime_040c':4}
+
     with tempfile.TemporaryDirectory(prefix='oos-farore-presence-') as t:
         p=Path(t);dll=p/'cpu.dylib';subprocess.run(['cc','-shared','-fPIC','-O2',str(a.lakesnes/'snes/cpu.c'),str(a.lakesnes/'snes/statehandler.c'),'-o',str(dll)],check=True)
         lib=C.CDLL(str(dll));lib.cpu_init.restype=C.POINTER(Cpu);lib.cpu_runOpcode.argtypes=[C.POINTER(Cpu)];lib.cpu_free.argtypes=[C.POINTER(Cpu)]
@@ -82,7 +92,7 @@ def main():
             try:
                 setup(f)
                 if invalid=='outdoor':f.put(0x1B,0)
-                elif invalid=='wrong-dungeon':f.put(0x40C,0x18)
+                elif invalid=='wrong-dungeon':f.put(0x40C,8)
                 else:
                     for i in range(16):f.put(0xDD0+i,9);f.put(0xE20+i,0xA7)
                 before=bytes(f.ram);call(f,'D8Farore_Stage',db=0x09)
@@ -146,6 +156,6 @@ def main():
                     checks.append(f'actual-callers-flag{enabled}-owned{own}')
                 finally:f.close()
         size=labels['D8Farore_CompanionEnd']-labels['D8Farore_CompanionStart']
-    result={'status':'PASS','size':size,'checks':checks,'scope':'CPU-only presence/placement and actual production callers; authored A6 anchor with stubbed terrain; no P2/solo control, plate weight, real placement or ROM proof'}
+    result={'status':'PASS','actual_rom_admission':admission,'size':size,'checks':checks,'scope':'CPU-only presence/placement and actual production callers; authored A6 anchor with stubbed terrain; no P2/solo control, plate weight, real placement or ROM proof'}
     a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(result,indent=2)+'\n');print(json.dumps({'status':'PASS','size':size,'checks':len(checks)}))
 if __name__=='__main__':main()

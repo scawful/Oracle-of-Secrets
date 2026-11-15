@@ -102,7 +102,7 @@ def call(f, name, m8=True, x8=True, a=0xA75D, x=0x37, y=0x4B, db=0x7E):
 
 
 def setup(f, room=0x90, indoor=1, crystal=0):
-    f.word(0xA0,room); f.put(0x1B,indoor); f.put(0x7EF37A,crystal)
+    f.word(0xA0,room); f.put(0x1B,indoor); f.put(0x40C,4); f.put(0x7EF37A,crystal)
     f.put(0x13,0x80); f.put(0x412,9); f.put(0x0AB1,0x0A)
     f.put(0x7EC2FE,0x29); f.put(0x7EC2FF,0x52)
 
@@ -124,6 +124,19 @@ def check(lib, rom, labels, blob):
             assert f.cpu.c==(room in MEMBERS), hex(room)
         finally: f.close()
     cases.append('298 full-width membership and ABI cases')
+    f=GraphicsFixture(lib,rom,labels)
+    try:
+        setup(f,0x90);f.put(0x40C,8)
+        call(f,'D8Farore_IsMember')
+        assert not f.cpu.c, 'wrong dungeon08 must not enable graphics/palette/stone gate'
+        call(f,'D8Farore_OverlayVram')
+        assert not f.dma
+        f.put(0xAAE,0x66)
+        original=f.read(0x0ED463+0x18)
+        result=call(f,'D8Farore_HeaderPalette',x8=False,x=0x18)
+        assert f.get(0xAAE)==original and result&255==original
+    finally:f.close()
+    cases.append('actual dungeon04 gate refuses08 for membership, VRAM and header palette')
     for room,indoor,crystal in [(r,1,0) for r in sorted(MEMBERS)]+[(0x96,1,0),(0x190,1,0),(0x90,0,0),(0x90,1,0x80),(0x90,1,0x7F)]:
         selected=room in MEMBERS and indoor and not crystal & 0x80
         for name in ('D8Farore_LoadSet','D8Farore_InitializeTilesets'):
@@ -146,7 +159,7 @@ def check(lib, rom, labels, blob):
                     assert all(size==64 for _,_,size in f.dma)
                 assert [f.get(a) for a in (0x412,0xAB1,0x7EC2FE,0x7EC2FF)]==[9,10,0x29,0x52]
                 allowed=set(range(0x100,0x200))
-                assert all((addr&0xFFFFFF) in allowed or 0x7F1000<=addr<0x7F1800 or addr in (0xA0,0xA1,0x1B,0x7EF37A,0x13,0x412,0xAB1,0x7EC2FE,0x7EC2FF) for addr,_ in f.writes)
+                assert all((addr&0xFFFFFF) in allowed or 0x7F1000<=addr<0x7F1800 or addr in (0xA0,0xA1,0x1B,0x40C,0x7EF37A,0x13,0x412,0xAB1,0x7EC2FE,0x7EC2FF) for addr,_ in f.writes)
                 cases.append(f'{name}-{room:03X}-{indoor}-{crystal:02X}')
             finally:f.close()
     for brightness in (0,15,127):

@@ -320,12 +320,12 @@
     "shared:Sprites/NPCs/farore_d8_graphics.asm": {
       "source_set": "shared",
       "path": "Sprites/NPCs/farore_d8_graphics.asm",
-      "sha256": "4eb2572c362b4fe7ca0ebc8b5d4170ec77beec9065934e6c2596db3b8b7887ee"
+      "sha256": "561fb4748234ab3cb8768972c71d1d0bfc0e75fd11b3583aa879b915d58f3e1d"
     },
     "shared:Sprites/NPCs/farore_d8_companion.asm": {
       "source_set": "shared",
       "path": "Sprites/NPCs/farore_d8_companion.asm",
-      "sha256": "af5f52b34d2f336b0647a830fed6d708bf187fcf859443ecf9819e0585acfe19"
+      "sha256": "60fe9cacb1cbb7a479b7c2a56fba8ce5e5dbfc9a4558846f4e9c84df01f8de7b"
     }
   },
   "claims": [
