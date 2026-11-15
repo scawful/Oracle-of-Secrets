@@ -63,7 +63,7 @@
 RichardFieldSpawn:
   db $23               ; $8A at runtime: large area parent of map $24
   dw $0800+(25*16)     ; world X (map $24 column 4 -> $0800)
-  dw $0800+124         ; world Y: tile row 7 + 12 px, on the bridge planks
+  dw $0800+124         ; world Y: tile row 7 + 12 px (grass NE of the moat)
   db $24               ; map $24, tile16 (25,7)
 
 ; Run path from the lady's pacing row to the shed door (door faces south).
@@ -462,9 +462,13 @@ RichardQuest_TickShed:
   LDA.l RichardQuestFlags : AND.b #!Richard_Delivered : BNE +
   RTS
 +
-  ; Room base: X hi = (room & $0F) * 2, Y hi = (room & $F0) / 8.
+  ; Room base: X hi = (room & $0F) * 2, Y hi = (room & $1F0) / 8.
+  ; Y needs the 9th room bit: room $107 sits at Y hi $20, not $00.
   LDA.b $A0 : AND.b #$0F : ASL A : STA.b $0A
-  LDA.b $A0 : AND.b #$F0 : LSR #3 : STA.b $0B
+  REP #$20
+  LDA.b $A0 : AND.w #$01F0 : LSR #3
+  SEP #$20
+  STA.b $0B
   LDX.b #$00
 
   LDA.b #$3D : STA.b $00
