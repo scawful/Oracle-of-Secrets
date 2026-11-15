@@ -2,7 +2,7 @@
 ; Lyra talkers (!ENABLE_LYRA_TALKERS, default off)
 ;
 ; Talk-only NPCs on the Lyra crescent island (parent area $B3: screens
-; $B3/$B4/$BB/$BC). They are vanilla ShopMan ($BB) sprites placed in the
+; $B3/$B4/$BB/$BC) and the fishing village (parent $A0: screens $A0/$A1). They are vanilla ShopMan ($BB) sprites placed in the
 ; overworld day list (phase 1). Lyra day sprite set $1B loads sheet $4B, so
 ; the ShopMan body draws without a sheet swap (scawful picked "ShopMan look",
 ; 2026-11-15).
@@ -34,6 +34,8 @@ LyraTalker_Prep:
 {
   LDA.b $1B : BNE .vanilla                 ; overworld only
   LDA.b $8A
+  CMP.b #$A0 : BEQ .ours                   ; fishing village (wide $A0/$A1)
+  CMP.b #$A1 : BEQ .ours
   CMP.b #$B3 : BEQ .ours
   CMP.b #$B4 : BEQ .ours
   CMP.b #$BB : BEQ .ours
@@ -123,17 +125,30 @@ LyraTalker_PosX:
   dw $0600+(40*16)                           ; 1 T2 camp trader (40,46)
   dw $0600+(15*16)                           ; 2 T3 shell-game thief (15,38)
   dw $0600+(30*16)                           ; 3 T4 brawler (30,16)
+  ; Fishing village: parent $A0 (2x1) at X $0000, Y $0800. Tiles from the
+  ; north roster board (AFS scratch lyra-npcs-north).
+  dw $0000+(26*16)                           ; 4 V1 ferry boatman, pier end (26,29)
+  dw $0000+(22*16)                           ; 5 V2 cartographer, house porch (22,19)
+  dw $0000+(27*16)                           ; 6 V3 net-mender, pier (27,24)
+  dw $0000+(35*16)                           ; 7 V4 storyteller, east grass (35,16)
+  dw $0000+(6*16)                            ; 8 V5 kid, southwest shore (6,29)
   dw $FFFF
 LyraTalker_PosY:
   dw $0C00+(44*16)
   dw $0C00+(46*16)
   dw $0C00+(38*16)
   dw $0C00+(16*16)
+  dw $0800+(29*16)                           ; 4 V1
+  dw $0800+(19*16)                           ; 5 V2
+  dw $0800+(24*16)                           ; 6 V3
+  dw $0800+(16*16)                           ; 7 V4
+  dw $0800+(29*16)                           ; 8 V5
   dw $FFFF
 
 ; $0DC0 frame: 0 = clerk body, 1 = chest-game man body (both sheet $4B).
 LyraTalker_Frames:
   db $01, $00, $01, $00
+  db $01, $00, $01, $00, $00                ; V1-V5
 
 ; PLACEHOLDER messages (vanilla) until approved Oracle text gets IDs.
 LyraTalker_Messages:
@@ -141,3 +156,10 @@ LyraTalker_Messages:
   dw $0165                                 ; T2 (vanilla shop clerk line)
   dw $0160                                 ; T3 (vanilla chest-game offer)
   dw $017E                                 ; T4 (vanilla thief line)
+  ; V1-V5: vanilla placeholders; drafts await review (IDs $241-$246 claimed
+  ; in AFS handoffs IDS.md).
+  dw $0165                                 ; V1 ferry boatman
+  dw $0165                                 ; V2 cartographer
+  dw $0165                                 ; V3 net-mender
+  dw $0165                                 ; V4 storyteller
+  dw $0165                                 ; V5 kid
