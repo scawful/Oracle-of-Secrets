@@ -46,6 +46,7 @@ The following blocks were marked "unused" in vanilla ALTTP but are now utilized 
 |----------|-----------|--------------------------------------------------------------------|----------|
 | `$7EF410` | `Dreams`  | Bitfield tracking collection of three Dreams (`.cpw`: Courage, Power, Wisdom). | ✓        |
 | `$7EF411` | `WaterGateStates` | Bitfield for Zora Temple water gate persistence (bit0=room 0x27, bit1=room 0x25). | ✓        |
+| `$7EF4BF` | `TravelSpotsVisited` | Bird Travel destinations visited (bit i = LoadTransport_screen_id entry i: $00,$0B,$06,$10,$1E,$38,$2F,$36). Set on area load; read only when `!ENABLE_MENU_MAP_TRAVEL`. | ✓        |
 
 > **💡 Usage Notes:**
 > - **Scrolls** (`$7EF398`): One scroll per dungeon (7 total). Bitfield format: `.dgi zktm` where each letter represents a dungeon (m=Mushroom Grotto, t=Tail Palace, k=Kalyxo Castle, z=Zora Temple, i=Glacia Estate, g=Goron Mines, d=Dragon Ship).
@@ -167,6 +168,7 @@ This section details the layout of the save file memory.
 | `$7EF39E` | `StoryState`      | State machine for Link's House intro sequence (0=Telepathy, 1=WakeUp, 2=End). |
 | `$7EF410` | `Dreams`          | A bitfield tracking the collection of the three "Dreams" (Courage, Power, Wisdom). |
 | `$7EF411` | `WaterGateStates` | Bitfield for Zora Temple water gate persistence (bit0=room 0x27, bit1=room 0x25). |
+| `$7EF4BF` | `TravelSpotsVisited` | Bitfield of visited bird Travel destinations (one bit per bird spot). |
 | `$7EF347` | `ZoraMask`        | Flag indicating if the player has obtained the Zora Mask.                |
 | `$7EF348` | `BunnyHood`       | Flag indicating if the player has obtained the Bunny Hood.               |
 | `$7EF349` | `DekuMask`        | Flag indicating if the player has obtained the Deku Mask.                |

@@ -5865,7 +5865,11 @@ LoadOverworldSprites_Interupt:
                       STZ.w $0FBA
 
     ; What phase are we in?
+    if !ENABLE_MENU_MAP_TRAVEL == 1
+    JSL Oracle_TravelDest_MarkVisited : ASL : TAY ; sets the travel visited bit, then CheckIfNight
+    else
     JSL Oracle_CheckIfNight : ASL : TAY
+    endif
 
     REP #$30
 

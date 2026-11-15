@@ -75,6 +75,11 @@ incsrc "Overworld/custom_gfx.asm"
 incsrc "Overworld/credits_scenes.asm"
 %log_end("Overworld/credits_scenes.asm", !LOG_OVERWORLD)
 
+if !ENABLE_MENU_MAP_TRAVEL == 1
+incsrc "Overworld/travel_destinations.asm"
+%log_end("Overworld/travel_destinations.asm", !LOG_OVERWORLD)
+endif
+
 incsrc "Overworld/docks_profile.asm"
 pushpc
 
