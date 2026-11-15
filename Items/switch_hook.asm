@@ -11,12 +11,16 @@
 ; SwitchHook_Enemies swap too. An enemy is frozen (vanilla stun state $0B,
 ; timers held) from the latch until the beat ends, then stunned ~1 s with
 ; the vanilla stun convention ($0DD0=$0B, $0DF0=$40, $0B58 timer).
-; Overworld (module $09, $1B=0, step 3): the place key is area $8A instead of
-; room $A0, there is no layer check, every submodule cancels, and the
-; overworld floor list is plain walkable ground only. Link's landing must sit
-; 16px inside the area's transition thresholds, so the camera never needs
-; to cross an area edge; Overworld_OperateCameraScroll stops at the area
-; bounds. Module $0B (special overworld) is refused.
+; Step 5 (2026-11-15, "Like ages please"): pots and bushes are tile
+; targets. The tip lifts the tile into a vanilla throwable sprite ($EC),
+; the beat swaps with it, then the sprite breaks on landing (debris + SFX).
+; Signs and glove rocks are refused. Overworld (module $09, $1B=0, step 3):
+; the place key is area $8A instead of room $A0, there is no layer check,
+; every submodule cancels, and the overworld floor list is plain walkable
+; ground only. Link's landing must sit 16px inside the area's transition
+; thresholds, so the camera never needs to cross an area edge;
+; Overworld_OperateCameraScroll stops at the area bounds. Module $0B
+; (special overworld) is refused.
 ; Link's feet occupy sprite Y+8..15, so Link Y = block Y-8.
 ; Both actors recompute $0642 from their own position every active frame,
 ; after Ancilla_Main, so a moved statue presses or releases a plate itself.
@@ -33,6 +37,7 @@
 ; $0269       : target sprite slot
 ; $026A/$026B : $E2/$E8 low bytes seen on the previous beat frame
 ; $026C       : 1 when the latched target is an enemy (step 4)
+; $0270       : 1 when the latched target is a pot/bush tile ($EC)
 ; $07F8       : active-shot tag ($A5, zero otherwise)
 ; $07F9-$07FA : launch place key (dungeon room $A0, or overworld area $8A)
 ; $07FB       : launch layer
@@ -60,13 +65,26 @@ pullpc
 !SwitchHookHeld   = $026D             ; slot+1 of the last swapped enemy (0 = none)
 !SwitchHookHeldType = $026E           ; its sprite type at the swap
 !SwitchHookHeldRoom = $026F           ; full dungeon room word at the swap
+!SwitchHookTile   = $0270             ; 1 = latched pot/bush throwable ($EC)
 !SwitchHookStun   = $20               ; $0B58 after landing: ~64 frames
 !SwitchHookCling  = 17                ; Ages: 1+4+4+4+4 cling frames
 !SwitchHookRise   = 16                ; Ages: z -1/frame for 16 frames
 !SwitchHookSwap   = !SwitchHookCling+!SwitchHookRise+1
 !SwitchHookLand   = !SwitchHookSwap+16
 
-assert !SwitchHookMode < $0800, "Switch Hook exceeds its WRAM reservation"
+; Vanilla lift/spawn entry points (same contracts as Sprites/Players/player2.asm).
+!SH_LiftOffY_UW   = $01D9BA           ; Underworld_LiftAndReplaceLiftable.offset_y
+!SH_LiftOffX_UW   = $01D9C2
+!SH_LiftOffY_OW   = $07D365           ; LiftableCheckOffset_Y
+!SH_LiftOffX_OW   = $07D36D
+!SH_IdentifyUW    = $01D748           ; Underworld_CheckForAndIDLiftableTile
+!SH_LiftUW        = $01D9EC           ; Underworld_LiftAndReplaceLiftable
+!SH_LiftOW        = $1BBF9D           ; Overworld_HandleLiftableTiles
+!SH_TossKinds     = $07B1AD           ; LinkToss_liftable_tiles
+!SH_SpawnSilent   = $068156           ; Sprite_SpawnThrowableTerrain_silently
+!SH_BreakSFX      = $1E               ; SFX2.1E: pot/bush shatter (ThrownItemSFX kind 2)
+
+assert !SwitchHookTile < $0800, "Switch Hook exceeds its WRAM reservation"
 
 pushpc
 ; @hook SwitchHook_ResetSprite kind=jsl target=SwitchHook_ResetSprite
@@ -163,6 +181,7 @@ SwitchHook_Init:
   LDA.l SwitchHookOwned : CMP.b #$01 : BNE .done
   STZ.w !SwitchHookBeat
   STZ.w !SwitchHookTarget
+  STZ.w !SwitchHookTile
   LDA.b $10 : STA.w !SwitchHookMode
   LDA.b $EE : STA.w !SwitchHookLayer
   JSR SwitchHook_PlaceKey
@@ -184,6 +203,11 @@ SwitchHook_Clear:
   ; Abort or finish: put both actors back on the ground.
   LDY.w !SwitchHookTarget
   LDA.b #$00 : STA.w SprHeight,Y
+  LDA.w !SwitchHookTile : BEQ .not_tile
+  ; Ages break-on-land (also cleans up an aborted lift): shatter $EC.
+  JSR SwitchHook_SmashTileTarget
+  BRA .grounded
+  .not_tile
   LDA.w !SwitchHookEnemy : BEQ .grounded
   ; Enemy: leave the freeze as a short vanilla stun (only if still frozen).
   LDA.w SprState,Y : CMP.b #$0B : BNE .grounded
@@ -197,6 +221,7 @@ SwitchHook_Clear:
   .idle
   STZ.w !SwitchHookActive
   STZ.w !SwitchHookEnemy
+  STZ.w !SwitchHookTile
   STZ.w !SwitchHookRoom : STZ.w !SwitchHookRoom+1
   STZ.w !SwitchHookLayer : STZ.w !SwitchHookMode
   REP #$30 : PLY : PLX : PLA
@@ -307,7 +332,10 @@ SwitchHook_SpriteContact:
   JML $08BDFD
   .switch
   JSL SwitchHook_TryExchange
+  BCS .beat
+  JSL SwitchHook_TryTileExchange
   BCC .continue
+  .beat
   JML $08BD9C                 ; beat started: draw the clinging hook only
 }
 
@@ -350,6 +378,7 @@ SwitchHook_TryExchange:
   PLY : PLX : PLB : CLC : RTL
   .exchange
   ; Start the swap beat. Positions change only on the hidden swap frame.
+  STZ.w !SwitchHookTile
   TYA : STA.w !SwitchHookTarget
   LDA.b #$01 : STA.w !SwitchHookBeat
   LDA.b $E2 : STA.w !SwitchHookCamX
@@ -371,8 +400,15 @@ SwitchHook_Beat:
   PHB : PHK : PLB : PHY
   LDA.b $5D : CMP.b #$13 : BNE .abort
   LDY.w !SwitchHookTarget
+  LDA.w !SwitchHookTile : BNE .tile
   LDA.w !SwitchHookEnemy : BNE .enemy
   LDA.w SprState,Y : CMP.b #$09 : BNE .abort
+  BRA .alive
+  .tile
+  ; Pot/bush $EC must stay in carried-like state $0A. State $09 runs
+  ; ThrowableScenery land → TransmuteToDebris on the first Sprite_Main tick.
+  LDA.w SprState,Y : CMP.b #$0A : BNE .abort
+  LDA.w SprType,Y : CMP.b #$EC : BNE .abort
   BRA .alive
   .enemy
   ; A killed or otherwise released enemy (state left $0B) cancels the beat.
@@ -975,6 +1011,185 @@ SwitchHook_FootprintSafe:
   db 0,7,15,0,7,15,0,7,15
   .y_offsets
   db 0,0,0,7,7,7,15,15,15
+}
+
+; Entry: M/X=8, X=ancilla; exit same widths, X/Y/DBR preserved, carry=latched.
+; Ages step 5: tip on a pot/bush tile lifts it to $EC and starts the beat.
+; Scratch $00-$0F free at the SpriteContact boundary (same as TryExchange).
+SwitchHook_TryTileExchange:
+{
+  PHB : PHK : PLB : PHX : PHY
+  STX.b $0F
+  JSR SwitchHook_ContextValid : BCS .ctx_ok
+  JMP .no
+  .ctx_ok
+  LDA.w $0C54,X : BEQ .extend_ok
+  JMP .no
+  .extend_ok
+  ; Tip → aligned 16x16 origin. LandingVisible wants $0A=Y, $0C=X.
+  LDA.w $0BFA,X : STA.b $00
+  LDA.w $0C0E,X : STA.b $01
+  LDA.w $0C04,X : STA.b $02
+  LDA.w $0C18,X : STA.b $03
+  %a16()
+  LDA.b $00 : AND.w #$FFF0 : STA.b $0A
+  LDA.b $02 : AND.w #$FFF0 : STA.b $0C
+  %a8()
+  JSR SwitchHook_LandingVisible : BCS .vis_ok
+  JMP .no
+  .vis_ok
+  ; Do not FootprintSafe the pot/bush cell itself: collision $27 (and the
+  ; liftable) is still present until Lift removes it. Ages clears the tile
+  ; at latch; Link then stands on the revealed floor. Only Link's current
+  ; standing footprint must be safe (where the lifted tile breaks on land).
+  %a16()
+  LDA.b $0A : PHA
+  LDA.b $0C : PHA
+  LDA.b $20 : CLC : ADC.w #$0008 : STA.b $0A
+  LDA.b $22 : STA.b $0C
+  %a8()
+  PHY : PHX
+  JSR SwitchHook_FootprintSafe                ; Link's old cell safe for break
+  PLX : PLY
+  %a16()
+  PLA : STA.b $0C
+  PLA : STA.b $0A
+  %a8()
+  BCS .link_floor_ok
+  JMP .no
+  .link_floor_ok
+  JSR SwitchHook_LiftPotOrBush : BCS .lift_ok
+  JMP .no
+  .lift_ok
+  ; Y = new $EC slot.
+  STY.w !SwitchHookTarget
+  STZ.w !SwitchHookEnemy
+  LDA.b #$01 : STA.w !SwitchHookTile
+  LDA.b #$01 : STA.w !SwitchHookBeat
+  LDA.b $E2 : STA.w !SwitchHookCamX
+  LDA.b $E8 : STA.w !SwitchHookCamY
+  STZ.b $30 : STZ.b $31
+  STZ.w $037E
+  LDA.b #$01 : STA.w $037B
+  PLY : PLX : PLB : SEC : RTL
+  .no
+  STZ.w !SwitchHookTile
+  PLY : PLX : PLB : CLC : RTL
+}
+
+; Aim Link at tip ($0A=Y, $0C=X aligned), identify pot/bush, lift, spawn $EC.
+; Out: C=ok, Y=sprite slot. Clobbers $00-$03/$08, A/X. Ancilla slot in $0F.
+; Link Y/X/facing saved on the stack — lift routines smash $00-$07.
+SwitchHook_LiftPotOrBush:
+{
+  %a16()
+  LDA.b $20 : PHA
+  LDA.b $22 : PHA
+  %a8()
+  LDA.b $2F : PHA
+  LDX.b $0F
+  LDA.w $0C72,X : ASL : STA.b $2F             ; face the shot direction
+  %a16()
+  LDA.b $2F : AND.w #$00FF : TAX
+  LDA.b $1B : AND.w #$00FF : BEQ .ow_aim
+  LDA.b $0A : SEC : SBC.l !SH_LiftOffY_UW,X : STA.b $20
+  LDA.b $0C : SEC : SBC.l !SH_LiftOffX_UW,X : STA.b $22
+  %a8()
+  JSL !SH_IdentifyUW : BCS .id_ok
+  JMP .restore_fail
+  .id_ok
+  JSR SwitchHook_IsPotOrBushType : BCS .type_ok
+  JMP .restore_fail
+  .type_ok
+  JSL !SH_LiftUW : BRA .lifted
+  .ow_aim
+  LDA.b $0A : SEC : SBC.l !SH_LiftOffY_OW,X : STA.b $20
+  LDA.b $0C : SEC : SBC.l !SH_LiftOffX_OW,X : STA.b $22
+  %a8()
+  %a16()
+  LDA.b $0A : STA.b $00
+  LDA.b $0C : STA.b $02
+  %a8()
+  LDA.b $EE
+  JSL Sprite_GetTileAttr
+  LDA.w $0FA5
+  JSR SwitchHook_IsPotOrBushType : BCS .ow_type_ok
+  JMP .restore_fail
+  .ow_type_ok
+  JSL !SH_LiftOW
+  .lifted
+  ; A = tile type, $00-$03 = X/Y. Map to thrown-object kind.
+  STA.b $08
+  LDX.b #$08
+  .kind
+  LDA.b $08 : CMP.l !SH_TossKinds,X : BEQ .got_kind
+  DEX : BPL .kind
+  JMP .restore_fail
+  .got_kind
+  ; Kinds: 1=$52 bush, 2=$50 pot, 4=$51 dark-bush family. Refuse sign/rocks.
+  CPX.b #$01 : BEQ .spawn
+  CPX.b #$02 : BEQ .spawn
+  CPX.b #$04 : BEQ .spawn
+  JMP .restore_fail
+  .spawn
+  LDA.w $0314 : PHA
+  LDA.w $0FB2 : PHA
+  TXA
+  JSL !SH_SpawnSilent                         ; X = slot; N set if none
+  PLA : STA.w $0FB2
+  PLA : STA.w $0314
+  TXA : BPL .spawned
+  JMP .restore_fail
+  .spawned
+  TXY                                         ; Y = slot
+  ; Keep SpawnSilent's state $0A (carried-like). Forcing $09 makes $EC
+  ; shatter immediately via ThrownSprite land → TransmuteToDebris.
+  LDA.b #$0A : STA.w SprState,Y
+  LDA.b #$00
+  STA.w SprXSpeed,Y : STA.w SprYSpeed,Y
+  STA.w SprHeight,Y : STA.w SprTimerA,Y
+  STA.w SprTimerF,Y
+  PLA : STA.b $2F
+  %a16()
+  PLA : STA.b $22
+  PLA : STA.b $20
+  %a8()
+  SEC : RTS
+  .restore_fail
+  PLA : STA.b $2F
+  %a16()
+  PLA : STA.b $22
+  PLA : STA.b $20
+  %a8()
+  CLC : RTS
+}
+
+; A = tile type. Pot/bush only ($50-$52). C=accept.
+SwitchHook_IsPotOrBushType:
+{
+  CMP.b #$50 : BCC .no
+  CMP.b #$53 : BCS .no
+  SEC : RTS
+  .no
+  CLC : RTS
+}
+
+; Y = $EC slot. Shatter in place (ThrowableScenery_TransmuteToDebris body).
+; Secrets already spawned at lift; this is debris + SFX + breakage module.
+SwitchHook_SmashTileTarget:
+{
+  LDA.w SprType,Y : CMP.b #$EC : BNE .done
+  LDA.w SprState,Y : BEQ .done
+  PHY : PHX
+  TYX
+  LDA.b #!SH_BreakSFX
+  JSL SpriteSFX_QueueSFX2WithPan
+  LDA.b #$1F : STA.w $0DF0,X
+  LDA.b #$06 : STA.w $0DD0,X                  ; SpriteModule breakage
+  LDA.w $0E40,X : CLC : ADC.b #$04 : STA.w $0E40,X
+  PLX : PLY
+  .done
+  RTS
 }
 
 ; Match the other item modules: the next file starts with vanilla org hooks.
