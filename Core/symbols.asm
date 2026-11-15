@@ -134,7 +134,7 @@ assert HudCornerBufferEnd <= $7EC880
 if !ENABLE_MENU_MAP_TRAVEL == 1
 base $7E1EFE
 {
-MenuMapTravel_Pending:   skip 1 ; 0 none, 1 field map, 2 Soaring
+MenuMapTravel_Pending:   skip 1 ; 0 none, 1 field map, 2 Soaring, 3 map open: reopen page
 assert MenuMapTravel_Pending == $7E1EFE
 assert pc() <= $7E1F00, "Map & Travel pending byte exceeds its bounded WRAM tail"
 }

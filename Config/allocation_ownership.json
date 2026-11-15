@@ -135,7 +135,7 @@
     "shared:Menu/menu_map_travel.asm": {
       "source_set": "shared",
       "path": "Menu/menu_map_travel.asm",
-      "sha256": "062135b67cc5743af647b22422df3436260472623fc23816b26c0ae259aed7ce"
+      "sha256": "389a8143fc7833dcb2c639e8253593e3f0323ea3e2430c049dfd36beab6e8a35"
     },
     "shared:Core/Cutscene/experiment.asm": {
       "source_set": "shared",
@@ -170,7 +170,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "9184de1923cbd995c27eeed217067fa9a473ff44f00712e664cd392c481560c4"
+      "sha256": "d4c715b898a6725c607b0bf4675dc80a93f5b02de644719dec83afb0c29fca44"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -2536,8 +2536,8 @@
       "condition": {
         "ENABLE_MENU_MAP_TRAVEL": 1
       },
-      "lifetime": "One conditional transient WRAM byte after the horse tail ($7E1EFE < $7E1F00). Set by the Map & Travel page when Map or Travel closes the menu; consumed by Menu_Exit the same frame the menu closes.",
-      "reset": "MenuMapTravel_Init clears it when the page is drawn; MenuMapTravel_ExitAction clears it before acting.",
+      "lifetime": "One conditional transient WRAM byte after the horse tail ($7E1EFE < $7E1F00). Set by the Map & Travel page when Map or Travel closes the menu; consumed by Menu_Exit the same frame the menu closes. A map opened from the page sets 3, which lives through the map module and reopens the page.",
+      "reset": "MenuMapTravel_Init clears it when the page is drawn; MenuMapTravel_ExitAction clears it before acting; the menu item screen clears 3 when it turns back to the page.",
       "save": "Volatile WRAM; not saved in SRAM.",
       "provenance": [
         "shared:Core/symbols.asm",

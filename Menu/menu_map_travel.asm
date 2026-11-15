@@ -265,6 +265,7 @@ MenuMapTravel_ExitAction:
   LDA.b #$00 : STA.l MenuMapTravel_Pending
   CPY.b #$01 : BNE .travel
   JSR MenuMapTravel_CanMap : BCC .error
+  LDA.b #$03 : STA.l MenuMapTravel_Pending ; reopen this page after the map
   STZ.w $0200
   LDA.b #$07                            ; overworld map
   LDX.b $1B : BEQ +
@@ -294,6 +295,31 @@ endif
   PLB : PLP
   RTL
 }
+
+; ---------------------------------------------------------
+; Replaces "LDA $F4 : AND #$10" in the Start check of Module07/09
+; PlayerControl. Pending 3 (a map opened from this page has closed) reads
+; as a Start press, so the menu reopens through the vanilla path; the item
+; screen then turns to this page. A map opened with X never sets 3.
+; In/out M=8; A and Z as the replaced code.
+MenuMapTravel_CheckStart:
+{
+  LDA.l MenuMapTravel_Pending : CMP.b #$03 : BEQ .reopen
+  LDA.b $F4 : AND.b #$10
+  RTL
+.reopen
+  LDA.b #$10
+  RTL
+}
+
+pushpc
+assert read4($0288EC) == $1029F4A5, "Module07 Start check moved"
+org $0288EC ; Module07_00_PlayerControl ; @hook module=Menu name=MenuMapTravel_CheckStart kind=jsl target=MenuMapTravel_CheckStart expected_m=8
+  JSL MenuMapTravel_CheckStart
+assert read4($02A54D) == $1029F4A5, "Module09 Start check moved"
+org $02A54D ; Module09_00_PlayerControl ; @hook module=Menu name=MenuMapTravel_CheckStart kind=jsl target=MenuMapTravel_CheckStart expected_m=8
+  JSL MenuMapTravel_CheckStart
+pullpc
 
 ; ---------------------------------------------------------
 ; Same frame, spacing and brackets as Equipment: Map/Travel on the mask row,
