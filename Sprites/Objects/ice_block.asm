@@ -783,6 +783,9 @@ IceBlock_CF_LiftGoalPot:
 ; word and the save mirror, so it persists with or without a room exit.
 IceBlock_CF_MarkSolved:
 {
+  ; Only in normal play: a BF->CF transition frame must not set the bit.
+  LDA.b $10 : CMP.b #$07 : BNE .done
+  LDA.b $11 : BNE .done
   LDA.b $A0 : CMP.b #!IceBlockCF_Room : BNE .done
   LDA.b $A1 : BNE .done
     REP #$20
