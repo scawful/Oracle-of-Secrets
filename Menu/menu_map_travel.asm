@@ -243,6 +243,7 @@ else
 endif
 .normal
   CMP.b #$09 : BNE .no
+  LDA.l TravelSpotsVisited : BEQ .no     ; no visited destination yet
   LDX.b #$04
 .bird
   LDA.w $0C4A,X : CMP.b #$27 : BEQ .no
