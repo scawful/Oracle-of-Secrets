@@ -25,6 +25,12 @@ ItemBindings_Route:
   BRA .held
   .boomerang
   LDA.w $0301 : AND.b #$80 : BNE .busy
+  ; The throw bits clear before the flight ends; a live boomerang ancilla
+  ; ($05) keeps the action owned until it returns or is destroyed.
+  LDX.b #$04
+  -
+  LDA.w $0C4A,X : CMP.b #$05 : BEQ .busy
+  DEX : BPL -
   .held
   LDA.b $3A : AND.b #$40 : BNE .busy
   JSL ItemBindings_EndAction
@@ -82,14 +88,29 @@ ItemBindings_OwnsX:
 }
 
 ; Replaces LDA $F4 : AND #$40 in CheckYButtonPress ($07B07B), M8.
-; Returns the latched initiating button's new-press bit; Y otherwise.
-; Z/A contract of the following BEQ/TSB $3A is preserved.
+; Returns X's new-press bit only while the X latch owns the running action
+; ($0303 == latched action), so a stale latch cannot redirect other Y readers.
+; Y's bit otherwise. Z/A contract of the following BEQ/TSB $3A is preserved.
 ItemBindings_UsePress:
 {
-  LDA.l ItemBindingButton : CMP.b #$02 : BEQ .x
-  LDA.b $F4 : AND.b #$40 : RTL
-  .x
+  LDA.l ItemBindingButton : CMP.b #$02 : BNE .y
+  LDA.w $0303 : CMP.l ItemBindingAction : BNE .y
   LDA.b $F6 : AND.b #$40 : RTL
+  .y
+  LDA.b $F4 : AND.b #$40 : RTL
+}
+
+; R+Y/R+X form change: drop the X press only when the prototype owns X,
+; so an unowned X keeps the vanilla field-map open. M8; A clobbered.
+ItemBindings_ConsumeX:
+{
+  PHX : PHY
+  JSR ItemBindings_OwnsX
+  PLY : PLX
+  BCC .keep
+  LDA.b #$40 : TRB.b $F6
+  .keep
+  RTL
 }
 
 ; Replaces LDA $F6 : AND #$40 at both native X field-map reads, M8.

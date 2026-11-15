@@ -196,7 +196,7 @@ endif
   ; R+Y changes form once; it must not also fire the newly exposed item.
   LDA.b #$40 : TRB.b $F4
 if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
-  TRB.b $F6                             ; R+X must not fire the X item either
+  JSL ItemBindings_ConsumeX             ; R+X must not fire an owned X item
 endif
 
   .route
