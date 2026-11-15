@@ -22,7 +22,7 @@ def granted_addresses():
         assert len(found) == 1, name
         result[name] = int(found[0], 16)
     assert list(result.values()) == [0x7EF3B9, 0x7EF3BA, 0x7EF3BB,
-                                     0x7E1EDE, 0x7E1EDF, 0x7E1EE0, 0x7E1EE1]
+                                     0x7E02B3, 0x7E02B4, 0x7E02B5, 0x7E02B6]
     return result
 
 
@@ -113,7 +113,7 @@ def main():
         core_cases=core.exercise(lib,rom,labels)
         mutations={
             'unsupported-Y-admitted':adapter.replace('JSR ItemBindings_Validate : BCC .refuse','JSR ItemBindings_Validate : NOP : NOP'),
-            'reset-clobbers-ferry':adapter.replace('STA.l ItemBindingCursor : STA.l ItemBindingLogical','STA.l $7E1EDD : STA.l ItemBindingLogical'),
+            'reset-clobbers-mask':adapter.replace('STA.l ItemBindingCursor : STA.l ItemBindingLogical','STA.l $7E02B2 : STA.l ItemBindingLogical'),
             'load-clobbers-A':adapter.replace('REP #$20 : PLA : PLP : SEC : RTL','REP #$20 : PLA : PLP : LDA.b #$00 : SEC : RTL'),
         }
         rejected=[]

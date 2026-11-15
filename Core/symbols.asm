@@ -104,14 +104,16 @@ assert pc() <= $7E1F00, "Horse transient state exceeds its bounded WRAM tail"
 base off
 endif
 
-; Root prototype grant 2026-11-14: separate from the original91-byte block
-; and conditional ferry tail. Never extend either owner's bulk clear here.
-; Reset explicitly on admitted load or action cancellation; not persistent.
-ItemBindingCursor  = $7E1EDE
-ItemBindingLogical = $7E1EDF
-ItemBindingAction  = $7E1EE0
-ItemBindingButton  = $7E1EE1
-assert ItemBindingCursor == $7E1EDE && ItemBindingButton+1 == $7E1EE2
+; Dual-item prototype volatile state. The 2026-11-14 grant at $7E1EDE was
+; later taken by the Horse Form transient block, so these four bytes moved to
+; vanilla-unused $7E02B3-$7E02B6 (usdasm UNUSED_7E02B3..B6; ancilla arrays end
+; at $02B1, $02B2 is !CurrentMask). Never cleared by a bulk owner here; reset
+; explicitly on file load or action cancellation; not persistent.
+ItemBindingCursor  = $7E02B3
+ItemBindingLogical = $7E02B4
+ItemBindingAction  = $7E02B5
+ItemBindingButton  = $7E02B6
+assert ItemBindingCursor == $7E02B3 && ItemBindingButton+1 == $7E02B7
 
 ; Explicit bounded aliases for the reserved palette history; no consumer yet.
 SpecialOverworldPaletteHoleCache = $7E1E8C

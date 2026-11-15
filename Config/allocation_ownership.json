@@ -165,7 +165,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "5e281a896236ea5be2f12beab5a033af73c8781d388c733ac28f75de7343f240"
+      "sha256": "8f1c8ddd6061baa4203e3f1e711e83547c6eb96ff39d56c935d3064547452f4d"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -2823,15 +2823,37 @@
       }
     },
     {
-      "id": "ItemBindingCursor",
-      "owner": "Granted disabled dual-item prototype: Cursor",
+      "id": "CurrentMask",
+      "owner": "Mask system current form (!CurrentMask)",
       "space": "wram",
-      "base": 8265438,
+      "base": 8258226,
       "size": 1,
       "status": "shared",
       "condition": {},
-      "lifetime": "Reserved prototype cursor/action state; no live dispatcher hook. Separate from ferry and original symbols block.",
-      "reset": "Explicit ItemBindings_AdapterReset clears only four owned bytes. Ordinary load/reset hook not yet installed.",
+      "lifetime": "Persistent gameplay WRAM for the current transformation form; vanilla-unused $7E02B2 directly after the ancilla arrays (end $02B1).",
+      "reset": "Owned by the mask system (Masks/all_masks.asm); not cleared by item-binding code.",
+      "save": "Volatile WRAM; form is re-derived by the mask system.",
+      "provenance": [
+        "shared:Masks/all_masks.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Masks/all_masks.asm",
+        "symbol": "!CurrentMask",
+        "bank00_mirror": true
+      }
+    },
+    {
+      "id": "ItemBindingCursor",
+      "owner": "Granted disabled dual-item prototype: Cursor",
+      "space": "wram",
+      "base": 8258227,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Dual-item prototype state at vanilla-unused $7E02B3-$7E02B6 (moved from $7E1EDE after the Horse Form transient block took that range). Separate from ancilla arrays (end $02B1) and !CurrentMask ($02B2).",
+      "reset": "ItemBindings_AdapterReset clears only these four bytes; called from LoadCheckpointOrWorld when ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1, and by the dispatcher on completion/cancel.",
       "save": "Volatile WRAM; never saved.",
       "provenance": [
         "shared:Core/symbols.asm"
@@ -2848,12 +2870,12 @@
       "id": "ItemBindingLogical",
       "owner": "Granted disabled dual-item prototype: Logical",
       "space": "wram",
-      "base": 8265439,
+      "base": 8258228,
       "size": 1,
       "status": "shared",
       "condition": {},
-      "lifetime": "Reserved prototype cursor/action state; no live dispatcher hook. Separate from ferry and original symbols block.",
-      "reset": "Explicit ItemBindings_AdapterReset clears only four owned bytes. Ordinary load/reset hook not yet installed.",
+      "lifetime": "Dual-item prototype state at vanilla-unused $7E02B3-$7E02B6 (moved from $7E1EDE after the Horse Form transient block took that range). Separate from ancilla arrays (end $02B1) and !CurrentMask ($02B2).",
+      "reset": "ItemBindings_AdapterReset clears only these four bytes; called from LoadCheckpointOrWorld when ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1, and by the dispatcher on completion/cancel.",
       "save": "Volatile WRAM; never saved.",
       "provenance": [
         "shared:Core/symbols.asm"
@@ -2870,12 +2892,12 @@
       "id": "ItemBindingAction",
       "owner": "Granted disabled dual-item prototype: Action",
       "space": "wram",
-      "base": 8265440,
+      "base": 8258229,
       "size": 1,
       "status": "shared",
       "condition": {},
-      "lifetime": "Reserved prototype cursor/action state; no live dispatcher hook. Separate from ferry and original symbols block.",
-      "reset": "Explicit ItemBindings_AdapterReset clears only four owned bytes. Ordinary load/reset hook not yet installed.",
+      "lifetime": "Dual-item prototype state at vanilla-unused $7E02B3-$7E02B6 (moved from $7E1EDE after the Horse Form transient block took that range). Separate from ancilla arrays (end $02B1) and !CurrentMask ($02B2).",
+      "reset": "ItemBindings_AdapterReset clears only these four bytes; called from LoadCheckpointOrWorld when ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1, and by the dispatcher on completion/cancel.",
       "save": "Volatile WRAM; never saved.",
       "provenance": [
         "shared:Core/symbols.asm"
@@ -2892,12 +2914,12 @@
       "id": "ItemBindingButton",
       "owner": "Granted disabled dual-item prototype: Button",
       "space": "wram",
-      "base": 8265441,
+      "base": 8258230,
       "size": 1,
       "status": "shared",
       "condition": {},
-      "lifetime": "Reserved prototype cursor/action state; no live dispatcher hook. Separate from ferry and original symbols block.",
-      "reset": "Explicit ItemBindings_AdapterReset clears only four owned bytes. Ordinary load/reset hook not yet installed.",
+      "lifetime": "Dual-item prototype state at vanilla-unused $7E02B3-$7E02B6 (moved from $7E1EDE after the Horse Form transient block took that range). Separate from ancilla arrays (end $02B1) and !CurrentMask ($02B2).",
+      "reset": "ItemBindings_AdapterReset clears only these four bytes; called from LoadCheckpointOrWorld when ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1, and by the dispatcher on completion/cancel.",
       "save": "Volatile WRAM; never saved.",
       "provenance": [
         "shared:Core/symbols.asm"

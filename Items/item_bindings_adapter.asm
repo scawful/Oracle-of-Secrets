@@ -6,7 +6,7 @@ assert defined("ENABLE_DUAL_ITEM_BINDING_PROTOTYPE"), "Use canonical feature def
 if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
 assert ItemBindingSavedVersion == $7EF3B9
 assert ItemBindingSavedY == $7EF3BA && ItemBindingSavedX == $7EF3BB
-assert ItemBindingCursor == $7E1EDE && ItemBindingButton == $7E1EE1
+assert ItemBindingCursor == $7E02B3 && ItemBindingButton == $7E02B6
 
 incsrc "item_bindings.asm"
 
