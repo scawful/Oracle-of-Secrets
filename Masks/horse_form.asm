@@ -216,12 +216,21 @@ HorseForm_Mount:
   RTL
 }
 
-; User-initiated or water dismount (saves Ranch anchor; no mask transform puff). Preserves A/X/Y/DBR/P.
+; User-initiated or water/pit dismount (saves outdoor/Ranch anchor; no mask transform puff).
+; Preserves A/X/Y/DBR/P.
 HorseForm_Dismount:
 {
   PHP : REP #$30 : PHA : PHX : PHY
   SEP #$30 : PHB
   LDA.b #$00 : PHA : PLB
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  ; Any outdoor OW area: park here. Pit prefers last FrameTick refresh.
+  LDA.b $1B : BNE .no_outdoor_anchor
+    JSL HorseForm_SaveOutdoorAnchor_Long
+    BRA .finish_dismount
+  .no_outdoor_anchor
+  LDA.b #$00 : STA.l Horse_HasAnchor : STA.l Horse_AnchorArea
+else
   LDA.b $8A : BNE .no_ranch_anchor
   LDA.b $1B : BNE .no_ranch_anchor
     REP #$20
@@ -232,6 +241,7 @@ HorseForm_Dismount:
     BRA .finish_dismount
   .no_ranch_anchor
   LDA.b #$00 : STA.l Horse_HasAnchor
+endif
   JSL Horse_RestoreSp3Palette
 
   .finish_dismount
@@ -254,7 +264,11 @@ HorseForm_SilentDismount:
   PHP : REP #$30 : PHA : PHX : PHY
   SEP #$30 : PHB
   LDA.b #$00 : PHA : PLB
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  ; Keep last outdoor safe park anchor from FrameTick / prior dismount.
+else
   LDA.b #$00 : STA.l Horse_HasAnchor
+endif
   JSL Horse_RestoreSp3Palette
   JSL ResetToLinkGraphics
   JSL HorseForm_ClearState
@@ -305,6 +319,10 @@ HorseForm_FrameTick:
   LDA.b $5D : CMP.b #$04 : BEQ .force_ranch_dismount
   LDA.b $4D : CMP.b #$04 : BEQ .force_ranch_dismount
   LDA.b $5B : CMP.b #$02 : BCS .force_ranch_dismount
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  ; Safe outdoor ground: refresh park so door/pit reuse last XY.
+  JSL HorseForm_SaveOutdoorAnchor_Long
+endif
 
   ; Suppress B-button sword swing and Y-button item press edges while mounted.
   LDA.b #$C0 : TRB.b $F4
@@ -350,8 +368,13 @@ HorseForm_FrameTick:
 }
 
 ; Ensure Toto Ranch NPC Epona spawns whenever Link is outdoors on area $00.
+; Park-anywhere: thin trampoline into free bank $53 after Sprite_HorseNPC.
 HorseForm_MaintainRanchNpc:
 {
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  JSL HorseForm_MaintainParkedNpc_Long
+  RTS
+else
   LDA.b $1B : ORA.b $8A : BEQ + : BRL .not_ranch : +
   LDA.b $10 : CMP.b #$09 : BEQ + : RTS : +
   LDA.b $11 : BEQ + : RTS : +
@@ -416,6 +439,7 @@ HorseForm_MaintainRanchNpc:
   +
   LDA.b #$00 : STA.l Horse_HasAnchor : STA.l Horse_NpcActive
   RTS
+endif
 }
 
 ; Play soft boot-dust hoof thud periodically while galloping.

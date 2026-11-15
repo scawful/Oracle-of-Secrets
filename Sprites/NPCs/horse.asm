@@ -55,9 +55,18 @@ Sprite_HorseNPC_Long:
   LDA.b #$00 : PHA : PLB
   ; Reject ownership before drawing, including the same-frame mount transition.
   LDA.w $02B2 : CMP.b #9 : BEQ .despawn_before_draw
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  LDA.b $1B : BNE .despawn_before_draw
+  LDA.l Horse_HasAnchor : BEQ .ranch_profile
+  LDA.b $8A : CMP.l Horse_AnchorArea : BNE .despawn_before_draw
+  JSL Horse_SlotsBusy : BCS .SpriteIsNotActive
+  BRA .draw_ok
+  .ranch_profile
+endif
   JSL Horse_RanchProfileReady : BCC .despawn_before_draw
   JSL Horse_SlotsBusy : BCS .SpriteIsNotActive
   JSL Horse_RanchActorsSafe : BCC .SpriteIsNotActive
+  .draw_ok
   JSR Sprite_HorseNPC_Draw
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     JSR Sprite_HorseNPC_Main
@@ -83,13 +92,21 @@ Sprite_HorseNPC_Prep:
 
 Sprite_HorseNPC_Main:
 {
-  ; Despawn cleanly if mounted, indoors, or outside Toto Ranch ($00).
+  ; Despawn cleanly if mounted, indoors, or off the parked/Ranch area.
   LDA.w $02B2 : CMP.b #$09 : BNE +
     BRL .despawn
   +
-  LDA.b $1B : ORA.b $8A : BEQ +
-    BRL .despawn
-  +
+  LDA.b $1B : BNE .do_despawn
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  LDA.l Horse_HasAnchor : BEQ .ranch_only_area
+  LDA.b $8A : CMP.l Horse_AnchorArea : BEQ .area_ok
+  BRA .do_despawn
+  .ranch_only_area
+endif
+  LDA.b $8A : BEQ .area_ok
+  .do_despawn
+  BRL .despawn
+  .area_ok
 
   ; Keep SP-3[9..15] palette crisp if area palette reload overwrote it with uniform fill.
   REP #$20
@@ -259,5 +276,9 @@ Sprite_HorseNPC_Draw:
 }
 
 HorseNpc_End:
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  incsrc "Masks/horse_park_anywhere.asm"
+  assert pc() <= $53E000, "horse_park_anywhere overlapped mounted clearance allocation"
+endif
 assert pc() <= $53E000, "Sprite_HorseNPC overlapped mounted clearance allocation"
 pullpc
