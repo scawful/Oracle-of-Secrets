@@ -1130,11 +1130,13 @@ HorseOam_WriteSlot:
 
 HorseOam_HideAll:
 {
+  ; Compacted to free bank $53 bytes for post-dismount NMI cache (queue125).
   LDA.w $0352 : LSR #2 : TAX
   LDA.w #$0101
-  STA.w $0A20, X : STA.w $0A22, X
-  STA.w $0A24, X : STA.w $0A26, X
-  STA.w $0A28, X : STA.w $0A2A, X
+  LDY.b #5
+- STA.w $0A20, X
+  INX : INX
+  DEY : BPL -
   RTS
 }
 
