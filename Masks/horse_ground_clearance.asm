@@ -39,6 +39,11 @@ HorseForm_ConstrainGroundInput:
   .query
   SEP #$20
   JSR Horse_QueryTileAt
+if !ENABLE_HORSE_LONG_JUMP == 1
+  ; A named water gap blocks like a wall unless a valid long jump crosses it
+  ; from here (.gap_point: A = $00 clear, $FF block, else the attribute).
+  JSR .gap_point : CMP.b #$FF : BEQ .block
+endif
   CMP.b #$01 : BEQ .solid
   CMP.b #$02 : BNE .clear_point
   .solid
@@ -47,6 +52,7 @@ HorseForm_ConstrainGroundInput:
   JSR .is_fence : BCS .fence_clear
   JSR .fence_ahead : BCS .fence_clear
   SEP #$20
+  .block
   PLY : PLX
   LDA.l .buttons, X : TRB.b $F0 : TRB.b $F2
   BRA .next_direction
@@ -90,7 +96,13 @@ HorseForm_ConstrainGroundInput:
   SEP #$20
   JSR Horse_QueryTileAt
   REP #$20
+if !ENABLE_HORSE_LONG_JUMP == 1
+  ; Same rule for a solid neighbour beside a valid long-jump gap.
+  JSR .is_fence : BCS + : JMP .long_ahead : +
+  RTS
+else
   BRA .is_fence
+endif
   .probe_hit
   REP #$20
   PLA : PLA
@@ -107,6 +119,47 @@ HorseForm_ConstrainGroundInput:
   .is_fence_hit
   SEC
   RTS
+if !ENABLE_HORSE_LONG_JUMP == 1
+  ; In: A16/X8, $0E = edge index. Out: carry = a valid long jump is ahead in
+  ; this direction (CheckFenceJump near/far probes, then the probe line at
+  ; this edge). X/Y, $04, $0A and $0C are clobbered; the caller restores them.
+  .long_ahead
+  SEP #$20
+  LDA.b $0E : LSR : STA.l Horse_JumpDir
+  JSR HorseLong_TryProbes : BCS .long_ahead_done
+  REP #$20
+  LDA.b $0E : AND.w #$00FF : CMP.w #$0004 : BCS .long_body_row
+    LDA.b $22 : CLC : ADC.w #$0008 : STA.b $0C
+    BRA .long_query
+  .long_body_row
+    LDA.b $20 : CLC : ADC.w #$000B : STA.b $0A
+  .long_query
+  SEP #$20
+  JSR Horse_QueryTileAt
+  REP #$20 : JSR HorseLong_IsGap : SEP #$20
+  BCC .long_ahead_done
+  JSR HorseLong_ScanGap
+  .long_ahead_done
+  REP #$20
+  RTS
+  ; In: M8/X8, A = attribute of the edge point, $04 = its Tile16, $0E = edge
+  ; index. Out: M8/X8; A = $00 (gap with a valid jump: clear), $FF (gap, no
+  ; valid jump: block) or the attribute unchanged (not a gap). Clearing a
+  ; jumpable gap point lets the horse keep walking and turn to face the gap,
+  ; so CheckFenceJump's probes can reach it (the queue123 freeze class).
+  .gap_point
+  PHA
+  REP #$20 : JSR HorseLong_IsGap : SEP #$20
+  BCS +
+  PLA
+  RTS
+  + PLA
+  LDA.b $0E : LSR : STA.l Horse_JumpDir
+  JSR HorseLong_ScanGap : SEP #$30
+  LDA.b #$00 : BCS +
+  DEC
+  + RTS
+endif
   .buttons
   db $08,$04,$02,$01 ; north, south, west, east
   ; Includes four pixels of next-step lookahead (horse cardinal speed2.75px).
@@ -124,5 +177,209 @@ HorseGroundClearance_End:
 HorseFenceTile16s:
   dw $0078, $007B, $043A, $003B, $0267, $002C, $02D6, $0EF2, $0EF4
 HorseFenceTile16s_End:
+
+if !ENABLE_HORSE_LONG_JUMP == 1
+!Horse_LongJumpMaxTiles = 2
+!Horse_LongJumpMinFrames = $10
+!Horse_LongJumpMaxFrames = $30
+
+; Water-gap Tile16s Epona clears with a long jump (gap of 1..2 tiles).
+; Clones keep the original 8x8 chars, so water collision is unchanged and
+; Link on foot still meets deep water. D2 Tail Pond $2D x10/x11 y11-13:
+; $0F90 = clone of $02C5, $0F91 = clone of $02CE.
+HorseLongGapTile16s:
+  dw $0F90, $0F91
+HorseLongGapTile16s_End:
+
+; In: A16/X8, $04 = Tile16. Out: carry set if $04 is a long-gap Tile16. X clobbered.
+HorseLong_IsGap:
+{
+  LDX.b #$00
+  .loop
+  LDA.l HorseLongGapTile16s, X : CMP.b $04 : BEQ .hit
+  INX #2 : CPX.b #HorseLongGapTile16s_End-HorseLongGapTile16s : BCC .loop
+  CLC
+  RTS
+  .hit
+  SEC
+  RTS
+}
+
+; In: M8/X8, Horse_JumpDir. Probes CheckFenceJump's near then far point for a
+; gap Tile16, then scans it. Out: carry = valid jump; Horse_JumpEndX/Y set.
+HorseLong_TryProbes:
+{
+  LDA.b #$00 : JSR .probe : BCS .scan
+  LDA.b #$01 : JSR .probe : BCC .done
+  .scan
+  JSR HorseLong_ScanGap
+  .done
+  RTS
+
+  .probe
+  PHA
+  LDA.l Horse_JumpDir : ASL : ORA 1, S : ASL : TAX
+  REP #$20
+  LDA.l HorseForm_ProbeFence_dx_table, X : CLC : ADC.b $22 : STA.b $0C
+  LDA.l HorseForm_ProbeFence_dy_table, X : CLC : ADC.b $20 : STA.b $0A
+  SEP #$20
+  PLA
+  JSR Horse_QueryTileAt
+  REP #$20 : JSR HorseLong_IsGap : SEP #$20
+  RTS
+}
+
+; In: M8/X8, $0A/$0C = a point inside a gap Tile16, Horse_JumpDir (U,D,L,R).
+; Walks one Tile16 at a time to the first non-gap Tile16 (at most
+; !Horse_LongJumpMaxTiles more), then sets the landing with the fence-jump
+; conventions and checks bounds, reach and the landing footprint.
+; Out: carry = valid; Horse_JumpEndX/Y. Clobbers X/Y, $04, $0A, $0C.
+HorseLong_ScanGap:
+{
+  REP #$20
+  LDA.b $0C : AND.w #$FFF0 : STA.b $0C
+  LDA.b $0A : AND.w #$FFF0 : STA.b $0A
+  SEP #$20
+  LDY.b #!Horse_LongJumpMaxTiles
+  .step
+    LDA.l Horse_JumpDir : ASL : TAX
+    REP #$20
+    LDA.b $0C : CLC : ADC.l .step_x, X : STA.b $0C
+    LDA.b $0A : CLC : ADC.l .step_y, X : STA.b $0A
+    SEP #$20
+    JSR Horse_QueryTileAt
+    REP #$20 : JSR HorseLong_IsGap : SEP #$20
+    BCC .found_land
+    DEY : BNE .step
+  CLC
+  RTS
+
+  .found_land
+  ; $0A/$0C = origin of the first ground Tile16 past the gap.
+  LDA.l Horse_JumpDir : ASL : TAX
+  REP #$20
+  CPX.b #$04 : BCS .horizontal
+    LDA.b $22 : STA.l Horse_JumpEndX
+    LDA.b $0A
+    CPX.b #$02 : BNE + : SEC : SBC.w #$0004 : +   ; down: fence FY+12 rule
+    STA.l Horse_JumpEndY
+    BRA .bounds
+  .horizontal
+    LDA.b $0C : STA.l Horse_JumpEndX
+    LDA.b $20 : STA.l Horse_JumpEndY
+  .bounds
+  ; Same $400-quadrant/border rule as HorseForm_ComputeJumpEnd.
+  LDA.l Horse_JumpEndX : CMP.w #$0010 : BCC .invalid
+  EOR.b $22 : AND.w #$FC00 : BNE .invalid
+  LDA.l Horse_JumpEndY : CMP.w #$0010 : BCC .invalid
+  EOR.b $20 : AND.w #$FC00 : BNE .invalid
+  ; Reach: |dX| and |dY| must fit the 8-bit lerp multiplicand.
+  LDA.l Horse_JumpEndX : SEC : SBC.b $22 : BPL + : EOR.w #$FFFF : INC : +
+  CMP.w #$00F0 : BCS .invalid
+  LDA.l Horse_JumpEndY : SEC : SBC.b $20 : BPL + : EOR.w #$FFFF : INC : +
+  CMP.w #$00F0 : BCS .invalid
+  SEP #$20
+  JMP HorseForm_CheckLandingWalkable        ; carry = landing walkable
+
+  .invalid
+  SEP #$20
+  CLC
+  RTS
+
+  .step_x
+  dw $0000, $0000, $FFF0, $0010
+  .step_y
+  dw $FFF0, $0010, $0000, $0000
+}
+
+; In: M8/X8 from CheckFenceJump with Horse_JumpDir set and no fence ahead.
+; Out: carry = launch; Horse_JumpEndX/Y and Horse_JumpTimer (total frames) set.
+HorseLong_TryJump:
+{
+  JSR HorseLong_TryProbes : BCC .done
+  ; Frames = max(|dX|,|dY|)/2, clamped to 16..48 (fence jump speed).
+  REP #$20
+  LDA.l Horse_JumpEndX : SEC : SBC.b $22 : BPL + : EOR.w #$FFFF : INC : +
+  STA.b $06
+  LDA.l Horse_JumpEndY : SEC : SBC.b $20 : BPL + : EOR.w #$FFFF : INC : +
+  CMP.b $06 : BCS + : LDA.b $06 : +
+  LSR                                       ; about 2 px per frame
+  CMP.w #!Horse_LongJumpMinFrames : BCS + : LDA.w #!Horse_LongJumpMinFrames : +
+  CMP.w #!Horse_LongJumpMaxFrames : BCC + : LDA.w #!Horse_LongJumpMaxFrames : +
+  SEP #$20
+  STA.l Horse_JumpTimer
+  SEC
+  .done
+  RTS
+}
+
+; Long-jump flight. M8/X8. Horse_JumpTimer = N total frames (16..48).
+; Z = HorseJump_ZTable[step*16/N]; X/Y = Start + (End-Start)*(step+1)/N.
+HorseLong_JumpTick:
+{
+  LDA.b #$0F : TRB.b $F0 : TRB.b $F2
+  LDA.l Horse_JumpStep : CMP.l Horse_JumpTimer : BCS .land
+    REP #$20
+    AND.w #$00FF : ASL #4 : STA.l $004204   ; dividend = step*16
+    SEP #$20
+    LDA.l Horse_JumpTimer : STA.l $004206
+    NOP #8                                  ; 16-cycle divide
+    LDA.l $004214 : TAX
+    LDA.l HorseJump_ZTable, X : STA.l Horse_JumpZ
+
+    LDA.l Horse_JumpStep : INC : STA.b $0E  ; t = 1..N
+    REP #$20
+    LDA.l Horse_JumpStartX : STA.b $00
+    LDA.l Horse_JumpEndX   : STA.b $02
+    JSR HorseLong_Lerp
+    STA.b $22
+    LDA.l Horse_JumpStartY : STA.b $00
+    LDA.l Horse_JumpEndY   : STA.b $02
+    JSR HorseLong_Lerp
+    STA.b $20
+    SEP #$20
+
+    LDA.l Horse_JumpStep : INC : STA.l Horse_JumpStep
+    CMP.l Horse_JumpTimer : BCC .done
+
+  .land
+  REP #$20
+  LDA.l Horse_JumpEndX : STA.b $22
+  LDA.l Horse_JumpEndY : STA.b $20
+  SEP #$20
+  LDA.b #$00 : STA.l Horse_State : STA.l Horse_JumpZ : STA.l Horse_JumpStep
+  STA.l Horse_JumpTimer
+  LDA.b #$10 : STA.l Horse_JumpCooldown
+  LDA.b #$21 : STA.w $012E            ; SFX2.21 hoof landing thud
+  .done
+  RTS
+}
+
+; In: M16/X8, $00 = Start, $02 = End, $0E = t (8-bit), Horse_JumpTimer = N.
+; |End-Start| < $100. Out: M16, A = Start + (End-Start)*t/N.
+HorseLong_Lerp:
+{
+  LDA.b $02 : SEC : SBC.b $00 : BEQ .same
+  PHP                                 ; N flag = sign
+  BPL + : EOR.w #$FFFF : INC : +
+  SEP #$20
+  STA.l $004202
+  LDA.b $0E : STA.l $004203
+  NOP #4                              ; 8-cycle multiply
+  REP #$20
+  LDA.l $004216 : STA.l $004204
+  SEP #$20
+  LDA.l Horse_JumpTimer : STA.l $004206
+  NOP #8                              ; 16-cycle divide
+  REP #$20
+  LDA.l $004214
+  PLP : BPL + : EOR.w #$FFFF : INC : +
+  CLC : ADC.b $00
+  RTS
+  .same
+  LDA.b $00
+  RTS
+}
+endif
 assert pc() <= $53E800, "Horse grounded clearance exceeded its bounded bank53 slice"
 pullpc
