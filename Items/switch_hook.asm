@@ -65,7 +65,6 @@ pullpc
 !SwitchHookRise   = 16                ; Ages: z -1/frame for 16 frames
 !SwitchHookSwap   = !SwitchHookCling+!SwitchHookRise+1
 !SwitchHookLand   = !SwitchHookSwap+16
-!SwitchHookSfx    = $0F               ; SFX3: existing magical effect sound
 
 assert !SwitchHookMode < $0800, "Switch Hook exceeds its WRAM reservation"
 
@@ -384,7 +383,7 @@ SwitchHook_Beat:
   LDA.w !SwitchHookBeat : CMP.b #$FF : BEQ .finish  ; settle safety cap
   INC : STA.w !SwitchHookBeat
   CMP.b #!SwitchHookCling : BCC .cling
-  BEQ .sfx
+  BEQ .cling
   CMP.b #!SwitchHookSwap : BCC .rise
   BEQ .swap
   CMP.b #!SwitchHookLand+1 : BCC .fall
@@ -401,8 +400,6 @@ SwitchHook_Beat:
   STZ.w $037B                 ; Link left $13; its exit path will not clear it
   JSL SwitchHook_Clear
   PLY : PLB : CLC : RTL
-  .sfx
-  LDA.b #!SwitchHookSfx : STA.w $012F
   .cling
   PLY : PLB : SEC : RTL
   .rise
