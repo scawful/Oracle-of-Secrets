@@ -324,9 +324,13 @@ if !ENABLE_HORSE_PARK_ANYWHERE == 1
   JSL HorseForm_SaveOutdoorAnchor_Long
 endif
 
+if !ENABLE_HORSE_MOUNTED_BOW == 1
+  JSR HorseForm_SuppressMountedButtons
+else
   ; Suppress B-button sword swing and Y-button item press edges while mounted.
   LDA.b #$C0 : TRB.b $F4
   STZ.b $3C
+endif
 
   ; Refresh SP-3[9..15] + SP-7 if a palette reload reset SP-3 to uniform fill.
   REP #$20

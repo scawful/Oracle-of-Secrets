@@ -294,6 +294,9 @@ endif
 ; Park Epona where Link last dismounted outdoors (any OW area, not Ranch-only).
 ; Off by default on master; this stack enables it for A5 fold proof. WRAM-only.
 !ENABLE_HORSE_PARK_ANYWHERE         = 1
+; Bow-only Y use while Horse mask mounted (spawn offset + input gate).
+; Off by default on master; this stack enables it for A6 fold proof.
+!ENABLE_HORSE_MOUNTED_BOW           = 1
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
