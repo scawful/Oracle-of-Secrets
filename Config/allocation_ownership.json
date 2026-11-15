@@ -132,6 +132,11 @@
       "path": "Menu/menu_hud.asm",
       "sha256": "de44d97c8613b26a2c25d2d4b63831a3b09d2f3e7034649a36e7a181bc25b5dc"
     },
+    "shared:Menu/menu_map_travel.asm": {
+      "source_set": "shared",
+      "path": "Menu/menu_map_travel.asm",
+      "sha256": "062135b67cc5743af647b22422df3436260472623fc23816b26c0ae259aed7ce"
+    },
     "shared:Core/Cutscene/experiment.asm": {
       "source_set": "shared",
       "path": "Core/Cutscene/experiment.asm",
@@ -165,7 +170,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "5e281a896236ea5be2f12beab5a033af73c8781d388c733ac28f75de7343f240"
+      "sha256": "758a52cfdd3f4a83710aabe8cb5cf1f8e572933e64befb78321713bdc2432cd3"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -2512,6 +2517,33 @@
       "binding": {
         "source": "shared:Core/symbols.asm",
         "symbol": "Horse_Marker",
+        "base_block": true
+      }
+    },
+    {
+      "id": "menu_map_travel_pending",
+      "owner": "Map & Travel menu page pending action byte ($7E1EFE)",
+      "space": "wram",
+      "base": 8265470,
+      "size": 1,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_MENU_MAP_TRAVEL": 1
+      },
+      "lifetime": "One conditional transient WRAM byte after the horse tail ($7E1EFE < $7E1F00). Set by the Map & Travel page when Map or Travel closes the menu; consumed by Menu_Exit the same frame the menu closes.",
+      "reset": "MenuMapTravel_Init clears it when the page is drawn; MenuMapTravel_ExitAction clears it before acting.",
+      "save": "Volatile WRAM; not saved in SRAM.",
+      "provenance": [
+        "shared:Core/symbols.asm",
+        "shared:Menu/menu_map_travel.asm"
+      ],
+      "anchors": [
+        "MenuMapTravel_Pending:"
+      ],
+      "aliases": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "MenuMapTravel_Pending",
         "base_block": true
       }
     },

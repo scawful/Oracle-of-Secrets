@@ -104,6 +104,18 @@ assert pc() <= $7E1F00, "Horse transient state exceeds its bounded WRAM tail"
 base off
 endif
 
+; Map & Travel page: the action chosen on the page, run once by Menu_Exit.
+; Separate conditional owner after the horse tail ($7E1EFE < $7E1F00).
+if !ENABLE_MENU_MAP_TRAVEL == 1
+base $7E1EFE
+{
+MenuMapTravel_Pending:   skip 1 ; 0 none, 1 field map, 2 Soaring
+assert MenuMapTravel_Pending == $7E1EFE
+assert pc() <= $7E1F00, "Map & Travel pending byte exceeds its bounded WRAM tail"
+}
+base off
+endif
+
 ; Explicit bounded aliases for the reserved palette history; no consumer yet.
 SpecialOverworldPaletteHoleCache = $7E1E8C
 SpecialOverworldPaletteHoleCacheEnd = $7E1EA6

@@ -47,7 +47,11 @@ Menu_Equipment_Owned:
   TXA : INC #2 : BRA .done
 .song
   CMP.b #$12 : BCS .supplies
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  BRA .none                          ; songs live on the Map & Travel page
+else
   SEC : SBC.b #$0B                    ; song 1-6 < Ocarina progression
+endif
   CMP.l $7EF34C : BCS .none
   INC : BRA .done                    ; colored note variants 2-7
 .supplies
@@ -205,7 +209,9 @@ Menu_Equipment_Draw:
 .labels
   LDA.w .masks,X : STA.w $1000+menu_offset(9,6),X
   LDA.w .rings,X : STA.w $1000+menu_offset(13,6),X
+if !ENABLE_MENU_MAP_TRAVEL == 0
   LDA.w .songs,X : STA.w $1000+menu_offset(17,6),X
+endif
   DEX #2 : BPL .labels
 if !MENU_EQUIPMENT_SUPPLIES_VISIBLE == 1
   LDX.w #$000E

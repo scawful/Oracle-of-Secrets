@@ -605,6 +605,9 @@ Menu_Exit:
 if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
   JSL SpecialSoaring_Complete
 endif
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  JSL MenuMapTravel_ExitAction       ; Map/Travel request from the menu
+endif
   RTS
 }
 
