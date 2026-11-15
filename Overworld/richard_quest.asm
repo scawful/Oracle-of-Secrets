@@ -47,10 +47,13 @@
 !RichardMsg_Found    = $001B
 
 ; Indoor placement, room-local pixels (0-511) in !RichardShedRoom.
-!RichardIndoorLadyX  = $0180
-!RichardIndoorLadyY  = $0190
-!RichardIndoorDogX   = $0198
-!RichardIndoorDogY   = $01A8
+; Board option A (no room edit): lady in the empty pot slot above the door,
+; Richard beside her. Option B (two center pots removed) uses
+; lady $0178/$019C, Richard $0188/$01AC.
+!RichardIndoorLadyX  = $0178
+!RichardIndoorLadyY  = $01B4
+!RichardIndoorDogX   = $0166
+!RichardIndoorDogY   = $01BC
 
 ; ---------------------------------------------------------
 ; Data. Field spawn site: open design question (the village study may move
