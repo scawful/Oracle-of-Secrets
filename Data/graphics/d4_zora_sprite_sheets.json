@@ -85,7 +85,7 @@
     {
       "global_sheet": "0xEB",
       "source": "sky_overworld/gEB.txt",
-      "decoded_sha256": "0723eaf9cc504bf6b801dfda64434840b866517ea219fd638939dfe809a84ac9",
+      "decoded_sha256": "4b2030fd2de682aeada4a8c334b39064b721858654dd94a00bf21985f3525613",
       "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
       "why": "Selected Revision03 Sky material binding; page-local definitions preserve the shared dictionary; private composition."
     },
@@ -99,7 +99,7 @@
     {
       "global_sheet": "0xED",
       "source": "sky_overworld/gED.txt",
-      "decoded_sha256": "9f57d2e23ca162a177bd252dba500cbf7090188444b9f6f2b0acb2cec6e1c78e",
+      "decoded_sha256": "54af01ae50ea2e95a34b4061396f39495dab21108c563215ab33102eb02e4003",
       "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
       "why": "Sky port slot 3 (be8a E1): pass 2 cloud kit chars A/B copied 1:1 from be8a; proposal only."
     },
@@ -113,14 +113,14 @@
     {
       "global_sheet": "0xEF",
       "source": "sky_overworld/gEF.txt",
-      "decoded_sha256": "58ea1cf16f50c9c8c4c54eebd24d0a9e7e09a68ddb17fbcfcc3aee442c646782",
+      "decoded_sha256": "7c5a2500bdc84154cf236b76df49238f3c97ace6115d63e15e4b78a994fe6aa2",
       "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
       "why": "Sky port slot 5 (be8a E3): pack86 rim art; proposal only."
     },
     {
       "global_sheet": "0xF0",
       "source": "sky_overworld/gF0.txt",
-      "decoded_sha256": "df62b572240fcd59309a6c697e96e36076e4c890755de3cc29e225db46366541",
+      "decoded_sha256": "a4cab62705fa5edeac37ae986561324dde902df1c9e30db9ea532574db3f0dde",
       "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
       "why": "Selected Revision03 Sky material binding; page-local definitions preserve the shared dictionary; private composition."
     },
@@ -134,7 +134,7 @@
     {
       "global_sheet": "0xF2",
       "source": "sky_overworld/gF2.txt",
-      "decoded_sha256": "63f6683dc93febaa16057396ef4c57997217994389a6f12619595f563f1e51ae",
+      "decoded_sha256": "5a588cde1aab017a40835a837d92025b18726d32a07b79a2692c288c27115e2c",
       "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
       "why": "Sky port slot 1 (replaces 0x3B on the 7 rim maps $84-$87, $8D-$8F; $8C keeps 0x3B): copy of 0x3B with v11 Meadow rim chars in indices no Sky cell uses"
     },

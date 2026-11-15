@@ -228,6 +228,25 @@ class ExperimentalNativeBuildCliTest(unittest.TestCase):
         self.args.project_context = self.project
         self.args.experimental_page_tile16 = True
 
+    def test_managed_prepare_and_final_seal_forward_same_source_context(self):
+        contexts = {(host, 0x9C): 0x9C for host in C.compiler.resources.SKY_RESIDENT_HOSTS}
+        class ReachedPlanner(Exception):
+            pass
+        with mock.patch.object(C.compiler.resources, 'selected_sky_overlay_contexts', return_value=contexts), \
+             mock.patch.object(C.compiler.resources, 'plan_saved_native_terrain', side_effect=ReachedPlanner) as planner:
+            with self.assertRaises(ReachedPlanner):
+                C._preparation(self.fixture.source, self.fixture.exported, self.root,
+                               experimental_page_tile16=True)
+            self.assertEqual(planner.call_args.kwargs['overlay_asset_contexts'], contexts)
+            selected = C._overlay_contexts(self.fixture.exported, self.root)
+            for seal in (C.compiler.plan_native_compiled_seal, C.compiler.verify_native_compiled_output):
+                with self.subTest(seal=seal.__name__):
+                    with self.assertRaises(ReachedPlanner):
+                        seal(self.fixture.source, self.fixture.exported, self.fixture.source, {},
+                             graphics_root=self.root, experimental_page_tile16=True,
+                             semantic_readers=True, overlay_asset_contexts=selected)
+                    self.assertEqual(planner.call_args.kwargs['overlay_asset_contexts'], contexts)
+
     def test_real_experimental_export_flag_and_authenticated_constants(self):
         command = self.root / 'experimental z3ed'
         export = self.root / 'experimental.json'

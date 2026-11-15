@@ -12,7 +12,7 @@ LyraOverlay_StaleHost:
   LDA.b $11 : AND.w #$00FF : BEQ .no
   CMP.w #$0009 : BCS .no
   LDA.b $8A : CMP.w #$0087 : BEQ .host
-  CMP.w #$008D : BCC .no
+  CMP.w #$008C : BCC .no
   CMP.w #$0090 : BCS .no
 .host:
   CMP.l $7EC213 : BEQ .no

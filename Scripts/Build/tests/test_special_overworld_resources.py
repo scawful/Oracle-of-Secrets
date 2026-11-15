@@ -128,16 +128,16 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
         self.assertEqual(result, R.plan_saved_native_terrain(self.source, self.exported))
         self.assertEqual(hashlib.sha256(self.source).hexdigest(), before)
 
-    def sky_overlay_export(self, selected=0x9C):
+    def sky_overlay_export(self, selected=0x9C, host=0x87):
         image = bytearray(self.source)
         _, _, entries = R.native.read_native_directory(self.source)
-        image[R.native.pc(entries[410][0]) + 0x87] = 1
-        struct.pack_into('<H', image, R.native.pc(entries[5][0]) + 0x87 * 2,
+        image[R.native.pc(entries[410][0]) + host] = 1
+        struct.pack_into('<H', image, R.native.pc(entries[5][0]) + host * 2,
                          selected)
         legacy = {name: (address, width) for name, address, _, _, width
                   in R.native.CURRENT_TABLE_SPECS}
         address, width = legacy['overlay']
-        struct.pack_into('<H', image, R.native.pc(address) + 0x87 * width,
+        struct.pack_into('<H', image, R.native.pc(address) + host * width,
                          selected)
         for overlay in (0x9C, 0x9F):
             for name, family in (('map32_high', 20), ('map32_low', 21)):
@@ -208,6 +208,23 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
                          different['witness']['reconstructed_colors_sha256'])
         self.assertNotEqual(old['witness']['source_colors_sha256'],
                             different['witness']['source_colors_sha256'])
+
+    def test_explicit_nonresident_donor_requires_resolved_states(self):
+        exported = self.sky_overlay_export(host=0x8C)
+        self.assertFalse(next(a for a in exported['native_source']['gameplay_areas']
+                              if a['parent_map_id'] == 0x95)['resident_required'])
+        contexts = {(0x8C, 0x9C): 0x95}
+        result = R.plan_saved_native_terrain(self.source, exported,
+                                             overlay_asset_contexts=contexts)
+        host = next(a for a in result['areas'] if a['maps'] == [0x8C])
+        self.assertEqual({r['asset_source_map_id'] for r in host['overlay_remaps']
+                          if r['overlay_map_id'] == 0x9C}, {0x95})
+        self.assertFalse(any(a['maps'] == [0x95] for a in result['areas']))
+        missing = copy.deepcopy(exported['native_source'])
+        next(p for p in missing['pages'] if p['map_id'] == 0x95)['resolved_states'] = []
+        with self.assertRaisesRegex(ValueError, 'NATIVE_PHASES_INVALID'):
+            R.plan_saved_native_terrain(self.source, self.seal(missing),
+                                        overlay_asset_contexts=contexts)
 
     def test_public_overlay_context_uses_authenticated_different_donor(self):
         exported = self.sky_overlay_export()
@@ -334,6 +351,62 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
                 sheet_id=0xEB, source='sky.txt', flag='ENABLE_TEST_SKY',
                 decoded_sheet_sha256=R._sha(flat))])
         return root, value, raw
+
+    def sky_source_contract_fixture(self):
+        root, value, _ = self.bound_global()
+        with (root / 'Util/macros.asm').open('a') as out:
+            out.write('!ENABLE_SKY_OVERLAY_SOURCE_PROFILE = 1\n')
+        value['directory_revision'] = 5
+        pages = {p['map_id']: p for p in value['pages']}
+        for host in R.SKY_RESIDENT_HOSTS:
+            pages[host]['source_profile']['subscreen_overlay'] = 0x9C
+            value['gameplay_areas'].append(dict(maps=[host], resident_required=True))
+        pages[0x9C]['source_profile']['appearance_flags'] = 3
+        pages[0x9C]['resolved_states'] = [dict(state=i) for i in range(3)]
+        return root, value
+
+    def test_source_overlay_flag_absent_off_and_precedence_preserve_default(self):
+        root, value, _ = self.bound_global()
+        self.assertIsNone(R.selected_sky_overlay_contexts(value, None))
+        self.assertIsNone(R.selected_sky_overlay_contexts(value, root))
+        with (root / 'Util/macros.asm').open('a') as out:
+            out.write('!ENABLE_SKY_OVERLAY_SOURCE_PROFILE = 1\n')
+        with (root / 'Config/feature_flags.asm').open('a') as out:
+            out.write('!ENABLE_SKY_OVERLAY_SOURCE_PROFILE = 0\n')
+        self.assertIsNone(R.selected_sky_overlay_contexts(value, root))
+
+    def test_source_overlay_flag_on_selects_only_saved_calm_page(self):
+        root, value = self.sky_source_contract_fixture()
+        expected = {(h, 0x9C): 0x9C for h in R.SKY_RESIDENT_HOSTS}
+        self.assertEqual(R.selected_sky_overlay_contexts(value, root), expected)
+        self.assertNotIn((0x87, 0x9F), expected)
+        self.assertNotIn((0x8B, 0x9C), expected)
+
+    def test_source_overlay_flag_refuses_wrong_host_unresolved_and_bad_auth(self):
+        root, value = self.sky_source_contract_fixture()
+        for change, reason in (('host', 'HOST_SELECTION'), ('states', 'PROFILE_UNRESOLVED'),
+                               ('revision', 'BINDING_REQUIRED'), ('hash', 'SPEC_MISMATCH')):
+            with self.subTest(change=change):
+                bad = copy.deepcopy(value)
+                if change == 'host':
+                    next(p for p in bad['pages'] if p['map_id'] == 0x8C)['source_profile']['subscreen_overlay'] = 0x95
+                elif change == 'states':
+                    next(p for p in bad['pages'] if p['map_id'] == 0x9C)['resolved_states'] = []
+                elif change == 'revision':
+                    bad['directory_revision'] = 4
+                else:
+                    bad['graphics_source']['spec_sha1'] = '0' * 40
+                with self.assertRaisesRegex(ValueError, reason):
+                    R.selected_sky_overlay_contexts(bad, root)
+
+    def test_source_overlay_flag_rejects_nonliteral_conditional_and_nonboolean(self):
+        root, value = self.sky_source_contract_fixture()
+        for assignment in ('?= 1', '= thing', '= 2', '= -1'):
+            with self.subTest(assignment=assignment):
+                (root / 'Config/feature_flags.asm').write_text(
+                    '!ENABLE_TEST_SKY = 1\n!ENABLE_SKY_OVERLAY_SOURCE_PROFILE ' + assignment + '\n')
+                with self.assertRaisesRegex(ValueError, 'SKY_SOURCE_FLAG_'):
+                    R.selected_sky_overlay_contexts(value, root)
 
     def test_bound_eb_source_authenticates_both_digest_representations(self):
         root, value, raw = self.bound_global()

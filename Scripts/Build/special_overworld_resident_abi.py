@@ -12,7 +12,7 @@ import struct
 
 from special_overworld_resources import (
     ANIMATED_SLOTS, PLAN_SCHEMA, EXPERIMENTAL_PLAN_SCHEMA,
-    PAGE_TILE16_RUNTIME_REQUIREMENTS, STATIC_SLOTS,
+    PAGE_TILE16_RUNTIME_REQUIREMENTS, STATIC_SLOTS, SKY_RESIDENT_HOSTS,
     _digest, _json_bytes, _payload, _require, _sha,
 )
 
@@ -204,13 +204,26 @@ def plan_native_resident_abi(resident_plan, *, tile16_count,
             animation_wram=[0x7EA680, 0x7EAA80, 0x7EAE80],
             animation_vram_word_address=0x3C00, native_animation_upload_byte_count=0x400))
         page_rows = {(page, None): {} for page in area['maps']}
+        asset_contexts = {}
         for remap in area['remaps'] + area.get('overlay_remaps', []):
             overlay = remap.get('overlay_map_id')
             extra = {'overlay_map_id'} if overlay is not None else set()
             if extra:
-                _require(remap.get('map_id') in (0x87, 0x8D, 0x8E, 0x8F)
+                _require(remap.get('map_id') in SKY_RESIDENT_HOSTS
                          and overlay in (0x9C, 0x9F), 'NATIVE_OVERLAY_CONTEXT_INVALID')
                 page_rows.setdefault((remap['map_id'], overlay), {})
+            if 'asset_source_map_id' in remap:
+                asset_page = remap['asset_source_map_id']
+                _require(overlay is not None and type(asset_page) is int
+                         and FIRST <= asset_page < end,
+                         'NATIVE_OVERLAY_ASSET_CONTEXT_INVALID')
+                extra.add('asset_source_map_id')
+            else:
+                asset_page = remap['map_id']
+            if overlay is not None:
+                key = (remap['map_id'], overlay)
+                _require(asset_contexts.setdefault(key, asset_page) == asset_page,
+                         'NATIVE_OVERLAY_ASSET_CONTEXT_INCONSISTENT')
             _require(type(remap) is dict and set(remap) == {
                 'map_id', 'tile16_id', 'quadrant', 'source_word', 'target_word'} | extra,
                 'NATIVE_REMAP_INVALID')
@@ -262,6 +275,8 @@ def plan_native_resident_abi(resident_plan, *, tile16_count,
                 destination[-1]['shared_display_rows'] = True
             if overlay is not None:
                 destination[-1]['overlay_map_id'] = overlay
+                if asset_contexts[page, overlay] != page:
+                    destination[-1]['asset_source_map_id'] = asset_contexts[page, overlay]
     pages.sort(key=lambda row: row['map_id'])
     counts = {role: sum(row['byte_count'] for row in blobs if row['role'] == role)
               for role in ('page_index', 'page_words', 'static_chr', 'animation', 'palette')}
@@ -373,10 +388,14 @@ def validate_native_resident_abi(native_plan, *, experimental_page_tile16=False)
              'NATIVE_OVERLAY_CONTEXT_INVALID')
     contexts = [(row.get('map_id'), row.get('overlay_map_id')) for row in overlay_pages]
     _require(contexts == sorted(set(contexts)) and all(host in selected and
-             host in (0x87, 0x8D, 0x8E, 0x8F) and overlay in (0x9C, 0x9F)
+             host in SKY_RESIDENT_HOSTS and overlay in (0x9C, 0x9F)
              for host, overlay in contexts), 'NATIVE_OVERLAY_CONTEXT_INVALID')
     for page in pages + overlay_pages:
         overlay = page.get('overlay_map_id')
+        if 'asset_source_map_id' in page:
+            _require(overlay is not None and type(page['asset_source_map_id']) is int
+                     and FIRST <= page['asset_source_map_id'] < native_plan['end_map'],
+                     'NATIVE_OVERLAY_ASSET_CONTEXT_INVALID')
         context = 'Page' if overlay is None else f'Overlay{overlay:02X}'
         index, words = (by_label.get(page.get(key)) for key in ('index_label', 'words_label'))
         count, blocks, area = (page.get(key) for key in ('row_count', 'block_count', 'area_index'))

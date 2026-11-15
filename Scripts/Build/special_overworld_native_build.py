@@ -141,7 +141,8 @@ def _code_reseal(source, capacity, bank, entries, replacement, *, revision=4):
 
 def prepare_native_compilation(source, exported, *, data_pc, capacity,
                                preimage, reader_code_replacement=None,
-                               graphics_root=None, experimental_page_tile16=False):
+                               graphics_root=None, experimental_page_tile16=False,
+                               overlay_asset_contexts=None):
     """Return pure compilation inputs and preimage-bound writes, not a ROM.
 
     ``data_pc/capacity`` name the caller-owned current resident reservation;
@@ -196,7 +197,8 @@ def prepare_native_compilation(source, exported, *, data_pc, capacity,
     # This validates fresh export identity/profiles/topology/resolved bytes;
     # the retained packer and emitter own all byte formats and bank placement.
     plan = resources.plan_saved_native_terrain(source, exported,
-        graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16)
+        graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16,
+        overlay_asset_contexts=overlay_asset_contexts)
     abi = resident.plan_native_resident_abi(plan, tile16_count=entries[400][1],
         experimental_page_tile16=experimental_page_tile16)
     emission = resident.emit_native_resident_abi(abi, data_pc=data_pc,
@@ -410,7 +412,8 @@ def _semantic_compiled_readers(source, compiled, entries, symbols, protected):
 
 def plan_native_compiled_seal(source, exported, compiled, symbols, *,
                               allow_stale_directory=False, graphics_root=None,
-                              experimental_page_tile16=False, semantic_readers=False):
+                              experimental_page_tile16=False, semantic_readers=False,
+                              overlay_asset_contexts=None):
     """Validate compilation and return directory bytes for source reassembly.
 
     Inputs are immutable ROM bytes, a fresh source export and WLA label names
@@ -435,7 +438,8 @@ def plan_native_compiled_seal(source, exported, compiled, symbols, *,
     prep = prepare_native_compilation(source, exported,
         data_pc=data_pc, capacity=data_size,
         preimage=source[data_pc:data_pc + data_size],
-        graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16)
+        graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16,
+        overlay_asset_contexts=overlay_asset_contexts)
     capacity, bank, entries = native.read_native_directory(
         source, experimental_page_tile16=experimental_page_tile16)
     revision = struct.unpack_from('<H', source, native.DIRECTORY_PC + 8)[0]
@@ -592,11 +596,11 @@ def plan_revision4_compiled_seal(source, exported, compiled, symbols, *,
 
 def verify_native_compiled_output(source, exported, compiled, symbols, *,
                                   graphics_root=None, experimental_page_tile16=False,
-                                  semantic_readers=False):
+                                  semantic_readers=False, overlay_asset_contexts=None):
     """Strict final composition; explicit experimental source admission only."""
     return plan_native_compiled_seal(source, exported, compiled, symbols,
         graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16,
-        semantic_readers=semantic_readers)
+        semantic_readers=semantic_readers, overlay_asset_contexts=overlay_asset_contexts)
 
 
 def verify_revision4_compiled_output(source, exported, compiled, symbols, *,

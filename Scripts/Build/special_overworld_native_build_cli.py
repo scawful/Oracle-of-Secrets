@@ -106,7 +106,13 @@ def _preparation(source, exported, graphics_root=None, *, experimental_page_tile
         source, experimental_page_tile16=experimental_page_tile16)
     return compiler.prepare_native_compilation(source, exported,
         data_pc=first, capacity=size, preimage=source[first:first + size],
-        graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16)
+        graphics_root=graphics_root, experimental_page_tile16=experimental_page_tile16,
+        overlay_asset_contexts=_overlay_contexts(exported, graphics_root))
+
+
+def _overlay_contexts(exported, graphics_root):
+    return compiler.resources.selected_sky_overlay_contexts(
+        exported['native_source'], graphics_root)
 
 
 def _constants(source, prepared, *, experimental_page_tile16=False):
@@ -200,7 +206,8 @@ def run_native_build_stage(args, source):
             result = compiler.plan_native_compiled_seal(
                 source, exported, compiled, symbols, allow_stale_directory=True,
                 graphics_root=root, experimental_page_tile16=experimental,
-                semantic_readers=experimental)
+                semantic_readers=experimental,
+                overlay_asset_contexts=_overlay_contexts(exported, root))
             prepared = _preparation(source, exported, root, experimental_page_tile16=experimental)
             data = prepared['data_asm']
             if result['needed_reassembly']:
@@ -216,7 +223,8 @@ def run_native_build_stage(args, source):
         else:
             compiler.verify_native_compiled_output(source, exported, compiled, symbols,
                 graphics_root=root, experimental_page_tile16=experimental,
-                semantic_readers=experimental)
+                semantic_readers=experimental,
+                overlay_asset_contexts=_overlay_contexts(exported, root))
         native.require(args.rom.read_bytes() == source,
                        'Saved native ROM changed during assembly')
         return 0

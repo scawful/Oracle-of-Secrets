@@ -30,6 +30,8 @@ PAGE_TILE16_RUNTIME_REQUIREMENTS = (
     'mutable_and_fixed_tile_id_semantics_and_closure',
     'page_context_for_overlay_transition_and_refresh_readers',
 )
+SKY_RESIDENT_HOSTS = (0x87, 0x8C, 0x8D, 0x8E, 0x8F)
+SKY_OVERLAY_SOURCE_FLAG = 'ENABLE_SKY_OVERLAY_SOURCE_PROFILE'
 STATIC_SLOTS = tuple(range(448)) + tuple(range(480, 512))
 ANIMATED_SLOTS = tuple(range(448, 480))
 UNKNOWNS = (
@@ -165,6 +167,51 @@ def _graphics_sources(value, graphics_root):
     _require(set(provenance) == {'spec', 'spec_sha1', 'sheets'}
              and provenance.get('sheets') == expected, 'GRAPHICS_SOURCE_ROWS_MISMATCH')
     return authenticated
+
+
+def selected_sky_overlay_contexts(value, graphics_root):
+    """Read the default-off source contract; never infer ownership from art.
+
+    Normal Yaze Save retains the source flags and native profile. No extra
+    project key or parallel source registry participates in this selection.
+    The retained planner authenticates each selected saved source page again.
+    """
+    if graphics_root is None:
+        return None
+    root = Path(graphics_root).resolve(strict=True)
+    enabled = 0
+    for name in ('Util/macros.asm', 'Config/module_flags.asm', 'Config/feature_flags.asm'):
+        path = root / name
+        if not path.exists():
+            continue
+        _require(path.resolve(strict=True).is_relative_to(root), 'SKY_SOURCE_FLAG_PATH_INVALID')
+        for line in path.read_text().splitlines():
+            match = re.match(r'^\s*!' + SKY_OVERLAY_SOURCE_FLAG + r'\b(.*)$', line.split(';', 1)[0])
+            if not match:
+                continue
+            assignment = match[1].strip()
+            _require(assignment.startswith('='), 'SKY_SOURCE_FLAG_ASSIGNMENT_INVALID')
+            literal = assignment[1:].strip()
+            _require(re.fullmatch(r'(?:\$[0-9a-fA-F]{1,8}|[0-9]{1,8})', literal) is not None,
+                     'SKY_SOURCE_FLAG_VALUE_INVALID')
+            enabled = int(literal[1:], 16) if literal.startswith('$') else int(literal)
+            _require(enabled in (0, 1), 'SKY_SOURCE_FLAG_VALUE_INVALID')
+    if not enabled:
+        return None
+    _require(value.get('directory_revision') == 5 and 'graphics_source' in value,
+             'SKY_SOURCE_PROFILE_BINDING_REQUIRED')
+    _graphics_sources(value, root)
+    pages = {page['map_id']: page for page in value['pages']}
+    resident = {page for area in value['gameplay_areas'] if area['resident_required']
+                for page in area['maps']}
+    _require(all(host in resident and host in pages
+                 and pages[host]['source_profile']['subscreen_overlay'] == 0x9C
+                 for host in SKY_RESIDENT_HOSTS), 'SKY_SOURCE_HOST_SELECTION_MISMATCH')
+    donor = pages.get(0x9C)
+    _require(donor is not None and donor['source_profile']['appearance_flags'] & 2
+             and [state.get('state') for state in donor.get('resolved_states', [])] == [0, 1, 2],
+             'SKY_SOURCE_PROFILE_UNRESOLVED')
+    return {(host, 0x9C): 0x9C for host in SKY_RESIDENT_HOSTS}
 
 
 def _source_sheets(source, authenticated=None):
@@ -486,7 +533,7 @@ def _sky_overlay_closure(source, value, tiles, areas, *, experimental_page_tile1
     selects the same picture. Refuse disagreement before packing resources.
     """
     hosts = sorted({page for area in areas if area['resident_required']
-                    for page in area['maps'] if page in (0x87, 0x8D, 0x8E, 0x8F)})
+                    for page in area['maps'] if page in SKY_RESIDENT_HOSTS})
     conditional, overlays_by_host = {}, {}
     if not hosts:
         return conditional, overlays_by_host
@@ -539,6 +586,18 @@ def plan_saved_native_terrain(source, exported, *, graphics_root=None,
     read_sheet, sheets = _source_sheets(source, authenticated)
     assets = {}
     required = {page for area in areas if area['resident_required'] for page in area['maps']}
+    _require(overlay_asset_contexts is None or type(overlay_asset_contexts) is dict,
+             'OVERLAY_ASSET_CONTEXT_INVALID')
+    for pair, source_page in (overlay_asset_contexts or {}).items():
+        _require(type(pair) is tuple and len(pair) == 2
+                 and all(type(v) is int for v in pair)
+                 and type(source_page) is int,
+                 'OVERLAY_ASSET_CONTEXT_INVALID')
+        _require(128 <= source_page < value['materialized_map_count'],
+                 'OVERLAY_ASSET_CONTEXT_UNBOUND')
+        # A selected donor needs the same authenticated three states as a
+        # resident page. It does not become a resident gameplay area.
+        required.add(source_page)
     for page in value['pages']:
         if page['map_id'] not in required:
             continue

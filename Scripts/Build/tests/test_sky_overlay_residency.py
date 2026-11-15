@@ -22,7 +22,7 @@ class SkyOverlayResidencyTest(unittest.TestCase):
     def build(self, transition=False, docks=False):
         tables = {f.name: f.snes for f in R.N.current_table_layout(R.N.TABLE_BASE)}
         updates = []
-        for page in (0x87, 0x8D, 0x8E, 0x8F):
+        for page in (0x87, 0x8C, 0x8D, 0x8E, 0x8F):
             updates += [(tables['parent'] + page, bytes([page])),
                         (tables['area_size'] + page, b'\0')]
             record = (0x4E9400).to_bytes(3, 'little') + (0x4E9500).to_bytes(3, 'little') + bytes([0, 1])
@@ -130,7 +130,7 @@ SpecialBgHorizOffsetAdjustment:
         for host, picture, indoors, expected in (
             (0x87, 0x9C, 0, 0x09C0), (0x8D, 0x9C, 0, 0x09C0),
             (0x8E, 0x9F, 0, 0x11C1), (0x8F, 0x9C, 0, 0x09C0),
-            (0x8C, 0x9C, 0, 0x1DC2), (0x8D, 0x96, 0, 0x1DC2),
+            (0x8C, 0x9C, 0, 0x09C0), (0x8B, 0x9C, 0, 0x1DC2), (0x8D, 0x96, 0, 0x1DC2),
             (0x8D, 0x9C, 1, 0x1DC2), (0xC0, 0x9C, 0, 0x1DC2)):
             ram = bytearray(65536)
             word(ram, 0x8A, picture); word(ram, 0xC213, host)
@@ -146,7 +146,7 @@ SpecialBgHorizOffsetAdjustment:
 
     def test_finish_transition_refreshes_same_picture_once_and_preserves_camera(self):
         a = self.build(transition=True)
-        for host in (0x87, 0x8D, 0x8E, 0x8F):
+        for host in (0x87, 0x8C, 0x8D, 0x8E, 0x8F):
             ram = bytearray(65536)
             ram[0x10] = 9; ram[0x11] = 8; ram[0x8C] = 0x9C; ram[0x69C] = 1
             word(ram, 0x8A, host); word(ram, 0xC213, 0x8D if host == 0x87 else 0x87)
@@ -228,13 +228,14 @@ SpecialBgHorizOffsetAdjustment:
     def test_special_exits_and_unselected_hosts_keep_original_path(self):
         a = self.build(transition=True)
         for host, exit_room, rain in ((0x87, 0x180, 0), (0x8D, 0x181, 1),
-            (0x8E, 0x182, 0), (0x8F, 0x189, 1), (0x8C, 0, 0)):
+            (0x8E, 0x182, 0), (0x8F, 0x189, 1), (0x8B, 0, 0)):
             ram = bytearray(65536); ram[0x10] = 9; ram[0x11] = 8
             word(ram, 0x8A, host); word(ram, 0xA0, exit_room); ram[0xE00E] = rain
             _, out, _ = a.call('NativeFinalizeCaller', p=0x30, db=0, d=0, ram=ram)
             self.assertEqual(out[0xF02], 0); self.assertEqual(out[0xF00], 1)
         for host, rain, carry in ((0x87, 0, 0), (0x8D, 0, 0), (0x8E, 1, 0),
-                                   (0x8F, 0, 0), (0x8C, 0, 1), (0x8C, 1, 0)):
+                                   (0x8F, 0, 0), (0x8C, 0, 0), (0x8C, 1, 0),
+                                   (0x8B, 0, 1), (0x8B, 1, 0)):
             ram = bytearray(65536); word(ram, 0x8A, host); ram[0xE00E] = rain
             r, _, _ = a.call('Oracle_LyraOverlay_UseTablePath', p=0, db=0, d=0, ram=ram)
             self.assertEqual(r['registers']['p'] & 1, carry)

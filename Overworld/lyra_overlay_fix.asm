@@ -24,7 +24,7 @@
 ;         $80-$9F  only while Song of Storms rain ($7EE00E != 0) is active and
 ;                  the exit room is none of $0180/$0181/$0182/$0189 (their
 ;                  mist, bridge, triforce and waterfall flows stay as they are)
-;         $87/$8D-$8F ordinary table clouds with ENABLE_SKY_OVERWORLD_ROUTE;
+;         $87/$8C-$8F ordinary table clouds with ENABLE_SKY_OVERWORLD_ROUTE;
 ;                  the same four exit-room exceptions retain precedence.
 ;       Other Sky without rain and areas >= $C0 keep the special-area path.
 ;
@@ -64,7 +64,7 @@ if !ENABLE_SKY_OVERWORLD_ROUTE == 1
   ; The selected tower approach has ordinary clouds even without Storms.
   ; Keep the special exit-room pictures ahead of the area-table selection.
   LDA.b $8A : CMP.w #$0087 : BEQ .sky_host
-  CMP.w #$008D : BCC .weather
+  CMP.w #$008C : BCC .weather
   CMP.w #$0090 : BCS .weather
   .sky_host
   LDA.b $A0

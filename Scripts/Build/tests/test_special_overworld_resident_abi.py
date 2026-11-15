@@ -75,6 +75,26 @@ class ResidentAbiTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'QUADRANTS_INVALID'):
             A.plan_native_resident_abi(broken, tile16_count=4096)
 
+    def test_landing_overlay_donor_provenance_survives_abi_and_refuses_mixed_rows(self):
+        fixture = F.SavedNativeTerrainResourcesTest()
+        fixture.setUp()
+        exported = fixture.sky_overlay_export(host=0x8C)
+        plan = R.plan_saved_native_terrain(fixture.source, exported,
+                                           overlay_asset_contexts={(0x8C, 0x9C): 0x95})
+        abi = A.plan_native_resident_abi(plan, tile16_count=4096)
+        A.validate_native_resident_abi(abi)
+        self.assertEqual([(r['map_id'], r['overlay_map_id']) for r in abi['overlay_pages']],
+                         [(0x8C, 0x9C), (0x8C, 0x9F)])
+        self.assertEqual(abi['overlay_pages'][0]['asset_source_map_id'], 0x95)
+        self.assertNotIn('asset_source_map_id', abi['overlay_pages'][1])
+        for value in (0x77, True, None, 0x96):
+            broken = copy.deepcopy(plan)
+            rows = next(a for a in broken['areas'] if a['maps'] == [0x8C])['overlay_remaps']
+            rows[0]['asset_source_map_id'] = value
+            self.reseal(broken, 'plan_sha256')
+            with self.assertRaisesRegex(ValueError, 'NATIVE_OVERLAY_ASSET_CONTEXT_'):
+                A.plan_native_resident_abi(broken, tile16_count=4096)
+
     def test_both_capacities_keep_physical_page_lookup_and_sparse_fallback(self):
         for capacity in (160, 192):
             with self.subTest(capacity=capacity):

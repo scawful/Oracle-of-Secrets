@@ -46,6 +46,8 @@ endif
 ; Selected Sky map collision and tower entrance recognition. Terrain and paired
 ; entrance/exit data must be qualified separately before activating this route.
 !ENABLE_SKY_OVERWORLD_ROUTE         = 0
+; Private native Sky calm overlay uses saved page9C graphics/palette; rain stays host.
+!ENABLE_SKY_OVERLAY_SOURCE_PROFILE  = 0
 ; Private D4 room-scoped actor/art prototype; no default behavior change.
 !ENABLE_D4_ZORA_REDESIGN            = 1
 !ENABLE_D4_WATER_CONTROLS           = 1
