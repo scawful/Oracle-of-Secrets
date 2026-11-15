@@ -216,22 +216,23 @@ def _source_sheets(source, authenticated=None):
 
 
 def _plan_area(area, page_tiles, assets, definitions, read_sheet, conditional_tiles=None,
-               page_definitions=None, overlay_tiles=None):
+               page_definitions=None, overlay_tiles=None, overlay_asset_contexts=None):
     demands, references, claims = {}, [], {}
     for map_id in area['maps']:
-        data = assets[map_id, 0]
-        palette = data['palette']['words']
         tiles = set(page_tiles[map_id])
         if conditional_tiles is not None:
             tiles.update(conditional_tiles.get(map_id, ()))
         contexts = [(None, tiles)] + sorted((overlay_tiles or {}).get(map_id, {}).items())
         for overlay, context_tiles in contexts:
+            source_page = (overlay_asset_contexts or {}).get((map_id, overlay), map_id)
+            data = assets[source_page, 0]
+            palette = data['palette']['words']
             for tile in sorted(context_tiles):
                 words = native.effective_tile16_words(
                     definitions, page_definitions or {}, map_id if overlay is None else overlay, tile)
                 for quadrant, word in enumerate(words):
                     references.append((map_id, overlay, tile, quadrant, word))
-                    key = (map_id, word)
+                    key = (map_id, source_page, word)
                     if key in demands:
                         continue
                     char, bank = word & 1023, (word >> 10) & 7
@@ -314,7 +315,8 @@ def _plan_area(area, page_tiles, assets, definitions, read_sheet, conditional_ti
     source_colors, reconstructed = hashlib.sha256(), hashlib.sha256()
     comparisons = 0
     for map_id, overlay, tile, quadrant, word in references:
-        key = (map_id, word)
+        source_page = (overlay_asset_contexts or {}).get((map_id, overlay), map_id)
+        key = (map_id, source_page, word)
         bank, patterns, pixels = encoded[key]
         char = animated_ids[patterns] if demands[key]['animated'] else static_ids[patterns[0]]
         target_word = (word & 0xE000) | (bank << 10) | char
@@ -324,6 +326,8 @@ def _plan_area(area, page_tiles, assets, definitions, read_sheet, conditional_ti
             result['remaps'].append(row)
         else:
             row['overlay_map_id'] = overlay
+            if source_page != map_id:
+                row['asset_source_map_id'] = source_page
             result.setdefault('overlay_remaps', []).append(row)
         for original, frame in zip(demands[key]['colors'], pixels):
             restored = tuple(None if value == 0 else palettes[bank - 2][value - 1] for value in frame)
@@ -517,7 +521,7 @@ def _sky_overlay_closure(source, value, tiles, areas, *, experimental_page_tile1
 
 
 def plan_saved_native_terrain(source, exported, *, graphics_root=None,
-                              experimental_page_tile16=False):
+                              experimental_page_tile16=False, overlay_asset_contexts=None):
     """Reuse the retained packer with saved-ROM pages, never a terrain sidecar.
 
     The caller must obtain the export by running z3ed on this exact saved ROM.
@@ -593,12 +597,26 @@ def plan_saved_native_terrain(source, exported, *, graphics_root=None,
                      'BG_PHASE_VARIATION_UNSUPPORTED')
     conditional_tiles, overlay_tiles = _sky_overlay_closure(
         source, value, tiles, areas, experimental_page_tile16=experimental_page_tile16)
+    # Explicit preparation-only source contexts. An absent selection retains
+    # the native host loader's CHR/palette interpretation exactly. This does
+    # not select a donor or grant a runtime/publication path on its own.
+    _require(overlay_asset_contexts is None or type(overlay_asset_contexts) is dict,
+             'OVERLAY_ASSET_CONTEXT_INVALID')
+    for pair, source_page in (overlay_asset_contexts or {}).items():
+        _require(type(pair) is tuple and len(pair) == 2
+                 and all(type(v) is int for v in pair)
+                 and type(source_page) is int,
+                 'OVERLAY_ASSET_CONTEXT_INVALID')
+        host, overlay = pair
+        _require(overlay in overlay_tiles.get(host, {})
+                 and (source_page, 0) in assets,
+                 'OVERLAY_ASSET_CONTEXT_UNBOUND')
     _require(all(0 <= tile < len(definitions) // 8
                  for values in conditional_tiles.values() for tile in values),
              'SKY_OVERLAY_TILE_INVALID')
     planned = [_plan_area(area, tiles, assets, definitions, read_sheet,
                           conditional_tiles=conditional_tiles, page_definitions=page_definitions,
-                          overlay_tiles=overlay_tiles)
+                          overlay_tiles=overlay_tiles, overlay_asset_contexts=overlay_asset_contexts)
                for area in areas if area['resident_required']]
     result = dict(schema=PLAN_SCHEMA, source_rom_sha256=_sha(source),
         materialized_map_count=value['materialized_map_count'],

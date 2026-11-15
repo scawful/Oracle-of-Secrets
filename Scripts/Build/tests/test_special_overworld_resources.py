@@ -169,6 +169,84 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
                 self.assertFalse(plan['full_residency_ready'])
                 self.assertEqual(self.source, original)
 
+    def test_overlay_same_word_uses_explicit_source_chr_and_palette(self):
+        area = dict(parent_map_id=0x87, maps=[0x87], size='small')
+        word = (2 << 10) | 64
+        definitions = struct.pack('<4H', *([word] * 4)) * 4096
+        host_palette = [0] * 256
+        donor_palette = [0] * 256
+        host_palette[33] = 0x001F
+        donor_palette[33:35] = [0x03E0, 0x7C00]
+        assets = {
+            (0x87, 0): dict(palette={'words': host_palette},
+                           slots=[{'sheet_id': 0}] * 8),
+            (0x9C, 0): dict(palette={'words': donor_palette},
+                           slots=[{'sheet_id': 1}] * 8),
+        }
+        def sheet(index):
+            pixels = bytes([1] * 64) if index == 0 else bytes([1, 2] * 32)
+            return b'', [pixels] * 64
+        args = (area, {0x87: [0]}, assets, definitions, sheet)
+        overlays = {0x87: {0x9C: {0}}}
+        old = R._plan_area(*args, overlay_tiles=overlays)
+        same = R._plan_area(*args, overlay_tiles=overlays,
+                            overlay_asset_contexts={(0x87, 0x9C): 0x87})
+        self.assertEqual(old, same)
+        different = R._plan_area(*args, overlay_tiles=overlays,
+                                 overlay_asset_contexts={(0x87, 0x9C): 0x9C})
+        self.assertTrue(different['terrain_plan_ready'])
+        self.assertEqual(old['static_pattern_count'], 1)
+        self.assertEqual(different['static_pattern_count'], 2)
+        self.assertEqual(different['animated_pattern_count'], 0)
+        self.assertEqual(len(different['remaps']), 4)
+        self.assertEqual(len(different['overlay_remaps']), 4)
+        self.assertNotEqual(different['remaps'][0]['target_word'],
+                            different['overlay_remaps'][0]['target_word'])
+        self.assertEqual(different['overlay_remaps'][0]['asset_source_map_id'], 0x9C)
+        self.assertEqual(different['witness']['pixel_comparisons'], 512)
+        self.assertEqual(different['witness']['source_colors_sha256'],
+                         different['witness']['reconstructed_colors_sha256'])
+        self.assertNotEqual(old['witness']['source_colors_sha256'],
+                            different['witness']['source_colors_sha256'])
+
+    def test_public_overlay_context_uses_authenticated_different_donor(self):
+        exported = self.sky_overlay_export()
+        before = self.source
+        baseline = R.plan_saved_native_terrain(self.source, exported)
+        # B1's real synthetic ROM palette already differs at the used entry.
+        # The public path validates/reconstructs that palette from the export.
+        selected = R.plan_saved_native_terrain(
+            self.source, exported, overlay_asset_contexts={(0x87, 0x9C): 0xB1})
+        host = next(a for a in selected['areas'] if a['maps'] == [0x87])
+        old = next(a for a in baseline['areas'] if a['maps'] == [0x87])
+        self.assertTrue(selected['terrain_plan_ready'])
+        self.assertEqual(old['static_pattern_count'], 1)
+        self.assertEqual(host['static_pattern_count'], 2)
+        cloud = [r for r in host['overlay_remaps'] if r['overlay_map_id'] == 0x9C]
+        rain = [r for r in host['overlay_remaps'] if r['overlay_map_id'] == 0x9F]
+        self.assertEqual(len(cloud), 4)
+        self.assertEqual({r['asset_source_map_id'] for r in cloud}, {0xB1})
+        self.assertTrue(all('asset_source_map_id' not in r for r in rain))
+        self.assertNotEqual(cloud[0]['target_word'], rain[0]['target_word'])
+        self.assertNotEqual(host['witness']['source_colors_sha256'],
+                            old['witness']['source_colors_sha256'])
+        self.assertEqual(host['witness']['source_colors_sha256'],
+                         host['witness']['reconstructed_colors_sha256'])
+        self.assertEqual(self.source, before)
+        self.assertFalse(selected['ordinary_build_ready'])
+
+    def test_overlay_context_requires_actual_bound_pair_and_source(self):
+        exported = self.sky_overlay_export()
+        for contexts in ([], {(0x87, 0x9C): 0x77}, {(0x88, 0x9C): 0x87},
+                         {(0x87, None): 0x87}, {(0x87, 0x9C): True}):
+            with self.subTest(contexts=contexts):
+                with self.assertRaisesRegex(ValueError, 'OVERLAY_ASSET_CONTEXT_'):
+                    R.plan_saved_native_terrain(self.source, exported,
+                                               overlay_asset_contexts=contexts)
+        baseline = R.plan_saved_native_terrain(self.source, exported)
+        self.assertEqual(baseline, R.plan_saved_native_terrain(
+            self.source, exported, overlay_asset_contexts={(0x87, 0x9C): 0x87}))
+
     def test_sky_host_refuses_legacy_selection_or_pointer_disagreement(self):
         exported = self.sky_overlay_export()
         legacy = {name: (address, width) for name, address, _, _, width
