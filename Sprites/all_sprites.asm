@@ -196,6 +196,13 @@ if !ENABLE_D8_FARORE_GRAPHICS == 1
   incsrc "Sprites/NPCs/farore_d8_follow.asm"
 endif
 
+; Bank $32 is full; Lyra talkers live here.
+if !ENABLE_LYRA_TALKERS == 1
+  %log_start("lyra_talker", !LOG_SPRITES)
+  incsrc "Sprites/NPCs/lyra_talker.asm"
+  %log_end("lyra_talker", !LOG_SPRITES)
+endif
+
 assert pc() <= $310000, "Bank $30 sprite code crossed its LoROM executable boundary"
 assert pc() >= $308000, "Bank $30 sprite code left its bank (org without pushpc/pullpc?)"
 print "Bank30 Free Space: ", dec($310000-pc()), " bytes"
