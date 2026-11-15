@@ -289,9 +289,17 @@ Sprite_Farore_Draw:
 
   PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
   INY
-  LDA .chr, X : STA ($90), Y
+  LDA .chr, X
+if !ENABLE_D8_FARORE_GRAPHICS == 1
+  JSL D8Farore_RemapTile
+endif
+  STA ($90), Y
   INY
-  LDA .properties, X : STA ($90), Y
+  LDA .properties, X
+if !ENABLE_D8_FARORE_GRAPHICS == 1
+  JSL D8Farore_RemapPalette
+endif
+  STA ($90), Y
 
   PHY
 

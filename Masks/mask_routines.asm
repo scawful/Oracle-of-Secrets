@@ -1782,6 +1782,9 @@ CheckNewLButtonPress:
   RTL
 }
 
+if !ENABLE_D8_FARORE_GRAPHICS == 1
+assert pc() <= $3A9800, "Mask routines reached D8 Farore graphics support"
+endif
 assert pc() <= $3AA000, "Mask routines reached the ice block code allocation"
 print "End of mask_routines.asm          ", pc
 

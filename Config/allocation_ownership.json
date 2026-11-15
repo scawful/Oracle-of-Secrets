@@ -316,6 +316,11 @@
       "source_set": "shared",
       "path": "Overworld/special_overworld_semantic.asm",
       "sha256": "c30c9f334960d285db404a907ab152dd4360d51c40dc785fd7c1085e7c5b2354"
+    },
+    "shared:Sprites/NPCs/farore_d8_graphics.asm": {
+      "source_set": "shared",
+      "path": "Sprites/NPCs/farore_d8_graphics.asm",
+      "sha256": "9c9d7045fac55aa279420e010db572be28e57a047faf41e7163909c46dbec097"
     }
   },
   "claims": [
@@ -2389,6 +2394,30 @@
       "anchors": [
         "RESIDENT_PAGE_TILE16_SPILL_PC = 0x28C000",
         "RESIDENT_PAGE_TILE16_SPILL_END = 0x290000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "d8_farore_graphics_support",
+      "owner": "Default-off D8 Farore room graphics helper and native Low4bpp blob",
+      "space": "snes_rom",
+      "base": 3840000,
+      "size": 2048,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_D8_FARORE_GRAPHICS": 1,
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Bounded code/data slot $3A9800-$3A9FFF, between conditionally bounded mask routines and unchanged ice_block_code at $3AA000. Member-only room-load overlay; no global sheet allocation. Root granted prototype placement on 2026-11-15.",
+      "reset": "Build-owned ROM only; no new WRAM. Native room graphics loads replace staging/VRAM contents.",
+      "save": "No saved fields, migration, or writes. Existing D8 crystal bit only read.",
+      "provenance": [
+        "shared:Sprites/NPCs/farore_d8_graphics.asm"
+      ],
+      "anchors": [
+        "org $3A9800",
+        "D8Farore_GraphicsStart:",
+        "D8Farore_GraphicsEnd:"
       ],
       "aliases": []
     }

@@ -426,3 +426,6 @@ if !ENABLE_THIN_ICE == 1
 endif
 
 ; =========================================================
+
+; Default-off D8 Farore room graphics support.
+incsrc "Sprites/NPCs/farore_d8_graphics.asm"
