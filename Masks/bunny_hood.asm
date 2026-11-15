@@ -68,6 +68,13 @@ org $20AF20
 LinkState_BunnyHoodRun:
 {
   CPX.b #$11 : BCS .end    ; speed value upper bound check
+if !ENABLE_HORSE_FORM == 1
+  LDA.w !CurrentMask : CMP.b #$09 : BNE +
+    LDA.l HorseSpeedTable, X
+    CLC
+    RTL
+  +
+endif
 if !ENABLE_MASK_R_BINDING == 0
   LDA.w $0202              ; check the current item
   CMP.b #$16 : BNE .end    ; is it the bunny hood?

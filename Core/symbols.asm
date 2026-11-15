@@ -69,6 +69,41 @@ assert pc() <= $7E1F00, "Ferry transient state exceeds its bounded WRAM tail"
 base off
 endif
 
+if !ENABLE_HORSE_FORM == 1
+base $7E1EDE
+{
+Horse_Marker:            skip 2
+Horse_State:             skip 1
+Horse_JumpTimer:         skip 1
+Horse_JumpCooldown:      skip 1
+Horse_JumpDir:           skip 1
+Horse_JumpZ:             skip 1
+Horse_AnimTimer:         skip 1
+Horse_Frame:             skip 1
+Horse_UploadedFrame:     skip 1
+Horse_NpcActive:         skip 1
+Horse_NpcFrame:          skip 1
+Horse_NpcUploadedFrame:  skip 1
+Horse_PalLoaded:         skip 1
+Horse_DismountCooldown:  skip 1
+Horse_HasAnchor:         skip 1
+Horse_JumpStep:          skip 1
+Horse_PushTimer:         skip 1
+Horse_JumpStartX:        skip 2
+Horse_JumpStartY:        skip 2
+Horse_JumpEndX:          skip 2
+Horse_JumpEndY:          skip 2
+Horse_AnchorX:           skip 2
+Horse_AnchorY:           skip 2
+Horse_NpcSlot:           skip 1
+Horse_InteractDelay:     skip 1
+Horse_TransientEnd:      skip 0
+assert Horse_Marker == $7E1EDE && Horse_TransientEnd == $7E1EFE
+assert pc() <= $7E1F00, "Horse transient state exceeds its bounded WRAM tail"
+}
+base off
+endif
+
 ; Explicit bounded aliases for the reserved palette history; no consumer yet.
 SpecialOverworldPaletteHoleCache = $7E1E8C
 SpecialOverworldPaletteHoleCacheEnd = $7E1EA6

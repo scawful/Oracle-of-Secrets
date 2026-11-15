@@ -15,12 +15,12 @@
     "shared:Masks/all_masks.asm": {
       "source_set": "shared",
       "path": "Masks/all_masks.asm",
-      "sha256": "1ca9d6f5b151bd83229e62c503240e10daea5323dd6098bc5f64dfd4eab14e6b"
+      "sha256": "ef3e85cc973ca9d3e3f879a63c49b5967e0d6953c0903766f85e051f526618c5"
     },
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "f33694be088369f0be6ebae67ce826a30a3c09acd24ae77b9a89fc759c01b106"
+      "sha256": "7ef44b58399e42de7199dd3fd5f6b2ba32b60a76001150259ffe10cd3e56345c"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -165,7 +165,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "e71653e2ce0ac1f4763846cc220f027f45ab4f7e5c9a529107496786de7f850f"
+      "sha256": "5e281a896236ea5be2f12beab5a033af73c8781d388c733ac28f75de7343f240"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -326,6 +326,36 @@
       "source_set": "shared",
       "path": "Sprites/NPCs/farore_d8_companion.asm",
       "sha256": "60fe9cacb1cbb7a479b7c2a56fba8ce5e5dbfc9a4558846f4e9c84df01f8de7b"
+    },
+    "shared:Masks/horse_form.asm": {
+      "source_set": "shared",
+      "path": "Masks/horse_form.asm",
+      "sha256": "74bf2df044d2c049a2fbd73cc12bd71100848b6f962f5324183e64092aeb8054"
+    },
+    "shared:Sprites/NPCs/horse.asm": {
+      "source_set": "shared",
+      "path": "Sprites/NPCs/horse.asm",
+      "sha256": "5e2ca05fc6d14aa27b0476b02feb05c59091d239b0d92c6a8b75176016cf64c0"
+    },
+    "shared:Masks/horse_sparse_runtime.asm": {
+      "source_set": "shared",
+      "path": "Masks/horse_sparse_runtime.asm",
+      "sha256": "64638e01321d1561fd1febadafdab18c98715cac64d9a9c0a18caa13cdcd9bba"
+    },
+    "shared:Masks/mask_binding.asm": {
+      "source_set": "shared",
+      "path": "Masks/mask_binding.asm",
+      "sha256": "582892a35de1043d8b9085989ff67a200a5e386b9dee683ddfc69242dd2dca41"
+    },
+    "shared:Overworld/entrances.asm": {
+      "source_set": "shared",
+      "path": "Overworld/entrances.asm",
+      "sha256": "3444e20217825dfa7854963f8ec210dc953a07b8f9988c53af0a9fbfce605ec6"
+    },
+    "shared:Masks/horse_ground_clearance.asm": {
+      "source_set": "shared",
+      "path": "Masks/horse_ground_clearance.asm",
+      "sha256": "1efddaaec47fd865666e62b5f65994c6e9c6b6be222f99e0621573f437538f0e"
     }
   },
   "claims": [
@@ -2425,6 +2455,105 @@
         "D8Farore_GraphicsStart:",
         "D8Farore_GraphicsEnd:",
         "D8Farore_SupportEnd:"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "horse_form_bank53",
+      "owner": "Default-off sparse horse graphics, restoration data and mounted behavior",
+      "space": "snes_rom",
+      "base": 5472256,
+      "size": 20480,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_HORSE_FORM": 1
+      },
+      "lifetime": "Bounded SNES538000..53CFFF; existing compile assertion prevents crossing53D000.",
+      "reset": "No runtime ROM writes. Read via NMI DMA and long bank addressing.",
+      "save": "No save format change. Compiled ROM payload only.",
+      "provenance": [
+        "shared:Masks/all_masks.asm",
+        "shared:Masks/horse_form.asm",
+        "shared:Masks/horse_sparse_runtime.asm"
+      ],
+      "anchors": [
+        "org $538000",
+        "HorseGraphics:",
+        "HorsePalette:"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "horse_form_transient",
+      "owner": "Horse Form transient WRAM block ($7E1EDE-$7E1EFD)",
+      "space": "wram",
+      "base": 8265438,
+      "size": 32,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_HORSE_FORM": 1
+      },
+      "lifetime": "Separate conditional 32-byte transient WRAM block immediately after ferry Boat_TransientEnd ($7E1EDE) and ending at Horse_TransientEnd ($7E1EFE < $7E1F00).",
+      "reset": "HorseForm_EnsureInit cold-clears all 32 bytes when Horse_Marker != $4852; HorseForm_ClearState resets active jump/push/anim/palette state; ResetToLinkGraphics, HorseForm_Dismount and HorseForm_SilentDismount clear transient state on dismount/transition. Horse_UploadedFrame preserves pending item-cell restoration through ClearState until NMI consumes it; FF means no mounted graphics ownership.",
+      "save": "Volatile WRAM; not saved in SRAM. Saved files always reload on foot.",
+      "provenance": [
+        "shared:Core/symbols.asm",
+        "shared:Masks/horse_form.asm",
+        "shared:Masks/mask_routines.asm",
+        "shared:Masks/mask_binding.asm",
+        "shared:Overworld/entrances.asm",
+        "shared:Sprites/NPCs/horse.asm"
+      ],
+      "anchors": [
+        "Horse_Marker:",
+        "Horse_TransientEnd:"
+      ],
+      "aliases": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "Horse_Marker",
+        "base_block": true
+      }
+    },
+    {
+      "id": "horse_npc_bank53",
+      "owner": "Ranch horse NPC",
+      "space": "snes_rom",
+      "base": 5492736,
+      "size": 4096,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_HORSE_FORM": 1
+      },
+      "lifetime": "Bounded 53D000..53DFFF; end assertion prevents neighboring allocation overlap.",
+      "reset": "No runtime ROM writes. Read via NMI DMA and long bank addressing.",
+      "save": "No save format change. Compiled ROM payload only.",
+      "provenance": [
+        "shared:Sprites/NPCs/horse.asm"
+      ],
+      "anchors": [
+        "org $53D000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "horse_ground_clearance_bank53",
+      "owner": "Mounted leading-edge solid clearance",
+      "space": "snes_rom",
+      "base": 5496832,
+      "size": 2048,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_HORSE_FORM": 1
+      },
+      "lifetime": "Bounded 53E000..53E7FF; end assertion prevents neighboring allocation overlap.",
+      "reset": "No runtime ROM writes. Read via NMI DMA and long bank addressing.",
+      "save": "No save format change. Compiled ROM payload only.",
+      "provenance": [
+        "shared:Masks/horse_ground_clearance.asm"
+      ],
+      "anchors": [
+        "org $53E000"
       ],
       "aliases": []
     }

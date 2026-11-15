@@ -291,6 +291,12 @@ FindEntrance:
 
   SEP #$20
 
+if !ENABLE_HORSE_FORM == 1
+  LDA.w $02B2 : CMP.b #$09 : BNE +
+    JSL HorseForm_SilentDismount
+  +
+endif
+
   LDA.l Overworld_Entrance_ID,X
   STA.w $010E
 

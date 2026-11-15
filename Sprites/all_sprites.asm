@@ -421,6 +421,12 @@ if !ENABLE_D8_BOSS == 1
   %log_end("d8_boss", !LOG_DUNGEON)
 endif
 
+if !ENABLE_HORSE_FORM == 1
+  %log_start("horse_npc", !LOG_OVERWORLD)
+  incsrc "Sprites/NPCs/horse.asm"
+  %log_end("horse_npc", !LOG_OVERWORLD)
+endif
+
 assert pc() <= $2CF700, "Bank $2C sprite stream overlaps Somaria internal landing"
 
 if !ENABLE_MINECART_CART_SHUTTERS

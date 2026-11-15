@@ -68,6 +68,9 @@ PlayerTransform:
 ResetToLinkGraphics:
 {
   JSL GaroMask_Clear
+if !ENABLE_HORSE_FORM == 1
+  JSL HorseForm_ClearState
+endif
   JSL LinkGraphics_IsD8 : BCS .normal
   LDA $0FFF : BNE +
   .normal
@@ -164,6 +167,9 @@ Palette_ArmorAndGloves:
                      CMP.b #$06 : BEQ .gbc_form
                      CMP.b #$07 : BEQ .moosh_form
                      CMP.b #$08 : BEQ .garo_form
+if !ENABLE_HORSE_FORM == 1
+                     CMP.b #$09 : BEQ .horse_form
+endif
                         JMP   .original_sprite
 
   .deku_mask
@@ -201,6 +207,13 @@ Palette_ArmorAndGloves:
   LDA.b #$42 : STA.b $BC
   JSL UpdateGaroPalette
   RTL
+
+if !ENABLE_HORSE_FORM == 1
+  .horse_form
+  LDA.b #$10 : STA.b $BC
+  JSL UpdateHorsePalette
+  JMP .original_palette
+endif
 
   .original_sprite
   ; Load Original Sprite Location
@@ -277,7 +290,14 @@ Oracle_CgramAuxToMain_Impl:
     ; Link's palette 7 belongs to the active mask; always refresh palette 6
     ; for lifted terrain and other environment sprites across world loads.
     CPX.b #$20 : BCC .copy_environment_palette
-    LDA.w !CurrentMask : AND.w #$00FF : BNE .has_mask_palette
+    LDA.w !CurrentMask : AND.w #$00FF
+if !ENABLE_HORSE_FORM == 1
+    BEQ .copy_environment_palette
+    CMP.w #$0009 : BEQ .copy_environment_palette
+    BRA .has_mask_palette
+else
+    BNE .has_mask_palette
+endif
     .copy_environment_palette
       LDA $7EC4C0, X : STA $7EC6C0, X
     .has_mask_palette
@@ -549,6 +569,20 @@ if !ENABLE_TRUTHFUL_CONTROLS == 1
   JSR StoneMask_CheckR
 endif
   LDA.w !CurrentMask : BEQ .done
+if !ENABLE_HORSE_FORM == 1
+  CMP.b #$09 : BNE +
+    ; Fallback when ENABLE_MASK_R_BINDING == 0: R dismounts and Y is disabled.
+    LDA.b $F6 : AND.b #$10 : BEQ ++
+      LDA.b #$10 : TRB.b $F6
+      LDA.l Horse_State : BNE ++
+        JSL HorseForm_Dismount
+        LDA.b #$01
+        RTL
+    ++
+    LDA.b #$01
+    RTL
+  +
+endif
   CMP.b #$05 : BCS .done
   CLC : ADC.b #$12 : CMP.w $0202 : BEQ .done
   LDA.b $6C : BNE .done
@@ -1620,6 +1654,9 @@ LinkOAM_CheckForDrawShield:
   CMP.w #$0001 : BEQ .no_shield
   CMP.w #$0003 : BEQ .no_shield
   CMP.w #$0007 : BEQ .no_shield
+if !ENABLE_HORSE_FORM == 1
+  CMP.w #$0009 : BEQ .no_shield
+endif
   .shield
   RTL
 }
@@ -1678,6 +1715,9 @@ LinkMain_FrameHook:
   %m8()
 if !ENABLE_MINISH_AUTO_PORTAL == 1
   JSL MinishPortal_Maintain
+endif
+if !ENABLE_HORSE_FORM == 1
+  JSL HorseForm_FrameTick
 endif
   JSL GaroMask_FrameTick
   JSL DekuStick_Main

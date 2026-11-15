@@ -140,6 +140,13 @@ endif
   LDA.w !CurrentMask : BEQ .as_link
   CMP.b #$06 : BEQ .as_link
   CMP.b #$08 : BEQ .take_off
+if !ENABLE_HORSE_FORM == 1
+  CMP.b #$09 : BNE +
+    LDA.l Horse_State : BNE .consume_y
+    JSL HorseForm_Dismount
+    BRA .consume_y
+  +
+endif
   CMP.b #$05 : BCS .blocked            ; Minish / Moosh
   ; An active form comes off first, regardless of the newly selected binding.
   .take_off
@@ -193,6 +200,9 @@ endif
   LDA.w !CurrentMask : BEQ .base_form
   CMP.b #$06 : BEQ .base_form
   CMP.b #$08 : BEQ .no_item            ; Garo's Y ability is handled above
+if !ENABLE_HORSE_FORM == 1
+  CMP.b #$09 : BEQ .no_item            ; Horse Form blocks all Y items
+endif
   CMP.b #$05 : BCS .regular            ; preserve automatic Minish / Moosh
   TAX
   LDA.l .actions-1, X : BRA .set_action

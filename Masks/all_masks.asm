@@ -105,3 +105,27 @@ GaroMasterGraphics:
 assert pc() == $42F000, "Garo Master must use the complete $7000-byte Link sheet"
   incsrc "Masks/garo_mask.asm"
 assert pc() <= $430000, "Garo Master exceeded its graphics/behavior bank"
+
+; Dedicated bank $53 avoids bank $51 special-overworld semantic code and bank $52 prison ($528000-$529FFF).
+if !ENABLE_HORSE_FORM == 1
+org $538000
+HorseGraphics:
+  incbin "gfx/horse_sparse.4bpp"
+HorseGraphics_End:
+HorseItemRestore:
+  incbin "gfx/horse_item_restore.4bpp"
+assert pc()-HorseItemRestore == 384, "Native item restoration must contain twelve Tile8s"
+HorseRanchRestore:
+  incbin "gfx/horse_ranch_restore.4bpp"
+assert pc()-HorseRanchRestore == 1024, "Ranch C2 restoration must contain first32 Tile8s"
+  incsrc "Masks/gfx/horse_sparse_tables.asm"
+assert HorseGraphics_End-HorseGraphics == !Horse_DictionaryBytes, "Sparse dictionary size mismatch"
+HorsePalette:
+  incbin "gfx/horse_palette.bin"
+assert pc()-HorsePalette == 14, "Horse palette must be 14 bytes (7 BGR555 colors for SP-3[9..15])"
+HorseNpcTail:
+  incbin "gfx/horse_npc_rows.4bpp"
+assert pc()-HorseNpcTail == 512, "NPC tail rows must preserve its final four sparse pieces"
+  incsrc "Masks/horse_form.asm"
+assert pc() <= $53D000, "Horse Form behavior overlapped Sprite_HorseNPC slot in bank $53"
+endif

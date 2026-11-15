@@ -288,6 +288,10 @@ endif
 !ENABLE_D8_BOSS                     = 0
 !ENABLE_D8_FARORE_GRAPHICS          = 0 ; Graphics + presence prototype; no companion control
 
+; Horse Form (!CurrentMask = $09) + Toto Ranch NPC ($2D) + fence jumps:
+; Off until prototype art and behavior review are complete.
+!ENABLE_HORSE_FORM                  = 0
+
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
 !LOG_MUSIC     = 1
