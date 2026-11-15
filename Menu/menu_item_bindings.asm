@@ -89,6 +89,47 @@ Menu_Bindings_Input:
 Menu_Bindings_DrawMarkers:
 {
   PHP : REP #$30
+if !ENABLE_HUD_LAYOUT_CODEX == 1
+  ; One corner per button: Y = green top-left, X = blue bottom-right.
+  ; Cells are 3 tiles apart and the brackets 4 wide, so four-corner marks
+  ; of neighbour cells landed on the same tiles and blended green and blue.
+  ; One fixed corner per button can only meet when the Y cell is diagonally
+  ; down-right of the X cell (Y is drawn first, X wins that one tile).
+  LDA.l ItemBindingMenuY : JSR .cell : BCC .cx_no_y
+    LDA.w #!MB_YMarker : STA.w $1108, X
+  .cx_no_y
+  JSR .x_cell : BCC .cx_no_x
+    LDA.w #!MB_XMarker|$C000 : STA.w $11CE, X
+  .cx_no_x
+  ; Redraw the gray cursor on top, so a neighbour's mark never colors it,
+  ; then give back its own cell's marks. Blink-off frames ($0207 bit 5) and
+  ; a mask item (no grid cursor) keep the marks only.
+  SEP #$30
+  LDA.b #$20 : BIT.w $0207 : BNE .cx_done
+if !ENABLE_MENU_PAGE3 == 1
+  LDA.w $0202 : JSR Menu_Page3_IsMaskItem : BCS .cx_done
+endif
+  LDA.w $0202 : BEQ .cx_done
+  ASL : TAY
+  REP #$10
+  LDX.w Menu_ItemCursorPositions-2, Y
+  JSR Menu_DrawCursor                 ; A8 in/out, keeps X
+  REP #$20
+  LDA.l ItemBindingMenuY : EOR.w $0202 : AND.w #$00FF : BNE .cx_own_x
+    LDA.w #!MB_YMarker : STA.w $1108, X
+  .cx_own_x
+  LDA.l ItemBindingSavedVersion : AND.w #$00FF : CMP.w #$0001 : BNE .cx_done
+  LDA.l ItemBindingSavedX : EOR.w $0202 : AND.w #$00FF : BNE .cx_done
+    LDA.w #!MB_XMarker|$C000 : STA.w $11CE, X
+  .cx_done
+  PLP : RTS
+
+  ; X item cell: C set and X = offset when version 1 holds a grid item.
+  .x_cell
+  LDA.l ItemBindingSavedVersion : AND.w #$00FF : CMP.w #$0001 : BNE .none
+  LDA.l ItemBindingSavedX
+  BRA .cell
+endif
   LDA.l ItemBindingMenuY : JSR .cell : BCC .no_y
     LDA.w #!MB_YMarker : JSR .corners
   .no_y
