@@ -123,7 +123,7 @@ Horse_NmiUpload:
   ; runs between8A0C and8B5C. Consume it once and preserve palette bit0.
   LDA.l Horse_PalLoaded : AND.b #$80 : BNE + : BRL .not_mounted : +
   LDA.l Horse_PalLoaded : AND.b #$7F : STA.l Horse_PalLoaded
-  LDA.l Horse_NpcUploadedFrame : CMP.b #$FF : BEQ .upload_mounted
+  LDA.l Horse_NpcUploadedFrame : CMP.b #$FF : BEQ .steady
   JSL Horse_RanchProfileReady : BCC .profile_changed
   LDA.l Horse_UploadedFrame : CMP.b #$FF : BEQ .first_mounted
   ; One ordinary-frame hold restores the now-hidden NPC before any consumer
@@ -146,6 +146,16 @@ Horse_NmiUpload:
   BRA .upload_mounted
   .restore_and_upload
   JSR Horse_RestoreNpcCells
+  BRA .upload_mounted
+  .steady
+  ; Native 8A0C/8ADB never write the mounted cells ($4000-40DF/4100-41DF,
+  ; $4260-42DF/4360-43DF); any lost grant resets UploadedFrame to FF. So an
+  ; unchanged frame needs no DMA: frees ~1.3KB of vblank for scroll map rows.
+  ; Submodules (area loads) still refresh every frame.
+  LDA.b $11 : BNE .upload_mounted
+  LDA.l Horse_Frame : CMP.b #!Horse_FrameCount : BCC + : LDA.b #6 : +
+  CMP.l Horse_UploadedFrame : BNE .upload_mounted
+  BRL .replay
   .upload_mounted
   LDA.l Horse_Frame : JSR Horse_FramePointerBase
   ; Six fixed groups; no per-piece loop or destination-table walk.

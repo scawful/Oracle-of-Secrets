@@ -838,8 +838,14 @@ Horse_DrawPlayerOam_Long:
     LDA.l Horse_JumpZ
   +
   STA.b $0E : STZ.b $0F               ; temp 16-bit AirZ in $0E/$0F
-  ; Mounted horse always uses OBJ priority 3: tall rider/horse never sinks under BG1 high tiles.
-  LDA.b $65 : ORA.b #$30 : STA.b $65
+  ; OBJ priority 3 only mid-jump or beside wooden fences (high-priority rails).
+  ; Elsewhere native $65 stays, so gates, arches and banisters cover horse and rider.
+  LDA.l Horse_State : BEQ +
+    LDA.b $65 : ORA.b #$30 : STA.b $65
+    BRA ++
+  +
+  JSR Horse_ApplyFencePriority
+  ++
 
   ; Handle invincibility blink ($031F) & invisible state ($4B == $0C).
   LDA.b $11 : BNE .chk_vis_flags
@@ -859,8 +865,16 @@ Horse_DrawPlayerOam_Long:
 
   .draw_visible
   REP #$30
-  ; Latch validated frame before indexing metadata; never alias an expanded ID.
   SEP #$20
+  ; Overworld scroll-row frames ($17=3) already fill vblank: hold the resident
+  ; pose one frame so NMI skips the ~1.3KB horse DMA (no black top scanline).
+  LDA.b $17 : CMP.b #$03 : BNE .frame_ok
+  LDA.b $11 : BNE .frame_ok
+  LDA.l Horse_NpcUploadedFrame : CMP.b #$FF : BNE .frame_ok
+  LDA.l Horse_UploadedFrame : CMP.b #!Horse_FrameCount : BCS .frame_ok
+  STA.l Horse_Frame
+  .frame_ok
+  ; Latch validated frame before indexing metadata; never alias an expanded ID.
   LDA.l Horse_Frame : CMP.b #!Horse_FrameCount : BCC +
     LDA.b #6
   +
@@ -928,6 +942,56 @@ Horse_DrawPlayerOam_Long:
   .exit
   PLP : PLB
   RTL
+}
+
+; Sets OBJ priority 3 in $65 when a wooden fence Tile16 lies under the
+; horse/rider footprint (6 samples). Preserves DP $04-$0F, P and registers.
+Horse_ApplyFencePriority:
+{
+  PHP
+  REP #$30
+  PHX : PHY
+  LDA.b $04 : PHA : LDA.b $08 : PHA : LDA.b $0A : PHA
+  LDA.b $0C : PHA : LDA.b $0E : PHA
+  SEP #$30
+  LDY.b #$00
+  LDX.b #10
+  .sample
+    PHX
+    REP #$20
+    LDA.l .dx, X : CLC : ADC.b $22 : STA.b $0C
+    LDA.l .dy, X : CLC : ADC.b $20 : STA.b $0A
+    SEP #$20
+    JSR Horse_QueryTileAt               ; M/X=8; X/Y preserved, DP $04 = Tile16
+    REP #$20
+    LDA.b $04
+    LDX.b #HorseFenceTile16s_End-HorseFenceTile16s-2
+    .cmp
+      CMP.l HorseFenceTile16s, X : BEQ .hit
+      DEX : DEX : BPL .cmp
+    SEP #$20
+    PLX
+    DEX : DEX : BPL .sample
+  BRA .restore
+  .hit
+  SEP #$20
+  PLX
+  LDY.b #$30
+  .restore
+  REP #$20
+  PLA : STA.b $0E : PLA : STA.b $0C : PLA : STA.b $0A
+  PLA : STA.b $08 : PLA : STA.b $04
+  SEP #$20
+  TYA : ORA.b $65 : STA.b $65
+  REP #$30
+  PLY : PLX : PLP
+  RTS
+
+  ; Offsets from Link ($22,$20): three columns across the body, rider and hooves rows.
+  .dx
+  dw -6, 8, 22, -6, 8, 22
+  .dy
+  dw  6, 6,  6, 22, 22, 22
 }
 
 ; Emits 16x16 Rider Head ($08) or Body ($0A) on SP-7 using DP $0D=frame. Returns M=16, X=16.
