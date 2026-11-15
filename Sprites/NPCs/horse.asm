@@ -255,7 +255,7 @@ Sprite_HorseNPC_Draw:
   .chr
   db $00,$02,$04,$06,$08,$0A,$0C,$0E
   .props
-  db $27,$27,$27,$27,$27,$27,$27,$27
+  db $37,$37,$37,$37,$37,$37,$37,$37  ; OBJ priority 3: tall Epona never sinks under BG1 high tiles
 }
 
 HorseNpc_End:

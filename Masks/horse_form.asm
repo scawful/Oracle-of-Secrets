@@ -838,6 +838,8 @@ Horse_DrawPlayerOam_Long:
     LDA.l Horse_JumpZ
   +
   STA.b $0E : STZ.b $0F               ; temp 16-bit AirZ in $0E/$0F
+  ; Mounted horse always uses OBJ priority 3: tall rider/horse never sinks under BG1 high tiles.
+  LDA.b $65 : ORA.b #$30 : STA.b $65
 
   ; Handle invincibility blink ($031F) & invisible state ($4B == $0C).
   LDA.b $11 : BNE .chk_vis_flags
