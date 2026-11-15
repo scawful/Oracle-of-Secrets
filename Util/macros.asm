@@ -292,6 +292,11 @@ endif
 ; Off until prototype art and behavior review are complete.
 !ENABLE_HORSE_FORM                  = 0
 
+; Goron Mines room $78 Lanmola boss: Hammer stagger, saved clear, key drop
+; (Sprites/Bosses/lanmola_room78.asm + lanmola_hammer78.asm).
+; Off until the room $78 layout lands in the shared base ROM.
+!ENABLE_GORON78_LANMOLA_BOSS        = 0
+
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
 !LOG_MUSIC     = 1

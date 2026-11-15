@@ -196,6 +196,11 @@ if !ENABLE_D8_FARORE_GRAPHICS == 1
   incsrc "Sprites/NPCs/farore_d8_follow.asm"
 endif
 
+if !ENABLE_GORON78_LANMOLA_BOSS == 1
+  ; Room $78 Lanmola surface/stagger states (Hammer opening).
+  incsrc "Sprites/Bosses/lanmola_hammer78.asm"
+endif
+
 assert pc() <= $310000, "Bank $30 sprite code crossed its LoROM executable boundary"
 assert pc() >= $308000, "Bank $30 sprite code left its bank (org without pushpc/pullpc?)"
 print "Bank30 Free Space: ", dec($310000-pc()), " bytes"
@@ -296,6 +301,11 @@ incsrc "Sprites/Enemies/darknut_weapon_hitbox.asm"
 
 ; Local pea-shot contact wrapper: keeps the bank $30 callsite size unchanged.
 incsrc "Sprites/Enemies/business_scrub_shield.asm"
+
+if !ENABLE_GORON78_LANMOLA_BOSS == 1
+  ; Room $78 key-after-Lanmolas hook + helper macros used by lanmola.asm.
+  incsrc "Sprites/Bosses/lanmola_room78.asm"
+endif
 
 assert pc() <= $328000, "Bank $31 sprite region overflow"
 assert pc() >= $318000, "Bank $31 sprite code left its bank (org without pushpc/pullpc?)"
@@ -425,6 +435,10 @@ if !ENABLE_HORSE_FORM == 1
   %log_start("horse_npc", !LOG_OVERWORLD)
   incsrc "Sprites/NPCs/horse.asm"
   %log_end("horse_npc", !LOG_OVERWORLD)
+endif
+
+if !ENABLE_GORON78_LANMOLA_BOSS == 1
+  %Goron78_EmitTargetHighHelper()
 endif
 
 assert pc() <= $2CF700, "Bank $2C sprite stream overlaps Somaria internal landing"
