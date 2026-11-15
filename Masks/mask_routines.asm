@@ -233,7 +233,12 @@ Oracle_CgramAuxToMain_Impl:
     LDA $7EC400, X : STA $7EC600, X
     LDA $7EC440, X : STA $7EC640, X
     LDA $7EC480, X : STA $7EC680, X
-    LDA !CurrentMask : BNE .has_mask_palette
+    ; This final 64-byte block contains OBJ palettes 6 AND 7. Only
+    ; Link's palette 7 belongs to the active mask; always refresh palette 6
+    ; for lifted terrain and other environment sprites across world loads.
+    CPX.b #$20 : BCC .copy_environment_palette
+    LDA.w !CurrentMask : AND.w #$00FF : BNE .has_mask_palette
+    .copy_environment_palette
       LDA $7EC4C0, X : STA $7EC6C0, X
     .has_mask_palette
   INX #2 : CPX.b #$40 : BNE .loop
