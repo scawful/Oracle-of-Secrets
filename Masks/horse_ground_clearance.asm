@@ -181,7 +181,17 @@ HorseFenceTile16s_End:
 if !ENABLE_HORSE_LONG_JUMP == 1
 !Horse_LongJumpMaxTiles = 2
 !Horse_LongJumpMinFrames = $10
-!Horse_LongJumpMaxFrames = $30
+!Horse_LongJumpMaxFrames = $12
+!Horse_LongJumpShakeFrames = $03
+
+; Vanilla dash-bonk tremor spawner (ancilla $1D, Ancilla1D_ScreenShake).
+HorseLong_AncillaAdd_DashTremor = $0993F3
+
+; Long-jump height across 16 arc steps: peak 24 px (fence vault table peaks
+; at 15). Index = step*16/N, so the curve stretches over N frames.
+HorseLong_ZTable:
+  db  3,  8, 13, 16, 19, 22, 23, 24
+  db 24, 23, 22, 19, 16, 13,  8,  3
 
 ; Water-gap Tile16s Epona clears with a long jump (gap of 1..2 tiles).
 ; Clones keep the original 8x8 chars, so water collision is unchanged and
@@ -297,13 +307,15 @@ HorseLong_ScanGap:
 HorseLong_TryJump:
 {
   JSR HorseLong_TryProbes : BCC .done
-  ; Frames = max(|dX|,|dY|)/2, clamped to 16..48 (fence jump speed).
+  ; Frames = max(|dX|,|dY|)*5/16, clamped to 16..18: about 3.2 px per
+  ; frame, about twice the measured riding speed (D2 54 px gap = 16 frames).
   REP #$20
   LDA.l Horse_JumpEndX : SEC : SBC.b $22 : BPL + : EOR.w #$FFFF : INC : +
   STA.b $06
   LDA.l Horse_JumpEndY : SEC : SBC.b $20 : BPL + : EOR.w #$FFFF : INC : +
   CMP.b $06 : BCS + : LDA.b $06 : +
-  LSR                                       ; about 2 px per frame
+  STA.b $06 : ASL #2 : CLC : ADC.b $06    ; dist*5 (dist < $F0)
+  LSR #4
   CMP.w #!Horse_LongJumpMinFrames : BCS + : LDA.w #!Horse_LongJumpMinFrames : +
   CMP.w #!Horse_LongJumpMaxFrames : BCC + : LDA.w #!Horse_LongJumpMaxFrames : +
   SEP #$20
@@ -313,8 +325,9 @@ HorseLong_TryJump:
   RTS
 }
 
-; Long-jump flight. M8/X8. Horse_JumpTimer = N total frames (16..48).
-; Z = HorseJump_ZTable[step*16/N]; X/Y = Start + (End-Start)*(step+1)/N.
+; Long-jump flight. M8/X8. Horse_JumpTimer = N total frames (16..18).
+; Z = HorseLong_ZTable[step*16/N]; X/Y = Start + (End-Start)*(step+1)/N.
+; Landing: SFX2.21 thud plus a 3-frame vanilla dash tremor shake.
 HorseLong_JumpTick:
 {
   LDA.b #$0F : TRB.b $F0 : TRB.b $F2
@@ -325,7 +338,7 @@ HorseLong_JumpTick:
     LDA.l Horse_JumpTimer : STA.l $004206
     NOP #8                                  ; 16-cycle divide
     LDA.l $004214 : TAX
-    LDA.l HorseJump_ZTable, X : STA.l Horse_JumpZ
+    LDA.l HorseLong_ZTable, X : STA.l Horse_JumpZ
 
     LDA.l Horse_JumpStep : INC : STA.b $0E  ; t = 1..N
     REP #$20
@@ -351,6 +364,11 @@ HorseLong_JumpTick:
   STA.l Horse_JumpTimer
   LDA.b #$10 : STA.l Horse_JumpCooldown
   LDA.b #$21 : STA.w $012E            ; SFX2.21 hoof landing thud
+  ; Vanilla dash tremor (16 frames by default), cut to a short landing shake.
+  ; DBR=$00 here; on success the spawner returns carry clear, X = slot.
+  LDY.b #$01 : LDA.b #$1D
+  JSL HorseLong_AncillaAdd_DashTremor : BCS .done
+  LDA.b #!Horse_LongJumpShakeFrames : STA.w $0C5E, X
   .done
   RTS
 }
