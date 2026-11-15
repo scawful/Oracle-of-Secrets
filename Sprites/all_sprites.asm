@@ -191,6 +191,11 @@ pullpc
 incsrc "Sprites/Objects/swap_diamond.asm"
 %log_end("swap_diamond", !LOG_SPRITES)
 
+if !ENABLE_D8_FARORE_GRAPHICS == 1
+  ; Append within the existing sprite stream; retain the bank's hard boundary.
+  incsrc "Sprites/NPCs/farore_d8_follow.asm"
+endif
+
 assert pc() <= $310000, "Bank $30 sprite code crossed its LoROM executable boundary"
 assert pc() >= $308000, "Bank $30 sprite code left its bank (org without pushpc/pullpc?)"
 print "Bank30 Free Space: ", dec($310000-pc()), " bytes"

@@ -43,7 +43,7 @@ def assemble(folder, enabled, source=None):
     draw_source = 'Sprite_Farore_Draw:'+draw
     fields = '\n'.join(m[0] for m in re.finditer(r'(?m)^Spr[A-Z]\w*\s*=\s*\$[0-9a-fA-F]+', (ROOT/'Core/symbols.asm').read_text()))
     asm.write_text(fields+'\nSprite_Farore = $73\nInCutScene = $7EF303\nSprite_GetTileAttr = $06E87B\n'+f'lorom\n!ENABLE_D8_FARORE_GRAPHICS = {enabled}\norg $308000\nincsrc "{helper}"\n'+
-                   ('Sprite_PrepOamCoord = $018000\nSprite_OAM_AllocateDeferToPlayer = $018010\n'+draw_source if enabled else ''))
+                   ('Sprite_PrepOamCoord = $018000\nSprite_OAM_AllocateDeferToPlayer = $018010\n'+draw_source+'\nincsrc "'+str(ROOT/'Sprites/NPCs/farore_d8_follow.asm')+'"\n' if enabled else ''))
     result = subprocess.run(['asar', '-I'+str(ROOT), '--no-title-check', '--fix-checksum=off',
                              '--symbols=wla', str(asm), str(image)], capture_output=True, text=True)
     assert result.returncode == 0, result.stdout+result.stderr

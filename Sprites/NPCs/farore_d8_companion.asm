@@ -119,8 +119,9 @@ D8Farore_Frame:
   JSR D8Farore_TryPlace
   BRA .restore
 .placed
-  ; This slice establishes presence and reload recovery. Autonomous following,
-  ; hold plates, solo possession and P2 transfer are deliberately not active.
+  ; All accepted non-wait rooms follow; A6 remains at its admitted anchor.
+  LDA.b $A0 : CMP.b #$A6 : BEQ .restore
+  JSL D8Farore_Follow
 .restore
   REP #$20
   PLA : STA.b $0A
@@ -206,4 +207,9 @@ D8Farore_CheckFootprint:
 .dx dw 0,15,0,15
 .dy dw 4,4,19,19
 }
+; Follow code is in bank30; local footprint tables belong to this bank.
+D8Farore_CheckFootprintLong:
+  PHB : PHK : PLB
+  JSR D8Farore_CheckFootprint
+  PLB : RTL
 D8Farore_CompanionEnd:

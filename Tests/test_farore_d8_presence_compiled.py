@@ -35,7 +35,7 @@ def assemble(p, enabled=1):
     stage=stage[stage.index('Part00_RoomSprites:'):stage.index('if !ENABLE_PART00_CHECKPOINT == 1\n; Room')]
     flags='\n'.join('!'+n+' = 0' for n in ('ENABLE_DREAM_RETURN','DISABLE_SPRITES','ENABLE_DREAM_ENTRY_FX','ENABLE_DREAM_WISDOM_SCENE','ENABLE_DREAM_ROOM_SHEETS','ENABLE_PART00_CHECKPOINT','ENABLE_PART00_ARRIVAL_LINES'))
     with asm.open('a') as out:
-        out.write(f'\n!ENABLE_D8_FARORE_GRAPHICS = {enabled}\n'+flags+'\nSprite_CheckActive = $008000\nINDOORS = $1B\nGameState = $7EF3C5\norg $2D8000\n'+callers+stage+"""
+        out.write(f'\n!ENABLE_D8_FARORE_GRAPHICS = {enabled}\n'+flags+'\nSprite_CheckActive = $008000\nINDOORS = $1B\nGameState = $7EF3C5\norg $2D8000\n'+callers+stage+'\norg $2DF000\nincsrc "'+str(ROOT/'Sprites/NPCs/farore_d8_follow.asm')+'"\n'+"""
 Sprite_HyruleDream_Draw: INC.w $1FF0 : RTS
 Sprite_HyruleDream_Prep: INC.w $1FF1 : RTS
 Sprite_HyruleDream_Main: INC.w $1FF2 : RTS
@@ -114,9 +114,9 @@ def main():
                 if placed:
                     x=f.get(0xD16)|f.get(0xD36)<<8;y=f.get(0xD06)|f.get(0xD26)<<8
                     assert (x,y)==({'join':(0xE8,0x100),'blocked-left':(0x118,0x100),'A6-wait':(0xC38,0x1440)}[scenario])
-                    # Moving Link does not drag A6 or silently invent follow/control behavior.
+                    # Moving Link engages ordinary following but never drags the A6 anchor.
                     f.word(0x22,0x190);f.call('D8Farore_Frame',long_return=True)
-                    assert (f.get(0xD16)|f.get(0xD36)<<8)==x
+                    assert (f.get(0xD16)|f.get(0xD36)<<8)==(x if scenario=='A6-wait' else x+1)
                 if scenario in ('completion','stale-room','B0','96'):assert f.get(0xDD6)==0
                 if scenario=='transition-room-change':
                     assert f.get(0xDD6)==8, 'transition must not discard pending new-room actor'
@@ -146,6 +146,6 @@ def main():
                     checks.append(f'actual-callers-flag{enabled}-owned{own}')
                 finally:f.close()
         size=labels['D8Farore_CompanionEnd']-labels['D8Farore_CompanionStart']
-    result={'status':'PASS','size':size,'checks':checks,'scope':'CPU-only presence/placement and actual production callers; authored A6 anchor with stubbed terrain; no following, P2/solo control, plate weight, real placement or ROM proof'}
+    result={'status':'PASS','size':size,'checks':checks,'scope':'CPU-only presence/placement and actual production callers; authored A6 anchor with stubbed terrain; no P2/solo control, plate weight, real placement or ROM proof'}
     a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(result,indent=2)+'\n');print(json.dumps({'status':'PASS','size':size,'checks':len(checks)}))
 if __name__=='__main__':main()
