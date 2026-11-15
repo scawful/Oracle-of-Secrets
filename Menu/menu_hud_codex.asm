@@ -31,10 +31,11 @@ HUD_CodexCells:
   LDA.w #$2071 : STA.l HudCornerBuffer+$0A      ; key icon, bottom right
 
   PHY
-  ; Mask forms other than base Link and GBC route X to the field map
-  ; (ItemBindings_Admitted), so the X box stays empty under them.
+  ; Forms ItemBindings_Admitted rejects (Deku/Zora/Wolf/Goron, Garo,
+  ; Horse) route X to the field map, so the X box stays empty under them.
   LDA.l $7E0000+!CurrentMask : AND.w #$00FF : BEQ .form_ok
-  CMP.w #$0006 : BNE .empty
+  CMP.w #$0005 : BCC .empty
+  CMP.w #$0008 : BCS .empty
   .form_ok
   LDA.l ItemBindingSavedVersion : AND.w #$00FF : CMP.w #$0001 : BNE .empty
   LDA.l ItemBindingSavedX : AND.w #$00FF : BEQ .empty

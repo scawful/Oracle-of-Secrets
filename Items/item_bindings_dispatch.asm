@@ -10,7 +10,7 @@ assert !ENABLE_MASK_R_BINDING == 1, "Dual-item prototype routes through MaskBind
 ; Live dispatcher. All entries run inside gameplay with D=0; long addressing
 ; for owned/WRAM bytes so caller DBR does not matter.
 
-; Called from MaskBinding_Tick .regular (base form or Minish/Moosh, no cape)
+; Called from MaskBinding_Tick .regular (base form, GBC or Minish/Moosh, no cape)
 ; with M8/X8. C=1: A = effective action the caller stores in $0303.
 ; C=0: caller keeps its original $0202 routing. X/Y preserved.
 ItemBindings_Route:
@@ -99,12 +99,14 @@ ItemBindings_Route:
   PLY : PLX : CLC : RTL
 }
 
-; C=1 when the prototype may route: base Link or GBC form. Any Y item.
+; C=1 when the prototype may route: a form whose Y uses regular items
+; (MaskBinding_Tick .regular): base Link, Minish (5), GBC (6), Moosh (7).
 ; M8 near helper; A clobbered.
 ItemBindings_Admitted:
 {
   LDA.l $7E0000+!CurrentMask : BEQ .form_ok
-  CMP.b #$06 : BNE .no
+  CMP.b #$05 : BCC .no
+  CMP.b #$08 : BCS .no
   .form_ok
   SEC : RTS
   .no
