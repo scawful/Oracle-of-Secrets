@@ -105,12 +105,14 @@ RichardQuest_FindSprite:
   RTS
 }
 
-; In: A = sprite ID, $01 = subtype. Out: N clear and Y = new slot on
+; In: A = sprite ID, $09 = subtype. Out: N clear and Y = new slot on
 ; success. Copies Link's layer. X is preserved.
+; Sprite_SpawnDynamically overwrites $00-$08 (usdasm #_1DF674), so callers
+; keep their inputs in $09-$0B.
 RichardQuest_Spawn:
 {
   JSL Sprite_SpawnDynamically : BMI .fail
-  LDA.b $01 : STA.w SprSubtype, Y
+  LDA.b $09 : STA.w SprSubtype, Y
   LDA.b $EE : STA.w SprFloor, Y
   LDA.b #$00
 .fail
@@ -191,17 +193,7 @@ RichardLady_Prep:
   LDA.b $8A : CMP.b #!RichardLadyMap : BNE .done
   LDA.l RichardQuestFlags : AND.b #!Richard_Delivered : BEQ .not_delivered
     STZ.w SprState, X ; she lives indoors now
-    RTL
 .not_delivered
-  LDA.l RichardQuestFlags : AND.b #!Richard_Found : BEQ .done
-  LDA.b #$25 : STA.b $00
-  LDA.b #$01 : STA.b $01
-  JSR RichardQuest_FindSprite : BCS .done
-  LDA.b #$25 : JSR RichardQuest_Spawn : BMI .done
-  LDA.w SprX, X : CLC : ADC.b #$14 : STA.w SprX, Y
-  LDA.w SprXH, X : ADC.b #$00 : STA.w SprXH, Y
-  LDA.w SprY, X : STA.w SprY, Y
-  LDA.w SprYH, X : STA.w SprYH, Y
 .done
   RTL
 }
@@ -236,18 +228,17 @@ RichardLady_Talk:
 .quest
   PLA
   LDA.l RichardQuestFlags : AND.b #!Richard_Found : BNE .delivery
-    LDY.b #!RichardMsg_Pacing>>8 : LDA.b #!RichardMsg_Pacing : JSL Sprite_ShowSolicitedMessageIfPlayerFacing : BCC .none
+    LDY.b #!RichardMsg_Pacing>>8 : LDA.b #!RichardMsg_Pacing&$FF : JSL Sprite_ShowSolicitedMessageIfPlayerFacing : BCC .none
     LDA.l RichardQuestFlags : ORA.b #!Richard_Asked : STA.l RichardQuestFlags
     BRA .none
 .delivery
-  LDY.b #!RichardMsg_Delivery>>8 : LDA.b #!RichardMsg_Delivery : JSL Sprite_ShowSolicitedMessageIfPlayerFacing : BCC .none
+  LDY.b #!RichardMsg_Delivery>>8 : LDA.b #!RichardMsg_Delivery&$FF : JSL Sprite_ShowSolicitedMessageIfPlayerFacing : BCC .none
   LDA.l RichardQuestFlags : ORA.b #!Richard_Delivered : STA.l RichardQuestFlags
   LDA.b #!RichardRunAction : STA.w SprAction, X
   STZ.w SprMiscB, X
   STZ.w SprXSpeed, X
   STZ.w SprYSpeed, X
   LDA.b #$F0 : STA.w SprTimerA, X ; safety: arrive after 240 frames anyway
-  LDA.b #$01 : STA.w $02E4         ; hold Link while she runs
 .none
   CLC
   RTL
@@ -264,7 +255,6 @@ RichardLady_Run:
   LDA.b #!RichardLadySpeed : JSR RichardQuest_RunPath : BCC .out
 .inside
   STZ.w SprState, X
-  STZ.w $02E4
 .out
   PLB
   RTL
@@ -285,20 +275,20 @@ RichardLady_Indoor:
     LDA.b $10 : CMP.b #$0E : BEQ .out
     STZ.w SprMiscD, X
     LDA.l RichardQuestFlags : AND.b #!Richard_Rewarded : BNE .out
-    ORA.l RichardQuestFlags : ORA.b #!Richard_Rewarded : STA.l RichardQuestFlags
     LDY.b #!RichardRewardItem
     STZ.w $02E9
     PHX
     JSL Link_ReceiveItem
     PLX
+    LDA.l RichardQuestFlags : ORA.b #!Richard_Rewarded : STA.l RichardQuestFlags
     BRA .out
 .talk
   LDA.l RichardQuestFlags : AND.b #!Richard_Rewarded : BNE .thanks
-    LDY.b #!RichardMsg_Reward>>8 : LDA.b #!RichardMsg_Reward : JSL Sprite_ShowSolicitedMessageIfPlayerFacing : BCC .out
+    LDY.b #!RichardMsg_Reward>>8 : LDA.b #!RichardMsg_Reward&$FF : JSL Sprite_ShowSolicitedMessageIfPlayerFacing : BCC .out
     LDA.b #$01 : STA.w SprMiscD, X
     BRA .out
 .thanks
-  LDY.b #!RichardMsg_Thanks>>8 : LDA.b #!RichardMsg_Thanks : JSL Sprite_ShowSolicitedMessageIfPlayerFacing
+  LDY.b #!RichardMsg_Thanks>>8 : LDA.b #!RichardMsg_Thanks&$FF : JSL Sprite_ShowSolicitedMessageIfPlayerFacing
 .out
   PLB
   RTL
@@ -352,7 +342,7 @@ RichardDog_Main:
   SEP #$20
   BCS .unhandled
     LDA.l RichardQuestFlags : ORA.b #!Richard_Found : STA.l RichardQuestFlags
-    LDY.b #!RichardMsg_Found>>8 : LDA.b #!RichardMsg_Found : JSL Sprite_ShowMessageUnconditional
+    LDY.b #!RichardMsg_Found>>8 : LDA.b #!RichardMsg_Found&$FF : JSL Sprite_ShowMessageUnconditional
     LDA.b #$40 : STA.w SprTimerA, X
     LDA.b #$20 : STA.w SprXSpeed, X
     STZ.w SprYSpeed, X
@@ -390,6 +380,7 @@ RichardDog_PaletteMask:
 RichardQuest_Tick:
 {
   PHB : PHK : PLB
+  PHX : PHY
   LDA.b $11 : BNE .done
   LDA.b $10 : CMP.b #$09 : BNE +
     JSR RichardQuest_TickField
@@ -398,6 +389,7 @@ RichardQuest_Tick:
   CMP.b #$07 : BNE .done
     JSR RichardQuest_TickShed
 .done
+  PLY : PLX
   PLB
   RTL
 }
@@ -405,6 +397,7 @@ RichardQuest_Tick:
 ; Overworld: spawn the night field Richard near RichardFieldSpawn.
 RichardQuest_TickField:
 {
+  JSR RichardQuest_TickHomeDog
   LDA.l RichardQuestFlags : AND.b #(!Richard_Asked|!Richard_Found)
   CMP.b #!Richard_Asked : BNE .done
   LDA.b $8A : CMP.w RichardFieldSpawn : BNE .done
@@ -418,7 +411,7 @@ RichardQuest_TickField:
   CMP.w #$0080 : BCS .far
   SEP #$20
   LDA.b #$25 : STA.b $00
-  LDA.b #$02 : STA.b $01
+  LDA.b #$02 : STA.b $01 : STA.b $09
   JSR RichardQuest_FindSprite : BCS .done
   LDX.b #$00
   LDA.b #$25 : JSR RichardQuest_Spawn : BMI .done
@@ -433,37 +426,65 @@ RichardQuest_TickField:
   RTS
 }
 
+; Quest map, Found and not Delivered: keep home Richard beside the lady.
+; Spawned here (not in her prep) so the area sprite loader cannot overwrite
+; the slot.
+RichardQuest_TickHomeDog:
+{
+  LDA.b $8A : CMP.b #!RichardLadyMap : BNE .done
+  LDA.l RichardQuestFlags : AND.b #(!Richard_Found|!Richard_Delivered)
+  CMP.b #!Richard_Found : BNE .done
+  LDA.b #$25 : STA.b $00
+  LDA.b #$01 : STA.b $01 : STA.b $09
+  JSR RichardQuest_FindSprite : BCS .done
+  LDA.b #$3D : STA.b $00
+  STZ.b $01
+  JSR RichardQuest_FindSprite : BCC .done
+  TYX ; X = lady slot (spawn parent)
+  LDA.b #$25 : JSR RichardQuest_Spawn : BMI .done
+  LDA.w SprX, X : CLC : ADC.b #$14 : STA.w SprX, Y
+  LDA.w SprXH, X : ADC.b #$00 : STA.w SprXH, Y
+  LDA.w SprY, X : STA.w SprY, Y
+  LDA.w SprYH, X : STA.w SprYH, Y
+.done
+  RTS
+}
+
 ; Underworld: after delivery, put the lady and Richard in the shed room.
 RichardQuest_TickShed:
 {
   REP #$20
   LDA.b $A0 : CMP.w #!RichardShedRoom
   SEP #$20
-  BNE .done
-  LDA.l RichardQuestFlags : AND.b #!Richard_Delivered : BEQ .done
+  BEQ +
+  RTS
++
+  LDA.l RichardQuestFlags : AND.b #!Richard_Delivered : BNE +
+  RTS
++
   ; Room base: X hi = (room & $0F) * 2, Y hi = (room & $F0) / 8.
-  LDA.b $A0 : AND.b #$0F : ASL A : STA.b $02
-  LDA.b $A0 : AND.b #$F0 : LSR #3 : STA.b $03
+  LDA.b $A0 : AND.b #$0F : ASL A : STA.b $0A
+  LDA.b $A0 : AND.b #$F0 : LSR #3 : STA.b $0B
   LDX.b #$00
 
   LDA.b #$3D : STA.b $00
-  STZ.b $01
+  STZ.b $01 : STZ.b $09
   JSR RichardQuest_FindSprite : BCS .dog
   LDA.b #$3D : JSR RichardQuest_Spawn : BMI .dog
   LDA.b #!RichardIndoorLadyX&$FF : STA.w SprX, Y
-  LDA.b #!RichardIndoorLadyX>>8 : CLC : ADC.b $02 : STA.w SprXH, Y
+  LDA.b #!RichardIndoorLadyX>>8 : CLC : ADC.b $0A : STA.w SprXH, Y
   LDA.b #!RichardIndoorLadyY&$FF : STA.w SprY, Y
-  LDA.b #!RichardIndoorLadyY>>8 : CLC : ADC.b $03 : STA.w SprYH, Y
+  LDA.b #!RichardIndoorLadyY>>8 : CLC : ADC.b $0B : STA.w SprYH, Y
   LDA.b #$01 : STA.w SprMiscC, Y : STA.w SprMiscE, Y
 .dog
   LDA.b #$25 : STA.b $00
-  LDA.b #$03 : STA.b $01
+  LDA.b #$03 : STA.b $01 : STA.b $09
   JSR RichardQuest_FindSprite : BCS .done
   LDA.b #$25 : JSR RichardQuest_Spawn : BMI .done
   LDA.b #!RichardIndoorDogX&$FF : STA.w SprX, Y
-  LDA.b #!RichardIndoorDogX>>8 : CLC : ADC.b $02 : STA.w SprXH, Y
+  LDA.b #!RichardIndoorDogX>>8 : CLC : ADC.b $0A : STA.w SprXH, Y
   LDA.b #!RichardIndoorDogY&$FF : STA.w SprY, Y
-  LDA.b #!RichardIndoorDogY>>8 : CLC : ADC.b $03 : STA.w SprYH, Y
+  LDA.b #!RichardIndoorDogY>>8 : CLC : ADC.b $0B : STA.w SprYH, Y
 .done
   RTS
 }
