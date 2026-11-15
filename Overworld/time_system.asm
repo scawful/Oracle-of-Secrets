@@ -36,6 +36,9 @@ HUD_ClockDisplay:
   ; A/X/Y (LDX.b #$1D / CPX.b #$0E). With 16-bit X the upper slots ($0F-$1D)
   ; never ran: thrown pot/bush debris (garnish $16) froze invisibly (2026-09-26).
   SEP #$30
+  if !ENABLE_RICHARD_QUEST == 1
+    JSL RichardQuest_Tick ; Overworld/richard_quest.asm
+  endif
   JSL $09B06E ; Restore Garnish_ExecuteUpperSlots_long
   PLP
   RTL
