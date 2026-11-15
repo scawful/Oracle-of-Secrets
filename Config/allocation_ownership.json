@@ -330,7 +330,7 @@
     "shared:Masks/horse_form.asm": {
       "source_set": "shared",
       "path": "Masks/horse_form.asm",
-      "sha256": "74bf2df044d2c049a2fbd73cc12bd71100848b6f962f5324183e64092aeb8054"
+      "sha256": "d83ba7051f4a740b7d7c84f480e4db438ba8414bfd3b1905f950f4392fbebef4"
     },
     "shared:Sprites/NPCs/horse.asm": {
       "source_set": "shared",

@@ -22,8 +22,8 @@
 !Horse_SpriteId      = $2D
 !Horse_JumpFrames    = $10      ; 16-frame fence vault
 
-!Horse_DefaultNpcX   = $01C8    ; Toto Ranch hay paddock clearing X (456px; (368,568) is inside crop bed)
-!Horse_DefaultNpcY   = $027C    ; Toto Ranch hay paddock clearing Y (636px, north of jumpable fence)
+!Horse_DefaultNpcX   = $01C0    ; Toto Ranch clear grass X (448px; avoids the adjacent east hay bale)
+!Horse_DefaultNpcY   = $0294    ; Toto Ranch clear grass Y (660px; rider clears hay, feet remain north of fence)
 
 ; Vanilla routines referenced long
 Horse_GetTileAttr    = $00882E  ; (DP $00=Ypx, $02=Xpx>>3) -> A=8x8 tiletype
