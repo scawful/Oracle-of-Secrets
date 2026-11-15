@@ -294,6 +294,9 @@ endif
 ; Horse Form (!CurrentMask = $09) + Toto Ranch NPC ($2D) + fence jumps:
 ; Off until prototype art and behavior review are complete.
 !ENABLE_HORSE_FORM                  = 0
+; Epona long jump over named water-gap Tile16s (HorseLongGapTile16s, up to two
+; tiles). Requires !ENABLE_HORSE_FORM. Off until native proof and site approval.
+!ENABLE_HORSE_LONG_JUMP             = 0
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
