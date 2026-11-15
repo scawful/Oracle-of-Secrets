@@ -81,6 +81,9 @@ class WallKitMaskSchemaTest(unittest.TestCase):
         self.assertIn('dl WallSel_KitHighPalette',asm)
         for kit in profiles.load_kits():
             if kit['_row'] is not None:
-                self.assertEqual(len(kit['classes']),24)
+                # Estate timber also owns the 12 five-word diagonals 009-014.
+                want=36 if kit['kit']=='glacia_estate_timber' else 24
+                self.assertEqual(len(kit['classes']),want)
+                self.assertTrue({int(c,16) for c in kit['classes']}<=set(profiles.CLASSES))
 
 if __name__=='__main__':unittest.main()

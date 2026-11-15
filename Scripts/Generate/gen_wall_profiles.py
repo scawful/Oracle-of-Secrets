@@ -45,7 +45,8 @@ KITS_ASM = KITS_DIR / "kits.asm"
 SUB1 = [0x061, 0x062, 0x001, 0x002, 0x063, 0x064, 0x003, 0x004,
         0x03A, 0x03B, 0x076, 0x077, 0x081, 0x082]
 SUB2 = list(range(0x100, 0x110))
-CLASSES = SUB1 + SUB2  # class index = position (0..29)
+DIAG = list(range(0x009, 0x015))  # 5-word diagonal columns, appended last
+CLASSES = SUB1 + SUB2 + DIAG  # class index = position (0..41)
 ROOM_COUNT = 0x128
 OBJ_TABLE_PC = 0x1B52  # PC of $00:9B52 (RoomDrawObjectData) in a headerless LoROM
 

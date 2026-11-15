@@ -21,7 +21,7 @@
 ;   blocked object 116: not a selector class: the candidate draws other words in rooms 0CE
 ;   blocked object 117: not a selector class: the candidate draws other words in rooms 0CE
 ;   blocked object FE7: not a selector class: the candidate draws other words in rooms 0AE
-; glacia_estate_timber (N8) [routed]: Glacia estate frozen timber (ce525155); glyphs copied into free slot-3 chars of a sheet-0B copy. Re-extracted on base 5d6b461b (origin 837bd18c) so the fancy-exit chars stay vanilla. Native sheet-0B floor glyphs restored; displaced wall glyphs retain their high palette half in static slot-6 cells. Slot-6 animation $1B0-$1BF is preserved.
+; glacia_estate_timber (N8) [routed]: Glacia estate frozen timber (ce525155); glyphs copied into free slot-3 chars of a sheet-0B copy. Re-extracted on base 5d6b461b (origin 837bd18c) so the fancy-exit chars stay vanilla. Native sheet-0B floor glyphs restored; displaced wall glyphs retain their high palette half in static slot-6 cells. Slot-6 animation $1B0-$1BF is preserved. Diagonals 009-014 use the v6 donor (4ea40cdb) five-glyph family in free slot-6 cells 190/191/1A6/1A7/1A8; 1A8 coping retinted 1->5 7->4 6->6 (scawful pick 2026-11-15, no white).
 
 ; ---- private ids: vanilla spare rows, palette offsets, no room uses them ----
 assert read1($00DDF3) == $09 && read1($00DDF4) == $00 && read1($00DDF5) == $24 && read1($00DDF6) == $1B, "blockset row $17 is not the vanilla spare row"

@@ -273,8 +273,10 @@ NATIVE_ATTRIBUTE_SOURCES = {
         '56b31841b303eb401e03cdc8a41a24a97b390cc0cdd0220a57bc8d1abb5aef97',
     'Dungeons/wall_profile_selector.asm':
         'fb9ae42f75fdcd810c1f6d9409c183f9a247c3e0f23829007b4af6efc601ecbc',
+    # Glacia diagonals 009-014 joined CLASSES; Room25 is profile 0 and still
+    # exits at the RoomProfile BEQ before SlotSrc, so its plain path is unchanged.
     'Dungeons/Data/wall_profiles/wall_profiles.asm':
-        '72c1e5f974bc762234df5434bafcf2611f7998daba0d95a707584fd8461f2d51',
+        '34b1637fdbef3d502e90a5618ad8281861b4c74cde3c96eea7280a35d29fad7b',
     # The selected backend suppresses all three old25/bit02 entry/fill paths.
     'Dungeons/Collision/water_collision.asm':
         '33b928028d7d5de14025ba7c256e51d6c0c8ce675fd08a0fccb90f08a40b2023',

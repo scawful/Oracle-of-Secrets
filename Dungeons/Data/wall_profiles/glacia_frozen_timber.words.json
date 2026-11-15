@@ -3,7 +3,7 @@
  "source_rom_sha256": "ce525155d0ff0f90f9161e90428fd73a0f813512962785b0308d94ef52eaac19",
  "base_rom_sha256": "8d6157840e402f98d5c4b1d61da90be072531fa661bc1608ae0eeab1b898e721",
  "reference_rom_sha256": "b685f3ec16f96f7e705aa42d0235843172b3d9b5d56ebf2eb24b5956afa84dea",
- "note": "QUEUE row 90 frozen timber v2 candidate ce525155 vs its baseline b685f3ec: pattern words only. Needs sheets 0x14/0x61/0x01, palette 13 row 3R, 56 floor-word evacuations, class bytes and covers/diagonals before it looks right.",
+ "note": "QUEUE row 90 frozen timber v2 candidate ce525155 vs its baseline b685f3ec: pattern words only. Needs sheets 0x14/0x61/0x01, palette 13 row 3R, 56 floor-word evacuations, class bytes and covers/diagonals before it looks right. Diagonal classes 009-014 come from v6 donor 4ea40cdb (doors-v6-lower-coping-fix).",
  "classes": {
   "061": [
    "$542B",
@@ -372,6 +372,90 @@
    "$4C54",
    "$CC1F",
    "$8C1F"
+  ],
+  "009": [
+   "$149C",
+   "$D49B",
+   "$149A",
+   "$1495",
+   "$1094"
+  ],
+  "00A": [
+   "$9094",
+   "$9495",
+   "$949A",
+   "$549B",
+   "$949C"
+  ],
+  "00B": [
+   "$549C",
+   "$949B",
+   "$549A",
+   "$5495",
+   "$5094"
+  ],
+  "00C": [
+   "$D094",
+   "$D495",
+   "$D49A",
+   "$149B",
+   "$D49C"
+  ],
+  "00D": [
+   "$149C",
+   "$D49B",
+   "$149A",
+   "$1495",
+   "$1094"
+  ],
+  "00E": [
+   "$9094",
+   "$9495",
+   "$949A",
+   "$549B",
+   "$949C"
+  ],
+  "00F": [
+   "$549C",
+   "$949B",
+   "$549A",
+   "$5495",
+   "$5094"
+  ],
+  "010": [
+   "$D094",
+   "$D495",
+   "$D49A",
+   "$149B",
+   "$D49C"
+  ],
+  "011": [
+   "$149C",
+   "$D49B",
+   "$149A",
+   "$1495",
+   "$1094"
+  ],
+  "012": [
+   "$9094",
+   "$9495",
+   "$949A",
+   "$549B",
+   "$949C"
+  ],
+  "013": [
+   "$549C",
+   "$949B",
+   "$549A",
+   "$5495",
+   "$5094"
+  ],
+  "014": [
+   "$D094",
+   "$D495",
+   "$D49A",
+   "$149B",
+   "$D49C"
   ]
  }
 }
