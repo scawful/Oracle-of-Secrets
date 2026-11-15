@@ -165,6 +165,7 @@ assert MenuScrollLevelV >= $7E0000+!MinecartCurrent+$02 || SongTintColor < $7E00
 Sprite_Minecart_Long:
 {
   PHB : PHK : PLB
+  JSL Goron88_SharedStopOccupancy
   LDA.w SprAction,X : CMP.b #$07 : BEQ .SpriteIsNotActive
   JSR Sprite_Minecart_DrawTop    ; Draw behind Link
   JSR Sprite_Minecart_DrawBottom ; Draw in front of Link

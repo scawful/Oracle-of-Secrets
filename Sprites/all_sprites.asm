@@ -324,6 +324,9 @@ if !ENABLE_GORON78_LANMOLA_BOSS == 1
   ; $30/$31 are full when D8 Farore follow is also on.
 endif
 
+; Same sprite ownership as MinecartLong; bounded bank31 qualification.
+incsrc "Sprites/Objects/minecart_shared_stop.asm"
+
 assert pc() <= $328000, "Bank $31 sprite region overflow"
 assert pc() >= $318000, "Bank $31 sprite code left its bank (org without pushpc/pullpc?)"
 print "Bank31 Free Space: ", dec($320000-pc()), " bytes"
@@ -472,6 +475,9 @@ endif
 if !ENABLE_GORON78_LANMOLA_BOSS == 1
   %Goron78_EmitTargetHighHelper()
 endif
+
+; Complete the shared-stop scan within the existing bank2C tail.
+%Goron88_EmitSharedStopScan()
 
 assert pc() <= $2CF700, "Bank $2C sprite stream overlaps Somaria internal landing"
 
