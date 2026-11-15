@@ -71,6 +71,7 @@
 !ENABLE_PART00_NIGHT_FIX              = 1
 !ENABLE_PART0_STORM                   = 1
 !ENABLE_PORTAL_ROD_CELL               = 1
+!ENABLE_RICHARD_QUEST                 = 0
 !ENABLE_RING_SRAM_RELOCATE            = 1
 !ENABLE_SKY_OVERWORLD_GRAPHICS        = 0
 !ENABLE_SKY_OVERWORLD_ROUTE           = 0

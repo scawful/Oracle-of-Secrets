@@ -837,7 +837,18 @@ RegionalCheckpointSchema = $7EF3B4
 RegionalCheckpointEpoch  = $7EF3B5
 RegionalCheckpointKey    = $7EF3B6 ; word, ends before $7EF3B8
 RegionalCheckpointResumeIntent = $7EF3B8 ; byte: 0 Home, 1 last regional key
-FreeBlock_Large    = $7EF3B9  ; 12 bytes [B9,C5)
+FreeBlock_Large    = $7EF3B9  ; 11 bytes [B9,C4)
+; Richard quest (Wayward Village lady + night dog), PROPOSED 2026-11-15 by the
+; richard-quest lane: last byte of the Large remainder, so the menu-gear
+; lane's B9-BB reservation and the B9 block start stay untouched. Vanilla
+; new-file init clears it; 00 in every stored save checked (20 .srm files);
+; no item-receipt destination reaches $7EF3A0-3C4. Bits are masks below.
+; Only Overworld/richard_quest.asm reads or writes it (!ENABLE_RICHARD_QUEST).
+RichardQuestFlags  = $7EF3C4
+!Richard_Asked     = $01 ; talked to the pacing lady
+!Richard_Found     = $02 ; met Richard at night; he went home
+!Richard_Delivered = $04 ; lady ran inside with Richard
+!Richard_Rewarded  = $08 ; indoor reward given (never twice)
 
 ; ---------------------------------------------------------
 ; Dreams extension and current tail-event reservation ($7EF412-4FD)
@@ -861,7 +872,7 @@ FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF3A0  | $7EF3A0  | bits  | Wolf dig: bit 0 used |
 ; | $7EF3B3  | $7EF3B3  | 1     | Large prefix       |
-; | $7EF3B9  | $7EF3C4  | 12    | Large remainder    |
+; | $7EF3B9  | $7EF3C3  | 11    | Large remainder    |
 ; | $7EF412  | $7EF4BF  | 174   | Dreams prefix      |
 ; | $7EF4E1  | $7EF4FD  | 29    | Dreams remainder   |
 ; |----------|----------|-------|--------------------|
