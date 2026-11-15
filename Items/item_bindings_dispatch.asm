@@ -31,13 +31,22 @@ ItemBindings_Route:
   LDA.b #$05 : BRA .ancilla
   .other
   ; Other latchable handlers: item-use bits, a Link state (hookshot pull,
-  ; feather jump) or a live hookshot ancilla ($1F) keep the action owned.
+  ; feather jump) or a live shot ancilla keep the action owned: hookshot
+  ; ($1F), Fire Rod shot ($02), Ice Rod shot ($0B). The Ice Rod water
+  ; freeze (Items/ice_rod.asm) reads $0303/$0304 == 6 when the shot lands,
+  ; so an X shot must keep the action until it ends.
   PHA
   LDA.w $0301 : ORA.w $037A : ORA.b $5D
   BEQ +
     PLA : BRA .busy
   +
-  PLA : CMP.b #$0E : BNE .held
+  PLA : CMP.b #$0E : BEQ .hookshot
+  CMP.b #$06 : BEQ .ice_rod
+  CMP.b #$05 : BNE .held
+  LDA.b #$02 : BRA .ancilla
+  .ice_rod
+  LDA.b #$0B : BRA .ancilla
+  .hookshot
   LDA.b #$1F
   .ancilla
   LDX.b #$04

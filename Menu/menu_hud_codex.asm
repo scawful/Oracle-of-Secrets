@@ -31,6 +31,11 @@ HUD_CodexCells:
   LDA.w #$2071 : STA.l HudCornerBuffer+$0A      ; key icon, bottom right
 
   PHY
+  ; Mask forms other than base Link and GBC route X to the field map
+  ; (ItemBindings_Admitted), so the X box stays empty under them.
+  LDA.l $7E0000+!CurrentMask : AND.w #$00FF : BEQ .form_ok
+  CMP.w #$0006 : BNE .empty
+  .form_ok
   LDA.l ItemBindingSavedVersion : AND.w #$00FF : CMP.w #$0001 : BNE .empty
   LDA.l ItemBindingSavedX : AND.w #$00FF : BEQ .empty
   JSL ItemBindings_IsLatchable : BCS .icon
