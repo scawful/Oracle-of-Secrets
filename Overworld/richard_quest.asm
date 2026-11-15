@@ -55,10 +55,13 @@
 ; ---------------------------------------------------------
 ; Data. Field spawn site: open design question (the village study may move
 ; it). Placeholder = scawful's 2026-11-15 suggestion: map $24, tile16 (25,7).
+; Layout: db area $8A (parent for large areas), dw world X, dw world Y,
+;         db map/quadrant (documentation for the design table only).
 RichardFieldSpawn:
-  db $24               ; overworld area ($8A)
+  db $23               ; $8A at runtime: large area parent of map $24
   dw $0800+(25*16)     ; world X (map $24 column 4 -> $0800)
-  dw $0800+(7*16)      ; world Y (map $24 row 4 -> $0800)
+  dw $0800+124         ; world Y: tile row 7 + 12 px, on the bridge planks
+  db $24               ; map $24, tile16 (25,7)
 
 ; Run path from the lady's pacing row to the shed door (door faces south).
 ; dw X, dw Y, db facing (0 up, 1 down, 2 left, 3 right); $FF ends.
@@ -385,17 +388,32 @@ RichardQuest_Tick:
 {
   PHB : PHK : PLB
   LDA.b $11 : BNE .done
-  LDA.b $10 : CMP.b #$09 : BEQ .overworld
-  CMP.b #$07 : BEQ .underworld
+  LDA.b $10 : CMP.b #$09 : BNE +
+    JSR RichardQuest_TickField
+    BRA .done
+  +
+  CMP.b #$07 : BNE .done
+    JSR RichardQuest_TickShed
 .done
   PLB
   RTL
+}
 
-.overworld
+; Overworld: spawn the night field Richard near RichardFieldSpawn.
+RichardQuest_TickField:
+{
   LDA.l RichardQuestFlags : AND.b #(!Richard_Asked|!Richard_Found)
   CMP.b #!Richard_Asked : BNE .done
   LDA.b $8A : CMP.w RichardFieldSpawn : BNE .done
   JSR RichardQuest_IsNight : BCC .done
+  ; Only near the spot: overworld sprites far off camera are culled, so a
+  ; far spawn would die and respawn every frame.
+  REP #$20
+  LDA.b $22 : SEC : SBC.w RichardFieldSpawn+1 : BPL + : EOR.w #$FFFF : INC A : +
+  CMP.w #$00A0 : BCS .far
+  LDA.b $20 : SEC : SBC.w RichardFieldSpawn+3 : BPL + : EOR.w #$FFFF : INC A : +
+  CMP.w #$0080 : BCS .far
+  SEP #$20
   LDA.b #$25 : STA.b $00
   LDA.b #$02 : STA.b $01
   JSR RichardQuest_FindSprite : BCS .done
@@ -405,9 +423,16 @@ RichardQuest_Tick:
   LDA.w RichardFieldSpawn+1 : SEP #$20 : STA.w SprX, Y : XBA : STA.w SprXH, Y
   REP #$20
   LDA.w RichardFieldSpawn+3 : SEP #$20 : STA.w SprY, Y : XBA : STA.w SprYH, Y
-  BRA .done
+.done
+  RTS
+.far
+  SEP #$20
+  RTS
+}
 
-.underworld
+; Underworld: after delivery, put the lady and Richard in the shed room.
+RichardQuest_TickShed:
+{
   REP #$20
   LDA.b $A0 : CMP.w #!RichardShedRoom
   SEP #$20
@@ -430,14 +455,14 @@ RichardQuest_Tick:
 .dog
   LDA.b #$25 : STA.b $00
   LDA.b #$03 : STA.b $01
-  JSR RichardQuest_FindSprite : BCS .tail
-  LDA.b #$25 : JSR RichardQuest_Spawn : BMI .tail
+  JSR RichardQuest_FindSprite : BCS .done
+  LDA.b #$25 : JSR RichardQuest_Spawn : BMI .done
   LDA.b #!RichardIndoorDogX&$FF : STA.w SprX, Y
   LDA.b #!RichardIndoorDogX>>8 : CLC : ADC.b $02 : STA.w SprXH, Y
   LDA.b #!RichardIndoorDogY&$FF : STA.w SprY, Y
   LDA.b #!RichardIndoorDogY>>8 : CLC : ADC.b $03 : STA.w SprYH, Y
-.tail
-  JMP .done
+.done
+  RTS
 }
 
 ; ---------------------------------------------------------
