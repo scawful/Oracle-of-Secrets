@@ -292,6 +292,9 @@ incsrc "Sprites/Enemies/darknut_weapon_hitbox.asm"
 ; Local pea-shot contact wrapper: keeps the bank $30 callsite size unchanged.
 incsrc "Sprites/Enemies/business_scrub_shield.asm"
 
+; Same sprite ownership as MinecartLong; bounded bank31 qualification.
+incsrc "Sprites/Objects/minecart_shared_stop.asm"
+
 assert pc() <= $328000, "Bank $31 sprite region overflow"
 assert pc() >= $318000, "Bank $31 sprite code left its bank (org without pushpc/pullpc?)"
 print "Bank31 Free Space: ", dec($320000-pc()), " bytes"
@@ -415,6 +418,9 @@ if !ENABLE_D8_BOSS == 1
   incsrc "Sprites/Bosses/d8_boss.asm"
   %log_end("d8_boss", !LOG_DUNGEON)
 endif
+
+; Complete the shared-stop scan within the existing bank2C tail.
+%Goron88_EmitSharedStopScan()
 
 assert pc() <= $2CF700, "Bank $2C sprite stream overlaps Somaria internal landing"
 
