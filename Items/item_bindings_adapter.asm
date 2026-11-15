@@ -1,6 +1,7 @@
-; Disabled, unhooked prototype adapter. Root memory grant 2026-11-14.
-; No ORG or production incsrc: code placement and live load/dispatch joins are
-; separate work. Merely compiling this include never takes X from the map.
+; Dual-item binding prototype (Bow/Boomerang first slice). Default off.
+; Core + load/reset adapter; ORG-free so the compiled fixture can assemble it
+; alone. Live routing and the three vanilla hooks are in
+; Items/item_bindings_dispatch.asm, included right after this file.
 assert defined("ENABLE_DUAL_ITEM_BINDING_PROTOTYPE"), "Use canonical feature defaults"
 
 if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
@@ -39,4 +40,5 @@ ItemBindings_AdapterLoad:
 .refuse
   REP #$20 : PLA : PLP : CLC : RTL
 }
+
 endif

@@ -302,6 +302,14 @@ if !ENABLE_D6_CHU_GATE_97 == 1
 incsrc "Dungeons/d6_chu_gate_97.asm"
 endif
 
+; Dual-item binding prototype (default off). Local span cap $600.
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+ItemBindings_SpanStart:
+incsrc "Items/item_bindings_adapter.asm"
+incsrc "Items/item_bindings_dispatch.asm"
+assert pc()-ItemBindings_SpanStart <= $600, "Dual-item prototype exceeded its $600 span"
+endif
+
 
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
 assert pc() <= $2BF000, "Items bank $2B reached the dream entry FX region ($2BF000)"
