@@ -124,6 +124,18 @@ OcarinaEffect_Stone:
   LDA.b $5D : BEQ +
     JMP .error
   +
+if !ENABLE_D8_FARORE_GRAPHICS == 1
+  ; Room90's native stone uses OBJ6 low colors reassigned to Farore. Refuse
+  ; creation/replacement only while this prototype segment is active. An
+  ; existing echo remains untouched; all other rooms retain the normal gate.
+  JSL D8Farore_IsMember : BCC +
+  REP #$20
+  LDA.b $A0 : CMP.w #$0090
+  SEP #$20
+  BNE +
+    JMP .error
+  +
+endif
   JSR Stone_SelectSpawnPoint
   JSR Stone_CheckSpawnFloor : BCS +
     JMP .error

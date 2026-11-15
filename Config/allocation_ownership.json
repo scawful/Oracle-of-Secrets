@@ -320,7 +320,12 @@
     "shared:Sprites/NPCs/farore_d8_graphics.asm": {
       "source_set": "shared",
       "path": "Sprites/NPCs/farore_d8_graphics.asm",
-      "sha256": "9c9d7045fac55aa279420e010db572be28e57a047faf41e7163909c46dbec097"
+      "sha256": "4eb2572c362b4fe7ca0ebc8b5d4170ec77beec9065934e6c2596db3b8b7887ee"
+    },
+    "shared:Sprites/NPCs/farore_d8_companion.asm": {
+      "source_set": "shared",
+      "path": "Sprites/NPCs/farore_d8_companion.asm",
+      "sha256": "469ca9631d7f8b0f67644a302e888e1e2bf06ab68e5a836cd95008ca76ae6fa8"
     }
   },
   "claims": [
@@ -2399,7 +2404,7 @@
     },
     {
       "id": "d8_farore_graphics_support",
-      "owner": "Default-off D8 Farore room graphics helper and native Low4bpp blob",
+      "owner": "Default-off D8 Farore graphics, bounded presence/recovery and native Low4bpp blob",
       "space": "snes_rom",
       "base": 3840000,
       "size": 2048,
@@ -2409,15 +2414,17 @@
         "DISABLE_SPRITES": 0
       },
       "lifetime": "Bounded code/data slot $3A9800-$3A9FFF, between conditionally bounded mask routines and unchanged ice_block_code at $3AA000. Member-only room-load overlay; no global sheet allocation. Root granted prototype placement on 2026-11-15.",
-      "reset": "Build-owned ROM only; no new WRAM. Native room graphics loads replace staging/VRAM contents.",
+      "reset": "Build-owned ROM; no new WRAM. Presence uses only the owned actor subtype/Misc fields, initialized by ordinary sprite Prep and discarded at room unload. Native room graphics loads replace staging/VRAM contents.",
       "save": "No saved fields, migration, or writes. Existing D8 crystal bit only read.",
       "provenance": [
-        "shared:Sprites/NPCs/farore_d8_graphics.asm"
+        "shared:Sprites/NPCs/farore_d8_graphics.asm",
+        "shared:Sprites/NPCs/farore_d8_companion.asm"
       ],
       "anchors": [
         "org $3A9800",
         "D8Farore_GraphicsStart:",
-        "D8Farore_GraphicsEnd:"
+        "D8Farore_GraphicsEnd:",
+        "D8Farore_SupportEnd:"
       ],
       "aliases": []
     }

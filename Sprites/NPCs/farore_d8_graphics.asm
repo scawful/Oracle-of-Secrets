@@ -1,4 +1,4 @@
-; D8 Farore graphics support only. No actor spawning, AI or new animation.
+; D8 Farore graphics and bounded presence/recovery prototype. No new animation.
 ; Private prototype: flag 0 emits no hooks, code or blob.
 ; Slot $3A9800-$3A9FFF granted by Root; mask code bounds tighten only when on.
 ; Native conversion fills the transition buffer before overlay. Full-load
@@ -204,6 +204,8 @@ D8Farore_Tiles:
   incbin "Sprites/NPCs/Data/farore_d8_low.4bpp"
 assert pc()-D8Farore_Tiles == $0380, "Farore must contain exactly28 Tile8"
 D8Farore_GraphicsEnd:
+incsrc "Sprites/NPCs/farore_d8_companion.asm"
+D8Farore_SupportEnd:
 assert pc() <= $3AA000, "Farore support exceeds granted2KiB slot"
 pullpc
 endif

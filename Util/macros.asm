@@ -284,7 +284,7 @@ endif
 ; Somaria-socket qualified cycles, credited-hit counter, three stages.
 ; Off until native proof; no room places the sprite yet.
 !ENABLE_D8_BOSS                     = 0
-!ENABLE_D8_FARORE_GRAPHICS          = 0 ; Graphics-only prototype; no companion AI
+!ENABLE_D8_FARORE_GRAPHICS          = 0 ; Graphics + presence prototype; no companion control
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.

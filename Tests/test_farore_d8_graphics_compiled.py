@@ -41,7 +41,8 @@ def assemble(folder, enabled, source=None):
         helper.write_text(source)
     draw = (ROOT/'Sprites/NPCs/farore.asm').read_text().split('Sprite_Farore_Draw:',1)[1]
     draw_source = 'Sprite_Farore_Draw:'+draw
-    asm.write_text(f'lorom\n!ENABLE_D8_FARORE_GRAPHICS = {enabled}\norg $308000\nincsrc "{helper}"\n'+
+    fields = '\n'.join(m[0] for m in re.finditer(r'(?m)^Spr[A-Z]\w*\s*=\s*\$[0-9a-fA-F]+', (ROOT/'Core/symbols.asm').read_text()))
+    asm.write_text(fields+'\nSprite_Farore = $73\nInCutScene = $7EF303\nSprite_GetTileAttr = $06E87B\n'+f'lorom\n!ENABLE_D8_FARORE_GRAPHICS = {enabled}\norg $308000\nincsrc "{helper}"\n'+
                    ('Sprite_PrepOamCoord = $018000\nSprite_OAM_AllocateDeferToPlayer = $018010\n'+draw_source if enabled else ''))
     result = subprocess.run(['asar', '-I'+str(ROOT), '--no-title-check', '--fix-checksum=off',
                              '--symbols=wla', str(asm), str(image)], capture_output=True, text=True)
@@ -228,7 +229,8 @@ def main():
         rom,labels,_=assemble(p/'on',1)
         cases=check(lib,rom,labels,blob)
         size=labels['D8Farore_GraphicsEnd']-labels['D8Farore_GraphicsStart']
-        assert size<=2048
+        support_size=labels['D8Farore_SupportEnd']-labels['D8Farore_GraphicsStart']
+        assert support_size<=2048
         for address,target in HOOKS.items():
             expected=labels['D8Farore_LoadSet' if target==0x00E031 else 'D8Farore_InitializeTilesets']
             assert rom[pc(address):pc(address)+4]==b'\x22'+expected.to_bytes(3,'little')
@@ -239,8 +241,8 @@ def main():
             try:check(lib,mutant,mutlabels,blob)
             except AssertionError:controls.append(name)
             else:raise AssertionError('mutation not detected: '+name)
-    result={'status':'PASS','source_sha256':hashlib.sha256(source.encode()).hexdigest(),'blob_sha256':hashlib.sha256(blob).hexdigest(),'slot_bytes':size,'slot_capacity':2048,'checks':cases,'mutation_controls':controls,'scope':'compiled CPU, stubbed native load, emulated DMA registers; no native PPU/render or whole-game build'}
+    result={'status':'PASS','source_sha256':hashlib.sha256(source.encode()).hexdigest(),'blob_sha256':hashlib.sha256(blob).hexdigest(),'slot_bytes':support_size,'graphics_bytes':size,'slot_capacity':2048,'checks':cases,'mutation_controls':controls,'scope':'compiled CPU, stubbed native load, emulated DMA registers; no native PPU/render or whole-game build'}
     args.output.parent.mkdir(parents=True,exist_ok=True);args.output.write_text(json.dumps(result,indent=2)+'\n')
-    print(json.dumps({'status':'PASS','slot_bytes':size,'check_groups':len(cases),'mutation_controls':controls}))
+    print(json.dumps({'status':'PASS','slot_bytes':support_size,'graphics_bytes':size,'check_groups':len(cases),'mutation_controls':controls}))
 
 if __name__=='__main__':main()
