@@ -68,9 +68,8 @@ HorseWalkableAttr:
   db 0,0,0,0,0,0,0,0                  ; $50-$57 (liftable rocks/bushes, bonk)
 
 ; Wooden ranch fence Tile16 IDs on Toto Ranch (area 0x00)
-HorseFenceTile16s:
-  dw $0078, $007B, $043A, $003B, $0267, $002C
-HorseFenceTile16s_End:
+; HorseFenceTile16s lives in Masks/horse_ground_clearance.asm (bank $53 slice $53E000-$53E7FF);
+; it is read long (CMP.l), so placement is free.
 
 ; ---------------------------------------------------------
 ; NMI Upload Hook at $008B5C (replaces LDX #$0400 : STX $4305 : LDA #$01 : STA $420B)

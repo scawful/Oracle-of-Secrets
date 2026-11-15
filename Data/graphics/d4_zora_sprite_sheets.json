@@ -153,6 +153,12 @@
       "why": "Private Sky slot-1 material variant; F5 removed from wall-kit eligibility; F3/F4 remain Glacia-owned."
     },
     {
+      "global_sheet": "0xF6",
+      "source": "pit22/gF6.txt",
+      "decoded_sha256": "76584ff4c8837304a5fc69a58d492320e7dcab4a4fea9195c9c3e73998120d24",
+      "why": "Map $22 slot-4 copy of sheet $64 with Kalyxo pit chars $007/$017 copied to solid chars $104/$107 and side char $110."
+    },
+    {
       "global_sheet": "0xDF",
       "source": "d4_zora/atlas-DF.txt",
       "decoded_sha256": "92467df57fd807f8d30a4da93d4392a6ad49040c6b0bf7fc8b60c693231c5e7a",

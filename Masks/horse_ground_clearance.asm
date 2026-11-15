@@ -44,10 +44,8 @@ HorseForm_ConstrainGroundInput:
   .solid
   ; A thin named fence is handled by CheckFenceJump, not this solid envelope.
   REP #$20
-  LDX.b #$00
-  .fence
-  LDA.l HorseFenceTile16s, X : CMP.b $04 : BEQ .fence_clear
-  INX #2 : CPX.b #HorseFenceTile16s_End-HorseFenceTile16s : BCC .fence
+  JSR .is_fence : BCS .fence_clear
+  JSR .fence_ahead : BCS .fence_clear
   SEP #$20
   PLY : PLX
   LDA.l .buttons, X : TRB.b $F0 : TRB.b $F2
@@ -67,6 +65,48 @@ HorseForm_ConstrainGroundInput:
   PLA : STA.b $02 : PLA : STA.b $00
   PLY : PLX : PLA : PLP
   RTS
+  ; A solid neighbour (e.g. a post beside a pit gap) does not block when a
+  ; fence Tile16 is ahead: either CheckFenceJump's own near/far probe for this
+  ; direction (so a blocked turn-around can still face the fence and jump), or
+  ; the probe line at this leading edge (body row y+11 sideways, centre column
+  ; x+8 vertically). Edge index/2 = Horse_JumpDir (U,D,L,R); CheckFenceJump
+  ; rewrites Horse_JumpDir before any read, so the store here is scratch.
+  ; In: A16/X8, $0A/$0C = edge point, $0E = edge index. Out: carry = fence.
+  ; X and $0A or $0C are clobbered; the caller recomputes them per point.
+  .fence_ahead
+  PEI ($0A) : PEI ($0C)
+  SEP #$20
+  LDA.b $0E : LSR : STA.l Horse_JumpDir
+  LDA.b #$00 : JSR HorseForm_ProbeFence : BCS .probe_hit
+  LDA.b #$01 : JSR HorseForm_ProbeFence : BCS .probe_hit
+  REP #$20
+  PLA : STA.b $0C : PLA : STA.b $0A
+  LDA.b $0E : AND.w #$00FF : CMP.w #$0004 : BCS .probe_body_row
+    LDA.b $22 : CLC : ADC.w #$0008 : STA.b $0C
+    BRA .probe_query
+  .probe_body_row
+    LDA.b $20 : CLC : ADC.w #$000B : STA.b $0A
+  .probe_query
+  SEP #$20
+  JSR Horse_QueryTileAt
+  REP #$20
+  BRA .is_fence
+  .probe_hit
+  REP #$20
+  PLA : PLA
+  SEC
+  RTS
+  ; In: A16/X8, $04 = Tile16. Out: carry set if $04 is in HorseFenceTile16s.
+  .is_fence
+  LDX.b #$00
+  .fence
+  LDA.l HorseFenceTile16s, X : CMP.b $04 : BEQ .is_fence_hit
+  INX #2 : CPX.b #HorseFenceTile16s_End-HorseFenceTile16s : BCC .fence
+  CLC
+  RTS
+  .is_fence_hit
+  SEC
+  RTS
   .buttons
   db $08,$04,$02,$01 ; north, south, west, east
   ; Includes four pixels of next-step lookahead (horse cardinal speed2.75px).
@@ -79,5 +119,10 @@ HorseForm_ConstrainGroundInput:
   dw $0000,$0008,$0010,$0018,$0020
 }
 HorseGroundClearance_End:
+; Ranch fence Tile16s Epona can jump: Toto Ranch fence set, $02D6, and the Kalyxo-art
+; pit gap Tile16s $0EF2 (top) / $0EF4 (bottom) on map $22 (x=4, y=17..18).
+HorseFenceTile16s:
+  dw $0078, $007B, $043A, $003B, $0267, $002C, $02D6, $0EF2, $0EF4
+HorseFenceTile16s_End:
 assert pc() <= $53E800, "Horse grounded clearance exceeded its bounded bank53 slice"
 pullpc
