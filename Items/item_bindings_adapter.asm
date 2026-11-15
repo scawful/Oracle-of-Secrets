@@ -1,4 +1,4 @@
-; Dual-item binding prototype (Bow/Boomerang first slice). Default off.
+; Dual-item binding prototype. Default off.
 ; Core + load/reset adapter; ORG-free so the compiled fixture can assemble it
 ; alone. Live routing and the three vanilla hooks are in
 ; Items/item_bindings_dispatch.asm, included right after this file.
@@ -25,7 +25,7 @@ ItemBindings_AdapterReset:
 }
 
 ; Admitted prototype load only. Preserve full A and P except C=admitted.
-; Current vanilla Y must already be a supported, owned Bow or Boomerang.
+; Current vanilla Y must already be an owned latchable item (Validate).
 ; Otherwise leave ALL saved bytes unchanged, reset transient prototype state,
 ; and return C=0. This prevents the core's fallback migration from changing
 ; unsupported existing assignments. $0202 and physical controls never change.

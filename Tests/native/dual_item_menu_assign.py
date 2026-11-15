@@ -13,13 +13,17 @@ Scenario (all real controller input):
 1. START opens the Items page on Boomerang. X binds X=Boomerang.
 2. LEFT moves the cursor to Bow; the Y item does not change (no equip on move).
    Y binds Y=Bow. The menu buffer holds green Y corners and blue X corners.
-3. X on Hookshot is refused: saved X stays Boomerang.
+3. X on Bottle (Y-only item) is refused: saved X stays Boomerang. Hookshot
+   is latchable since the dispatch slice, so it no longer serves as the refusal.
 4. X on Boomerang again clears X; X again binds it back.
 5. START closes the menu: $0202=Bow, saved bindings [1, 1, 2].
 6. In gameplay Y fires an arrow and X throws the boomerang without the map.
 7. Reopen, move to Boomerang, press A: the menu closes and $0202 stays Bow
    (A never binds).
 8. Same item on both buttons: Y on Boomerang shows green left and blue right corners.
+
+--codex (ROM built with hud_layout_codex): one corner per button instead of
+four (Y = green top-left, X = blue bottom-right), so the marker counts differ.
 """
 from __future__ import annotations
 
@@ -41,6 +45,7 @@ Y_ITEM = 0x7E0202
 CURSOR, LOGICAL, BUTTON_ACTION, BUTTON, MENU_Y = 0x7E02B3, 0x7E02B4, 0x7E02B5, 0x7E02B6, 0x7E02B7
 SAVED_VERSION, SAVED_Y, SAVED_X = 0x7EF3B9, 0x7EF3BA, 0x7EF3BB
 BOW, BOOMERANG, HOOKSHOT, ARROWS = 0x7EF340, 0x7EF341, 0x7EF342, 0x7EF377
+BOTTLE1 = 0x7EF35C  # menu ID 6, Y-only
 ANCILLA = 0x7E0C4A
 ARROW_ID, BOOMERANG_ID = 0x09, 0x05
 MAP_MODULE = 0x0E
@@ -50,8 +55,9 @@ ITEMS_PAGE = 0x04
 
 
 class MenuAssignTest(deku.DekuStickRuntimeTest):
-    def __init__(self, rom, app, work):
+    def __init__(self, rom, app, work, codex=False):
         super().__init__(rom, app, work)
+        self.codex = codex
         self.log: list[dict] = []
         self.checks: dict[str, bool] = {}
 
@@ -112,6 +118,7 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
     def scenario(self):
         # Declared fixture: inventory and a clean binding start only.
         self.w(BOW, 2); self.w(ARROWS, 30); self.w(BOOMERANG, 1); self.w(HOOKSHOT, 1)
+        self.w(BOTTLE1, 2)
         self.w(Y_ITEM, 2)
         self.w(SAVED_VERSION, 0); self.w(SAVED_Y, 0); self.w(SAVED_X, 0)
         for a in (CURSOR, LOGICAL, BUTTON_ACTION, BUTTON):
@@ -137,13 +144,16 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
         ys, xs = self.markers()
         print(f"    markers Y={[hex(a) for a in ys]} X={[hex(a) for a in xs]}")
         # Bow and Boomerang are neighbors: they share one corner column, X shows there.
-        self.check("Y_green_corners_X_blue_corners", len(ys) == 2 and len(xs) == 4)
+        if self.codex:  # one corner each: Y on Bow (cursor cell), X on Boomerang
+            self.check("Y_green_corners_X_blue_corners", len(ys) == 1 and len(xs) == 1)
+        else:
+            self.check("Y_green_corners_X_blue_corners", len(ys) == 2 and len(xs) == 4)
         self.take_screenshot("01_markers_Y_bow_X_boomerang")
 
-        # 3. X on Hookshot is refused.
-        self.check("cursor_reached_hookshot", self.move_to(3, "RIGHT"))
+        # 3. X on Bottle (Y-only) is refused.
+        self.check("cursor_reached_bottle", self.move_to(6, "RIGHT"))
         self.tap("X")
-        s = self.snap("X_on_hookshot")
+        s = self.snap("X_on_bottle")
         self.check("X_refused_unsupported", s["saved"][2] == 2 and s["menu"] == ITEMS_PAGE)
 
         # 4. X on Boomerang again clears X, then binds again.
@@ -151,7 +161,8 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
         self.tap("X")
         s = self.snap("X_again_clears")
         ys, xs = self.markers()
-        self.check("X_cleared_no_X_marker", s["saved"][2] == 0 and len(xs) == 0 and len(ys) == 4)
+        self.check("X_cleared_no_X_marker", s["saved"][2] == 0 and len(xs) == 0
+                   and len(ys) == (1 if self.codex else 4))
         self.take_screenshot("02_X_cleared")
         self.tap("X")
         s = self.snap("X_rebound")
@@ -192,8 +203,12 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
         ys, xs = self.markers()
         s = self.snap("Y_and_X_on_boomerang")
         print(f"    markers Y={[hex(a) for a in ys]} X={[hex(a) for a in xs]}")
-        self.check("both_markers_side_by_side",
-                   s["menu_y"] == 2 and len(ys) == 2 and len(xs) == 2 and min(xs) == min(ys) + 6)
+        if self.codex:  # same cell: Y top-left $1108+X, X bottom-right $11CE+X
+            self.check("both_markers_side_by_side",
+                       s["menu_y"] == 2 and len(ys) == 1 and len(xs) == 1 and xs[0] == ys[0] + 0xC6)
+        else:
+            self.check("both_markers_side_by_side",
+                       s["menu_y"] == 2 and len(ys) == 2 and len(xs) == 2 and min(xs) == min(ys) + 6)
         self.take_screenshot("05_both_markers_one_item")
         self.check("menu_closed_end", self.close_menu("START"))
         s = self.snap("end")
@@ -205,8 +220,9 @@ def main():
     ap.add_argument("--rom", type=Path, required=True)
     ap.add_argument("--work", type=Path, required=True)
     ap.add_argument("--app", type=Path, default=deku.APP_DEFAULT)
+    ap.add_argument("--codex", action="store_true", help="ROM built with hud_layout_codex")
     args = ap.parse_args()
-    t = MenuAssignTest(args.rom, args.app, args.work)
+    t = MenuAssignTest(args.rom, args.app, args.work, codex=args.codex)
     result = {"rom": str(args.rom), "status": "ERROR"}
     try:
         t.launch()

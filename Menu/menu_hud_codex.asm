@@ -17,10 +17,12 @@
 ; corners (HUD_Update writes the digits and blanks the key icon when Link
 ; has no keys, after this call).
 ; X is valid only when ItemBindingSavedVersion == 1 and the saved X item is
-; the Bow (1) or the Boomerang (2), the two X-bindable items. The icons use
-; the Y box tables ($0DF629 bow, $0DF651 boomerang; entry = 4 words:
-; top-left, top-right, bottom-left, bottom-right). The Bow shows the arrow
-; count (two digits, like the Y count) in the box's bottom border.
+; owned and latchable (ItemBindings_IsLatchable). The icon comes from the
+; same HudItems tables as the Y box ($0DFA93 pointer per item; entry = 4
+; words: top-left, top-right, bottom-left, bottom-right), indexed by the
+; ownership level like HUD_UpdateItemBox (Bombs level 1, Hookshot level 0).
+; Bow shows the arrow count, Bombs the bomb count (two digits, like the Y
+; count) in the box's bottom border.
 ; In: A/X/Y 16-bit, any DBR. Out: A/X/Y 16-bit, A and X clobbered.
 HUD_CodexCells:
 {
@@ -28,10 +30,10 @@ HUD_CodexCells:
   LDA.w #$FCA8 : STA.l HudCornerBuffer+2
   LDA.w #$2071 : STA.l HudCornerBuffer+$0A      ; key icon, bottom right
 
+  PHY
   LDA.l ItemBindingSavedVersion : AND.w #$00FF : CMP.w #$0001 : BNE .empty
-  LDA.l ItemBindingSavedX : AND.w #$00FF
-  CMP.w #$0001 : BEQ .bow
-  CMP.w #$0002 : BEQ .boomerang
+  LDA.l ItemBindingSavedX : AND.w #$00FF : BEQ .empty
+  JSL ItemBindings_IsLatchable : BCS .icon
 
   .empty
     LDA.w #$20AA                                ; item box background
@@ -39,29 +41,41 @@ HUD_CodexCells:
   .no_count
     LDA.w #$207D : STA.l $7EC7F0                ; box bottom under the X icon
     LDA.w #$A014 : STA.l $7EC7F2
+    PLY
     RTL
 
-  .boomerang
-    LDA.l $7EF341 : AND.w #$00FF : BEQ .empty
-    CMP.w #$0003 : BCS .empty
-    ASL #3 : TAX
-    LDA.l $0DF651+0, X : STA.l $7EC770
-    LDA.l $0DF651+2, X : STA.l $7EC772
-    LDA.l $0DF651+4, X : STA.l $7EC7B0
-    LDA.l $0DF651+6, X : STA.l $7EC7B2
-    BRA .no_count
+  .icon
+    TAY                                         ; Y = item ID
+    TAX
+    LDA.l Menu_AddressIndex-1, X : AND.w #$00FF : TAX
+    LDA.l $7EF300, X : AND.w #$00FF             ; ownership level
+    CPY.w #$0004 : BNE +
+      LDA.w #$0001                              ; Bombs: count, one icon
+    +
+    CPY.w #$0003 : BNE +
+if !ENABLE_GOLDSTAR_CELL == 1
+      LDA.w #$0000                              ; Hookshot cell: hookshot icon
+else
+      LDA.w GoldstarOrHookshot : AND.w #$00FF : DEC
+endif
+    +
+    ASL #3 : PHA
+    TYA : DEC : ASL : TAX
+    LDA.l $0DFA93, X : CLC : ADC 1,S : TAX
+    PLA
+    LDA.l $0D0000+0, X : STA.l $7EC770
+    LDA.l $0D0000+2, X : STA.l $7EC772
+    LDA.l $0D0000+4, X : STA.l $7EC7B0
+    LDA.l $0D0000+6, X : STA.l $7EC7B2
 
-  .bow
-    LDA.l $7EF340 : AND.w #$00FF : BEQ .empty
-    CMP.w #$0005 : BCS .empty
-    ASL #3 : TAX
-    LDA.l $0DF629+0, X : STA.l $7EC770
-    LDA.l $0DF629+2, X : STA.l $7EC772
-    LDA.l $0DF629+4, X : STA.l $7EC7B0
-    LDA.l $0DF629+6, X : STA.l $7EC7B2
-
-    ; Arrow count, two digits (tiles $2490-$2499, as HexToDecimal draws).
-    LDA.l $7EF377 : AND.w #$00FF
+    CPY.w #$0001 : BNE +
+      LDA.l $7EF377 : BRA .count                ; arrows
+    +
+    CPY.w #$0004 : BNE .no_count
+      LDA.l $7EF343                             ; bombs
+    .count
+    ; Two digits (tiles $2490-$2499, as HexToDecimal draws).
+    AND.w #$00FF
     CMP.w #100 : BCC .count_ok
       LDA.w #99
     .count_ok
@@ -73,6 +87,7 @@ HUD_CodexCells:
     .ones
     ORA.w #$2490 : STA.l $7EC7F2
     TXA : ORA.w #$2490 : STA.l $7EC7F0
+    PLY
     RTL
 }
 

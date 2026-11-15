@@ -7,38 +7,77 @@
 ; Long-entry ABI: native mode, D=0, any M/X and DBR; X/Y, DBR, D and widths
 ; preserved. A low byte is output/scratch; A high byte is preserved. C is
 ; output only where documented; other P flags restored. Binary arithmetic.
-; IDs 1=Bow, 2=Boomerang only. Other tools remain outside this first slice.
+; IDs are menu grid indices; ItemBindings_Owner lists the latchable set.
 ; Button 0=idle, 1=Y, 2=X. Caller owns gameplay eligibility/completion.
 ; No physical input, $0202, $0303/$0304, HUD, mask, sword or map writes.
 
-; C=owned and supported, A unchanged. Private M8 near helper.
+; C=owned and latchable, A unchanged. M8 near helper; any X width, X/Y/P
+; kept except C. Latchable items are the grid items whose handlers start on
+; one new press and never read $0202 to pick a variant (IDs 1-$11 below).
+; Bottles, Mirror, Ocarina, Book, rods, masks and the logical cells $19+
+; stay Y-only: their routines read $0202 or own a menu/song state.
 ItemBindings_Validate:
 {
+  PHX : PHY : PHP : SEP #$30            ; SEP #$10 clears X/Y high bytes
   PHA
-  CMP.b #$01 : BEQ .bow
-  CMP.b #$02 : BNE .no
-  LDA.l $7EF341 : BEQ .no
-  CMP.b #$03 : BCS .no
-  PLA : SEC : RTS
-.bow
-  LDA.l $7EF340 : BEQ .no
-  CMP.b #$05 : BCS .no
-  PLA : SEC : RTS
+  CMP.b #ItemBindings_Owner_End-ItemBindings_Owner : BCS .no
+  TAX
+  LDA.l ItemBindings_Max, X : PHA        ; ownership upper bound, 0 = none
+  LDA.l ItemBindings_Owner, X : BEQ .drop
+  TAX
+  LDA.l $7EF300, X : BEQ .drop
+  CMP 1,S : BCC .keep
+  LDA 1,S : BNE .drop
+.keep
+  PLA : PLA : PLP : PLY : PLX : SEC : RTS
+.drop
+  PLA
 .no
-  PLA : CLC : RTS
+  PLA : PLP : PLY : PLX : CLC : RTS
 }
 
-; Pure logical-to-action mapping. Unsupported/empty -> 0. M8 near helper.
+; Logical-to-action mapping (Menu_ItemIndex values). Unsupported -> 0.
+; M8 near helper; X/Y and P kept.
 ItemBindings_MapAction:
 {
-  CMP.b #$01 : BEQ .bow
-  CMP.b #$02 : BEQ .done
-  LDA.b #$00 : RTS
-.bow
-  LDA.b #$03
-.done
-  RTS
+  PHX : PHY : PHP : SEP #$30
+  CMP.b #ItemBindings_Owner_End-ItemBindings_Owner : BCS .none
+  TAX
+  LDA.l ItemBindings_ActionTable, X
+  PLP : PLY : PLX : RTS
+.none
+  LDA.b #$00
+  PLP : PLY : PLX : RTS
 }
+
+; Long wrapper for HUD/menu callers: A low = ID, C = owned and latchable.
+; Any widths; A, X/Y and P kept except C.
+ItemBindings_IsLatchable:
+{
+  PHP : SEP #$20
+  JSR ItemBindings_Validate : BCC .no
+  PLP : SEC : RTL
+.no
+  PLP : CLC : RTL
+}
+
+; Indexed by logical ID (= menu grid index). Owner: offset into $7EF300.
+ItemBindings_Owner:
+  db $00
+  db $40, $41, $42, $43, $44, $00       ; Bow Boomerang Hookshot Bombs Powder -
+  db $4B, $4A, $45, $46, $00, $00       ; Hammer Lamp FireRod IceRod - -
+  db $00, $00, $50, $00, $4D            ; - - Somaria - Feather
+ItemBindings_Owner_End:
+ItemBindings_Max:
+  db $00
+  db $05, $03, $00, $00, $03, $00
+  db $00, $00, $00, $00, $00, $00
+  db $00, $00, $00, $00, $00
+ItemBindings_ActionTable:
+  db $00
+  db $03, $02, $0E, $01, $0A, $00
+  db $04, $09, $05, $06, $00, $00
+  db $00, $00, $12, $00, $07
 
 ; Load/new-file migration, only after inventory and saved bytes are loaded.
 ; Unknown version: retain supported owned vanilla selection, otherwise choose

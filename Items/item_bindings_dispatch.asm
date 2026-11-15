@@ -24,12 +24,25 @@ ItemBindings_Route:
   LDA.w $0301 : AND.b #$10 : BNE .busy
   BRA .held
   .boomerang
+  CMP.b #$02 : BNE .other
   LDA.w $0301 : AND.b #$80 : BNE .busy
   ; The throw bits clear before the flight ends; a live boomerang ancilla
   ; ($05) keeps the action owned until it returns or is destroyed.
+  LDA.b #$05 : BRA .ancilla
+  .other
+  ; Other latchable handlers: item-use bits, a Link state (hookshot pull,
+  ; feather jump) or a live hookshot ancilla ($1F) keep the action owned.
+  PHA
+  LDA.w $0301 : ORA.w $037A : ORA.b $5D
+  BEQ +
+    PLA : BRA .busy
+  +
+  PLA : CMP.b #$0E : BNE .held
+  LDA.b #$1F
+  .ancilla
   LDX.b #$04
   -
-  LDA.w $0C4A,X : CMP.b #$05 : BEQ .busy
+  CMP.w $0C4A,X : BEQ .busy
   DEX : BPL -
   .held
   LDA.b $3A : AND.b #$40 : BNE .busy
@@ -42,17 +55,29 @@ ItemBindings_Route:
   .idle
   JSR ItemBindings_Admitted : BCC .decline
   ; Hydrate once per session: AdapterReset leaves the cursor at zero.
+  ; Load directly (not AdapterLoad): any Y item, latchable or not (a bottle),
+  ; must still let X route. Load never writes $0202; the lines below then
+  ; set saved Y and the cursor from $0202.
   LDA.l ItemBindingCursor : BNE .hydrated
-  JSL ItemBindings_AdapterLoad : BCC .decline
+  LDA.l $7E0202 : BEQ .decline
+  JSL ItemBindings_Load
   .hydrated
-  ; The existing menu equips Y through $0202; mirror it as saved Y.
-  LDA.l $7E0202 : STA.l ItemBindingSavedY : STA.l ItemBindingCursor
+  ; The menu equips Y through $0202; keep the saved Y equal to it. Load
+  ; restores $0202 from it (ItemBindings_RestoreY) before the HUD rebuild.
+  LDA.l $7E0202 : BEQ .decline
+  STA.l ItemBindingSavedY : STA.l ItemBindingCursor
 
   ; 2. Start permission: reuse the R-binding guards plus sword/bunny.
   LDA.w $0301 : ORA.w $037A : BNE .no_start
   LDA.b $3A : AND.b #$40 : BNE .no_start
   LDA.b $3C : ORA.b $46 : ORA.b $6C : ORA.b $5D : BNE .no_start
   LDA.w $0FFC : ORA.w $02E0 : BNE .no_start
+  ; X may not start an action whose routine the Y item also owns (Bombs
+  ; under a Bombchu Y, Hookshot under Goldstar/Switch Hook): the shared
+  ; routine reads $0202 and would fire the Y variant. Y still starts.
+  LDA.b $F4 : AND.b #$40 : BNE .may_start
+  JSR ItemBindings_XConflict : BCS .no_start
+  .may_start
   LDA.b #$01 : BRA .try
   .no_start
   LDA.b #$00
@@ -65,16 +90,63 @@ ItemBindings_Route:
   PLY : PLX : CLC : RTL
 }
 
-; C=1 when the prototype may route: base Link or GBC form, current $0202 is
-; an owned Bow/Boomerang. M8 near helper; A clobbered.
+; C=1 when the prototype may route: base Link or GBC form. Any Y item.
+; M8 near helper; A clobbered.
 ItemBindings_Admitted:
 {
   LDA.l $7E0000+!CurrentMask : BEQ .form_ok
   CMP.b #$06 : BNE .no
   .form_ok
-  LDA.l $7E0202 : JSR ItemBindings_Validate : RTS
+  SEC : RTS
   .no
   CLC : RTS
+}
+
+; C=1 when saved X is a different item than $0202 but runs the same action
+; routine. M8/X8 near helper; A and X clobbered.
+ItemBindings_XConflict:
+{
+  LDA.l ItemBindingSavedX : BEQ .no
+  CMP.l $7E0202 : BEQ .no
+  JSR ItemBindings_MapAction : CMP.b #$00 : BEQ .no   ; MapAction keeps P
+  PHA
+  LDA.l $7E0202 : CMP.b #Menu_ItemIndex_End-Menu_ItemIndex : BCS .pull_no
+  TAX
+  LDA.l Menu_ItemIndex, X : CMP 1,S : BNE .pull_no
+  PLA : SEC : RTS
+  .pull_no
+  PLA
+  .no
+  CLC : RTS
+}
+
+; Load (LoadCheckpointOrWorld, after AdapterReset): put the saved Y item back
+; in $0202 before SearchForEquippedItem, which keeps an owned nonzero $0202.
+; Without it the search picks the first owned item, often X's. Saved Y must
+; be a grid item the file owns (masks and Garo are R bindings, not Y).
+; Native, D=0, any widths; full A, X/Y and P preserved.
+ItemBindings_RestoreY:
+{
+  PHP : REP #$30 : PHA : PHX
+  SEP #$30
+  LDA.l ItemBindingSavedVersion : CMP.b #$01 : BNE .done
+  LDA.l ItemBindingSavedY : BEQ .done
+  CMP.b #Menu_ItemIndex_End-Menu_ItemIndex : BCS .done
+  CMP.b #$1E : BEQ .done
+  CMP.b #$13 : BCC .grid
+  CMP.b #$18 : BCC .done                ; Deku..Stone: R binding
+  .grid
+  TAX
+  LDA.l Menu_AddressLong-1, X : PHX : TAX
+  LDA.l $7EF300, X : PLX
+  CPX.b #$1B : BCC .ordinary
+  CMP.b #$01 : BNE .done                ; logical cells: exactly 1 owns
+  .ordinary
+  CMP.b #$00 : BEQ .done
+  TXA : STA.l $7E0202
+  .done
+  REP #$30 : PLX : PLA : PLP
+  RTL
 }
 
 ; C=1 when X belongs to the second item: admitted, hydrated, X assigned.

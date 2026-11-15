@@ -5,8 +5,8 @@
 ;   cursor stays in $0202 while the menu is open (every menu routine reads
 ;   it), and the Y item is kept in ItemBindingMenuY. Closing the menu writes
 ;   ItemBindingMenuY back to $0202 before the HUD is rebuilt.
-; - X on an item binds it to X (ItemBindings_AssignX: Bow or Boomerang in
-;   this prototype; other items play the error sound). X on the item that
+; - X on an item binds it to X (ItemBindings_AssignX: the latchable set in
+;   Items/item_bindings.asm; other items play the error sound). X on the item that
 ;   already holds X clears X, so the field map returns to X. X on this page
 ;   no longer opens the Journal; Quest and page 3 keep X: Journal.
 ; - A never binds. A and Start still close the menu; L/R still turn pages.
@@ -41,6 +41,7 @@ Menu_Bindings_Close:
   PHP : SEP #$20 : PHA
   LDA.l ItemBindingMenuY : BEQ .keep
     STA.w $0202
+    STA.l ItemBindingSavedY             ; reload restores this Y item
   .keep
   PLA : PLP : RTS
 }

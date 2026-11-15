@@ -217,7 +217,7 @@ def main():
         controls = []
         # Prove tests detect wrong action, broken origin and false migration.
         mutations = {
-            'bow-action-wrong': source.replace('LDA.b #$03\n.done', 'LDA.b #$02\n.done'),
+            'bow-action-wrong': source.replace('  db $03, $02, $0E', '  db $02, $02, $0E'),
             'X-origin-marked-Y': source.replace('LDA.b #$02 : BRA .commit', 'LDA.b #$01 : BRA .commit'),
             'old-save-X-not-cleared': source.replace('LDA.b #$00 : STA.l ItemBindingSavedX\n  LDA.l $7E0202', 'LDA.b #$02 : STA.l ItemBindingSavedX\n  LDA.l $7E0202'),
         }
