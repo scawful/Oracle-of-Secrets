@@ -12,14 +12,14 @@ No binding value is written by the test: every binding comes from menu input.
 Scenario (all real controller input):
 1. START opens the Items page on Boomerang. X binds X=Boomerang.
 2. LEFT moves the cursor to Bow; the Y item does not change (no equip on move).
-   Y binds Y=Bow. The menu buffer holds one green Y chip and one blue X chip.
+   Y binds Y=Bow. The menu buffer holds green Y corners and blue X corners.
 3. X on Hookshot is refused: saved X stays Boomerang.
 4. X on Boomerang again clears X; X again binds it back.
 5. START closes the menu: $0202=Bow, saved bindings [1, 1, 2].
 6. In gameplay Y fires an arrow and X throws the boomerang without the map.
 7. Reopen, move to Boomerang, press A: the menu closes and $0202 stays Bow
    (A never binds).
-8. Same item on both buttons: Y on Boomerang shows both chips side by side.
+8. Same item on both buttons: Y on Boomerang shows green left and blue right corners.
 """
 from __future__ import annotations
 
@@ -45,7 +45,7 @@ ANCILLA = 0x7E0C4A
 ARROW_ID, BOOMERANG_ID = 0x09, 0x05
 MAP_MODULE = 0x0E
 MENU_BUF, MENU_BUF_LEN = 0x7E1000, 0x800
-Y_MARKER, X_MARKER = 0x3C04, 0x2C04
+Y_MARKER, X_MARKER = 0x3C60, 0x2C60  # corner glyph $060; flips add $4000/$8000
 ITEMS_PAGE = 0x04
 
 
@@ -83,8 +83,8 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
     def markers(self):
         buf = self.b.read_block(MENU_BUF, MENU_BUF_LEN)
         words = [buf[i] | (buf[i + 1] << 8) for i in range(0, len(buf) - 1, 2)]
-        ys = [0x1000 + 2 * i for i, w in enumerate(words) if w == Y_MARKER]
-        xs = [0x1000 + 2 * i for i, w in enumerate(words) if w == X_MARKER]
+        ys = [0x1000 + 2 * i for i, w in enumerate(words) if w & 0x3FFF == Y_MARKER]
+        xs = [0x1000 + 2 * i for i, w in enumerate(words) if w & 0x3FFF == X_MARKER]
         return ys, xs
 
     def open_menu(self):
@@ -136,7 +136,8 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
         self.check("Y_bound_bow", s["menu_y"] == 1 and s["menu"] == ITEMS_PAGE)
         ys, xs = self.markers()
         print(f"    markers Y={[hex(a) for a in ys]} X={[hex(a) for a in xs]}")
-        self.check("one_Y_marker_one_X_marker", len(ys) == 1 and len(xs) == 1 and xs[0] != ys[0] + 2)
+        # Bow and Boomerang are neighbors: they share one corner column, X shows there.
+        self.check("Y_green_corners_X_blue_corners", len(ys) == 2 and len(xs) == 4)
         self.take_screenshot("01_markers_Y_bow_X_boomerang")
 
         # 3. X on Hookshot is refused.
@@ -150,7 +151,7 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
         self.tap("X")
         s = self.snap("X_again_clears")
         ys, xs = self.markers()
-        self.check("X_cleared_no_X_marker", s["saved"][2] == 0 and len(xs) == 0 and len(ys) == 1)
+        self.check("X_cleared_no_X_marker", s["saved"][2] == 0 and len(xs) == 0 and len(ys) == 4)
         self.take_screenshot("02_X_cleared")
         self.tap("X")
         s = self.snap("X_rebound")
@@ -192,7 +193,7 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
         s = self.snap("Y_and_X_on_boomerang")
         print(f"    markers Y={[hex(a) for a in ys]} X={[hex(a) for a in xs]}")
         self.check("both_markers_side_by_side",
-                   s["menu_y"] == 2 and len(ys) == 1 and len(xs) == 1 and xs[0] == ys[0] + 2)
+                   s["menu_y"] == 2 and len(ys) == 2 and len(xs) == 2 and min(xs) == min(ys) + 6)
         self.take_screenshot("05_both_markers_one_item")
         self.check("menu_closed_end", self.close_menu("START"))
         s = self.snap("end")

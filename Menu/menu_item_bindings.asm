@@ -10,18 +10,20 @@
 ;   already holds X clears X, so the field map returns to X. X on this page
 ;   no longer opens the Journal; Quest and page 3 keep X: Journal.
 ; - A never binds. A and Start still close the menu; L/R still turn pages.
-; - Markers sit in the two blank tiles under each cell's frame: a green chip
-;   under the left half of the Y item, a blue chip under the right half of
-;   the X item (the SFC face-button colors and sides). One item on both
-;   buttons shows both chips side by side. The menu font draws letters in
-;   color 2, which is white in palettes 1-3 and 7, so a letter cannot carry
-;   the button color; BG3 tile $004 is a 4-pixel bar in color 1.
+; - Markers (scawful, HUD_LAYOUT_02.md: "pressing y could do a colored
+;   highlight of the item"): green corner marks around the Y item, blue
+;   corner marks around the X item, from the existing cursor corner glyph
+;   $060 in palettes 7 and 3. The gray navigation cursor keeps its side
+;   lines; marks replace its corners on a bound item. One item on both
+;   buttons: left corners green (Y), right corners blue (X). Neighbor cells
+;   share one corner column, so two adjacent bound items share that corner
+;   and X's color shows there.
 ; Assembled at the end of bank $2D, after the page 3 code, so no flag-off
 ; byte moves.
 ; =========================================================
 
-!MB_YMarker = $3C04                 ; tile $004 bar, palette 7 (green), priority
-!MB_XMarker = $2C04                 ; tile $004 bar, palette 3 (blue), priority
+!MB_YMarker = $3C60                 ; corner $060, palette 7 (green), priority
+!MB_XMarker = $2C60                 ; corner $060, palette 3 (blue), priority
 
 ; Menu_InitGraphics (menu open). Any widths; keeps A/X/Y and P.
 Menu_Bindings_Open:
@@ -88,13 +90,25 @@ Menu_Bindings_DrawMarkers:
 {
   PHP : REP #$30
   LDA.l ItemBindingMenuY : JSR .cell : BCC .no_y
-    LDA.w #!MB_YMarker : STA.w $11CA, X
+    LDA.w #!MB_YMarker : JSR .corners
   .no_y
   LDA.l ItemBindingSavedVersion : AND.w #$00FF : CMP.w #$0001 : BNE .done
   LDA.l ItemBindingSavedX : JSR .cell : BCC .done
-    LDA.w #!MB_XMarker : STA.w $11CC, X
+    LDA.w #!MB_XMarker : JSR .corners
+    ; Same item on Y: the left corners show Y again.
+    LDA.l ItemBindingMenuY : EOR.l ItemBindingSavedX : AND.w #$00FF : BNE .done
+      LDA.w #!MB_YMarker : STA.w $1108, X
+      ORA.w #$8000 : STA.w $11C8, X
   .done
   PLP : RTS
+
+  ; A = top-left corner word; X = cell offset. Writes the four corners.
+  .corners
+  STA.w $1108, X                      ; top left
+  ORA.w #$4000 : STA.w $110E, X       ; top right (H flip)
+  ORA.w #$8000 : STA.w $11CE, X       ; bottom right (H+V flip)
+  EOR.w #$4000 : STA.w $11C8, X       ; bottom left (V flip)
+  RTS
 
   ; A low byte = item ID. C set: X = Menu_ItemCursorPositions offset.
   .cell
