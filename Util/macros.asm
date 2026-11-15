@@ -55,6 +55,9 @@ endif
 !ENABLE_D5_BF_PIT_RESET             = 0
 ; AF transfer-room pit reset; independent of BF and off until private qualification.
 !ENABLE_D5_AF_PIT_RESET             = 0
+; CF six-push stays solved (scawful 2026-11-15 "A: stays solved"): saved CF bit
+; $1000 reloads the block on goal, lifts the goal pot and holds both shutters open.
+!ENABLE_D5_CF_STAYS_SOLVED          = 1
 ; Per-dungeon wall object tile patterns (Dungeons/wall_profile_selector.asm);
 ; kit rows/palettes route per room (H3). Default on (scawful 2026-11-10).
 !ENABLE_WALL_PROFILE_SELECTOR       = 1

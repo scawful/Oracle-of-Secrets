@@ -452,5 +452,10 @@ org $06C0E8 ; @hook module=Items name=Stone_StatueDispatch kind=jml target=Stone
   JML Stone_StatueDispatch : NOP
 assert read3($01C568) == $0642AD && read3($01C56B) == $00FF29
 org $01C568 ; @hook module=Items name=Stone_ReadHoldSwitch kind=jsl target=Stone_ReadHoldSwitch
+if !ENABLE_D5_CF_STAYS_SOLVED == 1
+  ; Solved CF holds its shutters open (Sprites/Objects/ice_block.asm).
+  JSL IceBlock_CF_ReadHoldSwitch : NOP #2
+else
   JSL Stone_ReadHoldSwitch : NOP #2
+endif
 pullpc
