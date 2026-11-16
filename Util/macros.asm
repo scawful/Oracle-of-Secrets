@@ -353,6 +353,10 @@ endif
 ; Toto Ranch milk for 30 Rupees (BottleMan messages $187-$18B, no new text)
 ; instead of the curse reminder $10E. Off until native proof.
 !ENABLE_RANCH_MILK                  = 0
+; Lyra talkers: talk-only ShopMan ($BB) NPCs on the Lyra crescent island
+; (parent $B3); placeholder text, no gates yet (Sprites/NPCs/lyra_talker.asm).
+; Needs EARLY_GAME_BALANCE (its $BB dispatch).
+!ENABLE_LYRA_TALKERS                = 0
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.

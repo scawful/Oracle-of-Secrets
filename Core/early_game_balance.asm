@@ -67,11 +67,21 @@ assert pc() == $1EEEF2
 ; bank $3A code reaches them through these JSL stubs (DBR stays $1E).
 org $1EFFDE
 ShopBalance_Dispatch1E:
+if !ENABLE_LYRA_TALKERS == 1
+  ; Types >= $0E are Oracle types: $0E Banana, $0F Lyra talker
+  ; (Sprites/NPCs/lyra_talker.asm). Same size as the Banana-only form.
+  LDA.w $0E80,X : CMP.b #!ShopItemBanana : BCS .oracle
+  JMP.w $EEF2                              ; JSL JumpTableLocal, A = type
+  .oracle
+  JSL ShopBalance_OracleType
+  RTS
+else
   LDA.w $0E80,X : CMP.b #!ShopItemBanana : BEQ .banana
   JMP.w $EEF2                              ; JSL JumpTableLocal, A = type
   .banana
   JSL ShopBalance_Banana
   RTS
+endif
 ShopBalance_CheckForAPress: JSR $F391 : RTL   ; ShopItem_CheckForAPress
 ShopBalance_HandleCost:     JSR $F39E : RTL   ; ShopItem_HandleCost
 ShopBalance_HandleReceipt:  JSR $F366 : RTL   ; ShopItem_HandleReceipt
