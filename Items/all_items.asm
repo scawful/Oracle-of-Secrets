@@ -309,6 +309,19 @@ incsrc "Overworld/travel_destinations.asm"
 %log_end("Overworld/travel_destinations.asm", !LOG_ITEMS)
 endif
 
+; Richard quest: bank $34 is full. Every JSL entry sets DB with PHK : PLB and
+; hooks use JSL, so the file runs from this bank unchanged.
+if !ENABLE_RICHARD_QUEST == 1
+incsrc "Overworld/richard_quest.asm"
+endif
+
+; Room $78 Lanmola surface/stagger states (Hammer opening). Sprite banks
+; $30/$31 are full with D8 Farore follow on; every entry is long and every
+; absolute operand is mirrored WRAM, so the file runs from this bank.
+if !ENABLE_GORON78_LANMOLA_BOSS == 1
+incsrc "Sprites/Bosses/lanmola_hammer78.asm"
+endif
+
 
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
 assert pc() <= $2BF000, "Items bank $2B reached the dream entry FX region ($2BF000)"

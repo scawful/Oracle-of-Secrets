@@ -196,11 +196,6 @@ if !ENABLE_D8_FARORE_GRAPHICS == 1
   incsrc "Sprites/NPCs/farore_d8_follow.asm"
 endif
 
-if !ENABLE_GORON78_LANMOLA_BOSS == 1
-  ; Room $78 Lanmola surface/stagger states (Hammer opening).
-  incsrc "Sprites/Bosses/lanmola_hammer78.asm"
-endif
-
 assert pc() <= $310000, "Bank $30 sprite code crossed its LoROM executable boundary"
 assert pc() >= $308000, "Bank $30 sprite code left its bank (org without pushpc/pullpc?)"
 print "Bank30 Free Space: ", dec($310000-pc()), " bytes"
@@ -305,6 +300,8 @@ incsrc "Sprites/Enemies/business_scrub_shield.asm"
 if !ENABLE_GORON78_LANMOLA_BOSS == 1
   ; Room $78 key-after-Lanmolas hook + helper macros used by lanmola.asm.
   incsrc "Sprites/Bosses/lanmola_room78.asm"
+  ; Surface/stagger states live in Items/all_items.asm (bank $2B): banks
+  ; $30/$31 are full when D8 Farore follow is also on.
 endif
 
 assert pc() <= $328000, "Bank $31 sprite region overflow"
