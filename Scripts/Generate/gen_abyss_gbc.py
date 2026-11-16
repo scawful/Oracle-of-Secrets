@@ -13,6 +13,9 @@ Per style, every BG sheet in slots 0-6 of the style's rooms gets a GBC copy:
   1. Chars drawn by wall objects ($001-$004, $061-$064), concave/convex corners
      ($100-$10F) and the rooms' floor fills receive the donor metatile chars for
      the same role (B0-B3 walls, B4-BB corners, A0 floor), flips undone.
+     A style may name its own floor metatile, a carpet object drawn in a second
+     donor palette that shares one SNES row ("accent"), and inlay objects whose
+     chars are rebuilt as carpet under the kept SNES pixels (finale style).
   2. Objects the GBC sets have no direct match for get the closest donor art:
      deep walls $007/$008/$067/$068 -> second wall set 38-3B, deep corners
      $118-$11B -> concave corners B8-BB, layered stairs $130/$131/$F9C/$F9D ->
@@ -64,6 +67,22 @@ STYLES = [
     {"name": "rites", "png": "donor_raw_fortress/ages_gfx_tileset46.png",
      "map": "donor_raw_fortress/ages_tilesetMappings46.bin", "pal": "donor_pal/ages_46.txt",
      "rooms": [0x0D, 0x1D]},
+    # Finale rooms: onox donor with a throne-room floor, a carpet and the Triforce inlay.
+    {"name": "finale", "png": "donor_raw_fortress/seasons_gfx_tileset44.png",
+     "map": "donor_raw_fortress/seasons_tilesetMappings44.bin", "pal": "donor_pal/seasons_44.txt",
+     "rooms": [0x00, 0x10],
+     "floor_meta": 0xA1,
+     # Same wall colours and posterize ranking as the onox rooms.
+     "row_pal": {2: 3, 3: 4, 4: 4, 5: 4, 6: 4, 7: 3}, "posterize_like": 0x0C,
+     # SNES row 2 also carries donor palette 7 (blue) in its three spare indices.
+     "accent": {2: 7},
+     # Carpet $0E1 -> donor carpet A2 in the accent palette (donor shade -> glyph value):
+     # light-blue field, dark-blue lattice, pale dots, so the gold inlay stands out.
+     "accent_floors": {0x0E1: (0xA2, {0: 4, 1: 5, 2: 6, 3: 3})},
+     # Triforce inlay $FF8: two 4x4 blocks. SNES indices 5/4 (triangle body and the
+     # carpet line showing through it) -> brightest gold, everything else -> the
+     # carpet under it.
+     "inlays": [{"object": 0xFF8, "blocks": 2, "under": 0x0E1, "keep": {5: 0, 4: 0}}]},
 ]
 
 # Object -> (donor metatile, shape). Shapes give word k's (col, row) in the object.
@@ -220,13 +239,44 @@ def build(a: argparse.Namespace) -> int:
         votes: dict[int, Counter] = defaultdict(Counter)
         extra_votes: dict[int, Counter] = defaultdict(Counter)
 
-        def place(word, meta, col, row, tally=votes):
+        def place(word, meta, col, row, tally=votes, shades=None):
             c = word & 0x3FF
             g, p = donor.quadrant(meta, col % 2, row % 2)
+            if shades:
+                g = [[shades[v] for v in ln] for ln in g]
             if tally is not None:
                 tally[(word >> 10) & 7][p] += 1
             if c not in glyph:
                 glyph[c] = unflip(g, word)
+
+        floor_meta = style.get("floor_meta", FLOOR_META)
+        # Glyph values: 0-3 = shade of the row's donor palette, 4-6 = shade 0-2 of
+        # the row's accent palette (style key "accent").
+        for obj, (meta, shades) in style.get("accent_floors", {}).items():
+            for (col, row), w in zip(FLOOR_SHAPE, object_words(rom, obj, 8)):
+                place(w, meta, col, row, None, shades)
+        for inlay in style.get("inlays", []):
+            meta, shades = style["accent_floors"][inlay["under"]]
+            under_c = object_words(rom, inlay["under"], 1)[0] & 0x3FF
+            ws = object_words(rom, inlay["object"], 16 * inlay["blocks"])
+            for k, w in enumerate(ws):
+                c = w & 0x3FF
+                if c == under_c or c in glyph:
+                    continue
+                col, row = COLMAJ_4x4[k % 16]
+                slot = c // 64
+                sheet = gw.effective_slots(rom, gw.room_blockset_palette(rom, rooms[0])[0])[slot]
+                data, _ = st.decomp(rom, st.ptr(rom, sheet))
+                sg = sc.sheet_to_grid(bytes(data[:0x600]))
+                tx, ty = (c % 16) * 8, ((c % 64) // 16) * 8
+                src = [[sg[ty + y][tx + x] for x in range(8)] for y in range(8)]
+                src = unflip(src, w)  # as drawn on screen
+                # The carpet words alternate h-flip per column starting flipped, so
+                # block column c sits on carpet quadrant (c + 1) % 2.
+                ug, _ = donor.quadrant(meta, (col + 1) % 2, row % 2)
+                out = [[inlay["keep"][src[y][x]] if src[y][x] in inlay["keep"] else shades[ug[y][x]]
+                        for x in range(8)] for y in range(8)]
+                glyph[c] = unflip(out, w)
 
         extra = {**EXTRA_ROLE_OBJECTS, **DEEP_STYLES[a.deep], **STAIR_STYLES[a.stairs]}
         for roles, tally in ((ROLE_OBJECTS, votes), (extra, extra_votes)):
@@ -250,16 +300,18 @@ def build(a: argparse.Namespace) -> int:
                 for k in range(8):
                     w = gw.rom_word(rom, gw.OBJ_TABLE_PC + f * 16 + 2 * k)
                     col, row = FLOOR_SHAPE[k]
-                    place(w, FLOOR_META, col, row, votes if r in voters else None)
+                    place(w, floor_meta, col, row, votes if r in voters else None)
 
         # palette rows 2-7: donor palette by vote, default = floor palette
-        floor_pal = donor.quadrant(FLOOR_META, 0, 0)[1]
+        floor_pal = donor.quadrant(floor_meta, 0, 0)[1]
         row_pal = {}
         for r in range(2, 8):
             tally = votes[r] or extra_votes[r]
             row_pal[r] = tally.most_common(1)[0][0] if tally else floor_pal
+        row_pal.update(style.get("row_pal", {}))
         # posterize: rank SNES indices 1-7 by mean luminance over the rooms' rows 2-7
-        snes = gw.palette(rom, pal_ids[0])
+        like = style.get("posterize_like")
+        snes = gw.palette(rom, gw.room_blockset_palette(rom, like)[1] if like is not None else pal_ids[0])
         mean = {}
         for i in range(1, 8):
             vals = []
@@ -280,10 +332,21 @@ def build(a: argparse.Namespace) -> int:
         inv = {}
         for i in range(1, 8):
             inv.setdefault(quant[i] - 1, i)
+        # Accent: the three indices that duplicate a shade (one each for the three
+        # brightest) hold the accent palette's shades 0-2, brightest first. Its
+        # shade 3 is the row's own darkest shade.
+        accent = style.get("accent", {})
+        spare = sorted((i for i in range(1, 8) if i not in inv.values()),
+                       key=lambda i: donor_rank.index(quant[i] - 1))
+        pix = {**inv, **{4 + k: i for k, i in enumerate(spare)}}
         words = []
         for r in range(2, 8):
             cols = donor.pal[row_pal[r]]
             half = [cols[quant[i] - 1] for i in range(1, 8)]
+            if r in accent:
+                acc = sorted(donor.pal[accent[r]][:3], key=lambda c: -lum(c5(c)))
+                for k, i in enumerate(spare):
+                    half[i - 1] = acc[k]
             row = half + [cols[0]] + half  # 1-7, 8, 9-15
             for c in row:
                 words.append(c[0] | (c[1] << 5) | (c[2] << 10))
@@ -310,7 +373,11 @@ def build(a: argparse.Namespace) -> int:
                     for y in range(8):
                         for x in range(8):
                             v = g[ty + y][tx + x]
-                            g[ty + y][tx + x] = inv[dg[y][x]] if dg else v
+                            if dg:
+                                g[ty + y][tx + x] = pix[dg[y][x]]
+                            elif accent and v:
+                                # free the spare indices for the accent palette
+                                g[ty + y][tx + x] = inv[quant[v] - 1]
                     if dg:
                         donor_chars.append(c)
                     elif any(g[ty + y][tx + x] for y in range(8) for x in range(8)):
