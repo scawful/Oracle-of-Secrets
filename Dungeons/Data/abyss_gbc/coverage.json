@@ -9,7 +9,14 @@
    "6D",
    "4D",
    "5D",
-   "6C"
+   "6C",
+   "7B",
+   "7C",
+   "7D",
+   "8B",
+   "8D",
+   "9B",
+   "9D"
   ],
   "row_palettes": {
    "2": 3,
@@ -477,7 +484,13 @@
  "mermaid": {
   "rooms": [
    "C9",
-   "53"
+   "53",
+   "CA",
+   "7A",
+   "8A",
+   "9A",
+   "AA",
+   "BA"
   ],
   "row_palettes": {
    "2": 3,
@@ -646,22 +659,30 @@
    "0C": {
     "slot": 3,
     "donor_chars": [
+     "0EC",
+     "0ED",
      "0EE",
      "0EF",
+     "0FC",
+     "0FD",
      "0FE",
      "0FF"
     ],
-    "posterized_chars": 60
+    "posterized_chars": 56
    },
    "62": {
     "slot": 3,
     "donor_chars": [
+     "0EC",
+     "0ED",
      "0EE",
      "0EF",
+     "0FC",
+     "0FD",
      "0FE",
      "0FF"
     ],
-    "posterized_chars": 59
+    "posterized_chars": 55
    },
    "0E": {
     "slot": 4,
@@ -680,12 +701,22 @@
    },
    "19": {
     "slot": 6,
-    "donor_chars": [],
+    "donor_chars": [
+     "1B6",
+     "1B7",
+     "1B8",
+     "1B9"
+    ],
     "posterized_chars": 47
    },
    "1B": {
     "slot": 6,
-    "donor_chars": [],
+    "donor_chars": [
+     "1B6",
+     "1B7",
+     "1B8",
+     "1B9"
+    ],
     "posterized_chars": 45
    }
   }

@@ -46,12 +46,16 @@ import sheet_table as st  # noqa: E402
 REPO = Path(__file__).resolve().parents[2]
 OUT = REPO / "Dungeons/Data/abyss_gbc"
 
+# "more_rooms" share a style's sheets and palette but cast no palette votes, so
+# rooms reviewed earlier keep their colours when a style grows.
 # Style id = position + 1. Room lists follow the 2026-11-05 look plan (scawful picks):
 # Onox $44 main Fortress, Fire $42 for $2D/$3D, Rites $46 for $0D/$1D, Mermaid $3B shrines.
 STYLES = [
     {"name": "onox", "png": "donor_raw_fortress/seasons_gfx_tileset44.png",
      "map": "donor_raw_fortress/seasons_tilesetMappings44.bin", "pal": "donor_pal/seasons_44.txt",
-     "rooms": [0x0C, 0x1C, 0x4C, 0x5C, 0x6B, 0x6D, 0x4D, 0x5D, 0x6C]},
+     "rooms": [0x0C, 0x1C, 0x4C, 0x5C, 0x6B, 0x6D, 0x4D, 0x5D, 0x6C],
+     # Fortress island block, same header blockset 14 (no new art).
+     "more_rooms": [0x7B, 0x7C, 0x7D, 0x8B, 0x8D, 0x9B, 0x9D]},
     {"name": "fire", "png": "donor_raw_fortress/seasons_gfx_tileset42.png",
      "map": "donor_raw_fortress/seasons_tilesetMappings42.bin", "pal": "donor_pal/seasons_42.txt",
      "rooms": [0x2D, 0x3D]},
@@ -60,7 +64,9 @@ STYLES = [
      "rooms": [0x0D, 0x1D]},
     {"name": "mermaid", "png": "donor_raw_3b/gfx_tileset3b.png",
      "map": "donor_raw_3b/tilesetMappings3b.bin", "pal": "donor_pal/ages_3b.txt",
-     "rooms": [0xC9, 0x53]},
+     "rooms": [0xC9, 0x53],
+     # Rest of the Shrine of Wisdom, same header blockset 8 (no new art).
+     "more_rooms": [0xCA, 0x7A, 0x8A, 0x9A, 0xAA, 0xBA]},
 ]
 
 # Object -> (donor metatile, shape). Shapes give word k's (col, row) in the object.
@@ -199,7 +205,8 @@ def build(a: argparse.Namespace) -> int:
 
     for sid, style in enumerate(STYLES, 1):
         donor = Donor(donor_root, style)
-        rooms = style["rooms"]
+        voters = set(style["rooms"])
+        rooms = style["rooms"] + style.get("more_rooms", [])
         for r in rooms:
             room_style[r] = sid
         # sheets per slot 0-6 (slot 7 is shared animated/door art and stays SNES)
@@ -246,7 +253,7 @@ def build(a: argparse.Namespace) -> int:
                 for k in range(8):
                     w = gw.rom_word(rom, gw.OBJ_TABLE_PC + f * 16 + 2 * k)
                     col, row = FLOOR_SHAPE[k]
-                    place(w, FLOOR_META, col, row)
+                    place(w, FLOOR_META, col, row, votes if r in voters else None)
 
         # palette rows 2-7: donor palette by vote, default = floor palette
         floor_pal = donor.quadrant(FLOOR_META, 0, 0)[1]
