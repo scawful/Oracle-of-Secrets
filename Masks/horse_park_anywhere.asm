@@ -12,7 +12,9 @@ HorseForm_SaveOutdoorAnchor_Long:
   PHP
   SEP #$20
   LDA.b $1B : BNE .skip
-  LDA.b $10 : CMP.b #$09 : BNE .skip
+  LDA.b $10 : CMP.b #$09 : BEQ +
+  CMP.b #$0B : BNE .skip
+  +
   LDA.b $11 : BNE .skip
   LDA.l Horse_State : BNE .skip
   LDA.b $5D : ORA.b $4D : ORA.b $6C : BNE .skip
@@ -43,7 +45,10 @@ HorseForm_MaintainParkedNpc_Long:
   LDA.b #$00 : PHA : PLB
 
   LDA.b $1B : BEQ + : BRL .leave_keep_or_clear : +
-  LDA.b $10 : CMP.b #$09 : BEQ + : PLB : PLP : RTL : +
+  LDA.b $10 : CMP.b #$09 : BEQ +
+  CMP.b #$0B : BEQ +
+  PLB : PLP : RTL
+  +
   LDA.b $11 : BEQ + : PLB : PLP : RTL : +
   LDA.w $0FFC : BEQ + : PLB : PLP : RTL : +
 
@@ -178,9 +183,11 @@ Horse_FrameEndScan:
     CMP.b #$02 : BEQ .done
     BRA .leaving
   .not_pause
-  CMP.b #$09 : BNE .leaving
+  CMP.b #$09 : BEQ +
+  CMP.b #$0B : BNE .leaving
+  +
   LDA.b $1B : ORA.b $11 : BNE .leaving
-  LDA.l Horse_NpcActive : BEQ .reset
+  LDA.l Horse_NpcActive : BEQ .leaving
   JSL Horse_RanchProfileReady : BCS .reset
   JSR .scan_oam : BCS .conflict
   LDA.l Horse_OffClear : INC : BEQ .done          ; saturate at $FF
@@ -316,7 +323,9 @@ Horse_OffRanchNpc:
     .hold
     CLC : RTL                                     ; keep her cells as they are
   .not_pause
-  CMP.b #$09 : BNE .unwant
+  CMP.b #$09 : BEQ +
+  CMP.b #$0B : BNE .unwant
+  +
   LDA.b $11 : BNE .unwant
   LDA.b $1B : BNE .unwant
   LDA.l Horse_NpcActive : BEQ .unwant

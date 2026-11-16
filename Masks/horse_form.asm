@@ -233,12 +233,16 @@ HorseForm_Dismount:
   SEP #$30 : PHB
   LDA.b #$00 : PHA : PLB
 if !ENABLE_HORSE_PARK_ANYWHERE == 1
-  ; Any outdoor OW area: park here. Pit prefers last FrameTick refresh.
+  ; Any outdoor OW area ($09/$0B): park here. Pit/water prefers last FrameTick refresh.
+  ; Restore SP-3 immediately if no park anchor remains on the current area.
   LDA.b $1B : BNE .no_outdoor_anchor
     JSL HorseForm_SaveOutdoorAnchor_Long
-    BRA .finish_dismount
+    LDA.l Horse_HasAnchor : BEQ .restore_sp3
+    LDA.b $8A : CMP.l Horse_AnchorArea : BEQ .finish_dismount
+    BRA .restore_sp3
   .no_outdoor_anchor
   LDA.b #$00 : STA.l Horse_HasAnchor : STA.l Horse_AnchorArea
+  .restore_sp3
 else
   LDA.b $8A : BNE .no_ranch_anchor
   LDA.b $1B : BNE .no_ranch_anchor
@@ -317,17 +321,19 @@ HorseForm_FrameTick:
 
   .mounted
   ; Dismount automatically indoors, deep-water swimming, or falling in a pit.
-  LDA.b $1B : BNE .force_silent_dismount
+  LDA.b $1B : BNE .force_silent_dismount_near
   LDA.b $10 : CMP.b #$09 : BEQ .outdoor_ok
   CMP.b #$0B : BEQ .outdoor_ok
-  BRA .force_silent_dismount
+  .force_silent_dismount_near
+  BRL .force_silent_dismount
   .outdoor_ok
-  JSL Horse_SlotsBusy : BCC +
-    BRL .force_silent_dismount
-  +
-  LDA.b $5D : CMP.b #$04 : BEQ .force_ranch_dismount
-  LDA.b $4D : CMP.b #$04 : BEQ .force_ranch_dismount
-  LDA.b $5B : CMP.b #$02 : BCS .force_ranch_dismount
+  JSL Horse_SlotsBusy : BCS .force_silent_dismount_near
+  LDA.b $5D : CMP.b #$04 : BEQ .force_ranch_dismount_near
+  LDA.b $4D : CMP.b #$04 : BEQ .force_ranch_dismount_near
+  LDA.b $5B : CMP.b #$02 : BCC .outdoor_dry
+  .force_ranch_dismount_near
+    BRL .force_ranch_dismount
+  .outdoor_dry
 if !ENABLE_HORSE_PARK_ANYWHERE == 1
   ; Safe outdoor ground: refresh park so door/pit reuse last XY.
   JSL HorseForm_SaveOutdoorAnchor_Long
@@ -357,7 +363,9 @@ endif
     RTL
 
   .grounded
-  LDA.b $10 : CMP.b #$09 : BNE .skip_triggers
+  LDA.b $10 : CMP.b #$09 : BEQ +
+  CMP.b #$0B : BNE .skip_triggers
+  +
   LDA.b $11 : BNE .skip_triggers
   LDA.b $5D : ORA.b $4D : ORA.b $6C : BNE .skip_triggers
   LDA.w $0FFC : ORA.w $02E4 : BNE .skip_triggers
@@ -1148,54 +1156,6 @@ Horse_EmitEponaBody:
   RTS
 }
 
-; Writes one OAM entry at Y ($0800+Y) and $0A20+(Y>>2). Requires DBR=$00. Keeps Y.
-; Inputs (M=16): $08=screen X (signed), $0E=screen Y (signed), $0B=tile, $0A=attr, $0C=size (0 or 2).
-HorseOam_WriteSlot:
-{
-  ; Clip Y if completely offscreen vertically (224..65519)
-  LDA.b $0E : CLC : ADC.w #$0010 : CMP.w #$0100 : BCS .offscreen
-  ; Clip X if outside [-16..255]
-  LDA.b $08 : CLC : ADC.w #$0010 : CMP.w #$0110 : BCS .offscreen
-
-  ; On screen: write OAM $0800..$0803 via DBR=$00 WRAM mirror
-  SEP #$20
-  LDA.b $08 : STA.w $0800, Y        ; X low
-  LDA.b $0E : STA.w $0801, Y        ; Y
-  LDA.b $0B : STA.w $0802, Y        ; tile
-  LDA.b $0A : STA.w $0803, Y        ; attr
-
-  ; Compute $0A20 index and high X bit
-  LDA.b $09 : AND.b #$01              ; high bit of Screen X ($08/$09)
-  ORA.b $0C                           ; size bit ($02 or $00)
-  PHA
-  REP #$20
-  TYA : LSR #2 : TAX
-  SEP #$20
-  PLA : STA.w $0A20, X
-  REP #$20
-  RTS
-
-  .offscreen
-  SEP #$20
-  LDA.b #$F0 : STA.w $0801, Y
-  REP #$20
-  TYA : LSR #2 : TAX
-  SEP #$20
-  LDA.b #$01 : STA.w $0A20, X
-  REP #$20
-  RTS
-}
-
-HorseOam_HideAll:
-{
-  ; Compacted to free bank $53 bytes for post-dismount NMI cache (queue125).
-  LDA.w $0352 : LSR #2 : TAX
-  LDA.w #$0101
-  LDY.b #5
-- STA.w $0A20, X
-  INX : INX
-  DEY : BPL -
-  RTS
-}
-
+; HorseOam_WriteSlot and HorseOam_HideAll relocated into Masks/horse_ground_clearance.asm
+; ($53E000-$53E7FF, same bank $53) to free ~88 bytes before $53D000.
 incsrc "Masks/horse_ground_clearance.asm"
