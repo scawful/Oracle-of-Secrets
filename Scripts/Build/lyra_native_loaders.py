@@ -1385,22 +1385,10 @@ def current_property_rows(document, *, source=None):
     return result
 
 
-def plan_current_actor_streams(source, document, *, current_source_profile, private_pilot=None):
-    """Lower bound authored sprites to headerless OW lists; never place them.
-
-    Native OW records are Y, X, sprite ID followed by a single FF terminator.
-    The saved Lyra model has map-local Tile16 coordinates and three explicit
-    states; it represents no extra native X/Y flag bits. Placement IDs and
-    original ordinals remain provenance, never native sprite bytes. Authored
-    area members aggregate in row-major order with 32-tile quadrant offsets;
-    every member selects the same parent list. Storage and the bank-$09 pointer
-    assignments remain unbound.
-    """
-    import lyra_current_transfer as current
+def _current_actor_placements(document):
+    """Validate the existing parsed actor shape without source authority."""
     from lyra_project_terrain import TerrainDocument
 
-    R.require(type(source) is bytes and len(source) in (0x200000, 0x400000),
-              'CURRENT_ACTOR_MODEL_INVALID: exact saved2MiB or4MiB source required')
     R.require(isinstance(document, TerrainDocument)
               and type(document.authoring) is tuple and len(document.authoring) == 32
               and len(document.maps) == len(document.properties) == 32,
@@ -1424,7 +1412,11 @@ def plan_current_actor_streams(source, document, *, current_source_profile, priv
                 sprite['y'], sprite['x'], sprite['sprite_id']))
         authored.append((area, phases))
 
-    profile = current.verify_current_native_source_profile(current_source_profile, source, document)
+    return authored
+
+
+def _current_actor_codec(document, authored, *, private_pilot=None):
+    """Encode validated placements; selection and storage authority stay outside."""
     layout_document = private_pilot_document(document,private_pilot) if private_pilot is not None else document
     selected = tuple(private_pilot['allowed_tail_maps']) if private_pilot is not None else tuple(range(CURRENT_FIRST,CURRENT_END))
     area_plan = A.gameplay_area_plan(layout_document)
@@ -1459,6 +1451,28 @@ def plan_current_actor_streams(source, document, *, current_source_profile, priv
                 row.update(parent_map_id=parent, source_maps=list(members),
                     placement_maps=[member for member in members for _ in by_map[member][state]])
             streams.append(row)
+    return streams, selected
+
+
+def plan_current_actor_streams(source, document, *, current_source_profile, private_pilot=None):
+    """Lower bound authored sprites to headerless OW lists; never place them.
+
+    Native OW records are Y, X, sprite ID followed by a single FF terminator.
+    The saved Lyra model has map-local Tile16 coordinates and three explicit
+    states; it represents no extra native X/Y flag bits. Placement IDs and
+    original ordinals remain provenance, never native sprite bytes. Authored
+    area members aggregate in row-major order with 32-tile quadrant offsets;
+    every member selects the same parent list. Storage and the bank-$09 pointer
+    assignments remain unbound.
+    """
+    import lyra_current_transfer as current
+
+    R.require(type(source) is bytes and len(source) in (0x200000, 0x400000),
+              'CURRENT_ACTOR_MODEL_INVALID: exact saved2MiB or4MiB source required')
+    authored = _current_actor_placements(document)
+
+    profile = current.verify_current_native_source_profile(current_source_profile, source, document)
+    streams, selected = _current_actor_codec(document, authored, private_pilot=private_pilot)
     result = dict(kind='lyra.current_actor_streams_source_plan.v1',
         source_rom_sha256=R.sha(source), source_size=len(source),
         source_profile_sha256=current.T.digest(profile),
@@ -1476,6 +1490,52 @@ def plan_current_actor_streams(source, document, *, current_source_profile, priv
         ordinary_build_ready=False, runtime_admission=False, actors_compiled=False, rom_written=False)
     current.verify_current_native_source_profile(profile, source, document)
     return result
+
+def census_schema5_actor_streams(source, document, *, terrain_raw):
+    """Pure codec observation, never a source profile, policy or Build witness.
+
+    The caller authenticates and rechecks the Save and producer around this
+    census. Reparse the exact schema5 bytes here; do not inject defaults, native
+    resources, runtime placement, origins or a source epoch into that document.
+    """
+    from lyra_project_terrain import (TerrainDocument, has_native_resource_history,
+                                      parse_terrain_document)
+
+    R.require(type(source) is bytes and len(source) in (0x200000, 0x400000)
+              and type(terrain_raw) is bytes and isinstance(document, TerrainDocument),
+              'ACTOR_CENSUS_INPUT_INVALID')
+    try:
+        raw = json.loads(terrain_raw)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError('ACTOR_CENSUS_DOCUMENT_INVALID') from error
+    R.require(type(raw) is dict and type(raw.get('schema_version')) is int
+              and raw['schema_version'] == 5 and not has_native_resource_history(document)
+              and document.boat_transport is None and document.whirlpool_transport is None,
+              'ACTOR_CENSUS_SCHEMA5_REQUIRED')
+    authored = _current_actor_placements(document)
+    rebound = parse_terrain_document(terrain_raw, document.profile, allow_authoring_drafts=True,
+        expected_asset_bindings={CURRENT_FIRST+i: tuple(row['asset_bindings'])
+                                 for i, row in enumerate(document.authoring)})
+    R.require(rebound == document, 'ACTOR_CENSUS_DOCUMENT_MISMATCH')
+    R.require(A.gameplay_area_plan(document)['complete'], 'ACTOR_CENSUS_AREAS_INCOMPLETE')
+    streams, selected = _current_actor_codec(document, authored)
+    result = dict(kind='lyra.schema5_actor_codec_census.v1', scope='unqualified_read_only_census',
+        source_rom_sha256=R.sha(source), source_size=len(source), terrain_sha256=R.sha(terrain_raw),
+        streams=streams, demand=dict(maps=len(selected), phases=3, lists=len(selected)*3,
+            placements=len({i for row in streams for i in row['placement_ids']}),
+            payload_bytes=sum(row['bytes'] for row in streams), pointer_rows=len(selected)*3,
+            pointer_bytes=len(selected)*6),
+        source_profile=None, source_epoch=None, storage=None, pointers=None,
+        unclosed_families=['overlay_mosaic_backdrop_assignment', 'actor_initialization_and_dispatch',
+                          'active_obj_follower_ancilla_resources', 'actor_graphics_and_lifecycle'],
+        saved_inputs_authenticated=False, source_epoch_qualified=False, selected=False,
+        transfer_created=False, recipe_created=False, allocation_granted=False,
+        producer_enforcement_verified=False, publication_authorized=False,
+        ordinary_build_ready=False, runtime_admission=False, actors_compiled=False,
+        resource_closure_verified=False, rom_written=False)
+    result['census_sha256'] = R.sha(json.dumps(result, sort_keys=True, separators=(',', ':')).encode())
+    return result
+
 
 
 def plan_current_actor_storage(source, document, *, current_source_profile, data_snes, capacity, preimage, private_pilot=None):
@@ -1902,8 +1962,55 @@ def inspect_current_hidden_streams_adapter(compiled, labels, *, required=False):
         tail_stream_snes=[0xE38000, 0xE40000], pickup_state_implemented=False)
 
 
+def inspect_legacy_empty_bomb_guard(compiled, labels, *, required=False):
+    """Bind the one restoration view and native empty lists, not a save grant."""
+    R.require(type(required) is bool, 'LEGACY_EMPTY_GUARD_SELECTION_INVALID')
+    name = 'Lyra_TailEvent_LoadLegacyEmptyBomb'
+    markers = {name, name+'_End'}
+    present = markers & set(labels)
+    R.require(not required or present, 'LEGACY_EMPTY_GUARD_REQUIRED')
+    if not present:
+        return None
+    R.require(present == markers, 'LEGACY_EMPTY_GUARD_SYMBOLS_INCOMPLETE')
+    R.require({'Lyra_CurrentNativeCodeStart', 'Lyra_CurrentNativeCodeEnd', 'Lyra_ReadBombDoor',
+               'Lyra_CurrentTable_hidden_items', 'Lyra_CurrentTable_bomb_doors'} <= set(labels),
+              'LEGACY_EMPTY_GUARD_DEPENDENCY_MISSING')
+    start, end = labels[name], labels[name+'_End']
+    R.require(labels['Lyra_CurrentNativeCodeStart'] <= start < end
+              <= labels['Lyra_CurrentNativeCodeEnd'] and end-start == 27,
+              'LEGACY_EMPTY_GUARD_EXTENT')
+    raw = compiled[A.pc(start):A.pc(start)+27]
+    base = int.from_bytes(raw[15:18], 'little') + 0xA0
+    expected = (bytes.fromhex('08c210e0a000900de0c000b00828bf')
+                + (base-0xA0).to_bytes(3, 'little')
+                + bytes.fromhex('29fd6b28bf80f27e6b'))
+    R.require(0x7EF412 <= base and base+32 <= 0x7EF4FE and raw == expected,
+              'LEGACY_EMPTY_GUARD_BODY')
+    R.require(compiled[A.pc(0x02EF56):A.pc(0x02EF56)+4] == b'\x22'+start.to_bytes(3, 'little'),
+              'LEGACY_EMPTY_GUARD_HOOK')
+    restore = (bytes.fromhex('2902f01bc230a58a0aaa') + b'\x22'
+               + labels['Lyra_ReadBombDoor'].to_bytes(3, 'little')
+               + bytes.fromhex('aaa9b40d9f00207ea9b50d9f02207ee23060'))
+    R.require(compiled[A.pc(0x02EF40):A.pc(0x02EF40)+2] == bytes.fromhex('e230')
+              and compiled[A.pc(0x02EF54):A.pc(0x02EF54)+2] == bytes.fromhex('a68a')
+              and compiled[A.pc(0x02EF5A):A.pc(0x02EF5A)+len(restore)] == restore,
+              'LEGACY_EMPTY_RESTORE_CALLER_CHANGED')
+    R.require(not any(key.startswith('Lyra_HiddenStreams') for key in labels)
+              and compiled[A.pc(0x1BC8BE):A.pc(0x1BC8BE)+5] == bytes.fromhex('a99b008502')
+              and compiled[A.pc(A.EMPTY_HIDDEN_ITEMS):A.pc(A.EMPTY_HIDDEN_ITEMS)+2] == b'\xff\xff',
+              'LEGACY_EMPTY_NATIVE_LIST_BANK_CHANGED')
+    for family, payload in (('hidden_items', (A.EMPTY_HIDDEN_ITEMS & 0xFFFF).to_bytes(2, 'little')*32),
+                            ('bomb_doors', bytes(64))):
+        at = A.pc(labels['Lyra_CurrentTable_'+family]) + 0xA0*2
+        R.require(compiled[at:at+64] == payload, 'LEGACY_EMPTY_TABLE_CHANGED: '+family)
+    return dict(kind='lyra.legacy_empty_bomb_guard.v1', hook_snes=0x02EF56,
+        helper_snes=[start, end], helper_hex=raw.hex(), event_base=base,
+        tail_maps=[0xA0, 0xC0], returned_mask=0xFD, saved_state_modified=False,
+        hidden_bank=0x9B, empty_terminator_snes=A.EMPTY_HIDDEN_ITEMS)
+
+
 def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None, require_resident=False,
-                              require_hidden_streams=False):
+                              require_hidden_streams=False, require_legacy_empty=False):
     """Exact inspection for independent review; not a self-issued approval."""
     preview=None
     if checkpoint_preview is not None:
@@ -1935,6 +2042,7 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None, req
             labels[name] = value
     hidden_streams = inspect_current_hidden_streams_adapter(
         compiled, labels, required=require_hidden_streams)
+    legacy_empty = inspect_legacy_empty_bomb_guard(compiled, labels, required=require_legacy_empty)
     def address(name):
         R.require(name in labels,'Missing current consumer symbol: '+name)
         return labels[name]
@@ -2198,7 +2306,9 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None, req
             hook(site, target, padding=pad)
     for at,target in ((0x02F59D,'Lyra_FullHigh'),(0x02F5C8,'Lyra_FullLow'),
                       (0x02F7E3,'Lyra_SubHigh'),(0x02F80E,'Lyra_SubLow')):hook(at,target,padding=8)
-    for at in state.TAIL_LOAD_SITES:hook(at,'Lyra_TailEvent_Load')
+    for at in state.TAIL_LOAD_SITES:
+        hook(at, 'Lyra_TailEvent_LoadLegacyEmptyBomb'
+             if at == 0x02EF56 and legacy_empty is not None else 'Lyra_TailEvent_Load')
     for at,_ in state.TAIL_STORE_SITES:hook(at,'Lyra_TailEvent_Store')
     hook(0x028192,'LoadCheckpointOrWorld',0x5C)
     if bg:
@@ -2212,6 +2322,8 @@ def inspect_current_consumers(compiled, symbols, *, checkpoint_preview=None, req
     result=dict(kind='lyra.current_compiled_consumers.v1',regions=regions,source_calls=calls,fixed_hooks=hooks)
     if hidden_streams is not None:
         result['hidden_streams_adapter'] = hidden_streams
+    if legacy_empty is not None:
+        result['legacy_empty_bomb_guard'] = legacy_empty
     pilot='Lyra_PrivatePilotCanScroll' in labels
     R.require(pilot == ('LyraCall_PrivatePilotBoundary' in labels)
               == ('LyraPilot_BoundaryBlocked' in labels), 'Incomplete private pilot boundary symbols')

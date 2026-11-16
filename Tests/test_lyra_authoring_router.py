@@ -207,4 +207,69 @@ class DetachedCurrentOutputSelectionTest(unittest.TestCase):
                 self.assertFalse(target.exists())
 
 
+class DetachedCurrentTransferRouterTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        original = transfer_fixtures.CurrentSaveTransferTest.prepare
+
+        def capture_after_save(case, **kwargs):
+            case.output = case.root / 'detached-transfer'
+            case.candidate = case.root / 'engine/Roms/detached-generation/oos168x.sfc'
+            config = configparser.ConfigParser(interpolation=None)
+            config.read(case.project)
+            config['files']['lyra_build_request_file'] = ''
+            config['build'] = {'build_target': 'old-output.sfc'}
+            with case.project.open('w') as handle:
+                config.write(handle)
+            case.inputs['project'] = X.Q.bound(case.project)
+            case.save['artifacts'] = case.artifacts(case.inputs)
+            case.next_save()
+            return original(case, **kwargs)
+
+        # The existing host fixture creates a real transfer and reconstructs
+        # its source-bound plan; editor/verifier and policy are synthetic.
+        with mock.patch.object(transfer_fixtures.CurrentSaveTransferTest,
+                               'prepare', capture_after_save):
+            CurrentBuildTest.setUpClass.__func__(cls)
+
+    def test_captured_transfer_selects_fresh_detached_target_and_refuses_stale_inputs(self):
+        case = self.case
+        protected = (case.project, case.rom, case.terrain, case.receipt,
+                     case.context_path, self.request)
+        before = {path: path.read_bytes() for path in protected}
+        request = X._json(before[self.request])
+        self.assertEqual(request['live']['generation'], case.save['generation'])
+        self.assertEqual(request['live']['operation_id'], case.save['operation_id'])
+        self.assertEqual(request['target']['path'], str(case.candidate))
+
+        target = X.P.resolve_current_target(
+            case.project, request=self.request, candidate=case.candidate)
+        self.assertEqual(target['request'], str(self.request))
+        self.assertEqual(target['candidate'], str(case.candidate))
+        self.assertFalse(case.candidate.exists())
+
+        wrong_target = case.candidate.parent.parent / 'other/oos168x.sfc'
+        with self.assertRaisesRegex(ValueError, 'CURRENT_BUILD_OUTPUT_MISMATCH'):
+            X.P.resolve_current_target(case.project, request=self.request,
+                                       candidate=wrong_target)
+
+        case.candidate.parent.mkdir(parents=True)
+        case.candidate.write_bytes(b'prior fixture output')
+        with self.assertRaisesRegex(ValueError, 'Current transfer requires a new separate4MiB compiled candidate'):
+            X.P.resolve_current_target(case.project, request=self.request,
+                                       candidate=case.candidate)
+        self.assertEqual(case.candidate.read_bytes(), b'prior fixture output')
+        case.candidate.unlink()
+
+        try:
+            case.terrain.write_bytes(before[case.terrain] + b' ')
+            with self.assertRaisesRegex(ValueError, 'Current-save transfer retired'):
+                X.P.resolve_current_target(case.project, request=self.request,
+                                           candidate=case.candidate)
+        finally:
+            case.terrain.write_bytes(before[case.terrain])
+        self.assertEqual({path: path.read_bytes() for path in protected}, before)
+        self.assertFalse(case.candidate.exists())
+
+
 if __name__=='__main__':unittest.main()

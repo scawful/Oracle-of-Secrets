@@ -35,6 +35,7 @@ PROOF_KIND = 'yaze.current_save_transfer_enforcement.v1'
 POLICY_KIND = 'lyra.current_save_transfer_policy.v1'
 NATIVE_POLICY_KIND = 'lyra.current_save_transfer_policy.v2'
 NATIVE_EXECUTION_KIND = 'yaze.lyra_verify_project_execution.v1'
+INSPECTION_EXECUTION_KIND = 'yaze.lyra_inspect_project_execution.v1'
 COMPILE_ORDER = ['native_save', 'immutable_snapshot', 'compile_candidate', 'no_native_serializer']
 REVIEW_KIND = 'lyra.current_save_reservation_review.v1'
 PREVIEW_POLICY_KIND = 'lyra.private_checkpoint_preview_policy.v1'
@@ -47,6 +48,83 @@ HIDDEN_STREAMS_SOURCE_SET = 'lyra_current_hidden_streams_56'
 PERSISTENT_REWARD_SOURCE_SET = 'lyra_current_persistent_reward_authoring_57'
 SAVE_ADMISSION_SOURCE_SET = 'lyra_current_save_admission_diagnostics_58'
 BOM_ADMISSION_SOURCE_SET = 'lyra_current_bom_wrapper_admission_59'
+# One truthful local seed; this does not alias any historical source epoch.
+LOCAL_SNAPSHOT_SOURCE_SET = 'lyra_local_snapshot_c0_0d1b0b49_v1'
+LOCAL_SNAPSHOT_V2_SOURCE_SET = 'lyra_local_snapshot_c0_0d1b0b49_v2'
+LOCAL_SNAPSHOT_HEAD = '0d1b0b49837ea7443b61aebc567b0cff93d0d0d6'
+# V2 binds the ordinary command runtime too; it grants no Build or runtime
+# authority. V1 keeps its original exact source membership.
+LOCAL_SNAPSHOT_V2_ADDITIONAL_SOURCES = (
+    'Scripts/Build/oracle_ordinary_build.py',
+    'Scripts/Mesen2/mesen2_launch_instance.sh',
+    'Scripts/Mesen2/yaze_dedicated_profile.py',
+    'Scripts/Mesen2/yaze_dedicated_session.py',
+)
+# Exact reviewed additions to that immutable seed tree. Including a dormant
+# source binds its bytes; it does not enable its feature or grant allocation.
+LOCAL_SNAPSHOT_ADDITIONAL_SOURCES = (
+    'Overworld/area_tilesets.asm',
+    'Overworld/graphics_runtime.asm',
+    'Overworld/lyra_actor_stream.asm',
+    'Overworld/lyra_native_loaders.asm',
+    'Overworld/lyra_resident_atlas.asm',
+    'Overworld/lyra_resident_resources.asm',
+    'Overworld/lyra_tail_events.asm',
+    'Overworld/project_bg_palette.asm',
+    'Scripts/Build/build_checks.sh',
+    'Scripts/Build/build_receipt.py',
+    'Scripts/Build/check_zscream_overlap.py',
+    'Scripts/Build/checkpoint_registry.py',
+    'Scripts/Build/lyra_build_selection.py',
+    'Scripts/Build/lyra_current_transfer.py',
+    'Scripts/Build/lyra_generated_inputs.py',
+    'Scripts/Build/lyra_joint_art.py',
+    'Scripts/Build/lyra_macos_process_group.py',
+    'Scripts/Build/lyra_native_loaders.py',
+    'Scripts/Build/lyra_native_state.py',
+    'Scripts/Build/lyra_native_streams.py',
+    'Scripts/Build/lyra_output_paths.py',
+    'Scripts/Build/lyra_private_reservation.py',
+    'Scripts/Build/lyra_process_containment.py',
+    'Scripts/Build/lyra_project_admission.py',
+    'Scripts/Build/lyra_project_allocation.py',
+    'Scripts/Build/lyra_project_bg_palette.py',
+    'Scripts/Build/lyra_project_composition.py',
+    'Scripts/Build/lyra_project_delta.py',
+    'Scripts/Build/lyra_project_prepare.py',
+    'Scripts/Build/lyra_project_publisher.py',
+    'Scripts/Build/lyra_project_terrain.py',
+    'Scripts/Build/lyra_project_tile32.py',
+    'Scripts/Build/lyra_resident_graphics.py',
+    'Scripts/Build/rom_stage_input.py',
+    'Scripts/Build/run_build_smoke.py',
+    'Scripts/Build/set_feature_flags.py',
+    'Scripts/Build/verify_feature_flags.py',
+    'Scripts/Build/version_stamp.py',
+    'Scripts/Generate/allocation_contracts.py',
+    'Scripts/Generate/asm_source.py',
+    'Scripts/Generate/export_symbols.py',
+    'Scripts/Generate/generate_annotations.py',
+    'Scripts/Generate/generate_hack_manifest.py',
+    'Scripts/Generate/generate_hooks_json.py',
+    'Scripts/Generate/generate_water_fill_table.py',
+    'Scripts/Generate/generate_water_gate_runtime_tables.py',
+    'Scripts/Generate/graphics_source_checks.py',
+    'Scripts/Generate/joint_palette_directory.py',
+    'Scripts/Generate/lz2.py',
+    'Scripts/Generate/menu_icon_overrides.py',
+    'Scripts/Generate/sheet_codec.py',
+    'Scripts/Generate/sheet_overrides.py',
+    'Scripts/Generate/sheet_table.py',
+    'Scripts/Generate/validate_custom_collision_source.py',
+    'Scripts/Generate/validate_expanded_message_source.py',
+    'Scripts/Graphics/compile_graphics_pack.py',
+    'Scripts/Graphics/compile_runtime_graphics.py',
+    'Scripts/Mesen2/mesen2_client.py',
+    'Scripts/Validate/validate_sprite_registry.py',
+    'Scripts/Validate/verify_hooks_json.py',
+    'Scripts/Validate/verify_joint_palette_directory.py',
+)
 HIDDEN_STREAMS_CLAIM = 'LyraCurrentHiddenStreamsE3'
 RESIDENT_ADDITIONAL_SOURCES = (
     'Overworld/lyra_resident_atlas.asm', 'Overworld/lyra_resident_resources.asm',
@@ -93,6 +171,13 @@ def _reference(project, config, key, *, existing=True):
     path = Path(value)
     path = path if path.is_absolute() else project.parent / path
     return path.resolve(strict=existing)
+
+
+def _legacy_proof_path(live):
+    proof_path = live.get('enforcement_receipt')
+    R.require(type(proof_path) is str and Path(proof_path).is_file(),
+              'CURRENT_SAVE_PRODUCER_PROOF_REQUIRED: selected producer must enforce this snapshot and writer order')
+    return Path(proof_path)
 
 
 def _input_file(project, value, field):
@@ -224,14 +309,16 @@ def _live(project, *, producer_identity=None):
                                  operation_id=receipt['operation_id'])
               and context['producer'] == producer_artifact,
               'Live native commit/producer no longer matches the complete Save receipt')
-    proof_path = _reference(project, config, 'native_save_transfer_proof_file', existing=False)
-    R.require(proof_path not in {Path(row['path']) for row in inputs.values()},
+    proof_reference = config.get('files', 'native_save_transfer_proof_file', fallback='').strip()
+    proof_path = (_reference(project, config, 'native_save_transfer_proof_file', existing=False)
+                  if proof_reference else None)
+    R.require(proof_path is None or proof_path not in {Path(row['path']) for row in inputs.values()},
               'Transfer proof aliases a saved input')
     result = dict(project=str(project), inputs=inputs, producer=producer_binding,
         producer_identity=producer, save_receipt=receipt_binding,
         generation=receipt['generation'], operation_id=receipt['operation_id'],
         save_context=context_binding,
-        enforcement_receipt=str(proof_path))
+        enforcement_receipt=None if proof_path is None else str(proof_path))
     if producer_identity is not None:
         result['producer_identity_override'] = producer_binding
     return result
@@ -271,25 +358,93 @@ def _census(source, document):
         required_literal_stream_bytes=32 * 518)
 
 
+def select_ordinary_transfer_inputs(project, *, producer_identity=None):
+    """Resolve the current producer and exactly one ordinary policy, read-only.
+
+    This selection alone grants no allocation or Build admission. The transfer
+    and ordinary build planner must still authenticate every binding and source
+    preimage. Invoke the subsequent verifier in the supervised Build lifecycle.
+    """
+    live = _live(project, producer_identity=producer_identity)
+    ledger_binding = Q.bound(Path(R.LEDGER).resolve(strict=True))
+    ledger = _json(Q.read_bound(ledger_binding))
+    R.require(type(ledger) is dict and type(ledger.get('current_save_transfer_policies')) is list,
+              'CURRENT_SAVE_POLICY_REGISTRY_INVALID: source policy registry is malformed')
+    policies = ledger['current_save_transfer_policies']
+    R.require(all(type(row) is dict and type(row.get('id')) is str and row['id']
+                  for row in policies),
+              'CURRENT_SAVE_POLICY_REGISTRY_INVALID: policy identities are malformed')
+    R.require(len({row['id'] for row in policies}) == len(policies),
+              'CURRENT_SAVE_POLICY_REGISTRY_INVALID: duplicate policy identity')
+    matches = []
+    for policy in policies:
+        runtime = policy.get('current_runtime')
+        if (policy.get('producer_identity_sha256') == live['producer']['sha256']
+                and policy.get('kind') == NATIVE_POLICY_KIND
+                and policy.get('scope') == 'disposable_build_only'
+                and type(runtime) is dict
+                and runtime.get('kind') == 'lyra.current_runtime_policy.v1'
+                and runtime.get('scope') == 'disposable_build_only'
+                and runtime.get('runtime_admission') is True
+                and 'private_pilot' not in runtime):
+            matches.append(policy['id'])
+    R.require(len(matches) == 1,
+              'CURRENT_ORDINARY_POLICY_REQUIRED: no unique ordinary Build policy matches this Save producer')
+    verifier = live['producer_identity']['verifier']
+    Q.read_bound(verifier)
+    _recheck(live)
+    Q.read_bound(ledger_binding)
+    return dict(policy_id=matches[0], verifier=verifier, producer=live['producer'],
+                save_receipt=live['save_receipt'], save_context=live['save_context'],
+                ledger=ledger_binding)
+
+
+def prepare_ordinary_transfer(project, output, candidate, *, producer_identity=None):
+    """Prepare a fresh ordinary transfer using only the authenticated Save identity.
+
+    A Build caller must run this inside its contained, project-locked lifecycle.
+    A completed transfer is still not an admitted or completed Build.
+    """
+    selection = select_ordinary_transfer_inputs(project, producer_identity=producer_identity)
+    return prepare_transfer(project, selection['verifier']['path'], output, candidate,
+                            policy_id=selection['policy_id'], producer_identity=producer_identity,
+                            _ordinary_selection=selection, capture_resident_inspection=True)
+
+
 def _identity(request):
     return T.digest({key: value for key, value in request.items() if key != 'transfer_id'})
 
 
-def prepare_transfer(project, z3ed, output, candidate, *, policy_id=None, producer_identity=None):
+def prepare_transfer(project, z3ed, output, candidate, *, policy_id=None, producer_identity=None,
+                     _ordinary_selection=None, capture_resident_inspection=False):
     """Capture a new immutable input; never advance Yaze's save generation."""
     project = Path(os.path.abspath(project))
     z3ed = Path(z3ed).resolve(strict=True)
     output = Path(os.path.abspath(output))
     candidate = Path(os.path.abspath(candidate))
+    R.require(type(capture_resident_inspection) is bool, 'Resident inspection capture must be explicit')
     R.require(not output.exists() and not candidate.exists(), 'Transfer input/output paths must be new')
     R.require(not any(path.is_symlink() for path in (output, *output.parents, candidate, *candidate.parents)),
               'Current-save transfer paths use a symlink')
     R.require(not candidate.is_relative_to(output) and not output.is_relative_to(candidate),
               'Candidate must be separate from immutable transfer input')
     live = _live(project, producer_identity=producer_identity)
-    R.require(candidate != Path(live['enforcement_receipt'])
-              and not Path(live['enforcement_receipt']).is_relative_to(output),
-              'Transfer proof must be separate from candidate and immutable snapshot input')
+    def check_ordinary_selection():
+        if _ordinary_selection is None:
+            return
+        R.require(live['producer'] == _ordinary_selection['producer']
+                  and live['save_receipt'] == _ordinary_selection['save_receipt']
+                  and live['save_context'] == _ordinary_selection['save_context']
+                  and policy_id == _ordinary_selection['policy_id']
+                  and Q.bound(z3ed) == _ordinary_selection['verifier'],
+                  'CURRENT_ORDINARY_SELECTION_CHANGED: Save identity changed during transfer')
+        _recheck(live)
+        Q.read_bound(_ordinary_selection['ledger'])
+    check_ordinary_selection()
+    if live['enforcement_receipt'] is not None:
+        R.require(candidate != Path(live['enforcement_receipt'])
+                  and not Path(live['enforcement_receipt']).is_relative_to(output),
+                  'Transfer proof must be separate from candidate and immutable snapshot input')
     R.require(Q.bound(z3ed) == live['producer_identity']['verifier'],
               'Current-save verifier differs from the selected producer')
     R.require(str(candidate) not in {row['path'] for row in live['inputs'].values()},
@@ -300,6 +455,14 @@ def prepare_transfer(project, z3ed, output, candidate, *, policy_id=None, produc
               'no snapshot or candidate was created')
     proof = A.native_verify(Path(z3ed), Path(project), Path(live['inputs']['rom']['path']))
     _recheck(live)
+    inspection = None
+    if capture_resident_inspection:
+        # This is a child of the existing supervised preparation stage, never
+        # a producer source or permission to run an unadmitted command graph.
+        try:
+            inspection = A.native_inspect(z3ed, project, Path(live['inputs']['rom']['path']))
+        finally:
+            _recheck(live)
     document = C._document(raw['terrain'], P.encoded(proof), raw['rom'])
     files, snapshots = {}, {}
     for index, (key, content) in enumerate(sorted(raw.items())):
@@ -332,6 +495,13 @@ def prepare_transfer(project, z3ed, output, candidate, *, policy_id=None, produc
         census=_census(raw['rom'], document), allocation_policy_id=policy_id,
         target=dict(path=str(candidate), size=0x400000, role='compiled_candidate',
                     native_serializer_after_compile='forbidden'))
+    if inspection is not None:
+        files['inspection.json'] = P.encoded(inspection)
+        observation = dict(path=str(output / 'inspection.json'), sha256=R.sha(files['inspection.json']))
+        files['inspection-execution.json'] = P.encoded(_inspection_record(live, observation))
+        request.update(resource_inspection=observation,
+            native_inspection=dict(path=str(output / 'inspection-execution.json'),
+                                   sha256=R.sha(files['inspection-execution.json'])))
     request['transfer_id'] = _identity(request)
     _recheck(live)
     output.mkdir(parents=True, mode=0o700, exist_ok=False)
@@ -342,9 +512,11 @@ def prepare_transfer(project, z3ed, output, candidate, *, policy_id=None, produc
             (output / name).chmod(0o444)
         _recheck(live)
         # Completion marker last; consumers still recheck authoritative Save.
+        check_ordinary_selection()
         P.write_outputs(output, {'request.json': P.encoded(request)}, protected=protected)
         (output / 'request.json').chmod(0o444)
         _recheck(live)
+        check_ordinary_selection()
     except BaseException as error:
         (output / 'request.json').unlink(missing_ok=True)
         try:
@@ -388,7 +560,9 @@ def verify_transfer(request_path, project, base_rom):
     request = _json(Q.read_bound(binding))
     _keys(request, {'kind', 'live', 'snapshot_root', 'inputs', 'observation', 'save_snapshot',
                    'producer_snapshot', 'context_snapshot', 'census', 'allocation_policy_id', 'target', 'transfer_id'}
-          | ({'native_verification'} if 'native_verification' in request else set()), 'current transfer request')
+          | ({'native_verification'} if 'native_verification' in request else set())
+          | ({'resource_inspection', 'native_inspection'} if 'resource_inspection' in request else set()),
+          'current transfer request')
     R.require(request['kind'] == KIND and request['transfer_id'] == _identity(request),
               'Current transfer identity differs')
     R.require(Path(request['live']['project']).resolve() == Path(project).resolve(),
@@ -401,6 +575,8 @@ def verify_transfer(request_path, project, base_rom):
             request['save_snapshot'], request['producer_snapshot'], request['context_snapshot']]
     if 'native_verification' in request:
         rows.append(request['native_verification'])
+    if 'resource_inspection' in request:
+        rows.extend((request['resource_inspection'], request['native_inspection']))
     R.require(set(request['inputs']) == set(request['live']['inputs']), 'Transfer snapshot roles differ')
     R.require(len({row['path'] for row in rows}) == len(rows), 'Transfer snapshot files alias each other')
     for row in rows:
@@ -430,6 +606,8 @@ def verify_transfer(request_path, project, base_rom):
     document = C._document(raw['terrain'], Q.read_bound(request['observation']), raw['rom'])
     if 'native_verification' in request:
         native_execution(request)
+    if 'resource_inspection' in request:
+        inspection_execution(request)
     R.require(request['census'] == _census(raw['rom'], document), 'Current native reader census differs')
     _recheck(request['live'])
     Q.read_bound(binding)
@@ -558,8 +736,7 @@ def native_resource_plan(request_path, project, base_rom, inspection_path, *, so
     R.require(has_native_resource_history(document), 'CURRENT_NATIVE_RESOURCE_DOCUMENT_REQUIRED')
     inspection_binding = Q.bound(inspection_path)
     live = request['live']
-    R.require(inspection_binding in live['producer_identity']['source_bindings'],
-              'RESIDENT_INSPECTION_UNBOUND: select the retained observation in producer source bindings')
+    _selected_inspection(request, inspection_binding)
     inspection = _json(Q.read_bound(inspection_binding))
     R.require(inspection.get('inspection_only') is True
               and inspection.get('native_resolution_schema') == 'yaze.lyra-native-resolution.v1'
@@ -649,16 +826,16 @@ def resident_graphics_plan(request_path, project, base_rom, inspection_path, *, 
                            conditional_demands=None, conditional_source_epoch=None):
     """Derive held resource data from a genuine Save and retained inspection.
 
-    The inspection is an explicit selected-producer source binding. Reusing it
-    does not claim a new verifier execution or grant any runtime allocation.
+    Fresh inspections belong to the immutable transfer's execution evidence.
+    Historical selected-producer observations remain supported without claiming
+    a new execution. Neither route grants any runtime allocation.
     """
     request_binding = Q.bound(request_path)
     request, source, document = verify_transfer(request_path, project, base_rom)
     inspection_binding = Q.bound(inspection_path)
     live = request['live']
     producer = live['producer_identity']
-    R.require(inspection_binding in producer['source_bindings'],
-              'RESIDENT_INSPECTION_UNBOUND: select the retained observation in producer source bindings')
+    inspection_origin = _selected_inspection(request, inspection_binding)
     inspection = _json(Q.read_bound(inspection_binding))
     R.require(inspection.get('inspection_only') is True
               and inspection.get('native_resolution_schema') == 'yaze.lyra-native-resolution.v1'
@@ -693,8 +870,10 @@ def resident_graphics_plan(request_path, project, base_rom, inspection_path, *, 
         generation=live['generation'], operation_id=live['operation_id'],
         save_receipt=live['save_receipt'], save_context=live['save_context'],
         selected_producer=live['producer'], producer_identity=producer,
-        inspection=inspection_binding, inspection_origin='retained_selected_observation',
+        inspection=inspection_binding, inspection_origin=inspection_origin,
         compiler_bindings=compiler_bindings)
+    if 'native_inspection' in request:
+        provenance['inspection_execution'] = request['native_inspection']
     if conditional is not None:
         provenance.update(conditional_selection=conditional['selection'],
                           conditional_bindings=conditional['bindings'])
@@ -723,6 +902,47 @@ def resident_graphics_plan(request_path, project, base_rom, inspection_path, *, 
         result.update(conditional_selection=conditional['selection'],
                       conditional_bindings=conditional['bindings'], conditional_demands=conditional['witness'])
     return result
+
+
+def _inspection_record(live, observation):
+    producer = live['producer_identity']
+    return dict(kind=INSPECTION_EXECUTION_KIND, binary=producer['verifier'],
+        source_bindings=producer['source_bindings'], generation=live['generation'],
+        operation_id=live['operation_id'], save_receipt=live['save_receipt'],
+        save_context=live['save_context'], selected_producer=live['producer'],
+        project_descriptor=live['inputs']['project'], terrain=live['inputs']['terrain'],
+        source_rom_sha256=live['inputs']['rom']['sha256'], exit_code=0,
+        command=[producer['verifier']['path'], 'lyra-inspect-project',
+                 f'--project-context={live["project"]}', f'--rom={live["inputs"]["rom"]["path"]}',
+                 '--format=json'], observation=observation)
+
+
+def inspection_execution(request):
+    """Authenticate the exact fresh observation captured by this transfer."""
+    R.require('native_inspection' in request and 'resource_inspection' in request,
+              'CURRENT_NATIVE_INSPECTION_EXECUTION_REQUIRED')
+    native_execution(request)
+    value = _json(Q.read_bound(request['native_inspection']))
+    R.require(type(value) is dict and type(value.get('generation')) is int
+              and type(value.get('exit_code')) is int
+              and value == _inspection_record(request['live'], request['resource_inspection']),
+              'CURRENT_NATIVE_INSPECTION_EXECUTION_MISMATCH')
+    for row in [value['binary'], *value['source_bindings'], value['save_receipt'],
+                value['save_context'], value['selected_producer'], value['project_descriptor'],
+                value['terrain'], value['observation']]:
+        Q.read_bound(row)
+    return value
+
+
+def _selected_inspection(request, binding):
+    if 'resource_inspection' in request:
+        inspection_execution(request)
+        R.require(binding == request['resource_inspection'],
+                  'RESIDENT_INSPECTION_UNBOUND: select this transfer\'s captured observation')
+        return 'captured_selected_verifier_execution'
+    R.require(binding in request['live']['producer_identity']['source_bindings'],
+              'RESIDENT_INSPECTION_UNBOUND: select the retained observation in producer source bindings')
+    return 'retained_selected_observation'
 
 
 def native_execution(request):
@@ -1042,6 +1262,47 @@ def _current_table_layout(families):
     return layout, offset
 
 
+def _is_local_snapshot_source_set(value):
+    if value['ledger']['source_set'] not in (LOCAL_SNAPSHOT_SOURCE_SET, LOCAL_SNAPSHOT_V2_SOURCE_SET):
+        return False
+    R.require(value['engine_head'] == value['base_head'] == LOCAL_SNAPSHOT_HEAD,
+              'CURRENT_LOCAL_SOURCE_SEED_MISMATCH: exact local engine/base seed required')
+    return True
+
+
+def _local_snapshot_source_paths(root, *, source_set=LOCAL_SNAPSHOT_SOURCE_SET):
+    # The pinned parentless C0 tree supplies the exact normal ASM/incbin set.
+    # Never derive this list from the mutable working tree or selected C1 HEAD.
+    raw = _git(root, 'ls-tree', '-r', '--name-only', '-z', LOCAL_SNAPSHOT_HEAD)
+    R.require(raw.endswith(b'\0'), 'CURRENT_LOCAL_SOURCE_SEED_UNBOUND')
+    names = raw[:-1].decode('utf-8').split('\0')
+    R.require(names and len(names) == len(set(names))
+              and all(name and not Path(name).is_absolute()
+                      and '..' not in Path(name).parts
+                      and Path(name).as_posix() == name for name in names),
+              'CURRENT_LOCAL_SOURCE_SEED_UNBOUND')
+    paths = set(names) | set(LOCAL_SNAPSHOT_ADDITIONAL_SOURCES)
+    if source_set == LOCAL_SNAPSHOT_SOURCE_SET:
+        return paths
+    R.require(source_set == LOCAL_SNAPSHOT_V2_SOURCE_SET,
+              'CURRENT_LOCAL_SOURCE_SET_UNSUPPORTED: unknown local source membership')
+    additions = set(LOCAL_SNAPSHOT_V2_ADDITIONAL_SOURCES)
+    R.require(len(paths) == 303 and len(LOCAL_SNAPSHOT_V2_ADDITIONAL_SOURCES) == len(additions) == 4
+              and not paths & additions,
+              'CURRENT_LOCAL_SOURCE_V2_MEMBERSHIP_CHANGED: expected303 plus4 disjoint runtime paths')
+    return paths | additions
+
+
+def _validate_local_snapshot_source_paths(context, relatives, *, source_set=LOCAL_SNAPSHOT_SOURCE_SET):
+    root = Path(context['root'])
+    expected = _local_snapshot_source_paths(root, source_set=source_set)
+    normal = {Path(row['path']).relative_to(root).as_posix()
+              for row in context['bindings']}
+    R.require(len(relatives) == len(set(relatives)) and set(relatives) == expected
+              and normal <= expected,
+              'CURRENT_LOCAL_SOURCE_SET_INCOMPLETE: exact local consumer/compiler closure required')
+
+
 def validate_current_source_contract(review, project, base_rom, *, contract_path=None):
     """Validate explicit current source origins; this never grants publication."""
     canonical = Path(CURRENT_SOURCE_CONTRACT).resolve(strict=True)
@@ -1074,6 +1335,7 @@ def validate_current_source_contract(review, project, base_rom, *, contract_path
     R.require(ledger['path'] == 'Config/allocation_ownership.json'
               and type(ledger['source_set']) is str and ledger['source_set'],
               'Current source ledger must name its explicit source set and canonical relative path')
+    _is_local_snapshot_source_set(value)
     R.require(type(ledger['sha256']) is str and re.fullmatch('[0-9a-f]{64}', ledger['sha256']),
               'CURRENT_SOURCE_LEDGER_UNBOUND: current ledger has no selected source hash')
     current = verify_reservation_review(review, project, base_rom)
@@ -1117,6 +1379,8 @@ def validate_current_source_contract(review, project, base_rom, *, contract_path
         R.require(historical and set(relatives) == historical | set(RESIDENT_ADDITIONAL_SOURCES)
                   | {'Config/allocation_ownership.json'},
                   'CURRENT_RESIDENT_SOURCE_SET_INCOMPLETE: explicit current consumer/compiler bindings required')
+    elif _is_local_snapshot_source_set(value):
+        _validate_local_snapshot_source_paths(context, relatives, source_set=ledger['source_set'])
     committed = _git_source_blobs(root, context['engine_head'], relatives)
     for row, relative in zip(current_bindings, relatives):
         R.require(Q.read_bound(row) == committed[relative],
@@ -1331,9 +1595,8 @@ def plan_transfer(request_path, project, base_rom, *, ledger_path=None, current_
         # that a future assembly has already happened. Final readback owns it.
         proof = dict(writer_order=list(COMPILE_ORDER))
     else:
-        R.require(Path(request['live']['enforcement_receipt']).is_file(),
-                  'CURRENT_SAVE_PRODUCER_PROOF_REQUIRED: selected producer must enforce this snapshot and writer order')
-        proof_binding = Q.bound(request['live']['enforcement_receipt'])
+        proof_path = _legacy_proof_path(request['live'])
+        proof_binding = Q.bound(proof_path)
         proof = _json(Q.read_bound(proof_binding))
         _keys(proof, {'kind', 'transfer_id', 'generation', 'operation_id', 'save_context',
                       'source_rom_sha256', 'policy_sha256', 'producer', 'source_bindings',
@@ -1482,7 +1745,8 @@ def current_resident_inputs(profile, source, document, selection):
     contract = _json(Q.read_bound(profile['contract']))
     R.require(contract['ledger']['source_set'] in (RESIDENT_SOURCE_SET,
               HIDDEN_STREAMS_SOURCE_SET, PERSISTENT_REWARD_SOURCE_SET,
-              SAVE_ADMISSION_SOURCE_SET, BOM_ADMISSION_SOURCE_SET),
+              SAVE_ADMISSION_SOURCE_SET, BOM_ADMISSION_SOURCE_SET)
+              or _is_local_snapshot_source_set(contract),
               'CURRENT_RESIDENT_SOURCE_SET_REQUIRED: inactive resident consumers and compiler must be engine-bound')
     origins = profile['origins']
     R.require(all(name in origins for name in
@@ -1587,6 +1851,95 @@ def verify_resident_payload(emission, compiled, symbols):
                 abi_sha256=emission['abi_sha256'], payload_sha256=emission['payload_sha256'])
 
 
+def verify_current_graphics_assets(graphics, asset_bindings, *, project, candidate):
+    """Authenticate original directives and deterministically relocate private reads."""
+    from lyra_output_paths import is_private_generation
+    private = is_private_generation(Path(project), P.ROOT.resolve(), Path(candidate))
+    R.require(type(asset_bindings) is list,'CURRENT_GRAPHICS_ASSETS_UNBOUND')
+    assets={row['path']:row for row in asset_bindings}
+    R.require(len(assets)==len(asset_bindings),'Duplicate current graphics asset binding')
+    referenced=set()
+    rendered=[]
+    for original in graphics.splitlines(keepends=True):
+        line=original.split(';',1)[0]
+        R.require(not re.search(r'\bincsrc\b',line,re.I),'Current graphics cannot include unbound source')
+        if re.search(r'\bincbin\b',line,re.I):
+            match=re.fullmatch(r'\s*incbin\s+"([^"!]+)"\s*',line,re.I)
+            R.require(match is not None,'Unsupported current graphics binary directive')
+            requested=Path(match[1])
+            requested=requested if requested.is_absolute() else P.ROOT/P.OUTPUT/requested
+            name=requested.resolve(strict=True)
+            R.require(str(name) in assets,'CURRENT_GRAPHICS_ASSETS_UNBOUND: '+str(name))
+            Q.read_bound(assets[str(name)]);referenced.add(str(name))
+            if private:
+                path_text=name.as_posix()
+                R.require(not any(p.is_symlink() for p in (requested,*requested.parents))
+                          and not any(ord(c) < 32 or ord(c) == 127
+                                      or c in '"!;{}\\' for c in path_text),
+                          'CURRENT_GRAPHICS_RELOCATION_UNSUPPORTED: asset path cannot be represented safely in ASM')
+                # Keep comments, whitespace and line endings. Only the path
+                # token changes; provenance still binds the original source.
+                start,end=match.span(1)
+                original=original[:start]+path_text+original[end:]
+        rendered.append(original)
+    R.require(referenced==set(assets),'Unused or missing current graphics asset binding')
+    for name in sorted(referenced):
+        if private:
+            path=Path(name)
+            R.require(path == path.resolve(strict=True)
+                      and not any(p.is_symlink() for p in (path,*path.parents)),
+                      'CURRENT_GRAPHICS_RELOCATION_UNSUPPORTED: bound asset path changed')
+        Q.read_bound(assets[name])
+    return ''.join(rendered)
+
+
+def _legacy_empty_resource_plan(request, source, document):
+    """Derive the approved schema-5 absence semantics, never edit the Save.
+
+    The caller has verified the transfer. Read its bound raw schema because
+    TerrainDocument deliberately does not retain the serialized version.
+    Schema9 unselected/empty/authored states are not this compatibility path.
+    """
+    terrain = Q.read_bound(request['inputs']['terrain'])
+    raw = _json(terrain)
+    if raw.get('schema_version') != 5:
+        return None
+    R.require(not has_native_resource_history(document)
+              and len(document.authoring) == 32
+              and all('native_resources' not in row for row in document.authoring)
+              and A.gameplay_area_plan(document)['complete'],
+              'LEGACY_EMPTY_RESOURCE_DOCUMENT_INVALID')
+    R.require(R.sha(source) == request['inputs']['rom']['sha256']
+              and source[A.pc(A.EMPTY_HIDDEN_ITEMS):A.pc(A.EMPTY_HIDDEN_ITEMS)+2] == b'\xff\xff'
+              and source[A.pc(0x1BC8BE):A.pc(0x1BC8BE)+5] == bytes.fromhex('a99b008502'),
+              'LEGACY_EMPTY_RESOURCE_NATIVE_PREIMAGE_MISMATCH')
+    result = dict(kind='lyra.legacy_schema5_empty_resources.v1',
+        transfer_id=request['transfer_id'], generation=request['live']['generation'],
+        operation_id=request['live']['operation_id'],
+        terrain=request['inputs']['terrain'], source_rom=request['inputs']['rom'],
+        save_receipt=request['live']['save_receipt'], save_context=request['live']['save_context'],
+        selected_producer=request['live']['producer'],
+        document_sha256=_document_identity(document), authored_schema_version=5,
+        derived_semantics='no_authored_secrets_preserve_ordinary_events',
+        maps=list(V.FULL_MAPS), hidden_items=A.EMPTY_HIDDEN_ITEMS & 0xFFFF,
+        hidden_bank=0x9B, empty_terminator_snes=A.EMPTY_HIDDEN_ITEMS,
+        bomb_doors=0, bomb_restore_hook=0x02EF56, bomb_restore_mask=0xFD,
+        saved_state_modified=False, authored_document_modified=False,
+        allocation_granted=False, runtime_admission=False)
+    result['plan_sha256'] = T.digest(result)
+    return result
+
+
+def legacy_empty_resource_plan(request_path, project, base_rom):
+    """Read-only, receipt-bound compatibility evidence; no Build permission."""
+    request, source, document = verify_transfer(request_path, project, base_rom)
+    result = _legacy_empty_resource_plan(request, source, document)
+    R.require(result is not None, 'LEGACY_EMPTY_RESOURCE_SCHEMA5_REQUIRED')
+    R.require(verify_transfer(request_path, project, base_rom) == (request, source, document),
+              'LEGACY_EMPTY_RESOURCE_INPUT_CHANGED')
+    return result
+
+
 def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
     """Select only a source-owned reviewed runtime policy; no A1 fallback."""
     request, source, document = verify_transfer(request_path, project, base_rom)
@@ -1646,6 +1999,8 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
         guard_binding=_json(Q.read_bound(runtime['guard_binding']))
     else:
         pilot,pilot_binding=private_pilot_runtime(runtime,source,document)
+    legacy_empty = (None if preview or pilot is not None else
+                    _legacy_empty_resource_plan(request, source, document))
     plan, payload = plan_transfer(request_path, project, base_rom, ledger_path=ledger_path,
                                   current_source_profile=profile,private_pilot=pilot)
     import lyra_native_loaders as native
@@ -1675,6 +2030,9 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
               'PRIVATE_PILOT_RECIPE_UNSELECTED: recipe must name only A0/A1' if pilot is not None else
               'CURRENT_RUNTIME_RECIPE_INCOMPLETE: all32 explicit native rows required')
     rows = {int(key,16):dict(value) for key,value in rows.items()}
+    if legacy_empty is not None:
+        for row in rows.values():
+            row.update(hidden_items=legacy_empty['hidden_items'], bomb_doors=0)
     areas = A.gameplay_area_plan(layout_document)
     R.require(pilot is not None or areas['complete'], 'CURRENT_GAMEPLAY_AREAS_UNASSIGNED: selected build needs all32 explicit pages')
     for area, values in native.current_property_rows(document, source=source).items():
@@ -1696,26 +2054,16 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
         policy=dict(source_rom_sha256=R.sha(source),source_profile_sha256=T.digest(profile),
                     allocation_granted=False,publication_authorized=False),private_pilot=pilot)
     graphics = Q.read_bound(runtime['graphics_source']).decode('utf-8')
-    R.require(type(runtime['graphics_assets']) is list,'CURRENT_GRAPHICS_ASSETS_UNBOUND')
-    assets={row['path']:row for row in runtime['graphics_assets']}
-    R.require(len(assets)==len(runtime['graphics_assets']),'Duplicate current graphics asset binding')
-    referenced=set()
-    for line in graphics.splitlines():
-        line=line.split(';',1)[0]
-        R.require(not re.search(r'\bincsrc\b',line,re.I),'Current graphics cannot include unbound source')
-        if re.search(r'\bincbin\b',line,re.I):
-            match=re.fullmatch(r'\s*incbin\s+"([^"!]+)"\s*',line,re.I)
-            R.require(match is not None,'Unsupported current graphics binary directive')
-            name=Path(match[1]);name=(name if name.is_absolute() else P.ROOT/P.OUTPUT/name).resolve(strict=True)
-            R.require(str(name) in assets,'CURRENT_GRAPHICS_ASSETS_UNBOUND: '+str(name))
-            Q.read_bound(assets[str(name)]);referenced.add(str(name))
-    R.require(referenced==set(assets),'Unused or missing current graphics asset binding')
+    graphics = verify_current_graphics_assets(graphics, runtime['graphics_assets'],
+                                             project=project, candidate=plan['target']['path'])
     contract = _json(Q.read_bound(profile['contract']))
     report = dict(current_mode=True,parent_count=192,source_contract_sha256=R.sha(P.encoded(contract)),
         generated_sha256=R.sha(graphics.encode()),graphics_origin_snes=profile['origins']['graphics']['snes'])
     bg_plan,bg_binding = current_bg128(source,document,profile,ledger,runtime.get('bg128'),private_pilot=pilot)
+    endpoint_plan = C.S.plan_b0_endpoints(source, document) if not preview and pilot is None else None
     files = P.render_current_source_outputs(tables,contract=contract,graphics_source=graphics,
-        graphics_report=report,current_source_profile=profile,actor_storage_plan=actors,bg128_plan=bg_plan,private_pilot=pilot)
+        graphics_report=report,current_source_profile=profile,actor_storage_plan=actors,bg128_plan=bg_plan,private_pilot=pilot,
+        native_endpoint_plan=endpoint_plan)
     endpoint_state = _json(files['prepare.json'])['native_state_contract']
     R.require(not [r for r in document.flight_points if pilot is None or r['map_id'] in selected]
               and all(r['tile_match_verified'] for r in endpoint_state['requested_doors'])
@@ -1730,6 +2078,9 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
         + f"!LYRA_CURRENT_EVENT_BASE = ${events['flags']:06X}\n"
         + f"!LYRA_CURRENT_EVENT_VERSION = ${events['version']:06X}\n"
         + f"!LYRA_CURRENT_EVENT_MARKER = ${events['marker']:02X}\n")
+    if legacy_empty is not None:
+        constants += ('!LYRA_CURRENT_LEGACY_EMPTY_RESOURCES = 1\n'
+                      '!LYRA_CURRENT_HIDDEN_STREAMS_BOUND = 0\n')
     if bg_binding is not None:
         constants=constants.replace('!PROJECT_BG128_ENABLED = 0','!PROJECT_BG128_ENABLED = 1')
         constants=constants.replace('!PROJECT_BG128_RESTORE_BOUND = 0','!PROJECT_BG128_RESTORE_BOUND = 1')
@@ -1774,7 +2125,8 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
         require_preview_consumers(expected,guard_binding,source)
     else:
         _keys(expected,{'kind','regions','source_calls','fixed_hooks'}
-              | ({'private_pilot_boundary','private_pilot_ingress'} if pilot is not None else set()),
+              | ({'private_pilot_boundary','private_pilot_ingress'} if pilot is not None else set())
+              | ({'legacy_empty_bomb_guard'} if legacy_empty is not None else set()),
               'reviewed current compiled consumers')
         if pilot is not None:
             native.require_private_pilot_ingress(expected)
@@ -1808,6 +2160,8 @@ def ordinary_plan(project, base_rom, request_path, *, ledger_path=None):
             dict((key,value) for key,value in dict(bg_plan,payload_hex=bg_plan['payload'].hex()).items() if key!='payload')),
         generated_files={name:R.sha(raw) for name,raw in files.items()},
         save_exit_policy='unchanged_held',native_gameplay_verified=False,save_reopen_verified=False)
+    if legacy_empty is not None:
+        prepared['legacy_empty_resources'] = legacy_empty
     if joint_art is not None:
         prepared['joint_art'] = joint_art
     if preview:
@@ -1914,22 +2268,32 @@ def current_event_state(value, ledger):
     return dict(value)
 
 
-def verify_current_context(root, prepared):
+def verify_current_context(root, prepared, *, input_folder=None):
     """Reconstruct selected inputs from the canonical policy, not JSON booleans."""
     R.require(Path(root).resolve() == P.ROOT.resolve(), 'Current context uses another source root')
     target=Path(prepared['terrain_plan']['target']['path'])
     if target.exists() and _CANDIDATE_INSPECTION.get() is None:
         with candidate_inspection(target):
-            files=verify_current_context(root,prepared)
+            files=verify_current_context(root,prepared,input_folder=input_folder)
             # Source graph inspection also runs before Asar. Compiled-byte
             # admission belongs to the separate mandatory post-assembly verifier.
             return files
     files = P.render_outputs(ordinary_plan(prepared['project'],prepared['base_rom'],prepared['request'],
                                           ledger_path=prepared['ledger']))
     R.require(P.encoded(prepared) == files['prepare.json'], 'CURRENT_BUILD_CONTEXT_STALE: preparation differs')
-    folder=Path(root)/P.OUTPUT
+    from lyra_generated_inputs import private_folder, validate_prepared
+    from lyra_output_paths import is_private_generation
+    root = Path(root).resolve()
+    private = is_private_generation(Path(prepared['project']), root, target)
+    folder = (private_folder(root, prepared['project'], target) if private else root / P.OUTPUT)
+    R.require(input_folder is None or Path(input_folder) == folder,
+              'CURRENT_BUILD_CONTEXT_STALE: generated input folder differs from authenticated target')
+    if private:
+        validate_prepared(folder)
     R.require(all((folder/name).read_bytes() == raw for name,raw in files.items()),
               'CURRENT_BUILD_CONTEXT_STALE: generated input differs')
+    if private:
+        validate_prepared(folder)
     return files
 
 
@@ -1962,8 +2326,12 @@ def verify_current_output(prepared, compiled, symbols):
             expected_cache=bytes.fromhex(checkpoint_context['cache_hex']))
     else:
         observed=native.inspect_current_consumers(compiled,symbols,
-            require_resident=prepared.get('resident_source') is not None)
+            require_resident=prepared.get('resident_source') is not None,
+            require_legacy_empty=prepared.get('legacy_empty_resources') is not None)
     R.require(observed == expected, 'CURRENT_COMPILED_CONSUMERS_MISMATCH: reviewed active bytes differ')
+    if prepared.get('legacy_empty_resources') is not None:
+        R.require(observed['legacy_empty_bomb_guard']['event_base'] == prepared['event_state']['flags'],
+                  'LEGACY_EMPTY_GUARD_EVENT_BINDING_MISMATCH')
     if prepared.get('private_pilot') is not None:
         bound=native.private_pilot_native_full_paths(source)
         R.require(prepared.get('native_full_paths')==bound,'PRIVATE_PILOT_NATIVE_FULL_SOURCE_STALE')
@@ -2036,6 +2404,10 @@ def verify_current_output(prepared, compiled, symbols):
     profile=prepared['current_source_profile']
     _,saved,document=verify_transfer(prepared['request'],prepared['project'],prepared['base_rom'])
     verify_current_native_source_profile(profile,saved,document)
+    endpoint_plan = C.S.plan_b0_endpoints(saved, document) if not preview and prepared.get('private_pilot') is None else None
+    R.require(prepared.get('native_endpoint_plan') == endpoint_plan, 'B0_ENDPOINT_PREPARED_PLAN_MISMATCH')
+    endpoint_proof = (C.S.verify_b0_endpoints(saved, compiled, document, endpoint_plan)
+                      if endpoint_plan is not None else None)
     result=dict(kind='lyra.current_build_verification.v1',compiled_consumers_verified=True,
         saved_rom_sha256=R.sha(source),compiled_rom_sha256=R.sha(compiled),symbols_sha256=R.sha(symbols),
         current_ledger_sha256=prepared['current_ledger_sha256'],
@@ -2058,4 +2430,6 @@ def verify_current_output(prepared, compiled, symbols):
         result['joint_art'] = joint_art_proof
     if resident_proof is not None:
         result['resident'] = resident_proof
+    if endpoint_proof is not None:
+        result['native_endpoints'] = endpoint_proof
     return result

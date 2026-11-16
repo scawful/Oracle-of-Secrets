@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import sys
 import subprocess
+import shlex
 import tempfile
 import unittest
 from unittest import mock
@@ -916,6 +917,205 @@ class CurrentSaveTransferTest(unittest.TestCase):
                             request=request, ledger_path=ledger)
         render.assert_not_called()
         self.assertFalse((self.root / 'generated').exists())
+
+
+@unittest.skipUnless(Path('/bin/sh').is_file() and Path('/bin/cat').is_file(),
+                     'Fixed inspector executable requires POSIX sh and cat')
+class FreshInspectionCaptureTest(unittest.TestCase):
+    """Fixed disposable inspector processes; no editor, game or real verifier."""
+
+    def setUp(self):
+        self.case = CurrentSaveTransferTest(methodName='runTest')
+        self.case.setUp()
+        self.addCleanup(self.case.doCleanups)
+        case = self.case
+        self.inspection = dict(inspection_only=True,
+            native_resolution_schema='yaze.lyra-native-resolution.v1',
+            project_descriptor_identity_status='identified',
+            project_descriptor_path=str(case.project),
+            project_descriptor_sha256=X.R.sha(case.project.read_bytes()),
+            terrain_path=str(case.terrain), terrain_sha256=X.R.sha(case.terrain.read_bytes()),
+            source_rom_sha256=X.R.sha(case.rom.read_bytes()), map_count=32, donor_map=0x3A,
+            asset_binding_mismatches=0,
+            map_assets=[dict(map_id=page, state=state)
+                        for page in range(0xA0, 0xC0) for state in range(3)])
+        self.invocation = case.root / 'invocation.txt'
+        self.install_inspector(X.P.encoded(dict(data=self.inspection)).decode())
+
+    def install_inspector(self, stdout, *, exit_code=0, prefix=''):
+        case = self.case
+        case.verifier.write_text('#!/bin/sh\n'
+            + 'printf \'%s\\n\' "$@" > ' + shlex.quote(str(self.invocation)) + '\n'
+            + prefix + "/bin/cat <<'FIXED_INSPECTION_EOF'\n" + stdout
+            + '\nFIXED_INSPECTION_EOF\nexit ' + str(exit_code) + '\n')
+        case.verifier.chmod(0o700)
+        case.producer['verifier'] = X.Q.bound(case.verifier)
+        case.producer_path.write_bytes(X.P.encoded(case.producer))
+
+    def capture(self):
+        return self.case.prepare(capture_resident_inspection=True)
+
+    def assert_unpublished(self):
+        self.assertFalse(self.case.output.exists())
+        self.assertFalse(self.case.candidate.exists())
+        self.assertFalse(self.case.enforcement.exists())
+
+    def test_fixed_inspector_captures_receipt_bound_immutable_derived_evidence(self):
+        case = self.case
+        preserved = {path: path.read_bytes() for path in case.project_root.iterdir() if path.is_file()}
+        producer = case.producer_path.read_bytes()
+        _, path = self.capture()
+        request, _, _ = X.verify_transfer(path, case.project, case.rom)
+        execution = X.inspection_execution(request)
+        self.assertEqual(self.invocation.read_text().splitlines(), execution['command'][1:])
+        self.assertEqual(json.loads(X.Q.read_bound(request['resource_inspection'])), self.inspection)
+        self.assertEqual(execution['selected_producer'], request['live']['producer'])
+        self.assertEqual(execution['project_descriptor'], request['live']['inputs']['project'])
+        self.assertEqual(execution['source_bindings'], case.producer['source_bindings'])
+        self.assertNotIn(request['resource_inspection'], execution['source_bindings'])
+        self.assertEqual(case.producer_path.read_bytes(), producer)
+        self.assertEqual(preserved, {p: p.read_bytes() for p in preserved})
+        for key in ('resource_inspection', 'native_inspection'):
+            artifact = Path(request[key]['path'])
+            self.assertTrue(artifact.is_relative_to(case.output))
+            self.assertEqual(artifact.stat().st_mode & 0o222, 0)
+        self.assertFalse(case.candidate.exists())
+        self.assertFalse(case.enforcement.exists())
+        case.next_save()
+        with self.assertRaisesRegex(ValueError, 'retired'):
+            X.verify_transfer(path, case.project, case.rom)
+
+    def test_opt_in_is_explicit_and_legacy_capture_does_not_run_inspector(self):
+        with self.assertRaisesRegex(ValueError, 'must be explicit'):
+            self.case.prepare(capture_resident_inspection=1)
+        self.assert_unpublished()
+        _, path = self.case.prepare()
+        request = json.loads(path.read_bytes())
+        self.assertNotIn('resource_inspection', request)
+        self.assertNotIn('native_inspection', request)
+        self.assertFalse(self.invocation.exists())
+
+    def test_failed_or_malformed_inspector_does_not_publish(self):
+        for output, code, error in [('{}', 9, subprocess.CalledProcessError),
+                ('not JSON', 0, ValueError),
+                ('{"data":{},"data":{}}', 0, ValueError)]:
+            with self.subTest(output=output, code=code):
+                self.install_inspector(output, exit_code=code)
+                with self.assertRaises(error):
+                    self.capture()
+                self.assert_unpublished()
+
+    def test_timeout_is_bounded_and_does_not_publish(self):
+        with mock.patch.object(X.A.subprocess, 'run', side_effect=subprocess.TimeoutExpired('fixture', 120)) as run:
+            with self.assertRaises(subprocess.TimeoutExpired):
+                self.capture()
+        self.assertEqual(run.call_args.kwargs['timeout'], 120)
+        self.assertEqual(run.call_args.args[0][1], 'lyra-inspect-project')
+        self.assert_unpublished()
+
+    def test_stale_inspection_identity_or_incomplete_rows_do_not_publish(self):
+        changes = [dict(project_descriptor_sha256='0'*64), dict(terrain_sha256='0'*64),
+            dict(source_rom_sha256='0'*64), dict(project_descriptor_path='/different/project'),
+            dict(terrain_path='/different/terrain'), dict(inspection_only=False),
+            dict(asset_binding_mismatches=1), dict(map_count=True), dict(donor_map=False),
+            dict(map_assets=self.inspection['map_assets'][:-1]),
+            dict(map_assets=self.inspection['map_assets'][:-1] + [self.inspection['map_assets'][0]])]
+        for change in changes:
+            with self.subTest(change=list(change)):
+                self.install_inspector(X.P.encoded(dict(self.inspection, **change)).decode())
+                with self.assertRaisesRegex(ValueError, 'Native inspection (binding differs|rows differ)'):
+                    self.capture()
+                self.assert_unpublished()
+
+    def test_changed_save_producer_sources_or_inputs_after_inspection_refuse(self):
+        case = self.case
+        paths = [case.project, case.rom, case.terrain, case.receipt, case.context_path,
+                 case.producer_path, case.root / 'producer-source.cc', case.verifier]
+        for path in paths:
+            original = path.read_bytes()
+            def changed(*args):
+                path.write_bytes(original + b' changed')
+                return self.inspection
+            with self.subTest(path=path.name):
+                try:
+                    with mock.patch.object(X.A, 'native_inspect', side_effect=changed):
+                        with self.assertRaises((ValueError, json.JSONDecodeError)):
+                            self.capture()
+                    self.assert_unpublished()
+                finally:
+                    path.write_bytes(original)
+
+    def test_inspector_input_write_is_detected_before_snapshot(self):
+        self.install_inspector(X.P.encoded(self.inspection).decode(),
+            prefix='printf changed >> ' + shlex.quote(str(self.case.terrain)) + '\n')
+        with self.assertRaises(ValueError):
+            self.capture()
+        self.assert_unpublished()
+
+    def test_wrong_selected_verifier_refuses_before_inspection(self):
+        self.case.verifier.write_text('#!/bin/sh\nexit 0\n')
+        with self.assertRaises(ValueError):
+            self.capture()
+        self.assertFalse(self.invocation.exists())
+        self.assert_unpublished()
+
+    def test_rebound_execution_field_tampering_is_rejected(self):
+        case = self.case
+        _, path = self.capture()
+        original = json.loads(path.read_bytes())
+        artifact = Path(original['native_inspection']['path'])
+        before = artifact.read_bytes()
+        changes = [dict(exit_code=1), dict(exit_code=False), dict(generation=True),
+            dict(operation_id='different'), dict(source_rom_sha256='0'*64),
+            dict(command=['not executed']), dict(binary=case.producer['editor']),
+            dict(source_bindings=[]), dict(selected_producer=case.producer['editor']),
+            dict(project_descriptor=case.inputs['rom']), dict(terrain=case.inputs['rom']),
+            dict(save_receipt=case.inputs['project']), dict(save_context=case.inputs['project']),
+            dict(observation=original['observation'])]
+        for change in changes:
+            with self.subTest(change=list(change)):
+                artifact.chmod(0o600)
+                artifact.write_bytes(X.P.encoded(dict(json.loads(before), **change)))
+                artifact.chmod(0o444)
+                request = copy.deepcopy(original)
+                request['native_inspection'] = X.Q.bound(artifact)
+                request['transfer_id'] = X._identity(request)
+                path.chmod(0o600); path.write_bytes(X.P.encoded(request)); path.chmod(0o444)
+                with self.assertRaisesRegex(ValueError, 'INSPECTION_EXECUTION_MISMATCH'):
+                    X.verify_transfer(path, case.project, case.rom)
+
+    def test_inspection_tamper_missing_pair_alias_and_symlink_are_rejected(self):
+        case = self.case
+        _, path = self.capture()
+        original = json.loads(path.read_bytes())
+        observation = Path(original['resource_inspection']['path'])
+        before = observation.read_bytes()
+        observation.chmod(0o600); observation.write_bytes(before + b' '); observation.chmod(0o444)
+        with self.assertRaises(ValueError):
+            X.verify_transfer(path, case.project, case.rom)
+        observation.chmod(0o600); observation.write_bytes(before); observation.chmod(0o444)
+        for missing in ('resource_inspection', 'native_inspection'):
+            request = copy.deepcopy(original); del request[missing]
+            request['transfer_id'] = X._identity(request)
+            path.chmod(0o600); path.write_bytes(X.P.encoded(request)); path.chmod(0o444)
+            with self.assertRaisesRegex(ValueError, 'Malformed current transfer'):
+                X.verify_transfer(path, case.project, case.rom)
+        request = copy.deepcopy(original); del request['native_verification']
+        request['transfer_id'] = X._identity(request)
+        path.chmod(0o600); path.write_bytes(X.P.encoded(request)); path.chmod(0o444)
+        with self.assertRaisesRegex(ValueError, 'CURRENT_NATIVE_VERIFIER_EXECUTION_REQUIRED'):
+            X.verify_transfer(path, case.project, case.rom)
+        request = copy.deepcopy(original)
+        request['resource_inspection'] = request['observation']
+        request['transfer_id'] = X._identity(request)
+        path.chmod(0o600); path.write_bytes(X.P.encoded(request)); path.chmod(0o444)
+        with self.assertRaisesRegex(ValueError, 'alias'):
+            X.verify_transfer(path, case.project, case.rom)
+        path.chmod(0o600); path.write_bytes(X.P.encoded(original)); path.chmod(0o444)
+        outside = case.root / 'outside-inspection.json'
+        observation.rename(outside); observation.symlink_to(outside)
+        with self.assertRaisesRegex(ValueError, 'immutable and owned'):
+            X.verify_transfer(path, case.project, case.rom)
 
 
 if __name__ == '__main__':

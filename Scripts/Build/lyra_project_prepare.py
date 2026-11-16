@@ -267,10 +267,14 @@ def prepare_request(project, z3ed, qualification_request, output, *, ledger_path
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--project', type=Path, required=True)
-    parser.add_argument('--z3ed', type=Path, required=True)
+    parser.add_argument('--z3ed', type=Path)
     parser.add_argument('--qualification-request', type=Path)
     parser.add_argument('--current-save-transfer', action='store_true')
+    parser.add_argument('--auto-ordinary', action='store_true',
+                        help='Select the ordinary policy and verifier from the current Save identity')
     parser.add_argument('--candidate', type=Path)
+    parser.add_argument('--validate-build-engine', type=Path,
+                        help='Validate the fresh target against this Build engine')
     parser.add_argument('--allocation-policy-id')
     parser.add_argument('--producer-identity', type=Path,
                         help='External identity matching the actual committed Save producer')
@@ -278,17 +282,35 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     try:
+        R.require(args.validate_build_engine is None or
+                  (args.current_save_transfer and args.auto_ordinary),
+                  'Build-engine validation requires an automatic ordinary transfer')
         if args.current_save_transfer:
             R.require(args.candidate is not None and args.qualification_request is None and args.ledger is None,
                       'Current transfer needs --candidate; historical request/ledger overrides are unsupported')
-            from lyra_current_transfer import prepare_transfer
-            report = prepare_transfer(args.project, args.z3ed, args.output, args.candidate,
-                                      policy_id=args.allocation_policy_id,
-                                      producer_identity=args.producer_identity)
+            if args.auto_ordinary:
+                R.require(args.z3ed is None and args.allocation_policy_id is None,
+                          'Automatic ordinary transfer selects its own verifier and allocation policy')
+                from lyra_current_transfer import prepare_ordinary_transfer
+                report = prepare_ordinary_transfer(args.project, args.output, args.candidate,
+                                                   producer_identity=args.producer_identity)
+                if args.validate_build_engine is not None:
+                    import lyra_project_publisher as publisher
+                    selected = publisher.resolve_current_target(args.project, request=Path(report['request']),
+                                                                candidate=args.candidate)
+                    R.require(Path(selected['engine']) == args.validate_build_engine.resolve(strict=True),
+                              'Reviewed current source differs from this bundled build engine')
+            else:
+                R.require(args.z3ed is not None, 'Current transfer needs --z3ed')
+                from lyra_current_transfer import prepare_transfer
+                report = prepare_transfer(args.project, args.z3ed, args.output, args.candidate,
+                                          policy_id=args.allocation_policy_id,
+                                          producer_identity=args.producer_identity)
             print(json.dumps(report, sort_keys=True))
             return 0
         R.require(args.qualification_request is not None and args.candidate is None
-                  and args.producer_identity is None,
+                  and args.producer_identity is None and args.z3ed is not None
+                  and not args.auto_ordinary,
                   'Historical current37/A1 preparation needs --qualification-request')
         report = prepare_request(args.project, args.z3ed, args.qualification_request, args.output, ledger_path=args.ledger)
     except (ValueError, OSError, configparser.Error, subprocess.SubprocessError) as error:

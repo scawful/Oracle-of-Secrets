@@ -7,6 +7,7 @@ All intervals in the report are half-open.
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 from pathlib import Path
@@ -25,6 +26,26 @@ EXIT_COUNT = 79       # LoadOverworldFromUnderworld: LDX #$9E, predecrement twic
 ENTRANCE_SCREENS, ENTRANCE_TILES, ENTRANCE_IDS = 0x1BB96F, 0x1BBA71, 0x1BBB73
 EXIT_ROOMS, EXIT_MAPS = 0x02DD8A, 0x02DE28
 EXIT_PLAYER_Y, EXIT_PLAYER_X = 0x02E051, 0x02E0EF
+# Complete native return record, in the same order as Yaze LoadExits/SaveExits.
+EXIT_FIELDS = (
+    ('room', EXIT_ROOMS, 2), ('map', EXIT_MAPS, 1),
+    ('vram', 0x02DE77, 2), ('scroll_y', 0x02DF15, 2), ('scroll_x', 0x02DFB3, 2),
+    ('player_y', EXIT_PLAYER_Y, 2), ('player_x', EXIT_PLAYER_X, 2),
+    ('camera_y', 0x02E18D, 2), ('camera_x', 0x02E22B, 2),
+    ('scroll_mod_y', 0x02E2C9, 1), ('scroll_mod_x', 0x02E318, 1),
+    ('door1', 0x02E367, 2), ('door2', 0x02E405, 2),
+)
+# LoadOverworldFromUnderworld.custom_exit through its final scroll modifiers.
+# This pins the actual geometry readers, not just the dispatch/map prefixes.
+EXIT_GEOMETRY_BYTES = bytes.fromhex(
+    'a29ecacadd8addd0f9bd15df85e685e88d22018d2401bdb3df85e085e28d1e018d2001'
+    'bd51e08520bdefe08522bd77de858438e9000429800f0aeb8588a58438e91000293e004a8586'
+    'bd8de18d18063a3a8d1a06bd2be28d1c063a3a8d1e06a90200852fbd67e38d9606bd05e4'
+    '8d98068a4aaae220bd28de858a8d0a04648b9c0b04bdc9e28d24069c25060a9003ce2506'
+    'bd18e38d28069c29060a9003ce2906c220a9000038ed24068d2606a9000038ed28068d2a06')
+B0_RETURN_PREIMAGE = dict(room=0x83, map=0x4B, vram=0x1720,
+    scroll_y=1256, scroll_x=1792, player_y=1336, player_x=1912,
+    camera_y=1367, camera_x=1919, scroll_mod_y=10, scroll_mod_x=14, door1=0, door2=0)
 ENTRANCE_ROOM_VARIANTS = (
     ("vanilla", "ad0e0129ff000aaa0a0aa8bd13c885a08d8e04", 0x02C813, 133),
     ("zs_expanded", "ad0e0129ff000a2208f00fbd008085a08d8e04", 0x0F8000, 256),
@@ -343,6 +364,138 @@ def room_return(source, room, map_id, exit_row):
                 requested_row_consumed=(not cached and exit_row is not None
                     and consumed == dict(row=exit_row, map_id=map_id)),
                 allocation_granted=False, save_reopen_supported=False)
+
+
+def _b0_consumers_verified(source):
+    _, _, at, raw = next(row for row in BINDINGS if row[0] == 'exit_dispatch')
+    return (_entrance_scanner(source)['verified']
+            and _read(source, at, len(bytes.fromhex(raw))) == bytes.fromhex(raw)
+            and _read(source, 0x02E4D4, len(EXIT_GEOMETRY_BYTES)) == EXIT_GEOMETRY_BYTES)
+
+
+def plan_b0_endpoints(source, document):
+    """Lower the decided Power relocation only, without allocating any row.
+
+    Lyra positions are physical-page Tile16 cells. Like Yaze's maintained
+    OverworldExit::UpdateMapProperties, moving the record writes the chosen
+    pixel position and recalculates automatic scroll/camera/VRAM. Existing
+    signed scroll modifiers and door-animation fields stay byte-exact.
+    """
+    metadata = document.authoring[0xB0-0xA0]
+    if not metadata['doors'] and not metadata['exits']:
+        return None
+    _require(type(source) in (bytes, bytearray) and len(source) in (0x200000, 0x400000),
+             'B0_ENDPOINT_SOURCE_INVALID')
+    doors, exits = metadata['doors'], metadata['exits']
+    _require(len(doors) == len(exits) == 1
+             and {k: doors[0][k] for k in ('entrance_id', 'x', 'y')} ==
+                 dict(entrance_id=0x0B, x=21, y=9)
+             and {k: exits[0][k] for k in ('room_id', 'x', 'y')} ==
+                 dict(room_id=0x83, x=22, y=11)
+             and exits[0]['exit_row'] in (None, 41),
+             'B0_ENDPOINT_PLACEMENT_UNSUPPORTED: only the decided Power relocation is supported')
+    from lyra_project_terrain import validated_gameplay_areas
+    areas = validated_gameplay_areas(document.gameplay_areas)
+    _require(dict(parent_map_id=0xB0, size='large', maps=[0xB0, 0xB1, 0xB8, 0xB9]) in areas,
+             'B0_ENDPOINT_LAYOUT_UNBOUND: B0/B1/B8/B9 large parent required')
+    _require(_b0_consumers_verified(source), 'B0_ENDPOINT_CONSUMER_MISMATCH')
+    decoder = _read(source, 0x02D998, 19)
+    decoders = [(address, count) for name, expected, address, count in ENTRANCE_ROOM_VARIANTS
+                if decoder.hex() == expected and (name != 'zs_expanded' or
+                    _read(source, 0x0FF008, len(ENTRANCE_ROOM_TRAMPOLINE)) == ENTRANCE_ROOM_TRAMPOLINE)]
+    _require(len(decoders) == 1 and _read(source, decoders[0][0]+0x0B*2, 2) == b'\x83\x00',
+             'B0_ENDPOINT_ROOM_DECODER_MISMATCH')
+    _require([row for row in range(ENTRANCE_COUNT)
+              if _read(source, ENTRANCE_IDS+row, 1) == b'\x0b'] == [53]
+             and _read(source, ENTRANCE_SCREENS+53*2, 2) == b'\x4b\x00'
+             and _read(source, ENTRANCE_TILES+53*2, 2) == b'\x2e\x1a',
+             'B0_ENTRANCE_PREIMAGE_MISMATCH: unique existing row53 required')
+    dispatch = room_return(source, 0x83, 0x4B, 41)
+    old = {name: int.from_bytes(_read(source, at+41*stride, stride), 'little')
+           for name, at, stride in EXIT_FIELDS}
+    _require(dispatch['matching_rows'] == [dict(row=41, map_id=0x4B)]
+             and old == B0_RETURN_PREIMAGE
+             and _read(source, 0x288998+0x4B, 1) == b'\x4b'
+             and _read(source, 0x02F88D+0x4B, 1) == b'\x01',
+             'B0_RETURN_PREIMAGE_MISMATCH: sole existing row41 and original large-area geometry required')
+    # Yaze automatic placement, using the already-authored large parent.
+    mapx, mapy = (0xB0 & 7)*512, ((0xB0 & 0x3F) >> 3)*512
+    x, y = mapx+exits[0]['x']*16, mapy+exits[0]['y']*16
+    clamp = lambda n, lo, hi: max(lo, min(n, hi))
+    new = dict(old, map=0xB0, player_x=x, player_y=y,
+        scroll_x=clamp(x-120, mapx, mapx+768), scroll_y=clamp(y-80, mapy, mapy+800),
+        camera_x=clamp(x+7, mapx+127, mapx+895), camera_y=clamp(y+31, mapy+111, mapy+911))
+    new['vram'] = (((new['scroll_y']-mapy) & 0xFFF0) << 3) | (((new['scroll_x']-mapx) & 0xFFF0) >> 3)
+    tile = 2*(doors[0]['x']+64*doors[0]['y'])
+    writes = []
+    for name, at, stride, value in [
+            ('entrance_screen', ENTRANCE_SCREENS+53*2, 2, 0xB0),
+            ('entrance_tile', ENTRANCE_TILES+53*2, 2, tile),
+            *[(name, at+41*stride, stride, new[name]) for name, at, stride in EXIT_FIELDS if new[name] != old[name]]]:
+        writes.append(dict(field=name, pc=[_pc(at), _pc(at)+stride],
+                           preimage_hex=_read(source, at, stride).hex(),
+                           payload_hex=value.to_bytes(stride, 'little').hex()))
+    from lyra_project_composition import apply_writes
+    proposed = apply_writes(source, writes)
+    _require([row for row in range(ENTRANCE_COUNT)
+              if _read(proposed, ENTRANCE_SCREENS+row*2, 2) == b'\xb0\x00'
+              and int.from_bytes(_read(proposed, ENTRANCE_TILES+row*2, 2), 'little') == tile] == [53],
+             'B0_ENDPOINT_DESTINATION_CONFLICT: another entrance occupies the authored tile')
+    tables = [('entrance_screens', ENTRANCE_SCREENS, 2, ENTRANCE_COUNT),
+              ('entrance_tiles', ENTRANCE_TILES, 2, ENTRANCE_COUNT),
+              ('entrance_ids', ENTRANCE_IDS, 1, ENTRANCE_COUNT)]
+    tables += [(name, at, stride, EXIT_COUNT) for name, at, stride in EXIT_FIELDS]
+    return dict(kind='lyra.b0_existing_endpoints.v1', source_rom_sha256=_sha(source),
+        entrance_row=53, return_row=41, door_placement_id=doors[0]['id'], return_placement_id=exits[0]['id'],
+        before_return=old, after_return=new, writes=writes,
+        tables=[dict(name=name, snes=at, bytes=stride*count,
+                     before_sha256=_sha(_read(source, at, stride*count)),
+                     after_sha256=_sha(_read(proposed, at, stride*count))) for name, at, stride, count in tables],
+        allocation_granted=False, native_gameplay_verified=False, save_reopen_verified=False)
+
+
+def project_b0_endpoints(source, document, plan):
+    """Recheck before projecting; never change the source or saved authoring."""
+    _require(plan is not None and plan == plan_b0_endpoints(source, document),
+             'B0_ENDPOINT_PLAN_MISMATCH')
+    from lyra_project_composition import apply_writes
+    authoring = copy.deepcopy(document.authoring)
+    authoring[0xB0-0xA0]['exits'][0]['exit_row'] = 41
+    return apply_writes(source, plan['writes']), authoring
+
+
+def emit_b0_endpoints(source, document, plan):
+    """Emit only existing table cells, with assertions before any mutation."""
+    project_b0_endpoints(source, document, plan)
+    from lyra_project_admission import snes
+    lines = ['; Decided B0 Power relocation; no new entrance/return allocation.', 'pushpc']
+    for row in plan['writes']:
+        at = snes(row['pc'][0]); raw = bytes.fromhex(row['preimage_hex'])
+        lines.append(f'assert read{len(raw)}(${at:06X}) == ${int.from_bytes(raw, "little"):0{len(raw)*2}X}, "B0 endpoint preimage differs"')
+    for row in plan['writes']:
+        lines += [f"org ${snes(row['pc'][0]):06X}",
+                  'db '+','.join(f'${v:02X}' for v in bytes.fromhex(row['payload_hex']))]
+    return '\n'.join([*lines, 'pullpc', ''])
+
+
+def verify_b0_endpoints(source, compiled, document, plan):
+    proposed, authoring = project_b0_endpoints(source, document, plan)
+    for row in plan['tables']:
+        _require(_read(compiled, row['snes'], row['bytes']) == _read(proposed, row['snes'], row['bytes']),
+                 'B0_ENDPOINT_COMPILED_TABLE_MISMATCH: '+row['name'])
+    _require(_b0_consumers_verified(compiled), 'B0_ENDPOINT_COMPILED_CONSUMER_MISMATCH')
+    for _, expected, at, count in ENTRANCE_ROOM_VARIANTS:
+        if _read(source, 0x02D998, 19).hex() == expected:
+            _require(_read(compiled, at, count*2) == _read(source, at, count*2)
+                     and _read(compiled, 0x02D998, 19) == _read(source, 0x02D998, 19),
+                     'B0_ENDPOINT_COMPILED_ROOM_DECODER_MISMATCH')
+    state = plan_native_state(compiled, [0xB0], authoring=[(0xB0, authoring[16])],
+                              gameplay_areas=document.gameplay_areas)
+    _require(all(row['tile_match_verified'] for row in state['requested_doors'])
+             and all(row['position_match_verified'] for row in state['requested_returns']),
+             'B0_ENDPOINT_COMPILED_DISPATCH_MISMATCH')
+    return dict(entrance_row=53, return_row=41, table_count=len(plan['tables']),
+                other_rows_preserved=True, native_gameplay_verified=False, save_reopen_verified=False)
 
 
 def _plan_native_state(source, map_ids, *, authoring=(), symbols=None, ownership=None,

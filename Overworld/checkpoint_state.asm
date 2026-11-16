@@ -19,7 +19,7 @@ if !LYRA_PRIVATE_CHECKPOINT_ENABLED == 1
   assert !LYRA_CURRENT_MODE == 1 && !LYRA_PROJECT_DATA_PRESENT == 1, "Private checkpoint requires current saved project inputs"
   assert !LYRA_PRIVATE_PILOT_BOUNDARIES_ENABLED == 1 && !LYRA_PRIVATE_PILOT_BOUNDARIES_BOUND == 1, "Private checkpoint requires selected pair boundaries"
   assert !LYRA_PRIVATE_PILOT_INGRESS_ENABLED == 1, "Private checkpoint requires scoped ingress verification"
-  incsrc "Data/Generated/lyra_project/checkpoint_registry_constants.asm"
+  incsrc "!LYRA_GENERATED_ROOT/checkpoint_registry_constants.asm"
   assert !CHECKPOINT_STATE_SCHEMA == 1 && !CHECKPOINT_REGISTRY_EPOCH == 1, "Private checkpoint requires the current state codec"
   ; Asar cannot mix && and || in one condition. Shapes: A0 v1 = 2/6;
   ; A0 plus approved native ferry/Sky v2 = 4/9.
@@ -340,7 +340,7 @@ Checkpoint_EnterHome = pc()
 if !LYRA_PRIVATE_CHECKPOINT_ENABLED == 1
 ; Complete Registry.runtime_tables() payload, independently bound by the
 ; current-transfer publisher. File presence never enables the private path.
-  incsrc "Data/Generated/lyra_project/checkpoint_registry_tables.asm"
+  incsrc "!LYRA_GENERATED_ROOT/checkpoint_registry_tables.asm"
 else
 ; Existing native Goron source-qualified CONTROL, not a Lyra gameplay claim.
 ; Key1, LIGHT region1, map/parent36. No new coordinates or actor system.

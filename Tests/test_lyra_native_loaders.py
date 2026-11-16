@@ -73,15 +73,19 @@ class CPU:
                 self.load(self.x if op == 0x8A else self.y)
             elif op == 0x29:
                 self.load(self.a & self.take(width))
-            elif op in (0xC9, 0xC0):
+            elif op in (0xC9, 0xC0, 0xE0):
                 value = self.take(width if op == 0xC9 else iw)
-                original = self.a if op == 0xC9 else self.y
+                original = self.a if op == 0xC9 else self.x if op == 0xE0 else self.y
                 mask = (1 << (8 * (width if op == 0xC9 else iw))) - 1
                 self.p = self.p & ~1 | int(original & mask >= value)
                 self.nz((original - value) & mask, width if op == 0xC9 else iw)
             elif op in (0xD0, 0xF0):
                 offset = self.take()
                 if (not self.p & 2) == (op == 0xD0):
+                    self.pc += offset if offset < 128 else offset - 256
+            elif op in (0x90, 0xB0):
+                offset = self.take()
+                if bool(self.p & 1) == (op == 0xB0):
                     self.pc += offset if offset < 128 else offset - 256
             elif op in (0xAF, 0xBF, 0xB9, 0xAD, 0xA5):
                 if op in (0xAF, 0xBF):

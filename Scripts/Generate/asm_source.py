@@ -12,8 +12,42 @@ import hashlib
 import json
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Iterable, Optional
+
+# Ordinary standalone scanners need no Build runtime. The private generated
+# include route loads its required helper only when explicitly selected.
+LEGACY_OUTPUT = Path('Data/Generated/lyra_project')
+INCLUDE_PREFIX = '!LYRA_GENERATED_ROOT/'
+
+
+def _generated_inputs():
+    import importlib
+    build = str(Path(__file__).resolve().parents[1] / 'Build')
+    if build not in sys.path:
+        sys.path.insert(0, build)
+    return importlib.import_module('lyra_generated_inputs')
+
+
+def selected_folder(root):
+    if not os.environ.get('OOS_LYRA_CANDIDATE'):
+        return Path(root) / LEGACY_OUTPUT
+    return _generated_inputs().selected_folder(root)
+
+
+def source_path(path, root):
+    path, root = Path(path), Path(root).resolve()
+    if path.is_relative_to(root):
+        return path.relative_to(root)
+    if not os.environ.get('OOS_LYRA_CANDIDATE'):
+        raise ValueError(f'ASM source is outside repo root: {path}')
+    return _generated_inputs().source_path(path, root)
+
+
+def validate_prepared(folder):
+    return _generated_inputs().validate_prepared(folder)
+
 
 DEFINE_ASSIGN_RE = re.compile(
     r"^\s*!([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+?)\s*$"
@@ -88,8 +122,11 @@ def _load_global_defines(root: Path) -> dict[str, int]:
                    REGIONAL_CHECKPOINTS_ENABLED=defines.get("ENABLE_REGIONAL_CHECKPOINTS", 0),
                    REGIONAL_CHECKPOINTS_BOUND=defines.get("ENABLE_REGIONAL_CHECKPOINT_SOURCE_BINDING", 0))
     if context == "1":
-        constants = (root / LYRA_CONSTANTS).read_bytes()
-        prepared = json.loads((root / "Data/Generated/lyra_project/prepare.json").read_bytes())
+        folder = selected_folder(root)
+        constants = (folder / 'runtime_constants.asm').read_bytes()
+        prepared = json.loads((folder / 'prepare.json').read_bytes())
+        if folder != root / LEGACY_OUTPUT:
+            validate_prepared(folder)
         if (prepared.get("kind") not in ("lyra.ordinary_build_prepare.v1", "lyra.current_build_prepare.v1")
                 or prepared.get("selected") is not True
                 or prepared.get("generated_files", {}).get("runtime_constants.asm")
@@ -123,7 +160,7 @@ def _load_global_defines(root: Path) -> dict[str, int]:
             sys.path.insert(0,build)
             try:
                 from lyra_current_transfer import verify_current_context
-                verify_current_context(root,prepared)
+                verify_current_context(root,prepared,input_folder=folder)
             finally:
                 sys.path.remove(build)
         elif defines['LYRA_NATIVE_A1_ENABLED'] != 1 or prepared.get('kind') != 'lyra.ordinary_build_prepare.v1':
@@ -131,14 +168,14 @@ def _load_global_defines(root: Path) -> dict[str, int]:
     return defines
 
 
-def _is_identical_build_context_assignment(relative: str, line: str, defines: dict[str, int]) -> bool:
+def _is_identical_build_context_assignment(relative: str, line: str, defines: dict[str, int], *, generated_constants: bool = False) -> bool:
     """Only the generated context and entry fallback may repeat these values."""
     parsed = _parse_define_assignment(line, defines)
     if parsed is None:
         return False
     name, value = parsed
     allowed = ((relative == "Oracle_main.asm" and name in LYRA_CONTEXT_NAMES)
-               or (relative == LYRA_CONSTANTS and (name.startswith("LYRA_") or name in BG128_CONTEXT_NAMES
+               or ((relative == LYRA_CONSTANTS or generated_constants) and (name.startswith("LYRA_") or name in BG128_CONTEXT_NAMES
                                                  or name == "JOINT_PALETTE_DIRECTORY_ENABLED")
                    and name != "LYRA_BUILD_CONTEXT" and defines.get("LYRA_BUILD_CONTEXT") == 1))
     return allowed and name in defines and defines[name] == value
@@ -470,7 +507,18 @@ def collect_reachable_asm_sources(
         for line_number, include_text in _iter_active_incsrcs(
             lines, active_defines
         ):
-            include_path = Path(include_text)
+            generated = include_text.startswith(INCLUDE_PREFIX)
+            if generated:
+                if active_defines.get('LYRA_BUILD_CONTEXT') != 1:
+                    raise SourceGraphError('Generated include requires selected Lyra context')
+                suffix = include_text[len(INCLUDE_PREFIX):]
+                if suffix not in {'runtime_constants.asm', 'runtime_data.asm',
+                                  'graphics_runtime_tables.asm', 'checkpoint_registry_constants.asm',
+                                  'checkpoint_registry_tables.asm'}:
+                    raise SourceGraphError('Unknown generated Lyra include')
+                include_path = selected_folder(resolved_root) / suffix
+            else:
+                include_path = Path(include_text)
             candidates = (
                 asm_path.parent / include_path,
                 resolved_root / include_path,
@@ -481,17 +529,18 @@ def collect_reachable_asm_sources(
                 None,
             )
             if included is None:
-                rel = asm_path.relative_to(resolved_root)
+                rel = source_path(asm_path, resolved_root)
                 raise SourceGraphError(
                     f"{rel}:{line_number}: unresolved incsrc "
                     f"{include_text!r}"
                 )
             if not included.is_relative_to(resolved_root):
-                rel = asm_path.relative_to(resolved_root)
-                raise SourceGraphError(
-                    f"{rel}:{line_number}: incsrc escapes repo root: "
-                    f"{include_text!r}"
-                )
+                if not generated:
+                    raise SourceGraphError(f'incsrc escapes repo root: {include_text!r}')
+                try:
+                    source_path(included, resolved_root)
+                except ValueError as exc:
+                    raise SourceGraphError(str(exc)) from exc
             pending.append(included)
 
     canonical_define_sources = {
@@ -500,7 +549,7 @@ def collect_reachable_asm_sources(
         "Config/feature_flags.asm",
     }
     for asm_path in sorted(reachable):
-        rel = asm_path.relative_to(resolved_root).as_posix()
+        rel = source_path(asm_path, resolved_root).as_posix()
         if rel in canonical_define_sources:
             continue
         try:
@@ -514,7 +563,8 @@ def collect_reachable_asm_sources(
         for line_index, line, _ in _iter_active_lines(lines, active_defines):
             assignment = DEFINE_ANY_ASSIGN_RE.match(line.split(";", 1)[0])
             if assignment and assignment.group(1) in active_defines:
-                if _is_identical_build_context_assignment(rel, line, active_defines):
+                if _is_identical_build_context_assignment(rel, line, active_defines,
+                        generated_constants=(asm_path == selected_folder(resolved_root) / 'runtime_constants.asm')):
                     continue
                 raise SourceGraphError(
                     f"{rel}:{line_index + 1}: reachable source reassigns "

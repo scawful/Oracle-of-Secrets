@@ -19,12 +19,18 @@ class CurrentOutputGenerationTest(unittest.TestCase):
     def setUp(self):
         fixtures.BuildPipelineReceiptTest.setUp(self)
         self.copy('Scripts/Build/rom_stage_input.py')
+        self.copy('Scripts/Build/lyra_generated_inputs.py')
+        self.copy('Scripts/Build/lyra_output_paths.py')
+        self.project = Path(self.temp.name).resolve() / 'opened.yaze'
+        self.project.write_text('saved descriptor remains unchanged')
+        self.private_root = Path(str(self.project) + '.lyra-build-output')
+        self.write('tools/oracle_analyzer.py', 'import sys\nsys.exit(0)\n')
         # These source guards have independent suites. Keep their child-process
         # transport explicit here, like the fixture assembler and publisher.
         self.write('Scripts/Generate/joint_palette_directory.py', 'import sys\nsys.exit(0)\n')
         self.write('Scripts/Build/checkpoint_registry.py', 'import sys\nsys.exit(0)\n')
         self.write('Roms/oos168.sfc','x'*(2*1024*1024))
-        self.write('Scripts/Build/lyra_current_transfer.py','def verify_current_context(root,prepared): return {}\n')
+        self.write('Scripts/Build/lyra_current_transfer.py','from pathlib import Path\nimport os\ndef verify_current_context(root,prepared,*,input_folder=None):\n assert Path(input_folder)==Path(os.environ["OOS_LYRA_CANDIDATE"]).parent/"generated-inputs"\n return {}\n')
         self.write('Scripts/Build/lyra_project_publisher.py','''import hashlib,json,os,pathlib,sys
 root=pathlib.Path(__file__).resolve().parents[2];args=sys.argv[1:];command=args[0]
 def arg(key):return args[args.index(key)+1]
@@ -37,7 +43,10 @@ if command=='current-verifier':
  pinned=os.environ['FIXTURE_VERIFIER']
  if '--explicit' in args and arg('--explicit')!=pinned:sys.exit('CURRENT_VERIFIER_MISMATCH')
  print(pinned);sys.exit(0)
-folder=root/'Data/Generated/lyra_project';folder.mkdir(parents=True,exist_ok=True)
+folder=target.parent/'generated-inputs'
+if command=='prepare': assert pathlib.Path(arg('--output'))==folder
+if command in ('stage','verify'): assert pathlib.Path(arg('--input'))==folder
+folder.mkdir(parents=True,exist_ok=True)
 if command=='prepare':
  assert pathlib.Path(arg('--candidate'))==target
  constants=b'!LYRA_PROJECT_DATA_PRESENT = 1\\n!LYRA_NATIVE_A1_ENABLED = 0\\n!LYRA_CURRENT_MODE = 1\\n'
@@ -66,6 +75,8 @@ print('{}')
         self.calls=Path(self.temp.name)/'z3ed-calls.log'
         self.selected=self.z3ed(Path(self.temp.name)/'selected/z3ed','selected',0)
         self.env['FIXTURE_VERIFIER']=str(self.selected)
+        self.env.pop('PYTHONDONTWRITEBYTECODE', None)
+        self.env['PYTHONPYCACHEPREFIX'] = str(self.project.parent / 'forbidden-bytecode-cache')
 
     def z3ed(self,path,name,status):
         path.parent.mkdir(parents=True,exist_ok=True)
@@ -74,7 +85,7 @@ print('{}')
         return path
 
     def current_build(self,target):
-        self.env.update(OOS_LYRA_PROJECT=str(self.root/'opened.yaze'),OOS_LYRA_REQUEST=str(self.root/'request.json'),
+        self.env.update(OOS_LYRA_PROJECT=str(self.project),OOS_LYRA_REQUEST=str(self.root/'request.json'),
                         OOS_LYRA_CANDIDATE=str(target),OOS_BASE_ROM=str(self.root/'Roms/oos168.sfc'))
         return subprocess.run(['bash',str(self.root/'Scripts/Build/build_rom.sh'),'168',str(self.assembler)],
             cwd=self.temp.name,env=self.env,text=True,capture_output=True)
@@ -93,7 +104,7 @@ print('{}')
             with self.subTest(name):
                 self.env.pop('FIXTURE_VERIFIER_REFUSAL',None);self.env.pop('OOS_Z3ED_BIN',None)
                 self.env.update(change)
-                target=(self.root/f'Roms/current-{name}/oos168x.sfc').resolve()
+                target=self.private_root / ('lyra-' + ('1' if name=='unavailable' else '2') * 32) / 'oos168x.sfc'
                 result=self.current_build(target)
                 self.assertNotEqual(result.returncode,0)
                 self.assertEqual(list(target.parent.iterdir()) if target.parent.exists() else [],[])
@@ -103,9 +114,11 @@ print('{}')
 
     def test_two_generation_shell_outputs_and_receipts_are_distinct(self):
         before=(self.root/'Roms/oos168.sfc').read_bytes();first={}
+        engine_before = {p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
+        saved_before = self.project.read_bytes()
         for generation in (1,2):
-            directory=(self.root/f'Roms/current-save-{generation}').resolve();target=directory/'oos168x.sfc'
-            self.env.update(OOS_LYRA_PROJECT=str(self.root/'opened.yaze'),OOS_LYRA_REQUEST=str(self.root/'request.json'),
+            directory=self.private_root / ('lyra-' + str(generation) * 32);target=directory/'oos168x.sfc'
+            self.env.update(OOS_LYRA_PROJECT=str(self.project),OOS_LYRA_REQUEST=str(self.root/'request.json'),
                             OOS_LYRA_CANDIDATE=str(target),OOS_BASE_ROM=str(self.root/'Roms/oos168.sfc'))
             result=subprocess.run(['bash',str(self.root/'Scripts/Build/build_rom.sh'),'168',str(self.assembler)],
                 cwd=self.temp.name,env=self.env,text=True,capture_output=True)
@@ -124,6 +137,9 @@ print('{}')
             if generation==1:first={p:p.read_bytes() for p in directory.iterdir() if p.is_file()}
             else:self.assertTrue(all(p.read_bytes()==raw for p,raw in first.items()))
         self.assertEqual((self.root/'Roms/oos168.sfc').read_bytes(),before)
+        self.assertEqual({p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()}, engine_before)
+        self.assertEqual(self.project.read_bytes(), saved_before)
+        self.assertFalse((self.project.parent / 'forbidden-bytecode-cache').exists())
         # Real shell stops before opening the prior receipt/output again.
         prior={p:p.read_bytes() for p in directory.iterdir() if p.is_file()}
         retry=subprocess.run(['bash',str(self.root/'Scripts/Build/build_rom.sh'),'168',str(self.assembler)],
@@ -131,11 +147,28 @@ print('{}')
         self.assertNotEqual(retry.returncode,0)
         self.assertTrue(all(p.read_bytes()==raw for p,raw in prior.items()))
 
+    def test_failed_selected_build_preserves_shared_generated_inputs(self):
+        for name in ('Dungeons/generated/water_gate_runtime_tables.asm',
+                     'Dungeons/generated/water_fill_table.asm',
+                     'Data/Generated/lyra_project/runtime_constants.asm',
+                     'Data/Generated/lyra_project/prepare.json'):
+            self.write(name, 'shared engine sentinel')
+        before = {p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
+        self.env['FIXTURE_ASM_EXIT'] = '7'
+        target = self.private_root / ('lyra-' + '3' * 32) / 'oos168x.sfc'
+        result = self.current_build(target)
+        self.assertEqual(result.returncode, 7, result.stdout + result.stderr)
+        self.assertFalse(target.exists())
+        self.assertEqual({p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()}, before)
+        receipt = json.loads((target.parent / 'oos168x.build.json').read_bytes())
+        self.assertEqual(receipt['finish']['stage'], 'assembly')
+        self.assertTrue((target.parent / 'generated-inputs/prepare.json').is_file())
+
     def test_unselected_or_foreign_receipt_override_refuses_before_outputs(self):
-        target=(self.root/'Roms/current-save-1/oos168x.sfc').resolve()
+        target=self.private_root / ('lyra-' + '1' * 32) / 'oos168x.sfc'
         for selected in (False,True):
             self.env.update(OOS_LYRA_CANDIDATE=str(target),OOS_BASE_ROM=str(self.root/'Roms/oos168.sfc'))
-            if selected:self.env.update(OOS_LYRA_PROJECT=str(self.root/'opened.yaze'),OOS_BUILD_RECEIPT=str(self.root/'foreign.json'))
+            if selected:self.env.update(OOS_LYRA_PROJECT=str(self.project),OOS_BUILD_RECEIPT=str(self.root/'foreign.json'))
             result=subprocess.run(['bash',str(self.root/'Scripts/Build/build_rom.sh'),'168',str(self.assembler)],
                 cwd=self.temp.name,env=self.env,text=True,capture_output=True)
             self.assertNotEqual(result.returncode,0)

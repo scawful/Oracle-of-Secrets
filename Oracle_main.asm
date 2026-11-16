@@ -58,7 +58,7 @@ if not(defined("LYRA_BUILD_CONTEXT"))
   !LYRA_BUILD_CONTEXT = 0
 endif
 if !LYRA_BUILD_CONTEXT == 1
-  incsrc "Data/Generated/lyra_project/runtime_constants.asm"
+  incsrc "!LYRA_GENERATED_ROOT/runtime_constants.asm"
 else
   !LYRA_PROJECT_DATA_PRESENT = 0
   !LYRA_NATIVE_A1_ENABLED = 0
@@ -288,7 +288,7 @@ endif
 ; The ordinary build emits these source-bound bytes in the same assembly.
 ; Both includes follow the legacy overworld and source graphics overrides.
 if !LYRA_PROJECT_DATA_PRESENT == 1
-  incsrc "Data/Generated/lyra_project/runtime_data.asm"
+  incsrc "!LYRA_GENERATED_ROOT/runtime_data.asm"
   incsrc "Overworld/lyra_native_loaders.asm"
 endif
 if !LYRA_CURRENT_MODE == 1 || !ENABLE_KALYXO_BOAT == 1

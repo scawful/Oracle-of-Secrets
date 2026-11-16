@@ -351,7 +351,8 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
                                   current_source_profile=None, bg128_plan=None, actor_storage_plan=None, private_pilot=None,
                                   resident_graphics_plan=None, resource_inspection=None,
                                   resident_native_emission=None, conditional_tail_recipe=None,
-                                  conditional_demands=None, conditional_source_epoch=None):
+                                  conditional_demands=None, conditional_source_epoch=None,
+                                  native_endpoint_plan=None):
     """Compose reviewable source through the existing generated-input layout.
 
     A source plan remains unselected and cannot pass the build-context loader.
@@ -422,10 +423,16 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
                   'CURRENT_COMPOSER_PROPERTIES_MISMATCH: native selectors differ from saved properties')
     actor_stream_plan = native.plan_current_actor_streams(
         source, document, current_source_profile=profile,private_pilot=private_pilot)
-    native_state_plan = A.plan_native_state(source, selected,
-        authoring=[(area,document.authoring[area-native.CURRENT_FIRST])
+    state_source, state_authoring = source, document.authoring
+    if native_endpoint_plan is not None:
+        R.require(private_pilot is None, 'B0_ENDPOINT_PRIVATE_PILOT_UNSUPPORTED')
+        state_source, state_authoring = C.S.project_b0_endpoints(source, document, native_endpoint_plan)
+    native_state_plan = A.plan_native_state(state_source, selected,
+        authoring=[(area,state_authoring[area-native.CURRENT_FIRST])
                    for area in selected],
         gameplay_areas=layout_document.gameplay_areas)
+    if native_endpoint_plan is not None:
+        native_state_plan.update(image_scope='projected_b0_endpoint_tables', saved_rom_sha256=R.sha(source))
     if actor_storage_plan is not None:
         actor_origin = origins.get('actors')
         R.require(type(actor_origin) is dict,
@@ -554,6 +561,8 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
         data += bg.emit_bg128_data(bg128_plan)
     else:
         remaining.append('BG128 source data/code origin and consumer binding')
+    if native_endpoint_plan is not None:
+        data += C.S.emit_b0_endpoints(source, document, native_endpoint_plan)
     files = {'runtime_constants.asm': constants.encode(), 'runtime_data.asm': data.encode(),
              'graphics_runtime_tables.asm': graphics_source.encode(),
              'descriptor.json': encoded(dict(kind=native.CURRENT_KIND, payload_hex=table_plan['descriptor_hex']))}
@@ -579,6 +588,8 @@ def render_current_source_outputs(table_plan, *, contract, graphics_source, grap
         ordinary_build_ready=False, runtime_admission=False, rom_written=False)
     if resident_review is not None:
         prepared['resident_graphics_review'] = resident_review
+    if native_endpoint_plan is not None:
+        prepared['native_endpoint_plan'] = native_endpoint_plan
     if resident_native_emission is not None:
         prepared['resident_native_emission'] = resident_native_emission
     files['prepare.json'] = encoded(prepared)
@@ -709,7 +720,14 @@ def prepare(folder, *, project=None, base_rom=None, request=None, ledger_path=No
         target=json.loads(files['prepare.json'])['terrain_plan']['target']['path']
         R.require(candidate is not None and Path(candidate).resolve() == Path(target),
                   'CURRENT_BUILD_TARGET_MISMATCH: build output must match immutable transfer target')
-    write_outputs(folder, files, protected=[row['path'] for row in plan.get('inputs', [])])
+    if plan.get('kind') == 'lyra.current_build_prepare.v1':
+        from lyra_generated_inputs import private_folder, write_private_outputs
+        expected = private_folder(ROOT, project, candidate)
+        R.require(Path(folder) == expected,
+                  'LYRA_GENERATED_PATH: current Build requires its private generated inputs')
+        write_private_outputs(expected, files)
+    else:
+        write_outputs(folder, files, protected=[row['path'] for row in plan.get('inputs', [])])
     return json.loads(files['prepare.json'])
 
 
@@ -742,10 +760,14 @@ def _verify(folder, rom, symbols, *, receipt):
               'Verification receipt must be beside the assembled ROM')
     prior = json.loads((folder / 'prepare.json').read_bytes())
     R.require(prior.get('selected') is True, 'No selected current Lyra prepare context')
-    plan = make_plan(prior['project'], prior['base_rom'], prior['request'], ledger_path=prior['ledger'])
-    files = render_outputs(plan)
-    R.require(all((folder / name).read_bytes() == raw for name, raw in files.items()),
-              'Prepared context changed after generation')
+    if prior.get('kind') == 'lyra.current_build_prepare.v1':
+        from lyra_current_transfer import verify_current_context
+        files = verify_current_context(ROOT, prior, input_folder=folder)
+    else:
+        plan = make_plan(prior['project'], prior['base_rom'], prior['request'], ledger_path=prior['ledger'])
+        files = render_outputs(plan)
+        R.require(all((folder / name).read_bytes() == raw for name, raw in files.items()),
+                  'Prepared context changed after generation')
     if prior.get('kind') == 'lyra.current_build_prepare.v1':
         from lyra_current_transfer import verify_current_output
         result = verify_current_output(prior,rom.read_bytes(),symbols.read_bytes())
@@ -805,9 +827,12 @@ def resolve_current_target(project, base_rom=None, request=None, candidate=None)
     selected = Path(prepared['current_source_profile']['selected_source']['root']).resolve(strict=True)
     R.require(selected == ROOT.resolve(), 'CURRENT_BUILD_ENGINE_MISMATCH: use the exact reviewed source checkout')
     target = Path(prepared['terrain_plan']['target']['path'])
-    R.require(target.is_relative_to(selected / 'Roms') and target.name == 'oos168x.sfc'
-              and target.parent != selected / 'Roms',
-              'CURRENT_BUILD_OUTPUT_REQUIRED: use a fresh generation directory under the selected engine Roms')
+    import lyra_output_paths as output_paths
+    R.require(target.name == 'oos168x.sfc'
+              and ((target.is_relative_to(selected / 'Roms')
+                    and target.parent != selected / 'Roms')
+                   or output_paths.is_private_generation(project, selected, target)),
+              'CURRENT_BUILD_OUTPUT_REQUIRED: use an allowed project generation directory')
     config = configparser.ConfigParser(interpolation=None)
     config.read_string(project.read_text(encoding='utf-8-sig'));config.defaults().clear()
     configured = config.get('build','build_target',fallback='').strip()
@@ -876,7 +901,7 @@ def stage_current_candidate(folder, candidate):
               and not candidate.exists() and not candidate.is_symlink()
               and not stage_path.exists() and not stage_path.is_symlink(),
               'CURRENT_BUILD_TARGET_MISMATCH')
-    verify_current_context(ROOT,prior)
+    verify_current_context(ROOT,prior,input_folder=Path(folder))
     source_path=Path(prior['base_rom'])
     source=source_path.read_bytes()
     R.require(R.sha(source) == prior['saved_rom_sha256'],'Current staged source changed')

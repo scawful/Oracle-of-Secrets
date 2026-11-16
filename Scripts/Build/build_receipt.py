@@ -225,6 +225,8 @@ def verify_source_identity(receipt: dict, receipt_path: Path) -> str | None:
 def run(args: argparse.Namespace) -> int:
     path = args.receipt.resolve()
     if args.command == "init":
+        if args.lyra_build_id is not None and not re.fullmatch(r"[0-9a-f]{32}", args.lyra_build_id):
+            raise ValueError("Lyra build attempt ID must be 32 lowercase hexadecimal characters")
         root = args.root.resolve()
         guard_receipt_destination(path, root, args.base_rom, args.version)
         receipt = {"schema_version": SCHEMA_VERSION, "state": "in_progress",
@@ -234,6 +236,8 @@ def run(args: argparse.Namespace) -> int:
                    "checks": [], "artifacts": {}, "tools": {}, "snapshots": {},
                    "initial_profile": profile(root),
                    "evidence_scope": "Recorded inputs and check outcomes only; no implicit runtime or release qualification."}
+        if args.lyra_build_id is not None:
+            receipt["lyra_attempt"] = {"build_id": args.lyra_build_id}
         try:
             receipt["base_rom"] = identity(args.base_rom)
         except OSError as error:
@@ -312,6 +316,7 @@ def main(argv: list[str] | None = None) -> int:
             command.add_argument("--base-rom", type=Path, required=True)
             for option in ("version", "requested-profile", "assembler"):
                 command.add_argument(f"--{option}", required=True)
+            command.add_argument("--lyra-build-id")
         elif name == "check":
             command.add_argument("--name", required=True)
             command.add_argument("--status", choices=("passed", "failed", "unavailable", "skipped"), required=True)

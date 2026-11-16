@@ -205,6 +205,58 @@ def native_verify(z3ed, project, rom):
     return value
 
 
+def native_inspect(z3ed, project, rom):
+    """Capture only the selected verifier's read-only native asset observation.
+
+    The caller owns process supervision and authenticates the Save/producer
+    before and after this call. This neither selects an executable nor admits
+    a command graph. Resident consumers still rederive every asset and pixel.
+    """
+    terrain = resolve_project_terrain(project)
+    paths = (project, rom, terrain)
+    require(all(not os.path.samefile(a, b) for index, a in enumerate(paths)
+                for b in paths[index + 1:]), "Project, terrain and source ROM alias each other")
+    before = {path: sha(path.read_bytes()) for path in paths}
+    command = [str(z3ed), "lyra-inspect-project", f"--project-context={project}",
+               f"--rom={rom}", "--format=json"]
+    try:
+        result = subprocess.run(command, check=True, text=True, capture_output=True, timeout=120)
+    finally:
+        require(all(sha(path.read_bytes()) == digest for path, digest in before.items()),
+                "Read-only native inspector changed an input file")
+
+    def unique(pairs):
+        value = {}
+        for key, item in pairs:
+            require(key not in value, "Duplicate native inspection JSON key")
+            value[key] = item
+        return value
+
+    value = json.loads(result.stdout, object_pairs_hook=unique)
+    if type(value) is dict and "data" in value:
+        value = value["data"]
+    require(type(value) is dict and value.get("inspection_only") is True
+            and value.get("native_resolution_schema") == "yaze.lyra-native-resolution.v1"
+            and value.get("project_descriptor_identity_status") == "identified"
+            and value.get("project_descriptor_path") == str(project)
+            and value.get("project_descriptor_sha256") == before[project]
+            and value.get("terrain_path") == str(terrain)
+            and value.get("terrain_sha256") == before[terrain]
+            and value.get("source_rom_sha256") == before[rom]
+            and type(value.get("map_count")) is int and value["map_count"] == 32
+            and type(value.get("donor_map")) is int and value["donor_map"] == 0x3A
+            and type(value.get("asset_binding_mismatches")) is int
+            and value["asset_binding_mismatches"] == 0, "Native inspection binding differs")
+    rows = value.get("map_assets")
+    require(type(rows) is list and len(rows) == 96
+            and all(type(row) is dict and type(row.get("map_id")) is int
+                    and type(row.get("state")) is int for row in rows)
+            and {(row["map_id"], row["state"]) for row in rows}
+                == {(page, state) for page in range(0xA0, 0xC0) for state in range(3)},
+            "Native inspection rows differ")
+    return value
+
+
 def _decode_plane(source, pointer):
     at, output = pc(pointer), bytearray()
     end = (at // 0x8000 + 1) * 0x8000

@@ -26,6 +26,7 @@ import test_generate_hack_manifest as manifest_tests  # noqa: E402
 
 sys.path.insert(0, str(GENERATE.parent / "Build"))
 import authoring_bundle_build as build_guard  # noqa: E402
+import lyra_process_containment as containment  # noqa: E402
 
 
 class AuthoringProjectBundleTest(unittest.TestCase):
@@ -490,15 +491,16 @@ flagged_sheets=0xD4,0xD6
         }
         error = io.StringIO()
         with (
-            mock.patch.object(build_guard.subprocess, "run") as delegate,
+            mock.patch.object(build_guard.selection, "begin_attempt") as delegate,
             contextlib.redirect_stderr(error),
         ):
             self.assertEqual(
-                build_guard.main(["--project", str(self.bundle / "project.yaze")]), 2
+                build_guard.main(["--project", str(self.bundle / "project.yaze"),
+                                  "--request", str(self.root / "partial-request.json")]), 2
             )
         delegate.assert_not_called()
-        self.assertIn("lyra_build_request_file", error.getvalue())
-        self.assertIn("No build was started", error.getvalue())
+        self.assertIn("fresh transfer request and candidate", error.getvalue())
+        self.assertIn("no build was started", error.getvalue())
         self.assertEqual(
             before,
             {
@@ -518,28 +520,28 @@ flagged_sheets=0xD4,0xD6
                     original.replace("lyra_terrain_file=terrain.json\n", replacement)
                 )
                 self.capture()
-                with mock.patch.object(
-                    build_guard.subprocess, "run", return_value=mock.Mock(returncode=7)
-                ) as delegate:
+                with (mock.patch.object(containment, "prepare_contained",
+                                        side_effect=lambda argv, **kw: (argv, kw)),
+                      mock.patch.object(containment, "_run_windows",
+                                        return_value=containment.ContainedResult(7, False)) as delegate):
                     self.assertEqual(
                         build_guard.main(
                             ["--project", str(self.bundle / "project.yaze")]
                         ),
                         7,
                     )
-                args, kwargs = delegate.call_args
+                args, kwargs = delegate.call_args.args
                 self.assertEqual(
-                    args[0],
+                    args[1:],
                     [
-                        "bash",
                         str(self.bundle / "project/Scripts/Build/build_rom.sh"),
                         "168",
                     ],
                 )
                 self.assertEqual(kwargs["cwd"], self.bundle)
-                self.assertEqual(kwargs["env"]["OOS_BASE_ROM"], "rom")
-                self.assertEqual(kwargs["env"]["OOS_BACKUP_ROOT"], "backups")
-                self.assertEqual(kwargs["env"]["OOS_MANIFEST_ROOT"], ".")
+                self.assertEqual(kwargs["environment"]["OOS_BASE_ROM"], "rom")
+                self.assertEqual(kwargs["environment"]["OOS_BACKUP_ROOT"], "backups")
+                self.assertEqual(kwargs["environment"]["OOS_MANIFEST_ROOT"], ".")
 
     def test_authoring_build_delegates_authenticated_current_selection(self):
         from unittest import mock
@@ -547,23 +549,27 @@ flagged_sheets=0xD4,0xD6
 
         self.capture()
         project = self.bundle / "project.yaze"
-        before = {
-            p.relative_to(self.bundle): p.read_bytes()
-            for p in self.bundle.rglob("*")
-            if p.is_file()
-        }
         target = {
             "engine": str(self.bundle / "project"),
             "base_rom": str(self.bundle / "rom"),
             "request": str(self.bundle / "transfer/current/request.json"),
             "candidate": str(self.bundle / "project/Roms/current-2/oos168x.sfc"),
         }
+        request = Path(target["request"])
+        request.parent.mkdir(parents=True)
+        request.write_text('{}')
+        Path(target["candidate"]).parent.mkdir(parents=True)
+        validator = self.bundle / "project/Scripts/Build/lyra_project_publisher.py"
+        validator.parent.mkdir(parents=True, exist_ok=True)
+        validator.write_text("# synthetic validator\n")
+        before = {p.relative_to(self.bundle): p.read_bytes()
+                  for p in self.bundle.rglob("*") if p.is_file()}
         context = str(self.root / "appdata/native-saves/current.json")
         inherited = {
             key: "/foreign/project"
             for key in (
                 "OOS_LYRA_PROJECT", "OOS_LYRA_REQUEST", "OOS_LYRA_CANDIDATE",
-                "OOS_LYRA_BUILD_CONTEXT",
+                "OOS_LYRA_BUILD_CONTEXT", "OOS_LYRA_BUILD_ID",
             )
         }
         inherited["YAZE_NATIVE_SAVE_CONTEXT"] = context
@@ -571,58 +577,61 @@ flagged_sheets=0xD4,0xD6
         # the bundle wrapper's handoff to the real shell entry point.
         with (
             mock.patch.dict(build_guard.os.environ, inherited),
-            mock.patch.object(publisher, "resolve_current_target", return_value=target)
+            mock.patch.object(build_guard, "prepared_environment", return_value={
+                "OOS_BASE_ROM": target["base_rom"], "OOS_LYRA_PROJECT": str(project),
+                "OOS_LYRA_REQUEST": target["request"], "OOS_LYRA_CANDIDATE": target["candidate"]})
             as resolve,
-            mock.patch.object(build_guard.subprocess, "run",
-                              return_value=mock.Mock(returncode=7)) as delegate,
+            mock.patch.object(containment, "prepare_contained",
+                              side_effect=lambda argv, **kw: (argv, kw)),
+            mock.patch.object(containment, "_run_windows", side_effect=[
+                containment.ContainedResult(0, False),
+                containment.ContainedResult(7, False)]) as delegate,
         ):
-            self.assertEqual(build_guard.build_project(project), 7)
-        resolve.assert_called_once_with(project)
-        args, kwargs = delegate.call_args
-        self.assertEqual(args[0], [
-            "bash", str(self.bundle / "project/Scripts/Build/build_rom.sh"), "168"
-        ])
+            self.assertEqual(build_guard.build_project(project, request=request,
+                                                       candidate=Path(target["candidate"])), 7)
+        self.assertEqual(resolve.call_count, 1)
+        args, kwargs = delegate.call_args_list[-1].args
+        self.assertEqual(args[1:], [str(self.bundle / "project/Scripts/Build/build_rom.sh"), "168"])
         self.assertEqual(kwargs["cwd"], self.bundle)
-        environment = kwargs["env"]
+        environment = kwargs["environment"]
         self.assertEqual(environment["OOS_BASE_ROM"], target["base_rom"])
         self.assertEqual(environment["OOS_LYRA_PROJECT"], str(project))
         self.assertEqual(environment["OOS_LYRA_REQUEST"], target["request"])
         self.assertEqual(environment["OOS_LYRA_CANDIDATE"], target["candidate"])
         self.assertEqual(environment["YAZE_NATIVE_SAVE_CONTEXT"], context)
         self.assertNotIn("OOS_LYRA_BUILD_CONTEXT", environment)
+        self.assertRegex(environment["OOS_LYRA_BUILD_ID"], r"^[0-9a-f]{32}$")
         self.assertEqual(before, {
             p.relative_to(self.bundle): p.read_bytes()
             for p in self.bundle.rglob("*")
-            if p.is_file()
+            if p.is_file() and p.name != "project.yaze.lyra-build-latest.json"
         })
 
     def test_authoring_build_refuses_foreign_reviewed_engine_without_writes(self):
         from unittest import mock
-        import lyra_project_publisher as publisher
 
         self.capture()
-        foreign = self.root / "foreign-engine"
-        foreign.mkdir()
-        before = {
-            p.relative_to(self.bundle): p.read_bytes()
-            for p in self.bundle.rglob("*")
-            if p.is_file()
-        }
-        with (
-            mock.patch.object(publisher, "resolve_current_target",
-                              return_value={"engine": str(foreign)}),
-            mock.patch.object(build_guard.subprocess, "run") as delegate,
-        ):
-            with self.assertRaisesRegex(
-                ValueError, "Reviewed current source differs from this bundled build engine"
-            ):
-                build_guard.build_project(self.bundle / "project.yaze")
-        delegate.assert_not_called()
-        self.assertEqual(before, {
-            p.relative_to(self.bundle): p.read_bytes()
-            for p in self.bundle.rglob("*")
-            if p.is_file()
-        })
+        request = self.root / "request.json"
+        request.write_text('{}')
+        candidate = self.bundle / "project/Roms/gen/oos168x.sfc"
+        candidate.parent.mkdir(parents=True, exist_ok=True)
+        validator = self.bundle / "project/Scripts/Build/lyra_project_publisher.py"
+        validator.parent.mkdir(parents=True, exist_ok=True)
+        validator.write_text("# synthetic validator\n")
+        before = {p.relative_to(self.bundle): p.read_bytes()
+                  for p in self.bundle.rglob("*") if p.is_file()}
+        with (mock.patch.object(build_guard, "prepared_environment") as resolve,
+              mock.patch.object(containment, "prepare_contained", return_value=()) as prepare,
+              mock.patch.object(containment, "_run_windows",
+                                return_value=containment.ContainedResult(7, False)) as run):
+            self.assertEqual(build_guard.build_project(self.bundle / "project.yaze",
+                                                       request=request, candidate=candidate), 7)
+        resolve.assert_not_called()
+        self.assertEqual(prepare.call_count, 1)
+        self.assertEqual(run.call_count, 1)
+        self.assertEqual(before, {p.relative_to(self.bundle): p.read_bytes()
+                                  for p in self.bundle.rglob("*") if p.is_file()
+                                  and p.name != "project.yaze.lyra-build-latest.json"})
 
     def test_export_preserves_supported_build_refs_without_rewriting_save_identity(self):
         controls = ('lyra_build_request_file', 'native_save_receipt_file',
@@ -646,11 +655,13 @@ flagged_sheets=0xD4,0xD6
         self.project.write_text(self.project.read_text().replace('lyra_terrain_file=terrain.json','lyra_terrain_file='))
         self.capture()
         foreign={key:'/foreign/project' for key in
-                 ('OOS_LYRA_PROJECT','OOS_LYRA_REQUEST','OOS_LYRA_CANDIDATE','OOS_LYRA_BUILD_CONTEXT')}
-        with mock.patch.dict(build_guard.os.environ,foreign),mock.patch.object(
-                build_guard.subprocess,'run',return_value=mock.Mock(returncode=0)) as delegate:
+                 ('OOS_LYRA_PROJECT','OOS_LYRA_REQUEST','OOS_LYRA_CANDIDATE','OOS_LYRA_BUILD_CONTEXT','OOS_LYRA_BUILD_ID')}
+        with mock.patch.dict(build_guard.os.environ,foreign), mock.patch.object(
+                containment,'prepare_contained',side_effect=lambda argv,**kw:(kw['environment'],)), \
+             mock.patch.object(containment,'_run_windows',
+                               return_value=containment.ContainedResult(0,False)) as delegate:
             self.assertEqual(build_guard.build_project(self.bundle/'project.yaze'),0)
-        for key in foreign:self.assertNotIn(key,delegate.call_args.kwargs['env'])
+        for key in foreign:self.assertNotIn(key,delegate.call_args.args[0])
 
     def pin_tools(self):
         """Export provenance as staged for a desktop bundle with pinned tools."""
@@ -1047,16 +1058,17 @@ flagged_sheets=0xD4,0xD6
         relocated.parent.mkdir()
         self.bundle.rename(relocated)
         verify_bundle(relocated)
-        with mock.patch.object(
-            build_guard.subprocess, "run", return_value=mock.Mock(returncode=0)
-        ) as delegate:
+        with (mock.patch.object(containment, "prepare_contained",
+                                side_effect=lambda argv, **kw: (argv, kw)),
+              mock.patch.object(containment, "_run_windows",
+                                return_value=containment.ContainedResult(0, False)) as delegate):
             self.assertEqual(
                 build_guard.main(["--project", str(relocated / "project.yaze")]), 0
             )
-        args, kwargs = delegate.call_args
+        args, kwargs = delegate.call_args.args
         self.assertEqual(kwargs["cwd"], relocated)
         self.assertEqual(
-            args[0][1], str(relocated / "project/Scripts/Build/build_rom.sh")
+            args[1], str(relocated / "project/Scripts/Build/build_rom.sh")
         )
 
 

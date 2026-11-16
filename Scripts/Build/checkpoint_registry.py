@@ -988,7 +988,8 @@ def check_invocation(args):
     registry = goron_control_registry(base, (args.root/'Overworld/goron_checkpoint.asm').read_text())
     private = {}
     if flags.get('LYRA_PRIVATE_CHECKPOINT_ENABLED') == 1:
-        prepared = json.loads((args.root/'Data/Generated/lyra_project/prepare.json').read_bytes())
+        from lyra_generated_inputs import selected_folder
+        prepared = json.loads((selected_folder(args.root) / 'prepare.json').read_bytes())
         selection = prepared.get('checkpoint_preview')
         require(prepared.get('runtime_scope') == 'seeded_checkpoint_preview' and
                 type(selection) is dict and set(selection) == {'plan_binding', 'landing_binding'},

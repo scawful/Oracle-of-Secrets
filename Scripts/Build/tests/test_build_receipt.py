@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 from unittest import mock
@@ -65,6 +67,48 @@ class BuildReceiptTest(unittest.TestCase):
         self.assertEqual(self.read()["checks"][0]["status"], "unavailable")
         self.assertEqual(self.finish(), 1)
         self.assertEqual(self.read()["state"], "failed")
+
+    def test_optional_lyra_attempt_identity_is_preserved_and_validated(self):
+        self.assertEqual(self.initialize(), 0)
+        self.assertNotIn("lyra_attempt", self.read())
+        args = ("--root", self.root, "--base-rom", self.base, "--version", "168",
+                "--requested-profile", "rc-explicit", "--assembler", "/test/asar")
+        build_id = "0123456789abcdef" * 2
+        self.assertEqual(self.command("init", *args, "--lyra-build-id", build_id), 0)
+        self.assertEqual(self.read()["lyra_attempt"], {"build_id": build_id})
+        self.snapshot()
+        self.assertEqual(self.finish(), 0)
+        self.assertEqual(self.read()["lyra_attempt"], {"build_id": build_id})
+        before = self.output.read_bytes()
+        for invalid in ("", "A" * 32, "0" * 31, "g" * 32):
+            with self.subTest(invalid=invalid):
+                self.assertEqual(self.command("init", *args, "--lyra-build-id", invalid), 1)
+                self.assertEqual(self.output.read_bytes(), before)
+
+    def test_shell_forwards_attempt_only_for_selected_project(self):
+        checks = SPEC.origin.replace("build_receipt.py", "build_checks.sh")
+        script = '''set -euo pipefail
+repo_root="$1"; rom_dir="$2"; base_rom="$3"; version=168
+feat_profile=fixture; feat_enable=; feat_disable=; persist_flags=0; asar_bin=fixture
+source "$4"
+receipt_tool="$5"
+init_build_receipt
+trap - EXIT
+'''
+        env = {key: value for key, value in os.environ.items()
+               if not key.startswith('OOS_')}
+        env['OOS_LYRA_BUILD_ID'] = 'a' * 32
+        args = ['bash', '-c', script, 'fixture', str(self.root),
+                str(self.base.parent), str(self.base), checks, SPEC.origin]
+        without_project = subprocess.run(args, env=env, capture_output=True, text=True)
+        self.assertNotEqual(without_project.returncode, 0)
+        shell_receipt = self.base.parent / 'oos168x.build.json'
+        self.assertFalse(shell_receipt.exists())
+        env['OOS_LYRA_PROJECT'] = str(self.root / 'fixture.yaze')
+        selected = subprocess.run(args, env=env, capture_output=True, text=True)
+        self.assertEqual(selected.returncode, 0, selected.stderr)
+        self.assertEqual(json.loads(shell_receipt.read_text())['lyra_attempt'],
+                         {'build_id': 'a' * 32})
 
     def test_each_required_nonpass_blocks_success(self):
         for status in ("failed", "unavailable", "skipped"):

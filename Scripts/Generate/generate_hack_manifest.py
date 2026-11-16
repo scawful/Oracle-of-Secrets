@@ -52,6 +52,9 @@ from asm_source import (
     _load_global_defines,
     _iter_active_lines,
     _is_identical_build_context_assignment,
+    collect_reachable_asm_sources as _collect_reachable_asm_sources,
+    SourceGraphError,
+    source_path,
 )
 
 # Hook scanner (Python source scan; see generate_hooks_json.py)
@@ -254,103 +257,11 @@ def collect_reachable_asm_sources(
     entry_point: Path = MANIFEST_ENTRY_POINT,
     defines: Optional[dict[str, int]] = None,
 ) -> list[Path]:
-    """Collect the transitive literal `incsrc` graph for the build entry.
-
-    Asar sources in this repository use both paths relative to the including
-    file and repo-root-relative paths. Follow every feasible conditional edge,
-    treat literal includes as authoritative regardless of directory name, and
-    fail closed when a reachable include or cross-file global-define state
-    cannot be resolved safely.
-    """
-    resolved_root = root.resolve()
-    entry = entry_point if entry_point.is_absolute() else resolved_root / entry_point
-    entry = entry.resolve()
-    if not entry.is_file():
-        raise ManifestGenerationError(f"ASM entry point not found: {entry}")
-    if not entry.is_relative_to(resolved_root):
-        raise ManifestGenerationError(
-            f"ASM entry point is outside repo root: {entry}"
-        )
-
-    active_defines = (
-        _load_global_defines(resolved_root)
-        if defines is None
-        else dict(defines)
-    )
-    pending = [entry]
-    reachable: set[Path] = set()
-    while pending:
-        asm_path = pending.pop()
-        if asm_path in reachable:
-            continue
-        reachable.add(asm_path)
-
-        try:
-            lines = asm_path.read_text(
-                encoding="utf-8", errors="ignore"
-            ).splitlines()
-        except OSError as exc:
-            raise ManifestGenerationError(
-                f"Unable to read reachable ASM source {asm_path}: {exc}"
-            ) from exc
-
-        for line_number, include_text in _iter_active_incsrcs(
-            lines, active_defines
-        ):
-            include_path = Path(include_text)
-            candidates = (
-                asm_path.parent / include_path,
-                resolved_root / include_path,
-            )
-            included = next(
-                (candidate.resolve() for candidate in candidates
-                 if _is_case_exact_file(candidate, resolved_root)),
-                None,
-            )
-            if included is None:
-                rel = asm_path.relative_to(resolved_root)
-                raise ManifestGenerationError(
-                    f"{rel}:{line_number}: unresolved incsrc "
-                    f"{include_text!r}"
-                )
-            if not included.is_relative_to(resolved_root):
-                rel = asm_path.relative_to(resolved_root)
-                raise ManifestGenerationError(
-                    f"{rel}:{line_number}: incsrc escapes repo root: "
-                    f"{include_text!r}"
-                )
-            pending.append(included)
-
-    canonical_define_sources = {
-        "Util/macros.asm",
-        "Config/module_flags.asm",
-        "Config/feature_flags.asm",
-    }
-    for asm_path in sorted(reachable):
-        rel = asm_path.relative_to(resolved_root).as_posix()
-        if rel in canonical_define_sources:
-            continue
-        try:
-            lines = asm_path.read_text(
-                encoding="utf-8", errors="ignore"
-            ).splitlines()
-        except OSError as exc:
-            raise ManifestGenerationError(
-                f"Unable to validate reachable ASM source {asm_path}: {exc}"
-            ) from exc
-        for line_index, line, _ in _iter_active_lines(lines, active_defines):
-            assignment = DEFINE_ANY_ASSIGN_RE.match(line.split(";", 1)[0])
-            if assignment and assignment.group(1) in active_defines:
-                if _is_identical_build_context_assignment(rel, line, active_defines):
-                    continue
-                raise ManifestGenerationError(
-                    f"{rel}:{line_index + 1}: reachable source reassigns "
-                    f"preloaded global define !{assignment.group(1)} outside "
-                    "the canonical define files; include-order state cannot "
-                    "be resolved safely"
-                )
-
-    return sorted(reachable)
+    # Use the same selected include closure as hooks and the assembler.
+    try:
+        return _collect_reachable_asm_sources(root, entry_point, defines)
+    except (SourceGraphError, ValueError) as exc:
+        raise ManifestGenerationError(str(exc)) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -383,7 +294,7 @@ def scan_bank_ownership(
     for asm_path in source_paths:
         asm_path = asm_path.resolve()
         try:
-            rel = str(asm_path.relative_to(root))
+            rel = str(source_path(asm_path, root))
         except ValueError as exc:
             raise ManifestGenerationError(
                 f"Reachable ASM source is outside repo root: {asm_path}"
@@ -609,7 +520,7 @@ def scan_room_tags(
     for asm_path in source_paths:
         asm_path = asm_path.resolve()
         try:
-            rel = str(asm_path.relative_to(root))
+            rel = str(source_path(asm_path, root))
         except ValueError as exc:
             raise ManifestGenerationError(
                 f"Reachable ASM source is outside repo root: {asm_path}"

@@ -5,6 +5,7 @@ receipt_tool="$repo_root/Scripts/Build/build_receipt.py"
 receipt_path="${OOS_BUILD_RECEIPT:-$rom_dir/oos${version}x.build.json}"
 required_checks="${OOS_REQUIRE_CHECKS:-}"
 current_stage="preflight"
+lyra_input_dir="$repo_root/Data/Generated/lyra_project"
 receipt_started=0
 build_output_backup=""
 build_output_transaction=0
@@ -32,6 +33,7 @@ configure_current_output() {
   mlb_path="$rom_dir/oos168x.mlb"
   mlb_rel="$mlb_path"
   annotations_out="$rom_dir/annotations.json"
+  lyra_input_dir="$(python3 "$repo_root/Scripts/Build/lyra_generated_inputs.py" path --root "$repo_root")" || return $?
   mkdir -p "$rom_dir"
 }
 
@@ -93,6 +95,28 @@ omit_check() {
   if [[ "$required" == "1" ]]; then return 1; fi
 }
 
+run_graphics_source_check() {
+  local name="$1" capability code=0
+  shift
+  current_stage="$name"
+  if capability="$(python3 "$repo_root/Scripts/Generate/graphics_source_checks.py" \
+      --root "$repo_root" --check "$name")"; then
+    case "$capability" in
+      applicable) run_check "$name" 1 "$@" ;;
+      not-applicable)
+        omit_check "$name" skipped "$(check_required "$name" 0)" \
+          "Not applicable: no reachable generated ASM consumer for $name" ;;
+      *)
+        record_check "$name" failed 1 "Unrecognized graphics source capability" 1
+        return 1 ;;
+    esac
+  else
+    code=$?
+    record_check "$name" failed 1 "Graphics source graph could not be resolved" "$code"
+    return "$code"
+  fi
+}
+
 snapshot_build_outputs() {
   # Only derived files belong to this transaction. Keep the base ROM, authored
   # source, receipt and diagnostic reports outside it.
@@ -100,15 +124,21 @@ snapshot_build_outputs() {
     "$patched_rom" "$symbols_path" "$mlb_path"
     "$rom_dir/hooks.json" "$rom_dir/hack_manifest.json" "$rom_dir/sourcemap.json"
     "${annotations_out:-$repo_root/.cache/annotations.json}"
-    "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
-    "$repo_root/Dungeons/generated/water_fill_table.asm"
     "$rom_dir/oos${version}x.lyra-verification.json"
-    "$repo_root/Data/Generated/lyra_project/runtime_constants.asm"
-    "$repo_root/Data/Generated/lyra_project/runtime_data.asm"
-    "$repo_root/Data/Generated/lyra_project/descriptor.json"
-    "$repo_root/Data/Generated/lyra_project/prepare.json"
-    "$repo_root/Data/Generated/lyra_project/binaries/payload.bin"
   )
+  # Selected generations never restore engine files, including read-only water
+  # tables: rollback itself must not become an engine write.
+  if [[ -z "${OOS_LYRA_CANDIDATE:-}" ]]; then
+    build_output_paths+=(
+      "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
+      "$repo_root/Dungeons/generated/water_fill_table.asm"
+      "$lyra_input_dir/runtime_constants.asm"
+      "$lyra_input_dir/runtime_data.asm"
+      "$lyra_input_dir/descriptor.json"
+      "$lyra_input_dir/prepare.json"
+      "$lyra_input_dir/binaries/payload.bin"
+    )
+  fi
   local path index
   for path in "${build_output_paths[@]}"; do
     if [[ -L "$path" || ( -e "$path" && ! -f "$path" ) ]]; then
@@ -198,9 +228,17 @@ finish_build() {
 }
 
 init_build_receipt() {
+  local attempt_args=()
+  if [[ -n "${OOS_LYRA_BUILD_ID:-}" ]]; then
+    if [[ -z "${OOS_LYRA_PROJECT:-}" ]]; then
+      echo "ERROR: OOS_LYRA_BUILD_ID requires OOS_LYRA_PROJECT." >&2
+      return 1
+    fi
+    attempt_args+=(--lyra-build-id "$OOS_LYRA_BUILD_ID")
+  fi
   receipt init --root "$repo_root" --base-rom "$base_rom" --version "$version" \
     --requested-profile "$feat_profile;enable=$feat_enable;disable=$feat_disable;persist=$persist_flags" \
-    --assembler "$asar_bin"
+    --assembler "$asar_bin" ${attempt_args[@]+"${attempt_args[@]}"}
   receipt_started=1
   trap finish_build EXIT
   local name
@@ -208,7 +246,7 @@ init_build_receipt() {
   IFS=,
   for name in $required_checks; do
     case "$name" in
-      flags|menu|overlap|hooks|sprites|analysis|smoke|annotations) ;;
+      flags|menu|overlap|hooks|sprites|analysis|smoke|annotations|source_sprite_sheets|snowpeak_sheet|menu_icon_sheets|joint_palette_source) ;;
       *) echo "ERROR: unknown OOS_REQUIRE_CHECKS entry: $name" >&2; IFS="$old_ifs"; return 1 ;;
     esac
   done

@@ -65,7 +65,7 @@ class EventStorageOwnerTests(unittest.TestCase):
                     X.current_event_state(value,bad)
 
 
-def consumer_fixture(source, code, *, bg_code=None):
+def consumer_fixture(source, code, *, bg_code=None, legacy_empty=False):
     rom=bytearray(X.A.expanded_rom(source)); labels={}; serial=0
     def put(at,raw):rom[X.A.pc(at):X.A.pc(at)+len(raw)]=raw
     targets={t for _,t in L.SOURCE_CALLS}|{'Lyra_LoadCurrentSprites','Lyra_FullHigh','Lyra_FullLow',
@@ -106,6 +106,19 @@ def consumer_fixture(source, code, *, bg_code=None):
     for a,t in ((0x02F59D,'Lyra_FullHigh'),(0x02F5C8,'Lyra_FullLow'),(0x02F7E3,'Lyra_SubHigh'),(0x02F80E,'Lyra_SubLow')):hook(a,t,pad=8)
     for a in S.TAIL_LOAD_SITES:hook(a,'Lyra_TailEvent_Load')
     for a,_ in S.TAIL_STORE_SITES:hook(a,'Lyra_TailEvent_Store')
+    if legacy_empty:
+        name='Lyra_TailEvent_LoadLegacyEmptyBomb';at=code+0x780
+        body=bytes.fromhex('08c210e0a000900de0c000b00828bf20f47e29fd6b28bf80f27e6b')
+        labels[name]=at;labels[name+'_End']=at+len(body);put(at,body)
+        put(0x02EF40,bytes.fromhex('e230'));put(0x02EF54,bytes.fromhex('a68a'))
+        hook(0x02EF56,name)
+        put(0x02EF5A,bytes.fromhex('2902f01bc230a58a0aaa')+b'\x22'
+            +labels['Lyra_ReadBombDoor'].to_bytes(3,'little')
+            +bytes.fromhex('aaa9b40d9f00207ea9b50d9f02207ee23060'))
+        put(0x1BC8BE,bytes.fromhex('a99b008502'))
+        put(X.A.EMPTY_HIDDEN_ITEMS,b'\xff\xff')
+        put(labels['Lyra_CurrentTable_hidden_items']+0xA0*2,b'\xc2\xc5'*32)
+        put(labels['Lyra_CurrentTable_bomb_doors']+0xA0*2,bytes(64))
     hook(0x028192,'LoadCheckpointOrWorld',0x5C)
     if bg_code is not None:
         bg_names=('Startup','IntroReset','IndoorDeparture','NativeAllBegin','WhirlpoolBegin','WhirlpoolComplete',
@@ -197,10 +210,107 @@ class HookshotOperandTests(unittest.TestCase):
                     L.inspect_current_consumers(image,('\n'.join(changed)+'\n').encode())
 
 
+class LegacyEmptyCompiledTests(unittest.TestCase):
+    def test_exact_guard_and_native_bank_are_required(self):
+        image,symbols=consumer_fixture(bytes(0x400000),0xE0C000,legacy_empty=True)
+        result=L.inspect_current_consumers(image,symbols,require_legacy_empty=True)
+        self.assertEqual(result['legacy_empty_bomb_guard']['event_base'],0x7EF4C0)
+        controls=((0xE0C780+18,'GUARD_BODY'),(0x02EF56,'GUARD_HOOK'),
+            (0x02EF40,'RESTORE_CALLER'),(0x02EF54,'RESTORE_CALLER'),
+            (0x02EF5A,'RESTORE_CALLER'),(0x1BC8BE+1,'NATIVE_LIST_BANK'),
+            (X.A.EMPTY_HIDDEN_ITEMS,'NATIVE_LIST_BANK'))
+        labels=L._labels(symbols)
+        controls+=tuple((labels['Lyra_CurrentTable_'+family]+0x140,'TABLE_CHANGED')
+                        for family in ('hidden_items','bomb_doors'))
+        for site,error in controls:
+            with self.subTest(site=hex(site)):
+                bad=bytearray(image);bad[X.A.pc(site)]^=1
+                with self.assertRaisesRegex(ValueError,error):
+                    L.inspect_current_consumers(bytes(bad),symbols,require_legacy_empty=True)
+        old,oldsymbols=consumer_fixture(bytes(0x400000),0xE0C000)
+        self.assertNotIn('legacy_empty_bomb_guard',L.inspect_current_consumers(old,oldsymbols))
+        with self.assertRaisesRegex(ValueError,'GUARD_REQUIRED'):
+            L.inspect_current_consumers(old,oldsymbols,require_legacy_empty=True)
+
+
+class LegacyEmptyPlanTests(unittest.TestCase):
+    def setUp(self):
+        import test_lyra_current_transfer as fixtures
+        self.case=fixtures.CurrentSaveTransferTest();self.case.setUp()
+        self.addCleanup(self.case.doCleanups)
+
+    def prepare(self,version=5,*,bad_bank=False,bad_terminator=False):
+        from test_lyra_project_admission import observation
+        case=self.case;raw=json.loads(case.terrain.read_bytes())
+        raw.update(schema_version=version,gameplay_areas=[dict(parent_map_id=a,size='small',maps=[a])
+                                                       for a in range(0xA0,0xC0)])
+        auth=raw['maps'][16]['authoring']
+        auth['sprites']=[dict(id=20481,sprite_id=0x52,state=1,x=23,y=14)]
+        auth['doors']=[dict(id=24577,entrance_id=0x0B,x=21,y=9)]
+        auth['exits']=[dict(id=24578,room_id=0x83,exit_row=None,x=22,y=11)]
+        auth['properties']['background_palette']=list(range(128))
+        auth['asset_bindings']=['a'*64]*3
+        if version>=9:
+            from lyra_project_terrain import RUNTIME_PROPERTY_DEFAULTS
+            raw.update(next_flight_point_id=1,boat_transport=None,whirlpool_transport=None,
+                       next_native_resource_id=1)
+            for row in raw['maps']:
+                row['authoring']['native_resources']=None
+                row['authoring']['properties'].update(copy.deepcopy(RUNTIME_PROPERTY_DEFAULTS))
+        source=bytearray(case.rom.read_bytes());at=X.A.pc(0x1BC8BE)
+        source[at:at+5]=bytes.fromhex('a9e3008502' if bad_bank else 'a99b008502')
+        if bad_terminator:source[X.A.pc(X.A.EMPTY_HIDDEN_ITEMS)]=0
+        case.rom.write_bytes(source);case.terrain.write_bytes(X.P.encoded(raw))
+        case.inputs.update(rom=X.Q.bound(case.rom),terrain=X.Q.bound(case.terrain))
+        case.save['artifacts']=case.artifacts(case.inputs);case.receipt.write_bytes(X.P.encoded(case.save))
+        case.proof.clear();case.proof.update(observation(bytes(source),raw)[1])
+        case.proof['terrain_sha256']=X.R.sha(case.terrain.read_bytes())
+        return case.prepare()[1]
+
+    def test_receipt_bound_derivation_preserves_every_authored_byte(self):
+        request=self.prepare();case=self.case
+        before={p:p.read_bytes() for p in (case.rom,case.terrain,case.receipt,case.context_path)}
+        plan=X.legacy_empty_resource_plan(request,case.project,case.rom)
+        self.assertEqual((plan['hidden_bank'],plan['hidden_items'],plan['bomb_doors']),(0x9B,0xC5C2,0))
+        self.assertEqual(plan['maps'],list(range(0xA0,0xC0)))
+        self.assertEqual(plan['generation'],case.save['generation'])
+        self.assertFalse(plan['authored_document_modified']);self.assertFalse(plan['runtime_admission'])
+        self.assertEqual(before,{p:p.read_bytes() for p in before})
+        authored=json.loads(before[case.terrain])['maps'][16]['authoring']
+        self.assertEqual(authored['sprites'][0]['sprite_id'],0x52)
+        self.assertIsNone(authored['exits'][0]['exit_row'])
+        self.assertEqual(authored['properties']['background_palette'],list(range(128)))
+        case.terrain.write_bytes(before[case.terrain]+b' ')
+        with self.assertRaises(ValueError):X.legacy_empty_resource_plan(request,case.project,case.rom)
+
+    def test_schema9_unselected_is_never_legacy_empty(self):
+        request=self.prepare(9)
+        with self.assertRaisesRegex(ValueError,'SCHEMA5_REQUIRED'):
+            X.legacy_empty_resource_plan(request,self.case.project,self.case.rom)
+
+    def test_wrong_native_bank_refuses_before_deriving_tables(self):
+        request=self.prepare(bad_bank=True)
+        with self.assertRaisesRegex(ValueError,'NATIVE_PREIMAGE_MISMATCH'):
+            X.legacy_empty_resource_plan(request,self.case.project,self.case.rom)
+
+    def test_changed_empty_terminator_refuses_before_deriving_tables(self):
+        request=self.prepare(bad_terminator=True)
+        with self.assertRaisesRegex(ValueError,'NATIVE_PREIMAGE_MISMATCH'):
+            X.legacy_empty_resource_plan(request,self.case.project,self.case.rom)
+
+
 class CurrentBuildTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.owner=unittest.TestCase();cls.addClassCleanup(cls.owner.doCleanups)
+        import test_lyra_current_transfer as transfer_fixtures
+        source_rom=transfer_fixtures.source_rom
+        def legacy_source():
+            raw=bytearray(source_rom());at=X.A.pc(0x1BC8BE)
+            raw[at:at+5]=bytes.fromhex('a99b008502')
+            return bytes(raw)
+        patch=mock.patch.object(transfer_fixtures,'source_rom',legacy_source)
+        patch.start();cls.owner.addCleanup(patch.stop)
         areas=[dict(parent_map_id=a,size='small',maps=[a]) for a in range(0xA0,0xC0)]
         bg=getattr(cls,'BG128',False)
         if bg:
@@ -232,7 +342,7 @@ class CurrentBuildTest(unittest.TestCase):
             c.value['origins']['descriptor'].update(pc=[0x305800,0x305840],snes=[0xE0D800,0xE0D840])
             c.write()
         cls.compiled,cls.symbols=consumer_fixture(f.source,c.value['origins']['code']['snes'][0],
-                                                 bg_code=0xE0D000 if bg else None)
+                                                 bg_code=0xE0D000 if bg else None,legacy_empty=True)
         cls.expected=L.inspect_current_consumers(cls.compiled,cls.symbols)
         recipe=case.root/'tail-recipe.json';recipe.write_bytes(X.P.encoded({f'{a:02X}':r for a,r in f.rows.items()}))
         graphics=case.root/'current-graphics.asm';graphics.write_text('; Explicit host graphics fixture, not a resource grant.\n')
@@ -285,6 +395,9 @@ class CurrentBuildTest(unittest.TestCase):
                          'special_sprite_palettes_phase1', 'special_sprite_palettes_phase2'}
                         <= {row['name'] for row in p['tables']['tables']})
         self.assertIn(b'!LYRA_CURRENT_EVENTS_ENABLED = 1',self.files['runtime_constants.asm'])
+        self.assertIn(b'!LYRA_CURRENT_LEGACY_EMPTY_RESOURCES = 1',self.files['runtime_constants.asm'])
+        self.assertEqual(p['legacy_empty_resources']['authored_schema_version'],5)
+        self.assertFalse(p['legacy_empty_resources']['saved_state_modified'])
         self.assertIn(b'!LYRA_CURRENT_ACTORS_ENABLED = 1',self.files['runtime_constants.asm'])
         self.assertIn(b'Lyra_CurrentActorData:',self.files['runtime_data.asm'])
         self.assertIn(b'incbin "binaries/payload.bin":',self.files['runtime_data.asm'])

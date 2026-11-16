@@ -188,15 +188,7 @@ def _conditional_definitions(source, document):
     return pointer, raw
 
 
-def _conditional_source_policy(source, document, inspection, policy, *, resources=False):
-    keys = {'kind', 'source_epoch', 'selected_features', 'source_files',
-            'native_preimages', 'save_identity', 'area_tilesets'}
-    if not resources:
-        keys.add('tail_recipe')
-    _require(type(policy) is dict and set(policy) == keys
-             and policy['kind'] == (RESOURCE_POLICY_KIND if resources else CONDITIONAL_POLICY_KIND)
-             and type(policy['source_epoch']) is str
-             and re.fullmatch('[0-9a-f]{40}', policy['source_epoch']), 'CONDITIONAL_POLICY_INVALID')
+def _conditional_source_facts(source, policy, *, resources=False):
     features = policy['selected_features']
     _require(type(features) is dict and set(features) == {'ice_rod', 'area_tilesets'}
              and all(type(value) is bool for value in features.values()), 'CONDITIONAL_FEATURES_INVALID')
@@ -276,6 +268,20 @@ def _conditional_source_policy(source, document, inspection, policy, *, resource
         effective[index:index+3] = bytes.fromhex('0e5757')
         patches.append(dict(source_path='Items/ice_rod.asm', snes=0x0E95DC,
                             before_hex='515757', after_hex='0e5757'))
+    return bytes(effective), dict(snes=0x0E9459, byte_count=512,
+        source_sha256=_sha(native), effective_sha256=_sha(effective), patches=patches)
+
+
+def _conditional_source_policy(source, document, inspection, policy, *, resources=False):
+    keys = {'kind', 'source_epoch', 'selected_features', 'source_files',
+            'native_preimages', 'save_identity', 'area_tilesets'}
+    if not resources:
+        keys.add('tail_recipe')
+    _require(type(policy) is dict and set(policy) == keys
+             and policy['kind'] == (RESOURCE_POLICY_KIND if resources else CONDITIONAL_POLICY_KIND)
+             and type(policy['source_epoch']) is str
+             and re.fullmatch('[0-9a-f]{40}', policy['source_epoch']), 'CONDITIONAL_POLICY_INVALID')
+    effective, type_source = _conditional_source_facts(source, policy, resources=resources)
     if not resources:
         _conditional_recipe(policy['tail_recipe'])
     identity = policy['save_identity']
@@ -291,8 +297,7 @@ def _conditional_source_policy(source, document, inspection, policy, *, resource
         and identity['inspection_sha256'] == _sha(_json_bytes(inspection))
         and identity['document_sha256'] == conditional_document_identity(document),
         'CONDITIONAL_SAVE_IDENTITY_MISMATCH')
-    return bytes(effective), dict(snes=0x0E9459, byte_count=512,
-        source_sha256=_sha(native), effective_sha256=_sha(effective), patches=patches)
+    return effective, type_source
 
 
 def _conditional_recipe(recipe):
@@ -332,15 +337,7 @@ def derive_conditional_demands(source, document, inspection, *, source_policy):
     return _derive_conditional_demands(source, document, inspection, source_policy=source_policy)
 
 
-def _derive_conditional_demands(source, document, inspection, *, source_policy, resources=False):
-    """Shared pure target derivation; public compiler guards remain unchanged."""
-    areas = validated_gameplay_areas(document.gameplay_areas)
-    _require({page for area in areas for page in area['maps']} == set(range(FIRST, END))
-             and len(document.maps) == 32 and all(type(tiles) is tuple and len(tiles) == 1024
-                 for tiles in document.maps), 'CONDITIONAL_PAGES_INCOMPLETE')
-    pointer, definitions = _conditional_definitions(source, document)
-    types, type_source = _conditional_source_policy(source, document, inspection, source_policy,
-                                                   resources=resources)
+def _conditional_rows(document, definitions, types, *, ice_rod, areas):
     targets = {}
 
     def words(tile):
@@ -372,7 +369,7 @@ def _derive_conditional_demands(source, document, inspection, *, source_policy, 
                 add(page, 0xDC9, 'dig', dict(trigger, action='037A.low==1'))
             if tile in objects:
                 add(page, objects[tile], 'bush' if tile in (0x36, 0x72A) else 'small_object', trigger)
-            if source_policy['selected_features']['ice_rod'] and any(value in (3, 8) for value in quadrants):
+            if ice_rod and any(value in (3, 8) for value in quadrants):
                 add(page, 0xB7, 'ice_rod_water', dict(trigger,
                     eligible_quadrants=[q for q, value in enumerate(quadrants) if value in (3, 8)]))
 
@@ -413,6 +410,20 @@ def _derive_conditional_demands(source, document, inspection, *, source_policy, 
     for _, row in sorted(targets.items()):
         rows.append(dict(row, families=sorted(row['families']),
                          triggers=[value for _, value in sorted(row['triggers'].items())]))
+    return rows
+
+
+def _derive_conditional_demands(source, document, inspection, *, source_policy, resources=False):
+    """Shared pure target derivation; public compiler guards remain unchanged."""
+    areas = validated_gameplay_areas(document.gameplay_areas)
+    _require({page for area in areas for page in area['maps']} == set(range(FIRST, END))
+             and len(document.maps) == 32 and all(type(tiles) is tuple and len(tiles) == 1024
+                 for tiles in document.maps), 'CONDITIONAL_PAGES_INCOMPLETE')
+    pointer, definitions = _conditional_definitions(source, document)
+    types, type_source = _conditional_source_policy(source, document, inspection, source_policy,
+                                                   resources=resources)
+    rows = _conditional_rows(document, definitions, types,
+        ice_rod=source_policy['selected_features']['ice_rod'], areas=areas)
     result = dict(kind=CONDITIONAL_KIND, scope='saved_terrain_direct_trigger_subset',
         source_policy=copy.deepcopy(source_policy),
         source_policy_sha256=_sha(_json_bytes(source_policy)),
@@ -430,6 +441,99 @@ def _derive_conditional_demands(source, document, inspection, *, source_policy, 
         compiled_consumers_verified=False, resource_closure_verified=False,
         rom_written=False, selected=False)
     result['witness_sha256'] = _sha(_json_bytes(result))
+    return result
+
+
+def census_schema5_conditional_demands(source, document, inspection, *, terrain_raw,
+                                      source_snapshot, saved_inputs):
+    """Read-only schema5 census; never a policy, committed epoch or Build witness.
+
+    The caller authenticates/rechecks the real Save receipt, context and selected
+    producer. This pure layer binds their identities and reparses the exact
+    saved bytes, retaining the approved no-authored-secrets semantics. It never
+    manufactures a tail recipe, transfer ID, source epoch or allocation.
+    """
+    from lyra_project_terrain import parse_terrain_document
+    _require(type(source) is bytes and type(terrain_raw) is bytes
+             and isinstance(document, TerrainDocument), 'SCHEMA5_CENSUS_INPUT_INVALID')
+    try:
+        raw = json.loads(terrain_raw)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError('SCHEMA5_CENSUS_DOCUMENT_INVALID') from error
+    _require(type(raw) is dict and type(raw.get('schema_version')) is int
+             and raw['schema_version'] == 5 and not has_native_resource_history(document)
+             and len(document.authoring) == 32
+             and all('native_resources' not in row for row in document.authoring)
+             and document.boat_transport is None and document.whirlpool_transport is None,
+             'SCHEMA5_CENSUS_LEGACY_DOCUMENT_REQUIRED')
+    rebound = parse_terrain_document(terrain_raw, document.profile, allow_authoring_drafts=True,
+        expected_asset_bindings={FIRST+i: tuple(row['asset_bindings'])
+                                 for i, row in enumerate(document.authoring)})
+    _require(rebound == document, 'SCHEMA5_CENSUS_DOCUMENT_MISMATCH')
+    roles = {'project', 'rom', 'terrain', 'save_receipt', 'save_context', 'producer'}
+    _require(type(saved_inputs) is dict
+             and set(saved_inputs) == roles | {'generation', 'operation_id'}
+             and type(saved_inputs['generation']) is int
+             and 0 < saved_inputs['generation'] <= 0xFFFFFFFFFFFFFFFF
+             and type(saved_inputs['operation_id']) is str and saved_inputs['operation_id'],
+             'SCHEMA5_CENSUS_SAVE_UNBOUND')
+    for name in roles:
+        binding = saved_inputs[name]
+        _require(type(binding) is dict and set(binding) == {'path', 'sha256'}
+                 and type(binding['path']) is str and Path(binding['path']).is_absolute()
+                 and _digest(binding['sha256']), 'SCHEMA5_CENSUS_SAVE_UNBOUND')
+    _require(saved_inputs['rom']['sha256'] == _sha(source)
+             and saved_inputs['terrain']['sha256'] == _sha(terrain_raw)
+             and type(inspection) is dict
+             and inspection.get('source_rom_sha256') == _sha(source)
+             and inspection.get('terrain_sha256') == _sha(terrain_raw)
+             and inspection.get('project_descriptor_path') == saved_inputs['project']['path']
+             and inspection.get('project_descriptor_sha256') == saved_inputs['project']['sha256'],
+             'SCHEMA5_CENSUS_SAVE_MISMATCH')
+    keys = {'kind', 'source_epoch', 'qualified', 'selected_features',
+            'source_files', 'native_preimages', 'area_tilesets'}
+    _require(type(source_snapshot) is dict and set(source_snapshot) == keys
+             and source_snapshot['kind'] == 'lyra.uncommitted_schema5_census_source.v1'
+             and source_snapshot['source_epoch'] is None and source_snapshot['qualified'] is False,
+             'SCHEMA5_CENSUS_SOURCE_UNQUALIFIED_REQUIRED')
+    # The approved compatibility path uses the existing empty terminator and
+    # ordinary event behavior; it neither allocates E3 nor invents authored rows.
+    empty = sheet_table.pc(0x9BC5C2)
+    bank = sheet_table.pc(0x1BC8BE)
+    _require(source[empty:empty+2] == b'\xff\xff'
+             and source[bank:bank+5] == bytes.fromhex('a99b008502'),
+             'SCHEMA5_CENSUS_LEGACY_PREIMAGE_MISMATCH')
+    areas = validated_gameplay_areas(document.gameplay_areas)
+    _require({page for area in areas for page in area['maps']} == set(range(FIRST, END)),
+             'SCHEMA5_CENSUS_AREAS_INCOMPLETE')
+    pointer, definitions = _conditional_definitions(source, document)
+    types, type_source = _conditional_source_facts(source, source_snapshot)
+    rows = _conditional_rows(document, definitions, types,
+        ice_rod=source_snapshot['selected_features']['ice_rod'], areas=areas)
+    conditional_tiles = {}
+    for row in rows:
+        conditional_tiles.setdefault(row['map_id'], set()).add(row['tile16_id'])
+    read_sheet, sheets = _source_sheets(source)
+    assets = _inspection_rows(source, document, inspection, _sha(terrain_raw), read_sheet)
+    packed = [_plan_area(area, document, assets, definitions, read_sheet, conditional_tiles)
+              for area in sorted(areas, key=lambda row: row['parent_map_id'])]
+    result = dict(kind='lyra.schema5_conditional_census.v1', scope='unqualified_read_only_census',
+        saved_inputs=copy.deepcopy(saved_inputs), source_snapshot=copy.deepcopy(source_snapshot),
+        source_snapshot_sha256=_sha(_json_bytes(source_snapshot)),
+        inspection_sha256=_sha(_json_bytes(inspection)),
+        document_sha256=conditional_document_identity(document),
+        tile16_definition_snes=pointer, tile16_definition_sha256=_sha(definitions),
+        legacy_semantics='no_authored_secrets_preserve_ordinary_events',
+        native_type_source=type_source, rows=rows,
+        additional_rows=[dict(map_id=row['map_id'], tile16_id=row['tile16_id'])
+                         for row in rows if not row['already_authored']],
+        resident_areas=packed, decoded_sheets=[sheets[key] for key in sorted(sheets)],
+        unclosed_families=list(CONDITIONAL_UNCLOSED), selected=False,
+        source_epoch_qualified=False, transfer_created=False, recipe_created=False,
+        allocation_granted=False, publication_authorized=False, ordinary_build_ready=False,
+        runtime_admission=False, compiled_consumers_verified=False,
+        resource_closure_verified=False, rom_written=False)
+    result['census_sha256'] = _sha(_json_bytes(result))
     return result
 
 
@@ -1068,7 +1172,48 @@ def plan_native_resident_abi(resident_plan, *, tile16_count):
         'full_residency_ready', 'appearance_coherent', 'allocation_granted',
         'publication_authorized', 'ordinary_build_ready', 'runtime_admission',
         'compiled_consumers_verified')), 'NATIVE_SOURCE_AUTHORITY_INVALID')
-    source_areas = resident_plan.get('areas')
+    return _lower_native_resident_abi(resident_plan.get('areas'), tile16_count=tile16_count,
+        source_digest=supplied, source_metadata=resident_plan)
+
+
+def plan_schema5_census_abi(source, document, inspection, *, terrain_raw,
+                           source_snapshot, saved_inputs, census):
+    """Lower a rederived schema5 census to unplaced, non-admitting ABI bytes.
+
+    The caller authenticates the Save/producer and source snapshot just as for
+    the census API. This entry rederives all census values, including palettes,
+    remaps and page membership; a self-consistent supplied digest is not proof.
+    Its distinct result is not a historical resident plan or native ABI input.
+    No policy, recipe, profile, ROM origin or allocation is accepted/created.
+    """
+    expected = census_schema5_conditional_demands(source, document, inspection,
+        terrain_raw=terrain_raw, source_snapshot=source_snapshot, saved_inputs=saved_inputs)
+    _require(type(census) is dict and _json_bytes(census) == _json_bytes(expected),
+             'SCHEMA5_ABI_CENSUS_MISMATCH')
+    tile16_count = document.profile['tile_count']
+    _require(type(tile16_count) is int and 0 < tile16_count <= 4096,
+             'NATIVE_TILE16_COUNT_INVALID')
+    result = _lower_native_resident_abi(expected['resident_areas'],
+        tile16_count=tile16_count, source_digest=expected['census_sha256'],
+        source_metadata=dict(unknowns=list(dict.fromkeys(
+            [*UNKNOWNS, *expected['unclosed_families']]))))
+    del result['source_plan_sha256']
+    del result['abi_sha256']
+    result.update(kind='lyra.schema5_census_native_abi.v1',
+        scope='unqualified_census_native_abi_data_only',
+        source_census_sha256=expected['census_sha256'],
+        saved_inputs=copy.deepcopy(expected['saved_inputs']),
+        source_snapshot_sha256=expected['source_snapshot_sha256'],
+        source_epoch_qualified=False, inspection_sha256=expected['inspection_sha256'],
+        document_sha256=expected['document_sha256'],
+        resource_closure_verified=False, transfer_created=False, recipe_created=False,
+        rom_written=False)
+    result['abi_sha256'] = _sha(_json_bytes(result))
+    return result
+
+
+def _lower_native_resident_abi(source_areas, *, tile16_count, source_digest, source_metadata):
+    """Shared byte codec; each public entry retains its own provenance gates."""
     _require(type(source_areas) is list and 0 < len(source_areas) <= 32,
              'NATIVE_AREAS_INVALID')
     try:
@@ -1166,7 +1311,7 @@ def plan_native_resident_abi(resident_plan, *, tile16_count):
     counts['page_directory'] = (END - FIRST) * NATIVE_DIRECTORY_STRIDE
     counts['animation_directory'] = (END - FIRST) * NATIVE_ANIMATION_DIRECTORY_STRIDE
     result = dict(kind=NATIVE_KIND, abi_version=NATIVE_ABI_VERSION,
-        source_plan_sha256=supplied, tile16_count=tile16_count,
+        source_plan_sha256=source_digest, tile16_count=tile16_count,
         directory_label='LyraResidentPageDirectory', directory_stride=NATIVE_DIRECTORY_STRIDE,
         animation_directory_label='LyraResidentAnimationDirectory',
         animation_directory_stride=NATIVE_ANIMATION_DIRECTORY_STRIDE,
@@ -1176,7 +1321,7 @@ def plan_native_resident_abi(resident_plan, *, tile16_count):
         consumer_status=dict(page_word_lookup='source_abi_only',
             main_chr_staging_implemented=False, palette_lifecycle_implemented=False,
             animation_lifecycle_implemented=False, resource_closure_verified=False),
-        unknowns=copy.deepcopy(resident_plan['unknowns']),
+        unknowns=copy.deepcopy(source_metadata['unknowns']),
         missing_row_semantics='unqualified native fallback; resource closure remains unknown',
         selected=False, allocation_granted=False, publication_authorized=False,
         ordinary_build_ready=False, runtime_admission=False, compiled_consumers_verified=False)
@@ -1284,21 +1429,117 @@ def validate_native_resident_abi(native_plan):
     return by_label
 
 
+def _native_blob_end(blobs, by_label, cursor):
+    for blob in blobs:
+        size = len(by_label[blob['label']])
+        if cursor % 0x8000 + size > 0x8000:
+            cursor = (cursor // 0x8000 + 1) * 0x8000
+        cursor += size
+    return cursor
+
+
+# Fixed optimization budget, not a source/project size or admission limit.
+# Count state cells, scanned items, newly discovered sums and selection work.
+# Exhaustion falls back to the historical sequential algorithm; no candidate
+# result or claim of globally impossible packing is returned on exhaustion.
+NATIVE_BANK_SUBSET_WORK_LIMIT = 1048576
+
+
+def _native_bank_subset_order(blobs, by_label, cursor):
+    """Bounded whole-blob optimization; None explicitly requests fallback.
+
+    Original indices are visited in order; the first discovery of a sum wins.
+    Choose the largest reachable fill, retaining input order inside each group.
+    This is deterministic, not a claim of globally optimal bin packing. The
+    caller compares its complete extent with canonical order before using it.
+    Per-bank sums and bitsets are bounded by 32769 positions. The fixed work
+    budget also bounds repeated scans and the inner discovered-sum loop.
+    """
+    work = NATIVE_BANK_SUBSET_WORK_LIMIT
+    if len(blobs) > work:
+        return None
+    work -= len(blobs)
+    remaining, ordered = list(blobs), []
+    while remaining:
+        room = 0x8000 - cursor % 0x8000
+        if room + 1 > work:
+            return None
+        work -= room + 1
+        reachable, parents = 1, [None] * (room + 1)
+        mask = (1 << (room + 1)) - 1
+        for index, blob in enumerate(remaining):
+            if work == 0:
+                return None
+            work -= 1
+            size = len(by_label[blob['label']])
+            added = ((reachable << size) & mask) & ~reachable
+            discoveries = added.bit_count()
+            if discoveries > work:
+                return None
+            work -= discoveries  # Charge the complete inner loop before it runs.
+            reachable |= added
+            while added:
+                total = added.bit_length() - 1
+                parents[total] = (total - size, index)
+                added ^= 1 << total
+            if reachable & (1 << room):
+                break  # Later indices cannot improve this first exact fill.
+        total = reachable.bit_length() - 1
+        if total == 0:
+            cursor += room
+            continue
+        selected, trace = set(), total
+        while trace:
+            if work == 0:
+                return None
+            work -= 1
+            trace, index = parents[trace]
+            selected.add(index)
+        if 2 * len(remaining) > work:
+            return None
+        work -= 2 * len(remaining)
+        ordered.extend(blob for index, blob in enumerate(remaining) if index in selected)
+        remaining = [blob for index, blob in enumerate(remaining) if index not in selected]
+        cursor += total
+    return ordered
+
+
 def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
-                             binary_path='binaries/resident-atlas.bin'):
+                             binary_path='binaries/resident-atlas.bin', placement_mode=None):
     """Emit bytes/source for an explicit caller-owned ROM interval, without I/O.
 
     This mechanically places each blob inside one LoROM bank. It accepts no
     default address and makes no claim that the interval or runtime is granted.
     The owning publisher must authenticate and rederive the complete plan.
+    Optional bank_subset_v1 is separately selected and never worse in total
+    extent than canonical order. No existing caller implicitly selects it.
     """
     by_label = validate_native_resident_abi(native_plan)
+    result = _emit_native_resident_abi_bytes(native_plan, by_label, data_pc=data_pc,
+        capacity=capacity, preimage=preimage, binary_path=binary_path,
+        placement_mode=placement_mode)
+    result['kind'] = 'lyra.resident_atlas_native_emission.v1'
+    return result
+
+
+def _emit_native_resident_abi_bytes(native_plan, by_label, *, data_pc, capacity,
+                                   preimage, binary_path='binaries/resident-atlas.bin',
+                                   placement_mode=None):
+    """Pure internal placement of already validated bytes; not an admission API.
+
+    Public emission/bridge callers still validate the historical native kind.
+    A separately authenticated, non-admitting fixture may exercise this core
+    with census bytes without relabeling the census or producing a profile.
+    """
     _require(type(data_pc) is int and type(capacity) is int
              and 0 <= data_pc < data_pc + capacity <= 0x400000
              and type(preimage) is bytes and len(preimage) == capacity,
              'NATIVE_ORIGIN_PREIMAGE_REQUIRED')
     _require(type(binary_path) is str and re.fullmatch(r'binaries/[A-Za-z0-9_-]+\.bin', binary_path),
              'NATIVE_BINARY_PATH_INVALID')
+    _require(placement_mode is None or
+             (type(placement_mode) is str and placement_mode == 'bank_subset_v1'),
+             'NATIVE_PLACEMENT_MODE_INVALID')
     cursor, binary, placements = data_pc, bytearray(), []
 
     def snes(pc):
@@ -1321,7 +1562,21 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
     directory = place(native_plan['directory_label'], bytes(256), 'page_directory')
     animation_directory = place(native_plan['animation_directory_label'],
         bytes((END - FIRST) * NATIVE_ANIMATION_DIRECTORY_STRIDE), 'animation_directory')
-    for blob in native_plan['blobs']:
+    ordered = native_plan['blobs']
+    strategy = None
+    if placement_mode is not None:
+        _require(sum(len(by_label[row['label']]) for row in ordered) + len(binary) <= capacity,
+                 'NATIVE_ALLOCATION_CAPACITY')
+        candidate = _native_bank_subset_order(ordered, by_label, cursor)
+        if candidate is None:
+            strategy = 'sequential_work_limit'
+            _require(_native_blob_end(ordered, by_label, cursor) <= data_pc + capacity,
+                     'NATIVE_SUBSET_WORK_LIMIT_CAPACITY: sequential fallback exceeds capacity')
+        elif _native_blob_end(candidate, by_label, cursor) < _native_blob_end(ordered, by_label, cursor):
+            ordered, strategy = candidate, 'bank_subset'
+        else:
+            strategy = 'sequential_fallback'
+    for blob in ordered:
         place(blob['label'], by_label[blob['label']], blob['role'])
     addresses = {row['label']: row['snes'] for row in placements}
     directory_raw = b''.join(addresses[page['index_label']].to_bytes(3, 'little')
@@ -1355,7 +1610,7 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
         + f'!LYRA_CURRENT_RESIDENT_TILE16_COUNT = {native_plan["tile16_count"]}\n'
         + f'!LYRA_CURRENT_RESIDENT_DIRECTORY = ${directory["snes"]:06X}\n')
     constants += (f'!LYRA_CURRENT_RESIDENT_ANIMATION_DIRECTORY = ${animation_directory["snes"]:06X}\n')
-    return dict(kind='lyra.resident_atlas_native_emission.v1',
+    result = dict(kind='lyra.resident_abi_byte_placement.v1',
         abi_sha256=native_plan['abi_sha256'], data_pc=[data_pc, data_pc + capacity],
         preimage_sha256=_sha(preimage), used_pc_end=cursor,
         used_extent_bytes=cursor-data_pc, bank_padding_bytes=cursor-data_pc-len(binary),
@@ -1364,6 +1619,11 @@ def emit_native_resident_abi(native_plan, *, data_pc, capacity, preimage,
         runtime_data_asm='\n'.join(lines), constants_asm=constants,
         selected=False, allocation_granted=False, publication_authorized=False,
         ordinary_build_ready=False, runtime_admission=False)
+    if placement_mode is not None:
+        result.update(placement_mode=placement_mode, placement_strategy=strategy)
+        if strategy == 'sequential_work_limit':
+            result['placement_work_limit'] = NATIVE_BANK_SUBSET_WORK_LIMIT
+    return result
 
 
 def resident_bg128_rows(native_plan):
@@ -1374,7 +1634,7 @@ def resident_bg128_rows(native_plan):
         for page in native_plan['pages']]
 
 
-def resident_runtime_inputs(native_plan, emission, *, preimage):
+def resident_runtime_inputs(native_plan, emission, *, preimage, placement_mode=None):
     """Bridge verified resident placements to the existing SharedGraphics ABI.
 
     The resident emitter remains the sole payload writer. Its complete output
@@ -1387,8 +1647,9 @@ def resident_runtime_inputs(native_plan, emission, *, preimage):
              and all(type(value) is int for value in emission['data_pc']),
              'NATIVE_EMISSION_INVALID')
     first, end = emission['data_pc']
+    # Mode is caller-selected, never inferred from the supplied emission.
     expected = emit_native_resident_abi(native_plan, data_pc=first, capacity=end-first,
-        preimage=preimage, binary_path=emission.get('binary_path'))
+        preimage=preimage, binary_path=emission.get('binary_path'), placement_mode=placement_mode)
     _require(expected == emission, 'NATIVE_EMISSION_MISMATCH')
     placements = {row['label']: row for row in expected['placements']}
     resources, profiles, parents = {}, {}, {}

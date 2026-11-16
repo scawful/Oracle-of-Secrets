@@ -180,14 +180,15 @@ def lyra_owned_regions(verification_path: Path, rom_path: Path, symbols_path: Pa
     import lyra_project_allocation as R
     import lyra_project_publisher as P
 
-    folder = Path(input_path) if input_path is not None else REPO_ROOT / P.OUTPUT
+    from lyra_generated_inputs import selected_folder
+    folder = Path(input_path) if input_path is not None else selected_folder(REPO_ROOT)
     current_prior = json.loads((folder / 'prepare.json').read_bytes())
     if current_prior.get('kind') == 'lyra.current_build_prepare.v1':
         import lyra_current_transfer as current
         R.require(Path(rom_path).resolve() == Path(current_prior['terrain_plan']['target']['path']),
                   'CURRENT_BUILD_TARGET_MISMATCH')
         with current.candidate_inspection(rom_path):
-            files = current.verify_current_context(P.ROOT,current_prior)
+            files = current.verify_current_context(P.ROOT,current_prior,input_folder=folder)
             compiled,symbols = Path(rom_path).read_bytes(),Path(symbols_path).read_bytes()
             proof = json.loads(Path(verification_path).read_bytes())
             actual = current.verify_current_output(current_prior,compiled,symbols)

@@ -7,6 +7,14 @@ assert !LYRA_CURRENT_EVENT_BASE >= $7EF412 && !LYRA_CURRENT_EVENT_BASE+$20 <= $7
 assert !LYRA_CURRENT_EVENT_VERSION >= $7EF412 && !LYRA_CURRENT_EVENT_VERSION < $7EF4FE
 assert !LYRA_CURRENT_EVENT_VERSION < !LYRA_CURRENT_EVENT_BASE || !LYRA_CURRENT_EVENT_VERSION >= !LYRA_CURRENT_EVENT_BASE+$20
 assert !LYRA_CURRENT_EVENT_MARKER > 0 && !LYRA_CURRENT_EVENT_MARKER <= $FF
+if not(defined("LYRA_CURRENT_LEGACY_EMPTY_RESOURCES"))
+  !LYRA_CURRENT_LEGACY_EMPTY_RESOURCES = 0
+endif
+assert !LYRA_CURRENT_LEGACY_EMPTY_RESOURCES == 0 || !LYRA_CURRENT_LEGACY_EMPTY_RESOURCES == 1
+if !LYRA_CURRENT_LEGACY_EMPTY_RESOURCES == 1
+  ; Empty pointers retain the verified native $9B terminator, never E3 data.
+  assert !LYRA_CURRENT_HIDDEN_STREAMS_BOUND == 0
+endif
 
 ; Stores and most loads enter M8; the hidden-item read at1BC902 is M16 and
 ; immediately masks with0002. Keep each caller's A width, X/Y, DBR and D;
@@ -40,6 +48,28 @@ Lyra_TailEvent_Store:
   RTL
 }
 
+if !LYRA_CURRENT_LEGACY_EMPTY_RESOURCES == 1
+; Only the M8 bomb-restoration caller at02EF56 uses this view. An absent
+; bomb offset is zero, which is also a real top-left location. Mask only A,
+; never SRAM: retained event bits, other readers and migration are unchanged.
+; Preserve X/Y/DBR/D, hidden B and P except LDA/AND N/Z; X may enter8 or16.
+Lyra_TailEvent_LoadLegacyEmptyBomb:
+{
+  PHP : REP #$10
+  CPX.w #$00A0 : BCC .native
+  CPX.w #$00C0 : BCS .native
+    PLP
+    LDA.l !LYRA_CURRENT_EVENT_BASE-$A0, X
+    AND.b #$FD
+    RTL
+  .native
+  PLP
+  LDA.l $7EF280, X
+  RTL
+}
+Lyra_TailEvent_LoadLegacyEmptyBomb_End:
+endif
+
 ; File-load/Continue migration runs before the ordinary spawn selector.
 ; Preserve full A/X and P, including hidden B, for every caller width.
 ; The existing vanilla save copy/checksum/new-file clear owns these bytes.
@@ -67,7 +97,13 @@ pushpc
 assert read1($02EF48) == $BF && read3($02EF48+1) == $7EF280, "TailEvent hook $02EF48: unexpected bytes"
 org $02EF48 : JSL Lyra_TailEvent_Load ; @hook module=Overworld kind=jsl expected_m=8 name=TailEventLoad02EF48
 assert read1($02EF56) == $BF && read3($02EF56+1) == $7EF280, "TailEvent hook $02EF56: unexpected bytes"
+if !LYRA_CURRENT_LEGACY_EMPTY_RESOURCES == 1
+assert read2($02EF40) == $30E2 && read2($02EF54) == $8AA6, "Empty bomb restoration M8 caller moved"
+assert read4($02EF5A) == $1BF00229, "Empty bomb restoration branch moved"
+org $02EF56 : JSL Lyra_TailEvent_LoadLegacyEmptyBomb ; @hook module=Overworld kind=jsl expected_m=8 name=TailEventEmptyBomb02EF56
+else
 org $02EF56 : JSL Lyra_TailEvent_Load ; @hook module=Overworld kind=jsl expected_m=8 name=TailEventLoad02EF56
+endif
 assert read1($0588DF) == $BF && read3($0588DF+1) == $7EF280, "TailEvent hook $0588DF: unexpected bytes"
 org $0588DF : JSL Lyra_TailEvent_Load ; @hook module=Overworld kind=jsl expected_m=8 name=TailEventLoad0588DF
 assert read1($0589A5) == $BF && read3($0589A5+1) == $7EF280, "TailEvent hook $0589A5: unexpected bytes"

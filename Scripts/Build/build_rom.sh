@@ -97,10 +97,80 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# A Windows Python child folds environment names. Refuse noncanonical spellings
+# here rather than letting Bash treat a selected request as an ordinary build.
+selection_nocasematch=0
+if shopt -q nocasematch; then selection_nocasematch=1; fi
+shopt -s nocasematch
+while IFS= read -r selection_setting; do
+  case "$selection_setting" in
+    OOS_LYRA_PROJECT|OOS_LYRA_CANDIDATE|OOS_LYRA_REQUEST|OOS_LYRA_BUILD_ID|OOS_LYRA_BUILD_CONTEXT)
+      if [ "$selection_setting" != OOS_LYRA_PROJECT ] &&
+         [ "$selection_setting" != OOS_LYRA_CANDIDATE ] &&
+         [ "$selection_setting" != OOS_LYRA_REQUEST ] &&
+         [ "$selection_setting" != OOS_LYRA_BUILD_ID ] &&
+         [ "$selection_setting" != OOS_LYRA_BUILD_CONTEXT ]; then
+        echo "ERROR: Noncanonical Lyra environment name: $selection_setting" >&2
+        exit 1
+      fi
+      ;;
+  esac
+done < <(compgen -e)
+if [[ "$selection_nocasematch" == "0" ]]; then shopt -u nocasematch; fi
+
+# Reject incomplete selection before creating ordinary output directories,
+# receipts, flag backups or generated inputs. Later stage checks remain useful
+# defense in depth, but cannot protect the earlier ordinary-build writes.
+if [[ -z "${OOS_LYRA_PROJECT:-}" &&
+      ( -n "${OOS_LYRA_CANDIDATE:-}" || -n "${OOS_LYRA_REQUEST:-}" || -n "${OOS_LYRA_BUILD_ID:-}" ) ]]; then
+  echo "ERROR: Lyra selection inputs require OOS_LYRA_PROJECT: OOS_LYRA_CANDIDATE, OOS_LYRA_REQUEST, OOS_LYRA_BUILD_ID." >&2
+  exit 1
+fi
+
 repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
+if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
+  # Windows environment names are case-insensitive. Reject ambient gameplay
+  # endpoints and scrub every spelling of Python's cache controls before the
+  # first helper starts; ordinary builds retain their existing environment.
+  selected_nocasematch=0
+  if shopt -q nocasematch; then selected_nocasematch=1; fi
+  shopt -s nocasematch
+  while IFS= read -r selected_setting; do
+    case "$selected_setting" in
+      OOS_TEST_SOCKET)
+        if [[ -n "${!selected_setting}" ]]; then
+          echo "ERROR: Selected Lyra Build cannot use ambient OOS_TEST_SOCKET." >&2
+          exit 1
+        fi
+        unset "$selected_setting"
+        ;;
+      PYTHONPYCACHEPREFIX|PYTHONDONTWRITEBYTECODE)
+        unset "$selected_setting"
+        ;;
+    esac
+  done < <(compgen -e)
+  if [[ "$selected_nocasematch" == "0" ]]; then shopt -u nocasematch; fi
+  export PYTHONDONTWRITEBYTECODE=1
+  repo_root="$(cd "$repo_root" && pwd -P)"
+fi
 rom_dir="$repo_root/Roms"
 feature_flags_path="$repo_root/Config/feature_flags.asm"
-mkdir -p "$rom_dir"
+if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
+  if [[ -z "${OOS_LYRA_CANDIDATE:-}" || "$version" != "168" ]]; then
+    echo "ERROR: Selected Lyra Build requires a private current168 candidate." >&2
+    exit 1
+  fi
+  if [[ -n "$feat_enable" || -n "$feat_disable" || "$feat_profile" != "defaults" || "$persist_flags" == "1" ]]; then
+    echo "ERROR: Selected Lyra Build cannot modify engine feature flags." >&2
+    exit 1
+  fi
+  if [[ "$reload" == "1" || "$mesen_sync" == "1" ]]; then
+    echo "ERROR: Selected Lyra Build requires the dedicated Run lifecycle; reload/sync is unavailable." >&2
+    exit 1
+  fi
+else
+  mkdir -p "$rom_dir"
+fi
 
 # Optional: temporarily generate Config/feature_flags.asm for this build, then restore.
 flags_modified=0
@@ -198,15 +268,15 @@ fi
 
 # Source sheets must match the selected editable base and tracked generated
 # streams. Refuse a changed base sheet before replacing any prior build output.
-run_check source_sprite_sheets 1 python3 "$repo_root/Scripts/Generate/sheet_overrides.py" \
-  --root "$repo_root" --base-rom "$base_rom" --check --respect-flags --rom-role editable_base
-run_check snowpeak_sheet 1 python3 "$repo_root/Scripts/Generate/sheet_overrides.py" \
+run_graphics_source_check source_sprite_sheets python3 "$repo_root/Scripts/Generate/sheet_overrides.py" \
+  --root "$repo_root" --base-rom "$base_rom" --check --rom-role editable_base
+run_graphics_source_check snowpeak_sheet python3 "$repo_root/Scripts/Generate/sheet_overrides.py" \
   "$repo_root/Data/graphics/snowpeak_sheet.json" \
   --out-dir "$repo_root/Core/Generated/source_sprite_sheets/snowpeak" \
-  --root "$repo_root" --base-rom "$base_rom" --check --respect-flags --rom-role editable_base
+  --root "$repo_root" --base-rom "$base_rom" --check --rom-role editable_base
 
 # Prototype HUD icons preserve every unallocated tile in the editable base.
-run_check menu_icon_sheets 1 python3 "$repo_root/Scripts/Generate/menu_icon_overrides.py" \
+run_graphics_source_check menu_icon_sheets python3 "$repo_root/Scripts/Generate/menu_icon_overrides.py" \
   --root "$repo_root" --base-rom "$base_rom" --check
 
 # Custom collision is editor-authored but source-owned. Fail before generating
@@ -222,8 +292,12 @@ echo "[*] Validating expanded message source contract..."
 run_check message_source 1 python3 "$repo_root/Scripts/Generate/validate_expanded_message_source.py" \
   --root "$repo_root"
 
-run_check joint_palette_source 1 python3 "$repo_root/Scripts/Generate/joint_palette_directory.py" \
-  --root "$repo_root" --check
+# Selected preparation can enable joint palettes. Its single check must use
+# that final authenticated context; ordinary builds retain the early check.
+if [[ -z "${OOS_LYRA_PROJECT:-}" ]]; then
+  run_graphics_source_check joint_palette_source python3 "$repo_root/Scripts/Generate/joint_palette_directory.py" \
+    --root "$repo_root" --check
+fi
 
 # Shared checkpoints use the existing source/receipt route. Feature defaults off;
 # active candidates require the exact native source-control record and symbols.
@@ -245,7 +319,7 @@ if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
     echo "ERROR: Selected Lyra publication requires symbols for compiled-reader verification." >&2
     exit 1
   fi
-  lyra_args+=(--project "$OOS_LYRA_PROJECT" --base-rom "$base_rom")
+  lyra_args+=(--project "$OOS_LYRA_PROJECT" --base-rom "$base_rom" --output "$lyra_input_dir")
   if [[ -n "${OOS_LYRA_REQUEST:-}" ]]; then
     lyra_args+=(--request "$OOS_LYRA_REQUEST")
   fi
@@ -256,10 +330,14 @@ fi
 run_check lyra_prepare 1 python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" prepare \
   ${lyra_args[@]+"${lyra_args[@]}"}
 if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
-  lyra_assembler_args+=("-DLYRA_BUILD_CONTEXT=1")
+  lyra_assembler_args+=("-DLYRA_BUILD_CONTEXT=1" "-DLYRA_GENERATED_ROOT=$lyra_input_dir")
   export OOS_LYRA_BUILD_CONTEXT=1
 fi
-receipt artifact --name lyra_prepare --path "$repo_root/Data/Generated/lyra_project/prepare.json"
+receipt artifact --name lyra_prepare --path "$lyra_input_dir/prepare.json"
+if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
+  run_graphics_source_check joint_palette_source python3 "$repo_root/Scripts/Generate/joint_palette_directory.py" \
+    --root "$repo_root" --check
+fi
 
 # Keep water-gate runtime tables synced with the validated editor-authored base
 # ROM. The tracked custom-collision source contract guarantees that marker
@@ -339,22 +417,28 @@ else
   fi
 fi
 
-backup_root_default="$HOME/Documents/OracleOfSecrets/Roms"
-backup_root="${OOS_BACKUP_ROOT:-$backup_root_default}"
-if ! mkdir -p "$backup_root" 2>/dev/null; then
-  # Some environments (including sandboxed agents) cannot write to $HOME/Documents.
-  # Fall back to a repo-local archive directory so builds remain usable.
+if [[ -n "${OOS_LYRA_CANDIDATE:-}" ]]; then
+  # Fresh selected generations have no previous ROM to archive. Keep even the
+  # writability probe in the private generation, never the user's shared backup.
   backup_root="$rom_dir/_archives"
-  mkdir -p "$backup_root"
-  echo "WARNING: backup root not writable; using: $backup_root" >&2
 else
-  # Some environments can create the directory but disallow file writes.
-  if ! tmpfile="$(mktemp "$backup_root/.writetest.XXXXXX" 2>/dev/null)"; then
+  backup_root_default="$HOME/Documents/OracleOfSecrets/Roms"
+  backup_root="${OOS_BACKUP_ROOT:-$backup_root_default}"
+  if ! mkdir -p "$backup_root" 2>/dev/null; then
+    # Some environments (including sandboxed agents) cannot write to $HOME/Documents.
+    # Fall back to a repo-local archive directory so builds remain usable.
     backup_root="$rom_dir/_archives"
     mkdir -p "$backup_root"
     echo "WARNING: backup root not writable; using: $backup_root" >&2
   else
-    rm -f "$tmpfile" || true
+    # Some environments can create the directory but disallow file writes.
+    if ! tmpfile="$(mktemp "$backup_root/.writetest.XXXXXX" 2>/dev/null)"; then
+      backup_root="$rom_dir/_archives"
+      mkdir -p "$backup_root"
+      echo "WARNING: backup root not writable; using: $backup_root" >&2
+    else
+      rm -f "$tmpfile" || true
+    fi
   fi
 fi
 
@@ -424,12 +508,12 @@ receipt tool --name assembler --path "$(command -v "$asar_bin")"
 receipt tool --name python --path "$(command -v python3)"
 
 current_stage="prepare_output"
-if [[ -n "${OOS_LYRA_PROJECT:-}" ]] && python3 - "$repo_root/Data/Generated/lyra_project/prepare.json" <<'PY_CURRENT'
+if [[ -n "${OOS_LYRA_PROJECT:-}" ]] && python3 - "$lyra_input_dir/prepare.json" <<'PY_CURRENT'
 import json,sys
 sys.exit(0 if json.load(open(sys.argv[1])).get('kind') == 'lyra.current_build_prepare.v1' else 1)
 PY_CURRENT
 then
-  run_check lyra_stage 1 python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" stage --rom "$patched_rom"
+  run_check lyra_stage 1 python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" stage --input "$lyra_input_dir" --rom "$patched_rom"
   receipt artifact --name staged_input_transform --path "$patched_rom.stage-input.json"
 else
   cp -f "$base_rom" "$patched_rom"
@@ -470,6 +554,9 @@ assemble_rom() {
     )
   fi
 }
+if [[ -n "${OOS_LYRA_CANDIDATE:-}" ]]; then
+  run_check lyra_generated_identity 1 python3 "$repo_root/Scripts/Build/lyra_generated_inputs.py" verify --root "$repo_root"
+fi
 run_check assembly 1 assemble_rom
 
 # Verify actual assembled data and native readers before hashes or hook receipts
@@ -477,7 +564,7 @@ run_check assembly 1 assemble_rom
 if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
   lyra_verification="$rom_dir/oos${version}x.lyra-verification.json"
   run_check lyra_verify 1 python3 "$repo_root/Scripts/Build/lyra_project_publisher.py" verify \
-    --rom "$patched_rom" --symbols "$symbols_path" --receipt "$lyra_verification"
+    --input "$lyra_input_dir" --rom "$patched_rom" --symbols "$symbols_path" --receipt "$lyra_verification"
   receipt artifact --name lyra_verification --path "$lyra_verification"
 fi
 run_check checkpoint_compiled 1 python3 "$repo_root/Scripts/Build/checkpoint_registry.py" \
@@ -550,7 +637,7 @@ fi
 if [[ $emit_symbols -eq 1 ]]; then
   overlap_args=(--symbols "$symbols_path")
   if [[ -n "${OOS_LYRA_PROJECT:-}" ]]; then
-    overlap_args+=(--lyra-verification "$lyra_verification" --rom "$patched_rom")
+    overlap_args+=(--lyra-verification "$lyra_verification" --rom "$patched_rom" --lyra-input "$lyra_input_dir")
   fi
   run_check overlap 1 python3 "$repo_root/Scripts/Build/check_zscream_overlap.py" "${overlap_args[@]}"
 else

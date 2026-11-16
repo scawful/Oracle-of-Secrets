@@ -196,6 +196,22 @@ class CurrentRuntimePropertiesTest(unittest.TestCase):
         self.assertFalse(any('mosaic' in row for row in
                              L.current_property_rows(legacy, source=selector_source()).values()))
 
+    def test_actor_census_does_not_supply_missing_runtime_properties(self):
+        from test_lyra_current_actor_streams import Schema5ActorCodecCensusTest
+        source, doc, raw = Schema5ActorCodecCensusTest().inputs()
+        before = copy.deepcopy(doc)
+        lowered = L.current_property_rows(doc, source=source)
+        result = L.census_schema5_actor_streams(source, doc, terrain_raw=raw)
+        self.assertEqual(doc, before)
+        self.assertEqual(L.current_property_rows(doc, source=source), lowered)
+        self.assertTrue(all(not {'mosaic', 'overlay', 'bg_color'}.intersection(row)
+                            for row in lowered.values()))
+        self.assertTrue(all(not set(T.RUNTIME_PROPERTY_DEFAULTS).intersection(prop)
+                            for prop in doc.properties))
+        self.assertNotIn('rows', result)
+        self.assertIn('overlay_mosaic_backdrop_assignment', result['unclosed_families'])
+        self.assertFalse(result['recipe_created'])
+
 
 class CurrentRuntimePropertyComposerTest(unittest.TestCase):
     def setUp(self):

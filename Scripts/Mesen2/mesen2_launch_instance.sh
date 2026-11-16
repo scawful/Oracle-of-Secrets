@@ -7,6 +7,7 @@ Launch an isolated Mesen2 OOS instance (safe for multi-agent work).
 
 USAGE:
   Scripts/Mesen2/mesen2_launch_instance.sh [options]
+  Scripts/Mesen2/mesen2_launch_instance.sh --yaze-desktop CONFIG SHA256 PROJECT PROJECT_ID ENGINE OUTPUT SHA256 SIZE
 
 OPTIONS:
   --instance NAME        Instance name (default: <source>-<owner>)
@@ -43,6 +44,45 @@ EOF
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+
+# Separate ordinary entry; the expanded eight-field route below is unchanged.
+if [[ "${1:-}" == "--yaze-desktop-ordinary" ]]; then
+  if [[ $# -ne 11 ]]; then
+    echo "Usage: $0 --yaze-desktop-ordinary CONFIG SHA256 PROJECT PROJECT_ID ENGINE OUTPUT SHA256 SIZE SELECTOR SHA256" >&2
+    exit 2
+  fi
+  shift
+  # Yaze rechecks this exact interpreter against the ordinary profile before
+  # starting the task. The helper rechecks its running interpreter as well.
+  # This entry never discovers an interpreter through ambient PATH.
+  if [[ "${YAZE_ORDINARY_RUN_PYTHON:-}" != /* ||
+        ! -f "$YAZE_ORDINARY_RUN_PYTHON" || ! -x "$YAZE_ORDINARY_RUN_PYTHON" ]]; then
+    echo "Ordinary desktop Run requires the profile-bound absolute executable YAZE_ORDINARY_RUN_PYTHON." >&2
+    exit 2
+  fi
+  exec "$YAZE_ORDINARY_RUN_PYTHON" -I -S -B -c 'import pathlib,runpy,sys; p=sys.argv[1]; sys.argv=sys.argv[1:]; sys.path.insert(0,str(pathlib.Path(p).parent)); runpy.run_path(p,run_name="__main__")' "${SCRIPT_DIR}/yaze_dedicated_session.py" --desktop-ordinary "$@"
+fi
+
+# The desktop supervisor owns one explicit child until exit. No ordinary
+# profile, installed-app, endpoint-discovery or detached-launch defaults apply.
+if [[ "${1:-}" == "--yaze-desktop" ]]; then
+  if [[ $# -ne 9 ]]; then
+    echo "Usage: $0 --yaze-desktop <config.json> <config-sha256> <project> <project-id> <engine> <output> <output-sha256> <output-size>" >&2
+    exit 2
+  fi
+  shift
+  exec python3 -B "${SCRIPT_DIR}/yaze_dedicated_session.py" --desktop "$@"
+fi
+
+# Explicit private diagnostic dispatch precedes all ordinary ROM/profile defaults.
+# This entry executes a bounded episode; it never falls back to the ordinary route.
+if [[ "${1:-}" == "--yaze-headless-diagnostic" ]]; then
+  if [[ $# -ne 3 ]]; then
+    echo "Usage: $0 --yaze-headless-diagnostic <request.json> <sha256>" >&2
+    exit 2
+  fi
+  exec python3 -B "${SCRIPT_DIR}/yaze_dedicated_session.py" "$2" "$3"
+fi
 
 INSTANCE=""
 INSTANCE_SET=0

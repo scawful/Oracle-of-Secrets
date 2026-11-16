@@ -33,6 +33,7 @@ from asm_source import (  # noqa: E402,F401
     _parse_define_assignment,
     SourceGraphError,
     collect_reachable_asm_sources,
+    source_path as source_location,
 )
 
 
@@ -156,7 +157,9 @@ class OrgDirective:
 
 
 def _module_from_path(path: Path, root: Path) -> str:
-    rel = path.relative_to(root)
+    rel = source_location(path, root)
+    if rel.is_absolute():
+        return "Data"
     if not rel.parts:
         return "root"
     return rel.parts[0]
@@ -428,7 +431,7 @@ def filter_active_asm_sources(
     for source_path in asm_paths:
         asm_path = source_path.resolve()
         try:
-            rel = asm_path.relative_to(root)
+            rel = source_location(asm_path, root)
         except ValueError as exc:
             raise ValueError(
                 f"ASM source is outside repo root: {asm_path}"
@@ -479,7 +482,7 @@ def scan_org_directives(
     ] = {}
     for source_path in active_sources:
         asm_path = source_path.resolve()
-        if not explicit_sources and _should_skip(asm_path.relative_to(root)):
+        if not explicit_sources and _should_skip(source_location(asm_path, root)):
             continue
         try:
             lines = asm_path.read_text(
@@ -551,7 +554,7 @@ def scan_org_directives(
                 OrgDirective(
                     expression=expression,
                     address=_eval_numeric_expression(expression, defines),
-                    source=f"{asm_path.relative_to(root)}:{idx + 1}",
+                    source=f"{source_location(asm_path, root)}:{idx + 1}",
                     proof_bank=proof_bank,
                     macro_name=macro_name,
                     anchor_banks=_expression_address_anchor_banks(
@@ -593,10 +596,10 @@ def scan_hooks(
     }
     for source_path in active_sources:
         asm_path = source_path.resolve()
-        if not explicit_sources and _should_skip(asm_path.relative_to(root)):
+        if not explicit_sources and _should_skip(source_location(asm_path, root)):
             continue
         try:
-            asm_path.relative_to(root)
+            source_location(asm_path, root)
         except ValueError:
             if explicit_sources:
                 raise ValueError(
@@ -631,7 +634,7 @@ def scan_hooks(
             kind, target = _first_instruction(lines, idx, defines)
             abi_class_note, no_return, ann_m, ann_x = _scan_annotations(lines, idx)
             hook_directive = _scan_hook_directive(lines, idx)
-            source = f"{asm_path.relative_to(root)}:{idx + 1}"
+            source = f"{source_location(asm_path, root)}:{idx + 1}"
             directive_name = hook_directive.get("name")
             directive_kind = hook_directive.get("kind")
             directive_target = hook_directive.get("target")

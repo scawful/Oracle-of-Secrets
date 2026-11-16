@@ -4,6 +4,7 @@ import copy
 from dataclasses import replace
 import hashlib
 import json
+import shlex
 from pathlib import Path
 import struct
 import sys
@@ -379,6 +380,60 @@ class ResidentTransferLifecycleTest(unittest.TestCase):
                                          request=request, resident_data=True,
                                          resource_inspection=self.inspection)
 
+    def capture_fresh_inspection(self):
+        case, X = self.case, transfer_cases.X
+        # Preserve the same Save/editor identity; the new observation is not a
+        # producer source. This executable only emits the owned fixture JSON.
+        case.producer['source_bindings'] = [row for row in case.producer['source_bindings']
+                                           if row['path'] != str(self.inspection)]
+        case.verifier.write_text('#!/bin/sh\nexec /bin/cat '
+                                 + shlex.quote(str(self.inspection)) + '\n')
+        case.verifier.chmod(0o700)
+        case.producer['verifier'] = X.Q.bound(case.verifier)
+        case.producer_path.write_bytes(X.P.encoded(case.producer))
+        return case.prepare(capture_resident_inspection=True)
+
+    @unittest.skipUnless(Path('/bin/sh').is_file() and Path('/bin/cat').is_file(),
+                         'Fixed inspector executable requires POSIX sh and cat')
+    def test_fresh_execution_preserves_full_resident_rederivation_without_producer_relabeling(self):
+        case, X = self.case, transfer_cases.X
+        _, request_path = self.capture_fresh_inspection()
+        request = json.loads(request_path.read_bytes())
+        captured = Path(request['resource_inspection']['path'])
+        output = case.root / 'fresh-resident-review'
+        prepared = X.P.prepare(output, project=case.project, base_rom=case.rom,
+            request=request_path, resident_data=True, resource_inspection=captured)
+        plan = prepared['review']['appearance']['resident_graphics']
+        provenance = plan['provenance']
+        self.assertEqual(provenance['inspection_origin'], 'captured_selected_verifier_execution')
+        self.assertEqual(provenance['inspection_execution'], request['native_inspection'])
+        self.assertNotIn(request['resource_inspection'], case.producer['source_bindings'])
+        self.assertTrue(plan['terrain_plan_ready'])
+        self.assertFalse(plan['full_residency_ready'])
+        self.assertFalse(prepared['selected'])
+        self.assertFalse(prepared['rom_written'])
+        self.assertFalse(case.candidate.exists())
+        area = plan['areas'][0]
+        self.assertEqual((output / 'resident/A0/static_chr.bin').read_bytes(),
+                         bytes.fromhex(area['static_chr']['payload_hex']))
+        # Identical bytes at another path are not this transfer's observation.
+        with self.assertRaisesRegex(ValueError, 'RESIDENT_INSPECTION_UNBOUND'):
+            X.resident_graphics_plan(request_path, case.project, case.rom, self.inspection)
+
+    @unittest.skipUnless(Path('/bin/sh').is_file() and Path('/bin/cat').is_file(),
+                         'Fixed inspector executable requires POSIX sh and cat')
+    def test_fresh_capture_does_not_bypass_resident_asset_reconstruction(self):
+        case, X = self.case, transfer_cases.X
+        broken = json.loads(self.inspection.read_bytes())
+        broken['map_assets'][0]['native_assets']['palette']['uint16le_sha256'] = '0'*64
+        self.inspection.write_bytes(X.P.encoded(broken))
+        _, request_path = self.capture_fresh_inspection()
+        request = json.loads(request_path.read_bytes())
+        with self.assertRaisesRegex(ValueError, 'PALETTE'):
+            X.resident_graphics_plan(request_path, case.project, case.rom,
+                                    request['resource_inspection']['path'])
+        self.assertFalse(case.candidate.exists())
+
     def test_review_writes_exact_unselected_data_and_later_save_retires_transfer(self):
         case, X = self.case, transfer_cases.X
         _, request = case.prepare()
@@ -704,6 +759,181 @@ class ResidentNativeAbiTest(unittest.TestCase):
         self.assertEqual(native, before)
 
 
+class ResidentSubsetPlacementTest(unittest.TestCase):
+    MODE = 'bank_subset_v1'
+
+    @staticmethod
+    def native(extra_sizes=()):
+        value = R.plan_native_resident_abi(plan(Fixture().inputs()), tile16_count=1)
+        for index, size in enumerate(extra_sizes):
+            raw = bytes(((index + 1) % 256,)) * size
+            value['blobs'].append(dict(label=f'LyraResidentFixtureExtra{index}',
+                role='static_chr', byte_count=size, payload_hex=raw.hex(), sha256=sha(raw)))
+        value['byte_counts']['static_chr'] += sum(extra_sizes)
+        value['unaligned_byte_count'] += sum(extra_sizes)
+        ResidentNativeAbiTest.rehash(value, 'abi_sha256')
+        return value
+
+    def emit(self, native, *, start=0, capacity=0x20000, **kwargs):
+        return R.emit_native_resident_abi(native, data_pc=start, capacity=capacity,
+            preimage=bytes(capacity), placement_mode=self.MODE, **kwargs)
+
+    def assert_references(self, native, emission):
+        payload = bytes.fromhex(emission['payload_hex'])
+        placements = {row['label']: row for row in emission['placements']}
+        original = {b['label']: bytes.fromhex(b['payload_hex']) for b in native['blobs']}
+        for label, expected in original.items():
+            row = placements[label]
+            self.assertEqual(payload[row['binary_offset']:row['binary_offset']+row['byte_count']], expected)
+            self.assertEqual(row['sha256'], sha(expected))
+        for row in placements.values():
+            self.assertEqual(row['pc'][0] // 0x8000, (row['pc'][1]-1) // 0x8000)
+        for index, page in enumerate(native['pages']):
+            raw = payload[index*8:index*8+8]
+            self.assertEqual(int.from_bytes(raw[:3], 'little'), placements[page['index_label']]['snes'])
+            self.assertEqual(int.from_bytes(raw[3:6], 'little'), placements[page['words_label']]['snes'])
+            self.assertEqual(tuple(raw[6:]), (page['area_index'], page['row_count']))
+            area = native['areas'][page['area_index']]
+            at = 256 + index*11
+            self.assertEqual(int.from_bytes(payload[at+9:at+11], 'little'), area['animation_byte_count'])
+            for frame, label in enumerate(area['animation_labels']):
+                self.assertEqual(int.from_bytes(payload[at+frame*3:at+frame*3+3], 'little'),
+                    placements[label]['snes'] if label else 0)
+            for alias, label in ((page['index_alias'], page['index_label']),
+                                 (page['words_alias'], page['words_label'])):
+                if alias != label:
+                    self.assertIn(f'{alias} = ${placements[label]["snes"]:06X}', emission['runtime_data_asm'])
+
+    def test_subset_is_deterministic_and_preserves_all_references(self):
+        native = self.native((20000, 16000, 12000))
+        before = copy.deepcopy(native)
+        default = R.emit_native_resident_abi(native, data_pc=0, capacity=0x20000, preimage=bytes(0x20000))
+        selected = self.emit(native)
+        self.assertEqual(selected, self.emit(native))
+        self.assertEqual(selected['placement_strategy'], 'bank_subset')
+        self.assertLess(selected['used_extent_bytes'], default['used_extent_bytes'])
+        self.assertNotEqual([p['label'] for p in selected['placements']], [p['label'] for p in default['placements']])
+        self.assertEqual(native, before)
+        self.assertEqual(selected['abi_sha256'], before['abi_sha256'])
+        self.assert_references(native, selected)
+        for field in ('selected', 'allocation_granted', 'publication_authorized', 'ordinary_build_ready', 'runtime_admission'):
+            self.assertIs(selected[field], False)
+
+    def test_first_discovery_tie_and_whole_bank_blob(self):
+        rows = [dict(label=str(i)) for i in range(4)]
+        raw = {str(i): bytes(size) for i, size in enumerate((0x4000, 0x4000, 0x8000, 1))}
+        ordered = R._native_bank_subset_order(rows, raw, 0)
+        self.assertEqual([r['label'] for r in ordered], ['0', '1', '2', '3'])
+        self.assertEqual(R._native_blob_end(ordered, raw, 0), 0x10001)
+        # Equal-sized labels preserve the original source order, not name order.
+        self.assertEqual(R._native_bank_subset_order(rows[::-1], raw, 0)[0]['label'], '2')
+
+    def test_tie_falls_back_and_default_has_no_mode_metadata(self):
+        native = self.native()
+        old = R.emit_native_resident_abi(native, data_pc=0x7FF0, capacity=0x20000, preimage=bytes(0x20000))
+        selected = self.emit(native, start=0x7FF0)
+        self.assertEqual(selected['placement_strategy'], 'sequential_fallback')
+        self.assertEqual({k:v for k,v in selected.items() if k not in ('placement_mode','placement_strategy')}, old)
+        self.assertNotIn('placement_mode', old)
+        self.assertNotIn('placement_strategy', old)
+        self.assertGreater(selected['bank_padding_bytes'], 0)
+        self.assert_references(native, selected)
+
+    def test_larger_candidate_falls_back_to_complete_sequential_extent(self):
+        native = self.native((20000, 16000, 12000))
+        by_label = R.validate_native_resident_abi(native)
+        better = R._native_bank_subset_order(native['blobs'], by_label, 608)
+        native['blobs'] = better
+        ResidentNativeAbiTest.rehash(native, 'abi_sha256')
+        worse = sorted(better, key=lambda row: (not row['label'].startswith('LyraResidentFixtureExtra'), row['label']))
+        self.assertGreater(R._native_blob_end(worse, by_label, 608), R._native_blob_end(better, by_label, 608))
+        with mock.patch.object(R, '_native_bank_subset_order', return_value=worse):
+            selected = self.emit(native)
+        self.assertEqual(selected['placement_strategy'], 'sequential_fallback')
+        self.assertEqual([p['label'] for p in selected['placements'][2:]], [b['label'] for b in better])
+
+    def test_exact_capacity_and_short_capacity_refusal(self):
+        native = self.native((20000, 16000, 12000))
+        size = self.emit(native)['used_extent_bytes']
+        self.assertEqual(self.emit(native, capacity=size)['used_extent_bytes'], size)
+        with self.assertRaisesRegex(ValueError, 'NATIVE_ALLOCATION_CAPACITY'):
+            R.emit_native_resident_abi(native, data_pc=0, capacity=size, preimage=bytes(size))
+        with self.assertRaisesRegex(ValueError, 'NATIVE_ALLOCATION_CAPACITY'):
+            self.emit(native, capacity=size-1)
+        for mode in ('unknown', '', False, [], 1):
+            with self.subTest(mode=mode), self.assertRaisesRegex(ValueError, 'NATIVE_PLACEMENT_MODE_INVALID'):
+                R.emit_native_resident_abi(native, data_pc=0, capacity=0x20000, preimage=bytes(0x20000), placement_mode=mode)
+
+    def test_bridge_requires_explicit_matching_mode_and_exact_rederivation(self):
+        native = self.native((20000, 16000, 12000))
+        emission = self.emit(native)
+        bridge = R.resident_runtime_inputs(native, emission, preimage=bytes(0x20000), placement_mode=self.MODE)
+        self.assertEqual(bridge['abi_sha256'], native['abi_sha256'])
+        self.assertIs(bridge['ordinary_build_ready'], False)
+        with self.assertRaisesRegex(ValueError, 'NATIVE_EMISSION_MISMATCH'):
+            R.resident_runtime_inputs(native, emission, preimage=bytes(0x20000))
+        for mutate in (lambda e:e.update(placement_mode='unknown'),
+                       lambda e:e.update(placement_strategy='sequential_fallback'),
+                       lambda e:e.update(payload_sha256='0'*64),
+                       lambda e:e['placements'][-1].update(snes=0x908000),
+                       lambda e:e['placements'].reverse(),
+                       lambda e:e.update(selected=True)):
+            changed = copy.deepcopy(emission); mutate(changed)
+            with self.assertRaisesRegex(ValueError, 'NATIVE_EMISSION_MISMATCH'):
+                R.resident_runtime_inputs(native, changed, preimage=bytes(0x20000), placement_mode=self.MODE)
+        with self.assertRaisesRegex(ValueError, 'NATIVE_EMISSION_MISMATCH'):
+            R.resident_runtime_inputs(native, emission, preimage=b'\xff'*0x20000, placement_mode=self.MODE)
+
+    def test_blob_and_authority_tampering_refuse_before_placement(self):
+        for kind in ('duplicate', 'missing', 'payload', 'oversize', 'authority', 'census_kind'):
+            value = self.native()
+            if kind == 'duplicate':value['blobs'].append(copy.deepcopy(value['blobs'][0]))
+            elif kind == 'missing':value['blobs'].pop()
+            elif kind == 'payload':value['blobs'][0]['payload_hex'] = 'FF'
+            elif kind == 'oversize':
+                raw = bytes(0x8001);value['blobs'][0].update(payload_hex=raw.hex(), byte_count=len(raw), sha256=sha(raw))
+            elif kind == 'authority':value['allocation_granted'] = True
+            else:value['kind'] = 'lyra.schema5_census_native_abi.v1'
+            ResidentNativeAbiTest.rehash(value, 'abi_sha256')
+            with self.subTest(kind=kind), mock.patch.object(R, '_native_bank_subset_order', side_effect=AssertionError('placement reached')):
+                with self.assertRaises(ValueError):self.emit(value)
+
+    def test_many_banks_do_not_have_a_project_size_cutoff(self):
+        native = self.native((0x8000,) * 9)
+        selected = self.emit(native, capacity=0x60000)
+        self.assertEqual(len(selected['placements']), len(native['blobs'])+2)
+        self.assert_references(native, selected)
+        self.assertEqual(selected['placement_strategy'], 'sequential_fallback')
+
+    def test_unused_one_byte_blobs_have_explicit_work_limit_fallback(self):
+        native = self.native((1,) * 1024)
+        default = R.emit_native_resident_abi(native, data_pc=0, capacity=0x10000, preimage=bytes(0x10000))
+        with mock.patch.object(R, 'NATIVE_BANK_SUBSET_WORK_LIMIT', 64, create=True):
+            selected = self.emit(native, capacity=0x10000)
+        self.assertEqual(selected['placement_strategy'], 'sequential_work_limit')
+        self.assertEqual(selected['placement_work_limit'], 64)
+        self.assertEqual({k:v for k,v in selected.items() if k not in
+            ('placement_mode','placement_strategy','placement_work_limit')}, default)
+
+    def test_work_budget_checks_new_sums_and_distinguishes_capacity_refusal(self):
+        with mock.patch.object(R, 'NATIVE_BANK_SUBSET_WORK_LIMIT', 19, create=True):
+            self.assertIsNone(R._native_bank_subset_order([dict(label='x')], {'x': b'x'}, 0x7FF0))
+        native = self.native((20000, 16000, 12000))
+        size = self.emit(native)['used_extent_bytes']
+        with mock.patch.object(R, 'NATIVE_BANK_SUBSET_WORK_LIMIT', 1, create=True):
+            with self.assertRaisesRegex(ValueError, 'NATIVE_SUBSET_WORK_LIMIT_CAPACITY'):
+                self.emit(native, capacity=size)
+
+    def test_actual_fixed_work_limit_keeps_large_valid_default_layout(self):
+        native = self.native((0x8000,) * 40)
+        selected = self.emit(native, capacity=0x180000)
+        self.assertEqual(selected['placement_strategy'], 'sequential_work_limit')
+        self.assertEqual(selected['placement_work_limit'], 1048576)
+        default = R.emit_native_resident_abi(native, data_pc=0, capacity=0x180000, preimage=bytes(0x180000))
+        self.assertEqual({k:v for k,v in selected.items() if k not in
+            ('placement_mode','placement_strategy','placement_work_limit')}, default)
+
+
 class ConditionalDemandTest(unittest.TestCase):
     """Literal native predicates in a synthetic ROM; no game ROM or runtime."""
 
@@ -978,6 +1208,259 @@ class ConditionalDemandTest(unittest.TestCase):
                 policy['selected_features']['area_tilesets'] = True
             with self.subTest(mutation=mutation), self.assertRaisesRegex(ValueError, 'CONDITIONAL_' + error):
                 self.derive(inputs)
+
+
+class Schema5ConditionalCensusTest(unittest.TestCase):
+    """A non-admitting census uses real parsing and the historical pure packer."""
+
+    def inputs(self):
+        old = ConditionalDemandTest()
+        fixture = old.fixture()
+        fixture.map_tiles[0][:3] = [0x34, 0x36, 0x20F]
+        source, document, inspection, _, policy = old.inputs(fixture)
+        source = bytearray(source)
+        for address, raw in ((0x9BC5C2, b'\xff\xff'),
+                             (0x1BC8BE, bytes.fromhex('a99b008502'))):
+            start = sheet_table.pc(address)
+            source[start:start+len(raw)] = raw
+        source = bytes(source)
+        for row in inspection['map_assets']:
+            document.authoring[row['map_id']-0xA0]['asset_bindings'][row['state']] = row['current_binding']
+            row['stored_binding'] = row['current_binding']
+        raw = R._json_bytes(dict(schema='yaze.lyra-terrain', schema_version=5,
+            columns=8, rows=4, map_width=32, map_height=32, tile_pixels=16,
+            profile=document.profile, maps=[dict(map_id=0xA0+i,
+                tiles16=[list(tiles[y*32:y*32+32]) for y in range(32)],
+                authoring=document.authoring[i]) for i, tiles in enumerate(document.maps)],
+            flight_points=[], edge_connections=[], gameplay_areas=list(document.gameplay_areas)))
+        document = T.parse_terrain_document(raw, document.profile, allow_authoring_drafts=True,
+            expected_asset_bindings={0xA0+i: tuple(row['asset_bindings'])
+                                     for i, row in enumerate(document.authoring)})
+        bindings = {name: dict(path='/synthetic/'+name, sha256=sha(name.encode()))
+                    for name in ('project', 'rom', 'terrain', 'save_receipt', 'save_context', 'producer')}
+        bindings['rom']['sha256'] = sha(source)
+        bindings['terrain']['sha256'] = sha(raw)
+        bindings.update(generation=1, operation_id='synthetic-save')
+        inspection.update(source_rom_sha256=sha(source), terrain_sha256=sha(raw),
+            project_descriptor_path=bindings['project']['path'],
+            project_descriptor_sha256=bindings['project']['sha256'])
+        policy['save_identity'].update(source_rom_sha256=sha(source), terrain_sha256=sha(raw),
+            inspection_sha256=sha(R._json_bytes(inspection)),
+            document_sha256=R.conditional_document_identity(document))
+        snapshot = dict(kind='lyra.uncommitted_schema5_census_source.v1', source_epoch=None,
+            qualified=False, **{key: copy.deepcopy(policy[key]) for key in
+                ('selected_features', 'source_files', 'native_preimages', 'area_tilesets')})
+        return (source, document, inspection), dict(terrain_raw=raw,
+            source_snapshot=snapshot, saved_inputs=bindings), policy
+
+    def test_matches_historical_demands_and_packing_without_manufactured_authority(self):
+        args, kwargs, policy = self.inputs()
+        before = copy.deepcopy((args, kwargs, policy))
+        with mock.patch.object(Path, 'write_bytes', side_effect=AssertionError('no writes')), \
+             mock.patch.object(Path, 'write_text', side_effect=AssertionError('no writes')), \
+             mock.patch.object(Path, 'mkdir', side_effect=AssertionError('no writes')), \
+             mock.patch('subprocess.Popen', side_effect=AssertionError('no processes')):
+            result = R.census_schema5_conditional_demands(*args, **kwargs)
+        historical = R.derive_conditional_demands(*args, source_policy=policy)
+        packed = R.plan_resident_graphics(*args, terrain_sha256=sha(kwargs['terrain_raw']),
+            provenance=dict(test='synthetic historical comparison'), conditional_demands=historical)
+        self.assertEqual(result['rows'], historical['rows'])
+        self.assertEqual(result['additional_rows'], [dict(map_id=0xA0, tile16_id=tile)
+                                                   for tile in (0xDC7, 0xDC9, 0xDCA)])
+        self.assertEqual(result['native_type_source'], historical['native_type_source'])
+        self.assertEqual(result['resident_areas'], packed['areas'])
+        self.assertEqual((args, kwargs, policy), before)
+        for field in ('selected', 'source_epoch_qualified', 'transfer_created', 'recipe_created',
+                      'allocation_granted', 'publication_authorized', 'ordinary_build_ready',
+                      'runtime_admission', 'compiled_consumers_verified',
+                      'resource_closure_verified', 'rom_written'):
+            self.assertIs(result[field], False)
+        self.assertIsNone(result['source_snapshot']['source_epoch'])
+        for field in ('tail_recipe', 'transfer_id', 'source_policy'):
+            self.assertNotIn(field, result)
+            self.assertNotIn(field, result['source_snapshot'])
+        self.assertEqual(result['census_sha256'], sha(R._json_bytes(
+            {key: value for key, value in result.items() if key != 'census_sha256'})))
+
+    def test_census_is_rejected_as_historical_policy_or_witness(self):
+        args, kwargs, _ = self.inputs()
+        result = R.census_schema5_conditional_demands(*args, **kwargs)
+        for policy in (kwargs['source_snapshot'], result):
+            with self.assertRaisesRegex(ValueError, 'CONDITIONAL_POLICY_INVALID'):
+                R.derive_conditional_demands(*args, source_policy=policy)
+        with self.assertRaisesRegex(ValueError, 'CONDITIONAL_WITNESS_UNBOUND'):
+            R.plan_resident_graphics(*args, terrain_sha256=sha(kwargs['terrain_raw']),
+                provenance=dict(test='census is not a witness'), conditional_demands=result)
+
+    def test_schema_source_epoch_and_save_identity_refuse(self):
+        original = self.inputs()
+        for mutation, error in (('schema', 'LEGACY_DOCUMENT_REQUIRED'),
+                ('epoch', 'SOURCE_UNQUALIFIED_REQUIRED'), ('qualified', 'SOURCE_UNQUALIFIED_REQUIRED'),
+                ('recipe', 'SOURCE_UNQUALIFIED_REQUIRED'), ('rom', 'SAVE_MISMATCH'),
+                ('project', 'SAVE_MISMATCH'), ('generation', 'SAVE_UNBOUND')):
+            args, kwargs, _ = copy.deepcopy(original)
+            if mutation == 'schema':
+                data = json.loads(kwargs['terrain_raw']); data['schema_version'] = 9
+                kwargs['terrain_raw'] = R._json_bytes(data)
+            elif mutation == 'epoch': kwargs['source_snapshot']['source_epoch'] = '1'*40
+            elif mutation == 'qualified': kwargs['source_snapshot']['qualified'] = True
+            elif mutation == 'recipe': kwargs['source_snapshot']['tail_recipe'] = {}
+            elif mutation == 'rom': kwargs['saved_inputs']['rom']['sha256'] = '0'*64
+            elif mutation == 'project': kwargs['saved_inputs']['project']['path'] += '-other'
+            else: kwargs['saved_inputs']['generation'] = True
+            with self.subTest(mutation=mutation), self.assertRaisesRegex(ValueError, error):
+                R.census_schema5_conditional_demands(*args, **kwargs)
+
+    def test_changed_document_source_and_empty_secret_preimage_refuse(self):
+        original = self.inputs()
+        for mutation, error in (('document', 'DOCUMENT_MISMATCH'),
+                ('source', 'SOURCE_FILE_MISMATCH'), ('native', 'NATIVE_PREIMAGE_MISMATCH'),
+                ('empty', 'LEGACY_PREIMAGE_MISMATCH')):
+            args, kwargs, _ = copy.deepcopy(original)
+            if mutation == 'document':
+                maps = list(args[1].maps); maps[0] = (1,)+maps[0][1:]
+                args = (args[0], replace(args[1], maps=tuple(maps)), args[2])
+            elif mutation == 'source':
+                kwargs['source_snapshot']['source_files'][0]['source_utf8'] += ';changed'
+            elif mutation == 'native':
+                kwargs['source_snapshot']['native_preimages'][0]['sha256'] = '0'*64
+            else:
+                source = bytearray(args[0]); source[sheet_table.pc(0x9BC5C2)] = 0
+                args = (bytes(source), args[1], args[2])
+                kwargs['saved_inputs']['rom']['sha256'] = sha(source)
+                args[2]['source_rom_sha256'] = sha(source)
+            with self.subTest(mutation=mutation), self.assertRaisesRegex(ValueError, error):
+                R.census_schema5_conditional_demands(*args, **kwargs)
+
+
+class Schema5CensusAbiTest(unittest.TestCase):
+    """Real census rederivation and byte decoding, without placement or policy."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.args, cls.kwargs, cls.policy = Schema5ConditionalCensusTest().inputs()
+        cls.census = R.census_schema5_conditional_demands(*cls.args, **cls.kwargs)
+
+    def lower(self, census=None, *, args=None, kwargs=None):
+        return R.plan_schema5_census_abi(
+            *(self.args if args is None else args),
+            **(self.kwargs if kwargs is None else kwargs),
+            census=self.census if census is None else census)
+
+    def test_exact_census_round_trips_every_page_and_conditional_word_without_io(self):
+        before = copy.deepcopy((self.args, self.kwargs, self.census))
+        with mock.patch.object(Path, 'read_bytes', side_effect=AssertionError('no reads')), \
+             mock.patch.object(Path, 'write_bytes', side_effect=AssertionError('no writes')), \
+             mock.patch.object(Path, 'write_text', side_effect=AssertionError('no writes')), \
+             mock.patch.object(Path, 'mkdir', side_effect=AssertionError('no writes')), \
+             mock.patch('subprocess.Popen', side_effect=AssertionError('no processes')):
+            result = self.lower()
+        self.assertEqual((self.args, self.kwargs, self.census), before)
+        self.assertEqual([row['map_id'] for row in result['pages']], list(range(0xA0, 0xC0)))
+        for area in self.census['resident_areas']:
+            for row in area['remaps']:
+                self.assertEqual(ResidentNativeAbiTest.lookup(result, row['map_id'],
+                    row['tile16_id'], row['quadrant']), row['target_word'])
+        self.assertEqual(result['source_census_sha256'], self.census['census_sha256'])
+        self.assertEqual(result['saved_inputs'], self.kwargs['saved_inputs'])
+        self.assertEqual(result['source_snapshot_sha256'], self.census['source_snapshot_sha256'])
+        self.assertNotIn('source_plan_sha256', result)
+        self.assertEqual(result, self.lower())
+
+    def test_shared_codec_matches_historical_bytes_but_keeps_distinct_provenance(self):
+        conditional = R.derive_conditional_demands(*self.args, source_policy=self.policy)
+        plan = R.plan_resident_graphics(*self.args,
+            terrain_sha256=sha(self.kwargs['terrain_raw']),
+            provenance={'test': 'synthetic historical codec comparison'},
+            conditional_demands=conditional)
+        historical = R.plan_native_resident_abi(plan, tile16_count=self.args[1].profile['tile_count'])
+        result = self.lower()
+        for key in ('pages', 'areas', 'blobs', 'byte_counts', 'unaligned_byte_count'):
+            self.assertEqual(result[key], historical[key])
+        self.assertNotEqual(result['kind'], historical['kind'])
+        self.assertNotEqual(result['abi_sha256'], historical['abi_sha256'])
+        self.assertEqual(result['abi_sha256'], sha(R._json_bytes(
+            {key: value for key, value in result.items() if key != 'abi_sha256'})))
+        for key in ('selected', 'allocation_granted', 'publication_authorized',
+                    'ordinary_build_ready', 'runtime_admission', 'compiled_consumers_verified',
+                    'source_epoch_qualified', 'resource_closure_verified', 'transfer_created',
+                    'recipe_created', 'rom_written'):
+            self.assertIs(result[key], False)
+        for key in ('policy', 'profile', 'tail_recipe', 'transfer', 'data_pc', 'placements'):
+            self.assertNotIn(key, result)
+
+    def test_rehashed_palette_remap_and_provenance_tampering_refuses(self):
+        for mutation in ('palette', 'remap', 'source', 'inspection', 'save', 'row'):
+            changed = copy.deepcopy(self.census)
+            if mutation == 'palette':
+                palette = changed['resident_areas'][0]['palette']
+                palette['words'][0] ^= 1
+                raw = struct.pack('<128H', *palette['words'])
+                palette.update(payload_hex=raw.hex(), sha256=sha(raw))
+            elif mutation == 'remap':
+                changed['resident_areas'][0]['remaps'][0]['target_word'] ^= 1
+            elif mutation == 'source': changed['source_snapshot_sha256'] = '1' * 64
+            elif mutation == 'inspection': changed['inspection_sha256'] = '1' * 64
+            elif mutation == 'save': changed['saved_inputs']['save_receipt']['sha256'] = '1' * 64
+            else: changed['additional_rows'].pop()
+            ResidentNativeAbiTest.rehash(changed, 'census_sha256')
+            with self.subTest(mutation=mutation), self.assertRaisesRegex(
+                    ValueError, 'SCHEMA5_ABI_CENSUS_MISMATCH'):
+                self.lower(changed)
+
+    def test_missing_duplicate_and_extra_pages_refuse_even_with_new_digest(self):
+        for mutation in ('missing', 'duplicate', 'extra'):
+            changed = copy.deepcopy(self.census)
+            if mutation == 'missing': changed['resident_areas'].pop()
+            elif mutation == 'duplicate': changed['resident_areas'][-1] = copy.deepcopy(changed['resident_areas'][0])
+            else: changed['resident_areas'][-1]['maps'].append(0xC0)
+            ResidentNativeAbiTest.rehash(changed, 'census_sha256')
+            with self.subTest(mutation=mutation), self.assertRaisesRegex(
+                    ValueError, 'SCHEMA5_ABI_CENSUS_MISMATCH'):
+                self.lower(changed)
+
+    def test_authority_claims_integer_false_and_extra_policy_objects_refuse(self):
+        changes = [(key, True) for key in ('selected', 'allocation_granted',
+            'publication_authorized', 'runtime_admission', 'ordinary_build_ready',
+            'source_epoch_qualified', 'resource_closure_verified', 'compiled_consumers_verified')]
+        changes += [('selected', 0), ('policy', {}), ('profile', {}), ('tail_recipe', {})]
+        for key, value in changes:
+            changed = copy.deepcopy(self.census)
+            changed[key] = value
+            ResidentNativeAbiTest.rehash(changed, 'census_sha256')
+            with self.subTest(field=key, value=value), self.assertRaisesRegex(
+                    ValueError, 'SCHEMA5_ABI_CENSUS_MISMATCH'):
+                self.lower(changed)
+
+    def test_input_source_save_and_schema_are_rederived_before_lowering(self):
+        for mutation, error in (('source', 'SOURCE_FILE_MISMATCH'),
+                ('save', 'SAVE_MISMATCH'), ('epoch', 'SOURCE_UNQUALIFIED_REQUIRED'),
+                ('schema', 'LEGACY_DOCUMENT_REQUIRED')):
+            args, kwargs = copy.deepcopy((self.args, self.kwargs))
+            if mutation == 'source': kwargs['source_snapshot']['source_files'][0]['source_utf8'] += '; changed'
+            elif mutation == 'save': kwargs['saved_inputs']['rom']['sha256'] = '0' * 64
+            elif mutation == 'epoch': kwargs['source_snapshot']['source_epoch'] = '1' * 40
+            else:
+                raw = json.loads(kwargs['terrain_raw']); raw['schema_version'] = 9
+                kwargs['terrain_raw'] = R._json_bytes(raw)
+            with self.subTest(mutation=mutation), self.assertRaisesRegex(ValueError, error):
+                self.lower(args=args, kwargs=kwargs)
+
+    def test_census_and_result_remain_rejected_by_existing_admitting_routes(self):
+        result = self.lower()
+        for value in (self.census, result):
+            with self.subTest(kind=value['kind']):
+                with self.assertRaisesRegex(ValueError, 'NATIVE_TERRAIN_PLAN_REQUIRED'):
+                    R.plan_native_resident_abi(value, tile16_count=4096)
+                with self.assertRaisesRegex(ValueError, 'NATIVE_ABI_MISMATCH'):
+                    R.validate_native_resident_abi(value)
+                with self.assertRaisesRegex(ValueError, 'NATIVE_ABI_MISMATCH'):
+                    R.emit_native_resident_abi(value, data_pc=None, capacity=None, preimage=None)
+                with self.assertRaisesRegex(ValueError, 'CONDITIONAL_POLICY_INVALID'):
+                    R.derive_conditional_demands(*self.args, source_policy=value)
+                with self.assertRaisesRegex(ValueError, 'CONDITIONAL_WITNESS_UNBOUND'):
+                    R.plan_resident_graphics(*self.args, terrain_sha256=sha(self.kwargs['terrain_raw']),
+                        provenance={'test': 'refusal'}, conditional_demands=value)
 
 
 class Schema9ResidentBoundaryTest(unittest.TestCase):

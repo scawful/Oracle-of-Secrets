@@ -29,7 +29,7 @@ if !LYRA_CURRENT_MODE == 1
   assert defined("LYRA_CURRENT_GFX_END")
   org !LYRA_CURRENT_GFX_ORIGIN
   SharedGraphicsRuntimeStart = pc()
-  incsrc "Data/Generated/lyra_project/graphics_runtime_tables.asm"
+  incsrc "!LYRA_GENERATED_ROOT/graphics_runtime_tables.asm"
 else
 org $5B8000
 incsrc "Overworld/graphics_runtime_tables.asm"

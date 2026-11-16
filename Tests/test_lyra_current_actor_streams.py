@@ -6,6 +6,7 @@ existing external native verifier is a host fixture; current profile, saved
 generation, reservation review and document verification are real maintained code.
 """
 import copy
+from dataclasses import replace
 import json
 from pathlib import Path
 import sys
@@ -16,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'Scripts/Build'))
 import lyra_current_transfer as X
 import lyra_native_loaders as L
+import lyra_project_terrain as terrain
 import test_lyra_current_source_contract as contract_fixtures
 import test_lyra_current_transfer as transfer_fixtures
 from test_lyra_project_admission import observation
@@ -174,6 +176,110 @@ class CurrentActorStreamsTest(unittest.TestCase):
         self.assertEqual(plan['source_rom_sha256'], before)
         self.assertEqual(X.R.sha(self.fixture.case.rom.read_bytes()), before)
         self.assertFalse(self.fixture.case.candidate.exists())
+
+    def test_profile_validation_still_surrounds_codec_and_rejects_census(self):
+        codec = L._current_actor_codec
+        verify = X.verify_current_native_source_profile
+        with mock.patch.object(X, 'verify_current_native_source_profile', wraps=verify) as checked:
+            def encode(*args, **kwargs):
+                self.assertEqual(checked.call_count, 1)
+                return codec(*args, **kwargs)
+            with mock.patch.object(L, '_current_actor_codec', side_effect=encode):
+                self.plan()
+            self.assertEqual(checked.call_count, 2)
+        with mock.patch.object(L, '_current_actor_codec', side_effect=AssertionError('codec before profile')):
+            with self.assertRaisesRegex(ValueError, 'CURRENT_SOURCE_PROFILE_REQUIRED'):
+                self.plan(profile={'kind': 'lyra.schema5_actor_codec_census.v1'})
+
+
+class Schema5ActorCodecCensusTest(unittest.TestCase):
+    def inputs(self):
+        from test_lyra_project_terrain import fixture, profile
+        data = fixture()
+        data['schema_version'] = 5
+        data['gameplay_areas'] = [
+            dict(parent_map_id=area, size='large' if area == 0xB0 else 'small',
+                 maps=[0xB0, 0xB1, 0xB8, 0xB9] if area == 0xB0 else [area])
+            for area in range(0xA0, 0xC0) if area not in (0xB1, 0xB8, 0xB9)]
+        placements = {0xB0: [(1, 23, 14), (2, 15, 21)], 0xB1: [(3, 8, 12)],
+                      0xB8: [(4, 13, 11)], 0xB9: [(5, 5, 13)]}
+        for area, entries in placements.items():
+            data['maps'][area-0xA0]['authoring']['sprites'] = [
+                dict(id=identity, x=x, y=y, sprite_id=0x52, state=1)
+                for identity, x, y in entries]
+        raw = json.dumps(data).encode()
+        document = terrain.parse_terrain_document(raw, profile(), allow_authoring_drafts=True)
+        return bytes(0x200000), document, raw
+
+    def test_exact_large_area_codec_without_source_profile_or_runtime_assignment(self):
+        source, document, raw = self.inputs()
+        before = copy.deepcopy(document)
+        with (mock.patch.object(X, 'verify_current_native_source_profile', side_effect=AssertionError('profile')),
+              mock.patch.object(Path, 'write_bytes', side_effect=AssertionError('writer')),
+              mock.patch.object(Path, 'write_text', side_effect=AssertionError('writer'))):
+            result = L.census_schema5_actor_streams(source, document, terrain_raw=raw)
+        streams = {(row['map_id'], row['state']): row for row in result['streams']}
+        expected = '0e1752150f520c28522b0d522d2552ff'
+        for area in (0xB0, 0xB1, 0xB8, 0xB9):
+            row = streams[area, 1]
+            self.assertEqual(row['payload_hex'], expected)
+            self.assertEqual(row['placement_ids'], [1, 2, 3, 4, 5])
+            self.assertEqual(row['placement_maps'], [0xB0, 0xB0, 0xB1, 0xB8, 0xB9])
+            self.assertEqual(row['parent_map_id'], 0xB0)
+            self.assertEqual(streams[area, 0]['payload_hex'], 'ff')
+            self.assertEqual(streams[area, 2]['payload_hex'], 'ff')
+        self.assertEqual(result['demand'], dict(maps=32, phases=3, lists=96, placements=5,
+            payload_bytes=156, pointer_rows=96, pointer_bytes=192))
+        self.assertEqual(sum(row['payload_hex'] == 'ff' for row in result['streams']), 92)
+        for key in ('source_profile', 'source_epoch', 'storage', 'pointers'):
+            self.assertIsNone(result[key])
+        for key in ('saved_inputs_authenticated', 'source_epoch_qualified', 'selected',
+                    'transfer_created', 'recipe_created', 'allocation_granted',
+                    'producer_enforcement_verified', 'publication_authorized',
+                    'ordinary_build_ready', 'runtime_admission', 'actors_compiled',
+                    'resource_closure_verified', 'rom_written'):
+            self.assertIs(result[key], False, key)
+        self.assertEqual(document, before)
+        self.assertEqual(result['terrain_sha256'], X.R.sha(raw))
+        self.assertEqual(result['source_rom_sha256'], X.R.sha(source))
+        digest = result.pop('census_sha256')
+        self.assertEqual(digest, X.R.sha(json.dumps(result, sort_keys=True, separators=(',', ':')).encode()))
+
+    def test_exact_document_and_schema_required_without_native_resource_upgrade(self):
+        source, document, raw = self.inputs()
+        changed = copy.deepcopy(document)
+        changed.authoring[0]['properties']['music'][0] = 1
+        with self.assertRaisesRegex(ValueError, 'DOCUMENT_MISMATCH'):
+            L.census_schema5_actor_streams(source, changed, terrain_raw=raw)
+        for version in (3, 6, 9, True):
+            value = json.loads(raw)
+            value['schema_version'] = version
+            with self.subTest(version=version), self.assertRaisesRegex(ValueError, 'SCHEMA5_REQUIRED'):
+                L.census_schema5_actor_streams(source, document, terrain_raw=json.dumps(value).encode())
+        for changed in (replace(document, next_native_resource_id=2),
+                        replace(document, boat_transport={}), replace(document, whirlpool_transport={})):
+            with self.assertRaisesRegex(ValueError, 'SCHEMA5_REQUIRED'):
+                L.census_schema5_actor_streams(source, changed, terrain_raw=raw)
+        with self.assertRaisesRegex(ValueError, 'DOCUMENT_INVALID'):
+            L.census_schema5_actor_streams(source, document, terrain_raw=b'\xff')
+
+    def test_invalid_actor_and_incomplete_layout_refuse(self):
+        source, document, raw = self.inputs()
+        for field, value in (('state', True), ('state', 3), ('x', 32), ('id', 0)):
+            changed = copy.deepcopy(document)
+            changed.authoring[16]['sprites'][0][field] = value
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, 'CURRENT_ACTOR_MODEL_INVALID'):
+                L.census_schema5_actor_streams(source, changed, terrain_raw=raw)
+        changed = copy.deepcopy(document)
+        changed.authoring[16]['sprites'][1]['id'] = 1
+        with self.assertRaisesRegex(ValueError, 'CURRENT_ACTOR_MODEL_INVALID'):
+            L.census_schema5_actor_streams(source, changed, terrain_raw=raw)
+        value = json.loads(raw)
+        value['gameplay_areas'] = value['gameplay_areas'][1:]
+        changed_raw = json.dumps(value).encode()
+        changed = terrain.parse_terrain_document(changed_raw, document.profile, allow_authoring_drafts=True)
+        with self.assertRaisesRegex(ValueError, 'AREAS_INCOMPLETE'):
+            L.census_schema5_actor_streams(source, changed, terrain_raw=changed_raw)
 
 
 if __name__ == '__main__':

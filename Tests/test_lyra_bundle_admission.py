@@ -7,6 +7,7 @@ import unittest
 from unittest import mock
 
 import authoring_bundle_build as bundle
+import lyra_process_containment as containment
 import lyra_project_publisher as publisher
 
 
@@ -31,17 +32,37 @@ class BundleAdmissionTest(unittest.TestCase):
 
     def test_missing_request_stops_before_build(self):
         self.write_project()
-        with mock.patch.object(bundle.subprocess, 'run') as run:
-            with self.assertRaisesRegex(ValueError, 'lyra_build_request_file'):
-                bundle.build_project(self.descriptor)
+        with mock.patch.object(bundle.selection, 'begin_attempt') as run:
+            with self.assertRaisesRegex(ValueError, 'fresh transfer request and candidate'):
+                bundle.build_project(self.descriptor, request=self.root / 'request.json')
+        run.assert_not_called()
+
+    def test_partial_selection_stops_before_build(self):
+        self.write_project()
+        with mock.patch.object(bundle.selection, 'begin_attempt') as run:
+            for selection in ({'request': self.root / 'request.json'},
+                              {'candidate': self.engine / 'Roms/generation/oos168x.sfc'}):
+                with self.subTest(selection=selection):
+                    with self.assertRaisesRegex(ValueError, 'fresh transfer request and candidate'):
+                        bundle.build_project(self.descriptor, **selection)
+        run.assert_not_called()
+
+    def test_ordinary_project_refuses_expanded_selection(self):
+        self.write_project(terrain='')
+        with mock.patch.object(bundle.selection, 'begin_project_build') as run:
+            with self.assertRaisesRegex(ValueError, 'ordinary Build cannot select'):
+                bundle.build_project(self.descriptor, request=self.root / 'request.json',
+                                     candidate=self.engine / 'Roms/generation/oos168x.sfc')
         run.assert_not_called()
 
     def test_unrecognized_request_stops_before_build(self):
         (self.root / 'request.json').write_text('{}')
         self.write_project(request='request.json')
-        with mock.patch.object(bundle.subprocess, 'run') as run:
+        with mock.patch.object(bundle.selection, 'begin_attempt') as run:
             with self.assertRaisesRegex(ValueError, 'CURRENT_BUILD_REQUEST_REQUIRED'):
-                bundle.build_project(self.descriptor)
+                bundle.current_environment(self.descriptor, None, self.engine,
+                                           request=self.root / 'request.json',
+                                           candidate=self.engine / 'Roms/generation/oos168x.sfc')
         run.assert_not_called()
 
     def test_wrong_reviewed_engine_stops_before_build(self):
@@ -51,9 +72,11 @@ class BundleAdmissionTest(unittest.TestCase):
         target = {'engine': str(wrong_engine), 'base_rom': 'ignored',
                   'request': 'ignored', 'candidate': 'ignored'}
         with (mock.patch.object(publisher, 'resolve_current_target', return_value=target),
-              mock.patch.object(bundle.subprocess, 'run') as run):
+              mock.patch.object(bundle.selection, 'begin_attempt') as run):
             with self.assertRaisesRegex(ValueError, 'differs from this bundled build engine'):
-                bundle.build_project(self.descriptor)
+                bundle.current_environment(self.descriptor, None, self.engine,
+                                           request=self.root / 'request.json',
+                                           candidate=self.engine / 'Roms/generation/oos168x.sfc')
         run.assert_not_called()
 
     def test_native_build_does_not_inherit_lyra_selection(self):
@@ -62,19 +85,24 @@ class BundleAdmissionTest(unittest.TestCase):
             'OOS_LYRA_PROJECT', 'OOS_LYRA_REQUEST',
             'OOS_LYRA_BUILD_CONTEXT', 'OOS_LYRA_CANDIDATE')}
         with (mock.patch.dict(os.environ, inherited),
-              mock.patch.object(bundle.subprocess, 'run', return_value=mock.Mock(returncode=7)) as run):
+              mock.patch.object(containment, 'prepare_contained',
+                                side_effect=lambda argv, **kw: (kw['environment'],)) as prepare,
+              mock.patch.object(containment, '_run_windows',
+                                return_value=containment.ContainedResult(7, False)) as run):
             self.assertEqual(bundle.build_project(self.descriptor), 7)
-        environment = run.call_args.kwargs['env']
+        environment = run.call_args.args[0]
         self.assertTrue(inherited.keys().isdisjoint(environment))
         self.assertEqual(environment['OOS_BASE_ROM'], 'rom')
-        self.assertEqual(run.call_args.kwargs['cwd'], self.root)
+        self.assertEqual(prepare.call_args.kwargs['cwd'], self.root)
 
 
     def test_bom_native_descriptor_routes_without_changing_project(self):
         self.write_project(terrain='')
         before = b'\xef\xbb\xbf' + self.descriptor.read_bytes()
         self.descriptor.write_bytes(before)
-        with mock.patch.object(bundle.subprocess, 'run', return_value=mock.Mock(returncode=7)) as run:
+        with (mock.patch.object(containment, 'prepare_contained', return_value=()),
+              mock.patch.object(containment, '_run_windows',
+                                return_value=containment.ContainedResult(7, False)) as run):
             self.assertEqual(bundle.build_project(self.descriptor), 7)
         run.assert_called_once()
         self.assertEqual(self.descriptor.read_bytes(), before)
@@ -83,9 +111,9 @@ class BundleAdmissionTest(unittest.TestCase):
         self.write_project()
         before = b'\xef\xbb\xbf' + self.descriptor.read_bytes()
         self.descriptor.write_bytes(before)
-        with mock.patch.object(bundle.subprocess, 'run') as run:
-            with self.assertRaisesRegex(ValueError, 'lyra_build_request_file'):
-                bundle.build_project(self.descriptor)
+        with mock.patch.object(bundle.selection, 'begin_attempt') as run:
+            with self.assertRaisesRegex(ValueError, 'fresh transfer request and candidate'):
+                bundle.build_project(self.descriptor, request=self.root / 'request.json')
         run.assert_not_called()
         self.assertEqual(self.descriptor.read_bytes(), before)
 
