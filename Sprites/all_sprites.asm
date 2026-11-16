@@ -207,6 +207,11 @@ if !ENABLE_D8_FARORE_GRAPHICS == 1
   incsrc "Sprites/NPCs/farore_d8_follow.asm"
 endif
 
+; Moved from bank $32 (2026-11-16): bank-neutral, see the bank $32 note.
+%log_start("cloud_bridge", !LOG_SPRITES)
+incsrc "Sprites/Objects/cloud_bridge.asm"
+%log_end("cloud_bridge", !LOG_SPRITES)
+
 ; Sprites/NPCs/ranch_milk.asm is included from Items/all_items.asm
 ; (bank $2B): bank $30 is full once the playtest features are on.
 
@@ -373,9 +378,9 @@ incsrc "Sprites/NPCs/fortune_teller.asm"
 incsrc "Sprites/NPCs/ranch_girl.asm"
 %log_end("ranch_girl", !LOG_SPRITES)
 
-%log_start("cloud_bridge", !LOG_SPRITES)
-incsrc "Sprites/Objects/cloud_bridge.asm"
-%log_end("cloud_bridge", !LOG_SPRITES)
+; cloud_bridge moved to the end of bank $30 (2026-11-16): the Kydreeok
+; chamber plate code filled bank $32. It is bank-neutral (long entries with
+; PHK/PLB, outward calls are JSL).
 
 ; A file that orgs into a vanilla bank must pushpc/pullpc, or the next incsrc
 ; lands on vanilla code (fortune_teller.asm put ranch_girl/cloud_bridge on the
