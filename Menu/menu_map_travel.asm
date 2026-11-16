@@ -1,9 +1,11 @@
 ; Map & Travel page (MenuScrollLevelH = $40), fourth page of the menu ring:
 ; Items -R-> Equipment ($20) -R-> Quest ($00) -R-> Map & Travel ($40) -R-> Items.
-; Cells: 0 Map, 1 Travel, 2-7 songs 1-6. $020B is the cursor.
+; Cells: 0 Map, 1 Travel, 2-7 songs 1-6 (v4: 3x2 grid). $020B is the cursor.
 ; Map and Travel close the menu and act in Menu_Exit (MenuMapTravel_ExitAction):
 ; Map opens the existing field/dungeon map module, Travel the existing Soaring
 ; path. No second map renderer and no new destination list. DBR = $2D.
+
+!MenuMapTravel_RowCount = 3                ; Map|Travel row + two song rows
 
 ; ---------------------------------------------------------
 ; Replaces Menu_Page3_Turn under the flag. A = $01 right, else left.
@@ -117,7 +119,8 @@ MenuMapTravel_Screen:
 
 ; ---------------------------------------------------------
 ; Horizontal moves skip empty cells and turn the page at a row edge.
-; Vertical moves go to the nearest filled column of the other row.
+; Vertical moves go to the nearest filled column of the next row up/down
+; (wrapping), skipping rows with no filled cell.
 MenuMapTravel_Move:
 {
   SEP #$30
@@ -146,7 +149,17 @@ MenuMapTravel_Move:
   JMP Menu_Page3_Turn
 .vertical
   LDA.w MenuMapTravel_Columns,X : STA.b $06
-  LDA.w MenuMapTravel_Rows,X : EOR.b #$01 : TAX
+  LDA.w MenuMapTravel_Rows,X : STA.b $05 : STA.b $07  ; start row, row tried
+.next_row
+  LDA.b $04 : AND.b #$08 : BEQ .down                  ; Up
+  LDA.b $07 : DEC : BPL .row_ok
+  LDA.b #!MenuMapTravel_RowCount-1 : BRA .row_ok
+.down
+  LDA.b $07 : INC : CMP.b #!MenuMapTravel_RowCount : BCC .row_ok
+  LDA.b #$00
+.row_ok
+  STA.b $07 : CMP.b $05 : BEQ .stay                   ; no other row has a cell
+  TAX
   LDA.b #$FF : STA.b $08 : STA.b $02
   LDA.w .starts,X : TAY
   LDA.w .ends,X : STA.b $09
@@ -161,6 +174,8 @@ MenuMapTravel_Move:
 .next_cell
   INY : CPY.b $09 : BCC .scan_row
   LDA.b $02 : CMP.b #$FF : BNE .accept
+  BRA .next_row
+.stay
   RTS
 .accept
   LDA.b $02 : STA.w $020B
@@ -168,18 +183,18 @@ MenuMapTravel_Move:
   LDA.b #$20 : STA.w $012F
   RTS
 .next
-  db $01,$FF, $03,$04,$05,$06,$07,$FF   ; $FF = row edge
+  db $01,$FF, $03,$04,$FF, $06,$07,$FF  ; $FF = row edge
 .prev
-  db $FF,$00, $FF,$02,$03,$04,$05,$06
+  db $FF,$00, $FF,$02,$03, $FF,$05,$06
 .starts
-  db 0,2
+  db 0,2,5
 .ends
-  db 2,8
+  db 2,5,8
 }
 MenuMapTravel_Rows:
-  db 0,0, 1,1,1,1,1,1
-MenuMapTravel_Columns:
-  db 7,17, 7,10,13,17,20,23
+  db 0,0, 1,1,1, 2,2,2
+MenuMapTravel_Columns:                  ; absolute icon column (v4)
+  db 9,20, 8,14,20, 8,14,20
 
 ; ---------------------------------------------------------
 ; A or Y. Songs bind like Equipment; Map and Travel close the menu and
@@ -335,8 +350,9 @@ org $02A54D ; Module09_00_PlayerControl ; @hook module=Menu name=MenuMapTravel_C
 pullpc
 
 ; ---------------------------------------------------------
-; Same frame, spacing and brackets as Equipment: Map/Travel on the mask row,
-; area name on the ring row, songs on the song row.
+; v4 layout (make_frame_preserved_v4.py): area name header on row 9,
+; MAP | TRAVEL labels on row 11 over their icons, SONGS label on row 16 over
+; a 3x2 song grid. Footer names the cell under the cursor.
 MenuMapTravel_Draw:
 {
   JSR Menu_DrawBackground
@@ -347,15 +363,15 @@ MenuMapTravel_Draw:
   DEX #2 : BPL .title
   LDX.w #$0004
 .map_label
-  LDA.w .map_text,X : STA.w $1000+menu_offset(9,6),X
+  LDA.w .map_text,X : STA.w $1000+menu_offset(11,8),X
   DEX #2 : BPL .map_label
   LDX.w #$000A
 .travel_label
-  LDA.w .travel_text,X : STA.w $1000+menu_offset(9,16),X
+  LDA.w .travel_text,X : STA.w $1000+menu_offset(11,18),X
   DEX #2 : BPL .travel_label
   LDX.w #$0008
 .songs_label
-  LDA.w .songs_text,X : STA.w $1000+menu_offset(17,6),X
+  LDA.w .songs_text,X : STA.w $1000+menu_offset(16,13),X
   DEX #2 : BPL .songs_label
   JSR MenuMapTravel_AreaName
 
@@ -419,7 +435,7 @@ MenuMapTravel_Draw:
 }
 
 ; ---------------------------------------------------------
-; Current area name, centered on row 13. Light World and Abyss names
+; Current area name, centered on row 9 (the Map page header). Light World and Abyss names
 ; ($00-$7F, 16 cells each with the AbyssName pad); special areas show none.
 ; In/out M/X=16.
 MenuMapTravel_AreaName:
@@ -440,7 +456,7 @@ MenuMapTravel_AreaName:
 .found
   INY #2 : STY.b $02                    ; byte length
   LDA.w #$0040 : SEC : SBC.b $02 : LSR : AND.w #$FFFE
-  CLC : ADC.w #menu_offset(13,0) : TAX
+  CLC : ADC.w #menu_offset(9,0) : TAX
   LDY.w #$0000
 .copy
   LDA.b ($00),Y : STA.w $1000,X
@@ -460,6 +476,9 @@ MenuMapTravel_Names:
 MenuMapTravel_Gfx:
   dw MapGFX,OcarinaGFX
   dw QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX
+; DrawMenuItem offsets (absolute minus row 4, col 4). Map (13,9), Travel (13,20);
+; songs at rows 18/21, cols 8/14/20 absolute.
 MenuMapTravel_Pos:
-  dw menu_offset(6,3),menu_offset(6,13)
-  dw menu_offset(14,3),menu_offset(14,6),menu_offset(14,9),menu_offset(14,13),menu_offset(14,16),menu_offset(14,19)
+  dw menu_offset(9,5),menu_offset(9,16)
+  dw menu_offset(14,4),menu_offset(14,10),menu_offset(14,16)
+  dw menu_offset(17,4),menu_offset(17,10),menu_offset(17,16)

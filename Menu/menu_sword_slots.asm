@@ -54,7 +54,8 @@ SwordSlots_ExitReload:
 
 ; Menu_Equipment_Owned for slots 24-26. A = slot; returns the icon variant,
 ; zero when unavailable (smith-held $FF hides both swords). Caller saved X.
-; Slot 26 is the tunic (Menu/menu_tunic.asm). M/X=8.
+; Slot 26 is the tunic (Menu/menu_tunic.asm): a cursor stop whenever Armor
+; is 0-2, so its footer name shows even with one colour owned. M/X=8.
 SwordSlots_Variant:
 {
   CMP.b #$1A : BEQ .tunic : BCS .none
@@ -72,7 +73,7 @@ SwordSlots_Variant:
   LDA.b #$00
   RTL
 .tunic
-  JMP Tunic_StopVariant
+  JMP Tunic_WornVariant
 }
 
 ; A on an owned GEAR slot. A = 24 story / 25 heavy / 26 tunic. M/X=8.

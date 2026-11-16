@@ -135,7 +135,7 @@
     "shared:Menu/menu_map_travel.asm": {
       "source_set": "shared",
       "path": "Menu/menu_map_travel.asm",
-      "sha256": "79da45cf0eeea5df95251dacffb026a29d09fb3fa5a0437abbbcb64d64403802"
+      "sha256": "4a123398a31acd79a7180725f31304663c2cd3d036f5e7f2fb94ba50ac1d0203"
     },
     "shared:Core/Cutscene/experiment.asm": {
       "source_set": "shared",

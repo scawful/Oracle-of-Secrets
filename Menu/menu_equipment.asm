@@ -324,7 +324,7 @@ endif
 }
 
 ; GEAR band: story blade, heavy sword (cursor slots 24/25), passive shield,
-; tunic (cursor slot 26 with two colours owned), then passive glove, boots,
+; tunic (cursor slot 26, worn colour), then passive glove, boots,
 ; flippers (display only). The tunic icon shows the worn colour. Passive variants come
 ; from Menu_Quest_GearVariant, the same SRAM reads Quest used before v4.
 Menu_Equipment_Gear:

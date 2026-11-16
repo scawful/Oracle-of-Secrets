@@ -211,7 +211,7 @@ Menu_DrawPendantIcons:
 Menu_DrawHeartPieces:
 {
 if !ENABLE_EQUIPMENT_MENU == 1
-  !QuestHeart = $1000+menu_offset(21,23)
+  !QuestHeart = $1000+menu_offset(9,24)   ; Quest top-right corner
 else
   !QuestHeart = $149E
 endif
@@ -591,7 +591,7 @@ endif
         STA.w ShortSpoof
         LDA.w #ShortSpoof
 if !ENABLE_EQUIPMENT_MENU == 1
-        LDX.w #menu_offset(18,8)
+        LDX.w #menu_offset(17,17)       ; Quest absolute (21,21), right of the pendants
 else
         LDX.w #menu_offset(11,8)
 endif
@@ -609,7 +609,7 @@ endif
       LDA.w #ShortSpoof
       ; Draw the big key (or big key with chest if we've gotten the treasure) icon
 if !ENABLE_EQUIPMENT_MENU == 1
-      LDX.w #menu_offset(18,2)
+      LDX.w #menu_offset(17,2)          ; Quest absolute (21,6), bottom-left
 else
       LDX.w #menu_offset(11,2)
 endif
@@ -632,7 +632,7 @@ endif
       LDA.w #ShortSpoof
       ; Draw the big key (or big key with chest if we've gotten the treasure) icon
 if !ENABLE_EQUIPMENT_MENU == 1
-      LDX.w #menu_offset(18,11)
+      LDX.w #menu_offset(17,20)         ; Quest absolute (21,24), bottom-right
 else
       LDX.w #menu_offset(11,11)
 endif
@@ -812,7 +812,7 @@ Menu_DrawBigChestKey:
       STA.w ShortSpoof
       LDA.w #ShortSpoof
 if !ENABLE_EQUIPMENT_MENU == 1
-      LDX.w #menu_offset(18,5)
+      LDX.w #menu_offset(17,5)          ; Quest absolute (21,9), left of the pendants
 else
       LDX.w #menu_offset(11, 5)
 endif
