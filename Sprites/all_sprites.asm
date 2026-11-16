@@ -198,9 +198,7 @@ org $3AA000
   %log_end("ice_block", !LOG_SPRITES)
 pullpc
 
-%log_start("swap_diamond", !LOG_SPRITES)
-incsrc "Sprites/Objects/swap_diamond.asm"
-%log_end("swap_diamond", !LOG_SPRITES)
+; swap_diamond moved to the end of bank $32 (2026-11-16): bank $30 had 24 B free.
 
 if !ENABLE_D8_FARORE_GRAPHICS == 1
   ; Append within the existing sprite stream; retain the bank's hard boundary.
@@ -381,6 +379,13 @@ incsrc "Sprites/NPCs/ranch_girl.asm"
 ; cloud_bridge moved to the end of bank $30 (2026-11-16): the Kydreeok
 ; chamber plate code filled bank $32. It is bank-neutral (long entries with
 ; PHK/PLB, outward calls are JSL).
+
+; Moved from bank $30 (2026-11-16) for bank headroom. Bank-neutral: the
+; dispatcher reaches it through dl pointers, both entries do PHK/PLB, its
+; tables are local, and outward calls are JSL.
+%log_start("swap_diamond", !LOG_SPRITES)
+incsrc "Sprites/Objects/swap_diamond.asm"
+%log_end("swap_diamond", !LOG_SPRITES)
 
 ; A file that orgs into a vanilla bank must pushpc/pullpc, or the next incsrc
 ; lands on vanilla code (fortune_teller.asm put ranch_girl/cloud_bridge on the
