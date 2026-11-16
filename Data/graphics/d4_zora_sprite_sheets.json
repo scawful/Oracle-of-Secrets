@@ -33,6 +33,13 @@
       "why": "Kydrog boss, old pirate art (scawful 2026-10-19): dark outline around the collar and neck; room $A4 only."
     },
     {
+      "sprite_sheet": "0x0F",
+      "source": "spr0f.txt",
+      "base_sha256": "13532b9c4cc295e6efdb7c2532436a912f7392531b4c1228bd00484b26c9ca84",
+      "identity": false,
+      "why": "Goron Mines switch track sprite $B0 (scawful rulings 9/17/19, 2026-11-02): tiles 04/05/14/15 (block $44) carry the room's BG rail corner pixels, indices remapped from BG palette 7 to OBJ palette 6. No other tile changes."
+    },
+    {
       "decoded_sha256": "705208a1541b6ffb1d84cd05b00e284c2b6bfcf08a1ad5b14d72088b3205cd24",
       "global_sheet": "0xE3",
       "source": "docks/docks_gE3_slot6.txt",

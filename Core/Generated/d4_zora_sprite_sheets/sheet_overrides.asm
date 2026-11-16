@@ -8,6 +8,7 @@ SourceSpriteSheet_64: incbin "sheets/spr64.bin"
 SourceSpriteSheet_40: incbin "sheets/spr40.bin"
 SourceSpriteSheet_43: incbin "sheets/spr43.bin"
 SourceSpriteSheet_47: incbin "sheets/spr47.bin"
+SourceSpriteSheet_0F: incbin "sheets/spr0F.bin"
 assert pc() <= $410000 || pc() == $418000, "Source sprite sheets crossed bank $40"
 org $478000
 SourceGlobalSheet_E3: incbin "sheets/gE3.bin"
@@ -117,6 +118,13 @@ org $23FEBA ; @hook module=Core kind=data protected_size=1
   db $DA
 org $23FFBA ; @hook module=Core kind=data protected_size=1
   db $70
+; Sprite $0F, global $82: Goron Mines switch track sprite $B0 (scawful rulings 9/17/19, 2026-11-02): tiles 04/05/14/15 (block $44) carry the room's BG rail corner pixels, indices remapped from BG palette 7 to OBJ palette 6. No other tile changes.
+org $23FD82 ; @hook module=Core kind=data protected_size=1
+  db $C0
+org $23FE82 ; @hook module=Core kind=data protected_size=1
+  db $DE
+org $23FF82 ; @hook module=Core kind=data protected_size=1
+  db $68
 ; Global $E3 (sprite-relative $70): Kalyxo Docks ordinary 3bpp background; shared Secret Beach LOW deck sheet.
 org $23FDE3 ; @hook module=Core kind=data protected_size=1
   db $C7
