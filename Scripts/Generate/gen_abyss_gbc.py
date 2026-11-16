@@ -170,15 +170,6 @@ def build(a: argparse.Namespace) -> int:
         # palette rows 2-7: donor palette by vote, default = floor palette
         floor_pal = donor.quadrant(FLOOR_META, 0, 0)[1]
         row_pal = {r: (votes[r].most_common(1)[0][0] if votes[r] else floor_pal) for r in range(2, 8)}
-        words = []
-        for r in range(2, 8):
-            cols = donor.pal[row_pal[r]]
-            half = list(cols) + [cols[3]] * 3  # indices 1-7
-            row = half + [cols[0]] + half  # 1-7, 8, 9-15
-            for c in row:
-                words.append(c[0] | (c[1] << 5) | (c[2] << 10))
-        palettes.append(words)
-
         # posterize: rank SNES indices 1-7 by mean luminance over the rooms' rows 2-7
         snes = gw.palette(rom, pal_ids[0])
         mean = {}
@@ -194,6 +185,22 @@ def build(a: argparse.Namespace) -> int:
         quant = {0: 0}
         for n, i in enumerate(ranked):
             quant[i] = donor_rank[min(3, n * 4 // 7)] + 1
+
+        # Palette entry i (1-7) holds the donor shade that SNES index i posterizes
+        # to, so sheets this style does not remap (slot 7, animated, unlisted)
+        # still read by luminance instead of falling to the darkest shade.
+        inv = {}
+        for i in range(1, 8):
+            inv.setdefault(quant[i] - 1, i)
+        words = []
+        for r in range(2, 8):
+            cols = donor.pal[row_pal[r]]
+            half = [cols[quant[i] - 1] for i in range(1, 8)]
+            row = half + [cols[0]] + half  # 1-7, 8, 9-15
+            for c in row:
+                words.append(c[0] | (c[1] << 5) | (c[2] << 10))
+        palettes.append(words)
+
 
         smap = {}
         cov = {}
@@ -215,7 +222,7 @@ def build(a: argparse.Namespace) -> int:
                     for y in range(8):
                         for x in range(8):
                             v = g[ty + y][tx + x]
-                            g[ty + y][tx + x] = (dg[y][x] + 1) if dg else quant[v]
+                            g[ty + y][tx + x] = inv[dg[y][x]] if dg else v
                     if dg:
                         donor_chars.append(c)
                     elif any(g[ty + y][tx + x] for y in range(8) for x in range(8)):
