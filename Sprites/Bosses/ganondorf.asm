@@ -101,13 +101,13 @@ Sprite_Ganondorf_Long:
   ; fight (hits, stun count, action, teleport spot, ball) keeps running from where it was.
   LDA.w BossReinject : BEQ .no_reinject
     STZ.w BossReinject
-    JSL ApplyGanondorfGraphics
 if !ENABLE_GANON_BEAST == 1
-    LDA.w SprAction, X : CMP.b #$08 : BCC .ganon_palette
-      JSR Beast_Reinject ; beast palette + malice colors
+    LDA.w SprAction, X : CMP.b #$08 : BCC .ganon_reinject
+      JSR Beast_Reinject ; beast sheet + palette + malice colors
       BRA .no_reinject
-    .ganon_palette
+    .ganon_reinject
 endif
+    JSL ApplyGanondorfGraphics
     JSL ApplyGanondorfPalette
   .no_reinject
   JSR Ganondorf_Draw

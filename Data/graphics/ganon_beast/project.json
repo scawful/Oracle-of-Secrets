@@ -1,0 +1,112 @@
+{
+  "schema": 1,
+  "image": "canonical.png",
+  "status": "stand-in (GBC reference recolour), not final art",
+  "palette_bgr555": [
+    "$0000",
+    "$1043",
+    "$1C85",
+    "$1C4A",
+    "$246F",
+    "$2873",
+    "$1915",
+    "$21DC",
+    "$2279",
+    "$435D",
+    "$24C8",
+    "$34B8",
+    "$18AC",
+    "$009D",
+    "$1A7E",
+    "$57DF"
+  ],
+  "frames": [
+    {
+      "id": "idle",
+      "rect": [
+        0,
+        0,
+        64,
+        48
+      ],
+      "symmetric": true,
+      "source": "plan/pose_idle_B.png"
+    },
+    {
+      "id": "roar",
+      "rect": [
+        64,
+        0,
+        64,
+        48
+      ],
+      "symmetric": true,
+      "source": "plan/pose_roar_B.png"
+    },
+    {
+      "id": "core_open",
+      "rect": [
+        128,
+        0,
+        48,
+        48
+      ],
+      "symmetric": true,
+      "source": "plan/pose_core_open_B.png"
+    },
+    {
+      "id": "cloak",
+      "rect": [
+        176,
+        0,
+        48,
+        48
+      ],
+      "symmetric": false,
+      "source": "plan/pose_cloak.png"
+    },
+    {
+      "id": "trident_up",
+      "rect": [
+        0,
+        48,
+        64,
+        64
+      ],
+      "symmetric": false,
+      "source": "plan/pose_trident_up.png"
+    },
+    {
+      "id": "trident_v",
+      "rect": [
+        64,
+        48,
+        16,
+        32
+      ],
+      "symmetric": false,
+      "source": "mock/tri_mal_1.png"
+    },
+    {
+      "id": "trident_h",
+      "rect": [
+        80,
+        48,
+        32,
+        16
+      ],
+      "symmetric": false,
+      "source": "mock/tri_mal_3.png"
+    }
+  ],
+  "reserved_from_ganondorf": {
+    "chr": [
+      "$6A",
+      "$6C",
+      "$6E",
+      "$80",
+      "$82"
+    ],
+    "why": "energy balls + bats keep drawing if alive at the hand-off"
+  }
+}

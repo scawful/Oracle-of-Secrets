@@ -3,8 +3,9 @@
 ;
 ; Included by ganondorf.asm inside its bank $2A block when
 ; !ENABLE_GANON_BEAST == 1. The beast is a second Ganondorf ($D3) slot that
-; runs actions 8-15 (beast state = SprAction - 8). It reuses Ganondorf's
-; sheet and frames; only its OBJ palette differs (red/blue swapped at runtime).
+; runs actions 8-15 (beast state = SprAction - 8). It has its own sheet
+; (ganon_beast.bin, uploaded over Ganondorf's at VRAM $5000) and its own OBJ
+; palette 6 (ganon_beast.pal).
 ;
 ; Hand-off: Ganondorf_Dead (timer 0) spawns the beast, sets GanondorfFight = 3,
 ; then frees Ganondorf. GanondorfFight = 3 keeps the Triforce door shut
@@ -36,8 +37,11 @@
 ;   SprSubtype malice job: 0 idle, 1 R0, 2 stage 1, 3 stage 2; bit 7 = warning
 ;   SprCustom  malice cursor (cells written so far)
 ;
-; Art: no new art. Real art replaces Ganondorf frame use in Beast_* poses,
-; the trident OAM piece (chr/props below) and Beast_ApplyPalette.
+; Art: stand-in GBC art from Data/graphics/ganon_beast (canonical.png +
+; project.json), packed by Scripts/Generate/build_ganon_beast_art.py into
+; ganon_beast.bin/.pal/_frames.asm. Cells $6A/$6C/$6E/$80/$82 stay Ganondorf's.
+; OAM: the beast owns 16 entries of its default region (SprNbrOAM low bits $0F);
+; 0-11 body, 12-13 flying trident, 14 unused, 15 shadow. No defer-to-Link block.
 ; =========================================================
 
 ; ---- Malice floor look (BG palette row and tile16 words) ----
@@ -83,10 +87,9 @@
 !Beast_HandX        = 18
 !Beast_HandY        = -20
 
-; Trident placeholder: Ganondorf's energy ball tile, OBJ palette 6.
-!Beast_TridentChr   = $6A
-!Beast_TridentProps = $3D
-!Beast_TridentSlot  = 6     ; OAM piece index; beast frames use at most 6 pieces
+; OAM entries (see header).
+!Beast_OamCount     = $0F   ; SprNbrOAM low bits: 16 entries
+!Beast_TridentEntry = 12
 
 !Beast_ActEnter   = $08
 !Beast_ActStalk   = $09
@@ -96,6 +99,10 @@
 !Beast_ActDazed   = $0D
 !Beast_ActHit     = $0E
 !Beast_ActDead    = $0F
+
+; Frame tables (BeastFrames_start_index, _x_offsets, ...) and !BeastFrame_* ids.
+BeastFrames:
+  incsrc "ganon_beast_frames.asm"
 
 ; =========================================================
 ; Spawn from Ganondorf_Dead. X = Ganondorf slot.
@@ -146,7 +153,9 @@ if !Beast_MaliceR0 == 1
   LDA.b #$01
 endif
   STA.w SprSubtype, X ; malice job R0 (or idle)
+  LDA.w SprNbrOAM, X : AND.b #$E0 : ORA.b #!Beast_OamCount : STA.w SprNbrOAM, X
   JSR Beast_ClearCollapse
+  JSR ApplyBeastGraphics
   JSR Beast_ApplyPalette
   LDA.b #$00 : JSR Malice_SetColors
   RTS
@@ -174,20 +183,15 @@ Beast_ClearCollapse:
   RTS
 }
 
-; Beast OBJ palette: Ganondorf's 15 colors with red and blue swapped, written to
-; OBJ row 6 live and fade-target buffers. Keeps X.
+; Beast OBJ palette 6, colors 1-15, to the live and fade-target buffers.
+; Keeps X.
 Beast_ApplyPalette:
 {
   PHX
   REP #$30
   LDX.w #$001C
   .color
-    LDA.l GanondorfPalette+2, X : STA.b $00
-    AND.w #$03E0 : STA.b $02          ; green stays
-    LDA.b $00 : AND.w #$001F
-    XBA : ASL A : ASL A : ORA.b $02 : STA.b $02 ; red -> blue
-    LDA.b $00 : XBA : LSR A : LSR A
-    AND.w #$001F : ORA.b $02          ; blue -> red
+    LDA.l BeastPalette+2, X
     STA.l $7EC6C2, X
     STA.l $7EC4C2, X
     DEX : DEX : BPL .color
@@ -197,11 +201,35 @@ Beast_ApplyPalette:
   RTS
 }
 
-; Fairy revive (BossReinject): graphics are reapplied by the caller.
+; Fairy revive (BossReinject): the game over module reloaded sheets and palettes.
 Beast_Reinject:
 {
+  JSR ApplyBeastGraphics
   JSR Beast_ApplyPalette
-  LDA.b #$00 : JSR Malice_SetColors
+  LDA.w SprAction, X : CMP.b #!Beast_ActDead : BNE .malice
+    JMP Malice_ClearLook
+  .malice
+  LDA.b #$00 : JMP Malice_SetColors
+}
+
+; Beast sheet -> second OBJ name table (VRAM $5000-$5BFF), like
+; ApplyGanondorfGraphics. Ganondorf's falling-floor sheet at $5C00 stays.
+; Forced blank during the DMA. In: M=8 X=8. Keeps X.
+ApplyBeastGraphics:
+{
+  PHX
+  REP #$20
+  LDX.b #$80 : STX.w $2100
+  STX.w $2115
+  LDA.w #$5000 : STA.w $2116
+  LDA.w #$1801 : STA.w $4300
+  LDA.w #BeastGraphics : STA.w $4302
+  LDX.b #BeastGraphics>>16 : STX.w $4304
+  LDA.w #$1800 : STA.w $4305
+  LDX.b #$01 : STX.w $420B
+  LDX.b #$0F : STX.w $2100
+  SEP #$30
+  PLX
   RTS
 }
 
@@ -236,7 +264,6 @@ Beast_Stalk:
 {
   LDA.b #!Beast_WalkSpeed : JSL Sprite_ApplySpeedTowardsPlayer
   JSR Ganondorf_MoveClamped
-  JSR Beast_WalkPose
   JSL Sprite_CheckDamageToPlayer
   LDA.w SprTimerA, X : BNE .wait
     STZ.w SprXSpeed, X
@@ -249,12 +276,12 @@ Beast_Stalk:
     BEQ .roar
       LDA.b #!Beast_ActThrow : STA.w SprAction, X
       LDA.b #!Beast_ThrowTime : STA.w SprTimerA, X
-      LDA.b #!Ganon_FrameWindup : STA.w SprFrame, X
+      LDA.b #!BeastFrame_trident_up : STA.w SprFrame, X
       RTS
     .roar
     LDA.b #!Beast_ActRoar : STA.w SprAction, X
     LDA.b #!Beast_RoarTime : STA.w SprTimerA, X
-    LDA.b #!Ganon_FrameCast : STA.w SprFrame, X
+    LDA.b #!BeastFrame_roar : STA.w SprFrame, X
     LDA.b #$35 : STA.w $012E
   .wait
   RTS
@@ -264,7 +291,7 @@ Beast_Stalk:
 ; core is open from the moment the trident leaves ("2 after release").
 Beast_Throw:
 {
-  LDA.b #!Ganon_FrameWindup : STA.w SprFrame, X
+  LDA.b #!BeastFrame_trident_up : STA.w SprFrame, X
   JSL Sprite_CheckDamageToPlayer
   LDA.w SprTimerA, X : BNE .wait
     LDA.w SprX, X : CLC : ADC.b #!Beast_HandX : STA.w SprMiscC, X
@@ -278,7 +305,7 @@ Beast_Throw:
     LDA.b #!Beast_TridentOut : STA.w SprTimerC, X
     LDA.b #!Beast_ActTrident : STA.w SprAction, X
     LDA.b #!Beast_TridentTime : STA.w SprTimerA, X
-    LDA.b #!Ganon_FrameRelease : STA.w SprFrame, X
+    LDA.b #!BeastFrame_cloak : STA.w SprFrame, X
     LDA.b #$29 : JSL SpriteSFX_QueueSFX3WithPan
   .wait
   RTS
@@ -303,12 +330,7 @@ Beast_Trident:
   JSL Sprite_CheckDamageToPlayer
   JSR Beast_TridentMove
   JSR Beast_TridentDamage
-  LDA.w SprTimerA, X : CMP.b #!Beast_TridentTime-8 : BCS .release_pose
-    LDA.b #!Ganon_FrameRecover : BRA .pose
-  .release_pose
-    LDA.b #!Ganon_FrameRelease
-  .pose
-  STA.w SprFrame, X
+  LDA.b #!BeastFrame_cloak : STA.w SprFrame, X
   LDA.w SprMiscB, X : BEQ .caught
   LDA.w SprTimerA, X : BNE .wait
   .caught
@@ -323,14 +345,14 @@ Beast_Roar:
 {
   JSL Sprite_CheckDamageToPlayer
   LDA.w SprMiscA, X : BMI .charge
-    LDA.b #!Ganon_FrameCast : STA.w SprFrame, X
+    LDA.b #!BeastFrame_roar : STA.w SprFrame, X
     JSR Ganondorf_Quake
     LDA.w SprTimerA, X : BNE .wait
       JSR Ganondorf_StopQuake
       LDA.w SprMiscA, X : ORA.b #$80 : STA.w SprMiscA, X
       LDA.b #!Beast_ChargeSpeed : JSL Sprite_ApplySpeedTowardsPlayer
       LDA.b #!Beast_ChargeTime : STA.w SprTimerA, X
-      LDA.b #!Ganon_FrameReady : STA.w SprFrame, X
+      LDA.b #!BeastFrame_roar : STA.w SprFrame, X
     .wait
     RTS
   .charge
@@ -342,7 +364,7 @@ Beast_Roar:
   STZ.w SprYSpeed, X
   LDA.b #!Beast_ActDazed : STA.w SprAction, X
   LDA.b #!Beast_DazedTime : STA.w SprTimerA, X
-  LDA.b #!Ganon_FrameHurt : STA.w SprFrame, X
+  LDA.b #!BeastFrame_core_open : STA.w SprFrame, X
   LDA.b #$35 : STA.w $012E
   RTS
 }
@@ -350,7 +372,7 @@ Beast_Roar:
 ; 13: slumped, core open, no contact damage.
 Beast_Dazed:
 {
-  LDA.b #!Ganon_FrameHurt : STA.w SprFrame, X
+  LDA.b #!BeastFrame_core_open : STA.w SprFrame, X
   JSR Beast_TryCoreHit : BCS .exit
   LDA.w SprTimerA, X : BNE .exit
     JSR Beast_GotoStalk
@@ -361,7 +383,7 @@ Beast_Dazed:
 ; 14: flinch after a core hit. Invulnerable, no contact damage.
 Beast_Hit:
 {
-  LDA.b #!Ganon_FrameHurt : STA.w SprFrame, X
+  LDA.b #!BeastFrame_core_open : STA.w SprFrame, X
   LDA.w SprTimerA, X : BNE .wait
     JSR Beast_GotoStalk
   .wait
@@ -371,7 +393,7 @@ Beast_Hit:
 ; 15: death scene, same timeline as Ganondorf_Dead.
 Beast_Dead:
 {
-  LDA.b #!Ganon_FrameHurt : STA.w SprFrame, X
+  LDA.b #!BeastFrame_core_open : STA.w SprFrame, X
   LDA.w SprTimerA, X : BNE .run
     JSR Ganondorf_StopQuake
     LDA.b #$02 : STA.l GanondorfFight
@@ -403,19 +425,6 @@ Beast_GotoStalk:
   .store
   STA.w SprTimerA, X
   STZ.w SprFrame, X
-  RTS
-}
-
-; Front pose when Link is below, rear walk cycle when Link is above.
-Beast_WalkPose:
-{
-  JSR Ganondorf_CompareLinkY : BCS .front
-    LDA.b $1A : LSR A : LSR A : LSR A : AND.b #$01
-    CLC : ADC.b #!Ganon_FrameBackA
-    STA.w SprFrame, X
-    RTS
-  .front
-  LDA.b #!Ganon_FrameIdle : STA.w SprFrame, X
   RTS
 }
 
@@ -464,7 +473,7 @@ Beast_TryCoreHit:
 }
 
 ; =========================================================
-; Trident (drawn by the beast as one OAM piece; damage reuses the beast slot).
+; Trident (drawn by the beast in OAM entries 12-13; damage reuses the beast slot).
 
 Beast_TridentMove:
 {
@@ -545,7 +554,16 @@ Beast_Draw:
   .blink
   LDA.b $1A : AND.b #$02 : BEQ .skip
   .draw
-  JSR Ganon_DrawFrame
+  JSL Sprite_PrepOamCoord
+  LDA.w SprFlash, X : STA.b $0F
+  REP #$20
+  LDA.b $00 : STA.b $04
+  LDA.b $02 : STA.b $0A
+  SEP #$20
+  STZ.b $0C : STZ.b $0D
+  LDA.w SprFrame, X : JSR Beast_DrawPieces
+  ; The held trident is part of the trident_up pose; only a flying one is drawn here.
+  LDA.w SprMiscB, X : BEQ .shadow
   LDA.w SprAction, X : CMP.b #!Beast_ActDead : BEQ .shadow
     JSR Beast_DrawTrident
   .shadow
@@ -554,21 +572,65 @@ Beast_Draw:
   RTS
 }
 
-; One 16x16 OAM piece in slot !Beast_TridentSlot. $00/$02 = the beast's
-; screen position (preserved by Ganon_DrawFrame). Scratch $04-$05, $0A-$0D.
+; Writes one BeastFrames frame into consecutive OAM entries.
+; In: A = frame, $0C = first OAM entry, $0D = flip bits ($40 h, $80 v; offsets
+; mirror around the piece centre +8), $04-$05 / $0A-$0B = 16-bit screen origin,
+; $0F = flash bits. Scratch $06-$09, $0E. Keeps X and $00-$03.
+; Off-screen pieces are skipped; their entries keep the cleared Y = $F0.
+Beast_DrawPieces:
+{
+  PHX
+  TAX
+  LDA.w BeastFrames_nbr_of_tiles, X : STA.b $0E
+  LDA.w BeastFrames_start_index, X : TAX
+  LDA.b $0C : ASL A : ASL A : TAY
+  .piece
+    PHX
+    TXA : ASL A : TAX
+    REP #$20
+    LDA.w BeastFrames_x_offsets, X : STA.b $06
+    LDA.w BeastFrames_y_offsets, X : STA.b $08
+    SEP #$20
+    BIT.b $0D : BVC .no_h
+      REP #$20 : LDA.b $06 : EOR.w #$FFFF : INC A : STA.b $06 : SEP #$20
+    .no_h
+    BIT.b $0D : BPL .no_v
+      REP #$20 : LDA.b $08 : EOR.w #$FFFF : INC A : STA.b $08 : SEP #$20
+    .no_v
+    REP #$20
+    LDA.b $04 : CLC : ADC.b $06 : STA.b $06
+    LDA.b $0A : CLC : ADC.b $08 : STA.b $08
+    LDA.b $06 : CLC : ADC.w #$0010 : CMP.w #$0110 : BCS .off
+    LDA.b $08 : CLC : ADC.w #$0010 : CMP.w #$0100 : BCS .off
+    SEP #$20
+    PLX : PHX
+    LDA.b $06 : STA.b ($90), Y : INY
+    LDA.b $08 : STA.b ($90), Y : INY
+    LDA.w BeastFrames_chr, X : STA.b ($90), Y : INY
+    LDA.w BeastFrames_properties, X : EOR.b $0D : ORA.b $0F : STA.b ($90), Y
+    PHY
+    TYA : LSR A : LSR A : TAY
+    LDA.b $07 : AND.b #$01 : ORA.w BeastFrames_sizes, X : STA.b ($92), Y
+    PLY : INY
+    BRA .next
+    .off
+    SEP #$20
+    INY : INY : INY : INY
+    .next
+    PLX
+    INX
+    DEC.b $0E : BMI .done
+    JMP .piece
+  .done
+  PLX
+  RTS
+}
+
+; Flying trident in OAM entries 12-13. $00/$02 = the beast's screen position.
+; Vertical frame (head up) when |Y step| >= |X step|, else horizontal (head
+; right); flipped to point along the throw, and back at the beast on the return.
 Beast_DrawTrident:
 {
-  LDY.w SprFrame, X
-  LDA.w Ganon_DrawFrame_nbr_of_tiles, Y : CMP.b #!Beast_TridentSlot : BCC .fits
-    RTS ; 7-piece frame: slot 6 belongs to the body
-  .fits
-  LDA.w SprMiscB, X : BNE .flying
-    REP #$20
-    LDA.b $00 : CLC : ADC.w #!Beast_HandX : STA.b $04
-    LDA.b $02 : CLC : ADC.w #!Beast_HandY : STA.b $0A
-    SEP #$20
-    BRA .emit
-  .flying
   STZ.b $05 : STZ.b $0B : STZ.b $0D
   LDA.w SprMiscC, X : STA.b $04
   LDA.w SprX, X : STA.b $0C
@@ -580,23 +642,35 @@ Beast_DrawTrident:
   REP #$20
   LDA.b $0A : SEC : SBC.b $0C : CLC : ADC.b $02 : STA.b $0A
   SEP #$20
-  .emit
-  REP #$20
-  LDA.b $04 : CLC : ADC.w #$0010 : CMP.w #$0110 : BCS .off
-  LDA.b $0A : CLC : ADC.w #$0010 : CMP.w #$0100 : BCS .off
-  SEP #$20
-  LDY.b #!Beast_TridentSlot*4
-  LDA.b $04 : STA.b ($90), Y : INY
-  LDA.b $0A : STA.b ($90), Y : INY
-  LDA.b #!Beast_TridentChr : STA.b ($90), Y : INY
-  LDA.b #!Beast_TridentProps : ORA.w SprFlash, X : STA.b ($90), Y
-  LDY.b #!Beast_TridentSlot
-  LDA.b $05 : AND.b #$01 : ORA.b #$02 : STA.b ($92), Y
-  .done
-  RTS
-  .off
-  SEP #$20
-  RTS
+  LDA.w SprMiscG, X : BPL .g_pos
+    EOR.b #$FF : INC A
+  .g_pos
+  STA.b $0C
+  LDA.w SprMiscE, X : BPL .e_pos
+    EOR.b #$FF : INC A
+  .e_pos
+  CMP.b $0C : BEQ .vertical : BCS .horizontal
+  .vertical
+    LDA.b #$80 : STA.b $0E
+    LDA.w SprMiscG, X : BMI .v_up : BEQ .v_up
+      LDA.b #$80 : STA.b $0D
+    .v_up
+    LDA.b #!BeastFrame_trident_v
+    BRA .flip_back
+  .horizontal
+    LDA.b #$40 : STA.b $0E
+    LDA.w SprMiscE, X : BPL .h_right
+      LDA.b #$40 : STA.b $0D
+    .h_right
+    LDA.b #!BeastFrame_trident_h
+  .flip_back
+  PHA
+  LDA.w SprMiscB, X : CMP.b #$02 : BNE .out
+    LDA.b $0D : EOR.b $0E : STA.b $0D
+  .out
+  LDA.b #!Beast_TridentEntry : STA.b $0C
+  PLA
+  JMP Beast_DrawPieces
 }
 
 ; =========================================================
@@ -861,3 +935,9 @@ Malice_BandS2:
   dw $0BEA, $0BE6, $0BE2, $0BDE, $0BDA, $0BD6, $0BD2, $0BCE
   dw $0ACE, $09CE, $08CE, $07CE, $06CE, $05CE
 Malice_BandS2_End:
+
+BeastPalette:
+  incbin ganon_beast.pal
+
+BeastGraphics:
+  incbin ganon_beast.bin
