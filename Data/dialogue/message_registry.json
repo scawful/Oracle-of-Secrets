@@ -2,8 +2,8 @@
   "format": "oos-message-registry",
   "version": 1,
   "expanded_base": "0x18D",
-  "current_expanded_end": "0x21B",
-  "next_append_id": "0x21C",
+  "current_expanded_end": "0x226",
+  "next_append_id": "0x227",
   "renumber_policy": "freeze-published-ids",
   "ranges": [
     {
@@ -261,6 +261,14 @@
       "expected_content": "authored",
       "owner": "abyss-spawn-menu",
       "purpose": "Abyss file-load spawn menu after GameState 3 (Overworld/abyss_spawn_menu.asm): Pyramid / Kalyxo (then vanilla $0184/$0185). Option A picked by scawful 2026-11-15, two-step menu picked 2026-11-16; text \"Start From The Pyramid / Start From Kalyxo\" provisionally approved by scawful 2026-11-16 (\"Approve text\"); pending ridoyie review."
+    },
+    {
+      "start": "0x21C",
+      "end": "0x226",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "eon-goron-quests",
+      "purpose": "Eon Goron Roll Call (0x21C-0x223: chief request/report/reward, sentries C/D/E/G/H) and Meat Feast cook (0x224-0x226). Uses EonGoronQuest $7EF3BE (Core/sram.asm). Text from eon_goron_dialogue_draft.org; approved by scawful 2026-11-16, ridoyie review pending."
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "counts": {
-    "expanded": 143,
+    "expanded": 154,
     "vanilla": 0
   },
   "format": "yaze-message-bundle",
@@ -719,6 +719,61 @@
       "bank": "expanded",
       "id": 142,
       "text": "[P:00][S:00]>Start From The Pyramid[2]  Start From Kalyxo[CH2]"
+    },
+    {
+      "bank": "expanded",
+      "id": 143,
+      "text": "Heh, a traveler! Good timing.[2]I posted five sentries around[3]camp, and none have reported.[K][V]Go check on each one for me.[V]Two keep watch here in camp,[V]one is up north,[K][V]one guards the west cliffs,[V]and one holds the old plaza.[V]Come back once you've seen[V]all five!"
+    },
+    {
+      "bank": "expanded",
+      "id": 144,
+      "text": "Some of my sentries still[2]haven't been checked, friend.[K][V]Look around camp, up north,[V]on the west cliffs, and at[V]the old plaza. Five in all!"
+    },
+    {
+      "bank": "expanded",
+      "id": 145,
+      "text": "All five standing tall? Heh,[2]that's a load off my back![K][V]You did a sentry's work[V]today, traveler. Take this.[V]A Goron never forgets a[V]friend!"
+    },
+    {
+      "bank": "expanded",
+      "id": 146,
+      "text": "The chief sent you? Heh, I'm[2]still standing! Nothing gets[3]past this post.[K][V]Tell him the north road is[V]quiet. Too quiet, maybe."
+    },
+    {
+      "bank": "expanded",
+      "id": 147,
+      "text": "Roll call, huh? I'm here, I'm[2]here! Just resting my eyes.[K][V]Don't tell the chief that[V]last part, OK?"
+    },
+    {
+      "bank": "expanded",
+      "id": 148,
+      "text": "You came all the way up here?[2]Heh, I keep watch while the[3]sun is up.[K][V]At night I head back to camp[V]for supper. Tell the chief[V]I'm doing fine!"
+    },
+    {
+      "bank": "expanded",
+      "id": 149,
+      "text": "Up on the cliffs, you can see[2]half the Abyss. Nothing moves[3]out there I don't spot.[K][V]Tell the chief this post[V]holds. Now go on, you're[V]blocking my view!"
+    },
+    {
+      "bank": "expanded",
+      "id": 150,
+      "text": "Whoa! You made it to the[2]plaza? Not many get this far.[K][V]I'm still here, and still[V]hungry. Tell the chief to[V]send meat, not just visitors!"
+    },
+    {
+      "bank": "expanded",
+      "id": 151,
+      "text": "The cook pot's empty, friend.[2]No feast while the mine is[3]still sealed.[K][V]Once it opens, bring me every[V]Rock Sirloin you carry. We'll[V]eat like kings!"
+    },
+    {
+      "bank": "expanded",
+      "id": 152,
+      "text": "The mine's open, but your bag[2]is empty! A feast needs Rock[3]Sirloins, friend.[K][V]Bring me every one you can[V]carry. I'll cook them all!"
+    },
+    {
+      "bank": "expanded",
+      "id": 153,
+      "text": "FEAST! Hoo, that smell! Every[2]Goron in camp is coming![K][V]Thanks, friend. We won't[V]forget this one. Here's[V]something for your trouble!"
     }
   ],
   "version": 1
