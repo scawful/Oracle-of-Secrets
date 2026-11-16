@@ -170,7 +170,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "da06202f85c2f627ca72fc30b73d78bdfad6fbe21c183e4b563c8f241acb55a4"
+      "sha256": "a5bf7e4c89057e2a2f922e2c562c40b52f1aa0fec8fdb09cf3a70fa643a96f07"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",

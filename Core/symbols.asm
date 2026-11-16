@@ -160,6 +160,28 @@ assert SpecialOverworldPaletteHoleCacheEnd-SpecialOverworldPaletteHoleCache == 2
 !SongTint_Healing = $00
 !SongTint_Secrets = $01
 
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+; Off-Ranch parked Epona (Masks/horse_park_anywhere.asm). Her NPC cells
+; replace sprite VRAM $5000-$51FF (page1 chars $00-$1F); the native cells
+; are copied here first and written back. UNUSED_7F5000 has $0800 free.
+Horse_OffDma   = $7F5000 ; VRAM read lands here: duplicated first word + buffer
+Horse_OffBuf   = $7F5002 ; $0400 bytes, copy of VRAM $5000-$51FF
+Horse_OffState = $7F5402 ; $A1 saved, $A2 Epona cells in VRAM, else native
+Horse_OffClear = $7F5403 ; frames with no other page1 $00-$1F OAM user
+Horse_OffSheet = $7F5404 ; $7EC2FC when the copy was taken
+endif
+
+; Explicit bounded aliases for the reserved palette history; no consumer yet.
+SpecialOverworldPaletteHoleCache = $7E1E8C
+SpecialOverworldPaletteHoleCacheEnd = $7E1EA6
+assert SpecialOverworldPaletteHoleCache == SpecialOverworldPaletteHoleReference
+assert SpecialOverworldPaletteHoleCacheEnd == SpecialOverworldPaletteHoleArea+1
+assert SpecialOverworldPaletteHoleCacheEnd-SpecialOverworldPaletteHoleCache == 26
+
+; SongTint_Table entry indexes (Items/ocarina.asm).
+!SongTint_Healing = $00
+!SongTint_Secrets = $01
+
 ; PLACEHOLDER for the Song of Healing beat between Kydreeok and Ganondorf (decisions.org canon
 ; order: Kydreeok, Song frees Kydrog, Ganon). Until that scene exists, Ganondorf waits this many
 ; door-gate frames (3 s) after the Kydreeok body is dismissed. Replace with the real beat's flag.

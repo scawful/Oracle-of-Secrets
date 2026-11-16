@@ -17,7 +17,9 @@ Horse_SlotsBusy:
 {
   PHP : REP #$30 : PHA : PHX
   SEP #$20
-  LDA.l $7E0AF4 : BNE .busy
+  ; No $0AF4 test: vanilla never clears it after a bird flight, and its stale
+  ; NMI upload targets VRAM $40E0/$41E0, which no horse slot uses. The live
+  ; bird is an ancilla and the scan below still reports it.
   LDA.l InCutScene : BNE .busy
   LDX.w #9
   .scan
@@ -150,6 +152,9 @@ Horse_NmiUpload:
   BRA .upload_mounted
   .profile_changed
   ; Existing native profile loader owns C2 restoration outside the Ranch.
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  JSL Horse_OffRestore ; parked off-Ranch NPC cells -> saved native copy
+endif
   LDA.b #$FF : STA.l Horse_NpcUploadedFrame
   BRA .upload_mounted
   .restore_and_upload
@@ -206,8 +211,15 @@ Horse_NmiUpload:
     LDA.b #$FF : STA.l Horse_UploadedFrame
   .npc
   JSL Horse_RanchProfileReady : BCS +
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+    JSL Horse_OffRanchNpc : BCC .off_done
+    BRL .npc_rows ; C=1: Epona's cells are wanted and the frame changed
+    .off_done
+    BRL .replay
+else
     LDA.b #$FF : STA.l Horse_NpcUploadedFrame
     BRL .replay ; native profile loader owns restoration outside Ranch
+endif
   +
   LDA.b $10 : CMP.b #9 : BEQ +
     CMP.b #$0B : BNE .restore_npc

@@ -119,6 +119,126 @@ HorseForm_MaintainParkedNpc_Long:
   RTL
 }
 
+; ---------------------------------------------------------
+; Off-Ranch NPC cells. The Ranch path restores Epona's cells from ROM Ranch
+; data; elsewhere the native page1 chars $00-$1F (VRAM $5000-$51FF) are
+; copied to Horse_OffBuf, Epona's cells go in, and the copy goes back when
+; she is no longer wanted or another actor draws from those chars.
+; ---------------------------------------------------------
+
+; Main loop $008056: Module_MainRouting, then scan the finished OAM buffer.
+; Any visible page1 entry with char < $20 that is not Epona ($37 attributes)
+; resets Horse_OffClear and hides Epona's entries this frame; the NMI then
+; restores the native cells. Registers, widths and DBR preserved.
+Horse_FrameEndScan:
+{
+  JSL $0080B5 ; Module_MainRouting
+  PHP : PHB
+  REP #$30 : PHA : PHX
+  SEP #$20
+  LDA.b #$00 : PHA : PLB
+  LDA.b $10 : CMP.b #$09 : BNE .reset
+  LDA.b $1B : BNE .reset
+  REP #$20 : LDA.l Horse_Marker : CMP.w #$4852 : SEP #$20 : BNE .reset
+  LDA.l Horse_NpcActive : BEQ .reset
+  JSL Horse_RanchProfileReady : BCS .reset
+  LDX.w #$01FC
+  .scan
+    LDA.w $0801, X : CMP.b #$F0 : BEQ .next
+    LDA.w $0803, X : LSR : BCC .next              ; page0
+    LDA.w $0803, X : AND.b #$3F : CMP.b #$37 : BEQ .next ; Epona (any flip)
+    LDA.w $0802, X : CMP.b #$20 : BCC .conflict
+    .next
+    DEX #4 : BPL .scan
+  LDA.l Horse_OffClear : INC : BEQ .done          ; saturate at $FF
+  STA.l Horse_OffClear
+  BRA .done
+  .conflict
+  LDX.w #$01FC
+  .hide
+    LDA.w $0803, X : AND.b #$3F : CMP.b #$37 : BNE .hide_next
+    LDA.w $0802, X : CMP.b #$20 : BCS .hide_next
+    LDA.b #$F0 : STA.w $0801, X
+    .hide_next
+    DEX #4 : BPL .hide
+  .reset
+  LDA.b #$00 : STA.l Horse_OffClear
+  .done
+  REP #$30 : PLX : PLA
+  PLB : PLP
+  RTL
+}
+
+; NMI, from Horse_NmiUpload .npc when the Ranch profile is not loaded.
+; M8/X16, DBR $00. C=1: upload Horse_NpcFrame now (.npc_rows). C=0: done.
+; The copy (1KB read) and the upload use separate NMIs for vblank budget.
+Horse_OffRanchNpc:
+{
+  BRA .gates
+  .unwant                                         ; kept within branch range of the gates
+  JSL Horse_OffRestore
+  LDA.b #$FF : STA.l Horse_NpcUploadedFrame
+  CLC : RTL
+
+  .gates
+  LDA.b $10 : CMP.b #$09 : BNE .unwant
+  LDA.b $11 : BNE .unwant
+  LDA.b $1B : BNE .unwant
+  LDA.l Horse_NpcActive : BEQ .unwant
+  LDA.w $02B2 : CMP.b #$09 : BEQ .unwant          ; horse mask on
+  LDA.l Horse_HasAnchor : BEQ .unwant
+  LDA.b $8A : CMP.l Horse_AnchorArea : BNE .unwant
+  JSL Horse_SlotsBusy : BCS .unwant
+  LDA.l Horse_OffClear : CMP.b #$02 : BCC .unwant
+  LDA.l Horse_NpcFrame : CMP.b #14 : BEQ +
+    CMP.b #15 : BNE .unwant
+  +
+  LDA.l $7EC2FC : CMP.l Horse_OffSheet : BNE .save
+  LDA.l Horse_OffState : CMP.b #$A2 : BEQ .uploaded
+  CMP.b #$A1 : BNE .save
+  LDA.b #$A2 : STA.l Horse_OffState
+  LDA.b #$FF : STA.l Horse_NpcUploadedFrame
+  .uploaded
+  LDA.l Horse_NpcFrame : CMP.l Horse_NpcUploadedFrame : BEQ .none
+  SEC : RTL
+
+  .save
+  LDA.b #$81 : STA.w $4300                        ; B->A, $2139/$213A
+  LDA.b #$39 : STA.w $4301
+  ; A VRAM read returns the first word twice (the latch reloads before the
+  ; address increments), so read $0402 bytes and drop the leading word.
+  LDX.w #Horse_OffDma : STX.w $4302
+  LDA.b #Horse_OffDma>>16 : STA.w $4304
+  LDX.w #$0402 : STX.w $4305
+  LDX.w #$5000 : STX.w $2116                      ; address write prefetches
+  LDA.b #$01 : STA.w $420B
+  STA.w $4300                                     ; native DMA0: A->B, $2118/9
+  LDA.b #$18 : STA.w $4301
+  LDA.b #$7E : STA.w $4304
+  LDA.l $7EC2FC : STA.l Horse_OffSheet
+  LDA.b #$A1 : STA.l Horse_OffState
+  LDA.b #$FF : STA.l Horse_NpcUploadedFrame
+  .none
+  CLC : RTL
+}
+
+; NMI, M8/X16. Write the copy back if Epona's cells are in VRAM and slot
+; $7EC2FC still holds the copied sheet (a reload already replaced them).
+Horse_OffRestore:
+{
+  LDA.l Horse_OffState : CMP.b #$A2 : BNE .clear
+  LDA.l $7EC2FC : CMP.l Horse_OffSheet : BNE .clear
+  LDX.w #Horse_OffBuf : STX.w $4302
+  LDA.b #Horse_OffBuf>>16 : STA.w $4304
+  LDX.w #$0400 : STX.w $4305
+  LDX.w #$5000 : STX.w $2116
+  LDA.b #$01 : STA.w $420B
+  LDA.b #$7E : STA.w $4304
+  .clear
+  LDA.b #$00 : STA.l Horse_OffState
+  RTL
+}
+
 if !ENABLE_EPONA_SONG == 1
 ; Epona's Song call (decisions.org 2026-11-16 "Epona's Song calls Epona").
 ; Moves the park anchor beside Link and drops a live Epona; the next
