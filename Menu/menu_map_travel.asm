@@ -197,6 +197,11 @@ MenuMapTravel_Select:
   DEC : STA.w CurrentSong
   STA.l SavedOcarinaSong                ; survives save/reload ($030F does not)
   LDA.b #$0D : STA.w $0202              ; normal Y item, independent of mask
+if defined("ENABLE_DUAL_ITEM_BINDING_PROTOTYPE")
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  STA.l ItemBindingMenuY                ; Menu_Bindings_Close restores $0202 from this
+endif
+endif
   LDA.b #$20 : STA.w $012F
   LDA.b #$20 : STA.w $0207
 .done
