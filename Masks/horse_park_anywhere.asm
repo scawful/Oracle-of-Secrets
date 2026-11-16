@@ -267,6 +267,9 @@ HorseCall_Long:
   LDA.b $5D : CMP.b #$04 : BEQ .refuse_near
   LDA.l $7EF3D8 : AND.b #$01 : BEQ .refuse_near
   JSL Horse_SlotsBusy : BCS .refuse_near
+if !ENABLE_HORSE_CROWD_CHARGE == 1
+  JSL HorseCrowd_Check : BCS .refuse_near  ; too many enemies for Epona's OAM
+endif
   BRA .gates_ok
   .refuse_near
   BRL .refuse

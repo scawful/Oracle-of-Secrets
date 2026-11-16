@@ -343,6 +343,12 @@ endif
 ; Off until the room $78 layout lands in the shared base ROM.
 !ENABLE_GORON78_LANMOLA_BOSS        = 1
 
+; Epona crowd check + mounted charge (Masks/horse_charge.asm): the song call
+; refuses with 5+ active enemies (OAM headroom); charging into an enemy deals
+; level-1 sword damage. Armored enemies and bosses are immune. Off until
+; native proof.
+!ENABLE_HORSE_CROWD_CHARGE          = 0
+
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
 !LOG_MUSIC     = 1
