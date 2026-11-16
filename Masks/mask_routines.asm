@@ -1664,6 +1664,9 @@ LinkOAM_CheckForDrawShield:
 if !ENABLE_HORSE_FORM == 1
   CMP.w #$0009 : BEQ .no_shield
 endif
+if !ENABLE_EQUIPMENT_MENU == 1
+  JSL HeavySword_Active : BCS .no_shield  ; heavy sword: no shield draw
+endif
   .shield
   RTL
 }

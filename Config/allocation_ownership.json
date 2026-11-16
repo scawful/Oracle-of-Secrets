@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "899bfa24a13205ba8dd44e6e92470c76f7529ab403204d6fe876fa87174751b3"
+      "sha256": "9526636c7fa9257d227cd79a5485efd67ea6889656ec065ffaf6a7e09c85239f"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",

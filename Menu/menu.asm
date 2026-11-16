@@ -613,6 +613,9 @@ endif
   INC.b $16
 
   SEP #$20 ; Restore M=8 before return (REP #$20 at line 432 set M=16)
+if !ENABLE_EQUIPMENT_MENU == 1
+  JSL SwordSlots_ExitReload            ; heavy/story swap made in Equipment
+endif
   JSL Supply_ProcessPendingExitAction
 if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
   JSL SpecialSoaring_Complete

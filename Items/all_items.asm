@@ -377,6 +377,11 @@ incsrc "Menu/menu_hud_codex.asm"
 assert pc()-HudCodex_SpanStart <= $200, "Codex HUD routines exceeded their $200 span"
 endif
 
+; Two-slot sword helpers for the Equipment menu (Menu banks $2D/$2E are full).
+if !ENABLE_EQUIPMENT_MENU == 1
+incsrc "Menu/menu_sword_slots.asm"
+incsrc "Items/heavy_sword.asm"
+endif
 
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
 assert pc() <= $2BF000, "Items bank $2B reached the dream entry FX region ($2BF000)"
