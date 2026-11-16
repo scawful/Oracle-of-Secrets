@@ -531,7 +531,11 @@ Menu_DrawQuestItems:
   LDY.w #ShieldGFX
   JSR DrawMenuItem
 
+if !ENABLE_EQUIPMENT_MENU == 1
+  JSL Tunic_GetWorn                  ; worn colour, not defense
+else
   LDA.l $7EF35B
+endif
   INC
   STA.w MenuItemValueSpoof
   LDA.w #MenuItemValueSpoof

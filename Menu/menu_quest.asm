@@ -133,8 +133,12 @@ Menu_Quest_GearVariant:
   CMP.b #$04 : BCC .done             ; 0 absent; 1-3 owned
   BRA .none
 .tunic
+if !ENABLE_EQUIPMENT_MENU == 1
+  JSL Tunic_WornVariant : BRA .done  ; worn colour 0-2 -> variants 1-3
+else
   CMP.b #$03 : BCS .none
   INC : BRA .done                    ; SRAM 0-2 -> green/blue/red variants 1-3
+endif
 .none
   LDA.b #$00
 .done

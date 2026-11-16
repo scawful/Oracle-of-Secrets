@@ -221,7 +221,11 @@ endif
 
   .original_palette
   REP #$21
+if !ENABLE_EQUIPMENT_MENU == 1
+  JSL Tunic_GetWorn ; worn colour; keeps P, so carry stays clear
+else
   LDA $7EF35B ; Link's armor value
+endif
   JSL $1BEDFF ; Read Original Palette Code
   RTL
 
