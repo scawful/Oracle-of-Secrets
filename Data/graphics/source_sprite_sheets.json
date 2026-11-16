@@ -157,6 +157,12 @@
       "source": "pit22/gF6.txt",
       "decoded_sha256": "76584ff4c8837304a5fc69a58d492320e7dcab4a4fea9195c9c3e73998120d24",
       "why": "Map $22 slot-4 copy of sheet $64 with Kalyxo pit chars $007/$017 copied to solid chars $104/$107 and side char $110."
+    },
+    {
+      "global_sheet": "0xF9",
+      "source": "power_shrine/gF9.txt",
+      "decoded_sha256": "c05c5daf7886ebacee03cce643977f189287d987611afa811e77a534c1ba78be",
+      "why": "Shrine of Power main door art (door 5, scawful DECIDED 2026-11-16): War-mask facade chars for the $B0 group slot 3 ($B0/$B1/$B8/$B9)."
     }
   ]
 }
