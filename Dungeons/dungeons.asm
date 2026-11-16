@@ -203,6 +203,10 @@ if !ENABLE_WALL_PROFILE_SELECTOR == 1
 incsrc "Dungeons/wall_profile_selector.asm"
 endif
 
+if !ENABLE_ABYSS_GBC_INTERIORS == 1
+incsrc "Dungeons/abyss_gbc_interiors.asm"
+endif
+
 assert pc() <= $2CF700 ; Somaria internal-landing helper owns the fixed tail
 print "End of dungeons.asm               ", pc
 
