@@ -21,7 +21,15 @@ Horse_SlotsBusy:
   LDA.l InCutScene : BNE .busy
   LDX.w #9
   .scan
+if !ENABLE_HORSE_LONG_JUMP == 1
+    ; Ancilla $1D (dash tremor) is the long-jump landing shake: BG offsets
+    ; only, no graphics, so it must not force a silent dismount.
+    LDA.l $7E0C4A, X : BEQ .next_ancilla
+    CMP.b #$1D : BNE .busy
+    .next_ancilla
+else
     LDA.l $7E0C4A, X : BNE .busy
+endif
     DEX : BPL .scan
   LDX.w #15
   .receipt_sprites

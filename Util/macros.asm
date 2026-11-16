@@ -302,6 +302,9 @@ endif
 ; Bow-only Y use while Horse mask mounted (spawn offset + input gate).
 ; Off by default on master; this stack enables it for A6 fold proof.
 !ENABLE_HORSE_MOUNTED_BOW           = 1
+; Epona long jump over named water-gap Tile16s (HorseLongGapTile16s, up to two
+; tiles). Requires !ENABLE_HORSE_FORM. Off until native proof and site approval.
+!ENABLE_HORSE_LONG_JUMP             = 0
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
