@@ -35,8 +35,13 @@ HorseMountedBow_SetArrowCoords:
   LDA.b $01 : STA.w $0C0E, X
   LDA.b $02 : STA.w $0C04, X
   LDA.b $03 : STA.w $0C18, X
+  ; The hook is a JSL: return to its NOP at $0990FB, then the vanilla tail
+  ; (SEC : PLB : RTL). A JML to $0990FC left the JSL return address under
+  ; that PLB/RTL, so every arrow returned into WRAM. M=8 as the replaced
+  ; SEP #$20 : JSR Ancilla_SetCoordinates left it.
   PLP
-  JML $0990FC ; SEC (AncillaAdd_Arrow success tail)
+  SEP #$20
+  RTL
 }
 HorseMountedBow_End:
 assert pc() <= $53E900, "Mounted bow slice overlapped next bank53 allocation"
