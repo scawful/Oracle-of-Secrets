@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "671047cd58ac058fe59754f401be15d8dd5341dd4f98eaf9658f864f8adde606"
+      "sha256": "899bfa24a13205ba8dd44e6e92470c76f7529ab403204d6fe876fa87174751b3"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -135,7 +135,7 @@
     "shared:Menu/menu_map_travel.asm": {
       "source_set": "shared",
       "path": "Menu/menu_map_travel.asm",
-      "sha256": "389a8143fc7833dcb2c639e8253593e3f0323ea3e2430c049dfd36beab6e8a35"
+      "sha256": "7bc05c8a0d8add8d7cf9d3a6fc6d01c53f6c0015f53ac372b014a6826a00b4b4"
     },
     "shared:Core/Cutscene/experiment.asm": {
       "source_set": "shared",
@@ -366,6 +366,11 @@
       "source_set": "shared",
       "path": "Menu/menu_hud_codex.asm",
       "sha256": "1e38946a586a33dbd8ae86404eb9656f73d26c690986eb20d8842a84ad022ea9"
+    },
+    "shared:Overworld/travel_destinations.asm": {
+      "source_set": "shared",
+      "path": "Overworld/travel_destinations.asm",
+      "sha256": "380d274c53ce7177f18167a7229fab399cadffb6dcd17f999666ce1c1ef993ab"
     }
   },
   "claims": [
@@ -2222,6 +2227,32 @@
       "binding": {
         "source": "shared:Core/sram.asm",
         "symbol": "SkySoaringLearned",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "TravelSpotsVisited",
+      "owner": "Bird travel visited destinations (one bit per LoadTransport_screen_id entry)",
+      "space": "save_buffer",
+      "base": 8320018,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "ENABLE_MENU_MAP_TRAVEL": 1
+      },
+      "lifetime": "Save file; native five-page save and checksum block.",
+      "reset": "Vanilla new-file initialization zeros it. TravelDest_MarkVisited ORs bit i on each overworld area load whose area equals LoadTransport_screen_id entry i ($02EAE5). No migration: existing saves start at 0 and the picker refuses until Link enters a destination area.",
+      "save": "First byte of the former FreeBlock_Dreams prefix (now F413-F49E free; F49F-F4BF reserved for the special-event marker and areas 80-9F flags). SaveGameFile copies the F300 page to primary and backup; checksum covers offsets 0000-04FD. Native save/reopen proof (at the earlier F4BF address, same code path): SRAM slot byte holds the mask and reset/reopen restores it. Moved from $7EF4BF on 2026-11-16; saves written by the F4BF builds keep a stale byte there.",
+      "provenance": [
+        "shared:Overworld/travel_destinations.asm",
+        "shared:Core/sram.asm",
+        "shared:Menu/menu_map_travel.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "TravelSpotsVisited",
         "bank00_mirror": false
       }
     },

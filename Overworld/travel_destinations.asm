@@ -2,7 +2,7 @@
 ; Travel destinations: visited bits and the unlocked-only bird picker.
 ; Gated by !ENABLE_MENU_MAP_TRAVEL (included from overworld.asm, bank $34).
 ;
-; TravelSpotsVisited ($7EF4BF) holds one bit per bird destination:
+; TravelSpotsVisited ($7EF412) holds one bit per bird destination:
 ; bit i = destination i of LoadTransport_screen_id ($02EAE5, 8 words).
 ; The bit is set the first time Link enters that overworld area. The bird
 ; picker (module $0E sub $0A) draws and selects only destinations whose bit

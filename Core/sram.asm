@@ -863,10 +863,12 @@ RichardQuestFlags  = $7EF3C4
 ; Purpose: Large block after dreams/water gates
 ; Note: $7EF4FE-4FF are checksum (do not use)
 ;
-FreeBlock_Dreams   = $7EF412  ; 173 bytes [F412,F4BF)
 ; Map & Travel: one bit per bird destination (bit i = LoadTransport entry i),
 ; set on first entry to that area. Used only when !ENABLE_MENU_MAP_TRAVEL.
-TravelSpotsVisited = $7EF4BF ; one byte
+TravelSpotsVisited = $7EF412 ; one byte
+FreeBlock_Dreams   = $7EF413  ; 140 bytes [F413,F49F)
+; $7EF49F-4BF reserved: special-event marker $7EF49F and areas 80-9F flags
+; $7EF4A0-4BF (SPECIAL_EVENT_NAMESPACE_PROPOSAL01). Not free.
 ; Root-owned current-build A0-BF event flags and migration marker. The native
 ; five-page save/checksum/new-file loops already cover both fields.
 LyraCurrentTailFlags   = $7EF4C0 ; 32 bytes [F4C0,F4E0)
@@ -883,7 +885,7 @@ FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 ; | $7EF3A0  | $7EF3A0  | bits  | Wolf dig: bit 0 used |
 ; | $7EF3B3  | $7EF3B3  | 1     | Large prefix       |
 ; | $7EF3BC  | $7EF3C3  | 8     | Large remainder    |
-; | $7EF412  | $7EF4BE  | 173   | Dreams prefix      |
+; | $7EF413  | $7EF49E  | 140   | Dreams prefix      |
 ; | $7EF4E1  | $7EF4FD  | 29    | Dreams remainder   |
 ; |----------|----------|-------|--------------------|
 ; | Free-list comments describe candidates, not allocation grants.     |
