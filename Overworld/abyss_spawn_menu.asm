@@ -6,7 +6,7 @@
 ; (LoadDarkWorldIntro). From GameState 3 (Farore rescued) an outdoor Abyss
 ; load shows the vanilla spawn-select box with message $21B instead:
 ;   0 = Pyramid      (keeps the Abyss load, exit room $20)
-;   1 = Light World  (SavedWorld = 0, then the vanilla light world menu
+;   1 = Kalyxo       (SavedWorld = 0, then the vanilla light world menu
 ;                     $0184/$0185: Link's House / Hall of Secrets /
 ;                     Mountain Cave, same gates as a light world load)
 ; =========================================================

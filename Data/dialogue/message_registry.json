@@ -260,7 +260,7 @@
       "status": "occupied",
       "expected_content": "authored",
       "owner": "abyss-spawn-menu",
-      "purpose": "Abyss file-load spawn menu after GameState 3 (Overworld/abyss_spawn_menu.asm): Pyramid / Light World (then vanilla $0184/$0185). Option A picked by scawful 2026-11-15, two-step menu picked 2026-11-16; DRAFT text pending scawful's provisional OK and ridoyie review."
+      "purpose": "Abyss file-load spawn menu after GameState 3 (Overworld/abyss_spawn_menu.asm): Pyramid / Kalyxo (then vanilla $0184/$0185). Option A picked by scawful 2026-11-15, two-step menu picked 2026-11-16; DRAFT text pending scawful's provisional OK and ridoyie review."
     }
   ]
 }
