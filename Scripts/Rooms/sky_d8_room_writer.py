@@ -68,10 +68,14 @@ DOOR_ROOT_OPERANDS = ((0x00B6CC, "c0831f"), (0x00B7FE, "c0831f"))
 SPRITE_ROOT_PC, SPRITE_ROOT = 0x04C298, "b2d2"
 SPRITE_TABLE_PC, SPRITE_BANK = 0x04D2B2, 0x09
 POT_TABLE_PC, POT_BANK = 0x00DB69, 0x01
-# RevealPotItem picks the pot-data bank with `LDA.w #$0001` at $01:E6C7. This
-# writer's pinned room $91 pot plan addresses bank $01; a base whose pot data
-# moved to another bank is refused before any pot pointer is interpreted.
+# RevealPotItem picks the pot-data bank with `LDA.w #$00bb` at $01:E6C7 (A9 bb 00).
+# The inventory reader follows that operand, because the build reads migrated
+# bases through it (d4_water_rooms.py). The pinned room $91 pot plan below
+# addresses bank $01 only and refuses any other bank.
 POT_BANK_LOADER_PC, POT_BANK_LOADER = 0x00E6C7, "a90100"
+# Pot data region per loader bank. Bank $5A ends before the reserved pad
+# terminator at $5A:FFFE (Scripts/Rooms/pot_item_bank_migration.py).
+POT_DATA_REGIONS = {POT_BANK: (0x00DDE7, 0x00E6B2), 0x5A: (0x2D0000, 0x2D7FFE)}
 # Pointer words 296-318 pad the pot table up to its data and all point at an FFFF
 # sentinel inside the 9-byte gap; the new $91 stream must leave it intact.
 POT_PAD_SLOTS = (POT_TABLE_PC + ROOM_COUNT * 2, 0x00DDE7)
@@ -81,7 +85,7 @@ OBJECT_DATA_REGIONS = ((0x050000, 0x053730), (0x0F878A, 0x100000), (0x01EB90, 0x
                        (0x138000, 0x140000), (0x148000, 0x150000))
 OBJECT_ALLOC_REGION = (0x148000, 0x150000)
 SPRITE_REGION = (0x04D502, 0x04EC9F)
-POT_REGION = (0x00DDE7, 0x00E6B2)
+POT_REGION = POT_DATA_REGIONS[POT_BANK]
 
 CHEST_TABLE_PC, CHEST_CAPACITY = 0x00E96E, 0x1F8
 CHEST_SIZE_OPERAND_PC = 0x00EBF6
@@ -422,6 +426,16 @@ class Inventory:
     chests: list[bytes] = field(default_factory=list)
 
 
+def pot_layout(rom: bytes) -> tuple[int, tuple[int, int]]:
+    """Pot-data bank named by the RevealPotItem loader, and that bank's data region."""
+    loader = bytes(rom[POT_BANK_LOADER_PC:POT_BANK_LOADER_PC + 3])
+    expect(len(loader) == 3 and loader[0] == 0xA9 and loader[2] == 0x00
+           and loader[1] in POT_DATA_REGIONS,
+           f"pot data bank loader at PC 0x{POT_BANK_LOADER_PC:06X} is {loader.hex()}, "
+           "want a9 01 00 or a9 5a 00")
+    return loader[1], POT_DATA_REGIONS[loader[1]]
+
+
 def check_roots(rom: bytes) -> None:
     expect_bytes(rom, HEADER_ROOT_PC, hx(HEADER_ROOT), "header pointer root")
     expect(rom[HEADER_BANK_PC] == HEADER_BANK, "header bank byte moved")
@@ -429,7 +443,7 @@ def check_roots(rom: bytes) -> None:
     for pc, want in DOOR_ROOT_OPERANDS:
         expect_bytes(rom, pc, hx(want), "door pointer root")
     expect_bytes(rom, SPRITE_ROOT_PC, hx(SPRITE_ROOT), "sprite pointer root")
-    expect_bytes(rom, POT_BANK_LOADER_PC, hx(POT_BANK_LOADER), "pot data bank loader")
+    pot_layout(rom)
     for pc, want in CHEST_CODE_GUARDS:
         expect_bytes(rom, pc, hx(want), "chest lookup code")
     for pc, want in ENTRANCE_CODE_GUARDS:
@@ -438,6 +452,7 @@ def check_roots(rom: bytes) -> None:
 
 def build_inventory(rom: bytes) -> Inventory:
     check_roots(rom)
+    pot_bank, pot_region = pot_layout(rom)
     inv = Inventory()
     header_table = snes_to_pc(HEADER_BANK << 16 | 0x8000)
     for room in range(ROOM_COUNT):
@@ -462,8 +477,8 @@ def build_inventory(rom: bytes) -> Inventory:
         inv.spr_span.append((start, end))
 
         raw = bytes(rom[POT_TABLE_PC + room * 2:POT_TABLE_PC + room * 2 + 2])
-        start = bank16_ptr(raw, POT_BANK)
-        end = parse_until_ff(rom, start, region_end(start, (POT_REGION,), "pot"), "pot")
+        start = bank16_ptr(raw, pot_bank)
+        end = parse_until_ff(rom, start, region_end(start, (pot_region,), "pot"), "pot")
         inv.pot_ptr.append(raw)
         inv.pot_span.append((start, end))
 
@@ -682,6 +697,7 @@ def build_plan(rom: bytes, recipe_bytes: bytes, manifest: dict,
            f"ROM size {len(rom)} != {ROM_SIZE} (truncated, headered or wrong ROM)")
     source_sha = sha256(rom)
     expect(source_sha == pins.base_sha256, f"ROM sha256 {source_sha} is not the pinned base")
+    expect_bytes(rom, POT_BANK_LOADER_PC, hx(POT_BANK_LOADER), "pot data bank loader")
     recipe = check_recipe(recipe_bytes, pins)
     regions = check_manifest(manifest, pins)
     rooms = recipe["rooms"]
