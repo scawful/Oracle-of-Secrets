@@ -3,20 +3,25 @@
 
 Message $C7 reads "Oracle of Secrets Preview / v0.168 / scawful". Line 2 (the
 bytes between the [2] and [3] line commands) is rewritten with
-"v<version>-b<build>" from Config/version.json, padded to the same byte
-length, so no other message moves. Runs on the patched ROM after asar: a
+"v<version>-<kind><number>", padded to the same byte length, so no other
+message moves. Build IDs (scawful 2026-11-16):
+  b<N>  packaged beta; N = "build" in Config/version.json (default).
+  l<N>  integration (lane) build; N is the lane's own counter.
+Set the kind and number with --kind/--number or OOS_BUILD_KIND/OOS_BUILD_NUMBER. Runs on the patched ROM after asar: a
 post-build write does not enter the hack manifest, so yaze can still rewrite
 the vanilla text region in the base ROM (and $C7 may move; it is found by
 walking the text the way CreateMessagePointers ($0ED3EB) does).
 
 Usage:
   python3 Scripts/Build/version_stamp.py --rom Roms/oos168x.sfc [--check]
+  OOS_BUILD_KIND=l OOS_BUILD_NUMBER=14 python3 Scripts/Build/version_stamp.py --rom ...
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -29,6 +34,7 @@ CMD_LENGTHS_PC = 0x07536B      # $0E:D36B RenderText_MoreInitialSettings (length
 LINE2, LINE3, END, BANK = 0x75, 0x76, 0x7F, 0x80
 SPACE, DICT_4_SPACES, DICT_3_SPACES = 0x59, 0x88, 0x89
 TARGET_LEAD_SPACES = 15        # original centering of "v0.168"
+BUILD_KINDS = ("b", "l")       # b = packaged beta, l = integration (lane) build
 
 
 def encode_char(ch: str) -> int:
@@ -88,11 +94,24 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--rom", required=True, type=Path)
     parser.add_argument("--version-file", type=Path, default=VERSION_FILE)
+    parser.add_argument("--kind", choices=BUILD_KINDS,
+                        default=os.environ.get("OOS_BUILD_KIND") or "b",
+                        help="b = packaged beta (default), l = integration build; env OOS_BUILD_KIND")
+    parser.add_argument("--number", type=int,
+                        default=int(os.environ["OOS_BUILD_NUMBER"]) if os.environ.get("OOS_BUILD_NUMBER") else None,
+                        help="build number; default for b = version.json build; required for l; env OOS_BUILD_NUMBER")
     parser.add_argument("--check", action="store_true", help="report only; do not write")
     args = parser.parse_args()
+    if args.kind not in BUILD_KINDS:
+        raise SystemExit(f"version_stamp: kind {args.kind!r} is not one of {BUILD_KINDS}")
 
     info = json.loads(args.version_file.read_text())
-    text = f"v{info['version']}-b{info['build']}"
+    number = args.number
+    if number is None:
+        if args.kind != "b":
+            raise SystemExit("version_stamp: an l build needs --number or OOS_BUILD_NUMBER")
+        number = info["build"]
+    text = f"v{info['version']}-{args.kind}{number}"
     rom = bytearray(args.rom.read_bytes())
 
     start, end = find_message(rom, MESSAGE_ID)
