@@ -214,8 +214,7 @@ if !DISABLE_OVERWORLD == 0
   incsrc    "Overworld/ZSCustomOverworld.asm"
   %log_end("ZSCustomOverworld.asm", !LOG_OVERWORLD)
   ; QUEUE152: Ranch exit $2E landing beside DefaultNpc (vG XY).
-  ; Excluded from playtest k (Docks own row $2E; claude/drop-ranch-exit2e pending).
-  ; incsrc "Overworld/ranch_exit_2e_landing.asm"
+  incsrc "Overworld/ranch_exit_2e_landing.asm"
 else
   print "*** ZSCustomOverworld DISABLED ***"
 endif
