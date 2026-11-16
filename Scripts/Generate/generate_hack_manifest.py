@@ -155,6 +155,25 @@ DUNGEON_MESSAGE_IDS_PC = 0x3F61D
 SPRITE_DATA_END_PC = 0x4EC9F
 POT_DATA_START_PC = 0xDDE7
 POT_DATA_END_PC = 0xE6B2
+# RevealPotItem loads the pot-data bank with `LDA.w #$00bb` at $01:E6C7
+# (bytes A9 bb 00). The pointer table at $01:DB69 keeps 16-bit pointers; the
+# operand byte alone selects the bank that the table points into.
+POT_BANK_LOADER_PC = 0xE6C7
+POT_BANK_OPERAND_PC = 0xE6C8
+POT_VANILLA_BANK = 0x01
+POT_EXPANDED_BANK = 0x5C
+POT_EXPANDED_DATA_START_PC = 0x2E0000
+POT_EXPANDED_DATA_END_PC = 0x2E7FFE
+# The 23 pad words after the 296-room table are never rewritten by an editor
+# repack. In the expanded layout they point at a reserved FFFF at $5C:FFFE,
+# which sits outside the allocation region.
+POT_PAD_WORDS_PC = POT_POINTER_TABLE_PC + 296 * 2
+POT_PAD_WORD_COUNT = 23
+POT_EXPANDED_PAD_SENTINEL_PC = 0x2E7FFE
+POT_DATA_REGIONS_BY_BANK = {
+    POT_VANILLA_BANK: (POT_DATA_START_PC, POT_DATA_END_PC),
+    POT_EXPANDED_BANK: (POT_EXPANDED_DATA_START_PC, POT_EXPANDED_DATA_END_PC),
+}
 CUSTOM_COLLISION_POINTER_TABLE_PC = 0x128090
 CUSTOM_COLLISION_DATA_START_PC = 0x128450
 CUSTOM_COLLISION_DATA_END_PC = 0x12E000
@@ -1188,6 +1207,32 @@ def _find_dungeon_stream_end(
     raise ManifestGenerationError(f"unsupported dungeon stream {stream_name}")
 
 
+def _read_pot_item_bank(data: bytes) -> int:
+    """Return the pot-data bank the ROM's own loader selects.
+
+    Fail closed on an unrecognised loader or bank: a wrong guess would make
+    every writer place pot data where the game does not read it.
+    """
+    _require_rom_span(data, POT_BANK_LOADER_PC, 3, "pot-item bank loader")
+    loader = bytes(data[POT_BANK_LOADER_PC : POT_BANK_LOADER_PC + 3])
+    if loader[0] != 0xA9 or loader[2] != 0x00:
+        raise ManifestGenerationError(
+            "pot-item bank loader at PC "
+            f"0x{POT_BANK_LOADER_PC:X} is {loader.hex().upper()}, expected "
+            "LDA.w #$00bb (A9 bb 00)"
+        )
+    bank = loader[1]
+    if bank not in POT_DATA_REGIONS_BY_BANK:
+        supported = ", ".join(
+            f"${known:02X}" for known in sorted(POT_DATA_REGIONS_BY_BANK)
+        )
+        raise ManifestGenerationError(
+            f"pot-item bank operand at PC 0x{POT_BANK_OPERAND_PC:X} is "
+            f"${bank:02X}; supported pot-data banks are {supported}"
+        )
+    return bank
+
+
 def _derive_dungeon_stream_regions(data: bytes) -> dict:
     object_table_snes = _read_u24(
         data,
@@ -1276,6 +1321,7 @@ def _derive_dungeon_stream_regions(data: bytes) -> dict:
             _dungeon_stream_parse_limit(pointer_pc, sprite_regions),
         )
 
+    pot_bank = _read_pot_item_bank(data)
     pot_table_size = DUNGEON_ROOM_COUNT * 2
     _require_rom_span(
         data, POT_POINTER_TABLE_PC, pot_table_size, "pot-item pointer table"
@@ -1290,16 +1336,48 @@ def _derive_dungeon_stream_regions(data: bytes) -> dict:
         if pointer_low < 0x8000:
             raise ManifestGenerationError(
                 f"pot-item pointer for room 0x{room_id:03X} is unmapped "
-                f"bank-$01 value 0x{pointer_low:04X}"
+                f"bank-${pot_bank:02X} value 0x{pointer_low:04X}"
             )
         pot_pointers_pc.append(
             _strict_lorom_to_pc(
-                0x010000 | pointer_low,
+                (pot_bank << 16) | pointer_low,
                 f"Pot-item pointer for room 0x{room_id:03X}",
             )
         )
-    pot_regions = ((POT_DATA_START_PC, POT_DATA_END_PC),)
+    pot_regions = (POT_DATA_REGIONS_BY_BANK[pot_bank],)
     _validate_regions(data, "pot_items", pot_regions, pot_regions)
+    pot_reserved_ranges: list[tuple[str, int, int]] = []
+    if pot_bank == POT_EXPANDED_BANK:
+        _require_rom_span(
+            data, POT_EXPANDED_PAD_SENTINEL_PC, 2, "pot-item pad sentinel"
+        )
+        sentinel = bytes(
+            data[POT_EXPANDED_PAD_SENTINEL_PC : POT_EXPANDED_PAD_SENTINEL_PC + 2]
+        )
+        if sentinel != b"\xff\xff":
+            raise ManifestGenerationError(
+                "pot-item pad sentinel at PC "
+                f"0x{POT_EXPANDED_PAD_SENTINEL_PC:X} is {sentinel.hex().upper()}, "
+                "expected FFFF"
+            )
+        sentinel_word = 0x8000 + (POT_EXPANDED_PAD_SENTINEL_PC & 0x7FFF)
+        for slot in range(POT_PAD_WORD_COUNT):
+            pad_word = _read_u16(
+                data, POT_PAD_WORDS_PC + slot * 2, f"pot-item pad word {slot}"
+            )
+            if pad_word != sentinel_word:
+                raise ManifestGenerationError(
+                    f"pot-item pad word {slot} at PC "
+                    f"0x{POT_PAD_WORDS_PC + slot * 2:X} is 0x{pad_word:04X}, "
+                    f"expected 0x{sentinel_word:04X}"
+                )
+        pot_reserved_ranges.append(
+            (
+                "pot_items.pad_sentinel",
+                POT_EXPANDED_PAD_SENTINEL_PC,
+                POT_EXPANDED_PAD_SENTINEL_PC + 2,
+            )
+        )
     for room_id, pointer_pc in enumerate(pot_pointers_pc):
         if not _pointer_pc_in_regions(pointer_pc, pot_regions):
             raise ManifestGenerationError(
@@ -1349,12 +1427,18 @@ def _derive_dungeon_stream_regions(data: bytes) -> dict:
                 SPRITE_TABLE_POINTER_OPERAND_PC + 2,
             ),
             (
+                "pot_items.pointer_source",
+                POT_BANK_LOADER_PC,
+                POT_BANK_LOADER_PC + 3,
+            ),
+            (
                 "objects.door_pointer_table",
                 0xF83C0,
                 0xF83C0 + DUNGEON_ROOM_COUNT * 3,
             ),
         )
     )
+    occupied_ranges.extend(pot_reserved_ranges)
     _validate_disjoint_named_ranges(
         occupied_ranges, "dungeon stream pointer/data ranges"
     )
@@ -1400,7 +1484,7 @@ def _derive_dungeon_stream_regions(data: bytes) -> dict:
             "pointer_table": f"0x{_pc_to_snes(POT_POINTER_TABLE_PC):06X}",
             "pointer_count": DUNGEON_ROOM_COUNT,
             "pointer_encoding": "bank16",
-            "pointer_bank": "0x01",
+            "pointer_bank": f"0x{pot_bank:02X}",
             "strategy": "repack_all",
             "data_regions": [_editor_range(start, end) for start, end in pot_regions],
             "allocation_regions": [
