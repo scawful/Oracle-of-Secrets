@@ -123,7 +123,7 @@ Horse_NmiUpload:
   ; runs between8A0C and8B5C. Consume it once and preserve palette bit0.
   LDA.l Horse_PalLoaded : AND.b #$80 : BNE + : BRL .not_mounted : +
   LDA.l Horse_PalLoaded : AND.b #$7F : STA.l Horse_PalLoaded
-  LDA.l Horse_NpcUploadedFrame : CMP.b #$FF : BEQ .upload_mounted
+  LDA.l Horse_NpcUploadedFrame : CMP.b #$FF : BEQ .steady
   JSL Horse_RanchProfileReady : BCC .profile_changed
   LDA.l Horse_UploadedFrame : CMP.b #$FF : BEQ .first_mounted
   ; One ordinary-frame hold restores the now-hidden NPC before any consumer
@@ -146,6 +146,16 @@ Horse_NmiUpload:
   BRA .upload_mounted
   .restore_and_upload
   JSR Horse_RestoreNpcCells
+  BRA .upload_mounted
+  .steady
+  ; Native 8A0C/8ADB never write the mounted cells ($4000-40DF/4100-41DF,
+  ; $4260-42DF/4360-43DF); any lost grant resets UploadedFrame to FF. So an
+  ; unchanged frame needs no DMA: frees ~1.3KB of vblank for scroll map rows.
+  ; Submodules (area loads) still refresh every frame.
+  LDA.b $11 : BNE .upload_mounted
+  LDA.l Horse_Frame : CMP.b #!Horse_FrameCount : BCC + : LDA.b #6 : +
+  CMP.l Horse_UploadedFrame : BNE .upload_mounted
+  BRL .replay
   .upload_mounted
   LDA.l Horse_Frame : JSR Horse_FramePointerBase
   ; Six fixed groups; no per-piece loop or destination-table walk.
@@ -181,6 +191,8 @@ Horse_NmiUpload:
   BRL .replay ; mounted and NPC uploads are mutually exclusive
 
   .not_mounted
+  ; Dismount: item restore + uncached .npc_rows every frame overran vblank
+  ; (vF black lines). Hold NPC upload for DismountNpc and cache .npc_rows.
   LDA.l Horse_UploadedFrame : CMP.b #$FF : BEQ .npc
     JSR Horse_RestoreItemCells
     LDA.b #$FF : STA.l Horse_UploadedFrame
@@ -195,12 +207,16 @@ Horse_NmiUpload:
   JSL Horse_SlotsBusy : BCS .restore_npc
   JSL Horse_RanchActorsSafe : BCC .restore_npc
   LDA.l Horse_NpcActive : BEQ .restore_npc
+  ; NPC upload is allowed during DismountNpc because .replay skips its
+  ; 1KB native tail while cooldown is nonzero (item+NPC share that budget).
   LDA.l !CurrentMask : CMP.b #!Horse_MaskId : BEQ .restore_npc
   ; NPC frames14/15 share exact pixels. Reuse the packed first-four group
   ; and a512-byte final-four stream. Four transfers preserve unconditional
   ; reload behavior without an extra full NPC frame or a new cache/state.
-  LDA.l Horse_NpcFrame : CMP.b #14 : BEQ .npc_rows
+  LDA.l Horse_NpcFrame : CMP.b #14 : BEQ .npc_check
   CMP.b #15 : BNE .restore_npc
+  .npc_check
+  CMP.l Horse_NpcUploadedFrame : BEQ .replay
   .npc_rows
   ; Native DMA0/1 are already mode1→VRAM. Two channels concatenate the
   ; first-four and last-four256-byte rows; a second burst emits their bottoms.
@@ -225,10 +241,14 @@ Horse_NmiUpload:
   PLA : STA.b $04 : PLA : STA.b $06 : PLA : STA.b $0A
   SEP #$20
   LDA.b #$7E : STA.w $4304
+  ; During dismount cooldown the item/NPC path already spent the vblank
+  ; budget; skipping this 1KB native tail removes the residual black lines.
+  LDA.l Horse_DismountCooldown : BNE .replay_done
   LDX.w $0ADC : STX.w $4302
   LDX.w $0134 : STX.w $2116
   LDX.w #$0400 : STX.w $4305
   LDA.b #1 : STA.w $420B
+  .replay_done
   PLY : PLB : RTL
 }
 

@@ -97,8 +97,16 @@ Horse_AnchorX:           skip 2
 Horse_AnchorY:           skip 2
 Horse_NpcSlot:           skip 1
 Horse_InteractDelay:     skip 1
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+Horse_AnchorArea:        skip 1   ; $8A of parked outdoor dismount (WRAM-only)
+endif
 Horse_TransientEnd:      skip 0
-assert Horse_Marker == $7E1EDE && Horse_TransientEnd == $7E1EFE
+assert Horse_Marker == $7E1EDE
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+assert Horse_TransientEnd == $7E1EFF
+else
+assert Horse_TransientEnd == $7E1EFE
+endif
 assert pc() <= $7E1F00, "Horse transient state exceeds its bounded WRAM tail"
 }
 base off

@@ -216,12 +216,21 @@ HorseForm_Mount:
   RTL
 }
 
-; User-initiated or water dismount (saves Ranch anchor; no mask transform puff). Preserves A/X/Y/DBR/P.
+; User-initiated or water/pit dismount (saves outdoor/Ranch anchor; no mask transform puff).
+; Preserves A/X/Y/DBR/P.
 HorseForm_Dismount:
 {
   PHP : REP #$30 : PHA : PHX : PHY
   SEP #$30 : PHB
   LDA.b #$00 : PHA : PLB
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  ; Any outdoor OW area: park here. Pit prefers last FrameTick refresh.
+  LDA.b $1B : BNE .no_outdoor_anchor
+    JSL HorseForm_SaveOutdoorAnchor_Long
+    BRA .finish_dismount
+  .no_outdoor_anchor
+  LDA.b #$00 : STA.l Horse_HasAnchor : STA.l Horse_AnchorArea
+else
   LDA.b $8A : BNE .no_ranch_anchor
   LDA.b $1B : BNE .no_ranch_anchor
     REP #$20
@@ -232,6 +241,7 @@ HorseForm_Dismount:
     BRA .finish_dismount
   .no_ranch_anchor
   LDA.b #$00 : STA.l Horse_HasAnchor
+endif
   JSL Horse_RestoreSp3Palette
 
   .finish_dismount
@@ -254,7 +264,11 @@ HorseForm_SilentDismount:
   PHP : REP #$30 : PHA : PHX : PHY
   SEP #$30 : PHB
   LDA.b #$00 : PHA : PLB
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  ; Keep last outdoor safe park anchor from FrameTick / prior dismount.
+else
   LDA.b #$00 : STA.l Horse_HasAnchor
+endif
   JSL Horse_RestoreSp3Palette
   JSL ResetToLinkGraphics
   JSL HorseForm_ClearState
@@ -305,10 +319,18 @@ HorseForm_FrameTick:
   LDA.b $5D : CMP.b #$04 : BEQ .force_ranch_dismount
   LDA.b $4D : CMP.b #$04 : BEQ .force_ranch_dismount
   LDA.b $5B : CMP.b #$02 : BCS .force_ranch_dismount
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  ; Safe outdoor ground: refresh park so door/pit reuse last XY.
+  JSL HorseForm_SaveOutdoorAnchor_Long
+endif
 
+if !ENABLE_HORSE_MOUNTED_BOW == 1
+  JSR HorseForm_SuppressMountedButtons
+else
   ; Suppress B-button sword swing and Y-button item press edges while mounted.
   LDA.b #$C0 : TRB.b $F4
   STZ.b $3C
+endif
 
   ; Refresh SP-3[9..15] + SP-7 if a palette reload reset SP-3 to uniform fill.
   REP #$20
@@ -350,8 +372,13 @@ HorseForm_FrameTick:
 }
 
 ; Ensure Toto Ranch NPC Epona spawns whenever Link is outdoors on area $00.
+; Park-anywhere: thin trampoline into free bank $53 after Sprite_HorseNPC.
 HorseForm_MaintainRanchNpc:
 {
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  JSL HorseForm_MaintainParkedNpc_Long
+  RTS
+else
   LDA.b $1B : ORA.b $8A : BEQ + : BRL .not_ranch : +
   LDA.b $10 : CMP.b #$09 : BEQ + : RTS : +
   LDA.b $11 : BEQ + : RTS : +
@@ -416,6 +443,7 @@ HorseForm_MaintainRanchNpc:
   +
   LDA.b #$00 : STA.l Horse_HasAnchor : STA.l Horse_NpcActive
   RTS
+endif
 }
 
 ; Play soft boot-dust hoof thud periodically while galloping.
@@ -838,6 +866,14 @@ Horse_DrawPlayerOam_Long:
     LDA.l Horse_JumpZ
   +
   STA.b $0E : STZ.b $0F               ; temp 16-bit AirZ in $0E/$0F
+  ; OBJ priority 3 only mid-jump or beside wooden fences (high-priority rails).
+  ; Elsewhere native $65 stays, so gates, arches and banisters cover horse and rider.
+  LDA.l Horse_State : BEQ +
+    LDA.b $65 : ORA.b #$30 : STA.b $65
+    BRA ++
+  +
+  JSR Horse_ApplyFencePriority
+  ++
 
   ; Handle invincibility blink ($031F) & invisible state ($4B == $0C).
   LDA.b $11 : BNE .chk_vis_flags
@@ -857,8 +893,16 @@ Horse_DrawPlayerOam_Long:
 
   .draw_visible
   REP #$30
-  ; Latch validated frame before indexing metadata; never alias an expanded ID.
   SEP #$20
+  ; Overworld scroll-row frames ($17=3) already fill vblank: hold the resident
+  ; pose one frame so NMI skips the ~1.3KB horse DMA (no black top scanline).
+  LDA.b $17 : CMP.b #$03 : BNE .frame_ok
+  LDA.b $11 : BNE .frame_ok
+  LDA.l Horse_NpcUploadedFrame : CMP.b #$FF : BNE .frame_ok
+  LDA.l Horse_UploadedFrame : CMP.b #!Horse_FrameCount : BCS .frame_ok
+  STA.l Horse_Frame
+  .frame_ok
+  ; Latch validated frame before indexing metadata; never alias an expanded ID.
   LDA.l Horse_Frame : CMP.b #!Horse_FrameCount : BCC +
     LDA.b #6
   +
@@ -886,6 +930,15 @@ Horse_DrawPlayerOam_Long:
 
   .draw_shadow
   SEP #$20
+  ; Shadow only while airborne (same test as frame select): on the ground it read as Link's own.
+  LDA.l Horse_State : BNE .shadow_on
+  LDA.b $25 : BMI .shadow_neg_z
+    LDA.b $24 : BNE .shadow_on
+    BRL .shadow_done
+  .shadow_neg_z
+  LDA.b $24 : CMP.b #$F0 : BCC .shadow_on
+    BRL .shadow_done
+  .shadow_on
   ; Slots 6..7: Ground hoof shadow (two 8x8 tiles $6C at SX16, SY16+12)
   LDA.b #$6C : STA.b $0B
   LDA.b #$08 : ORA.b $65 : STA.b $0A
@@ -902,6 +955,7 @@ Horse_DrawPlayerOam_Long:
   LDA.b $00 : CLC : ADC.w #$0008 : STA.b $08
   JSR HorseOam_WriteSlot
   INY #4
+  .shadow_done
 
   ; Clear only unused entries; an eight-part horse consumes all twelve slots.
   REP #$30
@@ -916,6 +970,56 @@ Horse_DrawPlayerOam_Long:
   .exit
   PLP : PLB
   RTL
+}
+
+; Sets OBJ priority 3 in $65 when a wooden fence Tile16 lies under the
+; horse/rider footprint (6 samples). Preserves DP $04-$0F, P and registers.
+Horse_ApplyFencePriority:
+{
+  PHP
+  REP #$30
+  PHX : PHY
+  LDA.b $04 : PHA : LDA.b $08 : PHA : LDA.b $0A : PHA
+  LDA.b $0C : PHA : LDA.b $0E : PHA
+  SEP #$30
+  LDY.b #$00
+  LDX.b #10
+  .sample
+    PHX
+    REP #$20
+    LDA.l .dx, X : CLC : ADC.b $22 : STA.b $0C
+    LDA.l .dy, X : CLC : ADC.b $20 : STA.b $0A
+    SEP #$20
+    JSR Horse_QueryTileAt               ; M/X=8; X/Y preserved, DP $04 = Tile16
+    REP #$20
+    LDA.b $04
+    LDX.b #HorseFenceTile16s_End-HorseFenceTile16s-2
+    .cmp
+      CMP.l HorseFenceTile16s, X : BEQ .hit
+      DEX : DEX : BPL .cmp
+    SEP #$20
+    PLX
+    DEX : DEX : BPL .sample
+  BRA .restore
+  .hit
+  SEP #$20
+  PLX
+  LDY.b #$30
+  .restore
+  REP #$20
+  PLA : STA.b $0E : PLA : STA.b $0C : PLA : STA.b $0A
+  PLA : STA.b $08 : PLA : STA.b $04
+  SEP #$20
+  TYA : ORA.b $65 : STA.b $65
+  REP #$30
+  PLY : PLX : PLP
+  RTS
+
+  ; Offsets from Link ($22,$20): three columns across the body, rider and hooves rows.
+  .dx
+  dw -6, 8, 22, -6, 8, 22
+  .dy
+  dw  6, 6,  6, 22, 22, 22
 }
 
 ; Emits 16x16 Rider Head ($08) or Body ($0A) on SP-7 using DP $0D=frame. Returns M=16, X=16.
@@ -1054,11 +1158,13 @@ HorseOam_WriteSlot:
 
 HorseOam_HideAll:
 {
+  ; Compacted to free bank $53 bytes for post-dismount NMI cache (queue125).
   LDA.w $0352 : LSR #2 : TAX
   LDA.w #$0101
-  STA.w $0A20, X : STA.w $0A22, X
-  STA.w $0A24, X : STA.w $0A26, X
-  STA.w $0A28, X : STA.w $0A2A, X
+  LDY.b #5
+- STA.w $0A20, X
+  INX : INX
+  DEY : BPL -
   RTS
 }
 
