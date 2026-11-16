@@ -9,6 +9,7 @@ org $53E800
 HorseForm_SuppressMountedButtons:
 {
   LDA.b #$80 : TRB.b $F4
+  LDA.l $7EF3CC : BNE .block_y              ; follower owns $4200/$4220
   LDA.w $0303 : CMP.b #$03 : BNE .block_y
   LDA.l $7EF340 : BEQ .block_y
   LDA.l $7EF377 : BEQ .block_y

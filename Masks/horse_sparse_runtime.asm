@@ -132,11 +132,13 @@ Horse_LinkDmaPrefix:
   ; ($20-$23/$30-$33, never drawn by the rider) in place of the native aux
   ; sources. Same two bursts and byte count as native $008ADB-$008B24.
   .arrow_check
+  LDA.l $7EF3CC : BNE .no_arrow_cells       ; follower owns $4200/$4220
   LDY.w #9
   .arrow_scan
     LDA.w $0C4A, Y : CMP.b #$09 : BEQ .arrow_cells
     CMP.b #$0A : BEQ .arrow_cells
     DEY : BPL .arrow_scan
+  .no_arrow_cells
   JML $008ADB
   .arrow_cells
   LDA.b #HorseItemRestore>>16 : STA.w $4304 : STA.w $4314
@@ -159,6 +161,7 @@ Horse_LinkDmaPrefix:
 HorseArrow_StoreChar:
 {
   LDA.l !CurrentMask : CMP.b #!Horse_MaskId : BNE .native
+  LDA.l $7EF3CC : BNE .native               ; follower owns aux cells
   LDA.b $72 : SEC : SBC.b #$0A
   STA.b ($90), Y : INY
   RTL

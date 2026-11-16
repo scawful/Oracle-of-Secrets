@@ -1341,7 +1341,7 @@ P2_NmiUpload:
 
     ; blade art (bank $7E, P1's sword level) into the follower head tiles
     LDA.l P2_Flags : AND.b #$04 : BEQ .done
-      LDA.l $7EF3CC : BEQ .blade
+      JSR P2_SwordSlotBusy : BCC .blade
         LDA.l P2_Flags : AND.b #$FB : STA.l P2_Flags
         BRA .done
       .blade
@@ -1396,13 +1396,37 @@ P2_SuspendIfHidden:
 ; Pick this swing's weapon: P1's sword (P2 is an equal second Link), or the
 ; punch when P1 has none or a follower holds the tile slot the blade uses.
 
+; Out: carry set = follower or mounted bow arrow owns !P2_SWORD_VRAM ($4200).
+; Safe from both P2_Tick/Draw (X/Y=8, DB=$3A) and P2_NmiUpload (X/Y=16, DB=$00).
+
+P2_SwordSlotBusy:
+{
+  PHX : PHP
+  SEP #$30
+  LDA.l $7EF3CC : BNE .busy                     ; follower owns $4200/$4220
+  LDA.l $7E02B2 : CMP.b #$09 : BNE .free        ; only horse mask remaps arrows to $4200
+  LDX.b #$09
+  - LDA.l $7E0C4A,X
+    CMP.b #$09 : BEQ .busy
+    CMP.b #$0A : BEQ .busy
+    DEX : BPL -
+  .free
+  PLP : PLX
+  CLC
+  RTS
+  .busy
+  PLP : PLX
+  SEC
+  RTS
+}
+
 P2_ChooseWeapon:
 {
   LDA.b #$00 : STA.l P2_AttackSword
   LDA.b #!P2_DAMAGE_CLASS : STA.l P2_AttackClass
   LDA.l $7EF359 : BEQ .punch                   ; no sword
   CMP.b #$05 : BCS .punch                      ; not a sword level
-  LDA.l $7EF3CC : BNE .punch                   ; follower's tiles in use
+  JSR P2_SwordSlotBusy : BCS .punch            ; follower or mounted arrow in $4200
   LDA.l $7EF359 : STA.l P2_AttackClass         ; slash damage class = level
   LDA.b #$01 : STA.l P2_AttackSword
   .punch
@@ -1415,6 +1439,7 @@ P2_SwordVisible:
 {
   LDA.l P2_AttackTimer : BEQ .no
   LDA.l P2_AttackSword : BEQ .no
+  JSR P2_SwordSlotBusy : BCS .no               ; yield $4200 if mounted arrow spawns mid-swing
   SEC
   RTS
   .no
