@@ -158,6 +158,11 @@ endif
 ; dies. Malice floor writes tile type $0D at runtime (Sprites/Bosses/ganon_beast.asm).
 ; Needs GANONDORF_VOLLEY. Diagnostic opt-out.
 !ENABLE_GANON_BEAST                 = 1
+; Kydreeok chamber: Kydreeok fights in room $02 (absolute bounds become
+; room-local); after the Song of Healing a 2x2 floor plate falls away and the
+; room $02 holewarp drops Link into room $00 for Ganondorf and the beast
+; (Sprites/Bosses/kydreeok.asm). Room data lives in the ROM. Diagnostic opt-out.
+!ENABLE_KYDREEOK_CHAMBER            = 1
 ; Wisdom dream, shots 1-2 (decisions.org pendant dreams; Sealing War
 ; storyboard): D1.01 ($204) in the hut, then the great hall (room $51) with
 ; the Captain and Farore and D1.02 ($205) before the dream return

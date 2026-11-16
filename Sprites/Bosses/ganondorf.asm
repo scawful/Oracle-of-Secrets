@@ -1278,12 +1278,18 @@ endif
 ; Fairy revive hook. GameOver_ResituateLink ($09F742) is the last step of the fairy path
 ; (it hands Module12 back to the previous module); the room is not reloaded and sprites keep
 ; their state. Replaces `LDA.b #$90 : STA.w $031F` (A9 90 8D 1F 03 in the base ROM).
-; Room $00 only: Kydreeok and Ganondorf see BossReinject on their next frame.
+; Room $00 only (and room $02 with KYDREEOK_CHAMBER): Kydreeok and Ganondorf see
+; BossReinject on their next frame.
 
 BossReinject_Set:
 {
   LDA.b #$90 : STA.w $031F ; original
+if !ENABLE_KYDREEOK_CHAMBER == 1
+  LDA.b $A1 : BNE .not_finale_room
+  LDA.b $A0 : AND.b #$FD : BNE .not_finale_room ; room $00, or Kydreeok's chamber $02
+else
   LDA.b $A0 : ORA.b $A1 : BNE .not_finale_room
+endif
     LDA.b #$01 : STA.w BossReinject
   .not_finale_room
   RTL

@@ -45,6 +45,7 @@
 !ENABLE_KALYXO_BOAT                  = 0
 !ENABLE_KALYXO_DOCKS_PROFILE          = 0
 !ENABLE_KOROK_POLISH                  = 1
+!ENABLE_KYDREEOK_CHAMBER              = 1
 !ENABLE_LUPO_PAD_GATE                 = 1
 !ENABLE_LYRA_OVERLAY_FIX              = 1
 !ENABLE_MAP_ICON_TIMELINE             = 1

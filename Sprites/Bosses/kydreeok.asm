@@ -661,11 +661,43 @@ Sprite_Kydreeok_Main:
   {
     JSR ApplyPartPalette ; sprite palette 4 back from white
     LDA.b #$60 : STA.w FinaleBeat
+    if !ENABLE_KYDREEOK_CHAMBER == 1
+    JSR Kydreeok_OpenPlate
+    endif
     STZ.w SprState, X
     RTS
   }
 
 }
+
+if !ENABLE_KYDREEOK_CHAMBER == 1
+; Kydreeok chamber (room $02): after the Song of Healing a 2x2 floor plate
+; falls away south of the arena centre (room-local x $170-$18F, y $A0-$BF).
+; Room $02's holewarp drops Link into room $00 at the same local X/Y, on
+; floor clear of the torches and of Ganondorf's spawn ($170,$80). FinaleBeat
+; is already set; it counts down in room $00 (Ganondorf_DoorGate).
+; Garnish $03 places the pit at stored Y - $10. M=8 X=8; X = Kydreeok slot.
+Kydreeok_OpenPlate:
+{
+  LDY.b #$03
+  .tile
+    PHY
+    LDA.w .dx, Y : STA.b $04
+    LDA.b $23 : AND.b #$FE : ORA.b #$01 : STA.b $05
+    LDA.w .dy, Y : CLC : ADC.b #$10 : STA.b $06
+    LDA.b $21 : AND.b #$FE : STA.b $07
+    LDA.b #$1F : STA.b $08 ; garnish timer: the pit is placed at $1E
+    LDA.b #$04 : STA.b $09 ; cap: the four plate tiles
+    LDA.b #$03 : JSL BossKit_SpawnFx
+    PLY
+  DEY : BPL .tile
+  LDA.b #$1F : STA.w $012E ; SFX2 $1F, vanilla falling tile
+  RTS
+
+  .dx : db $70, $80, $70, $80
+  .dy : db $A0, $A0, $B0, $B0
+}
+endif
 
 ; =========================================================
 ; Originally from Trinexx_MoveBody $1DB2E5
@@ -734,7 +766,11 @@ MoveBody:
 StopIfOutOfBounds:
 {
   REP #$20
-  LDA.w SprCachedX : CMP.w #$0118
+  LDA.w SprCachedX
+  if !ENABLE_KYDREEOK_CHAMBER == 1
+  AND.w #$01FF ; room-local: the chamber is room $02
+  endif
+  CMP.w #$0118
   SEP #$20
   BCS .not_left
     LDA.w SprXSpeed, X : BPL .not_left
@@ -742,7 +778,11 @@ StopIfOutOfBounds:
   .not_left
 
   REP #$20
-  LDA.w SprCachedX : CMP.w #$01D8
+  LDA.w SprCachedX
+  if !ENABLE_KYDREEOK_CHAMBER == 1
+  AND.w #$01FF ; room-local: the chamber is room $02
+  endif
+  CMP.w #$01D8
   SEP #$20
   BCC .not_right
     LDA.w SprXSpeed, X : BMI .not_right
@@ -750,7 +790,11 @@ StopIfOutOfBounds:
   .not_right
 
   REP #$20
-  LDA.w SprCachedY : CMP.w #$0060 ; the raised heads stay on screen
+  LDA.w SprCachedY
+  if !ENABLE_KYDREEOK_CHAMBER == 1
+  AND.w #$01FF ; room-local: the chamber is room $02
+  endif
+  CMP.w #$0060 ; the raised heads stay on screen
   SEP #$20
   BCS .not_up
     LDA.w SprYSpeed, X : BPL .not_up
@@ -758,7 +802,11 @@ StopIfOutOfBounds:
   .not_up
 
   REP #$20
-  LDA.w SprCachedY : CMP.w #$00D0
+  LDA.w SprCachedY
+  if !ENABLE_KYDREEOK_CHAMBER == 1
+  AND.w #$01FF ; room-local: the chamber is room $02
+  endif
+  CMP.w #$00D0
   SEP #$20
   BCC .not_down
     LDA.w SprYSpeed, X : BMI .not_down
