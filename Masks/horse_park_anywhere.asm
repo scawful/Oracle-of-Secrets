@@ -126,10 +126,21 @@ HorseForm_MaintainParkedNpc_Long:
 ; she is no longer wanted or another actor draws from those chars.
 ; ---------------------------------------------------------
 
+; One OAM entry at <entry>+X: shown, page 1, not Epona ($37), char < $20
+; -> .scan_hit. M8/X8, DBR $00.
+macro HorseScanOam(entry)
+  LDA.w <entry>+1, X : CMP.b #$F0 : BEQ +
+  LDA.w <entry>+3, X : LSR : BCC +                ; page 0
+  LDA.w <entry>+3, X : AND.b #$3F : CMP.b #$37 : BEQ + ; Epona (any flip)
+  LDA.w <entry>+2, X : CMP.b #$20 : BCS +
+    JMP .scan_hit
+  +
+endmacro
+
 ; Main loop $008056: Module_MainRouting, then scan the finished OAM buffer.
 ; Any visible page1 entry with char < $20 that is not Epona ($37 attributes)
-; resets Horse_OffClear and hides Epona's entries this frame; the NMI then
-; restores the native cells. Registers, widths and DBR preserved.
+; hides Epona's entries this frame and makes her run off (Horse_RunOff); the
+; NMI then restores the native cells once. Registers, widths, DBR preserved.
 Horse_FrameEndScan:
 {
   JSL $0080B5 ; Module_MainRouting
@@ -137,23 +148,59 @@ Horse_FrameEndScan:
   REP #$30 : PHA : PHX
   SEP #$20
   LDA.b #$00 : PHA : PLB
-  LDA.b $10 : CMP.b #$09 : BNE .reset
-  LDA.b $1B : BNE .reset
   REP #$20 : LDA.l Horse_Marker : CMP.w #$4852 : SEP #$20 : BNE .reset
+  ; Item menu ($0E/$01) and text ($0E/$02) freeze play and leave sprite VRAM
+  ; alone: Epona keeps her cells (Horse_OffRanchNpc .hold), nothing to do.
+  LDA.b $10 : CMP.b #$0E : BNE .not_pause
+    LDA.b $11 : CMP.b #$01 : BEQ .done
+    CMP.b #$02 : BEQ .done
+    BRA .leaving
+  .not_pause
+  CMP.b #$09 : BNE .leaving
+  LDA.b $1B : ORA.b $11 : BNE .leaving
   LDA.l Horse_NpcActive : BEQ .reset
   JSL Horse_RanchProfileReady : BCS .reset
-  LDX.w #$01FC
-  .scan
-    LDA.w $0801, X : CMP.b #$F0 : BEQ .next
-    LDA.w $0803, X : LSR : BCC .next              ; page0
-    LDA.w $0803, X : AND.b #$3F : CMP.b #$37 : BEQ .next ; Epona (any flip)
-    LDA.w $0802, X : CMP.b #$20 : BCC .conflict
-    .next
-    DEX #4 : BPL .scan
+  JSR .scan_oam : BCS .conflict
   LDA.l Horse_OffClear : INC : BEQ .done          ; saturate at $FF
   STA.l Horse_OffClear
   BRA .done
+  ; Module/submodule changed this frame: the coming NMI restores the native
+  ; cells (Horse_OffRanchNpc .unwant) while this frame's OAM still has Epona.
+  .leaving
+  LDA.l Horse_OffState : CMP.b #$A2 : BNE .reset
+  JSR .hide_epona
+  BRA .reset
+  ; Another actor draws from her cells: hide her this frame and run off.
   .conflict
+  JSR .hide_epona
+  JSL Horse_RunOff
+  .reset
+  LDA.b #$00 : STA.l Horse_OffClear
+  .done
+  REP #$30 : PLX : PLA
+  PLB : PLP
+  RTL
+
+  ; Carry set when another actor draws from her cells. Eight entries per pass
+  ; with an 8-bit index: about half the time of a plain 128-entry loop.
+  .scan_oam
+  SEP #$10
+  LDX.b #$F0
+  .scan
+    %HorseScanOam($0800) : %HorseScanOam($0804)
+    %HorseScanOam($0808) : %HorseScanOam($080C)
+    %HorseScanOam($0900) : %HorseScanOam($0904)
+    %HorseScanOam($0908) : %HorseScanOam($090C)
+    TXA : SEC : SBC.b #$10 : TAX : BCC .scan_clear
+    JMP .scan
+  .scan_clear
+  REP #$10 : CLC
+  RTS
+  .scan_hit
+  REP #$10 : SEC
+  RTS
+
+  .hide_epona
   LDX.w #$01FC
   .hide
     LDA.w $0803, X : AND.b #$3F : CMP.b #$37 : BNE .hide_next
@@ -161,11 +208,32 @@ Horse_FrameEndScan:
     LDA.b #$F0 : STA.w $0801, X
     .hide_next
     DEX #4 : BPL .hide
-  .reset
-  LDA.b #$00 : STA.l Horse_OffClear
-  .done
-  REP #$30 : PLX : PLA
-  PLB : PLP
+  RTS
+}
+
+; Epona runs off: poof where she stood, sprite gone, park cleared. The next
+; NMI restores the native cells once (Horse_NpcActive = 0 -> .unwant) and she
+; stays away until Epona's Song sets a new anchor (HorseCall_Long .accept).
+; M8, DBR $00 in. A clobbered; X/Y and index width preserved.
+Horse_RunOff:
+{
+  PHP
+  REP #$10 : PHX : PHY
+  SEP #$30
+  LDX.b #$0F
+  .slot
+    LDA.w $0DD0, X : BEQ .slot_next
+    LDA.w $0E20, X : CMP.b #!HorsePark_SpriteId : BNE .slot_next
+    JSL Sprite_SpawnPoofGarnish                   ; X kept, Y clobbered
+    STZ.w $0DD0, X
+    .slot_next
+    DEX : BPL .slot
+  LDA.b #$15 : STA.w $012E                        ; SFX2.15 poof
+  JSL Horse_RestoreSp3Palette
+  LDA.b #$00
+  STA.l Horse_HasAnchor : STA.l Horse_NpcActive : STA.l Horse_AnchorArea
+  REP #$10 : PLY : PLX
+  PLP
   RTL
 }
 
@@ -181,7 +249,13 @@ Horse_OffRanchNpc:
   CLC : RTL
 
   .gates
-  LDA.b $10 : CMP.b #$09 : BNE .unwant
+  LDA.b $10 : CMP.b #$0E : BNE .not_pause
+    LDA.b $11 : CMP.b #$01 : BEQ .hold            ; item menu
+    CMP.b #$02 : BNE .unwant                      ; text
+    .hold
+    CLC : RTL                                     ; keep her cells as they are
+  .not_pause
+  CMP.b #$09 : BNE .unwant
   LDA.b $11 : BNE .unwant
   LDA.b $1B : BNE .unwant
   LDA.l Horse_NpcActive : BEQ .unwant

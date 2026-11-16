@@ -138,12 +138,14 @@ HudCornerBufferEnd = HudCornerBuffer+14
 assert HudCornerBufferEnd <= $7EC880
 
 ; Map & Travel page: the action chosen on the page, run once by Menu_Exit.
-; Separate conditional owner after the horse tail ($7E1EFE < $7E1F00).
+; Separate conditional owner after the horse tail. $7E1EFE is Horse_AnchorArea
+; when park-anywhere is on (the menu cleared her park on every open), so this
+; byte sits at $7E1EFF.
 if !ENABLE_MENU_MAP_TRAVEL == 1
-base $7E1EFE
+base $7E1EFF
 {
 MenuMapTravel_Pending:   skip 1 ; 0 none, 1 field map, 2 Soaring, 3 map open: reopen page
-assert MenuMapTravel_Pending == $7E1EFE
+assert MenuMapTravel_Pending == $7E1EFF
 assert pc() <= $7E1F00, "Map & Travel pending byte exceeds its bounded WRAM tail"
 }
 base off
