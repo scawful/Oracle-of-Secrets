@@ -153,6 +153,11 @@ endif
 ; is rallied with the Master Sword, stuns him, and his death opens the Triforce
 ; door (Sprites/Bosses/ganondorf.asm). Diagnostic opt-out.
 !ENABLE_GANONDORF_VOLLEY            = 1
+; Ganon beast, last finale phase: Ganondorf's death spawns the beast (second $D3
+; slot, actions 8-15); GanondorfFight = 3 keeps the Triforce door shut until it
+; dies. Malice floor writes tile type $0D at runtime (Sprites/Bosses/ganon_beast.asm).
+; Needs GANONDORF_VOLLEY. Diagnostic opt-out.
+!ENABLE_GANON_BEAST                 = 1
 ; Wisdom dream, shots 1-2 (decisions.org pendant dreams; Sealing War
 ; storyboard): D1.01 ($204) in the hut, then the great hall (room $51) with
 ; the Captain and Farore and D1.02 ($205) before the dream return

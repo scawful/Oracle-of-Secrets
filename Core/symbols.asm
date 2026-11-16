@@ -36,7 +36,7 @@ SpecialOverworldPaletteHoleReference: skip 12
 SpecialOverworldPaletteHoleEffective: skip 12
 SpecialOverworldPaletteHoleState: skip 1 ; Reset to0 before any capture/read.
 SpecialOverworldPaletteHoleArea: skip 1  ; Reset toFF; validate full8A first.
-GanondorfFight:           skip 1  ; $7E1EA6 finale: 0 none, 1 Ganondorf spawned, 2 defeated
+GanondorfFight:           skip 1  ; $7E1EA6 finale: 0 none, 1 Ganondorf spawned, 2 defeated, 3 beast alive (door shut)
 BossReinject:             skip 1  ; $7E1EA7 fairy revive in room $00: bosses re-inject their graphics next frame, then clear it
 FinaleBeat:               skip 1  ; $7E1EA8 0 Kydreeok not dead yet, N>1 placeholder beat counting down, 1 Ganondorf may spawn
 WallSel_Buffer:           skip 32 ; $7E1EA9-$7E1EC8 Dungeons/wall_profile_selector.asm span window (read via $01:1EA9 mirror)
