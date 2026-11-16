@@ -1,6 +1,20 @@
 ; This file contains all direct patches to the original ROM.
 ; It is included from Oracle_main.asm.
 
+; Pot-item lists live in bank $5C. RevealPotItem ($01:E6B2) takes the list
+; address from the table at $01:DB69 and the bank from LDA.w #$00bb at
+; $01:E6C7. The base ROM carries the operand and the data together
+; (Scripts/Rooms/pot_item_bank_migration.py), so the build only checks them:
+; writing the operand here onto an unmigrated base would point every room at
+; empty bank-$5C data. The 23 unused table words after room $127 point at the
+; reserved terminator at $5C:FFFE. Emits no bytes.
+assert read1($01E6C7) == $A9 && read1($01E6C9) == $00, "RevealPotItem bank loader at $01:E6C7 changed"
+assert read1($01E6C8) == $5C, "Base ROM pot items are not in bank $5C: run Scripts/Rooms/pot_item_bank_migration.py on the base"
+assert read2($5CFFFE) == $FFFF, "Pot-item pad terminator at $5C:FFFE was overwritten"
+; The operand alone does not prove the table was rewritten: the first and last
+; pad words ($01:DDB9, $01:DDE5) hold $FFFE only after the migration.
+assert read2($01DDB9) == $FFFE && read2($01DDE5) == $FFFE, "Pot-item table at $01:DB69 is not migrated: pad words do not point at $5C:FFFE"
+
 ; Keep the Shrine pendant rewards reproducible from an unedited base ROM.
 ; Guard both the chest record identity and the accepted old/already-fixed item
 ; values so a changed chest table fails closed instead of patching a wrong byte.
