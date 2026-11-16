@@ -69,6 +69,13 @@ assert pc() <= $7E1F00, "Ferry transient state exceeds its bounded WRAM tail"
 base off
 endif
 
+; Glade ambush Abyss landing (!ENABLE_GLADE_AMBUSH, Sprites/Bosses/kydrog.asm).
+; Vanilla-unused $7E02B8-$7E02B9 (usdasm UNUSED_7E02B8/B9, zero at boot); the
+; item binding bytes end at $7E02B7. The $7E1E70 block has no room: the ferry
+; block starts at $7E1ECB. Not persistent; no bulk owner clears it.
+AbyssLanding = $7E02B8 ; state (0 off, 1 armed, 2 mosaic, 3 pan); +1 = camera rows left
+assert AbyssLanding+2 <= $7E02C0
+
 if !ENABLE_HORSE_FORM == 1
 base $7E1EDE
 {
@@ -170,13 +177,6 @@ endif
 ; vanilla-free UNUSED_7FF180 block: the boss frame load meter and earthquake.
 ; BossDirector (Sprites/Bosses/boss_director.asm) uses $7FF388-$7FF39D after
 ; it: the boss attack token, rest, hit grace, cooldowns and 8 boss bytes.
-
-; Glade ambush Abyss landing (!ENABLE_GLADE_AMBUSH, Sprites/Bosses/kydrog.asm).
-; Vanilla-unused $7E02B8-$7E02B9 (usdasm UNUSED_7E02B8/B9, zero at boot); the
-; item binding bytes end at $7E02B7. The $7E1E70 block has no room: the ferry
-; block starts at $7E1ECB. Not persistent; no bulk owner clears it.
-AbyssLanding = $7E02B8 ; state (0 off, 1 armed, 2 mosaic, 3 pan); +1 = camera rows left
-assert AbyssLanding+2 <= $7E02C0
 
 ; Current Song
 CurrentSong    = $030F
