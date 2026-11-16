@@ -837,7 +837,13 @@ RegionalCheckpointSchema = $7EF3B4
 RegionalCheckpointEpoch  = $7EF3B5
 RegionalCheckpointKey    = $7EF3B6 ; word, ends before $7EF3B8
 RegionalCheckpointResumeIntent = $7EF3B8 ; byte: 0 Home, 1 last regional key
-FreeBlock_Large    = $7EF3B9  ; 12 bytes [B9,C5)
+; Root prototype grant 2026-11-14; not general live migration approval.
+; Disabled dual-item adapter: schema is written last; unsupported existing Y
+; selections must not be replaced by this Bow/Boomerang-only first slice.
+ItemBindingSavedVersion = $7EF3B9
+ItemBindingSavedY       = $7EF3BA
+ItemBindingSavedX       = $7EF3BB
+FreeBlock_Large    = $7EF3BC  ; 9 bytes [BC,C5)
 
 ; ---------------------------------------------------------
 ; Dreams extension and current tail-event reservation ($7EF412-4FD)
@@ -861,7 +867,7 @@ FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF3A0  | $7EF3A0  | bits  | Wolf dig: bit 0 used |
 ; | $7EF3B3  | $7EF3B3  | 1     | Large prefix       |
-; | $7EF3B9  | $7EF3C4  | 12    | Large remainder    |
+; | $7EF3BC  | $7EF3C4  | 9     | Large remainder    |
 ; | $7EF412  | $7EF4BF  | 174   | Dreams prefix      |
 ; | $7EF4E1  | $7EF4FD  | 29    | Dreams remainder   |
 ; |----------|----------|-------|--------------------|

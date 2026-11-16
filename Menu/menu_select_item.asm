@@ -122,6 +122,7 @@ if !ENABLE_GOLDSTAR_CELL == 1
   dw (15*64)+(8*2)  ; $1D Switch Hook, directly below Hookshot
   dw (15*64)+(18*2) ; $1E unused normal cursor; Garo lives on Equipment
 endif
+Menu_ItemCursorPositions_End:
 
 ; =========================================================
 

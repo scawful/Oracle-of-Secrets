@@ -104,6 +104,31 @@ assert pc() <= $7E1F00, "Horse transient state exceeds its bounded WRAM tail"
 base off
 endif
 
+; Dual-item prototype volatile state. The 2026-11-14 grant at $7E1EDE was
+; later taken by the Horse Form transient block, so these four bytes moved to
+; vanilla-unused $7E02B3-$7E02B6 (usdasm UNUSED_7E02B3..B6; ancilla arrays end
+; at $02B1, $02B2 is !CurrentMask). Never cleared by a bulk owner here; reset
+; explicitly on file load or action cancellation; not persistent.
+ItemBindingCursor  = $7E02B3
+ItemBindingLogical = $7E02B4
+ItemBindingAction  = $7E02B5
+ItemBindingButton  = $7E02B6
+; Menu session only: the Y item while the menu cursor browses in $0202.
+; Written on every menu open, read on close; never read in gameplay.
+ItemBindingMenuY   = $7E02B7
+assert ItemBindingCursor == $7E02B3 && ItemBindingButton+1 == ItemBindingMenuY
+assert ItemBindingMenuY+1 == $7E02B8
+
+; Codex HUD layout corner cells (!ENABLE_HUD_LAYOUT_CODEX). 14 bytes in the
+; vanilla-free $7EC84A-$7EC87F gap after the RebuildHUD copy ($7EC700+$14A).
+; +0..+8 = rupee icon (2) + 3 digits for BG3 $6342 (screen row 26, cols 2-6);
+; +$0A..+$0D = key icon + digit for BG3 $635C (row 26, cols 28-29).
+; Written by HUD_Update every HUD frame, read by HUD_NMIUpload and the menu
+; close scroll. Not persistent; not cleared by any bulk owner.
+HudCornerBuffer    = $7EC84A
+HudCornerBufferEnd = HudCornerBuffer+14
+assert HudCornerBufferEnd <= $7EC880
+
 ; Explicit bounded aliases for the reserved palette history; no consumer yet.
 SpecialOverworldPaletteHoleCache = $7E1E8C
 SpecialOverworldPaletteHoleCacheEnd = $7E1EA6

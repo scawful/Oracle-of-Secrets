@@ -31,6 +31,35 @@ org $0DF14F ; AnimateHeartRefill
   LDA.b #$7E : STA $02
 
 ; ==========================================================
+; HUD cell addresses. The Codex layout (HUD_LAYOUT_02/03,
+; !ENABLE_HUD_LAYOUT_CODEX) widens the item box to cols 23-29 (X icon cols
+; 24-25, gap col 26, Y icon cols 27-28, counts in the box's bottom border on
+; row 3), moves the magic box three tiles left (cols 18-22) and moves the
+; rupees and keys to the screen's bottom corners through HudCornerBuffer.
+; Flags off: the vanilla-layout cells, byte-identical code.
+
+if !ENABLE_HUD_LAYOUT_CODEX == 1
+  assert !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1, "hud_layout_codex needs dual_item_binding_prototype (X item)"
+  !HudHalfMagic   = $7EC72A             ; row 0, cols 21-22 (magic box top)
+  !HudMagicFill   = $7EC766             ; row 1, cols 19-22
+  !HudYCount      = $7EC7F6             ; row 3, cols 27-28 (under the Y icon)
+  !HudYCountRest0 = $A014               ; box bottom strip
+  !HudYCountRest1 = $207E               ; box bottom piece
+  !HudRupeeDigits = HudCornerBuffer+4   ; BG3 row 26, cols 4-6
+  !HudKeyIcon     = HudCornerBuffer+$0A ; BG3 row 26, col 28
+  !HudKeyDigit    = HudCornerBuffer+$0C ; BG3 row 26, col 29
+else
+  !HudHalfMagic   = $7EC730             ; row 0, cols 24-25
+  !HudMagicFill   = $7EC76C             ; row 1, cols 22-25
+  !HudYCount      = $7EC7B0             ; row 2, cols 24-25 (magic box bottom)
+  !HudYCountRest0 = $A00C
+  !HudYCountRest1 = $A00C
+  !HudRupeeDigits = $7EC79C             ; row 2, cols 14-16
+  !HudKeyIcon     = $7EC764             ; row 1, col 18
+  !HudKeyDigit    = $7EC7A4             ; row 2, col 18
+endif
+
+; ==========================================================
 ; Main HUD Update Loop
 
 org $2E8000
@@ -105,8 +134,8 @@ HUD_Update:
   ; Magic amount indicator (normal, 1/2, or 1/4)
   LDA $7EF37B : AND.w #$00FF : CMP.w #$0001 : BCC .normal_magic_meter
     ; draw 1/2 magic meter
-    LDA.w #$2851 : STA $7EC730
-    LDA.w #$28FA : STA $7EC732
+    LDA.w #$2851 : STA !HudHalfMagic
+    LDA.w #$28FA : STA !HudHalfMagic+2
 
   .normal_magic_meter
 
@@ -115,10 +144,14 @@ HUD_Update:
   LDA $7EF36E : AND.w #$00FF : CLC : ADC #$0007 : AND.w #$FFF8 : TAX
 
   ; these four writes draw the magic power bar based on how much MP you have
-  LDA.l (MagicTilemap)+0, X : STA $7EC76C
-  LDA.l (MagicTilemap)+2, X : STA $7EC76E
-  LDA.l (MagicTilemap)+4, X : STA $7EC770
-  LDA.l (MagicTilemap)+6, X : STA $7EC772
+  LDA.l (MagicTilemap)+0, X : STA !HudMagicFill
+  LDA.l (MagicTilemap)+2, X : STA !HudMagicFill+2
+  LDA.l (MagicTilemap)+4, X : STA !HudMagicFill+4
+  LDA.l (MagicTilemap)+6, X : STA !HudMagicFill+6
+
+if !ENABLE_HUD_LAYOUT_CODEX == 1
+  JSL HUD_CodexCells                    ; X icon/count, corner icons (both paths)
+endif
 
   ; Load how many rupees the player has
   LDA $7EF362
@@ -128,17 +161,17 @@ HUD_Update:
   REP #$30
 
   ; The tile index for the first rupee digit
-  LDA $03 : AND.w #$00FF : ORA.w #$2400 : STA $7EC79C
+  LDA $03 : AND.w #$00FF : ORA.w #$2400 : STA !HudRupeeDigits
 
   ; The tile index for the second rupee digit
-  LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA $7EC79E
+  LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA !HudRupeeDigits+2
 
   ; The tile index for the third rupee digit
-  LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7A0
+  LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA !HudRupeeDigits+4
 
   ; Clear digit tiles
-  LDA #$A00C : STA $7EC7B0
-  LDA #$A00C : STA $7EC7B2
+  LDA #!HudYCountRest0 : STA !HudYCount
+  LDA #!HudYCountRest1 : STA !HudYCount+2
 
   ; Check if the user has bombs equipped
 if !ENABLE_TRUTHFUL_CONTROLS == 1
@@ -163,10 +196,10 @@ endif
     REP #$30
 
     ; The tile index for the first bomb digit
-    LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B0
+    LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA !HudYCount
 
     ; The tile index for the second bomb digit
-    LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B2
+    LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA !HudYCount+2
 
   .not_bombs
 
@@ -186,10 +219,10 @@ endif
     REP #$30
 
     ; The tile index for the first arrow digit
-    LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B0
+    LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA !HudYCount
 
     ; The tile index for the second arrow digit
-    LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B2
+    LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA !HudYCount+2
 
   .not_arrows
   LDA.w #$007F : STA $05
@@ -203,10 +236,10 @@ endif
 
   ; The key digit, which is optionally drawn.
   ; Also check to see if the key spot is blank
-  LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7A4
+  LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA !HudKeyDigit
   CMP.w #$247F : BNE .dont_blank_key_icon
     ; If the key digit is blank, also blank out the key icon.
-    STA $7EC764
+    STA !HudKeyIcon
 
   .dont_blank_key_icon
 
@@ -562,6 +595,13 @@ HexToDecimal:
 
 pushpc
 
+if !ENABLE_HUD_LAYOUT_CODEX == 1
+org $008B82 ; @hook module=Menu name=HUD_NMIUploadHook kind=jsl target=HUD_NMIUpload expected_m=8 expected_x=16
+  assert read1($008B82) == $A9 && read1($008B83) == $01 && read1($008B84) == $8D && read2($008B85) == $420B, "Expected HUD DMA trigger at $008B82"
+  JSL HUD_NMIUpload : NOP
+assert pc() == $008B87
+endif
+
 ; =========================================================
 
 ; $6FA93-$6FAFC DATA
@@ -701,6 +741,27 @@ org $0DFE77
 HUD_Tilemap:
   incbin tilemaps/hud.tilemap
 
+if !ENABLE_HUD_LAYOUT_CODEX == 1
+; Codex HUD layout template (HUD_LAYOUT_02/03): magic box cols 18-22, item
+; box cols 23-29 with the strip glyph $014, no rupee/key cells on rows 1-2.
+; Row 0, cols 18-29: magic box top, item box top.
+org $0DFE9B           ; HUD_Tilemap+$24, row 0, col 18
+  dw $200B, $200C, $200C, $200C, $200C, $206C, $206D, $2014, $2014, $2014, $206E, $206F
+; Row 1, cols 15-16: old rupee icon off.
+org $0DFED5           ; HUD_Tilemap+$5E, row 1, col 15
+  dw $207F, $207F
+; Row 1, cols 18-29: magic meter, empty item box.
+org $0DFEDB           ; HUD_Tilemap+$64, row 1, col 18
+  dw $201B, $344B, $344B, $344B, $344B, $20DE, $20AA, $20AA, $20AA, $20AA, $20AA, $20DF
+; Row 2, cols 18-29: magic box bottom, empty item box.
+org $0DFF1B           ; HUD_Tilemap+$A4, row 2, col 18
+  dw $A00B, $A00C, $A00C, $A00C, $A00C, $20EE, $20AA, $20AA, $20AA, $20AA, $20AA, $20EF
+; Row 3, cols 23-29: item box bottom (counts overwrite cols 24-25 / 27-28).
+org $0DFF65           ; HUD_Tilemap+$EE, row 3, col 23
+  dw $207C, $207D, $A014, $A014, $A014, $207E, $201D
+assert pc() <= HUD_Tilemap+$180 && HUD_Tilemap == $0DFE77
+endif
+
 ; #_02816A: JSL RebuildHUD_Keys
 
 ; LoadUnderworldRoomRebuildHUD:
@@ -724,6 +785,16 @@ FloorIndicatorNumberLow:
   dw $E50C, $A50E, $007F
 }
 
+; HUD buffer cells for the floor number: top row and the row below.
+if !ENABLE_HUD_FLOOR_CENTER == 1
+  !FloorTop = $7EC7DE                 ; row 3, col 15 (centered, HUD_LAYOUT_02)
+elseif !ENABLE_HUD_LAYOUT_CODEX == 1
+  !FloorTop = $7EC7E8                 ; row 3, cols 20-21 (under the magic meter)
+else
+  !FloorTop = $7EC7F0                 ; row 3, col 24 (vanilla)
+endif
+!FloorBot = !FloorTop+$40
+
 ; *$57D0C-$57DA7 JUMP LOCATION (LONG)
 org $0AFD0C
 FloorIndicator:
@@ -738,10 +809,10 @@ FloorIndicator:
 
   STA   $04A0
   PHB   : PHK : PLB
-  LDA.w #$251E : STA $7EC7F0
-  INC   A        : STA $7EC832
-  INC   A        : STA $7EC830
-  LDA.w #$250F : STA $7EC7F2
+  LDA.w #$251E : STA !FloorTop
+  INC   A        : STA !FloorBot+2
+  INC   A        : STA !FloorBot
+  LDA.w #$250F : STA !FloorTop+2
   LDX.w #$0000
 
   ; check whether $A4[1] has a negative value
@@ -776,8 +847,8 @@ FloorIndicator:
 
   ASL A : TAY
 
-  LDA FloorIndicatorNumberHigh, Y : STA $7EC7F0, X
-  LDA FloorIndicatorNumberLow, Y  : STA $7EC830, X
+  LDA FloorIndicatorNumberHigh, Y : STA !FloorTop, X
+  LDA FloorIndicatorNumberLow, Y  : STA !FloorBot, X
 
   SEP #$30
 
@@ -793,7 +864,7 @@ FloorIndicator:
   REP #$20
 
   ; disable the display of the floor indicator.
-  LDA.w #$007F : STA $7EC7F0 : STA $7EC830 : STA $7EC7F2 : STA $7EC832
+  LDA.w #$007F : STA !FloorTop : STA !FloorBot : STA !FloorTop+2 : STA !FloorBot+2
 
   SEP #$30
 
