@@ -1089,11 +1089,16 @@ P2_SlotsBusy:
   ; No $0AF4 test: vanilla never clears it after a bird flight. The stale
   ; duck upload to $40E0 runs before P2_NmiUpload, which overwrites it.
   LDX.b #$09
-  - LDA.w $0C4A,X
+  - LDA.w $0C4A,X : BEQ .next_ancilla
     CMP.b #$27 : BEQ .busy                     ; travel bird (head slot)
     CMP.b #$38 : BEQ .busy                     ; cutscene duck (head slot)
     CMP.b #$1F : BEQ .busy                     ; hookshot/goldstar (head slot)
     CMP.b #$22 : BEQ .busy                     ; item receipt (body slot)
+    CMP.b #$09 : BEQ .horse_arrow
+    CMP.b #$0A : BNE .next_ancilla
+    .horse_arrow
+      LDA.l $7E02B2 : CMP.b #$09 : BEQ .busy   ; mounted arrow (aux A/B slots)
+    .next_ancilla
     DEX : BPL -
   LDX.b #$0F
   - LDA.w SprState,X : BEQ .next_sprite
