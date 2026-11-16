@@ -91,34 +91,70 @@ Menu_Bindings_DrawMarkers:
 {
   PHP : REP #$30
 if !ENABLE_HUD_LAYOUT_CODEX == 1
-  ; Full four-corner brackets: Y green, then X blue. Cells are 3 tiles
-  ; apart and the brackets 4 wide, so neighbour cells share one column of
-  ; corner tiles; X is drawn last and wins those tiles. Same item on both
-  ; buttons: the left corners show Y again.
-  LDA.l ItemBindingMenuY : JSR .cell : BCC .cx_no_y
-    LDA.w #!MB_YMarker : JSR .corners
-  .cx_no_y
-  JSR .x_cell : BCC .cx_no_x
-    LDA.w #!MB_XMarker : JSR .corners
-    LDA.l ItemBindingMenuY : EOR.l ItemBindingSavedX : AND.w #$00FF : BNE .cx_no_x
-      LDA.w #!MB_YMarker : STA.w $1108, X
-      ORA.w #$8000 : STA.w $11C8, X
-  .cx_no_x
-  ; Redraw the gray cursor on top on blink-on frames ($0207 bit 5 clear),
-  ; so the cursor cell alternates gray cursor / colored marks and a
-  ; neighbour's mark never colors the cursor. A mask item has no grid cursor.
-  SEP #$30
-  LDA.b #$20 : BIT.w $0207 : BNE .cx_done
+  ; Full brackets (corners + side lines, like the gray cursor): Y green,
+  ; X blue. Cells are 3 tiles apart across and down and the brackets 4x4,
+  ; so neighbour cells share a column or row of tiles; whichever mark is
+  ; drawn last owns them. Menu_DrawCursor already ran: gray on blink-on
+  ; frames ($0207 bit 5 clear), erased on blink-off frames.
+  ;   blink-on:  the cursor cell's marks are skipped (it stays gray);
+  ;              the other mark is drawn after it and is whole.
+  ;   blink-off: the cursor cell's mark is drawn last and is whole.
+  ;   cursor on neither mark: X last on blink-off, Y last on blink-on.
+  ; Y = item whose marks are skipped (0 = none). A mask Y item has no grid
+  ; cursor, so nothing is skipped.
+  LDY.w #$0000
+  LDA.w $0207 : AND.w #$0020 : BNE .cx_off
 if !ENABLE_MENU_PAGE3 == 1
-  LDA.w $0202 : JSR Menu_Page3_IsMaskItem : BCS .cx_done
+    SEP #$20
+    LDA.w $0202 : JSR Menu_Page3_IsMaskItem
+    REP #$20
+    BCS .cx_on_draw
 endif
-  LDA.w $0202 : BEQ .cx_done
-  ASL : TAY
-  REP #$10
-  LDX.w Menu_ItemCursorPositions-2, Y
-  JSR Menu_DrawCursor                 ; A8 in/out, keeps X
+    LDA.w $0202 : AND.w #$00FF : TAY
+    .cx_on_draw
+    JSR .cx_draw_x : JSR .cx_draw_y
+    BRA .cx_done
+  .cx_off
+  LDA.w $0202 : EOR.l ItemBindingMenuY : AND.w #$00FF : BNE .cx_x_last
+    JSR .cx_draw_x : JSR .cx_draw_y
+    BRA .cx_done
+  .cx_x_last
+  JSR .cx_draw_y : JSR .cx_draw_x
   .cx_done
   PLP : RTS
+
+  ; Same item on both buttons: X draws it (left half green, right half blue).
+  .cx_draw_y
+  LDA.l ItemBindingMenuY : EOR.l ItemBindingSavedX : AND.w #$00FF : BNE .cx_y_own
+    JSR .x_cell : BCS .cx_draw_x
+  .cx_y_own
+  TYA : EOR.l ItemBindingMenuY : AND.w #$00FF : BEQ .cx_rts
+  LDA.l ItemBindingMenuY : JSR .cell : BCC .cx_rts
+  LDA.w #!MB_YMarker : JMP .bracket
+
+  .cx_draw_x
+  TYA : EOR.l ItemBindingSavedX : AND.w #$00FF : BEQ .cx_rts
+  JSR .x_cell : BCC .cx_rts
+  LDA.w #!MB_XMarker : JSR .bracket
+  LDA.l ItemBindingMenuY : EOR.l ItemBindingSavedX : AND.w #$00FF : BNE .cx_rts
+    LDA.w #!MB_YMarker : STA.w $1108, X
+    ORA.w #$8000 : STA.w $11C8, X
+    LDA.w #!MB_YMarker+$0010 : STA.w $1148, X : STA.w $1188, X
+  .cx_rts
+  RTS
+
+  ; A = top-left corner word; X = cell offset. Corners plus side lines
+  ; (side glyph = corner + $10), the same 8 tiles as Menu_DrawCursor.
+  .bracket
+  STA.w $1108, X                      ; top left
+  ORA.w #$8000 : STA.w $11C8, X       ; bottom left (V flip)
+  ORA.w #$4000 : STA.w $11CE, X       ; bottom right (H+V flip)
+  EOR.w #$8000 : STA.w $110E, X       ; top right (H flip)
+  CLC : ADC.w #$0010
+  STA.w $114E, X : STA.w $118E, X     ; right side (H flip)
+  EOR.w #$4000
+  STA.w $1148, X : STA.w $1188, X     ; left side
+  RTS
 
   ; X item cell: C set and X = offset when version 1 holds a grid item.
   .x_cell

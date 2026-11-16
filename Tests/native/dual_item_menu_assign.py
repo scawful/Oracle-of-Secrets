@@ -52,6 +52,7 @@ MAP_MODULE = 0x0E
 MENU_BUF, MENU_BUF_LEN = 0x7E1000, 0x800
 Y_MARKER, X_MARKER = 0x3C60, 0x2C60  # corner glyph $060; flips add $4000/$8000
 ITEMS_PAGE = 0x04
+BLINK = 0x7E0207  # bit 5 set = gray cursor erased
 
 
 class MenuAssignTest(deku.DekuStickRuntimeTest):
@@ -87,19 +88,33 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
         return any(self.r(ANCILLA + i) == ident for i in range(5))
 
     def markers(self):
-        # Under --codex the gray cursor covers its own cell's marks on
-        # blink-on frames; sample across a blink and keep the fullest read.
-        best = ([], [])
-        for _ in range(10 if self.codex else 1):
+        # Under --codex marks are full brackets (corner $060 + side $070) and
+        # tiles shared with a neighbour or the gray cursor change owner with
+        # the blink ($0207 bit 5, 32 frames). Sample past one full blink and
+        # return the read with the most Y tiles and the one with the most X.
+        glyphs = lambda m: (m, m + 0x10) if self.codex else (m,)
+        best_y, best_x = [], []
+        for _ in range(24 if self.codex else 1):
             buf = self.b.read_block(MENU_BUF, MENU_BUF_LEN)
             words = [buf[i] | (buf[i + 1] << 8) for i in range(0, len(buf) - 1, 2)]
-            ys = [0x1000 + 2 * i for i, w in enumerate(words) if w & 0x3FFF == Y_MARKER]
-            xs = [0x1000 + 2 * i for i, w in enumerate(words) if w & 0x3FFF == X_MARKER]
-            if len(ys) + len(xs) > len(best[0]) + len(best[1]):
-                best = (ys, xs)
+            ys = [0x1000 + 2 * i for i, w in enumerate(words) if w & 0x3FFF in glyphs(Y_MARKER)]
+            xs = [0x1000 + 2 * i for i, w in enumerate(words) if w & 0x3FFF in glyphs(X_MARKER)]
+            if len(ys) > len(best_y):
+                best_y = ys
+            if len(xs) > len(best_x):
+                best_x = xs
             if self.codex:
                 time.sleep(0.06)
-        return best
+        return best_y, best_x
+
+    def shot_phases(self, name):
+        # Codex: one screenshot per blink phase, since shared tiles change owner.
+        if not self.codex:
+            self.take_screenshot(name)
+            return
+        for tag, bit in (("blink_off", 0x20), ("blink_on", 0x00)):
+            self.wait_for(lambda: self.r(BLINK) & 0x20 == bit, 1.5)
+            self.take_screenshot(f"{name}_{tag}")
 
     def open_menu(self):
         self.press("START", frames=6)
@@ -151,9 +166,12 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
         self.check("Y_bound_bow", s["menu_y"] == 1 and s["menu"] == ITEMS_PAGE)
         ys, xs = self.markers()
         print(f"    markers Y={[hex(a) for a in ys]} X={[hex(a) for a in xs]}")
-        # Bow and Boomerang are neighbors: they share one corner column, X shows there.
-        self.check("Y_green_corners_X_blue_corners", len(ys) == 2 and len(xs) == 4)
-        self.take_screenshot("01_markers_Y_bow_X_boomerang")
+        # Bow and Boomerang are neighbors and share one tile column; under
+        # --codex each full bracket (8 tiles) is whole in one blink phase.
+        full = 8 if self.codex else 4
+        self.check("Y_green_X_blue_full_outlines",
+                   len(ys) == (full if self.codex else 2) and len(xs) == full)
+        self.shot_phases("01_markers_Y_bow_X_boomerang")
 
         # 3. X on Bottle (Y-only) is refused.
         self.check("cursor_reached_bottle", self.move_to(6, "RIGHT"))
@@ -167,8 +185,8 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
         s = self.snap("X_again_clears")
         ys, xs = self.markers()
         self.check("X_cleared_no_X_marker", s["saved"][2] == 0 and len(xs) == 0
-                   and len(ys) == 4)
-        self.take_screenshot("02_X_cleared")
+                   and len(ys) == (8 if self.codex else 4))
+        self.shot_phases("02_X_cleared")
         self.tap("X")
         s = self.snap("X_rebound")
         self.check("X_rebound_boomerang", s["saved"][2] == 2)
@@ -209,8 +227,9 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
         s = self.snap("Y_and_X_on_boomerang")
         print(f"    markers Y={[hex(a) for a in ys]} X={[hex(a) for a in xs]}")
         self.check("both_markers_side_by_side",
-                   s["menu_y"] == 2 and len(ys) == 2 and len(xs) == 2 and min(xs) == min(ys) + 6)
-        self.take_screenshot("05_both_markers_one_item")
+                   s["menu_y"] == 2 and len(ys) == (4 if self.codex else 2)
+                   and len(xs) == len(ys) and min(xs) == min(ys) + 6)
+        self.shot_phases("05_both_markers_one_item")
         self.check("menu_closed_end", self.close_menu("START"))
         s = self.snap("end")
         self.check("end_Y_boomerang", s["y_item"] == 2)
