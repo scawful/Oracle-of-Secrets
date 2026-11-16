@@ -114,11 +114,57 @@ Horse_LinkDmaPrefix:
   LDA.b #$7E
   STA.w $4304 : STA.w $4314 : STA.w $4324 : STA.w $4334 : STA.w $4344
   LDX.w #$0040
-  JML $008ADB
+  BRA .arrow_check
   .native
   LDY.w #$4100 : STY.w $2116
   JML $008A12
+  ; Mounted frames own the native arrow cells ($2A-$2D/$3A-$3D). While a
+  ; rider's arrow is alive, load that arrow art into Link's aux A/B cells
+  ; ($20-$23/$30-$33, never drawn by the rider) in place of the native aux
+  ; sources. Same two bursts and byte count as native $008ADB-$008B24.
+  .arrow_check
+  LDY.w #9
+  .arrow_scan
+    LDA.w $0C4A, Y : CMP.b #$09 : BEQ .arrow_cells
+    CMP.b #$0A : BEQ .arrow_cells
+    DEY : BPL .arrow_scan
+  JML $008ADB
+  .arrow_cells
+  LDA.b #HorseItemRestore>>16 : STA.w $4304 : STA.w $4314
+  LDY.w #$4200 : STY.w $2116
+  LDY.w #HorseItemRestore+64 : STY.w $4302 : STX.w $4305  ; $2A,$2B -> $20,$21
+  LDY.w #HorseItemRestore+128 : STY.w $4312 : STX.w $4315 ; $2C,$2D -> $22,$23
+  LDY.w #$BD40 : STY.w $4322 : STX.w $4325
+  LDA.b #$07 : STA.w $420B
+  LDY.w #$4300 : STY.w $2116
+  LDY.w #HorseItemRestore+256 : STY.w $4302 : STX.w $4305 ; $3A,$3B -> $30,$31
+  LDY.w #HorseItemRestore+320 : STY.w $4312 : STX.w $4315 ; $3C,$3D -> $32,$33
+  LDY.w #$BD80 : STY.w $4322 : STX.w $4325
+  STA.w $420B
+  LDA.b #$7E : STA.w $4304 : STA.w $4314
+  JML $008B25
 }
+
+; AncillaDraw_Arrow char store ($08A41B), M8/X8. Mounted: draw from the aux
+; cells Horse_LinkDmaPrefix fills (arrow char - $0A). On foot: native char.
+HorseArrow_StoreChar:
+{
+  LDA.l !CurrentMask : CMP.b #!Horse_MaskId : BNE .native
+  LDA.b $72 : SEC : SBC.b #$0A
+  STA.b ($90), Y : INY
+  RTL
+  .native
+  LDA.b $72
+  STA.b ($90), Y : INY
+  RTL
+}
+
+pushpc
+org $08A41B ; @hook module=Masks name=HorseArrow_StoreChar kind=jsl target=HorseArrow_StoreChar expected_m=8 expected_x=8
+  assert read2($08A41B) == $72A5 && read2($08A41D) == $9091 && read1($08A41F) == $C8, "Expected arrow char store at $08A41B"
+  JSL HorseArrow_StoreChar : NOP
+assert pc() == $08A420
+pullpc
 
 ; Entry M8/X16, DBR any. Preserve Y/DBR/DP and displaced native DMA0 tail.
 ; Horse_UploadedFrame FF=no mounted ownership, 0..18=restore required on exit.
