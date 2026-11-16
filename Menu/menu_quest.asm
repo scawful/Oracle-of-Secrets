@@ -1,4 +1,4 @@
-; Quest displays progression (v4 essence ring + pendants). Supplies and passive
+; Quest displays progression (v4 essence ring, pendants in its centre). Supplies and passive
 ; gear live on Equipment; the area name heads the Map page.
 ; No ownership or save-format changes. DBR = $2D.
 Menu_Quest_Init:
@@ -228,9 +228,10 @@ Menu_Quest_Progress:
   dw menu_offset(18,15),menu_offset(17,10),menu_offset(14,8),menu_offset(11,10)
 .pendant_bits
   db !Pendant_Wisdom,!Pendant_Power,!Pendant_Courage
-; v4: pendants sit in one row under the ring.
+; Pendants form a triangle in the ring centre: Power on top, Wisdom
+; bottom-left, Courage bottom-right (table order Wisdom, Power, Courage).
 .pendant_pos
-  dw menu_offset(21,12),menu_offset(21,15),menu_offset(21,18)
+  dw menu_offset(15,13),menu_offset(13,15),menu_offset(15,17)
 .pendant_tiles
   dw $2504,$2505,$2514,$2515, $2502,$2503,$2512,$2513
   dw $253B,$253C,$A53B,$A53C, $3D3D,$3D3E,$BD3D,$BD3E

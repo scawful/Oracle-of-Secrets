@@ -591,7 +591,7 @@ endif
         STA.w ShortSpoof
         LDA.w #ShortSpoof
 if !ENABLE_EQUIPMENT_MENU == 1
-        LDX.w #menu_offset(17,17)       ; Quest absolute (21,21), right of the pendants
+        LDX.w #menu_offset(17,17)       ; Quest absolute (21,21), bottom row
 else
         LDX.w #menu_offset(11,8)
 endif
@@ -812,7 +812,7 @@ Menu_DrawBigChestKey:
       STA.w ShortSpoof
       LDA.w #ShortSpoof
 if !ENABLE_EQUIPMENT_MENU == 1
-      LDX.w #menu_offset(17,5)          ; Quest absolute (21,9), left of the pendants
+      LDX.w #menu_offset(17,5)          ; Quest absolute (21,9), bottom row
 else
       LDX.w #menu_offset(11, 5)
 endif

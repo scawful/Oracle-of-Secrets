@@ -31,7 +31,7 @@ LEGACY_BITS = {
     "!Crystal_D5_GlaciaEstate": 0x04, "!Crystal_D6_GoronMines": 0x01,
     "!Crystal_D7_DragonShip": 0x08,
 }
-PENDANT_POS = [(21, 12), (21, 15), (21, 18)]
+PENDANT_POS = [(15, 13), (13, 15), (15, 17)]  # triangle in the ring centre
 
 
 def block(text, label):
