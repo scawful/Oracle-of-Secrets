@@ -30,6 +30,9 @@ from generate_hack_manifest import (  # noqa: E402
     POT_DATA_END_PC,
     POT_EXPANDED_BANK,
     POT_EXPANDED_DATA_START_PC,
+    POT_EXPANDED_PAD_SENTINEL_PC,
+    POT_PAD_WORD_COUNT,
+    POT_PAD_WORDS_PC,
     POT_POINTER_TABLE_PC,
     ROOM_HEADER_BANK_PC,
     ROOM_HEADER_POINTER_PC,
@@ -123,6 +126,14 @@ class ManifestFixture:
                 _pc_to_snes(pot_data_pc) & 0xFFFF
             ).to_bytes(2, "little")
         data[pot_data_pc : pot_data_pc + 2] = b"\xFF\xFF"
+        if pot_bank != 0x01:
+            # Migrated layout: pad words point at the reserved FFFF.
+            data[
+                POT_EXPANDED_PAD_SENTINEL_PC : POT_EXPANDED_PAD_SENTINEL_PC + 2
+            ] = b"\xFF\xFF"
+            for slot in range(POT_PAD_WORD_COUNT):
+                pad_pc = POT_PAD_WORDS_PC + slot * 2
+                data[pad_pc : pad_pc + 2] = (0xFFFE).to_bytes(2, "little")
 
         header_table_pc = 0x110000
         header_table_snes = _pc_to_snes(header_table_pc)
@@ -2229,20 +2240,32 @@ class DungeonStreamRegionsTest(unittest.TestCase):
                 "pointer_encoding": "bank16",
                 "pointer_bank": "0x5A",
                 "strategy": "repack_all",
-                "data_regions": [{"start": "0x5A8000", "end": "0x5B8000"}],
-                "allocation_regions": [{"start": "0x5A8000", "end": "0x5B8000"}],
+                "data_regions": [{"start": "0x5A8000", "end": "0x5AFFFE"}],
+                "allocation_regions": [{"start": "0x5A8000", "end": "0x5AFFFE"}],
             },
         )
 
     def test_pot_bank_loader_mismatches_fail_closed(self) -> None:
         cases = {
-            # Operand says $5A while the data is still in bank $01: the
-            # pointers land on empty bank-$5A bytes with no terminator.
+            # Operand says $5A while the data is still in bank $01: bank
+            # $5A is empty, so the reserved pad FFFF is missing.
             "operand_without_migration": (
                 0x01,
                 POT_BANK_OPERAND_PC,
                 POT_EXPANDED_BANK,
-                "pot_items stream for room 0x000 has",
+                "pot-item pad sentinel",
+            ),
+            "pad_sentinel_overwritten": (
+                POT_EXPANDED_BANK,
+                POT_EXPANDED_PAD_SENTINEL_PC,
+                0x00,
+                "pot-item pad sentinel",
+            ),
+            "pad_word_left_in_bank_01": (
+                POT_EXPANDED_BANK,
+                POT_PAD_WORDS_PC + 2,
+                0xB0,
+                "pot-item pad word 1 ",
             ),
             # Data migrated but the operand still says $01.
             "migration_without_operand": (
