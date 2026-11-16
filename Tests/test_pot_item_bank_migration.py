@@ -12,6 +12,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
@@ -202,6 +203,41 @@ class CliTest(unittest.TestCase):
         code, report = run(["--rom", str(self.rom)])       # second run: refused
         self.assertEqual(code, 1)
         self.assertRegex(report["error"], "already migrated")
+
+    def test_an_error_after_the_rollback_copy_reports_it_as_failed(self):
+        out, back = self.dir / "out.sfc", self.dir / "back.sfc"
+        real = M.publish_exclusive
+
+        def fail_on_output(path, data, mode):
+            if path == out.resolve():
+                raise OSError("disk full")
+            real(path, data, mode)
+        with mock.patch.object(M, "publish_exclusive", fail_on_output):
+            code, report = run(["--rom", str(self.rom), "--expect-sha256", self.sha, "--write",
+                                "--output", str(out), "--rollback", str(back)])
+        self.assertEqual((code, report["status"]), (1, "failed"))
+        self.assertEqual(report["written"], {"rollback": str(back.resolve())})
+        self.assertEqual(back.read_bytes(), self.before)
+        self.assertEqual(self.rom.read_bytes(), self.before)
+        self.assertFalse(out.exists())
+
+    def test_a_bad_readback_after_the_replace_is_failed_not_refused(self):
+        back = self.dir / "back.sfc"
+        real = M.os.replace
+
+        def replace_then_damage(source, target):
+            real(source, target)
+            with open(target, "r+b") as handle:
+                handle.write(b"\xa5")       # the image starts with 00
+        with mock.patch.object(M.os, "replace", replace_then_damage):
+            code, report = run(["--rom", str(self.rom), "--expect-sha256", self.sha, "--write",
+                                "--in-place", "--rollback", str(back)])
+        self.assertEqual((code, report["status"]), (1, "failed"))
+        self.assertRegex(report["error"], "output readback differs")
+        self.assertEqual(report["written"], {"rollback": str(back.resolve()),
+                                             "output": str(self.rom.resolve())})
+        self.assertEqual(back.read_bytes(), self.before)
+        self.assertNotEqual(self.rom.read_bytes(), self.before)
 
 
 if __name__ == "__main__":

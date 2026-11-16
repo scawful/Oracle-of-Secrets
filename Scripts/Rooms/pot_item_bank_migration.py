@@ -16,7 +16,11 @@ Each room's record order is unchanged, so the per-room pot bits in SRAM
 ($7EF580) keep their meaning.
 
 Default is a dry run: it reads --rom, plans, self-checks and prints a JSON
-report. Nothing is written without --write.
+report. No ROM is written without --write; --report, when named, is the only
+file a dry run creates.
+
+Report status: "ok"; "refused" (nothing was written); "failed" (a file listed
+under "written" was created or replaced before the error; exit code 1).
 
   dry run   pot_item_bank_migration.py --rom ROM
   new file  pot_item_bank_migration.py --rom ROM --expect-sha256 HASH \\
@@ -235,6 +239,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     report: dict[str, Any] = {"tool": TOOL, "mode": "write" if args.write else "dry-run"}
     report_path = None
+    written: dict[str, str] = {}
     try:
         input_path = args.rom.resolve()
         expect(input_path.is_file(), f"--rom {args.rom} is not a file")
@@ -268,11 +273,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         report["source"]["path"] = str(input_path)
 
         if args.write:
-            written: dict[str, str] = {}
             if rollback is not None:
                 publish_exclusive(rollback, rom, 0o444)
-                expect(sha256(rollback.read_bytes()) == input_sha, "rollback readback differs")
                 written["rollback"] = str(rollback)
+                expect(sha256(rollback.read_bytes()) == input_sha, "rollback readback differs")
             expect(sha256(input_path.read_bytes()) == input_sha,
                    "input ROM changed during the run; nothing was replaced")
             if args.in_place:
@@ -291,9 +295,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             else:
                 publish_exclusive(output, out, 0o644)
                 target = output
+            written["output"] = str(target)
             expect(sha256(target.read_bytes()) == plan["output_sha256"],
                    "output readback differs")
-            written["output"] = str(target)
             written["output_readback_sha256"] = plan["output_sha256"]
             report["written"] = written
         else:
@@ -302,8 +306,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         report["status"] = "ok"
         code = 0
     except (PlanError, OSError, ValueError) as exc:
-        report["status"] = "refused"
+        # "refused" promises that nothing was written. Once the rollback copy or
+        # the output exists, say so and list it.
+        report["status"] = "failed" if written else "refused"
         report["error"] = str(exc)
+        if written:
+            report["written"] = written
         code = 1
 
     text = json.dumps(report, indent=2) + "\n"
