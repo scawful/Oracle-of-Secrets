@@ -1207,6 +1207,67 @@
         }
       ],
       "notes": "The area warp lands outside the D8 Final Boss Route door at ($0F70,$04F0) (Data/debug/warps.json area 0x57). The room $00 hole is about 120 px left and 10 px up; from ($0EF8,$04E8) holding up drops Link into room $00, where Kydreeok (sprite $7A) starts (b45 run, AFS scratchpad/handoffs/kydreeok_dragon_2026-10-19/evidence/log.txt). The hole and the room $00 layout are placeholders (the finale room plan is open)."
+    },
+    {
+      "id": "jump-kalyxo-05",
+      "label": "Kalyxo east peak $05",
+      "location": {
+        "area": "0x05"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x05"
+      },
+      "notes": "Editor jump. No story writes. Area is Data/debug/warps.json via Snow Mountain Cave. Landing may open a message; module 0x0E is allowed.",
+      "writes": []
+    },
+    {
+      "id": "jump-kalyxo-1d",
+      "label": "Kalyxo crossroads $1D",
+      "location": {
+        "area": "0x1D"
+      },
+      "expect": {
+        "modules": [
+          "0x09"
+        ],
+        "area": "0x1D"
+      },
+      "notes": "Editor jump. No story writes. Area is Data/debug/warps.json via Deluxe Fairy Fountain East.",
+      "writes": []
+    },
+    {
+      "id": "jump-kalyxo-2f",
+      "label": "Kalyxo Tail Palace approach $2F",
+      "location": {
+        "area": "0x2F"
+      },
+      "expect": {
+        "modules": [
+          "0x09"
+        ],
+        "area": "0x2F"
+      },
+      "notes": "Editor jump. No story writes. Area is Data/debug/warps.json via D2 Tail Palace.",
+      "writes": []
+    },
+    {
+      "id": "jump-shrine-power",
+      "label": "Shrine of Power room $84",
+      "location": {
+        "entrance": "0x09"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x0084"
+      },
+      "notes": "Editor jump through warps.json entrance $09. Native load sets CurrentMask $06; the Minish check fails. No story writes.",
+      "writes": []
     }
   ],
   "todo": [
@@ -1215,6 +1276,66 @@
       "label": "Eon Owl, first appearance on the Abyss arrival area (points to the Shrine of Origins)",
       "beat": 7,
       "reason": "Decided 2026-09-26 (AFS knowledge/planning/decisions.org 'Abyss segment', item 2). The flag exists (Core/sram.asm:541 (!EonOwl_ArrivalTalked)) but the Owl is not placed yet; add the checkpoint when it is."
+    },
+    {
+      "id": "jump-kalyxo-12",
+      "label": "Kalyxo $12",
+      "reason": "No exit-table room in Data/debug/warps.json, so warp-area cannot land it."
+    },
+    {
+      "id": "jump-kalyxo-1a",
+      "label": "Kalyxo $1A",
+      "reason": "No exit-table room in Data/debug/warps.json."
+    },
+    {
+      "id": "jump-kalyxo-1c",
+      "label": "Kalyxo $1C",
+      "reason": "No exit-table room in Data/debug/warps.json."
+    },
+    {
+      "id": "jump-kalyxo-32",
+      "label": "Kalyxo $32",
+      "reason": "No overworld area row in this tree's warps.json. Entrance $1A loads the beach cave, not the map."
+    },
+    {
+      "id": "jump-lyra-b0",
+      "label": "Lyra Goron town $B0",
+      "reason": "Data/debug/README.md: areas $80+ are excluded. Module $08 skips their setup."
+    },
+    {
+      "id": "jump-lyra-b1",
+      "label": "Lyra coast $B1",
+      "reason": "Areas $80+ are excluded from area warp."
+    },
+    {
+      "id": "jump-lyra-b2",
+      "label": "Lyra coast $B2",
+      "reason": "Areas $80+ are excluded from area warp."
+    },
+    {
+      "id": "jump-lyra-b9",
+      "label": "Lyra coast $B9",
+      "reason": "Areas $80+ are excluded from area warp."
+    },
+    {
+      "id": "jump-lyra-ba",
+      "label": "Lyra coast $BA",
+      "reason": "Areas $80+ are excluded from area warp."
+    },
+    {
+      "id": "jump-d8-08c",
+      "label": "D8 room $08C",
+      "reason": "No entrance in warps.json points at room $08C."
+    },
+    {
+      "id": "jump-d8-0a0",
+      "label": "D8 room $0A0",
+      "reason": "No entrance in warps.json points at room $0A0."
+    },
+    {
+      "id": "jump-sky-8c",
+      "label": "Sky landing $8C",
+      "reason": "Areas $80+ are excluded from area warp."
     }
   ]
 }
