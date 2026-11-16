@@ -178,6 +178,7 @@ Horse_OffBuf   = $7F5002 ; $0400 bytes, copy of VRAM $5000-$51FF
 Horse_OffState = $7F5402 ; $A1 saved, $A2 Epona cells in VRAM, else native
 Horse_OffClear = $7F5403 ; frames with no other page1 $00-$1F OAM user
 Horse_OffSheet = $7F5404 ; $7EC2FC when the copy was taken
+Horse_OffOam   = $7F5405 ; word: $0800-$09E0 OAM base of sprite $2D this frame (0 = none)
 endif
 
 ; PLACEHOLDER for the Song of Healing beat between Kydreeok and Ganondorf (decisions.org canon
