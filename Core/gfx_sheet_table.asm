@@ -41,6 +41,9 @@ GfxSheet_GetPtr_Spr:
   PHP : SEP #$30 : PHX : REP #$10
   TYX
   %GfxSheetCopy($00, $01, $02, !GfxSheet_SprOffset)
+if !ENABLE_D3_PRISON_ARMORY == 1
+  JSL Oracle_D3Prison_ArmorySpritePtr00
+endif
   SEP #$10 : PLX : PLP
   RTL
 }
@@ -57,6 +60,9 @@ GfxSheet_GetPtr_SprCA:
   PHP : SEP #$30 : PHX : REP #$10
   TYX
   %GfxSheetCopy($C8, $C9, $CA, !GfxSheet_SprOffset)
+if !ENABLE_D3_PRISON_ARMORY == 1
+  JSL Oracle_D3Prison_ArmorySpritePtrCA
+endif
   SEP #$10 : PLX : PLP
   RTL
 }
@@ -67,6 +73,9 @@ GfxSheet_GetPtr_BgCA:
   PHP : SEP #$30 : PHX : REP #$10
   TYX
   %GfxSheetCopy($C8, $C9, $CA, 0)
+if !ENABLE_D3_PRISON_ARMORY == 1
+  JSL Oracle_D3Prison_ArmoryBgPtrCA
+endif
   SEP #$10 : PLX : PLP
   RTL
 }

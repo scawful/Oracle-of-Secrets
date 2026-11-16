@@ -243,6 +243,10 @@ check_source_sprite_sheets() {
 }
 run_check source_sprite_sheets 1 check_source_sprite_sheets
 
+# A private cell-entry hook must never send an ordinary base into empty room65.
+run_check prison_cell65_data 1 python3 "$repo_root/Scripts/Build/validate_prison_cell65.py" \
+  --root "$repo_root" --rom "$base_rom"
+
 # Prototype HUD icons preserve every unallocated tile in the editable base.
 run_check menu_icon_sheets 1 python3 "$repo_root/Scripts/Generate/menu_icon_overrides.py" \
   --root "$repo_root" --base-rom "$base_rom" --check

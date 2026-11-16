@@ -274,7 +274,7 @@ NATIVE_ATTRIBUTE_SOURCES = {
     'Dungeons/wall_profile_selector.asm':
         'fb9ae42f75fdcd810c1f6d9409c183f9a247c3e0f23829007b4af6efc601ecbc',
     'Dungeons/Data/wall_profiles/wall_profiles.asm':
-        '72c1e5f974bc762234df5434bafcf2611f7998daba0d95a707584fd8461f2d51',
+        '32cd36316ee3f308f7aeb1e26c97d7de9b931ed0e9d7e41705fc987d4a0e3ba2',
     # The selected backend suppresses all three old25/bit02 entry/fill paths.
     'Dungeons/Collision/water_collision.asm':
         '33b928028d7d5de14025ba7c256e51d6c0c8ce675fd08a0fccb90f08a40b2023',

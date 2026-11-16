@@ -118,6 +118,9 @@ D4Water_PlayerControl:
     JSL DreamReturn_PlayerControl
   else
     JSL $078000
+    if !ENABLE_D3_PRISON_CELL65 == 1
+      JSL D3Prison_PlayerControl
+    endif
   endif
   JSL D4Water_Tick
   RTL

@@ -184,7 +184,7 @@ namespace Oracle
   ; Part00 villager lines and checkpoint (default on; see Util/macros.asm).
   ; The Wisdom dream scene shares its room-sprites hook ($09C2C3), and so does
   ; the dream return (shows Link after Link_WarpToRoom hides him).
-  if !ENABLE_PART00_ARRIVAL_LINES == 1 || !ENABLE_PART00_CHECKPOINT == 1 || !ENABLE_DREAM_WISDOM_SCENE == 1 || !ENABLE_DREAM_ROOM_SHEETS == 1 || !ENABLE_DREAM_RETURN == 1 || !ENABLE_DREAM_ENTRY_FX == 1
+  if !ENABLE_PART00_ARRIVAL_LINES == 1 || !ENABLE_PART00_CHECKPOINT == 1 || !ENABLE_DREAM_WISDOM_SCENE == 1 || !ENABLE_DREAM_ROOM_SHEETS == 1 || !ENABLE_DREAM_RETURN == 1 || !ENABLE_DREAM_ENTRY_FX == 1 || !ENABLE_D3_PRISON_CELL65 == 1
     incsrc "Core/part00.asm"
   endif
 
@@ -215,6 +215,14 @@ if !DISABLE_OVERWORLD == 0
   %log_end("ZSCustomOverworld.asm", !LOG_OVERWORLD)
 else
   print "*** ZSCustomOverworld DISABLED ***"
+endif
+
+; Prison callback requirements must follow ZS configuration and its AllOff override.
+if !ENABLE_D3_PRISON_SEQUENCE == 1 && !ENABLE_D3_PRISON_CELL65 == 1
+  assert !DISABLE_OVERWORLD == 0, "Prison exit notice requires ZSCustomOverworld"
+  if !DISABLE_OVERWORLD == 0
+    assert !Func02A5D3 == 1, "Prison exit notice requires normal overworld callback"
+  endif
 endif
 
 ; Relocated graphics sheet pointer table (copies the base ROM rows).

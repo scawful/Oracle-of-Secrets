@@ -25,6 +25,14 @@ Oracle_CaptureAndWarp:
   PHP
   SEP #$20
 
+if !ENABLE_D3_PRISON_CELL65 == 1
+  PHA ; retain requested entrance across the inventory transaction
+  JSL D3Prison_CaptureSword : BCS .inventory_ready
+  PLA : PLP : CLC : RTL
+  .inventory_ready
+  PLA
+endif
+
   ; Set the target entrance ID (16-bit variable: $010E/$010F).
   STA.w $010E
   STZ.w $010F
@@ -52,6 +60,9 @@ Oracle_CaptureAndWarp:
   STA.b $71          ; Transition/camera flag
 
   PLP
+if !ENABLE_D3_PRISON_CELL65 == 1
+  SEC ; qualified capture; guard caller can distinguish a refused transaction
+endif
   RTL
 }
 
@@ -94,8 +105,18 @@ Oracle_PrisonSequence_PostMeadowBlade:
   LDA.b $11
   BNE .done
 
+if !ENABLE_D3_PRISON_CELL65 == 1
+  LDA.b $A1 : BNE .done
+  LDA.b $A0 : CMP.b #$56 : BNE .done
+  LDA.l CastleAmbushFlags
+  AND.b #(!CastleAmbush_HasEscaped|!CastleAmbush_BladeReclaimed) : BNE .done
+  LDA.l CastleAmbushFlags : ORA.b #!CastleAmbush_AmbushPending
+  STA.l CastleAmbushFlags
+else
   LDA.b #$32
   JSL Oracle_CaptureAndWarp
+
+endif
 
 .done
   PLP
@@ -118,6 +139,9 @@ Oracle_PrisonSequence_PostMeadowBlade:
 ; - Carry / $0FDC semantics match vanilla, except when we intentionally suppress.
 Guard_CheckDamageToLink_CaptureWrapper:
 {
+if !ENABLE_D3_PRISON_CELL65 == 1
+  JML $06F121 ; scoped patrol dispatcher owns sight; no global mask exemption
+else
   ; Only D3 prison guards participate in the special logic.
   LDA.w SprSubtype, X
   AND.b #$07
@@ -163,6 +187,10 @@ Guard_CheckDamageToLink_CaptureWrapper:
   LDA.b #$32
   JSL Oracle_CaptureAndWarp
 
+if !ENABLE_D3_PRISON_CELL65 == 1
+  BCC .restore_and_return
+endif
+
   ; Suppress vanilla alert/recoil response (we're transitioning away).
   PLP
   STZ.w $0FDC
@@ -172,6 +200,7 @@ Guard_CheckDamageToLink_CaptureWrapper:
 .restore_and_return
   PLP
   RTL
+endif
 }
 
 ; ---------------------------------------------------------

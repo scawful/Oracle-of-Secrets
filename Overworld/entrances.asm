@@ -292,6 +292,9 @@ FindEntrance:
   SEP #$20
 
   LDA.l Overworld_Entrance_ID,X
+  if !ENABLE_D3_PRISON_CELL65 == 1
+    JSL D3Prison_WingEntranceAllowed : BCC .no_entrance_found
+  endif
   STA.w $010E
 
   STZ.b $4D : STZ.b $46

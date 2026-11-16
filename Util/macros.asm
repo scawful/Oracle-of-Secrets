@@ -65,6 +65,8 @@ endif
 !ENABLE_D6_CHU_GATE_97              = 1
 !ENABLE_MINECART_LIFT_TOSS           = 0
 !ENABLE_D3_PRISON_SEQUENCE           = 0
+!ENABLE_D3_PRISON_CELL65             = 0 ; private paired room-data prototype
+!ENABLE_D3_PRISON_ARMORY             = 0 ; private room54 furniture and Meadow Blade art
 !ENABLE_D7_FARORE_RESCUE_SEQUENCE    = 1
 !ENABLE_OCARINA_SONG_TINT            = 0
 !ENABLE_JUMPTABLELOCAL_GUARD         = 1

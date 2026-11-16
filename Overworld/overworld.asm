@@ -101,6 +101,7 @@ org $029E58 : NOP #6
 
 pullpc
 incsrc "Overworld/goron_checkpoint.asm"
+incsrc "Dungeons/prison_sequence.asm"
 
 LoadDarkWorldIntro:
 {

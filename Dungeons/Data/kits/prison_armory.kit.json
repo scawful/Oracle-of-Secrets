@@ -1,0 +1,151 @@
+{
+ "kit": "prison_armory",
+ "inventory_id": "D3_ARMORY_B",
+ "verdict": "routed",
+ "profile": "prison_armory",
+ "source_rom_sha256": "04fba7bd7fce79525189c7a0cbc59860391cabe2ec5c20e7c62f2c866f0a3660",
+ "base_rom_sha256": "a100708c7e9e4828bd6b6045fb2f3f08522ed99ffa236690ed3172fafc60dac0",
+ "rooms": [
+  "054"
+ ],
+ "base_blockset": "0x01",
+ "base_palette": "0x02",
+ "private_row": "0x19",
+ "sheets": [
+  {
+   "slot": 3,
+   "sheet": "0x08",
+   "copy_of": "0x08",
+   "source": "prison_armory.slot3.txt",
+   "decoded_sha256": "05bb3d47c43a87a77b6afb3bd084b0a685dd08e6e6bfea9daae2f1cd1bda605e",
+   "private_pointer": true,
+   "sprite_relative": "0x36"
+  }
+ ],
+ "char_map": {
+  "00E": "0FC",
+  "01F": "0FD"
+ },
+ "in_place": [
+  "0C1",
+  "0C6",
+  "0C7",
+  "0CA",
+  "0CB",
+  "0CC",
+  "0CD",
+  "0CE",
+  "0CF",
+  "0D2",
+  "0D3",
+  "0D4",
+  "0D5",
+  "0D6",
+  "0D7",
+  "0DA",
+  "0DB",
+  "0DC",
+  "0DD",
+  "0DE",
+  "0DF",
+  "0E0",
+  "0E3",
+  "0E4",
+  "0E5",
+  "0E6",
+  "0E7",
+  "0E9",
+  "0EA",
+  "0EB",
+  "0EC",
+  "0ED",
+  "0F0",
+  "0F1",
+  "0F2",
+  "0F3",
+  "0F4",
+  "0F5",
+  "0F6",
+  "0F7",
+  "0F9",
+  "0FA"
+ ],
+ "tile_types": {
+  "0C1": "0x01",
+  "0CA": "0x01",
+  "0CB": "0x01",
+  "0CC": "0x01",
+  "0CD": "0x01",
+  "0CE": "0x01",
+  "0CF": "0x01",
+  "0D2": "0x01",
+  "0D3": "0x01",
+  "0D4": "0x01",
+  "0D5": "0x01",
+  "0DA": "0x01",
+  "0DB": "0x01",
+  "0DC": "0x01",
+  "0DD": "0x01",
+  "0DE": "0x01",
+  "0DF": "0x01",
+  "0E0": "0x01",
+  "0E3": "0x01",
+  "0E4": "0x01",
+  "0E5": "0x01",
+  "0E6": "0x01",
+  "0E7": "0x01",
+  "0E9": "0x01",
+  "0EA": "0x01",
+  "0EB": "0x01",
+  "0EC": "0x01",
+  "0ED": "0x01",
+  "0F0": "0x01",
+  "0F1": "0x01",
+  "0F2": "0x01",
+  "0F3": "0x01",
+  "0F4": "0x01",
+  "0F5": "0x01",
+  "0F6": "0x01",
+  "0F7": "0x01",
+  "0F9": "0x01",
+  "0FA": "0x01",
+  "0FC": "0x01",
+  "0FD": "0x01"
+ },
+ "palette": {
+  "id": "0x1A",
+  "copy_of": "0x02",
+  "copy_offset": "0x00B4",
+  "splices": [
+   {
+    "first": 6,
+    "words": [
+     "$49AE"
+    ]
+   },
+   {
+    "first": 13,
+    "words": [
+     "$49AE",
+     "$6274"
+    ]
+   }
+  ]
+ },
+ "classes": [
+  "063",
+  "064",
+  "003",
+  "004",
+  "108",
+  "109",
+  "10A",
+  "10B",
+  "10C",
+  "10D",
+  "10E",
+  "10F"
+ ],
+ "blocked": [],
+ "note": "Selected B furniture and Meadow Blade, room54 only; all native door/floor/current room glyphs preserved. Four extra sprite-only glyphs share source sheet; no CGRAM changes. Private stream only: global08 and sprite36 pointers remain unchanged; no F6 claim. Lower-prison v3 walls: source chars00E/01F move to private0FC/0FD; source00F/01E reuse exact native061/044. Source donor2de5a004. All existing furniture/sprite glyphs and global sheets preserved. Room54-only palette1A copies actual02: row2 LOW7 becomes masonry backdrop4, HIGH6/7 become native stone4/5; other87 words and wood row5 preserved. Existing reserved palette slot; no global recolor."
+}

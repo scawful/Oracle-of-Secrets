@@ -251,6 +251,9 @@ ZoraWaterfallHint       = $7EF305
 CastleAmbushFlags       = $7EF306
 !CastleAmbush_HasBeenCaptured = $01  ; bit 0 - Player captured (one-shot)
 !CastleAmbush_HasEscaped      = $02  ; bit 1 - Player escaped prison
+!CastleAmbush_AmbushPending   = $04  ; pending hall arrest; paired cell65 mode
+!CastleAmbush_BladeReclaimed  = $08  ; silent room54 retrieval
+!CastleAmbush_SwordMask       = $70  ; confiscated sword level1-4; bit7 preserved
 
 ; Reserved: $7EF307-30F available for future use
 

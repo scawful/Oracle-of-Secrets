@@ -9,6 +9,8 @@
 !ENABLE_CUSTOM_ROOM_COLLISION         = 1
 !ENABLE_CUTSCENE_FRAMEWORK            = 1
 !ENABLE_D3_PRISON_SEQUENCE            = 0
+!ENABLE_D3_PRISON_CELL65             = 0 ; private paired room-data prototype
+!ENABLE_D3_PRISON_ARMORY             = 0 ; private room54 furniture and Meadow Blade art
 !ENABLE_D4_WATER_CONTROLS             = 1
 !ENABLE_D4_ZORA_REDESIGN              = 1
 !ENABLE_D5_AF_PIT_RESET               = 0

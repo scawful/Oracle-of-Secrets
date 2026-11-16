@@ -9,11 +9,15 @@ import test_special_overworld_semantic_kernel as T
 
 @unittest.skipUnless(T.R.ASSEMBLER and T.RUNNER, 'Asar and existing OOS_65816_RUNNER required')
 class PrisonRespawnMigrationTest(unittest.TestCase):
-    def build(self, enabled, checkpoint_source=None):
+    def build(self, enabled, checkpoint_source=None, paired=0):
         checkpoint_source = checkpoint_source or T.R.ROOT / "Overworld/goron_checkpoint.asm"
+        hall = (T.R.ROOT/'Dungeons/d3_prison_hall.asm').read_text()
+        hall = 'D3Prison_ShouldResumeHall:' + hall.split('D3Prison_ShouldResumeHall:',1)[1].split('; Called after Link_Main',1)[0]
         extra = f'''
 !ENABLE_KALYXO_BOAT = 0
 !ENABLE_D3_PRISON_SEQUENCE = {enabled}
+!ENABLE_D3_PRISON_CELL65 = {paired}
+!CastleAmbush_AmbushPending = 4
 !SPECIAL_OVERWORLD_NATIVE = 0
 !Spawn_Prison = 2
 !Spawn_Sanctuary = 1
@@ -24,6 +28,8 @@ class PrisonRespawnMigrationTest(unittest.TestCase):
 namespace Oracle
 SpawnPoint = $7EF3C8
 CastleAmbushFlags = $7EF306
+Sword = $7EF359
+D3Prison_ExitMessage = $7FF368
 GameState = $7EF3C5
 SavedWorld = $7EF3CA
 FollowerId = $7EF3CC
@@ -35,6 +41,7 @@ incsrc "{checkpoint_source}"
 CheckpointEnd:
 LoadDarkWorldIntro:
   LDA.l SavedWorld : RTL
+{hall}
 namespace off
 org $028196
 LegacyContinuation:
@@ -55,10 +62,10 @@ org $0DDD32
         self.assertEqual(a.proc.returncode, 0, a.proc.stdout + a.proc.stderr)
         return a
 
-    def run_case(self, art, selector, flags, world=0, state=3, follower=0):
+    def run_case(self, art, selector, flags, world=0, state=3, follower=0, sword=0):
         ram = bytearray(65536)
         for address, value in ((0xF3C8, selector), (0xF306, flags),
-                               (0xF3C5, state), (0xF3CA, world),
+                               (0xF359, sword), (0xF3C5, state), (0xF3CA, world),
                                (0xF3CC, follower)):
             ram[address] = value
         T.word(ram, 0x10E, 0xCAFE); T.word(ram, 0x4AA, 0xBEEF)
@@ -72,6 +79,20 @@ org $0DDD32
         self.assertEqual(out[0xF3CC], follower, 'follower unchanged')
         self.assertEqual(out[0xF3C5], state, 'progression unchanged')
         return result, out
+
+    def test_pending_arrest_cold_load_returns_to_hall_without_confiscation(self):
+        art=self.build(1,paired=1)
+        for selector in (0,1,2,7):
+            for sword in (1,2,3,4):
+                _,out=self.run_case(art,selector,4,sword=sword)
+                self.assertEqual(out[0x10E:0x110],b'\x28\0')
+                self.assertEqual(out[0x4AA:0x4AC],b'\0\0')
+                self.assertEqual(out[0xF359],sword)
+                self.assertEqual(out[0xF3C8],selector)
+                self.assertEqual(out[0xF01],1)
+        for sword in (0,0xFF):
+            _,out=self.run_case(art,0,4,sword=sword)
+            self.assertEqual(out[0xF00],1)
 
     def test_enabled_migrates_only_stale_prison_selector(self):
         art = self.build(1)

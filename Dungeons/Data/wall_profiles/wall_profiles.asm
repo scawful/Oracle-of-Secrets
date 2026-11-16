@@ -4,12 +4,14 @@
 ; profile 1 d1_grotto_floor: 0 classes, source ROM 8d615784, base 8d615784, kit d1_grotto_floor
 ; profile 2 glacia_frozen_timber: 24 classes, source ROM ce525155, base 8d615784, kit glacia_estate_timber
 ; profile 3 glacia_cave_art17: 24 classes, source ROM 63809fc2, base 5d6b461b, kit glacia_cave_art17
+; profile 4 prison_armory: 12 classes, source ROM 2de5a004, base c59efd3a, kit prison_armory
 ; group d1 -> d1_grotto_floor: 009 00A 00B 019 01A 01B 02A 02B 031 03A 03B 04A 04B 05A 05B 06A
 ; group d1_shrine23_extra -> d1_grotto_floor: 007 017 032 033 043 053 063
 ; group glacia_estate -> glacia_frozen_timber: 0DB 0CB 0BB 0BC 0BD 0AD 0AC 0CC
 ; group glacia_cave -> glacia_cave_art17: 09E 09F 0AE 0AF 0BE 0BF 0CD 0CE 0CF 0DC 0DD
+; group prison_armory54 -> prison_armory: 054
 !WALLSEL_CLASS_COUNT = 30
-!WALLSEL_PROFILE_COUNT = 3
+!WALLSEL_PROFILE_COUNT = 4
 
 ; class index per subtype-1 object ($FF = vanilla). Indexed by obj.
 WallSel_Sub1Class:
@@ -35,13 +37,17 @@ WallSel_Sub2Class:  ; indexed by obj-$100
   db $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
   db $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
 ; profile per room ID ($A0), 0 = none
+!WallSel_ProfileEnabled4 = $00
+if !ENABLE_D3_PRISON_ARMORY == 1
+  !WallSel_ProfileEnabled4 = $04
+endif
 WallSel_RoomProfile:
   db $00, $00, $00, $00, $00, $00, $00, $01, $00, $01, $01, $01, $00, $00, $00, $00
   db $00, $00, $00, $00, $00, $00, $00, $01, $00, $01, $01, $01, $00, $00, $00, $00
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $01, $01, $00, $00, $00, $00
   db $00, $01, $01, $01, $00, $00, $00, $00, $00, $00, $01, $01, $00, $00, $00, $00
   db $00, $00, $00, $01, $00, $00, $00, $00, $00, $00, $01, $01, $00, $00, $00, $00
-  db $00, $00, $00, $01, $00, $00, $00, $00, $00, $00, $01, $01, $00, $00, $00, $00
+  db $00, $00, $00, $01, !WallSel_ProfileEnabled4, $00, $00, $00, $00, $00, $01, $01, $00, $00, $00, $00
   db $00, $00, $00, $01, $00, $00, $00, $00, $00, $00, $01, $00, $00, $00, $00, $00
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
@@ -56,7 +62,7 @@ WallSel_RoomProfile:
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
   db $00, $00, $00, $00, $00, $00, $00, $00
 WallSel_ProfileBase:  ; (profile-1)*CLASS_COUNT*2
-  dw $0000, $003C, $0078
+  dw $0000, $003C, $0078, $00B4
 WallSel_SlotSrc:  ; byte offset of LAST word in WallSel_Data, $FFFF = vanilla
   dw $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF
   dw $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF
@@ -67,6 +73,9 @@ WallSel_SlotSrc:  ; byte offset of LAST word in WallSel_Data, $FFFF = vanilla
   dw $028E, $029E, $02AE, $02BE, $02CE, $02DE, $02EE, $02FE, $FFFF, $FFFF
   dw $FFFF, $FFFF, $FFFF, $FFFF, $031E, $033E, $035E, $037E, $039E, $03BE
   dw $03DE, $03FE, $041E, $043E, $045E, $047E, $049E, $04BE, $04DE, $04FE
+  dw $FFFF, $FFFF, $FFFF, $FFFF, $050E, $051E, $052E, $053E, $FFFF, $FFFF
+  dw $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF
+  dw $FFFF, $FFFF, $055E, $057E, $059E, $05BE, $05DE, $05FE, $061E, $063E
 WallSel_SlotLen:  ; span bytes - 2
   dw $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF
   dw $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF
@@ -77,7 +86,10 @@ WallSel_SlotLen:  ; span bytes - 2
   dw $000E, $000E, $000E, $000E, $000E, $000E, $000E, $000E, $FFFF, $FFFF
   dw $FFFF, $FFFF, $FFFF, $FFFF, $001E, $001E, $001E, $001E, $001E, $001E
   dw $001E, $001E, $001E, $001E, $001E, $001E, $001E, $001E, $001E, $001E
-WallSel_Data:  ; 640 words
+  dw $FFFF, $FFFF, $FFFF, $FFFF, $000E, $000E, $000E, $000E, $FFFF, $FFFF
+  dw $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF, $FFFF
+  dw $FFFF, $FFFF, $001E, $001E, $001E, $001E, $001E, $001E, $001E, $001E
+WallSel_Data:  ; 800 words
   dw $54D2, $14D3, $D4D4, $10AD, $54D2, $14D5, $54D6, $90AD
   dw $50AD, $94D4, $54D3, $14D2, $D0AD, $14D6, $54D5, $14D2
   dw $D4C1, $14CB, $D4C7, $10AC, $94C1, $14C8, $94CA, $50AC
@@ -158,6 +170,26 @@ WallSel_Data:  ; 640 words
   dw $0CE9, $CCE7, $CD95, $CCCD, $CCE6, $CCF7, $CD95, $8CCD
   dw $4CDF, $CCC3, $4CC3, $CCC3, $0CCD, $4CDC, $4CEA, $4CEA
   dw $4CCD, $4D95, $4CE7, $8D85, $0CCD, $4D95, $4CF7, $4CE6
+  dw $0843, $0844, $0871, $90AD, $0853, $08FD, $0871, $10AD
+  dw $D0AD, $4871, $4844, $4843, $50AD, $4871, $48FD, $4853
+  dw $0850, $08FC, $0870, $50AC, $0851, $0861, $0870, $10AC
+  dw $D0AC, $8870, $88FC, $8850, $90AC, $8870, $8861, $8851
+  dw $0846, $0843, $0853, $0843, $0850, $0847, $08FD, $0844
+  dw $0851, $0861, $0848, $0871, $0850, $08FC, $0870, $10AE
+  dw $0853, $0843, $0853, $8846, $08FD, $0844, $8847, $8850
+  dw $0871, $8848, $8861, $8851, $90AE, $8870, $88FC, $8850
+  dw $0851, $0861, $0870, $50AE, $0850, $08FC, $4848, $4871
+  dw $0851, $4847, $48FD, $4844, $4846, $4843, $4853, $4843
+  dw $D0AE, $8870, $8861, $8851, $4871, $C848, $88FC, $8850
+  dw $48FD, $4844, $C847, $8851, $4853, $4843, $4853, $C846
+  dw $0856, $0861, $0870, $10AC, $08FD, $0857, $0870, $50AC
+  dw $0871, $0871, $0858, $10AC, $10AD, $90AD, $10AD, $10AF
+  dw $90AC, $8870, $8861, $8856, $D0AC, $8870, $8857, $0844
+  dw $90AC, $8858, $0871, $0871, $90AF, $90AD, $10AD, $90AD
+  dw $50AD, $D0AD, $50AD, $50AF, $4871, $4871, $4858, $50AC
+  dw $48FD, $4857, $0870, $10AC, $4856, $08FC, $0870, $50AC
+  dw $D0AF, $D0AD, $50AD, $D0AD, $D0AC, $C858, $4871, $4871
+  dw $90AC, $8870, $C857, $4844, $D0AC, $8870, $88FC, $C856
 WallSel_Data_End:
 
 ; ---- kit graphics routes (Dungeons/Data/kits/kits.asm writes the rows,
@@ -166,15 +198,16 @@ WallSel_Data_End:
 ; kit dragon_ship_timber [in_base] profile -: no route
 ; kit glacia_cave_art17 [partial] profile glacia_cave_art17: row $18 (kit 1), palette $24
 ; kit glacia_estate_timber [routed] profile glacia_frozen_timber: row $17 (kit 0), palette $26
+; kit prison_armory [routed] profile prison_armory: row $19 (kit 2), palette $1A
 !WALLSEL_GFX = 1
 !WALLSEL_KIT_ROW0 = $17
-!WALLSEL_KIT_COUNT = 2
+!WALLSEL_KIT_COUNT = 3
 WallSel_ProfileBlockset:  ; private row per profile-1, $FF = keep the header blockset
-  db $FF, $17, $18
+  db $FF, $17, $18, $19
 WallSel_ProfilePalette:  ; BG palette id*2 for $0AB6 per profile-1, $FF = keep
-  db $22, $26, $24
+  db $22, $26, $24, $1A
 WallSel_KitBase:  ; base blockset per kit (row-!WALLSEL_KIT_ROW0)
-  db $0B, $0B
+  db $0B, $0B, $01
 WallSel_KitHighPalette:  ; 64 bytes per kit; slot-6 tile index, 0=low/1=high
   db $01, $01, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
@@ -184,10 +217,14 @@ WallSel_KitHighPalette:  ; 64 bytes per kit; slot-6 tile index, 0=low/1=high
   db $00, $00, $00, $00, $01, $01, $01, $00, $00, $01, $00, $00, $00, $00, $00, $00
   db $00, $00, $00, $00, $01, $01, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
   db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+  db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+  db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+  db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+  db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 WallSel_RenderMetadata:  ; compiled read-only view of the SAME selector tables
   db "WSR1"
   dw $0128
-  db 30, 3, $17, 2
+  db 30, 4, $17, 3
   dl WallSel_RoomProfile
   dl WallSel_Sub1Class
   dl WallSel_Sub2Class
@@ -198,6 +235,15 @@ WallSel_RenderMetadata:  ; compiled read-only view of the SAME selector tables
   dl WallSel_ProfileBlockset
   dl WallSel_ProfilePalette
   dl WallSel_KitHighPalette
+
+WallSel_PrivateSheetMetadata:
+  db "WSP1"
+  db $01, $0C ; version, record size
+  dw $0002
+  dw $0054 : db $00, $08, $03, $01
+  dl WallSel_Private_prison_armory_slot3 : dw $0600 : db $04
+  dw $0054 : db $01, $36, $03, $00
+  dl WallSel_Private_prison_armory_slot3 : dw $0600 : db $04
 
 ; Tile types. Called from WallSel_LoadTileAttr with M=8 X=8 (X/Y untouched).
 ; Chars $C0-$FF are restored from the ROM table on every room by the
@@ -284,5 +330,48 @@ WallSel_KitPatch1:  ; glacia_cave_art17: 36 chars
   STA.l $7EFE00+$0F9
   STA.l $7EFE00+$0FA
   RTS
+WallSel_KitPatch2:  ; prison_armory: 40 chars
+  LDA.b #$01
+  STA.l $7EFE00+$0C1
+  STA.l $7EFE00+$0CA
+  STA.l $7EFE00+$0CB
+  STA.l $7EFE00+$0CC
+  STA.l $7EFE00+$0CD
+  STA.l $7EFE00+$0CE
+  STA.l $7EFE00+$0CF
+  STA.l $7EFE00+$0D2
+  STA.l $7EFE00+$0D3
+  STA.l $7EFE00+$0D4
+  STA.l $7EFE00+$0D5
+  STA.l $7EFE00+$0DA
+  STA.l $7EFE00+$0DB
+  STA.l $7EFE00+$0DC
+  STA.l $7EFE00+$0DD
+  STA.l $7EFE00+$0DE
+  STA.l $7EFE00+$0DF
+  STA.l $7EFE00+$0E0
+  STA.l $7EFE00+$0E3
+  STA.l $7EFE00+$0E4
+  STA.l $7EFE00+$0E5
+  STA.l $7EFE00+$0E6
+  STA.l $7EFE00+$0E7
+  STA.l $7EFE00+$0E9
+  STA.l $7EFE00+$0EA
+  STA.l $7EFE00+$0EB
+  STA.l $7EFE00+$0EC
+  STA.l $7EFE00+$0ED
+  STA.l $7EFE00+$0F0
+  STA.l $7EFE00+$0F1
+  STA.l $7EFE00+$0F2
+  STA.l $7EFE00+$0F3
+  STA.l $7EFE00+$0F4
+  STA.l $7EFE00+$0F5
+  STA.l $7EFE00+$0F6
+  STA.l $7EFE00+$0F7
+  STA.l $7EFE00+$0F9
+  STA.l $7EFE00+$0FA
+  STA.l $7EFE00+$0FC
+  STA.l $7EFE00+$0FD
+  RTS
 WallSel_KitPatchPtr:
-  dw WallSel_KitPatch0, WallSel_KitPatch1
+  dw WallSel_KitPatch0, WallSel_KitPatch1, WallSel_KitPatch2

@@ -16,6 +16,16 @@ endif
   STZ.w GanondorfFight
   STZ.w BossReinject
   STZ.w FinaleBeat
+if !ENABLE_D3_PRISON_CELL65 == 1
+  LDA.b #$00 : STA.l D3Prison_ExitMessage : STA.l D3Prison_ExitMessage+1
+  JSL D3Prison_ShouldResumeHall : BCC .not_pending_prison
+  LDA.b #$28 : STA.w $010E
+  STZ.w $010F
+  LDA.b #$01 : STA.w $010A
+  STZ.w $04AA : STZ.w $04AB
+  JML $028208
+  .not_pending_prison
+endif
 if !ENABLE_D3_PRISON_SEQUENCE == 1
   ; Spawn_Prison is a saved selector, not an entrance number. Its vanilla
   ; record still names room80. Only an unfinished capture owns entrance32.

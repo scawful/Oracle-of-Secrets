@@ -227,6 +227,12 @@ CustomObjectHandler2:
   LDA $02 : PHA
   ; $00 Will be used for tile count and tile to skip
   LDA $B2 : ASL #2 : ORA $B4
+if !ENABLE_D3_PRISON_ARMORY == 1
+  ; Keep the worktable on its solid primary collision plane. Its raw-zero
+  ; silhouette must reveal the actual floor, not the room's empty lower map.
+  assert !ENABLE_D3_PRISON_SEQUENCE == 1 && !ENABLE_D3_PRISON_CELL65 == 1 && !DISABLE_SPRITES == 0, "Armory floor helper requires prison bank52"
+  JSL D3Prison_ArmoryFloorUnderlay
+endif
 
   ;get the offset for the object data based on the object height
   ASL : TAX
@@ -281,6 +287,15 @@ CustomObjectHandler2:
     dw .PitTS-.ObjData ; 08
     dw .PitTE-.ObjData ; 09
     dw .PitTW-.ObjData ; 0A
+if !ENABLE_D3_PRISON_CELL65 == 1
+    ; Preserve all eleven existing objects, especially Goron track03/04.
+    dw .PrisonTable-.ObjData ; 0B (historical prison03, remapped)
+    dw .PrisonWallHole-.ObjData ; 0C (historical prison04, remapped)
+if !ENABLE_D3_PRISON_ARMORY == 1
+    dw .PrisonArmoryWorktable-.ObjData ; 0D
+    dw .PrisonArmoryDrawers-.ObjData   ; 0E
+endif
+endif
 
   .ObjData
     .IceFurnace
@@ -305,6 +320,18 @@ CustomObjectHandler2:
       incbin Data/track_T_E.bin
     .PitTW
       incbin Data/track_T_W.bin
+if !ENABLE_D3_PRISON_CELL65 == 1
+    .PrisonTable
+      incbin Data/minish_stump.bin
+    .PrisonWallHole
+      incbin Data/minish_wall_hole.bin
+if !ENABLE_D3_PRISON_ARMORY == 1
+    .PrisonArmoryWorktable
+      incbin Data/prison_armory_worktable.bin
+    .PrisonArmoryDrawers
+      incbin Data/prison_armory_drawers.bin
+endif
+endif
 }
 
 pushpc

@@ -197,7 +197,8 @@ This section details the allocation of custom code and data within the ROM banks
 | $35        | `$358000` - `$35FFFF` | Deku Link Gfx and Palette                              |
 | $36        | `$368000` - `$36FFFF` | Zora Link Gfx and Palette                              |
 | $37        | `$378000` - `$37FFFF` | Bunny Link Gfx and Palette                             |
-| $38        | `$388000` - `$38FFFF` | Wolf Link Gfx and Palette                              |
+| $38        | `$388000` - `$38F0FF` | Wolf Link Gfx and Palette; code has an end assertion before the table below |
+| $38 part   | `$38F100` - `$38F12F` | Private D3 blade's 48-byte tabulated draw data; upper remainder not claimed here |
 | $39        | `$398000` - `$39FFFF` | Minish Link Gfx                                        |
 | $3A        | `$3A8000` - `$3AFFFF` | Mask Routines, Custom Ancillae (Deku Bubble)           |
 | $3B        | `$3B8000` - `$3BFFFF` | GBC Link Gfx                                           |
@@ -207,4 +208,7 @@ This section details the allocation of custom code and data within the ROM banks
 | $3F        |                       | DW ZS Tile32                                           |
 | $40        | `$408000` - `$40FFFF` | LW World Map                                           |
 | $41        | `$418000` - `$41FFFF` | DW World Map                                           |
+| $52 part   | `$528000` - `$529FFF` | Private D3 prison code; guarded by `Dungeons/prison_sequence.asm`. Upper bank $52 is not claimed. |
 | Patches    | Various               | Targeted modifications within vanilla ROM addresses    | `Core/patches.asm`, `Util/item_cheat.asm` |
+
+Prison cell65 paired sequence reserves volatile WRAM `$7FF368-$7FF369` for its once-only outward exit notice (`$D355`). Cold load, accepted save/reset and indoor control clear it. TextShade ends at `$7FF367`; DreamWisdom begins at `$7FF370`. This is distinct from dungeon-map SRAM `$7EF368-$7EF369`.

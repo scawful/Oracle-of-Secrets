@@ -88,6 +88,7 @@ org $368000
 org $388000
   incbin gfx/wolf_link.4bpp
   incsrc "Masks/wolf_mask.asm"
+assert pc() <= $38F100, "Wolf code overlaps reserved prison blade table"
 
 org $3B8000
   incbin gfx/gbc_link.4bpp

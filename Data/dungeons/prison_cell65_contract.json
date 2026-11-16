@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "status": "private combined draft: accepted64/65 plus provisional room64 north-door grow pot; room54 unchanged",
+  "donor_sha256": "d38dbc54cc765600fa0cfbaf0acd293aafb769d0590c106453df0c8111479ef8",
+  "rooms": {
+    "64": {
+      "object_stream_sha256": "65cd314ee55b2094b575a01bf05640c1d5af09206996e8e593a9986dc66b26d1",
+      "object_stream_bytes": 63,
+      "header_hex": "60014f2100000000000054000000"
+    },
+    "65": {
+      "object_stream_sha256": "10df293ca17e8284de19bf175e5b75f14e3d89214548d597369e834097e58c7a",
+      "object_stream_bytes": 498,
+      "header_hex": "60014f2800000000006600000000"
+    },
+    "54": {
+      "object_stream_bytes": 197,
+      "object_stream_sha256": "0a1f7686b1114ac717e7ee2372b121a4b274c527437c10291ecb1d7df9c5d4af",
+      "header_hex": "6001012100000000006444000000"
+    },
+    "55": {
+      "object_stream_sha256": "5a6b63abc7bc5c82d633322c49cf2f3afbb74c69a43c045a1f7f96e2193554e9",
+      "object_stream_bytes": 182,
+      "header_hex": "0101012100000000028013002300"
+    },
+    "56": {
+      "object_stream_sha256": "cc59e837541fd6ef1c60414be6a1258ff65a62e26ba482f707eb64bfc8a19633",
+      "object_stream_bytes": 323,
+      "header_hex": "000c022100000000023913001600"
+    }
+  },
+  "graphics": [
+    {
+      "sheet": 111,
+      "packed_bytes": 2048,
+      "packed_sha256": "79906f26b861c9f10a90e9ac59de1786076858248bcd8dd59bc76e1244ca3ea0"
+    },
+    {
+      "sheet": 112,
+      "packed_bytes": 2048,
+      "packed_sha256": "d46f638e1ef8fe9ba9e7b602b7125a52a01612fbfa2d71c431f1c12007751b60"
+    }
+  ],
+  "collision65_sha256": "905768dadfb1971655b51ef8e6e11fe73f925c8f0f5bdffb7cd1b81123f2a2b6",
+  "aux4F_hex": "0800706f",
+  "source_objects": {
+    "Dungeons/Objects/Data/minish_stump.bin": "dd8a77696d199546c58c9495d510f9de49ce083d594d684f5aadfefc57c7a411",
+    "Dungeons/Objects/Data/minish_wall_hole.bin": "9db60260592f8863244ee066e7b84e28f6a782eaa373841cd6809a453d5a797e",
+    "Dungeons/Objects/Data/prison_armory_worktable.bin": "dc001779f73c40cffb1e24012d53a4be2912fba366434402c54fbe721ef8fdca",
+    "Dungeons/Objects/Data/prison_armory_drawers.bin": "2562a0da5c8224745300d9fb4641181f0cd3b4603a5bbd232b5725176ae0e589"
+  },
+  "actor_streams": {
+    "54": "0016066d0b056e12146f121b6f060a6e190a6dff",
+    "55": "0009104102126f090942ff",
+    "56": "0015174808154112188a190441ff",
+    "64": "00060f41160841ff",
+    "65": "00ff"
+  },
+  "armory": "room54-table-drawers-meadow-b"
+}

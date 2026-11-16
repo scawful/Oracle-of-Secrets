@@ -28,6 +28,7 @@ RoomDrawObjectData ($00:9B52 + offset). The selector supports exactly CLASSES.
 from __future__ import annotations
 
 import argparse
+import re
 import collections
 import hashlib
 import json
@@ -541,13 +542,23 @@ def load_kits() -> list[dict]:
         slots_seen = set()
         for s in sheets:
             sid, slot = hx(s["sheet"]), int(s["slot"])
-            if sid not in KIT_SHEETS:
+            private = s.get("private_pointer", False)
+            if type(private) is not bool:
+                raise SystemExit(f"{f.name}: private_pointer must be boolean")
+            if private:
+                if sid != hx(s["copy_of"]) or not 0 <= sid < 0xDF:
+                    raise SystemExit(f"{f.name}: private pointer must retain its native source sheet ID")
+                sprite = hx(s.get("sprite_relative"))
+                if sprite is not None and not 0 <= sprite < 0x6C:
+                    raise SystemExit(f"{f.name}: private sprite request is outside native3bpp sheets")
+            elif sid not in KIT_SHEETS:
                 raise SystemExit(f"{f.name}: sheet ${sid:02X} is not an available wall-kit row ($F3-$FE excluding Sky $F5)")
-            if sid in sheets_seen:
+            if not private and sid in sheets_seen:
                 raise SystemExit(f"{f.name}: sheet ${sid:02X} is also used by {sheets_seen[sid]}")
             if not 3 <= slot <= 6 or slot in slots_seen:
                 raise SystemExit(f"{f.name}: sheet slot must be a unique 3-6")
-            sheets_seen[sid] = name
+            if not private:
+                sheets_seen[sid] = name
             slots_seen.add(slot)
             high = [hx(c) for c in s.get("high_palette_chars", [])]
             if high and (slot != 6 or any(c < 0x180 or c >= 0x1B0 for c in high)):
@@ -590,6 +601,10 @@ def load_config() -> tuple[list[dict], list[dict], list[int], dict[int, str]]:
     ids = [p["id"] for p in profiles]
     if ids != list(range(1, len(ids) + 1)):
         raise SystemExit(f"profile ids must be 1..N with no gaps, got {ids}")
+    for p in profiles:
+        flag = p.get("enable_flag")
+        if flag is not None and not re.fullmatch(r"ENABLE_[A-Z0-9_]+", flag):
+            raise SystemExit(f"profile {p['name']}: invalid enable_flag")
     by_name = {p["name"]: p for p in profiles}
     room_profile = [0] * ROOM_COUNT
     owner: dict[int, str] = {}
@@ -679,9 +694,15 @@ def render() -> str:
     for i in range(0, len(s2), 16):
         E("  db " + ", ".join(f"${v:02X}" for v in s2[i:i + 16]))
     E("; profile per room ID ($A0), 0 = none")
+    gated = {p["id"]: p["enable_flag"] for p in profiles if p.get("enable_flag")}
+    for pid, flag in gated.items():
+        E(f"!WallSel_ProfileEnabled{pid} = $00")
+        E(f"if !{flag} == 1")
+        E(f"  !WallSel_ProfileEnabled{pid} = ${pid:02X}")
+        E("endif")
     E("WallSel_RoomProfile:")
     for i in range(0, ROOM_COUNT, 16):
-        E("  db " + ", ".join(f"${v:02X}" for v in room_profile[i:i + 16]))
+        E("  db " + ", ".join(f"!WallSel_ProfileEnabled{v}" if v in gated else f"${v:02X}" for v in room_profile[i:i + 16]))
     E("WallSel_ProfileBase:  ; (profile-1)*CLASS_COUNT*2")
     E("  dw " + ", ".join(f"${i * len(CLASSES) * 2:04X}" for i in range(len(profiles))))
     data: list[int] = []
@@ -753,6 +774,25 @@ def render() -> str:
     for label in ("RoomProfile", "Sub1Class", "Sub2Class", "ProfileBase", "SlotSrc",
                   "SlotLen", "Data", "ProfileBlockset", "ProfilePalette", "KitHighPalette"):
         E(f"  dl WallSel_{label}")
+    E("")
+    private_rows = []
+    for p, _doc, _cls, kit in words_by_profile:
+        if not kit:
+            continue
+        for sheet in kit.get("sheets", []):
+            if not sheet.get("private_pointer"):
+                continue
+            for room in (hx(v) for v in kit["rooms"]):
+                private_rows.append((room, 0, hx(sheet["sheet"]), sheet["slot"], 1 if sheet["slot"] <= 3 else 0, private_sheet_label(kit, sheet), p["id"]))
+                if sheet.get("sprite_relative") is not None:
+                    private_rows.append((room, 1, hx(sheet["sprite_relative"]), 3, 0, private_sheet_label(kit, sheet), p["id"]))
+    E("WallSel_PrivateSheetMetadata:")
+    E('  db "WSP1"')
+    E("  db $01, $0C ; version, record size")
+    E(f"  dw ${len(private_rows):04X}")
+    for room, kind, request, slot, half, label, profile in private_rows:
+        E(f"  dw ${room:04X} : db ${kind:02X}, ${request:02X}, ${slot:02X}, ${half:02X}")
+        E(f"  dl {label} : dw $0600 : db ${profile:02X}")
     E("")
     E("; Tile types. Called from WallSel_LoadTileAttr with M=8 X=8 (X/Y untouched).")
     E("; Chars $C0-$FF are restored from the ROM table on every room by the")
@@ -875,10 +915,12 @@ def render_kits() -> str:
         E("pushpc")
         E(f"org ${KIT_SHEET_ORG:06X}")
         for k, s in all_sheets:
-            E(f"WallSel_KitSheet_{hx(s['sheet']):02X}:  ; {k['kit']} slot {s['slot']}")
+            E(f"{private_sheet_label(k, s)}:  ; {k['kit']} slot {s['slot']}")
             E(f"  incbin \"Dungeons/Data/kits/{stream_name(k, s)}\"")
         E(f"assert pc() <= ${KIT_SHEET_END:06X}, \"kit sheet streams exceeded ${KIT_SHEET_ORG:06X}-${KIT_SHEET_END - 1:06X}\"")
         for k, s in all_sheets:
+            if s.get("private_pointer"):
+                continue  # context-only stream; never rewrite global source identity
             sid = hx(s["sheet"])
             E(f"assert ${sid:02X} < !GfxSheet_Rows, \"kit sheet ${sid:02X} is past the sheet table\"")
             for arr, shift in ((0x23FD00, 16), (0x23FE00, 8), (0x23FF00, 0)):
@@ -886,6 +928,34 @@ def render_kits() -> str:
                 E(f"  db WallSel_KitSheet_{sid:02X}>>{shift}" if shift else f"  db WallSel_KitSheet_{sid:02X}")
         E("pullpc")
     return "\n".join(out) + "\n"
+
+
+def private_sheet_label(k: dict, s: dict) -> str:
+    if s.get("private_pointer"):
+        return f"WallSel_Private_{k['kit']}_slot{int(s['slot'])}"
+    return f"WallSel_KitSheet_{hx(s['sheet']):02X}"
+
+
+def private_sheet_pointer(data: bytes, kit: dict, sheet: dict) -> int:
+    """Read the bounded compiled WSP1 declaration; never infer a global alias."""
+    start, end = snes_pc(0x44E000), snes_pc(0x450000)
+    at = data.find(b"WSP1", start, end)
+    if at < 0 or data.find(b"WSP1", at + 1, end) >= 0:
+        raise ValueError("private kit requires one compiled WSP1 declaration")
+    version, size, count = struct.unpack_from("<BBH", data, at + 4)
+    if version != 1 or size != 12 or at + 8 + count * size > end:
+        raise ValueError("invalid private sheet metadata dimensions")
+    matches = set()
+    for i in range(count):
+        row = data[at + 8 + i * size:at + 8 + (i + 1) * size]
+        room, = struct.unpack_from("<H", row)
+        if room in {hx(r) for r in kit["rooms"]} and row[2] == 0 and row[3] == hx(sheet["sheet"]) and row[4] == sheet["slot"]:
+            if int.from_bytes(row[9:11], "little") != 1536:
+                raise ValueError("private kit decoded size differs")
+            matches.add(int.from_bytes(row[6:9], "little"))
+    if len(matches) != 1:
+        raise ValueError("private kit metadata is missing or ambiguous")
+    return matches.pop()
 
 
 def stream_name(k: dict, s: dict) -> str:
@@ -985,7 +1055,7 @@ def verify_kit_glyph_ownership(data: bytes) -> dict:
         owned = set(kit["_cmap"].values()) | {hx(c) for c in kit.get("in_place", [])}
         for sheet in kit.get("sheets", []):
             sid, source, slot = hx(sheet["sheet"]), hx(sheet["copy_of"]), sheet["slot"]
-            actual = bytes(decomp(data, ptr(data, sid))[0])
+            actual = bytes(decomp(data, private_sheet_pointer(data, kit, sheet) if sheet.get("private_pointer") else ptr(data, sid))[0])
             original = bytes(decomp(data, ptr(data, source))[0])
             if len(actual) != 1536 or len(original) != 1536:
                 raise ValueError(f"kit {kit['kit']} sheet ${sid:02X} is not 3bpp")

@@ -22,6 +22,7 @@
 ;   blocked object 117: not a selector class: the candidate draws other words in rooms 0CE
 ;   blocked object FE7: not a selector class: the candidate draws other words in rooms 0AE
 ; glacia_estate_timber (N8) [routed]: Glacia estate frozen timber (ce525155); glyphs copied into free slot-3 chars of a sheet-0B copy. Re-extracted on base 5d6b461b (origin 837bd18c) so the fancy-exit chars stay vanilla. Native sheet-0B floor glyphs restored; displaced wall glyphs retain their high palette half in static slot-6 cells. Slot-6 animation $1B0-$1BF is preserved.
+; prison_armory (D3_ARMORY_B) [routed]: Selected B furniture and Meadow Blade, room54 only; all native door/floor/current room glyphs preserved. Four extra sprite-only glyphs share source sheet; no CGRAM changes. Private stream only: global08 and sprite36 pointers remain unchanged; no F6 claim. Lower-prison v3 walls: source chars00E/01F move to private0FC/0FD; source00F/01E reuse exact native061/044. Source donor2de5a004. All existing furniture/sprite glyphs and global sheets preserved. Room54-only palette1A copies actual02: row2 LOW7 becomes masonry backdrop4, HIGH6/7 become native stone4/5; other87 words and wood row5 preserved. Existing reserved palette slot; no global recolor.
 
 ; ---- private ids: vanilla spare rows, palette offsets, no room uses them ----
 assert read1($00DDF3) == $09 && read1($00DDF4) == $00 && read1($00DDF5) == $24 && read1($00DDF6) == $1B, "blockset row $17 is not the vanilla spare row"
@@ -159,6 +160,34 @@ org $1BE490 ; @hook module=Dungeons kind=data protected_size=180
 assert pc() == $1BE544, "kit palette must be exactly 90 words"
 pullpc
 
+; ---- kit prison_armory -> profile 4 prison_armory ----
+assert read1(($220000|read2($228000+$0A8))+2) == $01 && read1($0ED460+(read1(($220000|read2($228000+$0A8))+1)*4)) == $02, "room $054 header no longer matches kit prison_armory"
+assert read1($00DD9B) == $08, "kit prison_armory slot 3 source is not sheet $08"
+pushpc
+org $00DDFB ; @hook module=Dungeons kind=data protected_size=4
+  db $08, read1($00DD9C), read1($00DD9D), read1($00DD9E)
+pullpc
+assert read2($1BEC4D) == $00B4, "kit prison_armory palette source $02 offset moved"
+pushpc
+org $1BE058 ; @hook module=Dungeons kind=data protected_size=180
+  dw read2($1BD7E8), read2($1BD7EA), read2($1BD7EC), read2($1BD7EE), read2($1BD7F0), read2($1BD7F2)
+  dw $49AE, read2($1BD7F6), read2($1BD7F8), read2($1BD7FA), read2($1BD7FC), read2($1BD7FE)
+  dw read2($1BD800), $49AE, $6274, read2($1BD806), read2($1BD808), read2($1BD80A)
+  dw read2($1BD80C), read2($1BD80E), read2($1BD810), read2($1BD812), read2($1BD814), read2($1BD816)
+  dw read2($1BD818), read2($1BD81A), read2($1BD81C), read2($1BD81E), read2($1BD820), read2($1BD822)
+  dw read2($1BD824), read2($1BD826), read2($1BD828), read2($1BD82A), read2($1BD82C), read2($1BD82E)
+  dw read2($1BD830), read2($1BD832), read2($1BD834), read2($1BD836), read2($1BD838), read2($1BD83A)
+  dw read2($1BD83C), read2($1BD83E), read2($1BD840), read2($1BD842), read2($1BD844), read2($1BD846)
+  dw read2($1BD848), read2($1BD84A), read2($1BD84C), read2($1BD84E), read2($1BD850), read2($1BD852)
+  dw read2($1BD854), read2($1BD856), read2($1BD858), read2($1BD85A), read2($1BD85C), read2($1BD85E)
+  dw read2($1BD860), read2($1BD862), read2($1BD864), read2($1BD866), read2($1BD868), read2($1BD86A)
+  dw read2($1BD86C), read2($1BD86E), read2($1BD870), read2($1BD872), read2($1BD874), read2($1BD876)
+  dw read2($1BD878), read2($1BD87A), read2($1BD87C), read2($1BD87E), read2($1BD880), read2($1BD882)
+  dw read2($1BD884), read2($1BD886), read2($1BD888), read2($1BD88A), read2($1BD88C), read2($1BD88E)
+  dw read2($1BD890), read2($1BD892), read2($1BD894), read2($1BD896), read2($1BD898), read2($1BD89A)
+assert pc() == $1BE10C, "kit palette must be exactly 90 words"
+pullpc
+
 ; ---- kit sheet streams (3bpp LC-LZ2) and their pointer rows ----
 assert GfxSheet_Bank == $23FD00 && GfxSheet_High == $23FE00 && GfxSheet_Low == $23FF00, "gfx sheet arrays moved"
 pushpc
@@ -171,6 +200,8 @@ WallSel_KitSheet_FE:  ; glacia_estate_timber slot 3
   incbin "Dungeons/Data/kits/glacia_estate_timber.slot3.lz2"
 WallSel_KitSheet_F3:  ; glacia_estate_timber slot 6
   incbin "Dungeons/Data/kits/glacia_estate_timber.slot6.lz2"
+WallSel_Private_prison_armory_slot3:  ; prison_armory slot 3
+  incbin "Dungeons/Data/kits/prison_armory.slot3.lz2"
 assert pc() <= $45F000, "kit sheet streams exceeded $458000-$45EFFF"
 assert $FD < !GfxSheet_Rows, "kit sheet $FD is past the sheet table"
 org $23FDFD ; @hook module=Dungeons kind=data protected_size=1

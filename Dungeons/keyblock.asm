@@ -21,6 +21,9 @@ org $01EC1A
 org $01EB8C
 Object_KeyBlock:
 {
+if !ENABLE_D3_PRISON_CELL65 == 1
+  JML D3Prison_CellKeyBlockGate
+else
   ; $7EF36F: Small key counter (Index into SRAM).
   LDA $7EF36F
   AND #$00FF              ; Mask high byte just in case.
@@ -36,6 +39,7 @@ Object_KeyBlock:
   DEC A
   STA $7EF36F
   JMP.w $EBA6
+endif
 }
 assert pc() <= $01EBA6, "Object_KeyBlock overruns vanilla .open_big_key_lock"
 

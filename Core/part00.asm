@@ -115,6 +115,10 @@ Part00_RoomSprites:
   if !ENABLE_DREAM_ROOM_SHEETS == 1 && !DISABLE_SPRITES == 0
     JSL DreamRoom_Stage                   ; Power/Courage BG sheets
   endif
+  if !ENABLE_D3_PRISON_CELL65 == 1 && !DISABLE_SPRITES == 0
+    JSL D3Prison_ThiefStage
+    JSL D3Prison_BladeStage                ; source-bound room54, any GameState
+  endif
   LDA.l GameState : BNE .done             ; Part00 only
   if !ENABLE_PART00_CHECKPOINT == 1
     JSR Part00_CheckpointTrigger
