@@ -94,10 +94,10 @@ class CustomCollisionSourceContractTest(unittest.TestCase):
         contract = validate_contract(REPO_ROOT)
 
         self.assertEqual(contract.room_count, 23)
-        self.assertEqual(contract.tile_count, 3561)
+        self.assertEqual(contract.tile_count, 3544)
         self.assertEqual(
             contract.source_sha256,
-            "3adce5b6aa65f641143c39295c4e57db73610a80eed3d47ccb0fa15372c0678e",
+            "291291c94ef9311fe55ed1db347baa4d1091399a7d313ec4cf6e1b567487e13c",
         )
 
     def test_repository_source_forces_exact_export_bytes(self) -> None:
