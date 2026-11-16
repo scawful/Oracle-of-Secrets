@@ -17,7 +17,9 @@ Horse_SlotsBusy:
 {
   PHP : REP #$30 : PHA : PHX
   SEP #$20
-  LDA.l $7E0AF4 : BNE .busy
+  ; No $0AF4 test: vanilla never clears it after a bird flight, and its stale
+  ; NMI upload targets VRAM $40E0/$41E0, which no horse slot uses. The live
+  ; bird is an ancilla and the scan below still reports it.
   LDA.l InCutScene : BNE .busy
   LDX.w #9
   .scan
