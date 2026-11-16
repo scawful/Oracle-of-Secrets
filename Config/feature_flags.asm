@@ -37,6 +37,7 @@
 !ENABLE_EXPERIMENT_SCENE              = 1
 !ENABLE_FOLLOWER_TRANSITION_HOOKS     = 1
 !ENABLE_GANONDORF_VOLLEY              = 1
+!ENABLE_GANON_BEAST                   = 1
 !ENABLE_GLADE_AMBUSH                  = 0
 !ENABLE_GOLDSTAR_CELL                 = 1
 !ENABLE_GORON78_LANMOLA_BOSS          = 1
@@ -56,6 +57,7 @@
 !ENABLE_KALYXO_BOAT                   = 0
 !ENABLE_KALYXO_DOCKS_PROFILE          = 0
 !ENABLE_KOROK_POLISH                  = 1
+!ENABLE_KYDREEOK_CHAMBER              = 1
 !ENABLE_LUPO_PAD_GATE                 = 1
 !ENABLE_LYRA_OVERLAY_FIX              = 1
 !ENABLE_LYRA_TALKERS                  = 0

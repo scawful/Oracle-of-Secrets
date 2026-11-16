@@ -101,6 +101,12 @@ Sprite_Ganondorf_Long:
   ; fight (hits, stun count, action, teleport spot, ball) keeps running from where it was.
   LDA.w BossReinject : BEQ .no_reinject
     STZ.w BossReinject
+if !ENABLE_GANON_BEAST == 1
+    LDA.w SprAction, X : CMP.b #$08 : BCC .ganon_reinject
+      JSR Beast_Reinject ; beast sheet + palette + malice colors
+      BRA .no_reinject
+    .ganon_reinject
+endif
     JSL ApplyGanondorfGraphics
     JSL ApplyGanondorfPalette
   .no_reinject
@@ -157,6 +163,11 @@ Sprite_Ganondorf_Prep:
 Ganondorf_Main:
 {
   LDA.b #$FF : STA.w SprHealth, X ; damage is counted in SprMiscF, never by HP
+if !ENABLE_GANON_BEAST == 1
+  LDA.w SprAction, X : CMP.b #$08 : BCC .ganondorf
+    JMP Beast_Main ; actions 8-15 = the beast (ganon_beast.asm)
+  .ganondorf
+endif
   %SpriteJumpTable(Ganondorf_Intro,
                    Ganondorf_Float,
                    Ganondorf_Cast,
@@ -347,8 +358,18 @@ Ganondorf_Main:
   {
     LDA.b #$02 : STA.w SprFrame, X
     LDA.w SprTimerA, X : BNE .run
+if !ENABLE_GANON_BEAST == 1
+      ; Hand-off: the beast takes over. No free slot: stay here, retry next frame.
+      JSR Beast_Spawn : BCS .beast
+        RTS
+      .beast
+endif
       JSR Ganondorf_StopQuake
+if !ENABLE_GANON_BEAST == 1
+      LDA.b #$03 : STA.l GanondorfFight ; beast alive: door stays shut
+else
       LDA.b #$02 : STA.l GanondorfFight
+endif
       STZ.w SprState, X
       RTS
     .run
@@ -743,6 +764,11 @@ Ganondorf_SpawnBall:
 
 Ganondorf_Draw:
 {
+if !ENABLE_GANON_BEAST == 1
+  LDA.w SprAction, X : CMP.b #$08 : BCC .ganondorf
+    JMP Beast_Draw
+  .ganondorf
+endif
   ; Death scene: flicker only in the last $30 frames.
   LDA.w SprAction, X : CMP.b #$06 : BNE .draw
   LDA.w SprTimerA, X : CMP.b #$30 : BCS .draw
@@ -1176,6 +1202,9 @@ Ganondorf_DoorGate:
 {
   LDA.b $A0 : ORA.b $A1 : BNE .open
   LDA.l GanondorfFight : CMP.b #$02 : BEQ .open
+if !ENABLE_GANON_BEAST == 1
+  CMP.b #$03 : BEQ .shut ; beast alive: keep shut, spawn nothing
+endif
   ; Kydreeok must have died first (kydreeok.asm sets FinaleBeat), then the placeholder beat runs out.
   LDA.w FinaleBeat : BEQ .shut
     PHX : PHY
@@ -1249,12 +1278,18 @@ endif
 ; Fairy revive hook. GameOver_ResituateLink ($09F742) is the last step of the fairy path
 ; (it hands Module12 back to the previous module); the room is not reloaded and sprites keep
 ; their state. Replaces `LDA.b #$90 : STA.w $031F` (A9 90 8D 1F 03 in the base ROM).
-; Room $00 only: Kydreeok and Ganondorf see BossReinject on their next frame.
+; Room $00 only (and room $02 with KYDREEOK_CHAMBER): Kydreeok and Ganondorf see
+; BossReinject on their next frame.
 
 BossReinject_Set:
 {
   LDA.b #$90 : STA.w $031F ; original
+if !ENABLE_KYDREEOK_CHAMBER == 1
+  LDA.b $A1 : BNE .not_finale_room
+  LDA.b $A0 : AND.b #$FD : BNE .not_finale_room ; room $00, or Kydreeok's chamber $02
+else
   LDA.b $A0 : ORA.b $A1 : BNE .not_finale_room
+endif
     LDA.b #$01 : STA.w BossReinject
   .not_finale_room
   RTL
@@ -1449,6 +1484,10 @@ ApplyGanondorfPalette:
 
 ; Triforce room: Link raises the Maku Seed before the credits.
 incsrc "../../Core/finale_seed_raise.asm"
+
+if !ENABLE_GANON_BEAST == 1
+  incsrc "ganon_beast.asm"
+endif
 
 GanondorfPalette:
   incbin ganondorf.pal
