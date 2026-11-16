@@ -108,7 +108,14 @@ Horse_LinkDmaPrefix:
   LDA.l !CurrentMask : CMP.b #!Horse_MaskId : BNE .native
   LDA.b $1B : BNE .native
   LDA.b $10 : CMP.b #9 : BEQ .eligible
-  CMP.b #$0B : BNE .native
+  CMP.b #$0B : BEQ .eligible
+  ; Pause keeps last frame's mounted OAM on screen, so her cells must stay:
+  ; the item menu for its whole life, the map only while it fades out
+  ; ($0200 = 0). Later map steps load their own sprite graphics.
+  CMP.b #$0E : BNE .native
+  LDA.b $11 : CMP.b #$01 : BEQ .eligible
+  CMP.b #$07 : BNE .native
+  LDA.w $0200 : BNE .native
   .eligible
   JSL Horse_SlotsBusy : BCS .native
   LDA.l Horse_PalLoaded : ORA.b #$80 : STA.l Horse_PalLoaded
@@ -214,8 +221,11 @@ endif
   ; Native 8A0C/8ADB never write the mounted cells ($4000-40DF/4100-41DF,
   ; $4260-42DF/4360-43DF); any lost grant resets UploadedFrame to FF. So an
   ; unchanged frame needs no DMA: frees ~1.3KB of vblank for scroll map rows.
-  ; Submodules (area loads) still refresh every frame.
-  LDA.b $11 : BNE .upload_mounted
+  ; Submodules (area loads) still refresh every frame. Pause never replaces
+  ; her cells, so it keeps the no-DMA path and leaves vblank to the menu.
+  LDA.b $10 : CMP.b #$0E : BEQ +
+    LDA.b $11 : BNE .upload_mounted
+  +
   LDA.l Horse_Frame : CMP.b #!Horse_FrameCount : BCC + : LDA.b #6 : +
   CMP.l Horse_UploadedFrame : BNE .upload_mounted
   BRL .replay

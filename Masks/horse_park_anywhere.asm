@@ -40,7 +40,7 @@ HorseForm_MaintainParkedNpc_Long:
   JSL Horse_RanchActorsSafe : BCS + : PLB : PLP : RTL : +
   BRA .spawn_scan
   .off_ranch_gates
-  JSL Horse_SlotsBusy : BCC + : PLB : PLP : RTL : +
+  JSL Horse_ParkedBusy : BCC + : PLB : PLP : RTL : +
   BRA .spawn_scan
 
   .ranch_default
@@ -237,6 +237,21 @@ Horse_RunOff:
   RTL
 }
 
+; C=1 while parked off-Ranch Epona must stay hidden: a cutscene only.
+; Her cells ($5000-$51FF) are not the item cells the mounted horse borrows,
+; so a live ancilla (sword sparkle, item shot) is no reason to hide her:
+; Horse_SlotsBusy here made her blink out for each one. A real cell conflict
+; is found on screen by Horse_FrameEndScan, which sends her off for good.
+; Any widths; A/X/Y/P kept except carry.
+Horse_ParkedBusy:
+{
+  PHP : SEP #$20 : PHA
+  LDA.l InCutScene : BNE .busy
+  PLA : PLP : CLC : RTL
+  .busy
+  PLA : PLP : SEC : RTL
+}
+
 ; NMI, from Horse_NmiUpload .npc when the Ranch profile is not loaded.
 ; M8/X16, DBR $00. C=1: upload Horse_NpcFrame now (.npc_rows). C=0: done.
 ; The copy (1KB read) and the upload use separate NMIs for vblank budget.
@@ -262,7 +277,7 @@ Horse_OffRanchNpc:
   LDA.w $02B2 : CMP.b #$09 : BEQ .unwant          ; horse mask on
   LDA.l Horse_HasAnchor : BEQ .unwant
   LDA.b $8A : CMP.l Horse_AnchorArea : BNE .unwant
-  JSL Horse_SlotsBusy : BCS .unwant
+  JSL Horse_ParkedBusy : BCS .unwant
   LDA.l Horse_OffClear : CMP.b #$02 : BCC .unwant
   LDA.l Horse_NpcFrame : CMP.b #14 : BEQ +
     CMP.b #15 : BNE .unwant
