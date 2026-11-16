@@ -159,6 +159,18 @@
       "why": "Map $22 slot-4 copy of sheet $64 with Kalyxo pit chars $007/$017 copied to solid chars $104/$107 and side char $110."
     },
     {
+      "global_sheet": "0xF7",
+      "source": "abyss_windmill/gF7.txt",
+      "decoded_sha256": "2aed77928d75a8a16363b84429567a1f55f19d6a81d9c1e51f2ff79f37c3a967",
+      "why": "Abyss $63 windmill (screen $64) slot 4: copy of sheet $34 with W2 brown-stone tower and sail chars in locals no other $63 cell uses (scawful picked option 2)."
+    },
+    {
+      "global_sheet": "0xF8",
+      "source": "abyss_windmill/gF8.txt",
+      "decoded_sha256": "322237e58e019c5f94ba5eb1abf43d65b29d7a39ff46c87594e184b2057571ae",
+      "why": "Abyss $63 windmill (screen $64) slot 6: copy of sheet $3F (area set 65 default) with brown-stone tower chars in locals no other $63 cell uses."
+    },
+    {
       "global_sheet": "0xDF",
       "source": "d4_zora/atlas-DF.txt",
       "decoded_sha256": "92467df57fd807f8d30a4da93d4392a6ad49040c6b0bf7fc8b60c693231c5e7a",
