@@ -210,7 +210,9 @@ HorseFenceTile16s:
 HorseFenceTile16s_End:
 
 if !ENABLE_HORSE_LONG_JUMP == 1
-!Horse_LongJumpMaxTiles = 2
+; Max gap width in Tile16s past the first gap cell: n=2 D2 Tail Pond / $24
+; bridge, n=4 Garo Desert $36.
+!Horse_LongJumpMaxTiles = 4
 !Horse_LongJumpMinFrames = $10
 !Horse_LongJumpMaxFrames = $12
 !Horse_LongJumpShakeFrames = $03
@@ -224,12 +226,13 @@ HorseLong_ZTable:
   db  3,  8, 13, 16, 19, 22, 23, 24
   db 24, 23, 22, 19, 16, 13,  8,  3
 
-; Water-gap Tile16s Epona clears with a long jump (gap of 1..2 tiles).
+; Water-gap Tile16s Epona clears with a long jump (gap of 1..4 tiles).
 ; Clones keep the original 8x8 chars, so water collision is unchanged and
 ; Link on foot still meets deep water. D2 Tail Pond $2D x10/x11 y11-13:
-; $0F90 = clone of $02C5, $0F91 = clone of $02CE.
+; $0F90 = clone of $02C5, $0F91 = clone of $02CE. Garo Desert $36:
+; $0FF0 (pass8 dark-water gap clone) and $02B8 (variant C).
 HorseLongGapTile16s:
-  dw $0F90, $0F91
+  dw $0F90, $0F91, $0FF0, $02B8
 HorseLongGapTile16s_End:
 
 ; In: A16/X8, $04 = Tile16. Out: carry set if $04 is a long-gap Tile16. X clobbered.
@@ -320,7 +323,7 @@ HorseLong_ScanGap:
   LDA.l Horse_JumpEndY : SEC : SBC.b $20 : BPL + : EOR.w #$FFFF : INC : +
   CMP.w #$00F0 : BCS .invalid
   SEP #$20
-  JMP HorseForm_CheckLandingWalkable        ; carry = landing walkable
+  JMP HorseLong_FitLanding                  ; carry = landing walkable
 
   .invalid
   SEP #$20
@@ -331,6 +334,137 @@ HorseLong_ScanGap:
   dw $0000, $0000, $FFF0, $0010
   .step_y
   dw $FFF0, $0010, $0000, $0000
+}
+
+; A long jump keeps the rider's row (column for vertical jumps). Landing
+; walkable feet are not enough: the mounted leading edge in JumpDir must
+; also be free, or the horse lands and cannot ride on (desert $36 probeC:
+; landed y3600, east side probe on a bank Tile16 one row above a 3-tile
+; exit, 30 frames at 0 px). Try the landing, then shifts across JumpDir of
+; +-8 to +-40 px, nearest first; keep the first that is walkable with a free
+; leading edge and a native footprint clear of hard solids. A side stops at
+; the first shift where the rider could not stand, so a shift never crosses
+; a wall (desert $36 pass8: -16 is inside the $0A4B lip, so -24 on the upper
+; corridor is not tried; +40 clears Tile16 $0BE1 east of the lane).
+; None fits: keep the unshifted landing if walkable (prior rule).
+; In: M8/X8, Horse_JumpDir, Horse_JumpEndX/Y. Out: M8/X8, carry = landing
+; walkable; Horse_JumpEndX/Y = chosen landing. $08/$0E/$0F preserved; X/Y,
+; $04, $0A and $0C clobbered.
+HorseLong_FitLanding:
+{
+  REP #$20
+  LDA.b $08 : PHA : LDA.b $0E : PHA
+  LDA.l Horse_JumpEndX : PHA
+  LDA.l Horse_JumpEndY : PHA
+  SEP #$20
+  LDA.l Horse_JumpDir : ASL : STA.b $0E  ; edge index (N,S,W,E tables)
+  STZ.b $0F                             ; closed sides: $01 = +shift, $02 = -shift
+  LDY.b #$00
+  .try
+  PHY                                   ; 1,S = shift index; 2,S = base Y; 4,S = base X
+  TYA : BEQ .side_open
+  LSR : AND.b #$01 : BNE + : LDA.b #$02 : +
+  BIT.b $0F : BEQ .side_open
+  JMP .next
+  .side_open
+  TYX
+  REP #$20
+  LDA.b $0E : AND.w #$00FF : CMP.w #$0004 : BCS .shift_y
+    LDA 4,S : CLC : ADC.l .shift, X : STA.l Horse_JumpEndX
+    BRA .shifted
+  .shift_y
+    LDA 2,S : CLC : ADC.l .shift, X : STA.l Horse_JumpEndY
+  .shifted
+  LDA.l Horse_JumpEndX : EOR.b $22 : AND.w #$FC00 : BNE .close_far
+  LDA.l Horse_JumpEndY : EOR.b $20 : AND.w #$FC00 : BNE .close_far
+  SEP #$20
+  JSR HorseForm_CheckLandingWalkable : BCS + : .close_far : JMP .close_side : +
+  JSR .footprint : BCS + : JMP .close_side : +
+  ; Leading edge at the landing: same points as ConstrainGroundInput.
+  LDY.b #$02
+  LDA.b $0E : CMP.b #$04 : BCC + : LDY.b #$04 : +
+  .point
+  PHY
+  TYA : ASL : TAX
+  REP #$20
+  LDA.l HorseForm_ConstrainGroundInput_along, X : STA.b $08
+  LDA.b $0E : AND.w #$00FF : TAX
+  LDA.l HorseForm_ConstrainGroundInput_edge_x, X : CLC : ADC.l Horse_JumpEndX : STA.b $0C
+  LDA.l HorseForm_ConstrainGroundInput_edge_y, X : CLC : ADC.l Horse_JumpEndY : STA.b $0A
+  CPX.b #$04 : BCS .vertical_edge
+    LDA.b $0C : CLC : ADC.b $08 : STA.b $0C
+    BRA .query
+  .vertical_edge
+    LDA.b $0A : CLC : ADC.b $08 : STA.b $0A
+  .query
+  JSR HorseForm_ConstrainGroundInput_query_side   ; out M8, A = attribute
+  CMP.b #$01 : BEQ .solid
+  CMP.b #$02 : BNE .point_clear
+  .solid
+  REP #$20 : JSR HorseForm_ConstrainGroundInput_is_fence : SEP #$20
+  BCC .point_blocked
+  .point_clear
+  PLY : DEY : BPL .point
+  PLY                                   ; fits
+  REP #$20
+  PLA : PLA
+  PLA : STA.b $0E : PLA : STA.b $08
+  SEP #$20
+  SEC
+  RTS
+  .point_blocked
+  PLY
+  BRA .next
+  ; The rider cannot stand here (other area, unwalkable feet or a solid in
+  ; the footprint): farther shifts on this side are behind it. Close the side.
+  .close_side
+  SEP #$20
+  LDA 1,S : BEQ .next                   ; unshifted landing closes nothing
+  LSR : AND.b #$01 : BNE + : LDA.b #$02 : +
+  ORA.b $0F : STA.b $0F
+  .next
+  SEP #$20
+  PLY : INY #2
+  CPY.b #.shift_end-.shift : BCS + : JMP .try : +
+  ; No shift fits: unshifted landing, walkable-feet rule only.
+  REP #$20
+  PLA : STA.l Horse_JumpEndY
+  PLA : STA.l Horse_JumpEndX
+  PLA : STA.b $0E : PLA : STA.b $08
+  SEP #$20
+  JMP HorseForm_CheckLandingWalkable
+
+  ; Native Link collision reads y+8, y+16 and y+23 at x+0 / x+15
+  ; (TileDetectOnMovement offsets, $07CD7B). CheckLandingWalkable reads only
+  ; y+8 / y+12, so a shifted landing could put the lower body inside a solid
+  ; half tile (desert $36: -16 px onto the top of Tile16 $0A4B, all four
+  ; directions blocked). In: M8/X8, Horse_JumpEndX/Y. Out: M8/X8, carry set
+  ; when no footprint point is hard solid ($01/$02). $04/$0A/$0C clobbered.
+  .footprint
+  LDX.b #$0A
+  .footprint_point
+  REP #$20
+  LDA.l Horse_JumpEndX : CLC : ADC.l .footprint_x, X : STA.b $0C
+  LDA.l Horse_JumpEndY : CLC : ADC.l .footprint_y, X : STA.b $0A
+  SEP #$20
+  JSR Horse_QueryTileAt               ; X preserved
+  CMP.b #$01 : BEQ .footprint_solid
+  CMP.b #$02 : BEQ .footprint_solid
+  DEX #2 : BPL .footprint_point
+  SEC
+  RTS
+  .footprint_solid
+  CLC
+  RTS
+
+  .footprint_x
+  dw $0000, $000F, $0000, $000F, $0000, $000F
+  .footprint_y
+  dw $0008, $0008, $0010, $0010, $0017, $0017
+  .shift
+  dw $0000, $0008, $FFF8, $0010, $FFF0
+  dw $0018, $FFE8, $0020, $FFE0, $0028, $FFD8
+  .shift_end
 }
 
 ; In: M8/X8 from CheckFenceJump with Horse_JumpDir set and no fence ahead.
