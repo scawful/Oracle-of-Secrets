@@ -39,6 +39,63 @@ class Classify(unittest.TestCase):
         self.assertEqual(g.classify(0x63, {}, "PR", 9)[0], "CLAIMED")
 
 
+def find_rom(name="oos168x.sfc"):
+    """Roms/ is untracked; in a worktree it lives in the main checkout."""
+    roots = [g.REPO_ROOT]
+    proc = subprocess.run(["git", "-C", str(g.REPO_ROOT), "rev-parse", "--git-common-dir"],
+                          capture_output=True, text=True)
+    if proc.returncode == 0:
+        common = Path(proc.stdout.strip())
+        roots.append((common if common.is_absolute() else g.REPO_ROOT / common).resolve().parent)
+    for root in roots:
+        if (root / "Roms" / name).is_file():
+            return root / "Roms" / name
+    return None
+
+
+JUNGLE = [0xA6, 0xA7, 0xAE, 0xAF]
+
+
+class TailMaps(unittest.TestCase):
+    def inv(self, tail):
+        return {"overworld_areas": {}, "main_blocksets": {}, "room_blocksets": {},
+                "spritesets": {"5": [1, 2, 3, 4]}, "tail_areas": tail,
+                "sheets": [{"hex": "0x6C", "usage": {"ow_areas_static": []}}]}
+
+    def test_tail_area_rows_count_as_users(self):
+        row = {"static_graphics": [0x69, 0x3B, 0x3C, 0x6C, 0x6D, 0x6E, 0x96, 0x5B],
+               "sprite_graphics": [5, 5, 0]}
+        inv = self.inv({str(a): row for a in JUNGLE})
+        L = g.build_loaders(inv)
+        self.assertEqual(L[0x6C]["area"], {3: JUNGLE})
+        self.assertEqual(L[0x6D]["area"], {4: JUNGLE})
+        self.assertEqual(L[0x74]["area_spriteset"][0], [a for a in JUNGLE for _ in range(2)])
+        # z3ed does not list tail maps, so they are not a cross-check mismatch.
+        self.assertEqual(g.check_inventory_usage(inv, L), [])
+        # An empty stub with tail users is no longer reported as a free id.
+        n = sum(len(v) for kinds in L[0x6C].values() for v in kinds.values())
+        self.assertEqual(g.classify(0x6C, {}, None, n)[0], "CHECK")
+
+    def test_inventory_without_tail_areas_still_builds(self):
+        inv = self.inv({})
+        del inv["tail_areas"]
+        L = g.build_loaders(inv)
+        self.assertFalse(any({"area", "area_spriteset"} & set(kinds) for kinds in L.values()))
+
+    def test_real_rom_jungle_maps_load_6c_6d(self):
+        rom = find_rom()
+        if rom is None:
+            self.skipTest("Roms/oos168x.sfc not present")
+        before = g.sha256(rom)
+        tail = g.read_tail_areas(rom.read_bytes())  # read-only
+        self.assertEqual(sorted(tail), list(range(0xA0, 0xC0)))
+        L = g.build_loaders(self.inv({str(a): v for a, v in tail.items()}))
+        for sheet in (0x6C, 0x6D):
+            users = sorted({a for ids in L[sheet]["area"].values() for a in ids})
+            self.assertEqual(users, JUNGLE, f"sheet ${sheet:02X}")
+        self.assertEqual(g.sha256(rom), before)
+
+
 class GitScan(unittest.TestCase):
     def setUp(self):
         temp = tempfile.TemporaryDirectory()
