@@ -88,8 +88,11 @@ ShopBalance_OracleType:
 
 LyraTalker_Main:
 {
-  JSL $06F864                              ; SpriteDraw_AllocateOAMDeferToPlayer_long
-  JSL $06DBF0                              ; SpriteDraw_SingleLarge_long
+  ; Light World clerk body (Shopkeeper_StandardClerk .light_world): head +
+  ; body 16x16 pair, palette 7. SingleLarge is the Dark World clerk path and
+  ; draws a generic class tile instead.
+  LDA.b #$07 : STA.w $0F50,X
+  JSL $05F91B                              ; SpriteDraw_Shopkeeper
 
   ; Sprite_CheckIfActive_Bank1E ($1EFE78), inline.
   LDA.w $0DD0,X : CMP.b #$09 : BNE .exit
@@ -100,9 +103,8 @@ LyraTalker_Main:
   .active
   JSL $1EF4F3                              ; Sprite_BehaveAsBarrier
 
-  ; Same idle flip as the vanilla clerk.
-  LDA.w $0F50,X : AND.b #$3F : STA.b $00
-  LDA.b $1A : ASL #3 : AND.b #$40 : ORA.b $00 : STA.w $0F50,X
+  ; Same idle animation as the Light World clerk: body frame flips every 16 frames.
+  LDA.b $1A : LSR #4 : AND.b #$01 : STA.w $0DC0,X
 
   PHB : PHK : PLB
   LDA.w SprMiscA,X : ASL A : TAY
@@ -145,7 +147,8 @@ LyraTalker_PosY:
   dw $0800+(29*16)                           ; 8 V5
   dw $FFFF
 
-; $0DC0 frame: 0 = clerk body, 1 = chest-game man body (both sheet $4B).
+; Initial $0DC0 frame (0/1 = SpriteDraw_Shopkeeper body pose); the idle
+; animation overwrites it every frame.
 LyraTalker_Frames:
   db $01, $00, $01, $00
   db $01, $00, $01, $00, $00                ; V1-V5
