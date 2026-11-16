@@ -389,6 +389,13 @@ incsrc "Menu/menu_sword_slots.asm"
 incsrc "Items/heavy_sword.asm"
 endif
 
+; Lyra edge guard: bank $34 is full. JSL entry only, exits by RTL, operands
+; are direct page, long or immediate, so it runs from here. Kept last in the
+; bank $2B stream so adding it moves no other routine.
+if !SPECIAL_OVERWORLD_NATIVE == 1
+incsrc "Overworld/lyra_edge_guard.asm"
+endif
+
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
 assert pc() <= $2BF000, "Items bank $2B reached the dream entry FX region ($2BF000)"
 if !ENABLE_D8_BOSS == 1
