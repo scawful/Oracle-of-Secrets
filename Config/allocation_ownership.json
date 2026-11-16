@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "435254eb768cb48998c4981399bb6953453236b8b1f7824359da928cf297d379"
+      "sha256": "671047cd58ac058fe59754f401be15d8dd5341dd4f98eaf9658f864f8adde606"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "b2f0461a7f02373fca4cbde5551c0b3d468b53f7328faa413e46d79fcaf62d2a"
+      "sha256": "d05065dda0887b2abbd776ea5e324a3cf5719d48c87e0c9eb42bbafda36ab84f"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "315e5865f8026bd84032f040bd1459c413a51958d8d38d08b3b3c718b25ed472"
+      "sha256": "a594aa9e30e28652bd63754fba9cd125e35c374c9cc1bcdc81d1079298a23a05"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -135,7 +135,7 @@
     "shared:Menu/menu_map_travel.asm": {
       "source_set": "shared",
       "path": "Menu/menu_map_travel.asm",
-      "sha256": "062135b67cc5743af647b22422df3436260472623fc23816b26c0ae259aed7ce"
+      "sha256": "389a8143fc7833dcb2c639e8253593e3f0323ea3e2430c049dfd36beab6e8a35"
     },
     "shared:Core/Cutscene/experiment.asm": {
       "source_set": "shared",
@@ -170,7 +170,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "758a52cfdd3f4a83710aabe8cb5cf1f8e572933e64befb78321713bdc2432cd3"
+      "sha256": "da06202f85c2f627ca72fc30b73d78bdfad6fbe21c183e4b563c8f241acb55a4"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -361,6 +361,11 @@
       "source_set": "shared",
       "path": "Masks/horse_ground_clearance.asm",
       "sha256": "1efddaaec47fd865666e62b5f65994c6e9c6b6be222f99e0621573f437538f0e"
+    },
+    "shared:Menu/menu_hud_codex.asm": {
+      "source_set": "shared",
+      "path": "Menu/menu_hud_codex.asm",
+      "sha256": "1e38946a586a33dbd8ae86404eb9656f73d26c690986eb20d8842a84ad022ea9"
     }
   },
   "claims": [
@@ -539,7 +544,8 @@
         "source": "shared:Core/symbols.asm",
         "symbol": "MenuScrollLevelV",
         "base_block": true
-      }
+      },
+      "container": true
     },
     {
       "id": "MinishPortalTimer",
@@ -2530,8 +2536,8 @@
       "condition": {
         "ENABLE_MENU_MAP_TRAVEL": 1
       },
-      "lifetime": "One conditional transient WRAM byte after the horse tail ($7E1EFE < $7E1F00). Set by the Map & Travel page when Map or Travel closes the menu; consumed by Menu_Exit the same frame the menu closes.",
-      "reset": "MenuMapTravel_Init clears it when the page is drawn; MenuMapTravel_ExitAction clears it before acting.",
+      "lifetime": "One conditional transient WRAM byte after the horse tail ($7E1EFE < $7E1F00). Set by the Map & Travel page when Map or Travel closes the menu; consumed by Menu_Exit the same frame the menu closes. A map opened from the page sets 3, which lives through the map module and reopens the page.",
+      "reset": "MenuMapTravel_Init clears it when the page is drawn; MenuMapTravel_ExitAction clears it before acting; the menu item screen clears 3 when it turns back to the page.",
       "save": "Volatile WRAM; not saved in SRAM.",
       "provenance": [
         "shared:Core/symbols.asm",
@@ -2588,6 +2594,426 @@
         "org $53E000"
       ],
       "aliases": []
+    },
+    {
+      "id": "ByrnaOwned",
+      "owner": "Independent Cane of Byrna ownership",
+      "space": "save_buffer",
+      "base": 8319916,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Per-file item ownership or ammunition; preserve regardless of current item feature activation.",
+      "reset": "Vanilla new-file initialization clears this saved byte. Ownership requires exact 1; BombchuAmmo validates 0..20 and rejects invalid old-save values.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "ByrnaOwned",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "BombchuOwned",
+      "owner": "Independent Bombchu ownership",
+      "space": "save_buffer",
+      "base": 8319917,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Per-file item ownership or ammunition; preserve regardless of current item feature activation.",
+      "reset": "Vanilla new-file initialization clears this saved byte. Ownership requires exact 1; BombchuAmmo validates 0..20 and rejects invalid old-save values.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "BombchuOwned",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "SwitchHookOwned",
+      "owner": "Independent Switch Hook ownership",
+      "space": "save_buffer",
+      "base": 8319918,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Per-file item ownership or ammunition; preserve regardless of current item feature activation.",
+      "reset": "Vanilla new-file initialization clears this saved byte. Ownership requires exact 1; BombchuAmmo validates 0..20 and rejects invalid old-save values.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "SwitchHookOwned",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "GaroMaskOwned",
+      "owner": "Independent Garo Mask ownership",
+      "space": "save_buffer",
+      "base": 8319919,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Per-file item ownership or ammunition; preserve regardless of current item feature activation.",
+      "reset": "Vanilla new-file initialization clears this saved byte. Ownership requires exact 1; BombchuAmmo validates 0..20 and rejects invalid old-save values.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "GaroMaskOwned",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "BombchuAmmo",
+      "owner": "Bombchu supply, separate from Bombs",
+      "space": "save_buffer",
+      "base": 8319920,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Per-file item ownership or ammunition; preserve regardless of current item feature activation.",
+      "reset": "Vanilla new-file initialization clears this saved byte. Ownership requires exact 1; BombchuAmmo validates 0..20 and rejects invalid old-save values.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "BombchuAmmo",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "RegionalCheckpointSchema",
+      "owner": "Reserved regional checkpoint schema",
+      "space": "save_buffer",
+      "base": 8319924,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved per-file state; Core/sram.asm records the existing grant. No current checkpoint consumer or migration is claimed.",
+      "reset": "Vanilla new-file initialization clears the five-page save buffer. No checkpoint migration or activation is inferred.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "RegionalCheckpointSchema",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "RegionalCheckpointEpoch",
+      "owner": "Reserved regional checkpoint epoch",
+      "space": "save_buffer",
+      "base": 8319925,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved per-file state; Core/sram.asm records the existing grant. No current checkpoint consumer or migration is claimed.",
+      "reset": "Vanilla new-file initialization clears the five-page save buffer. No checkpoint migration or activation is inferred.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "RegionalCheckpointEpoch",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "RegionalCheckpointKey",
+      "owner": "Reserved regional checkpoint key",
+      "space": "save_buffer",
+      "base": 8319926,
+      "size": 2,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved per-file state; Core/sram.asm records the existing grant. No current checkpoint consumer or migration is claimed.",
+      "reset": "Vanilla new-file initialization clears the five-page save buffer. No checkpoint migration or activation is inferred.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "RegionalCheckpointKey",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "RegionalCheckpointResumeIntent",
+      "owner": "Reserved regional checkpoint resume intent",
+      "space": "save_buffer",
+      "base": 8319928,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved per-file state; Core/sram.asm records the existing grant. No current checkpoint consumer or migration is claimed.",
+      "reset": "Vanilla new-file initialization clears the five-page save buffer. No checkpoint migration or activation is inferred.",
+      "save": "Covered by the vanilla five-page SaveGameFile copy, backup and checksum; CopySaveToWRAM restores the field.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "RegionalCheckpointResumeIntent",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ItemBindingSavedVersion",
+      "owner": "Granted disabled dual-item prototype: SavedVersion",
+      "space": "save_buffer",
+      "base": 8319929,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved per-file binding metadata; prototype source only, no live migration hook.",
+      "reset": "Vanilla new-file clear; explicit admitted prototype load validates assignments and commits schema last.",
+      "save": "Covered by vanilla five-page save, backup and checksum; no actual prototype save qualification yet.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "ItemBindingSavedVersion",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ItemBindingSavedY",
+      "owner": "Granted disabled dual-item prototype: SavedY",
+      "space": "save_buffer",
+      "base": 8319930,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved per-file binding metadata; prototype source only, no live migration hook.",
+      "reset": "Vanilla new-file clear; explicit admitted prototype load validates assignments and commits schema last.",
+      "save": "Covered by vanilla five-page save, backup and checksum; no actual prototype save qualification yet.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "ItemBindingSavedY",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ItemBindingSavedX",
+      "owner": "Granted disabled dual-item prototype: SavedX",
+      "space": "save_buffer",
+      "base": 8319931,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Reserved per-file binding metadata; prototype source only, no live migration hook.",
+      "reset": "Vanilla new-file clear; explicit admitted prototype load validates assignments and commits schema last.",
+      "save": "Covered by vanilla five-page save, backup and checksum; no actual prototype save qualification yet.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "ItemBindingSavedX",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "CurrentMask",
+      "owner": "Mask system current form (!CurrentMask)",
+      "space": "wram",
+      "base": 8258226,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Persistent gameplay WRAM for the current transformation form; vanilla-unused $7E02B2 directly after the ancilla arrays (end $02B1).",
+      "reset": "Owned by the mask system (Masks/all_masks.asm); not cleared by item-binding code.",
+      "save": "Volatile WRAM; form is re-derived by the mask system.",
+      "provenance": [
+        "shared:Masks/all_masks.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Masks/all_masks.asm",
+        "symbol": "!CurrentMask",
+        "bank00_mirror": true
+      }
+    },
+    {
+      "id": "ItemBindingCursor",
+      "owner": "Granted disabled dual-item prototype: Cursor",
+      "space": "wram",
+      "base": 8258227,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Dual-item prototype state at vanilla-unused $7E02B3-$7E02B6 (moved from $7E1EDE after the Horse Form transient block took that range). Separate from ancilla arrays (end $02B1) and !CurrentMask ($02B2).",
+      "reset": "ItemBindings_AdapterReset clears only these four bytes; called from LoadCheckpointOrWorld when ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1, and by the dispatcher on completion/cancel.",
+      "save": "Volatile WRAM; never saved.",
+      "provenance": [
+        "shared:Core/symbols.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "ItemBindingCursor",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ItemBindingLogical",
+      "owner": "Granted disabled dual-item prototype: Logical",
+      "space": "wram",
+      "base": 8258228,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Dual-item prototype state at vanilla-unused $7E02B3-$7E02B6 (moved from $7E1EDE after the Horse Form transient block took that range). Separate from ancilla arrays (end $02B1) and !CurrentMask ($02B2).",
+      "reset": "ItemBindings_AdapterReset clears only these four bytes; called from LoadCheckpointOrWorld when ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1, and by the dispatcher on completion/cancel.",
+      "save": "Volatile WRAM; never saved.",
+      "provenance": [
+        "shared:Core/symbols.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "ItemBindingLogical",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ItemBindingAction",
+      "owner": "Granted disabled dual-item prototype: Action",
+      "space": "wram",
+      "base": 8258229,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Dual-item prototype state at vanilla-unused $7E02B3-$7E02B6 (moved from $7E1EDE after the Horse Form transient block took that range). Separate from ancilla arrays (end $02B1) and !CurrentMask ($02B2).",
+      "reset": "ItemBindings_AdapterReset clears only these four bytes; called from LoadCheckpointOrWorld when ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1, and by the dispatcher on completion/cancel.",
+      "save": "Volatile WRAM; never saved.",
+      "provenance": [
+        "shared:Core/symbols.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "ItemBindingAction",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ItemBindingButton",
+      "owner": "Granted disabled dual-item prototype: Button",
+      "space": "wram",
+      "base": 8258230,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Dual-item prototype state at vanilla-unused $7E02B3-$7E02B6 (moved from $7E1EDE after the Horse Form transient block took that range). Separate from ancilla arrays (end $02B1) and !CurrentMask ($02B2).",
+      "reset": "ItemBindings_AdapterReset clears only these four bytes; called from LoadCheckpointOrWorld when ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1, and by the dispatcher on completion/cancel.",
+      "save": "Volatile WRAM; never saved.",
+      "provenance": [
+        "shared:Core/symbols.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "ItemBindingButton",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ItemBindingMenuY",
+      "owner": "Granted disabled dual-item prototype: menu Y item",
+      "space": "wram",
+      "base": 8258231,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Dual-item prototype menu-session byte at vanilla-unused $7E02B7 (usdasm UNUSED_7E02B7), directly after ItemBindingButton. Holds the Y item while the menu cursor browses in $0202.",
+      "reset": "Menu_Bindings_Open writes it on every menu open (Menu_InitGraphics); Menu_Bindings_Close copies it to $0202 on close. Only when ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1.",
+      "save": "Volatile WRAM; never saved; never read in gameplay.",
+      "provenance": [
+        "shared:Core/symbols.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "ItemBindingMenuY",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "hud_corner_buffer",
+      "owner": "Codex HUD layout bottom corners (rupees + keys)",
+      "space": "wram",
+      "base": 8308810,
+      "size": 14,
+      "status": "shared",
+      "condition": {
+        "ENABLE_HUD_LAYOUT_CODEX": 1
+      },
+      "lifetime": "HUD_CodexCells writes rupee (5 words) and key (2 words) cells after every HUD rebuild/update; HUD_NMIUpload DMAs them to BG3 row 26 (VRAM $6342/$635C) each NMI. Lies in usdasm UNUSED_7EC84A after the $14A-byte HUD template copy, so RebuildHUD never touches it.",
+      "reset": "No reset: fully rewritten from SRAM rupees/keys on each HUD refresh; hidden HUD uploads blanks from $7EC700 instead.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Core/symbols.asm",
+        "shared:Menu/menu_hud_codex.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "HudCornerBuffer"
+      }
     }
   ],
   "lifetime_aliases": [],

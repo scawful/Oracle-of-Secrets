@@ -1096,11 +1096,15 @@ Menu_DrawCursor:
     BRA .done
 
   .no_delete
+if !ENABLE_HUD_LAYOUT_CODEX == 0
   ; Check if current item has submenu behavior
   SEP #$20
   JSR Menu_CheckItemHasSubmenu
   REP #$20
   BCS .submenu_cursor
+endif
+  ; Codex layout: one gray selector on every item (scawful 2026-11-15:
+  ; "a gray main selector"); green/blue belong to the Y/X marks only.
 
   ; Normal cursor (palette 1 - default blue/white)
   LDA.w #$3060 : STA.w $1108, X ; corner

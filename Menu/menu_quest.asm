@@ -89,30 +89,12 @@ Menu_Quest_Draw:
   RTS
 }
 
+; v4: passive GEAR moved to the Equipment page (Menu_Equipment_Gear).
+; Quest keeps only the Moon Pearl beside the heart pieces.
 Menu_Quest_Gear:
 {
-  REP #$30
-  LDX.w #$0006
-.gear_label
-  LDA.w .gear,X : STA.w $1000+menu_offset(12,19),X
-  DEX #2 : BPL .gear_label
   SEP #$30
   LDA.b #$7E : STA.b $0A
-  LDY.b #$00
-.icons
-  PHY
-  TYA : CLC : ADC.b #$0F : JSR Menu_Quest_GearVariant
-  STA.w MenuItemValueSpoof
-  REP #$30
-  TYA : AND.w #$00FF : ASL : TAX
-  LDA.w .gfx,X : TAY
-  LDA.w .pos,X : TAX
-  LDA.w #MenuItemValueSpoof
-  JSR DrawMenuItem
-  SEP #$30
-  PLY
-  INY : CPY.b #$06 : BCC .icons
-
   LDA.l $7EF357 : BEQ .pearl_variant
   LDA.b #$01
 .pearl_variant
@@ -124,13 +106,6 @@ Menu_Quest_Gear:
   JSR DrawMenuItem
   REP #$30
   RTS
-.gear
-  dw "GEAR"
-.pos
-  dw menu_offset(9,14),menu_offset(9,17),menu_offset(9,20)
-  dw menu_offset(13,14),menu_offset(13,17),menu_offset(13,20)
-.gfx
-  dw PowerGloveGFX,PegasusBootsGFX,FlippersGFX,SwordGFX,ShieldGFX,TunicGFX
 }
 
 ; A = valid gear slot 15-20, 8-bit A/X/Y; clobbers X, preserves Y.

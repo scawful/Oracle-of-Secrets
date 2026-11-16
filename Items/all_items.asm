@@ -1,6 +1,19 @@
 ; Inherits Free Space from Bank07
 org $07FA80
 !RAM_MAGIC = $7EF36E
+
+; Variant reads of the selected item: shared action routines (bombs, rod,
+; hookshot chain) pick Bombchu/Portal/Byrna/Goldstar/Switch Hook by the
+; item ID. Under the dual-item prototype an X action must see the X item,
+; so these sites call ItemBindings_EffectiveItem (Items/item_bindings.asm).
+; Flags off: the original LDA.w $0202. M8; A and N/Z out, X/Y kept.
+macro SelectedItem()
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSL ItemBindings_EffectiveItem
+else
+  LDA.w $0202
+endif
+endmacro
 incsrc "Items/bottle_net.asm"
 
 ; Starts Expanded Bank 0x2B
@@ -320,6 +333,21 @@ endif
 ; absolute operand is mirrored WRAM, so the file runs from this bank.
 if !ENABLE_GORON78_LANMOLA_BOSS == 1
 incsrc "Sprites/Bosses/lanmola_hammer78.asm"
+endif
+
+; Dual-item binding prototype (default off). Local span cap $600.
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+ItemBindings_SpanStart:
+incsrc "Items/item_bindings_adapter.asm"
+incsrc "Items/item_bindings_dispatch.asm"
+assert pc()-ItemBindings_SpanStart <= $600, "Dual-item prototype exceeded its $600 span"
+endif
+
+; Codex HUD layout routines (default off; Menu bank $2E is full).
+if !ENABLE_HUD_LAYOUT_CODEX == 1
+HudCodex_SpanStart:
+incsrc "Menu/menu_hud_codex.asm"
+assert pc()-HudCodex_SpanStart <= $200, "Codex HUD routines exceeded their $200 span"
 endif
 
 

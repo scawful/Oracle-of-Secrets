@@ -126,6 +126,12 @@ endif
 Menu_Page3_ItemScreen:
 {
   SEP #$30
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  LDA.l MenuMapTravel_Pending : CMP.b #$03 : BNE .no_map_return
+    LDA.b #$00 : STA.l MenuMapTravel_Pending
+    LDA.b #$FF : JMP Menu_Page3_Turn     ; map closed: back to Map & Travel
+  .no_map_return
+endif
   LDA.b $F6 : BIT.b #$30 : BEQ .no_lr   ; L = $20, R = $10
 if !ENABLE_MENU_MAP_TRAVEL == 1
     LDA.b $F4 : BIT.b #$10 : BEQ .ring_turn ; Start keeps its priority

@@ -195,6 +195,9 @@ endif
   .consume_y
   ; R+Y changes form once; it must not also fire the newly exposed item.
   LDA.b #$40 : TRB.b $F4
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSL ItemBindings_ConsumeX             ; R+X must not fire an owned X item
+endif
 
   .route
   LDA.w !CurrentMask : BEQ .base_form
@@ -220,6 +223,9 @@ endif
   LDA.b $55 : BEQ .regular
   LDA.b #$13 : BRA .set_action          ; Stone remains an effective Cape
   .regular
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSL ItemBindings_Route : BCS .set_action
+endif
   LDX.w $0202 : CPX.b #Menu_ItemIndex_End-Menu_ItemIndex : BCS .no_item
   LDA.l Menu_ItemIndex, X : BRA .set_action
   .no_item

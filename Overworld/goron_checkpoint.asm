@@ -8,6 +8,10 @@ LoadCheckpointOrWorld:
 if !ENABLE_KALYXO_BOAT == 1
   JSL Boat_ResetSession
 endif
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSL ItemBindings_AdapterReset         ; volatile latch/cursor; preserves A/P
+  JSL ItemBindings_RestoreY             ; saved Y back in $0202; preserves A/P
+endif
   if !SPECIAL_OVERWORLD_NATIVE == 1
     JSL Lyra_TailEvent_MigrateSave
   endif

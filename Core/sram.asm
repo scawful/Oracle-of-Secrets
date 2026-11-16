@@ -838,7 +838,13 @@ RegionalCheckpointSchema = $7EF3B4
 RegionalCheckpointEpoch  = $7EF3B5
 RegionalCheckpointKey    = $7EF3B6 ; word, ends before $7EF3B8
 RegionalCheckpointResumeIntent = $7EF3B8 ; byte: 0 Home, 1 last regional key
-FreeBlock_Large    = $7EF3B9  ; 11 bytes [B9,C4)
+; Root prototype grant 2026-11-14; not general live migration approval.
+; Disabled dual-item adapter: schema is written last; unsupported existing Y
+; selections must not be replaced by this Bow/Boomerang-only first slice.
+ItemBindingSavedVersion = $7EF3B9
+ItemBindingSavedY       = $7EF3BA
+ItemBindingSavedX       = $7EF3BB
+FreeBlock_Large    = $7EF3BC  ; 8 bytes [BC,C4)
 ; Richard quest (Wayward Village lady + night dog), PROPOSED 2026-11-15 by the
 ; richard-quest lane: last byte of the Large remainder, so the menu-gear
 ; lane's B9-BB reservation and the B9 block start stay untouched. Vanilla
@@ -876,7 +882,7 @@ FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF3A0  | $7EF3A0  | bits  | Wolf dig: bit 0 used |
 ; | $7EF3B3  | $7EF3B3  | 1     | Large prefix       |
-; | $7EF3B9  | $7EF3C3  | 11    | Large remainder    |
+; | $7EF3BC  | $7EF3C3  | 8     | Large remainder    |
 ; | $7EF412  | $7EF4BE  | 173   | Dreams prefix      |
 ; | $7EF4E1  | $7EF4FD  | 29    | Dreams remainder   |
 ; |----------|----------|-------|--------------------|
