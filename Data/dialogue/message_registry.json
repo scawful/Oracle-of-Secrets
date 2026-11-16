@@ -2,8 +2,8 @@
   "format": "oos-message-registry",
   "version": 1,
   "expanded_base": "0x18D",
-  "current_expanded_end": "0x21A",
-  "next_append_id": "0x21B",
+  "current_expanded_end": "0x21B",
+  "next_append_id": "0x21C",
   "renumber_policy": "freeze-published-ids",
   "ranges": [
     {
@@ -253,6 +253,14 @@
       "expected_content": "authored",
       "owner": "switch-hook-receipt",
       "purpose": "Dedicated Switch Hook receipt $4D (Items/bombchu_receipt.asm, SwitchHookReceipt_Message). Exact pickup text approved by scawful 2026-11-11: Yes, use it. Preserve the approved wording; chest binding and playtest staging remain separate."
+    },
+    {
+      "start": "0x21B",
+      "end": "0x21B",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "abyss-spawn-menu",
+      "purpose": "Abyss file-load spawn menu after GameState 3 (Overworld/abyss_spawn_menu.asm): Pyramid / Kalyxo (then vanilla $0184/$0185). Option A picked by scawful 2026-11-15, two-step menu picked 2026-11-16; text \"Start From The Pyramid / Start From Kalyxo\" provisionally approved by scawful 2026-11-16 (\"Approve text\"); pending ridoyie review."
     }
   ]
 }

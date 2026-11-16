@@ -137,6 +137,10 @@ endif
 ; saved world ($7EF3CA), so the lock ends at the portal home instead of the
 ; Maku Tree (LoadDarkWorldIntro, Overworld/overworld.asm).
 !ENABLE_ABYSS_RESPAWN_UNTIL_ESCAPE   = 1
+; Abyss load spawn menu: from GameState 3 an outdoor Abyss load offers
+; Pyramid / Link's House / Hall of Secrets (message $21B,
+; Overworld/abyss_spawn_menu.asm).
+!ENABLE_ABYSS_SPAWN_MENU            = 1
 ; Eon Owl near trigger: the Abyss Owls talk only when Link is within
 ; !EonOwl_TalkDistance px (Sprites/NPCs/eon_owl.asm), not on area entry.
 !ENABLE_EON_OWL_NEAR_TRIGGER         = 1
