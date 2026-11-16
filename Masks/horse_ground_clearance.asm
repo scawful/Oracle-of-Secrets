@@ -341,10 +341,14 @@ HorseLong_ScanGap:
 ; also be free, or the horse lands and cannot ride on (desert $36 probeC:
 ; landed y3600, east side probe on a bank Tile16 one row above a 3-tile
 ; exit, 30 frames at 0 px). Try the landing, then shifts across JumpDir of
-; +8/-8/+16/-16 px; keep the first that is walkable with a free leading
-; edge and a native footprint clear of hard solids. None fits: keep the unshifted landing if walkable (prior rule).
+; +-8 to +-40 px, nearest first; keep the first that is walkable with a free
+; leading edge and a native footprint clear of hard solids. A side stops at
+; the first shift where the rider could not stand, so a shift never crosses
+; a wall (desert $36 pass8: -16 is inside the $0A4B lip, so -24 on the upper
+; corridor is not tried; +40 clears Tile16 $0BE1 east of the lane).
+; None fits: keep the unshifted landing if walkable (prior rule).
 ; In: M8/X8, Horse_JumpDir, Horse_JumpEndX/Y. Out: M8/X8, carry = landing
-; walkable; Horse_JumpEndX/Y = chosen landing. $08/$0E preserved; X/Y,
+; walkable; Horse_JumpEndX/Y = chosen landing. $08/$0E/$0F preserved; X/Y,
 ; $04, $0A and $0C clobbered.
 HorseLong_FitLanding:
 {
@@ -354,9 +358,15 @@ HorseLong_FitLanding:
   LDA.l Horse_JumpEndY : PHA
   SEP #$20
   LDA.l Horse_JumpDir : ASL : STA.b $0E  ; edge index (N,S,W,E tables)
+  STZ.b $0F                             ; closed sides: $01 = +shift, $02 = -shift
   LDY.b #$00
   .try
   PHY                                   ; 1,S = shift index; 2,S = base Y; 4,S = base X
+  TYA : BEQ .side_open
+  LSR : AND.b #$01 : BNE + : LDA.b #$02 : +
+  BIT.b $0F : BEQ .side_open
+  JMP .next
+  .side_open
   TYX
   REP #$20
   LDA.b $0E : AND.w #$00FF : CMP.w #$0004 : BCS .shift_y
@@ -365,11 +375,11 @@ HorseLong_FitLanding:
   .shift_y
     LDA 2,S : CLC : ADC.l .shift, X : STA.l Horse_JumpEndY
   .shifted
-  LDA.l Horse_JumpEndX : EOR.b $22 : AND.w #$FC00 : BNE .next_far
-  LDA.l Horse_JumpEndY : EOR.b $20 : AND.w #$FC00 : BNE .next_far
+  LDA.l Horse_JumpEndX : EOR.b $22 : AND.w #$FC00 : BNE .close_far
+  LDA.l Horse_JumpEndY : EOR.b $20 : AND.w #$FC00 : BNE .close_far
   SEP #$20
-  JSR HorseForm_CheckLandingWalkable : BCS + : .next_far : JMP .next : +
-  JSR .footprint : BCS + : JMP .next : +
+  JSR HorseForm_CheckLandingWalkable : BCS + : .close_far : JMP .close_side : +
+  JSR .footprint : BCS + : JMP .close_side : +
   ; Leading edge at the landing: same points as ConstrainGroundInput.
   LDY.b #$02
   LDA.b $0E : CMP.b #$04 : BCC + : LDY.b #$04 : +
@@ -404,6 +414,14 @@ HorseLong_FitLanding:
   RTS
   .point_blocked
   PLY
+  BRA .next
+  ; The rider cannot stand here (other area, unwalkable feet or a solid in
+  ; the footprint): farther shifts on this side are behind it. Close the side.
+  .close_side
+  SEP #$20
+  LDA 1,S : BEQ .next                   ; unshifted landing closes nothing
+  LSR : AND.b #$01 : BNE + : LDA.b #$02 : +
+  ORA.b $0F : STA.b $0F
   .next
   SEP #$20
   PLY : INY #2
@@ -445,6 +463,7 @@ HorseLong_FitLanding:
   dw $0008, $0008, $0010, $0010, $0017, $0017
   .shift
   dw $0000, $0008, $FFF8, $0010, $FFF0
+  dw $0018, $FFE8, $0020, $FFE0, $0028, $FFD8
   .shift_end
 }
 
