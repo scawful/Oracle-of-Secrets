@@ -234,9 +234,11 @@ Menu_Quest_Progress:
 ; bottom-left, Courage bottom-right (table order Wisdom, Power, Courage).
 .pendant_pos
   dw menu_offset(15,13),menu_offset(13,15),menu_offset(15,17)
-; Unowned halves use palette 4, the grey of the unowned crystal ($3134).
+; Unowned = the owned tiles in palette 4, the grey of the unowned crystal
+; ($3134), so v4 needs no outline art ($104/$105/$114/$115/$13B/$13C/
+; $121/$122 stay only for the legacy quest_icons.tilemap page).
 .pendant_tiles
-  dw $3104,$3105,$3114,$3115, $2502,$2503,$2512,$2513
-  dw $313B,$313C,$B13B,$B13C, $3D3D,$3D3E,$BD3D,$BD3E
-  dw $3121,$3122,$B121,$B122, $2D23,$2D24,$AD23,$AD24
+  dw $3102,$3103,$3112,$3113, $2502,$2503,$2512,$2513
+  dw $313D,$313E,$B13D,$B13E, $3D3D,$3D3E,$BD3D,$BD3E
+  dw $3123,$3124,$B123,$B124, $2D23,$2D24,$AD23,$AD24
 }
