@@ -4,10 +4,11 @@
 ; Songs leave band 3 when Map & Travel is on; supplies may then take it.
 ; $020B is only the cursor; BoundMask, RingSlot1 and CurrentSong are selections.
 ; No preview fixture or ownership spoof controls availability. DBR = $2D.
-; Supplies retain slots/counts but stay hidden until their menu is enabled.
+; Supplies show in band 3 whenever Map & Travel has taken the songs out of it.
+; A build may predefine MENU_EQUIPMENT_SUPPLIES_VISIBLE = 0 to hide them again.
 ; This is a build policy, not a new save byte or an inventory migration.
 if not(defined("MENU_EQUIPMENT_SUPPLIES_VISIBLE"))
-  !MENU_EQUIPMENT_SUPPLIES_VISIBLE = 0
+  !MENU_EQUIPMENT_SUPPLIES_VISIBLE = !ENABLE_MENU_MAP_TRAVEL
 endif
 assert !ENABLE_MENU_MAP_TRAVEL == 1 || !MENU_EQUIPMENT_SUPPLIES_VISIBLE == 0, "Songs and Supplies share Equipment band 3"
 ; Two-slot swords: Sword ($7EF359) is the equipped combat/graphics level.
@@ -244,13 +245,13 @@ if !ENABLE_MENU_MAP_TRAVEL == 0
   LDA.w .songs,X : STA.w $1000+menu_offset(21,6),X
 endif
   DEX #2 : BPL .labels
-  JSR Menu_Equipment_Gear
 if !MENU_EQUIPMENT_SUPPLIES_VISIBLE == 1
-  LDX.w #$000E
+  LDX.w #$000E                       ; before Gear: it returns with M/X=8
 .supplies_label
   LDA.w .supplies,X : STA.w $1000+menu_offset(21,6),X
   DEX #2 : BPL .supplies_label
 endif
+  JSR Menu_Equipment_Gear
   SEP #$30
   LDA.b #$7E : STA.b $0A
   LDY.b #$00
