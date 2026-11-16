@@ -143,8 +143,9 @@ endmacro
 ; ---------------------------------------------------------
 ; SideQuestProgress2 Bits ($7EF3D8)
 ; ---------------------------------------------------------
-; Bitfield: .bts fsmr
+; Bitfield: .bts fser
 !SideQuest2_RanchGirl      = $01  ; bit 0 - Revealed by powder, Ocarina given
+!SideQuest2_EponaSong      = $02  ; bit 1 - Ranch Girl taught Epona's Song (song 6)
 !SideQuest2_SongOfHealing  = $04  ; bit 2 - Mask Salesman taught
 !SideQuest2_FortuneTeller  = $08  ; bit 3 - Any fortune shown
 !SideQuest2_DekuSoulFreed  = $10  ; bit 4 - Before mask given

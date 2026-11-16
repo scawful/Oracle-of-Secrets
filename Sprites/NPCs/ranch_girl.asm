@@ -29,6 +29,8 @@
 ; FLAGS WRITTEN:
 ;   SideQuestProg2 |= 0x01 - Ranch Girl revealed (Ocarina given)
 ;   $7EF34C = 1 - Ocarina obtained (Lv1)
+;   SideQuestProg2 |= !SideQuest2_EponaSong - Epona's Song (!ENABLE_EPONA_SONG;
+;     with the Ocarina, or on a later talk for saves that predate it)
 ;   MapIcon = !MapIcon_TailPond - Tail Pond objective (beat 10; moved here
 ;     from the Village Elder, dialogue audit D3)
 ;
@@ -60,6 +62,16 @@ RanchGirl_Message:
     LDA #$01 : STA.w SprMiscD, X
     RTL
   .has_ocarina
+if !ENABLE_EPONA_SONG == 1
+  ; Saves that got the Ocarina before Epona's Song existed learn it here.
+  LDA.l SideQuestProg2 : AND.b #!SideQuest2_EponaSong : BNE .knows_epona
+    LDA.l SideQuestProg2 : ORA.b #!SideQuest2_EponaSong : STA.l SideQuestProg2
+    LDA.b #$13 : STA.w $0CF8
+    JSL $0DBB67 ; Link_CalculateSFXPan
+    ORA.w $0CF8
+    STA.w $012E ; song learned sound
+  .knows_epona
+endif
   %ShowUnconditionalMessage($010E)
   RTL
 }
@@ -79,6 +91,11 @@ RanchGirl_TeachSong:
   PLX
 
   LDA #$01 : STA $7EF34C ; Ocarina only (no songs yet)
+if !ENABLE_EPONA_SONG == 1
+  ; Epona's Song comes with the Ocarina (song 6; the item fanfare plays).
+  ; UpdateFluteSong_Long then selects it as the only learned song.
+  LDA.l SideQuestProg2 : ORA.b #!SideQuest2_EponaSong : STA.l SideQuestProg2
+endif
   ; Beat 10: the Tail Pond objective starts at the Ocarina receipt.
   LDA.b #!MapIcon_TailPond : STA.l MapIcon
   STZ $030F              ; Clear active song selection

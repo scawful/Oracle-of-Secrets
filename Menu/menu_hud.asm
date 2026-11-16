@@ -459,6 +459,14 @@ endif
 ; The caller may run before the file-load validator, so bound both values here.
 HUD_OcarinaIconIndex:
 {
+if !ENABLE_EPONA_SONG == 1
+  ; Same rule as UpdateFluteSong_Long, without writing CurrentSong.
+  SEP #$20
+  JSL Ocarina_ValidSong_Long
+  REP #$20
+  AND.w #$00FF
+  RTS
+endif
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0002 : BCC .no_song
   CMP.w #$0008 : BCC .count_ok
   LDA.w #$0007

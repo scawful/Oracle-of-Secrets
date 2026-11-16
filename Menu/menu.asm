@@ -898,6 +898,7 @@ MagicBag_ConsumeItem:
 ; An unlearned ocarina has no cursor and ignores direction input.
 Menu_SongMenu:
 {
+  assert !ENABLE_EPONA_SONG == 0 || !ENABLE_EQUIPMENT_MENU == 1, "Epona's Song needs the Equipment menu"
   REP #$30
   JSR Menu_DrawMusicNotes
   SEP #$30
