@@ -195,6 +195,11 @@ endif
 ; recovery pause, tuned chase speed, limited sight and a home box
 ; (Sprites/Enemies/stalfos_patrol.asm).
 !ENABLE_INTRO_STALFOS_PATROL        = 1
+; Forest Glade ambush (prototype, off): after Kydrog's msg $21 the glade
+; animals flee, a thunder blackout swaps stalfos art into the glade slots,
+; stalfos rise around Link, and a mosaic ramp leads into the module $15
+; banish (Sprites/Bosses/kydrog.asm).
+!ENABLE_GLADE_AMBUSH                = 0
 ; Part00 arrival lines (decisions.org "Arrival lines A/B/C approved"): a
 ; villager in the house (room $104) says B ($202) on the first wake and B2
 ; ($203) after a death; Impa opens with $25 (C) instead of the old $1C
