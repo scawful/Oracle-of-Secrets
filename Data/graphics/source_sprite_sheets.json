@@ -176,6 +176,12 @@
       "source": "abyss_windmill/gF8.txt",
       "decoded_sha256": "322237e58e019c5f94ba5eb1abf43d65b29d7a39ff46c87594e184b2057571ae",
       "why": "Abyss $63 windmill (screen $64) slot 6: copy of sheet $3F (area set 65 default) with brown-stone tower chars in locals no other $63 cell uses."
+    },
+    {
+      "global_sheet": "0xF9",
+      "source": "power_shrine/gF9.txt",
+      "decoded_sha256": "c05c5daf7886ebacee03cce643977f189287d987611afa811e77a534c1ba78be",
+      "why": "Shrine of Power main door art (door 5, scawful DECIDED 2026-11-16): War-mask facade chars for the $B0 group slot 3 ($B0/$B1/$B8/$B9)."
     }
   ]
 }
