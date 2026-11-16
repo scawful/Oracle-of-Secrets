@@ -1,0 +1,1299 @@
+{
+  "title": "Item-binding RAM ledger (QUEUE159)",
+  "branch": "cursor/binding-ledger-20261115",
+  "base": "cdc868a7",
+  "symbols": [
+    "$0202",
+    "$0303",
+    "$0304",
+    "SavedY",
+    "Menu_Exit"
+  ],
+  "savedy_note": "NOT FOUND as label SavedY in *.asm \u2014 see NOTES",
+  "counts": {
+    "$0202": 110,
+    "$0303": 13,
+    "Menu_Exit": 5,
+    "$0304": 14
+  },
+  "entries": [
+    {
+      "symbol": "$0202",
+      "file": "Core/credits_text.asm",
+      "line": 51,
+      "routine": "?",
+      "access": "comment",
+      "width": "?",
+      "text": "db $09, $19, $61, $72, $6B, $68, $72, $65, $6A, $63, $62, $61, $70, $71, $6F ; $0202 EVOLVINGFETUS"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Core/credits_text.asm",
+      "line": 356,
+      "routine": "?",
+      "access": "ref",
+      "width": "?",
+      "text": "dw $0202 ; row 294 EVOLVINGFETUS"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Core/sram.asm",
+      "line": 521,
+      "routine": "?",
+      "access": "comment",
+      "width": "?",
+      "text": "; Portal Rod cell ($0202 = $19, Menu_AddressLong). Menu open sets it to 1"
+    },
+    {
+      "symbol": "$0303",
+      "file": "Core/link.asm",
+      "line": 134,
+      "routine": "?",
+      "access": "ref",
+      "width": "?",
+      "text": "LinkItemY    = $0303 ; Currently equipped item on the Y button"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Core/part00.asm",
+      "line": 52,
+      "routine": "?",
+      "access": "ref",
+      "width": "?",
+      "text": "!HouseVillager_Msg_B   = $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Util/macros.asm",
+      "line": 103,
+      "routine": "?",
+      "access": "comment",
+      "width": "?",
+      "text": "; (as Y items, $0202) and equips/unequips rings; X opens the Journal. Masks"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Util/macros.asm",
+      "line": 225,
+      "routine": "?",
+      "access": "comment",
+      "width": "?",
+      "text": "; Portal Rod cell: the Portal Rod gets Items row 4, column 1 ($0202 = $19);"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Overworld/sky_overlay_transition.asm",
+      "line": 64,
+      "routine": "LyraOverlay_FinishTransition",
+      "access": "ref",
+      "width": "?",
+      "text": "PEA.w $0202 : PLB : PLB"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Dungeons/sky_room_sky_data.asm",
+      "line": 72,
+      "routine": "SkyRoom_Clouds",
+      "access": "ref",
+      "width": "?",
+      "text": "dw $0202 : db $94"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 17,
+      "routine": "Menu_ItemIndex",
+      "access": "comment",
+      "width": "?",
+      "text": ";  Rod ($0D, LinkItem_FishingRodAndPortalRod picks the rod by $0202)"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 137,
+      "routine": "Menu_FindNextItem",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202 : INC A"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 141,
+      "routine": "Menu_FindNextItem",
+      "access": "write",
+      "width": "16",
+      "text": "STA.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 166,
+      "routine": "Menu_FindPrevItem",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202 : DEC A : BNE .no_reset"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 169,
+      "routine": "Menu_FindPrevItem",
+      "access": "write",
+      "width": "16",
+      "text": "STA.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 192,
+      "routine": "Menu_FindNextDownItem",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CLC : ADC.b #$06"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 196,
+      "routine": "Menu_FindNextDownItem",
+      "access": "write",
+      "width": "16",
+      "text": "STA.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 221,
+      "routine": "Menu_FindNextUpItem",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : SEC : SBC.b #$06"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 227,
+      "routine": "Menu_FindNextUpItem",
+      "access": "write",
+      "width": "16",
+      "text": "STA.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 279,
+      "routine": "Menu_InitItemScreen",
+      "access": "read",
+      "width": "8",
+      "text": "LDY.w $0202 : BNE .all_good"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 292,
+      "routine": "Menu_InitItemScreen",
+      "access": "write",
+      "width": "8",
+      "text": "STY.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 299,
+      "routine": "Menu_InitItemScreen",
+      "access": "write",
+      "width": "16",
+      "text": "STZ.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 365,
+      "routine": "GotoNextItem_Local",
+      "access": "read",
+      "width": "8",
+      "text": "LDA $0202 : INC A : CMP.b #$18 : BCC .dont_reset"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 369,
+      "routine": "GotoNextItem_Local",
+      "access": "write",
+      "width": "8",
+      "text": "STA $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 375,
+      "routine": "DoWeHaveThisItem_Override",
+      "access": "read",
+      "width": "8",
+      "text": "LDY.w $0202 : LDX.w Menu_AddressLong-1, Y"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 420,
+      "routine": "SearchForEquippedItem_Override",
+      "access": "write",
+      "width": "8",
+      "text": "STZ $0202 : STZ $0203 : STZ $0204"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 429,
+      "routine": "SearchForEquippedItem_Override",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202 : BNE .alreadyEquipped"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 431,
+      "routine": "SearchForEquippedItem_Override",
+      "access": "write",
+      "width": "8",
+      "text": "LDA.b #$08 : STA $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 492,
+      "routine": "Menu_SplitValidateSelection",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202 : JSR .owned : BCS .done"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 499,
+      "routine": "Menu_SplitValidateSelection",
+      "access": "write",
+      "width": "8",
+      "text": "STY.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 524,
+      "routine": "Menu_SplitValidateSelection",
+      "access": "comment",
+      "width": "?",
+      "text": "; Physical cells are independent of saved logical IDs. Keep $0202 logical"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 565,
+      "routine": "Menu_CustomGridTryPageTurn",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w Menu_CustomGridItems,X : CMP.w $0202 : BEQ .scan"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 595,
+      "routine": "Menu_CustomGridMove",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w Menu_CustomGridItems,X : CMP.w $0202 : BEQ .located"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_select_item.asm",
+      "line": 619,
+      "routine": "Menu_CustomGridMove",
+      "access": "write",
+      "width": "16",
+      "text": "STA.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_draw.asm",
+      "line": 1125,
+      "routine": "Menu_CheckItemHasSubmenu",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202  ; Current cursor position/item index"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_equipment.asm",
+      "line": 177,
+      "routine": "Menu_Equipment_Select",
+      "access": "write",
+      "width": "8",
+      "text": "LDA.b #$0D : STA.w $0202            ; normal Y item, independent of mask"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_text.asm",
+      "line": 210,
+      "routine": "Menu_DrawItemName",
+      "access": "read",
+      "width": "8",
+      "text": "LDY.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_text.asm",
+      "line": 219,
+      "routine": "Menu_DrawItemName",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$1B : BCC .not_new_item"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_text.asm",
+      "line": 230,
+      "routine": "Menu_DrawItemName",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202 : AND.w #$00FF : CMP.w #$001C : BNE .new_name_done"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_text.asm",
+      "line": 243,
+      "routine": "Menu_DrawItemName",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$1A : BNE .not_goldstar_cell"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_text.asm",
+      "line": 247,
+      "routine": "Menu_DrawItemName",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_text.asm",
+      "line": 249,
+      "routine": "Menu_DrawItemName",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$03 : BEQ .goldstar"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_text.asm",
+      "line": 264,
+      "routine": "Menu_DrawItemName",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202 : BEQ .no_items"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_hud.asm",
+      "line": 147,
+      "routine": "HUD_Update",
+      "access": "read",
+      "width": "8",
+      "text": "LDX   $0202 : LDA $7EF33F, X : AND.w #$00FF"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_hud.asm",
+      "line": 177,
+      "routine": "HUD_Update",
+      "access": "read",
+      "width": "8",
+      "text": "LDX   $0202 : LDA $7EF33F, X : AND.w #$00FF"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_hud.asm",
+      "line": 280,
+      "routine": "HUD_UpdateItemBox",
+      "access": "read",
+      "width": "8",
+      "text": "LDX $0202 : BEQ .no_equipped_item"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_hud.asm",
+      "line": 369,
+      "routine": "HUD_UpdateItemBox",
+      "access": "comment",
+      "width": "?",
+      "text": "; button runs that form, even after the Y item ($0202) changed: the change"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_hud.asm",
+      "line": 392,
+      "routine": "HUD_ItemBoxItem",
+      "access": "read",
+      "width": "8",
+      "text": "LDX.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_page3.asm",
+      "line": 12,
+      "routine": "?",
+      "access": "comment",
+      "width": "?",
+      "text": ";   Y item ($0202 = $13-$17) the grid draws no cursor and the name bar"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_page3.asm",
+      "line": 22,
+      "routine": "?",
+      "access": "comment",
+      "width": "?",
+      "text": ";   $0202 = its item ID ($13-$17), exactly as picking it in the grid;"
+    },
+    {
+      "symbol": "$0303",
+      "file": "Menu/menu_page3.asm",
+      "line": 23,
+      "routine": "?",
+      "access": "comment",
+      "width": "?",
+      "text": ";   Menu_Exit copies it to $0303 when the menu closes."
+    },
+    {
+      "symbol": "Menu_Exit",
+      "file": "Menu/menu_page3.asm",
+      "line": 23,
+      "routine": "?",
+      "access": "ref",
+      "width": "?",
+      "text": ";   Menu_Exit copies it to $0303 when the menu closes."
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_page3.asm",
+      "line": 165,
+      "routine": "Menu_Page3_ItemScreen",
+      "access": "comment",
+      "width": "?",
+      "text": "BRA .items                  ; custom grid keeps $0202 a logical item ID"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_page3.asm",
+      "line": 169,
+      "routine": "Menu_Page3_ItemScreen",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$19 : BNE .items"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_page3.asm",
+      "line": 170,
+      "routine": "Menu_Page3_ItemScreen",
+      "access": "write",
+      "width": "8",
+      "text": "LDA.b #$13 : STA.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_page3.asm",
+      "line": 359,
+      "routine": "Menu_Page3_IsMaskItem",
+      "access": "comment",
+      "width": "?",
+      "text": "; In: A = owned value of item $0202, 8-bit A."
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_page3.asm",
+      "line": 360,
+      "routine": "Menu_Page3_IsMaskItem",
+      "access": "comment",
+      "width": "?",
+      "text": "; Out: A = 0 when $0202 is a mask, else A unchanged; N/Z follow A."
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_page3.asm",
+      "line": 364,
+      "routine": "Menu_Page3_GridFilter",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_page3.asm",
+      "line": 440,
+      "routine": "Menu_Page3_InitCursor",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_page3.asm",
+      "line": 524,
+      "routine": "Menu_Page3_Select",
+      "access": "write",
+      "width": "16",
+      "text": "STA.w $0202                          ; the Y item, as in the grid"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_page3.asm",
+      "line": 659,
+      "routine": "Menu_Page3_Draw",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_page3.asm",
+      "line": 789,
+      "routine": "Menu_Page3_Draw",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_page3.asm",
+      "line": 994,
+      "routine": "Menu_PortalRod_SyncOwned",
+      "access": "comment",
+      "width": "?",
+      "text": "; so $0202 = $13 there means the Portal Rod ($19). 8-bit A."
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_page3.asm",
+      "line": 1000,
+      "routine": "Menu_PortalRod_CellToItem",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$13 : BNE .done"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu_page3.asm",
+      "line": 1001,
+      "routine": "Menu_PortalRod_CellToItem",
+      "access": "write",
+      "width": "8",
+      "text": "LDA.b #$19 : STA.w $0202"
+    },
+    {
+      "symbol": "Menu_Exit",
+      "file": "Menu/menu.asm",
+      "line": 129,
+      "routine": "Menu_Entry",
+      "access": "call/ref",
+      "width": "?",
+      "text": "dw Menu_Exit               ; 0A"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu.asm",
+      "line": 159,
+      "routine": "Menu_InitGraphics",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu.asm",
+      "line": 294,
+      "routine": "Menu_CheckForSpecialMenus",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #!MENU_STATE_SCROLL_TO : BNE +"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu.asm",
+      "line": 301,
+      "routine": "Menu_CheckForSpecialMenus",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #!MENU_STATE_SONG_MENU : BNE ++"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu.asm",
+      "line": 311,
+      "routine": "Menu_CheckForSpecialMenus",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #!MENU_STATE_JOURNAL : BNE ++"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu.asm",
+      "line": 368,
+      "routine": "Menu_ItemScreen",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202 : BNE .have_item"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu.asm",
+      "line": 378,
+      "routine": "Menu_ItemScreen",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202 : BEQ .do_no_input"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu.asm",
+      "line": 435,
+      "routine": "Menu_ItemScreen",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202 : JSR Menu_Page3_IsMaskItem : BCS .no_grid_cursor"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu.asm",
+      "line": 437,
+      "routine": "Menu_ItemScreen",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202 : ASL : TAY"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu.asm",
+      "line": 546,
+      "routine": "Menu_CheckBottle",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$06 : BNE .not_first"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu.asm",
+      "line": 550,
+      "routine": "Menu_CheckBottle",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #!MENU_STATE_MAGIC_BAG : BNE .not_second"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu.asm",
+      "line": 554,
+      "routine": "Menu_CheckBottle",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$12 : BNE .not_third"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu.asm",
+      "line": 558,
+      "routine": "Menu_CheckBottle",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$18 : BNE .not_any"
+    },
+    {
+      "symbol": "Menu_Exit",
+      "file": "Menu/menu.asm",
+      "line": 569,
+      "routine": "Menu_Exit",
+      "access": "label",
+      "width": "?",
+      "text": "Menu_Exit:"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu.asm",
+      "line": 586,
+      "routine": "Menu_Exit",
+      "access": "comment",
+      "width": "?",
+      "text": "; set $0303 by using $0202 to index table on exit"
+    },
+    {
+      "symbol": "$0303",
+      "file": "Menu/menu.asm",
+      "line": 586,
+      "routine": "Menu_Exit",
+      "access": "comment",
+      "width": "?",
+      "text": "; set $0303 by using $0202 to index table on exit"
+    },
+    {
+      "symbol": "$0304",
+      "file": "Menu/menu.asm",
+      "line": 587,
+      "routine": "Menu_Exit",
+      "access": "comment",
+      "width": "?",
+      "text": "; set $0304 to prevent item + 1 animation exploits"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Menu/menu.asm",
+      "line": 588,
+      "routine": "Menu_Exit",
+      "access": "read",
+      "width": "8",
+      "text": "LDX $0202"
+    },
+    {
+      "symbol": "$0303",
+      "file": "Menu/menu.asm",
+      "line": 589,
+      "routine": "Menu_Exit",
+      "access": "write",
+      "width": "16",
+      "text": "LDA.w Menu_ItemIndex, X : STA $0303 : STA.w $0304"
+    },
+    {
+      "symbol": "$0304",
+      "file": "Menu/menu.asm",
+      "line": 589,
+      "routine": "Menu_Exit",
+      "access": "write",
+      "width": "16",
+      "text": "LDA.w Menu_ItemIndex, X : STA $0303 : STA.w $0304"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Items/fishing_rod.asm",
+      "line": 27,
+      "routine": "LinkItem_FishingRodAndPortalRod",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$1B : BNE .not_byrna"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Items/fishing_rod.asm",
+      "line": 33,
+      "routine": "LinkItem_FishingRodAndPortalRod",
+      "access": "comment",
+      "width": "?",
+      "text": "; The Portal Rod has its own Items cell ($0202 = $19, Menu_ItemIndex $0D"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Items/fishing_rod.asm",
+      "line": 35,
+      "routine": "LinkItem_FishingRodAndPortalRod",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$19 : BEQ .own_cell_portal_rod"
+    },
+    {
+      "symbol": "$0303",
+      "file": "Items/ice_rod.asm",
+      "line": 38,
+      "routine": "LinkItem_IceRod",
+      "access": "read",
+      "width": "8",
+      "text": "LDA $0303 : CMP #$06 : BEQ $01"
+    },
+    {
+      "symbol": "$0304",
+      "file": "Items/ice_rod.asm",
+      "line": 41,
+      "routine": "LinkItem_IceRod",
+      "access": "read",
+      "width": "8",
+      "text": "LDA $0304 : CMP #$06 : BEQ $01"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Items/bombchu.asm",
+      "line": 70,
+      "routine": "Bombchu_AddBomb",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$1C : BEQ .bombchu"
+    },
+    {
+      "symbol": "Menu_Exit",
+      "file": "Items/special_soaring.asm",
+      "line": 25,
+      "routine": "SpecialSoaring_Complete",
+      "access": "ref",
+      "width": "?",
+      "text": "; Normal Menu_Exit calls this after restoring the prior module. Do not"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Items/switch_hook.asm",
+      "line": 161,
+      "routine": "SwitchHook_Init",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$1D : BNE .done"
+    },
+    {
+      "symbol": "$0304",
+      "file": "Items/switch_hook.asm",
+      "line": 162,
+      "routine": "SwitchHook_Init",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0304 : CMP.b #$0E : BNE .done"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Items/switch_hook.asm",
+      "line": 231,
+      "routine": "SwitchHook_Tick",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$1D : BNE .cancel"
+    },
+    {
+      "symbol": "$0304",
+      "file": "Items/switch_hook.asm",
+      "line": 232,
+      "routine": "SwitchHook_Tick",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0304 : CMP.b #$0E : BNE .cancel"
+    },
+    {
+      "symbol": "$0304",
+      "file": "Items/switch_hook.asm",
+      "line": 650,
+      "routine": "SwitchHook_ContextValid",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0304 : CMP.b #$0E : BNE .no"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Items/switch_hook.asm",
+      "line": 651,
+      "routine": "SwitchHook_ContextValid",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$1D : BNE .no"
+    },
+    {
+      "symbol": "$0303",
+      "file": "Items/byrna.asm",
+      "line": 50,
+      "routine": "Byrna_IsSelected",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0303 : CMP.b #$0D : BNE .return"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Items/byrna.asm",
+      "line": 51,
+      "routine": "Byrna_IsSelected",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$1B"
+    },
+    {
+      "symbol": "$0304",
+      "file": "Items/goldstar.asm",
+      "line": 54,
+      "routine": "HookMaskCheck",
+      "access": "read",
+      "width": "8",
+      "text": "LDA $0304 : AND.w #$00FF : CMP.w #$000E : BNE .not_mask"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Items/goldstar.asm",
+      "line": 56,
+      "routine": "HookMaskCheck",
+      "access": "read",
+      "width": "8",
+      "text": "LDA $0202 : AND.w #$00FF : CMP.w #$0003 : BNE .not_mask"
+    },
+    {
+      "symbol": "$0304",
+      "file": "Items/goldstar.asm",
+      "line": 325,
+      "routine": "LinkOAM_GoldstarWeaponTiles",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0304 : AND.w #$00FF : CMP.w #$000E : BEQ +"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Items/goldstar.asm",
+      "line": 327,
+      "routine": "LinkOAM_GoldstarWeaponTiles",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202 : AND.w #$00FF : CMP.w #$0003 : BEQ +"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Items/goldstar.asm",
+      "line": 964,
+      "routine": "BeginGoldstarOrHookshot",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$1A : BEQ .select_goldstar"
+    },
+    {
+      "symbol": "$0304",
+      "file": "Items/goldstar.asm",
+      "line": 1008,
+      "routine": "ApplyGoldstarDamageClass",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0304 : CMP.b #$0E : BNE .return"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Items/goldstar.asm",
+      "line": 1010,
+      "routine": "ApplyGoldstarDamageClass",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$03 : BNE .return"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/wolf_mask.asm",
+      "line": 117,
+      "routine": "LinkItem_ShovelAndFlute",
+      "access": "read",
+      "width": "8",
+      "text": "LDA $0202 : CMP.b #$0D : BNE .use_wolf_mask"
+    },
+    {
+      "symbol": "$0303",
+      "file": "Masks/mask_routines.asm",
+      "line": 339,
+      "routine": "LinkState_ResetMaskAnimated",
+      "access": "comment",
+      "width": "?",
+      "text": "; Stone Mask = vanilla Magic Cape ($0303/$0304 = $13, $55 = 1). It stays on"
+    },
+    {
+      "symbol": "$0304",
+      "file": "Masks/mask_routines.asm",
+      "line": 339,
+      "routine": "LinkState_ResetMaskAnimated",
+      "access": "comment",
+      "width": "?",
+      "text": "; Stone Mask = vanilla Magic Cape ($0303/$0304 = $13, $55 = 1). It stays on"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/mask_routines.asm",
+      "line": 340,
+      "routine": "LinkState_ResetMaskAnimated",
+      "access": "comment",
+      "width": "?",
+      "text": "; through the menu while it is still the Y item ($0202 = $17). If the Y item"
+    },
+    {
+      "symbol": "$0303",
+      "file": "Masks/mask_routines.asm",
+      "line": 341,
+      "routine": "LinkState_ResetMaskAnimated",
+      "access": "comment",
+      "width": "?",
+      "text": "; changed, take it off with the poof and sound (Menu_Exit sets $0304 = $0303,"
+    },
+    {
+      "symbol": "$0304",
+      "file": "Masks/mask_routines.asm",
+      "line": 341,
+      "routine": "LinkState_ResetMaskAnimated",
+      "access": "comment",
+      "width": "?",
+      "text": "; changed, take it off with the poof and sound (Menu_Exit sets $0304 = $0303,"
+    },
+    {
+      "symbol": "Menu_Exit",
+      "file": "Masks/mask_routines.asm",
+      "line": 341,
+      "routine": "LinkState_ResetMaskAnimated",
+      "access": "ref",
+      "width": "?",
+      "text": "; changed, take it off with the poof and sound (Menu_Exit sets $0304 = $0303,"
+    },
+    {
+      "symbol": "$0304",
+      "file": "Masks/mask_routines.asm",
+      "line": 345,
+      "routine": "LinkState_ResetMaskAnimated",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0304 : CMP.b #$13 : BNE .clear_55"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/mask_routines.asm",
+      "line": 346,
+      "routine": "LinkState_ResetMaskAnimated",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$17 : BEQ .keep_55"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/mask_routines.asm",
+      "line": 369,
+      "routine": "LinkState_ResetMaskAnimated",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : SEC : SBC.b #$13 : BEQ .no_transform"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/mask_routines.asm",
+      "line": 433,
+      "routine": "LinkItem_CheckForSwordSwing_Masks",
+      "access": "comment",
+      "width": "?",
+      "text": "; - Does nothing unless this mask is the Y item ($0202 = ID + $12), so a stale"
+    },
+    {
+      "symbol": "$0303",
+      "file": "Masks/mask_routines.asm",
+      "line": 434,
+      "routine": "LinkItem_CheckForSwordSwing_Masks",
+      "access": "comment",
+      "width": "?",
+      "text": ";   $0303 cannot put on a mask the HUD does not show."
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/mask_routines.asm",
+      "line": 443,
+      "routine": "Link_TransformMask",
+      "access": "read",
+      "width": "8",
+      "text": "CLC : ADC.b #$12 : CMP.w $0202 : BNE .ignore"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/mask_routines.asm",
+      "line": 508,
+      "routine": "MaskInput_NewY",
+      "access": "comment",
+      "width": "?",
+      "text": "; Stone Mask ($0202 = $17) is the vanilla Magic Cape (LinkItem_Cape, $0303 ="
+    },
+    {
+      "symbol": "$0303",
+      "file": "Masks/mask_routines.asm",
+      "line": 508,
+      "routine": "MaskInput_NewY",
+      "access": "comment",
+      "width": "?",
+      "text": "; Stone Mask ($0202 = $17) is the vanilla Magic Cape (LinkItem_Cape, $0303 ="
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/mask_routines.asm",
+      "line": 517,
+      "routine": "StoneMask_CheckR",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$17 : BNE .done"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/mask_routines.asm",
+      "line": 557,
+      "routine": "StoneMask_TakeOff",
+      "access": "comment",
+      "width": "?",
+      "text": "; When Link wears a mask form (1-4) and the Y item ($0202) is no longer that"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/mask_routines.asm",
+      "line": 587,
+      "routine": "MaskControl_CheckYItem",
+      "access": "read",
+      "width": "8",
+      "text": "CLC : ADC.b #$12 : CMP.w $0202 : BEQ .done"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/mask_binding.asm",
+      "line": 2,
+      "routine": "?",
+      "access": "comment",
+      "width": "?",
+      "text": "; $0202 remains the normal item. $0303 is the effective action for vanilla"
+    },
+    {
+      "symbol": "$0303",
+      "file": "Masks/mask_binding.asm",
+      "line": 2,
+      "routine": "?",
+      "access": "comment",
+      "width": "?",
+      "text": "; $0202 remains the normal item. $0303 is the effective action for vanilla"
+    },
+    {
+      "symbol": "$0304",
+      "file": "Masks/mask_binding.asm",
+      "line": 3,
+      "routine": "?",
+      "access": "comment",
+      "width": "?",
+      "text": "; Link_HandleYItem, and $0304 retains vanilla in-flight action bookkeeping."
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/mask_binding.asm",
+      "line": 40,
+      "routine": "MaskBinding_SelectedItem",
+      "access": "comment",
+      "width": "?",
+      "text": "; Old saves can have a mask in $0202. Preserve it as the R binding and"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/mask_binding.asm",
+      "line": 52,
+      "routine": "MaskBinding_MigrateSelection",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$1E : BNE +"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/mask_binding.asm",
+      "line": 56,
+      "routine": "MaskBinding_MigrateSelection",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$13 : BCC .done"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/mask_binding.asm",
+      "line": 84,
+      "routine": "MaskBinding_MigrateSelection",
+      "access": "write",
+      "width": "8",
+      "text": "STX.w $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/mask_binding.asm",
+      "line": 96,
+      "routine": "MaskBinding_IsOcarina",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$0D : RTL"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/mask_binding.asm",
+      "line": 213,
+      "routine": "MaskBinding_Tick",
+      "access": "read",
+      "width": "8",
+      "text": "LDX.w $0202 : CPX.b #Menu_ItemIndex_End-Menu_ItemIndex : BCS .no_item"
+    },
+    {
+      "symbol": "$0303",
+      "file": "Masks/mask_binding.asm",
+      "line": 218,
+      "routine": "MaskBinding_Tick",
+      "access": "read",
+      "width": "8",
+      "text": "CMP.w $0303 : BEQ .done"
+    },
+    {
+      "symbol": "$0303",
+      "file": "Masks/mask_binding.asm",
+      "line": 219,
+      "routine": "MaskBinding_Tick",
+      "access": "write",
+      "width": "16",
+      "text": "STA.w $0303"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/minish_form.asm",
+      "line": 42,
+      "routine": "LinkState_CheckForMinishForm",
+      "access": "read",
+      "width": "8",
+      "text": "LDA $0202"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/minish_form.asm",
+      "line": 44,
+      "routine": "LinkState_CheckForMinishForm",
+      "access": "comment",
+      "width": "?",
+      "text": "; Check if the value in A (from $0202) is LT $13."
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/minish_form.asm",
+      "line": 47,
+      "routine": "LinkState_CheckForMinishForm",
+      "access": "comment",
+      "width": "?",
+      "text": "; Check if the value in A (from $0202) is GTE to $16."
+    },
+    {
+      "symbol": "$0202",
+      "file": "Masks/bunny_hood.asm",
+      "line": 79,
+      "routine": "LinkState_BunnyHoodRun",
+      "access": "read",
+      "width": "16",
+      "text": "LDA.w $0202              ; check the current item"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Sprites/NPCs/garo.asm",
+      "line": 70,
+      "routine": "Garo_Healing",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$0D : BNE .done ; logical Ocarina"
+    },
+    {
+      "symbol": "$0304",
+      "file": "Sprites/NPCs/garo.asm",
+      "line": 71,
+      "routine": "Garo_Healing",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0304 : CMP.b #$08 : BNE .done ; effective flute action"
+    },
+    {
+      "symbol": "$0202",
+      "file": "Sprites/Objects/pedestal.asm",
+      "line": 17,
+      "routine": "CheckForBook",
+      "access": "read",
+      "width": "8",
+      "text": "LDA.w $0202 : CMP.b #$0F : BNE .not_holding_book"
+    }
+  ]
+}
