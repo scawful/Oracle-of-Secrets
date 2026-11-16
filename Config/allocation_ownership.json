@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "c691ab672bef3ed19b69a130b30c8f942a4abf2122d6dcaacee13563fc366f57"
+      "sha256": "c5029072f4a47ac8531dd43696d4a6249d5124681230a872567fe9304e847d76"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -365,7 +365,7 @@
     "shared:Overworld/travel_destinations.asm": {
       "source_set": "shared",
       "path": "Overworld/travel_destinations.asm",
-      "sha256": "6adfe2d1be11a160bed2ccba83f3e6711afe18205f8458d17a477ff2f6102a56"
+      "sha256": "380d274c53ce7177f18167a7229fab399cadffb6dcd17f999666ce1c1ef993ab"
     }
   },
   "claims": [
@@ -2228,7 +2228,7 @@
       "id": "TravelSpotsVisited",
       "owner": "Bird travel visited destinations (one bit per LoadTransport_screen_id entry)",
       "space": "save_buffer",
-      "base": 8320191,
+      "base": 8320018,
       "size": 1,
       "status": "shared",
       "condition": {
@@ -2236,7 +2236,7 @@
       },
       "lifetime": "Save file; native five-page save and checksum block.",
       "reset": "Vanilla new-file initialization zeros it. TravelDest_MarkVisited ORs bit i on each overworld area load whose area equals LoadTransport_screen_id entry i ($02EAE5). No migration: existing saves start at 0 and the picker refuses until Link enters a destination area.",
-      "save": "Last byte of the former FreeBlock_Dreams range (now F412-F4BE free). SaveGameFile copies the F300 page to primary and backup; checksum covers offsets 0000-04FD. Native save/reopen proof: SRAM slot +$4BF holds the mask and reset/reopen restores it.",
+      "save": "First byte of the former FreeBlock_Dreams prefix (now F413-F49E free; F49F-F4BF reserved for the special-event marker and areas 80-9F flags). SaveGameFile copies the F300 page to primary and backup; checksum covers offsets 0000-04FD. Native save/reopen proof (at the earlier F4BF address, same code path): SRAM slot byte holds the mask and reset/reopen restores it. Moved from $7EF4BF on 2026-11-16; saves written by the F4BF builds keep a stale byte there.",
       "provenance": [
         "shared:Overworld/travel_destinations.asm",
         "shared:Core/sram.asm",

@@ -206,7 +206,7 @@
       "label": "WaterGateStates",
       "desc": "Water gate persistence flags"
     },
-    "0x7EF4BF": {
+    "0x7EF412": {
       "label": "TravelSpotsVisited",
       "desc": "Bird travel visited destinations; bit i = LoadTransport_screen_id entry i ($00,$0B,$06,$10,$1E,$38,$2F,$36)"
     }
