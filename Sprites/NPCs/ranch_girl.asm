@@ -92,7 +92,7 @@ if !ENABLE_RANCH_MILK == 1
   LDA.w SprMiscD, X : CMP.b #$02 : BNE .no_sale
   LDA $10 : CMP.b #$0E : BEQ .running_dialog   ; offer still on screen
     STZ.w SprMiscD, X
-    JSL RanchGirl_SellMilk_Long     ; Sprites/NPCs/ranch_milk.asm (bank $30)
+    JSL RanchGirl_SellMilk_Long     ; Sprites/NPCs/ranch_milk.asm (bank $2B)
     BRA .running_dialog
   .no_sale
 endif

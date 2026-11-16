@@ -196,9 +196,8 @@ if !ENABLE_D8_FARORE_GRAPHICS == 1
   incsrc "Sprites/NPCs/farore_d8_follow.asm"
 endif
 
-if !ENABLE_RANCH_MILK == 1
-  incsrc "Sprites/NPCs/ranch_milk.asm"
-endif
+; Sprites/NPCs/ranch_milk.asm is included from Items/all_items.asm
+; (bank $2B): bank $30 is full once the playtest features are on.
 
 assert pc() <= $310000, "Bank $30 sprite code crossed its LoROM executable boundary"
 assert pc() >= $308000, "Bank $30 sprite code left its bank (org without pushpc/pullpc?)"

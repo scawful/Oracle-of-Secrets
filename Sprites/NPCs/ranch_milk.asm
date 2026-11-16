@@ -1,6 +1,6 @@
 ; =========================================================
 ; Toto Ranch milk sale for the Ranch Girl (!ENABLE_RANCH_MILK).
-; Included in the bank $30 sprite stream (bank $32 is nearly full);
+; Included from Items/all_items.asm (bank $2B; banks $30/$32 are full);
 ; called from RanchGirl_TeachSong after the $187 offer box closes.
 ; =========================================================
 

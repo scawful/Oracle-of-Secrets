@@ -334,6 +334,12 @@ if !ENABLE_LYRA_OVERLAY_FIX == 1
 incsrc "Overworld/lyra_overlay_fix.asm"
 endif
 
+; Ranch milk sale: bank $30 is full. Entered by JSL, exits by RTL, operands
+; are long, immediate or low WRAM ($1CE8, mirrored), so it runs from here.
+if !ENABLE_RANCH_MILK == 1
+incsrc "Sprites/NPCs/ranch_milk.asm"
+endif
+
 ; Richard quest: bank $34 is full. Every JSL entry sets DB with PHK : PLB and
 ; hooks use JSL, so the file runs from this bank unchanged.
 if !ENABLE_RICHARD_QUEST == 1
