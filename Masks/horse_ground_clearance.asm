@@ -342,7 +342,7 @@ HorseLong_ScanGap:
 ; landed y3600, east side probe on a bank Tile16 one row above a 3-tile
 ; exit, 30 frames at 0 px). Try the landing, then shifts across JumpDir of
 ; +8/-8/+16/-16 px; keep the first that is walkable with a free leading
-; edge. None fits: keep the unshifted landing if walkable (prior rule).
+; edge and a native footprint clear of hard solids. None fits: keep the unshifted landing if walkable (prior rule).
 ; In: M8/X8, Horse_JumpDir, Horse_JumpEndX/Y. Out: M8/X8, carry = landing
 ; walkable; Horse_JumpEndX/Y = chosen landing. $08/$0E preserved; X/Y,
 ; $04, $0A and $0C clobbered.
@@ -369,6 +369,7 @@ HorseLong_FitLanding:
   LDA.l Horse_JumpEndY : EOR.b $20 : AND.w #$FC00 : BNE .next_far
   SEP #$20
   JSR HorseForm_CheckLandingWalkable : BCS + : .next_far : JMP .next : +
+  JSR .footprint : BCS + : JMP .next : +
   ; Leading edge at the landing: same points as ConstrainGroundInput.
   LDY.b #$02
   LDA.b $0E : CMP.b #$04 : BCC + : LDY.b #$04 : +
@@ -415,6 +416,33 @@ HorseLong_FitLanding:
   SEP #$20
   JMP HorseForm_CheckLandingWalkable
 
+  ; Native Link collision reads y+8, y+16 and y+23 at x+0 / x+15
+  ; (TileDetectOnMovement offsets, $07CD7B). CheckLandingWalkable reads only
+  ; y+8 / y+12, so a shifted landing could put the lower body inside a solid
+  ; half tile (desert $36: -16 px onto the top of Tile16 $0A4B, all four
+  ; directions blocked). In: M8/X8, Horse_JumpEndX/Y. Out: M8/X8, carry set
+  ; when no footprint point is hard solid ($01/$02). $04/$0A/$0C clobbered.
+  .footprint
+  LDX.b #$0A
+  .footprint_point
+  REP #$20
+  LDA.l Horse_JumpEndX : CLC : ADC.l .footprint_x, X : STA.b $0C
+  LDA.l Horse_JumpEndY : CLC : ADC.l .footprint_y, X : STA.b $0A
+  SEP #$20
+  JSR Horse_QueryTileAt               ; X preserved
+  CMP.b #$01 : BEQ .footprint_solid
+  CMP.b #$02 : BEQ .footprint_solid
+  DEX #2 : BPL .footprint_point
+  SEC
+  RTS
+  .footprint_solid
+  CLC
+  RTS
+
+  .footprint_x
+  dw $0000, $000F, $0000, $000F, $0000, $000F
+  .footprint_y
+  dw $0008, $0008, $0010, $0010, $0017, $0017
   .shift
   dw $0000, $0008, $FFF8, $0010, $FFF0
   .shift_end
