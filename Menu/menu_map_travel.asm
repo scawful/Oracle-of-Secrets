@@ -332,9 +332,9 @@ MenuMapTravel_Draw:
 {
   JSR Menu_DrawBackground
   REP #$30
-  LDX.w #$001A
+  LDX.w #$0004
 .title
-  LDA.w .title_text,X : STA.w $1000+menu_offset(6,9),X
+  LDA.w .title_text,X : STA.w $1000+menu_offset(6,14),X  ; columns 14-16, same center as EQUIPMENT
   DEX #2 : BPL .title
   LDX.w #$0004
 .map_label
@@ -400,7 +400,7 @@ MenuMapTravel_Draw:
   SEP #$30
   RTS
 .title_text
-  dw "MAP_AND_TRAVEL"
+  dw "MAP"
 .map_text
   dw "MAP"
 .travel_text
