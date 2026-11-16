@@ -24,7 +24,8 @@ org $07AF3E ; Cane of Byrna
 LinkItem_FishingRodAndPortalRod:
 {
 if !ENABLE_GOLDSTAR_CELL == 1
-  LDA.w $0202 : CMP.b #$1B : BNE .not_byrna
+  %SelectedItem()
+  CMP.b #$1B : BNE .not_byrna
     JSR LinkItem_RestoredByrna
     RTS
   .not_byrna
@@ -32,7 +33,8 @@ endif
 if !ENABLE_PORTAL_ROD_CELL == 1
   ; The Portal Rod has its own Items cell ($0202 = $19, Menu_ItemIndex $0D
   ; like the Fishing Rod cell $10). The cell picks the rod; no L/R switch.
-  LDA.w $0202 : CMP.b #$19 : BEQ .own_cell_portal_rod
+  %SelectedItem()
+  CMP.b #$19 : BEQ .own_cell_portal_rod
     JSL LinkItem_FishingRod
     RTS
   .own_cell_portal_rod

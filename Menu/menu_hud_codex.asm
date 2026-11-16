@@ -21,8 +21,9 @@
 ; same HudItems tables as the Y box ($0DFA93 pointer per item; entry = 4
 ; words: top-left, top-right, bottom-left, bottom-right), indexed by the
 ; ownership level like HUD_UpdateItemBox (Bombs level 1, Hookshot level 0).
-; Bow shows the arrow count, Bombs the bomb count (two digits, like the Y
-; count) in the box's bottom border.
+; Bow shows the arrow count, Bombs the bomb count and Bombchu its ammo
+; (two digits, like the Y count) in the box's bottom border. Portal,
+; Goldstar, Bombchu and Switch Hook use the Y box's icon choices.
 ; In: A/X/Y 16-bit, any DBR. Out: A/X/Y 16-bit, A and X clobbered.
 HUD_CodexCells:
 {
@@ -52,6 +53,23 @@ HUD_CodexCells:
 
   .icon
     TAY                                         ; Y = item ID
+if !ENABLE_GOLDSTAR_CELL == 1
+    CPY.w #$001B : BCC +                        ; Bombchu, Switch Hook
+      JMP .new_icon
+    +
+endif
+if !ENABLE_PORTAL_ROD_CELL == 1
+    ; Logical cells draw like the Y box: Portal = rod entry level 1,
+    ; Goldstar = hookshot entry level 1. Neither has a count.
+    CPY.w #$0019 : BNE +
+      LDY.w #$0010 : LDA.w #$0001 : BRA .level
+    +
+endif
+if !ENABLE_GOLDSTAR_CELL == 1
+    CPY.w #$001A : BNE +
+      LDY.w #$0003 : LDA.w #$0001 : BRA .level
+    +
+endif
     TAX
     LDA.l Menu_AddressIndex-1, X : AND.w #$00FF : TAX
     LDA.l $7EF300, X : AND.w #$00FF             ; ownership level
@@ -65,6 +83,7 @@ else
       LDA.w GoldstarOrHookshot : AND.w #$00FF : DEC
 endif
     +
+    .level
     ASL #3 : PHA
     TYA : DEC : ASL : TAX
     LDA.l $0DFA93, X : CLC : ADC 1,S : TAX
@@ -77,8 +96,27 @@ endif
     CPY.w #$0001 : BNE +
       LDA.l $7EF377 : BRA .count                ; arrows
     +
-    CPY.w #$0004 : BNE .no_count
+    CPY.w #$0004 : BEQ +
+      JMP .no_count
+    +
       LDA.l $7EF343                             ; bombs
+      BRA .count
+if !ENABLE_GOLDSTAR_CELL == 1
+  ; Prototype cells past vanilla's pointer table: the Y box's own icons
+  ; (HUD_DrawItem .new_icons, 4 words per item from Byrna $1B).
+  .new_icon
+    TYA : SEC : SBC.w #$001B : ASL #3 : TAX
+    LDA.l HUD_DrawItem_new_icons+0, X : STA.l $7EC770
+    LDA.l HUD_DrawItem_new_icons+2, X : STA.l $7EC772
+    LDA.l HUD_DrawItem_new_icons+4, X : STA.l $7EC7B0
+    LDA.l HUD_DrawItem_new_icons+6, X : STA.l $7EC7B2
+    CPY.w #$001C : BEQ +
+      JMP .no_count
+    +
+    LDA.l BombchuAmmo : AND.w #$00FF            ; same cap as the Y count
+    CMP.w #!BOMBCHU_AMMO_MAX+1 : BCC .count
+      LDA.w #$0000
+endif
     .count
     ; Two digits (tiles $2490-$2499, as HexToDecimal draws).
     AND.w #$00FF

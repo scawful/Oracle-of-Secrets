@@ -158,7 +158,8 @@ SwitchHook_Init:
   PHP : REP #$30 : PHA : PHX : PHY : PHB
   PHK : PLB : SEP #$30
   STZ.w !SwitchHookActive
-  LDA.w $0202 : CMP.b #$1D : BNE .done
+  %SelectedItem()
+  CMP.b #$1D : BNE .done
   LDA.w $0304 : CMP.b #$0E : BNE .done
   LDA.l SwitchHookOwned : CMP.b #$01 : BNE .done
   STZ.w !SwitchHookBeat
@@ -228,7 +229,8 @@ SwitchHook_Tick:
   CMP.b #$16 : BEQ .submodule_ok          ; Module07_16_UpdatePegs
   CMP.b #$17 : BNE .cancel                ; Module07_17_PressurePlate
   .submodule_ok
-  LDA.w $0202 : CMP.b #$1D : BNE .cancel
+  %SelectedItem()
+  CMP.b #$1D : BNE .cancel
   LDA.w $0304 : CMP.b #$0E : BNE .cancel
   LDA.l SwitchHookOwned : CMP.b #$01 : BNE .cancel
   LDA.b $1B : BEQ .place                  ; layer is a dungeon key only
@@ -648,7 +650,8 @@ SwitchHook_ContextValid:
   LDA.b $11 : ORA.w $037E : BNE .no
   LDA.b $5D : CMP.b #$13 : BNE .no
   LDA.w $0304 : CMP.b #$0E : BNE .no
-  LDA.w $0202 : CMP.b #$1D : BNE .no
+  %SelectedItem()
+  CMP.b #$1D : BNE .no
   LDA.l SwitchHookOwned : CMP.b #$01 : BNE .no
   LDA.b $10 : CMP.b #$09 : BEQ .overworld
   CMP.b #$07 : BNE .no

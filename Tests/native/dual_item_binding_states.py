@@ -17,8 +17,9 @@ Cases (real controller input after each fixture):
    fixture restores play, then X throws the boomerang.
 3. bottle_y: Y = Bottle (Y-only item). X still throws the boomerang and
    $0202 stays the bottle.
-4. bombchu_conflict: Y = Bombchu, X = Bombs (same bomb routine). X is refused
-   (no bomb, no latch); Y still works.
+4. bombchu_conflict: Y = Bombchu, X = Bombs (same bomb routine). X places a
+   normal bomb (the routine reads ItemBindings_EffectiveItem); Bombchu ammo
+   is kept.
 5. old_save: saved bindings version 0 (a save from before the feature) with
    Hookshot on Y. Gameplay hydrates version 1 with Y = Hookshot; X = Bow is
    then assigned. Game Over Save & Quit, fresh process, cold boot: Y is still
@@ -145,9 +146,9 @@ class StatesTest(base.DualItemBindingTest):
         self.b.press_button("x", frames=4, detach_debugger=False)
         time.sleep(0.5)
         s = self.snap("bombchu_after_X")
-        self.check("bombchu_X_bombs_refused",
-                   s["button"] == 0 and self.ancilla_count(BOMB_ID) == 0
-                   and self.r(BOMBS) == bombs and s["y_item"] == ID_BOMBCHU)
+        self.check("bombchu_X_places_bomb",
+                   self.ancilla_count(BOMB_ID) >= 1 and self.r(BOMBS) == bombs - 1
+                   and s["y_item"] == ID_BOMBCHU)
         self.take_screenshot("13_bombchu_Y_bombs_X")
         # Return to a plain state for the next case.
         self.bindings(ID_BOW, 1, ID_BOW, ID_BOOMERANG)

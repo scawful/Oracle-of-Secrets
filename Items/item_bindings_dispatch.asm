@@ -81,12 +81,9 @@ ItemBindings_Route:
   LDA.b $3A : AND.b #$40 : BNE .no_start
   LDA.b $3C : ORA.b $46 : ORA.b $6C : ORA.b $5D : BNE .no_start
   LDA.w $0FFC : ORA.w $02E0 : BNE .no_start
-  ; X may not start an action whose routine the Y item also owns (Bombs
-  ; under a Bombchu Y, Hookshot under Goldstar/Switch Hook): the shared
-  ; routine reads $0202 and would fire the Y variant. Y still starts.
-  LDA.b $F4 : AND.b #$40 : BNE .may_start
-  JSR ItemBindings_XConflict : BCS .no_start
-  .may_start
+  ; X and Y may share an action routine (Bombs/Bombchu, Hookshot/Goldstar/
+  ; Switch Hook, Fishing/Portal): the routine's variant read goes through
+  ; ItemBindings_EffectiveItem, so each button fires its own item.
   LDA.b #$01 : BRA .try
   .no_start
   LDA.b #$00
@@ -109,24 +106,6 @@ ItemBindings_Admitted:
   CMP.b #$08 : BCS .no
   .form_ok
   SEC : RTS
-  .no
-  CLC : RTS
-}
-
-; C=1 when saved X is a different item than $0202 but runs the same action
-; routine. M8/X8 near helper; A and X clobbered.
-ItemBindings_XConflict:
-{
-  LDA.l ItemBindingSavedX : BEQ .no
-  CMP.l $7E0202 : BEQ .no
-  JSR ItemBindings_MapAction : CMP.b #$00 : BEQ .no   ; MapAction keeps P
-  PHA
-  LDA.l $7E0202 : CMP.b #Menu_ItemIndex_End-Menu_ItemIndex : BCS .pull_no
-  TAX
-  LDA.l Menu_ItemIndex, X : CMP 1,S : BNE .pull_no
-  PLA : SEC : RTS
-  .pull_no
-  PLA
   .no
   CLC : RTS
 }

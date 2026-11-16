@@ -48,7 +48,8 @@ LinkItem_RestoredByrna:
 Byrna_IsSelected:
 {
   LDA.w $0303 : CMP.b #$0D : BNE .return
-  LDA.w $0202 : CMP.b #$1B
+  %SelectedItem()
+  CMP.b #$1B
   .return
   RTL
 }

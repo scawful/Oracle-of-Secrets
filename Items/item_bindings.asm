@@ -12,10 +12,11 @@
 ; No physical input, $0202, $0303/$0304, HUD, mask, sword or map writes.
 
 ; C=owned and latchable, A unchanged. M8 near helper; any X width, X/Y/P
-; kept except C. Latchable items are the grid items whose handlers start on
-; one new press and never read $0202 to pick a variant (IDs 1-$11 below).
-; Bottles, Mirror, Ocarina, Book, rods, masks and the logical cells $19+
-; stay Y-only: their routines read $0202 or own a menu/song state.
+; kept except C. Latchable items start on one new press. Handlers that pick
+; a variant by item ID (bomb/Bombchu, rod/Portal, chain/Goldstar/Switch Hook)
+; read ItemBindings_EffectiveItem, so X sees the X item.
+; Bottles, Mirror, Ocarina, Book, Fishing Rod, Byrna (held button), masks and
+; Garo stay Y-only: they own a menu, song, fishing or held state.
 ItemBindings_Validate:
 {
   PHX : PHY : PHP : SEP #$30            ; SEP #$10 clears X/Y high bytes
@@ -62,22 +63,59 @@ ItemBindings_IsLatchable:
 }
 
 ; Indexed by logical ID (= menu grid index). Owner: offset into $7EF300.
+; Logical cells own exactly 1 (Max $02); entries follow Menu_ItemIndex,
+; including its cell flags. Unsupported cells stay 0.
 ItemBindings_Owner:
   db $00
   db $40, $41, $42, $43, $44, $00       ; Bow Boomerang Hookshot Bombs Powder -
   db $4B, $4A, $45, $46, $00, $00       ; Hammer Lamp FireRod IceRod - -
-  db $00, $00, $50, $00, $4D            ; - - Somaria - Feather
+  db $00, $00, $50, $00, $4D, $00       ; - - Somaria - Feather -
+  db $00, $00, $00, $00, $00, $00       ; masks, Bottle 4
+if !ENABLE_PORTAL_ROD_CELL == 1
+  db PortalRodOwned&$FF                 ; $19 Portal Rod
+endif
+if !ENABLE_GOLDSTAR_CELL == 1
+  db GoldstarOwned&$FF, $00             ; $1A Goldstar, $1B Byrna (Y only)
+  db BombchuOwned&$FF, SwitchHookOwned&$FF ; $1C Bombchu, $1D Switch Hook
+endif
 ItemBindings_Owner_End:
 ItemBindings_Max:
   db $00
   db $05, $03, $00, $00, $03, $00
   db $00, $00, $00, $00, $00, $00
-  db $00, $00, $00, $00, $00
+  db $00, $00, $00, $00, $00, $00
+  db $00, $00, $00, $00, $00, $00
+if !ENABLE_PORTAL_ROD_CELL == 1
+  db $02
+endif
+if !ENABLE_GOLDSTAR_CELL == 1
+  db $02, $00, $02, $02
+endif
 ItemBindings_ActionTable:
   db $00
   db $03, $02, $0E, $01, $0A, $00
   db $04, $09, $05, $06, $00, $00
-  db $00, $00, $12, $00, $07
+  db $00, $00, $12, $00, $07, $00
+  db $00, $00, $00, $00, $00, $00
+if !ENABLE_PORTAL_ROD_CELL == 1
+  db $0D                                ; Portal: rod routine
+endif
+if !ENABLE_GOLDSTAR_CELL == 1
+  db $0E, $00, $01, $0E                 ; Goldstar chain, -, Bombchu bomb, Switch Hook chain
+endif
+
+; Item the running action belongs to, for handlers that pick a variant by
+; item ID. X latch owning $0303: the X item. Otherwise $0202 (Y, unchanged).
+; Called by %SelectedItem() (Items/all_items.asm). M8, any DBR/X width;
+; A, N/Z and C out; X/Y kept.
+ItemBindings_EffectiveItem:
+{
+  LDA.l ItemBindingButton : CMP.b #$02 : BNE .y
+  LDA.l $7E0303 : CMP.l ItemBindingAction : BNE .y
+  LDA.l ItemBindingLogical : RTL
+.y
+  LDA.l $7E0202 : RTL
+}
 
 ; Load/new-file migration, only after inventory and saved bytes are loaded.
 ; Unknown version: retain supported owned vanilla selection, otherwise choose
