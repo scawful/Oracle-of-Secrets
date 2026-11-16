@@ -204,9 +204,10 @@ endif
 }
 HorseGroundClearance_End:
 ; Ranch fence Tile16s Epona can jump: Toto Ranch fence set, $02D6, and the Kalyxo-art
-; pit gap Tile16s $0EF2 (top) / $0EF4 (bottom) on map $22 (x=4, y=17..18).
+; pit gap Tile16s $0EF2 (top) / $0EF4 (bottom) on map $22 (x=4, y=17..18), and the
+; scrub rail Tile16 $010B on map $25 (x=2..3, y=6; other $010B cells also become jumpable).
 HorseFenceTile16s:
-  dw $0078, $007B, $043A, $003B, $0267, $002C, $02D6, $0EF2, $0EF4
+  dw $0078, $007B, $043A, $003B, $0267, $002C, $02D6, $0EF2, $0EF4, $010B
 HorseFenceTile16s_End:
 
 if !ENABLE_HORSE_LONG_JUMP == 1
