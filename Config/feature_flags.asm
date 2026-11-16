@@ -83,6 +83,7 @@
 !ENABLE_PART00_NIGHT_FIX              = 1
 !ENABLE_PART0_STORM                   = 1
 !ENABLE_PORTAL_ROD_CELL               = 1
+!ENABLE_RANCH_MILK                    = 0
 !ENABLE_RICHARD_QUEST                 = 1
 !ENABLE_RING_SRAM_RELOCATE            = 1
 !ENABLE_SKY_OVERLAY_SOURCE_PROFILE    = 0

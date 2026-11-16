@@ -349,6 +349,11 @@ endif
 ; native proof.
 !ENABLE_HORSE_CROWD_CHARGE          = 0
 
+; Ranch milk: after the Ocarina, the Ranch Girl's later powder reveals offer
+; Toto Ranch milk for 30 Rupees (BottleMan messages $187-$18B, no new text)
+; instead of the curse reminder $10E. Off until native proof.
+!ENABLE_RANCH_MILK                  = 0
+
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
 !LOG_MUSIC     = 1
