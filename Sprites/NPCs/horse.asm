@@ -59,8 +59,11 @@ if !ENABLE_HORSE_PARK_ANYWHERE == 1
   LDA.b $1B : BNE .despawn_before_draw
   LDA.l Horse_HasAnchor : BEQ .ranch_profile
   LDA.b $8A : CMP.l Horse_AnchorArea : BNE .despawn_before_draw
-  JSL Horse_SlotsBusy : BCS .SpriteIsNotActive
-  JSL Horse_RanchProfileReady : BCS .draw_ok
+  JSL Horse_RanchProfileReady : BCC .off_ranch
+    JSL Horse_SlotsBusy : BCS .SpriteIsNotActive
+    BRA .draw_ok
+  .off_ranch
+  JSL Horse_ParkedBusy : BCS .SpriteIsNotActive
   ; Off the Ranch, draw only while her cells are in VRAM (hidden, not garbled).
   LDA.l Horse_OffState : CMP.b #$A2 : BNE .SpriteIsNotActive
   BRA .draw_ok
