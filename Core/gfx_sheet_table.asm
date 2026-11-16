@@ -67,6 +67,9 @@ GfxSheet_GetPtr_BgCA:
   PHP : SEP #$30 : PHX : REP #$10
   TYX
   %GfxSheetCopy($C8, $C9, $CA, 0)
+  if !ENABLE_ABYSS_GBC_INTERIORS == 1
+    JSL Oracle_AbyssGbc_RemapBg
+  endif
   SEP #$10 : PLX : PLP
   RTL
 }

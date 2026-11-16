@@ -1,0 +1,460 @@
+{
+ "onox": {
+  "rooms": [
+   "0C",
+   "1C",
+   "4C",
+   "5C",
+   "6B",
+   "6D",
+   "4D",
+   "5D",
+   "6C"
+  ],
+  "row_palettes": {
+   "2": 3,
+   "3": 4,
+   "4": 4,
+   "5": 4,
+   "6": 4,
+   "7": 4
+  },
+  "sheets": {
+   "00": {
+    "slot": 0,
+    "donor_chars": [],
+    "posterized_chars": 64
+   },
+   "01": {
+    "slot": 1,
+    "donor_chars": [
+     "043",
+     "044",
+     "046",
+     "047",
+     "048",
+     "050",
+     "051",
+     "053",
+     "054",
+     "060",
+     "061",
+     "070",
+     "071"
+    ],
+    "posterized_chars": 51
+   },
+   "15": {
+    "slot": 2,
+    "donor_chars": [
+     "090",
+     "092",
+     "093",
+     "094",
+     "095",
+     "096",
+     "097",
+     "098",
+     "099",
+     "09E",
+     "09F",
+     "0A2",
+     "0A3",
+     "0A4",
+     "0A5",
+     "0A6",
+     "0A7",
+     "0AC",
+     "0AD",
+     "0AE",
+     "0AF",
+     "0B3",
+     "0B5",
+     "0B6",
+     "0B7"
+    ],
+    "posterized_chars": 39
+   },
+   "0D": {
+    "slot": 3,
+    "donor_chars": [
+     "0C1",
+     "0EC",
+     "0ED",
+     "0EE",
+     "0EF",
+     "0FC",
+     "0FD",
+     "0FE",
+     "0FF"
+    ],
+    "posterized_chars": 55
+   },
+   "0E": {
+    "slot": 4,
+    "donor_chars": [],
+    "posterized_chars": 64
+   },
+   "2A": {
+    "slot": 5,
+    "donor_chars": [],
+    "posterized_chars": 58
+   },
+   "18": {
+    "slot": 6,
+    "donor_chars": [],
+    "posterized_chars": 46
+   }
+  }
+ },
+ "fire": {
+  "rooms": [
+   "2D",
+   "3D"
+  ],
+  "row_palettes": {
+   "2": 3,
+   "3": 3,
+   "4": 3,
+   "5": 4,
+   "6": 4,
+   "7": 4
+  },
+  "sheets": {
+   "00": {
+    "slot": 0,
+    "donor_chars": [],
+    "posterized_chars": 64
+   },
+   "01": {
+    "slot": 1,
+    "donor_chars": [
+     "043",
+     "044",
+     "046",
+     "047",
+     "048",
+     "050",
+     "051",
+     "053",
+     "054",
+     "060",
+     "061",
+     "070",
+     "071"
+    ],
+    "posterized_chars": 51
+   },
+   "15": {
+    "slot": 2,
+    "donor_chars": [
+     "090",
+     "092",
+     "093",
+     "094",
+     "095",
+     "096",
+     "097",
+     "098",
+     "099",
+     "09E",
+     "09F",
+     "0A2",
+     "0A3",
+     "0A4",
+     "0A5",
+     "0A6",
+     "0A7",
+     "0AC",
+     "0AD",
+     "0AE",
+     "0AF",
+     "0B3",
+     "0B5",
+     "0B6",
+     "0B7"
+    ],
+    "posterized_chars": 39
+   },
+   "0D": {
+    "slot": 3,
+    "donor_chars": [
+     "0C1",
+     "0EE",
+     "0EF",
+     "0FE",
+     "0FF"
+    ],
+    "posterized_chars": 59
+   },
+   "0E": {
+    "slot": 4,
+    "donor_chars": [],
+    "posterized_chars": 64
+   },
+   "2A": {
+    "slot": 5,
+    "donor_chars": [],
+    "posterized_chars": 58
+   },
+   "18": {
+    "slot": 6,
+    "donor_chars": [],
+    "posterized_chars": 46
+   }
+  }
+ },
+ "rites": {
+  "rooms": [
+   "0D",
+   "1D"
+  ],
+  "row_palettes": {
+   "2": 3,
+   "3": 3,
+   "4": 3,
+   "5": 4,
+   "6": 4,
+   "7": 4
+  },
+  "sheets": {
+   "00": {
+    "slot": 0,
+    "donor_chars": [],
+    "posterized_chars": 64
+   },
+   "01": {
+    "slot": 1,
+    "donor_chars": [
+     "043",
+     "044",
+     "046",
+     "047",
+     "048",
+     "050",
+     "051",
+     "053",
+     "054",
+     "060",
+     "061",
+     "070",
+     "071"
+    ],
+    "posterized_chars": 51
+   },
+   "15": {
+    "slot": 2,
+    "donor_chars": [
+     "090",
+     "092",
+     "093",
+     "094",
+     "095",
+     "096",
+     "097",
+     "098",
+     "099",
+     "09E",
+     "09F",
+     "0A2",
+     "0A3",
+     "0A4",
+     "0A5",
+     "0A6",
+     "0A7",
+     "0AC",
+     "0AD",
+     "0AE",
+     "0AF",
+     "0B3",
+     "0B5",
+     "0B6",
+     "0B7"
+    ],
+    "posterized_chars": 39
+   },
+   "0D": {
+    "slot": 3,
+    "donor_chars": [
+     "0C9",
+     "0CA",
+     "0CB",
+     "0DA",
+     "0DB",
+     "0EC",
+     "0ED",
+     "0FC",
+     "0FD"
+    ],
+    "posterized_chars": 55
+   },
+   "0E": {
+    "slot": 4,
+    "donor_chars": [],
+    "posterized_chars": 64
+   },
+   "2A": {
+    "slot": 5,
+    "donor_chars": [],
+    "posterized_chars": 58
+   },
+   "18": {
+    "slot": 6,
+    "donor_chars": [],
+    "posterized_chars": 46
+   }
+  }
+ },
+ "mermaid": {
+  "rooms": [
+   "C9",
+   "53"
+  ],
+  "row_palettes": {
+   "2": 3,
+   "3": 3,
+   "4": 3,
+   "5": 4,
+   "6": 4,
+   "7": 4
+  },
+  "sheets": {
+   "00": {
+    "slot": 0,
+    "donor_chars": [],
+    "posterized_chars": 64
+   },
+   "0A": {
+    "slot": 0,
+    "donor_chars": [],
+    "posterized_chars": 64
+   },
+   "01": {
+    "slot": 1,
+    "donor_chars": [
+     "043",
+     "044",
+     "046",
+     "047",
+     "048",
+     "050",
+     "051",
+     "053",
+     "054",
+     "060",
+     "061",
+     "070",
+     "071"
+    ],
+    "posterized_chars": 51
+   },
+   "11": {
+    "slot": 2,
+    "donor_chars": [
+     "090",
+     "092",
+     "093",
+     "094",
+     "095",
+     "096",
+     "097",
+     "098",
+     "099",
+     "09E",
+     "09F",
+     "0A2",
+     "0A3",
+     "0A4",
+     "0A5",
+     "0A6",
+     "0A7",
+     "0AC",
+     "0AD",
+     "0AE",
+     "0AF",
+     "0B3",
+     "0B5",
+     "0B6",
+     "0B7"
+    ],
+    "posterized_chars": 39
+   },
+   "E8": {
+    "slot": 2,
+    "donor_chars": [
+     "090",
+     "092",
+     "093",
+     "094",
+     "095",
+     "096",
+     "097",
+     "098",
+     "099",
+     "09E",
+     "09F",
+     "0A2",
+     "0A3",
+     "0A4",
+     "0A5",
+     "0A6",
+     "0A7",
+     "0AC",
+     "0AD",
+     "0AE",
+     "0AF",
+     "0B3",
+     "0B5",
+     "0B6",
+     "0B7"
+    ],
+    "posterized_chars": 39
+   },
+   "0C": {
+    "slot": 3,
+    "donor_chars": [
+     "0EE",
+     "0EF",
+     "0FE",
+     "0FF"
+    ],
+    "posterized_chars": 60
+   },
+   "62": {
+    "slot": 3,
+    "donor_chars": [
+     "0EE",
+     "0EF",
+     "0FE",
+     "0FF"
+    ],
+    "posterized_chars": 59
+   },
+   "0E": {
+    "slot": 4,
+    "donor_chars": [],
+    "posterized_chars": 64
+   },
+   "24": {
+    "slot": 5,
+    "donor_chars": [],
+    "posterized_chars": 61
+   },
+   "26": {
+    "slot": 5,
+    "donor_chars": [],
+    "posterized_chars": 58
+   },
+   "19": {
+    "slot": 6,
+    "donor_chars": [],
+    "posterized_chars": 47
+   },
+   "1B": {
+    "slot": 6,
+    "donor_chars": [],
+    "posterized_chars": 45
+   }
+  }
+ }
+}
