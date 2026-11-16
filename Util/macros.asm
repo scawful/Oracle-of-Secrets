@@ -295,6 +295,13 @@ endif
 ; Off until prototype art and behavior review are complete.
 !ENABLE_HORSE_FORM                  = 0
 
+; Archery mini game ring prize (Items/magic_rings.asm): the shooting gallery
+; (sprite $65, room $0111) gives a ring, once, for hitting a target with all
+; 5 shots of one game. The ring goes to FOUNDRINGS for Vasu to appraise; the
+; rupee prizes are unchanged. The ring bit is a placeholder constant.
+; Off until native proof and scawful's reward pick.
+!ENABLE_ARCHERY_RING_PRIZE          = 0
+
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
 !LOG_MUSIC     = 1
