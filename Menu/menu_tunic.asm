@@ -59,17 +59,12 @@ Tunic_WornVariant:
   RTL
 }
 
-; A on slot 26: the next owned colour, wrapping to green. With green only
-; it re-selects green (no visible change). Recolours Link
+; Tunic popup pick (MenuFlow_Frame): A = owned colour 0-2. Recolours Link
 ; now in the forms that show the tunic (base, Minish, GBC, horse); the
 ; other forms load their own palettes. Player 2 recolours at its next
 ; graphics reload. M/X=8.
-Tunic_Cycle:
+Tunic_SetWorn:
 {
-  JSL Tunic_GetWorn : INC
-  CMP.l Armor : BCC + : BEQ +
-  LDA.b #$00
-+
   INC : ASL #3 : PHA                  ; field = colour+1
   LDA.l SwordSlotFlags : AND.b #!SwordSlot_TunicMask^$FF
   ORA.b $01,S : STA.l SwordSlotFlags
@@ -138,6 +133,6 @@ org $1BEFCA ; @hook module=Menu name=Tunic_FileSelectSlot2 kind=jsl target=Tunic
 org $1BEFEE ; @hook module=Menu name=Tunic_FileSelectSlot3 kind=jsl target=Tunic_FileSelectSlot3 expected_m=16 expected_x=16 protected_size=4
   JSL Tunic_FileSelectSlot3
 ; Blue/Red Mail receipt: JSL Palettes_Load_LinkArmorAndGloves.
-org $08C4DC ; @hook module=Menu name=Tunic_OnMailReceipt kind=jsl target=Tunic_OnMailReceipt protected_size=4
+org $08C4DC ; @hook module=Menu name=Tunic_OnMailReceipt kind=jsl target=Tunic_OnMailReceipt expected_m=8 expected_x=8 protected_size=4
   JSL Tunic_OnMailReceipt
 pullpc

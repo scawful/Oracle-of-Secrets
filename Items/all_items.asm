@@ -390,6 +390,11 @@ incsrc "Menu/menu_tunic.asm"
 incsrc "Items/heavy_sword.asm"
 endif
 
+; Menu cursor memory, page-edge crossing, map return, tunic popup (bank $2D full).
+if !ENABLE_MENU_MAP_TRAVEL == 1
+incsrc "Menu/menu_cursor_flow.asm"
+endif
+
 ; Lyra edge guard: bank $34 is full. JSL entry only, exits by RTL, operands
 ; are direct page, long or immediate, so it runs from here. Kept last in the
 ; bank $2B stream so adding it moves no other routine.

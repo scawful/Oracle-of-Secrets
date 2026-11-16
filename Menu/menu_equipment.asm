@@ -21,6 +21,9 @@ Menu_Equipment_Init:
   JSL SwordSlots_Sync
   JSL UpdateFluteSong_Long
   STZ.w $0207
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  JSL MenuFlow_EquipRestore : BCS .done ; D-pad cross or remembered slot
+endif
   LDA.l BoundMask : DEC : CMP.b #$06 : BCS .first
   STA.w $020B
   JSR Menu_Equipment_Owned : BNE .done

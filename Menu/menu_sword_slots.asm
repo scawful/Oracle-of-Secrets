@@ -80,7 +80,11 @@ SwordSlots_Variant:
 SwordSlots_Select:
 {
   CMP.b #$1A : BNE +
-  JMP Tunic_Cycle
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  JMP MenuFlow_TunicOpen                ; the popup picks the colour
+else
+  RTL
+endif
 +
   CMP.b #$19 : BEQ .heavy
   LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyEquipped^$FF : STA.l SwordSlotFlags
@@ -124,14 +128,30 @@ SwordSlots_IsHeavyLevel:
 !HEAVY_ICON_TR        = $3065
 !HEAVY_ICON_BROKEN_TR = $30CE
 
-; Called after the gear icons are drawn. Recolors the heavy icon, then
-; returns A = equipped sword slot (24 story, 25 heavy) for the red marker.
-; M/X=8.
+; Called after the gear icons are drawn. Recolors the heavy icon, or draws
+; an empty frame on its cell while the heavy sword is not owned, draws the
+; open tunic popup, then returns A = equipped sword slot (24 story,
+; 25 heavy) for the red marker. M/X=8.
+!HEAVY_EMPTY_FRAME    = $2060         ; bracket corner, flipped per corner
 assert !SwordSlot_HeavyEquipped == $02, "MarkerSlot shifts bit1 into bit0"
 SwordSlots_MarkerSlot:
 {
   JSL Tunic_DrawArmorLabel
-  LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyOwned : BEQ .marker
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  LDA.l MenuFlow_TunicPopup : BPL +
+  JSL MenuFlow_DrawPopup
++
+endif
+  LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyOwned : BNE .owned
+  REP #$20
+  LDA.w #!HEAVY_EMPTY_FRAME
+  STA.l $7E1108+!HEAVY_ICON_POS         ; corners on the icon's own 2x2 tiles:
+  ORA.w #$4000 : STA.l $7E110A+!HEAVY_ICON_POS ; one column left is the story
+  ORA.w #$8000 : STA.l $7E114A+!HEAVY_ICON_POS ; sword's red marker, drawn later
+  EOR.w #$4000 : STA.l $7E1148+!HEAVY_ICON_POS
+  SEP #$20
+  BRA .marker
+.owned
   LDA.l Sword : CMP.b #$FF : BEQ .marker
   LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyReforged
   REP #$20

@@ -13,6 +13,7 @@
 MenuMapTravel_Turn:
 {
   SEP #$30
+  JSL MenuFlow_RecordTurn               ; keeps A/X/Y
   CMP.b #$01 : BEQ .right
   REP #$20
   LDA.w #$FFF8 : STA.w MenuScrollHDirection
@@ -53,11 +54,7 @@ MenuMapTravel_Turn:
 ; First frame of the turn onto this page (Menu_Page3_ScrollTo). Out: M/X=8.
 MenuMapTravel_Init:
 {
-  SEP #$30
-  JSL UpdateFluteSong_Long
-  STZ.w $0207
-  STZ.w $020B                           ; Map is always available
-  LDA.b #$00 : STA.l MenuMapTravel_Pending
+  JSL MenuFlow_MapInit                  ; cross, remembered cell, or Map
   RTS
 }
 

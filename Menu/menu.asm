@@ -195,7 +195,11 @@ incsrc "menu_draw.asm"
 Menu_UploadRight:
 {
 if !ENABLE_EQUIPMENT_MENU == 1
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  JSL MenuFlow_UploadRight              ; Quest, or Map & Travel after the map
+else
   JSR Menu_Quest_Draw
+endif
 else
   JSR Menu_DrawBackground
   JSR Menu_DrawQuestItems
@@ -1260,6 +1264,17 @@ if !ENABLE_MENU_PAGE3 == 1
   Menu_Page3_IsMaskItem_Long:
     JSR Menu_Page3_IsMaskItem : RTL
 endif
+endif
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  ; Long wrappers for Menu/menu_cursor_flow.asm (bank $2B); DBR stays $2D.
+  Menu_Quest_Draw_Long:
+    JSR Menu_Quest_Draw : RTL
+  MenuMapTravel_Draw_Long:
+    JSR MenuMapTravel_Draw : RTL
+  Menu_Equipment_Owned_Long:
+    JSR Menu_Equipment_Owned : RTL
+  MenuMapTravel_Owned_Long:
+    JSR MenuMapTravel_Owned : RTL
 endif
 %log_end("Menu/menu.asm", !LOG_MENU)
 incsrc "menu_hud.asm"
