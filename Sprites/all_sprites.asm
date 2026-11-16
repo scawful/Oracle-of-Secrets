@@ -19,7 +19,18 @@ incsrc "Sprites/NPCs/hyrule_dream.asm"
 %log_end("hyrule_dream", !LOG_SPRITES)
 
 %log_start("Sprite_KydrogNPC", !LOG_SPRITES)
-incsrc "Sprites/Bosses/kydrog.asm"
+if !ENABLE_GLADE_AMBUSH == 1
+  ; The glade arrival and ambush grow Kydrog past bank $30's free space.
+  ; Bank $3B mirrors low WRAM like $30, and its tail after the GBC form is
+  ; unused (Masks/all_masks.asm asserts the GBC form stays below $3BF400).
+  pushpc
+  org $3BF400
+    incsrc "Sprites/Bosses/kydrog.asm"
+    assert pc() <= $3C0000, "Kydrog (glade ambush) crossed bank $3B"
+  pullpc
+else
+  incsrc "Sprites/Bosses/kydrog.asm"
+endif
 %log_end("Sprite_KydrogNPC", !LOG_SPRITES)
 
 %log_start("Sprite_MakuTree", !LOG_SPRITES)

@@ -90,7 +90,11 @@ Sprite_Kydrog_Long:
     LDA.w SprSubtype, X : BEQ .kydrog
       JSR KydrogStal_Draw
       JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+        LDA.w SprSubtype, X : CMP.b #$02 : BEQ .patrol
         JSR KydrogStal_Main
+        BRA .SpriteIsNotActive
+      .patrol
+        JSR KydrogPatrol_Main
         BRA .SpriteIsNotActive
     .kydrog
   endif
@@ -108,6 +112,9 @@ Sprite_Kydrog_Prep:
   LDA.l $7EF300 : BEQ .PlayIntro
     STZ.w SprState, X ; Kill the sprite
   .PlayIntro
+  if !ENABLE_GLADE_AMBUSH == 1
+    STZ.w SprMiscE, X ; arrival pan not shown yet
+  endif
   PLB
   RTL
 }
@@ -126,10 +133,26 @@ Sprite_Kydrog_Main:
     dw Kydrog_AmbushLight
     dw Kydrog_AmbushRise
     dw Kydrog_AmbushMosaic
+    dw Kydrog_ArrivalHold
+    dw Kydrog_ArrivalDim
+    dw Kydrog_ArrivalCut
+    dw Kydrog_ArrivalReveal
+    dw Kydrog_ArrivalLook
+    dw Kydrog_ArrivalPan
   endif
 
   Kydrog_StartCutscene:
   {
+    if !ENABLE_GLADE_AMBUSH == 1
+      LDA.w SprMiscE, X : BNE .arrived
+        INC.w SprMiscE, X
+        LDA.b #$01 : STA.w $02E4 ; Link holds still for the arrival pan
+        STZ.b $49
+        LDA.b #$28 : STA.w SprTimerA, X
+        %GotoAction(8)
+        RTS
+      .arrived
+    endif
     LDA #$03 : STA $012C ; Play music
     LDA.b #WALKSPEED : NOP : STA.b $57 ; Preserve the original instruction span
     LDA.b #$08 : STA.b $49 ; Auto-movement north
@@ -226,6 +249,100 @@ Sprite_Kydrog_Main:
       STZ.b $95
       %GotoAction(3)
     .wait
+    RTS
+  }
+
+  ; Arrival pan. Link and Farore stand at the glade mouth, the screen dims,
+  ; and the camera cuts north to Kydrog with two Stalfos patrolling the
+  ; clearing. The camera then pans back south to Link and the vanilla walk-in
+  ; (action 0) starts. SprMiscD = camera rows still to pan back.
+  Kydrog_ArrivalHold:
+  {
+    LDA.w SprTimerA, X : BNE .wait
+      %GotoAction(9)
+    .wait
+    RTS
+  }
+
+  Kydrog_ArrivalDim:
+  {
+    LDA.b $1A : AND.b #$01 : BNE .wait
+    LDA.b $13 : BEQ .dark
+      DEC.b $13
+      RTS
+    .dark
+    %GotoAction(10)
+    .wait
+    RTS
+  }
+
+  ; Everything changes while the screen is black: Stalfos art, bone palette,
+  ; no animals, two patrols, Link hidden, camera on Kydrog.
+  Kydrog_ArrivalCut:
+  {
+    JSR KydrogAmbush_LoadStalfosArt
+    STZ.b $13 ; LoadStalfosArt left forced blank on
+    JSR KydrogAmbush_BoneStalfos
+    JSR KydrogAmbush_ClearAnimals
+    LDA.b #$00 : JSR KydrogPatrol_Spawn
+    LDA.b #$01 : JSR KydrogPatrol_Spawn
+    ; D = $E8 - .camera_y, never negative; the shown camera is $E8 - D
+    REP #$20
+    ; $E8 = $B8 keeps Farore (y about $1E0) inside the sprite off-screen
+    ; window ($E8-$40 to $E8+$12F) and puts Kydrog (y $100) 72 px down.
+    LDA.b $E8 : SEC : SBC.w #$00B8 : BCS +
+      LDA.w #$0000
+    +
+    SEP #$20
+    STA.w SprMiscD, X
+    REP #$20
+    AND.w #$00FF : EOR.w #$FFFF : INC A
+    JSR KydrogArrival_ShiftCamera
+    SEP #$20
+    LDA.b #$0C : STA.b $4B ; Link invisible while the camera is away
+    LDA.b #$03 : STA.w $012C ; Kydrog's theme with the reveal
+    %GotoAction(11)
+    RTS
+  }
+
+  Kydrog_ArrivalReveal:
+  {
+    LDA.b $13 : CMP.b #$0F : BCS .lit
+      INC.b $13
+      RTS
+    .lit
+    LDA.b #$40 : STA.w SprTimerA, X
+    %GotoAction(12)
+    RTS
+  }
+
+  Kydrog_ArrivalLook:
+  {
+    LDA.w SprTimerA, X : BNE .wait
+      %GotoAction(13)
+    .wait
+    RTS
+  }
+
+  ; 1 px per frame back to Link. Link reappears once his sprite is on screen
+  ; (screen y = $C8 + D, so below D = $30).
+  Kydrog_ArrivalPan:
+  {
+    LDA.w SprMiscD, X : BEQ .done
+      DEC A : STA.w SprMiscD, X
+      CMP.b #$30 : BCS +
+        STZ.b $4B
+      +
+      REP #$20
+      LDA.w #$0001
+      JSR KydrogArrival_ShiftCamera
+      SEP #$20
+      RTS
+    .done
+    STZ.b $4B
+    STZ.w $02E4
+    STZ.w $011C : STZ.w $011D
+    %GotoAction(0)
     RTS
   }
   endif
@@ -460,6 +577,103 @@ KydrogAmbush_SpawnStalfos:
   .dx   db -40,  40, -20,  20
   .dy   db   0,   0,  36,  36
   .pose db   4,   3,   5,   5 ; KydrogStal_Draw pose ids
+}
+
+; A (16-bit, signed) is added to every vertical camera register, the same
+; set D4Zora_ClampRoomCamera moves. Link and sprites keep their positions.
+; Overworld module 09/0B pushes $E8/$E6 before Sprite_Main and pops them
+; after ($02A48B/$02A4BE), so sprite writes to $E8 are lost. The shown BG
+; scroll and the sprite camera are $E8 + $011C (the quake offset), so the
+; cut and pan move $011C. Link's own scroll and triggers stay untouched.
+KydrogArrival_ShiftCamera:
+{
+  CLC : ADC.w $011C : STA.w $011C
+  RTS
+}
+
+; Spawn patrol A (0-1). X = Kydrog. Patrols are subtype 2 and keep Kydrog's
+; slot in SprMiscB.
+KydrogPatrol_Spawn:
+{
+  PHA
+  LDA.b #Sprite_KydrogNPC
+  JSL Sprite_SpawnDynamically
+  PLA : STA.b $0F
+  TYA : BMI .no_slot
+    LDA.b #$02 : STA.w SprSubtype, Y
+    TXA : STA.w SprMiscB, Y
+    LDA.b $EE : STA.w SprFloor, Y
+    PHX
+    LDX.b $0F
+    LDA.l .x, X : STA.w SprX, Y
+    LDA.l .y, X : STA.w SprY, Y
+    LDA.b #$01 : STA.w SprYH, Y
+    LDA.b #$00 : STA.w SprXH, Y : STA.w SprAction, Y
+    LDA.l .dir, X : STA.w SprMiscD, Y
+    LDA.l .pose, X : STA.w SprFrame, Y
+    PLX
+  .no_slot
+  RTS
+
+  ; y is $100 + value: $154 = 340, $180 = 384
+  .x    db 72, 184
+  .y    db $54, $80
+  .dir  db 0, 1 ; 0 east, 1 west
+  .pose db 4, 3
+}
+
+; Patrol: walk the clearing x 72-184 while Kydrog holds the camera (actions
+; 10-12), otherwise stand at the tree line (x 64 or 192) facing the path.
+KydrogPatrol_Main:
+{
+  LDY.w SprMiscB, X
+  LDA.w SprAction, Y : CMP.b #10 : BCC .retreat
+  CMP.b #13 : BCS .retreat
+  LDA.b $1A : LSR #3 : AND.b #$01 : STA.w SprHeight, X ; step bob
+  LDA.b $1A : AND.b #$01 : BNE .done
+  LDA.w SprMiscD, X : BNE .west
+    INC.w SprX, X
+    LDA.w SprX, X : CMP.b #184 : BCC .face
+      INC.w SprMiscD, X
+    BRA .face
+  .west
+    DEC.w SprX, X
+    LDA.w SprX, X : CMP.b #73 : BCS .face
+      STZ.w SprMiscD, X
+  .face
+  LDY.w SprMiscD, X
+  LDA.w .walk_pose, Y : STA.w SprFrame, X
+  .done
+  RTS
+
+  .retreat
+  STZ.w SprHeight, X
+  LDA.w SprX, X : CMP.b #128 : BCS .east_side
+    CMP.b #64 : BEQ .west_post
+    BCC .step_east
+    DEC.w SprX, X
+    LDA.b #$03 : STA.w SprFrame, X ; walking west
+    RTS
+  .step_east
+    INC.w SprX, X
+    RTS
+  .west_post
+    LDA.b #$04 : STA.w SprFrame, X ; face east, toward the path
+    RTS
+  .east_side
+    CMP.b #192 : BEQ .east_post
+    BCS .step_west
+    INC.w SprX, X
+    LDA.b #$04 : STA.w SprFrame, X ; walking east
+    RTS
+  .step_west
+    DEC.w SprX, X
+    RTS
+  .east_post
+    LDA.b #$03 : STA.w SprFrame, X ; face west, toward the path
+    RTS
+
+  .walk_pose db 4, 3
 }
 
 ; Stalfos child: low (5 frames), mid (5 frames), then its facing pose.
