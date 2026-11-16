@@ -322,6 +322,12 @@ incsrc "Overworld/travel_destinations.asm"
 %log_end("Overworld/travel_destinations.asm", !LOG_ITEMS)
 endif
 
+; Abyss load spawn menu: bank $34 is full. Entered only by JML, exits by
+; JML/RTL, absolute operands are low WRAM (mirrored), so it runs from here.
+if !ENABLE_ABYSS_SPAWN_MENU == 1
+incsrc "Overworld/abyss_spawn_menu.asm"
+endif
+
 ; Richard quest: bank $34 is full. Every JSL entry sets DB with PHK : PLB and
 ; hooks use JSL, so the file runs from this bank unchanged.
 if !ENABLE_RICHARD_QUEST == 1

@@ -104,9 +104,8 @@ org $029E58 : NOP #6
 
 pullpc
 incsrc "Overworld/goron_checkpoint.asm"
-if !ENABLE_ABYSS_SPAWN_MENU == 1
-  incsrc "Overworld/abyss_spawn_menu.asm"
-endif
+; Overworld/abyss_spawn_menu.asm is included from Items/all_items.asm
+; (bank $2B): bank $34 is full.
 
 LoadDarkWorldIntro:
 {
