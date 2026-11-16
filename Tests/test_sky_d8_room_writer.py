@@ -63,6 +63,7 @@ def build_rom():
     for pc, data in W.DOOR_ROOT_OPERANDS + W.CHEST_CODE_GUARDS + W.ENTRANCE_CODE_GUARDS:
         put(rom, pc, hx(data))
     put(rom, W.SPRITE_ROOT_PC, hx(W.SPRITE_ROOT))
+    put(rom, W.POT_BANK_LOADER_PC, hx(W.POT_BANK_LOADER))
 
     headers = {0x90: "0005011600250000000c91000000", 0x91: "0005010a00000000000090920000",
                0x92: "0005010a00000000000091000000"}
@@ -320,6 +321,48 @@ class AliasAndAllocationTests(Fixture):
         rom = bytearray(self.base)
         put(rom, 0x00E6A7, hx("2000"))
         self.refused("pot stream of 0x005 overlaps", rom=rom)
+
+    def moved_to_bank_5c(self):
+        """Base with the pot data copied to $5C:8000 and the loader operand set to $5C."""
+        old, new = W.POT_DATA_REGIONS[W.POT_BANK], W.POT_DATA_REGIONS[0x5C]
+        rom = bytearray(self.base) + bytearray(new[1] + 2 - len(self.base))
+        put(rom, new[0], self.base[old[0]:old[1]])
+        for room in range(W.ROOM_COUNT):
+            slot = W.POT_TABLE_PC + room * 2
+            pc = W.bank16_ptr(self.base[slot:slot + 2], W.POT_BANK) - old[0] + new[0]
+            put(rom, slot, (pc & 0x7FFF | 0x8000).to_bytes(2, "little"))
+        rom[W.POT_BANK_LOADER_PC + 1] = 0x5C
+        return rom
+
+    def test_pot_plan_refuses_data_in_another_bank(self):
+        # The pinned room $91 pot plan addresses bank $01 only.
+        rom = bytearray(self.base)
+        rom[W.POT_BANK_LOADER_PC + 1] = 0x5C
+        self.refused("pot data bank loader preimage", rom=rom,
+                     pins=pins_for(rom, self.recipe))
+
+    def test_inventory_reads_pots_from_the_loader_bank(self):
+        # The build reads migrated bases through build_inventory (d4_water_rooms.py).
+        rom = bytes(self.moved_to_bank_5c())
+        before, after = W.build_inventory(self.base), W.build_inventory(rom)
+        new = W.POT_DATA_REGIONS[0x5C]
+        for room in range(W.ROOM_COUNT):
+            self.assertEqual(W.logical_room(rom, after, room)["pots"][1],
+                             W.logical_room(self.base, before, room)["pots"][1], hex(room))
+            self.assertTrue(new[0] <= after.pot_span[room][0] < new[1], hex(room))
+        self.assertNotEqual(after.pot_span[0x05], before.pot_span[0x05])
+
+    def test_inventory_refuses_an_unknown_pot_loader(self):
+        for patch in ((1, 0x02), (0, 0xEA), (2, 0x01)):
+            rom = bytearray(self.base)
+            rom[W.POT_BANK_LOADER_PC + patch[0]] = patch[1]
+            with self.subTest(patch=patch), self.assertRaisesRegex(W.PlanError,
+                                                                   "pot data bank loader"):
+                W.build_inventory(bytes(rom))
+        stale = bytearray(self.moved_to_bank_5c())      # data in $5C, loader still $01
+        stale[W.POT_BANK_LOADER_PC + 1] = 0x01
+        with self.assertRaisesRegex(W.PlanError, "pot pointer .* outside its data regions"):
+            W.build_inventory(bytes(stale))
 
     def test_padded_pot_pointer_must_target_sentinel(self):
         rom = bytearray(self.base)

@@ -51,6 +51,7 @@ LEGACY_ROOM_TABLE = 0x02C813
 HEADER_POINTER_PC, HEADER_BANK_PC = 0xB5DD, 0xB5E7
 OBJECT_POINTERS_PC = 0x0F8000
 POT_POINTERS = 0x01DB69
+POT_BANK_LOADER_PC = 0xE6C7   # RevealPotItem: LDA.w #$00bb (A9 bb 00) picks the pot-data bank
 EXIT_ROOMS, EXIT_COUNT = 0x02DD8A, 0x4F
 SOMARIA_COSTS = (0x07B093, bytes.fromhex("080402"))
 EXPECTED_TAGS = {ENTRY_ROOM: (0x00, 0x00), LESSON_ROOM: (0x24, 0x00), RECOVERY_ROOM: (0x00, 0x00)}
@@ -147,7 +148,9 @@ def room_header(rom, room):
 
 
 def pot_items(rom, room):
-    at = pc_offset(0x010000 | word(rom, pc_offset(POT_POINTERS) + room * 2))
+    loader = rom[POT_BANK_LOADER_PC:POT_BANK_LOADER_PC + 3]
+    require(loader[0] == 0xA9 and loader[2] == 0x00, f"pot bank loader is {bytes(loader).hex()}")
+    at = pc_offset(loader[1] << 16 | word(rom, pc_offset(POT_POINTERS) + room * 2))
     items = []
     for _ in range(32):
         if rom[at:at + 2] == b"\xff\xff":

@@ -45,9 +45,11 @@ def stream(objects, doors):
     return body + b"".join(bytes(d) for d in doors) + b"\xff\xff"
 
 
-def lesson_rom(tags=None, doors=None, objects=None, pots=None, entrance=None):
+def lesson_rom(tags=None, doors=None, objects=None, pots=None, entrance=None, pot_bank=0x01):
     """Smallest synthetic wired candidate that satisfies validate_candidate."""
-    rom = bytearray(offset(0x2CFE00))
+    pot_list = pot_bank << 16 | (POT_LIST & 0xFFFF)
+    rom = bytearray(max(offset(0x2CFE00), offset(pot_list) + 0x100))
+    rom[lesson.POT_BANK_LOADER_PC:lesson.POT_BANK_LOADER_PC + 3] = bytes([0xA9, pot_bank, 0x00])
     for address, expected, _ in door.PINNED:
         data = bytes.fromhex(expected)
         rom[offset(address):offset(address) + len(data)] = data
@@ -73,7 +75,7 @@ def lesson_rom(tags=None, doors=None, objects=None, pots=None, entrance=None):
     rom[pot_slot:pot_slot + 2] = (POT_LIST & 0xFFFF).to_bytes(2, "little")
     pot_data = b"".join((y * 0x80 + x * 2).to_bytes(2, "little") + bytes([item])
                         for x, y, item in (pots or lesson.POTS)) + b"\xff\xff"
-    rom[offset(POT_LIST):offset(POT_LIST) + len(pot_data)] = pot_data
+    rom[offset(pot_list):offset(pot_list) + len(pot_data)] = pot_data
     for name, (address, expected) in lesson.EXPANDED_ENTRANCE.items():
         data = (entrance or {}).get(name, expected)
         rom[offset(address):offset(address) + len(data)] = data
@@ -95,6 +97,18 @@ class SkySomariaLessonControls(unittest.TestCase):
         self.assertEqual(report["tag24"]["hook"], "01CC89 JML 2CFD00")
         self.assertEqual(report["expanded_entrance_29"]["room"], "9000")
         self.assertEqual(report["exit_area"], "7A")
+
+    def test_pot_items_follow_the_loader_bank(self):
+        # Pot data in bank $5C: the table keeps 16-bit pointers, the loader names the bank.
+        lesson.validate_candidate(lesson_rom(pot_bank=0x5C), SYMBOLS)
+        moved = bytearray(lesson_rom(pot_bank=0x5C))
+        moved[lesson.POT_BANK_LOADER_PC + 1] = 0x01   # data stays in $5C, loader says $01
+        with self.assertRaisesRegex(RuntimeError, "pot list is unterminated|pot items"):
+            lesson.validate_candidate(bytes(moved), SYMBOLS)
+        broken = bytearray(lesson_rom())
+        broken[lesson.POT_BANK_LOADER_PC] = 0xEA
+        with self.assertRaisesRegex(RuntimeError, "pot bank loader"):
+            lesson.validate_candidate(bytes(broken), SYMBOLS)
 
     def test_unwired_or_unauthored_candidates_are_refused(self):
         plateless = [subtype3(0xFAF, 12, 54), subtype3(0xFAF, 18, 54)]
