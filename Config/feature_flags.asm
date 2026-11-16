@@ -18,6 +18,7 @@
 !ENABLE_D8_BOSS                       = 0
 !ENABLE_HORSE_FORM                    = 0
 !ENABLE_LYRA_TALKERS                  = 0
+!ENABLE_LYRA_TEMPLE_ZORA              = 0
 !ENABLE_D8_FARORE_GRAPHICS            = 0
 !ENABLE_DIVE_GATE                     = 1
 !ENABLE_DREAM_BED_WAKE                = 1

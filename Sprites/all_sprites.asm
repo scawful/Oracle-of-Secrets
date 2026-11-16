@@ -419,6 +419,9 @@ incsrc "Sprites/NPCs/goron.asm"
 if !ENABLE_D4_ZORA_REDESIGN == 1
   assert !ENABLE_SOURCE_SPRITE_SHEETS == 1, "D4 actors require their source sheets"
   incsrc "Sprites/Bosses/d4_pressure_warden.asm"
+  if !ENABLE_LYRA_TEMPLE_ZORA == 1
+    incsrc "Sprites/NPCs/lyra_temple_zora.asm"
+  endif
 endif
 
 if !ENABLE_D8_BOSS == 1
