@@ -88,6 +88,7 @@ if !ENABLE_D8_FARORE_GRAPHICS == 1
   LDA.w SprSubtype,X : CMP.b #D8Farore_Subtype : BNE +
     JSL D8Farore_Frame : BCC .SpriteIsNotActive
     JSR Sprite_Farore_Draw
+    JSL D8Farore_DrawGroundShadow ; native glyph/palette at this body's foot anchor
     BRA .SpriteIsNotActive
   +
 endif
