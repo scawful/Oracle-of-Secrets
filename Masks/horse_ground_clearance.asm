@@ -210,7 +210,9 @@ HorseFenceTile16s:
 HorseFenceTile16s_End:
 
 if !ENABLE_HORSE_LONG_JUMP == 1
-!Horse_LongJumpMaxTiles = 2
+; Max gap width in Tile16s past the first gap cell: n=2 D2 Tail Pond / $24
+; bridge, n=4 Garo Desert $36.
+!Horse_LongJumpMaxTiles = 4
 !Horse_LongJumpMinFrames = $10
 !Horse_LongJumpMaxFrames = $12
 !Horse_LongJumpShakeFrames = $03
@@ -224,12 +226,13 @@ HorseLong_ZTable:
   db  3,  8, 13, 16, 19, 22, 23, 24
   db 24, 23, 22, 19, 16, 13,  8,  3
 
-; Water-gap Tile16s Epona clears with a long jump (gap of 1..2 tiles).
+; Water-gap Tile16s Epona clears with a long jump (gap of 1..4 tiles).
 ; Clones keep the original 8x8 chars, so water collision is unchanged and
 ; Link on foot still meets deep water. D2 Tail Pond $2D x10/x11 y11-13:
-; $0F90 = clone of $02C5, $0F91 = clone of $02CE.
+; $0F90 = clone of $02C5, $0F91 = clone of $02CE. Garo Desert $36:
+; $0FF0 (pass8 dark-water gap clone) and $02B8 (variant C).
 HorseLongGapTile16s:
-  dw $0F90, $0F91
+  dw $0F90, $0F91, $0FF0, $02B8
 HorseLongGapTile16s_End:
 
 ; In: A16/X8, $04 = Tile16. Out: carry set if $04 is a long-gap Tile16. X clobbered.
@@ -320,7 +323,7 @@ HorseLong_ScanGap:
   LDA.l Horse_JumpEndY : SEC : SBC.b $20 : BPL + : EOR.w #$FFFF : INC : +
   CMP.w #$00F0 : BCS .invalid
   SEP #$20
-  JMP HorseForm_CheckLandingWalkable        ; carry = landing walkable
+  JMP HorseLong_FitLanding                  ; carry = landing walkable
 
   .invalid
   SEP #$20
@@ -331,6 +334,90 @@ HorseLong_ScanGap:
   dw $0000, $0000, $FFF0, $0010
   .step_y
   dw $FFF0, $0010, $0000, $0000
+}
+
+; A long jump keeps the rider's row (column for vertical jumps). Landing
+; walkable feet are not enough: the mounted leading edge in JumpDir must
+; also be free, or the horse lands and cannot ride on (desert $36 probeC:
+; landed y3600, east side probe on a bank Tile16 one row above a 3-tile
+; exit, 30 frames at 0 px). Try the landing, then shifts across JumpDir of
+; +8/-8/+16/-16 px; keep the first that is walkable with a free leading
+; edge. None fits: keep the unshifted landing if walkable (prior rule).
+; In: M8/X8, Horse_JumpDir, Horse_JumpEndX/Y. Out: M8/X8, carry = landing
+; walkable; Horse_JumpEndX/Y = chosen landing. $08/$0E preserved; X/Y,
+; $04, $0A and $0C clobbered.
+HorseLong_FitLanding:
+{
+  REP #$20
+  LDA.b $08 : PHA : LDA.b $0E : PHA
+  LDA.l Horse_JumpEndX : PHA
+  LDA.l Horse_JumpEndY : PHA
+  SEP #$20
+  LDA.l Horse_JumpDir : ASL : STA.b $0E  ; edge index (N,S,W,E tables)
+  LDY.b #$00
+  .try
+  PHY                                   ; 1,S = shift index; 2,S = base Y; 4,S = base X
+  TYX
+  REP #$20
+  LDA.b $0E : AND.w #$00FF : CMP.w #$0004 : BCS .shift_y
+    LDA 4,S : CLC : ADC.l .shift, X : STA.l Horse_JumpEndX
+    BRA .shifted
+  .shift_y
+    LDA 2,S : CLC : ADC.l .shift, X : STA.l Horse_JumpEndY
+  .shifted
+  LDA.l Horse_JumpEndX : EOR.b $22 : AND.w #$FC00 : BNE .next_far
+  LDA.l Horse_JumpEndY : EOR.b $20 : AND.w #$FC00 : BNE .next_far
+  SEP #$20
+  JSR HorseForm_CheckLandingWalkable : BCS + : .next_far : JMP .next : +
+  ; Leading edge at the landing: same points as ConstrainGroundInput.
+  LDY.b #$02
+  LDA.b $0E : CMP.b #$04 : BCC + : LDY.b #$04 : +
+  .point
+  PHY
+  TYA : ASL : TAX
+  REP #$20
+  LDA.l HorseForm_ConstrainGroundInput_along, X : STA.b $08
+  LDA.b $0E : AND.w #$00FF : TAX
+  LDA.l HorseForm_ConstrainGroundInput_edge_x, X : CLC : ADC.l Horse_JumpEndX : STA.b $0C
+  LDA.l HorseForm_ConstrainGroundInput_edge_y, X : CLC : ADC.l Horse_JumpEndY : STA.b $0A
+  CPX.b #$04 : BCS .vertical_edge
+    LDA.b $0C : CLC : ADC.b $08 : STA.b $0C
+    BRA .query
+  .vertical_edge
+    LDA.b $0A : CLC : ADC.b $08 : STA.b $0A
+  .query
+  JSR HorseForm_ConstrainGroundInput_query_side   ; out M8, A = attribute
+  CMP.b #$01 : BEQ .solid
+  CMP.b #$02 : BNE .point_clear
+  .solid
+  REP #$20 : JSR HorseForm_ConstrainGroundInput_is_fence : SEP #$20
+  BCC .point_blocked
+  .point_clear
+  PLY : DEY : BPL .point
+  PLY                                   ; fits
+  REP #$20
+  PLA : PLA
+  PLA : STA.b $0E : PLA : STA.b $08
+  SEP #$20
+  SEC
+  RTS
+  .point_blocked
+  PLY
+  .next
+  SEP #$20
+  PLY : INY #2
+  CPY.b #.shift_end-.shift : BCS + : JMP .try : +
+  ; No shift fits: unshifted landing, walkable-feet rule only.
+  REP #$20
+  PLA : STA.l Horse_JumpEndY
+  PLA : STA.l Horse_JumpEndX
+  PLA : STA.b $0E : PLA : STA.b $08
+  SEP #$20
+  JMP HorseForm_CheckLandingWalkable
+
+  .shift
+  dw $0000, $0008, $FFF8, $0010, $FFF0
+  .shift_end
 }
 
 ; In: M8/X8 from CheckFenceJump with Horse_JumpDir set and no fence ahead.
