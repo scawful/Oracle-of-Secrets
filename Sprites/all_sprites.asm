@@ -196,6 +196,10 @@ if !ENABLE_D8_FARORE_GRAPHICS == 1
   incsrc "Sprites/NPCs/farore_d8_follow.asm"
 endif
 
+if !ENABLE_RANCH_MILK == 1
+  incsrc "Sprites/NPCs/ranch_milk.asm"
+endif
+
 assert pc() <= $310000, "Bank $30 sprite code crossed its LoROM executable boundary"
 assert pc() >= $308000, "Bank $30 sprite code left its bank (org without pushpc/pullpc?)"
 print "Bank30 Free Space: ", dec($310000-pc()), " bytes"
