@@ -49,7 +49,9 @@ OUT = REPO / "Dungeons/Data/abyss_gbc"
 # "more_rooms" share a style's sheets and palette but cast no palette votes, so
 # rooms reviewed earlier keep their colours when a style grows.
 # Style id = position + 1. Room lists follow the 2026-11-05 look plan (scawful picks):
-# Onox $44 main Fortress, Fire $42 for $2D/$3D, Rites $46 for $0D/$1D, Mermaid $3B shrines.
+# Onox $44 main Fortress, Fire $42 for $2D/$3D, Rites $46 for $0D/$1D.
+# The pendant shrines (Wisdom, Courage, Power) are not in this set: they move to the
+# Lyra Sea (scawful, 2026-11-16) and keep SNES art.
 STYLES = [
     {"name": "onox", "png": "donor_raw_fortress/seasons_gfx_tileset44.png",
      "map": "donor_raw_fortress/seasons_tilesetMappings44.bin", "pal": "donor_pal/seasons_44.txt",
@@ -62,11 +64,6 @@ STYLES = [
     {"name": "rites", "png": "donor_raw_fortress/ages_gfx_tileset46.png",
      "map": "donor_raw_fortress/ages_tilesetMappings46.bin", "pal": "donor_pal/ages_46.txt",
      "rooms": [0x0D, 0x1D]},
-    {"name": "mermaid", "png": "donor_raw_3b/gfx_tileset3b.png",
-     "map": "donor_raw_3b/tilesetMappings3b.bin", "pal": "donor_pal/ages_3b.txt",
-     "rooms": [0xC9, 0x53],
-     # Rest of the Shrine of Wisdom, same header blockset 8 (no new art).
-     "more_rooms": [0xCA, 0x7A, 0x8A, 0x9A, 0xAA, 0xBA]},
 ]
 
 # Object -> (donor metatile, shape). Shapes give word k's (col, row) in the object.
