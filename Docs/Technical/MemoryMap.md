@@ -37,6 +37,7 @@ The following blocks were marked "unused" in vanilla ALTTP but are now utilized 
 | `$7EF39C` | `JournalState`      | Current state of the player's journal.                                   | ✓        |
 | `$7EF39D` | `Reserved` | Unused (Core/sram.asm:466). | |
 | `$7EF39E` | `StoryState`        | State machine for Link's House intro sequence (0-2).                     | ✓        |
+| `$7EF3BE` | `EonGoronQuest`     | Eon Goron camp quests: bits 0-4 Roll Call sentries C/D/E/G/H, bit 5 Heart Piece paid, bit 6 reserved (Sentry Duty), bit 7 Meat Feast done. Free block now starts at `$7EF3BF` (5 bytes). | |
 
 #### **Block $7EF403-$7EF4FD** - Partially Repurposed
 

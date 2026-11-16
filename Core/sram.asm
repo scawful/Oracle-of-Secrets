@@ -857,7 +857,16 @@ SwordSlotFlags     = $7EF3BD  ; bit0 heavy owned, bit1 heavy equipped,
 !SwordSlot_HeavyEquipped = $02
 !SwordSlot_HeavyReforged = $04
 !SwordSlot_Initialized   = $80
-FreeBlock_Large    = $7EF3BE  ; 6 bytes [BE,C4)
+;
+; Eon Goron camp quests (Roll Call + Meat Feast). Granted by root 2026-11-16
+; from FreeBlock_Large; inside the vanilla saved/checksummed block and cleared
+; by new-file init. No reader or writer yet; quest ASM owns the bits.
+;   bit 0-4: sentries C, D, E, G, H checked (Roll Call)
+;   bit 5:   Roll Call Heart Piece paid
+;   bit 6:   reserved (Sentry Duty, Loop C)
+;   bit 7:   Meat Feast done
+EonGoronQuest      = $7EF3BE
+FreeBlock_Large    = $7EF3BF  ; 5 bytes [BF,C4)
 ; Richard quest (Wayward Village lady + night dog), PROPOSED 2026-11-15 by the
 ; richard-quest lane: last byte of the Large remainder, so the menu-gear
 ; lane's B9-BB reservation and the B9 block start stay untouched. Vanilla
@@ -897,7 +906,7 @@ FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF3A0  | $7EF3A0  | bits  | Wolf dig: bit 0 used |
 ; | $7EF3B3  | $7EF3B3  | 1     | Large prefix       |
-; | $7EF3BE  | $7EF3C3  | 6     | Large remainder    |
+; | $7EF3BF  | $7EF3C3  | 5     | Large remainder    |
 ; | $7EF413  | $7EF49E  | 140   | Dreams prefix      |
 ; | $7EF4E1  | $7EF4FD  | 29    | Dreams remainder   |
 ; |----------|----------|-------|--------------------|
