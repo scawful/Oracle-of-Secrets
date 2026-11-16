@@ -171,17 +171,6 @@ Horse_OffClear = $7F5403 ; frames with no other page1 $00-$1F OAM user
 Horse_OffSheet = $7F5404 ; $7EC2FC when the copy was taken
 endif
 
-; Explicit bounded aliases for the reserved palette history; no consumer yet.
-SpecialOverworldPaletteHoleCache = $7E1E8C
-SpecialOverworldPaletteHoleCacheEnd = $7E1EA6
-assert SpecialOverworldPaletteHoleCache == SpecialOverworldPaletteHoleReference
-assert SpecialOverworldPaletteHoleCacheEnd == SpecialOverworldPaletteHoleArea+1
-assert SpecialOverworldPaletteHoleCacheEnd-SpecialOverworldPaletteHoleCache == 26
-
-; SongTint_Table entry indexes (Items/ocarina.asm).
-!SongTint_Healing = $00
-!SongTint_Secrets = $01
-
 ; PLACEHOLDER for the Song of Healing beat between Kydreeok and Ganondorf (decisions.org canon
 ; order: Kydreeok, Song frees Kydrog, Ganon). Until that scene exists, Ganondorf waits this many
 ; door-gate frames (3 s) after the Kydreeok body is dismissed. Replace with the real beat's flag.
