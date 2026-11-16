@@ -63,6 +63,7 @@ def build_rom():
     for pc, data in W.DOOR_ROOT_OPERANDS + W.CHEST_CODE_GUARDS + W.ENTRANCE_CODE_GUARDS:
         put(rom, pc, hx(data))
     put(rom, W.SPRITE_ROOT_PC, hx(W.SPRITE_ROOT))
+    put(rom, W.POT_BANK_LOADER_PC, hx(W.POT_BANK_LOADER))
 
     headers = {0x90: "0005011600250000000c91000000", 0x91: "0005010a00000000000090920000",
                0x92: "0005010a00000000000091000000"}
@@ -320,6 +321,13 @@ class AliasAndAllocationTests(Fixture):
         rom = bytearray(self.base)
         put(rom, 0x00E6A7, hx("2000"))
         self.refused("pot stream of 0x005 overlaps", rom=rom)
+
+    def test_pot_data_in_another_bank_refused(self):
+        # Pot data moved to bank $5A: the loader operand at $01:E6C8 is not $01.
+        rom = bytearray(self.base)
+        rom[W.POT_BANK_LOADER_PC + 1] = 0x5A
+        self.refused("pot data bank loader preimage", rom=rom,
+                     pins=pins_for(rom, self.recipe))
 
     def test_padded_pot_pointer_must_target_sentinel(self):
         rom = bytearray(self.base)

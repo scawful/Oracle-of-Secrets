@@ -68,6 +68,10 @@ DOOR_ROOT_OPERANDS = ((0x00B6CC, "c0831f"), (0x00B7FE, "c0831f"))
 SPRITE_ROOT_PC, SPRITE_ROOT = 0x04C298, "b2d2"
 SPRITE_TABLE_PC, SPRITE_BANK = 0x04D2B2, 0x09
 POT_TABLE_PC, POT_BANK = 0x00DB69, 0x01
+# RevealPotItem picks the pot-data bank with `LDA.w #$0001` at $01:E6C7. This
+# writer's pinned room $91 pot plan addresses bank $01; a base whose pot data
+# moved to another bank is refused before any pot pointer is interpreted.
+POT_BANK_LOADER_PC, POT_BANK_LOADER = 0x00E6C7, "a90100"
 # Pointer words 296-318 pad the pot table up to its data and all point at an FFFF
 # sentinel inside the 9-byte gap; the new $91 stream must leave it intact.
 POT_PAD_SLOTS = (POT_TABLE_PC + ROOM_COUNT * 2, 0x00DDE7)
@@ -425,6 +429,7 @@ def check_roots(rom: bytes) -> None:
     for pc, want in DOOR_ROOT_OPERANDS:
         expect_bytes(rom, pc, hx(want), "door pointer root")
     expect_bytes(rom, SPRITE_ROOT_PC, hx(SPRITE_ROOT), "sprite pointer root")
+    expect_bytes(rom, POT_BANK_LOADER_PC, hx(POT_BANK_LOADER), "pot data bank loader")
     for pc, want in CHEST_CODE_GUARDS:
         expect_bytes(rom, pc, hx(want), "chest lookup code")
     for pc, want in ENTRANCE_CODE_GUARDS:

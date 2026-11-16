@@ -24,8 +24,12 @@ from generate_hack_manifest import (  # noqa: E402
     DUNGEON_ROOM_COUNT,
     OBJECT_DATA_REGIONS_PC,
     OBJECT_TABLE_POINTER_OPERAND_PC,
+    POT_BANK_LOADER_PC,
+    POT_BANK_OPERAND_PC,
     POT_DATA_START_PC,
     POT_DATA_END_PC,
+    POT_EXPANDED_BANK,
+    POT_EXPANDED_DATA_START_PC,
     POT_POINTER_TABLE_PC,
     ROOM_HEADER_BANK_PC,
     ROOM_HEADER_POINTER_PC,
@@ -76,8 +80,15 @@ class ManifestFixture:
         path.write_text(text, encoding="utf-8")
         return path
 
-    def write_dev_rom(self, duplicate_room: int | None = None) -> Path:
-        data = bytearray(0x200000)
+    def write_dev_rom(
+        self,
+        duplicate_room: int | None = None,
+        pot_bank: int = 0x01,
+        rom_size: int | None = None,
+    ) -> Path:
+        if rom_size is None:
+            rom_size = 0x400000 if pot_bank != 0x01 else 0x200000
+        data = bytearray(rom_size)
 
         object_table_pc = 0xF8000
         data[OBJECT_TABLE_POINTER_OPERAND_PC : OBJECT_TABLE_POINTER_OPERAND_PC + 3] = (
@@ -99,10 +110,19 @@ class ManifestFixture:
             data[pointer_pc : pointer_pc + 2] = (0xD502).to_bytes(2, "little")
         data[0x4D502 : 0x4D504] = b"\x00\xFF"
 
+        # RevealPotItem bank loader: LDA.w #$00bb at $01:E6C7.
+        data[POT_BANK_LOADER_PC : POT_BANK_LOADER_PC + 3] = bytes(
+            [0xA9, pot_bank, 0x00]
+        )
+        pot_data_pc = (
+            POT_DATA_START_PC if pot_bank == 0x01 else POT_EXPANDED_DATA_START_PC
+        )
         for room_id in range(DUNGEON_ROOM_COUNT):
             pointer_pc = POT_POINTER_TABLE_PC + room_id * 2
-            data[pointer_pc : pointer_pc + 2] = (0xDDE7).to_bytes(2, "little")
-        data[POT_DATA_START_PC : POT_DATA_START_PC + 2] = b"\xFF\xFF"
+            data[pointer_pc : pointer_pc + 2] = (
+                _pc_to_snes(pot_data_pc) & 0xFFFF
+            ).to_bytes(2, "little")
+        data[pot_data_pc : pot_data_pc + 2] = b"\xFF\xFF"
 
         header_table_pc = 0x110000
         header_table_snes = _pc_to_snes(header_table_pc)
@@ -2196,6 +2216,75 @@ class DungeonStreamRegionsTest(unittest.TestCase):
             },
         )
 
+    def test_pot_items_layout_follows_the_loader_bank_operand(self) -> None:
+        rom_path = self.fixture.write_dev_rom(pot_bank=POT_EXPANDED_BANK)
+
+        pot_items = derive_dungeon_stream_regions(rom_path)["pot_items"]
+
+        self.assertEqual(
+            pot_items,
+            {
+                "pointer_table": "0x01DB69",
+                "pointer_count": DUNGEON_ROOM_COUNT,
+                "pointer_encoding": "bank16",
+                "pointer_bank": "0x5A",
+                "strategy": "repack_all",
+                "data_regions": [{"start": "0x5A8000", "end": "0x5B8000"}],
+                "allocation_regions": [{"start": "0x5A8000", "end": "0x5B8000"}],
+            },
+        )
+
+    def test_pot_bank_loader_mismatches_fail_closed(self) -> None:
+        cases = {
+            # Operand says $5A while the data is still in bank $01: the
+            # pointers land on empty bank-$5A bytes with no terminator.
+            "operand_without_migration": (
+                0x01,
+                POT_BANK_OPERAND_PC,
+                POT_EXPANDED_BANK,
+                "pot_items stream for room 0x000 has",
+            ),
+            # Data migrated but the operand still says $01.
+            "migration_without_operand": (
+                POT_EXPANDED_BANK,
+                POT_BANK_OPERAND_PC,
+                0x01,
+                "outside pot-item data region",
+            ),
+            "unsupported_bank": (
+                0x01,
+                POT_BANK_OPERAND_PC,
+                0x5B,
+                r"pot-item bank operand .* is \$5B",
+            ),
+            "wram_bank": (
+                0x01,
+                POT_BANK_OPERAND_PC,
+                0x7E,
+                r"pot-item bank operand .* is \$7E",
+            ),
+            "loader_opcode_changed": (
+                0x01,
+                POT_BANK_LOADER_PC,
+                0xEA,
+                "pot-item bank loader",
+            ),
+            "loader_high_byte_changed": (
+                0x01,
+                POT_BANK_LOADER_PC + 2,
+                0x01,
+                "pot-item bank loader",
+            ),
+        }
+        for name, (pot_bank, target_pc, replacement, expected) in cases.items():
+            with self.subTest(name=name):
+                rom_path = self.fixture.write_dev_rom(
+                    pot_bank=pot_bank, rom_size=0x400000
+                )
+                self.fixture.write_rom_value(rom_path, target_pc, replacement, 1)
+                with self.assertRaisesRegex(ManifestGenerationError, expected):
+                    derive_dungeon_stream_regions(rom_path)
+
     def test_invalid_live_stream_pointers_fail_closed(self) -> None:
         mutations = {
             "object": (
@@ -2873,7 +2962,7 @@ class ExperimentalNativeManifestTest(unittest.TestCase):
         self.write_native(self.native.fixture.source)
         manifest=generate_manifest(self.fixture.root)
         raw=json.dumps(manifest,sort_keys=True,separators=(',',':')).encode()
-        self.assertEqual(hashlib.sha256(raw).hexdigest(),'bcb6e2dff73afe6a5bb59daf7bdeebb4bca5f489ac90357a94844ba3018d6db3')
+        self.assertEqual(hashlib.sha256(raw).hexdigest(),'92058a7e869effe704eac802bddefe111e5c44085452a2de46523635771fb3e5')
 
     def test_semantic_source_bound_is_narrow_and_active(self):
         root=self.fixture.root
