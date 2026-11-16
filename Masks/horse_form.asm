@@ -364,6 +364,9 @@ endif
     JSR HorseForm_CheckFenceJump
     JSR HorseForm_ConstrainGroundInput
     JSR HorseForm_PlayHoofBeat
+if !ENABLE_HORSE_CROWD_CHARGE == 1
+    JSL HorseCharge_Tick_Long
+endif
   .skip_triggers
   JSR HorseForm_UpdateAnimFrame
   PLB : PLP
