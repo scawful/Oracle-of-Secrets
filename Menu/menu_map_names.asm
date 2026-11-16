@@ -64,71 +64,81 @@ OverworldLocationNames:
   dw "GARO_DESERT_____" ; 3E
   dw "GARO_DESERT_____" ; 3F
 
+; Abyss names are 15 cells wide. DrawLocationName steps 16 cells per area, so
+; with the Map & Travel menu on each entry gets a 16th blank cell. The pad is
+; flag-guarded so the flags-off ROM stays byte-identical.
+macro AbyssName(text)
+  dw "<text>"
+  if !ENABLE_MENU_MAP_TRAVEL == 1
+    dw "_"
+  endif
+endmacro
+
 DarkWorldLocationNames:
-  dw "TEMPORAL_GATE__" ; 00
-  dw "TEMPORAL_GATE__" ; 01
-  dw "PYRAMID_OF_EONS" ; 02
-  dw "LAVA_LANDS_____" ; 03
-  dw "LAVA_LANDS_____" ; 04 
-  dw "LAVA_LANDS_____" ; 05 
-  dw "LAVA_LANDS_____" ; 06
-  dw "LAVA_LANDS_____" ; 07
-  dw "TEMPORAL_GATE__" ; 08
-  dw "TEMPORAL_GATE__" ; 09
-  dw "LUPO_WATERFALL_" ; 0A
-  dw "THE_FORTRESS___" ; 0B
-  dw "THE_FORTRESS___" ; 0C
-  dw "LUPO_MOUNTAIN__" ; 0D
-  dw "LAVA_LANDS_____" ; 0E
-  dw "LAVA_LANDS_____" ; 0F
-  dw "SHRINE_COURAGE_" ; 10
-  dw "_______________" ; 11
-  dw "_______________" ; 12 
-  dw "THE_FORTRESS___" ; 13
-  dw "THE_FORTRESS___" ; 14
-  dw "LUPO_MOUNTAIN__" ; 15
-  dw "LAVA_LANDS_____" ; 16
-  dw "LAVA_LANDS_____" ; 17
-  dw "_______________" ; 18
-  dw "_______________" ; 19
-  dw "_______________" ; 1A
-  dw "_______________" ; 1B
-  dw "_______________" ; 1C
-  dw "_______________" ; 1D
-  dw "LUPO_MOUNTAIN__" ; 1E
-  dw "LUPO_MOUNTAIN__" ; 1F
-  dw "_______________" ; 20
-  dw "_______________" ; 21
-  dw "_______________" ; 22
-  dw "WISDOM_SWAMP___" ; 23
-  dw "WISDOM_SWAMP___" ; 24
-  dw "_______________" ; 25
-  dw "LUPO_MOUNTAIN__" ; 26
-  dw "LUPO_MOUNTAIN__" ; 27
-  dw "_______________" ; 28
-  dw "_______________" ; 29
-  dw "_______________" ; 2A
-  dw "WISDOM_SWAMP___" ; 2B
-  dw "WISDOM_SWAMP___" ; 2C
-  dw "_______________" ; 2D
-  dw "_______________" ; 2E
-  dw "_______________" ; 2F
-  dw "UNDERWATER_____" ; 30
-  dw "UNDERWATER_____" ; 31
-  dw "UNDERWATER_____" ; 32
-  dw "UNDERWATER_____" ; 33
-  dw "UNDERWATER_____" ; 34
-  dw "UNDERWATER_____" ; 35
-  dw "ABYSS_BEACH____" ; 36
-  dw "ABYSS_BEACH____" ; 37
-  dw "UNDERWATER_____" ; 38
-  dw "UNDERWATER_____" ; 39
-  dw "UNDERWATER_____" ; 3A
-  dw "UNDERWATER_____" ; 3B
-  dw "UNDERWATER_____" ; 3C
-  dw "UNDERWATER_____" ; 3D
-  dw "ABYSS_BEACH____" ; 3E
-  dw "ABYSS_BEACH____" ; 3F
+  %AbyssName("TEMPORAL_GATE__") ; 00
+  %AbyssName("TEMPORAL_GATE__") ; 01
+  %AbyssName("PYRAMID_OF_EONS") ; 02
+  %AbyssName("LAVA_LANDS_____") ; 03
+  %AbyssName("LAVA_LANDS_____") ; 04
+  %AbyssName("LAVA_LANDS_____") ; 05
+  %AbyssName("LAVA_LANDS_____") ; 06
+  %AbyssName("LAVA_LANDS_____") ; 07
+  %AbyssName("TEMPORAL_GATE__") ; 08
+  %AbyssName("TEMPORAL_GATE__") ; 09
+  %AbyssName("LUPO_WATERFALL_") ; 0A
+  %AbyssName("THE_FORTRESS___") ; 0B
+  %AbyssName("THE_FORTRESS___") ; 0C
+  %AbyssName("LUPO_MOUNTAIN__") ; 0D
+  %AbyssName("LAVA_LANDS_____") ; 0E
+  %AbyssName("LAVA_LANDS_____") ; 0F
+  %AbyssName("SHRINE_COURAGE_") ; 10
+  %AbyssName("_______________") ; 11
+  %AbyssName("_______________") ; 12
+  %AbyssName("THE_FORTRESS___") ; 13
+  %AbyssName("THE_FORTRESS___") ; 14
+  %AbyssName("LUPO_MOUNTAIN__") ; 15
+  %AbyssName("LAVA_LANDS_____") ; 16
+  %AbyssName("LAVA_LANDS_____") ; 17
+  %AbyssName("_______________") ; 18
+  %AbyssName("_______________") ; 19
+  %AbyssName("_______________") ; 1A
+  %AbyssName("_______________") ; 1B
+  %AbyssName("_______________") ; 1C
+  %AbyssName("_______________") ; 1D
+  %AbyssName("LUPO_MOUNTAIN__") ; 1E
+  %AbyssName("LUPO_MOUNTAIN__") ; 1F
+  %AbyssName("_______________") ; 20
+  %AbyssName("_______________") ; 21
+  %AbyssName("_______________") ; 22
+  %AbyssName("WISDOM_SWAMP___") ; 23
+  %AbyssName("WISDOM_SWAMP___") ; 24
+  %AbyssName("_______________") ; 25
+  %AbyssName("LUPO_MOUNTAIN__") ; 26
+  %AbyssName("LUPO_MOUNTAIN__") ; 27
+  %AbyssName("_______________") ; 28
+  %AbyssName("_______________") ; 29
+  %AbyssName("_______________") ; 2A
+  %AbyssName("WISDOM_SWAMP___") ; 2B
+  %AbyssName("WISDOM_SWAMP___") ; 2C
+  %AbyssName("_______________") ; 2D
+  %AbyssName("_______________") ; 2E
+  %AbyssName("_______________") ; 2F
+  %AbyssName("UNDERWATER_____") ; 30
+  %AbyssName("UNDERWATER_____") ; 31
+  %AbyssName("UNDERWATER_____") ; 32
+  %AbyssName("UNDERWATER_____") ; 33
+  %AbyssName("UNDERWATER_____") ; 34
+  %AbyssName("UNDERWATER_____") ; 35
+  %AbyssName("ABYSS_BEACH____") ; 36
+  %AbyssName("ABYSS_BEACH____") ; 37
+  %AbyssName("UNDERWATER_____") ; 38
+  %AbyssName("UNDERWATER_____") ; 39
+  %AbyssName("UNDERWATER_____") ; 3A
+  %AbyssName("UNDERWATER_____") ; 3B
+  %AbyssName("UNDERWATER_____") ; 3C
+  %AbyssName("UNDERWATER_____") ; 3D
+  %AbyssName("ABYSS_BEACH____") ; 3E
+  %AbyssName("ABYSS_BEACH____") ; 3F
 
 
 DungeonLocationNames:

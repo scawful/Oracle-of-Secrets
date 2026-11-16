@@ -97,12 +97,16 @@ MenuMapTravel_Screen:
     LDA.b #!MENU_STATE_INIT_SCROLL_DOWN : STA.w $0200
     RTS
   .no_start
+  LDA.w $020B : PHA
   JSR MenuMapTravel_Move
   SEP #$30
+  PLA : EOR.w $020B : TAX               ; X != 0: the cursor moved this frame
   LDA.w $0200 : CMP.b #!MENU_STATE_STATS_SCREEN : BEQ .select
   RTS                                   ; page turn owns the rest of this frame
 .select
+  TXA : BNE .moved                      ; A/Y act on the cell the player saw
   JSR MenuMapTravel_Select
+.moved
   INC.w $0207                           ; cursor blink
   JSR MenuMapTravel_Draw
   SEP #$30
@@ -415,13 +419,13 @@ MenuMapTravel_Draw:
 }
 
 ; ---------------------------------------------------------
-; Current area name, centered on row 13. Overworld names stop at $3F
-; (the $40+ table rows are not 16-word aligned); special areas show none.
+; Current area name, centered on row 13. Light World and Abyss names
+; ($00-$7F, 16 cells each with the AbyssName pad); special areas show none.
 ; In/out M/X=16.
 MenuMapTravel_AreaName:
 {
   LDA.b $1B : AND.w #$00FF : BNE .indoors
-  LDA.b $8A : AND.w #$00FF : CMP.w #$0040 : BCS .none
+  LDA.b $8A : AND.w #$00FF : CMP.w #$0080 : BCS .none
   ASL #5 : CLC : ADC.w #OverworldLocationNames
   BRA .have
 .indoors
