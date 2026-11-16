@@ -24,6 +24,9 @@ HUD_ClockDisplay:
 {
   PHP ; Preserve caller M/X flags
   JSR RunClock
+  if !ENABLE_GLADE_AMBUSH == 1
+    JSL KydrogLanding_Tick ; Abyss landing pan (Sprites/Bosses/kydrog.asm)
+  endif
   JSL SongTintTick ; After RunClock: repaints over an hourly palette refresh
   if !ENABLE_DREAM_WISDOM_SCENE == 1
     JSL DreamWisdom_HUDHidden : BCS .no_clock ; Wisdom scene: HUD blank

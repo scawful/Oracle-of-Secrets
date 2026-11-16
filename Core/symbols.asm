@@ -41,6 +41,7 @@ BossReinject:             skip 1  ; $7E1EA7 fairy revive in room $00: bosses re-
 FinaleBeat:               skip 1  ; $7E1EA8 0 Kydreeok not dead yet, N>1 placeholder beat counting down, 1 Ganondorf may spawn
 WallSel_Buffer:           skip 32 ; $7E1EA9-$7E1EC8 Dungeons/wall_profile_selector.asm span window (read via $01:1EA9 mirror)
 SongTintContext:          skip 2  ; $7E1EC9 $1B and area ($8A) or room ($A0) the tint started in
+AbyssLanding:             skip 2  ; $7E1ECB glade ambush landing: state (0 off, 1 armed, 2 mosaic, 3 pan), +1 camera rows left
 assert pc() <= $7E1F00, "Core/symbols.asm WRAM block overflows free RAM $7E1E70-$7E1EFF"
 }
 base off

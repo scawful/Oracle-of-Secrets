@@ -299,7 +299,7 @@ Sprite_Kydrog_Main:
     AND.w #$00FF : EOR.w #$FFFF : INC A
     JSR KydrogArrival_ShiftCamera
     SEP #$20
-    LDA.b #$0C : STA.b $4B ; Link invisible while the camera is away
+    LDA.b #$0C : STA.b $4B ; Link hidden until the pan ends (his OAM ignores $011C)
     LDA.b #$03 : STA.w $012C ; Kydrog's theme with the reveal
     %GotoAction(11)
     RTS
@@ -352,6 +352,11 @@ Sprite_Kydrog_Main:
     ; TODO: Trigger "Abyss" background effect here (BG3 mosaic or HDMA scanlines)
     ;       to emphasize the banishment sequence.
     
+    if !ENABLE_GLADE_AMBUSH == 1
+      ; Arm the Abyss landing pan (KydrogLanding_Tick).
+      LDA.b #$01 : STA.l AbyssLanding
+    endif
+
     ; Put us in the Dark World.
     LDA $7EF3CA : EOR.b #$40 : STA $7EF3CA
 
@@ -589,6 +594,62 @@ KydrogArrival_ShiftCamera:
 {
   CLC : ADC.w $011C : STA.w $011C
   RTS
+}
+
+; Abyss landing. Kydrog_WarpPlayerAway arms AbyssLanding (Core/symbols.asm);
+; Kydrog is gone after the module $15 warp, so this runs from
+; HUD_ClockDisplay (Sprite_Main, inside the module 09 camera push/pop).
+; State 1: wait for gameplay on area $40, then cut the camera $E0 px north
+; to the three pyramid peaks under full mosaic. State 2: the mosaic clears.
+; State 3: pan 1 px per frame down to Link, then free him.
+; AbyssLanding+1 = camera rows still to pan.
+KydrogLanding_Tick:
+{
+  PHP
+  SEP #$30
+  LDA.l AbyssLanding : BEQ .idle
+  LDA.b $10 : CMP.b #$09 : BEQ .gameplay
+  .idle
+    PLP
+    RTL
+  .gameplay
+  LDA.b $8A : CMP.b #$40 : BNE .abort
+  LDA.l AbyssLanding : CMP.b #$02 : BEQ .clear
+  BCS .pan
+    LDA.b $11 : BNE .out
+    LDA.b #$E0 : STA.l AbyssLanding+1
+    REP #$20
+    LDA.w #$FF20 : STA.w $011C
+    SEP #$20
+    LDA.b #$01 : STA.w $02E4
+    LDA.b #$0C : STA.b $4B ; Link invisible while the camera is away
+    LDA.b #$F3 : STA.b $95 ; BG1/BG2 mosaic, largest size
+    LDA.b #$02 : STA.l AbyssLanding
+    BRA .out
+  .clear
+    LDA.b $1A : AND.b #$03 : BNE .out
+    LDA.b $95 : SEC : SBC.b #$10 : STA.b $95
+    CMP.b #$10 : BCS .out
+      STZ.b $95
+      LDA.b #$03 : STA.l AbyssLanding
+      BRA .out
+  .pan
+    LDA.l AbyssLanding+1 : BEQ .done
+    DEC A : STA.l AbyssLanding+1
+    REP #$20
+    INC.w $011C
+    SEP #$20
+    BRA .out
+  .done
+  STZ.b $4B
+  STZ.b $95
+  STZ.w $02E4
+  STZ.w $011C : STZ.w $011D
+  .abort
+  LDA.b #$00 : STA.l AbyssLanding
+  .out
+  PLP
+  RTL
 }
 
 ; Spawn patrol A (0-1). X = Kydrog. Patrols are subtype 2 and keep Kydrog's
