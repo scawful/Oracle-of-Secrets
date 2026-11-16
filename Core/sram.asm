@@ -843,7 +843,18 @@ RegionalCheckpointResumeIntent = $7EF3B8 ; byte: 0 Home, 1 last regional key
 ItemBindingSavedVersion = $7EF3B9
 ItemBindingSavedY       = $7EF3BA
 ItemBindingSavedX       = $7EF3BB
-FreeBlock_Large    = $7EF3BC  ; 9 bytes [BC,C5)
+; Two-slot swords (scawful "Yes, two slots", 2026-11-16). Sword ($7EF359)
+; stays the EQUIPPED combat/graphics level; these keep story-blade and heavy
+; ownership apart. Free before: no reader/writer in Oracle/usdasm, not a
+; receipt destination, vanilla new-file clear, five-page save + checksum.
+; Bit7 clear = old save: Menu/menu_equipment.asm SwordSlots_Sync migrates it
+; (story := Sword if 1..4), never granting the heavy sword.
+SwordStoryBlade    = $7EF3BC  ; 0 none, 1 Meadow, 2+ Master levels
+SwordSlotFlags     = $7EF3BD  ; bit0 heavy owned, bit1 heavy equipped, bit7 init
+!SwordSlot_HeavyOwned    = $01
+!SwordSlot_HeavyEquipped = $02
+!SwordSlot_Initialized   = $80
+FreeBlock_Large    = $7EF3BE  ; 7 bytes [BE,C5)
 
 ; ---------------------------------------------------------
 ; Dreams extension and current tail-event reservation ($7EF412-4FD)
@@ -870,7 +881,7 @@ FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF3A0  | $7EF3A0  | bits  | Wolf dig: bit 0 used |
 ; | $7EF3B3  | $7EF3B3  | 1     | Large prefix       |
-; | $7EF3BC  | $7EF3C4  | 9     | Large remainder    |
+; | $7EF3BE  | $7EF3C4  | 7     | Large remainder    |
 ; | $7EF412  | $7EF4BE  | 173   | Dreams prefix      |
 ; | $7EF4E1  | $7EF4FD  | 29    | Dreams remainder   |
 ; |----------|----------|-------|--------------------|

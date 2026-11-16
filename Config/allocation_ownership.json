@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "6a25310c4ed971a5e0513e50ccfda1158a26b82d9e7976e2122f18f7083074ca"
+      "sha256": "3ccf3454149a33260ff001bf31601fe2be742c1553e440f2e7d1beace059dc52"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -2856,6 +2856,50 @@
       "binding": {
         "source": "shared:Core/sram.asm",
         "symbol": "ItemBindingSavedX",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "SwordStoryBlade",
+      "owner": "Two-slot swords: story blade level",
+      "space": "save_buffer",
+      "base": 8319932,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file; two-slot sword state (Menu/menu_equipment.asm SwordSlots_Sync).",
+      "reset": "Vanilla new-file clear; schema bit7 clear triggers migration from Sword ($7EF359) without granting the heavy sword.",
+      "save": "Covered by vanilla five-page save, backup and checksum.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "SwordStoryBlade",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "SwordSlotFlags",
+      "owner": "Two-slot swords: heavy owned/equipped/init flags",
+      "space": "save_buffer",
+      "base": 8319933,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file; two-slot sword state (Menu/menu_equipment.asm SwordSlots_Sync).",
+      "reset": "Vanilla new-file clear; schema bit7 clear triggers migration from Sword ($7EF359) without granting the heavy sword.",
+      "save": "Covered by vanilla five-page save, backup and checksum.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "SwordSlotFlags",
         "bank00_mirror": false
       }
     },
