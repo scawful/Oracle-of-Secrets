@@ -266,7 +266,10 @@ def run_case(case: dict, rom_path: Path, seed: Path, out: Path) -> int:
                     active = c.active_sprites()
                     c("screenshot", "--out", str(out / "2_boss.png"))
                     hit = sorted(set(active) & set(case["boss_sprites"]))
-                    check("boss_loads", s["module"] == 0x07 and s["room"] == room and bool(hit),
+                    # Module $0E/$02 is a message box: a boss that opens with intro text
+                    # (D5 $CE) is loaded, not hung.
+                    alive = s["module"] == 0x07 or (s["module"], s["sub"]) == (0x0E, 0x02)
+                    check("boss_loads", alive and s["room"] == room and bool(hit),
                           f"{fmt(s)} active {[f'{x:02X}' for x in active]} matched {[f'{x:02X}' for x in hit]}")
                     # 5. exit
                     er = case["entrance_room"]
