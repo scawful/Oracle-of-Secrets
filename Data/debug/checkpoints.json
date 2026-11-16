@@ -1266,7 +1266,7 @@
         ],
         "room": "0x0084"
       },
-      "notes": "Editor jump through warps.json entrance $09. Native load sets CurrentMask $06; the Minish check fails. No story writes.",
+      "notes": "Editor jump through warps.json entrance $09 -> room $84. On project ROM c606f8d9 and earlier, exit wiring forced GBC form (mask 6, $0FFF=1). On 566e8b62+ (doors 1-3 landed) warp_entrance(0x09) keeps mask 0 and $0FFF 0. Re-verify on a private 566e build; no story writes.",
       "writes": []
     }
   ],
