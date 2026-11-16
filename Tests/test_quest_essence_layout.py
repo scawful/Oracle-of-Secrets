@@ -199,6 +199,21 @@ class QuestEssenceLayout(unittest.TestCase):
                 shared = everything[first] & everything[second]
                 self.assertFalse(shared, f"{first} overlaps {second} at {sorted(shared)}")
 
+    def test_bottom_row_brackets_and_top_row_empty(self):
+        """Pearl | map, big chest key, big key, treasure | hearts on one mirrored row."""
+        content = self.other_content()
+        names = ["moon pearl"] + [f"dungeon item {i}" for i in range(4)] + ["heart piece"]
+        origins = [min(content[name]) for name in names]
+        self.assertEqual({row for row, _ in origins}, {21})
+        cols = sorted(col for _, col in origins)
+        self.assertEqual(cols[0], origins[0][1], "pearl is leftmost")
+        self.assertEqual(cols[-1], origins[-1][1], "hearts are rightmost")
+        self.assertEqual({a + b for a, b in zip(cols, reversed(cols))}, {30}, "row mirrors about cols 15|16")
+        count = content["heart piece count"]
+        self.assertEqual({row for row, _ in count}, {23})
+        for cells in content.values():
+            self.assertFalse({row for row, _ in cells} & {9, 10, 11}, "top row stays empty")
+
     def test_essences_keep_one_tile_gap(self):
         essences = [square(cell) for cell in self.crystal_cells()]
         icons = essences + [square(to_cell(self.offset(*p))) for p in self.pendant_helper]

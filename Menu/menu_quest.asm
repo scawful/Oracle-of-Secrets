@@ -65,7 +65,7 @@ Menu_Quest_Draw:
 
   JSR Menu_DrawHeartPieces
   LDA.l $7EF36B : AND.w #$00FF
-  LDX.w #menu_offset(11,23)          ; under the heart-piece container
+  LDX.w #menu_offset(23,23)          ; under the heart-piece container
   JSR Menu_Quest_Number3
   JSR Menu_Quest_Progress
   JSR Menu_Quest_Gear
@@ -78,7 +78,9 @@ Menu_Quest_Draw:
 }
 
 ; v4: passive GEAR moved to the Equipment page (Menu_Equipment_Gear).
-; Quest keeps only the Moon Pearl beside the heart pieces.
+; Quest keeps only the Moon Pearl; it and the heart pieces bracket the
+; bottom row (Pearl | map, big chest key, big key, treasure | hearts).
+; The top row stays empty.
 Menu_Quest_Gear:
 {
   SEP #$30
@@ -89,7 +91,7 @@ Menu_Quest_Gear:
   STA.w MenuItemValueSpoof
   REP #$30
   LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(5,2)   ; Quest absolute (9,6), top-left corner
+  LDX.w #menu_offset(17,2)  ; Quest absolute (21,6), bottom row, left end
   LDY.w #MoonPearlGFX
   JSR DrawMenuItem
   REP #$30
