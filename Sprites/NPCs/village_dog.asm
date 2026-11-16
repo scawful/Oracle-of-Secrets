@@ -87,6 +87,11 @@ LiftOrTalk:
 
 Sprite_VillageDog_Main:
 {
+  if !ENABLE_RICHARD_QUEST == 1
+  JSL RichardDog_Main : BCC .richard_vanilla ; Overworld/richard_quest.asm
+    RTS
+  .richard_vanilla
+  endif
   if !ENABLE_VILLAGE_DOG_POLISH == 1
   ; Bug fix (2026-09-26 playtest, flagged): vanilla CarriedSprite_CheckForThrow
   ; (usdasm bank_06 $06DF6D) restores SprState to 9, sets SprTimerF ($0F80,X,
@@ -339,6 +344,9 @@ Sprite_VillageDog_Draw:
 {
   JSL   Sprite_PrepOamCoord
   JSL   Sprite_OAM_AllocateDeferToPlayer
+  if !ENABLE_RICHARD_QUEST == 1
+  JSL RichardDog_PaletteMask ; $0C = Richard palette XOR
+  endif
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY ; Animation Frame
   LDA   .start_index,     Y : STA $06
@@ -374,7 +382,11 @@ Sprite_VillageDog_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
+  if !ENABLE_RICHARD_QUEST == 1
+  LDA .properties, X : EOR.b $0C : STA ($90), Y
+  else
   LDA .properties, X : STA ($90), Y
+  endif
 
   PHY
 

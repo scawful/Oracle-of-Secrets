@@ -268,6 +268,13 @@ endif
 ; Every other pad, including LW $25 -> $65 (Yesterwind), is unchanged
 ; (Overworld/lupo_pad_gate.asm).
 !ENABLE_LUPO_PAD_GATE               = 1
+; Richard quest (scawful 2026-11-15): the Wayward Village snitch lady ($3D)
+; paces without calling guards and asks for her dog Richard, a night-only
+; palette swap of the village dog ($25). After Link finds him she runs into
+; the storage shed (entrance $4A, room $107) and rewards Link inside.
+; Off by default until dialogue and the room are approved
+; (Overworld/richard_quest.asm, SRAM RichardQuestFlags).
+!ENABLE_RICHARD_QUEST               = 0
 ; Lyra/Sky overlay fix: Overworld_ReloadSubscreenOverlay (ZSCustomOverworld,
 ; $02AF58) skipped the subscreen-overlay table for every area >= $80, so a
 ; reload on a tail map ($A0-$BF) or during Song of Storms rain on a Sky map

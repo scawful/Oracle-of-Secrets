@@ -174,6 +174,9 @@ endif
 if !ENABLE_LUPO_PAD_GATE == 1
   incsrc "Overworld/lupo_pad_gate.asm"
 endif
+if !ENABLE_RICHARD_QUEST == 1
+  incsrc "Overworld/richard_quest.asm"
+endif
 
 LoadOverworldPitAreas:
 {
