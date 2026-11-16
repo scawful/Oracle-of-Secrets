@@ -1935,16 +1935,6 @@
       "landing": "outside Shrine of Power"
     },
     {
-      "area": "0x50",
-      "name": "Shrine Courage",
-      "world": "abyss",
-      "via_room": "0x0053",
-      "exit_index": "0x06",
-      "x": "0x00E8",
-      "y": "0x0428",
-      "landing": "outside Shrine of Courage"
-    },
-    {
       "area": "0x56",
       "name": "Lava Lands",
       "world": "abyss",
