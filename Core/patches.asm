@@ -11,6 +11,9 @@
 assert read1($01E6C7) == $A9 && read1($01E6C9) == $00, "RevealPotItem bank loader at $01:E6C7 changed"
 assert read1($01E6C8) == $5A, "Base ROM pot items are not in bank $5A: run Scripts/Rooms/pot_item_bank_migration.py on the base"
 assert read2($5AFFFE) == $FFFF, "Pot-item pad terminator at $5A:FFFE was overwritten"
+; The operand alone does not prove the table was rewritten: the first and last
+; pad words ($01:DDB9, $01:DDE5) hold $FFFE only after the migration.
+assert read2($01DDB9) == $FFFE && read2($01DDE5) == $FFFE, "Pot-item table at $01:DB69 is not migrated: pad words do not point at $5A:FFFE"
 
 ; Keep the Shrine pendant rewards reproducible from an unedited base ROM.
 ; Guard both the chest record identity and the accepted old/already-fixed item
