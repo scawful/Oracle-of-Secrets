@@ -75,10 +75,8 @@ incsrc "Overworld/custom_gfx.asm"
 incsrc "Overworld/credits_scenes.asm"
 %log_end("Overworld/credits_scenes.asm", !LOG_OVERWORLD)
 
-if !ENABLE_MENU_MAP_TRAVEL == 1
-incsrc "Overworld/travel_destinations.asm"
-%log_end("Overworld/travel_destinations.asm", !LOG_OVERWORLD)
-endif
+; Overworld/travel_destinations.asm is included from Items/all_items.asm
+; (bank $2B): bank $34 has no room once storm/Lupo/Lyra code is on.
 
 incsrc "Overworld/docks_profile.asm"
 pushpc

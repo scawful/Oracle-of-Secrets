@@ -302,6 +302,13 @@ if !ENABLE_D6_CHU_GATE_97 == 1
 incsrc "Dungeons/d6_chu_gate_97.asm"
 endif
 
+; Map & Travel visited bits + bird picker. Bank $34 is full; every access in
+; the file is long (.l / JML / JSL), so it runs from this bank unchanged.
+if !ENABLE_MENU_MAP_TRAVEL == 1
+incsrc "Overworld/travel_destinations.asm"
+%log_end("Overworld/travel_destinations.asm", !LOG_ITEMS)
+endif
+
 
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
 assert pc() <= $2BF000, "Items bank $2B reached the dream entry FX region ($2BF000)"
