@@ -1,4 +1,6 @@
 ; Functional Equipment: slots 0-5 masks, 6-11 rings, 12-17 songs, 18-23 supplies.
+; v4 bands, top to bottom: GEAR (display only), MASKS, RINGS, then SONGS or SUPPLIES.
+; Songs leave band 3 when Map & Travel is on; supplies may then take it.
 ; $020B is only the cursor; BoundMask, RingSlot1 and CurrentSong are selections.
 ; No preview fixture or ownership spoof controls availability. DBR = $2D.
 ; Supplies retain slots/counts but stay hidden until their menu is enabled.
@@ -6,6 +8,7 @@
 if not(defined("MENU_EQUIPMENT_SUPPLIES_VISIBLE"))
   !MENU_EQUIPMENT_SUPPLIES_VISIBLE = 0
 endif
+assert !ENABLE_MENU_MAP_TRAVEL == 1 || !MENU_EQUIPMENT_SUPPLIES_VISIBLE == 0, "Songs and Supplies share Equipment band 3"
 
 Menu_Equipment_Init:
 {
@@ -47,7 +50,11 @@ Menu_Equipment_Owned:
   TXA : INC #2 : BRA .done
 .song
   CMP.b #$12 : BCS .supplies
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  BRA .none                          ; songs live on the Map & Travel page
+else
   SEC : SBC.b #$0B                    ; song 1-6 < Ocarina progression
+endif
   CMP.l $7EF34C : BCS .none
   INC : BRA .done                    ; colored note variants 2-7
 .supplies
@@ -203,10 +210,14 @@ Menu_Equipment_Draw:
   DEX #2 : BPL .title
   LDX.w #$0008
 .labels
-  LDA.w .masks,X : STA.w $1000+menu_offset(9,6),X
-  LDA.w .rings,X : STA.w $1000+menu_offset(13,6),X
-  LDA.w .songs,X : STA.w $1000+menu_offset(17,6),X
+  LDA.w .gear,X : STA.w $1000+menu_offset(9,6),X
+  LDA.w .masks,X : STA.w $1000+menu_offset(13,6),X
+  LDA.w .rings,X : STA.w $1000+menu_offset(17,6),X
+if !ENABLE_MENU_MAP_TRAVEL == 0
+  LDA.w .songs,X : STA.w $1000+menu_offset(21,6),X
+endif
   DEX #2 : BPL .labels
+  JSR Menu_Equipment_Gear
 if !MENU_EQUIPMENT_SUPPLIES_VISIBLE == 1
   LDX.w #$000E
 .supplies_label
@@ -217,6 +228,13 @@ endif
   LDA.b #$7E : STA.b $0A
   LDY.b #$00
 .icons
+if !ENABLE_MENU_MAP_TRAVEL == 0
+  CPY.b #$12 : BCS .next_icon        ; band 3 holds songs; supplies are hidden
+else
+  CPY.b #$0C : BCC .draw_icon
+  CPY.b #$12 : BCC .next_icon        ; songs live on the Map & Travel page
+.draw_icon
+endif
   PHY
   TYA : JSR Menu_Equipment_Owned
   STA.w MenuItemValueSpoof
@@ -228,6 +246,7 @@ endif
   JSR DrawMenuItem
   SEP #$30
   PLY
+.next_icon
   INY : CPY.b #$18 : BCC .icons
 
   JSR Menu_Equipment_UsePrompt
@@ -264,6 +283,8 @@ endif
   RTS
 .title_text
   dw "EQUIPMENT"
+.gear
+  dw "GEAR_"
 .masks
   dw "MASKS"
 .rings
@@ -272,6 +293,34 @@ endif
   dw "SONGS"
 .supplies
   dw "SUPPLIES"
+}
+
+; GEAR band: passive gear, display only (no cursor, no names). Variants come
+; from Menu_Quest_GearVariant, the same SRAM reads Quest used before v4.
+Menu_Equipment_Gear:
+{
+  SEP #$30
+  LDA.b #$7E : STA.b $0A              ; DrawMenuItem reads the variant from $7E
+  LDY.b #$00
+.icons
+  PHY
+  TYA : CLC : ADC.b #$0F : JSR Menu_Quest_GearVariant
+  STA.w MenuItemValueSpoof
+  REP #$30
+  TYA : AND.w #$00FF : ASL : TAX
+  LDA.w .gfx,X : TAY
+  LDA.w .pos,X : TAX
+  LDA.w #MenuItemValueSpoof
+  JSR DrawMenuItem
+  SEP #$30
+  PLY
+  INY : CPY.b #$06 : BCC .icons
+  RTS
+.pos
+  dw menu_offset(6,3),menu_offset(6,6),menu_offset(6,9)
+  dw menu_offset(6,13),menu_offset(6,16),menu_offset(6,19)
+.gfx
+  dw PowerGloveGFX,PegasusBootsGFX,FlippersGFX,SwordGFX,ShieldGFX,TunicGFX
 }
 
 ; Only the three implemented foods advertise Use, and only with stock.
@@ -356,8 +405,8 @@ Menu_Equipment_Gfx:
   dw QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX
   dw BananaGFX,PineappleGFX,RockMeatGFX,SeashellGFX,HoneycombGFX,DekuStickGFX
 Menu_Equipment_Pos:
-  dw menu_offset(6,3),menu_offset(6,6),menu_offset(6,9),menu_offset(6,13),menu_offset(6,16),menu_offset(6,19)
   dw menu_offset(10,3),menu_offset(10,6),menu_offset(10,9),menu_offset(10,13),menu_offset(10,16),menu_offset(10,19)
   dw menu_offset(14,3),menu_offset(14,6),menu_offset(14,9),menu_offset(14,13),menu_offset(14,16),menu_offset(14,19)
+  dw menu_offset(18,3),menu_offset(18,6),menu_offset(18,9),menu_offset(18,13),menu_offset(18,16),menu_offset(18,19)
   dw menu_offset(18,3),menu_offset(18,6),menu_offset(18,9)
   dw menu_offset(18,13),menu_offset(18,16),menu_offset(18,19)

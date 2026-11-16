@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "1cc0f9ae70daf485d655e9a08075edcdc5a963f74f3d4fa7f02b5cfa1e940f1f"
+      "sha256": "6a25310c4ed971a5e0513e50ccfda1158a26b82d9e7976e2122f18f7083074ca"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -132,6 +132,11 @@
       "path": "Menu/menu_hud.asm",
       "sha256": "de44d97c8613b26a2c25d2d4b63831a3b09d2f3e7034649a36e7a181bc25b5dc"
     },
+    "shared:Menu/menu_map_travel.asm": {
+      "source_set": "shared",
+      "path": "Menu/menu_map_travel.asm",
+      "sha256": "062135b67cc5743af647b22422df3436260472623fc23816b26c0ae259aed7ce"
+    },
     "shared:Core/Cutscene/experiment.asm": {
       "source_set": "shared",
       "path": "Core/Cutscene/experiment.asm",
@@ -165,7 +170,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "794daecd83cc682c5d7bc4ed95abbd4b93ee845d4d43e680ef6d2b3557f8079e"
+      "sha256": "9184de1923cbd995c27eeed217067fa9a473ff44f00712e664cd392c481560c4"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -2518,6 +2523,33 @@
       "binding": {
         "source": "shared:Core/symbols.asm",
         "symbol": "Horse_Marker",
+        "base_block": true
+      }
+    },
+    {
+      "id": "menu_map_travel_pending",
+      "owner": "Map & Travel menu page pending action byte ($7E1EFE)",
+      "space": "wram",
+      "base": 8265470,
+      "size": 1,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_MENU_MAP_TRAVEL": 1
+      },
+      "lifetime": "One conditional transient WRAM byte after the horse tail ($7E1EFE < $7E1F00). Set by the Map & Travel page when Map or Travel closes the menu; consumed by Menu_Exit the same frame the menu closes.",
+      "reset": "MenuMapTravel_Init clears it when the page is drawn; MenuMapTravel_ExitAction clears it before acting.",
+      "save": "Volatile WRAM; not saved in SRAM.",
+      "provenance": [
+        "shared:Core/symbols.asm",
+        "shared:Menu/menu_map_travel.asm"
+      ],
+      "anchors": [
+        "MenuMapTravel_Pending:"
+      ],
+      "aliases": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "MenuMapTravel_Pending",
         "base_block": true
       }
     },
