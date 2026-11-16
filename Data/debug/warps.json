@@ -1845,16 +1845,6 @@
       "landing": "outside D2 Tail Palace"
     },
     {
-      "area": "0x32",
-      "name": "Secret Beach",
-      "world": "kalyxo",
-      "via_room": "0x00FD",
-      "exit_index": "0x1B",
-      "x": "0x04B8",
-      "y": "0x0C88",
-      "landing": "outside Beach Cave Route"
-    },
-    {
       "area": "0x33",
       "name": "Loom Beach",
       "world": "kalyxo",
