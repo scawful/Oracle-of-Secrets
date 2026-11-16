@@ -340,6 +340,15 @@ if !ENABLE_RANCH_MILK == 1
 incsrc "Sprites/NPCs/ranch_milk.asm"
 endif
 
+; Lyra talkers: banks $30/$32 are full. Entered by JML (prep hook) and JSL
+; (Oracle $BB dispatch); table reads run under PHK : PLB and other absolute
+; operands are low WRAM (mirrored), so the file runs from here.
+if !ENABLE_LYRA_TALKERS == 1
+  %log_start("lyra_talker", !LOG_SPRITES)
+  incsrc "Sprites/NPCs/lyra_talker.asm"
+  %log_end("lyra_talker", !LOG_SPRITES)
+endif
+
 ; Richard quest: bank $34 is full. Every JSL entry sets DB with PHK : PLB and
 ; hooks use JSL, so the file runs from this bank unchanged.
 if !ENABLE_RICHARD_QUEST == 1

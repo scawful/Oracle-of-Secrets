@@ -199,12 +199,8 @@ endif
 ; Sprites/NPCs/ranch_milk.asm is included from Items/all_items.asm
 ; (bank $2B): bank $30 is full once the playtest features are on.
 
-; Bank $32 is full; Lyra talkers live here.
-if !ENABLE_LYRA_TALKERS == 1
-  %log_start("lyra_talker", !LOG_SPRITES)
-  incsrc "Sprites/NPCs/lyra_talker.asm"
-  %log_end("lyra_talker", !LOG_SPRITES)
-endif
+; Sprites/NPCs/lyra_talker.asm is included from Items/all_items.asm
+; (bank $2B): banks $30 and $32 are full.
 
 assert pc() <= $310000, "Bank $30 sprite code crossed its LoROM executable boundary"
 assert pc() >= $308000, "Bank $30 sprite code left its bank (org without pushpc/pullpc?)"
