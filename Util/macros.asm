@@ -274,7 +274,7 @@ endif
 ; the storage shed (entrance $4A, room $107) and rewards Link inside.
 ; Off by default until dialogue and the room are approved
 ; (Overworld/richard_quest.asm, SRAM RichardQuestFlags).
-!ENABLE_RICHARD_QUEST               = 0
+!ENABLE_RICHARD_QUEST               = 1
 ; Lyra/Sky overlay fix: Overworld_ReloadSubscreenOverlay (ZSCustomOverworld,
 ; $02AF58) skipped the subscreen-overlay table for every area >= $80, so a
 ; reload on a tail map ($A0-$BF) or during Song of Storms rain on a Sky map
@@ -325,7 +325,7 @@ endif
 ; Goron Mines room $78 Lanmola boss: Hammer stagger, saved clear, key drop
 ; (Sprites/Bosses/lanmola_room78.asm + lanmola_hammer78.asm).
 ; Off until the room $78 layout lands in the shared base ROM.
-!ENABLE_GORON78_LANMOLA_BOSS        = 0
+!ENABLE_GORON78_LANMOLA_BOSS        = 1
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
