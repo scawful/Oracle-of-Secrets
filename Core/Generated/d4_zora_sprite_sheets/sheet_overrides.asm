@@ -228,35 +228,35 @@ org $23FDDF ; @hook module=Core kind=data protected_size=1
 org $23FEDF ; @hook module=Core kind=data protected_size=1
   db $AC
 org $23FFDF ; @hook module=Core kind=data protected_size=1
-  db $6B
+  db $4F
 ; Global $E0 (sprite-relative $6D): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDE0 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE0 ; @hook module=Core kind=data protected_size=1
   db $AE
 org $23FFE0 ; @hook module=Core kind=data protected_size=1
-  db $AB
+  db $8F
 ; Global $E1 (sprite-relative $6E): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDE1 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE1 ; @hook module=Core kind=data protected_size=1
   db $B1
 org $23FFE1 ; @hook module=Core kind=data protected_size=1
-  db $2C
+  db $10
 ; Global $E2 (sprite-relative $6F): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDE2 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE2 ; @hook module=Core kind=data protected_size=1
   db $B4
 org $23FFE2 ; @hook module=Core kind=data protected_size=1
-  db $7E
+  db $62
 ; Global $E7 (sprite-relative $74): Private105 refuge: preserves Sea Zora DE/EE cells; accepted River front head/body in C0/C2, with room-specific spriteset4E.
 org $23FDE7 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE7 ; @hook module=Core kind=data protected_size=1
-  db $B7
+  db $B6
 org $23FFE7 ; @hook module=Core kind=data protected_size=1
-  db $1B
+  db $FF
 ; Global $EA (sprite-relative $77): [ENABLE_SKY_ROOM_SKY] Sky room sky layer: legacy 1B with tiles 00-18 replaced by the picked candidate-A cloud chars (scawful 2026-11-10 'Sky in $A0'); 30-3F kept; binding is flag-gated.
 if !ENABLE_SKY_ROOM_SKY
 org $23FDEA ; @hook module=Core kind=data protected_size=1
