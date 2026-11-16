@@ -226,7 +226,7 @@ endif
 ; -> Items. Map opens the field map; Travel opens the Soaring picker; the six
 ; songs move here from Equipment. Needs MENU_PAGE3, PAGE_LOOP, EQUIPMENT_MENU.
 ; WRAM: MenuMapTravel_Pending $7E1EFE (Core/symbols.asm).
-!ENABLE_MENU_MAP_TRAVEL             = 0
+!ENABLE_MENU_MAP_TRAVEL             = 1
 ; Portal Rod cell: the Portal Rod gets Items row 4, column 1 ($0202 = $19);
 ; the Fishing Rod keeps its cell; no L/R rod switch in play. Ownership byte
 ; PortalRodOwned $7EF3A6 (Core/sram.asm). Needs MENU_PAGE3.
@@ -295,7 +295,7 @@ endif
 
 ; Horse Form (!CurrentMask = $09) + Toto Ranch NPC ($2D) + fence jumps:
 ; Off until prototype art and behavior review are complete.
-!ENABLE_HORSE_FORM                  = 0
+!ENABLE_HORSE_FORM                  = 1
 ; Park Epona where Link last dismounted outdoors (any OW area, not Ranch-only).
 ; Off by default on master; this stack enables it for A5 fold proof. WRAM-only.
 !ENABLE_HORSE_PARK_ANYWHERE         = 1
@@ -304,13 +304,13 @@ endif
 !ENABLE_HORSE_MOUNTED_BOW           = 1
 ; Epona long jump over named water-gap Tile16s (HorseLongGapTile16s, up to two
 ; tiles). Requires !ENABLE_HORSE_FORM. Off until native proof and site approval.
-!ENABLE_HORSE_LONG_JUMP             = 0
+!ENABLE_HORSE_LONG_JUMP             = 1
 
 ; Epona's Song (Ranch Girl teaches it with the Ocarina): song 6, the Equipment
 ; cell Elegy of Stone used (decisions.org 2026-11-16, "1 Replace Stone").
 ; Learned = SideQuestProg2 bit 1 (!SideQuest2_EponaSong), not the $7EF34C count.
 ; Off until native save/reopen proof and the song effect is decided.
-!ENABLE_EPONA_SONG                  = 0
+!ENABLE_EPONA_SONG                  = 1
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
