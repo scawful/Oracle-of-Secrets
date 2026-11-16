@@ -5,16 +5,31 @@
 !HorsePark_DefaultNpcX = $01C0
 !HorsePark_DefaultNpcY = $0294
 
-; Write Link outdoor XY + $8A into the park anchor. M=8,X=8,DBR=$00.
+; Write Link outdoor XY + $8A into the park anchor only on settled dry ground.
+; M=8,X=8,DBR=$00 (enforces M=8 internally; preserves caller P/X/Y/DBR).
 HorseForm_SaveOutdoorAnchor_Long:
 {
   PHP
+  SEP #$20
+  LDA.b $1B : BNE .skip
+  LDA.b $10 : CMP.b #$09 : BNE .skip
+  LDA.b $11 : BNE .skip
+  LDA.l Horse_State : BNE .skip
+  LDA.b $5D : ORA.b $4D : ORA.b $6C : BNE .skip
+  LDA.b $5B : CMP.b #$02 : BCS .skip
+  LDA.b $25 : BMI .neg_z
+    LDA.b $24 : BNE .skip
+    BRA .save
+  .neg_z
+  LDA.b $24 : CMP.b #$F0 : BCC .skip
+  .save
   REP #$20
   LDA.b $22 : STA.l Horse_AnchorX
   LDA.b $20 : STA.l Horse_AnchorY
   SEP #$20
   LDA.b $8A : STA.l Horse_AnchorArea
   LDA.b #$01 : STA.l Horse_HasAnchor
+  .skip
   PLP
   RTL
 }
