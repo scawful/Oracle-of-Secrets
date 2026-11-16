@@ -19,11 +19,12 @@
 ;   12 Roar/charge 48 frames roar, then a straight charge to the clamp edge
 ;   13 Dazed       150 frames; core open; no contact damage
 ;   14 Core hit    40 frames flinch; hits 2 and 4 start malice stages 1 and 2
-;   15 Dead        $C0 frames death scene; all malice is disarmed on entry
+;   15 Dead        $C0 frames death scene; all malice is disarmed on entry and
+;                  row 6 takes the floor colours, so the bands look like floor
 ;
 ; Core hit: Master Sword or better ($7EF359 >= 2), no item in use ($0301 = 0),
 ; only in states 11 and 13 (state 10 becomes 11 the frame the trident leaves).
-; Six core hits kill the beast.
+; Six core hits kill the beast. No core hit while a malice job runs (guard).
 ;
 ; Sprite-local bytes (no new WRAM):
 ;   SprTimerA state timer         SprTimerB malice warning   SprTimerC trident out
@@ -421,6 +422,9 @@ Beast_WalkPose:
 ; Carry set = a core hit landed (state already changed).
 Beast_TryCoreHit:
 {
+  ; Guard: no core hit while a malice job (words or warning) is running, so a
+  ; new floor stage can never start on top of the previous one.
+  LDA.w SprSubtype, X : BNE .no
   LDA.l $7EF359 : CMP.b #$02 : BCC .no
   LDA.w $0301 : BNE .no
   LDA.w SprGfxProps, X : AND.b #$BF : STA.w SprGfxProps, X
@@ -747,7 +751,7 @@ Malice_SetBandAttr:
 }
 
 ; Cancel any job and set every band cell to tile type $00 (no damage).
-; Words stay. Keeps X.
+; Words stay; Malice_ClearLook hides them. Keeps X.
 Malice_DisarmAll:
 {
   STZ.w SprSubtype, X
@@ -759,8 +763,25 @@ if !Beast_MaliceR0 == 1
 endif
   LDA.b #$02 : JSR Malice_LoadJobA : JSR Malice_SetBandAttr
   LDA.b #$03 : JSR Malice_LoadJobA : JSR Malice_SetBandAttr
-  LDA.b #$00 : JSR Malice_SetColors
+  JSR Malice_ClearLook
   JSR Ganondorf_StopQuake
+  RTS
+}
+
+; Malice cells use the floor chars $0EC/$0ED/$0FC/$0FD with palette row 6
+; instead of row 4; those chars draw with colours 10-12 only. Copying row 4
+; colours 10-12 into row 6 makes every malice cell look like plain floor again,
+; in one frame and with no tilemap writes. Row 6 has no other BG cells in room
+; $00 once Kydreeok is gone. Keeps X.
+!Malice_FloorColAddr = $7EC500+(4*$20)+(10*2)
+Malice_ClearLook:
+{
+  REP #$20
+  LDA.l !Malice_FloorColAddr   : STA.l !Malice_ColAddr   : STA.l !Malice_ColMirror
+  LDA.l !Malice_FloorColAddr+2 : STA.l !Malice_ColAddr+2 : STA.l !Malice_ColMirror+2
+  LDA.l !Malice_FloorColAddr+4 : STA.l !Malice_ColAddr+4 : STA.l !Malice_ColMirror+4
+  SEP #$20
+  LDA.b #$01 : STA.b $15
   RTS
 }
 
