@@ -1086,9 +1086,12 @@ P2_SlotsBusy:
   ; Called by sprite hooks (X=actor) and NMI (X=16-bit). Keep both ABIs.
   PHX : PHY : PHP
   SEP #$10
-  LDA.w $0AF4 : BNE .busy                      ; flute bird (head slot)
+  ; No $0AF4 test: vanilla never clears it after a bird flight. The stale
+  ; duck upload to $40E0 runs before P2_NmiUpload, which overwrites it.
   LDX.b #$09
   - LDA.w $0C4A,X
+    CMP.b #$27 : BEQ .busy                     ; travel bird (head slot)
+    CMP.b #$38 : BEQ .busy                     ; cutscene duck (head slot)
     CMP.b #$1F : BEQ .busy                     ; hookshot/goldstar (head slot)
     CMP.b #$22 : BEQ .busy                     ; item receipt (body slot)
     DEX : BPL -
