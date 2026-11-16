@@ -71,10 +71,10 @@ def run(argv):
 
 
 class PlanTest(unittest.TestCase):
-    def test_every_room_reads_the_same_stream_from_bank_5a(self):
+    def test_every_room_reads_the_same_stream_from_bank_5c(self):
         rom = bytes(synthetic_rom())
         out, report = M.build_plan(rom)
-        self.assertEqual(out[M.LOADER_PC:M.LOADER_PC + 3], bytes.fromhex("a95a00"))
+        self.assertEqual(out[M.LOADER_PC:M.LOADER_PC + 3], bytes.fromhex("a95c00"))
         for room in range(M.ROOM_COUNT):
             self.assertEqual(game_stream(out, room), game_stream(rom, room), hex(room))
             self.assertEqual(game_stream(out, room), ROOM_STREAMS.get(room, EMPTY))
@@ -91,7 +91,7 @@ class PlanTest(unittest.TestCase):
         self.assertEqual(word(4), word(5))                # both empty
         self.assertEqual(word(0), (0x8002).to_bytes(2, "little"))   # after the empty list
 
-    def test_only_table_operand_and_bank_5a_change(self):
+    def test_only_table_operand_and_bank_5c_change(self):
         rom = bytes(synthetic_rom())
         out, report = M.build_plan(rom)
         changed = [pc for pc in range(len(rom)) if rom[pc] != out[pc]]
@@ -121,7 +121,7 @@ class PlanTest(unittest.TestCase):
                                  "not a ROM address"),
             "pad_word_wrong": (mutate(M.PAD_PC, (0xDDE9).to_bytes(2, "little")),
                                "pad word 0 "),
-            "too_small": (bytes(synthetic_rom()[:0x200000]), "needs 0x2D8000"),
+            "too_small": (bytes(synthetic_rom()[:0x200000]), "needs 0x2E8000"),
         }
         unterminated = synthetic_rom()
         unterminated[M.OLD_START_PC:M.OLD_END_PC] = b"\x01" * (M.OLD_END_PC - M.OLD_START_PC)

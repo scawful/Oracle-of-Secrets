@@ -57,6 +57,6 @@ And an additional 3 banks at the end of the 2.0MB 0x1E8000 to 0x1FFFFF
     Native special-overworld terrain streams (descriptor entries 210-213), editor-owned
     Yaze native Save reuses every byte no live stream covers: no ASM or other allocation
 
-0x2D0000 - 0x2D7FFF: 1 Bank
-    Pot-item lists (bank $5A), read by RevealPotItem through the operand at $01:E6C8
-    Editor-owned 0x2D0000-0x2D7FFE; FFFF pad terminator at 0x2D7FFE; no ASM allocation
+0x2E0000 - 0x2E7FFF: 1 Bank
+    Pot-item lists (bank $5C), read by RevealPotItem through the operand at $01:E6C8
+    Editor-owned 0x2E0000-0x2E7FFE; FFFF pad terminator at 0x2E7FFE; no ASM allocation

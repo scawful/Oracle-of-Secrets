@@ -73,9 +73,9 @@ POT_TABLE_PC, POT_BANK = 0x00DB69, 0x01
 # bases through it (d4_water_rooms.py). The pinned room $91 pot plan below
 # addresses bank $01 only and refuses any other bank.
 POT_BANK_LOADER_PC, POT_BANK_LOADER = 0x00E6C7, "a90100"
-# Pot data region per loader bank. Bank $5A ends before the reserved pad
-# terminator at $5A:FFFE (Scripts/Rooms/pot_item_bank_migration.py).
-POT_DATA_REGIONS = {POT_BANK: (0x00DDE7, 0x00E6B2), 0x5A: (0x2D0000, 0x2D7FFE)}
+# Pot data region per loader bank. Bank $5C ends before the reserved pad
+# terminator at $5C:FFFE (Scripts/Rooms/pot_item_bank_migration.py).
+POT_DATA_REGIONS = {POT_BANK: (0x00DDE7, 0x00E6B2), 0x5C: (0x2E0000, 0x2E7FFE)}
 # Pointer words 296-318 pad the pot table up to its data and all point at an FFFF
 # sentinel inside the 9-byte gap; the new $91 stream must leave it intact.
 POT_PAD_SLOTS = (POT_TABLE_PC + ROOM_COUNT * 2, 0x00DDE7)
@@ -432,7 +432,7 @@ def pot_layout(rom: bytes) -> tuple[int, tuple[int, int]]:
     expect(len(loader) == 3 and loader[0] == 0xA9 and loader[2] == 0x00
            and loader[1] in POT_DATA_REGIONS,
            f"pot data bank loader at PC 0x{POT_BANK_LOADER_PC:06X} is {loader.hex()}, "
-           "want a9 01 00 or a9 5a 00")
+           "want a9 01 00 or a9 5c 00")
     return loader[1], POT_DATA_REGIONS[loader[1]]
 
 

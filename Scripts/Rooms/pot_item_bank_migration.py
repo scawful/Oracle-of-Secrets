@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Move the dungeon pot-item data from bank $01 to bank $5A (offline, one shot).
+"""Move the dungeon pot-item data from bank $01 to bank $5C (offline, one shot).
 
 Vanilla RevealPotItem ($01:E6B2) is the only reader of the pot data:
   $01:E6C1  LDA.l RoomData_PotItems_Pointers,X   16-bit pointer, table $01:DB69
   $01:E6C7  LDA.w #$0001                         data bank (bytes A9 01 00)
 The bank-$01 data region (PC 0xDDE7-0xE6B2) is full. This tool:
-  1. copies every room's stream, byte for byte, to $5A:8000 upward
+  1. copies every room's stream, byte for byte, to $5C:8000 upward
      (rooms that shared one pointer still share one pointer),
   2. rewrites the 296 table words at $01:DB69,
-  3. points the 23 pad words (PC 0xDDB9-0xDDE7) at a reserved FFFF at $5A:FFFE,
-  4. changes the loader operand at PC 0xE6C8 from $01 to $5A.
+  3. points the 23 pad words (PC 0xDDB9-0xDDE7) at a reserved FFFF at $5C:FFFE,
+  4. changes the loader operand at PC 0xE6C8 from $01 to $5C.
 The old bank-$01 data bytes are left in place as a rollback copy.
 
 Each room's record order is unchanged, so the per-room pot bits in SRAM
@@ -49,11 +49,11 @@ OLD_START_PC = 0x00DDE7                  # first stream byte in bank $01
 OLD_END_PC = 0x00E6B2                    # RevealPotItem starts here
 LOADER_PC = 0x00E6C7                     # LDA.w #$00bb
 OPERAND_PC = LOADER_PC + 1
-NEW_BANK = 0x5A
-NEW_START_PC = 0x2D0000                  # $5A:8000
-NEW_END_PC = 0x2D7FFE                    # end of the stream region (exclusive)
-PAD_SENTINEL_PC = 0x2D7FFE               # $5A:FFFE, reserved FFFF for the pad words
-BANK_END_PC = 0x2D8000
+NEW_BANK = 0x5C
+NEW_START_PC = 0x2E0000                  # $5C:8000
+NEW_END_PC = 0x2E7FFE                    # end of the stream region (exclusive)
+PAD_SENTINEL_PC = 0x2E7FFE               # $5C:FFFE, reserved FFFF for the pad words
+BANK_END_PC = 0x2E8000
 TERMINATOR = b"\xff\xff"
 
 assert PAD_PC + PAD_COUNT * 2 == OLD_START_PC

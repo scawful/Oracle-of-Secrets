@@ -99,10 +99,10 @@ class SkySomariaLessonControls(unittest.TestCase):
         self.assertEqual(report["exit_area"], "7A")
 
     def test_pot_items_follow_the_loader_bank(self):
-        # Pot data in bank $5A: the table keeps 16-bit pointers, the loader names the bank.
-        lesson.validate_candidate(lesson_rom(pot_bank=0x5A), SYMBOLS)
-        moved = bytearray(lesson_rom(pot_bank=0x5A))
-        moved[lesson.POT_BANK_LOADER_PC + 1] = 0x01   # data stays in $5A, loader says $01
+        # Pot data in bank $5C: the table keeps 16-bit pointers, the loader names the bank.
+        lesson.validate_candidate(lesson_rom(pot_bank=0x5C), SYMBOLS)
+        moved = bytearray(lesson_rom(pot_bank=0x5C))
+        moved[lesson.POT_BANK_LOADER_PC + 1] = 0x01   # data stays in $5C, loader says $01
         with self.assertRaisesRegex(RuntimeError, "pot list is unterminated|pot items"):
             lesson.validate_candidate(bytes(moved), SYMBOLS)
         broken = bytearray(lesson_rom())

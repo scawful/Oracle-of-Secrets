@@ -2238,17 +2238,17 @@ class DungeonStreamRegionsTest(unittest.TestCase):
                 "pointer_table": "0x01DB69",
                 "pointer_count": DUNGEON_ROOM_COUNT,
                 "pointer_encoding": "bank16",
-                "pointer_bank": "0x5A",
+                "pointer_bank": "0x5C",
                 "strategy": "repack_all",
-                "data_regions": [{"start": "0x5A8000", "end": "0x5AFFFE"}],
-                "allocation_regions": [{"start": "0x5A8000", "end": "0x5AFFFE"}],
+                "data_regions": [{"start": "0x5C8000", "end": "0x5CFFFE"}],
+                "allocation_regions": [{"start": "0x5C8000", "end": "0x5CFFFE"}],
             },
         )
 
     def test_pot_bank_loader_mismatches_fail_closed(self) -> None:
         cases = {
-            # Operand says $5A while the data is still in bank $01: bank
-            # $5A is empty, so the reserved pad FFFF is missing.
+            # Operand says $5C while the data is still in bank $01: bank
+            # $5C is empty, so the reserved pad FFFF is missing.
             "operand_without_migration": (
                 0x01,
                 POT_BANK_OPERAND_PC,
