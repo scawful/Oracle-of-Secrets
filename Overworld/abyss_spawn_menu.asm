@@ -5,10 +5,10 @@
 ; $20, Module05_LoadFile $0281AB): SavedWorld is the respawn lock
 ; (LoadDarkWorldIntro). From GameState 3 (Farore rescued) an outdoor Abyss
 ; load shows the vanilla spawn-select box with message $21B instead:
-;   0 = Pyramid           (keeps the Abyss load, exit room $20)
-;   1 = Link's House      (SavedWorld = 0, spawn point $00)
-;   2 = Hall of Secrets   (SavedWorld = 0, spawn point $01)
-; The light world lines use the vanilla Module1B spawn loader.
+;   0 = Pyramid      (keeps the Abyss load, exit room $20)
+;   1 = Light World  (SavedWorld = 0, then the vanilla light world menu
+;                     $0184/$0185: Link's House / Hall of Secrets /
+;                     Mountain Cave, same gates as a light world load)
 ; =========================================================
 
 ; Called by JML from LoadCheckpointOrWorld .legacy after LoadDarkWorldIntro.
@@ -62,14 +62,27 @@ AbyssSpawnMenu_Select:
     RTL
 
   .light_world
-  ; 1 -> spawn $00 (Link's House), 2 -> spawn $01 (Hall of Secrets).
-  DEC A : TAX
+  ; Step 2: SavedWorld = 0, then the vanilla light world menu. When that box
+  ; closes, Module1B runs again and takes the vanilla path above.
   LDA.b #$00 : STA.l SavedWorld
   ; Normal Link form: no GBC hook runs before the underworld entrance.
   LDA.b #$10 : STA.b $BC
   STZ.w $02B2
+  ; Same gates as the light world branch as patched in overworld.asm:
+  ; Hall of Secrets flag ($0281CD) and goldstar for Mountain Cave ($0281E2).
+  LDA.l $7EF3D6 : CMP.b #$04 : BCC .house_only
+  REP #$10
+  LDX.w #$0185 ; MESSAGE 0185 (House / Hall of Secrets / Mountain Cave)
+  LDA.l $7EF342 : CMP.b #$02 : BEQ .show_light_world
+    LDX.w #$0184 ; MESSAGE 0184 (House / Hall of Secrets)
+  .show_light_world
+  ; Vanilla tail: STX $1CF0, show the message, stay in Module1B.
+  JML $0281ED
+
+  .house_only
+  ; No Hall of Secrets yet: Link's House (spawn $00) without a second box.
   LDA.l SpawnPoint : PHA
-  TXA : STA.l SpawnPoint
+  LDA.b #$00 : STA.l SpawnPoint
   STZ.b $B0
   JSL $028208 ; LoadUnderworldRoomRebuildHUD
   PLA : STA.l SpawnPoint
