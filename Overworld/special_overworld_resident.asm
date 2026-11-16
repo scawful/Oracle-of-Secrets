@@ -111,7 +111,7 @@ if !ENABLE_SKY_OVERWORLD_ROUTE == 1
     CMP.w #$4000 : BNE .native
     LDA.b $06 : AND.w #$00FF : CMP.w #$007E : BNE .native
     LDA.b $1B : AND.w #$00FF : BNE .native
-    LDA.b $8A : CMP.w #$009C : BEQ .overlay
+    LDA.b $8A : CMP.w #!SKY_CLOUD_OVERLAY : BEQ .overlay
     CMP.w #$009F : BNE .native
 .overlay:
     LDA $05,S : ORA $03,S : TAY
@@ -254,7 +254,7 @@ Lyra_ResidentLookup:
 ; foreground path uses the terrain directory; BG1 has a separate context.
 if defined("LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY")
 if !LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY != 0
-; BG1: temporary $8A selects picture9C/9F; C213 is the physical host.
+; BG1: temporary $8A selects the cloud picture (!SKY_CLOUD_OVERLAY) or 9F; C213 is the physical host.
 ; Separate index directories prevent an overlay ID from taking the host's
 ; page-local terrain meaning (notably bridge862 versus transparent fill862).
 Lyra_ResidentOverlayLookup:
@@ -263,7 +263,7 @@ Lyra_ResidentOverlayLookup:
     CMP.w #!SPECIAL_OVERWORLD_RESIDENT_END : BCS .native
     SEC : SBC.w #!SPECIAL_OVERWORLD_RESIDENT_FIRST
     ASL : ASL : ASL : ASL : TAX
-    LDA.b $8A : CMP.w #$009C : BEQ .selected_context
+    LDA.b $8A : CMP.w #!SKY_CLOUD_OVERLAY : BEQ .selected_context
     TXA : CLC : ADC.w #$0008 : TAX
 .selected_context:
     LDA.l !LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY+7, X : AND.w #$00FF

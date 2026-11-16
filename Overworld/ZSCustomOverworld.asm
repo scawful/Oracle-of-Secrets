@@ -65,6 +65,24 @@ pushpc
 
 incsrc HardwareRegisters.asm
 
+; Sky cloud overlay ID. With !ENABLE_SKY_OVERLAY_SOURCE_PROFILE on, this ID
+; takes the vanilla DW Death Mountain ($9C) overlay behaviour: CGADSUB $20,
+; mountain fixed colour and BG1 scroll lock. $9C itself is reserved for the
+; Fortress. Must match SKY_CLOUD_OVERLAY in
+; Scripts/Build/special_overworld_resources.py. With the flag off, the resident
+; Sky compares keep the old $9C so flag-off bytes do not change.
+if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
+!SKY_CLOUD_OVERLAY = $94
+else
+!SKY_CLOUD_OVERLAY = $9C
+endif
+
+if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
+; Vanilla OverworldHandleBGOverlayScroll: CPX.b #$9C (dark DM scroll lock).
+org $02BD04 ; $013D04 ; @hook module=Overworld
+    db !SKY_CLOUD_OVERLAY
+endif
+
 ; Free RAM
 
 TransGFXModule_PriorSheets = $04CB   ; [0x08] May use more in the future here.
@@ -2215,6 +2233,9 @@ Spotlight_ConfigureTableAndControl_Interupt:
         
         ; Check for DW death mountain.
         CMP.w #$009C : BEQ .mountain
+if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
+        CMP.w #!SKY_CLOUD_OVERLAY : BEQ .mountain
+endif
             BRA .other
     
     .mountain
@@ -2323,7 +2344,11 @@ endif
 
             ; TODO: Write a patch to change what overlay is loaded here?
             ; The second mastersword/under the bridge area.
-            LDX.w #$0094
+            ; OoS: the Tree House ($0181, OW $17/$18 entrances) takes the tree
+            ; canopy ($9E), not the vanilla under-the-bridge overlay ($94).
+            ; $94 drew a checkerboard there, and holds the Sky clouds when
+            ; ENABLE_SKY_OVERLAY_SOURCE_PROFILE is on. Same size as vanilla.
+            LDX.w #$009E
 
             ; $0181 is the exit room number used for getting into the under the
             ; bridge area.
@@ -2461,7 +2486,9 @@ endif
         
     ; Comparing different screen types.
     CPX.b #$97 : BEQ .loadOverlay ; Fog 1
+if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 0 || !SKY_CLOUD_OVERLAY != $94
     CPX.b #$94 : BEQ .loadOverlay ; Master sword/bridge 2
+endif
     CPX.b #$93 : BEQ .loadOverlay ; Triforce room 2
     CPX.b #$9D : BEQ .loadOverlay ; Fog 2
     CPX.b #$9E : BEQ .loadOverlay ; Tree canopy
@@ -2472,6 +2499,9 @@ endif
         
         CPX.b #$95 : BEQ .loadOverlay ; Sky
         CPX.b #$9C : BEQ .loadOverlay ; Lava
+if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
+        CPX.b #!SKY_CLOUD_OVERLAY : BEQ .loadOverlay ; Sky clouds
+endif
         CPX.b #$96 : BEQ .loadOverlay ; Pyramid BG
         
         ; $FF has already returned before decompression. Keep the remaining
@@ -2488,13 +2518,15 @@ endif
     JSR.w LoadSubscreenOverlay
         
     ; This is the "under the bridge" area.
+if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 0 || !SKY_CLOUD_OVERLAY != $94
     LDA.b $8C : CMP.b #$94 : BNE .notUnderBridge
         ; All this is doing is setting the X coordinate of BG1 to 0x0100
         ; rather than 0x0000. (this area uses the second half of the data only,
         ; similar to the master sword area).
         LDA.b $E7 : ORA.b #$01 : STA.b $E7
-    
+
     .notUnderBridge
+endif
     
     REP #$20 ; Set A in 16bit mode.
         
@@ -3497,6 +3529,9 @@ CheckForChangeGraphicsTransitionLoad:
                         
                     ; DW death mountain.
                     CMP.w #$009C : BEQ .specialColor
+if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
+                    CMP.w #!SKY_CLOUD_OVERLAY : BEQ .specialColor
+endif
                         BRA .noSpecialColor
                 
             .specialColor
@@ -4023,6 +4058,9 @@ endif
             
             ; Check for DW Death mountain. (not turtle rock?).
             CMP.w #$009C : BEQ .setCustomFixedColor
+if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
+            CMP.w #!SKY_CLOUD_OVERLAY : BEQ .setCustomFixedColor
+endif
             
             ; Safety check: If we have a valid overlay ID (not FF) that wasn't caught above
             ; (e.g. Canopy $9E, Fog $97), preserve it with default fixed colors instead of disabling.
@@ -4283,6 +4321,9 @@ Palette_RestoreFixedColor_Interupt:
                         
                         ; DW death mountain.
                         CMP.w #$009C : BEQ .specialColor
+if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
+                        CMP.w #!SKY_CLOUD_OVERLAY : BEQ .specialColor
+endif
                             BRA .noSpecialColor
                 
                 .specialColor

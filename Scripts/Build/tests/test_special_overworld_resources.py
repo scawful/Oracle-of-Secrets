@@ -128,7 +128,7 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
         self.assertEqual(result, R.plan_saved_native_terrain(self.source, self.exported))
         self.assertEqual(hashlib.sha256(self.source).hexdigest(), before)
 
-    def sky_overlay_export(self, selected=0x9C, host=0x87):
+    def sky_overlay_export(self, selected=0x94, host=0x87):
         image = bytearray(self.source)
         _, _, entries = R.native.read_native_directory(self.source)
         image[R.native.pc(entries[410][0]) + host] = 1
@@ -139,7 +139,7 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
         address, width = legacy['overlay']
         struct.pack_into('<H', image, R.native.pc(address) + host * width,
                          selected)
-        for overlay in (0x9C, 0x9F):
+        for overlay in (0x94, 0x9F):
             for name, family in (('map32_high', 20), ('map32_low', 21)):
                 address, width = legacy[name]
                 old = R.native.pc(address) + overlay * width
@@ -149,12 +149,12 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
         self.source = self.fixture.installed()
         value = self.make_export(self.source)['native_source']
         for page in value['pages']:
-            if page['map_id'] in (0x9C, 0x9F):
-                page['tiles'] = [3 if page['map_id'] == 0x9C else 4] * 1024
+            if page['map_id'] in (0x94, 0x9F):
+                page['tiles'] = [3 if page['map_id'] == 0x94 else 4] * 1024
         return self.seal(value)
 
     def test_sky_host_reserves_cloud_rain_and_mutable_rows_without_changing_source(self):
-        for selected in (0x9C, 0xFF):
+        for selected in (0x94, 0xFF):
             with self.subTest(selected=selected):
                 exported = self.sky_overlay_export(selected)
                 original = self.source
@@ -164,7 +164,7 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
                 self.assertEqual(rows, {0, 0xDA4, 0xDA6, 0xE54})
                 overlay_rows = {(r['overlay_map_id'], r['tile16_id']) for r in host['overlay_remaps']}
                 self.assertEqual(overlay_rows, {(0x9F, 4)} |
-                                 ({(0x9C, 3)} if selected == 0x9C else set()))
+                                 ({(0x94, 3)} if selected == 0x94 else set()))
                 self.assertTrue(host['terrain_plan_ready'])
                 self.assertFalse(plan['full_residency_ready'])
                 self.assertEqual(self.source, original)
@@ -180,20 +180,20 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
         assets = {
             (0x87, 0): dict(palette={'words': host_palette},
                            slots=[{'sheet_id': 0}] * 8),
-            (0x9C, 0): dict(palette={'words': donor_palette},
+            (0x94, 0): dict(palette={'words': donor_palette},
                            slots=[{'sheet_id': 1}] * 8),
         }
         def sheet(index):
             pixels = bytes([1] * 64) if index == 0 else bytes([1, 2] * 32)
             return b'', [pixels] * 64
         args = (area, {0x87: [0]}, assets, definitions, sheet)
-        overlays = {0x87: {0x9C: {0}}}
+        overlays = {0x87: {0x94: {0}}}
         old = R._plan_area(*args, overlay_tiles=overlays)
         same = R._plan_area(*args, overlay_tiles=overlays,
-                            overlay_asset_contexts={(0x87, 0x9C): 0x87})
+                            overlay_asset_contexts={(0x87, 0x94): 0x87})
         self.assertEqual(old, same)
         different = R._plan_area(*args, overlay_tiles=overlays,
-                                 overlay_asset_contexts={(0x87, 0x9C): 0x9C})
+                                 overlay_asset_contexts={(0x87, 0x94): 0x94})
         self.assertTrue(different['terrain_plan_ready'])
         self.assertEqual(old['static_pattern_count'], 1)
         self.assertEqual(different['static_pattern_count'], 2)
@@ -202,7 +202,7 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
         self.assertEqual(len(different['overlay_remaps']), 4)
         self.assertNotEqual(different['remaps'][0]['target_word'],
                             different['overlay_remaps'][0]['target_word'])
-        self.assertEqual(different['overlay_remaps'][0]['asset_source_map_id'], 0x9C)
+        self.assertEqual(different['overlay_remaps'][0]['asset_source_map_id'], 0x94)
         self.assertEqual(different['witness']['pixel_comparisons'], 512)
         self.assertEqual(different['witness']['source_colors_sha256'],
                          different['witness']['reconstructed_colors_sha256'])
@@ -213,12 +213,12 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
         exported = self.sky_overlay_export(host=0x8C)
         self.assertFalse(next(a for a in exported['native_source']['gameplay_areas']
                               if a['parent_map_id'] == 0x95)['resident_required'])
-        contexts = {(0x8C, 0x9C): 0x95}
+        contexts = {(0x8C, 0x94): 0x95}
         result = R.plan_saved_native_terrain(self.source, exported,
                                              overlay_asset_contexts=contexts)
         host = next(a for a in result['areas'] if a['maps'] == [0x8C])
         self.assertEqual({r['asset_source_map_id'] for r in host['overlay_remaps']
-                          if r['overlay_map_id'] == 0x9C}, {0x95})
+                          if r['overlay_map_id'] == 0x94}, {0x95})
         self.assertFalse(any(a['maps'] == [0x95] for a in result['areas']))
         missing = copy.deepcopy(exported['native_source'])
         next(p for p in missing['pages'] if p['map_id'] == 0x95)['resolved_states'] = []
@@ -233,13 +233,13 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
         # B1's real synthetic ROM palette already differs at the used entry.
         # The public path validates/reconstructs that palette from the export.
         selected = R.plan_saved_native_terrain(
-            self.source, exported, overlay_asset_contexts={(0x87, 0x9C): 0xB1})
+            self.source, exported, overlay_asset_contexts={(0x87, 0x94): 0xB1})
         host = next(a for a in selected['areas'] if a['maps'] == [0x87])
         old = next(a for a in baseline['areas'] if a['maps'] == [0x87])
         self.assertTrue(selected['terrain_plan_ready'])
         self.assertEqual(old['static_pattern_count'], 1)
         self.assertEqual(host['static_pattern_count'], 2)
-        cloud = [r for r in host['overlay_remaps'] if r['overlay_map_id'] == 0x9C]
+        cloud = [r for r in host['overlay_remaps'] if r['overlay_map_id'] == 0x94]
         rain = [r for r in host['overlay_remaps'] if r['overlay_map_id'] == 0x9F]
         self.assertEqual(len(cloud), 4)
         self.assertEqual({r['asset_source_map_id'] for r in cloud}, {0xB1})
@@ -254,22 +254,22 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
 
     def test_overlay_context_requires_actual_bound_pair_and_source(self):
         exported = self.sky_overlay_export()
-        for contexts in ([], {(0x87, 0x9C): 0x77}, {(0x88, 0x9C): 0x87},
-                         {(0x87, None): 0x87}, {(0x87, 0x9C): True}):
+        for contexts in ([], {(0x87, 0x94): 0x77}, {(0x88, 0x94): 0x87},
+                         {(0x87, None): 0x87}, {(0x87, 0x94): True}):
             with self.subTest(contexts=contexts):
                 with self.assertRaisesRegex(ValueError, 'OVERLAY_ASSET_CONTEXT_'):
                     R.plan_saved_native_terrain(self.source, exported,
                                                overlay_asset_contexts=contexts)
         baseline = R.plan_saved_native_terrain(self.source, exported)
         self.assertEqual(baseline, R.plan_saved_native_terrain(
-            self.source, exported, overlay_asset_contexts={(0x87, 0x9C): 0x87}))
+            self.source, exported, overlay_asset_contexts={(0x87, 0x94): 0x87}))
 
     def test_sky_host_refuses_legacy_selection_or_pointer_disagreement(self):
         exported = self.sky_overlay_export()
         legacy = {name: (address, width) for name, address, _, _, width
                   in R.native.CURRENT_TABLE_SPECS}
         for name, page, reason in (('overlay', 0x87, 'SELECTION'),
-                                   ('map32_high', 0x9C, 'POINTER'),
+                                   ('map32_high', 0x94, 'POINTER'),
                                    ('map32_low', 0x9F, 'POINTER')):
             with self.subTest(name=name, page=page):
                 image = bytearray(self.source)
@@ -296,11 +296,11 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
         area = dict(parent_map_id=0x8D, size='small', maps=[0x8D])
         definitions = bytes(4096 * 8)
         pages = {(0x8D, 0x862): (0x0800,) * 4,
-                 (0x9C, 0x862): (0x1DC2,) * 4,
+                 (0x94, 0x862): (0x1DC2,) * 4,
                  (0x9F, 0x862): (0x1DC3,) * 4}
         packed = R._plan_area(area, {0x8D: [0x862]}, assets, definitions,
             sheets.__getitem__, page_definitions=pages,
-            overlay_tiles={0x8D: {0x9C: {0x862}, 0x9F: {0x862}}})
+            overlay_tiles={0x8D: {0x94: {0x862}, 0x9F: {0x862}}})
         self.assertEqual(packed['refusals'], [])
         self.assertEqual(packed['witness']['source_colors_sha256'],
                          packed['witness']['reconstructed_colors_sha256'])
@@ -359,10 +359,10 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
         value['directory_revision'] = 5
         pages = {p['map_id']: p for p in value['pages']}
         for host in R.SKY_RESIDENT_HOSTS:
-            pages[host]['source_profile']['subscreen_overlay'] = 0x9C
+            pages[host]['source_profile']['subscreen_overlay'] = 0x94
             value['gameplay_areas'].append(dict(maps=[host], resident_required=True))
-        pages[0x9C]['source_profile']['appearance_flags'] = 3
-        pages[0x9C]['resolved_states'] = [dict(state=i) for i in range(3)]
+        pages[0x94]['source_profile']['appearance_flags'] = 3
+        pages[0x94]['resolved_states'] = [dict(state=i) for i in range(3)]
         return root, value
 
     def test_source_overlay_flag_absent_off_and_precedence_preserve_default(self):
@@ -377,10 +377,10 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
 
     def test_source_overlay_flag_on_selects_only_saved_calm_page(self):
         root, value = self.sky_source_contract_fixture()
-        expected = {(h, 0x9C): 0x9C for h in R.SKY_RESIDENT_HOSTS}
+        expected = {(h, 0x94): 0x94 for h in R.SKY_RESIDENT_HOSTS}
         self.assertEqual(R.selected_sky_overlay_contexts(value, root), expected)
         self.assertNotIn((0x87, 0x9F), expected)
-        self.assertNotIn((0x8B, 0x9C), expected)
+        self.assertNotIn((0x8B, 0x94), expected)
 
     def test_source_overlay_flag_refuses_wrong_host_unresolved_and_bad_auth(self):
         root, value = self.sky_source_contract_fixture()
@@ -391,7 +391,7 @@ class SavedNativeTerrainResourcesTest(unittest.TestCase):
                 if change == 'host':
                     next(p for p in bad['pages'] if p['map_id'] == 0x8C)['source_profile']['subscreen_overlay'] = 0x95
                 elif change == 'states':
-                    next(p for p in bad['pages'] if p['map_id'] == 0x9C)['resolved_states'] = []
+                    next(p for p in bad['pages'] if p['map_id'] == 0x94)['resolved_states'] = []
                 elif change == 'revision':
                     bad['directory_revision'] = 4
                 else:
@@ -852,6 +852,16 @@ class ExperimentalPageTile16ResourcesTest(unittest.TestCase):
         self.assertEqual(regular, admitted)
         self.assertEqual(regular['plan_sha256'],
                          '2ef00caabbb191f825bfa247614b6444716e5c1519c47f77b52b430ba5b9b570')
+
+
+class SkyCloudOverlayConstantTest(unittest.TestCase):
+    def test_asm_constant_matches_build_constant(self):
+        import re
+        asm = (Path(__file__).resolve().parents[3] / 'Overworld' / 'ZSCustomOverworld.asm').read_text()
+        found = re.findall(r'^!SKY_CLOUD_OVERLAY = \$([0-9A-Fa-f]+)\s*$', asm, re.M)
+        # Flag-on branch first, flag-off fallback ($9C, the pre-move ID) second.
+        self.assertEqual([int(v, 16) for v in found], [R.SKY_CLOUD_OVERLAY, 0x9C])
+        self.assertNotEqual(R.SKY_CLOUD_OVERLAY, 0x9C)  # $9C is reserved for the Fortress
 
 
 if __name__ == '__main__':

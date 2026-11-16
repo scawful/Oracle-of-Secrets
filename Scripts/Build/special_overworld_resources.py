@@ -31,6 +31,8 @@ PAGE_TILE16_RUNTIME_REQUIREMENTS = (
     'page_context_for_overlay_transition_and_refresh_readers',
 )
 SKY_RESIDENT_HOSTS = (0x87, 0x8C, 0x8D, 0x8E, 0x8F)
+# Cloud overlay donor page. $9C is reserved for scawful's Fortress; clouds live on free $94.
+SKY_CLOUD_OVERLAY = 0x94
 SKY_OVERLAY_SOURCE_FLAG = 'ENABLE_SKY_OVERLAY_SOURCE_PROFILE'
 STATIC_SLOTS = tuple(range(448)) + tuple(range(480, 512))
 ANIMATED_SLOTS = tuple(range(448, 480))
@@ -205,13 +207,13 @@ def selected_sky_overlay_contexts(value, graphics_root):
     resident = {page for area in value['gameplay_areas'] if area['resident_required']
                 for page in area['maps']}
     _require(all(host in resident and host in pages
-                 and pages[host]['source_profile']['subscreen_overlay'] == 0x9C
+                 and pages[host]['source_profile']['subscreen_overlay'] == SKY_CLOUD_OVERLAY
                  for host in SKY_RESIDENT_HOSTS), 'SKY_SOURCE_HOST_SELECTION_MISMATCH')
-    donor = pages.get(0x9C)
+    donor = pages.get(SKY_CLOUD_OVERLAY)
     _require(donor is not None and donor['source_profile']['appearance_flags'] & 2
              and [state.get('state') for state in donor.get('resolved_states', [])] == [0, 1, 2],
              'SKY_SOURCE_PROFILE_UNRESOLVED')
-    return {(host, 0x9C): 0x9C for host in SKY_RESIDENT_HOSTS}
+    return {(host, SKY_CLOUD_OVERLAY): SKY_CLOUD_OVERLAY for host in SKY_RESIDENT_HOSTS}
 
 
 def _source_sheets(source, authenticated=None):
@@ -528,7 +530,8 @@ def _native_source(source, exported, *, experimental_page_tile16=False):
 def _sky_overlay_closure(source, value, tiles, areas, *, experimental_page_tile16=False):
     """Bind the tower host's BG1 demands to the actual legacy overlay loader.
 
-    Map87 and overlays9C/9F remain below the native readers' A0 threshold.
+    Map87, the cloud overlay (SKY_CLOUD_OVERLAY) and 9F stay below the
+    native readers' A0 threshold.
     An export of their directory rows alone does not prove the running loader
     selects the same picture. Refuse disagreement before packing resources.
     """
@@ -544,12 +547,12 @@ def _sky_overlay_closure(source, value, tiles, areas, *, experimental_page_tile1
     profiles = {page['map_id']: page['source_profile'] for page in value['pages']}
     for host in hosts:
         selected = profiles[host]['subscreen_overlay']
-        _require(selected in (0x9C, 0xFF), 'SKY_OVERLAY_UNSUPPORTED')
+        _require(selected in (SKY_CLOUD_OVERLAY, 0xFF), 'SKY_OVERLAY_UNSUPPORTED')
         address, width = tables['overlay']
         start = native.pc(address) + host * width
         _require(int.from_bytes(source[start:start + width], 'little') == selected,
                  'SKY_OVERLAY_SELECTION_MISMATCH')
-        overlays = (0x9C, 0x9F) if selected == 0x9C else (0x9F,)
+        overlays = (SKY_CLOUD_OVERLAY, 0x9F) if selected == SKY_CLOUD_OVERLAY else (0x9F,)
         for overlay in overlays:
             for name, family in (('map32_high', 20), ('map32_low', 21)):
                 address, width = tables[name]
@@ -560,7 +563,7 @@ def _sky_overlay_closure(source, value, tiles, areas, *, experimental_page_tile1
         # Overlay picture definitions have their own page context. Their CHR,
         # animation and palette still come from the actual physical host.
         # Never union their logical IDs into terrain: page-local $862 is a
-        # bridge on the islands and the transparent fill in overlay $9C.
+        # bridge on the islands and the transparent fill in the cloud overlay (SKY_CLOUD_OVERLAY).
         overlays_by_host[host] = {overlay: set(tiles[overlay]) for overlay in overlays}
         if host == 0x87:
             conditional[host] = {0xDA4, 0xDA6, 0xE54}

@@ -12,7 +12,7 @@ import struct
 
 from special_overworld_resources import (
     ANIMATED_SLOTS, PLAN_SCHEMA, EXPERIMENTAL_PLAN_SCHEMA,
-    PAGE_TILE16_RUNTIME_REQUIREMENTS, STATIC_SLOTS, SKY_RESIDENT_HOSTS,
+    PAGE_TILE16_RUNTIME_REQUIREMENTS, STATIC_SLOTS, SKY_CLOUD_OVERLAY, SKY_RESIDENT_HOSTS,
     _digest, _json_bytes, _payload, _require, _sha,
 )
 
@@ -210,7 +210,7 @@ def plan_native_resident_abi(resident_plan, *, tile16_count,
             extra = {'overlay_map_id'} if overlay is not None else set()
             if extra:
                 _require(remap.get('map_id') in SKY_RESIDENT_HOSTS
-                         and overlay in (0x9C, 0x9F), 'NATIVE_OVERLAY_CONTEXT_INVALID')
+                         and overlay in (SKY_CLOUD_OVERLAY, 0x9F), 'NATIVE_OVERLAY_CONTEXT_INVALID')
                 page_rows.setdefault((remap['map_id'], overlay), {})
             if 'asset_source_map_id' in remap:
                 asset_page = remap['asset_source_map_id']
@@ -388,7 +388,7 @@ def validate_native_resident_abi(native_plan, *, experimental_page_tile16=False)
              'NATIVE_OVERLAY_CONTEXT_INVALID')
     contexts = [(row.get('map_id'), row.get('overlay_map_id')) for row in overlay_pages]
     _require(contexts == sorted(set(contexts)) and all(host in selected and
-             host in SKY_RESIDENT_HOSTS and overlay in (0x9C, 0x9F)
+             host in SKY_RESIDENT_HOSTS and overlay in (SKY_CLOUD_OVERLAY, 0x9F)
              for host, overlay in contexts), 'NATIVE_OVERLAY_CONTEXT_INVALID')
     for page in pages + overlay_pages:
         overlay = page.get('overlay_map_id')
