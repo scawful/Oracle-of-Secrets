@@ -260,7 +260,7 @@
       "status": "occupied",
       "expected_content": "authored",
       "owner": "abyss-spawn-menu",
-      "purpose": "Abyss file-load spawn menu after GameState 3 (Overworld/abyss_spawn_menu.asm): Pyramid / Link's House / Hall of Secrets. Option A picked by scawful 2026-11-15; DRAFT text pending scawful's provisional OK and ridoyie review."
+      "purpose": "Abyss file-load spawn menu after GameState 3 (Overworld/abyss_spawn_menu.asm): Pyramid / Link's House / Hall of Secrets. Option A picked by scawful 2026-11-15; Text provisionally approved by scawful 2026-11-16, pending ridoyie review."
     }
   ]
 }
