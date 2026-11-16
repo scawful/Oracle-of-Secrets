@@ -210,10 +210,15 @@ HorseFenceTile16s:
 HorseFenceTile16s_End:
 
 if !ENABLE_HORSE_LONG_JUMP == 1
-!Horse_LongJumpMaxTiles = 2
+; Max gap width in Tile16s after the first gap cell (ScanGap steps).
+; n=2 D2 Tail Pond / $24 bridge; n=4 Garo Desert $36.
+!Horse_LongJumpMaxTiles = 4
 !Horse_LongJumpMinFrames = $10
 !Horse_LongJumpMaxFrames = $12
 !Horse_LongJumpShakeFrames = $03
+; Forward look from Link's Tile16 when ProbeFence near/far miss a short deck
+; ($24: solid stop before +18/+24 reaches the named gap).
+!Horse_LongJumpEdgeLookTiles = 5
 
 ; Vanilla dash-bonk tremor spawner (ancilla $1D, Ancilla1D_ScreenShake).
 HorseLong_AncillaAdd_DashTremor = $0993F3
@@ -224,12 +229,13 @@ HorseLong_ZTable:
   db  3,  8, 13, 16, 19, 22, 23, 24
   db 24, 23, 22, 19, 16, 13,  8,  3
 
-; Water-gap Tile16s Epona clears with a long jump (gap of 1..2 tiles).
+; Water-gap Tile16s Epona clears with a long jump (gap of 1..4 tiles).
 ; Clones keep the original 8x8 chars, so water collision is unchanged and
-; Link on foot still meets deep water. D2 Tail Pond $2D x10/x11 y11-13:
-; $0F90 = clone of $02C5, $0F91 = clone of $02CE.
+; Link on foot still meets deep water. D2 Tail Pond $2D x10/x11 y11-13 and
+; $24 Wayward x51: $0F90 = clone of $02C5, $0F91 = clone of $02CE.
+; Garo Desert $36 pass8 x30-33: $0FF0 (dark water gap clone).
 HorseLongGapTile16s:
-  dw $0F90, $0F91
+  dw $0F90, $0F91, $0FF0
 HorseLongGapTile16s_End:
 
 ; In: A16/X8, $04 = Tile16. Out: carry set if $04 is a long-gap Tile16. X clobbered.
@@ -247,11 +253,14 @@ HorseLong_IsGap:
 }
 
 ; In: M8/X8, Horse_JumpDir. Probes CheckFenceJump's near then far point for a
-; gap Tile16, then scans it. Out: carry = valid jump; Horse_JumpEndX/Y set.
+; gap Tile16; if both miss (short deck / stop short of ProbeFence reach), walk
+; Tile16s forward from Link's solid cell until a named gap. Then scans it.
+; Out: carry = valid jump; Horse_JumpEndX/Y set.
 HorseLong_TryProbes:
 {
   LDA.b #$00 : JSR .probe : BCS .scan
-  LDA.b #$01 : JSR .probe : BCC .done
+  LDA.b #$01 : JSR .probe : BCS .scan
+  JSR .from_solid_edge : BCC .done
   .scan
   JSR HorseLong_ScanGap
   .done
@@ -267,6 +276,34 @@ HorseLong_TryProbes:
   PLA
   JSR Horse_QueryTileAt
   REP #$20 : JSR HorseLong_IsGap : SEP #$20
+  RTS
+
+  ; Link must stand on a non-gap Tile16. Walk up to EdgeLookTiles ahead in
+  ; JumpDir; first named gap becomes the ScanGap origin ($0A/$0C).
+  .from_solid_edge
+  REP #$20
+  LDA.b $22 : CLC : ADC.w #$0008 : AND.w #$FFF0 : STA.b $0C
+  LDA.b $20 : CLC : ADC.w #$000B : AND.w #$FFF0 : STA.b $0A
+  SEP #$20
+  JSR Horse_QueryTileAt
+  REP #$20 : JSR HorseLong_IsGap : SEP #$20
+  BCS .edge_fail
+  LDY.b #!Horse_LongJumpEdgeLookTiles
+  .edge_step
+    LDA.l Horse_JumpDir : ASL : TAX
+    REP #$20
+    LDA.b $0C : CLC : ADC.l HorseLong_ScanGap_step_x, X : STA.b $0C
+    LDA.b $0A : CLC : ADC.l HorseLong_ScanGap_step_y, X : STA.b $0A
+    SEP #$20
+    JSR Horse_QueryTileAt
+    REP #$20 : JSR HorseLong_IsGap : SEP #$20
+    BCS .edge_hit
+    DEY : BNE .edge_step
+  .edge_fail
+  CLC
+  RTS
+  .edge_hit
+  SEC
   RTS
 }
 
