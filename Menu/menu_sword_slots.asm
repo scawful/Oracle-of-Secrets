@@ -1,10 +1,11 @@
 ; Two-slot sword helpers, called with JSL from the Equipment page (bank $2D)
 ; and Menu_Exit. Assembled in Items bank $2B: Menu bank $2D is full with
 ; Map & Travel on, and $2E reaches the D8 code slot.
-; Heavy-sword stats, name and art are not decided: level 3 and the level-3
-; sword icon are placeholders.
-!HEAVY_SWORD_LEVEL = 3
-!HEAVY_SWORD_ICON  = 3
+; Heavy sword = Greatblade, found broken (decisions.org 2026-11-16). Broken:
+; level 1. Reforged (bit2): level 3. Name and smith text are not approved.
+!HEAVY_SWORD_LEVEL        = 3
+!HEAVY_SWORD_BROKEN_LEVEL = 1
+!HEAVY_SWORD_ICON         = 3
 DecompressSwordGraphics_Long = $00D2C8
 Palettes_Load_Sword_Long     = $1BED03
 
@@ -27,7 +28,7 @@ SwordSlots_Sync:
   LDA.l Sword : DEC : CMP.b #$04 : BCS .done
   INC : TAX
   LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyEquipped : BEQ .story
-  CPX.b #!HEAVY_SWORD_LEVEL : BEQ .done
+  JSL SwordSlots_IsHeavyLevel : BEQ .done
   LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyEquipped^$FF : STA.l SwordSlotFlags
 .story
   TXA : STA.l SwordStoryBlade
@@ -80,16 +81,41 @@ SwordSlots_Select:
   RTL
 .heavy
   LDA.l SwordSlotFlags : ORA.b #!SwordSlot_HeavyEquipped : STA.l SwordSlotFlags
-  LDA.b #!HEAVY_SWORD_LEVEL : STA.l Sword
+  JSL SwordSlots_HeavyLevel : STA.l Sword
+  RTL
+}
+
+; A = heavy-sword level: reforged 3, broken 1. M=8; keeps X/Y.
+SwordSlots_HeavyLevel:
+{
+  LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyReforged : BEQ +
+  LDA.b #!HEAVY_SWORD_LEVEL
+  RTL
++
+  LDA.b #!HEAVY_SWORD_BROKEN_LEVEL
+  RTL
+}
+
+; Z set when X (8-bit) is the heavy-sword level. M/X=8; clobbers A.
+SwordSlots_IsHeavyLevel:
+{
+  LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyReforged : BEQ +
+  CPX.b #!HEAVY_SWORD_LEVEL
+  RTL
++
+  CPX.b #!HEAVY_SWORD_BROKEN_LEVEL
   RTL
 }
 
 ; Heavy icon = the level-3 SwordGFX icon with its blade (top two tiles)
-; moved from red palette 1 to grey palette 4. Bank $2D has no room for a
-; new SwordGFX row, so the recolor is written into the tilemap buffer.
-!HEAVY_ICON_POS = $018C               ; menu_offset(6,6), asserted in menu_equipment.asm
-!HEAVY_ICON_TL  = $308A
-!HEAVY_ICON_TR  = $3065
+; moved from red palette 1 to grey palette 4. Broken: the top-right blade
+; tile is the level-1 icon's shorter blade ($CE), so the tip is missing.
+; Bank $2D has no room for a new SwordGFX row, so the tiles are written
+; into the tilemap buffer.
+!HEAVY_ICON_POS       = $018C         ; menu_offset(6,6), asserted in menu_equipment.asm
+!HEAVY_ICON_TL        = $308A
+!HEAVY_ICON_TR        = $3065
+!HEAVY_ICON_BROKEN_TR = $30CE
 
 ; Called after the gear icons are drawn. Recolors the heavy icon, then
 ; returns A = equipped sword slot (24 story, 25 heavy) for the red marker.
@@ -99,9 +125,15 @@ SwordSlots_MarkerSlot:
 {
   LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyOwned : BEQ .marker
   LDA.l Sword : CMP.b #$FF : BEQ .marker
+  LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyReforged
   REP #$20
+  BEQ .broken
+  LDA.w #!HEAVY_ICON_TR : BRA +
+.broken
+  LDA.w #!HEAVY_ICON_BROKEN_TR
++
+  STA.l $7E110A+!HEAVY_ICON_POS
   LDA.w #!HEAVY_ICON_TL : STA.l $7E1108+!HEAVY_ICON_POS
-  LDA.w #!HEAVY_ICON_TR : STA.l $7E110A+!HEAVY_ICON_POS
   SEP #$20
 .marker
   LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyEquipped : LSR : ORA.b #$18

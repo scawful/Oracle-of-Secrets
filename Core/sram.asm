@@ -850,9 +850,11 @@ ItemBindingSavedX       = $7EF3BB
 ; Bit7 clear = old save: Menu/menu_equipment.asm SwordSlots_Sync migrates it
 ; (story := Sword if 1..4), never granting the heavy sword.
 SwordStoryBlade    = $7EF3BC  ; 0 none, 1 Meadow, 2+ Master levels
-SwordSlotFlags     = $7EF3BD  ; bit0 heavy owned, bit1 heavy equipped, bit7 init
+SwordSlotFlags     = $7EF3BD  ; bit0 heavy owned, bit1 heavy equipped,
+                              ; bit2 heavy reforged (clear = broken), bit7 init
 !SwordSlot_HeavyOwned    = $01
 !SwordSlot_HeavyEquipped = $02
+!SwordSlot_HeavyReforged = $04
 !SwordSlot_Initialized   = $80
 FreeBlock_Large    = $7EF3BE  ; 6 bytes [BE,C4); $7EF3C4 is held for
                               ; RichardQuestFlags (branch claude/richard-quest-20261115)

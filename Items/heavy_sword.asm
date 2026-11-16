@@ -1,20 +1,24 @@
-; Heavy sword (Goron Greatblade design; name and smith text not approved).
-; While the heavy slot is equipped: no sword beam, a slower windup, no
-; shield draw and no shield block. The story blade keeps vanilla behavior.
+; Heavy sword = Greatblade, found broken (decisions.org 2026-11-16); name
+; and smith text not approved. Broken: Sword level 1. Reforged
+; (SwordSlotFlags bit2): level 3. In both states, while the heavy slot is
+; equipped: no sword beam, a slower windup, no shield draw and no shield
+; block. The story blade keeps vanilla behavior.
 ; $7EF35A (shield level) is never written. Assembled in Items bank $2B with
 ; menu_sword_slots.asm under !ENABLE_EQUIPMENT_MENU.
 
-; Carry set = heavy slot equipped (bit1) and Sword holds the heavy level.
-; Any M/X; keeps A and every flag except carry.
+; Carry set = heavy slot equipped (bit1) and Sword holds the heavy level
+; for its state. Any M/X; keeps A/X/Y and every flag except carry.
 HeavySword_Active:
 {
-  PHP : SEP #$20 : PHA
+  PHP : SEP #$30 : PHA : PHX
   LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyEquipped : BEQ .no
-  LDA.l Sword : CMP.b #!HEAVY_SWORD_LEVEL : BNE .no
+  LDA.l Sword : TAX
+  JSL SwordSlots_IsHeavyLevel : BNE .no
+  PLX
   PLA : PLP : SEC
   RTL
 .no
-  PLA : PLP : CLC
+  PLX : PLA : PLP : CLC
   RTL
 }
 
@@ -53,17 +57,40 @@ HeavySword_ShieldLevel:
   RTL
 }
 
-; Grants the heavy slot (owned bit, plus the initialized bit after an
-; old-save sync). Not wired to the Goron smith yet. Any M/X; keeps them.
-HeavySword_Grant:
+; Grants the Broken Greatblade (owned, not reforged; plus the initialized
+; bit after an old-save sync). Not wired to the smith's partner: the text is
+; a draft. Any M/X; keeps A/X/Y.
+HeavySword_GrantBroken:
 {
-  PHP : SEP #$30
+  PHP : SEP #$30 : PHA
   LDA.l SwordSlotFlags : BMI +
   JSL SwordSlots_Sync
 +
-  LDA.l SwordSlotFlags : ORA.b #!SwordSlot_HeavyOwned|!SwordSlot_Initialized
+  LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyReforged^$FF
+  ORA.b #!SwordSlot_HeavyOwned|!SwordSlot_Initialized
   STA.l SwordSlotFlags
-  PLP
+  PLA : PLP
+  RTL
+}
+
+; The smiths reforge the Greatblade: sets the reforged bit and, while the
+; heavy slot is equipped, raises Sword to the reforged level and reloads its
+; tiles/palette. Not wired to the smiths. Any M/X, DP=$0000; keeps A/X/Y.
+HeavySword_Reforge:
+{
+  PHP : SEP #$30 : PHA : PHX : PHY
+  LDA.l SwordSlotFlags : BMI +
+  JSL SwordSlots_Sync
++
+  LDA.l SwordSlotFlags
+  ORA.b #!SwordSlot_HeavyOwned|!SwordSlot_HeavyReforged|!SwordSlot_Initialized
+  STA.l SwordSlotFlags
+  AND.b #!SwordSlot_HeavyEquipped : BEQ +
+  LDA.b #!HEAVY_SWORD_LEVEL : STA.l Sword
+  JSL SwordSlots_ExitReload
+  LDA.b #$01 : STA.b $15              ; upload the new sword palette at NMI
++
+  PLY : PLX : PLA : PLP
   RTL
 }
 
