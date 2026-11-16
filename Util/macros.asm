@@ -318,8 +318,8 @@ endif
 !ENABLE_THIN_ICE                    = 1
 ; D8 Sky boss mechanics prototype (sprite $C3, Sprites/Bosses/d8_boss.asm):
 ; Somaria-socket qualified cycles, credited-hit counter, three stages.
-; Off until native proof; no room places the sprite yet.
-!ENABLE_D8_BOSS                     = 0
+; On: room $96 uses dungeon spriteset $2D (base ROM PC 0x110AB7).
+!ENABLE_D8_BOSS                     = 1
 !ENABLE_D8_FARORE_GRAPHICS          = 0 ; Graphics + presence prototype; no companion control
 
 ; Horse Form (!CurrentMask = $09) + Toto Ranch NPC ($2D) + fence jumps:
