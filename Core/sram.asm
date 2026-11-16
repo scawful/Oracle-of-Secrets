@@ -854,7 +854,8 @@ SwordSlotFlags     = $7EF3BD  ; bit0 heavy owned, bit1 heavy equipped, bit7 init
 !SwordSlot_HeavyOwned    = $01
 !SwordSlot_HeavyEquipped = $02
 !SwordSlot_Initialized   = $80
-FreeBlock_Large    = $7EF3BE  ; 7 bytes [BE,C5)
+FreeBlock_Large    = $7EF3BE  ; 6 bytes [BE,C4); $7EF3C4 is held for
+                              ; RichardQuestFlags (branch claude/richard-quest-20261115)
 
 ; ---------------------------------------------------------
 ; Dreams extension and current tail-event reservation ($7EF412-4FD)
@@ -881,7 +882,7 @@ FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF3A0  | $7EF3A0  | bits  | Wolf dig: bit 0 used |
 ; | $7EF3B3  | $7EF3B3  | 1     | Large prefix       |
-; | $7EF3BE  | $7EF3C4  | 7     | Large remainder    |
+; | $7EF3BE  | $7EF3C3  | 6     | Large remainder    |
 ; | $7EF412  | $7EF4BE  | 173   | Dreams prefix      |
 ; | $7EF4E1  | $7EF4FD  | 29    | Dreams remainder   |
 ; |----------|----------|-------|--------------------|
