@@ -18,8 +18,8 @@
 ;   buttons: left corners green (Y), right corners blue (X). Neighbor cells
 ;   share one corner column, so two adjacent bound items share that corner
 ;   and X's color shows there.
-; Assembled at the end of bank $2D, after the page 3 code, so no flag-off
-; byte moves.
+; Assembled in bank $2B from Items/all_items.asm (bank $2D is full); entries
+; are JSL/RTL. Menu/menu.asm keeps two long wrappers for the $2D calls.
 ; =========================================================
 
 !MB_YMarker = $3C60                 ; corner $060, palette 7 (green), priority
@@ -30,7 +30,7 @@ Menu_Bindings_Open:
 {
   PHP : SEP #$20 : PHA
   LDA.w $0202 : STA.l ItemBindingMenuY
-  PLA : PLP : RTS
+  PLA : PLP : RTL
 }
 
 ; Menu_InitiateScrollDown and Menu_Exit (menu close). The Y item returns to
@@ -43,7 +43,7 @@ Menu_Bindings_Close:
     STA.w $0202
     STA.l ItemBindingSavedY             ; reload restores this Y item
   .keep
-  PLA : PLP : RTS
+  PLA : PLP : RTL
 }
 
 ; Menu_ItemScreen, after the page turn/close check, M/X=8, DBR=$2D.
@@ -72,7 +72,7 @@ Menu_Bindings_Input:
     JSR .changed
   .done
   SEP #$30
-  CLC : RTS
+  CLC : RTL
 
   .refuse
   LDA.b #$3C : STA.w $012E            ; error sound (Magic Bag)
@@ -80,7 +80,7 @@ Menu_Bindings_Input:
 
   ; Old markers are erased by repainting the page once, as a page turn does.
   .changed
-  JSR Menu_RefreshInventoryScreen     ; returns SEP #$30
+  JSL Menu_RefreshInventoryScreen_Long    ; returns SEP #$30
   LDA.b #$20 : STA.w $0207            ; show the cursor on the next frame
   LDA.b #$22 : STA.w $012F            ; equip sound (page 3)
   RTS
@@ -106,7 +106,7 @@ if !ENABLE_HUD_LAYOUT_CODEX == 1
   LDA.w $0207 : AND.w #$0020 : BNE .cx_off
 if !ENABLE_MENU_PAGE3 == 1
     SEP #$20
-    LDA.w $0202 : JSR Menu_Page3_IsMaskItem
+    LDA.w $0202 : JSL Menu_Page3_IsMaskItem_Long
     REP #$20
     BCS .cx_on_draw
 endif
@@ -121,7 +121,7 @@ endif
   .cx_x_last
   JSR .cx_draw_y : JSR .cx_draw_x
   .cx_done
-  PLP : RTS
+  PLP : RTL
 
   ; Same item on both buttons: X draws it (left half green, right half blue).
   .cx_draw_y
@@ -173,7 +173,7 @@ endif
       LDA.w #!MB_YMarker : STA.w $1108, X
       ORA.w #$8000 : STA.w $11C8, X
   .done
-  PLP : RTS
+  PLP : RTL
 
   ; A = top-left corner word; X = cell offset. Writes the four corners.
   .corners
@@ -188,7 +188,7 @@ endif
   AND.w #$00FF : BEQ .none
   CMP.w #((Menu_ItemCursorPositions_End-Menu_ItemCursorPositions)/2)+1 : BCS .none
   ASL : TAX
-  LDA.w Menu_ItemCursorPositions-2, X : TAX
+  LDA.l Menu_ItemCursorPositions-2, X : TAX
   SEC : RTS
   .none
   CLC : RTS

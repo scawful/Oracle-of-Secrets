@@ -377,6 +377,12 @@ incsrc "Menu/menu_hud_codex.asm"
 assert pc()-HudCodex_SpanStart <= $200, "Codex HUD routines exceeded their $200 span"
 endif
 
+; Dual-item binding menu code: Menu bank $2D is full. Entered by JSL from
+; the menu (DBR $2D); reads WRAM, long SRAM and Menu_ItemCursorPositions.l.
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+incsrc "Menu/menu_item_bindings.asm"
+endif
+
 ; Two-slot sword helpers for the Equipment menu (Menu banks $2D/$2E are full).
 if !ENABLE_EQUIPMENT_MENU == 1
 incsrc "Menu/menu_sword_slots.asm"

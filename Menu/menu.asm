@@ -153,7 +153,7 @@ if !ENABLE_MASK_R_BINDING == 1
   JSL MaskBinding_MigrateSelection
 endif
 if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
-  JSR Menu_Bindings_Open                ; Y item kept apart from the cursor
+  JSL Menu_Bindings_Open                ; Y item kept apart from the cursor
 endif
   LDA.w $0780 : STA.w $00
 if !ENABLE_PORTAL_ROD_CELL == 1
@@ -367,7 +367,7 @@ Menu_ItemScreen:
 .active
   INC $0207
 if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
-  JSR Menu_Bindings_Input              ; Y/X on an item bind it; A never
+  JSL Menu_Bindings_Input              ; Y/X on an item bind it; A never
 endif
 if !ENABLE_MENU_PAGE3 == 1
 if !ENABLE_GOLDSTAR_CELL == 1
@@ -448,7 +448,7 @@ if !ENABLE_MENU_PAGE3 == 1
   .no_grid_cursor
 endif
 if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
-  JSR Menu_Bindings_DrawMarkers
+  JSL Menu_Bindings_DrawMarkers
 endif
 
   JSR Menu_DrawItemName
@@ -578,7 +578,7 @@ Menu_CheckBottle:
 Menu_Exit:
 {
 if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
-  JSR Menu_Bindings_Close              ; before the bottle and $0303 reads
+  JSL Menu_Bindings_Close              ; before the bottle and $0303 reads
 endif
   JSL LinkState_ResetMaskAnimated
   JSR Menu_CheckBottle
@@ -683,7 +683,7 @@ Menu_RefreshInventoryScreen:
 Menu_InitiateScrollDown:
 {
 if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
-  JSR Menu_Bindings_Close              ; RebuildHUD_long reads $0202
+  JSL Menu_Bindings_Close              ; RebuildHUD_long reads $0202
 endif
   REP #$20
 
@@ -1252,8 +1252,14 @@ if !ENABLE_MENU_PAGE3 == 1
   incsrc "menu_page3.asm" ; end of bank $2D, after the map names
 endif
 if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
-  incsrc "menu_item_bindings.asm"
-  assert pc() <= $2E8000, "Menu/menu_item_bindings.asm overflows bank $2D"
+  ; menu_item_bindings.asm is in bank $2B (Items/all_items.asm): bank $2D is
+  ; full. Long wrappers for the two $2D routines it calls; DBR stays $2D.
+  Menu_RefreshInventoryScreen_Long:
+    JSR Menu_RefreshInventoryScreen : RTL
+if !ENABLE_MENU_PAGE3 == 1
+  Menu_Page3_IsMaskItem_Long:
+    JSR Menu_Page3_IsMaskItem : RTL
+endif
 endif
 %log_end("Menu/menu.asm", !LOG_MENU)
 incsrc "menu_hud.asm"
