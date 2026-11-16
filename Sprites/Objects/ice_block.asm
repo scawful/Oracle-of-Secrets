@@ -101,6 +101,9 @@ Sprite_IceBlock_Prep:
   ; which deletes a sprite 64px off camera. Bit 7 keeps the block active
   ; off camera, so a slide continues out of view instead of freezing.
   LDA.b #$80 : STA.w SprDefl, X
+if !ENABLE_D5_CF_STAYS_SOLVED == 1
+  JSR IceBlock_CF_LoadSolved
+endif
 if !ENABLE_D5_BF_PIT_RESET == 1 || !ENABLE_D5_AF_PIT_RESET == 1
   STZ.w SprMiscB, X
   STZ.w SprTimerC, X
@@ -152,10 +155,16 @@ endif
     STZ.w SprTimerA, X : STZ.w SprMiscA, X
   .no_damage
 
+if !ENABLE_D5_CF_STAYS_SOLVED == 1
+  JSR IceBlock_CF_LiftGoalPot
+endif
   STZ.w $0642
   JSR Sprite_IceBlock_CheckForSwitch : BCC .no_switch
     STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
     LDA.b #$01 : STA.w $0642
+if !ENABLE_D5_CF_STAYS_SOLVED == 1
+    JSR IceBlock_CF_MarkSolved
+endif
   .no_switch
 
   JSL Sprite_Move
@@ -674,3 +683,116 @@ endif
   .sizes
   db $00, $00, $00, $00
 }
+
+if !ENABLE_D5_CF_STAYS_SOLVED == 1
+; =========================================================
+; Room CF stays solved
+; =========================================================
+; CF has door slots 0-2 only, so the vanilla room-save door bit of slot 3
+; ($1000 in RMFLG0CF $7EF19E, mirrored in $0400) is free; D6 room D7 uses the
+; same slot-3 bit ($7EF1AE). Vanilla saves and reloads it with the room word.
+; Solving sets it. Later entries reload the block on the goal (48,104), lift
+; the goal pot once to reveal the switch, and IceBlock_CF_ReadHoldSwitch
+; (hooked at $01C568) reports the HoldDoor switch as pressed, so
+; both shutters stay open. A fourth CF door would collide with this bit.
+!IceBlockCF_Room   = $CF
+!IceBlockCF_GoalX  = 48   ; room px, block top-left on the goal switch
+!IceBlockCF_GoalY  = 104
+!IceBlockCF_PotX   = 48   ; room px, goal pot that covers the switch
+!IceBlockCF_PotY   = 112
+
+; Carry set when this is room CF and the solved bit is saved. M8.
+IceBlock_CF_IsSolved:
+{
+  LDA.b $A0 : CMP.b #!IceBlockCF_Room : BNE .no
+  LDA.b $A1 : BNE .no
+  LDA.l RMFLG0CF+1 : AND.b #$10 : BEQ .no ; bit $1000 of the room word
+  SEC
+  RTS
+  .no
+  CLC
+  RTS
+}
+
+; HoldDoor read at $01C568 (M16 X16): Stone_ReadHoldSwitch, then report the
+; switch pressed in solved CF. Callers branch on Z, so every exit sets it.
+IceBlock_CF_ReadHoldSwitch:
+{
+  JSL Stone_ReadHoldSwitch
+  PHA
+  LDA.b $A0 : CMP.w #!IceBlockCF_Room : BNE .ordinary
+  LDA.l RMFLG0CF : BIT.w #$1000 : BEQ .ordinary
+    PLA
+    LDA.w #$0001
+    RTL
+  .ordinary
+  PLA
+  RTL
+}
+
+; Prep: place the block and its sword-reset cache on the goal.
+IceBlock_CF_LoadSolved:
+{
+  JSR IceBlock_CF_IsSolved : BCC .done
+    LDA.b #!IceBlockCF_GoalX : STA.w SprX, X : STA.w SprMiscD, X
+    LDA.b #!IceBlockCF_GoalY : STA.w SprY, X : STA.w SprMiscE, X
+    LDA.b #((!IceBlockCF_Room&$0F)*2) : STA.w SprXH, X : STA.w SprMiscF, X
+    LDA.b #((!IceBlockCF_Room>>4)*2) : STA.w SprYH, X : STA.w SprMiscG, X
+  .done
+  RTS
+}
+
+; Main: on the first active frame of a solved entry, lift the goal pot with
+; the vanilla routine so the switch tile and its attribute return. Runs once:
+; the lifted cell becomes a switch attribute, not a pot ($7x).
+IceBlock_CF_LiftGoalPot:
+{
+  LDA.b $10 : CMP.b #$07 : BNE .done
+  LDA.b $11 : BNE .done
+  JSR IceBlock_CF_IsSolved : BCC .done
+  LDA.l $7F2000+((!IceBlockCF_PotY/8)*64)+(!IceBlockCF_PotX/8)
+  AND.b #$F0 : CMP.b #$70 : BNE .done
+    PHX
+    REP #$20
+    LDA.b $20 : PHA
+    LDA.b $22 : PHA
+    SEP #$20
+    LDA.b $2F : PHA
+    LDA.b $EE : PHA
+    REP #$20
+    ; Facing up probes (Y+3, X+7): aim inside the 16x16 pot cell, BG1.
+    LDA.w #((!IceBlockCF_Room>>4)*$200)+!IceBlockCF_PotY+5 : STA.b $20
+    LDA.w #((!IceBlockCF_Room&$0F)*$200)+!IceBlockCF_PotX+1 : STA.b $22
+    SEP #$20
+    STZ.b $2F : STZ.b $EE
+    PHB : LDA.b #$07 : PHA : PLB
+    JSL $01D9EC ; Underworld_LiftAndReplaceLiftable, exits M8 X8
+    PLB
+    PLA : STA.b $EE
+    PLA : STA.b $2F
+    REP #$20
+    PLA : STA.b $22
+    PLA : STA.b $20
+    SEP #$20
+    PLX
+  .done
+  RTS
+}
+
+; Main: the block is on the switch. Save the CF solved bit in the live room
+; word and the save mirror, so it persists with or without a room exit.
+IceBlock_CF_MarkSolved:
+{
+  ; Only in normal play: a BF->CF transition frame must not set the bit.
+  LDA.b $10 : CMP.b #$07 : BNE .done
+  LDA.b $11 : BNE .done
+  LDA.b $A0 : CMP.b #!IceBlockCF_Room : BNE .done
+  LDA.b $A1 : BNE .done
+    REP #$20
+    LDA.w $0400 : ORA.w #$1000 : STA.w $0400
+    LDA.l RMFLG0CF : ORA.w #$1000 : STA.l RMFLG0CF
+    SEP #$20
+  .done
+  RTS
+}
+endif
