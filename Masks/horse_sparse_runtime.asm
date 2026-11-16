@@ -21,15 +21,19 @@ Horse_SlotsBusy:
   LDA.l InCutScene : BNE .busy
   LDX.w #9
   .scan
+    LDA.l $7E0C4A, X : BEQ .next_ancilla
 if !ENABLE_HORSE_LONG_JUMP == 1
     ; Ancilla $1D (dash tremor) is the long-jump landing shake: BG offsets
     ; only, no graphics, so it must not force a silent dismount.
-    LDA.l $7E0C4A, X : BEQ .next_ancilla
-    CMP.b #$1D : BNE .busy
-    .next_ancilla
-else
-    LDA.l $7E0C4A, X : BNE .busy
+    CMP.b #$1D : BEQ .next_ancilla
 endif
+    ; A rider's own arrows ($09 in flight, $0A stuck in a wall) must not
+    ; unseat them (mounted bow). Unmounted, an arrow still reports busy.
+    CMP.b #$09 : BEQ .arrow
+    CMP.b #$0A : BNE .busy
+    .arrow
+    LDA.l $7E02B2 : CMP.b #$09 : BNE .busy ; CurrentMask != horse
+    .next_ancilla
     DEX : BPL .scan
   LDX.w #15
   .receipt_sprites
