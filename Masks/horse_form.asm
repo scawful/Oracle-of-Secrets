@@ -84,6 +84,12 @@ org $008B5C ; @hook module=Masks name=Horse_NmiUploadHook kind=jsl target=Horse_
   JSL Horse_NmiUpload
   NOP #7
 assert pc() == $008B67
+
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+org $008056 ; @hook module=Masks name=Horse_FrameEndScan kind=jsl target=Horse_FrameEndScan
+  assert read1($008056) == $22 && read3($008057) == $0080B5, "Expected JSL Module_MainRouting at $008056"
+  JSL Horse_FrameEndScan
+endif
 pullpc
 
 incsrc "Masks/horse_sparse_runtime.asm"
@@ -162,6 +168,9 @@ HorseForm_EnsureInit:
     LDA.b #$FF
     STA.l Horse_UploadedFrame
     STA.l Horse_NpcUploadedFrame
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+    LDA.b #$00 : STA.l Horse_OffState : STA.l Horse_OffClear
+endif
     REP #$20
     LDA.w #!Horse_MagicMarker : STA.l Horse_Marker
     PLX
