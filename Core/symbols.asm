@@ -41,7 +41,6 @@ BossReinject:             skip 1  ; $7E1EA7 fairy revive in room $00: bosses re-
 FinaleBeat:               skip 1  ; $7E1EA8 0 Kydreeok not dead yet, N>1 placeholder beat counting down, 1 Ganondorf may spawn
 WallSel_Buffer:           skip 32 ; $7E1EA9-$7E1EC8 Dungeons/wall_profile_selector.asm span window (read via $01:1EA9 mirror)
 SongTintContext:          skip 2  ; $7E1EC9 $1B and area ($8A) or room ($A0) the tint started in
-AbyssLanding:             skip 2  ; $7E1ECB glade ambush landing: state (0 off, 1 armed, 2 mosaic, 3 pan), +1 camera rows left
 assert pc() <= $7E1F00, "Core/symbols.asm WRAM block overflows free RAM $7E1E70-$7E1EFF"
 }
 base off
@@ -171,6 +170,13 @@ endif
 ; vanilla-free UNUSED_7FF180 block: the boss frame load meter and earthquake.
 ; BossDirector (Sprites/Bosses/boss_director.asm) uses $7FF388-$7FF39D after
 ; it: the boss attack token, rest, hit grace, cooldowns and 8 boss bytes.
+
+; Glade ambush Abyss landing (!ENABLE_GLADE_AMBUSH, Sprites/Bosses/kydrog.asm).
+; Vanilla-unused $7E02B8-$7E02B9 (usdasm UNUSED_7E02B8/B9, zero at boot); the
+; item binding bytes end at $7E02B7. The $7E1E70 block has no room: the ferry
+; block starts at $7E1ECB. Not persistent; no bulk owner clears it.
+AbyssLanding = $7E02B8 ; state (0 off, 1 armed, 2 mosaic, 3 pan); +1 = camera rows left
+assert AbyssLanding+2 <= $7E02C0
 
 ; Current Song
 CurrentSong    = $030F
