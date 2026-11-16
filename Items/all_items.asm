@@ -333,6 +333,7 @@ endif
 ; Two-slot sword helpers for the Equipment menu (Menu banks $2D/$2E are full).
 if !ENABLE_EQUIPMENT_MENU == 1
 incsrc "Menu/menu_sword_slots.asm"
+incsrc "Items/heavy_sword.asm"
 endif
 
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.

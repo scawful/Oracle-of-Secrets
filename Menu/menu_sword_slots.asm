@@ -84,10 +84,26 @@ SwordSlots_Select:
   RTL
 }
 
-; Returns A = equipped sword slot (24 story, 25 heavy) for the red marker.
+; Heavy icon = the level-3 SwordGFX icon with its blade (top two tiles)
+; moved from red palette 1 to grey palette 4. Bank $2D has no room for a
+; new SwordGFX row, so the recolor is written into the tilemap buffer.
+!HEAVY_ICON_POS = $018C               ; menu_offset(6,6), asserted in menu_equipment.asm
+!HEAVY_ICON_TL  = $308A
+!HEAVY_ICON_TR  = $3065
+
+; Called after the gear icons are drawn. Recolors the heavy icon, then
+; returns A = equipped sword slot (24 story, 25 heavy) for the red marker.
+; M/X=8.
 assert !SwordSlot_HeavyEquipped == $02, "MarkerSlot shifts bit1 into bit0"
 SwordSlots_MarkerSlot:
 {
+  LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyOwned : BEQ .marker
+  LDA.l Sword : CMP.b #$FF : BEQ .marker
+  REP #$20
+  LDA.w #!HEAVY_ICON_TL : STA.l $7E1108+!HEAVY_ICON_POS
+  LDA.w #!HEAVY_ICON_TR : STA.l $7E110A+!HEAVY_ICON_POS
+  SEP #$20
+.marker
   LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyEquipped : LSR : ORA.b #$18
   RTL
 }

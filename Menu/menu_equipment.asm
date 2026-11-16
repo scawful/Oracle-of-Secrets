@@ -447,3 +447,4 @@ Menu_Equipment_Pos:
   dw menu_offset(18,3),menu_offset(18,6),menu_offset(18,9)
   dw menu_offset(18,13),menu_offset(18,16),menu_offset(18,19)
   dw menu_offset(6,3),menu_offset(6,6)
+assert menu_offset(6,6) == !HEAVY_ICON_POS, "SwordSlots_MarkerSlot recolors the heavy icon at menu_offset(6,6)"
