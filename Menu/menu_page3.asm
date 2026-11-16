@@ -348,12 +348,22 @@ endif
     RTS
   .no_x
 
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  LDA.w $020B : PHA
+endif
   JSR Menu_Page3_Move
   SEP #$30
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  PLA : EOR.w $020B : TAX              ; X != 0: the cursor moved this frame
+endif
   LDA.w $0200 : CMP.b #!MENU_STATE_STATS_SCREEN : BEQ .select
   RTS                                  ; page turn owns the rest of this frame
 .select
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  TXA : BNE .moved                     ; A/Y act on the cell the player saw
+endif
   JSR Menu_Page3_Select
+.moved
   INC.w $0207                            ; cursor blink
   JSR Menu_Page3_Draw
   LDA.b #$23 : STA.w $0116
