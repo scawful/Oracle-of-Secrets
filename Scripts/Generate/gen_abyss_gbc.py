@@ -83,6 +83,15 @@ STYLES = [
      # carpet line showing through it) -> brightest gold, everything else -> the
      # carpet under it.
      "inlays": [{"object": 0xFF8, "blocks": 2, "under": 0x0E1, "keep": {5: 0, 4: 0}}]},
+    # Shrine of Origins (scawful pick "1 palace", 2026-11-16): Ages palace set,
+    # teal walls and green checker floor.
+    {"name": "palace", "png": "donor_raw_fortress/ages_gfx_tileset5a.png",
+     "map": "donor_raw_fortress/ages_tilesetMappings5a.bin", "pal": "donor_pal/ages_5a.txt",
+     "rooms": [0x05],
+     # SNES row 6 also carries donor palette 6 (blue) in its three spare indices.
+     "accent": {6: 6},
+     # Teal panel $0C5 around the chest (walkable floor) -> donor blue tile A2.
+     "accent_floors": {0x0C5: (0xA2, {0: 4, 1: 5, 2: 6, 3: 3})}},
 ]
 
 # Object -> (donor metatile, shape). Shapes give word k's (col, row) in the object.
