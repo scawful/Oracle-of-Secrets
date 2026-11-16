@@ -328,6 +328,12 @@ if !ENABLE_ABYSS_SPAWN_MENU == 1
 incsrc "Overworld/abyss_spawn_menu.asm"
 endif
 
+; Lyra overlay fix: bank $34 is full. JSL entries only, exits by RTL/JML,
+; operands are direct page, long or immediate, so it runs from here.
+if !ENABLE_LYRA_OVERLAY_FIX == 1
+incsrc "Overworld/lyra_overlay_fix.asm"
+endif
+
 ; Richard quest: bank $34 is full. Every JSL entry sets DB with PHK : PLB and
 ; hooks use JSL, so the file runs from this bank unchanged.
 if !ENABLE_RICHARD_QUEST == 1

@@ -246,7 +246,7 @@ endif
   REP #$30
   LDX.w #$3E
   .loop
-    LDA.w Menu_Palette, X
+    LDA.l Menu_Palette, X
     STA.l $7EC502, X
     DEX : DEX
   BPL .loop
@@ -665,7 +665,7 @@ Menu_RefreshInventoryScreen:
   REP #$30
   LDX.w #$3E
   .loop
-    LDA.w Menu_Palette, X
+    LDA.l Menu_Palette, X
     STA.l $7EC502, X
     DEX : DEX
   BPL .loop
@@ -1240,7 +1240,7 @@ endif
 endif
 
 menu_frame: incbin "tilemaps/menu_frame.tilemap"
-quest_icons: incbin "tilemaps/quest_icons.tilemap"
+; quest_icons (128 bytes) lives in bank $2E after menu_journal.asm: bank $2D is full.
 incsrc "menu_map_names.asm"
 if !ENABLE_EQUIPMENT_MENU == 1
   incsrc "menu_quest.asm"
@@ -1257,6 +1257,46 @@ incsrc "menu_hud.asm"
 %log_end("Menu/menu_hud.asm", !LOG_MENU)
 incsrc "menu_journal.asm"
 %log_end("Menu/menu_journal.asm", !LOG_MENU)
+; Read with LDA.l from Menu_DrawQuestIcons (bank $2D).
+quest_icons: incbin "tilemaps/quest_icons.tilemap"
+; Read with LDA.l from Menu_UploadLeft and the palette restore (bank $2D).
+Menu_Palette:
+  dw hexto555($814f16)
+  dw hexto555($552903)
+  dw hexto555($000000)
+  dw hexto555($000000) ; transparent
+  dw hexto555($d51d00)
+  dw hexto555($f9f9f9)
+  dw hexto555($000000)
+  dw hexto555($000000) ; transparent
+  dw hexto555($d0a050)
+  dw hexto555($f9f9f9)
+  dw hexto555($000000)
+  dw hexto555($000000) ; transparent
+  dw hexto555($5987e0)
+  dw hexto555($f9f9f9)
+  dw hexto555($000000)
+  dw hexto555($000000) ; transparent
+  dw hexto555($7b7b83)
+  dw hexto555($bbbbbb)
+  dw hexto555($000000)
+  dw hexto555($000000) ; transparent
+  ; Existing gold artwork keeps its original palette5 colors.
+  dw hexto555($a58100)
+  dw hexto555($dfb93f)
+  dw hexto555($000000)
+  dw hexto555($000000) ; transparent
+  ; Frame palette6 is preserved exactly (brown outline, dark blue fill).
+  dw hexto555($814f16)
+  dw hexto555($013e6e)
+  dw hexto555($000000)
+  dw hexto555($000000) ; transparent
+  dw hexto555($15cd34)
+  dw hexto555($f9f9f9)
+  dw hexto555($000000)
+  ; The upload loop reads 32 words (X = $3E..0). In bank $2D the 32nd word was
+  ; the next table's first word ($4B8B); keep that color here.
+  dw $4B8B
 if !ENABLE_D8_BOSS == 1
   ; D8 code owns $2EB800-$2EBFFF; its stage 2/3 graphics start at $2EC000.
   assert pc() <= $2EB800, "Menu bank $2E reached the D8 boss code slot ($2EB800)"

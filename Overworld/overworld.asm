@@ -190,10 +190,8 @@ LoadOverworldPitAreas:
   RTL
 }
 
-; Appended after the existing bank $34 free-space code so nothing moves.
-if !ENABLE_LYRA_OVERLAY_FIX == 1
-  incsrc "Overworld/lyra_overlay_fix.asm"
-endif
+; Overworld/lyra_overlay_fix.asm is included from Items/all_items.asm
+; (bank $2B): bank $34 is full once the dual-item binding is on.
 
 Overworld_Bank34CodeEnd:
 assert pc() <= $34FFFF, "Overworld code exceeds bank $34"
