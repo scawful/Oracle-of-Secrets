@@ -445,17 +445,18 @@
       "room": "0x00FD",
       "exit": "table",
       "source": "Overworld/entrances.asm:326",
-      "area": "0x32",
-      "area_name": "Secret Beach",
+      "area": "0x30",
+      "area_name": "Kalyxo Docks",
       "doors": [
         {
-          "area": "0x32",
-          "tile": "0x0496",
-          "x": 176,
+          "area": "0x30",
+          "tile": "0x04C4",
+          "x": 544,
           "y": 144
         }
       ],
-      "comment_area": "0x32"
+      "comment_area": "0x32",
+      "note": "entrances.asm says OW 32; the project ROM door table (docks pick A) puts this entrance on area 0x30 at (34,9)."
     },
     {
       "id": "0x1B",
