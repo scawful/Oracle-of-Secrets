@@ -127,25 +127,25 @@ AbyssGbc_Pal:
   dw $0000, $252B, $252B, $3E54, $39AF, $3E54, $39AF, $3E54, $0000, $252B, $252B, $3E54, $39AF, $3E54, $39AF
   dw $0000, $252B, $252B, $3E54, $39AF, $3E54, $39AF, $3E54, $0000, $252B, $252B, $3E54, $39AF, $3E54, $39AF
   dw $0000, $252B, $252B, $3E54, $39AF, $3E54, $39AF, $3E54, $0000, $252B, $252B, $3E54, $39AF, $3E54, $39AF
-  dw $0000, $252B, $252B, $3E54, $39AF, $3E54, $39AF, $3E54, $0000, $252B, $252B, $3E54, $39AF, $3E54, $39AF
+  dw $0000, $00A9, $00A9, $033F, $01B5, $033F, $01B5, $033F, $0000, $00A9, $00A9, $033F, $01B5, $033F, $01B5
   dw $0000, $004C, $004C, $0A9C, $09D7, $0A9C, $09D7, $0A9C, $0000, $004C, $004C, $0A9C, $09D7, $0A9C, $09D7
   dw $0000, $004C, $004C, $0A9C, $09D7, $0A9C, $09D7, $0A9C, $0000, $004C, $004C, $0A9C, $09D7, $0A9C, $09D7
   dw $0000, $004C, $004C, $0A9C, $09D7, $0A9C, $09D7, $0A9C, $0000, $004C, $004C, $0A9C, $09D7, $0A9C, $09D7
   dw $0000, $38EC, $38EC, $46F9, $1DEE, $46F9, $1DEE, $46F9, $0000, $38EC, $38EC, $46F9, $1DEE, $46F9, $1DEE
   dw $0000, $38EC, $38EC, $46F9, $1DEE, $46F9, $1DEE, $46F9, $0000, $38EC, $38EC, $46F9, $1DEE, $46F9, $1DEE
-  dw $0000, $38EC, $38EC, $46F9, $1DEE, $46F9, $1DEE, $46F9, $0000, $38EC, $38EC, $46F9, $1DEE, $46F9, $1DEE
+  dw $0000, $004C, $004C, $0A9C, $09D7, $0A9C, $09D7, $0A9C, $0000, $004C, $004C, $0A9C, $09D7, $0A9C, $09D7
   dw $0000, $092C, $092C, $47FF, $2257, $47FF, $2257, $47FF, $0000, $092C, $092C, $47FF, $2257, $47FF, $2257
   dw $0000, $092C, $092C, $47FF, $2257, $47FF, $2257, $47FF, $0000, $092C, $092C, $47FF, $2257, $47FF, $2257
   dw $0000, $092C, $092C, $47FF, $2257, $47FF, $2257, $47FF, $0000, $092C, $092C, $47FF, $2257, $47FF, $2257
   dw $0000, $218A, $218A, $47FF, $3294, $47FF, $3294, $47FF, $0000, $218A, $218A, $47FF, $3294, $47FF, $3294
   dw $0000, $218A, $218A, $47FF, $3294, $47FF, $3294, $47FF, $0000, $218A, $218A, $47FF, $3294, $47FF, $3294
-  dw $0000, $218A, $218A, $47FF, $3294, $47FF, $3294, $47FF, $0000, $218A, $218A, $47FF, $3294, $47FF, $3294
+  dw $0000, $092C, $092C, $47FF, $2257, $47FF, $2257, $47FF, $0000, $092C, $092C, $47FF, $2257, $47FF, $2257
   dw $0000, $2867, $454E, $6653, $6653, $454E, $2867, $6653, $0000, $2867, $454E, $6653, $6653, $454E, $2867
   dw $0000, $2867, $454E, $6653, $6653, $454E, $2867, $6653, $0000, $2867, $454E, $6653, $6653, $454E, $2867
   dw $0000, $2867, $454E, $6653, $6653, $454E, $2867, $6653, $0000, $2867, $454E, $6653, $6653, $454E, $2867
   dw $0000, $1C88, $3CEF, $4D71, $4D71, $3CEF, $1C88, $4D71, $0000, $1C88, $3CEF, $4D71, $4D71, $3CEF, $1C88
   dw $0000, $1C88, $3CEF, $4D71, $4D71, $3CEF, $1C88, $4D71, $0000, $1C88, $3CEF, $4D71, $4D71, $3CEF, $1C88
-  dw $0000, $1C88, $3CEF, $4D71, $4D71, $3CEF, $1C88, $4D71, $0000, $1C88, $3CEF, $4D71, $4D71, $3CEF, $1C88
+  dw $0000, $2867, $454E, $6653, $6653, $454E, $2867, $6653, $0000, $2867, $454E, $6653, $6653, $454E, $2867
 AbyssGbc_onox_00: incbin "Dungeons/Data/abyss_gbc/onox.00.lz2"
 AbyssGbc_onox_01: incbin "Dungeons/Data/abyss_gbc/onox.01.lz2"
 AbyssGbc_onox_15: incbin "Dungeons/Data/abyss_gbc/onox.15.lz2"
@@ -171,9 +171,9 @@ AbyssGbc_mermaid_00: incbin "Dungeons/Data/abyss_gbc/mermaid.00.lz2"
 AbyssGbc_mermaid_0A: incbin "Dungeons/Data/abyss_gbc/mermaid.0A.lz2"
 AbyssGbc_mermaid_01: incbin "Dungeons/Data/abyss_gbc/mermaid.01.lz2"
 AbyssGbc_mermaid_11: incbin "Dungeons/Data/abyss_gbc/mermaid.11.lz2"
+AbyssGbc_mermaid_E8: incbin "Dungeons/Data/abyss_gbc/mermaid.E8.lz2"
 assert pc() <= $5B0000, "Abyss GBC bank $5A overrun"
 org $5B8000
-AbyssGbc_mermaid_E8: incbin "Dungeons/Data/abyss_gbc/mermaid.E8.lz2"
 AbyssGbc_mermaid_0C: incbin "Dungeons/Data/abyss_gbc/mermaid.0C.lz2"
 AbyssGbc_mermaid_62: incbin "Dungeons/Data/abyss_gbc/mermaid.62.lz2"
 AbyssGbc_mermaid_0E: incbin "Dungeons/Data/abyss_gbc/mermaid.0E.lz2"

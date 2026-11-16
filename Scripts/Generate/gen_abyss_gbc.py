@@ -11,10 +11,18 @@ Dungeons/Data/abyss_gbc/:
 
 Per style, every BG sheet in slots 0-6 of the style's rooms gets a GBC copy:
   1. Chars drawn by wall objects ($001-$004, $061-$064), concave/convex corners
-     ($100-$10B) and the rooms' floor fills receive the donor metatile chars for
+     ($100-$10F) and the rooms' floor fills receive the donor metatile chars for
      the same role (B0-B3 walls, B4-BB corners, A0 floor), flips undone.
-  2. Every other char is posterized to the donor's four shades (no donor match;
+  2. Objects the GBC sets have no direct match for get the closest donor art:
+     deep walls $007/$008/$067/$068 -> second wall set 38-3B, deep corners
+     $118-$11B -> concave corners B8-BB, layered stairs $130/$131/$F9C/$F9D ->
+     stair stripes 50, diagonal ceilings $0A0-$0A3 -> black A9, diagonal walls
+     $009-$014 -> stepped wall slices (--diagonal wall) or a flat stepped fill
+     (--diagonal fill).
+  3. Every other char is posterized to the donor's four shades (no donor match;
      listed in coverage.json as fallback).
+Layer-2 masks $0C2/$0C6/$FF3 draw chars $1E9/$1EC (sheet $0F, all transparent)
+and need no art.
 The palette table holds 6 BG rows x 15 colours per style (rows 2-7). Each SNES row
 gets the donor palette that most of its donor-mapped chars use.
 
@@ -56,9 +64,16 @@ STYLES = [
 ]
 
 # Object -> (donor metatile, shape). Shapes give word k's (col, row) in the object.
+# Draw orders checked against vanilla bank $01 (usdasm):
+#   COLMAJ_2x4  RoomDraw_Rightwards2x4*          walls $001-$004
+#   ROWMAJ_4x2  RoomDraw_Downwards4x2*  $01B220  walls $061-$064
+#   COLMAJ_4x4  RoomDraw_4x4 / 4x4Corner_BothBG  $0197ED / $019813, corners $100-$10F
+#               RoomDraw_AutoStairs_*MultiLayer  $01A25D / $01A31C, stairs
+#   COLMAJ_2x2  RoomDraw_Rightwards2x2 $019895 / Downwards2x2 $01B2AF, deep walls
 COLMAJ_2x4 = [(k // 4, k % 4) for k in range(8)]
 ROWMAJ_4x2 = [(k % 4, k // 4) for k in range(8)]
 COLMAJ_4x4 = [(k // 4, k % 4) for k in range(16)]
+COLMAJ_2x2 = [(k // 2, k % 2) for k in range(4)]
 ROLE_OBJECTS = {
     0x001: (0xB0, COLMAJ_2x4), 0x003: (0xB0, COLMAJ_2x4),
     0x002: (0xB2, COLMAJ_2x4), 0x004: (0xB2, COLMAJ_2x4),
@@ -67,12 +82,66 @@ ROLE_OBJECTS = {
     # concave: NW SW NE SE (top), then the same for bottom $108-$10B
     0x100: (0xB8, COLMAJ_4x4), 0x101: (0xBA, COLMAJ_4x4), 0x102: (0xB9, COLMAJ_4x4), 0x103: (0xBB, COLMAJ_4x4),
     0x108: (0xB8, COLMAJ_4x4), 0x109: (0xBA, COLMAJ_4x4), 0x10A: (0xB9, COLMAJ_4x4), 0x10B: (0xBB, COLMAJ_4x4),
-    # convex (inner) corners: SE NE SW NW
+    # convex (inner) corners, top $104-$107 then bottom $10C-$10F. Checked: the
+    # $104 word grid has its wall block at NW (left column = north-wall profile,
+    # top row = west-wall profile), $105 = v-flip (SW), $106 = h-flip (NE),
+    # $107 = both (SE). Donor B7/B5/B6/B4 have the wall block at NW/SW/NE/SE
+    # (real Ages room 05:24).
     0x104: (0xB7, COLMAJ_4x4), 0x105: (0xB5, COLMAJ_4x4), 0x106: (0xB6, COLMAJ_4x4), 0x107: (0xB4, COLMAJ_4x4),
+}
+# Roles added after the first styled rooms were reviewed. Their palette votes go
+# to a second tally that only decides rows the roles above leave unclaimed, so
+# rooms already styled keep their colours.
+EXTRA_ROLE_OBJECTS = {
+    0x10C: (0xB7, COLMAJ_4x4), 0x10D: (0xB5, COLMAJ_4x4), 0x10E: (0xB6, COLMAJ_4x4), 0x10F: (0xB4, COLMAJ_4x4),
+    # deep walls N S W E -> second GBC wall set (38 top, 39 right, 3A bottom, 3B left)
+    0x007: (0x38, COLMAJ_2x2), 0x008: (0x3A, COLMAJ_2x2),
+    0x067: (0x3B, COLMAJ_2x2), 0x068: (0x39, COLMAJ_2x2),
+    # deep corners NW SW NE SE: corner and inner chars from the concave corners
+    # (their two wall chars are already set by the deep walls above)
+    0x118: (0xB8, COLMAJ_2x2), 0x119: (0xBA, COLMAJ_2x2), 0x11A: (0xB9, COLMAJ_2x2), 0x11B: (0xBB, COLMAJ_2x2),
+    # layered stairs (north $130/$131, south $F9C/$F9D) -> GBC stair stripes
+    0x130: (0x50, COLMAJ_4x4), 0x131: (0x50, COLMAJ_4x4),
+    0xF9C: (0x50, COLMAJ_4x4), 0xF9D: (0x50, COLMAJ_4x4),
+}
+# Solid fills: one flat glyph, no palette vote (a flat tile reads in any row).
+FILL_OBJECTS = {0x0A0: 0xA9, 0x0A1: 0xA9, 0x0A2: 0xA9, 0x0A3: 0xA9}  # diagonal ceilings -> black
+# Diagonal walls $009-$014 draw one 5-char column (void edge, 3 body, floor trim)
+# stepped one row per column. GBC sets have no diagonals; per char of the $009
+# column: (donor metatile, col, row). No palette votes: the trim char uses a
+# different palette row per object group.
+DIAGONAL_OBJECTS = range(0x009, 0x015)
+DIAGONAL_STYLES = {
+    # stepped slices of the north wall under a black step
+    "wall": [(0xA9, 0, 0), (0xB0, 0, 0), (0xB0, 0, 1), (0xB0, 0, 0), (0xB0, 0, 1)],
+    # flat dark steps with the wall's inner edge
+    "fill": [(0xA9, 0, 0), (0xA8, 0, 0), (0xA8, 0, 0), (0xA8, 0, 0), (0xB0, 0, 1)],
+}
+# Alternates for objects with no direct GBC equivalent (review options).
+DEEP_STYLES = {
+    "second": {},  # default above: second GBC wall set 38-3B
+    "main": {0x007: (0xB0, COLMAJ_2x2), 0x008: (0xB2, COLMAJ_2x2),
+             0x067: (0xB3, COLMAJ_2x2), 0x068: (0xB1, COLMAJ_2x2)},
+}
+STAIR_STYLES = {
+    "stripes": {},  # default above: stair stripes 50
+    "icons": {0x130: (0x44, COLMAJ_4x4), 0x131: (0x44, COLMAJ_4x4),
+              0xF9C: (0x45, COLMAJ_4x4), 0xF9D: (0x45, COLMAJ_4x4)},
 }
 FLOOR_META = 0xA0
 STREAM_BUDGET = 0x7000  # bank $5A bytes for streams after code + tables
+# Checked: RoomDraw_A_Many32x32Blocks ($018A44) writes the 8 floor words
+# row-major 4x2 (tilemap +$000..+$006, then +$080..+$086), twice vertically.
 FLOOR_SHAPE = ROWMAJ_4x2
+
+
+def object_words(rom: bytes, obj: int, n: int) -> list[int]:
+    """First n tile words of an object. Subtype 3 ($F80-$FFF) uses the
+    offset table at $01:84F0, which gen_wall_profiles does not read."""
+    if obj >= 0xF80:
+        pc = gw.OBJ_TABLE_PC + gw.rom_word(rom, 0x84F0 + (obj - 0xF80) * 2)
+        return [gw.rom_word(rom, pc + 2 * k) for k in range(n)]
+    return gw.class_words(rom, rom, obj)[:n]
 
 
 def c5(c):
@@ -145,18 +214,30 @@ def build(a: argparse.Namespace) -> int:
         # donor glyph per (char, from word) ; first writer wins
         glyph: dict[int, list] = {}
         votes: dict[int, Counter] = defaultdict(Counter)
+        extra_votes: dict[int, Counter] = defaultdict(Counter)
 
-        def place(word, meta, col, row):
+        def place(word, meta, col, row, tally=votes):
             c = word & 0x3FF
             g, p = donor.quadrant(meta, col % 2, row % 2)
-            votes[(word >> 10) & 7][p] += 1
+            if tally is not None:
+                tally[(word >> 10) & 7][p] += 1
             if c not in glyph:
                 glyph[c] = unflip(g, word)
 
-        for obj, (meta, shape) in ROLE_OBJECTS.items():
-            for k, w in enumerate(gw.class_words(rom, rom, obj)):
-                col, row = shape[k]
-                place(w, meta, col, row)
+        extra = {**EXTRA_ROLE_OBJECTS, **DEEP_STYLES[a.deep], **STAIR_STYLES[a.stairs]}
+        for roles, tally in ((ROLE_OBJECTS, votes), (extra, extra_votes)):
+            for obj, (meta, shape) in roles.items():
+                for (col, row), w in zip(shape, object_words(rom, obj, len(shape))):
+                    place(w, meta, col, row, tally)
+        for obj, meta in FILL_OBJECTS.items():
+            place(object_words(rom, obj, 1)[0], meta, 0, 0, None)
+        diag = {w & 0x3FF: spec for w, spec in
+                zip(object_words(rom, DIAGONAL_OBJECTS[0], 5), DIAGONAL_STYLES[a.diagonal])}
+        for obj in DIAGONAL_OBJECTS:
+            for w in object_words(rom, obj, 5):
+                if (w & 0x3FF) in diag:
+                    meta, col, row = diag[w & 0x3FF]
+                    place(w, meta, col, row, None)
         table = gw.room_object_table(rom, rooms)
         for r in rooms:
             p = gw.snes_pc(table + 3 * r)
@@ -169,7 +250,10 @@ def build(a: argparse.Namespace) -> int:
 
         # palette rows 2-7: donor palette by vote, default = floor palette
         floor_pal = donor.quadrant(FLOOR_META, 0, 0)[1]
-        row_pal = {r: (votes[r].most_common(1)[0][0] if votes[r] else floor_pal) for r in range(2, 8)}
+        row_pal = {}
+        for r in range(2, 8):
+            tally = votes[r] or extra_votes[r]
+            row_pal[r] = tally.most_common(1)[0][0] if tally else floor_pal
         # posterize: rank SNES indices 1-7 by mean luminance over the rooms' rows 2-7
         snes = gw.palette(rom, pal_ids[0])
         mean = {}
@@ -236,6 +320,8 @@ def build(a: argparse.Namespace) -> int:
                                    "posterized_chars": len(fallback)}
         sheet_map.append(smap)
         coverage[style["name"]] = {"rooms": [f"{r:02X}" for r in rooms], "row_palettes": {str(k): v for k, v in row_pal.items()},
+                                   "row_votes": {str(r): dict(sorted(votes[r].items())) for r in range(2, 8)},
+                                   "extra_row_votes": {str(r): dict(sorted(extra_votes[r].items())) for r in range(2, 8)},
                                    "sheets": cov}
 
     lines = [
@@ -282,6 +368,12 @@ def main() -> int:
     b = sub.add_parser("build")
     b.add_argument("--rom", default=str(REPO / "Roms/oos168x.sfc"))
     b.add_argument("--donor", required=True, help="AFS gbc_interiors directory with donor_raw_* and donor_pal")
+    b.add_argument("--diagonal", choices=sorted(DIAGONAL_STYLES), default="wall",
+                   help="art for diagonal walls $009-$014 (default: stepped wall slices)")
+    b.add_argument("--deep", choices=sorted(DEEP_STYLES), default="second",
+                   help="art for deep walls $007/$008/$067/$068 (default: second GBC wall set)")
+    b.add_argument("--stairs", choices=sorted(STAIR_STYLES), default="stripes",
+                   help="art for layered stairs $130/$131/$F9C/$F9D (default: stair stripes)")
     b.set_defaults(fn=build)
     a = ap.parse_args()
     return a.fn(a)
