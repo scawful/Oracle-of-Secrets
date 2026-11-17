@@ -90,6 +90,10 @@ endif
 ; Boat_Marker holds !Boat_Magic.
 !ENABLE_KALYXO_BOAT                   = 1
 !ENABLE_ORACLE_ARRIVAL_SEQUENCE      = 1
+; Oracle title screen BG2 (vortex, Maku Tree, green SECRETS plate, colour cycle)
+; in bank $58 (Core/title/title_screen.asm). Default on. While on,
+; yaze BG2 title edits are ignored; BG1 (logo) edits still apply.
+!ENABLE_ORACLE_TITLE_SCREEN          = 1
 ; New-file Mirror experiment scene before the arrival (Core/Cutscene/experiment.asm).
 ; Requires ORACLE_ARRIVAL_SEQUENCE (asserted in Oracle_main.asm).
 !ENABLE_EXPERIMENT_SCENE            = 1

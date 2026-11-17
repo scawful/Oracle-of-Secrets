@@ -176,6 +176,11 @@ namespace Oracle
     incsrc "Core/Cutscene/opening.asm"
   endif
 
+  ; Oracle title screen BG2 (default on; see Util/macros.asm).
+  if !ENABLE_ORACLE_TITLE_SCREEN == 1
+    incsrc "Core/title/title_screen.asm"
+  endif
+
   ; Native 2-player feature (RC profile enabled; see Util/macros.asm)
   if !ENABLE_NATIVE_2P_POC == 1
     incsrc "Sprites/Players/player2.asm"
