@@ -10,7 +10,10 @@
 ; Rows $00..$DE are copied from the base ROM table, so base-ROM edits (yaze)
 ; carry over. sheet_overrides.asm rewrites its rows in these arrays, so it
 ; must be included AFTER this file.
-; Rows $DF..$FF point at an empty LC-LZ2 stream until a sheet claims them.
+; Rows $DF..$FE keep a sheet that yaze saved into the base ROM's own copy of
+; this table (see GfxSheetNewRow below); other rows $DF..$FF point at an
+; empty LC-LZ2 stream until a sheet claims them. Generated overrides and kits
+; are included later, so an ASM-owned row still wins over a yaze row.
 ; New IDs $DF..$FE must be 3bpp LC-LZ2 (2bpp and raw sheets are keyed by
 ; number in the loaders).
 ;
@@ -88,6 +91,48 @@ GfxSheet_EmptyStream:
 
 assert pc() <= $23FD00, "Gfx sheet helpers overran the pointer arrays"
 
+; yaze writes new sheets into the base ROM's bank $23 table (rows 0..$DE
+; mirror vanilla, rows $DF.. hold the new sheets). read1 reads the unpatched
+; base ROM, so the rows below see yaze's bytes, not this build's.
+; The base table counts when most rows 0..$DE equal the vanilla arrays (a
+; few may differ after a sheet edit). A non-empty table that fails this check
+; warns instead of silently dropping its new rows.
+!GfxSheet_BaseMatches = 0
+!i = 0
+while !i < $DF
+  if read1($23FD00+!i) == read1($00CF80+!i) && read1($23FE00+!i) == read1($00D05F+!i) && read1($23FF00+!i) == read1($00D13E+!i)
+    !GfxSheet_BaseMatches #= !GfxSheet_BaseMatches+1
+  endif
+  !i #= !i+1
+endwhile
+!GfxSheet_BaseTable = 0
+if !GfxSheet_BaseMatches >= $C0
+  !GfxSheet_BaseTable = 1
+elseif !GfxSheet_BaseMatches > 0
+  warn "Base ROM bank $23 sheet table ignored: only !GfxSheet_BaseMatches of 223 rows match vanilla, so yaze-saved sheets $DF+ are not kept"
+endif
+
+; A base row is kept when it is a ROM pointer (low word >= $8000, not
+; $FFFFFF) outside this table and its helpers ($23:FC00-$23:FFFF, either
+; mirror). Row $FF stays the default sentinel's empty stream.
+macro GfxSheetNewRow(shift)
+  !GfxSheet_KeepBase = 0
+  if !GfxSheet_BaseTable == 1 && !i < $FF
+    !GfxSheet_Ptr #= (read1($23FD00+!i)<<16)|(read1($23FE00+!i)<<8)|read1($23FF00+!i)
+    !GfxSheet_PtrPc #= (!GfxSheet_Ptr)&$7FFFFF
+    if ((!GfxSheet_Ptr)&$FFFF) >= $8000 && !GfxSheet_Ptr != $FFFFFF
+      if !GfxSheet_PtrPc < $23FC00 || !GfxSheet_PtrPc >= $240000
+        !GfxSheet_KeepBase = 1
+      endif
+    endif
+  endif
+  if !GfxSheet_KeepBase == 1
+    db ((!GfxSheet_Ptr)>><shift>)&$FF
+  else
+    db (GfxSheet_EmptyStream>><shift>)&$FF
+  endif
+endmacro
+
 org $23FD00
 GfxSheet_Bank:
   !i = 0
@@ -96,7 +141,7 @@ GfxSheet_Bank:
     !i #= !i+1
   endwhile
   while !i < !GfxSheet_Rows
-    db (GfxSheet_EmptyStream>>16)&$FF
+    %GfxSheetNewRow(16)
     !i #= !i+1
   endwhile
 GfxSheet_High:
@@ -106,7 +151,7 @@ GfxSheet_High:
     !i #= !i+1
   endwhile
   while !i < !GfxSheet_Rows
-    db (GfxSheet_EmptyStream>>8)&$FF
+    %GfxSheetNewRow(8)
     !i #= !i+1
   endwhile
 GfxSheet_Low:
@@ -116,7 +161,7 @@ GfxSheet_Low:
     !i #= !i+1
   endwhile
   while !i < !GfxSheet_Rows
-    db GfxSheet_EmptyStream&$FF
+    %GfxSheetNewRow(0)
     !i #= !i+1
   endwhile
 assert pc() == $240000, "Gfx sheet pointer arrays must end at the bank boundary"
