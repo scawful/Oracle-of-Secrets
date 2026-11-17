@@ -58,6 +58,10 @@ endif
 ; CF six-push stays solved (scawful 2026-11-15 "A: stays solved"): saved CF bit
 ; $1000 reloads the block on goal, lifts the goal pot and holds both shutters open.
 !ENABLE_D5_CF_STAYS_SOLVED          = 1
+; Room-state bit (Dungeons/room_state.asm): saved per-room solved bit plus a
+; per-room mode table from Data/room_state.json. Every room is mode 0, so this
+; changes no gameplay until a room is given a mode.
+!ENABLE_ROOM_STATE_BITS             = 1
 ; Per-dungeon wall object tile patterns (Dungeons/wall_profile_selector.asm);
 ; kit rows/palettes route per room (H3). Default on (scawful 2026-11-10).
 !ENABLE_WALL_PROFILE_SELECTOR       = 1

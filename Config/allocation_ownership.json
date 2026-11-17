@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "9526636c7fa9257d227cd79a5485efd67ea6889656ec065ffaf6a7e09c85239f"
+      "sha256": "7e447ed11561eb93adabc93c7200d6852e87b5c2a795634f80ca390debc5ee32"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -371,6 +371,21 @@
       "source_set": "shared",
       "path": "Overworld/travel_destinations.asm",
       "sha256": "380d274c53ce7177f18167a7229fab399cadffb6dcd17f999666ce1c1ef993ab"
+    },
+    "shared:Dungeons/room_state.asm": {
+      "source_set": "shared",
+      "path": "Dungeons/room_state.asm",
+      "sha256": "dfcbce9908a9299db0a06345a86c66a199b201d3697e7a0dc781ac316decdc9d"
+    },
+    "shared:Data/room_state.json": {
+      "source_set": "shared",
+      "path": "Data/room_state.json",
+      "sha256": "16a8ad8fe66ba879e1e579d9b064894d1026abb72fbaa59d81a1d17ed8116d2f"
+    },
+    "shared:Dungeons/generated/room_state_table.asm": {
+      "source_set": "shared",
+      "path": "Dungeons/generated/room_state_table.asm",
+      "sha256": "47b045a4762066f45d61ef6a8c5c089d0d8c87a12fc2c7e510d61a945214c8e7"
     }
   },
   "claims": [
@@ -2242,7 +2257,7 @@
       },
       "lifetime": "Save file; native five-page save and checksum block.",
       "reset": "Vanilla new-file initialization zeros it. TravelDest_MarkVisited ORs bit i on each overworld area load whose area equals LoadTransport_screen_id entry i ($02EAE5). No migration: existing saves start at 0 and the picker refuses until Link enters a destination area.",
-      "save": "First byte of the former FreeBlock_Dreams prefix (now F413-F49E free; F49F-F4BF reserved for the special-event marker and areas 80-9F flags). SaveGameFile copies the F300 page to primary and backup; checksum covers offsets 0000-04FD. Native save/reopen proof (at the earlier F4BF address, same code path): SRAM slot byte holds the mask and reset/reopen restores it. Moved from $7EF4BF on 2026-11-16; saves written by the F4BF builds keep a stale byte there.",
+      "save": "First byte of the former FreeBlock_Dreams prefix (F413-F437 RoomSolvedBits, now F438-F49E free; F49F-F4BF reserved for the special-event marker and areas 80-9F flags). SaveGameFile copies the F300 page to primary and backup; checksum covers offsets 0000-04FD. Native save/reopen proof (at the earlier F4BF address, same code path): SRAM slot byte holds the mask and reset/reopen restores it. Moved from $7EF4BF on 2026-11-16; saves written by the F4BF builds keep a stale byte there.",
       "provenance": [
         "shared:Overworld/travel_destinations.asm",
         "shared:Core/sram.asm",
@@ -2253,6 +2268,32 @@
       "binding": {
         "source": "shared:Core/sram.asm",
         "symbol": "TravelSpotsVisited",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "RoomSolvedBits",
+      "owner": "Room-state bit: one stays-solved bit per underworld room $000-$127",
+      "space": "save_buffer",
+      "base": 8320019,
+      "size": 37,
+      "status": "shared",
+      "condition": {
+        "ENABLE_ROOM_STATE_BITS": 1
+      },
+      "lifetime": "Save file; native five-page save and checksum block.",
+      "reset": "Vanilla new-file initialization zeros it. RoomState_OnShuttersOpened sets the bit for mode-2 rooms when their tag opens the shutters; mode-1 rooms set it through RoomState_MarkSolved. Nothing clears a bit. No migration: the range was the free FreeBlock_Dreams prefix, so existing saves hold 0 (unsolved).",
+      "save": "Byte = room >> 3, mask = $01 << (room & 7). SaveGameFile copies the F300 page to primary and backup; checksum covers offsets 0000-04FD. FreeBlock_Dreams moved to $7EF438 (103 bytes).",
+      "provenance": [
+        "shared:Dungeons/room_state.asm",
+        "shared:Core/sram.asm",
+        "shared:Data/room_state.json"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "RoomSolvedBits",
         "bank00_mirror": false
       }
     },
@@ -2375,6 +2416,31 @@
         "org $3AD000",
         "Boat_CodeStart:",
         "Boat_CodeEnd:"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "room_state_code",
+      "owner": "Room-state bit: hook bodies, API and the generated RoomStateMode table",
+      "space": "snes_rom",
+      "base": 5537792,
+      "size": 2048,
+      "status": "proposed",
+      "condition": {
+        "ENABLE_ROOM_STATE_BITS": 1
+      },
+      "lifetime": "Compiled ROM code and a 296-byte per-room mode table. Must end at or before $548800 (asserted). Bank $54 had no orgs and was zero in the base and live project ROMs on 2026-11-17.",
+      "reset": "No runtime ROM writes.",
+      "save": "Reads and writes RoomSolvedBits ($7EF413, 37 bytes); see that claim.",
+      "provenance": [
+        "shared:Dungeons/room_state.asm",
+        "shared:Dungeons/generated/room_state_table.asm",
+        "shared:Data/room_state.json"
+      ],
+      "anchors": [
+        "org $548000",
+        "RoomState_CodeStart:",
+        "RoomState_CodeEnd:"
       ],
       "aliases": []
     },

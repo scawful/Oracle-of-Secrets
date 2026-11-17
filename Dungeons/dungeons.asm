@@ -50,6 +50,10 @@ incsrc "Dungeons/custom_tag.asm"
 incsrc "Dungeons/floor_puzzle.asm"
 print  "End of floor_puzzle.asm           ", pc
 
+; Room-state bit (stays solved)
+incsrc "Dungeons/room_state.asm"
+print  "End of room_state.asm             ", pc
+
 ; Crumble Floor Tag: Holes3
 incsrc "Dungeons/crumblefloor_tag.asm"
 

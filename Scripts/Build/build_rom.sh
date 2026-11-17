@@ -333,6 +333,14 @@ else
   omit_check water_fill skipped 0 "OOS_SKIP_WATER_FILL_TABLE_GEN=1; tracked generated input retained"
 fi
 
+echo "[*] Generating room-state table from Data/room_state.json"
+generate_room_state_table() {
+  python3 "$repo_root/Scripts/Generate/generate_room_state_table.py" \
+    --input "$repo_root/Data/room_state.json" \
+    --out-asm "$repo_root/Dungeons/generated/room_state_table.asm"
+}
+run_check room_state 1 generate_room_state_table
+
 # Profile consistency is required by default; diagnostic opt-outs remain visible.
 run_check flags "$(check_required flags "${OOS_FLAGS_FATAL:-1}")" \
   python3 "$repo_root/Scripts/Build/verify_feature_flags.py" --root "$repo_root" --strict
