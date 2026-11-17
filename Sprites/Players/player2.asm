@@ -151,6 +151,26 @@ org $3AF000
 P2_Tick:
 {
   PHP
+  SEP #$20
+  PHA
+  LDA.l P2_Magic : CMP.b #!P2_MAGIC&$FF : BNE .not_joined
+  LDA.l P2_Magic+1 : CMP.b #!P2_MAGIC>>8 : BEQ .joined
+.not_joined:
+  ; Unjoined fast path: check Pad-2 Start edge without PHB/PLB/JSR or P2_SlotsBusy.
+  ; Keep P2_PadHi = the full pad byte every frame (as P2_ReadPad did), so on
+  ; the join frame only Start reads as newly pressed.
+  LDA.l $00421B : AND.b #$10 : BEQ .no_join
+  LDA.l P2_PadHi : AND.b #$10 : BEQ .join_edge
+.no_join:
+  LDA.l $00421B : STA.l P2_PadHi
+  PLA
+  PLP
+  JML !P2_FollowerMain
+.join_edge:
+  PLA
+  PLP
+.joined:
+  PHP
   REP #$30
   PHA : PHX : PHY
   PHB : PHK : PLB
@@ -173,9 +193,7 @@ P2_Tick:
 
 P2_ReadPad:
 {
-  ; Wait out the auto-joypad read if a lag frame ran into vblank.
-  - LDA.l $004212 : LSR : BCS -
-
+  ; Read the auto-joypad latches once (no $004212 VBlank spin-wait in Sprite_Main).
   LDA.l $00421B : PHA
   EOR.l P2_PadHi : AND $01,S : STA.l P2_NewHi
   PLA : STA.l P2_PadHi
@@ -675,9 +693,12 @@ P2_UpdateAttack:
 
 P2_ActionGate:
 {
+  LDA.l P2_Magic : CMP.b #!P2_MAGIC&$FF : BNE .vanilla
+  LDA.l P2_Magic+1 : CMP.b #!P2_MAGIC>>8 : BNE .vanilla
   PHB : PHK : PLB
   JSR P2_PunchHitsSprite : BCS .p2_hit
   PLB
+.vanilla:
   LDA.b $44 : CMP.b #$80                       ; replayed; BEQ .no_collision follows
   RTL
 
@@ -824,9 +845,12 @@ P2_ContactGate:
     JML !P2_ContactExit                        ; RTS, carry = overlap
   .damage_check
   BCS .link_hit                                ; vanilla hurts Link
+  LDA.l P2_Magic : CMP.b #!P2_MAGIC&$FF : BNE .no_damage
+  LDA.l P2_Magic+1 : CMP.b #!P2_MAGIC>>8 : BNE .no_damage
   PHB : PHK : PLB
   JSR P2_TryHurt
   PLB
+  .no_damage
   CLC                                          ; no damage to Link
   .link_hit
   RTL

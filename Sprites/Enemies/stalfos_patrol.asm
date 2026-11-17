@@ -89,9 +89,9 @@ org $09C512 ; @hook module=Sprites name=IntroPatrol_StageGuards kind=jsl target=
   JSL IntroPatrol_StageGuards
 assert pc() == $09C516
 
-org $3ABE00
-; Bank $3A: free run $3A8AFD-$3ABFFF (after the mask routines, before the
-; opening at $3AC000).
+org $3ABC00
+; Bank $3A: free run $3ABC00-$3ABFFF (Part00 polish ends below $3ABC00,
+; opening starts at $3AC000). Contiguous patrol + draw block ($1024 B limit).
 
 ; ---------------------------------------------------------
 ; Placement. The guards are staged by code, not stored in the ZScream sprite
@@ -148,19 +148,6 @@ IntroPatrol_StageGuards:
   JML $09C55B                                           ; .done_sprites: SEP #$10 : RTS
 }
 
-; C set when slot X was loaded in the intro village. Keeps X and Y.
-IntroPatrol_InContext:
-{
-  LDA.b $1B : BNE .no                                   ; overworld only
-  LDA.w SprRoom, X : CMP.b #!IntroPatrol_Area : BNE .no
-  LDA.l GameState : CMP.b #$02 : BCS .no                ; 0 start, 1 Loom Beach
-  SEC
-  RTS
-  .no
-  CLC
-  RTS
-}
-
 ; Vanilla guards hurt Link from two calls in Guard_NotFalling:
 ; Guard_ParrySwordAttacks ($05C25F; its no-parry exit runs
 ; Sprite_AttemptDamageToLinkWithCollisionCheck every other frame) and
@@ -171,7 +158,10 @@ IntroPatrol_InContext:
 ; (first call runs during SpritePrep, before the first visible frame).
 IntroPatrol_GuardParry:
 {
-  JSR IntroPatrol_InContext : BCS .patrol
+  LDA.l GameState : CMP.b #$02 : BCS .vanilla
+  LDA.b $1B : BNE .vanilla
+  LDA.w SprRoom, X : CMP.b #!IntroPatrol_Area : BEQ .patrol
+  .vanilla
   JML IntroPatrol_ParrySwordAttacks
 
   .patrol
@@ -190,7 +180,10 @@ IntroPatrol_GuardParry:
 ; call: set = Guard_Main's alert path (action 3, $20 frames, if action < 3).
 IntroPatrol_GuardContact:
 {
-  JSR IntroPatrol_InContext : BCS .patrol
+  LDA.l GameState : CMP.b #$02 : BCS .vanilla
+  LDA.b $1B : BNE .vanilla
+  LDA.w SprRoom, X : CMP.b #!IntroPatrol_Area : BEQ .patrol
+  .vanilla
   if !ENABLE_D3_PRISON_SEQUENCE == 1
     JML Guard_CheckDamageToLink_CaptureWrapper
   else
@@ -225,13 +218,15 @@ IntroPatrol_StartRecovery:
 ; Replaces LDA.w AppliedSpeed16,Y : JSL Sprite_ApplySpeedTowardsLink_long.
 IntroPatrol_ChaseSpeed:
 {
-  JSR IntroPatrol_InContext
-  LDA.b #!IntroPatrol_ChaseSpeed
-  BCS +
-    PHX : TYX
-    LDA.l IntroPatrol_AppliedSpeed16, X                 ; vanilla (Y = slot & 3)
-    PLX
-  +
+  LDA.l GameState : CMP.b #$02 : BCS .vanilla
+  LDA.b $1B : BNE .vanilla
+  LDA.w SprRoom, X : CMP.b #!IntroPatrol_Area : BNE .vanilla
+    LDA.b #!IntroPatrol_ChaseSpeed
+    JML IntroPatrol_ApplySpeedToLink
+  .vanilla
+  PHX : TYX
+  LDA.l IntroPatrol_AppliedSpeed16, X                   ; vanilla (Y = slot & 3)
+  PLX
   JML IntroPatrol_ApplySpeedToLink                      ; RTLs to Guard_InPursuit
 }
 
@@ -242,7 +237,9 @@ IntroPatrol_ChaseSpeed:
 IntroPatrol_ProbeSight:
 {
   if !IntroPatrol_SightRange != 0
-    JSR IntroPatrol_InContext : BCC .vanilla
+    LDA.l GameState : CMP.b #$02 : BCS .vanilla
+    LDA.b $1B : BNE .vanilla
+    LDA.w SprRoom, X : CMP.b #!IntroPatrol_Area : BNE .vanilla
     LDA.w SprMiscB, X : DEC A : TAY
     LDA.w SprX, Y : STA.b $00
     LDA.w SprXH, Y : STA.b $01
@@ -314,13 +311,6 @@ IntroPatrol_CellY:
   RTS
 }
 
-print "End of intro Stalfos patrol       ", pc
-assert pc() <= $3AC000, "Intro Stalfos patrol crossed the opening at $3AC000"
-
-org $3ABC00
-; Pirate look (M1). Bank $3A: Part00 polish ends below $3ABC00; the patrol
-; block above starts at $3ABE00.
-
 ; Call a bank-$05 RTS routine from here: its RTS lands on the RTL at $05C67F
 ; (Guard_HandleAllAnimation_long), which returns to ?ret. DB, X, Y and the
 ; scratch registers pass through unchanged.
@@ -344,9 +334,17 @@ IntroPatrol_TGSize        = $05D637
 
 ; Replaces JSR Guard_AnimateHead : JSR Guard_AnimateBody : JSR Guard_AnimateWeapon.
 ; $00-$0F and the OAM pointers come from Sprite_PrepOAMCoord_Bank05. DB = $05.
+; Falls through to Guard_DrawShadow ($05C68C).
 IntroPatrol_DrawParts:
 {
-  JSR IntroPatrol_InContext : BCS .pirate
+  LDA.l GameState : CMP.b #$02 : BCS .vanilla
+  LDA.b $1B : BNE .vanilla
+  LDA.w SprRoom, X : CMP.b #!IntroPatrol_Area : BEQ .pirate
+  .vanilla
+  LDA.w $0E20, X : CMP.b #$46 : BCS .vanilla_slow
+    JSR IntroPatrol_DrawVanillaFast
+    RTL
+  .vanilla_slow
   %IntroPatrol_Call05(IntroPatrol_AnimateHead)
   %IntroPatrol_Call05(IntroPatrol_AnimateBody)
   %IntroPatrol_Call05(IntroPatrol_AnimateWeapon)
@@ -356,15 +354,90 @@ IntroPatrol_DrawParts:
   RTL
 }
 
+; Combined Head+Body+Weapon draw for guards $41-$45 (DBR=$05, M=8, X=8).
+; Eliminates 3x cross-bank trampolines, repeated SprMiscC/$0DC0/$0E20 loads,
+; inner PHX/PLX stack churn, per-object $46 checks, and dead $0FAA/$0FAB write.
+IntroPatrol_DrawVanillaFast:
+{
+  PHX
+  LDA.w $0E20, X : SEC : SBC.b #$41 : STA.b $08
+  LDY.w SprMiscC, X
+  LDA.w $CA05, Y : STA.b $0B                             ; GuardBodyOAMOffsets
+  LDA.w $CB60, Y : STA.b $0C                             ; GuardWeaponObjectOAMOffset
+  LDA.w $0DC0, X : ASL A : STA.b $0D : ASL A : STA.b $07 ; $0D=frame*2, $07=frame*4
+  LDY.w SprMiscE, X
+  LDA.w $C6A2, Y : STA.b $06                             ; GuardHeadChar
+  LDA.w $C6A6, Y : ORA.b $05 : STA.b $09                 ; GuardHeadProp | $05
+
+  ; Part 1: Head (OAM1 offset $00, OAM2 offset $00)
+  LDX.b $0D : LDY.b #$00
+  REP #$20
+  LDA.b $00 : STA.b ($90), Y : AND.w #$0100 : STA.b $0E
+  LDA.b $02 : SEC : SBC.w $C6AA, X : INY : STA.b ($90), Y ; GuardHeadOffsetY
+  CLC : ADC.w #$0010 : CMP.w #$0100 : BCC + : LDA.w #$00F0 : STA.b ($90), Y : +
+  SEP #$20
+  INY : LDA.b $06 : STA.b ($90), Y
+  INY : LDA.b $09 : STA.b ($90), Y
+  LDY.b #$00 : LDA.b #$02 : ORA.b $0F : STA.b ($92), Y
+
+  ; Part 2: Body (4 objects at OAM1 base $0B)
+  LDA.b #$03 : STA.b $0A
+  CLC : ADC.b $07 : TAX
+  LDY.b $0B
+  .body_loop
+    STX.b $06 : TXA : ASL A : TAX
+    REP #$20
+    LDA.b $00 : CLC : ADC.w $C72D, X : STA.b ($90), Y    ; GuardBodyObjectOffsetX
+    AND.w #$0100 : STA.b $0E
+    LDA.b $02 : CLC : ADC.w $C7FD, X : INY : STA.b ($90), Y ; GuardBodyObjectOffsetY
+    CLC : ADC.w #$0010 : CMP.w #$0100 : BCC + : LDA.w #$00F0 : STA.b ($90), Y : +
+    SEP #$20
+    LDX.b $06
+    LDA.w $C8CD, X : INY : STA.b ($90), Y                ; GuardBodyObjectChar
+    CMP.b #$20 : BNE .body_norm
+      LDA.b #$02 : CLC : BRA .body_flip
+    .body_norm
+      LDA.w $C99D, X : CMP.b #$01 : LDA.b #$08           ; GuardBodyObjectSize
+    .body_flip
+      STA.b $04
+      LDA.w $C935, X : ORA.b $05 : BCS + : AND.b #$F1 : ORA.b $04 : + ; GuardBodyObjectFlip
+      INY : STA.b ($90), Y
+    PHY : TYA : LSR A : LSR A : TAY : LDA.w $C99D, X : ORA.b $0F : STA.b ($92), Y : PLY : INY
+    DEX : DEC.b $0A : BPL .body_loop
+
+  ; Part 3: Weapon (2 objects at OAM1 base $0C)
+  LDA.b #$01 : STA.b $0A
+  CLC : ADC.b $0D : TAX
+  LDY.b $0C
+  .weapon_loop
+    STX.b $06 : TXA : ASL A : TAX
+    REP #$20
+    LDA.b $00 : CLC : ADC.w $CAB8, X : STA.b ($90), Y    ; GuardWeaponObjectOffsetX
+    AND.w #$0100 : STA.b $0E
+    LDA.b $02 : CLC : ADC.w $CAF0, X : INY : STA.b ($90), Y ; GuardWeaponObjectOffsetY
+    CLC : ADC.w #$0010 : CMP.w #$0100 : BCC + : LDA.w #$00F0 : STA.b ($90), Y : +
+    SEP #$20
+    LDA.b $0A : BNE .weapon_skip_hitoff
+      LDA.w $CAB8, X : STA.w $0FAB
+      LDA.w $CAF0, X : STA.w $0FAA
+    .weapon_skip_hitoff
+    LDX.b $06
+    LDA.b $08 : CMP.b #$02 : LDA.w $CB28, X : BCS + : ADC.b #$03 : + ; GuardWeaponObjectChar
+    INY : STA.b ($90), Y
+    LDA.w $CB44, X : ORA.b $05 : INY : STA.b ($90), Y    ; GuardWeaponObjectFlip
+    PHY : TYA : LSR A : LSR A : TAY : LDA.b $0F : STA.b ($92), Y : PLY : INY
+    DEX : DEC.b $0A : BPL .weapon_loop
+  PLX : RTS
+}
+
 ; SpriteDraw_TutorialGuard without its own Sprite_PrepOAMCoord: frame by
-; facing (SprMiscC: 0 east, 1 west, 2 south, 3 north), five objects.
+; facing (SprMiscC: 0 east, 1 west, 2 south, 3 north), five objects. DBR = $05.
 IntroPatrol_DrawPirate:
 {
   PHX
-  LDA.w SprMiscC, X : TAX
-  LDA.l IntroPatrol_TGStep, X : STA.b $06
-  PLX
-  ASL A : ASL A : CLC : ADC.b $06 : STA.b $06   ; frame * 5
+  LDY.w SprMiscC, X
+  LDA.w IntroPatrol_TGStep, Y : STA.b $06
+  ASL A : ASL A : CLC : ADC.b $06 : STA.b $06          ; frame * 5
 
   ; Step bob: 1 px up every other 8 frames while moving.
   LDA.w SprXSpeed, X : ORA.w SprYSpeed, X : BEQ .still
@@ -372,39 +445,36 @@ IntroPatrol_DrawPirate:
     REP #$20 : DEC.b $02 : SEP #$20
   .still
 
-  PHX
-  LDX.b #$04
+  LDA.b #$04 : STA.b $0A
+  CLC : ADC.b $06 : TAX
   LDY.b #$00
   .next_object
-    PHX
-    TXA : CLC : ADC.b $06 : PHA
-    ASL A : TAX
+    STX.b $06 : TXA : ASL A : TAX
     REP #$20
-    LDA.l IntroPatrol_TGOffsetX, X : CLC : ADC.b $00 : STA.b ($90), Y
+    LDA.w IntroPatrol_TGOffsetX, X : CLC : ADC.b $00 : STA.b ($90), Y
     AND.w #$0100 : STA.b $0E
-    LDA.l IntroPatrol_TGOffsetY, X : CLC : ADC.b $02
+    LDA.w IntroPatrol_TGOffsetY, X : CLC : ADC.b $02
     INY : STA.b ($90), Y
     CLC : ADC.w #$0010 : CMP.w #$0100 : BCC .on_screen
       LDA.w #$00F0 : STA.b ($90), Y
     .on_screen
     SEP #$20
-    PLX
-    LDA.l IntroPatrol_TGChar, X : INY : STA.b ($90), Y
+    LDX.b $06
+    LDA.w IntroPatrol_TGChar, X : INY : STA.b ($90), Y
     CMP.b #$40                                   ; slot-0 chars use palette 4
-    LDA.l IntroPatrol_TGFlip, X : ORA.b $05 : BCS .keep_palette
+    LDA.w IntroPatrol_TGFlip, X : ORA.b $05 : BCS .keep_palette
       AND.b #$F1 : ORA.b #$08
     .keep_palette
     INY : STA.b ($90), Y
     PHY
     TYA : LSR A : LSR A : TAY
-    LDA.l IntroPatrol_TGSize, X : ORA.b $0F : STA.b ($92), Y
+    LDA.w IntroPatrol_TGSize, X : ORA.b $0F : STA.b ($92), Y
     PLY : INY
-    PLX
-  DEX : BPL .next_object
+    DEX : DEC.b $0A : BPL .next_object
   PLX
   RTS
 }
 
-print "End of intro patrol pirate draw   ", pc
-assert pc() <= $3ABE00, "Intro patrol pirate draw crossed the patrol block at $3ABE00"
+print "End of intro Stalfos patrol       ", pc
+assert pc() <= $3AC000, "Intro Stalfos patrol crossed the opening at $3AC000"
 pullpc

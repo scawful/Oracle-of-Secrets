@@ -46,6 +46,7 @@ Bombchu_PickupDraw:
   LDA.l BombchuOwned : CMP.b #$01 : BNE .ordinary
   JSL Sprite_PrepOamCoord
   BCS .offscreen
+  LDA.b #$01 : STA.l BombchuPackPending
 
   LDA.b $00 : STA.b ($90),Y
   LDA.b $01 : CMP.b #$01 : LDA.b #$01 : ROL A : STA.b ($92)

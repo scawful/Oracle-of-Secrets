@@ -396,6 +396,11 @@ if !SPECIAL_OVERWORLD_NATIVE == 1
 incsrc "Overworld/lyra_edge_guard.asm"
 endif
 
+; Cached HUD update (Menu bank $2E has <64 bytes before D8 boss slot $2EB800).
+if !DISABLE_MENU == 0
+incsrc "Menu/menu_hud_cache.asm"
+endif
+
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
 assert pc() <= $2BF000, "Items bank $2B reached the dream entry FX region ($2BF000)"
 if !ENABLE_D8_BOSS == 1

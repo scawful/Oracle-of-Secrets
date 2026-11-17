@@ -60,6 +60,7 @@ LogoFadeInSetClock:
   JSL $00ED7C ; IntroLogoPaletteFadeIn
   LDA.b #$08 : STA.l TimeState.Hours ; Set the time to 6:00am
   LDA.b #$3F : STA.l TimeState.Speed ; Set the time speed
+  LDA.b #$01 : STA.l TimeState.GfxDirty
   RTL
 }
 
@@ -75,6 +76,7 @@ ResetClockTriforceRoom:
   JSL $00E384 ; LoadCommonSprites_long
   LDA.b #$00 : STA.l TimeState.Hours ; low hours for palette?
   LDA.b #$00 : STA.l TimeState.Minutes ; high hours for palette?
+  LDA.b #$01 : STA.l TimeState.GfxDirty
   RTL
 }
 
@@ -137,19 +139,22 @@ RunClock:
 TimeSystem_CheckCanRun:
 {
   ; checks current event in game
-  LDA $10 : CMP #$07 : BEQ .counter_increasing ; dungeon/building?
+  LDA $10 : CMP #$07 : BEQ .non_ow_increasing ; dungeon/building?
             CMP #$09 : BEQ .overworld ; overworld?
             CMP #$0B : BEQ .overworld ; special overworld?
             CMP #$0E : BEQ .dialog  ; dialog box?
+              STA.l TimeState.GfxLastMode
               CLC : RTS
-    .overworld
-    ; Reload Sprite Gfx Properties
-    ; Vanilla routine expects M=16, X=16 (all other callers wrap with REP #$30)
-    PHP
-    REP #$30
-    JSL $00FC62 ; Sprite_LoadGraphicsProperties
-    PLP
+    .non_ow_increasing
+    STA.l TimeState.GfxLastMode
+    BRA .counter_increasing
 
+    .overworld
+    ; Sprite gfx reload gate: TimeSystem_GfxGate (Items/ocarina.asm, bank $2B;
+    ; bank $34 has no room). M=8 in and out, X width kept, A clobbered.
+    JSL TimeSystem_GfxGate
+
+    .skip_reload_gfx
     LDA $11 : CMP #$23 : BNE .mosaic ; HDMA transfer? (warping)
       ; Lol what?
     .mosaic
@@ -158,6 +163,7 @@ TimeSystem_CheckCanRun:
       CLC : RTS
 
     .dialog
+    STA.l TimeState.GfxLastMode
     ; check submodule to prevent the counter from increasing if save/menu open
     LDA $11 : CMP #$02 : BEQ .counter_increasing ; NPC/signs speech
       CLC : RTS
@@ -231,6 +237,7 @@ TimeSystem_UpdatePalettes:
     ; An hourly tint change does not change overlays: keep $1C/$1D, $99/$9A,
     ; fixed color and BG scroll exactly as the active overlay configured them.
     JSL RefreshOverworldBackdrop
+    LDA.b #$01 : STA.l TimeState.GfxDirty
     INC.b $15
     RTS
 }
@@ -622,6 +629,7 @@ GlovesFix:
   JSL ColorSubEffect
   PLX
   STA GlovePalettePosition
+  PHA : SEP #$20 : LDA.b #$01 : STA.l TimeState.GfxDirty : REP #$20 : PLA
   RTL
 }
 
@@ -662,6 +670,7 @@ LoadPeacetimeSprites:
 FixSaveAndQuit:
 {
   LDA.b #$08 : STA.l TimeState.Hours
+  LDA.b #$01 : STA.l TimeState.GfxDirty
   LDA.l GameState
   RTL
 }
@@ -676,6 +685,7 @@ FixShockPalette:
     JSL ColorSubEffect
     PLX
     STA.l PalCgram500_HUD, X
+    PHA : SEP #$20 : LDA.b #$01 : STA.l TimeState.GfxDirty : REP #$20 : PLA
     RTL
   .indoors
   PLA
@@ -700,6 +710,7 @@ RestoreTimeForDungeonMap:
 {
   LDA $7EF900 : STA TimeState.Hours
   LDA $7EF901 : STA TimeState.Minutes
+  LDA.b #$01 : STA.l TimeState.GfxDirty
   LDA.l $7EC017
   RTL
 }

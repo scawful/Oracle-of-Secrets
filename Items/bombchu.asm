@@ -16,6 +16,7 @@ BombchuSignature  = $7E07F6
 BombchuFloor      = $7E07F7
 BombchuFollowing  = $7E07FD ; zero until the first wall; then keep it on the right
 BombchuAllocating = $7E07FE ; nonzero only inside the native bomb allocator
+BombchuPackPending = $7EC9E0 ; nonzero when Bombchu_PickupDraw drew a $DD pack this frame
 !BOMBCHU_SIGNATURE = $BC
 
 pushpc
@@ -355,12 +356,10 @@ Bombchu_NmiUpload:
   BRA .frame_ready
   .pickups
   LDA.l BombchuOwned : CMP.b #$01 : BNE .skip
-  LDX.b #$0F
-  .find_pack
-  LDA.w $0DD0,X : CMP.b #$09 : BNE .next_pack
-  LDA.w $0E20,X : CMP.b #$DD : BEQ .idle_frame
-  .next_pack
-  DEX : BPL .find_pack
+  LDA.l BombchuPackPending : BEQ .skip
+  LDA.b $10 : CMP.b #$0E : BEQ .idle_frame
+    LDA.b #$00 : STA.l BombchuPackPending
+    BRA .idle_frame
   .skip
   BRL .done
   .idle_frame
