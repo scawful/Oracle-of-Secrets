@@ -85,10 +85,14 @@ if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
 endif
 endif
   LDA.b #$20 : STA.w $0207
-  BRA .close_sound
+  JMP .close_sound                      ; past BRA range
 .song_move
-  LDA.b $F4 : AND.b #$90 : BNE .close   ; B or Start
-  LDA.b $F4 : AND.b #$0C : BEQ .used
+  LDA.b $F4 : AND.b #$90 : BEQ +        ; B or Start
+  JMP .close
++
+  LDA.b $F4 : AND.b #$0C : BNE +
+  JMP .used
++
   AND.b #$08 : BEQ .song_down
 .song_up
   DEX : BPL +
@@ -479,7 +483,9 @@ MenuFlow_MapName:
 MenuFlow_DrawSongPopup:
 {
   SEP #$30
-  LDA.l MenuFlow_SongPopup : BPL .closed
+  LDA.l MenuFlow_SongPopup : BMI +
+  RTL                                   ; closed (M/X=8 already)
++
   REP #$30
   LDY.w #!MENUFLOW_SONG_TOP
   LDA.w #$3811 : LDX.w #$3821
