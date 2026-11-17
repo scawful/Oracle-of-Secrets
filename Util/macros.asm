@@ -44,6 +44,11 @@
 ; in bank $58 (Core/title/title_screen.asm). Default on. While on,
 ; yaze BG2 title edits are ignored; BG1 (logo) edits still apply.
 !ENABLE_ORACLE_TITLE_SCREEN          = 1
+; Oracle file select restyle, option E "Maku Hollow" (bark, leaf canopy,
+; gold header plate, heartwood panel) in bank $59 (Core/title/file_select.asm).
+; Default on. Uses HDMA channels 6-7 and backdrop colour math on file select,
+; copy, erase and name entry only.
+!ENABLE_ORACLE_FILE_SELECT           = 1
 ; New-file Mirror experiment scene before the arrival (Core/Cutscene/experiment.asm).
 ; Requires ORACLE_ARRIVAL_SEQUENCE (asserted in Oracle_main.asm).
 !ENABLE_EXPERIMENT_SCENE            = 1
