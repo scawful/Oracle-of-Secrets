@@ -59,9 +59,10 @@ PAGE_TILE16_BASE = 0x519000
 PAGE_TILE16_ROW_CAPACITY = 1024
 # Explicit experimental1024 source only; legacy/v5-512 receipts retain their
 # original interval. D4 and saved semantic code/rows are not atlas storage.
-RESIDENT_PAGE_TILE16_CAPACITY = 0x28000
+RESIDENT_PAGE_TILE16_CAPACITY = 0x40000
+# Banks $53 (horse claims) and $54 (room-state code) stay excluded.
 RESIDENT_PAGE_TILE16_EXCLUDED_PC = (
-    (0x280000, 0x282000), (0x288000, 0x28C000))
+    (0x280000, 0x282000), (0x288000, 0x28C000), (0x298000, 0x2A8000))
 RESIDENT_PAGE_TILE16_SPILL_PC = 0x28C000
 RESIDENT_PAGE_TILE16_SPILL_END = 0x290000
 # All of bank $52 ($528000-$52FFFF). scawful 2026-11-17 admitted
@@ -69,6 +70,11 @@ RESIDENT_PAGE_TILE16_SPILL_END = 0x290000
 # lives in $01/$05/$08/$2C). Measured zero preimage in the editable source.
 RESIDENT_PAGE_TILE16_SPILL2_PC = 0x290000
 RESIDENT_PAGE_TILE16_SPILL2_END = 0x298000
+# All of bank $55 ($558000-$55FFFF). Live project ROM cd9bd587 overflowed
+# bank $52 by 664 bytes (map $B5 page words) on 2026-11-17. No ledger claim,
+# no asm org and no yaze writer there; zero preimage in source and patched ROM.
+RESIDENT_PAGE_TILE16_SPILL3_PC = 0x2A8000
+RESIDENT_PAGE_TILE16_SPILL3_END = 0x2B0000
 
 # Existing dictionaries in the selected Oracle engine. Initial import reuses
 # these owned bodies; arbitrary relocation needs a separately bound reader ABI.

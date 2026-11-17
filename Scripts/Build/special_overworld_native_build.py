@@ -188,6 +188,10 @@ def prepare_native_compilation(source, exported, *, data_pc, capacity,
                       native.RESIDENT_PAGE_TILE16_SPILL2_END)
         _require(source[first:end] == bytes(end-first),
                  'NATIVE_BUILD_RESIDENT_PAGE_TILE16_SPILL2_PREIMAGE_CHANGED')
+        first, end = (native.RESIDENT_PAGE_TILE16_SPILL3_PC,
+                      native.RESIDENT_PAGE_TILE16_SPILL3_END)
+        _require(source[first:end] == bytes(end-first),
+                 'NATIVE_BUILD_RESIDENT_PAGE_TILE16_SPILL3_PREIMAGE_CHANGED')
     _require(all(last <= first or begin >= end
                  for begin, last in allowed for first, end in call_spans),
              'NATIVE_BUILD_RESIDENT_OVERLAPS_READER_CALL')

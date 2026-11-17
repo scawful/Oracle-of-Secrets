@@ -185,7 +185,7 @@
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "d5b0e9a93d613fed8bb5878f6e3d37dbc6dfff75da3862ad3c688fff5d13efa8"
+      "sha256": "a88688c1a6ab226cd6365b3b7107bde652054e06970216cbbc24f7eb809df3f8"
     },
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
@@ -2537,6 +2537,50 @@
       "anchors": [
         "RESIDENT_PAGE_TILE16_SPILL_PC = 0x28C000",
         "RESIDENT_PAGE_TILE16_SPILL_END = 0x290000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_resident_page_tile16_spill2",
+      "owner": "Native special-overworld derived atlas; bank52 spill",
+      "space": "snes_rom",
+      "base": 5406720,
+      "size": 32768,
+      "status": "proposed",
+      "condition": {
+        "SPECIAL_OVERWORLD_SEMANTIC_ENABLED": 1
+      },
+      "lifetime": "Derived Build storage for the selected revision5-1024 resident atlas. scawful admitted all of bank $52 on 2026-11-17 (commit f6183a83).",
+      "reset": "Editable source must keep the measured zero preimage (special_overworld_native_build.py checks it). Bank-bound emission and all allowed-gap checks remain mandatory.",
+      "save": "No SRAM or editor publication permission. Build owns derived data; normal Save preserves the editable source preimage.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "RESIDENT_PAGE_TILE16_SPILL2_PC = 0x290000",
+        "RESIDENT_PAGE_TILE16_SPILL2_END = 0x298000"
+      ],
+      "aliases": []
+    },
+    {
+      "id": "native_special_resident_page_tile16_spill3",
+      "owner": "Native special-overworld derived atlas; bank55 spill",
+      "space": "snes_rom",
+      "base": 5603328,
+      "size": 32768,
+      "status": "proposed",
+      "condition": {
+        "SPECIAL_OVERWORLD_SEMANTIC_ENABLED": 1
+      },
+      "lifetime": "Derived Build storage for the selected revision5-1024 resident atlas. Added 2026-11-17 after live project ROM cd9bd587 overflowed bank $52 by 664 bytes. Banks $53/$54 stay excluded.",
+      "reset": "Editable source must keep the measured zero preimage (special_overworld_native_build.py checks it). Bank-bound emission and all allowed-gap checks remain mandatory.",
+      "save": "No SRAM or editor publication permission. Build owns derived data; normal Save preserves the editable source preimage.",
+      "provenance": [
+        "shared:Scripts/Build/lyra_native_loaders.py"
+      ],
+      "anchors": [
+        "RESIDENT_PAGE_TILE16_SPILL3_PC = 0x2A8000",
+        "RESIDENT_PAGE_TILE16_SPILL3_END = 0x2B0000"
       ],
       "aliases": []
     },
