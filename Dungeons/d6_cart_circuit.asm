@@ -335,6 +335,9 @@ D6BossDoor_LoadFlag:
   RTL
   .ordinary
   PLP
+if !ENABLE_ROOM_STATE_BITS == 1
+  JSL RoomState_FlagSolvedShutter ; Dungeons/room_state.asm
+endif
   LDA.w $068C
   AND.w $98C0,Y
   RTL

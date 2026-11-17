@@ -46,19 +46,19 @@
       "why": "Kalyxo Docks ordinary 3bpp background; shared Secret Beach LOW deck sheet."
     },
     {
-      "decoded_sha256": "a06f575732f4a3c3bb619d782985bb53deaa3dfa70eed37124fc628a28675515",
+      "decoded_sha256": "740106b4b43065e77b8f8b4b8455549886346664339748cba61c861e0b5d4ae3",
       "global_sheet": "0xE4",
       "source": "docks/docks_gE4_slot3.txt",
       "why": "Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload."
     },
     {
-      "decoded_sha256": "924d4327d683073743b168a655dfc5ac22ab19d9c8c4fce478833715fba543b7",
+      "decoded_sha256": "39eef800d928946e325458f4620e3b0cdf05d4ea65ea65a4ff40dae7ff48f915",
       "global_sheet": "0xE5",
       "source": "docks/docks_gE5_slot4.txt",
       "why": "Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload."
     },
     {
-      "decoded_sha256": "933d8f5dcea66c62f839a1b1ac37b27ee411c7f8d41e73204193d036555d40d5",
+      "decoded_sha256": "c49e94f681f18420697bc53f95a835632acd1724538371651540e0081e90f4c7",
       "global_sheet": "0xE6",
       "source": "docks/docks_gE6_slot5.txt",
       "why": "Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload."
@@ -144,13 +144,6 @@
       "decoded_sha256": "5a588cde1aab017a40835a837d92025b18726d32a07b79a2692c288c27115e2c",
       "flag": "ENABLE_SKY_OVERWORLD_GRAPHICS",
       "why": "Sky port slot 1 (replaces 0x3B on the 7 rim maps $84-$87, $8D-$8F; $8C keeps 0x3B): copy of 0x3B with v11 Meadow rim chars in indices no Sky cell uses"
-    },
-    {
-      "global_sheet": "0xE4",
-      "source": "docks/docks_gE4_ferry_slot3.txt",
-      "decoded_sha256": "47d892a6bcff73dea17935efc41ecc8cd04424bcc6248427c5a3ee73f95b16d4",
-      "flag": "ENABLE_KALYXO_BOAT",
-      "why": "Native ferry berth preservation glyphs; ordinary E4 remains selected while the ferry flag is off."
     },
     {
       "global_sheet": "0xF5",

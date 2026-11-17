@@ -58,6 +58,10 @@ endif
 ; CF six-push stays solved (scawful 2026-11-15 "A: stays solved"): saved CF bit
 ; $1000 reloads the block on goal, lifts the goal pot and holds both shutters open.
 !ENABLE_D5_CF_STAYS_SOLVED          = 1
+; Room-state bit (Dungeons/room_state.asm): saved per-room solved bit plus a
+; per-room mode table from Data/room_state.json. Every room is mode 0, so this
+; changes no gameplay until a room is given a mode.
+!ENABLE_ROOM_STATE_BITS             = 1
 ; Per-dungeon wall object tile patterns (Dungeons/wall_profile_selector.asm);
 ; kit rows/palettes route per room (H3). Default on (scawful 2026-11-10).
 !ENABLE_WALL_PROFILE_SELECTOR       = 1
@@ -85,9 +89,20 @@ endif
 ; Aux ABI 1 needs an explicitly bound authoring table; preserve ordinary ROMs.
 !ENABLE_OW_AUX_EXTENSION              = 0
 !ENABLE_KALYXO_DOCKS_PROFILE          = 0
-; Native cached-exit ferry prototype; both geography/underlays remain unbound.
-!ENABLE_KALYXO_BOAT                   = 0
+; Native cached-exit ferry: Kalyxo Docks $30/$31 <-> Sea Zora Quay $99 (bound in
+; Data/overworld/kalyxo_boat_placements.asm). Opening arrival is unchanged unless
+; Boat_Marker holds !Boat_Magic.
+!ENABLE_KALYXO_BOAT                   = 1
 !ENABLE_ORACLE_ARRIVAL_SEQUENCE      = 1
+; Oracle title screen BG2 (vortex, Maku Tree, green SECRETS plate, colour cycle)
+; in bank $58 (Core/title/title_screen.asm). Default on. While on,
+; yaze BG2 title edits are ignored; BG1 (logo) edits still apply.
+!ENABLE_ORACLE_TITLE_SCREEN          = 1
+; Oracle file select restyle, option E "Maku Hollow" (bark, leaf canopy,
+; gold header plate, heartwood panel) in bank $59 (Core/title/file_select.asm).
+; Default on. Uses HDMA channels 6-7 and backdrop colour math on file select,
+; copy, erase and name entry only.
+!ENABLE_ORACLE_FILE_SELECT           = 1
 ; New-file Mirror experiment scene before the arrival (Core/Cutscene/experiment.asm).
 ; Requires ORACLE_ARRIVAL_SEQUENCE (asserted in Oracle_main.asm).
 !ENABLE_EXPERIMENT_SCENE            = 1

@@ -891,7 +891,10 @@ RichardQuestFlags  = $7EF3C4
 ; Map & Travel: one bit per bird destination (bit i = LoadTransport entry i),
 ; set on first entry to that area. Used only when !ENABLE_MENU_MAP_TRAVEL.
 TravelSpotsVisited = $7EF412 ; one byte
-FreeBlock_Dreams   = $7EF413  ; 140 bytes [F413,F49F)
+; Room-state bit (Dungeons/room_state.asm): one bit per room $000-$127,
+; byte = room >> 3, mask = 1 << (room & 7). Used only when !ENABLE_ROOM_STATE_BITS.
+RoomSolvedBits     = $7EF413 ; 37 bytes [F413,F438)
+FreeBlock_Dreams   = $7EF438  ; 103 bytes [F438,F49F)
 ; $7EF49F-4BF reserved: special-event marker $7EF49F and areas 80-9F flags
 ; $7EF4A0-4BF (SPECIAL_EVENT_NAMESPACE_PROPOSAL01). Not free.
 ; Root-owned current-build A0-BF event flags and migration marker. The native
@@ -910,7 +913,7 @@ FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 ; | $7EF3A0  | $7EF3A0  | bits  | Wolf dig: bit 0 used |
 ; | $7EF3B3  | $7EF3B3  | 1     | Large prefix       |
 ; | $7EF3BF  | $7EF3C3  | 5     | Large remainder    |
-; | $7EF413  | $7EF49E  | 140   | Dreams prefix      |
+; | $7EF438  | $7EF49E  | 103   | Dreams prefix      |
 ; | $7EF4E1  | $7EF4FD  | 29    | Dreams remainder   |
 ; |----------|----------|-------|--------------------|
 ; | Free-list comments describe candidates, not allocation grants.     |

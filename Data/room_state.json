@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "description": "Per-room stays-solved mode for Dungeons/room_state.asm. Build data: Scripts/Generate/generate_room_state_table.py writes Dungeons/generated/room_state_table.asm. Rooms not listed are mode none.",
+  "modes": {
+    "none": "No room-state behavior (default).",
+    "code_owned": "Only the room's own ASM calls RoomState_IsSolved / RoomState_MarkSolved.",
+    "shutters_stay_open": "When the room's tag opens the shutters, the room is marked solved; later loads start with shutters open (door slots 0-3) and skip the entry close. clear_tags lists tag slots (AE, AF) to clear on a solved load, for tags such as HoldDoor that rewrite the shutter state every frame."
+  },
+  "rooms": []
+}

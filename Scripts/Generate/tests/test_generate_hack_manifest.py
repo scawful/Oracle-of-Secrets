@@ -1497,17 +1497,29 @@ class RepositorySourceRegressionTest(unittest.TestCase):
 
     def test_real_fastrom_orgs_use_physical_manifest_ranges(self) -> None:
         manifest = generate_manifest(REPO_ROOT)
-        protected_starts = {
-            region["start"]
-            for region in manifest["protected_regions"]["regions"]
-        }
+        protected = manifest["protected_regions"]["regions"]
         banks = {
             entry["bank"]: entry for entry in manifest["owned_banks"]["banks"]
         }
 
-        self.assertIn("0x008B6B", protected_starts)
-        self.assertIn("0x06F725", protected_starts)
-        self.assertIn("0x0DDFB2", protected_starts)
+        for region in protected:
+            self.assertLess(int(region["start"], 16), 0x800000)
+            self.assertLessEqual(int(region["end"], 16), 0x800000)
+
+        for start, size in (
+            (0x008B6B, 3),  # Menu/menu.asm:26 org $808B6B : LDX.w #$6040
+            (0x06F725, 4),
+            (0x0DDFB2, 4),  # Menu/menu.asm:29 org $8DDFB2 : LDA.l Menu_ItemIndex, X
+        ):
+            with self.subTest(start=f"0x{start:06X}", size=size):
+                matches = [
+                    region
+                    for region in protected
+                    if int(region["start"], 16) <= start
+                    and int(region["end"], 16) >= start + size
+                ]
+                self.assertEqual(len(matches), 1)
+
         self.assertFalse(
             {"0x80", "0x86", "0x8D", "0xA0"} & banks.keys()
         )
@@ -3019,6 +3031,94 @@ class ExperimentalNativeManifestTest(unittest.TestCase):
             path.write_text(text)
             with self.assertRaisesRegex(ManifestGenerationError,'active bounding assert'):
                 _validate_expanded_hooks_disjoint_from_editor_regions([hook],regions,root,semantic_defines=defines)
+
+
+class ZeroByteOrgHooksTest(unittest.TestCase):
+    """Regression coverage for QUEUE236: scan_hooks skips zero-byte label orgs."""
+
+    def setUp(self) -> None:
+        self.fixture = ManifestFixture()
+        self.addCleanup(self.fixture.close)
+
+    def test_scan_hooks_skips_zero_byte_label_and_disabled_pool_orgs(self) -> None:
+        self.fixture.write_text(
+            "Oracle_main.asm", 'incsrc "Overworld/sample.asm"\n'
+        )
+        self.fixture.write_text(
+            "Overworld/sample.asm",
+            "!UseVanillaPool = 0\n"
+            "org $02A63C\n"
+            "OverworldMixedCoordsChange:\n"
+            "{\n"
+            "  dw $FFF0, $0010, $FFFE, $0002\n"
+            "}\n"
+            "assert pc() <= $02A644\n"
+            "org $02A644\n"
+            "Overworld_HandleOverlaysAndBombDoors_bombable_door_location_New:\n"
+            "org $02A784\n"
+            "OverworldData_HiddenItems_New:\n"
+            "org $02C098\n"
+            "  ADC.w OverworldMixedCoordsChange, Y\n"
+            "org $02F88D\n"
+            "Pool_BufferAndBuildMap16Stripes_overworldScreenSize:\n"
+            "{\n"
+            "  if !UseVanillaPool > 0\n"
+            "    db $01, $01\n"
+            "  endif\n"
+            "}\n"
+            "assert pc() <= $02F94D\n"
+            "org $02AC40\n"
+            "  db $D0\n"
+            "org $0ED652\n"
+            "InitColorLoad2_Return:\n"
+            "pullpc\n"
+            "org $1AF981 : Lanmola_SpawnShrapnel:\n",
+        )
+        hooks = scan_hooks(
+            self.fixture.root,
+            collect_reachable_asm_sources(self.fixture.root),
+        )
+        self.assertEqual(
+            [hook.address for hook in hooks],
+            [0x02A63C, 0x02AC40, 0x02C098],
+        )
+
+    def test_scan_hooks_preserves_org_saved_with_pushpc_before_incsrc_or_pullpc(
+        self,
+    ) -> None:
+        self.fixture.write_text(
+            "Oracle_main.asm", 'incsrc "Masks/sample.asm"\n'
+        )
+        self.fixture.write_text("Masks/child.asm", "pullpc\n  RTL\n")
+        self.fixture.write_text(
+            "Masks/sample.asm",
+            "org $07F89D : pushpc\n"
+            "org $378000\n"
+            '  incsrc "Masks/child.asm"\n',
+        )
+        hooks = scan_hooks(
+            self.fixture.root,
+            collect_reachable_asm_sources(self.fixture.root),
+        )
+        self.assertEqual([hook.address for hook in hooks], [0x07F89D, 0x378000])
+
+    def test_real_zscustomoverworld_excludes_zero_byte_mirror_and_size_orgs(
+        self,
+    ) -> None:
+        defines = generate_hooks_json._load_global_defines(REPO_ROOT)
+        hooks = scan_hooks(
+            REPO_ROOT,
+            [REPO_ROOT / "Overworld/ZSCustomOverworld.asm"],
+            defines=defines,
+        )
+        addrs = {hook.address for hook in hooks}
+        self.assertNotIn(0x02A644, addrs)
+        self.assertNotIn(0x02A784, addrs)
+        self.assertNotIn(0x02F88D, addrs)
+        self.assertIn(0x02A63C, addrs)
+        self.assertIn(0x02C098, addrs)
+        self.assertIn(0x02AC40, addrs)
+
 
 if __name__ == "__main__":
     unittest.main()

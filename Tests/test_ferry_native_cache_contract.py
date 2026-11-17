@@ -54,15 +54,22 @@ class FerryNativeCacheContract(unittest.TestCase):
             with self.subTest(area=words[start]):
                 self.assertEqual(emit_fixture(words[start:start + 25]), struct.pack("<25H", *words[start:start + 25]))
 
-    def test_no_current_geography_is_silently_bound(self):
+    def test_bound_geography_is_docks_30_and_quay_99(self):
+        # Bound in QUEUE225: Kalyxo Docks $30/$31 (16, 23) <-> Sea Zora Quay $99 (23, 19).
         source = PLACEMENTS.read_text()
-        self.assertRegex(source, r"(?m)^!KALYXO_BOAT_ENDPOINTS_BOUND = 0$")
+        self.assertRegex(source, r"(?m)^!KALYXO_BOAT_ENDPOINTS_BOUND = 1$")
         calls = re.findall(r"^  %BoatNativeCache\(([^)]+)\)", source, re.M)
         self.assertEqual(len(calls), 2)
-        for call in calls:
-            self.assertEqual([v.strip() for v in call.split(",")], ["$FFFF"] * 18)
-        for name in ("DocksFacing", "IslandFacing", "DocksOpenTile", "IslandOpenTile", "DocksWaterTile", "IslandWaterTile"):
-            self.assertRegex(source, rf"(?m)^!Boat_{name} = \$FFFF$")
+        values = [[int(v.strip()[1:], 16) for v in call.split(",")] for call in calls]
+        self.assertEqual([v[0] for v in values], [0x30, 0x99])
+        for record in values:
+            self.assertEqual(len(record), 18)
+            self.assertNotIn(0xFFFF, record)
+        expected = {"DocksFacing": 0x0006, "IslandFacing": 0x0004,
+                    "DocksOpenTile": 0x0FC0, "IslandOpenTile": 0x085E,
+                    "DocksWaterTile": 0x02CD, "IslandWaterTile": 0x02C3}
+        for name, value in expected.items():
+            self.assertRegex(source, rf"(?m)^!Boat_{name} = \${value:04X}$")
 
 
 def recovery_symbols():
