@@ -77,13 +77,8 @@ if !ENABLE_SKY_OVERWORLD_GRAPHICS
 SourceGlobalSheet_F2_sky_overworld_graphics: incbin "sheets/gF2_sky_overworld_graphics.bin"
   assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
 endif
-if !ENABLE_KALYXO_BOAT
-  org $47F4C2
-SourceGlobalSheet_E4_kalyxo_boat: incbin "sheets/gE4_kalyxo_boat.bin"
-  assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
-endif
 if !ENABLE_SKY_OVERWORLD_GRAPHICS
-  org $47F98C
+  org $47F4C2
 SourceGlobalSheet_F5_sky_overworld_graphics: incbin "sheets/gF5_sky_overworld_graphics.bin"
   assert pc() <= $480000 || pc() == $488000, "New global sheets crossed bank $47"
 endif
@@ -134,39 +129,26 @@ org $23FEE3 ; @hook module=Core kind=data protected_size=1
 org $23FFE3 ; @hook module=Core kind=data protected_size=1
   db $00
 ; Global $E4 (sprite-relative $71): Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload.
-; Global $E4 (sprite-relative $71): [ENABLE_KALYXO_BOAT] Native ferry berth preservation glyphs; ordinary E4 remains selected while the ferry flag is off.
 org $23FDE4 ; @hook module=Core kind=data protected_size=1
-if !ENABLE_KALYXO_BOAT
   db $C7
-else
-  db $C7
-endif
 org $23FEE4 ; @hook module=Core kind=data protected_size=1
-if !ENABLE_KALYXO_BOAT
-  db $F4
-else
   db $85
-endif
 org $23FFE4 ; @hook module=Core kind=data protected_size=1
-if !ENABLE_KALYXO_BOAT
-  db $C2
-else
   db $3E
-endif
 ; Global $E5 (sprite-relative $72): Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload.
 org $23FDE5 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE5 ; @hook module=Core kind=data protected_size=1
   db $8A
 org $23FFE5 ; @hook module=Core kind=data protected_size=1
-  db $0D
+  db $69
 ; Global $E6 (sprite-relative $73): Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload.
 org $23FDE6 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE6 ; @hook module=Core kind=data protected_size=1
   db $8F
 org $23FFE6 ; @hook module=Core kind=data protected_size=1
-  db $17
+  db $65
 ; Global $E8 (sprite-relative $75): Selected Minish Cap A Sky Tower normal background sheet; clone of legacy 15; normal graphics group binding follows separately.
 ; Global $E8 (sprite-relative $75): [ENABLE_SKY_ROOM_SKY] Sky room sky layer: mcA sheet 15 with tile $2F colour 6->3 and 7->4 (blue/white inner corner, joints 104-107); replaces the $E8 pointer under the flag.
 org $23FDE8 ; @hook module=Core kind=data protected_size=1
@@ -185,78 +167,78 @@ org $23FFE8 ; @hook module=Core kind=data protected_size=1
 if !ENABLE_SKY_ROOM_SKY
   db $00
 else
-  db $5F
+  db $DA
 endif
 ; Global $E9 (sprite-relative $76): Selected Minish Cap A Sky Tower normal background sheet; clone of legacy 08; normal graphics group binding follows separately.
 org $23FDE9 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE9 ; @hook module=Core kind=data protected_size=1
-  db $98
+  db $99
 org $23FFE9 ; @hook module=Core kind=data protected_size=1
-  db $B9
+  db $34
 ; Global $F6 (sprite-relative $83): Map $22 slot-4 copy of sheet $64 with Kalyxo pit chars $007/$017 copied to solid chars $104/$107 and side char $110.
 org $23FDF6 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEF6 ; @hook module=Core kind=data protected_size=1
   db $9D
 org $23FFF6 ; @hook module=Core kind=data protected_size=1
-  db $4A
+  db $C5
 ; Global $F7 (sprite-relative $84): Abyss $63 windmill (screen $64) slot 4: copy of sheet $34 with W2 brown-stone tower and sail chars in locals no other $63 cell uses (scawful picked option 2).
 org $23FDF7 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEF7 ; @hook module=Core kind=data protected_size=1
-  db $9E
+  db $9F
 org $23FFF7 ; @hook module=Core kind=data protected_size=1
-  db $E8
+  db $63
 ; Global $F8 (sprite-relative $85): Abyss $63 windmill (screen $64) slot 6: copy of sheet $3F (area set 65 default) with brown-stone tower chars in locals no other $63 cell uses.
 org $23FDF8 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEF8 ; @hook module=Core kind=data protected_size=1
   db $A3
 org $23FFF8 ; @hook module=Core kind=data protected_size=1
-  db $6C
+  db $E7
 ; Global $F9 (sprite-relative $86): Shrine of Power main door art (door 5, scawful DECIDED 2026-11-16): War-mask facade chars for the $B0 group slot 3 ($B0/$B1/$B8/$B9).
 org $23FDF9 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEF9 ; @hook module=Core kind=data protected_size=1
-  db $A7
+  db $A8
 org $23FFF9 ; @hook module=Core kind=data protected_size=1
-  db $AD
+  db $28
 ; Global $DF (sprite-relative $6C): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDDF ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEDF ; @hook module=Core kind=data protected_size=1
   db $AC
 org $23FFDF ; @hook module=Core kind=data protected_size=1
-  db $4F
+  db $CA
 ; Global $E0 (sprite-relative $6D): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDE0 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE0 ; @hook module=Core kind=data protected_size=1
-  db $AE
+  db $AF
 org $23FFE0 ; @hook module=Core kind=data protected_size=1
-  db $8F
+  db $0A
 ; Global $E1 (sprite-relative $6E): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDE1 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE1 ; @hook module=Core kind=data protected_size=1
   db $B1
 org $23FFE1 ; @hook module=Core kind=data protected_size=1
-  db $10
+  db $8B
 ; Global $E2 (sprite-relative $6F): D4 complete private warden/protector fight; preserves Princess and Baby upload slots.
 org $23FDE2 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE2 ; @hook module=Core kind=data protected_size=1
   db $B4
 org $23FFE2 ; @hook module=Core kind=data protected_size=1
-  db $62
+  db $DD
 ; Global $E7 (sprite-relative $74): Private105 refuge: preserves Sea Zora DE/EE cells; accepted River front head/body in C0/C2, with room-specific spriteset4E.
 org $23FDE7 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEE7 ; @hook module=Core kind=data protected_size=1
-  db $B6
+  db $B7
 org $23FFE7 ; @hook module=Core kind=data protected_size=1
-  db $FF
+  db $7A
 ; Global $EA (sprite-relative $77): [ENABLE_SKY_ROOM_SKY] Sky room sky layer: legacy 1B with tiles 00-18 replaced by the picked candidate-A cloud chars (scawful 2026-11-10 'Sky in $A0'); 30-3F kept; binding is flag-gated.
 if !ENABLE_SKY_ROOM_SKY
 org $23FDEA ; @hook module=Core kind=data protected_size=1
@@ -343,8 +325,8 @@ if !ENABLE_SKY_OVERWORLD_GRAPHICS
 org $23FDF5 ; @hook module=Core kind=data protected_size=1
   db $C7
 org $23FEF5 ; @hook module=Core kind=data protected_size=1
-  db $F9
+  db $F4
 org $23FFF5 ; @hook module=Core kind=data protected_size=1
-  db $8C
+  db $C2
 endif
 pullpc
