@@ -727,6 +727,26 @@ def atomic_write_json(target: Path, payload: dict[str, Any]) -> None:
         raise
 
 
+def atomic_copy_file(src_file: Path, dst_file: Path) -> None:
+    dst_file.parent.mkdir(parents=True, exist_ok=True)
+    if dst_file.exists() and not dst_file.is_symlink():
+        if src_file.resolve() == dst_file.resolve():
+            return
+    fd, tmp_name = tempfile.mkstemp(
+        prefix=f".{dst_file.name}.tmp-", dir=str(dst_file.parent)
+    )
+    tmp_path = Path(tmp_name)
+    try:
+        with src_file.open("rb") as reader, os.fdopen(fd, "wb") as writer:
+            shutil.copyfileobj(reader, writer)
+            writer.flush()
+            os.fsync(writer.fileno())
+        os.replace(tmp_path, dst_file)
+    except Exception:
+        tmp_path.unlink(missing_ok=True)
+        raise
+
+
 def save_rollback_copy(
     existing_board_file: Path, board_id: str, rollback_dir: Path
 ) -> Path:
@@ -736,6 +756,60 @@ def save_rollback_copy(
     backup_target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(existing_board_file, backup_target)
     return backup_target
+
+
+def save_media_rollback_copies(
+    target_dir: Path,
+    existing_board_file: Path,
+    copy_plan: list[tuple[Path, str]],
+    board_id: str,
+    rollback_dir: Path,
+) -> list[str]:
+    """Back up existing media files inside `target_dir` before `--replace`."""
+    rel_paths: list[str] = []
+    seen: set[str] = set()
+
+    def add_rel(rel: Any) -> None:
+        if isinstance(rel, str) and rel and rel not in seen:
+            seen.add(rel)
+            rel_paths.append(rel)
+
+    try:
+        old_data = json.loads(existing_board_file.read_text(encoding="utf-8"))
+        if isinstance(old_data, dict) and isinstance(old_data.get("media"), list):
+            for entry in old_data["media"]:
+                if isinstance(entry, dict):
+                    add_rel(entry.get("path"))
+    except (OSError, json.JSONDecodeError):
+        pass
+
+    for _, rel_path in copy_plan:
+        add_rel(rel_path)
+
+    target_root = target_dir.resolve()
+    backed_up: list[str] = []
+    for rel_path in rel_paths:
+        rel_obj = Path(rel_path)
+        if (
+            rel_obj.is_absolute()
+            or rel_obj.name == "board.json"
+            or rel_obj.name.startswith("feedback-")
+        ):
+            continue
+        candidate = target_dir / rel_obj
+        if candidate.is_symlink() or not candidate.is_file():
+            continue
+        try:
+            resolved_candidate = candidate.resolve()
+        except OSError:
+            continue
+        if not resolved_candidate.is_relative_to(target_root):
+            continue
+        backup_target = rollback_dir / board_id / rel_obj
+        backup_target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(candidate, backup_target)
+        backed_up.append(rel_path)
+    return backed_up
 
 
 def run_set_status(
@@ -847,9 +921,13 @@ def run_publish(
     rollback_dir = scratch_root / f"{utc_stamp_compact()}-{board_id}"
     modified_ids: list[str] = []
     created_ids: list[str] = []
+    media_backed_up: list[str] = []
 
     if existed:
         save_rollback_copy(target_board_file, board_id, rollback_dir)
+        media_backed_up = save_media_rollback_copies(
+            target_dir, target_board_file, copy_plan, board_id, rollback_dir
+        )
         modified_ids.append(board_id)
     else:
         created_ids.append(board_id)
@@ -860,9 +938,7 @@ def run_publish(
 
     # Copy media files into <dest>/<id>/<rel_path> without touching feedback-*.json.
     for src_file, rel_path in copy_plan:
-        dst_media = target_dir / rel_path
-        dst_media.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(src_file, dst_media)
+        atomic_copy_file(src_file, target_dir / rel_path)
 
     atomic_write_json(target_board_file, board_out)
 
@@ -878,9 +954,11 @@ def run_publish(
             "board_id": board_id,
             "created": created_ids,
             "modified": modified_ids,
+            "media_backed_up": media_backed_up,
         },
     )
     receipt["rollback_dir"] = str(rollback_dir)
+    receipt["media_backed_up"] = media_backed_up
     return receipt
 
 

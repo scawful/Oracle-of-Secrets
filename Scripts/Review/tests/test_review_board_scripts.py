@@ -259,7 +259,10 @@ class ReviewBoardScriptsTest(unittest.TestCase):
             )
         self.assertEqual(fb_v1.read_text(encoding="utf-8"), fb_sentinel)
 
-        # --replace updates board.json, saves rollback copy, keeps feedback untouched.
+        # --replace updates board.json and media, saves rollback copies for both,
+        # and keeps feedback untouched.
+        img_a_v1_bytes = (dest / "sky-8c-v1" / "media" / "a.png").read_bytes()
+        img_a_v2, sha_a_v2 = write_png(src_dir / "a.png", width=8, height=6)
         first_replaced = sample_v2_board("sky-8c-v1")
         first_replaced["title"] = "Updated v1 title"
         first_draft.write_text(json.dumps(first_replaced), encoding="utf-8")
@@ -269,7 +272,7 @@ class ReviewBoardScriptsTest(unittest.TestCase):
                     "--board",
                     str(first_draft),
                     "--media",
-                    str(img_a),
+                    str(img_a_v2),
                     str(img_b),
                     "--dest",
                     str(dest),
@@ -281,6 +284,22 @@ class ReviewBoardScriptsTest(unittest.TestCase):
             0,
         )
         self.assertEqual(fb_v1.read_text(encoding="utf-8"), fb_sentinel)
+        self.assertEqual(
+            hashlib.sha256(
+                (dest / "sky-8c-v1" / "media" / "a.png").read_bytes()
+            ).hexdigest(),
+            sha_a_v2,
+        )
+        media_backups = list(scratch.glob("*/sky-8c-v1/media/a.png"))
+        self.assertEqual(len(media_backups), 1)
+        self.assertEqual(media_backups[0].read_bytes(), img_a_v1_bytes)
+        manifests = [
+            json.loads(p.read_text(encoding="utf-8"))
+            for p in scratch.glob("*/manifest.json")
+        ]
+        self.assertTrue(
+            any("media/a.png" in m.get("media_backed_up", []) for m in manifests)
+        )
 
         # Superseding board updates sky-8c-v1 status + superseded_by.
         second = sample_v2_board("sky-8c-v2")
