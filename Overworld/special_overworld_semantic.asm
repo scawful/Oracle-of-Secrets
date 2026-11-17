@@ -108,11 +108,17 @@ if !SPECIAL_OVERWORLD_RESIDENT_ENABLED == 1
 assert !SPECIAL_OVERWORLD_SEMANTIC_CAPACITY == !SPECIAL_OVERWORLD_RESIDENT_END
 assert !SPECIAL_OVERWORLD_SEMANTIC_CODE_END <= !LYRA_CURRENT_RESIDENT_CODE_BASE || !SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE >= !LYRA_CURRENT_RESIDENT_CODE_END
 Lyra_SemanticCollisionWord:
-    PHP : PHD : PHX : PHY
+    ; Fast exit when indoors ($1B != 0) or outside resident pages [$80, $BF]:
+    ; Lyra_ResidentPhysicalPage always returns CLC there.
+    PHP
+    LDA.l $7E001B : AND.w #$00FF : BNE .fast_native
+    LDA.l $7E008A : AND.w #$00FF
+    CMP.w #!SPECIAL_OVERWORLD_RESIDENT_FIRST : BCC .fast_native
+    CMP.w #!SPECIAL_OVERWORLD_RESIDENT_END : BCS .fast_native
+    PHD : PHX : PHY
     PEA.w $0000 : PLD : CLD
     LDA.l !LYRA_CURRENT_MAP16_DEFINITIONS, X : PHA
     TXA : TAY
-    LDA.l $7E001B : AND.w #$00FF : BNE .restore
     LDA.b $00 : SEC : SBC.l $7E0708 : AND.l $7E070A
     ASL : ASL : ASL : PHA
     LDA.b $02 : SEC : SBC.l $7E070C : AND.l $7E070E
@@ -127,6 +133,10 @@ Lyra_SemanticCollisionWord:
     PLA : PLY : PLX : PLD : PLP
     PHA : PLA ; replaced LDA's N/Z, all other caller flags preserved
     RTL
+.fast_native:
+    PLP
+    LDA.l !LYRA_CURRENT_MAP16_DEFINITIONS, X
+    RTL
 Lyra_SemanticCollisionWord_End:
 
 ; Explicit foreground query: A=raw terrain byte offset, X=Tile16*8+quadrant*2.
@@ -134,11 +144,17 @@ Lyra_SemanticCollisionWord_End:
 ; BG1 overlays are not gameplay terrain: resident visuals use host87 while
 ; record413 semantic rows belong to the physical page. Never infer host87 here.
 Lyra_SemanticTerrainSourceWord:
-    PHP : PHD : PHX : PHY : PHA
+    PHP
+    PHA
+    LDA.l $7E001B : AND.w #$00FF : BNE .fast_native
+    LDA.l $7E008A : AND.w #$00FF
+    CMP.w #!SPECIAL_OVERWORLD_RESIDENT_FIRST : BCC .fast_native
+    CMP.w #!SPECIAL_OVERWORLD_RESIDENT_END : BCS .fast_native
+    PLA
+    PHD : PHX : PHY : PHA
     PEA.w $0000 : PLD : CLD
     LDA.l !LYRA_CURRENT_MAP16_DEFINITIONS, X : PHA
     TXA : TAY
-    LDA.l $7E001B : AND.w #$00FF : BNE .restore
     LDA $03,S : CMP.w #$2000 : BCS .restore
     BIT.w #$0001 : BNE .restore
     JSL Lyra_ResidentPhysicalPageLong
@@ -150,6 +166,11 @@ Lyra_SemanticTerrainSourceWord:
     PLA : STA $01,S : PLA
     PLY : PLX : PLD : PLP
     PHA : PLA
+    RTL
+.fast_native:
+    PLA
+    PLP
+    LDA.l !LYRA_CURRENT_MAP16_DEFINITIONS, X
     RTL
 Lyra_SemanticTerrainSourceWord_End:
 

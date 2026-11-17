@@ -6,7 +6,7 @@ org $0DFB91 ; UpdateHUDBuffer ; @hook module=Menu
   RTS
 
 newIgnoreItemBox: ; UpdateHUDBuffer_skip_item
-  JSL HUD_Update
+  JSL HUD_Update_ignore_item
   RTS
 
 org $0DDD21 ; RefillLogic_heart_refill_done ; @hook module=Menu
@@ -38,6 +38,7 @@ org $0DF14F ; AnimateHeartRefill
 ; rupees and keys to the screen's bottom corners through HudCornerBuffer.
 ; Flags off: the vanilla-layout cells, byte-identical code.
 
+if not(defined("HudHalfMagic"))
 if !ENABLE_HUD_LAYOUT_CODEX == 1
   assert !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1, "hud_layout_codex needs dual_item_binding_prototype (X item)"
   !HudHalfMagic   = $7EC72A             ; row 0, cols 21-22 (magic box top)
@@ -58,11 +59,28 @@ else
   !HudKeyIcon     = $7EC764             ; row 1, col 18
   !HudKeyDigit    = $7EC7A4             ; row 2, col 18
 endif
+endif
 
 ; ==========================================================
 ; Main HUD Update Loop
 
 org $2E8000
+if !DISABLE_ITEMS == 0
+HUD_Update:
+  JML HUD_Update_Impl
+  .ignore_item
+  JML HUD_Update_Impl_ignore_item
+  .ignore_health
+  JML HUD_Update_Impl_ignore_health
+HUD_UpdateItemBox_long:
+  JSR HUD_UpdateItemBox : RTL
+if !ENABLE_TRUTHFUL_CONTROLS == 1
+HUD_ItemBoxItem_long:
+  JSR HUD_ItemBoxItem : RTL
+endif
+HexToDecimal_long:
+  JSR HexToDecimal : RTL
+else
 HUD_Update:
 {
   PHP ; Save caller's P register
@@ -246,6 +264,7 @@ endif
   PLP ; Restore caller's P register
   RTL
 }
+endif
 
 ; =========================================================
 

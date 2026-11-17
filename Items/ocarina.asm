@@ -461,6 +461,7 @@ SongTint_Start:
   LDA.b $1B : STA.l SongTintContext
   JSR SongTint_ReadPlace : STA.l SongTintContext+1
   LDA.b #$00 : JSR SongTint_Colors
+  LDA.b #$01 : STA.l TimeState.GfxDirty
   REP #$10 : PLY : PLX
   PLP
   RTL
@@ -491,6 +492,7 @@ endif
   .end
   LDA.b #$00 : STA.l SongTintTimer
   LDA.b #$01 : JSR SongTint_Colors
+  LDA.b #$01 : STA.l TimeState.GfxDirty
   .done
   REP #$10 : PLY : PLX
   PLP
@@ -730,6 +732,41 @@ incsrc "Items/song_secrets_stone.asm"
 if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
   incsrc "Items/special_soaring.asm"
 endif
+; Called by TimeSystem_CheckCanRun .overworld (Overworld/time_system.asm, bank $34)
+; from HUD_ClockDisplay's PHP/PLP wrapper. Calls Sprite_LoadGraphicsProperties
+; ($00FC62) only when module, area, phase (CheckIfNight), song tint or
+; TimeState.GfxDirty changed, instead of every overworld frame.
+; Contract: entry M=8, any X; exit M=8, X unchanged; A clobbered; DBR unchanged
+; (long addressing only). CheckIfNight leaves P alone; SEP #$20 is defensive.
+TimeSystem_GfxGate:
+{
+  LDA.l TimeState.GfxDirty : BNE .reload
+  LDA.b $10 : CMP.l TimeState.GfxLastMode : BNE .reload
+  LDA.b $8A : CMP.l TimeState.GfxLastArea : BNE .reload
+  JSR .tint : CMP.l TimeState.GfxLastTint : BNE .reload
+  JSL CheckIfNight : SEP #$20
+  CMP.l TimeState.GfxLastPhase : BEQ .done
+  .reload
+  PHP : REP #$30 ; vanilla routine expects M=16, X=16
+  JSL $00FC62 ; Sprite_LoadGraphicsProperties
+  PLP
+  LDA.b $10 : STA.l TimeState.GfxLastMode
+  LDA.b $8A : STA.l TimeState.GfxLastArea
+  JSR .tint : STA.l TimeState.GfxLastTint
+  JSL CheckIfNight : SEP #$20
+  STA.l TimeState.GfxLastPhase
+  LDA.b #$00 : STA.l TimeState.GfxDirty
+  .done
+  RTL
+
+  ; A = $80|color while a song tint runs, else 0.
+  .tint
+  LDA.l SongTintTimer : BEQ +
+    LDA.l SongTintColor : ORA.b #$80
+  +
+  RTS
+}
+
 %log_end("Items/ocarina.asm", !LOG_ITEMS)
 
 pushpc ; Bank2B freespace
@@ -739,3 +776,4 @@ org $02F210 : JSL ResetOcarinaFlag ; @hook module=Items name=ResetOcarinaFlag ki
 
 ; ZSOWv3 RainAnimation at $02A4CD handles all rain visuals natively.
 ; See Overworld/ZSCustomOverworld.asm:RainAnimation for the active code.
+

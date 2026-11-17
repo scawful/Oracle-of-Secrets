@@ -67,7 +67,12 @@ struct TimeState $7EE000
   .Hours:     skip 1 ; @watch fmt=hex
   .Minutes:   skip 1 ; @watch fmt=hex
   .Speed:     skip 1 ; @watch fmt=hex
-  .Padding:   skip 13 ; Pad to $7EE010
+  .GfxLastArea:  skip 1 ; $7EE003: last $8A when $00FC62 ran
+  .GfxLastMode:  skip 1 ; $7EE004: last $10 seen by TimeSystem_CheckCanRun
+  .GfxLastPhase: skip 1 ; $7EE005: last Oracle_CheckIfNight phase (0-3)
+  .GfxLastTint:  skip 1 ; $7EE006: last SongTint active/color state
+  .GfxDirty:     skip 1 ; $7EE007: non-zero forces $00FC62 reload
+  .Padding:      skip 8 ; Pad to $7EE010 ($7EE00E is Song of Storms rain flag)
   .BlueVal:   skip 2 ; @watch fmt=hex
   .GreenVal:  skip 2 ; @watch fmt=hex
   .RedVal:    skip 2 ; @watch fmt=hex
