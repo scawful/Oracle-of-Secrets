@@ -31,7 +31,7 @@ LEGACY_BITS = {
     "!Crystal_D5_GlaciaEstate": 0x04, "!Crystal_D6_GoronMines": 0x01,
     "!Crystal_D7_DragonShip": 0x08,
 }
-PENDANT_POS = [(15, 10), (17, 8), (17, 12)]
+PENDANT_POS = [(15, 13), (13, 15), (15, 17)]  # triangle in the ring centre
 
 
 def block(text, label):
@@ -115,15 +115,14 @@ class QuestEssenceLayout(unittest.TestCase):
             cells[name] = {(row, col + i) for i in range(tiles)}
 
         quest = self.draw_text
-        location = re.search(r"LDX\.w #\$([0-9A-F]{4})\n\.location\n\s*LDA\.w \$12CC,X : "
-                             r"STA\.w \$1000\+menu_offset\((\d+),(\d+)\),X", quest)
-        run("location label", int(location.group(2)), int(location.group(3)), int(location.group(1), 16) // 2 + 1)
+        # v4: the area name heads the Map page; Quest draws no location text.
+        self.assertNotIn("DrawLocationName", block(quest, "Menu_Quest_Draw"))
         gear = block(quest, "Menu_Quest_Gear")
         # v4 moved the GEAR label and icons to Equipment; only the pearl remains here.
         self.assertNotIn(".gear_label", gear)
         y, x = re.search(r"LDX\.w #menu_offset\((\d+),(\d+)\)[^\n]*\n\s*LDY\.w #MoonPearlGFX", gear).groups()
         item("moon pearl", int(y), int(x))
-        y, x = re.search(r"LDX\.w #menu_offset\((\d+),(\d+)\)\n\s*JSR Menu_Quest_Number3", quest).groups()
+        y, x = re.search(r"LDX\.w #menu_offset\((\d+),(\d+)\)[^\n]*\n\s*JSR Menu_Quest_Number3", quest).groups()
         run("heart piece count", int(y), int(x), 3)
         draw = DRAW.read_text()
         y, x = re.search(r"!QuestHeart = \$1000\+menu_offset\((\d+),(\d+)\)", draw).groups()
@@ -133,7 +132,7 @@ class QuestEssenceLayout(unittest.TestCase):
         for index, (y, x) in enumerate(dungeon):
             item(f"dungeon item {index}", int(y), int(x))
         row, col = to_cell(0x1692 - TILEMAP)
-        cells["footer name/clock"] = {(row, col + i) for i in range(0x1C // 2 + 1)}
+        cells["footer (cleared)"] = {(row, col + i) for i in range(0x1C // 2 + 1)}
         return cells
 
     def simulate(self, crystals):
@@ -199,6 +198,21 @@ class QuestEssenceLayout(unittest.TestCase):
             for second in names[i + 1:]:
                 shared = everything[first] & everything[second]
                 self.assertFalse(shared, f"{first} overlaps {second} at {sorted(shared)}")
+
+    def test_bottom_row_brackets_and_top_row_empty(self):
+        """Pearl | map, big chest key, big key, treasure | hearts on one mirrored row."""
+        content = self.other_content()
+        names = ["moon pearl"] + [f"dungeon item {i}" for i in range(4)] + ["heart piece"]
+        origins = [min(content[name]) for name in names]
+        self.assertEqual({row for row, _ in origins}, {21})
+        cols = sorted(col for _, col in origins)
+        self.assertEqual(cols[0], origins[0][1], "pearl is leftmost")
+        self.assertEqual(cols[-1], origins[-1][1], "hearts are rightmost")
+        self.assertEqual({a + b for a, b in zip(cols, reversed(cols))}, {30}, "row mirrors about cols 15|16")
+        count = content["heart piece count"]
+        self.assertEqual({row for row, _ in count}, {23})
+        for cells in content.values():
+            self.assertFalse({row for row, _ in cells} & {9, 10, 11}, "top row stays empty")
 
     def test_essences_keep_one_tile_gap(self):
         essences = [square(cell) for cell in self.crystal_cells()]

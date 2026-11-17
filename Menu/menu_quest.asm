@@ -1,4 +1,5 @@
-; Quest displays progression and passive gear. Supplies live on Equipment.
+; Quest displays progression (v4 essence ring, pendants in its centre). Supplies and passive
+; gear live on Equipment; the area name heads the Map page.
 ; No ownership or save-format changes. DBR = $2D.
 Menu_Quest_Init:
 {
@@ -55,29 +56,16 @@ Menu_Quest_Draw:
 {
   JSR Menu_DrawBackground
   JSR Menu_DrawQuestStatus
-  ; Reuse the location/name encoders. The location stands alone above the
-  ; progression ring; the footer holds seven name cells and the five-cell clock.
-  JSR DrawLocationName
-  LDX.w #$001E
-.location
-  LDA.w $12CC,X : STA.w $1000+menu_offset(9,6),X
-  LDA.w #$3417 : STA.w $12CC,X
-  DEX #2 : BPL .location
-  JSR Menu_DrawPlaytimeLabel
-  LDX.w #$0010
-.clear_label
+  ; v4: no area name here (it heads the Map page) and no LINK/clock footer.
+  ; Clear the 14 footer cells so a previous page's footer text never shows.
+  LDX.w #$001A
+.clear_footer
   LDA.w #$2417 : STA.w $1692,X
-  DEX #2 : BPL .clear_label
-  JSR Menu_DrawCharacterName
-  LDX.w #$000C
-.name
-  LDA.w $134C,X : STA.w $1692,X
-  LDA.w #$3417 : STA.w $134C,X
-  DEX #2 : BPL .name
+  DEX #2 : BPL .clear_footer
 
   JSR Menu_DrawHeartPieces
   LDA.l $7EF36B : AND.w #$00FF
-  LDX.w #menu_offset(23,22)
+  LDX.w #menu_offset(23,23)          ; under the heart-piece container
   JSR Menu_Quest_Number3
   JSR Menu_Quest_Progress
   JSR Menu_Quest_Gear
@@ -90,7 +78,9 @@ Menu_Quest_Draw:
 }
 
 ; v4: passive GEAR moved to the Equipment page (Menu_Equipment_Gear).
-; Quest keeps only the Moon Pearl beside the heart pieces.
+; Quest keeps only the Moon Pearl; it and the heart pieces bracket the
+; bottom row (Pearl | map, big chest key, big key, treasure | hearts).
+; The top row stays empty.
 Menu_Quest_Gear:
 {
   SEP #$30
@@ -101,7 +91,7 @@ Menu_Quest_Gear:
   STA.w MenuItemValueSpoof
   REP #$30
   LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(17,15) ; absolute (19,21), beside heart pieces
+  LDX.w #menu_offset(17,2)  ; Quest absolute (21,6), bottom row, left end
   LDY.w #MoonPearlGFX
   JSR DrawMenuItem
   REP #$30
@@ -133,8 +123,12 @@ Menu_Quest_GearVariant:
   CMP.b #$04 : BCC .done             ; 0 absent; 1-3 owned
   BRA .none
 .tunic
+if !ENABLE_EQUIPMENT_MENU == 1
+  JSL Tunic_WornVariant : BRA .done  ; worn colour 0-2 -> variants 1-3
+else
   CMP.b #$03 : BCS .none
   INC : BRA .done                    ; SRAM 0-2 -> green/blue/red variants 1-3
+endif
 .none
   LDA.b #$00
 .done
@@ -228,17 +222,23 @@ Menu_Quest_Progress:
   db !Crystal_D1_MushroomGrotto,!Crystal_D2_TailPalace,!Crystal_D3_KalyxoCastle
   db !Crystal_D4_ZoraTemple,!Crystal_D5_GlaciaEstate,!Crystal_D6_GoronMines,!Crystal_D7_DragonShip
   db !Crystal_D8_Sky
-; Draft layout for review: clockwise D1..D8 octagon, mirror-symmetric about
-; the pendant column; Tests/test_quest_essence_layout.py guards the footprint.
+; v4 ring (make_frame_preserved_v4.py): clockwise D1..D8 from the top,
+; mirror-symmetric about cols 15-16; Tests/test_quest_essence_layout.py
+; guards the footprint. Absolute tilemap offsets, 2x2 each.
 .crystal_pos
-  dw menu_offset(11,12),menu_offset(14,15),menu_offset(17,15),menu_offset(20,12)
-  dw menu_offset(20,8),menu_offset(17,5),menu_offset(14,5),menu_offset(11,8)
+  dw menu_offset(10,15),menu_offset(11,20),menu_offset(14,22),menu_offset(17,20)
+  dw menu_offset(18,15),menu_offset(17,10),menu_offset(14,8),menu_offset(11,10)
 .pendant_bits
   db !Pendant_Wisdom,!Pendant_Power,!Pendant_Courage
+; Pendants form a triangle in the ring centre: Power on top, Wisdom
+; bottom-left, Courage bottom-right (table order Wisdom, Power, Courage).
 .pendant_pos
-  dw menu_offset(15,10),menu_offset(17,8),menu_offset(17,12)
+  dw menu_offset(15,13),menu_offset(13,15),menu_offset(15,17)
+; Unowned = the owned tiles in palette 4, the grey of the unowned crystal
+; ($3134), so v4 needs no outline art ($104/$105/$114/$115/$13B/$13C/
+; $121/$122 stay only for the legacy quest_icons.tilemap page).
 .pendant_tiles
-  dw $2504,$2505,$2514,$2515, $2502,$2503,$2512,$2513
-  dw $253B,$253C,$A53B,$A53C, $3D3D,$3D3E,$BD3D,$BD3E
-  dw $2521,$2522,$A521,$A522, $2D23,$2D24,$AD23,$AD24
+  dw $3102,$3103,$3112,$3113, $2502,$2503,$2512,$2513
+  dw $313D,$313E,$B13D,$B13E, $3D3D,$3D3E,$BD3D,$BD3E
+  dw $3123,$3124,$B123,$B124, $2D23,$2D24,$AD23,$AD24
 }

@@ -386,7 +386,13 @@ endif
 ; Two-slot sword helpers for the Equipment menu (Menu banks $2D/$2E are full).
 if !ENABLE_EQUIPMENT_MENU == 1
 incsrc "Menu/menu_sword_slots.asm"
+incsrc "Menu/menu_tunic.asm"
 incsrc "Items/heavy_sword.asm"
+endif
+
+; Menu cursor memory, page-edge crossing, map return, tunic popup (bank $2D full).
+if !ENABLE_MENU_MAP_TRAVEL == 1
+incsrc "Menu/menu_cursor_flow.asm"
 endif
 
 ; Lyra edge guard: bank $34 is full. JSL entry only, exits by RTL, operands

@@ -10,17 +10,17 @@
     "shared:Sprites/Objects/minecart.asm": {
       "source_set": "shared",
       "path": "Sprites/Objects/minecart.asm",
-      "sha256": "01a29cdfadabbc7d207f7d39520f987d3b8080fbcde2a008517e575185b017c3"
+      "sha256": "ac6158eb321d54577bb8fe4a218d0b094167790b645577f51f8b67be4ce2b93e"
     },
     "shared:Masks/all_masks.asm": {
       "source_set": "shared",
       "path": "Masks/all_masks.asm",
-      "sha256": "ef3e85cc973ca9d3e3f879a63c49b5967e0d6953c0903766f85e051f526618c5"
+      "sha256": "0ad161ad8df5c1b712b74a032e082df1fa4f580893f77ed7e6d26ea4f5cd5491"
     },
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "7ef44b58399e42de7199dd3fd5f6b2ba32b60a76001150259ffe10cd3e56345c"
+      "sha256": "e9cc25ef9636225ff5439c438d95c22232a68abc3e4c80284a7a6d9148293d25"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "9526636c7fa9257d227cd79a5485efd67ea6889656ec065ffaf6a7e09c85239f"
+      "sha256": "f7da5900ad628d90082fc90817bff672f761d1e82de2277823a6c2278cdd2a85"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -135,7 +135,7 @@
     "shared:Menu/menu_map_travel.asm": {
       "source_set": "shared",
       "path": "Menu/menu_map_travel.asm",
-      "sha256": "732c138d2be60d4039ff120083bc6f3988598449eb351f6f49cc5dec02212041"
+      "sha256": "38c3a9ce92849256d79341c3ec4b240eca6ba9390d048799e0b5b791b47913f1"
     },
     "shared:Core/Cutscene/experiment.asm": {
       "source_set": "shared",
@@ -145,7 +145,7 @@
     "shared:Sprites/Players/player2.asm": {
       "source_set": "shared",
       "path": "Sprites/Players/player2.asm",
-      "sha256": "e2d8ac3338c9a2412db6a2d025bf1d75cc953d3eb611c74ded70b2ea6e299d0a"
+      "sha256": "485d507ecf547ac8f9fe26838fa28090c4b8aa012b4d515992013ce7789a3921"
     },
     "shared:Items/ice_rod.asm": {
       "source_set": "shared",
@@ -170,7 +170,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "4548b7e83783e57c0f85ccfe0a06ac448ab277f410b867165da500b851ae3108"
+      "sha256": "52ffa5995f7cee14b18bd6531188fedf4e4e4f7484a6cce58924bfab1e4e49ab"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -2559,16 +2559,16 @@
     },
     {
       "id": "menu_map_travel_pending",
-      "owner": "Map & Travel menu page pending action byte ($7E1EFE)",
+      "owner": "Map & Travel menu page pending action byte ($7E1EFF)",
       "space": "wram",
-      "base": 8265470,
+      "base": 8265471,
       "size": 1,
       "status": "proposed",
       "condition": {
         "ENABLE_MENU_MAP_TRAVEL": 1
       },
-      "lifetime": "One conditional transient WRAM byte after the horse tail ($7E1EFE < $7E1F00). Set by the Map & Travel page when Map or Travel closes the menu; consumed by Menu_Exit the same frame the menu closes. A map opened from the page sets 3, which lives through the map module and reopens the page.",
-      "reset": "MenuMapTravel_Init clears it when the page is drawn; MenuMapTravel_ExitAction clears it before acting; the menu item screen clears 3 when it turns back to the page.",
+      "lifetime": "One conditional transient WRAM byte after the horse tail ($7E1EFF < $7E1F00; $7E1EFE is Horse_AnchorArea). Set by the Map & Travel page when Map or Travel closes the menu; consumed by Menu_Exit the same frame the menu closes. A map opened from the page sets 3, which lives through the map module and reopens the page.",
+      "reset": "MenuMapTravel_Init clears it when the page is drawn; MenuMapTravel_ExitAction clears it before acting; MenuFlow_MapInit clears 3 when the page is drawn again after the map.",
       "save": "Volatile WRAM; not saved in SRAM.",
       "provenance": [
         "shared:Core/symbols.asm",
@@ -2891,6 +2891,50 @@
       }
     },
     {
+      "id": "SwordStoryBlade",
+      "owner": "Sword slots: story blade level (Menu/menu_sword_slots.asm)",
+      "space": "save_buffer",
+      "base": 8319932,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Persistent per-file story sword level (0 none, 1 Meadow, 2+ Master).",
+      "reset": "Vanilla new-file clear; SwordSlots_Sync migrates an old save once (bit7 of SwordSlotFlags clear).",
+      "save": "Covered by vanilla five-page save, backup and checksum; tunic pick proven by native save/reopen (l15/l16 tunic proof).",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "SwordStoryBlade",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "SwordSlotFlags",
+      "owner": "Sword slots + worn tunic flags (menu_sword_slots.asm, menu_tunic.asm)",
+      "space": "save_buffer",
+      "base": 8319933,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Persistent per-file: heavy owned/equipped/reforged bits0-2, worn tunic bits3-5, bit6 free, bit7 initialized.",
+      "reset": "Vanilla new-file clear; SwordSlots_Sync migrates an old save once (bit7 of SwordSlotFlags clear).",
+      "save": "Covered by vanilla five-page save, backup and checksum; tunic pick proven by native save/reopen (l15/l16 tunic proof).",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "SwordSlotFlags",
+        "bank00_mirror": false
+      }
+    },
+    {
       "id": "CurrentMask",
       "owner": "Mask system current form (!CurrentMask)",
       "space": "wram",
@@ -3019,6 +3063,30 @@
       "binding": {
         "source": "shared:Core/symbols.asm",
         "symbol": "ItemBindingMenuY",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "MenuFlow",
+      "owner": "Menu cursor flow (Map & Travel ring): per-page cursor memory, page-edge crossing, tunic popup",
+      "space": "wram",
+      "base": 8258234,
+      "size": 5,
+      "status": "shared",
+      "condition": {
+        "ENABLE_MENU_MAP_TRAVEL": 1
+      },
+      "lifetime": "Menu-session bytes at vanilla-unused $7E02BA-$7E02BE (usdasm UNUSED_7E02BA-BE): EquipCursor, MapCursor, CrossRow, CrossDir, TunicPopup. Read and written only by Menu/menu_cursor_flow.asm and the tunic popup draw in Menu/menu_sword_slots.asm.",
+      "reset": "Zero at boot. MenuFlow_UploadRight clears CrossRow and TunicPopup on every menu open; the two cursors persist across opens until power-off by design.",
+      "save": "Volatile WRAM; never saved; never read in gameplay.",
+      "provenance": [
+        "shared:Core/symbols.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "MenuFlow_EquipCursor",
         "bank00_mirror": false
       }
     },

@@ -211,7 +211,7 @@ Menu_DrawPendantIcons:
 Menu_DrawHeartPieces:
 {
 if !ENABLE_EQUIPMENT_MENU == 1
-  !QuestHeart = $1000+menu_offset(21,23)
+  !QuestHeart = $1000+menu_offset(21,24)  ; Quest bottom row, right end
 else
   !QuestHeart = $149E
 endif
@@ -531,7 +531,11 @@ Menu_DrawQuestItems:
   LDY.w #ShieldGFX
   JSR DrawMenuItem
 
+if !ENABLE_EQUIPMENT_MENU == 1
+  JSL Tunic_GetWorn                  ; worn colour, not defense
+else
   LDA.l $7EF35B
+endif
   INC
   STA.w MenuItemValueSpoof
   LDA.w #MenuItemValueSpoof
@@ -587,7 +591,7 @@ endif
         STA.w ShortSpoof
         LDA.w #ShortSpoof
 if !ENABLE_EQUIPMENT_MENU == 1
-        LDX.w #menu_offset(18,8)
+        LDX.w #menu_offset(17,17)       ; Quest absolute (21,21), bottom row 4th
 else
         LDX.w #menu_offset(11,8)
 endif
@@ -605,7 +609,7 @@ endif
       LDA.w #ShortSpoof
       ; Draw the big key (or big key with chest if we've gotten the treasure) icon
 if !ENABLE_EQUIPMENT_MENU == 1
-      LDX.w #menu_offset(18,2)
+      LDX.w #menu_offset(17,13)         ; Quest absolute (21,17), bottom row 3rd
 else
       LDX.w #menu_offset(11,2)
 endif
@@ -628,7 +632,7 @@ endif
       LDA.w #ShortSpoof
       ; Draw the big key (or big key with chest if we've gotten the treasure) icon
 if !ENABLE_EQUIPMENT_MENU == 1
-      LDX.w #menu_offset(18,11)
+      LDX.w #menu_offset(17,5)          ; Quest absolute (21,9), bottom row 1st
 else
       LDX.w #menu_offset(11,11)
 endif
@@ -808,7 +812,7 @@ Menu_DrawBigChestKey:
       STA.w ShortSpoof
       LDA.w #ShortSpoof
 if !ENABLE_EQUIPMENT_MENU == 1
-      LDX.w #menu_offset(18,5)
+      LDX.w #menu_offset(17,9)          ; Quest absolute (21,13), bottom row 2nd
 else
       LDX.w #menu_offset(11, 5)
 endif

@@ -1,9 +1,11 @@
 ; Map & Travel page (MenuScrollLevelH = $40), fourth page of the menu ring:
 ; Items -R-> Equipment ($20) -R-> Quest ($00) -R-> Map & Travel ($40) -R-> Items.
-; Cells: 0 Map, 1 Travel, 2-7 songs 1-6. $020B is the cursor.
+; Cells: 0 Map, 1 Travel, 2-7 songs 1-6 (v4: 3x2 grid). $020B is the cursor.
 ; Map and Travel close the menu and act in Menu_Exit (MenuMapTravel_ExitAction):
 ; Map opens the existing field/dungeon map module, Travel the existing Soaring
 ; path. No second map renderer and no new destination list. DBR = $2D.
+
+!MenuMapTravel_RowCount = 3                ; Map|Travel row + two song rows
 
 ; ---------------------------------------------------------
 ; Replaces Menu_Page3_Turn under the flag. A = $01 right, else left.
@@ -11,6 +13,7 @@
 MenuMapTravel_Turn:
 {
   SEP #$30
+  JSL MenuFlow_RecordTurn               ; keeps A/X/Y
   CMP.b #$01 : BEQ .right
   REP #$20
   LDA.w #$FFF8 : STA.w MenuScrollHDirection
@@ -51,11 +54,7 @@ MenuMapTravel_Turn:
 ; First frame of the turn onto this page (Menu_Page3_ScrollTo). Out: M/X=8.
 MenuMapTravel_Init:
 {
-  SEP #$30
-  JSL UpdateFluteSong_Long
-  STZ.w $0207
-  STZ.w $020B                           ; Map is always available
-  LDA.b #$00 : STA.l MenuMapTravel_Pending
+  JSL MenuFlow_MapInit                  ; cross, remembered cell, or Map
   RTS
 }
 
@@ -97,12 +96,16 @@ MenuMapTravel_Screen:
     LDA.b #!MENU_STATE_INIT_SCROLL_DOWN : STA.w $0200
     RTS
   .no_start
+  LDA.w $020B : PHA
   JSR MenuMapTravel_Move
   SEP #$30
+  PLA : EOR.w $020B : TAX               ; X != 0: the cursor moved this frame
   LDA.w $0200 : CMP.b #!MENU_STATE_STATS_SCREEN : BEQ .select
   RTS                                   ; page turn owns the rest of this frame
 .select
+  TXA : BNE .moved                      ; A/Y act on the cell the player saw
   JSR MenuMapTravel_Select
+.moved
   INC.w $0207                           ; cursor blink
   JSR MenuMapTravel_Draw
   SEP #$30
@@ -113,7 +116,8 @@ MenuMapTravel_Screen:
 
 ; ---------------------------------------------------------
 ; Horizontal moves skip empty cells and turn the page at a row edge.
-; Vertical moves go to the nearest filled column of the other row.
+; Vertical moves go to the nearest filled column of the next row up/down
+; (wrapping), skipping rows with no filled cell.
 MenuMapTravel_Move:
 {
   SEP #$30
@@ -142,7 +146,17 @@ MenuMapTravel_Move:
   JMP Menu_Page3_Turn
 .vertical
   LDA.w MenuMapTravel_Columns,X : STA.b $06
-  LDA.w MenuMapTravel_Rows,X : EOR.b #$01 : TAX
+  LDA.w MenuMapTravel_Rows,X : STA.b $05 : STA.b $07  ; start row, row tried
+.next_row
+  LDA.b $04 : AND.b #$08 : BEQ .down                  ; Up
+  LDA.b $07 : DEC : BPL .row_ok
+  LDA.b #!MenuMapTravel_RowCount-1 : BRA .row_ok
+.down
+  LDA.b $07 : INC : CMP.b #!MenuMapTravel_RowCount : BCC .row_ok
+  LDA.b #$00
+.row_ok
+  STA.b $07 : CMP.b $05 : BEQ .stay                   ; no other row has a cell
+  TAX
   LDA.b #$FF : STA.b $08 : STA.b $02
   LDA.w .starts,X : TAY
   LDA.w .ends,X : STA.b $09
@@ -157,6 +171,8 @@ MenuMapTravel_Move:
 .next_cell
   INY : CPY.b $09 : BCC .scan_row
   LDA.b $02 : CMP.b #$FF : BNE .accept
+  BRA .next_row
+.stay
   RTS
 .accept
   LDA.b $02 : STA.w $020B
@@ -164,18 +180,18 @@ MenuMapTravel_Move:
   LDA.b #$20 : STA.w $012F
   RTS
 .next
-  db $01,$FF, $03,$04,$05,$06,$07,$FF   ; $FF = row edge
+  db $01,$FF, $03,$04,$FF, $06,$07,$FF  ; $FF = row edge
 .prev
-  db $FF,$00, $FF,$02,$03,$04,$05,$06
+  db $FF,$00, $FF,$02,$03, $FF,$05,$06
 .starts
-  db 0,2
+  db 0,2,5
 .ends
-  db 2,8
+  db 2,5,8
 }
 MenuMapTravel_Rows:
-  db 0,0, 1,1,1,1,1,1
-MenuMapTravel_Columns:
-  db 7,17, 7,10,13,17,20,23
+  db 0,0, 1,1,1, 2,2,2
+MenuMapTravel_Columns:                  ; absolute icon column (v4)
+  db 9,20, 8,14,20, 8,14,20
 
 ; ---------------------------------------------------------
 ; A or Y. Songs bind like Equipment; Map and Travel close the menu and
@@ -331,8 +347,9 @@ org $02A54D ; Module09_00_PlayerControl ; @hook module=Menu name=MenuMapTravel_C
 pullpc
 
 ; ---------------------------------------------------------
-; Same frame, spacing and brackets as Equipment: Map/Travel on the mask row,
-; area name on the ring row, songs on the song row.
+; v4 layout (make_frame_preserved_v4.py): area name header on row 9,
+; MAP | TRAVEL labels on row 11 over their icons, SONGS label on row 16 over
+; a 3x2 song grid. Footer names the cell under the cursor.
 MenuMapTravel_Draw:
 {
   JSR Menu_DrawBackground
@@ -343,15 +360,15 @@ MenuMapTravel_Draw:
   DEX #2 : BPL .title
   LDX.w #$0004
 .map_label
-  LDA.w .map_text,X : STA.w $1000+menu_offset(9,6),X
+  LDA.w .map_text,X : STA.w $1000+menu_offset(11,8),X
   DEX #2 : BPL .map_label
   LDX.w #$000A
 .travel_label
-  LDA.w .travel_text,X : STA.w $1000+menu_offset(9,16),X
+  LDA.w .travel_text,X : STA.w $1000+menu_offset(11,18),X
   DEX #2 : BPL .travel_label
   LDX.w #$0008
 .songs_label
-  LDA.w .songs_text,X : STA.w $1000+menu_offset(17,6),X
+  LDA.w .songs_text,X : STA.w $1000+menu_offset(16,13),X
   DEX #2 : BPL .songs_label
   JSR MenuMapTravel_AreaName
 
@@ -415,13 +432,13 @@ MenuMapTravel_Draw:
 }
 
 ; ---------------------------------------------------------
-; Current area name, centered on row 13. Overworld names stop at $3F
-; (the $40+ table rows are not 16-word aligned); special areas show none.
+; Current area name, centered on row 9 (the Map page header). Light World and Abyss names
+; ($00-$7F, 16 cells each with the AbyssName pad); special areas show none.
 ; In/out M/X=16.
 MenuMapTravel_AreaName:
 {
   LDA.b $1B : AND.w #$00FF : BNE .indoors
-  LDA.b $8A : AND.w #$00FF : CMP.w #$0040 : BCS .none
+  LDA.b $8A : AND.w #$00FF : CMP.w #$0080 : BCS .none
   ASL #5 : CLC : ADC.w #OverworldLocationNames
   BRA .have
 .indoors
@@ -436,7 +453,7 @@ MenuMapTravel_AreaName:
 .found
   INY #2 : STY.b $02                    ; byte length
   LDA.w #$0040 : SEC : SBC.b $02 : LSR : AND.w #$FFFE
-  CLC : ADC.w #menu_offset(13,0) : TAX
+  CLC : ADC.w #menu_offset(9,0) : TAX
   LDY.w #$0000
 .copy
   LDA.b ($00),Y : STA.w $1000,X
@@ -456,6 +473,9 @@ MenuMapTravel_Names:
 MenuMapTravel_Gfx:
   dw MapGFX,OcarinaGFX
   dw QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX
+; DrawMenuItem offsets (absolute minus row 4, col 4). Map (13,9), Travel (13,20);
+; songs at rows 18/21, cols 8/14/20 absolute.
 MenuMapTravel_Pos:
-  dw menu_offset(6,3),menu_offset(6,13)
-  dw menu_offset(14,3),menu_offset(14,6),menu_offset(14,9),menu_offset(14,13),menu_offset(14,16),menu_offset(14,19)
+  dw menu_offset(9,5),menu_offset(9,16)
+  dw menu_offset(14,4),menu_offset(14,10),menu_offset(14,16)
+  dw menu_offset(17,4),menu_offset(17,10),menu_offset(17,16)

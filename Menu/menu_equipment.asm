@@ -1,13 +1,14 @@
 ; Functional Equipment: slots 0-5 masks, 6-11 rings, 12-17 songs, 18-23 supplies,
-; 24 story blade, 25 heavy sword (GEAR band, logical row 4).
+; 24 story blade, 25 heavy sword, 26 tunic colour (GEAR band, logical row 4).
 ; v4 bands, top to bottom: GEAR, MASKS, RINGS, then SONGS or SUPPLIES.
 ; Songs leave band 3 when Map & Travel is on; supplies may then take it.
 ; $020B is only the cursor; BoundMask, RingSlot1 and CurrentSong are selections.
 ; No preview fixture or ownership spoof controls availability. DBR = $2D.
-; Supplies retain slots/counts but stay hidden until their menu is enabled.
+; Supplies show in band 3 whenever Map & Travel has taken the songs out of it.
+; A build may predefine MENU_EQUIPMENT_SUPPLIES_VISIBLE = 0 to hide them again.
 ; This is a build policy, not a new save byte or an inventory migration.
 if not(defined("MENU_EQUIPMENT_SUPPLIES_VISIBLE"))
-  !MENU_EQUIPMENT_SUPPLIES_VISIBLE = 0
+  !MENU_EQUIPMENT_SUPPLIES_VISIBLE = !ENABLE_MENU_MAP_TRAVEL
 endif
 assert !ENABLE_MENU_MAP_TRAVEL == 1 || !MENU_EQUIPMENT_SUPPLIES_VISIBLE == 0, "Songs and Supplies share Equipment band 3"
 ; Two-slot swords: Sword ($7EF359) is the equipped combat/graphics level.
@@ -20,6 +21,9 @@ Menu_Equipment_Init:
   JSL SwordSlots_Sync
   JSL UpdateFluteSong_Long
   STZ.w $0207
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  JSL MenuFlow_EquipRestore : BCS .done ; D-pad cross or remembered slot
+endif
   LDA.l BoundMask : DEC : CMP.b #$06 : BCS .first
   STA.w $020B
   JSR Menu_Equipment_Owned : BNE .done
@@ -28,7 +32,7 @@ Menu_Equipment_Init:
 .scan
   STA.w $020B
   JSR Menu_Equipment_Owned : BNE .done
-  LDA.w $020B : INC : CMP.b #$1A : BCC .scan
+  LDA.w $020B : INC : CMP.b #$1B : BCC .scan
   LDA.b #$FF : STA.w $020B             ; no valid owned entry has no cursor
 .done
   RTS
@@ -102,7 +106,7 @@ Menu_Equipment_SupplyCount:
 Menu_Equipment_Move:
 {
   SEP #$30
-  LDA.w $020B : CMP.b #$1A : BCC .valid
+  LDA.w $020B : CMP.b #$1B : BCC .valid
   LDA.b $F4 : AND.b #$03 : BNE .turn
   JMP Menu_Equipment_Init
 .valid
@@ -121,9 +125,8 @@ Menu_Equipment_Move:
   LDA.w Menu_Equipment_Columns,X : CMP.b #$17 : BEQ .turn ; last column
   LDA.w .next,X : BRA .candidate
 .gear_right
-  CPX.b #$19 : BEQ .turn             ; heavy sword is the GEAR row's last cell
-  LDA.b #$19 : JSR Menu_Equipment_Owned : BEQ .turn
-  LDA.b #$19 : BRA .candidate
+  CPX.b #$1A : BEQ .turn             ; tunic is the GEAR row's last cell
+  INX : TXA : BRA .candidate
 .left
   LDA.w Menu_Equipment_Columns,X : CMP.b #$07 : BEQ .turn ; first column
   LDA.w .prev,X
@@ -175,18 +178,18 @@ Menu_Equipment_Move:
 .done
   RTS
 .next
-  db 1,2,3,4,5,0, 7,8,9,10,11,6, 13,14,15,16,17,12, 19,20,21,22,23,18, 25,24
+  db 1,2,3,4,5,0, 7,8,9,10,11,6, 13,14,15,16,17,12, 19,20,21,22,23,18, 25,26,24
 .prev
-  db 5,0,1,2,3,4, 11,6,7,8,9,10, 17,12,13,14,15,16, 23,18,19,20,21,22, 25,24
+  db 5,0,1,2,3,4, 11,6,7,8,9,10, 17,12,13,14,15,16, 23,18,19,20,21,22, 26,24,25
 .starts
   db 0,6,12,18,24
 .ends
-  db 6,12,18,24,26
+  db 6,12,18,24,27
 }
 Menu_Equipment_Rows:
-  db 0,0,0,0,0,0, 1,1,1,1,1,1, 2,2,2,2,2,2, 3,3,3,3,3,3, 4,4
+  db 0,0,0,0,0,0, 1,1,1,1,1,1, 2,2,2,2,2,2, 3,3,3,3,3,3, 4,4,4
 Menu_Equipment_Columns:
-  db 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10
+  db 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,16
 
 Menu_Equipment_Select:
 {
@@ -244,13 +247,13 @@ if !ENABLE_MENU_MAP_TRAVEL == 0
   LDA.w .songs,X : STA.w $1000+menu_offset(21,6),X
 endif
   DEX #2 : BPL .labels
-  JSR Menu_Equipment_Gear
 if !MENU_EQUIPMENT_SUPPLIES_VISIBLE == 1
-  LDX.w #$000E
+  LDX.w #$000E                       ; before Gear: it returns with M/X=8
 .supplies_label
   LDA.w .supplies,X : STA.w $1000+menu_offset(21,6),X
   DEX #2 : BPL .supplies_label
 endif
+  JSR Menu_Equipment_Gear
   SEP #$30
   LDA.b #$7E : STA.b $0A
   LDY.b #$00
@@ -323,8 +326,9 @@ endif
   dw "SUPPLIES"
 }
 
-; GEAR band: story blade, heavy sword (cursor slots 24/25), then passive
-; shield, tunic, glove, boots, flippers (display only). Passive variants come
+; GEAR band: story blade, heavy sword (cursor slots 24/25), passive shield,
+; tunic (cursor slot 26, worn colour), then passive glove, boots,
+; flippers (display only). The tunic icon shows the worn colour. Passive variants come
 ; from Menu_Quest_GearVariant, the same SRAM reads Quest used before v4.
 Menu_Equipment_Gear:
 {
@@ -450,5 +454,5 @@ Menu_Equipment_Pos:
   dw menu_offset(18,3),menu_offset(18,6),menu_offset(18,9),menu_offset(18,13),menu_offset(18,16),menu_offset(18,19)
   dw menu_offset(18,3),menu_offset(18,6),menu_offset(18,9)
   dw menu_offset(18,13),menu_offset(18,16),menu_offset(18,19)
-  dw menu_offset(6,3),menu_offset(6,6)
+  dw menu_offset(6,3),menu_offset(6,6),menu_offset(6,12) ; story, heavy, tunic
 assert menu_offset(6,6) == !HEAVY_ICON_POS, "SwordSlots_MarkerSlot recolors the heavy icon at menu_offset(6,6)"

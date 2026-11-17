@@ -76,6 +76,17 @@ endif
 AbyssLanding = $7E02B8 ; state (0 off, 1 armed, 2 mosaic, 3 pan); +1 = camera rows left
 assert AbyssLanding+2 <= $7E02C0
 
+; Menu cursor flow (!ENABLE_MENU_MAP_TRAVEL, Menu/menu_cursor_flow.asm).
+; Vanilla-unused $7E02BA-$7E02BE (usdasm UNUSED_7E02BA-BE, zero at boot).
+; Not persistent: the cursors last across menu opens until power-off.
+MenuFlow_EquipCursor = $7E02BA ; Equipment slot + 1 (0 = none)
+MenuFlow_MapCursor   = $7E02BB ; Map & Travel cell + 1 (0 = none)
+MenuFlow_CrossRow    = $7E02BC ; D-pad page cross: source row ordinal + 1 (0 = none)
+MenuFlow_CrossDir    = $7E02BD ; 0 = turned right (land left), $1F = turned left
+MenuFlow_TunicPopup  = $7E02BE ; 0 = closed; $80 | highlighted colour while open
+assert AbyssLanding+2 == MenuFlow_EquipCursor
+assert MenuFlow_TunicPopup+1 <= $7E02C0
+
 if !ENABLE_HORSE_FORM == 1
 base $7E1EDE
 {
