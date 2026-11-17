@@ -84,6 +84,7 @@ MenuFlow_MapCursor   = $7E02BB ; Map & Travel cell + 1 (0 = none)
 MenuFlow_CrossRow    = $7E02BC ; D-pad page cross: source row ordinal + 1 (0 = none)
 MenuFlow_CrossDir    = $7E02BD ; 0 = turned right (land left), $1F = turned left
 MenuFlow_TunicPopup  = $7E02BE ; 0 = closed; $80 | highlighted colour while open
+MenuFlow_SongPopup   = MenuFlow_TunicPopup ; Map & Travel: $80 | highlighted song - 1 (pages never overlap)
 assert AbyssLanding+2 == MenuFlow_EquipCursor
 assert MenuFlow_TunicPopup+1 <= $7E02C0
 
