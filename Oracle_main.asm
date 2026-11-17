@@ -181,6 +181,11 @@ namespace Oracle
     incsrc "Core/title/title_screen.asm"
   endif
 
+  ; Oracle file select restyle, option E (default on; see Util/macros.asm).
+  if !ENABLE_ORACLE_FILE_SELECT == 1
+    incsrc "Core/title/file_select.asm"
+  endif
+
   ; Native 2-player feature (RC profile enabled; see Util/macros.asm)
   if !ENABLE_NATIVE_2P_POC == 1
     incsrc "Sprites/Players/player2.asm"
