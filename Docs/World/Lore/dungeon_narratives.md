@@ -97,7 +97,7 @@ See also: `story_bible.md` Section 5 (Essence Presentation) for the full three-l
 
 **ALTTP Equivalent:** Palace of Darkness
 **Essence:** Whispering Vines (Growth, secrets hidden in nature)
-**Key Item:** Bow & Arrow
+**Key Item:** Boomerang (big chest, room $2A). The Lamp is in chest room $53; the Mushroom stays in room $0B. Ruling 2026-11-17 (AFS `knowledge/planning/decisions.org`); the Bow moved to D3.
 
 #### Narrative Role
 The Mushroom Grotto serves as Link's first test after returning from the Eon Abyss. The Maku Tree directs Link west toward the Grotto, which is conveniently located just west of Wayward Village. The forest itself has grown wild and hostile since Kydrog's influence spread—what was once a peaceful grove is now choked with poison spores and aggressive plant life.
@@ -122,13 +122,13 @@ The approach to D1 is where the real worldbuilding happens:
 1. Explore Toadstool Woods, meet the elder, collect Mushroom
 2. Solve the Lost Woods puzzle to reach the Grotto entrance
 3. Navigate poison spore puzzles inside the dungeon
-4. Obtain Bow & Arrow (key item — ranged combat opens new possibilities)
+4. Obtain the Boomerang (key item — stuns enemies and hits switches at range)
 5. Defeat boss, claim essence
 6. Forest begins to heal (subtle environmental change)
 
 #### Narrative Hooks (Current)
 - **What the player learns:** The forest is corrupted by Kydrog's influence; the elder provides context about the island's ancient history
-- **What power changes options:** Bow & Arrow — first ranged weapon, enables puzzle-solving and combat at distance
+- **What power changes options:** Boomerang — first ranged tool: stuns enemies, hits switches and collects items at a distance
 - **What tension escalates:** The elder's lore hints at a much larger conflict (essences, Triforce, Master Sword) but the player's immediate concern is just clearing the corrupted forest
 
 #### Gossip Stone Reference
@@ -202,6 +202,7 @@ The palace interior currently has no environmental storytelling about the Kalyxi
 
 **ALTTP Equivalent:** Skull Woods
 **Essence:** Crown of Shadows (Authority, the burden of power)
+**Key Item:** Bow & Arrow (ruling 2026-11-17; chest room not yet chosen). Meadow Blade is also listed for D3 in the quick reference.
 
 #### Narrative Role
 The Hylian-occupied castle represents the gray morality of occupation. The soldiers aren't evil—they're following orders, afraid of the magic they don't understand. Link must navigate both enemies and uncomfortable truths about "protection."
@@ -602,9 +603,9 @@ When Kydreeok falls, there may be a moment of clarity—the hero he once was sur
 
 | Dungeon | Essence | Theme | Key Item | Key NPC | Hook Strength |
 |---------|---------|-------|----------|---------|---------------|
-| D1 Mushroom Grotto | Whispering Vines | Corruption/healing | Bow & Arrow | Elder Woman | Moderate |
+| D1 Mushroom Grotto | Whispering Vines | Corruption/healing | Boomerang | Elder Woman | Moderate |
 | D2 Tail Palace | Celestial Veil | Aspiration | Roc's Feather | Deku Scrubs | Moderate |
-| D3 Kalyxo Castle | Crown of Shadows | Authority/burden | Meadow Blade | Guards | Strong |
+| D3 Kalyxo Castle | Crown of Shadows | Authority/burden | Bow & Arrow; Meadow Blade | Guards | Strong |
 | D4 Zora Temple | Luminous Mirage | Truth/deception | Zora Mask | Zora Princess | Excellent |
 | D5 Glacia Estate | Ebon Ember | Duality | Fire Rod | Twinrova | Excellent |
 | D6 Goron Mines | Seismic Whisper | Foundation/trust | Hammer | Goron Elder | Good |

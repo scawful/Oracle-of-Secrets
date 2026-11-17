@@ -12,6 +12,31 @@ ROM, z3ed v0.8.0-g356ca86b6, headless Mesen2 runs on b28 + `s3_dungeon_id` (logs
 in the D7 big-key patch README), editor sources `~/src/hobby/yaze/src` and
 `~/src/hobby/ZScreamDungeon/ZeldaFullEditor`.
 
+## Where the tables are (live Oracle ROM)
+
+Query these through z3ed (or the yaze-editor MCP tools), not through new scripts.
+z3ed derives each address from the game's own code operands. Vanilla addresses from
+the disassembly are wrong for Oracle where this table says so.
+
+| Data | Live location | Vanilla trap | z3ed command |
+|---|---|---|---|
+| Chest items | PC `0x0E96E` (operand at `0x0EBFB`), 168 records | same | `dungeon-list-chests [--room]` |
+| Sprite lists | pointers `$09:D2B2` = PC `0x4D2B2` (operand at `0x4C298`) | `0x4D62E` is wrong | `dungeon-list-sprites --room` (shows `key_drop`: 1 small, 2 big) |
+| Room headers | pointers `$22:8000` = PC `0x110000` (operand `0x0B5DD`, bank `0x0B5E7`) | vanilla `$04:F1E2` is wrong | `dungeon-room-header --room` |
+| Pot items | pointers PC `0x0DB69`; data bank from loader `0x0E6C7` (`$5C` = PC `0x2E0000`) | bank `$01` copy (PC `0x0DDE7`) is not read | `dungeon-list-pot-items --room` |
+| Dungeon entrances | expanded `$0F` tables: rooms PC `0x78000`, dungeon ID `0x79800` | `0x14813` is stale (see section 4) | `dungeon-get-entrance --entrance` |
+| Overworld entrances | vanilla tables `0xDB96F` / `0xDBA71` / `0xDBB73` (`Overworld/entrances.asm`) | same | `overworld-get-entrance --entrance` |
+
+Traps:
+1. `dungeon-room-header` prints `is_light: true` when header byte 0 bit 0 is 1. Bit 0 = 1
+   means the room is **dark** (yaze `IsDarkRoomHeaderByte`).
+2. yaze reads dungeon entrances `0x00-0x84`. The expanded table has nonzero rows past
+   `0x84`, but no overworld entrance or hole uses an ID above `0x84` (checked 2026-11-17).
+3. Room tags print as numbers. Oracle replaces several vanilla tag routines; the
+   `org $01CCxx ... ; @hook ... name=` lines in the ASM give the Oracle names.
+4. z3ed has no all-rooms search yet (find a sprite, item or tag in every room). Add it to
+   z3ed; do not write a Python decoder.
+
 ## Verdicts
 
 | # | Table | Capacity | In use / free | Verdict |
@@ -108,9 +133,15 @@ in the D7 big-key patch README), editor sources `~/src/hobby/yaze/src` and
 The entrance loader reads ZScream's tables in bank `$0F` (`LDA $9800,X` at
 `$02:DA96`, DBR from `JSL $0FF008`).
 
-**yaze reads and writes the old table `$02:D48B` (`room_entrance.h:34`), which the
-game no longer reads.** ZScream uses `$0F:9800`, detected through the `0x7F000` marker.
-Both tables are identical today.
+ZScream's expanded tables are active when PC `0x7F000` holds `0001`. yaze picks the
+same layout through `ResolveEntranceLayout` (`src/zelda3/dungeon/room_entrance.h`), so
+z3ed reads the tables the game reads. (Before that change, this doc said yaze read the
+old table `$02:D48B`.)
+
+**The vanilla tables are stale.** On 2026-11-17 the room words at vanilla PC `0x14813`
+differed from the live table at PC `0x78000` at 7 entrances (`0x08 0x29 0x68 0x70 0x72
+0x7B 0x83`; for example entrance `0x08` is room `$28` in the old table and `$AB` live).
+Never read entrance data from `0x14813`.
 
 **Tables indexed by ID:**
 
