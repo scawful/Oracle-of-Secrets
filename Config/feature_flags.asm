@@ -54,7 +54,7 @@
 !ENABLE_INTRO_STALFOS_PATROL          = 1
 !ENABLE_JOURNAL_DEFERRED              = 1
 !ENABLE_JUMPTABLELOCAL_GUARD          = 1
-!ENABLE_KALYXO_BOAT                   = 0
+!ENABLE_KALYXO_BOAT                   = 1
 !ENABLE_KALYXO_DOCKS_PROFILE          = 0
 !ENABLE_KOROK_POLISH                  = 1
 !ENABLE_KYDREEOK_CHAMBER              = 1
