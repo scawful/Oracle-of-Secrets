@@ -564,5 +564,56 @@ HorseLong_Lerp:
   RTS
 }
 endif
+
+; Relocated from Masks/horse_form.asm (same bank $53) to relieve $53D000 ceiling.
+; Writes one OAM entry at Y ($0800+Y) and $0A20+(Y>>2). Requires DBR=$00. Keeps Y.
+; Inputs (M=16): $08=screen X (signed), $0E=screen Y (signed), $0B=tile, $0A=attr, $0C=size (0 or 2).
+HorseOam_WriteSlot:
+{
+  ; Clip Y if completely offscreen vertically (224..65519)
+  LDA.b $0E : CLC : ADC.w #$0010 : CMP.w #$0100 : BCS .offscreen
+  ; Clip X if outside [-16..255]
+  LDA.b $08 : CLC : ADC.w #$0010 : CMP.w #$0110 : BCS .offscreen
+
+  ; On screen: write OAM $0800..$0803 via DBR=$00 WRAM mirror
+  SEP #$20
+  LDA.b $08 : STA.w $0800, Y        ; X low
+  LDA.b $0E : STA.w $0801, Y        ; Y
+  LDA.b $0B : STA.w $0802, Y        ; tile
+  LDA.b $0A : STA.w $0803, Y        ; attr
+
+  ; Compute $0A20 index and high X bit
+  LDA.b $09 : AND.b #$01              ; high bit of Screen X ($08/$09)
+  ORA.b $0C                           ; size bit ($02 or $00)
+  PHA
+  REP #$20
+  TYA : LSR #2 : TAX
+  SEP #$20
+  PLA : STA.w $0A20, X
+  REP #$20
+  RTS
+
+  .offscreen
+  SEP #$20
+  LDA.b #$F0 : STA.w $0801, Y
+  REP #$20
+  TYA : LSR #2 : TAX
+  SEP #$20
+  LDA.b #$01 : STA.w $0A20, X
+  REP #$20
+  RTS
+}
+
+HorseOam_HideAll:
+{
+  LDA.w $0352 : LSR #2 : TAX
+  LDA.w #$0101
+  LDY.b #5
+- STA.w $0A20, X
+  INX : INX
+  DEY : BPL -
+  RTS
+}
+
 assert pc() <= $53E800, "Horse grounded clearance exceeded its bounded bank53 slice"
 pullpc

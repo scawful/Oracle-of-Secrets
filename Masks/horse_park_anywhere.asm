@@ -5,16 +5,33 @@
 !HorsePark_DefaultNpcX = $01C0
 !HorsePark_DefaultNpcY = $0294
 
-; Write Link outdoor XY + $8A into the park anchor. M=8,X=8,DBR=$00.
+; Write Link outdoor XY + $8A into the park anchor only on settled dry ground.
+; M=8,X=8,DBR=$00 (enforces M=8 internally; preserves caller P/X/Y/DBR).
 HorseForm_SaveOutdoorAnchor_Long:
 {
   PHP
+  SEP #$20
+  LDA.b $1B : BNE .skip
+  LDA.b $10 : CMP.b #$09 : BEQ +
+  CMP.b #$0B : BNE .skip
+  +
+  LDA.b $11 : BNE .skip
+  LDA.l Horse_State : BNE .skip
+  LDA.b $5D : ORA.b $4D : ORA.b $6C : BNE .skip
+  LDA.b $5B : CMP.b #$02 : BCS .skip
+  LDA.b $25 : BMI .neg_z
+    LDA.b $24 : BNE .skip
+    BRA .save
+  .neg_z
+  LDA.b $24 : CMP.b #$F0 : BCC .skip
+  .save
   REP #$20
   LDA.b $22 : STA.l Horse_AnchorX
   LDA.b $20 : STA.l Horse_AnchorY
   SEP #$20
   LDA.b $8A : STA.l Horse_AnchorArea
   LDA.b #$01 : STA.l Horse_HasAnchor
+  .skip
   PLP
   RTL
 }
@@ -28,7 +45,10 @@ HorseForm_MaintainParkedNpc_Long:
   LDA.b #$00 : PHA : PLB
 
   LDA.b $1B : BEQ + : BRL .leave_keep_or_clear : +
-  LDA.b $10 : CMP.b #$09 : BEQ + : PLB : PLP : RTL : +
+  LDA.b $10 : CMP.b #$09 : BEQ +
+  CMP.b #$0B : BEQ +
+  PLB : PLP : RTL
+  +
   LDA.b $11 : BEQ + : PLB : PLP : RTL : +
   LDA.w $0FFC : BEQ + : PLB : PLP : RTL : +
 
@@ -126,26 +146,33 @@ HorseForm_MaintainParkedNpc_Long:
 ; she is no longer wanted or another actor draws from those chars.
 ; ---------------------------------------------------------
 
-; One OAM entry at <entry>+X: shown, page 1, not Epona ($37), char < $20
-; -> .scan_hit. M8/X8, DBR $00.
+; One OAM entry at <entry>+X: shown, page 1, char < $20, outside Epona's own
+; 8-entry OAM allocation [Horse_OffOam..Horse_OffOam+$1F] -> .scan_hit. M8/X8, DBR $00.
 macro HorseScanOam(entry)
   LDA.w <entry>+1, X : CMP.b #$F0 : BEQ +
   LDA.w <entry>+3, X : LSR : BCC +                ; page 0
-  LDA.w <entry>+3, X : AND.b #$3F : CMP.b #$37 : BEQ + ; Epona (any flip)
   LDA.w <entry>+2, X : CMP.b #$20 : BCS +
+    REP #$20
+    LDA.w #<entry> : JSR .check_not_epona
+    BCC +
     JMP .scan_hit
   +
 endmacro
 
 ; Main loop $008056: Module_MainRouting, then scan the finished OAM buffer.
-; Any visible page1 entry with char < $20 that is not Epona ($37 attributes)
+; Any visible page1 entry with char < $20 outside sprite $2D's OAM allocation
 ; hides Epona's entries this frame and makes her run off (Horse_RunOff); the
 ; NMI then restores the native cells once. Registers, widths, DBR preserved.
 Horse_FrameEndScan:
 {
+  PHP : SEP #$20 : PHA
+  LDA.l $7E0010 : CMP.b #$0E : BEQ +
+    LDA.b #$00 : STA.l Horse_OffOam : STA.l Horse_OffOam+1
+  +
+  PLA : PLP
   JSL $0080B5 ; Module_MainRouting
   PHP : PHB
-  REP #$30 : PHA : PHX
+  REP #$30 : PHA : PHX : PHY
   SEP #$20
   LDA.b #$00 : PHA : PLB
   REP #$20 : LDA.l Horse_Marker : CMP.w #$4852 : SEP #$20 : BNE .reset
@@ -156,9 +183,11 @@ Horse_FrameEndScan:
     CMP.b #$02 : BEQ .done
     BRA .leaving
   .not_pause
-  CMP.b #$09 : BNE .leaving
+  CMP.b #$09 : BEQ +
+  CMP.b #$0B : BNE .leaving
+  +
   LDA.b $1B : ORA.b $11 : BNE .leaving
-  LDA.l Horse_NpcActive : BEQ .reset
+  LDA.l Horse_NpcActive : BEQ .leaving
   JSL Horse_RanchProfileReady : BCS .reset
   JSR .scan_oam : BCS .conflict
   LDA.l Horse_OffClear : INC : BEQ .done          ; saturate at $FF
@@ -175,9 +204,9 @@ Horse_FrameEndScan:
   JSR .hide_epona
   JSL Horse_RunOff
   .reset
-  LDA.b #$00 : STA.l Horse_OffClear
+  LDA.b #$00 : STA.l Horse_OffClear : STA.l Horse_OffOam : STA.l Horse_OffOam+1
   .done
-  REP #$30 : PLX : PLA
+  REP #$30 : PLY : PLX : PLA
   PLB : PLP
   RTL
 
@@ -200,14 +229,38 @@ Horse_FrameEndScan:
   REP #$10 : SEC
   RTS
 
+  ; Entry: M=16, X=8 (XH=0), A = <entry> base ($0800..$090C).
+  ; Exit:  M=8,  X=8 (X kept), C=1 if outside [Horse_OffOam..Horse_OffOam+$1F].
+  .check_not_epona
+  PHA
+  LDA.l Horse_OffOam : BEQ .not_epona_pop
+  TXA
+  CLC : ADC 1, S
+  SEC : SBC.l Horse_OffOam
+  CMP.w #$0020
+  PLA
+  SEP #$20
+  RTS
+  .not_epona_pop
+  PLA
+  SEP #$20
+  SEC
+  RTS
+
   .hide_epona
-  LDX.w #$01FC
+  REP #$20
+  LDA.l Horse_OffOam : CMP.w #$0800 : BCC .hide_done
+  CMP.w #$09E4 : BCS .hide_done
+  TAX
+  SEP #$20
+  LDY.w #$0007
+  LDA.b #$F0
   .hide
-    LDA.w $0803, X : AND.b #$3F : CMP.b #$37 : BNE .hide_next
-    LDA.w $0802, X : CMP.b #$20 : BCS .hide_next
-    LDA.b #$F0 : STA.w $0801, X
-    .hide_next
-    DEX #4 : BPL .hide
+    STA.w $0001, X
+    INX #4
+    DEY : BPL .hide
+  .hide_done
+  SEP #$20
   RTS
 }
 
@@ -270,7 +323,9 @@ Horse_OffRanchNpc:
     .hold
     CLC : RTL                                     ; keep her cells as they are
   .not_pause
-  CMP.b #$09 : BNE .unwant
+  CMP.b #$09 : BEQ +
+  CMP.b #$0B : BNE .unwant
+  +
   LDA.b $11 : BNE .unwant
   LDA.b $1B : BNE .unwant
   LDA.l Horse_NpcActive : BEQ .unwant

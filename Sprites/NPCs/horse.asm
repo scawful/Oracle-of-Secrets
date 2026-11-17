@@ -226,6 +226,11 @@ Sprite_HorseNPC_Draw:
 {
   JSL Sprite_PrepOamCoord             ; $00=X, $02=Y (relative to camera)
   JSL Sprite_OAM_AllocateDeferToPlayer
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  REP #$20
+  LDA.b $90 : STA.l Horse_OffOam      ; exact 8-slot OAM base [$90..$90+$1F] for HorseScanOam
+  SEP #$20
+endif
 
   ; Optional vertical hop feedback on pre-unlock gentle refusal.
   LDA.w SprTimerA, X : BEQ .no_hop

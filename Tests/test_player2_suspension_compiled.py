@@ -134,8 +134,11 @@ def main():
             def busy(f,kind):
                 if kind=='bird':f.put(0xC4A+4,0x27)
                 elif kind in ('hook','receipt'):f.put(0xC4A+4,0x1F if kind=='hook' else 0x22)
+                elif kind in ('horse-arrow-flight','horse-arrow-wall'):
+                    f.put(0x7E02B2,0x09)
+                    f.put(0xC4A+4,0x09 if kind=='horse-arrow-flight' else 0x0A)
                 else:f.put(0xDD0+12,9);f.put(0xE20+12,0xEA if kind=='heart' else 0xE7)
-            for owner in ('bird','hook','receipt','heart','mushroom'):
+            for owner in ('bird','hook','receipt','heart','mushroom','horse-arrow-flight','horse-arrow-wall'):
                 def gate(f,owner=owner):
                     busy(f,owner);f.run('P2_CanAct');assert not f.cpu.c
                     assert f.cpu.x==6 and f.cpu.y==7
@@ -250,6 +253,16 @@ def main():
                 f.run('P2_SlotsBusy',x16=True,x=0xBEAD,y=0xCAFE)
                 assert f.cpu.c
             check('cutscene-duck-busy',cutscene_duck,True)
+            def foot_arrow_not_busy(f):
+                f.put(0x7E02B2,0x00);f.put(0xC4A+4,0x09);f.put(0xC4A+5,0x0A)
+                f.run('P2_SlotsBusy',x16=True,x=0xBEAD,y=0xCAFE)
+                assert not f.cpu.c
+            check('foot-arrow-not-busy',foot_arrow_not_busy)
+            def horse_without_arrow_not_busy(f):
+                f.put(0x7E02B2,0x09)
+                f.run('P2_SlotsBusy',x16=True,x=0xBEAD,y=0xCAFE)
+                assert not f.cpu.c
+            check('horse-without-arrow-not-busy',horse_without_arrow_not_busy)
             def action_hook_refusal(f):
                 f.put(0xC4A+4,0x27);f.put(0x7FF435,7);f.put(0x44,0x80)
                 f.run('P2_ActionGate',long_return=True,db=6)

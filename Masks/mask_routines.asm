@@ -580,6 +580,7 @@ if !ENABLE_HORSE_FORM == 1
         RTL
     ++
 if !ENABLE_HORSE_MOUNTED_BOW == 1
+    LDA.l $7EF3CC : BNE .horse_y_blocked
     LDA.w $0303 : CMP.b #$03 : BNE .horse_y_blocked
     LDA.l $7EF340 : BEQ .horse_y_blocked
     LDA.l $7EF377 : BEQ .horse_y_blocked
