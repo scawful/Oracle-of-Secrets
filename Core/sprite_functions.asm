@@ -155,6 +155,8 @@ RoundCoords:
   ; Clamp the X coord to the nearest multiple of 8.
   LDA.b $02 : CLC : ADC.b #$04 : AND.b #$F8 : STA.b $02 : STA.w SprX, X
 
+  STZ.w SprYRound, X
+  STZ.w SprXRound, X
   JSR UpdateCachedCoords
   RTS
 }

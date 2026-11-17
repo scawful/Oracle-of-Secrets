@@ -55,7 +55,7 @@
 
 ; Link is in cart
 !LinkInCart         = $35
-!MinecartSpeed      = 20
+!MinecartSpeed      = 40
 !DoubleSpeed        = 30
 
 ; SprMiscB and Minecart movement direction
@@ -471,13 +471,7 @@ Sprite_Minecart_Main:
     %PlayAnimation(2,3,8)
     JSR InitMovement
 
-    ; Used for an un-implemented speed switch feature.
-    LDA $36 : BNE .fast_speed
-      LDA.b #-!MinecartSpeed : STA.w SprYSpeed, X
-      JMP +
-    .fast_speed
-    LDA.b #-!DoubleSpeed : STA.w SprYSpeed, X
-    +
+    LDA.b #-!MinecartSpeed : STA.w SprYSpeed, X
 
     JSL Sprite_MoveVert
 
@@ -504,13 +498,7 @@ Sprite_Minecart_Main:
     %PlayAnimation(0,1,8)
     JSR InitMovement
 
-    ; Used for an un-implemented speed switch feature.
-    LDA $36 : BNE .fast_speed
-      LDA.b #!MinecartSpeed : STA.w SprXSpeed, X
-      JMP +
-    .fast_speed
-    LDA.b #!DoubleSpeed : STA.w SprXSpeed, X
-    +
+    LDA.b #!MinecartSpeed : STA.w SprXSpeed, X
 
     JSL Sprite_MoveHoriz
 
@@ -531,13 +519,7 @@ Sprite_Minecart_Main:
     %PlayAnimation(2,3,8)
     JSR InitMovement
 
-    ; Used for an un-implemented speed switch feature.
-    LDA $36 : BNE .fast_speed
-      LDA.b #!MinecartSpeed : STA.w SprYSpeed, X
-      JMP +
-    .fast_speed
-    LDA.b #!DoubleSpeed : STA.w SprYSpeed, X
-    +
+    LDA.b #!MinecartSpeed : STA.w SprYSpeed, X
 
     JSL Sprite_MoveVert
 
@@ -564,13 +546,7 @@ Sprite_Minecart_Main:
     %PlayAnimation(0,1,8)
     JSR InitMovement
 
-    ; Used for an un-implemented speed switch feature.
-    LDA $36 : BNE .fast_speed
-      LDA.b #-!MinecartSpeed : STA.w SprXSpeed, X
-      JMP +
-    .fast_speed
-    LDA.b #-!DoubleSpeed : STA.w SprXSpeed, X
-    +
+    LDA.b #-!MinecartSpeed : STA.w SprXSpeed, X
 
     JSL Sprite_MoveHoriz
 
@@ -608,9 +584,32 @@ Sprite_Minecart_Main:
 
 HandlePlayerCameraAndMoveCart:
 {
+  ; DragPlayer applies +-1 px plus +-1 px target catch-up (2.0 px/frame max).
+  ; Add the remaining integer cart displacement (delta -+ 1) so Link tracks
+  ; any cart speed while keeping a full 1.0 px/frame catch-up reserve.
+  PHX
+  CPY.b #$02 : BCS .horiz_drag
+    LDA.w SprY, X : SEC : SBC.w SprCachedY
+    LDX.b #$02
+    DEY : BEQ .pos_step
+    BRA .neg_step
+  .horiz_drag
+    LDA.w SprX, X : SEC : SBC.w SprCachedX
+    LDX.b #$00
+    CPY.b #$02 : BEQ .neg_step
+  .pos_step
+    DEC A
+    BRA .apply_drag
+  .neg_step
+    INC A
+  .apply_drag
+  LDY.b #$00 : CMP.b #$80 : BCC +
+    DEY
+  +
+  CLC : ADC.w DragYL, X : STA.w DragYL, X
+  TYA : ADC.w DragYH, X : STA.w DragYH, X
   LDA $22 : SEC : SBC $3F : STA $31
   LDA $20 : SEC : SBC $3E : STA $30
-  PHX
   JSL Link_HandleMovingAnimation_FullLongEntry
   JSL HandleIndoorCameraAndDoors
   JSL Link_CancelDash
@@ -1209,11 +1208,11 @@ CheckTrackSpritePresence:
       LDA.w SprXH, X : CMP.w SprXH, Y : BNE .not_b0
         ; Check if the low bytes match but round the cart's coordinates.
         ; The $B0 sprite sits on the same 8-px row as its switch tile
-        ; (switch_track.asm Prep reads the tile at the sprite's own row).
-        ; The zero operand keeps the routine's size (it was #$08).
-        LDA.w SprY, X : CLC : ADC.b #$04 : AND.b #$F8 : CLC : ADC.b #$00
+        ; (switch_track.asm Prep and HandleTileDirections both clamp with
+        ; AND #$F8; adding #$04 shrank single-cell switches to 4 px).
+        LDA.w SprY, X : AND.b #$F8
         CMP.w SprY, Y : BNE .not_b0
-        LDA.w SprX, X : CLC : ADC.b #$04 : AND.b #$F8
+        LDA.w SprX, X : AND.b #$F8
         CMP.w SprX, Y : BNE .not_b0
           STY.b $04
           SEC ; Set flag indicating sprite ID $B0 is present.
