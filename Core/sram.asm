@@ -143,8 +143,9 @@ endmacro
 ; ---------------------------------------------------------
 ; SideQuestProgress2 Bits ($7EF3D8)
 ; ---------------------------------------------------------
-; Bitfield: .bts fsmr
+; Bitfield: .bts fser
 !SideQuest2_RanchGirl      = $01  ; bit 0 - Revealed by powder, Ocarina given
+!SideQuest2_EponaSong      = $02  ; bit 1 - Ranch Girl taught Epona's Song (song 6)
 !SideQuest2_SongOfHealing  = $04  ; bit 2 - Mask Salesman taught
 !SideQuest2_FortuneTeller  = $08  ; bit 3 - Any fortune shown
 !SideQuest2_DekuSoulFreed  = $10  ; bit 4 - Before mask given
@@ -837,7 +838,46 @@ RegionalCheckpointSchema = $7EF3B4
 RegionalCheckpointEpoch  = $7EF3B5
 RegionalCheckpointKey    = $7EF3B6 ; word, ends before $7EF3B8
 RegionalCheckpointResumeIntent = $7EF3B8 ; byte: 0 Home, 1 last regional key
-FreeBlock_Large    = $7EF3B9  ; 12 bytes [B9,C5)
+; Root prototype grant 2026-11-14; not general live migration approval.
+; Disabled dual-item adapter: schema is written last; unsupported existing Y
+; selections must not be replaced by this Bow/Boomerang-only first slice.
+ItemBindingSavedVersion = $7EF3B9
+ItemBindingSavedY       = $7EF3BA
+ItemBindingSavedX       = $7EF3BB
+; Two-slot swords (scawful "Yes, two slots", 2026-11-16). Sword ($7EF359)
+; stays the EQUIPPED combat/graphics level; these keep story-blade and heavy
+; ownership apart. Free before: no reader/writer in Oracle/usdasm, not a
+; receipt destination, vanilla new-file clear, five-page save + checksum.
+; Bit7 clear = old save: Menu/menu_equipment.asm SwordSlots_Sync migrates it
+; (story := Sword if 1..4), never granting the heavy sword.
+SwordStoryBlade    = $7EF3BC  ; 0 none, 1 Meadow, 2+ Master levels
+SwordSlotFlags     = $7EF3BD  ; bit0 heavy owned, bit1 heavy equipped,
+                              ; bit2 heavy reforged (clear = broken), bit7 init
+!SwordSlot_HeavyOwned    = $01
+!SwordSlot_HeavyEquipped = $02
+!SwordSlot_HeavyReforged = $04
+!SwordSlot_Initialized   = $80
+;
+; Eon Goron camp quests (Roll Call + Meat Feast). Granted by root 2026-11-16
+; from FreeBlock_Large; inside the vanilla saved/checksummed block and cleared
+; by new-file init. No reader or writer yet; quest ASM owns the bits.
+;   bit 0-4: sentries C, D, E, G, H checked (Roll Call)
+;   bit 5:   Roll Call Heart Piece paid
+;   bit 6:   reserved (Sentry Duty, Loop C)
+;   bit 7:   Meat Feast done
+EonGoronQuest      = $7EF3BE
+FreeBlock_Large    = $7EF3BF  ; 5 bytes [BF,C4)
+; Richard quest (Wayward Village lady + night dog), PROPOSED 2026-11-15 by the
+; richard-quest lane: last byte of the Large remainder, so the menu-gear
+; lane's B9-BB reservation and the B9 block start stay untouched. Vanilla
+; new-file init clears it; 00 in every stored save checked (20 .srm files);
+; no item-receipt destination reaches $7EF3A0-3C4. Bits are masks below.
+; Only Overworld/richard_quest.asm reads or writes it (!ENABLE_RICHARD_QUEST).
+RichardQuestFlags  = $7EF3C4
+!Richard_Asked     = $01 ; talked to the pacing lady
+!Richard_Found     = $02 ; met Richard at night; he went home
+!Richard_Delivered = $04 ; lady ran inside with Richard
+!Richard_Rewarded  = $08 ; indoor reward given (never twice)
 
 ; ---------------------------------------------------------
 ; Dreams extension and current tail-event reservation ($7EF412-4FD)
@@ -845,7 +885,12 @@ FreeBlock_Large    = $7EF3B9  ; 12 bytes [B9,C5)
 ; Purpose: Large block after dreams/water gates
 ; Note: $7EF4FE-4FF are checksum (do not use)
 ;
-FreeBlock_Dreams   = $7EF412  ; 174 bytes [F412,F4C0)
+; Map & Travel: one bit per bird destination (bit i = LoadTransport entry i),
+; set on first entry to that area. Used only when !ENABLE_MENU_MAP_TRAVEL.
+TravelSpotsVisited = $7EF412 ; one byte
+FreeBlock_Dreams   = $7EF413  ; 140 bytes [F413,F49F)
+; $7EF49F-4BF reserved: special-event marker $7EF49F and areas 80-9F flags
+; $7EF4A0-4BF (SPECIAL_EVENT_NAMESPACE_PROPOSAL01). Not free.
 ; Root-owned current-build A0-BF event flags and migration marker. The native
 ; five-page save/checksum/new-file loops already cover both fields.
 LyraCurrentTailFlags   = $7EF4C0 ; 32 bytes [F4C0,F4E0)
@@ -861,8 +906,8 @@ FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF3A0  | $7EF3A0  | bits  | Wolf dig: bit 0 used |
 ; | $7EF3B3  | $7EF3B3  | 1     | Large prefix       |
-; | $7EF3B9  | $7EF3C4  | 12    | Large remainder    |
-; | $7EF412  | $7EF4BF  | 174   | Dreams prefix      |
+; | $7EF3BF  | $7EF3C3  | 5     | Large remainder    |
+; | $7EF413  | $7EF49E  | 140   | Dreams prefix      |
 ; | $7EF4E1  | $7EF4FD  | 29    | Dreams remainder   |
 ; |----------|----------|-------|--------------------|
 ; | Free-list comments describe candidates, not allocation grants.     |

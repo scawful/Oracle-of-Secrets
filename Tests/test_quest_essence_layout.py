@@ -119,13 +119,8 @@ class QuestEssenceLayout(unittest.TestCase):
                              r"STA\.w \$1000\+menu_offset\((\d+),(\d+)\),X", quest)
         run("location label", int(location.group(2)), int(location.group(3)), int(location.group(1), 16) // 2 + 1)
         gear = block(quest, "Menu_Quest_Gear")
-        label = re.search(r"LDX\.w #\$([0-9A-F]{4})\n\.gear_label\n\s*LDA\.w \.gear,X : "
-                          r"STA\.w \$1000\+menu_offset\((\d+),(\d+)\),X", gear)
-        run("GEAR label", int(label.group(2)), int(label.group(3)), int(label.group(1), 16) // 2 + 1)
-        gear_pos = re.findall(r"menu_offset\((\d+),(\d+)\)", between(gear, ".pos", ".gfx"))
-        self.assertEqual(len(gear_pos), 6)
-        for index, (y, x) in enumerate(gear_pos):
-            item(f"gear icon {index}", int(y), int(x))
+        # v4 moved the GEAR label and icons to Equipment; only the pearl remains here.
+        self.assertNotIn(".gear_label", gear)
         y, x = re.search(r"LDX\.w #menu_offset\((\d+),(\d+)\)[^\n]*\n\s*LDY\.w #MoonPearlGFX", gear).groups()
         item("moon pearl", int(y), int(x))
         y, x = re.search(r"LDX\.w #menu_offset\((\d+),(\d+)\)\n\s*JSR Menu_Quest_Number3", quest).groups()

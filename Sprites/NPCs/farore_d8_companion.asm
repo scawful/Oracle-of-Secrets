@@ -6,9 +6,6 @@
 D8Farore_Subtype = $D8
 ; c12 A6 authored BG1 floor left of the north Big Key door: local(56,64).
 ; Native $09C2A4/$09C2A9 room bases are X=$0C00,Y=$1400 for roomA6.
-!D8Farore_A6WorldX = $0C38
-!D8Farore_A6WorldY = $1440
-!D8Farore_A6Layer = 0
 D8Farore_CompanionStart:
 
 ; Input A=full room ID, M16; output A=0 absent,1 follows,2 waits, M8.
@@ -85,6 +82,7 @@ D8Farore_Prep:
   LDA.w $048F : STA.w SprMiscE,X
   STZ.w SprMiscB,X
   STZ.w SprGfx,X : STZ.w SprFrame,X
+  STZ.w SprMiscA,X ; per-actor following hysteresis; not persistent state
   STZ.w SprXSpeed,X : STZ.w SprYSpeed,X
   STZ.w SprHeight,X
   LDA.b #$80 : STA.w SprDefl,X
@@ -146,45 +144,22 @@ D8Farore_Frame:
 ; Try one bounded set of adjacent footprints; no repair/warp of Link. An
 ; unavailable footprint leaves the actor hidden and pending, never on a pit.
 D8Farore_TryPlace:
-{
-  LDA.b $A0 : CMP.b #$A6 : BEQ .wait_anchor
-  LDY.b #$00
-.try
-  PHY
-  REP #$20
-  TYA : AND.w #$00FF : ASL : TAY
-  LDA.b $22 : CLC : ADC.w .dx,Y : STA.b $08
-  LDA.b $20 : CLC : ADC.w .dy,Y : STA.b $0A
-  SEP #$20
-  LDA.b $EE : STA.w SprFloor,X
-  JSR D8Farore_CheckFootprint
-  PLY : BCC .place
-  INY : CPY.b #$05 : BCC .try
+  ; Keep the fixed support reservation small; the existing sprite-stream
+  ; helper owns collision-checked trailing candidates and pending retries.
+  JSL D8Farore_JoinBehind
   RTS
-.wait_anchor
-  REP #$20
-  LDA.w #!D8Farore_A6WorldX : STA.b $08
-  LDA.w #!D8Farore_A6WorldY : STA.b $0A
-  SEP #$20
-  LDA.b #!D8Farore_A6Layer : STA.w SprFloor,X
-  JSR D8Farore_CheckFootprint : BCS .done
-.place
-  LDA.b $08 : STA.w SprX,X
-  LDA.b $09 : STA.w SprXH,X
-  LDA.b $0A : STA.w SprY,X
-  LDA.b $0B : STA.w SprYH,X
-  LDA.b #$01 : STA.w SprMiscB,X
-.done
-  RTS
-.dx dw -24,24,0,0,0
-.dy dw 0,0,24,-24,0
-}
 
-; Four corners, same floor/plate set as the current Stone placement contract.
+; Entire16px footbox, sampled at0/7/15 across and4/11/19 down.
+; These cover every8px cell even at unaligned positions; local bounds refuse
+; footboxes that would wrap to another room. Same floor/plate allowlist.
 ; C=blocked. Existing Sprite_GetTileAttr exits M/X8 and clobbers scratch00..07.
 D8Farore_CheckFootprint:
 {
-  PHY : LDY.b #$03
+  REP #$20
+  LDA.b $08 : AND.w #$01FF : CMP.w #$01F1 : BCS .outside_room
+  LDA.b $0A : AND.w #$01FF : CMP.w #$01ED : BCS .outside_room
+  SEP #$20
+  PHY : LDY.b #$08
 .corner
   PHX : PHY
   REP #$20
@@ -204,8 +179,11 @@ D8Farore_CheckFootprint:
   PLY : CLC : RTS
 .blocked
   PLY : SEC : RTS
-.dx dw 0,15,0,15
-.dy dw 4,4,19,19
+.outside_room
+  SEP #$20
+  SEC : RTS
+.dx dw 0,7,15,0,7,15,0,7,15
+.dy dw 4,4,4,11,11,11,19,19,19
 }
 ; Follow code is in bank30; local footprint tables belong to this bank.
 D8Farore_CheckFootprintLong:

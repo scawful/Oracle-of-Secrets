@@ -75,7 +75,8 @@ endif
 
 LinkState_CheckMinishTile:
 {
-  LDA $02B2 : BEQ .blocked ; no form
+  ; 16-bit A here: mask off $02B3 (item-binding RAM) so only the form byte counts.
+  LDA $02B2 : AND.w #$00FF : BEQ .blocked ; no form
     CMP.w #$0007 : BEQ .allowed  ; moosh can fly over
       CMP.w #$0005 : BNE .blocked  ; not minish
       .allowed

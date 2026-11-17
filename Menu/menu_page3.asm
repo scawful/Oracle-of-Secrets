@@ -74,6 +74,9 @@ endif
 Menu_Page3_Turn:
 {
   SEP #$30
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  JMP MenuMapTravel_Turn                 ; four-page ring
+endif
   CMP.b #$01 : BEQ .right
   REP #$20
   LDA.w #$FFF8 : STA.w MenuScrollHDirection
@@ -123,9 +126,25 @@ endif
 Menu_Page3_ItemScreen:
 {
   SEP #$30
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  LDA.l MenuMapTravel_Pending : CMP.b #$03 : BNE .no_map_return
+    LDA.b #$00 : STA.l MenuMapTravel_Pending
+    LDA.b #$FF : JMP Menu_Page3_Turn     ; map closed: back to Map & Travel
+  .no_map_return
+endif
   LDA.b $F6 : BIT.b #$30 : BEQ .no_lr   ; L = $20, R = $10
+if !ENABLE_MENU_MAP_TRAVEL == 1
+    LDA.b $F4 : BIT.b #$10 : BEQ .ring_turn ; Start keeps its priority
+      JMP Menu_ItemScreen
+    .ring_turn
+    LDA.b $F6 : AND.b #$20 : BEQ .ring_right ; L wins
+      LDA.b #$FF : JMP Menu_Page3_Turn
+    .ring_right
+    LDA.b #$01 : JMP Menu_Page3_Turn
+else
     AND.b #$20 : STA.w MenuScrollLevelH ; L wins, as in Menu_CheckHScroll
     JMP Menu_ItemScreen
+endif
   .no_lr
 
 if !ENABLE_MENU_PAGE_LOOP == 0
@@ -183,6 +202,13 @@ Menu_Page3_ScrollTo:
   SEP #$20
   LDA.b $E4 : BNE .scrolling
     LDA.w MenuScrollLevelH : BEQ .quest
+if !ENABLE_MENU_MAP_TRAVEL == 1
+      CMP.b #$40 : BNE .equipment
+        JSR MenuMapTravel_Init
+        JSR MenuMapTravel_Draw
+        BRA .upload
+      .equipment
+endif
       JSR Menu_Page3_InitCursor
       JSR Menu_Page3_Draw
       BRA .upload
@@ -241,6 +267,19 @@ endif
 Menu_Page3_StatsScreen:
 {
   SEP #$30
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  ; Four-page ring: L/R turn from every right-half page; Start keeps priority.
+  LDA.b $F4 : BIT.b #$10 : BNE .ring_no_lr
+  LDA.b $F6 : AND.b #$30 : BEQ .ring_no_lr
+    AND.b #$20 : BEQ .ring_right       ; L wins
+      LDA.b #$FF : JMP Menu_Page3_Turn
+    .ring_right
+    LDA.b #$01 : JMP Menu_Page3_Turn
+  .ring_no_lr
+  LDA.w MenuScrollLevelH : CMP.b #$40 : BNE .ring_not_map
+    JMP MenuMapTravel_Screen
+  .ring_not_map
+endif
   LDA.w MenuScrollLevelH : BNE .page3
   LDA.b $F4 : BIT.b #$10 : BNE .quest_input
   LDA.b $F6 : AND.b #$B0 : BNE .quest_input
@@ -1007,6 +1046,11 @@ endif
 
 if !ENABLE_EQUIPMENT_MENU == 1
   incsrc "menu_equipment.asm"
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  incsrc "menu_map_travel.asm"         ; uses Menu_Equipment_Bracket
+endif
+elseif !ENABLE_MENU_MAP_TRAVEL == 1
+  error "ENABLE_MENU_MAP_TRAVEL needs ENABLE_EQUIPMENT_MENU"
 endif
 
 assert pc() <= $2E8000, "Menu/menu_page3.asm overflows bank $2D"

@@ -1,6 +1,19 @@
 ; Inherits Free Space from Bank07
 org $07FA80
 !RAM_MAGIC = $7EF36E
+
+; Variant reads of the selected item: shared action routines (bombs, rod,
+; hookshot chain) pick Bombchu/Portal/Byrna/Goldstar/Switch Hook by the
+; item ID. Under the dual-item prototype an X action must see the X item,
+; so these sites call ItemBindings_EffectiveItem (Items/item_bindings.asm).
+; Flags off: the original LDA.w $0202. M8; A and N/Z out, X/Y kept.
+macro SelectedItem()
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSL ItemBindings_EffectiveItem
+else
+  LDA.w $0202
+endif
+endmacro
 incsrc "Items/bottle_net.asm"
 
 ; Starts Expanded Bank 0x2B
@@ -302,6 +315,86 @@ if !ENABLE_D6_CHU_GATE_97 == 1
 incsrc "Dungeons/d6_chu_gate_97.asm"
 endif
 
+; Map & Travel visited bits + bird picker. Bank $34 is full; every access in
+; the file is long (.l / JML / JSL), so it runs from this bank unchanged.
+if !ENABLE_MENU_MAP_TRAVEL == 1
+incsrc "Overworld/travel_destinations.asm"
+%log_end("Overworld/travel_destinations.asm", !LOG_ITEMS)
+endif
+
+; Abyss load spawn menu: bank $34 is full. Entered only by JML, exits by
+; JML/RTL, absolute operands are low WRAM (mirrored), so it runs from here.
+if !ENABLE_ABYSS_SPAWN_MENU == 1
+incsrc "Overworld/abyss_spawn_menu.asm"
+endif
+
+; Lyra overlay fix: bank $34 is full. JSL entries only, exits by RTL/JML,
+; operands are direct page, long or immediate, so it runs from here.
+if !ENABLE_LYRA_OVERLAY_FIX == 1
+incsrc "Overworld/lyra_overlay_fix.asm"
+endif
+
+; Ranch milk sale: bank $30 is full. Entered by JSL, exits by RTL, operands
+; are long, immediate or low WRAM ($1CE8, mirrored), so it runs from here.
+if !ENABLE_RANCH_MILK == 1
+incsrc "Sprites/NPCs/ranch_milk.asm"
+endif
+
+; Lyra talkers: banks $30/$32 are full. Entered by JML (prep hook) and JSL
+; (Oracle $BB dispatch); table reads run under PHK : PLB and other absolute
+; operands are low WRAM (mirrored), so the file runs from here.
+if !ENABLE_LYRA_TALKERS == 1
+  %log_start("lyra_talker", !LOG_SPRITES)
+  incsrc "Sprites/NPCs/lyra_talker.asm"
+  %log_end("lyra_talker", !LOG_SPRITES)
+endif
+
+; Richard quest: bank $34 is full. Every JSL entry sets DB with PHK : PLB and
+; hooks use JSL, so the file runs from this bank unchanged.
+if !ENABLE_RICHARD_QUEST == 1
+incsrc "Overworld/richard_quest.asm"
+endif
+
+; Room $78 Lanmola surface/stagger states (Hammer opening). Sprite banks
+; $30/$31 are full with D8 Farore follow on; every entry is long and every
+; absolute operand is mirrored WRAM, so the file runs from this bank.
+if !ENABLE_GORON78_LANMOLA_BOSS == 1
+incsrc "Sprites/Bosses/lanmola_hammer78.asm"
+endif
+
+; Dual-item binding prototype (default off). Local span cap $600.
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+ItemBindings_SpanStart:
+incsrc "Items/item_bindings_adapter.asm"
+incsrc "Items/item_bindings_dispatch.asm"
+assert pc()-ItemBindings_SpanStart <= $600, "Dual-item prototype exceeded its $600 span"
+endif
+
+; Codex HUD layout routines (default off; Menu bank $2E is full).
+if !ENABLE_HUD_LAYOUT_CODEX == 1
+HudCodex_SpanStart:
+incsrc "Menu/menu_hud_codex.asm"
+assert pc()-HudCodex_SpanStart <= $200, "Codex HUD routines exceeded their $200 span"
+endif
+
+; Dual-item binding menu code: Menu bank $2D is full. Entered by JSL from
+; the menu (DBR $2D); reads WRAM, long SRAM and Menu_ItemCursorPositions.l.
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+incsrc "Menu/menu_item_bindings.asm"
+endif
+
+; Two-slot sword helpers for the Equipment menu (Menu banks $2D/$2E are full).
+if !ENABLE_EQUIPMENT_MENU == 1
+incsrc "Menu/menu_sword_slots.asm"
+incsrc "Items/heavy_sword.asm"
+endif
+
+; Lyra edge guard: bank $34 is full. JSL entry only, exits by RTL, operands
+; are direct page, long or immediate, so it runs from here. Kept last in the
+; bank $2B stream so adding it moves no other routine.
+if !SPECIAL_OVERWORLD_NATIVE == 1
+incsrc "Overworld/lyra_edge_guard.asm"
+endif
 
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
 assert pc() <= $2BF000, "Items bank $2B reached the dream entry FX region ($2BF000)"

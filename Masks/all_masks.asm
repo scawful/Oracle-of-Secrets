@@ -92,6 +92,9 @@ org $388000
 org $3B8000
   incbin gfx/gbc_link.4bpp
   incsrc "Masks/gbc_form.asm"
+if !ENABLE_GLADE_AMBUSH == 1
+  assert pc() <= $3BF400, "GBC form reached the glade-ambush Kydrog block"
+endif
 
 org $338000
   incbin gfx/moosh.4bpp

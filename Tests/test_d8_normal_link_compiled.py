@@ -28,6 +28,7 @@ def assemble(folder,raw,texts):
     asm.write_text('''lorom
 !ENABLE_MASK_R_BINDING = 1
 !ENABLE_DIVE_GATE = 0
+!ENABLE_HORSE_FORM = 0
 !CurrentMask = $02B2
 !LinkGraphics = $BC
 GaroMask_Clear = $42F073

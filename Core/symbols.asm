@@ -69,6 +69,13 @@ assert pc() <= $7E1F00, "Ferry transient state exceeds its bounded WRAM tail"
 base off
 endif
 
+; Glade ambush Abyss landing (!ENABLE_GLADE_AMBUSH, Sprites/Bosses/kydrog.asm).
+; Vanilla-unused $7E02B8-$7E02B9 (usdasm UNUSED_7E02B8/B9, zero at boot); the
+; item binding bytes end at $7E02B7. The $7E1E70 block has no room: the ferry
+; block starts at $7E1ECB. Not persistent; no bulk owner clears it.
+AbyssLanding = $7E02B8 ; state (0 off, 1 armed, 2 mosaic, 3 pan); +1 = camera rows left
+assert AbyssLanding+2 <= $7E02C0
+
 if !ENABLE_HORSE_FORM == 1
 base $7E1EDE
 {
@@ -97,9 +104,56 @@ Horse_AnchorX:           skip 2
 Horse_AnchorY:           skip 2
 Horse_NpcSlot:           skip 1
 Horse_InteractDelay:     skip 1
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+Horse_AnchorArea:        skip 1   ; $8A of parked outdoor dismount (WRAM-only)
+endif
 Horse_TransientEnd:      skip 0
-assert Horse_Marker == $7E1EDE && Horse_TransientEnd == $7E1EFE
+assert Horse_Marker == $7E1EDE
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+assert Horse_TransientEnd == $7E1EFF
+else
+assert Horse_TransientEnd == $7E1EFE
+endif
 assert pc() <= $7E1F00, "Horse transient state exceeds its bounded WRAM tail"
+}
+base off
+endif
+
+; Dual-item prototype volatile state. The 2026-11-14 grant at $7E1EDE was
+; later taken by the Horse Form transient block, so these four bytes moved to
+; vanilla-unused $7E02B3-$7E02B6 (usdasm UNUSED_7E02B3..B6; ancilla arrays end
+; at $02B1, $02B2 is !CurrentMask). Never cleared by a bulk owner here; reset
+; explicitly on file load or action cancellation; not persistent.
+ItemBindingCursor  = $7E02B3
+ItemBindingLogical = $7E02B4
+ItemBindingAction  = $7E02B5
+ItemBindingButton  = $7E02B6
+; Menu session only: the Y item while the menu cursor browses in $0202.
+; Written on every menu open, read on close; never read in gameplay.
+ItemBindingMenuY   = $7E02B7
+assert ItemBindingCursor == $7E02B3 && ItemBindingButton+1 == ItemBindingMenuY
+assert ItemBindingMenuY+1 == $7E02B8
+
+; Codex HUD layout corner cells (!ENABLE_HUD_LAYOUT_CODEX). 14 bytes in the
+; vanilla-free $7EC84A-$7EC87F gap after the RebuildHUD copy ($7EC700+$14A).
+; +0..+8 = rupee icon (2) + 3 digits for BG3 $6342 (screen row 26, cols 2-6);
+; +$0A..+$0D = key icon + digit for BG3 $635C (row 26, cols 28-29).
+; Written by HUD_Update every HUD frame, read by HUD_NMIUpload and the menu
+; close scroll. Not persistent; not cleared by any bulk owner.
+HudCornerBuffer    = $7EC84A
+HudCornerBufferEnd = HudCornerBuffer+14
+assert HudCornerBufferEnd <= $7EC880
+
+; Map & Travel page: the action chosen on the page, run once by Menu_Exit.
+; Separate conditional owner after the horse tail. $7E1EFE is Horse_AnchorArea
+; when park-anywhere is on (the menu cleared her park on every open), so this
+; byte sits at $7E1EFF.
+if !ENABLE_MENU_MAP_TRAVEL == 1
+base $7E1EFF
+{
+MenuMapTravel_Pending:   skip 1 ; 0 none, 1 field map, 2 Soaring, 3 map open: reopen page
+assert MenuMapTravel_Pending == $7E1EFF
+assert pc() <= $7E1F00, "Map & Travel pending byte exceeds its bounded WRAM tail"
 }
 base off
 endif
@@ -114,6 +168,17 @@ assert SpecialOverworldPaletteHoleCacheEnd-SpecialOverworldPaletteHoleCache == 2
 ; SongTint_Table entry indexes (Items/ocarina.asm).
 !SongTint_Healing = $00
 !SongTint_Secrets = $01
+
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+; Off-Ranch parked Epona (Masks/horse_park_anywhere.asm). Her NPC cells
+; replace sprite VRAM $5000-$51FF (page1 chars $00-$1F); the native cells
+; are copied here first and written back. UNUSED_7F5000 has $0800 free.
+Horse_OffDma   = $7F5000 ; VRAM read lands here: duplicated first word + buffer
+Horse_OffBuf   = $7F5002 ; $0400 bytes, copy of VRAM $5000-$51FF
+Horse_OffState = $7F5402 ; $A1 saved, $A2 Epona cells in VRAM, else native
+Horse_OffClear = $7F5403 ; frames with no other page1 $00-$1F OAM user
+Horse_OffSheet = $7F5404 ; $7EC2FC when the copy was taken
+endif
 
 ; PLACEHOLDER for the Song of Healing beat between Kydreeok and Ganondorf (decisions.org canon
 ; order: Kydreeok, Song frees Kydrog, Ganon). Until that scene exists, Ganondorf waits this many

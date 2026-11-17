@@ -67,7 +67,8 @@ pullpc
 
 Bombchu_AddBomb:
 {
-  LDA.w $0202 : CMP.b #$1C : BEQ .bombchu
+  %SelectedItem()
+  CMP.b #$1C : BEQ .bombchu
     LDY.b #$01 : LDA.b #$07
     JML $09811F ; original AncillaAdd_Bomb, returns to our caller
 

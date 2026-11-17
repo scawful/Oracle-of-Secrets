@@ -37,7 +37,7 @@
 ;       makes the call a no-op for $8A >= $A0; other areas are unchanged.
 ;       (The tail pointer table, F2b, is a separate job.)
 ;
-; Included from Overworld/overworld.asm (bank $34 free space) only when the
+; Included from Items/all_items.asm (bank $2B free space) only when the
 ; flag is on. The ZSCustomOverworld.asm hook site is gated by the same flag.
 ; =========================================================
 

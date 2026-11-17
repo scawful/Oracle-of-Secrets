@@ -462,17 +462,20 @@ if [[ "$asar_bin" == *"z3asm"* ]]; then
   assembler_emits+=("--emit=sourcemap:$repo_root/Roms/sourcemap.json" "--emit=hooks:$hooks_json")
 fi
 
+# Assembler stdout is kept for the bank headroom check (pipefail keeps asar's exit).
+assembly_log="$rom_dir/oos${version}x.asm.log"
+rm -f "$assembly_log"
 assemble_rom() {
   if [[ $emit_symbols -eq 1 ]]; then
     (
       cd "$repo_root"
       "$asar_bin" --symbols=wla --symbols-path="$symbols_path" ${assembler_emits[@]+"${assembler_emits[@]}"} Oracle_main.asm "$patched_rom"
-    )
+    ) | tee "$assembly_log"
   else
     (
       cd "$repo_root"
       "$asar_bin" ${assembler_emits[@]+"${assembler_emits[@]}"} Oracle_main.asm "$patched_rom"
-    )
+    ) | tee "$assembly_log"
   fi
 }
 run_check assembly 1 assemble_rom
@@ -506,6 +509,21 @@ run_check native_overworld_preservation 1 python3 "$repo_root/Scripts/Build/lyra
 # assertions. Verify the final ROM before publishing its artifacts/manifest.
 run_check wall_kit_palette_ownership 1 python3 "$repo_root/Scripts/Generate/gen_wall_profiles.py" \
   verify-rom --rom "$patched_rom"
+
+# Sprite code banks $30-$32: warn below 512 B free, fail below 64 B.
+# The summary line goes to the console and into the receipt check detail.
+check_bank_headroom() {
+  local summary code=0
+  summary="$(python3 "$repo_root/Scripts/Build/bank_headroom.py" --log "$assembly_log")" || code=$?
+  echo "[i] $summary"
+  record_check bank_headroom "$([[ $code -eq 0 ]] && echo passed || echo failed)" 1 "$summary" "$code"
+  if [[ $code -ne 0 ]]; then
+    echo "[-] bank_headroom failed (exit $code; required=1)." >&2
+    return "$code"
+  fi
+}
+current_stage="bank_headroom"
+check_bank_headroom
 
 receipt artifact --name output_rom --path "$patched_rom"
 if [[ "$emit_symbols" == "1" ]]; then

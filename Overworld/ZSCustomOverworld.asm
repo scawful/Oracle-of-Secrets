@@ -5264,7 +5264,16 @@ OverworldHandleTransitions:
     SEP #$20
 
     ; Just makes sure we're not using a medallion or input is disabled.
+    if !SPECIAL_OVERWORLD_NATIVE == 1
+    ; Lyra edge guard (Overworld/lyra_edge_guard.asm): runs the vanilla check
+    ; first, then refuses the open outer edges of tail maps $A0-$BF. Same 4
+    ; bytes; M=8, X=8 in and out, X and Y kept, C set = no transition.
+    ; Covered by this block's org $02A9C4 entry in hooks.json.
+    LyraCall_EdgeGuard = pc()
+    JSL.l Oracle_LyraEdgeGuard : BCS .noTransition
+    else
     JSL.l Player_IsScreenTransitionPermitted : BCS .noTransition
+    endif
         STY.b $02 : STZ.b $03
 
         ; Lost Woods early interception (v168)
@@ -5906,7 +5915,11 @@ LoadOverworldSprites_Interupt:
                       STZ.w $0FBA
 
     ; What phase are we in?
+    if !ENABLE_MENU_MAP_TRAVEL == 1
+    JSL Oracle_TravelDest_MarkVisited : ASL : TAY ; sets the travel visited bit, then CheckIfNight
+    else
     JSL Oracle_CheckIfNight : ASL : TAY
+    endif
 
     REP #$30
 
