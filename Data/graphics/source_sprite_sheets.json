@@ -157,6 +157,18 @@
       "source": "pit22/gF6.txt",
       "decoded_sha256": "76584ff4c8837304a5fc69a58d492320e7dcab4a4fea9195c9c3e73998120d24",
       "why": "Map $22 slot-4 copy of sheet $64 with Kalyxo pit chars $007/$017 copied to solid chars $104/$107 and side char $110."
+    },
+    {
+      "global_sheet": "0xF7",
+      "source": "abyss_windmill/gF7.txt",
+      "decoded_sha256": "2aed77928d75a8a16363b84429567a1f55f19d6a81d9c1e51f2ff79f37c3a967",
+      "why": "Abyss $63 windmill (screen $64) slot 4: copy of sheet $34 with W2 brown-stone tower and sail chars in locals no other $63 cell uses (scawful picked option 2)."
+    },
+    {
+      "global_sheet": "0xF8",
+      "source": "abyss_windmill/gF8.txt",
+      "decoded_sha256": "322237e58e019c5f94ba5eb1abf43d65b29d7a39ff46c87594e184b2057571ae",
+      "why": "Abyss $63 windmill (screen $64) slot 6: copy of sheet $3F (area set 65 default) with brown-stone tower chars in locals no other $63 cell uses."
     }
   ]
 }

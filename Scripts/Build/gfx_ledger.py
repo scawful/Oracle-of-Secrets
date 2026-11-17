@@ -10,6 +10,12 @@ written. The ledger goes to AFS (not Docs/).
 A free cell is only free if nobody loads the sheet in that slot. The users
 column counts loaders per slot so a "free" cell shared by 42 areas is visible.
 
+Tail maps ($A0-$BF, special overworld) are not in the z3ed inventory, which
+stops at area $9F. Their sheets come from the saved ROM's native directory
+(PC $147000, `lyra_native_loaders.read_native_directory`): family `gfx` holds
+8 static sheets per map, and the `special_sprite_gfx` phase families hold one
+spriteset id per map. They are counted as `area` / `area_spriteset` users.
+
 Bank check: BANK_CLAIMS lists which writer owns which ROM banks. The check
 fails when two different owners claim overlapping banks, or when an `org` in
 the repo (working tree or --ref) emits into a guarded bank from a source file
@@ -34,6 +40,9 @@ import sys
 import tempfile
 from collections import defaultdict
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import lyra_native_loaders as native  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUT = (Path.home() / ".context/projects/oracle-of-secrets/scratchpad/"
@@ -130,7 +139,46 @@ def run_inventory(rom: Path) -> dict:
         sys.exit(f"source ROM changed during the run: {rom}")
     inv["rom"] = str(rom)
     inv["rom_sha256"] = before
+    add_tail_areas(inv, rom)
     return inv
+
+
+# --- Tail maps ($A0-$BF) -----------------------------------------------------
+TAIL_SPRITE_FAMILIES = ("special_sprite_gfx", "special_sprite_gfx_phase1",
+                        "special_sprite_gfx_phase2")
+
+
+def read_tail_areas(image: bytes) -> dict[int, dict]:
+    """Tail map id -> {static_graphics: 8 sheets, sprite_graphics: 3 spriteset ids}.
+
+    Read from the native special-overworld directory in the saved ROM, the same
+    tables Lyra_ReadGfx0-7 and Lyra_ReadSpriteGfxByArea index at run time
+    (Overworld/lyra_native_loaders.asm). Returns {} for a ROM with no directory
+    (ordinary 160-map layout). Read-only.
+    """
+    installed = native.read_native_directory(image, experimental_page_tile16=True)
+    if installed is None:
+        return {}
+    capacity, _bank, entries = installed
+    ids = {f.name: f.id for f in native.current_table_layout(native.TABLE_BASE)}
+
+    def row(name: str, area: int, stride: int) -> bytes:
+        base = native.pc(entries[ids[name]][0]) + area * stride
+        return image[base:base + stride]
+
+    return {
+        area: {"static_graphics": list(row("gfx", area, 8)),
+               "sprite_graphics": [row(n, area, 1)[0] for n in TAIL_SPRITE_FAMILIES]}
+        for area in range(native.FIRST_TAIL_MAP, capacity)
+    }
+
+
+def add_tail_areas(inv: dict, rom: Path) -> None:
+    try:
+        tail = read_tail_areas(rom.read_bytes())
+    except ValueError as error:
+        sys.exit(f"cannot read tail-map graphics from {rom}: {error}")
+    inv["tail_areas"] = {str(a): v for a, v in tail.items()}
 
 
 # --- Loaders per sheet and slot ----------------------------------------------
@@ -143,6 +191,13 @@ def build_loaders(inv: dict) -> dict[int, dict]:
             L[sheet]["area"][slot].append(int(area))
         for sidx, ss in enumerate(a["sprite_graphics"]):
             # sprite_graphics[sidx] is a spriteset id; the sheets come from it.
+            for slot, val in enumerate(inv["spritesets"].get(str(ss), [])):
+                L[val + 0x73]["area_spriteset"][slot].append(int(area))
+    # Tail maps $A0-$BF: z3ed's overworld_areas stops at $9F (see read_tail_areas).
+    for area, a in inv.get("tail_areas", {}).items():
+        for slot, sheet in enumerate(a["static_graphics"]):
+            L[sheet]["area"][slot].append(int(area))
+        for ss in a["sprite_graphics"]:
             for slot, val in enumerate(inv["spritesets"].get(str(ss), [])):
                 L[val + 0x73]["area_spriteset"][slot].append(int(area))
     for bs, sheets in inv["main_blocksets"].items():
@@ -158,11 +213,14 @@ def build_loaders(inv: dict) -> dict[int, dict]:
 
 
 def check_inventory_usage(inv: dict, L: dict) -> list[str]:
-    """Cross-check: our areas-by-static-slot match z3ed's ow_areas_static."""
+    """Cross-check: our areas-by-static-slot match z3ed's ow_areas_static.
+
+    Tail maps are left out: z3ed does not list them."""
     problems = []
     for s in inv["sheets"]:
         sid = int(s["hex"], 16)
-        ours = sorted({a for sl in L[sid]["area"].values() for a in sl})
+        ours = sorted({a for sl in L[sid]["area"].values() for a in sl
+                       if a < native.FIRST_TAIL_MAP})
         theirs = sorted(s["usage"].get("ow_areas_static", []))
         if ours != theirs:
             problems.append(f"${sid:02X}: static-area users differ: table {len(ours)} vs z3ed {len(theirs)}")
@@ -296,7 +354,7 @@ def render_md(inv: dict, rows: list[dict], claims: list[dict], bank_problems: li
              "Status counts: " + ", ".join(f"{k} {v}" for k, v in sorted(counts.items())), "",
              "Loader notation: `sN×K` = K users load the sheet in slot N. "
              "A free cell is only free if the sheet has no loader in that slot "
-             "(ow = overworld area static slots 0-15, mb = main blockset, rb = room blockset, "
+             "(ow = overworld area static slots 0-15, tail maps $A0-$BF slots 0-7; mb = main blockset, rb = room blockset, "
              "ss = spriteset, as = area spriteset).", ""]
     lines += ["## Bank ownership", "",
               "| Banks | Owner | Source files |", "|---|---|---|"]
@@ -360,6 +418,12 @@ def main() -> int:
 
     if args.inventory:
         inv = json.loads(args.inventory.read_text())
+        if "tail_areas" not in inv:
+            if args.rom:
+                add_tail_areas(inv, args.rom)
+            else:
+                print("warning: inventory has no tail_areas and no --rom given; "
+                      "tail maps $A0-$BF are not counted", file=sys.stderr)
     elif args.rom:
         inv = run_inventory(args.rom)
     else:

@@ -1846,16 +1846,6 @@
       "landing": "outside D2 Tail Palace"
     },
     {
-      "area": "0x32",
-      "name": "Secret Beach",
-      "world": "kalyxo",
-      "via_room": "0x00FD",
-      "exit_index": "0x1B",
-      "x": "0x04B8",
-      "y": "0x0C88",
-      "landing": "outside Beach Cave Route"
-    },
-    {
       "area": "0x33",
       "name": "Loom Beach",
       "world": "kalyxo",
@@ -1929,21 +1919,11 @@
       "area": "0x4B",
       "name": "Lupo Mountain",
       "world": "abyss",
-      "via_room": "0x0084",
-      "exit_index": "0x28",
-      "x": "0x0738",
-      "y": "0x0428",
-      "landing": "outside Shrine of Power"
-    },
-    {
-      "area": "0x50",
-      "name": "Shrine Courage",
-      "world": "abyss",
-      "via_room": "0x0053",
-      "exit_index": "0x06",
-      "x": "0x00E8",
-      "y": "0x0428",
-      "landing": "outside Shrine of Courage"
+      "via_room": "0x000C",
+      "exit_index": "0x0B",
+      "x": "0x08A8",
+      "y": "0x0238",
+      "landing": "exit of room 0x000C"
     },
     {
       "area": "0x56",
@@ -1979,11 +1959,11 @@
       "area": "0x5E",
       "name": "The Fortress",
       "world": "abyss",
-      "via_room": "0x000C",
-      "exit_index": "0x0B",
-      "x": "0x0EA8",
-      "y": "0x0638",
-      "landing": "outside D8 Fortress of Secrets"
+      "via_room": "0x0084",
+      "exit_index": "0x28",
+      "x": "0x0D38",
+      "y": "0x0828",
+      "landing": "exit of room 0x0084"
     },
     {
       "area": "0x63",

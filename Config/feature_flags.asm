@@ -13,6 +13,7 @@
 !ENABLE_D4_ZORA_REDESIGN              = 1
 !ENABLE_D5_AF_PIT_RESET               = 0
 !ENABLE_D5_BF_PIT_RESET               = 0
+!ENABLE_D5_CF_STAYS_SOLVED            = 1
 !ENABLE_D6_CHU_GATE_97                = 1
 !ENABLE_D7_FARORE_RESCUE_SEQUENCE     = 1
 !ENABLE_D8_BOSS                       = 0
@@ -33,6 +34,7 @@
 !ENABLE_EXPERIMENT_SCENE              = 1
 !ENABLE_FOLLOWER_TRANSITION_HOOKS     = 1
 !ENABLE_GANONDORF_VOLLEY              = 1
+!ENABLE_GANON_BEAST                   = 1
 !ENABLE_GOLDSTAR_CELL                 = 1
 !ENABLE_GRAPHICS_TRANSFER_SCROLL_HOOK = 1
 !ENABLE_HOT_FLOOR                     = 1
@@ -43,6 +45,7 @@
 !ENABLE_KALYXO_BOAT                  = 0
 !ENABLE_KALYXO_DOCKS_PROFILE          = 0
 !ENABLE_KOROK_POLISH                  = 1
+!ENABLE_KYDREEOK_CHAMBER              = 1
 !ENABLE_LUPO_PAD_GATE                 = 1
 !ENABLE_LYRA_OVERLAY_FIX              = 1
 !ENABLE_MAP_ICON_TIMELINE             = 1

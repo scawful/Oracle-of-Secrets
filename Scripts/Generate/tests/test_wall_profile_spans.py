@@ -21,6 +21,8 @@ class WallProfileSpanTest(unittest.TestCase):
         data = bytearray(0x9000)
         expected = {}
         for i, obj in enumerate(profiles.CLASSES):
+            if obj in self.DIAGONALS:
+                continue  # laid out natively below
             count = (16 if obj >= 0x100 else
                      12 if obj in (0x03A, 0x03B, 0x076, 0x077, 0x081, 0x082) else 8)
             offset = 0x1000 + i * 0x40
@@ -34,8 +36,10 @@ class WallProfileSpanTest(unittest.TestCase):
         for obj in range(0x009, 0x016):
             offset = 0x0420 + (obj - 0x009) * 10
             struct.pack_into('<H', data, 0x8000 + obj * 2, offset)
-            struct.pack_into('<5H', data, profiles.OBJ_TABLE_PC + offset,
-                             *(0x6000 + obj * 8 + k for k in range(5)))
+            values = [0x6000 + obj * 8 + k for k in range(5)]
+            struct.pack_into('<5H', data, profiles.OBJ_TABLE_PC + offset, *values)
+            if obj in profiles.CLASSES:
+                expected[f'{obj:03X}'] = [f'${v:04X}' for v in values]
         struct.pack_into('<H', data, 0x8000 + 0x057 * 2,
                          profiles.obj_offset(data, 0x081))
         return data, expected

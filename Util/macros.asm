@@ -55,6 +55,9 @@ endif
 !ENABLE_D5_BF_PIT_RESET             = 0
 ; AF transfer-room pit reset; independent of BF and off until private qualification.
 !ENABLE_D5_AF_PIT_RESET             = 0
+; CF six-push stays solved (scawful 2026-11-15 "A: stays solved"): saved CF bit
+; $1000 reloads the block on goal, lifts the goal pot and holds both shutters open.
+!ENABLE_D5_CF_STAYS_SOLVED          = 1
 ; Per-dungeon wall object tile patterns (Dungeons/wall_profile_selector.asm);
 ; kit rows/palettes route per room (H3). Default on (scawful 2026-11-10).
 !ENABLE_WALL_PROFILE_SELECTOR       = 1
@@ -150,6 +153,16 @@ endif
 ; is rallied with the Master Sword, stuns him, and his death opens the Triforce
 ; door (Sprites/Bosses/ganondorf.asm). Diagnostic opt-out.
 !ENABLE_GANONDORF_VOLLEY            = 1
+; Ganon beast, last finale phase: Ganondorf's death spawns the beast (second $D3
+; slot, actions 8-15); GanondorfFight = 3 keeps the Triforce door shut until it
+; dies. Malice floor writes tile type $0D at runtime (Sprites/Bosses/ganon_beast.asm).
+; Needs GANONDORF_VOLLEY. Diagnostic opt-out.
+!ENABLE_GANON_BEAST                 = 1
+; Kydreeok chamber: Kydreeok fights in room $02 (absolute bounds become
+; room-local); after the Song of Healing a 2x2 floor plate falls away and the
+; room $02 holewarp drops Link into room $00 for Ganondorf and the beast
+; (Sprites/Bosses/kydreeok.asm). Room data lives in the ROM. Diagnostic opt-out.
+!ENABLE_KYDREEOK_CHAMBER            = 1
 ; Wisdom dream, shots 1-2 (decisions.org pendant dreams; Sealing War
 ; storyboard): D1.01 ($204) in the hut, then the great hall (room $51) with
 ; the Captain and Farore and D1.02 ($205) before the dream return

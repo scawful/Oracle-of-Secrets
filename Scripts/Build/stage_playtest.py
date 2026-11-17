@@ -60,7 +60,8 @@ def cmd_stage(args: argparse.Namespace) -> int:
 
     # The ROM must carry this version in message $C7.
     check = subprocess.run(
-        [sys.executable, str(REPO_ROOT / "Scripts/Build/version_stamp.py"), "--rom", str(rom), "--check"],
+        [sys.executable, str(REPO_ROOT / "Scripts/Build/version_stamp.py"), "--rom", str(rom), "--check",
+         "--kind", "b", "--number", str(info["build"])],
         capture_output=True, text=True, check=True).stdout
     # "... N bytes: <old> -> <new> (vX-bN)": stamped when old == new.
     old = check.split("bytes:", 1)[1].split("->")[0].split()
