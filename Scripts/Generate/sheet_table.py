@@ -36,7 +36,9 @@ def table_operands(rom):
     return out
 
 def ptr(rom, g):
-    bank, high, low = (NEW_BANK, NEW_HIGH, NEW_LOW) if relocated(rom) else (TBL_BANK, TBL_HIGH, TBL_LOW)
+    # yaze saves rows >= N only into the bank $23 arrays, also on an unpatched base.
+    use_new = relocated(rom) or g >= N
+    bank, high, low = (NEW_BANK, NEW_HIGH, NEW_LOW) if use_new else (TBL_BANK, TBL_HIGH, TBL_LOW)
     return (rom[pc(bank)+g] << 16) | (rom[pc(high)+g] << 8) | rom[pc(low)+g]
 
 def survey(rom):
