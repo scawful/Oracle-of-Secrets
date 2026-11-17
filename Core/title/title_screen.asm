@@ -31,6 +31,8 @@ org $0CC287 ; Intro_PopSubtitleCard ; @hook module=Core
   JSL OracleTitle_Cycle
 org $0CC2D4 ; Intro_TrianglesBeforeAttract ; @hook module=Core
   JSL OracleTitle_Cycle
+org $0CEDFA ; Attract_FadeOut.fully_faded ; @hook module=Core
+  JSL OracleTitle_RestoreForAttract
 
 org $588000
 ; Tiles first so every run's source stays inside bank $58.
@@ -64,6 +66,7 @@ OracleTitle_Load:
   SEP #$30
   LDA.b $10 : BNE .skip               ; intro module only
   LDA.b $11 : CMP.b #$02 : BEQ .go
+              CMP.b #$0A : BEQ .go    ; attract -> title return
 .skip
   JMP .done
 .go
@@ -130,5 +133,35 @@ OracleTitle_Cycle:
   PLP
   RTL
 }
+
+; ---------------------------------------------------------
+; Attract_FadeOut.fully_faded ($0CEDFA): restore the default title/storybook
+; VRAM and palette buffers that OracleTitle_Load / OracleTitle_Cycle replaced,
+; since Attract_Initialize ($0CEE0C) does not reload BG/OBJ tilesets.
+OracleTitle_RestoreForAttract:
+{
+  JSL $00893D                         ; EnableForceBlank (replaced)
+  PHP : PHB
+  SEP #$30
+  LDA.b #$00 : PHA : PLB
+  LDA.b #$23 : STA.w $0AA1
+  LDA.b #$7D : STA.w $0AA3
+  LDA.b #$51 : STA.w $0AA2
+  LDA.b #$08 : STA.w $0AA4
+  JSL $00E2D0                         ; LoadDefaultGraphics
+  JSL $00E19B                         ; InitializeTilesets
+  LDY.b #$5D
+  JSL $00D337                         ; DecompressAnimatedUnderworldTiles
+  JSL $02811A                         ; Overworld_LoadAllPalettes_long
+  REP #$30
+  LDX.w #$007E
+  - : LDA.l $7EC340,X : STA.l $7EC540,X : DEX : DEX : BPL -
+  PLB : PLP
+  RTL
+}
+
+; Bank $58 ledger: title code/data $588000-$58EFFF; attract actor choreography
+; (Dungeons/attract_royal_scenes.asm) starts at $58F000.
+assert pc() <= $58F000
 
 pullpc

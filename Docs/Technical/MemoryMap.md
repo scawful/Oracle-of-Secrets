@@ -210,4 +210,6 @@ This section details the allocation of custom code and data within the ROM banks
 | $3F        |                       | DW ZS Tile32                                           |
 | $40        | `$408000` - `$40FFFF` | LW World Map                                           |
 | $41        | `$418000` - `$41FFFF` | DW World Map                                           |
+| $58        | `$588000` - `$58EFFF` | Oracle title screen BG2 (Core/title/title_screen.asm)  |
+|            | `$58F000` - `$58FFFF` | Attract actor choreography (Dungeons/attract_royal_scenes.asm) |
 | Patches    | Various               | Targeted modifications within vanilla ROM addresses    | `Core/patches.asm`, `Util/item_cheat.asm` |

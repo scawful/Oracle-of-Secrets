@@ -38,16 +38,21 @@ if !ENABLE_CUSTOM_ATTRACT_SEQUENCE == 1
   ; Scene lengths hold each last page about 3 seconds after its final line
   ; appears. The message then waits at its end; the scene timer ends the
   ; scene. (Measured in the yaze emulator with the ORA flag fix.)
-  !AttractFrames_Throne = $01E0
-  !AttractFrames_Prison = $0240
+  !AttractFrames_Throne = $0220
+  !AttractFrames_Prison = $0260
   ; Card 5 ($1C3, approved 2026-09-26) is 3 lines + 4 scroll lines; its
   ; last line appears ~1020 frames after the timer starts (headless Mesen2,
   ; 2026-09-26), so hold about 3 s after it.
-  !AttractFrames_Altar  = $04B0
+  !AttractFrames_Altar  = $0460
   pushpc
   ; Attract_Initialize (vanilla code, not reassembled here).
   org $0CEE58 : dw $01C0 ; @hook module=Dungeons name=AttractStorybookMessage kind=data
   org $0CEE62 : dw $08A8 ; @hook module=Dungeons name=AttractStorybookFrames kind=data
+  ; AttractScene_WorldMap ($0CEF23-$0CEF38): zoom onto Tail Pond ($2D).
+  org $0CEF24 : dw $0130 ; @hook module=Dungeons name=AttractMapZoomM7X kind=data
+  org $0CEF2A : dw $0130 ; @hook module=Dungeons name=AttractMapZoomM7Y kind=data
+  org $0CEF30 : dw $00B0 ; @hook module=Dungeons name=AttractMapZoomHOFS kind=data
+  org $0CEF36 : dw $0103 ; @hook module=Dungeons name=AttractMapZoomVOFS kind=data
   pullpc
 else
   !AttractMsg_Throne    = $13
