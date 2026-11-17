@@ -393,7 +393,7 @@ ValidDoorTypesExpanded_low:
  dw $0131, $0112, $016D, $0163 ; 09:
  dw $0173, $00FE, $0113, $0177 ; 10:
  dw $00EA, $013B, $0174, $011B ; 11: Lava Land Large, Lava Land Small, Goron Mines, Docks Boat Door
- dw $FFFF                       ; 12: unused; fills the 49-entry scan contract
+ dw $0114                       ; 12: Docks Deck Hatch Tile16 0x572 (BL)
 
 ValidDoorTypesExpanded_high:
  dw $014A, $00C4, $014F, $0115 ; ???, House Door, ???, ???
@@ -408,7 +408,7 @@ ValidDoorTypesExpanded_high:
  dw $0131, $0112, $017A, $0163 ; 09:
  dw $0172, $01BD, $0152, $0167 ; 10:
  dw $00EB, $013A, $0174, $011A
- dw $FFFF
+ dw $00FE                       ; 12: Docks Deck Hatch Tile16 0x572 (BR)
 ValidDoorTypesExpanded_end:
 
 assert ValidDoorTypesExpanded_high-ValidDoorTypesExpanded_low == $62

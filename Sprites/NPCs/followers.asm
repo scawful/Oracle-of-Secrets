@@ -152,13 +152,49 @@ CheckForZoraBabyTransitionToSprite:
 
 CheckForZoraBabyFollower:
 {
-  LDA.l $7EF3CC : CMP.b #$09 : BNE .not_zora
-    LDA.b #$00
-    RTL
-  .not_zora
   LDA.b $05
   AND.b #$20
   RTL
+}
+
+; Hide follower OAM completely when FLWNODRAW ($02F9) or Zora Diving ($0AAB) is active.
+FollowerDraw_GateCheck:
+{
+  LDA.w $02F9 : BNE .hide
+  LDA.w $0AAB : BNE .hide ; !ZoraDiving
+    JML $09A90D
+  .hide
+  JML $09A90C ; bank $09 RTS
+}
+
+; Match Player_Draw ($0D:A2AC): force OBJ priority 2 (#$20) while swimming so
+; lower-index follower OAM never sits behind water BG and punches holes in Link.
+FollowerDraw_WaterPriority:
+{
+  LDA.w $0345 : BNE .swim_prio ; DEEPWATER
+  LDA.w $1A64, X : BIT.b #$20 : BNE .swim_prio
+    AND.b #$0C : ASL #2
+    RTL
+  .swim_prio
+  LDA.b #$20
+  RTL
+}
+
+; Skip lower-body OAM while follower cached step is in deep water ($1A64,X & #$20;
+; $09:AA8E overwrites DP $05 while drawing swim ripples, so index $1A64 via $02CF).
+FollowerDraw_SkipSwimBody:
+{
+  LDX.w $02CF : BPL +
+    LDX.b #$00
+  +
+  LDA.w $1A64, X : BIT.b #$20 : BEQ .draw_body
+    JML $09ABF6 ; PLY : PLX : RTS
+  .draw_body
+  REP #$30
+  PHY
+  LDA.b $04
+  AND.w #$00FF
+  JML $09AB9A
 }
 
 UploadZoraBabyGraphicsPrep:
@@ -449,6 +485,26 @@ pushpc
 
 ; Make Zora sway like a girl
 org $09AA5E : JSL CheckForZoraBabyFollower ; @hook module=Sprites name=CheckForZoraBabyFollower kind=jsl target=CheckForZoraBabyFollower
+
+; Swim visibility & diving gate fixes in vanilla Follower_Draw ($09:A907..$09:ABF8)
+assert read4($09A907) == $F002F9AD, "Follower_Draw gate moved"
+org $09A907 ; @hook module=Sprites name=FollowerDraw_GateCheck kind=jml target=FollowerDraw_GateCheck expected_m=8 expected_x=8 protected_size=6
+  JML FollowerDraw_GateCheck
+  NOP
+  RTS
+assert pc() == $09A90D
+
+assert read4($09A92C) == $291A64BD, "Follower_Draw priority check moved"
+org $09A92C ; @hook module=Sprites name=FollowerDraw_WaterPriority kind=jsl target=FollowerDraw_WaterPriority expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8 protected_size=7
+  JSL FollowerDraw_WaterPriority
+  NOP #3
+assert pc() == $09A933
+
+assert read4($09AB92) == $A55A30C2, "Follower_Draw body OAM start moved"
+org $09AB92 ; @hook module=Sprites name=FollowerDraw_SkipSwimBody kind=jml target=FollowerDraw_SkipSwimBody expected_m=8 expected_x=8 protected_size=8
+  JML FollowerDraw_SkipSwimBody
+  NOP #4
+assert pc() == $09AB9A
 
 ; Follower_BasicMover
 ; Jump to ZoraBaby sprite on star tile
