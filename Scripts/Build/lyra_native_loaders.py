@@ -61,13 +61,13 @@ PAGE_TILE16_ROW_CAPACITY = 1024
 # original interval. D4 and saved semantic code/rows are not atlas storage.
 RESIDENT_PAGE_TILE16_CAPACITY = 0x28000
 RESIDENT_PAGE_TILE16_EXCLUDED_PC = (
-    (0x280000, 0x282000), (0x288000, 0x28C000), (0x290000, 0x292000))
+    (0x280000, 0x282000), (0x288000, 0x28C000))
 RESIDENT_PAGE_TILE16_SPILL_PC = 0x28C000
 RESIDENT_PAGE_TILE16_SPILL_END = 0x290000
-# Bank $52 tail ($52A000-$52FFFF). $528000-$529FFF stays excluded: the
-# inactive D3 prison sequence (Masks/all_masks.asm, Sprites/NPCs/horse.asm)
-# names it as its home. Measured zero preimage in the editable source.
-RESIDENT_PAGE_TILE16_SPILL2_PC = 0x292000
+# All of bank $52 ($528000-$52FFFF). scawful 2026-11-17 admitted
+# $528000-$529FFF: no code orgs there (the D3 prison sequence named it but
+# lives in $01/$05/$08/$2C). Measured zero preimage in the editable source.
+RESIDENT_PAGE_TILE16_SPILL2_PC = 0x290000
 RESIDENT_PAGE_TILE16_SPILL2_END = 0x298000
 
 # Existing dictionaries in the selected Oracle engine. Initial import reuses
