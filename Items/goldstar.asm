@@ -961,7 +961,8 @@ BeginGoldstarOrHookshot:
 if !ENABLE_GOLDSTAR_CELL == 1
   ; Latch the selected weapon only at launch. Ancilla draw/collision and
   ; retract continue using this value even if the menu is opened in flight.
-  LDA.w $0202 : CMP.b #$1A : BEQ .select_goldstar
+  %SelectedItem()
+  CMP.b #$1A : BEQ .select_goldstar
   LDA.b #$01 : BRA .latch
   .select_goldstar
   LDA.b #$02

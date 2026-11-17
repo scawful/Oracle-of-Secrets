@@ -24,6 +24,9 @@ HUD_ClockDisplay:
 {
   PHP ; Preserve caller M/X flags
   JSR RunClock
+  if !ENABLE_GLADE_AMBUSH == 1
+    JSL KydrogLanding_Tick ; Abyss landing pan (Sprites/Bosses/kydrog.asm)
+  endif
   JSL SongTintTick ; After RunClock: repaints over an hourly palette refresh
   if !ENABLE_DREAM_WISDOM_SCENE == 1
     JSL DreamWisdom_HUDHidden : BCS .no_clock ; Wisdom scene: HUD blank
@@ -36,6 +39,9 @@ HUD_ClockDisplay:
   ; A/X/Y (LDX.b #$1D / CPX.b #$0E). With 16-bit X the upper slots ($0F-$1D)
   ; never ran: thrown pot/bush debris (garnish $16) froze invisibly (2026-09-26).
   SEP #$30
+  if !ENABLE_RICHARD_QUEST == 1
+    JSL RichardQuest_Tick ; Overworld/richard_quest.asm
+  endif
   JSL $09B06E ; Restore Garnish_ExecuteUpperSlots_long
   PLP
   RTL
@@ -166,7 +172,7 @@ TimeSystem_UpdateGBCLink:
   ; base-form policy instead of reapplying GBC art from the return's world.
   JSL LinkGraphics_ApplyD8Base : BCS .light_world
   ; GBC Link code
-  LDA $0FFF : CMP #$00 : BEQ .light_world
+  LDA.l SavedWorld : BEQ .light_world
     LDA $02B2 : BNE .already_gbc_or_minish
       JSL UpdateGbcPalette
       LDA.b #$3B : STA $BC   ; change link's sprite

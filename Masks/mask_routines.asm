@@ -579,6 +579,13 @@ if !ENABLE_HORSE_FORM == 1
         LDA.b #$01
         RTL
     ++
+if !ENABLE_HORSE_MOUNTED_BOW == 1
+    LDA.w $0303 : CMP.b #$03 : BNE .horse_y_blocked
+    LDA.l $7EF340 : BEQ .horse_y_blocked
+    LDA.l $7EF377 : BEQ .horse_y_blocked
+    BRA .done
+  .horse_y_blocked
+endif
     LDA.b #$01
     RTL
   +
@@ -1657,6 +1664,9 @@ LinkOAM_CheckForDrawShield:
 if !ENABLE_HORSE_FORM == 1
   CMP.w #$0009 : BEQ .no_shield
 endif
+if !ENABLE_EQUIPMENT_MENU == 1
+  JSL HeavySword_Active : BCS .no_shield  ; heavy sword: no shield draw
+endif
   .shield
   RTL
 }
@@ -1861,6 +1871,10 @@ CheckNewLButtonPress:
   CLC
   RTL
 }
+
+if !ENABLE_HORSE_MOUNTED_BOW == 1
+  incsrc "Masks/horse_mounted_bow.asm"
+endif
 
 if !ENABLE_D8_FARORE_GRAPHICS == 1
 assert pc() <= $3A9800, "Mask routines reached D8 Farore graphics support"

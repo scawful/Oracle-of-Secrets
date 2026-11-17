@@ -23,6 +23,14 @@ org $1DF614 : Sprite_ConvertVelocityToAngle:
 org $05A377 ; replace vanilla sprite_lanmola.asm
 Lanmola_FinishInitialization:
 {
+if !ENABLE_GORON78_LANMOLA_BOSS == 1
+  ; Saved room boss-clear retires only these Lanmolas on reentry.
+  JSL Goron78_IsRoom : BCC .initialize
+  LDA.w $0403 : BPL .initialize
+    STZ.w SprState,X
+    RTL
+  .initialize
+endif
   PHB : PHK : PLB
   LDA.l .starting_delay, X : STA.w SprTimerA, X
   LDA.b #$FF : STA.w SprHeight, X
@@ -46,6 +54,10 @@ Lanmola_FinishInitialization:
   ; Original: db $80, $CF, $FF, $60
   .starting_delay
     db $80, $CF
+if !ENABLE_GORON78_LANMOLA_BOSS == 1
+    ; Room $78 keeps placement slots 0..2; keep delay 2 in bounds.
+    db $FF
+endif
 }
 
 Sprite_Lanmola:
@@ -61,6 +73,10 @@ Sprite_Lanmola:
   dw Lanmola_Dive  ;0x03
   dw Lanmola_Reset ;0x04
   dw Lanmola_Death ;0x05
+if !ENABLE_GORON78_LANMOLA_BOSS == 1
+  dw Goron78_LanmolaSurface ;0x06
+  dw Goron78_LanmolaStagger ;0x07
+endif
 }
 
 Lanmola_Wait: ;0x00
@@ -83,6 +99,10 @@ Lanmola_Mound: ;0x01
   JSL CheckIfActive : BCS Lanmola_Wait_delay
 
   LDA.w SprTimerA, X : BNE .return
+if !ENABLE_GORON78_LANMOLA_BOSS == 1
+    JSL Goron78_MoundReady
+    RTS
+else
     JSL Lanmola_SpawnShrapnel
 
     LDA.b #$13 : STA $012D
@@ -101,6 +121,7 @@ Lanmola_Mound: ;0x01
 
     STZ.w SprMiscF, X
     STZ.w SprMiscG, X
+endif
 
     ; ALTERNATE ENTRY POINT
     .Lanmola_SetScatterSandPosition
@@ -117,6 +138,34 @@ Lanmola_Mound: ;0x01
 
   RTS
 }
+
+if !ENABLE_GORON78_LANMOLA_BOSS == 1
+; New room $78 states use the existing body draw/history and active predicate.
+; The bank30 helper owns behavior; every other room keeps its old states.
+Goron78_LanmolaSurface:
+{
+  JSR Lanmola_Draw
+  JSL CheckIfActive : BCS .done
+  JSL Goron78_SurfaceTick
+  .done
+  RTS
+}
+
+Goron78_LanmolaStagger:
+{
+  JSR Lanmola_Draw
+  JSL CheckIfActive : BCS .done
+  JSL Goron78_StaggerTick
+  .done
+  RTS
+}
+
+Goron78_ScatterLong:
+{
+  JSR Lanmola_Mound_Lanmola_SetScatterSandPosition
+  RTL
+}
+endif
 
 Lanmola_Fly: ;0x02
 {
@@ -152,7 +201,11 @@ Lanmola_Fly: ;0x02
   .dontSwitchDirections
 
   LDA.w SprMiscA, X : STA $04
+if !ENABLE_GORON78_LANMOLA_BOSS == 1
+  JSL Goron78_LoadLanmolaTargetXHigh : STA $05
+else
   LDA.w SprXH, X : STA $05
+endif
   LDA.w SprMiscB, X : STA $06
   LDA.w SprYH, X : STA $07
   LDA.w SprX, X : STA $00
@@ -222,10 +275,17 @@ Lanmola_Reset: ;0x04
 
     TXY
     JSL GetRandomInt : AND.b #$07 : TAX
+if !ENABLE_GORON78_LANMOLA_BOSS == 1
+    JSL Goron78_ResetLanmolaX ; Get random X pos to have the lanmola fly to. ;.randXPos
+
+    JSL GetRandomInt : AND.b #$07 : TAX
+    JSL Goron78_SelectLanmolaY : STA.w SprY, Y ; Get random Y pos to have the lanmola fly to. ;.randYPos
+else
     LDA $7EEAA8, X : STA.w SprX, Y ; Get random X pos to have the lanmola fly to. ;.randXPos
 
     JSL GetRandomInt : AND.b #$07 : TAX
     LDA $7EEAB0, X : STA.w SprY, Y ; Get random Y pos to have the lanmola fly to. ;.randYPos
+endif
     TYX
 
   .wait
@@ -245,6 +305,12 @@ Lanmola_Death: ;0x05
       LDA $7EEAB8, X : ORA $00 : STA $7EEAB8, X
       PLX ; pull back x because sprite will crash otherwise even if it's dying...
 
+if !ENABLE_GORON78_LANMOLA_BOSS == 1
+      ; Preserve X/Y/$00 room-clear bookkeeping around the predicate.
+      PHX
+      JSL Lanmola_EncounterIsClear : BCC .oneIsntDead
+      JSL Goron78_RecordLanmolaClear
+else
       ; Reduced to 2 lanmolas for v168 beta (was 4, LDX #$03)
       PHX : LDX.b #$01
 
@@ -255,6 +321,7 @@ Lanmola_Death: ;0x05
           .notLanmola
 
       DEX : BPL .next_sprite
+endif
           TYX : LDA.b #$0F : STA $7EEAB8, X
           LDA.b #$1A : STA $012F
       .oneIsntDead
@@ -486,6 +553,10 @@ Lanmola_DrawMound:
   RTS
 }
 
+if !ENABLE_GORON78_LANMOLA_BOSS == 1
+Goron78_LanmolaBodyEnd:
+%Goron78_EmitCoreHelpers()
+endif
 assert pc() <= $05A880
 
 org $1DCFCB

@@ -1,4 +1,7 @@
-; Functional Equipment: slots 0-5 masks, 6-11 rings, 12-17 songs, 18-23 supplies.
+; Functional Equipment: slots 0-5 masks, 6-11 rings, 12-17 songs, 18-23 supplies,
+; 24 story blade, 25 heavy sword (GEAR band, logical row 4).
+; v4 bands, top to bottom: GEAR, MASKS, RINGS, then SONGS or SUPPLIES.
+; Songs leave band 3 when Map & Travel is on; supplies may then take it.
 ; $020B is only the cursor; BoundMask, RingSlot1 and CurrentSong are selections.
 ; No preview fixture or ownership spoof controls availability. DBR = $2D.
 ; Supplies retain slots/counts but stay hidden until their menu is enabled.
@@ -6,10 +9,15 @@
 if not(defined("MENU_EQUIPMENT_SUPPLIES_VISIBLE"))
   !MENU_EQUIPMENT_SUPPLIES_VISIBLE = 0
 endif
+assert !ENABLE_MENU_MAP_TRAVEL == 1 || !MENU_EQUIPMENT_SUPPLIES_VISIBLE == 0, "Songs and Supplies share Equipment band 3"
+; Two-slot swords: Sword ($7EF359) is the equipped combat/graphics level.
+; Sword-slot logic, names and placeholders live in menu_sword_slots.asm
+; (Items bank $2B; Menu banks $2D/$2E are full).
 
 Menu_Equipment_Init:
 {
   SEP #$30
+  JSL SwordSlots_Sync
   JSL UpdateFluteSong_Long
   STZ.w $0207
   LDA.l BoundMask : DEC : CMP.b #$06 : BCS .first
@@ -20,7 +28,7 @@ Menu_Equipment_Init:
 .scan
   STA.w $020B
   JSR Menu_Equipment_Owned : BNE .done
-  LDA.w $020B : INC : CMP.b #$18 : BCC .scan
+  LDA.w $020B : INC : CMP.b #$1A : BCC .scan
   LDA.b #$FF : STA.w $020B             ; no valid owned entry has no cursor
 .done
   RTS
@@ -47,14 +55,26 @@ Menu_Equipment_Owned:
   TXA : INC #2 : BRA .done
 .song
   CMP.b #$12 : BCS .supplies
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  BRA .none                          ; songs live on the Map & Travel page
+else
   SEC : SBC.b #$0B                    ; song 1-6 < Ocarina progression
+if !ENABLE_EPONA_SONG == 1
+  JSL Ocarina_SongLearned_Long : BCC .none ; song 6 = Epona bit
+else
   CMP.l $7EF34C : BCS .none
+endif
+endif
   INC : BRA .done                    ; colored note variants 2-7
 .supplies
+  CMP.b #$18 : BCS .sword
 if !MENU_EQUIPMENT_SUPPLIES_VISIBLE == 1
-  CMP.b #$18 : BCS .none
   LDA.b #$01 : BRA .done             ; count never indexes the one-variant icon
+else
+  BRA .none
 endif
+.sword
+  JSL SwordSlots_Variant : BRA .done
 .none
   LDA.b #$00
 .done
@@ -82,7 +102,7 @@ Menu_Equipment_SupplyCount:
 Menu_Equipment_Move:
 {
   SEP #$30
-  LDA.w $020B : CMP.b #$18 : BCC .valid
+  LDA.w $020B : CMP.b #$1A : BCC .valid
   LDA.b $F4 : AND.b #$03 : BNE .turn
   JMP Menu_Equipment_Init
 .valid
@@ -97,8 +117,13 @@ Menu_Equipment_Move:
 .horizontal
   LDX.b $02
   LDA.b $04 : AND.b #$01 : BEQ .left
+  CPX.b #$18 : BCS .gear_right
   LDA.w Menu_Equipment_Columns,X : CMP.b #$17 : BEQ .turn ; last column
   LDA.w .next,X : BRA .candidate
+.gear_right
+  CPX.b #$19 : BEQ .turn             ; heavy sword is the GEAR row's last cell
+  LDA.b #$19 : JSR Menu_Equipment_Owned : BEQ .turn
+  LDA.b #$19 : BRA .candidate
 .left
   LDA.w Menu_Equipment_Columns,X : CMP.b #$07 : BEQ .turn ; first column
   LDA.w .prev,X
@@ -113,14 +138,20 @@ Menu_Equipment_Move:
   JMP Menu_Page3_Turn
 .vertical
   LDA.w Menu_Equipment_Columns,X : STA.b $06
-  LDA.b #$03 : STA.b $07              ; inspect other three rows only
+  LDA.b #$04 : STA.b $07              ; inspect other four rows only
 .next_row
   LDA.b $04 : AND.b #$04 : BEQ .up
   LDA.b $05 : INC : BRA .row
 .up
   LDA.b $05 : DEC
 .row
-  AND.b #$03 : STA.b $05 : TAX
+  CMP.b #$FF : BNE +
+  LDA.b #$04                          ; up from masks -> GEAR (row 4)
++
+  CMP.b #$05 : BCC +
+  LDA.b #$00                          ; down from GEAR -> masks
++
+  STA.b $05 : TAX
   LDA.b #$FF : STA.b $08 : STA.b $02
   LDA.w .starts,X : TAY
   LDA.w .ends,X : STA.b $09
@@ -144,18 +175,18 @@ Menu_Equipment_Move:
 .done
   RTS
 .next
-  db 1,2,3,4,5,0, 7,8,9,10,11,6, 13,14,15,16,17,12, 19,20,21,22,23,18
+  db 1,2,3,4,5,0, 7,8,9,10,11,6, 13,14,15,16,17,12, 19,20,21,22,23,18, 25,24
 .prev
-  db 5,0,1,2,3,4, 11,6,7,8,9,10, 17,12,13,14,15,16, 23,18,19,20,21,22
+  db 5,0,1,2,3,4, 11,6,7,8,9,10, 17,12,13,14,15,16, 23,18,19,20,21,22, 25,24
 .starts
-  db 0,6,12,18
+  db 0,6,12,18,24
 .ends
-  db 6,12,18,24
+  db 6,12,18,24,26
 }
 Menu_Equipment_Rows:
-  db 0,0,0,0,0,0, 1,1,1,1,1,1, 2,2,2,2,2,2, 3,3,3,3,3,3
+  db 0,0,0,0,0,0, 1,1,1,1,1,1, 2,2,2,2,2,2, 3,3,3,3,3,3, 4,4
 Menu_Equipment_Columns:
-  db 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17,20,23
+  db 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10
 
 Menu_Equipment_Select:
 {
@@ -163,7 +194,8 @@ Menu_Equipment_Select:
   LDA.b $F4 : BIT.b #$40 : BEQ .done
 .pressed
   LDA.w $020B : JSR Menu_Equipment_Owned : BEQ .error
-  LDA.w $020B : CMP.b #$06 : BCS .ring
+  LDA.w $020B : CMP.b #$18 : BCS .sword
+  CMP.b #$06 : BCS .ring
   INC : STA.l BoundMask               ; binding does not transform
   BRA .sound
 .ring
@@ -191,6 +223,8 @@ Menu_Equipment_Select:
 .error
   LDA.b #$3C : STA.w $012E
   RTS
+.sword                               ; Owned already refused the smith-held $FF
+  JSL SwordSlots_Select : BRA .sound
 }
 
 Menu_Equipment_Draw:
@@ -203,10 +237,14 @@ Menu_Equipment_Draw:
   DEX #2 : BPL .title
   LDX.w #$0008
 .labels
-  LDA.w .masks,X : STA.w $1000+menu_offset(9,6),X
-  LDA.w .rings,X : STA.w $1000+menu_offset(13,6),X
-  LDA.w .songs,X : STA.w $1000+menu_offset(17,6),X
+  LDA.w .gear,X : STA.w $1000+menu_offset(9,6),X
+  LDA.w .masks,X : STA.w $1000+menu_offset(13,6),X
+  LDA.w .rings,X : STA.w $1000+menu_offset(17,6),X
+if !ENABLE_MENU_MAP_TRAVEL == 0
+  LDA.w .songs,X : STA.w $1000+menu_offset(21,6),X
+endif
   DEX #2 : BPL .labels
+  JSR Menu_Equipment_Gear
 if !MENU_EQUIPMENT_SUPPLIES_VISIBLE == 1
   LDX.w #$000E
 .supplies_label
@@ -217,6 +255,13 @@ endif
   LDA.b #$7E : STA.b $0A
   LDY.b #$00
 .icons
+if !ENABLE_MENU_MAP_TRAVEL == 0
+  CPY.b #$12 : BCS .next_icon        ; band 3 holds songs; supplies are hidden
+else
+  CPY.b #$0C : BCC .draw_icon
+  CPY.b #$12 : BCC .next_icon        ; songs live on the Map & Travel page
+.draw_icon
+endif
   PHY
   TYA : JSR Menu_Equipment_Owned
   STA.w MenuItemValueSpoof
@@ -228,6 +273,7 @@ endif
   JSR DrawMenuItem
   SEP #$30
   PLY
+.next_icon
   INY : CPY.b #$18 : BCC .icons
 
   JSR Menu_Equipment_UsePrompt
@@ -242,6 +288,7 @@ endif
   LDA.w CurrentSong : BEQ .no_song
   CLC : ADC.b #$0B : JSR .marker
 .no_song
+  JSL SwordSlots_MarkerSlot : JSR .marker                        ; Owned hides it while the smiths hold Sword
   LDA.w $020B : JSR Menu_Equipment_Owned : BEQ .no_cursor
   LDA.w $0207 : AND.b #$20 : BNE .no_cursor
   LDA.w $020B : ASL : TAX
@@ -264,6 +311,8 @@ endif
   RTS
 .title_text
   dw "EQUIPMENT"
+.gear
+  dw "GEAR_"
 .masks
   dw "MASKS"
 .rings
@@ -272,6 +321,43 @@ endif
   dw "SONGS"
 .supplies
   dw "SUPPLIES"
+}
+
+; GEAR band: story blade, heavy sword (cursor slots 24/25), then passive
+; shield, tunic, glove, boots, flippers (display only). Passive variants come
+; from Menu_Quest_GearVariant, the same SRAM reads Quest used before v4.
+Menu_Equipment_Gear:
+{
+  SEP #$30
+  JSL SwordSlots_Sync
+  LDA.b #$7E : STA.b $0A              ; DrawMenuItem reads the variant from $7E
+  LDY.b #$00
+.icons
+  PHY
+  CPY.b #$02 : BCS .passive
+  TYA : CLC : ADC.b #$18 : JSR Menu_Equipment_Owned
+  BRA .variant
+.passive
+  LDA.w .quest_slot,Y : JSR Menu_Quest_GearVariant
+.variant
+  STA.w MenuItemValueSpoof
+  REP #$30
+  TYA : AND.w #$00FF : ASL : TAX
+  LDA.w .gfx,X : TAY
+  LDA.w .pos,X : TAX
+  LDA.w #MenuItemValueSpoof
+  JSR DrawMenuItem
+  SEP #$30
+  PLY
+  INY : CPY.b #$07 : BCC .icons
+  RTS
+.quest_slot
+  db $00,$00,$13,$14,$0F,$10,$11     ; -, -, shield, tunic, glove, boots, flippers
+.pos
+  dw menu_offset(6,3),menu_offset(6,6),menu_offset(6,9),menu_offset(6,12)
+  dw menu_offset(6,15),menu_offset(6,18),menu_offset(6,21)
+.gfx
+  dw SwordGFX,SwordGFX,ShieldGFX,TunicGFX,PowerGloveGFX,PegasusBootsGFX,FlippersGFX
 }
 
 ; Only the three implemented foods advertise Use, and only with stock.
@@ -314,6 +400,9 @@ Menu_Equipment_Name:
 {
   LDA.w $020B : JSR Menu_Equipment_Owned : BEQ .done
   LDA.w $020B : ASL : TAX
+  CPX.b #$30 : BCC .name
+  JSL SwordSlots_Name : BRA .done    ; sword names live in bank $2E
+.name
   REP #$30
   LDA.w Menu_Equipment_Names,X : TAX
   LDY.w #$0000
@@ -356,8 +445,10 @@ Menu_Equipment_Gfx:
   dw QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX
   dw BananaGFX,PineappleGFX,RockMeatGFX,SeashellGFX,HoneycombGFX,DekuStickGFX
 Menu_Equipment_Pos:
-  dw menu_offset(6,3),menu_offset(6,6),menu_offset(6,9),menu_offset(6,13),menu_offset(6,16),menu_offset(6,19)
   dw menu_offset(10,3),menu_offset(10,6),menu_offset(10,9),menu_offset(10,13),menu_offset(10,16),menu_offset(10,19)
   dw menu_offset(14,3),menu_offset(14,6),menu_offset(14,9),menu_offset(14,13),menu_offset(14,16),menu_offset(14,19)
+  dw menu_offset(18,3),menu_offset(18,6),menu_offset(18,9),menu_offset(18,13),menu_offset(18,16),menu_offset(18,19)
   dw menu_offset(18,3),menu_offset(18,6),menu_offset(18,9)
   dw menu_offset(18,13),menu_offset(18,16),menu_offset(18,19)
+  dw menu_offset(6,3),menu_offset(6,6)
+assert menu_offset(6,6) == !HEAVY_ICON_POS, "SwordSlots_MarkerSlot recolors the heavy icon at menu_offset(6,6)"

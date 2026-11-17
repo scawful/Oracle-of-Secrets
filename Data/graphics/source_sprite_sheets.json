@@ -33,25 +33,32 @@
       "why": "Kydrog boss, old pirate art (scawful 2026-10-19): dark outline around the collar and neck; room $A4 only."
     },
     {
+      "sprite_sheet": "0x0F",
+      "source": "spr0f.txt",
+      "base_sha256": "13532b9c4cc295e6efdb7c2532436a912f7392531b4c1228bd00484b26c9ca84",
+      "identity": false,
+      "why": "Goron Mines switch track sprite $B0 (scawful rulings 9/17/19, 2026-11-02): tiles 04/05/14/15 (block $44) carry the room's BG rail corner pixels, indices remapped from BG palette 7 to OBJ palette 6. No other tile changes."
+    },
+    {
       "decoded_sha256": "705208a1541b6ffb1d84cd05b00e284c2b6bfcf08a1ad5b14d72088b3205cd24",
       "global_sheet": "0xE3",
       "source": "docks/docks_gE3_slot6.txt",
       "why": "Kalyxo Docks ordinary 3bpp background; shared Secret Beach LOW deck sheet."
     },
     {
-      "decoded_sha256": "a06f575732f4a3c3bb619d782985bb53deaa3dfa70eed37124fc628a28675515",
+      "decoded_sha256": "740106b4b43065e77b8f8b4b8455549886346664339748cba61c861e0b5d4ae3",
       "global_sheet": "0xE4",
       "source": "docks/docks_gE4_slot3.txt",
       "why": "Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload."
     },
     {
-      "decoded_sha256": "924d4327d683073743b168a655dfc5ac22ab19d9c8c4fce478833715fba543b7",
+      "decoded_sha256": "39eef800d928946e325458f4620e3b0cdf05d4ea65ea65a4ff40dae7ff48f915",
       "global_sheet": "0xE5",
       "source": "docks/docks_gE5_slot4.txt",
       "why": "Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload."
     },
     {
-      "decoded_sha256": "933d8f5dcea66c62f839a1b1ac37b27ee411c7f8d41e73204193d036555d40d5",
+      "decoded_sha256": "c49e94f681f18420697bc53f95a835632acd1724538371651540e0081e90f4c7",
       "global_sheet": "0xE6",
       "source": "docks/docks_gE6_slot5.txt",
       "why": "Kalyxo Docks ordinary 3bpp background; native HIGH background slot; no map-specific graphics upload."
@@ -139,13 +146,6 @@
       "why": "Sky port slot 1 (replaces 0x3B on the 7 rim maps $84-$87, $8D-$8F; $8C keeps 0x3B): copy of 0x3B with v11 Meadow rim chars in indices no Sky cell uses"
     },
     {
-      "global_sheet": "0xE4",
-      "source": "docks/docks_gE4_ferry_slot3.txt",
-      "decoded_sha256": "47d892a6bcff73dea17935efc41ecc8cd04424bcc6248427c5a3ee73f95b16d4",
-      "flag": "ENABLE_KALYXO_BOAT",
-      "why": "Native ferry berth preservation glyphs; ordinary E4 remains selected while the ferry flag is off."
-    },
-    {
       "global_sheet": "0xF5",
       "source": "sky_overworld/gF5.txt",
       "decoded_sha256": "47d2798861e8ca6a9e9ec3613766709b998b23522ba757e3218aee0a47038f9f",
@@ -169,6 +169,12 @@
       "source": "abyss_windmill/gF8.txt",
       "decoded_sha256": "322237e58e019c5f94ba5eb1abf43d65b29d7a39ff46c87594e184b2057571ae",
       "why": "Abyss $63 windmill (screen $64) slot 6: copy of sheet $3F (area set 65 default) with brown-stone tower chars in locals no other $63 cell uses."
+    },
+    {
+      "global_sheet": "0xF9",
+      "source": "power_shrine/gF9.txt",
+      "decoded_sha256": "40c3326c03dbeb4826fad4f3fa21ecd864e7e3f4c1e898c40a20c5cc7637c4c2",
+      "why": "Shrine of Power main door art (door 5, scawful DECIDED 2026-11-16): War-mask facade chars for the $B0 group slot 3 ($B0/$B1/$B8/$B9)."
     }
   ]
 }

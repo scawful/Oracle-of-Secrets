@@ -27,8 +27,10 @@ def setup(f,room=0x90,crystal=0):
 def assemble(p, enabled=1):
     source=(ROOT/'Core/symbols.asm').read_text()
     defs='\n'.join(m[0] for m in re.finditer(r'(?m)^Spr\w+\s*=\s*\$[0-9a-fA-F]+',source))
+    graphics=(ROOT/'Sprites/NPCs/farore_d8_graphics.asm').read_text()
+    membership=graphics[graphics.index('D8Farore_IsMember:'):graphics.index('; Header ABI')]
     asm=p/'fixture.asm';rom=p/'fixture.sfc';rom.write_bytes(b'\xff'*0x200000)
-    asm.write_text('lorom\n'+defs+'\nSprite_Farore = $73\nInCutScene = $7EF303\norg $2C8000\nincsrc "'+str(ROOT/'Sprites/NPCs/farore_d8_companion.asm')+'"\n')
+    asm.write_text('lorom\n'+defs+'\nSprite_Farore = $73\nInCutScene = $7EF303\norg $2C8000\n'+membership+'\nincsrc "'+str(ROOT/'Sprites/NPCs/farore_d8_companion.asm')+'"\n')
     callers=(ROOT/'Sprites/NPCs/farore.asm').read_text()
     callers=callers[callers.index('Sprite_Farore_Long:'):callers.index('; Movement key bitwise')]
     stage=(ROOT/'Core/part00.asm').read_text()
@@ -41,6 +43,9 @@ Sprite_HyruleDream_Prep: INC.w $1FF1 : RTS
 Sprite_HyruleDream_Main: INC.w $1FF2 : RTS
 Sprite_Farore_Draw: INC.w $1FF3 : RTS
 Sprite_Farore_Main: INC.w $1FF4 : RTS
+org $06DC5C
+  INC.w $1FF6
+  RTL
 org $09C2D4
   RTS
 org $09F000
@@ -99,7 +104,7 @@ def main():
                 assert all(x==y or 0x100<=i<0x200 for i,(x,y) in enumerate(zip(before,f.ram)))
                 checks.append(invalid)
             finally:f.close()
-        for scenario in ('join','blocked-left','all-blocked','A6-wait','pause','completion','stale-room','B0','96','transition-room-change'):
+        for scenario in ('join','blocked-straight','all-blocked','A6-wait','pause','completion','stale-room','B0','96','transition-room-change'):
             f=PresenceFixture(lib,rom,labels)
             try:
                 room=0xA6 if scenario=='A6-wait' else 0x90;setup(f,room);f.put(2,6)
@@ -108,7 +113,7 @@ def main():
                 f.put(0xE96,0);f.put(0xEB6,0);f.put(0xDB6,0)
                 f.call('D8Farore_Prep',long_return=True)
                 assert (f.get(0xE96),f.get(0xEB6))==(room&255,room>>8)
-                if scenario=='blocked-left':f.tile=lambda x,y:1 if x<0x100 else 0
+                if scenario=='blocked-straight':f.tile=lambda x,y:1 if 0x100<=x<0x110 and y>=0x120 else 0
                 if scenario=='all-blocked':f.tile=lambda x,y:0x20
                 if scenario=='pause':f.put(0x11,1)
                 if scenario=='transition-room-change':f.put(0x11,1);f.word(0xA0,0x96)
@@ -118,12 +123,12 @@ def main():
                 before=bytes(f.ram[:12]);f.cpu.db=0x30
                 f.call('D8Farore_Frame',long_return=True)
                 assert f.cpu.db==0x30 and f.ram[:12]==before
-                placed=scenario in ('join','blocked-left','A6-wait')
+                placed=scenario in ('join','blocked-straight','A6-wait')
                 assert bool(f.get(0xDB6))==placed
                 assert f.cpu.c==placed
                 if placed:
                     x=f.get(0xD16)|f.get(0xD36)<<8;y=f.get(0xD06)|f.get(0xD26)<<8
-                    assert (x,y)==({'join':(0xE8,0x100),'blocked-left':(0x118,0x100),'A6-wait':(0xC38,0x1440)}[scenario])
+                    assert (x,y)==({'join':(0x100,0x120),'blocked-straight':(0xE0,0x120),'A6-wait':(0xC38,0x1440)}[scenario])
                     # Moving Link engages ordinary following but never drags the A6 anchor.
                     f.word(0x22,0x190);f.call('D8Farore_Frame',long_return=True)
                     assert (f.get(0xD16)|f.get(0xD36)<<8)==(x if scenario=='A6-wait' else x+1)
@@ -148,10 +153,13 @@ def main():
                     f.put(0xE96,0);f.put(0xEB6,0)
                     f.call('Sprite_Farore_Prep',long_return=True)
                     assert f.get(0x1FF1)==int(not(enabled and own))
-                    if enabled and own:assert (f.get(0xE96),f.get(0xEB6))==(0x90,0)
+                    if enabled and own:
+                        assert (f.get(0xE96),f.get(0xEB6))==(0x90,0)
+                        assert f.get(0xE46)==0x82 and f.get(0xDA6)==0, 'two body OAM pieces, reset follow latch'
                     f.call('Sprite_Farore_Long',long_return=True)
                     assert f.get(0x1FF0)==int(not(enabled and own))
                     assert f.get(0x1FF3)==int(bool(enabled and own))
+                    assert f.get(0x1FF6)==int(bool(enabled and own)), 'native shadow must be D8 placed-only'
                     assert f.get(0x1FF2)==0 and f.get(0x1FF4)==0
                     checks.append(f'actual-callers-flag{enabled}-owned{own}')
                 finally:f.close()

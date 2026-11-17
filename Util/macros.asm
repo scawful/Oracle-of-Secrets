@@ -61,6 +61,9 @@ endif
 ; Per-dungeon wall object tile patterns (Dungeons/wall_profile_selector.asm);
 ; kit rows/palettes route per room (H3). Default on (scawful 2026-11-10).
 !ENABLE_WALL_PROFILE_SELECTOR       = 1
+; Eon Abyss GBC interiors (Dungeons/abyss_gbc_interiors.asm): per-room GBC sheet
+; remap + palette overwrite in the Abyss. Prototype, off until scawful reviews.
+!ENABLE_ABYSS_GBC_INTERIORS         = 0
 !ENABLE_WATER_GATE_HOOKS            = 1
 !ENABLE_WATER_GATE_ROOMENTRY_RESTORE = 0
 !ENABLE_WATER_GATE_OVERLAY_REDIRECT = 1
@@ -82,8 +85,10 @@ endif
 ; Aux ABI 1 needs an explicitly bound authoring table; preserve ordinary ROMs.
 !ENABLE_OW_AUX_EXTENSION              = 0
 !ENABLE_KALYXO_DOCKS_PROFILE          = 0
-; Native cached-exit ferry prototype; both geography/underlays remain unbound.
-!ENABLE_KALYXO_BOAT                   = 0
+; Native cached-exit ferry: Kalyxo Docks $30/$31 <-> Sea Zora Quay $99 (bound in
+; Data/overworld/kalyxo_boat_placements.asm). Opening arrival is unchanged unless
+; Boat_Marker holds !Boat_Magic.
+!ENABLE_KALYXO_BOAT                   = 1
 !ENABLE_ORACLE_ARRIVAL_SEQUENCE      = 1
 ; New-file Mirror experiment scene before the arrival (Core/Cutscene/experiment.asm).
 ; Requires ORACLE_ARRIVAL_SEQUENCE (asserted in Oracle_main.asm).
@@ -106,6 +111,18 @@ endif
 ; (as Y items, $0202) and equips/unequips rings; X opens the Journal. Masks
 ; leave the item grid. Needs !ENABLE_RING_SRAM_RELOCATE = 1.
 !ENABLE_MENU_PAGE3                   = 1
+; Unhooked dual-item prototype; no production migration or X-map takeover.
+!ENABLE_DUAL_ITEM_BINDING_PROTOTYPE   = 0
+; Dungeon floor number (1F/B1/...) moves from under the magic bar (HUD cols
+; 24-25) to HUD cols 15-16, rows 3-4, so the widened dual-item frame of
+; HUD_LAYOUT_02 (cols 23-29) does not cover it (Menu/menu_hud.asm FloorIndicator).
+!ENABLE_HUD_FLOOR_CENTER              = 0
+; Codex HUD layout (HUD_LAYOUT_02/03): wide X+Y item box (cols 23-29) with
+; counts inside the box, magic bar moved left to cols 18-22, rupees and keys
+; moved to the bottom-left and bottom-right screen corners (NMI corner DMA),
+; floor number under the magic bar (or centered with hud_floor_center).
+; Needs !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE = 1 (Menu/menu_hud.asm).
+!ENABLE_HUD_LAYOUT_CODEX              = 0
 ; Part 0 storm: rain overlay, rain sound and dim world map follow the saved
 ; storm bit (StoryProgress2 bit 7), set at wake-up, cleared when Link is back
 ; on Kalyxo after the Abyss; no rain in the Abyss (Overworld/storm.asm).
@@ -125,6 +142,10 @@ endif
 ; saved world ($7EF3CA), so the lock ends at the portal home instead of the
 ; Maku Tree (LoadDarkWorldIntro, Overworld/overworld.asm).
 !ENABLE_ABYSS_RESPAWN_UNTIL_ESCAPE   = 1
+; Abyss load spawn menu: from GameState 3 an outdoor Abyss load offers
+; Pyramid / Link's House / Hall of Secrets (message $21B,
+; Overworld/abyss_spawn_menu.asm).
+!ENABLE_ABYSS_SPAWN_MENU            = 1
 ; Eon Owl near trigger: the Abyss Owls talk only when Link is within
 ; !EonOwl_TalkDistance px (Sprites/NPCs/eon_owl.asm), not on area entry.
 !ENABLE_EON_OWL_NEAR_TRIGGER         = 1
@@ -205,6 +226,11 @@ endif
 ; recovery pause, tuned chase speed, limited sight and a home box
 ; (Sprites/Enemies/stalfos_patrol.asm).
 !ENABLE_INTRO_STALFOS_PATROL        = 1
+; Forest Glade ambush (prototype, off): after Kydrog's msg $21 the glade
+; animals flee, a thunder blackout swaps stalfos art into the glade slots,
+; stalfos rise around Link, and a mosaic ramp leads into the module $15
+; banish (Sprites/Bosses/kydrog.asm).
+!ENABLE_GLADE_AMBUSH                = 0
 ; Part00 arrival lines (decisions.org "Arrival lines A/B/C approved"): a
 ; villager in the house (room $104) says B ($202) on the first wake and B2
 ; ($203) after a death; Impa opens with $25 (C) instead of the old $1C
@@ -235,6 +261,11 @@ endif
 ; Page loop: L and R always move one page, wrapping Masks&Rings <- Items ->
 ; Quest; the Items "Y:RINGS" prompt and Y shortcut are removed. Needs MENU_PAGE3.
 !ENABLE_MENU_PAGE_LOOP              = 1
+; Map & Travel page (v4): a fourth page, Items -> Equipment -> Quest -> Map
+; -> Items. Map opens the field map; Travel opens the Soaring picker; the six
+; songs move here from Equipment. Needs MENU_PAGE3, PAGE_LOOP, EQUIPMENT_MENU.
+; WRAM: MenuMapTravel_Pending $7E1EFF (Core/symbols.asm).
+!ENABLE_MENU_MAP_TRAVEL             = 1
 ; Portal Rod cell: the Portal Rod gets Items row 4, column 1 ($0202 = $19);
 ; the Fishing Rod keeps its cell; no L/R rod switch in play. Ownership byte
 ; PortalRodOwned $7EF3A6 (Core/sram.asm). Needs MENU_PAGE3.
@@ -273,6 +304,13 @@ endif
 ; Every other pad, including LW $25 -> $65 (Yesterwind), is unchanged
 ; (Overworld/lupo_pad_gate.asm).
 !ENABLE_LUPO_PAD_GATE               = 1
+; Richard quest (scawful 2026-11-15): the Wayward Village snitch lady ($3D)
+; paces without calling guards and asks for her dog Richard, a night-only
+; palette swap of the village dog ($25). After Link finds him she runs into
+; the storage shed (entrance $4A, room $107) and rewards Link inside.
+; Off by default until dialogue and the room are approved
+; (Overworld/richard_quest.asm, SRAM RichardQuestFlags).
+!ENABLE_RICHARD_QUEST               = 1
 ; Lyra/Sky overlay fix: Overworld_ReloadSubscreenOverlay (ZSCustomOverworld,
 ; $02AF58) skipped the subscreen-overlay table for every area >= $80, so a
 ; reload on a tail map ($A0-$BF) or during Song of Storms rain on a Sky map
@@ -297,13 +335,51 @@ endif
 !ENABLE_THIN_ICE                    = 1
 ; D8 Sky boss mechanics prototype (sprite $C3, Sprites/Bosses/d8_boss.asm):
 ; Somaria-socket qualified cycles, credited-hit counter, three stages.
-; Off until native proof; no room places the sprite yet.
-!ENABLE_D8_BOSS                     = 0
+; On: room $96 uses dungeon spriteset $2D (base ROM PC 0x110AB7).
+!ENABLE_D8_BOSS                     = 1
 !ENABLE_D8_FARORE_GRAPHICS          = 0 ; Graphics + presence prototype; no companion control
 
 ; Horse Form (!CurrentMask = $09) + Toto Ranch NPC ($2D) + fence jumps:
 ; Off until prototype art and behavior review are complete.
-!ENABLE_HORSE_FORM                  = 0
+!ENABLE_HORSE_FORM                  = 1
+; Park Epona where Link last dismounted outdoors (any OW area, not Ranch-only).
+; Off by default on master; this stack enables it for A5 fold proof. WRAM-only.
+!ENABLE_HORSE_PARK_ANYWHERE         = 1
+; Bow-only Y use while Horse mask mounted (spawn offset + input gate).
+; Off by default on master; this stack enables it for A6 fold proof.
+!ENABLE_HORSE_MOUNTED_BOW           = 1
+; Epona long jump over named water-gap Tile16s (HorseLongGapTile16s, up to two
+; tiles). Requires !ENABLE_HORSE_FORM. Off until native proof and site approval.
+!ENABLE_HORSE_LONG_JUMP             = 1
+
+; Epona's Song (Ranch Girl teaches it with the Ocarina): song 6, the Equipment
+; cell Elegy of Stone used (decisions.org 2026-11-16, "1 Replace Stone").
+; Learned = SideQuestProg2 bit 1 (!SideQuest2_EponaSong), not the $7EF34C count.
+; Off until native save/reopen proof and the song effect is decided.
+!ENABLE_EPONA_SONG                  = 1
+
+; Goron Mines room $78 Lanmola boss: Hammer stagger, saved clear, key drop
+; (Sprites/Bosses/lanmola_room78.asm + lanmola_hammer78.asm).
+; Off until the room $78 layout lands in the shared base ROM.
+!ENABLE_GORON78_LANMOLA_BOSS        = 1
+
+; Epona crowd check + mounted charge (Masks/horse_charge.asm): the song call
+; refuses with 5+ active enemies (OAM headroom); charging into an enemy deals
+; level-1 sword damage. Armored enemies and bosses are immune. Off until
+; native proof.
+!ENABLE_HORSE_CROWD_CHARGE          = 0
+
+; Ranch milk: after the Ocarina, the Ranch Girl's later powder reveals offer
+; Toto Ranch milk for 30 Rupees (BottleMan messages $187-$18B, no new text)
+; instead of the curse reminder $10E. Off until native proof.
+!ENABLE_RANCH_MILK                  = 0
+; Lyra talkers: talk-only ShopMan ($BB) NPCs on the Lyra crescent island
+; (parent $B3); placeholder text, no gates yet (Sprites/NPCs/lyra_talker.asm).
+; Needs EARLY_GAME_BALANCE (its $BB dispatch).
+!ENABLE_LYRA_TALKERS                = 0
+; Lyra temple Zora: Sea Zora $B8 on $90 draws the E7 River Zora front.
+; Needs ENABLE_D4_ZORA_REDESIGN and sprite set $8E on $90 (Sprites/NPCs/lyra_temple_zora.asm).
+!ENABLE_LYRA_TEMPLE_ZORA            = 0
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.

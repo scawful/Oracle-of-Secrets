@@ -167,7 +167,11 @@ Menu_SongNames:
   dw "SONG:_SOARING_  "
   dw "SONG:_TIME____  "
   dw "SONG:_SECRETS_  "
+if !ENABLE_EPONA_SONG == 1
+  dw "SONG:_EPONA___  "                 ; provisional name; replaces Elegy of Stone
+else
   dw "ELEGY:_STONE__  "
+endif
 
 Menu_RingNames:
   dw "____POWER_____  "

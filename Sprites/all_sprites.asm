@@ -19,7 +19,18 @@ incsrc "Sprites/NPCs/hyrule_dream.asm"
 %log_end("hyrule_dream", !LOG_SPRITES)
 
 %log_start("Sprite_KydrogNPC", !LOG_SPRITES)
-incsrc "Sprites/Bosses/kydrog.asm"
+if !ENABLE_GLADE_AMBUSH == 1
+  ; The glade arrival and ambush grow Kydrog past bank $30's free space.
+  ; Bank $3B mirrors low WRAM like $30, and its tail after the GBC form is
+  ; unused (Masks/all_masks.asm asserts the GBC form stays below $3BF400).
+  pushpc
+  org $3BF400
+    incsrc "Sprites/Bosses/kydrog.asm"
+    assert pc() <= $3C0000, "Kydrog (glade ambush) crossed bank $3B"
+  pullpc
+else
+  incsrc "Sprites/Bosses/kydrog.asm"
+endif
 %log_end("Sprite_KydrogNPC", !LOG_SPRITES)
 
 %log_start("Sprite_MakuTree", !LOG_SPRITES)
@@ -187,14 +198,23 @@ org $3AA000
   %log_end("ice_block", !LOG_SPRITES)
 pullpc
 
-%log_start("swap_diamond", !LOG_SPRITES)
-incsrc "Sprites/Objects/swap_diamond.asm"
-%log_end("swap_diamond", !LOG_SPRITES)
+; swap_diamond moved to the end of bank $32 (2026-11-16): bank $30 had 24 B free.
 
 if !ENABLE_D8_FARORE_GRAPHICS == 1
   ; Append within the existing sprite stream; retain the bank's hard boundary.
   incsrc "Sprites/NPCs/farore_d8_follow.asm"
 endif
+
+; Moved from bank $32 (2026-11-16): bank-neutral, see the bank $32 note.
+%log_start("cloud_bridge", !LOG_SPRITES)
+incsrc "Sprites/Objects/cloud_bridge.asm"
+%log_end("cloud_bridge", !LOG_SPRITES)
+
+; Sprites/NPCs/ranch_milk.asm is included from Items/all_items.asm
+; (bank $2B): bank $30 is full once the playtest features are on.
+
+; Sprites/NPCs/lyra_talker.asm is included from Items/all_items.asm
+; (bank $2B): banks $30 and $32 are full.
 
 assert pc() <= $310000, "Bank $30 sprite code crossed its LoROM executable boundary"
 assert pc() >= $308000, "Bank $30 sprite code left its bank (org without pushpc/pullpc?)"
@@ -297,6 +317,13 @@ incsrc "Sprites/Enemies/darknut_weapon_hitbox.asm"
 ; Local pea-shot contact wrapper: keeps the bank $30 callsite size unchanged.
 incsrc "Sprites/Enemies/business_scrub_shield.asm"
 
+if !ENABLE_GORON78_LANMOLA_BOSS == 1
+  ; Room $78 key-after-Lanmolas hook + helper macros used by lanmola.asm.
+  incsrc "Sprites/Bosses/lanmola_room78.asm"
+  ; Surface/stagger states live in Items/all_items.asm (bank $2B): banks
+  ; $30/$31 are full when D8 Farore follow is also on.
+endif
+
 assert pc() <= $328000, "Bank $31 sprite region overflow"
 assert pc() >= $318000, "Bank $31 sprite code left its bank (org without pushpc/pullpc?)"
 print "Bank31 Free Space: ", dec($320000-pc()), " bytes"
@@ -349,9 +376,16 @@ incsrc "Sprites/NPCs/fortune_teller.asm"
 incsrc "Sprites/NPCs/ranch_girl.asm"
 %log_end("ranch_girl", !LOG_SPRITES)
 
-%log_start("cloud_bridge", !LOG_SPRITES)
-incsrc "Sprites/Objects/cloud_bridge.asm"
-%log_end("cloud_bridge", !LOG_SPRITES)
+; cloud_bridge moved to the end of bank $30 (2026-11-16): the Kydreeok
+; chamber plate code filled bank $32. It is bank-neutral (long entries with
+; PHK/PLB, outward calls are JSL).
+
+; Moved from bank $30 (2026-11-16) for bank headroom. Bank-neutral: the
+; dispatcher reaches it through dl pointers, both entries do PHK/PLB, its
+; tables are local, and outward calls are JSL.
+%log_start("swap_diamond", !LOG_SPRITES)
+incsrc "Sprites/Objects/swap_diamond.asm"
+%log_end("swap_diamond", !LOG_SPRITES)
 
 ; A file that orgs into a vanilla bank must pushpc/pullpc, or the next incsrc
 ; lands on vanilla code (fortune_teller.asm put ranch_girl/cloud_bridge on the
@@ -412,6 +446,9 @@ incsrc "Sprites/NPCs/goron.asm"
 if !ENABLE_D4_ZORA_REDESIGN == 1
   assert !ENABLE_SOURCE_SPRITE_SHEETS == 1, "D4 actors require their source sheets"
   incsrc "Sprites/Bosses/d4_pressure_warden.asm"
+  if !ENABLE_LYRA_TEMPLE_ZORA == 1
+    incsrc "Sprites/NPCs/lyra_temple_zora.asm"
+  endif
 endif
 
 if !ENABLE_D8_BOSS == 1
@@ -425,6 +462,10 @@ if !ENABLE_HORSE_FORM == 1
   %log_start("horse_npc", !LOG_OVERWORLD)
   incsrc "Sprites/NPCs/horse.asm"
   %log_end("horse_npc", !LOG_OVERWORLD)
+endif
+
+if !ENABLE_GORON78_LANMOLA_BOSS == 1
+  %Goron78_EmitTargetHighHelper()
 endif
 
 assert pc() <= $2CF700, "Bank $2C sprite stream overlaps Somaria internal landing"

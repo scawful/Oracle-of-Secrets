@@ -405,7 +405,7 @@ Sprite_Minecart_Main:
           LDA.b #$02 : STA.w LinkSomaria
           LDA.b #$01 : STA.w !LinkInCart
           ; Adjust player pos
-          LDA.w SprCachedY : SEC : SBC #$0B : STA $20
+          JSR Minecart_SeatPlayer
 
           ; Check if the cart is facing east or west
           LDA.w SprMiscB, X : CMP.b #$03 : BNE +
@@ -444,7 +444,7 @@ Sprite_Minecart_Main:
           LDA.b #$02 : STA.w LinkSomaria
           LDA.b #$01 : STA.w !LinkInCart
           ; Adjust player pos
-          LDA.w SprCachedY : SEC : SBC #$0B : STA $20
+          JSR Minecart_SeatPlayer
 
           ; Check if the cart is facing north or south
           LDA.w SprMiscB, X : BEQ +
@@ -655,6 +655,26 @@ StopCart:
   LDA.w $A0 : STA.w !MinecartTrackRoom, Y
   SEP #$20
 
+  RTS
+}
+
+; Seat Link on the cart: Link Y = cart Y - 11, written as 16 bits.
+; A stop beside a room midline (tile rows 32-35) has Link and the cart in
+; different Y pages; the old 8-bit write then moved Link 256 px. The page
+; change also runs the vanilla quadrant update so $A9/$AA follow Link,
+; the same call a moving cart makes every frame.
+Minecart_SeatPlayer:
+{
+  LDA.b $21 : STA.b $40
+  LDA.b $23 : STA.b $41
+  REP #$20
+  LDA.w SprCachedY : SEC : SBC.w #$000B : STA.b $20
+  SEP #$20
+  LDA.b $1B : BEQ .outdoors
+    PHX
+    JSL ApplyLinksMovementToCamera
+    PLX
+  .outdoors
   RTS
 }
 

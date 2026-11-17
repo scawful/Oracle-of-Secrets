@@ -195,13 +195,26 @@ endif
   .consume_y
   ; R+Y changes form once; it must not also fire the newly exposed item.
   LDA.b #$40 : TRB.b $F4
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSL ItemBindings_ConsumeX             ; R+X must not fire an owned X item
+endif
 
   .route
   LDA.w !CurrentMask : BEQ .base_form
   CMP.b #$06 : BEQ .base_form
   CMP.b #$08 : BEQ .no_item            ; Garo's Y ability is handled above
 if !ENABLE_HORSE_FORM == 1
+if !ENABLE_HORSE_MOUNTED_BOW == 1
+  ; Mounted bow only: horse keeps the bow Y-slot ($0202=$01 → $0303=$03).
+  CMP.b #$09 : BNE .after_horse_y
+    LDA.w $0202 : CMP.b #$01 : BNE .no_item
+    LDA.l $7EF340 : BEQ .no_item
+    LDA.l $7EF377 : BEQ .no_item
+    BRA .regular
+  .after_horse_y
+else
   CMP.b #$09 : BEQ .no_item            ; Horse Form blocks all Y items
+endif
 endif
   CMP.b #$05 : BCS .regular            ; preserve automatic Minish / Moosh
   TAX
@@ -210,6 +223,9 @@ endif
   LDA.b $55 : BEQ .regular
   LDA.b #$13 : BRA .set_action          ; Stone remains an effective Cape
   .regular
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSL ItemBindings_Route : BCS .set_action
+endif
   LDX.w $0202 : CPX.b #Menu_ItemIndex_End-Menu_ItemIndex : BCS .no_item
   LDA.l Menu_ItemIndex, X : BRA .set_action
   .no_item

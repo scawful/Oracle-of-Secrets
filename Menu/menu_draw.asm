@@ -69,13 +69,13 @@ Menu_DrawQuestIcons:
   LDX.w #$10
 
   .loop
-    LDA.w quest_icons, X : STA.w $1364, X
-    LDA.w quest_icons+$10, X : STA.w $13A4, X
-    LDA.w quest_icons+$20, X : STA.w $13E4, X
-    LDA.w quest_icons+$30, X : STA.w $1424, X
-    LDA.w quest_icons+$40, X : STA.w $1464, X
-    LDA.w quest_icons+$50, X : STA.w $14A4, X
-    LDA.w quest_icons+$60, X : STA.w $14E4, X
+    LDA.l quest_icons, X : STA.w $1364, X
+    LDA.l quest_icons+$10, X : STA.w $13A4, X
+    LDA.l quest_icons+$20, X : STA.w $13E4, X
+    LDA.l quest_icons+$30, X : STA.w $1424, X
+    LDA.l quest_icons+$40, X : STA.w $1464, X
+    LDA.l quest_icons+$50, X : STA.w $14A4, X
+    LDA.l quest_icons+$60, X : STA.w $14E4, X
     DEX : DEX : BPL .loop
 
   LDA.w #$20F5 : STA.w $13B4 : STA.w $13F4 : STA.w $1474 : STA.w $14B4
@@ -249,7 +249,11 @@ Menu_DrawMusicNotes:
   LDY.b #$00
 .notes
   PHY
+if !ENABLE_EPONA_SONG == 1
+  TYA : INC : JSL Ocarina_SongLearned_Long : BCS .learned
+else
   TYA : INC #2 : CMP.l $7EF34C : BCC .learned : BEQ .learned
+endif
   LDA.b #$01 : BRA .variant
 .learned
   TYA : INC #2
@@ -361,7 +365,14 @@ endif
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0000 : BEQ .no_ocarina
 if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
     ; Ocarina owned, no song learned ($7EF34C = 1): grey icon (entry 7).
+if !ENABLE_EPONA_SONG == 1
+    SEP #$20
+    JSL Ocarina_ValidSong_Long          ; 0 = no learned song (Epona bit counts)
+    REP #$20
+    AND.w #$00FF : BNE .ocarina_has_songs
+else
     CMP.w #$0002 : BCS .ocarina_has_songs
+endif
       LDA.w #$0007 : BRA .spoof_ocarina
     .ocarina_has_songs
     LDA.w $030F : AND.w #$00FF : BNE .spoof_ocarina
@@ -1085,11 +1096,15 @@ Menu_DrawCursor:
     BRA .done
 
   .no_delete
+if !ENABLE_HUD_LAYOUT_CODEX == 0
   ; Check if current item has submenu behavior
   SEP #$20
   JSR Menu_CheckItemHasSubmenu
   REP #$20
   BCS .submenu_cursor
+endif
+  ; Codex layout: one gray selector on every item (scawful 2026-11-15:
+  ; "a gray main selector"); green/blue belong to the Y/X marks only.
 
   ; Normal cursor (palette 1 - default blue/white)
   LDA.w #$3060 : STA.w $1108, X ; corner

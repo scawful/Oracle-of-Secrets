@@ -152,6 +152,9 @@ endif
 if !ENABLE_MASK_R_BINDING == 1
   JSL MaskBinding_MigrateSelection
 endif
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSL Menu_Bindings_Open                ; Y item kept apart from the cursor
+endif
   LDA.w $0780 : STA.w $00
 if !ENABLE_PORTAL_ROD_CELL == 1
   JSR Menu_PortalRod_SyncOwned
@@ -243,7 +246,7 @@ endif
   REP #$30
   LDX.w #$3E
   .loop
-    LDA.w Menu_Palette, X
+    LDA.l Menu_Palette, X
     STA.l $7EC502, X
     DEX : DEX
   BPL .loop
@@ -363,6 +366,9 @@ Menu_ItemScreen:
   JMP .exit                           ; no cursor/equipment edits after a turn/close
 .active
   INC $0207
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSL Menu_Bindings_Input              ; Y/X on an item bind it; A never
+endif
 if !ENABLE_MENU_PAGE3 == 1
 if !ENABLE_GOLDSTAR_CELL == 1
   LDA.w $0202 : BNE .have_item
@@ -440,6 +446,9 @@ endif
   JSR Menu_DrawCursor
 if !ENABLE_MENU_PAGE3 == 1
   .no_grid_cursor
+endif
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSL Menu_Bindings_DrawMarkers
 endif
 
   JSR Menu_DrawItemName
@@ -568,6 +577,9 @@ Menu_CheckBottle:
 
 Menu_Exit:
 {
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSL Menu_Bindings_Close              ; before the bottle and $0303 reads
+endif
   JSL LinkState_ResetMaskAnimated
   JSR Menu_CheckBottle
   REP #$20
@@ -601,9 +613,15 @@ Menu_Exit:
   INC.b $16
 
   SEP #$20 ; Restore M=8 before return (REP #$20 at line 432 set M=16)
+if !ENABLE_EQUIPMENT_MENU == 1
+  JSL SwordSlots_ExitReload            ; heavy/story swap made in Equipment
+endif
   JSL Supply_ProcessPendingExitAction
 if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
   JSL SpecialSoaring_Complete
+endif
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  JSL MenuMapTravel_ExitAction       ; Map/Travel request from the menu
 endif
   RTS
 }
@@ -650,7 +668,7 @@ Menu_RefreshInventoryScreen:
   REP #$30
   LDX.w #$3E
   .loop
-    LDA.w Menu_Palette, X
+    LDA.l Menu_Palette, X
     STA.l $7EC502, X
     DEX : DEX
   BPL .loop
@@ -664,6 +682,9 @@ Menu_RefreshInventoryScreen:
 
 Menu_InitiateScrollDown:
 {
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSL Menu_Bindings_Close              ; RebuildHUD_long reads $0202
+endif
   REP #$20
 
   ; Clear out the whole buffer.
@@ -715,6 +736,19 @@ Menu_InitiateScrollDown:
   .loop4
     LDA $7EC7C2, X : STA $1142, X
   DEX : BNE .loop4
+
+if !ENABLE_HUD_LAYOUT_CODEX == 1
+  ; Bottom corners (rupees row 26 cols 2-6, keys cols 28-29) so the closing
+  ; scroll shows them before HUD_NMIUpload takes over again.
+  LDX.b #$09
+  .loop_rupees
+    LDA.l HudCornerBuffer, X : STA $1684, X
+  DEX : BPL .loop_rupees
+  LDX.b #$03
+  .loop_keys
+    LDA.l HudCornerBuffer+$0A, X : STA $16B8, X
+  DEX : BPL .loop_keys
+endif
 
   LDA.b #$24 : STA.w $0116
   LDA.b #$01 : STA.b $17
@@ -895,6 +929,7 @@ MagicBag_ConsumeItem:
 ; An unlearned ocarina has no cursor and ignores direction input.
 Menu_SongMenu:
 {
+  assert !ENABLE_EPONA_SONG == 0 || !ENABLE_EQUIPMENT_MENU == 1, "Epona's Song needs the Equipment menu"
   REP #$30
   JSR Menu_DrawMusicNotes
   SEP #$30
@@ -1208,7 +1243,7 @@ endif
 endif
 
 menu_frame: incbin "tilemaps/menu_frame.tilemap"
-quest_icons: incbin "tilemaps/quest_icons.tilemap"
+; quest_icons (128 bytes) lives in bank $2E after menu_journal.asm: bank $2D is full.
 incsrc "menu_map_names.asm"
 if !ENABLE_EQUIPMENT_MENU == 1
   incsrc "menu_quest.asm"
@@ -1216,11 +1251,61 @@ endif
 if !ENABLE_MENU_PAGE3 == 1
   incsrc "menu_page3.asm" ; end of bank $2D, after the map names
 endif
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  ; menu_item_bindings.asm is in bank $2B (Items/all_items.asm): bank $2D is
+  ; full. Long wrappers for the two $2D routines it calls; DBR stays $2D.
+  Menu_RefreshInventoryScreen_Long:
+    JSR Menu_RefreshInventoryScreen : RTL
+if !ENABLE_MENU_PAGE3 == 1
+  Menu_Page3_IsMaskItem_Long:
+    JSR Menu_Page3_IsMaskItem : RTL
+endif
+endif
 %log_end("Menu/menu.asm", !LOG_MENU)
 incsrc "menu_hud.asm"
 %log_end("Menu/menu_hud.asm", !LOG_MENU)
 incsrc "menu_journal.asm"
 %log_end("Menu/menu_journal.asm", !LOG_MENU)
+; Read with LDA.l from Menu_DrawQuestIcons (bank $2D).
+quest_icons: incbin "tilemaps/quest_icons.tilemap"
+; Read with LDA.l from Menu_UploadLeft and the palette restore (bank $2D).
+Menu_Palette:
+  dw hexto555($814f16)
+  dw hexto555($552903)
+  dw hexto555($000000)
+  dw hexto555($000000) ; transparent
+  dw hexto555($d51d00)
+  dw hexto555($f9f9f9)
+  dw hexto555($000000)
+  dw hexto555($000000) ; transparent
+  dw hexto555($d0a050)
+  dw hexto555($f9f9f9)
+  dw hexto555($000000)
+  dw hexto555($000000) ; transparent
+  dw hexto555($5987e0)
+  dw hexto555($f9f9f9)
+  dw hexto555($000000)
+  dw hexto555($000000) ; transparent
+  dw hexto555($7b7b83)
+  dw hexto555($bbbbbb)
+  dw hexto555($000000)
+  dw hexto555($000000) ; transparent
+  ; Existing gold artwork keeps its original palette5 colors.
+  dw hexto555($a58100)
+  dw hexto555($dfb93f)
+  dw hexto555($000000)
+  dw hexto555($000000) ; transparent
+  ; Frame palette6 is preserved exactly (brown outline, dark blue fill).
+  dw hexto555($814f16)
+  dw hexto555($013e6e)
+  dw hexto555($000000)
+  dw hexto555($000000) ; transparent
+  dw hexto555($15cd34)
+  dw hexto555($f9f9f9)
+  dw hexto555($000000)
+  ; The upload loop reads 32 words (X = $3E..0). In bank $2D the 32nd word was
+  ; the next table's first word ($4B8B); keep that color here.
+  dw $4B8B
 if !ENABLE_D8_BOSS == 1
   ; D8 code owns $2EB800-$2EBFFF; its stage 2/3 graphics start at $2EC000.
   assert pc() <= $2EB800, "Menu bank $2E reached the D8 boss code slot ($2EB800)"

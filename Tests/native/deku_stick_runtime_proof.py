@@ -260,6 +260,11 @@ class DekuStickRuntimeTest:
             raise RuntimeError(f"Socket {self.sock} did not appear")
 
         pids = subprocess.run(["lsof", "-t", str(self.sock)], text=True, capture_output=True).stdout.split()
+        if not pids:
+            # lsof can come back empty under heavy load; the ROM copy path is
+            # unique to this work dir, so pgrep on it names the same process.
+            pids = subprocess.run(["/usr/bin/pgrep", "-f", str(self.rom_copy)],
+                                  text=True, capture_output=True).stdout.split()
         owned = [int(p) for p in pids if p.isdigit() and str(self.rom_copy) in identity(int(p))]
         if len(owned) != 1:
             raise RuntimeError(f"Cannot identify owned emulator PID: {pids}")

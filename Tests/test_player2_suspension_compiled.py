@@ -132,7 +132,7 @@ def main():
                     else:raise
                 finally:f.close()
             def busy(f,kind):
-                if kind=='bird':f.put(0xAF4,1)
+                if kind=='bird':f.put(0xC4A+4,0x27)
                 elif kind in ('hook','receipt'):f.put(0xC4A+4,0x1F if kind=='hook' else 0x22)
                 else:f.put(0xDD0+12,9);f.put(0xE20+12,0xEA if kind=='heart' else 0xE7)
             for owner in ('bird','hook','receipt','heart','mushroom'):
@@ -240,8 +240,18 @@ def main():
                 assert not f.cpu.c
                 if variant=='candidate':timings['slot-scan-all-active']=t
             check('slot-scan-nonowners-active',worst_scan,True)
+            def stale_bird(f):
+                f.put(0xAF4,0x20)
+                f.run('P2_SlotsBusy',x16=True,x=0xBEAD,y=0xCAFE)
+                assert not f.cpu.c
+            check('stale-bird-flag-not-busy',stale_bird,True)
+            def cutscene_duck(f):
+                f.put(0xC4A+4,0x38)
+                f.run('P2_SlotsBusy',x16=True,x=0xBEAD,y=0xCAFE)
+                assert f.cpu.c
+            check('cutscene-duck-busy',cutscene_duck,True)
             def action_hook_refusal(f):
-                f.put(0xAF4,1);f.put(0x7FF435,7);f.put(0x44,0x80)
+                f.put(0xC4A+4,0x27);f.put(0x7FF435,7);f.put(0x44,0x80)
                 f.run('P2_ActionGate',long_return=True,db=6)
                 assert f.cpu.z and f.cpu.c and f.cpu.a&255==0x80 and f.cpu.x==6
                 assert f.get(0x7FF436)==0

@@ -1,14 +1,13 @@
 ; Current native cached-exit contract used by GoronCheckpoint/SpecialSoaring.
 ; NOT historical STV2 keys0186/0187. No exit/entrance allocation is emitted.
-; World pixels and full native camera/cache values must come from the selected
-; current landing. The corrected left boat is NOT the old physical31 anchor.
-!KALYXO_BOAT_ENDPOINTS_BOUND = 0
-!Boat_DocksFacing = $FFFF
-!Boat_IslandFacing = $FFFF
-!Boat_DocksOpenTile = $FFFF
-!Boat_IslandOpenTile = $FFFF
-!Boat_DocksWaterTile = $FFFF
-!Boat_IslandWaterTile = $FFFF
+; Bound in QUEUE225: Kalyxo Docks $30/$31 (16, 23) <-> Sea Zora Quay $99 (23, 19).
+!KALYXO_BOAT_ENDPOINTS_BOUND = 1
+!Boat_DocksFacing = $0006
+!Boat_IslandFacing = $0004
+!Boat_DocksOpenTile = $0FC0
+!Boat_IslandOpenTile = $085E
+!Boat_DocksWaterTile = $02CD
+!Boat_IslandWaterTile = $02C3
 
 ; Emit the native $32-byte payload already consumed at02E5D4. Bounds are
 ; the eight0600/0610 words; gfx0/gfx1 are AA0..AA3. No custom record format.
@@ -38,10 +37,11 @@ if !KALYXO_BOAT_ENDPOINTS_BOUND == 1
 endif
 Boat_Caches:
 Boat_DocksCache:
-  ; Unbound: area,scrollY/X,LinkY/X,origin,triggersY/X,bounds8,gfx2.
-  %BoatNativeCache($FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF)
+  ; Docks $30/$31 subscreen tile (16, 23) = area tile (48, 23): Y=$0D70, X=$0300
+  %BoatNativeCache($0030,$0D1E,$0288,$0D70,$0300,$08D0,$0D8F,$0307,$0C00,$0D1E,$0000,$0300,$0B20,$0E00,$FF00,$0400,$2000,$1C38)
 Boat_IslandCache:
-  %BoatNativeCache($FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF)
+  ; Sea Zora Quay $99 tile (23, 19): Y=$0730, X=$0370
+  %BoatNativeCache($0099,$06E0,$02F8,$0730,$0370,$071E,$074F,$0377,$0600,$071E,$0200,$0300,$0520,$0800,$0100,$0400,$2000,$2F2B)
 Boat_CachesEnd:
   assert Boat_IslandCache-Boat_DocksCache == $32
   assert Boat_CachesEnd-Boat_Caches == $64

@@ -30,6 +30,7 @@ class BuildPipelineReceiptTest(unittest.TestCase):
                         OOS_SKIP_MENU_VALIDATE='1', OOS_SKIP_VERSION_STAMP='1',
                         OOS_BACKUP_ROOT=str(self.root / 'Roms/backups'))
         for name in ('build_rom.sh', 'build_checks.sh', 'z3ed_locator.sh', 'build_receipt.py',
+                     'bank_headroom.py',
                      'verify_feature_flags.py', 'set_feature_flags.py', 'lyra_native_loaders.py',
                      'native_overworld_authoring_metadata.py'):
             self.copy(f'Scripts/Build/{name}')
@@ -55,6 +56,8 @@ class BuildPipelineReceiptTest(unittest.TestCase):
         self.assembler = self.write('tools/fake-asar', f'#!{sys.executable}\n' + '''import json,hashlib,os,pathlib,sys
 sys.exit(int(os.environ['FIXTURE_ASM_EXIT'])) if os.getenv('FIXTURE_ASM_EXIT') else None
 rom=pathlib.Path(sys.argv[-1]); rom.write_bytes(rom.read_bytes()+b' assembled')
+for bank in ('30','31','32'):
+ print(f"Bank{bank} Free Space: {os.getenv('FIXTURE_BANK'+bank+'_FREE','4096')} bytes")
 for arg in sys.argv:
  if arg.startswith('--symbols-path=') and not os.getenv('FIXTURE_OMIT_SYMBOLS'):
   pathlib.Path(arg.split('=',1)[1]).write_text('[labels]\\n2C:8000 Oracle_Fixture\\n')
@@ -390,6 +393,25 @@ if '--constants' in args:
         self.assertEqual(self.build().returncode, 7)
         self.assertEqual(self.check('smoke')['status'], 'failed')
         self.assertEqual(self.receipt['state'], 'failed')
+
+    def test_bank_headroom_summary_is_recorded(self):
+        self.env['FIXTURE_BANK30_FREE'] = '300'
+        result = self.build()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        check = self.check('bank_headroom')
+        self.assertEqual(check['status'], 'passed')
+        self.assertTrue(check['required'])
+        self.assertIn('$30 300 B WARN', check['detail'])
+        self.assertIn('bank headroom WARN', result.stdout)
+
+    def test_bank_headroom_below_floor_fails_build(self):
+        self.env['FIXTURE_BANK31_FREE'] = '24'
+        result = self.build()
+        self.assertNotEqual(result.returncode, 0)
+        check = self.check('bank_headroom')
+        self.assertEqual(check['status'], 'failed')
+        self.assertIn('$31 24 B FAIL', check['detail'])
+        self.assertNotIn('output_rom', self.receipt['artifacts'])
 
     def test_flags_restore_after_assembly_failure(self):
         before = (self.root / 'Config/feature_flags.asm').read_bytes()

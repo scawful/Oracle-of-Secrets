@@ -37,6 +37,7 @@ The following blocks were marked "unused" in vanilla ALTTP but are now utilized 
 | `$7EF39C` | `JournalState`      | Current state of the player's journal.                                   | ✓        |
 | `$7EF39D` | `Reserved` | Unused (Core/sram.asm:466). | |
 | `$7EF39E` | `StoryState`        | State machine for Link's House intro sequence (0-2).                     | ✓        |
+| `$7EF3BE` | `EonGoronQuest`     | Eon Goron camp quests: bits 0-4 Roll Call sentries C/D/E/G/H, bit 5 Heart Piece paid, bit 6 reserved (Sentry Duty), bit 7 Meat Feast done. Free block now starts at `$7EF3BF` (5 bytes). | |
 
 #### **Block $7EF403-$7EF4FD** - Partially Repurposed
 
@@ -46,6 +47,7 @@ The following blocks were marked "unused" in vanilla ALTTP but are now utilized 
 |----------|-----------|--------------------------------------------------------------------|----------|
 | `$7EF410` | `Dreams`  | Bitfield tracking collection of three Dreams (`.cpw`: Courage, Power, Wisdom). | ✓        |
 | `$7EF411` | `WaterGateStates` | Bitfield for Zora Temple water gate persistence (bit0=room 0x27, bit1=room 0x25). | ✓        |
+| `$7EF412` | `TravelSpotsVisited` | Bird Travel destinations visited (bit i = LoadTransport_screen_id entry i: $00,$0B,$06,$10,$1E,$38,$2F,$36). Set on area load; read only when `!ENABLE_MENU_MAP_TRAVEL`. | ✓        |
 
 > **💡 Usage Notes:**
 > - **Scrolls** (`$7EF398`): One scroll per dungeon (7 total). Bitfield format: `.dgi zktm` where each letter represents a dungeon (m=Mushroom Grotto, t=Tail Palace, k=Kalyxo Castle, z=Zora Temple, i=Glacia Estate, g=Goron Mines, d=Dragon Ship).
@@ -167,6 +169,7 @@ This section details the layout of the save file memory.
 | `$7EF39E` | `StoryState`      | State machine for Link's House intro sequence (0=Telepathy, 1=WakeUp, 2=End). |
 | `$7EF410` | `Dreams`          | A bitfield tracking the collection of the three "Dreams" (Courage, Power, Wisdom). |
 | `$7EF411` | `WaterGateStates` | Bitfield for Zora Temple water gate persistence (bit0=room 0x27, bit1=room 0x25). |
+| `$7EF412` | `TravelSpotsVisited` | Bitfield of visited bird Travel destinations (one bit per bird spot). |
 | `$7EF347` | `ZoraMask`        | Flag indicating if the player has obtained the Zora Mask.                |
 | `$7EF348` | `BunnyHood`       | Flag indicating if the player has obtained the Bunny Hood.               |
 | `$7EF349` | `DekuMask`        | Flag indicating if the player has obtained the Deku Mask.                |

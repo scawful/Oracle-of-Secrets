@@ -17,7 +17,7 @@ def routine(text):
 
 def assemble(folder,text):
     folder.mkdir();asm=folder/'fixture.asm';image=folder/'fixture.sfc'
-    asm.write_text('lorom\n!CurrentMask = $02B2\nRefreshOverworldBackdrop = $018000\norg $2C8000\n'+routine(text))
+    asm.write_text('lorom\n!ENABLE_HORSE_FORM = 0\n!CurrentMask = $02B2\nRefreshOverworldBackdrop = $018000\norg $2C8000\n'+routine(text))
     image.write_bytes(b'\xff'*0x200000)
     proc=subprocess.run(['asar','--no-title-check','--fix-checksum=off','--symbols=wla',str(asm),str(image)],capture_output=True,text=True)
     assert proc.returncode==0,proc.stdout+proc.stderr

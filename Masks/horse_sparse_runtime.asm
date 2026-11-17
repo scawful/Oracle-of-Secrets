@@ -17,11 +17,25 @@ Horse_SlotsBusy:
 {
   PHP : REP #$30 : PHA : PHX
   SEP #$20
-  LDA.l $7E0AF4 : BNE .busy
+  ; No $0AF4 test: vanilla never clears it after a bird flight, and its stale
+  ; NMI upload targets VRAM $40E0/$41E0, which no horse slot uses. The live
+  ; bird is an ancilla and the scan below still reports it.
   LDA.l InCutScene : BNE .busy
   LDX.w #9
   .scan
-    LDA.l $7E0C4A, X : BNE .busy
+    LDA.l $7E0C4A, X : BEQ .next_ancilla
+if !ENABLE_HORSE_LONG_JUMP == 1
+    ; Ancilla $1D (dash tremor) is the long-jump landing shake: BG offsets
+    ; only, no graphics, so it must not force a silent dismount.
+    CMP.b #$1D : BEQ .next_ancilla
+endif
+    ; A rider's own arrows ($09 in flight, $0A stuck in a wall) must not
+    ; unseat them (mounted bow). Unmounted, an arrow still reports busy.
+    CMP.b #$09 : BEQ .arrow
+    CMP.b #$0A : BNE .busy
+    .arrow
+    LDA.l $7E02B2 : CMP.b #$09 : BNE .busy ; CurrentMask != horse
+    .next_ancilla
     DEX : BPL .scan
   LDX.w #15
   .receipt_sprites
@@ -94,7 +108,14 @@ Horse_LinkDmaPrefix:
   LDA.l !CurrentMask : CMP.b #!Horse_MaskId : BNE .native
   LDA.b $1B : BNE .native
   LDA.b $10 : CMP.b #9 : BEQ .eligible
-  CMP.b #$0B : BNE .native
+  CMP.b #$0B : BEQ .eligible
+  ; Pause keeps last frame's mounted OAM on screen, so her cells must stay:
+  ; the item menu for its whole life, the map only while it fades out
+  ; ($0200 = 0). Later map steps load their own sprite graphics.
+  CMP.b #$0E : BNE .native
+  LDA.b $11 : CMP.b #$01 : BEQ .eligible
+  CMP.b #$07 : BNE .native
+  LDA.w $0200 : BNE .native
   .eligible
   JSL Horse_SlotsBusy : BCS .native
   LDA.l Horse_PalLoaded : ORA.b #$80 : STA.l Horse_PalLoaded
@@ -102,11 +123,57 @@ Horse_LinkDmaPrefix:
   LDA.b #$7E
   STA.w $4304 : STA.w $4314 : STA.w $4324 : STA.w $4334 : STA.w $4344
   LDX.w #$0040
-  JML $008ADB
+  BRA .arrow_check
   .native
   LDY.w #$4100 : STY.w $2116
   JML $008A12
+  ; Mounted frames own the native arrow cells ($2A-$2D/$3A-$3D). While a
+  ; rider's arrow is alive, load that arrow art into Link's aux A/B cells
+  ; ($20-$23/$30-$33, never drawn by the rider) in place of the native aux
+  ; sources. Same two bursts and byte count as native $008ADB-$008B24.
+  .arrow_check
+  LDY.w #9
+  .arrow_scan
+    LDA.w $0C4A, Y : CMP.b #$09 : BEQ .arrow_cells
+    CMP.b #$0A : BEQ .arrow_cells
+    DEY : BPL .arrow_scan
+  JML $008ADB
+  .arrow_cells
+  LDA.b #HorseItemRestore>>16 : STA.w $4304 : STA.w $4314
+  LDY.w #$4200 : STY.w $2116
+  LDY.w #HorseItemRestore+64 : STY.w $4302 : STX.w $4305  ; $2A,$2B -> $20,$21
+  LDY.w #HorseItemRestore+128 : STY.w $4312 : STX.w $4315 ; $2C,$2D -> $22,$23
+  LDY.w #$BD40 : STY.w $4322 : STX.w $4325
+  LDA.b #$07 : STA.w $420B
+  LDY.w #$4300 : STY.w $2116
+  LDY.w #HorseItemRestore+256 : STY.w $4302 : STX.w $4305 ; $3A,$3B -> $30,$31
+  LDY.w #HorseItemRestore+320 : STY.w $4312 : STX.w $4315 ; $3C,$3D -> $32,$33
+  LDY.w #$BD80 : STY.w $4322 : STX.w $4325
+  STA.w $420B
+  LDA.b #$7E : STA.w $4304 : STA.w $4314
+  JML $008B25
 }
+
+; AncillaDraw_Arrow char store ($08A41B), M8/X8. Mounted: draw from the aux
+; cells Horse_LinkDmaPrefix fills (arrow char - $0A). On foot: native char.
+HorseArrow_StoreChar:
+{
+  LDA.l !CurrentMask : CMP.b #!Horse_MaskId : BNE .native
+  LDA.b $72 : SEC : SBC.b #$0A
+  STA.b ($90), Y : INY
+  RTL
+  .native
+  LDA.b $72
+  STA.b ($90), Y : INY
+  RTL
+}
+
+pushpc
+org $08A41B ; @hook module=Masks name=HorseArrow_StoreChar kind=jsl target=HorseArrow_StoreChar expected_m=8 expected_x=8
+  assert read2($08A41B) == $72A5 && read2($08A41D) == $9091 && read1($08A41F) == $C8, "Expected arrow char store at $08A41B"
+  JSL HorseArrow_StoreChar : NOP
+assert pc() == $08A420
+pullpc
 
 ; Entry M8/X16, DBR any. Preserve Y/DBR/DP and displaced native DMA0 tail.
 ; Horse_UploadedFrame FF=no mounted ownership, 0..18=restore required on exit.
@@ -123,7 +190,7 @@ Horse_NmiUpload:
   ; runs between8A0C and8B5C. Consume it once and preserve palette bit0.
   LDA.l Horse_PalLoaded : AND.b #$80 : BNE + : BRL .not_mounted : +
   LDA.l Horse_PalLoaded : AND.b #$7F : STA.l Horse_PalLoaded
-  LDA.l Horse_NpcUploadedFrame : CMP.b #$FF : BEQ .upload_mounted
+  LDA.l Horse_NpcUploadedFrame : CMP.b #$FF : BEQ .steady
   JSL Horse_RanchProfileReady : BCC .profile_changed
   LDA.l Horse_UploadedFrame : CMP.b #$FF : BEQ .first_mounted
   ; One ordinary-frame hold restores the now-hidden NPC before any consumer
@@ -142,10 +209,26 @@ Horse_NmiUpload:
   BRA .upload_mounted
   .profile_changed
   ; Existing native profile loader owns C2 restoration outside the Ranch.
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+  JSL Horse_OffRestore ; parked off-Ranch NPC cells -> saved native copy
+endif
   LDA.b #$FF : STA.l Horse_NpcUploadedFrame
   BRA .upload_mounted
   .restore_and_upload
   JSR Horse_RestoreNpcCells
+  BRA .upload_mounted
+  .steady
+  ; Native 8A0C/8ADB never write the mounted cells ($4000-40DF/4100-41DF,
+  ; $4260-42DF/4360-43DF); any lost grant resets UploadedFrame to FF. So an
+  ; unchanged frame needs no DMA: frees ~1.3KB of vblank for scroll map rows.
+  ; Submodules (area loads) still refresh every frame. Pause never replaces
+  ; her cells, so it keeps the no-DMA path and leaves vblank to the menu.
+  LDA.b $10 : CMP.b #$0E : BEQ +
+    LDA.b $11 : BNE .upload_mounted
+  +
+  LDA.l Horse_Frame : CMP.b #!Horse_FrameCount : BCC + : LDA.b #6 : +
+  CMP.l Horse_UploadedFrame : BNE .upload_mounted
+  BRL .replay
   .upload_mounted
   LDA.l Horse_Frame : JSR Horse_FramePointerBase
   ; Six fixed groups; no per-piece loop or destination-table walk.
@@ -181,13 +264,22 @@ Horse_NmiUpload:
   BRL .replay ; mounted and NPC uploads are mutually exclusive
 
   .not_mounted
+  ; Dismount: item restore + uncached .npc_rows every frame overran vblank
+  ; (vF black lines). Hold NPC upload for DismountNpc and cache .npc_rows.
   LDA.l Horse_UploadedFrame : CMP.b #$FF : BEQ .npc
     JSR Horse_RestoreItemCells
     LDA.b #$FF : STA.l Horse_UploadedFrame
   .npc
   JSL Horse_RanchProfileReady : BCS +
+if !ENABLE_HORSE_PARK_ANYWHERE == 1
+    JSL Horse_OffRanchNpc : BCC .off_done
+    BRL .npc_rows ; C=1: Epona's cells are wanted and the frame changed
+    .off_done
+    BRL .replay
+else
     LDA.b #$FF : STA.l Horse_NpcUploadedFrame
     BRL .replay ; native profile loader owns restoration outside Ranch
+endif
   +
   LDA.b $10 : CMP.b #9 : BEQ +
     CMP.b #$0B : BNE .restore_npc
@@ -195,12 +287,16 @@ Horse_NmiUpload:
   JSL Horse_SlotsBusy : BCS .restore_npc
   JSL Horse_RanchActorsSafe : BCC .restore_npc
   LDA.l Horse_NpcActive : BEQ .restore_npc
+  ; NPC upload is allowed during DismountNpc because .replay skips its
+  ; 1KB native tail while cooldown is nonzero (item+NPC share that budget).
   LDA.l !CurrentMask : CMP.b #!Horse_MaskId : BEQ .restore_npc
   ; NPC frames14/15 share exact pixels. Reuse the packed first-four group
   ; and a512-byte final-four stream. Four transfers preserve unconditional
   ; reload behavior without an extra full NPC frame or a new cache/state.
-  LDA.l Horse_NpcFrame : CMP.b #14 : BEQ .npc_rows
+  LDA.l Horse_NpcFrame : CMP.b #14 : BEQ .npc_check
   CMP.b #15 : BNE .restore_npc
+  .npc_check
+  CMP.l Horse_NpcUploadedFrame : BEQ .replay
   .npc_rows
   ; Native DMA0/1 are already mode1→VRAM. Two channels concatenate the
   ; first-four and last-four256-byte rows; a second burst emits their bottoms.
@@ -225,10 +321,14 @@ Horse_NmiUpload:
   PLA : STA.b $04 : PLA : STA.b $06 : PLA : STA.b $0A
   SEP #$20
   LDA.b #$7E : STA.w $4304
+  ; During dismount cooldown the item/NPC path already spent the vblank
+  ; budget; skipping this 1KB native tail removes the residual black lines.
+  LDA.l Horse_DismountCooldown : BNE .replay_done
   LDX.w $0ADC : STX.w $4302
   LDX.w $0134 : STX.w $2116
   LDX.w #$0400 : STX.w $4305
   LDA.b #1 : STA.w $420B
+  .replay_done
   PLY : PLB : RTL
 }
 

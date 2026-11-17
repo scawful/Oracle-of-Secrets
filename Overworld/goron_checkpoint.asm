@@ -8,6 +8,10 @@ LoadCheckpointOrWorld:
 if !ENABLE_KALYXO_BOAT == 1
   JSL Boat_ResetSession
 endif
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  JSL ItemBindings_AdapterReset         ; volatile latch/cursor; preserves A/P
+  JSL ItemBindings_RestoreY             ; saved Y back in $0202; preserves A/P
+endif
   if !SPECIAL_OVERWORLD_NATIVE == 1
     JSL Lyra_TailEvent_MigrateSave
   endif
@@ -42,7 +46,11 @@ endif
   .legacy
     ; Preserve the original policy's A/N/Z for Module05's BEQ at028196.
     JSL LoadDarkWorldIntro
+if !ENABLE_ABYSS_SPAWN_MENU == 1
+    JML AbyssSpawnMenu_Check
+else
     JML $028196
+endif
 
   .checkpoint
     ; Same HUD calls as native Module05's outdoor branch at02819C.
