@@ -43,8 +43,19 @@ ORG_BANK_PROOF_RE = re.compile(
     re.IGNORECASE,
 )
 LABEL_RE = re.compile(r'^\s*[A-Za-z0-9_\.\+\-]+:\s*$')
+INLINE_LABELS_RE = re.compile(r'^(?:\s*[A-Za-z0-9_\.\+\-#]+:\s*)+')
+SUBLABEL_RE = re.compile(r'^\s*\.[A-Za-z0-9_\+\-]+\s*$')
 INSTR_RE = re.compile(r'^\s*([A-Za-z]{2,5})\b\s*(.*)$')
+TOKEN_RE = re.compile(r'^\s*([A-Za-z]{2,12})\b\s*(.*)$')
 COMMENT_RE = re.compile(r'^\s*;')
+NON_EMITTING_DIRECTIVES = {
+    'assert', 'warnpc', 'check', 'print', 'namespace', 'base',
+    'arch', 'lorom', 'hirom', 'exhirom', 'exlorom', 'norom',
+    'table', 'cleartable', 'struct', 'endstruct', 'function',
+    'bank', 'dpbase', 'optimize', 'math', 'warnings',
+    'freespace', 'freecode', 'freedata', 'prot', 'skip',
+    'fillbyte', 'padbyte',
+}
 DATA_LABEL_RE = re.compile(
     r'^(Pool_|RoomData|RoomDataTiles|RoomDataObjects|OverworldMap|DungeonMap|'
     r'Map16|Map32|Tile16|Tile32|Gfx|GFX|Pal|Palette|BG|OAM|Msg|Text|Font|'
@@ -300,6 +311,144 @@ def _inline_org_payload(line: str) -> tuple[str, Optional[str]] | None:
     if op in ("db", "dw", "dl", "dd", "incbin", "incsrc", "fill", "pad"):
         return "data", None
     return "patch", None
+
+
+def _org_emits_bytes(lines: list[str], start_idx: int, defines: dict[str, int]) -> bool:
+    """Return True iff the org at start_idx can emit at least one byte."""
+    directive0 = lines[start_idx].split(";", 1)[0]
+    pc_stack: list[bool] = []
+    at_target = True
+    if ":" in directive0:
+        _, tail = directive0.split(":", 1)
+        stmt0 = INLINE_LABELS_RE.sub("", tail).strip()
+        if stmt0:
+            low0 = stmt0.lower()
+            if low0.startswith("pushpc"):
+                pc_stack.append(True)
+            elif low0.startswith("pullpc"):
+                return False
+            else:
+                m0 = TOKEN_RE.match(stmt0)
+                if m0 and m0.group(1).lower() not in NON_EMITTING_DIRECTIVES:
+                    return True
+
+    defines = dict(defines)
+    active = True
+    stack: list[dict[str, object]] = []
+    macro_depth = 0
+    struct_depth = 0
+
+    for j in range(start_idx + 1, len(lines)):
+        raw_line = lines[j]
+        line = raw_line.strip()
+        if not line or COMMENT_RE.match(line):
+            continue
+        directive = raw_line.split(";", 1)[0].strip()
+        if not directive:
+            continue
+
+        m_if = IF_DIRECTIVE_RE.match(directive)
+        if m_if:
+            kind = m_if.group(1).lower()
+            expr = m_if.group(2).strip()
+            parent_active = active
+            cond = _eval_condition(expr, defines)
+            if cond is None:
+                if at_target or any(pc_stack):
+                    return True
+                continue
+            cond_val = bool(cond)
+            if kind == "if":
+                active = parent_active and cond_val
+                stack.append({"parent_active": parent_active, "branch_taken": active})
+            else:
+                if stack:
+                    frame = stack[-1]
+                    pa = bool(frame["parent_active"])
+                    al = bool(frame["branch_taken"])
+                    active = (pa and cond_val) if (pa and not al) else False
+                    if active:
+                        frame["branch_taken"] = True
+            continue
+        if ELSE_DIRECTIVE_RE.match(directive):
+            if stack:
+                frame = stack[-1]
+                active = bool(frame["parent_active"]) and not bool(frame["branch_taken"])
+                frame["branch_taken"] = True
+            continue
+        if ENDIF_DIRECTIVE_RE.match(directive):
+            if stack:
+                frame = stack.pop()
+                active = bool(frame["parent_active"])
+            continue
+        if not active:
+            continue
+
+        if MACRO_START_RE.match(directive):
+            macro_depth += 1
+            continue
+        if MACRO_END_RE.match(directive):
+            if macro_depth > 0:
+                macro_depth -= 1
+                continue
+            return False
+        if macro_depth > 0:
+            continue
+
+        if re.match(r"^struct\b", directive, re.IGNORECASE):
+            struct_depth += 1
+            continue
+        if re.match(r"^endstruct\b", directive, re.IGNORECASE):
+            struct_depth = max(0, struct_depth - 1)
+            continue
+        if struct_depth > 0:
+            if directive == "}":
+                struct_depth = max(0, struct_depth - 1)
+            continue
+
+        parsed_define = _parse_define_assignment(raw_line, defines)
+        if parsed_define is not None:
+            defines[parsed_define[0]] = parsed_define[1]
+            continue
+        assignment = DEFINE_ANY_ASSIGN_RE.match(directive)
+        if assignment:
+            defines.pop(assignment.group(1), None)
+            continue
+
+        stmt = INLINE_LABELS_RE.sub("", directive).strip()
+        if not stmt or stmt in ("{", "}") or SUBLABEL_RE.match(stmt):
+            continue
+        low = stmt.lower()
+        if low.startswith("pushpc"):
+            pc_stack.append(at_target)
+            continue
+        if low.startswith("pullpc"):
+            if not pc_stack:
+                return False
+            at_target = pc_stack.pop()
+            continue
+        if ORG_DIRECTIVE_RE.match(stmt):
+            if not any(pc_stack):
+                return False
+            at_target = False
+            if ":" in stmt and "pushpc" in stmt.split(":", 1)[1].lower():
+                pc_stack.append(False)
+            continue
+        if stmt.startswith("%"):
+            if at_target or any(pc_stack):
+                return True
+            continue
+        m = TOKEN_RE.match(stmt)
+        if not m:
+            continue
+        op = m.group(1).lower()
+        if op == "incsrc" and any(pc_stack):
+            return True
+        if op in NON_EMITTING_DIRECTIVES:
+            continue
+        if at_target:
+            return True
+    return False
 
 
 def _first_instruction(lines: list[str], start_idx: int, defines: dict[str, int]) -> tuple[str, Optional[str]]:
@@ -628,9 +777,13 @@ def scan_hooks(
             addr = _eval_numeric_expression(m.group(1), defines)
             if addr is None:
                 continue
+            hook_directive = _scan_hook_directive(lines, idx)
+            if not _org_emits_bytes(lines, idx, defines) and not (
+                "kind" in hook_directive or "protected_size" in hook_directive
+            ):
+                continue
             kind, target = _first_instruction(lines, idx, defines)
             abi_class_note, no_return, ann_m, ann_x = _scan_annotations(lines, idx)
-            hook_directive = _scan_hook_directive(lines, idx)
             source = f"{asm_path.relative_to(root)}:{idx + 1}"
             directive_name = hook_directive.get("name")
             directive_kind = hook_directive.get("kind")
