@@ -444,8 +444,3 @@ DreamReturn_GanonDoorGate:
   SEC
   RTL
 }
-
-pushpc
-org $068C9C
-db $0F
-pullpc

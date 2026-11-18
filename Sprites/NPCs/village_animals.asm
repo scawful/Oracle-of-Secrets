@@ -25,6 +25,13 @@
 ;              (!Rat_MsgMinish) + squeak SFX.
 ;      - Wolf: zero contact damage, rat freezes in place within 36px,
 ;              solicited talk (!Rat_MsgWolf) + panicked squeak SFX.
+;   4. Village Cat ($28 Action 3, hooked at $06:8CA1 / $06:AE34 / $06:AF1A):
+;      - Extends Storyteller ($28) prep to Wayward Village OW $23 and houses
+;        ($0102, $0103, $0104, $0107, $0119), plus temporary $000F compatibility
+;        until removed from Maple's Hut.
+;      - Human: native $0149 ("Will you pet the cat?") + happy purr hop.
+;      - Minish / Wolf: solicited form reactions (!Cat_MsgMinish / !Cat_MsgWolf).
+;      - Draw selects 0xBC $4E cat in spritesets without 0xC0 in slot 1.
 ;
 ; Dialogue IDs use existing ROM messages as placeholders until canon lines
 ; in AFS (ANIMAL_DIALOGUE_DRAFT.md) are approved by scawful.
@@ -37,10 +44,16 @@
 !Cucco_MsgWolf        = $001B ; Placeholder for spooked Cucco squawk
 !Rat_MsgMinish        = $0018 ; Placeholder for Library Rat peer clue
 !Rat_MsgWolf          = $001B ; Placeholder for cornered Rat squeak
+!Cat_MsgHuman         = $0149 ; Native "Meow. ... Will you pet the cat?"
+!Cat_MsgMinish        = $0149 ; Placeholder for towering Village Cat reaction
+!Cat_MsgWolf          = $0149 ; Placeholder for bristling Village Cat reaction
 
 ; ---- Vanilla hook-site byte guards ----
 assert read3($06F244) == $0E20BD && read4($06F247) == $0CF00BC9 && read4($06F24B) == $08F04AC9, "Sprite_CheckIfLifted $0B/$4A site changed"
 assert read3($05A8CE) == $AB9320 && read3($05A8D1) == $F9ED20, "Sprite_6D_Rat combat/move site changed"
+assert read4($068CA1) == $00A0A0A5 && read4($068CA5) == $F08C99D9 && read4($068CA9) == $F8D0C803, "SpritePrep_Storyteller room lookup site changed"
+assert read3($06AE34) == $0DF0BD && read2($06AE37) == $19D0, "Sprite_28 Action 3 Broccoli site changed"
+assert read4($06AF1A) == $0A0E80BD && read3($06AF1E) == $0DC07D, "Sprite_28_Draw site changed"
 
 pushpc
 org $06F257
@@ -61,6 +74,26 @@ org $05A8CE ; @hook module=Sprites name=VillageRat_InteractOrCombat kind=jsl tar
   JSL VillageRat_InteractOrCombat
   NOP #2
 assert pc() == $05A8D4, "VillageRat_InteractOrCombat hook size mismatch"
+
+; $06:8CA1 (12 bytes): replaces unbounded Storyteller room scan before `TYA : STA $0E80,X`
+org $068CA1 ; @hook module=Sprites name=VillageCat_Prep kind=jsl target=VillageCat_Prep expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8
+  JSL VillageCat_Prep
+  NOP #8
+assert pc() == $068CAD, "VillageCat_Prep hook size mismatch"
+
+; $06:AE34 (5 bytes): replaces Action 3 (Cat / Broccoli) entry
+org $06AE34 ; @hook module=Sprites name=VillageCat_Main kind=jsl target=VillageCat_Main expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8
+  JSL VillageCat_Main
+  RTS
+assert pc() == $06AE39, "VillageCat_Main hook size mismatch"
+
+; $06:AF1A (7 bytes): replaces `LDA $0E80,X : ASL : ADC $0DC0,X` at start of Sprite28_Draw
+org $06AF1A ; @hook module=Sprites name=VillageCat_Draw kind=jsl target=VillageCat_Draw expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8
+  JSL VillageCat_Draw
+  BCC .vanilla_draw
+  RTS
+  .vanilla_draw
+assert pc() == $06AF21, "VillageCat_Draw hook size mismatch"
 pullpc
 
 ; ---------------------------------------------------------
@@ -276,6 +309,142 @@ VillageRat_InteractOrCombat:
   .done
   PLB
   RTL
+}
+
+; ---------------------------------------------------------
+; 4. Village Cat ($28 Action 3):
+;    Prep sets Y = action index ($03 for Wayward Village + legacy $000F).
+;    Uses DB = caller ($06) for Prep, PHK/PLB for Main and Draw.
+; ---------------------------------------------------------
+VillageCat_Prep:
+{
+  PHB : PHK : PLB
+  LDA.b $1B : BNE .indoors
+    LDA.b $8A : CMP.b #$23 : BEQ .cat_action
+    BRA .bounded_vanilla
+  .indoors
+  REP #$20
+  LDA.b $A0
+  CMP.w #$000F : BEQ .cat_ind
+  CMP.w #$0102 : BEQ .cat_ind
+  CMP.w #$0103 : BEQ .cat_ind
+  CMP.w #$0104 : BEQ .cat_ind
+  CMP.w #$0107 : BEQ .cat_ind
+  CMP.w #$0119 : BEQ .cat_ind
+  SEP #$20
+
+  .bounded_vanilla
+  LDA.b $A0
+  LDY.b #$00
+  .scan
+    CMP.w .vanilla_rooms, Y : BEQ .done
+    INY
+    CPY.b #$05 : BCC .scan
+  .cat_action
+  LDY.b #$03
+  .done
+  PLB
+  RTL
+
+  .cat_ind
+  SEP #$20
+  LDY.b #$03
+  PLB
+  RTL
+
+  .vanilla_rooms : db $0E, $0E, $12, $1A, $14
+}
+
+VillageCat_Main:
+{
+  PHB : PHK : PLB
+  LDA.w SprHeight, X : BEQ .grounded
+    DEC.w SprHeight, X
+  .grounded
+
+  LDA.w $02B2 : CMP.b #$03 : BEQ .wolf
+  CMP.b #$05 : BEQ .minish
+
+  ; Human / other forms: idle look flip + native MSG $0149 ("Will you pet the cat?")
+  LDA.w SprTimerA, X : BNE .human_talk
+    LDA.b $1A : AND.b #$3F : BNE .human_talk
+      LDA.w $0F50, X : EOR.b #$40 : STA.w $0F50, X
+  .human_talk
+  LDY.b #!Cat_MsgHuman>>8
+  LDA.b #!Cat_MsgHuman&$FF
+  JSR Animal_SolicitedTalk : BCC .done
+    LDA.b #$04 : STA.w SprHeight, X
+    LDA.b #$20 : STA.w SprTimerA, X
+  .done
+  PLB
+  RTL
+
+  .minish
+  LDY.b #!Cat_MsgMinish>>8
+  LDA.b #!Cat_MsgMinish&$FF
+  JSR Animal_SolicitedTalk : BCC .done
+    LDA.b #$03 : STA.w SprHeight, X
+    LDA.b #$20 : STA.w SprTimerA, X
+  PLB
+  RTL
+
+  .wolf
+  ; Alertly track Wolf Link within 32px; solicited talk bristles/hops.
+  LDA.b #$20 : JSR Animal_NearPlayer : BCC .wolf_talk
+    JSL Sprite_IsToRightOfPlayer
+    LDA.w $0F50, X : AND.b #$BF
+    CPY.b #$00 : BEQ +
+      ORA.b #$40
+    +
+    STA.w $0F50, X
+  .wolf_talk
+  LDY.b #!Cat_MsgWolf>>8
+  LDA.b #!Cat_MsgWolf&$FF
+  JSR Animal_SolicitedTalk : BCC .done
+    LDA.b #$06 : STA.w SprHeight, X
+    LDA.b #$28 : STA.w SprTimerA, X
+  PLB
+  RTL
+}
+
+; Out: C=1 if custom Village Cat drawn (returns via RTS at $06:AF20);
+;      C=0 with A = (SprAction*2)+SprFrame if vanilla table should draw.
+VillageCat_Draw:
+{
+  LDA.w SprAction, X : CMP.b #$03 : BNE .vanilla
+  LDA.b $1B : BEQ .check_bc
+    ; Preserve legacy Maple's Hut ($000F) draw until removed cleanly.
+    REP #$20 : LDA.b $A0 : CMP.w #$000F : SEP #$20 : BEQ .vanilla
+  .check_bc
+  ; If current spriteset ALREADY has 0xC0 in slot 1, vanilla $6A/$6C draws the sitting cat.
+  LDA.w $0AA3
+  CMP.b #$28 : BEQ .vanilla
+  CMP.b #$45 : BEQ .vanilla
+  CMP.b #$47 : BEQ .vanilla
+  CMP.b #$4D : BEQ .vanilla
+  CMP.b #$4E : BEQ .vanilla
+  CMP.b #$4F : BEQ .vanilla
+  CMP.b #$60 : BEQ .vanilla
+
+  ; Otherwise draw 0xBC $0E (OAM $4E) curled/sitting cat from slot 1 + shadow.
+  PHB : PHK : PLB
+  LDA.b #.cat_bc_oam : STA.b $08
+  LDA.b #.cat_bc_oam>>8 : STA.b $09
+  LDA.b #$01 : STA.b $06
+  STZ.b $07
+  JSL $05DF75 ; SpriteDraw_Tabulated_player_deferred
+  JSL Sprite_DrawShadow
+  PLB
+  SEC
+  RTL
+
+  .vanilla
+  LDA.w SprAction, X : ASL A : ADC.w SprFrame, X
+  CLC
+  RTL
+
+  .cat_bc_oam
+  dw 0, 0 : db $4E, $0A, $00, $02
 }
 
 print "End of village_animals.asm         ", pc
