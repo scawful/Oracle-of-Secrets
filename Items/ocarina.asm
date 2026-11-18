@@ -305,6 +305,54 @@ Link_HandleCardinalCollision_Long:
 
 ; The restored cane uses vanilla bank-$07 JSR helpers and the shared rod action.
 incsrc "Items/byrna.asm"
+
+; Secret scroll chests (item receipt $33, vanilla Dungeon Map) set
+; ScrollsFound ($7EF3BF) by dungeon ID instead of DungeonMapSet1/2 ($7EF368-$7EF369).
+; Placed in the measured bank-$07 item extension ($07FDEA..$07FFA0) because
+; banks $2B (assert <= $2BE000) and $2C (assert <= $2CF700) are full.
+; Entry $0986A7: M=8, X=8, DBR=$09, Y=item receipt ID.
+ItemReceipt_SecretScroll:
+{
+  CPY.b #$33 : BEQ .secret_scroll
+  JML $0986BC ; .not_dungeon_item
+
+.secret_scroll
+  LDA.l $7E040C
+  LDX.b #(.dungeon_ids_end-.dungeon_ids)-1
+.find_dungeon
+  CMP.l .dungeon_ids, X : BEQ .matched
+  DEX : BPL .find_dungeon
+  JML $0986B9 ; .handle_gfx (no SRAM write for cave/unknown ID)
+
+.matched
+  LDA.l ScrollsFound
+  ORA.l .scroll_bits, X
+  STA.l ScrollsFound
+  JML $0986B9 ; .handle_gfx
+
+.dungeon_ids
+  db $0C, $0A, $10, $16, $12, $0E, $18, $04
+.dungeon_ids_end
+
+.scroll_bits
+  db !Scroll_D1_MushroomGrotto
+  db !Scroll_D2_TailPalace
+  db !Scroll_D3_KalyxoCastle
+  db !Scroll_D4_ZoraTemple
+  db !Scroll_D5_GlaciaEstate
+  db !Scroll_D6_GoronMines
+  db !Scroll_D7_DragonShip
+  db !Scroll_D8_SkyTower
+}
+ItemReceipt_SecretScroll_End:
+
+pushpc
+assert read4($0986A7) == $11D033C0, "AncillaAdd_ItemReceipt map check moved"
+org $0986A7 ; @hook module=Items name=ItemReceipt_SecretScroll kind=jml target=ItemReceipt_SecretScroll expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8 protected_size=4
+  JML ItemReceipt_SecretScroll
+assert pc() == $0986AB
+pullpc
+
 ; Dungeons/hot_floor.asm owns $07FFA0-$07FFFF.
 assert pc() <= $07FFA0, "Bank $07 free-space chain reached the hot floor slot ($07FFA0)"
 print "Bank07 Free Space: ", pc

@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "594ff50945cb4cd04f49beffbac1a4de428eb80daa4fa7d78cefaa6c7e84c1f6"
+      "sha256": "9f6b3a4dfd2a3dc69d17247c1392974753cd554cf9794405f2815aecbee98271"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -3062,6 +3062,30 @@
       "binding": {
         "source": "shared:Core/sram.asm",
         "symbol": "SwordSlotFlags",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "ScrollsFound",
+      "owner": "Secret scrolls found bitfield (D1-D8, bits 0-7; D8 = $80)",
+      "space": "save_buffer",
+      "base": 8319935,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Persistent per-file bitfield of secret scrolls found in dungeon chests ($33), separate from Tingle map ownership (DungeonMapSet1/2 $7EF368-369 and TingleMaps $7EF396).",
+      "reset": "Vanilla new-file clear ($0CC321) zeros $7EF3BF. ItemReceipt_SecretScroll sets bits 0-7; Librarian_SyncLegacyScrolls migrates unbought legacy DNGMAP bits (DNGMAP set and TingleMaps clear) plus already-translated Scrolls bits.",
+      "save": "Covered by vanilla five-page save, backup and checksum ($00897B/$00899C).",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "!Scroll_D8_SkyTower        = $80"
+      ],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "ScrollsFound",
         "bank00_mirror": false
       }
     },

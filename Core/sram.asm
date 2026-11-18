@@ -178,7 +178,7 @@ endmacro
 !Bean_Complete             = $40  ; bit 6
 
 ; ---------------------------------------------------------
-; Scroll Bits ($7EF398) - Dungeon Hints Collected
+; Scroll Bits ($7EF398 / $7EF3BF) - Dungeon Scrolls Found & Translated
 ; ---------------------------------------------------------
 !Scroll_D1_MushroomGrotto  = $01  ; bit 0
 !Scroll_D2_TailPalace      = $02  ; bit 1
@@ -187,6 +187,7 @@ endmacro
 !Scroll_D5_GlaciaEstate    = $10  ; bit 4
 !Scroll_D6_GoronMines      = $20  ; bit 5
 !Scroll_D7_DragonShip      = $40  ; bit 6
+!Scroll_D8_SkyTower        = $80  ; bit 7
 
 ; ---------------------------------------------------------
 ; MapIcon Values ($7EF3C7) - Dungeon Guidance
@@ -464,6 +465,7 @@ TingleId                = $7EF397   ; Next map index (0-7)
 ; Dungeon Scrolls ($7EF398-39A)
 ; ---------------------------------------------------------
 ; Use !Scroll_* bit constants
+; Found-scroll bits live in ScrollsFound ($7EF3BF, FreeBlock_Large).
 DungeonScrolls          = $7EF398
 PreviousScroll          = $7EF39A   ; For re-reading hints
 
@@ -868,7 +870,13 @@ SwordSlotFlags     = $7EF3BD  ; bit0 heavy owned, bit1 heavy equipped,
 ;   bit 6:   reserved (Sentry Duty, Loop C)
 ;   bit 7:   Meat Feast done
 EonGoronQuest      = $7EF3BE
-FreeBlock_Large    = $7EF3BF  ; 5 bytes [BF,C4)
+; Secret scrolls found in dungeon chests ($33), D1..D8 (bits 0-7; D8 = $80).
+; Separate from DungeonMapSet1/2 ($7EF368-$7EF369) and TingleMaps ($7EF396),
+; which Tingle owns. Vanilla new-file clear ($0CC321) zeros it; five-page
+; save/checksum ($00897B/$00899C) preserves it. Free before: FreeBlock_Large,
+; unused in Oracle/usdasm, no indexed $7EF3xx,X write or receipt target.
+ScrollsFound       = $7EF3BF
+FreeBlock_Large    = $7EF3C0  ; 4 bytes [C0,C4)
 ; Richard quest (Wayward Village lady + night dog), PROPOSED 2026-11-15 by the
 ; richard-quest lane: last byte of the Large remainder, so the menu-gear
 ; lane's B9-BB reservation and the B9 block start stay untouched. Vanilla
@@ -911,7 +919,7 @@ FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF3A0  | $7EF3A0  | bits  | Wolf dig: bit 0 used |
 ; | $7EF3B3  | $7EF3B3  | 1     | Large prefix       |
-; | $7EF3BF  | $7EF3C3  | 5     | Large remainder    |
+; | $7EF3C0  | $7EF3C3  | 4     | Large remainder    |
 ; | $7EF438  | $7EF49E  | 103   | Dreams prefix      |
 ; | $7EF4E1  | $7EF4FD  | 29    | Dreams remainder   |
 ; |----------|----------|-------|--------------------|

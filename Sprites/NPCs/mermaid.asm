@@ -154,7 +154,8 @@ Sprite_Mermaid_Main:
       %PlayAnimation(0,1,16)
       JSL Sprite_PlayerCantPassThrough
 
-      ; If the player has no maps
+      ; Sync legacy pre-patch scroll chests, then check if the player has any scrolls
+      JSR Librarian_SyncLegacyScrolls
       JSR Librarian_CheckForNoMaps : BCC +
         %ShowSolicitedMessage($012E)
         RTS
@@ -218,55 +219,29 @@ Sprite_Mermaid_Main:
       JSL Sprite_PlayerCantPassThrough
       %ShowUnconditionalMessage($01A1)
 
-      ; If there are no scrolls yet
-      LDA.l Scrolls : AND #$01 : BNE .NotMushroomGrotto
-        LDA.l DNGMAP2 : AND #%00000010 : BEQ .NotMushroomGrotto
-          LDA.l Scrolls : ORA #$01 : STA.l Scrolls
-          STZ.w SprMiscG, X
-          JMP +
-      .NotMushroomGrotto
-      LDA.l Scrolls : AND #$02 : BNE .NotTailPalace
-        LDA.l DNGMAP2 : AND #%00000100 : BEQ .NotTailPalace
-          LDA.l Scrolls : ORA #$02 : STA.l Scrolls
-          LDA.b #$01 : STA.w SprMiscG, X
-          JMP +
-      .NotTailPalace
-      LDA.l Scrolls : AND #$04 : BNE .NotKalyxoCastle
-        LDA.l DNGMAP1 : AND #%10000000 : BEQ .NotKalyxoCastle
-          LDA.l Scrolls : ORA #$04 : STA.l Scrolls
-          LDA.b #$02 : STA.w SprMiscG, X
-          JMP +
-      .NotKalyxoCastle
-      LDA.l Scrolls : AND #$08 : BNE .NotZoraTemple
-        LDA.l DNGMAP1 : AND #%00010000 : BEQ .NotZoraTemple
-          LDA.l Scrolls : ORA #$08 : STA.l Scrolls
-          LDA.b #$03 : STA.w SprMiscG, X
-          JMP +
-      .NotZoraTemple
-      LDA.l Scrolls : AND #$10 : BNE .NotIcePalace
-        LDA.l DNGMAP1 : AND #%01000000 : BEQ .NotIcePalace
-          LDA.l Scrolls : ORA #$10 : STA.l Scrolls
-          LDA.b #$04 : STA.w SprMiscG, X
-          JMP +
-      .NotIcePalace
-      LDA.l Scrolls : AND #$20 : BNE .NotGoronMines
-        LDA.l DNGMAP2 : AND #%00000001 : BEQ .NotGoronMines
-          LDA.l Scrolls : ORA #$20 : STA.l Scrolls
-          LDA.b #$05 : STA.w SprMiscG, X
-          JMP +
-      .NotGoronMines
-      LDA.l Scrolls : AND #$40 : BNE .NotDragonShip
-        LDA.l DNGMAP1 : AND #%00001000 : BEQ .NotDragonShip
-          LDA.l Scrolls : ORA #$40 : STA.l Scrolls
-          LDA.b #$06 : STA.w SprMiscG, X
-          JMP +
-      .NotDragonShip
+      LDY.b #$00
+      .check_next
+        LDA.l Scrolls : AND.w .scroll_bits, Y : BNE .skip
+        LDA.l ScrollsFound : AND.w .scroll_bits, Y : BEQ .skip
+          LDA.l Scrolls : ORA.w .scroll_bits, Y : STA.l Scrolls
+          TYA : STA.w SprMiscG, X
+          INC.w SprAction, X
+          RTS
+      .skip
+        INY
+        CPY.b #.scroll_bits_end-.scroll_bits : BCC .check_next
       STZ.w SprAction, X
       RTS
-      +
 
-      INC.w SprAction, X
-      RTS
+      .scroll_bits
+        db !Scroll_D1_MushroomGrotto
+        db !Scroll_D2_TailPalace
+        db !Scroll_D3_KalyxoCastle
+        db !Scroll_D4_ZoraTemple
+        db !Scroll_D5_GlaciaEstate
+        db !Scroll_D6_GoronMines
+        db !Scroll_D7_DragonShip
+      .scroll_bits_end
     }
 
     Librarian_TranslateScroll:
@@ -318,14 +293,57 @@ Librarian_CheckForAllMaps:
 
 Librarian_CheckForNoMaps:
 {
-  LDA.l DNGMAP1 : CMP.b #$00 : BNE .not_no_maps
-  LDA.l DNGMAP2 : CMP.b #$00 : BEQ .no_maps
+  LDA.l ScrollsFound : BNE .not_no_maps
+  LDA.l Scrolls : BNE .not_no_maps
+  SEC
+  RTS
   .not_no_maps
   CLC
   RTS
-  .no_maps
-  SEC
+}
+
+; Old-save compatibility: preserve scrolls found before this patch (DNGMAP set
+; with TingleMaps clear) and already-translated Scrolls bits without letting
+; Tingle-bought maps unlock untranslated scrolls. Preserves X/Y.
+Librarian_SyncLegacyScrolls:
+{
+  PHX
+  PHY
+  LDY.b #$06
+  .loop
+    LDA.l ScrollsFound : AND.w .scroll_bits, Y : BNE .next
+    LDA.l Scrolls : AND.w .scroll_bits, Y : BNE .mark_found
+    LDA.l TingleMaps : AND.w .scroll_bits, Y : BNE .next
+    TYA : ASL A : TAX
+    REP #$20
+    LDA.l DNGMAP1 : AND.w .map_masks, X
+    SEP #$20
+    BEQ .next
+  .mark_found
+    LDA.l ScrollsFound : ORA.w .scroll_bits, Y : STA.l ScrollsFound
+  .next
+    DEY : BPL .loop
+  PLY
+  PLX
   RTS
+
+  .scroll_bits
+    db !Scroll_D1_MushroomGrotto
+    db !Scroll_D2_TailPalace
+    db !Scroll_D3_KalyxoCastle
+    db !Scroll_D4_ZoraTemple
+    db !Scroll_D5_GlaciaEstate
+    db !Scroll_D6_GoronMines
+    db !Scroll_D7_DragonShip
+
+  .map_masks
+    dw $0200 ; D1 Mushroom Grotto
+    dw $0400 ; D2 Tail Palace
+    dw $0080 ; D3 Kalyxo Castle
+    dw $0010 ; D4 Zora Temple
+    dw $0040 ; D5 Glacia Estate
+    dw $0100 ; D6 Goron Mines
+    dw $0008 ; D7 Dragon Ship
 }
 
 Sprite_Mermaid_Draw:

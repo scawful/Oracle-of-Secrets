@@ -155,7 +155,8 @@ class OwnershipTests(unittest.TestCase):
                   'BombchuAmmo':(0x7EF3B0,1),'RegionalCheckpointSchema':(0x7EF3B4,1),
                   'RegionalCheckpointEpoch':(0x7EF3B5,1),
                   'RegionalCheckpointKey':(0x7EF3B6,2),
-                  'RegionalCheckpointResumeIntent':(0x7EF3B8,1)}
+                  'RegionalCheckpointResumeIntent':(0x7EF3B8,1),
+                  'ScrollsFound':(0x7EF3BF,1)}
         data['claims']=[c for c in data['claims'] if c['id'] in expected]
         self.assertEqual({c['id'] for c in data['claims']},set(expected))
         data['sources']={'shared:Core/sram.asm':data['sources']['shared:Core/sram.asm']}
