@@ -20,9 +20,9 @@ Storybook_PalPointers:
 
 Storybook_ChrSizes:
   dw $0FE0 ; panel 0: 127 tiles (15 colors)
-  dw $0DE0 ; panel 1: 111 tiles (14 colors)
-  dw $0EC0 ; panel 2: 118 tiles (15 colors)
-  dw $0EC0 ; panel 3: 118 tiles (15 colors)
+  dw $0CC0 ; panel 1: 102 tiles (15 colors)
+  dw $0EE0 ; panel 2: 119 tiles (15 colors)
+  dw $0EE0 ; panel 3: 119 tiles (15 colors)
 
 Storybook_Palettes: ; contiguous 4x32B (128B) for zero-DP NMI row-6 copy
 Storybook_Panel0_Pal: ; 32 B
@@ -38,15 +38,15 @@ Storybook_Panel0_Chr: ; 3310 B LZ2 -> 4064 B (127 tiles)
   incbin "Core/Cutscene/storybook/panel_0_chr.lz2"
 Storybook_Panel0_Map: ; 291 B LZ2 -> 2048 B
   incbin "Core/Cutscene/storybook/panel_0_map.lz2"
-Storybook_Panel1_Chr: ; 1850 B LZ2 -> 3552 B (111 tiles)
+Storybook_Panel1_Chr: ; 1776 B LZ2 -> 3264 B (102 tiles)
   incbin "Core/Cutscene/storybook/panel_1_chr.lz2"
-Storybook_Panel1_Map: ; 260 B LZ2 -> 2048 B
+Storybook_Panel1_Map: ; 248 B LZ2 -> 2048 B
   incbin "Core/Cutscene/storybook/panel_1_map.lz2"
-Storybook_Panel2_Chr: ; 3078 B LZ2 -> 3776 B (118 tiles)
+Storybook_Panel2_Chr: ; 2953 B LZ2 -> 3808 B (119 tiles)
   incbin "Core/Cutscene/storybook/panel_2_chr.lz2"
-Storybook_Panel2_Map: ; 282 B LZ2 -> 2048 B
+Storybook_Panel2_Map: ; 284 B LZ2 -> 2048 B
   incbin "Core/Cutscene/storybook/panel_2_map.lz2"
-Storybook_Panel3_Chr: ; 2206 B LZ2 -> 3776 B (118 tiles)
+Storybook_Panel3_Chr: ; 2290 B LZ2 -> 3808 B (119 tiles)
   incbin "Core/Cutscene/storybook/panel_3_chr.lz2"
-Storybook_Panel3_Map: ; 281 B LZ2 -> 2048 B
+Storybook_Panel3_Map: ; 284 B LZ2 -> 2048 B
   incbin "Core/Cutscene/storybook/panel_3_map.lz2"
