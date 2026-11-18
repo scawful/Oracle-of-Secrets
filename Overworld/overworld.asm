@@ -138,14 +138,13 @@ pushpc
 org $028192 : JML LoadCheckpointOrWorld ; @hook module=Overworld name=LoadCheckpointOrWorld kind=jml target=LoadCheckpointOrWorld expected_m=8 expected_x=8
 assert pc() == $028196
 
-; Module05_LoadFile
-; Check for goldstar instead of mirror for mountain spawn option
+; [W3 owner: Overworld] USDASM Module05_LoadFile ($0281E2): check Flute/Ocarina slot ($7EF342 == #$02, was Mirror $7EF353) for mountain spawn.
 org $0281E2 : LDA.l $7EF342 : CMP.b #$02
 
-; Check for hall of secrets spawn pt flag
+; [W3 owner: Overworld] USDASM Module05_LoadFile ($0281CD): check Hall of Secrets spawn bit ($7EF3D6 == #$04, was GameState >= #$02).
 org $0281CD : LDA.l $7EF3D6 : CMP.b #$04
 
-; GameOver_FadeAndRevive
+; [W3 owner: Overworld] USDASM GameOver_FadeAndRevive ($09F520): compare GameState == #$02 (was $7EF3C5 == #$03) so GameState 2/3 follow $7EF3CA.
 org $09F520 : LDA.l GameState : CMP.b #$02
 
 if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
@@ -197,10 +196,10 @@ org $0794D9 ; @hook module=Overworld
 
 org $1AF5C3 : CMP.b #$4B ; Fortress ceremony waterfall (Fortress moved $5E -> $4B)
 
+; [W3 owner: Overworld] USDASM #EXIT_0EF581 ($0EF581) & FlashGanonTowerPalette ($0EF587): flash on DW areas $73/$75/$7D (was $43/$45/$47); see W3 audit #_0EF622 note.
 org $0EF581
 EXIT_0EF581:
 
-; FlashGanonTowerPalette
 org $0EF587
   LDA.b $8A : CMP.b #$73 : BEQ .on_dark_dm
               CMP.b #$75 : BEQ .on_dark_dm

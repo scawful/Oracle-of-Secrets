@@ -164,10 +164,10 @@ org $06EFFF ; @hook module=Core name=SpriteDeath_SidenexxKin kind=patch protecte
   CMP.b #$C1              ; was CMP #$CD (Dark Link); the vanilla BNE stays
 assert pc() == $06F005, "Sidenexx death dispatch must end at the vanilla BNE"
 
-; Make Helmet ChuChu recoil link
+; [W3 owner: Sprites] USDASM #Sprite_CheckDamageFromLink_with_recoil ($06F37D): recoil against sword hit for sprite $05 (was #$CD).
 org $06F37D : CMP.b #$05
 
-; Make Kydreeok head recoil Link
+; [W3 owner: Sprites] USDASM #Sprite_CheckDamageFromLink_with_recoil ($06F381): recoil Link on Kydreeok head $CF (was #$CC).
 org $06F381 : CMP.b #$CF
 
 ; =========================================================
@@ -192,40 +192,40 @@ assert pc() <= $00841E
 
 ; =========================================================
 
-; Octoballoon_FormBabby
-; Reduce by half the number of babies spawned
+; [W3 owner: Sprites] USDASM Octoballoon_FormBabby ($06D814): reduce spawned baby count 5 -> 2.
 org $06D814 : LDA.b #$02
 
-; SpritePrep_HauntedGroveOstritch
+; [W3 owner: Sprites] USDASM SpritePrep_HauntedGroveOstritch ($068BB2): NOP #11 over flute check ($7EF34C) so Haunted Grove ostrich stays visible.
 org $068BB2 : NOP #11
 
-; HauntedGroveRabbit_Idle
+; [W3 owner: Sprites] USDASM HauntedGroveRabbit_Idle ($1E9A8F): NOP #5 over bottle/progression gate ($0FDD).
 org $1E9A8F : NOP #5
 
-; MedallionTablet (Goron)
+; [W3 owner: Sprites] USDASM SpritePrep_MedallionTablet ($05F274): check unused SRAM $7EF378 instead of $7EF347 so tablet remains active.
 org $05F274 : LDA.l $7EF378 ; Unused SRAM
 
+; [W3 owner: Items] USDASM Ancilla35_MasterSwordReceipt ($08C2E3): Butter Sword receipt message $006F (was $0052).
 org $08C2E3 : dw $006F ; BUTTER SWORD DIALOGUE
 
-; Fix the capital 'B' debug item cheat.
+; [W3 owner: Core] USDASM InitializeSaveFile ($0CDC26): patch BEQ .copy_next ($F0) -> BRA ($80) to fix capital 'B' debug item cheat.
 org $0CDC26 : db $80 ; replace a $F0 (BEQ) with a $80 (BRA).
 
-; Update Catfish Item Get to Bottle
+; [W3 owner: Sprites] USDASM Catfish_RegurgitateMedallion ($1DE184): swap Catfish drop item $11 (Quake) -> $16 (Bottle).
 org $1DE184 : LDA.b #$16 : STA.w $0D90, X
 
-; Follower_Disable
-; Don't disable Kiki so we can switch maps with him.
+; [W3 owner: Sprites/Followers] USDASM Follower_Disable ($09ACF3): check follower $0E (Kiki/new companion, was #$09/#$0A) before despawning across maps.
 org $09ACF3 : LDA.l $7EF3CC : CMP.b #$0E
 
-; Kiki, don't care if we're not in dark world
+; [W3 owner: Sprites/Followers] USDASM #Follower_AIVectors ($099FEB): preserve Kiki across Light/Dark world ($8A & $FF instead of $40).
 org $099FEB : LDA.b $8A : AND.b #$FF
 
+; [W3 owner: Sprites/Followers] USDASM Kiki_Dormant ($1EE48E): NOP #6 over $02E0 follower check so Kiki stays active.
 org $1EE48E : NOP #6
 
-; Kiki activate cutscene 3 (tail palace)
+; [W3 owner: Sprites/Followers] USDASM Kiki_WalkOnRoof ($1EE630): trigger Tail Palace cutscene state $03 in $04C6 (was #$01).
 org $1EE630 : LDA.b #$03 : STA.w $04C6
 
-; Kid at ranch checks for flute
+; [W3 owner: Sprites] USDASM Sprite_3C_KidInKak ($05FF7D): check flute/ocarina slot $7EF34C >= 1 instead of MapIcon $7EF3C7.
 org $05FF7D : LDA.l $7EF34C : CMP.b #$01
 
 ; Kid at ranch: vanilla msg $147 path writes MapIcon ($7EF3C7) = 2 at
@@ -233,10 +233,10 @@ org $05FF7D : LDA.l $7EF34C : CMP.b #$01
 ; (Docs/Debugging/Issues/world_map_icons_2026-09-26.md).
   org $05FF8F : NOP #6
 
-; Raven Damage (LW/DW)
+; [W3 owner: Sprites] USDASM SpritePrep_Vitreous ($068963): override LW/DW damage table bytes ($81, $84; was $81, $88).
 org $068963 : db $81, $84
 
-; Running Man draw palette
+; [W3 owner: Sprites] USDASM RunningMan_RunAway ($05E9CD): custom 8-frame Running Boy OAM table (#_05E9CD..#_05EA45).
 org $05E9CD
 SpriteDraw_RunningBoy:
   #_05E9CD: dw   0,  -8 : db $2C, $00, $00, $02
@@ -263,8 +263,7 @@ SpriteDraw_RunningBoy:
   #_05EA3D: dw   0,  -7 : db $2E, $40, $00, $02
   #_05EA45: dw   0,   1 : db $CE, $4E, $00, $02
 
-; Sword Barrier Sprite Prep
-; Skip overworld flag check, sprite is indoors now
+; [W3 owner: Sprites] USDASM SpritePrep_AgahnimsBarrier ($06891B): NOP #12 over overworld check so Sword Barrier works indoors.
 org $06891B : NOP #12
 
 ; (SPC upload timeout hook removed – revert to vanilla handshake)

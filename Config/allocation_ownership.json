@@ -40,7 +40,7 @@
     "shared:Overworld/overlays.asm": {
       "source_set": "shared",
       "path": "Overworld/overlays.asm",
-      "sha256": "8f346dc91702bfcdd5e09be1e84b41f8979277836f075c504961c7b91507aaa7"
+      "sha256": "0fc71ecac22486db3d4c9c1e6e9c61cc9a0ac60b0b12e6b027ad20e0f1da9fb7"
     },
     "shared:Core/sram.asm": {
       "source_set": "shared",
@@ -125,7 +125,7 @@
     "shared:Overworld/overworld.asm": {
       "source_set": "shared",
       "path": "Overworld/overworld.asm",
-      "sha256": "95e8f88e982fea4a00173cac5b14ccac02e950d79f4b6616c4b4d5b4c45df473"
+      "sha256": "00e64a25e46dcfc9f99e5faf36375dff04bc47832c557bab5f910906ba2c412a"
     },
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
