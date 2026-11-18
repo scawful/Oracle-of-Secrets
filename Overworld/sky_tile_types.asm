@@ -88,7 +88,7 @@ endif
 
 ; Retained west-landing source attributes, exact512 bytes from the
 ; qualified old Sky ROM0d0a0d1b (SHA25643fd6ce8 for this table).
-; $37E chars18C/18D/19C/19D remain $40; new8D/8E keep their table.
+; $37E chars18C/18D/19C/19D remain $40; void char $1E3 ($7F8/rims) is pit $20.
 SkyTileTypes_WestLanding:
   db $01, $27, $27, $27, $27, $27, $00, $20, $01, $01, $01, $01, $01, $01, $01, $01 ; $000-$00F
   db $01, $01, $01, $01, $01, $01, $00, $20, $27, $27, $27, $01, $00, $64, $00, $01 ; $010-$01F
@@ -120,7 +120,7 @@ SkyTileTypes_WestLanding:
   db $27, $02, $52, $53, $09, $01, $1A, $10, $55, $55, $00, $00, $48, $02, $02, $00 ; $1B0-$1BF
   db $08, $08, $09, $09, $29, $29, $02, $01, $02, $02, $02, $02, $02, $08, $1A, $02 ; $1C0-$1CF
   db $08, $08, $09, $09, $02, $02, $09, $01, $09, $09, $09, $48, $09, $01, $00, $4B ; $1D0-$1DF
-  db $02, $02, $02, $00, $08, $02, $02, $00, $00, $00, $00, $01, $01, $00, $20, $00 ; $1E0-$1EF
+  db $02, $02, $02, $20, $08, $02, $02, $00, $00, $00, $00, $01, $01, $00, $20, $00 ; $1E0-$1EF
   db $02, $29, $00, $02, $02, $02, $02, $00, $22, $01, $01, $01, $00, $00, $08, $00 ; $1F0-$1FF
 SkyTileTypes_WestLandingEnd:
 assert SkyTileTypes_WestLandingEnd-SkyTileTypes_WestLanding == $0200
@@ -129,7 +129,7 @@ assert SkyTileTypes_WestLandingEnd-SkyTileTypes_WestLanding == $0200
 assert (SkyTileTypes_WestLanding&$FFFF)+$0201 <= $10000
 
 ; Tile types use original VRAM-slot character IDs, not global source-sheet IDs.
-; $1AD opens the selected arch threshold; other authored Sky attributes stay.
+; $1AD opens the selected arch threshold; $1E3 ($7F8/rims) is pit $20.
 SkyTileTypes:
   db $01, $27, $27, $27, $27, $27, $00, $20, $01, $01, $01, $01, $01, $01, $01, $01 ; $000-$00F
   db $01, $00, $01, $01, $01, $01, $00, $20, $27, $27, $27, $01, $00, $64, $00, $01 ; $010-$01F
@@ -161,7 +161,7 @@ SkyTileTypes:
   db $27, $02, $01, $20, $01, $01, $27, $20, $01, $27, $00, $00, $48, $02, $02, $00 ; $1B0-$1BF
   db $08, $08, $09, $09, $29, $29, $02, $01, $02, $02, $02, $02, $02, $08, $1A, $02 ; $1C0-$1CF
   db $08, $08, $09, $09, $02, $02, $09, $01, $09, $09, $09, $48, $09, $01, $00, $4B ; $1D0-$1DF
-  db $02, $01, $02, $00, $08, $02, $02, $00, $00, $00, $00, $01, $02, $00, $20, $00 ; $1E0-$1EF
+  db $02, $01, $02, $20, $08, $02, $02, $00, $00, $00, $00, $01, $02, $00, $20, $00 ; $1E0-$1EF
   db $02, $29, $00, $02, $02, $02, $02, $00, $20, $27, $01, $22, $00, $00, $08, $00 ; $1F0-$1FF
 
 SkyTileTypesEnd:

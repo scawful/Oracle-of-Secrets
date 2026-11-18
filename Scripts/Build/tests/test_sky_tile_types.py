@@ -556,6 +556,14 @@ class SkyTileTypesTest(unittest.TestCase):
         self.assertIn(b"\x68\xA9\x00\x00\xE2\x30\x6B", guard_bytes)  # PLA : LDA #$0000 : SEP #$30 : RTL
         self.assertIn(b"\x5C\x49\xBE\x1B", guard_bytes)  # JML $1BBE49
         self.assertIn(b"\x5C\x3B\xBE\x1B", guard_bytes)  # JML $1BBE3B
+        # Sky void chars ($1E3 pre-b58/$84-$86 $07F8 + rims, $0B6 b58 $0FD4) are pit $20,
+        # $0F1 ($0F1D backing) stays solid $01, and vanilla $0E9459+$1E3 stays untouched.
+        sky_pc = snes_to_pc(labels["SkyTileTypes"])
+        west_pc = snes_to_pc(labels["SkyTileTypes_WestLanding"])
+        self.assertEqual((image[sky_pc + 0x1E3], image[west_pc + 0x1E3]), (0x20, 0x20))
+        self.assertEqual((image[sky_pc + 0x0B6], image[west_pc + 0x0B6]), (0x20, 0x20))
+        self.assertEqual((image[sky_pc + 0x0F1], image[west_pc + 0x0F1]), (0x01, 0x01))
+        self.assertEqual(image[snes_to_pc(0x0E9459) + 0x1E3], original[snes_to_pc(0x0E9459) + 0x1E3])
 
     @unittest.skipUnless(ASSEMBLER, "Asar required for compiled Sky tile-type checks")
     def test_corrupted_dig_preimage_refused(self):
