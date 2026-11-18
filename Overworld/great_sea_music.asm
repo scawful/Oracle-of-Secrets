@@ -78,6 +78,9 @@ NMI_GreatSeaSongRemap:
   .snowpeak
     PHX
     LDX.b $1B : BNE .plain_snow            ; indoors: plain $06
+    LDX.b $10
+    CPX.b #$08 : BCC .plain_snow           ; intro/file-select/underworld ($00-$07): plain $06
+    CPX.b #$11 : BCS .plain_snow           ; attract ($14) / non-OW ($11+): plain $06
     LDX.b $8A
     LDA.l !OverworldMusicCache, X : AND.b #$0F
     CMP.b #!SnowpeakSongAlias : BNE .plain_snow
