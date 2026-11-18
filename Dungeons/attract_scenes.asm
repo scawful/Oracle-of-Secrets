@@ -37,22 +37,37 @@ if !ENABLE_CUSTOM_ATTRACT_SEQUENCE == 1
   !AttractMsg_Altar    = $C3 ; message $01C3
   ; Scene lengths hold each last page about 3 seconds after its final line
   ; appears. The message then waits at its end; the scene timer ends the
-  ; scene. (Measured in the yaze emulator with the ORA flag fix.)
-  !AttractFrames_Throne = $0220
-  !AttractFrames_Prison = $0260
-  ; Card 5 ($1C3, approved 2026-09-26) is 3 lines + 4 scroll lines; its
-  ; last line appears ~1020 frames after the timer starts (headless Mesen2,
-  ; 2026-09-26), so hold about 3 s after it.
-  !AttractFrames_Altar  = $0460
+  ; scene. (Measured in headless Mesen2 / yaze with the ORA flag fix.)
+  if !ENABLE_ATTRACT_ROYAL_SCENES == 1
+    !AttractFrames_Throne = $0280
+    !AttractFrames_Prison = $02D0
+    !AttractFrames_Altar  = $04A0
+  else
+    !AttractFrames_Throne = $0220
+    !AttractFrames_Prison = $0260
+    ; Card 5 ($1C3, approved 2026-09-26) is 3 lines + 4 scroll lines; its
+    ; last line appears ~1020 frames after the timer starts (headless Mesen2,
+    ; 2026-09-26), so hold about 3 s after it.
+    !AttractFrames_Altar  = $0460
+  endif
   pushpc
   ; Attract_Initialize (vanilla code, not reassembled here).
   org $0CEE58 : dw $01C0 ; @hook module=Dungeons name=AttractStorybookMessage kind=data
   org $0CEE62 : dw $08A8 ; @hook module=Dungeons name=AttractStorybookFrames kind=data
-  ; AttractScene_WorldMap ($0CEF23-$0CEF38): zoom onto Kalyxo Castle (area $0B). $063A=M7Y, $0638=M7X; M7 = 128 + world_px/16; HOFS = M7X-$80, VOFS = M7Y-$2D (vanilla framing).
-  org $0CEF24 : dw $00AE ; @hook module=Dungeons name=AttractMapZoomM7Y kind=data
-  org $0CEF2A : dw $00FE ; @hook module=Dungeons name=AttractMapZoomM7X kind=data
-  org $0CEF30 : dw $007E ; @hook module=Dungeons name=AttractMapZoomHOFS kind=data
-  org $0CEF36 : dw $0081 ; @hook module=Dungeons name=AttractMapZoomVOFS kind=data
+  if !ENABLE_ATTRACT_ROYAL_SCENES == 1
+    ; AttractScene_WorldMap ($0CEF23-$0CEF38): whole-island establishing view
+    ; panning to Kalyxo Castle (area $0B) via AttractMap_Pan ($0CFFB1 hook).
+    org $0CEF24 : dw $00F6 ; @hook module=Dungeons name=AttractMapZoomM7Y kind=data
+    org $0CEF2A : dw $0100 ; @hook module=Dungeons name=AttractMapZoomM7X kind=data
+    org $0CEF30 : dw $0080 ; @hook module=Dungeons name=AttractMapZoomHOFS kind=data
+    org $0CEF36 : dw $00C9 ; @hook module=Dungeons name=AttractMapZoomVOFS kind=data
+  else
+    ; AttractScene_WorldMap ($0CEF23-$0CEF38): zoom onto Kalyxo Castle (area $0B). $063A=M7Y, $0638=M7X; M7 = 128 + world_px/16; HOFS = M7X-$80, VOFS = M7Y-$2D (vanilla framing).
+    org $0CEF24 : dw $00AE
+    org $0CEF2A : dw $00FE
+    org $0CEF30 : dw $007E
+    org $0CEF36 : dw $0081
+  endif
   pullpc
 else
   !AttractMsg_Throne    = $13

@@ -10,6 +10,10 @@ org $0CF120 ; @hook module=Dungeons name=AttractRoyal_DrawVectors kind=data
   dw AttractRoyal_DrawCard, AttractRoyal_DrawCard, AttractRoyal_DrawCard
 assert pc() == $0CF126
 
+org $0CF194 ; @hook module=Dungeons name=AttractMapZoomHook kind=hook
+  JSR AttractMap_ZoomTrampoline
+assert pc() == $0CF197
+
 ; Reuse only the three retired puppet routines and their data. Keep the
 ; map/conclusion, text helper, common graphics and preloaded-sprite helper.
 org $0CF1AE
@@ -39,10 +43,11 @@ AttractRoyal_LoadCard:
   PLA : STA.b $20
   SEP #$20
 
-  ; Keep each room's sub-blockset and palette. Entrance $04 uses cave main
-  ; group $04 (sheets $02/$03/$12); the royal/empty hall needs the audience
-  ; hall's castle main group $02 ($00/$01/$10), with identical room geometry.
-  LDA.b $23 : CMP.b #$02 : BEQ .main_gfx_ready
+  ; Keep each room's sub-blockset and palette. Only card 4 ($23=$03, room $61,
+  ; entrance $04) loads cave main group $04 and needs the castle main group $02
+  ; override; both great-hall cards ($23=$02 and $23=$04, room $51, entrance $74)
+  ; already load castle main group $02.
+  LDA.b $23 : CMP.b #$03 : BNE .main_gfx_ready
     LDA.b #$02 : STA.w $0AA1
   .main_gfx_ready
   STZ.w $0AAC
@@ -74,7 +79,7 @@ AttractRoyal_LoadCard:
   LDA.b #$07 : STA.w $210C
 
   ; Scroll values are room-local modulo $200, matching the renderer's
-  ; accepted 256x224 crops. The visit and empty card use identical values.
+  ; accepted 256x224 crops.
   LDA.b $23 : SEC : SBC.b #$02 : ASL A : TAX
   REP #$20
   LDA.w #$0080 : STA.b $E0 : STA.b $E2 : STA.w $011E : STA.w $0120
@@ -92,18 +97,18 @@ AttractRoyal_LoadCard:
   JMP AttractScene_AdvanceFromDungeon
 
   .entrance
-    db $74, $04, $04 ; existing entrances to room $51 and room $61
+    db $74, $04, $74 ; room $51, room $61, room $51
   .message
     db !AttractMsg_Throne, !AttractMsg_Prison, !AttractMsg_Altar
   .camera_y
-    dw $0040, $0050, $0050
+    dw $0040, $0050, $0040
   .frames
     dw !AttractFrames_Throne, !AttractFrames_Prison, !AttractFrames_Altar
 }
 
 AttractRoyal_DrawCard:
 {
-  ; Entry/exit M/X=8. $00-$0B and $2D are the existing attract draw scratch.
+  ; Entry/exit M/X=8.
   PHB : PHK : PLB
   STZ.b $2A
   LDA.b $52 : BNE .text
@@ -114,51 +119,7 @@ AttractRoyal_DrawCard:
       INC.b $52
   .text
   JSR Attract_DoTextInDungeonScene
-  LDA.b $23 : SEC : SBC.b #$02 : ASL A : TAX
-  REP #$20
-  LDA.w .cast, X : STA.b $00
-  SEP #$20
-  LDY.b #$00
-  LDA.b ($00), Y : STA.b $0B
-  INY : STY.b $0A
-  STZ.b $50
-  .actor
-    LDY.b $0A
-    LDA.b ($00), Y : STA.b $51
-    INY : LDA.b ($00), Y : STA.b $28
-    INY : LDA.b ($00), Y : STA.b $29
-    INY : STY.b $0A
-    JSL AttractRoyal_AnimateActor
-    BCS .skip_actor
-    LDA.b $51 : CMP.b #$0B : BCS .kydrog_pose
-      ASL A : TAX
-      REP #$20
-      LDA.w AttractRoyal_Pose_x, X : STA.b $02
-      LDA.w AttractRoyal_Pose_y, X : STA.b $04
-      LDA.w AttractRoyal_Pose_char, X : STA.b $06
-      LDA.w AttractRoyal_Pose_prop, X : STA.b $08
-      LDA.w AttractRoyal_Pose_size, X : STA.b $2D
-      SEP #$20
-      LDA.w AttractRoyal_PoseCounts, X : TAY : DEY
-      BRA .draw_pose
-    .kydrog_pose
-      REP #$20
-      LDA.w #AttractRoyal_kydrog_x : STA.b $02
-      LDA.w #AttractRoyal_kydrog_y : STA.b $04
-      LDA.w #AttractRoyal_kydrog_char : STA.b $06
-      LDA.w #AttractRoyal_kydrog_sil_prop
-      LDX.b $51 : CPX.b #$0B : BEQ .set_kydrog_prop
-        LDA.w #AttractRoyal_kydrog_idle_prop
-      .set_kydrog_prop
-      STA.b $08
-      LDA.w #AttractRoyal_kydrog_size : STA.b $2D
-      SEP #$20
-      LDY.b #$05 ; 6 pieces
-    .draw_pose
-    JSR Attract_DrawPreloadedSprite
-    .skip_actor
-    INC.b $50
-    DEC.b $0B : BNE .actor
+  JSL AttractRoyal_DrawCastLong
 
   REP #$20
   LDA.b $64
@@ -174,11 +135,7 @@ AttractRoyal_DrawCard:
   .exit
   PLB
   RTL
-
-  .cast
-    dw AttractRoyal_Cast_audience, AttractRoyal_Cast_visit, AttractRoyal_StoryCast_empty
 }
-
 
 AttractRoyal_UploadGfx:
 {
@@ -207,245 +164,433 @@ AttractRoyal_UploadGfx:
   RTL
 }
 
-
-incsrc "Data/attract_royal_poses.asm"
-
-; Kydrog idle frame = Sprite_Kydrog_Draw frame 0 (Sprites/Bosses/kydrog.asm .chr/.x_offsets/
-; .y_offsets: 6 x 16x16, chars $CC,$CE,$EE,$EC,$E8,$EA), in sprite slot 3 (VRAM $5C00-$5FFF,
-; sheet $42 from $0AA3=$0C, as in Kydrog NPC rooms). Y is shifted -30 so the feet sit on the anchor.
-; Review fix (coordinator, QUEUE252): the delivered 11-piece table used invented chars
-; ($C0-$CE in sequence) on sheet $43 and drew a scrambled Kydrog natively.
-AttractRoyal_kydrog_x:         db $F8,$08,$08,$F8,$F8,$08
-AttractRoyal_kydrog_y:         db $D6,$D6,$E6,$E6,$F6,$F6
-AttractRoyal_kydrog_char:      db $CC,$CE,$EE,$EC,$E8,$EA
-AttractRoyal_kydrog_sil_prop:  db $3D,$3D,$3D,$3D,$3D,$3D
-AttractRoyal_kydrog_idle_prop: db $39,$39,$39,$39,$39,$39
-AttractRoyal_kydrog_size:      db $02,$02,$02,$02,$02,$02
-
-; Card 4 cast: lone knight + two complacent guards + Kydrog + ground shadows.
-AttractRoyal_StoryCast_empty:
-  db $08,$04,$80,$B8,$04,$48,$88,$04,$B8,$88,$0B,$80,$70,$02,$80,$B8,$02,$48,$88,$02,$B8,$88,$02,$80,$70
-
 AttractRoyal_CodeEnd:
 ; Vanilla Attract_SkipToFileSelect ($0CF700, Start press) and Attract_BuildNextImageTilemap
 ; ($0CF72E-$0CF765, storybook) stay live with royal scenes on, so the ceiling is $0CF700.
+assert read1($0CF700) == $C6, "Vanilla Attract_SkipToFileSelect entry at $0CF700 was overwritten"
 assert pc() <= $0CF700 ; Start-skip, storybook and Attract_DoTextInDungeonScene remain untouched
 
-; Review fix (coordinator, QUEUE252): AnimateActor does not fit in $0CF1AE-$0CF766,
-; and the Bank $2C dungeon stream has no room for it (Somaria landing assert at $2CF700).
-; It uses only DP and $64 (no tables, no calls), so it lives in Bank $58 after the
-; Oracle title code (title code ends near $58D58D) and is called with JSL.
+; 7-byte tail trampoline in unused $0CFFB1-$0CFFFF for Scene 1 Mode 7 pan.
+pushpc
+org $0CFFB1 ; @hook module=Dungeons name=AttractMapZoomTrampoline kind=hook
+AttractMap_ZoomTrampoline:
+  JSL AttractMap_Pan
+  JMP $F783 ; Attract_ControlMapZoom (returns via RTS to $0CF197)
+assert pc() <= $0D0000
+pullpc
+
+; Bank $58 attract engine + generated pose/cast/track tables ($58F000-$58FFFF).
 pushpc
 org $58F000
-; ---------------------------------------------------------
-; Per-card narration choreography. Entry/exit M=8, X=8, DBR=$0C.
-; Input: $50 = actor record index, $51 = pose_id, $28/$29 = screen X/Y,
-;        $64 = 16-bit card countdown timer.
-; Output: CLC = draw ($51, $28, $29 updated), SEC = skip actor this frame.
-AttractRoyal_AnimateActor:
+
+; Draw all cast actors for the current royal card ($23 = 2..4).
+; Entry/exit M=8, X=8; DBR preserved.
+AttractRoyal_DrawCastLong:
 {
-  LDA.b $23 : CMP.b #$02 : BEQ .audience
-              CMP.b #$03 : BNE +
-              JMP .visit
-            +
-              JMP .empty
-
-  ; Card 2 ($23 == $02, room $51, $1C1, $64 = $0220 -> $0000):
-  ; - Records 2, 7 (Farore + shadow): step up to the dais ($6C -> $64) during
-  ;   "Word reached Hyrule..." ($64 = $0220..$01E0).
-  ; - Records 3, 8 (Commander + shadow): face north ($03) toward the King while
-  ;   listening ($64 > $0160), then turn south ($00) and step forward ($64 -> $68)
-  ;   on "Its king sent" ($64 <= $0160).
-  ; - Records 0, 1, 5, 6 (two Hylian soldiers + shadows): stand at Y=$90 facing
-  ;   north ($03), then turn south ($04) at $64 <= $0140 and march down the
-  ;   aisle ($90 -> $C8) on "soldiers to guard it."
-  .audience
-  LDA.b $50
-  CMP.b #$02 : BEQ .aud_farore
-  CMP.b #$07 : BEQ .aud_farore
-  CMP.b #$03 : BEQ .aud_commander
-  CMP.b #$08 : BEQ .aud_commander
-  CMP.b #$04 : BEQ .aud_draw
-    ; Soldiers + shadows (0, 1, 5, 6): start at Y=$90 ($A8 - $18).
-    LDA.b $29 : SEC : SBC.b #$18 : STA.b $29
-    REP #$20
-    LDA.b $64 : CMP.w #$0141 : BCS .aud_draw
-    LDA.w #$0140 : SEC : SBC.b $64
-    LSR #2
-    CMP.w #$0038 : BCC +
-      LDA.w #$0038
-    +
-    SEP #$20
-    CLC : ADC.b $29 : STA.b $29
-    LDA.b $50 : CMP.b #$02 : BCS .aud_draw
-      LDA.b #$04 : STA.b $51
-    BRA .aud_draw
-
-  .aud_farore
-    REP #$20
-    LDA.b $64 : SEC : SBC.w #$01E0 : BCC .aud_draw
-    LSR #3
-    SEP #$20
-    CLC : ADC.b $29 : STA.b $29
-    BRA .aud_draw
-
-  .aud_commander
-    REP #$20
-    LDA.b $64 : CMP.w #$0161 : BCC .aud_cmd_sent
-      SEP #$20
-      LDA.b $50 : CMP.b #$03 : BNE .aud_draw
-        LDA.b #$03 : STA.b $51
-      BRA .aud_draw
-    .aud_cmd_sent
-    LDA.w #$0160 : SEC : SBC.b $64
-    LSR #3
-    CMP.w #$0004 : BCC +
-      LDA.w #$0004
-    +
-    SEP #$20
-    CLC : ADC.b $29 : STA.b $29
-
-  .aud_draw
+  PHB : PHK : PLB
+  LDA.b $23 : SEC : SBC.b #$02 : ASL A : TAX
+  REP #$20
+  LDA.w AttractRoyal_CastPointers,X : STA.b $00
   SEP #$20
-  CLC
-  RTL
-
-  ; Card 3 ($23 == $03, room $61, $1C2, $64 = $0260 -> $0000):
-  ; - Records 0, 7 (Red Mage + shadow): shift west to X=$28 (clear of text).
-  ; - Records 1, 8 (Youth + shadow): shift east to X=$D8 (clear of text).
-  ; - Records 4, 11 (Kalyxo villager + shadow): stand in center court at Y=$84,
-  ;   then marched south ($84 -> $9C) at $64 <= $0100 on "Many called it an invasion."
-  ; - Records 2, 3, 9, 10 (two Hylian guards + shadows): close in diagonally
-  ;   from ($60,$94)/($A0,$94) to ($6E,$86)/($92,$86) during $64 = $0260..$01F0
-  ;   ("and new laws"), then turn south ($04) at $64 <= $0100 and escort the
-  ;   arrested villager down the aisle ($86 -> $9E).
-  .visit
-  LDA.b $50
-  BEQ .vis_left_bystander
-  CMP.b #$07 : BEQ .vis_left_bystander
-  CMP.b #$01 : BEQ .vis_right_bystander
-  CMP.b #$08 : BEQ .vis_right_bystander
-  CMP.b #$04 : BEQ .vis_villager
-  CMP.b #$0B : BEQ .vis_villager
-  CMP.b #$02 : BEQ .vis_guard
-  CMP.b #$03 : BEQ .vis_guard
-  CMP.b #$09 : BEQ .vis_guard
-  CMP.b #$0A : BEQ .vis_guard
-  BRA .aud_draw
-
-  .vis_left_bystander
-    LDA.b #$28 : STA.b $28
-    BRA .aud_draw
-
-  .vis_right_bystander
-    LDA.b #$D8 : STA.b $28
-    BRA .aud_draw
-
-  .vis_villager
-    LDA.b #$84 : STA.b $29
-    BRA .vis_escort_check
-
-  .vis_guard
-    LDA.b #$94 : STA.b $29
-    REP #$20
-    LDA.w #$0260 : SEC : SBC.b $64
-    LSR #3
-    CMP.w #$000E : BCC +
-      LDA.w #$000E
-    +
-    SEP #$20
-    STA.b $0C
-    LDA.b $29 : SEC : SBC.b $0C : STA.b $29
-    LDA.b $50 : CMP.b #$03 : BEQ .vis_guard_right
-                CMP.b #$0A : BEQ .vis_guard_right
-      LDA.b $28 : CLC : ADC.b $0C : STA.b $28
-      BRA .vis_escort_check
-    .vis_guard_right
-      LDA.b $28 : SEC : SBC.b $0C : STA.b $28
-
-  .vis_escort_check
-    REP #$20
-    LDA.b $64 : CMP.w #$0101 : BCC +
-      JMP .aud_draw
-    +
-    LDA.w #$0100 : SEC : SBC.b $64
-    LSR #2
-    CMP.w #$0018 : BCC +
-      LDA.w #$0018
-    +
-    SEP #$20
-    CLC : ADC.b $29 : STA.b $29
-    LDA.b $50 : CMP.b #$02 : BEQ .vis_turn_south
-                CMP.b #$03 : BEQ .vis_turn_south
-                JMP .aud_draw
-    .vis_turn_south
-      LDA.b #$04 : STA.b $51
-    JMP .aud_draw
-
-  ; Card 4 ($23 == $04, room $61, $1C3, $64 = $0460 -> $0000):
-  ; - Records 1, 5 (Left guard + shadow at $48,$88): blink out at $64 = $0360..$0330.
-  ; - Records 2, 6 (Right guard + shadow at $B8,$88): blink out at $64 = $02F0..$02C0.
-  ; - Records 0, 4 (Lone knight + shadow at $80,$B8): step forward ($B8 -> $BC)
-  ;   on "One knight kept watch alone." ($64 <= $029E).
-  ; - Records 3, 7 (Kydrog + shadow at $80,$70): hidden while $64 > $016E;
-  ;   flicker in ($64 = $016E..$0150) and hold as dark Abyss silhouette ($0B,
-  ;   OBJ6) on "Now dark forces stir in the Abyss", then resolve into full
-  ;   Pirate King / Fallen Knight colors ($0C, OBJ4) at $64 <= $00D0 on
-  ;   "and the destiny of the Oracle of Secrets draws near."
-  .empty
-  LDA.b $50
-  BEQ .emp_knight
-  CMP.b #$04 : BEQ .emp_knight
-  CMP.b #$01 : BEQ .emp_left_guard
-  CMP.b #$05 : BEQ .emp_left_guard
-  CMP.b #$02 : BEQ .emp_right_guard
-  CMP.b #$06 : BEQ .emp_right_guard
-    ; Kydrog + shadow (3, 7)
-    REP #$20
-    LDA.b $64 : CMP.w #$016F : BCS .emp_skip
-    CMP.w #$0150 : BCC .emp_kydrog_solid
-      AND.w #$0002 : BNE .emp_skip
-    .emp_kydrog_solid
-    LDA.b $64 : CMP.w #$00D1 : BCS .emp_draw
-      SEP #$20
-      LDA.b $50 : CMP.b #$03 : BNE .emp_draw
-        LDA.b #$0C : STA.b $51
-      BRA .emp_draw
-
-  .emp_knight
-    REP #$20
-    LDA.b $64 : CMP.w #$029F : BCS .emp_draw
-    LDA.w #$029E : SEC : SBC.b $64
-    LSR #3
-    CMP.w #$0004 : BCC +
-      LDA.w #$0004
-    +
-    SEP #$20
-    CLC : ADC.b $29 : STA.b $29
-    BRA .emp_draw
-
-  .emp_left_guard
-    REP #$20
-    LDA.b $64 : CMP.w #$0361 : BCS .emp_draw
-    CMP.w #$0331 : BCC .emp_skip
-    AND.w #$0002 : BEQ .emp_skip
-    BRA .emp_draw
-
-  .emp_right_guard
-    REP #$20
-    LDA.b $64 : CMP.w #$02F1 : BCS .emp_draw
-    CMP.w #$02C1 : BCC .emp_skip
-    AND.w #$0002 : BEQ .emp_skip
-
-  .emp_draw
-  SEP #$20
-  CLC
-  RTL
-
-  .emp_skip
-  SEP #$20
-  SEC
+  LDY.b #$00
+  LDA.b ($00),Y : BEQ .done
+  STA.b $0B
+  INY : STY.b $0A
+  STZ.b $50
+  .actor
+    LDY.b $0A
+    LDA.b ($00),Y : STA.b $51
+    INY : LDA.b ($00),Y : STA.b $28
+    INY : LDA.b ($00),Y : STA.b $29
+    INY : STY.b $0A
+    STZ.b $0D
+    JSL AttractRoyal_RunTracks
+    BCS .skip_actor
+      JSL AttractRoyal_DrawPoseLong
+    .skip_actor
+    INC.b $50
+    DEC.b $0B : BNE .actor
+  .done
+  PLB
   RTL
 }
+
+; Data-driven choreography interpreter keyed to $64 countdown timer.
+; Entry: M=8, X=8, $23 = scene (2..4), $50 = actor record index,
+;        $51 = pose_id, $28/$29 = screen X/Y, $0D = prop XOR mask ($00/$40),
+;        $64 = 16-bit card countdown timer.
+; Exit: M=8, X=8, DBR preserved. CLC = draw ($51/$28/$29/$0D updated), SEC = skip actor.
+AttractRoyal_RunTracks:
+{
+  PHB : PHK : PLB
+  STZ.b $0C ; hidden flag
+  LDA.b $23 : SEC : SBC.b #$02 : ASL A : TAX
+  REP #$20
+  LDA.w AttractRoyal_TrackPointers,X : STA.b $0E
+  SEP #$20
+
+.record_loop
+  LDY.b #$00
+  LDA.b ($0E),Y
+  CMP.b #$FF : BNE +
+    JMP .finish
+  +
+  CMP.b $50 : BEQ +
+    JMP .next_record
+  +
+  LDY.b #$08 : LDA.b ($0E),Y : STA.b $40 ; flags
+
+  LDY.b #$01
+  REP #$20
+  LDA.b ($0E),Y ; t_start
+  CMP.b $64
+  BCS .started
+    ; $64 > t_start: track has not started yet.
+    SEP #$20
+    LDA.b $40 : AND.b #$04 ; BLINK_IN
+    BNE +
+      JMP .next_record
+    +
+    INC.b $0C
+    JMP .next_record
+
+  .started
+  LDY.b #$03
+  LDA.b ($0E),Y ; t_end
+  CMP.b $64
+  BCC .in_progress
+
+  ; --- Finished ($64 <= t_end) ---
+  SEP #$20
+  LDA.b $40
+  BIT.b #$0A ; BLINK_OUT ($02) or HIDE ($08)
+  BEQ +
+    INC.b $0C
+    JMP .next_record
+  +
+  BIT.b #$10 ; FLIP_H
+  BEQ +
+    LDA.b $0D : EOR.b #$40 : STA.b $0D
+  +
+  LDY.b #$07 : LDA.b ($0E),Y ; pose
+  CMP.b #$FF : BEQ +
+    STA.b $51
+  +
+  LDY.b #$05 : LDA.b ($0E),Y ; dx
+  CLC : ADC.b $28 : STA.b $28
+  INY : LDA.b ($0E),Y ; dy
+  CLC : ADC.b $29 : STA.b $29
+  JMP .next_record
+
+  ; --- In progress (t_end < $64 <= t_start) ---
+  .in_progress
+  LDY.b #$01
+  LDA.b ($0E),Y ; t_start
+  SEC : SBC.b $64
+  STA.b $42 ; 16-bit elapsed
+  SEP #$20
+
+  LDA.b $40
+  BIT.b #$08 ; HIDE
+  BEQ +
+    INC.b $0C
+    JMP .next_record
+  +
+  BIT.b #$02 ; BLINK_OUT
+  BEQ .chk_blink_in
+    LDA.b $64 : AND.b #$02 : BNE .chk_pose_start
+      INC.b $0C
+      JMP .next_record
+  .chk_blink_in
+  LDA.b $40 : BIT.b #$04 ; BLINK_IN
+  BEQ .chk_pose_start
+    LDA.b $64 : AND.b #$02 : BEQ .chk_pose_start
+      INC.b $0C
+      JMP .next_record
+
+  .chk_pose_start
+  LDA.b $40 : BIT.b #$01 ; POSE_ON_START
+  BEQ .chk_motion
+    LDY.b #$07 : LDA.b ($0E),Y
+    CMP.b #$FF : BEQ +
+      STA.b $51
+    +
+    LDA.b $40 : BIT.b #$10 ; FLIP_H
+    BEQ .chk_motion
+      LDA.b $0D : EOR.b #$40 : STA.b $0D
+
+  .chk_motion
+  LDY.b #$05 : LDA.b ($0E),Y
+  INY : ORA.b ($0E),Y
+  BEQ .next_record
+
+  LDY.b #$09 : LDA.b ($0E),Y ; shift
+  CMP.b #$FF : BEQ .linear_motion
+  TAX
+  REP #$20
+  LDA.b $42
+  CPX.b #$00 : BEQ .shift_done
+  - : LSR A : DEX : BNE -
+  .shift_done
+  CMP.w #$0080 : BCC +
+    LDA.w #$007F
+  +
+  SEP #$20
+  STA.b $44 ; step
+
+  LDY.b #$05 : LDA.b ($0E),Y : BEQ .apply_dy
+  BPL .dx_pos
+    EOR.b #$FF : INC A
+    CMP.b $44 : BCC + : LDA.b $44 : +
+    STA.b $45
+    LDA.b $28 : SEC : SBC.b $45 : STA.b $28
+    BRA .apply_dy
+  .dx_pos
+    CMP.b $44 : BCC + : LDA.b $44 : +
+    CLC : ADC.b $28 : STA.b $28
+
+  .apply_dy
+  LDY.b #$06 : LDA.b ($0E),Y : BEQ .next_record
+  BPL .dy_pos
+    EOR.b #$FF : INC A
+    CMP.b $44 : BCC + : LDA.b $44 : +
+    STA.b $45
+    LDA.b $29 : SEC : SBC.b $45 : STA.b $29
+    BRA .next_record
+  .dy_pos
+    CMP.b $44 : BCC + : LDA.b $44 : +
+    CLC : ADC.b $29 : STA.b $29
+
+  .next_record
+  REP #$20
+  LDA.b $0E : CLC : ADC.w #$000A : STA.b $0E
+  SEP #$20
+  JMP .record_loop
+
+  .linear_motion
+  REP #$20
+  LDY.b #$01 : LDA.b ($0E),Y
+  LDY.b #$03 : SEC : SBC.b ($0E),Y
+  STA.b $46 ; 16-bit duration
+  SEP #$20
+
+  LDY.b #$05 : LDA.b ($0E),Y : BEQ .lin_dy
+  JSR .scale_axis
+  CLC : ADC.b $28 : STA.b $28
+
+  .lin_dy
+  LDY.b #$06 : LDA.b ($0E),Y : BEQ .next_record
+  JSR .scale_axis
+  CLC : ADC.b $29 : STA.b $29
+  BRA .next_record
+
+  .scale_axis
+  {
+    STZ.b $45
+    BPL +
+      EOR.b #$FF : INC A
+      INC.b $45
+    +
+    STA.l $004202
+    LDA.b $42 : STA.l $004203
+    NOP #4
+    REP #$20
+    LDA.l $004216 : STA.b $48
+    SEP #$20
+    STZ.b $4A
+    LDA.b $43 : BEQ .div_start
+      STA.l $004203
+      NOP #4
+      REP #$20
+      LDA.l $004216
+      CLC : ADC.b $49 : STA.b $49
+      SEP #$20
+    .div_start
+    STZ.b $4B : STZ.b $4C
+    LDX.b #$18
+    .div_loop
+      ASL.b $48 : ROL.b $49 : ROL.b $4A
+      ROL.b $4B : ROL.b $4C
+      BCS .div_sub
+      REP #$20
+      LDA.b $4B
+      CMP.b $46
+      BCC .div_no_sub
+      .div_sub
+        REP #$20
+        LDA.b $4B
+        SEC : SBC.b $46
+        STA.b $4B
+        SEP #$20
+        INC.b $48
+        BRA .div_next
+      .div_no_sub
+      SEP #$20
+    .div_next
+      DEX : BNE .div_loop
+    LDA.b $48
+    LDX.b $45 : BEQ +
+      EOR.b #$FF : INC A
+    +
+    RTS
+  }
+
+.finish
+  LDA.b $0C : BNE .skip
+    CLC
+    PLB
+    RTL
+  .skip
+    SEC
+    PLB
+    RTL
+}
+
+; Long pose OAM writer (24-bit [dp],Y reads from Bank $58, DBR=$00 for WRAM OAM).
+; Entry: M=8, X=8, $51 = pose_id, $28/$29 = screen X/Y, $2A = OAM slot, $0D = prop XOR.
+; Exit:  M=8, X=8, DBR preserved, $2A updated.
+AttractRoyal_DrawPoseLong:
+{
+  PHB
+  LDA.b #$00 : PHA : PLB
+  LDA.b $51 : STA.b $2F : ASL A : CLC : ADC.b $2F : TAX ; X = pose_id * 3
+  REP #$20
+  LDA.l AttractRoyal_Pose_size,X : STA.b $2D
+  LDA.l AttractRoyal_Pose_x,X    : STA.b $30
+  LDA.l AttractRoyal_Pose_y,X    : STA.b $33
+  LDA.l AttractRoyal_Pose_char,X : STA.b $36
+  LDA.l AttractRoyal_Pose_prop,X : STA.b $39
+  SEP #$20
+  LDA.l AttractRoyal_Pose_size+2,X : STA.b $2F
+  LDA.l AttractRoyal_Pose_x+2,X    : STA.b $32
+  LDA.l AttractRoyal_Pose_y+2,X    : STA.b $35
+  LDA.l AttractRoyal_Pose_char+2,X : STA.b $38
+  LDA.l AttractRoyal_Pose_prop+2,X : STA.b $3B
+  LDX.b $51
+  LDA.l AttractRoyal_PoseCounts,X : BEQ .done
+  TAY : DEY
+  .next_object
+    LDX.b $2A
+    CPX.b #$40 : BCS .done
+    LDA.b [$2D],Y
+    STA.w $0A60,X
+    TXA
+    ASL A
+    ASL A
+    TAX
+    LDA.b [$30],Y
+    CLC
+    ADC.b $28
+    STA.w $0900,X
+    LDA.b [$33],Y
+    CLC
+    ADC.b $29
+    STA.w $0901,X
+    LDA.b [$36],Y
+    STA.w $0902,X
+    LDA.b [$39],Y
+    EOR.b $0D
+    STA.w $0903,X
+    INC.b $2A
+    DEY
+    BPL .next_object
+  .done
+  PLB
+  RTL
+}
+
+; Interpolate Scene 1 Mode 7 center ($0638/$063A) and BG1 scroll ($0120/$0124)
+; along AttractMap_Keyframes as $0637 steps from $FF down to $00.
+; Entry/exit: M=8, X=8; preserves DBR and $0637. Clobbers A, X, Y, $00-$07.
+AttractMap_Pan:
+{
+  PHB
+  LDA.b #$00 : PHA : PLB ; DBR=$00 for WRAM ($0637..$063B, $0120..$0125) and MMIO ($4202..$4217)
+  LDX.b #$00
+  .find_seg
+    LDA.w $0637
+    CMP.l AttractMap_Keyframes+0,X ; $0637 >= t_end?
+    BCS .found
+    TXA : CLC : ADC.b #$0A : TAX
+    BRA .find_seg
+  .found
+  LDA.l AttractMap_Keyframes+1,X ; t_start
+  SEC : SBC.w $0637
+  STA.b $00 ; elapsed = t_start - t
+  LDA.l AttractMap_Keyframes+1,X
+  SEC : SBC.l AttractMap_Keyframes+0,X
+  STA.b $01 ; span = t_start - t_end
+  STX.b $02 ; save segment offset across 16-bit sections
+
+  ; X axis: M7X ($0638) and BG1HOFS ($0120 = M7X - $0080)
+  REP #$20
+  LDA.l AttractMap_Keyframes+6,X : STA.b $04 ; dx (signed 16-bit)
+  LDA.l AttractMap_Keyframes+2,X             ; x0
+  JSR .interp_axis
+  STA.w $0638
+  SEC : SBC.w #$0080 : STA.w $0120
+
+  ; Y axis: M7Y ($063A) and BG1VOFS ($0124 = M7Y - $002D)
+  SEP #$20
+  LDX.b $02
+  REP #$20
+  LDA.l AttractMap_Keyframes+8,X : STA.b $04 ; dy (signed 16-bit)
+  LDA.l AttractMap_Keyframes+4,X             ; y0
+  JSR .interp_axis
+  STA.w $063A
+  SEC : SBC.w #$002D : STA.w $0124
+
+  SEP #$30
+  PLB
+  RTL
+
+; Compute A = base (entry A, 16-bit) + (elapsed * signed $04) / span.
+; Entry: M=16, X=8, DBR=$00, $00=elapsed, $01=span, $04=signed 16-bit delta.
+; Exit:  M=16, A=result.
+.interp_axis
+  STA.b $06
+  LDY.b #$00
+  LDA.b $04
+  BEQ .axis_done
+  BPL .delta_pos
+    EOR.w #$FFFF : INC A
+    INY
+  .delta_pos
+  SEP #$20
+  PHA
+  LDA.b $00 : STA.w WRMPYA
+  PLA       : STA.w WRMPYB
+  NOP : NOP : NOP : NOP
+  REP #$20
+  LDA.w RDMPYL
+  STA.w WRDIVL
+  SEP #$20
+  LDA.b $01 : STA.w WRDIVB
+  NOP : NOP : NOP : NOP
+  NOP : NOP : NOP : NOP
+  REP #$20
+  LDA.w RDDIVL
+  CPY.b #$00 : BEQ .apply_off
+    EOR.w #$FFFF : INC A
+  .apply_off
+  CLC : ADC.b $06
+  RTS
+.axis_done
+  LDA.b $06
+  RTS
+}
+
+; Keyframe segments (10 bytes each):
+;   db t_end, t_start
+;   dw x0, y0
+;   dw dx, dy (signed 16-bit)
+; Whole-island overview ($0100, $00F6) -> ($0100, $00EE) -> Castle $0B ($00FE, $00AE) hold.
+AttractMap_Keyframes:
+  db $C0, $FF : dw $0100, $00F6, $0000, $FFF8 ; t=$FF..$C0: dy=-8
+  db $30, $C0 : dw $0100, $00EE, $FFFE, $FFC0 ; t=$C0..$30: dx=-2, dy=-64
+  db $00, $30 : dw $00FE, $00AE, $0000, $0000 ; t=$30..$00: hold Castle $0B
+
+incsrc "Data/attract_royal_poses.asm"
+
 assert pc() <= $590000 ; stays in Bank $58
 pullpc

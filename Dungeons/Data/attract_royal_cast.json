@@ -519,6 +519,154 @@
         }
       ],
       "indexedPixelSha256": "a6e380e3174e51429e1f3ab736c96e267d4a0b62e999ce10fa00e6e5e9e24038"
+    },
+    "kydrog_silhouette": {
+      "origin": [
+        16,
+        16
+      ],
+      "pieces": [
+        {
+          "oam": 0,
+          "sheet": "42",
+          "char": 234,
+          "x": 16,
+          "y": 6,
+          "size": 16,
+          "flip": 0,
+          "palette": 6,
+          "kind": "kydrog"
+        },
+        {
+          "oam": 1,
+          "sheet": "42",
+          "char": 232,
+          "x": 0,
+          "y": 6,
+          "size": 16,
+          "flip": 0,
+          "palette": 6,
+          "kind": "kydrog"
+        },
+        {
+          "oam": 2,
+          "sheet": "42",
+          "char": 236,
+          "x": 0,
+          "y": -10,
+          "size": 16,
+          "flip": 0,
+          "palette": 6,
+          "kind": "kydrog"
+        },
+        {
+          "oam": 3,
+          "sheet": "42",
+          "char": 238,
+          "x": 16,
+          "y": -10,
+          "size": 16,
+          "flip": 0,
+          "palette": 6,
+          "kind": "kydrog"
+        },
+        {
+          "oam": 4,
+          "sheet": "42",
+          "char": 206,
+          "x": 16,
+          "y": -26,
+          "size": 16,
+          "flip": 0,
+          "palette": 6,
+          "kind": "kydrog"
+        },
+        {
+          "oam": 5,
+          "sheet": "42",
+          "char": 204,
+          "x": 0,
+          "y": -26,
+          "size": 16,
+          "flip": 0,
+          "palette": 6,
+          "kind": "kydrog"
+        }
+      ]
+    },
+    "kydrog_idle": {
+      "origin": [
+        16,
+        16
+      ],
+      "pieces": [
+        {
+          "oam": 0,
+          "sheet": "42",
+          "char": 234,
+          "x": 16,
+          "y": 6,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "kydrog"
+        },
+        {
+          "oam": 1,
+          "sheet": "42",
+          "char": 232,
+          "x": 0,
+          "y": 6,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "kydrog"
+        },
+        {
+          "oam": 2,
+          "sheet": "42",
+          "char": 236,
+          "x": 0,
+          "y": -10,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "kydrog"
+        },
+        {
+          "oam": 3,
+          "sheet": "42",
+          "char": 238,
+          "x": 16,
+          "y": -10,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "kydrog"
+        },
+        {
+          "oam": 4,
+          "sheet": "42",
+          "char": 206,
+          "x": 16,
+          "y": -26,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "kydrog"
+        },
+        {
+          "oam": 5,
+          "sheet": "42",
+          "char": 204,
+          "x": 0,
+          "y": -26,
+          "size": 16,
+          "flip": 0,
+          "palette": 4,
+          "kind": "kydrog"
+        }
+      ]
     }
   },
   "scenes": [
@@ -550,13 +698,81 @@
         [
           "guard_north_0",
           240,
-          232
+          232,
+          "soldier_left"
         ],
         [
           "guard_north_0",
           272,
-          232
+          232,
+          "soldier_right"
         ]
+      ],
+      "tracks": [
+        {
+          "actor": "soldier_left",
+          "t_start": "0xFFFF",
+          "t_end": "0xFFFF",
+          "dy": -24
+        },
+        {
+          "actor": "soldier_left",
+          "t_start": "0x01A0",
+          "t_end": "0x00C0",
+          "dy": 56,
+          "shift": 2,
+          "pose_end": "guard_south_0",
+          "flags": [
+            "pose_on_start"
+          ]
+        },
+        {
+          "actor": "soldier_right",
+          "t_start": "0xFFFF",
+          "t_end": "0xFFFF",
+          "dy": -24
+        },
+        {
+          "actor": "soldier_right",
+          "t_start": "0x01A0",
+          "t_end": "0x00C0",
+          "dy": 56,
+          "shift": 2,
+          "pose_end": "guard_south_0",
+          "flags": [
+            "pose_on_start"
+          ]
+        },
+        {
+          "actor": "farore",
+          "t_start": "0xFFFF",
+          "t_end": "0xFFFF",
+          "dy": 8
+        },
+        {
+          "actor": "farore",
+          "t_start": "0x0287",
+          "t_end": "0x0247",
+          "dy": -8,
+          "shift": 3
+        },
+        {
+          "actor": "commander_south_0",
+          "t_start": "0xFFFF",
+          "t_end": "0xFFFF",
+          "pose_end": "guard_north_0"
+        },
+        {
+          "actor": "commander_south_0",
+          "t_start": "0x01C0",
+          "t_end": "0x01A0",
+          "dy": 4,
+          "shift": 3,
+          "pose_end": "commander_south_0",
+          "flags": [
+            "pose_on_start"
+          ]
+        }
       ]
     },
     {
@@ -570,29 +786,34 @@
       ],
       "actors": [
         [
-          "royal_visitor",
+          "resident_youth",
           256,
-          238
+          238,
+          "arrestee"
         ],
         [
           "guard_north_0",
           224,
-          240
+          240,
+          "guard_left"
         ],
         [
           "guard_north_0",
           288,
-          240
-        ],
-        [
-          "zora_right",
-          168,
-          224
+          240,
+          "guard_right"
         ],
         [
           "zora_left",
+          168,
+          224,
+          "zora_west"
+        ],
+        [
+          "zora_right",
           344,
-          224
+          224,
+          "zora_east"
         ],
         [
           "resident_red_mage",
@@ -602,16 +823,106 @@
         [
           "resident_youth",
           328,
-          272
+          272,
+          "onlooker_youth"
         ]
+      ],
+      "tracks": [
+        {
+          "actor": "resident_red_mage",
+          "t_start": "0xFFFF",
+          "t_end": "0xFFFF",
+          "dx": -16
+        },
+        {
+          "actor": "onlooker_youth",
+          "t_start": "0xFFFF",
+          "t_end": "0xFFFF",
+          "dx": 16
+        },
+        {
+          "actor": "zora_west",
+          "t_start": "0x0280",
+          "t_end": "0x0280",
+          "pose_end": "zora_right"
+        },
+        {
+          "actor": "zora_east",
+          "t_start": "0x0270",
+          "t_end": "0x0270",
+          "pose_end": "zora_left"
+        },
+        {
+          "actor": "arrestee",
+          "t_start": "0xFFFF",
+          "t_end": "0xFFFF",
+          "dy": -26
+        },
+        {
+          "actor": "arrestee",
+          "t_start": "0x0170",
+          "t_end": "0x0110",
+          "dy": 24,
+          "shift": 2
+        },
+        {
+          "actor": "guard_left",
+          "t_start": "0xFFFF",
+          "t_end": "0xFFFF",
+          "dy": -12
+        },
+        {
+          "actor": "guard_left",
+          "t_start": "0x02D0",
+          "t_end": "0x0260",
+          "dx": 14,
+          "dy": -14,
+          "shift": 3
+        },
+        {
+          "actor": "guard_left",
+          "t_start": "0x0170",
+          "t_end": "0x0110",
+          "dy": 24,
+          "shift": 2,
+          "pose_end": "guard_south_0",
+          "flags": [
+            "pose_on_start"
+          ]
+        },
+        {
+          "actor": "guard_right",
+          "t_start": "0xFFFF",
+          "t_end": "0xFFFF",
+          "dy": -12
+        },
+        {
+          "actor": "guard_right",
+          "t_start": "0x02D0",
+          "t_end": "0x0260",
+          "dx": -14,
+          "dy": -14,
+          "shift": 3
+        },
+        {
+          "actor": "guard_right",
+          "t_start": "0x0170",
+          "t_end": "0x0110",
+          "dy": 24,
+          "shift": 2,
+          "pose_end": "guard_south_0",
+          "flags": [
+            "pose_on_start"
+          ]
+        }
       ]
     },
     {
       "id": "empty",
-      "room": "0x61",
+      "room": "0x51",
       "camera": [
         128,
-        80,
+        64,
         256,
         224
       ],
@@ -619,8 +930,66 @@
         [
           "guard_south_0",
           256,
-          272
+          194,
+          "knight"
+        ],
+        [
+          "guard_south_0",
+          220,
+          180,
+          "guard_left"
+        ],
+        [
+          "guard_south_0",
+          292,
+          180,
+          "guard_right"
+        ],
+        [
+          "kydrog_silhouette",
+          256,
+          156,
+          "kydrog"
         ]
+      ],
+      "tracks": [
+        {
+          "actor": "knight",
+          "t_start": "0x02DE",
+          "t_end": "0x02BE",
+          "dy": 4,
+          "shift": 3
+        },
+        {
+          "actor": "guard_left",
+          "t_start": "0x03A0",
+          "t_end": "0x0370",
+          "flags": [
+            "blink_out"
+          ]
+        },
+        {
+          "actor": "guard_right",
+          "t_start": "0x0330",
+          "t_end": "0x0300",
+          "flags": [
+            "blink_out"
+          ]
+        },
+        {
+          "actor": "kydrog",
+          "t_start": "0x01AE",
+          "t_end": "0x018F",
+          "flags": [
+            "blink_in"
+          ]
+        },
+        {
+          "actor": "kydrog",
+          "t_start": "0x0110",
+          "t_end": "0x0110",
+          "pose_end": "kydrog_idle"
+        }
       ]
     }
   ]
