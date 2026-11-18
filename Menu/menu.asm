@@ -1259,6 +1259,12 @@ if !ENABLE_MENU_MAP_TRAVEL == 1
     JSR MenuMapTravel_Draw : RTL
   Menu_Equipment_Owned_Long:
     JSR Menu_Equipment_Owned : RTL
+  DrawMenuItem_Long:
+    JSR DrawMenuItem : RTL
+  Menu_Equipment_Cursor_Long:
+    JSR Menu_Equipment_Cursor : RTL
+  Menu_Quest_Number3_Long:
+    JSR Menu_Quest_Number3 : RTL
 endif
 %log_end("Menu/menu.asm", !LOG_MENU)
 incsrc "menu_hud.asm"

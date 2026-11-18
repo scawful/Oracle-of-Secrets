@@ -1,11 +1,13 @@
 ; Map page (MenuScrollLevelH = $40), fourth page of the menu ring:
 ; Items -R-> Equipment ($20) -R-> Quest ($00) -R-> Map ($40) -R-> Items.
-; One cell, Map ($020B = 0), over the current dungeon's row (map, big chest
+; Cell 0 is Map (!MapCellPos), over the current dungeon's row (map, big chest
 ; key, big key, treasure; Menu_DrawBigKey/Menu_DrawBigChestKey at !DungeonRow).
+; Cells 1..6 are the six Magic Bag supplies (Banana..Deku Stick) at row 17.
 ; Songs live on the Quest page (QuestSongs_*, Menu/menu_cursor_flow.asm);
 ; Soaring is played with the Ocarina.
-; A or Y closes the menu and Menu_Exit (MenuMapTravel_ExitAction) opens the
-; existing field/dungeon map module. No second map renderer. DBR = $2D.
+; A or Y on cell 0 closes the menu and Menu_Exit (MenuMapTravel_ExitAction)
+; opens the existing field/dungeon map module. A on cells 1..6 uses supplies
+; via MagicBag_ConsumeItem. DBR = $2D.
 
 !MapCellPos = menu_offset(9,11)         ; DrawMenuItem offset; absolute (13,15)
 
@@ -88,24 +90,23 @@ MenuMapTravel_Screen:
 }
 
 ; ---------------------------------------------------------
-; One cell: Left/Right turn the page; Up/Down do nothing.
+; Cursor navigation delegated to bank $2B (MenuFlow_MapMove).
+; C set on return requests a page turn (A = $01 right, $FF left).
 MenuMapTravel_Move:
 {
-  SEP #$30
-  LDA.b $F4 : AND.b #$03 : BNE +
-  RTS
-+
-  AND.b #$01 : BNE .right               ; A = $01 right
-  LDA.b #$FF
-.right
+  JSL MenuFlow_MapMove : BCC .done
   JMP Menu_Page3_Turn
+.done
+  RTS
 }
 
 ; ---------------------------------------------------------
-; A or Y closes the menu and leaves the map request for Menu_Exit. Where
-; the map cannot open, the error sound plays.
+; A or Y on Map ($020B = 0) closes the menu and leaves the map request for
+; Menu_Exit. A ($F6 bit 7; Y never consumes) on Supplies ($020B = 1..6) runs
+; MagicBag_ConsumeItem with $020B = slot - 1, then restores $020B = slot.
 MenuMapTravel_Select:
 {
+  LDA.w $020B : BNE .supply
   BIT.b $F6 : BMI .pressed
   LDA.b $F4 : BIT.b #$40 : BEQ .done
 .pressed
@@ -113,6 +114,14 @@ MenuMapTravel_Select:
   LDA.b #$01 : STA.l MenuMapTravel_Pending
   LDA.b #!MENU_STATE_INIT_SCROLL_DOWN : STA.w $0200
   RTS
+.supply
+  CMP.b #$07 : BCS .done
+  BIT.b $F6 : BPL .done
+  PHA
+  DEC : STA.w $020B
+  JSR MagicBag_ConsumeItem
+  SEP #$30
+  PLA : STA.w $020B
 .done
   RTS
 .error
@@ -194,9 +203,10 @@ pullpc
 
 ; ---------------------------------------------------------
 ; v4 layout (make_frame_preserved_v4.py): area name header on row 9, the
-; Map icon centred below it (columns 15-16), and in a dungeon its row of
-; owned dungeon items on row 17, mirrored about columns 15|16. The footer
-; names the cell.
+; Map icon centred below it (columns 15-16), in a dungeon its row of owned
+; dungeon items on row 17, mirrored about columns 15|16, and the 6 Magic Bag
+; supplies on row 21 (menu_offset 17, matching QuestSongs). Bank $2B
+; (MenuFlow_MapDraw) draws the cell icons, 4x4 cursor, footer, and A:USE.
 MenuMapTravel_Draw:
 {
   JSR Menu_DrawBackground
@@ -207,35 +217,14 @@ MenuMapTravel_Draw:
   DEX #2 : BPL .title
   JSR MenuMapTravel_AreaName
 
-  SEP #$30
-  LDA.b #$7E : STA.b $0A
-  LDA.b #$01 : STA.w MenuItemValueSpoof
-  REP #$30
-  LDA.w #MenuItemValueSpoof
-  LDX.w #!MapCellPos
-  LDY.w #MapGFX
-  JSR DrawMenuItem
-
-  SEP #$30
-  LDA.w $0207 : AND.b #$20 : BNE .no_cursor
-  REP #$30
-  LDX.w #!MapCellPos
-  LDA.w #$3060 : JSR Menu_Equipment_Bracket
-.no_cursor
   REP #$30
   JSR Menu_DrawBigKey                   ; map, big key, treasure
   REP #$30
   JSR Menu_DrawBigChestKey
-  REP #$30
-  LDX.w #$001A
-.name
-  LDA.w .name_text,X : STA.w $1692,X    ; 14 footer cells, end caps kept
-  DEX #2 : BPL .name
+  JSL MenuFlow_MapDraw                  ; MAP + 6 supplies, cursor, footer, A:USE
   RTS
 .title_text
   dw "MAP"
-.name_text
-  dw "_____MAP______"
 }
 
 ; ---------------------------------------------------------

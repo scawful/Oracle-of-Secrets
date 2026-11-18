@@ -55,11 +55,16 @@ MenuFlow_UploadRight:
 
 ; ---------------------------------------------------------
 ; Start of state $06 (Menu_Page3_StatsScreen), before its input.
-; Remembers the Equipment cursor.
+; Remembers the Equipment and Map cursors.
 MenuFlow_Frame:
 {
   SEP #$30
-  LDA.w MenuScrollLevelH : CMP.b #$20 : BNE .done
+  LDA.w MenuScrollLevelH : CMP.b #$20 : BEQ .equip
+  CMP.b #$40 : BNE .done
+  LDA.w $020B : CMP.b #$07 : BCS .done
+  INC : STA.l MenuFlow_MapCursor
+  RTL
+.equip
   LDA.w $020B : CMP.b #$1D : BCS .done
   INC : STA.l MenuFlow_EquipCursor
 .done
@@ -94,7 +99,10 @@ MenuFlow_RecordTurn:
   LDA.l MenuFlow_EquipOrd,X
   BRA .store
 .map
-  LDA.b #$00 : BRA .store               ; the Map cell sits on the top row
+  LDA.w $020B : BEQ .map_top
+  LDA.b #$03 : BRA .store               ; Supplies row: bottom row (ordinal 3)
+.map_top
+  LDA.b #$00 : BRA .store               ; Map cell: top row (ordinal 0)
 .items
 if !ENABLE_GOLDSTAR_CELL == 1
   LDX.b #$17
@@ -161,17 +169,178 @@ MenuFlow_EquipRestore:
 }
 
 ; ---------------------------------------------------------
-; MenuMapTravel_Init: first frame on the Map page. One cell, so the cursor
-; is always Map; a D-pad cross is used up here.
+; MenuMapTravel_Init: first frame on the Map page. D-pad cross picks top
+; (0 = Map) when source row < 2, else bottom edge supply (1 = Banana from left,
+; 6 = Deku Stick from right). Otherwise restores remembered MenuFlow_MapCursor
+; (1..7 -> 0..6), or defaults to 0. Clears pending and cross state. M/X=8 out.
 MenuFlow_MapInit:
 {
   SEP #$30
   STZ.w $0207
   LDA.b #$00
   STA.l MenuMapTravel_Pending
-  STA.l MenuFlow_CrossRow
+  LDA.l MenuFlow_CrossRow : BEQ .memory
+  PHA
+  LDA.b #$00 : STA.l MenuFlow_CrossRow
+  PLA
+  CMP.b #$03 : BCC .top
+  LDA.l MenuFlow_CrossDir : BNE .right_edge
+  LDA.b #$01 : BRA .set
+.right_edge
+  LDA.b #$06 : BRA .set
+.top
+  LDA.b #$00 : BRA .set
+.memory
+  LDA.l MenuFlow_MapCursor : BEQ .top
+  CMP.b #$08 : BCS .top
+  DEC
+.set
   STA.w $020B
   RTL
+}
+
+; ---------------------------------------------------------
+; Map page cells: 0 = Map (13,15), 1..6 = Magic Bag supplies (row 21, cols
+; 7/10/13/17/20/23, matching QuestSongs row height so 4x4 cursor boxes stay
+; inside panel rows 20..23 and clear of the row 24 bottom frame border).
+MenuFlow_MapPos:
+  dw menu_offset(9,11)
+  dw menu_offset(17,3),menu_offset(17,6),menu_offset(17,9)
+  dw menu_offset(17,13),menu_offset(17,16),menu_offset(17,19)
+
+MenuFlow_MapGfx:
+  dw MapGFX
+  dw BananaGFX,PineappleGFX,RockMeatGFX
+  dw SeashellGFX,HoneycombGFX,DekuStickGFX
+
+; ---------------------------------------------------------
+; MenuMapTravel_Move: D-pad navigation across MAP (0) and Supplies (1..6).
+; On 0: Left/Right turns page (C set, A = $01/$FF); Up/Down moves to 3.
+; On 1..6: Left at 1 or Right at 6 turns page; otherwise steps 1..6; Up/Down -> 0.
+; Out: M/X=8, C set = turn requested, C clear = done.
+MenuFlow_MapMove:
+{
+  SEP #$30
+  LDA.w $020B : CMP.b #$07 : BCC .valid
+  LDA.b #$00 : STA.w $020B
+.valid
+  LDA.b $F4 : AND.b #$0F : BEQ .none
+  BIT.b #$03 : BNE .horiz
+  LDA.w $020B : BEQ .to_supplies
+  LDA.b #$00 : BRA .move
+.to_supplies
+  LDA.b #$03
+.move
+  STA.w $020B
+  STZ.w $0207
+  LDA.b #$20 : STA.w $012F
+.none
+  CLC : RTL
+.horiz
+  LDX.w $020B : BEQ .turn
+  BIT.b #$01 : BNE .right
+  DEX : BNE .move_x
+.turn_left
+  LDA.b #$FF : SEC : RTL
+.right
+  INX : CPX.b #$07 : BCC .move_x
+  LDA.b #$01 : SEC : RTL
+.turn
+  BIT.b #$01 : BEQ .turn_left
+  LDA.b #$01 : SEC : RTL
+.move_x
+  TXA : BRA .move
+}
+
+; ---------------------------------------------------------
+; End of MenuMapTravel_Draw (DBR = $2D): draws MAP + 6 supply icons (with
+; MenuItemValueSpoof = 1), active 4x4 Menu_Equipment_Cursor ($0207 bit 5 == 0),
+; $1692 footer name + 3-digit stock count, and A:USE at menu_offset(19,20) for
+; usable supplies with stock > 0. Returns M/X=8.
+MenuFlow_MapDraw:
+{
+  SEP #$30
+  LDA.b #$7E : STA.b $0A
+  LDA.b #$01 : STA.w MenuItemValueSpoof
+  REP #$30
+  LDX.w #$0000
+.icons
+  PHX
+  LDA.l MenuFlow_MapGfx,X : TAY
+  LDA.l MenuFlow_MapPos,X : TAX
+  LDA.w #MenuItemValueSpoof
+  JSL DrawMenuItem_Long
+  PLX
+  INX #2 : CPX.w #$000E : BCC .icons
+
+  SEP #$30
+  LDA.w $020B : CMP.b #$07 : BCC +
+  LDA.b #$00
++
+  STA.b $02
+  LDA.w $0207 : AND.b #$20 : BNE .no_cursor
+  REP #$30
+  LDA.b $02 : AND.w #$00FF : ASL : TAX
+  LDA.l MenuFlow_MapPos,X : TAX
+  JSL Menu_Equipment_Cursor_Long
+.no_cursor
+  SEP #$30
+  LDA.b $02 : BNE .supply
+  REP #$30
+  LDX.w #$001A
+.map_footer
+  LDA.l .map_name,X : STA.w $1692,X
+  DEX #2 : BPL .map_footer
+  SEP #$30
+  RTL
+
+.supply
+  DEC : STA.b $02                       ; supply slot 0..5
+  TAX
+  LDA.l Menu_Equipment_CountLow,X : TAX
+  LDA.l $7EF300,X : STA.b $03           ; stock count 0..255
+  REP #$30
+  LDA.b $02 : AND.w #$00FF
+  ASL #2 : STA.b $00
+  ASL #3 : SEC : SBC.b $00 : TAX        ; slot * 28
+  LDY.w #$0000
+.supply_footer
+  LDA.l Menu_Equipment_SupplyNames,X : STA.w $1692,Y
+  INX #2 : INY #2 : CPY.w #$001C : BCC .supply_footer
+
+  LDA.b $03 : AND.w #$00FF
+  LDX.w #$06A6
+  JSL Menu_Quest_Number3_Long
+  SEP #$30
+
+  LDA.b $03 : BEQ .done
+  LDX.b $02
+  LDA.l .usable,X : BEQ .done
+  REP #$30
+  LDX.w #$0008
+.use_prompt
+  LDA.l .use_text,X : STA.w $1000+menu_offset(19,20),X
+  DEX #2 : BPL .use_prompt
+.done
+  SEP #$30
+  RTL
+
+.usable
+  db 1,1,0,0,1,1                        ; Banana, Pineapple, Honeycomb, Deku Stick
+pushtable
+  'A' = $2550
+  'E' = $2554
+  'M' = $255C
+  'P' = $255F
+  'S' = $2562
+  'U' = $2564
+  ':' = $256B
+  '_' = $20F5
+.map_name
+  dw "_____MAP______"
+.use_text
+  dw "A:USE"
+pulltable
 }
 
 if !ENABLE_GOLDSTAR_CELL == 1

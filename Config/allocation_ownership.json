@@ -135,7 +135,7 @@
     "shared:Menu/menu_map_travel.asm": {
       "source_set": "shared",
       "path": "Menu/menu_map_travel.asm",
-      "sha256": "5fc5329e365462f9ca925f032f8b4bab9709797805923f11aba5daed9f0ba28f"
+      "sha256": "d40a815375a93b68c6b6f2e0fe9579af63ec016478d20be7d159d956da63c6b8"
     },
     "shared:Core/Cutscene/experiment.asm": {
       "source_set": "shared",
@@ -170,7 +170,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "b8440941966d6a3d2b34fc98688f84ae21061d9ba6f0c934c9e479b84b428521"
+      "sha256": "a81d67add40edd0067dd181f48ed215bc4258abdf0c95ed16faff011b5410303"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",

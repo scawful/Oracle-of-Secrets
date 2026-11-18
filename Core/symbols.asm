@@ -80,7 +80,7 @@ assert AbyssLanding+2 <= $7E02C0
 ; Vanilla-unused $7E02BA-$7E02BD (usdasm UNUSED_7E02BA-BE, zero at boot; $7E02BE free).
 ; Not persistent: the cursors last across menu opens until power-off.
 MenuFlow_EquipCursor = $7E02BA ; Equipment slot + 1 (0 = none)
-MenuFlow_MapCursor   = $7E02BB ; unused (the Map page has one cell)
+MenuFlow_MapCursor   = $7E02BB ; Map cell + 1 (0 = none)
 MenuFlow_CrossRow    = $7E02BC ; D-pad page cross: source row ordinal + 1 (0 = none)
 MenuFlow_CrossDir    = $7E02BD ; 0 = turned right (land left), $1F = turned left
 assert AbyssLanding+2 == MenuFlow_EquipCursor
