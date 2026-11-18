@@ -201,6 +201,21 @@ if !ENABLE_SKY_OVERWORLD_ROUTE == 1
   .scan_door_types
 endif
 
+  ; Wayward Village Tavern back entrance (E43 at x=45..46, y=34..35):
+  ; works with both legacy $05D3-$05D6 and seamless Palette-7 north eave tiles
+  ; (where solid $0D5 ridge stops Link at $20=$0A26..$0A2F, cell $115A/$115C).
+  LDA.w $040A : CMP.w #$0023 : BNE .not_village_bar_back
+    LDA.b $2F : AND.w #$00FF : CMP.w #$0002 : BNE .not_village_bar_back
+    CPY.w #$11DA : BEQ FindEntrance
+    CPY.w #$11DC : BEQ .bar_back_enter
+    LDA.b $20 : CMP.w #$0A24 : BCC .not_village_bar_back
+    CPY.w #$115A : BEQ .bar_back_enter
+    CPY.w #$115C : BNE .not_village_bar_back
+    .bar_back_enter
+      LDY.w #$11DA
+      JMP FindEntrance
+  .not_village_bar_back
+
   ; Size of ValidDoorTypes
   LDX.w #$0060
 
