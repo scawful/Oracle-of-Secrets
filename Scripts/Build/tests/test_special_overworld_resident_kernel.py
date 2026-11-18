@@ -62,6 +62,7 @@ def source_fixture():
 def constants(capacity=192):
     tables = {family.name: family.snes for family in N.current_table_layout(N.TABLE_BASE)}
     return dict(ENABLE_SKY_OVERWORLD_ROUTE=0,
+                SKY_CLOUD_OVERLAY=N.R.SKY_CLOUD_OVERLAY if hasattr(N, 'R') else 0x0094,
                 SPECIAL_OVERWORLD_NATIVE=1, SPECIAL_OVERWORLD_RESIDENT_ENABLED=1,
                 SPECIAL_OVERWORLD_RESIDENT_FIRST=0x80, SPECIAL_OVERWORLD_RESIDENT_END=capacity,
                 LYRA_CURRENT_RESIDENT_ABI_VERSION=1, LYRA_CURRENT_RESIDENT_TILE16_COUNT=4096,

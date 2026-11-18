@@ -300,6 +300,8 @@ class SomariaSocketDoorModel(unittest.TestCase):
         self.assertEqual(RETURN_ADDRESS, 0x01CC5A)
         users = []
         for path in ROOT.rglob("*.asm"):
+            if path.name.startswith(".#"):
+                continue
             for line in path.read_text(errors="replace").splitlines():
                 code = line.split(";", 1)[0].strip()
                 if ROUTINE in code:

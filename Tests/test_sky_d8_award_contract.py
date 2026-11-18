@@ -562,6 +562,8 @@ class SkyAwardSource(unittest.TestCase):
         self.assertEqual(sorted(int(line[5:11], 16) for line in orgs), sorted(HOOKS))
         owners = []
         for path in ROOT.rglob("*.asm"):
+            if path.name.startswith(".#"):
+                continue
             for line in code_lines(path.read_text(errors="replace")):
                 if re.match(r"org \$08CC4[4-9A-B]\b", line):
                     owners.append((path.relative_to(ROOT).as_posix(), line))

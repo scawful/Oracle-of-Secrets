@@ -97,7 +97,7 @@ def _parse_feature_overrides(path: Path) -> dict[str, DefineSite]:
 
 
 def _should_skip(path: Path) -> bool:
-    return any(part in SKIP_DIRS for part in path.parts)
+    return path.name.startswith(".#") or any(part in SKIP_DIRS for part in path.parts)
 
 
 def main() -> int:

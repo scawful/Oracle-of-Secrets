@@ -69,6 +69,16 @@ from export_yazeproj_bundle import (  # noqa: E402
 )
 
 
+def _generate_repo_manifest() -> dict:
+    """Inspect repo sources regardless of whether Roms/oos168.sfc is absent, Rev-3/4, or Rev-5."""
+    try:
+        return generate_manifest(REPO_ROOT)
+    except ManifestGenerationError as exc:
+        if "revision3 or revision4" not in str(exc):
+            raise
+        return generate_manifest(REPO_ROOT, experimental_page_tile16=True)
+
+
 class ManifestFixture:
     def __init__(self) -> None:
         self._temp = tempfile.TemporaryDirectory()
@@ -1496,7 +1506,7 @@ class RepositorySourceRegressionTest(unittest.TestCase):
             generate_manifest(fixture.root, dev_rom_path=rom)
 
     def test_real_fastrom_orgs_use_physical_manifest_ranges(self) -> None:
-        manifest = generate_manifest(REPO_ROOT)
+        manifest = _generate_repo_manifest()
         protected = manifest["protected_regions"]["regions"]
         banks = {
             entry["bank"]: entry for entry in manifest["owned_banks"]["banks"]
@@ -1532,7 +1542,7 @@ class RepositorySourceRegressionTest(unittest.TestCase):
         )
 
     def test_house_wall_tables_publish_complete_protected_spans(self) -> None:
-        manifest = generate_manifest(REPO_ROOT)
+        manifest = _generate_repo_manifest()
         protected = manifest["protected_regions"]["regions"]
 
         for start, size in (
@@ -1969,7 +1979,7 @@ class RepositoryProjectSafetyTest(unittest.TestCase):
 
 class RepositoryMessageSourceTest(unittest.TestCase):
     def test_manifest_exposes_durable_expanded_message_source(self) -> None:
-        messages = generate_manifest(REPO_ROOT)["messages"]
+        messages = _generate_repo_manifest()["messages"]
 
         self.assertEqual(messages["data_start"], "0x2F8026")
         self.assertEqual(messages["data_end"], "0x2FFDFF")
@@ -2028,7 +2038,7 @@ class RepositoryMessageSourceTest(unittest.TestCase):
 
 class RepositoryMinecartTrackSourceTest(unittest.TestCase):
     def test_manifest_exposes_durable_minecart_track_source(self) -> None:
-        manifest = generate_manifest(REPO_ROOT)
+        manifest = _generate_repo_manifest()
 
         self.assertEqual(manifest["manifest_version"], 3)
         self.assertEqual(

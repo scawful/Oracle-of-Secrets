@@ -288,7 +288,7 @@ class EssenceCountContract(unittest.TestCase):
     def test_no_consumer_calls_get_essence_count(self):
         callers = []
         for path in ROOT.rglob("*.asm"):
-            if path == PROGRESSION or ".git" in path.parts:
+            if path == PROGRESSION or path.name.startswith(".#") or ".git" in path.parts:
                 continue
             text = path.read_text(encoding="utf-8", errors="replace")
             code = "\n".join(line.split(";", 1)[0] for line in text.splitlines())

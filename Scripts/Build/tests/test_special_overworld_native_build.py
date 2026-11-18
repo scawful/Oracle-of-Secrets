@@ -488,8 +488,8 @@ class ExperimentalNativeBuildTest(unittest.TestCase):
             self.fixture.rows, count=1024, authoring=True)
         origin, extent, holes = N.resident_data_reservation(
             self.source, experimental_page_tile16=True)
-        self.assertEqual((origin, extent, holes), (0x270000, 0x20000,
-            ((0x280000, 0x282000), (0x288000, 0x28C000))))
+        self.assertEqual((origin, extent, holes), (0x270000, 0x40000,
+            ((0x280000, 0x282000), (0x288000, 0x28C000), (0x298000, 0x2A8000))))
         result = self.prepare()
         for write in result['resource_writes']:
             first, end = write['pc'], write['pc'] + len(write['after'])

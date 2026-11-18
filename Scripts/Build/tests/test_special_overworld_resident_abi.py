@@ -53,7 +53,7 @@ class ResidentAbiTest(unittest.TestCase):
         abi = A.plan_native_resident_abi(plan, tile16_count=4096)
         blobs = A.validate_native_resident_abi(abi)
         self.assertEqual([(p['map_id'], p['overlay_map_id']) for p in abi['overlay_pages']],
-                         [(0x87, 0x9C), (0x87, 0x9F)])
+                         [(0x87, 0x94), (0x87, 0x9F)])
         emission = A.emit_native_resident_abi(abi, data_pc=0x300000,
             capacity=0x10000, preimage=bytes(0x10000))
         records = {p['label']: p for p in emission['placements']}
@@ -80,11 +80,11 @@ class ResidentAbiTest(unittest.TestCase):
         fixture.setUp()
         exported = fixture.sky_overlay_export(host=0x8C)
         plan = R.plan_saved_native_terrain(fixture.source, exported,
-                                           overlay_asset_contexts={(0x8C, 0x9C): 0x95})
+                                           overlay_asset_contexts={(0x8C, 0x94): 0x95})
         abi = A.plan_native_resident_abi(plan, tile16_count=4096)
         A.validate_native_resident_abi(abi)
         self.assertEqual([(r['map_id'], r['overlay_map_id']) for r in abi['overlay_pages']],
-                         [(0x8C, 0x9C), (0x8C, 0x9F)])
+                         [(0x8C, 0x94), (0x8C, 0x9F)])
         self.assertEqual(abi['overlay_pages'][0]['asset_source_map_id'], 0x95)
         self.assertNotIn('asset_source_map_id', abi['overlay_pages'][1])
         for value in (0x77, True, None, 0x96):

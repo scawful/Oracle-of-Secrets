@@ -45,7 +45,8 @@ class BuildPipelineReceiptTest(unittest.TestCase):
         self.write('Roms/oos999.sfc', 'disposable fixture bytes')
         for name in ('sheet_overrides.py', 'menu_icon_overrides.py',
                      'validate_custom_collision_source.py',
-                     'validate_expanded_message_source.py'):
+                     'validate_expanded_message_source.py',
+                     'generate_room_state_table.py'):
             self.write(f'Scripts/Generate/{name}', 'import os,sys\nsys.exit(int(os.getenv("FIXTURE_SOURCE_EXIT", "0")))\n')
         self.write('Scripts/Generate/generate_hack_manifest.py',
                    'import json,sys,pathlib\n'
