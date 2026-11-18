@@ -73,8 +73,13 @@ Sprite_VillageDog_Prep:
 ## `HandleTossedDog`
 This routine manages the vertical movement of a dog that has been tossed. If `SprHeight, X` is not `0`, it decrements it, simulating gravity.
 
-## `LiftOrTalk`
-This routine determines whether Link can lift the dog or engage in dialogue. It checks Link's current form (`$02B2`). If Link is in Wolf or Minish form, it calls `ShowMessageIfMinish`. Otherwise, it calls `JSL Sprite_CheckIfLifted` so Link can pick the dog up (`Dog_Tossed` owns `ThrownSprite_TileAndSpriteInteraction_long` once airborne so grounded hops in `SprHeight` never trigger false throw physics).
+## `LiftOrTalk` & `VillageDog_FormInteractLong` (`Sprites/NPCs/village_animals.asm`)
+This routine determines whether Link can lift the dog or engage in dialogue. It checks Link's current form (`$02B2`):
+*   **Human (`$00`) / other non-animal forms**: Calls `JSL Sprite_CheckIfLifted` so Link can pick the dog up (`Dog_Tossed` owns `ThrownSprite_TileAndSpriteInteraction_long` once airborne so grounded hops in `SprHeight` never trigger false throw physics).
+*   **Wolf (`$03`)**: In `Dog_Handler`, approaching within `40px` (`$28`) triggers an immediate friendly pack tail-wag (`Action $05/$06`); pressing `A` while facing calls `VillageDog_FormInteractLong`, showing `!Dog_MsgWolf` (`!RichardDog_MsgWolf` when `SprSubtype != 0`).
+*   **Minish (`$05`)**: In `Dog_MoveCommon`, approaches gently at speed `$08` and stops wider (`$18` = `24px`); pressing `A` while facing shows `!Dog_MsgMinish`.
+
+`Sprites/NPCs/village_animals.asm` also hosts the companion multi-form hooks for Wayward Village Cuccos (`$0B` via `$06:F244`) and peaceful indoor Wayward Village Rats (`$6D` via `$05:A8CE`, scoped to rooms `$0102`, `$0103`, `$0104`, `$0106`, `$0107`, `$0119`, `$011F` when `$1B != 0` and `$0FFF == 0`, preserving dungeon/cave rats untouched).
 
 ## Main Logic & State Machine (`Sprite_VillageDog_Main`)
 This routine manages the various states and behaviors of both Village Dogs and Eon Dogs.
@@ -251,8 +256,8 @@ This routine handles the Eon Dog's random movement. It moves the sprite (`JSL Sp
 *   **`Dog_NearPlayer` & `VillageDog_CalmIdleLong`**: Shared 16-bit box proximity check (`|Link - SprCached| < A` on both axes) in Bank `$31`, used for the Ocarina radius (`$60`), idle perk-up (`$58`), and approach-to-wag stop (`$16`). The cold calm-idle/stroll routine (`VillageDog_CalmIdleLong`) emits into the Bank `$2C` tail via `%VillageDog_EmitBank2C()` in `Sprites/all_sprites.asm` to balance Bank `$31` and Bank `$2C` headroom.
 *   **`Dog_PlayAnim`**: Shared 8-slot animation helper (`SprTimerB, X`), clamping `SprFrame` into `[start, end]` immediately on Left/Right transitions.
 
-## `ShowMessageIfMinish`
-This routine displays a context-sensitive message based on Link's current form (`$02B2`). If Link is in Minish form, it displays message `$18`; otherwise, it displays message `$1B`.
+## Form Dialogue Dispatch (`VillageDog_FormInteractLong`)
+Replaces the former Bank `$31` `ShowMessageIfMinish` tail and lives in `Sprites/NPCs/village_animals.asm` (Bank `$2B`). Uses `Animal_SolicitedTalk` so Minish Link (`$02B2 == $05`), Wolf Link (`$02B2 == $03`, distinguishing stray dogs vs Richard `SprSubtype != 0`), Cuccos (`$0B`), and indoor Library Rats (`$6D`) each route cleanly through placeholder message IDs (`!Dog_MsgMinish`, `!Dog_MsgWolf`, `!RichardDog_MsgWolf`, `!Cucco_MsgMinish`, `!Cucco_MsgWolf`, `!Rat_MsgMinish`, `!Rat_MsgWolf`).
 
 ## Drawing (`Sprite_VillageDog_Draw` and `Sprite_EonDog_Draw`)
 Both drawing routines handle OAM allocation and animation for their respective dog types. They explicitly use `REP #$20` and `SEP #$20` for 16-bit coordinate calculations. Each routine contains its own specific OAM data for rendering the character.

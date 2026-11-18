@@ -85,7 +85,8 @@ LiftOrTalk:
     JSL Sprite_CheckIfLifted
     RTS
   .talk
-  JMP ShowMessageIfMinish
+  JSL VillageDog_FormInteractLong
+  RTS
 }
 
 ; In: A = 8-bit axis radius ($01-$7F). Out: C set if |Link - SprCached| < r on both axes.
@@ -197,9 +198,22 @@ Sprite_VillageDog_Main:
   dw Dog_HappyDance            ; 0A
 
   ; 00 - Calm idle (sit, head-tilt, short stroll) unless Link approaches within 88px.
+  ; Wolf Link ($02B2 == #$03) within 40px immediately triggers a friendly pack tail-wag.
   Dog_Handler:
   {
     JSR HandleTossedDog
+    LDA.w $02B2 : CMP.b #$03 : BNE .check_perk
+      LDA.b #$28 : JSR Dog_NearPlayer : BCC .check_perk
+        STZ.w SprXSpeed, X
+        STZ.w SprYSpeed, X
+        LDA.b #$50 : STA.w SprTimerD, X
+        JSL Sprite_IsToRightOfPlayer : TYA : BEQ .wolf_wag_r
+          %GotoAction(5)
+          JMP LiftOrTalk
+        .wolf_wag_r
+        %GotoAction(6)
+        JMP LiftOrTalk
+    .check_perk
     LDA.w SprTimerC, X : BNE .calm
     LDA.b #$58 : JSR Dog_NearPlayer : BCC .calm
       STZ.w SprXSpeed, X
@@ -258,7 +272,11 @@ Sprite_VillageDog_Main:
   {
     JSR Dog_PlayAnim
     JSR HandleTossedDog
-    LDA.b #$16 : JSR Dog_NearPlayer : BCC .keep_moving
+    LDA.b #$16
+    LDY.w $02B2 : CPY.b #$05 : BNE +
+      LDA.b #$18 ; Minish Link: stop slightly wider so dog doesn't bowl over tiny Link
+    +
+    JSR Dog_NearPlayer : BCC .keep_moving
       STZ.w SprXSpeed, X
       STZ.w SprYSpeed, X
       LDA.b #$50 : STA.w SprTimerD, X
@@ -272,6 +290,9 @@ Sprite_VillageDog_Main:
     LDA.w $0E70, X : BNE .settle
     LDA.w SprTimerD, X : BEQ .settle
       LDA.b #$0C
+      LDY.w $02B2 : CPY.b #$05 : BNE +
+        LDA.b #$08 ; Gentle curious trot toward Minish Link
+      +
       JSL Sprite_ApplySpeedTowardsPlayer
       STZ.b $06 : STZ.b $07
       JSL Sprite_MoveLong
@@ -410,15 +431,6 @@ EonDog_Walk:
   db 0, -2, 2, 0
   .speed_y
   db 2, 0, 0, -2
-}
-
-ShowMessageIfMinish:
-{
-  LDA $02B2 : CMP.b #$05 : BNE .not_minish
-    %ShowSolicitedMessage($18) : RTS
-  .not_minish
-  %ShowSolicitedMessage($1B)
-  RTS
 }
 
 Sprite_VillageDog_Draw:
