@@ -97,6 +97,10 @@ STYLES = [
     # $C9 = windmill (QUEUE199R millstone_ring).
     {"name": "house", "png": "donor_raw_house/seasons_gfx_tileset2c.png",
      "map": "donor_raw_house/seasons_tilesetMappings2c.bin", "pal": "donor_pal/seasons_2c.txt",
+     # Floor rows 5-6: tan wood instead of the donor's green boards (scawful
+     # 2026-11-18 "Tan wood"); a warmer, darker brown than the cream wall palette 3.
+     "extra_pal": {8: [(0x1C, 0x16, 0x0E), (0x16, 0x0F, 0x08), (0x0E, 0x08, 0x04), (0, 0, 0)]},
+     "row_pal": {5: 8, 6: 8},
      "rooms": [0xC9]},
 ]
 
@@ -197,6 +201,7 @@ class Donor:
         self.maps = (root / style["map"]).read_bytes()
         vals = [tuple(int(v, 16) for v in ln.split()) for ln in (root / style["pal"]).read_text().splitlines() if ln.strip()]
         self.pal = {2 + i: vals[i * 4:i * 4 + 4] for i in range(6)}  # 5-bit RGB, GBC palettes 2-7
+        self.pal.update(style.get("extra_pal", {}))  # style-made palettes, ids 8+
 
     def char(self, i):
         x0, y0 = (i % 16) * 8, (i // 16) * 8

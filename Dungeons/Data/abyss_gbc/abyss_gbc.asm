@@ -196,8 +196,8 @@ AbyssGbc_Pal:
   dw $0000, $092C, $2657, $47FF, $092C, $2657, $47FF, $47FF, $0000, $092C, $2657, $47FF, $092C, $2657, $47FF
   dw $0000, $092C, $2657, $47FF, $092C, $2657, $47FF, $47FF, $0000, $092C, $2657, $47FF, $092C, $2657, $47FF
   dw $0000, $092C, $2657, $47FF, $092C, $2657, $47FF, $47FF, $0000, $092C, $2657, $47FF, $092C, $2657, $47FF
-  dw $0000, $1DAA, $2E92, $47FF, $1DAA, $2E92, $47FF, $47FF, $0000, $1DAA, $2E92, $47FF, $1DAA, $2E92, $47FF
-  dw $0000, $1DAA, $2E92, $47FF, $1DAA, $2E92, $47FF, $47FF, $0000, $1DAA, $2E92, $47FF, $1DAA, $2E92, $47FF
+  dw $0000, $110E, $21F6, $3ADC, $110E, $21F6, $3ADC, $3ADC, $0000, $110E, $21F6, $3ADC, $110E, $21F6, $3ADC
+  dw $0000, $110E, $21F6, $3ADC, $110E, $21F6, $3ADC, $3ADC, $0000, $110E, $21F6, $3ADC, $110E, $21F6, $3ADC
   dw $0000, $092C, $2657, $47FF, $092C, $2657, $47FF, $47FF, $0000, $092C, $2657, $47FF, $092C, $2657, $47FF
 AbyssGbc_onox_00: incbin "Dungeons/Data/abyss_gbc/onox.00.lz2"
 AbyssGbc_onox_01: incbin "Dungeons/Data/abyss_gbc/onox.01.lz2"
