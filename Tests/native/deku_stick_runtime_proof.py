@@ -3,7 +3,7 @@
 
 Verifies natively in headless Mesen2:
 1. Fresh draw & sword lockout:
-   - Drawing a fresh Deku Stick from Equipment menu decrements count (2 -> 1).
+   - Drawing a fresh Deku Stick from Map page Supplies row (slot 6) decrements count (2 -> 1).
    - Sets DekuStick_State = 1 (held unlit) and DekuStick_BurnTimer = 75 (~20s).
    - While stick is held, pressing B stows the stick without swinging the sword on that frame.
    - Fresh unlit stow refunds count (1 -> 2) and leaves DekuStickWear = 0.
@@ -13,7 +13,7 @@ Verifies natively in headless Mesen2:
 3. Worn stick stow & redraw:
    - Drawing stick, igniting (State = 2), and burning down to 30 ticks (~8s).
    - Stowing worn stick refunds inventory (1 -> 2) and saves remaining budget in DekuStickWear = 30 ($7EF39F).
-   - Redrawing from Equipment menu restores DekuStick_BurnTimer = 30 and clears DekuStickWear = 0.
+   - Redrawing from Map page restores DekuStick_BurnTimer = 30 and clears DekuStickWear = 0.
    - Relighting preserves the 30-tick budget.
 4. Visible OAM in 4 directions & controls:
    - Unlit held stick in 4 facings (Up, Down, Left, Right): Sprite 4 onscreen (palette 1), Sprite 5 hidden.
@@ -30,11 +30,11 @@ Verifies natively in headless Mesen2:
 6. Native torch interaction (controller-driven with declared fixture):
    - Authored room: Room 0x00 (Entrance 0x7B), Floor F1, Layer 0 with real torch objects.
    - Declared starting fixture: Torch 0 lit ($04F0 = 0x80), Torch 1 unlit ($04F1 = 0x00, $0542 & 0x7FFF), Deku Sticks count = 2.
-   - Joypad Equipment menu navigation: cursor moved from slot 0 via UP then LEFT to slot 23, unlit stick drawn (count 2 -> 1, state 1, burn 75).
+   - Joypad Map page navigation: Start -> L opens Map page ($1E71=$40, $0200=6), cursor moved from cell 0 via DOWN to 3 then RIGHT to slot 6 (Deku Sticks), unlit stick drawn (count 2 -> 1, state 1, burn 75).
    - Bounded D-pad movement approaches lit Torch 0: physical tip contact ignites stick (state 2).
    - Bounded D-pad movement carries lit stick across room to unlit Torch 1: physical tip contact lights Torch 1 ($04F1 > 0).
    - Joypad B button stows stick: count refunded (1 -> 2), burn budget saved in DekuStickWear ($7EF39F).
-   - Redraw via joypad Equipment menu (UP then LEFT): restores burn budget from wear, wear cleared.
+   - Redraw via joypad Map page (handles remembered cursor 6 or 0): restores burn budget from wear, wear cleared.
    - Reignite via bounded D-pad against lit Torch 1: reignites stick, conserving remaining burn budget.
    - Noncontact controls: out of reach (at spawn and 50+ px north of torch) and walk away.
    - Captures native 256x224 screenshots: before_torch, contact_torch_ignite, after_torch_lit.
@@ -58,7 +58,7 @@ Verifies natively in headless Mesen2:
 11. Burn countdown & burnout:
     - Lit stick ticks down every 16 frames; reaching 0 burns out and drops stick without refund.
 12. Zero-inventory refusal:
-    - With count = 0, pressing A in Equipment menu refuses activation and preserves stored wear.
+    - With count = 0, pressing A on Map page Deku Stick cell refuses activation and preserves stored wear.
 13. Indoor dungeon ($10=7) gameplay:
     - Verifies drawing, holding, swiping, torch lighting, and stow inside underworld mode $07.
 14. Real input-driven doorway crossing & real stairs transition:
@@ -387,7 +387,8 @@ class DekuStickRuntimeTest:
             raise RuntimeError(f"Failed to enter gameplay from cold boot: MODULE={self.r(MODULE)}")
         print(f"[+] Reached stable gameplay from fresh boot: MODULE={self.r(MODULE)}")
 
-    def navigate_to_equipment(self) -> bool:
+    def navigate_to_map(self) -> bool:
+        """Open pause menu and turn left from Items ($0200=4) to Map page ($1E71=$40, $0200=6)."""
         self.press("START", frames=10)
         for _ in range(50):
             if self.r(MENU) == 4:
@@ -398,10 +399,31 @@ class DekuStickRuntimeTest:
 
         self.press("L", frames=10)
         for _ in range(50):
-            if self.r(MENU) == 6:
+            if self.r(MENU) == 6 and self.r(PAGE) == 0x40:
                 break
             time.sleep(0.05)
-        return self.r(MENU) == 6
+        return self.r(MENU) == 6 and self.r(PAGE) == 0x40
+
+    def joypad_to_map_slot(self, target: int) -> int:
+        """Joypad-only walk on Map page to Supplies slot 1..6 (5=Honeycomb, 6=Deku Stick).
+
+        Cell 0 is MAP; DOWN moves 0 -> 3, and LEFT/RIGHT step across 1..6.
+        Also handles remembered MenuFlow_MapCursor values already in 1..6.
+        """
+        if not 1 <= target <= 6:
+            raise ValueError(f"Map supply slot must be 1..6, got {target}")
+        cur = self.r(CURSOR)
+        if cur == 0 or cur >= 7:
+            self.press("DOWN", frames=4)
+            time.sleep(0.08)
+            cur = self.r(CURSOR)
+        for _ in range(8):
+            if cur == target:
+                break
+            self.press("RIGHT" if cur < target else "LEFT", frames=4)
+            time.sleep(0.08)
+            cur = self.r(CURSOR)
+        return cur
 
     def take_screenshot(self, name: str) -> Path | None:
         try:
@@ -452,12 +474,13 @@ class DekuStickRuntimeTest:
             self.w(DEKU_BURN_TIMER, 0)
             self.w(PENDING_SUPPLY, 0)
 
-            if not self.navigate_to_equipment():
-                raise RuntimeError("Failed to open Equipment menu")
+            if not self.navigate_to_map():
+                raise RuntimeError("Failed to open Map page")
 
-            # Cursor 23 = Deku Stick (supplies row 2, slot 3)
-            self.w(CURSOR, 23)
-            time.sleep(0.1)
+            # Cell 6 = Deku Stick on Map page Supplies row
+            cur_slot = self.joypad_to_map_slot(6)
+            if cur_slot != 6:
+                raise RuntimeError(f"Expected cursor at Map supply slot 6, got {cur_slot}")
 
             # Press A to queue draw
             self.press("A", frames=10)
@@ -523,10 +546,11 @@ class DekuStickRuntimeTest:
         self.w(DEKU_STICK_STATE, 0)
         self.w(DEKU_BURN_TIMER, 0)
 
-        if not self.navigate_to_equipment():
-            raise RuntimeError("Failed to open Equipment menu")
-        self.w(CURSOR, 23)
-        time.sleep(0.1)
+        if not self.navigate_to_map():
+            raise RuntimeError("Failed to open Map page")
+        cur_slot = self.joypad_to_map_slot(6)
+        if cur_slot != 6:
+            raise RuntimeError(f"Expected cursor at Map supply slot 6, got {cur_slot}")
         self.press("A", frames=10)
         self.wait_play(8.0)
 
@@ -545,10 +569,11 @@ class DekuStickRuntimeTest:
         print(f"    Worn stow: count={count3_stow} (exp 2), state={state3_stow} (exp 0), wear={wear3_stow} (exp in 25..30)")
 
         # Redraw stick from menu
-        if not self.navigate_to_equipment():
-            raise RuntimeError("Failed to open Equipment menu")
-        self.w(CURSOR, 23)
-        time.sleep(0.1)
+        if not self.navigate_to_map():
+            raise RuntimeError("Failed to open Map page")
+        cur_slot = self.joypad_to_map_slot(6)
+        if cur_slot != 6:
+            raise RuntimeError(f"Expected cursor at Map supply slot 6, got {cur_slot}")
         self.press("A", frames=10)
         self.wait_play(8.0)
 
@@ -759,18 +784,12 @@ class DekuStickRuntimeTest:
         nc1_state = self.r(DEKU_STICK_STATE)
         nc1_ok = (nc1_state == 0)
 
-        # Step A: Draw unlit stick from Equipment menu via joypad navigation
-        if not self.navigate_to_equipment():
-            raise RuntimeError("Failed to open Equipment menu in Room 0x00")
-        # Navigate cursor to slot 23 via joypad inputs:
-        # Starting from slot 0: UP moves to row 3 (slot 18), LEFT moves to slot 23 (Deku Sticks)
-        self.press("UP", frames=4)
-        time.sleep(0.08)
-        self.press("LEFT", frames=4)
-        time.sleep(0.08)
-        cur_slot = self.r(CURSOR)
-        if cur_slot != 23:
-            raise RuntimeError(f"Expected cursor at slot 23, got {cur_slot}")
+        # Step A: Draw unlit stick from Map page via joypad navigation
+        if not self.navigate_to_map():
+            raise RuntimeError("Failed to open Map page in Room 0x00")
+        cur_slot = self.joypad_to_map_slot(6)
+        if cur_slot != 6:
+            raise RuntimeError(f"Expected cursor at Map supply slot 6, got {cur_slot}")
         self.press("A", frames=10)
         self.wait_play(8.0)
 
@@ -889,17 +908,12 @@ class DekuStickRuntimeTest:
         stow_ok = (stow_state == 0 and stow_count == 2 and saved_wear == burn_before_stow and saved_wear > 0)
         print(f"    Stow via B: state={stow_state} (exp 0), count={stow_count} (exp 2), wear={saved_wear} (exp {burn_before_stow}) -> OK: {stow_ok}")
 
-        # Step F: Redraw stick via joypad Equipment menu (at Y=166, out of torch reach -> draws unlit with wear)
-        if not self.navigate_to_equipment():
-            raise RuntimeError("Failed to open Equipment menu for redraw")
-        # Navigate cursor to slot 23 via joypad inputs:
-        self.press("UP", frames=4)
-        time.sleep(0.08)
-        self.press("LEFT", frames=4)
-        time.sleep(0.08)
-        cur_slot = self.r(CURSOR)
-        if cur_slot != 23:
-            raise RuntimeError(f"Expected cursor at slot 23 on redraw, got {cur_slot}")
+        # Step F: Redraw stick via joypad Map page (at Y=166, out of torch reach -> draws unlit with wear)
+        if not self.navigate_to_map():
+            raise RuntimeError("Failed to open Map page for redraw")
+        cur_slot = self.joypad_to_map_slot(6)
+        if cur_slot != 6:
+            raise RuntimeError(f"Expected cursor at Map supply slot 6 on redraw, got {cur_slot}")
         self.press("A", frames=10)
         self.wait_play(8.0)
 
@@ -1021,10 +1035,11 @@ class DekuStickRuntimeTest:
         # ----------------------------------------------------
         print("[*] Test 10: Interruption drop cleanup (damage drops stick)...")
         # Draw stick
-        if not self.navigate_to_equipment():
-            raise RuntimeError("Failed to open Equipment menu")
-        self.w(CURSOR, 23)
-        time.sleep(0.1)
+        if not self.navigate_to_map():
+            raise RuntimeError("Failed to open Map page")
+        cur_slot = self.joypad_to_map_slot(6)
+        if cur_slot != 6:
+            raise RuntimeError(f"Expected cursor at Map supply slot 6, got {cur_slot}")
         self.press("A", frames=10)
         self.wait_play(8.0)
 
@@ -1075,10 +1090,11 @@ class DekuStickRuntimeTest:
         self.w(DEKU_STICK_STATE, 0)
         self.w(PENDING_SUPPLY, 0)
 
-        if not self.navigate_to_equipment():
-            raise RuntimeError("Failed to open Equipment menu")
-        self.w(CURSOR, 23)
-        time.sleep(0.1)
+        if not self.navigate_to_map():
+            raise RuntimeError("Failed to open Map page")
+        cur_slot = self.joypad_to_map_slot(6)
+        if cur_slot != 6:
+            raise RuntimeError(f"Expected cursor at Map supply slot 6, got {cur_slot}")
 
         self.press("A", frames=10)
         time.sleep(0.5)
@@ -1115,11 +1131,12 @@ class DekuStickRuntimeTest:
         self.w(DEKU_STICK_STATE, 0)
         self.w(PENDING_SUPPLY, 0)
 
-        # Draw stick via Equipment menu in indoor mode:
-        if not self.navigate_to_equipment():
-            raise RuntimeError("Failed to open Equipment menu indoors")
-        self.w(CURSOR, 23)
-        time.sleep(0.1)
+        # Draw stick via Map page in indoor mode:
+        if not self.navigate_to_map():
+            raise RuntimeError("Failed to open Map page indoors")
+        cur_slot = self.joypad_to_map_slot(6)
+        if cur_slot != 6:
+            raise RuntimeError(f"Expected cursor at Map supply slot 6 indoors, got {cur_slot}")
         self.press("A", frames=10)
         if not self.wait_play(8.0):
             raise RuntimeError("Failed to return to indoor gameplay after menu")
@@ -1419,11 +1436,12 @@ class DekuStickRuntimeTest:
 
         reopened_clean = (wear_reopened == 30 and count_reopened == 2 and state_reopened == 0 and burn_reopened == 0)
 
-        # Redraw stick to verify restored burn timer from preserved wear
-        if not self.navigate_to_equipment():
-            raise RuntimeError("Failed to open Equipment menu after reopen")
-        self.w(CURSOR, 23)
-        time.sleep(0.1)
+        # Redraw stick to verify restored burn timer from preserved wear (pure controller)
+        if not self.navigate_to_map():
+            raise RuntimeError("Failed to open Map page after reopen")
+        cur_slot = self.joypad_to_map_slot(6)
+        if cur_slot != 6:
+            raise RuntimeError(f"Expected cursor at Map supply slot 6 after reopen, got {cur_slot}")
         self.press("A", frames=10)
         self.wait_play(8.0)
 
@@ -1441,10 +1459,11 @@ class DekuStickRuntimeTest:
         # Corrupt wear fallback test ($FF -> 75 ticks)
         self.w(DEKU_STICK_WEAR, 0xFF)
         time.sleep(0.1)
-        if not self.navigate_to_equipment():
-            raise RuntimeError("Failed to open Equipment menu for corrupt wear test")
-        self.w(CURSOR, 23)
-        time.sleep(0.1)
+        if not self.navigate_to_map():
+            raise RuntimeError("Failed to open Map page for corrupt wear test")
+        cur_slot = self.joypad_to_map_slot(6)
+        if cur_slot != 6:
+            raise RuntimeError(f"Expected cursor at Map supply slot 6 for corrupt wear test, got {cur_slot}")
         self.press("A", frames=10)
         self.wait_play(8.0)
 

@@ -255,8 +255,8 @@ class HoneycombRuntimeTest:
             raise RuntimeError(f"Failed to reach gameplay after load_state (MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)})")
         print(f"[+] Reached stable gameplay: MODULE={self.r(MODULE)}")
 
-    def navigate_to_equipment(self) -> bool:
-        """Opens menu and navigates cleanly to the Equipment page (menu state 6)."""
+    def navigate_to_map(self) -> bool:
+        """Open pause menu and turn left from Items ($0200=4) to Map page ($1E71=$40, $0200=6)."""
         self.press("START", frames=10)
         # Wait for menu state 4 (Item screen active)
         for _ in range(50):
@@ -266,14 +266,35 @@ class HoneycombRuntimeTest:
         if self.r(MENU) != 4:
             return False
 
-        # Switch to Equipment page
+        # Switch left to Map page
         self.press("L", frames=10)
-        # Wait for menu state 6 (Equipment screen active)
+        # Wait for menu state 6 on Map page ($1E71 == $40)
         for _ in range(50):
-            if self.r(MENU) == 6:
+            if self.r(MENU) == 6 and self.r(PAGE) == 0x40:
                 break
             time.sleep(0.05)
-        return self.r(MENU) == 6
+        return self.r(MENU) == 6 and self.r(PAGE) == 0x40
+
+    def joypad_to_map_slot(self, target: int) -> int:
+        """Joypad-only walk on Map page to Supplies slot 1..6 (5=Honeycomb, 6=Deku Stick).
+
+        Cell 0 is MAP; DOWN moves 0 -> 3, and LEFT/RIGHT step across 1..6.
+        Also handles remembered MenuFlow_MapCursor values already in 1..6.
+        """
+        if not 1 <= target <= 6:
+            raise ValueError(f"Map supply slot must be 1..6, got {target}")
+        cur = self.r(CURSOR)
+        if cur == 0 or cur >= 7:
+            self.press("DOWN", frames=4)
+            time.sleep(0.08)
+            cur = self.r(CURSOR)
+        for _ in range(8):
+            if cur == target:
+                break
+            self.press("RIGHT" if cur < target else "LEFT", frames=4)
+            time.sleep(0.08)
+            cur = self.r(CURSOR)
+        return cur
 
     def run_tests(self):
         # Fixture setup
@@ -398,12 +419,13 @@ class HoneycombRuntimeTest:
         self.w(HONEYCOMB_COUNT, 2)
         self.w(PENDING_SUPPLY, 0)
 
-        if not self.navigate_to_equipment():
-            raise RuntimeError(f"Failed to navigate to Equipment screen (MENU={self.r(MENU)})")
+        if not self.navigate_to_map():
+            raise RuntimeError(f"Failed to navigate to Map page (MENU={self.r(MENU)}, PAGE=0x{self.r(PAGE):02X})")
 
-        # Select Honeycomb (cursor 19)
-        self.w(CURSOR, 22)
-        time.sleep(0.1)
+        # Select Honeycomb (Map page Supplies slot 5) via pure controller input
+        cur_slot = self.joypad_to_map_slot(5)
+        if cur_slot != 5:
+            raise RuntimeError(f"Expected cursor at Map supply slot 5, got {cur_slot}")
 
         # Press A on Honeycomb: queues exit action and scrolls menu up
         self.press("A", frames=10)
@@ -467,12 +489,13 @@ class HoneycombRuntimeTest:
         # Give Link 1 Honeycomb to test repeated consumption
         self.w(HONEYCOMB_COUNT, 1)
 
-        # While bees are actively buzzing, open menu to Equipment
-        if not self.navigate_to_equipment():
-            raise RuntimeError(f"Failed to navigate to Equipment screen (MENU={self.r(MENU)})")
+        # While bees are actively buzzing, open menu to Map page
+        if not self.navigate_to_map():
+            raise RuntimeError(f"Failed to navigate to Map page (MENU={self.r(MENU)}, PAGE=0x{self.r(PAGE):02X})")
 
-        self.w(CURSOR, 22)
-        time.sleep(0.1)
+        cur_slot = self.joypad_to_map_slot(5)
+        if cur_slot != 5:
+            raise RuntimeError(f"Expected cursor at Map supply slot 5, got {cur_slot}")
 
         # Press A: should be REFUSED because bees are currently active!
         self.press("A", frames=10)
@@ -515,12 +538,13 @@ class HoneycombRuntimeTest:
         self.w(HONEYCOMB_COUNT, 1)
         self.w(PENDING_SUPPLY, 0)
 
-        # Open menu -> Equipment
-        if not self.navigate_to_equipment():
-            raise RuntimeError(f"Failed to navigate to Equipment screen (MENU={self.r(MENU)})")
+        # Open menu -> Map page
+        if not self.navigate_to_map():
+            raise RuntimeError(f"Failed to navigate to Map page (MENU={self.r(MENU)}, PAGE=0x{self.r(PAGE):02X})")
 
-        self.w(CURSOR, 22)
-        time.sleep(0.1)
+        cur_slot = self.joypad_to_map_slot(5)
+        if cur_slot != 5:
+            raise RuntimeError(f"Expected cursor at Map supply slot 5, got {cur_slot}")
 
         # Press A: should be REFUSED because only 1-2 slots are free (< 3)
         self.press("A", frames=10)
