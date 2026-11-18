@@ -61,3 +61,7 @@ org $0990F7 ; @hook module=Masks name=HorseMountedBow_SetArrowCoords kind=jsl ta
   NOP
 assert pc() == $0990FC
 pullpc
+
+if !ENABLE_HORSE_MINIGAME == 1
+incsrc "Masks/horse_minigame.asm"
+endif

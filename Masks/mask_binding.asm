@@ -143,6 +143,9 @@ endif
 if !ENABLE_HORSE_FORM == 1
   CMP.b #$09 : BNE +
     LDA.l Horse_State : BNE .consume_y
+if !ENABLE_HORSE_MINIGAME == 1
+    LDA.l HorseGame_State : BNE .consume_y
+endif
     JSL HorseForm_Dismount
     BRA .consume_y
   +

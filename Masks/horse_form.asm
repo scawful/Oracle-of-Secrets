@@ -310,6 +310,17 @@ HorseForm_FrameTick:
     DEC : STA.l Horse_JumpCooldown
   +
 
+if !ENABLE_HORSE_MINIGAME == 1
+  JSL HorseGame_Tick
+  LDA.l HorseGame_State
+  CMP.b #$01 : BEQ .minigame_freeze
+  CMP.b #$03 : BNE +
+  .minigame_freeze
+    PLB : PLP
+    RTL
+  +
+endif
+
   LDA.w !CurrentMask : CMP.b #!Horse_MaskId : BEQ .mounted
     ; Clear stale mount state and keep Ranch Epona NPC active on Toto Ranch.
     LDA.l Horse_State : BEQ +
@@ -340,6 +351,9 @@ if !ENABLE_HORSE_PARK_ANYWHERE == 1
 endif
 
   JSR HorseForm_SuppressMountedButtons
+if !ENABLE_HORSE_MINIGAME == 1
+  JSL HorseGame_KidStartCheck
+endif
 
   ; Refresh SP-3[9..15] + SP-7 if a palette reload reset SP-3 to uniform fill.
   REP #$20

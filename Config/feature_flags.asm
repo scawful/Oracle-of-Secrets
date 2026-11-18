@@ -17,6 +17,7 @@
 !ENABLE_GOLDSTAR_CELL                = 1
 !ENABLE_HORSE_CROWD_CHARGE           = 0
 !ENABLE_HORSE_FORM                   = 1
+!ENABLE_HORSE_MINIGAME               = 0
 !ENABLE_HORSE_PARK_ANYWHERE          = 1
 !ENABLE_KALYXO_BOAT                  = 1
 !ENABLE_KALYXO_DOCKS_PROFILE         = 0
