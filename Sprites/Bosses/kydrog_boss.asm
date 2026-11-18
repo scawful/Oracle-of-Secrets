@@ -444,11 +444,12 @@ CheckForNextPhase:
 
   .phase_one
     ; Check for phase two
-    LDA.w SprHealth,X : CMP.b #$20 : BCC .phase_two
+    LDA.w SprHealth,X : CMP.b #$20 : BCC .enter_phase_two
     RTS
 
   .phase_two
-    LDA.w SprHealth,X : CMP.b #$20 : BCC .phase_three
+    LDA.w SprHealth,X : CMP.b #$20 : BCC .enter_phase_three
+  .enter_phase_two
     LDA !KydrogPhase : CMP.b #$01 : BEQ .return
     LDA #$80 : STA.w SprHealth, X
     LDA #$01 : STA.w SprAction, X
@@ -458,6 +459,7 @@ CheckForNextPhase:
 
   .phase_three
     LDA.w SprHealth,X : CMP.b #$20 : BCC .phase_four
+  .enter_phase_three
     LDA !KydrogPhase : CMP.b #$02 : BEQ .return
     LDA #$80 : STA.w SprHealth, X
     LDA #$02 : STA.w SprAction, X

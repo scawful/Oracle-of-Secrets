@@ -93,7 +93,12 @@ ZoraBaby_RevertToSprite:
   PHA
 
   LDA.b #$39 : JSL Sprite_SpawnDynamically
+  BPL .spawned
+    PLA
+    SEC
+    RTS
 
+  .spawned
   PLA
 
   PHX
@@ -114,6 +119,7 @@ ZoraBaby_RevertToSprite:
 
   STZ.b $5E
 
+  CLC
   RTS
 }
 
@@ -131,6 +137,7 @@ CheckForZoraBabyTransitionToSprite:
     LDA.w $0114 : CMP.b #$3B : BNE +
       LDA.b #$00
       JSR ZoraBaby_RevertToSprite
+      BCS .not_zora
       ; Room25 star stages Baby only; the selected valve episode owns unlock08.
     +
 
