@@ -1268,6 +1268,21 @@
       },
       "notes": "Editor jump through warps.json entrance $09 -> room $84. On project ROM c606f8d9 and earlier, exit wiring forced GBC form (mask 6, $0FFF=1). On 566e8b62+ (doors 1-3 landed) warp_entrance(0x09) keeps mask 0 and $0FFF 0. Re-verify on a private 566e build; no story writes.",
       "writes": []
+    },
+    {
+      "id": "jump-shrine-wisdom",
+      "label": "Shrine of Wisdom room $C9",
+      "location": {
+        "entrance": "0x33"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x00C9"
+      },
+      "notes": "Editor jump through warps.json entrance $33 -> room $C9 (Shrine of Wisdom entry on OW $63 Wisdom Swamp; inner room $009A has no direct entrance row in warps.json). No story writes.",
+      "writes": []
     }
   ],
   "todo": [

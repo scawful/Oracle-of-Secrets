@@ -265,7 +265,17 @@
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
       "path": "Sprites/all_sprites.asm",
-      "sha256": "a5cdf0f86c9397145da7c5a534ab998ea4d1239dd2825c760adaf095e6ceda32"
+      "sha256": "1f4cb1e9a33ea628d9621721c3c84ae8ff4478bcba1caf64e5fd815ab86d074c"
+    },
+    "shared:Sprites/NPCs/eon_owl.asm": {
+      "source_set": "shared",
+      "path": "Sprites/NPCs/eon_owl.asm",
+      "sha256": "2433fc6e000b7efe8b434eca9543d84245fd595606cb6ddf0a417257168a48ef"
+    },
+    "shared:Sprites/NPCs/tingle.asm": {
+      "source_set": "shared",
+      "path": "Sprites/NPCs/tingle.asm",
+      "sha256": "7dd4bc06ec1b223c1117dcf1697fda234cb95744aa087e5ed7995963c49103b7"
     },
     "shared:Sprites/Objects/ice_block.asm": {
       "source_set": "shared",
@@ -3354,6 +3364,31 @@
         "org $36F800",
         "FireBurnBushes_CodeStart:",
         "FireBurnBushes_CodeEnd:"
+      ]
+    },
+    {
+      "id": "bank37_npc_tail_code",
+      "owner": "Eon Owl and Tingle relocated from Bank $2C sprite tail into Bank $37 tail after Bunny Hood",
+      "space": "snes_rom",
+      "base": 3666432,
+      "size": 3584,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Compiled ROM code and draw tables in fixed LoROM Bank $37 slot $37F200-$37FFFF after Masks/bunny_hood.asm ($37F062).",
+      "reset": "Build owns this slot; no runtime ROM writes.",
+      "save": "No SRAM format changes; both NPC sprites use PHB/PHK/PLB and JSL.",
+      "provenance": [
+        "shared:Sprites/all_sprites.asm",
+        "shared:Sprites/NPCs/eon_owl.asm",
+        "shared:Sprites/NPCs/tingle.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "org $37F200",
+        "Bank37NpcTail_CodeStart:",
+        "Bank37NpcTail_CodeEnd:"
       ]
     }
   ],
