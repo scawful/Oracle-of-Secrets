@@ -159,6 +159,11 @@ namespace Oracle
     incsrc "Core/Cutscene/opening.asm"
   endif
 
+  ; Intro Scene 0 storybook art engine (default on with Message_1C0; see Util/macros.asm)
+  if !ENABLE_CUSTOM_ATTRACT_SEQUENCE == 1
+    incsrc "Core/Cutscene/attract_storybook.asm"
+  endif
+
   ; Oracle title screen BG2 (default on; see Util/macros.asm).
     incsrc "Core/title/title_screen.asm"
 

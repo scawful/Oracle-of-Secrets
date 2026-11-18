@@ -53,7 +53,7 @@ if !ENABLE_CUSTOM_ATTRACT_SEQUENCE == 1
   pushpc
   ; Attract_Initialize (vanilla code, not reassembled here).
   org $0CEE58 : dw $01C0 ; @hook module=Dungeons name=AttractStorybookMessage kind=data
-  org $0CEE62 : dw $08A8 ; @hook module=Dungeons name=AttractStorybookFrames kind=data
+  org $0CEE62 : dw $0A20 ; @hook module=Dungeons name=AttractStorybookFrames kind=data (+376f for 4-page swaps & Page 4 hold)
   if !ENABLE_ATTRACT_ROYAL_SCENES == 1
     ; AttractScene_WorldMap ($0CEF23-$0CEF38): whole-island establishing view
     ; panning to Kalyxo Castle (area $0B) via AttractMap_Pan ($0CFFB1 hook).
