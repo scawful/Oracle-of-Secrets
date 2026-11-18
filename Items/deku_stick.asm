@@ -132,13 +132,14 @@ DekuStick_Main:
   BRA .interrupted
 
 .check_underworld_submodules
-  ; Destructive Underworld submodules (inter-room stairs, falling, warps, mirror):
-  ; 0x06 (Fat stairs), 0x07 (Fall), 0x0E (Spiral stairs), 0x11..0x13 (Straight stairs),
-  ; 0x14 (Fall recovery), 0x15 (Warp pad), 0x19 (Mirror fade)
+  ; Destructive Underworld submodules (inter-room stairs, falling, landing wipe, warps, mirror):
+  ; 0x06 (Fat stairs), 0x07 (Fall), 0x0E (Spiral stairs), 0x0F (Landing wipe),
+  ; 0x11..0x13 (Straight stairs), 0x14 (Fall recovery), 0x15 (Warp pad), 0x19 (Mirror fade)
   LDA.b $11
   CMP.b #$06 : BEQ .interrupted
   CMP.b #$07 : BEQ .interrupted
   CMP.b #$0E : BEQ .interrupted
+  CMP.b #$0F : BEQ .interrupted
   CMP.b #$11 : BEQ .interrupted
   CMP.b #$12 : BEQ .interrupted
   CMP.b #$13 : BEQ .interrupted
@@ -625,13 +626,14 @@ DekuStick_SubmoduleCheck:
   BRA .drop
 
 .check_uw
-  ; Destructive Underworld submodules (inter-room stairs, falling, warps, mirror):
-  ; 0x06 (Fat stairs), 0x07 (Fall), 0x0E (Spiral stairs), 0x11..0x13 (Straight stairs),
-  ; 0x14 (Fall recovery), 0x15 (Warp pad), 0x19 (Mirror fade)
+  ; Destructive Underworld submodules (inter-room stairs, falling, landing wipe, warps, mirror):
+  ; 0x06 (Fat stairs), 0x07 (Fall), 0x0E (Spiral stairs), 0x0F (Landing wipe),
+  ; 0x11..0x13 (Straight stairs), 0x14 (Fall recovery), 0x15 (Warp pad), 0x19 (Mirror fade)
   LDA.b $11
   CMP.b #$06 : BEQ .drop
   CMP.b #$07 : BEQ .drop
   CMP.b #$0E : BEQ .drop
+  CMP.b #$0F : BEQ .drop
   CMP.b #$11 : BEQ .drop
   CMP.b #$12 : BEQ .drop
   CMP.b #$13 : BEQ .drop

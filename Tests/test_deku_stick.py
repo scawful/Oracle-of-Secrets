@@ -160,6 +160,7 @@ class DekuStickContractTest(unittest.TestCase):
         self.assertIn("CMP.b #$06 : BEQ .interrupted", stick_text)
         self.assertIn("CMP.b #$07 : BEQ .interrupted", stick_text)
         self.assertIn("CMP.b #$0E : BEQ .interrupted", stick_text)
+        self.assertIn("CMP.b #$0F : BEQ .interrupted", stick_text)
         self.assertIn("CMP.b #$11 : BEQ .interrupted", stick_text)
         self.assertIn("CMP.b #$12 : BEQ .interrupted", stick_text)
         self.assertIn("CMP.b #$13 : BEQ .interrupted", stick_text)
