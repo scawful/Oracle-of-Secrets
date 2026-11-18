@@ -314,8 +314,7 @@ incsrc "Sprites/NPCs/garo.asm"
 ; Unconditional Darknut weapon publication; DBR remains bank $30.
 incsrc "Sprites/Enemies/darknut_weapon_hitbox.asm"
 
-; Local pea-shot contact wrapper: keeps the bank $30 callsite size unchanged.
-incsrc "Sprites/Enemies/business_scrub_shield.asm"
+; Business Scrub pea-shot contact runs from bank $2C: bank $31 is at its headroom floor.
 
 if !ENABLE_GORON78_LANMOLA_BOSS == 1
   ; Room $78 key-after-Lanmolas hook + helper macros used by lanmola.asm.
@@ -425,9 +424,12 @@ incsrc "Sprites/NPCs/followers.asm"
 incsrc "Sprites/Enemies/octorok.asm"
 %log_end("octorok", !LOG_DUNGEON)
 
-%log_start("piratian", !LOG_DUNGEON)
-incsrc "Sprites/NPCs/piratian.asm"
-%log_end("piratian", !LOG_DUNGEON)
+; Piratian runs from bank $2B (Items/all_items.asm): bank $2C is full.
+
+; Business Scrub pea-shot contact wrapper (moved from bank $31, which sits at
+; its 64 B headroom floor). Both routines are JSL-entered, return with RTL/JML,
+; and touch only low WRAM (mirrored) plus one long read, so they run from here.
+incsrc "Sprites/Enemies/business_scrub_shield.asm"
 
 %log_start("collectible", !LOG_DUNGEON)
 incsrc "Sprites/Objects/collectible.asm"

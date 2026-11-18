@@ -349,6 +349,13 @@ if !ENABLE_LYRA_TALKERS == 1
   %log_end("lyra_talker", !LOG_SPRITES)
 endif
 
+; Piratian: bank $2C is full. Entered by JSL through the long sprite pointers;
+; Prep and Long set DB with PHK : PLB, local calls stay in the file, and other
+; absolute operands are low WRAM (mirrored), so the file runs from here.
+%log_start("piratian", !LOG_SPRITES)
+incsrc "Sprites/NPCs/piratian.asm"
+%log_end("piratian", !LOG_SPRITES)
+
 ; Goron88 shared-stop occupancy: bank $31 is full. Entered by JSL from
 ; MinecartLong; reads only low-WRAM sprite tables (mirrored), so it runs from here.
 %Goron88_EmitSharedStopOccupancy()
