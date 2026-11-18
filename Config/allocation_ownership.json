@@ -3178,16 +3178,16 @@
     },
     {
       "id": "MenuFlow",
-      "owner": "Menu cursor flow (four-page ring): per-page cursor memory, page-edge crossing, tunic popup",
+      "owner": "Menu cursor flow (four-page ring): per-page cursor memory, page-edge crossing",
       "space": "wram",
       "base": 8258234,
-      "size": 5,
+      "size": 4,
       "status": "shared",
       "condition": {
         "ENABLE_MENU_MAP_TRAVEL": 1
       },
-      "lifetime": "Menu-session bytes at vanilla-unused $7E02BA-$7E02BE (usdasm UNUSED_7E02BA-BE): EquipCursor, MapCursor, CrossRow, CrossDir, TunicPopup. Read and written only by Menu/menu_cursor_flow.asm and the tunic popup draw in Menu/menu_sword_slots.asm.",
-      "reset": "Zero at boot. MenuFlow_UploadRight clears CrossRow and TunicPopup on every menu open; the two cursors persist across opens until power-off by design.",
+      "lifetime": "Menu-session bytes at vanilla-unused $7E02BA-$7E02BD (usdasm UNUSED_7E02BA-BE): EquipCursor, MapCursor, CrossRow, CrossDir. Read and written only by Menu/menu_cursor_flow.asm. $7E02BE is free since the tunic popup was removed (2026-11-18).",
+      "reset": "Zero at boot. MenuFlow_UploadRight clears CrossRow on every menu open; the two cursors persist across opens until power-off by design.",
       "save": "Volatile WRAM; never saved; never read in gameplay.",
       "provenance": [
         "shared:Core/symbols.asm"

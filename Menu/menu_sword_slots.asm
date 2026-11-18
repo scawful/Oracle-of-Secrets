@@ -52,13 +52,13 @@ SwordSlots_ExitReload:
   RTL
 }
 
-; Menu_Equipment_Owned for slots 24-26. A = slot; returns the icon variant,
+; Menu_Equipment_Owned for slots 24-28. A = slot; returns the icon variant,
 ; zero when unavailable (smith-held $FF hides both swords). Caller saved X.
-; Slot 26 is the tunic (Menu/menu_tunic.asm): a cursor stop whenever Armor
-; is 0-2, so its footer name shows even with one colour owned. M/X=8.
+; Slots 26-28 are the green/blue/red tunics (Menu/menu_tunic.asm): colour
+; n is owned when n <= Armor and Armor is 0-2; variant = n+1. M/X=8.
 SwordSlots_Variant:
 {
-  CMP.b #$1A : BEQ .tunic : BCS .none
+  CMP.b #$1A : BCS .tunic
   TAX
   LDA.l Sword : CMP.b #$FF : BEQ .none
   CPX.b #$19 : BEQ .heavy
@@ -73,18 +73,20 @@ SwordSlots_Variant:
   LDA.b #$00
   RTL
 .tunic
-  JMP Tunic_WornVariant
+  SEC : SBC.b #$1A : TAX              ; colour 0-2
+  LDA.l Armor : CMP.b #$03 : BCS .none
+  TXA : CMP.l Armor : BEQ + : BCS .none
++
+  INC
+  RTL
 }
 
-; A on an owned GEAR slot. A = 24 story / 25 heavy / 26 tunic. M/X=8.
+; A on an owned GEAR slot. A = 24 story / 25 heavy / 26-28 tunic. M/X=8.
 SwordSlots_Select:
 {
-  CMP.b #$1A : BNE +
-if !ENABLE_MENU_MAP_TRAVEL == 1
-  JMP MenuFlow_TunicOpen                ; the popup picks the colour
-else
-  RTL
-endif
+  CMP.b #$1A : BCC +
+  SEC : SBC.b #$1A
+  JMP Tunic_SetWorn                     ; wear that colour
 +
   CMP.b #$19 : BEQ .heavy
   LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyEquipped^$FF : STA.l SwordSlotFlags
@@ -129,19 +131,13 @@ SwordSlots_IsHeavyLevel:
 !HEAVY_ICON_BROKEN_TR = $30CE
 
 ; Called after the gear icons are drawn. Recolors the heavy icon, or draws
-; an empty frame on its cell while the heavy sword is not owned, draws the
-; open tunic popup, then returns A = equipped sword slot (24 story,
-; 25 heavy) for the red marker. M/X=8.
+; an empty frame on its cell while the heavy sword is not owned, then
+; returns A = equipped sword slot (24 story, 25 heavy) for the red marker.
+; M/X=8.
 !HEAVY_EMPTY_FRAME    = $2060         ; bracket corner, flipped per corner
 assert !SwordSlot_HeavyEquipped == $02, "MarkerSlot shifts bit1 into bit0"
 SwordSlots_MarkerSlot:
 {
-  JSL Tunic_DrawArmorLabel
-if !ENABLE_MENU_MAP_TRAVEL == 1
-  LDA.l MenuFlow_TunicPopup : BPL +
-  JSL MenuFlow_DrawPopup
-+
-endif
   LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyOwned : BNE .owned
   REP #$20
   LDA.w #!HEAVY_EMPTY_FRAME
@@ -168,12 +164,13 @@ endif
   RTL
 }
 
-; Footer name for X = $30 story / $32 heavy / $34 tunic (slot*2): 14 cells
-; to $1692. DBR = $2D; $1692 is the WRAM mirror. Returns M/X=8.
+; Footer name for X = $30 story / $32 heavy / $34-$38 green/blue/red tunic
+; (slot*2): 14 cells to $1692. DBR = $2D; $1692 is the WRAM mirror.
+; Returns M/X=8.
 SwordSlots_Name:
 {
-  CPX.b #$34 : BNE .sword
-  JSL Tunic_GetWorn : TAX
+  CPX.b #$34 : BCC .sword
+  TXA : SEC : SBC.b #$34 : LSR : TAX
   LDA.l .tunic_rows,X : BRA .copy
 .sword
   LDA.b #28 : CPX.b #$32 : BEQ .copy  ; heavy: name not decided, blank

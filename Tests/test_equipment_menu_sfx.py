@@ -154,7 +154,7 @@ def expected(slot, f6, f4, owned, rings, one_ring):
     """Returns (sound writes, changed selection state, stub calls)."""
     if not (f6 & 0x80 or f4 & 0x40):
         return [], {}, []
-    if slot > 0x1A or not owned:
+    if slot > 0x1C or not owned:
         return [("$012E", ERROR)], {}, []
     if slot >= 0x18:
         return [("$012F", MENU_CURSOR)], {"$0207": 0x20}, [("SwordSlots_Select", slot)]
@@ -182,8 +182,8 @@ def check_select(test, equipment_text, page3_text, flags):
         (equipment_text, "Menu_Equipment_Select"), (page3_text, "Menu_Page3_ToggleRing"))}
     one_ring = flags["ENABLE_ONE_RING"] == 1
     cases = 0
-    for slot in list(range(0x1B)) + [0xFF]:
-        ownership = (True,) if 0x12 <= slot < 0x18 else (False,) if slot > 0x1A else (False, True)
+    for slot in list(range(0x1D)) + [0xFF]:
+        ownership = (True,) if 0x12 <= slot < 0x18 else (False,) if slot > 0x1C else (False, True)
         for owned in ownership:
             rings_list = ring_states(slot - 4, one_ring) if 0x06 <= slot < 0x0C else [(0, 0, 0)]
             for rings in rings_list:
@@ -227,12 +227,13 @@ class EquipmentMenuSfxContract(unittest.TestCase):
 
     def test_sword_slots_select_dispatch(self):
         sword = SWORD_SLOTS.read_text(encoding="utf-8")
-        for travel, tunic in ((1, "JMP MenuFlow_TunicOpen"), (0, "RTL")):
+        for travel in (1, 0):
             lines = routine_lines(sword, "SwordSlots_Select",
                                   dict(self.flags, ENABLE_MENU_MAP_TRAVEL=travel))
             with self.subTest(map_travel=travel):
-                # $1A (tunic) first: the popup with the four-page menu, else no action.
-                self.assertEqual(lines[:3], ["CMP.b #$1A", "BNE +", tunic])
+                # $1A-$1C (tunic cells) first: wear colour slot-$1A, no popup.
+                self.assertEqual(lines[:5], ["CMP.b #$1A", "BCC +", "SEC", "SBC.b #$1A",
+                                             "JMP Tunic_SetWorn"])
                 self.assertIn("CMP.b #$19", lines)
                 heavy = lines[lines.index(".heavy"):]
                 self.assertIn("ORA.b #!SwordSlot_HeavyEquipped", heavy)
@@ -250,7 +251,7 @@ class EquipmentMenuSfxContract(unittest.TestCase):
     def test_move_accept_plays_cursor_sound(self):
         routines = {"Menu_Equipment_Move": routine_lines(
             self.equipment, "Menu_Equipment_Move", self.flags)}
-        for target in range(0x1B):
+        for target in range(0x1D):
             menu = Menu(routines, {"$02": target, "$020B": 0xFF, "$0207": 0x05}, {})
             menu.run("Menu_Equipment_Move", ".accept")
             self.assertEqual(menu.sounds, [("$012F", MENU_CURSOR)])

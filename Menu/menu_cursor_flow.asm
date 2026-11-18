@@ -1,11 +1,11 @@
 ; Menu cursor flow (four-page ring, v4): per-page cursor memory, D-pad
 ; edge crossing onto the matching row of the next page, the direct return
-; to the Map page after the field map, the worn-tunic popup (Equipment)
-; and the Quest song row (QuestSongs_*).
+; to the Map page after the field map, and the Quest song row (QuestSongs_*).
+; The tunics are Equipment cells (slots 26-28) since 2026-11-18: no popup.
 ; Assembled in Items bank $2B (Menu bank $2D is full). Every routine is
 ; called with JSL from bank $2D code, so DBR = $2D: WRAM below $2000 uses
 ; .w, everything else .l. All routines return with M/X=8.
-; WRAM: MenuFlow_* in Core/symbols.asm ($7E02BA-$7E02BE, not saved).
+; WRAM: MenuFlow_* in Core/symbols.asm ($7E02BA-$7E02BD, not saved).
 
 ; Visual row (top to bottom) of each Equipment logical row:
 ; 0 masks, 1 rings, 2 songs, 3 supplies (both in the last band), 4 GEAR (top).
@@ -29,8 +29,8 @@ MenuFlow_Cost:
 }
 
 ; ---------------------------------------------------------
-; State $01 (Menu_UploadRight). Opens a new menu: clears the cross and
-; the tunic popup. After the field map (pending 3) the right half is the
+; State $01 (Menu_UploadRight). Opens a new menu: clears the cross.
+; After the field map (pending 3) the right half is the
 ; Map page, shown from the first frame ($E4 = $0100); Menu_Page3_ItemScreen
 ; then goes straight to state $06. Otherwise the right half is Quest.
 MenuFlow_UploadRight:
@@ -38,7 +38,6 @@ MenuFlow_UploadRight:
   SEP #$30
   LDA.b #$00
   STA.l MenuFlow_CrossRow
-  STA.l MenuFlow_TunicPopup
   LDA.l MenuMapTravel_Pending : CMP.b #$03 : BNE .quest
   LDA.b #$40 : STA.w MenuScrollLevelH
   REP #$20
@@ -56,47 +55,14 @@ MenuFlow_UploadRight:
 
 ; ---------------------------------------------------------
 ; Start of state $06 (Menu_Page3_StatsScreen), before its input.
-; Remembers the Equipment cursor. While the tunic popup is
-; open it takes all input: C set = input used, redraw the page.
+; Remembers the Equipment cursor.
 MenuFlow_Frame:
 {
   SEP #$30
-  LDA.w MenuScrollLevelH : CMP.b #$20 : BEQ .equip
-.pass
-  CLC
-  RTL
-.equip
-  LDA.w $020B : CMP.b #$1B : BCS .popup
+  LDA.w MenuScrollLevelH : CMP.b #$20 : BNE .done
+  LDA.w $020B : CMP.b #$1D : BCS .done
   INC : STA.l MenuFlow_EquipCursor
-.popup
-  LDA.l MenuFlow_TunicPopup : BPL .pass
-  AND.b #$07 : TAX                      ; X = highlighted colour
-  LDA.b $F6 : BPL .no_a
-  TXA : JSL Tunic_SetWorn
-  BRA .close_sound
-.no_a
-  LDA.b $F4 : AND.b #$90 : BNE .close   ; B or Start
-  LDA.b $F4 : AND.b #$0C : BEQ .used
-  AND.b #$08 : BEQ .down
-  DEX : BPL .store
-  LDA.l Armor : TAX                     ; Up from green: last owned
-  BRA .store
-.down
-  INX : TXA : CMP.l Armor : BEQ .store : BCC .store
-  LDX.b #$00                            ; Down past the last owned: green
-.store
-  TXA : ORA.b #$80 : STA.l MenuFlow_TunicPopup
-  BRA .sound
-.close_sound
-  LDA.b #$00 : STA.l MenuFlow_TunicPopup
-.sound
-  LDA.b #$20 : STA.w $012F
-  BRA .used
-.close
-  LDA.b #$00 : STA.l MenuFlow_TunicPopup
-.used
-  SEP #$30
-  SEC
+.done
   RTL
 }
 
@@ -123,7 +89,7 @@ MenuFlow_RecordTurn:
   LDA.w $020B : CMP.b #$06 : BCS .done  ; Quest, no song: keep
   LDA.b #$03 : BRA .store               ; Quest songs: bottom row
 .equip
-  LDX.w $020B : CPX.b #$1B : BCS .clear
+  LDX.w $020B : CPX.b #$1D : BCS .clear
   LDA.l Menu_Equipment_Rows,X : TAX
   LDA.l MenuFlow_EquipOrd,X
   BRA .store
@@ -165,7 +131,7 @@ MenuFlow_EquipRestore:
   SEP #$30
   LDA.l MenuFlow_CrossRow : BEQ .memory
   LDA.b #$FF : STA.b $02 : STA.b $03    ; best cost, best slot
-  LDX.b #$1A
+  LDX.b #$1C
 .scan
   TXA : JSL Menu_Equipment_Owned_Long : BEQ .next
   LDA.l Menu_Equipment_Columns,X : STA.b $00
@@ -258,80 +224,6 @@ MenuFlow_ItemsEnter:
   RTL
 }
 endif
-
-; ---------------------------------------------------------
-; A on the tunic cell (SwordSlots_Select): open the popup on the worn colour.
-MenuFlow_TunicOpen:
-{
-  JSL Tunic_GetWorn
-  SEP #$30
-  ORA.b #$80 : STA.l MenuFlow_TunicPopup
-  RTL
-}
-
-; ---------------------------------------------------------
-; Tunic popup, drawn last by SwordSlots_MarkerSlot while open: a small box
-; centred under the GEAR band, rows 14 to 16+n, columns 8-23 (n = last
-; owned colour). One line per owned colour with the existing
-; GREEN/BLUE/RED TUNIC names; the marker shows the highlighted line.
-; The tunic cell and the footer stay visible. Uses $08-$0E.
-!MENUFLOW_POPUP_TOP  = menu_offset(14,8)
-!MENUFLOW_POPUP_LINE = menu_offset(15,8)
-MenuFlow_DrawPopup:
-{
-  REP #$30
-  LDA.l Armor : AND.w #$00FF
-  CMP.w #$0003 : BCC +
-  LDA.w #$0002
-+
-  STA.b $0E                             ; last line
-  LDY.w #!MENUFLOW_POPUP_TOP
-  LDA.w #$3811 : LDX.w #$3821
-  JSR .edge
-  STZ.b $0C
-.line
-  LDA.b $0C : ASL #6 : CLC : ADC.w #!MENUFLOW_POPUP_LINE : TAY
-  LDA.w #$3820 : STA.w $1000,Y
-  LDA.w #$7820 : STA.w $101E,Y
-  LDA.l MenuFlow_TunicPopup : AND.w #$0007 : CMP.b $0C : BEQ +
-  LDA.w #$3417 : BRA ++
-+
-  LDA.w #$6419                          ; marker
-++
-  STA.w $1002,Y
-  LDA.b $0C : ASL #2 : STA.b $0A
-  ASL #3 : SEC : SBC.b $0A              ; line * 28
-  CLC : ADC.w #84 : TAX                 ; GREEN/BLUE/RED_TUNIC rows
-  LDA.w #13 : STA.b $08
-.char
-  LDA.l SwordSlots_Name_names,X
-  CMP.w #$20F5 : BNE +
-  LDA.w #$3417
-+
-  STA.w $1004,Y
-  INX #2 : INY #2
-  DEC.b $08 : BNE .char                ; columns 10-22
-  INC.b $0C
-  LDA.b $0C : CMP.b $0E : BEQ .line : BCC .line
-  ASL #6 : CLC : ADC.w #!MENUFLOW_POPUP_LINE : TAY
-  LDA.w #$B811 : LDX.w #$B821
-  JSR .edge
-  SEP #$30
-  RTL
-
-; Y = row offset at column 8, A = left corner, X = edge tile. The right
-; corner is the left one flipped.
-.edge
-  STA.w $1000,Y
-  ORA.w #$4000 : STA.w $101E,Y
-  TXA
-  LDX.w #$000E
--
-  STA.w $1002,Y
-  INY #2
-  DEX : BNE -
-  RTS
-}
 
 ; ---------------------------------------------------------
 ; Songs. The six notes sit on the Quest bottom row (Menu_DrawMusicNotes,

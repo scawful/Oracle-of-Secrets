@@ -270,10 +270,7 @@ Menu_Page3_StatsScreen:
 {
   SEP #$30
 if !ENABLE_MENU_MAP_TRAVEL == 1
-  ; Cursor memory; the open tunic popup takes all input (C set): redraw.
-  JSL MenuFlow_Frame : BCC +
-  JMP .moved
-+
+  JSL MenuFlow_Frame                   ; Equipment cursor memory
   ; Four-page ring: L/R turn from every right-half page; Start keeps priority.
   LDA.b $F4 : BIT.b #$10 : BNE .ring_no_lr
   LDA.b $F6 : AND.b #$30 : BEQ .ring_no_lr

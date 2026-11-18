@@ -1,6 +1,7 @@
-; Worn tunic colour, picked on the Equipment page (GEAR slot 26).
-; scawful 2026-11-16: "1 Wear what you own" (green always, blue with Blue
-; Mail, red with Red Mail); names GREEN/BLUE/RED TUNIC, label "ARMOR n".
+; Worn tunic colour, picked on the Equipment page (GEAR slots 26-28, one
+; cell per owned colour; scawful 2026-11-18 dropped the popup and the
+; "ARMOR n" label). scawful 2026-11-16: "1 Wear what you own" (green
+; always, blue with Blue Mail, red with Red Mail); names GREEN/BLUE/RED TUNIC.
 ; Armor ($7EF35B) keeps meaning defense; damage code still reads it.
 ; SwordSlotFlags bits 3-5 hold the choice: 0 follow Armor (new files and
 ; old saves), 1-3 = green/blue/red. A choice above Armor, or bit7 clear
@@ -59,7 +60,7 @@ Tunic_WornVariant:
   RTL
 }
 
-; Tunic popup pick (MenuFlow_Frame): A = owned colour 0-2. Recolours Link
+; Equipment tunic cell (SwordSlots_Select): A = owned colour 0-2. Recolours Link
 ; now in the forms that show the tunic (base, Minish, GBC, horse); the
 ; other forms load their own palettes. Player 2 recolours at its next
 ; graphics reload. M/X=8.
@@ -89,35 +90,6 @@ Tunic_OnMailReceipt:
   LDA.l SwordSlotFlags : AND.b #!SwordSlot_TunicMask^$FF : STA.l SwordSlotFlags
   PLP
   JML $1BEDF9
-}
-
-; "ARMOR n" right-aligned on the GEAR label row: defense, not the colour.
-; Hidden at Armor 0 (green only, no mail): a new file never reads "ARMOR 0".
-; Called from SwordSlots_MarkerSlot. Returns M/X=8; clobbers A/X.
-!TUNIC_ARMOR_LABEL_POS = menu_offset(9,20)
-Tunic_DrawArmorLabel:
-{
-  SEP #$20
-  LDA.l Armor : BEQ .hidden
-  REP #$30
-  LDX.w #$000A
-.loop
-  LDA.l .text,X : STA.l $7E1000+!TUNIC_ARMOR_LABEL_POS,X
-  DEX #2 : BPL .loop
-  LDA.l Armor : AND.w #$00FF : CLC : ADC.w #$2570 ; menu font '0'
-  STA.l $7E1000+!TUNIC_ARMOR_LABEL_POS+12
-.hidden
-  SEP #$30
-  RTL
-.text
-  pushtable
-  'A' = $2550
-  'M' = $255C
-  'O' = $255E
-  'R' = $2561
-  '_' = $20F5
-  dw "ARMOR_"
-  pulltable
 }
 
 pushpc
