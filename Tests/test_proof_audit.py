@@ -2,6 +2,7 @@
 import importlib.util
 import json
 from pathlib import Path
+import sys
 import tempfile
 import textwrap
 import unittest
@@ -10,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
     "proof_audit", ROOT / "Scripts" / "Agents" / "proof_audit.py")
 proof_audit = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = proof_audit
 SPEC.loader.exec_module(proof_audit)
 
 HEADER = """
