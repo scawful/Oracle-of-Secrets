@@ -11,14 +11,13 @@ SummonGuards:
 ; TimerB - Manages spawn rate
 Overlord_SpawnSoldierPath:
 {
-  LDA.w OverlordTimerB, X : CMP.b #$80 : BEQ .spawn
+  LDA.w OverlordTimerB, X : BEQ .spawn
     DEC.w OverlordTimerB, X
     RTS
   .spawn
 
-  ; JSL GetRandomInt : AND.b #$1F
-  ; CLC : ADC.b #$60 : STA.w OverlordTimerB, X
-  INC.w OverlordTimerB, X
+  JSL GetRandomInt : AND.b #$3F
+  ORA.b #$40 : STA.w OverlordTimerB, X ; $40-$7F frames (64-127) cooldown
 
   STZ.b $00
   LDY.b #$0F
