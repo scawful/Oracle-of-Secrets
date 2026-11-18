@@ -351,10 +351,10 @@ ZoraTemple_EntranceAnimation:
     LDA.w #$056D
     LDX.w #$041A
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$06AF
+    LDA.w #$0A37
     LDX.w #$0394
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$06AF
+    LDA.w #$0A37
     LDX.w #$039A
     JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
@@ -456,19 +456,19 @@ ZoraTemple_EntranceAnimation:
     LDA.w #$02B6
     LDX.w #$021C
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$06B0
+    LDA.w #$0A39
     LDX.w #$0214
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$06B1
+    LDA.w #$0A3B
     LDX.w #$0216
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$06B2
+    LDA.w #$0A6D
     LDX.w #$0218
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$06B3
+    LDA.w #$0A7E
     LDX.w #$021A
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$06B5
+    LDA.w #$0A7F
     LDX.w #$0294
     JSL Overworld_DrawMap16_Persist
     LDA.w #$00DF
@@ -477,7 +477,7 @@ ZoraTemple_EntranceAnimation:
     LDA.w #$00E0
     LDX.w #$0298
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$06B6
+    LDA.w #$0ABE
     LDX.w #$029A
     JSL Overworld_DrawMap16_Persist
     LDA.w #$02D5
@@ -745,64 +745,64 @@ Castle_EntranceAnimation:
     .doInit
     ; Init code for the frame here
     REP #$30 ; 16 bit mode
-    LDA.w #$049E
+    LDA.w #$08EB
     LDX.w #$039C
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$049C
+    LDA.w #$08DF
     LDX.w #$039E
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$0604
+    LDA.w #$08FD
     LDX.w #$03A0
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$0608
+    LDA.w #$09C3
     LDX.w #$03A2
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$060A
+    LDA.w #$09CF
     LDX.w #$041C
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$0495
+    LDA.w #$08DB
     LDX.w #$041E
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$0496
+    LDA.w #$08DD
     LDX.w #$0420
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$0499
+    LDA.w #$08DE
     LDX.w #$0422
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$0602
+    LDA.w #$08EC
     LDX.w #$049C
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$0606
+    LDA.w #$0952
     LDX.w #$049E
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$0606
+    LDA.w #$0952
     LDX.w #$04A0
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$060E
+    LDA.w #$09E1
     LDX.w #$04A2
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$0610
+    LDA.w #$09E2
     LDX.w #$051C
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$0606
+    LDA.w #$0952
     LDX.w #$051E
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$0606
+    LDA.w #$0952
     LDX.w #$0520
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$046C
+    LDA.w #$08C1
     LDX.w #$0522
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$046F
+    LDA.w #$08CD
     LDX.w #$059C
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$0469
+    LDA.w #$08AD
     LDX.w #$059E
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$046A
+    LDA.w #$08B9
     LDX.w #$05A0
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$046E
+    LDA.w #$08C3
     LDX.w #$05A2
     JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
@@ -867,16 +867,16 @@ Castle_EntranceAnimation:
     LDA.w #$0613
     LDX.w #$03A0
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$048F
+    LDA.w #$08D1
     LDX.w #$031C
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$0474
+    LDA.w #$08CF
     LDX.w #$031E
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$061C
+    LDA.w #$0A17
     LDX.w #$0320
     JSL Overworld_DrawMap16_Persist
-    LDA.w #$061A
+    LDA.w #$09FD
     LDX.w #$0322
     JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
