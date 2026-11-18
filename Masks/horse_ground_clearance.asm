@@ -37,17 +37,10 @@ HorseForm_ConstrainGroundInput:
   .vertical_edge
     LDA.b $0A : CLC : ADC.b $08 : STA.b $0A
   .query
-if !ENABLE_HORSE_LONG_JUMP == 1
   JSR .query_side                     ; out-of-area side probe reads clear
-else
-  SEP #$20
-  JSR Horse_QueryTileAt
-endif
-if !ENABLE_HORSE_LONG_JUMP == 1
   ; A named water gap blocks like a wall unless a valid long jump crosses it
   ; from here (.gap_point: A = $00 clear, $FF block, else the attribute).
   JSR .gap_point : CMP.b #$FF : BEQ .block
-endif
   CMP.b #$01 : BEQ .solid
   CMP.b #$02 : BNE .clear_point
   .solid
@@ -100,13 +93,9 @@ endif
   SEP #$20
   JSR Horse_QueryTileAt
   REP #$20
-if !ENABLE_HORSE_LONG_JUMP == 1
   ; Same rule for a solid neighbour beside a valid long-jump gap.
   JSR .is_fence : BCS + : JMP .long_ahead : +
   RTS
-else
-  BRA .is_fence
-endif
   .probe_hit
   REP #$20
   PLA : PLA
@@ -123,7 +112,6 @@ endif
   .is_fence_hit
   SEC
   RTS
-if !ENABLE_HORSE_LONG_JUMP == 1
   ; In: A16/X8, $0E = edge index. Out: carry = a valid long jump is ahead in
   ; this direction (CheckFenceJump near/far probes, then the probe line at
   ; this edge). X/Y, $04, $0A and $0C are clobbered; the caller restores them.
@@ -190,7 +178,6 @@ if !ENABLE_HORSE_LONG_JUMP == 1
   LDA.b #$00 : BCS +
   DEC
   + RTS
-endif
   .buttons
   db $08,$04,$02,$01 ; north, south, west, east
   ; Includes four pixels of next-step lookahead (horse cardinal speed2.75px).
@@ -210,7 +197,6 @@ HorseFenceTile16s:
   dw $0078, $007B, $043A, $003B, $0267, $002C, $02D6, $0EF2, $0EF4, $010B
 HorseFenceTile16s_End:
 
-if !ENABLE_HORSE_LONG_JUMP == 1
 ; Max gap width in Tile16s past the first gap cell: n=2 D2 Tail Pond / $24
 ; bridge, n=4 Garo Desert $36.
 !Horse_LongJumpMaxTiles = 4
@@ -564,7 +550,6 @@ HorseLong_Lerp:
   LDA.b $00
   RTS
 }
-endif
 
 ; Relocated from Masks/horse_form.asm (same bank $53) to relieve $53D000 ceiling.
 ; Writes one OAM entry at Y ($0800+Y) and $0A20+(Y>>2). Requires DBR=$00. Keeps Y.

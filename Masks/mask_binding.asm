@@ -202,7 +202,6 @@ endif
   CMP.b #$06 : BEQ .base_form
   CMP.b #$08 : BEQ .no_item            ; Garo's Y ability is handled above
 if !ENABLE_HORSE_FORM == 1
-if !ENABLE_HORSE_MOUNTED_BOW == 1
   ; Mounted bow only: horse keeps the bow Y-slot ($0202=$01 → $0303=$03).
   CMP.b #$09 : BNE .after_horse_y
     LDA.l $7EF3CC : BNE .no_item            ; follower owns $4200/$4220
@@ -211,9 +210,6 @@ if !ENABLE_HORSE_MOUNTED_BOW == 1
     LDA.l $7EF377 : BEQ .no_item
     BRA .regular
   .after_horse_y
-else
-  CMP.b #$09 : BEQ .no_item            ; Horse Form blocks all Y items
-endif
 endif
   CMP.b #$05 : BCS .regular            ; preserve automatic Minish / Moosh
   TAX

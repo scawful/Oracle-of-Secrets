@@ -339,13 +339,7 @@ if !ENABLE_HORSE_PARK_ANYWHERE == 1
   JSL HorseForm_SaveOutdoorAnchor_Long
 endif
 
-if !ENABLE_HORSE_MOUNTED_BOW == 1
   JSR HorseForm_SuppressMountedButtons
-else
-  ; Suppress B-button sword swing and Y-button item press edges while mounted.
-  LDA.b #$C0 : TRB.b $F4
-  STZ.b $3C
-endif
 
   ; Refresh SP-3[9..15] + SP-7 if a palette reload reset SP-3 to uniform fill.
   REP #$20
@@ -498,14 +492,10 @@ HorseForm_CheckFenceJump:
 
   ; Probe distance 1 then distance 2 ahead for wooden fence Tile16s.
   LDA.b #$00 : JSR HorseForm_ProbeFence : BCS .hit_fence
-if !ENABLE_HORSE_LONG_JUMP == 1
   LDA.b #$01 : JSR HorseForm_ProbeFence : BCS .hit_fence
   ; No fence ahead: try a named water gap (sets Horse_JumpEnd and JumpTimer).
   JSR HorseLong_TryJump : BCC .no_fence
   BRA .launch
-else
-  LDA.b #$01 : JSR HorseForm_ProbeFence : BCC .no_fence
-endif
 
   .hit_fence
   ; Candidate landing stored in Horse_JumpEndX / Horse_JumpEndY (16-bit).
@@ -688,10 +678,8 @@ Horse_QueryTileAt:
 ; Advance 16-frame jump interpolation and freeze vanilla d-pad movement.
 HorseForm_JumpTick:
 {
-if !ENABLE_HORSE_LONG_JUMP == 1
   ; Nonzero Horse_JumpTimer = total frames of an active long jump.
   LDA.l Horse_JumpTimer : BEQ + : JMP HorseLong_JumpTick : +
-endif
   LDA.b #$0F : TRB.b $F0 : TRB.b $F2  ; mask directional buttons mid-flight
 
   LDA.l Horse_JumpStep : CMP.b #!Horse_JumpFrames : BCS .land
@@ -829,13 +817,9 @@ HorseForm_UpdateAnimFrame:
   CPX.b #$01 : BEQ .jump_s
     ; Side jump: ascending step < 8 -> 10, descending >= 8 -> 11
     LDA.l Horse_State : BEQ .jump_side_dn
-if !ENABLE_HORSE_LONG_JUMP == 1
     ; Half of the flight: JumpTimer/2 for a long jump, 8 for a fence jump.
     LDA.l Horse_JumpTimer : LSR : BNE + : LDA.b #$08 : +
     CMP.l Horse_JumpStep : BEQ .jump_side_dn : BCC .jump_side_dn
-else
-    LDA.l Horse_JumpStep : CMP.b #$08 : BCS .jump_side_dn
-endif
       LDA.b #$0A : STA.l Horse_Frame
       RTS
     .jump_side_dn

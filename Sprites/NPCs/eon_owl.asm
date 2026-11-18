@@ -155,11 +155,7 @@ Sprite_EonOwl_Main:
   EonOwl_Idle:
   {
     %PlayAnimation(0,1,16)
-if !ENABLE_EON_OWL_NEAR_TRIGGER == 1
     JSR EonOwl_CarrySetIfLinkNear : BCC .not_too_close
-else
-    JSL GetDistance8bit_Long : CMP #$28 : BCS .not_too_close
-endif
       %GotoAction(1)
     .not_too_close
     RTS
@@ -244,7 +240,6 @@ endif
   }
 }
 
-if !ENABLE_EON_OWL_NEAR_TRIGGER == 1
 ; Carry set when Link is within !EonOwl_TalkDistance px of the Owl on both
 ; axes. GetDistance8bit_Long uses only the low position bytes, so it fired
 ; from 248 px away (playtest: the Owl talked on area entry).
@@ -277,7 +272,6 @@ EonOwl_CarrySetIfLinkNear:
   RTS
 }
 
-endif
 ; =========================================================
 
 Sprite_EonOwl_Draw:

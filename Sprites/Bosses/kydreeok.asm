@@ -597,12 +597,10 @@ Sprite_Kydreeok_Main:
   Kydreeok_Healing:
   {
     LDA $1C : ORA.b #$01 : STA $1C
-    if !ENABLE_GANONDORF_VOLLEY == 1 ; the fade code lives in ganondorf.asm
     LDA.b $1A : AND.b #$03 : BNE .no_step
       LDA.w SprTimerA, X : CMP.b #$40 : LDA.b #$00 : ROL A ; 1 = toward white
       JSL Kydreeok_FinalePal
     .no_step
-    endif
 
     LDA.w SprTimerA, X : BNE .continue
       JSR ApplyPalette ; exact colors under the message
@@ -636,11 +634,9 @@ Sprite_Kydreeok_Main:
       AND.b #$01 : BEQ .shown
         LDA $1C : AND.b #$FE : STA $1C
     .shown
-    if !ENABLE_GANONDORF_VOLLEY == 1
     LDA.b $1A : AND.b #$03 : BNE .no_step
       LDA.b #$01 : JSL Kydreeok_FinalePal
     .no_step
-    endif
 
     LDA.w SprTimerA, X : BNE .continue
       LDA $1C : AND.b #$FE : STA $1C ;dismiss the body (BG2) for good: Ganondorf reuses its VRAM
@@ -661,16 +657,13 @@ Sprite_Kydreeok_Main:
   {
     JSR ApplyPartPalette ; sprite palette 4 back from white
     LDA.b #$60 : STA.w FinaleBeat
-    if !ENABLE_KYDREEOK_CHAMBER == 1
     JSR Kydreeok_OpenPlate
-    endif
     STZ.w SprState, X
     RTS
   }
 
 }
 
-if !ENABLE_KYDREEOK_CHAMBER == 1
 ; Kydreeok chamber (room $02): after the Song of Healing a 2x2 floor plate
 ; falls away south of the arena centre (room-local x $170-$18F, y $A0-$BF).
 ; Room $02's holewarp drops Link into room $00 at the same local X/Y, on
@@ -697,7 +690,6 @@ Kydreeok_OpenPlate:
   .dx : db $70, $80, $70, $80
   .dy : db $A0, $A0, $B0, $B0
 }
-endif
 
 ; =========================================================
 ; Originally from Trinexx_MoveBody $1DB2E5
@@ -767,9 +759,7 @@ StopIfOutOfBounds:
 {
   REP #$20
   LDA.w SprCachedX
-  if !ENABLE_KYDREEOK_CHAMBER == 1
   AND.w #$01FF ; room-local: the chamber is room $02
-  endif
   CMP.w #$0118
   SEP #$20
   BCS .not_left
@@ -779,9 +769,7 @@ StopIfOutOfBounds:
 
   REP #$20
   LDA.w SprCachedX
-  if !ENABLE_KYDREEOK_CHAMBER == 1
   AND.w #$01FF ; room-local: the chamber is room $02
-  endif
   CMP.w #$01D8
   SEP #$20
   BCC .not_right
@@ -791,9 +779,7 @@ StopIfOutOfBounds:
 
   REP #$20
   LDA.w SprCachedY
-  if !ENABLE_KYDREEOK_CHAMBER == 1
   AND.w #$01FF ; room-local: the chamber is room $02
-  endif
   CMP.w #$0060 ; the raised heads stay on screen
   SEP #$20
   BCS .not_up
@@ -803,9 +789,7 @@ StopIfOutOfBounds:
 
   REP #$20
   LDA.w SprCachedY
-  if !ENABLE_KYDREEOK_CHAMBER == 1
   AND.w #$01FF ; room-local: the chamber is room $02
-  endif
   CMP.w #$00D0
   SEP #$20
   BCC .not_down

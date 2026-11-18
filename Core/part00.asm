@@ -239,14 +239,12 @@ HouseVillager_LoadSheet:
   PLA
   LDA.b #$4A
   .store
-  if !ENABLE_KOROK_POLISH == 1
     ; Both InitializeTilesets ($00E1CF) and LoadNewSpriteGFXSet ($00D739)
     ; reload VRAM $5000 over Korok sheets; clear $0AA5 so Koroks re-DMA
     ; when returning from Garrison ($25) to Korok Cove ($0E).
     PHP : PHA
     LDA.b #$00 : STA.l $7E0AA5
     PLA : PLP
-  endif
   STA.l $7EC2FD
   RTL
   .unchanged

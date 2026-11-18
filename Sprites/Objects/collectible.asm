@@ -32,21 +32,17 @@
 
 %Set_Sprite_Properties(Sprite_Collectible_Prep, Sprite_Collectible_Long)
 
-if !ENABLE_SWORD_WARP_HOME == 1
 ; Sword warp home (Forest of Dreams sword, DW $58 -> LW $2A).
 SwordWarp_VictorySpinLong       = $07A7B0 ; Link_AnimateVictorySpin_long
 SwordWarp_TerminateInteractives = $09AC6B ; Ancilla_TerminateSelectInteractives
 !SwordWarp_CacheRoom = $0150              ; any room $0128-$017F (not an entrance)
-endif
 
 Sprite_Collectible_Long:
 {
   PHB : PHK : PLB
 
-if !ENABLE_SWORD_WARP_HOME == 1
   ; The sword is taken: the scene actions (4+) draw nothing.
   LDA.w SprAction, X : CMP.b #$04 : BCS .skip_draw
-endif
   LDA.b $8A : CMP.b #$58 : BNE .not_intro_sword
     JSR Sprite_SwordShield_Draw
     BRA +
@@ -58,9 +54,7 @@ endif
   JSR Sprite_Pineapple_Draw
   +
   JSL Sprite_DrawShadow
-if !ENABLE_SWORD_WARP_HOME == 1
   .skip_draw
-endif
   JSL Sprite_CheckActive
   BCC .SpriteIsNotActive
 
@@ -119,13 +113,11 @@ Sprite_Collectible_Main:
   dw Seashell
   dw SwordShield
   dw RockSirloin
-if !ENABLE_SWORD_WARP_HOME == 1
   dw SwordWarp_Spin       ; 4
   dw SwordWarp_SwordUp    ; 5
   dw SwordWarp_Hold       ; 6
   dw SwordWarp_Flash      ; 7
   dw SwordWarp_Go         ; 8
-endif
 
   Pineapple:
   {
@@ -154,18 +146,13 @@ endif
     JSL Sprite_CheckDamageToPlayer : BCC +
       LDY.b #$00 : STZ $02E9
       JSL Link_ReceiveItem
-if !ENABLE_SWORD_WARP_HOME == 1
       ; Keep the slot: the sword-warp scene runs once the receipt ends
       ; (Sprite_CheckActive skips this sprite while SprFreeze is set).
       LDA.b #$04 : STA.w SprAction, X
-else
-      STZ.w SprState, X
-endif
     +
     RTS
   }
 
-if !ENABLE_SWORD_WARP_HOME == 1
   ; -------------------------------------------------------
   ; Sword warp home (decisions.org "Intro Abyss exit: the sword cuts Link
   ; home"): spin, sword up, white flash, then an overworld reload onto the
@@ -283,7 +270,6 @@ if !ENABLE_SWORD_WARP_HOME == 1
     STZ.w SprState, X
     RTS
   }
-endif
 
   RockSirloin:
   {
@@ -302,7 +288,6 @@ endif
 
 }
 
-if !ENABLE_SWORD_WARP_HOME == 1
 ; Overworld cache image ($7EC140-$7EC171, LoadCachedEntranceProperties
 ; $02E5D4) for the arrival on LW $2A: Link at X $0530, Y $0AB0 (the old DW
 ; $6A pad spot); the house-exit walk then steps him ~19 px down the path.
@@ -321,7 +306,6 @@ SwordWarp_Cache:
   dw $2000, $0A3F               ; $0AA0-$0AA3 graphics bytes
   dw $0000                      ; $7EC168 (unused)
   dw $0000, $0000, $0000, $0000 ; $0624-$062A scroll offsets
-endif
 
 Sprite_Pineapple_Draw:
 {

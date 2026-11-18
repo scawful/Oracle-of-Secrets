@@ -1413,24 +1413,10 @@ org $09A41F ; @hook module=Sprites
 
 ; Module07_02_01_LoadNextRoom
 org $028A5B ; @hook module=Sprites name=CheckForFollowerInterroomTransition kind=jsl target=CheckForFollowerInterroomTransition expected_m=8 expected_x=8
-if !ENABLE_FOLLOWER_TRANSITION_HOOKS
   JSL CheckForFollowerInterroomTransition
-else
-  ; Vanilla (USDASM #_028A5B): JSL Underworld_LoadRoom ($01873A)
-if !ENABLE_SKY_ROOM_SKY == 1
-  JSL SkyRoom_LoadRoom
-else
-  JSL $01873A
-endif
-endif
 
 ; UnderworldTransition_Intraroom_PrepTransition
 org $0289BF ; @hook module=Sprites name=CheckForFollowerIntraroomTransition kind=jsl target=CheckForFollowerIntraroomTransition
-if !ENABLE_FOLLOWER_TRANSITION_HOOKS
   JSL CheckForFollowerIntraroomTransition
-else
-  ; Vanilla (USDASM #_0289BF): STA.l $7EC007
-  STA.l $7EC007
-endif
 
 pullpc

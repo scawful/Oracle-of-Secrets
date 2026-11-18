@@ -366,9 +366,7 @@ endif
 ; Room $78 Lanmola surface/stagger states (Hammer opening). Sprite banks
 ; $30/$31 are full with D8 Farore follow on; every entry is long and every
 ; absolute operand is mirrored WRAM, so the file runs from this bank.
-if !ENABLE_GORON78_LANMOLA_BOSS == 1
 incsrc "Sprites/Bosses/lanmola_hammer78.asm"
-endif
 
 ; Dual-item binding + 2-item HUD routines: bank $2B is full before the D8 boss
 ; tile slot ($2BE000) and menu banks $2D/$2E are full; all entries are JSL/RTL

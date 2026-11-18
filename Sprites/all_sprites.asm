@@ -107,9 +107,7 @@ if !ENABLE_INTRO_STALFOS_PATROL == 1
 endif
 
 ; Ganondorf finale phase 1: own org in bank $2A, no bank $30 bytes.
-if !ENABLE_GANONDORF_VOLLEY == 1
   incsrc "Sprites/Bosses/ganondorf.asm"
-endif
 
 %log_start("sea_urchin", !LOG_SPRITES)
 incsrc "Sprites/Enemies/sea_urchin.asm"
@@ -316,12 +314,10 @@ incsrc "Sprites/Enemies/darknut_weapon_hitbox.asm"
 
 ; Business Scrub pea-shot contact runs from bank $2C: bank $31 is at its headroom floor.
 
-if !ENABLE_GORON78_LANMOLA_BOSS == 1
   ; Room $78 key-after-Lanmolas hook + helper macros used by lanmola.asm.
   incsrc "Sprites/Bosses/lanmola_room78.asm"
   ; Surface/stagger states live in Items/all_items.asm (bank $2B): banks
   ; $30/$31 are full when D8 Farore follow is also on.
-endif
 
 ; Defines the Goron88 shared-stop macros only (no bytes here). Bank $31 is
 ; full: the occupancy check is emitted in Items/all_items.asm (bank $2B).
@@ -475,9 +471,7 @@ if !ENABLE_HORSE_FORM == 1
   %log_end("horse_npc", !LOG_OVERWORLD)
 endif
 
-if !ENABLE_GORON78_LANMOLA_BOSS == 1
   %Goron78_EmitTargetHighHelper()
-endif
 
 ; Complete the shared-stop scan within the existing bank2C tail.
 %Goron88_EmitSharedStopScan()

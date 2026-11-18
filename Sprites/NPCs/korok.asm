@@ -80,11 +80,9 @@
 Sprite_Korok_Long:
 {
   PHB : PHK : PLB
-  if !ENABLE_KOROK_POLISH == 1
     ; Load the sheets before the first draw, and again after the world map
     ; replaced them (FixMaskPaletteOnExit clears $0AA5, world_map.asm).
     JSR Sprite_Korok_EnsureSheets
-  endif
   LDA $0AA5 : BEQ .done
     LDA.w SprSubtype, X : BEQ .draw_makar
                           CMP.b #$01 : BEQ .draw_hollo
@@ -102,11 +100,7 @@ Sprite_Korok_Long:
 
   JSL Sprite_DrawShadow
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
-    if !ENABLE_KOROK_POLISH == 1
       JSR Sprite_Korok_PolishMain
-    else
-      JSR Sprite_Korok_Main
-    endif
   .SpriteIsNotActive
   PLB
   RTL
@@ -115,7 +109,6 @@ Sprite_Korok_Long:
 Sprite_Korok_Prep:
 {
   PHB : PHK : PLB
-  if !ENABLE_KOROK_POLISH == 1
     ; Variant from the placement, so each Korok keeps its look between
     ; visits: ((X + Y) low byte >> 5) & 3, with 3 folded to Hollo.
     ; Map $81 today: (688,480) Makar, (784,544) Hollo, (880,736) Rown on the
@@ -129,14 +122,10 @@ Sprite_Korok_Prep:
     LDA.w SprX, X : STA.w SprMiscA, X
     LDA.w SprY, X : STA.w SprMiscB, X
     JSL GetRandomInt : AND.b #$3F : ORA.b #$40 : STA.w SprTimerA, X
-  else
-    JSL GetRandomInt : AND.b #$03 : STA.w SprSubtype, X
-  endif
   PLB
   RTL
 }
 
-if !ENABLE_KOROK_POLISH == 1
 ; Contract: X = sprite slot, M/X 8-bit. Preserves X.
 Sprite_Korok_EnsureSheets:
 {
@@ -267,7 +256,6 @@ Sprite_Korok_PolishPickDir:
   .done
   RTS
 }
-endif
 
 KorokWalkSpeed = $02
 
@@ -406,11 +394,9 @@ Sprite_Korok_DrawMakar:
   LDA .chr, X : STA ($90), Y
   INY
   LDA .properties, X
-  if !ENABLE_KOROK_POLISH == 1
     ; OBJ palette 3 holds the Korok colors in Korok Cove (same as Rown);
     ; the table's palette 5 draws Makar teal and green.
     AND.b #$F1 : ORA.b #$06
-  endif
   STA ($90), Y
 
   PHY
@@ -436,16 +422,10 @@ Sprite_Korok_DrawMakar:
   dw 0, 0
   dw 0, 0
   dw 0, 8, 0
-  if !ENABLE_KOROK_POLISH == 1
   ; Walk up: back view from the unused set ($44/$46/$48 + crest).
   dw 0, 0, 8
   dw 0, 0, 8
   dw 0, 0, 8
-  else
-  dw 0, 0, 8
-  dw 0, 8, 0
-  dw 0, 8, 0
-  endif
   dw 0, 0, 8
   dw 0, 0, 8
   dw 0, 0, 8
@@ -456,15 +436,9 @@ Sprite_Korok_DrawMakar:
   dw -8, 0
   dw -8, 0
   dw -8, 8, 8
-  if !ENABLE_KOROK_POLISH == 1
   dw 0, -8, -8
   dw 0, -8, -8
   dw 0, -8, -8
-  else
-  dw 0, -8, -8
-  dw -8, -8, 0
-  dw -8, -8, 0
-  endif
   dw 0, -8, -8
   dw 0, -8, -8
   dw 0, -8, -8
@@ -475,15 +449,9 @@ Sprite_Korok_DrawMakar:
   db $00, $10
   db $00, $02
   db $00, $20, $21
-  if !ENABLE_KOROK_POLISH == 1
   db $44, $68, $69
   db $46, $78, $79
   db $48, $68, $69
-  else
-  db $04, $38, $39
-  db $38, $39, $06
-  db $38, $39, $08
-  endif
   db $22, $28, $29
   db $24, $28, $29
   db $26, $28, $29
@@ -507,15 +475,9 @@ Sprite_Korok_DrawMakar:
   db $02, $02
   db $02, $02
   db $02, $00, $00
-  if !ENABLE_KOROK_POLISH == 1
   db $02, $00, $00
   db $02, $00, $00
   db $02, $00, $00
-  else
-  db $02, $00, $00
-  db $00, $00, $02
-  db $00, $00, $02
-  endif
   db $02, $00, $00
   db $02, $00, $00
   db $02, $00, $00
@@ -579,7 +541,6 @@ Sprite_Korok_DrawHollo:
 
   RTS
 
-  if !ENABLE_KOROK_POLISH == 1
   ; Korok Hollo (polish): the unused round-mask set, tiles $40-$79.
   ; Front $40+$50 / $42 + crest $68,$78; back $44/$46/$48 + crest;
   ; left $62/$64/$66 + crest $70/$71; right = left mirrored.
@@ -652,78 +613,6 @@ Sprite_Korok_DrawHollo:
   db $02, $00, $00
   db $02, $00, $00
   db $02, $00, $00
-  else
-  ; Korok Hollo
-  .start_index
-  db $00, $02, $04, $06, $09, $0C, $0E, $10, $12, $14, $16, $18
-  .nbr_of_tiles
-  db 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1
-  .x_offsets
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0, 8
-  dw 0, 8, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  .y_offsets
-  dw 0, -8
-  dw -8, 0
-  dw -8, 0
-  dw 0, -8, -8
-  dw -8, -8, 0
-  dw 0, -8
-  dw 0, -8
-  dw 0, -8
-  dw 0, -8
-  dw 0, -8
-  dw 0, -8
-  dw 0, -8
-  .chr
-  db $1A, $0A
-  db $0C, $1C
-  db $0A, $0E
-  db $2E, $3A, $3B
-  db $3A, $3B, $4C
-  db $5E, $4E
-  db $4A, $7E
-  db $6A, $7E
-  db $6C, $7E
-  db $6A, $7E
-  db $6C, $7E
-  db $4A, $7E
-  .properties
-  db $2B, $2B
-  db $2B, $2B
-  db $2B, $2B
-  db $2B, $2B, $2B
-  db $2B, $2B, $2B
-  db $2B, $2B
-  db $2B, $2B
-  db $2B, $2B
-  db $2B, $2B
-  db $6B, $6B
-  db $6B, $6B
-  db $6B, $6B
-  .sizes
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $00, $00
-  db $00, $00, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  endif
 }
 
 Sprite_Korok_DrawRown:
@@ -781,7 +670,6 @@ Sprite_Korok_DrawRown:
 
   RTS
 
-  if !ENABLE_KOROK_POLISH == 1
   ; Korok Rown (polish): whole 16x24 frames from its own tiles.
   ; Front $82/$80, back $8A/$8C/$8E, left $84/$86/$88, right mirrored.
   .start_index
@@ -853,76 +741,4 @@ Sprite_Korok_DrawRown:
   db $02, $02
   db $02, $02
   db $02, $02
-  else
-  ; Korok Rown
-  .start_index
-  db $00, $02, $04, $06, $09, $0C, $0F, $11, $13, $15, $17, $19
-  .nbr_of_tiles
-  db 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1
-  .x_offsets
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0, 8
-  dw 0, 0, 8
-  dw 0, 0, 8
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  .y_offsets
-  dw -8, 0
-  dw 0, -8
-  dw 0, -8
-  dw 0, -8, -8
-  dw 0, -8, -8
-  dw 0, -8, -8
-  dw 0, -8
-  dw -8, 0
-  dw 0, -8
-  dw 0, -8
-  dw 0, -8
-  dw 0, -8
-  .chr
-  db $82, $92
-  db $84, $82
-  db $86, $82
-  db $A4, $B2, $B3
-  db $A6, $B2, $B3
-  db $A6, $B2, $B3
-  db $98, $88
-  db $88, $8A
-  db $8C, $88
-  db $98, $88
-  db $8A, $88
-  db $8C, $88
-  .properties
-  db $27, $27
-  db $27, $27
-  db $27, $27
-  db $27, $27, $27
-  db $27, $27, $27
-  db $67, $27, $27
-  db $27, $27
-  db $27, $27
-  db $27, $27
-  db $67, $67
-  db $67, $67
-  db $67, $67
-  .sizes
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $00, $00
-  db $02, $00, $00
-  db $02, $00, $00
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  endif
 }

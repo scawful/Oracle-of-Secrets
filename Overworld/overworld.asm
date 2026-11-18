@@ -118,7 +118,6 @@ LoadDarkWorldIntro:
   ; Dungeon/cave death continues must rebuild the current underworld room.
   ; Apply story-specific overworld routing only to outdoor loads.
   LDA.b $1B : BNE .indoors
-if !ENABLE_ABYSS_RESPAWN_UNTIL_ESCAPE == 1
   ; Abyss respawn lock (decisions.org, scawful 2026-09-26): from Kydrog's
   ; banishment until the escape, outdoor deaths and continues load the Abyss.
   ; The saved world is the lock: Kydrog_WarpPlayerAway sets $7EF3CA = $40 with
@@ -128,15 +127,6 @@ if !ENABLE_ABYSS_RESPAWN_UNTIL_ESCAPE == 1
   ; GameOver keeps $7EF3CA while GameState >= 2 ($09F520 patch below). The
   ; old OOSPROG < 2 force is not used: it ended at the Maku Tree and sent a
   ; death or continue after the escape back to the Abyss.
-else
-  LDA.l GameState : CMP.b #$02 : BNE .intro_sequence
-    ; Check for maku tree progress flag
-    LDA.l OOSPROG : CMP.b #$02 : BCS .has_pearl
-      STZ.w $1B
-      LDA.b #$40 : STA.l $7EF3CA
-      RTL
-    .has_pearl
-endif
   .intro_sequence
   LDA.l $7EF3CA
   .indoors
@@ -173,9 +163,7 @@ pullpc
 if !ENABLE_PART0_STORM == 1
   incsrc "Overworld/storm.asm"
 endif
-if !ENABLE_LUPO_PAD_GATE == 1
   incsrc "Overworld/lupo_pad_gate.asm"
-endif
 
 LoadOverworldPitAreas:
 {

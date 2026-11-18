@@ -199,9 +199,7 @@ incsrc "Dungeons/sky_room_sky.asm"
 print "End of sky_room_sky.asm           ", pc
 endif
 
-if !ENABLE_SKY_PIT_DAMAGE == 1
 incsrc "Dungeons/sky_pit_damage.asm"
-endif
 
 if !ENABLE_WALL_PROFILE_SELECTOR == 1
 incsrc "Dungeons/wall_profile_selector.asm"
@@ -270,17 +268,7 @@ org $0188DF ; @hook module=Dungeons name=Underworld_LoadRoom_ExitHook kind=patch
 
 ; RoomTag_WaterGate - redirect overlay data to custom water segments
 org $01CBAC
-if !ENABLE_WATER_GATE_OVERLAY_REDIRECT == 1
   ; Use room-authored overlay tables generated from dungeon object data.
   JSL WaterGate_SelectOverlayPointer
   JSR RoomTag_OperateWaterFlooring
   NOP #4
-else
-  ; Vanilla WaterOverlayData pointer (bank $84, addr $EE8B).
-  ; Keep as constants so this branch still assembles even when the vanilla
-  ; disassembly label isn't available in this codebase.
-  LDA.w #$0084
-  STA.b $B9
-  LDA.w #$EE8B
-  JSR RoomTag_OperateWaterFlooring
-endif

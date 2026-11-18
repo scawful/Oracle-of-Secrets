@@ -478,13 +478,11 @@ HandleMapDrawIcon:
 
 FixMaskPaletteOnExit:
 {
-  if !ENABLE_KOROK_POLISH == 1
     ; InitializeTilesets just reloaded the area sprite sheets over the Korok
     ; sheets; clear the loaded flag so a Korok reloads them (korok.asm).
     PHP : SEP #$20 : PHA
     LDA.b #$00 : STA.l $7E0AA5
     PLA : PLP
-  endif
   JSL Palette_ArmorAndGloves
   LDA.l $7EC229
   RTL

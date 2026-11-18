@@ -30,8 +30,6 @@ endif
 ; --- Feature Toggle Flags ---
 ; Active RC features default to 1. Set to 0 to isolate a defect.
 ; Override these via Config/feature_flags.asm (generate with Scripts/Build/set_feature_flags.py).
-!ENABLE_CUSTOM_ROOM_COLLISION         = 1
-!ENABLE_FOLLOWER_TRANSITION_HOOKS     = 1
 !ENABLE_GRAPHICS_TRANSFER_SCROLL_HOOK = 1
 ; Source-built sprite sheets; identity sheet $64 owns the audited bank $40 tail.
 !ENABLE_SOURCE_SPRITE_SHEETS        = 1
@@ -39,8 +37,6 @@ endif
 !ENABLE_SKY_TOWER_GRAPHICS          = 1
 ; Sky room sky layer ($A0 proof): sheet EA slot6, row6 colours, BG1 fill. Needs SKY_TOWER_GRAPHICS.
 !ENABLE_SKY_ROOM_SKY                = 1
-; Sky Tower void falls = damage pits (one heart, room entry); extended RoomsWithPitDamage copy.
-!ENABLE_SKY_PIT_DAMAGE              = 1
 ; Sky overworld source art; the live project ROM carries the Sky maps ($87/$94).
 !ENABLE_SKY_OVERWORLD_GRAPHICS      = 1
 ; Selected Sky map collision and tower entrance recognition. Required once the
@@ -63,7 +59,6 @@ endif
 ; kit rows/palettes route per room (H3). Default on (scawful 2026-11-10).
 !ENABLE_WALL_PROFILE_SELECTOR       = 1
 !ENABLE_WATER_GATE_HOOKS            = 1
-!ENABLE_WATER_GATE_OVERLAY_REDIRECT = 1
 ; 16-bit WaterFillTable tile_count (dw instead of db, capacity >255 tiles for widened $027).
 ; Default 0 while live $027 has 222 tiles and yaze (water_fill_zone.cc) serializes db counts;
 ; enable (=1) alongside the yaze dw writer when a >255-tile $027 basin lands.
@@ -126,25 +121,13 @@ endif
 ; Eon Owl one-shot: each Abyss Owl appearance happens once; after its talk and
 ; fly-away it does not respawn (EonOwlFlags $7EF3A7, Sprites/NPCs/eon_owl.asm).
 !ENABLE_EON_OWL_ONE_SHOT             = 1
-; Abyss respawn lock until the escape: outdoor deaths/continues follow the
-; saved world ($7EF3CA), so the lock ends at the portal home instead of the
-; Maku Tree (LoadDarkWorldIntro, Overworld/overworld.asm).
-!ENABLE_ABYSS_RESPAWN_UNTIL_ESCAPE   = 1
 ; Abyss load spawn menu: from GameState 3 an outdoor Abyss load offers
 ; Pyramid / Link's House / Hall of Secrets (message $21B,
 ; Overworld/abyss_spawn_menu.asm).
 !ENABLE_ABYSS_SPAWN_MENU            = 1
-; Eon Owl near trigger: the Abyss Owls talk only when Link is within
-; !EonOwl_TalkDistance px (Sprites/NPCs/eon_owl.asm), not on area entry.
-!ENABLE_EON_OWL_NEAR_TRIGGER         = 1
 ; Early-game balance: Act I/D1 enemy damage, per-location HP overrides,
 ; Red Potion 100 rupees (Core/early_game_balance.asm).
 !ENABLE_EARLY_GAME_BALANCE          = 1
-; Korok polish: Koroks in Korok Cove stroll a few px left/right near home and
-; stop at walls (the walk never ended before), talk from any state, Makar
-; uses the Korok palette, variant fixed per placement (no Hollo), and the
-; sheets reload after the world map (Sprites/NPCs/korok.asm, world_map.asm).
-!ENABLE_KOROK_POLISH                = 1
 ; World map: Light World dungeon markers follow story flags (crystals,
 ; Maku Tree, Ocarina) instead of the MapIcon counter $7EF3C7
 ; (Overworld/world_map.asm, Docs/Debugging/Issues/world_map_icons_2026-09-26.md).
@@ -153,21 +136,6 @@ endif
 ; a few seconds after one of Maple's dreams lands, Link is reloaded through the
 ; Dream Hut entrance ($68) so a dream cannot strand him (Sprites/NPCs/maple.asm).
 !ENABLE_DREAM_RETURN                = 1
-; Ganondorf volley finale, slice 1 (DESIGN.md Option A, phase 1): after Kydreeok
-; dies in room $00 the tag $3D gate spawns Ganondorf ($D3); his energy ball ($46)
-; is rallied with the Master Sword, stuns him, and his death opens the Triforce
-; door (Sprites/Bosses/ganondorf.asm). Diagnostic opt-out.
-!ENABLE_GANONDORF_VOLLEY            = 1
-; Ganon beast, last finale phase: Ganondorf's death spawns the beast (second $D3
-; slot, actions 8-15); GanondorfFight = 3 keeps the Triforce door shut until it
-; dies. Malice floor writes tile type $0D at runtime (Sprites/Bosses/ganon_beast.asm).
-; Needs GANONDORF_VOLLEY. Diagnostic opt-out.
-!ENABLE_GANON_BEAST                 = 1
-; Kydreeok chamber: Kydreeok fights in room $02 (absolute bounds become
-; room-local); after the Song of Healing a 2x2 floor plate falls away and the
-; room $02 holewarp drops Link into room $00 for Ganondorf and the beast
-; (Sprites/Bosses/kydreeok.asm). Room data lives in the ROM. Diagnostic opt-out.
-!ENABLE_KYDREEOK_CHAMBER            = 1
 ; Wisdom dream, shots 1-2 (decisions.org pendant dreams; Sealing War
 ; storyboard): D1.01 ($204) in the hut, then the great hall (room $51) with
 ; the Captain and Farore and D1.02 ($205) before the dream return
@@ -199,12 +167,6 @@ endif
 ; colours cycle, mosaic, white (Sprites/NPCs/dream_entry_fx.asm). Off, the
 ; warp starts right after the sleep. Diagnostic opt-out.
 !ENABLE_DREAM_ENTRY_FX              = 1
-; Sword warp home (decisions.org "Intro Abyss exit: the sword cuts Link
-; home"): taking the Forest of Dreams sword (DW $58) plays a spin, sword-up
-; and white flash, then reloads Link onto the Maku Tree area ($2A) with
-; SavedWorld = $00, which ends the respawn lock and the storm; no portal at
-; the arrival (Sprites/Objects/collectible.asm).
-!ENABLE_SWORD_WARP_HOME             = 1
 ; Intro village Stalfos patrol: while GameState < 2, Wayward Village loads
 ; guard sprites ($42) with the pirate palette, half-heart contact plus a
 ; recovery pause, tuned chase speed, limited sight and a home box
@@ -279,13 +241,6 @@ endif
 ; pick a real unfound ring and Vasu's appraisal clears the found ring.
 ; Needs MASK_Y_TRANSFORM and RING_SRAM_RELOCATE.
 !ENABLE_TRUTHFUL_CONTROLS           = 1
-; Lupo pad gate (scawful 2026-10-12: "Sure pad the gate, so long as you can
-; access the portal to yesterwind/swamp area for shrine of wisdom"): the
-; Hall of Secrets courtyard warp pad (LW $02 -> Abyss $42, Lupo Mountain)
-; refuses with an error beep until the D5 crystal (Crystals bit $04) is set.
-; Every other pad, including LW $25 -> $65 (Yesterwind), is unchanged
-; (Overworld/lupo_pad_gate.asm).
-!ENABLE_LUPO_PAD_GATE               = 1
 ; Richard quest (scawful 2026-11-15): the Wayward Village snitch lady ($3D)
 ; paces without calling guards and asks for her dog Richard, a night-only
 ; palette swap of the village dog ($25). After Link finds him she runs into
@@ -319,23 +274,12 @@ endif
 ; Park Epona where Link last dismounted outdoors (any OW area, not Ranch-only).
 ; Off by default on master; this stack enables it for A5 fold proof. WRAM-only.
 !ENABLE_HORSE_PARK_ANYWHERE         = 1
-; Bow-only Y use while Horse mask mounted (spawn offset + input gate).
-; Off by default on master; this stack enables it for A6 fold proof.
-!ENABLE_HORSE_MOUNTED_BOW           = 1
-; Epona long jump over named water-gap Tile16s (HorseLongGapTile16s, up to two
-; tiles). Requires !ENABLE_HORSE_FORM. Off until native proof and site approval.
-!ENABLE_HORSE_LONG_JUMP             = 1
 
 ; Epona's Song (Ranch Girl teaches it with the Ocarina): song 6, the Equipment
 ; cell Elegy of Stone used (decisions.org 2026-11-16, "1 Replace Stone").
 ; Learned = SideQuestProg2 bit 1 (!SideQuest2_EponaSong), not the $7EF34C count.
 ; Off until native save/reopen proof and the song effect is decided.
 !ENABLE_EPONA_SONG                  = 1
-
-; Goron Mines room $78 Lanmola boss: Hammer stagger, saved clear, key drop
-; (Sprites/Bosses/lanmola_room78.asm + lanmola_hammer78.asm).
-; Off until the room $78 layout lands in the shared base ROM.
-!ENABLE_GORON78_LANMOLA_BOSS        = 1
 
 ; Epona crowd check + mounted charge (Masks/horse_charge.asm): the song call
 ; refuses with 5+ active enemies (OAM headroom); charging into an enemy deals
