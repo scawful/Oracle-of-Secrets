@@ -260,6 +260,11 @@ echo "[*] Validating expanded message source contract..."
 run_check message_source 1 python3 "$repo_root/Scripts/Generate/validate_expanded_message_source.py" \
   --root "$repo_root"
 
+# Overlays draw Tile16 IDs by number. Fail when new map art has rewritten one.
+echo "[*] Validating overlay Tile16 pins..."
+run_check overlay_tile16 "$(check_required overlay_tile16 1)" python3 "$repo_root/Scripts/Build/check_overlay_tile16.py" \
+  --rom "$base_rom"
+
 current_stage="output_snapshot"
 snapshot_build_outputs
 
