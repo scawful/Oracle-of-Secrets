@@ -33,64 +33,34 @@ The `village_dog.asm` file defines the behavior for two distinct dog NPCs: the "
 *   **`!Boss`**: `00`
 
 ## Main Structure (`Sprite_VillageDog_Long`)
-This routine acts as a dispatcher for drawing, selecting `Sprite_VillageDog_Draw` for the Village Dog (`WORLDFLAG = 0`) or `Sprite_EonDog_Draw` for the Eon Dog. It also handles shadow drawing and dispatches to the main logic if the sprite is active.
-
-```asm
-Sprite_VillageDog_Long:
-{
-  PHB : PHK : PLB
-  LDA.w WORLDFLAG : BEQ .village
-    JSR Sprite_EonDog_Draw
-    JMP +
-  .village
-  JSR Sprite_VillageDog_Draw
-  +
-  JSL Sprite_DrawShadow
-  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
-    JSR Sprite_VillageDog_Main
-  .SpriteIsNotActive
-  PLB
-  RTL
-}
-```
+This routine acts as a dispatcher for drawing, selecting `Sprite_VillageDog_Draw` for the Village Dog (`WORLDFLAG = 0`) or `Sprite_EonDog_Draw` for the Eon Dog. It skips `Sprite_DrawShadow`, OAM allocation, and palette lookups whenever the sprite is outside the tight camera viewport (`BCS .after_draw`), and dispatches to the main logic if the sprite is active.
+- `Sprite_VillageDog_Draw` avoids cross-bank `JSL RichardDog_PaletteMask` on normal stray dogs (`SprSubtype == 0`) and converts Frame 4's sparse `16x16 $0A` into a single `8x8 $1B` OAM tile (`0` empty slivers).
 
 ## Initialization (`Sprite_VillageDog_Prep`)
 This routine initializes the dog upon spawning. If it's an Eon Dog (`WORLDFLAG` is not `0`), it sets `SprAction, X` to `$07` and `SprTimerA, X` to `$40`. In the Village (`WORLDFLAG == 0`), it staggers each dog's initial idle pose/timer (`SprMiscD, X`, `SprTimerD, X`) and rolls outdoor Overworld (`$1B == 0`) stray coat variation via `SprMiscG, X` (`$08` = OAM Palette 7 golden-cream coat, overridden whenever `SprSubtype, X != 0` by `RichardDog_PaletteMask`).
 
-```asm
-Sprite_VillageDog_Prep:
-{
-  PHB : PHK : PLB
-  LDA.w WORLDFLAG : BEQ .village
-    LDA.b #$07 : STA.w SprAction, X
-    LDA.b #$40 : STA.w SprTimerA, X
-  .village
-  PLB
-  RTL
-}
-```
-
 ## `HandleTossedDog`
 This routine manages the vertical movement of a dog that has been tossed. If `SprHeight, X` is not `0`, it decrements it, simulating gravity.
 
-## `LiftOrTalk` & `VillageDog_FormInteractLong` (`Sprites/NPCs/village_animals.asm`)
+## `LiftOrTalk` & `Sprites/NPCs/village_animals.asm`
 This routine determines whether Link can lift the dog or engage in dialogue. It checks Link's current form (`$02B2`):
 *   **Human (`$00`) / other non-animal forms**: Calls `JSL Sprite_CheckIfLifted` so Link can pick the dog up (`Dog_Tossed` owns `ThrownSprite_TileAndSpriteInteraction_long` once airborne so grounded hops in `SprHeight` never trigger false throw physics).
 *   **Wolf (`$03`)**: In `Dog_Handler`, approaching within `40px` (`$28`) triggers an immediate friendly pack tail-wag (`Action $05/$06`); pressing `A` while facing calls `VillageDog_FormInteractLong`, showing `!Dog_MsgWolf` (`!RichardDog_MsgWolf` when `SprSubtype != 0`).
 *   **Minish (`$05`)**: In `Dog_MoveCommon`, approaches gently at speed `$08` and stops wider (`$18` = `24px`); pressing `A` while facing shows `!Dog_MsgMinish`.
 
-`Sprites/NPCs/village_animals.asm` also hosts the companion multi-form hooks for Wayward Village Cuccos (`$0B` via `$06:F244`) and peaceful indoor Wayward Village Rats (`$6D` via `$05:A8CE`, scoped to rooms `$0102`, `$0103`, `$0104`, `$0106`, `$0107`, `$0119`, `$011F` when `$1B != 0` and `$0FFF == 0`, preserving dungeon/cave rats untouched).
+`Sprites/NPCs/village_animals.asm` also hosts the companion multi-form hooks for Wayward Village Cuccos (`$0B` via `$06:F244`), peaceful indoor Wayward Village Rats (`$6D` via `$05:A8CE`, scoped to rooms `$0102`, `$0103`, `$0104`, `$0106`, `$0107`, `$0119`, `$011F` when `$1B != 0` and `$0FFF == 0`), and Village Cat (`$28` Action 3 via `$06:8CA1`/`$06:AE34`/`$06:AF1A`).
 
 ## Main Logic & State Machine (`Sprite_VillageDog_Main`)
-This routine manages the various states and behaviors of both Village Dogs and Eon Dogs.
-
-*   **`Dog_Handler` (`00`)**: Calm idle state driven by `SprMiscD` (sit, head-tilt left/right, or short gentle stroll stopped on tile collision). When resting cooldown `SprTimerC == 0` and Link approaches within `88px` (`Dog_NearPlayer`), hops (`SprHeight = 4`) and perks up into `Dog_LookLeftAtLink` (`01`) or `Dog_LookRightAtLink` (`02`) chosen by `Sprite_IsToRightOfPlayer`. Calls `LiftOrTalk`.
+All Village Dog logic (including `Dog_CalmIdle`) now runs inline in Bank `$31`.
+*   **`Dog_Handler` (`00`)**: Calm idle state driven by `SprMiscD` (sit, head-tilt left/right, or short gentle stroll stopped on tile collision). When resting cooldown `SprTimerC == 0`, throttles its 88px proximity check (`(Frame ^ slot) & 3 == 0`) before hopping into `Dog_LookLeftAtLink` (`01`) or `Dog_LookRightAtLink` (`02`). Calls `LiftOrTalk`.
 *   **`Dog_LookLeftAtLink` / `Dog_LookRightAtLink` (`01`/`02`)**: Hold look pose (`SprFrame = 9/10`), allow `LiftOrTalk`, then transition into `Dog_MoveLeftTowardsLink` (`03`) / `Dog_MoveRightTowardsLink` (`04`).
 *   **`Dog_MoveLeftTowardsLink` / `Dog_MoveRightTowardsLink` (`03`/`04`)**: Trot at speed `$0C` toward Link while dynamically flipping `03 <-> 04` from `SprXSpeed` sign so circling Link never causes moonwalking. Enters `Dog_WagTailLeft`/`Right` (`05`/`06`) within `22px` or settles back to calm `00` with `SprTimerC` rest cooldown on collision/timeout.
 *   **`Dog_WagTailLeft` / `Dog_WagTailRight` (`05`/`06`)**: Wag tail via `Dog_PlayAnim`, continuously re-orienting toward Link via `Sprite_IsToRightOfPlayer`, allowing `LiftOrTalk`, then settling into calm idle with `SprTimerC` cooldown.
 *   **`EonDog_Handler` / `EonDog_Right` (`07`/`08`)**: Specific to the Eon Dog (`WORLDFLAG != 0`), calling `EonDog_Walk`.
 *   **`Dog_Tossed` (`09`)**: Airborne throw arc via `ThrownSprite_TileAndSpriteInteraction_long`; on landing, settles into `Dog_WagTailLeft` (`05`) or `Dog_WagTailRight` (`06`) based on Link's relative X position.
-*   **`Dog_HappyDance` (`0A`)**: Triggered for grounded Village Dogs (`SprAction < 7`) in Overworld mode `$09` within `96px` on a fresh Ocarina song cast (`$03F0 == $80`, `$3A & $40 != 0`, non-Wolf `$02B2 != $03`, leaving `SongFlag` and `SprTimerF` untouched). Plays fast tail-wag frames facing Link with a triangle-wave hop in `SprHeight` via `SprMiscF`, then rests via `SprTimerC`.
+*   **`Dog_HappyDance` (`0A`)**: Triggered for grounded/resting Village Dogs (Actions `00..06`, `0B..0C`) in Overworld mode `$09` within `96px` on a fresh Ocarina song cast (`$03F0 == $80`, `$3A & $40 != 0`, non-Wolf `$02B2 != $03`). Plays fast tail-wag frames facing Link with a triangle-wave hop in `SprHeight`, then rests via `SprTimerC`.
+*   **`Dog_Sleep` (`0B`)**: Outdoor stray dogs (`SprSubtype == 0`, `$1B == 0`) curl up at night (`TimeState.Hours >= 18 || < 6`) in sitting `Frame 8` (1 body OAM tile + shadow) and wake at dawn, on nearby Wolf Link (`32px`), on moving Link (`28px`), or via Ocarina (`-> 0A`).
+*   **`Dog_SniffPlay` (`0C`)**: Occasional daytime calm-idle ground-sniff / play-bow alternating `Frame 4`/`3` with a 1px vertical bob.
 
 ```asm
 Sprite_VillageDog_Main:

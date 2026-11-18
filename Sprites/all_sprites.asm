@@ -327,7 +327,6 @@ incsrc "Sprites/Enemies/darknut_weapon_hitbox.asm"
 
 ; Returned from Bank $2C once boss raw graphics moved to Bank $54.
 incsrc "Sprites/Enemies/business_scrub_shield.asm"
-%VillageDog_EmitBank2C()
 
   ; Room $78 key-after-Lanmolas hook + helper macros used by lanmola.asm.
   incsrc "Sprites/Bosses/lanmola_room78.asm"

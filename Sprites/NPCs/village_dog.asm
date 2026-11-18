@@ -37,11 +37,13 @@ Sprite_VillageDog_Long:
   PHB : PHK : PLB
   LDA.w WORLDFLAG : BEQ .village
     JSR Sprite_EonDog_Draw
-    JMP +
+    JMP .shadow
   .village
   JSR Sprite_VillageDog_Draw
-  +
+  BCS .after_draw
+  .shadow
   JSL Sprite_DrawShadow
+  .after_draw
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     JSR Sprite_VillageDog_Main
   .SpriteIsNotActive
@@ -105,16 +107,6 @@ Dog_NearPlayer:
   RTS
 }
 
-; Long entry for Bank $2C calm idle stroll to reuse Bank $31 Dog_PlayAnim.
-; In: X = sprite slot, Y = anim slot (0..7). Preserves X, caller DBR.
-VillageDog_PlayAnimLong:
-{
-  PHB : PHK : PLB
-  JSR Dog_PlayAnim
-  PLB
-  RTL
-}
-
 ; In: Y = animation slot (0..7). Immediately clamps stale frames on direction flip.
 Dog_PlayAnim:
 {
@@ -166,7 +158,10 @@ Sprite_VillageDog_Main:
   .not_fresh_toss
 
   ; Ocarina happy-dance trigger (fresh cast frame $03F0=$80, not Wolf dig, OW module $09)
-  LDA.w SprAction, X : CMP.b #$07 : BCS .no_ocarina
+  LDA.w SprAction, X
+  CMP.b #$07 : BCC .ocarina_eligible
+  CMP.b #$0B : BCC .no_ocarina ; wake Action $0B (Sleep) and $0C (SniffPlay), skip Eon ($07-$08) & Tossed ($09) & HappyDance ($0A)
+  .ocarina_eligible
   LDA.b $10 : CMP.b #$09 : BNE .no_ocarina
   LDA.w $02B2 : CMP.b #$03 : BEQ .no_ocarina
   LDA.b $3A : AND.b #$40 : BEQ .no_ocarina
@@ -196,8 +191,10 @@ Sprite_VillageDog_Main:
   dw EonDog_Right             ; 08
   dw Dog_Tossed                ; 09
   dw Dog_HappyDance            ; 0A
+  dw Dog_Sleep                 ; 0B
+  dw Dog_SniffPlay             ; 0C
 
-  ; 00 - Calm idle (sit, head-tilt, short stroll) unless Link approaches within 88px.
+  ; 00 - Calm idle (sit, head-tilt, short stroll, daytime sniff, night sleep) unless Link approaches within 88px.
   ; Wolf Link ($02B2 == #$03) within 40px immediately triggers a friendly pack tail-wag.
   Dog_Handler:
   {
@@ -215,6 +212,8 @@ Sprite_VillageDog_Main:
         JMP LiftOrTalk
     .check_perk
     LDA.w SprTimerC, X : BNE .calm
+    ; Throttle outer 88px proximity check to once per 4 frames per slot while calm.
+    TXA : EOR.b $1A : AND.b #$03 : BNE .calm
     LDA.b #$58 : JSR Dog_NearPlayer : BCC .calm
       STZ.w SprXSpeed, X
       STZ.w SprYSpeed, X
@@ -227,7 +226,7 @@ Sprite_VillageDog_Main:
       %GotoAction(2)
       JMP LiftOrTalk
     .calm
-    JSL VillageDog_CalmIdleLong
+    JSR Dog_CalmIdle
     JMP LiftOrTalk
   }
 
@@ -413,6 +412,144 @@ Sprite_VillageDog_Main:
     .done
     RTS
   }
+
+  ; 0B - Night sleep / doze for outdoor strays (18:00-05:59).
+  ; Uses sitting Frame 8 (single 16x16 body OAM + shadow = 2 OAM slots total).
+  Dog_Sleep:
+  {
+    STZ.w SprXSpeed, X
+    STZ.w SprYSpeed, X
+    JSR HandleTossedDog
+    %SetFrame(8)
+    ; Wake at dawn (06:00-17:59) or if Richard quest takes ownership.
+    LDA.w SprSubtype, X : BNE .wake_calm
+    LDA.l TimeState.Hours
+    CMP.b #$12 : BCS .still_night
+    CMP.b #$06 : BCS .wake_calm
+    .still_night
+    ; Throttle proximity wake checks to every 4 frames per slot.
+    TXA : EOR.b $1A : AND.b #$03 : BNE .sleep_talk
+      LDA.w $02B2 : CMP.b #$03 : BNE .chk_move_wake
+        LDA.b #$20 : JSR Dog_NearPlayer : BCS .wake_startle
+      .chk_move_wake
+      LDA.b $30 : ORA.b $31 : BEQ .sleep_talk
+        LDA.b #$1C : JSR Dog_NearPlayer : BCS .wake_startle
+    .sleep_talk
+    JMP LiftOrTalk
+
+    .wake_startle
+    LDA.b #$06 : STA.w SprHeight, X
+    .wake_calm
+    STZ.w SprMiscD, X
+    LDA.b #$C0 : STA.w SprTimerC, X
+    LDA.b #$40 : STA.w SprTimerD, X
+    %GotoAction(0)
+    JMP LiftOrTalk
+  }
+
+  ; 0C - Curious ground-sniff / play-bow during daytime idle.
+  Dog_SniffPlay:
+  {
+    STZ.w SprXSpeed, X
+    STZ.w SprYSpeed, X
+    JSR HandleTossedDog
+    LDA.b $1A : AND.b #$08 : BNE .sniff_down
+      %SetFrame(4)
+      BRA .bob
+    .sniff_down
+      %SetFrame(3)
+    .bob
+    LDA.b $1A : AND.b #$04 : LSR #2 : STA.w SprHeight, X
+    JSR LiftOrTalk
+    LDA.w SprTimerD, X : BNE .stay
+      STZ.w SprHeight, X
+      STZ.w SprMiscD, X
+      LDA.b #$48 : STA.w SprTimerD, X
+      %GotoAction(0)
+    .stay
+    RTS
+  }
+}
+
+; Inline Bank $31 calm idle behavior (returned from Bank $2C once Bank $31 headroom opened).
+Dog_CalmIdle:
+{
+  ; Outdoor strays (SprSubtype == 0) curl up to sleep at night (18:00-05:59) after cooldown.
+  LDA.b $1B : BNE .no_sleep
+  LDA.w SprSubtype, X : BNE .no_sleep
+  LDA.w SprTimerC, X : BNE .no_sleep
+  LDA.l TimeState.Hours
+  CMP.b #$12 : BCS .go_sleep
+  CMP.b #$06 : BCS .no_sleep
+  .go_sleep
+    STZ.w SprXSpeed, X
+    STZ.w SprYSpeed, X
+    STZ.w SprMiscD, X
+    %GotoAction($0B)
+    RTS
+  .no_sleep
+  LDA.w SprMiscD, X
+  CMP.b #$01 : BEQ .idle_left
+  CMP.b #$02 : BEQ .idle_right
+  CMP.b #$03 : BEQ .idle_stroll
+    %SetFrame(8)
+    BRA .idle_tick
+  .idle_left
+    %SetFrame(9)
+    BRA .idle_tick
+  .idle_right
+    %SetFrame(10)
+    BRA .idle_tick
+  .idle_stroll
+    LDA.w SprTimerC, X : BNE .stop_stroll
+    LDA.w SprXSpeed, X : BMI .stroll_anim_l
+      LDY.b #$03 : BRA .stroll_anim
+    .stroll_anim_l
+      LDY.b #$02
+    .stroll_anim
+    JSR Dog_PlayAnim
+    STZ.b $06 : STZ.b $07
+    JSL Sprite_MoveLong
+    JSL Sprite_CheckTileCollision
+    LDA.w $0E70, X : BEQ .idle_tick
+    .stop_stroll
+      STZ.w SprXSpeed, X
+      STZ.w SprYSpeed, X
+      STZ.w SprMiscD, X
+      LDA.b #$50 : STA.w SprTimerD, X
+      RTS
+
+  .idle_tick
+  LDA.w SprTimerD, X : BNE .done
+    STZ.w SprXSpeed, X
+    STZ.w SprYSpeed, X
+    JSL GetRandomInt : AND.b #$07
+    CMP.b #$04 : BEQ .start_sniff
+    AND.b #$03 : STA.w SprMiscD, X
+    LDA.b #$50 : STA.w SprTimerD, X
+    LDA.w SprMiscD, X : CMP.b #$03 : BNE .done
+    LDA.w SprTimerC, X : BEQ .start_stroll
+      STZ.w SprMiscD, X
+      RTS
+    .start_sniff
+      LDA.b #$38 : STA.w SprTimerD, X
+      %GotoAction($0C)
+      RTS
+    .start_stroll
+      JSL GetRandomInt : TAY
+      AND.b #$01 : BEQ .stroll_r
+        LDA.b #$FA : BRA .set_sx
+      .stroll_r
+        LDA.b #$06
+      .set_sx
+      STA.w SprXSpeed, X
+      TYA : LSR A : AND.b #$03 : TAY
+      LDA.w .stroll_vy, Y : STA.w SprYSpeed, X
+      LDA.b #$28 : STA.w SprTimerD, X
+
+  .done
+  RTS
+  .stroll_vy : db 0, -2, 2, 0
 }
 
 EonDog_Walk:
@@ -435,11 +572,25 @@ EonDog_Walk:
 
 Sprite_VillageDog_Draw:
 {
-  JSL   Sprite_PrepOamCoord
+  JSL   Sprite_PrepOamCoord : BCS .offscreen
+  ; Tight viewport cull for 24x24 dog bounds so offscreen persistent strays never allocate OAM or loop.
+  REP   #$20
+  LDA.b $00 : CLC : ADC.w #$0010 : CMP.w #$0118 : BCS .offscreen_16
+  LDA.b $02 : CLC : ADC.w #$0014 : CMP.w #$00FC : BCC .onscreen
+  .offscreen_16
+    SEP #$20
+  .offscreen
+    SEC
+    RTS
+
+  .onscreen
+  SEP   #$20
   JSL   Sprite_OAM_AllocateDeferToPlayer
-  STZ.b $0C
-  JSL RichardDog_PaletteMask ; $0C = Richard palette XOR ($04)
-  LDA.w SprSubtype, X : BNE .have_mask
+  LDA.w SprSubtype, X : BEQ .stray_mask
+    STZ.b $0C
+    JSL   RichardDog_PaletteMask ; $0C = Richard palette XOR ($04)
+    BRA   .have_mask
+  .stray_mask
     LDA.w SprMiscG, X : STA.b $0C
   .have_mask
 
@@ -491,6 +642,7 @@ Sprite_VillageDog_Draw:
 
   PLX
 
+  CLC
   RTS
 
 
@@ -503,7 +655,7 @@ Sprite_VillageDog_Draw:
     dw -4, -4, 12, 12
     dw -4, -4, 4, 12
     dw -4, -4, 4, 4
-    dw -4, 4, 4
+    dw -4, 4, 12
     dw 4, -4, 4, -4
     dw 4, -4, 4, -4
     dw 4, -4, -4, -4
@@ -517,7 +669,7 @@ Sprite_VillageDog_Draw:
     dw -4, 4, 4, 12
     dw -8, 0, 0, -8
     dw 0, -8, -8, 0
-    dw 0, 0, -16
+    dw 0, 0, -8
     dw 0, 0, -8, -8
     dw 0, 0, -16, -8
     dw 0, 0, 8, -8
@@ -531,7 +683,7 @@ Sprite_VillageDog_Draw:
     db $10, $20, $02, $12
     db $13, $23, $24, $15
     db $26, $16, $17, $27
-    db $29, $2A, $0A
+    db $29, $2A, $1B
     db $23, $24, $13, $14
     db $26, $27, $06, $18
     db $29, $2B, $3B, $1B
@@ -571,7 +723,7 @@ Sprite_VillageDog_Draw:
     db $02, $02, $00, $00
     db $02, $02, $02, $00
     db $02, $02, $02, $02
-    db $02, $02, $02
+    db $02, $02, $00
     db $02, $02, $02, $02
     db $02, $02, $02, $00
     db $02, $00, $00, $00
@@ -635,6 +787,7 @@ Sprite_EonDog_Draw:
 
   PLX
 
+  CLC
   RTS
 
   .start_index
@@ -667,71 +820,3 @@ Sprite_EonDog_Draw:
   db $02
   db $02
 }
-
-; =========================================================
-; Cold calm-idle helper spilled into Bank $2C tail
-; (Sprites/all_sprites.asm) to balance Bank $31 and Bank $2C headroom.
-; =========================================================
-macro VillageDog_EmitBank2C()
-VillageDog_CalmIdleLong:
-{
-  PHB : PHK : PLB
-  LDA.w SprMiscD, X
-  CMP.b #$01 : BEQ .idle_left
-  CMP.b #$02 : BEQ .idle_right
-  CMP.b #$03 : BEQ .idle_stroll
-    %SetFrame(8)
-    BRA .idle_tick
-  .idle_left
-    %SetFrame(9)
-    BRA .idle_tick
-  .idle_right
-    %SetFrame(10)
-    BRA .idle_tick
-  .idle_stroll
-    LDA.w SprTimerC, X : BNE .stop_stroll
-    LDA.w SprXSpeed, X : BMI .stroll_anim_l
-      LDY.b #$03 : BRA .stroll_anim
-    .stroll_anim_l
-      LDY.b #$02
-    .stroll_anim
-    JSL VillageDog_PlayAnimLong
-    STZ.b $06 : STZ.b $07
-    JSL Sprite_MoveLong
-    JSL Sprite_CheckTileCollision
-    LDA.w $0E70, X : BEQ .idle_tick
-    .stop_stroll
-      STZ.w SprXSpeed, X
-      STZ.w SprYSpeed, X
-      STZ.w SprMiscD, X
-      LDA.b #$50 : STA.w SprTimerD, X
-      BRA .done
-
-  .idle_tick
-  LDA.w SprTimerD, X : BNE .done
-    STZ.w SprXSpeed, X
-    STZ.w SprYSpeed, X
-    JSL GetRandomInt : AND.b #$03 : STA.w SprMiscD, X
-    LDA.b #$50 : STA.w SprTimerD, X
-    LDA.w SprMiscD, X : CMP.b #$03 : BNE .done
-    LDA.w SprTimerC, X : BEQ .start_stroll
-      STZ.w SprMiscD, X
-      BRA .done
-    .start_stroll
-      JSL GetRandomInt : TAY
-      AND.b #$01 : BEQ .stroll_r
-        LDA.b #$FA : BRA .set_sx
-      .stroll_r
-        LDA.b #$06
-      .set_sx
-      STA.w SprXSpeed, X
-      TYA : LSR A : AND.b #$03 : TAY
-      LDA.w .stroll_vy, Y : STA.w SprYSpeed, X
-      LDA.b #$28 : STA.w SprTimerD, X
-
-  .done
-  PLB
-  RTL
-  .stroll_vy : db 0, -2, 2, 0
-}
-endmacro
