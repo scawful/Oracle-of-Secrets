@@ -72,7 +72,6 @@ endif
 }
 endif
 
-if !ENABLE_TRUTHFUL_CONTROLS == 1
 ; Ring grant (Eon Zora message $1AE, Error message $121). Marks one ring as
 ; found (FOUNDRINGS), picked at random among the rings that are neither found
 ; nor owned (MAGICRINGS). Grants nothing while a found ring still waits for
@@ -123,7 +122,6 @@ MagicRing_GrantUnfound:
   CLC
   RTL
 }
-endif
 
 ; Archery mini game ring prize (sprite $65 ArcheryGame, room $0111).
 ; A game is 5 shots for 20 rupees. $0B88 is the hit streak: the host zeroes

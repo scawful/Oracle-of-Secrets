@@ -54,7 +54,7 @@ GfxSheet_GetPtr_Spr:
 ; sequence); with it compiled in, Y is the selected sheet on exit.
 GfxSheet_GetPtr_SprCA:
 {
-  if !ENABLE_EON_OWL_ONE_SHOT == 1 && !DISABLE_SPRITES == 0
+  if !DISABLE_SPRITES == 0
     JSL Oracle_EonOwl_ArrivalSheet
   endif
   PHP : SEP #$30 : PHX : REP #$10

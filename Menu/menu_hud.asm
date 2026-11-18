@@ -61,10 +61,8 @@ HUD_Update:
   JML HUD_Update_Impl_ignore_health
 HUD_UpdateItemBox_long:
   JSR HUD_UpdateItemBox : RTL
-if !ENABLE_TRUTHFUL_CONTROLS == 1
 HUD_ItemBoxItem_long:
   JSR HUD_ItemBoxItem : RTL
-endif
 HexToDecimal_long:
   JSR HexToDecimal : RTL
 else
@@ -177,11 +175,7 @@ HUD_Update:
   LDA #!HudYCountRest1 : STA !HudYCount+2
 
   ; Check if the user has bombs equipped
-if !ENABLE_TRUTHFUL_CONTROLS == 1
   JSR HUD_ItemBoxItem : LDA $7EF33F, X : AND.w #$00FF
-else
-  LDX   $0202 : LDA $7EF33F, X : AND.w #$00FF
-endif
   CPX.w #$0004 : BEQ .bomb_count
 if !ENABLE_GOLDSTAR_CELL == 1
   CPX.w #$001C : BNE .not_bombs
@@ -207,11 +201,7 @@ endif
   .not_bombs
 
   ; Check if the user has arrows equipped
-if !ENABLE_TRUTHFUL_CONTROLS == 1
   JSR HUD_ItemBoxItem : LDA $7EF33F, X : AND.w #$00FF
-else
-  LDX   $0202 : LDA $7EF33F, X : AND.w #$00FF
-endif
   CPX.w #$0001 : BNE .not_arrows
 
     ; Number of Arrows Link has.
@@ -311,11 +301,7 @@ HUD_UpdateItemBox:
   .no_bow
 
   REP #$30
-if !ENABLE_TRUTHFUL_CONTROLS == 1
   JSR HUD_ItemBoxItem : BEQ .no_equipped_item
-else
-  LDX $0202 : BEQ .no_equipped_item
-endif
     TXY
     LDA.l Menu_AddressIndex-1, X
     AND.w #$00FF : TAX
@@ -401,7 +387,6 @@ endif
   RTS
 }
 
-if !ENABLE_TRUTHFUL_CONTROLS == 1
 ; The item the Y button uses now. While Link wears a mask form (1-4) the Y
 ; button runs that form, even after the Y item ($0202) changed: the change
 ; back waits while Zora Link is in water, in a doorway or while the menu is
@@ -446,7 +431,6 @@ HUD_RefreshLong:
   PLB : PLP
   RTL
 }
-endif
 
 HUD_DrawItem:
 {

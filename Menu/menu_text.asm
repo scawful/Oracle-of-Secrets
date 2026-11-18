@@ -182,7 +182,6 @@ Menu_RingNames:
   dw "___STEADFAST__  "
 
 Menu_RingDescriptions:
-if !ENABLE_TRUTHFUL_CONTROLS == 1
   ; Power and Armor have no penalty in code (Items/magic_rings.asm
   ; MagicRing_CheckForPower / MagicRing_CheckForArmor), so none is shown.
   dw "_____ATK_UP_____"
@@ -194,14 +193,6 @@ if !ENABLE_TRUTHFUL_CONTROLS == 1
   ; up" is not true for every foe (m3 truth README, damage matrix).
   dw "___FIRE_BOMBS___"
   dw "__NO_KNOCKBACK__"
-else
-  dw "ATK_UP__DEF_DOWN"
-  dw "ATK_DOWN__DEF_UP"
-  dw "SLOW_HEART_REGEN"
-  dw "SWD_BEAM_2_HRTS_"
-  dw "_BOMB_DAMAGE_UP_"
-  dw "__NO_KNOCKBACK__"
-endif
 
 Menu_RingsFound:
   dw "NEW_RING_FOUND__"
@@ -658,7 +649,6 @@ Menu_DrawButtonPrompt:
   REP #$30
   ; With !ENABLE_MENU_PAGE_LOOP the "Y:RINGS" half is not drawn: L/R reach
   ; the rings on page 3, and Y no longer opens them.
-if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
   ; Draw each half only when its submenu is unlocked. A hidden half keeps
   ; the frame tiles that Menu_DrawBackground just wrote.
   JSR Menu_CheckJournalUnlocked : BCC .no_log
@@ -675,17 +665,6 @@ if !ENABLE_MENU_PAGE_LOOP == 0
     LDA.w ButtonPromptTXT+$10, X : STA.w $1264, X
     DEX : DEX : BPL .rings_loop
   .no_rings
-endif
-else
-if !ENABLE_MENU_PAGE_LOOP == 1
-  LDX.w #$0E             ; "X:LOG   " only, 8 tiles
-else
-  LDX.w #$1E             ; 16 tiles (32 bytes - 2 = $1E)
-endif
-
-  .loop
-  LDA.w ButtonPromptTXT, X : STA.w $1254, X
-  DEX : DEX : BPL .loop
 endif
 
   SEP #$30               ; Restore 8-bit mode before return

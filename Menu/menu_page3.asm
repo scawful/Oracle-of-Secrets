@@ -153,9 +153,7 @@ if !ENABLE_MENU_PAGE_LOOP == 0
   ; Y without Start or A: page 3, cursor on the rings.
   LDA.b $F4 : AND.b #$50 : CMP.b #$40 : BNE .no_y
   BIT.b $F6 : BMI .no_y                 ; A closes the menu first
-if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
   JSR Menu_CheckRingsUnlocked : BCC .no_y
-endif
     LDA.b #$21 : STA.w MenuScrollLevelH
     REP #$20
     LDA.w #$FFF8 : STA.w MenuScrollHDirection
@@ -348,9 +346,7 @@ endif
 
   ; X: Journal. Its A returns here (Menu_Page3_JournalReturn).
   LDA.b $F6 : BIT.b #$40 : BEQ .no_x
-if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
     JSR Menu_CheckJournalUnlocked : BCC .no_x
-endif
     LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
     REP #$20
     LDA.w #$0000 : STA.l JournalState    ; first page
@@ -797,9 +793,7 @@ endif
     DEX : DEX
   BPL .equip
 
-if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
   JSR Menu_CheckJournalUnlocked : BCC .no_log
-endif
   LDX.w #$08                             ; "X:LOG" = 5 tiles
   .log
     LDA.w .log_txt, X : STA.w $1000+menu_offset(10,19), X

@@ -91,7 +91,6 @@ Menu_DrawTriforceIcons:
   LDX.w #$3534
   LDY.w #$3544
 
-if !ENABLE_MENU_AUDIT_FIXES == 1
   ; Crystals in D1-D7 order (menu audit 2026-09-28). The award ORs
   ; RoomTagPrizeChecks[$040C/2] ($02A1A4, vanilla bytes in oos168.sfc), so
   ; the bits are D6 D1 D5 D7 D2 D4 D3 (Core/sram.asm !Crystal_*). Slots:
@@ -131,42 +130,6 @@ if !ENABLE_MENU_AUDIT_FIXES == 1
     STX.w $136E : INX : STX.w $1370 : DEX
     STY.w $13AE : INY : STY.w $13B0 : DEY
   +
-else
-  LSR : BCC +
-    STX.w $1366 : INX : STX.w $1368 : DEX
-    STY.w $13A6 : INY : STY.w $13A8 : DEY
-  +
-
-  LSR : BCC +
-    STX.w $136A : INX : STX.w $136C : DEX
-    STY.w $13AA : INY : STY.w $13AC : DEY
-  +
-
-  LSR : BCC +
-    STX.w $136E : INX : STX.w $1370 : DEX
-    STY.w $13AE : INY : STY.w $13B0 : DEY
-  +
-
-  LSR : BCC +
-    STX.w $13E4 : INX : STX.w $13E6 : DEX
-    STY.w $1424 : INY : STY.w $1426 : DEY
-  +
-
-  LSR : BCC +
-    STX.w $13E8 : INX : STX.w $13EA : DEX
-    STY.w $1428 : INY : STY.w $142A : DEY
-  +
-
-  LSR : BCC +
-    STX.w $13EC : INX : STX.w $13EE : DEX
-    STY.w $142C : INY : STY.w $142E : DEY
-  +
-
-  LSR : BCC +
-    STX.w $13F0 : INX : STX.w $13F2 : DEX
-    STY.w $1430 : INY : STY.w $1432 : DEY
-  +
-endif
 
   RTS
 }
@@ -616,11 +579,7 @@ Menu_DrawBigKey:
     .locateBigKeyFlag
 
     ASL A : DEX : BPL .locateBigKeyFlag : BCC .dontHaveBigKey
-if !ENABLE_TRUTHFUL_CONTROLS == 1
       JSR Menu_OracleTreasureOwned : LDA $02 : BEQ .noTreasureYet
-else
-      JSR CheckPalaceItemPossession : LDA $02 : BEQ .noTreasureYet
-endif
         SEP #$30
         LDA.b #$7E : STA.b $0A
         REP #$30
@@ -684,7 +643,6 @@ endif
 
 ; =========================================================
 
-if !ENABLE_TRUTHFUL_CONTROLS == 1
 ; Quest page treasure icon: is this dungeon's treasure owned?
 ; Replaces the vanilla palace table below (Eastern = Bow, Desert = Glove, ...),
 ; which does not match Oracle's dungeons. Treasure = the dungeon's big-chest item
@@ -735,7 +693,6 @@ Menu_OracleTreasureOwned:
   .value
   db $03, $00, $01, $01, $00, $01, $01, $01, $02, $01, $01, $01, $01, $02
 }
-endif
 
 ; $06EEB6-$06EEDB LOCAL
 CheckPalaceItemPossession:
@@ -966,12 +923,10 @@ if !ENABLE_ONE_RING == 1
   ; ring is the red bracket on page 3; r21-22 c17-26 keep the frame tiles.
   RTS
 else
-if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
   ; No ring owned: leave the three equipped-ring slots as frame background.
   JSR Menu_CheckRingsUnlocked : BCS .rings_unlocked
     RTS
   .rings_unlocked
-endif
   LDA.l RingSlot1 : AND.w #$00FF : CMP.w #$0001 : BCC .no_attack
     BRA .draw_storms
   .no_attack

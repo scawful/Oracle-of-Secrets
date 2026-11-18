@@ -103,7 +103,6 @@ Sprite_Vasu_Main:
   Vasu_AppraiseRing:
   {
     %PlayAnimation(0,1,20)
-if !ENABLE_TRUTHFUL_CONTROLS == 1
     ; Rings found and not owned yet. Old saves can hold owned bits in
     ; FOUNDRINGS (the appraisal never cleared it), so owned bits do not count.
     LDA.l MAGICRINGS : EOR.b #$FF : AND.l FOUNDRINGS : AND.b #$3F : BNE .tc_found
@@ -128,7 +127,6 @@ if !ENABLE_TRUTHFUL_CONTROLS == 1
     LDA.b #$00 : STA.l FOUNDRINGS
     %GotoAction(3)
     RTS
-endif
 
     ; Check if the player has found any rings to appraise
     REP #$30
@@ -193,11 +191,7 @@ endif
     %PlayAnimation(0,1,24)
      ; "I am Error"
     %ShowSolicitedMessage($0121) : BCC +
-if !ENABLE_TRUTHFUL_CONTROLS == 1
       JSL MagicRing_GrantUnfound
-else
-      JSL GetRandomInt : AND.b #$06 : STA.l FOUNDRINGS
-endif
     +
     RTS
   }

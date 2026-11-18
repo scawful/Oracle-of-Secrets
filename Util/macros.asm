@@ -51,10 +51,6 @@ endif
 !ENABLE_D5_BF_PIT_RESET             = 0
 ; AF transfer-room pit reset; independent of BF and off until private qualification.
 !ENABLE_D5_AF_PIT_RESET             = 0
-; Room-state bit (Dungeons/room_state.asm): saved per-room solved bit plus a
-; per-room mode table from Data/room_state.json. Every room is mode 0, so this
-; changes no gameplay until a room is given a mode.
-!ENABLE_ROOM_STATE_BITS             = 1
 ; Per-dungeon wall object tile patterns (Dungeons/wall_profile_selector.asm);
 ; kit rows/palettes route per room (H3). Default on (scawful 2026-11-10).
 !ENABLE_WALL_PROFILE_SELECTOR       = 1
@@ -98,29 +94,17 @@ endif
 ; New-file Mirror experiment scene before the arrival (Core/Cutscene/experiment.asm).
 ; Requires ORACLE_ARRIVAL_SEQUENCE (asserted in Oracle_main.asm).
 !ENABLE_EXPERIMENT_SCENE            = 1
-; Impa follower: position-triggered hints on the Act I route (Sprites/NPCs/impa_hints.asm).
-!ENABLE_IMPA_FOLLOWER_HINTS         = 1
-; Pause menu: hide/lock the X:LOG (Journal) and Y:RINGS (Ring Box) entries
-; until the Book of Secrets ($7EF34E) / a ring is owned (Menu/*.asm).
-!ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY = 1
 ; Pause menu page 3 "Masks & Rings" (Menu/menu_page3.asm): L (or Y) on Items
 ; scrolls to a page with the five masks and six rings; the cursor equips masks
 ; (as Y items, $0202) and equips/unequips rings; X opens the Journal. Masks
 ; leave the item grid. Needs !ENABLE_RING_SRAM_RELOCATE = 1.
 !ENABLE_MENU_PAGE3                   = 1
-; Part 0 storm: rain overlay, rain sound and dim world map follow the saved
-; storm bit (StoryProgress2 bit 7), set at wake-up, cleared when Link is back
-; on Kalyxo after the Abyss; no rain in the Abyss (Overworld/storm.asm).
-!ENABLE_PART0_STORM                  = 1
 ; Native 2-player PoC: pad-2 Start drops in a second Link (Sprites/Players/player2.asm).
 !ENABLE_NATIVE_2P_POC                = 1
 ; Magic rings save to their own bytes ($7EF3A1-3A6, Core/sram.asm RingSaveBlock)
 ; instead of the legacy addresses that alias SideQuestProgress/2, Pineapples
 ; and RockMeatCount (Items/magic_rings.asm).
 !ENABLE_RING_SRAM_RELOCATE           = 1
-; Eon Owl one-shot: each Abyss Owl appearance happens once; after its talk and
-; fly-away it does not respawn (EonOwlFlags $7EF3A7, Sprites/NPCs/eon_owl.asm).
-!ENABLE_EON_OWL_ONE_SHOT             = 1
 ; Abyss load spawn menu: from GameState 3 an outdoor Abyss load offers
 ; Pyramid / Link's House / Hall of Secrets (message $21B,
 ; Overworld/abyss_spawn_menu.asm).
@@ -188,30 +172,10 @@ endif
 ; the Fishing Rod keeps its cell; no L/R rod switch in play. Ownership byte
 ; PortalRodOwned $7EF3A6 (Core/sram.asm). Needs MENU_PAGE3.
 !ENABLE_PORTAL_ROD_CELL             = 1
-; Pause-menu audit fixes (menu_audit_2026-09-28): A+Y no longer opens the old
-; Ring Box (with page 3 the state $09 code is removed); the Journal clears
-; $0207 when it opens, so L/R turn pages at once; the Quest crystals draw in
-; D1-D7 order.
-!ENABLE_MENU_AUDIT_FIXES            = 1
-;
-; Mask controls (decisions.org "Masks stay Y items; Y transforms, R toggles;
-; Minish is automatic"): with a mask as the Y item, Y or R puts it on; in the
-; form Y runs the form's ability and R changes back; when the Y item stops
-; being the worn mask, Link changes back (Masks/mask_routines.asm).
-!ENABLE_MASK_Y_TRANSFORM            = 1
 ; Minish portal (tile $64): stand still about 1 s to shrink, and again to grow
 ; (charge sparkle while charging); no R. Link must be unmasked to shrink
 ; (Masks/minish_form.asm, Masks/mask_routines.asm).
 !ENABLE_MINISH_AUTO_PORTAL          = 1
-;
-; Truthful controls (M3; Codex menu review, accepted by scawful 2026-09-28):
-; ring text without the penalties the code never applied; the HUD Y box keeps
-; the worn form's mask until the form ends (Zora in water); R toggles the
-; Stone Mask and a menu visit keeps it on; the Quest page treasure icon uses
-; Oracle's dungeon treasures and the chest key gets its own icon; ring grants
-; pick a real unfound ring and Vasu's appraisal clears the found ring.
-; Needs MASK_Y_TRANSFORM and RING_SRAM_RELOCATE.
-!ENABLE_TRUTHFUL_CONTROLS           = 1
 ; Lyra/Sky overlay fix: Overworld_ReloadSubscreenOverlay (ZSCustomOverworld,
 ; $02AF58) skipped the subscreen-overlay table for every area >= $80, so a
 ; reload on a tail map ($A0-$BF) or during Song of Storms rain on a Sky map
@@ -387,10 +351,6 @@ endif
 
 if not(defined("ENABLE_GOLDSTAR_CELL"))
   !ENABLE_GOLDSTAR_CELL = 1
-endif
-
-if not(defined("ENABLE_JOURNAL_DEFERRED"))
-  !ENABLE_JOURNAL_DEFERRED = 1
 endif
 
 if not(defined("ENABLE_EQUIPMENT_MENU"))

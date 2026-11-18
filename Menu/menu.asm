@@ -30,14 +30,11 @@ org $8DDFB2 : LDA.l Menu_ItemIndex, X
 pullpc
 
 ; =========================================================
-; Menu audit fix (a) (!ENABLE_MENU_AUDIT_FIXES), or the page loop: with page 3
-; the old Ring Box (state $09) is reachable only through A+Y on Items (the Y
-; block below overrides A's close). Drop the Y block and the Ring Box code.
+; With page 3 the old Ring Box (state $09) is reachable only through A+Y on Items
+; (the Y block below overrides A's close). Drop the Y block and the Ring Box code.
 !MENU_DROP_RING_BOX = 0
 if !ENABLE_MENU_PAGE3 == 1
-  if !ENABLE_MENU_AUDIT_FIXES == 1 || !ENABLE_MENU_PAGE_LOOP == 1
-    !MENU_DROP_RING_BOX = 1
-  endif
+  !MENU_DROP_RING_BOX = 1
 endif
 
 ; =========================================================
@@ -315,9 +312,7 @@ if !ENABLE_EQUIPMENT_MENU == 0
 endif
     LDA.w $0202 : CMP.b #!MENU_STATE_JOURNAL : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
-if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
         JSR Menu_CheckJournalUnlocked : BCC ++
-endif
         LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
         JSR Menu_DeleteCursor
         REP #$20
@@ -329,9 +324,7 @@ endif
 
     ; X Button: Open Journal from anywhere
     LDA.b $F6 : BIT.b #$40 : BEQ .no_x_journal
-if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
       JSR Menu_CheckJournalUnlocked : BCC .no_x_journal
-endif
       LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
       JSR Menu_DeleteCursor
       REP #$20
@@ -344,9 +337,7 @@ endif
 if !MENU_DROP_RING_BOX == 0
     ; Y Button: Open Ring Box from anywhere
     LDA.b $F4 : BIT.b #$40 : BEQ .no_y_rings
-if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
       JSR Menu_CheckRingsUnlocked : BCC .no_y_rings
-endif
       JSR Menu_DeleteCursor
       JSR Menu_DrawRingBox
       STZ.w $020B
@@ -488,9 +479,7 @@ else
 
   ; X Button: Open Journal
   LDA.b $F6 : BIT.b #$40 : BEQ .no_journal
-if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
     JSR Menu_CheckJournalUnlocked : BCC .no_journal
-endif
     LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
     REP #$20
     LDA.w #$0000 : STA.l JournalState  ; Reset to first page
@@ -1100,9 +1089,7 @@ RingMenu_Controls:
 
   ; X button: Open Journal from ring menu
   LDA.b $F6 : BIT.b #$40 : BEQ .no_x
-if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
     JSR Menu_CheckJournalUnlocked : BCC .no_x
-endif
     LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
     REP #$20
     LDA.w #$0000 : STA.l JournalState
@@ -1191,7 +1178,6 @@ Submenu_Return:
   RTS
 }
 
-if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
 ; =========================================================
 ; LOCKED SUBMENU CHECKS (menu-hide-rings-journal-early)
 ; Both preserve A, X, Y and the M/X widths. Result in carry.
@@ -1217,11 +1203,9 @@ Menu_CheckRingsUnlocked:
 ; Out: C set = unlocked.
 Menu_CheckJournalUnlocked:
 {
-if !ENABLE_JOURNAL_DEFERRED == 1
   ; Journal deferred by scawful, 2026-09-29. All prompts and entry routes
   ; share this check. Keep Book gameplay and existing journal data intact.
   CLC : RTS
-endif
   PHP
   SEP #$20
   PHA
@@ -1232,7 +1216,6 @@ endif
   .unlocked
   PLP : SEC : RTS
 }
-endif
 
 menu_frame: incbin "tilemaps/menu_frame.tilemap"
 ; quest_icons (128 bytes) lives in bank $2E after menu_journal.asm: bank $2D is full.

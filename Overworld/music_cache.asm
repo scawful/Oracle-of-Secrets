@@ -55,10 +55,4 @@ assert read3($02C4A0) == $0040E0 && read3($02C4B1) == $0060C0
 org $02C4A0 : CPX.w #!OverworldMusicLightCount
 org $02C4B1 : CPY.w #!OverworldMusicOtherCount
 
-; The enabled storm tail replaces this instruction later. Diagnostic storm
-; opt-out still needs the separate index80 write at the relocated address.
-if !ENABLE_PART0_STORM == 0
-  assert read4($02C4B8) == $7F5B808F, "Special-area cache initializer moved"
-  org $02C4B8 : STA.l !OverworldMusicCache+!OverworldMusicSpecialIndex
-endif
 pullpc

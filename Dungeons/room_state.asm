@@ -17,7 +17,6 @@
 ;   RoomState_MarkSolved - set the current room's bit.
 ; =========================================================
 
-if !ENABLE_ROOM_STATE_BITS == 1
 
 !RoomStateDungeonMask = $0098C0 ; vanilla DungeonMask, bank $00
 
@@ -246,4 +245,3 @@ RoomState_CodeEnd:
 assert pc() <= $548800, "Room-state code exceeds its bank $54 slot"
 pullpc
 
-endif

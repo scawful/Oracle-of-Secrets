@@ -242,11 +242,7 @@ endif
   REP #$30
 
   ; Check bombs / bombchu / arrows once and skip HexToDecimal if unchanged.
-if !ENABLE_TRUTHFUL_CONTROLS == 1
   JSL HUD_ItemBoxItem_long
-else
-  LDA.l $7E0202 : AND.w #$00FF : TAX
-endif
   CPX.w #$0004 : BEQ .calc_bombs
 if !ENABLE_GOLDSTAR_CELL == 1
   CPX.w #$001C : BEQ .calc_bombchu

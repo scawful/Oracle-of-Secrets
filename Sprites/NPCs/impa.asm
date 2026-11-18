@@ -91,6 +91,4 @@ Zelda_ApproachHero:
 pullpc
 
 ; Position-triggered follower hints (default off; see Util/macros.asm).
-if !ENABLE_IMPA_FOLLOWER_HINTS == 1
   incsrc "impa_hints.asm"
-endif

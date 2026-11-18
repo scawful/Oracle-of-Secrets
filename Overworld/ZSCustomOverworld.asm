@@ -1593,15 +1593,10 @@ ActivateSubScreen:
 
     ; Early story phases only need a rain subscreen when beginning rain is
     ; enabled. Keep this in sync with Overworld_ReloadSubscreenOverlay.
-if !ENABLE_PART0_STORM == 1
     ; Part 0 storm: the saved storm bit (StoryProgress2 bit 7), light world
     ; only, replaces Pool_EnableBeginningRain + GameState < 2
     ; (Overworld/storm.asm). Keeps M/X and X; clobbers A.
     JSL Oracle_Part0Storm_CarryClearIfStorm : BCS .noRain
-else
-    LDA.w Pool_EnableBeginningRain : AND.w #$00FF : BEQ .noRain
-    LDA.l $7EF3C5 : AND.w #$00FF : CMP.w #$0002 : BCS .noRain
-endif
         BRA .turnOn
         
     .noRain
@@ -2421,7 +2416,6 @@ endif
         
     .notMire
 
-if !ENABLE_PART0_STORM == 1
     ; Part 0 storm: rain overlay and rain sound follow the saved storm bit
     ; (StoryProgress2 bit 7, Overworld/storm.asm) instead of GameState < 2.
     ; Light world only; keeps M/X and X (the overlay ID); clobbers A.
@@ -2431,12 +2425,6 @@ if !ENABLE_PART0_STORM == 1
         SEP #$20 ; Set A in 8bit mode.
         LDA.b #$01 : STA.w $012D ; SFX1.01 rain
         REP #$20 ; Set A in 16bit mode.
-else
-    ; Check if we are in the beginning phase, if not, no rain.
-    LDA.l Pool_EnableBeginningRain : AND.w #$00FF : BEQ .noRain
-        LDA.l $7EF3C5 : AND.w #$00FF : CMP.w #$0002 : BCS .noRain
-            LDX.w #$009F
-endif
 
     .noRain
 
@@ -6681,12 +6669,7 @@ Docks_ShouldHideSubscreen:
 
     ; Explicit weather still uses the normal overlay path.
     LDA.l $7EE00E : BNE .keep_overlay ; Song of Storms
-if !ENABLE_PART0_STORM == 1
     JSL Oracle_Part0Storm_CarryClearIfStorm : BCC .keep_overlay
-else
-    LDA.l Pool_EnableBeginningRain : BEQ .hide_overlay
-    LDA.l $7EF3C5 : CMP.b #$02 : BCC .keep_overlay
-endif
 
     .hide_overlay
     PLP

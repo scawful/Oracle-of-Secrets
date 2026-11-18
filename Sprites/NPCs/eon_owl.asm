@@ -63,7 +63,6 @@ Sprite_EonOwl_Long:
   RTL
 }
 
-if !ENABLE_EON_OWL_ONE_SHOT == 1
 ; Arrival graphics: preserve the Zora/Master Sword sheets in slots 1-3.
 ; Area $40 places no Eon Scrub, so replace only slot 0's sheet $16 with the
 ; existing Eon Owl sheet $42. Area $7A shares spriteset $18 and is untouched.
@@ -95,7 +94,6 @@ EonOwl_ArrivalSheet:
   ; Keeps later sprite code at its old addresses (the displaced tail was 8 bytes longer).
   padbyte $EA : fill 8
 }
-endif
 
 ; =========================================================
 
@@ -114,15 +112,12 @@ Sprite_EonOwl_Prep:
     LDA.l Sword : CMP.b #$01 : BCC .continue
        STZ.w SprState, X
     .continue
-if !ENABLE_EON_OWL_ONE_SHOT == 1
     ; Second Abyss appearance ($E6): once per save, no respawn after the
     ; talk and fly-away (EonOwlFlags, Core/sram.asm).
     LDA.l EonOwlFlags : AND.b #!EonOwl_SwordTalked : BEQ .not_talked
       STZ.w SprState, X
     .not_talked
-endif
   .not_intro
-if !ENABLE_EON_OWL_ONE_SHOT == 1
   ; First Abyss appearance: arrival map $40 (sprite $0A placed in the base
   ; ROM; decisions.org "Abyss segment: fix direction"). Before the Pearl
   ; only, and once per save (EonOwl_ArrivalTalked).
@@ -132,7 +127,6 @@ if !ENABLE_EON_OWL_ONE_SHOT == 1
     .no_arrival_owl
       STZ.w SprState, X
   .not_arrival
-endif
   PLB
   RTL
 }
@@ -164,7 +158,6 @@ Sprite_EonOwl_Main:
   EonOwl_IntroDialogue:
   {
     %PlayAnimation(0,1,16)
-if !ENABLE_EON_OWL_ONE_SHOT == 1
     ; First appearance (arrival map $40): message $1FA points to the Shrine
     ; of Origins. Marked done now, so the Owl does not come back.
     LDA.w AreaIndex : CMP.b #$40 : BNE .not_arrival_owl
@@ -177,11 +170,8 @@ if !ENABLE_EON_OWL_ONE_SHOT == 1
     LDA.w AreaIndex : CMP.b #$50 : BNE .not_sword_owl
       LDA.l EonOwlFlags : ORA.b #!EonOwl_SwordTalked : STA.l EonOwlFlags
     .not_sword_owl
-endif
     %ShowUnconditionalMessage($00E6)
-if !ENABLE_EON_OWL_ONE_SHOT == 1
     .message_shown
-endif
     LDA.b #$C0 : STA.w SprTimerA, X
     %GotoAction(2)
     RTS
@@ -310,17 +300,13 @@ Sprite_EonOwl_Draw:
 
   PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
   INY
-if !ENABLE_EON_OWL_ONE_SHOT == 1
   LDA.w AreaIndex : CMP.b #$40 : BNE .usual_sheet
   LDA.w $0AA3 : CMP.b #$18 : BNE .usual_sheet
     LDA .chr, X : AND.b #$3F ; arrival sheet $42 is in slot 0, not slot 3
     BRA .store_chr
   .usual_sheet
-endif
   LDA .chr, X
-if !ENABLE_EON_OWL_ONE_SHOT == 1
   .store_chr
-endif
   STA ($90), Y
   INY
   LDA .properties, X : STA ($90), Y

@@ -234,12 +234,8 @@ Sprite_Farore_Main:
     JSL Sprite_MoveVert
 
     LDA #$02 : STA $7EF3C5   ; (0 - intro, 1 - pendants, 2 - crystals)
-if !ENABLE_PART0_STORM == 1
     ; Part 0 storm: rain and rain sound continue through this beat and the
     ; Abyss; the storm ends when Link is back on Kalyxo (Overworld/storm.asm).
-else
-    LDA #$05 : STA $012D ; turn off rain sound
-endif
     LDA #$01 : STA $B6 ; Set Story State
     JSL Sprite_LoadGfxProperties
 

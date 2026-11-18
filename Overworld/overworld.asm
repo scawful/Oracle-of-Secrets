@@ -159,9 +159,7 @@ org $06F962 : db $90       ; snitch guard death song: BNE -> BCC (GameState >= 2
 endif
 
 pullpc
-if !ENABLE_PART0_STORM == 1
   incsrc "Overworld/storm.asm"
-endif
   incsrc "Overworld/lupo_pad_gate.asm"
 
 LoadOverworldPitAreas:

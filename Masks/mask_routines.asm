@@ -339,7 +339,6 @@ if !ENABLE_MASK_R_BINDING == 1
   ; Menu selection changes the binding, never the live form/cape/dive.
   RTL
 endif
-if !ENABLE_TRUTHFUL_CONTROLS == 1
   ; Stone Mask = vanilla Magic Cape ($0303/$0304 = $13, $55 = 1). It stays on
   ; through the menu while it is still the Y item ($0202 = $17). If the Y item
   ; changed, take it off with the poof and sound (Menu_Exit sets $0304 = $0303,
@@ -352,35 +351,9 @@ if !ENABLE_TRUTHFUL_CONTROLS == 1
   .clear_55
   STZ.b $55
   .keep_55
-else
-  STZ.b $55
-endif
-if !ENABLE_MASK_Y_TRANSFORM == 1
   ; Menu exit. MaskControl_CheckYItem (Link_HandleYItem hook) changes Link back
   ; once play resumes, and only when the Y item is no longer the worn mask.
   RTL
-else
-  LDA.w !CurrentMask : BEQ .no_transform
-    CMP.b #$01 : BEQ .check_item_slot
-    CMP.b #$02 : BEQ .no_transform
-    CMP.b #$03 : BEQ .check_item_slot
-    CMP.b #$04 : BEQ .check_item_slot
-    CMP.b #$05 : BEQ .no_transform
-    CMP.b #$06 : BEQ .gbc_form
-    CMP.b #$07 : BEQ .moosh_form
-
-  .check_item_slot
-  LDA.w $0202 : SEC : SBC.b #$13 : BEQ .no_transform
-
-  .transform
-  JSL PlayerTransform
-  JSL ResetToLinkGraphics
-
-  .gbc_form
-  .no_transform
-  .moosh_form
-  RTL
-endif
 }
 
 ; =========================================================
@@ -427,7 +400,6 @@ LinkItem_CheckForSwordSwing_Masks:
 ; A = Mask ID
 ; Carry clear = no transform press/cant use mask
 
-if !ENABLE_MASK_Y_TRANSFORM == 1
 ; Called every frame by the Y item handler of a mask (Deku, Zora, Wolf, Bunny)
 ; with A = that mask's form ID (1-4). The handler runs the form's own Y ability
 ; before this call; this routine only puts the mask on or takes it off.
@@ -508,7 +480,6 @@ MaskInput_NewY:
   CLC : RTS
 }
 
-if !ENABLE_TRUTHFUL_CONTROLS == 1
 ; Stone Mask ($0202 = $17) is the vanilla Magic Cape (LinkItem_Cape, $0303 =
 ; $13): Y puts it on and takes it off. R now does the same, by turning a new R
 ; press into a new Y press for LinkItem_Cape this frame (same magic check,
@@ -555,7 +526,6 @@ StoneMask_TakeOff:
   PLY : PLX
   RTL
 }
-endif
 
 ; Link_HandleYItem entry hook ($079B0E), every frame in LinkState_Default.
 ; When Link wears a mask form (1-4) and the Y item ($0202) is no longer that
@@ -569,9 +539,7 @@ MaskControl_CheckYItem:
 if !ENABLE_MASK_R_BINDING == 1
   JML MaskBinding_Tick
 endif
-if !ENABLE_TRUTHFUL_CONTROLS == 1
   JSR StoneMask_CheckR
-endif
   LDA.w !CurrentMask : BEQ .done
 if !ENABLE_HORSE_FORM == 1
   CMP.b #$09 : BNE +
@@ -602,9 +570,7 @@ endif
     ; Link_HandleAPress may already have set a new state this frame.
     JSL PlayerTransform
     JSL ResetToLinkGraphics
-if !ENABLE_TRUTHFUL_CONTROLS == 1
     JSL HUD_RefreshLong                  ; the Y box showed the form until now
-endif
   .done
   LDA.b $3C : BNE .sword
     LDA.b #$09
@@ -623,41 +589,6 @@ org $079B0E ; @hook module=Masks name=MaskControl_CheckYItem kind=jsl target=Mas
 assert pc() == $079B12
 pullpc
 
-else
-Link_TransformMask:
-{
-  PHB : PHK : PLB
-  PHA ; save mask ID
-  JSL CheckNewRButtonPress : BCS .press
-    PLA : PLB : CLC : RTL
-  .press
-    LDA $6C : BNE .return   ; in a doorway
-    LDA $0FFC : BNE .return ; can't open menu
-
-    JSL PlayerTransform
-    PLA ; restore mask ID
-    TAY
-    CPY !CurrentMask : BEQ .unequip ; check if mask is on
-      STA !CurrentMask : TAX
-      LDA .mask_gfx, X : STA $BC ; set the mask gfx
-      JSL Palette_ArmorAndGloves ; set the palette
-      ; STA $02F5                  ; Somaria platform flag, no dash
-      PLB : CLC : RTL
-
-    .unequip
-    STZ $5D
-    STZ $02F5
-
-    JSL ResetToLinkGraphics
-    PLB : CLC : RTL
-
-  .return
-  PLA : PLB : CLC : RTL
-
-  .mask_gfx
-    db $00, $35, $36, $38, $37, $39, $3A, $3B
-}
-endif
 
 Link_TransformMoosh:
 {

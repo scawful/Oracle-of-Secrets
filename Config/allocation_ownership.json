@@ -20,7 +20,7 @@
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "90c133bb2a4d4b03889f3bea1947308ee2b75ae122146b3b09329253b4b3a290"
+      "sha256": "ab5646a0d0da7e015c5b0d105f3e38fecd9261a1a04708f05600ed2716a43bba"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -50,7 +50,7 @@
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
       "path": "Items/magic_rings.asm",
-      "sha256": "773f194b103fa7374fbed22bba0522f7e4b8190e658df7ff123a26553b66a14b"
+      "sha256": "2a2589684603968f2877d6a9cf07aaa6f27793717f78dc17f7574844042ec743"
     },
     "pending_rc:Core/sram.asm": {
       "source_set": "pending_rc",
@@ -75,7 +75,7 @@
     "shared:Overworld/ZSCustomOverworld.asm": {
       "source_set": "shared",
       "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "a6e9658c7a9d1b31fcf4166d4ce97a101eb38558524765aea660426d70458e24"
+      "sha256": "3109359a355c2b8dbdc8be41f3871ea40691f09726ccdffcf3f98fe880b205fc"
     },
     "shared:Sprites/Objects/data/minecart_tracks.asm": {
       "source_set": "shared",
@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "85b0beb858cb4baaabea435eb98ad3ebf4b9a9ceccaab1441ff01e8c2ffcd08e"
+      "sha256": "ac4ce2580882ab6f3c418887d393896ec09cddf3d04d6ae697633fd9244f3dbb"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "9ddcfae1b8b9513f277bba2591e8a614ec97574371e56ae1210a33ac760bb42b"
+      "sha256": "1decfc51b722d16c1025ca59cfd6a72e836bc2f687080f70ef408017d759767e"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -115,7 +115,7 @@
     "shared:Overworld/music_cache.asm": {
       "source_set": "shared",
       "path": "Overworld/music_cache.asm",
-      "sha256": "675fb2f040234591dba29f15ae26d7ceb4567b3ce357526eb88beea25c3e3de4"
+      "sha256": "ce5c71c082f0765a3ea439cb20dbb0a9ffc36f10e9128477aeb04d1c126a4dd7"
     },
     "shared:Overworld/storm.asm": {
       "source_set": "shared",
@@ -125,12 +125,12 @@
     "shared:Overworld/overworld.asm": {
       "source_set": "shared",
       "path": "Overworld/overworld.asm",
-      "sha256": "00e64a25e46dcfc9f99e5faf36375dff04bc47832c557bab5f910906ba2c412a"
+      "sha256": "5d876a8d96075be345889208443d31d83ce2a8f88b29e42d686e33f85fcd9c28"
     },
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
       "path": "Menu/menu_hud.asm",
-      "sha256": "bae1901c20f8aaea2a80aaffb2e3939a6b6fd9cea2cea5936c43489a62856915"
+      "sha256": "0084f1329c652e7e6b1bdbdce6af65a8b1dd0dabed92360b6d4a47e07a7a96d4"
     },
     "shared:Menu/menu_map_travel.asm": {
       "source_set": "shared",
@@ -215,7 +215,7 @@
     "shared:Oracle_main.asm": {
       "source_set": "shared",
       "path": "Oracle_main.asm",
-      "sha256": "736809ac196891141e1879d44b64597fd9707581f8c3b25243c5c9ad5afa2c9e"
+      "sha256": "0389c8550ee4645260175bf5830d753e61215f1f67b14b3671c2eb3517e384a1"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
@@ -385,7 +385,7 @@
     "shared:Dungeons/room_state.asm": {
       "source_set": "shared",
       "path": "Dungeons/room_state.asm",
-      "sha256": "dfcbce9908a9299db0a06345a86c66a199b201d3697e7a0dc781ac316decdc9d"
+      "sha256": "7db3254f110aec3df5c4a61837224cd7d8da5ec0d68da4fee6d640b63a75f5ef"
     },
     "shared:Data/room_state.json": {
       "source_set": "shared",
@@ -2298,9 +2298,7 @@
       "base": 8320019,
       "size": 37,
       "status": "shared",
-      "condition": {
-        "ENABLE_ROOM_STATE_BITS": 1
-      },
+      "condition": {},
       "lifetime": "Save file; native five-page save and checksum block.",
       "reset": "Vanilla new-file initialization zeros it. RoomState_OnShuttersOpened sets the bit for mode-2 rooms when their tag opens the shutters; mode-1 rooms set it through RoomState_MarkSolved. Nothing clears a bit. No migration: the range was the free FreeBlock_Dreams prefix, so existing saves hold 0 (unsolved).",
       "save": "Byte = room >> 3, mask = $01 << (room & 7). SaveGameFile copies the F300 page to primary and backup; checksum covers offsets 0000-04FD. FreeBlock_Dreams moved to $7EF438 (103 bytes).",
@@ -2446,9 +2444,7 @@
       "base": 5537792,
       "size": 2048,
       "status": "proposed",
-      "condition": {
-        "ENABLE_ROOM_STATE_BITS": 1
-      },
+      "condition": {},
       "lifetime": "Compiled ROM code and a 296-byte per-room mode table. Must end at or before $548800 (asserted). Bank $54 had no orgs and was zero in the base and live project ROMs on 2026-11-17.",
       "reset": "No runtime ROM writes.",
       "save": "Reads and writes RoomSolvedBits ($7EF413, 37 bytes); see that claim.",

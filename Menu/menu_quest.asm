@@ -50,9 +50,7 @@ endif
     RTS
 .no_lr
   LDA.b $F6 : BIT.b #$40 : BEQ .no_journal
-if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
     JSR Menu_CheckJournalUnlocked : BCC .no_journal
-endif
     LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
     REP #$20
     LDA.w #$0000 : STA.l JournalState

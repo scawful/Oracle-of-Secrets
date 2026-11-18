@@ -220,7 +220,7 @@ class BombchuReceiptTests(unittest.TestCase):
         cls.new_grant = grant(current)
         menu = (ROOT/'Menu/menu_draw.asm').read_text()
         start = menu.index('Menu_OracleTreasureOwned:\n')
-        menu = menu[start:menu.index('\nendif',start)]
+        menu = menu[start:menu.index('\n}\n',start)+3]
         cls.images = {}
         for enabled in (0,1):
             asm = (f'lorom\n!ENABLE_GOLDSTAR_CELL = {enabled}\n!BOMBCHU_AMMO_MAX = 20\n'

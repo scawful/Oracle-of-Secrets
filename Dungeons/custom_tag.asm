@@ -156,12 +156,10 @@ HouseTag_Main:
     ; Legacy vanilla house flag (no uncle NPC in OOS).
     LDA $7EF3C6 : ORA.b #!Story2_LegacyHouseFlag : STA $7EF3C6
 
-if !ENABLE_PART0_STORM == 1
     ; Part 0 storm starts with the new game (Overworld/storm.asm). Runs in
     ; both the arrival and the flags-off intro; cleared when Link is back on
     ; Kalyxo after the Abyss.
     LDA.l StoryProgress2 : ORA.b #!Story2_Part0Storm : STA.l StoryProgress2
-endif
 
     ; Set the game mode (legacy mapping; see Core/sram.asm for current values)
     LDA #$00 : STA GameState
