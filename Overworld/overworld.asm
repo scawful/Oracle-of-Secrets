@@ -175,10 +175,15 @@ LoadOverworldPitAreas:
   RTL
 }
 
-; Overworld/lyra_overlay_fix.asm is included from Items/all_items.asm
-; (bank $2B): bank $34 is full once the dual-item binding is on.
+; Returned from Bank $2B (Items/all_items.asm) once custom_gfx DMA blobs moved to $57/$59.
+incsrc "Overworld/richard_quest.asm"
+if !SPECIAL_OVERWORLD_NATIVE == 1
+incsrc "Overworld/lyra_edge_guard.asm"
+endif
+incsrc "Overworld/village_bar_exit.asm"
 
 Overworld_Bank34CodeEnd:
+print "Bank34 Free Space: ", dec($34FFFF-pc()), " bytes"
 assert pc() <= $34FFFF, "Overworld code exceeds bank $34"
 
 incsrc "Overworld/great_sea_music.asm"

@@ -353,9 +353,7 @@ endif
 ; MinecartLong; reads only low-WRAM sprite tables (mirrored), so it runs from here.
 %Goron88_EmitSharedStopOccupancy()
 
-; Richard quest: bank $34 is full. Every JSL entry sets DB with PHK : PLB and
-; hooks use JSL, so the file runs from this bank unchanged.
-incsrc "Overworld/richard_quest.asm"
+; Overworld/richard_quest.asm returned to Bank $34 (Overworld/overworld.asm).
 
 ; Room $78 Lanmola surface/stagger states (Hammer opening). Sprite banks
 ; $30/$31 are full with D8 Farore follow on; every entry is long and every
@@ -391,20 +389,9 @@ if !ENABLE_MENU_MAP_TRAVEL == 1
 incsrc "Menu/menu_cursor_flow.asm"
 endif
 
-; Lyra edge guard: bank $34 is full. JSL entry only, exits by RTL, operands
-; are direct page, long or immediate, so it runs from here. Kept last in the
-; bank $2B stream so adding it moves no other routine.
-if !SPECIAL_OVERWORLD_NATIVE == 1
-incsrc "Overworld/lyra_edge_guard.asm"
-endif
-
 ; Cached HUD update (Menu bank $2E has <64 bytes before D8 boss slot $2EB800).
 if !DISABLE_MENU == 0
 incsrc "Menu/menu_hud_cache.asm"
-endif
-
-if !DISABLE_OVERWORLD == 0
-incsrc "Overworld/village_bar_exit.asm"
 endif
 
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.

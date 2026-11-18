@@ -57,7 +57,12 @@ OracleCredits_ExitHook:
     .next_room_check
     DEX : DEX
     CMP.l $02DD8A, X ; UnderworldExitData room id
-    BNE .next_room_check
+    BEQ .found_exit
+    CPX.b #$00 : BNE .next_room_check
+    ; Room has no row in UnderworldExitData: fall back to cached entrance
+    ; properties ($02E4CE) instead of wrapping 8-bit X ($00 -> $FE).
+    JML $02E4CE
+    .found_exit
     JML $02E4DD
 
   .credits

@@ -38,18 +38,12 @@ ApplyGraphics1:
 {
   %ApplyGraphicsSheet(BoatBitmap, $2C00)
   RTS
-
-  BoatBitmap:
-  incbin gfx/boat.bin
 }
 
 ApplyGraphics2:
 {
   %ApplyGraphicsSheet(AdditionalBitmap, $5000)
   RTS
-
-  AdditionalBitmap:
-  incbin gfx/boat2.bin
 }
 
 ApplyKorokSpriteSheets:
@@ -68,7 +62,24 @@ ApplyKorokSpriteSheets:
   SEP #$30
 
   RTL
-
-  KorokSpriteSheets:
-  incbin gfx/korok.bin
 }
+
+; Relocated from Bank $34 Overworld code stream to dedicated upper asset banks
+; (DMA-only via ApplyGraphics1/2 and ApplyKorokSpriteSheets; saves 24,576 B in Bank $34).
+pushpc
+org $57C000
+OverworldBoatGfx_DataStart:
+BoatBitmap:
+  incbin gfx/boat.bin
+AdditionalBitmap:
+  incbin gfx/boat2.bin
+OverworldBoatGfx_DataEnd:
+assert pc() <= $580000, "OverworldBoatGfx overflowed $57C000-$57FFFF"
+
+org $59C000
+KorokSpriteSheets_DataStart:
+KorokSpriteSheets:
+  incbin gfx/korok.bin
+KorokSpriteSheets_DataEnd:
+assert pc() <= $59E000, "KorokSpriteSheets overflowed $59C000-$59DFFF"
+pullpc

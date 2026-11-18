@@ -252,52 +252,63 @@ FindEntrance:
   .tile_fail
   DEX
   DEX
-  BMI .no_entrance_found
+  BMI .check_expanded
 
   CMP.l Overworld_EntranceTileIndex, X : BNE .tile_fail
 
   LDA.w $040A : CMP.l Overworld_EntranceScreens, X : BNE .next_check
 
-  LDA.l $7EF3D3 : AND.w #$00FF : BNE .entry_allowed
+  JSR .CheckFollowerAllowed : BCC +
+    BRL Overworld_ForbidEntry
+  +
 
-  LDA.w $02DA : AND.w #$00FF : CMP.w #$0001 : BEQ Overworld_ForbidEntry
-
-  LDA.l $7EF3CC : AND.w #$00FF : BEQ .entry_allowed
-
-  ; FOLLOWER 05
-  CMP.w #$05 : BEQ .entry_allowed
-
-  ; FOLLOWER 0E
-  CMP.w #$0E : BEQ .entry_allowed
-
-  ; FOLLOWER 01
-  CMP.w #$01 : BEQ .entry_allowed
-
-  ; FOLLOWER 07
-  CMP.w #$07 : BEQ .check_single_entrance
-
-  CMP.w #$08 ; FOLLOWER 08
-
-  BNE Overworld_ForbidEntry
-
-  .check_single_entrance
-  CPX.w #$0076 : BCC Overworld_ForbidEntry
-
-
-  .entry_allowed
   TXA
   LSR A
   TAX
 
   SEP #$20
+  LDA.l Overworld_Entrance_ID, X
+  BRA .commit_entrance_id
 
+  .check_expanded
+  LDX.w #$00FE
+
+  .next_expanded
+  LDA.b $00
+
+  .expanded_tile_fail
+  DEX
+  DEX
+  BMI .no_entrance_found
+
+  CMP.l Overworld_ExpandedEntranceTileIndex, X : BNE .expanded_tile_fail
+
+  LDA.w $040A : CMP.l Overworld_ExpandedEntranceScreens, X : BNE .next_expanded
+
+  ; Expanded rows behave like single-entrance rows (>= $0076) for follower checks.
+  PHX
+  LDX.w #$0076
+  JSR .CheckFollowerAllowed
+  PLX
+  BCC +
+    BRL Overworld_ForbidEntry
+  +
+
+  TXA
+  LSR A
+  TAX
+
+  SEP #$20
+  LDA.l Overworld_ExpandedEntranceID, X
+
+  .commit_entrance_id
+  PHA
 if !ENABLE_HORSE_FORM == 1
   LDA.w $02B2 : CMP.b #$09 : BNE +
     JSL HorseForm_SilentDismount
   +
 endif
-
-  LDA.l Overworld_Entrance_ID,X
+  PLA
   STA.w $010E
 
   STZ.b $4D : STZ.b $46
@@ -312,7 +323,54 @@ endif
   SEP #$30
 
   RTL
+
+  ; Checks whether follower state permits entering (X = word offset, M=16 X=16).
+  ; Returns Carry clear if allowed, Carry set if entry must be forbidden.
+  .CheckFollowerAllowed
+  LDA.l $7EF3D3 : AND.w #$00FF : BNE .follower_ok
+
+  LDA.w $02DA : AND.w #$00FF : CMP.w #$0001 : BEQ .follower_deny
+
+  LDA.l $7EF3CC : AND.w #$00FF : BEQ .follower_ok
+
+  ; FOLLOWER 05 / 0E / 01
+  CMP.w #$05 : BEQ .follower_ok
+  CMP.w #$0E : BEQ .follower_ok
+  CMP.w #$01 : BEQ .follower_ok
+
+  ; FOLLOWER 07 / 08 (single-entrance gate for rows >= $0076)
+  CMP.w #$07 : BEQ .check_single_entrance
+  CMP.w #$08 : BNE .follower_deny
+
+  .check_single_entrance
+  CPX.w #$0076 : BCC .follower_deny
+
+  .follower_ok
+  CLC
+  RTS
+
+  .follower_deny
+  SEC
+  RTS
 }
+
+; Expanded overworld entrance overflow (rows 129..255; total capacity 256 alongside
+; the 129 vanilla editor-owned rows at $1B:B96F/$1B:BA71/$1B:BB73). $FFFF tile index
+; indicates an unused slot. Allocated in Bank $5E ($5E:8000-$5E:82FF).
+pushpc
+org $5E8000
+Overworld_ExpandedEntrances_Start:
+Overworld_ExpandedEntranceScreens:
+  fillbyte $FF : fill 256
+assert pc() == $5E8100, "Overworld_ExpandedEntranceScreens must end at $5E8100"
+Overworld_ExpandedEntranceTileIndex:
+  fillbyte $FF : fill 256
+assert pc() == $5E8200, "Overworld_ExpandedEntranceTileIndex must end at $5E8200"
+Overworld_ExpandedEntranceID:
+  fillbyte $FF : fill 256
+assert pc() == $5E8300, "Overworld_ExpandedEntranceID must end at $5E8300"
+Overworld_ExpandedEntrances_End:
+pullpc
 
 ; Open-door art keyed by the closed map16 pair at $7E2000,X / $7E2002,X.
 ; Entry (.open_door) and the overworld load after an exit ($0696) share it.

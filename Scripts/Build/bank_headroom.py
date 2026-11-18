@@ -16,7 +16,7 @@ import re
 import sys
 
 BANKS = ("30", "31", "32")
-REPORT_BANKS = ("2B", "2C", "2D")
+REPORT_BANKS = ("2B", "2C", "2D", "34")
 WARN_BELOW = 512
 FAIL_BELOW = 64
 LINE = re.compile(r"^Bank([0-9A-Fa-f]{2}) Free Space: (-?\d+) bytes\s*$")

@@ -125,7 +125,7 @@
     "shared:Overworld/overworld.asm": {
       "source_set": "shared",
       "path": "Overworld/overworld.asm",
-      "sha256": "5d876a8d96075be345889208443d31d83ce2a8f88b29e42d686e33f85fcd9c28"
+      "sha256": "5ce1e67b8a258be135b7f8b042bd74bf80534ab3296d5ba63622551b0d53b283"
     },
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
@@ -205,7 +205,7 @@
     "shared:Overworld/custom_gfx.asm": {
       "source_set": "shared",
       "path": "Overworld/custom_gfx.asm",
-      "sha256": "ea924a62ff5f9a86d38bf9ba7870df25a086fb35906baa23f2f600250a268d40"
+      "sha256": "c518e294587370f2950b19b28710ac7f99139a892825a8e6f8ac1d7200e8b3b1"
     },
     "shared:Overworld/special_overworld_graphics.asm": {
       "source_set": "shared",
@@ -365,7 +365,7 @@
     "shared:Overworld/entrances.asm": {
       "source_set": "shared",
       "path": "Overworld/entrances.asm",
-      "sha256": "4c5abb6c75c5b174357c5c9e528138ed4dbfe2f8d397b823ecaa13d7d1560497"
+      "sha256": "ff8a878ef916d241b8ab59d0793249ab50cd9fa94f5640ade29b120350711a33"
     },
     "shared:Masks/horse_ground_clearance.asm": {
       "source_set": "shared",
@@ -375,7 +375,7 @@
     "shared:Items/all_items.asm": {
       "source_set": "shared",
       "path": "Items/all_items.asm",
-      "sha256": "c0e03eb3610a534588e2276f6910401f05cffe1ef0e19ffaba793f3a4d2559f6"
+      "sha256": "6a80cc97b28c2b97005d60d01a81d0416b4063ce5115f57502000dea16f210f7"
     },
     "shared:Masks/horse_park_anywhere.asm": {
       "source_set": "shared",
@@ -436,6 +436,26 @@
       "source_set": "shared",
       "path": "Sprites/Bosses/kydreeok.asm",
       "sha256": "0bc38c5bf7b82732432305c496dcab245db975075137d82b859d30431d9674c5"
+    },
+    "shared:Overworld/credits_scenes.asm": {
+      "source_set": "shared",
+      "path": "Overworld/credits_scenes.asm",
+      "sha256": "b4901fc71cd9a810253e2a64c877c2e6669a2f43388c3e72d74695f9f312c00d"
+    },
+    "shared:Overworld/richard_quest.asm": {
+      "source_set": "shared",
+      "path": "Overworld/richard_quest.asm",
+      "sha256": "eb4ba78f608bd894965d41a151179dedbbcd6f86a83a0dcad287e525bb0626b9"
+    },
+    "shared:Overworld/lyra_edge_guard.asm": {
+      "source_set": "shared",
+      "path": "Overworld/lyra_edge_guard.asm",
+      "sha256": "4312a362b50346a998b4a20b863eedf53a5378634d06ca7b6351eefc4ed78adc"
+    },
+    "shared:Overworld/village_bar_exit.asm": {
+      "source_set": "shared",
+      "path": "Overworld/village_bar_exit.asm",
+      "sha256": "a311a6585be2ffbfd16d9d8b8b4fa01cb1c5160158c86ee9cc9e17338089f9d3"
     }
   },
   "claims": [
@@ -3457,6 +3477,78 @@
         "org $578000",
         "KydreeokGraphics_DataStart:",
         "KydreeokGraphics_DataEnd:"
+      ]
+    },
+    {
+      "id": "overworld_boat_raw_graphics_bank57",
+      "owner": "Dragon Ship raw 4bpp DMA graphics relocated from Overworld Bank $34",
+      "space": "snes_rom",
+      "base": 5750784,
+      "size": 16384,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Read-only 24-bit DMA source tiles ($57C000 BoatBitmap boat.bin 8,192 B, $57E000 AdditionalBitmap boat2.bin 8,192 B).",
+      "reset": "Build owns this slot after KydreeokGraphics ($578000-$57BFFF); no runtime ROM writes.",
+      "save": "No SRAM or save-buffer impact.",
+      "provenance": [
+        "shared:Overworld/custom_gfx.asm",
+        "shared:Overworld/overworld.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "org $57C000",
+        "OverworldBoatGfx_DataStart:",
+        "OverworldBoatGfx_DataEnd:"
+      ]
+    },
+    {
+      "id": "korok_raw_graphics_bank59",
+      "owner": "Korok raw 4bpp DMA sprite sheets relocated from Overworld Bank $34",
+      "space": "snes_rom",
+      "base": 5881856,
+      "size": 8192,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Read-only 24-bit DMA source tiles ($59C000-$59DFFF KorokSpriteSheets korok.bin 8,192 B) in upper Bank $59 after file_select ($598000-$59AA2D).",
+      "reset": "Build owns this slot; no runtime ROM writes.",
+      "save": "No SRAM or save-buffer impact.",
+      "provenance": [
+        "shared:Overworld/custom_gfx.asm",
+        "shared:Overworld/overworld.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "org $59C000",
+        "KorokSpriteSheets_DataStart:",
+        "KorokSpriteSheets_DataEnd:"
+      ]
+    },
+    {
+      "id": "overworld_expanded_entrances_bank5e",
+      "owner": "Expanded Overworld entrance overflow tables (rows 129-255 alongside 129 vanilla rows at $1BB96F)",
+      "space": "snes_rom",
+      "base": 6193152,
+      "size": 768,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Read-only 256-entry capacity overflow in $5E8000-$5E82FF: Screens ($5E8000, 256 B $FF-filled), TileIndex ($5E8100, 256 B $FF-filled), EntranceID ($5E8200, 256 B $FF-filled).",
+      "reset": "Build owns this region; scanned by FindEntrance after vanilla rows 0-128 exhaust without matching.",
+      "save": "No SRAM changes; unused rows carry $FFFF tile index so normal gameplay never matches.",
+      "provenance": [
+        "shared:Overworld/entrances.asm",
+        "shared:Overworld/overworld.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "org $5E8000",
+        "Overworld_ExpandedEntrances_Start:",
+        "Overworld_ExpandedEntrances_End:"
       ]
     }
   ],
