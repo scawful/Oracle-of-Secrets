@@ -149,9 +149,10 @@ Sprite_BeanVendor_Main:
         LDA.w SprYH, X : STA $03
         LDA.w SprXH, X : STA $01
         LDA.b #$07
-        JSL   Sprite_SpawnDynamically
+        JSL   Sprite_SpawnDynamically : BMI .no_bean_slot
         JSL   Sprite_SetSpawnedCoords
         LDA.b #$01 : STA.w SprAction, Y
+      .no_bean_slot
 
         ; TODO: Set a flag that says you've got the magic bean
         %ShowUnconditionalMessage($145)

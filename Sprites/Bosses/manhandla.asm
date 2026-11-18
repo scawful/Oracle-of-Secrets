@@ -810,7 +810,7 @@ SpawnLeftManhandlaHead:
     STA.w SprAction, Y
     LDA.b #$14 : STA.w SprHealth, Y
     LDA.b #$90 : STA.w SprTileDie, Y
-    LDA.w SprGfxProps : ORA.b #$80 : STA.w SprGfxProps, Y
+    LDA.w SprGfxProps, X : ORA.b #$80 : STA.w SprGfxProps, Y
     TYX
     STZ.w SprYRound, X
     STZ.w SprXRound, X
@@ -830,7 +830,7 @@ SpawnRightManhandlaHead:
     STA.w SprSubtype, Y
     LDA.b #$14 : STA.w SprHealth, Y
     LDA.b #$90 : STA.w SprTileDie, Y
-    LDA.w SprGfxProps : AND.b #$80 : STA.w SprGfxProps, Y
+    LDA.w SprGfxProps, X : AND.b #$80 : STA.w SprGfxProps, Y
     TYX
     STZ.w SprYRound, X
     STZ.w SprXRound, X
@@ -850,7 +850,7 @@ SpawnCenterMandhandlaHead:
     STA.w SprSubtype, Y
     LDA.b #$14 : STA.w SprHealth, Y
     LDA.b #$90 : STA.w SprTileDie, Y
-    LDA.w SprGfxProps : AND.b #$80 : STA.w SprGfxProps, Y
+    LDA.w SprGfxProps, X : AND.b #$80 : STA.w SprGfxProps, Y
     TYX
     STZ.w SprYRound, X
     STZ.w SprXRound, X

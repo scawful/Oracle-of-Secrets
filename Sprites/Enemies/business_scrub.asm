@@ -66,7 +66,7 @@ Sprite_BusinessScrub_Prep:
   JMP +
   .pea_shot
     LDA.b #$06 : STA.w SprAction, X ; Pea Shot State
-    LDA.b #$20 : STA.b SprPrize, X
+    LDA.b #$20 : STA.w SprPrize, X
   +
   PLB
   RTL
