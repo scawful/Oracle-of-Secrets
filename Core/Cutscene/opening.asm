@@ -1,10 +1,10 @@
 ; =========================================================
 ; Opening experiments (Docs/Planning/RC_MASTER_PLAN.md section 3)
 ;
-; Included from Oracle_main.asm only when !ENABLE_CUTSCENE_FRAMEWORK is 1.
+; Included from Oracle_main.asm.
 ; Plan and evidence: Docs/Planning/Plans/intro_plan_2026-09-24.md
 ;
-; Oracle arrival (!ENABLE_ORACLE_ARRIVAL_SEQUENCE)
+; Oracle arrival
 ;   New file, first load of Link's house (room $104) with Link tucked into
 ;   bed: before the iris opens, Link spins down over black while the
 ;   telepathic plea "Accept our quest" (message $1F) plays. Then the screen
@@ -58,8 +58,6 @@ Arrival_Next   = $7FF313 ; state that follows Arrival_HoldBlack
 ; Experiment scene (experiment.asm): Exp_Done holds this value between the
 ; scene's reload and the arrival, so the gate starts the arrival that time.
 !ExpDoneMarker = $5A
-
-if !ENABLE_ORACLE_ARRIVAL_SEQUENCE == 1
 
 pushpc
 ; Module $0C (vanilla Module0C_Unused, never selected) runs the arrival.
@@ -384,5 +382,3 @@ if !ENABLE_KALYXO_BOAT == 1
 endif
 assert pc() <= $3AE000, "Opening arrival code crossed $3AE000"
 pullpc
-
-endif

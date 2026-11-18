@@ -67,8 +67,6 @@ if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
   assert !SPECIAL_OVERWORLD_NATIVE == 1, "Native palette lifecycle requires native readers"
   assert !DISABLE_OVERWORLD == 0, "Native palette lifecycle requires the overworld module"
 endif
-assert !ENABLE_ORACLE_ARRIVAL_SEQUENCE <= !ENABLE_CUTSCENE_FRAMEWORK, "ENABLE_ORACLE_ARRIVAL_SEQUENCE requires ENABLE_CUTSCENE_FRAMEWORK"
-assert !ENABLE_EXPERIMENT_SCENE <= !ENABLE_ORACLE_ARRIVAL_SEQUENCE, "ENABLE_EXPERIMENT_SCENE requires ENABLE_ORACLE_ARRIVAL_SEQUENCE"
 assert !ENABLE_ONE_RING == 1, "Page 3 Layout A requires !ENABLE_ONE_RING == 1"
 assert !ENABLE_GOLDSTAR_CELL <= !ENABLE_MASK_R_BINDING, "Goldstar cell requires independent mask binding"
 assert !ENABLE_EQUIPMENT_MENU <= !ENABLE_MASK_R_BINDING, "Equipment requires independent mask binding"
@@ -86,7 +84,6 @@ namespace Oracle
   incsrc "Core/sram.asm"
   incsrc "Core/symbols.asm"
   if !ENABLE_KALYXO_BOAT == 1
-    assert !ENABLE_CUTSCENE_FRAMEWORK == 1 && !ENABLE_ORACLE_ARRIVAL_SEQUENCE == 1
     assert !DISABLE_OVERWORLD == 0
   endif
   incsrc "Core/message.asm"
@@ -154,15 +151,8 @@ namespace Oracle
     print "*** MENU DISABLED ***"
   endif
 
-  ; RC opening sequence (default on; see Util/macros.asm)
-  if !ENABLE_CUTSCENE_FRAMEWORK == 1
-    incsrc "Core/Cutscene/opening.asm"
-  endif
-
-  ; Intro Scene 0 storybook art engine (default on with Message_1C0; see Util/macros.asm)
-  if !ENABLE_CUSTOM_ATTRACT_SEQUENCE == 1
-    incsrc "Core/Cutscene/attract_storybook.asm"
-  endif
+  ; RC opening sequence
+  incsrc "Core/Cutscene/opening.asm"
 
   ; Oracle title screen BG2 (default on; see Util/macros.asm).
     incsrc "Core/title/title_screen.asm"
@@ -224,9 +214,6 @@ if !ENABLE_SOURCE_SPRITE_SHEETS == 1
 endif
 if !DISABLE_MENU == 0
   incsrc "Core/Generated/menu_icons/menu_icon_overrides.asm"
-endif
-if !DISABLE_DUNGEON == 0
-  incsrc "Core/Generated/dungeon_bg_sheets/bg_sheet_overrides.asm"
 endif
   if !WALLSEL_GFX == 1
     incsrc "Dungeons/wall_profile_gfx.asm"

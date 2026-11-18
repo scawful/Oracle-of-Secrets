@@ -5,7 +5,6 @@
 ; Source review precedes build/native qualification of this composition.
 
 assert !ENABLE_KALYXO_BOAT == 1
-assert !ENABLE_CUTSCENE_FRAMEWORK == 1 && !ENABLE_ORACLE_ARRIVAL_SEQUENCE == 1
 
 incsrc "Data/overworld/kalyxo_boat_placements.asm"
 

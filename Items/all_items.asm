@@ -414,16 +414,10 @@ incsrc "Overworld/village_bar_exit.asm"
 endif
 
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
-if !ENABLE_D8_BOSS == 1
-  print "Bank2B Free Space: ", dec($2BE000-pc()), " bytes"
-else
-  print "Bank2B Free Space: ", dec($2BF000-pc()), " bytes"
-endif
+print "Bank2B Free Space: ", dec($2BE000-pc()), " bytes"
 assert pc() <= $2BF000, "Items bank $2B reached the dream entry FX region ($2BF000)"
-if !ENABLE_D8_BOSS == 1
-  ; Sprites/Bosses/d8_boss.asm owns $2BE000-$2BEFFF (stage 1 + beam tiles).
-  assert pc() <= $2BE000, "Items bank $2B reached the D8 boss tile slot ($2BE000)"
-endif
+; Sprites/Bosses/d8_boss.asm owns $2BE000-$2BEFFF (stage 1 + beam tiles).
+assert pc() <= $2BE000, "Items bank $2B reached the D8 boss tile slot ($2BE000)"
 
 pushpc
 ; League of its own

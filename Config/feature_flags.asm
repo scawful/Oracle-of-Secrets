@@ -6,14 +6,12 @@
 !ENABLE_ABYSS_SPAWN_MENU              = 1
 !ENABLE_ATTRACT_ROYAL_SCENES          = 1
 !ENABLE_CUSTOM_ATTRACT_SEQUENCE       = 1
-!ENABLE_CUTSCENE_FRAMEWORK            = 1
 !ENABLE_D3_PRISON_SEQUENCE            = 0
 !ENABLE_D4_ZORA_REDESIGN              = 1
 !ENABLE_D5_AF_PIT_RESET               = 0
 !ENABLE_D5_BF_PIT_RESET               = 0
 !ENABLE_D6_CHU_GATE_97                = 1
 !ENABLE_D7_FARORE_RESCUE_SEQUENCE     = 1
-!ENABLE_D8_BOSS                       = 1
 !ENABLE_D8_FARORE_GRAPHICS            = 0
 !ENABLE_DIVE_GATE                     = 1
 !ENABLE_EQUIPMENT_MENU                = 1
@@ -39,7 +37,6 @@
 !ENABLE_NATIVE_2P_POC                 = 1
 !ENABLE_OCARINA_SONG_TINT             = 0
 !ENABLE_ONE_RING                      = 1
-!ENABLE_ORACLE_ARRIVAL_SEQUENCE       = 1
 !ENABLE_OW_AUX_EXTENSION              = 0
 !ENABLE_PART00_NIGHT_FIX              = 1
 !ENABLE_RANCH_MILK                    = 0

@@ -1263,7 +1263,5 @@ Menu_Palette:
   ; The upload loop reads 32 words (X = $3E..0). In bank $2D the 32nd word was
   ; the next table's first word ($4B8B); keep that color here.
   dw $4B8B
-if !ENABLE_D8_BOSS == 1
-  ; D8 code owns $2EB800-$2EBFFF; its stage 2/3 graphics start at $2EC000.
-  assert pc() <= $2EB800, "Menu bank $2E reached the D8 boss code slot ($2EB800)"
-endif
+; D8 code owns $2EB800-$2EBFFF; its stage 2/3 graphics start at $2EC000.
+assert pc() <= $2EB800, "Menu bank $2E reached the D8 boss code slot ($2EB800)"

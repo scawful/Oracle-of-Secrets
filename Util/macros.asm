@@ -61,9 +61,7 @@ endif
 !ENABLE_D7_FARORE_RESCUE_SEQUENCE    = 1
 !ENABLE_OCARINA_SONG_TINT            = 0
 !ENABLE_JUMPTABLELOCAL_GUARD         = 1
-; RC opening features are enabled by default; disable individually for isolation.
-; ATTRACT and ARRIVAL require CUTSCENE_FRAMEWORK (asserted in Oracle_main.asm).
-!ENABLE_CUTSCENE_FRAMEWORK           = 1
+; RC opening / cutscene features.
 !ENABLE_CUSTOM_ATTRACT_SEQUENCE      = 1
 ; Accepted royal attract cards; kept off until focused playback passes.
 !ENABLE_ATTRACT_ROYAL_SCENES          = 1
@@ -74,9 +72,7 @@ endif
 ; Data/overworld/kalyxo_boat_placements.asm). Opening arrival is unchanged unless
 ; Boat_Marker holds !Boat_Magic.
 !ENABLE_KALYXO_BOAT                   = 1
-!ENABLE_ORACLE_ARRIVAL_SEQUENCE      = 1
 ; New-file Mirror experiment scene before the arrival (Core/Cutscene/experiment.asm).
-; Requires ORACLE_ARRIVAL_SEQUENCE (asserted in Oracle_main.asm).
 !ENABLE_EXPERIMENT_SCENE            = 1
 ; Native 2-player PoC: pad-2 Start drops in a second Link (Sprites/Players/player2.asm).
 !ENABLE_NATIVE_2P_POC                = 1
@@ -124,10 +120,9 @@ endif
 ; crossing on tag 0x39: per-frame map-a gate cells, one-time map-b strip and
 ; south cap, diver hide, resurface guard. Inert until the room has tag1 0x39.
 !ENABLE_DIVE_GATE                   = 1
-; D8 Sky boss mechanics prototype (sprite $C3, Sprites/Bosses/d8_boss.asm):
-; Somaria-socket qualified cycles, credited-hit counter, three stages.
-; On: room $96 uses dungeon spriteset $2D (base ROM PC 0x110AB7).
-!ENABLE_D8_BOSS                     = 1
+; D8 Sky boss (sprite $C3, Sprites/Bosses/d8_boss.asm):
+; Somaria-socket qualified cycles, credited-hit counter, three stages;
+; room $96 uses dungeon spriteset $2D (base ROM PC 0x110AB7).
 !ENABLE_D8_FARORE_GRAPHICS          = 0 ; Graphics + presence prototype; no companion control
 
 ; Horse Form (!CurrentMask = $09) + Toto Ranch NPC ($2D) + fence jumps:

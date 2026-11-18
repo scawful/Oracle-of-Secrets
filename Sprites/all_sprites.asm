@@ -171,9 +171,7 @@ Graphics_Transfer:
     JSR ApplyManhandlaPalette
   +
 
-  if !ENABLE_D8_BOSS == 1
-    JSL D8Boss_LoadGfx ; room $96 only (Sprites/Bosses/d8_boss.asm)
-  endif
+  JSL D8Boss_LoadGfx ; room $96 only (Sprites/Bosses/d8_boss.asm)
 
   PLB
   PLY
@@ -446,23 +444,9 @@ incsrc "Sprites/Enemies/business_scrub_shield.asm"
 incsrc "Sprites/Objects/collectible.asm"
 %log_end("collectible", !LOG_DUNGEON)
 
-; Relocated from Bank $2C to LoROM Bank $37 tail ($37F200-$37FFFF, after
-; Masks/bunny_hood.asm $37F062) for Bank $2C sprite headroom. Both files
-; establish DBR via PHK/PLB (mirroring low WRAM $0000-$1FFF) and use JSL
-; for all cross-bank calls.
-pushpc
-org $37F200
-Bank37NpcTail_CodeStart:
 %log_start("eon_owl", !LOG_DUNGEON)
 incsrc "Sprites/NPCs/eon_owl.asm"
 %log_end("eon_owl", !LOG_DUNGEON)
-
-%log_start("tingle", !LOG_DUNGEON)
-incsrc "Sprites/NPCs/tingle.asm"
-%log_end("tingle", !LOG_DUNGEON)
-Bank37NpcTail_CodeEnd:
-assert pc() <= $380000, "Bank $37 NPC tail overflowed $37F200-$37FFFF"
-pullpc
 
 %log_start("zora_princess", !LOG_DUNGEON)
 incsrc "Sprites/NPCs/eon_zora.asm"
@@ -470,6 +454,10 @@ incsrc "Sprites/NPCs/eon_zora_elder.asm"
 incsrc "Sprites/NPCs/zora.asm"
 incsrc "Sprites/NPCs/zora_princess.asm"
 %log_end("zora_princess", !LOG_DUNGEON)
+
+%log_start("tingle", !LOG_DUNGEON)
+incsrc "Sprites/NPCs/tingle.asm"
+%log_end("tingle", !LOG_DUNGEON)
 
 %log_start("goron", !LOG_DUNGEON)
 incsrc "Sprites/NPCs/goron.asm"
@@ -483,12 +471,10 @@ if !ENABLE_D4_ZORA_REDESIGN == 1
   endif
 endif
 
-if !ENABLE_D8_BOSS == 1
-  ; The D8 include owns a fixed bank $2E code slot and restores this cursor.
-  %log_start("d8_boss", !LOG_DUNGEON)
-  incsrc "Sprites/Bosses/d8_boss.asm"
-  %log_end("d8_boss", !LOG_DUNGEON)
-endif
+; The D8 include owns a fixed bank $2E code slot and restores this cursor.
+%log_start("d8_boss", !LOG_DUNGEON)
+incsrc "Sprites/Bosses/d8_boss.asm"
+%log_end("d8_boss", !LOG_DUNGEON)
 
 if !ENABLE_HORSE_FORM == 1
   %log_start("horse_npc", !LOG_OVERWORLD)

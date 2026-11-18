@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "10adfef946728942cc3e8c20ed49ecfff63910e69f36efa51febaf51b2c71e37"
+      "sha256": "ffbdcd6ec75243ef7f149ee0f61441fabc73ba5696f353df8dfdc26cacfe2526"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "b497f99eab35f62d915dd42a38f1d49cd9d84bfe0dd277d4ad8ab9b658709c67"
+      "sha256": "2a349f032cd9d1414d6144f30a8f19284dcb542aa0fe1dff2e5036d5ae3798a8"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -215,7 +215,7 @@
     "shared:Oracle_main.asm": {
       "source_set": "shared",
       "path": "Oracle_main.asm",
-      "sha256": "35d2f096d7fadbcaa40ed7f95dd6e0a69d8310889b05442de8a322e97d88eef0"
+      "sha256": "1a5f7de10f9b4b63d080cfcf226d22144fdeda7aaa99d754f23497a60635214d"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
@@ -245,7 +245,7 @@
     "shared:Sprites/Bosses/d8_boss.asm": {
       "source_set": "shared",
       "path": "Sprites/Bosses/d8_boss.asm",
-      "sha256": "3e03404200af4ce6e90b326966d1ea1be181a8b6fbb011b17a106c15865b318e"
+      "sha256": "30774e838baa8c77be46b368698aab94414c8d34c7bb24c4f2a1c38c276d50ad"
     },
     "shared:Dungeons/wall_profile_selector.asm": {
       "source_set": "shared",
@@ -265,17 +265,7 @@
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
       "path": "Sprites/all_sprites.asm",
-      "sha256": "1f4cb1e9a33ea628d9621721c3c84ae8ff4478bcba1caf64e5fd815ab86d074c"
-    },
-    "shared:Sprites/NPCs/eon_owl.asm": {
-      "source_set": "shared",
-      "path": "Sprites/NPCs/eon_owl.asm",
-      "sha256": "2433fc6e000b7efe8b434eca9543d84245fd595606cb6ddf0a417257168a48ef"
-    },
-    "shared:Sprites/NPCs/tingle.asm": {
-      "source_set": "shared",
-      "path": "Sprites/NPCs/tingle.asm",
-      "sha256": "7dd4bc06ec1b223c1117dcf1697fda234cb95744aa087e5ed7995963c49103b7"
+      "sha256": "b336a31368edcc242e260d3728bcc4e57bd5b7d86f01f603082bcb979112d48b"
     },
     "shared:Sprites/Objects/ice_block.asm": {
       "source_set": "shared",
@@ -310,7 +300,7 @@
     "shared:Overworld/kalyxo_boat.asm": {
       "source_set": "shared",
       "path": "Overworld/kalyxo_boat.asm",
-      "sha256": "3813ecc53f5a6f5bc36cab5b8c6cfd2b98a7b32449e8739fcb14ab03e1c0dbd0"
+      "sha256": "4dcacb673c1d93ea37232955bbaa931cfa272f0b3a6342f6bf41cca5cd34eb95"
     },
     "shared:Data/overworld/kalyxo_boat_placements.asm": {
       "source_set": "shared",
@@ -320,7 +310,7 @@
     "shared:Core/Cutscene/opening.asm": {
       "source_set": "shared",
       "path": "Core/Cutscene/opening.asm",
-      "sha256": "0cfe8773622a7196e697c5749c81b006bebded4b76775ab05555ca671b6d0b87"
+      "sha256": "ca0c7b92762785f754302366c010925671bbc5a08dc5899c8894276664d54de5"
     },
     "shared:Overworld/goron_checkpoint.asm": {
       "source_set": "shared",
@@ -375,7 +365,7 @@
     "shared:Items/all_items.asm": {
       "source_set": "shared",
       "path": "Items/all_items.asm",
-      "sha256": "e11a6c3e4281977f604b409531e247fbdd4d34352de178e6e26b5c3f42aa406e"
+      "sha256": "099887e6487907eb7aa0bd38221693e409c73083b349f3f6f61bdd69b72ec3ec"
     },
     "shared:Masks/horse_park_anywhere.asm": {
       "source_set": "shared",
@@ -2102,9 +2092,7 @@
       "base": 3061760,
       "size": 2048,
       "status": "shared",
-      "condition": {
-        "ENABLE_D8_BOSS": 1
-      },
+      "condition": {},
       "lifetime": "Compiled ROM code; fixed slot before existing D8 graphics at $2EC000.",
       "reset": "Build owns this slot; no runtime allocation or SRAM.",
       "save": "No saved data. The menu stream must end at or before $2EB800.",
@@ -3364,31 +3352,6 @@
         "org $36F800",
         "FireBurnBushes_CodeStart:",
         "FireBurnBushes_CodeEnd:"
-      ]
-    },
-    {
-      "id": "bank37_npc_tail_code",
-      "owner": "Eon Owl and Tingle relocated from Bank $2C sprite tail into Bank $37 tail after Bunny Hood",
-      "space": "snes_rom",
-      "base": 3666432,
-      "size": 3584,
-      "status": "shared",
-      "condition": {
-        "DISABLE_SPRITES": 0
-      },
-      "lifetime": "Compiled ROM code and draw tables in fixed LoROM Bank $37 slot $37F200-$37FFFF after Masks/bunny_hood.asm ($37F062).",
-      "reset": "Build owns this slot; no runtime ROM writes.",
-      "save": "No SRAM format changes; both NPC sprites use PHB/PHK/PLB and JSL.",
-      "provenance": [
-        "shared:Sprites/all_sprites.asm",
-        "shared:Sprites/NPCs/eon_owl.asm",
-        "shared:Sprites/NPCs/tingle.asm"
-      ],
-      "aliases": [],
-      "anchors": [
-        "org $37F200",
-        "Bank37NpcTail_CodeStart:",
-        "Bank37NpcTail_CodeEnd:"
       ]
     }
   ],

@@ -1,7 +1,7 @@
 ; =========================================================
 ; D8 Sky boss — mechanics prototype (first playable slice)
 ;
-; Gated by !ENABLE_D8_BOSS (default 0). Included from Sprites/all_sprites.asm;
+; Included from Sprites/all_sprites.asm;
 ; code owns $2EB800-$2EBFFF beside its existing graphics bank. The include
 ; restores the bank $2C sprite stream cursor after its final draw routine.
 ;
