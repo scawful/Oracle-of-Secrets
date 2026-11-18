@@ -2,6 +2,7 @@
 """Tests for gfx_ledger.py bank-overlap and sheet classification (no ROM needed)."""
 import contextlib
 import io
+import json
 import subprocess
 import sys
 import tempfile
@@ -135,6 +136,56 @@ class GitScan(unittest.TestCase):
     def test_successful_search_without_matches_passes(self):
         self.track_asm("org $018000\n")
         self.assertEqual(g.check_banks(g.BANK_CLAIMS, None), [])
+
+
+class AsmAndJsonLoaders(unittest.TestCase):
+    def test_scan_asm_catches_lastsprset_aa3_and_kits(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "Sprites").mkdir()
+            (root / "Sprites" / "maple.asm").write_text(
+                "LDA.b #$55 : STA.l LASTSPRSET3\nLDA.b #$42 : STA.l LASTSPRSET1\n"
+            )
+            (root / "Sprites" / "owl.asm").write_text(
+                "LDA.w $0AA3 : CMP.b #$05 : BEQ .ok\n"
+            )
+            (root / "Dungeons").mkdir()
+            (root / "Dungeons" / "kits.asm").write_text(
+                "org $00DDF7\n  db $FD, read1($00DDC4), read1($00DDC5), $F4\npullpc\n"
+            )
+            (root / "Data" / "graphics").mkdir(parents=True)
+            (root / "Data" / "graphics" / "d4_zora_sprite_sheets.json").write_text(json.dumps({
+                "sheets": [
+                    {"sprite_sheet": "0x64", "source": "spr64.png"},
+                    {"global_sheet": "0xE7", "source": "refuge.txt", "flag": "ENABLE_D4_ZORA_REDESIGN"},
+                ]
+            }))
+            inv = {
+                "overworld_areas": {},
+                "main_blocksets": {},
+                "room_blocksets": {},
+                "spritesets": {"5": [1, 2, 3, 4]},
+                "sheets": [{"hex": "0x5E", "kind": "3bpp", "pc": "0x000000", "unreferenced": True, "usage": {}}],
+            }
+            L = g.build_loaders(inv, repo_root=root, include_code_refs=True)
+            # LASTSPRSET3 #$55 -> 0x55 + 0x73 = 0xC8; LASTSPRSET1 #$42 -> 0xB5
+            self.assertIn(3, L[0xC8]["asm_code"])
+            self.assertIn(1, L[0xB5]["asm_code"])
+            # $0AA3 == #$05 -> spriteset [1,2,3,4] -> 0x74..0x77
+            self.assertIn(0, L[0x74]["asm_code"])
+            # Kit blockset -> $FD, $F4
+            self.assertIn(0, L[0xFD]["asm_code"])
+            self.assertIn(3, L[0xF4]["asm_code"])
+            # JSON specs -> 0x64+0x73 = 0xD7 (Impa follower), 0xE7 (refuge)
+            self.assertIn(0, L[0xD7]["json_spec"])
+            self.assertIn(0, L[0xE7]["json_spec"])
+            # Fixed follower loader -> 0xCB, 0xD7, 0xD9
+            self.assertIn(0, L[0xCB]["asm_code"])
+            self.assertIn(0, L[0xD9]["asm_code"])
+            rows = g.build_rows(inv, {}, repo_root=root)
+            by_sid = {r["sheet"]: r for r in rows}
+            self.assertEqual(by_sid[0xE7]["status"], "IN-USE")
+            self.assertEqual(by_sid[0xFD]["status"], "IN-USE")
 
 
 if __name__ == "__main__":

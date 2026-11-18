@@ -182,9 +182,216 @@ def add_tail_areas(inv: dict, rom: Path) -> None:
 
 
 # --- Loaders per sheet and slot ----------------------------------------------
-def build_loaders(inv: dict) -> dict[int, dict]:
-    """sheet id -> {kind: {slot: [ids]}} built from the raw tables (not from the
-    inventory's per-sheet usage lists, which do not carry slots)."""
+FIXED_ASM_LOADERS = {
+    0x58: "fixed:$00D8D5 animated OW tiles",
+    0x5A: "fixed:$00D8E7 animated OW tiles",
+    0x5C: "fixed:$00D34C Decompress_background_low",
+    0xC7: "fixed:$00D279 LoadItemGFX",
+    0xCB: "fixed:$00D440/$00D3DA/$00D8D5 LoadFollowerGraphics",
+    0xCE: "fixed:$00D505 item sheet",
+    0xD1: "fixed:$00D250/$00E4FE LoadItemGFX/file-select",
+    0xD2: "fixed:$00D250/$00E4FE LoadItemGFX/file-select",
+    0xD3: "fixed:$00D250/$00E4FE LoadItemGFX/file-select",
+    0xD7: "fixed:$00D426 LoadFollowerGraphics",
+    0xD9: "fixed:$00D430 LoadFollowerGraphics",
+}
+
+LASTSPRSET_SLOT = {
+    "LASTSPRSET0": 0, "$7EC2FC": 0,
+    "LASTSPRSET1": 1, "$7EC2FD": 1,
+    "LASTSPRSET2": 2, "$7EC2FE": 2,
+    "LASTSPRSET3": 3, "$7EC2FF": 3,
+}
+
+DEFINE_RE = re.compile(r"^\s*(!\w+)\s*=\s*(\$[0-9A-Fa-f]{1,4}|[0-9]+)\b")
+TOKEN_VAL = r"(\$[0-9A-Fa-f]{1,4}|!\w+|[0-9]+)"
+LASTSPRSET_STA_RE = re.compile(
+    r"\bSTA(?:\.[lw])?\s+(LASTSPRSET[0-3]|\$7EC2F[CDEF])\b",
+    re.IGNORECASE,
+)
+LDA_IMM_RE = re.compile(rf"\bLDA(?:\.b)?\s+#{TOKEN_VAL}\b", re.IGNORECASE)
+SPRSET_AA3_RE = re.compile(
+    rf"\b(?:LDA|CMP)(?:\.b)?\s+#{TOKEN_VAL}\b[^;\n]*(?:\$0AA3|SprGfx)\b|\$0AA3\b[^;\n]*\bCMP(?:\.b)?\s+#{TOKEN_VAL}\b",
+    re.IGNORECASE,
+)
+E772_CALL_RE = re.compile(r"\bJ[MS]L\s+\$00E772\b", re.IGNORECASE)
+LDY_IMM_RE = re.compile(rf"\bLDY(?:\.b)?\s+#{TOKEN_VAL}\b", re.IGNORECASE)
+KIT_ORG_RE = re.compile(r"^\s*org\s+\$00DD([0-9A-Fa-f]{2})\b", re.IGNORECASE)
+
+
+def _parse_int(tok: str, defs: dict[str, int]) -> int | None:
+    tok = tok.strip()
+    if tok in defs:
+        return defs[tok]
+    if tok.startswith("$"):
+        try:
+            return int(tok[1:], 16)
+        except ValueError:
+            return None
+    if tok.isdigit():
+        return int(tok, 10)
+    return None
+
+
+def _iter_asm_files(repo_root: Path, ref: str | None = None):
+    if ref:
+        proc = subprocess.run(
+            ["git", "-C", str(repo_root), "ls-files", "-z", "*.asm"],
+            capture_output=True, text=True)
+        if proc.returncode == 0:
+            for rel in proc.stdout.split("\0"):
+                if not rel:
+                    continue
+                show = subprocess.run(
+                    ["git", "-C", str(repo_root), "show", f"{ref}:{rel}"],
+                    capture_output=True, text=True, errors="replace")
+                if show.returncode == 0:
+                    yield rel, show.stdout
+            return
+    for p in sorted(repo_root.rglob("*.asm")):
+        if not p.is_file():
+            continue
+        rel = p.relative_to(repo_root).as_posix()
+        if any(part.startswith(".") for part in p.relative_to(repo_root).parts):
+            continue
+        if rel.startswith(("Roms/", "Backups/", "usdasm/")):
+            continue
+        yield rel, p.read_text(encoding="utf-8", errors="replace")
+
+
+def scan_asm_sheet_loaders(
+    inv: dict | None = None,
+    repo_root: Path = REPO_ROOT,
+    ref: str | None = None,
+) -> dict[int, dict[int, list[str]]]:
+    """Scan repo ASM and vanilla fixed loaders for code-driven sheet references."""
+    out: dict[int, dict[int, list[str]]] = defaultdict(lambda: defaultdict(list))
+    if (repo_root / "Core").is_dir() or (repo_root / "Sprites").is_dir() or (repo_root / "Dungeons").is_dir():
+        for sid, desc in FIXED_ASM_LOADERS.items():
+            out[sid][0].append(desc)
+
+    spritesets = (inv or {}).get("spritesets", {})
+    for rel, text in _iter_asm_files(repo_root, ref):
+        lines = text.splitlines()
+        defs: dict[str, int] = {}
+        for line in lines:
+            dm = DEFINE_RE.match(line.split(";", 1)[0])
+            if dm:
+                v = _parse_int(dm.group(2), defs)
+                if v is not None:
+                    defs[dm.group(1)] = v
+
+        in_kit_org = False
+        abyss_map_left = 0
+        abyss_map_idx = 0
+        for idx, raw in enumerate(lines, 1):
+            code = raw.split(";", 1)[0].strip()
+            if not code:
+                continue
+
+            # 1. LASTSPRSET0..3 immediate writes (same line or preceding LDA #) -> sheet (val + 0x73)
+            for m in LASTSPRSET_STA_RE.finditer(code):
+                slot = LASTSPRSET_SLOT[m.group(1).upper()]
+                prefix = code[:m.start()]
+                imm = list(LDA_IMM_RE.finditer(prefix))
+                if not imm and idx > 1:
+                    window = "\n".join(l.split(";", 1)[0] for l in lines[max(0, idx - 10):idx - 1])
+                    imm = list(LDA_IMM_RE.finditer(window))
+                if imm:
+                    val = _parse_int(imm[-1].group(1), defs)
+                    if val is not None and 0 <= val + 0x73 < 256:
+                        out[val + 0x73][slot].append(f"{rel}:{idx} LASTSPRSET{slot}")
+
+            # 2. $0AA3 spriteset writes/checks + HorseGame_CourseEnemyAA3 table
+            for m in SPRSET_AA3_RE.finditer(code):
+                tok = m.group(1) or m.group(2)
+                ss = _parse_int(tok, defs)
+                if ss is not None and str(ss) in spritesets:
+                    for slot, val in enumerate(spritesets[str(ss)]):
+                        if 0 <= val + 0x73 < 256:
+                            out[val + 0x73][slot].append(f"{rel}:{idx} $0AA3=${ss:02X}")
+
+            if code.startswith("HorseGame_CourseEnemyAA3:"):
+                for j in range(idx, min(idx + 6, len(lines))):
+                    sub = lines[j].split(";", 1)[0].strip()
+                    if sub.lower().startswith("db "):
+                        for tok in sub[3:].split(","):
+                            ss = _parse_int(tok.strip(), defs)
+                            if ss is not None and ss != 0xFF and str(ss) in spritesets:
+                                for slot, val in enumerate(spritesets[str(ss)]):
+                                    if 0 <= val + 0x73 < 256:
+                                        out[val + 0x73][slot].append(f"{rel}:{j + 1} horse $0AA3=${ss:02X}")
+
+            # 3. Direct Decompress_sprite_arbitrary ($00E772) calls paired with LDY #val
+            if E772_CALL_RE.search(code):
+                window = "\n".join(lines[max(0, idx - 6):idx])
+                ldy_matches = list(LDY_IMM_RE.finditer(window))
+                if ldy_matches:
+                    val = _parse_int(ldy_matches[-1].group(1), defs)
+                    if val is not None and 0 <= val + 0x73 < 256:
+                        out[val + 0x73][0].append(f"{rel}:{idx} $00E772")
+
+            # 4. Generated Kit blockset overrides (`org $00DDxx` -> `db ...`)
+            if KIT_ORG_RE.match(code):
+                in_kit_org = True
+                continue
+            if in_kit_org:
+                if code.lower().startswith("pullpc"):
+                    in_kit_org = False
+                elif code.lower().startswith("db "):
+                    for slot, tok in enumerate(code[3:].split(",")[:4]):
+                        val = _parse_int(tok.strip(), defs)
+                        if val is not None and 0 <= val < 255:
+                            out[val][slot].append(f"{rel}:{idx} kit blockset")
+
+            # 5. Abyss GBC room style remapped BG sheets (`AbyssGbc_SheetMap`)
+            if code.startswith("AbyssGbc_SheetMap:"):
+                abyss_map_left = 64
+                abyss_map_idx = 0
+                continue
+            if abyss_map_left > 0 and code.lower().startswith("db "):
+                for tok in code[3:].split(","):
+                    if abyss_map_left <= 0:
+                        break
+                    val = _parse_int(tok.strip(), defs)
+                    if val is not None and val > 0:
+                        out[abyss_map_idx][0].append(f"{rel}:{idx} AbyssGbc_SheetMap")
+                    abyss_map_idx += 1
+                    abyss_map_left -= 1
+
+    return out
+
+
+def scan_json_sheet_overrides(repo_root: Path = REPO_ROOT) -> dict[int, list[str]]:
+    """Scan Data/graphics/*.json specs for active source/override sheet IDs."""
+    out: dict[int, list[str]] = defaultdict(list)
+    gfx_dir = repo_root / "Data" / "graphics"
+    if not gfx_dir.is_dir():
+        return out
+    for name in ("source_sprite_sheets.json", "d4_zora_sprite_sheets.json",
+                 "dungeon_bg_sheets.json", "menu_icons.json"):
+        path = gfx_dir / name
+        if not path.is_file():
+            continue
+        data = json.loads(path.read_text(encoding="utf-8"))
+        for entry in data.get("sheets", []):
+            if not isinstance(entry, dict):
+                continue
+            sid = None
+            if "global_sheet" in entry:
+                sid = int(str(entry["global_sheet"]), 0)
+            elif "sprite_sheet" in entry:
+                sid = int(str(entry["sprite_sheet"]), 0) + 0x73
+            if sid is not None and 0 <= sid < 256:
+                src = entry.get("source") or f"0x{sid:02X}"
+                flag = f" [{entry['flag']}]" if entry.get("flag") else ""
+                out[sid].append(f"{name}:{src}{flag}")
+    return out
+
+
+def build_loaders(inv: dict, *, repo_root: Path = REPO_ROOT, ref: str | None = None,
+                  include_code_refs: bool = True) -> dict[int, dict]:
+    """sheet id -> {kind: {slot: [ids]}} built from raw tables plus ASM/JSON loaders."""
     L: dict[int, dict] = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     for area, a in inv["overworld_areas"].items():
         for slot, sheet in enumerate(a["static_graphics"]):
@@ -209,6 +416,12 @@ def build_loaders(inv: dict) -> dict[int, dict]:
     for ss, vals in inv["spritesets"].items():
         for slot, val in enumerate(vals):
             L[val + 0x73]["spriteset"][slot].append(int(ss))
+    if include_code_refs:
+        for sid, slots in scan_asm_sheet_loaders(inv, repo_root=repo_root, ref=ref).items():
+            for slot, refs in slots.items():
+                L[sid]["asm_code"][slot].extend(refs)
+        for sid, refs in scan_json_sheet_overrides(repo_root=repo_root).items():
+            L[sid]["json_spec"][0].extend(refs)
     return L
 
 
@@ -238,8 +451,10 @@ def classify(sid: int, s: dict, owner: str | None, user_count: int) -> tuple[str
         reasons.append(RESERVED[sid])
     if RAW_RANGE[0] <= sid <= RAW_RANGE[1]:
         reasons.append("raw sheet $71-$7E")
-    if sid >= BPP2_FROM:
-        reasons.append("2bpp $DA+")
+    if sid >= BPP2_FROM and sid <= 0xDE:
+        reasons.append("2bpp $DA-$DE")
+    elif sid > 0xDE and not user_count:
+        reasons.append("extended slot $DF-$FE")
     if sid in NOT_CLEARED:
         reasons.append("unreferenced but not cleared: " + NOT_CLEARED[sid])
     if reasons:
@@ -251,16 +466,35 @@ def classify(sid: int, s: dict, owner: str | None, user_count: int) -> tuple[str
         if user_count:
             return "CHECK", f"{kind} but {user_count} loaders in this ROM and no owner"
         return "FREE-ID", kind
-    if s.get("unreferenced"):
+    if s.get("unreferenced") and not user_count:
         return "CHECK", "inventory marks unreferenced; not in PLAN.md lists"
     return "IN-USE", ""
 
 
-def build_rows(inv: dict, owners: dict[int, str]) -> list[dict]:
-    L = build_loaders(inv)
+def _read_extended_sheet_ptrs(rom_bytes: bytes) -> dict[int, int]:
+    """Read Bank $23 expanded sheet table ($23:FD00..$23:FFFF) for IDs $DF..$FE."""
+    ptrs: dict[int, int] = {}
+    base_bk = 0x11FD00
+    base_hi = 0x11FE00
+    base_lo = 0x11FF00
+    if len(rom_bytes) < 0x120000:
+        return ptrs
+    for sid in range(0xDF, 0xFF):
+        snes = (rom_bytes[base_bk + sid] << 16) | (rom_bytes[base_hi + sid] << 8) | rom_bytes[base_lo + sid]
+        if (snes & 0xFFFF) >= 0x8000 and snes != 0xFFFFFF:
+            pc = ((snes >> 16) & 0x7F) * 0x8000 + (snes & 0x7FFF)
+            ptrs[sid] = pc
+    return ptrs
+
+
+def build_rows(inv: dict, owners: dict[int, str], *, repo_root: Path = REPO_ROOT,
+               ref: str | None = None, rom_path: Path | None = None) -> list[dict]:
+    L = build_loaders(inv, repo_root=repo_root, ref=ref, include_code_refs=True)
     rows = []
+    seen_sids: set[int] = set()
     for s in inv["sheets"]:
         sid = int(s["hex"], 16)
+        seen_sids.add(sid)
         loaders = L.get(sid, {})
         n_users = sum(len(v) for kinds in loaders.values() for v in kinds.values())
         status, reason = classify(sid, s, owners.get(sid), n_users)
@@ -273,6 +507,24 @@ def build_rows(inv: dict, owners: dict[int, str]) -> list[dict]:
             "loaders": {k: {str(sl): ids for sl, ids in v.items()} for k, v in loaders.items()},
             "status": status, "reason": reason, "owner": owners.get(sid, ""),
             "shares_pointer_with": s.get("shares_pointer_with", []),
+        })
+    ext_ptrs = _read_extended_sheet_ptrs(rom_path.read_bytes()) if rom_path and rom_path.is_file() else {}
+    for sid in sorted(set(L) | set(ext_ptrs)):
+        if sid in seen_sids:
+            continue
+        loaders = L.get(sid, {})
+        n_users = sum(len(v) for kinds in loaders.values() for v in kinds.values())
+        if not n_users and sid not in ext_ptrs:
+            continue
+        pc = ext_ptrs.get(sid, 0)
+        status, reason = classify(sid, {}, owners.get(sid), n_users)
+        rows.append({
+            "sheet": sid, "hex": f"0x{sid:02X}", "type": "3bpp_ext",
+            "pc": f"0x{pc:06X}" if pc else "", "snes": snes_addr(pc) if pc else "", "bytes": None,
+            "free16": 0, "free_cells": [],
+            "loaders": {k: {str(sl): ids for sl, ids in v.items()} for k, v in loaders.items()},
+            "status": status, "reason": reason, "owner": owners.get(sid, ""),
+            "shares_pointer_with": [],
         })
     return rows
 
@@ -355,7 +607,7 @@ def render_md(inv: dict, rows: list[dict], claims: list[dict], bank_problems: li
              "Loader notation: `sN×K` = K users load the sheet in slot N. "
              "A free cell is only free if the sheet has no loader in that slot "
              "(ow = overworld area static slots 0-15, tail maps $A0-$BF slots 0-7; mb = main blockset, rb = room blockset, "
-             "ss = spriteset, as = area spriteset).", ""]
+             "ss = spriteset, as = area spriteset, ac = ASM/follower code, js = graphics JSON spec).", ""]
     lines += ["## Bank ownership", "",
               "| Banks | Owner | Source files |", "|---|---|---|"]
     for c in claims:
@@ -369,8 +621,8 @@ def render_md(inv: dict, rows: list[dict], claims: list[dict], bank_problems: li
     attn = [r for r in rows if r["status"] in ("CHECK", "CLAIMED")]
     lines += [f"- `{r['hex']}` {r['status']}: {r['reason']}" for r in attn] or ["- none"]
     lines += ["", "## Ledger", "",
-              "| Sheet | Type | Addr | Bytes | Free16 | ow | mb | rb | ss | Status | Note |",
-              "|---|---|---|---|---|---|---|---|---|---|---|"]
+              "| Sheet | Type | Addr | Bytes | Free16 | ow | mb | rb | ss | ac | js | Status | Note |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         ld = r["loaders"]
         cell = lambda k: slot_summary({int(a): b for a, b in ld.get(k, {}).items()})
@@ -380,12 +632,16 @@ def render_md(inv: dict, rows: list[dict], claims: list[dict], bank_problems: li
         lines.append(
             f"| {r['hex']} | {r['type']} | {r['snes']} | {r['bytes'] or ''} | {r['free16']} | "
             f"{cell('area')} | {cell('main_blockset')} | {cell('room_blockset')} | "
-            f"{cell('spriteset')} | {r['status']} | {note} |")
+            f"{cell('spriteset')} | {cell('asm_code')} | {cell('json_spec')} | {r['status']} | {note} |")
     return "\n".join(lines) + "\n"
 
 
 def print_sheet(rows: list[dict], sid: int) -> None:
-    r = rows[sid]
+    matches = [r for r in rows if r["sheet"] == sid]
+    if not matches:
+        print(f"0x{sid:02X}: not found in ledger rows")
+        return
+    r = matches[0]
     print(f"{r['hex']} {r['type']} {r['snes']} status={r['status']} {r['reason']}")
     for kind, slots in r["loaders"].items():
         for slot, ids in sorted(slots.items(), key=lambda kv: int(kv[0])):
@@ -432,7 +688,7 @@ def main() -> int:
     owners = dict(OWNERS)
     if args.owners:
         owners.update({int(k, 0): v for k, v in json.loads(args.owners.read_text()).items()})
-    rows = build_rows(inv, owners)
+    rows = build_rows(inv, owners, ref=args.ref, rom_path=args.rom)
     if args.sheet:
         print_sheet(rows, int(args.sheet, 0))
         return 0
