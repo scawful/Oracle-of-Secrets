@@ -152,7 +152,12 @@ namespace Oracle
   endif
 
   ; RC opening sequence
-  incsrc "Core/Cutscene/opening.asm"
+    incsrc "Core/Cutscene/opening.asm"
+
+  ; Intro Scene 0 storybook art engine (default on with Message_1C0; see Util/macros.asm)
+  if !ENABLE_CUSTOM_ATTRACT_SEQUENCE == 1
+    incsrc "Core/Cutscene/attract_storybook.asm"
+  endif
 
   ; Oracle title screen BG2 (default on; see Util/macros.asm).
     incsrc "Core/title/title_screen.asm"
@@ -214,6 +219,9 @@ if !ENABLE_SOURCE_SPRITE_SHEETS == 1
 endif
 if !DISABLE_MENU == 0
   incsrc "Core/Generated/menu_icons/menu_icon_overrides.asm"
+endif
+if !DISABLE_DUNGEON == 0
+  incsrc "Core/Generated/dungeon_bg_sheets/bg_sheet_overrides.asm"
 endif
   if !WALLSEL_GFX == 1
     incsrc "Dungeons/wall_profile_gfx.asm"

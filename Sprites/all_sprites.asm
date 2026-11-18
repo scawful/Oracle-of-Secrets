@@ -444,9 +444,23 @@ incsrc "Sprites/Enemies/business_scrub_shield.asm"
 incsrc "Sprites/Objects/collectible.asm"
 %log_end("collectible", !LOG_DUNGEON)
 
+; Relocated from Bank $2C to LoROM Bank $37 tail ($37F200-$37FFFF, after
+; Masks/bunny_hood.asm $37F062) for Bank $2C sprite headroom. Both files
+; establish DBR via PHK/PLB (mirroring low WRAM $0000-$1FFF) and use JSL
+; for all cross-bank calls.
+pushpc
+org $37F200
+Bank37NpcTail_CodeStart:
 %log_start("eon_owl", !LOG_DUNGEON)
 incsrc "Sprites/NPCs/eon_owl.asm"
 %log_end("eon_owl", !LOG_DUNGEON)
+
+%log_start("tingle", !LOG_DUNGEON)
+incsrc "Sprites/NPCs/tingle.asm"
+%log_end("tingle", !LOG_DUNGEON)
+Bank37NpcTail_CodeEnd:
+assert pc() <= $380000, "Bank $37 NPC tail overflowed $37F200-$37FFFF"
+pullpc
 
 %log_start("zora_princess", !LOG_DUNGEON)
 incsrc "Sprites/NPCs/eon_zora.asm"
@@ -454,10 +468,6 @@ incsrc "Sprites/NPCs/eon_zora_elder.asm"
 incsrc "Sprites/NPCs/zora.asm"
 incsrc "Sprites/NPCs/zora_princess.asm"
 %log_end("zora_princess", !LOG_DUNGEON)
-
-%log_start("tingle", !LOG_DUNGEON)
-incsrc "Sprites/NPCs/tingle.asm"
-%log_end("tingle", !LOG_DUNGEON)
 
 %log_start("goron", !LOG_DUNGEON)
 incsrc "Sprites/NPCs/goron.asm"

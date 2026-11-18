@@ -215,7 +215,7 @@
     "shared:Oracle_main.asm": {
       "source_set": "shared",
       "path": "Oracle_main.asm",
-      "sha256": "1a5f7de10f9b4b63d080cfcf226d22144fdeda7aaa99d754f23497a60635214d"
+      "sha256": "87f157fe7cf9ad446576fed2b5fe10bfdc1763c2e60a9d2e06fd4b7e812a29e9"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
@@ -265,7 +265,17 @@
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
       "path": "Sprites/all_sprites.asm",
-      "sha256": "b336a31368edcc242e260d3728bcc4e57bd5b7d86f01f603082bcb979112d48b"
+      "sha256": "a2f754e5f2f153ea4de4a9ebbe25bef74f309fb22fdaeaca1bde69220d4639a4"
+    },
+    "shared:Sprites/NPCs/eon_owl.asm": {
+      "source_set": "shared",
+      "path": "Sprites/NPCs/eon_owl.asm",
+      "sha256": "2433fc6e000b7efe8b434eca9543d84245fd595606cb6ddf0a417257168a48ef"
+    },
+    "shared:Sprites/NPCs/tingle.asm": {
+      "source_set": "shared",
+      "path": "Sprites/NPCs/tingle.asm",
+      "sha256": "7dd4bc06ec1b223c1117dcf1697fda234cb95744aa087e5ed7995963c49103b7"
     },
     "shared:Sprites/Objects/ice_block.asm": {
       "source_set": "shared",
@@ -3352,6 +3362,31 @@
         "org $36F800",
         "FireBurnBushes_CodeStart:",
         "FireBurnBushes_CodeEnd:"
+      ]
+    },
+    {
+      "id": "bank37_npc_tail_code",
+      "owner": "Eon Owl and Tingle relocated from Bank $2C sprite tail into Bank $37 tail after Bunny Hood",
+      "space": "snes_rom",
+      "base": 3666432,
+      "size": 3584,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Compiled ROM code and draw tables in fixed LoROM Bank $37 slot $37F200-$37FFFF after Masks/bunny_hood.asm ($37F062).",
+      "reset": "Build owns this slot; no runtime ROM writes.",
+      "save": "No SRAM format changes; both NPC sprites use PHB/PHK/PLB and JSL.",
+      "provenance": [
+        "shared:Sprites/all_sprites.asm",
+        "shared:Sprites/NPCs/eon_owl.asm",
+        "shared:Sprites/NPCs/tingle.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "org $37F200",
+        "Bank37NpcTail_CodeStart:",
+        "Bank37NpcTail_CodeEnd:"
       ]
     }
   ],
