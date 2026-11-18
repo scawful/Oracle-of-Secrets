@@ -92,6 +92,12 @@ STYLES = [
      "accent": {6: 6},
      # Teal panel $0C5 around the chest (walkable floor) -> donor blue tile A2.
      "accent_floors": {0x0C5: (0xA2, {0: 4, 1: 5, 2: 6, 3: 3})}},
+    # Abyss house interiors (scawful, 2026-11-18: "land interior gbc graphics in eon
+    # abyss"): Seasons tileset $2C (indoors A), wooden walls B0-BB, board floor A0.
+    # $C9 = windmill (QUEUE199R millstone_ring).
+    {"name": "house", "png": "donor_raw_house/seasons_gfx_tileset2c.png",
+     "map": "donor_raw_house/seasons_tilesetMappings2c.bin", "pal": "donor_pal/seasons_2c.txt",
+     "rooms": [0xC9]},
 ]
 
 # Object -> (donor metatile, shape). Shapes give word k's (col, row) in the object.
