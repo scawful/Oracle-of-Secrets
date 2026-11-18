@@ -28,7 +28,7 @@ Verifies natively in headless Mesen2:
    - Immune enemies ($0E40 >= 0x80) and wrong layer ($0F20 != Link) are unaffected.
    - Wall contact plays tink without breaking stick.
 6. Native torch interaction (controller-driven with declared fixture):
-   - Authored room: Room 0x00 (Entrance 0x7B), Floor F1, Layer 0 with real torch objects.
+   - Authored room: Room 0x00 (stair-loaded, Floor F1, Layer 0) with real torch objects.
    - Declared starting fixture: Torch 0 lit ($04F0 = 0x80), Torch 1 unlit ($04F1 = 0x00, $0542 & 0x7FFF), Deku Sticks count = 2.
    - Joypad Map page navigation: Start -> L opens Map page ($1E71=$40, $0200=6), cursor moved from cell 0 via DOWN to 3 then RIGHT to slot 6 (Deku Sticks), unlit stick drawn (count 2 -> 1, state 1, burn 75).
    - Bounded D-pad movement approaches lit Torch 0: physical tip contact ignites stick (state 2).
@@ -458,6 +458,10 @@ class DekuStickRuntimeTest:
             print("[*] Running filtered Test 5 only...")
             self.run_test_5()
             return
+        if filter_test == 6:
+            print("[*] Running filtered Test 6 only...")
+            self.run_test_6()
+            return
         if filter_test == 8:
             print("[*] Running filtered Tests 8-9 only...")
             self.run_save_reopen()
@@ -672,227 +676,7 @@ class DekuStickRuntimeTest:
         print(f"    Visible OAM & controls verdict -> OK: {t4_ok}")
 
         self.run_test_5()
-
-        # ----------------------------------------------------
-        # 6. Real controller-driven torch interaction in authored room 0x00
-        # ----------------------------------------------------
-        print("[*] Test 6: Controller-driven torch interaction in authored room 0x00...")
-        self.boot_indoor_dungeon()
-        # Load Entrance 0x7B (Room 0x00, Floor F1, Layer 0)
-        self.w(0x7E010E, 0x7B)
-        self.w(MODULE, 6)  # Module 06 UnderworldLoad
-        self.w(SUBMODULE, 0)
-        self.wait_play(8.0)
-        time.sleep(0.5)
-
-        # Setup starting fixture:
-        # Declared progression fixture:
-        # Deku Sticks count = 2, wear = 0, state = 0, burn = 0
-        # Torch 0 lit ($04F0 = 0x80), Torch 1 unlit ($04F1 = 0x00, 0542 unlit bit)
-        # Clear room boss sprite in slot 0 and protect Link from room hazards
-        self.w(DEKU_STICKS_COUNT, 2)
-        self.w(DEKU_STICK_WEAR, 0)
-        self.w(DEKU_STICK_STATE, 0)
-        self.w(DEKU_BURN_TIMER, 0)
-        self.w(TORCH_TIMERS + 0, 0x80)
-        self.w(TORCH_TIMERS + 1, 0x00)
-        self.w(NOPAIN, 0x01)
-        self.w(SPRITE_STATE + 0, 0)
-        val_0542 = (self.r(0x7E0542) | (self.r(0x7E0543) << 8)) & 0x7FFF
-        self.w(0x7E0542, val_0542 & 0xFF)
-        self.w(0x7E0543, (val_0542 >> 8) & 0xFF)
-
-        init_x = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
-        init_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
-        print(f"    Room 0x00 loaded: Link=({init_x}, {init_y}), Torch0=0x{self.r(TORCH_TIMERS+0):02X}, Torch1=0x{self.r(TORCH_TIMERS+1):02X}")
-
-        # Noncontact control 1: Link at spawn (383, 137), 100+ px from torches
-        nc1_state = self.r(DEKU_STICK_STATE)
-        nc1_ok = (nc1_state == 0)
-
-        # Step A: Draw unlit stick from Map page via joypad navigation
-        if not self.navigate_to_map():
-            raise RuntimeError("Failed to open Map page in Room 0x00")
-        cur_slot = self.joypad_to_map_slot(6)
-        if cur_slot != 6:
-            raise RuntimeError(f"Expected cursor at Map supply slot 6, got {cur_slot}")
-        self.press("A", frames=10)
-        self.wait_play(8.0)
-
-        state_drawn = self.r(DEKU_STICK_STATE)
-        count_drawn = self.r(DEKU_STICKS_COUNT)
-        burn_drawn = self.r(DEKU_BURN_TIMER)
-        draw_ok = (state_drawn == 1 and count_drawn == 1 and burn_drawn == 75)
-        pos_draw = (self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8), self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8))
-        print(f"    Joypad draw unlit stick: state={state_drawn} (exp 1), count={count_drawn} (exp 1), burn={burn_drawn} (exp 75), pos={pos_draw} -> OK: {draw_ok}")
-        self.take_screenshot("before_torch")
-
-        # Step B: Walk LEFT to X=296 (probe X = Link_X+8 = 302..304, in tile col 18 X=288..303) with bounded deadline
-        left_ok = False
-        for step in range(40):
-            cur_x = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
-            if cur_x <= 296:
-                left_ok = True
-                break
-            self.press("LEFT", frames=3)
-            time.sleep(0.04)
-        if not left_ok:
-            raise RuntimeError(f"Movement leg B timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
-
-        # Noncontact control 2: Link at (296, 137), 50+ px north of Torch 0, stick remains unlit
-        posx_nc2 = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
-        posy_nc2 = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
-        nc2_state = self.r(DEKU_STICK_STATE)
-        nc2_ok = (nc2_state == 1 and posy_nc2 <= 150)
-        print(f"    Noncontact control 2 at ({posx_nc2}, {posy_nc2}): state={nc2_state} (exp 1) -> OK: {nc2_ok}")
-
-        # Step C: Approach existing lit Torch 0 via D-pad DOWN with bounded deadline
-        ignite_reached = False
-        for step in range(40):
-            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
-            if self.r(DEKU_STICK_STATE) == 2 or cur_y >= 176:
-                ignite_reached = True
-                break
-            self.press("DOWN", frames=2)
-            time.sleep(0.04)
-        if not ignite_reached:
-            raise RuntimeError(f"Movement leg C timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
-
-        ignite_state = self.r(DEKU_STICK_STATE)
-        ignite_burn = self.r(DEKU_BURN_TIMER)
-        ignite_flame_y = self.read_ppu_oam(5)["y"]
-        ignite_ok = (ignite_state == 2 and ignite_burn in (74, 75) and ignite_flame_y < 0xE0)
-        posx_ignite = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
-        posy_ignite = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
-        print(f"    Torch 0 ignition contact at ({posx_ignite}, {posy_ignite}): state={ignite_state} (exp 2), burn={ignite_burn} (exp 74..75), flame_y={ignite_flame_y} -> OK: {ignite_ok}")
-        self.take_screenshot("contact_torch_ignite")
-
-        # Step D: Carry lit stick to unlit Torch 1
-        # Leg D1: Walk UP to Y=158 for clearance with bounded deadline
-        up_clear_ok = False
-        for step in range(30):
-            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
-            if cur_y <= 158:
-                up_clear_ok = True
-                break
-            self.press("UP", frames=3)
-            time.sleep(0.04)
-        if not up_clear_ok:
-            raise RuntimeError(f"Movement leg D1 timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
-
-        # Leg D2: Walk RIGHT to X=452 (aligned with Torch 1) with bounded deadline
-        right_align_ok = False
-        for step in range(60):
-            cur_x = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
-            if cur_x >= 452:
-                right_align_ok = True
-                break
-            self.press("RIGHT", frames=3)
-            time.sleep(0.04)
-        if not right_align_ok:
-            raise RuntimeError(f"Movement leg D2 timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
-
-        # Leg D3: Approach Torch 1: Walk DOWN to Y=176 facing DOWN with bounded deadline
-        down_torch1_ok = False
-        for step in range(40):
-            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
-            if self.r(TORCH_TIMERS + 1) > 0 or cur_y >= 176:
-                down_torch1_ok = True
-                break
-            self.press("DOWN", frames=2)
-            time.sleep(0.04)
-        if not down_torch1_ok:
-            raise RuntimeError(f"Movement leg D3 timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
-
-        t1_timer = self.r(TORCH_TIMERS + 1)
-        stick_burn_when_lit = self.r(DEKU_BURN_TIMER)
-        torch1_lit_ok = (t1_timer > 0 and stick_burn_when_lit > 0)
-        posx_t1 = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
-        posy_t1 = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
-        print(f"    Torch 1 contact at ({posx_t1}, {posy_t1}): torch1_timer={t1_timer} (exp >0), stick_burn={stick_burn_when_lit} -> OK: {torch1_lit_ok}")
-        self.take_screenshot("after_torch_lit")
-
-        # Step E: Step slightly UP away from Torch 1 (to Y=166) with bounded deadline
-        step_up_ok = False
-        for step in range(20):
-            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
-            if cur_y <= 166:
-                step_up_ok = True
-                break
-            self.press("UP", frames=2)
-            time.sleep(0.04)
-        if not step_up_ok:
-            raise RuntimeError(f"Movement leg E timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
-
-        burn_before_stow = self.r(DEKU_BURN_TIMER)
-        # Stow stick via joypad B button
-        self.press("B", frames=8)
-        time.sleep(0.15)
-        stow_state = self.r(DEKU_STICK_STATE)
-        stow_count = self.r(DEKU_STICKS_COUNT)
-        saved_wear = self.r(DEKU_STICK_WEAR)
-        stow_ok = (stow_state == 0 and stow_count == 2 and saved_wear == burn_before_stow and saved_wear > 0)
-        print(f"    Stow via B: state={stow_state} (exp 0), count={stow_count} (exp 2), wear={saved_wear} (exp {burn_before_stow}) -> OK: {stow_ok}")
-
-        # Step F: Redraw stick via joypad Map page (at Y=166, out of torch reach -> draws unlit with wear)
-        if not self.navigate_to_map():
-            raise RuntimeError("Failed to open Map page for redraw")
-        cur_slot = self.joypad_to_map_slot(6)
-        if cur_slot != 6:
-            raise RuntimeError(f"Expected cursor at Map supply slot 6 on redraw, got {cur_slot}")
-        self.press("A", frames=10)
-        self.wait_play(8.0)
-
-        redraw_state = self.r(DEKU_STICK_STATE)
-        redraw_count = self.r(DEKU_STICKS_COUNT)
-        redraw_burn = self.r(DEKU_BURN_TIMER)
-        redraw_wear = self.r(DEKU_STICK_WEAR)
-        redraw_ok = (redraw_state == 1 and redraw_count == 1 and redraw_burn == saved_wear and redraw_wear == 0)
-        print(f"    Redraw stick: state={redraw_state} (exp 1), count={redraw_count} (exp 1), burn={redraw_burn} (exp {saved_wear}), wear={redraw_wear} (exp 0) -> OK: {redraw_ok}")
-
-        # Step G: Reignite stick by approaching lit Torch 1 via D-pad DOWN with bounded deadline
-        reignite_approach_ok = False
-        for step in range(30):
-            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
-            if self.r(DEKU_STICK_STATE) == 2 or cur_y >= 176:
-                reignite_approach_ok = True
-                break
-            self.press("DOWN", frames=2)
-            time.sleep(0.04)
-        if not reignite_approach_ok:
-            raise RuntimeError(f"Movement leg G timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
-
-        reignite_state = self.r(DEKU_STICK_STATE)
-        reignite_burn = self.r(DEKU_BURN_TIMER)
-        reignite_ok = (reignite_state == 2 and reignite_burn in (saved_wear, saved_wear - 1))
-        print(f"    Reignite stick from Torch 1: state={reignite_state} (exp 2), burn={reignite_burn} (exp in [{saved_wear-1}, {saved_wear}]) -> OK: {reignite_ok}")
-
-        # Step H: Noncontact control - walk away UP with bounded deadline
-        step_h_ok = False
-        for step in range(20):
-            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
-            if cur_y <= 168:
-                step_h_ok = True
-                break
-            self.press("UP", frames=2)
-            time.sleep(0.04)
-        if not step_h_ok:
-            raise RuntimeError(f"Movement leg H timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
-        posy_away = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
-        state_away = self.r(DEKU_STICK_STATE)
-        burn_away = self.r(DEKU_BURN_TIMER)
-        nc3_ok = (state_away == 2 and posy_away <= 170 and burn_away <= reignite_burn)
-        print(f"    Noncontact walk away: posy={posy_away}, state={state_away} (exp 2), burn={burn_away} -> OK: {nc3_ok}")
-
-        # Stow stick to leave clean state
-        self.press("B", frames=8)
-        time.sleep(0.1)
-        self.w(NOPAIN, 0x00)
-
-        t6_ok = (nc1_ok and draw_ok and nc2_ok and ignite_ok and torch1_lit_ok and
-                 stow_ok and redraw_ok and reignite_ok and nc3_ok)
-        self.results["torch_native_lighting_and_ignition"] = t6_ok
-        print(f"    Torch interaction verdict -> OK: {t6_ok}")
+        self.run_test_6()
 
         # Restore overworld baseline state for subsequent lifecycle tests
         self.boot_file2()
@@ -1388,6 +1172,253 @@ class DekuStickRuntimeTest:
         t5_ok = (stun_ok and immune_ok)
         self.results["swipe_enemy_stun_and_immunity"] = t5_ok
         print(f"    Swipe enemy stun verdict: stun_ok={stun_ok}, immune_ok={immune_ok} -> OK: {t5_ok}")
+
+    def run_test_6(self):
+        # ----------------------------------------------------
+        # 6. Real controller-driven torch interaction in authored room 0x00
+        # ----------------------------------------------------
+        print("[*] Test 6: Controller-driven torch interaction in authored room 0x00...")
+        self.boot_indoor_dungeon()
+        # Entrance 0x7B now points to Room 0x02 (Abyss Finale); stair-load Room 0x00 directly
+        # so Test 6 exercises the authored two-torch layout in Room 0x00 (Floor F1, Layer 0).
+        self.b.pause()
+        try:
+            prev_room = self.r(0x7E00A0)
+            self.w(0x7E00A2, prev_room)
+            self.w(0x7E00A0, 0x00)
+            self.w(0x7E00A1, 0x00)
+            self.w(SUBMODULE, 0x0E)
+            self.w(CHOICE, 0x03)
+        finally:
+            self.b.resume()
+        if not self.wait_play(8.0):
+            raise RuntimeError(f"Failed to load Room 0x00 via stair transition: MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)}")
+        time.sleep(0.3)
+
+        # Position Link at authored Room 0x00 spawn (383, 137) Layer 0, sync camera (0, 0),
+        # and initialize the declared torch fixture.
+        self.b.pause()
+        try:
+            self.w(LINK_POSX, 383 & 0xFF)
+            self.w(LINK_POSX + 1, 383 >> 8)
+            self.w(LINK_POSY, 137 & 0xFF)
+            self.w(LINK_POSY + 1, 137 >> 8)
+            self.w(CURRENT_LAYER, 0)
+            self.w(0x7E00A9, 0)
+            self.w(0x7E00AA, 0)
+            for addr, val in (
+                (0x7E0600, 0), (0x7E0602, 0), (0x7E0604, 16), (0x7E0606, 16),
+                (0x7E0608, 0), (0x7E060A, 0), (0x7E060C, 0), (0x7E060E, 0),
+                (0x7E00E0, 0), (0x7E00E2, 0), (0x7E00E6, 0), (0x7E00E8, 0),
+            ):
+                self.w(addr, val & 0xFF)
+                self.w(addr + 1, val >> 8)
+            self.w(DEKU_STICKS_COUNT, 2)
+            self.w(DEKU_STICK_WEAR, 0)
+            self.w(DEKU_STICK_STATE, 0)
+            self.w(DEKU_BURN_TIMER, 0)
+            self.w(TORCH_TIMERS + 0, 0x80)
+            self.w(TORCH_TIMERS + 1, 0x00)
+            self.w(NOPAIN, 0x01)
+            self.w(SPRITE_STATE + 0, 0)
+            val_0542 = (self.r(0x7E0542) | (self.r(0x7E0543) << 8)) & 0x7FFF
+            self.w(0x7E0542, val_0542 & 0xFF)
+            self.w(0x7E0543, (val_0542 >> 8) & 0xFF)
+        finally:
+            self.b.resume()
+        time.sleep(0.2)
+
+        init_x = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        init_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        print(f"    Room 0x00 loaded: Link=({init_x}, {init_y}), Torch0=0x{self.r(TORCH_TIMERS+0):02X}, Torch1=0x{self.r(TORCH_TIMERS+1):02X}")
+
+        # Noncontact control 1: Link at spawn (383, 137), 100+ px from torches
+        nc1_state = self.r(DEKU_STICK_STATE)
+        nc1_ok = (nc1_state == 0)
+
+        # Step A: Draw unlit stick from Map page via joypad navigation
+        if not self.navigate_to_map():
+            raise RuntimeError("Failed to open Map page in Room 0x00")
+        cur_slot = self.joypad_to_map_slot(6)
+        if cur_slot != 6:
+            raise RuntimeError(f"Expected cursor at Map supply slot 6, got {cur_slot}")
+        self.press("A", frames=10)
+        self.wait_play(8.0)
+
+        state_drawn = self.r(DEKU_STICK_STATE)
+        count_drawn = self.r(DEKU_STICKS_COUNT)
+        burn_drawn = self.r(DEKU_BURN_TIMER)
+        draw_ok = (state_drawn == 1 and count_drawn == 1 and burn_drawn == 75)
+        pos_draw = (self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8), self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8))
+        print(f"    Joypad draw unlit stick: state={state_drawn} (exp 1), count={count_drawn} (exp 1), burn={burn_drawn} (exp 75), pos={pos_draw} -> OK: {draw_ok}")
+        self.take_screenshot("before_torch")
+
+        # Step B: Walk LEFT to X=296 (probe X = Link_X+8 = 302..304, in tile col 18 X=288..303) with bounded deadline
+        left_ok = False
+        for step in range(40):
+            cur_x = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+            if cur_x <= 296:
+                left_ok = True
+                break
+            self.press("LEFT", frames=3)
+            time.sleep(0.04)
+        if not left_ok:
+            raise RuntimeError(f"Movement leg B timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
+
+        # Noncontact control 2: Link at (296, 137), 50+ px north of Torch 0, stick remains unlit
+        posx_nc2 = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        posy_nc2 = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        nc2_state = self.r(DEKU_STICK_STATE)
+        nc2_ok = (nc2_state == 1 and posy_nc2 <= 150)
+        print(f"    Noncontact control 2 at ({posx_nc2}, {posy_nc2}): state={nc2_state} (exp 1) -> OK: {nc2_ok}")
+
+        # Step C: Approach existing lit Torch 0 via D-pad DOWN with bounded deadline
+        ignite_reached = False
+        for step in range(40):
+            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+            if self.r(DEKU_STICK_STATE) == 2 or cur_y >= 176:
+                ignite_reached = True
+                break
+            self.press("DOWN", frames=2)
+            time.sleep(0.04)
+        if not ignite_reached:
+            raise RuntimeError(f"Movement leg C timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
+
+        ignite_state = self.r(DEKU_STICK_STATE)
+        ignite_burn = self.r(DEKU_BURN_TIMER)
+        ignite_flame_y = self.read_ppu_oam(5)["y"]
+        ignite_ok = (ignite_state == 2 and ignite_burn in (74, 75) and ignite_flame_y < 0xE0)
+        posx_ignite = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        posy_ignite = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        print(f"    Torch 0 ignition contact at ({posx_ignite}, {posy_ignite}): state={ignite_state} (exp 2), burn={ignite_burn} (exp 74..75), flame_y={ignite_flame_y} -> OK: {ignite_ok}")
+        self.take_screenshot("contact_torch_ignite")
+
+        # Step D: Carry lit stick to unlit Torch 1
+        # Leg D1: Walk UP to Y=158 for clearance with bounded deadline
+        up_clear_ok = False
+        for step in range(30):
+            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+            if cur_y <= 158:
+                up_clear_ok = True
+                break
+            self.press("UP", frames=3)
+            time.sleep(0.04)
+        if not up_clear_ok:
+            raise RuntimeError(f"Movement leg D1 timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
+
+        # Leg D2: Walk RIGHT to X=452 (aligned with Torch 1) with bounded deadline
+        right_align_ok = False
+        for step in range(60):
+            cur_x = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+            if cur_x >= 452:
+                right_align_ok = True
+                break
+            self.press("RIGHT", frames=3)
+            time.sleep(0.04)
+        if not right_align_ok:
+            raise RuntimeError(f"Movement leg D2 timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
+
+        # Leg D3: Approach Torch 1: Walk DOWN to Y=176 facing DOWN with bounded deadline
+        down_torch1_ok = False
+        for step in range(40):
+            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+            if self.r(TORCH_TIMERS + 1) > 0 or cur_y >= 176:
+                down_torch1_ok = True
+                break
+            self.press("DOWN", frames=2)
+            time.sleep(0.04)
+        if not down_torch1_ok:
+            raise RuntimeError(f"Movement leg D3 timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
+
+        t1_timer = self.r(TORCH_TIMERS + 1)
+        stick_burn_when_lit = self.r(DEKU_BURN_TIMER)
+        torch1_lit_ok = (t1_timer > 0 and stick_burn_when_lit > 0)
+        posx_t1 = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        posy_t1 = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        print(f"    Torch 1 contact at ({posx_t1}, {posy_t1}): torch1_timer={t1_timer} (exp >0), stick_burn={stick_burn_when_lit} -> OK: {torch1_lit_ok}")
+        self.take_screenshot("after_torch_lit")
+
+        # Step E: Step slightly UP away from Torch 1 (to Y=166) with bounded deadline
+        step_up_ok = False
+        for step in range(20):
+            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+            if cur_y <= 166:
+                step_up_ok = True
+                break
+            self.press("UP", frames=2)
+            time.sleep(0.04)
+        if not step_up_ok:
+            raise RuntimeError(f"Movement leg E timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
+
+        burn_before_stow = self.r(DEKU_BURN_TIMER)
+        # Stow stick via joypad B button
+        self.press("B", frames=8)
+        time.sleep(0.15)
+        stow_state = self.r(DEKU_STICK_STATE)
+        stow_count = self.r(DEKU_STICKS_COUNT)
+        saved_wear = self.r(DEKU_STICK_WEAR)
+        stow_ok = (stow_state == 0 and stow_count == 2 and saved_wear == burn_before_stow and saved_wear > 0)
+        print(f"    Stow via B: state={stow_state} (exp 0), count={stow_count} (exp 2), wear={saved_wear} (exp {burn_before_stow}) -> OK: {stow_ok}")
+
+        # Step F: Redraw stick via joypad Map page (at Y=166, out of torch reach -> draws unlit with wear)
+        if not self.navigate_to_map():
+            raise RuntimeError("Failed to open Map page for redraw")
+        cur_slot = self.joypad_to_map_slot(6)
+        if cur_slot != 6:
+            raise RuntimeError(f"Expected cursor at Map supply slot 6 on redraw, got {cur_slot}")
+        self.press("A", frames=10)
+        self.wait_play(8.0)
+
+        redraw_state = self.r(DEKU_STICK_STATE)
+        redraw_count = self.r(DEKU_STICKS_COUNT)
+        redraw_burn = self.r(DEKU_BURN_TIMER)
+        redraw_wear = self.r(DEKU_STICK_WEAR)
+        redraw_ok = (redraw_state == 1 and redraw_count == 1 and redraw_burn == saved_wear and redraw_wear == 0)
+        print(f"    Redraw stick: state={redraw_state} (exp 1), count={redraw_count} (exp 1), burn={redraw_burn} (exp {saved_wear}), wear={redraw_wear} (exp 0) -> OK: {redraw_ok}")
+
+        # Step G: Reignite stick by approaching lit Torch 1 via D-pad DOWN with bounded deadline
+        reignite_approach_ok = False
+        for step in range(30):
+            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+            if self.r(DEKU_STICK_STATE) == 2 or cur_y >= 176:
+                reignite_approach_ok = True
+                break
+            self.press("DOWN", frames=2)
+            time.sleep(0.04)
+        if not reignite_approach_ok:
+            raise RuntimeError(f"Movement leg G timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
+
+        reignite_state = self.r(DEKU_STICK_STATE)
+        reignite_burn = self.r(DEKU_BURN_TIMER)
+        reignite_ok = (reignite_state == 2 and reignite_burn in (saved_wear, saved_wear - 1))
+        print(f"    Reignite stick from Torch 1: state={reignite_state} (exp 2), burn={reignite_burn} (exp in [{saved_wear-1}, {saved_wear}]) -> OK: {reignite_ok}")
+
+        # Step H: Noncontact control - walk away UP with bounded deadline
+        step_h_ok = False
+        for step in range(20):
+            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+            if cur_y <= 168:
+                step_h_ok = True
+                break
+            self.press("UP", frames=2)
+            time.sleep(0.04)
+        if not step_h_ok:
+            raise RuntimeError(f"Movement leg H timed out: pos=({self.r(LINK_POSX)|(self.r(LINK_POSX+1)<<8)}, {self.r(LINK_POSY)|(self.r(LINK_POSY+1)<<8)})")
+        posy_away = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        state_away = self.r(DEKU_STICK_STATE)
+        burn_away = self.r(DEKU_BURN_TIMER)
+        nc3_ok = (state_away == 2 and posy_away <= 170 and burn_away <= reignite_burn)
+        print(f"    Noncontact walk away: posy={posy_away}, state={state_away} (exp 2), burn={burn_away} -> OK: {nc3_ok}")
+
+        # Stow stick to leave clean state
+        self.press("B", frames=8)
+        time.sleep(0.1)
+        self.w(NOPAIN, 0x00)
+
+        t6_ok = (nc1_ok and draw_ok and nc2_ok and ignite_ok and torch1_lit_ok and
+                 stow_ok and redraw_ok and reignite_ok and nc3_ok)
+        self.results["torch_native_lighting_and_ignition"] = t6_ok
+        print(f"    Torch interaction verdict -> OK: {t6_ok}")
 
     def run_save_reopen(self):
         # ----------------------------------------------------
