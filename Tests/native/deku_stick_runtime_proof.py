@@ -141,7 +141,7 @@ HURTME = 0x7E0373
 NOPAIN = 0x7E037B
 
 DEKU_STICKS_COUNT = 0x7EF395  # SRAM Deku Sticks quantity
-HONEYCOMB_COUNT   = 0x7EF394  # SRAM Honeycomb quantity
+HONEYCOMB_COUNT   = 0x7EF393  # SRAM Honeycomb quantity (Core/sram.asm)
 DEKU_STICK_WEAR   = 0x7EF39F  # SRAM DekuStickWear stored burn ticks
 DEKU_STICK_STATE  = 0x7E046D  # WRAM 0=none, 1=held unlit, 2=held lit, 3=swiping
 DEKU_BURN_TIMER   = 0x7E046E  # WRAM active burn ticks
@@ -186,7 +186,8 @@ class DekuStickRuntimeTest:
         self.screenshots_dir = self.work_dir / "screenshots"
         self.screenshots_dir.mkdir(parents=True, exist_ok=True)
 
-        self.instance_name = f"deku-test-{int(time.time())}"
+        self._launch_seq = 0
+        self.instance_name = f"deku-test-{os.getpid()}-0-{int(time.time())}"
         self.sock = self.socket_path()
         self.home = self.work_dir / "profile"
         self.rom_copy = self.work_dir / "deku_candidate.sfc"
@@ -202,9 +203,12 @@ class DekuStickRuntimeTest:
         self.traces: dict[str, object] = {}
 
     def socket_path(self) -> Path:
-        """Socket under --work, or ~/.cache/oos-sock when that path would exceed
-        the macOS AF_UNIX limit (103 chars + NUL); Mesen cannot bind longer paths."""
-        sock = self.work_dir / f"mesen-{self.instance_name}.sock"
+        """Socket under OOS_SOCK_DIR or --work, or ~/.cache/oos-sock when that path
+        would exceed the macOS AF_UNIX limit (103 chars + NUL); Mesen cannot bind longer paths."""
+        sock_dir = os.environ.get("OOS_SOCK_DIR")
+        base = Path(sock_dir).expanduser().resolve() if sock_dir else self.work_dir
+        base.mkdir(parents=True, exist_ok=True)
+        sock = base / f"mesen-{self.instance_name}.sock"
         if len(str(sock)) <= 103:
             return sock
         short = Path.home() / ".cache" / "oos-sock"
@@ -212,7 +216,8 @@ class DekuStickRuntimeTest:
         return short / f"mesen-{self.instance_name}.sock"
 
     def launch(self, reset_save: bool = True):
-        self.instance_name = f"deku-test-{int(time.time())}"
+        self._launch_seq += 1
+        self.instance_name = f"deku-test-{os.getpid()}-{self._launch_seq}-{int(time.time())}"
         self.sock = self.socket_path()
 
         if reset_save:
@@ -260,7 +265,7 @@ class DekuStickRuntimeTest:
             "--app", str(self.app),
         ]
         with (self.work_dir / "launch.log").open("a") as log:
-            subprocess.run(cmd, cwd=REPO, stdout=log, stderr=log, check=True, timeout=30)
+            subprocess.run(cmd, cwd=REPO, stdin=subprocess.DEVNULL, stdout=log, stderr=log, check=True, timeout=60)
 
         for _ in range(80):
             if self.sock.exists():
@@ -427,6 +432,10 @@ class DekuStickRuntimeTest:
 
     def run_tests(self, filter_test: int | None = None):
         print("\n=== STARTING DEKU STICK RUNTIME PROOFS ===")
+        if filter_test == 8:
+            print("[*] Running filtered Tests 8-9 only...")
+            self.run_save_reopen()
+            return
         if filter_test == 15:
             print("[*] Running filtered Test 15 only...")
             self.run_test_15()
@@ -1005,144 +1014,7 @@ class DekuStickRuntimeTest:
         self.results["cross_room_scroll_and_lifecycle"] = t7_ok
         print(f"    Cross-room lifecycle verdict -> OK: {t7_ok}")
 
-        # ----------------------------------------------------
-        # 8. Save & Quit battery persistence
-        # ----------------------------------------------------
-        print("[*] Test 8: In-game Save & Quit and battery SRM persistence...")
-        # Link has 2 sticks, stored wear = 30
-        self.w(DEKU_STICKS_COUNT, 2)
-        self.w(DEKU_STICK_WEAR, 30)
-        self.w(DEKU_STICK_STATE, 0)
-        self.w(GAME_STATE, 2)  # Enable SaveGameFile execution
-
-        # Queue lethal damage to reach GameOver screen
-        hp = self.r(LINK_HP) or 24
-        self.w(LINK_HP, hp)
-        self.w(NOPAIN, 0)
-        self.w(HURTME, hp)
-
-        # Wait for Game Over screen (MODULE 18 = 0x12, SUBMODULE 9)
-        end_time = time.time() + 15.0
-        while time.time() < end_time:
-            if self.r(MODULE) == 18 and self.r(SUBMODULE) == 9:
-                break
-            time.sleep(0.05)
-        if self.r(MODULE) != 18 or self.r(SUBMODULE) != 9:
-            raise RuntimeError(f"Failed to enter GameOver screen: MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)}")
-
-        # Select Save and Quit (choice 1)
-        for _ in range(4):
-            if self.r(CHOICE) == 1:
-                self.b.press_button("a", frames=8, detach_debugger=False)
-                break
-            self.b.press_button("select", frames=8, detach_debugger=False)
-            time.sleep(0.3)
-
-        # Wait for return to Title Screen
-        end_time = time.time() + 15.0
-        while time.time() < end_time:
-            if self.r(MODULE) in (0, 1, 0x14):
-                break
-            time.sleep(0.05)
-        print(f"    Returned to title/intro: MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)}")
-
-        # Read battery SRAM directly from emulator
-        sram = self.b.read_block(0, 8192, memtype="SnesSaveRam")
-        if len(sram) != 8192:
-            raise RuntimeError(f"Expected 8192 bytes of SRAM, got {len(sram)}")
-
-        slot1_csum = sum(int.from_bytes(sram[i:i+2], "little") for i in range(0, 0x500, 2)) & 0xFFFF
-        csum_ok = (slot1_csum == 0x5A5A)
-        backup_ok = (sram[:0x500] == sram[0xF00:0x1400])
-        sram_wear = sram[0x39F]
-        sram_count = sram[0x395]
-
-        # Ensure SRM file is saved on disk for fresh process reopen
-        srm_file = self.home / "Saves" / "deku_candidate.srm"
-        srm_file.write_bytes(sram)
-        (self.work_dir / "deku_persistence.srm").write_bytes(sram)
-        print(f"    SRAM: csum=0x{slot1_csum:04X} (valid: {csum_ok}), backup={backup_ok}, count={sram_count}, wear={sram_wear}")
-
-        t8_ok = (csum_ok and backup_ok and sram_wear == 30 and sram_count == 2)
-        self.results["save_quit_battery_persistence"] = t8_ok
-        print(f"    Save/Quit battery verdict -> OK: {t8_ok}")
-
-        # ----------------------------------------------------
-        # 9. Fresh-process cold boot reopen (T3 proof)
-        # ----------------------------------------------------
-        print("[*] Test 9: Fresh-process cold boot reopen with disk SRM...")
-        # Cleanly shut down first emulator instance
-        self.close()
-
-        # Launch fresh emulator instance loading the disk SRM without reset
-        self.launch(reset_save=False)
-        self.boot_fresh_file()
-
-        wear_reopened = self.r(DEKU_STICK_WEAR)
-        count_reopened = self.r(DEKU_STICKS_COUNT)
-        state_reopened = self.r(DEKU_STICK_STATE)
-        burn_reopened = self.r(DEKU_BURN_TIMER)
-        honeycomb_reopened = self.r(HONEYCOMB_COUNT)
-        print(f"    Fresh session: count={count_reopened}, wear={wear_reopened}, state={state_reopened}, honeycomb={honeycomb_reopened}")
-
-        reopened_clean = (wear_reopened == 30 and count_reopened == 2 and state_reopened == 0 and burn_reopened == 0)
-
-        # Redraw stick to verify restored burn timer from preserved wear
-        if not self.navigate_to_equipment():
-            raise RuntimeError("Failed to open Equipment menu after reopen")
-        self.w(CURSOR, 23)
-        time.sleep(0.1)
-        self.press("A", frames=10)
-        self.wait_play(8.0)
-
-        redraw_count = self.r(DEKU_STICKS_COUNT)
-        redraw_state = self.r(DEKU_STICK_STATE)
-        redraw_burn = self.r(DEKU_BURN_TIMER)
-        redraw_wear = self.r(DEKU_STICK_WEAR)
-        print(f"    Redrawn from wear: count={redraw_count} (exp 1), state={redraw_state} (exp 1), burn={redraw_burn} (exp 30), wear={redraw_wear} (exp 0)")
-        redraw_ok = (redraw_count == 1 and redraw_state == 1 and redraw_burn == 30 and redraw_wear == 0)
-
-        # Stow stick
-        self.press("B", frames=10)
-        time.sleep(0.2)
-
-        # Corrupt wear fallback test ($FF -> 75 ticks)
-        self.w(DEKU_STICK_WEAR, 0xFF)
-        time.sleep(0.1)
-        if not self.navigate_to_equipment():
-            raise RuntimeError("Failed to open Equipment menu for corrupt wear test")
-        self.w(CURSOR, 23)
-        time.sleep(0.1)
-        self.press("A", frames=10)
-        self.wait_play(8.0)
-
-        fallback_state = self.r(DEKU_STICK_STATE)
-        fallback_burn = self.r(DEKU_BURN_TIMER)
-        fallback_wear = self.r(DEKU_STICK_WEAR)
-        fallback_ok = (fallback_state == 1 and fallback_burn == 75 and fallback_wear == 0)
-        print(f"    Corrupt wear fallback: state={fallback_state}, burn={fallback_burn} (exp 75), wear={fallback_wear} (exp 0) -> OK: {fallback_ok}")
-
-        # Stow stick
-        self.press("B", frames=10)
-        time.sleep(0.2)
-
-        # Check ordinary sword swing works after reopen and stow
-        self.b.press_button("B", frames=8, detach_debugger=False)
-        observed_sword = 0
-        end_time = time.time() + 0.6
-        while time.time() < end_time:
-            if self.r(SWORD_STATE) > 0 or self.r(SWORD_ANIM) > 0:
-                observed_sword = 1
-                break
-            time.sleep(0.01)
-        time.sleep(0.5)
-
-        sword_reopened_ok = (observed_sword == 1 and self.r(SWORD_STATE) == 0 and self.r(SWORD_ANIM) == 0)
-        print(f"    Ordinary sword swing after reopen: observed={observed_sword} -> OK: {sword_reopened_ok}")
-
-        t9_ok = (reopened_clean and redraw_ok and fallback_ok and sword_reopened_ok)
-        self.results["save_reopen_t3_persistence"] = t9_ok
-        print(f"    Fresh process reopen verdict -> OK: {t9_ok}")
+        self.run_save_reopen()
 
         # ----------------------------------------------------
         # 10. Interruption drop cleanup (taking damage)
@@ -1463,6 +1335,146 @@ class DekuStickRuntimeTest:
         # ----------------------------------------------------
         if filter_test is None or filter_test == 15:
             self.run_test_15()
+
+    def run_save_reopen(self):
+        # ----------------------------------------------------
+        # 8. Save & Quit battery persistence
+        # ----------------------------------------------------
+        print("[*] Test 8: In-game Save & Quit and battery SRM persistence...")
+        # Link has 2 sticks, stored wear = 30
+        self.w(DEKU_STICKS_COUNT, 2)
+        self.w(DEKU_STICK_WEAR, 30)
+        self.w(DEKU_STICK_STATE, 0)
+        self.w(GAME_STATE, 2)  # Enable SaveGameFile execution
+
+        # Queue lethal damage to reach GameOver screen
+        hp = self.r(LINK_HP) or 24
+        self.w(LINK_HP, hp)
+        self.w(NOPAIN, 0)
+        self.w(HURTME, hp)
+
+        # Wait for Game Over screen (MODULE 18 = 0x12, SUBMODULE 9)
+        end_time = time.time() + 15.0
+        while time.time() < end_time:
+            if self.r(MODULE) == 18 and self.r(SUBMODULE) == 9:
+                break
+            time.sleep(0.05)
+        if self.r(MODULE) != 18 or self.r(SUBMODULE) != 9:
+            raise RuntimeError(f"Failed to enter GameOver screen: MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)}")
+
+        # Select Save and Quit (choice 1)
+        for _ in range(4):
+            if self.r(CHOICE) == 1:
+                self.b.press_button("a", frames=8, detach_debugger=False)
+                break
+            self.b.press_button("select", frames=8, detach_debugger=False)
+            time.sleep(0.3)
+
+        # Wait for return to Title Screen
+        end_time = time.time() + 15.0
+        while time.time() < end_time:
+            if self.r(MODULE) in (0, 1, 0x14):
+                break
+            time.sleep(0.05)
+        print(f"    Returned to title/intro: MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)}")
+
+        # Read battery SRAM directly from emulator
+        sram = self.b.read_block(0, 8192, memtype="SnesSaveRam")
+        if len(sram) != 8192:
+            raise RuntimeError(f"Expected 8192 bytes of SRAM, got {len(sram)}")
+
+        slot1_csum = sum(int.from_bytes(sram[i:i+2], "little") for i in range(0, 0x500, 2)) & 0xFFFF
+        csum_ok = (slot1_csum == 0x5A5A)
+        backup_ok = (sram[:0x500] == sram[0xF00:0x1400])
+        sram_wear = sram[0x39F]
+        sram_count = sram[0x395]
+
+        # Ensure SRM file is saved on disk for fresh process reopen
+        srm_file = self.home / "Saves" / "deku_candidate.srm"
+        srm_file.write_bytes(sram)
+        (self.work_dir / "deku_persistence.srm").write_bytes(sram)
+        print(f"    SRAM: csum=0x{slot1_csum:04X} (valid: {csum_ok}), backup={backup_ok}, count={sram_count}, wear={sram_wear}")
+
+        t8_ok = (csum_ok and backup_ok and sram_wear == 30 and sram_count == 2)
+        self.results["save_quit_battery_persistence"] = t8_ok
+        print(f"    Save/Quit battery verdict -> OK: {t8_ok}")
+
+        # ----------------------------------------------------
+        # 9. Fresh-process cold boot reopen (T3 proof)
+        # ----------------------------------------------------
+        print("[*] Test 9: Fresh-process cold boot reopen with disk SRM...")
+        # Cleanly shut down first emulator instance
+        self.close()
+
+        # Launch fresh emulator instance loading the disk SRM without reset
+        self.launch(reset_save=False)
+        self.boot_fresh_file()
+
+        wear_reopened = self.r(DEKU_STICK_WEAR)
+        count_reopened = self.r(DEKU_STICKS_COUNT)
+        state_reopened = self.r(DEKU_STICK_STATE)
+        burn_reopened = self.r(DEKU_BURN_TIMER)
+        honeycomb_reopened = self.r(HONEYCOMB_COUNT)
+        print(f"    Fresh session: count={count_reopened}, wear={wear_reopened}, state={state_reopened}, honeycomb={honeycomb_reopened}")
+
+        reopened_clean = (wear_reopened == 30 and count_reopened == 2 and state_reopened == 0 and burn_reopened == 0)
+
+        # Redraw stick to verify restored burn timer from preserved wear
+        if not self.navigate_to_equipment():
+            raise RuntimeError("Failed to open Equipment menu after reopen")
+        self.w(CURSOR, 23)
+        time.sleep(0.1)
+        self.press("A", frames=10)
+        self.wait_play(8.0)
+
+        redraw_count = self.r(DEKU_STICKS_COUNT)
+        redraw_state = self.r(DEKU_STICK_STATE)
+        redraw_burn = self.r(DEKU_BURN_TIMER)
+        redraw_wear = self.r(DEKU_STICK_WEAR)
+        print(f"    Redrawn from wear: count={redraw_count} (exp 1), state={redraw_state} (exp 1), burn={redraw_burn} (exp 30), wear={redraw_wear} (exp 0)")
+        redraw_ok = (redraw_count == 1 and redraw_state == 1 and redraw_burn == 30 and redraw_wear == 0)
+
+        # Stow stick
+        self.press("B", frames=10)
+        time.sleep(0.2)
+
+        # Corrupt wear fallback test ($FF -> 75 ticks)
+        self.w(DEKU_STICK_WEAR, 0xFF)
+        time.sleep(0.1)
+        if not self.navigate_to_equipment():
+            raise RuntimeError("Failed to open Equipment menu for corrupt wear test")
+        self.w(CURSOR, 23)
+        time.sleep(0.1)
+        self.press("A", frames=10)
+        self.wait_play(8.0)
+
+        fallback_state = self.r(DEKU_STICK_STATE)
+        fallback_burn = self.r(DEKU_BURN_TIMER)
+        fallback_wear = self.r(DEKU_STICK_WEAR)
+        fallback_ok = (fallback_state == 1 and fallback_burn == 75 and fallback_wear == 0)
+        print(f"    Corrupt wear fallback: state={fallback_state}, burn={fallback_burn} (exp 75), wear={fallback_wear} (exp 0) -> OK: {fallback_ok}")
+
+        # Stow stick
+        self.press("B", frames=10)
+        time.sleep(0.2)
+
+        # Check ordinary sword swing works after reopen and stow
+        self.b.press_button("B", frames=8, detach_debugger=False)
+        observed_sword = 0
+        end_time = time.time() + 0.6
+        while time.time() < end_time:
+            if self.r(SWORD_STATE) > 0 or self.r(SWORD_ANIM) > 0:
+                observed_sword = 1
+                break
+            time.sleep(0.01)
+        time.sleep(0.5)
+
+        sword_reopened_ok = (observed_sword == 1 and self.r(SWORD_STATE) == 0 and self.r(SWORD_ANIM) == 0)
+        print(f"    Ordinary sword swing after reopen: observed={observed_sword} -> OK: {sword_reopened_ok}")
+
+        t9_ok = (reopened_clean and redraw_ok and fallback_ok and sword_reopened_ok)
+        self.results["save_reopen_t3_persistence"] = t9_ok
+        print(f"    Fresh process reopen verdict -> OK: {t9_ok}")
 
     def run_test_15(self):
         print("[*] Test 15: Overworld dispatch hook ($02A477) and transition drops ($0283BF)...")

@@ -44,12 +44,44 @@ import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
+
+
+def _common_repo_root() -> Path:
+    try:
+        common_git = Path(
+            subprocess.check_output(
+                ["git", "-C", str(REPO), "rev-parse", "--git-common-dir"],
+                text=True, stderr=subprocess.DEVNULL,
+            ).strip()
+        )
+        if not common_git.is_absolute():
+            common_git = (REPO / common_git).resolve()
+        return common_git.resolve().parent
+    except Exception:
+        return REPO
+
+
+COMMON_REPO = _common_repo_root()
+if "MESEN2_OOS_ROOT" not in os.environ:
+    for cand in (REPO.parent / "mesen2-oos", COMMON_REPO.parent / "mesen2-oos"):
+        if (cand / "tools" / "oos_client").is_dir():
+            os.environ["MESEN2_OOS_ROOT"] = str(cand)
+            break
+
 sys.path.insert(0, str(REPO / "Scripts" / "Mesen2"))
 from mesen2_client_lib.bridge import MesenBridge  # noqa: E402
 
+
+def resolve_savestate(*parts: str) -> Path:
+    local = REPO.joinpath("Roms", "SaveStates", *parts)
+    if local.is_file():
+        return local
+    return COMMON_REPO.joinpath("Roms", "SaveStates", *parts)
+
+
 LAUNCHER = REPO / "Scripts" / "Mesen2" / "mesen2_launch_instance.sh"
 APP_DEFAULT = Path("/Applications/Mesen2 OOS.app")
-SAVE_DEFAULT = REPO / "Roms" / "SaveStates" / "oos168x" / "oos168x.srm"
+SAVE_DEFAULT = resolve_savestate("oos168x", "oos168x.srm")
 
 MODULE, SUBMODULE = 0x7E0010, 0x7E0011
 MENU, CURSOR, PAGE = 0x7E0200, 0x7E020B, 0x7E1E71
@@ -85,11 +117,11 @@ class HoneycombRuntimeTest:
     def __init__(self, rom_path: Path, app_path: Path, work_dir: Path):
         self.rom = rom_path
         self.app = app_path
-        self.work_dir = work_dir
+        self.work_dir = Path(work_dir).expanduser().resolve()
         self.work_dir.mkdir(parents=True, exist_ok=True)
 
-        self.instance_name = f"honeycomb-test-{int(time.time())}"
-        self.sock = self.work_dir / f"mesen-{self.instance_name}.sock"
+        self.instance_name = f"honeycomb-test-{os.getpid()}-{int(time.time())}"
+        self.sock = self.socket_path()
         self.home = self.work_dir / "profile"
         self.rom_copy = self.work_dir / "honeycomb_candidate.sfc"
         shutil.copy2(self.rom, self.rom_copy)
@@ -102,7 +134,49 @@ class HoneycombRuntimeTest:
         self.b: MesenBridge | None = None
         self.results: dict[str, bool] = {}
 
+    def socket_path(self) -> Path:
+        """Socket under OOS_SOCK_DIR or --work, or ~/.cache/oos-sock when that path
+        would exceed the macOS AF_UNIX limit (103 chars + NUL); Mesen cannot bind longer paths."""
+        sock_dir = os.environ.get("OOS_SOCK_DIR")
+        base = Path(sock_dir).expanduser().resolve() if sock_dir else self.work_dir
+        base.mkdir(parents=True, exist_ok=True)
+        sock = base / f"mesen-{self.instance_name}.sock"
+        if len(str(sock)) <= 103:
+            return sock
+        short = Path.home() / ".cache" / "oos-sock"
+        short.mkdir(parents=True, exist_ok=True)
+        return short / f"mesen-{self.instance_name}.sock"
+
     def launch(self):
+        settings_file = self.home / "settings.json"
+        cfg = {}
+        if settings_file.is_file():
+            try:
+                cfg = json.loads(settings_file.read_text(encoding="utf-8-sig"))
+            except Exception:
+                cfg = {}
+        if "Snes" not in cfg or "Input" not in cfg:
+            for seed_dir in (
+                Path.home() / "Documents" / "Mesen2",
+                Path.home() / "Library" / "Application Support" / "Mesen2",
+                Path.home() / ".config" / "Mesen2",
+            ):
+                seed_file = seed_dir / "settings.json"
+                if seed_file.is_file():
+                    try:
+                        cfg = json.loads(seed_file.read_text(encoding="utf-8-sig"))
+                        break
+                    except Exception:
+                        pass
+        cfg.setdefault("Input", {})
+        cfg.setdefault("Snes", {}).setdefault("Port1", {})["Type"] = "SnesController"
+        cfg.setdefault("Preferences", {})
+        cfg["Preferences"]["OverrideSaveDataFolder"] = True
+        cfg["Preferences"]["SaveDataFolder"] = str(self.home / "Saves")
+        cfg.setdefault("Oracle", {})
+        cfg["Oracle"]["PersistentSaveName"] = "honeycomb_candidate"
+        settings_file.write_text(json.dumps(cfg, indent=2))
+
         cmd = [
             "taskpolicy", "-b", "nice", "-n", "10", "bash", str(LAUNCHER),
             "--headless", "--no-copy-settings", "--no-save-settings",
@@ -112,7 +186,7 @@ class HoneycombRuntimeTest:
             "--app", str(self.app),
         ]
         with (self.work_dir / "launch.log").open("w") as log:
-            subprocess.run(cmd, cwd=REPO, stdout=log, stderr=log, check=True, timeout=30)
+            subprocess.run(cmd, cwd=REPO, stdin=subprocess.DEVNULL, stdout=log, stderr=log, check=True, timeout=60)
 
         for _ in range(80):
             if self.sock.exists():
@@ -122,6 +196,9 @@ class HoneycombRuntimeTest:
             raise RuntimeError(f"Socket {self.sock} did not appear")
 
         pids = subprocess.run(["lsof", "-t", str(self.sock)], text=True, capture_output=True).stdout.split()
+        if not pids:
+            pids = subprocess.run(["/usr/bin/pgrep", "-f", str(self.rom_copy)],
+                                  text=True, capture_output=True).stdout.split()
         owned = [int(p) for p in pids if p.isdigit() and str(self.rom_copy) in identity(int(p))]
         if len(owned) != 1:
             raise RuntimeError(f"Cannot identify owned emulator PID: {pids}")
@@ -140,6 +217,9 @@ class HoneycombRuntimeTest:
                 time.sleep(0.1)
         if self.sock.exists():
             self.sock.unlink(missing_ok=True)
+        self.pid = 0
+        self.pid_identity = ""
+        self.b = None
 
     def r(self, addr: int) -> int:
         return self.b.read_memory(addr)
@@ -148,7 +228,7 @@ class HoneycombRuntimeTest:
         self.b.write_memory(addr, val)
 
     def press(self, button: str, frames: int = 10):
-        if not self.b.press_button(button, frames=frames):
+        if not self.b.press_button(button, frames=frames, detach_debugger=False):
             raise RuntimeError(f"press failed: {button}")
         time.sleep((frames + 8) / 60)
 
@@ -165,9 +245,9 @@ class HoneycombRuntimeTest:
     def boot_file2(self):
         print("[*] Loading gameplay baseline state...")
         time.sleep(2)
-        state_path = REPO / "Roms" / "SaveStates" / "library" / "oos_1772076682_Agent_Gameplay_Baseline_Fresh.mss"
+        state_path = resolve_savestate("library", "oos_1772076682_Agent_Gameplay_Baseline_Fresh.mss")
         if not state_path.is_file():
-            state_path = REPO / "Roms" / "SaveStates" / "oos168x" / "oos168x_1.mss"
+            state_path = resolve_savestate("oos168x", "oos168x_1.mss")
         res = self.b.load_state(path=str(state_path))
         print(f"[*] load_state result: {res}")
         time.sleep(0.5)
