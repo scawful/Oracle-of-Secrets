@@ -31,6 +31,7 @@ deku_palette:
   dw $14A5, $14BC, $14B2, $14A5, $7FFF, $7A18, $178C
 
 print "End of Masks/deku_mask.asm        ", pc
+assert pc() >= $358000 && pc() <= $35F800, "Deku mask reached the Booki/Pols Voice sprite slot in bank $35"
 
 ; =========================================================
 

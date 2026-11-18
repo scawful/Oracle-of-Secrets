@@ -241,9 +241,7 @@ incsrc "Sprites/Enemies/anti_kirby.asm"
 incsrc "Sprites/Enemies/helmet_chuchu.asm"
 %log_end("helmet_chuchu", !LOG_SPRITES)
 
-%log_start("booki", !LOG_SPRITES)
-incsrc "Sprites/Enemies/booki.asm"
-%log_end("booki", !LOG_SPRITES)
+; booki moved to the bank $35 tail (2026-11-16), see the block after wolfos.
 
 %log_start("thunder_ghost", !LOG_SPRITES)
 incsrc "Sprites/Enemies/thunder_ghost.asm"
@@ -290,13 +288,32 @@ incsrc "Sprites/NPCs/impa.asm"
 incsrc "Sprites/Enemies/poltergeist.asm"
 %log_end("poltergeist", !LOG_SPRITES)
 
-%log_start("pols_voice", !LOG_SPRITES)
-incsrc "Sprites/Enemies/pols_voice.asm"
-%log_end("pols_voice", !LOG_SPRITES)
+; pols_voice moved to the bank $35 tail (2026-11-16), see the block after wolfos.
 
 %log_start("wolfos", !LOG_SPRITES)
 incsrc "Sprites/Bosses/wolfos.asm"
 %log_end("wolfos", !LOG_SPRITES)
+
+; Booki and Pols Voice moved to the Deku Link bank tail (2026-11-16): bank $31
+; had 83 B free (fail floor 64 B). Both are bank-neutral: the dispatcher reaches
+; them through dl pointers, the _Long and _Prep entries do PHB/PHK/PLB, their
+; tables are local, JSR targets stay inside this pair, and outward calls are
+; JSL. Bank $35 mirrors low WRAM like $30. Masks/all_masks.asm asserts the Deku
+; code stays below $35F800.
+pushpc
+org $35F800
+  %log_start("booki", !LOG_SPRITES)
+  incsrc "Sprites/Enemies/booki.asm"
+  %log_end("booki", !LOG_SPRITES)
+
+  %log_start("pols_voice", !LOG_SPRITES)
+  incsrc "Sprites/Enemies/pols_voice.asm"
+  %log_end("pols_voice", !LOG_SPRITES)
+
+  assert pc() <= $360000, "Booki/Pols Voice crossed bank $35"
+  assert pc() >= $35F800, "Booki/Pols Voice left their bank $35 slot (org without pushpc/pullpc?)"
+  print "Bank35 sprite tail used: ", dec(pc()-$35F800), " bytes"
+pullpc
 
 ; ice_block moved to the end of Bank $30 (2026-09-26): Bank $31 had 10 bytes
 ; free and Bank $30 had ~4.4 KB. Append new sprites to Bank $30 or $32 first.

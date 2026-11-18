@@ -78,6 +78,8 @@ org $398000
 org $358000
   incbin gfx/deku_link.bin
   incsrc "Masks/deku_mask.asm"
+  ; Bank $35 from $35F800 holds Booki and Pols Voice (Sprites/all_sprites.asm);
+  ; Deku's bank $35 bound is asserted inside Masks/deku_mask.asm before org $07A64B.
 
 org $368000
   incbin gfx/zora_link.4bpp

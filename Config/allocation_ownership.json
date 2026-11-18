@@ -15,7 +15,7 @@
     "shared:Masks/all_masks.asm": {
       "source_set": "shared",
       "path": "Masks/all_masks.asm",
-      "sha256": "ed317dc5ce35e1385da98ba9f685f74fb287c02399b1cf8bff6770c5b32651d2"
+      "sha256": "3197714c986740aa97647030edd5f40d3e9f416f135fc023ae95c460714b1d58"
     },
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
