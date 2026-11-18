@@ -12,7 +12,7 @@ class SemanticConsumersTest(unittest.TestCase):
    path=R.ROOT/'Overworld/entrances.asm'
    # Old-reader control assembles the maintained OFF branch of this source.
    if old_entrances:extra+='!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = 0\n'
-   extra+='!ENABLE_D7_FARORE_RESCUE_SEQUENCE = 1\nOverworld_DrawMap16_Persist = $1BC97C\norg $358000\nnamespace Oracle\n'+f'incsrc "{path}"\nnamespace off\n'
+   extra+='Overworld_DrawMap16_Persist = $1BC97C\norg $358000\nnamespace Oracle\n'+f'incsrc "{path}"\nnamespace off\n'
    if old_entrances:extra+='!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = 1\n'
    updates=tuple(updates)+((0x02EEF7,bytes.fromhex('a9a40d9f00207e')),(0x02EF1A,bytes.fromhex('9f02207e')),(0x02EF26,bytes.fromhex('9c9606')))
   # Actual displaced native prefixes with an explicit RTL probe boundary.

@@ -10,9 +10,7 @@
 !ENABLE_D5_AF_PIT_RESET              = 0
 !ENABLE_D5_BF_PIT_RESET              = 0
 !ENABLE_D6_CHU_GATE_97               = 1
-!ENABLE_D7_FARORE_RESCUE_SEQUENCE    = 1
 !ENABLE_D8_FARORE_GRAPHICS           = 0
-!ENABLE_DIVE_GATE                    = 1
 !ENABLE_GLADE_AMBUSH                 = 0
 !ENABLE_GOLDSTAR_CELL                = 1
 !ENABLE_HORSE_CROWD_CHARGE           = 0
@@ -32,7 +30,6 @@
 !ENABLE_OCARINA_SONG_TINT            = 0
 !ENABLE_ONE_RING                     = 1
 !ENABLE_OW_AUX_EXTENSION             = 0
-!ENABLE_PART00_NIGHT_FIX             = 1
 !ENABLE_RANCH_MILK                   = 0
 !ENABLE_SKY_OVERLAY_SOURCE_PROFILE   = 1
 !ENABLE_SKY_OVERWORLD_GRAPHICS       = 1

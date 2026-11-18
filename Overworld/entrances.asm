@@ -135,7 +135,7 @@ if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
 endif
   STZ.w $0692 : AND.w #$03FF : CMP.w #$0169 : BNE .open_this_castle_door
     ; With the D7 rescue flag, GameState 3 behaves like 2 here (decisions.org).
-    LDA.l $7EF3C5 : AND.w #$000F : CMP.w #$0003+!ENABLE_D7_FARORE_RESCUE_SEQUENCE
+    LDA.l $7EF3C5 : AND.w #$000F : CMP.w #$0004
 if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
     BCS .check_castle_door_type
 else

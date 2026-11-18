@@ -27,7 +27,8 @@ def assemble(folder,raw,texts):
     asm=folder/'fixture.asm'
     asm.write_text('''lorom
 !ENABLE_MASK_R_BINDING = 1
-!ENABLE_DIVE_GATE = 0
+!ENABLE_DIVE_GATE = 1
+!ZoraDiving = $0AAB
 !ENABLE_HORSE_FORM = 0
 !CurrentMask = $02B2
 !LinkGraphics = $BC

@@ -147,7 +147,6 @@ org $0281CD : LDA.l $7EF3D6 : CMP.b #$04
 ; [W3 owner: Overworld] USDASM GameOver_FadeAndRevive ($09F520): compare GameState == #$02 (was $7EF3C5 == #$03) so GameState 2/3 follow $7EF3CA.
 org $09F520 : LDA.l GameState : CMP.b #$02
 
-if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
 ; GameState 3 (Farore rescued) behaves like 2 for these vanilla readers until
 ; the ending (decisions.org: GameState 3 changes nothing in the overworld yet).
 ; A future GameState 4 would behave like vanilla 3 here; the ending rewrites this.
@@ -156,7 +155,6 @@ org $02C476 : CMP.b #$04   ; AdjustOverworldAmbiance row ; @hook module=Overworl
 org $1EEACB : CMP.b #$04   ; OldMan_Home: no $A0 line yet ; @hook module=Overworld kind=patch name=GS3Cap1EEACB
 org $05CC56 : db $90       ; BoltGuard chase theme: BNE -> BCC (GameState >= 2) ; @hook module=Overworld kind=patch name=GS3Cap05CC56
 org $06F962 : db $90       ; snitch guard death song: BNE -> BCC (GameState >= 2) ; @hook module=Overworld kind=patch name=GS3Cap06F962
-endif
 
 pullpc
   incsrc "Overworld/storm.asm"

@@ -6490,13 +6490,11 @@ Sprite_LoadGfxProperties_Interupt:
     JSL Oracle_CheckIfNight
     REP #$30
     AND.w #$00FF
-if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
     ; GS3Cap00FC79 compares4 rather than3; resolved phase3 still means night.
     ; CheckIfNight already caps the rescued-Farore daytime state to2.
     CMP.w #$0003 : BNE .resource_phase_ready
     LDA.w #$0004
 .resource_phase_ready
-endif
     PLY : PLX : PLD : PLB : PLP
     LDY.w #$003E
     RTL

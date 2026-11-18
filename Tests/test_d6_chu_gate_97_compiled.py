@@ -60,10 +60,10 @@ def assemble(directory, reference, enabled=True, corrupt=False):
     circuit = (ROOT/'Dungeons/d6_cart_circuit.asm').read_text()
     custom = block((ROOT/'Dungeons/custom_tag.asm').read_text(), 'CustomTag')
     (directory/'fixture.asm').write_text(
-        'lorom\n!ENABLE_D6_CHU_GATE_97 = %d\n!ENABLE_DIVE_GATE = 0\n'
+        'lorom\n!ENABLE_D6_CHU_GATE_97 = %d\n'
         '!DISABLE_MUSIC = 1\nRoomTag_Return = $2C7000\norg $2C9000\n' % enabled
         + defs + custom
-        + 'D6CartCircuit_Main: RTS\nHouseTag_Main: RTS\n'
+        + 'D6CartCircuit_Main: RTS\nDiveGate_IsRoom: CLC : RTL\nDiveGate_Main: RTS\nHouseTag_Main: RTS\n'
         + block(circuit, 'D6CartCircuit_IsRoom')
         + block(circuit, 'D6ChuActor_IsRoom')
         + block(circuit, 'D6ChuActor_IsLoadedRoom')

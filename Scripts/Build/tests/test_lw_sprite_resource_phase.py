@@ -17,7 +17,7 @@ def routine(text, name):
     return text.split(name + ':\n{', 1)[1].split('\n}', 1)[0]
 
 
-def assemble(directory, cap, guard, *, old=False):
+def assemble(directory, cap=1, guard=1, *, old=False):
     source = (ROOT / 'Overworld/ZSCustomOverworld.asm').read_text()
     body = routine(source, 'Sprite_LoadGfxProperties_Interupt')
     # The special palette cache loop is deliberately outside the changed block.
@@ -26,8 +26,6 @@ def assemble(directory, cap, guard, *, old=False):
         body = 'LDY.w #$003E\nLDA.l $7EF3C5\nRTL\n'
     clock = (ROOT / 'Overworld/time_system.asm').read_text()
     text = f'''lorom
-!ENABLE_D7_FARORE_RESCUE_SEQUENCE = {cap}
-!ENABLE_PART00_NIGHT_FIX = {guard}
 !GameState_FaroreRescued = $03
 !GameState_KydrogComplete = $02
 GameState = $7EF3C5
@@ -189,8 +187,8 @@ class Machine:
 @unittest.skipUnless(ASAR, 'Asar required for actual source execution')
 class LightWorldSpriteResourcePhaseTest(unittest.TestCase):
     def test_actual_selector_guards_and_abi_in_both_cap_modes(self):
-        for cap in (0, 1):
-            for guard in (0, 1):
+        for cap in (1,):
+            for guard in (1,):
                 with tempfile.TemporaryDirectory() as directory:
                     rom = assemble(Path(directory), cap, guard)
                 # Independent expected phase cases, including peacetime first.

@@ -57,7 +57,6 @@ endif
 !ENABLE_D6_CHU_GATE_97              = 1
 !ENABLE_MINECART_LIFT_TOSS           = 0
 !ENABLE_D3_PRISON_SEQUENCE           = 0
-!ENABLE_D7_FARORE_RESCUE_SEQUENCE    = 1
 !ENABLE_OCARINA_SONG_TINT            = 0
 ; RC opening / cutscene features.
 !ENABLE_CUSTOM_ATTRACT_SEQUENCE      = 1
@@ -75,11 +74,6 @@ endif
 ; stalfos rise around Link, and a mosaic ramp leads into the module $15
 ; banish (Sprites/Bosses/kydrog.asm).
 !ENABLE_GLADE_AMBUSH                = 0
-; Part00 night fix: from Farore's meeting (GameState 2) until Kydrog's ambush
-; ($7EF300), area sprite lists stay on the day set, which holds Farore and
-; Kydrog in the Forest Glade ($80); at night the ambush never loaded and the
-; Maku Tree's $20 opened with input locked (Overworld/time_system.asm).
-!ENABLE_PART00_NIGHT_FIX            = 1
 ; M2 pause menu (decisions.org 2026-09-28: "Masks & Rings page after the M1
 ; playtest: layout A, one ring", "Masks stay Y items"). Active RC defaults on.
 ; One ring: one worn ring (RingSlot1). A new ring replaces the worn one; A on
@@ -106,10 +100,6 @@ endif
 !ENABLE_LYRA_OVERLAY_FIX            = 1
 ; Garrison/Sky fly list; source preview until T3 native and save proof.
 !ENABLE_SPECIAL_OVERWORLD_SOARING   = 0
-; Dive gate (Dungeons/dive_gate.asm): room 0x44 Zora Temple deck/under-deck
-; crossing on tag 0x39: per-frame map-a gate cells, one-time map-b strip and
-; south cap, diver hide, resurface guard. Inert until the room has tag1 0x39.
-!ENABLE_DIVE_GATE                   = 1
 ; D8 Sky boss (sprite $C3, Sprites/Bosses/d8_boss.asm):
 ; Somaria-socket qualified cycles, credited-hit counter, three stages;
 ; room $96 uses dungeon spriteset $2D (base ROM PC 0x110AB7).

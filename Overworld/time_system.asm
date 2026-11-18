@@ -295,24 +295,20 @@ CheckIfNight:
     RTL
   +
   LDA.l GameState : CMP.b #$02 : BCC .day_time
-if !ENABLE_PART00_NIGHT_FIX == 1
     ; Farore met (GameState 2) but Kydrog's ambush not played yet: keep the
     ; day list. Only it holds Farore and Kydrog in the Forest Glade ($80);
     ; the night list has neither, so at night Link auto-walked into the Maku
     ; Tree's $20 with InCutScene still 1 (input locked): softlock.
     LDA.l KydrogFaroreRemoved : BEQ .day_time
-endif
     LDA TimeState.Hours : CMP.b #$12 : BCS .night_time
       LDA TimeState.Hours : CMP.b #$06 : BCC .night_time
       .day_time
       LDA.l GameState
-if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
       ; GameState 3 uses the GameState-2 day list until the ending
       ; (decisions.org: GameState 3 changes nothing in the overworld yet).
       CMP.b #!GameState_FaroreRescued : BCC +
         LDA.b #!GameState_KydrogComplete
       +
-endif
       RTL
   .night_time
   LDA.b #$03

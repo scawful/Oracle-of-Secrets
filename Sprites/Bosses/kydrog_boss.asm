@@ -341,7 +341,6 @@ Sprite_KydrogBoss_Main:
     RTS
   }
 
-  if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
   ; The rescue text runs in the crystal ceremony (Dungeons/d7_farore_rescue.asm).
 
   ; Replaces the crystal store in Ancilla3E_RisingCrystal ($08CC48), which
@@ -366,7 +365,6 @@ Sprite_KydrogBoss_Main:
   org $08CC48 ; Ancilla3E_RisingCrystal crystal store (STA.l $7EF37A)
     JSL KydrogBoss_D7CrystalCommit
   pullpc
-  endif
 
   KydrogBoss_Ascend: ; 0x0A
   {

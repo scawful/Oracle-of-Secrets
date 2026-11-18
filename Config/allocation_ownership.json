@@ -20,7 +20,7 @@
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "f3015b31c8717733d37726b0fb5a26182860bda23592452b89ebf1e568b78f9e"
+      "sha256": "200b464b597cb866a85801b7cd017d5d965d1848b97fe75dda6a635e82ce0854"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -75,7 +75,7 @@
     "shared:Overworld/ZSCustomOverworld.asm": {
       "source_set": "shared",
       "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "3109359a355c2b8dbdc8be41f3871ea40691f09726ccdffcf3f98fe880b205fc"
+      "sha256": "2aeef2f027794f2e921981976230f0d6c6e48719c605a9d06f55bee29364d64a"
     },
     "shared:Sprites/Objects/data/minecart_tracks.asm": {
       "source_set": "shared",
@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "7a91692fbb26076346ba40ad80e72c6d6b46203699633217a4f61eea9424d250"
+      "sha256": "93651919f3c789548487238685af809e66dbf25f42acef0d03f2b577648808a8"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "e15007abead1d97eea9f93d81b587fa9c20d5c1d4a6545749d3dea5ae852202e"
+      "sha256": "8caccebb8246385c6d02ceb65471228bb45059948a6f4aad44075021da0d9fe2"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -125,7 +125,7 @@
     "shared:Overworld/overworld.asm": {
       "source_set": "shared",
       "path": "Overworld/overworld.asm",
-      "sha256": "5ce1e67b8a258be135b7f8b042bd74bf80534ab3296d5ba63622551b0d53b283"
+      "sha256": "03ed1b40c3b877c161920dbf08abd730043b92e196db7a09dec25b7f63b9ce60"
     },
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
@@ -230,7 +230,7 @@
     "shared:Overworld/time_system.asm": {
       "source_set": "shared",
       "path": "Overworld/time_system.asm",
-      "sha256": "dd6c2e42638e6f0702ef4064f49ece63d37891bc6ba43c167bfa4fca5b35f539"
+      "sha256": "56c503c12c0d8fff898bc70a23f6fdd47b63a982ca278de477f60d9ae1a2ad01"
     },
     "shared:Overworld/aux_palette_extension.asm": {
       "source_set": "shared",
@@ -345,7 +345,7 @@
     "shared:Masks/horse_form.asm": {
       "source_set": "shared",
       "path": "Masks/horse_form.asm",
-      "sha256": "544ad5460c6c4d8258692ea075bf57c48ad8e0249d9bbaf83f063822747ba50d"
+      "sha256": "884721a5b08c329efc3527a29993d4ca66a5c1fd93bf9c6b2b68b9f6f5508daa"
     },
     "shared:Sprites/NPCs/horse.asm": {
       "source_set": "shared",
@@ -360,12 +360,12 @@
     "shared:Masks/mask_binding.asm": {
       "source_set": "shared",
       "path": "Masks/mask_binding.asm",
-      "sha256": "4f8e058346ac7a819b79e4a68efd912f1f9ee4eb4aa1f97aaf79a7ce037351ff"
+      "sha256": "31c5b1157754491b3e8f23e55002b98c9c64878f31445f6c63d595a17ad9028c"
     },
     "shared:Overworld/entrances.asm": {
       "source_set": "shared",
       "path": "Overworld/entrances.asm",
-      "sha256": "ff8a878ef916d241b8ab59d0793249ab50cd9fa94f5640ade29b120350711a33"
+      "sha256": "aeff701bf706273bbd30900457a77eaf5ac55349ce11baded3c9493e4c8fae18"
     },
     "shared:Masks/horse_ground_clearance.asm": {
       "source_set": "shared",
