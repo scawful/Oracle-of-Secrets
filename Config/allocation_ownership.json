@@ -20,7 +20,7 @@
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "4fb09360f8052bec9abc0c2c6e05f229bc3a9b7a3854cc49045664d8fdba37e8"
+      "sha256": "c50794708ab1caf583387e251ae60d8cb281b7d273db5f26822b40e2f33ddfda"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "249b8f1d8570f85b20f74a7bdde8ae3fe01c83001af07fc10ef91896b2a7e3c2"
+      "sha256": "dd5e6d1dec6a86314aab84a785c57fea68813a05e31f676aaeb3e866559357b4"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "f0bfef95123220e1f80aaecb4676808f9b4b975d2cd3c5439f9efd76de712182"
+      "sha256": "77301f95df3d2297c2738e7944eb89cf1b7493e7e8053426e1fc1262748f519e"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -130,7 +130,7 @@
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
       "path": "Menu/menu_hud.asm",
-      "sha256": "52b7be2e7c1bab0d54ba92daa02f7a86629dd1e29b99a23ce4dbb2333dbf260b"
+      "sha256": "bae1901c20f8aaea2a80aaffb2e3939a6b6fd9cea2cea5936c43489a62856915"
     },
     "shared:Menu/menu_map_travel.asm": {
       "source_set": "shared",
@@ -265,12 +265,12 @@
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
       "path": "Sprites/all_sprites.asm",
-      "sha256": "db301c89e8858df0297b364856dcb6f7c1e8b80e6ed8e00f05a2a0b75463ac85"
+      "sha256": "7066ccaba2aad4b207ce7b253a6b91ca1e437748a8fef2ded9cd530da5d4c35e"
     },
     "shared:Sprites/Objects/ice_block.asm": {
       "source_set": "shared",
       "path": "Sprites/Objects/ice_block.asm",
-      "sha256": "3112a8084858159af0add520f5870043dfeba2d992ef7dcc6571b734161f3307"
+      "sha256": "b16795fe4950a5f908256d31c24858155b86926c1bd70e0a2384d09644e3a000"
     },
     "shared:Dungeons/d4_water_control.asm": {
       "source_set": "shared",

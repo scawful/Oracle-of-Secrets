@@ -88,7 +88,5 @@ print "End of expanded dialogue          ", pc
 ; owns the reserved tail beginning at $2FFE00.
 assert pc() <= $2FFE00, "Expanded messages crossed fixed allocation end $2FFDFF"
 
-; Translucent dark band behind the text window (default off; see Util/macros.asm).
-if !ENABLE_TEXT_BOX_SHADE == 1
-  incsrc "Core/text_shade.asm"
-endif
+; Translucent dark band behind the text window.
+incsrc "Core/text_shade.asm"

@@ -92,8 +92,7 @@ Sprite_VillageDog_Main:
     RTS
   .richard_vanilla
   endif
-  if !ENABLE_VILLAGE_DOG_POLISH == 1
-  ; Bug fix (2026-09-26 playtest, flagged): vanilla CarriedSprite_CheckForThrow
+  ; Bug fix (2026-09-26 playtest): vanilla CarriedSprite_CheckForThrow
   ; (usdasm bank_06 $06DF6D) restores SprState to 9, sets SprTimerF ($0F80,X,
   ; Z velocity) to +4 and SprXSpeed/SprYSpeed to a pot-throw speed, and
   ; SpriteModule_Carried then runs this Main on the same frame. SprHeight is
@@ -112,7 +111,6 @@ Sprite_VillageDog_Main:
       LDA.b #$20 : STA.w SprTimerF, X
       LDA.b #$09 : STA.w SprAction, X ; -> Dog_Tossed
   .not_fresh_toss
-  endif
 
   LDA.w SprAction, X
   JSL   JumpTableLocal
@@ -127,9 +125,7 @@ Sprite_VillageDog_Main:
 
   dw EonDog_Handler           ; 07
   dw EonDog_Right             ; 08
-  if !ENABLE_VILLAGE_DOG_POLISH == 1
   dw Dog_Tossed                ; 09
-  endif
 
   ; 0
   Dog_Handler:
@@ -269,7 +265,6 @@ Sprite_VillageDog_Main:
     RTS
   }
 
-  if !ENABLE_VILLAGE_DOG_POLISH == 1
   ; 09 - airborne after a real toss (see the fresh-toss detection above).
   ; Same order as vanilla ThrowableScenery_InteractWithSpritesAndTiles
   ; ($06E164): move XY, tile collision, then ThrownSprite_TileAndSpriteInteraction,
@@ -293,7 +288,6 @@ Sprite_VillageDog_Main:
     .aloft
     RTS
   }
-  endif
 }
 
 EonDog_Walk:

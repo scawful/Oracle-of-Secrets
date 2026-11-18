@@ -101,9 +101,7 @@ Sprite_IceBlock_Prep:
   ; which deletes a sprite 64px off camera. Bit 7 keeps the block active
   ; off camera, so a slide continues out of view instead of freezing.
   LDA.b #$80 : STA.w SprDefl, X
-if !ENABLE_D5_CF_STAYS_SOLVED == 1
   JSR IceBlock_CF_LoadSolved
-endif
 if !ENABLE_D5_BF_PIT_RESET == 1 || !ENABLE_D5_AF_PIT_RESET == 1
   STZ.w SprMiscB, X
   STZ.w SprTimerC, X
@@ -155,16 +153,12 @@ endif
     STZ.w SprTimerA, X : STZ.w SprMiscA, X
   .no_damage
 
-if !ENABLE_D5_CF_STAYS_SOLVED == 1
   JSR IceBlock_CF_LiftGoalPot
-endif
   STZ.w $0642
   JSR Sprite_IceBlock_CheckForSwitch : BCC .no_switch
     STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
     LDA.b #$01 : STA.w $0642
-if !ENABLE_D5_CF_STAYS_SOLVED == 1
     JSR IceBlock_CF_MarkSolved
-endif
   .no_switch
 
   JSL Sprite_Move
@@ -684,7 +678,6 @@ endif
   db $00, $00, $00, $00
 }
 
-if !ENABLE_D5_CF_STAYS_SOLVED == 1
 ; =========================================================
 ; Room CF stays solved
 ; =========================================================
@@ -795,4 +788,3 @@ IceBlock_CF_MarkSolved:
   .done
   RTS
 }
-endif

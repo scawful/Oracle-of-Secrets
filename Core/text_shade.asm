@@ -1,5 +1,5 @@
 ; =========================================================
-; Text box shade (!ENABLE_TEXT_BOX_SHADE)
+; Text box shade (retired from !ENABLE_TEXT_BOX_SHADE in W1 Batch 1)
 ;
 ; Darkens the scene behind the text window (translucent dark band) so the
 ; white glyphs stay readable on bright ground. The Oracle font has no frame:

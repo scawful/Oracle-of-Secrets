@@ -684,11 +684,7 @@ org $0DF7C9
 
 ; Ocarina
 org $0DF859
-if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
   dw $30D4, $30D5, $30E4, $30E5 ; Grey: owned, no song learned
-else
-  dw $2CD4, $2CD5, $2CE4, $2CE5
-endif
   dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
   dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
   dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue

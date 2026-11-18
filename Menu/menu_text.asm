@@ -316,11 +316,7 @@ endif
 
     ; Check the timer and see if we should draw the item name
     LDA $1A : AND.w #$00FF : CMP #$0080 : BCC .draw_item
-if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
   LDA $030F : AND.w #$00FF : BEQ .draw_item ; no song: "OCARINA" only
-else
-  LDA $030F : BEQ .draw_item
-endif
   LDA $030F : AND.w #$00FF : DEC : ASL #5 : TAX
   LDY.w #$0000
 

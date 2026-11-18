@@ -1814,15 +1814,11 @@ MinishPortal_CanAct:
   LDA.w $0FFC : ORA.w $02E4 : ORA.w $02E1 : BNE .no
   LDA.w $0301 : ORA.w $037A : ORA.w $0308 : BNE .no
   LDA.w $0376 : ORA.w $0377 : BNE .no
-if !ENABLE_MINISH_GBC_PORTAL_FIX == 1
   ; GBC Link (the Abyss form before the Moon Pearl) walks in the permabunny
   ; state $17. Preserve access to the Origins portal before the Pearl.
   LDA.b $5D : BEQ .state_ok
   CMP.b #$17 : BNE .no
   .state_ok
-else
-  LDA.b $5D : BNE .no
-endif
   LDA.b $3C : BNE .no
   SEC : RTS
   .no

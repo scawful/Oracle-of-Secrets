@@ -2,11 +2,7 @@
 
 pushpc
 org $01CC08 ; Holes3 / tag $34 ; @hook module=Dungeons name=CrumbleFloor
-if !ENABLE_THIN_ICE == 1
 JSL CrumbleFloorTag_ThinIceEntry
-else
-JSL CrumbleFloorTag_Main
-endif
 RTS
 pullpc
 
@@ -165,7 +161,6 @@ replace_tile_pit:
 ;
 ; Allocation: fixed slot $2CF800-$2CF9FF (Sprites/all_sprites.asm asserts
 ; the bank $2C stream stays below it). RAM $7FB000-$7FB035 (zeroed at boot).
-if !ENABLE_THIN_ICE == 1
 
 !ThinIce_LastFrame  = $7FB000 ; byte, $1A of the last run
 !ThinIce_LastY      = $7FB002 ; word, $FFFF = no stored cell
@@ -305,5 +300,3 @@ ThinIce_Break:
 }
 assert pc() <= $2CFA00, "Thin ice overflows its bank $2C slot"
 pullpc
-
-endif

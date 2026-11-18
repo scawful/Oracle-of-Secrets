@@ -488,9 +488,7 @@ assert pc() <= $2CF700, "Bank $2C sprite stream overlaps Somaria internal landin
 if !ENABLE_MINECART_CART_SHUTTERS
   assert pc() <= $2CFA00, "Bank $2C sprite stream overlaps localized cart drag"
 endif
-if !ENABLE_THIN_ICE == 1
-  assert pc() <= $2CF800, "Bank $2C sprite stream overlaps thin ice slot"
-endif
+assert pc() <= $2CF800, "Bank $2C sprite stream overlaps thin ice slot"
 
 ; =========================================================
 

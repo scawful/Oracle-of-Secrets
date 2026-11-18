@@ -10,8 +10,6 @@
 ; Allocation: fixed bank $07 tail $07FFA0-$07FFFF. Items/ocarina.asm asserts
 ; that the bank $07 free-space chain stays below $07FFA0.
 
-if !ENABLE_HOT_FLOOR == 1
-
 pushpc
 
 ; Underworld tile behavior vector for type $DE (vanilla TileBehavior_Nothing).
@@ -41,5 +39,3 @@ TileBehavior_HotFloor:
 assert pc() <= $080000, "HotFloor overflows bank $07"
 
 pullpc
-
-endif

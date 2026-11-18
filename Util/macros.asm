@@ -55,9 +55,6 @@ endif
 !ENABLE_D5_BF_PIT_RESET             = 0
 ; AF transfer-room pit reset; independent of BF and off until private qualification.
 !ENABLE_D5_AF_PIT_RESET             = 0
-; CF six-push stays solved (scawful 2026-11-15 "A: stays solved"): saved CF bit
-; $1000 reloads the block on goal, lifts the goal pot and holds both shutters open.
-!ENABLE_D5_CF_STAYS_SOLVED          = 1
 ; Room-state bit (Dungeons/room_state.asm): saved per-room solved bit plus a
 ; per-room mode table from Data/room_state.json. Every room is mode 0, so this
 ; changes no gameplay until a room is given a mode.
@@ -105,17 +102,9 @@ endif
 !ENABLE_EXPERIMENT_SCENE            = 1
 ; Impa follower: position-triggered hints on the Act I route (Sprites/NPCs/impa_hints.asm).
 !ENABLE_IMPA_FOLLOWER_HINTS         = 1
-; Shrine of Origins: west shutter opens only when Minish Link is in the NE chamber.
-!ENABLE_ORIGINS_MINISH_PUZZLE        = 1
-; Let Minish Link reopen the Origins shutter after earning the Moon Pearl,
-; so the NW chest chamber has a return route (needs ORIGINS_MINISH_PUZZLE).
-!ENABLE_ORIGINS_PEARL_RETURN_FIX     = 1
 ; Pause menu: hide/lock the X:LOG (Journal) and Y:RINGS (Ring Box) entries
 ; until the Book of Secrets ($7EF34E) / a ring is owned (Menu/*.asm).
 !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY = 1
-; Pause menu + HUD: grey Ocarina icon and a no-song Song Menu state while the
-; Ocarina is owned with no song learned ($7EF34C = 1) (Menu/*.asm).
-!ENABLE_MENU_OCARINA_BLANK_SLOT      = 1
 ; Pause menu page 3 "Masks & Rings" (Menu/menu_page3.asm): L (or Y) on Items
 ; scrolls to a page with the five masks and six rings; the cursor equips masks
 ; (as Y items, $0202) and equips/unequips rings; X opens the Journal. Masks
@@ -131,8 +120,6 @@ endif
 ; instead of the legacy addresses that alias SideQuestProgress/2, Pineapples
 ; and RockMeatCount (Items/magic_rings.asm).
 !ENABLE_RING_SRAM_RELOCATE           = 1
-; Translucent dark band behind the text window (Core/text_shade.asm, HDMA ch 6).
-!ENABLE_TEXT_BOX_SHADE               = 1
 ; Eon Owl one-shot: each Abyss Owl appearance happens once; after its talk and
 ; fly-away it does not respawn (EonOwlFlags $7EF3A7, Sprites/NPCs/eon_owl.asm).
 !ENABLE_EON_OWL_ONE_SHOT             = 1
@@ -150,10 +137,6 @@ endif
 ; Early-game balance: Act I/D1 enemy damage, per-location HP overrides,
 ; Red Potion 100 rupees (Core/early_game_balance.asm).
 !ENABLE_EARLY_GAME_BALANCE          = 1
-; Village dog polish: real gravity/velocity toss arc (replaces the flat
-; HandleTossedDog height decrement) and an excited tail-wag reaction on
-; landing (Sprites/NPCs/village_dog.asm).
-!ENABLE_VILLAGE_DOG_POLISH          = 1
 ; Korok polish: Koroks in Korok Cove stroll a few px left/right near home and
 ; stop at walls (the walk never ended before), talk from any state, Makar
 ; uses the Korok palette, variant fixed per placement (no Hollo), and the
@@ -284,9 +267,6 @@ endif
 ; (charge sparkle while charging); no R. Link must be unmasked to shrink
 ; (Masks/minish_form.asm, Masks/mask_routines.asm).
 !ENABLE_MINISH_AUTO_PORTAL          = 1
-; Let GBC Link ($5D = $17, Abyss form before the Pearl) charge the Minish portal
-; (needs MINISH_AUTO_PORTAL). Without it the Origins Minish passage is unreachable.
-!ENABLE_MINISH_GBC_PORTAL_FIX       = 1
 ;
 ; Truthful controls (M3; Codex menu review, accepted by scawful 2026-09-28):
 ; ring text without the penalties the code never applied; the HUD Y box keeps
@@ -324,14 +304,6 @@ endif
 ; crossing on tag 0x39: per-frame map-a gate cells, one-time map-b strip and
 ; south cap, diver hide, resurface guard. Inert until the room has tag1 0x39.
 !ENABLE_DIVE_GATE                   = 1
-; Hot floor (underworld tile type $DE): hurts like spike floor except in
-; Garo Master form, airborne (feather/cape hop, Deku hover) or in a minecart.
-; Sprites walk on it (Dungeons/hot_floor.asm).
-!ENABLE_HOT_FLOOR                   = 1
-; Thin ice: the crumble floor tag ($34) also tracks ice floor (tile type
-; $0E/$0F by char). The cell Link steps off cracks and becomes a pit after a
-; 40-frame fuse (Dungeons/crumblefloor_tag.asm).
-!ENABLE_THIN_ICE                    = 1
 ; D8 Sky boss mechanics prototype (sprite $C3, Sprites/Bosses/d8_boss.asm):
 ; Somaria-socket qualified cycles, credited-hit counter, three stages.
 ; On: room $96 uses dungeon spriteset $2D (base ROM PC 0x110AB7).
