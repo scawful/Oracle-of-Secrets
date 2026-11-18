@@ -13,12 +13,15 @@
 ; Modify the code of the sprite "RunningBoy" 0x74
 ; ====================================================
 
-; Sprite_2D_NecklessMan_bounce
+; Sprite_2D_NecklessMan_bounce (active only when Horse Form is disabled; when enabled,
+; Sprites/NPCs/horse.asm owns $06:92DD and dispatches SprMiscA==$F1 to FloaterBoySpriteCheck).
+if !ENABLE_HORSE_FORM == 0
 org $06C0B2 ; @hook module=Items
 {
   JSL FloaterBoySpriteCheck
   RTS
 }
+endif
 
 org $07AF3E ; Cane of Byrna
 LinkItem_FishingRodAndPortalRod:
@@ -83,8 +86,21 @@ LinkItem_FishingRod:
 {
   PHB : PHK : PLB
 
+  ; Abort and clean up any active session in non-default states (swim/fall/recoil/door/carry/dash/submodule/Minish/Moosh).
+  LDA.b $5D : ORA.w $0345 : ORA.b $5B : ORA.b $6C
+  ORA.w $0308 : ORA.w $0372 : ORA.b $11 : BNE .abort_if_active
+  LDA.w $02B2 : BEQ .form_ok
+  CMP.b #$06 : BEQ .form_ok
+.abort_if_active
+  JSR Fishing_ClearSession
+  BRA FishingRodExit
+.form_ok
+
   BIT.b $3A : BVS .holding_y
-    LDA.b $6C : BNE FishingRodExit
+    ; Never reuse an orphaned session when starting a fresh cast.
+    LDA.l $7F5BA2 : BEQ +
+      JSR Fishing_ClearSession
+    +
     JSR CheckYButtonPress : BCC FishingRodExit
 
     LDA.b $67 : AND.b #$F0 : STA.b $67
@@ -139,6 +155,7 @@ LinkItem_FishingRod:
     LDA.b $23 : STA.w SprXH, Y
     LDA.b $20 : STA.w SprY, Y
     LDA.b $21 : STA.w SprYH, Y
+    LDA.b $EE : STA.w SprFloor, Y
     LDA.b #$01 : STA.w SprCollision, Y ; is floater
     LDA.b #!FishingFloaterSignature : STA.w SprMiscA, Y
     TYA : STA.l $7F5BA3 ; keep the index of the sprite
@@ -151,10 +168,11 @@ LinkItem_FishingRod:
   LDA.b #$FE : STA $3D ;set timer to 8 frames
   ; wait for Y press
   .waitforend
+  JSR Fishing_GetFloater : BCS +
+    JMP EndFishing
+  +
 
   LDA.b $F4 : AND #$40 : BEQ .exit
-  JSR Fishing_GetFloater : BCS .reel
-    JMP EndFishing
   .reel
   LDA.b #$08 : STA $3D ;set timer to 8 frames
   STZ.w $0300 ; set animation frame to 0 (pull back)
@@ -173,11 +191,6 @@ LinkItem_FishingRod:
     JSL Sprite_SpawnDynamically
     BMI .noPrize
     JSL Sprite_SetSpawnedCoordinates
-
-    LDA.w $0E20, Y : CMP.b #$D2 : BNE .notafish
-      LDA #$04 : STA.w SprHeight, Y
-      LDA #$01 : STA.w $0D80, Y
-    .notafish
 
     PHX
     LDX.b $66
@@ -249,8 +262,9 @@ DirSpeedsX:
 DirSpeedsY:
   db $20, $DF, $00, $00
 
+; Sprite ID $D2 is repurposed to Sprite_CloudBridge (Objects/cloud_bridge.asm); use valid vanilla pickups.
 Prizes:
-  db $D8, $D2, $D2, $D2, $D9, $DA, $DB, $DC, $DF, $E0, $E1, $D9, $D9, $DA, $D9, $DA
+  db $D8, $DB, $D8, $DA, $D9, $DA, $DB, $DC, $DF, $E0, $E1, $D9, $D9, $DA, $D9, $DA
 
 
 ;assert pc() <= $07A64A
@@ -342,6 +356,9 @@ RestoreCaneBlockHammerGfx:
 
 FloaterBoySpriteCheck:
 {
+  LDA.w SprMiscA, X : CMP.b #!FishingFloaterSignature : BEQ .is_floater
+    JML $0DC6DE
+.is_floater
   PHB : PHK : PLB
   JSR Sprite_Floater
   PLB
@@ -375,6 +392,15 @@ Sprite_CheckIfActive:
 
 SpritePrep_Floater:
 {
+  STZ.w SprXSpeed, X
+  STZ.w SprYSpeed, X
+  STZ.w SprYRound, X
+  STZ.w SprXRound, X
+  STZ.w SprHeightS, X
+  STZ.w SprTimerA, X
+  STZ.w SprTimerC, X
+  STZ.w SprTimerD, X
+
   LDA.b $66 : CMP.b #$03 : BNE .notRight
     LDA.b #$12 : STA.w SprXSpeed, X ; XSpeed
     BRA .DoInitFloater
@@ -394,6 +420,11 @@ SpritePrep_Floater:
 
   .DoInitFloater
 
+  ; Keep floater active when cast past a screen edge ($0CAA bit 7) and use small shadow ($0E60 bit 5),
+  ; overriding Epona's shared $2D property table defaults ($0CAA=$46, $0E60=$C6).
+  LDA.w SprDefl, X : ORA.b #$80 : STA.w SprDefl, X
+  LDA.w $0E60, X : ORA.b #$20 : STA.w $0E60, X
+
   LDA.b #$08 : STA.w SprHeight, X    ; Height
   LDA.b #$10 : STA.w $0F80, X    ; Gravity
   LDA.b #$00 : STA.w SprMiscG, X ; is it in water?
@@ -410,6 +441,15 @@ SpritePrep_Floater:
 
 Sprite_Floater:
 {
+  LDA.l $7F5BA2 : BNE +
+    STZ.w SprState, X
+    RTS
+  +
+  LDA.b $5D : ORA.w $0345 : ORA.b $5B : ORA.b $11 : BEQ +
+    JSR Fishing_ClearSession
+    RTS
+  +
+
   ; Floater Draw, allocate 4 tiles to use for the hud
   LDA.w SprMiscG, X : BEQ +
     JSL Sprite_DrawWaterRipple
@@ -446,9 +486,9 @@ Sprite_Floater:
     .still_wiggling
 
 
-    LDY.w SprTimerC, X
+    LDA.w SprTimerC, X : AND.b #$1F : TAY
     LDA.w WigglingTable, Y : STA.w SprXSpeed, X
-    LDA.w WigglingTable, Y : STA.w SprYSpeed, X
+    STA.w SprYSpeed, X
     LDY.w SprTimerC, X : BNE + ; use timer to do wiggling
     ; if = 0 then put it back to F
     LDA.b #$0F : STA.w SprTimerC, X ; wiggling timer
@@ -517,30 +557,36 @@ Sprite_Floater:
 
 Sprite_Floater_Draw:
 {
-  LDA.b #$4 ; 1 oam slots
-  JSL $0DBA88 ; SpriteDraw_AllocateOAMFromRegionC
-  JSL $06E416 ; Sprite_PrepOamCoord
+  JSL Sprite_PrepOamCoord
+  BCS .offscreen
+
   REP #$20
-
-  LDA.b $00 : STA.b ($90),Y
-  CLC : AND.w #$0100 : STA.b $0E
-
-  LDA.b $02 : INY
-  STA.b ($90),Y
-  CMP.w #$0100
+  LDA.b $00 : CLC : ADC.w #$000F : CMP.w #$010F : BCS .offscreen_16
+  LDA.b $02 : CLC : ADC.w #$000F : CMP.w #$00EF : BCS .offscreen_16
   SEP #$20
-  BCC .on_screen
 
-  LDA.b #$F0 : STA.b ($90),Y
+  LDA.b #$04 ; 1 oam slot
+  JSL OAM_AllocateFromRegionC
 
-  .on_screen
+  REP #$20
+  LDA.b $00 : AND.w #$0100 : STA.b $0E ; high byte ($0F) holds X-MSB bit 0
+  SEP #$20
 
-  LDA.b #$0C : INY : STA.b ($90),Y
+  LDY.b #$00
+  LDA.b $00 : STA.b ($90), Y
+  INY
+  LDA.b $02 : STA.b ($90), Y
+  INY
+  LDA.b #$0C : STA.b ($90), Y
+  INY
+  LDA.b #$32 : STA.b ($90), Y
 
-  LDA.b #$32 : INY : STA.b ($90),Y
+  LDA.b #$02 : ORA.b $0F : STA.b ($92)
+  RTS
 
-  LDA.b #$02 : STA.b ($92)
-
+.offscreen_16
+  SEP #$20
+.offscreen
   RTS
 }
 
@@ -553,7 +599,11 @@ WigglingTable:
 
 DismissRodFromMenu:
 {
+  PHA
+  PHB : PHK : PLB
   JSR Fishing_ClearSession
+  PLB
+  PLA
   RTL
 }
 

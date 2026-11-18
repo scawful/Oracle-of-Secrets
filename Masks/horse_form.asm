@@ -412,7 +412,8 @@ else
   LDX.b #$0F
   .scan
     LDA.w $0DD0, X : BEQ .next_slot
-    LDA.w $0E20, X : CMP.b #!Horse_SpriteId : BEQ .found
+    LDA.w $0E20, X : CMP.b #!Horse_SpriteId : BNE .next_slot
+    LDA.w SprMiscA, X : CMP.b #$F1 : BNE .found
   .next_slot
     DEX : BPL .scan
 

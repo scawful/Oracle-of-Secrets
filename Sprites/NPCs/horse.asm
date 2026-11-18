@@ -50,6 +50,11 @@ org $53D000
 
 Sprite_HorseNPC_Long:
 {
+  ; $2D is shared with Items/fishing_rod.asm's fishing floater (SprMiscA == $F1).
+  ; Enter with M=8, X=8, DBR=$30; JML straight to FloaterBoySpriteCheck before horse gates run.
+  LDA.w SprMiscA, X : CMP.b #$F1 : BNE .horse_npc
+    JML FloaterBoySpriteCheck
+  .horse_npc
   PHP : PHB : PHX : PHY
   SEP #$30
   LDA.b #$00 : PHA : PLB
