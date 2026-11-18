@@ -11,12 +11,6 @@
 !DreamMsg_PowerWake       = $020B
 ; Wisdom fall (!ENABLE_DREAM_WISDOM_FALL): D1.05, Maple after shots 3-5.
 !DreamMsg_WisdomWake      = $020E
-if !ENABLE_DREAM_WISDOM_FALL == 1
-  assert !ENABLE_DREAM_POWER_SCENE == 1, "ENABLE_DREAM_WISDOM_FALL runs on the Power scene's script engine (ENABLE_DREAM_POWER_SCENE)"
-endif
-if !ENABLE_DREAM_BED_WAKE == 1
-  assert !ENABLE_DREAM_POWER_SCENE == 1, "ENABLE_DREAM_BED_WAKE needs the wake word (ENABLE_DREAM_POWER_SCENE)"
-endif
 
 MapleHandler:
 {
@@ -37,14 +31,11 @@ MapleHandler:
   if !ENABLE_DREAM_WISDOM_SCENE == 1
     dw Maple_DreamNarrationDone ; 08
   endif
-  if !ENABLE_DREAM_BED_WAKE == 1
     dw Maple_WakeLink           ; 09
-  endif
 
 
   Maple_Idle:
   {
-    if !ENABLE_DREAM_POWER_SCENE == 1
       ; A finished dream scene left the wake word (DreamPower_OpEnd). With
       ; the bed wake-up Link snores a moment first (action 9); otherwise
       ; Maple says the dream's line now, at the hut door.
@@ -52,15 +43,10 @@ MapleHandler:
       LDA.l DreamPower_WakeLine : CMP.w #!DreamPower_WakeLive
       SEP #$20                            ; SEP keeps Z
       BNE .no_wake_line
-      if !ENABLE_DREAM_BED_WAKE == 1
         LDA.b #$40 : STA.w SprTimerA, X
         %GotoAction(9)
         RTS
-      else
-        JMP Maple_SayWakeLine
-      endif
       .no_wake_line
-    endif
     %ShowSolicitedMessage($01B3) : BCC +
       INC.w SprAction, X
     +
@@ -178,7 +164,6 @@ MapleHandler:
     RTS
   }
 
-  if !ENABLE_DREAM_BED_WAKE == 1
     ; Link was tucked into the bed on the hut reload (DreamWake_TuckIntoBed)
     ; and snores. Then he sits up, as Uncle_AwakenLink wakes him in the
     ; vanilla intro ($05DE86), and Maple says the line; a button press gets
@@ -192,9 +177,7 @@ MapleHandler:
       .wait
       RTS
     }
-  endif
 
-  if !ENABLE_DREAM_POWER_SCENE == 1
     ; Clears the wake word and shows the line of the dream that just ended.
     Maple_SayWakeLine:
     {
@@ -207,16 +190,11 @@ MapleHandler:
       RTS
 
       .lo ; by CurrentDream: Wisdom, Power, Courage
-      if !ENABLE_DREAM_WISDOM_FALL == 1
         db !DreamMsg_WisdomWake&$FF
-      else
-        db $00
-      endif
       db !DreamMsg_PowerWake&$FF, $00
       .hi
       db !DreamMsg_WisdomWake>>8, !DreamMsg_PowerWake>>8, $00
     }
-  endif
 }
 
 Sprite_PutLinkToSleep:
@@ -274,11 +252,9 @@ Link_HandleDreams:
       ; so LoadTransAuxGFX decodes LASTSPRSET3 there ($00D77B).
       LDA.b #$55 : STA.l LASTSPRSET3
     endif
-    if !ENABLE_DREAM_WISDOM_FALL == 1
       ; Kydrog's own sheet (kydrog.asm: chars $CC-$EE in slot 3 of overworld
       ; set $0C) for his silhouette in shot 5. Group $6A keeps slot 1 too.
       LDA.b #$42 : STA.l LASTSPRSET1
-    endif
     LDX.b #$00
     JSR Link_WarpToRoom
     RTS
@@ -286,11 +262,9 @@ Link_HandleDreams:
 
   Dream_Power:
   {
-    if !ENABLE_DREAM_POWER_SCENE == 1
       ; Farore's sheet for room $00, as Dream_Wisdom: group $57 keeps slot 3.
       ; The king's sheet comes in through DreamPower_KingSheet (slot 2).
       LDA.b #$55 : STA.l LASTSPRSET3
-    endif
     LDX.b #$01
     JSR Link_WarpToRoom
     RTS

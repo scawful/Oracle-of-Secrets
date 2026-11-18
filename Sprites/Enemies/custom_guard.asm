@@ -195,14 +195,7 @@ Guard_CheckDamageToLink_CaptureWrapper:
 ; ---------------------------------------------------------
 ; Vanilla patch (guard callsite hook)
 ; ---------------------------------------------------------
-	; With !ENABLE_INTRO_STALFOS_PATROL the patrol owns $05C263 and calls this
-	; wrapper for every guard outside the intro village (stalfos_patrol.asm).
-	if !ENABLE_INTRO_STALFOS_PATROL == 0
-	pushpc
-	org $05C263 ; Guard_Main damage/contact check ; @hook module=Sprites name=Guard_CheckDamageToLink_CaptureWrapper kind=jsl target=Guard_CheckDamageToLink_CaptureWrapper
-	  JSL Guard_CheckDamageToLink_CaptureWrapper
-	pullpc
-	endif
+	; Stalfos patrol owns $05C263 and calls this wrapper for guards outside the intro village.
 
 ; ---------------------------------------------------------
 ; Vanilla patch (common receipt completion hook)

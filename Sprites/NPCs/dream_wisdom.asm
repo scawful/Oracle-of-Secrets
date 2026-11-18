@@ -200,14 +200,12 @@ DreamWisdom_ReleaseLink:
     LDA.b $22 : STA.w $0FC2
     LDA.b $20 : STA.w $0FC4
     SEP #$20
-    if !ENABLE_DREAM_BED_WAKE == 1
       ; A finished scene left the wake word: Link wakes in Maple's bed.
       REP #$20
       LDA.l DreamPower_WakeLine : CMP.w #!DreamPower_WakeLive
       SEP #$20                            ; SEP keeps Z
       BNE .done
         JSR DreamWake_TuckIntoBed         ; dream_power.asm
-    endif
   .done
   RTS
 }
@@ -338,17 +336,11 @@ DreamWisdom_Main:
   DreamWisdom_End:
   {
     LDA.w SprTimerA, X : BNE .wait
-    if !ENABLE_DREAM_WISDOM_FALL == 1
       ; Shots 3-5: Farore becomes the script director (dream_power.asm),
       ; which ends the dream through DreamPower_OpEnd.
       LDA.b #!DreamPower_SubFarore : STA.w SprSubtype, X
       LDA.b #DreamPower_Script_wisdom-DreamPower_Script : STA.w SprAction, X
       STZ.w SprMiscB, X
-    else
-      STZ.w SprAction, X
-      STZ.w DreamReturnTimer              ; as when the timer fires
-      PHX : JSR DreamReturn_Begin : PLX   ; Begin clobbers X
-    endif
     .wait
     RTS
   }

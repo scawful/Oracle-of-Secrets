@@ -190,48 +190,6 @@ assert pc() <= $00841E
 
 ; =========================================================
 
-; With !ENABLE_EARLY_GAME_BALANCE the vanilla Heart item returns at $1EF27D
-; (base ROM bytes) and Bananas move to shop item type $0E
-; (Core/early_game_balance.asm).
-if !ENABLE_EARLY_GAME_BALANCE == 0
-org $1EF27D ; @hook module=Core
-ShopItem_Banana:
-{
-  JSR $F4CE   ; SpriteDraw_ShopItem
-  JSR $FE78   ; Sprite_CheckIfActive_Bank1E
-  JSL $1EF4F3 ; Sprite_BehaveAsBarrier
-  JSR $F391   ; ShopItem_CheckForAPress
-  BCC .exit
-
-    LDA.l Bananas : CMP.b #$0A : BCS .error
-    LDA.b #$1E : LDY.b #$00
-    JSR $F39E ; ShopItem_HandleCost
-    BCC .error
-
-    STZ.w SprState,X
-    INC.b Bananas
-
-    LDY.b #$42 : JSR $F366 ; ShopItem_HandleReceipt
-
-  .exit
-  RTS
-  .error
-  JSR $F1A1 ; ShopItem_GiveFailureMessage
-}
-assert pc() <= $1EF2AB
-
-; =========================================================
-
-; Shop item heart OAM
-; SpriteDraw_ShopItem
-org $1EF42E
-  dw  -4,  16 : db $03, $02, $00, $00 ; 3
-  dw  -4,  16 : db $03, $02, $00, $00 ; 3
-  dw   4,  16 : db $30, $02, $00, $00 ; 0
-  dw   0,   0 : db $E5, $03, $00, $02 ; item
-  dw   4,  11 : db $38, $03, $00, $00 ; shadow
-endif
-
 ; =========================================================
 
 ; Octoballoon_FormBabby
@@ -273,9 +231,7 @@ org $05FF7D : LDA.l $7EF34C : CMP.b #$01
 ; Kid at ranch: vanilla msg $147 path writes MapIcon ($7EF3C7) = 2 at
 ; $05FF8F, reachable before D1. The map icon timeline drops that write
 ; (Docs/Debugging/Issues/world_map_icons_2026-09-26.md).
-if !ENABLE_MAP_ICON_TIMELINE == 1
   org $05FF8F : NOP #6
-endif
 
 ; Raven Damage (LW/DW)
 org $068963 : db $81, $84
@@ -313,7 +269,5 @@ org $06891B : NOP #12
 
 ; (SPC upload timeout hook removed – revert to vanilla handshake)
 
-; Early-game balance (default off; see Util/macros.asm).
-if !ENABLE_EARLY_GAME_BALANCE == 1
+; Early-game balance ($BB dispatch, shop item redirects, HP overrides).
   incsrc "Core/early_game_balance.asm"
-endif

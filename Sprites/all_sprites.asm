@@ -102,9 +102,7 @@ incsrc "Sprites/Enemies/custom_guard.asm"
 %log_end("custom_guard", !LOG_SPRITES)
 
 ; Intro village Stalfos patrol: own org in bank $3A, no bank $30 bytes.
-if !ENABLE_INTRO_STALFOS_PATROL == 1
   incsrc "Sprites/Enemies/stalfos_patrol.asm"
-endif
 
 ; Ganondorf finale phase 1: own org in bank $2A, no bank $30 bytes.
   incsrc "Sprites/Bosses/ganondorf.asm"

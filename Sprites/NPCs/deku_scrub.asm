@@ -230,9 +230,6 @@ endif
     %PlayAnimation(3, 3, 10)
     JSL Sprite_PlayerCantPassThrough
     %ShowSolicitedMessage($1B9) : BCC +
-      if !ENABLE_MAP_ICON_TIMELINE == 0
-      LDA.b #$02 : STA.l MapIcon
-      endif
     +
     RTS
   }
@@ -243,9 +240,6 @@ endif
     %PlayAnimation(4, 4, 10)
     JSL Sprite_PlayerCantPassThrough
     %ShowSolicitedMessage($1BA) : BCC +
-      if !ENABLE_MAP_ICON_TIMELINE == 0
-      LDA.b #$02 : STA.l MapIcon
-      endif
     +
     RTS
   }

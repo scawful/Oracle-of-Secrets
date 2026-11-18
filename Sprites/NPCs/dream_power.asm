@@ -40,7 +40,6 @@
 ; up and says the dream's line (maple.asm). Off, the line plays at the door.
 ; =========================================================
 
-if !ENABLE_DREAM_POWER_SCENE == 1
 assert !ENABLE_DREAM_ROOM_SHEETS == 1, "ENABLE_DREAM_POWER_SCENE requires ENABLE_DREAM_ROOM_SHEETS"
 assert !ENABLE_DREAM_WISDOM_SCENE == 1, "ENABLE_DREAM_POWER_SCENE requires ENABLE_DREAM_WISDOM_SCENE (scene locks)"
 
@@ -68,7 +67,6 @@ assert !ENABLE_DREAM_WISDOM_SCENE == 1, "ENABLE_DREAM_POWER_SCENE requires ENABL
 !DP_OpLine          = $02     ; show !DreamMsg_PowerFirst + argument
 !DP_OpFrame         = $03     ; set the frame, then the next op at once
 !DP_OpEnd           = $04     ; the single exit: dream return
-if !ENABLE_DREAM_WISDOM_FALL == 1
 assert !ENABLE_DREAM_WISDOM_SCENE == 1, "ENABLE_DREAM_WISDOM_FALL requires ENABLE_DREAM_WISDOM_SCENE"
 !DP_OpFadeOut       = $05     ; brightness ($13) to 0 over argument frames
 !DP_OpFadeIn        = $06     ; brightness back to $0F over argument frames
@@ -90,13 +88,10 @@ assert !ENABLE_DREAM_WISDOM_SCENE == 1, "ENABLE_DREAM_WISDOM_FALL requires ENABL
 !DP_ManY1           = $00A8
 !DP_ManX2           = $00F0   ; in front of him
 !DP_ManY2           = $00C4
-endif
-if !ENABLE_DREAM_BED_WAKE == 1
 ; Maple's bed in the hut (room $0F, base $1E00,$0000): Sprite_PutLinkToSleep
 ; puts Link 24 px right of where he stands to talk to Maple.
 !DreamWake_BedX     = $1F78
 !DreamWake_BedY     = $0140
-endif
 
 ; Text pauses sprites, so each op after a line runs on the first frame
 ; after its box closes.
@@ -117,7 +112,6 @@ DreamPower_Script:
   db !DP_OpLine, $04                      ; D2.05 her own thought
   db !DP_OpWait, $30
   db !DP_OpEnd, $00
-if !ENABLE_DREAM_WISDOM_FALL == 1
 ; Wisdom shots 3-5 in the great hall. DreamWisdom_End starts it after D1.02
 ; (and its 48-frame hold). Lines: !DreamMsg_PowerFirst + 6 = $20C, + 7 = $20D.
 .wisdom
@@ -145,7 +139,6 @@ if !ENABLE_DREAM_WISDOM_FALL == 1
   db !DP_OpFlash, $00
   db !DP_OpWait, $40
   db !DP_OpEnd, $00
-endif
 .end
 assert DreamPower_Script_end-DreamPower_Script < $FF, "dream scripts must fit an 8-bit index"
 
@@ -228,10 +221,8 @@ DreamPower_Prep:
   STZ.w SprAction, X                      ; script position
   STZ.w SprMiscB, X                       ; continuous-op frames left
   LDA.w SprSubtype, X : CMP.b #!DreamPower_SubFarore : BEQ .farore
-  if !ENABLE_DREAM_WISDOM_FALL == 1
     CMP.b #!DreamPower_SubSilhouette : BEQ .silhouette
     CMP.b #!DreamPower_SubMan0 : BCS .man
-  endif
     LDA.b #!DP_FrameKing : STA.w SprFrame, X
     ; Frame 1 is four 16x16 pieces; $73 reserves ($0E40 & $1F) + 1 = 3.
     LDA.w $0E40, X : AND.b #$E0 : ORA.b #$03 : STA.w $0E40, X
@@ -239,7 +230,6 @@ DreamPower_Prep:
   .farore
   LDA.b #!DP_FrameBack : STA.w SprFrame, X
   RTS
-  if !ENABLE_DREAM_WISDOM_FALL == 1
     .man
     LDA.b #!DP_FrameMan : STA.w SprFrame, X
     RTS
@@ -247,7 +237,6 @@ DreamPower_Prep:
     LDA.b #!DP_FrameSilhouette : STA.w SprFrame, X
     LDA.w $0E40, X : AND.b #$E0 : ORA.b #$05 : STA.w $0E40, X ; 6 pieces
     RTS
-  endif
 }
 
 ; JMP from Sprite_HyruleDream_Main (subtype >= $D3); active frames only.
@@ -258,14 +247,11 @@ DreamPower_Main:
     RTS
   .dreaming
   LDA.w SprSubtype, X : CMP.b #!DreamPower_SubFarore : BEQ .director
-  if !ENABLE_DREAM_WISDOM_FALL == 1
     CMP.b #!DreamPower_SubSilhouette : BCS .drawn_only
     CMP.b #!DreamPower_SubMan0 : BCS .man
-  endif
   .drawn_only
   RTS                                     ; the king, the silhouette
 
-  if !ENABLE_DREAM_WISDOM_FALL == 1
     ; One of the Captain's men. DreamPower_OpVanish sets SprMiscB: blink
     ; (2 frames on, 2 off), then gone.
     .man
@@ -280,7 +266,6 @@ DreamPower_Main:
     .gone
     STZ.w SprState, X
     RTS
-  endif
 
   .director
   ; Hold the 8 s dream timer, for the first !DP_Watchdog frames only.
@@ -297,7 +282,6 @@ DreamPower_Main:
   ; Continuous ops run for SprMiscB frames: walk up (SprMiscD 0) or, in the
   ; Wisdom fall, a brightness fade out (1) or in (2), one step per 2 frames.
   LDA.w SprMiscB, X : BEQ .script
-  if !ENABLE_DREAM_WISDOM_FALL == 1
     LDA.w SprMiscD, X : BEQ .walk
     CMP.b #$01 : BEQ .fade_out
       LDA.w SprMiscB, X : LSR A : BCS .tick
@@ -312,7 +296,6 @@ DreamPower_Main:
     DEC.w SprMiscB, X
     RTS
     .walk
-  endif
     %PlayAnimation(!DP_FrameBackStepA, !DP_FrameBackStepB, 8)
     LDA.b #!DP_WalkSpeed : STA.w SprYSpeed, X
     JSL Sprite_MoveVert
@@ -336,7 +319,6 @@ DreamPower_Main:
   dw DreamPower_OpLine                    ; 2
   dw DreamPower_OpFrame                   ; 3
   dw DreamPower_OpEnd                     ; 4
-  if !ENABLE_DREAM_WISDOM_FALL == 1
     dw DreamPower_OpFadeOut               ; 5
     dw DreamPower_OpFadeIn                ; 6
     dw DreamPower_OpSpawnMen              ; 7
@@ -344,7 +326,6 @@ DreamPower_Main:
     dw DreamPower_OpSfx                   ; 9
     dw DreamPower_OpFlash                 ; A
     dw DreamPower_OpFall                  ; B
-  endif
 
   .done
   RTS
@@ -391,7 +372,6 @@ DreamPower_OpEnd:
   RTS
 }
 
-if !ENABLE_DREAM_WISDOM_FALL == 1
 DreamPower_OpFadeOut:
 {
   LDA.b $05 : STA.w SprMiscB, X
@@ -502,7 +482,6 @@ DreamPower_OpFall:
   LDA.b #$01 : STA.b $15                  ; upload the palettes in NMI
   RTS
 }
-endif
 
 ; ---------------------------------------------------------
 ; The king's sheet in sprite slot 2. Group $57 (room $00) loads $27 there,
@@ -539,7 +518,6 @@ DreamPower_KingSheet:
   RTL
 }
 
-if !ENABLE_DREAM_BED_WAKE == 1
 ; ---------------------------------------------------------
 ; JSR from DreamWisdom_ReleaseLink: the hut reload after a finished scene,
 ; at the end of the room's sprite list (Underworld_ResetSprites), where the
@@ -568,5 +546,3 @@ DreamWake_TuckIntoBed:
   JSR Blanket_UseBedColors                ; maple.asm: bed greys, not green
   RTS
 }
-endif
-endif

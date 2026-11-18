@@ -17,14 +17,10 @@
 !ENABLE_D8_BOSS                       = 1
 !ENABLE_D8_FARORE_GRAPHICS            = 0
 !ENABLE_DIVE_GATE                     = 1
-!ENABLE_DREAM_BED_WAKE                = 1
 !ENABLE_DREAM_ENTRY_FX                = 1
-!ENABLE_DREAM_POWER_SCENE             = 1
 !ENABLE_DREAM_RETURN                  = 1
 !ENABLE_DREAM_ROOM_SHEETS             = 1
-!ENABLE_DREAM_WISDOM_FALL             = 1
 !ENABLE_DREAM_WISDOM_SCENE            = 1
-!ENABLE_EARLY_GAME_BALANCE            = 1
 !ENABLE_EON_OWL_ONE_SHOT              = 1
 !ENABLE_EPONA_SONG                    = 1
 !ENABLE_EQUIPMENT_MENU                = 1
@@ -36,7 +32,6 @@
 !ENABLE_HORSE_FORM                    = 1
 !ENABLE_HORSE_PARK_ANYWHERE           = 1
 !ENABLE_IMPA_FOLLOWER_HINTS           = 1
-!ENABLE_INTRO_STALFOS_PATROL          = 1
 !ENABLE_JOURNAL_DEFERRED              = 1
 !ENABLE_JUMPTABLELOCAL_GUARD          = 1
 !ENABLE_KALYXO_BOAT                   = 1
@@ -44,7 +39,6 @@
 !ENABLE_LYRA_OVERLAY_FIX              = 1
 !ENABLE_LYRA_TALKERS                  = 0
 !ENABLE_LYRA_TEMPLE_ZORA              = 0
-!ENABLE_MAP_ICON_TIMELINE             = 1
 !ENABLE_MASK_R_BINDING                = 1
 !ENABLE_MASK_Y_TRANSFORM              = 1
 !ENABLE_MENU_AUDIT_FIXES              = 1
@@ -70,7 +64,6 @@
 !ENABLE_PART0_STORM                   = 1
 !ENABLE_PORTAL_ROD_CELL               = 1
 !ENABLE_RANCH_MILK                    = 0
-!ENABLE_RICHARD_QUEST                 = 1
 !ENABLE_RING_SRAM_RELOCATE            = 1
 !ENABLE_ROOM_STATE_BITS               = 1
 !ENABLE_SKY_OVERLAY_SOURCE_PROFILE    = 1

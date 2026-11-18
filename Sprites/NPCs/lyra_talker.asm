@@ -18,7 +18,6 @@
 ; the wording. Progression gates and the gear take/return are not built.
 ; =========================================================
 
-assert !ENABLE_EARLY_GAME_BALANCE == 1, "Lyra talkers use the Oracle $BB dispatch in Core/early_game_balance.asm"
 
 !LyraTalkerType = $0F
 

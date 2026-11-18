@@ -177,7 +177,6 @@ DrawEonEscapeIcon:
 !MapTimeline_D6 = !Crystal_D6_GoronMines
 !MapTimeline_D7 = !Crystal_D7_DragonShip
 
-if !ENABLE_MAP_ICON_TIMELINE == 1
 ; Entry: A (8-bit) = dungeon number 1-7. Any M/X.
 ; Exit:  C set = draw the marker, C clear = hide it.
 ;        A clobbered; X, Y, M/X preserved.
@@ -220,7 +219,6 @@ MapTimeline_ShouldDrawDungeon:
   db $00, $00, !MapTimeline_D2, !MapTimeline_D3
   db !MapTimeline_D3, !MapTimeline_D3, $00
 }
-endif
 
 pushpc
 
@@ -268,43 +266,26 @@ MapIconDraw:
       JMP restore_coords_and_exit
   .lwprizes
 
-  if !ENABLE_MAP_ICON_TIMELINE == 1
     ; Hall of Secrets: Maku Tree met (bit 1) until Impa is met there (bit 2).
     LDA.l OOSPROG : AND.b #$06 : CMP.b #$02 : BNE +
-  else
-    LDA.l OOSPROG : CMP.b #$02 : BNE +
-  endif
     JSL DrawHallOfSecretsIcon
     JSR HandleMapDrawIcon
   +
-  if !ENABLE_MAP_ICON_TIMELINE == 1
     ; Pyramid: after D3 Kalyxo Castle.
     LDA.l Crystals : AND.b #!MapTimeline_D3 : BEQ .main_quest
-  else
-    LDA.l OOSPROG : AND.b #$10 : BEQ .main_quest
-  endif
     JSL DrawPyramidIcon
     JSR HandleMapDrawIcon_noflash
   .main_quest
 
-  if !ENABLE_MAP_ICON_TIMELINE == 1
     ; Before the Maku Tree meeting only the pre-Maku marker shows.
     LDA.l OOSPROG : AND.b #$02 : BNE .draw_crystal_1
-  else
-  LDA.l MapIcon : CMP.b #$01 : BEQ .draw_crystal_1
-                  CMP.b #$02 : BCS .draw_crystals
-  endif
                     JSL DrawEonEscapeIcon
                     JSR HandleMapDrawIcon
                     JMP restore_coords_and_exit
 
   .draw_crystal_1
   ; Draw Crystal 1
-  if !ENABLE_MAP_ICON_TIMELINE == 1
     LDA.b #$01 : JSL MapTimeline_ShouldDrawDungeon : BCC .skip_draw_0
-  else
-  LDA.l $7EF37A : AND #$02 : BNE .skip_draw_0
-  endif
     ; X position
     LDA.b #$00 : STA.l $7EC10B
     LDA.b #$87 : STA.l $7EC10A
@@ -319,17 +300,10 @@ MapIconDraw:
     LDA.b #$0E : STA.l $7EC025 ; OAM Slot used
     JSR HandleMapDrawIcon
   .skip_draw_0
-  if !ENABLE_MAP_ICON_TIMELINE == 0
-  JMP restore_coords_and_exit
-  endif
 
   .draw_crystals
   ; Draw Crystal 2
-  if !ENABLE_MAP_ICON_TIMELINE == 1
     LDA.b #$02 : JSL MapTimeline_ShouldDrawDungeon : BCC .skip_draw_1
-  else
-  LDA.l $7EF37A : AND #$10 : BNE .skip_draw_1
-  endif
     ; X position (2)
     LDA.b #$1E : STA.l $7EC10B
     LDA.b #$A0 : STA.l $7EC10A
@@ -347,11 +321,7 @@ MapIconDraw:
   .skip_draw_1
 
   ; Draw Crystal 3
-  if !ENABLE_MAP_ICON_TIMELINE == 1
     LDA.b #$03 : JSL MapTimeline_ShouldDrawDungeon : BCC .skip_draw_2
-  else
-  LDA.l $7EF37A : AND #$40 : BNE .skip_draw_2
-  endif
     ; X position
     LDA.b #$08 : STA.l $7EC10B
     LDA.b #$10 : STA.l $7EC10A
@@ -369,11 +339,7 @@ MapIconDraw:
   .skip_draw_2
 
   ; Draw Crystal 4
-  if !ENABLE_MAP_ICON_TIMELINE == 1
     LDA.b #$04 : JSL MapTimeline_ShouldDrawDungeon : BCC .skip_draw_3
-  else
-  LDA.l $7EF37A : AND #$20 : BNE .skip_draw_3
-  endif
     ; X position
     LDA.b #$0E : STA.l $7EC10B
     LDA.b #$5E : STA.l $7EC10A
@@ -391,11 +357,7 @@ MapIconDraw:
   .skip_draw_3
 
   ; Draw Crystal 5
-  if !ENABLE_MAP_ICON_TIMELINE == 1
     LDA.b #$05 : JSL MapTimeline_ShouldDrawDungeon : BCC .skip_draw_4
-  else
-  LDA.l $7EF37A : AND #$04 : BNE .skip_draw_4
-  endif
     ; X position
     LDA.b #$0C : STA.l $7EC10B
     LDA.b #$34 : STA.l $7EC10A
@@ -413,11 +375,7 @@ MapIconDraw:
   .skip_draw_4
 
   ; Draw Crystal 6
-  if !ENABLE_MAP_ICON_TIMELINE == 1
     LDA.b #$06 : JSL MapTimeline_ShouldDrawDungeon : BCC .skip_draw_5
-  else
-  LDA.l $7EF37A : AND #$01 : BNE .skip_draw_5
-  endif
     ; X position (6)
     LDA.b #$0D : STA.l $7EC10B
     LDA.b #$05 : STA.l $7EC10A
@@ -435,11 +393,7 @@ MapIconDraw:
   .skip_draw_5
 
   ; Draw Crystal 7
-  if !ENABLE_MAP_ICON_TIMELINE == 1
     LDA.b #$07 : JSL MapTimeline_ShouldDrawDungeon : BCC .skip_draw_6
-  else
-  LDA.l $7EF37A : AND #$08 : BNE .skip_draw_6
-  endif
     ; X position
     LDA.b #$00 : STA.l $7EC10B
     LDA.b #$F4 : STA.l $7EC10A

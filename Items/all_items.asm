@@ -359,9 +359,7 @@ incsrc "Sprites/NPCs/piratian.asm"
 
 ; Richard quest: bank $34 is full. Every JSL entry sets DB with PHK : PLB and
 ; hooks use JSL, so the file runs from this bank unchanged.
-if !ENABLE_RICHARD_QUEST == 1
 incsrc "Overworld/richard_quest.asm"
-endif
 
 ; Room $78 Lanmola surface/stagger states (Hammer opening). Sprite banks
 ; $30/$31 are full with D8 Farore follow on; every entry is long and every

@@ -125,13 +125,6 @@ endif
 ; Pyramid / Link's House / Hall of Secrets (message $21B,
 ; Overworld/abyss_spawn_menu.asm).
 !ENABLE_ABYSS_SPAWN_MENU            = 1
-; Early-game balance: Act I/D1 enemy damage, per-location HP overrides,
-; Red Potion 100 rupees (Core/early_game_balance.asm).
-!ENABLE_EARLY_GAME_BALANCE          = 1
-; World map: Light World dungeon markers follow story flags (crystals,
-; Maku Tree, Ocarina) instead of the MapIcon counter $7EF3C7
-; (Overworld/world_map.asm, Docs/Debugging/Issues/world_map_icons_2026-09-26.md).
-!ENABLE_MAP_ICON_TIMELINE           = 1
 ; Dream return (decisions.org "DECIDED Abyss fixes follow-ups" item 3, option c):
 ; a few seconds after one of Maple's dreams lands, Link is reloaded through the
 ; Dream Hut entrance ($68) so a dream cannot strand him (Sprites/NPCs/maple.asm).
@@ -145,33 +138,11 @@ endif
 ; after Link_WarpToRoom; Wisdom does it in its scene (Sprites/NPCs/
 ; dream_rooms.asm). Needs DREAM_RETURN. Diagnostic opt-out.
 !ENABLE_DREAM_ROOM_SHEETS           = 1
-; Power dream scene (decisions.org pendant dreams; words approved 2026-10-15):
-; Farore and Hyrule's king in room $00's north-east arena play D2.01-D2.05
-; ($206-$20A), then the dream return; Maple says D2.06 ($20B) in the hut
-; (Sprites/NPCs/dream_power.asm). Needs DREAM_ROOM_SHEETS and the Wisdom
-; scene's locks (DREAM_WISDOM_SCENE). Diagnostic opt-out.
-!ENABLE_DREAM_POWER_SCENE           = 1
-; Wisdom dream shots 3-6 (storyboard; words approved 2026-10-15; decisions.org
-; "Wisdom dream shots 3-5 stay in the great hall"): his men fade, the prison
-; speaks (D1.03/D1.04, $20C/$20D), he falls to Kydrog's silhouette, Maple
-; says D1.05 ($20E) in the hut. Runs on the Power scene's script engine
-; (Sprites/NPCs/dream_power.asm), so it needs DREAM_POWER_SCENE. Diagnostic opt-out.
-!ENABLE_DREAM_WISDOM_FALL           = 1
-; Dream bed wake-up (decisions.org "Abyss fixes follow-ups" item 3, the later
-; step): after a finished dream scene Link wakes in Maple's bed and she says
-; the dream's line; off, the line plays at the hut door. Needs
-; DREAM_POWER_SCENE. Diagnostic opt-out.
-!ENABLE_DREAM_BED_WAKE              = 1
 ; Dream entry effect (scawful 2026-10-18): before the warp, the dream's
 ; pendant rises from Link, three medallion flashes, the hut sways (HDMA),
 ; colours cycle, mosaic, white (Sprites/NPCs/dream_entry_fx.asm). Off, the
 ; warp starts right after the sleep. Diagnostic opt-out.
 !ENABLE_DREAM_ENTRY_FX              = 1
-; Intro village Stalfos patrol: while GameState < 2, Wayward Village loads
-; guard sprites ($42) with the pirate palette, half-heart contact plus a
-; recovery pause, tuned chase speed, limited sight and a home box
-; (Sprites/Enemies/stalfos_patrol.asm).
-!ENABLE_INTRO_STALFOS_PATROL        = 1
 ; Forest Glade ambush (prototype, off): after Kydrog's msg $21 the glade
 ; animals flee, a thunder blackout swaps stalfos art into the glade slots,
 ; stalfos rise around Link, and a mosaic ramp leads into the module $15
@@ -241,13 +212,6 @@ endif
 ; pick a real unfound ring and Vasu's appraisal clears the found ring.
 ; Needs MASK_Y_TRANSFORM and RING_SRAM_RELOCATE.
 !ENABLE_TRUTHFUL_CONTROLS           = 1
-; Richard quest (scawful 2026-11-15): the Wayward Village snitch lady ($3D)
-; paces without calling guards and asks for her dog Richard, a night-only
-; palette swap of the village dog ($25). After Link finds him she runs into
-; the storage shed (entrance $4A, room $107) and rewards Link inside.
-; Off by default until dialogue and the room are approved
-; (Overworld/richard_quest.asm, SRAM RichardQuestFlags).
-!ENABLE_RICHARD_QUEST               = 1
 ; Lyra/Sky overlay fix: Overworld_ReloadSubscreenOverlay (ZSCustomOverworld,
 ; $02AF58) skipped the subscreen-overlay table for every area >= $80, so a
 ; reload on a tail map ($A0-$BF) or during Song of Storms rain on a Sky map
@@ -280,6 +244,7 @@ endif
 ; Learned = SideQuestProg2 bit 1 (!SideQuest2_EponaSong), not the $7EF34C count.
 ; Off until native save/reopen proof and the song effect is decided.
 !ENABLE_EPONA_SONG                  = 1
+
 
 ; Epona crowd check + mounted charge (Masks/horse_charge.asm): the song call
 ; refuses with 5+ active enemies (OAM headroom); charging into an enemy deals

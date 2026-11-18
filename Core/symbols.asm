@@ -241,7 +241,6 @@ endif
 
 ; Power dream scene (!ENABLE_DREAM_POWER_SCENE, Sprites/NPCs/dream_power.asm).
 ; Two more staged $73 actors; the scene uses the Wisdom marker and locks.
-if !ENABLE_DREAM_POWER_SCENE == 1
 !DreamPower_SubKing   = $D3
 !DreamPower_SubFarore = $D4
 !DreamPower_WakeLive = $D2A6
@@ -250,7 +249,6 @@ if !ENABLE_DREAM_POWER_SCENE == 1
 !DreamPower_SubMan0       = $D5
 !DreamPower_SubSilhouette = $D8
 DreamPower_WakeLine  = $7FF37A ; word: !DreamPower_WakeLive = Maple says D2.06 in the hut
-endif
 
 ; BossKit (Sprites/Bosses/boss_kit.asm) uses WRAM $7FF380-$7FF384 in the same
 ; vanilla-free UNUSED_7FF180 block: the boss frame load meter and earthquake.

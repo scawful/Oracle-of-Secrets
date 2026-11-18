@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "c64931dce3893442a486c007c8ee47c2a42cb86525fe71437c706c3f23487fa2"
+      "sha256": "85b0beb858cb4baaabea435eb98ad3ebf4b9a9ceccaab1441ff01e8c2ffcd08e"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "6c55919338422363e7e0e3c22b4e2d41f9d09914166267304ed3631785439ebf"
+      "sha256": "9ddcfae1b8b9513f277bba2591e8a614ec97574371e56ae1210a33ac760bb42b"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -170,7 +170,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "64a3476f36d71d8ed9acc9fefc830ed99affffa87a83bf46f32cba27e7518208"
+      "sha256": "85d06ccf4bf81278b2431fa0c46a7cff1abd664e83b95dad8df1c8855fc7621c"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -230,7 +230,7 @@
     "shared:Overworld/time_system.asm": {
       "source_set": "shared",
       "path": "Overworld/time_system.asm",
-      "sha256": "fdc009d4da54aa06b6378b62d514ff57e61ed35ff82038242a4811dedfb5140f"
+      "sha256": "0f836c336631975bdf3623ea808d1ee8810a8e2b551a5acf719d2474645be07f"
     },
     "shared:Overworld/aux_palette_extension.asm": {
       "source_set": "shared",
@@ -265,7 +265,7 @@
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
       "path": "Sprites/all_sprites.asm",
-      "sha256": "e6b95eb9262017ee0f9e0b3bfaa153422a7f862ef4d223414ac8d764fcc929b9"
+      "sha256": "908d77a4a367a211504ac3d35567719ad5ae10c1a2d5a8c64c9a467ae1be545e"
     },
     "shared:Sprites/Objects/ice_block.asm": {
       "source_set": "shared",
@@ -365,7 +365,7 @@
     "shared:Items/all_items.asm": {
       "source_set": "shared",
       "path": "Items/all_items.asm",
-      "sha256": "61889f462d01fb6fc0681dc5e9ee47e55d805fde3d2ab2c91d1ea0f9a29d2677"
+      "sha256": "3ac1bf089852c976ec8c9bddf3c2c3fb5495d7ee5f37fa1a687e62380b882507"
     },
     "shared:Masks/horse_park_anywhere.asm": {
       "source_set": "shared",
