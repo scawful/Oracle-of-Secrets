@@ -265,7 +265,7 @@
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
       "path": "Sprites/all_sprites.asm",
-      "sha256": "a2f754e5f2f153ea4de4a9ebbe25bef74f309fb22fdaeaca1bde69220d4639a4"
+      "sha256": "319a9c98669a3c5b82fc03dcbc4003079ce2810c99c4bd375acdf5278d8b55f2"
     },
     "shared:Sprites/NPCs/eon_owl.asm": {
       "source_set": "shared",
@@ -375,7 +375,7 @@
     "shared:Items/all_items.asm": {
       "source_set": "shared",
       "path": "Items/all_items.asm",
-      "sha256": "958abadf89ff6512ef6cb617bd2c34d8bab15a91079057f2a1e5f20d18fb0234"
+      "sha256": "c0e03eb3610a534588e2276f6910401f05cffe1ef0e19ffaba793f3a4d2559f6"
     },
     "shared:Masks/horse_park_anywhere.asm": {
       "source_set": "shared",
@@ -416,6 +416,26 @@
       "source_set": "shared",
       "path": "Items/fire_burn_bushes.asm",
       "sha256": "21d690a917bb66bcdd29aac3d7e63dde47860146dd9de16f90f5ef11be70719e"
+    },
+    "shared:Sprites/Bosses/manhandla.asm": {
+      "source_set": "shared",
+      "path": "Sprites/Bosses/manhandla.asm",
+      "sha256": "261fce35163e6cc8ee6dfa810e1fba56f2e7671c909d52bca778ffc0b97fe822"
+    },
+    "shared:Sprites/Bosses/dark_link.asm": {
+      "source_set": "shared",
+      "path": "Sprites/Bosses/dark_link.asm",
+      "sha256": "8a13c2693375f8254fa4db8f04b96813fb8868f3d8eaad65ea9478bc4f13a34a"
+    },
+    "shared:Sprites/Bosses/twinrova.asm": {
+      "source_set": "shared",
+      "path": "Sprites/Bosses/twinrova.asm",
+      "sha256": "788a1dace4d9bcfef04ca6c222617a80b43a2441cf06e1111f1fd8a633ab5380"
+    },
+    "shared:Sprites/Bosses/kydreeok.asm": {
+      "source_set": "shared",
+      "path": "Sprites/Bosses/kydreeok.asm",
+      "sha256": "0bc38c5bf7b82732432305c496dcab245db975075137d82b859d30431d9674c5"
     }
   },
   "claims": [
@@ -3383,6 +3403,60 @@
         "org $37F200",
         "Bank37NpcTail_CodeStart:",
         "Bank37NpcTail_CodeEnd:"
+      ]
+    },
+    {
+      "id": "boss_raw_graphics_bank54",
+      "owner": "Manhandla, Dark Link, and Twinrova raw 4bpp DMA graphics relocated from sprite code banks $30-$32",
+      "space": "snes_rom",
+      "base": 5545984,
+      "size": 24576,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Read-only 24-bit DMA source tiles ($54A000 Manhandla, $54C000 Dark Link, $54E000 Twinrova; 8,192 B each).",
+      "reset": "Build owns this region; no runtime ROM writes.",
+      "save": "No SRAM or save-buffer impact.",
+      "provenance": [
+        "shared:Sprites/Bosses/manhandla.asm",
+        "shared:Sprites/Bosses/dark_link.asm",
+        "shared:Sprites/Bosses/twinrova.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "org $54A000",
+        "ManhandlaGraphics_DataStart:",
+        "ManhandlaGraphics_DataEnd:",
+        "org $54C000",
+        "DarkLinkGraphics_DataStart:",
+        "DarkLinkGraphics_DataEnd:",
+        "org $54E000",
+        "TwinrovaGraphics_DataStart:",
+        "TwinrovaGraphics_DataEnd:"
+      ]
+    },
+    {
+      "id": "kydreeok_raw_graphics_bank57",
+      "owner": "Kydreeok phase 1 & phase 2 raw 4bpp DMA graphics relocated from sprite code bank $32",
+      "space": "snes_rom",
+      "base": 5734400,
+      "size": 16384,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Read-only 24-bit DMA source tiles in $578000-$57BFFF (contiguous bank so KydreeokGraphics>>16 == KydreeokPhase2Graphics>>16 == $57).",
+      "reset": "Build owns this region; no runtime ROM writes.",
+      "save": "No SRAM or save-buffer impact.",
+      "provenance": [
+        "shared:Sprites/Bosses/kydreeok.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "org $578000",
+        "KydreeokGraphics_DataStart:",
+        "KydreeokGraphics_DataEnd:"
       ]
     }
   ],

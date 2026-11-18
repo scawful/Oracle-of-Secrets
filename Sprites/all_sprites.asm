@@ -325,7 +325,9 @@ incsrc "Sprites/NPCs/garo.asm"
 ; Unconditional Darknut weapon publication; DBR remains bank $30.
 incsrc "Sprites/Enemies/darknut_weapon_hitbox.asm"
 
-; Business Scrub pea-shot contact runs from bank $2C: bank $31 is at its headroom floor.
+; Returned from Bank $2C once boss raw graphics moved to Bank $54.
+incsrc "Sprites/Enemies/business_scrub_shield.asm"
+%VillageDog_EmitBank2C()
 
   ; Room $78 key-after-Lanmolas hook + helper macros used by lanmola.asm.
   incsrc "Sprites/Bosses/lanmola_room78.asm"
@@ -404,6 +406,11 @@ incsrc "Sprites/Objects/swap_diamond.asm"
 incsrc "Sprites/NPCs/follower_swim_draw.asm"
 %log_end("follower_swim_draw", !LOG_SPRITES)
 
+; Returned from Bank $2B (Items/all_items.asm) once boss raw graphics moved to Banks $54/$57.
+%log_start("piratian", !LOG_SPRITES)
+incsrc "Sprites/NPCs/piratian.asm"
+%log_end("piratian", !LOG_SPRITES)
+
 ; A file that orgs into a vanilla bank must pushpc/pullpc, or the next incsrc
 ; lands on vanilla code (fortune_teller.asm put ranch_girl/cloud_bridge on the
 ; vanilla fortune teller at $0DC92E until 2026-09-26).
@@ -433,12 +440,7 @@ incsrc "Sprites/NPCs/followers.asm"
 incsrc "Sprites/Enemies/octorok.asm"
 %log_end("octorok", !LOG_DUNGEON)
 
-; Piratian runs from bank $2B (Items/all_items.asm): bank $2C is full.
-
-; Business Scrub pea-shot contact wrapper (moved from bank $31, which sits at
-; its 64 B headroom floor). Both routines are JSL-entered, return with RTL/JML,
-; and touch only low WRAM (mirrored) plus one long read, so they run from here.
-incsrc "Sprites/Enemies/business_scrub_shield.asm"
+; Piratian moved to Bank $32 and business_scrub_shield moved to Bank $31 above.
 
 %log_start("collectible", !LOG_DUNGEON)
 incsrc "Sprites/Objects/collectible.asm"
@@ -496,9 +498,6 @@ endif
 
 ; Complete the shared-stop scan within the existing bank2C tail.
 %Goron88_EmitSharedStopScan()
-
-; Village dog idle/ocarina helpers (bank $31 is at its headroom floor).
-%VillageDog_EmitBank2C()
 
 print "Bank2C Free Space: ", dec($2CF700-pc()), " bytes"
 assert pc() <= $2CF700, "Bank $2C sprite stream overlaps Somaria internal landing"

@@ -1057,13 +1057,21 @@ ApplyKydreeokGraphics:
   SEP #$30
   PLX
   RTS
-
-  KydreeokGraphics:
-    incbin kydreeok.bin
-
-  KydreeokPhase2Graphics:
-    incbin kydreeok_phase2.bin
 }
+
+; Relocated from Bank $32 sprite code stream to dedicated Bank $57 asset slot
+; (DMA-only via ApplyKydreeokGraphics; keeps >>16 == $57 shared, saves 16,384 B in Bank $32).
+pushpc
+org $578000
+KydreeokGraphics_DataStart:
+KydreeokGraphics:
+  incbin kydreeok.bin
+
+KydreeokPhase2Graphics:
+  incbin kydreeok_phase2.bin
+KydreeokGraphics_DataEnd:
+assert pc() <= $57C000, "KydreeokGraphics overflowed $578000-$57BFFF"
+pullpc
 
 ; =========================================================
 ; Kydreeok turn code (bank $3A, JSL). The pacing sheet is in AFS

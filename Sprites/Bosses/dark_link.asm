@@ -1697,7 +1697,15 @@ ApplyDarkLinkGraphics:
     SEP #$30
     PLX
     RTS
-
-  DarkLinkGraphics:
-    incbin dark_link.bin
 }
+
+; Relocated from Bank $31 sprite code stream to dedicated Bank $54 asset slot
+; (DMA-only via ApplyDarkLinkGraphics; saves 8,192 B in Bank $31).
+pushpc
+org $54C000
+DarkLinkGraphics_DataStart:
+DarkLinkGraphics:
+  incbin dark_link.bin
+DarkLinkGraphics_DataEnd:
+assert pc() <= $54E000, "DarkLinkGraphics overflowed $54C000-$54DFFF"
+pullpc

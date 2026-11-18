@@ -854,10 +854,18 @@ ApplyTwinrovaGraphics:
     SEP #$30
     PLX
     RTL
-
-  TwinrovaGraphics:
-    incbin twinrova.bin
 }
+
+; Relocated from Bank $32 sprite code stream to dedicated Bank $54 asset slot
+; (DMA-only via ApplyTwinrovaGraphics; saves 8,192 B in Bank $32).
+pushpc
+org $54E000
+TwinrovaGraphics_DataStart:
+TwinrovaGraphics:
+  incbin twinrova.bin
+TwinrovaGraphics_DataEnd:
+assert pc() <= $550000, "TwinrovaGraphics overflowed $54E000-$54FFFF"
+pullpc
 
 ; $1DC845
 #Fireball_Configure:

@@ -901,7 +901,15 @@ ApplyManhandlaGraphics:
   PLX
   PLP
   RTS
-
-  ManhandlaGraphics:
-    incbin manhandla.bin
 }
+
+; Relocated from Bank $30 sprite code stream to dedicated Bank $54 asset slot
+; (DMA-only via ApplyManhandlaGraphics; saves 8,192 B in Bank $30).
+pushpc
+org $54A000
+ManhandlaGraphics_DataStart:
+ManhandlaGraphics:
+  incbin manhandla.bin
+ManhandlaGraphics_DataEnd:
+assert pc() <= $54C000, "ManhandlaGraphics overflowed $54A000-$54BFFF"
+pullpc

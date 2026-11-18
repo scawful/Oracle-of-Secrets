@@ -871,5 +871,5 @@ if !ENABLE_MENU_MAP_TRAVEL == 1
   incsrc "menu_map_travel.asm"         ; uses Menu_Equipment_Bracket
 endif
 
-print "Bank2D Free Space: ", dec($2E8000-pc()), " bytes"
-assert pc() <= $2E8000, "Menu/menu_page3.asm overflows bank $2D"
+print "Bank2D Free Space: ", dec($2E0000-pc()), " bytes"
+assert pc() <= $2E0000, "Menu/menu_page3.asm overflows bank $2D"
