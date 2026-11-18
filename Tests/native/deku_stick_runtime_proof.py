@@ -454,6 +454,10 @@ class DekuStickRuntimeTest:
 
     def run_tests(self, filter_test: int | None = None):
         print("\n=== STARTING DEKU STICK RUNTIME PROOFS ===")
+        if filter_test == 5:
+            print("[*] Running filtered Test 5 only...")
+            self.run_test_5()
+            return
         if filter_test == 8:
             print("[*] Running filtered Tests 8-9 only...")
             self.run_save_reopen()
@@ -667,85 +671,7 @@ class DekuStickRuntimeTest:
         self.results["visible_oam_four_directions_and_controls"] = t4_ok
         print(f"    Visible OAM & controls verdict -> OK: {t4_ok}")
 
-        # ----------------------------------------------------
-        # 5. Swipe enemy nonlethal stun & immunity
-        # ----------------------------------------------------
-        print("[*] Test 5: Swipe nonlethal enemy stun, 0 HP damage, no break...")
-        # Draw stick unlit (count 2 -> 1)
-        self.w(DEKU_STICKS_COUNT, 1)
-        self.w(DEKU_STICK_STATE, 1)
-        self.w(DEKU_BURN_TIMER, 75)
-        self.w(LINK_DIR, 2)  # Facing Down
-
-        # Spawn active blue soldier in slot 0 directly in front of Link
-        posx = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
-        posy = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
-        cur_layer = self.r(CURRENT_LAYER)
-        underworld = self.r(UNDERWORLD_FLAG)
-
-        self.w(SPRITE_STATE + 0, 9)     # Active
-        self.w(SPRITE_CLASS + 0, 0x41)  # Soldier
-        self.w(SPRITE_DAMAGE + 0, 0)    # Vulnerable
-        self.w(SPRITE_HP + 0, 4)        # 4 HP
-        self.w(SPRITE_STUN + 0, 0)      # Not stunned
-        self.w(SPRITE_LAYER + 0, cur_layer)
-        self.w(SPRITE_POSX_LOW + 0, (posx + 2) & 0xFF)
-        self.w(SPRITE_POSX_HIGH + 0, (posx + 2) >> 8)
-        self.w(SPRITE_POSY_LOW + 0, (posy + 18) & 0xFF)
-        self.w(SPRITE_POSY_HIGH + 0, (posy + 18) >> 8)
-        self.w(NOPAIN, 0xFF)  # Prevent collision hurt during weapon test
-
-        print(f"    Sprite0 setup: Link=({posx},{posy}), Sprite0=({posx+2},{posy+18}), layer={cur_layer}, underworld={underworld}, state0={self.r(SPRITE_STATE+0)}")
-
-        # Trigger swipe via Mesen joypad
-        self.b.press_button("y", frames=4, detach_debugger=False)
-
-        observed_stun = 0
-        observed_latched = False
-        end_time = time.time() + 0.4
-        poll_samples = 0
-        while time.time() < end_time:
-            stun = self.r(SPRITE_STUN + 0)
-            timer = self.r(DEKU_SWIPE_TIMER)
-            state = self.r(DEKU_STICK_STATE)
-            s0_state = self.r(SPRITE_STATE + 0)
-            if poll_samples < 5 and state == 3:
-                print(f"      [poll] stick_state={state}, timer={timer}, stun={stun}, s0_state={s0_state}")
-                poll_samples += 1
-            if stun in (0x20, 0x1F, 0x1E):
-                observed_stun = 0x20
-            if (timer & 0x40) != 0:
-                observed_latched = True
-            if observed_stun == 0x20 and observed_latched and state == 1:
-                break
-            time.sleep(0.01)
-
-        hp_during = self.r(SPRITE_HP + 0)
-        state_end = self.r(DEKU_STICK_STATE)
-        count_end = self.r(DEKU_STICKS_COUNT)
-        hp_end = self.r(SPRITE_HP + 0)
-
-        print(f"    Observed swipe hit: stun={observed_stun} (exp 0x20), hp={hp_during} (exp 4), latched={observed_latched}, state_end={state_end}")
-
-        stun_ok = (observed_stun == 0x20 and hp_during == 4 and hp_end == 4 and
-                   observed_latched and state_end == 1 and count_end == 1)
-
-        # Test immune enemy ($0E40 = 0x80): should not be stunned
-        self.w(SPRITE_DAMAGE + 0, 0x80)
-        self.w(SPRITE_STUN + 0, 0)
-        self.b.press_button("y", frames=4, detach_debugger=False)
-        time.sleep(0.25)
-        immune_stun = self.r(SPRITE_STUN + 0)
-        immune_ok = (immune_stun == 0)
-
-        # Clear sprite slot 0 and restore NOPAIN
-        self.w(SPRITE_STATE + 0, 0)
-        self.w(SPRITE_STUN + 0, 0)
-        self.w(NOPAIN, 0)
-
-        t5_ok = (stun_ok and immune_ok)
-        self.results["swipe_enemy_stun_and_immunity"] = t5_ok
-        print(f"    Swipe enemy stun verdict: stun_ok={stun_ok}, immune_ok={immune_ok} -> OK: {t5_ok}")
+        self.run_test_5()
 
         # ----------------------------------------------------
         # 6. Real controller-driven torch interaction in authored room 0x00
@@ -1352,6 +1278,116 @@ class DekuStickRuntimeTest:
         # ----------------------------------------------------
         if filter_test is None or filter_test == 15:
             self.run_test_15()
+
+    def run_test_5(self):
+        # ----------------------------------------------------
+        # 5. Swipe enemy nonlethal stun & immunity
+        # ----------------------------------------------------
+        print("[*] Test 5: Swipe nonlethal enemy stun, 0 HP damage, no break...")
+        posx = self.r(LINK_POSX) | (self.r(LINK_POSX + 1) << 8)
+        posy = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+        cur_layer = self.r(CURRENT_LAYER)
+        underworld = self.r(UNDERWORLD_FLAG)
+        cur_area = self.r(0x7E008A)
+
+        # Pause while populating slot 0 so no frames execute with POSX/POSY=(0,0)
+        # (which previously caused immediate off-screen despawn before Y swipe).
+        self.b.pause()
+        try:
+            self.w(DEKU_STICKS_COUNT, 1)
+            self.w(DEKU_STICK_STATE, 1)
+            self.w(DEKU_BURN_TIMER, 75)
+            self.w(LINK_DIR, 2)  # Facing Down
+
+            self.w(0x7E0C9A + 0, cur_area)  # SPR0SCR
+            self.w(0x7E0CAA + 0, 0x80)      # SPR0DEFL persist
+            self.w(0x7E0D40 + 0, 0)         # VY
+            self.w(0x7E0D50 + 0, 0)         # VX
+            self.w(0x7E0D80 + 0, 0)
+            self.w(0x7E0DF0 + 0, 0)
+            self.w(0x7E0E60 + 0, 0)
+            self.w(SPRITE_CLASS + 0, 0x41)  # Soldier
+            self.w(SPRITE_DAMAGE + 0, 0)    # Vulnerable
+            self.w(SPRITE_HP + 0, 4)        # 4 HP
+            self.w(SPRITE_STUN + 0, 0)      # Not stunned
+            self.w(SPRITE_LAYER + 0, cur_layer)
+            self.w(SPRITE_POSX_LOW + 0, (posx + 2) & 0xFF)
+            self.w(SPRITE_POSX_HIGH + 0, (posx + 2) >> 8)
+            self.w(SPRITE_POSY_LOW + 0, (posy + 18) & 0xFF)
+            self.w(SPRITE_POSY_HIGH + 0, (posy + 18) >> 8)
+            self.w(SPRITE_STATE + 0, 9)     # Active (written last)
+            self.w(NOPAIN, 0xFF)            # Prevent collision hurt during weapon test
+        finally:
+            self.b.resume()
+
+        print(f"    Sprite0 setup: Link=({posx},{posy}), Sprite0=({posx+2},{posy+18}), layer={cur_layer}, underworld={underworld}, state0={self.r(SPRITE_STATE+0)}")
+
+        # Trigger swipe via Mesen joypad
+        self.b.press_button("y", frames=4, detach_debugger=False)
+
+        observed_stun = 0
+        observed_latched = False
+        end_time = time.time() + 0.6
+        poll_samples = 0
+        while time.time() < end_time:
+            stun = self.r(SPRITE_STUN + 0)
+            timer = self.r(DEKU_SWIPE_TIMER)
+            state = self.r(DEKU_STICK_STATE)
+            s0_state = self.r(SPRITE_STATE + 0)
+            if poll_samples < 5 and state == 3:
+                print(f"      [poll] stick_state={state}, timer=0x{timer:02X}, stun={stun}, s0_state={s0_state}")
+                poll_samples += 1
+            if 0 < stun <= 0x20:
+                observed_stun = max(observed_stun, stun)
+            if (timer & 0x40) != 0:
+                observed_latched = True
+            if observed_stun > 0 and observed_latched and state == 1:
+                break
+            time.sleep(0.005)
+
+        hp_during = self.r(SPRITE_HP + 0)
+        state_end = self.r(DEKU_STICK_STATE)
+        count_end = self.r(DEKU_STICKS_COUNT)
+        hp_end = self.r(SPRITE_HP + 0)
+
+        print(f"    Observed swipe hit: max_stun={observed_stun} (exp 0x10..0x20), hp={hp_during} (exp 4), latched={observed_latched}, state_end={state_end}")
+
+        stun_ok = (0x10 <= observed_stun <= 0x20 and hp_during == 4 and hp_end == 4 and
+                   observed_latched and state_end == 1 and count_end == 1)
+
+        # Test immune enemy ($0E40 = 0x80): reset exact probe overlap while paused
+        self.b.pause()
+        try:
+            self.w(SPRITE_DAMAGE + 0, 0x80)
+            self.w(SPRITE_STUN + 0, 0)
+            self.w(SPRITE_POSX_LOW + 0, (posx + 2) & 0xFF)
+            self.w(SPRITE_POSX_HIGH + 0, (posx + 2) >> 8)
+            self.w(SPRITE_POSY_LOW + 0, (posy + 18) & 0xFF)
+            self.w(SPRITE_POSY_HIGH + 0, (posy + 18) >> 8)
+            self.w(SPRITE_STATE + 0, 9)
+        finally:
+            self.b.resume()
+        self.b.press_button("y", frames=4, detach_debugger=False)
+        saw_immune_swipe = False
+        immune_end = time.time() + 0.5
+        while time.time() < immune_end:
+            st = self.r(DEKU_STICK_STATE)
+            if st == 3:
+                saw_immune_swipe = True
+            elif saw_immune_swipe and st == 1:
+                break
+            time.sleep(0.01)
+        immune_stun = self.r(SPRITE_STUN + 0)
+        immune_ok = (saw_immune_swipe and immune_stun == 0)
+
+        # Clear sprite slot 0 and restore NOPAIN
+        self.w(SPRITE_STATE + 0, 0)
+        self.w(SPRITE_STUN + 0, 0)
+        self.w(NOPAIN, 0)
+
+        t5_ok = (stun_ok and immune_ok)
+        self.results["swipe_enemy_stun_and_immunity"] = t5_ok
+        print(f"    Swipe enemy stun verdict: stun_ok={stun_ok}, immune_ok={immune_ok} -> OK: {t5_ok}")
 
     def run_save_reopen(self):
         # ----------------------------------------------------
