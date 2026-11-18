@@ -53,6 +53,8 @@ D4Zora_CacheRoomCamera:
   RTL
 }
 
+pushpc
+org $36FB00
 D4Zora_ClampRoomCamera:
 {
   PHP
@@ -108,6 +110,45 @@ D4Zora_ClampRoomCamera:
   RTS
 }
 
+; Filter only Baby09's timed108 reminder. Keep the follower and native timer,
+; carry/throw/switch paths untouched. No new rescue flag or dialogue is needed.
+D4Zora_FilterBabyReminder:
+{
+  PHP : PHA : PHX : PHY
+  LDA.l $7EF3CC : CMP.b #$09 : BNE .display
+  LDA.l $7E1CF0 : CMP.b #$08 : BNE .display
+  LDA.l $7E1CF1 : CMP.b #$01 : BNE .display
+  LDA.l $7EF302 : AND.b #$01 : BNE .suppress
+  LDA.l $7E00A0 : CMP.b #$46 : BNE .display
+  LDA.l $7E00A1 : BNE .display
+
+  LDY.b #$00
+  LDX.b #$0F
+  .scan
+  LDA.l $7E0DD0, X : BEQ .next
+  LDA.l $7E0E20, X : CMP.b #$11 : BEQ .warden
+  CMP.b #$B8 : BNE .next
+  LDA.l $7E0E30, X : CMP.b #$03 : BNE .next
+  LDA.l $7E0DD0, X : CMP.b #$09 : BNE .next
+  LDY.b #$01
+  BRA .next
+  .warden
+  ; Include state6 death poof, matching the protector's Healing gate.
+  LDA.l $7E0E30, X : CMP.b #$03 : BEQ .display
+  .next
+  DEX : BPL .scan
+  CPY.b #$01 : BEQ .suppress
+
+  .display
+  PLY : PLX : PLA : PLP
+  JML Interface_PrepAndDisplayMessage
+  .suppress
+  PLY : PLX : PLA : PLP
+  RTL
+}
+assert pc() <= $370000, "D4 bank $36 helpers overflowed $36FB00-$36FFFF"
+pullpc
+
 D4Zora_IsRescueActor:
 {
   LDA.w ROOM : CMP.b #$46 : BNE .no
@@ -160,10 +201,52 @@ D4Zora_Long:
   .draw
   JSR D4Zora_RefreshPalettesOnce
   JSR D4Zora_Draw
+  JSR D4Zora_DrawEastShutterSteamJet
+  JSR D4Zora_UpdateValveAssistShake
   JSL Sprite_CheckActive : BCC .done
   JSR D4Zora_ProtectorMain
   .done
   PLB : RTL
+}
+
+; Fix 3A: When Protector SprTimerB > 0 (HP <= 12 assist) and camera is UL-clamped
+; in Room $0046, project 2 H-flipped steam OAM pieces ($26/$28) at the East Shutter seam.
+D4Zora_DrawEastShutterSteamJet:
+{
+  LDA.w SprTimerB, X : BEQ .done
+  LDA.l $7E0010 : CMP.b #$07 : BNE .done
+  LDA.l $7E0011 : BNE .done
+  REP #$20
+  LDA.w ROOM : CMP.w #$0046 : BNE .done_sep
+  LDA.b $E2 : CMP.w #$0BF0 : BCC .done_sep : CMP.w #$0C60 : BCS .done_sep
+  LDA.b $E8 : CMP.w #$07F0 : BCC .done_sep : CMP.w #$0860 : BCS .done_sep
+  LDA.w #$0CD8 : SEC : SBC.b $E2 : STA $00
+  LDA.w #$0878 : SEC : SBC.b $E8 : STA $02
+  SEP #$20
+  LDA.b #$08 : JSL OAM_AllocateFromRegionA
+  PHX
+  LDA.b #$02 : STA $0D
+  LDA.w SprTimerB, X : AND.b #$04 : BNE .phase_b
+  REP #$20
+  LDA.w #.jet_a : BRA .ptr_ready
+  .phase_b
+  REP #$20
+  LDA.w #.jet_b
+  .ptr_ready
+  STA $06
+  SEP #$20
+  PHK : PLA : STA $08
+  JMP D4Zora_DrawEntries
+  .done_sep
+  SEP #$20
+  .done
+  RTS
+  .jet_a
+  db $F8, $F8, $26, $7B
+  db $EA, $F6, $28, $7B
+  .jet_b
+  db $F8, $F8, $28, $7B
+  db $E8, $F7, $26, $7B
 }
 
 D4Zora_PrincessMain:
@@ -186,6 +269,30 @@ D4Zora_PrincessMain:
   .blocked
   PLX
   RTS
+}
+
+; Shake camera gently (~0.25s, SprTimerB $30..$21) even when Protector is
+; in the offscreen rescue quadrant (where Sprite_PrepOamCoord sets SprPause).
+D4Zora_UpdateValveAssistShake:
+{
+  LDA.w SprTimerB, X : BEQ .done
+  CMP.b #$20 : BCC .done : BEQ .clear
+  LDA.w SprFreeze : BNE .clear
+  LDA.l $7E0010 : CMP.b #$07 : BNE .clear
+  LDA.l $7E0011 : BNE .clear
+  LDA.w SprTimerB, X : AND.b #$01 : ASL : TAY
+  REP #$20
+  LDA.w .shake_offset, Y : STA.w $011A : STA.w $011C
+  SEP #$20
+  RTS
+  .clear
+  REP #$20
+  STZ.w $011A : STZ.w $011C
+  SEP #$20
+  .done
+  RTS
+  .shake_offset
+  dw 2, -2
 }
 
 D4Zora_ProtectorMain:
@@ -264,18 +371,84 @@ D4Warden_Prep:
 D4Warden_Long:
 {
   PHB : PHK : PLB
-  LDA.w SprState, X : CMP.b #$06 : BNE .alive
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
+  JSR D4Zora_RefreshPalettesOnce
+  JSL Sprite_CheckActive : BCC .draw
+  JSR D4Warden_Main
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
+  JSR D4Warden_SyncArmorBit
+  JSR D4Warden_UpdatePaletteCue
+  .draw
+  JSR D4Zora_Draw
+  BRA .done
+  .dying
+  JSR D4Warden_RestoreBaseDisplayPalettes
+  REP #$20
+  STZ.w $011A : STZ.w $011C
+  SEP #$20
   ; Native room exit copies $0403 to SRAM; Save and Quit in room does not.
   %SetBossDefeated()
   LDA.l $7EF08D : ORA.b #$08 : STA.l $7EF08D
-  BRA .done
-  .alive
-  JSR D4Zora_RefreshPalettesOnce
-  JSR D4Zora_Draw
-  JSL Sprite_CheckActive : BCC .done
-  JSR D4Warden_Main
   .done
   PLB : RTL
+}
+
+D4Warden_RestoreBaseDisplayPalettes:
+{
+  LDA.l $7E0010 : CMP.b #$07 : BNE .skip
+  LDA.l $7E0011 : BNE .skip
+  PHX
+  REP #$20
+  LDX.b #$0C
+  .copy
+  LDA.l D4Zora_Palette_warden_armor, X : STA.l $7EC6A2, X
+  LDA.l D4Zora_Palette_warden_iron, X : STA.l $7EC6C2, X
+  DEX : DEX : BPL .copy
+  SEP #$20
+  PLX
+  .skip
+  RTS
+}
+
+; Active-play palette cues:
+; - .charge_brace ($02): pulse $7EC6C6 ($4E73 <-> $229B) every 4f.
+; - SprAction >= $07: pulse $7EC6AE ($18D2 <-> $229B) every 4f; flash
+;   row 5/6 colors 2..7 to bright ivory ($5BBE) every 2f during final 12f
+;   of .slam_recover ($08) and .vent ($09) before armor re-engages.
+D4Warden_UpdatePaletteCue:
+{
+  JSR D4Warden_RestoreBaseDisplayPalettes
+  LDA.l $7E0010 : CMP.b #$07 : BNE .done
+  LDA.l $7E0011 : BNE .done
+  LDA.w SprAction, X : CMP.b #$02 : BNE .check_vuln
+  LDA.w SprTimerA, X : AND.b #$04 : BNE .done
+  REP #$20
+  LDA.w #$229B : STA.l $7EC6C6
+  SEP #$20
+  .done
+  RTS
+  .check_vuln
+  CMP.b #$07 : BCC .done
+  CMP.b #$08 : BCC .pulse_armor
+  LDA.w SprTimerA, X : CMP.b #$0D : BCS .pulse_armor
+  AND.b #$02 : BNE .pulse_armor
+  PHX
+  REP #$20
+  LDA.w #$5BBE
+  LDX.b #$0A
+  .flash
+  STA.l $7EC6A4, X
+  STA.l $7EC6C4, X
+  DEX : DEX : BPL .flash
+  SEP #$20
+  PLX
+  RTS
+  .pulse_armor
+  LDA.w SprTimerA, X : AND.b #$04 : BNE .done
+  REP #$20
+  LDA.w #$229B : STA.l $7EC6AE
+  SEP #$20
+  RTS
 }
 
 ; Carry set only in upper-left arena, excluding gallery and rescue room.
@@ -293,14 +466,19 @@ D4Warden_LinkInArena:
   CLC : RTS
 }
 
-D4Warden_Main:
+D4Warden_SyncArmorBit:
 {
   LDA.w SprAction, X : CMP.b #$07 : BCC .armored
   LDA.w SprGfxProps, X : AND.b #$BF : STA.w SprGfxProps, X
-  BRA .damage
+  RTS
   .armored
   LDA.w SprGfxProps, X : ORA.b #$40 : STA.w SprGfxProps, X
-  .damage
+  RTS
+}
+
+D4Warden_Main:
+{
+  JSR D4Warden_SyncArmorBit
   JSL Sprite_CheckDamageFromPlayer
   LDA.w SprState, X : CMP.b #$09 : BEQ .active
   RTS
@@ -314,8 +492,9 @@ D4Warden_Main:
   dw .dormant,.approach,.charge_brace,.charge,.slam_windup
   dw .slam_hold,.slam_strike,.slam_stuck,.slam_recover,.vent
   .dormant
-  JSR D4Warden_LinkInArena : BCC .done
+  JSR D4Warden_LinkInArena : BCC .dormant_done
   JSR D4Warden_StartApproach
+  .dormant_done
   RTS
   .approach
   JSR D4Warden_LinkInArena : BCS .approach_active
@@ -338,15 +517,18 @@ D4Warden_Main:
   STZ.w SprYSpeed, X
   JSL Sprite_DirectionToFacePlayer : TYA : STA.w SprMiscC, X
   LDA.w SprMiscB, X : BEQ .choose_charge
-  JSL GetDistance8bit_Long : CMP.b #$50 : BCS .choose_charge
+  JSL GetDistance8bit_Long : CMP.b #$78 : BCS .choose_charge
   LDA.b #$04 : STA.w SprAction, X
   LDA.b #$0C : STA.w SprTimerA, X
+  LDA.b #$00 : JSR D4Warden_SelectSlam
   RTS
   .choose_charge
   ; Capture aim at the cue; no pursuit or retargeting through40fwindup.
   LDA.b #$20 : JSL Sprite_ApplySpeedTowardsPlayer
+  LDA.b #$28 : JSL SpriteSFX_QueueSFX2WithPan
   LDA.b #$02 : STA.w SprAction, X
   LDA.b #$28 : STA.w SprTimerA, X
+  LDA.b #$00 : JSR D4Warden_SelectCharge
   .done
   RTS
   .charge_brace
@@ -355,21 +537,26 @@ D4Warden_Main:
   RTS
   .start_charge
   LDA.b #$03 : STA.w SprAction, X
-  LDA.b #$18 : STA.w SprTimerA, X
+  LDA.b #$40 : STA.w SprTimerA, X
+  LDA.b #$01 : JSR D4Warden_SelectCharge
   RTS
   .charge
   LDA.w SprTimerA, X : LSR #3 : AND.b #$01 : INC A
   JSR D4Warden_SelectCharge
   JSL Sprite_CheckDamageToPlayerSameLayer
-  JSL Sprite_CheckTileCollision : BNE .enter_vent
-  JSR D4Warden_MoveBounded : BCS .enter_vent
+  JSL Sprite_CheckTileCollision : BNE .wall_crash
+  JSR D4Warden_MoveBounded : BCS .wall_crash
   LDA.w SprTimerA, X : BEQ .enter_vent
   RTS
+  .wall_crash
+  LDA.b #$09 : STA.w $012E
+  JSR D4Warden_ApplyWallRecoil
   .enter_vent
   STZ.w SprXSpeed, X
   STZ.w SprYSpeed, X
   LDA.b #$09 : STA.w SprAction, X
   LDA.b #$38 : STA.w SprTimerA, X
+  LDA.b #$00 : JSR D4Warden_SelectVent
   RTS
   .slam_windup
   LDA.b #$00 : JSR D4Warden_SelectSlam
@@ -378,14 +565,17 @@ D4Warden_Main:
   .start_hold
   LDA.b #$05 : STA.w SprAction, X
   LDA.b #$1C : STA.w SprTimerA, X
+  LDA.b #$01 : JSR D4Warden_SelectSlam
   RTS
   .slam_hold
   LDA.b #$01 : JSR D4Warden_SelectSlam
   LDA.w SprTimerA, X : BEQ .start_strike
   RTS
   .start_strike
+  LDA.b #$11 : JSL SpriteSFX_QueueSFX2WithPan
   LDA.b #$06 : STA.w SprAction, X
   LDA.b #$04 : STA.w SprTimerA, X
+  LDA.b #$02 : JSR D4Warden_SelectSlam
   RTS
   .slam_strike
   LDA.b #$02 : JSR D4Warden_SelectSlam
@@ -394,7 +584,8 @@ D4Warden_Main:
   RTS
   .start_stuck
   LDA.b #$07 : STA.w SprAction, X
-  LDA.b #$28 : STA.w SprTimerA, X
+  LDA.b #$34 : STA.w SprTimerA, X
+  LDA.b #$03 : JSR D4Warden_SelectSlam
   RTS
   .slam_stuck
   LDA.b #$03 : JSR D4Warden_SelectSlam
@@ -403,17 +594,29 @@ D4Warden_Main:
   .start_pull
   LDA.b #$08 : STA.w SprAction, X
   LDA.b #$10 : STA.w SprTimerA, X
+  LDA.b #$04 : JSR D4Warden_SelectSlam
   RTS
   .slam_recover
   LDA.b #$04 : JSR D4Warden_SelectSlam
+  LDA.w SprTimerA, X : CMP.b #$0C : BNE .recover_wait
+  LDA.b #$0A : JSL SpriteSFX_QueueSFX2WithPan
+  .recover_wait
   LDA.w SprTimerA, X : BEQ .finish_slam
   RTS
   .finish_slam
   JSR D4Warden_NextAttack
   RTS
   .vent
+  LDA.w SprTimerA, X : LSR #3 : AND.b #$01
   JSR D4Warden_SelectVent
   JSR D4Warden_TryValveAssist
+  LDA.w SprTimerA, X : CMP.b #$0C : BNE .vent_steam_sfx
+  LDA.b #$0A : JSL SpriteSFX_QueueSFX2WithPan
+  BRA .vent_wait
+  .vent_steam_sfx
+  AND.b #$0F : CMP.b #$08 : BNE .vent_wait
+  LDA.b #$0D : JSL SpriteSFX_QueueSFX2WithPan
+  .vent_wait
   LDA.w SprTimerA, X : BEQ .finish_vent
   RTS
   .finish_vent
@@ -428,6 +631,7 @@ D4Warden_StartApproach:
   STZ.w SprMiscA, X
   STZ.w SprXSpeed, X
   STZ.w SprYSpeed, X
+  JSR D4Warden_SelectWalk
   RTS
 }
 D4Warden_NextAttack:
@@ -464,9 +668,24 @@ D4Warden_SelectSlam:
 }
 D4Warden_SelectVent:
 {
-  LDA.w SprMiscC, X
+  AND.b #$01 : STA $0A
+  LDA.w SprMiscC, X : ASL : CLC : ADC $0A
   PHX : TAX : LDA.l D4Warden_VentFrames, X
   PLX : STA.w SprFrame, X
+  RTS
+}
+
+; Reverse charge vector for 4 steps (~8px recoil at speed $20), bounded to UL arena.
+D4Warden_ApplyWallRecoil:
+{
+  LDA.b #$00 : SEC : SBC.w SprXSpeed, X : STA.w SprXSpeed, X
+  LDA.b #$00 : SEC : SBC.w SprYSpeed, X : STA.w SprYSpeed, X
+  LDY.b #$04
+  .step
+  PHY
+  JSR D4Warden_MoveBounded
+  PLY
+  DEY : BNE .step
   RTS
 }
 
@@ -645,42 +864,6 @@ D4Zora_DrawEntries:
   DEC $0D : BNE .next
   PLX
   RTS
-}
-; Filter only Baby09's timed108 reminder. Keep the follower and native timer,
-; carry/throw/switch paths untouched. No new rescue flag or dialogue is needed.
-D4Zora_FilterBabyReminder:
-{
-  PHP : PHA : PHX : PHY
-  LDA.l $7EF3CC : CMP.b #$09 : BNE .display
-  LDA.l $7E1CF0 : CMP.b #$08 : BNE .display
-  LDA.l $7E1CF1 : CMP.b #$01 : BNE .display
-  LDA.l $7EF302 : AND.b #$01 : BNE .suppress
-  LDA.l $7E00A0 : CMP.b #$46 : BNE .display
-  LDA.l $7E00A1 : BNE .display
-
-  LDY.b #$00
-  LDX.b #$0F
-  .scan
-  LDA.l $7E0DD0, X : BEQ .next
-  LDA.l $7E0E20, X : CMP.b #$11 : BEQ .warden
-  CMP.b #$B8 : BNE .next
-  LDA.l $7E0E30, X : CMP.b #$03 : BNE .next
-  LDA.l $7E0DD0, X : CMP.b #$09 : BNE .next
-  LDY.b #$01
-  BRA .next
-  .warden
-  ; Include state6 death poof, matching the protector's Healing gate.
-  LDA.l $7E0E30, X : CMP.b #$03 : BEQ .display
-  .next
-  DEX : BPL .scan
-  CPY.b #$01 : BEQ .suppress
-
-  .display
-  PLY : PLX : PLA : PLP
-  JML Interface_PrepAndDisplayMessage
-  .suppress
-  PLY : PLX : PLA : PLP
-  RTL
 }
 ; Peaceful refuge roles are explicit B8 subtypes, separate from the legacy
 ; room105 Princess and the room46 protector/Princess. M/X=8 throughout.

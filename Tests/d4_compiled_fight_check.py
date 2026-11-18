@@ -31,7 +31,7 @@ class Fixture:
         self.lib,self.rom,self.labels=lib,rom,labels
         self.ram=bytearray(0x20000);self.stubs={};self.calls=[];self.writes=[];self.bad_writes=[]
         self.screen=(128,128);self.direction=0;self.distance=32;self.blocked=False
-        self.step_delta=(1,0);self.contact=[];self.speed_calls=[]
+        self.step_delta=(1,0);self.contact=[];self.speed_calls=[];self.sfx2_calls=[]
         self.read_cb=C.CFUNCTYPE(C.c_uint8,C.c_void_p,C.c_uint32)(lambda _,a:self.read(a))
         self.write_cb=C.CFUNCTYPE(None,C.c_void_p,C.c_uint32,C.c_uint8)(lambda _,a,v:self.write(a,v))
         self.idle_cb=C.CFUNCTYPE(None,C.c_void_p,C.c_bool)(lambda *_:None)
@@ -93,9 +93,15 @@ class Fixture:
             self.spr('SprXSpeed',dx*speed,x);self.spr('SprYSpeed',dy*speed,x)
         elif name=='Sprite_CheckTileCollision':self.acc(int(self.blocked))
         elif name=='Sprite_Move':
-            self.spr('SprX',self.spr('SprX',slot=x)+self.step_delta[0],x)
-            self.spr('SprY',self.spr('SprY',slot=x)+self.step_delta[1],x)
+            if self.step_delta is None:
+                sx=self.spr('SprXSpeed',slot=x);sy=self.spr('SprYSpeed',slot=x)
+                dx=(sx-256 if sx>=128 else sx)>>4;dy=(sy-256 if sy>=128 else sy)>>4
+            else:
+                dx,dy=self.step_delta
+            self.spr('SprX',self.spr('SprX',slot=x)+dx,x)
+            self.spr('SprY',self.spr('SprY',slot=x)+dy,x)
         elif name=='GetDistance8bit_Long':self.acc(self.distance)
+        elif name=='SpriteSFX_QueueSFX2WithPan':self.sfx2_calls.append(self.cpu.a&255)
         elif name=='Sprite_CheckDamageToPlayerSameLayer':
             self.contact.append(tuple(self.spr(n,slot=x) for n in ('SprX','SprY','SprHitbox')))
 
@@ -348,8 +354,10 @@ def check(lib,rom,labels,candidate):
         for phase in range(5):
             f.call('D4Warden_SelectSlam',a=phase)
             assert f.spr('SprFrame')==candidate['lookups']['Slam'][direction*5+phase]
-        f.call('D4Warden_SelectVent');assert f.spr('SprFrame')==candidate['lookups']['Vent'][direction]
-    results['direction_phase_lookups']=56
+        for phase in range(2):
+            f.call('D4Warden_SelectVent',a=phase)
+            assert f.spr('SprFrame')==candidate['lookups']['Vent'][direction*2+phase]
+    results['direction_phase_lookups']=60
     f.close()
     def fresh():
         m=Fixture(lib,rom,labels)
@@ -358,16 +366,51 @@ def check(lib,rom,labels,candidate):
         return m
     f=fresh();f.call('D4Warden_Main');assert (f.spr('SprAction'),f.spr('SprTimerA'))==(1,48)
     f.spr('SprTimerA',0);f.call('D4Warden_Main');assert (f.spr('SprAction'),f.spr('SprTimerA'))==(2,40)
+    assert f.sfx2_calls[-1]==0x28
     speed_calls=len(f.speed_calls);f.direction=3
     f.call('D4Warden_Main');assert f.spr('SprMiscC')==0 and len(f.speed_calls)==speed_calls
-    f.spr('SprTimerA',0);f.call('D4Warden_Main');assert (f.spr('SprAction'),f.spr('SprTimerA'))==(3,24)
-    f.blocked=True;f.call('D4Warden_Main');assert (f.spr('SprAction'),f.spr('SprTimerA'))==(9,56)
+    f.spr('SprTimerA',0);f.call('D4Warden_Main');assert (f.spr('SprAction'),f.spr('SprTimerA'))==(3,64)
+    f.step_delta=None;f.blocked=True;f.spr('SprX',208);f.spr('SprXSpeed',32);f.spr('SprYSpeed',0)
+    f.call('D4Warden_Main');assert (f.spr('SprAction'),f.spr('SprTimerA'))==(9,56)
+    assert f.get(0x012E)==0x09 and f.spr('SprX')==200,'wall crash SFX and 8px recoil'
     f.spr('SprTimerA',0);f.call('D4Warden_Main');assert (f.spr('SprAction'),f.spr('SprMiscB'))==(1,1)
-    f.blocked=False;f.spr('SprTimerA',0);f.call('D4Warden_Main');assert f.spr('SprAction')==4
-    for expected,timer in ((5,28),(6,4),(7,40),(8,16),(1,48)):
+    # Widened Slam distance gate ($50..$77 -> Slam, >= $78 -> Charge).
+    f.blocked=False;f.distance=0x77;f.spr('SprTimerA',0);f.call('D4Warden_Main');assert f.spr('SprAction')==4
+    for expected,timer in ((5,28),(6,4),(7,52),(8,16)):
         f.spr('SprTimerA',0);f.call('D4Warden_Main')
         assert (f.spr('SprAction'),f.spr('SprTimerA'))==(expected,timer)
+    f.spr('SprTimerA',0x0C);f.call('D4Warden_Main')
+    assert 0x11 in f.sfx2_calls and 0x0A in f.sfx2_calls
+    f.spr('SprTimerA',0);f.call('D4Warden_Main')
+    assert (f.spr('SprAction'),f.spr('SprTimerA'))==(1,48)
     assert len(f.contact)==2 # charge contact + one strike call
+    # Distance >= $78 overrides Slam with Charge.
+    f2=fresh();f2.spr('SprAction',1);f2.spr('SprMiscB',1);f2.spr('SprTimerA',0);f2.distance=0x78
+    f2.call('D4Warden_Main');assert f2.spr('SprAction')==2 and f2.sfx2_calls[-1]==0x28;f2.close()
+    # Palette cues during brace ($02), vulnerable ($07/$09), and closing flash (<= $0C).
+    fp=fresh();fp.put(0x10,7);fp.put(0x11,0);fp.spr('SprMiscG',1)
+    fp.spr('SprAction',2);fp.spr('SprTimerA',0);fp.call('D4Warden_UpdatePaletteCue')
+    assert (fp.get(0x7EC6C6)|(fp.get(0x7EC6C7)<<8))==0x229B
+    fp.spr('SprTimerA',4);fp.call('D4Warden_UpdatePaletteCue')
+    assert (fp.get(0x7EC6C6)|(fp.get(0x7EC6C7)<<8))==0x4E73
+    fp.spr('SprAction',9);fp.spr('SprTimerA',0x20);fp.call('D4Warden_UpdatePaletteCue')
+    assert (fp.get(0x7EC6AE)|(fp.get(0x7EC6AF)<<8))==0x229B
+    fp.spr('SprTimerA',0x24);fp.call('D4Warden_UpdatePaletteCue')
+    assert (fp.get(0x7EC6AE)|(fp.get(0x7EC6AF)<<8))==0x18D2
+    fp.spr('SprTimerA',0x0C);fp.call('D4Warden_UpdatePaletteCue')
+    assert (fp.get(0x7EC6A4)|(fp.get(0x7EC6A5)<<8))==0x5BBE
+    assert (fp.get(0x7EC6A2)|(fp.get(0x7EC6A3)<<8))==0x0C63
+    fp.spr('SprAction',1);fp.call('D4Warden_UpdatePaletteCue')
+    assert (fp.get(0x7EC6AE)|(fp.get(0x7EC6AF)<<8))==0x18D2;fp.close()
+    # Fix 3A: East Shutter steam jet draws 2 H-flipped pieces at world ($0CD8, $0878) when UL-clamped.
+    fj=fresh();fj.put(0x10,7);fj.put(0x11,0);fj.word(0xA0,0x0046);fj.word(0xE2,0x0C00);fj.word(0xE8,0x0800)
+    fj.spr('SprTimerB',0x30,12);fj.ram[0x800:0x820]=b'\xA5'*0x20
+    fj.call('D4Zora_DrawEastShutterSteamJet',x=12)
+    assert fj.ram[0x802]==0x26 and fj.ram[0x803]==0x7B and fj.ram[0x806]==0x28 and fj.ram[0x807]==0x7B
+    assert fj.ram[0x800]==((0xD8-8)&255) and fj.ram[0x801]==((0x78-8)&255)
+    fj.word(0xE2,0x0D00);fj.ram[0x800:0x820]=b'\xA5'*0x20
+    fj.call('D4Zora_DrawEastShutterSteamJet',x=12);assert fj.ram[0x800]==0xA5
+    fj.close()
     results['charge_slam_cycle']=True;f.close()
     # Gate controls: do not start from the gallery, rescue side or wrong floor.
     for x,y,floor in ((256+128,128,0),(128,256+128,0),(128,128,1),(16,128,0),(128,32,0)):

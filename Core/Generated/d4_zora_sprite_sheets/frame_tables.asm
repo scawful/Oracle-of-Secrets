@@ -58,16 +58,20 @@
 !D4Zora_Frame_protector_rest = 54
 !D4Zora_Frame_protector_healing = 55
 !D4Zora_Frame_right_vent = 56
-!D4Zora_Frame_left_vent = 57
-!D4Zora_Frame_front_vent = 58
-!D4Zora_Frame_rear_vent = 59
+!D4Zora_Frame_right_vent_b = 57
+!D4Zora_Frame_left_vent = 58
+!D4Zora_Frame_left_vent_b = 59
+!D4Zora_Frame_front_vent = 60
+!D4Zora_Frame_front_vent_b = 61
+!D4Zora_Frame_rear_vent = 62
+!D4Zora_Frame_rear_vent_b = 63
 pushpc
 org $47C000
 D4Zora_FrameDataStart:
 D4Zora_FramePointers:
-  dw D4Zora_Frame_0_Data&$FFFF, D4Zora_Frame_1_Data&$FFFF, D4Zora_Frame_2_Data&$FFFF, D4Zora_Frame_3_Data&$FFFF, D4Zora_Frame_4_Data&$FFFF, D4Zora_Frame_5_Data&$FFFF, D4Zora_Frame_6_Data&$FFFF, D4Zora_Frame_7_Data&$FFFF, D4Zora_Frame_8_Data&$FFFF, D4Zora_Frame_9_Data&$FFFF, D4Zora_Frame_10_Data&$FFFF, D4Zora_Frame_11_Data&$FFFF, D4Zora_Frame_12_Data&$FFFF, D4Zora_Frame_13_Data&$FFFF, D4Zora_Frame_14_Data&$FFFF, D4Zora_Frame_15_Data&$FFFF, D4Zora_Frame_16_Data&$FFFF, D4Zora_Frame_17_Data&$FFFF, D4Zora_Frame_18_Data&$FFFF, D4Zora_Frame_19_Data&$FFFF, D4Zora_Frame_20_Data&$FFFF, D4Zora_Frame_21_Data&$FFFF, D4Zora_Frame_22_Data&$FFFF, D4Zora_Frame_23_Data&$FFFF, D4Zora_Frame_24_Data&$FFFF, D4Zora_Frame_25_Data&$FFFF, D4Zora_Frame_26_Data&$FFFF, D4Zora_Frame_27_Data&$FFFF, D4Zora_Frame_28_Data&$FFFF, D4Zora_Frame_29_Data&$FFFF, D4Zora_Frame_30_Data&$FFFF, D4Zora_Frame_31_Data&$FFFF, D4Zora_Frame_32_Data&$FFFF, D4Zora_Frame_33_Data&$FFFF, D4Zora_Frame_34_Data&$FFFF, D4Zora_Frame_35_Data&$FFFF, D4Zora_Frame_36_Data&$FFFF, D4Zora_Frame_37_Data&$FFFF, D4Zora_Frame_38_Data&$FFFF, D4Zora_Frame_39_Data&$FFFF, D4Zora_Frame_40_Data&$FFFF, D4Zora_Frame_41_Data&$FFFF, D4Zora_Frame_42_Data&$FFFF, D4Zora_Frame_43_Data&$FFFF, D4Zora_Frame_44_Data&$FFFF, D4Zora_Frame_45_Data&$FFFF, D4Zora_Frame_46_Data&$FFFF, D4Zora_Frame_47_Data&$FFFF, D4Zora_Frame_48_Data&$FFFF, D4Zora_Frame_49_Data&$FFFF, D4Zora_Frame_50_Data&$FFFF, D4Zora_Frame_51_Data&$FFFF, D4Zora_Frame_52_Data&$FFFF, D4Zora_Frame_53_Data&$FFFF, D4Zora_Frame_54_Data&$FFFF, D4Zora_Frame_55_Data&$FFFF, D4Zora_Frame_56_Data&$FFFF, D4Zora_Frame_57_Data&$FFFF, D4Zora_Frame_58_Data&$FFFF, D4Zora_Frame_59_Data&$FFFF
+  dw D4Zora_Frame_0_Data&$FFFF, D4Zora_Frame_1_Data&$FFFF, D4Zora_Frame_2_Data&$FFFF, D4Zora_Frame_3_Data&$FFFF, D4Zora_Frame_4_Data&$FFFF, D4Zora_Frame_5_Data&$FFFF, D4Zora_Frame_6_Data&$FFFF, D4Zora_Frame_7_Data&$FFFF, D4Zora_Frame_8_Data&$FFFF, D4Zora_Frame_9_Data&$FFFF, D4Zora_Frame_10_Data&$FFFF, D4Zora_Frame_11_Data&$FFFF, D4Zora_Frame_12_Data&$FFFF, D4Zora_Frame_13_Data&$FFFF, D4Zora_Frame_14_Data&$FFFF, D4Zora_Frame_15_Data&$FFFF, D4Zora_Frame_16_Data&$FFFF, D4Zora_Frame_17_Data&$FFFF, D4Zora_Frame_18_Data&$FFFF, D4Zora_Frame_19_Data&$FFFF, D4Zora_Frame_20_Data&$FFFF, D4Zora_Frame_21_Data&$FFFF, D4Zora_Frame_22_Data&$FFFF, D4Zora_Frame_23_Data&$FFFF, D4Zora_Frame_24_Data&$FFFF, D4Zora_Frame_25_Data&$FFFF, D4Zora_Frame_26_Data&$FFFF, D4Zora_Frame_27_Data&$FFFF, D4Zora_Frame_28_Data&$FFFF, D4Zora_Frame_29_Data&$FFFF, D4Zora_Frame_30_Data&$FFFF, D4Zora_Frame_31_Data&$FFFF, D4Zora_Frame_32_Data&$FFFF, D4Zora_Frame_33_Data&$FFFF, D4Zora_Frame_34_Data&$FFFF, D4Zora_Frame_35_Data&$FFFF, D4Zora_Frame_36_Data&$FFFF, D4Zora_Frame_37_Data&$FFFF, D4Zora_Frame_38_Data&$FFFF, D4Zora_Frame_39_Data&$FFFF, D4Zora_Frame_40_Data&$FFFF, D4Zora_Frame_41_Data&$FFFF, D4Zora_Frame_42_Data&$FFFF, D4Zora_Frame_43_Data&$FFFF, D4Zora_Frame_44_Data&$FFFF, D4Zora_Frame_45_Data&$FFFF, D4Zora_Frame_46_Data&$FFFF, D4Zora_Frame_47_Data&$FFFF, D4Zora_Frame_48_Data&$FFFF, D4Zora_Frame_49_Data&$FFFF, D4Zora_Frame_50_Data&$FFFF, D4Zora_Frame_51_Data&$FFFF, D4Zora_Frame_52_Data&$FFFF, D4Zora_Frame_53_Data&$FFFF, D4Zora_Frame_54_Data&$FFFF, D4Zora_Frame_55_Data&$FFFF, D4Zora_Frame_56_Data&$FFFF, D4Zora_Frame_57_Data&$FFFF, D4Zora_Frame_58_Data&$FFFF, D4Zora_Frame_59_Data&$FFFF, D4Zora_Frame_60_Data&$FFFF, D4Zora_Frame_61_Data&$FFFF, D4Zora_Frame_62_Data&$FFFF, D4Zora_Frame_63_Data&$FFFF
 D4Zora_FrameCounts:
-  db 13, 13, 13, 13, 13, 13, 13, 13, 14, 14, 14, 14, 13, 13, 13, 13, 14, 14, 14, 14, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 14, 14, 14, 14, 14, 13, 13, 13, 13, 14, 14, 14, 14, 14, 2, 2, 2, 2, 13, 13, 15, 14
+  db 13, 13, 13, 13, 13, 13, 13, 13, 14, 14, 14, 14, 13, 13, 13, 13, 14, 14, 14, 14, 12, 12, 12, 12, 12, 12, 13, 13, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 14, 14, 14, 15, 14, 13, 13, 13, 13, 14, 14, 14, 15, 14, 2, 2, 2, 2, 13, 13, 13, 13, 15, 15, 14, 14
 D4Warden_WalkFrames:
   db 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 D4Warden_ChargeFrames:
@@ -75,7 +79,7 @@ D4Warden_ChargeFrames:
 D4Warden_SlamFrames:
   db 21, 23, 25, 27, 29, 20, 22, 24, 26, 28, 47, 48, 49, 50, 51, 38, 39, 40, 41, 42
 D4Warden_VentFrames:
-  db 56, 57, 58, 59
+  db 56, 57, 58, 59, 60, 61, 62, 63
 D4Zora_Palette_protector_head:
   dw $0C63, $2525, $39E5, $46F0, $2F7D, $5B7D, $1ADF
 D4Zora_Palette_protector_body:
@@ -313,20 +317,20 @@ D4Zora_Frame_15_Data: ; rear_walk_3
   db $F3, $F0, $8A, $7B
   db $F3, $F0, $8C, $7D
 D4Zora_Frame_16_Data: ; front_charge_brace
-  db $F6, $03, $C4, $3D
-  db $F9, $FE, $C6, $3B
-  db $03, $EE, $66, $3B
-  db $FB, $F7, $68, $3B
-  db $0E, $F8, $6A, $3B
-  db $10, $FF, $C8, $3B
-  db $11, $01, $CA, $3D
-  db $02, $FB, $80, $3B
-  db $02, $FB, $82, $3D
+  db $EB, $F7, $62, $3D
+  db $F6, $FA, $64, $3B
+  db $03, $EF, $66, $3B
+  db $FB, $F8, $68, $3B
+  db $0E, $F9, $6A, $3B
+  db $10, $01, $C8, $3B
+  db $11, $03, $CA, $3D
+  db $02, $FC, $80, $3B
+  db $02, $FC, $82, $3D
   db $FE, $05, $84, $3B
   db $FD, $08, $86, $3B
   db $09, $07, $88, $3B
-  db $0F, $F1, $8A, $3B
-  db $0F, $F1, $8C, $3D
+  db $0F, $F3, $8A, $3B
+  db $0F, $F3, $8C, $3D
 D4Zora_Frame_17_Data: ; front_charge_stride_a
   db $F5, $02, $C4, $3D
   db $F8, $FD, $C6, $3B
@@ -451,29 +455,31 @@ D4Zora_Frame_25_Data: ; right_slam_strike
   db $F4, $0A, $E4, $7B
   db $F4, $0A, $E6, $7D
 D4Zora_Frame_26_Data: ; left_slam_stuck
-  db $F9, $04, $C4, $3D
-  db $FC, $00, $24, $3B
-  db $FB, $F0, $02, $3B
-  db $FF, $FB, $04, $3B
+  db $F9, $0D, $2A, $3B
+  db $F9, $0A, $C4, $3D
+  db $FC, $01, $24, $3B
+  db $FB, $F2, $02, $3B
+  db $FF, $FC, $04, $3B
   db $02, $02, $06, $3B
   db $07, $0B, $E4, $3B
   db $07, $0B, $E6, $3D
-  db $0E, $FB, $08, $3B
-  db $0B, $F3, $0A, $3B
-  db $0B, $F3, $0C, $3D
+  db $0E, $FC, $08, $3B
+  db $0B, $F4, $0A, $3B
+  db $0B, $F4, $0C, $3D
   db $0C, $0A, $E4, $3B
   db $0C, $0A, $E6, $3D
 D4Zora_Frame_27_Data: ; right_slam_stuck
-  db $07, $04, $C4, $7D
-  db $04, $00, $24, $7B
-  db $05, $F0, $02, $7B
-  db $01, $FB, $04, $7B
+  db $07, $0D, $2A, $7B
+  db $07, $0A, $C4, $7D
+  db $04, $01, $24, $7B
+  db $05, $F2, $02, $7B
+  db $01, $FC, $04, $7B
   db $FE, $02, $06, $7B
   db $F9, $0B, $E4, $7B
   db $F9, $0B, $E6, $7D
-  db $F2, $FB, $08, $7B
-  db $F5, $F3, $0A, $7B
-  db $F5, $F3, $0C, $7D
+  db $F2, $FC, $08, $7B
+  db $F5, $F4, $0A, $7B
+  db $F5, $F4, $0C, $7D
   db $F4, $0A, $E4, $7B
   db $F4, $0A, $E6, $7D
 D4Zora_Frame_28_Data: ; left_slam_recover
@@ -503,29 +509,29 @@ D4Zora_Frame_29_Data: ; right_slam_recover
   db $F6, $0A, $E4, $7B
   db $F6, $0A, $E6, $7D
 D4Zora_Frame_30_Data: ; left_charge_brace
-  db $FD, $03, $C4, $3D
-  db $FF, $FF, $24, $3B
-  db $FF, $EE, $02, $3B
-  db $01, $F9, $04, $3B
+  db $F5, $F5, $62, $3D
+  db $00, $F7, $00, $3B
+  db $FF, $EF, $02, $3B
+  db $01, $FA, $04, $3B
   db $01, $01, $06, $3B
   db $09, $0B, $E4, $3B
   db $09, $0B, $E6, $3D
-  db $10, $FA, $08, $3B
-  db $0D, $F2, $0A, $3B
-  db $0D, $F2, $0C, $3D
+  db $10, $FB, $08, $3B
+  db $0D, $F3, $0A, $3B
+  db $0D, $F3, $0C, $3D
   db $0A, $0A, $E4, $3B
   db $0A, $0A, $E6, $3D
 D4Zora_Frame_31_Data: ; right_charge_brace
-  db $03, $03, $C4, $7D
-  db $01, $FF, $24, $7B
-  db $01, $EE, $02, $7B
-  db $FF, $F9, $04, $7B
+  db $0B, $F5, $62, $7D
+  db $00, $F7, $00, $7B
+  db $01, $EF, $02, $7B
+  db $FF, $FA, $04, $7B
   db $FF, $01, $06, $7B
   db $F7, $0B, $E4, $7B
   db $F7, $0B, $E6, $7D
-  db $F0, $FA, $08, $7B
-  db $F3, $F2, $0A, $7B
-  db $F3, $F2, $0C, $7D
+  db $F0, $FB, $08, $7B
+  db $F3, $F3, $0A, $7B
+  db $F3, $F3, $0C, $7D
   db $F6, $0A, $E4, $7B
   db $F6, $0A, $E6, $7D
 D4Zora_Frame_32_Data: ; left_charge_stride_a
@@ -652,20 +658,21 @@ D4Zora_Frame_40_Data: ; rear_slam_strike
   db $F4, $F3, $8A, $7B
   db $F4, $F3, $8C, $7D
 D4Zora_Frame_41_Data: ; rear_slam_stuck
-  db $01, $F7, $CE, $7D
-  db $0C, $04, $C4, $7D
-  db $08, $FF, $C6, $7B
-  db $00, $EF, $CC, $7B
-  db $08, $F8, $68, $7B
-  db $F4, $F9, $6A, $7B
-  db $F9, $00, $AE, $7B
-  db $F6, $01, $6E, $7D
-  db $00, $FC, $80, $7B
+  db $0C, $0D, $2A, $7B
+  db $01, $F8, $CE, $7D
+  db $0C, $0A, $C4, $7D
+  db $08, $00, $C6, $7B
+  db $00, $F1, $CC, $7B
+  db $08, $F9, $68, $7B
+  db $F4, $FA, $6A, $7B
+  db $F9, $01, $AE, $7B
+  db $F6, $02, $6E, $7D
+  db $00, $FD, $80, $7B
   db $01, $06, $84, $7B
   db $04, $08, $86, $7B
   db $F6, $07, $88, $7B
-  db $F3, $F3, $8A, $7B
-  db $F3, $F3, $8C, $7D
+  db $F3, $F4, $8A, $7B
+  db $F3, $F4, $8C, $7D
 D4Zora_Frame_42_Data: ; rear_slam_recover
   db $FF, $F5, $CE, $7D
   db $0A, $01, $C4, $7D
@@ -682,19 +689,19 @@ D4Zora_Frame_42_Data: ; rear_slam_recover
   db $EF, $F0, $8A, $7B
   db $EF, $F0, $8C, $7D
 D4Zora_Frame_43_Data: ; rear_charge_brace
-  db $00, $F5, $CE, $7D
-  db $0A, $03, $C4, $7D
-  db $07, $FE, $C6, $7B
-  db $FD, $EE, $CC, $7B
-  db $05, $F6, $68, $7B
-  db $F2, $F7, $6A, $7B
-  db $F0, $FF, $C8, $7B
-  db $EF, $01, $CA, $7D
+  db $00, $F6, $CE, $7D
+  db $15, $F6, $62, $7D
+  db $0A, $F9, $64, $7B
+  db $FD, $EF, $CC, $7B
+  db $05, $F7, $68, $7B
+  db $F2, $F8, $6A, $7B
+  db $F0, $00, $C8, $7B
+  db $EF, $02, $CA, $7D
   db $02, $05, $84, $7B
   db $03, $08, $86, $7B
   db $F7, $07, $88, $7B
-  db $F1, $F1, $8A, $7B
-  db $F1, $F1, $8C, $7D
+  db $F1, $F2, $8A, $7B
+  db $F1, $F2, $8C, $7D
 D4Zora_Frame_44_Data: ; rear_charge_stride_a
   db $00, $F3, $CE, $7D
   db $0A, $02, $C4, $7D
@@ -783,20 +790,21 @@ D4Zora_Frame_49_Data: ; front_slam_strike
   db $0C, $F3, $8A, $3B
   db $0C, $F3, $8C, $3D
 D4Zora_Frame_50_Data: ; front_slam_stuck
-  db $F4, $04, $C4, $3D
-  db $F8, $FF, $C6, $3B
-  db $00, $EF, $66, $3B
-  db $F8, $F8, $68, $3B
-  db $0C, $F9, $6A, $3B
-  db $07, $00, $AE, $3B
-  db $0A, $01, $6E, $3D
-  db $00, $FC, $80, $3B
-  db $00, $FC, $82, $3D
+  db $F4, $0D, $2A, $3B
+  db $F4, $0A, $C4, $3D
+  db $F8, $00, $C6, $3B
+  db $00, $F1, $66, $3B
+  db $F8, $F9, $68, $3B
+  db $0C, $FA, $6A, $3B
+  db $07, $01, $AE, $3B
+  db $0A, $02, $6E, $3D
+  db $00, $FD, $80, $3B
+  db $00, $FD, $82, $3D
   db $FF, $06, $84, $3B
   db $FC, $08, $86, $3B
   db $0A, $07, $88, $3B
-  db $0D, $F3, $8A, $3B
-  db $0D, $F3, $8C, $3D
+  db $0D, $F4, $8A, $3B
+  db $0D, $F4, $8C, $3D
 D4Zora_Frame_51_Data: ; front_slam_recover
   db $F6, $01, $C4, $3D
   db $F9, $FC, $C6, $3B
@@ -825,64 +833,123 @@ D4Zora_Frame_55_Data: ; protector_healing
   db $F8, $F0, $A2, $37
   db $F8, $F8, $A4, $39
 D4Zora_Frame_56_Data: ; right_vent
-  db $F3, $E8, $26, $3B
-  db $04, $04, $C4, $7D
-  db $02, $00, $24, $7B
-  db $02, $F0, $02, $7B
-  db $00, $FA, $04, $7B
+  db $F2, $EA, $26, $7B
+  db $04, $07, $C4, $7D
+  db $02, $03, $24, $7B
+  db $02, $F4, $02, $7B
+  db $00, $FD, $04, $7B
   db $FF, $02, $06, $7B
   db $F7, $0B, $E4, $7B
   db $F7, $0B, $E6, $7D
-  db $F1, $FB, $08, $7B
-  db $F4, $F3, $0A, $7B
-  db $F4, $F3, $0C, $7D
+  db $F1, $FE, $08, $7B
+  db $F4, $F6, $0A, $7B
+  db $F4, $F6, $0C, $7D
   db $F6, $0A, $E4, $7B
   db $F6, $0A, $E6, $7D
-D4Zora_Frame_57_Data: ; left_vent
-  db $0E, $E8, $26, $3B
-  db $FC, $04, $C4, $3D
-  db $FE, $00, $24, $3B
-  db $FE, $F0, $02, $3B
-  db $00, $FA, $04, $3B
+D4Zora_Frame_57_Data: ; right_vent_b
+  db $F2, $EA, $28, $7B
+  db $04, $07, $C4, $7D
+  db $02, $03, $24, $7B
+  db $02, $F4, $02, $7B
+  db $00, $FD, $04, $7B
+  db $FF, $02, $06, $7B
+  db $F7, $0B, $E4, $7B
+  db $F7, $0B, $E6, $7D
+  db $F1, $FE, $08, $7B
+  db $F4, $F6, $0A, $7B
+  db $F4, $F6, $0C, $7D
+  db $F6, $0A, $E4, $7B
+  db $F6, $0A, $E6, $7D
+D4Zora_Frame_58_Data: ; left_vent
+  db $0E, $EA, $26, $3B
+  db $FC, $07, $C4, $3D
+  db $FE, $03, $24, $3B
+  db $FE, $F4, $02, $3B
+  db $00, $FD, $04, $3B
   db $01, $02, $06, $3B
   db $09, $0B, $E4, $3B
   db $09, $0B, $E6, $3D
-  db $0F, $FB, $08, $3B
-  db $0C, $F3, $0A, $3B
-  db $0C, $F3, $0C, $3D
+  db $0F, $FE, $08, $3B
+  db $0C, $F6, $0A, $3B
+  db $0C, $F6, $0C, $3D
   db $0A, $0A, $E4, $3B
   db $0A, $0A, $E6, $3D
-D4Zora_Frame_58_Data: ; front_vent
-  db $0F, $E4, $26, $3B
-  db $F6, $02, $C4, $3D
-  db $F9, $FD, $C6, $3B
-  db $01, $ED, $66, $3B
-  db $F9, $F6, $68, $3B
-  db $0C, $F7, $6A, $3B
-  db $0E, $FE, $C8, $3B
-  db $0F, $00, $CA, $3D
-  db $00, $FA, $80, $3B
-  db $00, $FA, $82, $3D
+D4Zora_Frame_59_Data: ; left_vent_b
+  db $0E, $EA, $28, $3B
+  db $FC, $07, $C4, $3D
+  db $FE, $03, $24, $3B
+  db $FE, $F4, $02, $3B
+  db $00, $FD, $04, $3B
+  db $01, $02, $06, $3B
+  db $09, $0B, $E4, $3B
+  db $09, $0B, $E6, $3D
+  db $0F, $FE, $08, $3B
+  db $0C, $F6, $0A, $3B
+  db $0C, $F6, $0C, $3D
+  db $0A, $0A, $E4, $3B
+  db $0A, $0A, $E6, $3D
+D4Zora_Frame_60_Data: ; front_vent
+  db $0E, $E6, $26, $3B
+  db $F6, $05, $C4, $3D
+  db $F9, $00, $C6, $3B
+  db $01, $F1, $66, $3B
+  db $F9, $F9, $68, $3B
+  db $0C, $FA, $6A, $3B
+  db $0E, $01, $C8, $3B
+  db $0F, $03, $CA, $3D
+  db $00, $FD, $80, $3B
+  db $00, $FD, $82, $3D
   db $FE, $04, $84, $3B
   db $FE, $07, $86, $3B
   db $09, $06, $88, $3B
-  db $0D, $F0, $8A, $3B
-  db $0D, $F0, $8C, $3D
-D4Zora_Frame_59_Data: ; rear_vent
-  db $00, $E3, $26, $3B
-  db $00, $F5, $CE, $7D
-  db $0A, $02, $C4, $7D
-  db $07, $FD, $C6, $7B
-  db $FF, $EE, $CC, $7B
-  db $07, $F6, $68, $7B
-  db $F4, $F7, $6A, $7B
-  db $F2, $FE, $C8, $7B
-  db $F1, $00, $CA, $7D
+  db $0D, $F3, $8A, $3B
+  db $0D, $F3, $8C, $3D
+D4Zora_Frame_61_Data: ; front_vent_b
+  db $0E, $E6, $28, $3B
+  db $F6, $05, $C4, $3D
+  db $F9, $00, $C6, $3B
+  db $01, $F1, $66, $3B
+  db $F9, $F9, $68, $3B
+  db $0C, $FA, $6A, $3B
+  db $0E, $01, $C8, $3B
+  db $0F, $03, $CA, $3D
+  db $00, $FD, $80, $3B
+  db $00, $FD, $82, $3D
+  db $FE, $04, $84, $3B
+  db $FE, $07, $86, $3B
+  db $09, $06, $88, $3B
+  db $0D, $F3, $8A, $3B
+  db $0D, $F3, $8C, $3D
+D4Zora_Frame_62_Data: ; rear_vent
+  db $00, $E5, $26, $3B
+  db $00, $F8, $CE, $7B
+  db $0A, $05, $C4, $7D
+  db $07, $00, $C6, $7B
+  db $FF, $F2, $CC, $7B
+  db $07, $F9, $68, $7B
+  db $F4, $FA, $6A, $7B
+  db $F2, $01, $C8, $7B
+  db $F1, $03, $CA, $7D
   db $02, $04, $84, $7B
   db $02, $07, $86, $7B
   db $F7, $06, $88, $7B
-  db $F3, $F1, $8A, $7B
-  db $F3, $F1, $8C, $7D
+  db $F3, $F4, $8A, $7B
+  db $F3, $F4, $8C, $7D
+D4Zora_Frame_63_Data: ; rear_vent_b
+  db $00, $E5, $28, $3B
+  db $00, $F8, $CE, $7B
+  db $0A, $05, $C4, $7D
+  db $07, $00, $C6, $7B
+  db $FF, $F2, $CC, $7B
+  db $07, $F9, $68, $7B
+  db $F4, $FA, $6A, $7B
+  db $F2, $01, $C8, $7B
+  db $F1, $03, $CA, $7D
+  db $02, $04, $84, $7B
+  db $02, $07, $86, $7B
+  db $F7, $06, $88, $7B
+  db $F3, $F4, $8A, $7B
+  db $F3, $F4, $8C, $7D
 D4Zora_FrameDataEnd:
 assert D4Zora_FrameDataEnd <= $47D000, "D4 frame records exceed audited 4KiB tail"
 pullpc
