@@ -110,35 +110,27 @@ org $00EF80 : LDA.b $E2 : NOP
 ; first STY/PLY. It does NOT fix the upstream width leak, but it prevents the
 ; catastrophic failure mode and makes runtime captures actionable.
 ; =========================================================
-if !ENABLE_JUMPTABLELOCAL_GUARD
-  org $008781 ; @hook module=Core name=JumpTableLocal_Guard kind=jml target=JumpTableLocal_Guard expected_x=8 expected_m=8
-    JML JumpTableLocal_Guard
-    NOP
+org $008781 ; @hook module=Core name=JumpTableLocal_Guard kind=jml target=JumpTableLocal_Guard expected_x=8 expected_m=8
+  JML JumpTableLocal_Guard
+  NOP
 
-  ; Place the guard routine in known-free space in Bank $2C.
-  ; (Bank $3C is used by ZS/ROM data in many builds.)
-  org $2CFF00
-  JumpTableLocal_Guard:
-  {
-    SEP #$10    ; Force X/Y=8-bit so PLY pops 1 byte (JSL pushes 3-byte retaddr).
-    STY.b $03   ; Original: save caller Y
-    PLY         ; Original: pull low byte of return address
-    STY.b $00   ; Original: stash it for table base math
+; Place the guard routine in known-free space in Bank $2C.
+; (Bank $3C is used by ZS/ROM data in many builds.)
+org $2CFF00
+JumpTableLocal_Guard:
+{
+  SEP #$10    ; Force X/Y=8-bit so PLY pops 1 byte (JSL pushes 3-byte retaddr).
+  STY.b $03   ; Original: save caller Y
+  PLY         ; Original: pull low byte of return address
+  STY.b $00   ; Original: stash it for table base math
 
-    ; Resume original routine at REP #$30 (the instruction after STY $00).
-    JML $008786
-  }
-endif
+  ; Resume original routine at REP #$30 (the instruction after STY $00).
+  JML $008786
+}
 
 ; UnderworldTransition_ScrollRoom
 org $02BE5E ; @hook module=Core name=Graphics_Transfer kind=jsl target=Graphics_Transfer
-if !ENABLE_GRAPHICS_TRANSFER_SCROLL_HOOK
   JSL Graphics_Transfer
-else
-  ; Vanilla is `LDA.b $11` here; CMP #$02 follows at $02BE60.
-  LDA.b $11
-  NOP #2
-endif
 
 ; Whirlpool
 org $1EEEE4 : JSL DontTeleportWithoutFlippers ; @hook module=Core name=DontTeleportWithoutFlippers kind=jsl target=DontTeleportWithoutFlippers

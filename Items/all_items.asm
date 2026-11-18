@@ -321,9 +321,7 @@ endif
 
 ; Abyss load spawn menu: bank $34 is full. Entered only by JML, exits by
 ; JML/RTL, absolute operands are low WRAM (mirrored), so it runs from here.
-if !ENABLE_ABYSS_SPAWN_MENU == 1
 incsrc "Overworld/abyss_spawn_menu.asm"
-endif
 
 ; Lyra overlay fix: bank $34 is full. JSL entries only, exits by RTL/JML,
 ; operands are direct page, long or immediate, so it runs from here.

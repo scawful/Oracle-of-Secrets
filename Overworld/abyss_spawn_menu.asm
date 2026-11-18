@@ -1,5 +1,5 @@
 ; =========================================================
-; Abyss load spawn menu (!ENABLE_ABYSS_SPAWN_MENU)
+; Abyss load spawn menu
 ;
 ; Before the endgame every outdoor Abyss load lands at the pyramid (exit room
 ; $20, Module05_LoadFile $0281AB): SavedWorld is the respawn lock

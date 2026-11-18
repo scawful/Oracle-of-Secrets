@@ -162,10 +162,8 @@ namespace Oracle
   ; Oracle file select restyle, option E (default on; see Util/macros.asm).
     incsrc "Core/title/file_select.asm"
 
-  ; Native 2-player feature (RC profile enabled; see Util/macros.asm)
-  if !ENABLE_NATIVE_2P_POC == 1
+  ; Native 2-player feature
     incsrc "Sprites/Players/player2.asm"
-  endif
 
   ; Part00 villager lines and checkpoint (default on; see Util/macros.asm).
   ; The Wisdom dream scene shares its room-sprites hook ($09C2C3), and so does

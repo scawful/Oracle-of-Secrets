@@ -1,6 +1,6 @@
 ; =========================================================
 ; Native 2-player PoC hooks (Sprites/Players/player2.asm).
-; Included only when !ENABLE_NATIVE_2P_POC == 1.
+;
 ;
 ; Util/item_cheat.asm (disabled) also patches $068365; do not enable both.
 ; =========================================================

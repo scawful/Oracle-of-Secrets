@@ -13,7 +13,6 @@ class PrisonRespawnMigrationTest(unittest.TestCase):
         checkpoint_source = checkpoint_source or T.R.ROOT / "Overworld/goron_checkpoint.asm"
         extra = f'''
 !ENABLE_KALYXO_BOAT = 0
-!ENABLE_ABYSS_SPAWN_MENU = 0
 !ENABLE_D3_PRISON_SEQUENCE = {enabled}
 !SPECIAL_OVERWORLD_NATIVE = 0
 !Spawn_Prison = 2
@@ -40,6 +39,7 @@ ItemBindings_AdapterReset:
   RTL
 ItemBindings_RestoreY:
   RTL
+AbyssSpawnMenu_Check = $028196
 namespace off
 org $028196
 LegacyContinuation:

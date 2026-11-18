@@ -1,5 +1,5 @@
 ; =========================================================
-; Mirror experiment scene (!ENABLE_EXPERIMENT_SCENE), phase 3
+; Mirror experiment scene (phase 3)
 ;
 ; Included from Core/Cutscene/opening.asm (bank $3A, after the arrival code).
 ; Storyboard (approved, revision 2):

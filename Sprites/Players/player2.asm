@@ -11,12 +11,10 @@
 ;        pots, rocks, signs), Start pause, Select regroup (warp next to
 ;        Link), Select+Start leave. Touching drops collects them for the team.
 ;
-; Flag: !ENABLE_NATIVE_2P_POC (Util/macros.asm, default 0).
+; Flag: always enabled (native-2p-poc, shipped default-on).
 ; Design, budgets and known conflicts:
 ;   Roms/TestBuilds/native-2p-poc-2026-09-25/DESIGN.md
 ; =========================================================
-
-if !ENABLE_NATIVE_2P_POC == 1
 
 ; ---------------------------------------------------------
 ; WRAM ($7FF400-$7FF461, $7FF500-$7FF5FF). $7FF180-$7FF7FF is free except $7FF300-$7FF331.
@@ -2050,5 +2048,3 @@ P2_PoseStep:
 assert pc() <= $3AE800, "native-2p-poc sword/PvP/lift block runs into Impa hints at $3AE800"
 
 incsrc "player2_hooks.asm"
-
-endif

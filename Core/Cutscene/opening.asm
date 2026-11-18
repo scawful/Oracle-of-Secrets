@@ -66,12 +66,10 @@ org $00806D : db Arrival_Module>>0  ; @hook module=Cutscene name=Arrival_ModuleL
 org $008089 : db Arrival_Module>>8  ; @hook module=Cutscene name=Arrival_ModuleMid kind=data
 org $0080A5 : db Arrival_Module>>16 ; @hook module=Cutscene name=Arrival_ModuleBank kind=data
 
-if !ENABLE_EXPERIMENT_SCENE == 1
 ; Module $0D (vanilla Module0D_Unused, never selected) runs the experiment scene.
 org $00806E : db Experiment_Module>>0  ; @hook module=Cutscene name=Experiment_ModuleLow kind=data
 org $00808A : db Experiment_Module>>8  ; @hook module=Cutscene name=Experiment_ModuleMid kind=data
 org $0080A6 : db Experiment_Module>>16 ; @hook module=Cutscene name=Experiment_ModuleBank kind=data
-endif
 
 ; Module07_0F_00_InitSpotlight: JSL IrisSpotlight_open (same length).
 org $02932D ; @hook module=Cutscene name=Arrival_SpotlightGate kind=jsl target=Arrival_SpotlightGate expected_m=8 expected_x=8
@@ -92,14 +90,12 @@ Arrival_SpotlightGate:
   LDA.b $A1 : CMP.b #$01 : BNE .vanilla   ; room $104 = Link's house
   LDA.b $A0 : CMP.b #$04 : BNE .vanilla
   LDA.l IntroState : BNE .vanilla         ; plea not delivered yet
-  if !ENABLE_EXPERIMENT_SCENE == 1
-    LDA.l Exp_Done : CMP.b #!ExpDoneMarker : BEQ .after_scene
-      LDA.b #$0D : STA.b $10              ; next frame: Experiment_Module; it
-      LDA.b #$00 : STA.l Exp_State        ; reloads the house and comes back here
-      RTL
-    .after_scene
-    LDA.b #$00 : STA.l Exp_Done
-  endif
+  LDA.l Exp_Done : CMP.b #!ExpDoneMarker : BEQ .after_scene
+    LDA.b #$0D : STA.b $10              ; next frame: Experiment_Module; it
+    LDA.b #$00 : STA.l Exp_State        ; reloads the house and comes back here
+    RTL
+  .after_scene
+  LDA.b #$00 : STA.l Exp_Done
     LDA.b #$0C : STA.b $10                ; next frame: Arrival_Module
     LDA.b #$00 : STA.l Arrival_State
     RTL                                   ; caller INCs $B0; handoff clears it
@@ -372,10 +368,8 @@ Arrival_SpinStep:
 
 print "End of opening arrival            ", pc
 
-if !ENABLE_EXPERIMENT_SCENE == 1
-  incsrc "experiment.asm"
-  print "End of experiment scene           ", pc
-endif
+incsrc "experiment.asm"
+print "End of experiment scene           ", pc
 
 if !ENABLE_KALYXO_BOAT == 1
   incsrc "Overworld/kalyxo_boat.asm"

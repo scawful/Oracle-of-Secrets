@@ -25,7 +25,7 @@ def assemble(folder, player_source):
     (folder/'player2.asm').write_text(player_source)
     (folder/'player2_hooks.asm').write_bytes((ROOT/'Sprites/Players/player2_hooks.asm').read_bytes())
     asm = folder/'fixture.asm'
-    asm.write_text('lorom\n!ENABLE_NATIVE_2P_POC = 1\nInCutScene = $7EF303\n' + defs +
+    asm.write_text('lorom\nInCutScene = $7EF303\n' + defs +
                    '\nincsrc "player2.asm"\n')
     image = folder/'fixture.sfc'
     image.write_bytes(b'\xff' * 0x200000)

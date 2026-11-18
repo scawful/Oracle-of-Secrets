@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "a86e4e435476d1c0ebf77b0be06dbf500273a5e63a63cf27b1ddde796b71817d"
+      "sha256": "7a91692fbb26076346ba40ad80e72c6d6b46203699633217a4f61eea9424d250"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "0faae00441ff5e6ada0960b53d33b87ad59cdc140720720e4de32d155345b652"
+      "sha256": "e15007abead1d97eea9f93d81b587fa9c20d5c1d4a6545749d3dea5ae852202e"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -140,12 +140,12 @@
     "shared:Core/Cutscene/experiment.asm": {
       "source_set": "shared",
       "path": "Core/Cutscene/experiment.asm",
-      "sha256": "83c576ece765a92dccacab6da03426ba357aff95d0144f4266810886f44036c9"
+      "sha256": "a288a2222a5241479def8eff4d69f927ff6a6a7d74fc29d84b78bc66fe7d004a"
     },
     "shared:Sprites/Players/player2.asm": {
       "source_set": "shared",
       "path": "Sprites/Players/player2.asm",
-      "sha256": "0340d8292c63787adf1b89114d3be24764a960dfdd406a50ef6002599dac4fb9"
+      "sha256": "34fe62af31ef5442f6cc19242b8db086d52cd58b08582714bbcfc16896bd6a70"
     },
     "shared:Items/ice_rod.asm": {
       "source_set": "shared",
@@ -215,7 +215,7 @@
     "shared:Oracle_main.asm": {
       "source_set": "shared",
       "path": "Oracle_main.asm",
-      "sha256": "060e70e4ab280c262504f5d4d142a44570ef6bbd998c1b163f908980928bc8c6"
+      "sha256": "24834922c45a410ac7e800b4203697b03f93f39a568300231ed7e2dc3cdd3e2c"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
@@ -320,12 +320,12 @@
     "shared:Core/Cutscene/opening.asm": {
       "source_set": "shared",
       "path": "Core/Cutscene/opening.asm",
-      "sha256": "ca0c7b92762785f754302366c010925671bbc5a08dc5899c8894276664d54de5"
+      "sha256": "f588ffcf98cfb74062b24dd3fccd2e887716766d1fba2f3e645c241c4d0e3192"
     },
     "shared:Overworld/goron_checkpoint.asm": {
       "source_set": "shared",
       "path": "Overworld/goron_checkpoint.asm",
-      "sha256": "b34efbad44c6896282bd12dbf50b822a32924e71c1c362fbf22f40682e0fda28"
+      "sha256": "fba430e4f556ed40dfa9f679d53436e9030b4ed0d42da77f367c80d87bca6be8"
     },
     "shared:Overworld/special_overworld_semantic.asm": {
       "source_set": "shared",
@@ -375,7 +375,7 @@
     "shared:Items/all_items.asm": {
       "source_set": "shared",
       "path": "Items/all_items.asm",
-      "sha256": "6a80cc97b28c2b97005d60d01a81d0416b4063ce5115f57502000dea16f210f7"
+      "sha256": "db750076fdd41705d924372d307983d161ecd5c7ea59ca959a128935b1918105"
     },
     "shared:Masks/horse_park_anywhere.asm": {
       "source_set": "shared",

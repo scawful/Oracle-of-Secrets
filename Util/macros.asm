@@ -30,7 +30,6 @@ endif
 ; --- Feature Toggle Flags ---
 ; Active RC features default to 1. Set to 0 to isolate a defect.
 ; Override these via Config/feature_flags.asm (generate with Scripts/Build/set_feature_flags.py).
-!ENABLE_GRAPHICS_TRANSFER_SCROLL_HOOK = 1
 ; Source-built sprite sheets; identity sheet $64 owns the audited bank $40 tail.
 !ENABLE_SOURCE_SPRITE_SHEETS        = 1
 ; Sky room sky layer ($A0 proof): sheet EA slot6, row6 colours, BG1 fill.
@@ -60,7 +59,6 @@ endif
 !ENABLE_D3_PRISON_SEQUENCE           = 0
 !ENABLE_D7_FARORE_RESCUE_SEQUENCE    = 1
 !ENABLE_OCARINA_SONG_TINT            = 0
-!ENABLE_JUMPTABLELOCAL_GUARD         = 1
 ; RC opening / cutscene features.
 !ENABLE_CUSTOM_ATTRACT_SEQUENCE      = 1
 ; Accepted royal attract cards; kept off until focused playback passes.
@@ -72,14 +70,6 @@ endif
 ; Data/overworld/kalyxo_boat_placements.asm). Opening arrival is unchanged unless
 ; Boat_Marker holds !Boat_Magic.
 !ENABLE_KALYXO_BOAT                   = 1
-; New-file Mirror experiment scene before the arrival (Core/Cutscene/experiment.asm).
-!ENABLE_EXPERIMENT_SCENE            = 1
-; Native 2-player PoC: pad-2 Start drops in a second Link (Sprites/Players/player2.asm).
-!ENABLE_NATIVE_2P_POC                = 1
-; Abyss load spawn menu: from GameState 3 an outdoor Abyss load offers
-; Pyramid / Link's House / Hall of Secrets (message $21B,
-; Overworld/abyss_spawn_menu.asm).
-!ENABLE_ABYSS_SPAWN_MENU            = 1
 ; Forest Glade ambush (prototype, off): after Kydrog's msg $21 the glade
 ; animals flee, a thunder blackout swaps stalfos art into the glade slots,
 ; stalfos rise around Link, and a mosaic ramp leads into the module $15
