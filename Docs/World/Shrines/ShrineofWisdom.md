@@ -2,7 +2,7 @@
 
 **Type:** Shrine
 **Entrance ID(s):** 0x33
-**Overworld Location:** OW 0x63
+**Overworld Location:** OW 0x91 `(416, 128)` (active ROM door in `Data/debug/warps.json`; older 2026-02 snapshot `OW 0x63` at `(752, 96)`)
 **Reward:** Pendant of Wisdom
 **Boss:** None
 **Dungeon Item:** Zora Flippers (beat sheet beat 14; decisions.org:151)

@@ -185,14 +185,16 @@ Master index of recorded indoor locations with entrance IDs.
 
 ## Special Overworlds
 
-These are OW screens with special handling (from `special_areas.asm`):
+These screens (`0x80-0xBF`) use the native special-overworld loaders (`special_areas.asm`, `lyra_native_loaders.asm`; see [SpecialAreas/index.md](SpecialAreas/index.md)):
 
-| OW Screen | Name | Notes |
-|-----------|------|-------|
-| 0x80 | Maku Tree Area | Maku Tree sprite |
-| 0x81 | Zora Falls West | Waterfall area |
-| 0x82 | Zora Falls East | Waterfall area |
-| 0x80 (variant) | Tree House | Special variant |
+| OW Screen(s) | Parent / Size | Name | Notes |
+|---|---|---|---|
+| `0x80` | `0x80` (32x32) | Maku Tree Area / Tree House | Maku Tree sprite; variant tileset/overlay (`$0181`) |
+| `0x81-0x82, 0x89-0x8A` | `0x81` (64x64) | Zora Falls | 64x64 waterfall area |
+| `0x83` | `0x83` (32x32) | Cliff Terrace | Stepped terrace south of `0x8B` |
+| `0x84-0x87, 0x8C-0x8F` | 32x32 pages (`0x94` cloud) | Sky Islands & Sky Tower (`0x87`) | Upper-right islands; `page_tile16` on `0x87, 0x8C-0x8F` |
+| `0x90-0x92, 0x98-0x99` | 32x32 pages | Sea Zora Temple & Coast | `0x90` Sea Zora Temple; `0x91` Shrine of Wisdom (`0x33` door); `0x98` lagoon + `0xB8` sprite (`(15,12)`); `0x99` quay |
+| `0xA0-0xBF` | `0xA0`/`0xBE` (`64x32`), `0xA6`/`0xB0`/`0xB3` (`64x64`), `0xB5` (`32x64`), others `32x32` | Lyra Sea & Coast Tail Pages | Includes Zora Coast (`0xA0/0xA1`), Great Island (`0xA6/0xA7/0xAE/0xAF`, ent `0x0C`), Goron / Power (`0xB0/0xB1/0xB8/0xB9`), Crescent Atoll (`0xB3/0xB4/0xBB/0xBC`), Ship (`0xB5/0xBD`), Snowy Island (`0xBE/0xBF`) |
 
 ---
 

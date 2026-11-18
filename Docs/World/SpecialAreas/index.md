@@ -80,22 +80,25 @@ The route leading to the final boss area. Opens after completing all dungeons.
 
 ## Special Overworlds
 
-These are overworld screens with special behavior defined in `special_areas.asm`:
+The special-overworld region (`0x80-0xBF`) shares one 64-map native container (`special_areas.asm` and `lyra_native_loaders.asm`; see [Terminology Glossary](../../Technical/terminology_glossary.md#special-overworld-domain-model)):
 
-| OW Screen | Name | Special Feature |
-|-----------|------|-----------------|
-| 0x80 | Maku Tree Area | Maku Tree sprite spawns |
-| 0x81 | Zora Falls West | Waterfall effects |
-| 0x82 | Zora Falls East | Waterfall effects |
-| 0x80 (variant) | Tree House | Different tileset |
+| OW Screen(s) | Parent / Size | Name / Region Role | Technical Features |
+|---|---|---|---|
+| `0x80` | `0x80` (32x32) | Maku Tree Area / Tree House | Maku Tree sprite spawns; variant tileset/overlay (`$0181`) |
+| `0x81-0x82, 0x89-0x8A` | `0x81` (64x64) | Zora Falls | Waterfall effects/ripples, bridge causeways, water/cliff basins |
+| `0x83` | `0x83` (32x32) | Cliff Terrace | Stepped cliff terrace/ramp south of `0x8B` |
+| `0x84-0x87, 0x8C-0x8F` | small pages (`0x94` overlay) | Sky Islands & Sky Tower (`0x87`) | `page_tile16` overrides on `0x87, 0x8C-0x8F`; cloud cover (`0x94`); Sky Tower exit `0x42` / ent `0x29` (`0x87`) |
+| `0x90-0x92, 0x98-0x99` | small pages | Sea Zora Temple & Coast | `0x90` Sea Zora Temple; `0x91` Shrine of Wisdom (`0x33` door at `416,128`); `0x92` North Reef Gate; `0x98` shallow lagoon + sprite `0xB8` (`(15,12)`); `0x99` Zora Quay |
+| `0x9C` | `0x9C` (32x32) | Reserved Fortress space | Reserved scawful space |
+| `0xA0-0xBF` | `0xA0` (`64x32`), `0xA6`/`0xB0`/`0xB3` (`64x64`), `0xB5` (`32x64`), `0xBE` (`64x32`), others `32x32` | Lyra Sea & Coastal Tail Pages | `0xA0/0xA1` Zora Coast village; `0xA3/0xAC/0xAD` island/atoll waters (`0x387/0xC7C/0xC80` 2x2 corner reefs); `0xA6/0xA7/0xAE/0xAF` Great Island (Shrine of Courage `0x0C` on `0xA6`); `0xB0/0xB1/0xB8/0xB9` Goron coast / Shrine of Power (`0xB0`); `0xB3/0xB4/0xBB/0xBC` Crescent Atoll; `0xB5/0xBD` tall Lyra ship; `0xBE/0xBF` Snowy Island |
 
 ### Maku Tree Area (OW 0x80)
 
-The Maku Tree is a central story NPC. This special overworld spawns the Maku Tree sprite and handles its dialogue states.
+The Maku Tree sprite and Tree House variant live on `0x80`.
 
-### Zora Falls (OW 0x81, 0x82)
+### Zora Falls (OW 0x81 parent: 0x81, 0x82, 0x89, 0x8A)
 
-The Zora Falls area has special waterfall animations and sound effects. May connect to Zora Temple entrance.
+`0x81` is a 64x64 parent gameplay area spanning pages `0x81`, `0x82`, `0x89`, and `0x8A` with waterfall animations/SFX and connecting east into `0x83`.
 
 ---
 
