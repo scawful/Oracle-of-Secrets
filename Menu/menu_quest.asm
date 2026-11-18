@@ -3,8 +3,8 @@
 ; glove, boots, flippers). Supplies live on Equipment; the area name heads the Map page.
 ; No ownership or save-format changes. DBR = $2D.
 if !ENABLE_MENU_MAP_TRAVEL == 1
-  !QuestPearlCol = menu_offset(0,3)     ; absolute (9,7)
-  !QuestCountCol = menu_offset(6,9)     ; absolute (11,9-11), under the hearts at (9,10)
+  !QuestPearlCol = menu_offset(0,3)     ; absolute (16,7)
+  !QuestCountCol = menu_offset(6,9)     ; absolute (18,9-11), under the hearts at (16,10)
 else
   !QuestPearlCol = menu_offset(0,2)
   !QuestCountCol = menu_offset(6,23)
@@ -98,12 +98,12 @@ endif
   RTS
 }
 
-; Quest left side (OoT gear-box style): the Moon Pearl and heart pieces on
-; the top row, below them a 2x2 block of the passive gear the player
-; cannot select (shield, glove, boots, flippers); Equipment keeps the swords,
-; tunic, masks and rings. With the four-page menu the six songs take the
-; bottom row and the dungeon row moves to the Map page. Without it the bottom
-; row is Pearl | map, big chest key, big key, treasure | hearts.
+; Quest left side: a 2x2 block of the passive gear the player cannot select
+; (shield, glove, boots, flippers) on top, with the Moon Pearl and heart
+; pieces below them; Equipment keeps the swords, tunic, masks and rings. With
+; the four-page menu the six songs take the bottom row and the dungeon row
+; moves to the Map page. Without it the bottom row is Pearl | map, big chest
+; key, big key, treasure | hearts.
 Menu_Quest_Gear:
 {
   SEP #$30
@@ -135,9 +135,9 @@ Menu_Quest_Gear:
   RTS
 .gear_slot
   db $13,$0F,$10,$11                    ; shield, glove, boots, flippers
-; DrawMenuItem offsets (absolute minus 4,4): (13,7) (13,10) / (16,7) (16,10)
+; DrawMenuItem offsets (absolute minus 4,4): (10,7) (10,10) / (13,7) (13,10)
 .gear_pos
-  dw menu_offset(9,3),menu_offset(9,6),menu_offset(12,3),menu_offset(12,6)
+  dw menu_offset(6,3),menu_offset(6,6),menu_offset(9,3),menu_offset(9,6)
 .gear_gfx
   dw ShieldGFX,PowerGloveGFX,PegasusBootsGFX,FlippersGFX
 }

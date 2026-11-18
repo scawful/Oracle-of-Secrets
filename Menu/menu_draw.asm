@@ -171,14 +171,15 @@ Menu_DrawPendantIcons:
 ; E000 is T = 0
 ; E100 would be T = 16
 
-; Quest top row (Pearl ... hearts) and the dungeon row (map, big chest key,
+; Quest Pearl/hearts anchor row and the dungeon row (map, big chest key,
 ; big key, treasure), as DrawMenuItem row offsets (absolute row minus 4).
-; With the four-page menu the songs take the Quest bottom row
-; (Menu_DrawMusicNotes), Pearl and hearts the top-left (Menu_Quest_Gear), and the dungeon
-; row sits on the Map page under the Map cell (MenuMapTravel_Draw). Without
-; it the dungeon row is on the Quest bottom row between Pearl and hearts.
+; With the four-page menu the passive 2x2 gear sits at top-left, Pearl and
+; hearts below it (Menu_Quest_Gear), the six songs on the Quest bottom row
+; (Menu_DrawMusicNotes), and the dungeon row sits on the Map page under the
+; Map cell (MenuMapTravel_Draw). Without it the dungeon row is on the Quest
+; bottom row between Pearl and hearts.
 if !ENABLE_MENU_MAP_TRAVEL == 1
-  !QuestRow = menu_offset(5,0)          ; absolute row 9, first panel row under the frame border
+  !QuestRow = menu_offset(12,0)         ; absolute row 16, below the 2x2 passive gear block
   !DungeonRow = menu_offset(13,0)       ; Map page, absolute row 17
 else
   !QuestRow = menu_offset(17,0)
@@ -188,7 +189,7 @@ endif
 Menu_DrawHeartPieces:
 {
 if !ENABLE_MENU_MAP_TRAVEL == 1
-  !QuestHeart = $1000+!QuestRow+menu_offset(4,10)  ; Quest top row, beside the Pearl: absolute (9,10)
+  !QuestHeart = $1000+!QuestRow+menu_offset(4,10)  ; Quest lower-left row, beside the Pearl: absolute (16,10)
 else
   !QuestHeart = $1000+!QuestRow+menu_offset(4,24)  ; Quest bottom row, right end
 endif

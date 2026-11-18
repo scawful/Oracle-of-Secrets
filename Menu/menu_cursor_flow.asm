@@ -5,7 +5,7 @@
 ; Assembled in Items bank $2B (Menu bank $2D is full). Every routine is
 ; called with JSL from bank $2D code, so DBR = $2D: WRAM below $2000 uses
 ; .w, everything else .l. All routines return with M/X=8.
-; WRAM: MenuFlow_* in Core/symbols.asm ($7E02BA-$7E02BD, not saved).
+; WRAM: MenuFlow_* in Core/symbols.asm ($7E02BA-$7E02BF, not saved).
 
 ; Visual row (top to bottom) of each Equipment logical row:
 ; 0 masks, 1 rings, 2 songs, 3 supplies (both in the last band), 4 GEAR (top).
@@ -30,15 +30,49 @@ MenuFlow_Cost:
 
 ; ---------------------------------------------------------
 ; State $01 (Menu_UploadRight). Opens a new menu: clears the cross.
-; After the field map (pending 3) the right half is the
-; Map page, shown from the first frame ($E4 = $0100); Menu_Page3_ItemScreen
-; then goes straight to state $06. Otherwise the right half is Quest.
+; Preserves Ocarina Soaring on the left half when Menu_SoaringRequested
+; triggers; opens Map on pending 3 from the field map; otherwise reopens
+; the last visited page from MenuFlow_LastPage (0 = Items on left with
+; Quest behind it, 1 = Quest, 2 = Equipment, 3 = Map on right with $E4=$0100).
 MenuFlow_UploadRight:
 {
   SEP #$30
   LDA.b #$00
   STA.l MenuFlow_CrossRow
-  LDA.l MenuMapTravel_Pending : CMP.b #$03 : BNE .quest
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
+  JSL Menu_SoaringRequested_Long : BCS .items_left
+endif
+  LDA.l MenuMapTravel_Pending : CMP.b #$03 : BEQ .map
+  LDA.l MenuFlow_LastPage
+  CMP.b #$01 : BEQ .quest
+  CMP.b #$02 : BEQ .equip
+  CMP.b #$03 : BEQ .map
+.items_left
+  REP #$20
+  STZ.b $E4
+  SEP #$20
+  JSL Menu_Quest_Draw_Long
+  SEP #$30
+  RTL
+.quest
+  STZ.w MenuScrollLevelH
+  REP #$20
+  LDA.w #$0100 : STA.b $E4
+  SEP #$20
+  JSL Menu_Quest_Init_Long
+  JSL Menu_Quest_Draw_Long
+  SEP #$30
+  RTL
+.equip
+  LDA.b #$20 : STA.w MenuScrollLevelH
+  REP #$20
+  LDA.w #$0100 : STA.b $E4
+  SEP #$20
+  JSL Menu_Equipment_Init_Long
+  JSL Menu_Equipment_Draw_Long
+  SEP #$30
+  RTL
+.map
   LDA.b #$40 : STA.w MenuScrollLevelH
   REP #$20
   LDA.w #$0100 : STA.b $E4
@@ -47,24 +81,27 @@ MenuFlow_UploadRight:
   JSL MenuMapTravel_Draw_Long
   SEP #$30
   RTL
-.quest
-  JSL Menu_Quest_Draw_Long
-  SEP #$30
-  RTL
 }
 
 ; ---------------------------------------------------------
 ; Start of state $06 (Menu_Page3_StatsScreen), before its input.
-; Remembers the Equipment and Map cursors.
+; Remembers MenuFlow_LastPage (1=Quest, 2=Equipment, 3=Map) and the
+; Equipment / Map cursors.
 MenuFlow_Frame:
 {
   SEP #$30
-  LDA.w MenuScrollLevelH : CMP.b #$20 : BEQ .equip
-  CMP.b #$40 : BNE .done
+  LDA.w MenuScrollLevelH : AND.b #$FE
+  CMP.b #$20 : BEQ .equip
+  CMP.b #$40 : BEQ .map
+  LDA.b #$01 : STA.l MenuFlow_LastPage
+  RTL
+.map
+  LDA.b #$03 : STA.l MenuFlow_LastPage
   LDA.w $020B : CMP.b #$07 : BCS .done
   INC : STA.l MenuFlow_MapCursor
   RTL
 .equip
+  LDA.b #$02 : STA.l MenuFlow_LastPage
   LDA.w $020B : CMP.b #$1D : BCS .done
   INC : STA.l MenuFlow_EquipCursor
 .done

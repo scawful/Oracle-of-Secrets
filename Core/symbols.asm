@@ -85,8 +85,9 @@ MenuFlow_MapCursor   = $7E02BB ; Map cell + 1 (0 = none)
 MenuFlow_CrossRow    = $7E02BC ; D-pad page cross: source row ordinal + 1 (0 = none)
 MenuFlow_CrossDir    = $7E02BD ; 0 = turned right (land left), $1F = turned left
 MenuFlow_ItemsCursor = $7E02BE ; Items cursor item ID (0 = none / follow Y)
+MenuFlow_LastPage    = $7E02BF ; Last visited pause menu page (0=Items, 1=Quest, 2=Equip, 3=Map)
 assert AbyssLanding+2 == MenuFlow_EquipCursor
-assert MenuFlow_ItemsCursor+1 <= $7E02C0
+assert MenuFlow_LastPage+1 <= $7E02C0
 
 if !ENABLE_HORSE_FORM == 1
 base $7E1EDE

@@ -75,21 +75,13 @@ Menu_Entry:
   JSR (.vectors,X)
 
   SEP #$20
-  ; Held pages need the full map, not another copy of frozen-world graphics.
-  ; Pair the skip flag with transfer 1: NMI_UploadTilemap clears $0710 after
-  ; its DMA. OAM, palettes and HUD still upload; transitions use their old path.
-  LDA.w $0200 : CMP.b #!MENU_STATE_ITEM_SCREEN : BEQ .held_page
-if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
-  CMP.b #!MENU_STATE_SPECIAL_SOARING : BEQ .held_page
-endif
-  CMP.b #!MENU_STATE_STATS_SCREEN : BNE .dma_ready
-.held_page
+  ; Any menu tilemap transfer ($17 = 1) runs 2 KB of VRAM DMA while world
+  ; actors are frozen. Setting $0710 skips Link/sprite DMA for that frame so
+  ; NMI finishes inside VBlank; NMI_UploadTilemap clears $0710 right after
+  ; its DMA. OAM, palettes, and HUD still upload normally.
   LDA.b $17 : CMP.b #$01 : BNE .dma_ready
-  LDA.w $0116 : CMP.b #$22 : BEQ .full_menu_map
-  CMP.b #$23 : BNE .dma_ready
-.full_menu_map
   LDA.w $0710 : BNE .dma_ready
-  LDA.b #$01 : STA.w $0710
+  INC.w $0710
 .dma_ready
   PLB
   RTL
@@ -1110,10 +1102,20 @@ incsrc "menu_map_names.asm"
     JSR Menu_RefreshInventoryScreen : RTL
   Menu_Page3_IsMaskItem_Long:
     JSR Menu_Page3_IsMaskItem : RTL
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1 && !ENABLE_MENU_MAP_TRAVEL == 1
+  Menu_SoaringRequested_Long:
+    JSR Menu_SoaringRequested : RTL
+endif
 if !ENABLE_MENU_MAP_TRAVEL == 1
   ; Long wrappers for Menu/menu_cursor_flow.asm (bank $2B); DBR stays $2D.
+  Menu_Quest_Init_Long:
+    JSR Menu_Quest_Init : RTL
   Menu_Quest_Draw_Long:
     JSR Menu_Quest_Draw : RTL
+  Menu_Equipment_Init_Long:
+    JSR Menu_Equipment_Init : RTL
+  Menu_Equipment_Draw_Long:
+    JSR Menu_Equipment_Draw : RTL
   MenuMapTravel_Draw_Long:
     JSR MenuMapTravel_Draw : RTL
   Menu_Equipment_Owned_Long:

@@ -288,7 +288,7 @@ endif
   TXA : ASL : TAX
   REP #$30
   LDA.w Menu_Equipment_Pos,X : TAX
-  LDA.w #$2460 : JSR Menu_Equipment_Bracket
+  LDA.w #$2460 : JSR Menu_Equipment_Box
   SEP #$30
 .return
   RTS
@@ -320,29 +320,26 @@ endif
   dw "A:USE"
 }
 
-; Two-row red brackets beside the icon mark the bound/worn entry, leaving the
-; empty rows above and below untouched. X is the icon draw offset. M/X=16.
-Menu_Equipment_Bracket:
+; Full 4x4 cursor box around the icon, the Items page tiles (Menu_DrawCursor,
+; which sits at X - $42): corners on the empty rows above and below, edges
+; beside the icon. A = base top-left corner word ($2460 palette 1 red for
+; selected/equipped; $3060 palette 4 white/gray for active cursor).
+; X is the icon draw offset. M/X=16.
+Menu_Equipment_Box:
 {
-  STA.w $1106,X
-  ORA.w #$4000 : STA.w $110C,X
-  ORA.w #$8000 : STA.w $114C,X
-  EOR.w #$4000 : STA.w $1146,X
+  STA.w $10C6,X
+  ORA.w #$4000 : STA.w $10CC,X
+  ORA.w #$8000 : STA.w $118C,X
+  EOR.w #$4000 : STA.w $1186,X
+  AND.w #$3FFF : CLC : ADC.w #$0010
+  STA.w $1106,X : STA.w $1146,X
+  ORA.w #$4000 : STA.w $110C,X : STA.w $114C,X
   RTS
 }
 
-; Full 4x4 cursor box around the icon, the Items page tiles (Menu_DrawCursor,
-; which sits at X - $42): corners on the empty rows above and below, edges
-; beside the icon. X is the icon draw offset. M/X=16.
 Menu_Equipment_Cursor:
 {
-  LDA.w #$3060 : STA.w $10C6,X
-  LDA.w #$7060 : STA.w $10CC,X
-  LDA.w #$B060 : STA.w $1186,X
-  LDA.w #$F060 : STA.w $118C,X
-  LDA.w #$3070 : STA.w $1106,X : STA.w $1146,X
-  LDA.w #$7070 : STA.w $110C,X : STA.w $114C,X
-  RTS
+  LDA.w #$3060 : BRA Menu_Equipment_Box
 }
 
 ; Footer has exactly 14 interior cells. Never overwrite its end caps.

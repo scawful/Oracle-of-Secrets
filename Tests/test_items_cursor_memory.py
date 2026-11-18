@@ -349,7 +349,8 @@ class TestItemsCursorMemory(unittest.TestCase):
     def test_symbols_and_hooks(self):
         sym_text = SYMBOLS.read_text(encoding="utf-8")
         self.assertRegex(sym_text, r"(?m)^MenuFlow_ItemsCursor\s*=\s*\$7E02BE\b")
-        self.assertIn("assert MenuFlow_ItemsCursor+1 <= $7E02C0", sym_text)
+        self.assertRegex(sym_text, r"(?m)^MenuFlow_LastPage\s*=\s*\$7E02BF\b")
+        self.assertIn("assert MenuFlow_LastPage+1 <= $7E02C0", sym_text)
 
         menu_text = MENU.read_text(encoding="utf-8")
         m_init = re.search(r"^Menu_InitGraphics:\s*\n\{(.*?)^\}", menu_text, re.M | re.S)

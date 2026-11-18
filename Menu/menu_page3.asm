@@ -119,12 +119,14 @@ Menu_Page3_ItemScreen:
 {
   SEP #$30
 if !ENABLE_MENU_MAP_TRAVEL == 1
-  ; After the field map, MenuFlow_UploadRight drew the Map page on the right
-  ; half and scrolled to it ($E5 = 1): stay there.
+  ; After the field map or reopening a remembered right-half page, $E5 != 0
+  ; holds the right half on screen: jump straight to state $06 with no dead
+  ; frame, and record page 0 when remaining on Items.
   LDA.b $E5 : BEQ .no_map_return
     LDA.b #!MENU_STATE_STATS_SCREEN : STA.w $0200
-    RTS
+    JMP Menu_Page3_StatsScreen
   .no_map_return
+  LDA.b #$00 : STA.l MenuFlow_LastPage
 endif
   LDA.b $F6 : BIT.b #$30 : BEQ .no_lr   ; L = $20, R = $10
 if !ENABLE_MENU_MAP_TRAVEL == 1

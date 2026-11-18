@@ -220,26 +220,30 @@ class QuestEssenceLayout(unittest.TestCase):
                 self.assertFalse(shared, f"{first} overlaps {second} at {sorted(shared)}")
 
     def test_left_column_gear_box_and_songs_on_bottom_row(self):
-        """Pearl and hearts on the top row, a 2x2 gear block below them,
-        all left of the essence ring; the six songs on the bottom row (OoT style)."""
+        """2x2 passive gear block at top-left, Moon Pearl and hearts below it,
+        all left of the essence ring; the six songs on the bottom row."""
         content = self.other_content()
-        pearl, heart = min(content["moon pearl"]), min(content["heart piece"])
-        self.assertEqual({pearl[0], heart[0]}, {9}, "first panel row under the frame border")
-        self.assertLess(pearl[1], heart[1])
-        count = content["heart piece count"]
-        self.assertEqual({row for row, _ in count}, {11})
-        self.assertLessEqual({c for _, c in content["heart piece"]}, {c for _, c in count}, "count under the hearts")
         gear = [cell for n in ("shield", "glove", "boots", "flippers") for cell in content[n]]
         right = max(c for _, c in gear)
-        self.assertGreater(min(r for r, _ in gear), 11, "gear below the heart count")
+        gear_bottom = max(r for r, _ in gear)
+        self.assertEqual(min(r for r, _ in gear), 10, "gear top row inside panel border")
+        self.assertEqual(gear_bottom, 14, "2x2 gear ends at row 14")
         icons = [min(content[n]) for n in ("shield", "glove", "boots", "flippers")]
         self.assertEqual(icons[0][0], icons[1][0]); self.assertEqual(icons[2][0], icons[3][0])
         self.assertEqual(icons[0][1], icons[2][1]); self.assertEqual(icons[1][1], icons[3][1])
+        pearl, heart = min(content["moon pearl"]), min(content["heart piece"])
+        self.assertEqual({pearl[0], heart[0]}, {16}, "pearl and hearts sit below the gear block")
+        self.assertGreater(min(pearl[0], heart[0]), gear_bottom + 1, "blank separator row below gear")
+        self.assertLess(pearl[1], heart[1])
+        count = content["heart piece count"]
+        self.assertEqual({row for row, _ in count}, {18})
+        self.assertLessEqual({c for _, c in content["heart piece"]}, {c for _, c in count}, "count under the hearts")
         ring_left = min(c for _, c in self.crystal_cells())
         self.assertLess(right, ring_left, "gear left of the essence ring")
         self.assertLess(max(c for _, c in content["heart piece"]), ring_left)
         songs = [min(content[f"song {i}"]) for i in range(1, 7)]
         self.assertEqual({row for row, _ in songs}, {21})
+        self.assertGreater(21, max(row for row, _ in count) + 1, "songs clear of the heart count")
         self.assertEqual([c for _, c in songs], sorted(c for _, c in songs), "songs run left to right")
         ring_bottom = max(row for row, _ in self.crystal_cells()) + 1
         self.assertGreater(21, ring_bottom, "songs sit below the essence ring")

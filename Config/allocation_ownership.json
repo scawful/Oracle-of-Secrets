@@ -170,7 +170,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "fd35ede576dd3b6a92a895bcd73dc75da24bb983aec86c5733021b9fef1c529a"
+      "sha256": "ac4fd424b2bab901adc284164e8ea171c5970b150613b09318b46207a60f4d06"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -3298,6 +3298,30 @@
       "binding": {
         "source": "shared:Core/symbols.asm",
         "symbol": "MenuFlow_ItemsCursor",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "MenuFlow_LastPage",
+      "owner": "Last visited pause menu page memory across menu opens",
+      "space": "wram",
+      "base": 8258239,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "ENABLE_MENU_MAP_TRAVEL": 1
+      },
+      "lifetime": "Menu-session byte at vanilla-unused $7E02BF (usdasm UNUSED_7E02BF, freed when the tunic popup was removed). Stores 0=Items, 1=Quest, 2=Equipment, 3=Map.",
+      "reset": "Zero at boot (Items). Updated while on Items or stats pages; preserved during Ocarina Soaring ($10).",
+      "save": "Volatile WRAM; never saved; never read in gameplay.",
+      "provenance": [
+        "shared:Core/symbols.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "MenuFlow_LastPage",
         "bank00_mirror": false
       }
     },
