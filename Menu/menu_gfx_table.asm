@@ -222,12 +222,13 @@ AreaNameTXT:
   dw $2430, $2430, $2430, $2430
   dw $2430, $2430, $2430, $2430
 
-; Button prompts: "X:LOG   Y:RINGS "
+; Items page Row 9 button prompt: "A.Y:Y  X:X  B:EXIT" (18 tiles)
 ButtonPromptTXT:
-  dw $2567, $256B, $255B, $255E  ; X:LO
-  dw $2556, $2417, $2417, $2417  ; G   (spaces)
-  dw $2568, $256B, $2561, $2558  ; Y:RI
-  dw $255D, $2556, $2562, $2417  ; NGS (space)
+  dw $2550, $256A, $2568, $256B  ; A.Y:
+  dw $2568, $2417, $2417, $2567  ; Y  X
+  dw $256B, $2567, $2417, $2417  ; :X  
+  dw $2551, $256B, $2554, $2567  ; B:EX
+  dw $2558, $2563                 ; IT
 
 ; Ring box prompts: "A:EQUIP  Y:BACK " (Ring Box state $09 only)
 if !MENU_DROP_RING_BOX == 0

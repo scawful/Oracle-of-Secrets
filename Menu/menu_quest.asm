@@ -27,9 +27,7 @@ if !ENABLE_MENU_MAP_TRAVEL == 1
   ; A/Y on a learned song binds it to the Ocarina (consumes A).
   JSL QuestSongs_Frame : BCS .no_journal
 endif
-  LDA.b $F6 : BIT.b #$80 : BNE .close
-  LDA.b $F4 : BIT.b #$10 : BEQ .no_start
-.close
+  LDA.b $F4 : BIT.b #$90 : BEQ .no_start
     LDA.b #!MENU_STATE_INIT_SCROLL_DOWN : STA.w $0200
     RTS
 .no_start

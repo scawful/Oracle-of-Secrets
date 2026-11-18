@@ -2,12 +2,11 @@
 Menu_CheckHScroll:
 {
   LDA.b $F4
-  BIT.b #$10 : BNE .leave_menu
+  BIT.b #$90 : BNE .leave_menu
     LDA.b $F6
     BIT.b #$20 : BNE .left
       BIT.b #$10 : BNE .right
-        BIT.b #$80 : BNE .leave_menu
-          RTS
+        RTS
 
     .left
 

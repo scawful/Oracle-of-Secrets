@@ -301,7 +301,7 @@ Menu_ItemScreen:
   JMP .exit                           ; no cursor/equipment edits after a turn/close
 .active
   INC $0207
-  JSL Menu_Bindings_Input              ; Y/X on an item bind it; A never
+  JSL Menu_Bindings_Input              ; A/Y bind Y, X binds X; B/Start close above
 if !ENABLE_GOLDSTAR_CELL == 1
   LDA.w $0202 : BNE .have_item
   LDA.b $F4 : AND.b #$03 : BEQ .do_no_input
@@ -991,7 +991,8 @@ Menu_Journal:
 {
   JSL Journal_Handler
 
-  ; Check if we should return (A or Start pressed)
+  ; Check if we should return (B or A pressed) or close menu (Start pressed)
+  LDA.b $F4 : BIT.b #$80 : BNE .return_pressed
   LDA.b $F6 : BIT.b #$80 : BNE .return_pressed
   LDA.b $F4 : BIT.b #$10 : BNE .close_menu
   BRA .continue
@@ -1040,8 +1041,10 @@ Menu_SubmenuReturn:
 
 Submenu_Return:
 {
-  ; Return to the item menu if they press A
+  ; Return to the item menu if they press B or A
+  LDA.b $F4 : BIT.b #$80 : BNE .return
   LDA.b $F6 : BIT.b #$80 : BEQ +
+.return
     LDA.b #!MENU_STATE_SUBMENU_RETURN : STA.w $0200
   +
 

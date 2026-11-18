@@ -66,7 +66,10 @@ Menu_Bindings_Close:
 Menu_Bindings_Input:
 {
   LDA.w $0202 : BEQ .done             ; empty grid: nothing to bind
-  LDA.b $F4 : BIT.b #$40 : BEQ .no_y
+  LDA.b $F4 : BIT.b #$40 : BNE .bind_y
+  LDA.b $F6 : BIT.b #$80 : BEQ .no_y
+    LDA.b #$80 : TRB.b $F6            ; A binds Y here
+  .bind_y
     LDA.w $0202 : STA.l ItemBindingMenuY
     JSR .changed
   .no_y

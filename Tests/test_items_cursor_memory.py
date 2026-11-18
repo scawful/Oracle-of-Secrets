@@ -447,6 +447,17 @@ class TestItemsCursorMemory(unittest.TestCase):
         self.assertFalse(m.x8)
         self.assertEqual(len(m.stack), 1)
 
+    def test_bindings_input_accepts_both_a_and_y(self):
+        bind_txt = BINDINGS.read_text(encoding="utf-8")
+        lines = parse_routine(bind_txt, "Menu_Bindings_Input", load_flags())
+        self.assertIn("LDA.b $F4", lines)
+        self.assertIn("BIT.b #$40", lines)
+        self.assertIn("BNE .bind_y", lines)
+        self.assertIn("LDA.b $F6", lines)
+        self.assertIn("BIT.b #$80", lines)
+        self.assertIn("TRB.b $F6", lines)
+        self.assertIn("STA.l ItemBindingMenuY", lines)
+
 
 if __name__ == "__main__":
     unittest.main()

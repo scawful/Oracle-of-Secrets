@@ -18,9 +18,10 @@ Scenario (all real controller input):
 4. X on Boomerang again clears X; X again binds it back.
 5. START closes the menu: $0202=Bow, saved bindings [1, 1, 2].
 6. In gameplay Y fires an arrow and X throws the boomerang without the map.
-7. Reopen, move to Boomerang, press A: the menu closes and $0202 stays Bow
-   (A never binds).
-8. Same item on both buttons: Y on Boomerang shows green left and blue right corners.
+7. Reopen, move to Boomerang, press A: A binds Y=Boomerang without closing;
+   B closes the menu with Y=Boomerang persisted.
+8. Reopen on Boomerang, move to Bow, press Y: Y binds Y=Bow and X stays
+   Boomerang (green left and blue right markers match earlier check).
 
 Default 2-item HUD layout: full brackets around bound cells; the gray
 cursor covers its own cell on blink-on frames, so marks are sampled across a blink.
@@ -211,28 +212,34 @@ class MenuAssignTest(deku.DekuStickRuntimeTest):
         self.take_screenshot("04_boomerang_from_X")
         self.wait_for(lambda: self.r(BUTTON) == 0 and not self.has(BOOMERANG_ID), 6.0)
 
-        # 7. A never binds.
+        # 7. A binds Y without closing; B closes and commits Y=Boomerang.
         self.check("menu_reopened", self.open_menu())
         self.check("cursor_reached_boomerang_2", self.move_to(2, "RIGHT"))
-        self.check("menu_closed_A", self.close_menu("A"))
-        time.sleep(0.4)
-        s = self.snap("closed_with_A")
-        self.check("A_does_not_bind", s["y_item"] == 1 and s["saved"] == [1, 1, 2])
-
-        # 8. One item on both buttons: both markers side by side.
-        self.check("menu_reopened_2", self.open_menu())
-        self.check("cursor_reached_boomerang_3", self.move_to(2, "RIGHT"))
-        self.tap("Y")
+        self.tap("A")
         ys, xs = self.markers()
-        s = self.snap("Y_and_X_on_boomerang")
+        s = self.snap("A_on_boomerang")
         print(f"    markers Y={[hex(a) for a in ys]} X={[hex(a) for a in xs]}")
-        self.check("both_markers_side_by_side",
-                   s["menu_y"] == 2 and len(ys) == (4 if self.codex else 2)
+        self.check("A_binds_Y_and_stays_open",
+                   s["menu"] == ITEMS_PAGE and s["menu_y"] == 2
+                   and len(ys) == (4 if self.codex else 2)
                    and len(xs) == len(ys) and min(xs) == min(ys) + 6)
         self.shot_phases("05_both_markers_one_item")
+        self.check("menu_closed_B", self.close_menu("B"))
+        mirrored_b = self.wait_for(lambda: self.r(SAVED_Y) == 2, 2.0)
+        s = self.snap("closed_with_B")
+        self.check("B_closes_and_persists_A_bind",
+                   mirrored_b and s["y_item"] == 2 and s["saved"] == [1, 2, 2])
+
+        # 8. Reopen, move to Bow: Y binds Y=Bow cleanly while X stays Boomerang.
+        self.check("menu_reopened_2", self.open_menu())
+        self.check("cursor_reached_bow_2", self.move_to(1, "LEFT"))
+        self.tap("Y")
+        s = self.snap("Y_rebound_bow")
+        self.check("Y_rebinds_bow", s["menu"] == ITEMS_PAGE and s["menu_y"] == 1)
         self.check("menu_closed_end", self.close_menu("START"))
+        mirrored_end = self.wait_for(lambda: self.r(SAVED_Y) == 1, 2.0)
         s = self.snap("end")
-        self.check("end_Y_boomerang", s["y_item"] == 2)
+        self.check("end_Y_bow", mirrored_end and s["y_item"] == 1 and s["saved"] == [1, 1, 2])
 
 
 def main():

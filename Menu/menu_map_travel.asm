@@ -63,11 +63,11 @@ MenuMapTravel_Init:
 }
 
 ; ---------------------------------------------------------
-; State $06 on this page. Start closes; L/R are handled by the caller.
+; State $06 on this page. B/Start close; L/R are handled by the caller.
 MenuMapTravel_Screen:
 {
   SEP #$30
-  LDA.b $F4 : BIT.b #$10 : BEQ .no_start
+  LDA.b $F4 : BIT.b #$90 : BEQ .no_start
     LDA.b #!MENU_STATE_INIT_SCROLL_DOWN : STA.w $0200
     RTS
   .no_start
@@ -192,6 +192,35 @@ MenuMapTravel_CheckStart:
   RTL
 }
 
+; Overworld map (WorldMap_PlayerControl, $0ABAFB/$0ABB00).
+; Vanilla skips $0ABB00 when zoomed in ($0636 != 0), so NOP out that skip
+; and check B ($80) / Start ($10) before the zoom gate. When still zoomed in
+; ($0636 != 0), ignore X here so .not_switching handles zoom; when zoomed out
+; ($0636 == 0), X ($40) exits. A ($F6 bit 7) never exits.
+; In/out M=8; Z=0 closes the map, Z=1 keeps it open.
+Menu_WorldMapCheckExit:
+{
+  LDA.b $F4 : AND.b #$90 : BNE .exit
+  LDA.l $7E0636 : BNE .stay
+    LDA.b $F6 : AND.b #$40
+.exit
+    RTL
+.stay
+  LDA.b #$00
+  RTL
+}
+
+; Dungeon map (DungeonMap_HandleInput, $0AE95E).
+; B ($80), Start ($10), or X ($40) exits; A ($F6 bit 7) never exits.
+; In/out M=8; Z=0 closes the map, Z=1 keeps it open.
+Menu_DungeonMapCheckExit:
+{
+  LDA.b $F4 : AND.b #$90 : BNE .close
+  LDA.b $F6 : AND.b #$40
+.close
+  RTL
+}
+
 pushpc
 assert read4($0288EC) == $1029F4A5, "Module07 Start check moved"
 org $0288EC ; Module07_00_PlayerControl ; @hook module=Menu name=MenuMapTravel_CheckStart kind=jsl target=MenuMapTravel_CheckStart expected_m=8
@@ -199,6 +228,15 @@ org $0288EC ; Module07_00_PlayerControl ; @hook module=Menu name=MenuMapTravel_C
 assert read4($02A54D) == $1029F4A5, "Module09 Start check moved"
 org $02A54D ; Module09_00_PlayerControl ; @hook module=Menu name=MenuMapTravel_CheckStart kind=jsl target=MenuMapTravel_CheckStart expected_m=8
   JSL MenuMapTravel_CheckStart
+assert read4($0ABAFB) == $D00636AD && read1($0ABAFF) == $0A, "WorldMap zoom gate moved"
+org $0ABAFB ; WorldMap_PlayerControl ; @hook module=Menu name=Menu_WorldMapZoomGatePatch kind=patch protected_size=5 skip_abi=true
+  NOP #5
+assert read4($0ABB00) == $4029F6A5, "WorldMap exit check moved"
+org $0ABB00 ; WorldMap_PlayerControl ; @hook module=Menu name=Menu_WorldMapCheckExit kind=jsl target=Menu_WorldMapCheckExit expected_m=8 expected_exit_m=8
+  JSL Menu_WorldMapCheckExit
+assert read4($0AE95E) == $4029F6A5, "DungeonMap_HandleInput exit check moved"
+org $0AE95E ; DungeonMap_HandleInput ; @hook module=Menu name=Menu_DungeonMapCheckExit kind=jsl target=Menu_DungeonMapCheckExit expected_m=8 expected_exit_m=8
+  JSL Menu_DungeonMapCheckExit
 pullpc
 
 ; ---------------------------------------------------------

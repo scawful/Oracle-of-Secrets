@@ -637,25 +637,11 @@ Menu_DrawCharacterName:
 Menu_DrawButtonPrompt:
 {
   REP #$30
-  ; With !ENABLE_MENU_PAGE_LOOP the "Y:RINGS" half is not drawn: L/R reach
-  ; the rings on page 3, and Y no longer opens them.
-  ; Draw each half only when its submenu is unlocked. A hidden half keeps
-  ; the frame tiles that Menu_DrawBackground just wrote.
-  JSR Menu_CheckJournalUnlocked : BCC .no_log
-    LDX.w #$0E           ; "X:LOG   " = 8 tiles
-    .log_loop
-    LDA.w ButtonPromptTXT, X : STA.w $1254, X
-    DEX : DEX : BPL .log_loop
-  .no_log
-
-if !ENABLE_MENU_PAGE_LOOP == 0
-  JSR Menu_CheckRingsUnlocked : BCC .no_rings
-    LDX.w #$0E           ; "Y:RINGS " = 8 tiles
-    .rings_loop
-    LDA.w ButtonPromptTXT+$10, X : STA.w $1264, X
-    DEX : DEX : BPL .rings_loop
-  .no_rings
-endif
+  ; Centered in Items Row 9 ($124E, cols 7..24) cleanly above Row 10 item brackets.
+  LDX.w #$22             ; "A.Y:Y  X:X  B:EXIT" = 18 tiles
+  .prompt_loop
+    LDA.w ButtonPromptTXT, X : STA.w $124E, X
+    DEX : DEX : BPL .prompt_loop
 
   SEP #$30               ; Restore 8-bit mode before return
   RTS

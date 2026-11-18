@@ -130,7 +130,7 @@ if !ENABLE_MENU_MAP_TRAVEL == 1
 endif
   LDA.b $F6 : BIT.b #$30 : BEQ .no_lr   ; L = $20, R = $10
 if !ENABLE_MENU_MAP_TRAVEL == 1
-    LDA.b $F4 : BIT.b #$10 : BEQ .ring_turn ; Start keeps its priority
+    LDA.b $F4 : BIT.b #$90 : BEQ .ring_turn ; B/Start keep priority
       JMP Menu_ItemScreen
     .ring_turn
     LDA.b $F6 : AND.b #$20 : BEQ .ring_right ; L wins
@@ -144,9 +144,8 @@ endif
   .no_lr
 
 if !ENABLE_MENU_PAGE_LOOP == 0
-  ; Y without Start or A: page 3, cursor on the rings.
-  LDA.b $F4 : AND.b #$50 : CMP.b #$40 : BNE .no_y
-  BIT.b $F6 : BMI .no_y                 ; A closes the menu first
+  ; Y without B/Start: page 3, cursor on the rings.
+  LDA.b $F4 : AND.b #$D0 : CMP.b #$40 : BNE .no_y
   JSR Menu_CheckRingsUnlocked : BCC .no_y
     LDA.b #$21 : STA.w MenuScrollLevelH
     REP #$20
@@ -255,8 +254,8 @@ Menu_Page3_StatsScreen:
   SEP #$30
 if !ENABLE_MENU_MAP_TRAVEL == 1
   JSL MenuFlow_Frame                   ; Equipment cursor memory
-  ; Four-page ring: L/R turn from every right-half page; Start keeps priority.
-  LDA.b $F4 : BIT.b #$10 : BNE .ring_no_lr
+  ; Four-page ring: L/R turn from every right-half page; B/Start keep priority.
+  LDA.b $F4 : BIT.b #$90 : BNE .ring_no_lr
   LDA.b $F6 : AND.b #$30 : BEQ .ring_no_lr
     AND.b #$20 : BEQ .ring_right       ; L wins
       LDA.b #$FF : JMP Menu_Page3_Turn
@@ -268,7 +267,7 @@ if !ENABLE_MENU_MAP_TRAVEL == 1
   .ring_not_map
 endif
   LDA.w MenuScrollLevelH : BNE .page3
-  LDA.b $F4 : BIT.b #$10 : BNE .quest_input
+  LDA.b $F4 : BIT.b #$90 : BNE .quest_input
   LDA.b $F6 : AND.b #$B0 : BNE .quest_input
   LDA.b $F4 : AND.b #$03 : BEQ .quest_input
 if !ENABLE_MENU_MAP_TRAVEL == 1
@@ -282,9 +281,9 @@ endif
   JMP Menu_Page3_Turn
 .quest_input
 if !ENABLE_MENU_PAGE_LOOP == 1
-    ; Quest. R goes on to page 3; Start and L retain their priority (same order as
-    ; Menu_CheckHScroll: Start, L, R).
-    LDA.b $F4 : BIT.b #$10 : BNE .quest
+    ; Quest. R goes on to page 3; B/Start and L retain their priority (same order as
+    ; Menu_CheckHScroll: B/Start, L, R).
+    LDA.b $F4 : BIT.b #$90 : BNE .quest
     LDA.b $F6 : BIT.b #$20 : BNE .quest
     BIT.b #$10 : BEQ .quest
       LDA.b #$20 : STA.w MenuScrollLevelH ; target: page 3
@@ -296,7 +295,7 @@ endif
     JMP Menu_StatsScreen
 
   .page3
-  LDA.b $F4 : BIT.b #$10 : BEQ .no_start
+  LDA.b $F4 : BIT.b #$90 : BEQ .no_start
     LDA.b #!MENU_STATE_INIT_SCROLL_DOWN : STA.w $0200
     RTS
   .no_start
