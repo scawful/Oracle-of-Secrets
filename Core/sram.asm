@@ -888,7 +888,7 @@ RichardQuestFlags  = $7EF3C4
 ; Purpose: Large block after dreams/water gates
 ; Note: $7EF4FE-4FF are checksum (do not use)
 ;
-; Map & Travel: one bit per bird destination (bit i = LoadTransport entry i),
+; Soaring: one bit per bird destination (bit i = LoadTransport entry i),
 ; set on first entry to that area. Used only when !ENABLE_MENU_MAP_TRAVEL.
 TravelSpotsVisited = $7EF412 ; one byte
 ; Room-state bit (Dungeons/room_state.asm): one bit per room $000-$127,

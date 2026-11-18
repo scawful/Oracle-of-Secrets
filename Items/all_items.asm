@@ -315,7 +315,7 @@ if !ENABLE_D6_CHU_GATE_97 == 1
 incsrc "Dungeons/d6_chu_gate_97.asm"
 endif
 
-; Map & Travel visited bits + bird picker. Bank $34 is full; every access in
+; Soaring visited bits + bird picker. Bank $34 is full; every access in
 ; the file is long (.l / JML / JSL), so it runs from this bank unchanged.
 if !ENABLE_MENU_MAP_TRAVEL == 1
 incsrc "Overworld/travel_destinations.asm"

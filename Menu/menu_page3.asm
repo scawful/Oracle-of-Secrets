@@ -127,7 +127,7 @@ Menu_Page3_ItemScreen:
 {
   SEP #$30
 if !ENABLE_MENU_MAP_TRAVEL == 1
-  ; After the field map, MenuFlow_UploadRight drew Map & Travel on the right
+  ; After the field map, MenuFlow_UploadRight drew the Map page on the right
   ; half and scrolled to it ($E5 = 1): stay there.
   LDA.b $E5 : BEQ .no_map_return
     LDA.b #!MENU_STATE_STATS_SCREEN : STA.w $0200
@@ -270,12 +270,9 @@ Menu_Page3_StatsScreen:
 {
   SEP #$30
 if !ENABLE_MENU_MAP_TRAVEL == 1
-  ; Cursor memory; an open popup takes all input (C set): redraw its page.
+  ; Cursor memory; the open tunic popup takes all input (C set): redraw.
   JSL MenuFlow_Frame : BCC +
-  LDA.w MenuScrollLevelH : CMP.b #$40 : BNE ++
-  JMP MenuMapTravel_Screen_moved          ; song popup
-++
-  JMP .moved                              ; tunic popup
+  JMP .moved
 +
   ; Four-page ring: L/R turn from every right-half page; Start keeps priority.
   LDA.b $F4 : BIT.b #$10 : BNE .ring_no_lr
@@ -293,7 +290,12 @@ endif
   LDA.b $F4 : BIT.b #$10 : BNE .quest_input
   LDA.b $F6 : AND.b #$B0 : BNE .quest_input
   LDA.b $F4 : AND.b #$03 : BEQ .quest_input
-  AND.b #$01 : BNE .quest_turn
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  ; Left/right step through learned songs; only a row edge turns the page.
+  JSL QuestSongs_Move : BCS .quest_input
+  LDA.b $F4 : AND.b #$01
+endif
+  BNE .quest_turn
   LDA.b #$FF
 .quest_turn
   JMP Menu_Page3_Turn

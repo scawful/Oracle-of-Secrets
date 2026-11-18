@@ -1,7 +1,7 @@
-; Menu cursor flow (Map & Travel ring, v4): per-page cursor memory, D-pad
+; Menu cursor flow (four-page ring, v4): per-page cursor memory, D-pad
 ; edge crossing onto the matching row of the next page, the direct return
-; to Map & Travel after the field map, the worn-tunic popup (Equipment)
-; and the song popup (Map & Travel). The popups share one byte.
+; to the Map page after the field map, the worn-tunic popup (Equipment)
+; and the Quest song row (QuestSongs_*).
 ; Assembled in Items bank $2B (Menu bank $2D is full). Every routine is
 ; called with JSL from bank $2D code, so DBR = $2D: WRAM below $2000 uses
 ; .w, everything else .l. All routines return with M/X=8.
@@ -30,8 +30,8 @@ MenuFlow_Cost:
 
 ; ---------------------------------------------------------
 ; State $01 (Menu_UploadRight). Opens a new menu: clears the cross and
-; the popup. After the field map (pending 3) the right half is Map &
-; Travel, shown from the first frame ($E4 = $0100); Menu_Page3_ItemScreen
+; the tunic popup. After the field map (pending 3) the right half is the
+; Map page, shown from the first frame ($E4 = $0100); Menu_Page3_ItemScreen
 ; then goes straight to state $06. Otherwise the right half is Quest.
 MenuFlow_UploadRight:
 {
@@ -56,58 +56,16 @@ MenuFlow_UploadRight:
 
 ; ---------------------------------------------------------
 ; Start of state $06 (Menu_Page3_StatsScreen), before its input.
-; Remembers the Equipment / Map & Travel cursor. While a popup is open it
-; takes all input: C set = input used, redraw the page.
+; Remembers the Equipment cursor. While the tunic popup is
+; open it takes all input: C set = input used, redraw the page.
 MenuFlow_Frame:
 {
   SEP #$30
-  LDA.w MenuScrollLevelH : CMP.b #$40 : BNE .not_map
-  LDA.l MenuFlow_SongPopup : BMI .song_popup
-  LDA.w $020B : CMP.b #$03 : BCS .pass
-  INC : STA.l MenuFlow_MapCursor
+  LDA.w MenuScrollLevelH : CMP.b #$20 : BEQ .equip
 .pass
   CLC
   RTL
-; Song popup: A or Y binds the highlighted song (like the old song cells),
-; B or Start closes, Up/Down step through the learned songs and wrap.
-.song_popup
-  AND.b #$07 : TAX                      ; X = highlighted song - 1
-  LDA.b $F6 : BMI .bind                 ; A
-  LDA.b $F4 : AND.b #$40 : BEQ .song_move ; Y
-.bind
-  TXA : INC
-  STA.w CurrentSong
-  STA.l SavedOcarinaSong                ; survives save/reload ($030F does not)
-  LDA.b #$0D : STA.w $0202              ; normal Y item, independent of mask
-if defined("ENABLE_DUAL_ITEM_BINDING_PROTOTYPE")
-if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
-  STA.l ItemBindingMenuY                ; Menu_Bindings_Close restores $0202 from this
-endif
-endif
-  LDA.b #$20 : STA.w $0207
-  JMP .close_sound                      ; past BRA range
-.song_move
-  LDA.b $F4 : AND.b #$90 : BEQ +        ; B or Start
-  JMP .close
-+
-  LDA.b $F4 : AND.b #$0C : BNE +
-  JMP .used
-+
-  AND.b #$08 : BEQ .song_down
-.song_up
-  DEX : BPL +
-  LDX.b #$05
-+
-  TXA : INC : JSR MenuFlow_SongOwned : BCC .song_up
-  BRA .store
-.song_down
-  INX : CPX.b #$06 : BCC +
-  LDX.b #$00
-+
-  TXA : INC : JSR MenuFlow_SongOwned : BCC .song_down
-  BRA .store
-.not_map
-  CMP.b #$20 : BNE .pass
+.equip
   LDA.w $020B : CMP.b #$1B : BCS .popup
   INC : STA.l MenuFlow_EquipCursor
 .popup
@@ -145,7 +103,8 @@ endif
 ; ---------------------------------------------------------
 ; First line of MenuMapTravel_Turn, before $0200 changes. A = $01 right,
 ; else left. Records the source row when the D-pad (not L/R) turns the
-; page. Quest has no cursor: a cross through it keeps the row.
+; page. Quest songs are the bottom row; a cross through Quest with no
+; learned song keeps the row.
 ; Keeps A, X, Y (Items callers use Y afterwards). M/X=8.
 MenuFlow_RecordTurn:
 {
@@ -160,15 +119,16 @@ MenuFlow_RecordTurn:
   LDA.b $F6 : AND.b #$30 : BNE .clear   ; L/R: no row to keep
   LDA.w $0200 : CMP.b #$04 : BEQ .items       ; Items (state $04)
   LDA.w MenuScrollLevelH : CMP.b #$40 : BEQ .map
-  CMP.b #$20 : BNE .done                ; Quest: keep
+  CMP.b #$20 : BEQ .equip
+  LDA.w $020B : CMP.b #$06 : BCS .done  ; Quest, no song: keep
+  LDA.b #$03 : BRA .store               ; Quest songs: bottom row
+.equip
   LDX.w $020B : CPX.b #$1B : BCS .clear
   LDA.l Menu_Equipment_Rows,X : TAX
   LDA.l MenuFlow_EquipOrd,X
   BRA .store
 .map
-  LDX.w $020B : CPX.b #$03 : BCS .clear
-  LDA.l MenuMapTravel_Rows,X
-  BRA .store
+  LDA.b #$00 : BRA .store               ; the Map cell sits on the top row
 .items
 if !ENABLE_GOLDSTAR_CELL == 1
   LDX.b #$17
@@ -235,42 +195,15 @@ MenuFlow_EquipRestore:
 }
 
 ; ---------------------------------------------------------
-; MenuMapTravel_Init: first frame on Map & Travel. Cross: nearest owned
-; cell to the source row and entry edge. Else the remembered cell if
-; owned, else Map (always owned).
+; MenuMapTravel_Init: first frame on the Map page. One cell, so the cursor
+; is always Map; a D-pad cross is used up here.
 MenuFlow_MapInit:
 {
   SEP #$30
-  JSL UpdateFluteSong_Long
-  SEP #$30
   STZ.w $0207
-  LDA.b #$00 : STA.l MenuMapTravel_Pending
-  LDA.l MenuFlow_CrossRow : BEQ .memory
-  LDA.b #$FF : STA.b $02
-  STZ.b $03                             ; Map is always owned
-  LDX.b #$02
-.scan
-  TXA : JSL MenuMapTravel_Owned_Long : BEQ .next
-  LDA.l MenuMapTravel_Columns,X : STA.b $00
-  LDA.l MenuMapTravel_Rows,X
-  JSR MenuFlow_Cost
-  CMP.b $02 : BCS .next
-  STA.b $02 : STX.b $03
-.next
-  DEX : BPL .scan
-  LDA.b #$00 : STA.l MenuFlow_CrossRow
-  LDA.b $03
-  BRA .set
-.memory
-  LDA.l MenuFlow_MapCursor : BEQ .set   ; 0 = none: Map
-  DEC : CMP.b #$03 : BCS .map           ; cell from the old 8-cell grid
-  JSL MenuMapTravel_Owned_Long : BNE +
-.map
   LDA.b #$00
-  BRA .set
-+
-  LDA.l MenuFlow_MapCursor : DEC
-.set
+  STA.l MenuMapTravel_Pending
+  STA.l MenuFlow_CrossRow
   STA.w $020B
   RTL
 }
@@ -401,10 +334,21 @@ MenuFlow_DrawPopup:
 }
 
 ; ---------------------------------------------------------
-; Song popup (Map & Travel). The Songs cell shows the bound song; A or Y
-; on it opens this list of learned songs.
+; Songs. The six notes sit on the Quest bottom row (Menu_DrawMusicNotes,
+; OoT style) in quest order (Menu_SongOrder). On Quest, $020B = highlighted
+; slot 0-5 on that row, $FF = none learned.
+; Left/Right step through the learned songs; a row edge turns the page
+; (Menu_Page3_StatsScreen). A or Y binds the song to the Ocarina.
 
 ; In: A = song 1-6, M=8. Out: C set = learned. Keeps A, X, Y.
+; In: X = slot 0-5, M/X=8. Out: A = song in the slot, C set = learned.
+; Keeps X, Y.
+QuestSongs_SlotSong:
+{
+  LDA.l Menu_SongOrder,X
+  JMP MenuFlow_SongOwned
+}
+
 MenuFlow_SongOwned:
 {
 if !ENABLE_EPONA_SONG == 1
@@ -420,116 +364,157 @@ else
 endif
 }
 
-; MenuMapTravel_Owned for the Songs cell. Out: A = note variant (song + 1)
-; of the bound song, else of the lowest learned song, else 0. Keeps X, Y.
+; Out: A = note variant (song + 1) of the bound song, else of the first
+; learned song on the row, else 0 (Z follows A). In M/X=8 (QuestSongs_Init).
+; Keeps X, Y.
 MenuFlow_SongCell:
 {
   SEP #$20
   LDA.l $7E0000+CurrentSong
   JSR MenuFlow_SongOwned : BCS .found
-  LDA.b #$01
+  PHX
+  LDX.b #$00
 .scan
-  JSR MenuFlow_SongOwned : BCS .found
-  INC : CMP.b #$07 : BCC .scan
+  JSR QuestSongs_SlotSong : BCS .found_x
+  INX : CPX.b #$06 : BCC .scan
+  PLX
   LDA.b #$00
   RTL
+.found_x
+  PLX
 .found
   INC
   RTL
 }
 
-; A or Y on the Songs cell (MenuMapTravel_Select; the cell is owned):
-; open the popup on the bound song.
-MenuFlow_SongOpen:
-{
-  SEP #$30
-  JSL MenuFlow_SongCell
-  DEC : DEC : ORA.b #$80 : STA.l MenuFlow_SongPopup
-  LDA.b #$20 : STA.w $012F
-  RTL
-}
 
-; Footer for Map & Travel. Out: A = MenuMapTravel_Names index (0 Map,
-; 1 Travel, 2-7 songs 1-6), $FF = none; N follows A. While the popup is
-; open the footer names the highlighted song.
-MenuFlow_MapName:
+; Menu_Quest_Init. A D-pad cross enters at the edge it came from (turned
+; right: the lowest learned song; turned left: the highest). Otherwise the
+; bound song, else the lowest learned. The cross row stays for the next
+; turn (MenuFlow_RecordTurn overwrites it). M/X=8 out.
+QuestSongs_Init:
 {
   SEP #$30
-  LDA.l MenuFlow_SongPopup : BPL .cell
-  AND.b #$07 : INC : INC
-  RTL
-.cell
-  LDA.w $020B : CMP.b #$03 : BCS .none
-  PHA
-  JSL MenuMapTravel_Owned_Long
-  PLX : CMP.b #$00 : BEQ .none
-  CPX.b #$02 : BEQ .done                ; Songs: the variant is the index
-  TXA
-.done
-  ORA.b #$00
+  JSL UpdateFluteSong_Long
+  SEP #$30
+  LDA.l MenuFlow_CrossRow : BEQ .memory
+  LDA.l MenuFlow_CrossDir : BNE .highest
+  LDX.b #$00
+.up
+  JSR QuestSongs_SlotSong : BCS .set
+  INX : CPX.b #$06 : BCC .up
+  BRA .none
+.highest
+  LDX.b #$05
+.down
+  JSR QuestSongs_SlotSong : BCS .set
+  DEX : BPL .down
+  BRA .none
+.memory
+  JSL MenuFlow_SongCell : BEQ .none     ; A = song + 1
+  TAX : LDA.l Menu_SongSlot-2,X : TAX   ; song -> slot
+.set
+  STX.w $020B
   RTL
 .none
-  LDA.b #$FF
+  LDA.b #$FF : STA.w $020B
   RTL
 }
 
-; Drawn last by MenuMapTravel_Draw while open: a box over the Map/Travel
-; area, rows 9 to 10+n, columns 8-23 (n = learned songs). One line per
-; learned song with its Menu_SongNames short name; the marker shows the
-; highlighted line. The Songs cell (row 18) and the footer stay visible.
-; Uses $08, $0C, $0E. Any M/X in, M/X=8 out.
-!MENUFLOW_SONG_TOP  = menu_offset(9,8)
-!MENUFLOW_SONG_LINE = menu_offset(10,8)
-MenuFlow_DrawSongPopup:
+; Menu_Page3_StatsScreen on Quest, Left or Right pressed. C set: the
+; cursor moved to the next learned song (the caller redraws). C clear: no
+; learned song that way, the caller turns the page. M/X=8 out.
+QuestSongs_Move:
 {
   SEP #$30
-  LDA.l MenuFlow_SongPopup : BMI +
-  RTL                                   ; closed (M/X=8 already)
-+
+  LDX.w $020B : CPX.b #$06 : BCS .edge
+.step
+  LDA.b $F4 : AND.b #$01 : BEQ .left
+  INX : CPX.b #$06 : BCS .edge
+  BRA .check
+.left
+  DEX : BMI .edge
+.check
+  JSR QuestSongs_SlotSong : BCC .step
+  STX.w $020B
+  STZ.w $0207                           ; show the cursor at once
+  LDA.b #$20 : STA.w $012F
+  SEC
+  RTL
+.edge
+  CLC
+  RTL
+}
+
+; Start of Menu_QuestScreen. A or Y binds the highlighted song to the
+; Ocarina (Y item), as the old song cells did. C set: input used (the
+; caller redraws and skips A's close). M/X=8 out.
+QuestSongs_Frame:
+{
+  SEP #$30
+  INC.w $0207                           ; cursor blink
+  LDA.w $020B : CMP.b #$06 : BCS .none
+  LDA.b $F6 : BMI .bind                 ; A
+  LDA.b $F4 : AND.b #$40 : BEQ .none    ; Y
+.bind
+  LDX.w $020B : LDA.l Menu_SongOrder,X
+  STA.w CurrentSong
+  STA.l SavedOcarinaSong                ; survives save/reload ($030F does not)
+  LDA.b #$0D : STA.w $0202              ; normal Y item, independent of mask
+if defined("ENABLE_DUAL_ITEM_BINDING_PROTOTYPE")
+if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+  STA.l ItemBindingMenuY                ; Menu_Bindings_Close restores $0202 from this
+endif
+endif
+  STZ.w $0207
+  LDA.b #$20 : STA.w $012F
+  SEC
+  RTL
+.none
+  CLC
+  RTL
+}
+
+; End of Menu_Quest_Draw (any M/X in). On the live Quest page (state $06):
+; the bound-song marker, the blinking cursor bracket and the highlighted
+; song's name in the footer, like the Equipment cells. M/X=8 out.
+QuestSongs_DrawCursor:
+{
+  SEP #$30
+  LDA.w $0200 : CMP.b #$06 : BNE .done
+  LDA.w MenuScrollLevelH : BNE .done
+  LDA.w CurrentSong : DEC : CMP.b #$06 : BCS .no_marker
+  INC : JSR MenuFlow_SongOwned : BCC .no_marker
+  TAX : LDA.l Menu_SongSlot-1,X         ; song -> slot
+  LDY.b #$24 : JSR .bracket             ; marker $2460
+.no_marker
+  LDA.w $020B : CMP.b #$06 : BCS .done
+  LDA.w $0207 : AND.b #$20 : BNE .name
+  LDA.w $020B : LDY.b #$30 : JSR .bracket ; cursor $3060
+.name
+  LDX.w $020B : LDA.l Menu_SongOrder,X : DEC
   REP #$30
-  LDY.w #!MENUFLOW_SONG_TOP
-  LDA.w #$3811 : LDX.w #$3821
-  JSR MenuFlow_DrawPopup_edge
-  LDA.w #!MENUFLOW_SONG_LINE : STA.b $0E ; next line
-  LDA.w #$0001 : STA.b $0C              ; song
-.line
-  SEP #$20
-  LDA.b $0C : JSR MenuFlow_SongOwned
-  REP #$20
-  BCC .next
-  LDY.b $0E
-  LDA.w #$3820 : STA.w $1000,Y
-  LDA.w #$7820 : STA.w $101E,Y
-  LDA.l MenuFlow_SongPopup : AND.w #$0007 : INC : CMP.b $0C : BEQ +
-  LDA.w #$3417 : BRA ++
-+
-  LDA.w #$6419                          ; marker
-++
-  STA.w $1002,Y
-  LDA.b $0C : DEC : ASL #5 : TAX        ; (song - 1) * 32
-  LDA.w #8 : STA.b $08
+  AND.w #$00FF : ASL #5 : TAX           ; (song - 1) * 32
+  LDY.w #$0000
 .char
-  LDA.l Menu_SongNames+12,X             ; cells 6-13: the short name
-  CMP.w #$20F5 : BNE +
-  LDA.w #$3417
-+
-  STA.w $1004,Y
-  INX #2 : INY #2
-  DEC.b $08 : BNE .char                 ; columns 10-17
-  LDA.w #$3417
-  LDX.w #$0005
-.pad
-  STA.w $1004,Y                         ; columns 18-22
-  INY #2
-  DEX : BNE .pad
-  LDA.b $0E : CLC : ADC.w #$0040 : STA.b $0E
-.next
-  INC.b $0C
-  LDA.b $0C : CMP.w #$0007 : BCC .line
-  LDY.b $0E
-  LDA.w #$B811 : LDX.w #$B821
-  JSR MenuFlow_DrawPopup_edge
-.closed
+  LDA.l Menu_SongNames,X : STA.w $1692,Y ; 14 footer cells, end caps kept
+  INX #2 : INY #2 : CPY.w #$001C : BCC .char
+.done
   SEP #$30
   RTL
+
+; A = song index 0-5, Y = bracket tile high byte. M/X=8 in and out.
+; Same four stores as Menu_Equipment_Bracket (menu_equipment.asm).
+.bracket
+  ASL : TAX
+  REP #$30
+  TYA : XBA : ORA.w #$0060 : PHA
+  LDA.l Menu_DrawMusicNotes_positions,X : TAX
+  PLA
+  STA.w $1106,X
+  ORA.w #$4000 : STA.w $110C,X
+  ORA.w #$8000 : STA.w $114C,X
+  EOR.w #$4000 : STA.w $1146,X
+  SEP #$30
+  RTS
 }

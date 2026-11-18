@@ -115,22 +115,29 @@ class QuestEssenceLayout(unittest.TestCase):
             cells[name] = {(row, col + i) for i in range(tiles)}
 
         quest = self.draw_text
+        draw = DRAW.read_text()
+        # Default build has the four-page menu: Pearl and hearts on the top row
+        # (!QuestRow's first definition) and the six songs on the bottom row.
+        qy, qx = map(int, re.search(r"!QuestRow = menu_offset\((\d+),(\d+)\)", draw).groups())
+        row_arg = r"#!QuestRow\+menu_offset\((\d+),\s*(\d+)\)"
         # v4: the area name heads the Map page; Quest draws no location text.
         self.assertNotIn("DrawLocationName", block(quest, "Menu_Quest_Draw"))
         gear = block(quest, "Menu_Quest_Gear")
         # v4 moved the GEAR label and icons to Equipment; only the pearl remains here.
         self.assertNotIn(".gear_label", gear)
-        y, x = re.search(r"LDX\.w #menu_offset\((\d+),(\d+)\)[^\n]*\n\s*LDY\.w #MoonPearlGFX", gear).groups()
-        item("moon pearl", int(y), int(x))
-        y, x = re.search(r"LDX\.w #menu_offset\((\d+),(\d+)\)[^\n]*\n\s*JSR Menu_Quest_Number3", quest).groups()
-        run("heart piece count", int(y), int(x), 3)
-        draw = DRAW.read_text()
-        y, x = re.search(r"!QuestHeart = \$1000\+menu_offset\((\d+),(\d+)\)", draw).groups()
-        cells["heart piece"] = square(to_cell(self.offset(int(y), int(x))))
-        dungeon = re.findall(r"if !ENABLE_EQUIPMENT_MENU == 1\n\s*LDX\.w #menu_offset\((\d+),\s*(\d+)\)", draw)
-        self.assertEqual(len(dungeon), 4, "big key, treasure, map, big chest key")
-        for index, (y, x) in enumerate(dungeon):
-            item(f"dungeon item {index}", int(y), int(x))
+        y, x = re.search(r"LDX\.w " + row_arg + r"[^\n]*\n\s*LDY\.w #MoonPearlGFX", gear).groups()
+        item("moon pearl", qy + int(y), qx + int(x))
+        y, x = re.search(r"LDX\.w " + row_arg + r"[^\n]*\n\s*JSR Menu_Quest_Number3", quest).groups()
+        run("heart piece count", qy + int(y), qx + int(x), 3)
+        y, x = re.search(r"!QuestHeart = \$1000\+!QuestRow\+menu_offset\((\d+),(\d+)\)", draw).groups()
+        cells["heart piece"] = square(to_cell(self.offset(qy + int(y), qx + int(x))))
+        # Four-page menu: the dungeon row is drawn on the Map page, not here.
+        self.assertNotIn("Menu_DrawBigKey", between(quest, "Menu_Quest_Draw:", "else"))
+        notes = between(block(draw, "Menu_DrawMusicNotes"), "if !ENABLE_MENU_MAP_TRAVEL == 1", "else")
+        songs = re.findall(r"menu_offset\((\d+),(\d+)\)", notes)
+        self.assertEqual(len(songs), 6, "six song notes")
+        for index, (y, x) in enumerate(songs):
+            item(f"song {index + 1}", int(y), int(x))
         row, col = to_cell(0x1692 - TILEMAP)
         cells["footer (cleared)"] = {(row, col + i) for i in range(0x1C // 2 + 1)}
         return cells
@@ -192,27 +199,66 @@ class QuestEssenceLayout(unittest.TestCase):
         for name, cells in icons.items():
             for row, col in cells:
                 self.assertEqual(self.frame[row * 32 + col], PANEL_BLANK, f"{name} leaves panel at {(row, col)}")
-        everything = dict(icons, **self.other_content())
+        others = self.other_content()
+        for name, cells in others.items():
+            if name == "footer (cleared)":
+                continue
+            for row, col in cells:
+                self.assertEqual(self.frame[row * 32 + col], PANEL_BLANK, f"{name} leaves panel at {(row, col)}")
+        everything = dict(icons, **others)
         names = list(everything)
         for i, first in enumerate(names):
             for second in names[i + 1:]:
                 shared = everything[first] & everything[second]
                 self.assertFalse(shared, f"{first} overlaps {second} at {sorted(shared)}")
 
-    def test_bottom_row_brackets_and_top_row_empty(self):
-        """Pearl | map, big chest key, big key, treasure | hearts on one mirrored row."""
+    def test_top_corners_and_songs_on_bottom_row(self):
+        """Pearl and hearts in the top corners, mirrored; the six songs on the
+        bottom row (OoT style)."""
         content = self.other_content()
-        names = ["moon pearl"] + [f"dungeon item {i}" for i in range(4)] + ["heart piece"]
-        origins = [min(content[name]) for name in names]
-        self.assertEqual({row for row, _ in origins}, {21})
-        cols = sorted(col for _, col in origins)
-        self.assertEqual(cols[0], origins[0][1], "pearl is leftmost")
-        self.assertEqual(cols[-1], origins[-1][1], "hearts are rightmost")
-        self.assertEqual({a + b for a, b in zip(cols, reversed(cols))}, {30}, "row mirrors about cols 15|16")
+        pearl, heart = min(content["moon pearl"]), min(content["heart piece"])
+        self.assertEqual({pearl[0], heart[0]}, {9}, "first panel row under the frame border")
+        self.assertEqual(pearl[1] + heart[1], 30, "corners mirror about cols 15|16")
         count = content["heart piece count"]
-        self.assertEqual({row for row, _ in count}, {23})
-        for cells in content.values():
-            self.assertFalse({row for row, _ in cells} & {9, 10, 11}, "top row stays empty")
+        self.assertEqual({row for row, _ in count}, {11})
+        songs = [min(content[f"song {i}"]) for i in range(1, 7)]
+        self.assertEqual({row for row, _ in songs}, {21})
+        self.assertEqual([c for _, c in songs], sorted(c for _, c in songs), "songs run left to right")
+        ring_bottom = max(row for row, _ in self.crystal_cells()) + 1
+        self.assertGreater(21, ring_bottom, "songs sit below the essence ring")
+
+    def test_map_page_dungeon_row(self):
+        """Map page: the Map cell over the dungeon row (map, big chest key, big
+        key, treasure), mirrored about cols 15|16, clear of the cell's bracket,
+        the area name (row 9) and the footer."""
+        draw = DRAW.read_text()
+        page = (ROOT / "Menu" / "menu_map_travel.asm").read_text()
+        body = block(page, "MenuMapTravel_Draw")
+        self.assertIn("JSR Menu_DrawBigKey", body)
+        self.assertIn("JSR Menu_DrawBigChestKey", body)
+        item_base = self.draw_menu_item_base()
+        dy, dx = map(int, re.search(r"!DungeonRow = menu_offset\((\d+),(\d+)\)", draw).groups())
+        found = re.findall(r"if !ENABLE_EQUIPMENT_MENU == 1\n\s*LDX\.w #!DungeonRow\+menu_offset\((\d+),\s*(\d+)\)", draw)
+        self.assertEqual(len(found), 4, "big key, treasure, map, big chest key")
+        icons = [to_cell(self.offset(dy + int(y), dx + int(x)) + item_base) for y, x in found]
+        self.assertEqual({row for row, _ in icons}, {17})
+        cols = sorted(col for _, col in icons)
+        self.assertEqual({a + b for a, b in zip(cols, reversed(cols))}, {30}, "row mirrors about cols 15|16")
+        cy, cx = map(int, re.search(r"!MapCellPos = menu_offset\((\d+),(\d+)\)", page).groups())
+        cell = to_cell(self.offset(cy, cx) + item_base)
+        self.assertEqual(cell, (13, 15))
+        # Bracket = Menu_Equipment_Bracket: one column each side, two rows.
+        taken = square(cell) | {(cell[0] + r, cell[1] + c) for r in (0, 1) for c in (-1, 2)}
+        taken |= {(9, c) for c in range(32)}
+        row, col = to_cell(0x1692 - TILEMAP)
+        taken |= {(row, col + i) for i in range(0x1C // 2 + 1)}
+        cells = set()
+        for origin in icons:
+            for c in square(origin):
+                self.assertEqual(self.frame[c[0] * 32 + c[1]], PANEL_BLANK, f"dungeon icon leaves panel at {c}")
+            self.assertFalse(square(origin) & cells, "dungeon icons overlap")
+            cells |= square(origin)
+        self.assertFalse(cells & taken, f"dungeon row overlaps {sorted(cells & taken)}")
 
     def test_essences_keep_one_tile_gap(self):
         essences = [square(cell) for cell in self.crystal_cells()]

@@ -2669,7 +2669,7 @@
     },
     {
       "id": "menu_map_travel_pending",
-      "owner": "Map & Travel menu page pending action byte ($7E1EFF)",
+      "owner": "Map page pending map request byte ($7E1EFF)",
       "space": "wram",
       "base": 8265471,
       "size": 1,
@@ -2677,7 +2677,7 @@
       "condition": {
         "ENABLE_MENU_MAP_TRAVEL": 1
       },
-      "lifetime": "One conditional transient WRAM byte after the horse tail ($7E1EFF < $7E1F00; $7E1EFE is Horse_AnchorArea). Set by the Map & Travel page when Map or Travel closes the menu; consumed by Menu_Exit the same frame the menu closes. A map opened from the page sets 3, which lives through the map module and reopens the page.",
+      "lifetime": "One conditional transient WRAM byte after the horse tail ($7E1EFF < $7E1F00; $7E1EFE is Horse_AnchorArea). Set by the Map page when Map closes the menu; consumed by Menu_Exit the same frame the menu closes. A map opened from the page sets 3, which lives through the map module and reopens the page.",
       "reset": "MenuMapTravel_Init clears it when the page is drawn; MenuMapTravel_ExitAction clears it before acting; MenuFlow_MapInit clears 3 when the page is drawn again after the map.",
       "save": "Volatile WRAM; not saved in SRAM.",
       "provenance": [
@@ -3178,7 +3178,7 @@
     },
     {
       "id": "MenuFlow",
-      "owner": "Menu cursor flow (Map & Travel ring): per-page cursor memory, page-edge crossing, tunic popup",
+      "owner": "Menu cursor flow (four-page ring): per-page cursor memory, page-edge crossing, tunic popup",
       "space": "wram",
       "base": 8258234,
       "size": 5,

@@ -1,12 +1,13 @@
-; Map & Travel page (MenuScrollLevelH = $40), fourth page of the menu ring:
-; Items -R-> Equipment ($20) -R-> Quest ($00) -R-> Map & Travel ($40) -R-> Items.
-; Cells: 0 Map, 1 Travel, 2 Songs. $020B is the cursor. A/Y on Songs opens the
-; song popup (MenuFlow_SongOpen, Menu/menu_cursor_flow.asm), which binds a song.
-; Map and Travel close the menu and act in Menu_Exit (MenuMapTravel_ExitAction):
-; Map opens the existing field/dungeon map module, Travel the existing Soaring
-; path. No second map renderer and no new destination list. DBR = $2D.
+; Map page (MenuScrollLevelH = $40), fourth page of the menu ring:
+; Items -R-> Equipment ($20) -R-> Quest ($00) -R-> Map ($40) -R-> Items.
+; One cell, Map ($020B = 0), over the current dungeon's row (map, big chest
+; key, big key, treasure; Menu_DrawBigKey/Menu_DrawBigChestKey at !DungeonRow).
+; Songs live on the Quest page (QuestSongs_*, Menu/menu_cursor_flow.asm);
+; Soaring is played with the Ocarina.
+; A or Y closes the menu and Menu_Exit (MenuMapTravel_ExitAction) opens the
+; existing field/dungeon map module. No second map renderer. DBR = $2D.
 
-!MenuMapTravel_RowCount = 2                ; Map|Travel row + Songs row
+!MapCellPos = menu_offset(9,11)         ; DrawMenuItem offset; absolute (13,15)
 
 ; ---------------------------------------------------------
 ; Replaces Menu_Page3_Turn under the flag. A = $01 right, else left.
@@ -60,27 +61,6 @@ MenuMapTravel_Init:
 }
 
 ; ---------------------------------------------------------
-; A = cell; returns its icon variant, zero when the cell is empty.
-; Keeps X/Y, M/X=8, Z follows A.
-MenuMapTravel_Owned:
-{
-  PHX
-  CMP.b #$02 : BCS .song
-  CMP.b #$01 : BEQ .travel
-  LDA.b #$01 : BRA .done                ; Map
-.travel
-  LDA.l $7EF34C : BEQ .done             ; no Ocarina: empty cell
-  CMP.b #$04 : LDA.b #$07 : BCC .done   ; grey until Soaring is learned
-  LDA.b #$03 : BRA .done
-.song
-  JSL MenuFlow_SongCell                 ; current song's note (variants 2-7), or 0
-.done
-  PLX
-  ORA.b #$00
-  RTS
-}
-
-; ---------------------------------------------------------
 ; State $06 on this page. Start closes; L/R are handled by the caller.
 MenuMapTravel_Screen:
 {
@@ -108,106 +88,31 @@ MenuMapTravel_Screen:
 }
 
 ; ---------------------------------------------------------
-; Horizontal moves skip empty cells and turn the page at a row edge.
-; Vertical moves go to the nearest filled column of the next row up/down
-; (wrapping), skipping rows with no filled cell.
+; One cell: Left/Right turn the page; Up/Down do nothing.
 MenuMapTravel_Move:
 {
   SEP #$30
-  LDA.b $F4 : AND.b #$0F : BNE +
+  LDA.b $F4 : AND.b #$03 : BNE +
   RTS
 +
-  STA.b $04
-  LDX.w $020B
-  AND.b #$03 : BEQ .vertical
-  STX.b $02
-.horizontal
-  LDX.b $02
-  LDA.b $04 : AND.b #$01 : BEQ .left
-  LDA.w .next,X : BRA .candidate
-.left
-  LDA.w .prev,X
-.candidate
-  CMP.b #$FF : BEQ .turn
-  STA.b $02
-  JSR MenuMapTravel_Owned : BEQ .horizontal
-  BRA .accept
-.turn
-  LDA.b $04 : AND.b #$01 : BNE .right
+  AND.b #$01 : BNE .right               ; A = $01 right
   LDA.b #$FF
 .right
   JMP Menu_Page3_Turn
-.vertical
-  LDA.w MenuMapTravel_Columns,X : STA.b $06
-  LDA.w MenuMapTravel_Rows,X : STA.b $05 : STA.b $07  ; start row, row tried
-.next_row
-  LDA.b $04 : AND.b #$08 : BEQ .down                  ; Up
-  LDA.b $07 : DEC : BPL .row_ok
-  LDA.b #!MenuMapTravel_RowCount-1 : BRA .row_ok
-.down
-  LDA.b $07 : INC : CMP.b #!MenuMapTravel_RowCount : BCC .row_ok
-  LDA.b #$00
-.row_ok
-  STA.b $07 : CMP.b $05 : BEQ .stay                   ; no other row has a cell
-  TAX
-  LDA.b #$FF : STA.b $08 : STA.b $02
-  LDA.w .starts,X : TAY
-  LDA.w .ends,X : STA.b $09
-.scan_row
-  TYA : JSR MenuMapTravel_Owned : BEQ .next_cell
-  TYX
-  LDA.w MenuMapTravel_Columns,X : SEC : SBC.b $06 : BCS .distance
-  EOR.b #$FF : INC
-.distance
-  CMP.b $08 : BCS .next_cell
-  STA.b $08 : STY.b $02
-.next_cell
-  INY : CPY.b $09 : BCC .scan_row
-  LDA.b $02 : CMP.b #$FF : BNE .accept
-  BRA .next_row
-.stay
-  RTS
-.accept
-  LDA.b $02 : STA.w $020B
-  STZ.w $0207
-  LDA.b #$20 : STA.w $012F
-  RTS
-.next
-  db $01,$FF, $FF                       ; $FF = row edge
-.prev
-  db $FF,$00, $FF
-.starts
-  db 0,2
-.ends
-  db 2,3
 }
-MenuMapTravel_Rows:
-  db 0,0, 1
-MenuMapTravel_Columns:                  ; absolute icon column (v4)
-  db 9,20, 14
 
 ; ---------------------------------------------------------
-; A or Y. Songs opens the song popup; Map and Travel close the menu and
-; leave a request for Menu_Exit. An unavailable action plays the error sound.
+; A or Y closes the menu and leaves the map request for Menu_Exit. Where
+; the map cannot open, the error sound plays.
 MenuMapTravel_Select:
 {
   BIT.b $F6 : BMI .pressed
   LDA.b $F4 : BIT.b #$40 : BEQ .done
 .pressed
-  LDA.w $020B : JSR MenuMapTravel_Owned : BEQ .error
-  LDA.w $020B : CMP.b #$02 : BCS .song
-  CMP.b #$01 : BEQ .travel
   JSR MenuMapTravel_CanMap : BCC .error
-  LDA.b #$01 : BRA .request
-.travel
-  JSR MenuMapTravel_CanTravel : BCC .error
-  LDA.b #$02
-.request
-  STA.l MenuMapTravel_Pending
+  LDA.b #$01 : STA.l MenuMapTravel_Pending
   LDA.b #!MENU_STATE_INIT_SCROLL_DOWN : STA.w $0200
   RTS
-.song
-  JSL MenuFlow_SongOpen                 ; the popup binds the song
 .done
   RTS
 .error
@@ -234,37 +139,8 @@ MenuMapTravel_CanMap:
 }
 
 ; ---------------------------------------------------------
-; C set when Song of Soaring would work here: song learned, outdoors,
-; not the Dark World (that path is Moosh), normal overworld or an enabled
-; special-overworld Soaring area, and no travel bird already active.
-MenuMapTravel_CanTravel:
-{
-  LDA.l $7EF34C : CMP.b #$04 : BCC .no
-  LDA.b $1B : BNE .no
-  LDA.b $8A : AND.b #$40 : BNE .no
-  LDA.w $010C : CMP.b #$0B : BNE .normal
-if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
-  LDA.b $8A : CMP.b #$80 : BCC .no
-  CMP.b #$C0 : BCS .no
-  SEC : RTS
-else
-  BRA .no
-endif
-.normal
-  CMP.b #$09 : BNE .no
-  LDA.l TravelSpotsVisited : BEQ .no     ; no visited destination yet
-  LDX.b #$04
-.bird
-  LDA.w $0C4A,X : CMP.b #$27 : BEQ .no
-  DEX : BPL .bird
-  SEC : RTS
-.no
-  CLC : RTS
-}
-
-; ---------------------------------------------------------
 ; Called by Menu_Exit after the prior module is restored ($10).
-; Runs the request once; the gates are checked again first.
+; Runs a map request (1) once; the gate is checked again first.
 MenuMapTravel_ExitAction:
 {
   PHP : SEP #$30
@@ -272,7 +148,7 @@ MenuMapTravel_ExitAction:
   LDA.l MenuMapTravel_Pending : BEQ .done
   TAY
   LDA.b #$00 : STA.l MenuMapTravel_Pending
-  CPY.b #$01 : BNE .travel
+  CPY.b #$01 : BNE .done                ; only 1 (open the map) acts here
   JSR MenuMapTravel_CanMap : BCC .error
   LDA.b #$03 : STA.l MenuMapTravel_Pending ; reopen this page after the map
   STZ.w $0200
@@ -283,20 +159,6 @@ MenuMapTravel_ExitAction:
   STA.b $11
   LDA.b $10 : STA.w $010C
   LDA.b #$0E : STA.b $10
-  BRA .done
-.travel
-  JSR MenuMapTravel_CanTravel : BCC .error
-if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
-  LDA.b $10 : CMP.b #$0B : BNE .bird
-    JSL SpecialSoaring_Open
-    BRA .done
-  .bird
-endif
-  LDA.b #$3E : STA.w $012E              ; Song of Soaring
-  LDY.b #$04
-  LDA.b #$27
-  JSL AddTravelBird
-  STZ.w $03F8
   BRA .done
 .error
   LDA.b #$3C : STA.w $012E
@@ -331,10 +193,10 @@ org $02A54D ; Module09_00_PlayerControl ; @hook module=Menu name=MenuMapTravel_C
 pullpc
 
 ; ---------------------------------------------------------
-; v4 layout (make_frame_preserved_v4.py): area name header on row 9,
-; MAP | TRAVEL labels on row 11 over their icons, SONGS label on row 16 over
-; one Songs cell showing the bound song's note. Footer names the cell under
-; the cursor, or the highlighted song while the song popup is open.
+; v4 layout (make_frame_preserved_v4.py): area name header on row 9, the
+; Map icon centred below it (columns 15-16), and in a dungeon its row of
+; owned dungeon items on row 17, mirrored about columns 15|16. The footer
+; names the cell.
 MenuMapTravel_Draw:
 {
   JSR Menu_DrawBackground
@@ -343,65 +205,37 @@ MenuMapTravel_Draw:
 .title
   LDA.w .title_text,X : STA.w $1000+menu_offset(6,14),X  ; columns 14-16, same center as EQUIPMENT
   DEX #2 : BPL .title
-  LDX.w #$0004
-.map_label
-  LDA.w .map_text,X : STA.w $1000+menu_offset(11,8),X
-  DEX #2 : BPL .map_label
-  LDX.w #$000A
-.travel_label
-  LDA.w .travel_text,X : STA.w $1000+menu_offset(11,18),X
-  DEX #2 : BPL .travel_label
-  LDX.w #$0008
-.songs_label
-  LDA.w .songs_text,X : STA.w $1000+menu_offset(16,13),X
-  DEX #2 : BPL .songs_label
   JSR MenuMapTravel_AreaName
 
   SEP #$30
   LDA.b #$7E : STA.b $0A
-  LDY.b #$00
-.icons
-  PHY
-  TYA : JSR MenuMapTravel_Owned
-  STA.w MenuItemValueSpoof
+  LDA.b #$01 : STA.w MenuItemValueSpoof
   REP #$30
-  TYA : AND.w #$00FF : ASL : TAX
-  LDA.w MenuMapTravel_Gfx,X : TAY
-  LDA.w MenuMapTravel_Pos,X : TAX
   LDA.w #MenuItemValueSpoof
+  LDX.w #!MapCellPos
+  LDY.w #MapGFX
   JSR DrawMenuItem
-  SEP #$30
-  PLY
-  INY : CPY.b #$03 : BCC .icons
 
-  LDA.w $020B : CMP.b #$03 : BCS .no_cursor
-  JSR MenuMapTravel_Owned : BEQ .no_cursor
+  SEP #$30
   LDA.w $0207 : AND.b #$20 : BNE .no_cursor
-  LDA.w $020B : ASL : TAX
   REP #$30
-  LDA.w MenuMapTravel_Pos,X : TAX
+  LDX.w #!MapCellPos
   LDA.w #$3060 : JSR Menu_Equipment_Bracket
 .no_cursor
-  SEP #$30
-  JSL MenuFlow_MapName : BMI .no_name   ; Names index, $FF = none
-  ASL : TAX
   REP #$30
-  LDA.w MenuMapTravel_Names,X : TAX
-  LDY.w #$0000
+  JSR Menu_DrawBigKey                   ; map, big key, treasure
+  REP #$30
+  JSR Menu_DrawBigChestKey
+  REP #$30
+  LDX.w #$001A
 .name
-  LDA.w $0000,X : STA.w $1692,Y         ; 14 footer cells, end caps kept
-  INX #2 : INY #2 : CPY.w #$001C : BCC .name
-.no_name
-  JSL MenuFlow_DrawSongPopup            ; only while open
+  LDA.w .name_text,X : STA.w $1692,X    ; 14 footer cells, end caps kept
+  DEX #2 : BPL .name
   RTS
 .title_text
   dw "MAP"
-.map_text
-  dw "MAP"
-.travel_text
-  dw "TRAVEL"
-.songs_text
-  dw "SONGS"
+.name_text
+  dw "_____MAP______"
 }
 
 ; ---------------------------------------------------------
@@ -434,19 +268,3 @@ MenuMapTravel_AreaName:
 .none
   RTS
 }
-
-; Index 0 Map, 1 Travel, 2-7 songs 1-6 (MenuFlow_MapName).
-MenuMapTravel_Names:
-  dw .map,.travel
-  dw Menu_SongNames,Menu_SongNames+32,Menu_SongNames+64,Menu_SongNames+96
-  dw Menu_SongNames+128,Menu_SongNames+160
-.map
-  dw "_____MAP______"
-.travel
-  dw "____TRAVEL____"
-MenuMapTravel_Gfx:
-  dw MapGFX,OcarinaGFX,QuarterNoteGFX
-; DrawMenuItem offsets (absolute minus row 4, col 4). Map (13,9), Travel (13,20),
-; Songs (18,14) absolute.
-MenuMapTravel_Pos:
-  dw menu_offset(9,5),menu_offset(9,16),menu_offset(14,10)

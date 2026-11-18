@@ -65,7 +65,7 @@ OverworldLocationNames:
   dw "GARO_DESERT_____" ; 3F
 
 ; Abyss names are 15 cells wide. DrawLocationName steps 16 cells per area, so
-; with the Map & Travel menu on each entry gets a 16th blank cell. The pad is
+; with the four-page menu on each entry gets a 16th blank cell. The pad is
 ; flag-guarded so the flags-off ROM stays byte-identical.
 macro AbyssName(text)
   dw "<text>"

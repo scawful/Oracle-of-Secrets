@@ -208,10 +208,24 @@ Menu_DrawPendantIcons:
 ; E000 is T = 0
 ; E100 would be T = 16
 
+; Quest top row (Pearl ... hearts) and the dungeon row (map, big chest key,
+; big key, treasure), as DrawMenuItem row offsets (absolute row minus 4).
+; With the four-page menu the songs take the Quest bottom row
+; (Menu_DrawMusicNotes), Pearl and hearts the top corners, and the dungeon
+; row sits on the Map page under the Map cell (MenuMapTravel_Draw). Without
+; it the dungeon row is on the Quest bottom row between Pearl and hearts.
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  !QuestRow = menu_offset(5,0)          ; absolute row 9, first panel row under the frame border
+  !DungeonRow = menu_offset(13,0)       ; Map page, absolute row 17
+else
+  !QuestRow = menu_offset(17,0)
+  !DungeonRow = !QuestRow
+endif
+
 Menu_DrawHeartPieces:
 {
 if !ENABLE_EQUIPMENT_MENU == 1
-  !QuestHeart = $1000+menu_offset(21,24)  ; Quest bottom row, right end
+  !QuestHeart = $1000+!QuestRow+menu_offset(4,24)  ; Quest top row, right end
 else
   !QuestHeart = $149E
 endif
@@ -249,14 +263,15 @@ Menu_DrawMusicNotes:
   LDY.b #$00
 .notes
   PHY
+  TYX : LDA.l Menu_SongOrder,X          ; Y = slot, A = song in it
 if !ENABLE_EPONA_SONG == 1
-  TYA : INC : JSL Ocarina_SongLearned_Long : BCS .learned
+  JSL Ocarina_SongLearned_Long : BCC .unlearned
+  INC : BRA .variant                    ; variant = song + 1
 else
-  TYA : INC #2 : CMP.l $7EF34C : BCC .learned : BEQ .learned
+  INC : CMP.l $7EF34C : BCC .variant : BEQ .variant
 endif
-  LDA.b #$01 : BRA .variant
-.learned
-  TYA : INC #2
+.unlearned
+  LDA.b #$01
 .variant
   STA.w MusicNoteValue
   REP #$30
@@ -269,10 +284,33 @@ endif
   PLY : INY : CPY.b #$06 : BCC .notes
   REP #$30
   RTS
+; DrawMenuItem offsets; QuestSongs_DrawCursor (bank $2B) reads this table
+; long to place its bracket. Four-page menu: Quest bottom row (absolute 21).
 .positions
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  dw menu_offset(17,3),menu_offset(17,6),menu_offset(17,9)
+  dw menu_offset(17,13),menu_offset(17,16),menu_offset(17,19)
+else
   dw menu_offset(9,3),menu_offset(9,6),menu_offset(9,9)
   dw menu_offset(9,13),menu_offset(9,16),menu_offset(9,19)
+endif
 }
+
+; Song order on the row (slot -> song) and its inverse (song - 1 -> slot).
+; Song numbers ($030F, SavedOcarinaSong) are unchanged; only the row order
+; follows the quest: Epona's Song comes with the Ocarina (beat 10), then
+; Healing, Storms, Soaring, Time and Secrets in the teacher-count order.
+; QuestSongs_* (bank $2B) read both tables long.
+Menu_SongOrder:
+if !ENABLE_MENU_MAP_TRAVEL == 1 && !ENABLE_EPONA_SONG == 1
+  db 6,1,2,3,4,5
+Menu_SongSlot:
+  db 1,2,3,4,5,0
+else
+  db 1,2,3,4,5,6
+Menu_SongSlot:
+  db 0,1,2,3,4,5
+endif
 
 ; =========================================================
 
@@ -591,7 +629,7 @@ endif
         STA.w ShortSpoof
         LDA.w #ShortSpoof
 if !ENABLE_EQUIPMENT_MENU == 1
-        LDX.w #menu_offset(17,17)       ; Quest absolute (21,21), bottom row 4th
+        LDX.w #!DungeonRow+menu_offset(0,17) ; dungeon row, 4th
 else
         LDX.w #menu_offset(11,8)
 endif
@@ -609,7 +647,7 @@ endif
       LDA.w #ShortSpoof
       ; Draw the big key (or big key with chest if we've gotten the treasure) icon
 if !ENABLE_EQUIPMENT_MENU == 1
-      LDX.w #menu_offset(17,13)         ; Quest absolute (21,17), bottom row 3rd
+      LDX.w #!DungeonRow+menu_offset(0,13) ; dungeon row, 3rd
 else
       LDX.w #menu_offset(11,2)
 endif
@@ -632,7 +670,7 @@ endif
       LDA.w #ShortSpoof
       ; Draw the big key (or big key with chest if we've gotten the treasure) icon
 if !ENABLE_EQUIPMENT_MENU == 1
-      LDX.w #menu_offset(17,5)          ; Quest absolute (21,9), bottom row 1st
+      LDX.w #!DungeonRow+menu_offset(0,5) ; dungeon row, 1st
 else
       LDX.w #menu_offset(11,11)
 endif
@@ -812,7 +850,7 @@ Menu_DrawBigChestKey:
       STA.w ShortSpoof
       LDA.w #ShortSpoof
 if !ENABLE_EQUIPMENT_MENU == 1
-      LDX.w #menu_offset(17,9)          ; Quest absolute (21,13), bottom row 2nd
+      LDX.w #!DungeonRow+menu_offset(0,9) ; dungeon row, 2nd
 else
       LDX.w #menu_offset(11, 5)
 endif

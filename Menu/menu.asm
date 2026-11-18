@@ -196,7 +196,7 @@ Menu_UploadRight:
 {
 if !ENABLE_EQUIPMENT_MENU == 1
 if !ENABLE_MENU_MAP_TRAVEL == 1
-  JSL MenuFlow_UploadRight              ; Quest, or Map & Travel after the map
+  JSL MenuFlow_UploadRight              ; Quest, or the Map page after the map
 else
   JSR Menu_Quest_Draw
 endif
@@ -625,7 +625,7 @@ if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
   JSL SpecialSoaring_Complete
 endif
 if !ENABLE_MENU_MAP_TRAVEL == 1
-  JSL MenuMapTravel_ExitAction       ; Map/Travel request from the menu
+  JSL MenuMapTravel_ExitAction       ; Map request from the Map page
 endif
   RTS
 }
@@ -1273,8 +1273,6 @@ if !ENABLE_MENU_MAP_TRAVEL == 1
     JSR MenuMapTravel_Draw : RTL
   Menu_Equipment_Owned_Long:
     JSR Menu_Equipment_Owned : RTL
-  MenuMapTravel_Owned_Long:
-    JSR MenuMapTravel_Owned : RTL
 endif
 %log_end("Menu/menu.asm", !LOG_MENU)
 incsrc "menu_hud.asm"

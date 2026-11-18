@@ -274,9 +274,10 @@ endif
 ; Page loop: L and R always move one page, wrapping Masks&Rings <- Items ->
 ; Quest; the Items "Y:RINGS" prompt and Y shortcut are removed. Needs MENU_PAGE3.
 !ENABLE_MENU_PAGE_LOOP              = 1
-; Map & Travel page (v4): a fourth page, Items -> Equipment -> Quest -> Map
-; -> Items. Map opens the field map; Travel opens the Soaring picker; the six
-; songs move here from Equipment. Needs MENU_PAGE3, PAGE_LOOP, EQUIPMENT_MENU.
+; Map page (v4): a fourth page, Items -> Equipment -> Quest -> Map
+; -> Items. Map opens the field map; the dungeon row sits under it. The six
+; songs move from Equipment to the Quest bottom row. Needs MENU_PAGE3, PAGE_LOOP,
+; EQUIPMENT_MENU.
 ; WRAM: MenuMapTravel_Pending $7E1EFF (Core/symbols.asm).
 !ENABLE_MENU_MAP_TRAVEL             = 1
 ; Portal Rod cell: the Portal Rod gets Items row 4, column 1 ($0202 = $19);

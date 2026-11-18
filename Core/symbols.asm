@@ -80,11 +80,10 @@ assert AbyssLanding+2 <= $7E02C0
 ; Vanilla-unused $7E02BA-$7E02BE (usdasm UNUSED_7E02BA-BE, zero at boot).
 ; Not persistent: the cursors last across menu opens until power-off.
 MenuFlow_EquipCursor = $7E02BA ; Equipment slot + 1 (0 = none)
-MenuFlow_MapCursor   = $7E02BB ; Map & Travel cell + 1 (0 = none)
+MenuFlow_MapCursor   = $7E02BB ; unused (the Map page has one cell)
 MenuFlow_CrossRow    = $7E02BC ; D-pad page cross: source row ordinal + 1 (0 = none)
 MenuFlow_CrossDir    = $7E02BD ; 0 = turned right (land left), $1F = turned left
 MenuFlow_TunicPopup  = $7E02BE ; 0 = closed; $80 | highlighted colour while open
-MenuFlow_SongPopup   = MenuFlow_TunicPopup ; Map & Travel: $80 | highlighted song - 1 (pages never overlap)
 assert AbyssLanding+2 == MenuFlow_EquipCursor
 assert MenuFlow_TunicPopup+1 <= $7E02C0
 
@@ -156,16 +155,16 @@ HudCornerBuffer    = $7EC84A
 HudCornerBufferEnd = HudCornerBuffer+14
 assert HudCornerBufferEnd <= $7EC880
 
-; Map & Travel page: the action chosen on the page, run once by Menu_Exit.
+; Map page: the map request made on the page, run once by Menu_Exit.
 ; Separate conditional owner after the horse tail. $7E1EFE is Horse_AnchorArea
 ; when park-anywhere is on (the menu cleared her park on every open), so this
 ; byte sits at $7E1EFF.
 if !ENABLE_MENU_MAP_TRAVEL == 1
 base $7E1EFF
 {
-MenuMapTravel_Pending:   skip 1 ; 0 none, 1 field map, 2 Soaring, 3 map open: reopen page
+MenuMapTravel_Pending:   skip 1 ; 0 none, 1 field map, 3 map open: reopen page
 assert MenuMapTravel_Pending == $7E1EFF
-assert pc() <= $7E1F00, "Map & Travel pending byte exceeds its bounded WRAM tail"
+assert pc() <= $7E1F00, "Map page pending byte exceeds its bounded WRAM tail"
 }
 base off
 endif

@@ -5,12 +5,19 @@ Menu_Quest_Init:
 {
   SEP #$30
   STZ.w $0207
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  JSL QuestSongs_Init                ; pick the song cursor ($020B)
+endif
   RTS
 }
 
 Menu_QuestScreen:
 {
   SEP #$30
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  ; A/Y on a learned song binds it to the Ocarina (consumes A).
+  JSL QuestSongs_Frame : BCS .no_journal
+endif
   LDA.b $F6 : BIT.b #$80 : BNE .close
   LDA.b $F4 : BIT.b #$10 : BEQ .no_start
 .close
@@ -65,22 +72,30 @@ Menu_Quest_Draw:
 
   JSR Menu_DrawHeartPieces
   LDA.l $7EF36B : AND.w #$00FF
-  LDX.w #menu_offset(23,23)          ; under the heart-piece container
+  LDX.w #!QuestRow+menu_offset(6,23) ; under the heart-piece container
   JSR Menu_Quest_Number3
   JSR Menu_Quest_Progress
   JSR Menu_Quest_Gear
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  ; The dungeon row (map, big chest key, big key, treasure) is on the Map page.
+  REP #$30
+  JSR Menu_DrawMusicNotes            ; bottom row: the six songs
+  JSL QuestSongs_DrawCursor          ; bracket + footer song name
+else
   REP #$30
   JSR Menu_DrawBigKey
   REP #$30
   JSR Menu_DrawBigChestKey
+endif
   SEP #$30
   RTS
 }
 
 ; v4: passive GEAR moved to the Equipment page (Menu_Equipment_Gear).
-; Quest keeps only the Moon Pearl; it and the heart pieces bracket the
-; bottom row (Pearl | map, big chest key, big key, treasure | hearts).
-; The top row stays empty.
+; Quest keeps only the Moon Pearl. With the four-page menu the Pearl and
+; the heart pieces take the top corners, the six songs the bottom row (OoT
+; style) and the dungeon row moves to the Map page. Without it the bottom
+; row is Pearl | map, big chest key, big key, treasure | hearts.
 Menu_Quest_Gear:
 {
   SEP #$30
@@ -91,7 +106,7 @@ Menu_Quest_Gear:
   STA.w MenuItemValueSpoof
   REP #$30
   LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(17,2)  ; Quest absolute (21,6), bottom row, left end
+  LDX.w #!QuestRow+menu_offset(0,2) ; Quest top row, left end
   LDY.w #MoonPearlGFX
   JSR DrawMenuItem
   REP #$30

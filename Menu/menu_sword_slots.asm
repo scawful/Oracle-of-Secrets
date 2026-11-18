@@ -1,6 +1,6 @@
 ; Two-slot sword helpers, called with JSL from the Equipment page (bank $2D)
 ; and Menu_Exit. Assembled in Items bank $2B: Menu bank $2D is full with
-; Map & Travel on, and $2E reaches the D8 code slot.
+; the four-page menu on, and $2E reaches the D8 code slot.
 ; Heavy sword = Greatblade, found broken (decisions.org 2026-11-16). Broken:
 ; level 1. Reforged (bit2): level 3. Name and smith text are not approved.
 !HEAVY_SWORD_LEVEL        = 3

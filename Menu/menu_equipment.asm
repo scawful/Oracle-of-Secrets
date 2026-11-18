@@ -1,10 +1,10 @@
 ; Functional Equipment: slots 0-5 masks, 6-11 rings, 12-17 songs, 18-23 supplies,
 ; 24 story blade, 25 heavy sword, 26 tunic colour (GEAR band, logical row 4).
 ; v4 bands, top to bottom: GEAR, MASKS, RINGS, then SONGS or SUPPLIES.
-; Songs leave band 3 when Map & Travel is on; supplies may then take it.
+; Songs leave band 3 with the four-page menu; supplies may then take it.
 ; $020B is only the cursor; BoundMask, RingSlot1 and CurrentSong are selections.
 ; No preview fixture or ownership spoof controls availability. DBR = $2D.
-; Supplies show in band 3 whenever Map & Travel has taken the songs out of it.
+; Supplies show in band 3 whenever the four-page menu has taken the songs out of it.
 ; A build may predefine MENU_EQUIPMENT_SUPPLIES_VISIBLE = 0 to hide them again.
 ; This is a build policy, not a new save byte or an inventory migration.
 if not(defined("MENU_EQUIPMENT_SUPPLIES_VISIBLE"))
@@ -60,7 +60,7 @@ Menu_Equipment_Owned:
 .song
   CMP.b #$12 : BCS .supplies
 if !ENABLE_MENU_MAP_TRAVEL == 1
-  BRA .none                          ; songs live on the Map & Travel page
+  BRA .none                          ; songs live on the Quest page
 else
   SEC : SBC.b #$0B                    ; song 1-6 < Ocarina progression
 if !ENABLE_EPONA_SONG == 1
@@ -262,7 +262,7 @@ if !ENABLE_MENU_MAP_TRAVEL == 0
   CPY.b #$12 : BCS .next_icon        ; band 3 holds songs; supplies are hidden
 else
   CPY.b #$0C : BCC .draw_icon
-  CPY.b #$12 : BCC .next_icon        ; songs live on the Map & Travel page
+  CPY.b #$12 : BCC .next_icon        ; songs live on the Quest page
 .draw_icon
 endif
   PHY

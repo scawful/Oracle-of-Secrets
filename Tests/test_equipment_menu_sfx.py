@@ -231,7 +231,7 @@ class EquipmentMenuSfxContract(unittest.TestCase):
             lines = routine_lines(sword, "SwordSlots_Select",
                                   dict(self.flags, ENABLE_MENU_MAP_TRAVEL=travel))
             with self.subTest(map_travel=travel):
-                # $1A (tunic) first: the popup with Map & Travel, else no action.
+                # $1A (tunic) first: the popup with the four-page menu, else no action.
                 self.assertEqual(lines[:3], ["CMP.b #$1A", "BNE +", tunic])
                 self.assertIn("CMP.b #$19", lines)
                 heavy = lines[lines.index(".heavy"):]
@@ -262,7 +262,7 @@ class EquipmentMenuSfxContract(unittest.TestCase):
         selections = {"$0202": 0x0D, "$020B": 14, "BoundMask": 3,
                       "RingSlot1": 2, "SavedOcarinaSong": 4, "CurrentSong": 4}
         for loop in (0, 1):
-            # Legacy three-page ring; the Map & Travel ring has its own test.
+            # Legacy three-page ring; the four-page ring has its own test.
             flags = dict(self.flags, ENABLE_MENU_PAGE_LOOP=loop, ENABLE_MENU_MAP_TRAVEL=0)
             routines = {"Menu_Page3_Turn": routine_lines(
                 self.page3, "Menu_Page3_Turn", flags)}
