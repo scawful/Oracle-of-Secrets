@@ -387,6 +387,11 @@ incsrc "Sprites/NPCs/ranch_girl.asm"
 incsrc "Sprites/Objects/swap_diamond.asm"
 %log_end("swap_diamond", !LOG_SPRITES)
 
+; Moved from bank $2C (2026-11-18). Bank-neutral, long entries/exits.
+%log_start("follower_swim_draw", !LOG_SPRITES)
+incsrc "Sprites/NPCs/follower_swim_draw.asm"
+%log_end("follower_swim_draw", !LOG_SPRITES)
+
 ; A file that orgs into a vanilla bank must pushpc/pullpc, or the next incsrc
 ; lands on vanilla code (fortune_teller.asm put ranch_girl/cloud_bridge on the
 ; vanilla fortune teller at $0DC92E until 2026-09-26).
