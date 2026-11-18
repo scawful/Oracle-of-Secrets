@@ -2999,6 +2999,42 @@ class ExperimentalNativeManifestTest(unittest.TestCase):
         raw=json.dumps(manifest,sort_keys=True,separators=(',',':')).encode()
         self.assertEqual(hashlib.sha256(raw).hexdigest(),'92058a7e869effe704eac802bddefe111e5c44085452a2de46523635771fb3e5')
 
+    def test_source_attribute_tail_requires_exact_literal_513_byte_span(self):
+        root=self.fixture.root
+        source='.cache/special_overworld_native_data.asm'
+        path=self.fixture.write_text(source,'')
+        hook=HookEntry(0x518300,'attributes','patch',None,source+':3')
+        regions=[{'start':'0x519000','end':'0x519030'}]
+        defines={f'SPECIAL_OVERWORLD_SEMANTIC_{k}':v for k,v in
+                 dict(ENABLED=1,REVISION=5,CODE_BASE=0x518000,CODE_END=0x519000,ROWS=0x519000,COUNT=4).items()}
+        defines.update(SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED=1,
+                       SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE=0x518300)
+        def text(count=513):
+            return '; preceding managed payload\npushpc\norg $518300\n  db '+','.join(['$A5']*count)+'\nassert pc() == $518501\nassert pc() == Lyra_SourceTileTypes90_End\npullpc\n'
+        good=text();path.write_text(good)
+        _validate_expanded_hooks_disjoint_from_editor_regions([hook],regions,root,semantic_defines=defines)
+        bad=[text(512),text(514),good.replace('$518501','$518502'),
+             good.replace('db $A5,','db $A5+0,'),good.replace('db $A5,','skip 1\ndb '),
+             good.replace('db $A5,','incbin "data.bin"\ndb '),
+             good.replace('db $A5,','org $518300\ndb '),
+             good.replace('db $A5,','if 1\nendif\ndb '),good+'org $519000\n',
+             good.replace('assert pc() == $518501','; assert pc() == $518501')]
+        for content in bad:
+            path.write_text(content)
+            with self.subTest(content=content[:90]),self.assertRaises(ManifestGenerationError):
+                _validate_expanded_hooks_disjoint_from_editor_regions([hook],regions,root,semantic_defines=defines)
+        path.write_text(good)
+        for key,value in [('SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED',0),
+                          ('SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE',0x518301),
+                          ('SPECIAL_OVERWORLD_SEMANTIC_CODE_END',0x518500)]:
+            wrong=dict(defines);wrong[key]=value
+            with self.subTest(key=key),self.assertRaises(ManifestGenerationError):
+                _validate_expanded_hooks_disjoint_from_editor_regions([hook],regions,root,semantic_defines=wrong)
+        for address,src in [(0x518301,source+':3'),(0x518300,'other.asm:3'),(0x518300,source+':2')]:
+            wrong=HookEntry(address,'wrong','patch',None,src)
+            with self.subTest(src=src,address=address),self.assertRaises(ManifestGenerationError):
+                _validate_expanded_hooks_disjoint_from_editor_regions([wrong],regions,root,semantic_defines=defines)
+
     def test_semantic_source_bound_is_narrow_and_active(self):
         root=self.fixture.root
         path=self.fixture.write_text('Overworld/special_overworld_semantic.asm',

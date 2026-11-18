@@ -18,10 +18,13 @@ class NativeDirectoryEmissionTest(unittest.TestCase):
                         (0xE8, source, True), (0xE9, source, True),
                         (0xEA, source, True),
                         *((row, source, True) for row in range(0xEB, 0xF3)),
-                        (0xF3, source, False), (0xFE, source, False),
+                        *((row, source, True) for row in range(0xF6, 0xFD)),
+                        *((row, source, False) for row in (0xF3,0xF4,0xFD,0xFE,0xFF)),
                         (0xE8, 'Dungeons/unrelated.asm', False),
                         *((row, 'Dungeons/unrelated.asm', False)
-                          for row in range(0xEB, 0xF3))):
+                          for row in range(0xEB, 0xF3)),
+                        *((row, 'Dungeons/unrelated.asm', False)
+                          for row in range(0xF6, 0xFD))):
                     with self.subTest(table=table, row=row, source=emitting_source):
                         address = table + row
                         location = f'{address >> 16:02X}:{address & 65535:04X}'

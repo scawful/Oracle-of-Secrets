@@ -65,6 +65,28 @@ def number(value):
     return int(value, 0) if isinstance(value, str) else value
 
 
+COLLISION_FIELDS = frozenset(('collision_attributes_hex', 'collision_attributes_sha256'))
+
+
+def collision_attributes(entry):
+    """Return an optional authenticated 64-byte source-sheet attribute payload."""
+    present = COLLISION_FIELDS.intersection(entry)
+    require(not present or present == COLLISION_FIELDS,
+            'source collision attributes require both payload and hash')
+    if not present:
+        return None
+    payload, digest = (entry[name] for name in
+                       ('collision_attributes_hex', 'collision_attributes_sha256'))
+    require(type(payload) is str and re.fullmatch('[0-9a-f]{128}', payload),
+            'source collision attributes must be 64 bytes of lowercase hex')
+    require(type(digest) is str and re.fullmatch('[0-9a-f]{64}', digest),
+            'source collision hash must be lowercase SHA256')
+    raw = bytes.fromhex(payload)
+    require(hashlib.sha256(raw).hexdigest() == digest,
+            'source collision attributes hash mismatch')
+    return raw
+
+
 def read_spec(path):
     spec = json.loads(Path(path).read_text())
     require(type(spec) is dict and set(spec) == {'schema_version', 'start', 'capacity', 'encoding', 'sheets'}, 'invalid source sheet spec keys')
@@ -77,7 +99,8 @@ def read_spec(path):
         require(type(entry) is dict, 'invalid sheet entry')
         if 'global_sheet' in entry:
             require(spec['schema_version'] == 2, 'new global sheets require source schema 2')
-            require(set(entry) - {'flag'} == {'global_sheet', 'source', 'decoded_sha256', 'why'}, 'invalid new global sheet keys')
+            require(set(entry) - {'flag'} - COLLISION_FIELDS == {'global_sheet', 'source', 'decoded_sha256', 'why'}, 'invalid new global sheet keys')
+            collision_attributes(entry)
             require('flag' not in entry or (isinstance(entry['flag'], str) and re.fullmatch('ENABLE_[A-Z0-9_]+', entry['flag'])), 'flag must name an ENABLE_* define')
             global_id = number(entry['global_sheet'])
             require(0xDF <= global_id <= 0xFE, 'source-authored globals must be $DF-$FE; $FF is the default sentinel')

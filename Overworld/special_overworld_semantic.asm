@@ -227,6 +227,48 @@ Lyra_SemanticLiftWord:
 Lyra_SemanticActionWords_End:
 
 endif
+if not(defined("SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED"))
+  !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED = 0
+endif
+assert !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED == 0 || !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED == 1
+if !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED == 1
+assert !SPECIAL_OVERWORLD_NATIVE == 1 && !SPECIAL_OVERWORLD_RESIDENT_ENABLED == 1
+; M16/X16, X=source character 0..511. SkyTileType has already pushed P.
+; Long accesses preserve D/DBR/X/Y and all scratch. Restore P before the
+; full-word table LDA so its N/Z exactly replace the original LDA's N/Z.
+; The complete size byte must be 0; reserved size bits cannot qualify.
+Lyra_SourceTileType:
+    CPX.w #$0200 : BCS .legacy
+    LDA.l $7E001B : AND.w #$00FF : BNE .legacy
+    LDA.l $7E008A : CMP.w #$0090 : BNE .legacy
+    LDA.l $7E040A : CMP.w #$0090 : BNE .legacy
+    LDA.l !LYRA_CURRENT_TABLE_parent+$0090 : AND.w #$00FF
+    CMP.w #$0090 : BNE .legacy
+    LDA.l !LYRA_CURRENT_TABLE_area_size+$0090 : AND.w #$00FF
+    BNE .legacy
+    PLP
+    LDA.l Lyra_SourceTileTypes90, X
+    RTL
+.legacy:
+    JML Oracle_Lyra_SourceTileTypeLegacy
+Lyra_SourceTileType_End:
+assert defined("SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE")
+assert !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE >= !SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE
+assert !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE+$0201 <= !SPECIAL_OVERWORLD_SEMANTIC_CODE_END
+assert pc() <= !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE, "Semantic code reaches source attribute table"
+; Keep the untouched gap and table reservation in this bounded semantic block.
+; A second org would create a separate, unbounded manifest hook.
+skip !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE-pc()
+Lyra_SourceTileTypes90:
+    ; The existing managed native-data include emits the authenticated bytes
+    ; here after code assembly. The compiled seal verifies all513 bytes,
+    ; including the original sentinel for the M16 read at character $1FF.
+    skip $0201
+Lyra_SourceTileTypes90_End:
+assert Lyra_SourceTileTypes90_End-Lyra_SourceTileTypes90 == $0201
+assert (Lyra_SourceTileTypes90&$FFFF)+$0201 <= $10000
+endif
+
 Lyra_SemanticCodeEnd:
 assert pc() <= !SPECIAL_OVERWORLD_SEMANTIC_CODE_END, "Semantic code exceeds explicit bound"
 pullpc

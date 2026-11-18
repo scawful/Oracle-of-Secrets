@@ -10,8 +10,15 @@
 ; DBR and D; the final LDA supplies N/Z exactly as the replaced instruction.
 ; Long WRAM reads keep the selector independent of the caller's direct page.
 
+if not(defined("SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED"))
+  !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED = 0
+endif
+assert !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED == 0 || !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED == 1
+
+if !ENABLE_SKY_OVERWORLD_ROUTE == 1 || !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED == 1
 if !ENABLE_SKY_OVERWORLD_ROUTE == 1
 assert !ENABLE_SKY_OVERWORLD_GRAPHICS == 1, "Sky route requires its source graphics"
+endif
 
 ; Single source of truth for outdoors selected Sky maps ($84-$87, $8C-$8F).
 ; Clobbers 16-bit A; preserves X, Y, DBR, D, and stack (branch target sets N/Z).
@@ -27,6 +34,14 @@ endmacro
 SkyTileType:
 {
   PHP
+if !SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED == 1
+  assert !SPECIAL_OVERWORLD_NATIVE == 1 && !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
+  ; Reuse this exact four-caller ABI. The wrapper owns the already-pushed P;
+  ; route1 keeps Sky dispatch; route0 retains the original vanilla read.
+  JML Lyra_SourceTileType
+  #Lyra_SourceTileTypeLegacy:
+endif
+if !ENABLE_SKY_OVERWORLD_ROUTE == 1
   %SkyTileType_BranchIfSky(.sky, .vanilla)
 .sky
 if !SPECIAL_OVERWORLD_NATIVE == 1
@@ -80,12 +95,14 @@ endif
   PLP
   LDA.l SkyTileTypes, X
   RTL
+endif
 .vanilla
   PLP
   LDA.l $0E9459, X
   RTL
 }
 
+if !ENABLE_SKY_OVERWORLD_ROUTE == 1
 ; Retained west-landing source attributes, exact512 bytes from the
 ; qualified old Sky ROM0d0a0d1b (SHA25643fd6ce8 for this table).
 ; $37E chars18C/18D/19C/19D remain $40; void char $1E3 ($7F8/rims) is pit $20.
@@ -204,6 +221,8 @@ SkyTileType_GuardVoidDig:
   JML $1BBE3B
 }
 
+endif ; Sky-only tables and dig behavior
+
 pushpc
 assert read4($00886E) == $0E9459BF, "GetTileType table read moved"
 org $00886E ; @hook module=Overworld name=SkyTileType_GetTileType kind=jsl target=SkyTileType expected_m=16 expected_x=16 protected_size=4
@@ -221,6 +240,7 @@ assert read4($1BC04E) == $0E9459BF, "SmashRockPile table read moved"
 org $1BC04E ; @hook module=Overworld name=SkyTileType_SmashRockPile kind=jsl target=SkyTileType expected_m=16 expected_x=16 protected_size=4
   JSL SkyTileType
 assert pc() == $1BC052
+if !ENABLE_SKY_OVERWORLD_ROUTE == 1
 assert read4($1BBE3E) == $29037AAD, "TileInteract_DashLift dig gate moved"
 assert read4($1BBE42) == $01C900FF, "TileInteract_DashLift dig gate tail moved"
 assert read3($1BBE46) == $F2D000, "TileInteract_DashLift dig branch moved"
@@ -228,5 +248,6 @@ org $1BBE3E ; @hook module=Overworld name=SkyTileType_GuardVoidDig kind=jml targ
   JML SkyTileType_GuardVoidDig
   NOP #7
 assert pc() == $1BBE49
+endif
 pullpc
 endif

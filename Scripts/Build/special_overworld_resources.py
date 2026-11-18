@@ -159,12 +159,17 @@ def _graphics_sources(value, graphics_root):
         flat = bytes(pixel for row in grid for pixel in row)
         row = dict(sheet_id=sheet, source=entry['source'], flag=entry.get('flag'),
                    decoded_sheet_sha256=_sha(flat))
+        attributes = sheet_overrides.collision_attributes(entry)
+        if attributes is not None:
+            row.update({key: entry[key] for key in sheet_overrides.COLLISION_FIELDS})
         expected.append(row)
         source_record = dict(spec=spec_name,
             spec_sha1=provenance['spec_sha1'], source=entry['source'],
             flag=entry.get('flag'), define_files_sha256=define_files)
         if ordinary_sha1 is not None:
             source_record['ordinary_spec_sha1'] = ordinary_sha1
+        if attributes is not None:
+            source_record.update({key: entry[key] for key in sheet_overrides.COLLISION_FIELDS})
         authenticated[sheet] = (raw, grid, source_record)
     _require(set(provenance) == {'spec', 'spec_sha1', 'sheets'}
              and provenance.get('sheets') == expected, 'GRAPHICS_SOURCE_ROWS_MISMATCH')
@@ -570,6 +575,65 @@ def _sky_overlay_closure(source, value, tiles, areas, *, experimental_page_tile1
     return conditional, overlays_by_host
 
 
+def _page_source_attributes(source, value, assets, areas, authenticated):
+    """Compose explicit source attributes; current native consumer is page $90 only.
+
+    The active animation owns $1C0..$1DF even when static slot 7 has another sheet.
+    Other chunks retain legacy bytes unless their selected source provides attrs.
+    """
+    supplied = {sheet: sheet_overrides.collision_attributes(record)
+                for sheet, (_, _, record) in authenticated.items()
+                if sheet_overrides.COLLISION_FIELDS.intersection(record)}
+    if not supplied:
+        return None
+    legacy_pc = native.pc(0x0E9459)
+    legacy = source[legacy_pc:legacy_pc + 513]
+    _require(len(legacy) == 513, 'SOURCE_ATTRIBUTES_LEGACY_TABLE_TRUNCATED')
+    pages = {page['map_id']: page for page in value['pages']}
+    required = {page for area in areas if area['resident_required'] for page in area['maps']}
+    for page, record in pages.items():
+        profile = record.get('source_profile', {})
+        explicit = set(profile.get('graphics_sheets', ()))
+        explicit.add(profile.get('animated_sheet'))
+        _require(not explicit.intersection(supplied) or page in required,
+                 'SOURCE_ATTRIBUTES_RESIDENT_PAGE_REQUIRED')
+    result = None
+    for area in areas:
+        if not area['resident_required']:
+            continue
+        for page in area['maps']:
+            data = assets[page, 0]
+            selected = [slot['sheet_id'] for slot in data['slots']]
+            animation = data['animation']['sheet_id']
+            # Static slot 7 indices 0..31 are hidden by active animation.
+            consumed = set(selected[:7] + [selected[7], animation]) & supplied.keys()
+            if not consumed:
+                continue
+            _require(value['directory_revision'] == 5, 'SOURCE_ATTRIBUTES_REVISION5_REQUIRED')
+            _require(len(source) > 0x140145 and source[0x140145] == 3,
+                     'SOURCE_ATTRIBUTES_ZSCUSTOM_MARKER_UNSUPPORTED')
+            _require(page == 0x90 and area['parent_map_id'] == 0x90
+                     and area['size'] == 'small' and area['maps'] == [0x90]
+                     and pages[page]['parent_map_id'] == 0x90,
+                     'SOURCE_ATTRIBUTES_PAGE_GEOMETRY_UNSUPPORTED')
+            composed = bytearray(legacy)
+            for slot, sheet in enumerate(selected):
+                if sheet in supplied:
+                    composed[slot * 64:slot * 64 + 64] = supplied[sheet]
+            if animation in supplied:
+                composed[448:480] = supplied[animation][:32]
+            else:
+                # A static slot 7 payload never supplies the animated quarters.
+                composed[448:480] = legacy[448:480]
+            result = dict(map_id=0x90, parent_map_id=0x90, area_size=0,
+                selected_static_sheets=selected, animated_sheet=animation,
+                source_sheet_hashes={str(sheet): _sha(supplied[sheet])
+                                     for sheet in sorted(consumed)},
+                **_payload(bytes(composed), format='tile8_attributes_with_M16_sentinel'),
+                changed_attributes=sum(a != b for a, b in zip(composed[:512], legacy[:512])))
+    return result
+
+
 def plan_saved_native_terrain(source, exported, *, graphics_root=None,
                               experimental_page_tile16=False, overlay_asset_contexts=None):
     """Reuse the retained packer with saved-ROM pages, never a terrain sidecar.
@@ -694,5 +758,8 @@ def plan_saved_native_terrain(source, exported, *, graphics_root=None,
         result.update(schema=EXPERIMENTAL_PLAN_SCHEMA, runtime_supported=False,
             page_tile16_definitions_sha256=value['page_tile16_definitions']['sha256'],
             runtime_requirements=list(PAGE_TILE16_RUNTIME_REQUIREMENTS))
+    attributes = _page_source_attributes(source, value, assets, areas, authenticated)
+    if attributes is not None:
+        result['source_attributes'] = attributes
     result['plan_sha256'] = _sha(_json_bytes(result))
     return result

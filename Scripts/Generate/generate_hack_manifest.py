@@ -1656,7 +1656,9 @@ def _bounded_before_native_authoring_metadata(
 def _bounded_before_native_page_tile16(root, hook, physical, start, end, defines):
     """Admit only the existing semantic code's enforced bound before table413."""
     source = hook.source.rpartition(":")[0]
-    if not defines or source != "Overworld/special_overworld_semantic.asm":
+    semantic_source = "Overworld/special_overworld_semantic.asm"
+    attribute_source = ".cache/special_overworld_native_data.asm"
+    if not defines or source not in (semantic_source, attribute_source):
         return False
     names = ("ENABLED", "REVISION", "CODE_BASE", "CODE_END", "ROWS", "COUNT")
     values = [defines.get("SPECIAL_OVERWORLD_SEMANTIC_" + name) for name in names]
@@ -1671,12 +1673,42 @@ def _bounded_before_native_page_tile16(root, hook, physical, start, end, defines
     limit_pc = _strict_lorom_to_pc(limit - 1, "Semantic code last byte") + 1
     rows_pc = _strict_lorom_to_pc(rows, "Semantic rows")
     hook_pc = _strict_lorom_to_pc(physical, "Semantic hook")
-    if (hook_pc != base_pc or not base_pc < limit_pc <= rows_pc
+    if (not base_pc < limit_pc <= rows_pc
             or base >> 16 != (limit - 1) >> 16
             or base_pc // 0x8000 != (limit_pc - 1) // 0x8000
             or (rows & 0xFFFF) + count * 12 > 0x10000
             or rows_pc != start or not start < end
             or start + count * 12 != end):
+        return False
+    if source == attribute_source:
+        # This generated tail supports literal bytes only. Count actual bytes;
+        # a claimed end assertion alone cannot authorize an unknown span.
+        table = defines.get("SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE")
+        if (defines.get("SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED") != 1
+                or type(table) is not int or table != 0x518300
+                or physical != table or not base <= table < table + 513 <= limit):
+            return False
+        lines = (root / source).read_text().splitlines()
+        active = [line.split(';', 1)[0].strip() for line in lines]
+        try:
+            line_number = int(hook.source.rpartition(':')[2]) - 1
+        except ValueError:
+            return False
+        if (line_number < 1 or line_number >= len(active)
+                or active[line_number - 1] != 'pushpc'
+                or active[line_number] != 'org $518300'):
+            return False
+        tail = [line for line in active[line_number + 1:] if line]
+        if tail[-3:] != ['assert pc() == $518501',
+                         'assert pc() == Lyra_SourceTileTypes90_End', 'pullpc']:
+            return False
+        data_lines = tail[:-3]
+        if not data_lines or any(not re.fullmatch(
+                r'db\s+\$[0-9A-F]{2}(?:,\$[0-9A-F]{2})*', line)
+                for line in data_lines):
+            return False
+        return sum(line.count('$') for line in data_lines) == 513
+    if hook_pc != base_pc:
         return False
     lines = (root / source).read_text().splitlines()
     active = [line.strip() for _, line, _ in _iter_active_lines(lines, defines)]

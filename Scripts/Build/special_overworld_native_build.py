@@ -239,10 +239,41 @@ def prepare_native_compilation(source, exported, *, data_pc, capacity,
         allocation_granted=False, ordinary_build_ready=False,
         runtime_admission=False, publication_authorized=False)
 
+    result['data_asm'] += source_attribute_data_asm(result)
     if revision == 5:
         result.update(schema='special_overworld.native_build_preparation.experimental-v2',
                       semantic_source_contract=_semantic_source_contract(source, map_count, entries))
     return result
+
+
+def _source_attribute_payload(prepared):
+    row = prepared['resource_plan'].get('source_attributes')
+    if row is None:
+        return None
+    raw = resident._verified_payload(row)
+    _require(row.get('map_id') == 0x90 and row.get('parent_map_id') == 0x90
+             and row.get('area_size') == 0 and len(raw) == 513,
+             'NATIVE_BUILD_SOURCE_ATTRIBUTES_INVALID')
+    return raw
+
+
+def source_attribute_constants(prepared):
+    """Keep the managed reader-constants include strictly numeric-only."""
+    return ('!SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_ENABLED = 1\n'
+            f'!SPECIAL_OVERWORLD_SOURCE_ATTRIBUTES_TABLE_BASE = ${native.SOURCE_ATTRIBUTE_TABLE_BASE:06X}\n'
+            if _source_attribute_payload(prepared) is not None else '')
+
+
+def source_attribute_data_asm(prepared):
+    """Use the existing managed native-data include; no new file/reservation."""
+    raw = _source_attribute_payload(prepared)
+    if raw is None:
+        return ''
+    lines = ['pushpc', f'org ${native.SOURCE_ATTRIBUTE_TABLE_BASE:06X}']
+    lines.extend('  db ' + ','.join(f'${byte:02X}' for byte in raw[at:at+16])
+                 for at in range(0, len(raw), 16))
+    return '\n'.join(lines + [f'assert pc() == ${native.SOURCE_ATTRIBUTE_TABLE_BASE+len(raw):06X}',
+                              'assert pc() == Lyra_SourceTileTypes90_End', 'pullpc', ''])
 
 
 def _semantic_source_contract(source, capacity, entries):
@@ -359,7 +390,7 @@ SEMANTIC_ENTRANCE_SITES = (
 )
 
 
-def _semantic_compiled_readers(source, compiled, entries, symbols, protected):
+def _semantic_compiled_readers(source, compiled, entries, symbols, protected, source_attributes=None):
     """Validate actual enabled consumers before normalizing a comparison copy."""
     code_pc = native.pc(native.SEMANTIC_CODE_BASE)
     code_limit = native.pc(native.SEMANTIC_CODE_LIMIT - 1) + 1
@@ -377,6 +408,27 @@ def _semantic_compiled_readers(source, compiled, entries, symbols, protected):
     _require(all(first_pc >= limit or end_pc <= at for at, limit, _ in protected),
              'NATIVE_BUILD_SEMANTIC_CODE_OVERLAPS_SAVED_SOURCE')
     targets, hooks, normalized = {}, [], []
+    if source_attributes is None:
+        _require('Lyra_SourceTileType' not in symbols and 'Lyra_SourceTileTypes90' not in symbols,
+                 'NATIVE_BUILD_UNAUTHENTICATED_SOURCE_ATTRIBUTES')
+    else:
+        expected = resident._verified_payload(source_attributes)
+        table = _symbol(symbols, 'Lyra_SourceTileTypes90')
+        table_end = _symbol(symbols, 'Lyra_SourceTileTypes90_End', exclusive_end=True)
+        wrapper = _symbol(symbols, 'Lyra_SourceTileType')
+        sky = _symbol(symbols, 'Oracle_SkyTileType')
+        legacy = _symbol(symbols, 'Oracle_Lyra_SourceTileTypeLegacy')
+        _require(first <= wrapper < table and table == native.SOURCE_ATTRIBUTE_TABLE_BASE
+                 and table_end == table + 513 and table_end <= end
+                 and compiled[native.pc(table):native.pc(table)+513] == expected,
+                 'NATIVE_BUILD_SOURCE_ATTRIBUTES_TABLE_MISMATCH')
+        _require(legacy == sky + 5 and compiled[native.pc(sky):native.pc(sky)+5]
+                 == b'\x08\x5C' + wrapper.to_bytes(3, 'little'),
+                 'NATIVE_BUILD_SOURCE_ATTRIBUTES_DISPATCH_MISMATCH')
+        for site in (0x00886E, 0x1BBEFD, 0x1BBF2A, 0x1BC04E):
+            _require(compiled[native.pc(site):native.pc(site)+4]
+                     == b'\x22' + sky.to_bytes(3, 'little'),
+                     'NATIVE_BUILD_SOURCE_ATTRIBUTES_CALLER_MISMATCH')
 
     def hook(site, name, length):
         target = _symbol(symbols, name)
@@ -413,9 +465,14 @@ def _semantic_compiled_readers(source, compiled, entries, symbols, protected):
         previous = site
     _require(len(set(targets.values())) == len(targets),
              'NATIVE_BUILD_SEMANTIC_TARGET_ALIASED')
-    return normalized, dict(code_extent=dict(snes=[first, end], pc=[first_pc, end_pc]),
+    proof = dict(code_extent=dict(snes=[first, end], pc=[first_pc, end_pc]),
         hooks=hooks, hook_count=len(hooks), source_preimages_validated=True,
         actual_compiled_consumers_verified=True, normalization_comparison_only=True)
+    if source_attributes is not None:
+        proof['source_attributes'] = dict(map_id=0x90, parent_map_id=0x90, area_size=0,
+            table_snes=[table, table_end], byte_count=513, sha256=_sha(expected),
+            wrapper_snes=wrapper, caller_count=4, full_M16_table_verified=True)
+    return normalized, proof
 
 
 def plan_native_compiled_seal(source, exported, compiled, symbols, *,
@@ -452,6 +509,11 @@ def plan_native_compiled_seal(source, exported, compiled, symbols, *,
         source, experimental_page_tile16=experimental_page_tile16)
     revision = struct.unpack_from('<H', source, native.DIRECTORY_PC + 8)[0]
     _require(not semantic_readers or revision == 5, 'NATIVE_BUILD_SEMANTIC_REVISION5_REQUIRED')
+    _require(not prep['resource_plan'].get('source_attributes') or semantic_readers,
+             'NATIVE_BUILD_SOURCE_ATTRIBUTES_SEMANTIC_READERS_REQUIRED')
+    if prep['resource_plan'].get('source_attributes'):
+        _require(source[0x140145] == compiled[0x140145] == 3,
+                 'NATIVE_BUILD_SOURCE_ATTRIBUTES_ZSCUSTOM_MARKER_CHANGED')
     code_address, code_size = entries[300]
     code_start = _symbol(symbols, 'Lyra_CurrentNativeCodeStart')
     code_end = _symbol(symbols, 'Lyra_CurrentNativeCodeEnd', exclusive_end=True)
@@ -515,7 +577,8 @@ def plan_native_compiled_seal(source, exported, compiled, symbols, *,
                             snes=[first, end], pc=[pc_first, pc_end]))
 
     semantic_spans, semantic_proof = (
-        _semantic_compiled_readers(source, compiled, entries, symbols, protected)
+        _semantic_compiled_readers(source, compiled, entries, symbols, protected,
+            prep['resource_plan'].get('source_attributes'))
         if semantic_readers else ([], None))
     restored = bytearray(compiled)
     for at, end in semantic_spans:

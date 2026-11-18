@@ -185,12 +185,12 @@
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
       "path": "Scripts/Build/lyra_native_loaders.py",
-      "sha256": "a88688c1a6ab226cd6365b3b7107bde652054e06970216cbbc24f7eb809df3f8"
+      "sha256": "9cecb973f5b46534e9f43165cfc0b2c7bdb4c59567f41d69b80451506a40fa16"
     },
     "shared:Scripts/Generate/sheet_overrides.py": {
       "source_set": "shared",
       "path": "Scripts/Generate/sheet_overrides.py",
-      "sha256": "916ea44f0816aeb370043589dd82ed58acb2b88f5375c3f2bf354cd2d36d3ea7"
+      "sha256": "63d2bfb478b7476d9c344ca7fe3719e38b0d43236f065787d5c1200e3f4954be"
     },
     "shared:Scripts/Build/native_overworld_authoring_metadata.py": {
       "source_set": "shared",
@@ -320,7 +320,7 @@
     "shared:Overworld/special_overworld_semantic.asm": {
       "source_set": "shared",
       "path": "Overworld/special_overworld_semantic.asm",
-      "sha256": "d0fe1fbc1e8c34903d9a1af00fc67acd831f9eaf9563d3fe2c6373edb13c047a"
+      "sha256": "78a2c2f7255ead3a585b33aef0597272f5945228c4d94b8db2de162c77425848"
     },
     "shared:Sprites/NPCs/farore_d8_graphics.asm": {
       "source_set": "shared",

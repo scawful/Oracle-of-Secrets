@@ -137,6 +137,7 @@ def _constants(source, prepared, *, experimental_page_tile16=False):
         text += native.semantic_reader_constants(source, code_preimage=source[first:end],
             experimental_page_tile16=True)
         text += '!SPECIAL_OVERWORLD_SEMANTIC_ENABLED = 1\n'
+        text += compiler.source_attribute_constants(prepared)
     return text
 
 
