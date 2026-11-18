@@ -227,7 +227,9 @@ AttractRoyal_StoryCast_empty:
   db $08,$04,$80,$B8,$04,$48,$88,$04,$B8,$88,$0B,$80,$70,$02,$80,$B8,$02,$48,$88,$02,$B8,$88,$02,$80,$70
 
 AttractRoyal_CodeEnd:
-assert pc() <= $0CF766 ; Attract_DoTextInDungeonScene remains untouched
+; Vanilla Attract_SkipToFileSelect ($0CF700, Start press) and Attract_BuildNextImageTilemap
+; ($0CF72E-$0CF765, storybook) stay live with royal scenes on, so the ceiling is $0CF700.
+assert pc() <= $0CF700 ; Start-skip, storybook and Attract_DoTextInDungeonScene remain untouched
 
 ; Review fix (coordinator, QUEUE252): AnimateActor does not fit in $0CF1AE-$0CF766,
 ; and the Bank $2C dungeon stream has no room for it (Somaria landing assert at $2CF700).
