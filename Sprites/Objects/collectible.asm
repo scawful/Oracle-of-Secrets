@@ -51,7 +51,7 @@ endif
     JSR Sprite_SwordShield_Draw
     BRA +
   .not_intro_sword
-  LDA.b $8A : CMP.b #$5E : BNE .not_lupo_mountain
+  JSR Collectible_IsRockMeatArea : BCC .not_lupo_mountain
     JSR Sprite_RockSirloin_Draw
     BRA +
   .not_lupo_mountain
@@ -82,12 +82,30 @@ Sprite_Collectible_Prep:
     +
     LDA.b #$02 : STA.w SprAction, X
   .not_intro_sword
-  LDA.b $8A : CMP.b #$5E : BNE .not_lupo_mountain
+  JSR Collectible_IsRockMeatArea : BCC .not_lupo_mountain
     LDA.b #$03 : STA.w SprAction, X
   .not_lupo_mountain
 
   PLB
   RTL
+}
+
+; Returns C=1 when the current overworld area ($8A) swaps Pineapple ($52) for
+; Rock Meat (Lupo Mountain $5E or Lyra Shrine of Power 64x64 group $B0/$B1/$B8/$B9).
+; Expects 8-bit A; preserves X/Y.
+Collectible_IsRockMeatArea:
+{
+  LDA.b $8A
+  CMP.b #$5E : BEQ .yes
+  CMP.b #$B0 : BEQ .yes
+  CMP.b #$B1 : BEQ .yes
+  CMP.b #$B8 : BEQ .yes
+  CMP.b #$B9 : BEQ .yes
+  CLC
+  RTS
+.yes
+  SEC
+  RTS
 }
 
 Sprite_Collectible_Main:
