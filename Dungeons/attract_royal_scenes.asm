@@ -1,6 +1,5 @@
 ; King, Zelda-sprite visit, and matched empty Kalyxo hall.
 ; Uses the existing three room-card slots, narration and scene timers.
-assert !ENABLE_CUSTOM_ATTRACT_SEQUENCE == 1, "Royal scenes require custom attract history"
 
 org $0CEEF0 ; @hook module=Dungeons name=AttractRoyal_LoadVectors kind=data
   dw AttractRoyal_LoadCard, AttractRoyal_LoadCard, AttractRoyal_LoadCard

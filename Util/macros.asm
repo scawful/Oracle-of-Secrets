@@ -58,10 +58,6 @@ endif
 !ENABLE_MINECART_LIFT_TOSS           = 0
 !ENABLE_D3_PRISON_SEQUENCE           = 0
 !ENABLE_OCARINA_SONG_TINT            = 0
-; RC opening / cutscene features.
-!ENABLE_CUSTOM_ATTRACT_SEQUENCE      = 1
-; Accepted royal attract cards; kept off until focused playback passes.
-!ENABLE_ATTRACT_ROYAL_SCENES          = 1
 ; Aux ABI 1 needs an explicitly bound authoring table; preserve ordinary ROMs.
 !ENABLE_OW_AUX_EXTENSION              = 0
 !ENABLE_KALYXO_DOCKS_PROFILE          = 0

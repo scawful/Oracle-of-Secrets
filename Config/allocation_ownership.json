@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "93651919f3c789548487238685af809e66dbf25f42acef0d03f2b577648808a8"
+      "sha256": "fdffdfa36489d792f95af1530c989f5141a683e297f709f74b3656d8c21febb6"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "8caccebb8246385c6d02ceb65471228bb45059948a6f4aad44075021da0d9fe2"
+      "sha256": "2b890e1c339466f7bdb05979fc72eeebfee87cb31ede8c05197fc5235a6506b8"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -215,7 +215,7 @@
     "shared:Oracle_main.asm": {
       "source_set": "shared",
       "path": "Oracle_main.asm",
-      "sha256": "24834922c45a410ac7e800b4203697b03f93f39a568300231ed7e2dc3cdd3e2c"
+      "sha256": "44586665dfacc3916c97b16d2720b1995adac3e637da1330171ad20ad1741638"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",

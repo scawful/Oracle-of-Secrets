@@ -181,10 +181,8 @@ print  "End of sky_d8_award.asm           ", pc
 incsrc "Dungeons/d7_farore_rescue.asm"
 print  "End of d7_farore_rescue.asm       ", pc
 
-if !ENABLE_ATTRACT_ROYAL_SCENES == 1
 incsrc "Dungeons/attract_royal_graphics.asm"
 print "End of attract_royal_graphics.asm  ", pc
-endif
 
 incsrc "Dungeons/sky_tower_graphics.asm"
 
