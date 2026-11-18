@@ -68,11 +68,20 @@ def read_ledger(path):
 def base_block(text, first_label):
     """Base and byte extent of the one asar `base $addr` ... `base off` block
     whose first label is first_label. Bounded decoder: `Label: skip N` (decimal),
-    braces and asserts only. Other shapes need a new proof, never a guessed size."""
+    braces and asserts only. Other shapes need a new proof, never a guessed size.
+    Lines inside `if`/`else`/`endif` are excluded from the extent: a flag-gated
+    field needs its own ledger claim with the matching condition."""
     found = []
     for base, body in re.findall(r'^\s*base\s+\$([0-9A-Fa-f]+)\s*$(.*?)^\s*base\s+off\b', text, re.M | re.S):
-        lines = [line.split(';', 1)[0].strip() for line in body.splitlines()]
-        lines = [line for line in lines if line and line not in ('{', '}') and not line.startswith('assert ')]
+        lines, depth = [], 0
+        for line in (raw.split(';', 1)[0].strip() for raw in body.splitlines()):
+            word = line.split(maxsplit=1)[0] if line else ''
+            if word in ('if', 'endif'):
+                depth += 1 if word == 'if' else -1
+                require(depth >= 0, 'Unbalanced if/endif in base block')
+            elif depth == 0 and line and line not in ('{', '}') and not line.startswith('assert '):
+                lines.append(line)
+        require(depth == 0, 'Unbalanced if/endif in base block')
         if not lines or not lines[0].startswith(first_label + ':'):
             continue
         size = 0
@@ -110,6 +119,34 @@ def source_evidence(ledger, roots):
                 address += 0x7E0000
             require(address == c['base'], f"{c['id']}: source address disagrees with ledger")
     return {key: value['sha256'] for key, value in ledger['sources'].items()}
+
+
+def refresh_evidence(ledger, roots, keys=None):
+    """Return {key: (old, new)} for stale sources under the given roots.
+
+    The refreshed ledger must still pass every anchor and binding check for the
+    claims these roots can prove, so a hash refresh never hides a moved address.
+    """
+    sources = {k: s for k, s in ledger['sources'].items() if s['source_set'] in roots}
+    for key in keys or ():
+        require(key in sources, f"Unknown or unbound source key: {key}")
+    changes = {}
+    for key, src in sources.items():
+        if keys and key not in keys:
+            continue
+        root = Path(roots[src['source_set']]).resolve()
+        path = (root / src['path']).resolve()
+        require(path.is_relative_to(root) and path.is_file(), f"Missing/invalid evidence: {key}")
+        new = digest(path)
+        if new != src['sha256']:
+            changes[key] = (src['sha256'], new)
+    view = dict(ledger, sources={k: dict(s, sha256=changes.get(k, (0, s['sha256']))[1]) for k, s in sources.items()},
+                claims=[c for c in ledger['claims'] if set(c['provenance']) <= set(sources)
+                        and (not c.get('binding') or c['binding']['source'] in sources)])
+    stale = [k for k, s in view['sources'].items() if digest(Path(roots[s['source_set']]) / s['path']) != s['sha256']]
+    require(not stale, f"Other stale sources block the check: {', '.join(stale)}")
+    source_evidence(view, roots)
+    return changes
 
 
 def physical(c):

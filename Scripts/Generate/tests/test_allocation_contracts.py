@@ -97,6 +97,19 @@ class OwnershipTests(unittest.TestCase):
             path.unlink()
             with self.assertRaisesRegex(AllocationError,'Missing/invalid'):source_evidence(data,{'shared':root})
 
+    def test_refresh_evidence_updates_hash_but_not_moved_address(self):
+        from allocation_contracts import refresh_evidence
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);path=root/'proof.txt';path.write_text('Owner = $7E1000\n')
+            data=ledger(claim('a',0x7E1000,1));data['sources']['proof']['sha256']=digest(path)
+            data['claims'][0]['binding']={'source':'proof','symbol':'Owner'}
+            self.assertEqual(refresh_evidence(data,{'shared':root}),{})
+            path.write_text('; comment\nOwner = $7E1000\n')
+            self.assertEqual(refresh_evidence(data,{'shared':root}),{'proof':(data['sources']['proof']['sha256'],digest(path))})
+            with self.assertRaisesRegex(AllocationError,'Unknown or unbound'):refresh_evidence(data,{'shared':root},['nope'])
+            path.write_text('Owner = $7E1001\n')
+            with self.assertRaisesRegex(AllocationError,'disagrees'):refresh_evidence(data,{'shared':root})
+
     def test_base_block_binding_checks_base_and_extent(self):
         block='org $008000\nbase $7E1E70\n{\nFirst: skip 1\nWord:  skip 2 ; note\nassert pc() <= $7E1F00\n}\nbase off\n'
         with tempfile.TemporaryDirectory() as directory:
@@ -131,6 +144,18 @@ class OwnershipTests(unittest.TestCase):
         self.assertEqual(claim['condition'],{'ENABLE_KALYXO_BOAT':1})
         self.assertEqual(claim['binding'],{'source':'shared:Core/symbols.asm','symbol':'Boat_Marker','base_block':True})
         self.assertEqual(base_block((ROOT/'Core/symbols.asm').read_text(),'Boat_Marker'),(0x7E1ECB,19))
+
+    def test_base_block_excludes_flag_gated_fields(self):
+        # A flag-gated field needs its own conditional claim; the block extent must not depend on the flag.
+        from allocation_contracts import base_block
+        block='base $7E1EDE\nFirst: skip 2\nif !FLAG == 1\nGated: skip 1\nendif\nEnd: skip 0\nbase off\n'
+        self.assertEqual(base_block(block,'First'),(0x7E1EDE,2))
+        with self.assertRaisesRegex(AllocationError,'Unbalanced'):base_block(block.replace('endif\n',''),'First')
+        real={c['id']:c for c in read_ledger(ROOT/'Config/allocation_ownership.json')['claims']}
+        horse,anchor=real['horse_form_transient'],real['horse_park_anchor_area']
+        self.assertEqual(base_block((ROOT/'Core/symbols.asm').read_text(),'Horse_Marker'),(horse['base'],horse['size']))
+        self.assertEqual(anchor['base'],horse['base']+horse['size'])
+        self.assertEqual(anchor['condition'],{'ENABLE_HORSE_FORM':1,'ENABLE_HORSE_PARK_ANYWHERE':1})
 
 
     def test_real_palette_history_is_contained_without_hiding_other_owners(self):
