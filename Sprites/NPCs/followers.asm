@@ -1354,7 +1354,7 @@ LinkState_Minecart:
 
 TileBehavior_TL_Long:
 {
-  LDA.w !MinecartDirection : CMP.b #East : BNE +
+  LDA.w !MinecartDirection : CMP.b #East : BNE + ; lint: allow unindexed-slot-table
 
   +
   CMP.b #West

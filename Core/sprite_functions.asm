@@ -935,8 +935,8 @@ pullpc
 
 Intro_Dungeon_Main:
 {
-  LDA $0E20 : CMP.b #$92 : BNE .not_sprite_body_boss
-    LDA $0E30 : BEQ .not_sprite_body_boss
+  LDA $0E20 : CMP.b #$92 : BNE .not_sprite_body_boss ; lint: allow unindexed-slot-table
+    LDA $0E30 : BEQ .not_sprite_body_boss ; lint: allow unindexed-slot-table
     LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
 
     ; free ram used to check if the sprite ran this frame, if 0, it didn't run
