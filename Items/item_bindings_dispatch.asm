@@ -1,11 +1,10 @@
-; Dual-item binding prototype: live dispatcher and vanilla hooks. Default off.
+; Dual-item binding: live dispatcher and vanilla hooks.
 ; Included from Items/all_items.asm after Items/item_bindings_adapter.asm.
 ; Hooks: CheckYButtonPress new-press read ($07B07B) and both native X field-map
 ; reads ($0288F9 dungeon, $02A55A overworld). Routing joins MaskBinding_Tick's
 ; regular-item branch; reset joins LoadCheckpointOrWorld.
-if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
-assert !DISABLE_ITEMS == 0, "Dual-item prototype needs the item modules"
-assert !ENABLE_MASK_R_BINDING == 1, "Dual-item prototype routes through MaskBinding_Tick"
+assert !DISABLE_ITEMS == 0, "Dual-item binding needs the item modules"
+assert !ENABLE_MASK_R_BINDING == 1, "Dual-item binding routes through MaskBinding_Tick"
 ; ---------------------------------------------------------
 ; Live dispatcher. All entries run inside gameplay with D=0; long addressing
 ; for owned/WRAM bytes so caller DBR does not matter.
@@ -199,4 +198,3 @@ assert read4($02A55A) == $4029F6A5, "Overworld X map read moved"
 org $02A55A ; @hook module=Items name=ItemBindings_OverworldMapPress kind=jsl target=ItemBindings_MapPress expected_m=8
   JSL ItemBindings_MapPress
 pullpc
-endif

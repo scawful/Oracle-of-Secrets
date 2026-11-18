@@ -1024,7 +1024,7 @@ Menu_Page3_ScrollFrom:
 {
   SEP #$20
   LDA.b $E4 : BNE .scrolling
-if !ENABLE_MENU_MAP_TRAVEL == 1 && !ENABLE_GOLDSTAR_CELL == 1 && !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+if !ENABLE_MENU_MAP_TRAVEL == 1 && !ENABLE_GOLDSTAR_CELL == 1
     JSL MenuFlow_ItemsEnter              ; D-pad cross: matching row
 endif
     JSR Menu_RefreshInventoryScreen      ; returns SEP #$30

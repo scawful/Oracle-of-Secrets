@@ -1,8 +1,8 @@
 ; =========================================================
-; Codex HUD layout (HUD_LAYOUT_02/03), !ENABLE_HUD_LAYOUT_CODEX.
-; Included from Items/all_items.asm (bank $2B items stream): Menu bank $2E
-; has no room before the D8 boss slot ($2EB800). Template, cell defines,
-; floor spot and the $008B82 NMI hook live in Menu/menu_hud.asm.
+; 2-item HUD layout (HUD_LAYOUT_02/03).
+; Included from Items/all_items.asm (assembled at $548800+; Menu bank $2E
+; has no room before the D8 boss slot ($2EB800) and bank $2B is full). Template,
+; cell defines, floor spot and the $008B82 NMI hook live in Menu/menu_hud.asm.
 ;
 ; Claims:
 ;   WRAM HudCornerBuffer $7EC84A-$7EC857 (14 bytes, Core/symbols.asm;

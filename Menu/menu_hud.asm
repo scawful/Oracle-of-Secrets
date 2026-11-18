@@ -31,16 +31,13 @@ org $0DF14F ; AnimateHeartRefill
   LDA.b #$7E : STA $02
 
 ; ==========================================================
-; HUD cell addresses. The Codex layout (HUD_LAYOUT_02/03,
-; !ENABLE_HUD_LAYOUT_CODEX) widens the item box to cols 23-29 (X icon cols
-; 24-25, gap col 26, Y icon cols 27-28, counts in the box's bottom border on
-; row 3), moves the magic box three tiles left (cols 18-22) and moves the
-; rupees and keys to the screen's bottom corners through HudCornerBuffer.
-; Flags off: the vanilla-layout cells, byte-identical code.
+; HUD cell addresses. The 2-item HUD layout (HUD_LAYOUT_02/03) widens the
+; item box to cols 23-29 (X icon cols 24-25, gap col 26, Y icon cols 27-28,
+; counts in the box's bottom border on row 3), moves the magic box three tiles
+; left (cols 18-22) and moves rupees and keys to the screen's bottom corners
+; through HudCornerBuffer.
 
 if not(defined("HudHalfMagic"))
-if !ENABLE_HUD_LAYOUT_CODEX == 1
-  assert !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1, "hud_layout_codex needs dual_item_binding_prototype (X item)"
   !HudHalfMagic   = $7EC72A             ; row 0, cols 21-22 (magic box top)
   !HudMagicFill   = $7EC766             ; row 1, cols 19-22
   !HudYCount      = $7EC7F6             ; row 3, cols 27-28 (under the Y icon)
@@ -49,16 +46,6 @@ if !ENABLE_HUD_LAYOUT_CODEX == 1
   !HudRupeeDigits = HudCornerBuffer+4   ; BG3 row 26, cols 4-6
   !HudKeyIcon     = HudCornerBuffer+$0A ; BG3 row 26, col 28
   !HudKeyDigit    = HudCornerBuffer+$0C ; BG3 row 26, col 29
-else
-  !HudHalfMagic   = $7EC730             ; row 0, cols 24-25
-  !HudMagicFill   = $7EC76C             ; row 1, cols 22-25
-  !HudYCount      = $7EC7B0             ; row 2, cols 24-25 (magic box bottom)
-  !HudYCountRest0 = $A00C
-  !HudYCountRest1 = $A00C
-  !HudRupeeDigits = $7EC79C             ; row 2, cols 14-16
-  !HudKeyIcon     = $7EC764             ; row 1, col 18
-  !HudKeyDigit    = $7EC7A4             ; row 2, col 18
-endif
 endif
 
 ; ==========================================================
@@ -167,9 +154,7 @@ HUD_Update:
   LDA.l (MagicTilemap)+4, X : STA !HudMagicFill+4
   LDA.l (MagicTilemap)+6, X : STA !HudMagicFill+6
 
-if !ENABLE_HUD_LAYOUT_CODEX == 1
   JSL HUD_CodexCells                    ; X icon/count, corner icons (both paths)
-endif
 
   ; Load how many rupees the player has
   LDA $7EF362
@@ -625,12 +610,10 @@ HexToDecimal:
 
 pushpc
 
-if !ENABLE_HUD_LAYOUT_CODEX == 1
 org $008B82 ; @hook module=Menu name=HUD_NMIUploadHook kind=jsl target=HUD_NMIUpload expected_m=8 expected_x=16
   assert read1($008B82) == $A9 && read1($008B83) == $01 && read1($008B84) == $8D && read2($008B85) == $420B, "Expected HUD DMA trigger at $008B82"
   JSL HUD_NMIUpload : NOP
 assert pc() == $008B87
-endif
 
 ; =========================================================
 
@@ -771,8 +754,7 @@ org $0DFE77
 HUD_Tilemap:
   incbin tilemaps/hud.tilemap
 
-if !ENABLE_HUD_LAYOUT_CODEX == 1
-; Codex HUD layout template (HUD_LAYOUT_02/03): magic box cols 18-22, item
+; 2-item HUD layout template (HUD_LAYOUT_02/03): magic box cols 18-22, item
 ; box cols 23-29 with the strip glyph $014, no rupee/key cells on rows 1-2.
 ; Row 0, cols 18-29: magic box top, item box top.
 org $0DFE9B           ; HUD_Tilemap+$24, row 0, col 18
@@ -790,7 +772,6 @@ org $0DFF1B           ; HUD_Tilemap+$A4, row 2, col 18
 org $0DFF65           ; HUD_Tilemap+$EE, row 3, col 23
   dw $207C, $207D, $A014, $A014, $A014, $207E, $201D
 assert pc() <= HUD_Tilemap+$180 && HUD_Tilemap == $0DFE77
-endif
 
 ; #_02816A: JSL RebuildHUD_Keys
 
@@ -816,13 +797,7 @@ FloorIndicatorNumberLow:
 }
 
 ; HUD buffer cells for the floor number: top row and the row below.
-if !ENABLE_HUD_FLOOR_CENTER == 1
-  !FloorTop = $7EC7DE                 ; row 3, col 15 (centered, HUD_LAYOUT_02)
-elseif !ENABLE_HUD_LAYOUT_CODEX == 1
-  !FloorTop = $7EC7E8                 ; row 3, cols 20-21 (under the magic meter)
-else
-  !FloorTop = $7EC7F0                 ; row 3, col 24 (vanilla)
-endif
+!FloorTop = $7EC7DE                   ; row 3, col 15 (centered, HUD_LAYOUT_02)
 !FloorBot = !FloorTop+$40
 
 ; *$57D0C-$57DA7 JUMP LOCATION (LONG)

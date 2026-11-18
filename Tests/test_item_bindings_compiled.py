@@ -19,13 +19,23 @@ ROOT = Path(__file__).resolve().parents[1]
 FIELDS = ('SavedVersion', 'SavedY', 'SavedX', 'Cursor', 'Logical', 'Action', 'Button')
 # Synthetic fixture storage ONLY: never export these addresses to game source.
 ADDR = {name: 0x7E6000 + i for i, name in enumerate(FIELDS)}
+EXTRA_DEFS = (
+    '!ENABLE_PORTAL_ROD_CELL = 1\n'
+    '!ENABLE_GOLDSTAR_CELL = 1\n'
+    'PortalRodOwned = $7EF3A6\n'
+    'GoldstarOwned = $7EF3A9\n'
+    'ByrnaOwned = $7EF3AC\n'
+    'BombchuOwned = $7EF3AD\n'
+    'SwitchHookOwned = $7EF3AE\n'
+    'GaroMaskOwned = $7EF3AF\n'
+)
 
 
 def assemble(folder, source):
     folder.mkdir()
     (folder / 'item_bindings.asm').write_text(source)
     asm = folder / 'fixture.asm'
-    asm.write_text('lorom\n' + '\n'.join(
+    asm.write_text('lorom\n' + EXTRA_DEFS + '\n'.join(
         f'ItemBinding{name} = ${addr:06X}' for name, addr in ADDR.items()) +
         '\norg $208000\nnamespace Oracle\nincsrc "item_bindings.asm"\nnamespace off\n')
     image = folder / 'fixture.sfc'
@@ -130,6 +140,18 @@ def exercise(lib, rom, labels):
             f.run('AssignX'); assert not f.cpu.c and f.field('SavedX') == 2
             f.run('AssignY'); assert not f.cpu.c and f.field('SavedY') == 1
         check(f'unsupported-binding-refusal-{invalid}', refusal)
+
+    for y_only, sram in ((0x06, 0x7EF35C), (0x0B, 0x7EF353), (0x0D, 0x7EF34C),
+                         (0x10, 0x7EF351), (0x1B, 0x7EF3AC), (0x1E, 0x7EF3AF)):
+        def retain_y_only(f, y_only=y_only, sram=sram):
+            f.put(sram, 1)
+            f.field('SavedVersion', 0); f.field('SavedX', 2)
+            f.put(0x202, y_only)
+            f.run('Load')
+            assert [f.field(k) for k in FIELDS] == [1, y_only, 0, y_only, 0, 0, 0]
+            f.run('SetCursor', y_only)
+            assert not f.cpu.c and f.field('Cursor') == y_only
+        check(f'retain-owned-y-only-{y_only:02X}', retain_y_only)
 
     for button, logical, action in ((1, 1, 3), (2, 2, 2)):
         def latch(f, button=button, logical=logical, action=action):

@@ -1,4 +1,4 @@
-; Dual binding core, first Bow/Boomerang slice. Not included in the game yet.
+; Dual-item binding core.
 ; Integrator must provide seven granted long-address symbols:
 ; ItemBindingSavedVersion, ItemBindingSavedY, ItemBindingSavedX (saved bytes);
 ; ItemBindingCursor, ItemBindingLogical, ItemBindingAction, ItemBindingButton
@@ -21,19 +21,31 @@ ItemBindings_Validate:
 {
   PHX : PHY : PHP : SEP #$30            ; SEP #$10 clears X/Y high bytes
   PHA
-  CMP.b #ItemBindings_Owner_End-ItemBindings_Owner : BCS .no
+  CMP.b #ItemBindings_Owner_End-ItemBindings_Owner : BCS ItemBindings_CheckFail
   TAX
+  LDA.l ItemBindings_ActionTable, X : BEQ ItemBindings_CheckFail
+  BRA ItemBindings_CheckOwner
+}
+
+; C=owned (any grid/Y item, including Y-only items), A unchanged.
+ItemBindings_ValidateY:
+{
+  PHX : PHY : PHP : SEP #$30
+  PHA
+  CMP.b #ItemBindings_Owner_End-ItemBindings_Owner : BCS ItemBindings_CheckFail
+  TAX
+ItemBindings_CheckOwner:
   LDA.l ItemBindings_Max, X : PHA        ; ownership upper bound, 0 = none
-  LDA.l ItemBindings_Owner, X : BEQ .drop
+  LDA.l ItemBindings_Owner, X : BEQ ItemBindings_CheckDrop
   TAX
-  LDA.l $7EF300, X : BEQ .drop
-  CMP 1,S : BCC .keep
-  LDA 1,S : BNE .drop
-.keep
+  LDA.l $7EF300, X : BEQ ItemBindings_CheckDrop
+  CMP 1,S : BCC ItemBindings_CheckKeep
+  LDA 1,S : BNE ItemBindings_CheckDrop
+ItemBindings_CheckKeep:
   PLA : PLA : PLP : PLY : PLX : SEC : RTS
-.drop
+ItemBindings_CheckDrop:
   PLA
-.no
+ItemBindings_CheckFail:
   PLA : PLP : PLY : PLX : CLC : RTS
 }
 
@@ -64,19 +76,20 @@ ItemBindings_IsLatchable:
 
 ; Indexed by logical ID (= menu grid index). Owner: offset into $7EF300.
 ; Logical cells own exactly 1 (Max $02); entries follow Menu_ItemIndex,
-; including its cell flags. Unsupported cells stay 0.
+; including its cell flags. ActionTable == $00 marks Y-only items.
 ItemBindings_Owner:
   db $00
-  db $40, $41, $42, $43, $44, $00       ; Bow Boomerang Hookshot Bombs Powder -
-  db $4B, $4A, $45, $46, $00, $00       ; Hammer Lamp FireRod IceRod - -
-  db $00, $00, $50, $00, $4D, $00       ; - - Somaria - Feather -
-  db $00, $00, $00, $00, $00, $00       ; masks, Bottle 4
+  db $40, $41, $42, $43, $44, $5C       ; Bow Boomerang Hookshot Bombs Powder Bottle1
+  db $4B, $4A, $45, $46, $53, $5D       ; Hammer Lamp FireRod IceRod Mirror Bottle2
+  db $4C, $4E, $50, $51, $4D, $5E       ; Ocarina Book Somaria FishingRod Feather Bottle3
+  db $49, $47, $58, $48, $52, $5F       ; Deku Zora Wolf Bunny Stone Bottle4
 if !ENABLE_PORTAL_ROD_CELL == 1
   db PortalRodOwned&$FF                 ; $19 Portal Rod
 endif
 if !ENABLE_GOLDSTAR_CELL == 1
-  db GoldstarOwned&$FF, $00             ; $1A Goldstar, $1B Byrna (Y only)
+  db GoldstarOwned&$FF, ByrnaOwned&$FF  ; $1A Goldstar, $1B Byrna (Y only)
   db BombchuOwned&$FF, SwitchHookOwned&$FF ; $1C Bombchu, $1D Switch Hook
+  db GaroMaskOwned&$FF                  ; $1E Garo Mask (Y only)
 endif
 ItemBindings_Owner_End:
 ItemBindings_Max:
@@ -89,7 +102,7 @@ if !ENABLE_PORTAL_ROD_CELL == 1
   db $02
 endif
 if !ENABLE_GOLDSTAR_CELL == 1
-  db $02, $00, $02, $02
+  db $02, $02, $02, $02, $02
 endif
 ItemBindings_ActionTable:
   db $00
@@ -101,7 +114,7 @@ if !ENABLE_PORTAL_ROD_CELL == 1
   db $0D                                ; Portal: rod routine
 endif
 if !ENABLE_GOLDSTAR_CELL == 1
-  db $0E, $00, $01, $0E                 ; Goldstar chain, -, Bombchu bomb, Switch Hook chain
+  db $0E, $00, $01, $0E, $00            ; Goldstar chain, -, Bombchu bomb, Switch Hook chain, -
 endif
 
 ; Item the running action belongs to, for handlers that pick a variant by
@@ -118,7 +131,7 @@ ItemBindings_EffectiveItem:
 }
 
 ; Load/new-file migration, only after inventory and saved bytes are loaded.
-; Unknown version: retain supported owned vanilla selection, otherwise choose
+; Unknown version: retain any owned Y selection ($01-$1E), otherwise choose
 ; Bow then Boomerang; X starts empty. Recognized version revalidates ownership.
 ; Version is committed last. No grant, refill, or in-flight action survives.
 ItemBindings_Load:
@@ -133,9 +146,9 @@ ItemBindings_Load:
 .valid_x
   LDA.l ItemBindingSavedY
 .validate_y
-  JSR ItemBindings_Validate : BCS .store_y
-  LDA.b #$01 : JSR ItemBindings_Validate : BCS .store_y
-  LDA.b #$02 : JSR ItemBindings_Validate : BCS .store_y
+  JSR ItemBindings_ValidateY : BCS .store_y
+  LDA.b #$01 : JSR ItemBindings_ValidateY : BCS .store_y
+  LDA.b #$02 : JSR ItemBindings_ValidateY : BCS .store_y
   LDA.b #$00
 .store_y
   STA.l ItemBindingSavedY : STA.l ItemBindingCursor

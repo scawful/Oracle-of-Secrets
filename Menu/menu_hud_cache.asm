@@ -15,7 +15,6 @@ HudCache_Rupees     = $7EC9C7 ; word ($7EF362)
 HudCache_AmmoItem   = $7EC9C9
 HudCache_AmmoVal    = $7EC9CA
 HudCache_Keys       = $7EC9CB
-if !ENABLE_HUD_LAYOUT_CODEX == 1
 HudCache_CodexMask  = $7EC9CC
 HudCache_CodexX     = $7EC9CD
 HudCache_CodexVer   = $7EC9CE
@@ -23,28 +22,15 @@ HudCache_CodexHook  = $7EC9CF
 HudCache_CodexRod   = $7EC9D0
 HudCache_CodexBow   = $7EC9D1
 HudCache_CodexAmmo  = $7EC9D2
-endif
 
-if !ENABLE_HUD_LAYOUT_CODEX == 1
-  assert !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1, "hud_layout_codex needs dual_item_binding_prototype (X item)"
-  !HudHalfMagic   = $7EC72A             ; row 0, cols 21-22 (magic box top)
-  !HudMagicFill   = $7EC766             ; row 1, cols 19-22
-  !HudYCount      = $7EC7F6             ; row 3, cols 27-28 (under the Y icon)
-  !HudYCountRest0 = $A014               ; box bottom strip
-  !HudYCountRest1 = $207E               ; box bottom piece
-  !HudRupeeDigits = HudCornerBuffer+4   ; BG3 row 26, cols 4-6
-  !HudKeyIcon     = HudCornerBuffer+$0A ; BG3 row 26, col 28
-  !HudKeyDigit    = HudCornerBuffer+$0C ; BG3 row 26, col 29
-else
-  !HudHalfMagic   = $7EC730             ; row 0, cols 24-25
-  !HudMagicFill   = $7EC76C             ; row 1, cols 22-25
-  !HudYCount      = $7EC7B0             ; row 2, cols 24-25 (magic box bottom)
-  !HudYCountRest0 = $A00C
-  !HudYCountRest1 = $A00C
-  !HudRupeeDigits = $7EC79C             ; row 2, cols 14-16
-  !HudKeyIcon     = $7EC764             ; row 1, col 18
-  !HudKeyDigit    = $7EC7A4             ; row 2, col 18
-endif
+!HudHalfMagic   = $7EC72A             ; row 0, cols 21-22 (magic box top)
+!HudMagicFill   = $7EC766             ; row 1, cols 19-22
+!HudYCount      = $7EC7F6             ; row 3, cols 27-28 (under the Y icon)
+!HudYCountRest0 = $A014               ; box bottom strip
+!HudYCountRest1 = $207E               ; box bottom piece
+!HudRupeeDigits = HudCornerBuffer+4   ; BG3 row 26, cols 4-6
+!HudKeyIcon     = HudCornerBuffer+$0A ; BG3 row 26, col 28
+!HudKeyDigit    = HudCornerBuffer+$0C ; BG3 row 26, col 29
 
 ; Entry: caller P preserved; expects DBR=$0D (for HexToDecimal/HUD_DrawItem).
 HUD_Update_Impl:
@@ -182,7 +168,6 @@ HUD_Update_Impl:
   LDA.l (MagicTilemap)+6, X : STA.l !HudMagicFill+6
 
   .magic_done
-if !ENABLE_HUD_LAYOUT_CODEX == 1
   SEP #$20
   LDA.l ItemBindingSavedX
   CMP.b #$01 : BEQ .codex_ammo_arrows
@@ -235,7 +220,6 @@ endif
   SEP #$20
   LDA.b #$FE : STA.l HudCache_Keys
   .codex_done
-endif
 
   ; Load how many rupees the player has
   SEP #$20
@@ -345,9 +329,7 @@ endif
     BRA .keys_done
 
   .keys_non_blank
-if !ENABLE_HUD_LAYOUT_CODEX == 1
     LDA.w #$2071 : STA.l !HudKeyIcon
-endif
 
   .keys_done
   SEP #$20

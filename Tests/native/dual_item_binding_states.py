@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Native proof: dual-item binding in more game states, plus old-save reload.
 
-Needs a ROM built with ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1 (and, for the
-HUD screenshots, ENABLE_HUD_LAYOUT_CODEX=1). Launches its own private headless
+Dual-item binding and the 2-item HUD layout are default-on. Launches its own private headless
 Mesen2-OOS (never oos-rc-play). Companion to dual_item_binding.py (overworld,
 Game Over save/reopen) and dual_item_menu_assign.py (menu assignment).
 

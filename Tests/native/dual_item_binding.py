@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Focused native proof for the dual-item binding prototype (Bow on Y, Boomerang on X).
 
-Needs a ROM built with ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1. Launches its own
+Dual-item binding is default-on. Launches its own
 private headless Mesen2-OOS (never oos-rc-play) from the gameplay baseline state.
 
 Declared fixture writes (unearned inventory/bindings, not acquisition proof):

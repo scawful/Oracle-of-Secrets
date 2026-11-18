@@ -4,15 +4,11 @@ org $07FA80
 
 ; Variant reads of the selected item: shared action routines (bombs, rod,
 ; hookshot chain) pick Bombchu/Portal/Byrna/Goldstar/Switch Hook by the
-; item ID. Under the dual-item prototype an X action must see the X item,
-; so these sites call ItemBindings_EffectiveItem (Items/item_bindings.asm).
-; Flags off: the original LDA.w $0202. M8; A and N/Z out, X/Y kept.
+; item ID. Under 2-item binding an X action must see the X item, so these
+; sites call ItemBindings_EffectiveItem (Items/item_bindings.asm).
+; M8; A and N/Z out, X/Y kept.
 macro SelectedItem()
-if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
   JSL ItemBindings_EffectiveItem
-else
-  LDA.w $0202
-endif
 endmacro
 incsrc "Items/bottle_net.asm"
 
@@ -373,26 +369,24 @@ if !ENABLE_GORON78_LANMOLA_BOSS == 1
 incsrc "Sprites/Bosses/lanmola_hammer78.asm"
 endif
 
-; Dual-item binding prototype (default off). Local span cap $600.
-if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+; Dual-item binding + 2-item HUD routines: bank $2B is full before the D8 boss
+; tile slot ($2BE000) and menu banks $2D/$2E are full; all entries are JSL/RTL
+; with long/mirrored reads, placed after room_state_code ($548000-$5487FF).
+pushpc
+org $548800
 ItemBindings_SpanStart:
 incsrc "Items/item_bindings_adapter.asm"
 incsrc "Items/item_bindings_dispatch.asm"
-assert pc()-ItemBindings_SpanStart <= $600, "Dual-item prototype exceeded its $600 span"
-endif
+assert pc()-ItemBindings_SpanStart <= $600, "Dual-item binding exceeded its $600 span"
 
-; Codex HUD layout routines (default off; Menu bank $2E is full).
-if !ENABLE_HUD_LAYOUT_CODEX == 1
 HudCodex_SpanStart:
 incsrc "Menu/menu_hud_codex.asm"
-assert pc()-HudCodex_SpanStart <= $200, "Codex HUD routines exceeded their $200 span"
-endif
+assert pc()-HudCodex_SpanStart <= $200, "2-item HUD routines exceeded their $200 span"
 
-; Dual-item binding menu code: Menu bank $2D is full. Entered by JSL from
-; the menu (DBR $2D); reads WRAM, long SRAM and Menu_ItemCursorPositions.l.
-if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
 incsrc "Menu/menu_item_bindings.asm"
-endif
+print "End of dual-item/2-item HUD       ", pc
+assert pc() <= $54A000, "Dual-item/2-item HUD exceeded $54A000"
+pullpc
 
 ; Two-slot sword helpers for the Equipment menu (Menu banks $2D/$2E are full).
 if !ENABLE_EQUIPMENT_MENU == 1

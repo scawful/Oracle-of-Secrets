@@ -1,5 +1,5 @@
 ; =========================================================
-; Dual-item prototype, menu side (!ENABLE_DUAL_ITEM_BINDING_PROTOTYPE).
+; Dual-item binding, menu side.
 ; Items page:
 ; - Y on an item binds it to Y. Moving the cursor no longer equips: the
 ;   cursor stays in $0202 while the menu is open (every menu routine reads
@@ -18,7 +18,7 @@
 ;   buttons: left corners green (Y), right corners blue (X). Neighbor cells
 ;   share one corner column, so two adjacent bound items share that corner
 ;   and X's color shows there.
-; Assembled in bank $2B from Items/all_items.asm (bank $2D is full); entries
+; Assembled at $548800+ from Items/all_items.asm (banks $2B/$2D are full); entries
 ; are JSL/RTL. Menu/menu.asm keeps two long wrappers for the $2D calls.
 ; =========================================================
 
@@ -90,7 +90,6 @@ Menu_Bindings_Input:
 Menu_Bindings_DrawMarkers:
 {
   PHP : REP #$30
-if !ENABLE_HUD_LAYOUT_CODEX == 1
   ; Full brackets (corners + side lines, like the gray cursor): Y green,
   ; X blue. Cells are 3 tiles apart across and down and the brackets 4x4,
   ; so neighbour cells share a column or row of tiles; whichever mark is
@@ -161,27 +160,6 @@ endif
   LDA.l ItemBindingSavedVersion : AND.w #$00FF : CMP.w #$0001 : BNE .none
   LDA.l ItemBindingSavedX
   BRA .cell
-endif
-  LDA.l ItemBindingMenuY : JSR .cell : BCC .no_y
-    LDA.w #!MB_YMarker : JSR .corners
-  .no_y
-  LDA.l ItemBindingSavedVersion : AND.w #$00FF : CMP.w #$0001 : BNE .done
-  LDA.l ItemBindingSavedX : JSR .cell : BCC .done
-    LDA.w #!MB_XMarker : JSR .corners
-    ; Same item on Y: the left corners show Y again.
-    LDA.l ItemBindingMenuY : EOR.l ItemBindingSavedX : AND.w #$00FF : BNE .done
-      LDA.w #!MB_YMarker : STA.w $1108, X
-      ORA.w #$8000 : STA.w $11C8, X
-  .done
-  PLP : RTL
-
-  ; A = top-left corner word; X = cell offset. Writes the four corners.
-  .corners
-  STA.w $1108, X                      ; top left
-  ORA.w #$4000 : STA.w $110E, X       ; top right (H flip)
-  ORA.w #$8000 : STA.w $11CE, X       ; bottom right (H+V flip)
-  EOR.w #$4000 : STA.w $11C8, X       ; bottom left (V flip)
-  RTS
 
   ; A low byte = item ID. C set: X = Menu_ItemCursorPositions offset.
   .cell

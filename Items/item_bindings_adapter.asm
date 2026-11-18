@@ -1,10 +1,7 @@
-; Dual-item binding prototype. Default off.
+; Dual-item binding adapter.
 ; Core + load/reset adapter; ORG-free so the compiled fixture can assemble it
 ; alone. Live routing and the three vanilla hooks are in
 ; Items/item_bindings_dispatch.asm, included right after this file.
-assert defined("ENABLE_DUAL_ITEM_BINDING_PROTOTYPE"), "Use canonical feature defaults"
-
-if !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
 assert ItemBindingSavedVersion == $7EF3B9
 assert ItemBindingSavedY == $7EF3BA && ItemBindingSavedX == $7EF3BB
 assert ItemBindingCursor == $7E02B3 && ItemBindingButton == $7E02B6
@@ -40,5 +37,3 @@ ItemBindings_AdapterLoad:
 .refuse
   REP #$20 : PLA : PLP : CLC : RTL
 }
-
-endif

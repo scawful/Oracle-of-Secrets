@@ -838,9 +838,8 @@ RegionalCheckpointSchema = $7EF3B4
 RegionalCheckpointEpoch  = $7EF3B5
 RegionalCheckpointKey    = $7EF3B6 ; word, ends before $7EF3B8
 RegionalCheckpointResumeIntent = $7EF3B8 ; byte: 0 Home, 1 last regional key
-; Root prototype grant 2026-11-14; not general live migration approval.
-; Disabled dual-item adapter: schema is written last; unsupported existing Y
-; selections must not be replaced by this Bow/Boomerang-only first slice.
+; 2-item HUD bindings: schema is written last ($7EF3B9 = 1). Old-save
+; migration (ItemBindings_Load) retains any owned Y selection; X starts empty.
 ItemBindingSavedVersion = $7EF3B9
 ItemBindingSavedY       = $7EF3BA
 ItemBindingSavedX       = $7EF3BB

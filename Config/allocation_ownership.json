@@ -365,7 +365,7 @@
     "shared:Menu/menu_hud_codex.asm": {
       "source_set": "shared",
       "path": "Menu/menu_hud_codex.asm",
-      "sha256": "1e38946a586a33dbd8ae86404eb9656f73d26c690986eb20d8842a84ad022ea9"
+      "sha256": "2012c0ee5e9e863efb11486c3d87e1094de78ab55da5a5501783a43c300a8812"
     },
     "shared:Overworld/travel_destinations.asm": {
       "source_set": "shared",
@@ -2445,6 +2445,27 @@
       "aliases": []
     },
     {
+      "id": "dual_item_hud_code",
+      "owner": "2-item HUD + dual-item binding code (Items/all_items.asm)",
+      "space": "snes_rom",
+      "base": 5539840,
+      "size": 6144,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Relocated JSL/RTL code and tables for item_bindings_adapter, item_bindings_dispatch, menu_hud_codex, and menu_item_bindings. Assembled at $548800-$549FFF (asserted) because banks $2B, $2D, and $2E are full.",
+      "reset": "No runtime ROM writes.",
+      "save": "Reads and writes ItemBindingSaved* ($7EF3B9-$7EF3BB).",
+      "provenance": [
+        "shared:Menu/menu_hud_codex.asm"
+      ],
+      "anchors": [
+        "org $548800",
+        "ItemBindings_SpanStart:",
+        "HudCodex_SpanStart:"
+      ],
+      "aliases": []
+    },
+    {
       "id": "kalyxo_boat_native_transient",
       "owner": "Ferry-only scene marker, state, cancellation preimage and bounded loader timer",
       "space": "wram",
@@ -2936,15 +2957,15 @@
     },
     {
       "id": "ItemBindingSavedVersion",
-      "owner": "Granted disabled dual-item prototype: SavedVersion",
+      "owner": "2-item HUD binding: SavedVersion",
       "space": "save_buffer",
       "base": 8319929,
       "size": 1,
       "status": "shared",
       "condition": {},
-      "lifetime": "Reserved per-file binding metadata; prototype source only, no live migration hook.",
-      "reset": "Vanilla new-file clear; explicit admitted prototype load validates assignments and commits schema last.",
-      "save": "Covered by vanilla five-page save, backup and checksum; no actual prototype save qualification yet.",
+      "lifetime": "Persistent per-file binding schema version (0 = unmigrated old/fresh save, 1 = migrated).",
+      "reset": "Vanilla new-file clear; ItemBindings_Load validates assignments and commits schema 1 last.",
+      "save": "Covered by vanilla five-page save, backup and checksum.",
       "provenance": [
         "shared:Core/sram.asm"
       ],
@@ -2958,15 +2979,15 @@
     },
     {
       "id": "ItemBindingSavedY",
-      "owner": "Granted disabled dual-item prototype: SavedY",
+      "owner": "2-item HUD binding: SavedY",
       "space": "save_buffer",
       "base": 8319930,
       "size": 1,
       "status": "shared",
       "condition": {},
-      "lifetime": "Reserved per-file binding metadata; prototype source only, no live migration hook.",
-      "reset": "Vanilla new-file clear; explicit admitted prototype load validates assignments and commits schema last.",
-      "save": "Covered by vanilla five-page save, backup and checksum; no actual prototype save qualification yet.",
+      "lifetime": "Persistent per-file Y item ID ($01-$1E). Retained across save/reopen and old-save migration.",
+      "reset": "Vanilla new-file clear; ItemBindings_Load retains any owned Y selection.",
+      "save": "Covered by vanilla five-page save, backup and checksum.",
       "provenance": [
         "shared:Core/sram.asm"
       ],
@@ -2980,15 +3001,15 @@
     },
     {
       "id": "ItemBindingSavedX",
-      "owner": "Granted disabled dual-item prototype: SavedX",
+      "owner": "2-item HUD binding: SavedX",
       "space": "save_buffer",
       "base": 8319931,
       "size": 1,
       "status": "shared",
       "condition": {},
-      "lifetime": "Reserved per-file binding metadata; prototype source only, no live migration hook.",
-      "reset": "Vanilla new-file clear; explicit admitted prototype load validates assignments and commits schema last.",
-      "save": "Covered by vanilla five-page save, backup and checksum; no actual prototype save qualification yet.",
+      "lifetime": "Persistent per-file X item ID (0 = native field map, else latchable item ID).",
+      "reset": "Vanilla new-file clear; old-save migration starts X empty (0) and revalidates ownership.",
+      "save": "Covered by vanilla five-page save, backup and checksum.",
       "provenance": [
         "shared:Core/sram.asm"
       ],
@@ -3068,14 +3089,14 @@
     },
     {
       "id": "ItemBindingCursor",
-      "owner": "Granted disabled dual-item prototype: Cursor",
+      "owner": "2-item HUD binding: Cursor",
       "space": "wram",
       "base": 8258227,
       "size": 1,
       "status": "shared",
       "condition": {},
-      "lifetime": "Dual-item prototype state at vanilla-unused $7E02B3-$7E02B6 (moved from $7E1EDE after the Horse Form transient block took that range). Separate from ancilla arrays (end $02B1) and !CurrentMask ($02B2).",
-      "reset": "ItemBindings_AdapterReset clears only these four bytes; called from LoadCheckpointOrWorld when ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1, and by the dispatcher on completion/cancel.",
+      "lifetime": "2-item binding state at vanilla-unused $7E02B3-$7E02B6 (moved from $7E1EDE after the Horse Form transient block took that range). Separate from ancilla arrays (end $02B1) and !CurrentMask ($02B2).",
+      "reset": "ItemBindings_AdapterReset clears only these four bytes; called from LoadCheckpointOrWorld, and by the dispatcher on completion/cancel.",
       "save": "Volatile WRAM; never saved.",
       "provenance": [
         "shared:Core/symbols.asm"
@@ -3090,14 +3111,14 @@
     },
     {
       "id": "ItemBindingLogical",
-      "owner": "Granted disabled dual-item prototype: Logical",
+      "owner": "2-item HUD binding: Logical",
       "space": "wram",
       "base": 8258228,
       "size": 1,
       "status": "shared",
       "condition": {},
-      "lifetime": "Dual-item prototype state at vanilla-unused $7E02B3-$7E02B6 (moved from $7E1EDE after the Horse Form transient block took that range). Separate from ancilla arrays (end $02B1) and !CurrentMask ($02B2).",
-      "reset": "ItemBindings_AdapterReset clears only these four bytes; called from LoadCheckpointOrWorld when ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1, and by the dispatcher on completion/cancel.",
+      "lifetime": "2-item binding state at vanilla-unused $7E02B3-$7E02B6 (moved from $7E1EDE after the Horse Form transient block took that range). Separate from ancilla arrays (end $02B1) and !CurrentMask ($02B2).",
+      "reset": "ItemBindings_AdapterReset clears only these four bytes; called from LoadCheckpointOrWorld, and by the dispatcher on completion/cancel.",
       "save": "Volatile WRAM; never saved.",
       "provenance": [
         "shared:Core/symbols.asm"
@@ -3112,14 +3133,14 @@
     },
     {
       "id": "ItemBindingAction",
-      "owner": "Granted disabled dual-item prototype: Action",
+      "owner": "2-item HUD binding: Action",
       "space": "wram",
       "base": 8258229,
       "size": 1,
       "status": "shared",
       "condition": {},
-      "lifetime": "Dual-item prototype state at vanilla-unused $7E02B3-$7E02B6 (moved from $7E1EDE after the Horse Form transient block took that range). Separate from ancilla arrays (end $02B1) and !CurrentMask ($02B2).",
-      "reset": "ItemBindings_AdapterReset clears only these four bytes; called from LoadCheckpointOrWorld when ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1, and by the dispatcher on completion/cancel.",
+      "lifetime": "2-item binding state at vanilla-unused $7E02B3-$7E02B6 (moved from $7E1EDE after the Horse Form transient block took that range). Separate from ancilla arrays (end $02B1) and !CurrentMask ($02B2).",
+      "reset": "ItemBindings_AdapterReset clears only these four bytes; called from LoadCheckpointOrWorld, and by the dispatcher on completion/cancel.",
       "save": "Volatile WRAM; never saved.",
       "provenance": [
         "shared:Core/symbols.asm"
@@ -3134,14 +3155,14 @@
     },
     {
       "id": "ItemBindingButton",
-      "owner": "Granted disabled dual-item prototype: Button",
+      "owner": "2-item HUD binding: Button",
       "space": "wram",
       "base": 8258230,
       "size": 1,
       "status": "shared",
       "condition": {},
-      "lifetime": "Dual-item prototype state at vanilla-unused $7E02B3-$7E02B6 (moved from $7E1EDE after the Horse Form transient block took that range). Separate from ancilla arrays (end $02B1) and !CurrentMask ($02B2).",
-      "reset": "ItemBindings_AdapterReset clears only these four bytes; called from LoadCheckpointOrWorld when ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1, and by the dispatcher on completion/cancel.",
+      "lifetime": "2-item binding state at vanilla-unused $7E02B3-$7E02B6 (moved from $7E1EDE after the Horse Form transient block took that range). Separate from ancilla arrays (end $02B1) and !CurrentMask ($02B2).",
+      "reset": "ItemBindings_AdapterReset clears only these four bytes; called from LoadCheckpointOrWorld, and by the dispatcher on completion/cancel.",
       "save": "Volatile WRAM; never saved.",
       "provenance": [
         "shared:Core/symbols.asm"
@@ -3156,14 +3177,14 @@
     },
     {
       "id": "ItemBindingMenuY",
-      "owner": "Granted disabled dual-item prototype: menu Y item",
+      "owner": "2-item HUD binding: menu Y item",
       "space": "wram",
       "base": 8258231,
       "size": 1,
       "status": "shared",
       "condition": {},
-      "lifetime": "Dual-item prototype menu-session byte at vanilla-unused $7E02B7 (usdasm UNUSED_7E02B7), directly after ItemBindingButton. Holds the Y item while the menu cursor browses in $0202.",
-      "reset": "Menu_Bindings_Open writes it on every menu open (Menu_InitGraphics); Menu_Bindings_Close copies it to $0202 on close. Only when ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1.",
+      "lifetime": "2-item binding menu-session byte at vanilla-unused $7E02B7 (usdasm UNUSED_7E02B7), directly after ItemBindingButton. Holds the Y item while the menu cursor browses in $0202.",
+      "reset": "Menu_Bindings_Open writes it on every menu open (Menu_InitGraphics); Menu_Bindings_Close copies it to $0202 on close.",
       "save": "Volatile WRAM; never saved; never read in gameplay.",
       "provenance": [
         "shared:Core/symbols.asm"
@@ -3202,14 +3223,12 @@
     },
     {
       "id": "hud_corner_buffer",
-      "owner": "Codex HUD layout bottom corners (rupees + keys)",
+      "owner": "2-item HUD layout bottom corners (rupees + keys)",
       "space": "wram",
       "base": 8308810,
       "size": 14,
       "status": "shared",
-      "condition": {
-        "ENABLE_HUD_LAYOUT_CODEX": 1
-      },
+      "condition": {},
       "lifetime": "HUD_CodexCells writes rupee (5 words) and key (2 words) cells after every HUD rebuild/update; HUD_NMIUpload DMAs them to BG3 row 26 (VRAM $6342/$635C) each NMI. Lies in usdasm UNUSED_7EC84A after the $14A-byte HUD template copy, so RebuildHUD never touches it.",
       "reset": "No reset: fully rewritten from SRAM rupees/keys on each HUD refresh; hidden HUD uploads blanks from $7EC700 instead.",
       "save": "Volatile WRAM; not saved.",

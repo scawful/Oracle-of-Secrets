@@ -148,6 +148,12 @@ jobs:
           printf '\x20\x68\x8D' | dd of=test.sfc bs=1 seek=$((0x43DD7)) conv=notrunc 2>/dev/null  # $08BDD7 JSR $8D68
           printf '\xBD\x5E\x0C' | dd of=test.sfc bs=1 seek=$((0x43ECA)) conv=notrunc 2>/dev/null  # $08BECA LDA $0C5E,X
 
+          # 2-item HUD and dual-item binding hooks (default-on).
+          printf '\xA9\x01\x8D\x0B\x42' | dd of=test.sfc bs=1 seek=$((0xB82)) conv=notrunc 2>/dev/null  # $008B82 HUD DMA trigger
+          printf '\xA5\xF4\x29\x40' | dd of=test.sfc bs=1 seek=$((0x3B07B)) conv=notrunc 2>/dev/null  # $07B07B CheckYButtonPress
+          printf '\xA5\xF6\x29\x40' | dd of=test.sfc bs=1 seek=$((0x108F9)) conv=notrunc 2>/dev/null  # $0288F9 Dungeon X map press
+          printf '\xA5\xF6\x29\x40' | dd of=test.sfc bs=1 seek=$((0x1255A)) conv=notrunc 2>/dev/null  # $02A55A Overworld X map press
+
           # Base HUD sheet pointers for $69/$6A/$6B, split across the three
           # pointer tables: $98A967/$98AF1A/$98B3F8. Preserve all nine guards.
           printf '\x98\x98\x98' | dd of=test.sfc bs=1 seek=$((0x505C)) conv=notrunc 2>/dev/null  # $00D05C-$00D05E banks

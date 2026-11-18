@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Native proof: bind Y and X by pressing Y and X on the Items page.
 
-Needs a ROM built with ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1. Launches its own
+Dual-item binding and the 2-item HUD layout are default-on. Launches its own
 private headless Mesen2-OOS (never oos-rc-play) from the gameplay baseline.
 
 Declared fixture writes (unearned inventory, not acquisition proof):
@@ -22,7 +22,7 @@ Scenario (all real controller input):
    (A never binds).
 8. Same item on both buttons: Y on Boomerang shows green left and blue right corners.
 
---codex (ROM built with hud_layout_codex): same four-corner marks; the gray
+Default 2-item HUD layout: full brackets around bound cells; the gray
 cursor covers its own cell on blink-on frames, so marks are sampled across a blink.
 """
 from __future__ import annotations
@@ -240,7 +240,7 @@ def main():
     ap.add_argument("--rom", type=Path, required=True)
     ap.add_argument("--work", type=Path, required=True)
     ap.add_argument("--app", type=Path, default=deku.APP_DEFAULT)
-    ap.add_argument("--codex", action="store_true", help="ROM built with hud_layout_codex")
+    ap.add_argument("--codex", action="store_true", default=True, help="Default-on 2-item HUD layout (kept for compatibility)")
     args = ap.parse_args()
     t = MenuAssignTest(args.rom, args.app, args.work, codex=args.codex)
     result = {"rom": str(args.rom), "status": "ERROR"}

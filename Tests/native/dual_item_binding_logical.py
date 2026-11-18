@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Native proof: logical-cell items on X (Portal, Goldstar, Bombchu, Switch Hook).
 
-Needs a ROM built with ENABLE_DUAL_ITEM_BINDING_PROTOTYPE=1 and the Portal and
-Goldstar cells (ENABLE_HUD_LAYOUT_CODEX=1 for the X box screenshots). Launches
+Dual-item binding and the 2-item HUD layout are default-on. Launches
 its own private headless Mesen2-OOS (never oos-rc-play). Companion to
 dual_item_binding_states.py.
 
