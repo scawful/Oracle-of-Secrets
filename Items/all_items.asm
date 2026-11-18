@@ -349,6 +349,10 @@ if !ENABLE_LYRA_TALKERS == 1
   %log_end("lyra_talker", !LOG_SPRITES)
 endif
 
+; Goron88 shared-stop occupancy: bank $31 is full. Entered by JSL from
+; MinecartLong; reads only low-WRAM sprite tables (mirrored), so it runs from here.
+%Goron88_EmitSharedStopOccupancy()
+
 ; Richard quest: bank $34 is full. Every JSL entry sets DB with PHK : PLB and
 ; hooks use JSL, so the file runs from this bank unchanged.
 if !ENABLE_RICHARD_QUEST == 1

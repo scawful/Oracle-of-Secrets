@@ -2,13 +2,14 @@
 ; Exact Goron88 shared-stop ownership; no new route or save state.
 ; Source: native01 game1fa and existing action7 route semantics.
 ; Verification: focused actualAsarCPU; successor native not run.
-; The two code chunks use existing sprite-stream tails, bank31 and2C.
+; The two code chunks live in bank $2B (Items/all_items.asm) and bank $2C.
 ; =========================================================
 
 ; Exact room88 shared stop: T3 remains a distinct vehicle, dormant while
 ; T10 occupies this dock. This is the existing action7 representation.
 ; Called before Long's dormant early exit so departure can wake T3.
 ; M/X8, D0; preserve P/X/Y/DBR and all scratch. Only T3's action changes.
+macro Goron88_EmitSharedStopOccupancy()
 Goron88_SharedStopOccupancy:
 {
   PHP
@@ -38,6 +39,7 @@ Goron88_SharedStopOccupancy:
   .idle
   JML Goron88_SharedStopCoordinates
 }
+endmacro
 
 ; Emit the coordinate/actor scan at the normal bank2C sprite cursor.
 ; The front chunk tail-jumps here with its original PHP still stacked.

@@ -324,7 +324,8 @@ if !ENABLE_GORON78_LANMOLA_BOSS == 1
   ; $30/$31 are full when D8 Farore follow is also on.
 endif
 
-; Same sprite ownership as MinecartLong; bounded bank31 qualification.
+; Defines the Goron88 shared-stop macros only (no bytes here). Bank $31 is
+; full: the occupancy check is emitted in Items/all_items.asm (bank $2B).
 incsrc "Sprites/Objects/minecart_shared_stop.asm"
 
 assert pc() <= $328000, "Bank $31 sprite region overflow"
