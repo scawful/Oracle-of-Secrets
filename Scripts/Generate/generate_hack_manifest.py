@@ -2603,6 +2603,18 @@ def generate_manifest(
         # Keep extra metadata outside graphics_sheet_regions: its schema is strict.
         manifest["graphics_sheet_regions"]["reserved_sheets"].extend(source_sheets["global_sheet_ids"])
         manifest[metadata_key] = source_sheets
+    dungeon_bg_spec = root / "Data/graphics/dungeon_bg_sheets.json"
+    if dungeon_bg_spec.is_file() and defines.get("DISABLE_DUNGEON", 0) == 0:
+        import dungeon_bg_overrides
+        try:
+            bg_spec = dungeon_bg_overrides.read_spec(dungeon_bg_spec)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            raise ManifestGenerationError(f"Dungeon BG sheet metadata invalid: {exc}") from exc
+        reserved = manifest["graphics_sheet_regions"]["reserved_sheets"]
+        for entry in bg_spec["sheets"]:
+            gid_hex = f"0x{dungeon_bg_overrides.number(entry['global_sheet']):02X}"
+            if gid_hex not in reserved:
+                reserved.append(gid_hex)
 
     manifest["protected_regions"] = {
         "description": protected_description,

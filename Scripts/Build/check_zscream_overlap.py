@@ -48,6 +48,7 @@ OWNED_REGIONS = (
                   0xEB, 0xEC, 0xED, 0xEE, 0xEF, 0xF0, 0xF1, 0xF2, 0xF5,
                   0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC)),  # F6 = map $22 pit sheet; F7/F8 = Abyss $63 windmill; F9 = Shrine of Power door 5; FA-FC = Lyra/Tail OW; 82 = sprite sheet $0F (D6 switch corner)
     ("Core/Generated/menu_icons/menu_icon_overrides.asm", 0x11FD00, 0x11FFFF),
+    ("Core/Generated/dungeon_bg_sheets/bg_sheet_overrides.asm", 0x11FD00, 0x11FFFF),
     # Wall-profile selector kits (default on): spare global sheet rows $F3-$FE
     # ($EA is Sky room sky; $EB-$F2 and $F5 belong to the Sky port)
     # (gen_wall_profiles.py KIT_SHEETS), one byte per row in each pointer array.

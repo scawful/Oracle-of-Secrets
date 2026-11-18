@@ -986,6 +986,15 @@ class ReachableSourceTest(unittest.TestCase):
         ])
         self.assertTrue({"0x7B", "0x7C", "0x6F", "0x70"}.issubset(
             graphics["reserved_sheets"]))
+        # Audited dungeon BG sheets from Data/graphics/dungeon_bg_sheets.json
+        # are also reserved when present.
+        spec = json.loads((REPO_ROOT / "Data/graphics/dungeon_bg_sheets.json").read_text())
+        self.fixture.write_text("Data/graphics/dungeon_bg_sheets.json", json.dumps(spec))
+        self.fixture.write_text("Data/graphics/dungeon_bg/kettle_3L.txt",
+                                (REPO_ROOT / "Data/graphics/dungeon_bg/kettle_3L.txt").read_text())
+        manifest_with_bg = generate_manifest(self.fixture.root)
+        self.assertTrue({"0x07", "0x1F", "0x22"}.issubset(
+            manifest_with_bg["graphics_sheet_regions"]["reserved_sheets"]))
         objects = manifest["dungeon_stream_regions"]["objects"]
         self.assertEqual(objects["strategy"], "copy_on_write")
         self.assertIn({"start": "0x298000", "end": "0x2A8000"},

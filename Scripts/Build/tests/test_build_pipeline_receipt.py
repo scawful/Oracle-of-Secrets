@@ -44,6 +44,7 @@ class BuildPipelineReceiptTest(unittest.TestCase):
                    'incsrc "Config/feature_flags.asm"\norg $028000 ; @hook module=Core\nRTL\n')
         self.write('Roms/oos999.sfc', 'disposable fixture bytes')
         for name in ('sheet_overrides.py', 'menu_icon_overrides.py',
+                     'dungeon_bg_overrides.py',
                      'validate_custom_collision_source.py',
                      'validate_expanded_message_source.py',
                      'generate_room_state_table.py'):
@@ -155,6 +156,8 @@ if '--constants' in args:
         self.assertTrue(self.check('source_sprite_sheets')['required'])
         self.assertEqual(self.check('menu_icon_sheets')['status'], 'passed')
         self.assertTrue(self.check('menu_icon_sheets')['required'])
+        self.assertEqual(self.check('dungeon_bg_sheets')['status'], 'passed')
+        self.assertTrue(self.check('dungeon_bg_sheets')['required'])
         self.assertEqual(self.check('native_overworld_constants')['status'], 'passed')
         self.assertEqual(self.check('native_overworld_preservation')['status'], 'passed')
         self.assertEqual(self.check('wall_kit_palette_ownership')['status'], 'passed')

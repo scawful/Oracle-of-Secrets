@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "start": "0x5D8000",
+  "capacity": 8192,
+  "sheets": [
+    {
+      "global_sheet": "0x07",
+      "base_sha256": "dfa7696e40bbe870571acb22ed796460f97488f1a7645c1d35b286eb57289544"
+    },
+    {
+      "global_sheet": "0x1F",
+      "base_sha256": "80570f83b60543f4b62de47a8ceb9329766567b490a5cb2ae7b8251727319c90"
+    },
+    {
+      "global_sheet": "0x22",
+      "base_sha256": "f342c024d2b40528566ff26a8c76778dab9be9876f9bfbbe194a52d1b4531de7"
+    }
+  ],
+  "patches": [
+    {
+      "name": "timber_kettle",
+      "kind": "grid_16x16",
+      "sheet": "0x07",
+      "source": "dungeon_bg/kettle_3L.txt",
+      "tiles": ["0x01", "0x0C", "0x0D", "0x0E"],
+      "require_blank": true
+    },
+    {
+      "name": "d7_fd0_floor_plate",
+      "kind": "base_tile_copy",
+      "sheet": "0x07",
+      "source_sheet": "0x09",
+      "source_base_sha256": "b66dc6c8bd6bd0258bf4c637ac0900aed6e0578e6d9c5b55337ae41cdd676d78",
+      "source_tiles": ["0x12", "0x13", "0x2B", "0x3B"],
+      "tiles": ["0x12", "0x13", "0x2B", "0x3B"],
+      "require_blank": true
+    },
+    {
+      "name": "d3_diamond_runner_trim",
+      "kind": "tile_8x8",
+      "sheet": "0x1F",
+      "tile": "0x33",
+      "expected_rows": [
+        "77777777",
+        "76677667",
+        "76766767",
+        "77677677",
+        "77677677",
+        "76766767",
+        "76677667",
+        "77777777"
+      ],
+      "rows": [
+        "77766777",
+        "77677677",
+        "76777767",
+        "67766776",
+        "67766776",
+        "76777767",
+        "77677677",
+        "77766777"
+      ]
+    },
+    {
+      "name": "d4_bevel_runner_trim",
+      "kind": "tile_8x8",
+      "sheet": "0x22",
+      "tile": "0x33",
+      "expected_rows": [
+        "21111112",
+        "17766771",
+        "16676661",
+        "16776661",
+        "16666761",
+        "14666671",
+        "17466471",
+        "21111112"
+      ],
+      "rows": [
+        "21111112",
+        "17777761",
+        "17666651",
+        "17666651",
+        "17666651",
+        "17666651",
+        "16555541",
+        "21111112"
+      ]
+    }
+  ]
+}

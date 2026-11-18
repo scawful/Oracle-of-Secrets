@@ -247,6 +247,10 @@ run_check source_sprite_sheets 1 check_source_sprite_sheets
 run_check menu_icon_sheets 1 python3 "$repo_root/Scripts/Generate/menu_icon_overrides.py" \
   --root "$repo_root" --base-rom "$base_rom" --check
 
+# Audited dungeon BG overrides preserve every unallocated tile in the editable base.
+run_check dungeon_bg_sheets 1 python3 "$repo_root/Scripts/Generate/dungeon_bg_overrides.py" \
+  --root "$repo_root" --base-rom "$base_rom" --check
+
 # Custom collision is editor-authored but source-owned. Fail before generating
 # build inputs when the selected base ROM does not reproduce the tracked JSON.
 echo "[*] Validating custom collision source contract..."

@@ -220,6 +220,9 @@ endif
 if !DISABLE_MENU == 0
   incsrc "Core/Generated/menu_icons/menu_icon_overrides.asm"
 endif
+if !DISABLE_DUNGEON == 0
+  incsrc "Core/Generated/dungeon_bg_sheets/bg_sheet_overrides.asm"
+endif
   if !WALLSEL_GFX == 1
     incsrc "Dungeons/wall_profile_gfx.asm"
   endif

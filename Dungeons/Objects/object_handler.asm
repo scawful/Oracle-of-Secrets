@@ -281,6 +281,7 @@ CustomObjectHandler2:
     dw .PitTS-.ObjData ; 08
     dw .PitTE-.ObjData ; 09
     dw .PitTW-.ObjData ; 0A
+    dw .TimberKettle-.ObjData ; 0B
 
   .ObjData
     .IceFurnace
@@ -305,6 +306,8 @@ CustomObjectHandler2:
       incbin Data/track_T_E.bin
     .PitTW
       incbin Data/track_T_W.bin
+    .TimberKettle
+      incbin Data/timber_kettle.bin
 }
 
 pushpc
