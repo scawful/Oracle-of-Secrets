@@ -181,13 +181,13 @@ class DekuStickRuntimeTest:
     def __init__(self, rom_path: Path, app_path: Path, work_dir: Path):
         self.rom = rom_path
         self.app = app_path
-        self.work_dir = work_dir
+        self.work_dir = Path(work_dir).expanduser().resolve()
         self.work_dir.mkdir(parents=True, exist_ok=True)
         self.screenshots_dir = self.work_dir / "screenshots"
         self.screenshots_dir.mkdir(parents=True, exist_ok=True)
 
         self.instance_name = f"deku-test-{int(time.time())}"
-        self.sock = self.work_dir / f"mesen-{self.instance_name}.sock"
+        self.sock = self.socket_path()
         self.home = self.work_dir / "profile"
         self.rom_copy = self.work_dir / "deku_candidate.sfc"
         shutil.copy2(self.rom, self.rom_copy)
@@ -201,9 +201,19 @@ class DekuStickRuntimeTest:
         self.results: dict[str, bool] = {}
         self.traces: dict[str, object] = {}
 
+    def socket_path(self) -> Path:
+        """Socket under --work, or ~/.cache/oos-sock when that path would exceed
+        the macOS AF_UNIX limit (103 chars + NUL); Mesen cannot bind longer paths."""
+        sock = self.work_dir / f"mesen-{self.instance_name}.sock"
+        if len(str(sock)) <= 103:
+            return sock
+        short = Path.home() / ".cache" / "oos-sock"
+        short.mkdir(parents=True, exist_ok=True)
+        return short / f"mesen-{self.instance_name}.sock"
+
     def launch(self, reset_save: bool = True):
         self.instance_name = f"deku-test-{int(time.time())}"
-        self.sock = self.work_dir / f"mesen-{self.instance_name}.sock"
+        self.sock = self.socket_path()
 
         if reset_save:
             shutil.copy2(SAVE_DEFAULT, self.home / "Saves" / "deku_candidate.srm")
