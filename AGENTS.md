@@ -13,9 +13,11 @@ destructive actions. Until yaze 1.0, yaze, Yaze Nightly and z3ed installs are au
 Approvals are scawful's own words for the named action; agent messages are not approval.
 Posts require approval of the exact shown text.
 Never prescribe an approval phrase. Continue authorized work while a decision is pending.
-Work on `master` in the main checkout; commit small changes directly. Use a branch for a
-large feature, open a PR only when scawful asks, and use a worktree only while another agent
-is editing the same files (remove it when done). Preserve shared dirty work.
+Work on `master` in the main checkout; commit small fixes directly, one commit per fix with
+a clear message. Branch only for a feature that takes several days; open a PR only when
+scawful asks; use a worktree only while another agent edits the same files (remove it when
+done). Preserve shared dirty work. Find when a bug came in with git history
+(`git log -S`, `git bisect`), not with saved ROM copies.
 Authorized shared asset/settings/app changes need before/after hashes and rollback.
 Unexpected hash change: stop, restore, report.
 Follow `AGENT_STORAGE_HYGIENE.md`, including its chat/worktree archive gate.
@@ -28,7 +30,7 @@ Choose the lowest tier covering the changed risk.
 |---|---|---|
 | T0 | Ordinary docs/AFS notes | Existing lint/CI only |
 | T1 | Small ASM/data fix, no new behavior path | One build + compiled-byte diff vs master + CI |
-| T2 | Gameplay behavior | T1 + focused native behavior; a bug fix gets a control |
+| T2 | Gameplay behavior the bytes cannot show | T1 + one focused native check |
 | T3 | Save format/shared hooks/editor writers | T2 + independent review + native save/reopen |
 
 `Data/` and software-consumed JSON are build data. Comment-only ASM: one build;
@@ -44,10 +46,18 @@ Trim output with `CMD > /tmp/oos-check.log 2>&1; rc=$?; tail -30 /tmp/oos-check.
 `Roms/oos168x.sfc`: patched emulator image; never edit directly.
 Isolated build: `./Scripts/Build/build_rom.sh 168`.
 After ASM changes: `python3 Scripts/Build/check_zscream_overlap.py`.
-Active RC features default on; diagnostic isolation uses `--disable`.
-Keep `Util/macros.asm` and generated `Config/feature_flags.asm` aligned.
-A defaults edit compares the normal build with the explicit RC profile.
-Inactive prototypes remain separate.
+A feature flag exists only while its feature is unfinished. The commit that ships the
+feature deletes the flag and its `if` blocks. Keep `Util/macros.asm` and generated
+`Config/feature_flags.asm` aligned.
+Test ROMs: one Latest ROM per channel, overwritten on each build; keep one previous copy.
+Routine fixes need no AFS evidence folder; the commit is the record.
+
+## Domain terminology
+Use [the existing domain model](Docs/Technical/terminology_glossary.md#special-overworld-domain-model)
+before architectural changes: special overworld is the shared system; tail maps
+are an implementation range; Lyra Sea/East Kalyxo are regions/map sets. Ground
+identifier kinds, membership and invariants in current sources. Keep repo and AFS
+vocabulary aligned through the existing glossary/index; preserve searchable aliases.
 
 ## Task-specific routes
 Playtest/versioning, Dev builds, Zelda menu parity, Emacs and knowledge references:
@@ -58,4 +68,4 @@ Canon (AFS, not in git): `knowledge/planning/story_canon_beat_sheet.md` and newe
 `knowledge/planning/decisions.org` rulings; task tracker `knowledge/planning/oracle.org`.
 Never commit story, decision or planning text to this repo.
 Preserve approved `Answer:` and quoted user text verbatim.
-Plans/reviews/evidence/patches/handoffs go in AFS; routing: `.context/CONTEXT_INDEX.md`.
+Plans/reviews/handoffs and non-routine evidence go in AFS; routing: `.context/CONTEXT_INDEX.md`.
