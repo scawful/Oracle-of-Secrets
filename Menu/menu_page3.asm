@@ -1074,4 +1074,5 @@ elseif !ENABLE_MENU_MAP_TRAVEL == 1
   error "ENABLE_MENU_MAP_TRAVEL needs ENABLE_EQUIPMENT_MENU"
 endif
 
+print "Bank2D Free Space: ", dec($2E8000-pc()), " bytes"
 assert pc() <= $2E8000, "Menu/menu_page3.asm overflows bank $2D"

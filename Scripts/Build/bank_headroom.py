@@ -5,12 +5,18 @@ Sprites/all_sprites.asm prints "BankNN Free Space: N bytes" for banks $30-$32.
 This reads those lines from the assembler log, prints one summary line, and
 exits 1 when any bank is below the fail floor or a bank line is missing.
 A bank below the warn floor still passes, with WARN in the summary.
+
+Banks $2B (Items), $2C (Dungeons) and $2D (Menu page 3) print the same line
+before their limit asserts. They are reported, never failed: they are packed
+up to fixed owners, and the assert already stops an overflow. A report bank
+that a flag set leaves out is skipped.
 """
 import argparse
 import re
 import sys
 
 BANKS = ("30", "31", "32")
+REPORT_BANKS = ("2B", "2C", "2D")
 WARN_BELOW = 512
 FAIL_BELOW = 64
 LINE = re.compile(r"^Bank([0-9A-Fa-f]{2}) Free Space: (-?\d+) bytes\s*$")
@@ -41,6 +47,10 @@ def evaluate(free, warn_below=WARN_BELOW, fail_below=FAIL_BELOW):
         elif n < warn_below:
             tag, warned = " WARN", True
         parts.append(f"${bank} {n} B{tag}")
+    for bank in REPORT_BANKS:
+        if bank in free:
+            n = free[bank]
+            parts.append(f"${bank} {n} B" + (" LOW" if n < warn_below else ""))
     verdict = "FAIL" if failed else ("WARN" if warned else "OK")
     summary = (f"bank headroom {verdict}: " + ", ".join(parts)
                + f" (warn <{warn_below} B, fail <{fail_below} B)")

@@ -482,6 +482,7 @@ endif
 ; Complete the shared-stop scan within the existing bank2C tail.
 %Goron88_EmitSharedStopScan()
 
+print "Bank2C Free Space: ", dec($2CF700-pc()), " bytes"
 assert pc() <= $2CF700, "Bank $2C sprite stream overlaps Somaria internal landing"
 
 if !ENABLE_MINECART_CART_SHUTTERS

@@ -37,6 +37,14 @@ class BankHeadroomTest(unittest.TestCase):
     def test_negative_free_space_fails(self):
         self.assertEqual(bh.evaluate({"30": -5, "31": 900, "32": 900})[0], 1)
 
+    def test_report_banks_never_fail(self):
+        text = L13.replace("Bank30 Free Space: 24", "Bank30 Free Space: 900") + "Bank2B Free Space: 0 bytes\nBank2C Free Space: 600 bytes\n"
+        code, summary = bh.evaluate(bh.parse(text))
+        self.assertEqual(code, 0)
+        self.assertIn("$2B 0 B LOW", summary)
+        self.assertIn("$2C 600 B", summary)
+        self.assertNotIn("$2D", summary)
+
 
 if __name__ == "__main__":
     unittest.main()
