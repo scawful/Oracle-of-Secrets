@@ -18,7 +18,6 @@ org $07D8A0
 org $078427 : JSR $9BAA ; Link_HandleAPress ; @hook module=Masks name=$9BAA kind=jsr target=$9BAA
 
 pullpc
-if !ENABLE_MINISH_AUTO_PORTAL == 1
 ; Walk onto the portal to shrink or grow (MinishPortal_Tick, bank $3A).
 ; Leave it before another transformation; no Y, R or D-pad release is required.
 LinkState_CheckForMinishForm:
@@ -28,48 +27,6 @@ LinkState_CheckForMinishForm:
   REP #$30
   RTS
 }
-else
-LinkState_CheckForMinishForm:
-{
-  SEP #$30
-  LDA.l GameState : BEQ .return
-    JSL $0FF979 ; AncillaSpawn_SwordChargeSparkle
-
-    ; Check for the R button (like minish cap)
-    JSL CheckNewRButtonPress : BCC .return
-
-      ; Skip the code if you have a mask item out
-      LDA $0202
-
-      ; Check if the value in A (from $0202) is LT $13.
-      CMP.b #$13 : BCC .continue
-
-      ; Check if the value in A (from $0202) is GTE to $16.
-      CMP.b #$17 : BCS .continue
-        LDA.b #$3C : STA.w $012E ; Error beep
-        JMP .return
-      .continue
-
-      LDA   !CurrentMask
-      CMP.b #$05 : BEQ .already_minish ; return to human form
-      CMP.b #$00 : BEQ .transform
-      CMP.b #$06 : BCC .return         ; don't transform if not human
-      .transform
-      JSL PlayerTransform
-
-      LDA #$39 : STA $BC   ; Change link's sprite
-      LDA #$05 : STA $02B2 ; Set the current mask form
-      BRA .return
-
-      .already_minish
-      JSL PlayerTransform
-      JSL ResetToLinkGraphics
-
-  .return
-  REP #$30
-  RTS
-}
-endif
 
 ; =========================================================
 

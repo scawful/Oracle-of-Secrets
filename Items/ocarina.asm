@@ -160,12 +160,8 @@ LinkItem_NewFlute:
     ; unchanged. Same as vanilla's unusable Mushroom in LinkItem_Powder:
     ; $07A2A8 LDA #$3C : JSR PlaySFX_Set2 ($078028), then $07A30C clears
     ; $3A bit 6 (set by CheckYButtonPress $07B073) so the next Y press works.
-if !ENABLE_EPONA_SONG == 1
     ; UpdateFluteSong just validated CurrentSong: 0 = no learned song.
     LDA.w $030F : BNE .has_song
-else
-    LDA.l $7EF34C : CMP.b #$02 : BCS .has_song
-endif
       LDA.b #$3C : JSR Player_DoSfx2
       LDA.b $3A : AND.b #$BF : STA.b $3A
       RTS
@@ -182,11 +178,7 @@ endif
                     RTS
                   +
                   CMP.b #$06 : BNE +
-if !ENABLE_EPONA_SONG == 1
                     JSL OcarinaEffect_Epona
-else
-                    JSL OcarinaEffect_Stone
-endif
                     RTS
                   +
                   JMP .song_of_healing
@@ -662,7 +654,6 @@ if !ENABLE_EQUIPMENT_MENU == 1
   ; CurrentSong ($030F) is volatile; SavedOcarinaSong ($7EF3AB) keeps the
   ; choice across save/reload. Restore from it when $030F is 0, validate
   ; against the learned count (garbage or unlearned -> song 1), then sync.
-if !ENABLE_EPONA_SONG == 1
   ; Learned songs are no longer a contiguous 1..count-1 range (song 6 is
   ; its own bit), so validation picks the lowest learned song instead.
   LDA.w CurrentSong : BNE .epona_check
@@ -671,7 +662,6 @@ if !ENABLE_EPONA_SONG == 1
   JSL Ocarina_ValidSong_Long
   STA.w CurrentSong : STA.l SavedOcarinaSong
   RTL
-endif
   LDA.l $7EF34C : CMP.b #$02 : BCC .equipment_none
   CMP.b #$08 : BCC .equipment_count
   LDA.b #$07
@@ -694,7 +684,7 @@ endif
   LDA.b #$00 : STA.l SavedOcarinaSong
   RTL
 else
-  assert !ENABLE_EPONA_SONG == 0, "Epona's Song needs !ENABLE_EQUIPMENT_MENU = 1"
+  error "Epona's Song needs !ENABLE_EQUIPMENT_MENU = 1"
   ; Highest song = min(Flute - 1, 6); keeps the diagnostic legacy selector
   ; compatible with the same saved learned-count contract as Equipment.
   LDA.l $7EF34C : CMP.b #$02 : BCC .no_songs
@@ -725,7 +715,6 @@ else
 endif
 }
 
-if !ENABLE_EPONA_SONG == 1
 ; In: A = song 1-6, 8-bit A. Out: C set = learned. Keeps A, X, Y.
 ; Songs 1-5: learned when song < $7EF34C (the teacher count; unchanged).
 ; Song 6 = Epona's Song: learned only by !SideQuest2_EponaSong. A count of 7
@@ -773,7 +762,6 @@ endif
 .called
   RTL
 }
-endif
 incsrc "Items/song_secrets_stone.asm"
 if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
   incsrc "Items/special_soaring.asm"

@@ -23,7 +23,6 @@ MISC_D, FLUTE, SQ2, MODULE = 0x0E90, 0x7EF34C, 0x7EF3D8, 0x10
 
 FIXTURE = """lorom
 !ENABLE_RANCH_MILK = 1
-!ENABLE_EPONA_SONG = 1
 !SideQuest2_EponaSong = $02
 !MapIcon_TailPond = $05
 SprMiscC = $0DE0

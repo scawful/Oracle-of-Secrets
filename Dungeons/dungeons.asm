@@ -197,9 +197,7 @@ endif
 
 incsrc "Dungeons/sky_pit_damage.asm"
 
-if !ENABLE_WALL_PROFILE_SELECTOR == 1
 incsrc "Dungeons/wall_profile_selector.asm"
-endif
 
 incsrc "Dungeons/abyss_gbc_interiors.asm"
 

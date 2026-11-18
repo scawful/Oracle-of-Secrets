@@ -55,17 +55,10 @@
 ;   the Portal Rod, whose Y-item value is $19 (Menu_PortalRod_*).
 ; =========================================================
 
-if !ENABLE_RING_SRAM_RELOCATE == 0
-  error "!ENABLE_MENU_PAGE3 needs !ENABLE_RING_SRAM_RELOCATE = 1 (legacy ring bytes alias side-quest data)"
-endif
 
 !P3_FirstMaskSlot = $06
 !P3_SlotCount     = $0B
-if !ENABLE_MENU_PAGE3_LAYOUT_A == 1
 !P3_EffectRow     = 21        ; ring effect line: below ring row 3
-else
-!P3_EffectRow     = 11
-endif
 
 ; ---------------------------------------------------------
 ; A = $01 right or $FF left. Reuses the L/R page targets and scroll states.
@@ -167,17 +160,12 @@ endif
   ; No owned item left in the grid (masks only): ignore the D-pad, or
   ; Menu_FindNext*Item would stop on an empty cell.
   LDA.b $F4 : AND.b #$0F : BEQ .items
-if !ENABLE_PORTAL_ROD_CELL == 1
     JSR Menu_Page3_GridHasItem : BCS .grid_move
-else
-    JSR Menu_Page3_GridHasItem : BCS .items
-endif
 if !ENABLE_GOLDSTAR_CELL == 1
       LDA.b $F4 : AND.b #$F3 : STA.b $F4 ; empty grid may still turn pages
 else
       LDA.b $F4 : AND.b #$F0 : STA.b $F4
 endif
-if !ENABLE_PORTAL_ROD_CELL == 1
       BRA .items
     .grid_move
 if !ENABLE_GOLDSTAR_CELL == 1
@@ -187,7 +175,6 @@ else
     ; follows the grid; Menu_ItemScreen turns a $13 result back into $19.
     LDA.w $0202 : CMP.b #$19 : BNE .items
       LDA.b #$13 : STA.w $0202
-endif
 endif
   .items
   JMP Menu_ItemScreen
@@ -415,13 +402,11 @@ Menu_Page3_GridFilter:
 {
   PHA
   LDA.w $0202
-if !ENABLE_PORTAL_ROD_CELL == 1
   CMP.b #$13 : BNE .not_portal_cell
     PLA
     LDA.l PortalRodOwned                 ; cell $13 holds the Portal Rod
     RTS
   .not_portal_cell
-endif
 if !ENABLE_GOLDSTAR_CELL == 1
   CMP.b #$14 : BNE .not_goldstar_cell
   PLA
@@ -453,9 +438,7 @@ if !ENABLE_GOLDSTAR_CELL == 1
   PLY : PLX : SEC : RTS
 else
   PHX : PHY
-if !ENABLE_PORTAL_ROD_CELL == 1
   LDA.l PortalRodOwned : BNE .found
-endif
   LDY.b #$17                   ; table index (item ID - 1)
   .loop
     CPY.b #$12 : BCC .check
@@ -637,7 +620,6 @@ endif
 ; the name bar and the ring effect line. Rows 1 and 3 each hold one red
 ; bracket at most and are two rows apart, so red brackets never touch.
 ; Out: SEP #$30.
-if !ENABLE_MENU_PAGE3_LAYOUT_A == 1
 Menu_Page3_Draw:
 {
 if !ENABLE_EQUIPMENT_MENU == 1
@@ -755,134 +737,6 @@ endif
     dw menu_offset(13,3), menu_offset(13,6), menu_offset(13,9)
     dw menu_offset(13,13), menu_offset(13,16), menu_offset(13,19)
 }
-else
-; ---------------------------------------------------------
-; Draw page 3 into the $1000-$17FF buffer: ring-box frame, side tabs,
-; title, prompt, rings, masks, equipped markers, cursor, names.
-; Out: SEP #$30.
-Menu_Page3_Draw:
-{
-if !ENABLE_EQUIPMENT_MENU == 1
-  JMP Menu_Equipment_Draw
-endif
-  JSR Menu_DrawRingBox                   ; ring_box.tilemap
-  JSR Menu_DrawMagicRingsInBox           ; sets $0A = $7E for DrawMenuItem
-
-  REP #$30
-  ; L/R tabs from the Items/Quest frame (rows 15-17, columns 1-3, 28-30).
-  LDX.w #$0004
-  .tabs
-    LDA.w menu_frame+menu_offset(15,1), X  : STA.w $1000+menu_offset(15,1), X
-    LDA.w menu_frame+menu_offset(16,1), X  : STA.w $1000+menu_offset(16,1), X
-    LDA.w menu_frame+menu_offset(17,1), X  : STA.w $1000+menu_offset(17,1), X
-    LDA.w menu_frame+menu_offset(15,28), X : STA.w $1000+menu_offset(15,28), X
-    LDA.w menu_frame+menu_offset(16,28), X : STA.w $1000+menu_offset(16,28), X
-    LDA.w menu_frame+menu_offset(17,28), X : STA.w $1000+menu_offset(17,28), X
-    DEX : DEX
-  BPL .tabs
-
-  LDX.w #$16                             ; 12 tiles
-  .title
-    LDA.w .title_txt, X : STA.w $1000+menu_offset(6,10), X
-    DEX : DEX
-  BPL .title
-
-  LDX.w #$0C                             ; "A:EQUIP" = 7 tiles
-  .equip
-    LDA.w .equip_txt, X : STA.w $1000+menu_offset(10,8), X
-    DEX : DEX
-  BPL .equip
-
-  JSR Menu_CheckJournalUnlocked : BCC .no_log
-  LDX.w #$08                             ; "X:LOG" = 5 tiles
-  .log
-    LDA.w .log_txt, X : STA.w $1000+menu_offset(10,19), X
-    DEX : DEX
-  BPL .log
-  .no_log
-
-  ; Masks: icon rows 20-21, columns 9/12/15/18/21 (blank when not owned).
-  LDA.w #$7EF349
-  LDX.w #menu_offset(16,5)
-  LDY.w #DekuMaskGFX
-  JSR DrawMenuItem
-
-  LDA.w #$7EF347
-  LDX.w #menu_offset(16,8)
-  LDY.w #ZoraMaskGFX
-  JSR DrawMenuItem
-
-  LDA.w #$7EF358
-  LDX.w #menu_offset(16,11)
-  LDY.w #WolfMaskGFX
-  JSR DrawMenuItem
-
-  LDA.w #$7EF348
-  LDX.w #menu_offset(16,14)
-  LDY.w #BunnyHoodGFX
-  JSR DrawMenuItem
-
-  LDA.w #$7EF352
-  LDX.w #menu_offset(16,17)
-  LDY.w #StoneMaskGFX
-  JSR DrawMenuItem
-
-  ; Red brackets: equipped rings, then the equipped mask.
-  SEP #$30
-  LDA.l RingSlot1 : JSR .ring_marker
-if !ENABLE_ONE_RING == 0
-  LDA.l RingSlot2 : JSR .ring_marker
-  LDA.l RingSlot3 : JSR .ring_marker
-endif
-if !ENABLE_MASK_R_BINDING == 1
-  JSL MaskBinding_SelectedItem
-else
-  LDA.w $0202
-endif
-  JSR Menu_Page3_IsMaskItem : BCC .no_mask
-    SEC : SBC.b #$13-!P3_FirstMaskSlot
-    JSR .equipped_marker
-  .no_mask
-
-  ; Cursor: white bracket, hidden every other 32 frames.
-  SEP #$30
-  LDA.w $0207 : AND.b #$20 : BNE .no_cursor
-    LDA.w $020B : CMP.b #!P3_SlotCount : BCS .no_cursor
-    ASL : TAX
-    REP #$30
-    LDA.w Menu_Page3_CursorPos, X : TAX
-    LDA.w #$3060
-    JSR Menu_Page3_Bracket
-  .no_cursor
-
-  JSR Menu_Page3_DrawNames
-  SEP #$30
-  RTS
-
-  ; In: A = ring ID from a ring slot, 8-bit. Draws nothing for 0 or a bad ID.
-  .ring_marker
-  SEC : SBC.b #$02 : CMP.b #$06 : BCS .marker_done
-  ; In: A = slot (0-10), 8-bit.
-  .equipped_marker
-  ASL : TAX
-  REP #$30
-  LDA.w Menu_Page3_CursorPos, X : TAX
-  LDA.w #$2460
-  JSR Menu_Page3_Bracket
-  SEP #$30
-  .marker_done
-  RTS
-
-  .title_txt
-    dw "MASKS"
-    dw $2017, $2017
-    dw "RINGS"
-  .equip_txt
-    dw "A:EQUIP"
-  .log_txt
-    dw "X:LOG"
-}
-endif
 
 ; ---------------------------------------------------------
 ; Bracket (cursor shape) around one icon.
@@ -961,25 +815,17 @@ Menu_Page3_RingBits:
 
 ; Cursor offsets per slot (bracket top-left = icon - 1 row - 1 column).
 Menu_Page3_CursorPos:
-if !ENABLE_MENU_PAGE3_LAYOUT_A == 1
   ; Layout A: the Items grid cursor positions (Menu_ItemCursorPositions).
   dw menu_offset(12,2), menu_offset(12,5), menu_offset(12,8)      ; rings, row 3
   dw menu_offset(12,12), menu_offset(12,15), menu_offset(12,18)
   dw menu_offset(6,2), menu_offset(6,5), menu_offset(6,8)         ; Deku Zora Wolf, row 1
   dw menu_offset(6,12), menu_offset(6,15)                         ; Bunny Stone
-else
-  dw menu_offset(8,6), menu_offset(8,10), menu_offset(8,14)       ; rings 1-3
-  dw menu_offset(12,6), menu_offset(12,10), menu_offset(12,14)    ; rings 4-6
-  dw menu_offset(15,4), menu_offset(15,7), menu_offset(15,10)     ; Deku Zora Wolf
-  dw menu_offset(15,13), menu_offset(15,16)                       ; Bunny Stone
-endif
 
 ; Next slot per direction: right, left, down, up.
 ;   0 1 2         rings
 ;   3 4 5
 ;  6 7 8 9 10     masks
 Menu_Page3_Nav:
-if !ENABLE_MENU_PAGE3_LAYOUT_A == 1
 ; Layout A:
 ;   6 7 8 9 10 .    masks, grid row 1 (the spare cell is no slot)
 ;   0 1 2 3 4  5    rings, grid row 3
@@ -995,19 +841,6 @@ if !ENABLE_MENU_PAGE3_LAYOUT_A == 1
   db $09, $07, $02, $02   ; 8 Wolf
   db $0A, $08, $03, $03   ; 9 Bunny
   db $06, $09, $04, $04   ; 10 Stone
-else
-  db $01, $02, $03, $07   ; 0 Power
-  db $02, $00, $04, $08   ; 1 Armor
-  db $00, $01, $05, $09   ; 2 Heart
-  db $04, $05, $07, $00   ; 3 Light
-  db $05, $03, $08, $01   ; 4 Blast
-  db $03, $04, $09, $02   ; 5 Steadfast
-  db $07, $0A, $00, $03   ; 6 Deku
-  db $08, $06, $00, $03   ; 7 Zora
-  db $09, $07, $01, $04   ; 8 Wolf
-  db $0A, $08, $02, $05   ; 9 Bunny
-  db $06, $09, $02, $05   ; 10 Stone
-endif
 
 if !ENABLE_MENU_PAGE_LOOP == 1
 ; ---------------------------------------------------------
@@ -1029,7 +862,6 @@ endif
 }
 endif
 
-if !ENABLE_PORTAL_ROD_CELL == 1
 ; ---------------------------------------------------------
 ; Menu open (Menu_InitGraphics): PortalRodOwned follows Maple's upgrade
 ; (CustomRods $7EF351 1 -> 2), so saves from before the cell show it.
@@ -1057,7 +889,6 @@ else
   RTS
 endif
 }
-endif
 
 if !ENABLE_EQUIPMENT_MENU == 1
   incsrc "menu_equipment.asm"

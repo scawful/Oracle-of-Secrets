@@ -167,11 +167,7 @@ Menu_SongNames:
   dw "SONG:_SOARING_  "
   dw "SONG:_TIME____  "
   dw "SONG:_SECRETS_  "
-if !ENABLE_EPONA_SONG == 1
   dw "SONG:_EPONA___  "                 ; provisional name; replaces Elegy of Stone
-else
-  dw "ELEGY:_STONE__  "
-endif
 
 Menu_RingNames:
   dw "____POWER_____  "
@@ -246,9 +242,7 @@ endif
                 CMP.b #$05 : BEQ .mushroom
                 CMP.b #$0D : BEQ .ocarina
                 CMP.b #$10 : BEQ .custom_rods
-if !ENABLE_PORTAL_ROD_CELL == 1
                 CMP.b #$19 : BEQ .portal_rod_cell
-endif
   ; Check if it's a bottle
                 CMP.b #$06 : BEQ .bottle_1
                 CMP.b #$0C : BEQ .bottle_2
@@ -283,12 +277,8 @@ endif
         RTS
 
       .custom_rods
-if !ENABLE_PORTAL_ROD_CELL == 1
       JMP .draw_item                ; the $10 cell is only the Fishing Rod
       .portal_rod_cell
-else
-      LDA.w FishingOrPortalRod : CMP.b #$01 : BNE .draw_item
-endif
         JSR DrawPortalRodName
         RTS
 

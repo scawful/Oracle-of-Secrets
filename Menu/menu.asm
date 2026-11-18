@@ -32,10 +32,7 @@ pullpc
 ; =========================================================
 ; With page 3 the old Ring Box (state $09) is reachable only through A+Y on Items
 ; (the Y block below overrides A's close). Drop the Y block and the Ring Box code.
-!MENU_DROP_RING_BOX = 0
-if !ENABLE_MENU_PAGE3 == 1
-  !MENU_DROP_RING_BOX = 1
-endif
+!MENU_DROP_RING_BOX = 1
 
 ; =========================================================
 ; Menu Bank
@@ -102,16 +99,10 @@ endif
     dw Menu_UploadRight        ; 01
     dw Menu_UploadLeft         ; 02
     dw Menu_ScrollDown         ; 03
-if !ENABLE_MENU_PAGE3 == 1
     ; Page 3 wrappers (Menu/menu_page3.asm): same slots, same size.
     dw Menu_Page3_ItemScreen   ; 04
     dw Menu_Page3_ScrollTo     ; 05
     dw Menu_Page3_StatsScreen  ; 06
-else
-    dw Menu_ItemScreen         ; 04
-    dw Menu_ScrollTo           ; 05
-    dw Menu_StatsScreen        ; 06
-endif
 if !ENABLE_MENU_PAGE_LOOP == 1
     dw Menu_Page3_ScrollFrom   ; 07 (redraws Items first)
 else
@@ -150,9 +141,7 @@ if !ENABLE_MASK_R_BINDING == 1
   JSL MaskBinding_MigrateSelection
 endif
   LDA.w $0780 : STA.w $00
-if !ENABLE_PORTAL_ROD_CELL == 1
   JSR Menu_PortalRod_SyncOwned
-endif
   LDA.w $0202
   CMP.b #$10 : BNE .not_fishing
     JSL DismissRodFromMenu
@@ -360,7 +349,6 @@ Menu_ItemScreen:
 .active
   INC $0207
   JSL Menu_Bindings_Input              ; Y/X on an item bind it; A never
-if !ENABLE_MENU_PAGE3 == 1
 if !ENABLE_GOLDSTAR_CELL == 1
   LDA.w $0202 : BNE .have_item
   LDA.b $F4 : AND.b #$03 : BEQ .do_no_input
@@ -370,7 +358,6 @@ if !ENABLE_GOLDSTAR_CELL == 1
   JSR Menu_Page3_Turn
   JMP .exit
 .have_item
-endif
 endif
   LDA.w $0202 : BEQ .do_no_input
     ; Scroll through joypad 1 inputs
@@ -385,24 +372,20 @@ endif
   BRA .no_inputs
 
   .move_right
-if !ENABLE_MENU_PAGE3 == 1
 if !ENABLE_GOLDSTAR_CELL == 1
   LDA.b #$01 : JSR Menu_CustomGridTryPageTurn : BCC .right_in_row
   JMP .exit
 .right_in_row
-endif
 endif
   JSR Menu_DeleteCursor
   JSR Menu_FindNextItem
   BRA .draw_cursor
 
   .move_left
-if !ENABLE_MENU_PAGE3 == 1
 if !ENABLE_GOLDSTAR_CELL == 1
   LDA.b #$FF : JSR Menu_CustomGridTryPageTurn : BCC .left_in_row
   JMP .exit
 .left_in_row
-endif
 endif
   JSR Menu_DeleteCursor
   JSR Menu_FindPrevItem
@@ -419,25 +402,19 @@ endif
   BRA .draw_cursor
 
   .draw_cursor
-if !ENABLE_PORTAL_ROD_CELL == 1
   JSR Menu_PortalRod_CellToItem ; a move that ends on cell $13 = Portal Rod
-endif
   LDA.b #$20 : STA.w $012F ; cursor move sound effect
 
   .no_inputs
   SEP #$30
-if !ENABLE_MENU_PAGE3 == 1
   ; Masks are on page 3, not in the grid: no grid cursor while one is the
   ; Y item. The name bar still shows it.
   LDA.w $0202 : JSR Menu_Page3_IsMaskItem : BCS .no_grid_cursor
-endif
   LDA.w $0202 : ASL : TAY
   REP #$10
   LDX.w Menu_ItemCursorPositions-2, Y
   JSR Menu_DrawCursor
-if !ENABLE_MENU_PAGE3 == 1
   .no_grid_cursor
-endif
   JSL Menu_Bindings_DrawMarkers
 
   JSR Menu_DrawItemName
@@ -910,7 +887,7 @@ MagicBag_ConsumeItem:
 ; An unlearned ocarina has no cursor and ignores direction input.
 Menu_SongMenu:
 {
-  assert !ENABLE_EPONA_SONG == 0 || !ENABLE_EQUIPMENT_MENU == 1, "Epona's Song needs the Equipment menu"
+  assert !ENABLE_EQUIPMENT_MENU == 1, "Epona's Song needs the Equipment menu"
   REP #$30
   JSR Menu_DrawMusicNotes
   SEP #$30
@@ -1133,11 +1110,7 @@ Menu_Journal:
       BRA .continue
     .return_to_quest
       ; Return to quest screen (right side)
-if !ENABLE_MENU_PAGE3 == 1
       JSR Menu_Page3_JournalReturn ; page 3 or the quest screen
-else
-      JSR Menu_RefreshQuestScreen
-endif
       LDA.b #!MENU_STATE_STATS_SCREEN : STA.w $0200
 
   .continue
@@ -1223,17 +1196,13 @@ incsrc "menu_map_names.asm"
 if !ENABLE_EQUIPMENT_MENU == 1
   incsrc "menu_quest.asm"
 endif
-if !ENABLE_MENU_PAGE3 == 1
   incsrc "menu_page3.asm" ; end of bank $2D, after the map names
-endif
   ; menu_item_bindings.asm is in bank $2B (Items/all_items.asm): bank $2D is
   ; full. Long wrappers for the two $2D routines it calls; DBR stays $2D.
   Menu_RefreshInventoryScreen_Long:
     JSR Menu_RefreshInventoryScreen : RTL
-if !ENABLE_MENU_PAGE3 == 1
   Menu_Page3_IsMaskItem_Long:
     JSR Menu_Page3_IsMaskItem : RTL
-endif
 if !ENABLE_MENU_MAP_TRAVEL == 1
   ; Long wrappers for Menu/menu_cursor_flow.asm (bank $2B); DBR stays $2D.
   Menu_Quest_Draw_Long:

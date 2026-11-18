@@ -58,13 +58,11 @@ if !ENABLE_GOLDSTAR_CELL == 1
       JMP .new_icon
     +
 endif
-if !ENABLE_PORTAL_ROD_CELL == 1
     ; Logical cells draw like the Y box: Portal = rod entry level 1,
     ; Goldstar = hookshot entry level 1. Neither has a count.
     CPY.w #$0019 : BNE +
       LDY.w #$0010 : LDA.w #$0001 : BRA .level
     +
-endif
 if !ENABLE_GOLDSTAR_CELL == 1
     CPY.w #$001A : BNE +
       LDY.w #$0003 : LDA.w #$0001 : BRA .level

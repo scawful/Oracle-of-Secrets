@@ -15,12 +15,12 @@
     "shared:Masks/all_masks.asm": {
       "source_set": "shared",
       "path": "Masks/all_masks.asm",
-      "sha256": "0ad161ad8df5c1b712b74a032e082df1fa4f580893f77ed7e6d26ea4f5cd5491"
+      "sha256": "ed317dc5ce35e1385da98ba9f685f74fb287c02399b1cf8bff6770c5b32651d2"
     },
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "ab5646a0d0da7e015c5b0d105f3e38fecd9261a1a04708f05600ed2716a43bba"
+      "sha256": "470dbcfdf93d8254d87121565a4ac0b5b8f470e7f2d0d408fe7c92cdac703be5"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -30,7 +30,7 @@
     "shared:Items/fishing_rod.asm": {
       "source_set": "shared",
       "path": "Items/fishing_rod.asm",
-      "sha256": "b15905255dc02beba19adeee37d29ef18af9de0b112b923c51d1578e1ba7904c"
+      "sha256": "945330c42429496e950354224875ac8da44ce9b878c68596f00cc15f2d16e9ef"
     },
     "shared:Core/ram.asm": {
       "source_set": "shared",
@@ -50,7 +50,7 @@
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
       "path": "Items/magic_rings.asm",
-      "sha256": "2a2589684603968f2877d6a9cf07aaa6f27793717f78dc17f7574844042ec743"
+      "sha256": "6b6c64f5252dfe4d32844bf15b7c1e3517a29066625ebefd3dd8a6122eb984cb"
     },
     "pending_rc:Core/sram.asm": {
       "source_set": "pending_rc",
@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "3cccc308a2e254e5b2f2d7c820800da083389a499d684bacbe72ac1a38f095e2"
+      "sha256": "10adfef946728942cc3e8c20ed49ecfff63910e69f36efa51febaf51b2c71e37"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "e6a791d6b5e52ff0cb5dbc62bc0c48633bea47d95c6ff9c4b9dfc79b0a59f422"
+      "sha256": "b497f99eab35f62d915dd42a38f1d49cd9d84bfe0dd277d4ad8ab9b658709c67"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -130,7 +130,7 @@
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
       "path": "Menu/menu_hud.asm",
-      "sha256": "7dbb9580a8e9c034ccf8ad1a1c0d35b79b7395ecd57bd52a21917a0ec4ea5e13"
+      "sha256": "541546ded273eba2dc17ee0c9eba3873d8b880b98d369f56ae78f2f2bcdf1f2d"
     },
     "shared:Menu/menu_map_travel.asm": {
       "source_set": "shared",
@@ -215,7 +215,7 @@
     "shared:Oracle_main.asm": {
       "source_set": "shared",
       "path": "Oracle_main.asm",
-      "sha256": "6ca5e9f17e5f6ffdf774e097800b0637712ac36c6ed1d86eede4f77737d70e5d"
+      "sha256": "6a6b96a23c8c10ea104ed89ef1f437655a3ed05ac77205a944b384cf1abda94d"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
@@ -370,12 +370,12 @@
     "shared:Masks/horse_park_anywhere.asm": {
       "source_set": "shared",
       "path": "Masks/horse_park_anywhere.asm",
-      "sha256": "747e3df5b6251bb81080af06893d07a252a18636264fa265c148fa5fa6992377"
+      "sha256": "8a125fb41fafc055ef302d459a677767b48162458c0c133246c1ec6de65da1e8"
     },
     "shared:Menu/menu_hud_codex.asm": {
       "source_set": "shared",
       "path": "Menu/menu_hud_codex.asm",
-      "sha256": "2012c0ee5e9e863efb11486c3d87e1094de78ab55da5a5501783a43c300a8812"
+      "sha256": "62691d55125247c0f672635fdf91969d846663345ed82c71bf750647d08cd993"
     },
     "shared:Overworld/travel_destinations.asm": {
       "source_set": "shared",
@@ -571,7 +571,7 @@
       "size": 91,
       "status": "shared",
       "condition": {},
-      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint. Last four bytes retain underlying native sheets for resource slots 0/1/2/7 across graphics loads; not persistent save data. Next 26 bytes reserve six native BG column8 reference/effective words plus state/area; no HUD, OBJ or backdrop column0 history. Finale GanondorfFight/BossReinject/FinaleBeat append at $7E1EA6-$7E1EA8 without changing native cache aliases. WallSel_Buffer $7E1EA9-$7E1EC8 (32B) is the wall-profile selector span window: written by WallSel_Common immediately before the drawer reads it through the $01:1EA9 mirror; no state carries between draws; only used when !ENABLE_WALL_PROFILE_SELECTOR == 1. SongTintContext $7E1EC9-$7E1ECA (2B) holds the $1B and area/room a song tint started in; written by SongTint_Start, read until the tint ends; only used when !ENABLE_OCARINA_SONG_TINT == 1.",
+      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint. Last four bytes retain underlying native sheets for resource slots 0/1/2/7 across graphics loads; not persistent save data. Next 26 bytes reserve six native BG column8 reference/effective words plus state/area; no HUD, OBJ or backdrop column0 history. Finale GanondorfFight/BossReinject/FinaleBeat append at $7E1EA6-$7E1EA8 without changing native cache aliases. WallSel_Buffer $7E1EA9-$7E1EC8 (32B) is the wall-profile selector span window: written by WallSel_Common immediately before the drawer reads it through the $01:1EA9 mirror; no state carries between draws. SongTintContext $7E1EC9-$7E1ECA (2B) holds the $1B and area/room a song tint started in; written by SongTint_Start, read until the tint ends; only used when !ENABLE_OCARINA_SONG_TINT == 1.",
       "reset": "No block-wide reset is claimed. Not in ResetTrackVars arrays since PR 211 moved this block from $7E0730 to vanilla-free $7E1E70. The last four-byte SpecialOverworldMainCache is cleared by the default-off resource callback before fresh native InitTilesets/mirror identities, then retains underlying main-sheet identities for departure restoration. Runtime qualification remains pending. Palette-hole cache reset/capture/restoration remains unbound: before any read reset state to0 and area toFF; native84-color BG refresh and Buffer/Both completion must be bound before palette activation. Main file-load entry clears the three appended Finale state bytes after native tail migration.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
@@ -595,7 +595,6 @@
       "size": 1,
       "status": "shared",
       "condition": {
-        "ENABLE_MINISH_AUTO_PORTAL": 1,
         "DISABLE_MASKS": 0
       },
       "lifetime": "Volatile Minish portal contact latch/frame guard; never saved. Preserved independently of parked-cart/reset state.",
@@ -621,7 +620,6 @@
       "size": 1,
       "status": "shared",
       "condition": {
-        "ENABLE_MINISH_AUTO_PORTAL": 1,
         "DISABLE_MASKS": 0
       },
       "lifetime": "Volatile Minish portal contact latch/frame guard; never saved. Preserved independently of parked-cart/reset state.",
@@ -1204,48 +1202,6 @@
         "bank00_mirror": false
       },
       "contained_by": "RingSaveBlock"
-    },
-    {
-      "id": "legacy_found_rings",
-      "owner": "FOUNDRINGS",
-      "space": "save_buffer",
-      "base": 8319959,
-      "size": 1,
-      "status": "shared",
-      "condition": {
-        "ENABLE_RING_SRAM_RELOCATE": 0
-      },
-      "lifetime": "Save file; independent ring owner, not a legitimate side-quest alias.",
-      "reset": "Legacy new-file and ring-menu updates.",
-      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
-      "provenance": [
-        "shared:Items/magic_rings.asm"
-      ],
-      "aliases": [],
-      "anchors": [
-        "FOUNDRINGS"
-      ]
-    },
-    {
-      "id": "legacy_magic_rings",
-      "owner": "MAGICRINGS",
-      "space": "save_buffer",
-      "base": 8319960,
-      "size": 1,
-      "status": "shared",
-      "condition": {
-        "ENABLE_RING_SRAM_RELOCATE": 0
-      },
-      "lifetime": "Save file; independent ring owner, not a legitimate side-quest alias.",
-      "reset": "Legacy new-file and ring-menu updates.",
-      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
-      "provenance": [
-        "shared:Items/magic_rings.asm"
-      ],
-      "aliases": [],
-      "anchors": [
-        "MAGICRINGS"
-      ]
     },
     {
       "id": "special_event_access",
@@ -2157,9 +2113,7 @@
       "base": 4513792,
       "size": 8192,
       "status": "shared",
-      "condition": {
-        "ENABLE_WALL_PROFILE_SELECTOR": 1
-      },
+      "condition": {},
       "lifetime": "Compiled ROM code and generated profile/kit tables in the fixed 8 KiB slot $44E000-$44FFFF at the end of bank $44, clear of docks_map_streams ($44C000, 1036 B). Kit sheet streams live in wall_profile_kit_sheets. Banks $40/$43/$47 are exclusive to sheet tools.",
       "reset": "Build owns this slot; no runtime allocation or SRAM.",
       "save": "No saved data. Runtime span window is symbols_wram_block WallSel_Buffer.",
@@ -2178,9 +2132,7 @@
       "base": 4554752,
       "size": 28672,
       "status": "shared",
-      "condition": {
-        "ENABLE_WALL_PROFILE_SELECTOR": 1
-      },
+      "condition": {},
       "lifetime": "Generated 3bpp LC-LZ2 sheet streams ($458000-$45EFFF) written by Dungeons/Data/kits/kits.asm from Dungeons/Data/kits/*.kit.json; ends before ow_aux_extension_code ($45F000). The same file writes the private blockset rows $17-$1A and palettes $1A/$22/$24/$26 that no ordinary room header uses (input-ROM assertions and final compiled-ROM palette ownership check). Palette $1C is Sky-owned; $28 aliases the next vanilla table and is not a private palette.",
       "reset": "Build owns this slot; no runtime allocation or SRAM.",
       "save": "No saved data. Kit rows and palettes are selected per room at load by WallSel_HeaderGfx.",

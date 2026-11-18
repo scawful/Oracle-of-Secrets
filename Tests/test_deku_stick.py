@@ -124,7 +124,7 @@ class DekuStickContractTest(unittest.TestCase):
     def test_frame_hook_independence(self):
         mask_text = MASK_ROUTINES.read_text(encoding="utf-8")
         hook_idx = mask_text.find("LinkMain_FrameHook:")
-        minish_idx = mask_text.find("if !ENABLE_MINISH_AUTO_PORTAL == 1\n; =========================================================")
+        minish_idx = mask_text.find("; =========================================================\n; Minish portal, automatic.")
         self.assertNotEqual(hook_idx, -1)
         self.assertNotEqual(minish_idx, -1)
         # Frame hook must be independent of and precede the Minish auto portal feature block

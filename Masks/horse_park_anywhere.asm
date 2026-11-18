@@ -384,7 +384,6 @@ Horse_OffRestore:
   RTL
 }
 
-if !ENABLE_EPONA_SONG == 1
 ; Epona's Song call (decisions.org 2026-11-16 "Epona's Song calls Epona").
 ; Moves the park anchor beside Link and drops a live Epona; the next
 ; HorseForm_MaintainParkedNpc_Long tick respawns her there.
@@ -511,4 +510,3 @@ endif
   dw 12, 12, 8
   dw -28, -28, -28, -12, -12, -12, 4, 4, 4, 16, 16, 16
 }
-endif

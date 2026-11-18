@@ -1657,9 +1657,7 @@ LinkMain_FrameHook:
   %m16()
   PHA : PHX : PHY : PHB
   %m8()
-if !ENABLE_MINISH_AUTO_PORTAL == 1
   JSL MinishPortal_Maintain
-endif
 if !ENABLE_HORSE_FORM == 1
   JSL HorseForm_FrameTick
 endif
@@ -1672,7 +1670,6 @@ endif
   RTL
 }
 
-if !ENABLE_MINISH_AUTO_PORTAL == 1
 ; =========================================================
 ; Minish portal, automatic. User steering 2026-10-18 changes the earlier
 ; stand-still dwell to walk-on activation with leave-tile rearming.
@@ -1788,7 +1785,6 @@ MinishPortal_Toggle:
   INX : CPX.b #$10 : BNE .load
   RTS
 }
-endif
 
 CheckNewLButtonPress:
 {

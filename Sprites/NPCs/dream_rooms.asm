@@ -94,9 +94,7 @@ DreamRoom_LoadSheets:
   LDA.b $13 : PHA
   LDA.b #$80 : STA.b $13 : STA.w $2100
   LDA.w $0AA2
-  if !ENABLE_WALL_PROFILE_SELECTOR == 1
     JSL WallSel_RowToMain                ; kit row -> its base blockset
-  endif
   STA.w $0AA1
   JSL !DR_InitTilesets
   SEP #$30

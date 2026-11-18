@@ -67,21 +67,10 @@ if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
   assert !SPECIAL_OVERWORLD_NATIVE == 1, "Native palette lifecycle requires native readers"
   assert !DISABLE_OVERWORLD == 0, "Native palette lifecycle requires the overworld module"
 endif
-if !ENABLE_MASK_R_BINDING == 1
-  assert !ENABLE_MENU_PAGE3 == 1, "Mask R binding requires menu_page3"
-  assert !ENABLE_MINISH_AUTO_PORTAL == 1, "Mask R binding reserves R; enable minish_auto_portal"
-endif
 assert !ENABLE_ORACLE_ARRIVAL_SEQUENCE <= !ENABLE_CUTSCENE_FRAMEWORK, "ENABLE_ORACLE_ARRIVAL_SEQUENCE requires ENABLE_CUTSCENE_FRAMEWORK"
 assert !ENABLE_EXPERIMENT_SCENE <= !ENABLE_ORACLE_ARRIVAL_SEQUENCE, "ENABLE_EXPERIMENT_SCENE requires ENABLE_ORACLE_ARRIVAL_SEQUENCE"
-assert !ENABLE_RING_SRAM_RELOCATE == 1, "Ring/Journal unlock gating requires relocated ring SRAM"
-assert !ENABLE_ONE_RING <= !ENABLE_RING_SRAM_RELOCATE, "ENABLE_ONE_RING requires ENABLE_RING_SRAM_RELOCATE"
-assert !ENABLE_MENU_PAGE3_LAYOUT_A <= !ENABLE_MENU_PAGE3, "ENABLE_MENU_PAGE3_LAYOUT_A requires ENABLE_MENU_PAGE3"
-assert !ENABLE_MENU_PAGE3_LAYOUT_A <= !ENABLE_ONE_RING, "ENABLE_MENU_PAGE3_LAYOUT_A requires ENABLE_ONE_RING"
-assert !ENABLE_MENU_PAGE_LOOP <= !ENABLE_MENU_PAGE3, "ENABLE_MENU_PAGE_LOOP requires ENABLE_MENU_PAGE3"
-assert !ENABLE_PORTAL_ROD_CELL <= !ENABLE_MENU_PAGE3, "ENABLE_PORTAL_ROD_CELL requires ENABLE_MENU_PAGE3"
+assert !ENABLE_ONE_RING == 1, "Page 3 Layout A requires !ENABLE_ONE_RING == 1"
 assert !ENABLE_GOLDSTAR_CELL <= !ENABLE_MASK_R_BINDING, "Goldstar cell requires independent mask binding"
-assert !ENABLE_GOLDSTAR_CELL <= !ENABLE_PORTAL_ROD_CELL, "Goldstar cell uses ID $1A after Portal Rod"
-assert !ENABLE_EQUIPMENT_MENU <= !ENABLE_MENU_PAGE3_LAYOUT_A, "Equipment requires Layout A"
 assert !ENABLE_EQUIPMENT_MENU <= !ENABLE_MASK_R_BINDING, "Equipment requires independent mask binding"
 assert !ENABLE_EQUIPMENT_MENU <= !ENABLE_ONE_RING, "Equipment requires one ring"
 assert !ENABLE_EQUIPMENT_MENU <= !ENABLE_GOLDSTAR_CELL, "Equipment requires Goldstar split"
@@ -171,14 +160,10 @@ namespace Oracle
   endif
 
   ; Oracle title screen BG2 (default on; see Util/macros.asm).
-  if !ENABLE_ORACLE_TITLE_SCREEN == 1
     incsrc "Core/title/title_screen.asm"
-  endif
 
   ; Oracle file select restyle, option E (default on; see Util/macros.asm).
-  if !ENABLE_ORACLE_FILE_SELECT == 1
     incsrc "Core/title/file_select.asm"
-  endif
 
   ; Native 2-player feature (RC profile enabled; see Util/macros.asm)
   if !ENABLE_NATIVE_2P_POC == 1
@@ -235,11 +220,9 @@ endif
 if !DISABLE_MENU == 0
   incsrc "Core/Generated/menu_icons/menu_icon_overrides.asm"
 endif
-if !ENABLE_WALL_PROFILE_SELECTOR == 1
   if !WALLSEL_GFX == 1
     incsrc "Dungeons/wall_profile_gfx.asm"
   endif
-endif
 
 ; Readers are emitted after the current source callers and graphics overrides.
 if !SPECIAL_OVERWORLD_NATIVE == 1

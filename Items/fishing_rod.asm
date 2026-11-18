@@ -33,7 +33,6 @@ if !ENABLE_GOLDSTAR_CELL == 1
     RTS
   .not_byrna
 endif
-if !ENABLE_PORTAL_ROD_CELL == 1
   ; The Portal Rod has its own Items cell ($0202 = $19, Menu_ItemIndex $0D
   ; like the Fishing Rod cell $10). The cell picks the rod; no L/R switch.
   %SelectedItem()
@@ -43,35 +42,6 @@ if !ENABLE_PORTAL_ROD_CELL == 1
   .own_cell_portal_rod
   JSR LinkItem_PortalRod
   RTS
-else
-  ; If the sram slot is 02, we can swap between the fishing rod and the portal rod
-  LDA.l $7EF351 : CMP.b #$02 : BEQ +
-    JSL LinkItem_FishingRod
-    RTS
-  +
-
-  LDA.w FishingOrPortalRod : BNE .portal_rod
-    JSL LinkItem_FishingRod
-    JMP ++
-  .portal_rod
-  JSR LinkItem_PortalRod
-  ++
-  LDA.b $F6
-  BIT.b #$20 : BNE .left ; pressed left
-  BIT.b #$10 : BNE .right ; pressed right
-  RTS
-
-  ; Swap the ram variable FishingOrPortalRod based on left or right
-  ; 00 = fishing rod, 01 = portal rod
-  .left
-  LDA.w FishingOrPortalRod : CMP #$00 : BEQ .right
-    LDA.b #$00 : STA.w FishingOrPortalRod
-    RTS
-  .right
-  LDA.w FishingOrPortalRod : CMP #$01 : BEQ .left
-  LDA.b #$01 : STA.w FishingOrPortalRod
-  RTS
-endif
 }
 
 assert pc() <= $07AFB4

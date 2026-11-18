@@ -231,12 +231,8 @@ Menu_DrawMusicNotes:
 .notes
   PHY
   TYX : LDA.l Menu_SongOrder,X          ; Y = slot, A = song in it
-if !ENABLE_EPONA_SONG == 1
   JSL Ocarina_SongLearned_Long : BCC .unlearned
   INC : BRA .variant                    ; variant = song + 1
-else
-  INC : CMP.l $7EF34C : BCC .variant : BEQ .variant
-endif
 .unlearned
   LDA.b #$01
 .variant
@@ -269,7 +265,7 @@ endif
 ; Healing, Storms, Soaring, Time and Secrets in the teacher-count order.
 ; QuestSongs_* (bank $2B) read both tables long.
 Menu_SongOrder:
-if !ENABLE_MENU_MAP_TRAVEL == 1 && !ENABLE_EPONA_SONG == 1
+if !ENABLE_MENU_MAP_TRAVEL == 1
   db 6,1,2,3,4,5
 Menu_SongSlot:
   db 1,2,3,4,5,0
@@ -369,14 +365,10 @@ endif
 
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0000 : BEQ .no_ocarina
     ; Ocarina owned, no song learned ($7EF34C = 1): grey icon (entry 7).
-if !ENABLE_EPONA_SONG == 1
     SEP #$20
     JSL Ocarina_ValidSong_Long          ; 0 = no learned song (Epona bit counts)
     REP #$20
     AND.w #$00FF : BNE .ocarina_has_songs
-else
-    CMP.w #$0002 : BCS .ocarina_has_songs
-endif
       LDA.w #$0007 : BRA .spoof_ocarina
     .ocarina_has_songs
     LDA.w $030F : AND.w #$00FF : BNE .spoof_ocarina
@@ -403,12 +395,7 @@ endif
 
   ; LDA.w #$7EF351
   LDA.l $7EF351 : AND.w #$00FF : CMP.w #$00 : BEQ .no_rods
-if !ENABLE_PORTAL_ROD_CELL == 1
     LDA.w #$0001 ; this cell is only the Fishing Rod
-else
-    LDA.w FishingOrPortalRod
-    INC A
-endif
     STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
 if !ENABLE_GOLDSTAR_CELL == 1
     LDX.w #menu_offset(16,6)
@@ -441,35 +428,7 @@ endif
 
   ; Row 4 -------------------------------------------------
 
-if !ENABLE_MENU_PAGE3 == 0
-  ; Masks. With !ENABLE_MENU_PAGE3 they are on page 3 (menu_page3.asm).
-  LDA.w #$7EF349
-  LDX.w #menu_offset(16,3)
-  LDY.w #DekuMaskGFX
-  JSR DrawMenuItem
 
-  LDA.w #$7EF347
-  LDX.w #menu_offset(16,6)
-  LDY.w #ZoraMaskGFX
-  JSR DrawMenuItem
-
-  LDA.w #$7EF358
-  LDX.w #menu_offset(16,9)
-  LDY.w #WolfMaskGFX
-  JSR DrawMenuItem
-
-  LDA.w #$7EF348
-  LDX.w #menu_offset(16,13)
-  LDY.w #BunnyHoodGFX
-  JSR DrawMenuItem
-
-  LDA.w #$7EF352
-  LDX.w #menu_offset(16,16)
-  LDY.w #StoneMaskGFX
-  JSR DrawMenuItem
-endif
-
-if !ENABLE_PORTAL_ROD_CELL == 1
   ; Portal Rod: row 4, fifth cell with the custom grid; logical ID stays $19.
   LDA.w #PortalRodOwned&$FFFF
 if !ENABLE_GOLDSTAR_CELL == 1
@@ -479,7 +438,6 @@ else
 endif
   LDY.w #PortalRodGFX
   JSR DrawMenuItem
-endif
 
 if !ENABLE_GOLDSTAR_CELL == 1
   LDA.w #GoldstarOwned&$FFFF
@@ -882,7 +840,7 @@ Menu_DrawMagicBag:
 }
 
 ; Used by the Ring Box (state $09) and the M1 page 3 layout only.
-if !MENU_DROP_RING_BOX == 0 || !ENABLE_MENU_PAGE3_LAYOUT_A == 0
+if !MENU_DROP_RING_BOX == 0
 Menu_DrawRingBox:
 {
   REP #$30
@@ -961,7 +919,7 @@ else
 endif
 }
 
-if !MENU_DROP_RING_BOX == 0 || !ENABLE_MENU_PAGE3_LAYOUT_A == 0
+if !MENU_DROP_RING_BOX == 0
 Menu_DrawMagicRingsInBox:
 {
   SEP #$30

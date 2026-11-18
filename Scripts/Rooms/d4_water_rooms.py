@@ -270,7 +270,7 @@ SELECTED_PAIR_SHA256 = (
 # wall-profile path. A source change requires requalifying this native-only kit.
 NATIVE_ATTRIBUTE_SOURCES = {
     'Dungeons/Collision/CollisionTablesExpanded.asm':
-        '1904842f4df271fd328474fdacef1c2191c1c1a06d724a90618310f652ee3f3a',
+        '02efc5ae63e1ad7d03487cfb9e6c4548b272cb329ff3d0d3b17962295d6795c9',
     'Dungeons/wall_profile_selector.asm':
         'fb9ae42f75fdcd810c1f6d9409c183f9a247c3e0f23829007b4af6efc601ecbc',
     # Glacia diagonals 009-014 joined CLASSES; Room25 is profile 0 and still

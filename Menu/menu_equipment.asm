@@ -65,11 +65,7 @@ if !ENABLE_MENU_MAP_TRAVEL == 1
   BRA .none                          ; songs live on the Quest page
 else
   SEC : SBC.b #$0B                    ; song 1-6 < Ocarina progression
-if !ENABLE_EPONA_SONG == 1
   JSL Ocarina_SongLearned_Long : BCC .none ; song 6 = Epona bit
-else
-  CMP.l $7EF34C : BCS .none
-endif
 endif
   INC : BRA .done                    ; colored note variants 2-7
 .supplies

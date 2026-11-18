@@ -20,7 +20,6 @@ FIELDS = ('SavedVersion', 'SavedY', 'SavedX', 'Cursor', 'Logical', 'Action', 'Bu
 # Synthetic fixture storage ONLY: never export these addresses to game source.
 ADDR = {name: 0x7E6000 + i for i, name in enumerate(FIELDS)}
 EXTRA_DEFS = (
-    '!ENABLE_PORTAL_ROD_CELL = 1\n'
     '!ENABLE_GOLDSTAR_CELL = 1\n'
     'PortalRodOwned = $7EF3A6\n'
     'GoldstarOwned = $7EF3A9\n'

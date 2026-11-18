@@ -1008,10 +1008,6 @@ def verify_kit_glyph_ownership(data: bytes) -> dict:
 
 
 def cmd_verify_rom(a: argparse.Namespace) -> int:
-    from asm_source import _load_global_defines
-    if not _load_global_defines(REPO).get("ENABLE_WALL_PROFILE_SELECTOR", 0):
-        print("Wall-profile selector is disabled; private palettes are inactive")
-        return 0
     try:
         data = Path(a.rom).read_bytes()
         facts = verify_palette_ownership(data)

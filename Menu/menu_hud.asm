@@ -350,20 +350,14 @@ endif
     .hookshot_not_equipped
 
     CPX.w #$0010 : BNE .custom_rod_not_equipped
-if !ENABLE_PORTAL_ROD_CELL == 1
       LDA.w #$0000                ; Fishing Rod cell: Fishing Rod icon only
-else
-      LDA.w FishingOrPortalRod
-endif
     .custom_rod_not_equipped
 
-if !ENABLE_PORTAL_ROD_CELL == 1
     ; Portal Rod cell ($19): the rod entry of HudItems, Portal Rod icon.
     CPX.w #$0019 : BNE .portal_rod_not_equipped
       LDX.w #$0010
       LDA.w #$0001
     .portal_rod_not_equipped
-endif
 
 if !ENABLE_GOLDSTAR_CELL == 1
     CPX.w #$001A : BNE .not_goldstar_cell
@@ -478,14 +472,12 @@ endif
 ; The caller may run before the file-load validator, so bound both values here.
 HUD_OcarinaIconIndex:
 {
-if !ENABLE_EPONA_SONG == 1
   ; Same rule as UpdateFluteSong_Long, without writing CurrentSong.
   SEP #$20
   JSL Ocarina_ValidSong_Long
   REP #$20
   AND.w #$00FF
   RTS
-endif
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0002 : BCC .no_song
   CMP.w #$0008 : BCC .count_ok
   LDA.w #$0007

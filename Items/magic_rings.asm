@@ -18,7 +18,6 @@
 ;                With !ENABLE_ONE_RING only RingSlot1 is used.
 ;
 ; Save bytes: see RingSaveBlock in Core/sram.asm.
-if !ENABLE_RING_SRAM_RELOCATE == 1
 FOUNDRINGS     = RingSaveBlock+0   ; $7EF3A1
 MAGICRINGS     = RingSaveBlock+1   ; $7EF3A2
 
@@ -27,24 +26,9 @@ RingSlot2      = RingSaveBlock+3   ; $7EF3A4
 RingSlot3      = RingSaveBlock+4   ; $7EF3A5
 ; RingSaveBlock+5 ($7EF3A6) was RingSlotsNum (never read or written); it is
 ; PortalRodOwned now (Core/sram.asm).
-else
-; Legacy addresses. They alias other save data (known bug, 2026-09-25):
-;   FOUNDRINGS   = SideQuestProgress   ($7EF3D7)
-;   MAGICRINGS   = SideQuestProgress2  ($7EF3D8)
-;   RingSlot2    = Pineapples          ($7EF38D)
-;   RingSlotsNum = RockMeatCount       ($7EF38F)
-FOUNDRINGS     = $7EF3D7
-MAGICRINGS     = $7EF3D8
-
-RingSlot1      = $7EF38C
-RingSlot2      = $7EF38D
-RingSlot3      = $7EF38E
-RingSlotsNum   = $7EF38F
-endif
 
 DamageSubclassValue = $0DB8F1
 
-if !ENABLE_RING_SRAM_RELOCATE == 1
 ; Ring IDs stored in RingSlot1-3: ring menu cursor index + 2
 ; (RingMenu_Controls in Menu/menu.asm; names in Menu_RingNames).
 !RingID_Power     = $02
@@ -70,7 +54,6 @@ endif
   SEC
   RTS
 }
-endif
 
 ; Ring grant (Eon Zora message $1AE, Error message $121). Marks one ring as
 ; found (FOUNDRINGS), picked at random among the rings that are neither found
@@ -167,7 +150,6 @@ org $06EDC0 ; @hook module=Items
 JSL MagicRing_CheckForPower
 pullpc
 
-if !ENABLE_RING_SRAM_RELOCATE == 1
 ; Power     - Attack Up: sword damage classes 1-3 deal +$10.
 ;             "Defense Down" is not implemented.
 ; Replaces LDA.l DamageSubclassValue, X (M=8, X=8). Out: A = damage.
@@ -188,24 +170,6 @@ MagicRing_CheckForPower:
   LDA.l DamageSubclassValue, X
   RTL
 }
-else
-; Power     - Attack Up, Defense Down
-MagicRing_CheckForPower:
-{
-  LDA.l RingSlot1 : AND.b #$20 : BEQ +
-  LDA.l RingSlot2 : AND.b #$20 : BEQ +
-  LDA.l RingSlot3 : AND.b #$20 : BEQ +
-    LDA.w $0CF2 : CMP.b #$04 : BCS .not_sword
-                  CMP.b #$01 : BCC .not_sword
-     LDA.l DamageSubclassValue, X
-     CLC : ADC.b #$10
-     RTL
-    .not_sword
-  +
-  LDA.l DamageSubclassValue, X
-  RTL
-}
-endif
 
 pushpc
 ; Sprite_AttemptDamageToLinkPlusRecoil
@@ -219,7 +183,6 @@ pullpc
 ; $0373 - Damage queue for Link
 Sprite_BumpDamageGroups = $06F427
 
-if !ENABLE_RING_SRAM_RELOCATE == 1
 ; Armor     - Defense Up: contact damage to Link (Sprite_AttemptDamageToLink-
 ;             PlusRecoil) is halved. "Attack Down" is not implemented.
 MagicRing_CheckForArmor:
@@ -233,30 +196,11 @@ if !DISABLE_MASKS == 0
 endif
   RTL
 }
-else
-; Armor     - Defense Up, Attack Down
-MagicRing_CheckForArmor:
-{
-  LDA.w Sprite_BumpDamageGroups, Y : STA.w $0373
-  LDA.l RingSlot1 : AND.b #$10 : BEQ +
-  LDA.l RingSlot2 : AND.b #$10 : BEQ +
-  LDA.l RingSlot3 : AND.b #$10 : BEQ +
-    ; Reduce the damage queue by half
-    LDA $0373 : BEQ +
-      LSR : STA $0373
-  +
-if !DISABLE_MASKS == 0
-  JSL GaroMask_ParryContact
-endif
-  RTL
-}
-endif
 
 
 ; =========================================================
 ; Steadfast - Less knockback
 
-if !ENABLE_RING_SRAM_RELOCATE == 1
 MagicRing_CheckForSteadfast:
 {
   ; Steadfast reduces knockback only. Feather jumps and ledge hops also run
@@ -270,25 +214,6 @@ MagicRing_CheckForSteadfast:
   LDY.b #$08                ; replaced vanilla code ($07E1C0)
   RTL
 }
-else
-MagicRing_CheckForSteadfast:
-{
-  ; Steadfast reduces knockback only. Feather jumps and ledge hops also run
-  ; Link_HandleRecoiling with $4D = 2; keep their speed.
-  LDA.b $4D : CMP.b #$02 : BEQ +
-  LDA.l RingSlot1 : AND.b #$07 : BEQ +
-  LDA.l RingSlot2 : AND.b #$07 : BEQ +
-  LDA.l RingSlot3 : AND.b #$07 : BEQ +
-    STZ.b LinkRecoilX
-    STZ.b LinkRecoilY
-  +
-  #_07E1BE: STZ.b $67
-
-  #_07E1C0: LDY.b #$08
-
-  RTL
-}
-endif
 
 pushpc
 org $07E1BE ; @hook module=Items
@@ -298,7 +223,6 @@ pullpc
 ; =========================================================
 ; Light     - Sword beam at -2 hearts
 
-if !ENABLE_RING_SRAM_RELOCATE == 1
 ; In: A = MaxHP - 4 (vanilla). Out: C from CMP CurrentHealth (C set = no beam).
 MagicRing_CheckForLight:
 {
@@ -312,24 +236,6 @@ MagicRing_CheckForLight:
   CMP.l $7EF36D
   RTL
 }
-else
-MagicRing_CheckForLight:
-{
-  PHA
-  LDA.l RingSlot1 : AND.b #$05 : BEQ +
-  LDA.l RingSlot2 : AND.b #$05 : BEQ +
-  LDA.l RingSlot3 : AND.b #$05 : BEQ +
-    PLA
-    SEC
-    SBC.b #$10
-    CMP.l $7EF36D
-    RTL
-  +
-  PLA
-  CMP.l $7EF36D
-  RTL
-}
-endif
 
 pushpc
 org $079C77 ; @hook module=Items
@@ -339,7 +245,6 @@ pullpc
 ; =========================================================
 ; Blast     - Bomb Damage up
 
-if !ENABLE_RING_SRAM_RELOCATE == 1
 ; In: X = ancilla ID (8-bit). Bomb ($07) uses damage class $0D instead of $08.
 MagicRing_CheckForBlast:
 {
@@ -351,20 +256,6 @@ MagicRing_CheckForBlast:
   LDA.l AncillaDamageClasses, X
   RTL
 }
-else
-MagicRing_CheckForBlast:
-{
-  CPX #$07 : BNE +
-    LDA.l RingSlot1 : AND.b #$06 : BEQ +
-    LDA.l RingSlot2 : AND.b #$06 : BEQ +
-    LDA.l RingSlot3 : AND.b #$06 : BEQ +
-      LDA.b #$0D
-      RTL
-  +
-  LDA.l AncillaDamageClasses, X
-  RTL
-}
-endif
 
 AncillaDamageClasses = $06EC7E
 
@@ -376,7 +267,6 @@ pullpc
 ; =========================================================
 ; Heart     - Slowly regenerate hearts
 
-if !ENABLE_RING_SRAM_RELOCATE == 1
 ; +1 HP on 4 frames of every 256 (half a heart about every 4.3 s).
 MagicRings_CheckForHeart:
 {
@@ -389,23 +279,6 @@ MagicRings_CheckForHeart:
   AND.b #$80
   RTL
 }
-else
-MagicRings_CheckForHeart:
-{
-  LDA.l RingSlot1 : AND.b #$04 : BEQ ++
-  LDA.l RingSlot2 : AND.b #$04 : BEQ ++
-  LDA.l RingSlot3 : AND.b #$04 : BEQ ++
-    LDA.l CURHP : CMP.l MAXHP : BCS ++
-      LDA.l FrameCounter : LSR #2 : AND.b #$3F : BEQ +
-        JMP ++
-      +
-      LDA.l CURHP : CLC : ADC.b #$01 : STA.l CURHP
-  ++
-  LDA.b $F5
-  AND.b #$80
-  RTL
-}
-endif
 
 pushpc
 org $07810C ; @hook module=Items

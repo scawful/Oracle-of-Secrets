@@ -412,17 +412,8 @@ QuestSongs_SlotSong:
 
 MenuFlow_SongOwned:
 {
-if !ENABLE_EPONA_SONG == 1
   JSL Ocarina_SongLearned_Long          ; song 6 = Epona bit
   RTS
-else
-  CMP.b #$01 : BCC .no
-  CMP.b #$07 : BCS .no
-  CMP.l $7EF34C : BCS .no               ; learned when song < Ocarina progression
-  SEC : RTS
-.no
-  CLC : RTS
-endif
 }
 
 ; Out: A = note variant (song + 1) of the bound song, else of the first

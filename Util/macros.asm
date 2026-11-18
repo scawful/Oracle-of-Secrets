@@ -48,9 +48,6 @@ endif
 !ENABLE_D5_BF_PIT_RESET             = 0
 ; AF transfer-room pit reset; independent of BF and off until private qualification.
 !ENABLE_D5_AF_PIT_RESET             = 0
-; Per-dungeon wall object tile patterns (Dungeons/wall_profile_selector.asm);
-; kit rows/palettes route per room (H3). Default on (scawful 2026-11-10).
-!ENABLE_WALL_PROFILE_SELECTOR       = 1
 ; 16-bit WaterFillTable tile_count (dw instead of db, capacity >255 tiles for widened $027).
 ; Default 0 while live $027 has 222 tiles and yaze (water_fill_zone.cc) serializes db counts;
 ; enable (=1) alongside the yaze dw writer when a >255-tile $027 basin lands.
@@ -78,29 +75,11 @@ endif
 ; Boat_Marker holds !Boat_Magic.
 !ENABLE_KALYXO_BOAT                   = 1
 !ENABLE_ORACLE_ARRIVAL_SEQUENCE      = 1
-; Oracle title screen BG2 (vortex, Maku Tree, green SECRETS plate, colour cycle)
-; in bank $58 (Core/title/title_screen.asm). Default on. While on,
-; yaze BG2 title edits are ignored; BG1 (logo) edits still apply.
-!ENABLE_ORACLE_TITLE_SCREEN          = 1
-; Oracle file select restyle, option E "Maku Hollow" (bark, leaf canopy,
-; gold header plate, heartwood panel) in bank $59 (Core/title/file_select.asm).
-; Default on. Uses HDMA channels 6-7 and backdrop colour math on file select,
-; copy, erase and name entry only.
-!ENABLE_ORACLE_FILE_SELECT           = 1
 ; New-file Mirror experiment scene before the arrival (Core/Cutscene/experiment.asm).
 ; Requires ORACLE_ARRIVAL_SEQUENCE (asserted in Oracle_main.asm).
 !ENABLE_EXPERIMENT_SCENE            = 1
-; Pause menu page 3 "Masks & Rings" (Menu/menu_page3.asm): L (or Y) on Items
-; scrolls to a page with the five masks and six rings; the cursor equips masks
-; (as Y items, $0202) and equips/unequips rings; X opens the Journal. Masks
-; leave the item grid. Needs !ENABLE_RING_SRAM_RELOCATE = 1.
-!ENABLE_MENU_PAGE3                   = 1
 ; Native 2-player PoC: pad-2 Start drops in a second Link (Sprites/Players/player2.asm).
 !ENABLE_NATIVE_2P_POC                = 1
-; Magic rings save to their own bytes ($7EF3A1-3A6, Core/sram.asm RingSaveBlock)
-; instead of the legacy addresses that alias SideQuestProgress/2, Pineapples
-; and RockMeatCount (Items/magic_rings.asm).
-!ENABLE_RING_SRAM_RELOCATE           = 1
 ; Abyss load spawn menu: from GameState 3 an outdoor Abyss load offers
 ; Pyramid / Link's House / Hall of Secrets (message $21B,
 ; Overworld/abyss_spawn_menu.asm).
@@ -120,14 +99,10 @@ endif
 ; One ring: one worn ring (RingSlot1). A new ring replaces the worn one; A on
 ; the worn ring takes it off. Ring effects read slot 1 only. File load moves
 ; an old save's slot 2/3 ring into an empty slot 1 and clears slots 2-3. The
-; Quest page draws no rings. Needs !ENABLE_RING_SRAM_RELOCATE = 1.
+; Quest page draws no rings.
 !ENABLE_ONE_RING                    = 1
-; Page 3 layout A (Menu/menu_page3.asm): Items/Quest frame and tabs, masks on
-; grid row 1 (5 masks + 1 empty spare cell), rings on grid row 3, red brackets
-; on the worn mask and ring, no button prompt. Needs MENU_PAGE3 and ONE_RING.
-!ENABLE_MENU_PAGE3_LAYOUT_A         = 1
 ; Page loop: L and R always move one page, wrapping Masks&Rings <- Items ->
-; Quest; the Items "Y:RINGS" prompt and Y shortcut are removed. Needs MENU_PAGE3.
+; Quest; the Items "Y:RINGS" prompt and Y shortcut are removed.
 !ENABLE_MENU_PAGE_LOOP              = 1
 ; Map page (v4): a fourth page, Items -> Equipment -> Quest -> Map
 ; -> Items. Map opens the field map; the dungeon row sits under it. The six
@@ -135,14 +110,6 @@ endif
 ; EQUIPMENT_MENU.
 ; WRAM: MenuMapTravel_Pending $7E1EFF (Core/symbols.asm).
 !ENABLE_MENU_MAP_TRAVEL             = 1
-; Portal Rod cell: the Portal Rod gets Items row 4, column 1 ($0202 = $19);
-; the Fishing Rod keeps its cell; no L/R rod switch in play. Ownership byte
-; PortalRodOwned $7EF3A6 (Core/sram.asm). Needs MENU_PAGE3.
-!ENABLE_PORTAL_ROD_CELL             = 1
-; Minish portal (tile $64): stand still about 1 s to shrink, and again to grow
-; (charge sparkle while charging); no R. Link must be unmasked to shrink
-; (Masks/minish_form.asm, Masks/mask_routines.asm).
-!ENABLE_MINISH_AUTO_PORTAL          = 1
 ; Lyra/Sky overlay fix: Overworld_ReloadSubscreenOverlay (ZSCustomOverworld,
 ; $02AF58) skipped the subscreen-overlay table for every area >= $80, so a
 ; reload on a tail map ($A0-$BF) or during Song of Storms rain on a Sky map
@@ -170,11 +137,6 @@ endif
 ; Off by default on master; this stack enables it for A5 fold proof. WRAM-only.
 !ENABLE_HORSE_PARK_ANYWHERE         = 1
 
-; Epona's Song (Ranch Girl teaches it with the Ocarina): song 6, the Equipment
-; cell Elegy of Stone used (decisions.org 2026-11-16, "1 Replace Stone").
-; Learned = SideQuestProg2 bit 1 (!SideQuest2_EponaSong), not the $7EF34C count.
-; Off until native save/reopen proof and the song effect is decided.
-!ENABLE_EPONA_SONG                  = 1
 
 
 ; Epona crowd check + mounted charge (Masks/horse_charge.asm): the song call

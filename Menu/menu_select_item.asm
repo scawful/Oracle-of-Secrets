@@ -12,11 +12,9 @@ Menu_ItemIndex:
   db $08,     $0C,       $12,      $0D,        $07,        $0B
   ;  Deku,    Zora,      Wolf,     Bunny Hood, Stone Mask, Bottle4
   db $11,     $0F,       $08,      $10,        $13,        $0B
-if !ENABLE_PORTAL_ROD_CELL == 1
   ;  $19: Portal Rod cell, same routine as the Fishing
   ;  Rod ($0D, LinkItem_FishingRodAndPortalRod picks the rod by $0202)
   db $0D
-endif
 
 ; =========================================================
 if !ENABLE_GOLDSTAR_CELL == 1
@@ -57,9 +55,7 @@ Menu_AddressIndex:
   db $7EF348 ; Bunny Hood
   db $7EF352 ; Stone Mask
   db $7EF35F ; Bottle #4
-if !ENABLE_PORTAL_ROD_CELL == 1
   db PortalRodOwned&$FF ; $19 Portal Rod ($7EF3A6)
-endif
 if !ENABLE_GOLDSTAR_CELL == 1
   db GoldstarOwned&$FF ; $1A
   db ByrnaOwned&$FF    ; $1B
@@ -106,14 +102,12 @@ endif
   dw menu_offset(15,12) ; bunny hood
   dw menu_offset(15,15) ; stone mask
   dw menu_offset(15,18) ; bottle4
-if !ENABLE_PORTAL_ROD_CELL == 1
   ; $19 Portal Rod: fifth custom-grid cell, first cell in the legacy layout.
   ; Arithmetic keeps the menu registry's editable entries distinct.
 if !ENABLE_GOLDSTAR_CELL == 1
   dw (15*64)+(15*2)
 else
   dw (15*64)+(2*2)
-endif
 endif
 if !ENABLE_GOLDSTAR_CELL == 1
   dw (15*64)+(2*2)  ; $1A Goldstar, bottom row first cell
@@ -143,9 +137,7 @@ else
     TAX : DEX                ; X = position - 1 (for table index)
     LDA.l Menu_AddressLong, X : TAX  ; Load offset from table
     LDA.l $7EF300, X         ; Load item value
-if !ENABLE_MENU_PAGE3 == 1
     JSR Menu_Page3_GridFilter ; masks count as empty cells
-endif
     BNE .found               ; Item exists, done
     DEY : BNE .loop          ; Keep searching
   .found
@@ -171,9 +163,7 @@ else
     TAX : DEX                ; X = position - 1 (for table index)
     LDA.l Menu_AddressLong, X : TAX  ; Load offset from table
     LDA.l $7EF300, X         ; Load item value
-if !ENABLE_MENU_PAGE3 == 1
     JSR Menu_Page3_GridFilter ; masks count as empty cells
-endif
     BNE .found               ; Item exists, done
     DEY : BNE .loop          ; Keep searching
   .found
@@ -198,14 +188,10 @@ else
   TAX : DEX                       ; X = position - 1
   LDA.l Menu_AddressLong, X : TAX ; Load offset from table
   LDA.l $7EF300, X
-if !ENABLE_MENU_PAGE3 == 1
   JSR Menu_Page3_GridFilter       ; masks count as empty cells
   BNE +
     JMP Menu_FindNextItem         ; If empty, scan horizontally
   +
-else
-  BEQ Menu_FindNextItem           ; If empty, scan horizontally
-endif
   RTS
 endif
 }
@@ -229,14 +215,10 @@ else
   TAX : DEX                       ; X = position - 1
   LDA.l Menu_AddressLong, X : TAX ; Load offset from table
   LDA.l $7EF300, X
-if !ENABLE_MENU_PAGE3 == 1
   JSR Menu_Page3_GridFilter       ; masks count as empty cells
   BNE +
     JMP Menu_FindNextItem         ; If empty, scan horizontally
   +
-else
-  BEQ Menu_FindNextItem           ; If empty, scan horizontally
-endif
   RTS
 endif
 }
@@ -351,9 +333,7 @@ Menu_AddressLong:
   db $48 ; Bunny Hood
   db $52 ; Stone Mask
   db $5F ; Bottle 4
-if !ENABLE_PORTAL_ROD_CELL == 1
   db PortalRodOwned&$FF ; $19 Portal Rod ($7EF3A6)
-endif
 if !ENABLE_GOLDSTAR_CELL == 1
   db GoldstarOwned&$FF ; $1A
   db ByrnaOwned&$FF    ; $1B
@@ -556,7 +536,6 @@ Menu_CustomGridOwned:
   PLX : CLC : RTS
 }
 
-if !ENABLE_MENU_PAGE3 == 1
 ; A = $01 right or $FF left. C clear: an owned cell remains before the edge;
 ; C set: the existing page turn began. Never changes the logical Y item.
 ; Uses $00-$01, destroys A/X, keeps Y for Menu_DeleteCursor, M/X=8, DBR=$2D.
@@ -585,7 +564,6 @@ Menu_CustomGridTryPageTurn:
 .columns
   db 0,1,2,3,4,5, 0,1,2,3,4,5, 0,1,2,3,4,5, 0,1,2,3,4,5
 }
-endif
 
 ; A = +1/-1/+6/-6. The vertical empty-cell fallback remains a forward scan.
 ; Search is bounded to 24 cells; an empty inventory leaves selection intact.

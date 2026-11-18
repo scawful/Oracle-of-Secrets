@@ -26,7 +26,6 @@ DekuFloating   = $70
 ; Unset, will shoot deku bubble instead
 DekuHover      = $71
 
-if !ENABLE_MINISH_AUTO_PORTAL == 1
 ; Volatile portal state after the cart arrays/cache and its 16-bit slot word.
 ; Boot clears this pair at $0087CE. LinkMain_FrameHook (mask_routines.asm)
 ; calls MinishPortal_Maintain; collision $64 refreshes contact in Tick.
@@ -44,7 +43,6 @@ if !DISABLE_SPRITES == 0
   assert MinishPortalTimer > $7E0000+!MinecartDirectionCache
   ; Mount/release/transition paths access MinecartCurrent with M=16.
   assert MinishPortalTimer >= $7E0000+!MinecartCurrent+$02
-endif
 endif
 
 AddTransformationCloud = $09912C

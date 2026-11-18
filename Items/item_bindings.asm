@@ -83,9 +83,7 @@ ItemBindings_Owner:
   db $4B, $4A, $45, $46, $53, $5D       ; Hammer Lamp FireRod IceRod Mirror Bottle2
   db $4C, $4E, $50, $51, $4D, $5E       ; Ocarina Book Somaria FishingRod Feather Bottle3
   db $49, $47, $58, $48, $52, $5F       ; Deku Zora Wolf Bunny Stone Bottle4
-if !ENABLE_PORTAL_ROD_CELL == 1
   db PortalRodOwned&$FF                 ; $19 Portal Rod
-endif
 if !ENABLE_GOLDSTAR_CELL == 1
   db GoldstarOwned&$FF, ByrnaOwned&$FF  ; $1A Goldstar, $1B Byrna (Y only)
   db BombchuOwned&$FF, SwitchHookOwned&$FF ; $1C Bombchu, $1D Switch Hook
@@ -98,9 +96,7 @@ ItemBindings_Max:
   db $00, $00, $00, $00, $00, $00
   db $00, $00, $00, $00, $00, $00
   db $00, $00, $00, $00, $00, $00
-if !ENABLE_PORTAL_ROD_CELL == 1
   db $02
-endif
 if !ENABLE_GOLDSTAR_CELL == 1
   db $02, $02, $02, $02, $02
 endif
@@ -110,9 +106,7 @@ ItemBindings_ActionTable:
   db $04, $09, $05, $06, $00, $00
   db $00, $00, $12, $00, $07, $00
   db $00, $00, $00, $00, $00, $00
-if !ENABLE_PORTAL_ROD_CELL == 1
   db $0D                                ; Portal: rod routine
-endif
 if !ENABLE_GOLDSTAR_CELL == 1
   db $0E, $00, $01, $0E, $00            ; Goldstar chain, -, Bombchu bomb, Switch Hook chain, -
 endif

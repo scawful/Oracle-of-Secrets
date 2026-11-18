@@ -64,7 +64,6 @@ RanchGirl_Message:
     LDA #$01 : STA.w SprMiscD, X
     RTL
   .has_ocarina
-if !ENABLE_EPONA_SONG == 1
   ; Saves that got the Ocarina before Epona's Song existed learn it here.
   LDA.l SideQuestProg2 : AND.b #!SideQuest2_EponaSong : BNE .knows_epona
     LDA.l SideQuestProg2 : ORA.b #!SideQuest2_EponaSong : STA.l SideQuestProg2
@@ -73,7 +72,6 @@ if !ENABLE_EPONA_SONG == 1
     ORA.w $0CF8
     STA.w $012E ; song learned sound
   .knows_epona
-endif
 if !ENABLE_RANCH_MILK == 1
   ; Later visits: Toto Ranch milk for 30 Rupees (BottleMan offer $187,
   ; Buy/Reject). RanchGirl_TeachSong finishes the sale once the box closes.
@@ -109,11 +107,9 @@ endif
   PLX
 
   LDA #$01 : STA $7EF34C ; Ocarina only (no songs yet)
-if !ENABLE_EPONA_SONG == 1
   ; Epona's Song comes with the Ocarina (song 6; the item fanfare plays).
   ; UpdateFluteSong_Long then selects it as the only learned song.
   LDA.l SideQuestProg2 : ORA.b #!SideQuest2_EponaSong : STA.l SideQuestProg2
-endif
   ; Beat 10: the Tail Pond objective starts at the Ocarina receipt.
   LDA.b #!MapIcon_TailPond : STA.l MapIcon
   STZ $030F              ; Clear active song selection

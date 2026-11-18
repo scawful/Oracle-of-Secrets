@@ -33,11 +33,9 @@ Menu_Bindings_Open:
   PHP : SEP #$20 : PHA
   LDA.w $0202 : STA.l ItemBindingMenuY
   LDA.l MenuFlow_ItemsCursor : BEQ .keep
-if !ENABLE_MENU_PAGE3 == 1 || !ENABLE_GOLDSTAR_CELL == 1
   CMP.b #$13 : BCC .check_garo
   CMP.b #$18 : BCC .clear
 .check_garo
-endif
 if !ENABLE_GOLDSTAR_CELL == 1
   CMP.b #$1E : BEQ .clear
 endif
@@ -122,12 +120,10 @@ Menu_Bindings_DrawMarkers:
   ; cursor, so nothing is skipped.
   LDY.w #$0000
   LDA.w $0207 : AND.w #$0020 : BNE .cx_off
-if !ENABLE_MENU_PAGE3 == 1
     SEP #$20
     LDA.w $0202 : JSL Menu_Page3_IsMaskItem_Long
     REP #$20
     BCS .cx_on_draw
-endif
     LDA.w $0202 : AND.w #$00FF : TAY
     .cx_on_draw
     JSR .cx_draw_x : JSR .cx_draw_y
