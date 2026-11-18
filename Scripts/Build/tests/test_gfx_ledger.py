@@ -54,6 +54,8 @@ def find_rom(name="oos168x.sfc"):
 
 
 JUNGLE = [0xA6, 0xA7, 0xAE, 0xAF]
+# Live ROM updated $A3/$A4/$AC to share jungle sheets $6C/$6D alongside $A6/$A7/$AE/$AF.
+LIVE_JUNGLE = [0xA3, 0xA4, 0xA6, 0xA7, 0xAC, 0xAE, 0xAF]
 
 
 class TailMaps(unittest.TestCase):
@@ -92,7 +94,7 @@ class TailMaps(unittest.TestCase):
         L = g.build_loaders(self.inv({str(a): v for a, v in tail.items()}))
         for sheet in (0x6C, 0x6D):
             users = sorted({a for ids in L[sheet]["area"].values() for a in ids})
-            self.assertEqual(users, JUNGLE, f"sheet ${sheet:02X}")
+            self.assertEqual(users, LIVE_JUNGLE, f"sheet ${sheet:02X}")
         self.assertEqual(g.sha256(rom), before)
 
 
