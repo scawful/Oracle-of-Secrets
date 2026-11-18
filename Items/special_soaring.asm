@@ -68,10 +68,10 @@ SpecialSoaring_Complete:
 
 SpecialSoaring_Caches:
   ; Native $32-byte exit records; exact landing coordinates are previews.
-  ; Garrison83: clear court tile(16,20), all four char collisions00.
+  ; Garrison83: TallArea ($83+$8B) bounds $0000..$031E, Oracle Castle gfx $24, court tile(16,20) 0x49F walkable 00.
   dw $0083,$0016,$00F0,$0688,$0140,$0700,$0083,$0790
-  dw $015F,$0707,$0000,$011E,$0600,$0700,$FF20,$0200,$0500,$0800
-  dw $2000,$0E1B,$0000,$0000,$0000,$0000,$0000
+  dw $015F,$0707,$0000,$031E,$0600,$0700,$FF20,$0400,$0500,$0800
+  dw $2000,$0E24,$0000,$0000,$0000,$0000,$0000
   ; Sky8C: existing S1 tile(14,11),37E; all four chars40 (walkable grass).
   dw $008C,$0016,$0260,$0868,$02B0,$08E0,$008C,$030C
   dw $02CF,$08E7,$0200,$031E,$0800,$0900,$0120,$0400,$0700,$0A00
