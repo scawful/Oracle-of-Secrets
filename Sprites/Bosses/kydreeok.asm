@@ -127,6 +127,12 @@ Kydreeok_HomeY    = BossDir_Var+6 ; word
 Sprite_Kydreeok_Long:
 {
   PHB : PHK : PLB
+  ; Saved kill: Sprite_Kydreeok_Prep left a remnant, not a fight.
+  LDA.w SprAction, X : CMP.b #!BossDefeatedRemnant : BNE .fight
+    JSR Kydreeok_Remnant
+    PLB
+    RTL
+  .fight
   ; The OAM parts follow the BG2 body: they stay through Kydrog's first
   ; line, blink with it at the end of the dissolve and are gone after.
   LDA.w SprAction, X : CMP.b #!Kyd_Gone : BCS .no_draw
@@ -167,6 +173,25 @@ Sprite_Kydreeok_Prep:
       PLB
       RTL
     .not_dreaming
+  ; Kill flag (QUEUE205): Kydreeok_SaveKill set this room's boss bit
+  ; ($0403 bit 7, loaded from the saved room word). No fight, heads or
+  ; music: Kydreeok_Remnant hides the body and reopens the plate and the
+  ; shutters once the room has loaded.
+  LDA.w $0403 : BPL .alive
+    LDA.b #!BossDefeatedRemnant : STA.w SprAction, X
+    LDA.w SprHitbox, X : ORA.b #$40 : STA.w SprHitbox, X ; statis, as BossPrep_DefeatedRemnant
+    ; A file load or Continue cleared the WRAM finale state: Ganondorf
+    ; follows again after the same beat as Kydreeok_Gone. A Ganondorf
+    ; beaten this session (2) keeps the door open; a stale fight (1, 3)
+    ; starts over.
+    LDA.w GanondorfFight : CMP.b #$02 : BEQ .finale_kept
+      STZ.w GanondorfFight
+      LDA.w FinaleBeat : BNE .finale_kept
+        LDA.b #$60 : STA.w FinaleBeat
+    .finale_kept
+    PLB
+    RTL
+  .alive
   JSL BossKit_Reset
   JSL BossDirector_Reset
   ; Kydreeok alive on room load: the finale starts over (Ganondorf only follows a Kydreeok kill).
@@ -655,6 +680,7 @@ Sprite_Kydreeok_Main:
   {
     JSR ApplyPartPalette ; sprite palette 4 back from white
     LDA.b #$60 : STA.w FinaleBeat
+    JSR Kydreeok_SaveKill ; kill flag (QUEUE205)
     JSR Kydreeok_OpenPlate
     STZ.w SprState, X
     RTS
@@ -687,6 +713,43 @@ Kydreeok_OpenPlate:
 
   .dx : db $70, $80, $70, $80
   .dy : db $A0, $A0, $B0, $B0
+}
+
+; Kill flag (QUEUE205). Same convention as the other custom bosses
+; (Core/sprite_macros.asm SetBossDefeated, BossPrep_DefeatedRemnant): the
+; room's boss bit, live in $0403 bit 7 and saved in the room word at
+; $7EF000 + room*2, bit 11 (high byte bit 3; Core/ram.asm "Room flag
+; data"). Native room exit copies $0403 to the room word; Save and Quit
+; in the room does not, so write both (as d4_pressure_warden.asm).
+; M=8 X=8; keeps X.
+Kydreeok_SaveKill:
+{
+  %SetBossDefeated()
+  PHX
+  REP #$30
+  LDA.b $A0 : ASL A : TAX
+  SEP #$20
+  LDA.l $7EF001, X : ORA.b #$08 : STA.l $7EF001, X
+  SEP #$10
+  PLX
+  RTS
+}
+
+; Saved-kill remnant (Sprite_Kydreeok_Prep), every frame from
+; Sprite_Kydreeok_Long; DBR set, M=8 X=8, X = slot. The room load turns
+; the body layer ($1C bit 0) back on after Prep: keep it off, as
+; Kydreeok_Gone left it. Once the load and the entry shutter are done,
+; reopen the plate; BossDefeated_Remnant (Core/sprite_functions.asm)
+; reopens the shutters and frees the slot.
+Kydreeok_Remnant:
+{
+  LDA.b $1C : AND.b #$FE : STA.b $1C
+  LDA.b $10 : CMP.b #$07 : BNE .wait
+  LDA.b $11 : BNE .wait
+    JSR Kydreeok_OpenPlate
+    JSL BossDefeated_Remnant
+  .wait
+  RTS
 }
 
 ; =========================================================

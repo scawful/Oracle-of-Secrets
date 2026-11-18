@@ -101,6 +101,14 @@ These are existing native room-save words in the unchanged save block. They do n
 
 The released private manual gameplay, native save and cold-reopen receipts remain qualified as manual closure. The cold-reopen current-dungeon key counter is $FF in the overworld house; the saved dungeon key count was $00. These observations do not claim a new automatic PASS or qualification of a later composed ROM.
 
+## Finale room-state (QUEUE205, 2026-11-18)
+
+Existing native room-save word; no new SRAM byte.
+
+| State | Native saved word | Mask | Setter / guard | Reset | Evidence boundary |
+| --- | --- | --- | --- | --- | --- |
+| Kydreeok killed (Kydrog freed) | $7EF004 (room $02) | $0800 (live: $0403 bit 7) | Kydreeok_SaveKill from Kydreeok_Gone (Sprites/Bosses/kydreeok.asm); Sprite_Kydreeok_Prep reads $0403 and leaves Kydreeok_Remnant | New-file room-state initialization | Rebased onto post-0bbbb8f9/ab0e6258 master; prior native proof in handoffs/gemini_kydreeok_flag_2026-11-16/REPORT.md (29/29 patched routes) |
+
 ## Update Workflow
 
 1) Identify flag usage in disassembly (primary).

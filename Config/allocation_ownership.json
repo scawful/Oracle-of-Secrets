@@ -435,7 +435,7 @@
     "shared:Sprites/Bosses/kydreeok.asm": {
       "source_set": "shared",
       "path": "Sprites/Bosses/kydreeok.asm",
-      "sha256": "0bc38c5bf7b82732432305c496dcab245db975075137d82b859d30431d9674c5"
+      "sha256": "cf9c203c73afb5066547cdc0babe625e22684ee62bc78c63bb784d5ade8bc5ce"
     },
     "shared:Overworld/credits_scenes.asm": {
       "source_set": "shared",
