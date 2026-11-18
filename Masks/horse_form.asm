@@ -541,8 +541,8 @@ HorseForm_ProbeFence:
   SEP #$20
   PLA                                 ; balance stack
 
-  ; Query Map16 Tile16 + attribute at ($0A=Y, $0C=X)
-  JSR Horse_QueryTileAt               ; outputs DP $04 = 16-bit Tile16, A = attr
+  ; Query Map16 Tile16 at ($0A=Y, $0C=X) without calling $00882E
+  JSR Horse_QueryTile16Only           ; outputs DP $04 = 16-bit Tile16
   REP #$20
   LDA.b $04
   LDX.b #HorseFenceTile16s_End-HorseFenceTile16s-2

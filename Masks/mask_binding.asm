@@ -202,13 +202,15 @@ endif
   CMP.b #$06 : BEQ .base_form
   CMP.b #$08 : BEQ .no_item            ; Garo's Y ability is handled above
 if !ENABLE_HORSE_FORM == 1
-  ; Mounted bow only: horse keeps the bow Y-slot ($0202=$01 → $0303=$03).
+  ; Mounted bow only: supports Bow on Y ($0202=$01) and Bow on X via ItemBindings_Route.
   CMP.b #$09 : BNE .after_horse_y
     LDA.l $7EF3CC : BNE .no_item            ; follower owns $4200/$4220
-    LDA.w $0202 : CMP.b #$01 : BNE .no_item
     LDA.l $7EF340 : BEQ .no_item
-    LDA.l $7EF377 : BEQ .no_item
-    BRA .regular
+    LDA.l $7EF377 : BNE +
+    LDA.l ItemBindingButton : BEQ .no_item
+  + JSL ItemBindings_Route : BCS .set_action
+    LDA.w $0202 : CMP.b #$01 : BNE .no_item
+    LDA.b #$03 : BRA .set_action
   .after_horse_y
 endif
   CMP.b #$05 : BCS .regular            ; preserve automatic Minish / Moosh

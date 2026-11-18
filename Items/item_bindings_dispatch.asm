@@ -96,13 +96,25 @@ ItemBindings_Route:
 }
 
 ; C=1 when the prototype may route: a form whose Y uses regular items
-; (MaskBinding_Tick .regular): base Link, Minish (5), GBC (6), Moosh (7).
+; (MaskBinding_Tick .regular): base Link, Minish (5), GBC (6), Moosh (7),
+; plus mounted Horse (9) only when X is bound to Bow (with bow/arrows/no follower).
 ; M8 near helper; A clobbered.
 ItemBindings_Admitted:
 {
   LDA.l $7E0000+!CurrentMask : BEQ .form_ok
   CMP.b #$05 : BCC .no
-  CMP.b #$08 : BCS .no
+  CMP.b #$08 : BCC .form_ok
+if !ENABLE_HORSE_FORM == 1
+  CMP.b #$09 : BNE .no
+  LDA.l $7EF3CC : BNE .no
+  LDA.l $7EF340 : BEQ .no
+  LDA.l ItemBindingSavedVersion : CMP.b #$01 : BNE .no
+  LDA.l ItemBindingSavedX : CMP.b #$01 : BNE .no
+  LDA.l $7EF377 : BNE .form_ok
+  LDA.l ItemBindingButton : BEQ .no
+  BRA .form_ok
+endif
+  BRA .no
   .form_ok
   SEC : RTS
   .no

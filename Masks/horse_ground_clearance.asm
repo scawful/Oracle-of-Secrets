@@ -91,7 +91,7 @@ HorseForm_ConstrainGroundInput:
     LDA.b $20 : CLC : ADC.w #$000B : STA.b $0A
   .probe_query
   SEP #$20
-  JSR Horse_QueryTileAt
+  JSR Horse_QueryTile16Only
   REP #$20
   ; Same rule for a solid neighbour beside a valid long-jump gap.
   JSR .is_fence : BCS + : JMP .long_ahead : +
@@ -587,6 +587,21 @@ HorseOam_WriteSlot:
   SEP #$20
   LDA.b #$01 : STA.w $0A20, X
   REP #$20
+  RTS
+}
+
+; Fast Tile16 lookup without calling vanilla $00882E.
+; Inputs: DP $0A = 16-bit world Y px, DP $0C = 16-bit world X px (M/X=8).
+; Outputs: DP $04 = 16-bit Tile16 ID (M/X=8); X/Y/B/P and DP $06 preserved.
+Horse_QueryTile16Only:
+{
+  PHP : REP #$30 : PHX : PHA
+  LDA.b $06 : PHA
+  LDA.b $0A : SEC : SBC.l $7E0708 : AND.l $7E070A : ASL #3 : STA.b $06
+  LDA.b $0C : LSR #3 : SEC : SBC.l $7E070C : AND.l $7E070E : ORA.b $06 : TAX
+  LDA.l $7E2000, X : STA.b $04
+  PLA : STA.b $06
+  PLA : PLX : PLP
   RTS
 }
 
