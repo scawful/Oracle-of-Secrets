@@ -1,20 +1,20 @@
 ; ============================================================================
-; Intro Scene 0 Storybook Art Engine (QUEUE269 Option 1)
+; Intro Scene 0 Storybook Art Engine (QUEUE298 v2)
 ; ============================================================================
-; Replaces vanilla Scene 0 polka-dot BG1 with four 224x96 15-color 4bpp panels
+; Replaces vanilla Scene 0 polka-dot BG1 with four 168x48 15-color 4bpp panels
 ; streamed cleanly across the four pages of Message_1C0 without modifying
 ; Message_1C0 text/canon (parsed $7F1200 offsets are -4 from raw ROM):
 ;   Panel 0 (Page 1): Link riding toward Hyrule Castle  ($67 fade-in at $0004)
-;   Panel 1 (Page 2): Shipwreck & Maku Tree cliff        (hook at $0060)
-;   Panel 2 (Page 3): Abyssal Shrine & Twin Emblems      ($67/$67 at $00A9)
-;   Panel 3 (Page 4): Three Essence crests over Kalyxo   (hook at $00FB)
+;   Panel 1 (Page 2): Sunlit Kalyxo Island & Maku Tree  (hook at $0060)
+;   Panel 2 (Page 3): River-Shrine Mirror to Eon Abyss  ($67/$67 at $00A9)
+;   Panel 3 (Page 4): Explorers gazing into Eon Abyss   (hook at $00FB)
 ;
 ; Memory layout:
 ;   ROM:  Bank $56 ($568000-$56FFFF) + 5-byte NMI stub in $00E852
-;   WRAM: $7F8100-$7FABFF (up to 11 KB CHR decompress buffer, in UNUSED_7F74D8)
+;   WRAM: $7F8100-$7F90FF (<= 4064 B CHR decompress buffer, in UNUSED_7F74D8)
 ;         $7FB100-$7FB8FF (2 KB map decompress buffer, above ThinIce $7FB035)
 ;         $7FF3A0-$7FF3AF (16 B state block in UNUSED_7FF180)
-;   VRAM: $0000-$1BFF (BG1 4bpp CHR, <=448 tiles), $1C00-$1FFF (BG1 32x32 map)
+;   VRAM: $0000-$07FF (BG1 4bpp CHR, <= 127 tiles), $1C00-$1FFF (BG1 32x32 map)
 ;         $2000-$3FFF (BG2 4bpp CHR untouched), $6000-$63FF (BG3 VWF tilemap)
 ;         $6800-$6BFF (BG2 32x32 weave tilemap), CGRAM row 6 ($7EC3C0/$7EC5C0)
 ; ============================================================================
@@ -22,13 +22,13 @@
 pushpc
 
 !Storybook_ActiveMarker = $5A
-!Storybook_ChunkBytes   = $0A00       ; 2560 B/VBlank -> all 4 panels fit in 5 VBlanks
-!Storybook_ChrBuf       = $7F8100     ; up to $2B00 B decompressed 4bpp CHR (<$7FB000)
+!Storybook_ChunkBytes   = $0800       ; 2048 B/VBlank -> <= 127 tiles in 2 CHR + 1 Map VBlanks (0.05s)
+!Storybook_ChrBuf       = $7F8100     ; up to $1000 B decompressed 4bpp CHR (<$7FB000)
 !Storybook_MapBuf       = $7FB100     ; $0800 B decompressed 32x32 map (>$7FB035, <$7FDD80)
 
 ; Transient state block in UNUSED_7FF180 (Core/ram.asm), after BossDirector ($7FF39D).
 !Storybook_Active       = $7FF3A0     ; byte: $5A while Scene 0 owns BG1/PPU
-!Storybook_State        = $7FF3A1     ; byte: 0=idle/fade, 2=NMI streaming, 3=stream done
+!Storybook_State        = $7FF3A1     ; byte: 0=idle/fade, 1=black settle+load, 2=NMI stream, 3=done
 !Storybook_Panel        = $7FF3A2     ; byte: current/next panel index (0..3)
 !Storybook_Pending      = $7FF3A3     ; byte: 0=normal, 1=virtual fade-out+stream, 2=fade-in
 !Storybook_HooksDone    = $7FF3A4     ; byte: bit0=Page1->2 ($0060), bit1=Page3->4 ($00FB)
@@ -119,9 +119,10 @@ Storybook_Init:
   LDA.b #$60 : STA.w $2109            ; BG3SC: $6000..$63FF (32x32 VWF box)
   LDA.b #$20 : STA.w $210B            ; BG12NBA: BG1=$0000, BG2=$2000
 
+  STZ.w $0710                         ; keep normal sprite updates ready until stream
   REP #$20
   STZ.w $0120                         ; BG1HOFS = 0
-  LDA.w #$FFFB : STA.w $0124          ; BG1VOFS = -5 -> row 2 (bgY=16) at screen Y=20
+  LDA.w #$FFFC : STA.w $0124          ; BG1VOFS = -4 -> row 8 (bgY=64) at screen Y=67..114
   STZ.w $011E                         ; BG2HOFS = 0
   STZ.w $0122                         ; BG2VOFS = 0
 
@@ -189,6 +190,7 @@ Storybook_CleanupAndBlank:
   STA.l !Storybook_Active
   STA.l !Storybook_State
   STA.l !Storybook_Pending
+  STZ.w $0710                         ; restore sprite NMI DMAs if skipped mid-stream
   PLP
 
   JSL $00893D                         ; EnableForceBlank (returns SEP #$30)
@@ -222,6 +224,8 @@ Storybook_RenderText:
 .active:
   LDA.l !Storybook_State
   BEQ .not_streaming
+  CMP.b #$01
+  BEQ .settle_and_load
   CMP.b #$02
   BEQ .wait_nmi_stream
 
@@ -238,7 +242,18 @@ Storybook_RenderText:
 .promote_pending:
   LDA.b #$02 : STA.l !Storybook_Pending
   JSL Storybook_PaletteFilter         ; begin fade-in step 0 immediately
+.exit_stall:
+  SEP #$30
+  RTL
+
 .wait_nmi_stream:
+  LDA.b #$01 : STA.w $0710            ; keep unused sprite/Link NMI DMAs off while streaming
+  SEP #$30
+  RTL
+
+.settle_and_load:
+  LDA.b #$01 : STA.w $0710            ; keep sprite DMAs off before State=2 begins
+  JSL Storybook_PaletteFilter         ; decompresses WRAM now that Row 6 is black in PPU CGRAM
   SEP #$30
   RTL
 
@@ -256,7 +271,7 @@ Storybook_RenderText:
 .pending_fadein:
   JSL Storybook_PaletteFilter
   LDA.l $7EC007
-  BNE .wait_nmi_stream
+  BNE .exit_stall
   LDA.b #$00 : STA.l !Storybook_Pending
   SEP #$30
   RTL
@@ -301,8 +316,9 @@ Storybook_RenderText:
 
 ; ----------------------------------------------------------------------------
 ; Storybook_PaletteFilter ($0ECD04 -> JSL Storybook_PaletteFilter)
-; Replaces PaletteFilterHistory during Scene 0: drives 31-step Row-6 fade and
-; triggers next-panel WRAM decompression + 5-VBlank DMA stream.
+; Replaces PaletteFilterHistory during Scene 0: drives 16-step (2 levels/frame)
+; Row-6 fade, runs 1-frame pure-black CGRAM settle (State=1) before WRAM
+; decompression, then hands off to 3-VBlank NMI DMA stream (State=2).
 ; ----------------------------------------------------------------------------
 Storybook_PaletteFilter:
 {
@@ -318,6 +334,8 @@ Storybook_PaletteFilter:
 
   LDA.l !Storybook_State
   BEQ .do_fade
+  CMP.b #$01
+  BEQ .load_after_black
   CMP.b #$02
   BEQ .wait_stream
 
@@ -326,39 +344,11 @@ Storybook_PaletteFilter:
   REP #$20
   LDA.w #$0000 : STA.l $7EC007
   LDA.w #$0002 : STA.l $7EC009
-  BRA .exit
+  BRA .exit_no_cgram
 
-.wait_stream:
-  LDA.b #$01 : STA.l $7EC007          ; keep RenderText_NextImage paused
-  BRA .exit
-
-.do_fade:
-  ; Determine brightness level (0..31) from $7EC007 (0..30) & $7EC009 (0=out, 2=in)
-  REP #$30
-  LDA.l $7EC009
-  BNE .calc_in_lvl
-  LDA.w #30
-  SEC : SBC.l $7EC007                 ; fade-out: 30 down to 0
-  BRA .apply_lvl
-.calc_in_lvl:
-  LDA.l $7EC007
-  INC A                               ; fade-in: 1 up to 31
-
-.apply_lvl:
-  JSR Storybook_ApplyRow6Level
-
-  LDA.l $7EC007
-  INC A
-  STA.l $7EC007
-  CMP.w #$001F
-  BCC .more_steps
-
-  ; Completed 31st fade step ($7EC007 reached 31)
-  LDA.l $7EC009
-  BNE .fadein_done
-
-  ; Fade-out reached pure black ($0000): advance panel, decompress, start NMI stream
-  SEP #$20
+.load_after_black:
+  ; Pure black Row 6 CGRAM is now live on PPU; safe to decompress & begin State=2 stream.
+  LDA.b #$01 : STA.w $0710            ; skip unused sprite/Link NMI DMAs during stream
   LDA.l !Storybook_Panel
   INC A
   AND.b #$03
@@ -370,6 +360,55 @@ Storybook_PaletteFilter:
   LDA.w #$0001 : STA.l $7EC007        ; hold RenderText while State=2 streams
   SEP #$20
   LDA.b #$02 : STA.l !Storybook_State
+  BRA .exit_no_cgram
+
+.wait_stream:
+  LDA.b #$01 : STA.w $0710
+  REP #$20
+  LDA.w #$0001 : STA.l $7EC007        ; keep RenderText_NextImage paused
+.exit_no_cgram:
+  SEP #$20
+  PLP : PLB
+  RTL
+
+.do_fade:
+  ; Determine brightness level (0..31) from $7EC007 (0..15) & $7EC009 (0=out, 2=in)
+  REP #$30
+  LDA.l $7EC009
+  BNE .calc_in_lvl
+  LDA.w #30
+  SEC : SBC.l $7EC007
+  SEC : SBC.l $7EC007                 ; fade-out: 30 down to 0 by 2 levels/frame
+  BRA .apply_lvl
+.calc_in_lvl:
+  LDA.l $7EC007
+  ASL A
+  INC A                               ; fade-in: 1 up to 31 by 2 levels/frame
+
+.apply_lvl:
+  JSR Storybook_ApplyRow6Level
+
+  LDA.l $7EC007
+  INC A
+  STA.l $7EC007
+  CMP.w #$0010                        ; 16 steps (0..15)
+  BCC .more_steps
+
+  ; Completed 16th fade step ($7EC007 reached 16)
+  LDA.l $7EC009
+  BNE .fadein_done
+
+  ; Fade-out reached black: zero all 16 words of Row 6 live CGRAM & wait 1 NMI settle frame.
+  LDX.w #$001E
+  LDA.w #$0000
+- STA.l $7EC5C0,X
+  DEX #2
+  BPL -
+  LDA.w #$0002 : STA.l $7EC009        ; next phase is fade-in
+  LDA.w #$0001 : STA.l $7EC007        ; hold RenderText
+  SEP #$20
+  LDA.b #$01 : STA.w $0710            ; suppress unused sprite DMAs before streaming
+  STA.l !Storybook_State              ; State=1: NMI uploads pure black Row 6 CGRAM first
   BRA .exit
 
 .fadein_done:
@@ -387,7 +426,7 @@ Storybook_PaletteFilter:
 
 ; ----------------------------------------------------------------------------
 ; Storybook_NmiStream ($008C7E -> $00E852 -> JSL Storybook_NmiStream)
-; Runs inside NMI_DoUpdates when $17==0 (M=8, X=8). Streams <=$0A00 B/VBlank.
+; Runs inside NMI_DoUpdates when $17==0 (M=8, X=8). Streams <=$0800 B/VBlank.
 ; ----------------------------------------------------------------------------
 Storybook_NmiStream:
 {
@@ -407,7 +446,7 @@ Storybook_NmiStream:
   CMP.l !Storybook_ChrTotal
   BCS .final_map
 
-  ; size = min($0A00, ChrTotal - ChunkOff)
+  ; size = min($0800, ChrTotal - ChunkOff)
   LDA.l !Storybook_ChrTotal
   SEC : SBC.l !Storybook_ChunkOff
   CMP.w #!Storybook_ChunkBytes : BCC +
@@ -435,6 +474,7 @@ Storybook_NmiStream:
   JSR Storybook_DmaVram7F
 
   SEP #$20
+  STZ.w $0710                         ; restore sprite NMI DMAs now that stream finished
   LDA.l !Storybook_Panel
   JSR Storybook_InstallPanelPal_BlackLive
   LDA.b #$03 : STA.l !Storybook_State

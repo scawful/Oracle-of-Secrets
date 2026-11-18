@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Compile the 4 QUEUE269 Intro Scene 0 storybook panels into SNES 4bpp LC-LZ2 assets.
+"""Compile the 4 QUEUE298 Intro Scene 0 storybook panels into SNES 4bpp LC-LZ2 assets.
 
 Inputs:
-  Data/graphics/storybook/panel_{0..3}.png  (224x96, <= 15 BGR555 colors; opaque)
+  Data/graphics/storybook/panel_{0..3}.png  (168x48, <= 15 BGR555 colors; opaque)
 
 Generated outputs under Core/Cutscene/storybook/:
   panel_{0..3}_chr.lz2   LC-LZ2 compressed 4bpp tiles (Tile 0 reserved blank)
@@ -32,13 +32,13 @@ if str(GEN_DIR) not in sys.path:
 import lz2  # noqa: E402
 
 PANEL_COUNT = 4
-PANEL_W = 224
-PANEL_H = 96
-TILES_X = PANEL_W // 8       # 28
-TILES_Y = PANEL_H // 8       # 12
-MAP_ORIGIN_X = 2             # center 28 tiles in 32-wide tilemap (margin 2)
-MAP_ORIGIN_Y = 2             # row 2 -> Y=16..111 in BG space (with BG1VOFS=-5 -> Y=21..116)
-MAX_TILES = 448              # VRAM $0000..$1BFF (before BG1SC=$1C at $1C00)
+PANEL_W = 168
+PANEL_H = 48
+TILES_X = PANEL_W // 8       # 21
+TILES_Y = PANEL_H // 8       # 6
+MAP_ORIGIN_X = 5             # X=40..207 centered inside X=24..224 parchment box (aligns w/ text & .table_b shadow)
+MAP_ORIGIN_Y = 8             # row 8 (bgY=64) -> screen Y=67..114 with BG1VOFS=-4 ($FFFC), over .table_b Y=72..119
+MAX_TILES = 127              # Tile 0 reserved blank + <= 126 panel tiles (<= 4,064 B raw CHR)
 PALETTE_ATTR = 6 << 10       # $1800 -> CGRAM row 6 ($60..$6F / $7EC3C0..$7EC3DE)
 TILEMAP_BYTES = 32 * 32 * 2  # 2048 bytes
 
@@ -99,7 +99,7 @@ def tile_flips(tile: tuple[int, ...]) -> list[tuple[int, ...]]:
 
 
 def compile_panel(png_path: Path) -> dict:
-    """Compile one 224x96 PNG into compressed CHR, compressed 32x32 map, and 32B palette."""
+    """Compile one 168x48 PNG into compressed CHR, compressed 32x32 map, and 32B palette."""
     with Image.open(png_path) as raw_im:
         if raw_im.size != (PANEL_W, PANEL_H):
             raise ValueError(
@@ -135,7 +135,7 @@ def compile_panel(png_path: Path) -> dict:
         for y in range(PANEL_H)
     ]
 
-    # Tile 0 is reserved all-zeros so borders outside the 28x12 panel are transparent (index 0).
+    # Tile 0 is reserved all-zeros so borders outside the 21x6 panel are transparent (index 0).
     blank_tile = (0,) * 64
     tiles: list[tuple[int, ...]] = [blank_tile]
     canon_to_id: dict[tuple[int, ...], int] = {}

@@ -39,9 +39,9 @@ if !ENABLE_CUSTOM_ATTRACT_SEQUENCE == 1
   ; appears. The message then waits at its end; the scene timer ends the
   ; scene. (Measured in headless Mesen2 / yaze with the ORA flag fix.)
   if !ENABLE_ATTRACT_ROYAL_SCENES == 1
-    !AttractFrames_Throne = $0280
-    !AttractFrames_Prison = $02D0
-    !AttractFrames_Altar  = $04A0
+    !AttractFrames_Throne = $0260
+    !AttractFrames_Prison = $02AC
+    !AttractFrames_Altar  = $0478
   else
     !AttractFrames_Throne = $0220
     !AttractFrames_Prison = $0260
@@ -53,7 +53,7 @@ if !ENABLE_CUSTOM_ATTRACT_SEQUENCE == 1
   pushpc
   ; Attract_Initialize (vanilla code, not reassembled here).
   org $0CEE58 : dw $01C0 ; @hook module=Dungeons name=AttractStorybookMessage kind=data
-  org $0CEE62 : dw $0A20 ; @hook module=Dungeons name=AttractStorybookFrames kind=data (+376f for 4-page swaps & Page 4 hold)
+  org $0CEE62 : dw $08C4 ; @hook module=Dungeons name=AttractStorybookFrames kind=data (tight 2-level/f swaps + ~2.5s Page 4 hold)
   if !ENABLE_ATTRACT_ROYAL_SCENES == 1
     ; AttractScene_WorldMap ($0CEF23-$0CEF38): whole-island establishing view
     ; panning to Kalyxo Castle (area $0B) via AttractMap_Pan ($0CFFB1 hook).

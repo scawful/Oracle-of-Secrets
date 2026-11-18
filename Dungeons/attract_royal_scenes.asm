@@ -113,6 +113,7 @@ AttractRoyal_DrawCard:
   STZ.b $2A
   LDA.b $52 : BNE .text
     LDA.b $13 : CMP.b #$0F : BEQ .lit
+    LDA.b $1A : AND.b #$01 : BNE .text
       INC.b $13
       BRA .text
     .lit

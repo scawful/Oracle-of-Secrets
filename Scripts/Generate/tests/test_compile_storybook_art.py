@@ -33,7 +33,7 @@ class CompileStorybookArtTests(unittest.TestCase):
             src = tmp_path / 'src'
             out = tmp_path / 'out'
             src.mkdir()
-            # Paint 4 synthetic 224x96 panels using exact flip-symmetric 8x8 tiles and <= 15 colors.
+            # Paint 4 synthetic 168x48 panels using exact flip-symmetric 8x8 tiles and <= 15 colors.
             for idx in range(gen.PANEL_COUNT):
                 im = Image.new('RGB', (gen.PANEL_W, gen.PANEL_H), (8, 16, 24))
                 px = im.load()
@@ -72,10 +72,13 @@ class CompileStorybookArtTests(unittest.TestCase):
         total_bytes = sum(
             len(p['chr_lz2']) + len(p['map_lz2']) + len(p['pal_bytes']) for p in panels
         )
-        # Leave generous headroom (< 30 KB out of 32 KB bank $56) for ASM routines.
-        self.assertLess(total_bytes, 30000)
+        # Compact 168x48 assets leave ample headroom in 32 KB bank $56.
+        self.assertLess(total_bytes, 16000)
+        self.assertEqual((gen.PANEL_W, gen.PANEL_H), (168, 48))
+        self.assertEqual(gen.MAX_TILES, 127)
         for p in panels:
             self.assertLessEqual(p['tiles'], gen.MAX_TILES)
+            self.assertLessEqual(p['chr_raw_len'], 127 * 32)
             self.assertEqual(len(p['pal_bytes']), 32)
             self.assertEqual(struct.unpack_from('<H', p['pal_bytes'], 0)[0], 0)
 
