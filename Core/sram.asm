@@ -852,10 +852,13 @@ ItemBindingSavedX       = $7EF3BB
 ; (story := Sword if 1..4), never granting the heavy sword.
 SwordStoryBlade    = $7EF3BC  ; 0 none, 1 Meadow, 2+ Master levels
 SwordSlotFlags     = $7EF3BD  ; bit0 heavy owned, bit1 heavy equipped,
-                              ; bit2 heavy reforged (clear = broken), bit7 init
+                              ; bit2 heavy reforged (clear = broken), bits3-5
+                              ; worn tunic (0 follow Armor, 1-3 green/blue/red;
+                              ; Menu/menu_tunic.asm), bit6 free, bit7 init
 !SwordSlot_HeavyOwned    = $01
 !SwordSlot_HeavyEquipped = $02
 !SwordSlot_HeavyReforged = $04
+!SwordSlot_TunicMask     = $38
 !SwordSlot_Initialized   = $80
 ;
 ; Eon Goron camp quests (Roll Call + Meat Feast). Granted by root 2026-11-16

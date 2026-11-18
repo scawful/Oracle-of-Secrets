@@ -7,8 +7,14 @@ UpdateGbcPalette:
   REP #$30   ; change 16bit mode
   LDX #$001E
 
+if !ENABLE_EQUIPMENT_MENU == 1
+  JSL Tunic_GetWorn                  ; worn colour (Menu/menu_tunic.asm)
+  CMP #$0001 : BEQ .blue_mail
+  CMP #$0002 : BEQ .red_mail
+else
   LDA $7EF35B : AND.w #$00FF : CMP #$0001 : BEQ .blue_mail
   LDA $7EF35B : AND.w #$00FF : CMP #$0002 : BEQ .red_mail
+endif
 
   .loop
   LDA.l GameboyLinkPalette, X : STA $7EC6E0, X

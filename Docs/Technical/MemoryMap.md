@@ -37,6 +37,8 @@ The following blocks were marked "unused" in vanilla ALTTP but are now utilized 
 | `$7EF39C` | `JournalState`      | Current state of the player's journal.                                   | ✓        |
 | `$7EF39D` | `Reserved` | Unused (Core/sram.asm:466). | |
 | `$7EF39E` | `StoryState`        | State machine for Link's House intro sequence (0-2).                     | ✓        |
+| `$7EF3BC` | `SwordStoryBlade`   | Story-sword level kept while the heavy sword is equipped: 0 none, 1 Meadow, 2+ Master levels. Written only by `SwordSlots_Sync`/`SwordSlots_Select` (`Menu/menu_sword_slots.asm`). | |
+| `$7EF3BD` | `SwordSlotFlags`    | bit0 heavy sword owned, bit1 heavy equipped, bit2 heavy reforged, bits 3-5 worn tunic (0 follow Armor, 1-3 green/blue/red; claimed 2026-11-16 by `Menu/menu_tunic.asm`), bit6 free, bit7 initialized. Writers: `SwordSlots_Sync` (one full write `#$80` on saves with bit7 clear), every other site is read-modify-write that keeps bits 3-5 (`Menu/menu_sword_slots.asm`, `Items/heavy_sword.asm` `HeavySword_GrantBroken`/`HeavySword_Reforge`, `Menu/menu_tunic.asm` `Tunic_Cycle`/`Tunic_OnMailReceipt`). No yaze or save-tool reader; `Tests/test_item_bindings_adapter_compiled.py` fills `F3A8:F3BD`, which stops before this byte. | |
 | `$7EF3BE` | `EonGoronQuest`     | Eon Goron camp quests: bits 0-4 Roll Call sentries C/D/E/G/H, bit 5 Heart Piece paid, bit 6 reserved (Sentry Duty), bit 7 Meat Feast done. Free block now starts at `$7EF3BF` (5 bytes). | |
 
 #### **Block $7EF403-$7EF4FD** - Partially Repurposed

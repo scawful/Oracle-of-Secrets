@@ -4,8 +4,9 @@ Executes the assembly text of Menu_Equipment_Select, its Menu_Page3_ToggleRing
 delegate and the Menu_Equipment_Move accept block on a small 8-bit model, for
 every cursor slot, A/Y/other input, ownership and worn-ring state. SFX3 is
 queued via $012F: $20 is the menu cursor sound, $22 is Boss dying / Deleting
-file (Core/sfx.asm). Menu_Equipment_Owned, RingMenu_StoreRingToSlotStack and
-MagicBag_ConsumeItem are stubs. No build, no emulator.
+file (Core/sfx.asm). Menu_Equipment_Owned, RingMenu_StoreRingToSlotStack,
+MagicBag_ConsumeItem and SwordSlots_Select (GEAR slots $18-$1A: story sword,
+heavy sword, tunic popup) are stubs. No build, no emulator.
 """
 from pathlib import Path
 import re
@@ -15,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EQUIPMENT = ROOT / "Menu" / "menu_equipment.asm"
 PAGE3 = ROOT / "Menu" / "menu_page3.asm"
 SFX = ROOT / "Core" / "sfx.asm"
+SWORD_SLOTS = ROOT / "Menu" / "menu_sword_slots.asm"
 FLAGS = ROOT / "Config" / "feature_flags.asm"
 MENU_CURSOR, BOSS_DYING, ERROR = 0x20, 0x22, 0x3C
 SOUND_PORTS = ("$012E", "$012F")
@@ -99,6 +101,12 @@ class Menu:
                 pc = 0
             elif op == "JSR":
                 self.jsr(arg)
+            elif op == "JSL" and arg == "SwordSlots_Select":
+                # GEAR slot action (Menu/menu_sword_slots.asm); returns M=8, A unused.
+                self.calls.append((arg, self.a))
+            elif op == "JSL" and arg == "MenuFlow_RecordTurn":
+                # Saves the landing row for edge crossing; keeps A/X/Y and $0200.
+                self.calls.append((arg, self.a))
             elif op in ("LDA", "PLA"):
                 self.a = self.stack.pop() if op == "PLA" else self.value(arg)
                 self.nz(self.a)
@@ -146,8 +154,10 @@ def expected(slot, f6, f4, owned, rings, one_ring):
     """Returns (sound writes, changed selection state, stub calls)."""
     if not (f6 & 0x80 or f4 & 0x40):
         return [], {}, []
-    if slot >= 0x18 or not owned:
+    if slot > 0x1A or not owned:
         return [("$012E", ERROR)], {}, []
+    if slot >= 0x18:
+        return [("$012F", MENU_CURSOR)], {"$0207": 0x20}, [("SwordSlots_Select", slot)]
     if slot < 0x06:
         return [("$012F", MENU_CURSOR)], {"BoundMask": slot + 1, "$0207": 0x20}, []
     if slot < 0x0C:
@@ -172,8 +182,8 @@ def check_select(test, equipment_text, page3_text, flags):
         (equipment_text, "Menu_Equipment_Select"), (page3_text, "Menu_Page3_ToggleRing"))}
     one_ring = flags["ENABLE_ONE_RING"] == 1
     cases = 0
-    for slot in list(range(0x18)) + [0xFF]:
-        ownership = (True,) if 0x12 <= slot < 0x18 else (False,) if slot >= 0x18 else (False, True)
+    for slot in list(range(0x1B)) + [0xFF]:
+        ownership = (True,) if 0x12 <= slot < 0x18 else (False,) if slot > 0x1A else (False, True)
         for owned in ownership:
             rings_list = ring_states(slot - 4, one_ring) if 0x06 <= slot < 0x0C else [(0, 0, 0)]
             for rings in rings_list:
@@ -215,6 +225,21 @@ class EquipmentMenuSfxContract(unittest.TestCase):
         self.assertIn("JMP Menu_Page3_ToggleRing",
                       routine_lines(self.equipment, "Menu_Equipment_Select", self.flags))
 
+    def test_sword_slots_select_dispatch(self):
+        sword = SWORD_SLOTS.read_text(encoding="utf-8")
+        for travel, tunic in ((1, "JMP MenuFlow_TunicOpen"), (0, "RTL")):
+            lines = routine_lines(sword, "SwordSlots_Select",
+                                  dict(self.flags, ENABLE_MENU_MAP_TRAVEL=travel))
+            with self.subTest(map_travel=travel):
+                # $1A (tunic) first: the popup with Map & Travel, else no action.
+                self.assertEqual(lines[:3], ["CMP.b #$1A", "BNE +", tunic])
+                self.assertIn("CMP.b #$19", lines)
+                heavy = lines[lines.index(".heavy"):]
+                self.assertIn("ORA.b #!SwordSlot_HeavyEquipped", heavy)
+                story = lines[lines.index("CMP.b #$19"):lines.index(".heavy")]
+                self.assertIn("AND.b #!SwordSlot_HeavyEquipped^$FF", story)
+                self.assertIn("LDA.l SwordStoryBlade", story)
+
     def test_select_active_flags_every_slot_input_and_ring_state(self):
         check_select(self, self.equipment, self.page3, self.flags)
 
@@ -225,7 +250,7 @@ class EquipmentMenuSfxContract(unittest.TestCase):
     def test_move_accept_plays_cursor_sound(self):
         routines = {"Menu_Equipment_Move": routine_lines(
             self.equipment, "Menu_Equipment_Move", self.flags)}
-        for target in range(0x18):
+        for target in range(0x1B):
             menu = Menu(routines, {"$02": target, "$020B": 0xFF, "$0207": 0x05}, {})
             menu.run("Menu_Equipment_Move", ".accept")
             self.assertEqual(menu.sounds, [("$012F", MENU_CURSOR)])
@@ -237,7 +262,8 @@ class EquipmentMenuSfxContract(unittest.TestCase):
         selections = {"$0202": 0x0D, "$020B": 14, "BoundMask": 3,
                       "RingSlot1": 2, "SavedOcarinaSong": 4, "CurrentSong": 4}
         for loop in (0, 1):
-            flags = dict(self.flags, ENABLE_MENU_PAGE_LOOP=loop)
+            # Legacy three-page ring; the Map & Travel ring has its own test.
+            flags = dict(self.flags, ENABLE_MENU_PAGE_LOOP=loop, ENABLE_MENU_MAP_TRAVEL=0)
             routines = {"Menu_Page3_Turn": routine_lines(
                 self.page3, "Menu_Page3_Turn", flags)}
             for page, state, target in (("items", 4, 0), ("quest", 6, 0),
@@ -266,6 +292,35 @@ class EquipmentMenuSfxContract(unittest.TestCase):
                         self.assertEqual(menu.sounds, [("$012F", 6)])
                         self.assertTrue(menu.c)
                         self.assertEqual(menu.stack, [])
+
+    def test_map_travel_four_page_ring(self):
+        """Items -R-> Equipment -R-> Quest -R-> Map -R-> Items, and back with L."""
+        states = {"#!MENU_STATE_ITEM_SCREEN": 4, "#!MENU_STATE_SCROLL_TO": 5,
+                  "#!MENU_STATE_STATS_SCREEN": 6, "#!MENU_STATE_SCROLL_FROM": 7}
+        flags = dict(self.flags, ENABLE_MENU_MAP_TRAVEL=1)
+        map_travel = (ROOT / "Menu" / "menu_map_travel.asm").read_text(encoding="utf-8")
+        routines = {"Menu_Page3_Turn": routine_lines(self.page3, "Menu_Page3_Turn", flags),
+                    "MenuMapTravel_Turn": routine_lines(map_travel, "MenuMapTravel_Turn", flags)}
+        # (page, $0200, MenuScrollLevelH) -> {direction: ($0200, MenuScrollLevelH)}
+        ring = {
+            ("items", 4, 0x20): {1: (5, 0x20), 0xFF: (5, 0x40)},
+            ("equipment", 6, 0x20): {1: (5, 0x00), 0xFF: (7, 0x20)},
+            ("quest", 6, 0x00): {1: (5, 0x40), 0xFF: (5, 0x20)},
+            ("map", 6, 0x40): {1: (7, 0x40), 0xFF: (5, 0x00)},
+        }
+        for (page, state, target), turns in ring.items():
+            for direction, (want_state, want_target) in turns.items():
+                with self.subTest(page=page, direction=direction):
+                    memory = dict(states, **{"$0200": state, "MenuScrollLevelH": target})
+                    menu = Menu(routines, memory, {})
+                    menu.a = direction
+                    menu.run("Menu_Page3_Turn")
+                    self.assertEqual((menu.memory["$0200"], menu.memory["MenuScrollLevelH"]),
+                                     (want_state, want_target))
+                    self.assertEqual(menu.memory["MenuScrollHDirection"],
+                                     8 if direction == 1 else 0xFFF8)
+                    self.assertEqual(menu.sounds, [("$012F", 6)])
+                    self.assertTrue(menu.c)
 
     def test_pre_fix_boss_sound_fails_contract(self):
         mutants = [

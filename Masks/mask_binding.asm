@@ -207,6 +207,7 @@ if !ENABLE_HORSE_FORM == 1
 if !ENABLE_HORSE_MOUNTED_BOW == 1
   ; Mounted bow only: horse keeps the bow Y-slot ($0202=$01 → $0303=$03).
   CMP.b #$09 : BNE .after_horse_y
+    LDA.l $7EF3CC : BNE .no_item            ; follower owns $4200/$4220
     LDA.w $0202 : CMP.b #$01 : BNE .no_item
     LDA.l $7EF340 : BEQ .no_item
     LDA.l $7EF377 : BEQ .no_item

@@ -76,6 +76,18 @@ endif
 AbyssLanding = $7E02B8 ; state (0 off, 1 armed, 2 mosaic, 3 pan); +1 = camera rows left
 assert AbyssLanding+2 <= $7E02C0
 
+; Menu cursor flow (!ENABLE_MENU_MAP_TRAVEL, Menu/menu_cursor_flow.asm).
+; Vanilla-unused $7E02BA-$7E02BE (usdasm UNUSED_7E02BA-BE, zero at boot).
+; Not persistent: the cursors last across menu opens until power-off.
+MenuFlow_EquipCursor = $7E02BA ; Equipment slot + 1 (0 = none)
+MenuFlow_MapCursor   = $7E02BB ; Map & Travel cell + 1 (0 = none)
+MenuFlow_CrossRow    = $7E02BC ; D-pad page cross: source row ordinal + 1 (0 = none)
+MenuFlow_CrossDir    = $7E02BD ; 0 = turned right (land left), $1F = turned left
+MenuFlow_TunicPopup  = $7E02BE ; 0 = closed; $80 | highlighted colour while open
+MenuFlow_SongPopup   = MenuFlow_TunicPopup ; Map & Travel: $80 | highlighted song - 1 (pages never overlap)
+assert AbyssLanding+2 == MenuFlow_EquipCursor
+assert MenuFlow_TunicPopup+1 <= $7E02C0
+
 if !ENABLE_HORSE_FORM == 1
 base $7E1EDE
 {
@@ -178,6 +190,7 @@ Horse_OffBuf   = $7F5002 ; $0400 bytes, copy of VRAM $5000-$51FF
 Horse_OffState = $7F5402 ; $A1 saved, $A2 Epona cells in VRAM, else native
 Horse_OffClear = $7F5403 ; frames with no other page1 $00-$1F OAM user
 Horse_OffSheet = $7F5404 ; $7EC2FC when the copy was taken
+Horse_OffOam   = $7F5405 ; word: $0800-$09E0 OAM base of sprite $2D this frame (0 = none)
 endif
 
 ; PLACEHOLDER for the Song of Healing beat between Kydreeok and Ganondorf (decisions.org canon

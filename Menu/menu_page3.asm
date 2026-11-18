@@ -127,9 +127,11 @@ Menu_Page3_ItemScreen:
 {
   SEP #$30
 if !ENABLE_MENU_MAP_TRAVEL == 1
-  LDA.l MenuMapTravel_Pending : CMP.b #$03 : BNE .no_map_return
-    LDA.b #$00 : STA.l MenuMapTravel_Pending
-    LDA.b #$FF : JMP Menu_Page3_Turn     ; map closed: back to Map & Travel
+  ; After the field map, MenuFlow_UploadRight drew Map & Travel on the right
+  ; half and scrolled to it ($E5 = 1): stay there.
+  LDA.b $E5 : BEQ .no_map_return
+    LDA.b #!MENU_STATE_STATS_SCREEN : STA.w $0200
+    RTS
   .no_map_return
 endif
   LDA.b $F6 : BIT.b #$30 : BEQ .no_lr   ; L = $20, R = $10
@@ -268,6 +270,13 @@ Menu_Page3_StatsScreen:
 {
   SEP #$30
 if !ENABLE_MENU_MAP_TRAVEL == 1
+  ; Cursor memory; an open popup takes all input (C set): redraw its page.
+  JSL MenuFlow_Frame : BCC +
+  LDA.w MenuScrollLevelH : CMP.b #$40 : BNE ++
+  JMP MenuMapTravel_Screen_moved          ; song popup
+++
+  JMP .moved                              ; tunic popup
++
   ; Four-page ring: L/R turn from every right-half page; Start keeps priority.
   LDA.b $F4 : BIT.b #$10 : BNE .ring_no_lr
   LDA.b $F6 : AND.b #$30 : BEQ .ring_no_lr
@@ -354,12 +363,22 @@ endif
     RTS
   .no_x
 
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  LDA.w $020B : PHA
+endif
   JSR Menu_Page3_Move
   SEP #$30
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  PLA : EOR.w $020B : TAX              ; X != 0: the cursor moved this frame
+endif
   LDA.w $0200 : CMP.b #!MENU_STATE_STATS_SCREEN : BEQ .select
   RTS                                  ; page turn owns the rest of this frame
 .select
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  TXA : BNE .moved                     ; A/Y act on the cell the player saw
+endif
   JSR Menu_Page3_Select
+.moved
   INC.w $0207                            ; cursor blink
   JSR Menu_Page3_Draw
   LDA.b #$23 : STA.w $0116
@@ -1006,6 +1025,9 @@ Menu_Page3_ScrollFrom:
 {
   SEP #$20
   LDA.b $E4 : BNE .scrolling
+if !ENABLE_MENU_MAP_TRAVEL == 1 && !ENABLE_GOLDSTAR_CELL == 1 && !ENABLE_DUAL_ITEM_BINDING_PROTOTYPE == 1
+    JSL MenuFlow_ItemsEnter              ; D-pad cross: matching row
+endif
     JSR Menu_RefreshInventoryScreen      ; returns SEP #$30
     LDA.b #$22 : STA.w $0116             ; left half
     LDA.b #$01 : STA.b $17

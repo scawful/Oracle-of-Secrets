@@ -52,11 +52,13 @@ SwordSlots_ExitReload:
   RTL
 }
 
-; Menu_Equipment_Owned for slots 24/25. A = slot; returns the icon variant,
-; zero when unavailable (smith-held $FF hides both). Caller saved X. M/X=8.
+; Menu_Equipment_Owned for slots 24-26. A = slot; returns the icon variant,
+; zero when unavailable (smith-held $FF hides both swords). Caller saved X.
+; Slot 26 is the tunic (Menu/menu_tunic.asm): a cursor stop whenever Armor
+; is 0-2, so its footer name shows even with one colour owned. M/X=8.
 SwordSlots_Variant:
 {
-  CMP.b #$1A : BCS .none
+  CMP.b #$1A : BEQ .tunic : BCS .none
   TAX
   LDA.l Sword : CMP.b #$FF : BEQ .none
   CPX.b #$19 : BEQ .heavy
@@ -70,11 +72,20 @@ SwordSlots_Variant:
 .none
   LDA.b #$00
   RTL
+.tunic
+  JMP Tunic_WornVariant
 }
 
-; A on an owned sword slot. A = 24 story / 25 heavy. M/X=8.
+; A on an owned GEAR slot. A = 24 story / 25 heavy / 26 tunic. M/X=8.
 SwordSlots_Select:
 {
+  CMP.b #$1A : BNE +
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  JMP MenuFlow_TunicOpen                ; the popup picks the colour
+else
+  RTL
+endif
++
   CMP.b #$19 : BEQ .heavy
   LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyEquipped^$FF : STA.l SwordSlotFlags
   LDA.l SwordStoryBlade : STA.l Sword
@@ -117,13 +128,30 @@ SwordSlots_IsHeavyLevel:
 !HEAVY_ICON_TR        = $3065
 !HEAVY_ICON_BROKEN_TR = $30CE
 
-; Called after the gear icons are drawn. Recolors the heavy icon, then
-; returns A = equipped sword slot (24 story, 25 heavy) for the red marker.
-; M/X=8.
+; Called after the gear icons are drawn. Recolors the heavy icon, or draws
+; an empty frame on its cell while the heavy sword is not owned, draws the
+; open tunic popup, then returns A = equipped sword slot (24 story,
+; 25 heavy) for the red marker. M/X=8.
+!HEAVY_EMPTY_FRAME    = $2060         ; bracket corner, flipped per corner
 assert !SwordSlot_HeavyEquipped == $02, "MarkerSlot shifts bit1 into bit0"
 SwordSlots_MarkerSlot:
 {
-  LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyOwned : BEQ .marker
+  JSL Tunic_DrawArmorLabel
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  LDA.l MenuFlow_TunicPopup : BPL +
+  JSL MenuFlow_DrawPopup
++
+endif
+  LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyOwned : BNE .owned
+  REP #$20
+  LDA.w #!HEAVY_EMPTY_FRAME
+  STA.l $7E1108+!HEAVY_ICON_POS         ; corners on the icon's own 2x2 tiles:
+  ORA.w #$4000 : STA.l $7E110A+!HEAVY_ICON_POS ; one column left is the story
+  ORA.w #$8000 : STA.l $7E114A+!HEAVY_ICON_POS ; sword's red marker, drawn later
+  EOR.w #$4000 : STA.l $7E1148+!HEAVY_ICON_POS
+  SEP #$20
+  BRA .marker
+.owned
   LDA.l Sword : CMP.b #$FF : BEQ .marker
   LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyReforged
   REP #$20
@@ -140,10 +168,14 @@ SwordSlots_MarkerSlot:
   RTL
 }
 
-; Footer name for X = $30 story / $32 heavy (slot*2): 14 cells to $1692.
-; DBR = $2D; $1692 is the WRAM mirror. Returns M/X=8.
+; Footer name for X = $30 story / $32 heavy / $34 tunic (slot*2): 14 cells
+; to $1692. DBR = $2D; $1692 is the WRAM mirror. Returns M/X=8.
 SwordSlots_Name:
 {
+  CPX.b #$34 : BNE .sword
+  JSL Tunic_GetWorn : TAX
+  LDA.l .tunic_rows,X : BRA .copy
+.sword
   LDA.b #28 : CPX.b #$32 : BEQ .copy  ; heavy: name not decided, blank
   LDA.l SwordStoryBlade : CMP.b #$02
   LDA.b #$00 : BCC .copy              ; level 1: Meadow blade
@@ -157,24 +189,34 @@ SwordSlots_Name:
   INX #2 : INY #2 : CPY.w #$001C : BCC .loop
   SEP #$30
   RTL
+.tunic_rows
+  db 84,112,140                       ; GREEN/BLUE/RED_TUNIC rows below
 .names
   ; Items assemble before Menu/menu_text.asm defines the menu font map, so
   ; map only these letters here and restore the table for later Items code.
   pushtable
   'A' = $2550
   'B' = $2551
+  'C' = $2552
   'D' = $2553
   'E' = $2554
+  'G' = $2556
+  'I' = $2558
   'L' = $255B
   'M' = $255C
+  'N' = $255D
   'O' = $255E
   'R' = $2561
   'S' = $2562
   'T' = $2563
+  'U' = $2564
   'W' = $2566
   '_' = $20F5
   dw "MEADOW_BLADE__"
   dw "______________"
   dw "MASTER_SWORD__"
+  dw "GREEN_TUNIC___"
+  dw "BLUE_TUNIC____"
+  dw "RED_TUNIC_____"
   pulltable
 }

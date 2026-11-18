@@ -208,15 +208,16 @@ TunicGFX:
 
 ; Static Text on the Menu
 
-SelectItemTXT:
-  dw $2562, $2554, $255B, $2554
-  dw $2552, $2563, $2417, $2417
-  dw $2558, $2563, $2554, $255C
+; Page titles fill the 12-cell title handle (row 6, cols 10-21) centred.
+SelectItemTXT:                       ; "   ITEMS    "
+  dw $2417, $2417, $2417, $2558
+  dw $2563, $2554, $255C, $2562
+  dw $2417, $2417, $2417, $2417
 
-QuestStatusTXT:
-  dw $2560, $2564, $2554, $2562
-  dw $2563, $2417, $2562, $2563
-  dw $2550, $2563, $2564, $2562
+QuestStatusTXT:                      ; "   QUEST    "
+  dw $2417, $2417, $2417, $2560
+  dw $2564, $2554, $2562, $2563
+  dw $2417, $2417, $2417, $2417
 
 AreaNameTXT:
   dw $243F, $2550, $2561, $2554
