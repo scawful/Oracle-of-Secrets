@@ -24,7 +24,7 @@
 ; Pointer offset = 2*(id-1). asar evaluates math left to right here, so
 ; the offsets are written as literals.
 ; UW $0E stays vanilla (v1 songs dropped 2026-11-05).
-; OW $11 is not reachable from area music yet (4-bit area slots).
+; OW $11 plays outdoors where area music is alias $06 (Overworld/great_sea_music.asm).
 ; @source usdasm/bank_00.asm:008901 (LoadIntroSongBank), :008913 (LoadOverworldSongs)
 ;
 ; Cold boot ($008901): full SamplePointers chain (incl. vanilla OW), then resend
