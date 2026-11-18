@@ -1,0 +1,995 @@
+{
+  "_meta": {
+    "description": "Intent-only progression-audit specification for Oracle of Secrets (z3ed progression-audit, Audit A1).",
+    "principle": "Encodes progression intent, never current ROM room state. Zero hardcoded room ID lists.",
+    "schema_source": "yaze src/cli/handlers/game/progression_commands.cc (ParseProgressionSpec, lines 654-828)",
+    "brief_sources": [
+      "QUEUE262"
+    ],
+    "base_commit": "096d1fb9",
+    "authored_date": "2026-11-17"
+  },
+  "item_sources": [
+    "chests",
+    "pots"
+  ],
+  "item_ids": {
+    "chest": {
+      "0x00": "Fighter's Sword and Shield",
+      "0x01": "Meadow Blade",
+      "0x02": "Greatblade",
+      "0x03": "Master Sword",
+      "0x04": "Fighter's Shield",
+      "0x05": "Fire Shield",
+      "0x06": "Mirror Shield",
+      "0x07": "Fire Rod",
+      "0x08": "Ice Rod",
+      "0x09": "Hammer",
+      "0x0A": "Hookshot",
+      "0x0B": "Bow",
+      "0x0C": "Boomerang",
+      "0x0D": "Magic Powder",
+      "0x11": "Deku Mask",
+      "0x12": "Lamp",
+      "0x14": "Ocarina",
+      "0x15": "Cane of Somaria",
+      "0x16": "Bottle",
+      "0x17": "Piece of Heart",
+      "0x18": "Cane of Byrna",
+      "0x19": "Stone Mask",
+      "0x1A": "Magic Mirror",
+      "0x1B": "Power Glove",
+      "0x1C": "Titan's Mitt",
+      "0x1D": "Book of Secrets",
+      "0x1E": "Flippers",
+      "0x1F": "Moon Pearl",
+      "0x21": "Roc's Feather",
+      "0x22": "Blue Mail",
+      "0x23": "Red Mail",
+      "0x24": "Small Key",
+      "0x25": "Compass",
+      "0x26": "Heart Container (no animation)",
+      "0x27": "Bomb (1)",
+      "0x28": "Bomb (3)",
+      "0x29": "Mushroom",
+      "0x2A": "Red Boomerang",
+      "0x2C": "Garo Mask",
+      "0x31": "Bomb (10)",
+      "0x32": "Big Key",
+      "0x33": "Map",
+      "0x37": "Pendant of Courage",
+      "0x38": "Pendant of Wisdom",
+      "0x39": "Pendant of Power",
+      "0x3A": "Bow",
+      "0x3B": "Silver Arrows",
+      "0x3D": "Heart Container ( sanctuary )",
+      "0x3E": "Heart Container",
+      "0x4B": "Pegasus Boots",
+      "0x4C": "Bombchu",
+      "0x4D": "Switch Hook"
+    }
+  },
+  "regions": {
+    "D1": {
+      "owners": [
+        "D1",
+        "ID0C"
+      ],
+      "dungeon_id": "0x0C",
+      "name": "Mushroom Grotto",
+      "source": "Docs/Dev/Planning/dungeons.json:19-20; Docs/Technical/Dungeon_Tables_Expansion.md:145; Masks/mask_routines.asm:91-96"
+    },
+    "D2": {
+      "owners": [
+        "D2",
+        "ID0A"
+      ],
+      "dungeon_id": "0x0A",
+      "name": "Tail Palace",
+      "source": "Docs/Dev/Planning/dungeons.json:459-460; Docs/Technical/Dungeon_Tables_Expansion.md:144; Masks/mask_routines.asm:91-96"
+    },
+    "D3": {
+      "owners": [
+        "D3",
+        "ID10"
+      ],
+      "dungeon_id": "0x10",
+      "name": "Kalyxo Castle",
+      "source": "Docs/Dev/Planning/dungeons.json:919-920; Docs/Technical/Dungeon_Tables_Expansion.md:147; Masks/mask_routines.asm:91-96"
+    },
+    "S1": {
+      "owners": [
+        "S1",
+        "SOW",
+        "ID14"
+      ],
+      "dungeon_id": "0x14",
+      "name": "Shrine of Wisdom",
+      "source": "Docs/Dev/Planning/dungeons.json:3651-3652; Docs/Technical/Dungeon_Tables_Expansion.md:149; Masks/mask_routines.asm:91-96"
+    },
+    "D4": {
+      "owners": [
+        "D4",
+        "ID16"
+      ],
+      "dungeon_id": "0x16",
+      "name": "Zora Temple",
+      "source": "Docs/Dev/Planning/dungeons.json:1349-1350; Docs/Technical/Dungeon_Tables_Expansion.md:150; Masks/mask_routines.asm:91-96"
+    },
+    "D5": {
+      "owners": [
+        "D5",
+        "ID12"
+      ],
+      "dungeon_id": "0x12",
+      "name": "Glacia Estate",
+      "source": "Docs/Dev/Planning/dungeons.json:2119-2120; Docs/Technical/Dungeon_Tables_Expansion.md:148; Masks/mask_routines.asm:91-96"
+    },
+    "S2": {
+      "owners": [
+        "S2",
+        "SOP",
+        "ID06"
+      ],
+      "dungeon_id": "0x06",
+      "name": "Shrine of Power",
+      "source": "Docs/Dev/Planning/dungeons.json:4031-4032; Docs/Technical/Dungeon_Tables_Expansion.md:142; Masks/mask_routines.asm:91-96"
+    },
+    "D6": {
+      "owners": [
+        "D6",
+        "ID0E"
+      ],
+      "dungeon_id": "0x0E",
+      "name": "Goron Mines",
+      "source": "Docs/Dev/Planning/dungeons.json:2689-2690; Docs/Technical/Dungeon_Tables_Expansion.md:146; Masks/mask_routines.asm:91-96"
+    },
+    "D7": {
+      "owners": [
+        "D7",
+        "ID18"
+      ],
+      "dungeon_id": "0x18",
+      "name": "Dragon Ship",
+      "source": "Docs/Dev/Planning/dungeons.json:3361-3362; Docs/Technical/Dungeon_Tables_Expansion.md:151; Masks/mask_routines.asm:91-96"
+    },
+    "S3": {
+      "owners": [
+        "S3",
+        "SOC",
+        "ID00",
+        "ID09"
+      ],
+      "dungeon_id": "0x00",
+      "name": "Shrine of Courage",
+      "source": "Docs/Dev/Planning/dungeons.json:4181-4182; Docs/Technical/Dungeon_Tables_Expansion.md:139,155-156; Masks/mask_routines.asm:91-96"
+    },
+    "D8": {
+      "owners": [
+        "D8",
+        "ID04"
+      ],
+      "dungeon_id": "0x04",
+      "name": "Sky Tower",
+      "source": "Docs/Technical/Dungeon_Tables_Expansion.md:141; Dungeons/sky_d8_award.asm:1-35; Masks/mask_routines.asm:91-96"
+    },
+    "FOS": {
+      "owners": [
+        "FOS",
+        "D9",
+        "ID1A"
+      ],
+      "dungeon_id": "0x1A",
+      "name": "Fortress of Secrets",
+      "source": "Docs/Dev/Planning/dungeons.json:4311-4312; Docs/Technical/Dungeon_Tables_Expansion.md:152; Masks/mask_routines.asm:91-96"
+    },
+    "D9": {
+      "includes": [
+        "FOS"
+      ],
+      "name": "Fortress of Secrets (D9 alias)",
+      "source": "QUEUE262"
+    },
+    "PreBow": {
+      "includes": [
+        "D1",
+        "D2"
+      ],
+      "source": "QUEUE262"
+    },
+    "PreMountains": {
+      "includes": [
+        "D1",
+        "D2",
+        "D3"
+      ],
+      "source": "QUEUE262"
+    },
+    "PreFlippers": {
+      "includes": [
+        "D1",
+        "D2",
+        "D3",
+        "S1"
+      ],
+      "source": "QUEUE262"
+    },
+    "PreFireRod": {
+      "includes": [
+        "D1",
+        "D2",
+        "D3",
+        "S1",
+        "D4"
+      ],
+      "source": "QUEUE262"
+    },
+    "PreHammer": {
+      "includes": [
+        "D1",
+        "D2",
+        "D3",
+        "S1",
+        "D4",
+        "D5",
+        "S2"
+      ],
+      "source": "QUEUE262"
+    },
+    "PreSomaria": {
+      "includes": [
+        "D1",
+        "D2",
+        "D3",
+        "S1",
+        "D4",
+        "D5",
+        "S2",
+        "D6"
+      ],
+      "source": "QUEUE262"
+    },
+    "PreSwitchHook": {
+      "includes": [
+        "D1",
+        "D2",
+        "D3",
+        "S1",
+        "D4",
+        "D5",
+        "S2",
+        "D6",
+        "D7",
+        "S3"
+      ],
+      "source": "QUEUE262"
+    },
+    "PrePortalRod": {
+      "includes": [
+        "D1",
+        "D2",
+        "D3",
+        "S1",
+        "D4",
+        "D5",
+        "S2",
+        "D6",
+        "D7",
+        "S3",
+        "D8"
+      ],
+      "source": "QUEUE262"
+    }
+  },
+  "gates": [
+    {
+      "feature": "dark",
+      "requires": [
+        "Lamp"
+      ],
+      "source": "QUEUE262 (dark rooms require Lamp $7EF34A; Deku Sticks light torches only)"
+    },
+    {
+      "feature": "big_chest",
+      "requires": [
+        "Compass"
+      ],
+      "source": "Dungeons/keyblock.asm:15-16; Oracle Compass $7EF364-$7EF365 acts as the Treasure Key / Big Chest Key"
+    },
+    {
+      "feature": "door_class:small_key",
+      "requires": [
+        "Small Key"
+      ],
+      "source": "yaze src/cli/handlers/game/progression_commands.cc:28-39"
+    },
+    {
+      "feature": "door_class:big_key",
+      "requires": [
+        "Big Key"
+      ],
+      "source": "yaze src/cli/handlers/game/progression_commands.cc:41-46; Boss Key opens Boss Doors"
+    },
+    {
+      "feature": "door_class:bombable",
+      "requires": [
+        "Bombs"
+      ],
+      "source": "yaze src/cli/handlers/game/progression_commands.cc:48-57"
+    },
+    {
+      "feature": "door:0x28",
+      "requires": [
+        "Pegasus Boots"
+      ],
+      "source": "yaze src/zelda3/dungeon/door_types.h:64 (DashWall 0x28)"
+    },
+    {
+      "feature": "collision:0x08",
+      "requires": [
+        "Flippers"
+      ],
+      "source": "yaze src/zelda3/zelda3_labels.cc:525 (Deep water 0x08); Dungeons/Collision/water_collision.asm:271"
+    },
+    {
+      "feature": "collision:0xF5",
+      "requires": [
+        "Zora Mask"
+      ],
+      "source": "Dungeons/Collision/custom_collision.asm:18 (!WATER_FILL_MARKER_TILE = $F5); Dungeons/Collision/water_collision.asm:19-20"
+    },
+    {
+      "feature": "collision:0xDE",
+      "requires": [
+        "Garo Mask"
+      ],
+      "source": "Dungeons/dungeons.asm:52 (TileType $DE custom hot floor damage unless Garo Mask equipped)"
+    },
+    {
+      "feature": "collision:0x64",
+      "requires": [
+        "Minish Form"
+      ],
+      "source": "Dungeons/Collision/GlobalCollisionTables.asm:86-88 (Minish shutter/portal tile $64); Masks/all_masks.asm:31-33"
+    },
+    {
+      "feature": "tag:0x1A",
+      "requires": [
+        "Flippers",
+        "Zora Mask"
+      ],
+      "source": "yaze src/zelda3/zelda3_labels.cc:471 (26: Water Gate); Dungeons/dungeons.asm:239-245"
+    },
+    {
+      "feature": "tag:0x1B",
+      "requires": [
+        "Flippers",
+        "Zora Mask"
+      ],
+      "source": "yaze src/zelda3/zelda3_labels.cc:472 (27: Water Twin); Dungeons/dungeons.asm:239-245"
+    },
+    {
+      "feature": "tag:0x23",
+      "requires": [
+        "Minish Form"
+      ],
+      "source": "Dungeons/custom_tag.asm:12-17,175-217 (RoomTag_MinishSwitch = 0x23 / Holes 1); Docs/Technical/Mechanics/Room_Tag_Slots.md:19"
+    },
+    {
+      "feature": "tag:0x24",
+      "requires": [
+        "Cane of Somaria"
+      ],
+      "source": "Dungeons/custom_tag.asm:24-26,280-368 (RoomTag_SomariaSocketDoor = 0x24 / Holes 2); Docs/Technical/Mechanics/Room_Tag_Slots.md:20"
+    },
+    {
+      "feature": "tag:0x33",
+      "requires": [
+        "Fire Source"
+      ],
+      "source": "yaze src/zelda3/zelda3_labels.cc:496 (51: Light Torches to Open); satisfiable by Deku Stick, Lamp, or Fire Rod"
+    },
+    {
+      "feature": "tag:0x36",
+      "requires": [
+        "Minish Form"
+      ],
+      "source": "Dungeons/custom_tag.asm:12-17,221-276 (RoomTag_MinishShutterDoor = 0x36 / Holes 5); Docs/Technical/Mechanics/Room_Tag_Slots.md:21"
+    },
+    {
+      "feature": "tag:0x37",
+      "requires": [
+        "Minecart"
+      ],
+      "source": "Docs/Technical/Mechanics/Room_Tag_Slots.md:22 (0x37 / Holes 6: Cart-Required Shutters)"
+    },
+    {
+      "feature": "tag:0x3E",
+      "requires": [
+        "Fire Source"
+      ],
+      "source": "yaze src/zelda3/zelda3_labels.cc:507 (62: Light Torches for Chest); satisfiable by Deku Stick, Lamp, or Fire Rod"
+    },
+    {
+      "feature": "object:0x050",
+      "requires": [
+        "Cane of Somaria"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:399 (Somaria path horizontal 0x050)"
+    },
+    {
+      "feature": "object:0x07B",
+      "requires": [
+        "Cane of Somaria"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:443 (Somaria path vertical 0x07B)"
+    },
+    {
+      "feature": "object:0x096",
+      "requires": [
+        "Hammer"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:469 (Hammer pegs vertical 0x096)"
+    },
+    {
+      "feature": "object:0x0BE",
+      "requires": [
+        "Hammer"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:508 (Hammer pegs horizontal 0x0BE)"
+    },
+    {
+      "feature": "object:0x0D1",
+      "requires": [
+        "Flippers"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:519 (Water floor 0x0D1)"
+    },
+    {
+      "feature": "object:0x0D2",
+      "requires": [
+        "Flippers"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:520 (Flood water medium 0x0D2)"
+    },
+    {
+      "feature": "object:0x0E1",
+      "requires": [
+        "Flippers"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:535 (Flood water large 0x0E1)"
+    },
+    {
+      "feature": "object:0x0E2",
+      "requires": [
+        "Flippers"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:536 (Layer 2 swim mask 0x0E2)"
+    },
+    {
+      "feature": "object:0x0E3",
+      "requires": [
+        "Flippers"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:537 (Flood water B large 0x0E3)"
+    },
+    {
+      "feature": "object:0x0F0",
+      "requires": [
+        "Zora Mask"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:550 (Heavy current water 0x0F0)"
+    },
+    {
+      "feature": "object:0x135",
+      "requires": [
+        "Zora Mask"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:623 (Water-hop stairs A 0x135)"
+    },
+    {
+      "feature": "object:0x136",
+      "requires": [
+        "Zora Mask"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:624 (Water-hop stairs B 0x136)"
+    },
+    {
+      "feature": "object:0x137",
+      "requires": [
+        "Zora Mask"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:625 (Dam floodgate 0x137)"
+    },
+    {
+      "feature": "object:0xF83",
+      "requires": [
+        "Cane of Somaria"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:640 (Somaria path endpoint 0xF83)"
+    },
+    {
+      "feature": "object:0xF84",
+      "requires": [
+        "Cane of Somaria"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:641 (Somaria path corner NW 0xF84)"
+    },
+    {
+      "feature": "object:0xF85",
+      "requires": [
+        "Cane of Somaria"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:642 (Somaria path corner SW 0xF85)"
+    },
+    {
+      "feature": "object:0xF86",
+      "requires": [
+        "Cane of Somaria"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:643 (Somaria path corner NE 0xF86)"
+    },
+    {
+      "feature": "object:0xF87",
+      "requires": [
+        "Cane of Somaria"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:644 (Somaria path corner SE 0xF87)"
+    },
+    {
+      "feature": "object:0xF88",
+      "requires": [
+        "Cane of Somaria"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:645 (Somaria path 4-way 0xF88)"
+    },
+    {
+      "feature": "object:0xF89",
+      "requires": [
+        "Cane of Somaria"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:646 (Somaria path T-west 0xF89)"
+    },
+    {
+      "feature": "object:0xF8A",
+      "requires": [
+        "Cane of Somaria"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:647 (Somaria path T-south 0xF8A)"
+    },
+    {
+      "feature": "object:0xF8B",
+      "requires": [
+        "Cane of Somaria"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:648 (Somaria path T-east 0xF8B)"
+    },
+    {
+      "feature": "object:0xF8C",
+      "requires": [
+        "Cane of Somaria"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:649 (Somaria path T-north 0xF8C)"
+    },
+    {
+      "feature": "object:0xF8E",
+      "requires": [
+        "Cane of Somaria"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:651 (Somaria ? trigger 0xF8E)"
+    },
+    {
+      "feature": "object:0xF8F",
+      "requires": [
+        "Cane of Somaria"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:652 (Somaria path crossover 0xF8F)"
+    },
+    {
+      "feature": "object:0xF96",
+      "requires": [
+        "Hammer"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:659 (Single Hammer peg 0xF96)"
+    },
+    {
+      "feature": "object:0xFA6",
+      "requires": [
+        "Power Glove"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:681 (Liftable large block 0xFA6)"
+    },
+    {
+      "feature": "object:0xFC4",
+      "requires": [
+        "Bombs"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:708 (Bombable floor 0xFC4)"
+    },
+    {
+      "feature": "object:0xFF4",
+      "requires": [
+        "Bombs"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:740 (Wall crack north 0xFF4)"
+    },
+    {
+      "feature": "object:0xFF5",
+      "requires": [
+        "Bombs"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:741 (Wall crack south 0xFF5)"
+    },
+    {
+      "feature": "object:0xFF6",
+      "requires": [
+        "Bombs"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:742 (Wall crack west 0xFF6)"
+    },
+    {
+      "feature": "object:0xFF7",
+      "requires": [
+        "Bombs"
+      ],
+      "source": "yaze src/zelda3/dungeon/room_object.h:743 (Wall crack east 0xFF7)"
+    },
+    {
+      "feature": "sprite:0x03",
+      "requires": [
+        "Portal Rod"
+      ],
+      "source": "Sprites/registry.csv:32 (Sprite_Portal 0x03); Items/portal_rod.asm:47"
+    },
+    {
+      "feature": "sprite:0x38",
+      "requires": [
+        "Bow"
+      ],
+      "source": "yaze src/zelda3/sprite/sprite.cc:73 (Arrow Target / Statue Eye Switch 0x38)"
+    },
+    {
+      "feature": "sprite:0x77",
+      "requires": [
+        "Deku Mask"
+      ],
+      "source": "Sprites/registry.csv:31 (Sprite_DekuLeaf 0x77)"
+    },
+    {
+      "feature": "sprite:0x84",
+      "requires": [
+        "Bow"
+      ],
+      "source": "yaze src/zelda3/sprite/sprite.cc:149 (Red Eyegore 0x84)"
+    },
+    {
+      "feature": "sprite:0x8E",
+      "requires": [
+        "Switch Hook"
+      ],
+      "source": "Sprites/registry.csv:37 (Sprite_SwapDiamond 0x8E); Items/switch_hook.asm"
+    },
+    {
+      "feature": "sprite:0xA1",
+      "requires": [
+        "Fire Rod"
+      ],
+      "source": "yaze src/zelda3/sprite/sprite.cc:178 (Freezor 0xA1)"
+    },
+    {
+      "feature": "sprite:0xA3",
+      "requires": [
+        "Minecart"
+      ],
+      "source": "Sprites/registry.csv:25 (Sprite_Minecart 0xA3)"
+    },
+    {
+      "feature": "sprite:0xAF",
+      "requires": [
+        "Minecart"
+      ],
+      "source": "Sprites/registry.csv:26 (Sprite_Mineswitch 0xAF)"
+    },
+    {
+      "feature": "sprite:0xB0",
+      "requires": [
+        "Minecart"
+      ],
+      "source": "Sprites/registry.csv:28 (Sprite_SwitchTrack 0xB0)"
+    },
+    {
+      "feature": "sprite:0xB8",
+      "requires": [
+        "Ocarina"
+      ],
+      "source": "Sprites/registry.csv:44 (Sprite_ZoraPrincess 0xB8); Docs/World/Guides/QuestFlow.md:208-211 (Healing Song / Ocarina heals Zora Princess before D4)"
+    },
+    {
+      "feature": "sprite:0xED",
+      "requires": [
+        "Cane of Somaria"
+      ],
+      "source": "yaze src/zelda3/sprite/sprite.cc:254 (Cane Of Somaria Platform 0xED)"
+    }
+  ],
+  "rules": [
+    {
+      "name": "no dark rooms before mountains",
+      "forbid_feature": "dark",
+      "regions": [
+        "D1",
+        "D2",
+        "D3"
+      ],
+      "source": "QUEUE262 (dark rooms gate the mountains; D1-D3 must have no dark rooms)"
+    },
+    {
+      "name": "D1 gives Boomerang",
+      "require_source": "Boomerang",
+      "regions": [
+        "D1"
+      ],
+      "source": "QUEUE262 (D1 Boomerang, D3 Bow)"
+    },
+    {
+      "name": "D1 gives Lamp",
+      "require_source": "Lamp",
+      "regions": [
+        "D1"
+      ],
+      "source": "QUEUE262 (Lamp $12 placed in D1 big chest alongside Boomerang)"
+    },
+    {
+      "name": "D1 gives Mushroom",
+      "require_source": "Mushroom",
+      "regions": [
+        "D1"
+      ],
+      "source": "QUEUE262 (Mushroom $29 in D1 room $07)"
+    },
+    {
+      "name": "D2 gives Roc's Feather",
+      "require_source": "Roc's Feather",
+      "regions": [
+        "D2"
+      ],
+      "source": "Items/jump_feather.asm:4"
+    },
+    {
+      "name": "D3 gives Meadow Blade",
+      "require_source": "Meadow Blade",
+      "regions": [
+        "D3"
+      ],
+      "source": "QUEUE262 (Meadow Blade $01 in D3 Kalyxo Castle)"
+    },
+    {
+      "name": "D3 gives Bow",
+      "require_source": "Bow",
+      "regions": [
+        "D3"
+      ],
+      "source": "QUEUE262 (D3 Bow in room $71)"
+    },
+    {
+      "name": "S1 gives Pendant of Wisdom",
+      "require_source": "Pendant of Wisdom",
+      "regions": [
+        "S1"
+      ],
+      "source": "Core/patches.asm:11-13 ($38 Pendant of Wisdom in S1 Shrine of Wisdom)"
+    },
+    {
+      "name": "D4 gives Hookshot",
+      "require_source": "Hookshot",
+      "regions": [
+        "D4"
+      ],
+      "source": "Docs/World/Dungeons/Dungeons.md:18"
+    },
+    {
+      "name": "D5 gives Fire Rod",
+      "require_source": "Fire Rod",
+      "regions": [
+        "D5"
+      ],
+      "source": "QUEUE262"
+    },
+    {
+      "name": "S2 gives Power Glove",
+      "require_source": "Power Glove",
+      "regions": [
+        "S2"
+      ],
+      "source": "QUEUE262 (S2 Shrine of Power grants Power Glove $1B)"
+    },
+    {
+      "name": "S2 gives Pendant of Power",
+      "require_source": "Pendant of Power",
+      "regions": [
+        "S2"
+      ],
+      "source": "Core/patches.asm:7-9 ($39 Pendant of Power in S2 Shrine of Power)"
+    },
+    {
+      "name": "D6 gives Hammer",
+      "require_source": "Hammer",
+      "regions": [
+        "D6"
+      ],
+      "source": "QUEUE262"
+    },
+    {
+      "name": "D6 gives Bombchu",
+      "require_source": "Bombchu",
+      "regions": [
+        "D6"
+      ],
+      "source": "QUEUE262 (Bombchu $4C co-treasure in D6 Goron Mines room $A9)"
+    },
+    {
+      "name": "D7 gives Cane of Somaria",
+      "require_source": "Cane of Somaria",
+      "regions": [
+        "D7"
+      ],
+      "source": "QUEUE262 (D7 Dragon Ship grants Cane of Somaria $15)"
+    },
+    {
+      "name": "S3 gives Pendant of Courage",
+      "require_source": "Pendant of Courage",
+      "regions": [
+        "S3"
+      ],
+      "source": "Docs/World/Dungeons/Dungeons.md:42-44 ($37 Pendant of Courage in S3 Shrine of Courage)"
+    },
+    {
+      "name": "D8 gives Switch Hook",
+      "require_source": "Switch Hook",
+      "regions": [
+        "D8"
+      ],
+      "source": "QUEUE262 (Switch Hook $4D in D8 Sky Tower)"
+    },
+    {
+      "name": "FOS gives Portal Rod",
+      "require_source": "Portal Rod",
+      "regions": [
+        "FOS"
+      ],
+      "source": "QUEUE262 (Portal Rod in D9 Fortress of Secrets)"
+    },
+    {
+      "name": "FOS gives Silver Arrows",
+      "require_source": "Silver Arrows",
+      "regions": [
+        "FOS"
+      ],
+      "source": "QUEUE262 (Silver Arrows $3B in D9 Fortress of Secrets)"
+    },
+    {
+      "name": "FOS gives Red Mail",
+      "require_source": "Red Mail",
+      "regions": [
+        "FOS"
+      ],
+      "source": "QUEUE262 (Red Mail $23 in D9 Fortress of Secrets)"
+    },
+    {
+      "name": "no Bow required before D3",
+      "forbid_requires": "Bow",
+      "regions": [
+        "D1",
+        "D2"
+      ],
+      "source": "QUEUE262"
+    },
+    {
+      "name": "no Power Glove required in D1-D3 (Gloves=0 pre-Power rule)",
+      "forbid_requires": "Power Glove",
+      "regions": [
+        "D1",
+        "D2",
+        "D3"
+      ],
+      "source": "QUEUE262"
+    },
+    {
+      "name": "no Flippers required before S1 completion",
+      "forbid_requires": "Flippers",
+      "regions": [
+        "D1",
+        "D2",
+        "D3"
+      ],
+      "source": "QUEUE262 (Flippers granted by Sea Zora NPC upon S1 completion)"
+    },
+    {
+      "name": "no Zora Mask required before D4",
+      "forbid_requires": "Zora Mask",
+      "regions": [
+        "D1",
+        "D2",
+        "D3",
+        "S1"
+      ],
+      "source": "QUEUE262 (Zora Mask acquired from Zora Princess right before D4 Zora Temple)"
+    },
+    {
+      "name": "no Fire Rod required before D5",
+      "forbid_requires": "Fire Rod",
+      "regions": [
+        "D1",
+        "D2",
+        "D3",
+        "S1",
+        "D4"
+      ],
+      "source": "QUEUE262 (Fire Rod acquired in D5 Glacia Estate)"
+    },
+    {
+      "name": "no Hammer required in S2 Shrine of Power or earlier",
+      "forbid_requires": "Hammer",
+      "regions": [
+        "D1",
+        "D2",
+        "D3",
+        "S1",
+        "D4",
+        "D5",
+        "S2"
+      ],
+      "source": "QUEUE262 (S2 is non-Hammer; Hammer is acquired in D6 Goron Mines)"
+    },
+    {
+      "name": "no Cane of Somaria required before D7",
+      "forbid_requires": "Cane of Somaria",
+      "regions": [
+        "D1",
+        "D2",
+        "D3",
+        "S1",
+        "D4",
+        "D5",
+        "S2",
+        "D6"
+      ],
+      "source": "QUEUE262 (Cane of Somaria acquired in D7 Dragon Ship, then used in S3)"
+    },
+    {
+      "name": "no Switch Hook required before D8",
+      "forbid_requires": "Switch Hook",
+      "regions": [
+        "D1",
+        "D2",
+        "D3",
+        "S1",
+        "D4",
+        "D5",
+        "S2",
+        "D6",
+        "D7",
+        "S3"
+      ],
+      "source": "QUEUE262 (Switch Hook acquired in D8 Sky Tower)"
+    },
+    {
+      "name": "no Portal Rod required before Fortress (D9)",
+      "forbid_requires": "Portal Rod",
+      "regions": [
+        "D1",
+        "D2",
+        "D3",
+        "S1",
+        "D4",
+        "D5",
+        "S2",
+        "D6",
+        "D7",
+        "S3",
+        "D8"
+      ],
+      "source": "QUEUE262 (Portal Rod acquired in D9 Fortress of Secrets)"
+    }
+  ]
+}
