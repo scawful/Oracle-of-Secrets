@@ -33,12 +33,11 @@
 ;   0x1A4 - Default dialogue (face forward)
 ;   0x1A5 - Alternative dialogue (face sideways)
 ;   0x1A6 - Post-D4 dialogue (Crystals bit 5 set)
-;   Flippers gift: with the Wisdom pendant and no Flippers, 0x1A4 then item $1E
+;   Flippers gift: shrine keeper in room $9A, no Flippers, 0x1A4 then item $1E
 ;
 ; FLAGS READ:
-;   Pendants bit 0x01 - Wisdom pendant (Flippers gift)
 ;   Flippers - gift given once
-;   ROOM - Check for Zora Temple boss room (0x105)
+;   ROOM - Zora Temple boss room (0x105); Shrine of Wisdom keeper room (0x9A)
 ;   WORLDFLAG - Kalyxo (0) vs Eon Abyss (1)
 ;   Crystals bit 0x20 - D4 (Zora Temple) complete
 ;   SprSubtype - Elder variant detection
@@ -70,6 +69,11 @@ endif
     LDA.b #$01 : STA.w SprMiscG, X
     JMP +
   .not_princess
+  ; Shrine of Wisdom keeper (room $9A, Eon Abyss): keep the Sea Zora path so
+  ; the Flippers gift in Zora_HandleDialogue runs. A still holds ROOM here.
+  CMP.w #$009A : BNE .not_keeper
+    LDA.w INDOORS : AND.w #$00FF : BNE .eon_draw
+  .not_keeper
   LDA.w WORLDFLAG : AND.w #$00FF : BEQ .eon_draw
     SEP #$30
     JSR Sprite_EonZora_Draw
@@ -170,7 +174,8 @@ Zora_TrackHeadToPlayer:
 
 Zora_HandleDialogue:
 {
-  ; Flippers gift (decisions.org 2026-10-22): Wisdom pendant owned, no Flippers.
+  ; Flippers gift (decisions.org 2026-11-18): the shrine keeper in Shrine of
+  ; Wisdom room $9A gives them when Link has none.
   ; $1A4 plays first (placeholder text); the item is given on the next active
   ; frame, after the message box closes. SprMiscE = gift pending.
   LDA.w SprMiscE, X : BEQ .no_pending
@@ -180,7 +185,11 @@ Zora_HandleDialogue:
     PHX : JSL Link_ReceiveItem : PLX
     RTS
   .no_pending
-  LDA.l Pendants : AND.b #!Pendant_Wisdom : BEQ .no_gift
+  LDA.l INDOORS : BEQ .no_gift
+  REP #$20
+  LDA.l ROOM : CMP.w #$009A
+  SEP #$20
+  BNE .no_gift
   LDA.l Flippers : BNE .no_gift
     %ShowSolicitedMessage($01A4)
     BCC +
