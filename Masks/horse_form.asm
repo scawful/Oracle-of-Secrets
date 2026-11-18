@@ -889,9 +889,13 @@ Horse_DrawPlayerOam_Long:
     LDA.l Horse_JumpZ
   +
   STA.b $0E : STZ.b $0F               ; temp 16-bit AirZ in $0E/$0F
+  ; Split priority: DP $64 drives upper rider/horse parts (<= 0 Y offset),
+  ; DP $65 drives lower body/hooves (> 0 Y offset) + shadow.
+  LDA.b $65 : STA.b $64
   ; OBJ priority 3 only mid-jump or beside wooden fences (high-priority rails).
   ; Elsewhere native $65 stays, so gates, arches and banisters cover horse and rider.
   LDA.l Horse_State : BEQ +
+    LDA.b $64 : ORA.b #$30 : STA.b $64
     LDA.b $65 : ORA.b #$30 : STA.b $65
     BRA ++
   +
@@ -995,8 +999,9 @@ Horse_DrawPlayerOam_Long:
   RTL
 }
 
-; Sets OBJ priority 3 in $65 when a wooden fence Tile16 lies under the
-; horse/rider footprint (6 samples). Preserves DP $04-$0F, P and registers.
+; Sets OBJ priority 3 in $64/$65 when a fence/rail Tile16 lies under the
+; horse/rider footprint (6 samples), or only in $64 when the north row above feet
+; hits a solid base ($01/$02). Preserves DP $04-$0F, P and registers.
 Horse_ApplyFencePriority:
 {
   PHP
@@ -1005,7 +1010,6 @@ Horse_ApplyFencePriority:
   LDA.b $04 : PHA : LDA.b $08 : PHA : LDA.b $0A : PHA
   LDA.b $0C : PHA : LDA.b $0E : PHA
   SEP #$30
-  LDY.b #$00
   LDX.b #10
   .sample
     PHX
@@ -1013,27 +1017,25 @@ Horse_ApplyFencePriority:
     LDA.l .dx, X : CLC : ADC.b $22 : STA.b $0C
     LDA.l .dy, X : CLC : ADC.b $20 : STA.b $0A
     SEP #$20
-    JSR Horse_QueryTileAt               ; M/X=8; X/Y preserved, DP $04 = Tile16
+    JSR Horse_QueryTile16Only           ; M/X=8; DP $04 = Tile16
     REP #$20
-    LDA.b $04
-    LDX.b #HorseFenceTile16s_End-HorseFenceTile16s-2
-    .cmp
-      CMP.l HorseFenceTile16s, X : BEQ .hit
-      DEX : DEX : BPL .cmp
+    JSR Horse_IsPriorityFenceTile16 : BCS .hit
     SEP #$20
     PLX
     DEX : DEX : BPL .sample
-  BRA .restore
+  JSR Horse_CheckNorthSolidBase : BCC .restore
+    SEP #$20
+    LDA.b $64 : ORA.b #$30 : STA.b $64
+    BRA .restore
   .hit
   SEP #$20
   PLX
-  LDY.b #$30
+  LDA.b $64 : ORA.b #$30 : STA.b $64
+  LDA.b $65 : ORA.b #$30 : STA.b $65
   .restore
   REP #$20
   PLA : STA.b $0E : PLA : STA.b $0C : PLA : STA.b $0A
   PLA : STA.b $08 : PLA : STA.b $04
-  SEP #$20
-  TYA : ORA.b $65 : STA.b $65
   REP #$30
   PLY : PLX : PLP
   RTS
@@ -1075,7 +1077,7 @@ Horse_EmitRiderCommon:
   .rider_no_flip
   LDA.b #$0E                                ; SP-7, no flip
   .set_rider_attr
-  ORA.b $65 : STA.b $0A                     ; DP $0A = rider OAM attr
+  ORA.b $64 : STA.b $0A                     ; DP $0A = rider OAM attr
   LDA.b #$02 : STA.b $0C                    ; DP $0C = 16x16 size
 
   ; Compute signed Y ($0E/$0F) before overwriting $08/$09 with Screen X.
@@ -1112,7 +1114,12 @@ Horse_EmitEponaBody:
       LDA.l HorseFrame_Width, X : SEC : SBC.b #16 : SEC : SBC.b $08 : STA.b $08
       LDA.b #$46 : STA.b $0A
     .not_flip
-    LDA.b $0A : ORA.b $65 : STA.b $0A
+    LDA.b $09 : BEQ .upper_prio : BMI .upper_prio
+      LDA.b $0A : ORA.b $65 : BRA +
+    .upper_prio
+      LDA.b $0A : ORA.b $64
+    +
+    STA.b $0A
     LDA.b #2 : STA.b $0C
     LDA.b $09 : PHA
     REP #$20

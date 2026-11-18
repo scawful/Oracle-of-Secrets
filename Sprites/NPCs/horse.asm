@@ -288,7 +288,7 @@ endif
   .chr
   db $00,$02,$04,$06,$08,$0A,$0C,$0E
   .props
-  db $37,$37,$37,$37,$37,$37,$37,$37  ; OBJ priority 3: tall Epona never sinks under BG1 high tiles
+  db $27,$27,$27,$27,$27,$27,$27,$27  ; OBJ priority 2: respects BG1 high tiles (arches/roofs)
 }
 
 HorseNpc_End:

@@ -605,6 +605,66 @@ Horse_QueryTile16Only:
   RTS
 }
 
+; In: M=16, X=8, DP $04 = Tile16. Out: C=1 if jumpable fence (A/X clobbered, M=16/X=8).
+; Gate $010B to Overworld map $25 until it is removed from the global table.
+Horse_IsFenceTile16:
+{
+  LDA.b $04
+  CMP.w #$010B : BNE .scan
+    LDA.b $8A : AND.w #$00FF : CMP.w #$0025 : BEQ .hit
+    CLC
+    RTS
+  .scan
+  LDX.b #$00
+  .loop
+  LDA.l HorseFenceTile16s, X : CMP.b $04 : BEQ .hit
+  INX #2 : CPX.b #HorseFenceTile16s_End-HorseFenceTile16s : BCC .loop
+  CLC
+  RTS
+  .hit
+  SEC
+  RTS
+}
+
+; In: M=16, X=8, DP $04 = Tile16. Out: C=1 if fence or rail tile $0333/$0335 promotes prio 3.
+Horse_IsPriorityFenceTile16:
+{
+  JSR Horse_IsFenceTile16 : BCS .hit
+  LDA.b $04
+  CMP.w #$0333 : BEQ .hit
+  CMP.w #$0335 : BEQ .hit
+  CLC
+  RTS
+  .hit
+  SEC
+  RTS
+}
+
+; Queries (LinkX+2, LinkY-4) and (LinkX+13, LinkY-4) for solid base tiles ($01/$02).
+; In/Out: M=8, X=8. Out: C=1 if either is solid. Clobbers DP $04, $0A, $0C.
+Horse_CheckNorthSolidBase:
+{
+  REP #$20
+  LDA.b $20 : SEC : SBC.w #$0004 : STA.b $0A
+  LDA.b $22 : CLC : ADC.w #$0002 : STA.b $0C
+  SEP #$20
+  JSR Horse_QueryTileAt
+  CMP.b #$01 : BEQ .hit
+  CMP.b #$02 : BEQ .hit
+
+  REP #$20
+  LDA.b $22 : CLC : ADC.w #$000D : STA.b $0C
+  SEP #$20
+  JSR Horse_QueryTileAt
+  CMP.b #$01 : BEQ .hit
+  CMP.b #$02 : BEQ .hit
+  CLC
+  RTS
+  .hit
+  SEC
+  RTS
+}
+
 HorseOam_HideAll:
 {
   LDA.w $0352 : LSR #2 : TAX
