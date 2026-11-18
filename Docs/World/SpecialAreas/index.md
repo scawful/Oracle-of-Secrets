@@ -86,7 +86,7 @@ The special-overworld region (`0x80-0xBF`) shares one 64-map native container (`
 |---|---|---|---|
 | `0x80` | `0x80` (32x32) | Maku Tree Area / Tree House | Maku Tree sprite spawns; variant tileset/overlay (`$0181`) |
 | `0x81-0x82, 0x89-0x8A` | `0x81` (64x64) | Zora Falls | Waterfall effects/ripples, bridge causeways, water/cliff basins |
-| `0x83` | `0x83` (32x32) | Cliff Terrace | Stepped cliff terrace/ramp south of `0x8B` |
+| `0x83` | `0x83` (32x32) | Cliff Terrace | Stepped cliff terrace/ramp north of `0x8B` (east of `0x82`) |
 | `0x84-0x87, 0x8C-0x8F` | small pages (`0x94` overlay) | Sky Islands & Sky Tower (`0x87`) | `page_tile16` overrides on `0x87, 0x8C-0x8F`; cloud cover (`0x94`); Sky Tower exit `0x42` / ent `0x29` (`0x87`) |
 | `0x90-0x92, 0x98-0x99` | small pages | Sea Zora Temple & Coast | `0x90` Sea Zora Temple; `0x91` Shrine of Wisdom (`0x33` door at `416,128`); `0x92` North Reef Gate; `0x98` shallow lagoon + sprite `0xB8` (`(15,12)`); `0x99` Zora Quay |
 | `0x9C` | `0x9C` (32x32) | Reserved Fortress space | Reserved scawful space |
