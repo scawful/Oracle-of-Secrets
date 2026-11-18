@@ -131,19 +131,11 @@ class QuestEssenceLayout(unittest.TestCase):
         self.assertRegex(quest, r"LDX\.w #!QuestRow\+!QuestCountCol[^\n]*\n\s*JSR Menu_Quest_Number3")
         y, x = re.search(r"!QuestCountCol = menu_offset\((\d+),(\d+)\)", quest).groups()
         run("heart piece count", qy + int(y), qx + int(x), 3)
-        # Gear box: four passive icons (DrawMenuItem offsets) and the frame around them.
+        # Gear block: four passive icons (DrawMenuItem offsets).
         names = ["shield", "glove", "boots", "flippers"]
         for name, (y, x) in zip(names, re.findall(r"menu_offset\((\d+),(\d+)\)", between(gear, ".gear_pos", ".gear_gfx"))):
             item(name, int(y), int(x))
         self.assertRegex(gear, r"\.gear_gfx\s*\n\s*dw ShieldGFX,PowerGloveGFX,PegasusBootsGFX,FlippersGFX")
-        corner = {t: tuple(map(int, re.search(r"#\$" + t + r" : STA\.w \$1000\+menu_offset\((\d+),(\d+)\)", gear).groups()))
-                  for t in ("2900", "6900", "A900", "E900")}
-        (r0, c0), (r1, c1) = corner["2900"], corner["E900"]
-        self.assertEqual((corner["6900"], corner["A900"]), ((r0, c1), (r1, c0)))
-        self.assertIn(f"LDX.w #${(c1 - c0 - 2) * 2:04X}", gear, "top/bottom edge loop spans cols c0+1..c1-1")
-        self.assertIn(f"LDX.w #${(r1 - r0 - 2) * 0x40:04X}", gear, "side edge loop spans rows r0+1..r1-1")
-        cells["gear box frame"] = ({(r, c) for r in (r0, r1) for c in range(c0, c1 + 1)}
-                                   | {(r, c) for r in range(r0, r1 + 1) for c in (c0, c1)})
         y, x = re.search(r"!QuestHeart = \$1000\+!QuestRow\+menu_offset\((\d+),(\d+)\)", draw).groups()
         cells["heart piece"] = square(to_cell(self.offset(qy + int(y), qx + int(x))))
         # Four-page menu: the dungeon row is drawn on the Map page, not here.
@@ -228,7 +220,7 @@ class QuestEssenceLayout(unittest.TestCase):
                 self.assertFalse(shared, f"{first} overlaps {second} at {sorted(shared)}")
 
     def test_left_column_gear_box_and_songs_on_bottom_row(self):
-        """Pearl and hearts on the top row, a framed 2x2 gear box below them,
+        """Pearl and hearts on the top row, a 2x2 gear block below them,
         all left of the essence ring; the six songs on the bottom row (OoT style)."""
         content = self.other_content()
         pearl, heart = min(content["moon pearl"]), min(content["heart piece"])
@@ -237,18 +229,14 @@ class QuestEssenceLayout(unittest.TestCase):
         count = content["heart piece count"]
         self.assertEqual({row for row, _ in count}, {11})
         self.assertLessEqual({c for _, c in content["heart piece"]}, {c for _, c in count}, "count under the hearts")
-        frame = content["gear box frame"]
-        top, bottom = min(r for r, _ in frame), max(r for r, _ in frame)
-        left, right = min(c for _, c in frame), max(c for _, c in frame)
-        self.assertGreater(top, 11, "box below the heart count")
+        gear = [cell for n in ("shield", "glove", "boots", "flippers") for cell in content[n]]
+        right = max(c for _, c in gear)
+        self.assertGreater(min(r for r, _ in gear), 11, "gear below the heart count")
         icons = [min(content[n]) for n in ("shield", "glove", "boots", "flippers")]
         self.assertEqual(icons[0][0], icons[1][0]); self.assertEqual(icons[2][0], icons[3][0])
         self.assertEqual(icons[0][1], icons[2][1]); self.assertEqual(icons[1][1], icons[3][1])
-        for name in ("shield", "glove", "boots", "flippers"):
-            for r, c in content[name]:
-                self.assertTrue(top < r < bottom and left < c < right, f"{name} inside the box")
         ring_left = min(c for _, c in self.crystal_cells())
-        self.assertLess(right, ring_left, "box left of the essence ring")
+        self.assertLess(right, ring_left, "gear left of the essence ring")
         self.assertLess(max(c for _, c in content["heart piece"]), ring_left)
         songs = [min(content[f"song {i}"]) for i in range(1, 7)]
         self.assertEqual({row for row, _ in songs}, {21})

@@ -1,5 +1,5 @@
 ; Quest displays progression: the essence ring (pendants in its centre) on the right, and
-; on the left the Moon Pearl, heart pieces and a framed 2x2 box of passive gear (shield,
+; on the left the Moon Pearl, heart pieces and a 2x2 block of passive gear (shield,
 ; glove, boots, flippers). Supplies live on Equipment; the area name heads the Map page.
 ; No ownership or save-format changes. DBR = $2D.
 if !ENABLE_MENU_MAP_TRAVEL == 1
@@ -101,7 +101,7 @@ endif
 }
 
 ; Quest left side (OoT gear-box style): the Moon Pearl and heart pieces on
-; the top row, below them a framed 2x2 box of the passive gear the player
+; the top row, below them a 2x2 block of the passive gear the player
 ; cannot select (shield, glove, boots, flippers); Equipment keeps the swords,
 ; tunic, masks and rings. With the four-page menu the six songs take the
 ; bottom row and the dungeon row moves to the Map page. Without it the bottom
@@ -134,23 +134,6 @@ Menu_Quest_Gear:
   SEP #$30
   PLY
   INY : CPY.b #$04 : BCC .gear
-  ; Box frame: the ring box's one-tile border ($2900 corner, $2901 top,
-  ; $2910 side; flips for the other sides) around rows 12-18, cols 6-12.
-  REP #$30
-  LDA.w #$2900 : STA.w $1000+menu_offset(12,6)
-  LDA.w #$6900 : STA.w $1000+menu_offset(12,12)
-  LDA.w #$A900 : STA.w $1000+menu_offset(18,6)
-  LDA.w #$E900 : STA.w $1000+menu_offset(18,12)
-  LDX.w #$0008                          ; cols 7-11
-.box_h
-  LDA.w #$2901 : STA.w $1000+menu_offset(12,7),X
-  LDA.w #$A901 : STA.w $1000+menu_offset(18,7),X
-  DEX #2 : BPL .box_h
-  LDX.w #$0100                          ; rows 13-17
-.box_v
-  LDA.w #$2910 : STA.w $1000+menu_offset(13,6),X
-  LDA.w #$6910 : STA.w $1000+menu_offset(13,12),X
-  TXA : SEC : SBC.w #$0040 : TAX : BPL .box_v
   RTS
 .gear_slot
   db $13,$0F,$10,$11                    ; shield, glove, boots, flippers
@@ -286,7 +269,7 @@ Menu_Quest_Progress:
   db !Crystal_D4_ZoraTemple,!Crystal_D5_GlaciaEstate,!Crystal_D6_GoronMines,!Crystal_D7_DragonShip
   db !Crystal_D8_Sky
 ; Ring clockwise D1..D8 from the top, 12 columns wide (cols 14-25, right of
-; the gear box), mirror-symmetric about cols 19-20;
+; the gear block), mirror-symmetric about cols 19-20;
 ; Tests/test_quest_essence_layout.py guards the footprint. Absolute tilemap
 ; offsets, 2x2 each.
 .crystal_pos
