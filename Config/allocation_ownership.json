@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "df865810f43bfbbebb16784a93919b5820f22a1dcb3d61bf529ea0390a11b1b6"
+      "sha256": "594ff50945cb4cd04f49beffbac1a4de428eb80daa4fa7d78cefaa6c7e84c1f6"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -170,7 +170,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "52ffa5995f7cee14b18bd6531188fedf4e4e4f7484a6cce58924bfab1e4e49ab"
+      "sha256": "b8440941966d6a3d2b34fc98688f84ae21061d9ba6f0c934c9e479b84b428521"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
