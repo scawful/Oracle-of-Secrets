@@ -34,7 +34,7 @@ class BuildPipelineReceiptTest(unittest.TestCase):
                      'verify_feature_flags.py', 'set_feature_flags.py', 'lyra_native_loaders.py',
                      'native_overworld_authoring_metadata.py'):
             self.copy(f'Scripts/Build/{name}')
-        for name in ('generate_hooks_json.py', 'asm_source.py', 'gen_wall_profiles.py'):
+        for name in ('generate_hooks_json.py', 'asm_source.py'):
             self.copy(f'Scripts/Generate/{name}')
         self.copy('Scripts/Validate/verify_hooks_json.py')
         self.write('Util/macros.asm', '!ENABLE_FIXTURE = 1\n')
@@ -54,6 +54,7 @@ class BuildPipelineReceiptTest(unittest.TestCase):
                    'pathlib.Path(sys.argv[sys.argv.index("--output")+1]).write_text(json.dumps({"fixture":True,"argv":sys.argv[1:]}))\n')
         self.write('Scripts/Generate/export_symbols.py',
                    'import pathlib,sys\npathlib.Path(sys.argv[sys.argv.index("-o")+1]).write_text("fixture label")\n')
+        self.write('Scripts/Generate/gen_wall_profiles.py', 'import sys\nsys.exit(0)\n')
         self.write('Scripts/Build/check_zscream_overlap.py', 'import sys\nsys.exit(0)\n')
         self.write('Scripts/Build/check_overlay_tile16.py', 'import sys\nsys.exit(0)\n')
         self.assembler = self.write('tools/fake-asar', f'#!{sys.executable}\n' + '''import json,hashlib,os,pathlib,sys
