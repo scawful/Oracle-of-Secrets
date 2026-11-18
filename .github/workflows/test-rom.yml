@@ -66,6 +66,12 @@ jobs:
           printf '\x00\xFD\x00\xE4\xFF' | dd of=test.sfc bs=1 seek=$((0x4CA00)) conv=notrunc 2>/dev/null  # $09CA00 header, big-key drop $FD,$00,$E4, end $FF
           printf '\x02' | dd of=test.sfc bs=1 seek=$((0x716AE)) conv=notrunc 2>/dev/null  # $0E96AE tile $055 type (vanilla $02)
           printf '\x00' | dd of=test.sfc bs=1 seek=$((0x716D5)) conv=notrunc 2>/dev/null  # $0E96D5 tile $07C type (vanilla $00)
+          # Sky overworld route (sky_tile_types.asm hook preimages, vanilla bytes)
+          printf '\xBF\x59\x94\x0E' | dd of=test.sfc bs=1 seek=$((0x86E)) conv=notrunc 2>/dev/null  # $00886E LDA.l $0E9459,X
+          printf '\xBF\x59\x94\x0E' | dd of=test.sfc bs=1 seek=$((0xDBEFD)) conv=notrunc 2>/dev/null  # $1BBEFD LDA.l $0E9459,X
+          printf '\xBF\x59\x94\x0E' | dd of=test.sfc bs=1 seek=$((0xDBF2A)) conv=notrunc 2>/dev/null  # $1BBF2A LDA.l $0E9459,X
+          printf '\xBF\x59\x94\x0E' | dd of=test.sfc bs=1 seek=$((0xDC04E)) conv=notrunc 2>/dev/null  # $1BC04E LDA.l $0E9459,X
+          printf '\xAD\x7A\x03\x29\xFF\x00\xC9\x01\x00\xD0\xF2' | dd of=test.sfc bs=1 seek=$((0xDBE3E)) conv=notrunc 2>/dev/null  # $1BBE3E entrance check (vanilla)
           printf '\x23\x01' | dd of=test.sfc bs=1 seek=$((0x1976)) conv=notrunc 2>/dev/null  # $009976 pit-damage table filler $0123 (vanilla)
           printf '\x23\x01' | dd of=test.sfc bs=1 seek=$((0x1978)) conv=notrunc 2>/dev/null  # $009978 pit-damage table filler $0123 (vanilla)
           printf '\x23\x01' | dd of=test.sfc bs=1 seek=$((0x197A)) conv=notrunc 2>/dev/null  # $00997A pit-damage table filler $0123 (vanilla)

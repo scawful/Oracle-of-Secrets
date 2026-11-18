@@ -41,13 +41,13 @@ endif
 !ENABLE_SKY_ROOM_SKY                = 1
 ; Sky Tower void falls = damage pits (one heart, room entry); extended RoomsWithPitDamage copy.
 !ENABLE_SKY_PIT_DAMAGE              = 1
-; Sky overworld source art; keep off until its map/profile import is qualified.
-!ENABLE_SKY_OVERWORLD_GRAPHICS      = 0
-; Selected Sky map collision and tower entrance recognition. Terrain and paired
-; entrance/exit data must be qualified separately before activating this route.
-!ENABLE_SKY_OVERWORLD_ROUTE         = 0
-; Private native Sky calm overlay uses saved page9C graphics/palette; rain stays host.
-!ENABLE_SKY_OVERLAY_SOURCE_PROFILE  = 0
+; Sky overworld source art; the live project ROM carries the Sky maps ($87/$94).
+!ENABLE_SKY_OVERWORLD_GRAPHICS      = 1
+; Selected Sky map collision and tower entrance recognition. Required once the
+; project ROM's room $0090 exit points at Sky map $87 (sky_d8_award.asm assert).
+!ENABLE_SKY_OVERWORLD_ROUTE         = 1
+; Native Sky calm overlay uses saved page9C graphics/palette; rain stays host.
+!ENABLE_SKY_OVERLAY_SOURCE_PROFILE  = 1
 ; Private D4 room-scoped actor/art prototype; no default behavior change.
 !ENABLE_D4_ZORA_REDESIGN            = 1
 !ENABLE_D4_WATER_CONTROLS           = 1
