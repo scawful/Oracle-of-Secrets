@@ -3,7 +3,7 @@
 ; =========================================================
 
 !SPRID              = Sprite_VillageDog
-!NbrTiles           = 08  ; Number of tiles used in a frame
+!NbrTiles           = 05  ; Number of tiles used in a frame (4 body max + 1 shadow)
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -55,7 +55,14 @@ Sprite_VillageDog_Prep:
   LDA.w WORLDFLAG : BEQ .village
     LDA.b #$07 : STA.w SprAction, X
     LDA.b #$40 : STA.w SprTimerA, X
+    BRA .done
   .village
+  TXA : AND.b #$03 : STA.w SprMiscD, X ; Stagger initial idle phase per slot
+  TXA : ASL #4 : ORA.b #$28 : STA.w SprTimerD, X
+  LDA.b $1B : BNE .done ; Coat variation is Overworld outdoors only
+    JSL GetRandomInt : AND.b #$01 : BEQ .done
+      LDA.b #$08 : STA.w SprMiscG, X ; Palette 7 ($3F/$7F) golden-cream coat
+  .done
   PLB
   RTL
 }
@@ -70,19 +77,66 @@ HandleTossedDog:
 
 LiftOrTalk:
 {
-  LDA.w $02B2 : BEQ .lifting
-                CMP.b #$03 : BEQ .wolf
-                CMP.b #$05 : BEQ .minish
-                JMP .lifting
-  .wolf
-  .minish
-  JSR   ShowMessageIfMinish
-  JMP +
-  .lifting
+  LDA.w $02B2
+  CMP.b #$03 : BEQ .talk
+  CMP.b #$05 : BEQ .talk
+    ; Grounded states only check lift here; Dog_Tossed owns ThrownSprite Z-physics
+    ; so cosmetic perk-up / Ocarina hops in SprHeight never bounce SprTimerF.
     JSL Sprite_CheckIfLifted
-    JSL ThrownSprite_TileAndSpriteInteraction_long
-  +
+    RTS
+  .talk
+  JMP ShowMessageIfMinish
+}
+
+; In: A = 8-bit axis radius ($01-$7F). Out: C set if |Link - SprCached| < r on both axes.
+Dog_NearPlayer:
+{
+  STZ.b $07 : STA.b $06
+  ASL A : STZ.b $09 : STA.b $08
+  REP #$20
+  LDA.b $22 : SEC : SBC.w SprCachedX : CLC : ADC.b $06 : CMP.b $08 : BCS .far
+  LDA.b $20 : SEC : SBC.w SprCachedY : CLC : ADC.b $06 : CMP.b $08 : BCS .far
+  SEP #$21
   RTS
+  .far
+  SEP #$20
+  CLC
+  RTS
+}
+
+; Long entry for Bank $2C calm idle stroll to reuse Bank $31 Dog_PlayAnim.
+; In: X = sprite slot, Y = anim slot (0..7). Preserves X, caller DBR.
+VillageDog_PlayAnimLong:
+{
+  PHB : PHK : PLB
+  JSR Dog_PlayAnim
+  PLB
+  RTL
+}
+
+; In: Y = animation slot (0..7). Immediately clamps stale frames on direction flip.
+Dog_PlayAnim:
+{
+  LDA.w .start, Y : CMP.w SprFrame, X : BEQ .in_range : BCC .check_hi
+  .reset
+    LDA.w .start, Y : STA.w SprFrame, X
+    LDA.w .wait, Y : STA.w SprTimerB, X
+    RTS
+  .check_hi
+  LDA.w .end, Y : CMP.w SprFrame, X : BCC .reset
+  .in_range
+  LDA.w SprTimerB, X : BNE .done
+    LDA.w SprFrame, X : INC A
+    CMP.w .end, Y : BCC .store : BEQ .store
+      LDA.w .start, Y
+    .store
+    STA.w SprFrame, X
+    LDA.w .wait, Y : STA.w SprTimerB, X
+  .done
+  RTS
+  .start : db 0, 11, 2, 5, 0, 2,  0, 11
+  .end   : db 1, 12, 4, 7, 1, 3,  1, 12
+  .wait  : db 8,  8, 6, 6, 8, 8,  4,  4
 }
 
 Sprite_VillageDog_Main:
@@ -110,6 +164,22 @@ Sprite_VillageDog_Main:
       LDA.b #$09 : STA.w SprAction, X ; -> Dog_Tossed
   .not_fresh_toss
 
+  ; Ocarina happy-dance trigger (fresh cast frame $03F0=$80, not Wolf dig, OW module $09)
+  LDA.w SprAction, X : CMP.b #$07 : BCS .no_ocarina
+  LDA.b $10 : CMP.b #$09 : BNE .no_ocarina
+  LDA.w $02B2 : CMP.b #$03 : BEQ .no_ocarina
+  LDA.b $3A : AND.b #$40 : BEQ .no_ocarina
+  LDA.w $03F0 : CMP.b #$80 : BEQ .try_ocarina
+  BRA .no_ocarina
+  .try_ocarina
+  LDA.b #$60 : JSR Dog_NearPlayer : BCC .no_ocarina
+    STZ.w SprXSpeed, X
+    STZ.w SprYSpeed, X
+    STZ.w SprMiscF, X
+    LDA.b #$50 : STA.w SprTimerD, X
+    %GotoAction($0A)
+  .no_ocarina
+
   LDA.w SprAction, X
   JSL   JumpTableLocal
 
@@ -124,47 +194,51 @@ Sprite_VillageDog_Main:
   dw EonDog_Handler           ; 07
   dw EonDog_Right             ; 08
   dw Dog_Tossed                ; 09
+  dw Dog_HappyDance            ; 0A
 
-  ; 0
+  ; 00 - Calm idle (sit, head-tilt, short stroll) unless Link approaches within 88px.
   Dog_Handler:
   {
-    %PlayAnimation(8,8,8) ; Sitting
     JSR HandleTossedDog
-    LDA $0309 : AND #$03 : BNE .lifting
-      LDA #$20 : STA.w SprTimerD, X
-      JSL Sprite_IsToRightOfPlayer : TYA : BEQ .walk_right
+    LDA.w SprTimerC, X : BNE .calm
+    LDA.b #$58 : JSR Dog_NearPlayer : BCC .calm
+      STZ.w SprXSpeed, X
+      STZ.w SprYSpeed, X
+      LDA.b #$04 : STA.w SprHeight, X
+      LDA.b #$18 : STA.w SprTimerD, X
+      JSL Sprite_IsToRightOfPlayer : TYA : BEQ .perk_right
         %GotoAction(1)
-        JMP .lifting
-      .walk_right
+        JMP LiftOrTalk
+      .perk_right
       %GotoAction(2)
-      .lifting
-      JSR LiftOrTalk
-    JSL Sprite_Move
-    RTS
+      JMP LiftOrTalk
+    .calm
+    JSL VillageDog_CalmIdleLong
+    JMP LiftOrTalk
   }
 
   ; 01
   Dog_LookLeftAtLink:
   {
-    %PlayAnimation(9,9,8)
-    JSR HandleTossedDog
-    LDA.w SprTimerD, X : BNE +
-      ; Load the timer for the run
-      LDA.b #$60 : STA.w SprTimerD, X
-      %GotoAction(3)
-    +
-    RTS
+    %SetFrame(9)
+    LDA.b #$03 : BRA Dog_LookCommon
   }
 
   ; 02
   Dog_LookRightAtLink:
   {
-    %PlayAnimation(10,10,8)
+    %SetFrame(10)
+    LDA.b #$04
+  }
+  Dog_LookCommon:
+  {
+    PHA
     JSR HandleTossedDog
-    LDA.w SprTimerD, X : BNE +
-      ; Load the timer for the run
-      LDA.b #$60 : STA.w SprTimerD, X
-      %GotoAction(4)
+    JSR LiftOrTalk
+    PLA
+    LDY.w SprTimerD, X : BNE +
+      STA.w SprAction, X
+      LDA.b #$58 : STA.w SprTimerD, X
     +
     RTS
   }
@@ -172,78 +246,80 @@ Sprite_VillageDog_Main:
   ; 03
   Dog_MoveLeftTowardsLink:
   {
-    %PlayAnimation(2,4,6)
-    JSR HandleTossedDog
-    ; Check if the dog is near link, then wag the tail
-    JSR CheckIfPlayerIsNearby : BCC +
-      %GotoAction(5)
-    +
-
-    ; Check for collision
-    JSL Sprite_CheckTileCollision
-    LDA $0E70, X : BEQ .no_collision
-      %GotoAction(0)
-    .no_collision
-
-    LDA.b #$0A
-    JSL Sprite_ApplySpeedTowardsPlayer
-    STZ $06 : STZ $07
-    JSL Sprite_MoveLong
-
-    JSR LiftOrTalk
-
-    LDA.w SprTimerD, X : BNE +
-      %GotoAction(0)
-    +
-    RTS
+    LDY.b #$02 : BRA Dog_MoveCommon
   }
 
   ; 04
   Dog_MoveRightTowardsLink:
   {
-    %PlayAnimation(5,7,6)
+    LDY.b #$03
+  }
+  Dog_MoveCommon:
+  {
+    JSR Dog_PlayAnim
     JSR HandleTossedDog
-    JSR CheckIfPlayerIsNearby : BCC +
-      %GotoAction(6)
-    +
+    LDA.b #$16 : JSR Dog_NearPlayer : BCC .keep_moving
+      STZ.w SprXSpeed, X
+      STZ.w SprYSpeed, X
+      LDA.b #$50 : STA.w SprTimerD, X
+      JSL Sprite_IsToRightOfPlayer : TYA : BEQ .wag_r
+        %GotoAction(5) : RTS
+      .wag_r
+      %GotoAction(6) : RTS
 
-    ; Check for collision
+    .keep_moving
     JSL Sprite_CheckTileCollision
-    LDA $0E70, X : BEQ .no_collision
-      %GotoAction(0)
-    .no_collision
+    LDA.w $0E70, X : BNE .settle
+    LDA.w SprTimerD, X : BEQ .settle
+      LDA.b #$0C
+      JSL Sprite_ApplySpeedTowardsPlayer
+      STZ.b $06 : STZ.b $07
+      JSL Sprite_MoveLong
+      JSR LiftOrTalk
+      ; Sync facing to horizontal velocity so circling Link never moonwalks.
+      LDA.w SprXSpeed, X : BEQ .stay
+        BPL .face_r
+          %GotoAction(3) : RTS
+        .face_r
+          %GotoAction(4)
+      .stay
+      RTS
 
-    LDA.b #$0A
-    JSL Sprite_ApplySpeedTowardsPlayer
-    STZ $06 : STZ $07
-    JSL Sprite_MoveLong
-    JSR LiftOrTalk
-
-    LDA.w SprTimerD, X : BNE ++
+    .settle
+      STZ.w SprXSpeed, X
+      STZ.w SprYSpeed, X
+      STZ.w SprMiscD, X
+      LDA.b #$80 : STA.w SprTimerC, X
+      LDA.b #$40 : STA.w SprTimerD, X
       %GotoAction(0)
-    ++
-    RTS
+      RTS
   }
 
   ; 05
   Dog_WagTailLeft:
   {
-    %PlayAnimation(0,1, 8)
-    JSR LiftOrTalk
-    JSR HandleTossedDog
-    LDA.w SprTimerD, X : BNE +
-      %GotoAction(0)
-    +
-    RTS
+    LDY.b #$00 : BRA Dog_WagCommon
   }
 
   ; 06
   Dog_WagTailRight:
   {
-    %PlayAnimation(11,12,8)
+    LDY.b #$01
+  }
+  Dog_WagCommon:
+  {
+    JSR Dog_PlayAnim
     JSR LiftOrTalk
     JSR HandleTossedDog
+    JSL Sprite_IsToRightOfPlayer : TYA : BEQ .face_r
+      %GotoAction(5) : BRA .chk_done
+    .face_r
+      %GotoAction(6)
+    .chk_done
     LDA.w SprTimerD, X : BNE +
+      STZ.w SprMiscD, X
+      LDA.b #$90 : STA.w SprTimerC, X
+      LDA.b #$48 : STA.w SprTimerD, X
       %GotoAction(0)
     +
     RTS
@@ -251,16 +327,14 @@ Sprite_VillageDog_Main:
 
   EonDog_Handler:
   {
-    %PlayAnimation(0,1,8)
-    JSR EonDog_Walk
-    RTS
+    LDY.b #$04 : JSR Dog_PlayAnim
+    JMP EonDog_Walk
   }
 
   EonDog_Right:
   {
-    %PlayAnimation(2,3,8)
-    JSR EonDog_Walk
-    RTS
+    LDY.b #$05 : JSR Dog_PlayAnim
+    JMP EonDog_Walk
   }
 
   ; 09 - airborne after a real toss (see the fresh-toss detection above).
@@ -274,7 +348,7 @@ Sprite_VillageDog_Main:
   ; (report D: reactive behavior, "excited after being put down").
   Dog_Tossed:
   {
-    %PlayAnimation(8,8,8) ; reuse the sitting frame while airborne
+    %SetFrame(8) ; reuse the sitting frame while airborne
     JSL Sprite_Move
     JSL Sprite_CheckTileCollision
     JSL ThrownSprite_TileAndSpriteInteraction_long
@@ -282,8 +356,40 @@ Sprite_VillageDog_Main:
       STZ.w SprXSpeed, X
       STZ.w SprYSpeed, X
       LDA.b #$40 : STA.w SprTimerD, X ; happy wag duration on landing
-      %GotoAction(5)
+      JSL Sprite_IsToRightOfPlayer : TYA : BEQ .land_right
+        %GotoAction(5)
+        RTS
+      .land_right
+      %GotoAction(6)
     .aloft
+    RTS
+  }
+
+  ; 0A - joyful hopping wag dance triggered by nearby Ocarina cast ($03F0=$80).
+  Dog_HappyDance:
+  {
+    STZ.w SprXSpeed, X
+    STZ.w SprYSpeed, X
+    JSL Sprite_IsToRightOfPlayer : TYA : BEQ .dance_r
+      LDY.b #$06 : BRA .dance_anim
+    .dance_r
+      LDY.b #$07
+    .dance_anim
+    JSR Dog_PlayAnim
+    LDA.w SprMiscF, X : INC A : STA.w SprMiscF, X
+    AND.b #$0F
+    CMP.b #$08 : BCC .hop_up
+      EOR.b #$0F
+    .hop_up
+    STA.w SprHeight, X
+    JSR LiftOrTalk
+    LDA.w SprTimerD, X : BNE .done
+      STZ.w SprHeight, X
+      STZ.w SprMiscD, X
+      LDA.b #$70 : STA.w SprTimerC, X
+      LDA.b #$40 : STA.w SprTimerD, X
+      %GotoAction(0)
+    .done
     RTS
   }
 }
@@ -306,29 +412,12 @@ EonDog_Walk:
   db 2, 0, 0, -2
 }
 
-CheckIfPlayerIsNearby:
-{
-  REP #$20
-  LDA $22 : CLC : ADC #$0012 : CMP.w SprCachedX : BCC .out
-  LDA $22 : SEC : SBC #$0012 : CMP.w SprCachedX : BCS .out
-  LDA $20 : CLC : ADC #$001A : CMP.w SprCachedY : BCC .out
-  LDA $20 : SEC : SBC #$001A : CMP.w SprCachedY : BCS .out
-  SEP #$21
-  RTS ; Return with carry set
-
-  .out
-  SEP #$20
-  CLC
-  RTS ; Return with carry cleared
-}
-
 ShowMessageIfMinish:
 {
   LDA $02B2 : CMP.b #$05 : BNE .not_minish
-    %ShowSolicitedMessage($18) : JMP .continue
+    %ShowSolicitedMessage($18) : RTS
   .not_minish
   %ShowSolicitedMessage($1B)
-  .continue
   RTS
 }
 
@@ -336,7 +425,11 @@ Sprite_VillageDog_Draw:
 {
   JSL   Sprite_PrepOamCoord
   JSL   Sprite_OAM_AllocateDeferToPlayer
-  JSL RichardDog_PaletteMask ; $0C = Richard palette XOR
+  STZ.b $0C
+  JSL RichardDog_PaletteMask ; $0C = Richard palette XOR ($04)
+  LDA.w SprSubtype, X : BNE .have_mask
+    LDA.w SprMiscG, X : STA.b $0C
+  .have_mask
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY ; Animation Frame
   LDA   .start_index,     Y : STA $06
@@ -562,3 +655,71 @@ Sprite_EonDog_Draw:
   db $02
   db $02
 }
+
+; =========================================================
+; Cold calm-idle helper spilled into Bank $2C tail
+; (Sprites/all_sprites.asm) to balance Bank $31 and Bank $2C headroom.
+; =========================================================
+macro VillageDog_EmitBank2C()
+VillageDog_CalmIdleLong:
+{
+  PHB : PHK : PLB
+  LDA.w SprMiscD, X
+  CMP.b #$01 : BEQ .idle_left
+  CMP.b #$02 : BEQ .idle_right
+  CMP.b #$03 : BEQ .idle_stroll
+    %SetFrame(8)
+    BRA .idle_tick
+  .idle_left
+    %SetFrame(9)
+    BRA .idle_tick
+  .idle_right
+    %SetFrame(10)
+    BRA .idle_tick
+  .idle_stroll
+    LDA.w SprTimerC, X : BNE .stop_stroll
+    LDA.w SprXSpeed, X : BMI .stroll_anim_l
+      LDY.b #$03 : BRA .stroll_anim
+    .stroll_anim_l
+      LDY.b #$02
+    .stroll_anim
+    JSL VillageDog_PlayAnimLong
+    STZ.b $06 : STZ.b $07
+    JSL Sprite_MoveLong
+    JSL Sprite_CheckTileCollision
+    LDA.w $0E70, X : BEQ .idle_tick
+    .stop_stroll
+      STZ.w SprXSpeed, X
+      STZ.w SprYSpeed, X
+      STZ.w SprMiscD, X
+      LDA.b #$50 : STA.w SprTimerD, X
+      BRA .done
+
+  .idle_tick
+  LDA.w SprTimerD, X : BNE .done
+    STZ.w SprXSpeed, X
+    STZ.w SprYSpeed, X
+    JSL GetRandomInt : AND.b #$03 : STA.w SprMiscD, X
+    LDA.b #$50 : STA.w SprTimerD, X
+    LDA.w SprMiscD, X : CMP.b #$03 : BNE .done
+    LDA.w SprTimerC, X : BEQ .start_stroll
+      STZ.w SprMiscD, X
+      BRA .done
+    .start_stroll
+      JSL GetRandomInt : TAY
+      AND.b #$01 : BEQ .stroll_r
+        LDA.b #$FA : BRA .set_sx
+      .stroll_r
+        LDA.b #$06
+      .set_sx
+      STA.w SprXSpeed, X
+      TYA : LSR A : AND.b #$03 : TAY
+      LDA.w .stroll_vy, Y : STA.w SprYSpeed, X
+      LDA.b #$28 : STA.w SprTimerD, X
+
+  .done
+  PLB
+  RTL
+  .stroll_vy : db 0, -2, 2, 0
+}
+endmacro

@@ -5,7 +5,7 @@ The `village_dog.asm` file defines the behavior for two distinct dog NPCs: the "
 
 ## Sprite Properties
 *   **`!SPRID`**: `Sprite_VillageDog` (Custom symbol, likely a remapped vanilla ID)
-*   **`!NbrTiles`**: `08`
+*   **`!NbrTiles`**: `05` (up to 4 body OAM tiles + 1 shadow tile)
 *   **`!Harmless`**: `01`
 *   **`!HVelocity`**: `00`
 *   **`!Health`**: `00`
@@ -55,7 +55,7 @@ Sprite_VillageDog_Long:
 ```
 
 ## Initialization (`Sprite_VillageDog_Prep`)
-This routine initializes the dog upon spawning. If it's an Eon Dog (`WORLDFLAG` is not `0`), it sets `SprAction, X` to `$07` and `SprTimerA, X` to `$40`.
+This routine initializes the dog upon spawning. If it's an Eon Dog (`WORLDFLAG` is not `0`), it sets `SprAction, X` to `$07` and `SprTimerA, X` to `$40`. In the Village (`WORLDFLAG == 0`), it staggers each dog's initial idle pose/timer (`SprMiscD, X`, `SprTimerD, X`) and rolls outdoor Overworld (`$1B == 0`) stray coat variation via `SprMiscG, X` (`$08` = OAM Palette 7 golden-cream coat, overridden whenever `SprSubtype, X != 0` by `RichardDog_PaletteMask`).
 
 ```asm
 Sprite_VillageDog_Prep:
@@ -74,16 +74,18 @@ Sprite_VillageDog_Prep:
 This routine manages the vertical movement of a dog that has been tossed. If `SprHeight, X` is not `0`, it decrements it, simulating gravity.
 
 ## `LiftOrTalk`
-This routine determines whether Link can lift the dog or engage in dialogue. It checks Link's current form (`$02B2`). If Link is in Wolf or Minish form, it calls `ShowMessageIfMinish`. Otherwise, it checks if the dog is lifted (`JSL Sprite_CheckIfLifted`) and handles interactions with thrown sprites (`JSL ThrownSprite_TileAndSpriteInteraction_long`).
+This routine determines whether Link can lift the dog or engage in dialogue. It checks Link's current form (`$02B2`). If Link is in Wolf or Minish form, it calls `ShowMessageIfMinish`. Otherwise, it calls `JSL Sprite_CheckIfLifted` so Link can pick the dog up (`Dog_Tossed` owns `ThrownSprite_TileAndSpriteInteraction_long` once airborne so grounded hops in `SprHeight` never trigger false throw physics).
 
 ## Main Logic & State Machine (`Sprite_VillageDog_Main`)
 This routine manages the various states and behaviors of both Village Dogs and Eon Dogs.
 
-*   **`Dog_Handler`**: Plays a sitting animation, calls `HandleTossedDog`, and whenever Link is not lifting or carrying anything (`CARRY` `$0309` bits 0-1 clear), it sets `SprTimerD` to `$20` and transitions to `Dog_LookLeftAtLink` (action 1) or `Dog_LookRightAtLink` (action 2), chosen by `Sprite_IsToRightOfPlayer`. It also calls `LiftOrTalk`.
-*   **`Dog_LookLeftAtLink` / `Dog_LookRightAtLink`**: Plays an animation of the dog looking towards Link. After a timer, it transitions to `Dog_MoveLeftTowardsLink` or `Dog_MoveRightTowardsLink`.
-*   **`Dog_MoveLeftTowardsLink` / `Dog_MoveRightTowardsLink`**: Plays a walking animation, calls `HandleTossedDog`, and if Link is nearby, transitions to `Dog_WagTailLeft` or `Dog_WagTailRight`. It handles tile collisions, applies speed towards Link, and calls `LiftOrTalk`. After a timer, it returns to `Dog_Handler`.
-*   **`Dog_WagTailLeft` / `Dog_WagTailRight`**: Plays a wagging tail animation, calls `LiftOrTalk` and `HandleTossedDog`. After a timer, it returns to `Dog_Handler`.
-*   **`EonDog_Handler` / `EonDog_Right`**: These states are specific to the Eon Dog, playing animations and calling `EonDog_Walk`.
+*   **`Dog_Handler` (`00`)**: Calm idle state driven by `SprMiscD` (sit, head-tilt left/right, or short gentle stroll stopped on tile collision). When resting cooldown `SprTimerC == 0` and Link approaches within `88px` (`Dog_NearPlayer`), hops (`SprHeight = 4`) and perks up into `Dog_LookLeftAtLink` (`01`) or `Dog_LookRightAtLink` (`02`) chosen by `Sprite_IsToRightOfPlayer`. Calls `LiftOrTalk`.
+*   **`Dog_LookLeftAtLink` / `Dog_LookRightAtLink` (`01`/`02`)**: Hold look pose (`SprFrame = 9/10`), allow `LiftOrTalk`, then transition into `Dog_MoveLeftTowardsLink` (`03`) / `Dog_MoveRightTowardsLink` (`04`).
+*   **`Dog_MoveLeftTowardsLink` / `Dog_MoveRightTowardsLink` (`03`/`04`)**: Trot at speed `$0C` toward Link while dynamically flipping `03 <-> 04` from `SprXSpeed` sign so circling Link never causes moonwalking. Enters `Dog_WagTailLeft`/`Right` (`05`/`06`) within `22px` or settles back to calm `00` with `SprTimerC` rest cooldown on collision/timeout.
+*   **`Dog_WagTailLeft` / `Dog_WagTailRight` (`05`/`06`)**: Wag tail via `Dog_PlayAnim`, continuously re-orienting toward Link via `Sprite_IsToRightOfPlayer`, allowing `LiftOrTalk`, then settling into calm idle with `SprTimerC` cooldown.
+*   **`EonDog_Handler` / `EonDog_Right` (`07`/`08`)**: Specific to the Eon Dog (`WORLDFLAG != 0`), calling `EonDog_Walk`.
+*   **`Dog_Tossed` (`09`)**: Airborne throw arc via `ThrownSprite_TileAndSpriteInteraction_long`; on landing, settles into `Dog_WagTailLeft` (`05`) or `Dog_WagTailRight` (`06`) based on Link's relative X position.
+*   **`Dog_HappyDance` (`0A`)**: Triggered for grounded Village Dogs (`SprAction < 7`) in Overworld mode `$09` within `96px` on a fresh Ocarina song cast (`$03F0 == $80`, `$3A & $40 != 0`, non-Wolf `$02B2 != $03`, leaving `SongFlag` and `SprTimerF` untouched). Plays fast tail-wag frames facing Link with a triangle-wave hop in `SprHeight` via `SprMiscF`, then rests via `SprTimerC`.
 
 ```asm
 Sprite_VillageDog_Main:
@@ -245,8 +247,9 @@ Sprite_VillageDog_Main:
 ## `EonDog_Walk`
 This routine handles the Eon Dog's random movement. It moves the sprite (`JSL Sprite_MoveLong`), handles tile collision (`JSL Sprite_BounceFromTileCollision`), and after a timer, randomly selects a new direction and updates its speed and action.
 
-## `CheckIfPlayerIsNearby`
-This routine checks if Link is within a specific rectangular area around the dog, returning with the carry flag set if true.
+## `Dog_NearPlayer` & `Dog_PlayAnim`
+*   **`Dog_NearPlayer` & `VillageDog_CalmIdleLong`**: Shared 16-bit box proximity check (`|Link - SprCached| < A` on both axes) in Bank `$31`, used for the Ocarina radius (`$60`), idle perk-up (`$58`), and approach-to-wag stop (`$16`). The cold calm-idle/stroll routine (`VillageDog_CalmIdleLong`) emits into the Bank `$2C` tail via `%VillageDog_EmitBank2C()` in `Sprites/all_sprites.asm` to balance Bank `$31` and Bank `$2C` headroom.
+*   **`Dog_PlayAnim`**: Shared 8-slot animation helper (`SprTimerB, X`), clamping `SprFrame` into `[start, end]` immediately on Left/Right transitions.
 
 ## `ShowMessageIfMinish`
 This routine displays a context-sensitive message based on Link's current form (`$02B2`). If Link is in Minish form, it displays message `$18`; otherwise, it displays message `$1B`.

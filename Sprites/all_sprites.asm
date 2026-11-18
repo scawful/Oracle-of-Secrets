@@ -474,6 +474,9 @@ endif
 ; Complete the shared-stop scan within the existing bank2C tail.
 %Goron88_EmitSharedStopScan()
 
+; Village dog idle/ocarina helpers (bank $31 is at its headroom floor).
+%VillageDog_EmitBank2C()
+
 print "Bank2C Free Space: ", dec($2CF700-pc()), " bytes"
 assert pc() <= $2CF700, "Bank $2C sprite stream overlaps Somaria internal landing"
 
