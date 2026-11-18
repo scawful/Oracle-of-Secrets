@@ -63,8 +63,11 @@ endif
 ; kit rows/palettes route per room (H3). Default on (scawful 2026-11-10).
 !ENABLE_WALL_PROFILE_SELECTOR       = 1
 !ENABLE_WATER_GATE_HOOKS            = 1
-!ENABLE_WATER_GATE_ROOMENTRY_RESTORE = 0
 !ENABLE_WATER_GATE_OVERLAY_REDIRECT = 1
+; 16-bit WaterFillTable tile_count (dw instead of db, capacity >255 tiles for widened $027).
+; Default 0 while live $027 has 222 tiles and yaze (water_fill_zone.cc) serializes db counts;
+; enable (=1) alongside the yaze dw writer when a >255-tile $027 basin lands.
+!ENABLE_WATER_FILL_16BIT_COUNT       = 0
 !ENABLE_MINECART_PLANNED_TRACK_TABLE = 1
 !ENABLE_MINECART_CART_SHUTTERS       = 0
 ; Qualified Room97 Bombchu target; tag39/AF binding remains required.

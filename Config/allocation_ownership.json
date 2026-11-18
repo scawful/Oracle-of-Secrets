@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "dd5e6d1dec6a86314aab84a785c57fea68813a05e31f676aaeb3e866559357b4"
+      "sha256": "0c09c85b85e718ac380c86045587265f429b823a98166a054edca61dac6513e3"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "77301f95df3d2297c2738e7944eb89cf1b7493e7e8053426e1fc1262748f519e"
+      "sha256": "dc7a4cf457843a3b201cdf692108d125eee73049b6ad518bd83adc7e6704948c"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -275,7 +275,7 @@
     "shared:Dungeons/d4_water_control.asm": {
       "source_set": "shared",
       "path": "Dungeons/d4_water_control.asm",
-      "sha256": "5cebcc4eab9b6750156c9bbbfe3b4e3ebd95393a6abb83adbd48bff1aeda02f0"
+      "sha256": "92732f5b3fa88a0fdf9e52688f0b6c14bfeb0d4fca761558627c23f65f3cdcb2"
     },
     "shared:Items/special_soaring.asm": {
       "source_set": "shared",

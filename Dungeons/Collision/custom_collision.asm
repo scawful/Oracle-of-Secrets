@@ -105,7 +105,7 @@ CustomRoomCollision:
   ; This runs at the end of the collision map streaming pass (when $B4 reaches
   ; $2000). Doing it here avoids the old global torch-loop hook at $0188DF,
   ; which was implicated in deterministic dungeon transition corruption.
-  if !ENABLE_WATER_GATE_HOOKS == 1 && !ENABLE_WATER_GATE_ROOMENTRY_RESTORE == 1
+  if !ENABLE_WATER_GATE_HOOKS == 1
     LDA $B4 : CMP.w #$2000 : BNE +
       JSL WaterGate_CheckRoomEntry
     +

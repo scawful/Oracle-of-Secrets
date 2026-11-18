@@ -36,7 +36,8 @@
 ;     db sram_bit_mask
 ;     dw data_offset (relative to table start)
 ;   then data sections:
-;     db tile_count
+;     if !ENABLE_WATER_FILL_16BIT_COUNT: dw tile_count
+;     else: db tile_count
 ;     dw offsets...
 ;
 Oracle_WaterFillTable = $25E000
@@ -91,12 +92,14 @@ if !ENABLE_D4_WATER_CONTROLS == 1
 .legacy_owner
 endif
   SEP #$20
+  LDA.b $A1 : BNE .done
   LDA.b $A0
 
   ; Prefer editor-authored WaterFillTable (yaze) when present.
   JSR WaterFill_FindRoomInTable
   BCC .legacy_fallback
     JSR WaterGate_ApplyCollision
+    JSR WaterGate_ApplyRoom27Ladder
     JSR WaterGate_SetPersistenceFlag
     BRA .done
 
@@ -111,6 +114,7 @@ endif
     LDA.b #WaterGate_Room27_Data>>16 : STA.b $02
     LDA.b #$01 : STA.b $03
     JSR WaterGate_ApplyCollision
+    JSR WaterGate_ApplyRoom27Ladder
     JSR WaterGate_SetPersistenceFlag
     BRA .done
 
@@ -189,7 +193,7 @@ endif
 ;   A (8-bit) = room id ($A0)
 ; Output:
 ;   C=1 if found, C=0 if not found/invalid
-;   $00-$02 = 24-bit pointer to tile data (db tile_count, dw offsets...)
+;   $00-$02 = 24-bit pointer to tile data (db|dw tile_count, dw offsets...)
 ;   $03     = SRAM bit mask for this room (single bit in WaterGateStates)
 ;
 ; Clobbers: A, X, $04-$05
@@ -251,7 +255,8 @@ WaterFill_FindRoomInTable:
 ; deep water collision (type $08) to $7F2000
 ;
 ; Data format:
-;   db <tile_count>
+;   if !ENABLE_WATER_FILL_16BIT_COUNT: dw <tile_count>
+;   else: db <tile_count>
 ;   dw <offset1>, <offset2>, ...  ; Offsets into $7F2000
 ;
 WaterGate_ApplyCollision:
@@ -266,13 +271,22 @@ WaterGate_ApplyCollision:
   PHB
   PEA.w $7F7F : PLB : PLB  ; Set bank to $7F for collision writes
 
+if !ENABLE_WATER_FILL_16BIT_COUNT == 1
+  ; 16-bit count (QUEUE169): word at [$00], then offsets. Cap practical ~2047.
+  REP #$30
+  LDA.b [$00] : STA.b $04
+  ; Advance 24-bit pointer past the count word (page-safe).
+  LDA.b $00 : CLC : ADC.w #$0002 : STA.b $00
+  LDA.b $04 : BEQ .done
+else
   SEP #$20
-  LDA.b [$00] : STA.b $04  ; Tile count
+  LDA.b [$00] : STA.b $04  ; Tile count (8-bit)
   STZ.b $05                 ; Clear high byte for 16-bit decrement
   BEQ .done
 
   REP #$30                  ; 16-bit A and X/Y
   INC.b $00  ; Advance past tile count byte
+endif
 
   LDY.w #$0000
 
@@ -286,6 +300,7 @@ WaterGate_ApplyCollision:
                 STA.w $3000, X  ; COLMAPB (layer 2)
     REP #$20                ; 16-bit A for offset reads
 
+    ; Direct-page 16-bit decrement ($00:$0004..$05, D=$0000); never DEC.w while DBR=$7F.
     DEC.b $04
     BNE .next_tile
 
@@ -293,6 +308,71 @@ WaterGate_ApplyCollision:
   SEP #$30                  ; Restore 8-bit A and X/Y
   PLB
   PLD
+  RTS
+}
+
+; =========================================================
+; Room $27 Wet Pool-Ladder & West-Stair Stamp
+; =========================================================
+; When dry, Room $27 Option 2 blocks 0x135@(52,27) via solid COLMAPB ($02) and
+; custom 0x1D rail (option A), and leaves COLMAPB row 28 == $02 below 0x133@(25,27).
+; Once water fills or restores on re-entry, open rows 27-28 cols 52-55 on both
+; COLMAPA ($26F4/$2734) and COLMAPB ($36F4/$3734), and row 28 cols 25-28
+; ($2719/$3719) under 0x133@(25,27), so Link can climb both stairs out of
+; the filled basin. Preserves P, DB, and $03.
+WaterGate_ApplyRoom27Ladder:
+{
+  PHP
+  PHB
+  SEP #$20
+  LDA.b $A1 : BNE .exit
+  LDA.b $A0 : CMP.b #$27 : BNE .exit
+
+  PEA.w $7F7F : PLB : PLB
+  LDA.b #$03
+  ; 0x135@(52,27) side bumpers (Option 2 v2: cols 52 & 55, aligned under dais stairs cols 52..55)
+  STA.w $26F4
+  STA.w $26F7
+  STA.w $36F4
+  STA.w $36F7
+  STA.w $2734
+  STA.w $2737
+  STA.w $3734
+  STA.w $3737
+  ; 0x133@(25,27) rows 27-28 side bumpers
+  STA.w $26D9
+  STA.w $26DC
+  STA.w $36D9
+  STA.w $36DC
+  STA.w $2719
+  STA.w $271C
+  STA.w $3719
+  STA.w $371C
+
+  STZ.w $26DA
+  STZ.w $26DB
+  STZ.w $26F5
+  STZ.w $26F6
+
+  LDA.b #$0A
+  STA.w $36DA
+  STA.w $36DB
+  STA.w $36F5
+  STA.w $36F6
+
+  LDA.b #$08
+  STA.w $2735
+  STA.w $2736
+  STA.w $3735
+  STA.w $3736
+  STA.w $271A
+  STA.w $271B
+  STA.w $371A
+  STA.w $371B
+
+.exit
+  PLB
+  PLP
   RTS
 }
 
@@ -344,15 +424,17 @@ if !ENABLE_D4_WATER_CONTROLS == 1
 .legacy_owner
 endif
   SEP #$20
+  LDA.b $A1 : BNE .done
   LDA.b $A0
 
   ; Prefer editor-authored WaterFillTable (yaze) when present.
   JSR WaterFill_FindRoomInTable
   BCC .legacy_fallback
     LDA.l WaterGateStates : AND.b $03 : BEQ .done
-      ; Water was filled before - restore collision
-      LDA.b #$02 : STA.w $0403  ; Set door flag to skip animation
+      ; Preserve existing $0403 door/chest bits and mark DoorFlagMasks+1 ($08).
+      LDA.w $0403 : ORA.b #$08 : STA.w $0403
       JSR WaterGate_ApplyCollision
+      JSR WaterGate_ApplyRoom27Ladder
       BRA .done
 
   .legacy_fallback
@@ -362,19 +444,20 @@ endif
 
   CMP.b #$27 : BNE .check_room_25
     LDA.l WaterGateStates : AND.b #$01 : BEQ .done
-      LDA.b #$02 : STA.w $0403
+      LDA.w $0403 : ORA.b #$08 : STA.w $0403
       REP #$20
       LDA.w #WaterGate_Room27_Data : STA.b $00
       SEP #$20
       LDA.b #WaterGate_Room27_Data>>16 : STA.b $02
       LDA.b #$01 : STA.b $03
       JSR WaterGate_ApplyCollision
+      JSR WaterGate_ApplyRoom27Ladder
       BRA .done
 
   .check_room_25
   CMP.b #$25 : BNE .done
     LDA.l WaterGateStates : AND.b #$02 : BEQ .done
-      LDA.b #$02 : STA.w $0403
+      LDA.w $0403 : ORA.b #$08 : STA.w $0403
       REP #$20
       LDA.w #WaterGate_Room25_Data : STA.b $00
       SEP #$20
@@ -482,33 +565,34 @@ WaterGateCollisionTable:
 
 WaterGate_Room27_Data:
 {
-  ; Tile count: exact D9-derived placement for room 0x27
-  db 240
+  ; Tile count: Room $27 Option 2 (chute rows 15..28 cols 42..44 + basin rows 29..31 cols 5..54)
+if !ENABLE_WATER_FILL_16BIT_COUNT == 1
+  dw 192
+else
+  db 192
+endif
 
-  dw $00A7, $00A8, $00A9, $00AA, $00AB, $00AC, $00AD, $00AE, $00AF, $00B0
-  dw $00E7, $00E8, $00E9, $00EA, $00EB, $00EC, $00ED, $00EE, $00EF, $00F0
-  dw $0127, $0128, $0129, $012A, $012B, $012C, $012D, $012E, $012F, $0130
-  dw $04A7, $04A8, $04A9, $04AA, $04AB, $04AC, $04AD, $04AE, $04AF, $04B0
-  dw $04E7, $04E8, $04E9, $04EA, $04EB, $04EC, $04ED, $04EE, $04EF, $04F0
-  dw $0527, $0528, $0529, $052A, $052B, $052C, $052D, $052E, $052F, $0530
-  dw $08A7, $08A8, $08A9, $08AA, $08AB, $08AC, $08AD, $08AE, $08E7, $08E8
-  dw $08E9, $08EA, $08EB, $08EC, $08ED, $08EE, $0927, $0928, $0929, $092A
-  dw $092B, $092C, $092D, $092E, $0A45, $0A46, $0A47, $0A48, $0A49, $0A4A
-  dw $0A4B, $0A4C, $0A4D, $0A4E, $0A4F, $0A50, $0A51, $0A52, $0A53, $0A55
-  dw $0A56, $0A57, $0A58, $0A59, $0A5A, $0A5B, $0A5C, $0A5D, $0A5E, $0A5F
-  dw $0A60, $0A61, $0A62, $0A63, $0A64, $0A65, $0A66, $0A67, $0A68, $0A69
-  dw $0A6A, $0A6B, $0A6C, $0A6D, $0A6E, $0A6F, $0A70, $0A71, $0A72, $0A73
-  dw $0A74, $0A75, $0A76, $0A77, $0A78, $0A79, $0A85, $0A86, $0A87, $0A88
-  dw $0A89, $0A8A, $0A8B, $0A8C, $0A8D, $0A8E, $0A8F, $0A90, $0A91, $0A92
-  dw $0A93, $0A95, $0A96, $0A97, $0A98, $0A99, $0A9A, $0A9B, $0A9C, $0A9D
-  dw $0A9E, $0A9F, $0AA0, $0AA1, $0AA2, $0AA3, $0AA4, $0AA5, $0AA6, $0AA7
-  dw $0AA8, $0AA9, $0AAA, $0AAB, $0AAC, $0AAD, $0AAE, $0AAF, $0AB0, $0AB1
-  dw $0AB2, $0AB3, $0AB4, $0AB5, $0AB6, $0AB7, $0AB8, $0AB9, $0AC5, $0AC6
-  dw $0AC7, $0AC8, $0AC9, $0ACA, $0ACB, $0ACC, $0ACD, $0ACE, $0ACF, $0AD0
-  dw $0AD1, $0AD2, $0AD3, $0AD5, $0AD6, $0AD7, $0AD8, $0AD9, $0ADA, $0ADB
-  dw $0ADC, $0ADD, $0ADE, $0ADF, $0AE0, $0AE1, $0AE2, $0AE3, $0AE4, $0AE5
-  dw $0AE6, $0AE7, $0AE8, $0AE9, $0AEA, $0AEB, $0AEC, $0AED, $0AEE, $0AEF
-  dw $0AF0, $0AF1, $0AF2, $0AF3, $0AF4, $0AF5, $0AF6, $0AF7, $0AF8, $0AF9
+  dw $03EA, $03EB, $03EC, $042A, $042B, $042C, $046A, $046B, $046C, $04AA
+  dw $04AB, $04AC, $04EA, $04EB, $04EC, $052A, $052B, $052C, $056A, $056B
+  dw $056C, $05AA, $05AB, $05AC, $05EA, $05EB, $05EC, $062A, $062B, $062C
+  dw $066A, $066B, $066C, $06AA, $06AB, $06AC, $06EA, $06EB, $06EC, $072A
+  dw $072B, $072C, $0745, $0746, $0747, $0748, $0749, $074A, $074B, $074C
+  dw $074D, $074E, $074F, $0750, $0751, $0752, $0753, $0754, $0755, $0756
+  dw $0757, $0758, $0759, $075A, $075B, $075C, $075D, $075E, $075F, $0760
+  dw $0761, $0762, $0763, $0764, $0765, $0766, $0767, $0768, $0769, $076A
+  dw $076B, $076C, $076D, $076E, $076F, $0770, $0771, $0772, $0773, $0774
+  dw $0775, $0776
+  dw $0785, $0786, $0787, $0788, $0789, $078A, $078B, $078C, $078D, $078E
+  dw $078F, $0790, $0791, $0792, $0793, $0794, $0795, $0796, $0797, $0798
+  dw $0799, $079A, $079B, $079C, $079D, $079E, $079F, $07A0, $07A1, $07A2
+  dw $07A3, $07A4, $07A5, $07A6, $07A7, $07A8, $07A9, $07AA, $07AB, $07AC
+  dw $07AD, $07AE, $07AF, $07B0, $07B1, $07B2, $07B3, $07B4, $07B5, $07B6
+  dw $07C5, $07C6
+  dw $07C7, $07C8, $07C9, $07CA, $07CB, $07CC, $07CD, $07CE, $07CF, $07D0
+  dw $07D1, $07D2, $07D3, $07D4, $07D5, $07D6, $07D7, $07D8, $07D9, $07DA
+  dw $07DB, $07DC, $07DD, $07DE, $07DF, $07E0, $07E1, $07E2, $07E3, $07E4
+  dw $07E5, $07E6, $07E7, $07E8, $07E9, $07EA, $07EB, $07EC, $07ED, $07EE
+  dw $07EF, $07F0, $07F1, $07F2, $07F3, $07F4, $07F5, $07F6
 }
 
 ; =========================================================
@@ -525,7 +609,11 @@ WaterGate_Room27_Data:
 WaterGate_Room25_Data:
 {
   ; Tile count
+if !ENABLE_WATER_FILL_16BIT_COUNT == 1
+  dw 168
+else
   db 168
+endif
 
   ; Y=45 row (X=5-60) - 56 tiles
   dw $0B45, $0B46, $0B47, $0B48, $0B49, $0B4A, $0B4B, $0B4C
@@ -554,5 +642,51 @@ WaterGate_Room25_Data:
   dw $0BED, $0BEE, $0BEF, $0BF0, $0BF1, $0BF2, $0BF3, $0BF4
   dw $0BF5, $0BF6, $0BF7, $0BF8, $0BF9, $0BFA, $0BFB, $0BFC
 }
+
+if !ENABLE_WATER_GATE_HOOKS == 1
+; =========================================================
+; Room $27 Object Attribute Row-28 Hook (0x0133@(25,27))
+; =========================================================
+; Vanilla Underworld_LoadObjectAttribute (.next_water_overlay_a2) writes #$0808
+; to row 28 COLMAPA ($7F2040,X / $7F2042,X) AFTER CustomRoomCollision ($01B95B)
+; and, on horizontal room transitions, on the frame after CustomRoomCollision.
+; Preserve dry walkable floor/bumpers when dry, and wet bumpers/water/ladder
+; stamps when wet. Entered with M=16, X=16; preserves Y, M=16, X=16 on RTL.
+WaterGate_WaterOverlayA2_Row28:
+{
+  LDA.l $7E00A0 : CMP.w #$0027 : BNE .vanilla
+  LDA.l $7E0403 : AND.w #$0008 : BNE .wet_room27
+  ; Dry Room $27: apply vanilla dry AutoStairsNorthMergedStart ($1D single-layer stairs)
+  ; on rows 27..29 of 0x0133@(25,27), clearing row 27 COLMAPB $0A and row 29 COLMAPA $08.
+  LDA.w #$0002 : STA.l $7F2000,X : STA.l $7F3000,X
+  XBA          : STA.l $7F2002,X : STA.l $7F3002,X
+  LDA.w #$1D01 : STA.l $7F2040,X : STA.l $7F3040,X
+  XBA          : STA.l $7F2042,X : STA.l $7F3042,X
+  LDA.w #$1D1D : STA.l $7F2081,X : STA.l $7F3081,X
+  RTL
+.wet_room27
+  ; Wet Room $27: row 28 under 0x0133 gets side bumpers ($03) + deep water ($08) on COLMAPA & COLMAPB,
+  ; and re-applies Room $27 0x0135@(52,27) east ladder stamps after object attribute load.
+  LDA.w #$0803 : STA.l $7F2040,X : STA.l $7F3040,X
+  XBA          : STA.l $7F2042,X : STA.l $7F3042,X
+  PHP : PHX : PHY : PHD
+  LDA.w #$0000 : TCD
+  JSR WaterGate_ApplyRoom27Ladder
+  PLD : PLY : PLX : PLP
+  RTL
+.vanilla
+  LDA.w #$0808
+  STA.l $7F2040,X
+  STA.l $7F2042,X
+  RTL
+}
+
+pushpc
+org $01BC0A ; @hook module=Dungeons name=WaterGate_WaterOverlayA2_Row28 kind=jsl target=WaterGate_WaterOverlayA2_Row28 expected_m=16 expected_x=16 expected_exit_m=16 expected_exit_x=16
+  JSL WaterGate_WaterOverlayA2_Row28
+  NOP #7
+assert pc() == $01BC15
+pullpc
+endif
 
 print "End of water_collision.asm        ", pc

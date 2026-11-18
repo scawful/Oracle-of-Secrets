@@ -321,10 +321,23 @@ fi
 if [[ "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
   echo "[*] Generating water-fill table from custom collision markers: $water_table_rom_arg"
   generate_water_fill_tables() {
+    # Match effective !ENABLE_WATER_FILL_16BIT_COUNT in Config/feature_flags.asm (or Util/macros.asm fallback).
+    local count_width="8"
+    local flag_source="$feature_flags_path"
+    if [[ ! -f "$flag_source" ]]; then
+      flag_source="$repo_root/Util/macros.asm"
+    fi
+    if grep -Eq '^[[:space:]]*!ENABLE_WATER_FILL_16BIT_COUNT[[:space:]]*=[[:space:]]*1\b' "$flag_source" 2>/dev/null; then
+      count_width="16"
+    fi
+    if [[ "${OOS_WATER_FILL_COUNT_WIDTH:-}" == "8" || "${OOS_WATER_FILL_COUNT_WIDTH:-}" == "16" ]]; then
+      count_width="$OOS_WATER_FILL_COUNT_WIDTH"
+    fi
     (
       cd "$repo_root"
       python3 "$repo_root/Scripts/Generate/generate_water_fill_table.py" \
         --rom "$water_table_rom_arg" \
+        --count-width "$count_width" \
         --out-asm "$repo_root/Dungeons/generated/water_fill_table.asm"
     )
   }

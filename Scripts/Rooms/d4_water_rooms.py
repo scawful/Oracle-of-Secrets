@@ -277,9 +277,12 @@ NATIVE_ATTRIBUTE_SOURCES = {
     # exits at the RoomProfile BEQ before SlotSrc, so its plain path is unchanged.
     'Dungeons/Data/wall_profiles/wall_profiles.asm':
         '34b1637fdbef3d502e90a5618ad8281861b4c74cde3c96eea7280a35d29fad7b',
-    # The selected backend suppresses all three old25/bit02 entry/fill paths.
+    # The selected backend suppresses all three old25/bit02 entry/fill paths,
+    # while enabling 16-bit WaterFillTable count support (flag-gated), Room27
+    # fill persistence ($0403 ORA #$08 + $A1 == 0 guard), wet ladder pass, and
+    # the 0x0133 row-28 WaterOverlayA2 hook ($01BC0A) for Room $27 dry/wet parity.
     'Dungeons/Collision/water_collision.asm':
-        '33b928028d7d5de14025ba7c256e51d6c0c8ce675fd08a0fccb90f08a40b2023',
+        '2bd63ccf8f95159da44dfe2c2dd0675608d590017ab31681611b277e746ad22a',
 }
 
 

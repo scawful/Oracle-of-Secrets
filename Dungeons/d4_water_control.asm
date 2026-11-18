@@ -57,6 +57,26 @@ org $09F554 ; @hook module=Dungeons name=D4Hub_SaveFollower kind=jml target=D4Hu
   JML D4Hub_SaveFollower
 assert pc() == $09F558
 
+; Module07_15_WarpPad step $01 ($0296AC) and step $0D ($0296EC) drive the
+; Warp Pad hardware mosaic ($2106 via $94/$95/$7EC011). Suppress mosaic only
+; for Room $25's same-room valve reload ($A0 == $0025 && $A2 == $0025) so the
+; paired valve fades cleanly without a warp-pad mosaic wipe, while all real
+; warp pads and dream warps retain exact vanilla mosaic behavior.
+org $0296AC ; @hook module=Dungeons name=D4Water_WarpFadeOut kind=jml target=D4Water_WarpFadeOut expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8 protected_size=7
+  assert read3($0296AC) == $C2E420 && read4($0296AF) == $7EC011AF
+  assert read4($0296B3) == $95850309 && read3($0296B7) == $A2A04C
+  assert read4($02A2A0) == $00E91422
+  JML D4Water_WarpFadeOut
+  NOP #3
+assert pc() == $0296B3
+
+org $0296EC ; @hook module=Dungeons name=D4Water_WarpFadeIn kind=jml target=D4Water_WarpFadeIn expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8 protected_size=7
+  assert read4($0296EC) == $7EC007AF && read3($0296F0) == $0D904A
+  assert read4($029700) == $948509A9 && read3($02970C) == $A2A04C
+  JML D4Water_WarpFadeIn
+  NOP #3
+assert pc() == $0296F3
+
 org $508000
 D4Water_Start:
 ; Slot is explicitly reserved in allocation_ownership.json, not graphics padding.
@@ -239,7 +259,9 @@ D4Water_ToggleAndReload:
   .store_water
   STA.l WaterGateStates
   LDA.b #$25 : STA.w $012F
-  ; Reproduce Underworld_SaveRoomData before the normal same-room warp reload.
+  LDA.b #$2F : STA.w $012E ; SFX2.2F water rush/drain (paired $2F->$38)
+  ; Reproduce Underworld_SaveRoomData before the same-room fade reload.
+  ; D4Water_WarpFadeOut/In suppress Module07_15's warp-pad mosaic for $25->$25.
   ; Keep collected chests/keys and open doors; no room flag or inventory reset.
   REP #$30
   LDA.b $A0 : ASL : TAX
@@ -1143,6 +1165,49 @@ D4Hub_SaveFollower:
   JML $09F558
   .keep
   JML $09F55E
+}
+
+; Entry/exit: M8/X8, preserves X/Y/D/DBR. C=1 iff indoor Room $25 is
+; reloading itself in-place ($A0 == $0025 && $A2 == $0025).
+D4Water_IsRoom25Reload:
+{
+  LDA.l $7E001B : BEQ .no
+  REP #$20
+  LDA.l $7E00A0 : CMP.w #$0025 : BNE .no16
+  LDA.l $7E00A2 : CMP.w #$0025 : BNE .no16
+  SEP #$20
+  SEC : RTS
+  .no16
+  SEP #$20
+  .no
+  CLC : RTS
+}
+
+; $0296AC (Module07_15_01_ApplyMosaicAndFilter): M8/X8/D0 from JumpTableLocal.
+D4Water_WarpFadeOut:
+{
+  JSR D4Water_IsRoom25Reload : BCC .ordinary
+  JML $02A2A0 ; ApplyPaletteFilter_bounce (clean fade-out, no $2106 mosaic)
+  .ordinary
+  LDA.l $7EC007 : LSR A : BCC .copy
+  LDA.l $7EC011 : CLC : ADC.b #$10 : STA.l $7EC011
+  .copy
+  LDA.b #$09 : STA.b $94
+  LDA.l $7EC011 : ORA.b #$07 : STA.b $95 ; ConditionalMosaicControl ($02C2FA)
+  LDA.l $7EC011
+  JML $0296B3
+}
+
+; $0296EC (Module07_15_0E_FadeInFromWarp): M8/X8/D0 from JumpTableLocal.
+D4Water_WarpFadeIn:
+{
+  JSR D4Water_IsRoom25Reload : BCC .ordinary
+  JML $02A2A0 ; ApplyPaletteFilter_bounce (clean fade-in, no $2106 mosaic)
+  .ordinary
+  LDA.l $7EC007 : LSR A : BCC .dont_decrease
+  JML $0296F3
+  .dont_decrease
+  JML $029700
 }
 
 D4Water_End:

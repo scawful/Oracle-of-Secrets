@@ -188,10 +188,19 @@ def assign_room_masks(
     return assigned
 
 
-def build_layout(marker_offsets: Dict[int, List[int]], room_masks: Dict[int, int]) -> Dict[int, int]:
+def build_layout(
+    marker_offsets: Dict[int, List[int]],
+    room_masks: Dict[int, int],
+    count_width: int = 8,
+) -> Dict[int, int]:
     rooms = sorted(marker_offsets)
     if len(rooms) > 8:
         raise ValueError(f"Found {len(rooms)} water fill rooms, runtime max is 8")
+    if count_width not in (8, 16):
+        raise ValueError(f"count_width must be 8 or 16, got {count_width}")
+    count_bytes = 1 if count_width == 8 else 2
+    # 8-bit db cap 255; 16-bit dw practical max before 8KiB bank pressure (~2047).
+    max_tiles = 0xFF if count_width == 8 else 0x07FF
 
     # [zone_count] + N*[room_id,mask,off_lo,off_hi]
     running = 1 + (len(rooms) * 4)
@@ -199,9 +208,10 @@ def build_layout(marker_offsets: Dict[int, List[int]], room_masks: Dict[int, int
 
     for room_id in rooms:
         offsets = marker_offsets[room_id]
-        if len(offsets) > 0xFF:
+        if len(offsets) > max_tiles:
             raise ValueError(
-                f"Room {room_id:02X}: {len(offsets)} marker tiles, runtime max per room is 255 (db tile_count)"
+                f"Room {room_id:02X}: {len(offsets)} marker tiles, runtime max per room is {max_tiles} "
+                f"({'db' if count_width == 8 else 'dw'} tile_count)"
             )
         for off in offsets:
             if off < 0 or off > 0x0FFF:
@@ -209,7 +219,7 @@ def build_layout(marker_offsets: Dict[int, List[int]], room_masks: Dict[int, int
                     f"Room {room_id:02X}: marker offset {off:#06x} out of 64x64 collision bounds (0x0000..0x0FFF)"
                 )
         data_offsets[room_id] = running
-        running += 1 + (len(offsets) * 2)
+        running += count_bytes + (len(offsets) * 2)
 
     table_span = running
     if table_span > 0x2000:
@@ -235,6 +245,7 @@ def write_asm(
     marker_offsets: Dict[int, List[int]],
     room_masks: Dict[int, int],
     data_offsets: Dict[int, int],
+    count_width: int = 8,
 ) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -245,10 +256,12 @@ def write_asm(
     # The build receipt binds the full path/hash; keep this include portable.
     lines.append(f"; Source ROM filename: {rom_path.name}")
     lines.append(f"; Marker tile: {fmt_hex(marker_tile)}")
+    lines.append(f"; Count width: {count_width}-bit")
     lines.append("; Format at $25E000:")
     lines.append(";   db zone_count")
     lines.append(";   repeat zone_count: db room_id, mask, dw data_offset")
-    lines.append(";   data: db tile_count, dw offsets...")
+    count_dir = "dw tile_count" if count_width == 16 else "db tile_count"
+    lines.append(f";   data: {count_dir}, dw offsets...")
     lines.append("")
     lines.append("pushpc")
     lines.append(f"org {fmt_hex(WATER_FILL_TABLE_SNES, 6)}")
@@ -270,7 +283,12 @@ def write_asm(
         offsets = marker_offsets[room_id]
         lines.append(f"WaterFillData_Room{room_id:02X}:")
         lines.append("{")
-        lines.append(f"  db {fmt_hex(len(offsets))} ; mask={fmt_hex(room_masks[room_id])}")
+        if count_width == 16:
+            lines.append(
+                f"  dw {fmt_hex(len(offsets), 4)} ; mask={fmt_hex(room_masks[room_id])} (16-bit count)"
+            )
+        else:
+            lines.append(f"  db {fmt_hex(len(offsets))} ; mask={fmt_hex(room_masks[room_id])}")
         for i in range(0, len(offsets), 10):
             chunk = offsets[i : i + 10]
             lines.append("  dw " + ", ".join(fmt_hex(off, 4) for off in chunk))
@@ -287,6 +305,13 @@ def main() -> int:
         description="Generate WaterFillTable from custom collision marker tiles."
     )
     parser.add_argument("--rom", type=Path, required=True, help="Source ROM path (typically Yaze-edited ROM).")
+    parser.add_argument(
+        "--count-width",
+        type=int,
+        choices=(8, 16),
+        default=8,
+        help="Tile-count field width: 8=db (default), 16=dw (ENABLE_WATER_FILL_16BIT_COUNT).",
+    )
     parser.add_argument(
         "--out-asm",
         type=Path,
@@ -336,7 +361,9 @@ def main() -> int:
     )
     rooms = sorted(marker_offsets)
     room_masks = assign_room_masks(rooms, explicit_masks)
-    data_offsets = build_layout(marker_offsets, room_masks)
+    data_offsets = build_layout(
+        marker_offsets, room_masks, count_width=args.count_width
+    )
 
     write_asm(
         out_path=args.out_asm,
@@ -345,6 +372,7 @@ def main() -> int:
         marker_offsets=marker_offsets,
         room_masks=room_masks,
         data_offsets=data_offsets,
+        count_width=args.count_width,
     )
 
     print(f"Wrote {args.out_asm}")

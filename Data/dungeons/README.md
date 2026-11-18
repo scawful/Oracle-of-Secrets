@@ -13,6 +13,18 @@ older nonzero-only tools do not satisfy this contract.
 
 ## Current provenance
 
+The 2026-11-18 Zora Temple (`QUEUE253 v2`) Room `$27` Option 2 compact basin
+updates custom collision (`0xF5` flood markers on `rows 29..31 cols 5..54`,
+`192` tiles + `4` `0x1D` ladder rails = `196` tiles in `$27`) together with
+`QUEUE289` pause maps and `QUEUE199R` Windmill `$C9` in the project ROM below.
+The shared base has not been synchronized to it.
+
+- source: 23 rooms, 3,512 explicit tiles (3,351 nonzero and 161 floor tiles)
+- source SHA-256:
+  `625ab8996747b8c01379b2d22b3117cfc544c3ef848a9283b4ae92fb69bb4ee0`
+- matching project ROM SHA-256:
+  `f1002d439b6d5b3a6b11d1d09c45a7c5fb62c5529128a7ba0606f222c7c15f7c`
+
 The 2026-11-09 Goron Mines cart loop adds custom collision for rooms `$79`
 and `$99` (scawful: "Write Goron loop", "Push Goron files"). The project ROM
 below carries the matching room data; the shared base has not been
