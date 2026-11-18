@@ -62,12 +62,12 @@ Verifies natively in headless Mesen2:
 13. Indoor dungeon ($10=7) gameplay:
     - Verifies drawing, holding, swiping, torch lighting, and stow inside underworld mode $07.
 14. Real input-driven doorway crossing & real stairs transition:
-    - Lit stick carried across real same-floor doorway in D6 (room 0x98 -> 0x88) preserves fire and resumes burn countdown.
+    - Lit stick carried across real same-floor doorway in D8 Sky (room 0x90 -> 0x91) preserves fire and resumes burn countdown.
     - Lit stick carried into real spiral stairs in Zora Temple (room 0x28 -> 0x38) cleans up stick and flame without inventory refund.
 15. Overworld dispatch hook and transition drops:
     - Part A (Real overworld screen boundary crossing fuel pause proof): Real controller-driven movement from Village West (Screen 0x23) across the boundary into destination Screen 0x2A via D-pad LEFT; observes engine-triggered scroll transition, takes two during-scroll samples separated by >= 16 frames proving identical fuel, lit state and flame visibility, observes arrival on destination Screen 0x2A with stick/flame intact, and proves resumed active countdown.
     - Part B (Submodule whitelist fixture control): Verifies $02A477 hook preserves lit stick and pauses burn timer during scroll ($11 = 1) in Module 09.
-    - Part C (Real overworld entrance transition): Walking into real overworld entrance doorway (D6 entrance at Screen 54) triggers entrance fade/Module 08 load hook ($0283BF) which drops stick without inventory refund.
+    - Part C (Real overworld entrance transition): Walking into real overworld entrance doorway (D6 entrance at Screen 54) triggers entrance fade and Module 07 LandingWipe ($11 = 0x0F) drop without inventory refund.
 """
 from __future__ import annotations
 
@@ -199,6 +199,7 @@ class DekuStickRuntimeTest:
         self.pid = 0
         self.pid_identity = ""
         self.b: MesenBridge | None = None
+        self._spc_clean = False
         self.results: dict[str, bool] = {}
         self.traces: dict[str, object] = {}
 
@@ -348,6 +349,7 @@ class DekuStickRuntimeTest:
         if not state_path.is_file():
             state_path = resolve_savestate("oos168x", "oos168x_1.mss")
         res = self.b.load_state(path=str(state_path))
+        self._spc_clean = False
         print(f"[*] load_state result: {res}")
         time.sleep(0.5)
         if not self.wait_play(8.0):
@@ -361,6 +363,7 @@ class DekuStickRuntimeTest:
         if not state_path.is_file():
             state_path = resolve_savestate("library", "oos_1772076583_Agent_Zora_Inside_Fresh.mss")
         res = self.b.load_state(path=str(state_path))
+        self._spc_clean = False
         print(f"[*] load_state indoor result: {res}")
         time.sleep(0.5)
         if not self.wait_play(8.0):
@@ -385,7 +388,41 @@ class DekuStickRuntimeTest:
             time.sleep(0.3)
         if not self.wait_play(8.0):
             raise RuntimeError(f"Failed to enter gameplay from cold boot: MODULE={self.r(MODULE)}")
+        self._spc_clean = True
         print(f"[+] Reached stable gameplay from fresh boot: MODULE={self.r(MODULE)}")
+
+    def boot_clean_dungeon(self, entrance_id: int = 0x27, area_id: int = 0x36):
+        """Enter an authored dungeon room using current-ROM Module 05 reload (no stale .mss WRAM/SPC)."""
+        if not self._spc_clean:
+            self.b.reset()
+            time.sleep(0.3)
+            self.boot_fresh_file()
+        world = area_id & 0x40 if 0 <= area_id < 0x80 else 0
+        self.b.pause()
+        try:
+            self.w(0x7EF3CA, world)
+            self.w(0x7E0FFF, 1 if world else 0)
+            self.w(0x7EF3CC, 0)  # Clear follower 0x02 spawn override
+            self.w(0x7E010E, entrance_id & 0xFF)
+            self.w(0x7E010F, 0)
+            self.w(0x7E010A, 1)  # Continue flag
+            self.w(0x7E04AA, 0)  # Respawn flag
+            self.w(UNDERWORLD_FLAG, 1)
+            self.w(SUBMODULE, 0)
+            self.w(CHOICE, 0)
+            self.w(MODULE, 0x05)
+        finally:
+            self.b.resume()
+        for _ in range(100):
+            time.sleep(0.1)
+            if self.r(MODULE) == 7 and self.r(SUBMODULE) == 0:
+                time.sleep(0.2)
+                if self.r(MODULE) == 7 and self.r(SUBMODULE) == 0:
+                    return
+        raise RuntimeError(
+            f"Failed clean dungeon reload for entrance 0x{entrance_id:02X}: "
+            f"MODULE={self.r(MODULE)}, SUBMODULE={self.r(SUBMODULE)}"
+        )
 
     def navigate_to_map(self) -> bool:
         """Open pause menu and turn left from Items ($0200=4) to Map page ($1E71=$40, $0200=6)."""
@@ -465,6 +502,14 @@ class DekuStickRuntimeTest:
         if filter_test == 8:
             print("[*] Running filtered Tests 8-9 only...")
             self.run_save_reopen()
+            return
+        if filter_test == 13:
+            print("[*] Running filtered Test 13 only...")
+            self.run_test_13()
+            return
+        if filter_test == 14:
+            print("[*] Running filtered Test 14 only...")
+            self.run_test_14()
             return
         if filter_test == 15:
             print("[*] Running filtered Test 15 only...")
@@ -822,10 +867,19 @@ class DekuStickRuntimeTest:
         print(f"    Zero-inventory refusal: MENU={menu12} (exp 6), pending={pend12} (exp 0), count={count12} (exp 0), wear={wear12} (exp 30) -> OK: {t12_ok}")
 
         # ----------------------------------------------------
+        # 13-15. Indoor gameplay, real transitions, and Overworld hooks
+        # ----------------------------------------------------
+        self.run_test_13()
+        self.run_test_14()
+        if filter_test is None or filter_test == 15:
+            self.run_test_15()
+
+    def run_test_13(self):
+        # ----------------------------------------------------
         # 13. Actual indoor Underworld ($10=7) gameplay proof
         # ----------------------------------------------------
         print("[*] Test 13: Actual indoor dungeon ($10=7) draw, hold, swipe, torch, room transition, and stow...")
-        self.boot_indoor_dungeon()
+        self.boot_clean_dungeon(0x27, area_id=0x36)
 
         # Check natural indoor baseline without modifying MODULE:
         module_init = self.r(MODULE)
@@ -897,8 +951,10 @@ class DekuStickRuntimeTest:
         print(f"    Indoor lighting unlit torch: torch1={torch1_lit} (exp >0) -> OK: {indoor_torch_light_ok}")
 
         # Indoor room transition (InterroomTransition / door scroll $11 = 2):
+        self.b.pause()
         self.w(DEKU_BURN_TIMER, 50)
         self.w(SUBMODULE, 2)  # Door scroll
+        self.b.resume()
         time.sleep(0.4)
         burn_in_door_scroll = self.r(DEKU_BURN_TIMER)
         state_in_door_scroll = self.r(DEKU_STICK_STATE)
@@ -910,8 +966,14 @@ class DekuStickRuntimeTest:
             stick_y_scroll < 0xE0 and
             flame_y_scroll < 0xE0
         )
+        self.b.pause()
         self.w(SUBMODULE, 0)
-        time.sleep(0.4)
+        self.w(CHOICE, 0)
+        self.b.resume()
+        for _ in range(15):
+            time.sleep(0.1)
+            if self.r(DEKU_BURN_TIMER) < 50:
+                break
         burn_after_door_scroll = self.r(DEKU_BURN_TIMER)
         state_after_door_scroll = self.r(DEKU_STICK_STATE)
         indoor_scroll_resumed = (burn_after_door_scroll < 50 and state_after_door_scroll == 2)
@@ -946,12 +1008,13 @@ class DekuStickRuntimeTest:
         self.results["indoor_underworld_gameplay_proof"] = t13_ok
         print(f"    Indoor Underworld gameplay verdict -> OK: {t13_ok}")
 
+    def run_test_14(self):
         # ----------------------------------------------------
         # 14. Real input-driven doorway crossing and real stairs transition
         # ----------------------------------------------------
         print("[*] Test 14: Real input-driven doorway traversal and stairs transition...")
-        # Part A: Carry lit stick through real same-floor doorway in D6 (room 0x98 -> 0x88)
-        self.boot_indoor_dungeon()  # loads oos_1772076582_Agent_D6_Inside_Entry_Fresh.mss (Room 0x98)
+        # Part A: Carry lit stick through real same-floor doorway in D8 Sky (room 0x90 -> 0x91)
+        self.boot_clean_dungeon(0x29, area_id=0x40)
         init_room = self.r(0x7E00A0)
         self.w(DEKU_STICKS_COUNT, 2)
         self.w(DEKU_STICK_STATE, 2)   # Held lit
@@ -960,18 +1023,27 @@ class DekuStickRuntimeTest:
 
         print(f"    Doorway initial room: 0x{init_room:02X}, state={self.r(DEKU_STICK_STATE)}, burn={self.r(DEKU_BURN_TIMER)}")
 
-        # Drive Link north through north doorway using joypad input UP
+        # Walk UP to the east corridor (Y <= 4986), then RIGHT through the open doorway (0x90 -> 0x91)
+        for _ in range(20):
+            cur_y = self.r(LINK_POSY) | (self.r(LINK_POSY + 1) << 8)
+            if cur_y <= 4986:
+                break
+            self.press("UP", frames=6)
+
         door_scroll_entered = False
-        for _ in range(25):
-            self.b.press_button("UP", frames=8, detach_debugger=False)
-            time.sleep(0.15)
-            if self.r(SUBMODULE) == 2:
-                door_scroll_entered = True
+        for _ in range(35):
+            self.b.press_button("RIGHT", frames=8, detach_debugger=False)
+            for _ in range(8):
+                if self.r(SUBMODULE) == 2 or self.r(0x7E00A0) == 0x91:
+                    door_scroll_entered = True
+                    break
+                time.sleep(0.02)
+            if door_scroll_entered:
                 break
 
         # Wait for door scroll to finish and gameplay to resume in destination room
         door_scroll_finished = False
-        for _ in range(40):
+        for _ in range(80):
             time.sleep(0.1)
             if self.r(SUBMODULE) == 0 and self.r(MODULE) == 7:
                 door_scroll_finished = True
@@ -993,17 +1065,18 @@ class DekuStickRuntimeTest:
 
         doorway_traversal_ok = (
             door_scroll_entered and door_scroll_finished and
-            dest_room == 0x88 and
+            dest_room == 0x91 and
             state_after_door == 2 and
             stick_y_door < 0xE0 and
             flame_y_door < 0xE0 and
             burn_ticked
         )
-        print(f"    Doorway traversal (0x98 -> 0x{dest_room:02X}): scroll={door_scroll_entered}, arrived={door_scroll_finished}, state={state_after_door} (exp 2), stick_y={stick_y_door}, flame_y={flame_y_door}, burn_ticked={burn_ticked} -> OK: {doorway_traversal_ok}")
+        print(f"    Doorway traversal (0x90 -> 0x{dest_room:02X}): scroll={door_scroll_entered}, arrived={door_scroll_finished}, state={state_after_door} (exp 2), stick_y={stick_y_door}, flame_y={flame_y_door}, burn_ticked={burn_ticked} -> OK: {doorway_traversal_ok}")
 
         # Part B: Enter real spiral stairs using joypad input UP in Zora Temple (Room 0x28)
         stairs_state_path = resolve_savestate("library", "oos168x", "zora_temple_stairs_seed_20260207.mss")
         res = self.b.load_state(path=str(stairs_state_path))
+        self._spc_clean = False
         time.sleep(0.5)
         self.wait_play(8.0)
         zora_init_room = self.r(0x7E00A0)
@@ -1030,7 +1103,7 @@ class DekuStickRuntimeTest:
                 break
 
         # Wait for stairs transition to complete and Link to arrive in destination room (0x38)
-        for _ in range(50):
+        for _ in range(60):
             time.sleep(0.1)
             if self.r(SUBMODULE) == 0 and self.r(MODULE) == 7:
                 break
@@ -1056,12 +1129,6 @@ class DekuStickRuntimeTest:
         t14_ok = (doorway_traversal_ok and stairs_cleanup_ok)
         self.results["real_transitions_proof"] = t14_ok
         print(f"    Real transitions verdict -> OK: {t14_ok}")
-
-        # ----------------------------------------------------
-        # 15. Overworld dispatch hook and transition drops
-        # ----------------------------------------------------
-        if filter_test is None or filter_test == 15:
-            self.run_test_15()
 
     def run_test_5(self):
         # ----------------------------------------------------
@@ -1624,7 +1691,7 @@ class DekuStickRuntimeTest:
         print(f"    Scroll triggered: sample1={scroll_sample1}")
 
         # Sample 2 during scroll: poll until at least 16 engine frames have elapsed while still scrolling (submodule 1..8)
-        for _ in range(35):
+        for _ in range(120):
             time.sleep(0.03)
             sub_now = self.r(SUBMODULE)
             f_now = self.r(0x7E001A)
@@ -1658,7 +1725,7 @@ class DekuStickRuntimeTest:
 
         # Wait for screen scroll transition to finalize onto destination screen (submodule 0)
         dest_settled = False
-        for _ in range(60):
+        for _ in range(100):
             time.sleep(0.08)
             if self.r(SUBMODULE) == 0:
                 dest_settled = True
@@ -1805,7 +1872,10 @@ class DekuStickRuntimeTest:
         time.sleep(0.1)
 
         # In Module 09, submodule 1..4 is whitelisted by DekuStick_SubmoduleCheck hooked at $02A477
+        self.b.pause()
+        self.w(DEKU_BURN_TIMER, 60)
         self.w(SUBMODULE, 1)  # scroll active
+        self.b.resume()
         time.sleep(0.4)
         burn_during_ow_scroll = self.r(DEKU_BURN_TIMER)
         state_during_ow_scroll = self.r(DEKU_STICK_STATE)
@@ -1819,18 +1889,31 @@ class DekuStickRuntimeTest:
         )
 
         self.w(SUBMODULE, 0)  # scroll complete
-        time.sleep(0.4)
+        for _ in range(15):
+            time.sleep(0.1)
+            if self.r(DEKU_BURN_TIMER) < 60:
+                break
         burn_after_ow_scroll = self.r(DEKU_BURN_TIMER)
         state_after_ow_scroll = self.r(DEKU_STICK_STATE)
         ow_scroll_resumed = (burn_after_ow_scroll < 60 and state_after_ow_scroll == 2)
         print(f"    Overworld scroll fixture ($11=1): paused={ow_scroll_paused} (burn={burn_during_ow_scroll}), resumed={ow_scroll_resumed} (burn={burn_after_ow_scroll}) -> OK: {ow_scroll_paused and ow_scroll_resumed}")
 
         # Part C: Real overworld destructive transition into D6 entrance
-        # Load D6 Pre-Entrance overworld state (Screen 54, right outside D6)
-        d6_ow_state_path = resolve_savestate("library", "oos_1772076582_Agent_D6_Pre_Entrance_Fresh.mss")
-        self.b.load_state(path=str(d6_ow_state_path))
-        time.sleep(0.5)
-        self.wait_play(8.0)
+        # Enter D6 cleanly (no stale Feb-2026 SPC snapshot) and step DOWN outside onto Screen 0x36.
+        self.boot_clean_dungeon(0x27, area_id=0x36)
+        for _ in range(15):
+            self.b.press_button("DOWN", frames=8, detach_debugger=False)
+            time.sleep(0.1)
+            if self.r(MODULE) != 7:
+                break
+        for _ in range(80):
+            time.sleep(0.1)
+            if self.r(MODULE) == 9 and self.r(SUBMODULE) == 0:
+                break
+        if self.r(MODULE) != 9 or self.r(0x7E008A) != 0x36:
+            raise RuntimeError(
+                f"Expected Overworld outside D6 (Screen 0x36), got MODULE={self.r(MODULE)} SCR=0x{self.r(0x7E008A):02X}"
+            )
 
         self.w(DEKU_STICKS_COUNT, 2)
         self.w(DEKU_STICK_STATE, 2)  # Held lit
@@ -1854,9 +1937,11 @@ class DekuStickRuntimeTest:
                 ow_entrance_entered = True
                 break
 
-        # Wait for entrance transition into dungeon (Module 07)
-        for _ in range(50):
+        # Wait for entrance transition into dungeon (Module 07), checking drop during LandingWipe ($11=0x0F)
+        for _ in range(80):
             time.sleep(0.1)
+            if self.r(DEKU_STICK_STATE) == 0 and not dropped_on_ow_entrance:
+                dropped_on_ow_entrance = (self.r(DEKU_BURN_TIMER) == 0 and self.r(DEKU_STICKS_COUNT) == 2)
             if self.r(MODULE) == 7 and self.r(SUBMODULE) == 0:
                 break
 
