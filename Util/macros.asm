@@ -76,6 +76,9 @@
 !ENABLE_PART0_STORM                  = 1
 ; Native 2-player PoC: pad-2 Start drops in a second Link (Sprites/Players/player2.asm).
 !ENABLE_NATIVE_2P_POC                = 1
+; Host director / promo freecam: when DBG_CAM_MODE!=0, skip Link-follow camera and
+; force BG scrolls from DBG_CAM_X/Y (Core/director_freecam.asm). Default off.
+!ENABLE_DIRECTOR_FREECAM             = 0
 ; Magic rings save to their own bytes ($7EF3A1-3A6, Core/sram.asm RingSaveBlock)
 ; instead of the legacy addresses that alias SideQuestProgress/2, Pineapples
 ; and RockMeatCount (Items/magic_rings.asm).

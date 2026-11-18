@@ -49,6 +49,13 @@ Keep `Util/macros.asm` and generated `Config/feature_flags.asm` aligned.
 A defaults edit compares the normal build with the explicit RC profile.
 Inactive prototypes remain separate.
 
+## Domain terminology
+Use [the existing domain model](Docs/Technical/terminology_glossary.md#special-overworld-domain-model)
+before architectural changes: special overworld is the shared system; tail maps
+are an implementation range; Lyra Sea/East Kalyxo are regions/map sets. Ground
+identifier kinds, membership and invariants in current sources. Keep repo and AFS
+vocabulary aligned through the existing glossary/index; preserve searchable aliases.
+
 ## Task-specific routes
 Playtest/versioning, Dev builds, Zelda menu parity, Emacs and knowledge references:
 AFS `scratchpad/operations/oracle.md`; load only the needed section.

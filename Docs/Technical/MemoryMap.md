@@ -119,6 +119,11 @@ This section details the layout of the game's volatile memory.
 | `$7E0752` | `DBG_WARP_STATUS`      | Debug warp status (0=idle, 0x5A=armed, 2=in_progress, 3=complete).        |
 | `$7E0753` | `DBG_WARP_ERROR`       | Debug warp error code.                                                   |
 | `$7E0754` | `DBG_WARP_GFX_PENDING` | Debug warp pending GFX reload flag.                                      |
+| `$7E0755` | `DBG_CAM_MODE`         | Director freecam mode (0=off, 1=hold, 2=freepan). Requires `ENABLE_DIRECTOR_FREECAM`. |
+| `$7E0756` | `DBG_CAM_X_LO`         | Director camera X low (with `$7E0757` high).                             |
+| `$7E0757` | `DBG_CAM_X_HI`         | Director camera X high.                                                  |
+| `$7E0758` | `DBG_CAM_Y_LO`         | Director camera Y low (with `$7E0759` high).                             |
+| `$7E0759` | `DBG_CAM_Y_HI`         | Director camera Y high.                                                  |
 | `$7EE00E` | `(no symbol)` | Song of Storms rain flag set by the Ocarina (Items/ocarina.asm:362). WRAM only, not saved. |
 
 ---

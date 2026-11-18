@@ -1,5 +1,9 @@
 # Overworld Systems Analysis
 
+See the [special-overworld domain model](../../Technical/terminology_glossary.md#special-overworld-domain-model)
+for tail maps, Lyra Sea and East Kalyxo: one shared system with distinct map identities
+and regions. This guide's individual source modules are implementation components.
+
 ## 1. Overview
 
 The `Overworld/` directory contains all code and data related to the game's overworld, including rendering, transitions, time-based events, and custom features. The architecture is centered around `ZSCustomOverworld.asm` (ZSOW), a powerful data-driven system that replaces most of the vanilla game's hardcoded overworld logic.

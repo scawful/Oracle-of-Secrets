@@ -137,24 +137,27 @@ Sprite_BeanVendor_Main:
       SEP #$30
       BCC .player_said_no_or_not_enough_rupees
 
-        REP #$20
-        LDA.l $7EF360
-        SEC
-        SBC.w #$64 ; Subtract 100 rupees
-        STA.l $7EF360
-        SEP #$30
-
         LDA.w SprX, X : CLC : ADC.b #$16 : STA $00
         LDA.w SprY, X : STA $02
         LDA.w SprYH, X : STA $03
         LDA.w SprXH, X : STA $01
         LDA.b #$07
         JSL   Sprite_SpawnDynamically
+        BMI .spawn_unavailable
+
+        REP #$20
+        LDA.l $7EF360
+        SEC
+        SBC.w #$64 ; Subtract 100 rupees only after allocation succeeds
+        STA.l $7EF360
+        SEP #$30
+
         JSL   Sprite_SetSpawnedCoords
         LDA.b #$01 : STA.w SprAction, Y
 
         ; TODO: Set a flag that says you've got the magic bean
         %ShowUnconditionalMessage($145)
+    .spawn_unavailable
         %GotoAction(0)
         RTS
     .player_said_no_or_not_enough_rupees

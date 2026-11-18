@@ -1,0 +1,30 @@
+{
+  "id": "prio3_ranch_tour",
+  "label": "A3–A6 horse stack ranch ride tour (LEDGER C4 deferred native)",
+  "area": "0x00",
+  "warp_area": "0x00",
+  "mount": "npc_a",
+  "rom": "/Users/scawful/src/hobby/oracle-of-secrets-worktrees/horse-prio3-rebase-20261115/Roms/oos168x.sfc",
+  "seed": "/Users/scawful/src/hobby/oracle-of-secrets-scratch/horse-front-codex-20261115/current-master-anchor02/private01/native12/ranch-cured-original.srm",
+  "start_xy": [448, 660],
+  "npc_xy": [448, 660],
+  "routes": {
+    "control": [
+      ["left", 30],
+      ["down", 40],
+      ["right", 50],
+      ["up", 40],
+      ["left", 30],
+      ["right", 30]
+    ]
+  },
+  "expect": {
+    "form_mounted": 9,
+    "form_dismounted": 0,
+    "use_jump_ride": false
+  },
+  "watch": {
+    "post_land_freeze": false
+  },
+  "notes": "Branch cursor/horse-prio3-rebase-20261115 @22072f8b (A3+A4+A5+A6). ROM sha1 52b8b4cb…; ranch npc_xy from ranch_control PASS. Native ride tour deferred until heavy_lock free. Never oos-rc-play."
+}

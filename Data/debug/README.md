@@ -1,8 +1,13 @@
-# Data/debug: checkpoints and warps
+# Data/debug: checkpoints, warps, and director promo shots
 
 Test data for the Mesen2-OOS **Cheats & Warps** panel (Oracle tools pane) and
 the client commands `checkpoint`, `warp-entrance`, `warp-area`. Not built into
 the ROM.
+
+Host director (promo + fast staging) lives in mesen2-oos
+`tools/oos_client/mesen2_client_lib/director_camera.py` and the OoS wrapper
+`Scripts/Mesen2/oos_director.sh`. Shot JSON matches yaze Cutscene Camera v1
+(`Data/debug/promo_shots/`). Never point director commands at `oos-rc-play`.
 
 | File | What | Source of truth |
 |------|------|-----------------|
@@ -74,6 +79,74 @@ follower graphics (Impa) are rebuilt.
 - `entrances.asm` area comments disagree with the ROM door table for 15
   entrances (for example Link's House: comment `OW 32`, ROM area `$33`). Each
   such entry has a `note`; the ROM value is used.
+
+## Host director + promo capture
+
+Yaze exports cutscene shots (`version: 1`, `shots[]` with `camera` / `link` /
+`actors`). The host director flies Link, writes BG1 scroll at `$E2`/`$E8`, pans
+between shots, and writes `mesen2-oos.promo-capture.v1` bundles (PNG sequence,
+optional ffmpeg clip/crops).
+
+```bash
+# Offline first (no emulator)
+python3 Scripts/Mesen2/oos_director.sh list
+python3 Scripts/Mesen2/oos_director.sh validate
+
+# Stage then capture (private socket only)
+C="python3 Scripts/Mesen2/oos_director.sh --socket /tmp/mesen2-<instance>.sock"
+# Rebuild labeled OW shots from warps.json + story checkpoints
+python3 Scripts/Promo/build_promo_shots_from_warps.py
+
+# Director StageResolver: sanitize inventory → checkpoint loadout → warp-area →
+# live landing → walkable snap. Shot.checkpoint (e.g. village-impa) drives story gear.
+$C apply --shots Data/debug/promo_shots/ow_warp_shots.json --shot wayward_village --no-rom
+$C capture --shots Data/debug/promo_shots/ow_warp_shots.json \
+  --out Roms/telemetry/promo/run01 --clip --gif --preset square --no-rom --hud-off
+$C smoke --no-rom
+
+# Batch (private socket only)
+python3 Scripts/Promo/capture_ow_warp_shots.py --socket /tmp/mesen2-<instance>.sock \
+  --out Roms/telemetry/promo/ow-warp-batch --clip
+# Labels: warps.json. Gear: checkpoints.json via shot.checkpoint (sanitize clears
+# leftover F1 inventory first so early beats stay swordless / 3 hearts / etc.).
+# Lyra Sea=$A0-$BF: Data/debug/promo_shots/cinema/lyra_sea_coast.json + private savestate.
+
+# Epona site clips (private horse ROM + site JSON; never oos-rc-play)
+python3 Scripts/Promo/run_horse_site_clip.py --site ranch_control
+python3 Scripts/Promo/run_horse_site_clip.py --site d2_tail_pond --execute \
+  --output ~/src/hobby/oracle-of-secrets-scratch/horse-ride-clips-20261115/d2_runXX --icloud
+# Sites: Scripts/Promo/horse_ride_sites/*.json — require horse NMI hook (0x22 @ 0xB5C).
+
+# Social draft (never posts; needs scawful approval + x_post.py --send)
+python3 Scripts/Promo/promo_social_draft.py Roms/telemetry/promo/run01 \
+  --caption 'Exact caption text here'
+```
+
+Camera hold (default): rewrites BG1+BG2 `$E0/$E2/$E6/$E8` every settle/pan
+frame, keeps Link inside the viewport, and pauses for screenshots. Use
+`--no-hold` only for debugging. Special areas `$80+` need an `extent` object
+(per shot or top-level `extents` map).
+
+In-ROM freecam (`ENABLE_DIRECTOR_FREECAM`, default off): when assembled, host
+hold also arms `DBG_CAM_MODE`/`DBG_CAM_X/Y` so the ROM skips Link-follow camera.
+Mode 2 = Select+D-pad freepan. Socket AVI needs a rebuilt Mesen2-OOS with
+`AVI_RECORD`/`AVI_STOP`.
+
+Direct mesen2 client:
+
+```bash
+python3 Scripts/Mesen2/mesen2_client.py --socket /tmp/mesen2-<instance>.sock \
+  director-capture Data/debug/promo_shots/starter_shots.json \
+  --out Roms/telemetry/promo/run01 --clip --preset wide
+```
+
+Limits: overworld play modules only; follower `$02` refused; special areas
+`$80+` have no vanilla camera layout (author shots on `$00-$7F` or supply a
+future extent override). Actors in shot JSON are skipped in v1.
+
+Trusted session seeds (`trusted_state_seeds.json`) stay `canon` + `human`.
+Capture a draft with `Scripts/Debug/capture_trusted_seed.py`, promote via
+`mesen2_client.py lib-verify`, then `Scripts/set_trusted_state_seed.py`.
 
 ## Regenerate `warps.json`
 

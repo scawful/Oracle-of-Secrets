@@ -818,7 +818,7 @@ SpawnBossPoof:
   STA.w $012E
 
   LDA.b #$CE
-  JSL Sprite_SpawnDynamically
+  JSL Sprite_SpawnDynamically : BMI .return
 
   LDA.b $00 : CLC : ADC.b #$10 : STA.w SprX,Y
   LDA.b $01 : ADC.b #$00 : STA.w SprXH,Y
@@ -832,6 +832,7 @@ SpawnBossPoof:
   STA.w SprNbrOAM,Y
   STA.w SprBulletproof,Y
 
+  .return
   RTS
 }
 

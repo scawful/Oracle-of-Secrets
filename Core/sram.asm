@@ -334,7 +334,7 @@ Boots                   = $7EF355   ; 1=Pegasus Shoes (also needs Ability bit)
 Flippers                = $7EF356   ; 1=Have
 MoonPearl               = $7EF357   ; 1=Have
 WolfMask                = $7EF358   ; 1=Have
-Sword                   = $7EF359   ; 1=Fighter, 2=Master, 3=Tempered, 4=Golden
+Sword                   = $7EF359   ; 1=Fighter, 2=Meadow Blade, 3=Greatblade, 4=Master Sword
 Shield                  = $7EF35A   ; 1=Fighter, 2=Fire, 3=Mirror
 Armor                   = $7EF35B   ; 0=Green, 1=Blue, 2=Red
 

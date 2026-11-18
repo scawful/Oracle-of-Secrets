@@ -1,0 +1,464 @@
+{
+  "version": 1,
+  "comment": "Generated from warps.json area names/landings + checkpoints.json story gear. Do not rename areas to vanilla ALTTP places. Lyra Sea ($A0-$BF) is special-overworld \u2014 not in this exit-table set. Director StageResolver applies checkpoint (warp=False) then warp-area; live landing + walkable snap replace doorway exit pixels.",
+  "source": "Data/debug/warps.json",
+  "shots": [
+    {
+      "area": "0x05",
+      "label": "Snow Mountain",
+      "landing": "outside Snow Mountain Cave to the East Peak",
+      "checkpoint": "d5-entrance",
+      "extent": {
+        "origin_x": 2768,
+        "origin_y": 0,
+        "width": 384,
+        "height": 336
+      },
+      "actors": [],
+      "name": "snow_mountain_east",
+      "note": "Snow Mountain \u2014 outside Snow Mountain Cave to the East Peak (warps.json 0x05; checkpoint=d5-entrance)",
+      "camera": {
+        "x": 2832,
+        "y": 36
+      },
+      "link": {
+        "x": 2952,
+        "y": 136,
+        "facing": 2
+      }
+    },
+    {
+      "area": "0x0B",
+      "label": "Kalyxo Castle",
+      "landing": "outside D3 Kalyxo Castle (main)",
+      "checkpoint": "d3-entrance",
+      "extent": {
+        "origin_x": 1792,
+        "origin_y": 672,
+        "width": 384,
+        "height": 368
+      },
+      "actors": [],
+      "name": "kalyxo_castle",
+      "note": "Kalyxo Castle \u2014 outside D3 Kalyxo Castle (main) (warps.json 0x0B; checkpoint=d3-entrance)",
+      "camera": {
+        "x": 1856,
+        "y": 740
+      },
+      "link": {
+        "x": 1976,
+        "y": 840,
+        "facing": 2
+      }
+    },
+    {
+      "area": "0x0B",
+      "label": "Kalyxo Castle",
+      "landing": "outside D3 Kalyxo Castle (main)",
+      "checkpoint": "d3-entrance",
+      "extent": {
+        "origin_x": 1792,
+        "origin_y": 672,
+        "width": 512,
+        "height": 368
+      },
+      "actors": [],
+      "name": "kalyxo_castle_east_pan",
+      "note": "Kalyxo Castle east pan twin (checkpoint=d3-entrance)",
+      "camera": {
+        "x": 1952,
+        "y": 740
+      },
+      "link": {
+        "x": 2056,
+        "y": 840,
+        "facing": 3
+      }
+    },
+    {
+      "area": "0x0E",
+      "label": "Hall of Secrets",
+      "landing": "outside Hall of Secrets",
+      "checkpoint": "kalyxo-return",
+      "extent": {
+        "origin_x": 3136,
+        "origin_y": 448,
+        "width": 384,
+        "height": 368
+      },
+      "actors": [],
+      "name": "hall_of_secrets",
+      "note": "Hall of Secrets \u2014 outside Hall of Secrets (warps.json 0x0E; checkpoint=kalyxo-return)",
+      "camera": {
+        "x": 3200,
+        "y": 516
+      },
+      "link": {
+        "x": 3320,
+        "y": 616,
+        "facing": 2
+      }
+    },
+    {
+      "area": "0x10",
+      "label": "Toadstool Woods",
+      "landing": "outside D1 Mushroom Grotto",
+      "checkpoint": "d1-entrance",
+      "extent": {
+        "origin_x": 0,
+        "origin_y": 864,
+        "width": 320,
+        "height": 368
+      },
+      "actors": [],
+      "name": "mushroom_grotto_ow",
+      "note": "Toadstool Woods \u2014 outside D1 Mushroom Grotto (warps.json 0x10; checkpoint=d1-entrance)",
+      "camera": {
+        "x": 0,
+        "y": 940
+      },
+      "link": {
+        "x": 112,
+        "y": 1040,
+        "facing": 2
+      }
+    },
+    {
+      "area": "0x18",
+      "label": "Toadstool Woods",
+      "landing": "outside Toadstool Woods Log Cave",
+      "checkpoint": "d1-entrance",
+      "extent": {
+        "origin_x": 0,
+        "origin_y": 1472,
+        "width": 352,
+        "height": 368
+      },
+      "actors": [],
+      "name": "toadstool_woods_log",
+      "note": "Toadstool Woods \u2014 outside Toadstool Woods Log Cave (warps.json 0x18; checkpoint=d1-entrance)",
+      "camera": {
+        "x": 24,
+        "y": 1540
+      },
+      "link": {
+        "x": 144,
+        "y": 1640,
+        "facing": 2
+      }
+    },
+    {
+      "area": "0x1E",
+      "label": "Sunken City",
+      "landing": "outside D4 Zora Temple",
+      "checkpoint": "d4-entrance",
+      "extent": {
+        "origin_x": 3696,
+        "origin_y": 1392,
+        "width": 384,
+        "height": 368
+      },
+      "actors": [],
+      "name": "sunken_city_zora",
+      "note": "Sunken City \u2014 outside D4 Zora Temple (warps.json 0x1E; checkpoint=d4-entrance)",
+      "camera": {
+        "x": 3760,
+        "y": 1460
+      },
+      "link": {
+        "x": 3880,
+        "y": 1560,
+        "facing": 2
+      }
+    },
+    {
+      "area": "0x23",
+      "label": "Wayward Village",
+      "landing": "outside Beach Cave Intro",
+      "checkpoint": "village-impa",
+      "extent": {
+        "origin_x": 2176,
+        "origin_y": 2640,
+        "width": 384,
+        "height": 368
+      },
+      "actors": [],
+      "name": "wayward_village",
+      "note": "Wayward Village \u2014 outside Beach Cave Intro (warps.json 0x23; checkpoint=village-impa)",
+      "camera": {
+        "x": 2240,
+        "y": 2708
+      },
+      "link": {
+        "x": 2360,
+        "y": 2808,
+        "facing": 2
+      }
+    },
+    {
+      "area": "0x23",
+      "label": "Wayward Village",
+      "landing": "outside Beach Cave Intro",
+      "checkpoint": "village-impa",
+      "extent": {
+        "origin_x": 2176,
+        "origin_y": 2640,
+        "width": 512,
+        "height": 368
+      },
+      "actors": [],
+      "name": "wayward_village_east_pan",
+      "note": "Wayward Village east pan twin (checkpoint=village-impa)",
+      "camera": {
+        "x": 2336,
+        "y": 2708
+      },
+      "link": {
+        "x": 2440,
+        "y": 2808,
+        "facing": 3
+      }
+    },
+    {
+      "area": "0x25",
+      "label": "Village Road",
+      "landing": "outside Kalyxo Field Cave River",
+      "checkpoint": "village-impa",
+      "extent": {
+        "origin_x": 2736,
+        "origin_y": 2192,
+        "width": 384,
+        "height": 368
+      },
+      "actors": [],
+      "name": "village_road",
+      "note": "Village Road \u2014 outside Kalyxo Field Cave River (warps.json 0x25; checkpoint=village-impa)",
+      "camera": {
+        "x": 2800,
+        "y": 2260
+      },
+      "link": {
+        "x": 2920,
+        "y": 2360,
+        "facing": 2
+      }
+    },
+    {
+      "area": "0x2E",
+      "label": "City Road",
+      "landing": "outside Tail Palace Cave Route End",
+      "checkpoint": "d2-entrance",
+      "extent": {
+        "origin_x": 2976,
+        "origin_y": 2416,
+        "width": 384,
+        "height": 368
+      },
+      "actors": [],
+      "name": "city_road",
+      "note": "City Road \u2014 outside Tail Palace Cave Route End (warps.json 0x2E; checkpoint=d2-entrance)",
+      "camera": {
+        "x": 3040,
+        "y": 2484
+      },
+      "link": {
+        "x": 3160,
+        "y": 2584,
+        "facing": 2
+      }
+    },
+    {
+      "area": "0x2F",
+      "label": "Tail Palace",
+      "landing": "outside D2 Tail Palace",
+      "checkpoint": "d2-entrance",
+      "extent": {
+        "origin_x": 3712,
+        "origin_y": 2464,
+        "width": 400,
+        "height": 368
+      },
+      "actors": [],
+      "name": "tail_palace",
+      "note": "Tail Palace \u2014 outside D2 Tail Palace (warps.json 0x2F; checkpoint=d2-entrance)",
+      "camera": {
+        "x": 3784,
+        "y": 2532
+      },
+      "link": {
+        "x": 3904,
+        "y": 2632,
+        "facing": 2
+      }
+    },
+    {
+      "area": "0x32",
+      "label": "Secret Beach",
+      "landing": "outside Beach Cave Route",
+      "checkpoint": "loom-beach",
+      "extent": {
+        "origin_x": 1024,
+        "origin_y": 3040,
+        "width": 384,
+        "height": 368
+      },
+      "actors": [],
+      "name": "secret_beach",
+      "note": "Secret Beach \u2014 outside Beach Cave Route (warps.json 0x32; checkpoint=loom-beach)",
+      "camera": {
+        "x": 1088,
+        "y": 3108
+      },
+      "link": {
+        "x": 1208,
+        "y": 3208,
+        "facing": 2
+      }
+    },
+    {
+      "area": "0x33",
+      "label": "Loom Beach",
+      "landing": "outside Link's House",
+      "checkpoint": "loom-beach",
+      "extent": {
+        "origin_x": 1792,
+        "origin_y": 3280,
+        "width": 384,
+        "height": 368
+      },
+      "actors": [],
+      "name": "loom_beach",
+      "note": "Loom Beach \u2014 outside Link's House (warps.json 0x33; checkpoint=loom-beach)",
+      "camera": {
+        "x": 1856,
+        "y": 3348
+      },
+      "link": {
+        "x": 1976,
+        "y": 3448,
+        "facing": 2
+      }
+    },
+    {
+      "area": "0x33",
+      "label": "Loom Beach",
+      "landing": "outside Link's House",
+      "checkpoint": "loom-beach",
+      "extent": {
+        "origin_x": 1792,
+        "origin_y": 3280,
+        "width": 512,
+        "height": 368
+      },
+      "actors": [],
+      "name": "loom_beach_east_pan",
+      "note": "Loom Beach east pan twin (checkpoint=loom-beach)",
+      "camera": {
+        "x": 1952,
+        "y": 3348
+      },
+      "link": {
+        "x": 2056,
+        "y": 3448,
+        "facing": 3
+      }
+    },
+    {
+      "area": "0x36",
+      "label": "Garo Desert",
+      "landing": "outside D6 Goron Mines",
+      "checkpoint": "d6-entrance",
+      "extent": {
+        "origin_x": 3136,
+        "origin_y": 3360,
+        "width": 400,
+        "height": 368
+      },
+      "actors": [],
+      "name": "garo_desert",
+      "note": "Garo Desert \u2014 outside D6 Goron Mines (warps.json 0x36; checkpoint=d6-entrance)",
+      "camera": {
+        "x": 3208,
+        "y": 3428
+      },
+      "link": {
+        "x": 3328,
+        "y": 3528,
+        "facing": 2
+      }
+    },
+    {
+      "area": "0x38",
+      "label": "Dragon Ship",
+      "landing": "outside D7 Dragon Ship",
+      "checkpoint": "d7-entrance",
+      "extent": {
+        "origin_x": 208,
+        "origin_y": 3664,
+        "width": 384,
+        "height": 368
+      },
+      "actors": [],
+      "name": "dragon_ship",
+      "note": "Dragon Ship \u2014 outside D7 Dragon Ship (warps.json 0x38; checkpoint=d7-entrance)",
+      "camera": {
+        "x": 272,
+        "y": 3732
+      },
+      "link": {
+        "x": 392,
+        "y": 3832,
+        "facing": 2
+      }
+    },
+    {
+      "area": "0x40",
+      "label": "Temporal Gate",
+      "landing": "at the Abyss arrival point (Kydrog's banish exit)",
+      "checkpoint": "abyss-arrival",
+      "extent": {
+        "origin_x": 560,
+        "origin_y": 368,
+        "width": 384,
+        "height": 368
+      },
+      "actors": [],
+      "name": "temporal_gate_abyss",
+      "note": "Temporal Gate \u2014 at the Abyss arrival point (Kydrog's banish exit) (warps.json 0x40; checkpoint=abyss-arrival)",
+      "camera": {
+        "x": 624,
+        "y": 436
+      },
+      "link": {
+        "x": 744,
+        "y": 536,
+        "facing": 2
+      }
+    },
+    {
+      "area": "0x50",
+      "label": "Shrine Courage",
+      "landing": "outside Shrine of Courage",
+      "checkpoint": "abyss-owl",
+      "extent": {
+        "origin_x": 48,
+        "origin_y": 896,
+        "width": 384,
+        "height": 368
+      },
+      "actors": [],
+      "name": "shrine_courage",
+      "note": "Shrine Courage \u2014 outside Shrine of Courage (warps.json 0x50; checkpoint=abyss-owl)",
+      "camera": {
+        "x": 112,
+        "y": 964
+      },
+      "link": {
+        "x": 232,
+        "y": 1064,
+        "facing": 2
+      }
+    }
+  ],
+  "missing_areas": []
+}

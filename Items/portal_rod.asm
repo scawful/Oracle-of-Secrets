@@ -15,6 +15,11 @@ LinkItem_PortalRod:
       JSR LinkItem_EvaluateMagicCost : BCC .insufficient_mp
         LDA.b #$30 : JSR $802F    ; Sfx3
         JSL   LinkItem_FirePortal
+        BPL .y_button_held
+          ; Failed allocation: refund the exact Portal Rod cost.
+          LDX.b #$00
+          JSL Refund_Magic
+          BRA .insufficient_mp
         .y_button_held
 
         JSR $AE65 ; HaltLinkWhenUsingItems

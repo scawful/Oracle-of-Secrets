@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "comment": "Lyra Sea cinema shot. Special-overworld ($A0+): requires private savestate path in each shot.savestate. Do not fake with LW $1E (Sunken City).",
+  "shots": [
+    {
+      "name": "lyra_sea_coast",
+      "area": "0xA0",
+      "label": "Lyra Sea",
+      "checkpoint": "d4-entrance",
+      "note": "FIRST_MAP Lyra page $A0. Set savestate to a private .mss captured on Lyra coast before capture.",
+      "savestate": "",
+      "extent": {
+        "origin_x": 0,
+        "origin_y": 0,
+        "width": 1024,
+        "height": 1024
+      },
+      "camera": {"x": 120, "y": 120},
+      "link": {"x": 240, "y": 220, "facing": 2},
+      "actors": []
+    }
+  ]
+}

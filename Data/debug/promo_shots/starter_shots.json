@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "comment": "Smoke subset with labels+checkpoints from ow_warp_shots.json",
+  "source": "Data/debug/promo_shots/ow_warp_shots.json",
+  "shots": [
+    {
+      "area": "0x23",
+      "label": "Wayward Village",
+      "landing": "outside Beach Cave Intro",
+      "checkpoint": "village-impa",
+      "extent": {
+        "origin_x": 2176,
+        "origin_y": 2640,
+        "width": 384,
+        "height": 368
+      },
+      "actors": [],
+      "name": "wayward_village",
+      "note": "Wayward Village \u2014 outside Beach Cave Intro (warps.json 0x23; checkpoint=village-impa)",
+      "camera": {
+        "x": 2240,
+        "y": 2708
+      },
+      "link": {
+        "x": 2360,
+        "y": 2808,
+        "facing": 2
+      }
+    },
+    {
+      "area": "0x23",
+      "label": "Wayward Village",
+      "landing": "outside Beach Cave Intro",
+      "checkpoint": "village-impa",
+      "extent": {
+        "origin_x": 2176,
+        "origin_y": 2640,
+        "width": 512,
+        "height": 368
+      },
+      "actors": [],
+      "name": "wayward_village_east_pan",
+      "note": "Wayward Village east pan twin (checkpoint=village-impa)",
+      "camera": {
+        "x": 2336,
+        "y": 2708
+      },
+      "link": {
+        "x": 2440,
+        "y": 2808,
+        "facing": 3
+      }
+    },
+    {
+      "area": "0x33",
+      "label": "Loom Beach",
+      "landing": "outside Link's House",
+      "checkpoint": "loom-beach",
+      "extent": {
+        "origin_x": 1792,
+        "origin_y": 3280,
+        "width": 384,
+        "height": 368
+      },
+      "actors": [],
+      "name": "loom_beach",
+      "note": "Loom Beach \u2014 outside Link's House (warps.json 0x33; checkpoint=loom-beach)",
+      "camera": {
+        "x": 1856,
+        "y": 3348
+      },
+      "link": {
+        "x": 1976,
+        "y": 3448,
+        "facing": 2
+      }
+    }
+  ]
+}

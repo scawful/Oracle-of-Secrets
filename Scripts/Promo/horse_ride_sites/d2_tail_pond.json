@@ -1,0 +1,29 @@
+{
+  "id": "d2_tail_pond",
+  "label": "D2 Tail Pond $2D 2-tile water x10-11",
+  "area": "0x2D",
+  "mount": "diag",
+  "rom": "/Users/scawful/src/hobby/oracle-of-secrets-scratch/epona-longjump01/roms/lj_on.sfc",
+  "map_rom": "/Users/scawful/src/hobby/oracle-of-secrets-scratch/design-proposals/d2-epona-alt01/build01/d2jump.sfc",
+  "engine_note": "QUEUE138 D2 PASS used lj_on.sfc via run_lj_q138 (d2_q138_03). Prefer that harness for exact BFS/grate path; this site JSON is the generic clip driver entry.",
+  "seed": "/Users/scawful/src/hobby/oracle-of-secrets-scratch/horse-front-codex-20261115/current-master-anchor02/private01/native12/ranch-cured-original.srm",
+  "start_xy": [2784, 2768],
+  "routes": {
+    "mounted_ew": [["left", 100]],
+    "mounted_we": [["right", 100]],
+    "foot": [["left", 80]]
+  },
+  "expect": {
+    "gap_tile_x_lo": 10,
+    "gap_tile_x_hi": 11,
+    "lane_row": 13,
+    "foot_must_fail_cross": true,
+    "mounted_cross_x_delta_min": 28
+  },
+  "watch": {
+    "post_land_freeze": true,
+    "freeze_frames": 30,
+    "freeze_button": "left"
+  },
+  "notes": "Horse-capable d2 native01. Map proposal d2jump.sfc is layout-only."
+}

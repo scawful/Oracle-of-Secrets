@@ -309,7 +309,7 @@ Axe:
     RTS
   +
 
-  CMP #$03 : BNE +
+  CMP #$03 : BNE .other_state
     LDA.w SprSubtype, X : CMP #$11 : BNE .notAxe
       JSR PlayAxe
       BRA .done
@@ -328,11 +328,18 @@ Axe:
       JSL Sprite_CheckDamageToPlayer : BCC +
         JMP Shatter
       +
-      JSL Sprite_CheckDamageFromPlayer : BCC +
+      JSL Sprite_CheckDamageFromPlayer : BCC .check_tile_collision
         JMP Shatter
-        JSL Sprite_CheckTileCollision : BEQ +
-          JMP Shatter
+      .check_tile_collision
+      JSL Sprite_CheckTileCollision : BEQ +
+        JMP Shatter
   +
+  RTS
+
+  .other_state
+  JSL Sprite_CheckDamageFromPlayer : BCC .return
+    JMP Shatter
+  .return
   RTS
 
   .waitingdelay

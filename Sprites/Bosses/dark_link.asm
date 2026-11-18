@@ -513,7 +513,7 @@ Sprite_DarkLink_Main:
 
 
       LDA #$C1 ; SPRID
-      JSL Sprite_SpawnDynamically
+      JSL Sprite_SpawnDynamically : BMI .return
       JSL Sprite_SetSpawnedCoords
       PHX
       LDA #$01 : STA.w SprSubtype, Y
@@ -524,6 +524,7 @@ Sprite_DarkLink_Main:
       LDA.w SprY, X : CLC : ADC.w DirOffsetY, Y : STA.w SprY, X
 
       PLX
+    .return
       RTS
     }
 

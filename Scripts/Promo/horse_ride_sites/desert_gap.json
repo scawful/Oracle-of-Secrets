@@ -1,0 +1,28 @@
+{
+  "id": "desert_gap",
+  "label": "Goron desert $36 4-tile gap x30-33",
+  "area": "0x36",
+  "mount": "diag",
+  "rom": "/Users/scawful/src/hobby/oracle-of-secrets-scratch/epona-longjump01/roms/lj_fast2.sfc",
+  "map_rom": "/Users/scawful/src/hobby/oracle-of-secrets-scratch/design-proposals/goron-desert-d6shortcut03/pass8/variant8.sfc",
+  "engine_note": "SITE_INVENTORY: jump ASM for n=4 desert NOT_BUILT — expect FAIL until Claude ships n=4 table+map clone. lj_fast2 is latest horse+LJ engine.",
+  "seed": "/Users/scawful/src/hobby/oracle-of-secrets-scratch/horse-front-codex-20261115/current-master-anchor02/private01/native12/ranch-cured-original.srm",
+  "start_xy": [3520, 3568],
+  "routes": {
+    "mounted_ew": [["right", 160]],
+    "mounted_we": [["left", 160]],
+    "foot": [["right", 100]]
+  },
+  "expect": {
+    "gap_tile_x_lo": 30,
+    "gap_tile_x_hi": 33,
+    "foot_must_fail_cross": true,
+    "mounted_cross_x_delta_min": 48
+  },
+  "watch": {
+    "post_land_freeze": true,
+    "freeze_frames": 30,
+    "freeze_button": "right"
+  },
+  "notes": "Horse+longjump capable lj_on.sfc. Layout reference variant8.sfc (map-only, no horse NMI)."
+}

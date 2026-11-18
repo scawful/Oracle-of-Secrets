@@ -1,6 +1,6 @@
 # Quest & Event Flow
 
-**Narrative alignment:** 2026-10-20. The current design is eight main dungeons,
+**Narrative alignment:** 2026-10-29 (author reconciliation). The current design is eight main dungeons,
 three pendant shrines, a shorter Fortress, and the volcano finale. This guide
 summarizes [the beat sheet](../../Planning/story_canon_beat_sheet.md) and
 [the decision log](../../Planning/Status/decisions.org); it does not establish
@@ -54,8 +54,10 @@ use as the guardian's sword left a connection to the prison. The timing
 must remain clear in the dreams: Farore's power was not already in the
 blade when she first appointed the Captain.
 
-Farore's callouts begin here. Kydrog does not discover where she concealed
-her power until her intervention during D7.
+Farore's callouts begin here. Neither the player nor Kydrog learns where she concealed her power until
+her intervention during D7 (reaffirmed 2026-10-29). The existing explicit
+D3 blade-vessel wording needs separate dialogue review; this guide does not
+claim that a replacement has been published.
 
 ### Shrine of Wisdom -> D4 Zora Temple
 
@@ -84,7 +86,7 @@ and post-D4 Song of Storms/whirlpool route remain part of this middle game.
    it creates no required return trip or additional healing quest.
 2. **Shrine of Power sits east of the desert**, accessible with the items available at the D6 stage. It is built around **Power Glove**; **Hammer is not required for it or D6** (scawful, 2026-10-21).
    The guest shrine has separate internal Glove and final Pendant of Power chests in the current base. Dream2 retains Farore's appeal to Hyrule and the Maple-hut return; there are no Eon Gorons inside the shrine.
-3. **Current direction:** keep Power Glove inside the shrine; cut the early Ember Seed/forge grant quest and supersede the required D3 Glove-garden proposal. Hide Rock Meat on nearby Lyra maps, accessible with the shrine's basic Glove and D6-stage items.
+3. **Current direction, reaffirmed 2026-10-29:** keep Power Glove inside the shrine; supersede the October 23 Option A mid-shrine Mitt grant. Keep the early Ember Seed/forge grant quest cut and the required D3 Glove-garden proposal superseded. The new ruling does not select a Mitt location or the separate Garo encounter. Hide Rock Meat on nearby Lyra maps, accessible with the shrine's basic Glove and D6-stage items.
 4. Return five Meat to the desert Goron for the existing Mines opening. Eon Goron/Lupo Mountain is optional, not a required Abyss detour. Exact hiding places and the return path remain a map-design task. No Mitt or Hammer is required for this sequence.
 
 **Geography planning:** Fortress `$4B` / Lupo `$5E` remains a recorded placement direction, not applied terrain. The Lupo trip is optional under the current direction. See [Power/Glove reconciliation](/Users/scawful/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_completion_2026-10-20/POWER_GLOVE_ROUTE.md). Use the selected local Lyra supply role; choose exact hiding places and return before binding new map records.
@@ -100,6 +102,11 @@ The rescue starts a playable partnership. Express it through selected NPC
 placements and useful encounters using Farore's available sprite. Exact
 stops and interactions remain design work; no continuous follower is required.
 Her power remains in the blade until the pedestal scene.
+
+**Source status (2026-10-29):** `Dungeons/d7_farore_rescue.asm` and
+`KydrogBoss_D7CrystalCommit` implement the Farore crystal ceremony and rescue
+state commit; the checked flag is enabled. Message `$138` remains temporary.
+The authored reveal, partnership and full route are not proved by source presence.
 
 ### Late Courage -> Dream 3 -> Master Sword
 
@@ -118,7 +125,9 @@ Somaria is required, and the previously learned Song of Soaring retains its
 travel use. The lower tower reuses Hylian garrison structures; the upper
 structures expose their Watcher origins. Farore participates through selected
 encounters. Exact puzzles, encounters, dungeon item, and boss remain open.
-Sky awards the **eighth essence**.
+Sky awards the **eighth essence**. `Dungeons/sky_d8_award.asm` provides
+source award/ceremony gateways for room `$0096`; authored route and gameplay
+acceptance remain separate.
 
 ### Maku Tree -> Maku Seed -> Fortress of Secrets
 
@@ -128,13 +137,24 @@ old Master Sword-only entrance barrier. The Fortress is a shorter, separate
 late-game location, not D8. Its Dark Link encounter belongs to Kydrog's arc.
 The route from the Fortress to the volcano prison still needs design.
 
+The Seed receipt and once-only grant exist in `Sprites/NPCs/maku_tree.asm`
+and expanded source message `$1BC`; `Overworld/overlays.asm` checks the Seed
+at the existing Fortress entrance on `$5E`. Source presence does not establish
+the planned `$4B` relocation, full route or save/reopen acceptance. The nine
+former Fortress island rooms remain unclaimed under the October 28 ruling.
+
 ### Volcano finale and ending
 
 The established elements are the **Kydreeok encounter**, the player's
-**Song of Healing** finisher, and the **Ganon battle**. The detailed restored
-Kydrog choice, Farore's binding action, Ganon's origin and breakout mechanism,
-and final Seed/renewal staging need reconciliation. Neither rescuing Farore
+**Song of Healing** finisher, and the **Ganon battle**. Kydrog's restored human appearance is established; biological life versus
+a spirit's form stays deliberately ambiguous (2026-10-29). His voluntary
+choice, Farore's binding action, and Ganon's origin/breakout mechanism remain
+open. Seed planting and the credits sapling are approved ending direction
+(2026-10-18); their exact staging and implementation remain open. Neither rescuing Farore
 nor playing the song should be assigned an unapproved prison-opening effect.
+On 2026-10-29, scawful left the cause open and suggested Ganon might simply
+appear in the final boss room. Treat this as tentative staging, not a ruling
+that the seal opens or a new explanation of his confinement.
 No additional multi-NPC combat system is implied by this route.
 
 ## Historical implementation notes

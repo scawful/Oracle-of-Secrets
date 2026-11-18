@@ -15,6 +15,43 @@
 
 ---
 
+## Special-overworld domain model
+
+Updated 2026-10-30 from scawful's terminology correction and the source anchors below.
+**Special overworld** names the shared technical system. **Lyra Sea** and
+**East Kalyxo** name regions/map sets within it; **tail maps** describes an
+implementation range. These names do not imply three independent systems, and
+are not interchangeable at every level of detail.
+
+| Concept | Meaning and source |
+|---|---|
+| Technical container | Special-overworld loading and transitions; `Overworld/special_areas.asm`, `LoadSpecialOverworld` and `Overworld_CheckForSpecialOverworldTrigger`. |
+| Physical map identity | In the current Lyra implementation, `Scripts/Build/lyra_project_terrain.py` defines `FIRST_MAP = 0xA0`, `MAP_COUNT = 32`: pages `0xA0–0xBF`. `Overworld/lyra_native_loaders.asm` asserts first `$A0` and exclusive end `$C0`. These are map IDs, not ROM/CPU storage addresses. |
+| Gameplay area | A parent area can contain multiple physical pages. `Overworld/lyra_resident_atlas.asm` describes the 32-page directory and its area index; page count does not establish gameplay-area count. |
+| In-world region | Lyra Sea and East Kalyxo distinguish geography/content within the shared system. Verify membership against the selected authored map/project data; a region name alone does not allocate IDs or select a loader. |
+| Legacy aliases | Search `tail maps`, `Lyra`, `Lyra Sea`, `East Kalyxo` and `expanded maps` when tracing older docs/handoffs. Preserve existing symbols, filenames and historical evidence. |
+
+The implementation anchors above were checked at Oracle commit `4f837962`
+(`codex/lyra-stage1-source-20261030`); they describe source contracts, not enabled
+runtime behavior or completed all-map Save/Build/Test. Older region ranges below
+are historical labels, not current allocation authority. Special-entry/exit IDs
+such as `0x182`, RAM locations such as `$A0`, and physical map IDs such as `0xA0`
+are different kinds of identifier even when their digits overlap.
+
+Before architectural changes, establish the container, exact identifier kind,
+region and invariant from current source/authored data. Keep that vocabulary in
+repo docs and the existing AFS reference/index; link here rather than creating
+another glossary. Record unresolved membership explicitly instead of inventing
+separate systems or inferring donor inheritance.
+
+Source navigation: [special-area loader](../../Overworld/special_areas.asm),
+[overworld guide](../World/Overworld/Overworld.md),
+[location registry](../World/LocationRegistry.md).
+Branch-specific implementation anchors must be read in the selected Lyra checkout;
+the main checkout may not contain those files yet.
+
+---
+
 ## Characters & NPCs
 
 ### Major Characters
@@ -71,7 +108,7 @@
 | **Mount Snowpeak** | LW northern | TBD | Goron territory |
 | **Zora Sanctuary** | LW eastern | TBD | Sea Zora settlement |
 | **Korok Cove** | SW 0x182 | Exit ID `0x182` | Waterfall area behind graveyard; leads to East Kalyxo via expanded maps |
-| **East Kalyxo** | LW 0x90-9B | `AreaIndex = $90-$9B` | River Zora territory (new) |
+| **East Kalyxo** | Historical label: 0x90–0x9B; current membership must be verified | Special-overworld region; see domain model above | Region name, not a separate engine or current allocation |
 | **Sky Islands** | LW 0x84-8F | `AreaIndex = $84-$8F` | Post-D7 weather puzzles |
 | **Kalyxo Castle** | LW D3 area | TBD | Hylian occupation HQ |
 | **Glacia Estate** | LW D5 area | TBD | Twinrova's lair |
@@ -117,8 +154,9 @@
 
 | Narrative Term | Item ID | Code Reference | Notes |
 |----------------|---------|----------------|-------|
-| **Meadow Blade** | Sword Lv2? | `$7EF359` | Fallen knight's sword, D3 |
-| **Master Sword** | Sword Lv3+ | `$7EF359 >= 3` | Forged from pendants |
+| **Meadow Blade** | Sword Lv2 | `$7EF359 = 2` | Fallen knight's sword, D3; green palette |
+| **Greatblade** | Sword Lv3 | `$7EF359 = 3` | Heavy sword, reforged by the smiths; second sword slot |
+| **Master Sword** | Sword Lv4 | `$7EF359 = 4` | Pulled from the pedestal (ITEMGET 03, `Overworld/overworld.asm`); blue palette |
 | **Moon Pearl** | Standard | `$7EF357` | Maintains form in Abyss |
 | **Magic Mirror** | Standard | `$7EF353` | World travel |
 | **Zora Mask** | Item 0x0F | `$7EF302` | Dive underwater |

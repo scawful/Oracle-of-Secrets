@@ -213,6 +213,12 @@ org $05F274 : LDA.l $7EF378 ; Unused SRAM
 
 org $08C2E3 : dw $006F ; BUTTER SWORD DIALOGUE
 
+; PaletteData_sword ($1BD630, 3 words per level: blade mid, blade light, hilt).
+; Overrides the base ROM rows, so later palette edits to these rows go here.
+org $1BD636 : dw $32EA, $67F8, $19F6 ; Lv2 Meadow Blade: Farore green, gold hilt
+; Lv3 (Greatblade placeholder, tempered orange) stays as the base ROM row.
+org $1BD642 : dw $7E4E, $6FF4, $1CF5 ; Lv4 Master Sword (pedestal, overworld.asm $0589AF): vanilla blue
+
 ; Fix the capital 'B' debug item cheat.
 org $0CDC26 : db $80 ; replace a $F0 (BEQ) with a $80 (BRA).
 

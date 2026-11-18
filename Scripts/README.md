@@ -6,6 +6,10 @@ This repo has accumulated scripts over time. The goal is to keep a small “gold
 - Quick build + reload: `Scripts/Build/oos-quick.sh`
 - Quick build + reload + validate: `Scripts/Build/oos-verify.sh`
 - Named debug sessions: `Scripts/Build/oos-session.sh`
+- Host director (stage / apply / pan / promo capture): `Scripts/Mesen2/oos_director.sh`
+- Promo social draft (approval-gated, no auto-post): `Scripts/Promo/promo_social_draft.py`
+- Promo OW shots from warps.json labels: `Scripts/Promo/build_promo_shots_from_warps.py`
+- Promo batch warp+capture: `Scripts/Promo/capture_ow_warp_shots.py`
 - Metadata popup control panel: `Scripts/Debug/oos_state_popup.py`
 - Build loop: `Scripts/Build/dev_loop.sh`
 - Build ROM directly: `Scripts/Build/build_rom.sh`
@@ -49,6 +53,7 @@ If a doc references a script that does not exist (example: `mesen_cli.sh`), pref
 - `mesen2_launch_instance.sh` does **not** seed project slot states by default (`SEED_PROJECT_STATES=0`).
 - Opt-in legacy seeding only with `--seed-project-states`.
 - `oos-session.sh` loads task seeds from `Data/debug/trusted_state_seeds.json` and requires `canon + human-captured` states.
-- Use `Scripts/set_trusted_state_seed.py <task> <state_id>` to map trusted library states to session tasks.
+- Capture a draft seed from a private session: `Scripts/Debug/capture_trusted_seed.py <label> --socket … --captured-by human`
+- Use `Scripts/set_trusted_state_seed.py <task> <state_id>` to map trusted library states to session tasks (canon + human).
 - Use `Scripts/Debug/oos_state_popup.py --instance <name> [--font-size 18] [--theme dark] [--layout compact]` for integrated metadata capture, macros, shortcuts, and custom test actions.
 - Macro buttons/shortcuts are loaded from `Data/debug/oos_ui_macros.json` so workflows can be edited without Python changes.

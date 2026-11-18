@@ -158,6 +158,11 @@ namespace Oracle
     incsrc "Sprites/Players/player2.asm"
   endif
 
+  ; Director freecam / camera hold for promo (default off; see Util/macros.asm).
+  if !ENABLE_DIRECTOR_FREECAM == 1
+    incsrc "Core/director_freecam.asm"
+  endif
+
   ; Part00 villager lines and checkpoint (default on; see Util/macros.asm).
   ; The Wisdom dream scene shares its room-sprites hook ($09C2C3), and so does
   ; the dream return (shows Link after Link_WarpToRoom hides him).

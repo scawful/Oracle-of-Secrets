@@ -88,6 +88,14 @@ def process_start(pid: int) -> str | None:
         raise ProcessInspectionError(str(error)) from error
     start = " ".join(out.stdout.split())
     if out.returncode != 0 or not start:
+        # The process can exit between the first probe and ps. Only a fresh
+        # absence is conclusive; a live or uninspectable PID stays protected.
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return None
+        except OSError:
+            pass
         raise ProcessInspectionError(f"cannot inspect pid {pid}")
     return start
 

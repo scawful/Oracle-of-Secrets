@@ -208,7 +208,18 @@ class DekuStickRuntimeTest:
         if not self.sock.exists():
             raise RuntimeError(f"Socket {self.sock} did not appear")
 
-        pids = subprocess.run(["lsof", "-t", str(self.sock)], text=True, capture_output=True).stdout.split()
+        # Prefer pgrep: macOS `lsof -t` on unix sockets can stall >2min and pin Mesens.
+        pids = subprocess.run(
+            ["pgrep", "-f", str(self.rom_copy)], text=True, capture_output=True, timeout=5
+        ).stdout.split()
+        if not pids:
+            try:
+                pids = subprocess.run(
+                    ["lsof", "-t", str(self.sock)],
+                    text=True, capture_output=True, timeout=8
+                ).stdout.split()
+            except subprocess.TimeoutExpired:
+                pids = []
         owned = [int(p) for p in pids if p.isdigit() and str(self.rom_copy) in identity(int(p))]
         if len(owned) != 1:
             raise RuntimeError(f"Cannot identify owned emulator PID: {pids}")

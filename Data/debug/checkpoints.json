@@ -218,6 +218,48 @@
           "name": "CurrentHealth",
           "inferred": true,
           "why": "full health"
+        },
+        {
+          "addr": "0x7EF342",
+          "value": "0x00",
+          "name": "Hookshot",
+          "evidence": "Core/sram.asm:310 (Hookshot)"
+        },
+        {
+          "addr": "0x7EF345",
+          "value": "0x00",
+          "name": "FireRod",
+          "evidence": "Core/sram.asm:313 (FireRod)"
+        },
+        {
+          "addr": "0x7EF34A",
+          "value": "0x00",
+          "name": "Lamp",
+          "evidence": "Core/sram.asm:318 (Lamp)"
+        },
+        {
+          "addr": "0x7EF34D",
+          "value": "0x00",
+          "name": "RocsFeather",
+          "evidence": "Core/sram.asm:321 (RocsFeather)"
+        },
+        {
+          "addr": "0x7EF377",
+          "value": "0x00",
+          "name": "Arrows",
+          "evidence": "Core/sram.asm:374 (Arrows)"
+        },
+        {
+          "addr": "0x7EF360",
+          "value": "0x00",
+          "name": "Rupees",
+          "evidence": "Core/sram.asm:357 (Rupees)"
+        },
+        {
+          "addr": "0x7EF361",
+          "value": "0x00",
+          "name": "RupeesGoal",
+          "evidence": "Core/sram.asm:358 (RupeesGoal)"
         }
       ]
     },
@@ -261,6 +303,13 @@
           "value": "0x00",
           "name": "LinkState",
           "evidence": "intro-bed leaves Link in LinkState_Sleeping ($16, $037C = 0). IntroState 2 skips HouseTag_WakeUpPlayer (Dungeons/custom_tag.asm), so nothing resets it and Link_SnoringInBed ($079A62) keeps spawning ancilla $21 (Z) at the landing spot."
+        },
+        {
+          "addr": "0x7EF34A",
+          "value": "0x01",
+          "name": "Lamp",
+          "inferred": true,
+          "why": "Lamp chest is in Link's House (room $104) per the 2026-11-15 chest survey; picked up before leaving the house"
         }
       ]
     },
@@ -484,6 +533,59 @@
       ]
     },
     {
+      "id": "toto-ranch",
+      "label": "Region: Toto Ranch (D1 done)",
+      "beat": 10,
+      "after": "d1-entrance",
+      "location": {
+        "area": "0x00"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x00"
+      },
+      "notes": "Lands at the Ranch (area $00) via room $0003 exit. Region test point between D1 and D2.",
+      "writes": [
+        {
+          "addr": "0x7EF37A",
+          "value": "0x02",
+          "name": "Crystals",
+          "evidence": "same value as d2-entrance (D1 done)"
+        },
+        {
+          "addr": "0x7EF340",
+          "value": "0x02",
+          "name": "Bow",
+          "inferred": true,
+          "why": "dungeon reward survey 2026-11-15 (z3ed chest lists + Docs/Planning/item_flow_balance_check.md); D1 gives the Bow; 2 = with arrows"
+        },
+        {
+          "addr": "0x7EF377",
+          "value": "0x1E",
+          "name": "Arrows",
+          "inferred": true,
+          "why": "debug kit: 30 arrows"
+        },
+        {
+          "addr": "0x7EF36C",
+          "value": "0x28",
+          "name": "MaxHealth",
+          "inferred": true,
+          "why": "one heart container per finished dungeon, same rule as the dungeon checkpoints"
+        },
+        {
+          "addr": "0x7EF36D",
+          "value": "0x28",
+          "name": "CurrentHealth",
+          "inferred": true,
+          "why": "full health"
+        }
+      ]
+    },
+    {
       "id": "d2-entrance",
       "label": "D2 Tail Palace entrance (D1 done, Ocarina chain done)",
       "beat": 11,
@@ -512,9 +614,9 @@
         },
         {
           "addr": "0x7EF340",
-          "value": "0x01",
+          "value": "0x02",
           "name": "Bow",
-          "evidence": "Docs/Planning/item_flow_balance_check.md:13 (D1 yields Bow + Mushroom)"
+          "evidence": "Docs/Planning/item_flow_balance_check.md:13 (D1 yields Bow + Mushroom); value 2 = Bow with arrows (Core/sram.asm:308) so the arrow count shows"
         },
         {
           "addr": "0x7EF344",
@@ -565,6 +667,27 @@
           "name": "CurrentHealth",
           "inferred": true,
           "why": "full health"
+        },
+        {
+          "addr": "0x7EF377",
+          "value": "0x1E",
+          "name": "Arrows",
+          "inferred": true,
+          "why": "debug kit: 30 arrows so the Bow is usable"
+        },
+        {
+          "addr": "0x7EF36E",
+          "value": "0x80",
+          "name": "MagicPower",
+          "inferred": true,
+          "why": "debug kit: full magic (max 128, Core/sram.asm:366) with the Powder"
+        },
+        {
+          "addr": "0x7EF360",
+          "value": "0xC8",
+          "name": "Rupees",
+          "inferred": true,
+          "why": "debug kit: 200 rupees for shops"
         }
       ]
     },
@@ -623,6 +746,72 @@
         {
           "addr": "0x7EF36D",
           "value": "0x30",
+          "name": "CurrentHealth",
+          "inferred": true,
+          "why": "full health"
+        },
+        {
+          "addr": "0x7EF34D",
+          "value": "0x01",
+          "name": "RocsFeather",
+          "inferred": true,
+          "why": "dungeon reward survey 2026-11-15 (z3ed chest lists + Docs/Planning/item_flow_balance_check.md); D2 Tail Palace gives Roc's Feather"
+        }
+      ]
+    },
+    {
+      "id": "wisdom-shrine",
+      "label": "Region: Wisdom Swamp / Shrine of Wisdom (D3 done)",
+      "beat": 14,
+      "after": "d3-entrance",
+      "location": {
+        "area": "0x63"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x63"
+      },
+      "notes": "Lands outside the Shrine of Wisdom (area $63, Abyss). Flippers are the shrine reward, so they are not given.",
+      "writes": [
+        {
+          "addr": "0x7EF37A",
+          "value": "0x52",
+          "name": "Crystals",
+          "evidence": "same value as d4-entrance (D3 done)"
+        },
+        {
+          "addr": "0x7EF359",
+          "value": "0x02",
+          "name": "Sword",
+          "inferred": true,
+          "why": "Meadow Blade from D3, same as d4-entrance"
+        },
+        {
+          "addr": "0x7EF34D",
+          "value": "0x01",
+          "name": "RocsFeather",
+          "inferred": true,
+          "why": "dungeon reward survey 2026-11-15 (z3ed chest lists + Docs/Planning/item_flow_balance_check.md); D2 Roc's Feather"
+        },
+        {
+          "addr": "0x7EF3CA",
+          "value": "0x40",
+          "name": "SavedWorld",
+          "evidence": "Abyss area; abyss-arrival uses $40"
+        },
+        {
+          "addr": "0x7EF36C",
+          "value": "0x38",
+          "name": "MaxHealth",
+          "inferred": true,
+          "why": "one heart container per finished dungeon, same rule as the dungeon checkpoints"
+        },
+        {
+          "addr": "0x7EF36D",
+          "value": "0x38",
           "name": "CurrentHealth",
           "inferred": true,
           "why": "full health"
@@ -692,6 +881,24 @@
       ]
     },
     {
+      "id": "sunken-city",
+      "label": "Region: Sunken City outside D4",
+      "beat": 15,
+      "after": "d4-entrance",
+      "location": {
+        "area": "0x1E"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x1E"
+      },
+      "notes": "Same state as d4-entrance; lands outside D4 Zora Temple (area $1E).",
+      "writes": []
+    },
+    {
       "id": "d5-entrance",
       "label": "D5 Glacia Estate entrance (D4 done, Song of Storms)",
       "beat": 17,
@@ -749,6 +956,83 @@
           "name": "CurrentHealth",
           "inferred": true,
           "why": "full health"
+        },
+        {
+          "addr": "0x7EF342",
+          "value": "0x01",
+          "name": "Hookshot",
+          "inferred": true,
+          "why": "dungeon reward survey 2026-11-15 (z3ed chest lists + Docs/Planning/item_flow_balance_check.md); D4 Zora Temple gives the Hookshot"
+        }
+      ]
+    },
+    {
+      "id": "snow-mountain",
+      "label": "Region: Snow Mountain outside D5",
+      "beat": 17,
+      "after": "d5-entrance",
+      "location": {
+        "area": "0x06"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x06"
+      },
+      "notes": "Same state as d5-entrance; lands outside D5 Glacia Estate (area $06).",
+      "writes": []
+    },
+    {
+      "id": "lupo-mountain",
+      "label": "Region: Lupo Mountain / Shrine of Power (D5 done)",
+      "beat": 19,
+      "after": "d5-entrance",
+      "location": {
+        "area": "0x4B"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x4B"
+      },
+      "notes": "Lands outside the Shrine of Power (area $4B, Abyss). Power Glove is the shrine reward, so it is not given.",
+      "writes": [
+        {
+          "addr": "0x7EF37A",
+          "value": "0x76",
+          "name": "Crystals",
+          "evidence": "same value as d6-entrance (D5 done)"
+        },
+        {
+          "addr": "0x7EF345",
+          "value": "0x01",
+          "name": "FireRod",
+          "inferred": true,
+          "why": "dungeon reward survey 2026-11-15 (z3ed chest lists + Docs/Planning/item_flow_balance_check.md); D5 Fire Rod"
+        },
+        {
+          "addr": "0x7EF3CA",
+          "value": "0x40",
+          "name": "SavedWorld",
+          "evidence": "Abyss area; abyss-arrival uses $40"
+        },
+        {
+          "addr": "0x7EF36C",
+          "value": "0x48",
+          "name": "MaxHealth",
+          "inferred": true,
+          "why": "one heart container per finished dungeon, same rule as the dungeon checkpoints"
+        },
+        {
+          "addr": "0x7EF36D",
+          "value": "0x48",
+          "name": "CurrentHealth",
+          "inferred": true,
+          "why": "full health"
         }
       ]
     },
@@ -798,8 +1082,40 @@
           "name": "CurrentHealth",
           "inferred": true,
           "why": "full health"
+        },
+        {
+          "addr": "0x7EF345",
+          "value": "0x01",
+          "name": "FireRod",
+          "inferred": true,
+          "why": "dungeon reward survey 2026-11-15 (z3ed chest lists + Docs/Planning/item_flow_balance_check.md); D5 Glacia Estate gives the Fire Rod"
+        },
+        {
+          "addr": "0x7EF354",
+          "value": "0x01",
+          "name": "Gloves",
+          "inferred": true,
+          "why": "Power Glove chest in Shrine of Power room $74 (2026-11-15 chest survey); Pendants $03 here means Power is done"
         }
       ]
+    },
+    {
+      "id": "garo-desert",
+      "label": "Region: Garo Desert outside D6",
+      "beat": 20,
+      "after": "d6-entrance",
+      "location": {
+        "area": "0x36"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x36"
+      },
+      "notes": "Same state as d6-entrance; lands outside D6 Goron Mines (area $36).",
+      "writes": []
     },
     {
       "id": "d7-entrance",
@@ -859,6 +1175,100 @@
           "name": "CurrentHealth",
           "inferred": true,
           "why": "full health"
+        }
+      ]
+    },
+    {
+      "id": "dragon-ship-dock",
+      "label": "Region: Dragon Ship dock outside D7",
+      "beat": 23,
+      "after": "d7-entrance",
+      "location": {
+        "area": "0x38"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x38"
+      },
+      "notes": "Same state as d7-entrance; lands outside D7 Dragon Ship (area $38).",
+      "writes": []
+    },
+    {
+      "id": "shrine-courage",
+      "label": "Region: Shrine of Courage (D7 done)",
+      "beat": 24,
+      "after": "d7-entrance",
+      "location": {
+        "area": "0x50"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x50"
+      },
+      "notes": "Lands outside the Shrine of Courage (area $50, Abyss). GameState stays at the D7 value; d8-entrance sets 3.",
+      "writes": [
+        {
+          "addr": "0x7EF37A",
+          "value": "0x7F",
+          "name": "Crystals",
+          "evidence": "same value as d8-entrance (D7 done)"
+        },
+        {
+          "addr": "0x7EF350",
+          "value": "0x01",
+          "name": "Somaria",
+          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 23 (D7 gives the Somaria Rod)"
+        },
+        {
+          "addr": "0x7EF3CA",
+          "value": "0x40",
+          "name": "SavedWorld",
+          "evidence": "Abyss area; abyss-arrival uses $40"
+        },
+        {
+          "addr": "0x7EF36C",
+          "value": "0x58",
+          "name": "MaxHealth",
+          "inferred": true,
+          "why": "one heart container per finished dungeon, same rule as the dungeon checkpoints"
+        },
+        {
+          "addr": "0x7EF36D",
+          "value": "0x58",
+          "name": "CurrentHealth",
+          "inferred": true,
+          "why": "full health"
+        }
+      ]
+    },
+    {
+      "id": "master-sword",
+      "label": "Region: Lava Lands, Master Sword cave (all pendants)",
+      "beat": 25,
+      "after": "shrine-courage",
+      "location": {
+        "area": "0x46"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x46"
+      },
+      "notes": "Lands outside the Master Sword cave (area $46, Abyss).",
+      "writes": [
+        {
+          "addr": "0x7EF374",
+          "value": "0x07",
+          "name": "Pendants",
+          "evidence": "all three pendants, same value as d8-entrance"
         }
       ]
     },

@@ -1,0 +1,31 @@
+{
+  "id": "wayward_bridge",
+  "label": "Wayward $23/$24 wooden-bridge gap x51 y14-18 (native02 combined)",
+  "area": "0x23",
+  "warp_area": "0x23",
+  "mount": "diag",
+  "rom": "/Users/scawful/src/hobby/oracle-of-secrets-scratch/design-proposals/wayward-village01/native02/source/Roms/oos168x.sfc",
+  "map_rom": "/Users/scawful/src/hobby/oracle-of-secrets-scratch/design-proposals/wayward-village01/bridge2/newbridge_broken.sfc",
+  "seed": "/Users/scawful/src/hobby/oracle-of-secrets-scratch/horse-front-codex-20261115/current-master-anchor02/private01/native12/ranch-cured-original.srm",
+  "start_xy": [2315, 2292],
+  "routes": {
+    "mounted_ew": [["right", 200]],
+    "mounted_we": [["left", 200]],
+    "foot": [["right", 90]]
+  },
+  "expect": {
+    "gap_tile_x": 51,
+    "gap_tile_y_lo": 14,
+    "gap_tile_y_hi": 18,
+    "foot_must_fail_cross": true,
+    "mounted_cross_x_delta_min": 24,
+    "use_jump_ride": true,
+    "expected_verdict": "FAIL_GEOMETRY"
+  },
+  "watch": {
+    "post_land_freeze": true,
+    "freeze_frames": 30,
+    "freeze_button": "right"
+  },
+  "notes": "COMBINED already: native02 = newbridge_broken + x51 y14-18->$0F90 + HorseFenceTile16s+=$0F90 (sha256 f66bbb39…). Claude native02/tour/run01 status WV_X51_FAIL: foot blocked PASS; mounted W->E no jump (2-row deck too short — solid edge at x+32 blocks while ProbeFence still sees x50 deck). E->W same geometry. Need Claude deck-taller art OR probe-from-solid-edge. Area $23 matches Claude harness (queue text said $24)."
+}

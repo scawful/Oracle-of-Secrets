@@ -185,7 +185,10 @@ Master index of recorded indoor locations with entrance IDs.
 
 ## Special Overworlds
 
-These are OW screens with special handling (from `special_areas.asm`):
+These are OW screens with special handling (from `special_areas.asm`). This list
+is partial; region names such as Lyra Sea/East Kalyxo and the tail-map range do
+not identify separate engines. See the [domain model](../Technical/terminology_glossary.md#special-overworld-domain-model)
+for identifier kinds, current implementation scope and historical range limits:
 
 | OW Screen | Name | Notes |
 |-----------|------|-------|

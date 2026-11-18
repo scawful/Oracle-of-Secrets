@@ -46,7 +46,7 @@ This document catalogs all custom sprites, their technical status, and known iss
 | **Kydrog NPC** | ✅ Done | Various cutscenes | Custom | Could free slot later |
 | **Lanmola** | ⚠️ Problematic | D6 (Goron Mines) | Vanilla Lanmola | Causes lag with minecart, may need rework |
 | **Manhandla** | ✅ Done | D1 (Mushroom Grotto) | Custom two-phase | User's custom boss, well-designed |
-| **Octoboss** | ⚠️ Needs Fix | D2 (Tail Palace) | Custom | Camera offset hardcoded wrong |
+| **Octoboss** | ⚠️ Needs Fix | Abyss cave `$75` (Kholdstare hook) | Custom | Not D2; DECIDED 2026-10-28 |
 | **Twinrova** | ✅ Done | D5 (Glacia Estate) | Custom | User's custom, MVP+ quality |
 | **Vampire Bat** | ✅ Done | D1 miniboss | Custom | Reusable for other dungeons |
 | **Wolfos** | ✅ Functional | Overworld night | Custom | Night-only spawn, gives mask reward |
