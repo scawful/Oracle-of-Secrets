@@ -268,5 +268,12 @@ org $06891B : NOP #12
 
 ; (SPC upload timeout hook removed – revert to vanilla handshake)
 
+; [W3 owner: Items] USDASM PaletteData_sword ($1BD630, 3 words/level: blade mid, blade light, hilt).
+; Approved 2026-11-17/18 (QUEUE287, oracle_title_filemenu_2026-11-17/sword_palette_patch.asm): Lv3 Greatblade stays base ROM row.
+org $1BD636 ; @hook module=Core name=PaletteData_SwordLv2Meadow kind=data
+  dw $32EA, $67F8, $19F6 ; Lv2 Meadow Blade: Farore green, gold hilt
+org $1BD642 ; @hook module=Core name=PaletteData_SwordLv4Master kind=data
+  dw $7E4E, $6FF4, $1CF5 ; Lv4 Master Sword (pedestal $0589AF): vanilla blue
+
 ; Early-game balance ($BB dispatch, shop item redirects, HP overrides).
   incsrc "Core/early_game_balance.asm"
