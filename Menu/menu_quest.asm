@@ -1,6 +1,15 @@
-; Quest displays progression (v4 essence ring, pendants in its centre). Supplies and passive
-; gear live on Equipment; the area name heads the Map page.
+; Quest displays progression: the essence ring (pendants in its centre) on the right, and
+; on the left the Moon Pearl, heart pieces and a framed 2x2 box of passive gear (shield,
+; glove, boots, flippers). Supplies live on Equipment; the area name heads the Map page.
 ; No ownership or save-format changes. DBR = $2D.
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  !QuestPearlCol = menu_offset(0,3)     ; absolute (9,7)
+  !QuestCountCol = menu_offset(6,9)     ; absolute (11,9-11), under the hearts at (9,10)
+else
+  !QuestPearlCol = menu_offset(0,2)
+  !QuestCountCol = menu_offset(6,23)
+endif
+
 Menu_Quest_Init:
 {
   SEP #$30
@@ -72,7 +81,7 @@ Menu_Quest_Draw:
 
   JSR Menu_DrawHeartPieces
   LDA.l $7EF36B : AND.w #$00FF
-  LDX.w #!QuestRow+menu_offset(6,23) ; under the heart-piece container
+  LDX.w #!QuestRow+!QuestCountCol   ; under the heart-piece container
   JSR Menu_Quest_Number3
   JSR Menu_Quest_Progress
   JSR Menu_Quest_Gear
@@ -91,10 +100,11 @@ endif
   RTS
 }
 
-; v4: passive GEAR moved to the Equipment page (Menu_Equipment_Gear).
-; Quest keeps only the Moon Pearl. With the four-page menu the Pearl and
-; the heart pieces take the top corners, the six songs the bottom row (OoT
-; style) and the dungeon row moves to the Map page. Without it the bottom
+; Quest left side (OoT gear-box style): the Moon Pearl and heart pieces on
+; the top row, below them a framed 2x2 box of the passive gear the player
+; cannot select (shield, glove, boots, flippers); Equipment keeps the swords,
+; tunic, masks and rings. With the four-page menu the six songs take the
+; bottom row and the dungeon row moves to the Map page. Without it the bottom
 ; row is Pearl | map, big chest key, big key, treasure | hearts.
 Menu_Quest_Gear:
 {
@@ -106,11 +116,49 @@ Menu_Quest_Gear:
   STA.w MenuItemValueSpoof
   REP #$30
   LDA.w #MenuItemValueSpoof
-  LDX.w #!QuestRow+menu_offset(0,2) ; Quest top row, left end
+  LDX.w #!QuestRow+!QuestPearlCol
   LDY.w #MoonPearlGFX
   JSR DrawMenuItem
+  SEP #$30
+  LDY.b #$00
+.gear
+  PHY
+  LDA.w .gear_slot,Y : JSR Menu_Quest_GearVariant
+  STA.w MenuItemValueSpoof
   REP #$30
+  TYA : AND.w #$00FF : ASL : TAX
+  LDA.w .gear_gfx,X : TAY
+  LDA.w .gear_pos,X : TAX
+  LDA.w #MenuItemValueSpoof
+  JSR DrawMenuItem
+  SEP #$30
+  PLY
+  INY : CPY.b #$04 : BCC .gear
+  ; Box frame: the ring box's one-tile border ($2900 corner, $2901 top,
+  ; $2910 side; flips for the other sides) around rows 12-18, cols 6-12.
+  REP #$30
+  LDA.w #$2900 : STA.w $1000+menu_offset(12,6)
+  LDA.w #$6900 : STA.w $1000+menu_offset(12,12)
+  LDA.w #$A900 : STA.w $1000+menu_offset(18,6)
+  LDA.w #$E900 : STA.w $1000+menu_offset(18,12)
+  LDX.w #$0008                          ; cols 7-11
+.box_h
+  LDA.w #$2901 : STA.w $1000+menu_offset(12,7),X
+  LDA.w #$A901 : STA.w $1000+menu_offset(18,7),X
+  DEX #2 : BPL .box_h
+  LDX.w #$0100                          ; rows 13-17
+.box_v
+  LDA.w #$2910 : STA.w $1000+menu_offset(13,6),X
+  LDA.w #$6910 : STA.w $1000+menu_offset(13,12),X
+  TXA : SEC : SBC.w #$0040 : TAX : BPL .box_v
   RTS
+.gear_slot
+  db $13,$0F,$10,$11                    ; shield, glove, boots, flippers
+; DrawMenuItem offsets (absolute minus 4,4): (13,7) (13,10) / (16,7) (16,10)
+.gear_pos
+  dw menu_offset(9,3),menu_offset(9,6),menu_offset(12,3),menu_offset(12,6)
+.gear_gfx
+  dw ShieldGFX,PowerGloveGFX,PegasusBootsGFX,FlippersGFX
 }
 
 ; A = valid gear slot 15-20, 8-bit A/X/Y; clobbers X, preserves Y.
@@ -237,18 +285,19 @@ Menu_Quest_Progress:
   db !Crystal_D1_MushroomGrotto,!Crystal_D2_TailPalace,!Crystal_D3_KalyxoCastle
   db !Crystal_D4_ZoraTemple,!Crystal_D5_GlaciaEstate,!Crystal_D6_GoronMines,!Crystal_D7_DragonShip
   db !Crystal_D8_Sky
-; v4 ring (make_frame_preserved_v4.py): clockwise D1..D8 from the top,
-; mirror-symmetric about cols 15-16; Tests/test_quest_essence_layout.py
-; guards the footprint. Absolute tilemap offsets, 2x2 each.
+; Ring clockwise D1..D8 from the top, 12 columns wide (cols 14-25, right of
+; the gear box), mirror-symmetric about cols 19-20;
+; Tests/test_quest_essence_layout.py guards the footprint. Absolute tilemap
+; offsets, 2x2 each.
 .crystal_pos
-  dw menu_offset(10,15),menu_offset(11,20),menu_offset(14,22),menu_offset(17,20)
-  dw menu_offset(18,15),menu_offset(17,10),menu_offset(14,8),menu_offset(11,10)
+  dw menu_offset(10,19),menu_offset(11,23),menu_offset(14,24),menu_offset(17,23)
+  dw menu_offset(18,19),menu_offset(17,15),menu_offset(14,14),menu_offset(11,15)
 .pendant_bits
   db !Pendant_Wisdom,!Pendant_Power,!Pendant_Courage
 ; Pendants form a triangle in the ring centre: Power on top, Wisdom
 ; bottom-left, Courage bottom-right (table order Wisdom, Power, Courage).
 .pendant_pos
-  dw menu_offset(15,13),menu_offset(13,15),menu_offset(15,17)
+  dw menu_offset(15,17),menu_offset(13,19),menu_offset(15,21)
 ; Unowned = the owned tiles in palette 4, the grey of the unowned crystal
 ; ($3134), so v4 needs no outline art ($104/$105/$114/$115/$13B/$13C/
 ; $121/$122 stay only for the legacy quest_icons.tilemap page).

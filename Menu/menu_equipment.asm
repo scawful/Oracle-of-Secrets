@@ -189,7 +189,7 @@ Menu_Equipment_Move:
 Menu_Equipment_Rows:
   db 0,0,0,0,0,0, 1,1,1,1,1,1, 2,2,2,2,2,2, 3,3,3,3,3,3, 4,4,4
 Menu_Equipment_Columns:
-  db 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,16
+  db 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13
 
 Menu_Equipment_Select:
 {
@@ -326,10 +326,9 @@ endif
   dw "SUPPLIES"
 }
 
-; GEAR band: story blade, heavy sword (cursor slots 24/25), passive shield,
-; tunic (cursor slot 26, worn colour), then passive glove, boots,
-; flippers (display only). The tunic icon shows the worn colour. Passive variants come
-; from Menu_Quest_GearVariant, the same SRAM reads Quest used before v4.
+; GEAR band: story blade, heavy sword (cursor slots 24/25) and tunic
+; (cursor slot 26). The tunic icon shows the worn colour (Menu_Quest_GearVariant).
+; The passive shield, glove, boots and flippers are on the Quest gear box.
 Menu_Equipment_Gear:
 {
   SEP #$30
@@ -338,11 +337,11 @@ Menu_Equipment_Gear:
   LDY.b #$00
 .icons
   PHY
-  CPY.b #$02 : BCS .passive
+  CPY.b #$02 : BCS .tunic
   TYA : CLC : ADC.b #$18 : JSR Menu_Equipment_Owned
   BRA .variant
-.passive
-  LDA.w .quest_slot,Y : JSR Menu_Quest_GearVariant
+.tunic
+  LDA.b #$14 : JSR Menu_Quest_GearVariant
 .variant
   STA.w MenuItemValueSpoof
   REP #$30
@@ -353,15 +352,13 @@ Menu_Equipment_Gear:
   JSR DrawMenuItem
   SEP #$30
   PLY
-  INY : CPY.b #$07 : BCC .icons
+  INY : CPY.b #$03 : BCC .icons
   RTS
-.quest_slot
-  db $00,$00,$13,$14,$0F,$10,$11     ; -, -, shield, tunic, glove, boots, flippers
+; Shield, glove, boots and flippers are on the Quest gear box (Menu_Quest_Gear).
 .pos
-  dw menu_offset(6,3),menu_offset(6,6),menu_offset(6,9),menu_offset(6,12)
-  dw menu_offset(6,15),menu_offset(6,18),menu_offset(6,21)
+  dw menu_offset(6,3),menu_offset(6,6),menu_offset(6,9)
 .gfx
-  dw SwordGFX,SwordGFX,ShieldGFX,TunicGFX,PowerGloveGFX,PegasusBootsGFX,FlippersGFX
+  dw SwordGFX,SwordGFX,TunicGFX
 }
 
 ; Only the three implemented foods advertise Use, and only with stock.
@@ -454,5 +451,5 @@ Menu_Equipment_Pos:
   dw menu_offset(18,3),menu_offset(18,6),menu_offset(18,9),menu_offset(18,13),menu_offset(18,16),menu_offset(18,19)
   dw menu_offset(18,3),menu_offset(18,6),menu_offset(18,9)
   dw menu_offset(18,13),menu_offset(18,16),menu_offset(18,19)
-  dw menu_offset(6,3),menu_offset(6,6),menu_offset(6,12) ; story, heavy, tunic
+  dw menu_offset(6,3),menu_offset(6,6),menu_offset(6,9) ; story, heavy, tunic
 assert menu_offset(6,6) == !HEAVY_ICON_POS, "SwordSlots_MarkerSlot recolors the heavy icon at menu_offset(6,6)"

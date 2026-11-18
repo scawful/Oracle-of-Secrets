@@ -211,7 +211,7 @@ Menu_DrawPendantIcons:
 ; Quest top row (Pearl ... hearts) and the dungeon row (map, big chest key,
 ; big key, treasure), as DrawMenuItem row offsets (absolute row minus 4).
 ; With the four-page menu the songs take the Quest bottom row
-; (Menu_DrawMusicNotes), Pearl and hearts the top corners, and the dungeon
+; (Menu_DrawMusicNotes), Pearl and hearts the top-left (Menu_Quest_Gear), and the dungeon
 ; row sits on the Map page under the Map cell (MenuMapTravel_Draw). Without
 ; it the dungeon row is on the Quest bottom row between Pearl and hearts.
 if !ENABLE_MENU_MAP_TRAVEL == 1
@@ -225,7 +225,11 @@ endif
 Menu_DrawHeartPieces:
 {
 if !ENABLE_EQUIPMENT_MENU == 1
-  !QuestHeart = $1000+!QuestRow+menu_offset(4,24)  ; Quest top row, right end
+if !ENABLE_MENU_MAP_TRAVEL == 1
+  !QuestHeart = $1000+!QuestRow+menu_offset(4,10)  ; Quest top row, beside the Pearl: absolute (9,10)
+else
+  !QuestHeart = $1000+!QuestRow+menu_offset(4,24)  ; Quest bottom row, right end
+endif
 else
   !QuestHeart = $149E
 endif

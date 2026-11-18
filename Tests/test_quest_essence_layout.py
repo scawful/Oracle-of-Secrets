@@ -31,7 +31,7 @@ LEGACY_BITS = {
     "!Crystal_D5_GlaciaEstate": 0x04, "!Crystal_D6_GoronMines": 0x01,
     "!Crystal_D7_DragonShip": 0x08,
 }
-PENDANT_POS = [(15, 13), (13, 15), (15, 17)]  # triangle in the ring centre
+PENDANT_POS = [(15, 17), (13, 19), (15, 21)]  # triangle in the ring centre
 
 
 def block(text, label):
@@ -123,12 +123,27 @@ class QuestEssenceLayout(unittest.TestCase):
         # v4: the area name heads the Map page; Quest draws no location text.
         self.assertNotIn("DrawLocationName", block(quest, "Menu_Quest_Draw"))
         gear = block(quest, "Menu_Quest_Gear")
-        # v4 moved the GEAR label and icons to Equipment; only the pearl remains here.
         self.assertNotIn(".gear_label", gear)
-        y, x = re.search(r"LDX\.w " + row_arg + r"[^\n]*\n\s*LDY\.w #MoonPearlGFX", gear).groups()
+        # Pearl and count columns: first (four-page menu) definitions.
+        self.assertRegex(gear, r"LDX\.w #!QuestRow\+!QuestPearlCol\s*\n\s*LDY\.w #MoonPearlGFX")
+        y, x = re.search(r"!QuestPearlCol = menu_offset\((\d+),(\d+)\)", quest).groups()
         item("moon pearl", qy + int(y), qx + int(x))
-        y, x = re.search(r"LDX\.w " + row_arg + r"[^\n]*\n\s*JSR Menu_Quest_Number3", quest).groups()
+        self.assertRegex(quest, r"LDX\.w #!QuestRow\+!QuestCountCol[^\n]*\n\s*JSR Menu_Quest_Number3")
+        y, x = re.search(r"!QuestCountCol = menu_offset\((\d+),(\d+)\)", quest).groups()
         run("heart piece count", qy + int(y), qx + int(x), 3)
+        # Gear box: four passive icons (DrawMenuItem offsets) and the frame around them.
+        names = ["shield", "glove", "boots", "flippers"]
+        for name, (y, x) in zip(names, re.findall(r"menu_offset\((\d+),(\d+)\)", between(gear, ".gear_pos", ".gear_gfx"))):
+            item(name, int(y), int(x))
+        self.assertRegex(gear, r"\.gear_gfx\s*\n\s*dw ShieldGFX,PowerGloveGFX,PegasusBootsGFX,FlippersGFX")
+        corner = {t: tuple(map(int, re.search(r"#\$" + t + r" : STA\.w \$1000\+menu_offset\((\d+),(\d+)\)", gear).groups()))
+                  for t in ("2900", "6900", "A900", "E900")}
+        (r0, c0), (r1, c1) = corner["2900"], corner["E900"]
+        self.assertEqual((corner["6900"], corner["A900"]), ((r0, c1), (r1, c0)))
+        self.assertIn(f"LDX.w #${(c1 - c0 - 2) * 2:04X}", gear, "top/bottom edge loop spans cols c0+1..c1-1")
+        self.assertIn(f"LDX.w #${(r1 - r0 - 2) * 0x40:04X}", gear, "side edge loop spans rows r0+1..r1-1")
+        cells["gear box frame"] = ({(r, c) for r in (r0, r1) for c in range(c0, c1 + 1)}
+                                   | {(r, c) for r in range(r0, r1 + 1) for c in (c0, c1)})
         y, x = re.search(r"!QuestHeart = \$1000\+!QuestRow\+menu_offset\((\d+),(\d+)\)", draw).groups()
         cells["heart piece"] = square(to_cell(self.offset(qy + int(y), qx + int(x))))
         # Four-page menu: the dungeon row is drawn on the Map page, not here.
@@ -212,15 +227,29 @@ class QuestEssenceLayout(unittest.TestCase):
                 shared = everything[first] & everything[second]
                 self.assertFalse(shared, f"{first} overlaps {second} at {sorted(shared)}")
 
-    def test_top_corners_and_songs_on_bottom_row(self):
-        """Pearl and hearts in the top corners, mirrored; the six songs on the
-        bottom row (OoT style)."""
+    def test_left_column_gear_box_and_songs_on_bottom_row(self):
+        """Pearl and hearts on the top row, a framed 2x2 gear box below them,
+        all left of the essence ring; the six songs on the bottom row (OoT style)."""
         content = self.other_content()
         pearl, heart = min(content["moon pearl"]), min(content["heart piece"])
         self.assertEqual({pearl[0], heart[0]}, {9}, "first panel row under the frame border")
-        self.assertEqual(pearl[1] + heart[1], 30, "corners mirror about cols 15|16")
+        self.assertLess(pearl[1], heart[1])
         count = content["heart piece count"]
         self.assertEqual({row for row, _ in count}, {11})
+        self.assertLessEqual({c for _, c in content["heart piece"]}, {c for _, c in count}, "count under the hearts")
+        frame = content["gear box frame"]
+        top, bottom = min(r for r, _ in frame), max(r for r, _ in frame)
+        left, right = min(c for _, c in frame), max(c for _, c in frame)
+        self.assertGreater(top, 11, "box below the heart count")
+        icons = [min(content[n]) for n in ("shield", "glove", "boots", "flippers")]
+        self.assertEqual(icons[0][0], icons[1][0]); self.assertEqual(icons[2][0], icons[3][0])
+        self.assertEqual(icons[0][1], icons[2][1]); self.assertEqual(icons[1][1], icons[3][1])
+        for name in ("shield", "glove", "boots", "flippers"):
+            for r, c in content[name]:
+                self.assertTrue(top < r < bottom and left < c < right, f"{name} inside the box")
+        ring_left = min(c for _, c in self.crystal_cells())
+        self.assertLess(right, ring_left, "box left of the essence ring")
+        self.assertLess(max(c for _, c in content["heart piece"]), ring_left)
         songs = [min(content[f"song {i}"]) for i in range(1, 7)]
         self.assertEqual({row for row, _ in songs}, {21})
         self.assertEqual([c for _, c in songs], sorted(c for _, c in songs), "songs run left to right")
@@ -263,11 +292,15 @@ class QuestEssenceLayout(unittest.TestCase):
     def test_essences_keep_one_tile_gap(self):
         essences = [square(cell) for cell in self.crystal_cells()]
         icons = essences + [square(to_cell(self.offset(*p))) for p in self.pendant_helper]
+        # Essences keep a full one-tile gap from each other. The tight ring
+        # (Quest Q2) lets a pendant meet an essence corner-to-corner only.
         for i, first in enumerate(essences):
             halo = {(r + dr, c + dc) for r, c in first for dr in (-1, 0, 1) for dc in (-1, 0, 1)}
+            edge = {(r + dr, c + dc) for r, c in first for dr, dc in ((0, 0), (-1, 0), (1, 0), (0, -1), (0, 1))}
             for j, second in enumerate(icons):
                 if i != j:
-                    self.assertFalse(halo & second, f"D{i + 1} touches icon {j}")
+                    near = halo if j < len(essences) else edge
+                    self.assertFalse(near & second, f"D{i + 1} touches icon {j}")
 
     def test_clockwise_order_and_mirror_balance(self):
         centres = [(row + 1, col + 1) for row, col in self.crystal_cells()]
