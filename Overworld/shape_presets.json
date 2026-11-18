@@ -1,0 +1,383 @@
+{
+  "version": 1,
+  "presets": [
+    {
+      "id": "sea-reef-nw",
+      "name": "Sea Reef L-Corner (NW)",
+      "width": 2,
+      "height": 2,
+      "tiles": [
+        [
+          903,
+          3196
+        ],
+        [
+          3200,
+          -1
+        ]
+      ],
+      "tags": [
+        "reef",
+        "sea"
+      ],
+      "compatibility": {
+        "world": 2,
+        "area_gfx": 72,
+        "note": "Special / Lyra Sea (area_gfx 0x48) - NW/SW/SE reef corner (Rule B2)"
+      }
+    },
+    {
+      "id": "sea-reef-ne",
+      "name": "Sea Reef L-Corner (NE)",
+      "width": 2,
+      "height": 2,
+      "tiles": [
+        [
+          903,
+          3196
+        ],
+        [
+          -1,
+          3200
+        ]
+      ],
+      "tags": [
+        "reef",
+        "sea"
+      ],
+      "compatibility": {
+        "world": 2,
+        "area_gfx": 72,
+        "note": "Special / Lyra Sea (area_gfx 0x48) - NE reef corner (Rule B2)"
+      }
+    },
+    {
+      "id": "sky-cliff-rim-e",
+      "name": "Sky Cliff Rim (East)",
+      "width": 1,
+      "height": 3,
+      "tiles": [
+        [
+          2567
+        ],
+        [
+          2296
+        ],
+        [
+          2296
+        ]
+      ],
+      "tags": [
+        "cliff",
+        "sky"
+      ],
+      "compatibility": {
+        "world": 2,
+        "note": "Special / Sky Islands - continuous east rim below 0xA07 (Rule S1)"
+      }
+    },
+    {
+      "id": "sky-cliff-rim-w",
+      "name": "Sky Cliff Rim (West)",
+      "width": 1,
+      "height": 3,
+      "tiles": [
+        [
+          2567
+        ],
+        [
+          2297
+        ],
+        [
+          2297
+        ]
+      ],
+      "tags": [
+        "cliff",
+        "sky"
+      ],
+      "compatibility": {
+        "world": 2,
+        "note": "Special / Sky Islands - continuous west rim below 0xA07 (Rule S1)"
+      }
+    },
+    {
+      "id": "waterfall-crest-3x1",
+      "name": "Waterfall Crest (3x1)",
+      "width": 3,
+      "height": 1,
+      "tiles": [
+        [
+          787,
+          787,
+          787
+        ]
+      ],
+      "tags": [
+        "water",
+        "waterfall",
+        "cliff"
+      ],
+      "compatibility": {
+        "world": 2,
+        "note": "Special / Zora Falls & Lagoon - anchored waterfall crest (Rule W3)"
+      }
+    },
+    {
+      "id": "hop-gate-3x2",
+      "name": "Hop-Gate Post-Rail (3x2)",
+      "width": 3,
+      "height": 2,
+      "tiles": [
+        [
+          265,
+          1643,
+          384
+        ],
+        [
+          820,
+          260,
+          820
+        ]
+      ],
+      "tags": [
+        "fence",
+        "gate"
+      ],
+      "compatibility": {
+        "world": 0,
+        "note": "Light World - hop-gate signature (Style Rule 9)"
+      }
+    },
+    {
+      "id": "lw-small-tree-2x2",
+      "name": "Small Green Tree (2x2)",
+      "width": 2,
+      "height": 2,
+      "tiles": [
+        [
+          0,
+          1
+        ],
+        [
+          2,
+          7
+        ]
+      ],
+      "tags": [
+        "tree"
+      ],
+      "compatibility": {
+        "world": 0,
+        "note": "Light World - standard 2x2 green tree ($0C/$0D)"
+      }
+    },
+    {
+      "id": "abyss-tree-2x2",
+      "name": "Eon Abyss Tree (2x2)",
+      "width": 2,
+      "height": 2,
+      "tiles": [
+        [
+          809,
+          808
+        ],
+        [
+          816,
+          817
+        ]
+      ],
+      "tags": [
+        "tree",
+        "abyss"
+      ],
+      "compatibility": {
+        "world": 1,
+        "note": "Dark World / Eon Abyss - standard 2x2 hedge tree ($4B/$5A)"
+      }
+    },
+    {
+      "id": "beach-small-palm-2x2",
+      "name": "Small Palm Tree (Sand 2x2)",
+      "width": 2,
+      "height": 2,
+      "tiles": [
+        [
+          3188,
+          3189
+        ],
+        [
+          3198,
+          3199
+        ]
+      ],
+      "tags": [
+        "tree",
+        "palm"
+      ],
+      "compatibility": {
+        "world": 0,
+        "note": "Light World / Loom Beach - 2x2 sand palm ($32/$33/$3A)"
+      }
+    },
+    {
+      "id": "sea-small-palm-2x2",
+      "name": "Small Palm Tree (Grass 2x2)",
+      "width": 2,
+      "height": 2,
+      "tiles": [
+        [
+          3923,
+          3924
+        ],
+        [
+          3925,
+          3926
+        ]
+      ],
+      "tags": [
+        "tree",
+        "palm"
+      ],
+      "compatibility": {
+        "world": 2,
+        "area_gfx": 72,
+        "note": "Special / Lyra Sea - 2x2 grass palm ($AC)"
+      }
+    },
+    {
+      "id": "lw-canopy-tree-4x4",
+      "name": "Canopy Green Tree (4x4)",
+      "width": 4,
+      "height": 4,
+      "tiles": [
+        [
+          176,
+          20,
+          21,
+          168
+        ],
+        [
+          137,
+          28,
+          29,
+          118
+        ],
+        [
+          241,
+          78,
+          79,
+          217
+        ],
+        [
+          154,
+          155,
+          156,
+          149
+        ]
+      ],
+      "tags": [
+        "tree",
+        "canopy"
+      ],
+      "compatibility": {
+        "world": 0,
+        "note": "Light World - 4x4 canopy tree ($0D/$1D/$0B)"
+      }
+    },
+    {
+      "id": "palm-light-sand-4x5",
+      "name": "Palm Tree (Light Sand 4x5)",
+      "width": 4,
+      "height": 5,
+      "tiles": [
+        [
+          3291,
+          3227,
+          3294,
+          3295
+        ],
+        [
+          3234,
+          3243,
+          3246,
+          3282
+        ],
+        [
+          3235,
+          3244,
+          3245,
+          3289
+        ],
+        [
+          3327,
+          3237,
+          3323,
+          3342
+        ],
+        [
+          3300,
+          3301,
+          3366,
+          3350
+        ]
+      ],
+      "tags": [
+        "tree",
+        "palm"
+      ],
+      "compatibility": {
+        "world": 2,
+        "area_gfx": 72,
+        "note": "Special / Sea Lagoon $98 - 4x5 palm on 0xC82 light sand (Rule L1)"
+      }
+    },
+    {
+      "id": "palm-shore-sand-4x5",
+      "name": "Palm Tree (Shore Sand 4x5)",
+      "width": 4,
+      "height": 5,
+      "tiles": [
+        [
+          2084,
+          3227,
+          3294,
+          2085
+        ],
+        [
+          3234,
+          3243,
+          3246,
+          3282
+        ],
+        [
+          3235,
+          3244,
+          3245,
+          3289
+        ],
+        [
+          2087,
+          3237,
+          3323,
+          3342
+        ],
+        [
+          2088,
+          2089,
+          3366,
+          2090
+        ]
+      ],
+      "tags": [
+        "tree",
+        "palm"
+      ],
+      "compatibility": {
+        "world": 2,
+        "area_gfx": 72,
+        "note": "Special / Sea Shore $99 - 4x5 palm cluster on 0x821 shore sand (Rule L1)"
+      }
+    }
+  ]
+}
