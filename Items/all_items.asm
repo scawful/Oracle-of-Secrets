@@ -409,6 +409,10 @@ if !DISABLE_MENU == 0
 incsrc "Menu/menu_hud_cache.asm"
 endif
 
+if !DISABLE_OVERWORLD == 0
+incsrc "Overworld/village_bar_exit.asm"
+endif
+
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
 if !ENABLE_D8_BOSS == 1
   print "Bank2B Free Space: ", dec($2BE000-pc()), " bytes"
