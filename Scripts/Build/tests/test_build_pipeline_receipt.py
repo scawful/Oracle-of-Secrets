@@ -53,6 +53,7 @@ class BuildPipelineReceiptTest(unittest.TestCase):
         self.write('Scripts/Generate/export_symbols.py',
                    'import pathlib,sys\npathlib.Path(sys.argv[sys.argv.index("-o")+1]).write_text("fixture label")\n')
         self.write('Scripts/Build/check_zscream_overlap.py', 'import sys\nsys.exit(0)\n')
+        self.write('Scripts/Build/check_overlay_tile16.py', 'import sys\nsys.exit(0)\n')
         self.assembler = self.write('tools/fake-asar', f'#!{sys.executable}\n' + '''import json,hashlib,os,pathlib,sys
 sys.exit(int(os.environ['FIXTURE_ASM_EXIT'])) if os.getenv('FIXTURE_ASM_EXIT') else None
 rom=pathlib.Path(sys.argv[-1]); rom.write_bytes(rom.read_bytes()+b' assembled')
