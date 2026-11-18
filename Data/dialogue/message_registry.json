@@ -2,8 +2,8 @@
   "format": "oos-message-registry",
   "version": 1,
   "expanded_base": "0x18D",
-  "current_expanded_end": "0x226",
-  "next_append_id": "0x227",
+  "current_expanded_end": "0x229",
+  "next_append_id": "0x22A",
   "renumber_policy": "freeze-published-ids",
   "ranges": [
     {
@@ -269,6 +269,14 @@
       "expected_content": "authored",
       "owner": "eon-goron-quests",
       "purpose": "Eon Goron Roll Call (0x21C-0x223: chief request/report/reward, sentries C/D/E/G/H) and Meat Feast cook (0x224-0x226). Uses EonGoronQuest $7EF3BE (Core/sram.asm). Text from eon_goron_dialogue_draft.org; approved by scawful 2026-11-16, ridoyie review pending."
+    },
+    {
+      "start": "0x227",
+      "end": "0x229",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "toto-ranch-minigame",
+      "purpose": "Toto Ranch Kid ($3C) post-cure sister + Epona's Song reaction on foot (0x227, replaces 0x148 at $05FF96), mounted target practice Yes/No prompt (0x228), and mounted missing-bow reminder (0x229). Approved by scawful 2026-11-18."
     }
   ]
 }

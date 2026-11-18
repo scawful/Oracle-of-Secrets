@@ -1,6 +1,6 @@
 {
   "counts": {
-    "expanded": 154,
+    "expanded": 157,
     "vanilla": 0
   },
   "format": "yaze-message-bundle",
@@ -774,6 +774,21 @@
       "bank": "expanded",
       "id": 153,
       "text": "FEAST! Hoo, that smell! Every[2]Goron in camp is coming![K][V]Thanks, friend. We won't[V]forget this one. Here's[V]something for your trouble!"
+    },
+    {
+      "bank": "expanded",
+      "id": 154,
+      "text": "You helped my sister, didn't[2]you? She's finally back to[3]her old self![K][V]If she taught you Epona's[V]Song, hop on Epona and come[V]talk to me for target practice!"
+    },
+    {
+      "bank": "expanded",
+      "id": 155,
+      "text": "Whoa, Epona's listening to[2]you! You must have helped my[3]sister and learned her song![K][V]Want to try mounted target[V]practice around the ranch?[V]    > Let's ride![V]       Not right now[CH2]"
+    },
+    {
+      "bank": "expanded",
+      "id": 156,
+      "text": "Whoa, you know Epona's Song![2]You must have helped my[3]sister![K][V]Bring a Bow and some arrows[V]while riding Epona if you[V]want to try target practice!"
     }
   ],
   "version": 1

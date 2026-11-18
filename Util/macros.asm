@@ -116,11 +116,6 @@ endif
 ; native proof.
 !ENABLE_HORSE_CROWD_CHARGE          = 0
 
-; Mounted minigame engine (Masks/horse_minigame.asm): talking to the Toto
-; Ranch Kid ($3C) while riding Epona starts the ranch archery course. Off until
-; the prompt text is approved.
-!ENABLE_HORSE_MINIGAME              = 0
-
 ; Ranch milk: after the Ocarina, the Ranch Girl's later powder reveals offer
 ; Toto Ranch milk for 30 Rupees (BottleMan messages $187-$18B, no new text)
 ; instead of the curse reminder $10E. Off until native proof.

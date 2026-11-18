@@ -1,10 +1,10 @@
-; Shared Horse Minigame Engine (!ENABLE_HORSE_MINIGAME, requires !ENABLE_HORSE_FORM).
+; Shared Horse Minigame Engine (!ENABLE_HORSE_FORM).
 ; Supports both contained courses with NPC unload + enemy sheet swap + exit
 ; route blocking (Course 0: Toto Ranch OW $00) and multi-area overlay hurdle
 ; routes (Course 1: Kalyxo OW $11 bridge route).
 ; Uses UNUSED_7F5000 ($7F5410-$7F545F) after Horse_OffOam ($7F5405-$7F5406).
 
-HorseGame_State            = $7F5410 ; 0=idle, 1=enter blackout, 2=active, 3=exit blackout
+HorseGame_State            = $7F5410 ; 0=idle, 1=enter blackout, 2=active, 3=exit blackout, 4=prompt wait
 HorseGame_CourseId         = $7F5411 ; 0=Toto Ranch archery+hurdle, 1=Kalyxo route hurdles
 HorseGame_Timer            = $7F5412 ; word: active frame countdown
 HorseGame_TargetsLeft      = $7F5414 ; remaining live target count
@@ -25,6 +25,13 @@ HorseGame_SavedTileValues  = $7F5440 ; 16 words (original Tile16 IDs)
 !HorseGame_SpriteLoadProperties = $0DB818
 !HorseGame_DrawMap16Persist     = $1BC97C
 !HorseGame_CheckTouchLink       = $06F129 ; Sprite_CheckDamageToLink_same_layer_long
+!HorseGame_ShowMessageUncond    = $05E219 ; Sprite_ShowMessageUnconditional
+!HorseGame_ReceiveItem          = $0799AD ; Link_ReceiveItem (Y = item id)
+!HorseGame_MsgKidOnFoot         = $0227
+!HorseGame_MsgKidMountedPrompt  = $0228
+!HorseGame_MsgKidMountedNoBow   = $0229
+!HorseGame_RupeeReward          = $0032   ; 50 Rupees per course clear
+!SideQuest2_RanchArchery        = $80     ; SideQuestProg2 ($7EF3D8) bit 7: first-clear Heart Piece won
 
 pushpc
 org $53E900
@@ -40,6 +47,7 @@ HorseGame_Tick:
   CMP.b #$01 : BEQ .enter
   CMP.b #$02 : BEQ .active
   CMP.b #$03 : BEQ .exit
+  CMP.b #$04 : BEQ .prompt
   LDA.b #$00 : STA.l HorseGame_State
   .done
   PLB : PLP
@@ -59,6 +67,28 @@ HorseGame_Tick:
   JSR HorseGame_ExitTransition
   PLB : PLP
   RTL
+
+  .prompt
+  JSR HorseGame_PromptWait
+  PLB : PLP
+  RTL
+}
+
+; State $04: Wait for $0228 mounted Yes/No prompt ($10 == $0E) to return to
+; overworld play ($10 == $09, $11 == $00), then read $1CE8 (0 = Let's ride!).
+HorseGame_PromptWait:
+{
+  LDA.b $10 : CMP.b #$09 : BNE .wait
+  LDA.b $11 : BNE .wait
+  LDA.w $1CE8 : BNE .declined
+    LDA.b #$00 : STA.l HorseGame_CourseId : STA.l HorseGame_TransStep
+    LDA.b #$01 : STA.l HorseGame_State
+    JSR HorseGame_EnterTransition
+    RTS
+  .declined
+  LDA.b #$00 : STA.l HorseGame_State
+  .wait
+  RTS
 }
 
 ; State $01: Two-step forced-blank loading screen transition.
@@ -194,15 +224,31 @@ HorseGame_ExitTransition:
   SEP #$30
   LDA.b #$00 : PHA : PLB
 
-  ; Play victory SFX3 ($0F) when course targets were all cleared.
-  LDA.l HorseGame_TargetCount : BEQ .clear_done
-  LDA.l HorseGame_TargetsLeft : BNE .clear_done
-    LDA.b #$0F : STA.w $012F
-  .clear_done
-
+  ; Clear state and reveal course before granting rewards.
   LDA.b #$00 : STA.l HorseGame_TransStep
   STA.l HorseGame_State
   LDA.b #$0F : STA.b $13
+
+  ; Award +50 Rupees + first-clear Piece of Heart ($17) when course targets were cleared.
+  LDA.l HorseGame_TargetCount : BEQ .clear_done
+  LDA.l HorseGame_TargetsLeft : BNE .clear_done
+    LDA.b #$0F : STA.w $012F
+    REP #$20
+    LDA.l $7EF360 : CLC : ADC.w #!HorseGame_RupeeReward
+    CMP.w #$03E7 : BCC +
+      LDA.w #$03E7
+    +
+    STA.l $7EF360
+    SEP #$20
+    LDA.l SideQuestProg2 : AND.b #!SideQuest2_RanchArchery : BNE .clear_done
+      LDA.l SideQuestProg2 : ORA.b #!SideQuest2_RanchArchery : STA.l SideQuestProg2
+      LDA.l $7EF280 : ORA.b #$40 : STA.l $7EF280
+      STZ.w $02E9
+      LDY.b #$17
+      JSL !HorseGame_ReceiveItem
+      SEP #$30
+      LDA.b #$00 : PHA : PLB
+  .clear_done
   RTS
 }
 
@@ -465,12 +511,33 @@ HorseGame_KidStartCheck:
   .start
   LDA.b #$80 : TRB.b $F6
   LDA.b #$40 : STA.w $0F10, X
-  LDA.b #$00 : STA.l HorseGame_CourseId : STA.l HorseGame_TransStep
-  LDA.b #$01 : STA.l HorseGame_State
+  LDA.l $7EF340 : BEQ .no_bow
+  LDA.l $7EF377 : BEQ .no_bow
+    LDA.b #$04 : STA.l HorseGame_State
+    STZ.w $1CE8
+    LDA.b #!HorseGame_MsgKidMountedPrompt&$FF
+    LDY.b #!HorseGame_MsgKidMountedPrompt>>8
+    JSL !HorseGame_ShowMessageUncond
+    PLY : PLX
+    RTL
+  .no_bow
+  LDA.b #!HorseGame_MsgKidMountedNoBow&$FF
+  LDY.b #!HorseGame_MsgKidMountedNoBow>>8
+  JSL !HorseGame_ShowMessageUncond
   PLY : PLX
   RTL
 }
 
 HorseGame_End:
 assert pc() <= $53EFF0, "Horse minigame engine exceeded bank53 allocation ($53E900-$53EFF0)"
+pullpc
+
+pushpc
+; USDASM Sprite_3C_KidInKak .dont_discuss_quest ($05FF96): after the Ocarina
+; ($7EF34C >= 1), replace vanilla $0148 hotel hint with $0227 (sister cured +
+; Epona's Song mounted target practice invitation).
+org $05FF96 ; @hook module=Masks name=HorseGame_KidPostOcarinaMsg kind=data
+  LDA.b #!HorseGame_MsgKidOnFoot&$FF
+  LDY.b #!HorseGame_MsgKidOnFoot>>8
+assert pc() == $05FF9A
 pullpc

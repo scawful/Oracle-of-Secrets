@@ -533,9 +533,7 @@ if !ENABLE_HORSE_FORM == 1
     LDA.b $F6 : AND.b #$10 : BEQ ++
       LDA.b #$10 : TRB.b $F6
       LDA.l Horse_State : BNE ++
-if !ENABLE_HORSE_MINIGAME == 1
       LDA.l HorseGame_State : BNE ++
-endif
         JSL HorseForm_Dismount
         LDA.b #$01
         RTL

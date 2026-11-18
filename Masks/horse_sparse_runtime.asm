@@ -27,9 +27,11 @@ Horse_SlotsBusy:
     ; Ancilla $1D (dash tremor) is the long-jump landing shake: BG offsets
     ; only, no graphics, so it must not force a silent dismount.
     CMP.b #$1D : BEQ .next_ancilla
-    ; A rider's own arrows ($09 in flight, $0A stuck in a wall) must not
-    ; unseat them (mounted bow). Unmounted, an arrow still reports busy.
+    ; A rider's own arrows ($09 in flight, $0A stuck in a wall) and item
+    ; receipts ($22, VRAM $40E0/$41E0 disjoint from horse slots) must not
+    ; unseat them (mounted bow / minigame reward). Unmounted, they still report busy.
     CMP.b #$09 : BEQ .arrow
+    CMP.b #$22 : BEQ .arrow
     CMP.b #$0A : BNE .busy
     .arrow
     LDA.l $7E02B2 : CMP.b #$09 : BNE .busy ; CurrentMask != horse
