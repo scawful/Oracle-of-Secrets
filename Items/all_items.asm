@@ -396,6 +396,8 @@ if !DISABLE_SPRITES == 0
 incsrc "Sprites/NPCs/village_animals.asm"
 endif
 
+incsrc "Items/mirror_shield_palette.asm"
+
 ; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
 print "Bank2B Free Space: ", dec($2BE000-pc()), " bytes"
 assert pc() <= $2BF000, "Items bank $2B reached the dream entry FX region ($2BF000)"
