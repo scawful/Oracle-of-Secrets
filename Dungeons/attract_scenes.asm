@@ -48,11 +48,11 @@ if !ENABLE_CUSTOM_ATTRACT_SEQUENCE == 1
   ; Attract_Initialize (vanilla code, not reassembled here).
   org $0CEE58 : dw $01C0 ; @hook module=Dungeons name=AttractStorybookMessage kind=data
   org $0CEE62 : dw $08A8 ; @hook module=Dungeons name=AttractStorybookFrames kind=data
-  ; AttractScene_WorldMap ($0CEF23-$0CEF38): zoom onto Tail Pond ($2D).
-  org $0CEF24 : dw $0130 ; @hook module=Dungeons name=AttractMapZoomM7X kind=data
-  org $0CEF2A : dw $0130 ; @hook module=Dungeons name=AttractMapZoomM7Y kind=data
-  org $0CEF30 : dw $00B0 ; @hook module=Dungeons name=AttractMapZoomHOFS kind=data
-  org $0CEF36 : dw $0103 ; @hook module=Dungeons name=AttractMapZoomVOFS kind=data
+  ; AttractScene_WorldMap ($0CEF23-$0CEF38): zoom onto Kalyxo Castle (area $0B). $063A=M7Y, $0638=M7X; M7 = 128 + world_px/16; HOFS = M7X-$80, VOFS = M7Y-$2D (vanilla framing).
+  org $0CEF24 : dw $00AE ; @hook module=Dungeons name=AttractMapZoomM7Y kind=data
+  org $0CEF2A : dw $00FE ; @hook module=Dungeons name=AttractMapZoomM7X kind=data
+  org $0CEF30 : dw $007E ; @hook module=Dungeons name=AttractMapZoomHOFS kind=data
+  org $0CEF36 : dw $0081 ; @hook module=Dungeons name=AttractMapZoomVOFS kind=data
   pullpc
 else
   !AttractMsg_Throne    = $13
