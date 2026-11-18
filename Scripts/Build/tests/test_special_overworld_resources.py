@@ -3,8 +3,12 @@ import copy
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
+import re
+import shutil
 import struct
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -856,12 +860,119 @@ class ExperimentalPageTile16ResourcesTest(unittest.TestCase):
 
 class SkyCloudOverlayConstantTest(unittest.TestCase):
     def test_asm_constant_matches_build_constant(self):
-        import re
         asm = (Path(__file__).resolve().parents[3] / 'Overworld' / 'ZSCustomOverworld.asm').read_text()
         found = re.findall(r'^!SKY_CLOUD_OVERLAY = \$([0-9A-Fa-f]+)\s*$', asm, re.M)
         # Flag-on branch first, flag-off fallback ($9C, the pre-move ID) second.
         self.assertEqual([int(v, 16) for v in found], [R.SKY_CLOUD_OVERLAY, 0x9C])
         self.assertNotEqual(R.SKY_CLOUD_OVERLAY, 0x9C)  # $9C is reserved for the Fortress
+
+
+class TreeHouseCanopyOverlayByteTest(unittest.TestCase):
+    """Ensure Tree House exit room $0181 loads tree canopy $9E at $02:AF9C (PC 0x012F9C) even when Sky flags are off."""
+
+    TREE_HOUSE_OVERLAY_SNES = 0x02AF9C
+    TREE_HOUSE_OVERLAY_PC = 0x012F9C
+    TREE_HOUSE_CANOPY_ID = 0x9E
+    TREE_HOUSE_BRANCH_BYTES = bytes.fromhex('A29E00A5A0C98101F0F1')
+    ASSEMBLER = shutil.which('asar')
+
+    def _zs_text(self):
+        return (Path(__file__).resolve().parents[3] / 'Overworld' / 'ZSCustomOverworld.asm').read_text()
+
+    def _assert_rom_branch(self, image: bytes, context: str):
+        if len(image) % 0x8000 == 0x200:
+            image = image[0x200:]
+        self.assertEqual(R.native.pc(self.TREE_HOUSE_OVERLAY_SNES), self.TREE_HOUSE_OVERLAY_PC)
+        self.assertEqual(
+            image[self.TREE_HOUSE_OVERLAY_PC],
+            self.TREE_HOUSE_CANOPY_ID,
+            f'{context}: expected PC 0x012F9C ($02:AF9C) == 0x9E, got 0x{image[self.TREE_HOUSE_OVERLAY_PC]:02X}',
+        )
+        self.assertEqual(
+            image[self.TREE_HOUSE_OVERLAY_PC - 1:self.TREE_HOUSE_OVERLAY_PC + 9],
+            self.TREE_HOUSE_BRANCH_BYTES,
+            f'{context}: unexpected instruction sequence around PC 0x012F9B..0x012FA4',
+        )
+
+    def test_source_tree_house_branch_unconditionally_loads_canopy(self):
+        zs = self._zs_text()
+        fn_start = zs.index('org $02AF58 ; $012F58')
+        fn_end = zs.index('assert pc() <= $02B0D2 ; $0130D2', fn_start)
+        body = zs[fn_start:fn_end]
+        depth = 0
+        pending_ldx = None
+        matched_0181 = None
+        for raw_line in body.splitlines():
+            stripped = raw_line.split(';', 1)[0].strip()
+            if not stripped:
+                continue
+            if re.match(r'^if\b', stripped):
+                depth += 1
+                continue
+            if re.match(r'^endif\b', stripped):
+                depth -= 1
+                self.assertGreaterEqual(depth, 0)
+                continue
+            ldx_match = re.match(r'^LDX\.w\s+#\$([0-9A-Fa-f]{4})$', stripped)
+            if ldx_match:
+                pending_ldx = (int(ldx_match.group(1), 16), depth)
+                continue
+            if re.match(r'^LDA\.b\s+\$A0\s*:\s*CMP\.w\s+#\$0181\s*:\s*BEQ\s+\.loadOverlayShortcut$', stripped):
+                matched_0181 = (pending_ldx, depth)
+                break
+        self.assertIsNotNone(matched_0181, 'Missing $0181 shortcut branch in Overworld_ReloadSubscreenOverlay_Interupt')
+        (ldx_info, cmp_depth) = matched_0181
+        self.assertIsNotNone(ldx_info, 'Missing LDX.w immediate before CMP.w #$0181')
+        ldx_val, ldx_depth = ldx_info
+        self.assertEqual(ldx_depth, 0, 'Tree House $0181 LDX.w must be unconditional (active when flag-off)')
+        self.assertEqual(cmp_depth, 0, 'Tree House $0181 CMP/BEQ must be unconditional (active when flag-off)')
+        self.assertEqual(ldx_val, self.TREE_HOUSE_CANOPY_ID)
+
+    @unittest.skipUnless(ASSEMBLER, 'Asar required for compiled Overworld_ReloadSubscreenOverlay_Interupt check')
+    def test_flag_off_assembled_pc_012f9c_is_9e(self):
+        zs = self._zs_text()
+        const_marker = 'if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1\n!SKY_CLOUD_OVERLAY'
+        const_block = ''
+        if const_marker in zs:
+            const_start = zs.index(const_marker)
+            const_end = zs.index('endif\n', const_start) + len('endif\n')
+            const_block = zs[const_start:const_end]
+        fn_start = zs.index('org $02AF58 ; $012F58')
+        fn_end = zs.index('assert pc() <= $02B0D2 ; $0130D2', fn_start) + len('assert pc() <= $02B0D2 ; $0130D2')
+        fn_block = zs[fn_start:fn_end]
+
+        for sky_flag, lyra_fix in ((0, 1), (0, 0), (1, 1)):
+            with self.subTest(sky_flag=sky_flag, lyra_fix=lyra_fix), tempfile.TemporaryDirectory() as tmp:
+                tmp_dir = Path(tmp)
+                rom_path = tmp_dir / 'probe.sfc'
+                asm_path = tmp_dir / 'probe.asm'
+                rom_path.write_bytes(b'\x00' * 0x200000)
+                asm_path.write_text(
+                    'lorom\n'
+                    f'!ENABLE_SKY_OVERLAY_SOURCE_PROFILE = {sky_flag}\n'
+                    f'!ENABLE_LYRA_OVERLAY_FIX = {lyra_fix}\n'
+                    '!ENABLE_PART0_STORM = 1\n'
+                    'Oracle_LyraOverlay_UseTablePath = $348000\n'
+                    'Oracle_Part0Storm_CarryClearIfStorm = $348010\n'
+                    'ReadOverlayArray = $288000\n'
+                    'Pool_EnableRainMireEvent = $288010\n'
+                    'Pool_EnableBeginningRain = $288020\n'
+                    'LoadSubscreenOverlay = $02B0D2\n'
+                    f'{const_block}\n'
+                    f'{fn_block}\n'
+                )
+                proc = subprocess.run(
+                    [self.ASSEMBLER, '--no-title-check', '--fix-checksum=off', str(asm_path), str(rom_path)],
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+                self._assert_rom_branch(rom_path.read_bytes(), f'assembled(sky_flag={sky_flag}, lyra_fix={lyra_fix})')
+
+    @unittest.skipUnless(os.environ.get('OOS_TEST_ROM'), 'Set OOS_TEST_ROM to a built oos168x.sfc')
+    def test_built_rom_pc_012f9c_is_9e(self):
+        rom_path = Path(os.environ['OOS_TEST_ROM'])
+        self._assert_rom_branch(rom_path.read_bytes(), f'built_rom({rom_path.name})')
 
 
 if __name__ == '__main__':
