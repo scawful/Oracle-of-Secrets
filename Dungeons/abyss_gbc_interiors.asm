@@ -1,5 +1,5 @@
 ; =========================================================
-; Eon Abyss GBC interiors (flag !ENABLE_ABYSS_GBC_INTERIORS, default 0).
+; Eon Abyss GBC interiors.
 ;
 ; Indoors in the Abyss ($7EF3CA != 0), rooms listed in AbyssGbc_RoomStyle draw
 ; GBC-style art:

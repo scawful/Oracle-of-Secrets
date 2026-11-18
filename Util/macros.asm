@@ -65,9 +65,6 @@ endif
 ; Per-dungeon wall object tile patterns (Dungeons/wall_profile_selector.asm);
 ; kit rows/palettes route per room (H3). Default on (scawful 2026-11-10).
 !ENABLE_WALL_PROFILE_SELECTOR       = 1
-; Eon Abyss GBC interiors (Dungeons/abyss_gbc_interiors.asm): per-room GBC sheet
-; remap + palette overwrite in the Abyss. Prototype, off until scawful reviews.
-!ENABLE_ABYSS_GBC_INTERIORS         = 0
 !ENABLE_WATER_GATE_HOOKS            = 1
 !ENABLE_WATER_GATE_ROOMENTRY_RESTORE = 0
 !ENABLE_WATER_GATE_OVERLAY_REDIRECT = 1
