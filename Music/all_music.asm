@@ -85,3 +85,8 @@ org $1B8004+$1C : dw uwmain_aram(StoneTowerTempleTheme)   ; UW $0F
 ; D8 Sky (entrance $29, room $90): vanilla dungeon $11 -> Stone Tower $0F.
 assert read1($0F9F00+$29) == $11, "entrance $29 song changed in the base ROM"
 org $0F9F00+$29 : db $0F
+
+; Fortress of Secrets (entrance $37, room $00C): Color Dungeon $16 -> Z1
+; Dungeon Theme $0D. The planned move to OW $4B will need this byte re-checked.
+assert read1($0F9F00+$37) == $16, "entrance $37 song changed in the base ROM"
+org $0F9F00+$37 : db $0D
