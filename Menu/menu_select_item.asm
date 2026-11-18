@@ -272,6 +272,7 @@ if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
 endif
 if !ENABLE_GOLDSTAR_CELL == 1
   JSR Menu_SplitValidateSelection
+  LDA.w $0202 : STA.l MenuFlow_ItemsCursor
   STZ.w $0207
   LDA.b #$04 : STA.w $0200
   RTS
@@ -298,6 +299,7 @@ endif
     ; available but one was still selected. This should
     ; never happen under normal vanilla circumstances.
     STZ.w $0202
+    LDA.b #$00 : STA.l MenuFlow_ItemsCursor
 
     STZ   $0207
     LDA.b #$04
@@ -312,6 +314,7 @@ endif
   LDA.l Menu_AddressLong, X : TAX
   LDA.l $7EF300, X
   CMP.b #$01 : BCC .lookForAlternateItem
+    LDA.w $0202 : STA.l MenuFlow_ItemsCursor
     STZ   $0207
     LDA.b #$04
     STA.w $0200

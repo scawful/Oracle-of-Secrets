@@ -170,7 +170,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "a81d67add40edd0067dd181f48ed215bc4258abdf0c95ed16faff011b5410303"
+      "sha256": "530c1ba5578102970d64c82a5167071bed47c5ebbc46505646ca770970ad819b"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -3242,7 +3242,7 @@
       "status": "shared",
       "condition": {},
       "lifetime": "2-item binding menu-session byte at vanilla-unused $7E02B7 (usdasm UNUSED_7E02B7), directly after ItemBindingButton. Holds the Y item while the menu cursor browses in $0202.",
-      "reset": "Menu_Bindings_Open writes it on every menu open (Menu_InitGraphics); Menu_Bindings_Close copies it to $0202 on close.",
+      "reset": "Menu_Bindings_Open writes it on every menu open (Menu_InitGraphics) before restoring MenuFlow_ItemsCursor to $0202; Menu_Bindings_Close copies it back to $0202 on close.",
       "save": "Volatile WRAM; never saved; never read in gameplay.",
       "provenance": [
         "shared:Core/symbols.asm"
@@ -3265,7 +3265,7 @@
       "condition": {
         "ENABLE_MENU_MAP_TRAVEL": 1
       },
-      "lifetime": "Menu-session bytes at vanilla-unused $7E02BA-$7E02BD (usdasm UNUSED_7E02BA-BE): EquipCursor, MapCursor, CrossRow, CrossDir. Read and written only by Menu/menu_cursor_flow.asm. $7E02BE is free since the tunic popup was removed (2026-11-18).",
+      "lifetime": "Menu-session bytes at vanilla-unused $7E02BA-$7E02BD (usdasm UNUSED_7E02BA-BE): EquipCursor, MapCursor, CrossRow, CrossDir. Read and written only by Menu/menu_cursor_flow.asm.",
       "reset": "Zero at boot. MenuFlow_UploadRight clears CrossRow on every menu open; the two cursors persist across opens until power-off by design.",
       "save": "Volatile WRAM; never saved; never read in gameplay.",
       "provenance": [
@@ -3276,6 +3276,28 @@
       "binding": {
         "source": "shared:Core/symbols.asm",
         "symbol": "MenuFlow_EquipCursor",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "MenuFlow_ItemsCursor",
+      "owner": "Items page cursor memory across menu opens",
+      "space": "wram",
+      "base": 8258238,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Menu-session byte at vanilla-unused $7E02BE (usdasm UNUSED_7E02BE, freed when the tunic popup was removed). Stores the last valid Items grid item ID ($0202) while the menu is open or crossed into.",
+      "reset": "Zero at boot. Persists across menu opens until power-off; Menu_Bindings_Open revalidates ownership against the active save and clears it to 0 if unowned.",
+      "save": "Volatile WRAM; never saved; never read in gameplay.",
+      "provenance": [
+        "shared:Core/symbols.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "MenuFlow_ItemsCursor",
         "bank00_mirror": false
       }
     },

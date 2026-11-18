@@ -25,11 +25,28 @@
 !MB_YMarker = $3C60                 ; corner $060, palette 7 (green), priority
 !MB_XMarker = $2C60                 ; corner $060, palette 3 (blue), priority
 
-; Menu_InitGraphics (menu open). Any widths; keeps A/X/Y and P.
+; Menu_InitGraphics (menu open). Saves the equipped Y item, then restores
+; MenuFlow_ItemsCursor to $0202 if owned on the Items grid.
+; Any widths; keeps A/X/Y and P.
 Menu_Bindings_Open:
 {
   PHP : SEP #$20 : PHA
   LDA.w $0202 : STA.l ItemBindingMenuY
+  LDA.l MenuFlow_ItemsCursor : BEQ .keep
+if !ENABLE_MENU_PAGE3 == 1 || !ENABLE_GOLDSTAR_CELL == 1
+  CMP.b #$13 : BCC .check_garo
+  CMP.b #$18 : BCC .clear
+.check_garo
+endif
+if !ENABLE_GOLDSTAR_CELL == 1
+  CMP.b #$1E : BEQ .clear
+endif
+  JSR ItemBindings_ValidateY : BCC .clear
+  STA.w $0202
+  BRA .keep
+.clear
+  LDA.b #$00 : STA.l MenuFlow_ItemsCursor
+.keep
   PLA : PLP : RTL
 }
 
@@ -89,7 +106,9 @@ Menu_Bindings_Input:
 ; Menu_ItemScreen after the cursor draw, any widths. Keeps P; destroys A/X.
 Menu_Bindings_DrawMarkers:
 {
-  PHP : REP #$30
+  PHP : SEP #$20
+  LDA.w $0202 : STA.l MenuFlow_ItemsCursor
+  REP #$30
   ; Full brackets (corners + side lines, like the gray cursor): Y green,
   ; X blue. Cells are 3 tiles apart across and down and the brackets 4x4,
   ; so neighbour cells share a column or row of tiles; whichever mark is

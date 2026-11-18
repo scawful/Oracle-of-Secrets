@@ -152,7 +152,6 @@ endif
 if !ENABLE_MASK_R_BINDING == 1
   JSL MaskBinding_MigrateSelection
 endif
-  JSL Menu_Bindings_Open                ; Y item kept apart from the cursor
   LDA.w $0780 : STA.w $00
 if !ENABLE_PORTAL_ROD_CELL == 1
   JSR Menu_PortalRod_SyncOwned
@@ -182,6 +181,7 @@ endif
   STZ.w $037A ; USEY2
   STZ.w $0301 ; USEY1
   STZ.w $020C ; Stats Screen Cursor Index
+  JSL Menu_Bindings_Open                ; Y item kept apart from the cursor
   INC $0200
 }
 
