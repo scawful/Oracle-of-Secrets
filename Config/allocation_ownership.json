@@ -50,7 +50,7 @@
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
       "path": "Items/magic_rings.asm",
-      "sha256": "3541606cc802c1f717af2c4904fa7a48aefff98801c11a164113652940e0bee2"
+      "sha256": "773f194b103fa7374fbed22bba0522f7e4b8190e658df7ff123a26553b66a14b"
     },
     "pending_rc:Core/sram.asm": {
       "source_set": "pending_rc",
@@ -265,7 +265,7 @@
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
       "path": "Sprites/all_sprites.asm",
-      "sha256": "908d77a4a367a211504ac3d35567719ad5ae10c1a2d5a8c64c9a467ae1be545e"
+      "sha256": "a5cdf0f86c9397145da7c5a534ab998ea4d1239dd2825c760adaf095e6ceda32"
     },
     "shared:Sprites/Objects/ice_block.asm": {
       "source_set": "shared",
@@ -335,12 +335,12 @@
     "shared:Masks/horse_form.asm": {
       "source_set": "shared",
       "path": "Masks/horse_form.asm",
-      "sha256": "ffe329702c520ec00d400f9246713134d23ff0f47ed68d6863b04bb9dcd55bb8"
+      "sha256": "544ad5460c6c4d8258692ea075bf57c48ad8e0249d9bbaf83f063822747ba50d"
     },
     "shared:Sprites/NPCs/horse.asm": {
       "source_set": "shared",
       "path": "Sprites/NPCs/horse.asm",
-      "sha256": "a742444e84e78ded36707c8651201ed9c625c938a7117c3e8d43bf8b8532a000"
+      "sha256": "bb6c2f82ba42b940a701a19e8f190c902c9739005fd3088fa99c1dbb8a3ca322"
     },
     "shared:Masks/horse_sparse_runtime.asm": {
       "source_set": "shared",
@@ -350,7 +350,7 @@
     "shared:Masks/mask_binding.asm": {
       "source_set": "shared",
       "path": "Masks/mask_binding.asm",
-      "sha256": "f978e99e0b4b68aec7a4f93e4e7c8677f8dedc75a08818b60a51ec6540701859"
+      "sha256": "56fc4d6b89179b5cb65f96c828e859d74fc058d051f6b611fafc5d84b2455713"
     },
     "shared:Overworld/entrances.asm": {
       "source_set": "shared",
@@ -360,12 +360,12 @@
     "shared:Masks/horse_ground_clearance.asm": {
       "source_set": "shared",
       "path": "Masks/horse_ground_clearance.asm",
-      "sha256": "d8ea999e6be9b310de22ef65f9ff09665e37b3ce73c5eb380cb7debc5c306212"
+      "sha256": "53a9237e9fc1f254a3e934179d879939e5ee3b0c0c66f765918ada6d195596d7"
     },
     "shared:Items/all_items.asm": {
       "source_set": "shared",
       "path": "Items/all_items.asm",
-      "sha256": "3ac1bf089852c976ec8c9bddf3c2c3fb5495d7ee5f37fa1a687e62380b882507"
+      "sha256": "e11a6c3e4281977f604b409531e247fbdd4d34352de178e6e26b5c3f42aa406e"
     },
     "shared:Masks/horse_park_anywhere.asm": {
       "source_set": "shared",

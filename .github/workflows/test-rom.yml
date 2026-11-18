@@ -310,6 +310,35 @@ jobs:
           printf '\x0B\x00\x0E\x00\x14\x00\x1A\x00\x1C\x00\x1E\x00\x3C\x00\x3F\x00\x45\x00\x47\x00\x48\x00\x49\x00\x56\x00\x59\x00\x5F\x00\x66\x00\x67\x00\x69\x00\x6E\x00\x71\x00\x73\x00\x74\x00\x75\x00\x76\x00\x77\x00\x7B\x00\x7D\x00\x7E\x00\x7F\x00\x83\x00\x84\x00\x85\x00\x86\x00\x87\x00\x89\x00\x8C\x00\x8E\x00\x8F\x00\xAC\x00\xB1\x00\xB4\x00\xB5\x00\xB9\x00\xC4\x00\xC6\x00\xC7\x00\xCB\x00\xD6\x00\xD7\x00\xD8\x00\xDE\x00\x0B\x01' | dd of=test.sfc bs=1 seek=$((0x190C)) conv=notrunc 2>/dev/null  # $00990C RoomsWithPitDamage base table (52 words)
           printf '\xA2\x70\x00\xA5\xA0\xDF\x0C\x99\x00' | dd of=test.sfc bs=1 seek=$((0x394A5)) conv=notrunc 2>/dev/null  # $0794A5 Pit-damage scan LDX #imm + CMP.l table
 
+          # Horse form (default-on) and Archery ring prize synthetic preimages.
+          python3 - <<'PY'
+          import re
+          src = open('Masks/gfx/horse_sparse_tables.asm').read()
+          pat = re.compile(r'assert\s+read1\(\$([0-9A-Fa-f]{6})(?:\+(\$[0-9A-Fa-f]+|\d+))?\)\s*==\s*\$([0-9A-Fa-f]{2})\b')
+          count = 0
+          with open('test.sfc', 'r+b') as f:
+              for line in src.splitlines():
+                  code = line.split(';')[0]
+                  if 'assert read' not in code:
+                      continue
+                  m = pat.search(code)
+                  assert m, f'unparsed horse_sparse_tables guard: {line}'
+                  addr = int(m.group(1), 16) + (int(m.group(2)[1:], 16) if m.group(2) and m.group(2).startswith('$') else int(m.group(2) or '0'))
+                  bank = (addr >> 16) & 0x7F
+                  assert bank < 0x7E and (addr & 0xFFFF) >= 0x8000, f'non-LoROM ${addr:06X}'
+                  f.seek(bank * 0x8000 + (addr & 0x7FFF))
+                  f.write(bytes([int(m.group(3), 16)]))
+                  count += 1
+          assert count >= 1780, f'expected >=1780 horse sparse guards, saw {count}'
+          print(f'horse sparse preimage seed: {count} guards')
+          PY
+          printf '\x22\xB5\x80\x00' | dd of=test.sfc bs=1 seek=$((0x00056)) conv=notrunc 2>/dev/null  # $008056 JSL Module_MainRouting (Masks/horse_form.asm)
+          printf '\xA0\x00\x41\x8C\x16\x21' | dd of=test.sfc bs=1 seek=$((0x00A0C)) conv=notrunc 2>/dev/null  # $008A0C Horse native Link prefix hook (Masks/horse_form.asm)
+          printf '\xA2\x00\x04' | dd of=test.sfc bs=1 seek=$((0x00B5C)) conv=notrunc 2>/dev/null  # $008B5C animated tile DMA tail (Masks/horse_form.asm)
+          printf '\xA5\x72\x91\x90\xC8' | dd of=test.sfc bs=1 seek=$((0x4241B)) conv=notrunc 2>/dev/null  # $08A41B arrow char store (Masks/horse_sparse_runtime.asm)
+          printf '\xA0\x00\xA5\x11' | dd of=test.sfc bs=1 seek=$((0x6A191)) conv=notrunc 2>/dev/null  # $0DA191 PlayerOam_Main entry (Masks/horse_form.asm)
+          printf '\xA9\x00\xEB\xB9\xCE\x83' | dd of=test.sfc bs=1 seek=$((0x28436)) conv=notrunc 2>/dev/null  # $058436 ArcheryGame_Octo payout load (Items/magic_rings.asm)
+
           # Grow to the real 4 MiB base size after the seeders, which validate the
           # 2 MiB image. Keeps zero-filled bank $50 in bounds for the D4 water slot
           # guard at $508000-$50A000 (PC $280000).

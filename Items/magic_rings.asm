@@ -125,6 +125,44 @@ MagicRing_GrantUnfound:
 }
 endif
 
+; Archery mini game ring prize (sprite $65 ArcheryGame, room $0111).
+; A game is 5 shots for 20 rupees. $0B88 is the hit streak: the host zeroes
+; it when it takes the money, a wall or a non-target hit zeroes it, and the
+; host deletes arrows fired without credits, so $0B88 = 5 means all 5 shots
+; of this game hit a target. The vanilla prize index (Y) cannot stand in for
+; the streak: ArcheryGame_Octo forces it to 6 once one target has 5 hits.
+; The ring is given once: the ring bit in FOUNDRINGS or MAGICRINGS is the
+; record. It arrives as a found ring; Vasu's appraisal makes it owned.
+!ArcheryRing_Streak   = $05   ; hits in a row needed (1 to 5)
+!ArcheryRing_PrizeBit = $20   ; PLACEHOLDER reward: Power Ring (..pa hlbs)
+!ArcheryRing_SFX3     = $0F   ; SFX3.0F item fanfare, played with the grant
+
+ArcheryGame_PrizesM1 = $0583CE ; vanilla ArcheryGame_Prizes-1 (rupees by Y)
+
+pushpc
+; ArcheryGame_Octo payout. Replaces 6 bytes:
+;   LDA.b #$00 : XBA : LDA.w ArcheryGame_Prizes-1, Y
+org $058436 ; @hook module=Items name=ArcheryGame_RingPrize kind=jsl target=ArcheryGame_RingPrize
+  assert read4($058436) == $B9EB00A9 && read2($05843A) == $83CE, "Expected vanilla ArcheryGame_Octo payout load at $058436"
+  JSL ArcheryGame_RingPrize
+  NOP : NOP
+pullpc
+
+; In: M=8, X=8, DB=$05, X = target sprite slot, Y = prize index (1-9).
+; Out: B = 0, A = rupee prize for Y, as the replaced code. Keeps X, Y.
+ArcheryGame_RingPrize:
+{
+  LDA.w $0B88 : CMP.b #!ArcheryRing_Streak : BCC .rupees
+  LDA.l FOUNDRINGS : ORA.l MAGICRINGS
+  AND.b #!ArcheryRing_PrizeBit : BNE .rupees
+    LDA.l FOUNDRINGS : ORA.b #!ArcheryRing_PrizeBit : STA.l FOUNDRINGS
+    LDA.b #!ArcheryRing_SFX3 : STA.w $012F
+  .rupees
+  LDA.b #$00 : XBA
+  LDA.w ArcheryGame_PrizesM1, Y
+  RTL
+}
+
 pushpc
 ; Sprite_ApplyCalculatedDamage
 org $06EDC0 ; @hook module=Items
