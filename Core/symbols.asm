@@ -156,6 +156,14 @@ HudCornerBuffer    = $7EC84A
 HudCornerBufferEnd = HudCornerBuffer+14
 assert HudCornerBufferEnd <= $7EC880
 
+; Burnable doorway webs (Sprites/Objects/dungeon_web.asm). 16-bit per-room
+; mask across all 320 underworld rooms ($000-$13F) in vanilla-free UNUSED_7EC900
+; after music_cache_reservation ($7EC900-$7EC9BF) and BombchuPackPending ($7EC9E0).
+; Cleared on file load ($02816C) and Overworld load ($0283EA); not saved to SRAM.
+DungeonWeb_BurnedMask    = $7ECA00
+DungeonWeb_BurnedMaskEnd = DungeonWeb_BurnedMask+$0280
+assert DungeonWeb_BurnedMaskEnd == $7ECC80
+
 ; Map page: the map request made on the page, run once by Menu_Exit.
 ; Separate conditional owner after the horse tail. $7E1EFE is Horse_AnchorArea
 ; when park-anywhere is on (the menu cleared her park on every open), so this

@@ -496,3 +496,8 @@ endif
 
 ; Default-off D8 Farore room graphics support.
 incsrc "Sprites/NPCs/farore_d8_graphics.asm"
+
+; Burnable doorway web ($B7): owns fixed bank $36 slot $36F200-$36F7FF and restores cursor.
+%log_start("dungeon_web", !LOG_SPRITES)
+incsrc "Sprites/Objects/dungeon_web.asm"
+%log_end("dungeon_web", !LOG_SPRITES)

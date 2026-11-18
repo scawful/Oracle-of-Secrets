@@ -301,6 +301,7 @@ Supply_ProcessPendingExitAction:
 }
 
 incsrc "Items/deku_stick.asm"
+incsrc "Items/fire_burn_bushes.asm"
 
 ; Dedicated receipt $4C; all existing receipt IDs retain their native rows.
 incsrc "Items/bombchu_receipt.asm"

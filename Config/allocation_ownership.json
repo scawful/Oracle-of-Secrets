@@ -170,7 +170,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "530c1ba5578102970d64c82a5167071bed47c5ebbc46505646ca770970ad819b"
+      "sha256": "64a3476f36d71d8ed9acc9fefc830ed99affffa87a83bf46f32cba27e7518208"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -265,7 +265,7 @@
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
       "path": "Sprites/all_sprites.asm",
-      "sha256": "4829f11323e8ef793cbaed71e02396a79517f6919868909ea13c367e46a6316e"
+      "sha256": "db301c89e8858df0297b364856dcb6f7c1e8b80e6ed8e00f05a2a0b75463ac85"
     },
     "shared:Sprites/Objects/ice_block.asm": {
       "source_set": "shared",
@@ -365,7 +365,7 @@
     "shared:Items/all_items.asm": {
       "source_set": "shared",
       "path": "Items/all_items.asm",
-      "sha256": "91acbb3e8ec776cf82cf818986e8b9536c26d900287d0e73a57c2471f69ff48d"
+      "sha256": "caa5a3596bf9d85e88465589bd9adce2b764e5028da3460cb9d03648aedd7e05"
     },
     "shared:Masks/horse_park_anywhere.asm": {
       "source_set": "shared",
@@ -396,6 +396,16 @@
       "source_set": "shared",
       "path": "Dungeons/generated/room_state_table.asm",
       "sha256": "47b045a4762066f45d61ef6a8c5c089d0d8c87a12fc2c7e510d61a945214c8e7"
+    },
+    "shared:Sprites/Objects/dungeon_web.asm": {
+      "source_set": "shared",
+      "path": "Sprites/Objects/dungeon_web.asm",
+      "sha256": "4ce9ae81cf14c3e24e2a043912a56a99ec453fb058605f7cb5387911de248d1c"
+    },
+    "shared:Items/fire_burn_bushes.asm": {
+      "source_set": "shared",
+      "path": "Items/fire_burn_bushes.asm",
+      "sha256": "21d690a917bb66bcdd29aac3d7e63dde47860146dd9de16f90f5ef11be70719e"
     }
   },
   "claims": [
@@ -3322,6 +3332,83 @@
         "source": "shared:Core/symbols.asm",
         "symbol": "HudCornerBuffer"
       }
+    },
+    {
+      "id": "dungeon_web_burned_mask",
+      "owner": "Burnable doorway web per-room visit bitmask",
+      "space": "wram",
+      "base": 8309248,
+      "size": 640,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Active dungeon visit: 16-bit bitmask per underworld room ($000-$13F) in vanilla-free UNUSED_7EC900 after music_cache_reservation ($7EC900-$7EC9BF) and BombchuPackPending ($7EC9E0).",
+      "reset": "DungeonWeb_ClearAll zeroes all 640 bytes on file load (Module05_LoadFile $02816C) and Overworld load (Module08_00_LoadProperties $0283EA).",
+      "save": "Volatile WRAM; not saved to SRAM.",
+      "provenance": [
+        "shared:Core/symbols.asm",
+        "shared:Sprites/Objects/dungeon_web.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "DungeonWeb_BurnedMask    = $7ECA00",
+        "STA.l DungeonWeb_BurnedMask, X"
+      ],
+      "count": 320,
+      "stride": 2,
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "DungeonWeb_BurnedMask",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "dungeon_web_code",
+      "owner": "Burnable doorway web compiled sprite routines and 4bpp common-sprite tiles",
+      "space": "snes_rom",
+      "base": 3600896,
+      "size": 1536,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Compiled ROM code and 128-byte 4bpp tile payload in fixed Bank $36 slot $36F200-$36F7FF after Masks/zora_mask.asm ($36F030).",
+      "reset": "Build owns this slot; no runtime ROM writes.",
+      "save": "No SRAM format or room-data changes.",
+      "provenance": [
+        "shared:Sprites/all_sprites.asm",
+        "shared:Sprites/Objects/dungeon_web.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "org $36F200",
+        "DungeonWeb_CodeStart:",
+        "DungeonWeb_CodeEnd:"
+      ]
+    },
+    {
+      "id": "fire_burn_bushes_code",
+      "owner": "Overworld bush burning routines for Lit Deku Stick and Fire Rod",
+      "space": "snes_rom",
+      "base": 3602432,
+      "size": 768,
+      "status": "shared",
+      "condition": {
+        "DISABLE_ITEMS": 0
+      },
+      "lifetime": "Compiled ROM code and probe offset tables in fixed Bank $36 slot $36F800-$36FAFF after dungeon_web_code ($36F200-$36F7FF).",
+      "reset": "Build owns this slot; no runtime ROM writes.",
+      "save": "No SRAM format changes; reuses vanilla Overworld_MemorizeMap16Change.",
+      "provenance": [
+        "shared:Items/fire_burn_bushes.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "org $36F800",
+        "FireBurnBushes_CodeStart:",
+        "FireBurnBushes_CodeEnd:"
+      ]
     }
   ],
   "lifetime_aliases": [],

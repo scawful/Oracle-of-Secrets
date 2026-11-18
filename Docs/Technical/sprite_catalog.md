@@ -1,6 +1,6 @@
 # Oracle of Secrets - Sprite Catalog
 
-**Last Updated:** 2026-01-23
+**Last Updated:** 2026-11-18
 **Status:** Complete (initial pass)
 
 This document catalogs all custom sprites, their technical status, and known issues.
@@ -12,8 +12,8 @@ This document catalogs all custom sprites, their technical status, and known iss
 | Bosses | 12 | 9 | 3 | 0 |
 | Enemies | 16 | 9 | 7 | 1 |
 | NPCs | 26 | 21 | 4 | 1 |
-| Objects | 8 | 8 | 0 | 0 |
-| **Total** | **62** | **47** | **14** | **2** |
+| Objects | 9 | 9 | 0 | 0 |
+| **Total** | **63** | **48** | **14** | **2** |
 
 **Key Issues to Address:**
 - Prober logic bugs (Booki, Darknut, guards) - needs vanilla probe research
@@ -197,12 +197,13 @@ Several NPCs use a dispatcher pattern that routes to different behaviors:
 
 ---
 
-## Objects (8 files)
+## Objects (9 files)
 
 | Sprite | Status | Location | Purpose | Notes |
 |--------|--------|----------|---------|-------|
 | **Collectible** | ✅ Done | Various | Multi-item: Pineapple, Seashell, Sword/Shield, Rock Meat | AreaIndex routing (0x58=sword, 0x4B=sirloin) |
 | **Deku Leaf** | ✅ Done | Forest, Water | Platform + Whirlpool portal | Two modes: leaf ride (cape flag) + whirlpool warp |
+| **Dungeon Web** | ✅ Done | Dungeons (`$B7`) | Burnable doorway barrier (`0`=32x16 horiz, `1`=16x32 vert) | Burns from lit Deku Stick, Fire Rod, or Lamp; persists in WRAM (`$7ECA00`) until dungeon exit |
 | **Mine Switch** | ✅ Done | D6 (Goron Mines) | Lever toggle + Speed switch | SwitchRam array tracks on/off state |
 | **Pedestal** | ✅ Done | Temples | Song of Zora + Book interaction | Zora Temple (0x1E), Goron Desert (0x36), Fortress (0x5E) |
 | **Portal Sprite** | ✅ Done | Various | Blue/Orange portal warp system | Works in dungeons and overworld, tile collision rejection |

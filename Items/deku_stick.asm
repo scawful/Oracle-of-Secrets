@@ -198,6 +198,8 @@ DekuStick_Main:
 
   ; Within active window (7..10): check hit if not already latched (bit 6)
   LDA.l DekuStick_SwipeTimer : AND.b #$40 : BNE .torch_check
+    JSL DekuStick_CheckSwipeBush
+    BCS .torch_check
     JSR DekuStick_CheckHit
 
 .torch_check
@@ -210,18 +212,19 @@ DekuStick_Main:
 
   ; Swipe complete! Revert state to lit (2) or unlit (1) based on bit 7
   LDA.l DekuStick_SwipeTimer : BMI .revert_lit
-    LDA.b #$01 : STA.l DekuStick_State
-    LDA.b #$00 : STA.l DekuStick_SwipeTimer
-    BRA .burn_check
+    LDA.b #$01 : BRA .revert_set
 
 .revert_lit
-  LDA.b #$02 : STA.l DekuStick_State
+  LDA.b #$02
+.revert_set
+  STA.l DekuStick_State
   LDA.b #$00 : STA.l DekuStick_SwipeTimer
   BRA .burn_check
 
 .check_held_torch
-  ; Held contact with dungeon torches
+  ; Held contact with dungeon torches (indoors) or burnable bushes (overworld)
   JSR DekuStick_CheckTorch
+  JSL DekuStick_CheckHeldBush
 
 .burn_check
   ; Active burn countdown:
