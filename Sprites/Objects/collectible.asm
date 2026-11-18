@@ -95,12 +95,14 @@ Sprite_Collectible_Prep:
 ; Expects 8-bit A; preserves X/Y.
 Collectible_IsRockMeatArea:
 {
+  LDA.b $1B : BNE .no
   LDA.b $8A
   CMP.b #$5E : BEQ .yes
   CMP.b #$B0 : BEQ .yes
   CMP.b #$B1 : BEQ .yes
   CMP.b #$B8 : BEQ .yes
   CMP.b #$B9 : BEQ .yes
+.no
   CLC
   RTS
 .yes
