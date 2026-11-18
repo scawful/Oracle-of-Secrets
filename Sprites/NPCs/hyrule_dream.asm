@@ -1,6 +1,5 @@
 Sprite_HyruleDream_Prep:
 {
-  if !ENABLE_DREAM_WISDOM_SCENE == 1
     ; Wisdom scene actors (subtypes $D1/$D2, Sprites/NPCs/dream_wisdom.asm),
     ; Power scene actors ($D3/$D4, Sprites/NPCs/dream_power.asm)
     LDA.w SprSubtype, X : CMP.b #!DreamWisdom_SubCaptain : BCC .by_room
@@ -9,7 +8,6 @@ Sprite_HyruleDream_Prep:
         .wisdom
       JMP DreamWisdom_Prep
     .by_room
-  endif
   LDA.b ROOM : CMP.b #$51 : BEQ .king
                CMP.b #$60 : BEQ .soldier
                LDA.b #$00 : JMP .done
@@ -24,14 +22,12 @@ Sprite_HyruleDream_Prep:
 
 Sprite_HyruleDream_Main:
 {
-  if !ENABLE_DREAM_WISDOM_SCENE == 1
     LDA.w SprSubtype, X : CMP.b #!DreamWisdom_SubCaptain : BCC .by_room
         CMP.b #!DreamPower_SubKing : BCC .wisdom
           JMP DreamPower_Main
         .wisdom
       JMP DreamWisdom_Main
     .by_room
-  endif
   %SpriteJumpTable(Zelda_Idle,
                    King_Idle,
                    Soldier_Idle)
@@ -126,28 +122,22 @@ Sprite_HyruleDream_Draw:
   ; frame, kydrog.asm, with sheet $42 in slot 1: chars -$80; OBJ palette 6).
   .start_index
   db $00, $03, $07
-  if !ENABLE_DREAM_WISDOM_SCENE == 1
     db $0A, $0D, $0F, $11
-  endif
     db $14, $16, $18, $1A
     db $1C, $1D
   .nbr_of_tiles
   db 2, 3, 2
-  if !ENABLE_DREAM_WISDOM_SCENE == 1
     db 2, 1, 1, 2
-  endif
     db 1, 1, 1, 1
     db 0, 5
   .x_offsets
   dw -8, 8, 0
   dw -8, 8, -8, 8
   dw -4, 4, 0
-  if !ENABLE_DREAM_WISDOM_SCENE == 1
     dw -4, 4, 0
     dw 0, 1
     dw 0, 1
     dw 0, -8, 0
-  endif
     dw 0, 0
     dw 0, 0
     dw 0, 0
@@ -158,12 +148,10 @@ Sprite_HyruleDream_Draw:
   dw -4, -4, -14
   dw -16, -16, 0, 0
   dw -4, -4, -14
-  if !ENABLE_DREAM_WISDOM_SCENE == 1
     dw -2, -2, -10
     dw 4, -7
     dw 4, -7
     dw 4, 6, -6
-  endif
     dw -8, 4
     dw -8, 4
     dw 4, -7
@@ -174,12 +162,10 @@ Sprite_HyruleDream_Draw:
   db $A8, $A8, $84
   db $8E, $8E, $AE, $AE
   db $A4, $A4, $A6
-  if !ENABLE_DREAM_WISDOM_SCENE == 1
     db $A4, $A4, $A6
     db $EA, $C6
     db $C8, $C6
     db $CE, $F1, $C6
-  endif
     db $CA, $EC
     db $CA, $CC
     db $CC, $CA
@@ -190,12 +176,10 @@ Sprite_HyruleDream_Draw:
   db $39, $79, $39
   db $39, $79, $39, $79
   db $39, $79, $39
-  if !ENABLE_DREAM_WISDOM_SCENE == 1
     db $39, $79, $39
     db $3B, $3B
     db $7B, $3B
     db $3B, $3B, $3B
-  endif
     db $3B, $3B
     db $3B, $3B
     db $7B, $3B
@@ -206,12 +190,10 @@ Sprite_HyruleDream_Draw:
   db $02, $02, $02
   db $02, $02, $02, $02
   db $02, $02, $02
-  if !ENABLE_DREAM_WISDOM_SCENE == 1
     db $02, $02, $02
     db $02, $02
     db $02, $02
     db $02, $00, $02
-  endif
     db $02, $02
     db $02, $02
     db $02, $02

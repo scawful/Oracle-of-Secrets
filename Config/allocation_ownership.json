@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "ac4ce2580882ab6f3c418887d393896ec09cddf3d04d6ae697633fd9244f3dbb"
+      "sha256": "3cccc308a2e254e5b2f2d7c820800da083389a499d684bacbe72ac1a38f095e2"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "1decfc51b722d16c1025ca59cfd6a72e836bc2f687080f70ef408017d759767e"
+      "sha256": "e6a791d6b5e52ff0cb5dbc62bc0c48633bea47d95c6ff9c4b9dfc79b0a59f422"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -130,7 +130,7 @@
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
       "path": "Menu/menu_hud.asm",
-      "sha256": "0084f1329c652e7e6b1bdbdce6af65a8b1dd0dabed92360b6d4a47e07a7a96d4"
+      "sha256": "7dbb9580a8e9c034ccf8ad1a1c0d35b79b7395ecd57bd52a21917a0ec4ea5e13"
     },
     "shared:Menu/menu_map_travel.asm": {
       "source_set": "shared",
@@ -170,7 +170,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "85d06ccf4bf81278b2431fa0c46a7cff1abd664e83b95dad8df1c8855fc7621c"
+      "sha256": "fd35ede576dd3b6a92a895bcd73dc75da24bb983aec86c5733021b9fef1c529a"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -215,7 +215,7 @@
     "shared:Oracle_main.asm": {
       "source_set": "shared",
       "path": "Oracle_main.asm",
-      "sha256": "0389c8550ee4645260175bf5830d753e61215f1f67b14b3671c2eb3517e384a1"
+      "sha256": "6ca5e9f17e5f6ffdf774e097800b0637712ac36c6ed1d86eede4f77737d70e5d"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
@@ -230,7 +230,7 @@
     "shared:Overworld/time_system.asm": {
       "source_set": "shared",
       "path": "Overworld/time_system.asm",
-      "sha256": "0f836c336631975bdf3623ea808d1ee8810a8e2b551a5acf719d2474645be07f"
+      "sha256": "dd6c2e42638e6f0702ef4064f49ece63d37891bc6ba43c167bfa4fca5b35f539"
     },
     "shared:Overworld/aux_palette_extension.asm": {
       "source_set": "shared",
@@ -275,7 +275,7 @@
     "shared:Dungeons/d4_water_control.asm": {
       "source_set": "shared",
       "path": "Dungeons/d4_water_control.asm",
-      "sha256": "92732f5b3fa88a0fdf9e52688f0b6c14bfeb0d4fca761558627c23f65f3cdcb2"
+      "sha256": "ce0ecf725ede2bc82ddd43a209f89eb7e406307683fa587fd6aeaf621c8104e6"
     },
     "shared:Items/special_soaring.asm": {
       "source_set": "shared",
@@ -2223,9 +2223,7 @@
       "base": 5275648,
       "size": 8192,
       "status": "proposed",
-      "condition": {
-        "ENABLE_D4_WATER_CONTROLS": 1
-      },
+      "condition": {},
       "lifetime": "Compiled prototype only; no editor writes or default activation.",
       "reset": "Both native room-stream reads select25/26Low/High by04 and37closed/original by10.08 remains maintenanceReleased.",
       "save": "WaterGateStates04 reservoirHigh,08 maintenanceReleased,10 inletReleased; preserve01/02. No automatic220/221-save migration to10.",

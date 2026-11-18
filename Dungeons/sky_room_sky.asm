@@ -18,7 +18,6 @@
 ; Existing row 7 room graphics use entries 13-14, outside the sky entries.
 ; =========================================================
 
-assert !ENABLE_SKY_TOWER_GRAPHICS == 1, "Sky room sky requires Sky Tower graphics"
 
 ; Colour defines + SkyRoom_Clouds. The v3d lattice (370 cells, 1110 bytes) no
 ; longer fits the bank $2C slack under the Somaria/thin-ice tail asserts, so the

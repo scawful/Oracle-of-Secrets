@@ -33,9 +33,7 @@ endif
 !ENABLE_GRAPHICS_TRANSFER_SCROLL_HOOK = 1
 ; Source-built sprite sheets; identity sheet $64 owns the audited bank $40 tail.
 !ENABLE_SOURCE_SPRITE_SHEETS        = 1
-; Selected Sky Minish Cap sheets; normal group/palette binding awaits qualification.
-!ENABLE_SKY_TOWER_GRAPHICS          = 1
-; Sky room sky layer ($A0 proof): sheet EA slot6, row6 colours, BG1 fill. Needs SKY_TOWER_GRAPHICS.
+; Sky room sky layer ($A0 proof): sheet EA slot6, row6 colours, BG1 fill.
 !ENABLE_SKY_ROOM_SKY                = 1
 ; Sky overworld source art; the live project ROM carries the Sky maps ($87/$94).
 !ENABLE_SKY_OVERWORLD_GRAPHICS      = 1
@@ -46,7 +44,6 @@ endif
 !ENABLE_SKY_OVERLAY_SOURCE_PROFILE  = 1
 ; Private D4 room-scoped actor/art prototype; no default behavior change.
 !ENABLE_D4_ZORA_REDESIGN            = 1
-!ENABLE_D4_WATER_CONTROLS           = 1
 ; BF-only ice block pit reset and reset feedback; room-layout adoption is separate.
 !ENABLE_D5_BF_PIT_RESET             = 0
 ; AF transfer-room pit reset; independent of BF and off until private qualification.
@@ -54,7 +51,6 @@ endif
 ; Per-dungeon wall object tile patterns (Dungeons/wall_profile_selector.asm);
 ; kit rows/palettes route per room (H3). Default on (scawful 2026-11-10).
 !ENABLE_WALL_PROFILE_SELECTOR       = 1
-!ENABLE_WATER_GATE_HOOKS            = 1
 ; 16-bit WaterFillTable tile_count (dw instead of db, capacity >255 tiles for widened $027).
 ; Default 0 while live $027 has 222 tiles and yaze (water_fill_zone.cc) serializes db counts;
 ; enable (=1) alongside the yaze dw writer when a >255-tile $027 basin lands.
@@ -109,40 +105,11 @@ endif
 ; Pyramid / Link's House / Hall of Secrets (message $21B,
 ; Overworld/abyss_spawn_menu.asm).
 !ENABLE_ABYSS_SPAWN_MENU            = 1
-; Dream return (decisions.org "DECIDED Abyss fixes follow-ups" item 3, option c):
-; a few seconds after one of Maple's dreams lands, Link is reloaded through the
-; Dream Hut entrance ($68) so a dream cannot strand him (Sprites/NPCs/maple.asm).
-!ENABLE_DREAM_RETURN                = 1
-; Wisdom dream, shots 1-2 (decisions.org pendant dreams; Sealing War
-; storyboard): D1.01 ($204) in the hut, then the great hall (room $51) with
-; the Captain and Farore and D1.02 ($205) before the dream return
-; (Sprites/NPCs/dream_wisdom.asm). Needs DREAM_RETURN. Diagnostic opt-out.
-!ENABLE_DREAM_WISDOM_SCENE          = 1
-; Dream rooms load their own BG sheets: Power (room $00) and Courage ($31)
-; after Link_WarpToRoom; Wisdom does it in its scene (Sprites/NPCs/
-; dream_rooms.asm). Needs DREAM_RETURN. Diagnostic opt-out.
-!ENABLE_DREAM_ROOM_SHEETS           = 1
-; Dream entry effect (scawful 2026-10-18): before the warp, the dream's
-; pendant rises from Link, three medallion flashes, the hut sways (HDMA),
-; colours cycle, mosaic, white (Sprites/NPCs/dream_entry_fx.asm). Off, the
-; warp starts right after the sleep. Diagnostic opt-out.
-!ENABLE_DREAM_ENTRY_FX              = 1
 ; Forest Glade ambush (prototype, off): after Kydrog's msg $21 the glade
 ; animals flee, a thunder blackout swaps stalfos art into the glade slots,
 ; stalfos rise around Link, and a mosaic ramp leads into the module $15
 ; banish (Sprites/Bosses/kydrog.asm).
 !ENABLE_GLADE_AMBUSH                = 0
-; Part00 arrival lines (decisions.org "Arrival lines A/B/C approved"): a
-; villager in the house (room $104) says B ($202) on the first wake and B2
-; ($203) after a death; Impa opens with $25 (C) instead of the old $1C
-; greeting (Core/part00.asm). Line A is in the arrival (opening.asm).
-!ENABLE_PART00_ARRIVAL_LINES        = 1
-; Part00 checkpoint (decisions.org "Part00 checkpoint after the village
-; hole"): while GameState is 0, death/continue no longer reloads the new-file
-; save (which replayed the whole intro); it respawns in the house, or at the
-; village-hole landing (entrance $80, room $FE) once Link went down the hole
-; (Core/part00.asm).
-!ENABLE_PART00_CHECKPOINT           = 1
 ; Part00 night fix: from Farore's meeting (GameState 2) until Kydrog's ambush
 ; ($7EF300), area sprite lists stay on the day set, which holds Farore and
 ; Kydrog in the Forest Glade ($80); at night the ambush never loaded and the

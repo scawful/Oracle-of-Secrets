@@ -160,7 +160,6 @@ Sprite_Kydreeok_Long:
 Sprite_Kydreeok_Prep:
 {
   PHB : PHK : PLB
-  if !ENABLE_DREAM_RETURN == 1
     ; Power dream stage (maple.asm): no boss, heads or final-boss music while
     ; a pendant dream runs.
     JSL DreamReturn_IsDreaming : BCC .not_dreaming
@@ -168,7 +167,6 @@ Sprite_Kydreeok_Prep:
       PLB
       RTL
     .not_dreaming
-  endif
   JSL BossKit_Reset
   JSL BossDirector_Reset
   ; Kydreeok alive on room load: the finale starts over (Ganondorf only follows a Kydreeok kill).

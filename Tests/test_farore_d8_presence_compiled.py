@@ -34,10 +34,16 @@ def assemble(p, enabled=1):
     callers=(ROOT/'Sprites/NPCs/farore.asm').read_text()
     callers=callers[callers.index('Sprite_Farore_Long:'):callers.index('; Movement key bitwise')]
     stage=(ROOT/'Core/part00.asm').read_text()
-    stage=stage[stage.index('Part00_RoomSprites:'):stage.index('if !ENABLE_PART00_CHECKPOINT == 1\n; Room')]
-    flags='\n'.join('!'+n+' = 0' for n in ('ENABLE_DREAM_RETURN','DISABLE_SPRITES','ENABLE_DREAM_ENTRY_FX','ENABLE_DREAM_WISDOM_SCENE','ENABLE_DREAM_ROOM_SHEETS','ENABLE_PART00_CHECKPOINT','ENABLE_PART00_ARRIVAL_LINES'))
+    stage=stage[stage.index('Part00_RoomSprites:'):stage.index('; Room $FE or $FD loaded after entering through the village hole')]
+    flags='!DISABLE_SPRITES = 0'
     with asm.open('a') as out:
         out.write(f'\n!ENABLE_D8_FARORE_GRAPHICS = {enabled}\n'+flags+'\nSprite_CheckActive = $008000\nINDOORS = $1B\nGameState = $7EF3C5\norg $2D8000\n'+callers+stage+'\norg $2DF000\nincsrc "'+str(ROOT/'Sprites/NPCs/farore_d8_follow.asm')+'"\n'+"""
+DreamReturn_IsDreaming: CLC : RTL
+DreamFX_RoomLoaded: RTL
+DreamWisdom_Stage: RTL
+DreamRoom_Stage: RTL
+Part00_CheckpointTrigger: RTS
+HouseVillager_Stage: RTS
 Sprite_HyruleDream_Draw: INC.w $1FF0 : RTS
 Sprite_HyruleDream_Prep: INC.w $1FF1 : RTS
 Sprite_HyruleDream_Main: INC.w $1FF2 : RTS

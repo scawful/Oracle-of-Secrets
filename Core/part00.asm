@@ -63,14 +63,11 @@ org $09C2C3 ; @hook module=Dungeons name=Part00_RoomSprites kind=jsl target=Part
   JSL Part00_RoomSprites
 assert pc() == $09C2C7
 
-if !ENABLE_PART00_CHECKPOINT == 1
 ; GameOver_FadeAndRevive .use_this_spawn: LDA.l $7EF3C5 (then BEQ .no_progress)
 org $09F5D4 ; @hook module=Dungeons name=Part00_ReviveGate kind=jsl target=Part00_ReviveGate expected_m=8
   JSL Part00_ReviveGate
 assert pc() == $09F5D8
-endif
 
-if !ENABLE_PART00_ARRIVAL_LINES == 1
 ; Initial load and transition reload, slot 1 cache assignment. M=8; preserve
 ; X/Y widths and registers. Keep the shared spriteset table unchanged.
 org $00E1CF ; @hook module=Sprites name=HouseVillager_InitialSheet kind=jsl target=HouseVillager_LoadSheet expected_m=8
@@ -85,7 +82,6 @@ org $05ED02 ; @hook module=Sprites name=Part00_ImpaGreeting kind=jsl target=Part
   JSL Part00_ImpaGreeting
   NOP #4
 assert pc() == $05ED0A
-endif
 
 org $3AB800
 ; Bank $3A: free run $3A8AFD-$3ABDFF (mask routines end $3A8AFC, intro Stalfos
@@ -99,38 +95,33 @@ Part00_RoomSprites:
   RTL                                     ; next record, $09C2C7
 
   .end_of_list
-  if !ENABLE_DREAM_RETURN == 1 && !DISABLE_SPRITES == 0
+  if !DISABLE_SPRITES == 0
     ; Link_WarpToRoom hid Link for the fade-out; the dream room shows him.
     ; The Wisdom and Power scenes below hide him again.
     JSL DreamReturn_IsDreaming : BCC +
       STZ.b $4B
     +
   endif
-  if !ENABLE_DREAM_ENTRY_FX == 1 && !DISABLE_SPRITES == 0
+  if !DISABLE_SPRITES == 0
     JSL DreamFX_RoomLoaded                ; colour math back after the white
   endif
-  if !ENABLE_DREAM_WISDOM_SCENE == 1 && !DISABLE_SPRITES == 0
+  if !DISABLE_SPRITES == 0
     JSL DreamWisdom_Stage                 ; Wisdom dream; any GameState
   endif
-  if !ENABLE_DREAM_ROOM_SHEETS == 1 && !DISABLE_SPRITES == 0
+  if !DISABLE_SPRITES == 0
     JSL DreamRoom_Stage                   ; Power/Courage BG sheets
   endif
   if !ENABLE_D8_FARORE_GRAPHICS == 1 && !DISABLE_SPRITES == 0
     JSL D8Farore_Stage                    ; before Part00's story-state gate
   endif
   LDA.l GameState : BNE .done             ; Part00 only
-  if !ENABLE_PART00_CHECKPOINT == 1
     JSR Part00_CheckpointTrigger
-  endif
-  if !ENABLE_PART00_ARRIVAL_LINES == 1
     JSR HouseVillager_Stage
-  endif
   .done
   PLA : PLA : PLA                         ; drop the JSL return
   JML $09C2D4                             ; Underworld_LoadSprites .done: RTS
 }
 
-if !ENABLE_PART00_CHECKPOINT == 1
 ; Room $FE or $FD loaded after entering through the village hole ($80):
 ; the route checkpoint is reached. The cave door $1C also leads into room
 ; $FE, but only into its closed south-west pocket, so it does not count.
@@ -184,9 +175,7 @@ Part00_ReviveGate:
   .vanilla
   RTL
 }
-endif
 
-if !ENABLE_PART00_ARRIVAL_LINES == 1
 ; Stage the villager in room $104 after the room's own sprites.
 ; X/Y free (the loader returns right after), M = 8, X = 8.
 HouseVillager_Stage:
@@ -331,7 +320,6 @@ Part00_ImpaGreeting:
   .skip
   RTL
 }
-endif
 
 print "End of Part00 polish              ", pc
 assert pc() <= $3ABC00, "Part00 polish crossed $3ABC00 (patrol pirate draw)"

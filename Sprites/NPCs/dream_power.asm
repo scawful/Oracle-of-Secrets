@@ -40,8 +40,6 @@
 ; up and says the dream's line (maple.asm). Off, the line plays at the door.
 ; =========================================================
 
-assert !ENABLE_DREAM_ROOM_SHEETS == 1, "ENABLE_DREAM_POWER_SCENE requires ENABLE_DREAM_ROOM_SHEETS"
-assert !ENABLE_DREAM_WISDOM_SCENE == 1, "ENABLE_DREAM_POWER_SCENE requires ENABLE_DREAM_WISDOM_SCENE (scene locks)"
 
 !DP_KingSheet       = $35     ; vanilla king: HyruleDream frame 1, chars $8E/$AE
 ; In-room spots (room $00, base 0; camera $0100,$0010 from the landing).
@@ -67,7 +65,6 @@ assert !ENABLE_DREAM_WISDOM_SCENE == 1, "ENABLE_DREAM_POWER_SCENE requires ENABL
 !DP_OpLine          = $02     ; show !DreamMsg_PowerFirst + argument
 !DP_OpFrame         = $03     ; set the frame, then the next op at once
 !DP_OpEnd           = $04     ; the single exit: dream return
-assert !ENABLE_DREAM_WISDOM_SCENE == 1, "ENABLE_DREAM_WISDOM_FALL requires ENABLE_DREAM_WISDOM_SCENE"
 !DP_OpFadeOut       = $05     ; brightness ($13) to 0 over argument frames
 !DP_OpFadeIn        = $06     ; brightness back to $0F over argument frames
 !DP_OpSpawnMen      = $07     ; the Captain's three men appear

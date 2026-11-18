@@ -23,8 +23,6 @@
 ; art, objects and the dream return are unchanged.
 ; =========================================================
 
-if !ENABLE_DREAM_ROOM_SHEETS == 1
-assert !ENABLE_DREAM_RETURN == 1, "ENABLE_DREAM_ROOM_SHEETS requires ENABLE_DREAM_RETURN"
 
 ; ---------------------------------------------------------
 ; JSL from Part00_RoomSprites .end_of_list, every underworld room load.
@@ -79,9 +77,7 @@ DreamRoom_PowerLanding:
   STZ.b $EE : STZ.w $0476                ; upper layer, no layer transition
   RTS
 }
-endif
 
-if !ENABLE_DREAM_ROOM_SHEETS == 1 || !ENABLE_DREAM_WISDOM_SCENE == 1
 
 !DR_InitTilesets = $00E19B ; InitializeTilesets (vanilla, JSL/RTL)
 !DR_AnimatedSheets = $02811E ; AnimatedTileSheets, indexed by main GFX set
@@ -104,11 +100,9 @@ DreamRoom_LoadSheets:
   STA.w $0AA1
   JSL !DR_InitTilesets
   SEP #$30
-  if !ENABLE_DREAM_ROOM_SHEETS == 1
   LDX.w $0AA1
   LDA.l !DR_AnimatedSheets, X : TAY
   JSL !DR_LoadAnimated                   ; replace hut animation under blank
-  endif
   JSR DreamRoom_ClearPPU
   PLA : STA.b $13
   PLB
@@ -148,4 +142,3 @@ DreamRoom_ClearPPU:
   PLX
   RTS
 }
-endif

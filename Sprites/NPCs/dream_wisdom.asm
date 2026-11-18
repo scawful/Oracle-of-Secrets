@@ -34,8 +34,6 @@
 ; soldier, hyrule_dream.asm frame 3); swap the art through !DW_FrameCaptain.
 ; =========================================================
 
-if !ENABLE_DREAM_WISDOM_SCENE == 1
-assert !ENABLE_DREAM_RETURN == 1, "ENABLE_DREAM_WISDOM_SCENE requires ENABLE_DREAM_RETURN"
 
 !DW_Room            = $51     ; the great hall (attract card 3, entrance $74)
 !DW_CamX            = $0080   ; in-room BG2 camera: view x 128-383, y 72-295
@@ -411,4 +409,3 @@ DreamWisdom_BlankHUD:
   LDA.b #$01 : STA.b $16
   RTS
 }
-endif

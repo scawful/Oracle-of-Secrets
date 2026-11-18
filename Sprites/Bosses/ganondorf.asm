@@ -1249,16 +1249,6 @@ Finale_BeatRumble:
   RTS
 }
 
-if !ENABLE_DREAM_RETURN == 0
-  ; maple.asm owns this hook when the dream return is on.
-  RoomTag_GanonDoor_Exit_Ganondorf = $01C7A1
-  pushpc
-  org $01C77F ; @hook module=Sprites name=Ganondorf_DoorGate kind=jsl target=Ganondorf_DoorGate expected_m=8 expected_x=8
-    JSL Ganondorf_DoorGate
-    BCS RoomTag_GanonDoor_Exit_Ganondorf
-    assert pc() == $01C785
-  pullpc
-endif
 
 ; =========================================================
 ; Fairy revive hook. GameOver_ResituateLink ($09F742) is the last step of the fairy path

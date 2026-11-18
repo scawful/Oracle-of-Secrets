@@ -108,9 +108,7 @@ ZoraBaby_RevertToSprite:
   LDA.b #$04 : STA.w SprAction, Y
   LDA.b #$FF : STA.w SprTimerB, Y
   PLX
-if !ENABLE_D4_WATER_CONTROLS == 1
   JSL ZoraBaby_Room25Stage ; Y=new NPC, mark actual follower custody only
-endif
 
   LDA.b #$00 : STA.l $7EF3CC
 
@@ -260,11 +258,9 @@ ZoraBaby_GlobalBehavior:
 {
   JSL Sprite_BehaveAsBarrier
   JSR Follower_WatchLink
-if !ENABLE_D4_WATER_CONTROLS == 1
   JSL ZoraBaby_Room25Global : BCC .ordinary_room
   RTL
   .ordinary_room
-endif
   LDA.w SprAction, X : CMP.b #$02 : BEQ .done
 
   ; Keep normal lift/throw movement active for all live states except action 2.
@@ -360,7 +356,6 @@ ZoraBaby_RunPostSwitchSequence:
 {
   PHB : PHK : PLB
   SEP #$30
-if !ENABLE_D4_WATER_CONTROLS == 1
   LDA.b $A0 : CMP.b #$25 : BNE .ordinary_target
   LDA.b $A1 : BNE .ordinary_target
   LDA.w SprAction, X : CMP.b #$08 : BEQ .room25_target
@@ -371,7 +366,6 @@ if !ENABLE_D4_WATER_CONTROLS == 1
   JSL ZoraBaby_Room25Recover
   BRA .done
   .ordinary_target
-endif
 
   JSR ZoraBaby_FindSwitchSequenceTarget : BCC .fallback_follow
 
@@ -432,12 +426,10 @@ ZoraBaby_EnterFollower:
 ZoraBaby_PullSwitchDispatch:
 {
   SEP #$30
-if !ENABLE_D4_WATER_CONTROLS == 1
   LDA.w SprAction, X : CMP.b #$0A : BNE .ordinary
   JSL ZoraBaby_Room25AwaitSwitch
   RTL
   .ordinary
-endif
   LDY.b #$01 : LDA.b #$07
   JSL Sprite_ShowMessageUnconditional
   INC.w SprAction, X
@@ -528,14 +520,12 @@ Sprite_39_ZoraBaby:
   dw ZoraBaby_AgreeToWait
   dw ZoraBaby_PullSwitch
   dw ZoraBaby_PostSwitch
-if !ENABLE_D4_WATER_CONTROLS == 1
   dw ZoraBaby_ThrowAttempt  ; 7: armed carried/released attempt
   dw ZoraBaby_PostSwitch    ; 8: isolated miss -> verified hatch mouth
   dw ZoraBaby_PostSwitch    ; 9: missed attempt -> authored hatch
   dw ZoraBaby_PullSwitch    ; A: selected legacy release or paired NPC pull/hold
   dw ZoraBaby_PostSwitch    ; B: success -> authored return mouth
   dw ZoraBaby_PostSwitch    ; C: success -> authored hatch
-endif
 
   ; =======================================================
 

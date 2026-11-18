@@ -298,8 +298,6 @@ class CommonProducerTest(unittest.TestCase):
         data.mkdir(parents=True)
         (data/'25-low.bin').write_bytes(self.low)
         (data/'25-high.bin').write_bytes(self.high)
-        self.flags = types.SimpleNamespace(_load_global_defines=lambda root:
-                                          {'ENABLE_D4_WATER_CONTROLS': 1})
         def write_asm(path, *args):
             path.write_text('new generated runtime include\n')
         def write_contacts(path, contacts):
@@ -314,8 +312,7 @@ class CommonProducerTest(unittest.TestCase):
             if before_trace:
                 before_trace()
             Path(path).write_text(json.dumps(trace(self.low)))
-        with patch.dict(sys.modules, {'asm_source': self.flags,
-                'generate_water_gate_runtime_tables': self.runtime}), \
+        with patch.dict(sys.modules, {'generate_water_gate_runtime_tables': self.runtime}), \
              patch.object(producer, 'validate_native_sources'), \
              patch.object(producer, 'saved_room25_input', return_value=self.low), \
              patch.object(producer, 'validate_legacy_collision'), \

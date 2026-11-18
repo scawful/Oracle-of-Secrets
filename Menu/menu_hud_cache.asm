@@ -36,22 +36,18 @@ HudCache_CodexAmmo  = $7EC9D2
 HUD_Update_Impl:
 {
   PHP ; Save caller's P register
-  if !ENABLE_DREAM_WISDOM_SCENE == 1
     JSL DreamWisdom_HUDHidden : BCC .draw_with_item
       PLP
       RTL
     .draw_with_item
-  endif
   JSL HUD_UpdateItemBox_long
   BRA .after_item_box
 
   .ignore_item
   PHP ; Save caller's P register
-  if !ENABLE_DREAM_WISDOM_SCENE == 1
     JSL DreamWisdom_HUDHidden : BCC .after_item_box
       PLP
       RTL
-  endif
 
   .after_item_box
   SEP #$30

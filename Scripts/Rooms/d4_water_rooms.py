@@ -270,7 +270,7 @@ SELECTED_PAIR_SHA256 = (
 # wall-profile path. A source change requires requalifying this native-only kit.
 NATIVE_ATTRIBUTE_SOURCES = {
     'Dungeons/Collision/CollisionTablesExpanded.asm':
-        '56b31841b303eb401e03cdc8a41a24a97b390cc0cdd0220a57bc8d1abb5aef97',
+        '1904842f4df271fd328474fdacef1c2191c1c1a06d724a90618310f652ee3f3a',
     'Dungeons/wall_profile_selector.asm':
         'fb9ae42f75fdcd810c1f6d9409c183f9a247c3e0f23829007b4af6efc601ecbc',
     # Glacia diagonals 009-014 joined CLASSES; Room25 is profile 0 and still
@@ -282,7 +282,7 @@ NATIVE_ATTRIBUTE_SOURCES = {
     # fill persistence ($0403 ORA #$08 + $A1 == 0 guard), wet ladder pass, and
     # the 0x0133 row-28 WaterOverlayA2 hook ($01BC0A) for Room $27 dry/wet parity.
     'Dungeons/Collision/water_collision.asm':
-        '2bd63ccf8f95159da44dfe2c2dd0675608d590017ab31681611b277e746ad22a',
+        '75e4ec48e6f6d009a421714b66ac34ef1134f80ee4ccf8df58e74dcf5fe6f798',
 }
 
 
@@ -386,9 +386,8 @@ def generate_saved(root, source, output, z3ed):
     """Common source/project Build producer; only generated files are written."""
     root, source, output = map(lambda p: Path(p).resolve(), (root, source, output))
     sys.path.insert(0, str(root / 'Scripts/Generate'))
-    import asm_source
     import generate_water_gate_runtime_tables as runtime
-    enabled = asm_source._load_global_defines(root).get('ENABLE_D4_WATER_CONTROLS', 0)
+    enabled = 1
     base = source.read_bytes()
     contacts, derived = None, None
     inputs = [source]

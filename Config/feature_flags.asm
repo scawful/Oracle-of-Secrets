@@ -8,7 +8,6 @@
 !ENABLE_CUSTOM_ATTRACT_SEQUENCE       = 1
 !ENABLE_CUTSCENE_FRAMEWORK            = 1
 !ENABLE_D3_PRISON_SEQUENCE            = 0
-!ENABLE_D4_WATER_CONTROLS             = 1
 !ENABLE_D4_ZORA_REDESIGN              = 1
 !ENABLE_D5_AF_PIT_RESET               = 0
 !ENABLE_D5_BF_PIT_RESET               = 0
@@ -17,10 +16,6 @@
 !ENABLE_D8_BOSS                       = 1
 !ENABLE_D8_FARORE_GRAPHICS            = 0
 !ENABLE_DIVE_GATE                     = 1
-!ENABLE_DREAM_ENTRY_FX                = 1
-!ENABLE_DREAM_RETURN                  = 1
-!ENABLE_DREAM_ROOM_SHEETS             = 1
-!ENABLE_DREAM_WISDOM_SCENE            = 1
 !ENABLE_EPONA_SONG                    = 1
 !ENABLE_EQUIPMENT_MENU                = 1
 !ENABLE_EXPERIMENT_SCENE              = 1
@@ -52,8 +47,6 @@
 !ENABLE_ORACLE_FILE_SELECT            = 1
 !ENABLE_ORACLE_TITLE_SCREEN           = 1
 !ENABLE_OW_AUX_EXTENSION              = 0
-!ENABLE_PART00_ARRIVAL_LINES          = 1
-!ENABLE_PART00_CHECKPOINT             = 1
 !ENABLE_PART00_NIGHT_FIX              = 1
 !ENABLE_PORTAL_ROD_CELL               = 1
 !ENABLE_RANCH_MILK                    = 0
@@ -62,9 +55,7 @@
 !ENABLE_SKY_OVERWORLD_GRAPHICS        = 1
 !ENABLE_SKY_OVERWORLD_ROUTE           = 1
 !ENABLE_SKY_ROOM_SKY                  = 1
-!ENABLE_SKY_TOWER_GRAPHICS            = 1
 !ENABLE_SOURCE_SPRITE_SHEETS          = 1
 !ENABLE_SPECIAL_OVERWORLD_SOARING     = 0
 !ENABLE_WALL_PROFILE_SELECTOR         = 1
 !ENABLE_WATER_FILL_16BIT_COUNT        = 0
-!ENABLE_WATER_GATE_HOOKS              = 1

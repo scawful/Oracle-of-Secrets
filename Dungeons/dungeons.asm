@@ -1,8 +1,6 @@
 ; Dungeons
 
-if !ENABLE_D4_WATER_CONTROLS == 1
   incsrc "Dungeons/d4_water_control.asm"
-endif
 
 incsrc "Dungeons/keyblock.asm"
 print  "End of keyblock.asm               ", pc
@@ -190,9 +188,7 @@ incsrc "Dungeons/attract_royal_graphics.asm"
 print "End of attract_royal_graphics.asm  ", pc
 endif
 
-if !ENABLE_SKY_TOWER_GRAPHICS == 1
 incsrc "Dungeons/sky_tower_graphics.asm"
-endif
 
 if !ENABLE_SKY_ROOM_SKY == 1
 incsrc "Dungeons/sky_room_sky.asm"
@@ -225,13 +221,8 @@ RoomTag_OperateWaterFlooring = $01CC95
 
 ; Room $25 uses the lever to open its authored swim band, not a Swamp drain.
 org $01CA94 ; @hook module=Dungeons name=WaterGate_Room25Tag_Hook kind=jml target=WaterGate_Room25Tag_Hook expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8
-if !ENABLE_WATER_GATE_HOOKS == 1
   JML WaterGate_Room25Tag_Hook
   NOP
-else
-  ; LDA $0642 : BEQ $01CA93 (preserve the original relative branch bytes).
-  db $AD, $42, $06, $F0, $FA
-endif
 assert pc() == $01CA99
 
 org $01F195 ; Replace static LDA
@@ -242,14 +233,8 @@ LDA $0682
 
 ; Water gate collision write + persistence
 org $01F3D2 ; @hook module=Dungeons name=WaterGate_FillComplete_Hook kind=jml target=WaterGate_FillComplete_Hook expected_m=8 expected_x=8
-if !ENABLE_WATER_GATE_HOOKS == 1
   JML WaterGate_FillComplete_Hook
   NOP #4 ; Pad to 8 bytes (replaces STZ $1E + STZ $1F + JSL IrisSpotlight_ResetTable)
-else
-  STZ.b $1E
-  STZ.b $1F
-  JSL IrisSpotlight_ResetTable
-endif
 
 ; Underworld_LoadRoom exit hook (torch loop end).
 ; IMPORTANT:

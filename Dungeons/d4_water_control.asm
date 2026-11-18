@@ -30,11 +30,6 @@ org $01883E ; @hook module=Dungeons name=D4Water_SelectObjectLists kind=jsl targ
   NOP #4
 assert pc() == $01884A
 
-if !ENABLE_DREAM_RETURN == 0
-org $028947 ; @hook module=Dungeons name=D4Water_PlayerControl kind=jsl target=D4Water_PlayerControl expected_m=8 expected_x=8 protected_size=4
-  assert read4($028947) == $07800022
-  JSL D4Water_PlayerControl
-endif
 
 ; Native correct/wrong pull-switch bounce. Preserve all non-hub behavior.
 org $06C003 ; @hook module=Dungeons name=D4Hub_ManualSwitch kind=jsl target=D4Hub_ManualSwitch expected_m=8 expected_x=8 protected_size=4
@@ -134,11 +129,7 @@ D4Water_SelectObjects:
 }
 
 D4Water_PlayerControl:
-  if !ENABLE_DREAM_RETURN == 1
     JSL DreamReturn_PlayerControl
-  else
-    JSL $078000
-  endif
   JSL D4Water_Tick
   RTL
 

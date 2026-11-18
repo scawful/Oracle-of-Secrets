@@ -28,9 +28,7 @@ MapleHandler:
   dw Maple_NoNewPendant
   dw Maple_PutLinkToSleep
   dw Maple_HandleDreams
-  if !ENABLE_DREAM_WISDOM_SCENE == 1
     dw Maple_DreamNarrationDone ; 08
-  endif
     dw Maple_WakeLink           ; 09
 
 
@@ -130,35 +128,29 @@ MapleHandler:
   Maple_HandleDreams:
   {
     LDA.w SprTimerA, X : BNE +
-      if !ENABLE_DREAM_WISDOM_SCENE == 1
         ; D1.01 over the sleeping Link, before the Wisdom dream only.
         LDA.w CurrentDream : BNE .warp
           %ShowUnconditionalMessage(!DreamMsg_WisdomNarration)
           %GotoAction(8)
           RTS
         .warp
-      endif
       JSR Maple_DreamEntry
     +
     RTS
   }
 
-  if !ENABLE_DREAM_WISDOM_SCENE == 1
     ; Every frame after D1.01 closes.
     Maple_DreamNarrationDone:
     {
       JSR Maple_DreamEntry
       RTS
     }
-  endif
 
   ; Every frame until the entry effect is done (dream_entry_fx.asm), then
   ; the warp.
   Maple_DreamEntry:
   {
-    if !ENABLE_DREAM_ENTRY_FX == 1
       JSL DreamFX_Run : BCC .wait
-    endif
     JSR Link_HandleDreams
     .wait
     RTS
@@ -247,11 +239,9 @@ Link_HandleDreams:
   ; The dream's Dreams bit is set when it ends (DreamReturn_Begin).
   Dream_Wisdom:
   {
-    if !ENABLE_DREAM_WISDOM_SCENE == 1
       ; Farore's sheet for the great hall. Group $6A keeps slot 3 (entry 0),
       ; so LoadTransAuxGFX decodes LASTSPRSET3 there ($00D77B).
       LDA.b #$55 : STA.l LASTSPRSET3
-    endif
       ; Kydrog's own sheet (kydrog.asm: chars $CC-$EE in slot 3 of overworld
       ; set $0C) for his silhouette in shot 5. Group $6A keeps slot 1 too.
       LDA.b #$42 : STA.l LASTSPRSET1
@@ -293,22 +283,16 @@ Link_WarpToRoom:
   LDA.w .x, X : STA.b $22
   LDA.w .y, X : STA.b $20
   LDA.w .layer, X : STA.b $EE
-  if !ENABLE_DREAM_RETURN == 1
     ; Arm the wake-up timer; it only counts in Module07_00 after the warp lands.
     LDA.b #!DreamReturn_Ticks : STA.w DreamReturnTimer
     ; Hide Link for the fade-out: LinkOAM_Main draws him every Module07_15
     ; frame, at the landing offset above against the hut camera (DREAM-LINK,
     ; 2026-10-18). Part00_RoomSprites shows him again when the room loads.
     LDA.b #$0C : STA.b $4B
-  endif
   RTS
 
   .room  ; Wisdom, Power, Courage
-  if !ENABLE_DREAM_WISDOM_SCENE == 1
     db $51, $00, $31 ; Wisdom: the great hall (attract card 3, entrance $74)
-  else
-    db $61, $00, $31
-  endif
   .x     ; in-room X low byte, SE quadrant
   db $38, $48, $78
   .y     ; in-room Y low byte, SE quadrant
@@ -338,7 +322,6 @@ Link_FallIntoDungeon:
   db $81 ; 0x03
 }
 
-if !ENABLE_DREAM_RETURN == 1
 ; =========================================================
 ; Dream return, option (c) (decisions.org "DECIDED Abyss fixes follow-ups",
 ; item 3): a dream must not strand the player.
@@ -363,13 +346,8 @@ if !ENABLE_DREAM_RETURN == 1
 
 pushpc
 ; Module07_00_PlayerControl: JSL Link_Main
-if !ENABLE_D4_WATER_CONTROLS == 1
 org $028947 ; @hook module=Dungeons name=D4Water_PlayerControl kind=jsl target=D4Water_PlayerControl expected_m=8 expected_x=8 protected_size=4
   JSL D4Water_PlayerControl
-else
-org $028947 ; @hook module=Sprites name=DreamReturn_PlayerControl kind=jsl target=DreamReturn_PlayerControl expected_m=8 expected_x=8
-  JSL DreamReturn_PlayerControl
-endif
 pullpc
 
 DreamReturn_PlayerControl:
@@ -405,9 +383,7 @@ DreamReturn_PlayerControl:
 ; edge transitions), so nothing else can change the submodule.
 DreamReturn_Begin:
 {
-  if !ENABLE_DREAM_WISDOM_SCENE == 1
     JSR DreamWisdom_Release ; scene locks end with every dream return
-  endif
   ; The dream counts as seen only now (decisions.org: pendant dreams):
   ; dying or quitting mid-dream leaves it offerable again.
   LDX.w CurrentDream
@@ -468,7 +444,6 @@ DreamReturn_GanonDoorGate:
   SEC
   RTL
 }
-endif
 
 pushpc
 org $068C9C

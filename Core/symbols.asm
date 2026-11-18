@@ -230,14 +230,12 @@ PendingSupplyAction      = $0434
 ; Subtypes of the two staged $73 actors; room data never produces them.
 ; WRAM $7FF370-$7FF37F is taken (vanilla-free UNUSED_7FF180, Core/ram.asm;
 ; the text shade ends at $7FF367, the 2P PoC starts at $7FF400).
-if !ENABLE_DREAM_WISDOM_SCENE == 1
 !DreamWisdom_SubCaptain = $D1
 !DreamWisdom_SubFarore  = $D2
 DreamWisdom_Marker   = $7FF370 ; word: $D1A5 while the scene owns Link (garbage-safe)
 DreamWisdom_Watchdog = $7FF372 ; word
 DreamWisdom_Save99   = $7FF374 ; $99,$9A,$9C,$9D,$9E during the flash
 DreamWisdom_Flash    = $7FF379 ; nonzero while the flash is on
-endif
 
 ; Power dream scene (!ENABLE_DREAM_POWER_SCENE, Sprites/NPCs/dream_power.asm).
 ; Two more staged $73 actors; the scene uses the Wisdom marker and locks.

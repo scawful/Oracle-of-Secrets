@@ -83,14 +83,12 @@ WaterGate_CompleteRoom:
 
   PHB : PHK : PLB
 
-if !ENABLE_D4_WATER_CONTROLS == 1
   ; The paired controller owns room $25, regardless of old saved bit $02
   ; or a stale legacy table row. Check the full room ID before either path.
   REP #$20
   LDA.l $7E00A0 : CMP.w #$0025 : BNE .legacy_owner
   JMP .done
 .legacy_owner
-endif
   SEP #$20
   LDA.b $A1 : BNE .done
   LDA.b $A0
@@ -150,11 +148,9 @@ WaterGate_Room25Tag_Hook:
   LDA.l $7E00A0 : CMP.w #$0025 : BNE .vanilla
   SEP #$30
 
-if !ENABLE_D4_WATER_CONTROLS == 1
   ; Do not consume the actor-owned $0642 episode or replay the old swim band.
   ; The selected paired room has tag 0; also make a stale WaterOff tag inert.
   BRA .exit
-endif
 
   LDA.l WaterGateStates : AND.b #$02 : BNE .open
   LDA.l $7E0642 : BEQ .exit
@@ -416,13 +412,11 @@ WaterGate_CheckRoomEntry:
   LDA.w #$0000
   TCD
 
-if !ENABLE_D4_WATER_CONTROLS == 1
   ; Keep legacy restore from overwriting the paired room after its loader.
   ; This also covers callers when ROOMENTRY_RESTORE is enabled for diagnosis.
   LDA.l $7E00A0 : CMP.w #$0025 : BNE .legacy_owner
   JMP .done
 .legacy_owner
-endif
   SEP #$20
   LDA.b $A1 : BNE .done
   LDA.b $A0
@@ -643,7 +637,6 @@ endif
   dw $0BF5, $0BF6, $0BF7, $0BF8, $0BF9, $0BFA, $0BFB, $0BFC
 }
 
-if !ENABLE_WATER_GATE_HOOKS == 1
 ; =========================================================
 ; Room $27 Object Attribute Row-28 Hook (0x0133@(25,27))
 ; =========================================================
@@ -687,6 +680,5 @@ org $01BC0A ; @hook module=Dungeons name=WaterGate_WaterOverlayA2_Row28 kind=jsl
   NOP #7
 assert pc() == $01BC15
 pullpc
-endif
 
 print "End of water_collision.asm        ", pc
