@@ -22,7 +22,7 @@ HorseForm_ConstrainGroundInput:
   PHX
   TXA : ASL : STA.b $0E
   LDY.b #$02
-  CPX.b #$02 : BCC + : LDY.b #$04 : +
+  CPX.b #$02 : BCC + : LDY.b #$03 : +
   .point
   PHY
   TYA : ASL : TAX
@@ -101,17 +101,9 @@ HorseForm_ConstrainGroundInput:
   PLA : PLA
   SEC
   RTS
-  ; In: A16/X8, $04 = Tile16. Out: carry set if $04 is in HorseFenceTile16s.
+  ; In: A16/X8, $04 = Tile16. Out: carry set if jumpable fence (with map gate).
   .is_fence
-  LDX.b #$00
-  .fence
-  LDA.l HorseFenceTile16s, X : CMP.b $04 : BEQ .is_fence_hit
-  INX #2 : CPX.b #HorseFenceTile16s_End-HorseFenceTile16s : BCC .fence
-  CLC
-  RTS
-  .is_fence_hit
-  SEC
-  RTS
+  JMP Horse_IsFenceTile16
   ; In: A16/X8, $0E = edge index. Out: carry = a valid long jump is ahead in
   ; this direction (CheckFenceJump near/far probes, then the probe line at
   ; this edge). X/Y, $04, $0A and $0C are clobbered; the caller restores them.
@@ -180,21 +172,21 @@ HorseForm_ConstrainGroundInput:
   + RTS
   .buttons
   db $08,$04,$02,$01 ; north, south, west, east
-  ; Includes four pixels of next-step lookahead (horse cardinal speed2.75px).
-  ; North uses rider head clearance; sides use the horse body, not its tail tip.
+  ; Ground lane clearance around Link ($22,$20): symmetric corridor matching
+  ; Kalyxo 16px bridges/archways (widens OW $11 bridge to a 19px lane).
   .edge_x
-  dw $0000,$0000,$FFF0,$0020
+  dw $0000,$0000,$FFF8,$0017
   .edge_y
-  dw $FFDC,$0014,$FFE8,$FFE8
+  dw $FFF4,$0014,$0000,$0000
   .along
-  dw $0000,$0008,$0010,$0018,$0020
+  dw $0002,$0008,$000D,$0014
 }
 HorseGroundClearance_End:
 ; Ranch fence Tile16s Epona can jump: Toto Ranch fence set, $02D6, and the Kalyxo-art
-; pit gap Tile16s $0EF2 (top) / $0EF4 (bottom) on map $22 (x=4, y=17..18), and the
-; scrub rail Tile16 $010B on map $25 (x=2..3, y=6; other $010B cells also become jumpable).
+; pit gap Tile16s $0EF2 (top) / $0EF4 (bottom) on map $22 (x=4, y=17..18).
+; Tile16 $010B is gated specifically to Overworld map $25 in Horse_IsFenceTile16.
 HorseFenceTile16s:
-  dw $0078, $007B, $043A, $003B, $0267, $002C, $02D6, $0EF2, $0EF4, $010B
+  dw $0078, $007B, $043A, $003B, $0267, $002C, $02D6, $0EF2, $0EF4
 HorseFenceTile16s_End:
 
 ; Max gap width in Tile16s past the first gap cell: n=2 D2 Tail Pond / $24
@@ -369,7 +361,7 @@ HorseLong_FitLanding:
   JSR .footprint : BCS + : JMP .close_side : +
   ; Leading edge at the landing: same points as ConstrainGroundInput.
   LDY.b #$02
-  LDA.b $0E : CMP.b #$04 : BCC + : LDY.b #$04 : +
+  LDA.b $0E : CMP.b #$04 : BCC + : LDY.b #$03 : +
   .point
   PHY
   TYA : ASL : TAX
@@ -606,7 +598,7 @@ Horse_QueryTile16Only:
 }
 
 ; In: M=16, X=8, DP $04 = Tile16. Out: C=1 if jumpable fence (A/X clobbered, M=16/X=8).
-; Gate $010B to Overworld map $25 until it is removed from the global table.
+; Gate $010B specifically to Overworld map $25.
 Horse_IsFenceTile16:
 {
   LDA.b $04
@@ -663,6 +655,72 @@ Horse_CheckNorthSolidBase:
   .hit
   SEC
   RTS
+}
+
+; Verifies landing footprint around (Horse_JumpEndX, Horse_JumpEndY) is clear.
+HorseForm_CheckLandingWalkable:
+{
+  LDX.b #$02                          ; check 3 points: 2, 1, 0
+  .pt_loop
+    PHX
+    TXA : ASL : TAX
+    REP #$20
+    LDA.l Horse_JumpEndX : CLC : ADC.l .off_x, X : STA.b $0C
+    LDA.l Horse_JumpEndY : CLC : ADC.l .off_y, X : STA.b $0A
+    JSR .test_walkable : BCC .blocked_pop
+    PLX
+    DEX : BPL .pt_loop
+
+  LDA.l Horse_JumpDir : BNE .not_north
+    LDX.b #$02                        ; North jump: also verify top half (4,2) & (11,2) walkable
+    .north_loop
+      PHX
+      REP #$20
+      LDA.l Horse_JumpEndX : CLC : ADC.l .off_x, X : STA.b $0C
+      LDA.l Horse_JumpEndY : CLC : ADC.w #$0002 : STA.b $0A
+      JSR .test_walkable : BCC .blocked_pop
+      PLX
+      DEX : DEX : BPL .north_loop
+    BRA .ok
+
+  .not_north
+  LDX.b #$02                          ; S/W/E jump: verify lower body (4,22) & (11,22) not $01/$02 solid
+  .south_loop
+    REP #$20
+    LDA.l Horse_JumpEndX : CLC : ADC.l .off_x, X : STA.b $0C
+    LDA.l Horse_JumpEndY : CLC : ADC.w #$0016 : STA.b $0A
+    SEP #$20
+    JSR Horse_QueryTileAt             ; M=8, X=8, X preserved
+    CMP.b #$01 : BEQ .blocked
+    CMP.b #$02 : BEQ .blocked
+    DEX : DEX : BPL .south_loop
+  .ok
+  SEC
+  RTS
+
+  .blocked_pop
+  PLX
+  .blocked
+  CLC
+  RTS
+
+  ; In: M=16, DP $0A/$0C set. Out: M=8, C=1 if walkable, clobbers X.
+  .test_walkable
+  SEP #$20
+  JSR Horse_QueryTileAt
+  CMP.b #$58 : BCS .not_walk
+  TAX
+  LDA.l HorseWalkableAttr, X : BEQ .not_walk
+  SEC
+  RTS
+  .not_walk
+  CLC
+  RTS
+
+  .off_x
+  dw 4, 11, 8
+  .off_y
+  dw 12, 12, 8
 }
 
 HorseOam_HideAll:

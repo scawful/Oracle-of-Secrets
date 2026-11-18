@@ -544,11 +544,8 @@ HorseForm_ProbeFence:
   ; Query Map16 Tile16 at ($0A=Y, $0C=X) without calling $00882E
   JSR Horse_QueryTile16Only           ; outputs DP $04 = 16-bit Tile16
   REP #$20
-  LDA.b $04
-  LDX.b #HorseFenceTile16s_End-HorseFenceTile16s-2
-  .cmp_loop
-    CMP.l HorseFenceTile16s, X : BEQ .matched
-    DEX : DEX : BPL .cmp_loop
+  JSR Horse_IsFenceTile16
+  BCS .matched
   SEP #$20
   CLC
   RTS
@@ -615,36 +612,8 @@ HorseForm_ComputeJumpEnd:
   RTS
 }
 
-; Verifies 3 footprint points around (Horse_JumpEndX, Horse_JumpEndY) are walkable.
-HorseForm_CheckLandingWalkable:
-{
-  LDX.b #$02                          ; check 3 points: 2, 1, 0
-  .pt_loop
-    PHX
-    TXA : ASL : TAX
-    REP #$20
-    LDA.l Horse_JumpEndX : CLC : ADC.l .off_x, X : STA.b $0C
-    LDA.l Horse_JumpEndY : CLC : ADC.l .off_y, X : STA.b $0A
-    SEP #$20
-    JSR Horse_QueryTileAt             ; A = 8x8 tiletype
-    CMP.b #$58 : BCS .blocked_pop
-    TAX
-    LDA.l HorseWalkableAttr, X : BEQ .blocked_pop
-    PLX
-    DEX : BPL .pt_loop
-  SEC
-  RTS
-
-  .blocked_pop
-  PLX
-  CLC
-  RTS
-
-  .off_x
-  dw 4, 11, 8
-  .off_y
-  dw 12, 12, 8
-}
+; HorseForm_CheckLandingWalkable relocated into Masks/horse_ground_clearance.asm
+; ($53E000-$53E7FF, same bank $53) alongside HorseForm_ConstrainGroundInput.
 
 ; Queries Overworld_GetTileAttrAtLocation ($00882E) safely from any DBR.
 ; Inputs: DP $0A = 16-bit world Y px, DP $0C = 16-bit world X px (M/X=8).
