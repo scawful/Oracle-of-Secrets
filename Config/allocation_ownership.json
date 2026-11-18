@@ -20,7 +20,7 @@
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "470dbcfdf93d8254d87121565a4ac0b5b8f470e7f2d0d408fe7c92cdac703be5"
+      "sha256": "f3015b31c8717733d37726b0fb5a26182860bda23592452b89ebf1e568b78f9e"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "ffbdcd6ec75243ef7f149ee0f61441fabc73ba5696f353df8dfdc26cacfe2526"
+      "sha256": "a86e4e435476d1c0ebf77b0be06dbf500273a5e63a63cf27b1ddde796b71817d"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "2a349f032cd9d1414d6144f30a8f19284dcb542aa0fe1dff2e5036d5ae3798a8"
+      "sha256": "0faae00441ff5e6ada0960b53d33b87ad59cdc140720720e4de32d155345b652"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -130,7 +130,7 @@
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
       "path": "Menu/menu_hud.asm",
-      "sha256": "541546ded273eba2dc17ee0c9eba3873d8b880b98d369f56ae78f2f2bcdf1f2d"
+      "sha256": "d0f105711d512970985fff8f0699d22e9fadb380caeb3a81ac82637fd1a6e6fe"
     },
     "shared:Menu/menu_map_travel.asm": {
       "source_set": "shared",
@@ -145,7 +145,7 @@
     "shared:Sprites/Players/player2.asm": {
       "source_set": "shared",
       "path": "Sprites/Players/player2.asm",
-      "sha256": "d93dd5cafbdf23a33b49c707286e19886dd4e2b34a78d3726239310a4e8ef40d"
+      "sha256": "0340d8292c63787adf1b89114d3be24764a960dfdd406a50ef6002599dac4fb9"
     },
     "shared:Items/ice_rod.asm": {
       "source_set": "shared",
@@ -175,7 +175,7 @@
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
       "path": "Masks/wolf_mask.asm",
-      "sha256": "f2435f1738736e43a01f4be2e48831f60e666961d6503dea17101c69507fb782"
+      "sha256": "992207e009813ced9f03954bfe9ea6af454b08046e6254387c76f6ccef7fb372"
     },
     "shared:Overworld/lyra_native_loaders.asm": {
       "source_set": "shared",
@@ -215,7 +215,7 @@
     "shared:Oracle_main.asm": {
       "source_set": "shared",
       "path": "Oracle_main.asm",
-      "sha256": "87f157fe7cf9ad446576fed2b5fe10bfdc1763c2e60a9d2e06fd4b7e812a29e9"
+      "sha256": "060e70e4ab280c262504f5d4d142a44570ef6bbd998c1b163f908980928bc8c6"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
@@ -360,7 +360,7 @@
     "shared:Masks/mask_binding.asm": {
       "source_set": "shared",
       "path": "Masks/mask_binding.asm",
-      "sha256": "56fc4d6b89179b5cb65f96c828e859d74fc058d051f6b611fafc5d84b2455713"
+      "sha256": "4f8e058346ac7a819b79e4a68efd912f1f9ee4eb4aa1f97aaf79a7ce037351ff"
     },
     "shared:Overworld/entrances.asm": {
       "source_set": "shared",
@@ -375,7 +375,7 @@
     "shared:Items/all_items.asm": {
       "source_set": "shared",
       "path": "Items/all_items.asm",
-      "sha256": "099887e6487907eb7aa0bd38221693e409c73083b349f3f6f61bdd69b72ec3ec"
+      "sha256": "958abadf89ff6512ef6cb617bd2c34d8bab15a91079057f2a1e5f20d18fb0234"
     },
     "shared:Masks/horse_park_anywhere.asm": {
       "source_set": "shared",
@@ -1241,9 +1241,7 @@
       "base": 8319912,
       "size": 1,
       "status": "pending",
-      "condition": {
-        "ENABLE_MASK_R_BINDING": 1
-      },
+      "condition": {},
       "lifetime": "Save file in separate RC candidate; not merged into shared source.",
       "reset": "MaskBinding_Get validates 0/1-5 and ownership; selection migration handles old mask item.",
       "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
@@ -1316,9 +1314,7 @@
       "base": 8319915,
       "size": 1,
       "status": "pending",
-      "condition": {
-        "ENABLE_EQUIPMENT_MENU": 1
-      },
+      "condition": {},
       "lifetime": "Save file in separate RC candidate; not merged into shared source.",
       "reset": "UpdateFluteSong_Long validates learned song; invalid becomes 1, no Ocarina clears.",
       "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",

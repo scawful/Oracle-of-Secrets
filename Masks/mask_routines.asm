@@ -221,11 +221,7 @@ endif
 
   .original_palette
   REP #$21
-if !ENABLE_EQUIPMENT_MENU == 1
   JSL Tunic_GetWorn ; worn colour; keeps P, so carry stays clear
-else
-  LDA $7EF35B ; Link's armor value
-endif
   JSL $1BEDFF ; Read Original Palette Code
   RTL
 
@@ -335,10 +331,8 @@ pullpc
 
 LinkState_ResetMaskAnimated:
 {
-if !ENABLE_MASK_R_BINDING == 1
   ; Menu selection changes the binding, never the live form/cape/dive.
   RTL
-endif
   ; Stone Mask = vanilla Magic Cape ($0303/$0304 = $13, $55 = 1). It stays on
   ; through the menu while it is still the Y item ($0202 = $17). If the Y item
   ; changed, take it off with the poof and sound (Menu_Exit sets $0304 = $0303,
@@ -410,10 +404,8 @@ LinkItem_CheckForSwordSwing_Masks:
 ;   $0303 cannot put on a mask the HUD does not show.
 Link_TransformMask:
 {
-if !ENABLE_MASK_R_BINDING == 1
   ; Central R controller owns transforms. Form handlers only run abilities.
   CLC : RTL
-endif
   PHB : PHK : PLB
   PHA                                    ; $01,S = mask ID
   CLC : ADC.b #$12 : CMP.w $0202 : BNE .ignore
@@ -536,9 +528,7 @@ StoneMask_TakeOff:
 MaskControl_CheckYItem:
 {
   JSL DekuStick_CheckYPress
-if !ENABLE_MASK_R_BINDING == 1
   JML MaskBinding_Tick
-endif
   JSR StoneMask_CheckR
   LDA.w !CurrentMask : BEQ .done
 if !ENABLE_HORSE_FORM == 1
@@ -578,9 +568,7 @@ endif
   RTL
 }
 
-if !ENABLE_MASK_R_BINDING == 1
-  incsrc "Masks/mask_binding.asm"
-endif
+incsrc "Masks/mask_binding.asm"
 
 pushpc
 ; Link_HandleYItem: LDA $3C : BEQ .sword_not_out (4 bytes)
@@ -1598,9 +1586,7 @@ LinkOAM_CheckForDrawShield:
 if !ENABLE_HORSE_FORM == 1
   CMP.w #$0009 : BEQ .no_shield
 endif
-if !ENABLE_EQUIPMENT_MENU == 1
   JSL HeavySword_Active : BCS .no_shield  ; heavy sword: no shield draw
-endif
   .shield
   RTL
 }

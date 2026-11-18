@@ -380,14 +380,12 @@ SearchForEquippedItem_Override:
 if !ENABLE_ONE_RING == 1
   JSR OneRing_MigrateSlots ; file load (Module05) and RefreshIcon
 endif
-if !ENABLE_EQUIPMENT_MENU == 1
   ; $030F is volatile WRAM and survives a warm file switch (Save and Quit ->
   ; another file). Clear it so the loaded file's SavedOcarinaSong decides;
   ; otherwise the previous file's song would be written into this file.
   ; Harmless on RefreshIcon: the saved byte is kept in sync with $030F.
   STZ.w CurrentSong
   JSL UpdateFluteSong_Long ; restore/validate the saved song on file load
-endif
 
 if !ENABLE_GOLDSTAR_CELL == 1
   JSL GoldstarInventory_Migrate

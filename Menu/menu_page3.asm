@@ -1,5 +1,4 @@
-; ENABLE_MASK_R_BINDING overrides the legacy Y-item selection below:
-; page 3 selects BoundMask; the live form drives the effective action/HUD.
+; Page 3 selects BoundMask; the live form drives the effective action/HUD.
 ; =========================================================
 ; Menu page 3 "Masks & Rings" (!ENABLE_MENU_PAGE3)
 ;
@@ -200,9 +199,7 @@ endif
       JSR Menu_Page3_Draw
       BRA .upload
     .quest
-if !ENABLE_EQUIPMENT_MENU == 1
     JSR Menu_Quest_Init
-endif
     JSR Menu_RefreshQuestScreen
     .upload
     SEP #$30
@@ -463,18 +460,12 @@ endif
 ; Cursor slot when page 3 opens. Out: $020B, $0207 = 0, SEP #$30.
 Menu_Page3_InitCursor:
 {
-if !ENABLE_EQUIPMENT_MENU == 1
   JMP Menu_Equipment_Init
-endif
   SEP #$30
   STZ.w $0207
   LDA.w MenuScrollLevelH : LSR : BCS .rings  ; opened with Y
 
-if !ENABLE_MASK_R_BINDING == 1
   JSL MaskBinding_SelectedItem
-else
-  LDA.w $0202
-endif
   JSR Menu_Page3_IsMaskItem : BCC .first_mask
     SEC : SBC.b #$13-!P3_FirstMaskSlot
     STA.w $020B
@@ -508,9 +499,7 @@ endif
 ; D-pad: move the cursor with Menu_Page3_Nav. 8-bit A/X/Y.
 Menu_Page3_Move:
 {
-if !ENABLE_EQUIPMENT_MENU == 1
   JMP Menu_Equipment_Move
-endif
   LDA.b $F4 : AND.b #$0F : BEQ .done
   LDX.b #$00
   LSR : BCS .go                ; right
@@ -535,9 +524,7 @@ endif
 ; 8-bit A/X/Y.
 Menu_Page3_Select:
 {
-if !ENABLE_EQUIPMENT_MENU == 1
   JMP Menu_Equipment_Select
-endif
   BIT.b $F6 : BMI .pressed               ; A
   LDA.b $F4 : BIT.b #$40 : BEQ .done     ; Y
   .pressed
@@ -552,13 +539,8 @@ endif
   SEC : SBC.b #!P3_FirstMaskSlot : TAX
   LDA.l Menu_AddressLong+$12, X : TAX
   LDA.l $7EF300, X : BEQ .error
-if !ENABLE_MASK_R_BINDING == 1
     LDA.w $020B : SEC : SBC.b #!P3_FirstMaskSlot-1
     STA.l BoundMask
-else
-    LDA.w $020B : CLC : ADC.b #$13-!P3_FirstMaskSlot
-    STA.w $0202                          ; the Y item, as in the grid
-endif
     LDA.b #$20 : STA.w $0207             ; show the new marker first
     LDA.b #$22 : STA.w $012F             ; equip sound (Ring Box)
     RTS
@@ -622,9 +604,7 @@ endif
 ; Out: SEP #$30.
 Menu_Page3_Draw:
 {
-if !ENABLE_EQUIPMENT_MENU == 1
   JMP Menu_Equipment_Draw
-endif
   JSR Menu_DrawBackground                ; menu_frame (single border, tabs)
   SEP #$30
   LDA.b #$7E : STA.b $0A                 ; bank of DrawMenuItem's [$08]
@@ -688,11 +668,7 @@ endif
 
   ; Red brackets: the worn mask (the Y item), then the worn ring.
   SEP #$30
-if !ENABLE_MASK_R_BINDING == 1
   JSL MaskBinding_SelectedItem
-else
-  LDA.w $0202
-endif
   JSR Menu_Page3_IsMaskItem : BCC .no_mask
     SEC : SBC.b #$13-!P3_FirstMaskSlot
     JSR .marker
@@ -890,13 +866,9 @@ else
 endif
 }
 
-if !ENABLE_EQUIPMENT_MENU == 1
   incsrc "menu_equipment.asm"
 if !ENABLE_MENU_MAP_TRAVEL == 1
   incsrc "menu_map_travel.asm"         ; uses Menu_Equipment_Bracket
-endif
-elseif !ENABLE_MENU_MAP_TRAVEL == 1
-  error "ENABLE_MENU_MAP_TRAVEL needs ENABLE_EQUIPMENT_MENU"
 endif
 
 print "Bank2D Free Space: ", dec($2E8000-pc()), " bytes"

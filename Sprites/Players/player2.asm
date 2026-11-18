@@ -992,11 +992,7 @@ P2_TunicVariant:
   LDA.b #$00
   RTS
   .mail
-if !ENABLE_EQUIPMENT_MENU == 1
   JSL Tunic_GetWorn                            ; P1's worn colour (8-bit here)
-else
-  LDA.l $7EF35B
-endif
   CMP.b #$02 : BEQ .blue
   LDA.b #$01
   RTS
@@ -1004,11 +1000,7 @@ endif
   LDA.b #$02
   RTS
   .gbc
-if !ENABLE_EQUIPMENT_MENU == 1
   JSL Tunic_GetWorn                            ; P1's worn colour (8-bit here)
-else
-  LDA.l $7EF35B
-endif
   CMP.b #$02 : BEQ .gold
   LDA.b #$03
   RTS

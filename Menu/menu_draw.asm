@@ -187,14 +187,10 @@ endif
 
 Menu_DrawHeartPieces:
 {
-if !ENABLE_EQUIPMENT_MENU == 1
 if !ENABLE_MENU_MAP_TRAVEL == 1
   !QuestHeart = $1000+!QuestRow+menu_offset(4,10)  ; Quest top row, beside the Pearl: absolute (9,10)
 else
   !QuestHeart = $1000+!QuestRow+menu_offset(4,24)  ; Quest bottom row, right end
-endif
-else
-  !QuestHeart = $149E
 endif
   ; Empty heart container
   LDX.w #$2484 : STX.w !QuestHeart ; top left
@@ -490,11 +486,7 @@ Menu_DrawQuestItems:
   LDY.w #ShieldGFX
   JSR DrawMenuItem
 
-if !ENABLE_EQUIPMENT_MENU == 1
   JSL Tunic_GetWorn                  ; worn colour, not defense
-else
-  LDA.l $7EF35B
-endif
   INC
   STA.w MenuItemValueSpoof
   LDA.w #MenuItemValueSpoof
@@ -545,11 +537,7 @@ Menu_DrawBigKey:
         LDA.w #$01
         STA.w ShortSpoof
         LDA.w #ShortSpoof
-if !ENABLE_EQUIPMENT_MENU == 1
         LDX.w #!DungeonRow+menu_offset(0,17) ; dungeon row, 4th
-else
-        LDX.w #menu_offset(11,8)
-endif
         LDY.w #TreasureChestGFX
         JSR DrawMenuItem
 
@@ -563,11 +551,7 @@ endif
       STA.w ShortSpoof
       LDA.w #ShortSpoof
       ; Draw the big key (or big key with chest if we've gotten the treasure) icon
-if !ENABLE_EQUIPMENT_MENU == 1
       LDX.w #!DungeonRow+menu_offset(0,13) ; dungeon row, 3rd
-else
-      LDX.w #menu_offset(11,2)
-endif
       LDY.w #BigKeyGFX
       JSR DrawMenuItem
 
@@ -586,11 +570,7 @@ endif
       STA.w ShortSpoof
       LDA.w #ShortSpoof
       ; Draw the big key (or big key with chest if we've gotten the treasure) icon
-if !ENABLE_EQUIPMENT_MENU == 1
       LDX.w #!DungeonRow+menu_offset(0,5) ; dungeon row, 1st
-else
-      LDX.w #menu_offset(11,11)
-endif
       LDY.w #MapGFX
       JSR DrawMenuItem
 
@@ -764,11 +744,7 @@ Menu_DrawBigChestKey:
       LDA.w #$01
       STA.w ShortSpoof
       LDA.w #ShortSpoof
-if !ENABLE_EQUIPMENT_MENU == 1
       LDX.w #!DungeonRow+menu_offset(0,9) ; dungeon row, 2nd
-else
-      LDX.w #menu_offset(11, 5)
-endif
       LDY.w #BigChestKeyGFX
       JSR DrawMenuItem
     .dontHaveCompass

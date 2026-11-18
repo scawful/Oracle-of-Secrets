@@ -217,7 +217,6 @@ class EquipmentMenuSfxContract(unittest.TestCase):
         self.assertRegex(sfx, r"SFX3 - queued via \$012F")
         self.assertRegex(sfx, r"SFX3\.20 .*Menu / Text cursor moved")
         self.assertRegex(sfx, r"SFX3\.22 .*Boss dying / Deleting file")
-        self.assertEqual(self.flags["ENABLE_EQUIPMENT_MENU"], 1)
         self.assertEqual(routine_lines(self.page3, "Menu_Page3_Select", self.flags)[0],
                          "JMP Menu_Equipment_Select")
         self.assertEqual(routine_lines(self.page3, "Menu_Page3_Move", self.flags)[0],

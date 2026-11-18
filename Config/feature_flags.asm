@@ -14,7 +14,6 @@
 !ENABLE_D7_FARORE_RESCUE_SEQUENCE     = 1
 !ENABLE_D8_FARORE_GRAPHICS            = 0
 !ENABLE_DIVE_GATE                     = 1
-!ENABLE_EQUIPMENT_MENU                = 1
 !ENABLE_EXPERIMENT_SCENE              = 1
 !ENABLE_GLADE_AMBUSH                  = 0
 !ENABLE_GOLDSTAR_CELL                 = 1
@@ -28,7 +27,6 @@
 !ENABLE_LYRA_OVERLAY_FIX              = 1
 !ENABLE_LYRA_TALKERS                  = 0
 !ENABLE_LYRA_TEMPLE_ZORA              = 0
-!ENABLE_MASK_R_BINDING                = 1
 !ENABLE_MENU_MAP_TRAVEL               = 1
 !ENABLE_MENU_PAGE_LOOP                = 1
 !ENABLE_MINECART_CART_SHUTTERS        = 0

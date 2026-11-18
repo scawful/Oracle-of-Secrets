@@ -269,16 +269,8 @@ macro OOS_HookMx(addr, kind, target, name, expected_m, expected_x)
     ; @hook module=Util name=<name> kind=<kind> target=<target> expected_m=<expected_m> expected_x=<expected_x>
 endmacro
 
-if not(defined("ENABLE_MASK_R_BINDING"))
-  !ENABLE_MASK_R_BINDING = 1
-endif
-
 if not(defined("ENABLE_GOLDSTAR_CELL"))
   !ENABLE_GOLDSTAR_CELL = 1
-endif
-
-if not(defined("ENABLE_EQUIPMENT_MENU"))
-  !ENABLE_EQUIPMENT_MENU = 1
 endif
 
 ; Build-derived native reader mode. Direct legacy assembly stays disabled.

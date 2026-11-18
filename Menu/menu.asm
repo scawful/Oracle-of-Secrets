@@ -137,9 +137,7 @@ Menu_InitGraphics:
 if !ENABLE_GOLDSTAR_CELL == 1
   JSL GoldstarInventory_Migrate
 endif
-if !ENABLE_MASK_R_BINDING == 1
   JSL MaskBinding_MigrateSelection
-endif
   LDA.w $0780 : STA.w $00
   JSR Menu_PortalRod_SyncOwned
   LDA.w $0202
@@ -178,29 +176,10 @@ incsrc "menu_draw.asm"
 
 Menu_UploadRight:
 {
-if !ENABLE_EQUIPMENT_MENU == 1
 if !ENABLE_MENU_MAP_TRAVEL == 1
   JSL MenuFlow_UploadRight              ; Quest, or the Map page after the map
 else
   JSR Menu_Quest_Draw
-endif
-else
-  JSR Menu_DrawBackground
-  JSR Menu_DrawQuestItems
-  JSR Menu_DrawCharacterName
-  JSR Menu_DrawBigKey
-  JSR Menu_DrawBigChestKey
-
-  JSR Menu_DrawQuestIcons
-  JSR Menu_DrawTriforceIcons
-  JSR Menu_DrawPendantIcons
-  JSR Menu_DrawMagicRings
-  JSR Menu_DrawPlaytimeLabel
-
-  JSR Menu_DrawHeartPieces
-  JSR Menu_DrawQuestStatus
-  JSR Menu_DrawAreaNameTXT
-  JSR DrawLocationName
 endif
 
   SEP #$30
@@ -281,24 +260,6 @@ incsrc "menu_select_item.asm"
 
 Menu_CheckForSpecialMenus:
 {
-if !ENABLE_EQUIPMENT_MENU == 0
-    LDA.w $0202 : CMP.b #!MENU_STATE_SCROLL_TO : BNE +
-      LDA.b $F6 : BIT.b #$80 : BEQ +
-        STZ.w $020B
-        LDA.b #!MENU_STATE_MAGIC_BAG : STA.w $0200 ; Magic Bag
-        JSR Menu_DeleteCursor ; Ensure cursor is deleted
-        SEC : RTS             ; Return Carry Set
-    +
-    LDA.w $0202 : CMP.b #!MENU_STATE_SONG_MENU : BNE ++
-      LDA.b $F6 : BIT.b #$80 : BEQ ++
-        LDA.b #!MENU_STATE_SONG_MENU : STA.w $0200
-        LDA.b #$01 : STA.w CurrentSong ; Initialize song selection
-          JSR Menu_DeleteCursor
-          JSR Menu_DrawSongMenu
-          SEP #$30
-          SEC : RTS ; Return Carry Set
-    ++
-endif
     LDA.w $0202 : CMP.b #!MENU_STATE_JOURNAL : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
         JSR Menu_CheckJournalUnlocked : BCC ++
@@ -433,9 +394,7 @@ Menu_ScrollTo:
 {
   SEP #$20
   JSR Menu_ScrollHorizontal : BCC .not_done
-if !ENABLE_EQUIPMENT_MENU == 1
     JSR Menu_Quest_Init
-endif
     JSR Menu_RefreshQuestScreen
     INC.w $0200
   .not_done
@@ -449,33 +408,7 @@ incsrc "menu_scroll.asm"
 
 Menu_StatsScreen:
 {
-if !ENABLE_EQUIPMENT_MENU == 1
   JMP Menu_QuestScreen
-else
-  JSR Menu_CheckHScroll
-
-  ; X Button: Open Journal
-  LDA.b $F6 : BIT.b #$40 : BEQ .no_journal
-    JSR Menu_CheckJournalUnlocked : BCC .no_journal
-    LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
-    REP #$20
-    LDA.w #$0000 : STA.l JournalState  ; Reset to first page
-    JSL Menu_DrawJournal
-    SEP #$30
-    ; Set VRAM upload for right side (quest screen)
-    LDA.b #$23 : STA.w $0116
-    LDA.b #$01 : STA.b $17
-    ; Play menu open sound
-    LDA.b #$11 : STA.w $012F
-    RTS
-  .no_journal
-
-  ; Y Button: Ring Box disabled on Quest Status screen
-  ; (Ring box graphics don't display correctly on right side)
-
-  ; JSR Menu_StatsScreen_Input ; Selection disabled per user request
-  RTS
-endif
 }
 
 ; =========================================================
@@ -575,9 +508,7 @@ Menu_Exit:
   INC.b $16
 
   SEP #$20 ; Restore M=8 before return (REP #$20 at line 432 set M=16)
-if !ENABLE_EQUIPMENT_MENU == 1
   JSL SwordSlots_ExitReload            ; heavy/story swap made in Equipment
-endif
   JSL Supply_ProcessPendingExitAction
 if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
   JSL SpecialSoaring_Complete
@@ -594,28 +525,7 @@ endif
 
 Menu_RefreshQuestScreen:
 {
-if !ENABLE_EQUIPMENT_MENU == 1
   JMP Menu_Quest_Draw
-else
-  JSR Menu_DrawBackground
-  JSR Menu_DrawQuestItems
-  JSR Menu_DrawCharacterName
-  JSR Menu_DrawBigKey
-  JSR Menu_DrawBigChestKey
-
-  JSR Menu_DrawQuestIcons
-  JSR Menu_DrawTriforceIcons
-  JSR Menu_DrawPendantIcons
-  JSR Menu_DrawMagicRings
-  JSR Menu_DrawPlaytimeLabel
-
-  JSR Menu_DrawHeartPieces
-  JSR Menu_DrawQuestStatus
-  JSR Menu_DrawAreaNameTXT
-  JSR DrawLocationName
-  SEP #$30               ; Restore 8-bit mode before return
-  RTS
-endif
 }
 
 Menu_RefreshInventoryScreen:
@@ -887,7 +797,6 @@ MagicBag_ConsumeItem:
 ; An unlearned ocarina has no cursor and ignores direction input.
 Menu_SongMenu:
 {
-  assert !ENABLE_EQUIPMENT_MENU == 1, "Epona's Song needs the Equipment menu"
   REP #$30
   JSR Menu_DrawMusicNotes
   SEP #$30
@@ -1193,9 +1102,7 @@ Menu_CheckJournalUnlocked:
 menu_frame: incbin "tilemaps/menu_frame.tilemap"
 ; quest_icons (128 bytes) lives in bank $2E after menu_journal.asm: bank $2D is full.
 incsrc "menu_map_names.asm"
-if !ENABLE_EQUIPMENT_MENU == 1
   incsrc "menu_quest.asm"
-endif
   incsrc "menu_page3.asm" ; end of bank $2D, after the map names
   ; menu_item_bindings.asm is in bank $2B (Items/all_items.asm): bank $2D is
   ; full. Long wrappers for the two $2D routines it calls; DBR stays $2D.

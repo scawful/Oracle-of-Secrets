@@ -4,7 +4,7 @@
 ; equipped: no sword beam, a slower windup, no shield draw and no shield
 ; block. The story blade keeps vanilla behavior.
 ; $7EF35A (shield level) is never written. Assembled in Items bank $2B with
-; menu_sword_slots.asm under !ENABLE_EQUIPMENT_MENU.
+; menu_sword_slots.asm.
 
 ; Carry set = heavy slot equipped (bit1) and Sword holds the heavy level
 ; for its state. Any M/X; keeps A/X/Y and every flag except carry.

@@ -7,14 +7,9 @@ UpdateGbcPalette:
   REP #$30   ; change 16bit mode
   LDX #$001E
 
-if !ENABLE_EQUIPMENT_MENU == 1
   JSL Tunic_GetWorn                  ; worn colour (Menu/menu_tunic.asm)
   CMP #$0001 : BEQ .blue_mail
   CMP #$0002 : BEQ .red_mail
-else
-  LDA $7EF35B : AND.w #$00FF : CMP #$0001 : BEQ .blue_mail
-  LDA $7EF35B : AND.w #$00FF : CMP #$0002 : BEQ .red_mail
-endif
 
   .loop
   LDA.l GameboyLinkPalette, X : STA $7EC6E0, X
@@ -56,13 +51,11 @@ LinkState_GameboyInDungeonEntrance:
 {
   ; Preserve the actual entrance's world, but never choose GBC base art in D8.
   JSL LinkGraphics_ApplyD8Base : BCS .return
-if !ENABLE_MASK_R_BINDING == 1
   ; Cosmetic GBC transitions must not replace an active mask form.
   LDA.w !CurrentMask : BEQ +
   CMP.b #$08 : BEQ .return
   CMP.b #$05 : BCC .return
   +
-endif
   ; if link is in the dark world, change his sprite to the gbc one
   ; SavedWorld, not $0FFF: Sprite_Main copies it to $0FFF only once sprites
   ; run, which is after the load fade on file load and continue.
@@ -78,13 +71,11 @@ endif
 ; Retain GBC sprite when exiting DW dungeons
 LoadOverworld_CheckForGbcLink:
 {
-if !ENABLE_MASK_R_BINDING == 1
   ; Cosmetic GBC transitions must not replace an active mask form.
   LDA.w !CurrentMask : BEQ +
   CMP.b #$08 : BEQ .return
   CMP.b #$05 : BCC .return
   +
-endif
   ; SavedWorld, not $0FFF: on file load and continue Sprite_Main has not run
   ; yet, so $0FFF is still 0 here and the spotlight showed normal Link.
   LDA.l SavedWorld : BEQ .return_lw
@@ -104,13 +95,11 @@ endif
 
 OverworldTransition_CheckForGbcLink:
 {
-if !ENABLE_MASK_R_BINDING == 1
   ; Cosmetic GBC transitions must not replace an active mask form.
   LDA.w !CurrentMask : BEQ +
   CMP.b #$08 : BEQ .return
   CMP.b #$05 : BCC .return
   +
-endif
   LDA.l SavedWorld : BEQ .return
     LDA.w !CurrentMask : CMP.b #$05 : BEQ .return
       LDA #$3B : STA $BC   ; change link's sprite
@@ -159,13 +148,11 @@ MirrorWarp_PearlArrival:
   LDA.l SavedWorld : BEQ .done
   ; Without the pearl, MirrorWarp_PearllessArrival sets the form.
   LDA.l $7EF357 : BEQ .done
-if !ENABLE_MASK_R_BINDING == 1
   ; Cosmetic GBC transitions must not replace an active mask form.
   LDA.w !CurrentMask : BEQ +
   CMP.b #$08 : BEQ .done
   CMP.b #$05 : BCC .done
   +
-endif
   LDA.w !CurrentMask : CMP.b #$05 : BEQ .done
     LDA.b #$3B : STA.b $BC
     LDA.b #$06 : STA.w $02B2
@@ -206,10 +193,8 @@ pullpc
 LinkState_GameboyForm:
 {
   SEP #$30
-if !ENABLE_MASK_R_BINDING == 1
   ; A cosmetic world transition must not replace the active Garo form.
   LDA.w !CurrentMask : CMP.b #$08 : BEQ .return
-endif
   LDA $02B2 : CMP.b #$06 : BEQ .already_gbc
     LDA.l SavedWorld : BEQ .return ; not in dark world
       .transform

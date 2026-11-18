@@ -4,7 +4,6 @@
 ; reads ($0288F9 dungeon, $02A55A overworld). Routing joins MaskBinding_Tick's
 ; regular-item branch; reset joins LoadCheckpointOrWorld.
 assert !DISABLE_ITEMS == 0, "Dual-item binding needs the item modules"
-assert !ENABLE_MASK_R_BINDING == 1, "Dual-item binding routes through MaskBinding_Tick"
 ; ---------------------------------------------------------
 ; Live dispatcher. All entries run inside gameplay with D=0; long addressing
 ; for owned/WRAM bytes so caller DBR does not matter.

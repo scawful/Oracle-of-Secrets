@@ -255,7 +255,7 @@ class QuestEssenceLayout(unittest.TestCase):
         self.assertIn("JSR Menu_DrawBigChestKey", body)
         item_base = self.draw_menu_item_base()
         dy, dx = map(int, re.search(r"!DungeonRow = menu_offset\((\d+),(\d+)\)", draw).groups())
-        found = re.findall(r"if !ENABLE_EQUIPMENT_MENU == 1\n\s*LDX\.w #!DungeonRow\+menu_offset\((\d+),\s*(\d+)\)", draw)
+        found = re.findall(r"LDX\.w #!DungeonRow\+menu_offset\((\d+),\s*(\d+)\)", draw)
         self.assertEqual(len(found), 4, "big key, treasure, map, big chest key")
         icons = [to_cell(self.offset(dy + int(y), dx + int(x)) + item_base) for y, x in found]
         self.assertEqual({row for row, _ in icons}, {17})

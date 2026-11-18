@@ -75,10 +75,6 @@ if !ENABLE_HORSE_FORM == 1
     RTL
   +
 endif
-if !ENABLE_MASK_R_BINDING == 0
-  LDA.w $0202              ; check the current item
-  CMP.b #$16 : BNE .end    ; is it the bunny hood?
-endif
   LDA.w !CurrentMask : CMP.b #$04 : BNE .end
         LDA.l BunnySpeedTable, X ; load new speed values
         CLC

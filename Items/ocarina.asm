@@ -649,7 +649,6 @@ ResetOcarinaFlag:
 ; 07 - 6 songs (+ Stone)
 UpdateFluteSong_Long:
 {
-if !ENABLE_EQUIPMENT_MENU == 1
   ; Equipment chooses the song. L/R must not also change it in the world.
   ; CurrentSong ($030F) is volatile; SavedOcarinaSong ($7EF3AB) keeps the
   ; choice across save/reload. Restore from it when $030F is 0, validate
@@ -683,36 +682,6 @@ if !ENABLE_EQUIPMENT_MENU == 1
   STZ.w CurrentSong
   LDA.b #$00 : STA.l SavedOcarinaSong
   RTL
-else
-  error "Epona's Song needs !ENABLE_EQUIPMENT_MENU = 1"
-  ; Highest song = min(Flute - 1, 6); keeps the diagnostic legacy selector
-  ; compatible with the same saved learned-count contract as Equipment.
-  LDA.l $7EF34C : CMP.b #$02 : BCC .no_songs
-  CMP.b #$08 : BCC +
-    LDA.b #$07
-  +
-  DEC : STA.b $00
-  LDA.w CurrentSong : BEQ .first_song
-  CMP.b $00 : BCC .input
-  BEQ .input
-.first_song
-  LDA.b #$01 : STA.w CurrentSong
-.input
-  LDA.b $F6 : BIT.b #$20 : BNE .left
-  BIT.b #$10 : BEQ .done
-  INC.w CurrentSong
-  LDA.b $00 : CMP.w CurrentSong : BCS .done
-  LDA.b #$01 : STA.w CurrentSong
-  RTL
-.left
-  DEC.w CurrentSong : BNE .done
-  LDA.b $00 : STA.w CurrentSong
-.done
-  RTL
-.no_songs
-  STZ.w CurrentSong
-  RTL
-endif
 }
 
 ; In: A = song 1-6, 8-bit A. Out: C set = learned. Keeps A, X, Y.

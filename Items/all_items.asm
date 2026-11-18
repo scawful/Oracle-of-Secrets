@@ -386,11 +386,9 @@ assert pc() <= $54A000, "Dual-item/2-item HUD exceeded $54A000"
 pullpc
 
 ; Two-slot sword helpers for the Equipment menu (Menu banks $2D/$2E are full).
-if !ENABLE_EQUIPMENT_MENU == 1
 incsrc "Menu/menu_sword_slots.asm"
 incsrc "Menu/menu_tunic.asm"
 incsrc "Items/heavy_sword.asm"
-endif
 
 ; Menu cursor memory, page-edge crossing, map return, tunic popup (bank $2D full).
 if !ENABLE_MENU_MAP_TRAVEL == 1

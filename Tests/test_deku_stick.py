@@ -134,7 +134,7 @@ class DekuStickContractTest(unittest.TestCase):
     def test_y_interception_hook(self):
         mask_text = MASK_ROUTINES.read_text(encoding="utf-8")
         y_hook_idx = mask_text.find("MaskControl_CheckYItem:")
-        r_bind_idx = mask_text.find("if !ENABLE_MASK_R_BINDING == 1", y_hook_idx)
+        r_bind_idx = mask_text.find("  JML MaskBinding_Tick", y_hook_idx)
         self.assertNotEqual(y_hook_idx, -1)
         self.assertNotEqual(r_bind_idx, -1)
         # DekuStick_CheckYPress must precede R binding dispatch in MaskControl_CheckYItem

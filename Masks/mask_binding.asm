@@ -1,4 +1,4 @@
-; Independent mask binding. Included in bank $3A under ENABLE_MASK_R_BINDING.
+; Independent mask binding. Included in bank $3A.
 ; $0202 remains the normal item. $0303 is the effective action for vanilla
 ; Link_HandleYItem, and $0304 retains vanilla in-flight action bookkeeping.
 ; All entry points use 8-bit A/X/Y unless documented otherwise.

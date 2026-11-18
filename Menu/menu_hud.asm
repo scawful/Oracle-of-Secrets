@@ -365,17 +365,13 @@ if !ENABLE_GOLDSTAR_CELL == 1
     .not_goldstar_cell
 endif
     JSR HUD_DrawItem
-if !ENABLE_MASK_R_BINDING == 1
     RTS
-endif
 
   .no_equipped_item
-if !ENABLE_MASK_R_BINDING == 1
   ; Restore the four empty item-box tiles from hud.tilemap after unmasking
   ; when there is no normal item selected (for example, an old mask-only save).
   LDA.w #$20AA
   STA.l $7EC776 : STA.l $7EC778 : STA.l $7EC7B6 : STA.l $7EC7B8
-endif
   RTS
 }
 
@@ -386,7 +382,6 @@ endif
 ; In: 16-bit A/X/Y. Out: X = item ID to draw (Z from X). A is not kept.
 HUD_ItemBoxItem:
 {
-if !ENABLE_MASK_R_BINDING == 1
   ; Stone uses the cape flag, not CurrentMask (Zora also uses $55).
   LDA.w !CurrentMask : AND.w #$00FF : BEQ .stone_check
   CMP.w #$0006 : BNE .form_check
@@ -394,7 +389,6 @@ if !ENABLE_MASK_R_BINDING == 1
   LDA.b $55 : AND.w #$00FF : BEQ .form_check
     LDX.w #$0017 : RTS
   .form_check
-endif
   LDA.w !CurrentMask : AND.w #$00FF : BEQ .y_item
   CMP.w #$0008 : BNE +
     LDX.w #$001E : RTS

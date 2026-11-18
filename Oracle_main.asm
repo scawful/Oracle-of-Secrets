@@ -68,10 +68,7 @@ if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
   assert !DISABLE_OVERWORLD == 0, "Native palette lifecycle requires the overworld module"
 endif
 assert !ENABLE_ONE_RING == 1, "Page 3 Layout A requires !ENABLE_ONE_RING == 1"
-assert !ENABLE_GOLDSTAR_CELL <= !ENABLE_MASK_R_BINDING, "Goldstar cell requires independent mask binding"
-assert !ENABLE_EQUIPMENT_MENU <= !ENABLE_MASK_R_BINDING, "Equipment requires independent mask binding"
-assert !ENABLE_EQUIPMENT_MENU <= !ENABLE_ONE_RING, "Equipment requires one ring"
-assert !ENABLE_EQUIPMENT_MENU <= !ENABLE_GOLDSTAR_CELL, "Equipment requires Goldstar split"
+assert !ENABLE_GOLDSTAR_CELL == 1, "Goldstar cell is permanently active"
 incsrc    "Core/structs.asm"
 
 ; Vanilla WRAM and SRAM

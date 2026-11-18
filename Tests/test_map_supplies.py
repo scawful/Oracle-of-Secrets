@@ -90,7 +90,7 @@ class MapSuppliesLayoutTest(unittest.TestCase):
 
         dy, dx = map(int, re.search(r"!DungeonRow = menu_offset\((\d+),(\d+)\)", DRAW).groups())
         d_offsets = re.findall(
-            r"if !ENABLE_EQUIPMENT_MENU == 1\n\s*LDX\.w #!DungeonRow\+menu_offset\((\d+),\s*(\d+)\)",
+            r"LDX\.w #!DungeonRow\+menu_offset\((\d+),\s*(\d+)\)",
             DRAW,
         )
         self.assertEqual(len(d_offsets), 4)
