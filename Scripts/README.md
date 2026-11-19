@@ -14,7 +14,10 @@ This repo has accumulated scripts over time. The goal is to keep a small “gold
 - Launch isolated Mesen2 instance: `Scripts/Mesen2/mesen2_launch_instance.sh`
 - Run manifest-based tests: `Scripts/Validate/run_regression_tests.sh regression`
 - Test runner (socket backend): `Scripts/Validate/test_runner.py`
-- Package a beta patch: `Scripts/Build/beta_patch.sh`
+- Package a verified beta `.bps` + showcase `.srm` bundle: `Scripts/Build/beta_patch.sh` / `Scripts/Build/package_beta_bps.py`
+- Generate the 3-slot beta showcase `.srm`: `Scripts/Build/generate_showcase_srm.py`
+- 192-map overworld seam & arrival auditor: `Scripts/Build/check_overworld_seams.py`
+- Stitched overworld diagnostic region board (with optional Yaze `--diff-rom`): `Scripts/Tools/overworld_region_board.py`
 - Handheld (RG353P) testing: moved to the sibling repo `~/src/hobby/oos-rg353p`.
 
 Older docs may still reference `./build.sh` or flat `scripts/…` paths. Prefer the Golden Path commands above.
