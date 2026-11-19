@@ -13,7 +13,7 @@ A full-scale *A Link to the Past* ROM hack featuring original overworlds, dungeo
 
 | Title Screen | Intro Storybook |
 |---|---|
-| ![Title Screen](Docs/Screenshots/title_screen.png) | ![Intro Storybook](Docs/Screenshots/attract_storybook.png) |
+| ![Title Screen](Docs/Screenshots/title_screen.gif) | ![Intro Storybook](Docs/Screenshots/attract_storybook.png) |
 
 | Menu v5: Items (Dual X/Y Bind) | Menu v5: Equipment & Masks |
 |---|---|
