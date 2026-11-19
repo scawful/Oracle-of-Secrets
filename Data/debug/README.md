@@ -61,11 +61,13 @@ follower graphics (Impa) are rebuilt.
 - Areas without a dungeon/cave exit room are not warpable (for example `$2A`,
   the western forest where Farore stands). `warp-area --list` shows the 38
   that are.
-- Special areas `$80+` (Maku Tree Area / Forest Glade, Zora falls) are excluded:
-  loading them through `$10` = `$08` skips their setup, and walking to the edge
-  ran into area `$90` with garbage tiles. `village-impa` (also the
-  Farore-meeting state) and `kalyxo-return` therefore land in the village and
-  outside the Hall of Secrets.
+- Special areas `$80+` are excluded from `warp-area`. The exit-table load
+  skips their setup. `village-impa` and `kalyxo-return` therefore land in the
+  village and outside the Hall of Secrets. On b67 the debug warp in
+  `Util/item_cheat.asm` does load `$80-$BF` through the cached-exit record
+  (X and Y both 0 pick the camera-bounds interior). The checkpoint client does
+  not call that path, so Garrison `$83+$8B`, Sea Zora `$90+$98`, Deku
+  `$A8+$A9`, and Goron Desert `$B0/$B1/$B8/$B9` stay in `todo`.
 - Warps need normal play (module `$07/$09/$0B`, submodule 0): close text boxes
   first. Follower `$02` makes the game load the spawn point; the warp refuses.
 - Mesen2 builds without the SPC state-load fix (`Spc::AfterStateLoad`) hang in

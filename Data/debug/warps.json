@@ -733,6 +733,27 @@
       "comment_area": "0x0B"
     },
     {
+      "id": "0x29",
+      "name": "Sky Tower",
+      "label": "D8 Sky Tower",
+      "group": "dungeon",
+      "room": "0x0090",
+      "exit": "table",
+      "source": "ROM entrance table $0F8000 and door table $1BB96F on b67 0392d772",
+      "area": "0x87",
+      "area_name": "Sky Tower",
+      "doors": [
+        {
+          "area": "0x87",
+          "tile": "0x071E",
+          "x": 240,
+          "y": 224
+        }
+      ],
+      "comment_area": "0xXX",
+      "note": "Overworld/entrances.asm:569 still says this id is available. The b67 ROM entrance word is room $0090 and the door is area $87 tile $071E. Exit of room $90 is area $87."
+    },
+    {
       "id": "0x2A",
       "name": "Kalyxo Castle Basement Route",
       "label": "D3 Kalyxo Castle (basement route)",
@@ -1141,6 +1162,27 @@
         }
       ],
       "comment_area": "0x23"
+    },
+    {
+      "id": "0x43",
+      "name": "Village Tavern backdoor",
+      "label": "Village Tavern backdoor",
+      "group": "town",
+      "room": "0x0103",
+      "exit": "cache",
+      "source": "Overworld/entrances.asm:204; Overworld/village_bar_exit.asm",
+      "area": "0x23",
+      "area_name": "Wayward Village",
+      "doors": [
+        {
+          "area": "0x23",
+          "tile": "0x11DA",
+          "x": 1744,
+          "y": 544
+        }
+      ],
+      "comment_area": "0x23",
+      "note": "entrances.asm:595 comment is only 'OW'. ROM door i=$3B is area $23 tile $11DA entrance $43, room $0103. North half of the tavern; $22 >= $0700 in that room is the cottage, entrance $44."
     },
     {
       "id": "0x44",

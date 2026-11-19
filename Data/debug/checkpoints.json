@@ -1,6 +1,6 @@
 {
   "schema": "oracle-debug-checkpoints/1",
-  "description": "Story checkpoints for the Mesen2-OOS Cheats & Warps panel and mesen2_client.py checkpoint. Order follows AFS knowledge/planning/story_canon_beat_sheet.md. See Data/debug/README.md.",
+  "description": "Story checkpoints for the Mesen2-OOS Cheats & Warps panel and mesen2_client.py checkpoint. Order follows AFS knowledge/planning/story_canon_beat_sheet.md. See Data/debug/README.md. b67 (0392d772) adds editor jumps for the three shrines, D8 Sky entrance $29, Wayward Village and its bar doors, the four Magic Bean areas, and Ranch archery. Special pages $83/$8B, $90/$98, $A8/$A9, and $B0/$B1/$B8/$B9 stay in todo: area warp still refuses $80+.",
   "rom_tested": {
     "path": "Roms/Playtest/oos-v0.9.0-b17.sfc",
     "sha256": "a0fdd4220d4da24b9c8cd087f5cb68a9758b85fbf733655f7888d0fa844b008c"
@@ -1266,7 +1266,7 @@
         ],
         "room": "0x0084"
       },
-      "notes": "Editor jump through warps.json entrance $09 -> room $84. On project ROM c606f8d9 and earlier, exit wiring forced GBC form (mask 6, $0FFF=1). On 566e8b62+ (doors 1-3 landed) warp_entrance(0x09) keeps mask 0 and $0FFF 0. Re-verify on a private 566e build; no story writes.",
+      "notes": "Editor jump through entrance $09 -> room $84 (ROM entrance table $0F8000). b67 door table $1BB96F puts this door on Goron Desert area $B0 tile $0AAA, not the entrances.asm OW $4B comment. On project ROM c606f8d9 and earlier, exit wiring forced GBC form (mask 6, $0FFF=1). On 566e8b62+ warp_entrance(0x09) kept mask 0. Re-check $02B2 and $0FFF on the b67 ROM. No story writes.",
       "writes": []
     },
     {
@@ -1281,8 +1281,178 @@
         ],
         "room": "0x00C9"
       },
-      "notes": "Editor jump through warps.json entrance $33 -> room $C9 (Shrine of Wisdom entry on OW $63 Wisdom Swamp; inner room $009A has no direct entrance row in warps.json). No story writes.",
+      "notes": "Editor jump through entrance $33 -> room $C9. b67 door table has one door, area $63 tile $035E. Inner room $009A has no entrance row. No story writes.",
       "writes": []
+    },
+    {
+      "id": "jump-shrine-courage",
+      "label": "Shrine of Courage room $53 (Mirror Shield)",
+      "location": {
+        "entrance": "0x0C"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x0053"
+      },
+      "notes": "b67 editor jump. Entrance $0C -> room $53 (Menu/menu_draw.asm shrine row: Mirror Shield, room $053). Door table area $A6. The Shield write is Option D: Items/mirror_shield_palette.asm loads SP-5 color 8 only when Shield == 3.",
+      "writes": [
+        {
+          "addr": "0x7EF35A",
+          "value": "0x03",
+          "name": "Shield",
+          "evidence": "Core/sram.asm:340 (Shield 3 = Mirror); Items/mirror_shield_palette.asm:70"
+        }
+      ]
+    },
+    {
+      "id": "jump-d8-sky",
+      "label": "D8 Sky Tower entrance room $90 (area $87 door)",
+      "location": {
+        "entrance": "0x29"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x0090"
+      },
+      "notes": "b67. ROM entrance table word $29 is room $0090; the door is area $87 tile $071E. Exit of room $90 is area $87. Distinct from d8-entrance (Fortress $37 -> room $0C) and from d8-sky-boss-room ($96). entrances.asm:569 still says this id is available. Farore's D8 companion follows in rooms $90-$95 when indoors, dungeon id $040C is 4, and Crystals bit $80 is clear (Sprites/NPCs/farore_d8_companion.asm D8Farore_Presence).",
+      "writes": []
+    },
+    {
+      "id": "jump-wayward-village",
+      "label": "Wayward Village area $23 (cat and dog)",
+      "location": {
+        "area": "0x23"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x23"
+      },
+      "notes": "Editor jump. Area warp via room $FE. Village Cat ($28) and Village Dog ($25) are scoped to OW $23 and the village houses (Sprites/NPCs/village_animals.asm). No story writes.",
+      "writes": []
+    },
+    {
+      "id": "jump-wayward-tavern",
+      "label": "Wayward Village tavern front door $42",
+      "location": {
+        "entrance": "0x42"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x0103"
+      },
+      "notes": "South front door of room $0103 (Overworld/village_bar_exit.asm: Link Y >= $2100 leaves through door $42). Cat and dog hooks include this room.",
+      "writes": []
+    },
+    {
+      "id": "jump-wayward-bar-back",
+      "label": "Wayward Village bar backdoor $43",
+      "location": {
+        "entrance": "0x43"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x0103"
+      },
+      "notes": "North backdoor of the same room $0103 (Overworld/entrances.asm:204-216 routes tile $11DA to entrance $43; village_bar_exit.asm leaves through door $43 when Link Y < $2100). Shares the room with the front door and the cottage half ($22 >= $0700 is entrance $44).",
+      "writes": []
+    },
+    {
+      "id": "jump-bean-spot0",
+      "label": "Magic Bean spot 0, Ranch $00",
+      "location": {
+        "area": "0x00"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x00"
+      },
+      "notes": "Editor jump. Spot 0 progress is MagicBeanProgress $7EF39B (Core/sram.asm:475). No story writes; planting state is left as it is.",
+      "writes": []
+    },
+    {
+      "id": "jump-bean-spot1",
+      "label": "Magic Bean spot 1, Tail Pond $2D",
+      "location": {
+        "area": "0x2D"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x2D"
+      },
+      "notes": "Editor jump. Spot 1 is MagicBeanSpot1 $7EF3C0 (Core/sram.asm:886). No story writes.",
+      "writes": []
+    },
+    {
+      "id": "jump-bean-spot2",
+      "label": "Magic Bean spot 2, Mountainside $15",
+      "location": {
+        "area": "0x15"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x15"
+      },
+      "notes": "Editor jump. Spot 2 is MagicBeanSpot2 $7EF3C1 (Core/sram.asm:887). No story writes.",
+      "writes": []
+    },
+    {
+      "id": "jump-bean-spot3",
+      "label": "Magic Bean spot 3, Loom Beach $33",
+      "location": {
+        "area": "0x33"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x33"
+      },
+      "notes": "Editor jump. Spot 3 is MagicBeanSpot3 $7EF3C2 (Core/sram.asm:888). Area warp uses room $104, which the cheat client treats as a table exit. No story writes.",
+      "writes": []
+    },
+    {
+      "id": "jump-horse-archery",
+      "label": "Toto Ranch archery course (Horse minigame, course 0)",
+      "location": {
+        "area": "0x00"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x00"
+      },
+      "notes": "Lands on Ranch $00, the course-0 map (Masks/horse_minigame.asm HorseGame_CourseId 0). Bow must be nonzero or the kid uses message $0229. Horse form is CurrentMask $02B2 = 9 (Masks/horse_form.asm) and does not survive the area reload; equip it after landing. SideQuest2 bit $80 is the first-clear heart piece and is not set here.",
+      "writes": [
+        {
+          "addr": "0x7EF340",
+          "value": "0x02",
+          "name": "Bow",
+          "evidence": "Core/sram.asm:310 (Bow 2 = bow and arrows); Masks/horse_minigame.asm:514 refuses the course when Bow is 0"
+        }
+      ]
     }
   ],
   "todo": [
@@ -1313,29 +1483,64 @@
       "reason": "No overworld area row in this tree's warps.json. Entrance $1A loads the beach cave, not the map."
     },
     {
+      "id": "jump-garrison-83",
+      "label": "Garrison top $83 (tall area with $8B)",
+      "reason": "b67 SpecialSoaring cache names TallArea $83+$8B (Items/special_soaring.asm). Area warp refuses $80+. Debug warp (Util/item_cheat.asm) loads it; X=Y=0 uses the camera-bounds interior."
+    },
+    {
+      "id": "jump-garrison-8b",
+      "label": "Garrison bottom $8B",
+      "reason": "Paired with $83. Same area-warp refusal. Edge guard: $8B connects north to $83 and west to $8A (Overworld/lyra_edge_guard.asm)."
+    },
+    {
+      "id": "jump-seazora-90",
+      "label": "Sea Zora north $90",
+      "reason": "b67 edge guard: $90 connects south to $98. Area warp refuses $80+."
+    },
+    {
+      "id": "jump-seazora-98",
+      "label": "Sea Zora south $98",
+      "reason": "b67 edge guard: $98 connects north to $90, east to $99, south to $A0. Area warp refuses $80+."
+    },
+    {
+      "id": "jump-deku-a8",
+      "label": "Deku west $A8",
+      "reason": "b67 edge guard: $A8 connects east to $A9 and south to $B0. Area warp refuses $80+."
+    },
+    {
+      "id": "jump-deku-a9",
+      "label": "Deku east $A9",
+      "reason": "b67 edge guard: $A9 connects west to $A8 and south to $B1. Area warp refuses $80+."
+    },
+    {
       "id": "jump-lyra-b0",
-      "label": "Lyra Goron town $B0",
-      "reason": "Data/debug/README.md: areas $80+ are excluded. Module $08 skips their setup."
+      "label": "Goron Desert NW $B0 (parent of $B0/$B1/$B8/$B9)",
+      "reason": "b67 64x64 desert. Shrine of Power doors $03/$05/$09/$0B sit on this area, but the overworld page itself has no exit-table warp. Debug warp loads $80-$BF."
     },
     {
       "id": "jump-lyra-b1",
-      "label": "Lyra coast $B1",
-      "reason": "Areas $80+ are excluded from area warp."
+      "label": "Goron Desert NE $B1",
+      "reason": "Quadrant of parent $B0. Area warp refuses $80+."
     },
     {
-      "id": "jump-lyra-b2",
-      "label": "Lyra coast $B2",
-      "reason": "Areas $80+ are excluded from area warp."
+      "id": "jump-goron-b8",
+      "label": "Goron Desert SW $B8",
+      "reason": "Quadrant of parent $B0. Area warp refuses $80+."
     },
     {
       "id": "jump-lyra-b9",
-      "label": "Lyra coast $B9",
-      "reason": "Areas $80+ are excluded from area warp."
+      "label": "Goron Desert SE $B9",
+      "reason": "Quadrant of parent $B0. Area warp refuses $80+. Harbor stairs continue east to $BA."
+    },
+    {
+      "id": "jump-lyra-b2",
+      "label": "Lyra Sea east of the desert $B2",
+      "reason": "b67 edge guard names $B2 the sea page east of $B1, not the old coast label. Area warp refuses $80+."
     },
     {
       "id": "jump-lyra-ba",
-      "label": "Lyra coast $BA",
-      "reason": "Areas $80+ are excluded from area warp."
+      "label": "Harbor / sea $BA",
+      "reason": "b67 edge guard: $BA connects west to $B9 by the harbor stairs. Area warp refuses $80+."
     },
     {
       "id": "jump-d8-08c",
@@ -1350,7 +1555,7 @@
     {
       "id": "jump-sky-8c",
       "label": "Sky landing $8C",
-      "reason": "Areas $80+ are excluded from area warp."
+      "reason": "Areas $80+ are excluded from area warp. b67 debug warp can load $8C; the checkpoint client cannot."
     }
   ]
 }
