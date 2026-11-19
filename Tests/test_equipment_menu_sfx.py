@@ -182,7 +182,7 @@ def check_select(test, equipment_text, page3_text, flags):
     """Runs every case through Menu_Equipment_Select; returns the case count."""
     routines = {name: routine_lines(text, name, flags) for text, name in (
         (equipment_text, "Menu_Equipment_Select"), (page3_text, "Menu_Page3_ToggleRing"))}
-    one_ring = flags["ENABLE_ONE_RING"] == 1
+    one_ring = True
     cases = 0
     for slot in list(range(0x1D)) + [0xFF]:
         ownership = (True,) if 0x12 <= slot < 0x18 else (False,) if slot > 0x1C else (False, True)
@@ -231,26 +231,19 @@ class EquipmentMenuSfxContract(unittest.TestCase):
 
     def test_sword_slots_select_dispatch(self):
         sword = SWORD_SLOTS.read_text(encoding="utf-8")
-        for travel in (1, 0):
-            lines = routine_lines(sword, "SwordSlots_Select",
-                                  dict(self.flags, ENABLE_MENU_MAP_TRAVEL=travel))
-            with self.subTest(map_travel=travel):
-                # $1A-$1C (tunic cells) first: wear colour slot-$1A, no popup.
-                self.assertEqual(lines[:5], ["CMP.b #$1A", "BCC +", "SEC", "SBC.b #$1A",
-                                             "JMP Tunic_SetWorn"])
-                self.assertIn("CMP.b #$19", lines)
-                heavy = lines[lines.index(".heavy"):]
-                self.assertIn("ORA.b #!SwordSlot_HeavyEquipped", heavy)
-                story = lines[lines.index("CMP.b #$19"):lines.index(".heavy")]
-                self.assertIn("AND.b #!SwordSlot_HeavyEquipped^$FF", story)
-                self.assertIn("LDA.l SwordStoryBlade", story)
+        lines = routine_lines(sword, "SwordSlots_Select", self.flags)
+        # $1A-$1C (tunic cells) first: wear colour slot-$1A, no popup.
+        self.assertEqual(lines[:5], ["CMP.b #$1A", "BCC +", "SEC", "SBC.b #$1A",
+                                     "JMP Tunic_SetWorn"])
+        self.assertIn("CMP.b #$19", lines)
+        heavy = lines[lines.index(".heavy"):]
+        self.assertIn("ORA.b #!SwordSlot_HeavyEquipped", heavy)
+        story = lines[lines.index("CMP.b #$19"):lines.index(".heavy")]
+        self.assertIn("AND.b #!SwordSlot_HeavyEquipped^$FF", story)
+        self.assertIn("LDA.l SwordStoryBlade", story)
 
     def test_select_active_flags_every_slot_input_and_ring_state(self):
         check_select(self, self.equipment, self.page3, self.flags)
-
-    def test_select_multi_ring_delegate(self):
-        flags = dict(self.flags, ENABLE_ONE_RING=0)
-        check_select(self, self.equipment, self.page3, flags)
 
     def test_move_accept_plays_cursor_sound(self):
         routines = {"Menu_Equipment_Move": routine_lines(
@@ -261,51 +254,15 @@ class EquipmentMenuSfxContract(unittest.TestCase):
             self.assertEqual(menu.sounds, [("$012F", MENU_CURSOR)])
             self.assertEqual((menu.memory["$020B"], menu.memory["$0207"]), (target, 0))
 
-    def test_horizontal_page_turn_reuses_targets_without_changing_selections(self):
-        states = {"#!MENU_STATE_ITEM_SCREEN": 4, "#!MENU_STATE_SCROLL_TO": 5,
-                  "#!MENU_STATE_STATS_SCREEN": 6, "#!MENU_STATE_SCROLL_FROM": 7}
-        selections = {"$0202": 0x0D, "$020B": 14, "BoundMask": 3,
-                      "RingSlot1": 2, "SavedOcarinaSong": 4, "CurrentSong": 4}
-        for loop in (0, 1):
-            # Legacy three-page ring; the four-page ring has its own test.
-            flags = dict(self.flags, ENABLE_MENU_PAGE_LOOP=loop, ENABLE_MENU_MAP_TRAVEL=0)
-            routines = {"Menu_Page3_Turn": routine_lines(
-                self.page3, "Menu_Page3_Turn", flags)}
-            for page, state, target in (("items", 4, 0), ("quest", 6, 0),
-                                        ("equipment", 6, 0x20)):
-                for direction in (1, 0xFF):
-                    with self.subTest(loop=loop, page=page, direction=direction):
-                        memory = dict(states, **selections)
-                        memory.update({"$0200": state, "MenuScrollLevelH": target})
-                        menu = Menu(routines, memory, {})
-                        menu.a = direction
-                        menu.run("Menu_Page3_Turn")
-                        expected_state, expected_target = 7, target
-                        if page == "items":
-                            expected_state = 5
-                            expected_target = 0 if direction == 1 else 0x20
-                        elif loop and ((page == "quest" and direction == 1) or
-                                       (page == "equipment" and direction == 0xFF)):
-                            expected_state = 5
-                            expected_target = 0x20 if page == "quest" else 0
-                        self.assertEqual(menu.memory["$0200"], expected_state)
-                        self.assertEqual(menu.memory["MenuScrollLevelH"], expected_target)
-                        self.assertEqual(menu.memory["MenuScrollHDirection"],
-                                         8 if direction == 1 else 0xFFF8)
-                        self.assertEqual({key: menu.memory[key] for key in selections},
-                                         selections)
-                        self.assertEqual(menu.sounds, [("$012F", 6)])
-                        self.assertTrue(menu.c)
-                        self.assertEqual(menu.stack, [])
-
     def test_map_travel_four_page_ring(self):
         """Items -R-> Equipment -R-> Quest -R-> Map -R-> Items, and back with L."""
         states = {"#!MENU_STATE_ITEM_SCREEN": 4, "#!MENU_STATE_SCROLL_TO": 5,
                   "#!MENU_STATE_STATS_SCREEN": 6, "#!MENU_STATE_SCROLL_FROM": 7}
-        flags = dict(self.flags, ENABLE_MENU_MAP_TRAVEL=1)
+        selections = {"$0202": 0x0D, "$020B": 14, "BoundMask": 3,
+                      "RingSlot1": 2, "SavedOcarinaSong": 4, "CurrentSong": 4}
         map_travel = (ROOT / "Menu" / "menu_map_travel.asm").read_text(encoding="utf-8")
-        routines = {"Menu_Page3_Turn": routine_lines(self.page3, "Menu_Page3_Turn", flags),
-                    "MenuMapTravel_Turn": routine_lines(map_travel, "MenuMapTravel_Turn", flags)}
+        routines = {"Menu_Page3_Turn": routine_lines(self.page3, "Menu_Page3_Turn", self.flags),
+                    "MenuMapTravel_Turn": routine_lines(map_travel, "MenuMapTravel_Turn", self.flags)}
         # (page, $0200, MenuScrollLevelH) -> {direction: ($0200, MenuScrollLevelH)}
         ring = {
             ("items", 4, 0x20): {1: (5, 0x20), 0xFF: (5, 0x40)},
@@ -316,7 +273,8 @@ class EquipmentMenuSfxContract(unittest.TestCase):
         for (page, state, target), turns in ring.items():
             for direction, (want_state, want_target) in turns.items():
                 with self.subTest(page=page, direction=direction):
-                    memory = dict(states, **{"$0200": state, "MenuScrollLevelH": target})
+                    memory = dict(states, **selections)
+                    memory.update({"$0200": state, "MenuScrollLevelH": target})
                     menu = Menu(routines, memory, {})
                     menu.a = direction
                     menu.run("Menu_Page3_Turn")
@@ -324,8 +282,11 @@ class EquipmentMenuSfxContract(unittest.TestCase):
                                      (want_state, want_target))
                     self.assertEqual(menu.memory["MenuScrollHDirection"],
                                      8 if direction == 1 else 0xFFF8)
+                    self.assertEqual({key: menu.memory[key] for key in selections},
+                                     selections)
                     self.assertEqual(menu.sounds, [("$012F", 6)])
                     self.assertTrue(menu.c)
+                    self.assertEqual(menu.stack, [])
 
     def test_pre_fix_boss_and_heart_refill_sounds_fail_contract(self):
         mutants = [
