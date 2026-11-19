@@ -387,6 +387,7 @@ class TestShowcaseSrm(unittest.TestCase):
             self.assertEqual(p_blk[0x35A], 0x03)      # Mirror Shield
             self.assertEqual(p_blk[0x35B], 0x02)      # Red Mail
             self.assertEqual(p_blk[0x412], 0xFF)      # TravelSpotsVisited = $FF
+            self.assertEqual(p_blk[0x438], 0x7F)      # SpecialTravelSpotsVisited = $7F
             self.assertEqual(p_blk[0x3B2], 0xA5)      # SkySoaringLearned = $A5
             self.assertEqual(p_blk[0x3C6] & 0x80, 0)  # Part0Storm clear
 
