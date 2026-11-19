@@ -231,6 +231,7 @@ HUD_Update_Impl:
   LDA.l $7EF340 : STA.l HudCache_CodexBow
   REP #$30
   JSL HUD_CodexCells                    ; X icon/count, corner icons
+  JSL DrawClockToHudLong                ; ensure HudClockBuffer populated on rebuild
   LDA.l $7EC770 : STA.l HudCache_CodexTile0
   ; HUD_CodexCells writes key icon $2071; force keys block to re-check $FF blanking.
   ; Also ensure gameplay NMI uploads the refreshed X box (e.g. Epona mount/dismount).

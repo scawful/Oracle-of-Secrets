@@ -3,13 +3,16 @@
 ; Included from Items/all_items.asm (assembled at $548800+; Menu bank $2E
 ; has no room before the D8 boss slot ($2EB800) and bank $2B is full). Template,
 ; cell defines, floor spot and the $008B82 NMI hook live in Menu/menu_hud.asm.
+; HUD_NMIUpload and the 2bpp HUD strip/sun/moon tiles live in
+; Overworld/time_system.asm (bank $34) so this file stays within its $200 span.
 ;
 ; Claims:
 ;   WRAM HudCornerBuffer $7EC84A-$7EC857 (14 bytes, Core/symbols.asm;
 ;     vanilla-free gap after the RebuildHUD copy, usdasm UNUSED_7EC84A).
-;   BG3 CHR tile $014 = VRAM word $70A0-$70A7 (blank in the HUD sheet; no
-;     HUD or menu tilemap uses it). Re-uploaded on every HUD NMI upload, so
-;     sheet reloads (menu, transitions) cannot leave it stale.
+;   WRAM HudClockBuffer $7EC858-$7EC865 (14 bytes, Core/symbols.asm;
+;     contiguous after HudCornerBuffer for row-26 center 12h clock).
+;   BG3 CHR tiles $014-$015 = VRAM words $70A0-$70AF (blank in the HUD sheet;
+;     no HUD or menu tilemap uses them). Re-uploaded on every HUD NMI upload.
 
 ; ---------------------------------------------------------
 ; Cells HUD_Update cannot reach without the template: the X item icon and
@@ -147,46 +150,5 @@ endif
     PLY
     RTL
 }
-
-; ---------------------------------------------------------
-; NMI: after the HUD rows 0-4 DMA, copy the bottom-corner cells (rupees
-; bottom left, keys bottom right) and the item-box border strip glyph.
-; The HUD buffer upload stops at row 4 (blocker 1 of HUD_LAYOUT_02), so the
-; corners have two short DMAs of their own from HudCornerBuffer.
-; Hidden HUD (row 0, col 29 low byte $7F: Opening_HideHUD, Dream Wisdom):
-; blank $207F cells from the HUD buffer instead, and no glyph upload.
-; In: from $008B82, A 8-bit, X/Y 16-bit, DBR $00, DMA0 mode $01 -> $2118,
-; VMAIN $80. Out: A = $01; X/Y clobbered (the NMI reloads them).
-HUD_NMIUpload:
-{
-  LDA.b #$01 : STA.w $420B                      ; replaced: HUD rows 0-4
-
-  LDX.w #HudCornerBuffer&$FFFF
-  LDA.l $7EC73A : CMP.b #$7F : BNE .shown
-    LDX.w #$C700                                ; hidden HUD: blank cells
-  .shown
-  STX.w $4302
-  LDA.b #$7E : STA.w $4304
-  LDY.w #$6342 : STY.w $2116                    ; BG3 row 26, col 2
-  LDY.w #$000A : STY.w $4305
-  LDA.b #$01 : STA.w $420B
-  LDY.w #$635C : STY.w $2116                    ; BG3 row 26, col 28
-  LDY.w #$0004 : STY.w $4305                    ; source continues at +$0A
-  STA.w $420B
-
-  CPX.w #$C700 : BEQ .done
-    LDY.w #$70A0 : STY.w $2116                  ; HUD CHR tile $014
-    LDY.w #HUD_StripTile&$FFFF : STY.w $4302
-    LDA.b #HUD_StripTile>>16 : STA.w $4304
-    LDY.w #$0010 : STY.w $4305
-    LDA.b #$01 : STA.w $420B
-  .done
-  RTL
-}
-
-; 2bpp item-box border strip: one tile serves the top edge ($2014) and,
-; V-flipped, the bottom edge ($A014) of the widened box. Rows 4-7 repeat the
-; line rows of the original box border pieces.
-HUD_StripTile:
-  db $00, $00, $00, $00, $00, $00, $00, $00
-  db $FF, $FF, $00, $FF, $FF, $00, $00, $FF
+; HUD_NMIUpload and HUD_StripAndSunTiles / HUD_StripAndMoonTiles live in
+; Overworld/time_system.asm (bank $34).

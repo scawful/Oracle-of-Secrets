@@ -1,18 +1,5 @@
 ; ---------------------[ Time system ]---------------------
 
-; tiles locations on HUD
-!hud_min_low = $7EC7CC
-!hud_min_high = $7EC7CA
-!hud_hours_low = $7EC7C6
-!hud_hours_high = $7EC7C4
-
-; HUD Template adjusts timer's color
-org $0DFF07 ; @hook module=Overworld
-  db $10, $24, $11, $24
-  db $6C, $25
-  db $90, $24, $90, $24
-  db $6C, $25, $90, $24, $90, $24
-
 ; Sprite_Main.dont_reset_drag
 ; Executes every frame to update the clock.
 ; Stack contract: HUD_ClockDisplay uses PHP/PLP only; RunClock and DrawClockToHud
@@ -82,35 +69,180 @@ DrawClockToHudLong:
   RTL
 }
 
+; Format TimeState.Hours (0..23) and TimeState.Minutes (0..59) into the
+; 6-tile bottom-center BG3 row-26 clock buffer HudClockBuffer ($7EC858..$7EC863,
+; VRAM $634D cols 13-18) using 12-hour time with leading-zero suppression and
+; Majora's Mask-style Sun (06:00..17:59, Pal 5 gold $3415) / Moon (18:00..05:59,
+; Pal 3 cool blue/silver $2C15) icon on CHR tile $015.
+; Sets $16 = 1 only when the displayed time actually changes during active
+; gameplay ($10 in {$07, $09, $0B}); skips $16 on menu/dialogue/map ($0E) and
+; marks HudClockLastMinutes = $FF so the first frame back in gameplay syncs.
+; Contract: preserves caller P, X, Y and DBR; A clobbered.
 DrawClockToHud:
 {
-  LDX #$00
-  .debut
-  LDY #$00 : LDA TimeState.Hours,x
-  .debut2
-  CMP #$0A : BMI .draw
-    SBC #$0A : INY : BRA .debut2
-  .draw
-  ADC #$90 : CPX #$01 : BEQ .minutes_low
-    STA.l !hud_hours_low
-    LDA #$24 : STA.l !hud_hours_low+1 ; white palette
-    BRA .continue_draw ; 04
-  .minutes_low
-  STA.l !hud_min_low
-  LDA #$24 : STA.l !hud_min_low+1 ; white palette
-  .continue_draw
-  TYA
-  CLC : ADC #$90 : CPX #$01 : BEQ .minutes_high
-    STA.l !hud_hours_high
-    LDA #$24 : STA.l !hud_hours_high+1 ; white palette
-    BRA .finish_draw ; 04
-  .minutes_high
-  STA.l !hud_min_high
-  LDA #$24 : STA.l !hud_min_high+1 ; white palette
-  .finish_draw
-  INX : CPX #$02 : BMI .debut
+  PHP
+  REP #$10 : PHX : PHY
+  SEP #$30
+
+  ; Fast-path: skip rebuild + $16 upload when Hours/Minutes are unchanged
+  ; and the colon sentinel ($24AB at +6) confirms HudClockBuffer is valid.
+  LDA.l HudClockBuffer+6 : CMP.b #$AB : BNE .rebuild
+  LDA.l HudClockBuffer+7 : CMP.b #$24 : BNE .rebuild
+  LDA.l TimeState.Hours : CMP.l HudClockLastHours : BNE .rebuild
+  LDA.l TimeState.Minutes : CMP.l HudClockLastMinutes : BNE .rebuild
+    JMP .done
+
+  .rebuild
+  LDA.l TimeState.Hours
+  STA.l HudClockLastHours
+  CMP.b #$18 : BCC .hours_ok
+    LDA.b #$00
+  .hours_ok
+
+  ; Day (06..17) -> Sun ($34 = Pal 5 gold), Night (00..05, 18..23) -> Moon ($2C = Pal 3 blue/silver).
+  ; Matches CheckIfNight ($06 <= Hours < $12).
+  LDY.b #$2C
+  CMP.b #$06 : BCC .icon_pal_ready
+  CMP.b #$12 : BCS .icon_pal_ready
+    LDY.b #$34
+  .icon_pal_ready
+
+  ; Convert 24-hour (0..23) -> 12-hour (1..12): 0->12, 1..12->1..12, 13..23->1..11.
+  CMP.b #$00 : BNE .not_midnight
+    LDA.b #$0C
+    BRA .hour12_ready
+  .not_midnight
+  CMP.b #$0D : BCC .hour12_ready
+    SEC : SBC.b #$0C
+  .hour12_ready
+
+  ; Format hour digits + icon without leading zero on single-digit hours (1..9).
+  CMP.b #$0A : BCC .single_digit_hour
+    ; Two-digit hour (10..12): cols 13-15 = [Icon][1][0..2]
+    SEC : SBC.b #$0A
+    ORA.b #$90 : STA.l HudClockBuffer+4
+    LDA.b #$24 : STA.l HudClockBuffer+5
+    LDA.b #$91 : STA.l HudClockBuffer+2
+    LDA.b #$24 : STA.l HudClockBuffer+3
+    LDA.b #$15 : STA.l HudClockBuffer+0
+    TYA        : STA.l HudClockBuffer+1
+    BRA .draw_colon_and_mins
+
+  .single_digit_hour
+    ; Single-digit hour (1..9): cols 13-15 = [blank $207F][Icon][1..9]
+    ORA.b #$90 : STA.l HudClockBuffer+4
+    LDA.b #$24 : STA.l HudClockBuffer+5
+    LDA.b #$15 : STA.l HudClockBuffer+2
+    TYA        : STA.l HudClockBuffer+3
+    LDA.b #$7F : STA.l HudClockBuffer+0
+    LDA.b #$20 : STA.l HudClockBuffer+1
+
+  .draw_colon_and_mins
+  ; Col 16 (+6): white HUD colon ':' ($24AB)
+  LDA.b #$AB : STA.l HudClockBuffer+6
+  LDA.b #$24 : STA.l HudClockBuffer+7
+
+  ; Minutes (0..59) -> always two digits (e.g. :05, :34) at cols 17-18
+  LDA.l TimeState.Minutes
+  STA.l HudClockLastMinutes
+  CMP.b #$3C : BCC .mins_ok
+    LDA.b #$00
+  .mins_ok
+
+  LDX.b #$00
+  .div10
+    CMP.b #$0A : BCC .mins_split
+    SEC : SBC.b #$0A
+    INX
+    BRA .div10
+  .mins_split
+  ORA.b #$90 : STA.l HudClockBuffer+$0A
+  LDA.b #$24 : STA.l HudClockBuffer+$0B
+  TXA : ORA.b #$90 : STA.l HudClockBuffer+8
+  LDA.b #$24 : STA.l HudClockBuffer+9
+
+  ; Trigger NMI HUD upload only in active gameplay ($07/$09/$0B).
+  ; Outside gameplay (menu/dialogue/map $0E, transitions), defer VRAM upload
+  ; by invalidating HudClockLastMinutes so the first gameplay frame syncs.
+  LDA.b $10
+  CMP.b #$07 : BEQ .upload
+  CMP.b #$09 : BEQ .upload
+  CMP.b #$0B : BEQ .upload
+    LDA.b #$FF : STA.l HudClockLastMinutes
+    BRA .done
+  .upload
+  LDA.b #$01 : STA.b $16
+
+  .done
+  REP #$10 : PLY : PLX
+  PLP
   RTS
 }
+
+; ---------------------------------------------------------
+; NMI: after the HUD rows 0-4 DMA, stream bottom row 26 from contiguous WRAM
+; (HudCornerBuffer rupees cols 2-6 + keys cols 28-29 + HudClockBuffer 12h clock
+; cols 13-18) and upload 2bpp HUD CHR tiles $014 (item-box strip) + $015
+; (Sun during 06:00..17:59 or Moon during 18:00..05:59) in one 32-byte DMA.
+; Hidden HUD ($7EC73A == #$7F: Opening_HideHUD, Dream Wisdom): stream 26 bytes
+; of $207F blank cells from $7EC700 to all three bottom segments and skip CHR.
+; In: from $008B82, A 8-bit, X/Y 16-bit, DBR $00, DMA0 mode $01 -> $2118,
+; VMAIN $80. Out: A = $01; X/Y clobbered (the NMI reloads them).
+HUD_NMIUpload:
+{
+  LDA.b #$01 : STA.w $420B                      ; replaced: HUD rows 0-4
+
+  assert HudClockBuffer == HudCornerBufferEnd
+  LDX.w #HudCornerBuffer&$FFFF
+  LDA.l $7EC73A : CMP.b #$7F : BNE .shown
+    LDX.w #$C700                                ; hidden HUD: blank cells
+  .shown
+  STX.w $4302
+  LDA.b #$7E : STA.w $4304
+  LDY.w #$6342 : STY.w $2116                    ; BG3 row 26, cols 2-6 (rupees)
+  LDY.w #$000A : STY.w $4305
+  LDA.b #$01 : STA.w $420B
+  LDY.w #$635C : STY.w $2116                    ; BG3 row 26, cols 28-29 (keys)
+  LDY.w #$0004 : STY.w $4305                    ; continues at HudCornerBuffer+$0A
+  STA.w $420B
+  LDY.w #$634D : STY.w $2116                    ; BG3 row 26, cols 13-18 (clock)
+  LDY.w #$000C : STY.w $4305                    ; continues at HudClockBuffer ($7EC858)
+  STA.w $420B
+
+  CPX.w #$C700 : BEQ .done
+    LDY.w #$70A0 : STY.w $2116                  ; HUD CHR tiles $014-$015
+    LDY.w #HUD_StripAndMoonTiles&$FFFF          ; default: night (Moon)
+    LDA.l TimeState.Hours
+    CMP.b #$06 : BCC .upload_chr
+    CMP.b #$12 : BCS .upload_chr
+      LDY.w #HUD_StripAndSunTiles&$FFFF         ; day 06:00..17:59 (Sun)
+    .upload_chr
+    STY.w $4302
+    LDA.b #HUD_StripAndSunTiles>>16 : STA.w $4304
+    LDY.w #$0020 : STY.w $4305                  ; 32 bytes ($014 strip + $015 icon)
+    LDA.b #$01 : STA.w $420B
+  .done
+  RTL
+}
+
+; Contiguous 32-byte 2bpp CHR bundles for VRAM $70A0-$70AF (tiles $014-$015).
+; Tile $014: item-box border strip (top edge $2014 / V-flipped bottom $A014).
+; Tile $015: Majora's Mask-inspired 8x8 Sun (Pal 5 gold) or Moon (Pal 3 blue/silver).
+HUD_StripAndSunTiles:
+HUD_StripTile:
+  db $00, $00, $00, $00, $00, $00, $00, $00
+  db $FF, $FF, $00, $FF, $FF, $00, $00, $FF
+HUD_SunTile:
+  db $28, $38, $28, $7C, $C6, $BA, $01, $FF
+  db $C6, $BA, $2A, $7E, $28, $38, $10, $10
+
+HUD_StripAndMoonTiles:
+  db $00, $00, $00, $00, $00, $00, $00, $00
+  db $FF, $FF, $00, $FF, $FF, $00, $00, $FF
+HUD_MoonTile:
+  db $1C, $1C, $24, $3C, $4C, $74, $98, $E8
+  db $9A, $EA, $9A, $E6, $62, $5E, $3C, $3C
+assert (HUD_StripAndSunTiles>>16) == (HUD_StripAndMoonTiles>>16)
 
 ; =========================================================
 
@@ -746,3 +878,15 @@ org $0ED745 : JSL FixShockPalette ; @hook module=Overworld name=FixShockPalette 
 
 ; GameOver_SaveAndQuit:
 org $09F604 : JSL FixSaveAndQuit ; @hook module=Overworld name=FixSaveAndQuit kind=jsl target=FixSaveAndQuit
+
+; Vanilla NMI_UploadGameOverText ($009038, triggered by $09F430 $17=#$16)
+; DMAs TILEMAPA ($7E2000/$7E3400) over BG3 CHR $7800-$7BFF (sheet $69,
+; tiles $100-$17F), corrupting the HUD X|Y wood divider ($214F) and custom
+; item icons ($130-$17F: Gust Jar, Ball & Chain, Portal Rod) during Game Over.
+; Game Over menu text lives in $180-$1FD ($7C00-$7FEF), uploaded cleanly by
+; RenderText_PostDeathSaveOptions ($17=#$02, NMI_UploadBG3Text).
+org $009038 ; @hook module=Overworld name=HUD_GameOverPreserveSheet69 kind=patch expected_m=8 expected_x=8
+  assert read1($009038) == $C2 && read1($009039) == $20 && read1($00903A) == $A9 && read2($00903B) == $7800, "Expected NMI_UploadGameOverText at $009038"
+  STZ.w $0710
+  RTS
+assert pc() == $00903C

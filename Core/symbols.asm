@@ -157,6 +157,20 @@ HudCornerBuffer    = $7EC84A
 HudCornerBufferEnd = HudCornerBuffer+14
 assert HudCornerBufferEnd <= $7EC880
 
+; Bottom-center 12-hour Sun/Moon HUD clock buffer + dirty-check cache.
+; Contiguous with HudCornerBuffer so HUD_NMIUpload streams all three
+; row-26 segments without reloading DMA0ADDRL.
+; +0..+$0B = 6 tilemap words for BG3 $634D (screen row 26, cols 13-18):
+;   2-digit hour (10..12): [Icon][1][0..2][:][M10][M1]
+;   1-digit hour (1..9):   [$207F][Icon][1..9][:][M10][M1]
+; +$0C = HudClockLastHours, +$0D = HudClockLastMinutes (dirty cache).
+HudClockBuffer      = HudCornerBufferEnd ; $7EC858..$7EC863 (6 tiles = 12 bytes)
+HudClockLastHours   = HudClockBuffer+12  ; $7EC864
+HudClockLastMinutes = HudClockBuffer+13  ; $7EC865
+HudClockBufferEnd   = HudClockBuffer+14  ; $7EC866
+assert HudClockBuffer == $7EC858 && HudClockBufferEnd == $7EC866
+assert HudClockBufferEnd <= $7EC880
+
 ; Burnable doorway webs (Sprites/Objects/dungeon_web.asm). 16-bit per-room
 ; mask across all 320 underworld rooms ($000-$13F) in vanilla-free UNUSED_7EC900
 ; after music_cache_reservation ($7EC900-$7EC9BF) and BombchuPackPending ($7EC9E0).

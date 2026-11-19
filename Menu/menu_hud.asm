@@ -151,6 +151,7 @@ HUD_Update:
   LDA.l (MagicTilemap)+6, X : STA !HudMagicFill+6
 
   JSL HUD_CodexCells                    ; X icon/count, corner icons (both paths)
+  JSL DrawClockToHudLong                ; ensure HudClockBuffer populated on rebuild
 
   ; Load how many rupees the player has
   LDA $7EF362
@@ -720,6 +721,9 @@ org $0DFEDB           ; HUD_Tilemap+$64, row 1, col 18
 ; Row 2, cols 18-29: magic box bottom, item box (col 26 = brown wood X|Y divider $214F).
 org $0DFF1B           ; HUD_Tilemap+$A4, row 2, col 18
   dw $A00B, $A00C, $A00C, $A00C, $A00C, $20EE, $20AA, $20AA, $214F, $20AA, $20AA, $20EF
+; Row 3, cols 2-6: old top-left clock cells blanked (clock moved to BG3 row 26 center).
+org $0DFF3B           ; HUD_Tilemap+$C4, row 3, cols 2-6
+  dw $207F, $207F, $207F, $207F, $207F
 ; Row 3, cols 23-29: item box bottom (counts overwrite cols 24-25 / 27-28).
 org $0DFF65           ; HUD_Tilemap+$EE, row 3, col 23
   dw $207C, $207D, $A014, $A014, $A014, $207E, $201D

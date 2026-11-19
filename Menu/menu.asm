@@ -559,8 +559,8 @@ Menu_InitiateScrollDown:
     LDA $7EC7C2, X : STA $1142, X
   DEX : BNE .loop4
 
-  ; Bottom corners (rupees row 26 cols 2-6, keys cols 28-29) so the closing
-  ; scroll shows them before HUD_NMIUpload takes over again.
+  ; Bottom row 26 (rupees cols 2-6, keys cols 28-29, 12h clock cols 13-18) so
+  ; the closing scroll shows them before HUD_NMIUpload takes over again.
   LDX.b #$09
   .loop_rupees
     LDA.l HudCornerBuffer, X : STA $1684, X
@@ -569,6 +569,10 @@ Menu_InitiateScrollDown:
   .loop_keys
     LDA.l HudCornerBuffer+$0A, X : STA $16B8, X
   DEX : BPL .loop_keys
+  LDX.b #$0B
+  .loop_clock
+    LDA.l HudClockBuffer, X : STA $169A, X
+  DEX : BPL .loop_clock
 
   LDA.b #$24 : STA.w $0116
   LDA.b #$01 : STA.b $17
