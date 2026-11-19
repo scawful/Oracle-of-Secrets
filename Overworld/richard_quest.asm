@@ -55,6 +55,11 @@
 !RichardIndoorDogX   = $0166
 !RichardIndoorDogY   = $01BC
 
+; Outdoor home placement on OW $23 (tile16 (9, 26), matching Phase 1 ROM list).
+; Used as a Phase 2 / nighttime fallback because Phase 2 omits sprite $3D.
+!RichardHomeLadyX    = $0690
+!RichardHomeLadyY    = $09A0
+
 ; ---------------------------------------------------------
 ; Data. Field spawn site: open design question (the village study may move
 ; it to a gated spot). Temporary test spot (scawful 2026-11-15): map $2B,
@@ -399,6 +404,7 @@ RichardQuest_Tick:
 ; Overworld: spawn the night field Richard near RichardFieldSpawn.
 RichardQuest_TickField:
 {
+  JSR RichardQuest_TickHomeLady
   JSR RichardQuest_TickHomeDog
   LDA.l RichardQuestFlags : AND.b #(!Richard_Asked|!Richard_Found)
   CMP.b #!Richard_Asked : BNE .done
@@ -421,6 +427,38 @@ RichardQuest_TickField:
   LDA.w RichardFieldSpawn+1 : SEP #$20 : STA.w SprX, Y : XBA : STA.w SprXH, Y
   REP #$20
   LDA.w RichardFieldSpawn+3 : SEP #$20 : STA.w SprY, Y : XBA : STA.w SprYH, Y
+.done
+  RTS
+.far
+  SEP #$20
+  RTS
+}
+
+; Quest map, Phase 2 (nighttime or GameState >= 3) omits $3D from the OW $23
+; ROM sprite list. Spawn the pacing lady near her home tile (9,26) while
+; GameState >= 2 and !Richard_Delivered is clear so Richard can always be
+; delivered at night (right after finding him) and in GameState 3.
+RichardQuest_TickHomeLady:
+{
+  LDA.b $8A : CMP.b #!RichardLadyMap : BNE .done
+  LDA.l GameState : CMP.b #$02 : BCC .done
+  LDA.l RichardQuestFlags : AND.b #!Richard_Delivered : BNE .done
+  REP #$20
+  LDA.b $22 : SEC : SBC.w #!RichardHomeLadyX : BPL + : EOR.w #$FFFF : INC A : +
+  CMP.w #$00A0 : BCS .far
+  LDA.b $20 : SEC : SBC.w #!RichardHomeLadyY : BPL + : EOR.w #$FFFF : INC A : +
+  CMP.w #$0080 : BCS .far
+  SEP #$20
+  LDA.b #$3D : STA.b $00
+  STZ.b $01 : STZ.b $09
+  JSR RichardQuest_FindSprite : BCS .done
+  LDX.b #$00
+  LDA.b #$3D : JSR RichardQuest_Spawn : BMI .done
+  LDA.b #!RichardHomeLadyX&$FF : STA.w SprX, Y
+  LDA.b #!RichardHomeLadyX>>8 : STA.w SprXH, Y
+  LDA.b #!RichardHomeLadyY&$FF : STA.w SprY, Y
+  LDA.b #!RichardHomeLadyY>>8 : STA.w SprYH, Y
+  LDA.b #$08 : STA.w SprState, Y ; run RichardLady_Prep -> SpritePrep_Snitch next frame
 .done
   RTS
 .far
