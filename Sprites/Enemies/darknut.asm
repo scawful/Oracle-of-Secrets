@@ -74,11 +74,11 @@ DarknutSpeed = 04
 
 Sprite_Darknut_Main:
 {
-  ; Spawn probe toward Link when in range
-  ; NOTE: Vanilla probe sets guard state, not SprTimerD
-  ; Detection currently works via damage (SprTimerD set below)
-  JSL GetDistance8bit_Long : CMP.b #$80 : BCS .no_probe
-    JSL Sprite_SpawnProbeAlways_long
+  ; Throttled 16-bit LOS prober with tile solidity raycast (all 4 facings incl. Up).
+  LDA.w SprTimerD, X : BNE .no_probe
+  TXA : EOR.b $1A : AND.b #$07 : BNE .no_probe
+    JSR Darknut_CheckLineOfSight : BCC .no_probe
+      LDA.b #$90 : STA.w SprTimerD, X
   .no_probe
 
   ; Vanilla guard contact/parry reads the current sprite's weapon offsets.
@@ -105,7 +105,7 @@ endif
     LDA.b #$90 : STA.w SprTimerD, X
   +
 
-  ; SprTimerD > 0 means alerted (from damage or SprTimerA)
+  ; SprTimerD > 0 means alerted (from LOS prober, damage, or SprTimerA)
   LDA.w SprTimerD, X : BEQ ++
     LDA.b #$08 : JSL Sprite_ApplySpeedTowardsPlayer
     JSL Sprite_DirectionToFacePlayer
@@ -117,9 +117,10 @@ endif
     JMP +++
   ++
   JSR Sprite_Darknut_BasicMove
+  JSR Goriya_HandleTileCollision
   +++
 
-  JSR Goriya_HandleTileCollision
+  JSR Darknut_SyncFrame
 
   LDA.w SprAction, X
   JSL JumpTableLocal
@@ -155,6 +156,133 @@ endif
     %PlayAnimation(6,7,10)
     RTS
   }
+}
+
+; Clamp SprFrame into the 2-frame pair matching SprAction (0=R:6-7, 1=L:4-5, 2=D:2-3, 3=U:0-1).
+Darknut_SyncFrame:
+{
+  LDA.w SprAction, X : AND.b #$03 : TAY
+  LDA.w .base_frame, Y : STA.b $00
+  LDA.w SprFrame, X : CMP.b $00 : BCC .reset
+  SEC : SBC.b $00 : CMP.b #$02 : BCC .ok
+.reset
+  LDA.b $00 : STA.w SprFrame, X
+.ok
+  RTS
+.base_frame
+  db $06, $04, $02, $00
+}
+
+; 16-bit line-of-sight prober with 7-step tile solidity raycast.
+; Out: Carry set if Link is spotted with clear LOS, clear otherwise. X preserved.
+Darknut_CheckLineOfSight:
+{
+  LDA.b $55 : BEQ .no_cape ; Link invisible under Magic Cape
+    CLC : RTS
+.no_cape
+  LDA.b $1B : BEQ .layer_ok ; Overworld has no indoor floor split
+    LDA.w SprFloor, X : CMP.b $EE : BEQ .layer_ok
+      CLC : RTS
+.layer_ok
+  ; 16-bit signed dx = LinkX - SprX ($00), dy = LinkY - SprY ($02)
+  LDA.w SprXH, X : XBA : LDA.w SprX, X
+  REP #$20
+  EOR.w #$FFFF : INC A : CLC : ADC.b $22 : STA.b $00
+  CLC : ADC.w #$007F : CMP.w #$00FF : BCS .no_sight_16
+  SEP #$20
+
+  LDA.w SprYH, X : XBA : LDA.w SprY, X
+  REP #$20
+  EOR.w #$FFFF : INC A : CLC : ADC.b $20 : STA.b $02
+  CLC : ADC.w #$007F : CMP.w #$00FF : BCS .no_sight_16
+
+  ; Close proximity (< 24px on both axes) senses Link regardless of facing
+  LDA.b $00 : CLC : ADC.w #$0017 : CMP.w #$002F : BCS .check_facing
+  LDA.b $02 : CLC : ADC.w #$0017 : CMP.w #$002F : BCC .in_cone
+
+.check_facing
+  SEP #$20
+  LDA.w SprAction, X : AND.b #$03
+  BEQ .face_right
+  CMP.b #$01 : BEQ .face_left
+  CMP.b #$02 : BEQ .face_down
+.face_up
+  REP #$20
+  LDA.b $02 : BEQ .in_cone : BPL .no_sight_16
+  BRA .in_cone
+.face_down
+  REP #$20
+  LDA.b $02 : BMI .no_sight_16
+  BRA .in_cone
+.face_left
+  REP #$20
+  LDA.b $00 : BEQ .in_cone : BPL .no_sight_16
+  BRA .in_cone
+.face_right
+  REP #$20
+  LDA.b $00 : BPL .in_cone
+.no_sight_16
+  SEP #$20
+.no_sight
+  CLC
+  RTS
+
+.in_cone
+  ; Signed step_x = dx / 8 ($08), step_y = dy / 8 ($0A)
+  LDA.b $00
+  CMP.w #$8000 : ROR A
+  CMP.w #$8000 : ROR A
+  CMP.w #$8000 : ROR A
+  STA.b $08
+  LDA.b $02
+  CMP.w #$8000 : ROR A
+  CMP.w #$8000 : ROR A
+  CMP.w #$8000 : ROR A
+  STA.b $0A
+
+  ; Preserve cached sprite world coordinates around Probe_CheckTileSolidity
+  LDA.w $0FD8 : PHA
+  LDA.w $0FDA : PHA
+
+  ; Start ray at sprite center (SprX+8, SprY+8) in $0C/$0E
+  SEP #$20
+  LDA.w SprXH, X : XBA : LDA.w SprX, X
+  REP #$20
+  CLC : ADC.w #$0008 : STA.b $0C
+  SEP #$20
+  LDA.w SprYH, X : XBA : LDA.w SprY, X
+  REP #$20
+  CLC : ADC.w #$0008 : STA.b $0E
+  SEP #$20
+
+  LDY.b #$07 ; 7 interior sample points (1/8 .. 7/8)
+.ray_loop
+  REP #$20
+  LDA.b $0C : CLC : ADC.b $08 : STA.b $0C : STA.w $0FD8
+  LDA.b $0E : CLC : ADC.b $0A : STA.b $0E : STA.w $0FDA
+  SEP #$20
+  PHY
+  JSL Probe_CheckTileSolidity
+  PLY
+  BCC .step_clear
+    LDA.w $0FA5 : CMP.b #$09 : BNE .blocked ; deep water does not block sight
+.step_clear
+  DEY : BNE .ray_loop
+
+  REP #$20
+  PLA : STA.w $0FDA
+  PLA : STA.w $0FD8
+  SEP #$20
+  SEC
+  RTS
+
+.blocked
+  REP #$20
+  PLA : STA.w $0FDA
+  PLA : STA.w $0FD8
+  SEP #$20
+  CLC
+  RTS
 }
 
 Sprite_Darknut_BasicMove:

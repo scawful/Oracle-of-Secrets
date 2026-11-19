@@ -298,6 +298,20 @@ Sprite_Kydreeok_CheckIfDead:
     ; Both stage 3 heads down: Kydreeok stops fighting and waits, wounded,
     ; for the Song of Healing (decisions.org "Kydreeok healing").
     STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+    ; Clear active slam quake and lingering fireballs so Song of Healing plays cleanly.
+    LDA.b #$00 : STA.l BossKit_Quake
+    REP #$20
+    STZ.w $011A : STZ.w $011C
+    SEP #$20
+    PHX
+    LDX.b #$0F
+    .clear_fireballs
+      LDA.w SprState, X : BEQ .next_fb
+      LDA.w SprType, X : CMP.b #$55 : BNE .next_fb
+        STZ.w SprState, X
+      .next_fb
+      DEX : BPL .clear_fireballs
+    PLX
     ; SongFlag stays set until a consumer clears it: a song played before
     ; this frame (in the fight or in the field) must not count.
     STZ.b SongFlag

@@ -78,6 +78,7 @@ Sprite_KydrogBoss_Prep:
   PHB : PHK : PLB
   LDA #$00 : STA !KydrogPhase
   STZ.w !KydrogRescueStage, X
+  STZ.w SprMiscG, X ; freeze timer armed flag
 
   LDA.b #$A0 : STA.w SprHealth, X ; health
   LDA.b #$80 : STA.w SprDefl, X
@@ -472,14 +473,25 @@ CheckForNextPhase:
   RTS
 }
 
-; TODO: Use a timer to unfreeze the sprite
+; Frozen state ($0B) countdown: arm SprTimerC on entry via SprMiscG and
+; cleanly thaw Kydrog back to active ($09) when the timer expires.
 Sprite_CheckIfFrozen:
 {
   LDA.w SprState, X : CMP.b #$0B : BNE .not_frozen
-    LDA.w SprTimerC, X : BNE .not_frozen
-      LDA.b #$00 : STA.l $7FFA3C,X
+    LDA.w SprMiscG, X : BNE .counting
+      LDA.b #$01 : STA.w SprMiscG, X
+      LDA.b #$90 : STA.w SprTimerC, X ; ~2.4s freeze duration
+      RTS
+    .counting
+    LDA.w SprTimerC, X : BNE .still_frozen
+      STZ.w SprMiscG, X
+      STZ.w SprStunTimer, X
+      LDA.b #$00 : STA.l $7FFA3C, X
       LDA.b #$09 : STA.w SprState, X
-    .not_frozen
+    .still_frozen
+    RTS
+  .not_frozen
+  STZ.w SprMiscG, X
   RTS
 }
 

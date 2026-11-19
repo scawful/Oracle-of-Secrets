@@ -6,8 +6,8 @@
 !NbrTiles           = 05  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 00  ; Number of Health the sprite have
-!Damage             = 00  ; (08 is a whole heart), 04 is half heart
+!Health             = 02  ; Number of Health the sprite have (matches vanilla $08)
+!Damage             = 01  ; Bump damage class (matches vanilla $08: 0.5/0.5/0.5 heart)
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
@@ -21,7 +21,7 @@
 !DeflectArrow       = 00  ; 01 = deflect arrows
 !WaterSprite        = 00  ; 01 = can only walk shallow water
 !Blockable          = 00  ; 01 = can be blocked by link's shield?
-!Prize              = 00  ; 00-15 = the prize pack the sprite will drop from
+!Prize              = 02  ; 00-15 = the prize pack the sprite will drop from (matches vanilla $08)
 !Sound              = 00  ; 01 = Play different sound when taking damage
 !Interaction        = 00  ; ?? No documentation
 !Statue             = 00  ; 01 = Sprite is statue
@@ -85,6 +85,14 @@ Sprite_Octorok_Main:
     STZ.w SprMiscG, X
     RTS
   .not_water_tile
+
+  ; Clamp SprFrame to the 2-frame pair for current SprAction (0=D:0-1, 1=U:2-3, 2=L:4-5, 3=R:6-7).
+  LDA.w SprAction, X : AND.b #$03 : ASL A : STA.b $00
+  LDA.w SprFrame, X : CMP.b $00 : BCC .sync_frame
+  SEC : SBC.b $00 : CMP.b #$02 : BCC .frame_synced
+  .sync_frame
+  LDA.b $00 : STA.w SprFrame, X
+  .frame_synced
 
   LDA.w SprAction, X
   JSL JumpTableLocal
@@ -199,7 +207,7 @@ Octorock_ShootEmUp:
 
   LDA.w SprMiscD, X : BEQ .continue
     LDA.w SprTimerD, X : BNE .four_ways
-      LDA.b #$01 : STA.w SprMiscD, X
+      STZ.w SprMiscD, X
   .continue
   JSL GetRandomInt : AND.b #$1F : BNE .single_shot
   .four_ways
@@ -296,8 +304,8 @@ Sprite_WaterOctorok_Attack:
        INC.w SprMiscG, X
        %SetTimerA($20)
        JSL Sprite_DirectionToFacePlayer
-       ; LDA.w SprMiscC, X : AND.b #$03 : TAY
-       ; LDA.w Sprite_Octorok_Move_direction, Y : STA.w SprAction, X
+       TYA : AND.b #$03 : STA.w SprMiscC, X : TAY
+       LDA.w Sprite_Octorok_Move_direction, Y : STA.w SprAction, X
      +
      RTS
    }
@@ -382,22 +390,23 @@ Octorok_SpawnRock:
 {
   LDA.b #$07 : JSL SpriteSFX_QueueSFX2WithPan
   LDA.b #$0C : JSL Sprite_SpawnDynamically : BMI .fired_a_blank
+    ; Populate $00-$03 with parent Octorok coordinates and inherit floor layer.
+    LDA.w SprX, X  : STA.b $00
+    LDA.w SprXH, X : STA.b $01
+    LDA.w SprY, X  : STA.b $02
+    LDA.w SprYH, X : STA.b $03
+    LDA.w SprFloor, X : STA.w SprFloor, Y
+
     PHX
+    LDA.w SprMiscC, X : AND.b #$03 : TAX
 
-    LDA.w SprMiscC,X
-    TAX
+    LDA.b $00 : CLC : ADC.w .offset_x_low, X  : STA.w SprX, Y
+    LDA.b $01 : ADC.w .offset_x_high, X       : STA.w SprXH, Y
+    LDA.b $02 : CLC : ADC.w .offset_y_low, X  : STA.w SprY, Y
+    LDA.b $03 : ADC.w .offset_y_high, X       : STA.w SprYH, Y
 
-    LDA.b $00 : CLC : ADC.w .offset_x_low,X : STA.w SprX,Y
-    LDA.b $01 : ADC.w .offset_x_high,X : STA.w SprXH,Y
-    LDA.b $02 : CLC : ADC.w .offset_y_low,X : STA.w SprY,Y
-    LDA.b $03 : ADC.w .offset_y_high,X : STA.w SprYH,Y
-
-    LDA.w SprMiscC,Y
-    TAX
-
-    LDA.w .rock_speed_x,X : STA.w SprXSpeed,Y
-    LDA.w .rock_speed_y,X : STA.w SprYSpeed,Y
-
+    LDA.w .rock_speed_x, X : STA.w SprXSpeed, Y
+    LDA.w .rock_speed_y, X : STA.w SprYSpeed, Y
     PLX
   .fired_a_blank
   RTS
@@ -425,12 +434,33 @@ Octorok_SpawnRock:
 
 Sprite_Octorok_Draw:
 {
-  JSL Sprite_PrepOamCoord
+  JSL Sprite_PrepOamCoord : BCC .on_screen
+    RTS
+  .on_screen
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-  LDA.w SprFrame, X : TAY ;Animation Frame
+  LDA.w SprFrame, X : CMP.b #$09 : BCC .frame_ok
+    LDA.b #$00
+  .frame_ok
+  TAY ; Animation Frame
   LDA .start_index, Y : STA $06
-  LDA.w SprFlash, X : STA $08
+
+  ; 8-bit WORLDFLAG palette split before entering 16-bit OAM coordinate math:
+  ; - Kalyxo & Special OW (WORLDFLAG == 0): Universal OBJ Pal 3 ($06) for land
+  ;   Octoroks and Universal OBJ Pal 2 ($04) for Water Octoroks (no aux-pal drift).
+  ; - Eon Abyss (WORLDFLAG != 0): Area Aux OBJ Pal 6 ($0C) for skull sheet $18.
+  LDA.w WORLDFLAG : BNE .abyss_pal
+    LDA.w SprSubtype, X : BNE .water_pal
+      LDA.b #$06 ; Universal OBJ Pal 3 (red/tan)
+      BRA .combine_flash
+    .water_pal
+      LDA.b #$04 ; Universal OBJ Pal 2 (blue/cyan)
+      BRA .combine_flash
+  .abyss_pal
+    LDA.b #$0C ; Eon Abyss Aux OBJ Pal 6
+  .combine_flash
+  STA.b $07
+  LDA.w SprFlash, X : ASL A : AND.b #$0E : EOR.b $07 : STA.b $08
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
@@ -492,14 +522,14 @@ Sprite_Octorok_Draw:
   db $A2
   db $AA ; Water Octorok
   .properties
-  ; Keep land Octoroks above dense OW grass/sub-layer blends.
-  db $2D
-  db $6D
-  db $2D
-  db $6D
-  db $2D
-  db $2D
-  db $6D
-  db $6D
-  db $3D ; Water Octorok
+  ; Keep land Octoroks above dense OW grass/sub-layer blends; palette bits set in $08.
+  db $21
+  db $61
+  db $21
+  db $61
+  db $21
+  db $21
+  db $61
+  db $61
+  db $31 ; Water Octorok
 }

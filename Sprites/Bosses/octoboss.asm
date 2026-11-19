@@ -8,7 +8,11 @@ JSL Sprite_Octoboss_Long
 RTS
 pullpc
 
-BrotherSpr = $0EB0
+BrotherSpr      = $0EB0
+Octoboss_HomeXL = SprMiscA
+Octoboss_HomeXH = SprMiscB
+Octoboss_HomeYL = SprMiscC
+Octoboss_HomeYH = SprMiscG
 
 Sprite_Octoboss_Long:
 {
@@ -49,6 +53,11 @@ Sprite_Octoboss_Long:
     PLX
     ;LDA.w SprGfxProps, X : AND.b #$BF : STA.w SprGfxProps, X
     ;LDA.w SprProps, X : AND.b #$BF : STA.w SprProps, X
+    ; Save 16-bit spawn coordinates as home anchor for room-relative bounds.
+    LDA.w SprX, X  : STA.w Octoboss_HomeXL, X
+    LDA.w SprXH, X : STA.w Octoboss_HomeXH, X
+    LDA.w SprY, X  : STA.w Octoboss_HomeYL, X
+    LDA.w SprYH, X : STA.w Octoboss_HomeYH, X
     LDA.b #15 : STA.w SprFrame, X
     LDA.b #$87 : STA.l $7EC664 : STA.l $7EC684
     LDA.b #$55 : STA.l $7EC665 : STA.l $7EC685
@@ -115,8 +124,18 @@ Sprite_Octoboss_Secondary:
 
   WaitForPlayerToApproach:
   {
+    ; 16-bit proximity check relative to Octoboss's own position (works in any room/area).
+    LDA.w SprXH, X : XBA : LDA.w SprX, X
     REP #$20
-    LDA.b $20 : CMP #$08C8
+    EOR.w #$FFFF : INC A : CLC : ADC.b $22
+    CLC : ADC.w #$008F : CMP.w #$011F
+    SEP #$20
+    BCS .TooFar
+
+    LDA.w SprYH, X : XBA : LDA.w SprY, X
+    REP #$20
+    EOR.w #$FFFF : INC A : CLC : ADC.b $20
+    CLC : ADC.w #$007F : CMP.w #$00FF
     SEP #$20
     BCS .TooFar
       INC.w SprAction, X
@@ -152,15 +171,17 @@ Sprite_Octoboss_Secondary:
   {
     LDA.b #$40 : STA.w SprTimerC, X ; Will need to adjust
     LDA.b #$3C
-    JSL Sprite_SpawnDynamically
+    JSL Sprite_SpawnDynamically : BMI .no_space
     TYA
     STA.w BrotherSpr, X ; keep the brother id
-    LDA.b #$D0 : STA.w SprY, Y
-    LDA.b #$08 : STA.w SprYH, Y
-    LDA.b #$20 : STA.w SprX, Y
-    LDA.b #$09 : STA.w SprXH, Y
+    ; Spawn brother relative to parent's saved home (+$70 X, -$04 Y).
+    LDA.w Octoboss_HomeXL, X : CLC : ADC.b #$70 : STA.w SprX, Y
+    LDA.w Octoboss_HomeXH, X : ADC.b #$00 : STA.w SprXH, Y
+    LDA.w Octoboss_HomeYL, X : SEC : SBC.b #$04 : STA.w SprY, Y
+    LDA.w Octoboss_HomeYH, X : SBC.b #$00 : STA.w SprYH, Y
     LDA.b #$01 : STA.w SprMiscF, Y
     LDA.b #$00 : STA.w SprFrame, Y
+    .no_space
     ; Do the spawning code
     INC.w SprAction, X
     RTS
@@ -294,25 +315,7 @@ Sprite_Octoboss_Secondary:
       LDA.b #10 : STA.w SprTimerB, X
     +
 
-    LDA.w SprX, X : CMP.b #$E2 : BCC .notTooFarRight
-      LDA.w SprXSpeed, X : BMI .notTooFarRight
-        EOR.b #$FF : STA.w SprXSpeed, X
-    .notTooFarRight
-
-    LDA.w SprX, X : CMP.b #$80 : BCS .notTooFarLeft
-      LDA.w SprXSpeed, X : BPL .notTooFarLeft
-        EOR.b #$FF : STA.w SprXSpeed, X
-    .notTooFarLeft
-
-    LDA.w SprY, X : CMP.b #$FB : BCC .notTooFarDown
-      LDA.w SprYSpeed, X : BMI .notTooFarDown
-        EOR.b #$FF : STA.w SprYSpeed, X
-    .notTooFarDown
-
-    LDA.w SprY, X : CMP.b #$B8 : BCS .notTooFarUp
-      LDA.w SprYSpeed, X : BPL .notTooFarUp
-        EOR.b #$FF : STA.w SprYSpeed, X
-    .notTooFarUp
+    JSR Octoboss_ClampBounds
 
     JSR HandleMovingSplash
     JSL Sprite_CheckDamageFromPlayer
@@ -340,29 +343,84 @@ Sprite_Octoboss_Secondary:
       LDA.b #10 : STA.w SprTimerB, X
     +
 
-    LDA.w SprX, X : CMP.b #$78 : BCC .notTooFarRight
-      LDA.w SprXSpeed, X : BMI .notTooFarRight
-        EOR.b #$FF : STA.w SprXSpeed, X
-    .notTooFarRight
-
-    LDA.w SprX, X : CMP.b #$10 : BCS .notTooFarLeft
-      LDA.w SprXSpeed, X : BPL .notTooFarLeft
-        EOR.b #$FF : STA.w SprXSpeed, X
-    .notTooFarLeft
-
-    LDA.w SprY, X : CMP.b #$FB : BCC .notTooFarDown
-      LDA.w SprYSpeed, X : BMI .notTooFarDown
-        EOR.b #$FF : STA.w SprYSpeed, X
-    .notTooFarDown
-
-    LDA.w SprY, X : CMP.b #$B8 : BCS .notTooFarUp
-      LDA.w SprYSpeed, X : BPL .notTooFarUp
-        EOR.b #$FF : STA.w SprYSpeed, X
-    .notTooFarUp
+    JSR Octoboss_ClampBounds
 
     JSR HandleMovingSplash
     JSL Sprite_CheckDamageFromPlayer
     RTS
+  }
+
+  ; 16-bit Home-relative boundary bounce for both Red (SprMiscF=0) and Blue (SprMiscF!=0).
+  ; Uses offset +$0100 unsigned math so room/camera coordinates and $FF->$00 page wraps work anywhere.
+  Octoboss_ClampBounds:
+  {
+    ; $00 = (SprX - HomeX) + $0100, $02 = (SprY - HomeY) + $0100
+    LDA.w Octoboss_HomeXH, X : XBA : LDA.w Octoboss_HomeXL, X
+    REP #$20
+    EOR.w #$FFFF : INC A : STA.b $00
+    SEP #$20
+    LDA.w SprXH, X : XBA : LDA.w SprX, X
+    REP #$20
+    CLC : ADC.b $00 : CLC : ADC.w #$0100 : STA.b $00
+    SEP #$20
+
+    LDA.w Octoboss_HomeYH, X : XBA : LDA.w Octoboss_HomeYL, X
+    REP #$20
+    EOR.w #$FFFF : INC A : STA.b $02
+    SEP #$20
+    LDA.w SprYH, X : XBA : LDA.w SprY, X
+    REP #$20
+    CLC : ADC.b $02 : CLC : ADC.w #$0100 : STA.b $02
+    SEP #$20
+
+    ; Y = 0 for Red (parent), 2 for Blue (brother)
+    LDY.b #$00
+    LDA.w SprMiscF, X : BEQ .have_idx
+      LDY.b #$02
+    .have_idx
+
+    ; Right bound: rel_x >= max_x -> reflect positive SprXSpeed
+    REP #$20
+    LDA.b $00 : CMP.w .max_x, Y
+    SEP #$20
+    BCC .notTooFarRight
+      LDA.w SprXSpeed, X : BMI .notTooFarRight
+        EOR.b #$FF : INC A : STA.w SprXSpeed, X
+    .notTooFarRight
+
+    ; Left bound: rel_x < min_x -> reflect negative SprXSpeed
+    REP #$20
+    LDA.b $00 : CMP.w .min_x, Y
+    SEP #$20
+    BCS .notTooFarLeft
+      LDA.w SprXSpeed, X : BPL .notTooFarLeft
+        EOR.b #$FF : INC A : STA.w SprXSpeed, X
+    .notTooFarLeft
+
+    ; Bottom bound: rel_y >= max_y -> reflect positive SprYSpeed
+    REP #$20
+    LDA.b $02 : CMP.w .max_y, Y
+    SEP #$20
+    BCC .notTooFarDown
+      LDA.w SprYSpeed, X : BMI .notTooFarDown
+        EOR.b #$FF : INC A : STA.w SprYSpeed, X
+    .notTooFarDown
+
+    ; Top bound: rel_y < min_y -> reflect negative SprYSpeed
+    REP #$20
+    LDA.b $02 : CMP.w .min_y, Y
+    SEP #$20
+    BCS .notTooFarUp
+      LDA.w SprYSpeed, X : BPL .notTooFarUp
+        EOR.b #$FF : INC A : STA.w SprYSpeed, X
+    .notTooFarUp
+    RTS
+
+    ; Offsets relative to Home + $0100 (Red: [-$30,+$32]x[-$1C,+$27]; Blue: [-$10,+$58]x[-$18,+$2B])
+    .min_x : dw $00D0, $00F0
+    .max_x : dw $0132, $0158
+    .min_y : dw $00E4, $00E8
+    .max_y : dw $0127, $012B
   }
 
   WaitMessageBeforeSurrender:
@@ -415,9 +473,10 @@ Sprite_Octoboss_Secondary:
       JSR SpawnSplash
       INC.w SprAction, X ; surrender message
       LDA.b #15 : STA.w SprFrame, X
-      LDA.b #$B0 : STA.w SprX, X
-      LDA.b #$08 : STA.w SprXH, X : STA.w SprYH, X
-      LDA.b #$D4 : STA.w SprY, X
+      LDA.w Octoboss_HomeXL, X : STA.w SprX, X
+      LDA.w Octoboss_HomeXH, X : STA.w SprXH, X
+      LDA.w Octoboss_HomeYL, X : STA.w SprY, X
+      LDA.w Octoboss_HomeYH, X : STA.w SprYH, X
       LDA.b #$90 : STA.w SprTimerC, X
       .noframereset
       LDA.b #2 : STA.w SprTimerB, X
@@ -871,8 +930,8 @@ HandleMovingSplash:
 
       LDA.w SprX,Y : STA.l $7FF83C,X
       LDA.w SprXH,Y : STA.l $7FF878,X
-      CLC : ADC.b #$18 : STA.l $7FF81E,X
-      LDA.w SprYH,Y : STA.l $7FF85A,X
+      LDA.w SprY,Y : CLC : ADC.b #$18 : STA.l $7FF81E,X
+      LDA.w SprYH,Y : ADC.b #$00 : STA.l $7FF85A,X
       LDA.b #$0F : STA.l $7FF90E,X
 
       PLX

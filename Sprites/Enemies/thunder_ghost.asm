@@ -104,24 +104,27 @@ Sprite_ThunderGhost_Main:
     %PlayAnimation(6, 6, 16)
     JSL Sprite_CheckDamageToPlayer
     JSL Sprite_MoveLong
-
-    LDA.w SprTimerA, X : BNE +
+    JSL Sprite_CheckTileCollision
+    LDA.w SprCollision, X : BNE .despawn
+    LDA.w SprTimerA, X : BNE .alive
+    .despawn
       STZ.w SprState, X
-    +
+    .alive
     RTS
   }
 
   CastThunderRight:
   {
-    %StartOnFrame(6)
+    %StartOnFrame(7)
     %PlayAnimation(7, 7, 16)
-
     JSL Sprite_CheckDamageToPlayer
     JSL Sprite_MoveLong
-
-    LDA.w SprTimerA, X : BNE +
+    JSL Sprite_CheckTileCollision
+    LDA.w SprCollision, X : BNE .despawn
+    LDA.w SprTimerA, X : BNE .alive
+    .despawn
       STZ.w SprState, X
-    +
+    .alive
     RTS
   }
 }
@@ -139,16 +142,14 @@ Sprite_ThunderGhost_Move:
       JSR SpawnLightningAttack
   ++
 
-  LDA.w SprTimerA, X : BNE +
+  LDA.w SprTimerA, X : BNE .Continue
     JSL Sprite_IsToRightOfPlayer : CPY.b #$01 : BNE .ToRight
       %GotoAction(1)
-      JMP .Continue
+      BRA .ResetFaceTimer
     .ToRight
     %GotoAction(2)
+  .ResetFaceTimer
     LDA.b #$20 : STA.w SprTimerA, X
-    JMP .Continue
-  +
-  %GotoAction(0)
   .Continue
 
   LDA.w SprMiscB, X
@@ -173,39 +174,55 @@ SpawnLightningAttack:
 {
   PHX
   LDA.b #$CD
-  JSL Sprite_SpawnDynamically : BMI .no_space
-    ; Use SprXSpeed, SprYSpeed, SprXRound, SprYRound
-    ; SprX, SprY, SprXH, SprY, to cast the lightning spell
-    ; and make it move off to the bottom left or bottom right
-
-    ; Y is the ID of the new attack sprite
-    ; X is the ID of the current source sprite
-
-    ; Left 0 or Right 1
+  JSL Sprite_SpawnDynamically : BPL .spawned
+    PLX
+    RTS
+  .spawned
+    ; Y = spawned lightning bolt slot, X = parent Thunder Ghost slot.
+    ; Save child slot before Sprite_IsToRightOfPlayer overwrites Y.
     PHY
-    JSL Sprite_IsToRightOfPlayer : TAY : CMP.b #$01 : BEQ +
-      LDA.b #$00
-      JMP .Continue
-    +
-    LDA.b #$01
-    .Continue
-    CLC : ADC.b #$03
+    JSL Sprite_IsToRightOfPlayer
+    TYA ; 1 = Link is left of ghost -> CastThunderLeft (3); 0 = right -> CastThunderRight (4)
     PLY
-    STA.w SprSubtype, Y
-    STA.w SprAction, Y
+    CMP.b #$00 : BNE .cast_left
+      ; CastThunderRight (action 4, frame 7), spawn at (SprX+12, SprY+12)
+      LDA.b #$04 : STA.w SprSubtype, Y : STA.w SprAction, Y
+      LDA.b #$07 : STA.w SprFrame, Y
+      LDA.w SprX, X : CLC : ADC.b #$0C : STA.w SprX, Y
+      LDA.w SprXH, X : ADC.b #$00 : STA.w SprXH, Y
+      BRA .place_y
+    .cast_left
+      ; CastThunderLeft (action 3, frame 6), spawn at (SprX-12, SprY+12)
+      LDA.b #$03 : STA.w SprSubtype, Y : STA.w SprAction, Y
+      LDA.b #$06 : STA.w SprFrame, Y
+      LDA.w SprX, X : SEC : SBC.b #$0C : STA.w SprX, Y
+      LDA.w SprXH, X : SBC.b #$00 : STA.w SprXH, Y
+    .place_y
+    LDA.w SprY, X : CLC : ADC.b #$0C : STA.w SprY, Y
+    LDA.w SprYH, X : ADC.b #$00 : STA.w SprYH, Y
 
-    LDA.w SprX, X : STA.w SprX, Y
-    LDA.w SprY, X : STA.w SprY, Y
-    LDA.w SprXH, X : STA.w SprXH, Y
-    LDA.w SprYH, X : STA.w SprYH, Y
+    ; Match parent floor and configure clean projectile hitbox/impervious/lifetime.
+    LDA.w SprFloor, X : STA.w SprFloor, Y
+    LDA.b #$02 : STA.w SprHitbox, Y
+    LDA.b #$03 : STA.w SprNbrOAM, Y
+    LDA.b #$40 : STA.w SprGfxProps, Y
+    LDA.b #$56 : STA.w SprDefl, Y
+    LDA.b #$01 : STA.w SprTileDie, Y
+    LDA.b #$FF : STA.w SprBulletproof, Y
+    LDA.b #$40 : STA.w SprHealth, Y
+    LDA.b #$04 : STA.w SprBump, Y
+    LDA.b #$38 : STA.w SprTimerA, Y
+    LDA.b #$00
+    STA.w SprTimerB, Y
+    STA.w SprCollision, Y
+    STA.w SprXRound, Y
+    STA.w SprYRound, Y
 
-    LDA.w SprXSpeed, X : STA.w SprXSpeed, Y
-    LDA.w SprYSpeed, X : STA.w SprYSpeed, Y
-    LDA.b #$02 : STA.w SprXRound, Y
-    LDA.b #$02 : STA.w SprYRound, Y
-    LDA.b #$30 : STA.w SprTimerA, Y
-    LDA.b #$30 : STA.w SprTimerB, Y
-  .no_space
+    ; Aim child projectile toward Link from its spawn coordinates.
+    PHX
+    TYX
+    LDA.b #$18 : JSL Sprite_ApplySpeedTowardsPlayer
+    PLX
 
   PLX
 
@@ -229,8 +246,8 @@ Sprite_ThunderGhost_Draw:
   dw 0, 0, 8
   dw 0, 8, 0
   dw 0, 8, 0
-  dw -12, -8, -16
-  dw 12, 16, 20
+  dw 0, 4, -4
+  dw 0, 4, 8
   .y_offsets
   dw -8, 0, -8
   dw -8, 0, -8
@@ -238,8 +255,8 @@ Sprite_ThunderGhost_Draw:
   dw 0, -8, -8
   dw 0, -8, -8
   dw 0, -8, -8
-  dw 12, 24, 20
-  dw 12, 24, 12
+  dw 0, 12, 8
+  dw 0, 12, 0
   .chr
   db $3A, $02, $3B
   db $3A, $02, $3B

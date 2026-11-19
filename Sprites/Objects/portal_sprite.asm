@@ -490,7 +490,7 @@ Sprite_Portal_Draw:
     db $EE
   .properties
     db $24
-    db $64
+    db $E4
     db $22
-    db $62
+    db $E2
 }

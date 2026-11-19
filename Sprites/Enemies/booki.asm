@@ -136,44 +136,146 @@ Sprite_Booki_Move:
 
   SlowFloat:
   {
-    ; Float toward player
+    ; Float toward player while unseen
     LDY #$04
     JSL GetRandomInt : AND.b #$04
     JSL Sprite_FloatTowardPlayer
 
-    ; Check if Link is looking at us (facing our direction)
-    PHX
-    JSL Sprite_DirectionToFacePlayer
-
-    ; If Link is too close, flee (simple distance check)
-    ; TODO: Implement proper line-of-sight with tile collision
-    LDA.b $0E : CMP.b #$1A : BCS .NotTooClose
-    LDA.b $0F : CMP.b #$1A : BCS .NotTooClose
+    ; Throttled 16-bit LOS check: Link facing Booki or right next to it with clear LOS
+    TXA : EOR.b $1A : AND.b #$03 : BNE .NotTooClose
+    JSR Booki_PlayerCanSeeUs : BCC .NotTooClose
       LDA.b #$01 : STA.w SprMiscB, X
       LDA.b #$20 : STA.w SprTimerA, X
       %GotoAction(1)
     .NotTooClose
-    PLX
 
     RTS
   }
 
   FloatAway:
   {
-    JSL GetRandomInt : AND.b #$04
-    JSL Sprite_FloatAwayFromPlayer
+    ; Smooth flee vector away from player (avoid per-frame speed inversion jitter)
+    LDA.b #$06 : JSL Sprite_ApplySpeedTowardsPlayer
+    JSL Sprite_InvertSpeed_XY
 
-    PHX
-    JSL Sprite_DirectionToFacePlayer
-    LDA.b $0E : CMP.b #$1B : BCC .NotTooClose
-    LDA.b $0F : CMP.b #$1B : BCC .NotTooClose
-      LDA.b #$00 : STA.w SprMiscB, X
+    ; Return to stalking once Link looks away, moves behind a wall, or leaves range
+    TXA : EOR.b $1A : AND.b #$03 : BNE .StillSeen
+    JSR Booki_PlayerCanSeeUs : BCS .StillSeen
+      STZ.w SprMiscB, X
       %GotoAction(0)
-    .NotTooClose
-    PLX
+    .StillSeen
 
     RTS
   }
+}
+
+; 16-bit line-of-sight check: returns Carry set if Link is within range,
+; either facing Booki ($2F) or within close proximity (< 26px), with clear LOS.
+; Out: Carry set = seen, Carry clear = unseen/blocked. X preserved.
+Booki_PlayerCanSeeUs:
+{
+  LDA.b $1B : BEQ .layer_ok
+    LDA.w SprFloor, X : CMP.b $EE : BEQ .layer_ok
+      CLC : RTS
+.layer_ok
+  ; 16-bit signed dx = LinkX - SprX ($00), dy = LinkY - SprY ($02)
+  LDA.w SprXH, X : XBA : LDA.w SprX, X
+  REP #$20
+  EOR.w #$FFFF : INC A : CLC : ADC.b $22 : STA.b $00
+  CLC : ADC.w #$007F : CMP.w #$00FF : BCS .no_sight_16
+  SEP #$20
+
+  LDA.w SprYH, X : XBA : LDA.w SprY, X
+  REP #$20
+  EOR.w #$FFFF : INC A : CLC : ADC.b $20 : STA.b $02
+  CLC : ADC.w #$007F : CMP.w #$00FF : BCS .no_sight_16
+
+  ; Close proximity (< 26px on both axes) triggers shy flee regardless of Link facing
+  LDA.b $00 : CLC : ADC.w #$0019 : CMP.w #$0033 : BCS .check_facing
+  LDA.b $02 : CLC : ADC.w #$0019 : CMP.w #$0033 : BCC .check_los
+
+.check_facing
+  ; Link $2F: 0=Up (SprY<=LinkY -> dy>=0), 2=Down (dy<=0), 4=Left (dx>=0), 6=Right (dx<=0)
+  SEP #$20
+  LDA.b $2F : AND.b #$06
+  BEQ .link_up
+  CMP.b #$02 : BEQ .link_down
+  CMP.b #$04 : BEQ .link_left
+.link_right
+  REP #$20
+  LDA.b $00 : BEQ .check_los : BPL .no_sight_16
+  BRA .check_los
+.link_left
+  REP #$20
+  LDA.b $00 : BMI .no_sight_16
+  BRA .check_los
+.link_down
+  REP #$20
+  LDA.b $02 : BEQ .check_los : BPL .no_sight_16
+  BRA .check_los
+.link_up
+  REP #$20
+  LDA.b $02 : BPL .check_los
+.no_sight_16
+  SEP #$20
+.no_sight
+  CLC
+  RTS
+
+.check_los
+  ; Signed step_x = dx / 8 ($08), step_y = dy / 8 ($0A)
+  LDA.b $00
+  CMP.w #$8000 : ROR A
+  CMP.w #$8000 : ROR A
+  CMP.w #$8000 : ROR A
+  STA.b $08
+  LDA.b $02
+  CMP.w #$8000 : ROR A
+  CMP.w #$8000 : ROR A
+  CMP.w #$8000 : ROR A
+  STA.b $0A
+
+  LDA.w $0FD8 : PHA
+  LDA.w $0FDA : PHA
+
+  SEP #$20
+  LDA.w SprXH, X : XBA : LDA.w SprX, X
+  REP #$20
+  CLC : ADC.w #$0008 : STA.b $0C
+  SEP #$20
+  LDA.w SprYH, X : XBA : LDA.w SprY, X
+  REP #$20
+  CLC : ADC.w #$0008 : STA.b $0E
+  SEP #$20
+
+  LDY.b #$07
+.ray_loop
+  REP #$20
+  LDA.b $0C : CLC : ADC.b $08 : STA.b $0C : STA.w $0FD8
+  LDA.b $0E : CLC : ADC.b $0A : STA.b $0E : STA.w $0FDA
+  SEP #$20
+  PHY
+  JSL Probe_CheckTileSolidity
+  PLY
+  BCC .step_clear
+    LDA.w $0FA5 : CMP.b #$09 : BNE .blocked
+.step_clear
+  DEY : BNE .ray_loop
+
+  REP #$20
+  PLA : STA.w $0FDA
+  PLA : STA.w $0FD8
+  SEP #$20
+  SEC
+  RTS
+
+.blocked
+  REP #$20
+  PLA : STA.w $0FDA
+  PLA : STA.w $0FD8
+  SEP #$20
+  CLC
+  RTS
 }
 
 
@@ -181,7 +283,9 @@ Sprite_Booki_Move:
 
 Sprite_Booki_Draw:
 {
-  JSL Sprite_PrepOamCoord
+  JSL Sprite_PrepOamCoord : BCC .on_screen
+    RTS
+  .on_screen
   JSL Sprite_OAM_AllocateDeferToPlayer
 
   LDA.w SprGfx, X : CLC : ADC.w SprFrame, X : TAY;Animation Frame
