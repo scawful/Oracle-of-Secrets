@@ -987,7 +987,7 @@ Beast_DrawPieces:
 ; Smooth 8-angle spin every 2 frames using trident_v, trident_d, trident_h + flips.
 Beast_DrawTrident:
 {
-  STZ.b $05 : STZ.b $0B
+  STZ.b $05 : STZ.b $0B : STZ.b $0D
   LDA.w SprMiscC, X : STA.b $04
   LDA.w SprX, X : STA.b $0C
   REP #$20
