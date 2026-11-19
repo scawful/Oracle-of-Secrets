@@ -568,7 +568,7 @@ Menu_Page3_Select:
     LDA.w $020B : SEC : SBC.b #!P3_FirstMaskSlot-1
     STA.l BoundMask
     LDA.b #$20 : STA.w $0207             ; show the new marker first
-    LDA.b #$22 : STA.w $012F             ; equip sound (Ring Box)
+    LDA.b #$0D : STA.w $012F             ; equip confirm chime (SFX3.$0D)
     RTS
 
   .error
@@ -592,7 +592,7 @@ if !ENABLE_ONE_RING == 1
     RTS
   .wear
   STA.l RingSlot1
-  LDA.b #$20 : STA.w $012F
+  LDA.b #$0D : STA.w $012F
   LDA.b #$20 : STA.w $0207               ; show the new marker first
   RTS
 else
@@ -614,7 +614,7 @@ else
   .on
   JSR RingMenu_StoreRingToSlotStack
   SEP #$30
-  LDA.b #$20 : STA.w $012F
+  LDA.b #$0D : STA.w $012F
   LDA.b #$20 : STA.w $0207               ; show the new marker first
   RTS
 endif

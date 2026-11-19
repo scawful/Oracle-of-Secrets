@@ -520,7 +520,7 @@ QuestSongs_Frame:
   LDA.b #$0D : STA.w $0202              ; normal Y item, independent of mask
   STA.l ItemBindingMenuY                ; Menu_Bindings_Close restores $0202 from this
   STZ.w $0207
-  LDA.b #$20 : STA.w $012F
+  LDA.b #$0D : STA.w $012F
   SEC
   RTL
 .none

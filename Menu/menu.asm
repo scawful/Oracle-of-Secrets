@@ -753,14 +753,14 @@ MagicBag_ConsumeItem:
     LDA ($00) : DEC A : STA ($00)
     PLB
 
-    ; Sound
-    LDA.b #$35 : STA.w $012F
+    ; Sound: crisp heart/restore chime (SFX3.$0B; replaces partial heart-container $35)
+    LDA.b #$0B : STA.w $012F
     BRA .exit
 
 .deferred_use
     PLB
-    ; Selection sound
-    LDA.b #$20 : STA.w $012F
+    ; Confirm sound (SFX3.$0D)
+    LDA.b #$0D : STA.w $012F
     ; Trigger menu scroll up to return to gameplay
     LDA.b #!MENU_STATE_SCROLL_UP : STA.w $0200
     BRA .exit
@@ -1044,7 +1044,7 @@ RingMenu_Controls:
       INY #2
       TYA                 ; Transfer Y to A
       JSR RingMenu_StoreRingToSlotStack
-      LDA.b #$22 : STA.w $012F  ; Play equip sound
+      LDA.b #$0D : STA.w $012F  ; Play equip confirm chime (SFX3.$0D)
   .no_a
 
   ; Y button: Close ring menu, return to previous screen

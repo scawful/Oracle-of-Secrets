@@ -18,7 +18,7 @@ PAGE3 = ROOT / "Menu" / "menu_page3.asm"
 SFX = ROOT / "Core" / "sfx.asm"
 SWORD_SLOTS = ROOT / "Menu" / "menu_sword_slots.asm"
 FLAGS = ROOT / "Config" / "feature_flags.asm"
-MENU_CURSOR, BOSS_DYING, ERROR = 0x20, 0x22, 0x3C
+MENU_CURSOR, EQUIP_CONFIRM, BOSS_DYING, ERROR = 0x20, 0x0D, 0x22, 0x3C
 SOUND_PORTS = ("$012E", "$012F")
 INPUTS = [(f6, f4) for f6 in (0x00, 0x80, 0x40, 0x30) for f4 in (0x00, 0x40, 0x80, 0x3F)]
 
@@ -157,20 +157,20 @@ def expected(slot, f6, f4, owned, rings, one_ring):
     if slot > 0x1C or not owned:
         return [("$012E", ERROR)], {}, []
     if slot >= 0x18:
-        return [("$012F", MENU_CURSOR)], {"$0207": 0x20}, [("SwordSlots_Select", slot)]
+        return [("$012F", EQUIP_CONFIRM)], {"$0207": 0x20}, [("SwordSlots_Select", slot)]
     if slot < 0x06:
-        return [("$012F", MENU_CURSOR)], {"BoundMask": slot + 1, "$0207": 0x20}, []
+        return [("$012F", EQUIP_CONFIRM)], {"BoundMask": slot + 1, "$0207": 0x20}, []
     if slot < 0x0C:
         ring = slot - 4
         if ring in rings:
             return [("$012F", MENU_CURSOR)], {f"RingSlot{rings.index(ring) + 1}": 0, "$0207": 0x00}, []
         if one_ring:
-            return [("$012F", MENU_CURSOR)], {"RingSlot1": ring, "$0207": 0x20}, []
-        return [("$012F", MENU_CURSOR)], {"$0207": 0x20}, [("RingMenu_StoreRingToSlotStack", ring)]
+            return [("$012F", EQUIP_CONFIRM)], {"RingSlot1": ring, "$0207": 0x20}, []
+        return [("$012F", EQUIP_CONFIRM)], {"$0207": 0x20}, [("RingMenu_StoreRingToSlotStack", ring)]
     if slot < 0x12:
         song = slot - 0x0B
         state = {"CurrentSong": song, "SavedOcarinaSong": song, "$0202": 0x0D, "$0207": 0x20}
-        return [("$012F", MENU_CURSOR)], state, []
+        return [("$012F", EQUIP_CONFIRM)], state, []
     if not f6 & 0x80:
         return [], {}, []
     return [], {}, [("MagicBag_ConsumeItem", slot - 0x12)]
@@ -215,6 +215,7 @@ class EquipmentMenuSfxContract(unittest.TestCase):
     def test_sound_ids_and_equipment_call_chain(self):
         sfx = SFX.read_text(encoding="utf-8")
         self.assertRegex(sfx, r"SFX3 - queued via \$012F")
+        self.assertRegex(sfx, r"SFX3\.0D .*HUD heart")
         self.assertRegex(sfx, r"SFX3\.20 .*Menu / Text cursor moved")
         self.assertRegex(sfx, r"SFX3\.22 .*Boss dying / Deleting file")
         self.assertEqual(routine_lines(self.page3, "Menu_Page3_Select", self.flags)[0],
@@ -324,11 +325,11 @@ class EquipmentMenuSfxContract(unittest.TestCase):
 
     def test_pre_fix_boss_sound_fails_contract(self):
         mutants = [
-            ("mask/song", r"(\.sound\n\s*LDA\.b #\$)20( : STA\.w \$012F)", self.flags),
-            ("one-ring wear", r"(\.wear\n\s*STA\.l RingSlot1\n\s*LDA\.b #\$)20( : STA\.w \$012F)",
+            ("mask/song", r"(\.sound\n\s*LDA\.b #\$)0D( : STA\.w \$012F)", self.flags),
+            ("one-ring wear", r"(\.wear\n\s*STA\.l RingSlot1\n\s*LDA\.b #\$)0D( : STA\.w \$012F)",
              self.flags),
             ("multi-ring on", r"(\.on\n\s*JSR RingMenu_StoreRingToSlotStack\n\s*SEP #\$30\n"
-             r"\s*LDA\.b #\$)20( : STA\.w \$012F)", dict(self.flags, ENABLE_ONE_RING=0)),
+             r"\s*LDA\.b #\$)0D( : STA\.w \$012F)", dict(self.flags, ENABLE_ONE_RING=0)),
         ]
         for name, pattern, flags in mutants:
             with self.subTest(name):
