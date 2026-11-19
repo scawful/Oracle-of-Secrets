@@ -37,19 +37,33 @@ Sprite_BusinessScrub_Long:
   ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
   ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
   LDA.w SprState, X : CMP.b #$06 : BEQ .normal_scrub
+  ; While carried ($0A), Sprite_CheckActive returns CLC (requires SprState == $09),
+  ; so update the parent scrub's squirming pose here before drawing so frame 0
+  ; immediately switches out of hiding into the overhead animation.
+  CMP.b #$0A : BNE .draw_body
+    LDA.w SprSubtype, X : BNE .draw_body
+    LDA.w SprFreeze : ORA.b $11 : BNE .draw_body
+      LDA.w WORLDFLAG : BNE .carried_eon
+        JSR BusinessScrub_UpdateCarried
+        BRA .draw_body
+      .carried_eon
+        JSR EonScrub_UpdateCarried
+  .draw_body
   LDA.w WORLDFLAG : BNE .draw_eon
     JSR Sprite_BusinessScrub_Draw
-    JMP +
+    BCS .normal_scrub
+    BRA .after_draw
   .draw_eon
-  JSR Sprite_EonScrub_Draw
-  +
-  LDA.w SprSubtype, X : CMP #$01 : BNE .normal_scrub
+    JSR Sprite_EonScrub_Draw
+    BCS .normal_scrub
+  .after_draw
+  LDA.w SprSubtype, X : CMP.b #$01 : BNE .normal_scrub
     JSL Sprite_DrawShadow
   .normal_scrub
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     LDA.w WORLDFLAG : BNE .eon
       JSR Sprite_BusinessScrub_Main
-      JMP .SpriteIsNotActive
+      BRA .SpriteIsNotActive
     .eon
     JSR Sprite_EonScrub_Main
   .SpriteIsNotActive
@@ -63,37 +77,80 @@ Sprite_BusinessScrub_Prep:
 {
   PHB : PHK : PLB
   LDA.w SprSubtype, X : CMP.b #$01 : BEQ .pea_shot
-  JMP +
+    LDA.b #$FF : STA.w SprMiscE, X ; No active PeaShot child yet
+    STZ.w SprMiscF, X              ; Not subdued yet (survives Sprite_CheckIfLifted)
+    BRA .done
   .pea_shot
     LDA.b #$06 : STA.w SprAction, X ; Pea Shot State
     LDA.b #$20 : STA.w SprPrize, X
-  +
+  .done
   PLB
   RTL
 }
 
 ; =========================================================
 
+; Clean carried overhead squirm pose for LW Business Scrub (frames 8..9, max y_offset <= 0).
+BusinessScrub_UpdateCarried:
+{
+  STZ.w SprXSpeed, X
+  STZ.w SprYSpeed, X
+  STZ.w SprGfx, X
+  ; If re-lifted mid-air out of Action 8, clear SprAction so re-throw triggers fresh throw.
+  LDA.w SprAction, X : CMP.b #$08 : BNE .action_ok
+    STZ.w SprAction, X
+  .action_ok
+  LDA.w SprFrame, X
+  CMP.b #$08 : BCC .clamp
+  CMP.b #$0A : BCC .anim
+  .clamp
+    LDA.b #$08 : STA.w SprFrame, X
+    LDA.b #$06 : STA.w SprTimerB, X
+    RTS
+  .anim
+  %PlayAnimation(8, 9, 6)
+  RTS
+}
+
 ; 0-2 - Spitting
 ; 3-6 - Spinning
 ; 7-7 - Crouching
-; 8-9 - Dazed
+; 8-9 - Dazed / Carried Squirm
 ; 10-12 - Pea Shooter Anim
 ; 13 - Hiding
 Sprite_BusinessScrub_Main:
 {
+  LDA.w SprSubtype, X : BNE .dispatch ; PeaShot (subtype 1) skips carry/throw checks
+  LDA.w SprState, X : CMP.b #$0A : BNE .not_carried
+    JSR BusinessScrub_UpdateCarried
+    RTS
+  .not_carried
+  ; Detect a fresh throw from vanilla CarriedSprite_CheckForThrow ($06DF6D),
+  ; which restores SprState to $09 and sets SprTimerF = +4 and XY throw speed.
+  LDA.w SprTimerF, X : BEQ .dispatch
+    LDA.w SprAction, X : CMP.b #$08 : BEQ .dispatch
+      ; Halve pot-throw XY speed (signed) so the scrub lands in clear view
+      ; (~4 tiles) with a crisp upward hop arc (SprTimerF = #$18).
+      LDA.w SprXSpeed, X : CMP.b #$80 : ROR A : STA.w SprXSpeed, X
+      LDA.w SprYSpeed, X : CMP.b #$80 : ROR A : STA.w SprYSpeed, X
+      LDA.b #$18 : STA.w SprTimerF, X
+      LDA.b #$03 : STA.w SprFrame, X
+      LDA.b #$04 : STA.w SprTimerB, X
+      %GotoAction(8)
+  .dispatch
   LDA.w SprAction, X
   JSL JumpTableLocal
 
-  dw BusinessScrub_Hiding
-  dw BusinessScrub_Attack
-  dw BusinessScrub_PostAttack
-  dw BusinessScrub_Recoil
-  dw BusinessScrub_Dazed
-  dw BusinessScrub_Subdued
+  dw BusinessScrub_Hiding         ; 00
+  dw BusinessScrub_Attack         ; 01
+  dw BusinessScrub_PostAttack     ; 02
+  dw BusinessScrub_Recoil         ; 03
+  dw BusinessScrub_Dazed          ; 04
+  dw BusinessScrub_Subdued        ; 05
 
-  dw BusinessScrub_PeaShot
-  dw BusinessScrub_HidingDefeated
+  dw BusinessScrub_PeaShot        ; 06
+  dw BusinessScrub_HidingDefeated ; 07
+  dw BusinessScrub_Thrown         ; 08
 
   ; 0x00
   BusinessScrub_Hiding:
@@ -105,17 +162,18 @@ Sprite_BusinessScrub_Main:
     JSR CheckForPeaShotRedirect
 
     JSL Sprite_IsBelowPlayer : TYA
-    CMP #$00 : BNE .is_below_player
-        ; Check if the player is too close
-        JSL GetDistance8bit_Long : CMP.b #$24 : BCC .too_close
-          ; The player is below the scrub, so it should pop up
-          LDA #$20 : STA.w SprTimerA, X
-          %GotoAction(1)
+    BNE .is_below_player
+      ; Player is south (in front of scrub): pop up if far enough away.
+      JSL GetDistance8bit_Long : CMP.b #$24 : BCC .too_close
+        LDA.b #$20 : STA.w SprTimerA, X
+        STZ.w SprFrame, X
+        %GotoAction(1)
       .too_close
-    RTS
+      RTS
     .is_below_player
+    ; Player is north (behind scrub): stay crouched and allow lifting out of bush.
+    ; Action 8 (BusinessScrub_Thrown) owns thrown physics.
     JSL Sprite_CheckIfLifted
-    JSL ThrownSprite_TileAndSpriteInteraction_long
     RTS
   }
 
@@ -127,16 +185,21 @@ Sprite_BusinessScrub_Main:
 
     JSL Sprite_PlayerCantPassThrough
     JSR CheckForPeaShotRedirect
+    LDA.w SprAction, X : CMP.b #$01 : BNE .done
 
-    LDA.w SprTimerA, X : BNE .not_done
+    ; Duck back into bush if Link circles behind (north) or gets close (< $20).
+    JSL Sprite_IsBelowPlayer : TYA : BNE .duck
+    JSL GetDistance8bit_Long : CMP.b #$20 : BCC .duck
+
+    LDA.w SprTimerA, X : BNE .done
       JSR SpawnPeaShot
-      LDA #$F0 : STA.w SprTimerA, X
+      LDA.b #$F0 : STA.w SprTimerA, X
       INC.w SprAction, X
-    .not_done
+    .done
+    RTS
 
-    JSL GetDistance8bit_Long : CMP #$18 : BCS .not_too_close
-      %GotoAction(0)
-    .not_too_close
+    .duck
+    %GotoAction(0)
     RTS
   }
 
@@ -148,10 +211,16 @@ Sprite_BusinessScrub_Main:
 
     JSL Sprite_PlayerCantPassThrough
     JSR CheckForPeaShotRedirect
+    LDA.w SprAction, X : CMP.b #$02 : BNE .done
 
-    LDA.w SprTimerA, X : BNE +
-      %GotoAction(0)
-    +
+    ; Duck back into bush if Link circles behind (north), approaches close (< $20),
+    ; or post-attack timer expires.
+    JSL Sprite_IsBelowPlayer : TYA : BNE .duck
+    JSL GetDistance8bit_Long : CMP.b #$20 : BCC .duck
+    LDA.w SprTimerA, X : BNE .done
+    .duck
+    %GotoAction(0)
+    .done
     RTS
   }
 
@@ -195,10 +264,12 @@ Sprite_BusinessScrub_Main:
     %PlayAnimation(7,7,1)
     JSL Sprite_PlayerCantPassThrough
 
-    LDA.w SprMiscD, X : BNE .no_talk
+    ; Track subdued status in SprMiscF ($0EC0,X): vanilla Sprite_CheckIfLifted
+    ; ($06F27C) zeroes SprMiscD ($0E90,X), so SprMiscF survives re-lifting.
+    LDA.w SprMiscF, X : BNE .no_talk
       %ShowSolicitedMessage($12D) : BCC .no_talk
         JSR DekuScrub_GiveRandomPrize
-        LDA.b #$01 : STA.w SprMiscD, X
+        LDA.b #$01 : STA.w SprMiscF, X
         %GotoAction(7)
     .no_talk
 
@@ -226,14 +297,42 @@ Sprite_BusinessScrub_Main:
     RTS
   }
 
+  ; 0x07
   BusinessScrub_HidingDefeated:
   {
     %StartOnFrame(13)
     %PlayAnimation(13,13,1)
 
+    JSL Sprite_PlayerCantPassThrough
     JSL Sprite_CheckIfLifted
+
+    RTS
+  }
+
+  ; 0x08 - Airborne after being lifted and thrown in any direction.
+  BusinessScrub_Thrown:
+  {
+    %StartOnFrame(3)
+    %PlayAnimation(3, 6, 4)
+
+    JSL Sprite_Move
+    JSL Sprite_CheckTileCollision
     JSL ThrownSprite_TileAndSpriteInteraction_long
 
+    ; Abort landing transition if thrown into a pit/water or re-lifted mid-air.
+    LDA.w SprState, X : CMP.b #$09 : BNE .aloft
+    LDA.w SprHeight, X : ORA.w SprTimerF, X : BNE .aloft
+      STZ.w SprXSpeed, X
+      STZ.w SprYSpeed, X
+      LDA.w SprMiscF, X : BNE .already_subdued
+        LDA.b #$21 : JSL SpriteSFX_QueueSFX2WithPan
+        LDA.b #$20 : STA.w SprTimerA, X
+        %GotoAction(3) ; Unsubdued toss -> Recoil -> Dazed -> Subdued
+        RTS
+      .already_subdued
+      LDA.b #$0D : STA.w SprFrame, X
+      %GotoAction(7) ; Already subdued -> HidingDefeated
+    .aloft
     RTS
   }
 }
@@ -257,60 +356,50 @@ DekuScrub_GiveRandomPrize:
 
 CheckForPeaShotRedirect:
 {
+  ; Validate per-slot child tracker SprMiscE, X (never global Offspring1_Id).
+  LDY.w SprMiscE, X
+  BMI .done
+  CPY.b #$10 : BCS .done
+  LDA.w SprState, Y : CMP.b #$09 : BNE .done
+  LDA.w SprType, Y : CMP.b #Sprite_BusinessScrub : BNE .done
+  LDA.w SprSubtype, Y : CMP.b #$01 : BNE .done
+  LDA.w SprYSpeed, Y : BPL .done ; Must be reflected northward (< 0)
+
   LDA.w SprX, X : STA.b $00
-  LDA.w SprXH, X  : STA.b $08
+  LDA.w SprXH, X : STA.b $08
 
   LDA.b #$04 : STA.b $02
-  STZ $03
+  STZ.b $03
 
   LDA.w SprY, X : STA.b $01
   LDA.w SprYH, X : STA.b $09
 
   PHX
-  LDA.w Offspring1_Id : TAX
+  TYX
   JSL Sprite_SetupHitBox
   PLX
 
-  JSL CheckIfHitBoxesOverlap : BCC .no_dano
+  JSL CheckIfHitBoxesOverlap : BCC .done
     JSL BusinessScrub_BeginRecoil
-    NOP #4 ; Keep the existing call/action span and following labels fixed.
-    RTS
-  .no_dano
-  ; If the pea shot and deku scrub hitboxes intersect
-  ; We will go to recoil
-  PHX
-  LDA.w Offspring1_Id : TAX
-  JSL Sprite_SetupHitBox
-  PLX
-  JSL CheckIfHitBoxesOverlap : BCC .not_done2
-    JSL BusinessScrub_BeginRecoil
-    NOP #4 ; Keep the existing call/action span and following labels fixed.
-    RTS
-  .not_done2
-  RTS
-}
-
-KillPeaShot:
-{
-  ; Kill the pea shot
-  PHX
-  LDA.w Offspring1_Id : TAX
-  STZ.w SprState, X
-  PLX
+  .done
   RTS
 }
 
 SpawnPeaShot:
 {
-  LDA.b #$14
+  LDA.b #Sprite_BusinessScrub
   JSL Sprite_SpawnDynamically : BMI .return ;89
 .AltEntry
-  LDA.b #$01 : STA $0E30, Y
-  LDA.b #$06 : STA $0D80, Y
+  LDA.b #$01 : STA.w $0E30, Y
+  LDA.b #$06 : STA.w $0D80, Y
   LDA.b #$20 : STA.w SprPrize, Y
   LDA.b #$02 : STA.w SprMiscC, Y
   LDA.b #$01 : STA.w SprBump, Y
   LDA.b #$01 : STA.w SprNbrOAM, Y
+  LDA.w SprFloor, X : STA.w SprFloor, Y
+
+  ; Track this child slot on the parent only (keep Offspring1_Id free for bosses).
+  TYA : STA.w SprMiscE, X
 
   PHX
   ; Spawn Location
@@ -327,10 +416,8 @@ SpawnPeaShot:
   TYX
   STZ.w SprXRound, X
 
-  LDA #$10 : STA.w SprYSpeed, X
+  LDA.b #$10 : STA.w SprYSpeed, X
   STA.w SprYRound, X
-
-  STX.w Offspring1_Id
   PLX
 
   .return
@@ -341,8 +428,23 @@ SpawnPeaShot:
 
 Sprite_BusinessScrub_Draw:
 {
-    JSL Sprite_PrepOamCoord
-    JSL Sprite_OAM_AllocateDeferToPlayer
+    JSL Sprite_PrepOamCoord : BCC .onscreen
+      SEC
+      RTS
+    .onscreen
+    LDA.w SprState, X : CMP.b #$0A : BNE .alloc_defer
+      LDA.b #$10 : JSL OAM_AllocateFromRegionC ; Carried: 4 tiles max above Link
+      BRA .alloc_done
+    .alloc_defer
+      JSL Sprite_OAM_AllocateDeferToPlayer
+    .alloc_done
+    ; Base .properties are pri 2 ($2B/$6B), matching Link on layer 0 ($20).
+    ; If carried on layer 1 (SprFloor != 0), promote to pri 3 ($3B/$7B).
+    STZ.b $0C
+    LDA.w SprState, X : CMP.b #$0A : BNE .have_pri
+      LDA.w SprFloor, X : BEQ .have_pri
+        LDA.b #$10 : STA.b $0C
+    .have_pri
 
     LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
     LDA .start_index, Y : STA $06
@@ -377,7 +479,7 @@ Sprite_BusinessScrub_Draw:
     INY
     LDA .chr, X : STA ($90), Y
     INY
-    LDA .properties, X : STA ($90), Y
+    LDA .properties, X : ORA.b $0C : STA ($90), Y
 
     PHY
     TYA : LSR #2 : TAY
@@ -387,6 +489,7 @@ Sprite_BusinessScrub_Draw:
 
     PLX
 
+    CLC
     RTS
 
 

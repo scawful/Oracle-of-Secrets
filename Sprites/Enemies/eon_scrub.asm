@@ -9,37 +9,78 @@
 ; 7-10 - Getting Stunned
 ; 11-12 - Dazed
 
+; Clean carried overhead squirm pose for DW Eon Scrub (frames 11..12, max y_offset <= 0).
+EonScrub_UpdateCarried:
+{
+  STZ.w SprXSpeed, X
+  STZ.w SprYSpeed, X
+  STZ.w SprGfx, X
+  ; If re-lifted mid-air out of Action 8, clear SprAction so re-throw triggers fresh throw.
+  LDA.w SprAction, X : CMP.b #$08 : BNE .action_ok
+    STZ.w SprAction, X
+  .action_ok
+  LDA.w SprFrame, X
+  CMP.b #$0B : BCC .clamp
+  CMP.b #$0D : BCC .anim
+  .clamp
+    LDA.b #$0B : STA.w SprFrame, X
+    LDA.b #$06 : STA.w SprTimerB, X
+    RTS
+  .anim
+  %PlayAnimation(11, 12, 6)
+  RTS
+}
+
 Sprite_EonScrub_Main:
 {
+  LDA.w SprSubtype, X : BNE .dispatch ; PeaShot (subtype 1) skips carry/throw checks
+  LDA.w SprState, X : CMP.b #$0A : BNE .not_carried
+    JSR EonScrub_UpdateCarried
+    RTS
+  .not_carried
+  ; Detect a fresh throw from vanilla CarriedSprite_CheckForThrow ($06DF6D).
+  LDA.w SprTimerF, X : BEQ .dispatch
+    LDA.w SprAction, X : CMP.b #$08 : BEQ .dispatch
+      LDA.w SprXSpeed, X : CMP.b #$80 : ROR A : STA.w SprXSpeed, X
+      LDA.w SprYSpeed, X : CMP.b #$80 : ROR A : STA.w SprYSpeed, X
+      LDA.b #$18 : STA.w SprTimerF, X
+      LDA.b #$07 : STA.w SprFrame, X
+      LDA.b #$04 : STA.w SprTimerB, X
+      %GotoAction(8)
+  .dispatch
   LDA.w SprAction, X
   JSL JumpTableLocal
 
-  dw EonScrub_Stalking
-  dw EonScrub_Attack
-  dw EonScrub_PostAttack
-  dw EonScrub_Recoil
-  dw EonScrub_Dazed
-  dw EonScrub_Subdued
+  dw EonScrub_Stalking            ; 00
+  dw EonScrub_Attack              ; 01
+  dw EonScrub_PostAttack          ; 02
+  dw EonScrub_Recoil              ; 03
+  dw EonScrub_Dazed               ; 04
+  dw EonScrub_Subdued             ; 05
 
-  dw EonScrub_PeaShot
-  dw EonScrub_Defeated
+  dw EonScrub_PeaShot             ; 06
+  dw EonScrub_Defeated            ; 07
+  dw EonScrub_Thrown              ; 08
 
   EonScrub_Stalking:
   {
     %PlayAnimation(0,1,16)
 
     JSL Sprite_PlayerCantPassThrough
+    JSR CheckForPeaShotRedirect
 
     JSL Sprite_IsBelowPlayer : TYA
-    CMP #$00 : BNE .is_below_player
-      ; Check if the player is too close
+    BNE .is_below_player
+      ; Player is south (in front of scrub): pop up if far enough away.
       JSL GetDistance8bit_Long : CMP.b #$24 : BCC .too_close
-        ; The player is below the scrub, so it should pop up
-        LDA #$20 : STA.w SprTimerA, X
+        LDA.b #$20 : STA.w SprTimerA, X
+        LDA.b #$02 : STA.w SprFrame, X
         %GotoAction(1)
       .too_close
+      RTS
     .is_below_player
-
+    ; Player is north (behind scrub): stay crouched and allow lifting out of bush.
+    JSL Sprite_CheckIfLifted
     RTS
   }
 
@@ -49,17 +90,22 @@ Sprite_EonScrub_Main:
 
     JSL Sprite_PlayerCantPassThrough
     JSR CheckForPeaShotRedirect
+    LDA.w SprAction, X : CMP.b #$01 : BNE .done
 
-    LDA.w SprTimerA, X : BNE .not_done
+    ; Duck back into bush if Link circles behind (north) or gets close (< $20).
+    JSL Sprite_IsBelowPlayer : TYA : BNE .duck
+    JSL GetDistance8bit_Long : CMP.b #$20 : BCC .duck
+
+    LDA.w SprTimerA, X : BNE .done
       JSR EonScrub_SpawnPeaShot
-      LDA #$F0 : STA.w SprTimerA, X
+      LDA.b #$F0 : STA.w SprTimerA, X
       INC.w SprAction, X
-    .not_done
+    .done
+    RTS
 
-    JSL GetDistance8bit_Long : CMP #$18 : BCS .not_too_close
-      %GotoAction(0)
-    .not_too_close
-
+    .duck
+    STZ.w SprFrame, X
+    %GotoAction(0)
     RTS
   }
 
@@ -68,15 +114,23 @@ Sprite_EonScrub_Main:
     %PlayAnimation(2,2,16)
     JSL Sprite_PlayerCantPassThrough
     JSR CheckForPeaShotRedirect
+    LDA.w SprAction, X : CMP.b #$02 : BNE .done
 
-    LDA.w SprTimerA, X : BNE +
-      %GotoAction(0)
-    +
+    ; Duck back into bush if Link circles behind (north), approaches close (< $20),
+    ; or post-attack timer expires.
+    JSL Sprite_IsBelowPlayer : TYA : BNE .duck
+    JSL GetDistance8bit_Long : CMP.b #$20 : BCC .duck
+    LDA.w SprTimerA, X : BNE .done
+    .duck
+    STZ.w SprFrame, X
+    %GotoAction(0)
+    .done
     RTS
   }
 
   EonScrub_Recoil:
   {
+    %StartOnFrame(7)
     %PlayAnimation(7,10,16)
 
     JSL Sprite_PlayerCantPassThrough
@@ -92,6 +146,7 @@ Sprite_EonScrub_Main:
 
   EonScrub_Dazed:
   {
+    %StartOnFrame(11)
     %PlayAnimation(11,12,16)
 
     JSL Sprite_PlayerCantPassThrough
@@ -110,10 +165,12 @@ Sprite_EonScrub_Main:
 
     JSL Sprite_PlayerCantPassThrough
 
-    LDA.w SprMiscD, X : BNE .no_talk
+    ; Track subdued status in SprMiscF ($0EC0,X) so it survives Sprite_CheckIfLifted.
+    LDA.w SprMiscF, X : BNE .no_talk
       %ShowSolicitedMessage($12D) : BCC .no_talk
       JSR DekuScrub_GiveRandomPrize
-      LDA.b #$01 : STA.w SprMiscD, X
+      LDA.b #$01 : STA.w SprMiscF, X
+      STZ.w SprFrame, X
       %GotoAction(7)
     .no_talk
     RTS
@@ -124,7 +181,7 @@ Sprite_EonScrub_Main:
     %StartOnFrame(13)
     %PlayAnimation(13,13,3)
 
-    %DoDamageToPlayerSameLayerOnContact()
+    JSL BusinessScrub_PeaShotContact
 
     JSL Sprite_MoveVert
     JSL Sprite_CheckTileCollision
@@ -142,8 +199,35 @@ Sprite_EonScrub_Main:
   EonScrub_Defeated:
   {
     %PlayAnimation(0,1,16)
+    JSL Sprite_PlayerCantPassThrough
     JSL Sprite_CheckIfLifted
+    RTS
+  }
+
+  ; 0x08 - Airborne after being lifted and thrown in any direction.
+  EonScrub_Thrown:
+  {
+    %StartOnFrame(7)
+    %PlayAnimation(7, 10, 4)
+
+    JSL Sprite_Move
+    JSL Sprite_CheckTileCollision
     JSL ThrownSprite_TileAndSpriteInteraction_long
+
+    ; Abort landing transition if thrown into a pit/water or re-lifted mid-air.
+    LDA.w SprState, X : CMP.b #$09 : BNE .aloft
+    LDA.w SprHeight, X : ORA.w SprTimerF, X : BNE .aloft
+      STZ.w SprXSpeed, X
+      STZ.w SprYSpeed, X
+      LDA.w SprMiscF, X : BNE .already_subdued
+        LDA.b #$21 : JSL SpriteSFX_QueueSFX2WithPan
+        LDA.b #$20 : STA.w SprTimerA, X
+        %GotoAction(3) ; Unsubdued toss -> Recoil -> Dazed -> Subdued
+        RTS
+      .already_subdued
+      STZ.w SprFrame, X
+      %GotoAction(7) ; Already subdued -> EonScrub_Defeated
+    .aloft
     RTS
   }
 }
@@ -151,20 +235,30 @@ Sprite_EonScrub_Main:
 
 EonScrub_SpawnPeaShot:
 {
-  LDA.b #Sprite_BusinessScrub
-  JSL Sprite_SpawnDynamically : BMI .return ;89
-    JSR SpawnPeaShot_AltEntry
-  .return
-  LDA.w Offspring1_Id, X : TAY
-  RTS
+  JMP SpawnPeaShot
 }
 
 ; =========================================================
 
 Sprite_EonScrub_Draw:
 {
-  JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  JSL Sprite_PrepOamCoord : BCC .onscreen
+    SEC
+    RTS
+  .onscreen
+  LDA.w SprState, X : CMP.b #$0A : BNE .alloc_defer
+    LDA.b #$08 : JSL OAM_AllocateFromRegionC ; Carried: 2 tiles max above Link
+    BRA .alloc_done
+  .alloc_defer
+    JSL Sprite_OAM_AllocateDeferToPlayer
+  .alloc_done
+  ; Base .properties are pri 3 ($33/$73). When carried on layer 0 (SprFloor == 0),
+  ; drop to pri 2 ($23/$63) to match Link under roofs/canopies.
+  STZ.b $0C
+  LDA.w SprState, X : CMP.b #$0A : BNE .have_pri
+    LDA.w SprFloor, X : BNE .have_pri
+      LDA.b #$10 : STA.b $0C
+  .have_pri
 
   LDA.w SprFrame, X : TAY ;Animation Frame
   LDA .start_index, Y : STA $06
@@ -200,7 +294,7 @@ Sprite_EonScrub_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : STA ($90), Y
+  LDA .properties, X : EOR.b $0C : STA ($90), Y
 
   PHY
   TYA : LSR #2 : TAY
@@ -210,6 +304,7 @@ Sprite_EonScrub_Draw:
 
   PLX
 
+  CLC
   RTS
 
   ; =========================================================

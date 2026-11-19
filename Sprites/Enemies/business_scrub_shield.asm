@@ -40,18 +40,25 @@ BusinessScrub_PeaShotContact:
 
 ; Returned-nut hit: start a dedicated 32-frame spin instead of inheriting
 ; the remaining post-attack cooldown. Caller has M/X=8, X=Scrub slot,
-; DBR=bank30. Preserve X/Y/DBR and consume the existing child projectile.
+; DBR=bank30. Preserve X/Y/DBR and consume only this parent's validated
+; child projectile (SprMiscE, X), leaving global Offspring1_Id untouched.
 BusinessScrub_BeginRecoil:
 {
-  PHX
-  LDA.w Offspring1_Id : TAX
-  STZ.w SprState, X
-  PLX
+  PHY
+  LDY.w SprMiscE, X
+  BMI .no_child
+  CPY.b #$10 : BCS .no_child
+    LDA.w SprType, Y : CMP.b #Sprite_BusinessScrub : BNE .no_child
+    LDA.w SprSubtype, Y : CMP.b #$01 : BNE .no_child
+      LDA.b #$00 : STA.w SprState, Y
+  .no_child
+  LDA.b #$FF : STA.w SprMiscE, X
   ; Match Sprite_BusinessScrub_Long dispatch: only ordinary Scrubs use
   ; the short timer. Eon Scrubs retain the original attack cooldown.
   LDA.w WORLDFLAG : BNE .keep_timer
   LDA.b #$20 : STA.w SprTimerA, X
   .keep_timer
   LDA.b #$03 : STA.w SprAction, X
+  PLY
   RTL
 }
