@@ -34,7 +34,7 @@ org $23FEDD ; @hook module=Menu kind=data protected_size=1
 assert pc() == $23FEDE
 assert read1($00D21B) == $1A, "HUD sheet base pointer changed"
 org $23FFDD ; @hook module=Menu kind=data protected_size=1
-  db $89
+  db $84
 assert pc() == $23FFDE
 ; Sheet $6B; decoded base SHA256 a6f1d7bb754f7493eb2eec27d8ac437db3a4aa09d282d7aaba369ac61ce8d188
 assert read1($00D05E) == $98, "HUD sheet base pointer changed"
@@ -47,6 +47,6 @@ org $23FEDE ; @hook module=Menu kind=data protected_size=1
 assert pc() == $23FEDF
 assert read1($00D21C) == $F8, "HUD sheet base pointer changed"
 org $23FFDE ; @hook module=Menu kind=data protected_size=1
-  db $8C
+  db $87
 assert pc() == $23FFDF
 pullpc

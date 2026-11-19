@@ -97,7 +97,7 @@ MenuFlow_Frame:
   RTL
 .map
   LDA.b #$03 : STA.l MenuFlow_LastPage
-  LDA.w $020B : CMP.b #$07 : BCS .done
+  LDA.w $020B : CMP.b #$0A : BCS .done
   INC : STA.l MenuFlow_MapCursor
   RTL
 .equip
@@ -137,9 +137,10 @@ MenuFlow_RecordTurn:
   BRA .store
 .map
   LDA.w $020B : BEQ .map_top
+  CMP.b #$07 : BCS .map_top             ; Dungeon icons 7..9 live on top row too
   LDA.b #$03 : BRA .store               ; Supplies row: bottom row (ordinal 3)
 .map_top
-  LDA.b #$00 : BRA .store               ; Map cell: top row (ordinal 0)
+  LDA.b #$00 : BRA .store               ; Map/Dungeon icons: top row (ordinal 0)
 .items
 if !ENABLE_GOLDSTAR_CELL == 1
   LDX.b #$17
@@ -207,9 +208,10 @@ MenuFlow_EquipRestore:
 
 ; ---------------------------------------------------------
 ; MenuMapTravel_Init: first frame on the Map page. D-pad cross picks top
-; (0 = Map) when source row < 2, else bottom edge supply (1 = Banana from left,
-; 6 = Deku Stick from right). Otherwise restores remembered MenuFlow_MapCursor
-; (1..7 -> 0..6), or defaults to 0. Clears pending and cross state. M/X=8 out.
+; (0 = Map from left, rightmost owned 9/8/7/0 from right) when source row < 2,
+; else bottom edge supply (1 = Banana from left, 6 = Deku Stick from right).
+; Otherwise restores remembered MenuFlow_MapCursor (1..10 -> 0..9) if owned,
+; or defaults to 0. Clears pending and cross state. M/X=8 out.
 MenuFlow_MapInit:
 {
   SEP #$30
@@ -220,17 +222,24 @@ MenuFlow_MapInit:
   PHA
   LDA.b #$00 : STA.l MenuFlow_CrossRow
   PLA
-  CMP.b #$03 : BCC .top
+  CMP.b #$03 : BCC .top_cross
   LDA.l MenuFlow_CrossDir : BNE .right_edge
   LDA.b #$01 : BRA .set
 .right_edge
   LDA.b #$06 : BRA .set
+.top_cross
+  LDA.l MenuFlow_CrossDir : BEQ .top
+  LDA.b #$09
+.scan_top_right
+  JSL MenuMap_CellOwned_Long : BCS .set
+  DEC : CMP.b #$07 : BCS .scan_top_right
 .top
   LDA.b #$00 : BRA .set
 .memory
   LDA.l MenuFlow_MapCursor : BEQ .top
-  CMP.b #$08 : BCS .top
+  CMP.b #$0B : BCS .top
   DEC
+  JSL MenuMap_CellOwned_Long : BCC .top
 .set
   STA.w $020B
   RTL
@@ -238,13 +247,17 @@ MenuFlow_MapInit:
 
 ; ---------------------------------------------------------
 ; Map & Spoils page cells:
-;   0     = World/Dungeon Map icon at (12,19) -> menu_offset(8,15)
+;   0     = World/Dungeon Map icon at (15,15) -> menu_offset(11,11)
 ;   1..6  = Magic Bag Spoils on row 21, cols 6,9,13,17,21,24 -> menu_offset(17,2/5/9/13/17/20)
 ;           (4x4 C4 cursor rows 20..23: clear of row 19 divider and row 24 border).
+;   7     = Chest Key at (15,18) -> menu_offset(11,14)
+;   8     = Big Key   at (15,21) -> menu_offset(11,17)
+;   9     = Treasure  at (15,24) -> menu_offset(11,20)
 MenuFlow_MapPos:
-  dw menu_offset(8,15)
+  dw menu_offset(11,11)
   dw menu_offset(17,2),menu_offset(17,5),menu_offset(17,9)
   dw menu_offset(17,13),menu_offset(17,17),menu_offset(17,20)
+  dw menu_offset(11,14),menu_offset(11,17),menu_offset(11,20)
 
 MenuFlow_MapGfx:
   dw MapGFX
@@ -252,65 +265,33 @@ MenuFlow_MapGfx:
   dw SeashellGFX,HoneycombGFX,DekuStickGFX
 
 ; ---------------------------------------------------------
-; MenuMapTravel_Move: D-pad navigation across MAP (0) and Supplies (1..6).
-; On 0: Left/Right turns page (C set, A = $01/$FF); Up/Down moves to 3.
-; On 1..6: Left at 1 or Right at 6 turns page; otherwise steps 1..6; Up/Down -> 0.
-; Out: M/X=8, C set = turn requested, C clear = done.
+; MenuMapTravel_Move: 2D D-pad navigation across Top row (0=Map, 7..9=Dungeon
+; icons skipping unowned) and Bottom row (1..6=Spoils). Delegated to Bank $54.
+; Out: M/X=8, C set = turn requested (A=$01/$FF), C clear = done.
 MenuFlow_MapMove:
 {
-  SEP #$30
-  LDA.w $020B : CMP.b #$07 : BCC .valid
-  LDA.b #$00 : STA.w $020B
-.valid
-  LDA.b $F4 : AND.b #$0F : BEQ .none
-  BIT.b #$03 : BNE .horiz
-  LDA.w $020B : BEQ .to_supplies
-  LDA.b #$00 : BRA .move
-.to_supplies
-  LDA.b #$03
-.move
-  STA.w $020B
-  STZ.w $0207
-  LDA.b #$20 : STA.w $012F
-.none
-  CLC : RTL
-.horiz
-  LDX.w $020B : BEQ .turn
-  BIT.b #$01 : BNE .right
-  DEX : BNE .move_x
-.turn_left
-  LDA.b #$FF : SEC : RTL
-.right
-  INX : CPX.b #$07 : BCC .move_x
-  LDA.b #$01 : SEC : RTL
-.turn
-  BIT.b #$01 : BEQ .turn_left
-  LDA.b #$01 : SEC : RTL
-.move_x
-  TXA : BRA .move
+  JSL MenuMap_Move_Long
+  RTL
 }
 
 ; ---------------------------------------------------------
-; End of MenuMapTravel_Draw (DBR = $2D): draws MAP + 6 supply icons (with
-; MenuItemValueSpoof = 1), active 4x4 Menu_Equipment_Cursor ($0207 bit 5 == 0),
-; $1692 footer name + 3-digit stock count, and A:USE at menu_offset(19,20) for
-; usable supplies with stock > 0. Returns M/X=8.
+; End of MenuMapTravel_Draw (DBR = $2D): draws 8x8 Mini-Map, row 19 horizontal
+; divider, MAP + 6 supply icons (MenuItemValueSpoof = 1), active 4x4 C4 cursor
+; ($0207 bit 5 == 0) over cells 0..9, and $1692 footer label (Map/Dungeon icon
+; name or Spoil name + 3-digit stock count). Zero static A:MAP / A:USE prompts.
+; Returns M/X=8.
 MenuFlow_MapDraw:
 {
   ; Runtime 8x8 Overworld Mini-Map on left (rows 11..18, cols 6..13).
   JSL MenuMap_DrawMiniMap_Long
 
-  ; Horizontal wood divider at row 19, cols 6..25 + "A:MAP" prompt at (12,22).
+  ; Horizontal wood divider at row 19, cols 6..25.
   REP #$30
   LDX.w #$0026
   LDA.w #$217A
 .hdiv
   STA.w $1000+menu_offset(19,6),X
   DEX #2 : BPL .hdiv
-  LDX.w #$0008
-.amap_lbl
-  LDA.l .amap_text,X : STA.w $1000+menu_offset(12,22),X
-  DEX #2 : BPL .amap_lbl
 
   SEP #$30
   LDA.b #$7E : STA.b $0A
@@ -327,8 +308,8 @@ MenuFlow_MapDraw:
   INX #2 : CPX.w #$000E : BCC .icons
 
   SEP #$30
-  LDA.w $020B : CMP.b #$07 : BCC +
-  LDA.b #$00
+  LDA.w $020B : JSL MenuMap_CellOwned_Long : BCS +
+  LDA.b #$00 : STA.w $020B
 +
   STA.b $02
   LDA.w $0207 : AND.b #$20 : BNE .no_cursor
@@ -338,16 +319,10 @@ MenuFlow_MapDraw:
   JSL Menu_Equipment_Cursor_Long
 .no_cursor
   SEP #$30
-  LDA.b $02 : BNE .supply
-  REP #$30
-  LDX.w #$001A
-.map_footer
-  LDA.l .map_name,X : STA.w $1692,X
-  DEX #2 : BPL .map_footer
-  SEP #$30
-  RTL
+  LDA.b $02 : BEQ .top_footer
+  CMP.b #$07 : BCS .top_footer
 
-.supply
+  ; Spoils (cells 1..6): name + 3-digit stock count in $1692 footer.
   DEC : STA.b $02                       ; supply slot 0..5
   TAX
   LDA.l Menu_Equipment_CountLow,X : TAX
@@ -365,37 +340,12 @@ MenuFlow_MapDraw:
   LDX.w #$06A6
   JSL Menu_Quest_Number3_Long
   SEP #$30
-
-  LDA.b $03 : BEQ .done
-  LDX.b $02
-  LDA.l .usable,X : BEQ .done
-  REP #$30
-  LDX.w #$0008
-.use_prompt
-  LDA.l .use_text,X : STA.w $1000+menu_offset(18,21),X
-  DEX #2 : BPL .use_prompt
-.done
-  SEP #$30
   RTL
 
-.usable
-  db 1,1,0,0,1,1                        ; Banana, Pineapple, Honeycomb, Deku Stick
-pushtable
-  'A' = $2550
-  'E' = $2554
-  'M' = $255C
-  'P' = $255F
-  'S' = $2562
-  'U' = $2564
-  ':' = $256B
-  '_' = $20F5
-.map_name
-  dw "_____MAP______"
-.amap_text
-  dw "A:MAP"
-.use_text
-  dw "A:USE"
-pulltable
+.top_footer
+  JSL MenuMap_DrawTopFooter_Long
+  SEP #$30
+  RTL
 }
 
 if !ENABLE_GOLDSTAR_CELL == 1

@@ -25,7 +25,8 @@
       {"name": "menu_divider_vert", "tile": "0x14F", "base_sha256": "db1a15155f339ca0f8b4312ce8ce2f3a9607e6ad822ea37d3991895ecf0e9a70"},
       {"name": "menu_divider_horiz", "tile": "0x17A", "base_sha256": "297ef0705c1aacf91b92051d06fec1a104e9cccef39e56e836edb8be877547b1"},
       {"name": "minimap_cell", "tile": "0x17B", "base_sha256": "297ef0705c1aacf91b92051d06fec1a104e9cccef39e56e836edb8be877547b1"},
-      {"name": "minimap_marker", "tile": "0x16D", "base_sha256": "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b"}
+      {"name": "minimap_marker", "tile": "0x16D", "base_sha256": "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b"},
+      {"name": "portal_rod_wing_br", "tile": "0x139", "base_sha256": "b7dcc11df25c831c76e130898993aa6d60527d9d0359009c85b75830bf4370e0"}
     ]
   }
 }

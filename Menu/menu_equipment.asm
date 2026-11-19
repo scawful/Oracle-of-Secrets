@@ -242,17 +242,7 @@ Menu_Equipment_Draw:
 .title
   LDA.w .title_text,X : STA.w $1000+menu_offset(6,11),X
   DEX #2 : BPL .title
-  ; E2 dividers: vertical col 15 (rows 10..11 between Swords & Tunics,
-  ; rows 14..21 between 3x2 Masks & 3x2 Rings) + horizontal row 13 cols 6..25.
-  LDA.w #$214F
-  STA.w $1000+menu_offset(10,15) : STA.w $1000+menu_offset(11,15)
-  LDX.w #menu_offset(14,15)
-  LDY.w #$0008
-.vdiv
-  STA.w $1000,X
-  TXA : CLC : ADC.w #$0040 : TAX
-  LDA.w #$214F
-  DEY : BNE .vdiv
+  ; E2 divider: horizontal wood divider at row 13, cols 6..25.
   LDX.w #$0026
   LDA.w #$217A
 .hdiv

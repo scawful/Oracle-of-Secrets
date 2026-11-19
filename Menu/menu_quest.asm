@@ -3,8 +3,8 @@
 ; glove, boots, flippers). Supplies live on Equipment; the area name heads the Map page.
 ; No ownership or save-format changes. DBR = $2D.
 if !ENABLE_MENU_MAP_TRAVEL == 1
-  !QuestPearlCol = menu_offset(0,3)     ; absolute (16,7)
-  !QuestCountCol = menu_offset(6,9)     ; absolute (18,9-11), under the hearts at (16,10)
+  !QuestPearlCol = menu_offset(0,3)     ; absolute (17,7)
+  !QuestCountCol = menu_offset(6,9)     ; absolute (19,9-11), under the hearts at (17,10)
 else
   !QuestPearlCol = menu_offset(0,2)
   !QuestCountCol = menu_offset(6,23)
@@ -130,9 +130,9 @@ Menu_Quest_Gear:
   RTS
 .gear_slot
   db $13,$0F,$10,$11                    ; shield, glove, boots, flippers
-; DrawMenuItem offsets (absolute minus 4,4): (10,7) (10,10) / (13,7) (13,10)
+; DrawMenuItem offsets (absolute minus 4,4): (11,7) (11,10) / (14,7) (14,10)
 .gear_pos
-  dw menu_offset(6,3),menu_offset(6,6),menu_offset(9,3),menu_offset(9,6)
+  dw menu_offset(7,3),menu_offset(7,6),menu_offset(10,3),menu_offset(10,6)
 .gear_gfx
   dw ShieldGFX,PowerGloveGFX,PegasusBootsGFX,FlippersGFX
 }

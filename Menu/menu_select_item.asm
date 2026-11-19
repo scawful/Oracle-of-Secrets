@@ -83,14 +83,14 @@ Menu_ItemCursorPositions:
   dw menu_offset(12,1)  ; $08 Lamp        (row 17, col 6)
   dw menu_offset(9,7)   ; $09 Fire Rod    (row 14, col 12)
   dw menu_offset(9,10)  ; $0A Ice Rod     (row 14, col 15)
-  dw menu_offset(15,7)  ; $0B Mirror      (row 20, col 12)
+  dw menu_offset(15,10) ; $0B Mirror      (row 20, col 15)
   dw menu_offset(9,19)  ; $0C Bottle 2    (row 14, col 24)
 
   ; Logical IDs $0D..$12
   dw menu_offset(15,1)  ; $0D Ocarina     (row 20, col 6)
   dw menu_offset(12,4)  ; $0E Book        (row 17, col 9)
   dw menu_offset(12,7)  ; $0F Somaria     (row 17, col 12)
-  dw menu_offset(15,10) ; $10 Fishing Rod (row 20, col 15)
+  dw menu_offset(15,7)  ; $10 Fishing Rod (row 20, col 12)
   dw menu_offset(15,4)  ; $11 Feather     (row 20, col 9)
   dw menu_offset(12,19) ; $12 Bottle 3    (row 17, col 24)
 
@@ -502,12 +502,12 @@ if !ENABLE_GOLDSTAR_CELL == 1
 ;   Row 1: Bow($01) Boomerang($02) Hookshot($03) Bombs($04) Bombchu($1C)  | Bottle1($06)
 ;   Row 2: Hammer($07) Powder($05) FireRod($09)  IceRod($0A) Goldstar($1A)| Bottle2($0C)
 ;   Row 3: Lamp($08) Book($0E)     Somaria($0F)  Byrna($1B) GustJar($1D)  | Bottle3($12)
-;   Row 4: Ocarina($0D) Feather($11) Mirror($0B) Fishing($10) Portal($19) | Bottle4($18)
+;   Row 4: Ocarina($0D) Feather($11) Fishing($10) Mirror($0B) Portal($19) | Bottle4($18)
 Menu_CustomGridItems:
   db $01,$02,$03,$04,$1C,$06
   db $07,$05,$09,$0A,$1A,$0C
   db $08,$0E,$0F,$1B,$1D,$12
-  db $0D,$11,$0B,$10,$19,$18
+  db $0D,$11,$10,$0B,$19,$18
 
 ; X = zero-based physical cell; C set and A = its owned logical ID.
 ; Keeps X/Y, uses $01. Invalid Byrna values are not ownership.

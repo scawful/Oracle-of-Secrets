@@ -108,7 +108,7 @@ FishingRodGFX:
   dw $2082, $2883, $208B, $288C ; Fishing Rod (F2 brown wood + tan tip/white line)
 
 PortalRodGFX:
-  dw $2CF0, $24F1, $30EC, $E4F0
+  dw $2CF0, $24F1, $30EC, $2539
 
 ; formerly Magic Cape
 StoneMaskGFX:

@@ -179,7 +179,7 @@ Menu_DrawPendantIcons:
 ; Map cell (MenuMapTravel_Draw). Without it the dungeon row is on the Quest
 ; bottom row between Pearl and hearts.
 if !ENABLE_MENU_MAP_TRAVEL == 1
-  !QuestRow = menu_offset(12,0)         ; absolute row 16, below the 2x2 passive gear block
+  !QuestRow = menu_offset(13,0)         ; absolute row 17, below the 2x2 passive gear block
   !DungeonRow = menu_offset(11,0)       ; Map & Spoils page, absolute row 15
 else
   !QuestRow = menu_offset(17,0)
@@ -189,7 +189,7 @@ endif
 Menu_DrawHeartPieces:
 {
 if !ENABLE_MENU_MAP_TRAVEL == 1
-  !QuestHeart = $1000+!QuestRow+menu_offset(4,10)  ; Quest lower-left row, beside the Pearl: absolute (16,10)
+  !QuestHeart = $1000+!QuestRow+menu_offset(4,10)  ; Quest lower-left row, beside the Pearl: absolute (17,10)
 else
   !QuestHeart = $1000+!QuestRow+menu_offset(4,24)  ; Quest bottom row, right end
 endif
@@ -274,22 +274,6 @@ Menu_SongSlot:
 endif
 
 ; =========================================================
-
-; Items page vertical wood divider at col 21, rows 11..22 separating the
-; 5x4 tools grid (cols 6..18) from the 1x4 Bottles column (col 24).
-Menu_DrawItemsDivider:
-{
-  REP #$30
-  LDX.w #menu_offset(11,21)
-  LDY.w #$000C
-  LDA.w #$214F
-.loop
-  STA.w $1000, X
-  TXA : CLC : ADC.w #$0040 : TAX
-  LDA.w #$214F
-  DEY : BNE .loop
-  RTS
-}
 
 DrawYItems:
 {
@@ -430,7 +414,7 @@ endif
   LDY.w #BottlesGFX
   JSR DrawMenuItem
 
-  ; Row 4 (row 20): Ocarina, Feather, Mirror, Fishing Rod, Portal Rod | Bottle 4
+  ; Row 4 (row 20): Ocarina, Feather, Fishing Rod, Mirror, Portal Rod | Bottle 4
 
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0000 : BEQ .no_ocarina
     ; Ocarina owned, no song learned ($7EF34C = 1): grey icon (entry 7).
@@ -455,18 +439,18 @@ endif
   LDY.w #JumpFeatherGFX
   JSR DrawMenuItem
 
-  LDA.w #$7EF353
-  LDX.w #menu_offset(16,8)
-  LDY.w #MirrorGFX
-  JSR DrawMenuItem
-
   LDA.l $7EF351 : AND.w #$00FF : CMP.w #$00 : BEQ .no_rods
     LDA.w #$0001 ; this cell is only the Fishing Rod
     STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
-    LDX.w #menu_offset(16,11)
+    LDX.w #menu_offset(16,8)
     LDY.w #FishingRodGFX
     JSR DrawMenuItem
   .no_rods
+
+  LDA.w #$7EF353
+  LDX.w #menu_offset(16,11)
+  LDY.w #MirrorGFX
+  JSR DrawMenuItem
 
   ; Portal Rod: Row 4 Col 5 (bottom-right tool); logical ID stays $19.
   LDA.w #PortalRodOwned&$FFFF
@@ -552,7 +536,7 @@ Menu_DrawBigKey:
         STA.w ShortSpoof
         LDA.w #ShortSpoof
 if !ENABLE_MENU_MAP_TRAVEL == 1
-        LDX.w #!DungeonRow+menu_offset(0,19) ; Map & Spoils page: Chest at (15,23)
+        LDX.w #!DungeonRow+menu_offset(0,20) ; Map & Spoils page: Chest at (15,24)
 else
         LDX.w #!DungeonRow+menu_offset(0,17) ; dungeon row, 4th
 endif
@@ -570,7 +554,7 @@ endif
       LDA.w #ShortSpoof
       ; Draw the big key (or big key with chest if we've gotten the treasure) icon
 if !ENABLE_MENU_MAP_TRAVEL == 1
-      LDX.w #!DungeonRow+menu_offset(0,16) ; Map & Spoils page: BigKey at (15,20)
+      LDX.w #!DungeonRow+menu_offset(0,17) ; Map & Spoils page: BigKey at (15,21)
 else
       LDX.w #!DungeonRow+menu_offset(0,13) ; dungeon row, 3rd
 endif
@@ -769,7 +753,7 @@ Menu_DrawBigChestKey:
       STA.w ShortSpoof
       LDA.w #ShortSpoof
 if !ENABLE_MENU_MAP_TRAVEL == 1
-      LDX.w #!DungeonRow+menu_offset(0,13) ; Map & Spoils page: ChestKey at (15,17)
+      LDX.w #!DungeonRow+menu_offset(0,14) ; Map & Spoils page: ChestKey at (15,18)
 else
       LDX.w #!DungeonRow+menu_offset(0,9) ; dungeon row, 2nd
 endif

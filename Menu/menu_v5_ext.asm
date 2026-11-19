@@ -10,8 +10,9 @@
 ;   $012D = Cursor C4 thin rounded frame corner (H/V/HV flip for TR/BL/BR)
 ;   $012E = Cursor C4 thin horizontal frame line (V-flip for bottom)
 ;   $012F = Cursor C4 thin vertical frame line (H-flip for right)
+;   $0139 = Portal Rod PR5 45-deg transposed BR wing ($2539, opaque black BG)
 ;   $013F = Cursor C4 bold active L-bracket corner (pal 5 gold $353F)
-;   $014F = Centered brown wood vertical divider ($214F)
+;   $014F = Centered brown wood vertical divider ($214F, HUD X|Y)
 ;   $017A = Centered brown wood horizontal divider ($217A)
 ;   $017B = Mini-map 8x8 terrain cell block (palette | $217B)
 ;   $016D = Mini-map Link marker pin ($256D red / $356D gold)
@@ -80,40 +81,93 @@ Menu_C4_DrawEquipCursor_Long:
 }
 
 ; =========================================================
-; Special Overworld ($80-$BF) Area Names for Map Page Header (row 9).
-; Compact 64-byte index table + 17 unique 16-char names (576 bytes total).
+; Map & Spoils Area Name Renderer (right of 8x8 Mini-Map: cols 15..26, rows 11..12).
+; Handles Light World ($00-$3F), Abyss ($40-$7F), Special Overworld ($80-$BF),
+; and indoors ($1B != 0). Cleanly wraps names > 12 chars onto 2 centered lines
+; at the last word boundary so no name ever clips the right frame border (col 27).
+; Compact 64-byte Special OW index table + 17 unique 16-char names.
 ; Grounded in Overworld/lyra_edge_guard.asm and Docs/Technical/terminology_glossary.md.
-; In: M/X=16, A = $8A ($80..$BF). Out: draws centered name at $7E1000+menu_offset(9,0).
-MenuMap_SpecialAreaName_Long:
+; In/out: M/X=16. Uses $00-$09.
+MenuMap_DrawAreaNameRight_Long:
 {
-  SEC : SBC.w #$0080
-  CMP.w #$0040 : BCS .done
-  TAX
+  REP #$30
+  LDA.b $1B : AND.w #$00FF : BNE .indoors
+  LDA.b $8A : AND.w #$00FF : CMP.w #$0080 : BCC .lw_dw
+  CMP.w #$00C0 : BCS .done_early
+  SEC : SBC.w #$0080 : TAX
   LDA.l .map_index, X : AND.w #$00FF
-  ASL #5 : TAX                          ; X = name_id * 32 (byte offset into .names)
-  ; Find trimmed length from right (skip trailing $20F5 blanks)
+  ASL #5 : CLC : ADC.w #.names : STA.b $00
+  SEP #$20
+  LDA.b #.names>>16 : STA.b $02
+  REP #$20
+  BRA .have_ptr
+.done_early
+  RTL
+.lw_dw
+  ASL #5 : CLC : ADC.w #OverworldLocationNames : STA.b $00
+  SEP #$20
+  LDA.b #OverworldLocationNames>>16 : STA.b $02
+  REP #$20
+  BRA .have_ptr
+.indoors
+  LDA.b $A0 : ASL #5 : CLC : ADC.w #DungeonLocationNames : STA.b $00
+  SEP #$20
+  LDA.b #DungeonLocationNames>>16 : STA.b $02
+  REP #$20
+.have_ptr
+  ; Trim trailing $20F5 spaces from 16-tile (32-byte) string.
   LDY.w #$001E
-  STX.b $00
 .trim
-  PHX
-  TYA : CLC : ADC.b $00 : TAX
-  LDA.l .names, X
-  PLX
-  CMP.w #$20F5 : BNE .found
+  LDA.b [$00], Y : CMP.w #$20F5 : BNE .found_len
   DEY #2 : BPL .trim
-  BRA .done
-.found
-  INY #2 : STY.b $02                    ; byte length
-  LDA.w #$0040 : SEC : SBC.b $02 : LSR : AND.w #$FFFE
-  CLC : ADC.w #menu_offset(9,0) : TAX   ; dest offset in $7E1000
+  RTL                                   ; completely blank name
+.found_len
+  INY #2 : STY.b $04                    ; $04 = total byte length (2..32)
+  CPY.w #$001A : BCS .two_lines         ; >= 26 bytes (>= 13 tiles) -> wrap
+
+  ; Single line on row 11, centered within cols 15..26 (12 tiles = 24 bytes).
+  LDA.w #$0018 : SEC : SBC.b $04 : LSR : AND.w #$FFFE
+  CLC : ADC.w #menu_offset(11,15) : TAX
   LDY.w #$0000
-.copy
-  PHX
-  TYA : CLC : ADC.b $00 : TAX
-  LDA.l .names, X
-  PLX
-  STA.l $7E1000, X
-  INX #2 : INY #2 : CPY.b $02 : BCC .copy
+.copy1
+  LDA.b [$00], Y : STA.l $7E1000, X
+  INX #2 : INY #2 : CPY.b $04 : BCC .copy1
+  RTL
+
+.two_lines
+  ; Scan backwards from char 12 (byte $18) to char 1 (byte $02) for word boundary.
+  LDY.w #$0018
+.find_space
+  LDA.b [$00], Y : CMP.w #$20F5 : BEQ .split_at_y
+  DEY #2 : CPY.w #$0002 : BCS .find_space
+  ; No space found in first 12 chars: defensive split at 12 chars.
+  LDA.w #$0018 : STA.b $06 : STA.b $08
+  BRA .have_split
+.split_at_y
+  STY.b $06                             ; $06 = line 1 byte length
+  INY #2 : STY.b $08                    ; $08 = line 2 start offset
+.have_split
+  ; Line 1 on row 11, centered in cols 15..26.
+  LDA.w #$0018 : SEC : SBC.b $06 : LSR : AND.w #$FFFE
+  CLC : ADC.w #menu_offset(11,15) : TAX
+  LDY.w #$0000
+.copy_l1
+  LDA.b [$00], Y : STA.l $7E1000, X
+  INX #2 : INY #2 : CPY.b $06 : BCC .copy_l1
+
+  ; Line 2 on row 12, centered in cols 15..26 (clamped to <= 12 tiles).
+  LDA.b $04 : SEC : SBC.b $08 : BEQ .done : BMI .done
+  CMP.w #$001A : BCC .len2_ok
+  LDA.w #$0018
+.len2_ok
+  STA.b $06                             ; $06 = line 2 byte length
+  CLC : ADC.b $08 : STA.b $04           ; $04 = line 2 end offset
+  LDA.w #$0018 : SEC : SBC.b $06 : LSR : AND.w #$FFFE
+  CLC : ADC.w #menu_offset(12,15) : TAX
+  LDY.b $08
+.copy_l2
+  LDA.b [$00], Y : STA.l $7E1000, X
+  INX #2 : INY #2 : CPY.b $04 : BCC .copy_l2
 .done
   RTL
 
@@ -428,10 +482,426 @@ pushtable
 
 .map_lines
   dw "_MAP_SPOILS_HELP__"
-  dw "A.Y_:_OPEN_MAP____"
-  dw "A___:_USE_SPOIL___"
+  dw "X___:_OPEN_MAP____"
+  dw "A___:_INSPECT_USE_"
   dw "L.R_:_SWITCH_PAGE_"
   dw "B___:_CLOSE_MENU__"
   dw "SEL_:_CLOSE_HELP__"
+pulltable
+}
+
+; =========================================================
+; Map & Spoils Hoverable Dungeon Icons + 2D Navigation + Footers + Spoils Popup.
+; Cells:
+;   0     = World/Dungeon Map icon at (15,15)
+;   1..6  = 6 Magic Bag Spoils on row 21 (cols 6,9,13,17,21,24)
+;   7     = Chest Key at (15,18) — hoverable when drawn by Menu_DrawBigChestKey
+;   8     = Big Key   at (15,21) — hoverable when drawn by Menu_DrawBigKey
+;   9     = Treasure  at (15,24) — hoverable when drawn by Menu_DrawBigKey
+; =========================================================
+
+; In: A = cell (0..9), M/X=8. Out: C set = hoverable/owned, C clear = absent.
+; Preserves A, X, Y, and DP $02-$03.
+MenuMap_CellOwned_Long:
+{
+  SEP #$30
+  CMP.b #$07 : BCC .yes                 ; 0 (Map) and 1..6 (Spoils) always hoverable
+  CMP.b #$0A : BCS .no                  ; >= 10 invalid
+  PHX : PHY : PHA                       ; stack: cell (1,S)
+  LDA.l $7E040C : CMP.b #$FF : BEQ .pop_no
+  LDA $01,S : CMP.b #$07 : BEQ .chest_key
+  ; Cell 8 (Big Key) or 9 (Treasure): check $7EF366 Big Key bit for current palace
+  REP #$30
+  LDA.l $7E040C : AND.w #$00FF : LSR A : TAX
+  LDA.l $7EF366
+.bk_shift
+  ASL A : DEX : BPL .bk_shift
+  SEP #$30
+  BCC .pop_no
+  LDA $01,S : CMP.b #$08 : BEQ .pop_yes
+  ; Cell 9 (Treasure): also require Menu_OracleTreasureOwned ($02 != 0)
+  LDA.b $02 : PHA : LDA.b $03 : PHA
+  JSL Menu_OracleTreasureOwned_Long     ; exits SEP #$30, sets $02 = 0/1
+  LDA.b $02 : TAX
+  PLA : STA.b $03 : PLA : STA.b $02
+  TXA : BNE .pop_yes
+  BRA .pop_no
+.chest_key
+  REP #$30
+  LDA.l $7E040C : AND.w #$00FF : LSR A : TAX
+  LDA.l $7EF364
+.ck_shift
+  ASL A : DEX : BPL .ck_shift
+  SEP #$30
+  BCS .pop_yes
+.pop_no
+  PLA : PLY : PLX
+.no
+  CLC : RTL
+.pop_yes
+  PLA : PLY : PLX
+.yes
+  SEC : RTL
+}
+
+; Fluid 2D D-pad navigation on Map & Spoils across Top row [0, 7, 8, 9]
+; (skipping unowned dungeon icons) and Bottom row [1..6].
+; Out: M/X=8, C set = page turn requested (A=$01 right / $FF left), C clear = done.
+MenuMap_Move_Long:
+{
+  SEP #$30
+  LDA.w $020B : JSL MenuMap_CellOwned_Long : BCS .valid
+  LDA.b #$00 : STA.w $020B
+.valid
+  LDA.b $F4 : AND.b #$0F : BNE .has_dir
+  CLC : RTL
+.has_dir
+  STA.b $04                             ; $04 = D-pad bits (1=R, 2=L, 4=D, 8=U)
+  BIT.b #$03 : BNE .horiz
+  ; Vertical move between Top row [0, 7, 8, 9] and Bottom row [1..6]
+  LDA.w $020B : BEQ .top_to_bot_0
+  CMP.b #$07 : BCS .top_to_bot_dng
+  ; Bottom row (1..6) -> nearest owned top-row cell by column distance
+  DEC : TAX
+  LDA.l .bot_cols, X : STA.b $06
+  LDA.b #$FF : STA.b $07                ; best distance
+  LDA.b #$00 : STA.b $05                ; best cell (fallback Map 0)
+  LDX.b #$00
+.scan_top
+  LDA.l .top_cells, X : JSL MenuMap_CellOwned_Long : BCC .next_top
+  LDA.l .top_cols, X : SEC : SBC.b $06 : BCS .abs_ok
+  EOR.b #$FF : INC
+.abs_ok
+  CMP.b $07 : BCS .next_top
+  STA.b $07
+  LDA.l .top_cells, X : STA.b $05
+.next_top
+  INX : CPX.b #$04 : BCC .scan_top
+  LDA.b $05 : BRA .accept
+
+.top_to_bot_0
+  LDA.b #$03 : BRA .accept              ; Map (0, col 15) -> Rock Meat (3, col 13)
+.top_to_bot_dng
+  SEC : SBC.b #$03                      ; 7->4, 8->5, 9->6
+  BRA .accept
+
+.horiz
+  LDA.w $020B : BEQ .horiz_top_0
+  CMP.b #$07 : BCS .horiz_top_dng
+  ; Bottom row (1..6): step left/right, turn at edges
+  TAX
+  LDA.b $04 : BIT.b #$01 : BNE .bot_right
+  DEX : BNE .accept_x
+  BRA .turn_left
+.bot_right
+  INX : CPX.b #$07 : BCC .accept_x
+  BRA .turn_right
+
+.horiz_top_0
+  LDX.b #$00 : BRA .horiz_top_step
+.horiz_top_dng
+  SEC : SBC.b #$06 : TAX                ; 7->1, 8->2, 9->3
+.horiz_top_step
+  LDA.b $04 : BIT.b #$01 : BNE .top_right
+.top_left
+  DEX : BMI .turn_left
+  LDA.l .top_cells, X : JSL MenuMap_CellOwned_Long : BCC .top_left
+  LDA.l .top_cells, X : BRA .accept
+.top_right
+  INX : CPX.b #$04 : BCS .turn_right
+  LDA.l .top_cells, X : JSL MenuMap_CellOwned_Long : BCC .top_right
+  LDA.l .top_cells, X : BRA .accept
+
+.accept_x
+  TXA
+.accept
+  STA.w $020B
+  STZ.w $0207
+  LDA.b #$20 : STA.w $012F
+.none
+  CLC : RTL
+.turn_left
+  LDA.b #$FF : SEC : RTL
+.turn_right
+  LDA.b #$01 : SEC : RTL
+
+.top_cells
+  db 0, 7, 8, 9
+.top_cols
+  db 15, 18, 21, 24
+.bot_cols
+  db 6, 9, 13, 17, 21, 24
+}
+
+; Footer label in $7E1692 (14 tiles) when hovering Map (0) or Dungeon icons (7..9).
+; In: A = cell (0, 7, 8, 9), M/X=8. Out: M/X=8.
+MenuMap_DrawTopFooter_Long:
+{
+  SEP #$30
+  CMP.b #$07 : BEQ .chest_key
+  CMP.b #$08 : BEQ .boss_key
+  CMP.b #$09 : BEQ .treasure
+  LDA.b $1B : BNE .dng_map
+  LDA.b #$00 : BRA .copy
+.dng_map
+  LDA.b #$01 : BRA .copy
+.chest_key
+  LDA.b #$02 : BRA .copy
+.boss_key
+  LDA.b #$03 : BRA .copy
+.treasure
+  LDA.b #$04
+.copy
+  REP #$30
+  AND.w #$00FF : ASL #2 : STA.b $00
+  ASL #3 : SEC : SBC.b $00 : STA.b $00  ; $00 = index * 28
+  LDX.w #$0000
+.loop
+  PHX
+  TXA : CLC : ADC.b $00 : TAX
+  LDA.l .labels, X
+  PLX
+  STA.l $7E1692, X
+  INX #2 : CPX.w #$001C : BCC .loop
+  SEP #$30
+  RTL
+
+pushtable
+  'A' = $2550
+  'B' = $2551
+  'C' = $2552
+  'D' = $2553
+  'E' = $2554
+  'F' = $2555
+  'G' = $2556
+  'H' = $2557
+  'I' = $2558
+  'J' = $2559
+  'K' = $255A
+  'L' = $255B
+  'M' = $255C
+  'N' = $255D
+  'O' = $255E
+  'P' = $255F
+  'Q' = $2560
+  'R' = $2561
+  'S' = $2562
+  'T' = $2563
+  'U' = $2564
+  'V' = $2565
+  'W' = $2566
+  'X' = $2567
+  'Y' = $2568
+  'Z' = $2569
+  '_' = $20F5
+.labels
+  dw "__WORLD_MAP___"                   ; 0: Map outdoors
+  dw "_DUNGEON_MAP__"                   ; 1: Map indoors
+  dw "__CHEST_KEY___"                   ; 2: Chest Key (cell 7)
+  dw "___BOSS_KEY___"                   ; 3: Big Key   (cell 8)
+  dw "___TREASURE___"                   ; 4: Treasure  (cell 9)
+pulltable
+}
+
+; =========================================================
+; Spoils Detail / Use Popup (!MENU_STATE_SPOIL_POPUP = $11).
+; Matches Link_ConsumeMagicBagItem in Items/all_items.asm 100%:
+;   0 Banana    (usable=1): CURHP += $10 (+2 hearts)
+;   1 Pineapple (usable=1): !RAM_MAGIC = $80 (full magic)
+;   2 Rock Meat (usable=0): Goron trade item
+;   3 Seashell  (usable=0): Collectible sea find
+;   4 Honeycomb (usable=1): Queues 3-bee swarm on menu exit
+;   5 Deku Stick(usable=1): Equips held Deku Stick on menu exit
+; =========================================================
+
+; In: A = spoil slot 0..5, M/X=8. Out: C set = usable via MagicBag_ConsumeItem.
+; Preserves X, Y.
+MenuSpoil_IsUsable_Long:
+{
+  SEP #$30
+  PHX
+  CMP.b #$06 : BCS .no
+  TAX
+  LDA.l .usable, X : BEQ .no
+  PLX : SEC : RTL
+.no
+  PLX : CLC : RTL
+.usable
+  db 1, 1, 0, 0, 1, 1
+}
+
+; Draw Spoils Detail/Use Popup into $7E1000 (for $020B = 1..6).
+; DBR = $2D. Out: M/X=8.
+MenuSpoil_DrawPopup_Long:
+{
+  JSL Menu_DrawBackground_Long
+  REP #$30
+  ; Title "   SPOILS   " at row 6, cols 10..21 ($7E1194)
+  LDX.w #$0016
+.title
+  LDA.l .title_txt, X : STA.l $7E1194, X
+  DEX #2 : BPL .title
+
+  ; Horizontal wood divider at row 13, cols 6..25
+  LDX.w #$0026
+  LDA.w #!Menu_DivH
+.div
+  STA.l $7E1000+menu_offset(13,6), X
+  DEX #2 : BPL .div
+
+  ; "OWNED:" label at row 11, cols 10..15
+  LDX.w #$000A
+.owned_lbl
+  LDA.l .owned_txt, X : STA.l $7E1000+menu_offset(11,10), X
+  DEX #2 : BPL .owned_lbl
+
+  ; Resolve spoil slot 0..5 from $020B (1..6)
+  SEP #$30
+  LDA.w $020B : DEC : CMP.b #$06 : BCC .slot_ok
+  LDA.b #$00
+.slot_ok
+  STA.b $0C                             ; $0C = spoil slot 0..5 (untouched by DrawMenuItem / Number3)
+
+  ; Draw 2x2 spoil icon at abs (10,7) -> DrawMenuItem offset menu_offset(6,3)
+  LDA.b #$7E : STA.b $0A
+  LDA.b #$01 : STA.w MenuItemValueSpoof
+  REP #$30
+  LDA.b $0C : AND.w #$00FF : INC : ASL : TAX
+  LDA.l MenuFlow_MapGfx, X : TAY
+  LDX.w #menu_offset(6,3)
+  LDA.w #MenuItemValueSpoof
+  JSL DrawMenuItem_Long
+
+  ; Draw spoil name (10 tiles from Menu_Equipment_SupplyNames) at row 10, cols 10..19
+  REP #$30
+  LDA.b $0C : AND.w #$00FF : ASL #2 : STA.b $00
+  ASL #3 : SEC : SBC.b $00 : STA.b $00  ; $00 = slot * 28
+  LDX.w #$0000
+.name
+  PHX
+  TXA : CLC : ADC.b $00 : TAX
+  LDA.l Menu_Equipment_SupplyNames, X
+  PLX
+  STA.l $7E1000+menu_offset(10,10), X
+  INX #2 : CPX.w #$0014 : BCC .name
+
+  ; Draw 3-digit quantity at row 11, cols 16..18
+  SEP #$30
+  LDX.b $0C
+  LDA.l Menu_Equipment_CountLow, X : TAX
+  LDA.l $7EF300, X
+  REP #$30
+  AND.w #$00FF
+  LDX.w #menu_offset(11,16)
+  JSL Menu_Quest_Number3_Long
+
+  ; Draw 2 concise 18-char mechanical lines at rows 17 & 19, col 7
+  REP #$30
+  LDA.b $0C : AND.w #$00FF : ASL : TAX
+  LDA.l .desc_offsets, X : STA.b $00
+  LDX.w #menu_offset(17,7)
+  LDY.w #$0000
+.line1
+  PHX
+  LDA.b $00 : TAX
+  LDA.l .spoil_desc, X
+  PLX
+  STA.l $7E1000, X
+  INC.b $00 : INC.b $00
+  INX #2 : INY #2 : CPY.w #$0024 : BCC .line1
+
+  LDX.w #menu_offset(19,7)
+  LDY.w #$0000
+.line2
+  PHX
+  LDA.b $00 : TAX
+  LDA.l .spoil_desc, X
+  PLX
+  STA.l $7E1000, X
+  INC.b $00 : INC.b $00
+  INX #2 : INY #2 : CPY.w #$0024 : BCC .line2
+
+  ; Footer: "A:USE   B:BACK" for consumables, "    B:BACK    " for non-consumables
+  SEP #$30
+  LDA.b $0C : JSL MenuSpoil_IsUsable_Long
+  REP #$30
+  LDX.w #$001A
+  BCC .footer_back
+.footer_use
+  LDA.l .footer_use_txt, X : STA.l $7E1692, X
+  DEX #2 : BPL .footer_use
+  SEP #$30
+  RTL
+.footer_back
+  LDA.l .footer_back_txt, X : STA.l $7E1692, X
+  DEX #2 : BPL .footer_back
+  SEP #$30
+  RTL
+
+.desc_offsets
+  dw 0, 72, 144, 216, 288, 360
+
+pushtable
+  'A' = $2550
+  'B' = $2551
+  'C' = $2552
+  'D' = $2553
+  'E' = $2554
+  'F' = $2555
+  'G' = $2556
+  'H' = $2557
+  'I' = $2558
+  'J' = $2559
+  'K' = $255A
+  'L' = $255B
+  'M' = $255C
+  'N' = $255D
+  'O' = $255E
+  'P' = $255F
+  'Q' = $2560
+  'R' = $2561
+  'S' = $2562
+  'T' = $2563
+  'U' = $2564
+  'V' = $2565
+  'W' = $2566
+  'X' = $2567
+  'Y' = $2568
+  'Z' = $2569
+  '.' = $256A
+  ':' = $256B
+  '0' = $2570
+  '1' = $2571
+  '2' = $2572
+  '3' = $2573
+  '4' = $2574
+  '5' = $2575
+  '6' = $2576
+  '7' = $2577
+  '8' = $2578
+  '9' = $2579
+  '_' = $20F5
+.title_txt
+  dw "___SPOILS___"
+.owned_txt
+  dw "OWNED:"
+.footer_use_txt
+  dw "A:USE___B:BACK"
+.footer_back_txt
+  dw "____B:BACK____"
+; 18 tiles per line, 2 lines per spoil (strictly concise mechanical UI labels)
+.spoil_desc
+  dw "RESTORES_2_HEARTS_"
+  dw "EAT_FROM_THIS_MENU"
+  dw "REFILLS_ALL_MAGIC_"
+  dw "EAT_FROM_THIS_MENU"
+  dw "GORON_TRADE_ITEM__"
+  dw "KEEP_IN_YOUR_BAG__"
+  dw "RARE_SEA_FIND_____"
+  dw "COLLECT_TO_TRADE__"
+  dw "SUMMONS_3_BEES____"
+  dw "USES_ON_MENU_EXIT_"
+  dw "HOLD_TO_LIGHT_FIRE"
+  dw "USES_ON_MENU_EXIT_"
 pulltable
 }

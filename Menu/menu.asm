@@ -65,6 +65,9 @@ incsrc "menu_palette.asm"
 if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
 !MENU_STATE_SPECIAL_SOARING     = $10
 endif
+if !ENABLE_MENU_MAP_TRAVEL == 1
+!MENU_STATE_SPOIL_POPUP         = $11
+endif
 
 ; =========================================================
 ; SUBROUTINE TABLE
@@ -115,6 +118,11 @@ endif
     dw Menu_SubmenuReturn      ; 0F
 if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
     dw Menu_SpecialSoaring     ; 10
+else
+    dw Menu_HelpPopup          ; 10 (pad slot when soaring off)
+endif
+if !ENABLE_MENU_MAP_TRAVEL == 1
+    dw Menu_SpoilPopup         ; 11 (Map & Spoils detail/use popup)
 endif
 }
 
@@ -194,7 +202,6 @@ if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
   .ordinary_left
 endif
   JSR Menu_DrawBackground
-  JSR Menu_DrawItemsDivider
   JSR DrawYItems
   JSR Menu_DrawSelect
   JSR Menu_DrawItemName
@@ -524,7 +531,6 @@ Menu_RefreshQuestScreen:
 Menu_RefreshInventoryScreen:
 {
   JSR Menu_DrawBackground
-  JSR Menu_DrawItemsDivider
   JSR DrawYItems
   JSR Menu_DrawSelect
   JSR Menu_DrawItemName
@@ -903,6 +909,45 @@ Menu_HelpPopup:
 endif
 
 ; =========================================================
+; 11 MAP & SPOILS DETAIL / USE POPUP
+
+if !ENABLE_MENU_MAP_TRAVEL == 1
+Menu_SpoilPopup:
+{
+  SEP #$30
+  ; Start closes the entire menu cleanly.
+  LDA.b $F4 : BIT.b #$10 : BEQ .no_start
+    LDA.b #!MENU_STATE_INIT_SCROLL_DOWN : STA.w $0200
+    RTS
+  .no_start
+  ; B cancels back to Map & Spoils.
+  LDA.b $F4 : BIT.b #$80 : BEQ .no_b
+    LDA.b #$12 : STA.w $012F
+    BRA .close_popup
+  .no_b
+  ; A on a usable spoil consumes via MagicBag_ConsumeItem and closes popup.
+  LDA.b $F6 : BIT.b #$80 : BEQ .stay
+  LDA.w $020B : DEC : CMP.b #$06 : BCS .stay
+  JSL MenuSpoil_IsUsable_Long : BCC .stay
+  LDA.w $020B : PHA
+  DEC : STA.w $020B
+  JSR MagicBag_ConsumeItem
+  SEP #$30
+  PLA : STA.w $020B
+  ; Deferred uses (Honeycomb / Deku Stick) already set $0200 = SCROLL_UP.
+  LDA.w $0200 : CMP.b #!MENU_STATE_SPOIL_POPUP : BNE .stay
+.close_popup
+  JSR MenuMapTravel_Draw
+  SEP #$30
+  LDA.b #$23 : STA.w $0116
+  LDA.b #$01 : STA.b $17
+  LDA.b #!MENU_STATE_STATS_SCREEN : STA.w $0200
+.stay
+  RTS
+}
+endif
+
+; =========================================================
 ; 09 MENU RING BOX
 
 if !MENU_DROP_RING_BOX == 0
@@ -1175,6 +1220,8 @@ if !ENABLE_MENU_MAP_TRAVEL == 1
     JSR Menu_Equipment_Cursor : RTL
   Menu_Quest_Number3_Long:
     JSR Menu_Quest_Number3 : RTL
+  Menu_OracleTreasureOwned_Long:
+    JSR Menu_OracleTreasureOwned : RTL
 endif
 %log_end("Menu/menu.asm", !LOG_MENU)
 incsrc "menu_hud.asm"

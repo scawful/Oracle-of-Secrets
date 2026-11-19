@@ -219,20 +219,23 @@ class QuestEssenceLayout(unittest.TestCase):
                 self.assertFalse(shared, f"{first} overlaps {second} at {sorted(shared)}")
 
     def test_left_column_gear_box_and_songs_on_bottom_row(self):
-        """2x2 passive gear block at top-left, Moon Pearl and hearts below it,
-        all left of the essence ring; the six songs on the bottom row."""
+        """2x2 passive gear block shifted down 1 row (rows 11..15), Moon Pearl and
+        hearts below it (rows 17..18), leaving row 19 clear above row 21 songs'
+        4x4 C4 cursor (top border row 20)."""
         content = self.other_content()
         gear = [cell for n in ("shield", "glove", "boots", "flippers") for cell in content[n]]
         right = max(c for _, c in gear)
         gear_bottom = max(r for r, _ in gear)
-        self.assertEqual(min(r for r, _ in gear), 10, "gear top row inside panel border")
-        self.assertEqual(gear_bottom, 14, "2x2 gear ends at row 14")
+        self.assertEqual(min(r for r, _ in gear), 11, "gear top row shifted down 1 row")
+        self.assertEqual(gear_bottom, 15, "2x2 gear ends at row 15")
         icons = [min(content[n]) for n in ("shield", "glove", "boots", "flippers")]
         self.assertEqual(icons[0][0], icons[1][0]); self.assertEqual(icons[2][0], icons[3][0])
         self.assertEqual(icons[0][1], icons[2][1]); self.assertEqual(icons[1][1], icons[3][1])
         pearl, heart = min(content["moon pearl"]), min(content["heart piece"])
-        self.assertEqual({pearl[0], heart[0]}, {16}, "pearl and hearts sit below the gear block")
+        self.assertEqual({pearl[0], heart[0]}, {17}, "pearl and hearts sit at rows 17..18")
         self.assertGreater(min(pearl[0], heart[0]), gear_bottom + 1, "blank separator row below gear")
+        self.assertLess(max(r for r, _ in content["moon pearl"] | content["heart piece"]), 19,
+                        "row 19 stays completely clear above row 21 songs 4x4 cursor (top border row 20)")
         self.assertLess(pearl[1], heart[1])
         ring_left = min(c for _, c in self.crystal_cells())
         self.assertLess(right, ring_left, "gear left of the essence ring")
@@ -244,9 +247,9 @@ class QuestEssenceLayout(unittest.TestCase):
         self.assertGreater(21, ring_bottom, "songs sit below the essence ring")
 
     def test_map_page_dungeon_row(self):
-        """Map & Spoils page: Map cell (12,19) over dungeon treasure row
-        (ChestKey, BigKey, Chest at (15, 17/20/23)), clear of the 4x4 C4
-        cursor, mini-map, area name (row 9), divider (row 19), and footer."""
+        """Map & Spoils page: Map cell (15,15) alongside hoverable dungeon icons
+        (ChestKey, BigKey, Chest at (15, 18/21/24)) below the right-hand 2-line
+        Area Name (rows 11..12, cols 15..26), clear of the mini-map, divider, and footer."""
         draw = DRAW.read_text()
         page = (ROOT / "Menu" / "menu_map_travel.asm").read_text()
         body = block(page, "MenuMapTravel_Draw")
@@ -258,13 +261,13 @@ class QuestEssenceLayout(unittest.TestCase):
         self.assertEqual(len(found), 3, "chest key, big key, treasure")
         icons = [to_cell(self.offset(dy + int(y), dx + int(x)) + item_base) for y, x in found]
         self.assertEqual({row for row, _ in icons}, {15})
-        self.assertEqual(sorted(col for _, col in icons), [17, 20, 23])
+        self.assertEqual(sorted(col for _, col in icons), [18, 21, 24])
         cy, cx = map(int, re.search(r"!MapCellPos = menu_offset\((\d+),(\d+)\)", page).groups())
         cell = to_cell(self.offset(cy, cx) + item_base)
-        self.assertEqual(cell, (12, 19))
-        # Full 4x4 C4 cursor box around Map cell (12,19) -> rows 11..14, cols 18..21
-        taken = {(cell[0] + r, cell[1] + c) for r in range(-1, 3) for c in range(-1, 3)}
-        taken |= {(9, c) for c in range(32)}
+        self.assertEqual(cell, (15, 15))
+        # Fixed regions: Map icon 2x2, 2-line area name (11..12, 15..26), mini-map, divider, footer
+        taken = square(cell)
+        taken |= {(r, c) for r in (11, 12) for c in range(15, 27)}
         taken |= {(r, c) for r in range(11, 19) for c in range(6, 14)}  # 8x8 mini-map
         taken |= {(19, c) for c in range(6, 26)}  # horizontal divider
         row, col = to_cell(0x1692 - TILEMAP)

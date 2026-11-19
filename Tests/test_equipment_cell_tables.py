@@ -104,7 +104,9 @@ class EquipmentCellTables(unittest.TestCase):
 
     def test_cursor_boxes_fit_between_rows_and_clear_dividers(self):
         # Absolute icon rows: 10 (box 9..12), 15 (box 14..17), 19 (box 18..21).
-        # Row 13 is the horizontal divider; col 15 is the vertical divider.
+        # Row 13 is the horizontal wood divider; internal vertical divider removed in polish pass.
+        self.assertIn("LDA.w #$217A", SRC)
+        self.assertNotIn("LDA.w #$214F", SRC)
         row_ys = [self.pos[self.vorder[lo]][0] + 4 for lo in self.starts]
         self.assertEqual(row_ys, [10, 15, 19])
         for slot in self.vorder:
@@ -113,7 +115,7 @@ class EquipmentCellTables(unittest.TestCase):
             box_rows = range(r - 1, r + 3)
             box_cols = range(c - 1, c + 3)
             self.assertNotIn(13, box_rows, f"slot {slot} cursor hits row 13 divider")
-            self.assertNotIn(15, box_cols, f"slot {slot} cursor hits col 15 divider")
+            self.assertNotIn(15, box_cols, f"slot {slot} cursor crosses center gutter col 15")
             self.assertGreaterEqual(min(box_rows), 9)
             self.assertLessEqual(max(box_rows), 22)
             self.assertGreaterEqual(min(box_cols), 5)

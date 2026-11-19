@@ -41,7 +41,8 @@ PANEL_BLANK = 0x3417
 
 class MenuV5OverhaulTest(unittest.TestCase):
     def test_items_page_option_a_grid_and_logical_ids_preserved(self):
-        # Exact Option A 4x6 grid (Gust Jar $1D at Row 3 Col 5, Portal Rod $19 at Row 4 Col 5)
+        # Exact Option A 4x6 grid (Gust Jar $1D Row 3 Col 5; Fishing Rod $10 Row 4 Col 3;
+        # Mirror $0B Row 4 Col 4; Portal Rod $19 Row 4 Col 5).
         m = re.search(r"Menu_CustomGridItems:\s*\n((?:\s*db [^\n]+\n)+)", SELECT)
         self.assertIsNotNone(m)
         grid = [int(x.lstrip("$"), 16) for x in re.findall(r"\$[0-9A-Fa-f]{2}", m.group(1))]
@@ -49,7 +50,7 @@ class MenuV5OverhaulTest(unittest.TestCase):
             0x01, 0x02, 0x03, 0x04, 0x1C, 0x06,
             0x07, 0x05, 0x09, 0x0A, 0x1A, 0x0C,
             0x08, 0x0E, 0x0F, 0x1B, 0x1D, 0x12,
-            0x0D, 0x11, 0x0B, 0x10, 0x19, 0x18,
+            0x0D, 0x11, 0x10, 0x0B, 0x19, 0x18,
         ]
         self.assertEqual(grid, expected)
 
@@ -72,9 +73,9 @@ class MenuV5OverhaulTest(unittest.TestCase):
         self.assertEqual(len(pos_offsets), 30)
 
         # Verify every active grid cell maps to exact Option A (rows [11,14,17,20], cols [6,9,12,15,18,24])
-        # and that its 4x4 C4 cursor stays strictly inside panel and never touches col 21 divider.
+        # and that its 4x4 C4 cursor stays strictly inside panel and leaves clean gutter at col 21.
         frame = [int.from_bytes(FRAME[i:i + 2], "little") for i in range(0, len(FRAME), 2)]
-        divider_cells = {(r, 21) for r in range(11, 23)}
+        gutter_cells = {(r, 21) for r in range(11, 23)}
         expected_rows = [11, 14, 17, 20]
         expected_cols = [6, 9, 12, 15, 18, 24]
         for idx, item_id in enumerate(expected):
@@ -85,14 +86,16 @@ class MenuV5OverhaulTest(unittest.TestCase):
             self.assertEqual((tl_r + 1, tl_c + 1), (expected_rows[r_idx], expected_cols[c_idx]),
                              f"Logical ID ${item_id:02X} cursor mismatch")
             box = {(tl_r + dr, tl_c + dc) for dr in range(4) for dc in range(4)}
-            self.assertFalse(box & divider_cells, f"Logical ID ${item_id:02X} cursor hits col 21 divider")
+            self.assertFalse(box & gutter_cells, f"Logical ID ${item_id:02X} cursor crosses col 21 gutter")
             for br, bc in box:
                 self.assertEqual(frame[br * 32 + bc], PANEL_BLANK, f"Logical ID ${item_id:02X} leaves panel at {(br, bc)}")
 
-        # Gust Jar label + SwitchHook alias preserved; static button prompt removed
+        # Gust Jar label + SwitchHook alias preserved; static prompts & internal vertical dividers removed.
         self.assertIn("Menu_GustJarLabel:\nMenu_SwitchHookLabel:\n  dw \"___GUST_JAR___\"", TEXT)
         self.assertNotIn("JSR Menu_DrawButtonPrompt", MENU)
-        self.assertIn("JSR Menu_DrawItemsDivider", MENU)
+        self.assertNotIn("Menu_DrawItemsDivider", MENU)
+        self.assertNotIn("Menu_DrawItemsDivider", DRAW)
+        self.assertNotIn("$214F", DRAW)
 
     def test_icons_recolors_sword_digits_and_hud_divider(self):
         # Gust Jar S1/P1
@@ -102,15 +105,16 @@ class MenuV5OverhaulTest(unittest.TestCase):
         self.assertIn("dw $2CF5, $2CF6, $2CC0, $2CF5 ; Hookshot", GFX)
         self.assertIn("dw $2C17, $3531, $2D40, $3541 ; Ball & Chain", GFX)
         self.assertIn("dw $2CF5, $2CF6, $2CC0, $2CF5 ; Hookshot", HUD)
-        # Fishing Rod F2 brown/tan (Portal Rod untouched)
+        # Fishing Rod F2 brown/tan & Portal Rod PR5 (45-deg symmetrical blue/red with $0139 BR wing)
         self.assertIn("dw $2082, $2883, $208B, $288C ; Fishing Rod", GFX)
         self.assertIn("dw $2082, $2883, $208B, $288C ; Fishing Rod", HUD)
-        self.assertIn("dw $2CF0, $24F1, $30EC, $E4F0 ; Portal Rod", HUD)
+        self.assertIn("PortalRodGFX:\n  dw $2CF0, $24F1, $30EC, $2539", GFX)
+        self.assertIn("dw $2CF0, $24F1, $30EC, $2539 ; Portal Rod", HUD)
         # SwordGFX level digits removed
         for old_digit in ("$2D26", "$2D48", "$2D39"):
             self.assertNotIn(old_digit, GFX)
         self.assertEqual(GFX.count("$EC8A"), 3)
-        # HUD X|Y brown wood divider at col 26 rows 1-2
+        # HUD X|Y brown wood divider at col 26 rows 1-2 KEPT!
         self.assertIn("dw $201B, $344B, $344B, $344B, $344B, $20DE, $20AA, $20AA, $214F, $20AA, $20AA, $20DF", HUD)
         self.assertIn("dw $A00B, $A00C, $A00C, $A00C, $A00C, $20EE, $20AA, $20AA, $214F, $20AA, $20AA, $20EF", HUD)
 
@@ -155,27 +159,50 @@ class MenuV5OverhaulTest(unittest.TestCase):
         self.assertIn("LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyReforged : BNE .heavy_reforged", SWORDS)
         # Select Help Popup wired on all 4 pages + state $09 handler
         self.assertIn("!MENU_STATE_HELP_POPUP          = $09", MENU)
+        self.assertIn("!MENU_STATE_SPOIL_POPUP         = $11", MENU)
         self.assertIn("dw Menu_HelpPopup", MENU)
+        self.assertIn("dw Menu_SpoilPopup", MENU)
         self.assertIn("LDA.b #!MENU_STATE_HELP_POPUP : STA.w $0200", PAGE3)
         self.assertGreaterEqual(PAGE3.count("JSL MenuHelp_Draw_Long"), 2)
-        # Verify every help line is exactly 18 chars and all 4 pages exist
-        lines = re.findall(r'dw "([A-Z.:_]{18})"', V5_EXT)
+        # Verify every help line is exactly 18 chars (4 pages x 6 lines = 24 lines)
+        help_sec = V5_EXT.split("MenuHelp_Draw_Long:")[1].split("MenuMap_CellOwned_Long:")[0]
+        lines = re.findall(r'dw "([A-Z.:_]{18})"', help_sec)
         self.assertEqual(len(lines), 24, "Expected 4 pages x 6 lines x 18 tiles in MenuHelp_Draw_Long")
+        # Verify every spoil popup description line is exactly 18 chars (6 spoils x 2 lines = 12 lines)
+        spoil_sec = V5_EXT.split("MenuSpoil_DrawPopup_Long:")[1]
+        spoil_lines = re.findall(r'dw "([A-Z0-9.:_]{18})"', spoil_sec)
+        self.assertEqual(len(spoil_lines), 12, "Expected 6 spoils x 2 lines x 18 tiles in MenuSpoil_DrawPopup_Long")
+        self.assertIn('dw "A:USE___B:BACK"', spoil_sec)
+        self.assertIn('dw "____B:BACK____"', spoil_sec)
 
     def test_quest_songs_full_4x4_cursor_and_special_ow_names_and_minimap(self):
         # QuestSongs_DrawCursor upgraded to full 4x4 C4 frame/L-brackets
         self.assertIn("JSL Menu_C4_DrawEquipBox_Long", CURSOR_FLOW)
         self.assertIn("JSL Menu_C4_DrawEquipCursor_Long", CURSOR_FLOW)
         self.assertNotIn("STA.w $1106,X", CURSOR_FLOW)
-        # Map & Spoils title has clean spaces (no slash) and calls Special OW area names
+        # Map & Spoils title has clean spaces (no slash) and calls unified right-hand wrapped area names
         self.assertIn('dw "_MAP_SPOILS_"', MAP_TRAVEL)
-        self.assertIn("JSL MenuMap_SpecialAreaName_Long", MAP_TRAVEL)
+        self.assertIn("JSL MenuMap_DrawAreaNameRight_Long", MAP_TRAVEL)
         # Special OW $80-$BF index table has exactly 64 entries referencing valid names (0..16)
         im = re.search(r"\.map_index\s*\n((?:\s*db [^\n]+\n)+)", V5_EXT)
         self.assertIsNotNone(im)
         indices = [int(v) for v in re.findall(r"\b\d+\b", re.sub(r";[^\n]*", "", im.group(1)))]
         self.assertEqual(len(indices), 64)
         self.assertTrue(all(0 <= v <= 16 for v in indices))
+        # Every location name in Overworld / Dark World / Dungeon / Special OW wraps cleanly in <= 12 cols
+        map_names = (ROOT / "Menu" / "menu_map_names.asm").read_text(encoding="utf-8")
+        all_names = set(re.findall(r'"([A-Z_]{10,16})"', map_names + "\n" + V5_EXT.split("MenuMap_DrawMiniMap_Long:")[0]))
+        for raw in all_names:
+            name = raw.rstrip("_")
+            if not name:
+                continue
+            if len(name) <= 12:
+                continue
+            split = name.rfind("_", 0, 13)
+            self.assertGreater(split, 0, f"Area name {name!r} has no word break within 12 cols")
+            l1, l2 = name[:split], name[split + 1:]
+            self.assertLessEqual(len(l1), 12, f"Area name {name!r} line 1 clips: {l1!r}")
+            self.assertLessEqual(len(l2), 12, f"Area name {name!r} line 2 clips: {l2!r}")
         # Mini-Map terrain has exactly 3 worlds x 64 cells = 192 entries (values 0..5)
         tm = re.search(r"\.terrain\s*\n(.*?)\n\}", V5_EXT, re.S)
         self.assertIsNotNone(tm)

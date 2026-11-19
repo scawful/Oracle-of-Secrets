@@ -682,7 +682,7 @@ org $0DF7A9
 
 org $0DF8A9
   dw $2082, $2883, $208B, $288C ; Fishing Rod (F2 brown wood + tan tip/white line)
-  dw $2CF0, $24F1, $30EC, $E4F0 ; Portal Rod
+  dw $2CF0, $24F1, $30EC, $2539 ; Portal Rod
 
 ; Deku (Quake)
 org $0DF6E1

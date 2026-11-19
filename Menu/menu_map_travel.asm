@@ -1,15 +1,16 @@
 ; Map page (MenuScrollLevelH = $40), fourth page of the menu ring:
 ; Items -R-> Equipment ($20) -R-> Quest ($00) -R-> Map ($40) -R-> Items.
-; Cell 0 is Map (!MapCellPos), over the current dungeon's row (map, big chest
-; key, big key, treasure; Menu_DrawBigKey/Menu_DrawBigChestKey at !DungeonRow).
-; Cells 1..6 are the six Magic Bag supplies (Banana..Deku Stick) at row 17.
+; Top row right of the 8x8 Mini-Map: Map icon (cell 0, !MapCellPos) plus
+; hoverable Dungeon icons (cells 7..9: Chest Key, Big Key, Treasure at
+; !DungeonRow). Bottom row: 6 Magic Bag spoils (cells 1..6, Banana..Deku Stick).
 ; Songs live on the Quest page (QuestSongs_*, Menu/menu_cursor_flow.asm);
 ; Soaring is played with the Ocarina.
-; A or Y on cell 0 closes the menu and Menu_Exit (MenuMapTravel_ExitAction)
-; opens the existing field/dungeon map module. A on cells 1..6 uses supplies
-; via MagicBag_ConsumeItem. DBR = $2D.
+; X anywhere on the page (or A/Y on cell 0) closes the menu and Menu_Exit
+; (MenuMapTravel_ExitAction) opens the existing field/dungeon map module.
+; A on an owned Spoil (cells 1..6) opens the Spoils Detail/Use Popup
+; (!MENU_STATE_SPOIL_POPUP), where A consumes via MagicBag_ConsumeItem. DBR = $2D.
 
-!MapCellPos = menu_offset(8,15)         ; DrawMenuItem offset; absolute (12,19)
+!MapCellPos = menu_offset(11,11)        ; DrawMenuItem offset; absolute (15,15)
 
 ; ---------------------------------------------------------
 ; Replaces Menu_Page3_Turn under the flag. A = $01 right, else left.
@@ -64,6 +65,7 @@ MenuMapTravel_Init:
 
 ; ---------------------------------------------------------
 ; State $06 on this page. B/Start close; L/R are handled by the caller.
+; X ($F6 bit 6) anywhere on this page launches the full World/Dungeon Map.
 MenuMapTravel_Screen:
 {
   SEP #$30
@@ -71,6 +73,15 @@ MenuMapTravel_Screen:
     LDA.b #!MENU_STATE_INIT_SCROLL_DOWN : STA.w $0200
     RTS
   .no_start
+  LDA.b $F6 : BIT.b #$40 : BEQ .no_x_map
+    JSR MenuMapTravel_CanMap : BCC .x_map_err
+    LDA.b #$01 : STA.l MenuMapTravel_Pending
+    LDA.b #!MENU_STATE_INIT_SCROLL_DOWN : STA.w $0200
+    RTS
+  .x_map_err
+    LDA.b #$3C : STA.w $012E
+    BRA .moved
+  .no_x_map
   LDA.w $020B : PHA
   JSR MenuMapTravel_Move
   SEP #$30
@@ -80,12 +91,17 @@ MenuMapTravel_Screen:
 .select
   TXA : BNE .moved                      ; A/Y act on the cell the player saw
   JSR MenuMapTravel_Select
+  SEP #$30
+  LDA.w $0200 : CMP.b #!MENU_STATE_SPOIL_POPUP : BEQ .upload_only
+  CMP.b #!MENU_STATE_STATS_SCREEN : BNE .done
 .moved
   INC.w $0207                           ; cursor blink
   JSR MenuMapTravel_Draw
+.upload_only
   SEP #$30
   LDA.b #$23 : STA.w $0116
   LDA.b #$01 : STA.b $17
+.done
   RTS
 }
 
@@ -102,8 +118,9 @@ MenuMapTravel_Move:
 
 ; ---------------------------------------------------------
 ; A or Y on Map ($020B = 0) closes the menu and leaves the map request for
-; Menu_Exit. A ($F6 bit 7; Y never consumes) on Supplies ($020B = 1..6) runs
-; MagicBag_ConsumeItem with $020B = slot - 1, then restores $020B = slot.
+; Menu_Exit. A ($F6 bit 7; Y never opens/consumes) on an owned Spoil
+; ($020B = 1..6) opens the Spoils Detail/Use Popup (!MENU_STATE_SPOIL_POPUP).
+; Hovering Dungeon icons ($020B = 7..9) is informational (footer label).
 MenuMapTravel_Select:
 {
   LDA.w $020B : BNE .supply
@@ -117,11 +134,12 @@ MenuMapTravel_Select:
 .supply
   CMP.b #$07 : BCS .done
   BIT.b $F6 : BPL .done
-  PHA
-  DEC : STA.w $020B
-  JSR MagicBag_ConsumeItem
-  SEP #$30
-  PLA : STA.w $020B
+  DEC : TAX
+  LDA.w Menu_Equipment_CountLow,X : TAX
+  LDA.l $7EF300,X : BEQ .error
+  LDA.b #$20 : STA.w $012F
+  LDA.b #!MENU_STATE_SPOIL_POPUP : STA.w $0200
+  JSL MenuSpoil_DrawPopup_Long
 .done
   RTS
 .error
@@ -242,10 +260,10 @@ pullpc
 ; ---------------------------------------------------------
 ; Menu v5 Map & Spoils page:
 ;   Title:  " MAP SPOILS " (row 6, cols 10..21)
-;   Header: Centered Area Name (row 9), including Special Overworld $80-$BF
 ;   Left:   Runtime 8x8 Overworld Mini-Map (rows 11..18, cols 6..13)
-;   Right:  Map icon at (12,19) + "A:MAP" at (12,22); Dungeon treasures
-;           (ChestKey, BigKey, Chest) at (15,17/20/23) when indoors
+;   Right:  2-line word-wrapped Area Name (rows 11..12, cols 15..26);
+;           Map icon (15,15) + hoverable Dungeon icons (ChestKey 15,18;
+;           BigKey 15,21; Treasure 15,24) beneath with zero static prompts.
 ;   Div:    Horizontal wood divider at row 19 (cols 6..25)
 ;   Bottom: 6 Magic Bag Spoils on row 21 (cols 6,9,13,17,21,24)
 MenuMapTravel_Draw:
@@ -262,45 +280,20 @@ MenuMapTravel_Draw:
   JSR Menu_DrawBigKey                   ; big key, treasure
   REP #$30
   JSR Menu_DrawBigChestKey
-  JSL MenuFlow_MapDraw                  ; mini-map, divider, A:MAP, MAP + 6 spoils, cursor, footer
+  JSL MenuFlow_MapDraw                  ; mini-map, divider, MAP + 6 spoils, cursor, footer
   RTS
 .title_text
   dw "_MAP_SPOILS_"
 }
 
 ; ---------------------------------------------------------
-; Current area name, centered on row 9 (the Map & Spoils page header).
-; Light World ($00-$3F) and Abyss ($40-$7F) read OverworldLocationNames;
-; Special Overworld ($80-$BF) delegates to MenuMap_SpecialAreaName_Long;
-; indoors ($1B != 0) reads DungeonLocationNames.
+; Current area name right of the Mini-Map (cols 15..26, rows 11..12,
+; wrapping cleanly onto 2 lines at a word boundary when > 12 chars).
+; Handles Light World ($00-$3F), Abyss ($40-$7F), Special Overworld ($80-$BF),
+; and indoors ($1B != 0). Delegated to Bank $54 (Menu/menu_v5_ext.asm).
 ; In/out M/X=16.
 MenuMapTravel_AreaName:
 {
-  LDA.b $1B : AND.w #$00FF : BNE .indoors
-  LDA.b $8A : AND.w #$00FF : CMP.w #$0080 : BCC .lw_dw
-  CMP.w #$00C0 : BCS .none
-  JSL MenuMap_SpecialAreaName_Long
-  RTS
-.lw_dw
-  ASL #5 : CLC : ADC.w #OverworldLocationNames
-  BRA .have
-.indoors
-  LDA.b $A0 : ASL #5 : CLC : ADC.w #DungeonLocationNames
-.have
-  STA.b $00
-  LDY.w #$001E
-.trim
-  LDA.b ($00),Y : CMP.w #$20F5 : BNE .found
-  DEY #2 : BPL .trim
-  BRA .none                             ; blank name
-.found
-  INY #2 : STY.b $02                    ; byte length
-  LDA.w #$0040 : SEC : SBC.b $02 : LSR : AND.w #$FFFE
-  CLC : ADC.w #menu_offset(9,0) : TAX
-  LDY.w #$0000
-.copy
-  LDA.b ($00),Y : STA.w $1000,X
-  INX #2 : INY #2 : CPY.b $02 : BCC .copy
-.none
+  JSL MenuMap_DrawAreaNameRight_Long
   RTS
 }

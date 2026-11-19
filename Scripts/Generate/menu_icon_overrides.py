@@ -22,7 +22,7 @@ PROTECTED_TILES = frozenset((0x014, 0x060, 0x070, 0x07F, 0x14B, 0x14C, 0x14D, 0x
 TILES = frozenset((0x00D, 0x00E, 0x00F, 0x025, 0x07B, 0x08F,
                    0x0AC, 0x0AF, 0x0F2, 0x130, 0x17E, 0x17F))
 RECLAIMED_UI_TILES = frozenset((0x12B, 0x12C, 0x12D, 0x12E, 0x12F,
-                                0x13F, 0x14F, 0x16D, 0x17A, 0x17B))
+                                0x139, 0x13F, 0x14F, 0x16D, 0x17A, 0x17B))
 
 
 def tile_location(tile):
@@ -82,7 +82,7 @@ def read_spec(path):
         require(type(ui) is dict and set(ui) == {'source', 'tiles'}, 'invalid ui_tiles block')
         _validate_rel_source(path, ui['source'])
         require(type(ui['tiles']) is list and len(ui['tiles']) == len(RECLAIMED_UI_TILES),
-                'ui_tiles must cover the ten audited reclaimed tiles')
+                'ui_tiles must cover the eleven audited reclaimed tiles')
         ui_names, ui_allocated = set(), set()
         for entry in ui['tiles']:
             require(type(entry) is dict and set(entry) == {'name', 'tile', 'base_sha256'},
@@ -98,7 +98,7 @@ def read_spec(path):
             ui_allocated.add(tile)
             require(isinstance(entry['base_sha256'], str) and re.fullmatch('[0-9a-f]{64}', entry['base_sha256']),
                     'ui tile base_sha256 must be a full lowercase SHA256')
-        require(ui_allocated == RECLAIMED_UI_TILES, 'ui_tiles must use the ten audited reclaimed tiles exactly')
+        require(ui_allocated == RECLAIMED_UI_TILES, 'ui_tiles must use the eleven audited reclaimed tiles exactly')
     return spec
 
 
