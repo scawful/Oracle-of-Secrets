@@ -4,10 +4,28 @@ A full-scale *A Link to the Past* ROM hack featuring original overworlds, dungeo
 
 ## Highlights
 
-- **Expanded Overworlds & Regions:** Kalyxo (with day/night cycle), Eon Abyss (GBC-styled dark realm), East Kalyxo, Lyra Sea (sailable boat + Song of Soaring), and Sky Islands.
+- **Expanded Overworlds & Regions:** Kalyxo (with day/night cycle), Eon Abyss (GBC-styled dark realm), East Kalyxo, Lyra Sea (sailable boat + 6-stop Song of Soaring), and Sky Islands.
 - **Mask Transformations:** Deku, Zora, Wolf, Bunny, Stone, Garo, and Minish forms with quick-swap bindings.
 - **Custom Items & Menu Overhaul:** Minish Cap-style Gust Jar, Portal Rod, Switch Hook / Goldstar, Bombchus, Fishing Rod, Ocarina songs, and X/Y item bindings.
 - **Custom Bosses, NPCs & Soundtrack:** Original bosses, living villages, and custom SNES N-SPC arrangements.
+
+## Screenshots
+
+| Title Screen | Intro Storybook |
+|---|---|
+| ![Title Screen](Docs/Screenshots/title_screen.png) | ![Intro Storybook](Docs/Screenshots/attract_storybook.png) |
+
+| Menu v5: Items (Dual X/Y Bind) | Menu v5: Equipment & Masks |
+|---|---|
+| ![Menu v5 Items](Docs/Screenshots/menu_items.png) | ![Menu v5 Equipment](Docs/Screenshots/menu_equipment.png) |
+
+| Wayward Village (Gust Jar) | Eon Abyss (GBC Dark World) |
+|---|---|
+| ![Wayward Village Gust Jar](Docs/Screenshots/wayward_gust_jar.png) | ![Eon Abyss Fortress](Docs/Screenshots/abyss_fortress.png) |
+
+| Kalyxo World Map | Lyra Sea & East Kalyxo Map |
+|---|---|
+| ![Kalyxo World Map](Docs/Screenshots/map_kalyxo.png) | ![Lyra Sea World Map](Docs/Screenshots/map_lyra_sea.png) |
 
 ## Start Here
 
