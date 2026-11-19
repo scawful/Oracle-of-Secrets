@@ -66,9 +66,13 @@ pushpc
 incsrc HardwareRegisters.asm
 
 ; Sky cloud overlay ID. With !ENABLE_SKY_OVERLAY_SOURCE_PROFILE on, this ID
-; takes the vanilla DW Death Mountain ($9C) overlay behaviour: CGADSUB $20,
-; mountain fixed colour and BG1 scroll lock. $9C itself is reserved for the
-; Fortress. Must match SKY_CLOUD_OVERLAY in
+; draws BG1 strictly BELOW BG2 (TM $16, TS $01, CGWSEL $82, CGADSUB $60 = half
+; add on Backdrop only so distant clouds blend softly against the authored
+; non-black sky CGRAM[0] $764C without clipping to flat white, while S-PPU2
+; never halves fixed color), keeps neutral COLDATA ($4020/$8040) so Day/Night
+; sky tinting and Sky-to-Sky smooth scrolls stay seamless, and locks BG1 scroll
+; in both Bank $02 ($02BD04) and Bank $0E ($0EAF94). $9C itself is reserved for
+; the Fortress. Must match SKY_CLOUD_OVERLAY in
 ; Scripts/Build/special_overworld_resources.py. With the flag off, the resident
 ; Sky compares keep the old $9C so flag-off bytes do not change.
 if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
@@ -80,6 +84,11 @@ endif
 if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
 ; Vanilla OverworldHandleBGOverlayScroll: CPX.b #$9C (dark DM scroll lock).
 org $02BD04 ; $013D04 ; @hook module=Overworld
+    db !SKY_CLOUD_OVERLAY
+; Vanilla Bank $0E camera/overlay scroll copy ($0EAEA6 -> $0EAF93: CPX.b #$9C).
+assert read1($0EAF93) == $E0
+assert read1($0EAF94) == $9C || read1($0EAF94) == !SKY_CLOUD_OVERLAY
+org $0EAF94 ; $072F94 ; @hook module=Overworld
     db !SKY_CLOUD_OVERLAY
 endif
 
@@ -2228,9 +2237,6 @@ Spotlight_ConfigureTableAndControl_Interupt:
         
         ; Check for DW death mountain.
         CMP.w #$009C : BEQ .mountain
-if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
-        CMP.w #!SKY_CLOUD_OVERLAY : BEQ .mountain
-endif
             BRA .other
     
     .mountain
@@ -2478,15 +2484,19 @@ endif
     CPX.b #$9D : BEQ .loadOverlay ; Fog 2
     CPX.b #$9E : BEQ .loadOverlay ; Tree canopy
     CPX.b #$9F : BEQ .loadOverlay ; Rain
+if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
+        ; Sky cloud backdrop ($94): Backdrop-only Half-Add ($60) keeps BG1
+        ; strictly below BG2 (zero overlay on top of map/OBJ) while blending
+        ; distant BG1 clouds softly against non-black sky CGRAM[0] ($764C).
+        LDA.b #$60
+        CPX.b #!SKY_CLOUD_OVERLAY : BEQ .loadOverlay ; Sky clouds
+endif
         ; Alternative setting for CGADSUB (only background is enabled on
         ; subscreen).
         LDA.b #$20 
         
         CPX.b #$95 : BEQ .loadOverlay ; Sky
         CPX.b #$9C : BEQ .loadOverlay ; Lava
-if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
-        CPX.b #!SKY_CLOUD_OVERLAY : BEQ .loadOverlay ; Sky clouds
-endif
         CPX.b #$96 : BEQ .loadOverlay ; Pyramid BG
         
         ; $FF has already returned before decompression. Keep the remaining
@@ -3523,9 +3533,6 @@ CheckForChangeGraphicsTransitionLoad:
                         
                     ; DW death mountain.
                     CMP.w #$009C : BEQ .specialColor
-if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
-                    CMP.w #!SKY_CLOUD_OVERLAY : BEQ .specialColor
-endif
                         BRA .noSpecialColor
                 
             .specialColor
@@ -4052,8 +4059,21 @@ endif
             
             ; Check for DW Death mountain. (not turtle rock?).
             CMP.w #$009C : BEQ .setCustomFixedColor
+if defined("ENABLE_SKY_OVERLAY_SOURCE_PROFILE")
 if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
-            CMP.w #!SKY_CLOUD_OVERLAY : BEQ .setCustomFixedColor
+            ; Sky cloud backdrop ($94): keep neutral COLDATA ($4020/$8040) so
+            ; authored CGRAM[0] ($764C) tints cleanly day/night and never snaps
+            ; mid-scroll, and re-assert backdrop-only layer order (TM=$16,
+            ; CGWSEL=$82, CGADSUB=$60) so no foreground overlay bleeds over map.
+            CMP.w #!SKY_CLOUD_OVERLAY : BNE .notSkyBackdrop
+                SEP #$20
+                LDA.b #$16 : STA.b $1C
+                LDA.b #$82 : STA.b $99
+                LDA.b #$60 : STA.b $9A
+                REP #$20
+                BRA .noCustomFixedColor
+            .notSkyBackdrop
+endif
 endif
             
             ; Safety check: If we have a valid overlay ID (not FF) that wasn't caught above
@@ -4315,9 +4335,6 @@ Palette_RestoreFixedColor_Interupt:
                         
                         ; DW death mountain.
                         CMP.w #$009C : BEQ .specialColor
-if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
-                        CMP.w #!SKY_CLOUD_OVERLAY : BEQ .specialColor
-endif
                             BRA .noSpecialColor
                 
                 .specialColor
