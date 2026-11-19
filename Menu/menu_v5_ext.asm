@@ -730,116 +730,93 @@ MenuSpoil_IsUsable_Long:
   db 1, 1, 0, 0, 1, 1
 }
 
-; Draw Spoils Detail/Use Popup into $7E1000 (for $020B = 1..6).
+; Draw compact framed Spoils Detail/Use rectangle popup directly over the
+; Map & Spoils tilemap in $7E1000 (rows 13..17, cols 5..26, same border style
+; as the former tunic selector popup). Leaves header, area name, spoils row,
+; cursor, and footer visible around the box.
 ; DBR = $2D. Out: M/X=8.
+!MENU_SPOIL_BOX_TOP    = menu_offset(13,5)
+!MENU_SPOIL_BOX_ROW1   = menu_offset(14,5)
+!MENU_SPOIL_BOX_ROW2   = menu_offset(15,5)
+!MENU_SPOIL_BOX_ROW3   = menu_offset(16,5)
+!MENU_SPOIL_BOX_BOTTOM = menu_offset(17,5)
 MenuSpoil_DrawPopup_Long:
 {
-  JSL Menu_DrawBackground_Long
-  REP #$30
-  ; Title "   SPOILS   " at row 6, cols 10..21 ($7E1194)
-  LDX.w #$0016
-.title
-  LDA.l .title_txt, X : STA.l $7E1194, X
-  DEX #2 : BPL .title
-
-  ; Horizontal wood divider at row 13, cols 6..25
-  LDX.w #$0026
-  LDA.w #!Menu_DivH
-.div
-  STA.l $7E1000+menu_offset(13,6), X
-  DEX #2 : BPL .div
-
-  ; "OWNED:" label at row 11, cols 10..15
-  LDX.w #$000A
-.owned_lbl
-  LDA.l .owned_txt, X : STA.l $7E1000+menu_offset(11,10), X
-  DEX #2 : BPL .owned_lbl
-
   ; Resolve spoil slot 0..5 from $020B (1..6)
   SEP #$30
   LDA.w $020B : DEC : CMP.b #$06 : BCC .slot_ok
   LDA.b #$00
 .slot_ok
-  STA.b $0C                             ; $0C = spoil slot 0..5 (untouched by DrawMenuItem / Number3)
+  STA.b $0C                             ; $0C = spoil slot 0..5
 
-  ; Draw 2x2 spoil icon at abs (10,7) -> DrawMenuItem offset menu_offset(6,3)
-  LDA.b #$7E : STA.b $0A
-  LDA.b #$01 : STA.w MenuItemValueSpoof
   REP #$30
-  LDA.b $0C : AND.w #$00FF : INC : ASL : TAX
-  LDA.l MenuFlow_MapGfx, X : TAY
-  LDX.w #menu_offset(6,3)
-  LDA.w #MenuItemValueSpoof
-  JSL DrawMenuItem_Long
-
-  ; Draw spoil name (10 tiles from Menu_Equipment_SupplyNames) at row 10, cols 10..19
-  REP #$30
-  LDA.b $0C : AND.w #$00FF : ASL #2 : STA.b $00
-  ASL #3 : SEC : SBC.b $00 : STA.b $00  ; $00 = slot * 28
+  ; Top border (row 13, cols 5..26): $3811, 20x $3821, $7811
   LDX.w #$0000
-.name
-  PHX
-  TXA : CLC : ADC.b $00 : TAX
-  LDA.l Menu_Equipment_SupplyNames, X
-  PLX
-  STA.l $7E1000+menu_offset(10,10), X
-  INX #2 : CPX.w #$0014 : BCC .name
+  LDA.w #$3821
+.top_fill
+  STA.l $7E1000+!MENU_SPOIL_BOX_TOP+2, X
+  INX #2 : CPX.w #$0028 : BCC .top_fill
+  LDA.w #$3811 : STA.l $7E1000+!MENU_SPOIL_BOX_TOP
+  LDA.w #$7811 : STA.l $7E1000+!MENU_SPOIL_BOX_TOP+42
 
-  ; Draw 3-digit quantity at row 11, cols 16..18
-  SEP #$30
-  LDX.b $0C
-  LDA.l Menu_Equipment_CountLow, X : TAX
-  LDA.l $7EF300, X
-  REP #$30
-  AND.w #$00FF
-  LDX.w #menu_offset(11,16)
-  JSL Menu_Quest_Number3_Long
+  ; Bottom border (row 17, cols 5..26): $B811, 20x $B821, $F811
+  LDX.w #$0000
+  LDA.w #$B821
+.bot_fill
+  STA.l $7E1000+!MENU_SPOIL_BOX_BOTTOM+2, X
+  INX #2 : CPX.w #$0028 : BCC .bot_fill
+  LDA.w #$B811 : STA.l $7E1000+!MENU_SPOIL_BOX_BOTTOM
+  LDA.w #$F811 : STA.l $7E1000+!MENU_SPOIL_BOX_BOTTOM+42
 
-  ; Draw 2 concise 18-char mechanical lines at rows 17 & 19, col 7
-  REP #$30
+  ; Interior rows 14, 15, 16: side edges $3820/$7820 + opaque black $3417 fill
+  LDX.w #$0000
+  LDA.w #$3417
+.mid_fill
+  STA.l $7E1000+!MENU_SPOIL_BOX_ROW1+2, X
+  STA.l $7E1000+!MENU_SPOIL_BOX_ROW2+2, X
+  STA.l $7E1000+!MENU_SPOIL_BOX_ROW3+2, X
+  INX #2 : CPX.w #$0028 : BCC .mid_fill
+
+  LDA.w #$3820
+  STA.l $7E1000+!MENU_SPOIL_BOX_ROW1
+  STA.l $7E1000+!MENU_SPOIL_BOX_ROW2
+  STA.l $7E1000+!MENU_SPOIL_BOX_ROW3
+  LDA.w #$7820
+  STA.l $7E1000+!MENU_SPOIL_BOX_ROW1+42
+  STA.l $7E1000+!MENU_SPOIL_BOX_ROW2+42
+  STA.l $7E1000+!MENU_SPOIL_BOX_ROW3+42
+
+  ; Row 14, cols 7..24: 18-char concise effect line
   LDA.b $0C : AND.w #$00FF : ASL : TAX
   LDA.l .desc_offsets, X : STA.b $00
-  LDX.w #menu_offset(17,7)
   LDY.w #$0000
-.line1
-  PHX
+.desc_loop
   LDA.b $00 : TAX
   LDA.l .spoil_desc, X
-  PLX
-  STA.l $7E1000, X
+  TYX
+  STA.l $7E1000+!MENU_SPOIL_BOX_ROW1+4, X
   INC.b $00 : INC.b $00
-  INX #2 : INY #2 : CPY.w #$0024 : BCC .line1
+  INY #2 : CPY.w #$0024 : BCC .desc_loop
 
-  LDX.w #menu_offset(19,7)
-  LDY.w #$0000
-.line2
-  PHX
-  LDA.b $00 : TAX
-  LDA.l .spoil_desc, X
-  PLX
-  STA.l $7E1000, X
-  INC.b $00 : INC.b $00
-  INX #2 : INY #2 : CPY.w #$0024 : BCC .line2
-
-  ; Footer: "A:USE   B:BACK" for consumables, "    B:BACK    " for non-consumables
+  ; Row 16, cols 7..24: "__A:USE___B:BACK__" for consumables, "______B:BACK______" otherwise
   SEP #$30
   LDA.b $0C : JSL MenuSpoil_IsUsable_Long
   REP #$30
-  LDX.w #$001A
-  BCC .footer_back
-.footer_use
-  LDA.l .footer_use_txt, X : STA.l $7E1692, X
-  DEX #2 : BPL .footer_use
+  LDX.w #$0022
+  BCC .act_back
+.act_use
+  LDA.l .act_use_txt, X : STA.l $7E1000+!MENU_SPOIL_BOX_ROW3+4, X
+  DEX #2 : BPL .act_use
   SEP #$30
   RTL
-.footer_back
-  LDA.l .footer_back_txt, X : STA.l $7E1692, X
-  DEX #2 : BPL .footer_back
+.act_back
+  LDA.l .act_back_txt, X : STA.l $7E1000+!MENU_SPOIL_BOX_ROW3+4, X
+  DEX #2 : BPL .act_back
   SEP #$30
   RTL
 
 .desc_offsets
-  dw 0, 72, 144, 216, 288, 360
+  dw 0, 36, 72, 108, 144, 180
 
 pushtable
   'A' = $2550
@@ -880,28 +857,18 @@ pushtable
   '7' = $2577
   '8' = $2578
   '9' = $2579
-  '_' = $20F5
-.title_txt
-  dw "___SPOILS___"
-.owned_txt
-  dw "OWNED:"
-.footer_use_txt
-  dw "A:USE___B:BACK"
-.footer_back_txt
-  dw "____B:BACK____"
-; 18 tiles per line, 2 lines per spoil (strictly concise mechanical UI labels)
+  '_' = $3417
+.act_use_txt
+  dw "__A:USE___B:BACK__"
+.act_back_txt
+  dw "______B:BACK______"
+; 18 tiles per spoil (strictly concise single-line mechanical UI labels)
 .spoil_desc
   dw "RESTORES_2_HEARTS_"
-  dw "EAT_FROM_THIS_MENU"
   dw "REFILLS_ALL_MAGIC_"
-  dw "EAT_FROM_THIS_MENU"
-  dw "GORON_TRADE_ITEM__"
-  dw "KEEP_IN_YOUR_BAG__"
-  dw "RARE_SEA_FIND_____"
-  dw "COLLECT_TO_TRADE__"
-  dw "SUMMONS_3_BEES____"
-  dw "USES_ON_MENU_EXIT_"
+  dw "_GORON_TRADE_ITEM_"
+  dw "__RARE_SEA_FIND___"
+  dw "__SUMMONS_3_BEES__"
   dw "HOLD_TO_LIGHT_FIRE"
-  dw "USES_ON_MENU_EXIT_"
 pulltable
 }

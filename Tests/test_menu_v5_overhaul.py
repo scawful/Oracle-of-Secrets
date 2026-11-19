@@ -168,12 +168,16 @@ class MenuV5OverhaulTest(unittest.TestCase):
         help_sec = V5_EXT.split("MenuHelp_Draw_Long:")[1].split("MenuMap_CellOwned_Long:")[0]
         lines = re.findall(r'dw "([A-Z.:_]{18})"', help_sec)
         self.assertEqual(len(lines), 24, "Expected 4 pages x 6 lines x 18 tiles in MenuHelp_Draw_Long")
-        # Verify every spoil popup description line is exactly 18 chars (6 spoils x 2 lines = 12 lines)
+        # Verify compact rectangle popup overlay (6 spoils x 1 concise 18-char line + action row)
         spoil_sec = V5_EXT.split("MenuSpoil_DrawPopup_Long:")[1]
+        self.assertNotIn("Menu_DrawBackground_Long", spoil_sec)
+        self.assertIn("LDA.w #$3811", spoil_sec)
+        self.assertIn("LDA.w #$B811", spoil_sec)
+        self.assertIn("LDA.w #$3417", spoil_sec)
         spoil_lines = re.findall(r'dw "([A-Z0-9.:_]{18})"', spoil_sec)
-        self.assertEqual(len(spoil_lines), 12, "Expected 6 spoils x 2 lines x 18 tiles in MenuSpoil_DrawPopup_Long")
-        self.assertIn('dw "A:USE___B:BACK"', spoil_sec)
-        self.assertIn('dw "____B:BACK____"', spoil_sec)
+        self.assertEqual(len(spoil_lines), 8, "Expected 2 action lines + 6 concise spoil lines (18 tiles) in MenuSpoil_DrawPopup_Long")
+        self.assertIn('dw "__A:USE___B:BACK__"', spoil_sec)
+        self.assertIn('dw "______B:BACK______"', spoil_sec)
 
     def test_quest_songs_full_4x4_cursor_and_special_ow_names_and_minimap(self):
         # QuestSongs_DrawCursor upgraded to full 4x4 C4 frame/L-brackets
