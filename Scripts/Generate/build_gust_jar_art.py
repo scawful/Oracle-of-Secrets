@@ -99,94 +99,91 @@ PAL2_DW_RGB = {
 }
 
 # =============================================================================
-# 1. HELD GUST JAR (4 x 16x16 frames, $000..$1FF)
+# 1. HELD GUST JAR v2 (4 x 16x16 frames, $000..$1FF) — Sleek, Compact & Cool!
+#    Compact ~10-13px silhouettes (2-6px trimmer than v1) with sculpted 3D jade
+#    amphora shading (deep d + bright g + crisp w ceramic glaze), carved gold
+#    Minish wind-crest/collar, and gleaming flared metallic suction bell that
+#    shifts to electric wind-sapphire + blazing amber-gold on Tier 3 / Recoil!
 # =============================================================================
 
-# Block 0: Side Normal (Facing Right; H-flip for Left)
-# Authentic Minish Cap squat ribbed emerald pot tapering smoothly into a pinched
-# golden neck collar and flaring into a gleaming gold trumpet suction bell!
+# Block 0: Side Normal (Facing Right; H-flip for Left) — sleek 12x9 (x=1..12, y=4..12)
 JAR_0_SIDE_NORMAL = [
     "................",
     "................",
-    "...........kkk..",
-    "...kkkkk..kwwyk.",
-    "..kgggggkkwy0yok",
-    ".kgwwggggyyw00yk",
-    "kogwgggggyyo000k",
-    "kygggdgggyyo000k",
-    "kygggdgggyyo000k",
-    "kogggdgggyyo000k",
-    ".kddgddddyyo00yk",
-    "..kdddddkkoo0yok",
-    "...kkkkk..koook.",
-    "...........kkk..",
+    "................",
+    "................",
+    ".........kkk....",
+    "...kkkk.kwwyk...",
+    "..kgwwgkwy0yk...",
+    ".kogggygoy00k...",
+    ".kygdgygyo00k...",
+    ".kogddggyo00k...",
+    "..kddddkko0yk...",
+    "...kkkk.koook...",
+    ".........kkk....",
+    "................",
     "................",
     "................",
 ]
 
-# Block 1: Side Swollen / Bulging (Tier 2/3 pulse or Corked, Facing Right)
-# Iconic Minish Cap inflated belly puffing noticeably rounder (+2px top & bottom)
-# with bright stretched ceramic sheen & strained wide-open trumpet mouth!
+# Block 1: Side Swollen / Bulging (Tier 2/3 pulse or Corked, Facing Right) — compact 12x11 (x=1..12, y=3..13)
+# Nozzle bell stays rock-steady at x=9..12, y=4..12 while ONLY the emerald belly puffs +/-1px!
 JAR_1_SIDE_SWOLLEN = [
     "................",
-    "...kkkkk...kkk..",
-    "..kgggggk.kwwyk.",
-    ".kgwwwgggkwy0yok",
-    "kggwwwgggyyw00yk",
-    "koggdggggyyo000k",
-    "kyggdggggyyo000k",
-    "kyggdggggyyo000k",
-    "kyggddgggyyo000k",
-    "koggddgggyyo000k",
-    "koddddgggyyo000k",
-    ".kddddddgyyo00yk",
-    "..kddddddkoo0yok",
-    "...kkkkk..koook.",
-    "...........kkk..",
+    "................",
+    "................",
+    "...kkkk.........",
+    "..kgwwgk.kkk....",
+    ".kggwwggkwwyk...",
+    ".koggdygwy0yk...",
+    ".kygddygoy00k...",
+    ".kygddygyo00k...",
+    ".kogddggyo00k...",
+    ".kdddddgyo0yk...",
+    "..kddddkkoook...",
+    "...kkkk..kkk....",
+    "................",
+    "................",
     "................",
 ]
 
-# Block 2: Front / Down View (ALTTP 3/4 overhead angle, open circular nozzle!)
-# Plump rounded emerald ceramic dome + pinched gold collar band + gleaming oval
-# golden trumpet rim framing a clean rounded dark suction opening facing down.
+# Block 2: Front / Down View (ALTTP 3/4 overhead angle, open circular nozzle) — sleek 10x11 (x=3..12, y=1..11)
 JAR_2_FRONT_DOWN = [
     "................",
-    "....kkkkkkkk....",
-    "..kkggggggggkk..",
-    ".kggwwggggdggdk.",
-    ".kggwgggggdggdk.",
-    "kgggggggggdggddk",
-    "kggdggggggdddddk",
-    ".kkyywwwwyyyykk.",
-    ".kyyyyooyyyyyyk.",
-    "kkyw00000000wykk",
-    "kyy0000000000ook",
-    "koy0000000000ook",
-    ".koyy000000yook.",
-    "..kkoooooooook..",
-    "....kkkkkkkk....",
+    ".....kkkkkk.....",
+    "....kggwwggk....",
+    "...kggwggdgdk...",
+    "...kgdgyygddk...",
+    "....kddddddk....",
+    "....kyywwyyk....",
+    "...kyw0000wyk...",
+    "...ky000000ok...",
+    "...ko000000ok...",
+    "....koy00yok....",
+    ".....kkkkkk.....",
+    "................",
+    "................",
+    "................",
     "................",
 ]
 
-# Block 3: Back / Up View (Facing Up, drawn behind Link in Region B)
-# Wide flared gleaming golden trumpet bell pointing UP (peeking cleanly above
-# Link's raised hands & cap) + pinched gold neck + glossy emerald pot body.
+# Block 3: Back / Up View (Facing Up, drawn behind Link in Region B) — sleek 10x11 (x=3..12, y=4..14)
 JAR_3_BACK_UP = [
-    "...kkkkkkkkkk...",
-    "..kwwyyyyyyook..",
-    ".kwyy000000yyok.",
-    ".kkyyyyyyyyyokk.",
-    "...kkyyyyooyk...",
-    "..kkggggggggkk..",
-    ".kggwwggggdggdk.",
-    "kggwwgggggdggddk",
-    "kgggggggggdggddk",
-    "kggggdggggdggddk",
-    "kggggdggggdddddk",
-    "kddddddddddddddk",
-    ".kddddddddddddk.",
-    "..kkoooooooook..",
-    "....kkkkkkkk....",
+    "................",
+    "................",
+    "................",
+    "................",
+    ".....kkkkkk.....",
+    "....kwwyyyyk....",
+    "...kwy0000yok...",
+    "...koyyyyyook...",
+    "....kkyyooyk....",
+    "...kggwwggddk...",
+    "...kggwgyyddk...",
+    "...kggdgddddk...",
+    "....kddddddk....",
+    "....kkoooook....",
+    ".....kkkkkk.....",
     "................",
 ]
 

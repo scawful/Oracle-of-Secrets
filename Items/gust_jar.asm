@@ -1593,8 +1593,8 @@ GustJar_DrawHeldJar:
   .jar_dy   : dw  -9,  13,   6,   6
   .kick_dx  : dw   0,   0,   2,  -2
   .kick_dy  : dw   2,  -2,   0,   0
-  .mouth_dx : dw   0,   4,  -5,  13
-  .mouth_dy : dw   0,  12,   4,   4
+  .mouth_dx : dw   0,   4,  -2,  10
+  .mouth_dy : dw   0,   9,   4,   4
 }
 
 ; ---------------------------------------------------------
