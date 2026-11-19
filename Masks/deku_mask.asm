@@ -292,13 +292,14 @@ DekuWings_DrawHoverOam:
 
   .bob_y
     db 0, -1, -1, 0
-  ; Per-facing hand anchor offsets indexed by (LinkFaceDir >> 1) & 3: Up, Down, Left, Right
+  ; Per-facing overhead Deku Flower offsets indexed by (LinkFaceDir >> 1) & 3: Up, Down, Left, Right
+  ; Raised above Deku Link's cap/shoulders with clean outward breathing room (Majora's Mask style).
   .dir_dx_l
-    db -12, -12, -10, -9
+    db -13, -13, -11, -10
   .dir_dx_r
-    db  12,  12,   9, 10
+    db  13,  13,  10,  11
   .dir_dy
-    db   0,   2,   2,  2
+    db  -6,  -5,  -5,  -5
   .prio_tbl
     db $20, $10, $30, $20
 }
