@@ -196,13 +196,13 @@
       "index": 2,
       "world": "shared",
       "use": "link_items",
-      "description": "Level 3 Oracle Mirror Shield 5-color Option D palette: SP5 C12..C15 ($1BD658: $373C gold bezel, $18A5 cool outline, $7FFE white specular, $5589 deep blue-steel) PLUS free OAM SP5 Color 8 ($01B0 -> PALB_SPR5B $7EC4B0 / PAL_SPR5B $7EC6B0 = $7B13 #98C0F0 cool steel highlight), with day/night tinting and WRAM bp1&=bp2 remap preserving Master Sword C9..C11.",
+      "description": "Level 3 Oracle Mirror Shield original Wind Waker-style 5-color palette: SP5 C12..C15 ($1BD658: $3B3B antique gold bezel, $18C6 charcoal outline, $62F8 cool silver-lavender rim, $518B cool indigo-blue face) PLUS free OAM SP5 Color 8 ($01B0 -> PALB_SPR5B $7EC4B0 / PAL_SPR5B $7EC6B0 = $67F8 #C6FFCE pale turquoise-silver sheen), with day/night tinting and WRAM bp1&=bp2 remap preserving all Swords C9..C11.",
       "provenance": "Items/mirror_shield_palette.asm org $1BD658, $1BED4A, $0ED73C, $00D333, $00D510, $00D533 (PC $0DD658).",
       "ownership": "asm",
       "usages": [
         {
           "name": "Equipped L3 Oracle Mirror Shield & pickup icon",
-          "context": "Link Down/Up/Left/Right shield tiles ($20-$25/$30-$35 on sheet $5F) and pickup $2E ($24-$25/$34-$35 on sheet $5C). Front/pickup 3bpp index 2 remaps from C10 -> SP5[8] ($7B13).",
+          "context": "Link Down/Up/Left/Right shield tiles ($20-$25/$30-$35 on sheet $5F) and pickup $2E ($24-$25/$34-$35 on sheet $5C). Front/pickup 3bpp index 2 remaps from C10 -> SP5[8] ($67F8).",
           "obj_row": 5,
           "sprite_sheets": [
             95,

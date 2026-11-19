@@ -11,7 +11,7 @@
 ;       C13 = $1CE7 (#393939 crisp ALTTP charcoal outline)
 ;       C14 = $047B (#DE1808 vibrant Crimson Loftwing emblem)
 ;       C15 = $6739 (#CECECE gleaming metallic silver frame)
-;   - L3: Custom Mirror Shield ($1BD658 Option D + SP-5 C8 !MirrorShield_Color8)
+;   - L3: Original Wind Waker-style Mirror Shield ($1BD658 + SP-5 C8 !MirrorShield_Color8)
 ;
 ; Eon Abyss / Dark World ($7EF3CA == $40) switches Link's equipped shield tiles
 ; ($7E9300..$7E947F, 384B; compact face-clearing 9x9 GBC art built by
@@ -26,21 +26,21 @@
 ;       C13 = $1CA4 (#202838 deep cool navy-steel outline)
 ;       C14 = $6ECE (#70B0DC cool steely-blue face)
 ;       C15 = $4947 (#385090 deep iron-slate shadow)
-;   - L3 GBC Mirror Shield (Option D 5-color palette in LW & DW; compact GBC art in DW):
+;   - L3 Mirror Shield (original $1BD658 Wind Waker-style palette in LW & DW; compact GBC art in DW):
 ;       Uses free OAM SP-5 Color 8 ($01B0 -> PALB_SPR5B $7EC4B0 / PAL_SPR5B $7EC6B0)
-;       for Mirror Shield's cool steel highlight (#98C0F0 / $7B13), preserving
-;       Master Sword ($1BD642):
-;       C12 = $373C (#E0C868 gold bezel/trim)
-;       C13 = $18A5 (#282830 cool dark outline)
-;       C14 = $7FFE (#F0F8F8 white specular sheen)
-;       C15 = $5589 (#4860A8 deep blue-steel shadow)
+;       for Mirror Shield's pale turquoise-silver sheen (#C6FFCE / $67F8), preserving
+;       all Swords ($1BD630..$1BD646):
+;       C12 = $3B3B (#DECE73 antique gold bezel/emblem)
+;       C13 = $18C6 (#313131 charcoal outline)
+;       C14 = $62F8 (#C6BDC6 cool silver-lavender rim)
+;       C15 = $518B (#5A63A5 cool indigo-blue mirror face)
 ;   - Pre-decoded 4BPP tile blobs (3 x 384B = 1152B each) live in Bank $34
 ;     ($34F000+) so ShieldWorld_SyncTiles / ShieldWorld_SyncBoth swap LW <-> DW
 ;     shields in ~0.18 ms without touching $7F0000 decompression scratch or DP.
 ; ==============================================================================
 
 !HylianShield_Color8 = $275E ; BGR555 #F7D64A (LW L2 Hylian Triforce Gold)
-!MirrorShield_Color8 = $7B13 ; BGR555 #98C0F0 (L3 Mirror Shield Steel Highlight)
+!MirrorShield_Color8 = $67F8 ; BGR555 #C6FFCE (Original L3 Mirror Shield Turquoise-Silver)
 
 pushpc
 
@@ -49,9 +49,9 @@ pushpc
 org $1BD650 ; @hook module=Items name=PaletteData_ShieldHylian kind=data protected_size=8
   dw $6947, $1CE7, $047B, $6739
 
-; Shield level 3 (Mirror Shield) palette C12..C15 in PaletteData ($1BD658, 8B).
+; Shield level 3 (Mirror Shield) original yazeproj palette C12..C15 in PaletteData ($1BD658, 8B).
 org $1BD658 ; @hook module=Items name=PaletteData_ShieldMirror kind=data protected_size=8
-  dw $373C, $18A5, $7FFE, $5589
+  dw $3B3B, $18C6, $62F8, $518B
 
 ; Palettes_Load_Shield ($1BED29) exit at $1BED4A (5B: SEP #$30 : INC $15 : RTL).
 org $1BED4A ; @hook module=Items name=MirrorShield_LoadColor8 kind=jml target=MirrorShield_LoadColor8 expected_m=16 expected_x=16 protected_size=5
