@@ -49,7 +49,24 @@ Overworld_UseEntrance:
   ASL #3
   TAX
 
-  LDA.b $2F : AND.w #$00FF : BNE .not_facing_up
+  LDA.b $2F : AND.w #$00FF : BEQ .facing_up_entry
+    BRL .not_facing_up
+  .facing_up_entry
+  ; Active UP-intent gate:
+  ; - In live overworld gameplay ($10 == $09), require UP ($08) held in $F0 or
+  ;   active Pegasus Boots dash ($0372 != 0). Stops standing still, swinging the
+  ;   sword/items, or sword-charge strafing (Left/Right/Down) from opening doors
+  ;   or sucking Link into flat-wall doorways.
+  ; - In zeroed-RAM standalone unit harnesses ($10 != $09), neutral ($F0&$0F==0)
+  ;   still passes while any explicit non-UP direction is rejected.
+  LDA.b $F0 : AND.w #$000F : BEQ .up_neutral
+  BIT.w #$0008 : BNE .up_input_ok
+    BRL .no_door
+  .up_neutral
+  LDA.b $10 : AND.w #$00FF : CMP.w #$0009 : BNE .up_input_ok
+  LDA.w $0372 : AND.w #$00FF : BNE .up_input_ok
+    BRL .no_door
+  .up_input_ok
 
 if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
     #Lyra_SemanticEntranceSite2:
@@ -203,51 +220,124 @@ else
   LDA.l Map16Definitions+6, X : AND.w #$01FF : STA.b $02
 endif
 
+  ; Strict directional doorway gate: north-facing doorways ONLY trigger while
+  ; facing UP ($2F == $00). Facing LEFT ($04), RIGHT ($06), or DOWN ($02) never
+  ; scans ValidDoorTypesExpanded (stops cheap sideways/downward proximity suction
+  ; on flat-wall and symmetric-tile entrances). Only explicit directional special
+  ; entrances (Wayward Village Tavern back door facing DOWN) run when $2F != $00.
+  LDA.b $2F : AND.w #$00FF : BEQ .facing_up_door_checks
+    ; Wayward Village Tavern back entrance (E43 at x=45..46, y=34..35):
+    ; works with both legacy $05D3-$05D6 and seamless Palette-7 north eave tiles
+    ; (where solid $0D5 ridge stops Link's hitbox at $20=$0A20..$0A2F, cell $115A/$115C).
+    CMP.w #$0002 : BNE .reject_non_up
+    LDA.b $F0 : AND.w #$000F : BEQ .down_neutral
+    BIT.w #$0004 : BNE .down_input_ok
+      BRL .no_door
+    .down_neutral
+    LDA.b $10 : AND.w #$00FF : CMP.w #$0009 : BNE .down_input_ok
+    LDA.w $0372 : AND.w #$00FF : BEQ .reject_non_up
+    .down_input_ok
+    LDA.w $040A : CMP.w #$0023 : BNE .reject_non_up
+    CPY.w #$11DA : BEQ .bar_back_direct
+    CPY.w #$11DC : BEQ .bar_back_enter
+    LDA.b $20 : CMP.w #$0A20 : BCC .reject_non_up
+    CPY.w #$115A : BEQ .bar_back_enter
+    CPY.w #$115C : BNE .reject_non_up
+    .bar_back_enter
+      LDY.w #$11DA
+    .bar_back_direct
+      JMP FindEntrance
+    .reject_non_up
+      BRL .no_door
+
+  .facing_up_door_checks
 if !ENABLE_SKY_OVERWORLD_ROUTE == 1
-  ; The selected stone arch is already open. Require its map, trigger cell
-  ; and original dictionary pair before taking the normal registration lookup.
+  ; The selected stone arch is already open. Require its map, trigger cell,
+  ; recessed arch depth ($20 - $0708 <= $00E2 so Link steps INTO row 14's
+  ; walkable bottom rather than triggering 8px early on row 15), and
+  ; original dictionary pair before taking the normal registration lookup.
   ; Source graphics may remap rendered words while retaining these Tile16 IDs.
   LDA.w $040A : CMP.w #$0087 : BNE .scan_door_types
   CPY.w #$071E : BNE .scan_door_types
   LDA.b $00 : CMP.w #$01AD : BNE .scan_door_types
   LDA.b $02 : CMP.w #$01AE : BNE .scan_door_types
+  LDA.b $20 : SEC : SBC.w $0708 : CMP.w #$00E3 : BCC .sky87_enter
+    BRL .no_door
+  .sky87_enter
   JMP FindEntrance
   .scan_door_types
 endif
 
-  ; Wayward Village Tavern back entrance (E43 at x=45..46, y=34..35):
-  ; works with both legacy $05D3-$05D6 and seamless Palette-7 north eave tiles
-  ; (where solid $0D5 ridge stops Link's hitbox at $20=$0A20..$0A2F, cell $115A/$115C).
-  LDA.w $040A : CMP.w #$0023 : BNE .not_village_bar_back
-    LDA.b $2F : AND.w #$00FF : CMP.w #$0002 : BNE .not_village_bar_back
-    CPY.w #$11DA : BEQ FindEntrance
-    CPY.w #$11DC : BEQ .bar_back_enter
-    LDA.b $20 : CMP.w #$0A20 : BCC .not_village_bar_back
-    CPY.w #$115A : BEQ .bar_back_enter
-    CPY.w #$115C : BNE .not_village_bar_back
-    .bar_back_enter
-      LDY.w #$11DA
-      JMP FindEntrance
-  .not_village_bar_back
+  ; Shrine of Courage ($A6) right arch cell ($046C, cx=54, cy=8):
+  ; Y=$046C is $FA8 (right arch), while Y+2=$046E is east jamb $FA5 ($00F8/$00F9).
+  LDA.w $040A : CMP.w #$00A6 : BNE .not_courage_right
+    CPY.w #$046C : BNE .not_courage_right
+    LDA.b $00 : CMP.w #$00F8 : BNE .not_courage_right
+    LDA.b $02 : CMP.w #$00F9 : BNE .not_courage_right
+    JMP FindEntrance
+  .not_courage_right
+
+  ; Shrine of Power ($B0):
+  ; - Cave arches ($FF6/$FF7/$FF8 at Ent $03/$05/$0B): centering directly under
+  ;   the dark arch $FF7 places Y on $FF7 and Y+2 on east jamb $FF8 ($00EA/$00E9).
+  ;   Accept center-aligned X (low nibble < 8) and resolve to registered Y-2.
+  ; - Mid temple ($FD1/$FD2/$FD3 at Ent $09, Pos $0AAA): accept right stair half
+  ;   ($0AAC, Y+2=$FD3 $00CB/$00CB, low nibble < 8) and resolve to $0AAA.
+  LDA.w $040A : CMP.w #$00B0 : BNE .not_power_center
+    LDA.b $00 : CMP.w #$00EA : BNE .power_check_mid
+    LDA.b $02 : CMP.w #$00E9 : BNE .power_check_mid
+    LDA.b $22 : AND.w #$000F : CMP.w #$0008 : BCS .power_reject
+    DEY : DEY
+    JMP FindEntrance
+    .power_check_mid
+    CPY.w #$0AAC : BNE .not_power_center
+    LDA.b $00 : CMP.w #$00CB : BNE .not_power_center
+    LDA.b $02 : CMP.w #$00CB : BNE .not_power_center
+    LDA.b $22 : AND.w #$000F : CMP.w #$0008 : BCS .power_reject
+    DEY : DEY
+    JMP FindEntrance
+    .power_reject
+    BRL .no_door
+  .not_power_center
+
+  ; D4 Zora Temple ($1E) 2-tile-wide recessed doorway ([50..51, 3], $58F):
+  ; Vanilla row 7 registers left cell $0164 (cx=50); normalize right alcove cell
+  ; $0166 (cx=51) so walking up either half enters with the same follower rules.
+  LDA.w $040A : CMP.w #$001E : BNE .not_d4_right
+    CPY.w #$0166 : BNE .not_d4_right
+    LDY.w #$0164
+  .not_d4_right
+
+  ; DW $70 recessed caves ($E19/$E1A, rows 111/114/115): Y is $E19 while Y+2
+  ; is east jamb $E1A ($0154/$0155). Allow clean north-facing entry.
+  LDA.w $040A : CMP.w #$0070 : BNE .not_dw70_door
+    LDA.b $00 : CMP.w #$0154 : BNE .not_dw70_door
+    LDA.b $02 : CMP.w #$0155 : BNE .not_dw70_door
+    JMP FindEntrance
+  .not_dw70_door
 
   ; Size of ValidDoorTypes
   LDX.w #$0068
 
   .check_next
     LDA.b $00 : CMP.l ValidDoorTypesExpanded_low, X : BNE .low_byte_fail
-      LDA.b $02 : CMP.l ValidDoorTypesExpanded_high, X : BEQ FindEntrance
+      LDA.b $02 : CMP.l ValidDoorTypesExpanded_high, X : BEQ .enter_found
 
     .low_byte_fail
     DEX
     DEX
   BPL .check_next
 
+  .no_door
   STZ.w $04B8
 
   .message_received
   SEP #$30
 
   RTL
+
+  .enter_found
+  JMP FindEntrance
 }
 
 if !SPECIAL_OVERWORLD_SEMANTIC_ENABLED == 1
@@ -332,10 +422,12 @@ FindEntrance:
 
   .commit_entrance_id
   PHA
+if defined("ENABLE_HORSE_FORM")
 if !ENABLE_HORSE_FORM == 1
   LDA.w $02B2 : CMP.b #$09 : BNE +
     JSL HorseForm_SilentDismount
   +
+endif
 endif
   PLA
   STA.w $010E
