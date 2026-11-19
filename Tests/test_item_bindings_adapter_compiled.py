@@ -4,9 +4,11 @@ import argparse
 import ctypes as C
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tempfile
 
 import test_item_bindings_compiled as core
@@ -93,6 +95,12 @@ def exercise(lib,rom,labels):
 
 
 def main():
+    # Same runtime oracle as test_item_bindings_compiled.py. The LakeSnes
+    # body below only checks the granted SRAM addresses.
+    if "--mesen-native" in sys.argv:
+        argv = [a for a in sys.argv[1:] if a != "--mesen-native"]
+        native = ROOT / "Tests/native/dual_item_binding.py"
+        os.execv(sys.executable, [sys.executable, str(native), *argv])
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--lakesnes',type=Path,required=True)
     ap.add_argument('--output',type=Path,required=True)

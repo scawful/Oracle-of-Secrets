@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Execute Farore presence core and production callers. Floor probes are stubbed."""
-import argparse,ctypes as C,json,re,subprocess,tempfile
+import argparse,ctypes as C,json,os,re,subprocess,sys,tempfile
 from pathlib import Path
 from d4_compiled_fight_check import Cpu
 from test_farore_d8_graphics_compiled import GraphicsFixture,call
@@ -70,6 +70,13 @@ StageCaller:
     return rom.read_bytes(),labels
 
 def main():
+    # Ruling 2026-11-18 #3: the built ROM is the runtime oracle. This flag
+    # hands the D8 $29/$90 load to the existing headless smoke harness.
+    # The LakeSnes matrix below stays the isolated presence-byte fixture.
+    if "--mesen-native" in sys.argv:
+        argv=[a for a in sys.argv[1:] if a != "--mesen-native"]
+        native=ROOT/"Tests/native/dungeon_smoke.py"
+        os.execv(sys.executable, [sys.executable, str(native), "--only", "D8", *argv])
     ap=argparse.ArgumentParser();ap.add_argument('--lakesnes',type=Path,required=True);ap.add_argument('--output',type=Path,required=True);ap.add_argument('--rom',type=Path);a=ap.parse_args();checks=[];admission=None
     if a.rom:
         import hashlib
