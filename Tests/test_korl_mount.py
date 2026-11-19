@@ -85,6 +85,13 @@ KORL_LAST_WATER_X = 0x7FF3E4
 KORL_LAST_WATER_Y = 0x7FF3E6
 KORL_VEL_Y = 0x7FF3E8
 KORL_VEL_X = 0x7FF3EA
+KORL_DOCK_STATE = 0x7FF3EC
+KORL_DOCK_SHEET = 0x7FF3ED
+KORL_DOCK_FRAME = 0x7FF3EE
+KORL_DOCK_UPLOADED = 0x7FF3EF
+KORL_DOCK_CLEAR = 0x7FF3F0
+KORL_DOCK_BOB_TIMER = 0x7FF3F1
+KORL_DOCK_OAM = 0x7FF3F2
 KORL_UNLOCKED = 0x7EF439
 
 KORL_PROTECTED_VRAM = PROTECTED_VRAM_RANGES + [
@@ -289,12 +296,52 @@ class KorlFixture(VBlankBudgetFixture):
         self.tile_fn = lambda x, y: 0x08  # default: ALTTP deep water ($08)
         self.daynight_fn = lambda color, off: color  # default: midday (identity tint)
         self.reset_swim_calls = 0
+        self.dma_reads: list[tuple[int, int, int, int]] = []
         self.stubs.update({
             STUB_SWIM_CONTINUE: "swim_continue",
             STUB_RESET_SWIM: "reset_swim",
             STUB_GET_TILE_ATTR: "get_tile_attr",
             STUB_LOAD_DAYNIGHT: "load_daynight",
         })
+
+    def _write_mmio(self, off: int, val: int) -> None:
+        if off == 0x420B:
+            self.mmio[off] = val & 0xFF
+            for ch in range(5):
+                if not (val & (1 << ch)):
+                    continue
+                base = 0x4300 + ch * 0x10
+                mode = self.mmio.get(base + 0, 0x01)
+                bbus = self.mmio.get(base + 1, 0x18)
+                src = self.mmio.get(base + 2, 0) | (self.mmio.get(base + 3, 0) << 8)
+                bank = self.mmio.get(base + 4, 0)
+                size = self.mmio.get(base + 5, 0) | (self.mmio.get(base + 6, 0) << 8)
+                if size == 0:
+                    size = 0x10000
+                start_vram = self.vram_addr
+                if (mode & 0x80) and bbus == 0x39:
+                    # Hardware-accurate B->A SNES VRAM read ($2139/$213A):
+                    # First word prefetched on $2116 write -> returned twice before advancing!
+                    for i in range(size):
+                        v_off = 0 if i < 2 else (i - 2)
+                        vbyte = ((start_vram * 2) + v_off) & 0xFFFF
+                        b = self.vram[vbyte]
+                        dst_off = (src + i) & 0xFFFF
+                        if bank == 0x7E:
+                            self.ram[dst_off] = b
+                        elif bank == 0x7F:
+                            self.ram[0x10000 + dst_off] = b
+                    new_src = (src + size) & 0xFFFF
+                    self.mmio[base + 2] = new_src & 0xFF
+                    self.mmio[base + 3] = (new_src >> 8) & 0xFF
+                    self.mmio[base + 5] = 0
+                    self.mmio[base + 6] = 0
+                    self.vram_addr = (start_vram + max(0, (size - 2) // 2)) & 0xFFFF
+                    self.dma_reads.append((start_vram, bank, src, size))
+                else:
+                    super()._write_mmio(0x420B, 1 << ch)
+            return
+        super()._write_mmio(off, val)
 
     def stub(self, name: str):
         c = self.cpu
@@ -641,7 +688,25 @@ class TestKorlMount(unittest.TestCase):
         self.assertEqual(fx2.get(KORL_HAS_ANCHOR), 1)
         self.assertEqual(fx2.get(KORL_ANCHOR_X) | (fx2.get(KORL_ANCHOR_X + 1) << 8), 0x0180)
 
-        # 5) Zora Mask ($02B2 == 2) MUST NOT be hijacked by R or docked anchor!
+        # 5) NO automatic remount when walking/swimming right beside moored boat!
+        fx2.put(KORL_COOLDOWN, 0)
+        fx2.put(0x5D, 0x04)  # Even if Link enters water right next to moored boat...
+        fx2.put(0xF6, 0x00)  # ...with NO button pressed!
+        fx2.run_jsl("KORL_FrameTick", mf=True, xf=True)
+        self.assertEqual(fx2.get(KORL_MOUNTED), 0, "Boat MUST NOT auto-remount without A/R press!")
+
+        # 6) Deliberate A press while standing on shore beside moored boat -> snaps & boards!
+        fx2.put(0x5D, 0x00)
+        fx2.put(0x0308, 0x00)
+        fx2.put(0x3C, 0x00)
+        fx2.put(0xF6, 0x80)  # Fresh A press!
+        fx2.run_jsl("KORL_FrameTick", mf=True, xf=True)
+        self.assertEqual(fx2.get(KORL_MOUNTED), 1, "Deliberate A beside moored boat must board!")
+        self.assertEqual(fx2.get(0x22) | (fx2.get(0x23) << 8), 0x0180)
+        self.assertEqual(fx2.get(0x20) | (fx2.get(0x21) << 8), 0x0180)
+        self.assertEqual(fx2.get(0x5D), 0x04)
+
+        # 7) Zora Mask ($02B2 == 2) MUST NOT be hijacked by R or docked anchor!
         fx3 = self.make_fx()
         fx3.put(KORL_UNLOCKED, 0x01)
         fx3.put(0x10, 0x09)
@@ -651,6 +716,144 @@ class TestKorlMount(unittest.TestCase):
         fx3.put(0xF6, 0x10)
         fx3.run_jsl("KORL_FrameTick", mf=True, xf=True)
         self.assertEqual(fx3.get(KORL_MOUNTED), 0)
+
+    # ------------------------------------------------------------------
+    # 4b. Visibly Docked Boat: Page 1 $5C00/$5D00 Save/Upload/OAM/Conflict/Restore
+    # ------------------------------------------------------------------
+    def test_visibly_docked_boat_vram_oam_menu_and_deferred_restore(self):
+        fx = self.make_fx()
+        fx.word(KORL_MARKER, 0x4B4C)
+        fx.put(KORL_UNLOCKED, 0x01)
+        fx.put(KORL_MOUNTED, 0)
+        fx.put(KORL_UPLOADED_FRAME, 0xFF)
+        fx.put(KORL_DOCK_UPLOADED, 0xFF)
+        fx.put(KORL_HAS_ANCHOR, 1)
+        fx.put(KORL_ANCHOR_AREA, 0x99)
+        fx.put(KORL_ANCHOR_DIR, 6)  # Right-facing docked boat
+        fx.word(KORL_ANCHOR_X, 0x0330)
+        fx.word(KORL_ANCHOR_Y, 0x07A0)
+        fx.put(KORL_DOCK_FRAME, 4)  # Side empty hull A
+        fx.put(0x10, 0x09)
+        fx.put(0x11, 0x00)
+        fx.put(0x1B, 0x00)
+        fx.put(0x8A, 0x99)
+        fx.word(0xE2, 0x02B0)
+        fx.word(0xE8, 0x0730)
+        fx.put(0x7EC2FF, 0x52)  # Page 1 Slot 3 sheet ID
+        fx.word(0x0134, 0x3800)
+
+        # Fill native Page 1 $5C00-$5C7F & $5D00-$5D7F with recognizable sentinel bytes
+        orig_top = bytes((0xA0 + (i % 53)) & 0xFF for i in range(256))
+        orig_bot = bytes((0x40 + (i % 59)) & 0xFF for i in range(256))
+        fx.vram[0x5C00 * 2 : 0x5C00 * 2 + 256] = orig_top
+        fx.vram[0x5D00 * 2 : 0x5D00 * 2 + 256] = orig_bot
+
+        # Clear OAM ($0800-$09FF) to $F0
+        for i in range(128):
+            fx.put(0x0801 + i * 4, 0xF0)
+
+        # 2 conflict-free OAM frames -> KORL_DockClear reaches 2
+        fx.run_jsl("KORL_FrameEndDockedOam", mf=True, xf=True)
+        fx.run_jsl("KORL_FrameEndDockedOam", mf=True, xf=True)
+        self.assertEqual(fx.get(KORL_DOCK_CLEAR), 2)
+        self.assertEqual(fx.get(KORL_DOCK_STATE), 0)
+
+        # NMI 1: saves $5C00/$5D00 (516 B VRAM read) -> state $A1, skips 1KB anim DMA!
+        fx.dma_writes.clear()
+        fx.dma_reads.clear()
+        fx.run_jsl("Horse_NmiUpload", mf=True, xf=False)
+        self.assertEqual(fx.get(KORL_DOCK_STATE), 0xA1)
+        self.assertEqual(sum(sz for *_, sz in fx.dma_reads), 516)
+        self.assertEqual(len(fx.dma_writes), 0, "1KB anim DMA must be skipped on 516B VRAM save NMI!")
+        self.assertEqual(bytes(fx.ram[0x15406 : 0x15406 + 256]), orig_top)
+        self.assertEqual(bytes(fx.ram[0x15508 : 0x15508 + 256]), orig_bot)
+
+        # NMI 2: promotes $A1->$A2 & uploads 512 B empty hull to $5C00/$5D00!
+        fx.dma_writes.clear()
+        fx.run_jsl("Horse_NmiUpload", mf=True, xf=False)
+        self.assertEqual(fx.get(KORL_DOCK_STATE), 0xA2)
+        self.assertEqual(fx.get(KORL_DOCK_UPLOADED), 4)
+        self.assertEqual(sum(sz for *_, sz in fx.dma_writes), 512)
+        # Bit-exact check of empty hull tiles in VRAM $5C00 & $5D00!
+        hull_off = self.frame_ptrs[4][0]
+        self.assertEqual(bytes(fx.vram[0x5C00 * 2 : 0x5C00 * 2 + 256]), self.sparse_bin[hull_off : hull_off + 256])
+        self.assertEqual(bytes(fx.vram[0x5D00 * 2 : 0x5D00 * 2 + 256]), self.sparse_bin[hull_off + 256 : hull_off + 512])
+
+        # Frame-end emits 4 empty-hull OAM entries at $09F0..$09FC (CHR $C0,$C2,$C4,$C6, attr $27)
+        fx.run_jsl("KORL_FrameEndDockedOam", mf=True, xf=True)
+        self.assertEqual(fx.get(KORL_DOCK_OAM) | (fx.get(KORL_DOCK_OAM + 1) << 8), 0x09F0)
+        dock_chrs = [fx.get(0x09F0 + i * 4 + 2) for i in range(4)]
+        dock_attrs = [fx.get(0x09F0 + i * 4 + 3) for i in range(4)]
+        dock_ys = [fx.get(0x09F0 + i * 4 + 1) for i in range(4)]
+        self.assertEqual(dock_chrs, [0xC0, 0xC2, 0xC4, 0xC6])
+        self.assertEqual(dock_attrs, [0x27, 0x27, 0x27, 0x27])
+        self.assertTrue(all(y != 0xF0 for y in dock_ys))
+
+        # Steady docked NMI = 0 B KORL DMA (only 1KB anim tile DMA runs)
+        fx.dma_writes.clear()
+        fx.run_jsl("Horse_NmiUpload", mf=True, xf=False)
+        self.assertEqual([(s, sz) for s, _, _, _, sz in fx.dma_writes], [(0x3800, 0x0400)])
+
+        # Safe Pause Menu ($0E/$01): keeps docked OAM frozen & $5C00/$5D00 untouched!
+        fx.put(0x10, 0x0E)
+        fx.put(0x11, 0x01)
+        fx.run_jsl("KORL_FrameEndDockedOam", mf=True, xf=True)
+        self.assertTrue(all(fx.get(0x09F0 + i * 4 + 1) != 0xF0 for i in range(4)))
+        fx.dma_writes.clear()
+        fx.run_jsl("Horse_NmiUpload", mf=True, xf=False)
+        self.assertEqual(fx.get(KORL_DOCK_STATE), 0xA2)
+
+        # Unsafe Overlay ($0E/$07, $0200=1): hides docked OAM BEFORE NMI restores $5C00/$5D00 bit-for-bit!
+        fx.put(0x11, 0x07)
+        fx.put(0x0200, 0x01)
+        fx.run_jsl("KORL_FrameEndDockedOam", mf=True, xf=True)
+        self.assertTrue(all(fx.get(0x09F0 + i * 4 + 1) == 0xF0 for i in range(4)))
+        fx.dma_writes.clear()
+        fx.run_jsl("Horse_NmiUpload", mf=True, xf=False)
+        self.assertEqual(fx.get(KORL_DOCK_STATE), 0)
+        self.assertEqual(sum(sz for *_, sz in fx.dma_writes), 512)
+        self.assertEqual(bytes(fx.vram[0x5C00 * 2 : 0x5C00 * 2 + 256]), orig_top)
+        self.assertEqual(bytes(fx.vram[0x5D00 * 2 : 0x5D00 * 2 + 256]), orig_bot)
+
+        # Re-dock & verify deferred restore when re-boarding (never > 960 B in 1 NMI!)
+        fx.put(0x10, 0x09)
+        fx.put(0x11, 0x00)
+        fx.put(0x0200, 0x00)
+        for i in range(128):
+            fx.put(0x0801 + i * 4, 0xF0)
+        fx.run_jsl("KORL_FrameEndDockedOam", mf=True, xf=True)
+        fx.run_jsl("KORL_FrameEndDockedOam", mf=True, xf=True)
+        fx.run_jsl("Horse_NmiUpload", mf=True, xf=False)  # Save ($A1)
+        fx.run_jsl("Horse_NmiUpload", mf=True, xf=False)  # Upload ($A2)
+        self.assertEqual(fx.get(KORL_DOCK_STATE), 0xA2)
+
+        # Now mount KORL! NMI 1 uploads mounted (640 B <= 960 B), NMI 2 restores $5C00/$5D00 (512 B <= 960 B)!
+        fx.put(KORL_MOUNTED, 1)
+        fx.put(KORL_FRAME, 4)
+        fx.put(KORL_UPLOADED_FRAME, 0xFF)
+        fx.put(KORL_PAL_LOADED, 0x01)
+        fx.run_jml("Horse_LinkDmaPrefix", mf=True, xf=False)
+        fx.dma_writes.clear()
+        fx.run_jsl("Horse_NmiUpload", mf=True, xf=False)
+        self.assertEqual(sum(sz for *_, sz in fx.dma_writes), 640)
+        self.assertEqual(fx.get(KORL_DOCK_STATE), 0xA2, "Deferred restore waits for steady NMI!")
+
+        fx.run_jml("Horse_LinkDmaPrefix", mf=True, xf=False)
+        fx.dma_writes.clear()
+        fx.run_jsl("Horse_NmiUpload", mf=True, xf=False)
+        self.assertEqual(sum(sz for *_, sz in fx.dma_writes), 512)
+        self.assertEqual(fx.get(KORL_DOCK_STATE), 0x00)
+        self.assertEqual(bytes(fx.vram[0x5C00 * 2 : 0x5C00 * 2 + 256]), orig_top)
+        self.assertEqual(bytes(fx.vram[0x5D00 * 2 : 0x5D00 * 2 + 256]), orig_bot)
+
+        # Page 1 CHR $C2 OAM conflict immediately yields & clears KORL_DockClear -> 0!
+        fx.put(KORL_MOUNTED, 0)
+        fx.put(KORL_DOCK_CLEAR, 5)
+        fx.put(0x0840 + 1, 0x60)  # visible enemy sprite
+        fx.put(0x0840 + 2, 0xC2)  # uses Page 1 tile $C2!
+        fx.put(0x0840 + 3, 0x21)  # Page 1 bit set!
+        fx.run_jsl("KORL_FrameEndDockedOam", mf=True, xf=True)
+        self.assertEqual(fx.get(KORL_DOCK_CLEAR), 0, "Page 1 $C2 OAM conflict must yield immediately!")
 
     # ------------------------------------------------------------------
     # 5. Menu $0E Safe-Overlay Hold/Restore & OAM Layering

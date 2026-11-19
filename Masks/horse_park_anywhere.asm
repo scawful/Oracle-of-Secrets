@@ -209,6 +209,9 @@ Horse_FrameEndScan:
   .reset
   LDA.b #$00 : STA.l Horse_OffClear : STA.l Horse_OffOam : STA.l Horse_OffOam+1
   .done
+if not(defined("NO_KORL_MOUNT"))
+  JSL KORL_FrameEndDockedOam
+endif
   REP #$30 : PLY : PLX : PLA
   PLB : PLP
   RTL

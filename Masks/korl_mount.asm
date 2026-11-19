@@ -21,17 +21,17 @@
 ; =========================================================
 
 ; ---------------------------------------------------------
-; Transient WRAM Block ($7FF3D4-$7FF3EB, 24 bytes in vanilla-free UNUSED_7FF180)
+; Transient WRAM Block ($7FF3D4-$7FF3F3, 32 bytes in vanilla-free UNUSED_7FF180)
 ; Immediately after HeavySword ($7FF3D0-$7FF3D2), strictly < $7FF400 (2P PoC).
 ; ---------------------------------------------------------
 KORL_Mounted        = $7FF3D4 ; byte: 0=off boat, 1=sailing King of Red Lions (Lyra current bypass!)
 KORL_SailActive     = $7FF3D5 ; byte: 0=cruise (2.00 px/f), 1=Wind Waker sail boost (2.91 px/f)
-KORL_Frame          = $7FF3D6 ; byte: desired frame ID (0..11)
-KORL_UploadedFrame  = $7FF3D7 ; byte: resident VRAM frame ($FF = none / restore needed)
-KORL_PalLoaded      = $7FF3D8 ; byte: bit7=same-NMI DMA grant, bit0=SP-3 palette active
-KORL_AnimTimer      = $7FF3D9 ; byte: wave bob & sail billow counter
+KORL_Frame          = $7FF3D6 ; byte: desired mounted frame ID (0..11)
+KORL_UploadedFrame  = $7FF3D7 ; byte: resident mounted Page 0 VRAM frame ($FF = none / restore needed)
+KORL_PalLoaded      = $7FF3D8 ; byte: bit7=same-NMI mounted DMA grant, bit0=SP-3 palette active
+KORL_AnimTimer      = $7FF3D9 ; byte: mounted wave bob & sail billow counter
 KORL_Cooldown       = $7FF3DA ; byte: mount/dismount debounce timer
-KORL_HasAnchor      = $7FF3DB ; byte: 0=none, 1=docked boat anchor valid
+KORL_HasAnchor      = $7FF3DB ; byte: 0=none, 1=docked boat anchor valid (visibly moored!)
 KORL_AnchorArea     = $7FF3DC ; byte: $8A area of docked boat
 KORL_AnchorDir      = $7FF3DD ; byte: facing ($00/$02/$04/$06) when docked
 KORL_AnchorX        = $7FF3DE ; word: 16-bit world X of docked water edge
@@ -41,7 +41,22 @@ KORL_LastWaterX     = $7FF3E4 ; word: last deep-water world X while sailing
 KORL_LastWaterY     = $7FF3E6 ; word: last deep-water world Y while sailing
 KORL_VelY           = $7FF3E8 ; word: signed 1/256 px/f Y boat velocity
 KORL_VelX           = $7FF3EA ; word: signed 1/256 px/f X boat velocity
-assert KORL_VelX+2 <= $7FF400, "KORL transient WRAM block reached 2P PoC ($7FF400)"
+KORL_DockState      = $7FF3EC ; byte: $00=clean, $A1=Page1 $5C00/$5D00 saved, $A2=docked hull resident
+KORL_DockSheet      = $7FF3ED ; byte: saved $7EC2FF sheet ID for safe VRAM restore
+KORL_DockFrame      = $7FF3EE ; byte: desired docked empty-hull frame (0..5)
+KORL_DockUploaded   = $7FF3EF ; byte: resident docked hull frame in $5C00/$5D00 ($FF = none)
+KORL_DockClear      = $7FF3F0 ; byte: consecutive OAM-conflict-free frames (requires >= 2)
+KORL_DockBobTimer   = $7FF3F1 ; byte: calm moored bob timer
+KORL_DockOam        = $7FF3F2 ; word: OAM offset ($0800..$09F0) of 4 docked hull slots, or 0
+assert KORL_DockOam+2 <= $7FF400, "KORL transient WRAM block reached 2P PoC ($7FF400)"
+
+; Docked-boat Page 1 VRAM backup ($5C00-$5C7F + $5D00-$5D7F = 512 B) in UNUSED_7F5000
+; right after Horse_OffBuf ($7F5000-$7F5401), strictly < $7F5800 (zero Epona collision!).
+KORL_DockDma0       = $7F5404 ; 2B VRAM read prefetch + 256B copy of VRAM $5C00-$5C7F
+KORL_DockBuf0       = $7F5406 ; 256B payload
+KORL_DockDma1       = $7F5506 ; 2B VRAM read prefetch + 256B copy of VRAM $5D00-$5D7F
+KORL_DockBuf1       = $7F5508 ; 256B payload
+assert KORL_DockBuf1+$0100 <= $7F5800, "KORL docked VRAM backup exceeded UNUSED_7F5000 ($7F5800)"
 
 ; Persistent SRAM unlock flag ($7EF439, first free byte of FreeBlock_Dreams after
 ; SpecialTravelSpotsVisited $7EF438; inside native 5-page checksummed SRAM $7EF000-$7EF4FF).
@@ -188,13 +203,22 @@ endif
 }
 
 ; Called from Palette_ArmorAndGloves (.original_palette) — preserves P (M16/C=0) & A/X/Y.
+; Refreshes KORL SP-3[9..15] whenever KORL is mounted OR visibly docked on the current area!
 KORL_RefreshPaletteIfMounted:
 {
   PHP : REP #$30 : PHA : PHX : PHY
   SEP #$20
   LDA.l KORL_Marker : CMP.b #(!KORL_MagicMarker&$FF) : BNE .done
   LDA.l KORL_Marker+1 : CMP.b #(!KORL_MagicMarker>>8) : BNE .done
-  LDA.l KORL_Mounted : BEQ .done
+  LDA.l KORL_Mounted : BNE .reload
+  ; Also keep SP-3 active while King of Red Lions is visibly moored on this outdoor map!
+  LDA.l KORL_HasAnchor : BEQ .done
+  LDA.l $7E001B : BNE .done
+  LDA.l $7E008A : CMP.l KORL_AnchorArea : BNE .done
+if !ENABLE_HORSE_FORM == 1
+  LDA.l Horse_NpcActive : BNE .done
+endif
+  .reload
     JSL KORL_LoadPalette
   .done
   REP #$30 : PLY : PLX : PLA : PLP
@@ -210,12 +234,14 @@ KORL_EnsureInit:
   LDA.l KORL_Marker : CMP.w #!KORL_MagicMarker : BEQ .ok
     SEP #$20
     PHX
-    LDX.w #$0017
+    LDX.w #$001F
     LDA.b #$00
     .clr
       STA.l KORL_Mounted, X
       DEX : BPL .clr
-    LDA.b #$FF : STA.l KORL_UploadedFrame
+    LDA.b #$FF
+    STA.l KORL_UploadedFrame
+    STA.l KORL_DockUploaded
     REP #$20
     LDA.w #!KORL_MagicMarker : STA.l KORL_Marker
     PLX
@@ -225,6 +251,7 @@ KORL_EnsureInit:
 }
 
 ; Clears mounted state & velocities cleanly (safe from ResetToLinkGraphics / GameOver / SaveQuit).
+; Preserves moored anchor coords/dir so docked King of Red Lions stays waiting outdoors.
 ; Preserves A/X/Y/DBR/P.
 KORL_ClearState:
 {
@@ -244,6 +271,27 @@ KORL_ClearState:
   .exit
   REP #$30 : PLA : PLP
   RTL
+}
+
+; Initializes calm moored docked-boat frame from KORL_AnchorDir & keeps SP-3 warm.
+; Entry: M=8, X=8, DBR=$00.
+KORL_InitDockedMoored:
+{
+  LDA.l KORL_AnchorDir : AND.b #$06 : LSR A : TAX
+  LDA.l KORL_DirBase, X
+  STA.l KORL_DockFrame
+  LDA.b #$00
+  STA.l KORL_DockBobTimer
+  STA.l KORL_DockClear
+if !ENABLE_HORSE_FORM == 1
+  LDA.l Horse_NpcActive : BEQ .keep_pal
+    JSL KORL_RestoreSp3Palette
+    RTS
+  .keep_pal
+endif
+  LDA.b #$01 : STA.l KORL_PalLoaded
+  JSL KORL_LoadPalette
+  RTS
 }
 
 ; Board King of Red Lions on deep water. Preserves A/X/Y/DBR/P.
@@ -269,6 +317,7 @@ KORL_Mount:
   STA.l KORL_AnimTimer
   STA.l KORL_VelY : STA.l KORL_VelY+1
   STA.l KORL_VelX : STA.l KORL_VelX+1
+  STA.l KORL_DockClear
   LDA.b #$FF : STA.l KORL_UploadedFrame
   LDA.b #$14 : STA.l KORL_Cooldown
 
@@ -297,7 +346,7 @@ KORL_Mount:
 }
 
 ; Clean shore dock when Link hops out of deep water onto beach/pier/shallow shore.
-; Leaves Link's current $5D hop/ground state intact while saving KORL's water-edge anchor.
+; Keeps King of Red Lions visibly moored & bobbing right at the water's edge!
 KORL_DockAtShore:
 {
   PHP : REP #$30 : PHA : PHX : PHY
@@ -312,7 +361,7 @@ KORL_DockAtShore:
   LDA.b #$01 : STA.l KORL_HasAnchor
 
   JSL KORL_ClearState
-  JSL KORL_RestoreSp3Palette
+  JSR KORL_InitDockedMoored
   LDA.b #$18 : STA.l KORL_Cooldown
 
   ; Gentle dock splash cue
@@ -359,11 +408,91 @@ KORL_FrameTick:
     BRL .mounted
   +
 
-  ; --- UNMOUNTED: check R-summon or parked-anchor reboard while swimming outdoors ---
-  LDA.b $1B : BNE .exit_near
+  ; --- UNMOUNTED: maintain visibly moored boat + deliberate A/R re-board (NO auto-remount!) ---
+  ; If indoors or on a different area than the docked boat, restore SP-3 once while keeping anchor!
+  LDA.b $1B : BEQ + : BRL .off_dock_area : +
   LDA.b $10 : CMP.b #$09 : BEQ .mod_ok
-  CMP.b #$0B : BNE .exit_near
+  CMP.b #$0B : BEQ .mod_ok
+    BRL .exit_near
   .mod_ok
+  LDA.l KORL_HasAnchor : BNE + : BRL .chk_open_water_summon : +
+  LDA.b $8A : CMP.l KORL_AnchorArea : BEQ + : BRL .off_dock_area : +
+
+  ; On the docked boat's outdoor map!
+  LDA.b $11 : BEQ + : BRL .exit_near_tramp : +
+
+  ; Advance calm moored wave-bob animation (toggles frame A/B every 16 frames).
+  LDA.l KORL_DockBobTimer : INC : STA.l KORL_DockBobTimer
+  LDA.l KORL_AnchorDir : AND.b #$06 : LSR A : TAX
+  LDA.l KORL_DirBase, X : STA.b $00
+  LDA.l KORL_DockBobTimer : LSR #4 : AND.b #$01
+  CLC : ADC.b $00
+  STA.l KORL_DockFrame
+
+  ; Keep KORL SP-3[9..15] palette Day/Night-refreshed while boat is moored (yield if Epona NPC active).
+if !ENABLE_HORSE_FORM == 1
+  LDA.l Horse_NpcActive : BNE .skip_dock_pal
+endif
+  LDA.b $13 : CMP.b #$0F : BNE .skip_dock_pal
+  REP #$30
+  LDA.l KORL_Palette+12 : LDX.w #$017E
+  JSL LoadDayNightPaletteEffect
+  REP #$30
+  CMP.l $7EC67E : BEQ .dock_pal_ok
+    SEP #$30
+    LDA.b #$01 : STA.l KORL_PalLoaded
+    JSL KORL_LoadPalette
+  .dock_pal_ok
+  SEP #$30
+  .skip_dock_pal
+
+  ; Deliberate re-board check when Link stands on pier/shore OR swims within +/-28 px of moored boat!
+  LDA.w $0FFC : ORA.w $02E4 : BNE .exit_near_tramp
+  LDA.w !ZoraDiving : BNE .exit_near_tramp
+  LDA.l KORL_Cooldown : BNE .exit_near_tramp
+  LDA.l InCutScene : BNE .exit_near_tramp
+  LDA.w !CurrentMask : BEQ .dock_form_ok
+  CMP.b #$06 : BNE .exit_near_tramp
+  .dock_form_ok
+  REP #$20
+  LDA.b $22 : SEC : SBC.l KORL_AnchorX : CLC : ADC.w #28 : CMP.w #57 : BCS .not_beside_boat
+  LDA.b $20 : SEC : SBC.l KORL_AnchorY : CLC : ADC.w #28 : CMP.w #57 : BCS .not_beside_boat
+  SEP #$20
+  ; Beside the visibly moored boat! Re-board deliberately on fresh R OR fresh A (when not carrying)!
+  LDA.b $F6 : AND.b #$10 : BNE .reboard_r
+  LDA.b $F6 : AND.b #$80 : BEQ .exit_near_tramp
+  LDA.w $0308 : ORA.b $3C : BNE .exit_near_tramp ; carrying liftable or mid-swing -> don't hijack A
+    LDA.b #$80 : TRB.b $F6
+    BRA .do_reboard
+  .reboard_r
+    LDA.b #$10 : TRB.b $F6
+  .do_reboard
+    ; Snap Link cleanly into the visibly docked boat at exact anchor coordinates & facing!
+    REP #$20
+    LDA.l KORL_AnchorX : STA.b $22
+    LDA.l KORL_AnchorY : STA.b $20
+    SEP #$20
+    LDA.l KORL_AnchorDir : STA.b $2F
+    JSL KORL_Mount
+  .exit_near_tramp
+    PLB : PLP
+    RTL
+
+  .not_beside_boat
+  SEP #$20
+  BRA .chk_open_water_summon
+
+  .off_dock_area
+  ; Left the moored map or went indoors: restore SP-3 once while preserving KORL_HasAnchor!
+  LDA.l KORL_PalLoaded : AND.b #$01 : BEQ .chk_open_water_summon_guard
+    LDA.b #$00 : STA.l KORL_PalLoaded
+    LDA.b $1B : BNE .chk_open_water_summon_guard
+      JSL KORL_RestoreSp3Palette
+  .chk_open_water_summon_guard
+  LDA.b $1B : BNE .exit_near
+
+  ; --- Open-water deliberate R summon/board (only when swimming in deep water $5D==$04) ---
+  .chk_open_water_summon
   LDA.b $11 : BNE .exit_near
   LDA.b $5D : CMP.b #$04 : BNE .exit_near      ; deep-water swimming only
   LDA.w $0FFC : ORA.w $02E4 : BNE .exit_near
@@ -374,30 +503,13 @@ KORL_FrameTick:
   LDA.w !CurrentMask : BEQ .form_ok
   CMP.b #$06 : BNE .exit_near
   .form_ok
-
-  ; Trigger A: Fresh R press while swimming in deep water -> board King of Red Lions!
-  LDA.b $F6 : AND.b #$10 : BEQ .chk_anchor
+  ; Deliberate fresh R press while swimming in deep water -> summon & board King of Red Lions!
+  LDA.b $F6 : AND.b #$10 : BEQ .exit_near
     LDA.b #$10 : TRB.b $F6
     JSL KORL_Mount
   .exit_near
     PLB : PLP
     RTL
-
-  ; Trigger B: Re-entered deep water right next to docked boat anchor -> auto-board!
-  .chk_anchor
-  LDA.l KORL_HasAnchor : BEQ .exit_near
-  LDA.b $8A : CMP.l KORL_AnchorArea : BNE .exit_near
-  REP #$20
-  LDA.b $22 : SEC : SBC.l KORL_AnchorX : CLC : ADC.w #20 : CMP.w #41 : BCS .anchor_far
-  LDA.b $20 : SEC : SBC.l KORL_AnchorY : CLC : ADC.w #20 : CMP.w #41 : BCS .anchor_far
-  SEP #$20
-  JSL KORL_Mount
-  PLB : PLP
-  RTL
-  .anchor_far
-  SEP #$20
-  PLB : PLP
-  RTL
 
   ; --- MOUNTED: sailing King of Red Lions ---
   .mounted
@@ -505,7 +617,7 @@ KORL_SelectFrame:
 {
   ; Base dir offset: Down ($02)->0, Up ($00)->2, Left ($04)/Right ($06)->4
   LDA.b $2F : AND.b #$06 : LSR A : TAX
-  LDA.l .dir_base, X
+  LDA.l KORL_DirBase, X
   STA.b $00
   ; Bob / billow bit: 8f cadence when sail raised, 16f cadence when cruising
   LDA.l KORL_SailActive : BEQ .cruise_bob
@@ -518,9 +630,9 @@ KORL_SelectFrame:
   CLC : ADC.b $00
   STA.l KORL_Frame
   RTS
-  .dir_base
-  db $02, $00, $04, $04               ; $2F=0(Up)->2, 2(Down)->0, 4(Left)->4, 6(Right)->4
 }
+KORL_DirBase:
+  db $02, $00, $04, $04               ; $2F=0(Up)->2, 2(Down)->0, 4(Left)->4, 6(Right)->4
 
 ; Manual R dismount: tries adjacent walkable shore/shallow tile first (facing dir then N/S/W/E);
 ; if out in open deep water with Flippers, dismounts into swimming leaving boat anchored.
@@ -571,7 +683,7 @@ KORL_TryManualDismount:
     BRL .next_cand16
 
     .found_shore
-    ; Valid walkable shore found! Dock boat at current water coords & hop Link onto shore!
+    ; Valid walkable shore found! Leave King of Red Lions visibly moored & hop Link onto shore!
     PLY
     REP #$20
     LDA.b $22 : STA.l KORL_AnchorX
@@ -585,7 +697,7 @@ KORL_TryManualDismount:
     STZ.w $0345
     JSL KORL_ResetSwimmingState
     JSL KORL_ClearState
-    JSL KORL_RestoreSp3Palette
+    JSR KORL_InitDockedMoored
     LDA.b #$18 : STA.l KORL_Cooldown
     LDA.b #$21 : STA.w $012E          ; crisp land/dock thud
     PLY : PLX
@@ -600,7 +712,7 @@ KORL_TryManualDismount:
       BRL .probe_loop
     +
 
-  ; No adjacent walkable shore: if Link has Flippers, dismount into swimming in place!
+  ; No adjacent walkable shore: if Link has Flippers, dismount into swimming leaving boat visibly moored!
   LDA.l $7EF356 : BEQ .refuse_dismount
     REP #$20
     LDA.b $22 : STA.l KORL_AnchorX
@@ -610,7 +722,7 @@ KORL_TryManualDismount:
     LDA.b #$01 : STA.l KORL_HasAnchor
     JSL KORL_ResetSwimmingState
     JSL KORL_ClearState
-    JSL KORL_RestoreSp3Palette
+    JSR KORL_InitDockedMoored
     LDA.b #$18 : STA.l KORL_Cooldown
     LDA.b #$25 : STA.w $012E          ; water splash SFX
     PLY : PLX
@@ -879,10 +991,11 @@ KORL_LinkDmaPrefix:
 ; Out: C=1 -> skip 1 KB animated-tile DMA this NMI; C=0 -> allow animated tiles normally.
 KORL_NmiUpload:
 {
-  ; Fast-exit when KORL is inactive and VRAM is already clean (~14 cycles!).
+  ; Fast-exit when KORL is inactive, Page 0 clean, and no docked boat active (~24 cycles!).
   LDA.l KORL_PalLoaded : BMI .mounted
   LDA.l KORL_UploadedFrame : CMP.b #$FF : BNE .restore_cells
-    CLC : RTL
+  ; Unmounted + Page 0 clean -> maintain visibly docked boat on Page 1 $5C00/$5D00 (<= 516 B!)
+  JML KORL_NmiDockedBoat
 
   .restore_cells
   ; Dismount or unsafe $0E overlay: restore 256 B native arrow cells ($42A0/$43A0).
@@ -905,7 +1018,15 @@ KORL_NmiUpload:
   LDA.l KORL_Frame : CMP.b #!KORL_FrameCount : BCC + : LDA.b #4 : +
   CMP.l KORL_UploadedFrame : BNE .upload
 
-  ; Steady frame (pose already resident in VRAM): ZERO KORL DMA!
+  ; Steady mounted frame (0 B mounted DMA!): if docked Page 1 backup is still live from
+  ; re-boarding 1 frame ago, restore $5C00/$5D00 (512 B <= 960 B!) cleanly now!
+  LDA.l KORL_DockState : BEQ .steady_check
+    CMP.b #$A2 : BNE .clear_dock_only
+      JML KORL_DockRestoreVram        ; restores 512B if sheet matches, returns SEC : RTL
+    .clear_dock_only
+    LDA.b #$00 : STA.l KORL_DockState
+    LDA.b #$FF : STA.l KORL_DockUploaded
+  .steady_check
   ; Guard crowded steady frames (scroll+palette/stripes) identically to Epona.
   LDA.b $17 : BNE .steady_heavy
   LDA.b $14 : BEQ .steady_ok
@@ -1329,6 +1450,294 @@ KORL_OamHideAll:
     STA.w $0A20, X
     INX : INX
     DEY : BPL .loop
+  RTS
+}
+
+; =========================================================
+; Visibly Docked King of Red Lions (Page 1 $5C00/$5D00, <= 516 B NMI!)
+; Mirrors Epona's parked off-Ranch VRAM save/restore & OAM conflict safety.
+; =========================================================
+
+; NMI handler entered via JML from KORL_NmiUpload when unmounted & Page 0 is clean.
+; Entry: M=8, X=16, DBR=$00; DP $04/$06 already saved by Horse_NmiUpload; preserves Y & $4314=#$7E.
+; Out: C=1 -> skip 1 KB animated-tile DMA this NMI; C=0 -> allow animated tiles normally.
+KORL_NmiDockedBoat:
+{
+  ; Ultra-fast exit when uninitialized or no anchor and Page 1 is clean!
+  REP #$20 : LDA.l KORL_Marker : CMP.w #!KORL_MagicMarker : SEP #$20 : BEQ .init_ok
+    CLC : RTL
+  .init_ok
+  LDA.l KORL_HasAnchor : ORA.l KORL_DockState : BNE .active
+    CLC : RTL
+  .active
+
+  ; Safe Overworld-overlay $0E (Pause Menu / Dialogue / Save Menu): hold $5C00/$5D00 untouched!
+  LDA.b $10 : CMP.b #$0E : BNE .not_overlay
+    JSL Horse_IsSafeOverlay : BCC .unwant
+    CLC : RTL
+  .not_overlay
+  CMP.b #$09 : BEQ .mod_ok
+  CMP.b #$0B : BNE .unwant
+  .mod_ok
+  LDA.b $1B : ORA.b $11 : BNE .unwant
+  LDA.l KORL_HasAnchor : BEQ .unwant
+  LDA.b $8A : CMP.l KORL_AnchorArea : BNE .unwant
+  LDA.l InCutScene : BNE .unwant
+if !ENABLE_HORSE_FORM == 1
+  LDA.l Horse_NpcActive : BNE .unwant
+endif
+  LDA.l KORL_DockClear : CMP.b #$02 : BCC .unwant
+
+  ; Eligible! Check whether Page 1 Slot 3 ($7EC2FF) still matches our backup.
+  LDA.l $7EC2FF : CMP.l KORL_DockSheet : BNE .save_vram
+  LDA.l KORL_DockState : CMP.b #$A2 : BEQ .check_upload
+  CMP.b #$A1 : BNE .save_vram
+  ; Promote $A1 (saved last NMI) -> $A2 and fall through to upload empty hull (512 B)!
+  LDA.b #$A2 : STA.l KORL_DockState
+  LDA.b #$FF : STA.l KORL_DockUploaded
+
+  .check_upload
+  ; Clamp desired empty-hull frame (0..5: Down/Up/Side A/B)
+  LDA.l KORL_DockFrame : CMP.b #$06 : BCC + : LDA.b #$04 : +
+  CMP.l KORL_DockUploaded : BEQ +
+    BRL .upload_hull
+  +
+
+  ; Steady docked frame (0 B DMA!) — guard crowded scroll+palette frames identically to Epona.
+  LDA.b $17 : BNE .steady_heavy
+  LDA.b $14 : BEQ .steady_ok
+  LDA.b $15 : BNE .steady_skip
+  .steady_ok
+  CLC : RTL
+  .steady_heavy
+  LDA.b $14 : ORA.b $15 : BEQ .steady_ok
+  .steady_skip
+  SEC : RTL
+
+  .unwant
+  LDA.l KORL_DockState : CMP.b #$A2 : BNE .clear_only
+    JML KORL_DockRestoreVram
+  .clear_only
+  LDA.b #$00 : STA.l KORL_DockState
+  LDA.b #$FF : STA.l KORL_DockUploaded
+  CLC : RTL
+
+  ; Save Page 1 $5C00-$5C7F (256B+2B prefetch) + $5D00-$5D7F (256B+2B prefetch) = 516 B!
+  .save_vram
+  PHY
+  LDA.b #$81 : STA.w $4300            ; B->A VRAM read ($2139/$213A)
+  LDA.b #$39 : STA.w $4301
+  LDA.b #KORL_DockDma0>>16 : STA.w $4304
+  LDY.w #$0102 : LDA.b #$01
+  LDX.w #KORL_DockDma0 : STX.w $4302 : STY.w $4305
+  LDX.w #$5C00 : STX.w $2116 : STA.w $420B
+  LDX.w #KORL_DockDma1 : STX.w $4302 : STY.w $4305
+  LDX.w #$5D00 : STX.w $2116 : STA.w $420B
+  ; Restore native DMA0 mode (A->B $2118/9, bank $7E)
+  LDA.b #$01 : STA.w $4300
+  LDA.b #$18 : STA.w $4301
+  LDA.b #$7E : STA.w $4304
+  LDA.l $7EC2FF : STA.l KORL_DockSheet
+  LDA.b #$A1 : STA.l KORL_DockState
+  LDA.b #$FF : STA.l KORL_DockUploaded
+  PLY
+  SEC : RTL                           ; skip 1 KB animated tiles on 516 B VRAM read NMI!
+
+  ; Upload 4 x 16x16 empty hull -> Page 1 $5C00/$5D00 (512 B in 2 hardware auto-inc bursts!)
+  .upload_hull
+  PHY
+  REP #$20
+  AND.w #$00FF : STA.b $06
+  ASL : STA.b $04
+  ASL #2 : CLC : ADC.b $04 : TAX      ; X = frame * 10 (GroupPointers offset)
+  LDA.l KORL_Frame_GroupPointers+0, X : STA.w $4302
+  SEP #$20
+  LDA.b #KORL_Graphics>>16 : STA.w $4304
+  LDX.w #$0100 : LDA.b #$01
+  LDY.w #$5C00 : STY.w $2116 : STX.w $4305 : STA.w $420B
+  LDY.w #$5D00 : STY.w $2116 : STX.w $4305 : STA.w $420B
+  LDA.b #$7E : STA.w $4304            ; restore native DMA0 bank
+  LDA.b $06 : STA.l KORL_DockUploaded
+  PLY
+  SEC : RTL                           ; skip 1 KB animated tiles on 512 B upload NMI!
+}
+
+; Restores saved 512 B back into Page 1 $5C00/$5D00 if $7EC2FF still holds the copied sheet.
+; Entry: M=8, X=16, DBR=$00; preserves Y. Out: C=1 if 512 B DMA ran, C=0 if no DMA needed.
+KORL_DockRestoreVram:
+{
+  LDA.l KORL_DockState : CMP.b #$A2 : BNE .done_no_dma
+  LDA.l $7EC2FF : CMP.l KORL_DockSheet : BNE .done_no_dma
+  PHY
+  LDA.b #KORL_DockBuf0>>16 : STA.w $4304
+  LDY.w #$0100 : LDA.b #$01
+  LDX.w #KORL_DockBuf0 : STX.w $4302 : STY.w $4305
+  LDX.w #$5C00 : STX.w $2116 : STA.w $420B
+  LDX.w #KORL_DockBuf1 : STX.w $4302 : STY.w $4305
+  LDX.w #$5D00 : STX.w $2116 : STA.w $420B
+  LDA.b #$7E : STA.w $4304
+  LDA.b #$00 : STA.l KORL_DockState
+  LDA.b #$FF : STA.l KORL_DockUploaded
+  PLY
+  SEC : RTL
+  .done_no_dma
+  LDA.b #$00 : STA.l KORL_DockState
+  LDA.b #$FF : STA.l KORL_DockUploaded
+  CLC : RTL
+}
+
+KORL_DockHullChr:
+  db $C0, $C2, $C4, $C6
+
+; Frame-end OAM scanner & docked-boat emitter (called from Horse_FrameEndScan .done).
+; Preserves all registers, widths, DBR, and DP $00-$0F.
+KORL_FrameEndDockedOam:
+{
+  PHP : PHB
+  REP #$30 : PHA : PHX : PHY
+  ; Preserve DP $00-$0F cleanly across any module
+  LDA.b $00 : PHA : LDA.b $02 : PHA : LDA.b $04 : PHA : LDA.b $06 : PHA
+  LDA.b $08 : PHA : LDA.b $0A : PHA : LDA.b $0C : PHA : LDA.b $0E : PHA
+  SEP #$20
+  LDA.b #$00 : PHA : PLB
+
+  ; Cold-init guard
+  REP #$20 : LDA.l KORL_Marker : CMP.w #!KORL_MagicMarker : SEP #$20 : BEQ .marker_ok
+    BRL .exit
+  .marker_ok
+
+  ; Module $0E overlay: safe overlays keep docked boat OAM frozen behind menu;
+  ; unsafe overlays hide docked OAM immediately BEFORE NMI restores $5C00/$5D00 (0 glitch frames!).
+  LDA.b $10 : CMP.b #$0E : BNE .not_overlay
+    JSL Horse_IsSafeOverlay : BCS .exit_near
+    BRL .hide_reset
+  .exit_near
+    BRL .exit
+  .not_overlay
+
+  ; On non-$0E frames, Oam_Clear wiped $0800-$09FF at frame start -> clear old OAM pointer first.
+  CMP.b #$09 : BEQ .mod_ok
+  CMP.b #$0B : BNE .hide_tramp
+  .mod_ok
+  LDA.b $1B : ORA.b $11 : BNE .hide_tramp
+  LDA.l KORL_Mounted : BNE .hide_tramp
+  LDA.l KORL_HasAnchor : BEQ .hide_tramp
+  LDA.b $8A : CMP.l KORL_AnchorArea : BNE .hide_tramp
+  LDA.l InCutScene : BNE .hide_tramp
+if !ENABLE_HORSE_FORM == 1
+  LDA.l Horse_NpcActive : BNE .hide_tramp
+endif
+
+  ; Reset previous-frame OAM record before scanning finished OAM buffer for Page 1 $C0-$C7/$D0-$D7 conflicts!
+  LDA.b #$00 : STA.l KORL_DockOam : STA.l KORL_DockOam+1
+  REP #$10
+  LDX.w #$01FC
+  .scan_oam
+    LDA.w $0801, X : CMP.b #$F0 : BEQ .scan_next
+    LDA.w $0803, X : LSR : BCC .scan_next          ; page 0 -> safe
+    LDA.w $0802, X : AND.b #$E8 : CMP.b #$C0 : BEQ .hide_tramp ; Page 1 $C0-$C7 or $D0-$D7 -> yield!
+    .scan_next
+    DEX #4
+    BPL .scan_oam
+  BRA .scan_clean
+  .hide_tramp
+    BRL .hide_reset
+  .scan_clean
+
+  ; Clean OAM scan! Increment consecutive clear counter (saturating at $FF).
+  LDA.l KORL_DockClear : INC : BEQ + : STA.l KORL_DockClear : +
+
+  ; Only draw docked OAM once Page 1 $5C00/$5D00 tiles are resident (KORL_DockState == $A2 & Uploaded < 6)!
+  LDA.l KORL_DockState : CMP.b #$A2 : BNE .exit_near
+  LDA.l KORL_DockUploaded : CMP.b #$06 : BCS .exit_near
+  STA.b $0D                           ; DP $0D = resident docked empty-hull frame (0..5)
+
+  ; Find 4 contiguous free OAM slots (Y == #$F0), scanning backwards from $09F0 down to $0900
+  ; (tail of OAM -> Link & HUD always render cleanly IN FRONT of the moored boat!).
+  REP #$10
+  LDY.w #$01F0                        ; $0800 + $01F0 = $09F0 (slots 124..127)
+  .find_slots
+    LDA.w $0801, Y : CMP.b #$F0 : BNE .next_block
+    LDA.w $0805, Y : CMP.b #$F0 : BNE .next_block
+    LDA.w $0809, Y : CMP.b #$F0 : BNE .next_block
+    LDA.w $080D, Y : CMP.b #$F0 : BEQ .got_slots
+    .next_block
+    REP #$20
+    TYA : SEC : SBC.w #$0010 : CMP.w #$0100 : BCC .no_slots
+    TAY
+    SEP #$20
+    BRA .find_slots
+  .no_slots
+  SEP #$20
+  BRL .exit
+
+  .got_slots
+  ; Record absolute OAM address ($0800 + Y) for unsafe-$0E hide guard.
+  REP #$20
+  TYA : CLC : ADC.w #$0800 : STA.l KORL_DockOam
+  ; Base screen origin: SX16 = AnchorX - $E2, SY16 = AnchorY - $E8 (matches mounted KORL pixel-for-pixel!)
+  LDA.l KORL_AnchorX : SEC : SBC.b $E2 : STA.b $00
+  LDA.l KORL_AnchorY : SEC : SBC.b $E8 : STA.b $02
+  ; BaseX ($04) = SX16 + 8 - (Width >> 1); BaseY ($06) = SY16 + 24 - Height
+  LDA.b $0D : AND.w #$00FF : TAX
+  LDA.l KORL_Frame_Width, X : AND.w #$00FF : LSR : STA.b $08
+  LDA.b $00 : CLC : ADC.w #8 : SEC : SBC.b $08 : STA.b $04
+  LDA.l KORL_Frame_Height, X : AND.w #$00FF : STA.b $08
+  LDA.b $02 : CLC : ADC.w #24 : SEC : SBC.b $08 : STA.b $06
+
+  ; Emit 4 x 16x16 empty hull pieces ($C0, $C2, $C4, $C6, Page 1 + SP-3 + priority 2 = $27 / H-flip $67)!
+  LDA.b $0D : AND.w #$00FF : ASL #2 : TAX
+  .emit_loop
+    PHX
+    SEP #$20
+    LDA.l KORL_Piece_X, X : STA.b $08
+    LDA.l KORL_Piece_Y, X : STA.b $09
+    TXA : AND.b #$03 : REP #$20 : AND.w #$00FF : TAX : SEP #$20
+    LDA.l KORL_DockHullChr, X : STA.b $0B
+    LDA.b #$27 : STA.b $0A            ; Priority 2 ($20) + SP-3 ($06) + Page 1 ($01)
+    LDA.l KORL_AnchorDir : CMP.b #$04 : BNE .no_flip
+      REP #$20 : LDA.b $0D : AND.w #$00FF : TAX : SEP #$20
+      LDA.l KORL_Frame_Width, X : SEC : SBC.b #16 : SEC : SBC.b $08 : STA.b $08
+      LDA.b #$67 : STA.b $0A          ; H-flip ($40) + Priority 2 ($20) + SP-3 ($06) + Page 1 ($01)
+    .no_flip
+    LDA.b #$02 : STA.b $0C            ; 16x16 size
+    JSR KORL_EmitSignedPiece
+    PLX : INX
+    REP #$20 : TXA : AND.w #$0003 : BNE .emit_loop
+  SEP #$20
+  BRA .exit
+
+  .conflict
+  .hide_reset
+  JSR KORL_HideDockedOam
+  LDA.b #$00 : STA.l KORL_DockClear
+
+  .exit
+  REP #$30
+  PLA : STA.b $0E : PLA : STA.b $0C : PLA : STA.b $0A : PLA : STA.b $08
+  PLA : STA.b $06 : PLA : STA.b $04 : PLA : STA.b $02 : PLA : STA.b $00
+  PLY : PLX : PLA
+  PLB : PLP
+  RTL
+}
+
+; Hides the 4 docked boat OAM slots immediately (called on unsafe $0E / map exit / conflict).
+; Entry: M=8, DBR=$00. Preserves nothing except DBR.
+KORL_HideDockedOam:
+{
+  REP #$30
+  LDA.l KORL_DockOam : CMP.w #$0800 : BCC .done
+  CMP.w #$09F1 : BCS .done
+  TAX
+  SEP #$20
+  LDA.b #$F0
+  STA.w $0001, X
+  STA.w $0005, X
+  STA.w $0009, X
+  STA.w $000D, X
+  .done
+  SEP #$20
+  LDA.b #$00 : STA.l KORL_DockOam : STA.l KORL_DockOam+1
   RTS
 }
 KORL_CodeEnd:

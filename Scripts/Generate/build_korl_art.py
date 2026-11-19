@@ -42,6 +42,7 @@ from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SOURCE = Path("/Users/scawful/Documents/Zelda/Graphics/red lion.png")
+DEFAULT_MC_SHEET = ROOT / "Data/graphics/link/mc_link_sheet.4bpp"
 OUT_DIR = ROOT / "Data/graphics/mounts"
 OUT_4BPP = OUT_DIR / "korl_sparse.4bpp"
 OUT_TABLES = OUT_DIR / "korl_sparse_tables.asm"
@@ -304,103 +305,245 @@ def trim_to_box(g: Grid, w: int, h: int, ox: int = 0, oy: int = 0) -> Grid:
 
 
 # ---------------------------------------------------------------------------
-# Boat Hull + Seated Link + Wind Waker Sail compaction from red lion.png
+# Boat Hull (bolder 48x32 Side & 28x44 Down/Up) + Authentic MC Link Rider
 # ---------------------------------------------------------------------------
-def build_side_hull_pair(im: Image.Image, bg: tuple[int, int, int, int]) -> tuple[Grid, Grid]:
-    """Compact Dervilacus's empty_ext_L_68 (73x42 -> H-flipped Right) into 46x32.
+def widen_symmetric(grid: Grid, target_w: int, left_dup: Sequence[int], right_dup: Sequence[int]) -> Grid:
+    """Widen a boat hull symmetrically by inserting specific interior flank columns."""
+    out: Grid = []
+    for row in grid:
+        nr: list[int] = []
+        for idx, val in enumerate(row):
+            nr.append(val)
+            if idx in left_dup:
+                nr.append(val)
+            if idx in right_dup:
+                nr.append(val)
+        # Pad/center cleanly to exact target_w
+        if len(nr) < target_w:
+            pad_l = (target_w - len(nr)) // 2
+            pad_r = target_w - len(nr) - pad_l
+            nr = [0] * pad_l + nr + [0] * pad_r
+        elif len(nr) > target_w:
+            trim_l = (len(nr) - target_w) // 2
+            nr = nr[trim_l : trim_l + target_w]
+        out.append(nr)
+    return out
 
-    Preserves 100% pixel-exact dragon-lion head, golden antlers, full curved red
-    hull body with clean horizontal cockpit for seated Link, white gunwale trim,
-    and stern + golden tailfin, fitting cleanly into 4 x 16x16 tiles (512 B total).
+
+def build_side_hull_pair(im: Image.Image, bg: tuple[int, int, int, int]) -> tuple[Grid, Grid]:
+    """Compact Dervilacus's empty_ext_L_68 (73x42 -> H-flipped Right) into bold 48x32.
+
+    Uses the full 48px width (3 x 16px tiles) and full 32px height (preserving 100%
+    of the deep crimson hull belly, golden tailfin, wide white-rimmed cockpit, and
+    sculpted dragon-lion head + antlers) in exact 4 x 16x16 tiles (512 B total).
     """
     raw = crop_quantize(im, (86, 293, 159, 335), bg, quantize_boat_pixel, hflip=True, flood_bg=True)
-    # Horizontal (73 -> 46 px):
-    #   0..17  (17px): full golden tailfin, curved stern, white rear gunwale
-    #   23..29 ( 6px): straight horizontal white gunwale + crimson midship cockpit!
-    #   47..54 ( 7px): curved red bow prow + neck base
+    # Horizontal (73 -> 48 px):
+    #   0..16  (16px): full golden tailfin, curved stern, white rear gunwale
+    #   20..30 (10px): wide straight horizontal white gunwale + crimson midship cockpit!
+    #   48..54 ( 6px): bold curved red bow prow + neck base
     #   57..73 (16px): full 16px dragon-lion head, eye, snout & golden antler-horn
-    comp_x = slice_cols(raw, [(0, 17), (23, 29), (47, 54), (57, 73)])
-    assert len(comp_x[0]) == 46
+    comp_x = slice_cols(raw, [(0, 16), (20, 30), (48, 54), (57, 73)])
+    assert len(comp_x[0]) == 48
     # Vertical (42 -> 32 px):
-    #   y=0..3   ( 4px): golden antler-horn tip
-    #   y=10..28 (19px): 100% UNMODIFIED Lion Face, Eye, Snout, Neck & Stern Curl!
-    #   y=30..33 ( 4px): white gunwale & prow curve
-    #   y=35..40 ( 5px): full curved crimson hull, golden tailfin & dark keel!
-    comp = slice_rows(comp_x, [(0, 4), (10, 29), (30, 34), (35, 40)])
+    #   y=0..2   ( 2px): antler-horn upper tip
+    #   y=10..13 ( 3px): horn base curving into lion brow
+    #   y=13..26 (13px): 100% UNMODIFIED Lion Face, Eye, Snout, Mane & Stern Crest!
+    #   y=26..40 (14px): 100% UNMODIFIED White Gunwale, Deep Crimson Belly, Tailfin & Keel!
+    comp = slice_rows(comp_x, [(0, 2), (10, 13), (13, 26), (26, 40)])
     assert len(comp) == 32, len(comp)
-    hull_a = trim_to_box(comp, 46, 32, ox=0, oy=0)
-    # Ensure Piece 0 (30, 0) covers 100% of upper head pixels (x=30..45, y=0..15) cleanly
-    # and connect the lion's chin/neck seamlessly into the red bow at x=28..32, y=16..20!
+    hull_a = trim_to_box(comp, 48, 32, ox=0, oy=0)
+    # Piece 0 is at (32, 0), so clear x < 32 in upper band y < 16 (leaves clean air for MC Link!)
     for y in range(16):
-        for x in range(30):
+        for x in range(32):
             hull_a[y][x] = 0
-    # Paint crisp 2px crimson-and-white diagonal neck bridge at (28..31, 16..18) joining head to bow
+    # Smooth 3px crimson-and-white diagonal neck bridge at (29..33, 15..18) joining head to prow
     for nx, ny, col in (
-        (29, 16, 9), (30, 16, 13), (31, 16, 11), (32, 16, 9),
-        (28, 17, 9), (29, 17, 11), (30, 17, 10), (31, 17, 9),
-        (28, 18, 9), (29, 18, 11), (30, 18, 10), (31, 18, 9),
+        (32, 15, 9), (33, 15, 13), (34, 15, 11),
+        (30, 16, 9), (31, 16, 13), (32, 16, 11), (33, 16, 9),
+        (29, 17, 9), (30, 17, 11), (31, 17, 10), (32, 17, 9),
+        (29, 18, 9), (30, 18, 11), (31, 18, 10), (32, 18, 9),
     ):
         hull_a[ny][nx] = col
 
     # Frame B: gentle -1px wave bob with crisp animated ocean foam along waterline (rows 30..31)
     hull_b = shift_grid(hull_a, 0, -1)
-    hull_a = add_keel_foam(hull_a, 31, [(8, 15, 13), (18, 25, 14), (28, 36, 13)])
-    hull_b = add_keel_foam(hull_b, 30, [(6, 13, 13), (16, 23, 14), (26, 35, 13), (36, 41, 15)])
-    hull_b = add_keel_foam(hull_b, 31, [(3, 9, 14), (11, 20, 13), (27, 37, 13)])
+    hull_a = add_keel_foam(hull_a, 31, [(6, 15, 13), (18, 28, 14), (30, 41, 13)])
+    hull_b = add_keel_foam(hull_b, 30, [(5, 14, 13), (17, 26, 14), (28, 39, 13), (40, 45, 15)])
+    hull_b = add_keel_foam(hull_b, 31, [(3, 10, 14), (12, 23, 13), (29, 41, 13)])
     return hull_a, hull_b
 
 
 def build_down_hull_pair(im: Image.Image, bg: tuple[int, int, int, int]) -> tuple[Grid, Grid]:
-    """Compact Dervilacus's down_empty (21x51) into 22x38 (exact 1+2+1 boat tiling!)."""
-    raw = crop_quantize(im, (284, 293, 305, 344), bg, quantize_boat_pixel)
-    # raw is 21x51:
-    #   y=0..12:  stern rim & backrest (13 px)
-    #   y=13..25: straight empty deck interior (13 px -> slice out!)
-    #   y=26..50: full front-facing horned lion head & prow (25 px)
-    comp = slice_rows(raw, [(0, 12), (25, 51)])  # 12 + 26 = 38 px tall!
-    hull_a = trim_to_box(comp, 22, 38, ox=1, oy=0)
+    """Build bold 28x44 Down hull from Dervilacus's down_empty (21x51) in 1+2+1 tiling."""
+    raw = crop_quantize(im, (284, 293, 305, 344), bg, quantize_boat_pixel, flood_bg=True)
+    # Keep 19 rows of stern+wide cockpit (0..19) + 25 full untouched rows of horned lion prow (26..51) = 44 px!
+    comp = slice_rows(raw, [(0, 19), (26, 51)])
+    assert len(comp) == 44, len(comp)
+    # Smoothly widen broadsides across y=14..29 (where left/right pieces cover x=0..27) while
+    # keeping top y=0..13 & bottom y=30..43 naturally tapered inside x=6..21 (ZERO hard steps!).
+    hull_a: Grid = []
+    for y, row in enumerate(comp):
+        if y < 14:
+            # Top stern rim naturally tapered inside x=6..21 (21px raw trimmed 2px left/3px right)
+            wrow = trim_to_box([row], 28, 1, ox=3, oy=0)[0]
+        elif y < 16:
+            # Gentle +2px flare into wide broadside
+            wrow = widen_symmetric([row], 28, (6,), (14,))[0]
+        elif y < 27:
+            # Full bold +4px broadside cockpit & crimson gunwales (25px wide inside 28px)
+            wrow = widen_symmetric([row], 28, (5, 8), (12, 15))[0]
+        elif y < 30:
+            # Gentle +2px taper back into lion cheeks & antlers
+            wrow = widen_symmetric([row], 28, (6,), (14,))[0]
+        else:
+            # Lower lion head & prow cleanly centered inside x=6..21
+            wrow = trim_to_box([row], 28, 1, ox=3, oy=0)[0]
+        hull_a.append(wrow)
+
+    # Clear any 1px fringe outside 1+2+1 tile mask [(6,0),(0,14),(12,14),(6,28)]
+    for y in range(14):
+        for x in range(28):
+            if x < 6 or x >= 22:
+                hull_a[y][x] = 0
+    for y in range(30, 44):
+        for x in range(28):
+            if x < 6 or x >= 22:
+                hull_a[y][x] = 0
+
     hull_b = shift_grid(hull_a, 0, -1)
-    # Animated ocean wake foam flanking the bow & sides on Frame B, subtle on Frame A
-    hull_a = add_keel_foam(hull_a, 36, [(4, 8, 13), (14, 18, 13)])
-    hull_a = add_keel_foam(hull_a, 37, [(6, 16, 14)])
-    hull_b = add_keel_foam(hull_b, 35, [(2, 6, 13), (16, 20, 13)])
-    hull_b = add_keel_foam(hull_b, 36, [(4, 9, 14), (13, 18, 14)])
-    hull_b = add_keel_foam(hull_b, 37, [(6, 16, 13)])
+    # Animated ocean wake foam flanking the bow & sides
+    hull_a = add_keel_foam(hull_a, 42, [(7, 11, 13), (17, 21, 13)])
+    hull_a = add_keel_foam(hull_a, 43, [(9, 19, 14)])
+    hull_b = add_keel_foam(hull_b, 41, [(6, 10, 13), (18, 22, 13)])
+    hull_b = add_keel_foam(hull_b, 42, [(7, 12, 14), (16, 21, 14)])
+    hull_b = add_keel_foam(hull_b, 43, [(9, 19, 13)])
     return hull_a, hull_b
 
 
 def build_up_hull_pair(im: Image.Image, bg: tuple[int, int, int, int]) -> tuple[Grid, Grid]:
-    """Compact Dervilacus's up_empty (23x63) into 23x38 (exact 1+2+1 boat tiling!)."""
-    raw = crop_quantize(im, (298, 175, 321, 238), bg, quantize_boat_pixel)
-    # raw is 23x63:
-    #   y=0..17:  full golden-horned lion head pointing north (18 px)
-    #   y=18..42: long thin neck & empty deck (25 px -> slice out!)
-    #   y=43..62: full curved stern + white trim + golden tailfin (20 px)
-    comp = slice_rows(raw, [(0, 17), (42, 63)])  # 17 + 21 = 38 px tall!
-    hull_a = trim_to_box(comp, 23, 38, ox=0, oy=0)
+    """Build bold 28x44 Up hull from Dervilacus's up_empty (23x63) in 1+2+1 tiling."""
+    raw = crop_quantize(im, (298, 175, 321, 238), bg, quantize_boat_pixel, flood_bg=True)
+    # Keep 21 full untouched rows of north-pointing horned lion head (0..21) + 23 rows of cockpit/stern/tailfin (40..63) = 44 px!
+    comp = slice_rows(raw, [(0, 21), (40, 63)])
+    assert len(comp) == 44, len(comp)
+    hull_a: Grid = []
+    for y, row in enumerate(comp):
+        if y < 14:
+            # Top horned head stays cleanly within x=6..21 (raw 23px centered at ox=2 -> x=5..22)
+            wrow = trim_to_box([row], 28, 1, ox=2, oy=0)[0]
+        elif y < 16:
+            # Smooth transition from lion head into broadside mane (0px widening -> zero step!)
+            wrow = trim_to_box([row], 28, 1, ox=2, oy=0)[0]
+        elif y < 28:
+            # Broadside mane wings + wide crimson cockpit (+2px symmetric flare -> 25px!)
+            wrow = widen_symmetric([row], 28, (7,), (15,))[0]
+        elif y < 30:
+            # Smooth taper into rear stern curve
+            wrow = trim_to_box([row], 28, 1, ox=2, oy=0)[0]
+        else:
+            # Tapered stern & golden tailfin centered cleanly in x=6..21
+            wrow = trim_to_box([row], 28, 1, ox=2, oy=0)[0]
+        hull_a.append(wrow)
+
+    # Enforce 1+2+1 tile coverage bounds cleanly: y=0..13 & y=30..43 strictly within x=6..21
+    for y in range(14):
+        for x in range(28):
+            if x < 6 or x >= 22:
+                hull_a[y][x] = 0
+    for y in range(30, 44):
+        for x in range(28):
+            if x < 6 or x >= 22:
+                hull_a[y][x] = 0
+
     hull_b = shift_grid(hull_a, 0, -1)
     # Trailing stern wake foam behind golden tailfin
-    hull_a = add_keel_foam(hull_a, 36, [(4, 8, 13), (15, 19, 13)])
-    hull_a = add_keel_foam(hull_a, 37, [(6, 10, 14), (13, 17, 14)])
-    hull_b = add_keel_foam(hull_b, 35, [(2, 6, 13), (17, 21, 13)])
-    hull_b = add_keel_foam(hull_b, 36, [(5, 10, 13), (13, 18, 13)])
-    hull_b = add_keel_foam(hull_b, 37, [(7, 16, 14)])
+    hull_a = add_keel_foam(hull_a, 42, [(7, 11, 13), (17, 21, 13)])
+    hull_a = add_keel_foam(hull_a, 43, [(9, 13, 14), (15, 19, 14)])
+    hull_b = add_keel_foam(hull_b, 41, [(6, 10, 13), (18, 22, 13)])
+    hull_b = add_keel_foam(hull_b, 42, [(8, 13, 13), (15, 20, 13)])
+    hull_b = add_keel_foam(hull_b, 43, [(10, 18, 14)])
     return hull_a, hull_b
 
 
-def build_riders(im: Image.Image, bg: tuple[int, int, int, int]) -> dict[str, Grid]:
-    """Extract Dervilacus's Minish Cap seated Link sprites into 16x16 SP-7 tiles."""
-    # Down seated Link: x=436..452, y=68..86 (16x18 -> take top 16 rows = full cap+face+tunic+hands!)
-    down_raw = crop_quantize(im, (436, 68, 452, 84), bg, quantize_link_pixel)
-    # Up seated Link: x=494..510, y=68..86 (16x18 -> top 16 rows = full cap+shoulders+hands!)
-    up_raw = crop_quantize(im, (494, 68, 510, 84), bg, quantize_link_pixel)
-    # Right seated Link: x=474..492, y=68..86 (18x18 -> trim 1px left, 1px right, top 16 rows!)
-    side_raw = crop_quantize(im, (475, 68, 491, 84), bg, quantize_link_pixel)
-    return {
-        "down": trim_to_box(down_raw, 16, 16),
-        "up": trim_to_box(up_raw, 16, 16),
-        "side": trim_to_box(side_raw, 16, 16),
-    }
+def decode_mc_tile16(sheet: bytes, tile_row: int, tile_col: int) -> Grid:
+    """Decode one 16x16 4BPP sprite block directly from Data/graphics/link/mc_link_sheet.4bpp.
+
+    Preserves exact native SP-7 palette indices (0..15) with zero lossy re-quantization
+    so seated Minish Cap Link matches walking Link 1:1 across Green, Blue, and Red Mail!
+    """
+    grid = new_grid(16, 16, 0)
+    for dy in range(2):
+        for dx in range(2):
+            off = ((tile_row + dy) * 16 + (tile_col + dx)) * 32
+            for y in range(8):
+                p0 = sheet[off + y * 2]
+                p1 = sheet[off + y * 2 + 1]
+                p2 = sheet[off + 16 + y * 2]
+                p3 = sheet[off + 16 + y * 2 + 1]
+                for x in range(8):
+                    b = 7 - x
+                    grid[dy * 8 + y][dx * 8 + x] = (
+                        ((p0 >> b) & 1)
+                        | (((p1 >> b) & 1) << 1)
+                        | (((p2 >> b) & 1) << 2)
+                        | (((p3 >> b) & 1) << 3)
+                    )
+    return grid
+
+
+def overlay_grid(dst: Grid, src: Grid, ox: int, oy: int, src_y0: int = 0, src_y1: int | None = None) -> None:
+    """Composite non-zero pixels of src[src_y0:src_y1] onto dst at (ox, oy)."""
+    dh, dw = len(dst), len(dst[0])
+    sh, sw = len(src), len(src[0])
+    y1 = sh if src_y1 is None else min(sh, src_y1)
+    for sy in range(src_y0, y1):
+        dy = oy + (sy - src_y0)
+        if not (0 <= dy < dh):
+            continue
+        for sx in range(sw):
+            v = src[sy][sx]
+            if v == 0:
+                continue
+            dx = ox + sx
+            if 0 <= dx < dw:
+                dst[dy][dx] = v
+
+
+def build_mc_riders(mc_sheet_path: Path) -> dict[str, Grid]:
+    """Assemble authentic 16x16 seated Minish Cap Link riders directly from mc_link_sheet.4bpp.
+
+    Uses exact MC Link heads (R00-R01 cols 0..5) over authentic MC Link upper green-tunic
+    torsos (R02-R03 cols 0..1, 6..7 and R04-R05 cols 2..3) with exact SP-7 palette indices.
+    """
+    sheet = mc_sheet_path.read_bytes()
+    assert len(sheet) >= 8 * 16 * 32, f"mc_link_sheet.4bpp unexpectedly short ({len(sheet)} B)"
+
+    # SIDE (Right-facing; auto H-flipped for Left by KORL_EmitRider):
+    #   Head R00-R01 cols 0..1 (rows 1..13 = 13px) over Side Torso R02-R03 cols 0..1 (rows 4..9 = 6px)
+    side_head = decode_mc_tile16(sheet, 0, 0)
+    side_body = decode_mc_tile16(sheet, 2, 0)
+    side = new_grid(16, 16, 0)
+    overlay_grid(side, side_body, ox=1, oy=10, src_y0=4, src_y1=10)
+    overlay_grid(side, side_head, ox=0, oy=0, src_y0=1, src_y1=14)
+
+    # DOWN (Front-facing):
+    #   Head R00-R01 cols 2..3 (rows 1..14 = 14px) over Front Torso R02-R03 cols 6..7 (rows 5..9 = 5px)
+    down_head = decode_mc_tile16(sheet, 0, 2)
+    down_body = decode_mc_tile16(sheet, 2, 6)
+    down = new_grid(16, 16, 0)
+    overlay_grid(down, down_body, ox=0, oy=11, src_y0=5, src_y1=10)
+    overlay_grid(down, down_head, ox=0, oy=0, src_y0=1, src_y1=15)
+
+    # UP (Back-facing):
+    #   Head R00-R01 cols 4..5 (rows 1..15 = 15px) over Back Torso R04-R05 cols 2..3 (rows 6..10 = 5px)
+    up_head = decode_mc_tile16(sheet, 0, 4)
+    up_body = decode_mc_tile16(sheet, 4, 2)
+    up = new_grid(16, 16, 0)
+    overlay_grid(up, up_body, ox=0, oy=11, src_y0=6, src_y1=11)
+    overlay_grid(up, up_head, ox=0, oy=0, src_y0=1, src_y1=16)
+
+    return {"down": down, "up": up, "side": side}
 
 
 def parse_sail_art(rows: Sequence[str]) -> Grid:
@@ -643,14 +786,14 @@ def encode_narrow_8x16(grid: Grid, px: int, py: int) -> bytes:
 # ---------------------------------------------------------------------------
 # Master Sparse Asset Assembly (12 frames: 0..5 Cruise, 6..11 Sail Boost)
 # ---------------------------------------------------------------------------
-def build_all(source_png: Path) -> tuple[bytes, str, bytes, dict]:
+def build_all(source_png: Path, mc_sheet: Path = DEFAULT_MC_SHEET) -> tuple[bytes, str, bytes, dict]:
     im = Image.open(source_png).convert("RGBA")
     bg = im.getpixel((0, 0))
 
     side_a, side_b = build_side_hull_pair(im, bg)
     down_a, down_b = build_down_hull_pair(im, bg)
     up_a, up_b = build_up_hull_pair(im, bg)
-    riders = build_riders(im, bg)
+    riders = build_mc_riders(mc_sheet)
 
     sail_side_a = parse_sail_art(SAIL_SIDE_A)
     sail_side_b = parse_sail_art(SAIL_SIDE_B)
@@ -660,24 +803,24 @@ def build_all(source_png: Path) -> tuple[bytes, str, bytes, dict]:
     sail_up_b = parse_sail_art(SAIL_UP_B)
 
     # Hull 4x16x16 tiling coordinates (relative to hull top-left):
-    #   Down (22x38): 1+2+1 tapered boat layout (0..22 x 0..38)
-    #   Up   (23x38): 1+2+1 tapered boat layout (0..23 x 0..38)
-    #   Side (46x30): Lion Head top-right + 3 lower hull tiles (0..46 x 0..30)
+    #   Down (28x44): 1+2+1 bold broadside hull (0..28 x 0..44)
+    #   Up   (28x44): 1+2+1 bold broadside hull (0..28 x 0..44)
+    #   Side (48x32): Lion Head top-right (32,0) + 3 full lower hull tiles (0..48 x 16..32)
     HULL_PIECES = {
-        "down": [(3, 0), (0, 12), (16, 12), (3, 22)],
-        "up":   [(3, 0), (0, 16), (16, 16), (3, 24)],
-        "side": [(30, 0), (0, 16), (16, 16), (30, 16)],
+        "down": [(6, 0), (0, 14), (12, 14), (6, 28)],
+        "up":   [(6, 0), (0, 14), (12, 14), (6, 28)],
+        "side": [(32, 0), (0, 16), (16, 16), (32, 16)],
     }
     HULL_DIMS = {
-        "down": (22, 38),
-        "up":   (23, 38),
-        "side": (46, 32),
+        "down": (28, 44),
+        "up":   (28, 44),
+        "side": (48, 32),
     }
-    # Rider 16x16 placement relative to hull top-left (facing Right for side; auto-mirrored for Left!)
+    # Authentic Minish Cap Link 16x16 rider placement (facing Right for side; auto-mirrored for Left!)
     RIDER_POS = {
-        "down": (3, 0),    # Seated in stern looking South above lion prow
-        "up":   (3, 15),   # Seated in cockpit facing North behind lion prow
-        "side": (14, 9),   # Centered cleanly in midship cockpit between rear & front gunwale rims!
+        "down": (6, 6),    # Centered in wide 28px cockpit looking South over lion horns
+        "up":   (6, 19),   # Centered in rear cockpit facing North behind lion prow
+        "side": (15, 6),   # Seated cleanly inside wide midship gunwale with green collar above rim!
     }
     # Sail 24x32 placement relative to hull top-left:
     SAIL_NARROW_Y = {
@@ -687,9 +830,9 @@ def build_all(source_png: Path) -> tuple[bytes, str, bytes, dict]:
     }
     # Sail anchor (ox, oy) relative to hull top-left
     SAIL_ANCHOR = {
-        "down": (12, -16),  # rises beside Link on starboard, leaving Link & Lion Head 100% clear!
-        "up":   (-12, -15), # rises on port side above cockpit, leaving Lion Head & Link clear!
-        "side": (17, -19),  # mast planted cleanly ahead of Link, Wind Waker sail towering clear above cap!
+        "down": (18, -14),  # rises beside MC Link on starboard gunwale, leaving face & ears 100% clear!
+        "up":   (-14, -13), # rises on port gunwale above cockpit, leaving lion head & MC cap clear!
+        "side": (22, -20),  # mast planted cleanly at bow ahead of MC Link's face, billowing grandly above!
     }
 
     # Verify ZERO pixels lost on narrow 8x16 sail edges (check full sail coverage!)
@@ -970,6 +1113,7 @@ def check_existing_artifacts() -> None:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--source", type=Path, default=DEFAULT_SOURCE, help="Source red lion.png")
+    ap.add_argument("--mc-sheet", type=Path, default=DEFAULT_MC_SHEET, help="Source mc_link_sheet.4bpp")
     ap.add_argument("--check", action="store_true", help="Verify generated artifacts match source deterministically")
     ap.add_argument("--preview", type=Path, default=None, help="Write zoomed RGBA preview sheet")
     args = ap.parse_args(argv)
@@ -982,7 +1126,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: Source PNG not found: {args.source}", file=sys.stderr)
         return 1
 
-    raw_4bpp, asm_text, pal_bytes, meta = build_all(args.source)
+    raw_4bpp, asm_text, pal_bytes, meta = build_all(args.source, args.mc_sheet)
 
     if args.preview:
         render_preview(meta, args.preview)
