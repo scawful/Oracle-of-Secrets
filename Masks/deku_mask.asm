@@ -144,12 +144,12 @@ DekuWings_NmiUpload:
 ; Post-Ancilla OAM renderer called from DekuLink_SpinOrRecoil (PlayerOam_Main).
 ; Draws overhead 16x16 Deku Flower-Leaves in Region C across all 4 facings
 ; using SP-7 (Deku palette, tile $07):
-;   - Up/Down:    2 OAM slots (8 B) — symmetric twin overhead flower-leaves
-;                 (Slot 0 left normal at dx=-12, Slot 1 right H-flipped at dx=+12),
-;                 raised high above Deku Link's cap (dy=-11 Up / -10 Down).
-;   - Left/Right: 1 OAM slot (4 B) — ONE single centered overhead flower right down
-;                 the middle (dx=0, dy=-12) since outstretched left/right hands align
-;                 along the viewer's sightline from the side (Left normal, Right H-flip).
+;   - Up/Down:    2 OAM slots (8 B) — symmetric twin flower-leaves anchored by
+;                 Deku Link's hands (Slot 0 left normal at dx=-13, Slot 1 right
+;                 H-flipped at dx=+13, dy=-7 Up / -6 Down).
+;   - Left/Right: 1 OAM slot (4 B) — ONE single centered fluttering flower right
+;                 down the middle (dx=0, dy=-9) anchored at raised hand height
+;                 (Left normal, Right H-flip).
 ; Entry/Exit: M=8, X=8; preserves DBR, X, Y, and zero-page $00..$0F.
 DekuWings_DrawHoverOam:
 {
@@ -257,12 +257,12 @@ DekuWings_DrawHoverOam:
   LDA.b $04 : ORA.b #$40 : STA.b $05 ; Slot 1 attr (H-flipped)
 
   LDA.b $0E : BEQ .fb_nosp
-    LDA.b #-13 : STA.b $0A
-    LDA.b #13  : STA.b $06
+    LDA.b #-14 : STA.b $0A
+    LDA.b #14  : STA.b $06
     BRA .fb_addx
   .fb_nosp
-  LDA.b #-12 : STA.b $0A
-  LDA.b #12  : STA.b $06
+  LDA.b #-13 : STA.b $0A
+  LDA.b #13  : STA.b $06
   .fb_addx
   LDA.b #$FF : STA.b $0B
   STZ.b $07
@@ -343,11 +343,11 @@ DekuWings_DrawHoverOam:
 
   .bob_y
     db 0, -1, -1, 0
-  ; Per-facing overhead Deku Flower-Leaf tables indexed by (LinkFaceDir >> 1) & 3:
+  ; Per-facing hand-anchored Deku Flower-Leaf tables indexed by (LinkFaceDir >> 1) & 3:
   ;   0=Up, 1=Down, 2=Left, 3=Right
-  ; Raised +4px higher across all 4 facings so blossoms stay cleanly above Deku Link's cap/eyes.
+  ; Anchored down by Deku Link's hands (not sticking out of his cap/head).
   .dir_dy
-    db -11, -10, -12, -12
+    db -7, -6, -9, -9
   .dir_flip0
     db $00, $00, $00, $40
   .prio_tbl
