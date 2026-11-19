@@ -20,7 +20,7 @@
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "dc4d1d2b07c64ec00907dbd63af361d4cbc6cc9849cf89513e3359566680b842"
+      "sha256": "eb985d202761ef0e2cdb517381fb56c96f0de148f8d4697aaba1b3b6d50afe95"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -30,7 +30,7 @@
     "shared:Items/fishing_rod.asm": {
       "source_set": "shared",
       "path": "Items/fishing_rod.asm",
-      "sha256": "945330c42429496e950354224875ac8da44ce9b878c68596f00cc15f2d16e9ef"
+      "sha256": "f94102dcd9dc4b87ec36b02efd9c1ef4ccf4c002915a5303326e2e998c276e91"
     },
     "shared:Core/ram.asm": {
       "source_set": "shared",
@@ -40,12 +40,12 @@
     "shared:Overworld/overlays.asm": {
       "source_set": "shared",
       "path": "Overworld/overlays.asm",
-      "sha256": "0fc71ecac22486db3d4c9c1e6e9c61cc9a0ac60b0b12e6b027ad20e0f1da9fb7"
+      "sha256": "6b9e9310ee4d9139c31af0c94ee0ae827d20dd937499422a96fc9b9b82171c69"
     },
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "1c1725d1ba608e2cef936b30b1436366caacc28e3f7b09040baf7215c1788600"
+      "sha256": "54d203717343012501ac520f6f20f98070a153e1b8a7e0bbd5448fc74f75de8f"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -75,7 +75,7 @@
     "shared:Overworld/ZSCustomOverworld.asm": {
       "source_set": "shared",
       "path": "Overworld/ZSCustomOverworld.asm",
-      "sha256": "2aeef2f027794f2e921981976230f0d6c6e48719c605a9d06f55bee29364d64a"
+      "sha256": "dd8bf9e7b88c3326f82bcc6e60365135e1a56d3389313e664fe232fa9edc2b67"
     },
     "shared:Sprites/Objects/data/minecart_tracks.asm": {
       "source_set": "shared",
@@ -125,17 +125,17 @@
     "shared:Overworld/overworld.asm": {
       "source_set": "shared",
       "path": "Overworld/overworld.asm",
-      "sha256": "bbabf47716b8715e490ccf9402ec084264036b325df6c5d9cab20f9c2217f13c"
+      "sha256": "124da830bc465a180e12d629713e8abed5b1f74bef5d08f535949d19dbe98bb6"
     },
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
       "path": "Menu/menu_hud.asm",
-      "sha256": "d0f105711d512970985fff8f0699d22e9fadb380caeb3a81ac82637fd1a6e6fe"
+      "sha256": "a9a6b5b994165553e68923d7baadd7fbe3901cd0218242576d31efd0539b7307"
     },
     "shared:Menu/menu_map_travel.asm": {
       "source_set": "shared",
       "path": "Menu/menu_map_travel.asm",
-      "sha256": "99df1ebb49257ee9574961e8294fb7056da24f6751b13809497395dd286cf60b"
+      "sha256": "13cfe0d5fdfcd6472b0c5d39ee7913f42cfdb4051d0cb5e8d3c69187e30289e0"
     },
     "shared:Core/Cutscene/experiment.asm": {
       "source_set": "shared",
@@ -170,7 +170,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "0b50f804bbf41d7faa2a3ff34b0d915c821ef992c2dc968599c05c89052d1712"
+      "sha256": "175082962618e13784cee534b4a9352b4275bfd7897924f18fa536312336cd3f"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -180,7 +180,7 @@
     "shared:Overworld/lyra_native_loaders.asm": {
       "source_set": "shared",
       "path": "Overworld/lyra_native_loaders.asm",
-      "sha256": "60f98b4e9cf1202c2186749f2c56f6aac9cb8fa566b0df990e1ad8fabd3f5407"
+      "sha256": "4bf19d129fdf8dd9029dda514b5ba95e04660dde5ccaf32c1ef30ebc5bb584d1"
     },
     "shared:Scripts/Build/lyra_native_loaders.py": {
       "source_set": "shared",
@@ -200,7 +200,7 @@
     "shared:Overworld/special_overworld_resident.asm": {
       "source_set": "shared",
       "path": "Overworld/special_overworld_resident.asm",
-      "sha256": "0e3a0ef11b5f92ccd2c142cc8190e237f20fd4dc43f11ecbc1868a4b1c19b64a"
+      "sha256": "92b575e02c4aae947fba9a55fb0c66137386fd2e974a36d00d9d795b604f77ca"
     },
     "shared:Overworld/custom_gfx.asm": {
       "source_set": "shared",
@@ -225,12 +225,12 @@
     "shared:Overworld/special_overworld_palette.asm": {
       "source_set": "shared",
       "path": "Overworld/special_overworld_palette.asm",
-      "sha256": "a59223d7ed3bfff2511d0b1ce776fd866b607e389308518c51a21c906652647e"
+      "sha256": "f18c07971952e568f8ab841806c9e1140e55e1335aab0cf9123ce10066048c62"
     },
     "shared:Overworld/time_system.asm": {
       "source_set": "shared",
       "path": "Overworld/time_system.asm",
-      "sha256": "163813aaf004d63e66cb1ac6b7e279558b22d5c4523c74e9ce220fc8d828d495"
+      "sha256": "d97a3b754052f5f660138915463468e8beb4eb498a66b1c5c097b7e7b989cae8"
     },
     "shared:Overworld/aux_palette_extension.asm": {
       "source_set": "shared",
@@ -265,7 +265,7 @@
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
       "path": "Sprites/all_sprites.asm",
-      "sha256": "512ad84e26699bbe273353c6c50738ed34da4235ee024c94f0412182a5ae9bf9"
+      "sha256": "460f9082227b220db5005799e8834abaa5c33037506e956c8e7457c209da09d4"
     },
     "shared:Sprites/NPCs/eon_owl.asm": {
       "source_set": "shared",
@@ -285,12 +285,12 @@
     "shared:Dungeons/d4_water_control.asm": {
       "source_set": "shared",
       "path": "Dungeons/d4_water_control.asm",
-      "sha256": "ce0ecf725ede2bc82ddd43a209f89eb7e406307683fa587fd6aeaf621c8104e6"
+      "sha256": "e42ea5f65a8629517f59992dc9c5e302d1ded8578fcda7b64ccfbb4575c88943"
     },
     "shared:Items/special_soaring.asm": {
       "source_set": "shared",
       "path": "Items/special_soaring.asm",
-      "sha256": "91e9f2326ae2dc90226f0d0c0fe5e5bda4399ed9ccaa475b7d9a88cce823ac61"
+      "sha256": "4ca90c12bb58b0e8c84abf14b082fed8248a97a60dca345ba5eb26eb65d6c61e"
     },
     "shared:Items/switch_hook.asm": {
       "source_set": "shared",
@@ -330,7 +330,7 @@
     "shared:Overworld/special_overworld_semantic.asm": {
       "source_set": "shared",
       "path": "Overworld/special_overworld_semantic.asm",
-      "sha256": "78a2c2f7255ead3a585b33aef0597272f5945228c4d94b8db2de162c77425848"
+      "sha256": "5c60191c9da8aeda6282a09556cfc02443e46850e82b20113f44110f6599c457"
     },
     "shared:Sprites/NPCs/farore_d8_graphics.asm": {
       "source_set": "shared",
@@ -345,17 +345,17 @@
     "shared:Masks/horse_form.asm": {
       "source_set": "shared",
       "path": "Masks/horse_form.asm",
-      "sha256": "6b1fcf51c9d16a6562929c1deef0d3efc15a65e912872a287f82db09a70b78c4"
+      "sha256": "3a7ad6a72c513fb203534f7c63408fdd5fbe025e41a850b4351f3b58f86fe9ca"
     },
     "shared:Sprites/NPCs/horse.asm": {
       "source_set": "shared",
       "path": "Sprites/NPCs/horse.asm",
-      "sha256": "bb6c2f82ba42b940a701a19e8f190c902c9739005fd3088fa99c1dbb8a3ca322"
+      "sha256": "a61c28dbef596c5b948ffda84c68d7dbe4f8bb5744ff49d127fe6dd70fd31449"
     },
     "shared:Masks/horse_sparse_runtime.asm": {
       "source_set": "shared",
       "path": "Masks/horse_sparse_runtime.asm",
-      "sha256": "a4f829ec3cd0a9496e346509e3e52a01833951ce4f6440e565f55cebb4e4429a"
+      "sha256": "2e265cf76eb1ad066a8713e06e8b8d0b858e57fcebb7330eb196a4d12bc250ee"
     },
     "shared:Masks/mask_binding.asm": {
       "source_set": "shared",
@@ -365,17 +365,17 @@
     "shared:Overworld/entrances.asm": {
       "source_set": "shared",
       "path": "Overworld/entrances.asm",
-      "sha256": "ee084bf16a9bde94bc978d2187c49882205e611536b21962dc518092f275c6d9"
+      "sha256": "b4e0cead8084a6a3c49d4b6daf03c00255979c6b3b233175f1c6f1352c1d93a3"
     },
     "shared:Masks/horse_ground_clearance.asm": {
       "source_set": "shared",
       "path": "Masks/horse_ground_clearance.asm",
-      "sha256": "53a9237e9fc1f254a3e934179d879939e5ee3b0c0c66f765918ada6d195596d7"
+      "sha256": "42b69b651bbf8997b92ad38905afca697579f4fc5a729470e71cbf244d320bef"
     },
     "shared:Items/all_items.asm": {
       "source_set": "shared",
       "path": "Items/all_items.asm",
-      "sha256": "958bc60d419a1a4f52533e594a61ab3447d852175c16203bcff40a19600e1623"
+      "sha256": "f8c8d56ca8e537462f418c78a3a816bc4cad0e2cb8f0c8f95b38c2c37ed35335"
     },
     "shared:Masks/horse_park_anywhere.asm": {
       "source_set": "shared",
@@ -385,7 +385,7 @@
     "shared:Menu/menu_hud_codex.asm": {
       "source_set": "shared",
       "path": "Menu/menu_hud_codex.asm",
-      "sha256": "62691d55125247c0f672635fdf91969d846663345ed82c71bf750647d08cd993"
+      "sha256": "df1aa12fb5b779b8958af56da4ba5ae260fe6a5af83e03d478f808e8c5fed0e7"
     },
     "shared:Overworld/travel_destinations.asm": {
       "source_set": "shared",
@@ -410,7 +410,7 @@
     "shared:Sprites/Objects/dungeon_web.asm": {
       "source_set": "shared",
       "path": "Sprites/Objects/dungeon_web.asm",
-      "sha256": "4ce9ae81cf14c3e24e2a043912a56a99ec453fb058605f7cb5387911de248d1c"
+      "sha256": "d2c55a77a6eaebb9afd4c1b56eb23a60dddf4d8e2083c6db89b939792889999d"
     },
     "shared:Items/fire_burn_bushes.asm": {
       "source_set": "shared",
@@ -420,7 +420,7 @@
     "shared:Sprites/Bosses/manhandla.asm": {
       "source_set": "shared",
       "path": "Sprites/Bosses/manhandla.asm",
-      "sha256": "261fce35163e6cc8ee6dfa810e1fba56f2e7671c909d52bca778ffc0b97fe822"
+      "sha256": "bc4caa766381e85182c0fde1954ffdec4800b5686827249eb1e5ae1fec08da9a"
     },
     "shared:Sprites/Bosses/dark_link.asm": {
       "source_set": "shared",
@@ -430,52 +430,52 @@
     "shared:Sprites/Bosses/twinrova.asm": {
       "source_set": "shared",
       "path": "Sprites/Bosses/twinrova.asm",
-      "sha256": "788a1dace4d9bcfef04ca6c222617a80b43a2441cf06e1111f1fd8a633ab5380"
+      "sha256": "dcbdbc42bd0c653680fa23debcd1e5cbe2d28968781903e7d24d6feeea911013"
     },
     "shared:Sprites/Bosses/kydreeok.asm": {
       "source_set": "shared",
       "path": "Sprites/Bosses/kydreeok.asm",
-      "sha256": "cf9c203c73afb5066547cdc0babe625e22684ee62bc78c63bb784d5ade8bc5ce"
+      "sha256": "ed5123df2afa07ab5f3a6850148ecd41b34247059593f156fa655e1b86f035c3"
     },
     "shared:Overworld/credits_scenes.asm": {
       "source_set": "shared",
       "path": "Overworld/credits_scenes.asm",
-      "sha256": "b4901fc71cd9a810253e2a64c877c2e6669a2f43388c3e72d74695f9f312c00d"
+      "sha256": "8ff5810cc808ba2209b149f06cf37eeb2e5ede5b91b984560bbb98e37474bada"
     },
     "shared:Overworld/richard_quest.asm": {
       "source_set": "shared",
       "path": "Overworld/richard_quest.asm",
-      "sha256": "eb4ba78f608bd894965d41a151179dedbbcd6f86a83a0dcad287e525bb0626b9"
+      "sha256": "b75966ce72d6c199e7e906c2a98ad494c844fa15581dc130d2c3caad85f0e2f9"
     },
     "shared:Overworld/lyra_edge_guard.asm": {
       "source_set": "shared",
       "path": "Overworld/lyra_edge_guard.asm",
-      "sha256": "4fe6197381258271ae2b8a53e2c7af515008b639b17e164222db52f924e2bde3"
+      "sha256": "f420f9b22f402113f3599b0d4623fcc7defb7d91d8ac6f98b8314ffd4d3333b8"
     },
     "shared:Overworld/village_bar_exit.asm": {
       "source_set": "shared",
       "path": "Overworld/village_bar_exit.asm",
-      "sha256": "a311a6585be2ffbfd16d9d8b8b4fa01cb1c5160158c86ee9cc9e17338089f9d3"
+      "sha256": "6873393af2e641bfb36354e921d117d290355baa1361bf00adecae1b7e0a7866"
     },
     "shared:Overworld/world_map.asm": {
       "source_set": "shared",
       "path": "Overworld/world_map.asm",
-      "sha256": "a5250a911df7dd2abcc2dd7f2d8db534a849dea18ca9f9f05c8170946f4d8ba0"
+      "sha256": "56c074ee48818903c924615af6eddc0f6183effaaa87fc504ce2fb2473c97d20"
     },
     "shared:Overworld/special_overworld_transitions.asm": {
       "source_set": "shared",
       "path": "Overworld/special_overworld_transitions.asm",
-      "sha256": "64ca3bf22fe113f32d774066d41090f0f702d2347e09d663eb88c35140293507"
+      "sha256": "959817cadcfa696c43146f8490599f4b7f73e6740bd1de2291478f57d46f6409"
     },
     "shared:Items/gust_jar.asm": {
       "source_set": "shared",
       "path": "Items/gust_jar.asm",
-      "sha256": "fd93742fbcd89f663917cbc8f13e6ccaf82427843f7c53d54a10d62b17760823"
+      "sha256": "8805a72d0d3eb08854999b7ee2ecd3c82dc30d4eae0c9fce837a7b9078ccb32e"
     },
     "shared:Masks/garo_mask.asm": {
       "source_set": "shared",
       "path": "Masks/garo_mask.asm",
-      "sha256": "c7f18275cdc53ea6d5ac2df0b4e78b96f0a629d78d9805b13de45c6840aa99b1" 
+      "sha256": "c7f18275cdc53ea6d5ac2df0b4e78b96f0a629d78d9805b13de45c6840aa99b1"
     }
   },
   "claims": [
