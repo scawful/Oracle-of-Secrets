@@ -40,7 +40,9 @@ def find_lakesnes() -> Path:
 
 
 # Shared stubs for vanilla SNES services called by tested modules.
+STUB_OAM_A = 0x0DBA80
 STUB_OAM_B = 0x0DBA84
+STUB_OAM_C = 0x0DBA88
 STUB_OAM_D = 0x0DBA8C
 STUB_OW_TILE_ACT = 0x1BBD7A
 STUB_CANCEL_DASH = 0x0790B0
@@ -73,6 +75,11 @@ def _assemble_suite(folder: Path) -> tuple[bytes, dict[str, int]]:
     put_rom(0x02A5CC, bytes.fromhex("22 FA E3 00 20 90 BB"))
     # Preimage asserted by Items/gust_jar.asm (LinkOAM_ContinueWithAnimation)
     put_rom(0x0DA435, bytes.fromhex("8C 54 03 C0 05"))
+    # Preimages asserted by Items/bombchu.asm
+    put_rom(0x098127, bytes.fromhex("AF 43 F3 7E"))
+    put_rom(0x098133, bytes.fromhex("8F 43 F3 7E"))
+    put_rom(0x008B56, bytes.fromhex("AE 34 01 8E 16 21"))
+    put_rom(0x08A7D7, bytes.fromhex("BD 10 9D 00 00 00 BD 11 9D"))
 
     rom_path = folder / "fixture.sfc"
     rom_path.write_bytes(image)
@@ -91,6 +98,12 @@ endmacro
 macro a16()
   REP #$20
 endmacro
+macro m8()
+  SEP #$20
+endmacro
+macro m16()
+  REP #$20
+endmacro
 macro SelectedItem()
   JSL Test_SelectedItem
 endmacro
@@ -103,6 +116,8 @@ GaroCooldown = $07F0
 GaroLungeTimer = $07FF
 GaroMaskOwned = $7EF3AF
 SwitchHookOwned = $7EF3AE
+BombchuOwned = $7EF3B0
+BombchuAmmo = $7EF3B1
 GoldstarInventoryVersion = $7EF3AA
 ItemBindingButton = $7E02B6
 GameState = $7EF3C5
@@ -166,17 +181,21 @@ pushpc
 incsrc "{(ROOT / 'Items/book_of_secrets.asm').as_posix()}"
 ; book_of_secrets ends with pushpc
 
-; Assemble real Items/switch_hook.asm in Bank $2B (expects bank cursor on stack)
+; Assemble real Items/switch_hook.asm & Items/bombchu.asm in Bank $2B
 incsrc "{(ROOT / 'Items/switch_hook.asm').as_posix()}"
 pullpc
+org $2BA000
+incsrc "{(ROOT / 'Items/bombchu.asm').as_posix()}"
 
-; Assemble real Items/gust_jar.asm in Bank $39 tail ($39F000-$39FFFF)
+; Assemble real Items/gust_jar.asm in Bank $39 tail ($39F000-$39FFFF) & Bank $34 ($34E000-$34EFFF)
 incsrc "{(ROOT / 'Items/gust_jar.asm').as_posix()}"
 """)
 
     res = subprocess.run(
-        ["asar", "--no-title-check", "--fix-checksum=off", "--symbols=wla", str(asm), str(rom_path)],
-        cwd=str(ROOT / "Masks"),
+        ["asar", "--no-title-check", "--fix-checksum=off", "--symbols=wla",
+         f"-I{ROOT}", f"-I{ROOT / 'Masks'}",
+         str(asm), str(rom_path)],
+        cwd=str(ROOT),
         capture_output=True,
         text=True,
     )
@@ -192,22 +211,87 @@ class Q323Fixture(Fixture):
     def __init__(self, lib, rom: bytes, labels: dict[str, int]):
         super().__init__(lib, rom, labels)
         self.stubs = {
+            STUB_OAM_A: "oam_a",
             STUB_OAM_B: "oam_b",
+            STUB_OAM_C: "oam_c",
             STUB_OAM_D: "oam_d",
             STUB_OW_TILE_ACT: "ow_tile_act",
             STUB_CANCEL_DASH: "cancel_dash",
         }
         self.oam_allocs: list[int] = []
         self.oam_records: list[tuple[str, int, int, int]] = []  # (region, size, low_addr, hi_addr)
+        self._oam_a_off = 0x0040
         self._oam_b_off = 0x01D0
+        self._oam_c_off = 0x0000
         self._oam_d_off = 0x0030
         self.ow_cuts: list[tuple[int, int, int]] = []
         self.cancel_dash_calls = 0
         self.cpu.db = 0x07  # Gameplay DBR mirror
+        # SNES hardware register & DMA0 tracking for NMI VRAM upload tests
+        self.hw_regs: dict[int, int] = {
+            0x2116: 0, 0x2117: 0,
+            0x4302: 0, 0x4303: 0, 0x4304: 0x7E,
+            0x4305: 0, 0x4306: 0,
+        }
+        self.vram = bytearray(0x10000)
+        self.dma_transfers: list[tuple[int, int, int, bytes]] = []  # (vram_word, src24, length, data)
+
+    def write(self, a: int, v: int):
+        bank = a >> 16
+        lo = a & 0xFFFF
+        if (bank & 0x7F) < 0x40 and lo in (0x2116, 0x2117, 0x4302, 0x4303, 0x4304, 0x4305, 0x4306, 0x420B):
+            if lo == 0x420B:
+                if v & 0x01:
+                    vram_word = self.hw_regs[0x2116] | (self.hw_regs[0x2117] << 8)
+                    src_lo = self.hw_regs[0x4302] | (self.hw_regs[0x4303] << 8)
+                    src_bank = self.hw_regs[0x4304]
+                    src24 = (src_bank << 16) | src_lo
+                    length = self.hw_regs[0x4305] | (self.hw_regs[0x4306] << 8)
+                    if length == 0:
+                        length = 0x10000
+                    payload = bytes(self.read(src24 + i) for i in range(length))
+                    vaddr = (vram_word * 2) & 0xFFFF
+                    self.vram[vaddr:vaddr + length] = payload
+                    self.dma_transfers.append((vram_word, src24, length, payload))
+            else:
+                self.hw_regs[lo] = v & 0xFF
+            return
+        super().write(a, v)
+
+    def run_nmi_jsl(self, label: str, a: int = 0xA5, x: int = 0x1234, y: int = 0x5678, limit: int = 60000):
+        """Invoke an NMI handler matching vanilla $008B56 ABI: M=8, X=16, DBR=$00."""
+        c = self.cpu
+        c.mf = True
+        c.xf = False
+        c.a = a & 0xFF
+        c.x = x & 0xFFFF
+        c.y = y & 0xFFFF
+        c.db = 0x00
+        c.dp = 0
+        self.dma_transfers.clear()
+        entry = self.addr(label)
+        assert entry is not None, f"Missing label {label}"
+        c.k, c.pc = entry >> 16, entry & 0xFFFF
+        sp = c.sp
+        self.put(sp, c.k)
+        self.put(sp - 1, 0x6F)
+        self.put(sp - 2, 0xFF)
+        c.sp -= 3
+        sentinel = (entry & 0xFF0000) | 0x7000
+        for _ in range(limit):
+            pc = (c.k << 16) | c.pc
+            if pc == sentinel:
+                assert c.sp == sp, f"{label}: stack imbalance {c.sp:#x} != {sp:#x}"
+                assert not self.bad_writes, f"{label}: bad writes {self.bad_writes}"
+                return
+            self.lib.cpu_runOpcode(self.p)
+        raise AssertionError(f"{label}: exceeded {limit} opcodes at {pc:#08x}")
 
     def reset_oam_frame(self):
         self.oam_records.clear()
+        self._oam_a_off = 0x0040
         self._oam_b_off = 0x01D0
+        self._oam_c_off = 0x0000
         self._oam_d_off = 0x0030
 
     def read_oam_sprites(self, region: str | None = None) -> list[tuple[str, int, int, int, int, int]]:
@@ -226,7 +310,20 @@ class Q323Fixture(Fixture):
         return out
 
     def stub(self, name: str):
-        if name == "oam_b":
+        if name == "oam_a":
+            size = self.cpu.a & 0xFF
+            self.oam_allocs.append(size)
+            off = self._oam_a_off
+            if off + size > 0x0170:
+                off = 0x0040
+            self._oam_a_off = off + size
+            lo, hi = 0x0800 + off, 0x0A20 + (off >> 2)
+            self.word(0x90, lo)
+            self.word(0x92, hi)
+            self.put(0x0E, size); self.put(0x0F, 0)
+            self.cpu.y = lo & 0xFF
+            self.oam_records.append(("A", size, lo, hi))
+        elif name == "oam_b":
             size = self.cpu.a & 0xFF
             self.oam_allocs.append(size)
             off = self._oam_b_off
@@ -240,6 +337,19 @@ class Q323Fixture(Fixture):
             self.put(0x0E, size); self.put(0x0F, 0)
             self.cpu.y = lo & 0xFF
             self.oam_records.append(("B", size, lo, hi))
+        elif name == "oam_c":
+            size = self.cpu.a & 0xFF
+            self.oam_allocs.append(size)
+            off = self._oam_c_off
+            if off + size > 0x0030:
+                off = 0x0000
+            self._oam_c_off = off + size
+            lo, hi = 0x0800 + off, 0x0A20 + (off >> 2)
+            self.word(0x90, lo)
+            self.word(0x92, hi)
+            self.put(0x0E, size); self.put(0x0F, 0)
+            self.cpu.y = lo & 0xFF
+            self.oam_records.append(("C", size, lo, hi))
         elif name == "oam_d":
             size = self.cpu.a & 0xFF
             self.oam_allocs.append(size)
@@ -1037,35 +1147,71 @@ class TestQ323GustJarAndGaroGlide(unittest.TestCase):
         fx.run_jsl("GustJar_LinkPoseOamHook", y=0x05, db=0x0D)
         self.assertEqual(fx.get(0x0354), 0x05)
 
+        # 5. Live OAM render inside GustJar_LinkPoseOamHook MUST preserve ALL of
+        #    LinkOAM's zero-page $00..$0F (screen coords in $00/$01, etc.), X, and DBR!
+        fx_dp = self.make_fx()
+        self._start_gust(fx_dp, button=1, facing=6)
+        fx_dp.put(0x1A, 3)
+        fx_dp.run_jsl("GustJar_FrameTick")
+        sentinel_dp = [0xA0 + i for i in range(16)]
+        for i, val in enumerate(sentinel_dp):
+            fx_dp.put(i, val)
+        fx_dp.run_jsl("GustJar_LinkPoseOamHook", x=0x77, y=0x00, db=0x0D)
+        self.assertEqual(fx_dp.cpu.x & 0xFF, 0x77, "LinkPoseOamHook must preserve X")
+        self.assertEqual(fx_dp.cpu.db, 0x0D, "LinkPoseOamHook must preserve DBR=$0D")
+        for i, val in enumerate(sentinel_dp):
+            if i == 2:
+                continue  # $02 is intentionally updated with Link's pose frame index
+            self.assertEqual(fx_dp.get(i), val, f"LinkPoseOamHook clobbered LinkOAM DP ${i:02X}")
+
     def test_gust_jar_visible_held_jar_oam_all_dirs_priority_tremble_and_glow(self):
-        # Verify held jar tile $72 across all 4 directions + Region B (Up) vs Region D (D/L/R)
+        # Verify custom 16x16 held Minish Cap Gust Jar (tile $07, hi=$02) across all 4 directions
+        # + Region B (Up, behind Link) vs Region C (D/L/R, top-priority in front of Link & Ancilla!)
+        # + custom Minish Cap mouth sheen ($1A L/R, $19 Down)
+        # + ZERO recycled Small Magic Jar ($72) or Portal Rod ($EE) tiles!
         dir_expect = [
-            (0, "B", 0x60 + 4, 0x60 - 4, 0x00),   # Up: behind Link in Region B, no H-flip
-            (2, "D", 0x60 + 4, 0x60 + 14, 0x00),  # Down: in front in Region D, no H-flip
-            (4, "D", 0x60 - 5, 0x60 + 10, 0x40),  # Left: in front in Region D, H-flipped
-            (6, "D", 0x60 + 13, 0x60 + 10, 0x00), # Right: in front in Region D, no H-flip
+            (0, "B", 0x60 + 0, 0x60 - 9, 0x00, None),   # Up: behind Link in Region B, no H-flip
+            (2, "C", 0x60 + 0, 0x60 + 13, 0x00, 0x19),  # Down: top-priority in Region C, $19 curl sheen
+            (4, "C", 0x60 - 9, 0x60 + 6, 0x40, 0x1A),   # Left: top-priority in Region C, H-flipped, $1A sheen
+            (6, "C", 0x60 + 9, 0x60 + 6, 0x00, 0x1A),   # Right: top-priority in Region C, no H-flip, $1A sheen
         ]
-        for facing, exp_reg, exp_x, exp_y, exp_hflip in dir_expect:
+        for facing, exp_reg, exp_x, exp_y, exp_hflip, exp_mouth in dir_expect:
             with self.subTest(facing=facing):
                 fx = self.make_fx()
                 self._start_gust(fx, button=1, facing=facing)
                 fx.reset_oam_frame()
-                # Pre-dirty high OAM bytes with 16x16 ($02) to prove both jar & mouth clear to 8x8!
+                # Pre-dirty high OAM bytes with $FF to verify exact 8x8 ($00) vs 16x16 ($02) writes!
                 for hi_addr in range(0x0A20, 0x0AA0):
-                    fx.put(hi_addr, 0x02)
+                    fx.put(hi_addr, 0xFF)
                 fx.put(0x1A, 0)
                 fx.run_jsl("GustJar_FrameTick")
+                fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
+                all_sprs = fx.read_oam_sprites()
+                for s in all_sprs:
+                    self.assertNotIn(s[3], (0x72, 0xEE), f"Forbidden recycled tile {s[3]:#04x} emitted")
                 reg_sprites = fx.read_oam_sprites(exp_reg)
-                jar_sprites = [s for s in reg_sprites if s[3] == 0x72]
-                self.assertEqual(len(jar_sprites), 1, f"Expected 1 held jar ($72) in Region {exp_reg}")
+                jar_sprites = [s for s in reg_sprites if s[3] == 0x07]
+                self.assertEqual(len(jar_sprites), 1, f"Expected 1 held Minish Jar ($07) in Region {exp_reg}")
                 _, jx, jy, jtile, jattr, jhi = jar_sprites[0]
                 self.assertEqual((jx, jy), (exp_x, exp_y))
-                self.assertEqual(jattr & 0x0E, 0x08, "Tier 1 jar must use green/gold OAM Palette 4 ($08)")
+                self.assertEqual(jattr & 0x0E, 0x08, "Tier 1 jar must use emerald/gold OAM Palette 4 ($08)")
                 self.assertEqual(jattr & 0x40, exp_hflip)
                 self.assertEqual(jattr & 0x30, 0x20, "Normal floor ($EE=0) uses BG prio 2 ($20)")
-                self.assertEqual(jhi, 0x00, "Held jar is 8x8")
-                if exp_reg == "D":
-                    self.assertEqual(reg_sprites[0][5], 0x00, "Mouth spark slot 0 must also clear high OAM to 8x8")
+                self.assertEqual(jhi, 0x02, "Held Minish Cap Gust Jar must be 16x16 ($02)")
+                if exp_mouth is not None:
+                    self.assertEqual(reg_sprites[0][3], exp_mouth, "Expected custom Minish Cap nozzle sheen")
+                    self.assertEqual(reg_sprites[0][5], 0x00, "Mouth sheen slot 0 must be 8x8 ($00)")
+
+        # Verify smooth left-edge clipping when facing Left at LinkScreenX=4 (jar_sx = -5 -> hi=$03!)
+        fx_edge = self.make_fx()
+        self._start_gust(fx_edge, button=1, facing=4)
+        fx_edge.set_word(0xE2, 0x00FC)  # LinkX=0x100 -> screenX=4, jar_sx = 4 - 9 = -5 ($FB)
+        fx_edge.reset_oam_frame()
+        fx_edge.run_jsl("GustJar_FrameTick")
+        fx_edge.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
+        jar_edge = [s for s in fx_edge.read_oam_sprites("C") if s[3] == 0x07][0]
+        self.assertEqual(jar_edge[1], 0xFB)
+        self.assertEqual(jar_edge[5], 0x03, "Left-edge overhang must use 16x16 + X-msb=1 ($03)")
 
         # Verify Tier 3 rapid +/-1px tremble AND Pal 4 <-> Pal 2 pulsing glow
         fx = self.make_fx()
@@ -1076,27 +1222,31 @@ class TestQ323GustJarAndGaroGlide(unittest.TestCase):
             fx.reset_oam_frame()
             fx.put(0x1A, f)
             fx.run_jsl("GustJar_FrameTick")
-            jar = [s for s in fx.read_oam_sprites("D") if s[3] == 0x72][0]
+            fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
+            jar = [s for s in fx.read_oam_sprites("C") if s[3] == 0x07][0]
             ys_seen.add(jar[2])
             pals_seen.add(jar[4] & 0x0E)
-        self.assertEqual(ys_seen, {0x60 + 10 - 1, 0x60 + 10 + 1}, "Tier 3 must rumble +/-1px on Y when facing Right")
-        self.assertEqual(pals_seen, {0x04, 0x08}, "Tier 3 must pulse between Pal 4 (green) and Pal 2 (blue)")
+        self.assertEqual(ys_seen, {0x60 + 6 - 1, 0x60 + 6 + 1}, "Tier 3 must rumble +/-1px on Y when facing Right")
+        self.assertEqual(pals_seen, {0x04, 0x08}, "Tier 3 must pulse between Pal 4 (emerald) and Pal 2 (wind glow)")
 
         # Verify Blast Peak 2px recoil kickback + Pal 2 flash + muzzle burst ($A9)
         # starts immediately on frame 0 (FireBlast release frame — zero 1-frame flicker!)
         fx.reset_oam_frame()
         fx.put(0xF0, 0x00)
         fx.put(0x1A, 1)
-        fx.run_jsl("GustJar_FrameTick")  # enters state 2 & renders frame-0 recoil + wave!
-        jar_f0 = [s for s in fx.read_oam_sprites("D") if s[3] == 0x72]
-        self.assertEqual(len(jar_f0), 1, "Frame-0 release must draw held jar without 1-frame blink")
-        self.assertEqual(jar_f0[0][1], 0x60 + 13 - 2, "Blast peak must kick jar 2px back toward Link")
+        fx.run_jsl("GustJar_FrameTick")  # enters state 2
+        fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)  # renders frame-0 recoil + wave!
+        jar_f0 = [s for s in fx.read_oam_sprites("C") if s[3] == 0x07]
+        self.assertEqual(len(jar_f0), 1, "Frame-0 release must draw held jar ($07) without 1-frame blink")
+        self.assertEqual(jar_f0[0][1], 0x60 + 9 - 2, "Blast peak must kick jar 2px back toward Link")
         self.assertEqual(jar_f0[0][4] & 0x0E, 0x04, "Blast peak must flash Pal 2")
-        self.assertEqual(fx.read_oam_sprites("D")[0][3], 0xA9, "Blast peak must emit $A9 muzzle burst")
+        self.assertEqual(jar_f0[0][5], 0x02, "Held jar stays 16x16 during blast peak")
+        self.assertEqual(fx.read_oam_sprites("C")[0][3], 0xA9, "Blast peak must emit $A9 muzzle burst")
 
-    def test_gust_jar_upgraded_inhale_funnel_and_expanding_cyclone_wave_oam(self):
-        # 1. Inhale OAM scales 4 / 5 / 6 wind sprites across Tier 1 / 2 / 3 with resident wind tiles
-        wind_tiles = {0xC2, 0xCC, 0xCD, 0xCE, 0xA9, 0xCF, 0x8C}
+    def test_gust_jar_minish_inhale_funnel_and_crescent_wave_oam(self):
+        # 1. Inhale OAM scales 4 / 5 / 6 wind sprites across Tier 1 / 2 / 3 using ONLY
+        #    our dedicated custom Minish Cap Inhale Wind Set ($09, $0A, $19, $1A)!
+        mc_inhale_tiles = {0x09, 0x0A, 0x19, 0x1A}
         for charge, exp_tier, exp_wind_cnt in ((0x04, 1, 4), (0x1A, 2, 5), (0x40, 3, 6)):
             with self.subTest(inhale_tier=exp_tier):
                 fx = self.make_fx()
@@ -1105,49 +1255,234 @@ class TestQ323GustJarAndGaroGlide(unittest.TestCase):
                 fx.reset_oam_frame()
                 fx.put(0x1A, 5)
                 fx.run_jsl("GustJar_FrameTick")
-                # Region D gets 2 sprites (held jar + mouth spark) + exp_wind_cnt funnel streaks
+                fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
                 self.assertEqual(len(fx.oam_records), 2)
+                self.assertEqual(fx.oam_records[0][0], "C")
                 self.assertEqual(fx.oam_records[0][1], 8)
+                self.assertEqual(fx.oam_records[1][0], "A")
                 self.assertEqual(fx.oam_records[1][1], exp_wind_cnt * 4)
-                wind_sprs = fx.read_oam_sprites("D")[2:]
+                wind_sprs = fx.read_oam_sprites("A")
                 self.assertEqual(len(wind_sprs), exp_wind_cnt)
                 for _, x, y, tile, attr, hi in wind_sprs:
-                    self.assertIn(tile, wind_tiles, f"Unexpected wind tile {tile:#04x}")
-                    self.assertEqual(attr & 0x0E, 0x04, "Wind particles must use icy sky-blue OAM Pal 2")
+                    self.assertIn(tile, mc_inhale_tiles, f"Expected custom Minish inhale tile, got {tile:#04x}")
+                    self.assertEqual(attr & 0x0E, 0x04, "Wind particles must use OAM Pal 2 ($04)")
                     self.assertEqual(hi, 0x00)
+                # Horizontal inhale streaks ($09) when facing Right must H-flip ($40) to point inward Left!
+                h_streaks = [s for s in wind_sprs if s[3] == 0x09]
+                self.assertGreaterEqual(len(h_streaks), 1)
+                for s in h_streaks:
+                    self.assertEqual(s[4] & 0x40, 0x40, "Right-facing inhale streak $09 must H-flip inward")
 
-        # 2. Blast Wave OAM: Tier 1 = 3x 8x8; Tier 2 = 1x 16x16 + 3x 8x8; Tier 3 = 1x 16x16 + 4x 8x8 expanding!
-        for charge, exp_tier, exp_cnt, exp_core_hi in ((0x04, 1, 3, 0x00), (0x1A, 2, 4, 0x02), (0x40, 3, 5, 0x02)):
+        # Vertical inhale uses $0A vertical ribbon (V-flip $80 when facing Down, $00 when facing Up)
+        for facing, exp_vflip in ((0, 0x00), (2, 0x80)):
+            fx_v = self.make_fx()
+            self._start_gust(fx_v, button=1, facing=facing)
+            fx_v.reset_oam_frame()
+            fx_v.put(0x1A, 1)
+            fx_v.run_jsl("GustJar_FrameTick")
+            fx_v.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
+            v_streaks = [s for s in fx_v.read_oam_sprites("A") if s[3] == 0x0A]
+            self.assertGreaterEqual(len(v_streaks), 1, f"Expected $0A vertical ribbon for facing={facing}")
+            for s in v_streaks:
+                self.assertEqual(s[4] & 0x80, exp_vflip)
+
+        # 2. Blast Wave OAM: ALL Tiers (1/2/3) emit 16x16 custom Minish Crescent Wave ($09)
+        #    with directional orientation flip (U=$80, D=$00, L=$40, R=$00) + expanding wing puffs,
+        #    and ZERO Portal Rod ($EE) tiles at any wave age!
+        dir_flips = ((0, 0x80), (2, 0x00), (4, 0x40), (6, 0x00))
+        for facing, exp_flip in dir_flips:
+            with self.subTest(wave_dir=facing):
+                fx = self.make_fx()
+                self._start_gust(fx, button=1, facing=facing)
+                fx.put(0x0275, 0x40)  # Tier 3
+                fx.run_jsl("GustJar_FrameTick")
+                fx.put(0xF0, 0x00)
+                fx.run_jsl("GustJar_FrameTick")  # FireBlast
+                fx.reset_oam_frame()
+                fx.put(0x1A, 4)
+                fx.run_jsl("GustJar_FrameTick")
+                fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
+                wave_sprs = fx.read_oam_sprites("A")
+                self.assertEqual(wave_sprs[0][3], 0x09, "Primary Blast Wave core must be custom 16x16 $09")
+                self.assertEqual(wave_sprs[0][5], 0x02, "Blast Crescent core must be 16x16 ($02)")
+                self.assertEqual(wave_sprs[0][4] & 0xC0, exp_flip, "Blast Crescent must orient in travel direction")
+
+        for charge, exp_tier, exp_cnt in ((0x04, 1, 3), (0x1A, 2, 4), (0x40, 3, 5)):
             with self.subTest(wave_tier=exp_tier):
                 fx = self.make_fx()
                 self._start_gust(fx, button=1, facing=6)
                 fx.put(0x0275, charge)
-                fx.run_jsl("GustJar_FrameTick")  # latch tier
+                fx.run_jsl("GustJar_FrameTick")
                 fx.put(0xF0, 0x00)
                 fx.run_jsl("GustJar_FrameTick")  # FireBlast
-                # Tick 1 (age=1): Tier 2/3 core uses $86 billowing puff cloud (16x16)
                 fx.reset_oam_frame()
                 fx.put(0x1A, 2)
                 fx.run_jsl("GustJar_FrameTick")
-                wave_rec = fx.oam_records[-1]  # DrawWaveOAM is last alloc
+                fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
+                wave_rec = fx.oam_records[-1]
+                self.assertEqual(wave_rec[0], "A")
                 self.assertEqual(wave_rec[1], exp_cnt * 4)
-                wave_sprs_early = fx.read_oam_sprites("D")[-exp_cnt:]
-                self.assertEqual(wave_sprs_early[0][5], exp_core_hi)
-                if exp_tier >= 2:
-                    self.assertEqual(wave_sprs_early[0][3], 0x86, "Early Tier 2/3 wave core must be $86 puff cloud")
+                wave_sprs_early = fx.read_oam_sprites("A")
+                self.assertEqual(wave_sprs_early[0][3], 0x09)
+                self.assertEqual(wave_sprs_early[0][5], 0x02)
                 spread_early = abs(wave_sprs_early[1][2] - wave_sprs_early[2][2])
 
-                # Advance 6 more ticks (age=7): Tier 2/3 core transitions to $EE cyclone & wings widen!
                 for k in range(6):
                     fx.reset_oam_frame()
                     fx.put(0x1A, 4 + k)
                     fx.run_jsl("GustJar_FrameTick")
-                wave_sprs_late = fx.read_oam_sprites("D")[-exp_cnt:]
-                if exp_tier >= 2:
-                    self.assertEqual(wave_sprs_late[0][3], 0xEE, "Sustained Tier 2/3 wave core must be $EE cyclone")
-                    self.assertEqual(wave_sprs_late[0][5], 0x02, "Cyclone core must remain 16x16")
+                    fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
+                    for s in fx.read_oam_sprites():
+                        self.assertNotIn(s[3], (0xEE, 0x72), "Never emit Portal Rod $EE or Magic Jar $72")
+                wave_sprs_late = fx.read_oam_sprites("A")
+                self.assertEqual(wave_sprs_late[0][3], 0x09)
+                self.assertEqual(wave_sprs_late[0][5], 0x02)
                 spread_late = abs(wave_sprs_late[1][2] - wave_sprs_late[2][2])
-                self.assertGreater(spread_late, spread_early, "Crescent wings must widen as wave travels")
+                self.assertGreater(spread_late, spread_early, "Wing puffs must widen as wave travels")
+
+        # 3. Graceful fallback: if another $0109 item ($0301/$037A/$0308/$5D) becomes active
+        #    while a Blast Wave is still flying after follow-through (bit 2 clear), DrawWaveOAM
+        #    falls back cleanly from $09 to resident white billowing cloud $86 (16x16)!
+        for conflict_addr, conflict_val in ((0x0301, 0x01), (0x037A, 0x04), (0x0308, 0x01), (0x5D, 0x13)):
+            with self.subTest(fallback_addr=hex(conflict_addr)):
+                fx = self.make_fx()
+                self._start_gust(fx, button=1, facing=6)
+                fx.put(0x0275, 0x40)
+                fx.run_jsl("GustJar_FrameTick")
+                fx.put(0xF0, 0x00)
+                fx.run_jsl("GustJar_FrameTick")
+                for f in range(8):  # Finish 7-frame follow-through -> bit 2 clears
+                    fx.put(0x1A, f)
+                    fx.run_jsl("GustJar_FrameTick")
+                self.assertEqual(fx.get(0x0273), 2)
+                self.assertEqual(fx.get(0x027F) & 0x04, 0)
+                fx.put(conflict_addr, conflict_val)
+                fx.reset_oam_frame()
+                fx.put(0x1A, 12)
+                fx.run_jsl("GustJar_FrameTick")
+                fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
+                wave_sprs = fx.read_oam_sprites("A")
+                self.assertEqual(wave_sprs[0][3], 0x86, "Must fall back to resident cloud $86 on $0109 item conflict")
+                self.assertEqual(wave_sprs[0][5], 0x02, "Fallback cloud $86 must remain 16x16")
+
+    def test_gust_jar_nmi_upload_vram_slots_frames_restore_and_bombchu_chain(self):
+        gfx_bytes = (ROOT / "Data/graphics/items/gust_jar_world.4bpp").read_bytes()
+        self.assertEqual(len(gfx_bytes), 0x480)
+        gfx_addr = self.labels["GustJarWorldGfx"]
+        self.assertEqual(gfx_addr >> 16, 0x34, "GustJarWorldGfx must reside in Bank $34")
+        self.assertGreaterEqual(gfx_addr & 0xFFFF, 0xE000)
+        self.assertLessEqual((gfx_addr & 0xFFFF) + len(gfx_bytes), 0xF000)
+
+        def block(idx: int) -> bytes:
+            return gfx_bytes[idx * 128:(idx + 1) * 128]
+
+        # 1. Idle fast-path: zero DMA transfers, preserves A/X/Y/P/DBR and $4304/$4302!
+        fx = self.make_fx()
+        fx.put(0x10, 0x07)
+        fx.set_word(0x0ADC, 0x9A3C)
+        fx.hw_regs[0x4302] = 0x3C; fx.hw_regs[0x4303] = 0x9A; fx.hw_regs[0x4304] = 0x7E
+        fx.run_nmi_jsl("GustJar_NmiUpload", a=0x5A, x=0x1357, y=0x2468)
+        self.assertEqual(fx.dma_transfers, [])
+        self.assertEqual((fx.cpu.a & 0xFF, fx.cpu.x, fx.cpu.y, fx.cpu.mf, fx.cpu.xf), (0x5A, 0x1357, 0x2468, True, False))
+        self.assertEqual((fx.hw_regs[0x4304], fx.hw_regs[0x4302], fx.hw_regs[0x4303]), (0x7E, 0x3C, 0x9A))
+
+        # 2. Non-gameplay module ($0E pause/menu) skips DMA cleanly!
+        fx.put(0x0273, 1); fx.put(0x027F, 0x04); fx.put(0x10, 0x0E)
+        fx.run_nmi_jsl("GustJar_NmiUpload")
+        self.assertEqual(fx.dma_transfers, [])
+
+        # 3. Inhale frames across all directions, Tier 1 vs Tier 2/3 pulse vs Corked ->
+        #    Slot 1 ($4070/$4170) gets exact Jar block 0..3; Slot 2 ($4090/$4190) gets Inhale block 4!
+        inhale_cases = [
+            ("right_t1",      6, 1, 0, 0x00, 0),
+            ("left_t1",       4, 1, 0, 0x04, 0),
+            ("right_t2_even", 6, 2, 0, 0x00, 0),
+            ("right_t2_odd",  6, 2, 0, 0x04, 1),  # Swollen pulse!
+            ("left_corked",   4, 1, 1, 0x00, 1),  # Corked -> always swollen!
+            ("down_front",    2, 3, 0, 0x04, 2),
+            ("up_back",       0, 3, 0, 0x04, 3),
+        ]
+        for name, facing, tier, cap, frame_ctr, exp_jar_blk in inhale_cases:
+            with self.subTest(inhale_nmi=name):
+                fx = self.make_fx()
+                fx.put(0x10, 0x09)
+                fx.set_word(0x0ADC, 0xBCDE)
+                fx.put(0x0273, 1); fx.put(0x027F, 0x04)
+                fx.put(0x0277, facing); fx.put(0x0276, tier)
+                fx.put(0x0278, cap); fx.put(0x1A, frame_ctr)
+                fx.run_nmi_jsl("GustJar_NmiUpload", a=0x33, x=0xCAFE, y=0xBEEF)
+                self.assertEqual(len(fx.dma_transfers), 4, "Expected 2 rows Jar + 2 rows Inhale Wind")
+                self.assertEqual([t[0] for t in fx.dma_transfers], [0x4070, 0x4170, 0x4090, 0x4190])
+                self.assertEqual([t[2] for t in fx.dma_transfers], [0x40, 0x40, 0x40, 0x40])
+                self.assertEqual(fx.dma_transfers[0][3] + fx.dma_transfers[1][3], block(exp_jar_blk))
+                self.assertEqual(fx.dma_transfers[2][3] + fx.dma_transfers[3][3], block(4))
+                # Verify $4304=$7E, $4302=$0ADC restored and registers/M8/X16 preserved!
+                self.assertEqual(fx.hw_regs[0x4304], 0x7E)
+                self.assertEqual(fx.hw_regs[0x4302] | (fx.hw_regs[0x4303] << 8), 0xBCDE)
+                self.assertEqual((fx.cpu.a & 0xFF, fx.cpu.x, fx.cpu.y, fx.cpu.mf, fx.cpu.xf), (0x33, 0xCAFE, 0xBEEF, True, False))
+                # Verify ZERO writes to Sword ($4050/$4150) or Somaria ($40C0/$41C0)!
+                for vword, _, _, _ in fx.dma_transfers:
+                    self.assertNotIn(vword, (0x4050, 0x4150, 0x40C0, 0x41C0))
+
+        # 4. Blast Wave NMI: directional H0/H1 (5/6) & V0/V1 (7/8) toggle on !GustJarWaveTmr bit 2;
+        #    Slot 1 ($4070) uploaded during follow-through (bit 2=1) and SKIPPED after (bit 2=0)!
+        blast_cases = [
+            ("R_peak_H0",  6, 0x0D, 0x10, 1, 5),
+            ("R_rec_H1",   6, 0x05, 0x14, 0, 6),
+            ("L_free_H1",  4, 0x01, 0x0C, None, 6),  # Follow-through ended -> Shield untouched!
+            ("D_free_V0",  2, 0x01, 0x10, None, 7),
+            ("U_free_V1",  0, 0x01, 0x0C, None, 8),
+        ]
+        for name, facing, flags, wtmr, exp_jar_blk, exp_wave_blk in blast_cases:
+            with self.subTest(blast_nmi=name):
+                fx = self.make_fx()
+                fx.put(0x10, 0x07)
+                fx.set_word(0x0ADC, 0xABCD)
+                fx.put(0x0273, 2); fx.put(0x027F, flags)
+                fx.put(0x0277, facing); fx.put(0x027A, wtmr)
+                fx.run_nmi_jsl("GustJar_NmiUpload")
+                if exp_jar_blk is not None:
+                    self.assertEqual([t[0] for t in fx.dma_transfers], [0x4070, 0x4170, 0x4090, 0x4190])
+                    self.assertEqual(fx.dma_transfers[0][3] + fx.dma_transfers[1][3], block(exp_jar_blk))
+                    self.assertEqual(fx.dma_transfers[2][3] + fx.dma_transfers[3][3], block(exp_wave_blk))
+                else:
+                    self.assertEqual([t[0] for t in fx.dma_transfers], [0x4090, 0x4190], "Shield $4070 must be skipped once follow-through ends")
+                    self.assertEqual(fx.dma_transfers[0][3] + fx.dma_transfers[1][3], block(exp_wave_blk))
+                self.assertEqual(fx.hw_regs[0x4304], 0x7E)
+                self.assertEqual(fx.hw_regs[0x4302] | (fx.hw_regs[0x4303] << 8), 0xABCD)
+
+        # 5. Another $0109 item active after follow-through skips Slot 2 ($4090/$4190) cleanly!
+        fx_item = self.make_fx()
+        fx_item.put(0x10, 0x07); fx_item.set_word(0x0ADC, 0x8888)
+        fx_item.put(0x0273, 2); fx_item.put(0x027F, 0x01); fx_item.put(0x0301, 0x01)
+        fx_item.run_nmi_jsl("GustJar_NmiUpload")
+        self.assertEqual(fx_item.dma_transfers, [], "Active $0301 item must prevent $4090/$4190 overwrite")
+        self.assertEqual(fx_item.hw_regs[0x4304], 0x7E)
+        self.assertEqual(fx_item.hw_regs[0x4302] | (fx_item.hw_regs[0x4303] << 8), 0x8888)
+
+        # 6. Full Bombchu_NmiUpload -> GustJar_NmiUpload chain: BOTH upload cleanly with zero conflict!
+        fx_chain = self.make_fx()
+        fx_chain.put(0x10, 0x07)
+        fx_chain.set_word(0x0ADC, 0x9999)
+        fx_chain.set_word(0x0134, 0x2200)
+        # Active Bombchu in slot 0 + active Gust Jar inhale facing Right!
+        fx_chain.put(0x7E07F6, 0xBC); fx_chain.put(0x7E07F1, 1); fx_chain.put(0x7E07F2, 0)
+        fx_chain.put(0x0C4A, 0x07); fx_chain.put(0x03EA, 0xBC); fx_chain.put(0x0C5E, 0)
+        fx_chain.put(0x0273, 1); fx_chain.put(0x027F, 0x04); fx_chain.put(0x0277, 6); fx_chain.put(0x0276, 1)
+        fx_chain.run_nmi_jsl("Bombchu_NmiUpload", a=0x42, x=0x1111, y=0x2222)
+        self.assertEqual([t[0] for t in fx_chain.dma_transfers],
+                         [0x42E0, 0x43E0, 0x4070, 0x4170, 0x4090, 0x4190])
+        self.assertEqual(fx_chain.hw_regs[0x4304], 0x7E)
+        self.assertEqual(fx_chain.hw_regs[0x4302] | (fx_chain.hw_regs[0x4303] << 8), 0x9999)
+        self.assertEqual(fx_chain.hw_regs[0x2116] | (fx_chain.hw_regs[0x2117] << 8), 0x2200,
+                         "Bombchu_NmiUpload displaced LDX $0134 : STX $2116 must run after GustJar_NmiUpload")
+        self.assertEqual((fx_chain.cpu.a & 0xFF, fx_chain.cpu.y, fx_chain.cpu.mf, fx_chain.cpu.xf),
+                         (0x42, 0x2222, True, False))
+
+        # 7. Source-level static check: ZERO #$EE or #$72 tile constants anywhere in Items/gust_jar.asm!
+        gust_src = (ROOT / "Items/gust_jar.asm").read_text()
+        self.assertNotIn("#$EE", gust_src, "Items/gust_jar.asm must never reference Portal Rod tile #$EE")
+        self.assertNotIn("#$72", gust_src, "Items/gust_jar.asm must never reference Small Magic Jar tile #$72")
 
     def test_switch_hook_trade_gate_isolated_from_gust_jar_1d(self):
         fx = self.make_fx()

@@ -386,6 +386,7 @@ Bombchu_NmiUpload:
   SEP #$20
   .done
   REP #$10
+  JSL GustJar_NmiUpload
   PLY : PLX : PLA : PLP
   LDX.w $0134 : STX.w $2116 ; displaced instructions
   RTL
