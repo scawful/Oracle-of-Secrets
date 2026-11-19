@@ -352,13 +352,19 @@ endif
   JSR HorseForm_ThrottleHostiles
   JSL HorseGame_KidStartCheck
 
-  ; Refresh SP-3[9..15] + SP-7 if a palette reload reset SP-3 to uniform fill.
-  REP #$20
-  LDA.l $7EC67C : CMP.l $7EC67E : BNE +
-    SEP #$20
+  ; Refresh SP-3[9..15] + SP-7 whenever SP-3[15] ($7EC67E) no longer matches
+  ; Epona's day/night-tinted HorsePalette[6] ($239F) at full brightness.
+  ; Catches BOTH LW uniform $14A5 fills AND non-uniform SW/DW palettes ($B0).
+  LDA.b $13 : CMP.b #$0F : BNE .pal_ok
+  REP #$30
+  LDA.l HorsePalette+12 : LDX.w #$017E
+  JSL LoadDayNightPaletteEffect
+  REP #$30
+  CMP.l $7EC67E : BEQ .pal_ok
+    SEP #$30
     JSL Palette_ArmorAndGloves
-  +
-  SEP #$20
+  .pal_ok
+  SEP #$30
 
   ; Handle mid-jump physics or check ground triggers.
   LDA.l Horse_State : BEQ .grounded
@@ -828,11 +834,21 @@ pullpc
 
 Horse_PlayerOamHook:
 {
-  LDA.w !CurrentMask : CMP.b #!Horse_MaskId : BEQ .draw_horse
+  LDA.w !CurrentMask : CMP.b #!Horse_MaskId : BEQ .chk_horse
+  .native_oam
     LDY.b #$00 : LDA.b $11
     RTL
 
-  .draw_horse
+  .chk_horse
+  ; Match Horse_LinkDmaPrefix eligibility exactly so Horse OAM is never drawn
+  ; over native Link/item VRAM during non-overlay menus or busy slots.
+  LDA.b $1B : BNE .native_oam
+  LDA.b $10 : CMP.b #$09 : BEQ .chk_busy
+  CMP.b #$0B : BEQ .chk_busy
+  CMP.b #$0E : BNE .native_oam
+  JSL Horse_IsSafeOverlay : BCC .native_oam
+  .chk_busy
+  JSL Horse_SlotsBusy : BCS .native_oam
   JSL Horse_DrawPlayerOam_Long
   PLA : PLA : PLA                     ; drop JSL return inside PlayerOam_Main
   PLB                                 ; pop PlayerOam_Main's entry PHB

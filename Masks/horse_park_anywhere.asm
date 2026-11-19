@@ -177,11 +177,10 @@ Horse_FrameEndScan:
   SEP #$20
   LDA.b #$00 : PHA : PLB
   REP #$20 : LDA.l Horse_Marker : CMP.w #$4852 : SEP #$20 : BNE .reset
-  ; Item menu ($0E/$01) and text ($0E/$02) freeze play and leave sprite VRAM
+  ; Safe Overworld-overlay $0E submodules freeze play and leave sprite VRAM
   ; alone: Epona keeps her cells (Horse_OffRanchNpc .hold), nothing to do.
   LDA.b $10 : CMP.b #$0E : BNE .not_pause
-    LDA.b $11 : CMP.b #$01 : BEQ .done
-    CMP.b #$02 : BEQ .done
+    JSL Horse_IsSafeOverlay : BCS .done
     BRA .leaving
   .not_pause
   CMP.b #$09 : BEQ +
@@ -194,10 +193,13 @@ Horse_FrameEndScan:
   LDA.l Horse_OffClear : INC : BEQ .done          ; saturate at $FF
   STA.l Horse_OffClear
   BRA .done
-  ; Module/submodule changed this frame: the coming NMI restores the native
-  ; cells (Horse_OffRanchNpc .unwant) while this frame's OAM still has Epona.
+  ; Module/submodule changed to a non-overlay state: the coming NMI restores
+  ; native cells (off-Ranch or Ranch) while this frame's OAM still has Epona.
+  ; Hide Epona's 8 OAM slots before NMI so garbled native tiles never flash!
   .leaving
-  LDA.l Horse_OffState : CMP.b #$A2 : BNE .reset
+  LDA.l Horse_OffState : CMP.b #$A2 : BEQ .leaving_hide
+  LDA.l Horse_NpcUploadedFrame : CMP.b #$FF : BEQ .reset
+  .leaving_hide
   JSR .hide_epona
   BRA .reset
   ; Another actor draws from her cells: hide her this frame and run off.
@@ -307,22 +309,25 @@ Horse_ParkedBusy:
 }
 
 ; NMI, from Horse_NmiUpload .npc when the Ranch profile is not loaded.
-; M8/X16, DBR $00. C=1: upload Horse_NpcFrame now (.npc_rows). C=0: done.
+; M8/X16, DBR $00.
+; Out: C=1: upload Horse_NpcFrame now (.npc_rows).
+;      C=0, A=1: performed 1KB VRAM save/restore DMA (skip 1KB animated tiles).
+;      C=0, A=0: no DMA performed.
 ; The copy (1KB read) and the upload use separate NMIs for vblank budget.
 Horse_OffRanchNpc:
 {
   BRA .gates
   .unwant                                         ; kept within branch range of the gates
-  JSL Horse_OffRestore
+  JSL Horse_OffRestore                            ; returns A=1 if 1KB restore DMA ran, else 0
+  PHA
   LDA.b #$FF : STA.l Horse_NpcUploadedFrame
+  PLA
   CLC : RTL
 
   .gates
   LDA.b $10 : CMP.b #$0E : BNE .not_pause
-    LDA.b $11 : CMP.b #$01 : BEQ .hold            ; item menu
-    CMP.b #$02 : BNE .unwant                      ; text
-    .hold
-    CLC : RTL                                     ; keep her cells as they are
+    JSL Horse_IsSafeOverlay : BCC .unwant
+    LDA.b #$00 : CLC : RTL                        ; keep her cells as they are (no DMA)
   .not_pause
   CMP.b #$09 : BEQ +
   CMP.b #$0B : BNE .unwant
@@ -363,23 +368,28 @@ Horse_OffRanchNpc:
   LDA.l $7EC2FC : STA.l Horse_OffSheet
   LDA.b #$A1 : STA.l Horse_OffState
   LDA.b #$FF : STA.l Horse_NpcUploadedFrame
+  LDA.b #$01 : CLC : RTL                          ; 1KB VRAM read ran
   .none
-  CLC : RTL
+  LDA.b #$00 : CLC : RTL                          ; no DMA ran
 }
 
 ; NMI, M8/X16. Write the copy back if Epona's cells are in VRAM and slot
 ; $7EC2FC still holds the copied sheet (a reload already replaced them).
+; Out: A=1 if 1KB restore DMA ran, A=0 if no DMA ran.
 Horse_OffRestore:
 {
-  LDA.l Horse_OffState : CMP.b #$A2 : BNE .clear
-  LDA.l $7EC2FC : CMP.l Horse_OffSheet : BNE .clear
+  LDA.l Horse_OffState : CMP.b #$A2 : BNE .clear_none
+  LDA.l $7EC2FC : CMP.l Horse_OffSheet : BNE .clear_none
   LDX.w #Horse_OffBuf : STX.w $4302
   LDA.b #Horse_OffBuf>>16 : STA.w $4304
   LDX.w #$0400 : STX.w $4305
   LDX.w #$5000 : STX.w $2116
   LDA.b #$01 : STA.w $420B
   LDA.b #$7E : STA.w $4304
-  .clear
+  LDA.b #$00 : STA.l Horse_OffState
+  LDA.b #$01
+  RTL
+  .clear_none
   LDA.b #$00 : STA.l Horse_OffState
   RTL
 }
