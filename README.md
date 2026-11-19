@@ -1,49 +1,52 @@
 # The Legend of Zelda: Oracle of Secrets
 
-Source code for all assembly-level hacks in the game. Learn more about the project at [halext.org](https://halext.org/labs/Oracle)
+A full-scale *A Link to the Past* ROM hack featuring original overworlds, dungeons, custom bosses, mask transformations, expanded items, custom music, and a day/night system. Learn more at [halext.org](https://halext.org/labs/Oracle).
 
-## Start here
+## Highlights
+
+- **Expanded Overworlds & Regions:** Kalyxo (with day/night cycle), Eon Abyss (GBC-styled dark realm), East Kalyxo, Lyra Sea (sailable boat + Song of Soaring), and Sky Islands.
+- **Mask Transformations:** Deku, Zora, Wolf, Bunny, Stone, Garo, and Minish forms with quick-swap bindings.
+- **Custom Items & Menu Overhaul:** Minish Cap-style Gust Jar, Portal Rod, Switch Hook / Goldstar, Bombchus, Fishing Rod, Ocarina songs, and X/Y item bindings.
+- **Custom Bosses, NPCs & Soundtrack:** Original bosses, living villages, and custom SNES N-SPC arrangements.
+
+## Start Here
 
 | I want to... | Go to |
 |---|---|
-| Build the ROM | `Scripts/Build/build_rom.sh 168` (base `Roms/oos168.sfc` -> patched `Roms/oos168x.sfc`) |
-| Edit rooms, maps, graphics, text | open `Oracle-of-Secrets.yaze` in yaze (it pins the base ROM SHA-1) |
+| Build the ROM | `Scripts/Build/build_rom.sh 168` (base `Roms/oos168.sfc` → patched `Roms/oos168x.sfc`) |
+| Package a `.bps` beta patch | `Scripts/Build/beta_patch.sh` (diffs against vanilla US ALTTP 1.0) |
+| Edit rooms, maps, graphics, text | Open `Oracle-of-Secrets.yaze` in [yaze](https://github.com/scawful/yaze) |
 | Look up RAM/SRAM, flags, tables | `Docs/Technical/` (`Flag_Ledger.md`, `MemoryMap.md`) |
-| Read dungeon/world/lore references | `Docs/World/` |
+| Read dungeon & world references | `Docs/World/` |
 
-What lives where:
+### Repository Layout
 
-- **Game source**: `Oracle_main.asm`, `Config/`, `Core/`, `Dungeons/`, `Items/`, `Masks/`, `Menu/`,
-  `Music/`, `Overworld/`, `Sprites/`, `Util/`. Feature flags: `Util/macros.asm` (generated
-  `Config/feature_flags.asm` via `Scripts/Build/set_feature_flags.py`).
-- **Build data**: `Data/` (dialogue, custom collision, ROM byte patches, debug checkpoints),
-  `Docs/Dev/Planning/*.json` (yaze project registry).
-- **Scripts**: only build, generate, validate, emulator and debug helpers (`Scripts/README.md`).
-- **Not in git**: agent plans, reviews, evidence, old debugging guides and session notes live in the
-  private AFS context `~/.context/projects/oracle-of-secrets/` (the repo's `.context` symlink).
-  Docs moved out on 2026-10-06 keep their old relative paths under
-  `scratchpad/archive/repo-slim-2026-10-06/repo/` (e.g. the old `Docs/RUNBOOK.md`).
+- **Game source:** `Oracle_main.asm`, `Config/`, `Core/`, `Dungeons/`, `Items/`, `Masks/`, `Menu/`, `Music/`, `Overworld/`, `Sprites/`, `Util/`. Feature flags live in `Util/macros.asm` (generated into `Config/feature_flags.asm` via `Scripts/Build/set_feature_flags.py`).
+- **Build data:** `Data/` (dialogue tables, custom collision, graphics manifests, debug checkpoints), `Docs/Dev/Planning/*.json`.
+- **Scripts:** Build, generation, validation, and emulator helpers (`Scripts/README.md`).
+- **Tests:** Automated unit and compiled 65816 test suites (`Tests/`).
 
 ## Quick Build
 
 ```bash
-Scripts/Build/build_rom.sh 168      # direct build with options
+Scripts/Build/build_rom.sh 168      # assemble patched ROM (Roms/oos168x.sfc)
 Scripts/Build/oos-quick.sh          # fast build + Mesen2 reload
-Scripts/Build/oos-verify.sh         # build + reload + full validation
-Scripts/Build/z3dk_safe_smoke.sh    # safe z3asm smoke build in a temp workspace
+Scripts/Build/oos-verify.sh         # build + reload + validation suite
+Scripts/Build/z3dk_safe_smoke.sh    # isolated z3asm smoke build
 ```
 
-ROM naming: `Roms/oos<VERSION>.sfc` is the unpatched base (the edit target); `Roms/oos<VERSION>x.sfc` is
-the Asar-patched ROM for testing only. Never edit the `x` ROM.
+ROM naming: `Roms/oos<VERSION>.sfc` is the unpatched base (edit target); `Roms/oos<VERSION>x.sfc` is the Asar-patched output for emulator testing only. Never edit the `x` ROM directly.
 
-## Hook tagging (optional)
-z3asm infers each hook's kind, target, and name from the assembled code (`Scripts/Build/build_rom.sh 168 --asar=z3asm` writes `Roms/hooks.json`).
-Add an `@hook` comment on the `org` line only to override those values or to record ABI widths, for example:
-`org $02C0C3 ; @hook name=Overworld_SetCameraBounds expected_m=16 expected_x=8`
+## Hook Tagging (Optional)
 
-Supported `@hook` fields: `name`, `kind`, `target`, `module`, `note`, `expected_m`, `expected_x`, `expected_exit_m`, `expected_exit_x`, `skip_abi`, `abi`. Rules: `../z3dk/docs/Z3DK_HOOKS.md`.
+`z3asm` infers each hook's kind, target, and name from assembled code (`Scripts/Build/build_rom.sh 168 --asar=z3asm` writes `Roms/hooks.json`). Add an `@hook` comment on an `org` line only to override those values or document ABI widths:
 
-## Z3DK config
+```asm
+org $02C0C3 ; @hook name=Overworld_SetCameraBounds expected_m=16 expected_x=8
+```
+
+Supported `@hook` fields: `name`, `kind`, `target`, `module`, `note`, `expected_m`, `expected_x`, `expected_exit_m`, `expected_exit_x`, `skip_abi`, `abi`.
+
+## Z3DK Config
+
 - `z3dk.toml`: Oracle of Secrets main entry (`Oracle_main.asm`).
-
----

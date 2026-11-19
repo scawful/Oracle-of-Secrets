@@ -17,7 +17,7 @@ This repo has accumulated scripts over time. The goal is to keep a small “gold
 - Package a beta patch: `Scripts/Build/beta_patch.sh`
 - Handheld (RG353P) testing: moved to the sibling repo `~/src/hobby/oos-rg353p`.
 
-Archived docs may still say `./build.sh` or flat `scripts/…` paths. Prefer this Golden Path (the old `Docs/RUNBOOK.md` is in the AFS archive).
+Older docs may still reference `./build.sh` or flat `scripts/…` paths. Prefer the Golden Path commands above.
 
 ## Common Debug Helpers
 - Blackout capture bundle: `Scripts/Debug/capture_blackout.py`
@@ -36,12 +36,8 @@ Archived docs may still say `./build.sh` or flat `scripts/…` paths. Prefer thi
 - Portable iOS/Mac project bundle: `Scripts/Generate/export_yazeproj_bundle.py --out-icloud`
 
 ## Scope
-Keep scripts here only when they build, validate, or debug the game.
-Agent frameworks, autonomous gameplay, and device tooling live outside this repo.
-Exception: `Scripts/Agents/coord_compact.py` keeps the AFS coordination files short (AGENTS.md rule 4).
-The Campaign, Agent, OracleDebugger, Evaluations, and ralph-codex-loop tools were removed on 2026-09-23; recover them from git history if needed.
-Analysis scripts, map renders and window-manager helpers moved to the AFS archive on 2026-10-06
-(`~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Scripts/`).
+Keep scripts here focused on building, generating, validating, packaging, or debugging the game.
+Device deployment and external tooling live in their own repositories.
 
 If a doc references a script that does not exist (example: `mesen_cli.sh`), prefer the socket client (`Scripts/Mesen2/mesen2_client.py`) instead.
 
