@@ -1,7 +1,7 @@
 {
-  "schema": 1,
+  "schema": 2,
   "image": "canonical.png",
-  "status": "stand-in (GBC reference recolour), not final art",
+  "status": "16-bit SNES/Oracle-hybrid multi-frame boss tilesheet",
   "palette_bgr555": [
     "$0000",
     "$1043",
@@ -29,74 +29,127 @@
         64,
         48
       ],
-      "symmetric": true,
-      "source": "plan/pose_idle_B.png"
+      "symmetric": true
+    },
+    {
+      "id": "walk_l",
+      "rect": [
+        64,
+        0,
+        64,
+        48
+      ],
+      "symmetric": false
+    },
+    {
+      "id": "walk_r",
+      "rect": [
+        128,
+        0,
+        64,
+        48
+      ],
+      "symmetric": false
     },
     {
       "id": "roar",
       "rect": [
-        64,
+        192,
         0,
         64,
         48
       ],
-      "symmetric": true,
-      "source": "plan/pose_roar_B.png"
+      "symmetric": true
+    },
+    {
+      "id": "charge_lean",
+      "rect": [
+        256,
+        0,
+        64,
+        48
+      ],
+      "symmetric": true
     },
     {
       "id": "core_open",
       "rect": [
-        128,
         0,
+        48,
         48,
         48
       ],
-      "symmetric": true,
-      "source": "plan/pose_core_open_B.png"
+      "symmetric": true
+    },
+    {
+      "id": "core_pulse",
+      "rect": [
+        48,
+        48,
+        48,
+        48
+      ],
+      "symmetric": true
     },
     {
       "id": "cloak",
       "rect": [
-        176,
-        0,
+        96,
         48,
+        32,
         48
       ],
-      "symmetric": false,
-      "source": "plan/pose_cloak.png"
+      "symmetric": true
+    },
+    {
+      "id": "trident_throw",
+      "rect": [
+        128,
+        48,
+        64,
+        48
+      ],
+      "symmetric": false
     },
     {
       "id": "trident_up",
       "rect": [
         0,
-        48,
+        96,
         64,
         64
       ],
-      "symmetric": false,
-      "source": "plan/pose_trident_up.png"
+      "symmetric": false
     },
     {
       "id": "trident_v",
       "rect": [
-        64,
+        192,
         48,
         16,
         32
       ],
-      "symmetric": false,
-      "source": "mock/tri_mal_1.png"
+      "symmetric": false
     },
     {
       "id": "trident_h",
       "rect": [
-        80,
+        208,
         48,
         32,
         16
       ],
-      "symmetric": false,
-      "source": "mock/tri_mal_3.png"
+      "symmetric": false
+    },
+    {
+      "id": "trident_d",
+      "rect": [
+        240,
+        48,
+        32,
+        32
+      ],
+      "symmetric": false
     }
   ],
   "reserved_from_ganondorf": {
@@ -107,6 +160,6 @@
       "$80",
       "$82"
     ],
-    "why": "energy balls + bats keep drawing if alive at the hand-off"
+    "why": "energy balls + bats keep drawing during hand-off and Phase 3 Ring of Bats"
   }
 }
