@@ -132,7 +132,9 @@ Sprite_KydreeokHead_Main:
                    KydreeokHead_Stuck,
                    KydreeokHead_Pant,
                    KydreeokHead_Stunned,
-                   KydreeokHead_Spit)
+                   KydreeokHead_Spit,
+                   KydreeokHead_SweepWindup,
+                   KydreeokHead_SweepFire)
 
   ; 0x00
   KydreeokHead_Rise:
@@ -165,10 +167,10 @@ Sprite_KydreeokHead_Main:
     JSR KydreeokHead_Anchor
     LDY.w SprSubtype, X
     LDA.w KydreeokHead_RestX, Y : STA.b $08
-    LDA.b #-48 : STA.b $09
+    LDA.b #-52 : STA.b $09
     LDA.b #$02 : JSR KydreeokHead_SeekOffset
     LDA.w SprTimerA, X : BNE .winding
-      LDA.b #$0C : STA.w SprTimerA, X
+      LDA.b #$0A : STA.w SprTimerA, X
       %GotoAction(!KydHead_Strike)
     .winding
     RTS
@@ -183,7 +185,8 @@ Sprite_KydreeokHead_Main:
     LDA.b #$01 : JSR KydreeokHead_SeekOffset
     LDA.w SprTimerA, X : BNE .striking
       LDA.b #!KydKnob_Stuck : JSL Kydreeok_Knob : STA.w SprTimerA, X
-      LDA.b #$06 : STA.l BossKit_Quake
+      LDA.b #$08 : STA.l BossKit_Quake
+      LDA.b #$21 : JSL Sound_SetSfx2PanLong ; Heavy bite impact thud
       %GotoAction(!KydHead_Stuck)
     .striking
     RTS
@@ -302,8 +305,8 @@ Sprite_KydreeokHead_Main:
     JMP KydreeokHead_EndWindow
   }
 
-  ; 0x0A - fireball telegraph: rear back and glow, then spit one fireball
-  ; at the player (a 3-ball spread in stage 3)
+  ; 0x0A - fireball telegraph: rear back and glow, then spit aimed fireball
+  ; in Stage 1 or 3-ball spread in Stages 2 & 3!
   KydreeokHead_Spit:
   {
     JSR KydreeokHead_Cue
@@ -313,26 +316,108 @@ Sprite_KydreeokHead_Main:
     LDA.b #-40 : STA.b $09
     LDA.b #$02 : JSR KydreeokHead_SeekOffset
     LDA.w SprTimerA, X : BNE .charging
-      LDA.b #$10 : STA.w SprTimerA, X
+      LDA.b #$0C : STA.w SprTimerA, X
       %GotoAction(!KydHead_Recover)
-      LDA.l BossDir_Stage : CMP.b #$03 : BNE .one
+      LDA.l BossDir_Stage : CMP.b #$02 : BCC .one
         JMP KydreeokHead_SpawnFireballSpread
       .one
       JMP KydreeokHead_SpawnFireballTargeted
     .charging
     RTS
   }
+
+  ; 0x0B - Stage 2/3 Sweeping Arc Flame Breath telegraph: rear to outer wing
+  ; shoulder and glow brightly before sweeping a 7-flame crescent wave.
+  KydreeokHead_SweepWindup:
+  {
+    JSR KydreeokHead_Cue
+    JSR KydreeokHead_Anchor
+    LDA.b #-44
+    LDY.w SprSubtype, X : BEQ .left_outer
+      LDA.b #44
+    .left_outer
+    STA.b $08
+    LDA.b #-48 : STA.b $09
+    LDA.b #$02 : JSR KydreeokHead_SeekOffset
+    LDA.w SprTimerA, X : BNE .charging
+      STZ.w SprMiscG, X
+      STZ.w SprTimerD, X
+      LDA.b #$2A : JSL Sound_SetSfx2PanLong ; Flame roar onset
+      %GotoAction(!KydHead_SweepFire)
+    .charging
+    RTS
+  }
+
+  ; 0x0C - Sweeping 7-flame crescent arc: left head sweeps L->R, right head
+  ; sweeps R->L (forming an X-crossing pincer wave during Stage 3 DualBreath!).
+  KydreeokHead_SweepFire:
+  {
+    JSR KydreeokHead_Anchor
+    LDA.w SprMiscG, X : CMP.b #$07 : BCC + : LDA.b #$06 : +
+    TAY
+    LDA.w .neck_x, Y
+    LDY.w SprSubtype, X : BEQ .left_pose
+      EOR.b #$FF : INC A
+    .left_pose
+    STA.b $08
+    LDA.b #-34 : STA.b $09
+    LDA.b #$02 : JSR KydreeokHead_SeekOffset
+
+    LDA.w SprTimerD, X : BNE .wait
+      LDA.b #$04 : STA.w SprTimerD, X
+      LDA.w SprMiscG, X : TAY
+      LDA.w .flame_dx, Y
+      LDY.w SprSubtype, X : BEQ .left_fx
+        EOR.b #$FF : INC A
+      .left_fx
+      STA.b $00
+      LDA.w SprMiscG, X : TAY
+      LDA.w .flame_dy, Y : STA.b $01
+      LDA.b #$36 : STA.b $08
+      LDA.b #$06 : STA.b $09
+      LDA.b #$10 : JSL BossKit_FxAtOffset
+
+      INC.w SprMiscG, X
+      LDA.w SprMiscG, X : CMP.b #$04 : BNE +
+        LDA.b #$2A : JSL Sound_SetSfx2PanLong ; Mid-sweep flame surge
+      +
+      LDA.w SprMiscG, X : CMP.b #$07 : BCC .wait
+        LDA.b #!KydKnob_Pant : JSL Kydreeok_Knob : STA.w SprTimerA, X
+        LDA.w SprHealth, X : STA.w SprMiscB, X
+        %GotoAction(!KydHead_Pant)
+    .wait
+    RTS
+
+    ; Left-head neck & flame sweep arc (negated for right head!)
+    .neck_x   : db -40, -28, -14,   0,  14,  28,  40
+    .flame_dx : db -44, -30, -14,   0,  14,  30,  44
+    .flame_dy : db  20,  34,  44,  48,  44,  34,  20
+  }
 }
 
 ; Carry set on the first telegraph frame (SprMiscG = 0, set by
-; Kydreeok_TakeTurn); plays the cue once.
+; Kydreeok_TakeTurn); plays a DISTINCT per-attack audio telegraph cue!
 KydreeokHead_Cue:
 {
   LDA.w SprMiscG, X : BNE .later
     INC.w SprMiscG, X
-    LDA.b #$35 : JSL Sound_SetSfx2PanLong ; placeholder cue: the rumble
-    SEC
-    RTS
+    LDA.w SprAction, X
+    CMP.b #!KydHead_Bite : BEQ .cue_bite
+    CMP.b #!KydHead_Spit : BEQ .cue_spit
+      ; Breath / Sweep charge: ominous fire charge SFX3.$2A
+      LDA.b #$2A : JSL Sound_SetSfx3PanLong
+      SEC
+      RTS
+    .cue_bite
+      ; Bite lunge telegraph: fierce Trinexx snarl SFX3.$26
+      LDA.b #$26 : JSL Sound_SetSfx3PanLong
+      SEC
+      RTS
+    .cue_spit
+      ; Fireball spit telegraph: crisp Fire Rod charge SFX2.$0E
+      LDA.b #$0E : JSL Sound_SetSfx2PanLong
+      SEC
+      RTS
   .later
   CLC
   RTS
@@ -567,29 +652,13 @@ KydreeokHead_SpawnFireballTargeted:
     JSR KydreeokHead_ConfigureFireball
     PHX
     TYX
-    JSL Sprite_DirectionToFacePlayer
-    LDA.w .speed_x, Y : STA.w SprXSpeed, X
-    LDA.w .speed_y, Y : STA.w SprYSpeed, X
-    LDA.w SprX, X : CLC : ADC.w .offset_x_low, Y : STA.w SprX, X
-    LDA.w SprXH, X : ADC.w .offset_x_high, Y : STA.w SprXH, X
-    LDA.w SprY, X : CLC : ADC.w .offset_y_low, Y : STA.w SprY, X
-    LDA.w SprYH, X : ADC.w .offset_y_high, Y : STA.w SprYH, X
+    LDA.b #$28 : JSL Sprite_ProjectSpeedTowardsPlayer
+    LDA.b $01 : STA.w SprXSpeed, X
+    LDA.b $00 : STA.w SprYSpeed, X
     PLX
+    LDA.b #$0E : JSL Sound_SetSfx2PanLong
   .exit
   RTS
-
-  .offset_x_low
-    db  12, -12,   0,   0
-  .offset_x_high
-    db   0,  -1,   0,   0
-  .offset_y_low
-    db   0,   0,  12, -12
-  .offset_y_high
-    db   0,   0,   0,  -1
-  .speed_y
-    db   0,   0,  32, -32
-  .speed_x
-    db  32, -32,   0,   0
 }
 
 KydreeokHead_SpawnFireballSpread:
@@ -630,15 +699,15 @@ KydreeokHead_SpawnFireballSpread:
     db   0,   0,   0,  -1
 
   .spread_speed_x
-    db  32,  32,  32
-    db -32, -32, -32
-    db  -8,   0,   8
-    db  -8,   0,   8
+    db  36,  36,  36
+    db -36, -36, -36
+    db -12,   0,  12
+    db -12,   0,  12
   .spread_speed_y
-    db  -8,   0,   8
-    db  -8,   0,   8
-    db  32,  32,  32
-    db -32, -32, -32
+    db -12,   0,  12
+    db -12,   0,  12
+    db  36,  36,  36
+    db -36, -36, -36
 }
 
 ; ---------------------------------------------------------
@@ -649,6 +718,7 @@ KydreeokHead_SpawnFireballSpread:
 KydreeokHead_FlashBits:
 {
   LDA.w SprAction, X : CMP.b #!KydHead_Breath : BEQ .glow
+  CMP.b #!KydHead_Sweep : BEQ .glow
   CMP.b #!KydHead_Spit : BEQ .glow
   CMP.b #!KydHead_Pant : BNE .damage
     LDA.b $1A : AND.b #$10 : LSR A : LSR A : LSR A
@@ -667,10 +737,10 @@ Sprite_KydreeokHead_Draw:
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-  ; Lunge windup: shake 1 px side to side.
+  ; Lunge windup: sharp 2 px side-to-side viper rattle telegraph.
   LDA.w SprAction, X : CMP.b #$02 : BNE .no_shake
     REP #$20
-    LDA.b $1A : AND.w #$0002 : DEC A : CLC : ADC.b $00 : STA.b $00
+    LDA.b $1A : AND.w #$0002 : ASL A : SEC : SBC.w #$0002 : CLC : ADC.b $00 : STA.b $00
     SEP #$20
   .no_shake
 

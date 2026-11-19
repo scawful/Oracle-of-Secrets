@@ -58,11 +58,13 @@
 !Boss               = 01  ; 00 = normal sprite, 01 = sprite is a boss
 
 !Kydreeok_CruiseAltitude = 32
+!Kydreeok_SwoopAltitude  = 16
 
 ; Body actions (Sprite_Kydreeok_Main order).
 !Kyd_Stand  = $01
 !Kyd_Walk   = $02
 !Kyd_Roar   = $03
+!Kyd_Swoop  = $04 ; Stage 3 enraged low-altitude cross-arena swoop charge
 !Kyd_Dead   = $05 ; old explosion death, unused since the Healing beat
 !Kyd_Crouch = $06
 !Kyd_Glide  = $08
@@ -75,28 +77,33 @@
 !Kyd_Gone    = $0E
 
 ; Head actions (Sprite_KydreeokHead_Main order, kydreeok_head.asm).
-!KydHead_Rise    = $00
-!KydHead_Idle    = $01
-!KydHead_Bite    = $02 ; rear back, shake: the bite telegraph
-!KydHead_Strike  = $03
-!KydHead_Breath  = $04 ; rise, glow: the breath telegraph
-!KydHead_Fire    = $05
-!KydHead_Recover = $06 ; Recover..Stunned are harmless to touch
-!KydHead_Stuck   = $07
-!KydHead_Pant    = $08
-!KydHead_Stunned = $09
-!KydHead_Spit    = $0A ; glow: the fireball telegraph
+!KydHead_Rise      = $00
+!KydHead_Idle      = $01
+!KydHead_Bite      = $02 ; rear back, 2px rattle: the bite telegraph
+!KydHead_Strike    = $03
+!KydHead_Breath    = $04 ; rise, glow: the straight breath telegraph
+!KydHead_Fire      = $05
+!KydHead_Recover   = $06 ; Recover..Stunned are harmless to touch
+!KydHead_Stuck     = $07
+!KydHead_Pant      = $08
+!KydHead_Stunned   = $09
+!KydHead_Spit      = $0A ; glow: the fireball telegraph
+!KydHead_Sweep     = $0B ; Stage 2/3 sweeping arc breath telegraph (harmful)
+!KydHead_SweepFire = $0C ; Stage 2/3 sweeping 7-flame crescent arc (harmful)
 
-; Turn codes in the stage patterns. 0-2 are head attacks; their cooldown
-; id is code * 2 + head subtype (0 = left, 1 = right).
-!KydTurn_Bite   = 0
-!KydTurn_Breath = 1
-!KydTurn_Spit   = 2
-!KydTurn_Move   = 3
-!KydTurn_Fly    = 4
+; Turn codes in the stage patterns. Cooldown ids 0-7 = (slot * 2 + head subtype):
+; Bite=0, Breath=1, Spit=2, Sweep/DualBreath=3.
+!KydTurn_Bite       = 0
+!KydTurn_Breath     = 1
+!KydTurn_Spit       = 2
+!KydTurn_Move       = 3
+!KydTurn_Fly        = 4
+!KydTurn_Sweep      = 5
+!KydTurn_DualBreath = 6
+!KydTurn_Swoop      = 7
 
 ; Kydreeok_Knob: A = knob, out A = its value in the current stage.
-; Knobs 0-2 are the telegraphs of turn codes 0-2.
+; Knobs 0-2 are the telegraphs of turn codes 0-2 (Sweep/DualBreath share knob 1).
 !KydKnob_Stuck = 3
 !KydKnob_Pant  = 4
 !KydKnob_Stun  = 5
@@ -109,15 +116,15 @@
 !KydOrder_Fly  = 2
 !KydOrder_Roar = 3
 
-!Kyd_CrouchTime = 40 ; flight telegraph
-!Kyd_DiveWarn   = 40 ; last glide frames: hover, the shadow flashes
-!Kyd_SlamTime   = 75 ; heads stuck on the floor after a dive
-!Kyd_WalkSpeed  = 16 ; 1 px a frame
+!Kyd_CrouchTime = 32 ; flight / swoop telegraph
+!Kyd_DiveWarn   = 28 ; last glide frames: hover, the shadow flashes
+!Kyd_SlamTime   = 48 ; heads stuck on the floor after a dive
+!Kyd_WalkSpeed  = 24 ; 1.5 px a frame stomp
 
 ; BossDir_Var bytes (boss_director.asm).
 Kydreeok_NextHead = BossDir_Var+0 ; subtype of the head whose turn is next
 Kydreeok_Spot     = BossDir_Var+1 ; stage 2 spot, 0-3 (home, right, home, left)
-Kydreeok_Flags    = BossDir_Var+2 ; bit 0: walk to the spot first; bit 1: combo follow-up next
+Kydreeok_Flags    = BossDir_Var+2 ; bit 0: walk first; bit 1: combo follow-up; bit 2: swoop flight
 Kydreeok_Regrow   = BossDir_Var+3 ; stage 3 regrow timer in 8-frame steps, 0 = off
 Kydreeok_HomeX    = BossDir_Var+4 ; word: the spawn spot
 Kydreeok_HomeY    = BossDir_Var+6 ; word
@@ -342,7 +349,7 @@ Sprite_Kydreeok_Main:
                   Kydreeok_Stand,
                   Kydreeok_Walk,
                   Kydreeok_Roar,
-                  Kydreeok_Stand,
+                  Kydreeok_Swoop,
                   Kydreeok_Dead,
                   Kydreeok_Crouch,
                   Kydreeok_TakeOff,
@@ -425,7 +432,7 @@ Sprite_Kydreeok_Main:
     .arrived
     STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
     LDA.l Kydreeok_Flags : AND.b #$FE : STA.l Kydreeok_Flags
-    LDA.b #$10 : STA.w SprTimerA, X
+    LDA.b #$08 : STA.w SprTimerA, X
     %GotoAction(!Kyd_Stand)
     RTS
   }
@@ -503,34 +510,84 @@ Sprite_Kydreeok_Main:
   }
 
   ; -------------------------------------------------------
-  ; 0x06 - crouch with the wings down before take-off
+  ; 0x04 - Stage 3 enraged low-altitude cross-arena swoop charge:
+  ; skims at altitude 16, aggressively cuts across the player's lane
+  ; while alternating live heads fire 3 staggered aimed fireballs,
+  ; then drops into Kydreeok_Dive for a brief punish opening.
+  Kydreeok_Swoop:
+  {
+    %StartOnFrame(0)
+    %PlayAnimation(0, 2, 04)
+
+    ; Re-steer slightly mid-swoop so Link must stay mobile
+    LDA.w SprTimerA, X : CMP.b #$22 : BNE .keep_vel
+      LDA.b #$22 : JSL Sprite_ApplySpeedTowardsPlayer
+    .keep_vel
+
+    JSR StopIfOutOfBounds
+    JSL MoveBody
+    JSL Sprite_CheckDamageToPlayer
+
+    ; Gentle 1 px skim bob around swoop altitude
+    LDA.b $1A : LSR A : LSR A : AND.b #$01 : CLC : ADC.b #!Kydreeok_SwoopAltitude
+    JSR Kydreeok_SetAltitude
+
+    ; Staggered 3-fireball barrage from alternating live heads
+    LDA.w SprTimerA, X
+    CMP.b #$34 : BEQ .shoot
+    CMP.b #$20 : BEQ .shoot
+    CMP.b #$0C : BNE .no_shoot
+    .shoot
+      JSR Kydreeok_SwoopFireball
+    .no_shoot
+
+    LDA.w SprTimerA, X : BNE .swooping
+      %GotoAction(9) ; Brief touchdown slam into punish window
+    .swooping
+    RTS
+  }
+
+  ; -------------------------------------------------------
+  ; 0x06 - crouch with the wings down before take-off (rapid wing rattle telegraph)
   Kydreeok_Crouch:
   {
     LDA.b #$02 : STA.w SprFrame, X
+    LDA.w SprTimerA, X : CMP.b #$10 : BCS .hold_crouch
+      LDA.b $1A : AND.b #$02 : STA.w SprFrame, X ; Wing-spread launch telegraph
+    .hold_crouch
     JSL MoveBody
 
     JSL Sprite_CheckDamageFromPlayer
     JSL Sprite_CheckDamageToPlayer
 
     LDA.w SprTimerA, X : BNE .crouching
+      LDA.b #$13 : STA.w $012D ; SFX1.$13 Large boss wing swoosh
       %GotoAction(7)
     .crouching
     RTS
   }
 
   ; -------------------------------------------------------
-  ; 0x07 - beat the wings and climb 2 px a frame
+  ; 0x07 - beat the wings and climb 2 px a frame (swoop vs high glide)
   Kydreeok_TakeOff:
   {
     %StartOnFrame(0)
-    %PlayAnimation(0, 2, 04)
+    %PlayAnimation(0, 2, 03)
     JSL MoveBody
 
     LDA.w SprHeight, X : CLC : ADC.b #$02
     JSR Kydreeok_SetAltitude
-    CMP.b #!Kydreeok_CruiseAltitude : BCC .climbing
-      LDA.b #$80 : STA.w SprTimerA, X
-      LDA $36 : CLC : ADC.b #$04
+    LDA.l Kydreeok_Flags : AND.b #$04 : BEQ .high_climb
+      ; Low-altitude cross-arena swoop!
+      LDA.w SprHeight, X : CMP.b #!Kydreeok_SwoopAltitude : BCC .climbing
+        LDA.b #$44 : STA.w SprTimerA, X
+        LDA.b #$22 : JSL Sprite_ApplySpeedTowardsPlayer
+        %GotoAction(!Kyd_Swoop)
+        RTS
+    .high_climb
+    LDA.w SprHeight, X : CMP.b #!Kydreeok_CruiseAltitude : BCC .climbing
+      LDA.b #$68 : STA.w SprTimerA, X
+      LDA $36 : CLC : ADC.b #$0A
       JSL Sprite_ApplySpeedTowardsPlayer
       %GotoAction(8)
     .climbing
@@ -538,21 +595,19 @@ Sprite_Kydreeok_Main:
   }
 
   ; -------------------------------------------------------
-  ; 0x08 - glide after the player, re-aiming every 32 frames, then hover
-  ; for !Kyd_DiveWarn frames while the shadow flashes: the dive lands
-  ; there. No body contact in the air; the heads wait (the body holds
-  ; the token).
+  ; 0x08 - glide briskly after the player, re-aiming every 16 frames,
+  ; then hover for !Kyd_DiveWarn frames while the shadow flashes.
   Kydreeok_Glide:
   {
     %StartOnFrame(0)
-    %PlayAnimation(0, 2, 08)
+    %PlayAnimation(0, 2, 06)
 
     LDA.w SprTimerA, X : CMP.b #!Kyd_DiveWarn : BCS .chase
       STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
       BRA .no_aim
     .chase
-    LDA.b $1A : AND.b #$1F : BNE .no_aim
-      LDA $36 : CLC : ADC.b #$04
+    LDA.b $1A : AND.b #$0F : BNE .no_aim
+      LDA $36 : CLC : ADC.b #$0A
       JSL Sprite_ApplySpeedTowardsPlayer
     .no_aim
     JSR StopIfOutOfBounds
@@ -564,6 +619,7 @@ Sprite_Kydreeok_Main:
     JSR Kydreeok_SetAltitude
 
     LDA.w SprTimerA, X : BNE .gliding
+      LDA.b #$26 : JSL Sound_SetSfx3PanLong ; Dive drop screech cue
       %GotoAction(9)
     .gliding
     RTS
@@ -573,9 +629,9 @@ Sprite_Kydreeok_Main:
   }
 
   ; -------------------------------------------------------
-  ; 0x09 - fold the wings and drop 4 px a frame; the landing shakes
-  ; the room, then the body stands while the heads lie stuck, and walks
-  ; home.
+  ; 0x09 - fold the wings and drop 4 px a frame; high-altitude Stage 3
+  ; dives unleash a 4-way shockwave fireball ring on impact before the
+  ; stuck-head sword window.
   Kydreeok_Dive:
   {
     LDA.b #$02 : STA.w SprFrame, X
@@ -590,6 +646,11 @@ Sprite_Kydreeok_Main:
       LDA.b #$18 : STA.l BossKit_Quake
       LDA.b #$0C : JSL Sound_SetSfx2PanLong
       JSL Sprite_CheckDamageToPlayer
+      ; Full high-altitude dive unleashes a 4-way diagonal shockwave ring!
+      LDA.l Kydreeok_Flags : AND.b #$04 : BNE .clear_swoop
+        JSR Kydreeok_LandedRing
+      .clear_swoop
+      LDA.l Kydreeok_Flags : AND.b #$FB : STA.l Kydreeok_Flags
       ; Both heads slam onto the floor: the sword window.
       JSL Kydreeok_Landed
       LDA.b #!Kyd_SlamTime : STA.w SprTimerA, X
@@ -700,6 +761,70 @@ Sprite_Kydreeok_Main:
     RTS
   }
 
+}
+
+
+; Fires one aimed fireball from alternating live heads during Kydreeok_Swoop.
+; M=8 X=8; preserves X (body slot).
+Kydreeok_SwoopFireball:
+{
+  LDA.l Kydreeok_NextHead : EOR.b #$01 : STA.l Kydreeok_NextHead
+  BNE .try_right
+    LDY.w Offspring1_Id : JSR Kydreeok_HeadAlive : BCS .fire
+    LDY.w Offspring2_Id : JSR Kydreeok_HeadAlive : BCS .fire
+    RTS
+  .try_right
+    LDY.w Offspring2_Id : JSR Kydreeok_HeadAlive : BCS .fire
+    LDY.w Offspring1_Id : JSR Kydreeok_HeadAlive : BCS .fire
+    RTS
+  .fire
+  LDA.w SprX, Y : STA.b $00
+  LDA.w SprXH, Y : STA.b $01
+  LDA.w SprY, Y : STA.b $02
+  LDA.w SprYH, Y : STA.b $03
+  LDA.w SprHeight, Y : STA.b $04
+  JSL Sprite_SpawnFireball : BMI .done
+    LDA.w SprDefl, Y : ORA.b #$08 : STA.w SprDefl, Y
+    LDA.b #$04 : STA.w SprBump, Y
+    PHX
+    TYX
+    LDA.b #$28 : JSL Sprite_ProjectSpeedTowardsPlayer
+    LDA.b $01 : STA.w SprXSpeed, X
+    LDA.b $00 : STA.w SprYSpeed, X
+    PLX
+    LDA.b #$0E : JSL Sound_SetSfx2PanLong
+  .done
+  RTS
+}
+
+; Stage 3 Dive impact: spawns a 4-way diagonal shockwave fireball ring.
+; M=8 X=8; preserves X (body slot).
+Kydreeok_LandedRing:
+{
+  LDA.l BossDir_Stage : CMP.b #$03 : BNE .exit
+  LDA.b #$03 : STA.w $0FB5
+  .ring_loop
+    LDA.w SprX, X : STA.b $00
+    LDA.w SprXH, X : STA.b $01
+    LDA.w SprY, X : STA.b $02
+    LDA.w SprYH, X : STA.b $03
+    STZ.b $04
+    JSL Sprite_SpawnFireball : BMI .next
+      LDA.w SprDefl, Y : ORA.b #$08 : STA.w SprDefl, Y
+      LDA.b #$04 : STA.w SprBump, Y
+      PHX
+      LDX.w $0FB5
+      LDA.w .vx, X : STA.w SprXSpeed, Y
+      LDA.w .vy, X : STA.w SprYSpeed, Y
+      PLX
+    .next
+    DEC.w $0FB5
+    BPL .ring_loop
+  .exit
+  RTS
+
+  .vx : db  22, -22,  22, -22
+  .vy : db  22,  22, -22, -22
 }
 
 ; Kydreeok chamber (room $02): after the Song of Healing a 2x2 floor plate
@@ -1160,35 +1285,38 @@ pushpc
 org $3AAA00
 
 ; Knob values by stage: rows are knobs (see !KydKnob_*), columns are
-; stages 1, 2, 3. Frames.
+; stages 1, 2, 3. Frames. Tighter endgame cadence with sharp punish windows.
 Kydreeok_KnobTable:
-  db  40,  32,  28 ; 0 bite telegraph
-  db  40,  40,  32 ; 1 breath telegraph
-  db  28,  24,  24 ; 2 fireball telegraph
-  db  90,  90,  45 ; 3 stuck after a bite
-  db  90,  90,  45 ; 4 pant after a breath
-  db  60,  60,  45 ; 5 knocked down by a shot
-  db  90,  75,  45 ; 6 rest after a turn
-  db 240, 180, 120 ; 7 same-attack cooldown
+  db  34,  28,  24 ; 0 bite telegraph
+  db  34,  32,  28 ; 1 breath / sweep telegraph
+  db  24,  20,  18 ; 2 fireball telegraph
+  db  56,  48,  36 ; 3 stuck after a bite
+  db  64,  54,  40 ; 4 pant after a breath / sweep
+  db  48,  44,  36 ; 5 knocked down by a shot
+  db  44,  34,  24 ; 6 rest after a turn
+  db 120,  90,  70 ; 7 same-attack cooldown
 
-; Stage patterns (!KydTurn_*), repeated in order.
+; Stage patterns (!KydTurn_*), repeated in order across 3 escalating phases:
+;   Stage 1 (4): Alternating Bite, Aimed Spit, Bite, Breath
+;   Stage 2 (4): Sweeping Arc Breath, Stomp Move, Lunge Bite, 3-Ball Spread
+;   Stage 3 (6): Dual Cross-Breath, Bite, Enraged Swoop, 3-Ball Spread, Dive+Ring, Dual Cross-Breath
 Kydreeok_PatternStart:
-  db 0, 3, 7
+  db 0, 4, 8
 Kydreeok_PatternLen:
-  db 3, 4, 6
+  db 4, 4, 6
 Kydreeok_Pattern:
-  db !KydTurn_Bite, !KydTurn_Bite, !KydTurn_Spit
-  db !KydTurn_Breath, !KydTurn_Move, !KydTurn_Spit, !KydTurn_Move
-  db !KydTurn_Bite, !KydTurn_Breath, !KydTurn_Fly
-  db !KydTurn_Breath, !KydTurn_Bite, !KydTurn_Fly
+  db !KydTurn_Bite, !KydTurn_Spit, !KydTurn_Bite, !KydTurn_Breath
+  db !KydTurn_Sweep, !KydTurn_Move, !KydTurn_Bite, !KydTurn_Spit
+  db !KydTurn_DualBreath, !KydTurn_Bite, !KydTurn_Swoop
+  db !KydTurn_Spit, !KydTurn_Fly, !KydTurn_DualBreath
 
-; Head action that starts each head turn code (its telegraph).
+; Head action that starts each head cooldown slot (0=Bite, 1=Breath, 2=Spit, 3=Sweep).
 Kydreeok_HeadAction:
-  db !KydHead_Bite, !KydHead_Breath, !KydHead_Spit
+  db !KydHead_Bite, !KydHead_Breath, !KydHead_Spit, !KydHead_Sweep
 
 ; Stage 2 spots: X offset from home for Kydreeok_Spot 0-3.
 Kydreeok_SpotX:
-  db 0, 48, 0, -48
+  db 0, 52, 0, -52
 
 ; Y = a slot. Carry set while it holds a live Kydreeok head. A dying
 ; head (SprState 6, the death poof) counts as lost, so the next stage
@@ -1317,7 +1445,7 @@ Kydreeok_TakeTurn:
     JSR KydDir_HeadAlive : BCC .lost
     LDA.w SprAction, Y : CMP.b #!KydHead_Bite : BCS .token_ok
     .lost
-      LDA.b #60 : STA.b $01
+      LDA.b #36 : STA.b $01
       JSL BossDirector_Free
   .token_ok
 
@@ -1328,16 +1456,16 @@ Kydreeok_TakeTurn:
     LDA.l BossDir_Stage : STA.b $00
     PLA : STA.l BossDir_Stage
     LDA.b #$00 : STA.l BossDir_Turn : STA.l Kydreeok_Spot
-    LDA.l Kydreeok_Flags : AND.b #$FC : ORA.b #$01 : STA.l Kydreeok_Flags
+    LDA.l Kydreeok_Flags : AND.b #$F8 : ORA.b #$01 : STA.l Kydreeok_Flags
     LDA.b $00 : BNE .roar
-      ; The fight starts: a short pause, no roar.
-      LDA.b #60 : JSR KydDir_RaiseRest
+      ; The fight starts: crisp intro pause, no roar.
+      LDA.b #40 : JSR KydDir_RaiseRest
       LDA.b #!KydOrder_None
       RTL
     .roar
-    LDA.b #120
+    LDA.b #75
     LDY.w SprMiscD, X : CPY.b #$02 : BNE .rest_set
-      LDA.b #180
+      LDA.b #105
     .rest_set
     JSR KydDir_RaiseRest
     LDA.b #$20 : STA.l BossKit_Quake
@@ -1374,16 +1502,48 @@ Kydreeok_TakeTurn:
     RTL
   .ready
   PLA
-  CMP.b #!KydTurn_Fly : BNE .head_turn
+  CMP.b #!KydTurn_Fly : BEQ .do_fly
+  CMP.b #!KydTurn_Swoop : BEQ .do_swoop
+  CMP.b #!KydTurn_DualBreath : BNE .head_turn
+    ; Stage 3 Dual-Head Synchronized Crossing Breath (requires both heads alive & idle)
+    JSL Kydreeok_AliveBits : CMP.b #$03 : BNE .dual_fallback
+      LDY.w Offspring1_Id : LDA.w SprAction, Y : CMP.b #!KydHead_Idle : BNE .dual_wait
+      LDY.w Offspring2_Id : LDA.w SprAction, Y : CMP.b #!KydHead_Idle : BNE .dual_wait
+      LDA.b #$06 : JSL BossDirector_CoolLeft : BNE .dual_wait
+      ; Primary left head takes token; right head runs in sync!
+      LDA.w Offspring1_Id : JSL BossDirector_Take
+      LDA.b #!KydTurn_Breath : JSL Kydreeok_Knob : STA.b $05
+      LDY.w Offspring1_Id : JSR KydDir_LaunchSweepHead
+      LDY.w Offspring2_Id : JSR KydDir_LaunchSweepHead
+      LDA.b #$35 : JSL Sound_SetSfx2PanLong ; Twin-breath rumble telegraph
+      JSR KydDir_NextTurn
+      .dual_wait
+      LDA.b #!KydOrder_None
+      RTL
+    .dual_fallback
+    LDA.b #!KydTurn_Sweep ; One head left: fall back to single sweep + desperation opener
+    BRA .head_turn
+
+  .do_swoop
+    LDA.l Kydreeok_Flags : ORA.b #$04 : STA.l Kydreeok_Flags
+    BRA .launch_air
+  .do_fly
+    LDA.l Kydreeok_Flags : AND.b #$FB : STA.l Kydreeok_Flags
+  .launch_air
     TXA : JSL BossDirector_Take
     JSR KydDir_NextTurn
-    LDA.b #$35 : JSL Sound_SetSfx2PanLong
+    LDA.b #$13 : STA.w $012D ; SFX1.$13 Large boss wing swoosh telegraph
     LDA.b #!KydOrder_Fly
     RTL
+
   .head_turn
+  ; Normalize turn code into head cooldown slot 0..3 (Bite=0, Breath=1, Spit=2, Sweep=3)
+  CMP.b #!KydTurn_Sweep : BNE +
+    LDA.b #$03
+  +
   STA.b $02
   ; Desperation (stage 3, one head left): each head turn opens with a
-  ; fireball spread; the pattern attack follows after a short rest.
+  ; 3-ball spread; the pattern attack follows after a short rest.
   STZ.b $03
   LDA.l BossDir_Stage : CMP.b #$03 : BNE .pick
   JSL Kydreeok_AliveBits : CMP.b #$03 : BEQ .pick
@@ -1396,14 +1556,18 @@ Kydreeok_TakeTurn:
     LDA.l Kydreeok_NextHead : EOR.b #$01 : STA.l Kydreeok_NextHead
     JSR KydDir_HeadSlot : JSR KydDir_HeadAlive : BCC .none
   .have_head
-  ; Y = the head. It must be idle, and this attack off its cooldown.
+  ; Y = the head. It must be idle, and this attack off its cooldown (slot 0..7).
   LDA.w SprAction, Y : CMP.b #!KydHead_Idle : BNE .none
   LDA.w SprSubtype, Y : AND.b #$01 : STA.b $04
   LDA.b $02 : ASL A : ORA.b $04 : JSL BossDirector_CoolLeft : BNE .none
   TYA : JSL BossDirector_Take
   LDA.b $02 : STA.w SprMiscD, Y
   LDA.b #$00 : STA.w SprMiscG, Y
-  LDA.b $02 : JSL Kydreeok_Knob : STA.w SprTimerA, Y
+  ; Map slot 3 (Sweep) to Knob 1 (breath/sweep telegraph); slots 0-2 map 1:1.
+  LDA.b $02 : CMP.b #$03 : BNE +
+    LDA.b #!KydTurn_Breath
+  +
+  JSL Kydreeok_Knob : STA.w SprTimerA, Y
   PHX
   LDX.b $02
   LDA.l Kydreeok_HeadAction, X : STA.w SprAction, Y
@@ -1447,11 +1611,21 @@ Kydreeok_HeadDone:
 ; From the body when a dive lands. X = the body. Idle heads slam onto
 ; the floor and lie stuck; the token is freed with a long rest, and the
 ; body walks home next.
+; Y = head slot, $05 = telegraph frames. Starts head Y in !KydHead_Sweep (slot 3).
+KydDir_LaunchSweepHead:
+{
+  LDA.b #$03 : STA.w SprMiscD, Y
+  LDA.b #$00 : STA.w SprMiscG, Y
+  LDA.b $05 : STA.w SprTimerA, Y
+  LDA.b #!KydHead_Sweep : STA.w SprAction, Y
+  RTS
+}
+
 Kydreeok_Landed:
 {
   LDY.w Offspring1_Id : LDA.b #-20 : JSR .slam
   LDY.w Offspring2_Id : LDA.b #20 : JSR .slam
-  LDA.b #120 : STA.b $01
+  LDA.b #44 : STA.b $01
   JSL BossDirector_Free
   LDA.l Kydreeok_Flags : ORA.b #$01 : STA.l Kydreeok_Flags
   RTL
@@ -1536,7 +1710,7 @@ Kydreeok_RegrowTick:
   .one_lost
   PHA
   LDA.l Kydreeok_Regrow : BNE .running
-    LDA.b #150 : STA.l Kydreeok_Regrow
+    LDA.b #90 : STA.l Kydreeok_Regrow
     BRA .no
   .running
   LDA.b $1A : AND.b #$07 : BNE .warn
@@ -1550,7 +1724,7 @@ Kydreeok_RegrowTick:
       SEC
       RTL
   .warn
-  LDA.l Kydreeok_Regrow : CMP.b #30 : BCS .no
+  LDA.l Kydreeok_Regrow : CMP.b #26 : BCS .no
     LDA.b $1A : AND.b #$1F : BNE .no
       LDA.b #$08 : STA.l BossKit_Quake
       LDA.b #$35 : JSL Sound_SetSfx2PanLong
