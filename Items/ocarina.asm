@@ -35,13 +35,13 @@ org $1A9750
 Song_of_Healing:
 {
   %SetInstrument($0D) ; Ocarina
-  db $18, $46         ; quarter (~219ms), warm volume
+  db $18, $76         ; quarter (~219ms), full lead volume
   db E5, D5, A4s      ; concert B5 - A5 - F5
   db E5, D5, A4s      ; concert B5 - A5 - F5
   db E5, D5           ; concert B5 - A5
   db $0C              ; eighth (~110ms)
   db A4, G4           ; concert E5 - D5
-  db $40, $3E         ; dotted-half sustain (~585ms), gentle release
+  db $40, $6C         ; dotted-half sustain (~585ms), gentle release
   db A4               ; concert E5
   db End
 }
@@ -56,11 +56,11 @@ org $1A9765
 Song_of_Soaring:
 {
   %SetInstrument($0D)
-  db $10, $46, A4s, E5 ; concert F5 - B5
-  db $28, $4E, G5      ; concert D6~ (soaring peak)
-  db $10, $46, A4s, E5 ; concert F5 - B5
-  db $32, $4E, G5      ; concert D6~~
-  db $0C, $28, A4s, E5 ; soft airy sky echo (F5 - B5)
+  db $10, $76, A4s, E5 ; concert F5 - B5
+  db $28, $7C, G5      ; concert D6~ (soaring peak)
+  db $10, $76, A4s, E5 ; concert F5 - B5
+  db $32, $7C, G5      ; concert D6~~
+  db $0C, $46, A4s, E5 ; airy sky echo (F5 - B5)
   db $34, G5           ; echo D6~~ fade
   db End
 }
@@ -75,13 +75,13 @@ org $1A92F7 ; SFX2_2F
 Song_of_Storms:
 {
   %SetInstrument($0D)
-  db $0C, $46, G4, A4s              ; concert D5 - F5 (eighths)
-  db $30, $4C, G5                   ; concert D6~ (half, accented octave leap!)
-  db $0C, $46, G4, A4s              ; concert D5 - F5
-  db $30, $4C, G5                   ; concert D6~
-  db $24, $4C, A5                   ; concert E6. (dotted quarter)
-  db $0C, $44, A5s, A5, A5s, A5, F5 ; concert F6 - E6 - F6 - E6 - C6
-  db $36, $46, D5                   ; concert A5~ (clean tonic resolution)
+  db $0C, $76, G4, A4s              ; concert D5 - F5 (eighths)
+  db $30, $7C, G5                   ; concert D6~ (half, accented octave leap!)
+  db $0C, $76, G4, A4s              ; concert D5 - F5
+  db $30, $7C, G5                   ; concert D6~
+  db $24, $7C, A5                   ; concert E6. (dotted quarter)
+  db $0C, $72, A5s, A5, A5s, A5, F5 ; concert F6 - E6 - F6 - E6 - C6
+  db $36, $74, D5                   ; concert A5~ (clean tonic resolution)
   db End
 }
 assert pc() <= $1A931F
@@ -95,16 +95,16 @@ org $1A91F0
 Song_of_Time:
 {
   %SetInstrument($0D)
-  db $16, $46, D5      ; concert A5 (quarter)
+  db $16, $76, D5      ; concert A5 (quarter)
   db $2C, G4           ; concert D5~ (half)
   db $16, A4s, D5      ; concert F5 - A5
   db $2C, G4           ; concert D5~ (half)
   db $16, A4s          ; concert F5
-  db $0B, $4C, D5, F5  ; concert A5 - C6 (rising eighths)
+  db $0B, $7C, D5, F5  ; concert A5 - C6 (rising eighths)
   db $16, E5, C5       ; concert B5 - G5
-  db $0B, $44, A4s, C5 ; concert F5 - G5
-  db $16, $46, D5      ; concert A5
-  db $36, $40, G4      ; concert D5~~ (resolved tonic)
+  db $0B, $72, A4s, C5 ; concert F5 - G5
+  db $16, $76, D5      ; concert A5
+  db $36, $6C, G4      ; concert D5~~ (resolved tonic)
   db End
 }
 assert pc() <= $1A922B
@@ -121,12 +121,12 @@ org $1A9B2E
 Song_of_Secrets:
 {
   %SetInstrument($0D)
-  db $10, $44, D5, A4, D5 ; concert A5 - E5 - A5
-  db $24, $4C, F5         ; concert C6~ (mysterious peak)
-  db $10, $46, E5         ; concert B5
-  db $10, $42, C5         ; concert G5 (Dorian dip)
-  db $36, $48, D5         ; concert A5~~ (home shimmer)
-  db $0C, $26, F5, E5     ; soft cavern echo (C6 - B5)
+  db $10, $74, D5, A4, D5 ; concert A5 - E5 - A5
+  db $24, $7C, F5         ; concert C6~ (mysterious peak)
+  db $10, $76, E5         ; concert B5
+  db $10, $70, C5         ; concert G5 (Dorian dip)
+  db $36, $78, D5         ; concert A5~~ (home shimmer)
+  db $0C, $44, F5, E5     ; cavern echo (C6 - B5)
   db $26, D5              ; echo A5~
   db End
 }
@@ -137,13 +137,13 @@ Epona_Song:
 Elegy_of_Stone:
 {
   %SetInstrument($0D)
-  db $14, $48, G5, E5     ; concert D6 - B5
-  db $28, $44, D5         ; concert A5~
-  db $14, $4A, G5, E5     ; concert D6 - B5
-  db $28, $44, D5         ; concert A5~
-  db $14, $4C, G5         ; concert D6 (gentle lift)
-  db $14, $46, E5, D5, E5 ; concert B5 - A5 - B5
-  db $38, $40, D5         ; concert A5~~ (warm sustain)
+  db $14, $76, G5, E5     ; concert D6 - B5
+  db $28, $72, D5         ; concert A5~
+  db $14, $78, G5, E5     ; concert D6 - B5
+  db $28, $72, D5         ; concert A5~
+  db $14, $7C, G5         ; concert D6 (gentle lift)
+  db $14, $74, E5, D5, E5 ; concert B5 - A5 - B5
+  db $38, $6C, D5         ; concert A5~~ (warm sustain)
   db End
 }
 assert pc() <= $1A9B92
@@ -180,6 +180,10 @@ LinkItem_NewFlute:
   BIT.b $3A : BVC .y_button_not_held
     DEC.w $03F0 : LDA.w $03F0 : BNE ReturnFromFluteHook
     LDA.b $3A : AND.b #$BF : STA.b $3A
+    ; Restore full BGM volume ($F3) once the Ocarina song finishes, unless a
+    ; track switch or fade command is already queued in $012C.
+    LDA.w $012C : BNE .y_button_not_held
+      LDA.b #$F3 : STA.w $012C
   .y_button_not_held
 
   ; Check for Switch Swong
@@ -195,8 +199,13 @@ LinkItem_NewFlute:
       LDA.b $3A : AND.b #$BF : STA.b $3A
       RTS
     .has_song
-    ; Success... play the flute.
+    ; Success... play the flute. Duck BGM to half volume ($F2) so loud
+    ; overworld tracks never overpower the Ocarina melody, and emit all 6
+    ; songs center-panned (no Player_DoSfx* X-position stereo drop).
     LDA.b #$80 : STA.w $03F0
+    LDA.w $012C : BNE +
+      LDA.b #$F2 : STA.w $012C
+    +
 
     LDA.w $030F : CMP.b #$01 : BEQ .song_of_healing
                   CMP.b #$02 : BEQ .song_of_storms
@@ -212,25 +221,25 @@ LinkItem_NewFlute:
                   +
                   JMP .song_of_healing
     .song_of_time
-    LDA.b #$27 : JSR $802F ; Player_DoSfx3
+    LDA.b #$27 : STA.w $012F
     LDA.b #$02 : STA.b SongFlag
     RTS
 
     .song_of_healing
-    LDA.b #$13 : JSR Player_DoSfx2
+    LDA.b #$13 : STA.w $012E
     LDA.b #$01 : STA.b SongFlag
     RTS
 
     .song_of_storms
-    ; Play the Song of Storms SFX
-    LDA.b #$2F : JSR Player_DoSfx2
+    ; Play the Song of Storms SFX (centered stereo)
+    LDA.b #$2F : STA.w $012E
     LDA.b #$03 : STA.b SongFlag
     JSL OcarinaEffect_SummonStorms
     ; Song of Storms tint handled by rain system ($9A = $72)
     RTS
 
   .song_of_soaring
-  LDA.b #$3E : JSR Player_DoSfx2
+  LDA.b #$3E : STA.w $012E
 
   ; Are we indoors?
   LDA.b $1B : BNE .return
@@ -653,6 +662,13 @@ ResetOcarinaFlag:
   ; Rain flag is now only cleared when player plays Song of Storms again.
   ; The visibility is controlled in ZSCustomOverworld.asm.
   ; Song tint ticking handled in HUD_ClockDisplay (Overworld/time_system.asm).
+  ; If an Ocarina song was still ducking BGM ($03F0 != 0) when transitioning
+  ; screens, restore full BGM volume ($F3) unless another music command is queued.
+  LDA.w $03F0 : BEQ +
+    STZ.w $03F0
+    LDA.w $012C : BNE +
+      LDA.b #$F3 : STA.w $012C
+  +
   LDA.w $0416 : ASL A
   RTL
 }

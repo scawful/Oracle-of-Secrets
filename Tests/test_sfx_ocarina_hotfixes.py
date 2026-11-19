@@ -264,10 +264,25 @@ class TestQ330OcarinaJingles(unittest.TestCase):
                 self.assertGreaterEqual(len(set(dec["durations"])), 2, f"{name} has flat monotone rhythm")
                 self.assertGreaterEqual(dec["duration_sec"], 1.8, f"{name} too short ({dec['duration_sec']:.2f}s)")
                 self.assertLessEqual(dec["duration_sec"], 3.3, f"{name} too long ({dec['duration_sec']:.2f}s)")
+                lead_vols = [v for _, _, v in dec["events"] if v is not None]
+                self.assertGreaterEqual(max(lead_vols), 0x74, f"{name} peak volume too quiet: {lead_vols}")
 
         # Song_of_Secrets and Epona_Song must not overlap each other
         sec_len = decode_sfx_stream(self.rom, self.labels["Song_of_Secrets"])["size"]
         self.assertLessEqual(self.labels["Song_of_Secrets"] + sec_len, self.labels["Epona_Song"])
+
+    def test_ocarina_centered_stereo_and_bgm_ducking(self):
+        src = OCARINA_ASM.read_text(encoding="utf-8")
+        self.assertIn("LDA.b #$F2 : STA.w $012C", src)
+        self.assertIn("LDA.b #$F3 : STA.w $012C", src)
+        self.assertIn("LDA.b #$13 : STA.w $012E", src)
+        self.assertIn("LDA.b #$2F : STA.w $012E", src)
+        self.assertIn("LDA.b #$3E : STA.w $012E", src)
+        self.assertIn("LDA.b #$27 : STA.w $012F", src)
+        self.assertNotIn("LDA.b #$13 : JSR Player_DoSfx2", src)
+        self.assertNotIn("LDA.b #$2F : JSR Player_DoSfx2", src)
+        self.assertNotIn("LDA.b #$3E : JSR Player_DoSfx2", src)
+        self.assertNotIn("LDA.b #$27 : JSR $802F", src)
 
 
 class TestQ330HorseDialogueCompiled(unittest.TestCase):
