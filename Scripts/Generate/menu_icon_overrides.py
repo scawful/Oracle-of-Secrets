@@ -23,6 +23,7 @@ TILES = frozenset((0x00D, 0x00E, 0x00F, 0x025, 0x07B, 0x08F,
                    0x0AC, 0x0AF, 0x0F2, 0x130, 0x17E, 0x17F))
 RECLAIMED_UI_TILES = frozenset((0x12B, 0x12C, 0x12D, 0x12E, 0x12F,
                                 0x139, 0x13F, 0x14F, 0x16D, 0x17A, 0x17B))
+SHIELD_TILES = frozenset((0x080, 0x081, 0x08D, 0x08E, 0x09F, 0x0FD, 0x0FE, 0x0FF))
 
 
 def tile_location(tile):
@@ -45,6 +46,8 @@ def read_spec(path):
     require(type(spec) is dict and set(spec) in (
         {'schema_version', 'start', 'capacity', 'canonical_blank_tile', 'sheets', 'icons'},
         {'schema_version', 'start', 'capacity', 'canonical_blank_tile', 'sheets', 'icons', 'ui_tiles'},
+        {'schema_version', 'start', 'capacity', 'canonical_blank_tile', 'sheets', 'icons', 'shield_tiles'},
+        {'schema_version', 'start', 'capacity', 'canonical_blank_tile', 'sheets', 'icons', 'ui_tiles', 'shield_tiles'},
     ), 'invalid menu icon spec keys')
     require(spec['schema_version'] == 1, 'unsupported menu icon schema')
     require((number(spec['start']), number(spec['capacity'])) == (START, CAPACITY),
@@ -77,13 +80,14 @@ def read_spec(path):
         _validate_rel_source(path, entry['source'])
     require(allocated == TILES, 'icon allocation must use the twelve audited tiles exactly')
 
+    ui_allocated = set()
     if 'ui_tiles' in spec:
         ui = spec['ui_tiles']
         require(type(ui) is dict and set(ui) == {'source', 'tiles'}, 'invalid ui_tiles block')
         _validate_rel_source(path, ui['source'])
         require(type(ui['tiles']) is list and len(ui['tiles']) == len(RECLAIMED_UI_TILES),
                 'ui_tiles must cover the eleven audited reclaimed tiles')
-        ui_names, ui_allocated = set(), set()
+        ui_names = set()
         for entry in ui['tiles']:
             require(type(entry) is dict and set(entry) == {'name', 'tile', 'base_sha256'},
                     'invalid ui_tiles entry')
@@ -99,6 +103,28 @@ def read_spec(path):
             require(isinstance(entry['base_sha256'], str) and re.fullmatch('[0-9a-f]{64}', entry['base_sha256']),
                     'ui tile base_sha256 must be a full lowercase SHA256')
         require(ui_allocated == RECLAIMED_UI_TILES, 'ui_tiles must use the eleven audited reclaimed tiles exactly')
+    if 'shield_tiles' in spec:
+        sh = spec['shield_tiles']
+        require(type(sh) is dict and set(sh) == {'source', 'tiles'}, 'invalid shield_tiles block')
+        _validate_rel_source(path, sh['source'])
+        require(type(sh['tiles']) is list and len(sh['tiles']) == len(SHIELD_TILES),
+                'shield_tiles must cover the eight audited ShieldGFX tiles')
+        sh_names, sh_allocated = set(), set()
+        for entry in sh['tiles']:
+            require(type(entry) is dict and set(entry) == {'name', 'tile', 'base_sha256'},
+                    'invalid shield_tiles entry')
+            require(isinstance(entry['name'], str) and entry['name'] and entry['name'] not in sh_names,
+                    'invalid or duplicate shield tile name')
+            sh_names.add(entry['name'])
+            tile = number(entry['tile'])
+            require(tile != BLANK, 'canonical blank tile cannot be allocated')
+            require(tile not in PROTECTED_TILES, 'protected HUD tile cannot be reclaimed')
+            require(tile in SHIELD_TILES and tile not in sh_allocated and tile not in allocated and tile not in ui_allocated,
+                    'shield tile is unapproved or already allocated')
+            sh_allocated.add(tile)
+            require(isinstance(entry['base_sha256'], str) and re.fullmatch('[0-9a-f]{64}', entry['base_sha256']),
+                    'shield tile base_sha256 must be a full lowercase SHA256')
+        require(sh_allocated == SHIELD_TILES, 'shield_tiles must use the eight audited ShieldGFX tiles exactly')
     return spec
 
 
@@ -154,21 +180,22 @@ def build(spec_path, base_rom, root=None):
             sheet, offset = tile_location(tile)
             require(bases[sheet][offset:offset+16] == bytes(16), f'tile ${tile:03X} is not empty in editable base')
             modified[sheet][offset:offset+16] = pixels[quadrant*16:(quadrant+1)*16]
-    if 'ui_tiles' in spec:
-        ui = spec['ui_tiles']
-        pixels = (spec_path.parent/ui['source']).read_bytes()
-        expected_len = len(ui['tiles']) * 16
-        require(len(pixels) == expected_len, f'ui_tiles source must be {expected_len} bytes of SNES 2bpp')
-        for index, entry in enumerate(ui['tiles']):
-            tile = number(entry['tile'])
-            sheet, offset = tile_location(tile)
-            base_tile = bases[sheet][offset:offset+16]
-            digest = hashlib.sha256(base_tile).hexdigest()
-            require(digest == entry['base_sha256'],
-                    f'reclaimed tile ${tile:03X} ({entry["name"]}): base tile changed ({digest})')
-            tile_bytes = pixels[index*16:(index+1)*16]
-            require(any(tile_bytes), f'ui tile {entry["name"]} is entirely transparent')
-            modified[sheet][offset:offset+16] = tile_bytes
+    for block_key, label in (('ui_tiles', 'ui'), ('shield_tiles', 'shield')):
+        if block_key in spec:
+            block = spec[block_key]
+            pixels = (spec_path.parent/block['source']).read_bytes()
+            expected_len = len(block['tiles']) * 16
+            require(len(pixels) == expected_len, f'{block_key} source must be {expected_len} bytes of SNES 2bpp')
+            for index, entry in enumerate(block['tiles']):
+                tile = number(entry['tile'])
+                sheet, offset = tile_location(tile)
+                base_tile = bases[sheet][offset:offset+16]
+                digest = hashlib.sha256(base_tile).hexdigest()
+                require(digest == entry['base_sha256'],
+                        f'reclaimed tile ${tile:03X} ({entry["name"]}): base tile changed ({digest})')
+                tile_bytes = pixels[index*16:(index+1)*16]
+                require(any(tile_bytes), f'{label} tile {entry["name"]} is entirely transparent')
+                modified[sheet][offset:offset+16] = tile_bytes
     for protected in PROTECTED_TILES:
         sheet, offset = tile_location(protected)
         require(modified[sheet][offset:offset+16] == bases[sheet][offset:offset+16],
@@ -231,6 +258,8 @@ def main():
             sources = [args.base_rom, spec_path] + [spec_path.parent/i['source'] for i in spec['icons']]
             if 'ui_tiles' in spec:
                 sources.append(spec_path.parent/spec['ui_tiles']['source'])
+            if 'shield_tiles' in spec:
+                sources.append(spec_path.parent/spec['shield_tiles']['source'])
             write_outputs(out, files, sources)
         print(json.dumps(dict(checked=args.check, sheets=[dict(sprite_sheet=f'{i["s"]:02X}',
                          bytes=len(i['stream']), decoded_sha256=hashlib.sha256(i['raw']).hexdigest()) for i in items])))

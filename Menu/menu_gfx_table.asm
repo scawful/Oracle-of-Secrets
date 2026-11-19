@@ -193,9 +193,9 @@ SwordGFX:
   dw $288A, $2865, $2C74, $EC8A ; level four (clean crossguard tip, no level digit)
 
 ShieldGFX:
-  dw $2CFD, $6CFD, $2CFE, $6CFE ; baby shield
-  dw $2CFF, $6CFF, $2C9F, $6C9F ; island shield
-  dw $2C80, $2C81, $2C8D, $2C8E ; mirror shield
+  dw $34FD, $74FD, $34FE, $74FE ; L1 Wooden Shield (GBC Pal 5 wood + golden-brass)
+  dw $30FF, $70FF, $309F, $709F ; L2 Iron / Kite Shield (GBC Pal 4 steel + silver)
+  dw $2C80, $2C81, $2C8D, $2C8E ; L3 Oracle Mirror Shield (GBC Pal 3 radiant blue + white)
 
 TunicGFX:
   dw $3C68, $7C68, $3C78, $7C78 ; green tunic

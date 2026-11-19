@@ -21,15 +21,20 @@
 ; FLAGS WRITTEN:
 ;   $7EF34C = 3 - Song of Storms learned
 ;
-; NOTE:
-;   Uses Race Game Lady draw routine as a placeholder.
-;   TODO: Swap to windmill NPC graphics/palette.
+; GRAPHICS / PALETTES:
+;   Room $00C9 uses spriteset $22 (34) -> slot 3 loads Sheet $38 (VRAM $C0..$FF).
+;   Guru-Guru occupies the 12 blank tiles of Sheet $38 via Data/graphics/spr38.txt:
+;     $E8 ($28/$29/$38/$39): Head/ears/eyes/beard/collar (16x16, OBJ5 $2B)
+;     $EA ($2A/$2B/$3A/$3B): Tunic/wooden music box/feet (16x16, OBJ5 $2B)
+;     $CF/$DF/$EF ($0F/$1F/$2F): Pewter gramophone horn (3x 8x8, OBJ6 $2D)
+;     $FF ($3F): Music box crank + left hand (8x8, OBJ5 $2B / Frame 1 V-flip $AB)
 ; =========================================================
 
+; Shared vanilla symbol referenced by Overworld/richard_quest.asm & Sprites/NPCs/ranch_girl.asm.
 SpriteDraw_RaceGameLady =  $1AF92C
 
 !SPRID              = Sprite_WindmillGuy
-!NbrTiles           = 02 ; Number of tiles used in a frame
+!NbrTiles           = 06 ; 6 body/horn/crank tiles + 1 shadow = 7 OAM slots (zero-based)
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -71,12 +76,91 @@ Sprite_WindmillGuy_Long:
   +
   PHB : PHK : PLB
   LDA.b #$01 : STA.w SprMiscC, X
-  JSL SpriteDraw_RaceGameLady
+  JSR Sprite_WindmillGuy_Draw
+  BCS .skip_shadow
+    JSL Sprite_DrawShadow
+  .skip_shadow
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     JSR Sprite_WindmillGuy_Main
   .SpriteIsNotActive
   PLB
   RTL
+}
+
+Sprite_WindmillGuy_Draw:
+{
+  JSL Sprite_PrepOamCoord : BCC .on_screen
+    SEC
+    RTS
+  .on_screen
+  JSL Sprite_OAM_AllocateDeferToPlayer
+
+  LDA.w SprFrame, X : AND.b #$01 : TAY
+  LDA.w .start_index, Y : STA.b $06
+
+  PHX
+  LDX.b #$05 ; 6 tiles per frame (indices 5..0 -> OAM slots 0..5)
+  LDY.b #$00
+  .nextTile
+    PHX
+    TXA : CLC : ADC.b $06
+    PHA
+    ASL A : TAX
+
+    REP #$20
+    LDA.b $00 : CLC : ADC.w .x_offsets, X : STA.b ($90), Y
+    AND.w #$0100 : STA.b $0E
+    INY
+    LDA.b $02 : CLC : ADC.w .y_offsets, X : STA.b ($90), Y
+    CLC : ADC.w #$0010 : CMP.w #$0100
+    SEP #$20
+    BCC .on_screen_y
+      LDA.b #$F0 : STA.b ($90), Y
+      STA.b $0E
+    .on_screen_y
+
+    PLX
+    INY
+    LDA.w .chr, X : STA.b ($90), Y
+    INY
+    LDA.w .properties, X : STA.b ($90), Y
+
+    PHY
+    TYA : LSR #2 : TAY
+    LDA.w .sizes, X : ORA.b $0F : STA.b ($92), Y
+    PLY : INY
+
+    PLX : DEX : BPL .nextTile
+  PLX
+  CLC
+  RTS
+
+  .start_index
+  db $00, $06
+
+  ; Order per frame (index 5 drawn to OAM slot 0 frontmost, index 0 backmost):
+  ;   0: Horn neck ($CF)  1: Horn top ($DF)   2: Horn bot ($EF)
+  ;   3: Body/Box ($EA)   4: Head ($E8)       5: Crank ($FF)
+  .x_offsets
+  dw 4, 12, 12, 0, 0, -5      ; Frame 0: Idle / Crank Up
+  dw 4, 12, 12, 0, 0, -5      ; Frame 1: Crank Down + Nod
+
+  .y_offsets
+  dw -20, -23, -15, 0, -13, 2 ; Frame 0
+  dw -19, -22, -14, 0, -12, 4 ; Frame 1
+
+  .chr
+  db $CF, $DF, $EF, $EA, $E8, $FF
+  db $CF, $DF, $EF, $EA, $E8, $FF
+
+  ; Priority 2 ($20) + OBJ page 1 ($01): OBJ5 = $2B ($AB V-flip), OBJ6 = $2D
+  .properties
+  db $2D, $2D, $2D, $2B, $2B, $2B
+  db $2D, $2D, $2D, $2B, $2B, $AB
+
+  .sizes
+  db $00, $00, $00, $02, $02, $00
+  db $00, $00, $00, $02, $02, $00
 }
 
 Sprite_WindmillGuy_Prep:

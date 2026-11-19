@@ -28,5 +28,18 @@
       {"name": "minimap_marker", "tile": "0x16D", "base_sha256": "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b"},
       {"name": "portal_rod_wing_br", "tile": "0x139", "base_sha256": "b7dcc11df25c831c76e130898993aa6d60527d9d0359009c85b75830bf4370e0"}
     ]
+  },
+  "shield_tiles": {
+    "source": "items/gbc_shields.2bpp",
+    "tiles": [
+      {"name": "shield_l1_tl", "tile": "0x0FD", "base_sha256": "81476bbce5ca80d96de30f650dba5d11fbd7bb76a71f310c6b26d4273761342b"},
+      {"name": "shield_l1_bl", "tile": "0x0FE", "base_sha256": "b4420ae78fcbc79ca3a805cc14bcc3ff6b1d78bca8c1e8e1c54b545837febe08"},
+      {"name": "shield_l2_tl", "tile": "0x0FF", "base_sha256": "933a790697693c1051c3cbffe444c809edbde3f357cfd30eececb85ecf54ffcc"},
+      {"name": "shield_l2_bl", "tile": "0x09F", "base_sha256": "414791468ddf103401cfbf2cb9a4fb08f2312e88d90e297463c35164c87197bd"},
+      {"name": "shield_l3_tl", "tile": "0x080", "base_sha256": "6470584b10fd87cfce39b2efe849755169e7b77ec7b5121bb51d59d43319d388"},
+      {"name": "shield_l3_tr", "tile": "0x081", "base_sha256": "c790b05e31e26d5b0051b203b04444cfb2b00dfb6a3c4cb732f554982beab5de"},
+      {"name": "shield_l3_bl", "tile": "0x08D", "base_sha256": "bb0035e0c6438fd3924b28e6e963fe5d334bbdcb7c053128538e297e4029f1b1"},
+      {"name": "shield_l3_br", "tile": "0x08E", "base_sha256": "6929c29c6c31ebb72f43eeb194690c87aa0d5c6fa04ee6a625ae06dab8e9e324"}
+    ]
   }
 }

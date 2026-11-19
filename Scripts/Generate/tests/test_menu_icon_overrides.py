@@ -43,14 +43,15 @@ class MenuIconOverrides(unittest.TestCase):
             source = self.root/entry['source']
             source.parent.mkdir(exist_ok=True)
             source.write_bytes(bytes(range(1+index, 65+index)))
-        if 'ui_tiles' in self.spec:
-            ui = self.spec['ui_tiles']
-            ui_source = self.root/ui['source']
-            ui_source.parent.mkdir(exist_ok=True)
-            ui_source.write_bytes(bytes((i % 251) + 1 for i in range(len(ui['tiles']) * 16)))
-            for entry in ui['tiles']:
-                sheet, offset = icons.tile_location(icons.number(entry['tile']))
-                entry['base_sha256'] = hashlib.sha256(self.bases[sheet][offset:offset+16]).hexdigest()
+        for block_key in ('ui_tiles', 'shield_tiles'):
+            if block_key in self.spec:
+                block = self.spec[block_key]
+                block_source = self.root/block['source']
+                block_source.parent.mkdir(exist_ok=True)
+                block_source.write_bytes(bytes((i % 251) + 1 for i in range(len(block['tiles']) * 16)))
+                for entry in block['tiles']:
+                    sheet, offset = icons.tile_location(icons.number(entry['tile']))
+                    entry['base_sha256'] = hashlib.sha256(self.bases[sheet][offset:offset+16]).hexdigest()
         self.base = self.root/'base.sfc'
         self.base.write_bytes(self.rom)
         self.write_spec()
@@ -71,13 +72,14 @@ class MenuIconOverrides(unittest.TestCase):
                     sheet, offset = icons.tile_location(icons.number(value))
                     if sheet == item['s']:
                         expected[offset:offset+16] = pixels[quadrant*16:(quadrant+1)*16]
-            if 'ui_tiles' in self.spec:
-                ui = self.spec['ui_tiles']
-                pixels = (self.root/ui['source']).read_bytes()
-                for idx, entry in enumerate(ui['tiles']):
-                    sheet, offset = icons.tile_location(icons.number(entry['tile']))
-                    if sheet == item['s']:
-                        expected[offset:offset+16] = pixels[idx*16:(idx+1)*16]
+            for block_key in ('ui_tiles', 'shield_tiles'):
+                if block_key in self.spec:
+                    block = self.spec[block_key]
+                    pixels = (self.root/block['source']).read_bytes()
+                    for idx, entry in enumerate(block['tiles']):
+                        sheet, offset = icons.tile_location(icons.number(entry['tile']))
+                        if sheet == item['s']:
+                            expected[offset:offset+16] = pixels[idx*16:(idx+1)*16]
             decoded, consumed = lz2.decompress(item['stream'], max_output=0x800)
             self.assertEqual(decoded, bytes(expected))
             self.assertEqual(consumed, len(item['stream']))

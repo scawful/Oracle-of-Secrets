@@ -40,6 +40,27 @@
       "why": "Goron Mines switch track sprite $B0 (scawful rulings 9/17/19, 2026-11-02): tiles 04/05/14/15 (block $44) carry the room's BG rail corner pixels, indices remapped from BG palette 7 to OBJ palette 6. No other tile changes."
     },
     {
+      "sprite_sheet": "0x38",
+      "source": "spr38.txt",
+      "base_sha256": "ab0f303a1dd42e1ab42e5a6cf1857067c3b5a0698f4c5d8f5a938b518bbebc5a",
+      "identity": false,
+      "why": "Windmill Guy ($B2) Guru-Guru 2-frame NPC art in blank tiles $0F/$1F/$2F/$3F/$28-$2B/$38-$3B of Room $00C9 sheet $38; all 52 existing tiles preserved."
+    },
+    {
+      "sprite_sheet": "0x5F",
+      "source": "spr5f.txt",
+      "base_sha256": "18c807659c22c744b648634e5b22d7e2f438d6b9cc06f6662f24e3f276a673e8",
+      "identity": false,
+      "why": "GBC-style Shield Trilogy equipped Link tiles ($04-$09/$14-$19 L1 Wooden, $0A-$0F/$1A-$1F L2 Iron-Kite, $20-$25/$30-$35 L3 Oracle Mirror); all non-shield tiles preserved."
+    },
+    {
+      "sprite_sheet": "0x5C",
+      "source": "spr5c.txt",
+      "base_sha256": "4e48e6481424881ec46c4a1da3394b3108221ba5b6cc107eaaa6629fd0ec562a",
+      "identity": false,
+      "why": "GBC-style Shield Trilogy item receipt icons ($0F/$1F L1/L2 pickup, $24-$25/$34-$35 L3 Oracle Mirror pickup); all non-shield tiles preserved."
+    },
+    {
       "decoded_sha256": "705208a1541b6ffb1d84cd05b00e284c2b6bfcf08a1ad5b14d72088b3205cd24",
       "global_sheet": "0xE3",
       "source": "docks/docks_gE3_slot6.txt",

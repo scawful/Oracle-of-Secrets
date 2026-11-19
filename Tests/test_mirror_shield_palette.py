@@ -289,6 +289,8 @@ class MirrorShieldPaletteTests(unittest.TestCase):
     def test_hook_annotations_and_rom_bytes(self) -> None:
         text = ASM_PATH.read_text(encoding="utf-8")
         for line_tag in (
+            "org $1BD648 ; @hook module=Items name=PaletteData_ShieldWooden kind=data protected_size=8",
+            "org $1BD650 ; @hook module=Items name=PaletteData_ShieldIronKite kind=data protected_size=8",
             "org $1BD658 ; @hook module=Items name=PaletteData_ShieldMirror kind=data protected_size=8",
             "org $1BED4A ; @hook module=Items name=MirrorShield_LoadColor8 kind=jml target=MirrorShield_LoadColor8 expected_m=16 expected_x=16 protected_size=5",
             "org $0ED73C ; @hook module=Items name=MirrorShield_RefreshColor8 kind=jml target=MirrorShield_RefreshColor8 expected_m=16 expected_x=16 protected_size=5",
@@ -297,11 +299,16 @@ class MirrorShieldPaletteTests(unittest.TestCase):
             "org $00D533 ; @hook module=Items name=MirrorShield_RemapPickupWRAM kind=jml target=MirrorShield_RemapPickupWRAM expected_m=16 expected_x=16 protected_size=4",
         ):
             self.assertIn(line_tag, text)
-        pal_words = [
-            int.from_bytes(self.rom[pc(0x1BD658) + i * 2 : pc(0x1BD658) + i * 2 + 2], "little")
-            for i in range(4)
-        ]
-        self.assertEqual(pal_words, [0x373C, 0x18A5, 0x7FFE, 0x5589])
+        for addr, expected in (
+            (0x1BD648, [0x379F, 0x0865, 0x15F9, 0x08EF]),
+            (0x1BD650, [0x7BDE, 0x1CA4, 0x6ECE, 0x4947]),
+            (0x1BD658, [0x373C, 0x18A5, 0x7FFE, 0x5589]),
+        ):
+            pal_words = [
+                int.from_bytes(self.rom[pc(addr) + i * 2 : pc(addr) + i * 2 + 2], "little")
+                for i in range(4)
+            ]
+            self.assertEqual(pal_words, expected)
         self.assertEqual(self.rom[pc(0x1BED4A) + 4], 0xEA)
         self.assertEqual(self.rom[pc(0x0ED73C) + 4], 0xEA)
         self.assertEqual(self.rom[pc(0x00D510) + 4], 0xEA)

@@ -1,10 +1,23 @@
 ; ==============================================================================
-; Mirror Shield Option D: 5-color palette via free OAM SP-5 Color 8
+; GBC-Style Shield Trilogy Palettes & Mirror Shield Option D (SP-5 Color 8)
 ; ==============================================================================
-; Uses free OAM SP-5 Color 8 ($01B0 -> PALB_SPR5B $7EC4B0 / PAL_SPR5B $7EC6B0)
-; for Mirror Shield's cool steel highlight (#98C0F0 / $7B13), preserving
-; Master Sword ($1BD642) and keeping base Sheets $5F/$5C unedited:
-;   - PaletteData_shield_02 ($1BD658, C12..C15):
+; Replaces all three shield palette rows in PaletteData ($1BD648..$1BD65F) to
+; pair with source-built GBC Link shield sheets ($5F/$5C in source_sprite_sheets.json)
+; and Menu/HUD 2bpp icons (Data/graphics/menu_icons.json):
+;   - PaletteData_shield_00 ($1BD648, L1 Wooden Shield, C12..C15):
+;       C12 = $379F (#F8E068 bright golden-brass rim & emblem)
+;       C13 = $0865 (#281810 deep warm umber outline)
+;       C14 = $15F9 (#C87828 warm Oracle oak wood)
+;       C15 = $08EF (#783810 deep walnut wood grain shadow)
+;   - PaletteData_shield_01 ($1BD650, L2 Iron / Kite Shield, C12..C15):
+;       C12 = $7BDE (#F0F0F8 gleaming silver bevel & Oracle kite crest)
+;       C13 = $1CA4 (#202838 deep cool navy-steel outline)
+;       C14 = $6ECE (#70B0DC cool steely-blue kite face)
+;       C15 = $4947 (#385090 deep iron-slate shadow)
+;   - PaletteData_shield_02 ($1BD658, L3 Oracle Mirror Shield, C12..C15 + SP-5 C8):
+;       Uses free OAM SP-5 Color 8 ($01B0 -> PALB_SPR5B $7EC4B0 / PAL_SPR5B $7EC6B0)
+;       for Mirror Shield's cool steel highlight (#98C0F0 / $7B13), preserving
+;       Master Sword ($1BD642):
 ;       C12 = $373C (#E0C868 gold bezel/emblem)
 ;       C13 = $18A5 (#282830 cool dark outline)
 ;       C14 = $7FFE (#F0F8F8 white specular sheen)
@@ -18,6 +31,14 @@
 !MirrorShield_Color8 = $7B13 ; BGR555 #98C0F0
 
 pushpc
+
+; Shield level 1 (GBC Wooden Shield) palette C12..C15 in PaletteData ($1BD648, 8B).
+org $1BD648 ; @hook module=Items name=PaletteData_ShieldWooden kind=data protected_size=8
+  dw $379F, $0865, $15F9, $08EF
+
+; Shield level 2 (GBC Iron / Kite Shield) palette C12..C15 in PaletteData ($1BD650, 8B).
+org $1BD650 ; @hook module=Items name=PaletteData_ShieldIronKite kind=data protected_size=8
+  dw $7BDE, $1CA4, $6ECE, $4947
 
 ; Shield level 3 (Mirror Shield) palette C12..C15 in PaletteData ($1BD658, 8B).
 org $1BD658 ; @hook module=Items name=PaletteData_ShieldMirror kind=data protected_size=8
