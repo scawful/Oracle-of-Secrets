@@ -5736,6 +5736,12 @@ assert pc() <= $08FA81 ; $047A81
 org $02AB0D ; $012B0D
 Overworld_LoadMapProperties_Interupt:
 {
+    ; Sync $7EFCC0/$7EFD40 (and $7EFDC0 for $80-$9F) to live $8A + CheckIfNight
+    ; phase BEFORE reading $0AA3 or letting downstream palette loaders (scroll,
+    ; mosaic, Bird Travel fly-in, house exit, mirror warp, whirlpool, soaring)
+    ; read $7EFD40.
+    JSL.l Overworld_SyncSpriteGfxPhase
+
     CPX.b #$80 : BCS .inSW
         ; $0AA3 is the sprite graphics index.
         LDA.l $7EFCC0, X
@@ -5905,6 +5911,26 @@ AreaSizeCheck:
 
     .XSize
     dw $003E, $007E, $007E, $003E
+}
+
+; Refreshes $7EFCC0/$7EFD40 (LW sprite gfx/pal) and $7EFDC0 (SW $80-$9F pal)
+; for the newly loaded $8A and live CheckIfNight phase (Day/Night/Peacetime),
+; then updates TimeState.GfxLastArea/Phase and clears GfxDirty so
+; TimeSystem_GfxGate avoids redundant reloads on ordinary screen scrolls.
+; Contract: preserves A, X, Y, P, DBR, and D; safe from any M/X width.
+Overworld_SyncSpriteGfxPhase:
+{
+    PHP : REP #$30 : PHA : PHX : PHY : PHB : PHD
+    PEA.w $0000 : PLD
+    JSL.l $00FC62 ; Sprite_LoadGraphicsProperties_light_world_only
+    SEP #$30
+    LDA.b $8A : STA.l TimeState.GfxLastArea
+    JSL.l Oracle_CheckIfNight : SEP #$20
+    STA.l TimeState.GfxLastPhase
+    LDA.b #$00 : STA.l TimeState.GfxDirty
+    REP #$30
+    PLD : PLB : PLY : PLX : PLA : PLP
+    RTL
 }
 
 pushpc

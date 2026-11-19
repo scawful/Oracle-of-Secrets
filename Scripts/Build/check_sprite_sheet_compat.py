@@ -100,6 +100,8 @@ SPRITE_SHEET_RULES: dict[int, dict[str, Any]] = {
     0x8C: {"name": "Arrghus",             "slot": 2, "sheets": {0xAC},       "scope": "dungeon"},
     0x91: {"name": "StalfosKnight",       "slot": 2, "sheets": {0x99, 0x9A}, "scope": "dungeon"},
     # --- Oracle Custom Sprites (Sprites/registry.csv) ---
+    0x14: {"name": "BusinessScrub",       "slot": 2, "sheets": {0xB8},       "scope": "ow"},
+    0x25: {"name": "VillageDog",          "slot": 0, "sheets": {0x9E},       "scope": "ow"},
     0xB8: {"name": "SeaZora_ZoraPrincess","slot": 3, "sheets": {0xC9, 0xE7}, "scope": "both"},
     0xF1: {"name": "Korok",               "slot": 3, "sheets": {0xB7},       "scope": "ow"},
     0xA0: {"name": "DekuScrubNPC",        "slot": 0, "sheets": {0xA6, 0xBE, 0xB0}, "scope": "ow"},
@@ -108,6 +110,10 @@ SPRITE_SHEET_RULES: dict[int, dict[str, Any]] = {
     0x7B: {"name": "KydrogNPC",           "slot": 0, "sheets": {0xC4, 0xB3}, "scope": "ow"},
     0x9E: {"name": "MakuTree",            "slot": 2, "sheets": {0xC8},       "scope": "ow"},
 }
+
+# Light World areas that switch to phase-0 peacetime sprite lists once their
+# governing dungeon crystal is obtained (LoadPeacetimeSprites in Overworld/time_system.asm).
+PEACETIME_OW_MAPS = {0x1E, 0x2E, 0x2F}
 
 
 def load_custom_3bpp_sprite_sheets(root: Path = ROOT) -> set[int]:
@@ -168,10 +174,44 @@ def _check_sprite_rule(
     scope: str,
     context_id: int = -1,
 ) -> dict[str, Any] | None:
-    # Context-aware dispatch for multi-variant Oracle sprite $B8 (Sprites/NPCs/zora.asm):
-    #   - Eon Abyss OW ($40-$7F): Sprite_EonZora_Draw draws OAM $40-$64 from Slot 1 ($CA)
-    #   - Room $0046 (D4 Warden fight): private D4 atlas sheets $DF-$E2 (Slot 3 = $E2)
-    #   - Room $0105 / SW $90 / Kalyxo / Room $009A: Sea Zora / Refuge draws Slot 3 ($C9/$E7)
+    # Context-aware dispatch for world-variant Oracle sprites:
+    #   - 0x14 BusinessScrub (LW/SW: Slot 2 $B8) vs EonScrub (DW $40-$7F: Slot 0 $89)
+    #   - 0x25 VillageDog    (LW/SW: Slot 0 $9E) vs EonDog   (DW $40-$7F: Slot 3 $8C)
+    #   - 0xB8 SeaZora/Princess (LW/SW/Dungeon: Slot 3 $C9/$E7; DW: Slot 1 $CA; Room $46: Slot 3 $E2)
+    if sid == 0x14 and scope == "ow":
+        if 0x40 <= context_id < 0x80:
+            slot, allowed, label = 0, {0x89}, "EonScrub"
+        else:
+            slot, allowed, label = 2, {0xB8}, "BusinessScrub"
+        loaded = sheets[slot]
+        if loaded in allowed:
+            return None
+        return {
+            "sprite_id": f"0x{sid:02X}",
+            "sprite_name": label,
+            "required_slot": slot,
+            "loaded_sheet": f"0x{loaded:02X}",
+            "expected_sheets": [f"0x{x:02X}" for x in sorted(allowed)],
+            "all_loaded_sheets": [f"0x{x:02X}" for x in sheets],
+        }
+
+    if sid == 0x25 and scope == "ow":
+        if 0x40 <= context_id < 0x80:
+            slot, allowed, label = 3, {0x8C}, "EonDog"
+        else:
+            slot, allowed, label = 0, {0x9E}, "VillageDog"
+        loaded = sheets[slot]
+        if loaded in allowed:
+            return None
+        return {
+            "sprite_id": f"0x{sid:02X}",
+            "sprite_name": label,
+            "required_slot": slot,
+            "loaded_sheet": f"0x{loaded:02X}",
+            "expected_sheets": [f"0x{x:02X}" for x in sorted(allowed)],
+            "all_loaded_sheets": [f"0x{x:02X}" for x in sheets],
+        }
+
     if sid == 0xB8:
         if scope == "ow" and 0x40 <= context_id < 0x80:
             slot, allowed, label = 1, {0xCA}, "EonZora"
@@ -277,6 +317,7 @@ def scan_rom_sprite_compat(rom: bytes, root: Path = ROOT) -> dict[str, Any]:
     ow_invalid_sheet_fmt: list[dict[str, Any]] = []
     ow_sheet_mismatches: list[dict[str, Any]] = []
     ow_water_terrain: list[dict[str, Any]] = []
+    ow_phase_palette_parity: list[dict[str, Any]] = []
     special_ow_table: list[dict[str, Any]] = []
 
     seen_pal_oob: set[tuple[int, int]] = set()
@@ -286,10 +327,13 @@ def scan_rom_sprite_compat(rom: bytes, root: Path = ROOT) -> dict[str, Any]:
         parent, sz, grid = get_parent_and_grid(m)
         is_special = m >= 0x80
         sw_phases: dict[str, Any] = {}
+        phase_sids: dict[int, set[int]] = {}
+        phase_pal: dict[int, int] = {}
 
         for phase in range(3):
             sg, sp = ow_spr_meta(m, parent, phase)
             sheets = decode_sprite_blockset(rom, sg)
+            phase_pal[phase] = sp
 
             # Check 1: Sprite palette OOB (>= $14)
             if sp >= MAX_VALID_OW_SPR_PAL and (m, phase) not in seen_pal_oob:
@@ -344,6 +388,7 @@ def scan_rom_sprite_compat(rom: bytes, root: Path = ROOT) -> dict[str, Any]:
                 while p + 2 < len(rom) and rom[p] != 0xFF and len(sprs) < 64:
                     sprs.append((rom[p] & 0x3F, rom[p + 1] & 0x3F, rom[p + 2]))
                     p += 3
+            phase_sids[phase] = {s[2] for s in sprs}
 
             if is_special:
                 sw_phases[f"p{phase}"] = {
@@ -401,6 +446,55 @@ def scan_rom_sprite_compat(rom: bytes, root: Path = ROOT) -> dict[str, Any]:
                             "tile_types": [],
                             "reason": f"coords_oob_for_grid_{len(grid[0])}x{len(grid)}",
                         })
+
+        # Check 5 (advisory): Day/Night/Peacetime sprite-palette parity audit
+        all_sids = sorted({sid for s in phase_sids.values() for sid in s})
+        shared_diffs: list[dict[str, Any]] = []
+        for sid in all_sids:
+            ph_pals = {ph: phase_pal[ph] for ph in range(3) if sid in phase_sids.get(ph, ())}
+            if len(set(ph_pals.values())) > 1:
+                sname = (
+                    custom_names.get(sid)
+                    or (SPRITE_SHEET_RULES[sid]["name"] if sid in SPRITE_SHEET_RULES else f"Spr_0x{sid:02X}")
+                )
+                shared_diffs.append({
+                    "sprite_id": f"0x{sid:02X}",
+                    "sprite_name": sname,
+                    "phase_palettes": {f"p{ph}": f"0x{pal:02X}" for ph, pal in sorted(ph_pals.items())},
+                })
+        if shared_diffs:
+            ow_phase_palette_parity.append({
+                "severity": "warn",
+                "kind": "multi_phase_sprite_pal_drift",
+                "map_id": f"0x{m:02X}",
+                "parent_id": f"0x{parent:02X}",
+                "is_peacetime_map": m in PEACETIME_OW_MAPS,
+                "phase_palettes": {f"p{ph}": f"0x{phase_pal[ph]:02X}" for ph in range(3)},
+                "sprites": shared_diffs,
+            })
+        elif m in PEACETIME_OW_MAPS and phase_sids.get(0) and (
+            phase_pal[0] != phase_pal[1] or phase_pal[0] != phase_pal[2]
+        ):
+            p0_list = []
+            for sid in sorted(phase_sids[0]):
+                sname = (
+                    custom_names.get(sid)
+                    or (SPRITE_SHEET_RULES[sid]["name"] if sid in SPRITE_SHEET_RULES else f"Spr_0x{sid:02X}")
+                )
+                p0_list.append({
+                    "sprite_id": f"0x{sid:02X}",
+                    "sprite_name": sname,
+                    "phase_palettes": {"p0": f"0x{phase_pal[0]:02X}"},
+                })
+            ow_phase_palette_parity.append({
+                "severity": "warn",
+                "kind": "peacetime_pal_divergence",
+                "map_id": f"0x{m:02X}",
+                "parent_id": f"0x{parent:02X}",
+                "is_peacetime_map": True,
+                "phase_palettes": {f"p{ph}": f"0x{phase_pal[ph]:02X}" for ph in range(3)},
+                "sprites": p0_list,
+            })
 
         if is_special:
             if m < 0xA0:
@@ -472,6 +566,7 @@ def scan_rom_sprite_compat(rom: bytes, root: Path = ROOT) -> dict[str, Any]:
             "ow_sheet_mismatches": len(ow_sheet_mismatches),
             "ow_water_terrain_errors": sum(1 for x in ow_water_terrain if x["severity"] == "error"),
             "ow_water_terrain_warns": sum(1 for x in ow_water_terrain if x["severity"] == "warn"),
+            "ow_phase_palette_parity_warns": len(ow_phase_palette_parity),
             "dungeon_invalid_sheet_fmt": len(dun_invalid_sheet_fmt),
             "dungeon_sheet_mismatches": len(dun_sheet_mismatches),
         },
@@ -479,6 +574,7 @@ def scan_rom_sprite_compat(rom: bytes, root: Path = ROOT) -> dict[str, Any]:
         "ow_invalid_sheet_fmt": ow_invalid_sheet_fmt,
         "ow_sheet_mismatches": ow_sheet_mismatches,
         "ow_water_terrain": ow_water_terrain,
+        "ow_phase_palette_parity": ow_phase_palette_parity,
         "dungeon_invalid_sheet_fmt": dun_invalid_sheet_fmt,
         "dungeon_sheet_mismatches": dun_sheet_mismatches,
         "special_ow_audit": special_ow_table,
@@ -496,6 +592,7 @@ def format_markdown(report: dict[str, Any]) -> str:
         f"- **OW Invalid Sprite Sheet Format (2bpp/3bpp):** {s['ow_invalid_sheet_fmt']}",
         f"- **OW Sprite-Sheet Mismatches:** {s['ow_sheet_mismatches']}",
         f"- **OW Water Enemies on Dry Land:** {s['ow_water_terrain_errors']} errors, {s['ow_water_terrain_warns']} coastal warns",
+        f"- **OW Day/Night/Peacetime Palette Parity:** {s['ow_phase_palette_parity_warns']} warns",
         f"- **Dungeon Invalid Sprite Sheet Format:** {s['dungeon_invalid_sheet_fmt']}",
         f"- **Dungeon Sprite-Sheet Mismatches:** {s['dungeon_sheet_mismatches']}",
         "",
@@ -542,6 +639,21 @@ def format_markdown(report: dict[str, Any]) -> str:
             )
         lines.append("")
 
+    if report.get("ow_phase_palette_parity"):
+        lines += [
+            "## Day/Night/Peacetime Sprite-Palette Parity Warnings",
+            "",
+            "| Map | Kind | p0 Pal | p1 (Day) Pal | p2 (Night) Pal | Affected Sprites |",
+            "|---|---|---|---|---|---|",
+        ]
+        for r in report["ow_phase_palette_parity"]:
+            pp = r["phase_palettes"]
+            spr_txt = ", ".join(f"`{x['sprite_id']}` ({x['sprite_name']})" for x in r["sprites"])
+            lines.append(
+                f"| `{r['map_id']}` | {r['kind']} | `{pp['p0']}` | `{pp['p1']}` | `{pp['p2']}` | {spr_txt} |"
+            )
+        lines.append("")
+
     if report["dungeon_sheet_mismatches"]:
         lines += ["## Dungeon Sprite-Sheet Mismatches", "", "| Room | Spriteset | Pos | Sprite | Slot | Loaded | Expected |", "|---|---|---|---|---|---|---|"]
         for r in report["dungeon_sheet_mismatches"]:
@@ -584,6 +696,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"    OW invalid sprite sheet format : {s['ow_invalid_sheet_fmt']}")
     print(f"    OW sprite-sheet mismatches     : {s['ow_sheet_mismatches']}")
     print(f"    OW water enemies on dry land   : {s['ow_water_terrain_errors']} errors, {s['ow_water_terrain_warns']} warns")
+    print(f"    OW day/night/peace pal parity  : {s['ow_phase_palette_parity_warns']} warns")
     print(f"    Dungeon invalid sheet format   : {s['dungeon_invalid_sheet_fmt']}")
     print(f"    Dungeon sprite-sheet mismatches: {s['dungeon_sheet_mismatches']}")
 
