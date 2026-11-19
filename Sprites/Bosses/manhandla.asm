@@ -585,16 +585,25 @@ BigChuchu_BeatPunish:
   RTS
 }
 
-; Out: A = count of living Phase 1 heads (0..3). Preserves X.
+; Out: A = count of living Phase 1 heads (0..3). Guards against reused beam slots.
 Manhandla_CountAliveHeads:
 {
   PHY
   LDA.b #$00 : STA.b $00
-  LDY.w Offspring1_Id : LDA.w SprState, Y : BEQ + : INC.b $00 : +
-  LDY.w Offspring2_Id : LDA.w SprState, Y : BEQ + : INC.b $00 : +
-  LDY.w Offspring3_Id : LDA.w SprState, Y : BEQ + : INC.b $00 : +
+  LDY.w Offspring1_Id : JSR .check_head
+  LDY.w Offspring2_Id : JSR .check_head
+  LDY.w Offspring3_Id : JSR .check_head
   LDA.b $00
   PLY
+  RTS
+
+  .check_head
+  LDA.w SprState, Y : BEQ .dead
+  LDA.w SprType, Y : CMP.b #$88 : BNE .dead
+  LDA.w SprSubtype, Y : BEQ .dead
+  CMP.b #$04 : BCS .dead
+    INC.b $00
+  .dead
   RTS
 }
 
