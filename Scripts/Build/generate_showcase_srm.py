@@ -213,6 +213,7 @@ def _common_showcase_kit() -> tuple[dict[int, int], dict[int, int]]:
         # Travel Spots & Dreams
         0x7EF410: 0x07,  # Dreams (all 3)
         0x7EF412: 0xFF,  # TravelSpotsVisited = $FF (all 8 Kalyxo soaring spots unlocked)
+        0x7EF438: 0x7F,  # SpecialTravelSpotsVisited = $7F (all 7 Lyra Sea regions + Sky = 8 pins)
     }
     u16: dict[int, int] = {
         0x7EF360: 999,   # Rupees
@@ -350,6 +351,7 @@ def validate_showcase_srm(data: bytes) -> dict[str, Any]:
             "spawn_point": p_blk[0x3C8],
             "gust_jar_owned": p_blk[0x3AE],
             "travel_spots_visited": f"0x{p_blk[0x412]:02X}",
+            "special_travel_spots_visited": f"0x{p_blk[0x438]:02X}",
             "sky_soaring_learned": f"0x{p_blk[0x3B2]:02X}",
             "bound_mask": p_blk[0x3A8],
             "item_y": f"0x{p_blk[0x3BA]:02X}",

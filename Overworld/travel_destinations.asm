@@ -22,6 +22,20 @@ TravelDest_MarkVisited:
   PHP : SEP #$30
   PHX
   LDA.l $7E040A
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
+  CMP.b #$80 : BCC .light_world
+  CMP.b #$C0 : BCS .done
+    LDX.b #(SpecialTravelDest_AreasEnd-SpecialTravelDest_Areas)-1
+  .sw_next
+    CMP.l SpecialTravelDest_Areas, X : BEQ .sw_hit
+    DEX : BPL .sw_next
+    BRA .done
+  .sw_hit
+    LDA.l SpecialTravelDest_Masks, X
+    ORA.l SpecialTravelSpotsVisited : STA.l SpecialTravelSpotsVisited
+    BRA .done
+  .light_world
+endif
   LDX.b #$0E
 .next
   CMP.l TravelDest_ScreenIDs, X : BEQ .hit
@@ -44,16 +58,21 @@ TravelDest_Bits:
 ; M8/X8 -> returns A = 8-bit unlocked destination mask (preserves X, Y).
 ; Light World ($00..$3F): TravelSpotsVisited ($7EF412).
 ; Special Overworld ($80..$BF, when !ENABLE_SPECIAL_OVERWORLD_SOARING == 1):
-;   pins 1..5 always unlocked ($1F), plus pin 6 (Sky) when SkySoaringLearned == $A5 ($3F).
+;   (SpecialTravelSpotsVisited & $7F) | $0E (baseline hubs Pins 2/3/4 always
+;   reachable; Pins 1/5/6/7 unlock on visit), ORed with $80 iff SkySoaringLearned == $A5.
 TravelPicker_GetMask:
 {
 if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
   LDA.b $8A : CMP.b #$80 : BCC .light_world
   CMP.b #$C0 : BCS .light_world
-    LDA.l SkySoaringLearned : CMP.b #!SKY_SOARING_LEARNED : BEQ .with_sky
-    LDA.b #$1F : RTS
-  .with_sky
-    LDA.b #$3F : RTS
+    LDA.l SpecialTravelSpotsVisited
+    AND.b #$7F
+    ORA.b #$0E
+    PHA
+    LDA.l SkySoaringLearned : CMP.b #!SKY_SOARING_LEARNED : BNE .no_sky
+      PLA : ORA.b #$80 : RTS
+    .no_sky
+    PLA : RTS
   .light_world
 endif
   LDA.l TravelSpotsVisited : RTS
@@ -65,6 +84,9 @@ endif
 TravelPicker_LoadMap:
 {
   PHP : SEP #$30
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
+  LDA.b #$00 : STA.l SpecialSoaring_LoadStep
+endif
   LDX.b #$00
 .next
   JSR TravelPicker_GetMask : AND.l TravelDest_Bits, X : BNE .set
@@ -83,8 +105,9 @@ if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
 ; Entry: M=8, X=8, DBR=$0A ($C8 == 0).
 ; Light World ($00..$3F): exact vanilla confirm behavior.
 ; Special Overworld ($80..$BF):
-;   - B ($F4 bit 7) or X ($F6 bit 6): cancel via Module $0E Sub $07
-;     (WorldMap_RestoreGraphics -> WorldMap_ExitMap -> Module $09 Sub $20).
+;   - B ($F4 bit 7) or X ($F6 bit 6): clear Travel Bird pickup locks and cancel
+;     via Module $0E Sub $07 (WorldMap_RestoreGraphics -> WorldMap_ExitMap ->
+;     Module $09 Sub $20).
 ;   - A ($F6 bit 7) or START ($F4 bit 4): confirm and advance to transport.
 TravelPicker_CheckAction:
 {
@@ -96,6 +119,7 @@ TravelPicker_CheckAction:
     LDA.b $F4 : AND.b #$10 : BNE .sw_confirm
     JML $0AB79D                           ; .no_selection_made
   .sw_cancel
+    JSL SpecialSoaring_CancelCleanup
     STZ.w $1AF0
     LDA.b #$07 : STA.b $11                ; switch to OverworldMap exit sequence
     INC.w $0200                           ; 5 -> 6 (WorldMap_RestoreGraphics -> WorldMap_ExitMap)

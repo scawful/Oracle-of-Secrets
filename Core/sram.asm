@@ -912,7 +912,12 @@ TravelSpotsVisited = $7EF412 ; one byte
 ; Room-state bit (Dungeons/room_state.asm): one bit per room $000-$127,
 ; byte = room >> 3, mask = 1 << (room & 7). Used only when !ENABLE_ROOM_STATE_BITS.
 RoomSolvedBits     = $7EF413 ; 37 bytes [F413,F438)
-FreeBlock_Dreams   = $7EF438  ; 103 bytes [F438,F49F)
+; Special Overworld ($80-$BF) Soaring visited regions (bits 0..6 = Korok Cove,
+; Royal Garrison, Zora Quay, Goron Coast, Crescent Island, Courage Island,
+; Frost Glacier; bit 7 reserved — Sky $8C is gated on SkySoaringLearned == $A5).
+; Inside the native five-page checksummed SRAM block ($7EF000-$7EF4FF).
+SpecialTravelSpotsVisited = $7EF438 ; one byte
+FreeBlock_Dreams   = $7EF439  ; 102 bytes [F439,F49F)
 ; $7EF49F-4BF reserved: special-event marker $7EF49F and areas 80-9F flags
 ; $7EF4A0-4BF (SPECIAL_EVENT_NAMESPACE_PROPOSAL01). Not free.
 ; Root-owned current-build A0-BF event flags and migration marker. The native
@@ -931,7 +936,7 @@ FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 ; | $7EF3A0  | $7EF3A0  | bits  | Wolf dig: bit 0 used |
 ; | $7EF3B3  | $7EF3B3  | 1     | Large prefix       |
 ; | $7EF3C3  | $7EF3C3  | 1     | Large remainder    |
-; | $7EF438  | $7EF49E  | 103   | Dreams prefix      |
+; | $7EF439  | $7EF49E  | 102   | Dreams prefix      |
 ; | $7EF4E1  | $7EF4FD  | 29    | Dreams remainder   |
 ; |----------|----------|-------|--------------------|
 ; | Free-list comments describe candidates, not allocation grants.     |
