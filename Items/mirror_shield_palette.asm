@@ -1,26 +1,31 @@
 ; ==============================================================================
-; Dark-World-Only GBC Shield Trilogy + Mirror Shield Option D (SP-5 Color 8)
+; Dark-World-Only Compact GBC Shield Trilogy + Mirror Shield Option D (SP-5 C8)
 ; ==============================================================================
-; Light World ($7EF3CA == $00) & Special Overworld keep 100% vanilla SNES ALTTP
-; shields (Sheets $5F/$5C, Menu icons, and ROM PaletteData $1BD648/$1BD650).
+; Light World ($7EF3CA == $00) & Special Overworld preserve the base Oracle of
+; Secrets Light World shields from the yazeproj ROM (Sheets $5F/$5C, Menu icons,
+; and ROM PaletteData $1BD648/$1BD650):
+;   - L1: Custom Round Blue Fighter Shield ($1BD648)
+;   - L2: Custom Red/Blue/Silver Hylian Shield ($1BD650)
+;   - L3: Custom Mirror Shield ($1BD658 Option D + SP-5 C8)
 ;
 ; Eon Abyss / Dark World ($7EF3CA == $40) switches Link's equipped shield tiles
-; ($7E9300..$7E947F, 384B) and SP-5 C12..C15 palette dynamically:
-;   - L1 Wooden Shield (DW only):
+; ($7E9300..$7E947F, 384B; compact face-clearing 9x9 GBC art built by
+; Scripts/Generate/build_gbc_shields_dw.py) and SP-5 C12..C15 palette:
+;   - L1 GBC Wooden Shield (DW only):
 ;       C12 = $379F (#F8E068 bright golden-brass rim & emblem)
 ;       C13 = $0865 (#281810 deep warm umber outline)
 ;       C14 = $15F9 (#C87828 warm Oracle oak wood)
 ;       C15 = $08EF (#783810 deep walnut wood grain shadow)
-;   - L2 Iron / Kite Shield (DW only):
-;       C12 = $7BDE (#F0F0F8 gleaming silver bevel & Oracle kite crest)
+;   - L2 GBC Iron Heater Shield (DW only):
+;       C12 = $7BDE (#F0F0F8 gleaming silver bevel & center crest)
 ;       C13 = $1CA4 (#202838 deep cool navy-steel outline)
-;       C14 = $6ECE (#70B0DC cool steely-blue kite face)
+;       C14 = $6ECE (#70B0DC cool steely-blue face)
 ;       C15 = $4947 (#385090 deep iron-slate shadow)
-;   - L3 Mirror Shield (Option D 5-color palette in LW & DW; GBC art in DW only):
+;   - L3 GBC Mirror Shield (Option D 5-color palette in LW & DW; compact GBC art in DW):
 ;       Uses free OAM SP-5 Color 8 ($01B0 -> PALB_SPR5B $7EC4B0 / PAL_SPR5B $7EC6B0)
 ;       for Mirror Shield's cool steel highlight (#98C0F0 / $7B13), preserving
 ;       Master Sword ($1BD642):
-;       C12 = $373C (#E0C868 gold bezel/emblem)
+;       C12 = $373C (#E0C868 gold bezel/trim)
 ;       C13 = $18A5 (#282830 cool dark outline)
 ;       C14 = $7FFE (#F0F8F8 white specular sheen)
 ;       C15 = $5589 (#4860A8 deep blue-steel shadow)
@@ -254,8 +259,9 @@ pushpc
 org $34F000
 
 ; Copies the equipped shield's 12 4BPP tiles (384 bytes) into GFX_SHIELD ($7E9300):
-;   SavedWorld ($7EF3CA) == #$40 -> GbcShields_4bpp (DW GBC Shield Trilogy)
-;   otherwise                    -> VanillaShields_4bpp (LW vanilla SNES shields)
+;   SavedWorld ($7EF3CA) == #$40 -> GbcShields_4bpp (DW compact GBC Shield Trilogy)
+;   otherwise                    -> VanillaShields_4bpp (LW base OoS custom shields:
+;                                   L1 Round Blue Fighter, L2 Hylian, L3 Mirror)
 ShieldWorld_SyncTiles:
 {
   PHP : PHB : REP #$30
