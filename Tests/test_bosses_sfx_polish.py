@@ -452,6 +452,12 @@ MoveBody = $328004
 BossDefeated_Remnant = $318010
 NewMainSprFunction = $06FFF8
 NewSprPrepFunction = $068EB9
+!FinaleContinue_Magic = $A5
+FinaleContinueCheckpoint = $7EC139
+MaxHealth = $7EF36C
+CurrentHealth = $7EF36D
+MagicPower = $7EF36E
+SFX2 = $7E012E
 org $308000
 NewSprRoutinesLong:
   fill $300
@@ -700,6 +706,12 @@ BossKit_FireTrail = $328004
 BossKit_IceTrail = $328008
 NewMainSprFunction = $06FFF8
 NewSprPrepFunction = $068EB9
+!FinaleContinue_Magic = $A5
+FinaleContinueCheckpoint = $7EC139
+MaxHealth = $7EF36C
+CurrentHealth = $7EF36D
+MagicPower = $7EF36E
+SFX2 = $7E012E
 org $308000
 NewSprRoutinesLong:
   fill $300
@@ -902,6 +914,12 @@ BossDefeated_Remnant = $318018
 Kydreeok_FinalePal = $31801C
 NewMainSprFunction = $06FFF8
 NewSprPrepFunction = $068EB9
+!FinaleContinue_Magic = $A5
+FinaleContinueCheckpoint = $7EC139
+MaxHealth = $7EF36C
+CurrentHealth = $7EF36D
+MagicPower = $7EF36E
+SFX2 = $7E012E
 org $308000
 NewSprRoutinesLong:
   fill $300
