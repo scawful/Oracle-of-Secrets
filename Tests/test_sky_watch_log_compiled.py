@@ -160,23 +160,23 @@ def main():
             assert f.get(STATE) == 0
             cases.append('initialize-context-%04x' % address); f.close()
 
-        # Oracle's pedestal sword is exactly L4; lower and unknown values
-        # cannot capture a conversation, even if upgraded before its close.
+        # DECIDED (decisions.org:207): Sky Soaring no longer requires Sword L4;
+        # every sword level captures and finalizes SkySoaringLearned identically.
         for sword in (0, 1, 2, 3, 4, 5, 0xFF):
             f, control = fresh(), fresh(synthetic)
             for q in (f, control):
                 q.put(SWORD, sword)
                 run_to(q, 0x0EC491, 0x0EC4A9)
             assert cpu_state(f) == cpu_state(control), ('sword capture ABI', sword)
-            assert f.get(STATE) == int(sword == 4), ('sword capture', sword)
+            assert f.get(STATE) == 1, ('sword capture', sword)
             f.cpu.mf = f.cpu.xf = True
             f.put(SWORD, 4)
             acknowledge(f); finalize(f)
-            assert f.get(LEARNED) == (0xA5 if sword == 4 else 0)
+            assert f.get(LEARNED) == 0xA5
             cases.append('capture-sword-%02x-then-L4-close' % sword)
             f.close(); control.close()
 
-        # A valid original read must still satisfy progression at final grant.
+        # Varying Sword at final close never blocks SkySoaringLearned either.
         for sword in (0, 1, 2, 3, 5, 0xFF):
             f, control = fresh(), fresh(synthetic)
             for q in (f, control):
@@ -188,9 +188,9 @@ def main():
             run_to(f, 0x0ECA61, 0x0ECA6B)
             run_to(control, 0x0ECA61, 0x0ECA6B)
             assert cpu_state(f) == cpu_state(control), ('sword grant ABI', sword)
-            assert f.get(STATE) == 0 and f.get(LEARNED) == 0
-            assert not [w for w in f.writes if w[0] == LEARNED]
-            cases.append('close-required-sword-lost-%02x' % sword)
+            assert f.get(STATE) == 0 and f.get(LEARNED) == 0xA5
+            assert [w for w in f.writes if w[0] == LEARNED]
+            cases.append('close-ignores-sword-%02x' % sword)
             f.close(); control.close()
 
         for previous, pad, helper in ((0, 4, 10), (1, 8, 9)):

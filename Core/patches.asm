@@ -33,6 +33,16 @@ assert read2($01E9F5) == $807A, "Room $7A big-chest record moved"
 assert read1($01E9F7) == $38 || read1($01E9F7) == $39 || read1($01E9F7) == $17, "Unexpected room $7A big-chest item"
 org $01E9F7 : db $38 ; Pendant of Wisdom: receipt handler sets $7EF374 bit $01
 
+; Shrine of Wisdom entrance $81 targets room $00CA (layout 4: horizontal split
+; with solid divider wall at y=28..36 and intra-room doors at (14,36)/(46,36)).
+; Its scrollquad byte ($0F:9B81) must be $20 (horizontal scroll only), not $22:
+; with bit 1 ($02) set, camera Y scrolls past $1900 early, so crossing (14,36)
+; leaves Link's Y high byte at $19 and lands him at $19DE (south wall softlock).
+if read2($0F8000+($81*2)) == $00CA
+  assert read1($0F9B81) == $22 || read1($0F9B81) == $20, "Unexpected Entrance $81 scrollquad"
+  org $0F9B81 : db $20
+endif
+
 ; D7 (Dragon Ship) has no big-key chest: the Stalfos Knight in room $A2 (NE
 ; alcove, behind the interior small-key door) drops the Big Key. The drop is a
 ; sprite-list entry $FD,xx,$E4 after the knight (Underworld_LoadSingleSprite
