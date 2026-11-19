@@ -201,6 +201,7 @@ endif
 
 ; Relocated graphics sheet pointer table (copies the base ROM rows).
 incsrc "Core/gfx_sheet_table.asm"
+incsrc "Core/link_sheet_patch.asm"
 
 ; Source-owned compressed sheets patch their streams and rows of the table above.
 if !ENABLE_SOURCE_SPRITE_SHEETS == 1
