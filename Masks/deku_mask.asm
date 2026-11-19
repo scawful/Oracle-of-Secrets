@@ -144,12 +144,12 @@ DekuWings_DrawHoverOam:
   BPL + : LDA.b #$FF : BRA ++ : + : LDA.b #$00 : ++
   STA.b $09
 
-  ; Screen base: $00 = LinkSX16, $02 = WingSY16 = (LinkY - CamY) - AirZ - 10 + bob
+  ; Screen base: $00 = LinkSX16, $02 = WingSY16 = (LinkY - CamY) - AirZ - 6 + bob
   REP #$20
   LDA.b $22 : SEC : SBC.b $E2 : STA.b $00
   LDA.b $20 : SEC : SBC.b $E8
   SEC : SBC.b $06
-  SEC : SBC.w #$000A
+  SEC : SBC.w #$0006
   CLC : ADC.b $08
   STA.b $02
   SEP #$20
@@ -162,17 +162,17 @@ DekuWings_DrawHoverOam:
   ; OAM_AllocateFromRegionC leaves Y non-zero; always reload Y after JSL.
   LDA.b #$08 : JSL OAM_AllocateFromRegionC
 
-  ; Slot 0 (Left hand wing): X = LinkSX16 - 9, normal orientation
+  ; Slot 0 (Left hand wing): X = LinkSX16 - 6, normal orientation
   REP #$20
-  LDA.b $00 : SEC : SBC.w #$0009 : STA.b $0A
+  LDA.b $00 : SEC : SBC.w #$0006 : STA.b $0A
   SEP #$20
   LDY.b #$00 : LDX.b #$00
   LDA.b $04
   JSR .emit_wing
 
-  ; Slot 1 (Right hand wing): X = LinkSX16 + 9, H-flipped for counter-rotation
+  ; Slot 1 (Right hand wing): X = LinkSX16 + 6, H-flipped for counter-rotation
   REP #$20
-  LDA.b $00 : CLC : ADC.w #$0009 : STA.b $0A
+  LDA.b $00 : CLC : ADC.w #$0006 : STA.b $0A
   SEP #$20
   LDY.b #$04 : LDX.b #$01
   LDA.b $04 : ORA.b #$40

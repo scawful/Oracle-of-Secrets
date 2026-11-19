@@ -615,9 +615,9 @@ class DekuPolishTests(unittest.TestCase):
         region, size, low_addr, hi_addr = fx.oam_allocs[0]
         self.assertEqual((region, size), ("C", 8))
         slots = fx.read_oam_slots(low_addr, hi_addr, 2)
-        # Expected Y = 112 - 18 - 10 + (-2) = 82; Left X = 128 - 9 = 119; Right X = 128 + 9 = 137
-        self.assertEqual(slots[0], (119, 82, 0x07, 0x2E, 0x02))
-        self.assertEqual(slots[1], (137, 82, 0x07, 0x6E, 0x02))
+        # Expected Y = 112 - 18 - 6 + (-2) = 86; Left X = 128 - 6 = 122; Right X = 128 + 6 = 134
+        self.assertEqual(slots[0], (122, 86, 0x07, 0x2E, 0x02))
+        self.assertEqual(slots[1], (134, 86, 0x07, 0x6E, 0x02))
 
     def test_wings_draw_hover_oam_hidden_and_left_edge_clip(self):
         # Hidden via $4B=$0C or $55=1 -> zero OAM allocated
@@ -628,15 +628,15 @@ class DekuPolishTests(unittest.TestCase):
             fx.run_jsl("DekuWings_DrawHoverOam", db=0x0D)
             self.assertEqual(fx.oam_allocs, [], f"Expected no OAM when ${addr:02X}=${val:02X}")
 
-        # Left-edge smooth clipping: SX = 4 -> Left wing X = -5 ($FB, hi=$03), Right wing X = 13 (hi=$02)
+        # Left-edge smooth clipping: SX = 4 -> Left wing X = -2 ($FE, hi=$03), Right wing X = 10 (hi=$02)
         fx = self.make_fx()
         fx.ram[0x10] = 0x09
         fx.ram[0x22] = 0x04; fx.ram[0x20] = 0x50; fx.ram[0x24] = 0x10
         fx.run_jsl("DekuWings_DrawHoverOam", db=0x0D)
         _, _, low_addr, hi_addr = fx.oam_allocs[0]
         slots = fx.read_oam_slots(low_addr, hi_addr, 2)
-        self.assertEqual((slots[0][0], slots[0][4]), (0xFB, 0x03))  # X=-5 with X-msb=1
-        self.assertEqual((slots[1][0], slots[1][4]), (13, 0x02))
+        self.assertEqual((slots[0][0], slots[0][4]), (0xFE, 0x03))  # X=-2 with X-msb=1
+        self.assertEqual((slots[1][0], slots[1][4]), (10, 0x02))
 
     # ------------------------------------------------------------------
     # 2. Deku Flower ($77, Sprites/Objects/deku_leaf.asm) Polish
@@ -650,7 +650,7 @@ class DekuPolishTests(unittest.TestCase):
         fx.ram[0x22] = 160; fx.ram[0x23] = 0
         fx.ram[0x20] = 160; fx.ram[0x21] = 0
 
-        # Frame 1: Deku Link steps onto Flower 0 -> sets $71=1, SprMiscA=1, spawns 1 entry poof
+        # Frame 1: Deku Link steps onto Flower 0 -> sets $71=1, SprMiscA=1, spawns 1 entry sparkle (0 poof!)
         fx.ram[0x0FD8] = 160; fx.ram[0x0FD9] = 0
         fx.ram[0x0FDA] = 160; fx.ram[0x0FDB] = 0
         fx.ram[0x1A] = 1
@@ -658,7 +658,8 @@ class DekuPolishTests(unittest.TestCase):
         self.assertEqual(fx.ram[0x71], 1)
         self.assertEqual(fx.ram[0x0DA0 + slot0], 1)  # SprMiscA
         self.assertEqual(fx.ram[0x0DE0 + slot0], 1)  # SprMiscC (within 40px)
-        self.assertEqual(fx.poof_count, 1)
+        self.assertEqual(fx.poof_count, 0, "Standing on flower must use sparkle, not dust puff")
+        self.assertEqual(fx.sparkle_count, 1)
 
         # Same frame: Flower 1 (far away) runs -> must NOT clobber $71!
         fx.ram[0x0FD8] = 240; fx.ram[0x0FD9] = 0
@@ -667,11 +668,12 @@ class DekuPolishTests(unittest.TestCase):
         self.assertEqual(fx.ram[0x71], 1, "Unrelated flower must not clobber $71")
         self.assertEqual(fx.ram[0x0DE0 + slot1], 0, "Far flower proximity flag must stay 0")
 
-        # Frame 2: Still burrowed on Flower 0 at FrameCounter=2 -> poof throttled (no spam!)
+        # Frame 2: Still standing on Flower 0 at FrameCounter=2 -> sparkle throttled (no spam!)
         fx.ram[0x0FD8] = 160; fx.ram[0x0FDA] = 160
         fx.ram[0x1A] = 2
         fx.run_jsl("Sprite_DekuLeaf_Long", x=slot0, db=0x31)
-        self.assertEqual(fx.poof_count, 1, "Burrow poof must throttle instead of firing every frame")
+        self.assertEqual(fx.poof_count, 0)
+        self.assertEqual(fx.sparkle_count, 1, "Standing sparkle must throttle instead of firing every frame")
 
         # Frame 3: Deku Link launches ($5D = $0A) -> triggers launch burst ONCE (SprMiscD = $18, poof+sparkle)
         fx.ram[0x5D] = 0x0A
@@ -680,8 +682,8 @@ class DekuPolishTests(unittest.TestCase):
         fx.run_jsl("Sprite_DekuLeaf_Long", x=slot0, db=0x31)
         self.assertEqual(fx.ram[0x0DB0 + slot0], 1)     # SprMiscB latched
         self.assertEqual(fx.ram[0x0E90 + slot0], 0x18)  # SprMiscD = 24-frame burst
-        self.assertEqual(fx.poof_count, 2)
-        self.assertEqual(fx.sparkle_count, 1)
+        self.assertEqual(fx.poof_count, 1)
+        self.assertEqual(fx.sparkle_count, 2)
 
         # Next frame: launch burst draws Region B (4 flower tiles) + Region C (4 leaf flutter particles)!
         fx.oam_allocs.clear()
@@ -696,7 +698,7 @@ class DekuPolishTests(unittest.TestCase):
             self.assertEqual(attr & 0x3F, 0x32)
             self.assertEqual(hi, 0x00)
         # Must NOT re-trigger launch burst while $5D remains $0A
-        self.assertEqual(fx.sparkle_count, 1)
+        self.assertEqual(fx.sparkle_count, 2)
 
         # Leaving Flower 0 clears $71 and SprMiscA cleanly
         fx.ram[0x22] = 200

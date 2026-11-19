@@ -101,10 +101,10 @@ Sprite_DekuLeaf_Main:
     JSR CheckIfPlayerIsOn : BCC .not_on_flower
       LDA.b #$01 : STA.b $71
       LDA.w $02B2 : CMP.b #$01 : BNE .mark_on_only
-        ; Detect burrow entry (0 -> 1) for crisp entry poof without spamming.
+        ; Detect burrow entry (0 -> 1) for a crisp sparkle cue (no white dust puff).
         LDA.w SprMiscA, X : BNE .already_burrowed
           LDA.b #$01 : STA.w SprMiscA, X
-          JSL Sprite_SpawnPoofGarnish
+          JSL Sprite_SpawnSparkleGarnish
           RTS
 
         .already_burrowed
@@ -115,9 +115,9 @@ Sprite_DekuLeaf_Main:
             RTS
 
         .idle_burrow_rustle
-        ; Subtle periodic leaf rustle every 16 frames while coiled in the flower.
-        LDA.b FrameCounter : AND.b #$0F : BNE .done_on
-          JSL Sprite_SpawnPoofGarnish
+        ; Subtle periodic sparkle cue every 24 frames while standing/ready on the flower.
+        LDA.b FrameCounter : AND.b #$1F : BNE .done_on
+          JSL Sprite_SpawnSparkleGarnish
         .done_on
         RTS
 
