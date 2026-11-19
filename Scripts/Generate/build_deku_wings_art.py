@@ -9,35 +9,37 @@ Each 128-byte frame is stored in SNES 16x16 OBJ row-major DMA order:
   +$40..$7F (64 B): Bottom row (BL tile 32B + BR tile 32B) -> VRAM $4170
 
 Directional Geometry & Overhead Invariants:
-  Frames 0..5 — FRONT / BACK (Up/Down) Overhead Flower-Leaf Propellers:
-    Left flower drawn normal, Right flower H-flipped (ORA #$40), held overhead
-    above Deku Link's cap/shoulders (dx = +-13, dy = -7/-6). Each Left-side
-    frame curves its slender green stem down-inward into the bottom-inner
-    corner (cols 12..15, rows 10..15) while keeping face-clearance cols 14..15
-    empty on rows 0..7 so blossoms never obscure Deku Link's cap or face.
-  Frames 6..11 — SIDE PROFILE (Left/Right) Overhead Flower-Leaf Propellers:
-    Completely distinct foreshortened 3/4 side-profile flower-leaf blossoms
-    tilted forward into Deku Link's flight direction, with sculpted green
-    underside calyx and a centered vertical-swept stem (cols 7..11) dropping
-    cleanly onto his cap crown. On Left facing, BOTH OAM slots face Left
-    (normal, staggered in 3/4 foreground/background depth); on Right facing,
-    BOTH OAM slots are H-flipped (ORA #$40) and mirrored symmetrically.
+  Frames 0..5 — FRONT / BACK (Up/Down) Overhead Twin Flower-Leaf Propellers:
+    Left flower drawn normal, Right flower H-flipped (ORA #$40), held high
+    overhead above Deku Link's cap/shoulders (dx = +-12, dy = -11/-10). Each
+    Left-side frame curves its slender green stem down-inward into the
+    bottom-inner corner (cols 12..15, rows 10..15) while keeping face-clearance
+    cols 14..15 empty on rows 0..7 so blossoms never obscure Deku Link's cap
+    or face.
+  Frames 6..11 — SIDE PROFILE (Left/Right) Single Centered Overhead Flower:
+    Because Deku Link holds one flower in each outstretched hand (left & right
+    of his body), viewing him from the side aligns both hands/flowers along the
+    viewer's sightline into ONE single centered overhead flower right down the
+    middle (1 OAM slot at dx = 0, dy = -12; normal on Left, H-flipped on Right).
+    All 6 side frames feature a lively, fluttering petal-wave animation with a
+    clean centered vertical stem (cols 6..9) tucked down onto his cap crown,
+    staying high and clear of his forehead and eyes even on Flap-Down.
 
 Frame map (streamed during NMI by DekuWings_NmiUpload from Bank $38 tail):
-  Front/Back (LinkFaceDir = $00 Up / $02 Down):
+  Front/Back (LinkFaceDir = $00 Up / $02 Down, 2 OAM slots):
     0 (+$000): Phase 1 Levitate — Wide horizontal 3-leaf helicopter canopy
     1 (+$080): Phase 1 Levitate — Tilted 45 deg CW rotor spin sweep
     2 (+$100): Phase 1 Levitate — Edge-on high-speed horizontal spin flash
     3 (+$180): Phase 1 Levitate — Tilted 45 deg CCW rotor spin sweep
     4 (+$200): Phase 2 Fall Flap-Up — Scalloped leaves pitched skyward (-2px Y)
     5 (+$280): Phase 2 Fall Flap-Down — Drooping bent leaves + wind streaks (+2px Y, +-1px X)
-  Side Profile (LinkFaceDir = $04 Left / $06 Right):
-    6 (+$300): Phase 1 Side Spin — 3/4 side-profile tilted forward-left
-    7 (+$380): Phase 1 Side Spin — Razor-flat side-profile edge spin blur
-    8 (+$400): Phase 1 Side Spin — 3/4 side-profile tilted back-right
-    9 (+$480): Phase 1 Side Spin — 3/4 side-profile cupped broad leaf canopy
-   10 (+$500): Phase 2 Side Flap-Up — Tall narrow skyward-folded profile (-2px Y)
-   11 (+$580): Phase 2 Side Flap-Down — Inverted-umbrella drooping profile + wind streaks (+2px Y)
+  Side Profile (LinkFaceDir = $04 Left / $06 Right, 1 centered OAM slot):
+    6 (+$300): Phase 1 Side Flutter — Front petal crest lifted, rear tips dipping
+    7 (+$380): Phase 1 Side Flutter — Crisp horizontal breeze snap + dancing glint motes
+    8 (+$400): Phase 1 Side Flutter — Rear petal crest lifted, front tips dipping
+    9 (+$480): Phase 1 Side Flutter — Buoyant triple-scallop open bloom (1px flutter lift)
+   10 (+$500): Phase 2 Side Flap-Up — Skyward-folded V-cupped profile (-2px Y)
+   11 (+$580): Phase 2 Side Flap-Down — Gull-wing drooping flutter + wind motes (+2px Y, high clearance)
 
 Palette invariant:
   Uses ONLY Deku Link's SP-7 palette indices (Masks/deku_mask.asm `deku_palette`,
@@ -115,8 +117,8 @@ FRONT_0_WIDE = [
     ".........kfgk...",
     "..........kfgk..",
     "..........kfgbk.",
-    "...........kbgk.",
-    "............kkk.",
+    "...........kfgbk",
+    "............kbgk",
 ]
 
 # Frame 1 (F1): Phase 1 Levitate — Tilted 45 deg CW Helicopter Leaf Spin Sweep
@@ -135,8 +137,8 @@ FRONT_1_CW = [
     ".........kfgk...",
     "..........kfgk..",
     "..........kfgbk.",
-    "...........kbgk.",
-    "............kkk.",
+    "...........kfgbk",
+    "............kbgk",
 ]
 
 # Frame 2 (F2): Phase 1 Levitate — Edge-On Fast Horizontal Propeller Spin Flash
@@ -155,8 +157,8 @@ FRONT_2_EDGE = [
     ".........kfgk...",
     "..........kfgk..",
     "..........kfgbk.",
-    "...........kbgk.",
-    "............kkk.",
+    "...........kfgbk",
+    "............kbgk",
 ]
 
 # Frame 3 (F3): Phase 1 Levitate — Tilted 45 deg CCW Helicopter Leaf Spin Sweep
@@ -175,8 +177,8 @@ FRONT_3_CCW = [
     ".........kfgk...",
     "..........kfgk..",
     "..........kfgbk.",
-    "...........kbgk.",
-    "............kkk.",
+    "...........kfgbk",
+    "............kbgk",
 ]
 
 # Frame 4 (F4): Phase 2 Fall FLAP-UP (Scalloped leaves folded sharply skyward)
@@ -201,9 +203,8 @@ FRONT_4_FLAP_UP = [
 ]
 
 # Frame 5 (F5): Phase 2 Fall FLAP-DOWN (Drooping bent flower-leaf + wind streaks)
-# Paired with +2px OAM Y & +-1px outward spread; small calyx hub + long drooping petal.
+# Paired with +2px OAM Y & +-1px outward spread; calyx sits high so drooping tips stay clear.
 FRONT_5_FLAP_DOWN = [
-    "................",
     "..w.....m.......",
     "....w...........",
     ".m..............",
@@ -219,129 +220,131 @@ FRONT_5_FLAP_DOWN = [
     "..kk........kbgk",
     ".............kkk",
     "................",
+    "................",
 ]
 
 # =========================================================================
-# SIDE PROFILE FRAMES (6..11): Sleek Foreshortened 3/4 Overhead Flower-Leaves
+# SIDE PROFILE FRAMES (6..11): Single Centered Overhead Fluttering Flower
 # Drawn normal on Left facing ($04), H-flipped via ORA #$40 on Right ($06).
-# Both OAM slots face forward into flight direction, staggered in 3/4 depth!
+# Strictly 1 OAM slot centered right down the middle above Deku Link's head!
 # =========================================================================
 
-# Frame 6 (S0): Phase 1 Side Spin — Sleek 3/4 Profile Tilted Forward-Left
-SIDE_0_TILT_FWD = [
+# Frame 6 (S0): Phase 1 Side Flutter — Front Petal Crest Lifted, Rear Dipping
+SIDE_0_FLUTTER_FWD = [
     "................",
-    "................",
-    ".......kkkkkk...",
-    "..kkkkkwmmwwmk..",
-    "kmwwryyyywwyrmk.",
-    "kmrryyccyyyrdk..",
-    ".kddooyylggkk...",
-    "...kkkllggfk....",
-    "......kffgfk....",
-    ".......kfgk.....",
-    "........kfgk....",
-    "........kfgbk...",
-    ".........kbgk...",
-    "..........kkk...",
-    "................",
-    "................",
-]
-
-# Frame 7 (S1): Phase 1 Side Spin — Razor-Flat Side-Profile Edge Spin Blur
-SIDE_1_EDGE_BLUR = [
-    "................",
-    "................",
-    "................",
-    "..kkkkkkkkkkk...",
-    "wkmwwyywwyywmkw.",
-    "mkdrryyyyyyrdkm.",
-    "..kkloooooolkk..",
-    ".....klggglk....",
-    "......kffgfk....",
-    ".......kfgk.....",
-    "........kfgk....",
-    "........kfgbk...",
-    ".........kbgk...",
-    "..........kkk...",
-    "................",
-    "................",
-]
-
-# Frame 8 (S2): Phase 1 Side Spin — Sleek 3/4 Profile Tilted Back-Right
-SIDE_2_TILT_BACK = [
-    "................",
-    "................",
-    ".kkkkkk.........",
-    "kmwwmmwkkkkk....",
-    "kmrywwyyyyrmmk..",
-    ".kdryyccyyyrrmk.",
-    "..kkgglyyooddk..",
-    "....kfgllkkk....",
-    ".....kfgffk.....",
-    ".......kfgk.....",
-    "........kfgk....",
-    "........kfgbk...",
-    ".........kbgk...",
-    "..........kkk...",
-    "................",
-    "................",
-]
-
-# Frame 9 (S3): Phase 1 Side Spin — Sleek Cupped 3/4 Crescent Leaf Canopy
-SIDE_3_CUP_WIDE = [
-    "................",
-    "................",
-    ".kkk......kkk...",
-    "kmwwkkkkkkwmmk..",
-    "kmryyywwyyyrmwk.",
-    ".kdryyyccyyyrdk.",
-    "..kklooyyyoolk..",
-    "....kllgggllk...",
-    "......kffgfk....",
-    ".......kfgk.....",
-    "........kfgk....",
-    "........kfgbk...",
-    ".........kbgk...",
-    "..........kkk...",
-    "................",
-    "................",
-]
-
-# Frame 10 (S4): Phase 2 Side FLAP-UP — Swept-Back Tall Folded Leaf Profile (-2px Y)
-SIDE_4_FLAP_UP = [
-    ".....kkkk.......",
-    "....kmwwmk......",
-    "...kmwrymmkk....",
-    "...kmryyyrmk....",
-    "..kmryywwyrk....",
-    "..kmryyyyyok....",
-    "...kdryyyodk....",
-    "....kklgglk.....",
-    ".....kffgfk.....",
+    "..kkk...........",
+    ".kmwwkk...w.....",
+    "kmwryykkkkkk....",
+    "kmryyywwyyrmkk..",
+    ".kdryycyyyyrrmk.",
+    "..kkoollloyydk..",
+    "....kelgggllk...",
+    ".....kkfggfk....",
+    "......kfgfk.....",
     "......kfgk......",
-    ".......kfgk.....",
-    ".......kfgk.....",
-    "........kfgk....",
-    "........kbgk....",
-    ".........kkk....",
-    "................",
+    "......kfgk......",
+    "......kfgk......",
+    "......kfgk......",
+    "......kbgk......",
+    ".......kk.......",
 ]
 
-# Frame 11 (S5): Phase 2 Side FLAP-DOWN — Gull-Wing Drooping Profile + Air Streaks (+2px Y)
-SIDE_5_FLAP_DOWN = [
+# Frame 7 (S1): Phase 1 Side Flutter — Crisp Horizontal Breeze Snap + Glint Motes
+SIDE_1_FLUTTER_FLAT = [
     "................",
-    "...w......m.....",
-    ".m....w.........",
-    ".........w......",
+    "....w......m....",
+    "..m...........w.",
+    "..kkkkkkkkkkkk..",
+    "wkmwwyywwyywmmkw",
+    "mkdrryyccyyrddkm",
+    "..kkoelggleokk..",
+    ".....klgglk.....",
+    ".....kffggk.....",
+    "......kfgk......",
+    "......kfgk......",
+    "......kfgk......",
+    "......kfgk......",
+    "......kfgk......",
+    "......kbgk......",
+    ".......kk.......",
+]
+
+# Frame 8 (S2): Phase 1 Side Flutter — Rear Petal Crest Lifted, Front Dipping
+SIDE_2_FLUTTER_BACK = [
+    "................",
+    "...........kkk..",
+    ".....w...kkwwmk.",
+    "....kkkkkkyyrwmk",
+    "..kkmryywwyyyrmk",
+    ".kmrryyyycryydk.",
+    "..kdyyolllookk..",
+    "...kllgggek.....",
+    "....kfgffkk.....",
+    ".....kfgfk......",
+    "......kfgk......",
+    "......kfgk......",
+    "......kfgk......",
+    "......kfgk......",
+    "......kbgk......",
+    ".......kk.......",
+]
+
+# Frame 9 (S3): Phase 1 Side Flutter — Buoyant Triple-Scallop Open Crown (+1px Lift)
+SIDE_3_FLUTTER_CROWN = [
+    "......kkkk......",
+    ".kkk.kmwwmk.kkk.",
+    "kmwwkkwrywkkmwwk",
+    "kmwryyyyyyyyrwmk",
+    ".kdryycyycyyrdk.",
+    "..kkooyyyyookk..",
+    "...kelgggglek...",
+    ".....kffggk.....",
+    "......kfgk......",
+    "......kfgk......",
+    "......kfgk......",
+    "......kfgk......",
+    "......kfgk......",
+    "......kfgk......",
+    "......kbgk......",
+    ".......kk.......",
+]
+
+# Frame 10 (S4): Phase 2 Side FLAP-UP — Skyward V-Cupped Fluttering Profile (-2px Y)
+SIDE_4_FLAP_UP = [
+    "...kkk....kkk...",
+    "..kmwwk..kwwmk..",
+    "..kmwrykkrymmk..",
+    "..kmryywwyyrmk..",
+    "...kmryyyyrmk...",
+    "...kdryyyyrdk...",
+    "....kkooyokk....",
+    ".....klgglk.....",
+    ".....kffggk.....",
+    "......kfgk......",
+    "......kfgk......",
+    "......kfgk......",
+    "......kfgk......",
+    "......kfgk......",
+    "......kfgk......",
+    "......kbgk......",
+]
+
+# Frame 11 (S5): Phase 2 Side FLAP-DOWN — Gull-Wing Drooping Flutter + Wind Motes (+2px Y)
+# Rows 13..15 stay completely transparent so drooping petals & stem never touch cap/eyes!
+SIDE_5_FLAP_DOWN = [
+    "...w........m...",
+    ".m......w.......",
+    "..........w.....",
     ".....kkkkkk.....",
     "...kkllggllkk...",
     "..koyyggggyyok..",
-    ".koyyyykfkyyyok.",
-    "kmrywwykfkywwrmk",
-    "kmwryykfgkkyrmwk",
-    "kmwrmk.kfgk.kmrk",
-    ".kddk..kbgk.kddk",
-    "..kk....kkk..kk.",
+    ".koyyykfgkyyyok.",
+    "kmrywykfgkywyrmk",
+    "kmwrykkfgkkyrwmk",
+    "kmwmk.kfgk.kmwmk",
+    ".kddk.kfgk.kddk.",
+    "..kk..kbgk..kk..",
+    ".......kk.......",
     "................",
     "................",
     "................",
@@ -357,12 +360,12 @@ FRONT_FRAMES: list[tuple[str, list[str]]] = [
 ]
 
 SIDE_FRAMES: list[tuple[str, list[str]]] = [
-    ("side0_tilt_fwd",   SIDE_0_TILT_FWD),
-    ("side1_edge_blur",  SIDE_1_EDGE_BLUR),
-    ("side2_tilt_back",  SIDE_2_TILT_BACK),
-    ("side3_cup_wide",   SIDE_3_CUP_WIDE),
-    ("side4_flap_up",    SIDE_4_FLAP_UP),
-    ("side5_flap_down",  SIDE_5_FLAP_DOWN),
+    ("side0_flutter_fwd",   SIDE_0_FLUTTER_FWD),
+    ("side1_flutter_flat",  SIDE_1_FLUTTER_FLAT),
+    ("side2_flutter_back",  SIDE_2_FLUTTER_BACK),
+    ("side3_flutter_crown", SIDE_3_FLUTTER_CROWN),
+    ("side4_flap_up",       SIDE_4_FLAP_UP),
+    ("side5_flap_down",     SIDE_5_FLAP_DOWN),
 ]
 
 FRAMES: list[tuple[str, list[str]]] = FRONT_FRAMES + SIDE_FRAMES
@@ -453,7 +456,7 @@ def render_preview(out_png: Path, scale: int = 6) -> None:
     draw = ImageDraw.Draw(img)
     draw.text(
         (pad, 8),
-        "Deku Overhead Flower-Leaves - 12-Frame 4BPP SP-7 Preview (Row 1: Front/Back F0..F5 | Row 2: Side S0..S5 | Row 3: Paired 3/4 Depth)",
+        "Deku Overhead Flower-Leaves - 12-Frame 4BPP SP-7 Preview (Row 1: Front/Back F0..F5 | Row 2: Side Left S0..S5 | Row 3: Side Right H-Flip S0..S5)",
         fill=(245, 245, 245, 255),
     )
 
@@ -466,27 +469,23 @@ def render_preview(out_png: Path, scale: int = 6) -> None:
         blit(img, grid, cx, ry1, sc=scale, hflip=False)
         draw.text((cx + 2, ry1 + cell + 4), f"F{i}: {name}", fill=(235, 235, 235, 255))
 
-    # Row 2: Side Profile frames 6..11 (S0..S5)
+    # Row 2: Side Profile frames 6..11 (S0..S5, single centered Left facing)
     ry2 = ry1 + cell + 34
     for i, (name, grid) in enumerate(side_grids):
         cx = pad + i * (cell + pad)
         bg = (54, 96, 116, 255) if i < 4 else (96, 74, 88, 255)
         draw.rectangle((cx, ry2, cx + cell - 1, ry2 + cell - 1), fill=bg, outline=(105, 118, 130, 255))
         blit(img, grid, cx, ry2, sc=scale, hflip=False)
-        draw.text((cx + 2, ry2 + cell + 4), f"S{i} (F{i+6}): {name}", fill=(235, 235, 235, 255))
+        draw.text((cx + 2, ry2 + cell + 4), f"S{i}: {name.split('_', 1)[1]}", fill=(235, 235, 235, 255))
 
-    # Row 3: Staggered 3/4 Side Depth Pair Preview (Far behind, Near in front)
+    # Row 3: Side Profile Right facing (H-flipped single centered mirror check)
     ry3 = ry2 + cell + 34
-    pair_sc = max(3, scale - 2)
     for i, (name, grid) in enumerate(side_grids):
         cx = pad + i * (cell + pad)
-        draw.rectangle((cx, ry3, cx + cell - 1, ry3 + cell - 1), fill=(42, 52, 68, 255), outline=(105, 118, 130, 255))
-        # Draw Far slot first (shifted +7px back, -2px up in SNES px), then Near slot on top
-        base_x = cx + (cell - 23 * pair_sc) // 2
-        base_y = ry3 + (cell - 18 * pair_sc) // 2 + 2 * pair_sc
-        blit(img, grid, base_x + 7 * pair_sc, base_y - 2 * pair_sc, sc=pair_sc, hflip=False)
-        blit(img, grid, base_x, base_y, sc=pair_sc, hflip=False)
-        draw.text((cx + 2, ry3 + cell + 4), f"3/4 Left Pair S{i}", fill=(215, 228, 240, 255))
+        bg = (42, 56, 74, 255) if i < 4 else (74, 52, 68, 255)
+        draw.rectangle((cx, ry3, cx + cell - 1, ry3 + cell - 1), fill=bg, outline=(105, 118, 130, 255))
+        blit(img, grid, cx, ry3, sc=scale, hflip=True)
+        draw.text((cx + 2, ry3 + cell + 4), f"Right Mirror S{i}", fill=(215, 228, 240, 255))
 
     out_png.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_png)

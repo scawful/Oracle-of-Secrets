@@ -39,13 +39,13 @@ deku_palette:
 ; cannot run during hover, so zero VRAM conflict.
 ;
 ; 12-Frame Directional & 2-Phase Animation (driven by LinkFaceDir $2F, FallTimer $5C, $1A):
-;   Front / Back ($2F = $00 Up / $02 Down -> frames 0..5):
+;   Front / Back ($2F = $00 Up / $02 Down -> frames 0..5, 2 OAM slots):
 ;     Phase 1 (FallTimer >= #$50): Steady levitating spin (frames 0..3)
 ;     Phase 2a ($20..$4F):         End-of-hover flapping (frames 4<->5 every 4f)
 ;     Phase 2b (< #$20):           Frantic panic flapping (frames 4<->5 every 2f)
-;   Side Profile ($2F = $04 Left / $06 Right -> frames 6..11, staggered 3/4 depth):
-;     Phase 1 (FallTimer >= #$50): Sleek foreshortened side rotor spin (frames 6..9)
-;     Phase 2a/2b (< #$50):        Side-profile fall-flapping (frames 10<->11)
+;   Side Profile ($2F = $04 Left / $06 Right -> frames 6..11, 1 centered OAM slot):
+;     Phase 1 (FallTimer >= #$50): Lively fluttering centered flower (frames 6..9)
+;     Phase 2a/2b (< #$50):        Centered side-profile fall-flapping (frames 10<->11)
 ; =========================================================
 
 ; Place 12-frame GFX ($0600 = 1,536 B) in Bank $38 tail ($38F800..$38FDFF).
@@ -142,11 +142,14 @@ DekuWings_NmiUpload:
 }
 
 ; Post-Ancilla OAM renderer called from DekuLink_SpinOrRecoil (PlayerOam_Main).
-; Draws twin overhead 16x16 Deku Flower-Leaves in Region C across all 4 facings
+; Draws overhead 16x16 Deku Flower-Leaves in Region C across all 4 facings
 ; using SP-7 (Deku palette, tile $07):
-;   - Up/Down:    Symmetric twin overhead flower-leaves (Slot 0 normal, Slot 1 H-flipped).
-;   - Left/Right: Staggered 3/4 side-profile overhead pair (Slot 0 Near in front,
-;                 Slot 1 Far shifted back & 2px higher behind; BOTH face flight dir).
+;   - Up/Down:    2 OAM slots (8 B) — symmetric twin overhead flower-leaves
+;                 (Slot 0 left normal at dx=-12, Slot 1 right H-flipped at dx=+12),
+;                 raised high above Deku Link's cap (dy=-11 Up / -10 Down).
+;   - Left/Right: 1 OAM slot (4 B) — ONE single centered overhead flower right down
+;                 the middle (dx=0, dy=-12) since outstretched left/right hands align
+;                 along the viewer's sightline from the side (Left normal, Right H-flip).
 ; Entry/Exit: M=8, X=8; preserves DBR, X, Y, and zero-page $00..$0F.
 DekuWings_DrawHoverOam:
 {
@@ -195,7 +198,7 @@ DekuWings_DrawHoverOam:
       LDA.b #$FE ; -2 px on Flap-Up (F4 / S4)
       BRA .have_bob
     .flap_down
-    LDA.b #$01 : STA.b $0E ; +-1 px splay on Flap-Down (F5 / S5)
+    LDA.b #$01 : STA.b $0E ; +-1 px splay on Front/Back Flap-Down (F5)
     LDA.b #$02             ; +2 px on Flap-Down (F5 / S5)
     BRA .have_bob
 
@@ -215,79 +218,64 @@ DekuWings_DrawHoverOam:
   STA.b $02
   SEP #$20
 
-  ; Precompute ALL Slot 0 & Slot 1 coordinates and attributes in $00..$09 BEFORE
-  ; calling OAM_AllocateFromRegionC, because vanilla $0DBB0A clobbers $0C..$0F.
-  ;   $00/$01 = X0, $02/$03 = Y0, $04 = attr0, $05 = attr1, $06/$07 = X1, $08/$09 = Y1.
-  LDX.b $0D
-
-  ; Slot 1 Y16 ($08/$09) = BaseSY16 + signext(.dir_dy1[dir] + bob_y)
-  LDA.b $0F : CLC : ADC.w .dir_dy1, X : STA.b $08
-  BPL .dy1_pos
-    LDA.b #$FF : BRA .dy1_hi
-  .dy1_pos
-  LDA.b #$00
-  .dy1_hi
-  STA.b $09
-
-  ; Slot 0 Y16 ($0A/$0B -> $02/$03) = BaseSY16 + signext(.dir_dy0[dir] + bob_y)
-  LDA.b $0F : CLC : ADC.w .dir_dy0, X : STA.b $0A
-  BPL .dy0_pos
-    LDA.b #$FF : BRA .dy0_hi
-  .dy0_pos
-  LDA.b #$00
-  .dy0_hi
-  STA.b $0B
-
-  REP #$20
-  LDA.b $02 : CLC : ADC.b $08 : STA.b $08 ; $08/$09 = Y1
-  LDA.b $02 : CLC : ADC.b $0A : STA.b $02 ; $02/$03 = Y0
-  SEP #$20
-
-  ; Slot 0 X16 ($0A/$0B -> $00/$01) = LinkSX16 + signext(.dir_dx0[dir] + (spread ? .dir_sp0[dir] : 0))
-  LDA.b $0E : BEQ .dx0_nosp
-    LDA.w .dir_dx0, X : CLC : ADC.w .dir_sp0, X : BRA .dx0_sign
-  .dx0_nosp
-  LDA.w .dir_dx0, X
-  .dx0_sign
-  STA.b $0A
-  BPL .dx0_pos
-    LDA.b #$FF : BRA .dx0_hi
-  .dx0_pos
-  LDA.b #$00
-  .dx0_hi
-  STA.b $0B
-
-  ; Slot 1 X16 ($06/$07) = LinkSX16 + signext(.dir_dx1[dir] + (spread ? .dir_sp1[dir] : 0))
-  LDA.b $0E : BEQ .dx1_nosp
-    LDA.w .dir_dx1, X : CLC : ADC.w .dir_sp1, X : BRA .dx1_sign
-  .dx1_nosp
-  LDA.w .dir_dx1, X
-  .dx1_sign
-  STA.b $06
-  BPL .dx1_pos
-    LDA.b #$FF : BRA .dx1_hi
-  .dx1_pos
-  LDA.b #$00
-  .dx1_hi
-  STA.b $07
-
-  REP #$20
-  LDA.b $00 : CLC : ADC.b $06 : STA.b $06 ; $06/$07 = X1
-  LDA.b $00 : CLC : ADC.b $0A : STA.b $00 ; $00/$01 = X0
-  SEP #$20
-
-  ; BG priority from $EE + Deku SP-7 ($0E), NT=0, plus per-facing slot H-flip
+  ; Base BG priority from $EE + Deku SP-7 ($0E), NT=0 -> $04
   LDA.b $EE : AND.b #$03 : TAX
   LDA.w .prio_tbl, X : ORA.b #$0E : STA.b $04
+
+  ; Overhead Y16 ($02/$03) = BaseSY16 + signext(.dir_dy[dir] + bob_y)
+  ; Precomputed BEFORE OAM_AllocateFromRegionC, because vanilla $0DBB0A clobbers $0C..$0F.
   LDX.b $0D
-  ORA.w .dir_flip1, X : STA.b $05 ; Slot 1 attr
-  LDA.b $04 : ORA.w .dir_flip0, X : STA.b $04 ; Slot 0 attr
+  LDA.b $0F : CLC : ADC.w .dir_dy, X : STA.b $0A
+  BPL .dy_pos
+    LDA.b #$FF : BRA .dy_hi
+  .dy_pos
+  LDA.b #$00
+  .dy_hi
+  STA.b $0B
+
+  REP #$20
+  LDA.b $02 : CLC : ADC.b $0A : STA.b $02 ; $02/$03 = Y0 (shared by both slots on Up/Down)
+  SEP #$20
+
+  ; Side profile (Left=2, Right=3): strictly ONE centered 16x16 flower at dx=0!
+  CPX.b #$02 : BCC .front_back_pair
+    LDA.b $04 : ORA.w .dir_flip0, X : STA.b $04
+    ; Allocate 1 OAM slot (4 B) from Region C (leaves Y non-zero, clobbers $0C..$0F).
+    LDA.b #$04 : JSL OAM_AllocateFromRegionC
+    REP #$20
+    LDA.b $00 : STA.b $0A ; X0 = LinkSX16 (dx = 0, centered right down the middle)
+    LDA.b $02 : STA.b $0C ; Y0
+    SEP #$20
+    LDY.b #$00 : LDX.b #$00
+    LDA.b $04
+    JSR .emit_wing
+    BRA .exit
+
+  .front_back_pair
+  ; Front/Back (Up=0, Down=1): Twin symmetric overhead flowers (Slot 0 left normal, Slot 1 right H-flipped).
+  ; Precompute X0 ($00/$01), X1 ($06/$07), attr1 ($05) BEFORE OAM_AllocateFromRegionC.
+  LDA.b $04 : ORA.b #$40 : STA.b $05 ; Slot 1 attr (H-flipped)
+
+  LDA.b $0E : BEQ .fb_nosp
+    LDA.b #-13 : STA.b $0A
+    LDA.b #13  : STA.b $06
+    BRA .fb_addx
+  .fb_nosp
+  LDA.b #-12 : STA.b $0A
+  LDA.b #12  : STA.b $06
+  .fb_addx
+  LDA.b #$FF : STA.b $0B
+  STZ.b $07
+
+  REP #$20
+  LDA.b $00 : CLC : ADC.b $06 : STA.b $06 ; $06/$07 = X1 (Right flower)
+  LDA.b $00 : CLC : ADC.b $0A : STA.b $00 ; $00/$01 = X0 (Left flower)
+  SEP #$20
 
   ; Allocate 2 OAM slots (8 B) from Region C (above Link & ground sprites, post-Ancilla safe).
-  ; OAM_AllocateFromRegionC leaves Y non-zero and clobbers $0C..$0F; reload Y after JSL.
   LDA.b #$08 : JSL OAM_AllocateFromRegionC
 
-  ; Slot 0 (Left wing on Up/Down; Near/Front flower on Left/Right -> drawn ON TOP)
+  ; Slot 0 (Left flower, normal)
   REP #$20
   LDA.b $00 : STA.b $0A
   LDA.b $02 : STA.b $0C
@@ -296,10 +284,10 @@ DekuWings_DrawHoverOam:
   LDA.b $04
   JSR .emit_wing
 
-  ; Slot 1 (Right wing on Up/Down; Far/Back flower on Left/Right -> drawn BEHIND)
+  ; Slot 1 (Right flower, H-flipped, shares Y0 in $02/$03)
   REP #$20
   LDA.b $06 : STA.b $0A
-  LDA.b $08 : STA.b $0C
+  LDA.b $02 : STA.b $0C
   SEP #$20
   LDY.b #$04 : LDX.b #$01
   LDA.b $05
@@ -357,25 +345,11 @@ DekuWings_DrawHoverOam:
     db 0, -1, -1, 0
   ; Per-facing overhead Deku Flower-Leaf tables indexed by (LinkFaceDir >> 1) & 3:
   ;   0=Up, 1=Down, 2=Left, 3=Right
-  ; Up/Down: symmetric twin overhead flower-leaves (Slot 0 left normal, Slot 1 right H-flipped).
-  ; Left/Right: staggered 3/4 side-profile overhead pair (Slot 0 near/front in front,
-  ;             Slot 1 far/back shifted back & 2px higher behind; BOTH face flight direction).
-  .dir_dx0
-    db -13, -13,  -4,   4
-  .dir_dx1
-    db  13,  13,   3,  -3
-  .dir_dy0
-    db  -7,  -6,  -8,  -8
-  .dir_dy1
-    db  -7,  -6, -10, -10
-  .dir_sp0
-    db  -1,  -1,  -1,   1
-  .dir_sp1
-    db   1,   1,   1,  -1
+  ; Raised +4px higher across all 4 facings so blossoms stay cleanly above Deku Link's cap/eyes.
+  .dir_dy
+    db -11, -10, -12, -12
   .dir_flip0
     db $00, $00, $00, $40
-  .dir_flip1
-    db $40, $40, $00, $40
   .prio_tbl
     db $20, $10, $30, $20
 }

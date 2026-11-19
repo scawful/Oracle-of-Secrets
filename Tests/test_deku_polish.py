@@ -513,13 +513,15 @@ class DekuPolishTests(unittest.TestCase):
             self.assertGreaterEqual(grip_pixels, 8, f"{name}: missing bottom-inner stem grip pixels")
             face_intrusions = sum(1 for r in range(0, 8) for c in range(14, 16) if grid[r][c] != 0)
             self.assertEqual(face_intrusions, 0, f"{name}: blossom intrudes into face-clearance cols 14..15")
-        # Side Profile frames (6..11): centered overhead stem (cols 6..12, rows 9..14)
-        # and rows 15 stay clear so stacked 3/4 side flowers never cover Deku Link's eyes.
+        # Side Profile frames (6..11): strictly ONE centered overhead flower (stem cols 6..9)
+        # and S5 Flap-Down leaves rows 13..15 clear so drooping petals never cover cap/eyes.
         for name, rows in wings_art.SIDE_FRAMES:
             grid = wings_art.parse_grid(name, rows)
-            stem_pixels = sum(1 for r in range(9, 15) for c in range(6, 13) if grid[r][c] != 0)
-            self.assertGreaterEqual(stem_pixels, 8, f"{name}: missing centered overhead side stem pixels")
-            self.assertTrue(all(v == 0 for v in grid[15]), f"{name}: row 15 should stay clear above Deku Link's eyes")
+            stem_pixels = sum(1 for r in range(9, 15) for c in range(6, 10) if grid[r][c] != 0)
+            self.assertGreaterEqual(stem_pixels, 10, f"{name}: missing centered overhead side stem pixels (cols 6..9)")
+            if name == "side5_flap_down":
+                for r in range(13, 16):
+                    self.assertTrue(all(v == 0 for v in grid[r]), f"{name}: row {r} should stay clear above Deku Link's cap/eyes")
 
     def test_nmi_upload_fast_exits_when_not_deku_hovering(self):
         cases = [
@@ -667,18 +669,20 @@ class DekuPolishTests(unittest.TestCase):
                 self.assertEqual(fx.hw_regs[0x4302] | (fx.hw_regs[0x4303] << 8), 0x9000)
                 self.assertEqual(fx.cpu.y, 0x5566)
 
-    def test_wings_draw_hover_oam_overhead_all_4_dirs_side_depth_and_2phase_flap(self):
+    def test_wings_draw_hover_oam_overhead_all_4_dirs_single_side_and_2phase_flap(self):
         # Per-facing overhead Deku Flower-Leaf layout:
-        #   (name, dval, dx0, dy0, attr0, dx1, dy1, attr1)
-        # Up/Down: symmetric mirrored pair; Left/Right: staggered 3/4 depth pair both facing flight dir!
-        facings = [
-            ("Up",    0x00, -13, -7, 0x2E, +13,  -7, 0x6E),
-            ("Down",  0x02, -13, -6, 0x2E, +13,  -6, 0x6E),
-            ("Left",  0x04,  -4, -8, 0x2E,  +3, -10, 0x2E),
-            ("Right", 0x06,  +4, -8, 0x6E,  -3, -10, 0x6E),
+        #   - Up/Down:    2 OAM slots (8 B) — symmetric twin flowers at dx=+-12, raised high (dy=-11/-10)
+        #   - Left/Right: 1 OAM slot  (4 B) — ONE single centered flower at dx=0, dy=-12
+        front_back = [
+            ("Up",   0x00, -12, -11, 0x2E, +12, -11, 0x6E),
+            ("Down", 0x02, -12, -10, 0x2E, +12, -10, 0x6E),
+        ]
+        side_single = [
+            ("Left",  0x04, 0, -12, 0x2E),
+            ("Right", 0x06, 0, -12, 0x6E),
         ]
         # Phase 1: FallTimer = $C0, $1A = $08 (bob index 1 -> -1px), SX = 128, SY_air = 94
-        for name, dval, dx0, dy0, attr0, dx1, dy1, attr1 in facings:
+        for name, dval, dx0, dy0, attr0, dx1, dy1, attr1 in front_back:
             with self.subTest(phase=1, dir=name):
                 fx = self.make_fx()
                 fx.ram[0x10] = 0x09
@@ -708,20 +712,44 @@ class DekuPolishTests(unittest.TestCase):
                 self.assertEqual(slots[0], (128 + dx0, 94 + dy0 - 1, 0x07, attr0, 0x02))
                 self.assertEqual(slots[1], (128 + dx1, 94 + dy1 - 1, 0x07, attr1, 0x02))
 
-        # Phase 2a ($38) & Phase 2b ($14): Flap-Up (-2px Y, splay=0) vs Flap-Down (+2px Y, directional splay)
-        # Verify Front (Down) AND both Side profiles (Left & Right)!
-        flap_dirs = [
-            ("Down",  0x02, -13, -6, 0x2E, -1, +13,  -6, 0x6E, +1),
-            ("Left",  0x04,  -4, -8, 0x2E, -1,  +3, -10, 0x2E, +1),
-            ("Right", 0x06,  +4, -8, 0x6E, +1,  -3, -10, 0x6E, -1),
-        ]
+        for name, dval, dx0, dy0, attr0 in side_single:
+            with self.subTest(phase=1, dir=name):
+                fx = self.make_fx()
+                fx.ram[0x10] = 0x09
+                fx.ram[0x11] = 0x00
+                fx.ram[0x22] = 0x80; fx.ram[0x23] = 0x01
+                fx.ram[0x20] = 0x70; fx.ram[0x21] = 0x01
+                fx.ram[0xE2] = 0x00; fx.ram[0xE3] = 0x01
+                fx.ram[0xE8] = 0x00; fx.ram[0xE9] = 0x01
+                fx.ram[0x24] = 0x12; fx.ram[0x25] = 0x00
+                fx.ram[0x2F] = dval
+                fx.ram[0x5C] = 0xC0
+                fx.ram[0xEE] = 0x00
+                fx.ram[0x1A] = 0x08
+                canary = bytes(range(0xA0, 0xB0))
+                fx.ram[0x00:0x10] = canary
+
+                fx.run_jsl("DekuWings_DrawHoverOam", x=0x33, y=0x05, db=0x0D, mf=True, xf=True)
+
+                self.assertEqual(bytes(fx.ram[0x00:0x10]), canary)
+                self.assertEqual(fx.cpu.db, 0x0D)
+                self.assertEqual(fx.cpu.x, 0x33)
+                self.assertEqual(fx.cpu.y, 0x05)
+                self.assertEqual(len(fx.oam_allocs), 1)
+                region, size, low_addr, hi_addr = fx.oam_allocs[0]
+                self.assertEqual((region, size), ("C", 4))  # strictly 1 OAM slot!
+                slots = fx.read_oam_slots(low_addr, hi_addr, 1)
+                self.assertEqual(slots[0], (128 + dx0, 94 + dy0 - 1, 0x07, attr0, 0x02))
+
+        # Phase 2a ($38) & Phase 2b ($14): Flap-Up (-2px Y) vs Flap-Down (+2px Y)
+        # Front/Back splay +-1px on Flap-Down; Side stays centered (dx=0, 1 OAM slot)!
         flap_cases = [
             ("2a_up",   0x38, 0x00, -2, False),
             ("2a_down", 0x38, 0x04, +2, True),
             ("2b_up",   0x14, 0x00, -2, False),
             ("2b_down", 0x14, 0x02, +2, True),
         ]
-        for dname, dval, dx0, dy0, attr0, sp0, dx1, dy1, attr1, sp1 in flap_dirs:
+        for dname, dval, dy0 in (("Up", 0x00, -11), ("Down", 0x02, -10)):
             for label, ft, fc, bob_y, is_down in flap_cases:
                 with self.subTest(dir=dname, flap=label):
                     fx = self.make_fx()
@@ -735,12 +763,31 @@ class DekuPolishTests(unittest.TestCase):
                     fx.ram[0x5C] = ft
                     fx.ram[0x1A] = fc
                     fx.run_jsl("DekuWings_DrawHoverOam", db=0x0D)
-                    _, _, low_addr, hi_addr = fx.oam_allocs[0]
+                    region, size, low_addr, hi_addr = fx.oam_allocs[0]
+                    self.assertEqual((region, size), ("C", 8))
                     slots = fx.read_oam_slots(low_addr, hi_addr, 2)
-                    s0 = sp0 if is_down else 0
-                    s1 = sp1 if is_down else 0
-                    self.assertEqual(slots[0], (128 + dx0 + s0, 94 + dy0 + bob_y, 0x07, attr0, 0x02))
-                    self.assertEqual(slots[1], (128 + dx1 + s1, 94 + dy1 + bob_y, 0x07, attr1, 0x02))
+                    dx = 13 if is_down else 12
+                    self.assertEqual(slots[0], (128 - dx, 94 + dy0 + bob_y, 0x07, 0x2E, 0x02))
+                    self.assertEqual(slots[1], (128 + dx, 94 + dy0 + bob_y, 0x07, 0x6E, 0x02))
+
+        for dname, dval, attr0 in (("Left", 0x04, 0x2E), ("Right", 0x06, 0x6E)):
+            for label, ft, fc, bob_y, _ in flap_cases:
+                with self.subTest(dir=dname, flap=label):
+                    fx = self.make_fx()
+                    fx.ram[0x10] = 0x09
+                    fx.ram[0x22] = 0x80; fx.ram[0x23] = 0x01
+                    fx.ram[0x20] = 0x70; fx.ram[0x21] = 0x01
+                    fx.ram[0xE2] = 0x00; fx.ram[0xE3] = 0x01
+                    fx.ram[0xE8] = 0x00; fx.ram[0xE9] = 0x01
+                    fx.ram[0x24] = 0x12; fx.ram[0x25] = 0x00
+                    fx.ram[0x2F] = dval
+                    fx.ram[0x5C] = ft
+                    fx.ram[0x1A] = fc
+                    fx.run_jsl("DekuWings_DrawHoverOam", db=0x0D)
+                    region, size, low_addr, hi_addr = fx.oam_allocs[0]
+                    self.assertEqual((region, size), ("C", 4))
+                    slots = fx.read_oam_slots(low_addr, hi_addr, 1)
+                    self.assertEqual(slots[0], (128, 94 - 12 + bob_y, 0x07, attr0, 0x02))
 
     def test_wings_draw_hover_oam_hidden_and_left_edge_clip(self):
         # Hidden via $4B=$0C or $55=1 -> zero OAM allocated
@@ -751,7 +798,7 @@ class DekuPolishTests(unittest.TestCase):
             fx.run_jsl("DekuWings_DrawHoverOam", db=0x0D)
             self.assertEqual(fx.oam_allocs, [], f"Expected no OAM when ${addr:02X}=${val:02X}")
 
-        # Left-edge smooth clipping: Down (dx0=-13, dx1=+13), SX=4 -> Left X=-9 ($F7, hi=$03), Right X=17 (hi=$02)
+        # Left-edge smooth clipping: Down (dx0=-12, dx1=+12), SX=4 -> Left X=-8 ($F8, hi=$03), Right X=16 (hi=$02)
         fx = self.make_fx()
         fx.ram[0x10] = 0x09
         fx.ram[0x2F] = 0x02
@@ -760,34 +807,48 @@ class DekuPolishTests(unittest.TestCase):
         fx.run_jsl("DekuWings_DrawHoverOam", db=0x0D)
         _, _, low_addr, hi_addr = fx.oam_allocs[0]
         slots = fx.read_oam_slots(low_addr, hi_addr, 2)
-        self.assertEqual((slots[0][0], slots[0][4]), (0xF7, 0x03))  # X=-9 with X-msb=1
-        self.assertEqual((slots[1][0], slots[1][4]), (17, 0x02))
+        self.assertEqual((slots[0][0], slots[0][4]), (0xF8, 0x03))  # X=-8 with X-msb=1
+        self.assertEqual((slots[1][0], slots[1][4]), (16, 0x02))
 
-        # Full off-left clip: Down + Flap-Down (dx0=-14, dx1=+14); SX=-4 -> Left X=-18 (clipped!), Right X=-4+14=10
+        # Full off-left clip: Down + Flap-Down (dx0=-13, dx1=+13); SX=-4 -> Left X=-17 (clipped!), Right X=-4+13=9
         fx2 = self.make_fx()
         fx2.ram[0x10] = 0x09
         fx2.ram[0x2F] = 0x02
         fx2.ram[0x5C] = 0x14
-        fx2.ram[0x1A] = 0x02  # Flap-Down (spread=1 -> dx0=-14, dx1=+14)
-        fx2.ram[0x22] = 0xFC; fx2.ram[0x23] = 0xFF  # LinkSX = -4 -> Left X = -18 (clipped!)
+        fx2.ram[0x1A] = 0x02  # Flap-Down (spread=1 -> dx0=-13, dx1=+13)
+        fx2.ram[0x22] = 0xFC; fx2.ram[0x23] = 0xFF  # LinkSX = -4 -> Left X = -17 (clipped!)
         fx2.ram[0x20] = 0x50; fx2.ram[0x24] = 0x10
         fx2.run_jsl("DekuWings_DrawHoverOam", db=0x0D)
         _, _, low2, hi2 = fx2.oam_allocs[0]
         slots2 = fx2.read_oam_slots(low2, hi2, 2)
         self.assertEqual(slots2[0][1], 0xF0)        # Left wing cleanly clipped offscreen
-        self.assertEqual((slots2[1][0], slots2[1][4]), (10, 0x02))  # Right wing at -4 + 14 = 10
+        self.assertEqual((slots2[1][0], slots2[1][4]), (9, 0x02))  # Right wing at -4 + 13 = 9
 
-        # Side Right negative signed dx1 check near left edge: SX=1 -> Slot0 X=+5 (hi=$02), Slot1 X=-2 ($FE, hi=$03)
+        # Side Right smooth partial left-edge clip (1 slot): SX=-4 -> X=-4 ($FC, hi=$03)
         fx3 = self.make_fx()
         fx3.ram[0x10] = 0x09
-        fx3.ram[0x2F] = 0x06  # Right: dx0=+4, dx1=-3
+        fx3.ram[0x2F] = 0x06  # Right: single centered slot at dx=0
         fx3.ram[0x5C] = 0xC0
-        fx3.ram[0x22] = 0x01; fx3.ram[0x20] = 0x50; fx3.ram[0x24] = 0x10
+        fx3.ram[0x22] = 0xFC; fx3.ram[0x23] = 0xFF
+        fx3.ram[0x20] = 0x50; fx3.ram[0x24] = 0x10
         fx3.run_jsl("DekuWings_DrawHoverOam", db=0x0D)
-        _, _, low3, hi3 = fx3.oam_allocs[0]
-        slots3 = fx3.read_oam_slots(low3, hi3, 2)
-        self.assertEqual((slots3[0][0], slots3[0][4]), (5, 0x02))
-        self.assertEqual((slots3[1][0], slots3[1][4]), (0xFE, 0x03))  # X=-2 with X-msb=1
+        region3, size3, low3, hi3 = fx3.oam_allocs[0]
+        self.assertEqual((region3, size3), ("C", 4))
+        slots3 = fx3.read_oam_slots(low3, hi3, 1)
+        self.assertEqual((slots3[0][0], slots3[0][4]), (0xFC, 0x03))  # X=-4 with X-msb=1
+
+        # Side Left full off-left clip (1 slot): SX=-16 -> clipped ($F0)
+        fx4 = self.make_fx()
+        fx4.ram[0x10] = 0x09
+        fx4.ram[0x2F] = 0x04
+        fx4.ram[0x5C] = 0xC0
+        fx4.ram[0x22] = 0xF0; fx4.ram[0x23] = 0xFF
+        fx4.ram[0x20] = 0x50; fx4.ram[0x24] = 0x10
+        fx4.run_jsl("DekuWings_DrawHoverOam", db=0x0D)
+        _, size4, low4, hi4 = fx4.oam_allocs[0]
+        self.assertEqual(size4, 4)
+        slots4 = fx4.read_oam_slots(low4, hi4, 1)
+        self.assertEqual(slots4[0][1], 0xF0)
 
     # ------------------------------------------------------------------
     # 2. Deku Flower ($77, Sprites/Objects/deku_leaf.asm) Polish
