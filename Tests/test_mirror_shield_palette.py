@@ -362,10 +362,10 @@ class MirrorShieldPaletteTests(unittest.TestCase):
 
     def test_hook_annotations_and_rom_bytes(self) -> None:
         text = ASM_PATH.read_text(encoding="utf-8")
-        # Light World L1/L2 ROM palettes ($1BD648/$1BD650) MUST remain untouched vanilla SNES.
+        # Light World L1 ROM palette ($1BD648) MUST remain untouched vanilla SNES.
         self.assertNotIn("org $1BD648", text)
-        self.assertNotIn("org $1BD650", text)
         for line_tag in (
+            "org $1BD650 ; @hook module=Items name=PaletteData_ShieldHylian kind=data protected_size=8",
             "org $1BD658 ; @hook module=Items name=PaletteData_ShieldMirror kind=data protected_size=8",
             "org $1BED4A ; @hook module=Items name=MirrorShield_LoadColor8 kind=jml target=MirrorShield_LoadColor8 expected_m=16 expected_x=16 protected_size=5",
             "org $0ED73C ; @hook module=Items name=MirrorShield_RefreshColor8 kind=jml target=MirrorShield_RefreshColor8 expected_m=16 expected_x=16 protected_size=5",
@@ -374,6 +374,11 @@ class MirrorShieldPaletteTests(unittest.TestCase):
             "org $00D533 ; @hook module=Items name=MirrorShield_RemapPickupWRAM kind=jml target=MirrorShield_RemapPickupWRAM expected_m=16 expected_x=16 protected_size=4",
         ):
             self.assertIn(line_tag, text)
+        l2_words = [
+            int.from_bytes(self.rom[pc(0x1BD650) + i * 2 : pc(0x1BD650) + i * 2 + 2], "little")
+            for i in range(4)
+        ]
+        self.assertEqual(l2_words, [0x6947, 0x1CE7, 0x047B, 0x6739])
         pal_words = [
             int.from_bytes(self.rom[pc(0x1BD658) + i * 2 : pc(0x1BD658) + i * 2 + 2], "little")
             for i in range(4)
@@ -386,36 +391,49 @@ class MirrorShieldPaletteTests(unittest.TestCase):
     def test_color8_load_and_refresh_hooks(self) -> None:
         def stub_day_night(cpu: Mini65816) -> None:
             self.assertEqual(cpu.p & 0x30, 0x00)
-            tinted = 0x6A0B if cpu.a == 0x7B13 else cpu.a
+            if cpu.a == 0x7B13:
+                tinted = 0x6A0B
+            elif cpu.a == 0x275E:
+                tinted = 0x1E4D
+            else:
+                tinted = cpu.a
             cpu.put(0x7EC300 + cpu.x, tinted, 2)
             cpu.a = tinted
             cpu.pc = cpu.pop(3) + 1
 
-        # Light World ($00): L1/L2 stay untouched vanilla SNES; L3 writes Option D C8
-        for shield in (0, 1, 2, 3):
-            cpu = Mini65816(self.rom, p=0x00)
-            cpu.stubs[0x348000] = stub_day_night
-            cpu.put(0x7EF3CA, 0x00, 1)  # Light World
-            cpu.put(0x7EF35A, shield, 1)
-            cpu.put(0x7EC4B0, 0x1234, 2)
-            cpu.put(0x7EC6B0, 0x5678, 2)
-            cpu.put(0x7EC6B8, 0x9999, 2)
-            cpu.put(0x15, 4, 1)
-            cpu.push(0x02FFEF, 3)
-            cpu.run(self.labels["MirrorShield_LoadColor8"], {0x02FFF0})
-            self.assertEqual(cpu.p & 0x30, 0x30)
-            self.assertEqual(cpu.read(0x15, 1), 5)
-            self.assertEqual(cpu.read(0x7EC6B8, 2), 0x9999)  # LW L1/L2 untouched
-            if shield == 3:
-                self.assertEqual(cpu.read(0x7EC4B0, 2), 0x6A0B)
-                self.assertEqual(cpu.read(0x7EC6B0, 2), 0x6A0B)
-                self.assertEqual(cpu.calls, [0x348000])
-            else:
-                self.assertEqual(cpu.read(0x7EC4B0, 2), 0x1234)
-                self.assertEqual(cpu.read(0x7EC6B0, 2), 0x5678)
-                self.assertEqual(cpu.calls, [])
+        # Light World ($00) & Special Overworld ($80):
+        #   L0/L1 leave C8 untouched; L2 writes Hylian Gold C8 ($275E -> $1E4D);
+        #   L3 writes Mirror Steel C8 ($7B13 -> $6A0B).
+        for world in (0x00, 0x80):
+            for shield in (0, 1, 2, 3):
+                cpu = Mini65816(self.rom, p=0x00)
+                cpu.stubs[0x348000] = stub_day_night
+                cpu.put(0x7EF3CA, world, 1)
+                cpu.put(0x7EF35A, shield, 1)
+                cpu.put(0x7EC4B0, 0x1234, 2)
+                cpu.put(0x7EC6B0, 0x5678, 2)
+                cpu.put(0x7EC6B8, 0x9999, 2)
+                cpu.put(0x15, 4, 1)
+                cpu.push(0x02FFEF, 3)
+                cpu.run(self.labels["MirrorShield_LoadColor8"], {0x02FFF0})
+                self.assertEqual(cpu.p & 0x30, 0x30)
+                self.assertEqual(cpu.read(0x15, 1), 5)
+                self.assertEqual(cpu.read(0x7EC6B8, 2), 0x9999)  # LW/SW C12 untouched by C8 hook
+                if shield == 3:
+                    self.assertEqual(cpu.read(0x7EC4B0, 2), 0x6A0B)
+                    self.assertEqual(cpu.read(0x7EC6B0, 2), 0x6A0B)
+                    self.assertEqual(cpu.calls, [0x348000])
+                elif shield == 2:
+                    self.assertEqual(cpu.read(0x7EC4B0, 2), 0x1E4D)
+                    self.assertEqual(cpu.read(0x7EC6B0, 2), 0x1E4D)
+                    self.assertEqual(cpu.calls, [0x348000])
+                else:
+                    self.assertEqual(cpu.read(0x7EC4B0, 2), 0x1234)
+                    self.assertEqual(cpu.read(0x7EC6B0, 2), 0x5678)
+                    self.assertEqual(cpu.calls, [])
 
         # Dark World ($40): L1 writes GBC Wooden, L2 writes GBC Iron-Kite into SP-5 C12..C15
+        # and does NOT write Hylian Gold into C8.
         for shield, want_pal in (
             (1, [0x379F, 0x0865, 0x15F9, 0x08EF]),
             (2, [0x7BDE, 0x1CA4, 0x6ECE, 0x4947]),
@@ -424,13 +442,37 @@ class MirrorShieldPaletteTests(unittest.TestCase):
             cpu.stubs[0x348000] = stub_day_night
             cpu.put(0x7EF3CA, 0x40, 1)  # Dark World / Eon Abyss
             cpu.put(0x7EF35A, shield, 1)
+            cpu.put(0x7EC6B0, 0x5678, 2)
             cpu.put(0x15, 4, 1)
             cpu.push(0x02FFEF, 3)
             cpu.run(self.labels["MirrorShield_LoadColor8"], {0x02FFF0})
             self.assertEqual(cpu.p & 0x30, 0x30)
             self.assertEqual(cpu.read(0x15, 1), 5)
+            self.assertEqual(cpu.read(0x7EC6B0, 2), 0x5678)
             got = [cpu.read(0x7EC6B8 + i * 2, 2) for i in range(4)]
             self.assertEqual(got, want_pal)
+
+        # Refresh hook in LW with L2 Hylian equipped: $0D==2 restores Hylian Gold C8,
+        # while mismatched $0D (zap state) leaves C8 untouched!
+        for dp_0d in (0, 1, 2, 3):
+            cpu = Mini65816(self.rom, p=0x00)
+            cpu.stubs[0x348000] = stub_day_night
+            cpu.put(0x7EF3CA, 0x00, 1)  # Light World
+            cpu.put(0x0D, dp_0d, 1)
+            cpu.put(0x7EF35A, 2, 1)     # L2 Hylian equipped
+            cpu.put(0x7EC4B0, 0x1111, 2)
+            cpu.put(0x7EC6B0, 0x2222, 2)
+            cpu.put(0x15, 9, 1)
+            cpu.push(0x07FFEF, 3)
+            cpu.run(self.labels["MirrorShield_RefreshColor8"], {0x07FFF0})
+            self.assertEqual(cpu.p & 0x30, 0x30)
+            self.assertEqual(cpu.read(0x15, 1), 10)
+            if dp_0d == 2:
+                self.assertEqual(cpu.read(0x7EC6B0, 2), 0x1E4D)
+            elif dp_0d == 3:
+                self.assertEqual(cpu.read(0x7EC6B0, 2), 0x6A0B)
+            else:
+                self.assertEqual(cpu.read(0x7EC6B0, 2), 0x2222)
 
         # Refresh hook inspects DP $0D so zap state ($0D=2 while Shield=3) never overrides C8 or DW pal
         for dp_0d in (0, 1, 2, 3, 4):
@@ -462,28 +504,33 @@ class MirrorShieldPaletteTests(unittest.TestCase):
                 self.assertEqual((cpu.x, cpu.y), (0x44, 0x55))
 
     def test_equipped_and_pickup_wram_remap_exact(self) -> None:
-        # Construct 64 pixels containing every valid 4bpp value produced by RightPal ({0, 10, 12, 13, 14, 15})
+        # 1. DecompressShieldGraphics exit hook (MirrorShield_RemapEquippedWRAM) ALWAYS
+        #    syncs $7E9300..$7E947F from our clean sword-independent 4BPP blobs in BOTH
+        #    Light World ($00) and Dark World ($40) without touching adjacent WRAM!
+        lw_blob = (ROOT / "Data/graphics/items/vanilla_shields_lw.4bpp").read_bytes()
+        dw_blob = (ROOT / "Data/graphics/items/gbc_shields_dw.4bpp").read_bytes()
+        for world, blob in ((0x00, lw_blob), (0x40, dw_blob)):
+            for shield in (1, 2, 3):
+                cpu = Mini65816(self.rom, p=0x00, db=0x00)
+                cpu.put(0x7EF3CA, world, 1)
+                cpu.put(0x7EF35A, shield, 1)
+                cpu.put_bytes(0x7E9300, b"\xAA" * 0x180)
+                cpu.put(0x7E92FF, 0xA5, 1)
+                cpu.put(0x7E9480, 0x5A, 1)
+                cpu.push(0x09FFEF, 3)  # caller JSL return address
+                cpu.push(0x1B, 1)      # saved caller DBR popped by PLB
+                cpu.run(self.labels["MirrorShield_RemapEquippedWRAM"], {0x09FFF0})
+                self.assertEqual((cpu.p & 0x30, cpu.db, cpu.stack), (0x30, 0x1B, []))
+                self.assertEqual((cpu.read(0x7E92FF, 1), cpu.read(0x7E9480, 1)), (0xA5, 0x5A))
+                got = cpu.read_bytes(0x7E9300, 0x180)
+                want = blob[(shield - 1) * 0x180 : shield * 0x180]
+                self.assertEqual(got, want, f"RemapEquippedWRAM mismatch world=${world:02X} shield={shield}")
+
+        # 2. WriteTo4BPPBuffer exit hook (MirrorShield_RemapPickupWRAM) remaps L3 Mirror
+        #    Shield pickup receipt ($2E -> $7EBD40, 4 tiles) C10 -> C8 cleanly.
         pattern = ([0, 10, 12, 13, 14, 15, 8, 10] * 8)[:64]
         tile = encode_tile_from_pixels(pattern)
         expected_pixels = [8 if c == 10 else c for c in pattern]
-
-        for shield in (1, 2, 3):
-            cpu = Mini65816(self.rom, p=0x00, db=0x00)
-            cpu.put(0x7EF35A, shield, 1)
-            cpu.put_bytes(0x7E9300, tile * 2)
-            cpu.put_bytes(0x7E9340, tile * 4)  # untouched non-front block
-            cpu.put_bytes(0x7E93C0, tile * 2)
-            cpu.put(0x7E92FF, 0xA5, 1)
-            cpu.put(0x7E9400, 0x5A, 1)
-            cpu.push(0x09FFEF, 3)  # caller JSL return address
-            cpu.push(0x1B, 1)      # saved caller DBR popped by PLB
-            cpu.run(self.labels["MirrorShield_RemapEquippedWRAM"], {0x09FFF0})
-            self.assertEqual((cpu.p & 0x30, cpu.db, cpu.stack), (0x30, 0x1B, []))
-            self.assertEqual((cpu.read(0x7E92FF, 1), cpu.read(0x7E9400, 1)), (0xA5, 0x5A))
-            self.assertEqual(decode_tile_pixels(cpu.read_bytes(0x7E9340, 32)), pattern)
-            want = expected_pixels if shield == 3 else pattern
-            for base in (0x7E9300, 0x7E9320, 0x7E93C0, 0x7E93E0):
-                self.assertEqual(decode_tile_pixels(cpu.read_bytes(base, 32)), want)
 
         for item_id in (0x00, 0x20, 0x2D, 0x2E, 0x39):
             cpu = Mini65816(self.rom, p=0x00, db=0x00)
@@ -499,6 +546,29 @@ class MirrorShieldPaletteTests(unittest.TestCase):
             want = expected_pixels if item_id == 0x2E else pattern
             for idx in range(4):
                 self.assertEqual(decode_tile_pixels(cpu.read_bytes(0x7EBD40 + idx * 32, 32)), want)
+
+    def test_lw_and_dw_shield_blobs_have_zero_sword_palette_bleed(self) -> None:
+        # Sword owns SP-5 C9, C10, C11 ($1BD630..$1BD646). ZERO pixels in {9, 10, 11}
+        # may exist in ANY Light World or Dark World shield level!
+        for rel_path, expected_per_level in (
+            (
+                "Data/graphics/items/vanilla_shields_lw.4bpp",
+                ({0, 12, 13, 14, 15}, {0, 8, 12, 13, 14, 15}, {0, 8, 12, 13, 14, 15}),
+            ),
+            (
+                "Data/graphics/items/gbc_shields_dw.4bpp",
+                ({0, 12, 13, 14, 15}, {0, 12, 13, 14, 15}, {0, 8, 12, 13, 14, 15}),
+            ),
+        ):
+            blob = (ROOT / rel_path).read_bytes()
+            self.assertEqual(len(blob), 1152)
+            for lvl, want_set in enumerate(expected_per_level):
+                used: set[int] = set()
+                chunk = blob[lvl * 384 : (lvl + 1) * 384]
+                for t in range(12):
+                    used.update(decode_tile_pixels(chunk[t * 32 : (t + 1) * 32]))
+                self.assertEqual(used & {9, 10, 11}, set(), f"{rel_path} L{lvl+1} leaked Sword C9..C11!")
+                self.assertEqual(used, want_set, f"{rel_path} L{lvl+1} unexpected indices {used}")
 
     def test_shield_world_sync_tiles_lw_vs_dw(self) -> None:
         lw_blob = (ROOT / "Data/graphics/items/vanilla_shields_lw.4bpp").read_bytes()

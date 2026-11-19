@@ -1,12 +1,17 @@
 ; ==============================================================================
-; Dark-World-Only Compact GBC Shield Trilogy + Mirror Shield Option D (SP-5 C8)
+; World-Aware Shield Trilogy + Zero-Sword-Bleed SP-5 Color 8 (LW L2 & L3)
 ; ==============================================================================
-; Light World ($7EF3CA == $00) & Special Overworld preserve the base Oracle of
-; Secrets Light World shields from the yazeproj ROM (Sheets $5F/$5C, Menu icons,
-; and ROM PaletteData $1BD648/$1BD650):
-;   - L1: Custom Round Blue Fighter Shield ($1BD648)
-;   - L2: Custom Red/Blue/Silver Hylian Shield ($1BD650)
-;   - L3: Custom Mirror Shield ($1BD658 Option D + SP-5 C8)
+; Light World ($7EF3CA != $40) & Special Overworld load sword-independent 4BPP
+; shield tiles built by Scripts/Generate/build_lw_shields.py
+; (Data/graphics/items/vanilla_shields_lw.4bpp, ZERO Sword C9..C11 pixels!):
+;   - L1: Custom Round Blue Fighter Shield ($1BD648 untouched; {0,12..15})
+;   - L2: Custom 5-Color Hylian Shield ($1BD650 + SP-5 C8 !HylianShield_Color8):
+;       C8  = $275E (#F7D64A Hylian Triforce & crest gold via SP-5 C8)
+;       C12 = $6947 (#3952D6 rich royal blue field)
+;       C13 = $1CE7 (#393939 crisp ALTTP charcoal outline)
+;       C14 = $047B (#DE1808 vibrant Crimson Loftwing emblem)
+;       C15 = $6739 (#CECECE gleaming metallic silver frame)
+;   - L3: Custom Mirror Shield ($1BD658 Option D + SP-5 C8 !MirrorShield_Color8)
 ;
 ; Eon Abyss / Dark World ($7EF3CA == $40) switches Link's equipped shield tiles
 ; ($7E9300..$7E947F, 384B; compact face-clearing 9x9 GBC art built by
@@ -34,12 +39,17 @@
 ;     shields in ~0.18 ms without touching $7F0000 decompression scratch or DP.
 ; ==============================================================================
 
-!MirrorShield_Color8 = $7B13 ; BGR555 #98C0F0
+!HylianShield_Color8 = $275E ; BGR555 #F7D64A (LW L2 Hylian Triforce Gold)
+!MirrorShield_Color8 = $7B13 ; BGR555 #98C0F0 (L3 Mirror Shield Steel Highlight)
 
 pushpc
 
+; Shield level 1 ($1BD648) stays untouched vanilla SNES Round Blue Fighter.
+; Shield level 2 (LW Hylian Shield) palette C12..C15 in PaletteData ($1BD650, 8B).
+org $1BD650 ; @hook module=Items name=PaletteData_ShieldHylian kind=data protected_size=8
+  dw $6947, $1CE7, $047B, $6739
+
 ; Shield level 3 (Mirror Shield) palette C12..C15 in PaletteData ($1BD658, 8B).
-; L1 ($1BD648) & L2 ($1BD650) stay untouched vanilla SNES for Light World.
 org $1BD658 ; @hook module=Items name=PaletteData_ShieldMirror kind=data protected_size=8
   dw $373C, $18A5, $7FFE, $5589
 
@@ -68,11 +78,10 @@ org $00D533 ; @hook module=Items name=MirrorShield_RemapPickupWRAM kind=jml targ
 
 pullpc
 
-; Entry: M=16, X=16. Sets SP-5 Color 8 ($7EC4B0/$7EC6B0) with day/night tint.
+; Entry: M=16, X=16, A = BGR555 color for SP-5 Color 8 ($7EC4B0/$7EC6B0) with day/night tint.
 ; Clobbers A, X; keeps Y, DBR. Returns M=16, X=16.
 MirrorShield_ApplyColor8:
 {
-  LDA.w #!MirrorShield_Color8
   LDX.w #$01B0
   if !DISABLE_OVERWORLD == 0
     JSL LoadDayNightPaletteEffect
@@ -84,16 +93,19 @@ MirrorShield_ApplyColor8:
 }
 
 ; Entry: M=16, X=16, A = active shield level (1..3).
-; - L3: applies Option D SP-5 Color 8 in both Light World and Dark World.
-; - L1/L2: leaves vanilla SNES palette intact in Light World; in Dark World
-;   ($7EF3CA == #$40), writes GBC Wooden / Iron-Kite C12..C15 to SP-5.
+; - L3: applies Option D SP-5 Color 8 (!MirrorShield_Color8) in both LW and DW.
+; - L2 in LW/Special OW ($7EF3CA != #$40): applies Hylian Gold SP-5 Color 8
+;   (!HylianShield_Color8) routed cleanly through LoadDayNightPaletteEffect.
+; - L1 in LW/Special OW: leaves vanilla Fighter Shield palette intact.
+; - L1/L2 in Dark World ($7EF3CA == #$40): writes GBC Wooden / Iron C12..C15.
 ; Clobbers A, X, Y. Returns M=16, X=16.
 MirrorShield_ApplyWorldPalette:
 {
-  CMP.w #$0003 : BNE .check_dw_l12
+  CMP.w #$0003 : BNE .check_l12
+    LDA.w #!MirrorShield_Color8
     JSR MirrorShield_ApplyColor8
     RTS
-.check_dw_l12
+.check_l12
   CMP.w #$0001 : BEQ .is_l12
   CMP.w #$0002 : BNE .done
 .is_l12
@@ -101,7 +113,7 @@ MirrorShield_ApplyWorldPalette:
   SEP #$20
   LDA.l SavedWorld : CMP.b #$40
   REP #$20
-  BNE .pop_done
+  BNE .lw_l12
   PLA
   ; Dark World ($40): pick 8-byte GBC palette table for L1 (0) or L2 (8).
   DEC A : ASL #3 : TAX ; X = 0 (Wooden) or 8 (Iron-Kite)
@@ -122,8 +134,11 @@ MirrorShield_ApplyWorldPalette:
   INY : INY
   CPY.w #$01C0 : BCC .pal_loop
   RTS
-.pop_done
+.lw_l12
   PLA
+  CMP.w #$0002 : BNE .done
+    LDA.w #!HylianShield_Color8
+    JSR MirrorShield_ApplyColor8
 .done
   RTS
 }
@@ -205,24 +220,15 @@ MirrorShield_RemapTilesC10ToC8:
 }
 
 ; Exit hook for DecompressShieldGraphics ($00D333 -> M=8, X=8, restores caller DBR).
-; - In Dark World ($7EF3CA == #$40): overwrites $7E9300..$7E947F with the GBC
-;   Shield Trilogy 4BPP tiles for equipped Shield 1..3 (Option D pre-baked on L3).
-; - In Light World / Special OW: leaves vanilla SNES tiles intact and applies
-;   Option D C10->C8 remap to L3 front tiles ($7E9300/$7E93C0).
+; Always syncs $7E9300..$7E947F from our clean pre-baked 4BPP blobs via
+; ShieldWorld_SyncTiles so fresh boots, file loads, and shield upgrades NEVER
+; display raw Sheet $5F Sword-palette bleed pixels:
+;   - Dark World ($7EF3CA == #$40): compact GBC Shield Trilogy (Option D pre-baked)
+;   - Light World / Special OW:     sword-independent LW shields (L1 Fighter,
+;                                   L2 Hylian with C8 gold, L3 Mirror with C8 steel)
 MirrorShield_RemapEquippedWRAM:
 {
-  REP #$30
-  SEP #$20
-  LDA.l SavedWorld : CMP.b #$40
-  REP #$20
-  BNE .light_world
-    JSL ShieldWorld_SyncTiles
-    BRA .done
-.light_world
-  LDA.l Shield : AND.w #$00FF : CMP.w #$0003 : BNE .done
-  LDX.w #$9300 : LDY.w #$0002 : JSR MirrorShield_RemapTilesC10ToC8
-  LDX.w #$93C0 : LDY.w #$0002 : JSR MirrorShield_RemapTilesC10ToC8
-.done
+  JSL ShieldWorld_SyncTiles
   SEP #$30
   PLB
   RTL
