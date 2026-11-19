@@ -146,8 +146,9 @@ Menu_BottleItems:
 
 Menu_BombchuLabel:
   dw "___BOMBCHU____"
+Menu_GustJarLabel:
 Menu_SwitchHookLabel:
-  dw "_SWITCH_HOOK__"
+  dw "___GUST_JAR___"
 Menu_GaroLabel:
   dw "_GARO_MASTER__"
 

@@ -22,6 +22,10 @@ HudCache_CodexHook  = $7EC9CF
 HudCache_CodexRod   = $7EC9D0
 HudCache_CodexBow   = $7EC9D1
 HudCache_CodexAmmo  = $7EC9D2
+HudCache_CodexTile0 = $7EC9D3 ; word at $7EC770 to detect RebuildHUD/blanking of X box
+HudCache_CodexOwn   = $7EC9D5 ; ownership/level byte of ItemBindingSavedX
+HudCache_CodexFoll  = $7EC9D6 ; $7EF3CC follower (gates mounted-bow X visibility)
+assert HudCache_CodexFoll+1 <= $7EC9E0, "HudCache exceeded UNUSED_7EC9C0..DF before BombchuPackPending"
 
 !HudHalfMagic   = $7EC72A             ; row 0, cols 21-22 (magic box top)
 !HudMagicFill   = $7EC766             ; row 1, cols 19-22
@@ -187,24 +191,41 @@ endif
   .codex_bottle3 : LDA.l $7EF35F
   .codex_ammo_ready
   PHA
+  ; Look up current ownership/level byte for ItemBindingSavedX (catches upgrades
+  ; like Boomerang 1->2, Powder 1->2, or acquisition/loss on load/grant).
+  SEP #$10
+  LDA.l ItemBindingSavedX : BEQ .codex_own_zero
+  CMP.b #(Menu_ItemIndex_End-Menu_ItemIndex) : BCS .codex_own_zero
+  TAX : LDA.l Menu_AddressIndex-1, X : TAX
+  LDA.l $7EF300, X : BRA .codex_own_ready
+  .codex_own_zero
+  LDA.b #$00
+  .codex_own_ready
+  PHA
   LDA.l HudCache_Init : CMP.b #$5A : BNE .draw_codex
   REP #$20
-  LDA.l HudCornerBuffer : CMP.w #$3CA8
+  LDA.l HudCornerBuffer : CMP.w #$3CA8 : BNE .draw_codex_m8
+  LDA.l $7EC770 : CMP.l HudCache_CodexTile0 : BNE .draw_codex_m8
   SEP #$20
-  BNE .draw_codex
   LDA.l $7E0000+!CurrentMask : CMP.l HudCache_CodexMask : BNE .draw_codex
+  LDA.l $7EF3CC : CMP.l HudCache_CodexFoll : BNE .draw_codex
   LDA.l ItemBindingSavedVersion : CMP.l HudCache_CodexVer : BNE .draw_codex
   LDA.l ItemBindingSavedX : CMP.l HudCache_CodexX : BNE .draw_codex
   LDA.l GoldstarOrHookshot : CMP.l HudCache_CodexHook : BNE .draw_codex
   LDA.l FishingOrPortalRod : CMP.l HudCache_CodexRod : BNE .draw_codex
   LDA.l $7EF340 : CMP.l HudCache_CodexBow : BNE .draw_codex
-  LDA $01,S : CMP.l HudCache_CodexAmmo : BNE .draw_codex
-    PLA
+  LDA $01,S : CMP.l HudCache_CodexOwn : BNE .draw_codex
+  LDA $02,S : CMP.l HudCache_CodexAmmo : BNE .draw_codex
+    PLA : PLA
     BRA .codex_done
 
+  .draw_codex_m8
+  SEP #$20
   .draw_codex
+  PLA : STA.l HudCache_CodexOwn
   PLA : STA.l HudCache_CodexAmmo
   LDA.l $7E0000+!CurrentMask : STA.l HudCache_CodexMask
+  LDA.l $7EF3CC : STA.l HudCache_CodexFoll
   LDA.l ItemBindingSavedVersion : STA.l HudCache_CodexVer
   LDA.l ItemBindingSavedX : STA.l HudCache_CodexX
   LDA.l GoldstarOrHookshot : STA.l HudCache_CodexHook
@@ -212,9 +233,13 @@ endif
   LDA.l $7EF340 : STA.l HudCache_CodexBow
   REP #$30
   JSL HUD_CodexCells                    ; X icon/count, corner icons
+  LDA.l $7EC770 : STA.l HudCache_CodexTile0
   ; HUD_CodexCells writes key icon $2071; force keys block to re-check $FF blanking.
+  ; Also ensure gameplay NMI uploads the refreshed X box (e.g. Epona mount/dismount).
   SEP #$20
   LDA.b #$FE : STA.l HudCache_Keys
+  LDA.b $10 : CMP.b #$0E : BEQ .codex_done
+    LDA.b #$01 : STA.b $16
   .codex_done
 
   ; Load how many rupees the player has

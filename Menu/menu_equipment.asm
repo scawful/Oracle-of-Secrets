@@ -99,8 +99,9 @@ Menu_Equipment_SupplyCount:
   RTS
 }
 
-; Horizontal movement skips unowned entries, then turns the page at the band edge
-; (slots in a band are consecutive, left to right).
+; Horizontal movement steps through the 3 visual rows of E2 (Gear 5 slots,
+; Mid 3 Masks + 3 Rings = 6 slots, Bot 3 Masks + 3 Rings = 6 slots), skipping
+; unowned entries and turning the page at the row edge.
 ; Vertical movement finds the nearest owned column in the next nonempty row.
 Menu_Equipment_Move:
 {
@@ -114,20 +115,26 @@ Menu_Equipment_Move:
 +
   STA.b $04
   LDX.w $020B
-  LDA.w Menu_Equipment_Rows,X : STA.b $05
+  LDA.w Menu_Equipment_Rows,X : STA.b $05 ; visual row 0..2
   LDA.b $04 : AND.b #$03 : BEQ .vertical
-  LDA.w $020B : STA.b $02
-  LDX.b $05                           ; band
+  ; Locate current slot in Menu_Equipment_VisualOrder (0..16)
+  LDX.b $05
+  LDA.w .starts,X : TAY
+  LDA.w .ends,X : STA.b $09
+.find_cur
+  LDA.w Menu_Equipment_VisualOrder,Y : CMP.w $020B : BEQ .horizontal
+  INY : CPY.b $09 : BCC .find_cur
+  BRA .turn
 .horizontal
   LDA.b $04 : AND.b #$01 : BEQ .left
-  LDA.b $02 : INC : CMP.w .ends,X : BCS .turn ; past the band's last cell
+  INY : CPY.b $09 : BCS .turn
   BRA .candidate
 .left
-  LDA.b $02 : CMP.w .starts,X : BEQ .turn ; band's first cell
-  DEC
+  TYA : CMP.w .starts,X : BEQ .turn
+  DEY
 .candidate
-  STA.b $02
-  JSR Menu_Equipment_Owned : BEQ .horizontal ; Owned keeps X (band)
+  LDA.w Menu_Equipment_VisualOrder,Y : STA.b $02
+  JSR Menu_Equipment_Owned : BEQ .horizontal ; Owned keeps X/Y
   BRA .accept
 .turn
   LDA.b $F4 : AND.b #$01 : BNE .right
@@ -136,31 +143,27 @@ Menu_Equipment_Move:
   JMP Menu_Page3_Turn
 .vertical
   LDA.w Menu_Equipment_Columns,X : STA.b $06
-  LDA.b #$04 : STA.b $07              ; inspect other four rows only
+  LDA.b #$02 : STA.b $07              ; inspect other two visual rows only
 .next_row
   LDA.b $04 : AND.b #$04 : BEQ .up
-  LDA.b $05 : INC : BRA .row
+  LDA.b $05 : INC : CMP.b #$03 : BCC .row
+  LDA.b #$00 : BRA .row
 .up
-  LDA.b $05 : DEC
+  LDA.b $05 : DEC : BPL .row
+  LDA.b #$02
 .row
-  CMP.b #$FF : BNE +
-  LDA.b #$04                          ; up from masks -> GEAR (row 4)
-+
-  CMP.b #$05 : BCC +
-  LDA.b #$00                          ; down from GEAR -> masks
-+
   STA.b $05 : TAX
   LDA.b #$FF : STA.b $08 : STA.b $02
   LDA.w .starts,X : TAY
   LDA.w .ends,X : STA.b $09
 .scan_row
-  TYA : JSR Menu_Equipment_Owned : BEQ .next_cell
-  TYX
+  LDA.w Menu_Equipment_VisualOrder,Y : JSR Menu_Equipment_Owned : BEQ .next_cell
+  LDA.w Menu_Equipment_VisualOrder,Y : TAX
   LDA.w Menu_Equipment_Columns,X : SEC : SBC.b $06 : BCS .distance
   EOR.b #$FF : INC
 .distance
   CMP.b $08 : BCS .next_cell
-  STA.b $08 : STY.b $02
+  STA.b $08 : STX.b $02
 .next_cell
   INY : CPY.b $09 : BCC .scan_row
   LDA.b $02 : CMP.b #$FF : BNE .accept
@@ -173,15 +176,24 @@ Menu_Equipment_Move:
 .done
   RTS
 .starts
-  db 0,6,12,18,24
+  db 0,5,11
 .ends
-  db 6,12,18,24,29
+  db 5,11,17
 }
+; Visual left-to-right slot order per E2 row:
+;   Row 0 (Gear):  Story(24), Heavy(25), Green(26), Blue(27), Red(28)
+;   Row 1 (Mid):   Deku(0), Zora(1), Wolf(2) | Power(6), Armor(7), Heart(8)
+;   Row 2 (Bot):   Bunny(3), Stone(4), Garo(5) | Light(9), Blast(10), Steadfast(11)
+Menu_Equipment_VisualOrder:
+  db 24,25,26,27,28
+  db 0,1,2,6,7,8
+  db 3,4,5,9,10,11
+; Visual row (0=Gear, 1=Mid, 2=Bot) per logical slot 0..28.
 Menu_Equipment_Rows:
-  db 0,0,0,0,0,0, 1,1,1,1,1,1, 2,2,2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4
-; Tile column of each icon (menu_offset column + 4), for vertical moves.
+  db 1,1,1,2,2,2, 1,1,1,2,2,2, 2,2,2,2,2,2, 2,2,2,2,2,2, 0,0,0,0,0
+; Absolute tile column of each icon (menu_offset column + 4), for vertical moves.
 Menu_Equipment_Columns:
-  db 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17,20,23, 6,10,15,19,23
+  db 6,9,12,6,9,12, 18,21,24,18,21,24, 6,9,12,18,21,24, 6,9,12,18,21,24, 7,11,17,20,23
 
 Menu_Equipment_Select:
 {
@@ -230,6 +242,22 @@ Menu_Equipment_Draw:
 .title
   LDA.w .title_text,X : STA.w $1000+menu_offset(6,11),X
   DEX #2 : BPL .title
+  ; E2 dividers: vertical col 15 (rows 10..11 between Swords & Tunics,
+  ; rows 14..21 between 3x2 Masks & 3x2 Rings) + horizontal row 13 cols 6..25.
+  LDA.w #$214F
+  STA.w $1000+menu_offset(10,15) : STA.w $1000+menu_offset(11,15)
+  LDX.w #menu_offset(14,15)
+  LDY.w #$0008
+.vdiv
+  STA.w $1000,X
+  TXA : CLC : ADC.w #$0040 : TAX
+  LDA.w #$214F
+  DEY : BNE .vdiv
+  LDX.w #$0026
+  LDA.w #$217A
+.hdiv
+  STA.w $1000+menu_offset(13,6),X
+  DEX #2 : BPL .hdiv
   SEP #$30
   JSL SwordSlots_Sync
   LDA.b #$7E : STA.b $0A              ; DrawMenuItem reads the variant from $7E
@@ -288,7 +316,7 @@ endif
   TXA : ASL : TAX
   REP #$30
   LDA.w Menu_Equipment_Pos,X : TAX
-  LDA.w #$2460 : JSR Menu_Equipment_Box
+  LDA.w #$2400 : JSR Menu_Equipment_Box
   SEP #$30
 .return
   RTS
@@ -320,35 +348,32 @@ endif
   dw "A:USE"
 }
 
-; Full 4x4 cursor box around the icon, the Items page tiles (Menu_DrawCursor,
-; which sits at X - $42): corners on the empty rows above and below, edges
-; beside the icon. A = base top-left corner word ($2460 palette 1 red for
-; selected/equipped; $3060 palette 4 white/gray for active cursor).
-; X is the icon draw offset. M/X=16.
+; Full 4x4 Cursor C4 box around the icon (X = DrawMenuItem offset).
+; Menu_Equipment_Box: thin rounded 12-tile C4 frame (A = priority+palette bits,
+; e.g. $2400 red for currently equipped sword/tunic/mask/ring).
+; Menu_Equipment_Cursor: crisp Gold ($34) active C4 L-brackets on the 4 corners.
+; M/X=16.
 Menu_Equipment_Box:
 {
-  STA.w $10C6,X
-  ORA.w #$4000 : STA.w $10CC,X
-  ORA.w #$8000 : STA.w $118C,X
-  EOR.w #$4000 : STA.w $1186,X
-  AND.w #$3FFF : CLC : ADC.w #$0010
-  STA.w $1106,X : STA.w $1146,X
-  ORA.w #$4000 : STA.w $110C,X : STA.w $114C,X
+  JSL Menu_C4_DrawEquipBox_Long
   RTS
 }
 
 Menu_Equipment_Cursor:
 {
-  LDA.w #$3060 : BRA Menu_Equipment_Box
+  JSL Menu_C4_DrawEquipCursor_Long
+  RTS
 }
 
 ; Footer has exactly 14 interior cells. Never overwrite its end caps.
+; When hovering an owned Ring (slots 6..11), also display its concise effect
+; centered on row 23 (clear of all E2 cursor boxes, which end at row 21).
 Menu_Equipment_Name:
 {
   LDA.w $020B : JSR Menu_Equipment_Owned : BEQ .done
   LDA.w $020B : ASL : TAX
   CPX.b #$30 : BCC .name
-  JSL SwordSlots_Name : BRA .done    ; sword names live in bank $2E
+  JSL SwordSlots_Name : BRA .done    ; sword/tunic names live in bank $2B
 .name
   REP #$30
   LDA.w Menu_Equipment_Names,X : TAX
@@ -357,6 +382,18 @@ Menu_Equipment_Name:
   LDA.w $0000,X : STA.w $1692,Y
   INX #2 : INY #2 : CPY.w #$001C : BCC .loop
   SEP #$30
+  LDA.w $020B : CMP.b #$06 : BCC .done
+  CMP.b #$0C : BCS .check_supply
+  ; Owned ring effect on row 23, cols 8..23 (16 tiles)
+  SEC : SBC.b #$06
+  REP #$30
+  AND.w #$00FF : ASL #5 : TAX
+  LDY.w #$0000
+.ring_desc
+  LDA.w Menu_RingDescriptions,X : STA.w $1000+menu_offset(23,8),Y
+  INX #2 : INY #2 : CPY.w #$0020 : BCC .ring_desc
+  BRA .done
+.check_supply
   LDA.w $020B : CMP.b #$12 : BCC .done
   JSR Menu_Equipment_SupplyCount
   REP #$30
@@ -392,14 +429,16 @@ Menu_Equipment_Gfx:
   dw QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX
   dw BananaGFX,PineappleGFX,RockMeatGFX,SeashellGFX,HoneycombGFX,DekuStickGFX
   dw SwordGFX,SwordGFX,TunicGFX,TunicGFX,TunicGFX
-; GEAR icons on tile row 10, masks 15, rings 20 (menu_offset row + 4); the
-; empty rows 9, 12-14, 17-19 and 22 hold the cursor box corners.
+; E2 layout (DrawMenuItem adds +4,+4):
+;   Gear (row 10): Story (10,7), Heavy (10,11) | Green (10,17), Blue (10,20), Red (10,23)
+;   Masks 3x2 (rows 15 & 19, cols 6,9,12): Deku,Zora,Wolf / Bunny,Stone,Garo
+;   Rings 3x2 (rows 15 & 19, cols 18,21,24): Power,Armor,Heart / Light,Blast,Steadfast
 Menu_Equipment_Pos:
-  dw menu_offset(11,3),menu_offset(11,6),menu_offset(11,9),menu_offset(11,13),menu_offset(11,16),menu_offset(11,19)
-  dw menu_offset(16,3),menu_offset(16,6),menu_offset(16,9),menu_offset(16,13),menu_offset(16,16),menu_offset(16,19)
-  dw menu_offset(18,3),menu_offset(18,6),menu_offset(18,9),menu_offset(18,13),menu_offset(18,16),menu_offset(18,19)
-  dw menu_offset(18,3),menu_offset(18,6),menu_offset(18,9)
-  dw menu_offset(18,13),menu_offset(18,16),menu_offset(18,19)
-  dw menu_offset(6,2),menu_offset(6,6)                       ; story, heavy
-  dw menu_offset(6,11),menu_offset(6,15),menu_offset(6,19)   ; green, blue, red tunic
-assert menu_offset(6,6) == !HEAVY_ICON_POS, "SwordSlots_MarkerSlot recolors the heavy icon at menu_offset(6,6)"
+  dw menu_offset(11,2),menu_offset(11,5),menu_offset(11,8),menu_offset(15,2),menu_offset(15,5),menu_offset(15,8)
+  dw menu_offset(11,14),menu_offset(11,17),menu_offset(11,20),menu_offset(15,14),menu_offset(15,17),menu_offset(15,20)
+  dw menu_offset(17,2),menu_offset(17,5),menu_offset(17,8),menu_offset(17,14),menu_offset(17,17),menu_offset(17,20)
+  dw menu_offset(17,2),menu_offset(17,5),menu_offset(17,8)
+  dw menu_offset(17,14),menu_offset(17,17),menu_offset(17,20)
+  dw menu_offset(6,3),menu_offset(6,7)                       ; story (10,7), heavy (10,11)
+  dw menu_offset(6,13),menu_offset(6,16),menu_offset(6,19)   ; green (10,17), blue (10,20), red (10,23)
+assert menu_offset(6,7) == !HEAVY_ICON_POS, "SwordSlots_MarkerSlot recolors the heavy icon at menu_offset(6,7)"

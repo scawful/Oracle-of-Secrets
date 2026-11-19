@@ -157,6 +157,19 @@ if !ENABLE_MENU_PAGE_LOOP == 0
   .no_y
 endif
 
+if !MENU_DROP_RING_BOX == 1
+  ; Select ($F4 bit 5) without B/Start: open Context Help Popup for Items page.
+  LDA.b $F4 : BIT.b #$90 : BNE .no_help_items
+  BIT.b #$20 : BEQ .no_help_items
+    LDA.b #$20 : STA.w $012F
+    LDA.b #!MENU_STATE_HELP_POPUP : STA.w $0200
+    JSL MenuHelp_Draw_Long
+    LDA.b #$22 : STA.w $0116
+    LDA.b #$01 : STA.b $17
+    RTS
+  .no_help_items
+endif
+
   ; No owned item left in the grid (masks only): ignore the D-pad, or
   ; Menu_FindNext*Item would stop on an empty cell.
   LDA.b $F4 : AND.b #$0F : BEQ .items
@@ -262,6 +275,18 @@ if !ENABLE_MENU_MAP_TRAVEL == 1
     .ring_right
     LDA.b #$01 : JMP Menu_Page3_Turn
   .ring_no_lr
+if !MENU_DROP_RING_BOX == 1
+  ; Select ($F4 bit 5) without B/Start: open Context Help Popup for active right-half page.
+  LDA.b $F4 : BIT.b #$90 : BNE .no_help_stats
+  BIT.b #$20 : BEQ .no_help_stats
+    LDA.b #$20 : STA.w $012F
+    LDA.b #!MENU_STATE_HELP_POPUP : STA.w $0200
+    JSL MenuHelp_Draw_Long
+    LDA.b #$23 : STA.w $0116
+    LDA.b #$01 : STA.b $17
+    RTS
+  .no_help_stats
+endif
   LDA.w MenuScrollLevelH : CMP.b #$40 : BNE .ring_not_map
     JMP MenuMapTravel_Screen
   .ring_not_map

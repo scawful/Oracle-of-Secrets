@@ -9,7 +9,7 @@
 ; opens the existing field/dungeon map module. A on cells 1..6 uses supplies
 ; via MagicBag_ConsumeItem. DBR = $2D.
 
-!MapCellPos = menu_offset(9,11)         ; DrawMenuItem offset; absolute (13,15)
+!MapCellPos = menu_offset(8,15)         ; DrawMenuItem offset; absolute (12,19)
 
 ; ---------------------------------------------------------
 ; Replaces Menu_Page3_Turn under the flag. A = $01 right, else left.
@@ -240,39 +240,48 @@ org $0AE95E ; DungeonMap_HandleInput ; @hook module=Menu name=Menu_DungeonMapChe
 pullpc
 
 ; ---------------------------------------------------------
-; v4 layout (make_frame_preserved_v4.py): area name header on row 9, the
-; Map icon centred below it (columns 15-16), in a dungeon its row of owned
-; dungeon items on row 17, mirrored about columns 15|16, and the 6 Magic Bag
-; supplies on row 21 (menu_offset 17, matching QuestSongs). Bank $2B
-; (MenuFlow_MapDraw) draws the cell icons, 4x4 cursor, footer, and A:USE.
+; Menu v5 Map & Spoils page:
+;   Title:  " MAP SPOILS " (row 6, cols 10..21)
+;   Header: Centered Area Name (row 9), including Special Overworld $80-$BF
+;   Left:   Runtime 8x8 Overworld Mini-Map (rows 11..18, cols 6..13)
+;   Right:  Map icon at (12,19) + "A:MAP" at (12,22); Dungeon treasures
+;           (ChestKey, BigKey, Chest) at (15,17/20/23) when indoors
+;   Div:    Horizontal wood divider at row 19 (cols 6..25)
+;   Bottom: 6 Magic Bag Spoils on row 21 (cols 6,9,13,17,21,24)
 MenuMapTravel_Draw:
 {
   JSR Menu_DrawBackground
   REP #$30
-  LDX.w #$0004
+  LDX.w #$0016
 .title
-  LDA.w .title_text,X : STA.w $1000+menu_offset(6,14),X  ; columns 14-16, same center as EQUIPMENT
+  LDA.w .title_text,X : STA.w $1000+menu_offset(6,10),X
   DEX #2 : BPL .title
   JSR MenuMapTravel_AreaName
 
   REP #$30
-  JSR Menu_DrawBigKey                   ; map, big key, treasure
+  JSR Menu_DrawBigKey                   ; big key, treasure
   REP #$30
   JSR Menu_DrawBigChestKey
-  JSL MenuFlow_MapDraw                  ; MAP + 6 supplies, cursor, footer, A:USE
+  JSL MenuFlow_MapDraw                  ; mini-map, divider, A:MAP, MAP + 6 spoils, cursor, footer
   RTS
 .title_text
-  dw "MAP"
+  dw "_MAP_SPOILS_"
 }
 
 ; ---------------------------------------------------------
-; Current area name, centered on row 9 (the Map page header). Light World and Abyss names
-; ($00-$7F, 16 cells each with the AbyssName pad); special areas show none.
+; Current area name, centered on row 9 (the Map & Spoils page header).
+; Light World ($00-$3F) and Abyss ($40-$7F) read OverworldLocationNames;
+; Special Overworld ($80-$BF) delegates to MenuMap_SpecialAreaName_Long;
+; indoors ($1B != 0) reads DungeonLocationNames.
 ; In/out M/X=16.
 MenuMapTravel_AreaName:
 {
   LDA.b $1B : AND.w #$00FF : BNE .indoors
-  LDA.b $8A : AND.w #$00FF : CMP.w #$0080 : BCS .none
+  LDA.b $8A : AND.w #$00FF : CMP.w #$0080 : BCC .lw_dw
+  CMP.w #$00C0 : BCS .none
+  JSL MenuMap_SpecialAreaName_Long
+  RTS
+.lw_dw
   ASL #5 : CLC : ADC.w #OverworldLocationNames
   BRA .have
 .indoors

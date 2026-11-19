@@ -125,7 +125,7 @@ SwordSlots_IsHeavyLevel:
 ; tile is the level-1 icon's shorter blade ($CE), so the tip is missing.
 ; Bank $2D has no room for a new SwordGFX row, so the tiles are written
 ; into the tilemap buffer.
-!HEAVY_ICON_POS       = $018C         ; menu_offset(6,6), asserted in menu_equipment.asm
+!HEAVY_ICON_POS       = $018E         ; menu_offset(6,7), asserted in menu_equipment.asm
 !HEAVY_ICON_TL        = $308A
 !HEAVY_ICON_TR        = $3065
 !HEAVY_ICON_BROKEN_TR = $30CE
@@ -173,7 +173,12 @@ SwordSlots_Name:
   TXA : SEC : SBC.b #$34 : LSR : TAX
   LDA.l .tunic_rows,X : BRA .copy
 .sword
-  LDA.b #28 : CPX.b #$32 : BEQ .copy  ; heavy: name not decided, blank
+  CPX.b #$32 : BNE .story_sword
+    LDA.l SwordSlotFlags : AND.b #!SwordSlot_HeavyReforged : BNE .heavy_reforged
+    LDA.b #28 : BRA .copy               ; broken heavy sword -> BROKEN BLADE
+  .heavy_reforged
+    LDA.b #168 : BRA .copy              ; reforged heavy sword -> GORONBLADE
+  .story_sword
   LDA.l SwordStoryBlade : CMP.b #$02
   LDA.b #$00 : BCC .copy              ; level 1: Meadow blade
   LDA.b #56                           ; level 2-4: Master Sword
@@ -199,6 +204,7 @@ SwordSlots_Name:
   'E' = $2554
   'G' = $2556
   'I' = $2558
+  'K' = $255A
   'L' = $255B
   'M' = $255C
   'N' = $255D
@@ -209,11 +215,12 @@ SwordSlots_Name:
   'U' = $2564
   'W' = $2566
   '_' = $20F5
-  dw "MEADOW_BLADE__"
-  dw "______________"
-  dw "MASTER_SWORD__"
-  dw "GREEN_TUNIC___"
-  dw "BLUE_TUNIC____"
-  dw "RED_TUNIC_____"
+  dw "MEADOW_BLADE__" ;   0
+  dw "_BROKEN_BLADE_" ;  28
+  dw "MASTER_SWORD__" ;  56
+  dw "GREEN_TUNIC___" ;  84
+  dw "BLUE_TUNIC____" ; 112
+  dw "RED_TUNIC_____" ; 140
+  dw "__GORONBLADE__" ; 168
   pulltable
 }

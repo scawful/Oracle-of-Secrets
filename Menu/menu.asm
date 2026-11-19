@@ -55,6 +55,7 @@ incsrc "menu_palette.asm"
 !MENU_STATE_SCROLL_FROM         = $07
 !MENU_STATE_SCROLL_UP           = $08
 !MENU_STATE_RING_BOX            = $09
+!MENU_STATE_HELP_POPUP          = $09
 !MENU_STATE_EXIT                = $0A
 !MENU_STATE_INIT_SCROLL_DOWN    = $0B
 !MENU_STATE_MAGIC_BAG           = $0C
@@ -102,7 +103,7 @@ else
 endif
     dw Menu_ScrollUp           ; 08
 if !MENU_DROP_RING_BOX == 1
-    dw Menu_SubmenuReturn      ; 09 (Ring Box removed; never set)
+    dw Menu_HelpPopup          ; 09 (Select Context Help Popup across all 4 pages)
 else
     dw Menu_RingBox            ; 09
 endif
@@ -193,9 +194,9 @@ if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
   .ordinary_left
 endif
   JSR Menu_DrawBackground
+  JSR Menu_DrawItemsDivider
   JSR DrawYItems
   JSR Menu_DrawSelect
-  JSR Menu_DrawButtonPrompt
   JSR Menu_DrawItemName
 if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
   .left_palette
@@ -523,9 +524,9 @@ Menu_RefreshQuestScreen:
 Menu_RefreshInventoryScreen:
 {
   JSR Menu_DrawBackground
+  JSR Menu_DrawItemsDivider
   JSR DrawYItems
   JSR Menu_DrawSelect
-  JSR Menu_DrawButtonPrompt
   JSR Menu_DrawItemName
 
   ; Palette restore if needed (mimicking Menu_UploadLeft)
@@ -859,6 +860,49 @@ Menu_SongIconCursorPositions:
   dw menu_offset(8,12),menu_offset(8,15),menu_offset(8,18)
 
 ; =========================================================
+; 09 SELECT CONTEXT HELP POPUP (all 4 pages)
+
+if !MENU_DROP_RING_BOX == 1
+Menu_HelpPopup:
+{
+  SEP #$30
+  ; Start closes the entire menu cleanly.
+  LDA.b $F4 : BIT.b #$10 : BEQ .no_start
+    LDA.b #!MENU_STATE_INIT_SCROLL_DOWN : STA.w $0200
+    RTS
+  .no_start
+  ; Select ($20) or B ($80) dismisses help and redraws the underlying page.
+  LDA.b $F4 : BIT.b #$A0 : BEQ .stay
+    LDA.b #$12 : STA.w $012F
+    LDA.b $E5 : BNE .right_page
+      JSR Menu_RefreshInventoryScreen
+      LDA.b #$22 : STA.w $0116
+      LDA.b #$01 : STA.b $17
+      LDA.b #!MENU_STATE_ITEM_SCREEN : STA.w $0200
+      RTS
+    .right_page
+    LDA.w MenuScrollLevelH : AND.b #$FE
+    CMP.b #$20 : BEQ .redraw_equip
+    CMP.b #$40 : BEQ .redraw_map
+      JSR Menu_Quest_Draw
+      BRA .right_done
+    .redraw_equip
+      JSR Menu_Equipment_Draw
+      BRA .right_done
+    .redraw_map
+      JSR MenuMapTravel_Draw
+    .right_done
+    SEP #$30
+    LDA.b #$23 : STA.w $0116
+    LDA.b #$01 : STA.b $17
+    LDA.b #!MENU_STATE_STATS_SCREEN : STA.w $0200
+    RTS
+  .stay
+  RTS
+}
+endif
+
+; =========================================================
 ; 09 MENU RING BOX
 
 if !MENU_DROP_RING_BOX == 0
@@ -1103,6 +1147,8 @@ incsrc "menu_map_names.asm"
   ; full. Long wrappers for the two $2D routines it calls; DBR stays $2D.
   Menu_RefreshInventoryScreen_Long:
     JSR Menu_RefreshInventoryScreen : RTL
+  Menu_DrawBackground_Long:
+    JSR Menu_DrawBackground : RTL
   Menu_Page3_IsMaskItem_Long:
     JSR Menu_Page3_IsMaskItem : RTL
 if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1 && !ENABLE_MENU_MAP_TRAVEL == 1

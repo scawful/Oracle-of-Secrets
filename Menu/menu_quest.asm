@@ -76,9 +76,6 @@ Menu_Quest_Draw:
   DEX #2 : BPL .clear_footer
 
   JSR Menu_DrawHeartPieces
-  LDA.l $7EF36B : AND.w #$00FF
-  LDX.w #!QuestRow+!QuestCountCol   ; under the heart-piece container
-  JSR Menu_Quest_Number3
   JSR Menu_Quest_Progress
   JSR Menu_Quest_Gear
 if !ENABLE_MENU_MAP_TRAVEL == 1

@@ -66,55 +66,50 @@ endif
 
 ; =========================================================
 
+; Option A cursor offsets indexed by logical item ID ($01..$1E, unchanged for save compat).
+; Absolute icon rows [11,14,17,20] -> cursor rows [6,9,12,15].
+; Absolute icon cols [6,9,12,15,18,24] -> cursor cols [1,4,7,10,13,19].
 Menu_ItemCursorPositions:
-  ; Row 1
-  dw menu_offset(6,2)  ; bow
-  dw menu_offset(6,5)  ; boom
-  dw menu_offset(6,8)  ; hookshot
-  dw menu_offset(6,12) ; bombs
-  dw menu_offset(6,15) ; powder
-  dw menu_offset(6,18) ; bottle1
+  ; Logical IDs $01..$06
+  dw menu_offset(6,1)   ; $01 Bow         (row 11, col 6)
+  dw menu_offset(6,4)   ; $02 Boomerang   (row 11, col 9)
+  dw menu_offset(6,7)   ; $03 Hookshot    (row 11, col 12)
+  dw menu_offset(6,10)  ; $04 Bombs       (row 11, col 15)
+  dw menu_offset(9,4)   ; $05 Powder      (row 14, col 9)
+  dw menu_offset(6,19)  ; $06 Bottle 1    (row 11, col 24)
 
-  ; Row 2
-  dw menu_offset(9,2)  ; hammer
-  dw menu_offset(9,5)  ; lamp
-  dw menu_offset(9,8)  ; fire rod
-  dw menu_offset(9,12) ; ice rod
-  dw menu_offset(9,15) ; mirror
-  dw menu_offset(9,18) ; bottle2
+  ; Logical IDs $07..$0C
+  dw menu_offset(9,1)   ; $07 Hammer      (row 14, col 6)
+  dw menu_offset(12,1)  ; $08 Lamp        (row 17, col 6)
+  dw menu_offset(9,7)   ; $09 Fire Rod    (row 14, col 12)
+  dw menu_offset(9,10)  ; $0A Ice Rod     (row 14, col 15)
+  dw menu_offset(15,7)  ; $0B Mirror      (row 20, col 12)
+  dw menu_offset(9,19)  ; $0C Bottle 2    (row 14, col 24)
 
-  ; Row 3
-  dw menu_offset(12,2)  ; ocarina
-  dw menu_offset(12,5)  ; book
-  dw menu_offset(12,8)  ; somaria
-if !ENABLE_GOLDSTAR_CELL == 1
-  dw (15*64)+(5*2)      ; $10 Fishing, bottom row second cell
-else
-  dw menu_offset(12,12) ; Fishing (legacy position)
-endif
-  dw menu_offset(12,15) ; feather
-  dw menu_offset(12,18) ; bottle3
+  ; Logical IDs $0D..$12
+  dw menu_offset(15,1)  ; $0D Ocarina     (row 20, col 6)
+  dw menu_offset(12,4)  ; $0E Book        (row 17, col 9)
+  dw menu_offset(12,7)  ; $0F Somaria     (row 17, col 12)
+  dw menu_offset(15,10) ; $10 Fishing Rod (row 20, col 15)
+  dw menu_offset(15,4)  ; $11 Feather     (row 20, col 9)
+  dw menu_offset(12,19) ; $12 Bottle 3    (row 17, col 24)
 
-  ; Row 4
-  dw menu_offset(15,2)  ; deku mask
-  dw menu_offset(15,5)  ; zora mask
-  dw menu_offset(15,8)  ; wolf mask
-  dw menu_offset(15,12) ; bunny hood
-  dw menu_offset(15,15) ; stone mask
-  dw menu_offset(15,18) ; bottle4
-  ; $19 Portal Rod: fifth custom-grid cell, first cell in the legacy layout.
-  ; Arithmetic keeps the menu registry's editable entries distinct.
+  ; Logical IDs $13..$18 (Masks $13..$17 live on Equipment; indices retained)
+  dw menu_offset(15,1)  ; $13 Deku Mask (Equipment)
+  dw menu_offset(15,4)  ; $14 Zora Mask (Equipment)
+  dw menu_offset(15,7)  ; $15 Wolf Mask (Equipment)
+  dw menu_offset(15,10) ; $16 Bunny Hood (Equipment)
+  dw menu_offset(15,13) ; $17 Stone Mask (Equipment)
+  dw menu_offset(15,19) ; $18 Bottle 4    (row 20, col 24)
+
+  ; Logical ID $19 Portal Rod: Row 4 Col 5 (bottom-right tool)
+  dw (15*64)+(13*2)     ; $19 Portal Rod  (row 20, col 18)
 if !ENABLE_GOLDSTAR_CELL == 1
-  dw (15*64)+(15*2)
-else
-  dw (15*64)+(2*2)
-endif
-if !ENABLE_GOLDSTAR_CELL == 1
-  dw (15*64)+(2*2)  ; $1A Goldstar, bottom row first cell
-  dw (12*64)+(12*2) ; $1B Byrna, beside Somaria
-  dw (15*64)+(12*2) ; $1C Bombchu, directly below Bombs
-  dw (15*64)+(8*2)  ; $1D Switch Hook, directly below Hookshot
-  dw (15*64)+(18*2) ; $1E unused normal cursor; Garo lives on Equipment
+  dw (9*64)+(13*2)      ; $1A Goldstar    (row 14, col 18)
+  dw (12*64)+(10*2)     ; $1B Byrna       (row 17, col 15)
+  dw (6*64)+(13*2)      ; $1C Bombchu     (row 11, col 18)
+  dw (12*64)+(13*2)     ; $1D Gust Jar    (row 17, col 18)
+  dw (15*64)+(19*2)     ; $1E Garo Mask   (Equipment)
 endif
 Menu_ItemCursorPositions_End:
 
@@ -232,11 +227,11 @@ Menu_DeleteCursor:
   LDX.w Menu_ItemCursorPositions-2, Y
 
 Menu_DeleteCursor_AltEntry:
-  LDA.w #$20F5
-  STA.w $1108, X : STA.w $1148, X
-  STA.w $114E, X : STA.w $110E, X
-  STA.w $11C8, X : STA.w $1188, X
-  STA.w $118E, X : STA.w $11CE, X
+  LDA.w #$3417
+  STA.w $1108, X : STA.w $110A, X : STA.w $110C, X : STA.w $110E, X
+  STA.w $1148, X : STA.w $114E, X
+  STA.w $1188, X : STA.w $118E, X
+  STA.w $11C8, X : STA.w $11CA, X : STA.w $11CC, X : STA.w $11CE, X
   SEP   #$30
   STZ   $0207
   RTS
@@ -503,13 +498,16 @@ Menu_SplitValidateSelection:
 endif
 
 if !ENABLE_GOLDSTAR_CELL == 1
-; Physical cells are independent of saved logical IDs. Keep $0202 logical
-; even while deleting the old bracket; masks retain IDs $13-$17 elsewhere.
+; Option A 4x6 grid (logical item IDs unchanged for battery-save compatibility):
+;   Row 1: Bow($01) Boomerang($02) Hookshot($03) Bombs($04) Bombchu($1C)  | Bottle1($06)
+;   Row 2: Hammer($07) Powder($05) FireRod($09)  IceRod($0A) Goldstar($1A)| Bottle2($0C)
+;   Row 3: Lamp($08) Book($0E)     Somaria($0F)  Byrna($1B) GustJar($1D)  | Bottle3($12)
+;   Row 4: Ocarina($0D) Feather($11) Mirror($0B) Fishing($10) Portal($19) | Bottle4($18)
 Menu_CustomGridItems:
-  db $01,$02,$03,$04,$05,$06
-  db $07,$08,$09,$0A,$0B,$0C
-  db $0D,$0E,$0F,$1B,$11,$12
-  db $1A,$10,$1D,$1C,$19,$18
+  db $01,$02,$03,$04,$1C,$06
+  db $07,$05,$09,$0A,$1A,$0C
+  db $08,$0E,$0F,$1B,$1D,$12
+  db $0D,$11,$0B,$10,$19,$18
 
 ; X = zero-based physical cell; C set and A = its owned logical ID.
 ; Keeps X/Y, uses $01. Invalid Byrna values are not ownership.

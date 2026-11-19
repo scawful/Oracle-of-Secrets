@@ -46,7 +46,30 @@ endif
 
 assert pc() <= $07AFB4
 
+; Held Cane/Rod OAM palette override ($0DA6AA..$0DA6B4, 11 bytes).
+; Vanilla sets $0F = $04 (OAM pal 2 blue) for $0303 == $0D (Byrna/Portal Rod).
+; When actively fishing ($7F5BA2 != 0), switch to OAM pal 7 ($0E, Link's
+; palette: color 14 = warm wood brown, color 6 = tan, color 5 = outline) to
+; match the F2 Menu/HUD Fishing Rod while leaving Byrna/Somaria/Portal intact.
+assert read4($0DA6AA) == $C90303AD && read1($0DA6AE) == $0D && read4($0DA6B1) == $0F8504A9, "Bank 0D Cane/Rod OAM palette check moved"
+org $0DA6AA ; @hook module=Items name=FishingRod_WeaponOamPalette kind=jsl target=FishingRod_WeaponOamPalette expected_m=8 protected_size=11
+  JSL FishingRod_WeaponOamPalette
+  NOP #7
+assert pc() == $0DA6B5
+
 pullpc
+
+FishingRod_WeaponOamPalette:
+{
+  LDA.w $0303 : CMP.b #$0D : BNE .done
+  LDA.l $7F5BA2 : BNE .fishing
+    LDA.b #$04 : STA.b $0F
+    RTL
+  .fishing
+    LDA.b #$0E : STA.b $0F
+  .done
+  RTL
+}
 
 FishingRodExit:
   PLB

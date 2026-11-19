@@ -444,7 +444,7 @@ if !ENABLE_GOLDSTAR_CELL == 1
   .new_icons
   dw $2CDC,$2CDD,$2CEC,$2CED ; Byrna
   dw $2C7B,$2C8F,$2CAC,$2CAF ; Bombchu
-  dw $24F2,$2530,$257E,$257F ; Switch Hook
+  dw $28F2,$2930,$357E,$357F ; Gust Jar (S1/P1)
   dw $340D,$340E,$340F,$3425 ; Garo
   .ordinary
 endif
@@ -617,7 +617,7 @@ org $0DF651
 
 ; Hookshot
 org $0DF669
-  dw $24F5, $24F6, $24C0, $24F5 ; Hookshot
+  dw $2CF5, $2CF6, $2CC0, $2CF5 ; Hookshot (H3 blue/white)
   dw $2C17, $3531, $2D40, $3541 ; Ball & Chain
 
 ; Bombs (Unchanged)
@@ -681,7 +681,7 @@ org $0DF7A9
   dw $24DC, $24DD, $24EC, $24ED ; Cane of Somaria
 
 org $0DF8A9
-  dw $2C82, $2C83, $2C8B, $2C8C ; Fishing Rod
+  dw $2082, $2883, $208B, $288C ; Fishing Rod (F2 brown wood + tan tip/white line)
   dw $2CF0, $24F1, $30EC, $E4F0 ; Portal Rod
 
 ; Deku (Quake)
@@ -726,12 +726,12 @@ org $0DFE9B           ; HUD_Tilemap+$24, row 0, col 18
 ; Row 1, cols 15-16: old rupee icon off.
 org $0DFED5           ; HUD_Tilemap+$5E, row 1, col 15
   dw $207F, $207F
-; Row 1, cols 18-29: magic meter, empty item box.
+; Row 1, cols 18-29: magic meter, item box (col 26 = brown wood X|Y divider $214F).
 org $0DFEDB           ; HUD_Tilemap+$64, row 1, col 18
-  dw $201B, $344B, $344B, $344B, $344B, $20DE, $20AA, $20AA, $20AA, $20AA, $20AA, $20DF
-; Row 2, cols 18-29: magic box bottom, empty item box.
+  dw $201B, $344B, $344B, $344B, $344B, $20DE, $20AA, $20AA, $214F, $20AA, $20AA, $20DF
+; Row 2, cols 18-29: magic box bottom, item box (col 26 = brown wood X|Y divider $214F).
 org $0DFF1B           ; HUD_Tilemap+$A4, row 2, col 18
-  dw $A00B, $A00C, $A00C, $A00C, $A00C, $20EE, $20AA, $20AA, $20AA, $20AA, $20AA, $20EF
+  dw $A00B, $A00C, $A00C, $A00C, $A00C, $20EE, $20AA, $20AA, $214F, $20AA, $20AA, $20EF
 ; Row 3, cols 23-29: item box bottom (counts overwrite cols 24-25 / 27-28).
 org $0DFF65           ; HUD_Tilemap+$EE, row 3, col 23
   dw $207C, $207D, $A014, $A014, $A014, $207E, $201D

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate narrowly allocated 2bpp HUD icons without writing the editable ROM."""
+"""Generate narrowly allocated 2bpp HUD icons and Menu v5 UI tiles without writing the editable ROM."""
 from __future__ import annotations
 
 import argparse
@@ -18,8 +18,11 @@ SPEC = Path('Data/graphics/menu_icons.json')
 OUTPUT = Path('Core/Generated/menu_icons')
 SHEETS = (0x69, 0x6A, 0x6B)
 BLANK = 0x07F
+PROTECTED_TILES = frozenset((0x014, 0x060, 0x070, 0x07F, 0x14B, 0x14C, 0x14D, 0x14E))
 TILES = frozenset((0x00D, 0x00E, 0x00F, 0x025, 0x07B, 0x08F,
                    0x0AC, 0x0AF, 0x0F2, 0x130, 0x17E, 0x17F))
+RECLAIMED_UI_TILES = frozenset((0x12B, 0x12C, 0x12D, 0x12E, 0x12F,
+                                0x13F, 0x14F, 0x16D, 0x17A, 0x17B))
 
 
 def tile_location(tile):
@@ -28,12 +31,21 @@ def tile_location(tile):
     return (0x6A, 0x6B, 0x69)[tile // 0x80], (tile % 0x80) * 16
 
 
+def _validate_rel_source(spec_path, rel_str):
+    source = Path(rel_str)
+    require(not source.is_absolute() and '..' not in source.parts, 'icon source must stay inside spec directory')
+    require((spec_path.parent/source).resolve().is_relative_to(spec_path.parent.resolve()),
+            'icon source escapes through symlink')
+    return source
+
+
 def read_spec(path):
     path = Path(path)
     spec = json.loads(path.read_text())
-    require(type(spec) is dict and set(spec) == {
-        'schema_version', 'start', 'capacity', 'canonical_blank_tile', 'sheets', 'icons'
-    }, 'invalid menu icon spec keys')
+    require(type(spec) is dict and set(spec) in (
+        {'schema_version', 'start', 'capacity', 'canonical_blank_tile', 'sheets', 'icons'},
+        {'schema_version', 'start', 'capacity', 'canonical_blank_tile', 'sheets', 'icons', 'ui_tiles'},
+    ), 'invalid menu icon spec keys')
     require(spec['schema_version'] == 1, 'unsupported menu icon schema')
     require((number(spec['start']), number(spec['capacity'])) == (START, CAPACITY),
             'only audited $43:8000-$43:9FFF is supported')
@@ -51,20 +63,42 @@ def read_spec(path):
     names, allocated = set(), set()
     for entry in spec['icons']:
         require(type(entry) is dict and set(entry) == {'name', 'source', 'tiles', 'palette'}, 'invalid icon entry')
-        require(entry['name'] in ('garo_mask', 'bombchu', 'switch_hook') and entry['name'] not in names,
+        require(entry['name'] in ('garo_mask', 'bombchu', 'gust_jar') and entry['name'] not in names,
                 'unsupported or duplicate icon name')
         names.add(entry['name'])
         require(type(entry['tiles']) is list and len(entry['tiles']) == 4, 'icon must have TL/TR/BL/BR tiles')
         for value in entry['tiles']:
             tile = number(value)
             require(tile != BLANK, 'canonical blank tile cannot be allocated')
+            require(tile not in PROTECTED_TILES, 'protected HUD tile cannot be allocated')
             require(tile in TILES and tile not in allocated, 'tile is unapproved or already allocated')
             allocated.add(tile)
         require(0 <= number(entry['palette']) < 8, 'invalid BG3 palette')
-        source = Path(entry['source'])
-        require(not source.is_absolute() and '..' not in source.parts, 'icon source must stay inside spec directory')
-        require((path.parent/source).resolve().is_relative_to(path.parent.resolve()), 'icon source escapes through symlink')
+        _validate_rel_source(path, entry['source'])
     require(allocated == TILES, 'icon allocation must use the twelve audited tiles exactly')
+
+    if 'ui_tiles' in spec:
+        ui = spec['ui_tiles']
+        require(type(ui) is dict and set(ui) == {'source', 'tiles'}, 'invalid ui_tiles block')
+        _validate_rel_source(path, ui['source'])
+        require(type(ui['tiles']) is list and len(ui['tiles']) == len(RECLAIMED_UI_TILES),
+                'ui_tiles must cover the ten audited reclaimed tiles')
+        ui_names, ui_allocated = set(), set()
+        for entry in ui['tiles']:
+            require(type(entry) is dict and set(entry) == {'name', 'tile', 'base_sha256'},
+                    'invalid ui_tiles entry')
+            require(isinstance(entry['name'], str) and entry['name'] and entry['name'] not in ui_names,
+                    'invalid or duplicate ui tile name')
+            ui_names.add(entry['name'])
+            tile = number(entry['tile'])
+            require(tile != BLANK, 'canonical blank tile cannot be allocated')
+            require(tile not in PROTECTED_TILES, 'protected HUD tile (including Yoshi Doll) cannot be reclaimed')
+            require(tile in RECLAIMED_UI_TILES and tile not in ui_allocated and tile not in allocated,
+                    'ui tile is unapproved or already allocated')
+            ui_allocated.add(tile)
+            require(isinstance(entry['base_sha256'], str) and re.fullmatch('[0-9a-f]{64}', entry['base_sha256']),
+                    'ui tile base_sha256 must be a full lowercase SHA256')
+        require(ui_allocated == RECLAIMED_UI_TILES, 'ui_tiles must use the ten audited reclaimed tiles exactly')
     return spec
 
 
@@ -120,6 +154,25 @@ def build(spec_path, base_rom, root=None):
             sheet, offset = tile_location(tile)
             require(bases[sheet][offset:offset+16] == bytes(16), f'tile ${tile:03X} is not empty in editable base')
             modified[sheet][offset:offset+16] = pixels[quadrant*16:(quadrant+1)*16]
+    if 'ui_tiles' in spec:
+        ui = spec['ui_tiles']
+        pixels = (spec_path.parent/ui['source']).read_bytes()
+        expected_len = len(ui['tiles']) * 16
+        require(len(pixels) == expected_len, f'ui_tiles source must be {expected_len} bytes of SNES 2bpp')
+        for index, entry in enumerate(ui['tiles']):
+            tile = number(entry['tile'])
+            sheet, offset = tile_location(tile)
+            base_tile = bases[sheet][offset:offset+16]
+            digest = hashlib.sha256(base_tile).hexdigest()
+            require(digest == entry['base_sha256'],
+                    f'reclaimed tile ${tile:03X} ({entry["name"]}): base tile changed ({digest})')
+            tile_bytes = pixels[index*16:(index+1)*16]
+            require(any(tile_bytes), f'ui tile {entry["name"]} is entirely transparent')
+            modified[sheet][offset:offset+16] = tile_bytes
+    for protected in PROTECTED_TILES:
+        sheet, offset = tile_location(protected)
+        require(modified[sheet][offset:offset+16] == bases[sheet][offset:offset+16],
+                f'protected tile ${protected:03X} changed')
     sheet, offset = tile_location(BLANK)
     require(modified[sheet][offset:offset+16] == bases[sheet][offset:offset+16] == bytes(16),
             'canonical blank pixels changed or are not transparent')
@@ -137,8 +190,8 @@ def build(spec_path, base_rom, root=None):
 
 def generated_files(items):
     lines = ['; GENERATED by Scripts/Generate/menu_icon_overrides.py. Do not edit.',
-             '; Three complete 2bpp HUD sheets; only the twelve approved icon tiles differ.',
-             '; Canonical transparent tile $07F is preserved.', 'pushpc', 'org $438000']
+             '; Three complete 2bpp HUD sheets; only the approved icon and Menu v5 UI tiles differ.',
+             '; Canonical transparent tile $07F and Yoshi Doll ($14B-$14E) are preserved.', 'pushpc', 'org $438000']
     for item in items:
         lines.append(f'MenuIconSheet_{item["s"]:02X}: incbin "sheets/spr{item["s"]:02X}.bin"')
     lines.append('assert pc() <= $43A000, "Menu icon sheets exceeded their 8 KiB allocation"')
@@ -175,7 +228,10 @@ def main():
         if args.check:
             require(not stale, 'stale generated menu icon sheets: '+', '.join(stale))
         else:
-            write_outputs(out, files, [args.base_rom, spec_path]+[spec_path.parent/i['source'] for i in spec['icons']])
+            sources = [args.base_rom, spec_path] + [spec_path.parent/i['source'] for i in spec['icons']]
+            if 'ui_tiles' in spec:
+                sources.append(spec_path.parent/spec['ui_tiles']['source'])
+            write_outputs(out, files, sources)
         print(json.dumps(dict(checked=args.check, sheets=[dict(sprite_sheet=f'{i["s"]:02X}',
                          bytes=len(i['stream']), decoded_sha256=hashlib.sha256(i['raw']).hexdigest()) for i in items])))
         return 0

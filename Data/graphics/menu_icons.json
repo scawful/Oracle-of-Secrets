@@ -11,6 +11,21 @@
   "icons": [
     {"name": "garo_mask", "source": "items/garo_mask.2bpp", "tiles": ["0x00D", "0x00E", "0x00F", "0x025"], "palette": 5},
     {"name": "bombchu", "source": "items/bombchu.2bpp", "tiles": ["0x07B", "0x08F", "0x0AC", "0x0AF"], "palette": 3},
-    {"name": "switch_hook", "source": "items/switch_hook.2bpp", "tiles": ["0x0F2", "0x130", "0x17E", "0x17F"], "palette": 1}
-  ]
+    {"name": "gust_jar", "source": "items/gust_jar.2bpp", "tiles": ["0x0F2", "0x130", "0x17E", "0x17F"], "palette": 2}
+  ],
+  "ui_tiles": {
+    "source": "items/menu_v5_ui.2bpp",
+    "tiles": [
+      {"name": "cursor_c4_badge_y", "tile": "0x12B", "base_sha256": "cd024076512d0bd18a364d7b0858b6818fcc68ace08731df2eb8bbd3a6f064dd"},
+      {"name": "cursor_c4_badge_x", "tile": "0x12C", "base_sha256": "4d86f87fd48fc473afc85a569cc646f8d3a095226d3be020dfe3707646953794"},
+      {"name": "cursor_c4_corner", "tile": "0x12D", "base_sha256": "dc2daea8b6e50274aa309dcf65d75d282ef359d40a8bc63792d529d60e6f0a9d"},
+      {"name": "cursor_c4_horiz", "tile": "0x12E", "base_sha256": "a842480ac786338854c1d6dfbc4f208714c2d9bbc600affc108b15a2a760527f"},
+      {"name": "cursor_c4_vert", "tile": "0x12F", "base_sha256": "4a2d7b47256b98ca9341c63681502e64b5c92f00220a1bbf6ffe811f7cc61d76"},
+      {"name": "cursor_c4_active_l", "tile": "0x13F", "base_sha256": "e77aa72e0e187363c787d54b5f012aafc6835cb2e2c94a3cff82a3346a6fe4c9"},
+      {"name": "menu_divider_vert", "tile": "0x14F", "base_sha256": "db1a15155f339ca0f8b4312ce8ce2f3a9607e6ad822ea37d3991895ecf0e9a70"},
+      {"name": "menu_divider_horiz", "tile": "0x17A", "base_sha256": "297ef0705c1aacf91b92051d06fec1a104e9cccef39e56e836edb8be877547b1"},
+      {"name": "minimap_cell", "tile": "0x17B", "base_sha256": "297ef0705c1aacf91b92051d06fec1a104e9cccef39e56e836edb8be877547b1"},
+      {"name": "minimap_marker", "tile": "0x16D", "base_sha256": "5ac6a5945f16500911219129984ba8b387a06f24fe383ce4e81a73294065461b"}
+    ]
+  }
 }

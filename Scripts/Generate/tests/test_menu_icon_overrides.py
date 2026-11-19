@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ROM-free preservation, allocation and refusal checks for 2bpp HUD icons."""
+"""ROM-free preservation, allocation and refusal checks for 2bpp HUD icons and Menu v5 UI tiles."""
 import hashlib
 import contextlib
 import io
@@ -43,6 +43,14 @@ class MenuIconOverrides(unittest.TestCase):
             source = self.root/entry['source']
             source.parent.mkdir(exist_ok=True)
             source.write_bytes(bytes(range(1+index, 65+index)))
+        if 'ui_tiles' in self.spec:
+            ui = self.spec['ui_tiles']
+            ui_source = self.root/ui['source']
+            ui_source.parent.mkdir(exist_ok=True)
+            ui_source.write_bytes(bytes((i % 251) + 1 for i in range(len(ui['tiles']) * 16)))
+            for entry in ui['tiles']:
+                sheet, offset = icons.tile_location(icons.number(entry['tile']))
+                entry['base_sha256'] = hashlib.sha256(self.bases[sheet][offset:offset+16]).hexdigest()
         self.base = self.root/'base.sfc'
         self.base.write_bytes(self.rom)
         self.write_spec()
@@ -53,7 +61,7 @@ class MenuIconOverrides(unittest.TestCase):
     def build(self):
         return icons.build(self.spec_path, self.base)
 
-    def test_preserves_all_non_icon_bytes_and_blank(self):
+    def test_preserves_all_non_allocated_bytes_blank_and_yoshi_doll(self):
         _, items = self.build()
         for item in items:
             expected = bytearray(self.bases[item['s']])
@@ -63,11 +71,22 @@ class MenuIconOverrides(unittest.TestCase):
                     sheet, offset = icons.tile_location(icons.number(value))
                     if sheet == item['s']:
                         expected[offset:offset+16] = pixels[quadrant*16:(quadrant+1)*16]
+            if 'ui_tiles' in self.spec:
+                ui = self.spec['ui_tiles']
+                pixels = (self.root/ui['source']).read_bytes()
+                for idx, entry in enumerate(ui['tiles']):
+                    sheet, offset = icons.tile_location(icons.number(entry['tile']))
+                    if sheet == item['s']:
+                        expected[offset:offset+16] = pixels[idx*16:(idx+1)*16]
             decoded, consumed = lz2.decompress(item['stream'], max_output=0x800)
             self.assertEqual(decoded, bytes(expected))
             self.assertEqual(consumed, len(item['stream']))
         blank_sheet = next(item for item in items if item['s'] == 0x6A)
         self.assertEqual(blank_sheet['raw'][0x7F0:0x800], bytes(16))
+        sheet69 = next(item for item in items if item['s'] == 0x69)
+        for yoshi_tile in (0x14B, 0x14C, 0x14D, 0x14E):
+            _, off = icons.tile_location(yoshi_tile)
+            self.assertEqual(sheet69['raw'][off:off+16], self.bases[0x69][off:off+16])
         self.assertEqual(self.base.read_bytes(), self.rom)
 
     def test_only_nine_independent_pointer_bytes_owned(self):
@@ -89,6 +108,20 @@ class MenuIconOverrides(unittest.TestCase):
         self.write_spec()
         with self.assertRaisesRegex(ValueError, 'base sheet changed'):
             self.build()
+
+    def test_changed_reclaimed_ui_base_tile_hash_refused(self):
+        self.spec['ui_tiles']['tiles'][0]['base_sha256'] = 'f'*64
+        self.write_spec()
+        with self.assertRaisesRegex(ValueError, 'base tile changed'):
+            self.build()
+
+    def test_yoshi_doll_or_blank_cannot_be_reclaimed(self):
+        for tile_hex, msg in (('0x14B', 'protected HUD tile'), ('0x07F', 'canonical blank')):
+            with self.subTest(tile=tile_hex):
+                self.spec['ui_tiles']['tiles'][0]['tile'] = tile_hex
+                self.write_spec()
+                with self.assertRaisesRegex(ValueError, msg):
+                    self.build()
 
     def test_blank_or_duplicate_tile_refused(self):
         for replacement, message in (('0x07F', 'canonical blank'), ('0x00E', 'already allocated')):

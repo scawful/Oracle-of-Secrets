@@ -33,10 +33,18 @@ HUD_CodexCells:
 
   PHY
   ; Forms ItemBindings_Admitted rejects (Deku/Zora/Wolf/Goron, Garo,
-  ; Horse) route X to the field map, so the X box stays empty under them.
+  ; Horse without mounted bow) route X to the field map, so the X box stays
+  ; empty under them. Mounted Horse ($09) keeps Bow ($01) visible when no
+  ; follower rides along, matching ItemBindings_Admitted.
   LDA.l $7E0000+!CurrentMask : AND.w #$00FF : BEQ .form_ok
   CMP.w #$0005 : BCC .empty
-  CMP.w #$0008 : BCS .empty
+  CMP.w #$0008 : BCC .form_ok
+if !ENABLE_HORSE_FORM == 1
+  CMP.w #$0009 : BNE .empty
+  LDA.l $7EF3CC : AND.w #$00FF : BNE .empty
+  LDA.l ItemBindingSavedX : AND.w #$00FF : CMP.w #$0001 : BEQ .form_ok
+endif
+  BRA .empty
   .form_ok
   LDA.l ItemBindingSavedVersion : AND.w #$00FF : CMP.w #$0001 : BNE .empty
   LDA.l ItemBindingSavedX : AND.w #$00FF : BEQ .empty

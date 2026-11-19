@@ -180,7 +180,7 @@ Menu_DrawPendantIcons:
 ; bottom row between Pearl and hearts.
 if !ENABLE_MENU_MAP_TRAVEL == 1
   !QuestRow = menu_offset(12,0)         ; absolute row 16, below the 2x2 passive gear block
-  !DungeonRow = menu_offset(13,0)       ; Map page, absolute row 17
+  !DungeonRow = menu_offset(11,0)       ; Map & Spoils page, absolute row 15
 else
   !QuestRow = menu_offset(17,0)
   !DungeonRow = !QuestRow
@@ -245,11 +245,12 @@ Menu_DrawMusicNotes:
   REP #$30
   RTS
 ; DrawMenuItem offsets; QuestSongs_DrawCursor (bank $2B) reads this table
-; long to place its bracket. Four-page menu: Quest bottom row (absolute 21).
+; long to place its full-size 4x4 C4 cursor. Four-page menu: Quest row 21,
+; cols 6, 9, 13, 17, 21, 24 (4x4 cursor rows 20..23: clear of D5 and border).
 .positions
 if !ENABLE_MENU_MAP_TRAVEL == 1
-  dw menu_offset(17,3),menu_offset(17,6),menu_offset(17,9)
-  dw menu_offset(17,13),menu_offset(17,16),menu_offset(17,19)
+  dw menu_offset(17,2),menu_offset(17,5),menu_offset(17,9)
+  dw menu_offset(17,13),menu_offset(17,17),menu_offset(17,20)
 else
   dw menu_offset(9,3),menu_offset(9,6),menu_offset(9,9)
   dw menu_offset(9,13),menu_offset(9,16),menu_offset(9,19)
@@ -274,6 +275,22 @@ endif
 
 ; =========================================================
 
+; Items page vertical wood divider at col 21, rows 11..22 separating the
+; 5x4 tools grid (cols 6..18) from the 1x4 Bottles column (col 24).
+Menu_DrawItemsDivider:
+{
+  REP #$30
+  LDX.w #menu_offset(11,21)
+  LDY.w #$000C
+  LDA.w #$214F
+.loop
+  STA.w $1000, X
+  TXA : CLC : ADC.w #$0040 : TAX
+  LDA.w #$214F
+  DEY : BNE .loop
+  RTS
+}
+
 DrawYItems:
 {
   SEP #$30
@@ -281,13 +298,17 @@ DrawYItems:
   LDA.b #$7E : STA.b $0A ; Set up the bank of our indirect address
   REP #$30
 
+  ; Option A grid: rows [11,14,17,20] -> DrawMenuItem rows [7,10,13,16]
+  ;                cols [6,9,12,15,18,24] -> DrawMenuItem cols [2,5,8,11,14,20]
+  ; Row 1 (row 11): Bow, Boomerang, Hookshot, Bombs, Bombchu | Bottle 1
+
   LDA.w #$7EF340
-  LDX.w #menu_offset(7,3)
+  LDX.w #menu_offset(7,2)
   LDY.w #BowsGFX
   JSR DrawMenuItem
 
   LDA.w #$7EF341
-  LDX.w #menu_offset(7,6)
+  LDX.w #menu_offset(7,5)
   LDY.w #BoomsGFX
   JSR DrawMenuItem
 
@@ -299,9 +320,8 @@ else
       LDA #$0001 ; No goldstar, but hookshot
     .spoof_hookshot
 endif
-
     STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
-    LDX.w #menu_offset(7,9)
+    LDX.w #menu_offset(7,8)
     LDY.w #HookGFX
     JSR DrawMenuItem
   .no_hookshot
@@ -311,54 +331,106 @@ endif
     LDA.w #$0001
     STA.w MenuItemValueSpoof
     LDA.w #MenuItemValueSpoof
-    LDX.w #menu_offset(7,13)
+    LDX.w #menu_offset(7,11)
     LDY.w #BombsGFX
     JSR DrawMenuItem
   .no_bomb
 
-  LDA.w #$7EF344
-  LDX.w #menu_offset(7,16)
-  LDY.w #PowderGFX
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.l BombchuOwned : AND.w #$00FF : CMP.w #$0001 : BEQ .bombchuowned_value
+    LDA.w #$0000
+  .bombchuowned_value
+  STA.w MenuItemValueSpoof
+  LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(7,14)
+  LDY.w #BombchuGFX
   JSR DrawMenuItem
+endif
 
   LDA.w #$7EF35C
-  LDX.w #menu_offset(7,19)
+  LDX.w #menu_offset(7,20)
   LDY.w #BottlesGFX
   JSR DrawMenuItem
 
-  ; Row 2 -------------------------------------------------
+  ; Row 2 (row 14): Hammer, Powder, Fire Rod, Ice Rod, Goldstar | Bottle 2
 
   LDA.w #$7EF34B
-  LDX.w #menu_offset(10,3)
+  LDX.w #menu_offset(10,2)
   LDY.w #HammerGFX
   JSR DrawMenuItem
 
-  LDA.w #$7EF34A
-  LDX.w #menu_offset(10,6)
-  LDY.w #LampGFX
+  LDA.w #$7EF344
+  LDX.w #menu_offset(10,5)
+  LDY.w #PowderGFX
   JSR DrawMenuItem
 
   LDA.w #$7EF345
-  LDX.w #menu_offset(10,9)
+  LDX.w #menu_offset(10,8)
   LDY.w #Fire_rodGFX
   JSR DrawMenuItem
 
   LDA.w #$7EF346
-  LDX.w #menu_offset(10,13)
+  LDX.w #menu_offset(10,11)
   LDY.w #Ice_rodGFX
   JSR DrawMenuItem
 
-  LDA.w #$7EF353
-  LDX.w #menu_offset(10,16)
-  LDY.w #MirrorGFX
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.w #GoldstarOwned&$FFFF
+  LDX.w #menu_offset(10,14)
+  LDY.w #HookGFX+8
   JSR DrawMenuItem
+endif
 
   LDA.w #$7EF35D
-  LDX.w #menu_offset(10,19)
+  LDX.w #menu_offset(10,20)
   LDY.w #BottlesGFX
   JSR DrawMenuItem
 
-  ; Row 3 -------------------------------------------------
+  ; Row 3 (row 17): Lamp, Book, Somaria, Byrna, Gust Jar | Bottle 3
+
+  LDA.w #$7EF34A
+  LDX.w #menu_offset(13,2)
+  LDY.w #LampGFX
+  JSR DrawMenuItem
+
+  LDA.l $7EF34E : AND.w #$00FF : CMP.w #$00 : BEQ .no_book
+    LDA.w #$01 : STA.w ShortSpoof : LDA.w #ShortSpoof
+    LDX.w #menu_offset(13,5)
+    LDY.w #BookGFX
+    JSR DrawMenuItem
+  .no_book
+
+  LDA.w #$7EF350
+  LDX.w #menu_offset(13,8)
+  LDY.w #SomariaGFX
+  JSR DrawMenuItem
+
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.l ByrnaOwned : AND.w #$00FF : CMP.w #$0001 : BEQ .byrna_value
+    LDA.w #$0000
+  .byrna_value
+  STA.w MenuItemValueSpoof
+  LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(13,11)
+  LDY.w #ByrnaGFX
+  JSR DrawMenuItem
+
+  LDA.l SwitchHookOwned : AND.w #$00FF : CMP.w #$0001 : BEQ .gustjar_value
+    LDA.w #$0000
+  .gustjar_value
+  STA.w MenuItemValueSpoof
+  LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(13,14)
+  LDY.w #GustJarGFX
+  JSR DrawMenuItem
+endif
+
+  LDA.w #$7EF35E
+  LDX.w #menu_offset(13,20)
+  LDY.w #BottlesGFX
+  JSR DrawMenuItem
+
+  ; Row 4 (row 20): Ocarina, Feather, Mirror, Fishing Rod, Portal Rod | Bottle 4
 
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0000 : BEQ .no_ocarina
     ; Ocarina owned, no song learned ($7EF34C = 1): grey icon (entry 7).
@@ -373,96 +445,37 @@ endif
     .spoof_ocarina
 
     STA.w ShortSpoof : LDA.w #ShortSpoof
-    LDX.w #menu_offset(13,3)
+    LDX.w #menu_offset(16,2)
     LDY.w #OcarinaGFX
     JSR DrawMenuItem
   .no_ocarina
 
-  LDA.l $7EF34E : AND.w #$00FF : CMP.w #$00 : BEQ .no_book
-    LDA.w #$01 : STA.w ShortSpoof : LDA.w #ShortSpoof
-    LDX.w #menu_offset(13,6)
-    LDY.w #BookGFX
-    JSR DrawMenuItem
-  .no_book
-
-  LDA.w #$7EF350
-  LDX.w #menu_offset(13,9)
-  LDY.w #SomariaGFX
-  JSR DrawMenuItem
-
-  ; LDA.w #$7EF351
-  LDA.l $7EF351 : AND.w #$00FF : CMP.w #$00 : BEQ .no_rods
-    LDA.w #$0001 ; this cell is only the Fishing Rod
-    STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
-if !ENABLE_GOLDSTAR_CELL == 1
-    LDX.w #menu_offset(16,6)
-else
-    LDX.w #menu_offset(13,13)
-endif
-    LDY.w #FishingRodGFX
-    JSR DrawMenuItem
-  .no_rods
-if !ENABLE_GOLDSTAR_CELL == 1
-  LDA.l ByrnaOwned : AND.w #$00FF : CMP.w #$0001 : BEQ .byrna_value
-    LDA.w #$0000
-  .byrna_value
-  STA.w MenuItemValueSpoof
-  LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(13,13)
-  LDY.w #ByrnaGFX
-  JSR DrawMenuItem
-endif
-
   LDA.w #$7EF34D
-  LDX.w #menu_offset(13,16)
+  LDX.w #menu_offset(16,5)
   LDY.w #JumpFeatherGFX
   JSR DrawMenuItem
 
-  LDA.w #$7EF35E
-  LDX.w #menu_offset(13,19)
-  LDY.w #BottlesGFX
+  LDA.w #$7EF353
+  LDX.w #menu_offset(16,8)
+  LDY.w #MirrorGFX
   JSR DrawMenuItem
 
-  ; Row 4 -------------------------------------------------
+  LDA.l $7EF351 : AND.w #$00FF : CMP.w #$00 : BEQ .no_rods
+    LDA.w #$0001 ; this cell is only the Fishing Rod
+    STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
+    LDX.w #menu_offset(16,11)
+    LDY.w #FishingRodGFX
+    JSR DrawMenuItem
+  .no_rods
 
-
-  ; Portal Rod: row 4, fifth cell with the custom grid; logical ID stays $19.
+  ; Portal Rod: Row 4 Col 5 (bottom-right tool); logical ID stays $19.
   LDA.w #PortalRodOwned&$FFFF
-if !ENABLE_GOLDSTAR_CELL == 1
-  LDX.w #menu_offset(16,16)
-else
-  LDX.w #menu_offset(16,3)
-endif
+  LDX.w #menu_offset(16,14)
   LDY.w #PortalRodGFX
   JSR DrawMenuItem
 
-if !ENABLE_GOLDSTAR_CELL == 1
-  LDA.w #GoldstarOwned&$FFFF
-  LDX.w #menu_offset(16,3)
-  LDY.w #HookGFX+8
-  JSR DrawMenuItem
-
-  LDA.l SwitchHookOwned : AND.w #$00FF : CMP.w #$0001 : BEQ .switchhookowned_value
-    LDA.w #$0000
-  .switchhookowned_value
-  STA.w MenuItemValueSpoof
-  LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(16,9)
-  LDY.w #SwitchHookGFX
-  JSR DrawMenuItem
-
-  LDA.l BombchuOwned : AND.w #$00FF : CMP.w #$0001 : BEQ .bombchuowned_value
-    LDA.w #$0000
-  .bombchuowned_value
-  STA.w MenuItemValueSpoof
-  LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(16,13)
-  LDY.w #BombchuGFX
-  JSR DrawMenuItem
-endif
-
   LDA.w #$7EF35F
-  LDX.w #menu_offset(16,19)
+  LDX.w #menu_offset(16,20)
   LDY.w #BottlesGFX
   JSR DrawMenuItem
 
@@ -538,7 +551,11 @@ Menu_DrawBigKey:
         LDA.w #$01
         STA.w ShortSpoof
         LDA.w #ShortSpoof
+if !ENABLE_MENU_MAP_TRAVEL == 1
+        LDX.w #!DungeonRow+menu_offset(0,19) ; Map & Spoils page: Chest at (15,23)
+else
         LDX.w #!DungeonRow+menu_offset(0,17) ; dungeon row, 4th
+endif
         LDY.w #TreasureChestGFX
         JSR DrawMenuItem
 
@@ -552,13 +569,18 @@ Menu_DrawBigKey:
       STA.w ShortSpoof
       LDA.w #ShortSpoof
       ; Draw the big key (or big key with chest if we've gotten the treasure) icon
+if !ENABLE_MENU_MAP_TRAVEL == 1
+      LDX.w #!DungeonRow+menu_offset(0,16) ; Map & Spoils page: BigKey at (15,20)
+else
       LDX.w #!DungeonRow+menu_offset(0,13) ; dungeon row, 3rd
+endif
       LDY.w #BigKeyGFX
       JSR DrawMenuItem
 
     .dontHaveBigKey
   .notInPalace
 
+if !ENABLE_MENU_MAP_TRAVEL == 0
   LDA $040C : AND.w #$00FF : CMP.w #$00FF : BEQ .notInPalaceAgain
     LSR A : TAX
     ; Check if we have the map in this dungeon
@@ -577,6 +599,7 @@ Menu_DrawBigKey:
 
     .dontHaveMap
   .notInPalaceAgain
+endif
   RTS
 }
 
@@ -745,7 +768,11 @@ Menu_DrawBigChestKey:
       LDA.w #$01
       STA.w ShortSpoof
       LDA.w #ShortSpoof
+if !ENABLE_MENU_MAP_TRAVEL == 1
+      LDX.w #!DungeonRow+menu_offset(0,13) ; Map & Spoils page: ChestKey at (15,17)
+else
       LDX.w #!DungeonRow+menu_offset(0,9) ; dungeon row, 2nd
+endif
       LDY.w #BigChestKeyGFX
       JSR DrawMenuItem
     .dontHaveCompass
@@ -1019,27 +1046,22 @@ Menu_DrawCursor:
   LDA.b #$20 : BIT.w $0207
   REP #$20
   BEQ .no_delete
-    ; Delete cursor
-    LDA.w #$20F5
-    STA.w $1108, X : STA.w $1148, X
-    STA.w $114E, X : STA.w $110E, X
-    STA.w $11C8, X : STA.w $1188, X
-    STA.w $118E, X : STA.w $11CE, X
+    ; Clear all 12 perimeter tiles of C4 cursor box
+    LDA.w #$3417
+    STA.w $1108, X : STA.w $110A, X : STA.w $110C, X : STA.w $110E, X
+    STA.w $1148, X : STA.w $114E, X
+    STA.w $1188, X : STA.w $118E, X
+    STA.w $11C8, X : STA.w $11CA, X : STA.w $11CC, X : STA.w $11CE, X
     BRA .done
 
   .no_delete
-  ; 2-item HUD layout: one gray selector on every item (scawful 2026-11-15:
-  ; "a gray main selector"); green/blue belong to the Y/X marks only.
-
-  ; Normal cursor (palette 1 - default blue/white)
-  LDA.w #$3060 : STA.w $1108, X ; corner
-  LDA.w #$3070 : STA.w $1148, X
-  LDA.w #$7060 : STA.w $110E, X ; corner
-  LDA.w #$7070 : STA.w $114E, X
-  LDA.w #$3070 : STA.w $1188, X
-  LDA.w #$B060 : STA.w $11C8, X ; corner
-  LDA.w #$7070 : STA.w $118E, X
-  LDA.w #$F060 : STA.w $11CE, X ; corner
+  ; Cursor C4 active selection: crisp Gold ($34) L-brackets on the 4 corners.
+  ; On Items page, Menu_Bindings_DrawMarkers layers the Green Y / Blue X thin
+  ; rounded frames + corner badges and preserves badges under active hover.
+  LDA.w #$353F : STA.w $1108, X ; TL gold L-bracket
+  LDA.w #$753F : STA.w $110E, X ; TR (H-flip)
+  LDA.w #$B53F : STA.w $11C8, X ; BL (V-flip)
+  LDA.w #$F53F : STA.w $11CE, X ; BR (HV-flip)
 
   .done
   SEP #$20

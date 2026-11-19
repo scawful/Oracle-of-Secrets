@@ -1,9 +1,11 @@
-"""Contract and tilemap-geometry tests for the Map page Supplies row (QUEUE288).
+"""Contract and tilemap-geometry tests for the Menu v5 Map & Spoils page (QUEUE320).
 
 Covers:
-1. Tilemap footprints on the Map page: Area Name (row 9), MAP icon + 4x4 cursor,
-   !DungeonRow icons, 6 Supplies icons + 4x4 cursors, A:USE prompt, menu_frame
-   interior bounds, and $1692 footer — zero overlap and border intact.
+1. Tilemap footprints on the Map & Spoils page: Area Name (row 9), 8x8 Mini-Map
+   (rows 11..18, cols 6..13), MAP icon (12,19) + 4x4 C4 cursor + "A:MAP" (12,22..26),
+   !DungeonRow 3 icons (ChestKey, BigKey, Chest at (15, 17/20/23)), A:USE prompt (18,21..25),
+   row 19 horizontal divider (cols 6..25), 6 Spoils icons on row 21 (cols 6,9,13,17,21,24)
+   + 4x4 C4 cursors, menu_frame interior bounds, and $1692 footer — zero overlap and border intact.
 2. MenuFlow_MapMove / MenuMapTravel_Select / MenuFlow_MapInit / MenuFlow_RecordTurn
    contracts and state transitions.
 """
@@ -31,16 +33,18 @@ def to_cell(byte_offset: int) -> tuple[int, int]:
 
 
 def cursor_box_4x4(draw_offset: int) -> set[tuple[int, int]]:
-    # Menu_Equipment_Cursor writes $10C6/$10CC/$1106/$110C/$1146/$114C/$1186/$118C
-    # relative to $1000 + draw_offset.
-    cells = set()
-    for disp in (0x0C6, 0x0CC, 0x106, 0x10C, 0x146, 0x14C, 0x186, 0x18C):
-        cells.add(to_cell(draw_offset + disp))
-    return cells
+    # Full 12-tile C4 perimeter around a 2x2 icon at draw_offset (+4,+4):
+    # corners + top/bottom + left/right relative to $1000 + draw_offset.
+    disps = (
+        0x0C6, 0x0C8, 0x0CA, 0x0CC,
+        0x106, 0x10C,
+        0x146, 0x14C,
+        0x186, 0x188, 0x18A, 0x18C,
+    )
+    return {to_cell(draw_offset + d) for d in disps}
 
 
 def icon_2x2(draw_offset: int) -> set[tuple[int, int]]:
-    # DrawMenuItem writes $1108/$110A/$1148/$114A relative to $1000 + draw_offset.
     return {to_cell(draw_offset + disp) for disp in (0x108, 0x10A, 0x148, 0x14A)}
 
 
@@ -59,12 +63,12 @@ class MapSuppliesLayoutTest(unittest.TestCase):
 
     def test_table_sizes_and_alignment(self):
         self.assertEqual(len(self.map_pos), 7)
-        self.assertEqual(self.map_pos[0], (9, 11))
-        # Supplies sit on menu_offset row 17 (abs icons rows 21..22), matching QuestSongs.
+        self.assertEqual(self.map_pos[0], (8, 15))  # abs (12, 19)
+        # Spoils sit on menu_offset row 17 (abs icons rows 21..22), matching QuestSongs.
         for i in range(1, 7):
-            self.assertEqual(self.map_pos[i][0], 17, f"supply cell {i} row")
+            self.assertEqual(self.map_pos[i][0], 17, f"spoil cell {i} row")
         self.assertEqual(
-            [c for _, c in self.map_pos[1:]], [3, 6, 9, 13, 16, 19]
+            [c for _, c in self.map_pos[1:]], [2, 5, 9, 13, 17, 20]
         )
 
         gfx_m = re.search(r"MenuFlow_MapGfx:\s*\n(.*?)\n\n", CURSOR_FLOW, re.S)
@@ -84,23 +88,32 @@ class MapSuppliesLayoutTest(unittest.TestCase):
         )
 
     def test_zero_overlap_and_inside_panel(self):
-        # Fixed elements on Map page
+        # Fixed elements on Map & Spoils page
         fixed = {}
         fixed["area_name"] = {(9, c) for c in range(5, 27)}
+        fixed["minimap"] = {(r, c) for r in range(11, 19) for c in range(6, 14)}
+        fixed["amap_label"] = {(12, c) for c in range(22, 27)}
+        fixed["divider_h"] = {(19, c) for c in range(6, 26)}
 
         dy, dx = map(int, re.search(r"!DungeonRow = menu_offset\((\d+),(\d+)\)", DRAW).groups())
+        # Under !ENABLE_MENU_MAP_TRAVEL == 1: ChestKey (15,17), BigKey (15,20), Chest (15,23).
         d_offsets = re.findall(
-            r"LDX\.w #!DungeonRow\+menu_offset\((\d+),\s*(\d+)\)",
+            r"LDX\.w #!DungeonRow\+menu_offset\((\d+),\s*(\d+)\) ; Map & Spoils page",
             DRAW,
         )
-        self.assertEqual(len(d_offsets), 4)
+        self.assertEqual(len(d_offsets), 3)
         for idx, (y, x) in enumerate(d_offsets):
             fixed[f"dungeon_{idx}"] = icon_2x2(menu_offset(dy + int(y), dx + int(x)))
 
-        use_m = re.search(r"\$1000\+menu_offset\((\d+),(\d+)\),X", CURSOR_FLOW)
+        use_m = re.search(r"\.use_prompt\s*\n\s*LDA\.l \.use_text,X : STA\.w \$1000\+menu_offset\((\d+),(\d+)\),X", CURSOR_FLOW)
         assert use_m, "A:USE offset not found"
         uy, ux = int(use_m.group(1)), int(use_m.group(2))
         fixed["use_prompt"] = {(uy, ux + i) for i in range(5)}
+
+        # All fixed elements stay strictly inside panel interior
+        for fname, fcells in fixed.items():
+            for r, c in fcells:
+                self.assertEqual(self.frame[r * 32 + c], PANEL_BLANK, f"{fname} leaves panel at {(r, c)}")
 
         # All 7 cell icons stay inside panel and clear of fixed elements
         icons = {}
@@ -117,7 +130,7 @@ class MapSuppliesLayoutTest(unittest.TestCase):
             for b in names[i + 1:]:
                 self.assertFalse(combined[a] & combined[b], f"{a} overlaps {b}: {combined[a] & combined[b]}")
 
-        # Active 4x4 cursor for EVERY cell (0..6) must stay inside panel and never overlap
+        # Active 4x4 C4 cursor for EVERY cell (0..6) must stay inside panel and never overlap
         # fixed elements or its own icon or footer.
         footer = {(26, 9 + i) for i in range(14)}
         for idx, (y, x) in enumerate(self.map_pos):

@@ -7,10 +7,10 @@
 ; .w, everything else .l. All routines return with M/X=8.
 ; WRAM: MenuFlow_* in Core/symbols.asm ($7E02BA-$7E02BF, not saved).
 
-; Visual row (top to bottom) of each Equipment logical row:
-; 0 masks, 1 rings, 2 songs, 3 supplies (both in the last band), 4 GEAR (top).
+; Visual row (top to bottom) of each Equipment E2 row:
+; 0 GEAR (top), 1 Mid (Masks 0-2 | Rings 6-8), 2 Bot (Masks 3-5 | Rings 9-11).
 MenuFlow_EquipOrd:
-  db 1,2,3,3,0
+  db 0,1,2,2,0
 
 ; In: A = candidate row ordinal, $00 = candidate column. Out: A = cost.
 ; Cost = |row - source row| * 32 + the column measured from the entry
@@ -237,13 +237,14 @@ MenuFlow_MapInit:
 }
 
 ; ---------------------------------------------------------
-; Map page cells: 0 = Map (13,15), 1..6 = Magic Bag supplies (row 21, cols
-; 7/10/13/17/20/23, matching QuestSongs row height so 4x4 cursor boxes stay
-; inside panel rows 20..23 and clear of the row 24 bottom frame border).
+; Map & Spoils page cells:
+;   0     = World/Dungeon Map icon at (12,19) -> menu_offset(8,15)
+;   1..6  = Magic Bag Spoils on row 21, cols 6,9,13,17,21,24 -> menu_offset(17,2/5/9/13/17/20)
+;           (4x4 C4 cursor rows 20..23: clear of row 19 divider and row 24 border).
 MenuFlow_MapPos:
-  dw menu_offset(9,11)
-  dw menu_offset(17,3),menu_offset(17,6),menu_offset(17,9)
-  dw menu_offset(17,13),menu_offset(17,16),menu_offset(17,19)
+  dw menu_offset(8,15)
+  dw menu_offset(17,2),menu_offset(17,5),menu_offset(17,9)
+  dw menu_offset(17,13),menu_offset(17,17),menu_offset(17,20)
 
 MenuFlow_MapGfx:
   dw MapGFX
@@ -296,6 +297,21 @@ MenuFlow_MapMove:
 ; usable supplies with stock > 0. Returns M/X=8.
 MenuFlow_MapDraw:
 {
+  ; Runtime 8x8 Overworld Mini-Map on left (rows 11..18, cols 6..13).
+  JSL MenuMap_DrawMiniMap_Long
+
+  ; Horizontal wood divider at row 19, cols 6..25 + "A:MAP" prompt at (12,22).
+  REP #$30
+  LDX.w #$0026
+  LDA.w #$217A
+.hdiv
+  STA.w $1000+menu_offset(19,6),X
+  DEX #2 : BPL .hdiv
+  LDX.w #$0008
+.amap_lbl
+  LDA.l .amap_text,X : STA.w $1000+menu_offset(12,22),X
+  DEX #2 : BPL .amap_lbl
+
   SEP #$30
   LDA.b #$7E : STA.b $0A
   LDA.b #$01 : STA.w MenuItemValueSpoof
@@ -356,7 +372,7 @@ MenuFlow_MapDraw:
   REP #$30
   LDX.w #$0008
 .use_prompt
-  LDA.l .use_text,X : STA.w $1000+menu_offset(19,20),X
+  LDA.l .use_text,X : STA.w $1000+menu_offset(18,21),X
   DEX #2 : BPL .use_prompt
 .done
   SEP #$30
@@ -375,6 +391,8 @@ pushtable
   '_' = $20F5
 .map_name
   dw "_____MAP______"
+.amap_text
+  dw "A:MAP"
 .use_text
   dw "A:USE"
 pulltable
@@ -571,11 +589,11 @@ QuestSongs_DrawCursor:
   LDA.w CurrentSong : DEC : CMP.b #$06 : BCS .no_marker
   INC : JSR MenuFlow_SongOwned : BCC .no_marker
   TAX : LDA.l Menu_SongSlot-1,X         ; song -> slot
-  LDY.b #$24 : JSR .bracket             ; marker $2460
+  JSR .draw_equipped                    ; full-size 4x4 red C4 rounded frame
 .no_marker
   LDA.w $020B : CMP.b #$06 : BCS .done
   LDA.w $0207 : AND.b #$20 : BNE .name
-  LDA.w $020B : LDY.b #$30 : JSR .bracket ; cursor $3060
+  LDA.w $020B : JSR .draw_active        ; full-size 4x4 Gold C4 L-brackets
 .name
   LDX.w $020B : LDA.l Menu_SongOrder,X : DEC
   REP #$30
@@ -588,18 +606,22 @@ QuestSongs_DrawCursor:
   SEP #$30
   RTL
 
-; A = song index 0-5, Y = bracket tile high byte. M/X=8 in and out.
-; Same four stores as Menu_Equipment_Bracket (menu_equipment.asm).
-.bracket
+; Full-size 4x4 C4 thin rounded red frame around song slot A (0-5). M/X=8 in/out.
+.draw_equipped
   ASL : TAX
   REP #$30
-  TYA : XBA : ORA.w #$0060 : PHA
   LDA.l Menu_DrawMusicNotes_positions,X : TAX
-  PLA
-  STA.w $1106,X
-  ORA.w #$4000 : STA.w $110C,X
-  ORA.w #$8000 : STA.w $114C,X
-  EOR.w #$4000 : STA.w $1146,X
+  LDA.w #$2400
+  JSL Menu_C4_DrawEquipBox_Long
+  SEP #$30
+  RTS
+
+; Full-size 4x4 C4 Gold L-brackets around song slot A (0-5). M/X=8 in/out.
+.draw_active
+  ASL : TAX
+  REP #$30
+  LDA.l Menu_DrawMusicNotes_positions,X : TAX
+  JSL Menu_C4_DrawEquipCursor_Long
   SEP #$30
   RTS
 }

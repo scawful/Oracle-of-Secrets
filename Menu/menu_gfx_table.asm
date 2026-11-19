@@ -19,7 +19,7 @@ BoomsGFX:
 	dw $24B8, $24B9, $24C9, $A4B9 ; Red boomerang
 
 HookGFX:
-	dw $24F5, $24F6, $24C0, $24F5 ; Hookshot
+	dw $2CF5, $2CF6, $2CC0, $2CF5 ; Hookshot (H3 blue/white)
   dw $2C17, $3531, $2D40, $3541 ; Ball & Chain
 
 BombsGFX:
@@ -105,7 +105,7 @@ ByrnaGFX:
 	dw $2CDC, $2CDD, $2CEC, $2CED
 
 FishingRodGFX:
-  dw $2C82, $2C83, $2C8B, $2C8C
+  dw $2082, $2883, $208B, $288C ; Fishing Rod (F2 brown wood + tan tip/white line)
 
 PortalRodGFX:
   dw $2CF0, $24F1, $30EC, $E4F0
@@ -188,9 +188,9 @@ MoonPearlGFX:
 
 SwordGFX:
   dw $2C64, $2CCE, $2C75, $EC64 ; level one
-  dw $2C64, $2C65, $2C74, $2D26 ; level two
-  dw $248A, $2465, $3C74, $2D48 ; level three
-  dw $288A, $2865, $2C74, $2D39 ; level four
+  dw $2C64, $2C65, $2C74, $EC8A ; level two (clean crossguard tip, no level digit)
+  dw $248A, $2465, $3C74, $EC8A ; level three (clean crossguard tip, no level digit)
+  dw $288A, $2865, $2C74, $EC8A ; level four (clean crossguard tip, no level digit)
 
 ShieldGFX:
   dw $2CFD, $6CFD, $2CFE, $6CFE ; baby shield
@@ -242,7 +242,8 @@ endif
 ; New prototype icons use only the audited spare 2bpp tiles; $07F stays blank.
 BombchuGFX:
   dw $2C7B,$2C8F,$2CAC,$2CAF
+GustJarGFX:
 SwitchHookGFX:
-  dw $24F2,$2530,$257E,$257F
+  dw $28F2,$2930,$357E,$357F
 GaroMaskGFX:
   dw $340D,$340E,$340F,$3425

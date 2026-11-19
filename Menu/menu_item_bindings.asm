@@ -22,8 +22,17 @@
 ; are JSL/RTL. Menu/menu.asm keeps two long wrappers for the $2D calls.
 ; =========================================================
 
-!MB_YMarker = $3C60                 ; corner $060, palette 7 (green), priority
-!MB_XMarker = $2C60                 ; corner $060, palette 3 (blue), priority
+!MB_YPal     = $3C00                ; palette 7 (green), priority
+!MB_XPal     = $2C00                ; palette 3 (blue), priority
+!C4_BadgeY   = $3D2B                ; green pal 7 + priority + tile $12B
+!C4_BadgeX   = $2D2C                ; blue  pal 3 + priority + tile $12C
+!C4_BadgeXTR = $6D2C                ; blue  pal 3 + priority + H-flip + tile $12C
+!C4_Corner   = $012D                ; thin rounded frame corner
+!C4_Horiz    = $012E                ; thin horizontal frame line
+!C4_Vert     = $012F                ; thin vertical frame line
+!C4_ActiveL  = $353F                ; gold pal 5 + priority + active L-bracket $13F
+!Menu_DivV   = $214F                ; brown wood vertical divider
+!Menu_DivH   = $217A                ; brown wood horizontal divider
 
 ; Menu_InitGraphics (menu open). Saves the equipped Y item, then restores
 ; MenuFlow_ItemsCursor to $0202 if owned on the Items grid.
@@ -105,72 +114,79 @@ Menu_Bindings_Input:
 }
 
 ; Menu_ItemScreen after the cursor draw, any widths. Keeps P; destroys A/X.
+; Cursor C4 layering:
+;   - Y-bound item: Green ($3C) thin rounded 12-tile frame + crisp Y badge at TL.
+;   - X-bound item: Blue  ($2C) thin rounded 12-tile frame + crisp X badge at TL.
+;   - Both on same item: left half Green (Y badge TL), right half Blue (X badge TR).
+;   - Active cursor ($0202) on blink-on ($0207 bit 5 clear): bold Gold ($34)
+;     L-brackets drawn last on non-badge corners so both active selection and
+;     equipped Y/X badges stay crisply visible at the same time.
 Menu_Bindings_DrawMarkers:
 {
   PHP : SEP #$20
   LDA.w $0202 : STA.l MenuFlow_ItemsCursor
   REP #$30
-  ; Full brackets (corners + side lines, like the gray cursor): Y green,
-  ; X blue. Cells are 3 tiles apart across and down and the brackets 4x4,
-  ; so neighbour cells share a column or row of tiles; whichever mark is
-  ; drawn last owns them. Menu_DrawCursor already ran: gray on blink-on
-  ; frames ($0207 bit 5 clear), erased on blink-off frames.
-  ;   blink-on:  the cursor cell's marks are skipped (it stays gray);
-  ;              the other mark is drawn after it and is whole.
-  ;   blink-off: the cursor cell's mark is drawn last and is whole.
-  ;   cursor on neither mark: X last on blink-off, Y last on blink-on.
-  ; Y = item whose marks are skipped (0 = none). A mask Y item has no grid
-  ; cursor, so nothing is skipped.
-  LDY.w #$0000
-  LDA.w $0207 : AND.w #$0020 : BNE .cx_off
+  ; Always draw Y and X C4 frames first (X second if adjacent; split if same cell).
+  JSR .c4_draw_y
+  JSR .c4_draw_x
+
+  ; On blink-on frames, overlay Gold active C4 L-brackets on the hovered cell
+  ; (preserving any Y/X badge on that cell's TL / TR corner).
+  LDA.w $0207 : AND.w #$0020 : BNE .c4_done
     SEP #$20
     LDA.w $0202 : JSL Menu_Page3_IsMaskItem_Long
     REP #$20
-    BCS .cx_on_draw
-    LDA.w $0202 : AND.w #$00FF : TAY
-    .cx_on_draw
-    JSR .cx_draw_x : JSR .cx_draw_y
-    BRA .cx_done
-  .cx_off
-  LDA.w $0202 : EOR.l ItemBindingMenuY : AND.w #$00FF : BNE .cx_x_last
-    JSR .cx_draw_x : JSR .cx_draw_y
-    BRA .cx_done
-  .cx_x_last
-  JSR .cx_draw_y : JSR .cx_draw_x
-  .cx_done
+    BCS .c4_done
+    LDA.w $0202 : JSR .cell : BCC .c4_done
+    ; Always draw BL and BR Gold L-brackets on the hovered item.
+    LDA.w #!C4_ActiveL|$8000 : STA.w $11C8, X
+    LDA.w #!C4_ActiveL|$C000 : STA.w $11CE, X
+    ; Check if hovered item == Y or X (if so, preserve TL badge!).
+    LDA.w $0202 : EOR.l ItemBindingMenuY : AND.w #$00FF : BEQ .c4_hover_has_tl
+    JSR .is_x_hovered : BCS .c4_hover_has_tl
+      LDA.w #!C4_ActiveL : STA.w $1108, X
+      LDA.w #!C4_ActiveL|$4000 : STA.w $110E, X
+      BRA .c4_done
+    .c4_hover_has_tl
+    ; If hovered item is bound to BOTH Y and X, preserve TR X-badge too!
+    LDA.w $0202 : EOR.l ItemBindingMenuY : AND.w #$00FF : BNE .c4_hover_tr
+    JSR .is_x_hovered : BCS .c4_done
+    .c4_hover_tr
+    LDA.w #!C4_ActiveL|$4000 : STA.w $110E, X
+  .c4_done
   PLP : RTL
 
-  ; Same item on both buttons: X draws it (left half green, right half blue).
-  .cx_draw_y
-  LDA.l ItemBindingMenuY : EOR.l ItemBindingSavedX : AND.w #$00FF : BNE .cx_y_own
-    JSR .x_cell : BCS .cx_draw_x
-  .cx_y_own
-  TYA : EOR.l ItemBindingMenuY : AND.w #$00FF : BEQ .cx_rts
-  LDA.l ItemBindingMenuY : JSR .cell : BCC .cx_rts
-  LDA.w #!MB_YMarker : JMP .bracket
+  ; C set if version 1 X binding equals current cursor $0202. Keeps X.
+  .is_x_hovered
+  LDA.l ItemBindingSavedVersion : AND.w #$00FF : CMP.w #$0001 : BNE .ix_no
+  LDA.l ItemBindingSavedX : EOR.w $0202 : AND.w #$00FF : BNE .ix_no
+  SEC : RTS
+  .ix_no
+  CLC : RTS
 
-  .cx_draw_x
-  TYA : EOR.l ItemBindingSavedX : AND.w #$00FF : BEQ .cx_rts
-  JSR .x_cell : BCC .cx_rts
-  LDA.w #!MB_XMarker : JSR .bracket
-  LDA.l ItemBindingMenuY : EOR.l ItemBindingSavedX : AND.w #$00FF : BNE .cx_rts
-    LDA.w #!MB_YMarker : STA.w $1108, X
-    ORA.w #$8000 : STA.w $11C8, X
-    LDA.w #!MB_YMarker+$0010 : STA.w $1148, X : STA.w $1188, X
-  .cx_rts
+  ; Draw Y-bound item's green thin rounded frame + Y badge at TL.
+  .c4_draw_y
+  LDA.l ItemBindingMenuY : JSR .cell : BCC .c4_rts
+  LDA.w #!MB_YPal : JSR Menu_C4_DrawFrame_Near
+  LDA.w #!C4_BadgeY : STA.w $1108, X
+  .c4_rts
   RTS
 
-  ; A = top-left corner word; X = cell offset. Corners plus side lines
-  ; (side glyph = corner + $10), the same 8 tiles as Menu_DrawCursor.
-  .bracket
-  STA.w $1108, X                      ; top left
-  ORA.w #$8000 : STA.w $11C8, X       ; bottom left (V flip)
-  ORA.w #$4000 : STA.w $11CE, X       ; bottom right (H+V flip)
-  EOR.w #$8000 : STA.w $110E, X       ; top right (H flip)
-  CLC : ADC.w #$0010
-  STA.w $114E, X : STA.w $118E, X     ; right side (H flip)
-  EOR.w #$4000
-  STA.w $1148, X : STA.w $1188, X     ; left side
+  ; Draw X-bound item's blue thin rounded frame + X badge.
+  ; If X == Y, keep left half green (Y badge TL) and paint right half blue (X badge TR).
+  .c4_draw_x
+  JSR .x_cell : BCC .c4_rts
+  LDA.l ItemBindingMenuY : EOR.l ItemBindingSavedX : AND.w #$00FF : BEQ .c4_split
+    LDA.w #!MB_XPal : JSR Menu_C4_DrawFrame_Near
+    LDA.w #!C4_BadgeX : STA.w $1108, X
+    RTS
+  .c4_split
+  ; Right half blue: TR = H-flipped symmetric X badge, T2/R1/R2/BR/B2 = blue.
+  LDA.w #!C4_BadgeXTR : STA.w $110E, X
+  LDA.w #!MB_XPal|!C4_Horiz : STA.w $110C, X
+  ORA.w #$8000 : STA.w $11CC, X
+  LDA.w #!MB_XPal|!C4_Vert|$4000 : STA.w $114E, X : STA.w $118E, X
+  LDA.w #!MB_XPal|!C4_Corner|$C000 : STA.w $11CE, X
   RTS
 
   ; X item cell: C set and X = offset when version 1 holds a grid item.
@@ -189,3 +205,5 @@ Menu_Bindings_DrawMarkers:
   .none
   CLC : RTS
 }
+
+incsrc "menu_v5_ext.asm"

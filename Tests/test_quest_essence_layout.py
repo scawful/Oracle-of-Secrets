@@ -124,13 +124,12 @@ class QuestEssenceLayout(unittest.TestCase):
         self.assertNotIn("DrawLocationName", block(quest, "Menu_Quest_Draw"))
         gear = block(quest, "Menu_Quest_Gear")
         self.assertNotIn(".gear_label", gear)
-        # Pearl and count columns: first (four-page menu) definitions.
+        # Pearl column: first (four-page menu) definition; Menu v5 removes the
+        # redundant numeric heart-piece digit under the visual heart container.
         self.assertRegex(gear, r"LDX\.w #!QuestRow\+!QuestPearlCol\s*\n\s*LDY\.w #MoonPearlGFX")
         y, x = re.search(r"!QuestPearlCol = menu_offset\((\d+),(\d+)\)", quest).groups()
         item("moon pearl", qy + int(y), qx + int(x))
-        self.assertRegex(quest, r"LDX\.w #!QuestRow\+!QuestCountCol[^\n]*\n\s*JSR Menu_Quest_Number3")
-        y, x = re.search(r"!QuestCountCol = menu_offset\((\d+),(\d+)\)", quest).groups()
-        run("heart piece count", qy + int(y), qx + int(x), 3)
+        self.assertNotIn("JSR Menu_Quest_Number3", block(quest, "Menu_Quest_Draw"))
         # Gear block: four passive icons (DrawMenuItem offsets).
         names = ["shield", "glove", "boots", "flippers"]
         for name, (y, x) in zip(names, re.findall(r"menu_offset\((\d+),(\d+)\)", between(gear, ".gear_pos", ".gear_gfx"))):
@@ -235,23 +234,19 @@ class QuestEssenceLayout(unittest.TestCase):
         self.assertEqual({pearl[0], heart[0]}, {16}, "pearl and hearts sit below the gear block")
         self.assertGreater(min(pearl[0], heart[0]), gear_bottom + 1, "blank separator row below gear")
         self.assertLess(pearl[1], heart[1])
-        count = content["heart piece count"]
-        self.assertEqual({row for row, _ in count}, {18})
-        self.assertLessEqual({c for _, c in content["heart piece"]}, {c for _, c in count}, "count under the hearts")
         ring_left = min(c for _, c in self.crystal_cells())
         self.assertLess(right, ring_left, "gear left of the essence ring")
         self.assertLess(max(c for _, c in content["heart piece"]), ring_left)
         songs = [min(content[f"song {i}"]) for i in range(1, 7)]
         self.assertEqual({row for row, _ in songs}, {21})
-        self.assertGreater(21, max(row for row, _ in count) + 1, "songs clear of the heart count")
         self.assertEqual([c for _, c in songs], sorted(c for _, c in songs), "songs run left to right")
         ring_bottom = max(row for row, _ in self.crystal_cells()) + 1
         self.assertGreater(21, ring_bottom, "songs sit below the essence ring")
 
     def test_map_page_dungeon_row(self):
-        """Map page: the Map cell over the dungeon row (map, big chest key, big
-        key, treasure), mirrored about cols 15|16, clear of the cell's bracket,
-        the area name (row 9) and the footer."""
+        """Map & Spoils page: Map cell (12,19) over dungeon treasure row
+        (ChestKey, BigKey, Chest at (15, 17/20/23)), clear of the 4x4 C4
+        cursor, mini-map, area name (row 9), divider (row 19), and footer."""
         draw = DRAW.read_text()
         page = (ROOT / "Menu" / "menu_map_travel.asm").read_text()
         body = block(page, "MenuMapTravel_Draw")
@@ -259,18 +254,19 @@ class QuestEssenceLayout(unittest.TestCase):
         self.assertIn("JSR Menu_DrawBigChestKey", body)
         item_base = self.draw_menu_item_base()
         dy, dx = map(int, re.search(r"!DungeonRow = menu_offset\((\d+),(\d+)\)", draw).groups())
-        found = re.findall(r"LDX\.w #!DungeonRow\+menu_offset\((\d+),\s*(\d+)\)", draw)
-        self.assertEqual(len(found), 4, "big key, treasure, map, big chest key")
+        found = re.findall(r"LDX\.w #!DungeonRow\+menu_offset\((\d+),\s*(\d+)\) ; Map & Spoils page", draw)
+        self.assertEqual(len(found), 3, "chest key, big key, treasure")
         icons = [to_cell(self.offset(dy + int(y), dx + int(x)) + item_base) for y, x in found]
-        self.assertEqual({row for row, _ in icons}, {17})
-        cols = sorted(col for _, col in icons)
-        self.assertEqual({a + b for a, b in zip(cols, reversed(cols))}, {30}, "row mirrors about cols 15|16")
+        self.assertEqual({row for row, _ in icons}, {15})
+        self.assertEqual(sorted(col for _, col in icons), [17, 20, 23])
         cy, cx = map(int, re.search(r"!MapCellPos = menu_offset\((\d+),(\d+)\)", page).groups())
         cell = to_cell(self.offset(cy, cx) + item_base)
-        self.assertEqual(cell, (13, 15))
-        # Bracket = Menu_Equipment_Bracket: one column each side, two rows.
-        taken = square(cell) | {(cell[0] + r, cell[1] + c) for r in (0, 1) for c in (-1, 2)}
+        self.assertEqual(cell, (12, 19))
+        # Full 4x4 C4 cursor box around Map cell (12,19) -> rows 11..14, cols 18..21
+        taken = {(cell[0] + r, cell[1] + c) for r in range(-1, 3) for c in range(-1, 3)}
         taken |= {(9, c) for c in range(32)}
+        taken |= {(r, c) for r in range(11, 19) for c in range(6, 14)}  # 8x8 mini-map
+        taken |= {(19, c) for c in range(6, 26)}  # horizontal divider
         row, col = to_cell(0x1692 - TILEMAP)
         taken |= {(row, col + i) for i in range(0x1C // 2 + 1)}
         cells = set()
