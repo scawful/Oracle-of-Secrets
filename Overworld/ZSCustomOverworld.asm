@@ -1939,6 +1939,7 @@ PreOverworld_LoadProperties_Interupt:
         JSL.l LoadGearPalettes_bunny
     
     .notBunny
+    JSL.l Palette_Shield
     
     ; Set screen to mode 1 with BG3 priority.
     LDA.b #$09 : STA.b $94
