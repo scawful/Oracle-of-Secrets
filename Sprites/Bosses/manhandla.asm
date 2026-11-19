@@ -180,6 +180,10 @@ Sprite_Manhandla_Main:
       JSR SpawnRightManhandlaHead
       JSR SpawnCenterMandhandlaHead
       LDA.b #$06 : STA.w SprFrame, X
+      LDA.b #$60 : STA.w SprTimerD, X ; First telegraphed volley timer
+      LDA.b #$28 : STA.w SprTimerE, X ; Course re-target timer
+      STZ.w SprMiscE, X               ; 0 = Stalking
+      STZ.w SprMiscF, X
       %GotoAction(6) ; Manhandla_Body
       RTS
     .not_main
@@ -190,7 +194,7 @@ Sprite_Manhandla_Main:
 
   Manhandla_FrontHead:
   {
-    %PlayAnimation(0,1,16)
+    %PlayAnimation(0,1,10)
 
     JSL Sprite_Move
     JSL Sprite_DamageFlash_Long
@@ -204,7 +208,7 @@ Sprite_Manhandla_Main:
   Manhandla_LeftHead:
   {
     %StartOnFrame(2)
-    %PlayAnimation(2,3,16)
+    %PlayAnimation(2,3,10)
 
     JSL Sprite_Move
     JSL Sprite_DamageFlash_Long
@@ -218,7 +222,7 @@ Sprite_Manhandla_Main:
   Manhandla_RightHead:
   {
     %StartOnFrame(4)
-    %PlayAnimation(4,5,16)
+    %PlayAnimation(4,5,10)
 
     PHX
     JSL Sprite_Move
@@ -231,23 +235,19 @@ Sprite_Manhandla_Main:
     RTS
   }
 
+  ; Phase 2: Big Chuchu structured 4-beat combat loop (SprMiscE):
+  ;   0 = Stalk -> 1 = Swell Telegraph -> (A: Aimed Blast Pair | B: Elastic Lunge) -> 3 = Punish Window
   BigChuchu_Main:
   {
-    %PlayAnimation(0,2,16)
-
-    LDA.w SprTimerC, X : BEQ +
+    LDA.w SprTimerC, X : BEQ .active
+      %PlayAnimation(0,2,8)
       RTS
-    +
+    .active
 
-    JSL GetRandomInt : AND.b #$3F : BNE ++
-      JSR Chuchu_SpawnBlast
-      ; JSR Mothula_SpawnBeams
-    ++
+    JSR BigChuchu_RunBeat
 
     PHX
-    JSR Sprite_Manhandla_Move
     JSL Sprite_DamageFlash_Long
-
     JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     PLX
@@ -262,19 +262,50 @@ Sprite_Manhandla_Main:
     RTS
   }
 
+  ; Transformation Act B: BG2 pod flickers out while SprMiscD stays 1 so
+  ; Sprite_Manhandla_Draw renders frames 11..12 cleanly (fixes old BigChuchu OOB!).
   Flower_Flicker:
   {
-    %PlayAnimation(11, 12, 10)
-    LDA $1C : ORA.b #$01 : STA $1C ; turn on BG2 (Body)
-    ; Flicker the body every other frame using the timer
-    LDA.w SprTimerA, X : AND.b #$01 : BEQ .flicker
-      LDA $1C : AND.b #$FE : STA $1C ; turn off BG2 (Body)
-    .flicker
+    %StartOnFrame(11)
+    %PlayAnimation(11, 12, 6)
+    LDA.w SprGfxProps, X : ORA.b #$40 : STA.w SprGfxProps, X ; Invulnerable during dissolve
+    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
 
-    LDA.w SprTimerA, X : BNE .continue
+    ; Accelerating BG2 pod dissolve flicker
+    LDA $1C : ORA.b #$01 : STA $1C ; turn on BG2 (Body)
+    LDA.w SprTimerA, X : CMP.b #$14 : BCS .slow_flicker
+      AND.b #$01 : BEQ .flicker_done
+        BRA .hide_bg2
+    .slow_flicker
+    AND.b #$02 : BEQ .flicker_done
+    .hide_bg2
+      LDA $1C : AND.b #$FE : STA $1C ; turn off BG2 (Body)
+    .flicker_done
+
+    ; Subtle vertical shudder during pod dissolve
+    REP #$20
+    STZ.w $011A
+    LDA.b $1A : AND.w #$0002 : DEC A : STA.w $011C
+    SEP #$20
+
+    LDA.w SprTimerA, X : BEQ .finish_bloom
+      RTS
+    .finish_bloom
+      REP #$20
+      STZ.w $011A : STZ.w $011C
+      SEP #$20
       STZ.w $0422
       STZ.w $0424
       LDA $1C : AND.b #$FE : STA $1C ; turn off BG2 (Body)
+      LDA.b #$02 : STA.w SprMiscD, X ; Now switch renderer cleanly to BigChuchu
+      STZ.w SprFrame, X              ; Frame 0 (valid BigChuchu frame!)
+      LDA.w SprGfxProps, X : AND.b #$BF : STA.w SprGfxProps, X ; Vulnerable again
+      LDA.b #$32 : JSL Sound_SetSfx3PanLong ; Elastic BOING reveal!
+      STZ.w SprMiscC, X
+      STZ.w SprMiscE, X
+      STZ.w SprMiscF, X
+      LDA.b #$48 : STA.w SprTimerD, X
+      LDA.b #$28 : STA.w SprTimerE, X
       %GotoAction($04)
 
       LDA.b #$10 : STA.w SprTimerC, X
@@ -289,30 +320,49 @@ Sprite_Manhandla_Main:
         STA.w SprAction, Y
         LDA.b #$20 : STA.w SprHealth, Y
         LDA.b #$07 : STA.w SprNbrOAM, Y
-        LDA.w SprY, Y : CLC : ADC.b #$20 : STA.w SprY, Y
+        ; Spawn 16 px below center so 16 frames of DEC SprY arrive cleanly at +0!
+        LDA.w SprY, Y : CLC : ADC.b #$10 : STA.w SprY, Y
         LDA.b #$10 : STA.w SprTimerC, Y
         TYX
         STZ.w SprYRound, X
         STZ.w SprXRound, X
         PLX
       .return
-    .continue
     RTS
   }
 
   Manhandla_Body:
   {
-    %PlayAnimation(6,8,16)
+    LDA.w SprMiscE, X : BNE .telegraph_volley
 
+    ; --- Stalking state (SprMiscE == 0) ---
+    %PlayAnimation(6,8,12)
     PHX
     JSR Sprite_Manhandla_Move
-    JSL Sprite_DamageFlash_Long
+    PLX
+    LDA.w SprTimerD, X : BNE .post_ai
+      ; Enter telegraphed volley wind-up (34 frames)
+      LDA.b #$01 : STA.w SprMiscE, X
+      LDA.b #$22 : STA.w SprTimerD, X
+      STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+      LDA.b #$2A : JSL Sound_SetSfx3PanLong ; Bud charge telegraph cue
+      BRA .post_ai
 
-    JSL GetRandomInt : AND.b #$7F : BNE +
-      JSL GetRandomInt : AND.b #$04 : BNE +
+    ; --- Telegraphed Volley state (SprMiscE == 1) ---
+    .telegraph_volley
+    %PlayAnimation(6,8,4)
+    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+    LDA.w SprTimerD, X : BNE .post_ai
       JSR Mothula_SpawnBeams
-    +
+      STZ.w SprMiscE, X
+      ; Scale next volley cadence by surviving heads (3->120, 2->92, 1->68)
+      JSR Manhandla_CountAliveHeads
+      TAY
+      LDA.w .volley_cd, Y : STA.w SprTimerD, X
 
+    .post_ai
+    PHX
+    JSL Sprite_DamageFlash_Long
     JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
 
@@ -338,15 +388,59 @@ Sprite_Manhandla_Main:
     .not_head3
     PLX
     RTS
+
+    .volley_cd
+    db $44, $44, $5C, $78
   }
 
+  ; Transformation Act A (64 frames, invulnerable): room shudder, rising SFX,
+  ; smooth bud -> split -> petals progression (frames 9 -> 10 -> 11) before Flower_Flicker.
   BigChuchu_Emerge:
   {
-    %PlayAnimation(9, 12, 10)
+    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+    LDA.w SprGfxProps, X : ORA.b #$40 : STA.w SprGfxProps, X ; Invulnerable during transform
     JSL Sprite_DamageFlash_Long
+
+    ; Room rumble shudder (+-2 px X, +-1 px Y)
+    REP #$20
+    LDA.b $1A : AND.w #$0002 : ASL A : SEC : SBC.w #$0002 : STA.w $011A
+    LDA.b $1A : AND.w #$0001 : ASL A : DEC A : STA.w $011C
+    SEP #$20
+
+    ; Staged audio beats
+    LDA.w SprTimerA, X
+    CMP.b #$3F : BNE +
+      LDA.b #$35 : JSL Sound_SetSfx2PanLong ; Shaking rumble start
+    +
+    LDA.w SprTimerA, X
+    CMP.b #$2A : BNE +
+      LDA.b #$2A : JSL Sound_SetSfx3PanLong ; Swell power cue
+    +
+    LDA.w SprTimerA, X
+    CMP.b #$16 : BNE +
+      LDA.b #$30 : JSL Sound_SetSfx3PanLong ; Petal crack cue
+    +
+
+    ; Clean monotonic bloom progression: 9 -> 10 -> 11
+    LDA.w SprTimerA, X
+    CMP.b #$2C : BCS .bud_closed
+    CMP.b #$16 : BCS .bud_cracking
+      LDA.b #$0B : STA.w SprFrame, X ; Frame 11: full petals bursting
+      BRA .check_done
+    .bud_cracking
+      LDA.b #$0A : STA.w SprFrame, X ; Frame 10: bud splitting open
+      BRA .check_done
+    .bud_closed
+      LDA.b #$09 : STA.w SprFrame, X ; Frame 9: tight bud swelling
+
+    .check_done
     LDA.w SprTimerA, X : BNE +
-      LDA.b #$02 : STA.w SprMiscD, X ; Set phase flag
-      LDA.b #$20 : STA.w SprTimerA, X
+      REP #$20
+      STZ.w $011A : STZ.w $011C
+      SEP #$20
+      LDA.b #$0C : JSL Sound_SetSfx2PanLong ; Pod burst shockwave!
+      ; Keep SprMiscD == 1 through Flower_Flicker so frames 11..12 stay valid!
+      LDA.b #$24 : STA.w SprTimerA, X
       %GotoAction($05)
     +
     RTS
@@ -382,9 +476,146 @@ Sprite_Manhandla_Main:
   {
     %PlayAnimation(3, 4, 4)
     JSL Sprite_Move
+    JSL Sprite_CheckTileCollision : BNE .despawn
+    LDA.w SprTimerE, X : BEQ .despawn
     %DoDamageToPlayerSameLayerOnContact()
     RTS
+    .despawn
+    STZ.w SprState, X
+    RTS
   }
+}
+
+BigChuchu_RunBeat:
+{
+  LDA.w SprMiscE, X
+  JSL JumpTableLocal
+
+  dw BigChuchu_BeatStalk
+  dw BigChuchu_BeatSwell
+  dw BigChuchu_BeatLunge
+  dw BigChuchu_BeatPunish
+}
+
+BigChuchu_BeatStalk:
+{
+  %PlayAnimation(0,2,12)
+  PHX
+  JSR Sprite_Manhandla_Move
+  PLX
+  LDA.w SprTimerD, X : BNE .done
+    LDA.b #$01 : STA.w SprMiscE, X
+    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+    LDA.b #$1E
+    LDY.w SprHealth, X : CPY.b #$21 : BCS +
+      LDA.b #$16 ; Enraged faster telegraph below half HP
+    +
+    STA.w SprTimerD, X
+    LDA.b #$32 : JSL Sound_SetSfx3PanLong ; Elastic coil wind-up cue
+  .done
+  RTS
+}
+
+BigChuchu_BeatSwell:
+{
+  %PlayAnimation(0,2,4)
+  STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+  LDA.w SprTimerD, X : BNE .done
+    INC.w SprMiscF, X
+    LDA.w SprMiscF, X : AND.b #$01 : BEQ .start_lunge
+      ; Pattern A: Paired Aimed Spore Burst -> Punish Window
+      JSR Chuchu_SpawnAimedPair
+      LDA.b #$30 : JSL Sound_SetSfx3PanLong
+      LDA.b #$03 : STA.w SprMiscE, X
+      LDA.b #$26
+      LDY.w SprHealth, X : CPY.b #$21 : BCS +
+        LDA.b #$1C
+      +
+      STA.w SprTimerD, X
+      RTS
+    .start_lunge
+    ; Pattern B: Elastic Lunge Dash toward Link
+    LDA.b #$1C
+    LDY.w SprHealth, X : CPY.b #$21 : BCS +
+      LDA.b #$22 ; Enraged faster lunge
+    +
+    JSL Sprite_ApplySpeedTowardsPlayer
+    LDA.b #$26 : JSL Sound_SetSfx3PanLong ; Lunge dash cue
+    LDA.b #$02 : STA.w SprMiscE, X
+    LDA.b #$1A : STA.w SprTimerD, X
+  .done
+  RTS
+}
+
+BigChuchu_BeatLunge:
+{
+  %PlayAnimation(0,2,5)
+  PHX
+  JSR Manhandla_StopIfOutOfBounds
+  JSL MoveBody
+  PLX
+  LDA.w SprTimerD, X : CMP.b #$0D : BNE +
+    JSR Chuchu_SpawnBlast ; Drop one trailing aimed orb mid-lunge
+  +
+  LDA.w SprTimerD, X : BNE .done
+    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+    LDA.b #$21 : JSL Sound_SetSfx2PanLong ; Squelchy landing thud
+    LDA.b #$03 : STA.w SprMiscE, X
+    LDA.b #$2C
+    LDY.w SprHealth, X : CPY.b #$21 : BCS +
+      LDA.b #$20
+    +
+    STA.w SprTimerD, X
+  .done
+  RTS
+}
+
+BigChuchu_BeatPunish:
+{
+  %PlayAnimation(0,2,18)
+  STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+  LDA.w SprTimerD, X : BNE .done
+    STZ.w SprMiscE, X
+    LDA.b #$4C
+    LDY.w SprHealth, X : CPY.b #$21 : BCS +
+      LDA.b #$36
+    +
+    STA.w SprTimerD, X
+  .done
+  RTS
+}
+
+; Out: A = count of living Phase 1 heads (0..3). Preserves X.
+Manhandla_CountAliveHeads:
+{
+  PHY
+  LDA.b #$00 : STA.b $00
+  LDY.w Offspring1_Id : LDA.w SprState, Y : BEQ + : INC.b $00 : +
+  LDY.w Offspring2_Id : LDA.w SprState, Y : BEQ + : INC.b $00 : +
+  LDY.w Offspring3_Id : LDA.w SprState, Y : BEQ + : INC.b $00 : +
+  LDA.b $00
+  PLY
+  RTS
+}
+
+; Out: A = effective stalking speed (preserves $36 contract for phase checker).
+Manhandla_EffectiveSpeed:
+{
+  LDA.w SprMiscD, X : CMP.b #$02 : BCS .chuchu_speed
+    JSR Manhandla_CountAliveHeads
+    TAY
+    LDA.w .head_speed, Y
+    RTS
+  .chuchu_speed
+  LDA.w SprHealth, X : CMP.b #$21 : BCC .enraged
+    LDA.b #$0C
+    RTS
+  .enraged
+  LDA.b #$10
+  RTS
+
+  .head_speed
+  db $0C, $0B, $08, $06
 }
 
 Sprite_Manhandla_Move:
@@ -399,7 +630,7 @@ Sprite_Manhandla_Move:
 
   StageControl:
   {
-    STZ.w SprYSpeed : STZ.w SprXSpeed ;set velocitys to 0
+    STZ.w SprYSpeed, X : STZ.w SprXSpeed, X ; set velocities to 0
     JSL MoveBody
     JSR Manhandla_StopIfOutOfBounds
     LDA.w SprTimerA, X : BNE .continue
@@ -410,20 +641,22 @@ Sprite_Manhandla_Move:
 
   MoveXandY:
   {
-    LDA $36
+    JSR Manhandla_EffectiveSpeed
     JSL Sprite_ApplySpeedTowardsPlayer
     JSR Manhandla_StopIfOutOfBounds
     JSL MoveBody
+    LDA.b #$28 : STA.w SprTimerE, X
     INC.w SprMiscC, X
     RTS
   }
 
   MoveXorY:
   {
-    LDA $36 : STA $00
+    JSR Manhandla_EffectiveSpeed : STA $00
     JSL Sprite_ApplySpeedTowardsPlayerXOrY
     JSR Manhandla_StopIfOutOfBounds
     JSL MoveBody
+    LDA.b #$28 : STA.w SprTimerE, X
     INC.w SprMiscC, X
     RTS
   }
@@ -431,78 +664,95 @@ Sprite_Manhandla_Move:
   KeepWalking:
   {
     PHX
+    ; Re-target cleanly when the course timer expires or Link crosses our axis
+    LDA.w SprTimerE, X : BEQ .retarget
+
     REP #$20
+    LDA.b $20 : SEC : SBC.w SprCachedY : BPL + : EOR.w #$FFFF : INC A : +
+    CMP.w #$0006 : BCC .retarget16
+    LDA.b $22 : SEC : SBC.w SprCachedX : BPL + : EOR.w #$FFFF : INC A : +
+    CMP.w #$0006 : BCS .keep_course
 
-    ; Use a range of + 0x05 because being exact equal didnt trigger consistently
-    LDA $20 : SBC.w SprCachedY : CMP.w #$FFFB : BCC .notEqualY
-      SEP #$20
-      LDA.b #$02 : STA.w SprMiscC, X
-
-      BRA .notEqualX
-    .notEqualY
-
-    ; Use a range of + 0x05 because being exact equal didnt trigger consistently
-    LDA $22 : SBC.w SprCachedX : CMP.w #$FFFB : BCC .notEqualX
-      SEP #$20
-      LDA.b #$02 : STA.w SprMiscC, X
-    .notEqualX
-
+    .retarget16
     SEP #$20
+    .retarget
+    LDA.b #$01 : STA.w SprMiscC, X
+    BRA .move_now
+
+    .keep_course
+    SEP #$20
+    .move_now
     JSR Manhandla_StopIfOutOfBounds
 
-    ;if both velocities are 0 go back to the Stalk_Player_XORY to re-set the course
-    LDA.w SprYSpeed : BNE .notZero
-      LDA.w SprXSpeed : BNE .notZero
-        LDA.b #$03 : STA.w SprMiscC, X
+    ; If both velocities are 0, immediately pick a fresh vector
+    LDA.w SprYSpeed, X : ORA.w SprXSpeed, X : BNE .notZero
+      LDA.b #$01 : STA.w SprMiscC, X
     .notZero
 
     JSL MoveBody
 
-    PLX ;restores X
+    PLX ; restores X
     RTS
   }
 }
 
 Manhandla_StopIfOutOfBounds:
 {
-  ; Set A to 00 if outside of certain bounds
+  ; Left bound: if too far left and moving left (negative), bounce RIGHT (+8)
   REP #$20
   LDA.w SprCachedX : CMP.w #$153A : BCS .not_out_of_bounds_Left
     SEP #$20
-    LDA.w SprXSpeed : CMP.b #$7F : BCC .not_out_of_bounds_Left
-      LDA.b #-08 : STA.w SprXSpeed : STA.w SprXRound
+    LDA.w SprXSpeed, X : BPL .not_out_of_bounds_Left
+      LDA.b #$08 : STA.w SprXSpeed, X : STZ.w SprXRound, X
 
   .not_out_of_bounds_Left
   SEP #$20
 
+  ; Right bound: if too far right and moving right (positive), bounce LEFT (-8)
   REP #$20
   LDA.w SprCachedX : CMP.w #$15C8 : BCC .not_out_of_bounds_Right
     SEP #$20
-    LDA.w SprXSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Right
-      LDA.b #$08 : STA.w SprXSpeed : STA.w SprXRound
+    LDA.w SprXSpeed, X : BMI .not_out_of_bounds_Right
+      LDA.b #-08 : STA.w SprXSpeed, X : STZ.w SprXRound, X
 
   .not_out_of_bounds_Right
   SEP #$20
 
-  ; Upper bound
+  ; Upper bound: if too high and moving up (negative), bounce DOWN (+8)
   REP #$20
   LDA.w SprCachedY : CMP.w #$0B3A : BCS .not_out_of_bounds_Up
     SEP #$20
-    LDA.w SprYSpeed : CMP.b #$7F : BCC .not_out_of_bounds_Up
-      LDA.b #$08 : STA.w SprYSpeed : STA.w SprYRound
+    LDA.w SprYSpeed, X : BPL .not_out_of_bounds_Up
+      LDA.b #$08 : STA.w SprYSpeed, X : STZ.w SprYRound, X
 
   .not_out_of_bounds_Up
   SEP #$20
 
-  REP   #$20
+  ; Lower bound: if too low and moving down (positive), bounce UP (-8)
+  REP #$20
   LDA.w SprCachedY : CMP.w #$0BA6 : BCC .not_out_of_bounds_Down
     SEP #$20
-    LDA.w SprYSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Down
-        LDA.b #-08 : STA.w SprYSpeed : STA.w SprYRound ; Reverse the direction
+    LDA.w SprYSpeed, X : BMI .not_out_of_bounds_Down
+      LDA.b #-08 : STA.w SprYSpeed, X : STZ.w SprYRound, X
 
   .not_out_of_bounds_Down
   SEP #$20
 
+  RTS
+}
+
+; Out: A = palette flash bits (damage flash OR transform/telegraph glow).
+Manhandla_FlashBits:
+{
+  LDA.w SprAction, X : CMP.b #$07 : BEQ .glow ; BigChuchu_Emerge
+  CMP.b #$05 : BEQ .glow                      ; Flower_Flicker
+  LDA.w SprSubtype, X : BNE .damage
+  LDA.w SprMiscE, X : CMP.b #$01 : BNE .damage ; Telegraphing volley / swell
+  .glow
+    LDA.b $1A : AND.b #$06 : ORA.w SprFlash, X
+    RTS
+  .damage
+  LDA.w SprFlash, X
   RTS
 }
 
@@ -513,7 +763,7 @@ Sprite_Manhandla_Draw:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-  LDA.w SprFlash, X : STA $08
+  JSR Manhandla_FlashBits : STA $08
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
@@ -650,7 +900,7 @@ Sprite_BigChuchu_Draw:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY ; Animation Frame
   LDA.w .start_index, Y : STA $06
-  LDA.w SprFlash, X : STA $08
+  JSR Manhandla_FlashBits : STA $08
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
@@ -737,38 +987,72 @@ Sprite_BigChuchu_Draw:
 
 Chuchu_SpawnBlast:
 {
+  LDA.b #$16 : JSL Sprite_ProjectSpeedTowardsPlayer
+  LDA.b $01 : STA.b $06 ; aimed X speed
+  LDA.b $00 : STA.b $07 ; aimed Y speed
+  JMP Chuchu_EmitOrb
+}
+
+; Spawns two aimed spore orbs fanning ~+-14 degrees around the vector to Link.
+Chuchu_SpawnAimedPair:
+{
+  LDA.b #$1A : JSL Sprite_ProjectSpeedTowardsPlayer
+  LDA.b $01 : STA.b $08 ; base vx
+  LDA.b $00 : STA.b $09 ; base vy
+  ; Perpendicular spread delta = (vy/4, vx/4)
+  LDA.b $09 : CMP.b #$80 : ROR A : CMP.b #$80 : ROR A : STA.b $0A
+  LDA.b $08 : CMP.b #$80 : ROR A : CMP.b #$80 : ROR A : STA.b $0B
+
+  ; Save Orb 2 speeds on stack across Sprite_SpawnDynamically
+  LDA.b $08 : SEC : SBC.b $0A : PHA ; Orb 2 vx
+  LDA.b $09 : CLC : ADC.b $0B : PHA ; Orb 2 vy
+
+  ; Orb 1: (vx + vy/4, vy - vx/4)
+  LDA.b $08 : CLC : ADC.b $0A : STA.b $06
+  LDA.b $09 : SEC : SBC.b $0B : STA.b $07
+  JSR Chuchu_EmitOrb
+
+  ; Orb 2: pull saved speeds
+  PLA : STA.b $07
+  PLA : STA.b $06
+  JMP Chuchu_EmitOrb
+}
+
+; In: $06 = X speed, $07 = Y speed. Spawns one ChuchuBlast orb with 2s lifetime.
+Chuchu_EmitOrb:
+{
   PHX
   LDA.b #$88
   JSL Sprite_SpawnDynamically : BMI .return
     LDA.b #$0A : STA.w SprSubtype, Y : STA.w SprAction, Y
-    JSL GetRandomInt : AND.b #$01 : TAX
-    LDA.w .speed_and_offset_x, X : STA.w SprXSpeed, Y
-    LDA.w SprX, Y : CLC : ADC.w .speed_and_offset_x, X : STA.w SprX, Y
-    STA.w SprXRound, Y
-    LDA.w .speed_y, X : STA.w SprYSpeed, Y
-    STA.w SprYRound, Y
+    LDA.w SprX, X : STA.w SprX, Y
+    LDA.w SprXH, X : STA.w SprXH, Y
+    LDA.w SprY, X : CLC : ADC.b #$10 : STA.w SprY, Y
+    LDA.w SprYH, X : ADC.b #$00 : STA.w SprYH, Y
+    LDA.b $06 : STA.w SprXSpeed, Y
+    LDA.b $07 : STA.w SprYSpeed, Y
+    LDA.b #$00 : STA.w SprXRound, Y : STA.w SprYRound, Y
     LDA.b #$02 : STA.w SprMiscD, Y
     LDA.b #$00 : STA.w SprTileDie, Y
     LDA.b #$40 : STA.w SprProps, Y
     LDA.b #$04 : STA.w SprFrame, Y
     LDA.b #$10 : STA.w SprTimerB, Y
+    LDA.b #$78 : STA.w SprTimerE, Y ; 2-second lifetime cap
     LDA.b #$00 : STA.w SprNbrOAM, Y
     LDA.b #$03 : STA.w SprHitbox, Y
   .return
   PLX
   RTS
-
-  .speed_and_offset_x
-  db -16, 16
-
-  .speed_y
-  db  24, 24
 }
 
 Mothula_SpawnBeams:
 {
   LDA.b #$36 ; SFX3.36
   JSL $0DBB8A ; SpriteSFX_QueueSFX3WithPan
+
+  ; Aim vertical spread toward player (preserve aim flag on stack across spawn)
+  JSL Sprite_IsBelowPlayer
+  TYA : PHA ; 1,S = 1 if player is above Manhandla, 0 if below
 
   LDA.b #$02 : STA.w $0FB5
 
@@ -780,17 +1064,24 @@ Mothula_SpawnBeams:
     CLC : ADC.b #$03 : STA.w SprY,Y
     LDA.b #$10 : STA.w SprTimerA,Y : STA.w SprBulletproof,Y
 
-    PHX
+    PHX ; stack: [X, aim_flag]
     LDX.w $0FB5
     LDA.b $00 : CLC : ADC.w .speed_and_offset_x,X : STA.w SprX,Y
     LDA.w .speed_and_offset_x,X : STA.w SprXSpeed,Y
-    LDA.w .speed_y,X : STA.w SprYSpeed,Y
+    LDA.w .speed_y,X
+    PHA ; stack: [vy, X, aim_flag] -> aim_flag at 3,S
+    LDA $03, S : BEQ .aim_down
+      PLA : EOR.b #$FF : INC A : BRA .store_y
+    .aim_down
+    PLA
+    .store_y
+    STA.w SprYSpeed,Y
     LDA.b #$00 : STA.w SprHeight,Y
     PLX
-
   .no_space
   DEC.w $0FB5
   BPL .next_spawn
+  PLA ; drop aim_flag
   RTS
   .speed_and_offset_x
   db -20,   0,  20
