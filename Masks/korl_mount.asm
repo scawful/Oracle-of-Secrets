@@ -51,11 +51,12 @@ KORL_DockOam        = $7FF3F2 ; word: OAM offset ($0800..$09F0) of 4 docked hull
 assert KORL_DockOam+2 <= $7FF400, "KORL transient WRAM block reached 2P PoC ($7FF400)"
 
 ; Docked-boat Page 1 VRAM backup ($5C00-$5C7F + $5D00-$5D7F = 512 B) in UNUSED_7F5000
-; right after Horse_OffBuf ($7F5000-$7F5401), strictly < $7F5800 (zero Epona collision!).
-KORL_DockDma0       = $7F5404 ; 2B VRAM read prefetch + 256B copy of VRAM $5C00-$5C7F
-KORL_DockBuf0       = $7F5406 ; 256B payload
-KORL_DockDma1       = $7F5506 ; 2B VRAM read prefetch + 256B copy of VRAM $5D00-$5D7F
-KORL_DockBuf1       = $7F5508 ; 256B payload
+; cleanly after Horse_Off* ($7F5000-$7F5406) AND HorseGame_* ($7F5410-$7F545F), strictly < $7F5800.
+KORL_DockDma0       = $7F5460 ; 2B VRAM read prefetch + 256B copy of VRAM $5C00-$5C7F
+KORL_DockBuf0       = $7F5462 ; 256B payload ($7F5462..$7F5561)
+KORL_DockDma1       = $7F5562 ; 2B VRAM read prefetch + 256B copy of VRAM $5D00-$5D7F
+KORL_DockBuf1       = $7F5564 ; 256B payload ($7F5564..$7F5663)
+assert KORL_DockDma0 >= $7F5460, "KORL docked VRAM backup overlapped Horse_Off*/HorseGame_*"
 assert KORL_DockBuf1+$0100 <= $7F5800, "KORL docked VRAM backup exceeded UNUSED_7F5000 ($7F5800)"
 
 ; Persistent SRAM unlock flag ($7EF439, first free byte of FreeBlock_Dreams after

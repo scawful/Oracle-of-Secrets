@@ -765,8 +765,8 @@ class TestKorlMount(unittest.TestCase):
         self.assertEqual(fx.get(KORL_DOCK_STATE), 0xA1)
         self.assertEqual(sum(sz for *_, sz in fx.dma_reads), 516)
         self.assertEqual(len(fx.dma_writes), 0, "1KB anim DMA must be skipped on 516B VRAM save NMI!")
-        self.assertEqual(bytes(fx.ram[0x15406 : 0x15406 + 256]), orig_top)
-        self.assertEqual(bytes(fx.ram[0x15508 : 0x15508 + 256]), orig_bot)
+        self.assertEqual(bytes(fx.ram[0x15462 : 0x15462 + 256]), orig_top)
+        self.assertEqual(bytes(fx.ram[0x15564 : 0x15564 + 256]), orig_bot)
 
         # NMI 2: promotes $A1->$A2 & uploads 512 B empty hull to $5C00/$5D00!
         fx.dma_writes.clear()
