@@ -287,6 +287,7 @@ DragXH = $0B7F
 
 DragPlayer:
 {
+  PHB : PHK : PLB
   LDA.w .drag_x_low,  Y : CLC : ADC.w DragYL : STA.w DragYL
   LDA.w .drag_x_high, Y : ADC.w DragYH : STA.w DragYH
 
@@ -315,6 +316,7 @@ DragPlayer:
   .y_done
 
   SEP #$30
+  PLB
   RTL
 
   .drag_x_high

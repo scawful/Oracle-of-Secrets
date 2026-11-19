@@ -68,7 +68,7 @@
 | SideQuest2_FortuneTeller | $7EF3D8 | $08 | TBD | TBD | Any fortune shown | Core/sram.asm; Sprites/NPCs/fortune_teller.asm | 2026-01-23 (code) | No setter found; fortune_teller.asm has no SideQuestProg2 writes |
 | SideQuest2_DekuSoulFreed | $7EF3D8 | $10 | QuiereCuracion (DekuScrub) | TBD | Main quest: Deku Scrub soul freed | Sprites/NPCs/deku_scrub.asm | 2026-01-24 (design) | Bit 4; Tail Pond (OW 0x2D); between D1 and D2; Song of Healing required |
 | SideQuest2_TingleMet | $7EF3D8 | $20 | TBD | TBD | Any map purchased | Core/sram.asm; Sprites/NPCs/tingle.asm | 2026-01-23 (code) | No setter found; Tingle uses TingleMaps bitfield instead |
-| SideQuest2_BeanstalkGrown | $7EF3D8 | $40 | TBD | TBD | Final bean stage | Core/sram.asm; Sprites/NPCs/bean_vendor.asm; Menu/menu_journal.asm | 2026-01-23 (code) | No setter found; bean quest uses MagicBeanProg ($7EF39B) |
+| SideQuest2_BeanstalkGrown | $7EF3D8 | $40 | MagicBean_MarkBeanstalkGrown (Sprite_BeanVendor_Prep / MagicBean_RanchFlower / MagicBean_Finished) | never | Final bean stage | Core/sram.asm; Sprites/NPCs/bean_vendor.asm; Menu/menu_journal.asm | 2026-11-18 (code + Mesen2) | Set once any bean spot reaches grown state ($3F/$7F); Spots 0-3 tracked in $7EF39B and $7EF3C0-$7EF3C2 |
 | Dream_Wisdom | $7EF410 | $01 | TBD | TBD | Dream progress (Wisdom) | Core/sram.asm | 2026-01-23 (code) | Setter not located |
 | Dream_Power | $7EF410 | $02 | TBD | TBD | Dream progress (Power) | Core/sram.asm | 2026-01-23 (code) | Setter not located |
 | Dream_Courage | $7EF410 | $04 | TBD | TBD | Dream progress (Courage) | Core/sram.asm | 2026-01-23 (code) | Setter not located |

@@ -470,8 +470,10 @@ DungeonScrolls          = $7EF398
 PreviousScroll          = $7EF39A   ; For re-reading hints
 
 ; ---------------------------------------------------------
-; Magic Bean Progress ($7EF39B)
+; Magic Bean Progress ($7EF39B, $7EF3C0-$7EF3C2)
 ; ---------------------------------------------------------
+; Spot 0 (OW $00/$01 Ranch) uses MagicBeanProgress ($7EF39B).
+; Spots 1-3 (OW $2D, $15, $33) use MagicBeanSpot1..3 ($7EF3C0-$7EF3C2).
 ; Use !Bean_* bit constants
 MagicBeanProgress       = $7EF39B
 
@@ -876,7 +878,15 @@ EonGoronQuest      = $7EF3BE
 ; save/checksum ($00897B/$00899C) preserves it. Free before: FreeBlock_Large,
 ; unused in Oracle/usdasm, no indexed $7EF3xx,X write or receipt target.
 ScrollsFound       = $7EF3BF
-FreeBlock_Large    = $7EF3C0  ; 4 bytes [C0,C4)
+; Multi-spot Magic Bean growth states ($7EF3C0-3C2) for Spots 1-3 (Spot 0
+; remains on MagicBeanProgress $7EF39B). Bitfield matches !Bean_*.
+; Allocated 2026-11-18 from FreeBlock_Large: unused in Oracle/usdasm, no
+; item-receipt destinations or indexed $7EF3xx,X writes, covered by the vanilla
+; five-page save/checksum/new-file clear block ($7EF000-$7EF4FF).
+MagicBeanSpot1     = $7EF3C0  ; OW $2D Tail Pond
+MagicBeanSpot2     = $7EF3C1  ; OW $15 Mountainside
+MagicBeanSpot3     = $7EF3C2  ; OW $33 Loom Beach
+FreeBlock_Large    = $7EF3C3  ; 1 byte [C3,C4)
 ; Richard quest (Wayward Village lady + night dog), PROPOSED 2026-11-15 by the
 ; richard-quest lane: last byte of the Large remainder, so the menu-gear
 ; lane's B9-BB reservation and the B9 block start stay untouched. Vanilla
@@ -919,7 +929,7 @@ FreeBlock_DreamsTail   = $7EF4E1 ; 29 bytes [F4E1,F4FE)
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF3A0  | $7EF3A0  | bits  | Wolf dig: bit 0 used |
 ; | $7EF3B3  | $7EF3B3  | 1     | Large prefix       |
-; | $7EF3C0  | $7EF3C3  | 4     | Large remainder    |
+; | $7EF3C3  | $7EF3C3  | 1     | Large remainder    |
 ; | $7EF438  | $7EF49E  | 103   | Dreams prefix      |
 ; | $7EF4E1  | $7EF4FD  | 29    | Dreams remainder   |
 ; |----------|----------|-------|--------------------|
