@@ -71,12 +71,12 @@ AbyssSpawnMenu_Select:
   ; Normal Link form: no GBC hook runs before the underworld entrance.
   LDA.b #$10 : STA.b $BC
   STZ.w $02B2
-  ; Same gates as the light world branch as patched in overworld.asm:
-  ; Hall of Secrets flag ($0281CD) and goldstar for Mountain Cave ($0281E2).
+  ; Hall of Secrets flag ($0281CD) and GoldstarOwned ($7EF3A9) for Mountain Cave
+  ; so Hookshot <-> Switch Hook trade ($7EF342 == 2) never alters spawn unlocks.
   LDA.l $7EF3D6 : CMP.b #$04 : BCC .house_only
   REP #$10
   LDX.w #$0185 ; MESSAGE 0185 (House / Hall of Secrets / Mountain Cave)
-  LDA.l $7EF342 : CMP.b #$02 : BEQ .show_light_world
+  LDA.l GoldstarOwned : BNE .show_light_world
     LDX.w #$0184 ; MESSAGE 0184 (House / Hall of Secrets)
   .show_light_world
   ; Vanilla tail: STX $1CF0, show the message, stay in Module1B.

@@ -1166,6 +1166,7 @@ Fortress_EntranceAnimation:
   RTL
 
   .AnimationFrames
+  dw Fortress_SwordRaise
   dw Fortress_Frame0
   dw Fortress_Frame1
   dw Fortress_Frame2
@@ -1182,6 +1183,29 @@ Fortress_EntranceAnimation:
 
     LDA.b #$07 ; SFX3.07
     STA.w $012F
+    RTS
+  }
+
+  ; Master Sword + Maku Seed ceremony beat before the Fortress stairs reveal.
+  ; Raises Link's sword (SWORDUP $03EF), plays chime + tremor buildup, then
+  ; clears $03EF and advances into Fortress_Frame0..Fortress_Frame4.
+  Fortress_SwordRaise:
+  {
+    LDA.b $C8 : BNE .hold
+      LDA.b #$01 : STA.w $02E4 ; lock Link movement during ceremony
+      LDA.b #$02 : STA.b $2F   ; face Link forward toward camera
+      LDA.b #$01 : STA.w $03EF ; SWORDUP: raise Master Sword aloft
+      LDA.b #$16 : STA.w $012F ; SFX3.16 magical opening chime
+    .hold
+    LDA.b $C8 : CMP.b #$20 : BCC .no_shake
+      JSR ShakeScreen
+    .no_shake
+    INC.b $C8 : LDA.b $C8 : CMP.b #$30 : BNE .wait
+      STZ.w $03EF ; lower Master Sword before stair reveal
+      INC.b $B0
+      STZ.b $C8
+      JSR Fortress_SFX
+    .wait
     RTS
   }
 
@@ -1380,6 +1404,7 @@ Fortress_EntranceAnimation:
     STZ.b $B0
     STZ.w $0710
     STZ.w $02E4
+    STZ.w $03EF ; ensure SWORDUP is cleared on ceremony exit
     STZ.w $0FC1
     STZ.w $011A
     STZ.w $011B

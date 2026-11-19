@@ -296,18 +296,25 @@ DrawYItems:
   LDY.w #BoomsGFX
   JSR DrawMenuItem
 
-  LDA.l $7EF342 : AND.w #$00FF : CMP.w #$0000 : BEQ .no_hookshot
+  LDA.l $7EF342 : AND.w #$00FF : BEQ .no_hookshot
 if !ENABLE_GOLDSTAR_CELL == 1
+    LDY.w #HookGFX
+    CMP.w #$0002 : BNE .hook_icon_ready
+      LDY.w #.switch_hook_gfx
+    .hook_icon_ready
     LDA.w #$0001
 else
     LDA.w GoldstarOrHookshot : BNE .spoof_hookshot
       LDA #$0001 ; No goldstar, but hookshot
     .spoof_hookshot
+    LDY.w #HookGFX
 endif
     STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
     LDX.w #menu_offset(7,8)
-    LDY.w #HookGFX
     JSR DrawMenuItem
+    BRA .no_hookshot
+  .switch_hook_gfx
+    dw $24F5, $34F6, $24C0, $24F5 ; Switch Hook (gold prong + red grip)
   .no_hookshot
 
   LDA.l $7EF343
