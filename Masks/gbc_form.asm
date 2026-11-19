@@ -146,6 +146,7 @@ MirrorWarp_PearllessArrival:
 MirrorWarp_PearlArrival:
 {
   LDA.b $10 : CMP.b #$15 : BNE .done
+  JSL ShieldWorld_SyncBoth
   LDA.l SavedWorld : BEQ .done
   ; Without the pearl, MirrorWarp_PearllessArrival sets the form.
   LDA.l $7EF357 : BEQ .done

@@ -130,8 +130,12 @@ GbcShieldPal_Table:
   dw $7BDE, $1CA4, $6ECE, $4947
 
 ; Exit hook for Palettes_Load_Shield ($1BED4A -> M=8, X=8).
+; Syncs BOTH equipped shield 4BPP tiles ($7E9300..$7E947F) and world palette so
+; every LW <-> DW crossing (Mirror, Breach Portal, Vortex, Warp Pad, Dungeon Exit)
+; switches between vanilla SNES shields (LW/SW) and GBC shields (DW) automatically.
 MirrorShield_LoadColor8:
 {
+  JSL ShieldWorld_SyncTiles
   REP #$30
   LDA.l Shield : AND.w #$00FF
   JSR MirrorShield_ApplyWorldPalette
