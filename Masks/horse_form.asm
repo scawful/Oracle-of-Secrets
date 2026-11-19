@@ -376,6 +376,7 @@ endif
   LDA.w $0FFC : ORA.w $02E4 : BNE .skip_triggers
     JSR HorseForm_CheckFenceJump
     JSR HorseForm_ConstrainGroundInput
+    JSR HorseForm_TrampleBushes
     JSR HorseForm_PlayHoofBeat
 if !ENABLE_HORSE_CROWD_CHARGE == 1
     JSL HorseCharge_Tick_Long

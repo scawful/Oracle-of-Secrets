@@ -8,9 +8,14 @@
 ;   - HorseForm_ThrottleHostiles / Horse_IsThrottleableHostile: strict
 ;     mounted overworld hostile-enemy cap (!Horse_MountedEnemyCap = 1)
 ;     with exhaustive NPC/boss/pickup/target whitelist.
+;   - HorseForm_TrampleBushes / Horse_TryTrampleBushAt: mounted grounded
+;     overworld bush trampling ($0036 only) via native HandleItemTileAction_Overworld.
 ; =========================================================
 
-!Horse_MountedEnemyCap = 1
+!Horse_MountedEnemyCap    = 1
+!HorseHelpers_CurrentMask = $02B2
+!HorseHelpers_MaskId      = $09
+Horse_HandleItemTileAction_Overworld = $1BBD7A
 
 ; Entry: M8/X16, DBR=$00, X = HorseGraphics offset of Rider group (256B:
 ;   +$00 HeadTop 64B, +$40 BodyTop 64B, +$80 HeadBot 64B, +$C0 BodyBot 64B).
@@ -382,3 +387,156 @@ Horse_ProtectedSpriteIds:
   db $CF ; Sprite_KydreeokHead
   db $D3 ; Sprite_Ganondorf
 Horse_ProtectedSpriteIds_End:
+HorseMountedHelpers_End:
+
+; =========================================================
+; Epona Bush Trampling (Bank $53, $53F000-$53F3FF slice)
+; Placed after horse_minigame ($53E900-$53EFF0) to keep $53D000-$53DFFF roomy.
+; =========================================================
+pushpc
+org $53F000
+; Probes leading hoof/body edges ahead of Link's native collision box
+; ($07CD7B) for cuttable Overworld bushes (Tile16 $0036 ONLY) before
+; Link_ControlHandler runs, cutting them via vanilla
+; HandleItemTileAction_Overworld ($1BBD7A -> OverworldTileAction_Bush)
+; with $0301=$0000 and $037A=$0000:
+;   - Replaces $0036 in $7E2000 + queues VRAM BG update via Overworld_DrawMap16
+;   - Preserves Liftables_SelectBushReveal (DW $63 -> $0172, else $0DC7)
+;     and Overworld_RevealSecret (rupees, hearts, arrows, hidden holes/stairs)
+;   - Spawns Sprite $EC leaf-burst debris + bush-cut SFX2.1E + drop roll
+;   - Spawns NO Ancilla $3F poof ($0301 bit 6 = 0 -> Horse_SlotsBusy stays clear)
+; Rejects rocks, signs, pegs, fences, trees, walls, tall grass ($037E), and
+; overwritten LW $22 brick wall ($072A).
+;
+; Entry/Exit: M=8, X=8, DBR=$00. Preserves X, Y, DBR, DP $00-$0F, P (M8/X8).
+HorseForm_TrampleBushes:
+{
+  LDA.w !HorseHelpers_CurrentMask : CMP.b #!HorseHelpers_MaskId : BNE .early_exit
+  LDA.b $1B : BNE .early_exit
+  LDA.b $10 : CMP.b #$09 : BEQ +
+  CMP.b #$0B : BNE .early_exit
+  +
+  LDA.b $11 : ORA.b $5D : ORA.b $4D : ORA.b $6C : BNE .early_exit
+  LDA.w $0FFC : ORA.w $02E4 : BNE .early_exit
+  LDA.l HorseGame_State
+  CMP.b #$01 : BEQ .early_exit
+  CMP.b #$03 : BEQ .early_exit
+  LDA.l Horse_State : ORA.l Horse_JumpTimer : BNE .early_exit
+  LDA.b $F0 : AND.b #$0F : BNE .active
+  .early_exit
+  RTS
+
+  .active
+  PHP : PHB
+  REP #$30
+  PHX : PHY
+  LDA.b $00 : PHA : LDA.b $02 : PHA : LDA.b $04 : PHA : LDA.b $06 : PHA
+  LDA.b $08 : PHA : LDA.b $0A : PHA : LDA.b $0C : PHA : LDA.b $0E : PHA
+  SEP #$30
+  LDA.b #$00 : PHA : PLB              ; ensure DBR=$00
+
+  LDA.b $F0 : AND.b #$0F : STA.b $0E  ; live post-clearance D-pad nibble
+
+  ; Check each held cardinal direction (0=N, 1=S, 2=W, 3=E): 2 leading probes each.
+  ; Perpendicular span is 15px (<= 16px Tile16) so no bush can slip between points.
+  LDX.b #$03
+  .dir_loop
+    LDA.b $0E : AND.l .dir_mask, X : BEQ .next_dir
+    PHX
+    TXA : ASL : TAX                   ; X = dir * 2 (0, 2, 4, 6)
+    REP #$20
+    LDA.b $22 : CLC : ADC.l .p0_dx, X : STA.b $0C
+    LDA.b $20 : CLC : ADC.l .p0_dy, X : STA.b $0A
+    SEP #$20
+    JSR Horse_TryTrampleBushAt
+    REP #$20
+    LDA.b $22 : CLC : ADC.l .p1_dx, X : STA.b $0C
+    LDA.b $20 : CLC : ADC.l .p1_dy, X : STA.b $0A
+    SEP #$20
+    JSR Horse_TryTrampleBushAt
+    PLX
+  .next_dir
+    DEX : BPL .dir_loop
+
+  ; Diagonal movement (both V=$0C and H=$03 held): also probe leading diagonal corner.
+  LDA.b $0E : AND.b #$0C : BEQ .restore
+  LDA.b $0E : AND.b #$03 : BEQ .restore
+    LDX.b #$00                        ; 0=NE, 2=NW, 4=SE, 6=SW
+    LDA.b $0E : BIT.b #$04 : BEQ + : LDX.b #$04 : +
+    LDA.b $0E : BIT.b #$02 : BEQ + : INX #2 : +
+    REP #$20
+    LDA.b $22 : CLC : ADC.l .diag_dx, X : STA.b $0C
+    LDA.b $20 : CLC : ADC.l .diag_dy, X : STA.b $0A
+    SEP #$20
+    JSR Horse_TryTrampleBushAt
+
+  .restore
+  REP #$30
+  PLA : STA.b $0E : PLA : STA.b $0C : PLA : STA.b $0A : PLA : STA.b $08
+  PLA : STA.b $06 : PLA : STA.b $04 : PLA : STA.b $02 : PLA : STA.b $00
+  PLY : PLX
+  SEP #$30
+  PLB : PLP
+  RTS
+
+  .dir_mask : db $08, $04, $02, $01   ; N, S, W, E
+  ; Offsets 4px ahead of Link's native collision box ($07CD7B: X+0..+15, Y+8..+24)
+  ;              North  South  West   East
+  .p0_dx   : dw $0000, $0000, $FFFC, $0013
+  .p0_dy   : dw $0004, $001C, $0008, $0008
+  .p1_dx   : dw $000F, $000F, $FFFC, $0013
+  .p1_dy   : dw $0004, $001C, $0017, $0017
+  ;              NE     NW     SE     SW
+  .diag_dx : dw $0013, $FFFC, $0013, $FFFC
+  .diag_dy : dw $0004, $0004, $001C, $001C
+}
+
+; Tests world pixel ($0C=X16, $0A=Y16) for cuttable Overworld bush Tile16 $0036
+; inside the current area and viewport, and invokes HandleItemTileAction_Overworld.
+; Entry/Exit: M=8, X=8, DBR=$00. Preserves X, Y, DBR, DP $0E.
+Horse_TryTrampleBushAt:
+{
+  PHX : PHY
+  REP #$20
+  ; Reject probes outside current area (prevents $070A/$070E wraparound).
+  JSR HorseForm_ConstrainGroundInput_point_outside_area : BCS .miss16
+  ; Reject probes outside visible viewport (matches $088A26 / Fire_TryBurnOverworldBush).
+  LDA.b $0A : SEC : SBC.b $E8 : CMP.w #$00E0 : BCS .miss16
+  LDA.b $0C : SEC : SBC.b $E2 : CMP.w #$0100 : BCS .miss16
+  ; Guard $1000 VRAM BG update queue headroom (each Map16 update adds $10 bytes).
+  LDA.w $1000 : CMP.w #$00D0 : BCS .miss16
+
+  ; O(1) $7E2000 lookup: accept ONLY Overworld cuttable bush Tile16 $0036.
+  REP #$10
+  LDA.b $0A : SEC : SBC.w $0708 : AND.w $070A : ASL #3 : STA.b $06
+  LDA.b $0C : LSR #3 : STA.b $02
+  SEC : SBC.w $070C : AND.w $070E : CLC : ADC.b $06 : TAX
+  LDA.l $7E2000, X : CMP.w #$0036 : BNE .miss30
+
+  ; Prepare $00=Ypx ($02=Xpx>>3 already stored) and invoke vanilla bush cut.
+  LDA.b $0A : STA.b $00
+  LDA.b $0E : PHA                     ; preserve 16-bit $0E/$0F across $1BBD7A
+  SEP #$30
+  LDA.w $0301 : PHA : STZ.w $0301
+  LDA.w $037A : PHA : STZ.w $037A
+  PHB
+  JSL Horse_HandleItemTileAction_Overworld ; returns M=8, X=8
+  PLB
+  PLA : STA.w $037A
+  PLA : STA.w $0301
+  REP #$20
+  PLA : STA.b $0E
+  SEP #$20
+  PLY : PLX
+  RTS
+
+  .miss30
+  SEP #$10
+  .miss16
+  SEP #$20
+  PLY : PLX
+  RTS
+}
+HorseBushTrample_End:
+assert pc() <= $53F400, "Horse bush trampling exceeded its bounded bank53 slice ($53F000-$53F3FF)"
+pullpc
