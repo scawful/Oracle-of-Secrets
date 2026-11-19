@@ -3,32 +3,51 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: Scripts/beta_patch.sh [version] [options]
+Usage: Scripts/Build/beta_patch.sh [version] [options]
 
-Build a beta-ready BPS patch plus metadata and notes stub.
+Build and package a verified Discord Feature Beta BPS release bundle against
+canonical Vanilla US ALTTP 1.0 using Scripts/Build/package_beta_bps.py (isolated
+rev5 authoring_bundle_build.py + static gates + flips round-trip verification +
+3-slot showcase .srm + release manifest + Discord draft).
 
 Options:
+  --label LABEL     Release label (default: oos<version>-beta-<YYYYMMDD_HHMMSS>)
   --out-dir DIR     Output directory (default: build/releases)
-  --skip-build      Reuse existing ROMs instead of rebuilding first
-  --notes PATH      Override notes stub path
+  --skip-build      Package an existing ROM (--rom or Roms/oos<version>x.sfc)
+                    instead of running an isolated rev5 authoring build first
+  --rom PATH        Explicit already-built ROM path (implies --skip-build)
+  --symbols PATH    Explicit .sym path for check_zscream_overlap.py
+  --vanilla PATH    Canonical vanilla US ALTTP 1.0 .sfc (default: OOS_VANILLA_ROM
+                    or ~/src/hobby/roms/Legend of Zelda, The - A Link to the Past (USA).sfc)
+  --project PATH    Yaze .yazeproj/project.yaze path for isolated rev5 build
+  --enable CSV      Override comma-separated beta feature flags to enable
+  --disable CSV     Comma-separated feature flags to disable
+  --flips PATH      Explicit path to flips binary
+  --notes PATH      Also copy generated Discord release draft to PATH (legacy compat)
   -h, --help        Show this help
 
 Examples:
-  Scripts/beta_patch.sh
-  Scripts/beta_patch.sh 168
-  Scripts/beta_patch.sh 168 --skip-build
-  Scripts/beta_patch.sh 168 --out-dir /tmp/oos-release
+  Scripts/Build/beta_patch.sh --label v0.9.0-beta1
+  Scripts/Build/beta_patch.sh 168 --out-dir /tmp/oos-release
+  Scripts/Build/beta_patch.sh 168 --rom /tmp/oos168x.sfc --label dryrun --out-dir /tmp/out
 EOF
 }
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-BUILD_SCRIPT="${ROOT_DIR}/Scripts/Build/build_rom.sh"
-OVERLAP_CHECK="${ROOT_DIR}/Scripts/Build/check_zscream_overlap.py"
+PACKAGER="${ROOT_DIR}/Scripts/Build/package_beta_bps.py"
 
 VERSION="${OOS_BUILD_VERSION:-168}"
 OUT_DIR="${ROOT_DIR}/build/releases"
 SKIP_BUILD=0
 NOTES_PATH=""
+LABEL=""
+ROM_PATH=""
+SYMBOLS_PATH=""
+VANILLA_PATH=""
+PROJECT_PATH=""
+ENABLE_FLAGS=""
+DISABLE_FLAGS=""
+FLIPS_PATH=""
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   usage
@@ -42,6 +61,10 @@ fi
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --label)
+      LABEL="$2"
+      shift 2
+      ;;
     --out-dir)
       OUT_DIR="$2"
       shift 2
@@ -49,6 +72,35 @@ while [[ $# -gt 0 ]]; do
     --skip-build)
       SKIP_BUILD=1
       shift
+      ;;
+    --rom)
+      ROM_PATH="$2"
+      SKIP_BUILD=1
+      shift 2
+      ;;
+    --symbols)
+      SYMBOLS_PATH="$2"
+      shift 2
+      ;;
+    --vanilla)
+      VANILLA_PATH="$2"
+      shift 2
+      ;;
+    --project)
+      PROJECT_PATH="$2"
+      shift 2
+      ;;
+    --enable)
+      ENABLE_FLAGS="$2"
+      shift 2
+      ;;
+    --disable)
+      DISABLE_FLAGS="$2"
+      shift 2
+      ;;
+    --flips)
+      FLIPS_PATH="$2"
+      shift 2
       ;;
     --notes)
       NOTES_PATH="$2"
@@ -66,124 +118,51 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-resolve_base_rom() {
-  local version="$1"
-  local rom_dir="${ROOT_DIR}/Roms"
-  local default_base="${rom_dir}/oos${version}.sfc"
-  local legacy_base="${rom_dir}/oos${version}_test2.sfc"
-
-  if [[ -n "${OOS_BASE_ROM:-}" ]]; then
-    printf '%s\n' "${OOS_BASE_ROM}"
-    return
-  fi
-  if [[ -f "${default_base}" ]]; then
-    printf '%s\n' "${default_base}"
-    return
-  fi
-  if [[ -f "${legacy_base}" ]]; then
-    printf '%s\n' "${legacy_base}"
-    return
-  fi
-  printf '%s\n' "${default_base}"
-}
-
-require_cmd() {
-  if ! command -v "$1" >/dev/null 2>&1; then
-    echo "Error: required command not found: $1" >&2
-    exit 1
-  fi
-}
-
-hash_file() {
-  local path="$1"
-  if command -v shasum >/dev/null 2>&1; then
-    shasum -a 256 "$path" | awk '{print $1}'
-  elif command -v sha256sum >/dev/null 2>&1; then
-    sha256sum "$path" | awk '{print $1}'
-  else
-    echo "Error: no SHA-256 tool found (need shasum or sha256sum)" >&2
-    exit 1
-  fi
-}
-
-require_cmd flips
-
-BASE_ROM="$(resolve_base_rom "${VERSION}")"
-PATCHED_ROM="${ROOT_DIR}/Roms/oos${VERSION}x.sfc"
-
-if [[ "${SKIP_BUILD}" != "1" ]]; then
-  "${BUILD_SCRIPT}" "${VERSION}"
-elif [[ -f "${OVERLAP_CHECK}" ]]; then
-  python3 "${OVERLAP_CHECK}"
+if [[ -z "${LABEL}" ]]; then
+  STAMP="$(date +%Y%m%d_%H%M%S)"
+  LABEL="oos${VERSION}-beta-${STAMP}"
 fi
 
-if [[ ! -f "${BASE_ROM}" ]]; then
-  echo "Error: base ROM not found: ${BASE_ROM}" >&2
-  exit 1
-fi
-if [[ ! -f "${PATCHED_ROM}" ]]; then
-  echo "Error: patched ROM not found: ${PATCHED_ROM}" >&2
-  exit 1
-fi
+CMD=(
+  python3 "${PACKAGER}"
+  --label "${LABEL}"
+  --version "${VERSION}"
+  --out-dir "${OUT_DIR}"
+)
 
-mkdir -p "${OUT_DIR}"
-
-STAMP="$(date +%Y%m%d_%H%M%S)"
-ARTIFACT_STEM="oos${VERSION}_beta_${STAMP}"
-PATCH_PATH="${OUT_DIR}/${ARTIFACT_STEM}.bps"
-MANIFEST_PATH="${OUT_DIR}/${ARTIFACT_STEM}.json"
-if [[ -z "${NOTES_PATH}" ]]; then
-  NOTES_PATH="${OUT_DIR}/${ARTIFACT_STEM}_notes.md"
+if [[ "${SKIP_BUILD}" == "1" ]]; then
+  if [[ -z "${ROM_PATH}" ]]; then
+    ROM_PATH="${ROOT_DIR}/Roms/oos${VERSION}x.sfc"
+  fi
+  CMD+=(--rom "${ROM_PATH}")
 fi
 
-echo "[beta-patch] Creating BPS patch..."
-flips --create --bps "${BASE_ROM}" "${PATCHED_ROM}" "${PATCH_PATH}"
-
-BASE_SHA="$(hash_file "${BASE_ROM}")"
-PATCHED_SHA="$(hash_file "${PATCHED_ROM}")"
-PATCH_SHA="$(hash_file "${PATCH_PATH}")"
-
-cat >"${MANIFEST_PATH}" <<EOF
-{
-  "created_at": "${STAMP}",
-  "version": ${VERSION},
-  "base_rom": "$(basename "${BASE_ROM}")",
-  "patched_rom": "$(basename "${PATCHED_ROM}")",
-  "patch_file": "$(basename "${PATCH_PATH}")",
-  "base_sha256": "${BASE_SHA}",
-  "patched_sha256": "${PATCHED_SHA}",
-  "patch_sha256": "${PATCH_SHA}",
-  "notes_file": "$(basename "${NOTES_PATH}")"
-}
-EOF
-
-if [[ ! -f "${NOTES_PATH}" ]]; then
-  cat >"${NOTES_PATH}" <<EOF
-# Oracle of Secrets Beta Patch
-
-- Build date: ${STAMP}
-- Internal ROM version: ${VERSION}
-- Patch file: $(basename "${PATCH_PATH}")
-
-## Highlights
-- TODO
-
-## Validation
-- Built with \`Scripts/Build/build_rom.sh ${VERSION}\`
-- Overlap check: \`python3 Scripts/Build/check_zscream_overlap.py\`
-- Smoke / regression notes: TODO
-
-## Known Issues
-- TODO
-
-## Tester Notes
-- Apply the BPS patch to your own compatible base ROM.
-- Use the patched ROM for emulator testing only.
-- If you need a portable save for another emulator, export SRAM separately.
-EOF
+if [[ -n "${SYMBOLS_PATH}" ]]; then
+  CMD+=(--symbols "${SYMBOLS_PATH}")
+fi
+if [[ -n "${VANILLA_PATH}" ]]; then
+  CMD+=(--vanilla "${VANILLA_PATH}")
+fi
+if [[ -n "${PROJECT_PATH}" ]]; then
+  CMD+=(--project "${PROJECT_PATH}")
+fi
+if [[ -n "${ENABLE_FLAGS}" ]]; then
+  CMD+=(--enable "${ENABLE_FLAGS}")
+fi
+if [[ -n "${DISABLE_FLAGS}" ]]; then
+  CMD+=(--disable "${DISABLE_FLAGS}")
+fi
+if [[ -n "${FLIPS_PATH}" ]]; then
+  CMD+=(--flips "${FLIPS_PATH}")
 fi
 
-echo "[beta-patch] Wrote:"
-echo "  ${PATCH_PATH}"
-echo "  ${MANIFEST_PATH}"
-echo "  ${NOTES_PATH}"
+"${CMD[@]}"
+
+if [[ -n "${NOTES_PATH}" ]]; then
+  DRAFT_SRC="${OUT_DIR}/oracle-of-secrets-${LABEL}-discord.md"
+  if [[ -f "${DRAFT_SRC}" && "${NOTES_PATH}" != "${DRAFT_SRC}" ]]; then
+    mkdir -p "$(dirname "${NOTES_PATH}")"
+    cp -f "${DRAFT_SRC}" "${NOTES_PATH}"
+    echo "[beta-patch] Copied release draft to ${NOTES_PATH}"
+  fi
+fi
