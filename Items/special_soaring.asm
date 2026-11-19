@@ -13,7 +13,7 @@ SpecialSoaring_Open:
   STZ.w MenuScrollLevelV
   STZ.w MenuScrollLevelH
   STZ.b $E4 : STZ.b $E5
-  LDA.b $10 : STA.w $010C
+  LDA.b #$0B : STA.w $010C
   LDA.b #$01 : STA.b $11
   LDA.b #$0E : STA.b $10
   .done

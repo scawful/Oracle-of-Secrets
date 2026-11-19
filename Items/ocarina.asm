@@ -212,9 +212,10 @@ LinkItem_NewFlute:
     RTS
   .light_world
 
-  ; Also doesn't work in special areas like Master Sword area.
+  ; Special Overworld ($80-$BF) uses Special Soaring under unified Module $09.
 if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
-  LDA.b $10 : CMP.b #$0B : BNE .normal_soaring
+  LDA.b $8A : CMP.b #$80 : BCC .normal_soaring
+  CMP.b #$C0 : BCS .normal_soaring
     JSL SpecialSoaring_Open
     RTS
   .normal_soaring

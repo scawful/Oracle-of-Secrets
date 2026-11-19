@@ -1889,14 +1889,13 @@ PreOverworld_LoadProperties_Interupt:
     
     .notForestArea
 
-    ; 0x09 is the normal overworld $10 module.
+    ; 0x09 is the unified overworld $10 module across LW, DW, and Special Overworld.
+    ; Keep exact original byte count so Overworld_LoadMusicIfNeeded stays at $0284D4.
     LDX.b #$09
 
-    ; Check if we are going to a SW area. If so we need to move into the SW
-    ; mode after we are done loading.
+    ; Previously switched to $0B for SW areas; unified to $09 for Q322.
     LDA.b $8A : AND.b #$80 : BEQ .notSWArea
-        ; 0x0B is the SW overworld $10 module.
-        LDX.b #$0B
+        LDX.b #$09
     
     .notSWArea
     
@@ -5278,6 +5277,14 @@ OverworldHandleTransitions:
 
         JSR.w DeleteCertainAncillaeStopDashing
 
+        if !SPECIAL_OVERWORLD_NATIVE == 1
+        ; Intercept bidirectional LW Col 7 <-> SW Col 0 boundary crossings
+        ; before normal same-world scroll/wrap math runs.
+        JSL.l Oracle_SpecialOverworld_TryCrossWorld : BCC .normalSameWorld
+            RTS
+        .normalSameWorld
+        endif
+
         REP #$31
 
         ; Remove potential large world offest.
@@ -5297,7 +5304,7 @@ OverworldHandleTransitions:
         ; 0x06 - Up
         if !SPECIAL_OVERWORLD_NATIVE == 1
         LyraCall_ByScreen = pc()
-        JSL Lyra_ReadByScreen : CLC : ADC.b $84 : STA.b $84
+        JSL Oracle_SpecialOverworld_ReadByScreen : CLC : ADC.b $84 : STA.b $84
         else
         CLC : ADC.l .ByScreenAddresses, X : TAX
         LDA.b $84 : CLC : ADC.l Pool_ByScreen1_New, X : STA.b $84
@@ -5358,16 +5365,17 @@ OverworldHandleTransitions:
         ; d - Down
         ; l - Left
         ; r - Right
-        ; Check if the area we are in needs a mosaic.
-        ; Filter out the the direction of the transition we are looking for.
+        ; Check if the area transition needs a mosaic (two-sided symmetric check
+        ; across all worlds + Special Overworld graphics/overlay compatibility).
         PLX
         if !SPECIAL_OVERWORLD_NATIVE == 1
         LyraCall_Mosaic = pc()
-        JSL Lyra_ReadMosaic
+        JSL Oracle_SpecialOverworld_ShouldMosaic
+        BEQ .noMosaic
         else
         LDA.l Pool_MosaicTable, X
-        endif
         AND.w $0416 : BEQ .noMosaic
+        endif
             ; Trigger a mosaic transition.
 
             ; Send us to a submodule that will handle a mosaic transition.
@@ -5543,6 +5551,16 @@ Overworld_SetCameraBounds_Interupt:
     JSL.l NewOverworld_SetCameraBounds
 
     RTS
+}
+Overworld_LoadMapProperties_Long:
+{
+    JSR.w $AB08
+    RTL
+}
+Overworld_LoadAreaPalettes_Long:
+{
+    JSR.w $C692
+    RTL
 }
 assert pc() <= $02C0F8 ; $0140F8
 
@@ -6301,6 +6319,7 @@ Overworld_PlayerControl_Interupt:
     ; transitions. See Docs/Debugging/Issues/lost_woods_camera_desync.md for details.
     ; The scroll drift from wrong puzzle moves persists but is visual-only.
 
+    JSL.l Oracle_SpecialOverworld_NormalizeModule09
     JSL.l Overworld_Entrance
     JSL.l Overworld_DwDeathMountainPaletteAnimation
 

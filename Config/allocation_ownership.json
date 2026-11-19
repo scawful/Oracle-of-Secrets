@@ -125,7 +125,7 @@
     "shared:Overworld/overworld.asm": {
       "source_set": "shared",
       "path": "Overworld/overworld.asm",
-      "sha256": "43fe19300c29b08e42f425c744fd07310f53fd7d137a2f0c5cb1c7f6208fdd8e"
+      "sha256": "bbabf47716b8715e490ccf9402ec084264036b325df6c5d9cab20f9c2217f13c"
     },
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
@@ -456,6 +456,21 @@
       "source_set": "shared",
       "path": "Overworld/village_bar_exit.asm",
       "sha256": "a311a6585be2ffbfd16d9d8b8b4fa01cb1c5160158c86ee9cc9e17338089f9d3"
+    },
+    "shared:Overworld/world_map.asm": {
+      "source_set": "shared",
+      "path": "Overworld/world_map.asm",
+      "sha256": "a5250a911df7dd2abcc2dd7f2d8db534a849dea18ca9f9f05c8170946f4d8ba0"
+    },
+    "shared:Overworld/special_overworld_transitions.asm": {
+      "source_set": "shared",
+      "path": "Overworld/special_overworld_transitions.asm",
+      "sha256": "64ca3bf22fe113f32d774066d41090f0f702d2347e09d663eb88c35140293507"
+    },
+    "shared:Scripts/Tools/generate_special_world_map.py": {
+      "source_set": "shared",
+      "path": "Scripts/Tools/generate_special_world_map.py",
+      "sha256": "1c8287fb7bb609e6c58538a11d40631a65345a772811856f9c968c92953d2bfc"
     }
   },
   "claims": [
@@ -3573,6 +3588,82 @@
         "org $5E8000",
         "Overworld_ExpandedEntrances_Start:",
         "Overworld_ExpandedEntrances_End:"
+      ]
+    },
+    {
+      "id": "special_world_map_assets",
+      "owner": "Special Overworld ($80-$BF) Mode 7 World Map tilemap, 8bpp tiles, and 128-color palette",
+      "space": "snes_rom",
+      "base": 6258688,
+      "size": 20992,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Compiled ROM assets ($5F8000-$5FD1FF) matching LW ($408000) and DW ($418000) Mode 7 World Map layout (Bank $42 is owned by Masks/all_masks.asm).",
+      "reset": "Generated deterministically by Scripts/Tools/generate_special_world_map.py from base ROM.",
+      "save": "ROM assets only; no SRAM format change.",
+      "provenance": [
+        "shared:Overworld/world_map.asm",
+        "shared:Scripts/Tools/generate_special_world_map.py"
+      ],
+      "anchors": [
+        "org $5F8000"
+      ],
+      "aliases": [
+        "SWWorldMap_Tiles",
+        "SWWorldMap_Gfx",
+        "SWPalettes"
+      ]
+    },
+    {
+      "id": "special_overworld_transitions_code",
+      "owner": "Unified Special Overworld transitions, bidirectional cross-world mosaic crossings, dynamic mixed-size ByScreen, two-sided mosaic, and SW World Map helpers",
+      "space": "snes_rom",
+      "base": 6279680,
+      "size": 11776,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Compiled ROM code ($5FD200-$5FFFFF) in Bank $5F tail after SW World Map assets.",
+      "reset": "No persistent state; volatile scratch lives in special_overworld_transition_transient.",
+      "save": "No SRAM format change.",
+      "provenance": [
+        "shared:Overworld/special_overworld_transitions.asm",
+        "shared:Overworld/overworld.asm"
+      ],
+      "anchors": [
+        "org $5FD200"
+      ],
+      "aliases": [
+        "SpecialOverworld_TryCrossWorld",
+        "SpecialOverworld_MosaicFBlankHook",
+        "SpecialOverworld_ReadByScreen",
+        "SpecialOverworld_ShouldMosaic"
+      ]
+    },
+    {
+      "id": "special_overworld_transition_transient",
+      "owner": "Cross-world crossing pending destination byte and Special Overworld World Map return-cache backup ($7EC132-$7EC137)",
+      "space": "wram",
+      "base": 8306994,
+      "size": 6,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Volatile WRAM in unused $7EC132-$7EC13F tail of the special-overworld return cache block; $7EC132 lives only across Submodule $24 fade-out and $7EC133-$7EC137 lives only while the World Map is open on $80-$BF.",
+      "reset": "Cleared on FBlank load ($7EC132) and WorldMap_ExitMap ($7EC137).",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Overworld/special_overworld_transitions.asm"
+      ],
+      "anchors": [],
+      "aliases": [
+        "SpecialOverworld_CrossWorldDest",
+        "SpecialOverworld_MapSavedPos",
+        "SpecialOverworld_MapSavedFlag"
       ]
     }
   ],

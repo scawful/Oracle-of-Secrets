@@ -43,7 +43,7 @@ EXPECTED_PERMISSIONS: dict[int, int] = {
     # Row 1 ($88-$8F)
     0x88: 0x00,
     0x89: BIT_RIGHT | BIT_UP,
-    0x8A: BIT_RIGHT | BIT_LEFT | BIT_UP,
+    0x8A: BIT_RIGHT | BIT_LEFT | BIT_DOWN | BIT_UP,
     0x8B: BIT_LEFT | BIT_UP,
     0x8C: BIT_RIGHT,
     0x8D: BIT_RIGHT | BIT_LEFT,
@@ -52,14 +52,14 @@ EXPECTED_PERMISSIONS: dict[int, int] = {
     # Row 2 ($90-$97)
     0x90: BIT_DOWN,
     0x91: BIT_DOWN,
-    0x92: 0x00,
+    0x92: BIT_UP,
     0x93: 0x00,
     0x94: 0x00,
     0x95: 0x00,
     0x96: 0x00,
     0x97: 0x00,
     # Row 3 ($98-$9F)
-    0x98: BIT_RIGHT | BIT_DOWN | BIT_UP,
+    0x98: BIT_RIGHT | BIT_LEFT | BIT_DOWN | BIT_UP,
     0x99: BIT_RIGHT | BIT_LEFT | BIT_DOWN | BIT_UP,
     0x9A: BIT_LEFT | BIT_DOWN,
     0x9B: 0x00,
@@ -68,7 +68,7 @@ EXPECTED_PERMISSIONS: dict[int, int] = {
     0x9E: 0x00,
     0x9F: 0x00,
     # Row 4 ($A0-$A7)
-    0xA0: BIT_RIGHT | BIT_UP,
+    0xA0: BIT_RIGHT | BIT_LEFT | BIT_UP,
     0xA1: BIT_RIGHT | BIT_LEFT | BIT_UP,
     0xA2: BIT_RIGHT | BIT_LEFT | BIT_DOWN | BIT_UP,
     0xA3: BIT_RIGHT | BIT_LEFT | BIT_DOWN,
@@ -77,7 +77,7 @@ EXPECTED_PERMISSIONS: dict[int, int] = {
     0xA6: BIT_RIGHT | BIT_LEFT | BIT_DOWN,
     0xA7: BIT_LEFT | BIT_DOWN,
     # Row 5 ($A8-$AF)
-    0xA8: BIT_RIGHT | BIT_DOWN,
+    0xA8: BIT_RIGHT | BIT_LEFT | BIT_DOWN,
     0xA9: BIT_LEFT | BIT_DOWN,
     0xAA: BIT_RIGHT | BIT_DOWN | BIT_UP,
     0xAB: BIT_RIGHT | BIT_LEFT | BIT_DOWN | BIT_UP,
@@ -86,7 +86,7 @@ EXPECTED_PERMISSIONS: dict[int, int] = {
     0xAE: BIT_RIGHT | BIT_LEFT | BIT_DOWN | BIT_UP,
     0xAF: BIT_LEFT | BIT_DOWN | BIT_UP,
     # Row 6 ($B0-$B7)
-    0xB0: BIT_RIGHT | BIT_DOWN | BIT_UP,
+    0xB0: BIT_RIGHT | BIT_LEFT | BIT_DOWN | BIT_UP,
     0xB1: BIT_RIGHT | BIT_LEFT | BIT_DOWN | BIT_UP,
     0xB2: BIT_RIGHT | BIT_LEFT | BIT_DOWN | BIT_UP,
     0xB3: BIT_RIGHT | BIT_LEFT | BIT_DOWN | BIT_UP,
@@ -95,7 +95,7 @@ EXPECTED_PERMISSIONS: dict[int, int] = {
     0xB6: BIT_RIGHT | BIT_LEFT | BIT_DOWN | BIT_UP,
     0xB7: BIT_LEFT | BIT_DOWN | BIT_UP,
     # Row 7 ($B8-$BF)
-    0xB8: BIT_RIGHT | BIT_UP,
+    0xB8: BIT_RIGHT | BIT_LEFT | BIT_UP,
     0xB9: BIT_RIGHT | BIT_LEFT | BIT_UP,
     0xBA: BIT_RIGHT | BIT_LEFT | BIT_UP,
     0xBB: BIT_RIGHT | BIT_LEFT | BIT_UP,
@@ -425,7 +425,8 @@ class LyraEdgeGuardTests(unittest.TestCase):
 
     def test_overlay_curtain_and_outer_edges_hard_blocked(self) -> None:
         overlays = (0x93, 0x94, 0x95, 0x96, 0x97, 0x9C, 0x9D, 0x9E, 0x9F)
-        hard_zero = overlays + (0x80, 0x84, 0x85, 0x86, 0x88, 0x92, 0x9B)
+        hard_zero = overlays + (0x80, 0x84, 0x85, 0x86, 0x88, 0x9B)
+        cross_world_col0 = (0x98, 0xA0, 0xA8, 0xB0, 0xB8)
         for m in hard_zero:
             for d in DIRECTIONS:
                 self.assertEqual(EXPECTED_PERMISSIONS[m] & (1 << (d // 2)), 0, f"${m:02X} d={d}")
@@ -436,7 +437,10 @@ class LyraEdgeGuardTests(unittest.TestCase):
             if r == 7:
                 self.assertFalse(EXPECTED_PERMISSIONS[m] & BIT_DOWN, f"South of ${m:02X} open")
             if c == 0:
-                self.assertFalse(EXPECTED_PERMISSIONS[m] & BIT_LEFT, f"West of ${m:02X} open")
+                if m in cross_world_col0:
+                    self.assertTrue(EXPECTED_PERMISSIONS[m] & BIT_LEFT, f"Cross-world West of ${m:02X} closed")
+                else:
+                    self.assertFalse(EXPECTED_PERMISSIONS[m] & BIT_LEFT, f"West of ${m:02X} open")
             if c == 7:
                 self.assertFalse(EXPECTED_PERMISSIONS[m] & BIT_RIGHT, f"East of ${m:02X} open")
             # No allowed transition may step onto a hard-zero overlay/indoor/unused map.
@@ -448,14 +452,17 @@ class LyraEdgeGuardTests(unittest.TestCase):
             )
             for bit, nb in neighbors:
                 if EXPECTED_PERMISSIONS[m] & bit:
+                    if bit == BIT_LEFT and m in cross_world_col0:
+                        continue
                     self.assertIsNotNone(nb)
                     self.assertNotIn(nb, hard_zero, f"${m:02X} leaks into ${nb:02X}")
 
     def test_bidirectional_kalyxo_and_garrison_links(self) -> None:
         links = [
-            # Korok Cove <-> Garrison Tall
+            # Korok Cove <-> Garrison Tall & North Reef ($92)
             (0x82, DIR_RIGHT, 0x83, DIR_LEFT),
             (0x8A, DIR_RIGHT, 0x8B, DIR_LEFT),
+            (0x8A, DIR_DOWN, 0x92, DIR_UP),
             (0x83, DIR_DOWN, 0x8B, DIR_UP),
             # Sea Zora <-> Zora Quay <-> Zora Coast <-> Lyra Sea
             (0x90, DIR_DOWN, 0x98, DIR_UP),
@@ -485,11 +492,15 @@ class LyraEdgeGuardTests(unittest.TestCase):
             self.assertEqual(rb["p"] & 1, 0, f"${b:02X} d={db} should be open")
 
     def test_multi_area_parent_uses_0700_physical_map(self) -> None:
-        # Standing on $8A (parent=$81): East into $8B allowed, South into $92 blocked
-        res_allow, _ = self._call(area8a=0x81, phys_map=0x8A, direction=DIR_RIGHT)
-        res_block, _ = self._call(area8a=0x81, phys_map=0x8A, direction=DIR_DOWN)
-        self.assertEqual(res_allow["p"] & 1, 0)
-        self.assertEqual(res_block["p"] & 1, 1)
+        # Standing on $8A (parent=$81): East into $8B allowed, South into $92 allowed
+        res_east, _ = self._call(area8a=0x81, phys_map=0x8A, direction=DIR_RIGHT)
+        res_south, _ = self._call(area8a=0x81, phys_map=0x8A, direction=DIR_DOWN)
+        self.assertEqual(res_east["p"] & 1, 0)
+        self.assertEqual(res_south["p"] & 1, 0)
+        # Standing on $92 (North Reef): North to $8A allowed, West/South/East blocked
+        self.assertEqual(self._call(area8a=0x92, phys_map=0x92, direction=DIR_UP)[0]["p"] & 1, 0)
+        for d in (DIR_RIGHT, DIR_LEFT, DIR_DOWN):
+            self.assertEqual(self._call(area8a=0x92, phys_map=0x92, direction=d)[0]["p"] & 1, 1)
 
         # Standing on $8B (parent=$83): East into $8C blocked, South into $93 overlay blocked
         for d in (DIR_RIGHT, DIR_DOWN):

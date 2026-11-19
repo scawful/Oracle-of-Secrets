@@ -233,6 +233,18 @@ MapIconDraw:
   LDA.l $7EC10B : PHA
 
   .draw_prizes
+  LDA.b $8A : CMP.b #$80 : BCC .not_sw
+  CMP.b #$C0 : BCS .not_sw
+    LDA.b #$00
+    .sw_icon_loop
+    PHA
+    JSL SpecialOverworld_SetupMapIcon : BCC .sw_icon_skip
+      JSR HandleMapDrawIcon
+    .sw_icon_skip
+    PLA : INC A
+    CMP.b #$04 : BCC .sw_icon_loop
+    JMP restore_coords_and_exit
+  .not_sw
   LDA.b $8A : AND.b #$40 : BEQ .lwprizes
     LDA.l OOSPROG : AND.b #$02 : BNE .check_pendants
       JSL DrawEonEscapeIcon
@@ -432,6 +444,8 @@ HandleMapDrawIcon:
 
 FixMaskPaletteOnExit:
 {
+    ; Restore Special Overworld return-cache coordinates ($7EC108..$7EC10B) if backed up.
+    JSL SpecialOverworld_RestoreMapPos
     ; InitializeTilesets just reloaded the area sprite sheets over the Korok
     ; sheets; clear the loaded flag so a Korok reloads them (korok.asm).
     PHP : SEP #$20 : PHA
@@ -501,16 +515,26 @@ org $418000 ; @hook module=Overworld
   DWWorldMap_Gfx:
     incbin world_map/DwMapGfx.bin
 
+assert (LWWorldMap_Tiles&$FFFF) == $8000 && (DWWorldMap_Tiles&$FFFF) == $8000
+assert (LWWorldMap_Gfx&$FFFF) == $9000 && (DWWorldMap_Gfx&$FFFF) == $9000
+
 DMAOwMap:
 {
   JSL Palette_ArmorAndGloves
-  LDA $8A : AND #$40 : BEQ .LWMAP
-    JMP .DWMAP
-  .LWMAP
-
-  STZ.w $2115
-
+  LDA.b $8A
+  CMP.b #$80 : BCC .check_dw
+  CMP.b #$C0 : BCS .check_dw
+    LDA.b #SWWorldMap_Tiles>>16
+    BRA .upload
+  .check_dw
+  AND.b #$40 : BEQ .lw_bank
+    LDA.b #DWWorldMap_Tiles>>16
+    BRA .upload
+  .lw_bank
   LDA.b #LWWorldMap_Tiles>>16
+
+  .upload
+  STZ.w $2115
   STA.w $4304
 
   REP #$20
@@ -543,7 +567,7 @@ DMAOwMap:
 
       LDA.b $02
       CLC
-      ADC.w #LWWorldMap_Tiles
+      ADC.w #$8000
       STA.w $4302
 
       LDA.w #$0020
@@ -571,125 +595,59 @@ DMAOwMap:
 
   .vram_offset
     dw $0000, $0020, $1000, $1020
-
-  .DWMAP
-
-    STZ.w $2115
-
-    LDA.b #DWWorldMap_Tiles>>16
-    STA.w $4304
-
-    REP #$20
-
-    LDA.w #$1800
-    STA.w $4300
-
-    STZ.b $04
-    STZ.b $02
-
-    LDY.b #$01
-    LDX.b #$00
-
-    .next_quadrant2
-
-      LDA.w #$0020
-      STA.b $06
-
-      LDA.l .vram_offset,X
-      STA.b $00
-
-      .next_row2
-
-        LDA.b $00
-        STA.w $2116
-
-        CLC
-        ADC.w #$0080
-        STA.b $00
-
-        LDA.b $02
-        CLC
-        ADC.w #DWWorldMap_Tiles
-        STA.w $4302
-
-        LDA.w #$0020
-        STA.w $4305
-
-        STY.w $420B
-
-        CLC
-        ADC.b $02
-        STA.b $02
-
-        DEC.b $06
-    BNE .next_row2
-
-    INC.b $04
-    INC.b $04
-
-    LDX.b $04
-    CPX.b #$08
-    BNE .next_quadrant2
-
-    SEP #$20
-
-    RTL
 }
 
 
 DMAOwMapGfx:
 {
-  LDA $8A : AND #$40 : BNE .DWMAP
-    LDA.b #LWWorldMap_Gfx>>16 : STA $02
+  LDA.b $8A
+  CMP.b #$80 : BCC .check_dw
+  CMP.b #$C0 : BCS .check_dw
+    LDA.b #SWWorldMap_Gfx>>16
+    BRA .upload
+  .check_dw
+  AND.b #$40 : BEQ .lw_bank
+    LDA.b #DWWorldMap_Gfx>>16
+    BRA .upload
+  .lw_bank
+  LDA.b #LWWorldMap_Gfx>>16
 
-    LDA.b #$80 : STA $2115
+  .upload
+  STA.b $02
 
-    STZ $2116 : STZ $2117
+  LDA.b #$80 : STA.w $2115
 
-    REP #$10
+  STZ.w $2116 : STZ.w $2117
 
-    LDY.w #LWWorldMap_Gfx : STY $00
+  REP #$10
 
-    LDY.w #$0000
+  LDY.w #$9000 : STY.b $00
 
-    .writeChr
+  LDY.w #$0000
 
-        LDA [$00], Y : STA $2119 : INY
-        LDA [$00], Y : STA $2119 : INY
-        LDA [$00], Y : STA $2119 : INY
-        LDA [$00], Y : STA $2119 : INY
-    CPY.w #$4000 : BNE .writeChr
+  .writeChr
+    LDA [$00], Y : STA.w $2119 : INY
+    LDA [$00], Y : STA.w $2119 : INY
+    LDA [$00], Y : STA.w $2119 : INY
+    LDA [$00], Y : STA.w $2119 : INY
+  CPY.w #$4000 : BNE .writeChr
 
-    SEP #$10
+  SEP #$10
 
-    RTL
-
-    .DWMAP
-
-    LDA.b #DWWorldMap_Gfx>>16 : STA $02
-
-    LDA.b #$80 : STA $2115
-
-    STZ $2116 : STZ $2117
-
-    REP #$10
-
-    LDY.w #DWWorldMap_Gfx : STY $00
-
-    LDY.w #$0000
-
-    .writeChr2
-
-        LDA [$00], Y : STA $2119 : INY
-        LDA [$00], Y : STA $2119 : INY
-        LDA [$00], Y : STA $2119 : INY
-        LDA [$00], Y : STA $2119 : INY
-    CPY.w #$4000 : BNE .writeChr2
-
-    SEP #$10
-
-    RTL
+  RTL
 }
+
+org $5F8000 ; @hook module=Overworld
+  SWWorldMap_Tiles:
+    incbin world_map/SwMapTileset.bin
+
+  SWWorldMap_Gfx:
+    incbin world_map/SwMapGfx.bin
+
+  SWPalettes:
+    incbin world_map/sw_palette.bin
+  assert (SWWorldMap_Tiles&$FFFF) == $8000 && (SWWorldMap_Gfx&$FFFF) == $9000
+  assert pc() <= $5FD200, "SW map assets exceed Bank $5F allocation"
 
 org $0ADC27
   DWPalettes:

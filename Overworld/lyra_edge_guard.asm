@@ -103,7 +103,7 @@ LyraEdgeGuard:
   ; Row 1 ($88-$8F): Korok S ($89-$8A), Garrison S ($8B), Sky chain ($8C-$8F)
   db !EG_NONE                             ; $88: Dark curtain indoor room
   db !EG_R|!EG_U                          ; $89: Korok Cove SW <-> $81, $8A
-  db !EG_R|!EG_L|!EG_U                    ; $8A: Korok Cove SE <-> $82, $89, $8B (Garrison moat)
+  db !EG_ALL                              ; $8A: Korok Cove SE <-> $82, $89, $8B (Garrison), $92 (North Reef channel)
   db !EG_L|!EG_U                          ; $8B: Garrison Bottom <-> $8A, $83 ($8C/$93 blocked)
   db !EG_R                                ; $8C: Sky West Landing <-> $8D ($94 overlay blocked)
   db !EG_R|!EG_L                          ; $8D: Sky Bridge W <-> $8C, $8E ($95 overlay blocked)
@@ -111,9 +111,9 @@ LyraEdgeGuard:
   db !EG_L|!EG_U                          ; $8F: Sky East <-> $8E, $87 ($97 overlay blocked)
 
   ; Row 2 ($90-$97): Sea Zora N ($90), Wisdom ($91), Reef ($92), Overlays ($93-$97)
-  db !EG_D                                ; $90: Sea Zora N <-> $98 ($88/$91 blocked)
+  db !EG_D                                ; $90: Sea Zora N <-> $98 ($88/$91/col 0 W blocked)
   db !EG_D                                ; $91: Shrine of Wisdom <-> $99 ($89/$90/$92 blocked)
-  db !EG_NONE                             ; $92: North Reef (walled C80; $93 overlay E)
+  db !EG_U                                ; $92: North Reef <-> $8A N channel ($91 W / $9A S / $93 overlay E blocked)
   db !EG_NONE                             ; $93: Overlay (triforce curtain)
   db !EG_NONE                             ; $94: Overlay (under bridge)
   db !EG_NONE                             ; $95: Overlay (sky bg)
@@ -121,7 +121,7 @@ LyraEdgeGuard:
   db !EG_NONE                             ; $97: Overlay (fog 1)
 
   ; Row 3 ($98-$9F): Sea Zora S ($98), Quay ($99), C-Island ($9A), Reserved/Overlays ($9B-$9F)
-  db !EG_R|!EG_D|!EG_U                    ; $98: Sea Zora S <-> $90, $99, $A0
+  db !EG_ALL                              ; $98: Sea Zora S <-> $90, $99, $A0, and LW $1F West cross-world
   db !EG_R|!EG_L|!EG_D|!EG_U              ; $99: Zora Quay <-> $91, $98, $9A, $A1
   db !EG_L|!EG_D                          ; $9A: C-Island <-> $99, $A2 ($92 C80 N / $9B E blocked)
   db !EG_NONE                             ; $9B: Reserved Fortress slot ($93/$9C overlays N/E)
@@ -131,7 +131,7 @@ LyraEdgeGuard:
   db !EG_NONE                             ; $9F: Overlay (rain)
 
   ; Row 4 ($A0-$A7): Zora Coast ($A0-$A1), Lyra Sea ($A2-$A7)
-  db !EG_R|!EG_U                          ; $A0: Zora Coast W <-> $98, $A1 ($A8 cliff S blocked)
+  db !EG_R|!EG_L|!EG_U                    ; $A0: Zora Coast W <-> $98, $A1, and LW $27 West cross-world ($A8 S blocked)
   db !EG_R|!EG_L|!EG_U                    ; $A1: Zora Coast E <-> $A0, $99, $A2 ($A9 C80 S blocked)
   db !EG_R|!EG_L|!EG_D|!EG_U              ; $A2: Lyra Sea <-> $9A, $A1, $A3, $AA
   db !EG_R|!EG_L|!EG_D                    ; $A3: Twin-Tree Island <-> $A2, $A4, $AB ($9B N blocked)
@@ -141,7 +141,7 @@ LyraEdgeGuard:
   db !EG_L|!EG_D                          ; $A7: Shrine of Courage NE <-> $A6, $AF ($9F overlay N / col 7 E blocked)
 
   ; Row 5 ($A8-$AF): Deku ($A8-$A9), Lyra Sea ($AA-$AF)
-  db !EG_R|!EG_D                          ; $A8: Deku W <-> $A9, $B0 (cliff/corridor drop)
+  db !EG_R|!EG_L|!EG_D                    ; $A8: Deku W <-> $A9, $B0, and LW $2F West cross-world
   db !EG_L|!EG_D                          ; $A9: Deku E <-> $A8, $B1 ($AA C80 wall E / $A1 N blocked)
   db !EG_R|!EG_D|!EG_U                    ; $AA: Square Island <-> $A2, $AB, $B2 ($A9 C80 W blocked)
   db !EG_R|!EG_L|!EG_D|!EG_U              ; $AB: Hut Island <-> $A3, $AA, $AC, $B3
@@ -151,7 +151,7 @@ LyraEdgeGuard:
   db !EG_L|!EG_D|!EG_U                    ; $AF: Shrine of Courage SE <-> $A7, $AE, $B7 (col 7 E blocked)
 
   ; Row 6 ($B0-$B7): Goron Desert N ($B0-$B1), Lyra Sea ($B2-$B7)
-  db !EG_R|!EG_D|!EG_U                    ; $B0: Goron Desert NW <-> $B1, $B8, $A8
+  db !EG_ALL                              ; $B0: Goron Desert NW <-> $B1, $B8, $A8, and LW $37 West cross-world
   db !EG_R|!EG_L|!EG_D|!EG_U              ; $B1: Goron Desert NE <-> $B0, $B9, $A9 (road), $B2 (overlook)
   db !EG_R|!EG_L|!EG_D|!EG_U              ; $B2: Sea/Cliff <-> $AA, $B1, $B3, $BA
   db !EG_R|!EG_L|!EG_D|!EG_U              ; $B3: Crescent NW <-> $AB, $B2, $B4, $BB
@@ -161,7 +161,7 @@ LyraEdgeGuard:
   db !EG_L|!EG_D|!EG_U                    ; $B7: Crescent Sandbar <-> $AF, $B6, $BF (col 7 E blocked)
 
   ; Row 7 ($B8-$BF): Goron Desert S ($B8-$B9), Lyra Sea S ($BA-$BF)
-  db !EG_R|!EG_U                          ; $B8: Goron Desert SW <-> $B0, $B9 (col 0 W / row 7 S blocked)
+  db !EG_R|!EG_L|!EG_U                    ; $B8: Goron Desert SW <-> $B0, $B9, and LW $3F West cross-world (row 7 S blocked)
   db !EG_R|!EG_L|!EG_U                    ; $B9: Goron Desert SE <-> $B1, $B8, $BA (Harbor stairs E)
   db !EG_R|!EG_L|!EG_U                    ; $BA: Harbor/Sea <-> $B2, $B9 (stairs W), $BB
   db !EG_R|!EG_L|!EG_U                    ; $BB: Crescent SW <-> $B3, $BA, $BC
