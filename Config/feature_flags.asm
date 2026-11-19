@@ -9,6 +9,7 @@
 !ENABLE_D5_BF_PIT_RESET              = 0
 !ENABLE_D6_CHU_GATE_97               = 1
 !ENABLE_D8_FARORE_GRAPHICS           = 0
+!ENABLE_DEBUG_TOOLS                  = 0
 !ENABLE_GLADE_AMBUSH                 = 0
 !ENABLE_GOLDSTAR_CELL                = 1
 !ENABLE_HORSE_CROWD_CHARGE           = 0

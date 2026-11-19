@@ -1,17 +1,25 @@
 ;===========================================================
-; Debug Hacks
+; Debug Tools (Opt-in via !ENABLE_DEBUG_TOOLS == 1)
 ;
-; Gives player all items when pressing L (not for main game)
-; Bank 0x3C used for code
-; WRITTEN: by XaserLE, refactored by scawful
-; THANKS TO: -MathOnNapkins' Zelda Doc's
-; -wiiqwertyuiop for his Zelda Disassembly
+; Bank $3C ($3CA62A-$3CBFFF; bounded strictly below $3CC000
+; Dungeons/attract_royal_graphics.asm).
+; Invoked per-frame from P2_Tick (Sprites/Players/player2.asm)
+; so it never collides with the $068365 Follower_Main hook.
+;
+; Features:
+;   - Hotkey L+R+X: Non-destructive full testing kit grant
+;     (preserves Crystals, GameState, OOSPROG, and OW events).
+;   - Hotkey L+R+Select+Start: Reload message & sprite caches.
+;   - ReinitDispatcher ($7FF3C0): Bridge-driven cache reload.
+;   - WarpDispatcher ($7FF3C4): Bridge-driven area/room warps
+;     including Special Overworld ($80-$BF) native $7EC140
+;     cached-exit loads and Dungeon Room Fall (Submode $15).
 ;===========================================================
 
 !BetaRelease                              = $00
 !DebugReloadLatch                         = $00FE               ; Uses UNUSED_FE (free RAM) for hotkey debounce
-!DEBUG_REINIT                             = 0
-!DEBUG_WARP                               = 0                   ; DISABLED - Enable debug warp dispatcher
+!DEBUG_REINIT                             = 1
+!DEBUG_WARP                               = 1
 
 ; Reinit bitfield
 !REINIT_DIALOG                            = $01
@@ -20,135 +28,128 @@
 !REINIT_MSGBANK                           = $08
 !REINIT_ROOMCACHE                         = $10
 
-; Debug warp RAM addresses live in Core/symbols.asm (DBG_WARP_*).
-; The Python client writes to these, and WarpDispatcher reads/clears them.
+; Debug mailbox RAM addresses live in Core/symbols.asm (DBG_REINIT_*/DBG_WARP_*
+; at $7FF3C0-$7FF3CF inside vanilla-free UNUSED_7FF180).
 
 !DBG_WARP_ARM_MAGIC       = $A5
 !DBG_WARP_STATUS_ARMED    = $5A
 
-; Overwrite JSL executed every frame
-org $068365 : JSL $3CA62A ; @hook module=Util name=$3CA62A kind=jsl target=$3CA62A
-
-Follower_Main                             = $099F91
 CreateMessagePointers                     = $0ED3EB
 Sprite_LoadGraphicsProperties             = $00FC41
 Sprite_ReloadAll_Overworld                = $09C499
 Overworld_ReloadSubscreenOverlay_Interupt = $02AF58
 
-org                                       $3CA62A               ; Expanded space for our routine ; @hook module=Util
+org $3CA62A ; Expanded space for debug tools (Bank $3C, below $3CC000)
+DebugTools_Tick:
 {
-if                                        !DEBUG_REINIT == 1
+  PHP
+  REP #$30
+  PHA : PHX : PHY
+  PHB
+  SEP #$30
+  LDA.b #$7E : PHA : PLB
+
+if !DEBUG_REINIT == 1
   JSL ReinitDispatcher
 endif
-if                                        !DEBUG_WARP == 1
+if !DEBUG_WARP == 1
   JSL WarpDispatcher
   JSL WarpPostTransitionCheck
 endif
-  ;LDA.l $7EF3C5 : CMP.b #$02 : BCS .continue ; Check if in main game
-  ;JSL Follower_Main
-  ;RTL
-  ;.continue
+
   ; Hotkey: L+R+Select+Start -> reload message pointers + sprite properties
-  PHP
-  SEP #$20
-  LDA RawJoypad1H : AND.b #$F0 : CMP.b #$30 : BNE .reset_reload
-  LDA RawJoypad1L : AND.b #$30 : CMP.b #$30 : BNE .reset_reload
-  LDA !DebugReloadLatch : BNE .skip_reload
-  INC !DebugReloadLatch
+  LDA.w RawJoypad1H : AND.b #$F0 : CMP.b #$30 : BNE .reset_reload
+  LDA.w RawJoypad1L : AND.b #$30 : CMP.b #$30 : BNE .reset_reload
+  LDA.w !DebugReloadLatch : BNE .skip_reload
+  INC.w !DebugReloadLatch
   JSL Debug_ReloadRuntimeCaches
   BRA .skip_reload
   .reset_reload
-  STZ !DebugReloadLatch
+  STZ.w !DebugReloadLatch
   .skip_reload
-  PLP
 
-  LDA $F2 : CMP #$70 : BEQ $03 : JMP END ; Check L, R and X button
+  ; Hotkey: L+R+X ($F2 == $70) -> non-destructive full testing kit grant
+  LDA.b $F2 : CMP.b #$70 : BEQ .grant_kit
+  JMP .end
 
+.grant_kit
 if !BetaRelease == 0
-  ; How many bombs you have. Can exceed 0x50, up to 0xff.
-  LDA #$50 : STA Bombs
+  ; Core tools, bombs, masks, armor, bottles, rupees, health, magic
+  LDA.b #$50 : STA.l Bombs
+  LDA.b #$02 : STA.l MagicPowder
+               STA.l Gloves
+               STA.l Armor
+               STA.l MagicUsage
+               STA.l Boomerang
+               STA.l Mirror
+               STA.l CustomRods ; Portal Rod tier
 
-  LDA #$02 : STA MagicPowder
-             STA Gloves
+  LDA.b #$01 : STA.l FireRod
+               STA.l IceRod
+               STA.l BunnyHood
+               STA.l DekuMask
+               STA.l ZoraMask
+               STA.l WolfMask
+               STA.l StoneMask
+               STA.l Book
+               STA.l Somaria
+               STA.l Boots
+               STA.l Flippers
+               STA.l BottleIndex
+               STA.l Hookshot
+               STA.l RocsFeather
+               STA.l Lamp
+               STA.l Hammer
+               STA.l Pearl
+               STA.l FishingRod
+               STA.l PortalRodOwned
+               STA.l GoldstarOwned
+               STA.l ByrnaOwned
+               STA.l BombchuOwned
+               STA.l SwitchHookOwned
+               STA.l GaroMaskOwned
 
-  LDA #$01 : STA FireRod
-             STA IceRod
+  LDA.b #$A5 : STA.l GoldstarInventoryVersion
+  LDA.b #!BOMBCHU_AMMO_MAX : STA.l BombchuAmmo
 
-  LDA #$01 : STA BunnyHood
+  ; Two-slot swords: Story blade lv4 + reforged Heavy Sword, preserving tunic bits
+  LDA.b #$04 : STA.l Sword
+               STA.l SwordStoryBlade
+  LDA.l SwordSlotFlags
+  AND.b #!SwordSlot_HeavyEquipped^$FF
+  ORA.b #(!SwordSlot_Initialized|!SwordSlot_HeavyOwned|!SwordSlot_HeavyReforged)
+  STA.l SwordSlotFlags
 
-  LDA #$01 : STA DekuMask
-  LDA #$01 : STA ZoraMask
-  LDA #$01 : STA WolfMask
-  LDA #$01 : STA StoneMask
+  LDA.b #$03 : STA.l Shield
+               STA.l Bow
+               STA.l Bottle1
+  LDA.b #$05 : STA.l Bottle2
+  LDA.b #$04 : STA.l Bottle3
+  LDA.b #$06 : STA.l Bottle4
 
-  LDA #$01 : STA Book
-  LDA #$01 : STA Somaria
-  LDA #$01 : STA Boots
-             STA Flippers
-             STA WolfMask
-
-  LDA #$04 : STA Sword
-
-  LDA #$03 : STA Shield
-
-  LDA #$02 : STA Armor
-
-  LDA #$01 : STA BottleIndex ; has bottles
-  LDA #$03 : STA Bottle1
-  LDA #$05 : STA Bottle2
-  LDA #$04 : STA Bottle3
-  LDA #$06 : STA Bottle4
-
-  ; How many arrows you have. Can exceed 0x70.
-  LDA #$32 : STA Arrows
-
-  ; 2 bytes for rupees (goal, for counting up)
-  LDA #$E7 : STA Rupees
-  LDA #$03 : STA RupeesGoal
-  LDA #$07 : STA Pendants
-  LDA #$6E : STA Ability
-  LDA #$00 : STA Crystals
-  LDA #$01 : STA Hookshot
-  LDA #$02 : STA MagicUsage
-
-  LDA #$A0 : STA MAXHP
-
+  LDA.b #$32 : STA.l Arrows
+  LDA.b #$E7 : STA.l Rupees
+               STA.l RupeesDisplay
+  LDA.b #$03 : STA.l RupeesGoal
+               STA.l RupeesDisplay+1
+  LDA.b #$07 : STA.l Pendants
+  LDA.b #$6E : STA.l Ability
+  LDA.b #$A0 : STA.l MAXHP
+               STA.l HeartRefill
+  LDA.b #$80 : STA.l MagicPower
 endif
-  LDA #$04 : STA Flute
-  LDA #$01 : STA RocsFeather
-  LDA #$03 : STA Bow
-  LDA #$02 : STA Boomerang
-             STA Mirror
-             STA Byrna
 
-  LDA #$01 : STA Lamp
-             ; STA MagicHammer
-             STA Pearl
+  ; All Ocarina songs (1-5 via Flute=7, song 6 Epona via SideQuestProg2 bit 1)
+  ; plus Sky Soaring token. Preserves Crystals, GameState, OOSPROG & OW events.
+  LDA.b #$07 : STA.l Flute
+  LDA.l SideQuestProgress2 : ORA.b #!SideQuest2_EponaSong : STA.l SideQuestProgress2
+  LDA.b #!SKY_SOARING_LEARNED : STA.l SkySoaringLearned
 
-  LDA #$A0 : STA HeartRefill
-  LDA #$80 : STA MagicPower
-
-  ; Skip story events, test goron mines
-  LDX.b #$36
-  if !SPECIAL_OVERWORLD_NATIVE == 1
-  JSL Lyra_TailEvent_Load
-  else
-  LDA.l $7EF280, X
-  endif
-  ORA.b #$20
-  if !SPECIAL_OVERWORLD_NATIVE == 1
-  JSL Lyra_TailEvent_Store
-  else
-  STA.l $7EF280, X
-  endif
-
-  LDA.b #$02 : STA $7EF3C5
-  LDA.b #$01 : STA MakuTreeQuest
-  LDA.b #%00001010 : STA OOSPROG
-
-END:
-
-  JSL Follower_Main
+.end
+  PLB
+  REP #$30
+  PLY : PLX : PLA
+  PLP
   RTL
 }
 
@@ -213,10 +214,12 @@ ReinitDispatcher:
 
   SEP #$30
 
-  ; Only run in safe modes: 0x06 (Underworld Load), 0x07 (Underworld), 0x09 (Overworld)
+  ; Only run in safe modes: 0x06 (Underworld Load), 0x07 (Underworld),
+  ; 0x09 (Overworld), 0x0B (Special Overworld)
   LDA.l MODE : CMP.b #$06 : BEQ .mode_ok
-             CMP.b #$07 : BEQ .mode_ok
-             CMP.b #$09 : BEQ .mode_ok
+               CMP.b #$07 : BEQ .mode_ok
+               CMP.b #$09 : BEQ .mode_ok
+               CMP.b #$0B : BEQ .mode_ok
   JMP .done
 
 .mode_ok
@@ -244,7 +247,8 @@ ReinitDispatcher:
   ; sprites
   LDA.l DBG_REINIT_FLAGS : AND.b #!REINIT_SPRITES : BEQ .skip_sprites
     LDA.l MODE : CMP.b #$09 : BEQ .sprites_ow
-               CMP.b #$07 : BEQ .sprites_uw
+                 CMP.b #$0B : BEQ .sprites_ow
+                 CMP.b #$07 : BEQ .sprites_uw
     LDA.l DBG_REINIT_ERROR : ORA.b #!REINIT_SPRITES : STA.l DBG_REINIT_ERROR
     BRA   .skip_sprites
   .sprites_ow
@@ -258,12 +262,14 @@ ReinitDispatcher:
     LDA.l DBG_REINIT_STATUS : ORA.b #!REINIT_SPRITES : STA.l DBG_REINIT_STATUS
   .skip_sprites
 
-  ; overlays (overworld only, avoid mirror warp submodes)
+  ; overlays (overworld/special only, avoid mirror warp submodes)
   LDA.l DBG_REINIT_FLAGS : AND.b #!REINIT_OVERLAYS : BEQ .skip_overlays
-    LDA.l MODE : CMP.b #$09 : BNE .overlay_err
+    LDA.l MODE : CMP.b #$09 : BEQ .overlay_mode_ok
+                 CMP.b #$0B : BNE .overlay_err
+  .overlay_mode_ok
     LDA.l SUBMODE : CMP.b #$23 : BEQ .overlay_err
-                  CMP.b #$24 : BEQ .overlay_err
-                  CMP.b #$2C : BEQ .overlay_err
+                    CMP.b #$24 : BEQ .overlay_err
+                    CMP.b #$2C : BEQ .overlay_err
     LDA.b #!REINIT_OVERLAYS : STA.l DBG_REINIT_LAST
     JSL   Reinit_Overlays
     LDA.l DBG_REINIT_STATUS : ORA.b #!REINIT_OVERLAYS : STA.l DBG_REINIT_STATUS
@@ -275,10 +281,10 @@ ReinitDispatcher:
   ; room cache (underworld load/transition only)
   LDA.l DBG_REINIT_FLAGS : AND.b #!REINIT_ROOMCACHE : BEQ .skip_roomcache
     LDA.l MODE : CMP.b #$06 : BEQ .roomcache_ok
-               CMP.b #$07 : BNE .roomcache_err
+                 CMP.b #$07 : BNE .roomcache_err
     LDA.l SUBMODE : CMP.b #$01 : BEQ .roomcache_ok
-                  CMP.b #$02 : BEQ .roomcache_ok
-                  CMP.b #$1A : BEQ .roomcache_ok
+                    CMP.b #$02 : BEQ .roomcache_ok
+                    CMP.b #$1A : BEQ .roomcache_ok
     BRA .roomcache_err
   .roomcache_ok
     LDA.b #!REINIT_ROOMCACHE : STA.l DBG_REINIT_LAST
@@ -347,18 +353,21 @@ Reinit_RoomCache:
 }
 
 ; ==============================================================================
-; Debug Warp Dispatcher (Conditionally compiled when !DEBUG_WARP == 1)
+; Debug Warp Dispatcher (Bank $3C, $7FF3C4-$7FF3CF mailbox)
 ; ==============================================================================
-; Triggered by writing to DBG_WARP_REQUEST from the Python debug client.
-; Performs a proper overworld warp by setting up all necessary RAM and
-; triggering a mosaic transition.
-;
-; Usage from Python:
-;   1. Write target area to DBG_WARP_AREA ($7E074D)
-;   2. Write target X to DBG_WARP_X_LO/HI ($7E074E-$7E074F)
-;   3. Write target Y to DBG_WARP_Y_LO/HI ($7E0750-$7E0751)
-;   4. Write 1 to DBG_WARP_REQUEST ($7E074C) to trigger
-;   5. Poll DBG_WARP_STATUS ($7E0752) for completion
+; Protocol:
+;   1. Write target parameters:
+;      - Req 1 (Overworld / Special Overworld warp):
+;          DBG_WARP_AREA ($7FF3C5) = $00-$BF
+;          DBG_WARP_X_LO/HI ($7FF3C6-$7FF3C7), DBG_WARP_Y_LO/HI ($7FF3C8-$7FF3C9)
+;          (If X==0 && Y==0, defaults to the area's camera interior.)
+;      - Req 2 (Same-area reposition):
+;          DBG_WARP_X_LO/HI, DBG_WARP_Y_LO/HI
+;      - Req 3 (Dungeon room fall, requires MODE == $07):
+;          DBG_WARP_ROOM_LO/HI ($7FF3CE-$7FF3CF) = 16-bit room ID
+;   2. Arm mailbox: DBG_WARP_ARM ($7FF3CD) = $A5, DBG_WARP_STATUS ($7FF3CA) = $5A
+;   3. Trigger: DBG_WARP_REQUEST ($7FF3C4) = 1, 2, or 3
+;   4. Poll DBG_WARP_STATUS ($7FF3CA) until 3 (complete) or inspect DBG_WARP_ERROR
 ; ==============================================================================
 
 if !DEBUG_WARP == 1
@@ -367,11 +376,11 @@ org $3CB400
 WarpDispatcher:
 {
   PHP
-  PHA
-  PHX
-  PHY
-
+  REP #$30
+  PHA : PHX : PHY
+  PHB
   SEP #$30
+  LDA.b #$7E : PHA : PLB
 
   ; Check if a warp is requested (guard against uninitialized garbage)
   LDA.l DBG_WARP_REQUEST : BNE .check_req
@@ -379,149 +388,253 @@ WarpDispatcher:
 .check_req
   CMP.b #$01 : BEQ .check_arm
   CMP.b #$02 : BEQ .check_arm
+  CMP.b #$03 : BEQ .check_arm
     LDA.b #$04 : STA.l DBG_WARP_ERROR  ; Error 4 = invalid request byte
     LDA.b #$00 : STA.l DBG_WARP_STATUS
-    LDA.b #$00 : STA.l DBG_WARP_REQUEST
-    LDA.b #$00 : STA.l DBG_WARP_ARM
+                 STA.l DBG_WARP_REQUEST
+                 STA.l DBG_WARP_ARM
     JMP .done
 .check_arm
   LDA.l DBG_WARP_ARM : CMP.b #!DBG_WARP_ARM_MAGIC : BEQ .check_status
     LDA.b #$05 : STA.l DBG_WARP_ERROR  ; Error 5 = not armed
     LDA.b #$00 : STA.l DBG_WARP_STATUS
-    LDA.b #$00 : STA.l DBG_WARP_REQUEST
-    LDA.b #$00 : STA.l DBG_WARP_ARM
+                 STA.l DBG_WARP_REQUEST
+                 STA.l DBG_WARP_ARM
     JMP .done
 .check_status
   LDA.l DBG_WARP_STATUS : CMP.b #!DBG_WARP_STATUS_ARMED : BEQ .has_request
     LDA.b #$06 : STA.l DBG_WARP_ERROR  ; Error 6 = not armed (status)
     LDA.b #$00 : STA.l DBG_WARP_STATUS
-    LDA.b #$00 : STA.l DBG_WARP_REQUEST
-    LDA.b #$00 : STA.l DBG_WARP_ARM
+                 STA.l DBG_WARP_REQUEST
+                 STA.l DBG_WARP_ARM
     JMP .done
 .has_request
-  LDA.b #$00 : STA.l DBG_WARP_ARM
+  ; Only allow warps in safe playable modes:
+  ; $07 = Underworld, $09 = Overworld, $0B = Special Overworld
+  LDA.l MODE : CMP.b #$09 : BEQ .mode_ok
+               CMP.b #$0B : BEQ .mode_ok
+               CMP.b #$07 : BEQ .mode_ok
+    LDA.b #$01 : STA.l DBG_WARP_ERROR  ; Error 1 = unsafe mode
+    LDA.b #$00 : STA.l DBG_WARP_REQUEST
+                 STA.l DBG_WARP_ARM
+    JMP .done
 
-  ; Only allow warps in safe game modes
-  ; 0x09 = Overworld normal play, 0x07 = Dungeon normal play
-  LDA.l MODE : CMP.b #$09 : BEQ .mode_ok_ow
-               CMP.b #$07 : BEQ .mode_ok_uw
-  ; Wrong mode - set error and clear request
-  LDA.b #$01 : STA.l DBG_WARP_ERROR
-  LDA.b #$00 : STA.l DBG_WARP_REQUEST
-  JMP .done
-
-.mode_ok_uw
-  ; Dungeon room warps not yet supported - too complex without proper setup
-  ; Return error code 2
-  LDA.b #$02 : STA.l DBG_WARP_ERROR
-  LDA.b #$00 : STA.l DBG_WARP_REQUEST
-  JMP .done
-
-.mode_ok_ow
-  ; Only allow in submode 0x00 (player control)
+.mode_ok
+  ; Only trigger when player has control (SUBMODE == $00)
   LDA.l SUBMODE : BEQ .submode_ok
-  JMP .busy
-.submode_ok
+    JMP .done ; Busy — leave request & arm intact for next frame
 
-  ; Mark warp in progress
+.submode_ok
+  LDA.b #$00 : STA.l DBG_WARP_ARM
   LDA.b #$02 : STA.l DBG_WARP_STATUS
 
-  ; Check if this is a same-area warp (just repositioning)
-  ; or a cross-area warp (needs full transition)
-  LDA.l DBG_WARP_REQUEST : CMP.b #$02 : BEQ .same_area_warp
+  LDA.l DBG_WARP_REQUEST
+  CMP.b #$02 : BNE + : JMP .same_area_warp : +
+  CMP.b #$03 : BNE + : JMP .dungeon_fall_warp : +
 
-  ; Cross-area warp: Check if cross-world BEFORE modifying OWSCR
-  ; (LW 0x00-3F, DW 0x40-7F, SW 0x80+)
-  LDA.l OWSCR            ; Current area (not yet modified)
-  AND.b #$40             ; Get world bit (0=LW, $40=DW)
-  STA.l $00              ; Temp store
-  LDA.l DBG_WARP_AREA    ; Target area
-  AND.b #$40
-  CMP.l $00              ; Same world?
-  BEQ .same_world_warp
+  ; --- Request $01: Overworld / Special Overworld area warp ---
+  LDA.l DBG_WARP_AREA : CMP.b #$C0 : BCC .area_valid
+    LDA.b #$07 : STA.l DBG_WARP_ERROR  ; Error 7 = invalid area (>= $C0)
+    LDA.b #$00 : STA.l DBG_WARP_STATUS
+                 STA.l DBG_WARP_REQUEST
+    JMP .done
 
-  ; Cross-world warp detected - error out
-  ; User must mirror warp first, then warp within that world
-  LDA.b #$03 : STA.l DBG_WARP_ERROR  ; Error 3 = cross-world warp
-  LDA.b #$00 : STA.l DBG_WARP_REQUEST
-  JMP .done
+.area_valid
+  ; Fast mosaic path only for same-world LW/DW -> LW/DW while already in Mode $09.
+  ; Special Overworld ($80-$BF), cross-world (LW<->DW), Mode $0B, and Mode $07
+  ; all use the native $7EC140 cached-exit Module $08 loader below.
+  LDA.l MODE : CMP.b #$09 : BNE .cached_exit_warp
+  LDA.l OWSCR : CMP.b #$80 : BCS .cached_exit_warp
+  LDA.l DBG_WARP_AREA : CMP.b #$80 : BCS .cached_exit_warp
+  EOR.l OWSCR : AND.b #$40 : BNE .cached_exit_warp
 
-.same_world_warp
-  ; Now safe to set target area
+  ; Same-world LW/DW mosaic transition
   LDA.l DBG_WARP_AREA
-  STA.l OWSCR           ; $7E008A - current area
-  STA.l OWSCR2          ; $7E040A - area copy
+  STA.l OWSCR           ; $7E008A
+  STA.l OWSCR2          ; $7E040A
 
-  ; Set Link's position
   REP #$20
-  LDA.l DBG_WARP_X_LO   ; 16-bit load (X_LO + X_HI)
-  STA.l POSX            ; $7E0022
-  LDA.l DBG_WARP_Y_LO   ; 16-bit load (Y_LO + Y_HI)
-  STA.l POSY            ; $7E0020
+  LDA.l DBG_WARP_X_LO : STA.l POSX
+  LDA.l DBG_WARP_Y_LO : STA.l POSY
   SEP #$20
-  ; Cross-area warp (same world): Use SUBMODE 0x24 (StartMosaicTransition) which chains:
-  ; 0x24 -> 0x25 -> 0x26 (LoadAuxGFX) -> 0x27 (TriggerTilemapUpdate)
-  ;      -> 0x28 (LoadAndBuildScreen) -> 0x29 (FadeBackInFromMosaic)
-  ; This stays in Mode 0x09 and reloads based on $8A (already set above)
 
-  ; Set outdoor flag (we're warping to overworld)
   LDA.b #$00 : STA.l $7E001B   ; INDOORS = 0
-
-  ; Initialize the mosaic effect for transition
-  LDA.b #$07 : STA.l $7E0095   ; Start mosaic at max intensity
-              STA.l $7EC011   ; Mosaic cache
-
-  ; Clear scroll lock
-  LDA.b #$00 : STA.l $7E011A   ; Clear scroll lock low
-              STA.l $7E011B   ; Clear scroll lock high
-
-  ; Set submodule to StartMosaicTransition
-  ; Mode stays at 0x09 (Overworld), submode drives the reload
-  LDA.b #$24 : STA.l SUBMODE
-
-  ; Set flag to trigger post-warp GFX reload when transition completes
+  LDA.b #$07 : STA.l $7E0095   ; Mosaic intensity
+               STA.l $7EC011   ; Mosaic cache
+  LDA.b #$00 : STA.l $7E011A   ; Clear scroll lock
+               STA.l $7E011B
+  LDA.b #$24 : STA.l SUBMODE   ; StartMosaicTransition
   LDA.b #$01 : STA.l DBG_WARP_GFX_PENDING
-
-  ; Mark warp in progress (will be set to complete after GFX reload)
   LDA.b #$02 : STA.l DBG_WARP_STATUS
   LDA.b #$00 : STA.l DBG_WARP_ERROR
-              STA.l DBG_WARP_REQUEST
+               STA.l DBG_WARP_REQUEST
+  JMP .done
+
+.cached_exit_warp
+  ; Synthesize a full native $32-byte exit cache at $7EC140-$7EC171 and
+  ; load via Module $08 ($02E5D4), matching GoronCheckpoint / SpecialSoaring / Boat.
+  ; Preserve zero-page scratch $00-$05 on stack.
+  REP #$20
+  LDA.b $00 : PHA
+  LDA.b $02 : PHA
+  LDA.b $04 : PHA
+
+  ; Set target area in $8A so NewOverworld_SetCameraBounds populates $0600-$0617
+  SEP #$20
+  LDA.l DBG_WARP_AREA : STA.b $8A : STA.w $040A
+  REP #$20
+  SEP #$10
+  JSL NewOverworld_SetCameraBounds ; M16/X8 -> populates $0600..$0607, $0610..$0617
+
+  ; Load target Link X ($04) and Link Y ($02); if both 0, pick safe interior ($0604+$80, $0600+$A0)
+  LDA.l DBG_WARP_X_LO : STA.b $04
+  LDA.l DBG_WARP_Y_LO : STA.b $02
+  ORA.b $04 : BNE .have_xy
+    LDA.w $0604 : CLC : ADC.w #$0080 : STA.b $04
+    LDA.w $0600 : CLC : ADC.w #$00A0 : STA.b $02
+.have_xy
+
+  ; Write Area ($C140, $C14C) and main/subscreen ($C142 = $0016)
+  LDA.l DBG_WARP_AREA : AND.w #$00FF
+  STA.w $C140
+  STA.w $C14C
+  LDA.w #$0016 : STA.w $C142
+
+  ; Write Link Y ($C148) and Link X ($C14A)
+  LDA.b $02 : STA.w $C148
+  LDA.b $04 : STA.w $C14A
+
+  ; Camera trigger Y ($C150 = LinkY + $1F) and X ($C152 = LinkX + $07)
+  LDA.b $02 : CLC : ADC.w #$001F : STA.w $C150
+  LDA.b $04 : CLC : ADC.w #$0007 : STA.w $C152
+
+  ; ScrollY = clamp(LinkY - $0050, $0600, $0602) -> $C144 & $00
+  LDA.b $02 : SEC : SBC.w #$0050 : BCC .clamp_sy_lo
+  CMP.w $0600 : BCC .clamp_sy_lo
+  CMP.w $0602 : BCC .sy_ok
+  LDA.w $0602 : BRA .sy_ok
+.clamp_sy_lo
+  LDA.w $0600
+.sy_ok
+  STA.w $C144
+  STA.b $00
+
+  ; ScrollX = clamp(LinkX - $0078, $0604, $0606) -> $C146 & $02
+  LDA.b $04 : SEC : SBC.w #$0078 : BCC .clamp_sx_lo
+  CMP.w $0604 : BCC .clamp_sx_lo
+  CMP.w $0606 : BCC .sx_ok
+  LDA.w $0606 : BRA .sx_ok
+.clamp_sx_lo
+  LDA.w $0604
+.sx_ok
+  STA.w $C146
+  STA.b $02
+
+  ; TilemapOrigin ($C14E) = (((ScrollY - $0600) & $FFF0) << 3) | (((ScrollX - $0604) & $FFF0) >> 3)
+  LDA.b $00 : SEC : SBC.w $0600 : AND.w #$FFF0 : ASL #3 : STA.b $00
+  LDA.b $02 : SEC : SBC.w $0604 : AND.w #$FFF0 : LSR #3 : ORA.b $00
+  STA.w $C14E
+
+  ; Copy camera bounds $0600-$0606 -> $C154-$C15A and $0610-$0616 -> $C15C-$C162
+  LDA.w $0600 : STA.w $C154
+  LDA.w $0602 : STA.w $C156
+  LDA.w $0604 : STA.w $C158
+  LDA.w $0606 : STA.w $C15A
+  LDA.w $0610 : STA.w $C15C
+  LDA.w $0612 : STA.w $C15E
+  LDA.w $0614 : STA.w $C160
+  LDA.w $0616 : STA.w $C162
+
+  ; GFX cache words ($C164: $0AA1=$21 DW / $20 LW+SW; $C166 overwritten by loader)
+  SEP #$20
+  LDA.l DBG_WARP_AREA : CMP.b #$40 : BCC .gfx_lw_sw
+  CMP.b #$80 : BCS .gfx_lw_sw
+    REP #$20 : LDA.w #$2100 : BRA .store_gfx
+.gfx_lw_sw
+  REP #$20 : LDA.w #$2000
+.store_gfx
+  STA.w $C164
+  STZ.w $C166
+
+  ; Fresh scroll modifiers ($C168-$C171 = 5 zero words)
+  STZ.w $C168 : STZ.w $C16A : STZ.w $C16C : STZ.w $C16E : STZ.w $C170
+
+  ; Trigger native cached-exit load via synthetic cache room !GoronCheckpoint_CacheRoom
+  STZ.w $0696 : STZ.w $0698
+  LDA.w #!GoronCheckpoint_CacheRoom : STA.b $A0
+  STZ.w $010A : STZ.w $04AA
+  STZ.w $0FFF
+
+  ; Restore zero-page scratch $00-$05 before switching to 8-bit
+  PLA : STA.b $04
+  PLA : STA.b $02
+  PLA : STA.b $00
+
+  SEP #$20
+  ; SavedWorld ($7EF3CA): $40 for Dark World ($40-$7F), $00 for LW ($00-$3F) & SW ($80-$BF)
+  LDA.l DBG_WARP_AREA : CMP.b #$40 : BCC .sw_zero
+  CMP.b #$80 : BCS .sw_zero
+    LDA.b #$40 : BRA .set_world
+.sw_zero
+  LDA.b #$00
+.set_world
+  STA.l SavedWorld
+
+  STZ.w $03F0 : STZ.b $3A
+  STZ.w $0300 : STZ.w $0301 : STZ.w $037A
+  STZ.b $5D : STZ.w $03EF : STZ.w $02E4
+  STZ.b $B0 : STZ.b $11
+  LDA.b #$80 : STA.b $13
+  STZ.b $9B
+  LDA.b #$08 : STA.b $10 ; Module $08: LoadOverworldFromUnderworld
+
+  LDA.b #$02 : STA.l DBG_WARP_GFX_PENDING
+  LDA.b #$02 : STA.l DBG_WARP_STATUS
+  LDA.b #$00 : STA.l DBG_WARP_ERROR
+               STA.l DBG_WARP_REQUEST
   JMP .done
 
 .same_area_warp
-  ; Same-area warp: just move Link, no transition needed
-  ; Set Link's position
+  ; Same-area reposition (valid in Mode $07, $09, $0B)
   REP #$20
-  LDA.l DBG_WARP_X_LO
-  STA.l POSX
-  LDA.l DBG_WARP_Y_LO
-  STA.l POSY
+  LDA.l DBG_WARP_X_LO : STA.l POSX
+  LDA.l DBG_WARP_Y_LO : STA.l POSY
   SEP #$20
-  ; Mark complete immediately
   LDA.b #$03 : STA.l DBG_WARP_STATUS
   LDA.b #$00 : STA.l DBG_WARP_ERROR
-              STA.l DBG_WARP_REQUEST
+               STA.l DBG_WARP_REQUEST
   JMP .done
 
-.busy
-  ; Game is busy with another transition, don't interfere
-  ; Leave request pending, it will be processed next frame
-  JMP .done
+.dungeon_fall_warp
+  ; Request $03: Dungeon room fall via native Submode $15 (requires Mode $07)
+  LDA.l MODE : CMP.b #$07 : BEQ .fall_mode_ok
+    LDA.b #$02 : STA.l DBG_WARP_ERROR ; Error 2 = room fall requires Mode $07
+    LDA.b #$00 : STA.l DBG_WARP_STATUS
+                 STA.l DBG_WARP_REQUEST
+    JMP .done
+.fall_mode_ok
+  LDA.b $A0 : STA.b $A2
+  LDA.l DBG_WARP_ROOM_LO : STA.b $A0
+  LDA.l DBG_WARP_ROOM_HI : STA.b $A1
+  LDA.b #$20 : STA.b $5C ; Fall animation timer
+  LDA.b #$01 : STA.b $5D ; Falling state
+  STZ.b $EE              ; Reset to floor layer 0
+  LDA.b #$15 : STA.b $11 ; Submode $15: pit/fall room transition
+  LDA.b #$03 : STA.l DBG_WARP_GFX_PENDING
+  LDA.b #$02 : STA.l DBG_WARP_STATUS
+  LDA.b #$00 : STA.l DBG_WARP_ERROR
+               STA.l DBG_WARP_REQUEST
 
 .done
-  PLY
-  PLX
-  PLA
+  PLB
+  REP #$30
+  PLY : PLX : PLA
   PLP
   RTL
 }
 
 ; ==============================================================================
 ; WarpPostTransitionCheck
-; ==============================================================================
-; Called every frame to check if a warp transition has completed.
-; When the transition finishes (SUBMODE returns to 0) and GFX_PENDING is set,
-; this routine reloads the camera scroll and custom GFX for the new area.
 ; ==============================================================================
 WarpPostTransitionCheck:
 {
@@ -532,29 +645,41 @@ WarpPostTransitionCheck:
 
   SEP #$30
 
-  ; Check if GFX reload is pending
   LDA.l DBG_WARP_GFX_PENDING : BEQ .done
   ; Ignore stale pending flag unless a warp is actively in progress
-  LDA.l DBG_WARP_STATUS : CMP.b #$02 : BEQ .check_mode
+  LDA.l DBG_WARP_STATUS : CMP.b #$02 : BEQ .dispatch
     LDA.b #$00 : STA.l DBG_WARP_GFX_PENDING
     JMP .done
-.check_mode
 
-  ; Check if we're in overworld mode
+.dispatch
+  LDA.l DBG_WARP_GFX_PENDING
+  CMP.b #$01 : BEQ .check_mosaic
+  CMP.b #$02 : BEQ .check_cached_exit
+  CMP.b #$03 : BEQ .check_dungeon_fall
+  LDA.b #$00 : STA.l DBG_WARP_GFX_PENDING
+  JMP .done
+
+.check_mosaic
   LDA.l MODE : CMP.b #$09 : BNE .done
+  LDA.l SUBMODE : BNE .done
+  JSL LostWoods_RecalculateScroll
+  JSL CheckForChangeGraphicsNormalLoadBoat
+  BRA .complete
 
-  ; Check if transition has completed (SUBMODE back to 0)
+.check_cached_exit
+  LDA.l MODE : CMP.b #$09 : BEQ .cached_sub
+               CMP.b #$0B : BNE .done
+.cached_sub
+  LDA.l SUBMODE : BNE .done
+  ; Wait until Module $08 fade-in completes (INIDISP mirror $13 == $0F)
+  LDA.l $7E0013 : CMP.b #$0F : BNE .done
+  BRA .complete
+
+.check_dungeon_fall
+  LDA.l MODE : CMP.b #$07 : BNE .done
   LDA.l SUBMODE : BNE .done
 
-  ; Transition complete - recalculate camera scroll based on Link's position
-  ; This fixes the camera drift issue from the warp
-  JSL LostWoods_RecalculateScroll
-
-  ; Load custom Oracle GFX for the new area (e.g., boat graphics for area 0x30)
-  ; CheckForChangeGraphicsNormalLoadBoat is in custom_gfx.asm (same namespace)
-  JSL CheckForChangeGraphicsNormalLoadBoat
-
-  ; Clear the pending flag and mark warp complete
+.complete
   LDA.b #$00 : STA.l DBG_WARP_GFX_PENDING
   LDA.b #$03 : STA.l DBG_WARP_STATUS
 
@@ -567,3 +692,5 @@ WarpPostTransitionCheck:
 }
 
 endif ; !DEBUG_WARP
+
+assert pc() <= $3CC000, "Util/item_cheat.asm exceeded Bank $3C debug allocation ($3CC000)"

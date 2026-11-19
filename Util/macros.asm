@@ -127,6 +127,11 @@ endif
 ; Lyra temple Zora: Sea Zora $B8 on $90 draws the E7 River Zora front.
 ; Needs ENABLE_D4_ZORA_REDESIGN and sprite set $8E on $90 (Sprites/NPCs/lyra_temple_zora.asm).
 !ENABLE_LYRA_TEMPLE_ZORA            = 0
+; Dev/beta testing harness in Bank $3C (Util/item_cheat.asm): non-destructive
+; L+R+X kit grant, runtime cache reinit, and WarpDispatcher (including Special
+; Overworld $80-$BF cached-exit load and dungeon room fall). Default off so
+; shipping ROM bytes are unchanged; opt in with --enable ENABLE_DEBUG_TOOLS.
+!ENABLE_DEBUG_TOOLS                 = 0
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.

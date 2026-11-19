@@ -174,7 +174,9 @@ namespace Oracle
     incsrc "Sprites/NPCs/dream_entry_fx.asm"
   endif
 
-  ; incsrc "Util/item_cheat.asm"  ; DISABLED FOR TESTING
+  if !ENABLE_DEBUG_TOOLS == 1
+    incsrc "Util/item_cheat.asm"
+  endif
 
   if !DISABLE_PATCHES == 0
     incsrc "Core/patches.asm"

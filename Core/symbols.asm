@@ -253,6 +253,28 @@ DreamPower_WakeLine  = $7FF37A ; word: !DreamPower_WakeLive = Maple says D2.06 i
 ; vanilla-free UNUSED_7FF180 block: the boss frame load meter and earthquake.
 ; BossDirector (Sprites/Bosses/boss_director.asm) uses $7FF388-$7FF39D after
 ; it: the boss attack token, rest, hit grace, cooldowns and 8 boss bytes.
+; Attract storybook (Core/Cutscene/attract_storybook.asm) uses $7FF3A0-$7FF3AF.
+;
+; Debug tools mailbox (!ENABLE_DEBUG_TOOLS, Util/item_cheat.asm): WRAM
+; $7FF3C0-$7FF3CF (reserved block $7FF3C0-$7FF3DF before 2P PoC $7FF400).
+; Relocated from legacy $7E0730-$7E075F which overlapped minecart track tables.
+DBG_REINIT_FLAGS      = $7FF3C0 ; bitfield: 01 dialog, 02 sprites, 04 overlays, 08 msgbank, 10 roomcache
+DBG_REINIT_STATUS     = $7FF3C1 ; completed bits
+DBG_REINIT_ERROR      = $7FF3C2 ; failed bits
+DBG_REINIT_LAST       = $7FF3C3 ; last bit executed
+DBG_WARP_REQUEST      = $7FF3C4 ; 0=idle, 1=overworld/special warp, 2=same-area xy, 3=dungeon room fall
+DBG_WARP_AREA         = $7FF3C5 ; target overworld/special area ($00-$BF)
+DBG_WARP_X_LO         = $7FF3C6 ; target Link X (16-bit LE)
+DBG_WARP_X_HI         = $7FF3C7
+DBG_WARP_Y_LO         = $7FF3C8 ; target Link Y (16-bit LE)
+DBG_WARP_Y_HI         = $7FF3C9
+DBG_WARP_STATUS       = $7FF3CA ; $5A=armed, 2=in progress, 3=complete
+DBG_WARP_ERROR        = $7FF3CB ; 0=ok, 1=bad mode, 2=bad req/mode, 4=bad req, 5=unarmed, 6=bad status, 7=bad area
+DBG_WARP_GFX_PENDING  = $7FF3CC ; 0=none, 1=mosaic, 2=cached-exit, 3=dungeon fall
+DBG_WARP_ARM          = $7FF3CD ; write $A5 to arm
+DBG_WARP_ROOM_LO      = $7FF3CE ; target dungeon room ID (16-bit LE, req=3)
+DBG_WARP_ROOM_HI      = $7FF3CF
+assert DBG_WARP_ROOM_HI < $7FF400
 
 ; Current Song
 CurrentSong    = $030F

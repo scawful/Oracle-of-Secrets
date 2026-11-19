@@ -20,6 +20,9 @@ OWNED_REGIONS = (
     # Scene-only attract cast in zero padding of the custom-ASM bank.
     # The emitting source guards every input word and its exact 8 KiB end.
     ("Dungeons/attract_royal_graphics.asm", 0x1E4000, 0x1E5FFF),
+    # Opt-in debug/beta testing tools (!ENABLE_DEBUG_TOOLS = 0 by default).
+    # Bounded strictly below attract_royal_graphics ($3CC000 / 0x1E4000).
+    ("Util/item_cheat.asm", 0x1E262A, 0x1E3FFF),
     ("Overworld/ZSCustomOverworld.asm", 0x140000, 0x147FFF),
     # Managed native Build reseals only this existing 1 KiB directory.
     # The codec, compiled-output verifier and generated end assertion bound it.

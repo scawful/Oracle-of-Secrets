@@ -163,6 +163,9 @@ P2_Tick:
   LDA.l $00421B : STA.l P2_PadHi
   PLA
   PLP
+if !ENABLE_DEBUG_TOOLS == 1
+  JSL DebugTools_Tick
+endif
   JML !P2_FollowerMain
 .join_edge:
   PLA
@@ -182,6 +185,9 @@ P2_Tick:
   REP #$30
   PLY : PLX : PLA
   PLP
+if !ENABLE_DEBUG_TOOLS == 1
+  JSL DebugTools_Tick
+endif
   JML !P2_FollowerMain
 }
 
