@@ -263,19 +263,19 @@ def create_and_verify_bps(
 
 
 def _copy_working_tree_isolated(repo_root: Path, dest: Path) -> None:
-    """Copy repo working tree into an isolated /tmp build root without Roms/ or .git/."""
+    """Copy repo working tree into an isolated /tmp build root without Roms/, dot-dirs, or symlinks."""
     dest.mkdir(parents=True, exist_ok=True)
-    skip_dirs = {".git", "Roms", "Backups", "build", ".cache", "__pycache__", "node_modules"}
+    skip_dirs = {"Roms", "Backups", "build", "__pycache__", "node_modules"}
     for item in repo_root.iterdir():
-        if item.name in skip_dirs:
+        if item.name.startswith(".") or item.is_symlink() or item.name in skip_dirs:
             continue
         target = dest / item.name
         if item.is_dir():
             shutil.copytree(
                 item,
                 target,
-                symlinks=False,
-                ignore=shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store"),
+                symlinks=True,
+                ignore=shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store", ".context"),
             )
         elif item.is_file():
             shutil.copy2(item, target)
