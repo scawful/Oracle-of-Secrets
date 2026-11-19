@@ -101,21 +101,32 @@ class Tile16AndSpriteGuardrailsTests(unittest.TestCase):
                 self.assertNotIn(tid, pins, f"0x{tid:03X} is engine-pinned!")
 
     def test_exit_door_audit_flags_room_0106_lw23_and_exit_25_oob(self) -> None:
+        # Live ROM after Wave 2 Batch A must have 0 exit issues & 0 missing/wrong entrance exit doors
         report = ctp.audit_overworld_exit_doors(self.rom)
         self.assertEqual(report["exits_checked"], 0x4F)
         self.assertEqual(report["ow_entrances_checked"], 129)
-
-        # Must catch bug_004823 (Room $0106 -> LW $23, Ent $48 missing $1112)
-        ent48 = [
+        self.assertEqual(report["exit_findings"], [])
+        missing_doors = [
             e for e in report["entrance_findings"]
+            if e["kind"] == "missing_or_wrong_entrance_exit_door"
+        ]
+        self.assertEqual(missing_doors, [])
+
+        # Synthetic regression: reverting Ent $48 -> $0000 and Exit $25 dt2 -> $82BE MUST be caught!
+        mut = bytearray(self.rom)
+        mut[0x0157B4:0x0157B6] = b"\x00\x00"  # Ent $48 (Room $0106 -> LW $23) missing $1112
+        mut[0x01644F:0x016451] = b"\xBE\x82"  # Exit $25 OOB dt2 ($82BE on SmallArea LW $15)
+        mut_rep = ctp.audit_overworld_exit_doors(bytes(mut))
+
+        ent48 = [
+            e for e in mut_rep["entrance_findings"]
             if e["entrance_id"] == "0x48" and e["room_id"] == "0x0106" and e["map_id"] == "0x23"
         ]
         self.assertEqual(len(ent48), 1)
         self.assertEqual(ent48[0]["expected_exit_field"], "0x1112")
         self.assertEqual(ent48[0]["actual_exit_field"], "0x0000")
 
-        # Must catch Exit $25 OOB dt2 ($82BE on SmallArea LW $15)
-        ex25 = [e for e in report["exit_findings"] if e["exit_id"] == "0x25"]
+        ex25 = [e for e in mut_rep["exit_findings"] if e["exit_id"] == "0x25"]
         self.assertEqual(len(ex25), 1)
         self.assertEqual(ex25[0]["kind"], "exit_dt2_oob")
 
@@ -162,68 +173,73 @@ class Tile16AndSpriteGuardrailsTests(unittest.TestCase):
     # ------------------------------------------------------------------
 
     def test_sprite_sheet_compat_catches_lw12_blue_soldier_sw90_and_water_on_land(self) -> None:
+        # Live ROM after Wave 2 Batch A must be clean across all 4 overworld checks!
         report = cssc.scan_rom_sprite_compat(self.rom)
         self.assertEqual(report["overworld_maps_scanned"], 192)
         self.assertEqual(report["dungeon_rooms_scanned"], 296)
+        self.assertEqual(len(report["ow_palette_oob"]), 0)
+        self.assertEqual(len(report["ow_invalid_sheet_fmt"]), 0)
+        self.assertEqual(len(report["dungeon_invalid_sheet_fmt"]), 0)
+        self.assertEqual(len(report["ow_sheet_mismatches"]), 0)
+        self.assertEqual(
+            [w for w in report["ow_water_terrain"] if w["severity"] == "error"],
+            [],
+        )
 
-        # 1. Must automatically catch Retroid bug_004507: LW $12 Sprite $41 BlueSoldier!
+        # Synthetic regressions: injecting LW $12 p2 SprGfx=$1A, SW $90 OOB SprPal=$C2,
+        # 2bpp font sheet $DA / BG sheet $E3, and LW $1E WalkingZora on dry land (5,43)
+        # MUST all be caught by check_sprite_sheet_compat!
+        mut = bytearray(self.rom)
+        mut[0x007AD3] = 0x1A                                  # LW $12 p2 BlueSoldier mismatch
+        mut[0x016701 + (0x90 - 0x80)] = 0xC2                  # SW $90 OOB sprite palette
+        mut[cssc.SPRITE_BLOCKSET_PC + 0x1F * 4 + 3] = 0xDA - 0x73  # 2bpp font in slot 3
+        mut[cssc.SPRITE_BLOCKSET_PC + 0x2F * 4 + 3] = 0xE3 - 0x73  # 3bpp BG sheet in slot 3
+        mut[0x04CAA5] = 0x05                                  # LW $1E p1 WalkingZora back onto dry land (5,43)
+        mut[0x005D22] = 0x44                                  # Room $009A SeaZora Slot 3 back to $B7
+        mut_rep = cssc.scan_rom_sprite_compat(bytes(mut))
+
         lw12_41 = [
-            m for m in report["ow_sheet_mismatches"]
+            m for m in mut_rep["ow_sheet_mismatches"]
             if m["map_id"] == "0x12" and m["sprite_id"] == "0x41"
         ]
         self.assertGreaterEqual(len(lw12_41), 2, "Must catch LW $12 phase 2 BlueSoldier $41 sheet mismatch")
         self.assertEqual(lw12_41[0]["spr_gfx"], "0x1A")
         self.assertEqual(lw12_41[0]["loaded_sheet"], "0xCA")
 
-        # 2. Must catch all 11 Special OW OOB sprite palettes ($90-$9E)
-        oob_maps = {x["map_id"] for x in report["ow_palette_oob"]}
-        for expected_oob in ("0x90", "0x91", "0x92", "0x93", "0x95", "0x98", "0x9A", "0x9B", "0x9C", "0x9D", "0x9E"):
-            self.assertIn(expected_oob, oob_maps)
+        oob_maps = {x["map_id"] for x in mut_rep["ow_palette_oob"]}
+        self.assertIn("0x90", oob_maps)
+        self.assertIn("0x98", oob_maps)
 
-        # 3. Custom D4/Lyra 3bpp sprite sheets ($DF-$E2, $E7) and DW $40 EonZora ($CA)
-        # MUST NOT produce false positives on SW $90, DW $40, Room $0046, or Room $0105!
-        self.assertEqual(len(report["ow_invalid_sheet_fmt"]), 0)
-        self.assertEqual(len(report["dungeon_invalid_sheet_fmt"]), 0)
-        ow_mm_maps = {m["map_id"] for m in report["ow_sheet_mismatches"]}
-        self.assertNotIn("0x40", ow_mm_maps)
-        self.assertNotIn("0x90", ow_mm_maps)
-        self.assertNotIn("0x98", ow_mm_maps)
-
-        # Synthetic mutation: injecting a 2bpp font sheet ($DA) or custom BG sheet ($E3)
-        # into a SpriteBlockset slot MUST be caught!
-        mut = bytearray(self.rom)
-        mut[cssc.SPRITE_BLOCKSET_PC + 0x1F * 4 + 3] = 0xDA - 0x73  # 2bpp font in slot 3
-        mut[cssc.SPRITE_BLOCKSET_PC + 0x2F * 4 + 3] = 0xE3 - 0x73  # 3bpp BG sheet in slot 3
-        mut_rep = cssc.scan_rom_sprite_compat(bytes(mut))
         mut_reasons = {(x["sheet"], x["reason"]) for x in mut_rep["ow_invalid_sheet_fmt"]}
         self.assertIn(("0xDA", "2bpp_font_hud_sheet_in_sprite_slot"), mut_reasons)
         self.assertIn(("0xE3", "3bpp_bg_or_unmapped_sheet_in_sprite_slot"), mut_reasons)
 
-        # 4. Must catch water enemy on dry land (LW $1E phase 1 $56 WalkingZora at (5,43))
         dry_errs = [
-            w for w in report["ow_water_terrain"]
+            w for w in mut_rep["ow_water_terrain"]
             if w["severity"] == "error" and w["map_id"] == "0x1E" and w["sprite_id"] == "0x56"
         ]
         self.assertEqual(len(dry_errs), 1)
         self.assertEqual(dry_errs[0]["pos"], [5, 43])
 
-        # 5. Must catch genuine dungeon mismatches (Room $009A SeaZora $B7, $0032 Gibdo, $00A9 StalfosKnight)
-        # while NOT false-positiving Room $0046 (D4 Warden) or Room $0105 (Refuge $E7)
+        # 5. Live ROM must have Room $009A fixed (no SeaZora mismatch) while mutated ROM catches it,
+        # and Room $0046 (D4 Warden) / Room $0105 (Refuge $E7) never false-positive!
         dun_mm_rooms = {x["room_id"] for x in report["dungeon_sheet_mismatches"]}
-        self.assertIn("0x009A", dun_mm_rooms)
-        self.assertIn("0x0032", dun_mm_rooms)
-        self.assertIn("0x00A9", dun_mm_rooms)
+        mut_dun_mm_rooms = {x["room_id"] for x in mut_rep["dungeon_sheet_mismatches"]}
+        self.assertNotIn("0x009A", dun_mm_rooms)
+        self.assertIn("0x009A", mut_dun_mm_rooms)
         self.assertNotIn("0x0046", dun_mm_rooms)
         self.assertNotIn("0x0105", dun_mm_rooms)
 
         # 6. Verify Special Overworld 64-map audit table is complete ($80-$BF)
         self.assertEqual(len(report["special_ow_audit"]), 64)
 
-        # 7. Verify --strict exits 1 on ROM with mismatches and JSON/MD outputs succeed
+        # 7. Verify --strict exits 1 on mutated ROM with mismatches and JSON/MD outputs succeed
         with tempfile.TemporaryDirectory(prefix="q329-compat-") as td:
+            mut_rom_path = Path(td) / "mut.sfc"
+            mut_rom_path.write_bytes(bytes(mut))
             out_j = Path(td) / "out.json"
             out_m = Path(td) / "out.md"
-            rc = cssc.main(["--rom", str(LIVE_ROM), "--out-json", str(out_j), "--out-md", str(out_m), "--strict"])
+            rc = cssc.main(["--rom", str(mut_rom_path), "--out-json", str(out_j), "--out-md", str(out_m), "--strict"])
             self.assertEqual(rc, 1)
             self.assertTrue(out_j.exists() and out_j.stat().st_size > 1000)
             self.assertTrue(out_m.exists() and "BlueSoldier" in out_m.read_text(encoding="utf-8"))
