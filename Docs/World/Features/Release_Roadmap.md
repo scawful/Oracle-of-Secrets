@@ -222,7 +222,7 @@ Prioritize AFTER Kydrog complete:
 
 ### 5.4 Sprite Quality Pass
 
-- [ ] Goriya: Add chase and head detection animation (`goriya.asm:163`)
+- [x] Goriya: Add chase and head detection animation (`goriya.asm`)
 - [ ] Darknut: Setup parrying sword gfx (`darknut.asm:70`)
 - [ ] General AI/behavior polish pass
 

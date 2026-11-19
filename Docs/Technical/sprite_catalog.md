@@ -70,7 +70,7 @@ This document catalogs all custom sprites, their technical status, and known iss
 | **Custom Guard** | 🔲 Placeholder | Castle prison | TBD | For story sequence |
 | **Darknut** | ⚠️ Needs Work | Dungeons | Custom | Alert via damage only; probe doesn't signal parent |
 | **Eon Scrub** | ✅ Done | Eon Abyss | 8-bit variant | Merge candidate with Business Scrub |
-| **Goriya** | ⚠️ Needs Polish | Various | Custom | Sluggish boomerang/AI |
+| **Goriya** | ✅ Done | Various | Custom | Chase/detection AI, two-phase boomerang return/catch, alternate Red/Blue/Sand palettes |
 | **Helmet Chuchu** | ✅ Done | Dungeons | Custom | Hookshot removes helmet, good design |
 | **Keese** | ⚠️ Mostly Done | Various | Vanilla base | Fire/ice variants uncertain, shares handler with Vampire Bat |
 | **Leever** | ✅ Needs Review | Desert/beach | Vanilla base | Collision handling may need review |

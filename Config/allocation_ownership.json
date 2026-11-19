@@ -20,7 +20,7 @@
     "shared:Masks/mask_routines.asm": {
       "source_set": "shared",
       "path": "Masks/mask_routines.asm",
-      "sha256": "200b464b597cb866a85801b7cd017d5d965d1848b97fe75dda6a635e82ce0854"
+      "sha256": "de041b9fd6da3b5bada06777a197a616ec16f72910b913a262f2703d8f1108bc"
     },
     "vanilla:bank_02.asm": {
       "source_set": "vanilla",
@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "fdffdfa36489d792f95af1530c989f5141a683e297f709f74b3656d8c21febb6"
+      "sha256": "c21e90c2a328128c789319e8a40d57a0fafbaf7b5bbbae62ebd9dd27ad5773d4"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "2b890e1c339466f7bdb05979fc72eeebfee87cb31ede8c05197fc5235a6506b8"
+      "sha256": "a98cf6204c8d0003713e90c9785dbec280ec5953be192e893104199f4a14e488"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -145,7 +145,7 @@
     "shared:Sprites/Players/player2.asm": {
       "source_set": "shared",
       "path": "Sprites/Players/player2.asm",
-      "sha256": "34fe62af31ef5442f6cc19242b8db086d52cd58b08582714bbcfc16896bd6a70"
+      "sha256": "b871805858a405ff5d132403bc494487963617dee82dd33ea5c2467050478ec4"
     },
     "shared:Items/ice_rod.asm": {
       "source_set": "shared",
@@ -170,7 +170,7 @@
     "shared:Core/symbols.asm": {
       "source_set": "shared",
       "path": "Core/symbols.asm",
-      "sha256": "ac4fd424b2bab901adc284164e8ea171c5970b150613b09318b46207a60f4d06"
+      "sha256": "0b50f804bbf41d7faa2a3ff34b0d915c821ef992c2dc968599c05c89052d1712"
     },
     "shared:Masks/wolf_mask.asm": {
       "source_set": "shared",
@@ -215,7 +215,7 @@
     "shared:Oracle_main.asm": {
       "source_set": "shared",
       "path": "Oracle_main.asm",
-      "sha256": "44586665dfacc3916c97b16d2720b1995adac3e637da1330171ad20ad1741638"
+      "sha256": "5d866bb30c7569d89e34d3cd156227238ffb6e59da2fef9c5200718a3fb479c1"
     },
     "shared:Scripts/Build/special_overworld_resident_abi.py": {
       "source_set": "shared",
@@ -265,7 +265,7 @@
     "shared:Sprites/all_sprites.asm": {
       "source_set": "shared",
       "path": "Sprites/all_sprites.asm",
-      "sha256": "319a9c98669a3c5b82fc03dcbc4003079ce2810c99c4bd375acdf5278d8b55f2"
+      "sha256": "512ad84e26699bbe273353c6c50738ed34da4235ee024c94f0412182a5ae9bf9"
     },
     "shared:Sprites/NPCs/eon_owl.asm": {
       "source_set": "shared",
@@ -345,7 +345,7 @@
     "shared:Masks/horse_form.asm": {
       "source_set": "shared",
       "path": "Masks/horse_form.asm",
-      "sha256": "884721a5b08c329efc3527a29993d4ca66a5c1fd93bf9c6b2b68b9f6f5508daa"
+      "sha256": "6b1fcf51c9d16a6562929c1deef0d3efc15a65e912872a287f82db09a70b78c4"
     },
     "shared:Sprites/NPCs/horse.asm": {
       "source_set": "shared",
@@ -355,17 +355,17 @@
     "shared:Masks/horse_sparse_runtime.asm": {
       "source_set": "shared",
       "path": "Masks/horse_sparse_runtime.asm",
-      "sha256": "7fd14388d6e0c831c35bd2f9ede98df99011bf5b5a101a0b58d943143e977b80"
+      "sha256": "a4f829ec3cd0a9496e346509e3e52a01833951ce4f6440e565f55cebb4e4429a"
     },
     "shared:Masks/mask_binding.asm": {
       "source_set": "shared",
       "path": "Masks/mask_binding.asm",
-      "sha256": "31c5b1157754491b3e8f23e55002b98c9c64878f31445f6c63d595a17ad9028c"
+      "sha256": "ef847bb3f21ec82d1746cf5ceff2102cf64c09be5f76e25bb20e3a8bb85d943e"
     },
     "shared:Overworld/entrances.asm": {
       "source_set": "shared",
       "path": "Overworld/entrances.asm",
-      "sha256": "aeff701bf706273bbd30900457a77eaf5ac55349ce11baded3c9493e4c8fae18"
+      "sha256": "dd89c03e9601eb9bbffb167d68fe8f1aa3de1233d448188b6edc4b4eb0b57c12"
     },
     "shared:Masks/horse_ground_clearance.asm": {
       "source_set": "shared",

@@ -3,7 +3,7 @@
 ; =========================================================
 
 !SPRID              = Sprite_DekuLeaf
-!NbrTiles           = 00  ; Number of tiles used in a frame
+!NbrTiles           = 03  ; OAM slots - 1: 4 tiles (16 bytes)
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -35,12 +35,12 @@
 Sprite_DekuLeaf_Long:
 {
   PHB : PHK : PLB
-  LDA $8A : CMP.b #$3D : BEQ .whirlpool
+  LDA.b $8A : CMP.b #$3D : BEQ .whirlpool
     JSR Sprite_DekuLeaf_Draw
-    JMP +
+    BRA .run_main
   .whirlpool
-  JSR Sprite_Whirlpool_Draw
-  +
+    JSR Sprite_Whirlpool_Draw
+  .run_main
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     JSR Sprite_DekuLeaf_Main
   .SpriteIsNotActive
@@ -51,7 +51,7 @@ Sprite_DekuLeaf_Long:
 Sprite_DekuLeaf_Prep:
 {
   PHB : PHK : PLB
-  LDA $8A : CMP.b #$3D : BNE .not_whirlpool
+  LDA.b $8A : CMP.b #$3D : BNE .not_whirlpool
     LDA.b #$01 : STA.w SprAction, X
   .not_whirlpool
   PLB
@@ -87,12 +87,12 @@ Sprite_DekuLeaf_Main:
     %PlayAnimation(0, 2, 10)
     JSR CheckIfPlayerIsOn : BCC .not_on
 
-    LDA $0AAB : BEQ .not_on
+    LDA.w $0AAB : BEQ .not_on
 
-      STZ $55    ; Reset cape flag
-      STZ $0AAB  ; Reset underwater flag
-      STZ $0351  ; Reset ripple flag
-      STZ $037B  ; Reset invincibility flag
+      STZ.b $55    ; Reset cape flag
+      STZ.w $0AAB  ; Reset underwater flag
+      STZ.w $0351  ; Reset ripple flag
+      STZ.w $037B  ; Reset invincibility flag
       ; Reset the mask with its sprite bank and palette. STZ $02B2 alone left
       ; the Zora Mask palette on Link's sprite (Discord 2025-01-01).
       LDA.w $02B2 : BEQ +
@@ -126,148 +126,102 @@ Sprite_DekuLeaf_Main:
 
 Sprite_DekuLeaf_Draw:
 {
-  JSL Sprite_PrepOamCoord
-  LDA #$10
-  JSL OAM_AllocateFromRegionB
-
-  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
-  LDA .start_index, Y : STA $06
-
-  PHX
-  LDX .nbr_of_tiles, Y ;amount of tiles -1
-  LDY.b #$00
-  .nextTile
-
-  PHX ; Save current Tile Index?
-
-  TXA : CLC : ADC $06 ; Add Animation Index Offset
-
-  PHA ; Keep the value with animation index offset?
-
-  ASL A : TAX
-
-  REP #$20
-
-  LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E
-  INY
-  LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
-  CLC : ADC #$0010 : CMP.w #$0100
-  SEP #$20
-  BCC .on_screen_y
-
-  LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-  STA $0E
-  .on_screen_y
-
-  PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
-  INY
-  LDA .chr, X : STA ($90), Y
-  INY
-  LDA .properties, X : STA ($90), Y
-
-  PHY
-
-  TYA : LSR #2 : TAY
-
-  LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-
-  PLY : INY
-
-  PLX : DEX : BPL .nextTile
-
-  PLX
-
-  RTS
-
-.start_index
-  db $00
-.nbr_of_tiles
-  db 3
-.x_offsets
-  dw -8, 8, 8, -8
-.y_offsets
-  dw 8, 8, -8, -8
-.chr
-  db $A0, $A2, $82, $80
-.properties
-  db $23, $23, $23, $23
+  LDA.b #$00
+  BRA DekuLeaf_DrawFrame
 }
-
 
 Sprite_Whirlpool_Draw:
 {
-  JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  LDA.w SprFrame, X : CMP.b #$03 : BCC +
+    LDA.b #$00
+  +
+  INC A
+}
 
-  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
-  LDA .start_index, Y : STA $06
+; Shared 4-tile Region B draw for Deku Leaf (frame 0) and Whirlpool (frames 1-3).
+; Keeps both flat water/surface sprites below Link and avoids !NbrTiles=0 OAM
+; overflow by explicitly requesting $10 bytes (4 OAM slots) after clipping.
+DekuLeaf_DrawFrame:
+{
+  PHA
+  JSL Sprite_PrepOamCoord : BCC .check_viewport
+    PLA
+    RTS
+  .check_viewport
+  REP #$20
+  LDA.b $00 : CLC : ADC.w #$0017 : CMP.w #$011F : BCS .clipped
+  LDA.b $02 : CLC : ADC.w #$0017 : CMP.w #$00FF : BCC .draw_on_screen
+  .clipped
+    SEP #$20
+    PLA
+    RTS
+  .draw_on_screen
+  SEP #$20
+  LDA.b #$10
+  JSL OAM_AllocateFromRegionB
+
+  PLY
+  LDA.w .start_index, Y : STA.b $06
 
   PHX
-  LDX .nbr_of_tiles, Y ;amount of tiles -1
+  LDX.w .nbr_of_tiles, Y ; amount of tiles - 1
   LDY.b #$00
   .nextTile
+    PHX
+    TXA : CLC : ADC.b $06
+    PHA
+    ASL A : TAX
 
-  PHX ; Save current Tile Index?
+    REP #$20
+    LDA.b $00 : CLC : ADC.w .x_offsets, X : STA ($90), Y
+    AND.w #$0100 : STA.b $0E
+    INY
+    LDA.b $02 : CLC : ADC.w .y_offsets, X : STA ($90), Y
+    CLC : ADC.w #$0010 : CMP.w #$0100
+    SEP #$20
+    BCC .on_screen_y
+      LDA.b #$F0 : STA ($90), Y ; Put the sprite out of the way
+      STA.b $0E
+    .on_screen_y
 
-  TXA : CLC : ADC $06 ; Add Animation Index Offset
+    PLX
+    INY
+    LDA.w .chr, X : STA ($90), Y
+    INY
+    LDA.w .properties, X : STA ($90), Y
 
-  PHA ; Keep the value with animation index offset?
+    PHY
+    TYA : LSR #2 : TAY
+    LDA.b #$02 : ORA.b $0F : STA ($92), Y ; store size in oam buffer
+    PLY : INY
 
-  ASL A : TAX
-
-  REP #$20
-
-  LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E
-  INY
-  LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
-  CLC : ADC #$0010 : CMP.w #$0100
-  SEP #$20
-  BCC .on_screen_y
-
-  LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-  STA $0E
-  .on_screen_y
-
-  PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
-  INY
-  LDA .chr, X : STA ($90), Y
-  INY
-  LDA .properties, X : STA ($90), Y
-
-  PHY
-
-  TYA : LSR #2 : TAY
-
-  LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-
-  PLY : INY
-
-  PLX : DEX : BPL .nextTile
-
+    PLX : DEX : BPL .nextTile
   PLX
-
   RTS
 
+  ; Frame 0: Deku Leaf; Frames 1-3: Whirlpool
   .start_index
-  db $00, $04, $08
+    db $00, $04, $08, $0C
   .nbr_of_tiles
-  db 3, 3, 3
+    db 3, 3, 3, 3
   .x_offsets
-  dw -8, 8, -8, 8
-  dw 8, -8, 8, -8
-  dw -8, 8, -8, 8
+    dw -8,  8,  8, -8
+    dw -8,  8, -8,  8
+    dw  8, -8,  8, -8
+    dw -8,  8, -8,  8
   .y_offsets
-  dw -8, -8, 8, 8
-  dw -8, -8, 8, 8
-  dw 8, 8, -8, -8
+    dw  8,  8, -8, -8
+    dw -8, -8,  8,  8
+    dw -8, -8,  8,  8
+    dw  8,  8, -8, -8
   .chr
-  db $C4, $C6, $E4, $E6
-  db $C4, $C6, $E4, $E6
-  db $C4, $C6, $E4, $E6
+    db $A0, $A2, $82, $80
+    db $C4, $C6, $E4, $E6
+    db $C4, $C6, $E4, $E6
+    db $C4, $C6, $E4, $E6
   .properties
-  db $29, $29, $29, $29
-  db $69, $69, $69, $69
-  db $A9, $A9, $A9, $A9
+    db $23, $23, $23, $23
+    db $29, $29, $29, $29
+    db $69, $69, $69, $69
+    db $A9, $A9, $A9, $A9
 }
