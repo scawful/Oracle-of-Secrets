@@ -18,11 +18,14 @@ with Asar and executes them on the LakeSnes 65816 CPU:
        $3D/$3E SW) across BlockGFXCheck, NewLoadTransAuxGFX, and LoadTransMainGFX.
      - BlockGFXCheck on FIELD $15 from Docks $30 reloads Slots 3, 4, 5, 6 and updates
        PriorSheets to [$3A,$3B,$3C,$3D,$51,$4E,$3E,$5B].
-     - NewLoadTransAuxGFX Whirlpool multi-frame re-entry ($11=#$2E, TransGFXModuleFrame!=0)
-       skips re-decompression, sets $04=0, preserves TransGFXModuleFrame, and keeps the
-       stack balanced (matching $00D66E caller PHB + own PHB).
-     - Whirlpool_LoadDestinationMap_Interupt ($02B490) clears TransGFXModuleFrame and
-       invalidates PriorSheets[3..6] to #$FE while preserving #$FF entries.
+     - NewLoadTransAuxGFX writes resolved aux sheets 3..6 to $7EC2F8..$7EC2FB
+       (LASTBGSET0..3) so Whirlpool $B0=12 ($02B4F4 -> JSL $00D788) reloads the
+       destination area's aux sheets instead of stale source/Docks sheets, and on
+       multi-frame re-entry ($11=#$2E, TransGFXModuleFrame!=0) skips re-decompression,
+       sets $04=0, preserves TransGFXModuleFrame, and keeps the stack balanced.
+     - Whirlpool_LoadDestinationMap_Interupt ($02B490) clears TransGFXModuleFrame
+       and AnimatedTileGFXSet ($0FC0) and unconditionally invalidates all 8
+       PriorSheets[0..7] to #$FE (including #$FF Docks/Special-OW cache markers).
   4. Whirlpool_ReloadSubscreenOverlay_Interupt ($02B47E):
      - Resets stale source R/G fixed-color mirrors ($9C=#$20, $9D=#$40).
      - When destination $8C == #$FF, populates $7F4000..$7F407F with safe BG1 tilemap
@@ -393,8 +396,18 @@ Oracle_DocksNormalLoad:
   INC.w $0F0C
   RTL
 
-; Pass-through mock for Docks sheet resolver (keeps sheet in A unchanged)
+; Authentic Docks/Special-OW cache-restore resolver mock:
+; when table sheet == #$FF, slot in 3..6, and PriorSheets[X] == #$FF, restores $7EC2F5,X.
 Oracle_DocksResolveTransitionSheet:
+  CMP.b #$FF : BNE .done
+  CPX.b #$03 : BCC .done
+  CPX.b #$07 : BCS .done
+  LDA.w TransGFXModule_PriorSheets, X : CMP.b #$FF : BEQ .restore
+    LDA.b #$FF
+    RTL
+  .restore
+  LDA.l $7EC2F5, X
+  .done
   RTL
 
 LoadTransAuxGFX_return = $00D673
@@ -661,6 +674,7 @@ class WhirlpoolGfxBackdropCompiledTests(unittest.TestCase):
 
     def test_new_load_trans_aux_gfx_whirlpool_guard_and_ff_resolution(self) -> None:
         # First Whirlpool frame (TransGFXModuleFrame == 0): decompresses resolved aux slots 3..6
+        # and synchronizes $7EC2F8..$7EC2FB (LASTBGSET0..3) with resolved destination sheets.
         f = self._fx()
         f.put(0x1B, 0x00)
         f.put(0x11, 0x2E)
@@ -668,13 +682,34 @@ class WhirlpoolGfxBackdropCompiledTests(unittest.TestCase):
         f.put(0x0CF3, 0x00)
         for idx, val in enumerate([0x3A, 0x3B, 0x3C, 0xE4, 0xE5, 0xE6, 0xE3, 0x5B]):
             f.put(0x04CB + idx, val)
+        for idx, val in enumerate([0xE4, 0xE5, 0xE6, 0xE3]):
+            f.put(0x7EC2F8 + idx, val)
 
         _call(f, "Test_CallNewLoadTransAuxGFX", m8=True, x8=True, db=0x00)
 
         self.assertEqual(f.get(0x04), 4)
         self.assertEqual(f.get(0x0F1A), 4)
         self.assertEqual([f.get(0x0F40 + i) for i in range(4)], [0x3D, 0x51, 0x4E, 0x3E])
+        self.assertEqual([f.get(0x7EC2F8 + i) for i in range(4)], [0x3D, 0x51, 0x4E, 0x3E])
         self.assertEqual(f.get(0x0F1E), 1)  # continued to sprite aux
+
+        # Even when PriorSheets already match destination (no decomp needed),
+        # NewLoadTransAuxGFX still repairs stale $7EC2F8..$7EC2FB so $00D788 stays synced.
+        f_sync = self._fx()
+        f_sync.put(0x1B, 0x00)
+        f_sync.put(0x11, 0x02)
+        f_sync.put(0x8A, 0x15)
+        f_sync.put(0x0CF3, 0x00)
+        for idx, val in enumerate([0x3A, 0x3B, 0x3C, 0x3D, 0x51, 0x4E, 0x3E, 0x5B]):
+            f_sync.put(0x04CB + idx, val)
+        for idx, val in enumerate([0x3D, 0x47, 0x48, 0x3E]):  # stale Loom Beach cache
+            f_sync.put(0x7EC2F8 + idx, val)
+
+        _call(f_sync, "Test_CallNewLoadTransAuxGFX", m8=True, x8=True, db=0x00)
+
+        self.assertEqual(f_sync.get(0x04), 0)
+        self.assertEqual(f_sync.get(0x0F1A), 0)
+        self.assertEqual([f_sync.get(0x7EC2F8 + i) for i in range(4)], [0x3D, 0x51, 0x4E, 0x3E])
 
         # Subsequent Whirlpool frame (TransGFXModuleFrame == 2): skips re-decomp & keeps frame!
         f2 = self._fx()
@@ -703,19 +738,73 @@ class WhirlpoolGfxBackdropCompiledTests(unittest.TestCase):
         self.assertEqual(f.get(0x0F1A), 1)
         self.assertEqual(f.get(0x0F40), 0x3A)
 
-    def test_whirlpool_load_destination_map_invalidates_aux_prior_sheets(self) -> None:
+    def test_whirlpool_load_destination_map_invalidates_all_prior_sheets_and_anim(self) -> None:
         f = self._fx()
         f.put(0x0CF3, 0x05)
-        # Include one #$FF entry in slot 5 to confirm #$FF is preserved while non-$FF -> #$FE
-        for idx, val in enumerate([0x3A, 0x3B, 0x3C, 0x3D, 0x51, 0xFF, 0x3E, 0x5B]):
+        f.put(0x0FC0, 0x5B)  # AnimatedTileGFXSet
+        # Include #$FF Docks/Special-OW cache markers in both main and aux slots:
+        # ALL 8 PriorSheets[0..7] must be unconditionally invalidated to #$FE.
+        for idx, val in enumerate([0xFF, 0x3B, 0x3C, 0xFF, 0x51, 0xFF, 0xFF, 0xFF]):
             f.put(0x04CB + idx, val)
 
         _call(f, "Test_Call02B490", m8=True, x8=True, db=0x02)
 
         self.assertEqual(f.get(0x0F18), 1)
         self.assertEqual(f.get(0x0CF3), 0x00)
+        self.assertEqual(f.get(0x0FC0), 0x00)
         prior = [f.get(0x04CB + i) for i in range(8)]
-        self.assertEqual(prior, [0x3A, 0x3B, 0x3C, 0xFE, 0xFE, 0xFF, 0xFE, 0x5B])
+        self.assertEqual(prior, [0xFE] * 8)
+
+    def test_whirlpool_clears_ff_cache_markers_and_reloads_all_8_sheets_cleanly(self) -> None:
+        # End-to-end regression for Docks/Special-OW #$FF cache markers + stale LASTBGSET:
+        # If PriorSheets[3/6] stayed #$FF, Oracle_DocksResolveTransitionSheet would leak
+        # stale Docks $E4/$E3 into FIELD $15's $FF slots.
+        f = self._fx()
+        f.put(0x1B, 0x00)
+        f.put(0x11, 0x2E)
+        f.put(0x8A, 0x15)  # FIELD $15: ['3A','3B','3C','FF','51','4E','FF','5B']
+        f.put(0x0CF3, 0x08)
+        f.put(0x0FC0, 0x5B)
+        # Poison PriorSheets with #$FF markers and LASTBGSET with Docks sheets $E4/$E5/$E6/$E3
+        for idx, val in enumerate([0xFF, 0xFF, 0x3C, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]):
+            f.put(0x04CB + idx, val)
+        for idx, val in enumerate([0xE4, 0xE5, 0xE6, 0xE3]):
+            f.put(0x7EC2F8 + idx, val)
+
+        # $B0=5: Whirlpool_LoadDestinationMap_Interupt clears all 8 PriorSheets to #$FE
+        _call(f, "Test_Call02B490", m8=True, x8=True, db=0x02)
+        self.assertEqual([f.get(0x04CB + i) for i in range(8)], [0xFE] * 8)
+        self.assertEqual(f.get(0x0FC0), 0x00)
+
+        # $B0=7 Frame 1: NewLoadTransAuxGFX resolves clean $15 aux sheets & updates LASTBGSET
+        _call(f, "Test_CallNewLoadTransAuxGFX", m8=True, x8=True, db=0x00)
+        self.assertEqual([f.get(0x0F40 + i) for i in range(4)], [0x3D, 0x51, 0x4E, 0x3E])
+        self.assertEqual([f.get(0x7EC2F8 + i) for i in range(4)], [0x3D, 0x51, 0x4E, 0x3E])
+
+        # LoadTransMainGFX decompresses all 4 main/static sheets (0, 1, 2, 7)
+        f.put(0x0F1A, 0)
+        _call(f, "Test_CallLoadTransMainGFX", m8=True, x8=True)
+        self.assertEqual(f.get(0x0F1A), 4)
+        self.assertEqual([f.get(0x0F40 + i) for i in range(4)], [0x3A, 0x3B, 0x3C, 0x5B])
+
+        # BlockGFXCheck drains all 8 sheets over 4 frames (2 sheets/frame)
+        expected_targets = [
+            (0x2C00, 0x3000),  # Slots 3 & 4
+            (0x3400, 0x3800),  # Slots 5 & 6
+            (0x2000, 0x2400),  # Slots 0 & 1
+            (0x2800, 0x3E00),  # Slots 2 & 7 (upper half only)
+        ]
+        for frame_idx, (t1, t2) in enumerate(expected_targets, start=1):
+            f.put(0x06, 0x08)
+            _call(f, "Test_CallBlockGFXCheck", m8=True, x8=True)
+            self.assertEqual(_get16(f, 0x04D3), t1)
+            self.assertEqual(_get16(f, 0x04D9), t2)
+            self.assertEqual(f.get(0x0CF3), frame_idx * 2)
+
+        self.assertEqual(
+            [f.get(0x04CB + i) for i in range(8)],
+            [0x3A, 0x3B, 0x3C, 0x3D, 0x51, 0x4E, 0x3E, 0x5B],
+        )
 
     # 4. Whirlpool_ReloadSubscreenOverlay_Interupt ($02B47E)
     def test_whirlpool_reload_overlay_clears_poisoned_7f4000_when_no_overlay(self) -> None:

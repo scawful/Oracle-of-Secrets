@@ -4568,6 +4568,7 @@ endif
         LDX.b #$03 : JSR.w ResolveDefaultOWGFXSheet8
     .notDefault3
     CMP.b #$FF : BEQ .noBgGfxChange3
+        STA.l $7EC2F8
         CMP.w TransGFXModule_PriorSheets+3 : BEQ .noBgGfxChange3
             TAY
 
@@ -4605,6 +4606,7 @@ endif
         LDX.b #$04 : JSR.w ResolveDefaultOWGFXSheet8
     .notDefault4
     CMP.b #$FF : BEQ .noBgGfxChange4
+        STA.l $7EC2F9
         CMP.w TransGFXModule_PriorSheets+4 : BEQ .noBgGfxChange4
             TAY
 
@@ -4642,6 +4644,7 @@ endif
         LDX.b #$05 : JSR.w ResolveDefaultOWGFXSheet8
     .notDefault5
     CMP.b #$FF : BEQ .noBgGfxChange5
+        STA.l $7EC2FA
         CMP.w TransGFXModule_PriorSheets+5 : BEQ .noBgGfxChange5
             TAY
 
@@ -4679,6 +4682,7 @@ endif
         LDX.b #$06 : JSR.w ResolveDefaultOWGFXSheet8
     .notDefault6
     CMP.b #$FF : BEQ .noBgGfxChange6
+        STA.l $7EC2FB
         CMP.w TransGFXModule_PriorSheets+6 : BEQ .noBgGfxChange6
             TAY
 
@@ -5324,18 +5328,24 @@ Whirlpool_LoadDestinationMap_Interupt:
     PHP
     SEP #$30
     STZ.w TransGFXModuleFrame
+    ; Force fresh animated tile decompression ($00D394 also re-arms $0134=$3C00)
+    ; so stale/overwritten $7EA680-$7EB27F tiles never survive a Whirlpool.
+    STZ.w AnimatedTileGFXSet
 
-    ; Force fresh reload of aux BG slots 3..6 on Whirlpool arrival so stale or
-    ; directly-overwritten VRAM (e.g. Dragon Ship $38 boat DMA) never survives.
-    ; Use #$FE (never #$FF) so SpecialOverworldGraphicsResolveSheet and
-    ; DocksResolveTransitionSheet cache-restore guards stay untouched.
+    ; Unconditionally invalidate ALL 8 PriorSheets[0..7] to #$FE on Whirlpool
+    ; arrival (including any #$FF cache-dirty markers from Kalyxo Docks or
+    ; Special Overworld resident pages $80-$BF) so:
+    ;  - *ResolveSheet / DocksResolveTransitionSheet cannot hijack destination
+    ;    $FF slots (e.g. Cliffs $15 Slots 3 & 6) with stale cached sheets;
+    ;  - directly-overwritten VRAM in both aux (3..6) and main/static (0..2, 7)
+    ;    sheets (e.g. Dragon Ship $38 boat DMA or Special OW resident DMA)
+    ;    always reloads cleanly from the destination area's tables.
     PHX
-    LDX.b #$03
-    .invalidateAux
-        LDA.w TransGFXModule_PriorSheets, X : CMP.b #$FF : BEQ .keepFF
-            LDA.b #$FE : STA.w TransGFXModule_PriorSheets, X
-        .keepFF
-        INX : CPX.b #$07 : BCC .invalidateAux
+    LDX.b #$00
+    LDA.b #$FE
+    .invalidateAll
+        STA.w TransGFXModule_PriorSheets, X
+        INX : CPX.b #$08 : BCC .invalidateAll
     PLX
     PLP
 
