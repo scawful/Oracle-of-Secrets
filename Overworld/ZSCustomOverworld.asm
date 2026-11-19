@@ -69,27 +69,18 @@ incsrc HardwareRegisters.asm
 ; draws BG1 strictly BELOW BG2 (TM $16, TS $01, CGWSEL $82, CGADSUB $60 = half
 ; add on Backdrop only so distant clouds blend softly against the authored
 ; non-black sky CGRAM[0] $764C without clipping to flat white, while S-PPU2
-; never halves fixed color), keeps neutral COLDATA ($4020/$8040) so Day/Night
-; sky tinting and Sky-to-Sky smooth scrolls stay seamless, and locks BG1 scroll
-; in both Bank $02 ($02BD04) and Bank $0E ($0EAF94). $9C itself is reserved for
-; the Fortress. Must match SKY_CLOUD_OVERLAY in
+; never halves fixed color) and keeps neutral COLDATA ($4020/$8040) so
+; Day/Night sky tinting and Sky-to-Sky smooth scrolls stay seamless.
+; Vanilla Bank $02 ($02BD04) and Bank $0E ($0EAF94) keep CPX.b #$9C untouched
+; (that branch is Dark DM's continuous vertical auto-drift, NOT a scroll lock),
+; so $94 falls cleanly into vanilla static parallax with zero autonomous drift.
+; $9C itself remains reserved for the Fortress. Must match SKY_CLOUD_OVERLAY in
 ; Scripts/Build/special_overworld_resources.py. With the flag off, the resident
 ; Sky compares keep the old $9C so flag-off bytes do not change.
 if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
 !SKY_CLOUD_OVERLAY = $94
 else
 !SKY_CLOUD_OVERLAY = $9C
-endif
-
-if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1
-; Vanilla OverworldHandleBGOverlayScroll: CPX.b #$9C (dark DM scroll lock).
-org $02BD04 ; $013D04 ; @hook module=Overworld
-    db !SKY_CLOUD_OVERLAY
-; Vanilla Bank $0E camera/overlay scroll copy ($0EAEA6 -> $0EAF93: CPX.b #$9C).
-assert read1($0EAF93) == $E0
-assert read1($0EAF94) == $9C || read1($0EAF94) == !SKY_CLOUD_OVERLAY
-org $0EAF94 ; $072F94 ; @hook module=Overworld
-    db !SKY_CLOUD_OVERLAY
 endif
 
 ; Free RAM

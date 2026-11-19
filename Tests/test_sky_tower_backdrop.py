@@ -101,7 +101,7 @@ def _assemble_sky_backdrop_fixture(folder: Path, *, sky_profile_flag: int = 1) -
     const_block = _extract_block(
         zs,
         "if !ENABLE_SKY_OVERLAY_SOURCE_PROFILE == 1\n!SKY_CLOUD_OVERLAY = $94",
-        "org $0EAF94 ; $072F94 ; @hook module=Overworld\n    db !SKY_CLOUD_OVERLAY\nendif",
+        "!SKY_CLOUD_OVERLAY = $9C\nendif",
     )
     reload_block = _extract_block(
         zs,
@@ -301,13 +301,13 @@ class SkyTowerBackdropCompiledTests(unittest.TestCase):
         labels = self.labels_on if flag_on else self.labels_off
         return Fixture(self.lib, rom, labels)
 
-    def test_bank02_and_bank0e_overlay_scroll_parity(self) -> None:
-        """Both Bank $02 ($02BD04) and Bank $0E ($0EAF94) lock BG1 scroll for $94 when flag ON."""
+    def test_bank02_and_bank0e_overlay_scroll_keep_vanilla_9c_no_sky_drift(self) -> None:
+        """Both Bank $02 ($02BD04) and Bank $0E ($0EAF94) keep vanilla $9C so $94 does not auto-drift."""
         self.assertEqual(self.rom_on[_snes_to_pc(0x02BD03)], 0xE0)
-        self.assertEqual(self.rom_on[_snes_to_pc(0x02BD04)], 0x94)
+        self.assertEqual(self.rom_on[_snes_to_pc(0x02BD04)], 0x9C)
         self.assertEqual(self.rom_on[_snes_to_pc(0x0EAF93)], 0xE0)
-        self.assertEqual(self.rom_on[_snes_to_pc(0x0EAF94)], 0x94)
-        # Flag OFF preserves vanilla $9C in both banks.
+        self.assertEqual(self.rom_on[_snes_to_pc(0x0EAF94)], 0x9C)
+        # Flag OFF also preserves vanilla $9C in both banks.
         self.assertEqual(self.rom_off[_snes_to_pc(0x02BD04)], 0x9C)
         self.assertEqual(self.rom_off[_snes_to_pc(0x0EAF94)], 0x9C)
 
