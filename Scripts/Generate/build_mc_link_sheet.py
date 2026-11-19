@@ -1,34 +1,19 @@
 #!/usr/bin/env python3
-"""Reproducible builder for Oracle of Secrets' Human Minish Cap Link 4BPP sheet.
+"""Build Data/graphics/link/mc_link_sheet.4bpp cleanly from scawful's base ROM Link sheet
+($108000) + artist-authored InTheBEEF Minish Cap Link frames (Masks/etc/minishcaplink.3.zspr).
 
-Starts from the base ROM's $108000 (PC 0x080000, 28,672 bytes = 28x8 16x16 cells)
-Human Link sheet—preserving 100% of scawful's existing Minish Cap heads and
-walk/idle/swim/item-get frames—and upgrades every remaining vanilla ALTTP
-brown-sleeve / wide-ALTTP-torso / yellow-hem body cell and legacy ALTTP
-blue-headband head cell to unified Minish Cap Link pixel art.
-
-Palette semantics (Link Green/Blue/Red Mail at $1BD308/$1BD326/$1BD344):
-  0 (.) = transparent
-  1 (1) = white (eye sclera, sparkles)
-  2 (2) = bright gold (hair highlight, small belt buckle ONLY — no ALTTP hem)
-  3 (3) = shaded peach skin
-  4 (4) = bright peach skin
-  5 (5) = dark charcoal outline (#292929)
-  6 (6) = warm ochre (hair midtone, warm buckle shadow)
-  7 (7) = crimson-brown (boots highlight, open mouth)
-  8 (8) = bright blue (Minish Cap Link eyes ONLY — zero blue headbands!)
-  9 (9) = deepest tunic/cap shadow   [recolors with Green/Blue/Red Mail]
-  A (A) = bright tunic/sleeve/cap    [recolors with Green/Blue/Red Mail]
-  B (B) = dark tunic/sleeve/cap      [recolors with Green/Blue/Red Mail]
-  C (C) = mid tunic/sleeve/cap       [recolors with Green/Blue/Red Mail]
-  D (D) = warm tan (hair dark shadow, hand crease — NEVER sleeves)
-  E (E) = dark brown leather (belt strap & boot shadow — NEVER sleeves)
-  F (F) = lavender FX (sword slash / splash — NEVER hair)
-
-Idempotency:
-  Every upgraded cell is explicitly authored as a 16x16 pixel grid in CELLS.
-  Running against the base ROM ($108000) or against the generated .4bpp file
-  produces the exact same 28,672-byte Data/graphics/link/mc_link_sheet.4bpp.
+Design principles (per scawful's 2026-11-19 review):
+  1. Preserve 100% of scawful's existing hand-ported Minish Cap heads, walk, idle, swim,
+     and action frames in the base ROM ($108000).
+  2. For remaining untouched vanilla ALTTP frames (Praying/Shock R17C1/R18C1/R19C1,
+     Midway Pull R13C0, Upside-Down R04C7, Hatless/Flute/Bed R25C5/R26C1/R26C4, and
+     secondary action bodies), pull the genuine artist-drawn frames directly from
+     Masks/etc/minishcaplink.3.zspr (InTheBEEF) and remap cleanly into Oracle's exact
+     ROM Link palette (preserving Green/Blue/Red Mail sleeve recoloring via C10/C11/C12/C09).
+  3. Never pull InTheBEEF's unused-slot Easter-egg signature blocks (R16C2..C4, R17C3..C5,
+     R21C7, R22C0..C7, R23C0) or blank ZSPR slots; on remaining brown-sleeve vanilla body
+     cells, apply a minimal Mail-recolored sleeve remap directly to the base ROM cell.
+  4. Never overwrite valid existing cells with synthetic/procedural faces.
 
 Usage:
   python3 Scripts/Generate/build_mc_link_sheet.py [--base PATH] [--out PATH] [--check]
@@ -37,1525 +22,239 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import struct
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUT = ROOT / "Data/graphics/link/mc_link_sheet.4bpp"
-DEFAULT_BASE_CANDIDATES = (
-    Path.home() / "Zelda/Projects/Oracle-of-Secrets/Oracle-of-Secrets.yazeproj/rom",
+DEFAULT_ZSPR = ROOT / "Masks/etc/minishcaplink.3.zspr"
+DEFAULT_BASE_CANDIDATES = [
+    Path("/Users/scawful/Zelda/Projects/Oracle-of-Secrets/Oracle-of-Secrets.yazeproj/rom"),
     ROOT / "Roms/oos168.sfc",
-    DEFAULT_OUT,
+]
+SHEET_SIZE = 28672  # $7000 bytes = 28 rows x 8 cols of 16x16 4BPP cells
+
+# ZSPR (InTheBEEF) -> Oracle ROM Link palette index remap:
+#   ZSPR: 1=white, 2=goldHairMid, 3=warmBrownHairShade, 4=midSkin, 5=outline, 6=goldAccent,
+#         7=red, 8=blue, 9=tunicDark, 10=tunicMid, 11=tunicBright, 12=lightSkin,
+#         13=brightHair, 14=darkBrownBootBelt, 15=slash
+#   ROM:  1=white, 2=brightHair, 3=midSkin, 4=lightSkin, 5=outline, 6=goldHairMid,
+#         7=red, 8=blue, 9=tunicDarkest, 10=tunicBright, 11=tunicDark, 12=tunicMid,
+#         13=tanBrownMid, 14=darkBrownBootBelt, 15=slash
+ZSPR_TO_ROM_PAL = {
+    0: 0,
+    1: 1,
+    2: 6,
+    3: 6,   # warm hair-shadow / cuff-gold -> C06 (matches R00 Minish Cap blonde shading!)
+    4: 3,
+    5: 5,
+    6: 6,
+    7: 7,
+    8: 8,
+    9: 11,  # tunic dark (Mail-recolored!)
+    10: 12, # tunic mid (Mail-recolored!)
+    11: 10, # tunic bright (Mail-recolored!)
+    12: 4,
+    13: 2,  # bright blonde hair -> C02
+    14: 14,
+    15: 15,
+}
+
+# Body-only ZSPR cells where ZSPR C03 is boot/belt warm brown -> ROM C13 instead of C06 gold
+ZSPR_TO_ROM_BODY = {
+    **ZSPR_TO_ROM_PAL,
+    3: 13,
+}
+
+# Valid artist-drawn InTheBEEF ZSPR head/full-figure cells (zero blank/signature cells!)
+ZSPR_HEAD_CELLS: tuple[tuple[int, int], ...] = (
+    (4, 7),   # Upside-down somersault ($12B)
+    (17, 1),  # Praying / Shock top ($07D)
+    (18, 1),  # Praying / Shock mid ($07D/$080)
+    (19, 1),  # Praying / Shock full ($080)
+    (23, 1),  # Side hooded/tumble head
+    (25, 5),  # Hatless / Flute head ($128)
+    (26, 1),  # Sleep / Bed back head
+    (26, 4),  # Sleep / Bed side head
 )
 
-SHEET_SIZE = 28_672  # 28 rows x 8 cols of 16x16 cells = 896 8x8 tiles x 32 B
-HEX_MAP = {ch: i for i, ch in enumerate(".123456789ABCDEF")}
+# Valid artist-drawn InTheBEEF ZSPR body cells (all Mail-recolored sleeves, zero Easter-egg cells!)
+ZSPR_BODY_CELLS: tuple[tuple[int, int], ...] = (
+    (2, 7),
+    (8, 0),
+    (11, 4),
+    (13, 0),  # Midway pull!
+    (13, 2),
+    (13, 3),
+    (14, 2),
+    (14, 3),
+    (14, 4),
+    (15, 1),
+    (15, 5),
+    (16, 0),
+    (16, 1),
+    (18, 5),
+    (18, 6),
+    (20, 4),
+    (20, 7),
+    (21, 0),
+    (21, 1),
+    (21, 2),
+    (21, 3),
+    (21, 4),
+    (21, 5),
+    (21, 6),
+    (23, 3),
+    (23, 5),
+    (23, 6),
+    (23, 7),
+    (24, 3),
+    (24, 4),
+    (24, 5),
+    (25, 7),
+    (26, 0),
+    (26, 2),
+    (26, 3),
+    (26, 5),
+    (26, 6),
+    (26, 7),
+    (27, 2),
+    (27, 3),
+)
+
+# Vanilla brown-sleeve body cells where ZSPR has blank or @InTheBEEF signature art:
+# Keep the exact ROM body silhouette and ONLY recolor brown ALTTP sleeve pixels (C13/C14 -> C12/C11)
+# in the upper-arm/shoulder band (rows 0..10), preserving belt/boots untouched!
+SLEEVE_RECOLOR_CELLS: tuple[tuple[int, int], ...] = (
+    (3, 5),
+    (3, 6),
+    (4, 0),
+    (4, 1),
+    (16, 2),
+    (16, 3),
+    (16, 4),
+    (17, 3),
+    (17, 4),
+    (17, 5),
+    (20, 3),
+    (21, 7),
+    (22, 0),
+    (22, 1),
+    (22, 2),
+    (22, 3),
+    (22, 4),
+    (22, 5),
+    (22, 6),
+    (22, 7),
+    (23, 0),
+)
+
+ALL_UPGRADED_CELLS = set(ZSPR_HEAD_CELLS) | set(ZSPR_BODY_CELLS) | set(SLEEVE_RECOLOR_CELLS)
 
 
 def decode_4bpp_sheet(data: bytes) -> list[list[int]]:
     if len(data) != SHEET_SIZE:
-        raise ValueError(f"Expected {SHEET_SIZE} bytes for Link 4BPP sheet, got {len(data)}")
+        raise ValueError(f"Expected {SHEET_SIZE} bytes, got {len(data)}")
     grid = [[0] * 128 for _ in range(448)]
-    for tile in range(896):
-        tx = (tile % 16) * 8
-        ty = (tile // 16) * 8
-        base = tile * 32
-        for y in range(8):
-            b0 = data[base + y * 2]
-            b1 = data[base + y * 2 + 1]
-            b2 = data[base + 16 + y * 2]
-            b3 = data[base + 16 + y * 2 + 1]
-            for x in range(8):
-                sh = 7 - x
-                grid[ty + y][tx + x] = (
-                    ((b0 >> sh) & 1)
-                    | (((b1 >> sh) & 1) << 1)
-                    | (((b2 >> sh) & 1) << 2)
-                    | (((b3 >> sh) & 1) << 3)
-                )
+    for tr in range(56):
+        for tc in range(16):
+            off = (tr * 16 + tc) * 32
+            for y in range(8):
+                b0 = data[off + y * 2]
+                b1 = data[off + y * 2 + 1]
+                b2 = data[off + 16 + y * 2]
+                b3 = data[off + 16 + y * 2 + 1]
+                row = grid[tr * 8 + y]
+                x0 = tc * 8
+                for x in range(8):
+                    bit = 7 - x
+                    row[x0 + x] = (
+                        ((b0 >> bit) & 1)
+                        | (((b1 >> bit) & 1) << 1)
+                        | (((b2 >> bit) & 1) << 2)
+                        | (((b3 >> bit) & 1) << 3)
+                    )
     return grid
 
 
 def encode_4bpp_sheet(grid: list[list[int]]) -> bytes:
     out = bytearray(SHEET_SIZE)
-    for tile in range(896):
-        tx = (tile % 16) * 8
-        ty = (tile // 16) * 8
-        base = tile * 32
-        for y in range(8):
-            b0 = b1 = b2 = b3 = 0
-            for x in range(8):
-                val = grid[ty + y][tx + x]
-                bit = 1 << (7 - x)
-                if val & 1:
-                    b0 |= bit
-                if val & 2:
-                    b1 |= bit
-                if val & 4:
-                    b2 |= bit
-                if val & 8:
-                    b3 |= bit
-            out[base + y * 2] = b0
-            out[base + y * 2 + 1] = b1
-            out[base + 16 + y * 2] = b2
-            out[base + 16 + y * 2 + 1] = b3
+    for tr in range(56):
+        for tc in range(16):
+            off = (tr * 16 + tc) * 32
+            x0 = tc * 8
+            for y in range(8):
+                row = grid[tr * 8 + y]
+                p0 = p1 = p2 = p3 = 0
+                for x in range(8):
+                    v = row[x0 + x]
+                    bit = 0x80 >> x
+                    if v & 1:
+                        p0 |= bit
+                    if v & 2:
+                        p1 |= bit
+                    if v & 4:
+                        p2 |= bit
+                    if v & 8:
+                        p3 |= bit
+                out[off + y * 2] = p0
+                out[off + y * 2 + 1] = p1
+                out[off + 16 + y * 2] = p2
+                out[off + 16 + y * 2 + 1] = p3
     return bytes(out)
 
 
-def parse_cell(rows: list[str], name: str) -> list[list[int]]:
-    if len(rows) != 16:
-        raise ValueError(f"Cell {name}: expected 16 rows, got {len(rows)}")
-    out = []
-    for y, line in enumerate(rows):
-        if len(line) != 16:
-            raise ValueError(f"Cell {name} row {y}: expected 16 chars, got {len(line)}")
-        out.append([HEX_MAP[ch] for ch in line])
-    return out
-
-
-# =============================================================================
-# UPGRADED MINISH CAP LINK CELLS (row, col) -> 16x16 pixel art
-# =============================================================================
-CELLS: dict[tuple[int, int], list[str]] = {
-    # -------------------------------------------------------------------------
-    # GROUP 1: LEGACY VANILLA ALTTP HEADS -> MINISH CAP LINK HEADS
-    # -------------------------------------------------------------------------
-    # R04C7: Upside-down head (poses $08D, $12B — somersault / hang / tumble)
-    (4, 7): [
-        "................",
-        "......5555......",
-        "....55333355....",
-        "...5D444444D5...",
-        "..554814418455..",
-        ".56E18E44E81E65.",
-        "54D2622222262D45",
-        "53ED62266226DE35",
-        ".55D22222222D55.",
-        "..55BCCCCCCB55..",
-        "...5BCCCCCCB5...",
-        "...55BCCCCB55...",
-        ".....5BBBB5.....",
-        "......5555......",
-        "................",
-        "................",
-    ],
-    # R06C5: 3/4-facing expressive Minish Cap head (matching R00C1 eyes & bangs)
-    (6, 5): [
-        "................",
-        "......55555.....",
-        "....5BCCCCCB5...",
-        "...5BCCCCCCCB5..",
-        "..5BD222222DB5..",
-        ".54D22622622D45.",
-        ".53D26222262D35.",
-        "..52E624426E25..",
-        "..56E184481E65..",
-        "..554814418455..",
-        "...5D447744D5...",
-        "....53477435....",
-        ".....553355.....",
-        ".......55.......",
-        "................",
-        "................",
-    ],
-    # R06C6: Front tilted Minish Cap head (matching R00C1 eyes & bangs)
-    (6, 6): [
-        "................",
-        ".....555555.....",
-        "...55BCCCCB55...",
-        "..5BCCCCCCCCB5..",
-        "..5CD222222DC5..",
-        ".5BD22222222DB5.",
-        "4EE6262226D22EE4",
-        "E4D2E2222D3D2D4E",
-        "E3ED6226E34D6D3E",
-        ".52E66DE3443E25.",
-        ".56E18E44E81E65.",
-        "..554814418455..",
-        "...5D444444D5...",
-        "....EE3333EE....",
-        "................",
-        "................",
-    ],
-    # R10C0: Cap back crown (pose $12D climbing/looking down) — sleek MC cap crown
-    (10, 0): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        ".....555555.....",
-        "...55BCCCCB55...",
-        "...5BCCCCCCB5...",
-        "...5BBCCCCBB5...",
-        "...5BBCCCCBB5...",
-        "...59BBBBBB95...",
-        "....599BB995....",
-        ".....599995.....",
-        "................",
-    ],
-    # R10C5: Side head tilted down-left (matching R00C0 Minish Cap side eye)
-    (10, 5): [
-        "................",
-        "......55555.....",
-        ".....5CCCCC55...",
-        "...55BCCCCCCB5..",
-        "..54D22BCCCCB5..",
-        "..543222BCCCC55.",
-        "..5342622BCCCC5.",
-        "..534E262BCCCC5.",
-        "...538142BCCCC5.",
-        "...538142BBCCC5.",
-        "....54442DBBC5..",
-        ".....53345BBC5..",
-        "......5555555...",
-        "................",
-        "................",
-        "................",
-    ],
-    # R10C7: Front Ocarina/Flute playing head (pose $128 — matching R00C1 eyes & bangs)
-    (10, 7): [
-        "................",
-        ".....5BBBB5.....",
-        "...5BCCCCCCB5...",
-        "..5BCCCCCCCCB5..",
-        "..5CD222222DC5..",
-        ".5BD22222222DB5.",
-        "4EE6262226D22EE4",
-        "E4D2E2222D3D2D4E",
-        ".52E66DE3443E25.",
-        ".56E18E44E81E65.",
-        "..554814418455..",
-        "..534444454445..",
-        "...55334453345..",
-        ".....555553335..",
-        "..........555...",
-        "................",
-    ],
-    # R23C1: Wind-swept side head leaning forward (poses $0F5-$0F7, $0FB-$0FD dash/push)
-    (23, 1): [
-        "................",
-        "................",
-        "......55555.....",
-        "....55CCCCB5....",
-        "...5BCCCCCC25...",
-        "..5BCCCCCC2225..",
-        ".5BCCCCCBB62265.",
-        ".5BCCCCB6222D45.",
-        "..5CCCCB6245E45.",
-        "..5CCCBB5241835.",
-        "..5CCBB55241835.",
-        "..5CCB5..54445..",
-        "..55CB5...5335..",
-        "...555.....55...",
-        "................",
-        "................",
-    ],
-
-    # -------------------------------------------------------------------------
-    # GROUP 2: SHOCKED / BONKED / STRAINED COL 1 (R17C1, R18C1, R19C1)
-    #   Pose $07D = Head R17C1 (y=0..15) + Body R17C1(y=8..15)/R18C1(y=0..7)
-    #   Pose $080 = Head R18C1(y=8..15)/R19C1(y=0..7) + Body R19C1(y=0..15)
-    # -------------------------------------------------------------------------
-    (17, 1): [
-        "................",
-        "................",
-        ".....5BBBB5.....",
-        "...5BCCCCCCB5...",
-        "..5BCCCCCCCCB5..",
-        "..5CD222222DC5..",
-        ".5BD22222222DB5.",
-        "4EE6262226D22EE4",
-        "E4D2E2222D3D2D4E",
-        ".56E18E44E81E65.",
-        "..554814418455..",
-        "..534447744435..",
-        "..553447744355..",
-        ".5AA55333355AA5.",
-        "544AA9BBBB9AA445",
-        "5345AA9BB9AA5435",
-    ],
-    (18, 1): [
-        ".555BCE22ECB555.",
-        "...5CCB22BCC5...",
-        "...5BCCCCCCB5...",
-        "..57E555555E75..",
-        "..577E5..5E775..",
-        "...555....555...",
-        "................",
-        "................",
-        "................",
-        "................",
-        ".....5BBBB5.....",
-        "...5BCCCCCCB5...",
-        "..5BCCCCCCCCB5..",
-        "..5CD222222DC5..",
-        ".5BD22222222DB5.",
-        "4EE6262226D22EE4",
-    ],
-    (19, 1): [
-        "E4D2E2222D3D2D4E",
-        ".56E18E44E81E65.",
-        "..554814418455..",
-        "..534477774435..",
-        "..553447744355..",
-        "5AA5553333555AA5",
-        "544AA9BBBB9AA445",
-        ".535AA9BB9AA535.",
-        "..55BCE22ECB55..",
-        "...5CCB22BCC5...",
-        "...5BCCCCCCB5...",
-        "..57E555555E75..",
-        "...57E5..5E75...",
-        "....55....55....",
-        "................",
-        "................",
-    ],
-
-    # -------------------------------------------------------------------------
-    # GROUP 3: HATLESS / MINI FALLBACK SLOTS (R25C5, R25C7, R26C0-C6)
-    #   Upgraded from flat black-hair/no-outline shapes to crisp Minish Cap Link!
-    # -------------------------------------------------------------------------
-    # R25C5: Front head (poses $11E-$120)
-    (25, 5): [
-        "................",
-        "................",
-        "................",
-        "................",
-        ".....555555.....",
-        "...5522222255...",
-        "..522622226225..",
-        ".54D22266222D45.",
-        ".53ED624426DE35.",
-        "..56E184481E65..",
-        "..554814418455..",
-        "...5D444444D5...",
-        "....EE3333EE....",
-        "......5555......",
-        "................",
-        "................",
-    ],
-    # R25C7: Front walk body (poses $11F-$120)
-    (25, 7): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "...5........5...",
-        "..5AA9BBBB9AA5..",
-        ".5AA9BBBBBB9AA5.",
-        "54455BCCCCB55445",
-        "534BCEE22EECB435",
-        ".555CCB22BCC555.",
-        "...55BCCCCB55...",
-        "..57E5555555....",
-        "..577E5..5E75...",
-        "...555....55....",
-        "................",
-        "................",
-    ],
-    # R26C0: Front idle body (pose $11E)
-    (26, 0): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "...5........5...",
-        "..5AA9BBBB9AA5..",
-        ".5AA9BBBBBB9AA5.",
-        "54455BCCCCB55445",
-        "534BCEE22EECB435",
-        ".555CCB22BCC555.",
-        "...55BCCCCB55...",
-        "..57E555555E75..",
-        "..577E5..5E775..",
-        "...555....555...",
-        "................",
-        "................",
-    ],
-    # R26C1: Back head (poses $11B-$11D)
-    (26, 1): [
-        "................",
-        "................",
-        "................",
-        "................",
-        ".....555555.....",
-        "...5522222255...",
-        "..522226622225..",
-        ".54D22622622D45.",
-        ".53D62222226D35.",
-        "..5D62222226D5..",
-        "..55DD6666DD55..",
-        "...55DDDDDD55...",
-        ".....555555.....",
-        "................",
-        "................",
-        "................",
-    ],
-    # R26C2: Back idle body (pose $11B)
-    (26, 2): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "...5........5...",
-        "..5AA9BBBB9AA5..",
-        ".5AA9BBBBBB9AA5.",
-        "544559BBBB955445",
-        "534BCEEEEEECB435",
-        ".555CCCCCCCC555.",
-        "..5E5BCCCCB5E5..",
-        "...5E775577E5...",
-        "....555..555....",
-        "................",
-        "................",
-    ],
-    # R26C3: Back walk body (poses $11C-$11D)
-    (26, 3): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "...5........5...",
-        "..5AA9BBBB9AA5..",
-        ".5AA9BBBBBB9AA5.",
-        "544559BBBB955AA5",
-        "534BCEEEEEECB55.",
-        ".555CCCCCCCC5...",
-        "...55BCCCCB5E5..",
-        "....55555577E5..",
-        "..........555...",
-        "................",
-        "................",
-    ],
-    # R26C4: Side head (poses $121-$124)
-    (26, 4): [
-        "................",
-        "................",
-        "................",
-        "................",
-        ".....555555.....",
-        "...5522222255...",
-        "..522622226225..",
-        "..5262222622D5..",
-        "..5D6244262435..",
-        "..55D4445241835.",
-        "...553445241835.",
-        "....5555524445..",
-        "........55335...",
-        "..........55....",
-        "................",
-        "................",
-    ],
-    # R26C5: Side idle body (poses $121, $123)
-    (26, 5): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "....5BBBBBB5....",
-        "...5B959BBB5....",
-        "...5B5AA5BB25...",
-        "..5BE5AA5EE25...",
-        "..5BC5AA5CCC5...",
-        "...5C5445CC5....",
-        "....5534555.....",
-        ".....555EE75....",
-        "......55E775....",
-        "........555.....",
-        "................",
-        "................",
-    ],
-    # R26C6: Side walk body (poses $122, $124)
-    (26, 6): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "...55BBBBBB5....",
-        "..5AB5AA5BB5....",
-        ".545B5AA5BB25...",
-        "..5BE5AA5EE25...",
-        ".55BC5445CCC5...",
-        ".57555345CC5E5..",
-        ".57EE555555E75..",
-        "..555.....555...",
-        "................",
-        "................",
-        "................",
-        "................",
-    ],
-
-    # -------------------------------------------------------------------------
-    # GROUP 4: EARLY ACTION BODIES (R02C7, R03C5-C6, R04C0-C1, R08C0, R11C4, R13C0/C2/C3)
-    # -------------------------------------------------------------------------
-    # R02C7: Side arm raised up-right (sword/item windup)
-    (2, 7): [
-        "................",
-        "................",
-        ".............55.",
-        "............5445",
-        "...........5A345",
-        ".....55...5AAA5.",
-        "....5BB995AAC5..",
-        "...5BBCCC9CB5...",
-        "...5BEEEEEC25...",
-        "...5BCCCCCC25...",
-        "....5BCCCCB5....",
-        ".....555555.....",
-        ".....5777E5.....",
-        "......5555......",
-        "................",
-        "................",
-    ],
-    # R03C5: Front bow / item / sword-poke (poses $087, $089)
-    (3, 5): [
-        "................",
-        "................",
-        ".55.............",
-        "5445............",
-        "53AA5........55.",
-        ".5AAA5.....55AA5",
-        "..55AA9BBBB9AAA5",
-        "...59BBBBBBB5445",
-        "...5BCEE22EE5345",
-        "...5CCB22BCC555.",
-        "..555BCCCCB55...",
-        "..57E555555E75..",
-        "..577E5..5E775..",
-        "...555....555...",
-        "................",
-        "................",
-    ],
-    # R03C6: Front/3/4 bow / item pull (poses $088, $08A)
-    (3, 6): [
-        "................",
-        "................",
-        "55..............",
-        "545.............",
-        "5AA5........55..",
-        ".5AA5......5AA5.",
-        "..5AA9BBBB9AAA5.",
-        "...59BBBBBB5445.",
-        "...5BCEE22E5345.",
-        "...5CCB22BCC55..",
-        "...55BCCCCB55...",
-        "..57E555555E75..",
-        "..577E5..5E775..",
-        "...555....555...",
-        "................",
-        "................",
-    ],
-    # R04C0: Wide stance action body 1 (replaces ALTTP wide yellow band torso)
-    (4, 0): [
-        "................",
-        "................",
-        "................",
-        "..55........55..",
-        ".5AA5......5AA5.",
-        ".5AAA9BBBB9AAA5.",
-        "..5AA9BBBB9AA5..",
-        "..5445EEEE5445..",
-        "..534BE22EB435..",
-        "...55BCCCCB55...",
-        "..57E5BCCC5E75..",
-        "..577E5555E775..",
-        "...555....555...",
-        "................",
-        "................",
-        "................",
-    ],
-    # R04C1: Wide stance action body 2 (replaces ALTTP wide yellow band torso)
-    (4, 1): [
-        "................",
-        "................",
-        "................",
-        "..55........55..",
-        ".5AA5......5AA5.",
-        ".5AAA9BBBB9AAA5.",
-        "..5AA9BBBB9AA5..",
-        "..5445EEEE5445..",
-        "..534BE22EB435..",
-        "...55BCCCCB55...",
-        "..57E5CCCC5E75..",
-        "..577E5555E775..",
-        "...555....555...",
-        "................",
-        "................",
-        "................",
-    ],
-    # R08C0: Side spin-attack windup body (pose $072)
-    (8, 0): [
-        "................",
-        ".55.............",
-        "5445............",
-        "53AA5........55.",
-        ".5AAA5.....55AA5",
-        "..55AA9BBB5AAA5.",
-        "....5BBCCC9CB5..",
-        "....5BCCCCCB5...",
-        "...5BCEEEEEC25..",
-        "...5BCCCCCCB25..",
-        "...575BCCCCB5...",
-        "...57E555555....",
-        "....555.577E5...",
-        ".........555....",
-        "................",
-        "................",
-    ],
-    # R11C4: Up sword-swing 3 back body (pose $013)
-    (11, 4): [
-        "................",
-        "................",
-        "................",
-        "5555.........55.",
-        "544A5.......5AA5",
-        "53AAA9BBBB95AAA5",
-        ".55AA9BBBBBB9AA5",
-        "...59BBBBBBBB95.",
-        "...5BCEEEEEECB5.",
-        "...5BCCCCCCCCB5.",
-        "....55BCCCCB55..",
-        ".....5555555E75.",
-        "..........5E775.",
-        "...........555..",
-        "................",
-        "................",
-    ],
-    # R13C0: Upside-down somersault / hang body (pose $12C, V-flipped in OAM)
-    (13, 0): [
-        "................",
-        "...555....555...",
-        "..577E5..5E775..",
-        "..57E555555E75..",
-        "...55BCCCCB55...",
-        "...5CCB22BCC5...",
-        "..55BCE22ECB55..",
-        ".54459BBBB95445.",
-        ".534A9BBBB9A435.",
-        "5AAA55....55AAA5",
-        "5AA5........5AA5",
-        ".55..........55.",
-        "................",
-        "................",
-        "................",
-        "................",
-    ],
-    # R13C2: Side braced/shield body 1 (poses $036, $039)
-    (13, 2): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        ".....555555.....",
-        "....5BBCCBB5....",
-        "....5BCAA5B5....",
-        "...5BCEAA5BB5...",
-        "...5BCE445CB25..",
-        "..575BC345CC25..",
-        "..57E5BCCCCB5...",
-        "...55555555E75..",
-        ".........5E775..",
-        "..........555...",
-        "................",
-    ],
-    # R13C3: Side braced/shield body 2 (poses $037, $03A)
-    (13, 3): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        ".....5555.......",
-        "....5445BBB5....",
-        "....5345ACBB5...",
-        "...555AA5CBB5...",
-        "...5BEEEEECB25..",
-        "..575BCCCCC25...",
-        "..57E5BCCCCB5...",
-        "...55555555E75..",
-        ".........5E775..",
-        "..........555...",
-        "................",
-    ],
-
-    # -------------------------------------------------------------------------
-    # GROUP 5: R14-R19 ACTION / SWIM / SPIN / LIFT BODIES
-    # -------------------------------------------------------------------------
-    # R14C2..C4: Side swimming bodies — clean brown sleeve DD -> bright green sleeve AA + peach hand
-    (14, 2): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "..265...........",
-        "..5595AA595.....",
-        "...5B5AA5BB5....",
-        "...5BBAA5BB25...",
-        "..5BEB445EE25...",
-        "..59BEEEECCB5...",
-        "...59BCCCCB5....",
-        "....55BB5555....",
-        "....5E55EE75....",
-        ".....5E5555.....",
-        "......55........",
-        "................",
-    ],
-    (14, 3): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "..265...........",
-        "..5595AA595.....",
-        "...5B5AA5BB5....",
-        "...5BBAA5BB25...",
-        "...5EB445BE2555.",
-        "..5BCEEEEEC9575.",
-        "..59BCCCCC95E5..",
-        ".57559BBB95E5...",
-        ".57EE5555555....",
-        "..57EE5.........",
-        "...555..........",
-        "................",
-    ],
-    (14, 4): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "..265...........",
-        "..5595AA595.....",
-        "...5B5AA5B25....",
-        "...5BBAA5B2B5...",
-        "..5BB44EEEB5555.",
-        ".559CCCCCCB5E775",
-        "57E59BBBB95EE75.",
-        "57E5555555EEE5..",
-        "5EE5.....5555...",
-        "5EE5............",
-        ".55.............",
-        "................",
-    ],
-    # R15C1: Side spin-attack follow-through body (pose $073)
-    (15, 1): [
-        "................",
-        "................",
-        "................",
-        ".5555.......55..",
-        "544AA5.....5AA5.",
-        "534AA9....5AAA5.",
-        ".5555BBCCCB5AA5.",
-        "....5BCCCCCB55..",
-        "...5BCEEEEEC25..",
-        "...5BCCCCCCB25..",
-        "..575BCCCCCB5...",
-        "..57E55555555...",
-        "...55555555E75..",
-        ".........5E775..",
-        "..........555...",
-        "................",
-    ],
-    # R15C5: Up spin-attack / crouch back body (poses $074, $125)
-    (15, 5): [
-        "................",
-        "................",
-        ".............55.",
-        ".55.........5445",
-        "5AA5........53A5",
-        "5AAA9BBBB9.5AAA5",
-        ".5AA9BBBBBB5AA5.",
-        "..59BBBBBBBB95..",
-        "..5BCEEEEEECB5..",
-        "..5BCCCCCCCCB5..",
-        "...55BCCCCB55...",
-        "...57E5555E75...",
-        "...5775..5775...",
-        "....55....55....",
-        "................",
-        "................",
-    ],
-    # R16C0: Praying / medallion / bow front body 1 (pose $07F)
-    (16, 0): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "..55........55..",
-        ".5AA5......5AA5.",
-        ".5AAA9BBBB9AAA5.",
-        ".5AA5449B445AA5.",
-        "..55534BB43555..",
-        "...5BCE22ECB5...",
-        "...5BCCCCCCB5...",
-        "..57E555555E75..",
-        "..577E5..5E775..",
-        "...555....555...",
-        "................",
-    ],
-    # R16C1: Praying / medallion / bow front body 2 (poses $07E, $0CD)
-    (16, 1): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "..55........55..",
-        ".5AA5.....55AA5.",
-        ".5AAA9BBBB9AAA5.",
-        ".5AA54455445AA5.",
-        "..555345543555..",
-        "...5BCE22ECB5...",
-        "...5BCCCCCCB5...",
-        "..57E555555E75..",
-        "..577E5..5E775..",
-        "...555....555...",
-        "................",
-    ],
-    # R16C2: Wide arms-up / lifting pose body
-    (16, 2): [
-        "................",
-        "................",
-        "................",
-        ".55..........55.",
-        "5445........5445",
-        "53AA5......5AA35",
-        ".5AAA5....5AAA5.",
-        "..5AA9BBBB9AA5..",
-        "..559BBBBBB955..",
-        "...5BCE22ECB5...",
-        "...5BCCCCCCB5...",
-        "..57E555555E75..",
-        "..577E5..5E775..",
-        "...555....555...",
-        "................",
-        "................",
-    ],
-    # R16C3: Side cane/rod/item thrust body (poses $109, $10C)
-    (16, 3): [
-        "................",
-        "................",
-        "................",
-        "......555.......",
-        ".....5BBB5......",
-        "....5BBCC55.....",
-        "....5BCAA5AAA55.",
-        "....5BCAA5AA445.",
-        "...5BCEEE555345.",
-        "...5BCCCCCB555..",
-        "....5BCCCCB5....",
-        ".....55555E75...",
-        ".....577E555....",
-        "......555.......",
-        "................",
-        "................",
-    ],
-    # R16C4: Back arms-raised body (upward pose)
-    (16, 4): [
-        "................",
-        "................",
-        ".55..........55.",
-        "5445........5445",
-        "53AA5......5AA35",
-        ".5AAA9BBBB9AAA5.",
-        "..559BBBBBB955..",
-        "..59BBBBBBBB95..",
-        "..5BCEEEEEECB5..",
-        "...5BCCCCCCB5...",
-        "...55BCCCCB55...",
-        "...57E5555E75...",
-        "...5775..5775...",
-        "....55....55....",
-        "................",
-        "................",
-    ],
-    # R17C3: Front sword/action slash body
-    (17, 3): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "555.............",
-        "5445........55..",
-        "53AA59BBBB95AA5.",
-        ".55AA9BBBBB9AA5.",
-        "...5BCEE22E5445.",
-        "...5CCB22BC5345.",
-        "..555BCCCCB555..",
-        ".57E55555555....",
-        ".577E5....5E75..",
-        "..555.....5775..",
-        "...........55...",
-        "................",
-    ],
-    # R17C4: Back sword/action follow-through body
-    (17, 4): [
-        "................",
-        "................",
-        "................",
-        "5555.........55.",
-        "544A5.......5AA5",
-        "53AAA9BBBB95AAA5",
-        ".55AA9BBBBBB9AA5",
-        "...59BBBBBBBB95.",
-        "...5BCEEEEEECB5.",
-        "...5BCCCCCCCCB5.",
-        "..555BCCCCB555..",
-        ".57E5555555E75..",
-        ".577E5....555...",
-        "..555...........",
-        "................",
-        "................",
-    ],
-    # R17C5: Side braced crouch/walk body
-    (17, 5): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        ".....5555.......",
-        "....5445BBB5....",
-        "....5345ACBB5...",
-        "...555AA5CBB5...",
-        "...5BEEEEECB25..",
-        "....5BCCCCC25...",
-        "....55BCCCCB5...",
-        "....57E55555....",
-        ".....5777E5.....",
-        "......5555......",
-        "................",
-    ],
-    # R18C5: Front lift/carry body 1 — remove leftover brown shoulder cuffs EE -> AA/BB
-    (18, 5): [
-        "................",
-        "................",
-        "................",
-        "............55..",
-        "...........9A45.",
-        "...5AA....AAAD5.",
-        "...5AA5BBB9B95..",
-        "..5BAA522EEB5...",
-        "..5D4EE22CCC95..",
-        "..5445BCCCCB5...",
-        "...5555555555...",
-        ".........5DE5...",
-        ".........5E7E5..",
-        ".........57775..",
-        "..........555...",
-        "................",
-    ],
-    # R18C6: Front lift/carry body 2 — remove leftover brown shoulder cuffs EE -> AA/BB
-    (18, 6): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "............5A5.",
-        "...5AA....AAAD45",
-        "..5BAA59BBB99445",
-        "..5AA59BBB9B555.",
-        ".5445EE22EE95...",
-        ".5D4599229CC5...",
-        ".55559CCCC95....",
-        ".....55555DE5...",
-        ".........5E775..",
-        ".........57775..",
-        "..........555...",
-        "................",
-    ],
-
-    # -------------------------------------------------------------------------
-    # GROUP 6: R20-R22 ROD / HAMMER / CANE / PUSH / PULL BODIES
-    # -------------------------------------------------------------------------
-    # R20C3: Front rod/hammer/lift reach 1 (pose $0FF)
-    (20, 3): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "..55........55..",
-        ".5AA5......5AA5.",
-        ".5AAA9BBBB9AAA5.",
-        ".5AA9BBBBBB9AA5.",
-        ".5445BCE22EB445.",
-        ".5345BCCCCB5435.",
-        "..5555BCCC5555..",
-        "..57E555555E75..",
-        "..577E5...555...",
-        "...555..........",
-        "................",
-    ],
-    # R20C4: Front rod/hammer/lift reach 2 (poses $0DA, $0DB, $0F0)
-    (20, 4): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "..55........55..",
-        ".5AA5......5AA5.",
-        ".5AAA9BBBB9AAA5.",
-        ".5AA9BBBBBB9AA5.",
-        ".5445BCE22EB445.",
-        ".5345BCCCCB5435.",
-        "..5555BCCC5555..",
-        "..57E555555E75..",
-        "...555....555...",
-        "................",
-    ],
-    # R20C7: Back rod/hammer/lift body (pose $0D8)
-    (20, 7): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "..55........55..",
-        ".5445.5555.5445.",
-        "53AAA5BBBB5AAA35",
-        "55AA9BBBBBB9AA55",
-        "..59BBBBBBBB95..",
-        "..5BCEEEEEECB5..",
-        "..5BCCCCCCCCB5..",
-        "...55BCCCCB55...",
-        "....55555555....",
-        "....57E55E75....",
-        ".....55..55.....",
-        "................",
-    ],
-    # R21C0: Back push/lift arms up
-    (21, 0): [
-        "................",
-        "................",
-        "................",
-        "................",
-        ".55..........55.",
-        "5445........5445",
-        "53AA5......5AA35",
-        ".55AA9BBBB9AA55.",
-        "..59BBBBBBBB95..",
-        "..59BBBBBBBB95..",
-        "..5BCEEEEEECB5..",
-        "..5BCCCCCCCCB5..",
-        "...55BCCCCB55...",
-        "....55555555....",
-        "................",
-        "................",
-    ],
-    # R21C1: Side push / sword-charge walk 1 (poses $02B, $02E, $0D4, $0D6)
-    (21, 1): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "............55..",
-        "...........5445.",
-        ".....5555..5A35.",
-        "....5BBCC55AAA5.",
-        "....5BCAA5AAAC5.",
-        "...5BCEAA55CB25.",
-        "...5BCE445CCC25.",
-        "....555345CCB5..",
-        "....57E55555E75.",
-        "....577E5..555..",
-        ".....555........",
-        "................",
-    ],
-    # R21C2: Side push / sword-charge walk 2 (poses $0D5, $0D7)
-    (21, 2): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "............55..",
-        ".....5555..5445.",
-        "....5BBCC55AA35.",
-        "....5BCAA5AAA5..",
-        "...5BCEAA55CB25.",
-        "...5BCE445CCC25.",
-        "..57555345CCB55.",
-        "..57E5555555E75.",
-        "...55555555555..",
-        "....555.........",
-        "................",
-    ],
-    # R21C3: Front pushing walk 1 (poses $0D0, $0D2)
-    (21, 3): [
-        "................",
-        "................",
-        "................",
-        "................",
-        ".55..........55.",
-        "5445........5445",
-        "53AA59BBBB95AA35",
-        ".55AA9BBBB9AA55.",
-        "..5BCEE22EECB5..",
-        "..5CCCB22BCCC5..",
-        "..555BCCCCB555..",
-        "..57E555555E75..",
-        "..577E5...555...",
-        "...555..........",
-        "................",
-        "................",
-    ],
-    # R21C4: Front pushing walk 2 (poses $0D1, $0D3)
-    (21, 4): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        ".55..........55.",
-        "5445........5445",
-        "53AA59BBBB95AA35",
-        ".55AA9BBBB9AA55.",
-        "..5BCEE22EECB5..",
-        "..5CCCB22BCCC5..",
-        "..555BCCCCB555..",
-        "..57E555555E75..",
-        "..577E5..5E775..",
-        "...555....555...",
-        "................",
-    ],
-    # R21C5: Back pushing walk 1 (pose $0CE)
-    (21, 5): [
-        "................",
-        "................",
-        "................",
-        "................",
-        ".55..........55.",
-        "5445........5445",
-        "53AA9BBBBBB9AA35",
-        ".55A9BBBBBB9A55.",
-        "..59BBBBBBBB95..",
-        "..5BCEEEEEECB5..",
-        "..5BCCCCCCCCB5..",
-        "...55BCCCCB55...",
-        "....5555555E75..",
-        ".........5E775..",
-        "..........555...",
-        "................",
-    ],
-    # R21C6: Back pushing walk 2 (pose $0CF)
-    (21, 6): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        ".55..........55.",
-        "5445........5445",
-        "53AA9BBBBBB9AA35",
-        ".55A9BBBBBB9A55.",
-        "..59BBBBBBBB95..",
-        "..5BCEEEEEECB5..",
-        "..5BCCCCCCCCB5..",
-        "...55BCCCCB55...",
-        "....5555555E75..",
-        ".........5E775..",
-        "..........555...",
-    ],
-    # R21C7: Side pulling / grabbing action body 0
-    (21, 7): [
-        "................",
-        "................",
-        "................",
-        "...........55...",
-        "...55.....5AA5..",
-        "..5AA55..5AAA55.",
-        ".55AAAA5555A5445",
-        ".5B5AAA544555345",
-        "5BEE5AA5345B555.",
-        "5BCCE5555525....",
-        ".55BCCCCCCB5....",
-        ".5555BCCCC5.....",
-        ".577E55555......",
-        "..577E5.........",
-        "...555..........",
-        "................",
-    ],
-    # R22C0..C3: Side pulling / grabbing 4-frame cycle
-    (22, 0): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "...........55...",
-        "...55.....5AA5..",
-        "..5AA55..5AAA55.",
-        ".55AAAA5555A5445",
-        ".5B5AAA544555345",
-        "5BEE5AA5345B555.",
-        "5BCCE5555525....",
-        ".5BCCCCCCCC5....",
-        "..55BCCCC55.....",
-        "...555555.......",
-        "...5777E5.......",
-        "....5555........",
-    ],
-    (22, 1): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "...........55...",
-        "...55.....5AA5..",
-        "..5AA55..5AAA55.",
-        ".55AAAA5555A5445",
-        ".5B5AAA544555345",
-        "5BEE5AA5345B555.",
-        "5BCCE5555525....",
-        ".5B5577E555.....",
-        "..55777E5.......",
-        "...55555........",
-        "................",
-    ],
-    (22, 2): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "...........55...",
-        "...55.....5AA5..",
-        "..5AA55..5AAA55.",
-        ".55AAAA5555A5445",
-        ".5B5AAA544555345",
-        "5BEE5AA5345B555.",
-        "5BCCE55555255...",
-        ".55BCCCCCC555...",
-        ".57E5BCCC5E75...",
-        "..5555555E775...",
-        ".........555....",
-        "................",
-    ],
-    (22, 3): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "...........55...",
-        "...55.....5AA5..",
-        "..5AA55..5AAA55.",
-        ".55AAAA5555A5445",
-        ".5B5AAA544555345",
-        "5BEE5AA53455555.",
-        "5BCCE555555E75..",
-        "555BCCCCCC5E775.",
-        ".5555BCCCC5555..",
-        ".....5555.......",
-        "................",
-    ],
-    # R22C4..C7: Side arm-raised / bow / boomerang / hookshot 4-frame cycle
-    (22, 4): [
-        "................",
-        "................",
-        ".............55.",
-        ".......555..5445",
-        "......5BBB55A345",
-        "....55BBCB5AAA55",
-        "...5BCCCCB5AAA5.",
-        "..5BCCCCCCB5A5..",
-        "..5BCEEEEEECB5..",
-        "..5BCCCCCCCC25..",
-        "...55BCCCCCB5...",
-        "....5555555E75..",
-        ".........5E775..",
-        "..........555...",
-        "................",
-        "................",
-    ],
-    (22, 5): [
-        "................",
-        "................",
-        "................",
-        ".............55.",
-        ".......555..5445",
-        "......5BBB55A345",
-        "....55BBCB5AAA5.",
-        "...5BCCCCB5AAA5.",
-        "..5BCCCCCCB5A5..",
-        "..5BCEEEEEECB5..",
-        "..5BCCCCCCCC25..",
-        "...55BCCCCCB5...",
-        "..57E55555555...",
-        "..577E5.........",
-        "...555..........",
-        "................",
-    ],
-    (22, 6): [
-        "................",
-        "................",
-        "................",
-        "................",
-        ".............55.",
-        ".......555..5445",
-        "......5BBB55A345",
-        "....55BBCB5AAA5.",
-        "...5BCCCCB5AAA5.",
-        "..5BCCCCCCB5A5..",
-        "..5BCEEEEEECB5..",
-        "..5BCCCCCCCC25..",
-        ".57E5BCCCCCB5...",
-        ".577E5555555....",
-        "..555...........",
-        "................",
-    ],
-    (22, 7): [
-        "................",
-        "................",
-        "................",
-        "................",
-        ".............55.",
-        ".......555..5445",
-        "......5BBB55A345",
-        "....55BBCB5AAA5.",
-        "...5BCCCCB5AAA5.",
-        "..5BCCCCCCB5A5..",
-        "..5BCEEEEEECB5..",
-        "..5BCCCCCCCC25..",
-        "...55BCCCCCB5...",
-        "......555555....",
-        "......5777E5....",
-        ".......5555.....",
-    ],
-
-    # -------------------------------------------------------------------------
-    # GROUP 7: R23-R27 CARRY-WALK / PEGASUS DASH / LUNGE / SWORD-HOLD BODIES
-    # -------------------------------------------------------------------------
-    # R23C0: Side arm-raised pose
-    (23, 0): [
-        "................",
-        "................",
-        "................",
-        "................",
-        ".............55.",
-        ".......555..5445",
-        "......5BBB55A345",
-        "....55BBCB5AAA5.",
-        "...5BCCCCB5AAA5.",
-        "..5BCCCCCCB5A5..",
-        "..5BCEEEEEECB5..",
-        "..5BCCCCCCCC25..",
-        "...55BCCCCCB5...",
-        ".....55777E5....",
-        "......555775....",
-        ".......5555.....",
-    ],
-    # R23C3: Side carry-walk 2 — remove stray top-row brown shoulder pixels
-    (23, 3): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "...5B9BB5.......",
-        ".5BCCBB95555555.",
-        "5BCECCBAAAAAA435",
-        "5ECCECBBAAAAA445",
-        ".5BCCEEE2EE5555.",
-        "5E34BCBB2B9.....",
-        "5EE7EBB9555.....",
-        ".5777E55........",
-        "..5555..........",
-        "................",
-        "................",
-    ],
-    # R23C5..C7: Front carry-walk / crouch-reach bodies — clean green sleeves & proper belt!
-    (23, 5): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "..55........55..",
-        ".5AA9BBBBBB9AA5.",
-        ".5AA9BBBBBB9AA5.",
-        "5AA5BCE22ECB5AA5",
-        "5445CCB22BCC5445",
-        "53455BCCCCB55435",
-        ".5557E5555E7555.",
-        "...5775..5775...",
-        "....55....55....",
-        "................",
-    ],
-    (23, 6): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "..55........55..",
-        ".5AA9BBBBBB9AA5.",
-        ".5AA9BBBBBB9AA5.",
-        "5AA5BCE22ECB5AA5",
-        "5445CCB22BCC5445",
-        "53455BCCCCB55435",
-        ".5557E555555555.",
-        "...5775...5E75..",
-        "....55.....55...",
-        "................",
-    ],
-    (23, 7): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "..55........55..",
-        ".5AA9BBBBBB9AA5.",
-        ".5AA9BBBBBB9AA5.",
-        "5AA5BCE22ECB5AA5",
-        "5445CCB22BCC5445",
-        "53455BCCCCB55435",
-        ".555555555E7555.",
-        "...57E5..5775...",
-        "....55....55....",
-        "................",
-    ],
-    # R24C3..C5: Pegasus Dash / fast-run side bodies (poses $0F5-$0F7, $0FB-$0FD with R23C1)
-    (24, 3): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "......55555.....",
-        "...559BBBB5AA5..",
-        "..5BBCCCCB5AAA5.",
-        "..5BCCCCCB5AA445",
-        "..5BCEEEEE555345",
-        "...5BCCCCCC2555.",
-        "...55BCCCCB5....",
-        "...57E555555....",
-        "....555..5E75...",
-        ".........5775...",
-        "..........55....",
-        "................",
-    ],
-    (24, 4): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        ".55....55555....",
-        "5445..9BBBB5AA5.",
-        "53AA5BBCCCB5AAA5",
-        ".555BBCCCCB5AA45",
-        "..5BCEEEEEEC5345",
-        "..5BCCCCCCC2555.",
-        "...55BCCCCB5....",
-        "....5555555.....",
-        ".....577E5......",
-        ".....5557E5.....",
-        ".......555......",
-    ],
-    (24, 5): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "......55555.....",
-        "...559BBBB5AA5..",
-        "..5BBCCCCB5AAA5.",
-        "..5BCCCCCB5AA5..",
-        "..5BCEEEEE5445..",
-        "..5BCCCCCC5345..",
-        ".57E5BCCCC5555..",
-        ".577E55555E75...",
-        "..555.....555...",
-        "................",
-    ],
-    # R26C7: Side sword lunge / charge body (poses $07B, $084)
-    (26, 7): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "......55........",
-        ".....5AA5.......",
-        "....55AA55BB5555",
-        "...5BB5BB5AAAA44",
-        "...5BBCCCB5AAA43",
-        "...5BCEEEECB5555",
-        "..575BCCCCCC25..",
-        "..57E5BCCCCB5...",
-        "...555555555E75.",
-        "..........5E775.",
-        "...........555..",
-        "................",
-    ],
-    # R27C2: Front carry/sword-hold walk down 1 (pose $028)
-    (27, 2): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "555..........55.",
-        "5445........5AA5",
-        "53AA59BBBB95AAA5",
-        ".55AA9BBBB9AAA5.",
-        "...5BCEE22E5445.",
-        "...5CCB22BC5345.",
-        "..555BCCCCB555..",
-        "..57E555555E75..",
-        "..577E5...555...",
-        "...555..........",
-        "................",
-        "................",
-    ],
-    # R27C3: Front carry/sword-hold walk down 2 (pose $029)
-    (27, 3): [
-        "................",
-        "................",
-        "................",
-        "................",
-        "................",
-        "555..........55.",
-        "5445........5AA5",
-        "53AA59BBBB95AAA5",
-        ".55AA9BBBB9AAA5.",
-        "...5BCEE22E5445.",
-        "...5CCB22BC5345.",
-        "..555BCCCCB555..",
-        "...55555555E75..",
-        ".........5E775..",
-        "..........555...",
-        "................",
-    ],
-}
+def load_zspr_gfx(path: Path) -> bytes:
+    raw = path.read_bytes()
+    if raw[:4] != b"ZSPR":
+        raise ValueError(f"{path} is not a valid ZSPR file")
+    gfx_off, gfx_len, _pal_off, _pal_len = struct.unpack_from("<IHIH", raw, 9)
+    if gfx_len != SHEET_SIZE:
+        raise ValueError(f"{path}: unexpected gfx_len={gfx_len}")
+    return raw[gfx_off : gfx_off + gfx_len]
 
 
 def load_base_sheet(path: Path) -> bytes:
     raw = path.read_bytes()
     if len(raw) == SHEET_SIZE:
         return raw
-    if len(raw) >= 0x087000:
-        return raw[0x080000:0x087000]
-    raise ValueError(f"Unsupported base input {path} ({len(raw)} bytes)")
+    if len(raw) >= 0x80000 + SHEET_SIZE:
+        return raw[0x80000 : 0x80000 + SHEET_SIZE]
+    raise ValueError(f"Unsupported base size {len(raw)} for {path}")
 
 
-def build_sheet(base_bytes: bytes) -> bytes:
+def build_sheet(base_bytes: bytes, zspr_path: Path = DEFAULT_ZSPR) -> bytes:
     grid = decode_4bpp_sheet(base_bytes)
-    for (r, c), rows in CELLS.items():
-        cell = parse_cell(rows, f"R{r:02d}C{c}")
-        for py in range(16):
-            for px in range(16):
-                grid[r * 16 + py][c * 16 + px] = cell[py][px]
+    zgrid = decode_4bpp_sheet(load_zspr_gfx(zspr_path))
+
+    # 1. Copy artist-drawn InTheBEEF head/praying/flute/bed frames with clean ROM palette remap
+    for r, c in ZSPR_HEAD_CELLS:
+        y0, x0 = r * 16, c * 16
+        for dy in range(16):
+            for dx in range(16):
+                grid[y0 + dy][x0 + dx] = ZSPR_TO_ROM_PAL[zgrid[y0 + dy][x0 + dx]]
+
+    # 2. Copy artist-drawn InTheBEEF body frames (including midway pull R13C0)
+    for r, c in ZSPR_BODY_CELLS:
+        y0, x0 = r * 16, c * 16
+        for dy in range(16):
+            for dx in range(16):
+                grid[y0 + dy][x0 + dx] = ZSPR_TO_ROM_BODY[zgrid[y0 + dy][x0 + dx]]
+
+    # 3. On body cells where ZSPR has blank or @InTheBEEF signature art, minimally recolor
+    #    vanilla brown ALTTP sleeves (C13/C14 in rows 0..10) to Mail-recolored tunic shades
+    #    (C10/C12/C11) while keeping the exact ROM silhouette, hands, belt, and boots intact!
+    for r, c in SLEEVE_RECOLOR_CELLS:
+        y0, x0 = r * 16, c * 16
+        for dy in range(11):
+            for dx in range(16):
+                v = grid[y0 + dy][x0 + dx]
+                if v == 13:
+                    grid[y0 + dy][x0 + dx] = 10  # sleeve highlight -> Mail tunic bright
+                elif v == 14:
+                    # Only convert brown sleeve pixels adjacent to tunic/skin/arm, not deep bottom boots
+                    grid[y0 + dy][x0 + dx] = 11  # sleeve shade -> Mail tunic dark
+
     return encode_4bpp_sheet(grid)
 
 
@@ -1563,39 +262,36 @@ def resolve_default_base() -> Path:
     for cand in DEFAULT_BASE_CANDIDATES:
         if cand.is_file():
             return cand
-    raise FileNotFoundError(
-        "Could not locate base ROM or existing mc_link_sheet.4bpp; pass --base PATH."
-    )
+    if DEFAULT_OUT.is_file():
+        return DEFAULT_OUT
+    raise FileNotFoundError("No base ROM or mc_link_sheet.4bpp found; pass --base")
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--base", type=Path, default=None,
-                    help="Base ROM (reads $108000 / PC 0x080000) or existing 28,672-byte 4BPP sheet")
-    ap.add_argument("--out", type=Path, default=DEFAULT_OUT,
-                    help="Output 4BPP sheet path (default: Data/graphics/link/mc_link_sheet.4bpp)")
-    ap.add_argument("--check", action="store_true",
-                    help="Verify --out already matches freshly generated bytes without writing")
+    ap.add_argument("--base", type=Path, help="Base ROM (.sfc/rom) or 28672B 4BPP sheet")
+    ap.add_argument("--zspr", type=Path, default=DEFAULT_ZSPR, help="Reference Minish Cap Link ZSPR")
+    ap.add_argument("--out", type=Path, default=DEFAULT_OUT, help="Output 28672B 4BPP path")
+    ap.add_argument("--check", action="store_true", help="Verify output matches reproducible build")
     args = ap.parse_args(argv)
 
-    base_path = args.base if args.base is not None else resolve_default_base()
-    rebuilt = build_sheet(load_base_sheet(base_path))
-    assert len(rebuilt) == SHEET_SIZE
+    base_path = args.base or resolve_default_base()
+    rebuilt = build_sheet(load_base_sheet(base_path), args.zspr)
 
     if args.check:
         if not args.out.is_file():
             print(f"MISSING: {args.out}", file=sys.stderr)
             return 1
-        existing = args.out.read_bytes()
-        if existing != rebuilt:
-            print(f"MISMATCH: {args.out} differs from build_mc_link_sheet.py output", file=sys.stderr)
+        cur = args.out.read_bytes()
+        if cur != rebuilt:
+            print(f"STALE: {args.out} differs from freshly built bytes", file=sys.stderr)
             return 1
-        print(f"OK: {args.out} matches reproducible build ({len(rebuilt)} bytes, {len(CELLS)} cells patched)")
+        print(f"OK: {args.out} matches reproducible build ({len(rebuilt)} bytes, {len(ALL_UPGRADED_CELLS)} cells upgraded from ZSPR/recolor)")
         return 0
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_bytes(rebuilt)
-    print(f"Wrote {args.out} ({len(rebuilt)} bytes, {len(CELLS)} cells upgraded)")
+    print(f"Wrote {args.out} ({len(rebuilt)} bytes, {len(ALL_UPGRADED_CELLS)} cells upgraded)")
     return 0
 
 

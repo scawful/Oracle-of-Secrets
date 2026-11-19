@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import subprocess
 import sys
 import unittest
 
@@ -17,20 +18,6 @@ import build_deku_link_sheet as deku_builder  # noqa: E402
 MC_SHEET_PATH = ROOT / "Data/graphics/link/mc_link_sheet.4bpp"
 DEKU_SHEET_PATH = ROOT / "Masks/gfx/deku_link.bin"
 YAZE_BASE_ROM = Path.home() / "Zelda/Projects/Oracle-of-Secrets/Oracle-of-Secrets.yazeproj/rom"
-VANILLA_ALTTP_ROM = Path.home() / "src/hobby/roms/Legend of Zelda, The - A Link to the Past (USA).sfc"
-
-# Lavender slash/swoosh FX cells that legitimately remain identical to vanilla ALTTP
-MC_VANILLA_FX_CELLS = {
-    (8, 3), (8, 4), (8, 5), (8, 6), (8, 7),
-    (9, 0), (9, 1), (9, 2),
-    (11, 0),
-}
-
-# Upgraded Human MC Link head cells (formerly vanilla blue headband / legacy heads)
-MC_UPGRADED_HEADS = {
-    (4, 7), (6, 5), (6, 6), (10, 0), (10, 5), (10, 7),
-    (23, 1), (25, 5), (26, 1), (26, 4),
-}
 
 
 def cell_pixels(grid: list[list[int]], r: int, c: int) -> list[list[int]]:
@@ -50,18 +37,17 @@ class MinishCapLinkSheetTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.raw = MC_SHEET_PATH.read_bytes()
         cls.grid = mc_builder.decode_4bpp_sheet(cls.raw)
+        cls.zgrid = mc_builder.decode_4bpp_sheet(mc_builder.load_zspr_gfx(mc_builder.DEFAULT_ZSPR))
 
-    def test_exact_size_and_idempotent_reproducibility(self) -> None:
+    def test_exact_size_and_reproducibility(self) -> None:
         self.assertEqual(len(self.raw), mc_builder.SHEET_SIZE)
         # Rebuilding from itself must be byte-exact (CI-safe without external ROM)
-        rebuilt_self = mc_builder.build_sheet(self.raw)
-        self.assertEqual(rebuilt_self, self.raw)
-        # If authoring base ROM is present locally, rebuilding from $108000 must match byte-exact
+        self.assertEqual(mc_builder.build_sheet(self.raw), self.raw)
         if YAZE_BASE_ROM.is_file():
             base = mc_builder.load_base_sheet(YAZE_BASE_ROM)
             self.assertEqual(mc_builder.build_sheet(base), self.raw)
-            # And scawful's existing MC heads/walk frames must be preserved verbatim
             base_grid = mc_builder.decode_4bpp_sheet(base)
+            # scawful's existing MC heads/walk frames must be preserved verbatim
             for r, c in [
                 (0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7),
                 (1, 0), (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7),
@@ -74,55 +60,32 @@ class MinishCapLinkSheetTests(unittest.TestCase):
                     f"Existing scawful cell R{r:02d}C{c} must be preserved untouched",
                 )
 
-    def test_zero_leftover_vanilla_alttp_body_or_head_cells(self) -> None:
-        if not VANILLA_ALTTP_ROM.is_file():
-            self.skipTest("Canonical vanilla ALTTP ROM not present locally")
-        van_grid = mc_builder.decode_4bpp_sheet(mc_builder.load_base_sheet(VANILLA_ALTTP_ROM))
-        leftover = []
-        for r in range(28):
-            for c in range(8):
-                cell = cell_pixels(self.grid, r, c)
-                if not any(v for row in cell for v in row):
-                    continue
-                if cell == cell_pixels(van_grid, r, c) and (r, c) not in MC_VANILLA_FX_CELLS:
-                    leftover.append(f"R{r:02d}C{c}")
-        self.assertEqual(leftover, [], f"Leftover untouched vanilla ALTTP cells: {leftover}")
-
-    def test_action_rows_have_green_mail_sleeves_and_no_alttp_yellow_hem(self) -> None:
-        # Check every upgraded body cell in R14..R27 and early action rows
-        body_cells = [
-            (r, c) for (r, c) in mc_builder.CELLS
-            if (r, c) not in MC_UPGRADED_HEADS
-            and (r, c) not in {(17, 1), (18, 1), (19, 1)}  # combined shocked head+body
-        ]
-        self.assertGreaterEqual(len(body_cells), 55)
-        for r, c in body_cells:
-            cell = cell_pixels(self.grid, r, c)
-            cnt = color_counts(cell)
-            # Must use Mail-recolored tunic/sleeve colors (C10/C11/C12)
-            tunic_px = cnt.get(10, 0) + cnt.get(11, 0) + cnt.get(12, 0)
-            self.assertGreaterEqual(tunic_px, 16, f"R{r:02d}C{c} lacks mail-recolored tunic/sleeves")
-            # No wide ALTTP bright yellow tunic hem (C02 <= 4px for tiny belt buckle only)
-            self.assertLessEqual(cnt.get(2, 0), 4, f"R{r:02d}C{c} still has wide ALTTP yellow hem ({cnt.get(2, 0)}px)")
-            # No vanilla brown sleeve highlight (C13 == 0 on upgraded pure body cells except R18C5/6 skin crease)
-            if (r, c) not in {(18, 5), (18, 6)}:
-                self.assertEqual(cnt.get(13, 0), 0, f"R{r:02d}C{c} has leftover C13 brown sleeve pixels")
-            # Upper shoulder region must NOT have wide brown sleeve blocks (C14 <= 2)
-            # (R13C0 is stored upside-down for V-flipped somersault, so its arms live at y >= 8)
-            arm_rows = range(8, 16) if (r, c) == (13, 0) else range(7)
-            upper_c14 = sum(1 for y in arm_rows for x in range(16) if cell[y][x] == 14)
-            self.assertLessEqual(upper_c14, 2, f"R{r:02d}C{c} has upper-shoulder brown sleeve pixels ({upper_c14})")
-            # Zero pink-hair C15 in body cells
-            self.assertEqual(cnt.get(15, 0), 0, f"R{r:02d}C{c} contains stray C15 pixel")
-
-    def test_upgraded_heads_have_zero_pink_hair_and_zero_blue_headband(self) -> None:
-        for r, c in sorted(MC_UPGRADED_HEADS | {(17, 1), (19, 1)}):
-            cell = cell_pixels(self.grid, r, c)
-            cnt = color_counts(cell)
-            # Zero pink hair (C15)
+    def test_praying_pull_flute_bed_match_remapped_inthebeef_zspr(self) -> None:
+        # Praying (R17C1/R18C1/R19C1), Upside-Down (R04C7), Flute (R25C5), Bed (R26C1/C4)
+        for r, c in mc_builder.ZSPR_HEAD_CELLS:
+            got = cell_pixels(self.grid, r, c)
+            exp = [[mc_builder.ZSPR_TO_ROM_PAL[v] for v in row] for row in cell_pixels(self.zgrid, r, c)]
+            self.assertEqual(got, exp, f"Head cell R{r:02d}C{c} must match remapped InTheBEEF ZSPR")
+            cnt = color_counts(got)
             self.assertEqual(cnt.get(15, 0), 0, f"Head R{r:02d}C{c} has pink hair C15")
-            # Blue (C08) is ONLY for Minish Cap eyes (<= 4px, NEVER a wide 6-14px vanilla headband!)
-            self.assertLessEqual(cnt.get(8, 0), 4, f"Head R{r:02d}C{c} has legacy blue headband ({cnt.get(8, 0)}px C08)")
+            self.assertLessEqual(cnt.get(8, 0), 4, f"Head R{r:02d}C{c} has blue headband")
+
+        # Midway pull (R13C0) and all secondary ZSPR body frames
+        for r, c in mc_builder.ZSPR_BODY_CELLS:
+            got = cell_pixels(self.grid, r, c)
+            exp = [[mc_builder.ZSPR_TO_ROM_BODY[v] for v in row] for row in cell_pixels(self.zgrid, r, c)]
+            self.assertEqual(got, exp, f"Body cell R{r:02d}C{c} must match remapped InTheBEEF ZSPR")
+            cnt = color_counts(got)
+            self.assertEqual(cnt.get(15, 0), 0, f"Body R{r:02d}C{c} has stray C15")
+
+    def test_no_inthebeef_signature_cells_imported(self) -> None:
+        # Unused ZSPR Easter-egg blocks must NEVER be in ZSPR_HEAD_CELLS or ZSPR_BODY_CELLS
+        sig_cells = {
+            (16, 2), (16, 3), (16, 4), (17, 3), (17, 4), (17, 5),
+            (21, 7), (22, 0), (22, 1), (22, 2), (22, 3), (22, 4), (22, 5), (22, 6), (22, 7), (23, 0),
+        }
+        imported = set(mc_builder.ZSPR_HEAD_CELLS) | set(mc_builder.ZSPR_BODY_CELLS)
+        self.assertTrue(imported.isdisjoint(sig_cells), f"Signature cells leaked: {imported & sig_cells}")
 
     def test_asm_patch_and_include_wired(self) -> None:
         patch_asm = (ROOT / "Core/link_sheet_patch.asm").read_text(encoding="utf-8")
@@ -138,45 +101,42 @@ class DekuLinkSheetTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.raw = DEKU_SHEET_PATH.read_bytes()
         cls.grid = deku_builder.decode_4bpp_sheet(cls.raw)
+        cls.orig = subprocess.check_output(
+            ["git", "-C", str(ROOT), "show", f"{deku_builder.ORIG_GIT_REV}:Masks/gfx/deku_link.bin"]
+        )
+        cls.orig_grid = deku_builder.decode_4bpp_sheet(cls.orig)
 
-    def test_exact_size_idempotency_and_no_index_15(self) -> None:
+    def test_exact_size_reproducibility_and_no_index_15(self) -> None:
         self.assertEqual(len(self.raw), deku_builder.SHEET_SIZE)
-        self.assertEqual(deku_builder.polish_deku_sheet(self.raw), self.raw)
+        self.assertEqual(deku_builder.build_sheet(self.orig), self.raw)
         c15 = sum(1 for row in self.grid for v in row if v == 15)
         self.assertEqual(c15, 0, "Deku sheet must never use undefined color index 15")
 
-    def test_zero_leftover_human_green_tunic_yellow_belt_in_action_rows(self) -> None:
-        # All unified Deku body cells across R01..R27 (excluding the 3 mini Deku heads)
-        mini_heads = {(25, 5), (26, 1), (26, 4)}
-        body_cells = [rc for rc in deku_builder.CELLS if rc not in mini_heads and rc != (10, 0)]
-        self.assertGreaterEqual(len(body_cells), 135)
-        for r, c in body_cells:
-            cell = cell_pixels(self.grid, r, c)
-            cnt = color_counts(cell)
-            # Zero bright yellow ALTTP belt/tunic band (C06 == 0 in every Deku body cell!)
-            self.assertEqual(cnt.get(6, 0), 0, f"Deku body R{r:02d}C{c} still has C06 yellow belt pixels")
-            # Zero red clown mittens / red shoes (C09 == 0, C10 == 0)
-            self.assertEqual(cnt.get(9, 0) + cnt.get(10, 0), 0, f"Deku body R{r:02d}C{c} has stray red pixels")
-            # Must combine warm sculpted wooden bark {2, 5, 7} AND lush green leaf skirt {1, 3, 4, 14}
-            bark_px = cnt.get(2, 0) + cnt.get(5, 0) + cnt.get(7, 0)
-            leaf_px = cnt.get(1, 0) + cnt.get(3, 0) + cnt.get(4, 0) + cnt.get(14, 0)
-            self.assertGreaterEqual(bark_px, 14, f"Deku body R{r:02d}C{c} lacks wooden bark ({bark_px}px)")
-            self.assertGreaterEqual(leaf_px, 12, f"Deku body R{r:02d}C{c} lacks green leaf skirt ({leaf_px}px)")
-            # Specifically verify R14..R24 action rows are no longer human green-tunic dominated
-            if 14 <= r <= 24:
-                self.assertGreaterEqual(
-                    bark_px / max(1, bark_px + leaf_px),
-                    0.35,
-                    f"Deku action cell R{r:02d}C{c} looks human green-tunic dominated (bark={bark_px}, leaf={leaf_px})",
-                )
+    def test_original_slim_body_and_cute_red_gloves_boots_preserved(self) -> None:
+        # ALL of R00..R13 must be 100% byte-for-byte identical to original slim Deku Link!
+        self.assertEqual(self.raw[: 14 * 8 * 128], self.orig[: 14 * 8 * 128])
+        # Verify red gloves/boots (C09/C10) are intact on core walk/idle cells (R01..R03, R12..R13)
+        red_px = sum(
+            1
+            for r in (1, 2, 3, 12, 13)
+            for c in range(8)
+            for row in cell_pixels(self.grid, r, c)
+            for v in row
+            if v in (9, 10)
+        )
+        self.assertGreaterEqual(red_px, 400, f"Cute red gloves/boots were stripped ({red_px}px)")
 
-    def test_scawful_deku_heads_preserved_with_glowing_eyes_and_leaf_caps(self) -> None:
-        # Key Deku front/side head cells must still have glowing yellow eyes (C06) + green cap + bark face
-        for r, c in [(0, 0), (0, 1), (0, 3), (0, 4), (0, 5), (0, 7), (1, 7), (20, 0), (20, 1)]:
-            cnt = color_counts(cell_pixels(self.grid, r, c))
-            self.assertGreaterEqual(cnt.get(6, 0), 10, f"Deku head R{r:02d}C{c} lost yellow eyes/tuft")
-            self.assertGreaterEqual(cnt.get(4, 0) + cnt.get(3, 0), 15, f"Deku head R{r:02d}C{c} lost green cap")
-            self.assertGreaterEqual(cnt.get(5, 0) + cnt.get(2, 0), 20, f"Deku head R{r:02d}C{c} lost bark face")
+    def test_surgical_recolor_preserves_exact_silhouette_and_removes_yellow_belt(self) -> None:
+        for r, c in deku_builder.VANILLA_TUNIC_CELLS:
+            got = cell_pixels(self.grid, r, c)
+            ref = cell_pixels(self.orig_grid, r, c)
+            # Zero fattening: exact same opaque pixel mask on every recolored cell!
+            got_mask = [[v != 0 for v in row] for row in got]
+            ref_mask = [[v != 0 for v in row] for row in ref]
+            self.assertEqual(got_mask, ref_mask, f"Deku cell R{r:02d}C{c} silhouette changed (fattened!)")
+            # Zero leftover bright yellow human belt (C06)
+            cnt = color_counts(got)
+            self.assertEqual(cnt.get(6, 0), 0, f"Deku cell R{r:02d}C{c} still has C06 yellow belt")
 
 
 if __name__ == "__main__":
