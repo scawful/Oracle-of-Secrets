@@ -224,6 +224,8 @@ class StartupGbcSpawnTests(unittest.TestCase):
             "Palette_ArmorAndGloves = $018100\n"
             "LinkGraphics_ApplyD8Base = $018110\n"
             "Link_HandleMovingAnimation_FullLongEntry = $018120\n"
+            "ShieldWorld_SyncBoth = $018130\n"
+            "org $018130 : RTL\n"
             "org $2C8000\n"
             + tunic_macro
             + tunic_fn
