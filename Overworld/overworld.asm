@@ -85,6 +85,8 @@ incsrc "Overworld/world_map.asm"
 %log_end("Overworld/world_map.asm", !LOG_OVERWORLD)
 incsrc "Overworld/special_overworld_transitions.asm"
 %log_end("Overworld/special_overworld_transitions.asm", !LOG_OVERWORLD)
+incsrc "Overworld/special_overworld_quality.asm"
+%log_end("Overworld/special_overworld_quality.asm", !LOG_OVERWORLD)
 
 ; =========================================================
 ; Get Lv2 Sword from chest

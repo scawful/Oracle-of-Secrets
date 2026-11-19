@@ -51,6 +51,7 @@ LogoFadeInSetClock:
   if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
   JSL Oracle_SpecialOverworldPaletteReset
   endif
+  LDA.b #$00 : STA.l SpecialOverworld_VortexWorld
   JSL $00ED7C ; IntroLogoPaletteFadeIn
   LDA.b #$08 : STA.l TimeState.Hours ; Set the time to 6:00am
   LDA.b #$3F : STA.l TimeState.Speed ; Set the time speed
@@ -67,6 +68,7 @@ ResetClockTriforceRoom:
   if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
   JSL Oracle_SpecialOverworldPaletteReset
   endif
+  LDA.b #$00 : STA.l SpecialOverworld_VortexWorld
   JSL $00E384 ; LoadCommonSprites_long
   LDA.b #$00 : STA.l TimeState.Hours ; low hours for palette?
   LDA.b #$00 : STA.l TimeState.Minutes ; high hours for palette?
@@ -646,6 +648,7 @@ LoadPeacetimeSprites:
 
 FixSaveAndQuit:
 {
+  LDA.b #$00 : STA.l SpecialOverworld_VortexWorld
   LDA.b #$08 : STA.l TimeState.Hours
   LDA.b #$01 : STA.l TimeState.GfxDirty
   LDA.l GameState

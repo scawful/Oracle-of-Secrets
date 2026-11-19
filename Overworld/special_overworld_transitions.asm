@@ -14,15 +14,17 @@
 ;   5. Special Overworld Mode 7 World Map palette, Link dot save/restore,
 ;      and landmark icon helpers
 ;
-; Volatile WRAM (6 bytes inside unused $7EC132-$7EC13F):
+; Volatile WRAM (7 bytes inside unused $7EC132-$7EC13F):
 ;   $7EC132: SpecialOverworld_CrossWorldDest (1B; $00 = idle)
 ;   $7EC133..$7EC136: SpecialOverworld_MapSavedPos (4B; $7EC108..$7EC10B backup)
 ;   $7EC137: SpecialOverworld_MapSavedFlag (1B; $01 while map backup active)
+;   $7EC138: SpecialOverworld_VortexWorld (1B; $00=none, $01=LW, $40=DW Abyss, $FF=just returned DW->LW)
 ; =========================================================
 
 SpecialOverworld_CrossWorldDest = $7EC132
 SpecialOverworld_MapSavedPos    = $7EC133
 SpecialOverworld_MapSavedFlag   = $7EC137
+SpecialOverworld_VortexWorld    = $7EC138
 
 pushpc
 org $5FD200
@@ -175,9 +177,23 @@ SpecialOverworld_SetupMapIcon:
 
 ; Hook at $02B1B4 (Module09_1C_02_HandleMusic end, M=8, X=8).
 ; Unifies Special Overworld entry ($17..$1C) into Module $09 before
-; Overworld_FinalizeEntryOntoScreen ($08) hands control to the player.
+; Overworld_FinalizeEntryOntoScreen ($08) hands control to the player, and
+; restores Special Overworld area music/ambience (vanilla $02B1A0 skips $8A >= $80).
 SpecialOverworld_FinishSpecialEntry:
 {
+  LDA.b $8A : CMP.b #$80 : BCC .done_music
+    PHX
+    TAX
+    LDA.l !OverworldMusicCache, X : LSR #4 : BNE .has_amb
+      LDA.b #$05
+    .has_amb
+    STA.w $012D
+    LDA.l !OverworldMusicCache, X : AND.b #$0F : BEQ .keep_song
+      CMP.w $0130 : BEQ .keep_song
+        STA.w $012C
+    .keep_song
+    PLX
+  .done_music
   LDA.b #$09 : STA.b $10
   LDA.b #$08 : STA.b $11
   STZ.b $B0
@@ -628,15 +644,64 @@ SpecialOverworld_ShouldMosaic:
   TYX : JSL Lyra_ReadGfx7 : CMP $01,S : BNE .gfx_diff
   PLA
   SEP #$30
+  BRA .check_resident
+
+  .gfx_diff
+  PLA
+  SEP #$30
+  JMP .yes
+
+  .check_resident
+if defined("SPECIAL_OVERWORLD_RESOURCES_ENABLED")
+if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
+  ; Resident Main-VRAM tile atlases pack each map's unique tiles from $2000+,
+  ; so smooth-scrolling across two different resident Transfer pointers would
+  ; overwrite the outgoing screen's live tiles mid-scroll -> force clean Mosaic.
+  REP #$30
+  LDA $02,S : AND.w #$00FF : ASL : TAX
+  LDA.l !SPECIAL_OVERWORLD_TRANSFER_DIRECTORY, X : PHA
+  LDA.b $8A : AND.w #$00FF : ASL : TAX
+  LDA.l !SPECIAL_OVERWORLD_TRANSFER_DIRECTORY, X
+  CMP $01,S : BEQ .same_transfer
+    PLA
+    SEP #$30
+    JMP .yes
+  .same_transfer
+  PLA
+  SEP #$30
+endif
+endif
+
+if defined("SPECIAL_OVERWORLD_PALETTE_ENABLED")
+if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
+  ; Resident packed 256B palettes differ across biomes (Deku/Goron/Sea/Snow),
+  ; so smooth-scrolling across different palette pointers flashes wrong BG colors.
+  REP #$30
+  LDA $02,S : AND.w #$00FF : SEC : SBC.w #$0080 : PHA
+  ASL : CLC : ADC $01,S : TAX : PLA
+  LDA.l !SPECIAL_OVERWORLD_RESIDENT_PALETTE_DIRECTORY, X : PHA
+  LDA.l !SPECIAL_OVERWORLD_RESIDENT_PALETTE_DIRECTORY+2, X : AND.w #$00FF : PHA
+  LDA.b $8A : AND.w #$00FF : SEC : SBC.w #$0080 : PHA
+  ASL : CLC : ADC $01,S : TAX : PLA
+  LDA.l !SPECIAL_OVERWORLD_RESIDENT_PALETTE_DIRECTORY+2, X : AND.w #$00FF
+  CMP $01,S : BNE .respal_diff
+  LDA.l !SPECIAL_OVERWORLD_RESIDENT_PALETTE_DIRECTORY, X
+  CMP $03,S : BEQ .same_respal
+  .respal_diff
+    PLA : PLA
+    SEP #$30
+    JMP .yes
+  .same_respal
+  PLA : PLA
+  SEP #$30
+endif
+endif
 
   .no
   PLY : PLX
   LDA.b #$00
   RTL
 
-  .gfx_diff
-  PLA
-  SEP #$30
   .yes
   PLY : PLX
   LDA.b #$01

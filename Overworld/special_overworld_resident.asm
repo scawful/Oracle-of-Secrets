@@ -139,8 +139,11 @@ endif
 Lyra_ResidentFullWord_End:
 
 Lyra_ResidentHorizontalWord:
+    LDA.b $8A
+    CMP.w #!SPECIAL_OVERWORLD_RESIDENT_FIRST : BCC .native
+    CMP.w #!SPECIAL_OVERWORLD_RESIDENT_END : BCS .native
     LDA.b $88 : ASL : JSR Lyra_ResidentBufferDelta
-    ASL : ASL : ASL : ASL : ASL : ASL
+    XBA : LSR : LSR
     CLC : ADC.b $84 : PHA
     LDA.w $0416 : AND.w #$0002 : TAX
     LDA.l Lyra_ResidentHorizontalOffsets, X
@@ -157,6 +160,9 @@ Lyra_ResidentHorizontalWord:
 Lyra_ResidentHorizontalWord_End:
 
 Lyra_ResidentVerticalWord:
+    LDA.b $8A
+    CMP.w #!SPECIAL_OVERWORLD_RESIDENT_FIRST : BCC .native
+    CMP.w #!SPECIAL_OVERWORLD_RESIDENT_END : BCS .native
     LDA.b $86 : ASL : JSR Lyra_ResidentBufferDelta
     CLC : ADC.b $84 : PHA
     LDA.w $0416 : AND.w #$0004 : LSR : TAX
@@ -177,6 +183,9 @@ Lyra_ResidentVerticalWord_End:
 ; Native X is Tile16*8, while native Y indexes the output stripe buffer.
 ; Refuse nonterrain offsets instead of wrapping them onto a resident page.
 Lyra_ResidentMutableWord:
+    LDA.b $8A
+    CMP.w #!SPECIAL_OVERWORLD_RESIDENT_FIRST : BCC .native
+    CMP.w #!SPECIAL_OVERWORLD_RESIDENT_END : BCS .native
     LDA.b $00 : CMP.w #$2000 : BCS .native
     LDA $07,S : ORA $03,S : TAY
     LDA.b $00
@@ -213,8 +222,9 @@ Lyra_ResidentPhysicalPage:
     ASL : TAX
     LDA.l Lyra_ResidentQuadrantMasks, X : PHA
     LDA $05,S : AND.w #$1000 : XBA : LSR : PHA
-    LDA $07,S : AND.w #$0040
-    LSR : LSR : LSR : LSR : LSR : LSR
+    LDA $07,S : AND.w #$0040 : BEQ .qx0
+    LDA.w #$0001
+.qx0:
     ORA $01,S : AND $03,S : CLC : ADC $05,S
     STA $07,S
     PLA : PLA : PLA : PLA
@@ -299,7 +309,7 @@ Lyra_ResidentPageLookup:
 Lyra_ResidentIndexedLookup:
     TYA : AND.w #$0006 : PHA
     TYA : LSR : LSR : LSR : PHA
-    LSR : LSR : LSR : LSR : LSR : TAY
+    TYA : XBA : AND.w #$00FF : TAY
     SEP #$20
     LDA.b [$00], Y
     REP #$20

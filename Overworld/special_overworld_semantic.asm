@@ -36,6 +36,8 @@ assert !SPECIAL_OVERWORLD_SEMANTIC_CODE_END <= !SPECIAL_OVERWORLD_SEMANTIC_ROWS 
 !semantic_last_page #= 0
 !semantic_last_id #= 0
 !semantic_padding = 0
+!semantic_mask_lo #= 0
+!semantic_mask_hi #= 0
 while !semantic_i < !SPECIAL_OVERWORLD_SEMANTIC_COUNT
   !semantic_at #= !SPECIAL_OVERWORLD_SEMANTIC_ROWS+(!semantic_i*12)
   !semantic_page #= read2(!semantic_at)
@@ -52,6 +54,11 @@ while !semantic_i < !SPECIAL_OVERWORLD_SEMANTIC_COUNT
     else
       assert !semantic_page > !semantic_last_page, "Unsorted or duplicate semantic row"
     endif
+    if !semantic_page < $A0
+      !semantic_mask_lo #= !semantic_mask_lo|(1<<(!semantic_page-$80))
+    else
+      !semantic_mask_hi #= !semantic_mask_hi|(1<<(!semantic_page-$A0))
+    endif
     !semantic_last_page #= !semantic_page
     !semantic_last_id #= !semantic_id
   endif
@@ -65,37 +72,39 @@ Lyra_SemanticCodeStart:
 ; Y=local Tile16*8+quadrant*2 (TL0,TR2,BL4,BR6).
 ; Return A=effective source word; preserve ALL P/X/Y/DBR/D and scratch.
 ; Invalid query/missing row returns the supplied original word exactly.
-; Binary search [low,high), at most ceil(log2(count+1)) row comparisons.
+; Uses O(1) compile-time page range [low, high) so empty pages exit in 0
+; iterations and populated pages binary-search only their own ID slice.
 Lyra_SemanticSourceWord:
     PHP : PHX : PHY : PHA : CLD
     TYA : AND.w #$8001 : BNE .restore
     TXA : CMP.w #$0080 : BCC .restore
     CMP.w #!SPECIAL_OVERWORLD_SEMANTIC_CAPACITY : BCS .restore
+    SEC : SBC.w #$0080 : ASL : TAX
+    LDA.l Lyra_SemanticPageStart, X
+    CMP.l Lyra_SemanticPageStart+2, X : BCS .restore
+    PHA ; low
+    LDA.l Lyra_SemanticPageStart+2, X : PHA ; high
     TYA : LSR : LSR : LSR : PHA ; local ID
-    LDA.w #$0000 : PHA ; low
-    LDA.w #!SPECIAL_OVERWORLD_SEMANTIC_COUNT : PHA ; high
+    ; stack: id($01), high($03), low($05), nativeword($07), nativeY($09), nativeX($0B), P($0D)
 .search:
-    LDA $03,S : CMP $01,S : BCS .missing
-    CLC : ADC $01,S : LSR : PHA ; midpoint
-    ; stack: mid,high,low,id,nativeword,nativeY,nativeX,P
+    LDA $05,S : CMP $03,S : BCS .missing
+    CLC : ADC $03,S : LSR : PHA ; midpoint ($01,S); id=$03, high=$05, low=$07, word=$09, Y=$0B
     ASL : ASL : PHA : ASL : CLC : ADC $01,S : TAX : PLA
-    LDA.l !SPECIAL_OVERWORLD_SEMANTIC_ROWS, X
-    CMP $0D,S : BCC .higher : BNE .lower
     LDA.l !SPECIAL_OVERWORLD_SEMANTIC_ROWS+2, X
-    CMP $07,S : BCC .higher : BNE .lower
+    CMP $03,S : BCC .higher : BNE .lower
     TXA : CLC : ADC.w #$0004 : PHA
     LDA $0D,S : AND.w #$0006 : CLC : ADC $01,S : TAX : PLA
     LDA.l !SPECIAL_OVERWORLD_SEMANTIC_ROWS, X
     STA $09,S
     PLA ; mid
 .missing:
-    PLA : PLA : PLA ; high,low,id
+    PLA : PLA : PLA ; id,high,low
 .restore:
     PLA : PLY : PLX : PLP : RTL
 .higher:
-    PLA : INC : STA $03,S : BRA .search
+    PLA : INC : STA $05,S : BRA .search
 .lower:
-    PLA : STA $01,S : BRA .search
+    PLA : STA $03,S : BRA .search
 Lyra_SemanticSourceWord_End:
 
 ; Adapter for the guarded native $008864 hook (M16/X16, native D=0).
@@ -108,15 +117,22 @@ if !SPECIAL_OVERWORLD_RESIDENT_ENABLED == 1
 assert !SPECIAL_OVERWORLD_SEMANTIC_CAPACITY == !SPECIAL_OVERWORLD_RESIDENT_END
 assert !SPECIAL_OVERWORLD_SEMANTIC_CODE_END <= !LYRA_CURRENT_RESIDENT_CODE_BASE || !SPECIAL_OVERWORLD_SEMANTIC_CODE_BASE >= !LYRA_CURRENT_RESIDENT_CODE_END
 Lyra_SemanticCollisionWord:
-    ; Fast exit when indoors ($1B != 0) or outside resident pages [$80, $BF]:
-    ; Lyra_ResidentPhysicalPage always returns CLC there.
+    ; Fast exit when indoors ($1B != 0), outside resident pages [$80, $BF],
+    ; or when parent[$8A] and all 4 possible quadrants have zero record413 rows.
     PHP
     LDA.l $7E001B : AND.w #$00FF : BNE .fast_native
     LDA.l $7E008A : AND.w #$00FF
     CMP.w #!SPECIAL_OVERWORLD_RESIDENT_FIRST : BCC .fast_native
     CMP.w #!SPECIAL_OVERWORLD_RESIDENT_END : BCS .fast_native
+    CLD : PHX : TAX
+    LDA.l !LYRA_CURRENT_TABLE_parent, X : AND.w #$00FF
+    CMP.w #!SPECIAL_OVERWORLD_RESIDENT_FIRST : BCC .fast_native_x
+    CMP.w #!SPECIAL_OVERWORLD_RESIDENT_END : BCS .fast_native_x
+    SEC : SBC.w #!SPECIAL_OVERWORLD_RESIDENT_FIRST : TAX
+    LDA.l Lyra_SemanticQuadNonEmpty, X : AND.w #$00FF : BEQ .fast_native_x
+    PLX
     PHD : PHX : PHY
-    PEA.w $0000 : PLD : CLD
+    PEA.w $0000 : PLD
     LDA.l !LYRA_CURRENT_MAP16_DEFINITIONS, X : PHA
     TXA : TAY
     LDA.b $00 : SEC : SBC.l $7E0708 : AND.l $7E070A
@@ -133,6 +149,8 @@ Lyra_SemanticCollisionWord:
     PLA : PLY : PLX : PLD : PLP
     PHA : PLA ; replaced LDA's N/Z, all other caller flags preserved
     RTL
+.fast_native_x:
+    PLX
 .fast_native:
     PLP
     LDA.l !LYRA_CURRENT_MAP16_DEFINITIONS, X
@@ -150,9 +168,16 @@ Lyra_SemanticTerrainSourceWord:
     LDA.l $7E008A : AND.w #$00FF
     CMP.w #!SPECIAL_OVERWORLD_RESIDENT_FIRST : BCC .fast_native
     CMP.w #!SPECIAL_OVERWORLD_RESIDENT_END : BCS .fast_native
+    CLD : PHX : TAX
+    LDA.l !LYRA_CURRENT_TABLE_parent, X : AND.w #$00FF
+    CMP.w #!SPECIAL_OVERWORLD_RESIDENT_FIRST : BCC .fast_native_x
+    CMP.w #!SPECIAL_OVERWORLD_RESIDENT_END : BCS .fast_native_x
+    SEC : SBC.w #!SPECIAL_OVERWORLD_RESIDENT_FIRST : TAX
+    LDA.l Lyra_SemanticQuadNonEmpty, X : AND.w #$00FF : BEQ .fast_native_x
+    PLX
     PLA
     PHD : PHX : PHY : PHA
-    PEA.w $0000 : PLD : CLD
+    PEA.w $0000 : PLD
     LDA.l !LYRA_CURRENT_MAP16_DEFINITIONS, X : PHA
     TXA : TAY
     LDA $03,S : CMP.w #$2000 : BCS .restore
@@ -167,6 +192,8 @@ Lyra_SemanticTerrainSourceWord:
     PLY : PLX : PLD : PLP
     PHA : PLA
     RTL
+.fast_native_x:
+    PLX
 .fast_native:
     PLA
     PLP
@@ -268,6 +295,70 @@ Lyra_SourceTileTypes90_End:
 assert Lyra_SourceTileTypes90_End-Lyra_SourceTileTypes90 == $0201
 assert (Lyra_SourceTileTypes90&$FFFF)+$0201 <= $10000
 endif
+
+; Compile-time O(1) page range index (65 words = 130B) and parent-quadrant
+; presence table (64B) derived directly from validated record413 rows.
+Lyra_SemanticPageStart:
+!sem_cursor = 0
+!sem_page = $80
+while !sem_page < $C0
+  while !sem_cursor < !SPECIAL_OVERWORLD_SEMANTIC_COUNT && read2(!SPECIAL_OVERWORLD_SEMANTIC_ROWS+(!sem_cursor*12)) < !sem_page
+    !sem_cursor #= !sem_cursor+1
+  endwhile
+  dw !sem_cursor
+  !sem_page #= !sem_page+1
+endwhile
+while !sem_cursor < !SPECIAL_OVERWORLD_SEMANTIC_COUNT && read2(!SPECIAL_OVERWORLD_SEMANTIC_ROWS+(!sem_cursor*12)) < $FFFF
+  !sem_cursor #= !sem_cursor+1
+endwhile
+dw !sem_cursor
+
+Lyra_SemanticQuadNonEmpty:
+!sem_p = 0
+while !sem_p < 64
+  !sem_hit #= 0
+  if !sem_p < 32
+    if (!semantic_mask_lo>>!sem_p)&1
+      !sem_hit #= 1
+    endif
+  else
+    if (!semantic_mask_hi>>(!sem_p-32))&1
+      !sem_hit #= 1
+    endif
+  endif
+  !sem_q #= !sem_p+1
+  if !sem_q < 32
+    if (!semantic_mask_lo>>!sem_q)&1
+      !sem_hit #= 1
+    endif
+  elseif !sem_q < 64
+    if (!semantic_mask_hi>>(!sem_q-32))&1
+      !sem_hit #= 1
+    endif
+  endif
+  !sem_q #= !sem_p+8
+  if !sem_q < 32
+    if (!semantic_mask_lo>>!sem_q)&1
+      !sem_hit #= 1
+    endif
+  elseif !sem_q < 64
+    if (!semantic_mask_hi>>(!sem_q-32))&1
+      !sem_hit #= 1
+    endif
+  endif
+  !sem_q #= !sem_p+9
+  if !sem_q < 32
+    if (!semantic_mask_lo>>!sem_q)&1
+      !sem_hit #= 1
+    endif
+  elseif !sem_q < 64
+    if (!semantic_mask_hi>>(!sem_q-32))&1
+      !sem_hit #= 1
+    endif
+  endif
+  db !sem_hit
+  !sem_p #= !sem_p+1
+endwhile
 
 Lyra_SemanticCodeEnd:
 assert pc() <= !SPECIAL_OVERWORLD_SEMANTIC_CODE_END, "Semantic code exceeds explicit bound"

@@ -457,9 +457,9 @@ LyraCall_HiddenStreamsBank:
 assert pc() == $1BC8C3
 endif
 ; END CURRENT HIDDEN STREAM BANK HOOK
-assert read4($02C4BC) == $6BAB10E2 || read4($02C4BC) == ((Lyra_InitMusicTail<<8)|$5C), "Music initializer tail moved"
-org $02C4BC ; @hook module=Overworld name=Lyra_InitMusic kind=jml target=Lyra_InitMusicTail expected_m=8 expected_x=16
-    JML Lyra_InitMusicTail
+assert read4($02C4BC) == $6BAB10E2 || read4($02C4BC) == ((Lyra_InitMusicTail<<8)|$5C) || read4($02C4BC) == ((Oracle_SpecialOverworld_InitMusicTail<<8)|$5C), "Music initializer tail moved"
+org $02C4BC ; @hook module=Overworld name=Lyra_InitMusic kind=jml target=Oracle_SpecialOverworld_InitMusicTail expected_m=8 expected_x=16
+    JML Oracle_SpecialOverworld_InitMusicTail
 pullpc
 
 pushpc

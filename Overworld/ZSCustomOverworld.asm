@@ -1904,11 +1904,11 @@ PreOverworld_LoadProperties_Interupt:
 
     JSL.l Sprite_OverworldReloadAll
         
-    ; Are we in the dark world? If so, there's no warp vortex there.
-    LDA.b $8A : AND.b #$40 : BNE .noWarpVortex
-        JSL.l Sprite_ReinitWarpVortex
-    
-    .noWarpVortex
+    ; A4 Abyss return vortex ($6C): allow Kalyxo -> Abyss warp-pad return vortex
+    ; while suppressing intro Pyramid drop and Special Overworld ($80-$BF).
+    ; Keep exact 10-byte footprint so Overworld_LoadMusicIfNeeded stays at $0284D4.
+    JSL.l Oracle_SpecialOverworld_ReinitWarpVortex
+    NOP #6
         
     ; Check if Blind disguised as a crystal maiden was following us when
     ; we left the dungeon area.
@@ -2713,10 +2713,11 @@ MirrorWarp_LoadSpritesAndColors_Interupt:
         
     LDA.b #$14 : STA.b $5D
         
-    LDA.b $8A : AND.b #$40 : BNE .darkWorld
-        JSL.l Sprite_ReinitWarpVortex
-    
-    .darkWorld
+    ; A4 Abyss return vortex ($6C): spawn clickable return vortex on Kalyxo ->
+    ; Abyss warp-pad landings; suppress duplicate LW vortex on DW->LW return and
+    ; suppress on Special Overworld ($80-$BF).
+    JSL.l Oracle_SpecialOverworld_ReinitWarpVortex
+    NOP #6
     
     RTL
 }
@@ -5744,7 +5745,7 @@ Overworld_LoadMapProperties_Interupt:
 
     if !SPECIAL_OVERWORLD_NATIVE == 1
     LyraCall_SpriteGfxByArea_0 = pc()
-    JSL.l Lyra_ReadSpriteGfxByArea
+    JSL.l Oracle_SpecialOverworld_ReadSpriteGfxByArea
     else
     LDA.l Pool_LoadSpecialOverworld_GFX_0AA3-$80, X
     endif
@@ -6135,7 +6136,7 @@ LoadSpecialOverworld_Interupt:
     ; GFX $0AA3
     if !SPECIAL_OVERWORLD_NATIVE == 1
     LyraCall_SpecialSpriteGfx_0 = pc()
-    JSL.l Lyra_ReadSpecialSpriteGfx
+    JSL.l Oracle_SpecialOverworld_ReadSpecialSpriteGfx
     else
     LDA.l Pool_LoadSpecialOverworld_GFX_0AA3, X
     endif
