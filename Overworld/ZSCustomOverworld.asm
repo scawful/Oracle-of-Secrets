@@ -3224,30 +3224,27 @@ endif
 
     .loadAnimated
 
-    ; The NMI_DoUpdates function is never actually run while the whirpool is
-    ; happening. So we need to upload the animated tiles manually here while
-    ; the screen is still blue to cover up the change.
-
-    ; Set the bank for the source to $7E.
-    LDA.b #$7E : STA.w DMA.0_SourceAddrBank
-
+    ; Schedule animated tile upload ($7E:($0ADC) -> VRAM $0134, $0400 bytes)
+    ; through NMI ($17 = #$06 -> NMI_UpdateChr_Bg2HalfAndAnimatedLONG) so it
+    ; executes safely inside VBlank instead of firing a mid-frame Channel-0 DMA
+    ; while active rendering is enabled.
     REP #$20
-
-    LDA.w #DMA.0_TransferParameters : STA.w SNES.VRAMAddrReadWriteLow
-
-    LDA.w $0ADC : STA.w DMA.0_SourceAddrOffsetLow
-    
-    ; Set the target VRAM address.
-    LDA.w $0134 : STA.w SNES.VRAMAddrReadWriteLow
-    
-    ; Transfer #$400 = 4 * 256 = 1024 bytes = 1 Kbyte
-    LDA.w #$0400 : STA.w DMA.0_TransferSizeLow
-
+    LDA.w $0134 : BEQ .skipAnimatedUpload
+    STA.w NewNMITarget1
+    LDA.w $0ADC : CMP.w #$8000 : BCC .skipAnimatedUpload
+    STA.w NewNMISource1
+    LDA.w #$0400 : STA.w NewNMICount1
+    STZ.w NewNMITarget2
+    STZ.w NewNMISource2
+    STZ.w NewNMICount2
     SEP #$20
-    
-    ; Activate line 0.
-    LDA.b #$01 : STA.w SNES.DMAChannelEnable
+    LDA.b #$06 : STA.b $17 : STA.w $0710
+    BRA .doneAnimatedUpload
 
+    .skipAnimatedUpload
+    SEP #$20
+
+    .doneAnimatedUpload
     ; Move on to next submodule. This will get undone by the vanilla
     ; whirlpool code because it shared the function with the OW
     ; transition code which uses $11 as its module index but the
@@ -3257,6 +3254,25 @@ endif
     PLB
 
     RTL
+}
+
+; Resolves the $FF ZSCustomOverworld sheet sentinel to Pool_DefaultGFXGroups
+; for the destination area's world (LW/DW/SW) so areas with $FF slots restore
+; default tilesets instead of inheriting stale custom sheets across transitions
+; or whirlpools.
+; Entry: M=8, X=8, A=sheet ID, X=slot (0..7), DBR=$28.
+; Exit:  A=resolved sheet ID; X, Y, and DP scratch preserved.
+ResolveDefaultOWGFXSheet8:
+{
+    CMP.b #$FF : BNE .done
+        PHX
+        TXA : PHA
+        LDA.b $8A : AND.b #$C0 : LSR #3 : CLC : ADC $01, S : TAX
+        PLA
+        LDA.w Pool_DefaultGFXGroups_sheet0, X
+        PLX
+    .done
+    RTS
 }
 
 BlockGFXCheck:
@@ -3304,6 +3320,10 @@ if !ENABLE_KALYXO_DOCKS_PROFILE == 1
         JSL Oracle_DocksResolveTransitionSheet
         STA.b $00
 endif
+        CMP.b #$FF : BNE .notDefaultBlock
+            LDX.b $02 : JSR.w ResolveDefaultOWGFXSheet8
+            STA.b $00
+        .notDefaultBlock
 
         ; Check if it is #$FF.
         CMP.b #$FF : BEQ .dontLoadThisSheet
@@ -3349,7 +3369,8 @@ endif
 
                 .first
         .dontLoadThisSheet
-    INY : CPY.b $06 : BCC .loop
+    INY : CPY.b $06 : BCS .twoReady
+    JMP .loop
 
     .twoReady
     
@@ -3384,6 +3405,10 @@ CheckForChangeGraphicsTransitionLoad:
         CMP.b #$1A : BEQ .mosaic
             ; Are we leaving a special area?
             CMP.b #$26 : BEQ .mosaic
+                ; Are we in a whirlpool? Route through buffer-only palette and
+                ; backdrop updates so live CGRAM ($7EC500) stays whirlpool blue
+                ; until PaletteFilter_WhirlpoolRestore* fades it in.
+                CMP.b #$2E : BEQ .mosaic
                 ; Just a normal transition, Not a mosaic.
                 if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
                 JSL Oracle_SpecialOverworldAnimationForceTransition : BEQ .nativeAnimatedDecision1
@@ -3550,6 +3575,9 @@ CheckForChangeGraphicsTransitionLoad:
     ;INC.b $15
 
     ; PLACE CUSTOM GFX LOAD HERE!
+    ; Whirlpool ($11 == #$2E) runs outside forced blank ($13 = #$0F); never run
+    ; direct-VRAM-DMA normal-load callbacks here.
+    LDA.b $11 : CMP.b #$2E : BEQ CheckForChangeGraphicsTransitionLoadRetrun
 if !ENABLE_KALYXO_DOCKS_PROFILE == 1
     JSL Oracle_DocksNormalLoad
 else
@@ -3687,9 +3715,12 @@ LoadTransMainGFX:
     JSL Oracle_SpecialOverworldGraphicsResolveSheet
     PLX
     endif
+    SEP #$10
+    CMP.b #$FF : BNE .notDefault0
+        LDX.b #$00 : JSR.w ResolveDefaultOWGFXSheet8
+    .notDefault0
     CMP.b #$FF
     BEQ .noBgGfxChange0
-        SEP #$10
         CMP.w TransGFXModule_PriorSheets+0 : BEQ .noBgGfxChange0
             TAY
 
@@ -3718,9 +3749,12 @@ LoadTransMainGFX:
     JSL Oracle_SpecialOverworldGraphicsResolveSheet
     PLX
     endif
+    SEP #$10
+    CMP.b #$FF : BNE .notDefault1
+        LDX.b #$01 : JSR.w ResolveDefaultOWGFXSheet8
+    .notDefault1
     CMP.b #$FF
     BEQ .noBgGfxChange1
-        SEP #$10
         CMP.w TransGFXModule_PriorSheets+1 : BEQ .noBgGfxChange1
             TAY
 
@@ -3749,9 +3783,12 @@ LoadTransMainGFX:
     JSL Oracle_SpecialOverworldGraphicsResolveSheet
     PLX
     endif
+    SEP #$10
+    CMP.b #$FF : BNE .notDefault2
+        LDX.b #$02 : JSR.w ResolveDefaultOWGFXSheet8
+    .notDefault2
     CMP.b #$FF
     BEQ .noBgGfxChange2
-        SEP #$10
         CMP.w TransGFXModule_PriorSheets+2 : BEQ .noBgGfxChange2
             TAY
 
@@ -3780,9 +3817,12 @@ LoadTransMainGFX:
     JSL Oracle_SpecialOverworldGraphicsResolveSheet
     PLX
     endif
+    SEP #$10
+    CMP.b #$FF : BNE .notDefault7
+        LDX.b #$07 : JSR.w ResolveDefaultOWGFXSheet8
+    .notDefault7
     CMP.b #$FF
     BEQ .noBgGfxChange7
-        SEP #$10
         CMP.w TransGFXModule_PriorSheets+7 : BEQ .noBgGfxChange7
             TAY
 
@@ -4207,9 +4247,21 @@ ReplaceBGColor:
     SEP #$20
     LDA.w Pool_EnableBGColor : BEQ .disabled
 
+    ; During Whirlpool ($11 == #$2E), update only the fade target buffers
+    ; ($7EC300/$7EC340) so live CGRAM ($7EC500/$7EC540) stays whirlpool blue
+    ; ($7C00) until PaletteFilter_WhirlpoolRestore* fades it cleanly.
+    LDA.b $11 : CMP.b #$2E : BEQ .whirlpool_cache_only
+
     REP #$30
     JSL Oracle_ReadOverworldBackdropColor
     JSL Oracle_BackgroundFix
+    PLB
+    RTL
+
+    .whirlpool_cache_only
+    REP #$30
+    JSL Oracle_ReadOverworldBackdropColor
+    JSL Oracle_MosaicFix
     PLB
     RTL
 
@@ -4473,6 +4525,18 @@ NewLoadTransAuxGFX:
 
     .notNormalLoad
 
+    ; On Whirlpool multi-frame GFX uploads ($11 == #$2E, $B0 == #$07),
+    ; Frame 1 already decompressed and converted all dirty aux/main/sprite
+    ; sheets. Subsequent frames only need BlockGFXCheck to drain the remaining
+    ; NMI sheet pairs without resetting TransGFXModuleFrame or re-decompressing.
+    LDA.b $11 : CMP.b #$2E : BNE .freshAuxLoad
+        LDA.w TransGFXModuleFrame : BEQ .freshAuxLoad
+            STZ.b $04
+            PLB ; NewLoadTransAuxGFX PHB
+            PLB ; LoadTransAuxGFX ($00D66E) PHB
+            RTL
+    .freshAuxLoad
+
     if !SPECIAL_OVERWORLD_RESOURCES_ENABLED == 1
     JSL Oracle_SpecialOverworldGraphicsInvalidateCache
     endif
@@ -4508,8 +4572,11 @@ if !ENABLE_KALYXO_DOCKS_PROFILE == 1
     LDX.b #$03 : JSL Oracle_DocksResolveTransitionSheet
     REP #$10 : PLX
 endif
+    SEP #$10
+    CMP.b #$FF : BNE .notDefault3
+        LDX.b #$03 : JSR.w ResolveDefaultOWGFXSheet8
+    .notDefault3
     CMP.b #$FF : BEQ .noBgGfxChange3
-        SEP #$10
         CMP.w TransGFXModule_PriorSheets+3 : BEQ .noBgGfxChange3
             TAY
 
@@ -4542,8 +4609,11 @@ if !ENABLE_KALYXO_DOCKS_PROFILE == 1
     LDX.b #$04 : JSL Oracle_DocksResolveTransitionSheet
     REP #$10 : PLX
 endif
+    SEP #$10
+    CMP.b #$FF : BNE .notDefault4
+        LDX.b #$04 : JSR.w ResolveDefaultOWGFXSheet8
+    .notDefault4
     CMP.b #$FF : BEQ .noBgGfxChange4
-        SEP #$10
         CMP.w TransGFXModule_PriorSheets+4 : BEQ .noBgGfxChange4
             TAY
 
@@ -4576,8 +4646,11 @@ if !ENABLE_KALYXO_DOCKS_PROFILE == 1
     LDX.b #$05 : JSL Oracle_DocksResolveTransitionSheet
     REP #$10 : PLX
 endif
+    SEP #$10
+    CMP.b #$FF : BNE .notDefault5
+        LDX.b #$05 : JSR.w ResolveDefaultOWGFXSheet8
+    .notDefault5
     CMP.b #$FF : BEQ .noBgGfxChange5
-        SEP #$10
         CMP.w TransGFXModule_PriorSheets+5 : BEQ .noBgGfxChange5
             TAY
 
@@ -4610,8 +4683,11 @@ if !ENABLE_KALYXO_DOCKS_PROFILE == 1
     LDX.b #$06 : JSL Oracle_DocksResolveTransitionSheet
     REP #$10 : PLX
 endif
+    SEP #$10
+    CMP.b #$FF : BNE .notDefault6
+        LDX.b #$06 : JSR.w ResolveDefaultOWGFXSheet8
+    .notDefault6
     CMP.b #$FF : BEQ .noBgGfxChange6
-        SEP #$10
         CMP.w TransGFXModule_PriorSheets+6 : BEQ .noBgGfxChange6
             TAY
 
@@ -4648,19 +4724,29 @@ NMI_UpdateChr_Bg2HalfAndAnimatedLONG:
     LDA.w #$1801 : STA.w DMA.0_TransferParameters
 
     LDA.w NewNMICount1 : BEQ .skipFirst
-        ; Sheet 1
-        ; Target address
-        LDA.w NewNMITarget1 : STA.w SNES.VRAMAddrReadWriteLow
-        
-        ; Source address
-        LDA.w NewNMISource1 : STA.w DMA.0_SourceAddrOffsetLow
-        LDY.b #$7F          : STY.w DMA.0_SourceAddrBank
-        
-        ; Write count
-        LDA.w NewNMICount1 : STA.w DMA.0_TransferSizeLow
-        
-        ; Transfer data on channel 0.
-        LDY.b #$01 : STY.w SNES.DMAChannelEnable
+        ; Sheet 1 (or Whirlpool animated tiles when NewNMISource1 >= $8000 -> bank $7E)
+        LDA.w NewNMISource1 : CMP.w #$8000 : BCS .animatedBank7E
+            ; Target address
+            LDA.w NewNMITarget1 : STA.w SNES.VRAMAddrReadWriteLow
+            
+            ; Source address
+            LDA.w NewNMISource1 : STA.w DMA.0_SourceAddrOffsetLow
+            LDY.b #$7F          : STY.w DMA.0_SourceAddrBank
+            
+            ; Write count
+            LDA.w NewNMICount1 : STA.w DMA.0_TransferSizeLow
+            
+            ; Transfer data on channel 0.
+            LDY.b #$01 : STY.w SNES.DMAChannelEnable
+            BRA .skipFirst
+
+        .animatedBank7E
+            ; Upload Whirlpool animated tiles ($7E:($0ADC) -> $0134, 1 KiB) inside VBlank.
+            LDA.w NewNMITarget1 : STA.w SNES.VRAMAddrReadWriteLow
+            LDA.w NewNMISource1 : STA.w DMA.0_SourceAddrOffsetLow
+            LDY.b #$7E          : STY.w DMA.0_SourceAddrBank
+            LDA.w #$0400 : STA.w DMA.0_TransferSizeLow
+            LDY.b #$01 : STY.w SNES.DMAChannelEnable
 
     .skipFirst
 
@@ -5159,10 +5245,24 @@ pushpc
 
 ; ==============================================================================
 
+if !Func02AF58 == 1
+
+org $02B47E ; $01347E ; @hook module=Overworld
+    JSL.l Whirlpool_ReloadSubscreenOverlay_Interupt
+assert pc() <= $02B482
+
+else
+
+org $02B47E ; $01347E
+    JSL.l Overworld_ReloadSubscreenOverlayAndAdvance
+
+endif
+
 if !Func00E221 == 1
 
 org $02B490 ; $013490 ; @hook module=Overworld
     JSL.l Whirlpool_LoadDestinationMap_Interupt
+assert pc() <= $02B494
 
 else
 
@@ -5171,16 +5271,90 @@ org $02B490 ; $013490 ; @hook module=Overworld
 
 endif
 
+if !Func0ED627 == 1
+
+; Keep live CGRAM ($7EC500/$7EC540) whirlpool blue until PaletteFilter_WhirlpoolRestore*
+; fades it cleanly from $7C00 to the destination custom BG color in $7EC300/$7EC340.
+org $02B4D5 ; $0134D5 ; @hook module=Overworld
+    JSL.l Overworld_SetScreenBGColorCacheOnly
+assert pc() <= $02B4D9
+
+else
+
+org $02B4D5 ; $0134D5
+    JSL.l Palette_SetOwBgColor_Long
+
+endif
+
+if !Func0BFEB6 == 1
+
+; Skip the fallthrough into Whirlpool_SetFixedColor ($02B4E1: LDA #$80 : STA $9E)
+; after LoadNewSpriteGFXSet so the destination overlay's COLDATA blue byte just
+; set by Overworld_SetFixedColorAndScroll ($02B4D9) is preserved.
+org $02B4DD ; $0134DD ; @hook module=Overworld
+    JML.l Whirlpool_LoadSpritesAndFinishPalettes
+assert pc() <= $02B4E1
+
+else
+
+org $02B4DD ; $0134DD
+    JSL.l $00E031
+
+endif
+
 pullpc
+
+Whirlpool_ReloadSubscreenOverlay_Interupt:
+{
+    JSL.l Overworld_ReloadSubscreenOverlayAndAdvance
+
+    ; Reset stale source-area R/G fixed-color mirrors while $B0=3..6 finishes
+    ; (vanilla $02B488 -> $02B4E1 resets $9E = #$80).
+    PHP
+    SEP #$20
+    LDA.b #$20 : STA.b $9C
+    LDA.b #$40 : STA.b $9D
+    PLP
+
+    ; When destination has no overlay ($8C == #$FF), Overworld_ReloadSubscreenOverlay
+    ; skipped LoadSubscreenOverlay, leaving stale Map32/menu bytes in $7F4000-$7F407F.
+    ; Point the 64 VRAM targets safely at unused BG1 tilemap ($1000-$1FC0) before
+    ; $02B482 ($17=#$0C) and $02B48A ($17=#$0D) run.
+    JSL.l MirrorWarp_NoOverlayUploadTable
+
+    RTL
+}
 
 Whirlpool_LoadDestinationMap_Interupt:
 {
     ; Replaced code.
     JSL.l BirdTravel_LoadAmbientOverlay
 
+    PHP
+    SEP #$30
     STZ.w TransGFXModuleFrame
 
+    ; Force fresh reload of aux BG slots 3..6 on Whirlpool arrival so stale or
+    ; directly-overwritten VRAM (e.g. Dragon Ship $38 boat DMA) never survives.
+    ; Use #$FE (never #$FF) so SpecialOverworldGraphicsResolveSheet and
+    ; DocksResolveTransitionSheet cache-restore guards stay untouched.
+    PHX
+    LDX.b #$03
+    .invalidateAux
+        LDA.w TransGFXModule_PriorSheets, X : CMP.b #$FF : BEQ .keepFF
+            LDA.b #$FE : STA.w TransGFXModule_PriorSheets, X
+        .keepFF
+        INX : CPX.b #$07 : BCC .invalidateAux
+    PLX
+    PLP
+
     RTL
+}
+
+Whirlpool_LoadSpritesAndFinishPalettes:
+{
+    JSL.l $00E031 ; LoadNewSpriteGFXSet (replaced call)
+    JML.l $02B4E5 ; Whirlpool_SetBrightness (preserve $02B4D9's COLDATA $9E)
 }
 
 pushpc
@@ -6452,9 +6626,9 @@ assert read4($02B4C1) == $1BEEC722 || read4($02B4C1) == ((SpecialPaletteBeginBgM
 org $02B4C1 ; @hook module=Overworld name=SpecialPaletteWhirlpoolBegin kind=jsl target=SpecialPaletteBeginBgMain
     JSL SpecialPaletteBeginBgMain
 assert pc() <= $02B4C5
-assert read4($02B4D1) == $0ED5A822 || read4($02B4D1) == ((SpecialPaletteLoadFinishBoth<<8)|$22), "Whirlpool auxiliary palette entry changed"
-org $02B4D1 ; @hook module=Overworld name=SpecialPaletteWhirlpoolComplete kind=jsl target=SpecialPaletteLoadFinishBoth
-    JSL SpecialPaletteLoadFinishBoth
+assert read4($02B4D1) == $0ED5A822 || read4($02B4D1) == ((SpecialPaletteLoadFinishBuffer<<8)|$22), "Whirlpool auxiliary palette entry changed"
+org $02B4D1 ; @hook module=Overworld name=SpecialPaletteWhirlpoolComplete kind=jsl target=SpecialPaletteLoadFinishBuffer
+    JSL SpecialPaletteLoadFinishBuffer
 assert pc() <= $02B4D5
 endif
 
@@ -6706,6 +6880,10 @@ SpecialPaletteDepartSetBlack:
     JSL Oracle_SpecialOverworldPaletteBegin
     JSL Oracle_SpecialOverworldPaletteReset
     JSL $0ED5F4 ; SetBGandFixedColorBlack; subsequent native indoor loaders own BG.
+    RTL
+SpecialPaletteLoadFinishBuffer:
+    JSL Overworld_LoadPalettes
+    JSL Oracle_SpecialOverworldPaletteCompleteBuffer
     RTL
 SpecialPaletteAdaptersEnd:
 assert pc() <= !SPECIAL_OVERWORLD_PALETTE_CODE_END
