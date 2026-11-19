@@ -1,20 +1,19 @@
 ; =========================================================
-; Ganondorf finale, slice 1 (phase 1 volley)
+; Ganondorf finale — 3-phase sorcerer duel (Room $00) -> Beast Ganon hand-off
 ;
-; Design: AFS handoffs/ganondorf_finale_2026-10-20/DESIGN.md sections 3-4.
 ; After Kydreeok dies in room $00, room tag $3D (Triforce door) calls
 ; Ganondorf_DoorGate. The gate spawns Ganondorf ($D3) once and keeps the
-; door shut until he is defeated.
+; door shut until both Ganondorf and Ganon Beast are defeated.
 ;
-; Phase 1 loop:
-;   float -> cast one energy ball ($46) at Link
-;   Link hits the ball with the Master Sword (sword level >= 2) -> it flies back
-;   Ganondorf returns it 1-3 times (random), faster each time
-;   he varies his glide during rallies, with a short return stroke
-;   the last return hits him -> stunned -> 3 sword hits -> he casts a bat
-;   the independent bat flies at Link while he recovers and changes perch
-;   between rallies he rises and stomps, dropping the four outer floor edges
-;   9 sword hits in total -> he dies -> GanondorfFight = 2 -> door opens
+; Phases (by remaining hits SprMiscF out of 9; 3 hits per stun):
+;   Phase 1 (9..7): Classic Dead Man's Volley ($10 orb, 1-3 returns), single
+;                   cast bat after stun, floor-edge collapse stomp.
+;   Phase 2 (6..4): Relentless Sorcerer — charge-surge telegraph SFX, faster
+;                   volley glide ($0C) & 2-3 returns, 4-way Shockwave Ground-
+;                   Stomp, Telegraphed Teleport Feint after stomp, Twin-Bat Sweep.
+;   Phase 3 (3..1): Desperate Surge — fastest volley glide ($10), twin flanking
+;                   dark-magic bolts on every return stroke, 8-way Shockwave
+;                   Ground-Stomp, 3-Bat V-Formation Swarm -> Beast Ganon hand-off!
 ;
 ; Original 32x40 art: one $1800 sheet, plus the vanilla $800 falling-floor slot.
 ; Source art and generated OAM tables: Data/graphics/ganondorf/ and
@@ -31,6 +30,8 @@ Ganon_SetupActionHitbox = $06F57E ; SetupActionHitbox_long (Link's weapon box ->
 !Ganon_BallSpeedEnd = $18
 !Ganon_BallSpeedMax = $30
 !Ganon_GlideSpeed   = $08
+!Ganon_GlideSpeedP2 = $0C
+!Ganon_GlideSpeedP3 = $10
 !Ganon_BatSpeed     = $18
 !Ganon_BatLifetime  = $60
 
@@ -232,6 +233,11 @@ Ganondorf_Main:
     .windup
       LDA.b #!Ganon_FrameWindup : BRA .set_pose
     .charge
+      ; Phase 2/3 charge-surge audio telegraph on entering the charge peak.
+      LDA.w SprTimerA, X : CMP.b #$18 : BNE .charge_frame
+      LDA.w SprMiscF, X : CMP.b #$07 : BCS .charge_frame
+        LDA.b #$25 : JSL SpriteSFX_QueueSFX3WithPan
+      .charge_frame
       LDA.b $1A : LSR #3 : AND.b #$01
       CLC : ADC.b #!Ganon_FrameChargeA
     .set_pose
@@ -317,7 +323,9 @@ Ganondorf_Main:
     RTS
   }
 
-  ; 5: remain human, telegraph a cast, then release an independent bat.
+  ; 5: remain human, telegraph a cast, then release independent bat(s).
+  ; Phase 1: 1 aimed bat at $18. Phase 2: +1 flanking bat at $14.
+  ; Phase 3: 3-bat V-swarm ($18 center, $15 left flank, $12 right flank).
   ; Relocation happens only after the cast has finished, outside a live rally.
   Ganondorf_CastBat:
   {
@@ -325,9 +333,25 @@ Ganondorf_Main:
     LDA.w SprTimerA, X : BEQ .recover
     CMP.b #$25 : BCS .ready
     CMP.b #$19 : BCS .windup
-    CMP.b #$18 : BNE .released
+    CMP.b #$18 : BNE .check_extra_bats
       JSR Ganondorf_SpawnBat
     .bat_spawned
+      BRA .released
+    .check_extra_bats
+    ; Phase 2 (hits 4..6): second angled bat at timer $14.
+    LDA.w SprMiscF, X : CMP.b #$07 : BCS .released
+    CMP.b #$04 : BCC .phase3_bats
+      LDA.w SprTimerA, X : CMP.b #$14 : BNE .released
+        LDA.b #$01 : JSR Ganondorf_SpawnAngledBat
+        BRA .released
+    .phase3_bats
+    ; Phase 3 (hits 1..3): twin angled flank bats at timers $15 and $12!
+    LDA.w SprTimerA, X : CMP.b #$15 : BNE .check_p3_right
+      LDA.b #$00 : JSR Ganondorf_SpawnAngledBat
+      BRA .released
+    .check_p3_right
+    CMP.b #$12 : BNE .released
+      LDA.b #$01 : JSR Ganondorf_SpawnAngledBat
     .released
     LDA.w SprTimerA, X : CMP.b #$11 : BCS .release
     CMP.b #$09 : BCS .follow
@@ -344,6 +368,11 @@ Ganondorf_Main:
     STA.w SprFrame, X
     RTS
     .recover
+      ; Phase 2/3 Teleport Feint: leave an afterimage decoy before relocating!
+      LDA.w SprMiscF, X : CMP.b #$07 : BCS .reloc_now
+        LDA.b #$05 : JSR GanonMagic_Spawn
+        LDA.b #$29 : JSL SpriteSFX_QueueSFX3WithPan
+      .reloc_now
       JSR Ganondorf_Relocate
       LDA.b #$10 : STA.w SprHeight, X
       JSR Ganondorf_StartStomp
@@ -739,10 +768,25 @@ Ganondorf_SpawnBall:
         LDA.b #!Ganon_BallSpeedEnd : STA.w SprMiscE, Y
     .speed_ready
     TXA : STA.w SprMiscD, Y ; parent slot
-    JSL GetRandomInt : AND.b #$03 : BNE .returns
+    ; Phase-escalated rally returns: P1 = 1-3, P2 = 2-3, P3 = 2-4.
+    JSL GetRandomInt : AND.b #$03 : BNE .returns_base
       INC A
-    .returns
-    STA.w SprMiscC, Y   ; Ganondorf's returns left (1-3)
+    .returns_base
+    PHA
+    LDA.w SprMiscF, X : CMP.b #$07 : BCS .returns_done
+      CMP.b #$04 : BCS .returns_p2
+        ; Phase 3: add +1 (2..4 returns)
+        PLA : INC A : PHA
+        BRA .returns_done
+      .returns_p2
+      ; Phase 2: floor at 2 returns (2..3)
+      PLA : CMP.b #$02 : BCS .returns_push
+        LDA.b #$02
+      .returns_push
+      PHA
+    .returns_done
+    PLA
+    STA.w SprMiscC, Y   ; Ganondorf's returns left
     TYA : STA.w SprMiscD, X
     PHX
     TYX
@@ -775,11 +819,18 @@ Ganondorf_Draw:
 
 ; Vary the glide while the ball is active. Never teleport during a live volley.
 ; Returns get an uninterrupted stroke; stale vanish timers are cleared.
+; Phase-scaled glide speed: P1 = $08, P2 = $0C, P3 = $10.
 Ganondorf_VolleyMove:
 {
   STZ.w SprTimerD, X
   LDA.w SprTimerC, X : BNE .done
-  LDA.b #!Ganon_GlideSpeed : JSL Sprite_ApplySpeedTowardsPlayer
+  LDA.b #!Ganon_GlideSpeed
+  LDY.w SprMiscF, X : CPY.b #$07 : BCS .speed_ok
+    LDA.b #!Ganon_GlideSpeedP2
+    CPY.b #$04 : BCS .speed_ok
+      LDA.b #!Ganon_GlideSpeedP3
+  .speed_ok
+  JSL Sprite_ApplySpeedTowardsPlayer
   LDA.w SprCustom, X : AND.b #$03 : BEQ .clockwise
     CMP.b #$01 : BEQ .counterclockwise
       JSR Ganondorf_Weave
@@ -823,12 +874,18 @@ Ganondorf_StartStomp:
 }
 
 ; Rise, slam, then recover. Floor changes are the native falling-tile overlords.
+; Phase 2/3 rise higher ($30), unleash a 4-way/8-way shockwave burst on impact,
+; and execute a telegraphed Teleport Feint (afterimage decoy + relocate) on rise.
 Ganondorf_Stomp:
 {
   LDA.w SprMiscG, X : CMP.b #$02 : BEQ .recover
   CMP.b #$01 : BEQ .descend
     LDA.b #!Ganon_FrameCast : STA.w SprFrame, X
-    LDA.w SprHeight, X : CMP.b #$28 : BCS .at_top
+    LDA.b #$28
+    LDY.w SprMiscF, X : CPY.b #$07 : BCS .peak_ok
+      LDA.b #$30 ; higher dramatic leap in Phase 2/3
+    .peak_ok
+    CMP.w SprHeight, X : BCC .at_top : BEQ .at_top
       INC.w SprHeight, X
     .at_top
     LDA.w SprTimerA, X : BNE .done
@@ -848,6 +905,13 @@ Ganondorf_Stomp:
   LDA.b #$07 : STA.w $012D ; vanilla Ganon landing thud
   LDA.b #$0C : JSL SpriteSFX_QueueSFX2WithPan
   JSR Ganondorf_SpawnFloorCollapse
+  ; Phase 2 (hits 4..6): 4-way diagonal shockwave ring; Phase 3 (1..3): 8-way ring!
+  LDA.w SprMiscF, X : CMP.b #$07 : BCS .done
+    CMP.b #$04 : BCS .wave4
+      LDA.b #$08 : JSR Ganondorf_SpawnStompWave
+      RTS
+    .wave4
+    LDA.b #$04 : JSR Ganondorf_SpawnStompWave
   RTS
   .recover
   JSL Sprite_CheckDamageToPlayer
@@ -868,10 +932,44 @@ Ganondorf_Stomp:
   .mode_ready
   STA.w SprCustom, X
   %GotoAction(1)
+  ; Phase 2/3 Telegraphed Teleport Feint after stomp recovery (never mid-volley!)
+  LDA.w SprMiscF, X : CMP.b #$07 : BCS .p1_cd
+    PHA
+    LDA.b #$05 : JSR GanonMagic_Spawn ; decoy afterimage at stomp site
+    JSR Ganondorf_Relocate
+    LDA.b #$29 : JSL SpriteSFX_QueueSFX3WithPan
+    PLA : CMP.b #$04 : BCS .p2_cd
+      LDA.b #$2C : STA.w SprTimerA, X
+      RTS
+    .p2_cd
+    LDA.b #$38 : STA.w SprTimerA, X
+    RTS
+  .p1_cd
   LDA.b #$50 : STA.w SprTimerA, X
   RTS
 
   .shake : dw 1, -1
+}
+
+; Spawn A (4 = diagonals, 8 = diagonals + cardinals) radial dark-magic shockwave
+; shards on Phase 2/3 stomp impact. Keeps X.
+Ganondorf_SpawnStompWave:
+{
+  DEC A : STA.b $0D
+  .next
+    LDA.b #$2C : JSR GanonBall_AllocShard : BCC .done
+    PHX
+    LDX.b $0D
+    LDA.w .vx, X : STA.w SprXSpeed, Y
+    LDA.w .vy, X : STA.w SprYSpeed, Y
+    PLX
+    DEC.b $0D : BPL .next
+  .done
+  RTS
+
+  ; Entries 0..3 = 4 diagonals (Phase 2); 4..7 = 4 cardinals (Phase 3 8-way ring)
+  .vx : db $14, $EC, $14, $EC, $1C, $E4, $00, $00
+  .vy : db $14, $14, $EC, $EC, $00, $00, $1C, $E4
 }
 
 Ganondorf_SpawnFloorCollapse:
@@ -1028,7 +1126,13 @@ GanonBall_CheckSwordReflect:
 
 GanonBall_SpeedUp:
 {
-  LDA.w SprMiscE, X : CLC : ADC.b #$04
+  LDY.w SprMiscD, X : CPY.b #$10 : BCS .p1
+    LDA.w SprMiscF, Y : CMP.b #$07 : BCS .p1
+      LDA.b #$05 : BRA .add
+  .p1
+  LDA.b #$04
+  .add
+  CLC : ADC.w SprMiscE, X
   CMP.b #!Ganon_BallSpeedMax : BCC .store
     LDA.b #!Ganon_BallSpeedMax
   .store

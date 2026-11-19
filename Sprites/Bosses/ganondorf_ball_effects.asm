@@ -59,6 +59,12 @@ GanonBall_Main:
     JSR GanonBall_SpeedUp
     LDA.w SprMiscE, X : JSL Sprite_ApplySpeedTowardsPlayer
     JSR GanonBall_SetReturnFacing
+    ; Phase 3 Desperate Surge (parent SprMiscF <= 3): unleash twin flanking
+    ; dark-magic bolts alongside the returned golden rally orb!
+    LDY.w SprMiscD, X
+    LDA.w SprMiscF, Y : CMP.b #$04 : BCS .no_flank
+      JSR GanonBall_SpawnReturnFlanks
+    .no_flank
     LDA.b #$05 : JSL SpriteSFX_QueueSFX2WithPan
     LDA.b #$29 : JSL SpriteSFX_QueueSFX3WithPan
     RTS
@@ -345,6 +351,61 @@ GanonBall_SpawnShard:
   .speed_y
   db $F0, $00, $10, $00, $F0, $00, $10, $00
   db $18, $18, $18, $00, $E8, $E8, $E8, $00
+}
+
+; Shared helper: allocate and initialize one independent action-1 dark shard
+; at sprite X's position with lifetime A. Out: Carry set + slot in Y, or Carry clear.
+GanonBall_AllocShard:
+{
+  PHA
+  LDA.b #Sprite_GanonBall : JSL Sprite_SpawnDynamically : BPL .spawned
+    PLA
+    CLC
+    RTS
+  .spawned
+  LDA.w SprX, X : STA.w SprX, Y
+  LDA.w SprXH, X : STA.w SprXH, Y
+  LDA.w SprY, X : STA.w SprY, Y
+  LDA.w SprYH, X : STA.w SprYH, Y
+  LDA.w SprFloor, X : STA.w SprFloor, Y
+  LDA.b #$00
+  STA.w SprHeight, Y
+  STA.w SprXRound, Y : STA.w SprYRound, Y
+  STA.w SprMiscA, Y : STA.w SprMiscB, Y : STA.w SprMiscC, Y
+  STA.w SprMiscE, Y : STA.w SprMiscF, Y : STA.w SprMiscG, Y
+  STA.w SprTimerB, Y : STA.w SprTimerC, Y : STA.w SprTimerD, Y
+  STA.w SprTimerE, Y : STA.w SprTimerF, Y
+  STA.w SprFlash, Y : STA.w SprPause, Y
+  LDA.b #$FF : STA.w SprMiscD, Y
+  LDA.b #$01 : STA.w SprAction, Y : STA.w SprBump, Y
+  LDA.b #$59 : STA.w SprHitbox, Y
+  LDA.b #$C0 : STA.w SprGfxProps, Y
+  LDA.b #$46 : STA.w SprDefl, Y
+  LDA.b #$40 : STA.w SprNbrOAM, Y
+  PLA : STA.w SprTimerA, Y
+  SEC
+  RTS
+}
+
+; Phase 3 return barrage: spawn 2 angled flanking dark-magic bolts (action 1 shards)
+; flanking the returned rally orb at ~+/-27 degrees. In: X = rally ball slot. Keeps X.
+GanonBall_SpawnReturnFlanks:
+{
+  LDA.b #$01 : STA.b $0C ; 1 = right flank, 0 = left flank
+  .next
+    LDA.b #$38 : JSR GanonBall_AllocShard : BCC .done
+    ; Copy parent orb velocity and deflect +/- half perpendicular component.
+    LDA.b $0C : BNE .right
+      LDA.w SprYSpeed, X : CMP.b #$80 : ROR A : CLC : ADC.w SprXSpeed, X : STA.w SprXSpeed, Y
+      LDA.w SprXSpeed, X : CMP.b #$80 : ROR A : EOR.b #$FF : INC A : CLC : ADC.w SprYSpeed, X : STA.w SprYSpeed, Y
+      BRA .dec
+    .right
+    LDA.w SprYSpeed, X : CMP.b #$80 : ROR A : EOR.b #$FF : INC A : CLC : ADC.w SprXSpeed, X : STA.w SprXSpeed, Y
+    LDA.w SprXSpeed, X : CMP.b #$80 : ROR A : CLC : ADC.w SprYSpeed, X : STA.w SprYSpeed, Y
+    .dec
+    DEC.b $0C : BPL .next
+  .done
+  RTS
 }
 
 ; Main ball: existing full 16px art. Dissipation: 8 large ticks, 4 small

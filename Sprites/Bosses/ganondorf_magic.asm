@@ -127,6 +127,7 @@ GanonMagic_Main:
   LDA.w SprState, Y : CMP.b #$09 : BNE .kill
   LDA.w SprType, Y : CMP.b #Sprite_Ganondorf : BNE .kill
   LDA.w SprAction, Y : CMP.b #$06 : BEQ .kill
+  CMP.b #$0F : BEQ .kill ; Ganon Beast Dead (!Beast_ActDead)
   LDA.w SprTimerA, X : BEQ .kill
   LDA.w SprAction, X : CMP.b #$04 : BNE .exit
   LDA.w SprTimerA, X : CMP.b #$09 : BCC .exit

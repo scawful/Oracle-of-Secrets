@@ -48,10 +48,38 @@ Ganondorf_SpawnBat:
   LDA.b #$40 : STA.w SprDefl, Y
   STA.w SprHitbox, Y ; hitbox 0 plus the attack's room-tag exemption
   LDA.b #$01 : STA.w SprNbrOAM, Y
-  PHX : TYX
+  PHX : PHY : TYX
   LDA.b #!Ganon_BatSpeed : JSL Sprite_ApplySpeedTowardsPlayer
-  PLX
+  PLY : PLX
+  PHY
   LDA.b #$29 : JSL SpriteSFX_QueueSFX3WithPan
+  PLY
+  SEC
+  RTS
+}
+
+; Spawn a flanking bat aimed at Link and deflected left (A=0) or right (A!=0)
+; by ~27 deg (adds +/- half perpendicular velocity). Keeps X.
+Ganondorf_SpawnAngledBat:
+{
+  PHA
+  JSR Ganondorf_SpawnBat : BCS .deflect
+    PLA
+    CLC
+    RTS
+  .deflect
+  PLA : BNE .right
+    ; Rotate slightly counter-clockwise: vx' = vx + vy/2, vy' = vy - vx/2
+    LDA.w SprXSpeed, Y : PHA
+    LDA.w SprYSpeed, Y : CMP.b #$80 : ROR A : CLC : ADC.w SprXSpeed, Y : STA.w SprXSpeed, Y
+    PLA : CMP.b #$80 : ROR A : EOR.b #$FF : INC A : CLC : ADC.w SprYSpeed, Y : STA.w SprYSpeed, Y
+    SEC
+    RTS
+  .right
+  ; Rotate slightly clockwise: vx' = vx - vy/2, vy' = vy + vx/2
+  LDA.w SprXSpeed, Y : PHA
+  LDA.w SprYSpeed, Y : CMP.b #$80 : ROR A : EOR.b #$FF : INC A : CLC : ADC.w SprXSpeed, Y : STA.w SprXSpeed, Y
+  PLA : CMP.b #$80 : ROR A : CLC : ADC.w SprYSpeed, Y : STA.w SprYSpeed, Y
   SEC
   RTS
 }
@@ -63,6 +91,7 @@ GanonBat_Main:
   LDA.w SprState, Y : CMP.b #$09 : BNE .kill
   LDA.w SprType, Y : CMP.b #Sprite_Ganondorf : BNE .kill
   LDA.w SprAction, Y : CMP.b #$06 : BEQ .kill
+  CMP.b #$0F : BEQ .kill ; Ganon Beast Dead (!Beast_ActDead)
   LDA.w SprTimerA, X : BEQ .dissipate
   ; Ancilla run before sprites and may already have queued a ranged hit.
   LDA.w SprDeath, X : BMI .dissipate
