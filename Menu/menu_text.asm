@@ -433,35 +433,10 @@ DrawMushroomName:
 
 DrawLocationName:
 {
-  REP #$30
-  LDA $1B         ; check if indoors or outdoors
-  AND.w #$00FF    ; isolate bit
-  CMP.w #$01      ; if 1, then indoors
-  BEQ .indoors
-
-  LDA.b $8A
-  ASL #5
-  LDY.w #$000
-  TAX
-
-  .draw_overworld_loop
-  LDA.w OverworldLocationNames, X ; Load your text character
-  STA.w $12CC, Y                  ; Store into the buffer
-  INX : INX
-  INY : INY : CPY #$0020 : BCC .draw_overworld_loop
-  RTS
-
-  .indoors
-  LDA.b $A0 ; Load current room
-  ASL #5
-  TAY
-  LDX.w #$0000
-
-  .draw_indoors_loop
-  LDA.w DungeonLocationNames, Y : STA.w $12CC, X
-
-  INY : INY
-  INX : INX : CPX #$0020 : BCC .draw_indoors_loop
+  ; Delegated to Bank $54 (Menu/menu_v5_ext.asm) so LW ($00-$3F), Abyss DW
+  ; ($40-$7F), Special Overworld ($80-$BF), and indoors ($1B != 0) share one
+  ; unified resolver with zero Bank $2D bloat.
+  JSL Menu_DrawLocationName_Long
   RTS
 }
 

@@ -81,46 +81,85 @@ Menu_C4_DrawEquipCursor_Long:
 }
 
 ; =========================================================
-; Map & Spoils Area Name Renderer (right of 8x8 Mini-Map: cols 15..26, rows 11..12).
-; Handles Light World ($00-$3F), Abyss ($40-$7F), Special Overworld ($80-$BF),
-; and indoors ($1B != 0). Cleanly wraps names > 12 chars onto 2 centered lines
-; at the last word boundary so no name ever clips the right frame border (col 27).
-; Compact 64-byte Special OW index table + 17 unique 16-char names.
-; Grounded in Overworld/special_overworld/edge_guard.asm and Docs/Technical/terminology_glossary.md.
-; In/out: M/X=16. Uses $00-$09.
-MenuMap_DrawAreaNameRight_Long:
+; Shared Area Name Pointer Resolver (Bank $54).
+; Resolves a 24-bit pointer in $00..$02 to the 16-tile (32-byte) location name
+; for Light World ($00-$3F), Dark World / Abyss ($40-$7F), Special Overworld
+; ($80-$BF), or indoors ($1B != 0, indexed by 16-bit $A0).
+; In: M/X=16. Out: M/X=16, C set = valid 24-bit ptr in $00..$02, C clear = invalid.
+; Clobbers A, X, $00-$02.
+MenuMap_ResolveAreaNamePtr_Near:
 {
-  REP #$30
   LDA.b $1B : AND.w #$00FF : BNE .indoors
   LDA.b $8A : AND.w #$00FF : CMP.w #$0080 : BCC .lw_dw
-  CMP.w #$00C0 : BCS .done_early
+  CMP.w #$00C0 : BCS .invalid
   SEC : SBC.w #$0080 : TAX
-  LDA.l .map_index, X : AND.w #$00FF
-  ASL #5 : CLC : ADC.w #.names : STA.b $00
+  LDA.l SpecialOverworldLocationNameIndex, X : AND.w #$00FF
+  ASL #5 : CLC : ADC.w #SpecialOverworldLocationNames : STA.b $00
   SEP #$20
-  LDA.b #.names>>16 : STA.b $02
+  LDA.b #SpecialOverworldLocationNames>>16 : STA.b $02
   REP #$20
-  BRA .have_ptr
-.done_early
-  RTL
+  SEC : RTS
+.invalid
+  CLC : RTS
 .lw_dw
   ASL #5 : CLC : ADC.w #OverworldLocationNames : STA.b $00
   SEP #$20
   LDA.b #OverworldLocationNames>>16 : STA.b $02
   REP #$20
-  BRA .have_ptr
+  SEC : RTS
 .indoors
   LDA.b $A0 : ASL #5 : CLC : ADC.w #DungeonLocationNames : STA.b $00
   SEP #$20
   LDA.b #DungeonLocationNames>>16 : STA.b $02
   REP #$20
-.have_ptr
+  SEC : RTS
+}
+
+; Long entry for Menu/menu_text.asm DrawLocationName (Bank $2D trampoline).
+; Writes the 16-tile (32-byte) location name to $7E12CC for LW ($00-$3F),
+; Abyss DW ($40-$7F), Special Overworld ($80-$BF), and indoors ($1B != 0).
+; Preserves $00-$03 so callers expecting original DrawLocationName scratch
+; safety stay unaffected. Out: M/X=16.
+Menu_DrawLocationName_Long:
+{
+  REP #$30
+  LDA.b $00 : PHA
+  LDA.b $02 : PHA
+  JSR MenuMap_ResolveAreaNamePtr_Near
+  BCC .done
+  LDY.w #$0000
+.copy
+  LDA.b [$00], Y
+  TYX
+  STA.l $7E12CC, X
+  INY #2 : CPY.w #$0020 : BCC .copy
+.done
+  PLA : STA.b $02
+  PLA : STA.b $00
+  RTL
+}
+
+; =========================================================
+; Map & Spoils Area Name Renderer (right of 8x8 Mini-Map: cols 15..26, rows 11..12).
+; Handles Light World ($00-$3F), Abyss ($40-$7F), Special Overworld ($80-$BF),
+; and indoors ($1B != 0). Cleanly wraps names > 12 chars onto 2 centered lines
+; at the last word boundary so no name ever clips the right frame border (col 27).
+; Grounded in Docs/World/LocationRegistry.md, Docs/Dev/Planning/overworld.json,
+; Overworld/special_overworld/edge_guard.asm, and live rev5 Special OW layout.
+; In/out: M/X=16. Uses $00-$09.
+MenuMap_DrawAreaNameRight_Long:
+{
+  REP #$30
+  JSR MenuMap_ResolveAreaNamePtr_Near
+  BCC .done_early
+
   ; Trim trailing $20F5 spaces from 16-tile (32-byte) string.
   LDY.w #$001E
 .trim
   LDA.b [$00], Y : CMP.w #$20F5 : BNE .found_len
   DEY #2 : BPL .trim
-  RTL                                   ; completely blank name
+.done_early
+  RTL                                   ; completely blank or invalid name
 .found_len
   INY #2 : STY.b $04                    ; $04 = total byte length (2..32)
   CPY.w #$001A : BCS .two_lines         ; >= 26 bytes (>= 13 tiles) -> wrap
@@ -170,20 +209,24 @@ MenuMap_DrawAreaNameRight_Long:
   INX #2 : INY #2 : CPY.b $04 : BCC .copy_l2
 .done
   RTL
+}
 
-  ; 0=TAIL_WOODS, 1=KOROK_COVE, 2=EAST_GARRISON, 3=SKY_ISLANDS, 4=SKY_TOWER,
-  ; 5=ZORA_SANCTUARY, 6=SHRINE_WISDOM, 7=NORTH_REEF, 8=LYRA_SEA, 9=ZORA_QUAY,
-  ; 10=KALYXO_COAST, 11=ZORA_COAST, 12=SHRINE_COURAGE, 13=DEKU_COAST,
-  ; 14=GORON_DESERT, 15=TOWER_ISLAND, 16=SNOW_ISLAND
+; Special Overworld ($80-$BF) 64-entry location index + 17 unique 16-char names.
+; Kept in Bank $54 so Bank $2D headroom stays untouched.
+; 0=FOREST_GLADE, 1=KOROK_COVE, 2=ROYAL_GARRISON, 3=SKY_ISLANDS, 4=SKY_TOWER,
+; 5=SEA_ZORA_TEMPLE, 6=SHRINE_OF_WISDOM, 7=ZORA_COAST, 8=LYRA_SEA,
+; 9=ZORA_LAGOON, 10=ZORA_QUAY, 11=COURAGE_ISLAND, 12=DEKU_GROVE,
+; 13=GORON_COAST, 14=CRESCENT_ATOLL, 15=PIRATE_SHIP, 16=FROST_GLACIER
+SpecialOverworldLocationNameIndex:
 .map_index
   db  0,  1,  1,  2,  3,  3,  3,  4     ; $80-$87
-  db  8,  1,  1,  2,  3,  3,  3,  3     ; $88-$8F
+  db  0,  1,  1,  2,  3,  3,  3,  3     ; $88-$8F
   db  5,  6,  7,  8,  8,  8,  8,  8     ; $90-$97
-  db  5,  9, 10,  8,  8,  8,  8,  8     ; $98-$9F
-  db 11, 11,  8,  8,  8,  8, 12, 12     ; $A0-$A7
-  db 13, 13,  8,  8,  8,  8, 12, 12     ; $A8-$AF
-  db 14, 14,  8,  8,  8, 15,  8,  8     ; $B0-$B7
-  db 14, 14,  8,  8,  8, 15, 16, 16     ; $B8-$BF
+  db  9, 10,  8,  8,  8,  8,  8,  8     ; $98-$9F
+  db  7,  7,  8,  8,  8,  8, 11, 11     ; $A0-$A7
+  db 12, 12,  8,  8,  8,  8, 11, 11     ; $A8-$AF
+  db 13, 13,  8, 14, 14, 15,  8,  8     ; $B0-$B7
+  db 13, 13,  8, 14, 14, 15, 16, 16     ; $B8-$BF
 
 pushtable
   'A' = $2550
@@ -213,39 +256,48 @@ pushtable
   'Y' = $2568
   'Z' = $2569
   '_' = $20F5
+SpecialOverworldLocationNames:
 .names
-  dw "TAIL_WOODS______" ;  0
-  dw "KOROK_COVE______" ;  1
-  dw "EAST_GARRISON___" ;  2
-  dw "SKY_ISLANDS_____" ;  3
-  dw "SKY_TOWER_______" ;  4
-  dw "ZORA_SANCTUARY__" ;  5
-  dw "SHRINE_WISDOM___" ;  6
-  dw "NORTH_REEF______" ;  7
-  dw "LYRA_SEA________" ;  8
-  dw "ZORA_QUAY_______" ;  9
-  dw "KALYXO_COAST____" ; 10
-  dw "ZORA_COAST______" ; 11
-  dw "SHRINE_COURAGE__" ; 12
-  dw "DEKU_COAST______" ; 13
-  dw "GORON_DESERT____" ; 14
-  dw "TOWER_ISLAND____" ; 15
-  dw "SNOW_ISLAND_____" ; 16
+  dw "FOREST_GLADE____" ;  0: $80, $88
+  dw "KOROK_COVE______" ;  1: $81/$82/$89/$8A (64x64)
+  dw "ROYAL_GARRISON__" ;  2: $83/$8B (32x64)
+  dw "SKY_ISLANDS_____" ;  3: $84-$86, $8C-$8F
+  dw "SKY_TOWER_______" ;  4: $87
+  dw "SEA_ZORA_TEMPLE_" ;  5: $90
+  dw "SHRINE_OF_WISDOM" ;  6: $91
+  dw "ZORA_COAST______" ;  7: $92, $A0/$A1 (64x32)
+  dw "LYRA_SEA________" ;  8: $93-$97, $9A-$9F, $A2-$A5, $AA-$AD, $B2, $B6-$B7, $BA
+  dw "ZORA_LAGOON_____" ;  9: $98
+  dw "ZORA_QUAY_______" ; 10: $99
+  dw "COURAGE_ISLAND__" ; 11: $A6/$A7/$AE/$AF (64x64)
+  dw "DEKU_GROVE______" ; 12: $A8/$A9 (64x32)
+  dw "GORON_COAST_____" ; 13: $B0/$B1/$B8/$B9 (64x64)
+  dw "CRESCENT_ATOLL__" ; 14: $B3/$B4/$BB/$BC (64x64)
+  dw "PIRATE_SHIP_____" ; 15: $B5/$BD (32x64)
+  dw "FROST_GLACIER___" ; 16: $BE/$BF (64x32)
 pulltable
-}
 
 ; =========================================================
 ; Runtime 8x8 Overworld Mini-Map on Map & Spoils Page (rows 11..18, cols 6..13).
 ; Renders terrain silhouette for Light World ($00-$3F), Dark World / Eon Abyss
-; ($40-$7F), or Special Overworld / Lyra Sea ($80-$BF) using tile $17B, and
-; highlights Link's current screen ($8A & $3F) with pulsing marker $16D.
-; Indoors ($1B != 0) renders a muted gray 8x8 grid with a gold entrance marker.
-; In: any M/X. Out: SEP #$30. Clobbers A/X/Y/$00-$07.
+; ($40-$7F), or Special Overworld / Lyra Sea ($80-$BF) using tile $17B.
+; Outdoors ($1B == 0): resolves the active map's parent and area size
+; (0=Small 1x1, 1=Large 2x2, 2=Wide 2x1, 3=Tall 1x2) and highlights ALL cells
+; in the footprint as a unified pulsing shape (outer-framed $257B/$357B with
+; per-quadrant H/V bevel flips), while Link's active sub-quadrant cell (from
+; ($7E0700 & $7E) >> 1 when inside the footprint, else $8A & $3F) displays the
+; pulsing Link marker pin ($256D/$356D).
+; Indoors ($1B != 0) renders a muted gray 8x8 grid with a single entrance pin.
+; In: any M/X. Out: SEP #$30. Clobbers A/X/Y/$00-$0B.
 MenuMap_DrawMiniMap_Long:
 {
   SEP #$30
+  ; Default single-cell state: c0 = $8A & $3F, c1/c2/c3 = $FF, link_cell = c0.
+  LDA.b $8A : AND.b #$3F : STA.b $04    ; $04 = c0 (parent cell 0..63)
+  STA.b $0A                             ; $0A = Link active sub-quadrant cell
+  LDA.b #$FF : STA.b $07 : STA.b $08 : STA.b $09
+
   ; Pick terrain table offset ($00 = LW, $40 = DW, $80 = Special OW)
-  LDA.b $8A : AND.b #$3F : STA.b $04    ; $04 = Link cell index 0..63
   LDA.b $8A : CMP.b #$80 : BCS .special
   CMP.b #$40 : BCS .abyss
   LDA.b #$00 : BRA .world_ok
@@ -256,12 +308,85 @@ MenuMap_DrawMiniMap_Long:
 .world_ok
   STA.b $05                             ; $05 = world table base (0 / 64 / 128)
   LDA.b $1B : STA.b $06                 ; $06 = indoors flag
+  BEQ .outdoors
+  BRL .footprint_done                   ; indoors: single entrance marker only
 
+.outdoors
+  ; Outdoors: resolve parent map and area size (0=Small, 1=Large, 2=Wide, 3=Tall).
+  LDA.b $8A
+if !SPECIAL_OVERWORLD_NATIVE == 1
+  CMP.b #$C0 : BCC .id_ok
+  BRL .footprint_done
+.id_ok
+  TAX
+  LDA.l !LYRA_CURRENT_TABLE_parent, X
+  TAX
+  AND.b #$3F : STA.b $04
+  LDA.l !LYRA_CURRENT_TABLE_area_size, X
+else
+  CMP.b #$A0 : BCC .id_ok
+  BRL .footprint_done
+.id_ok
+  TAX
+  LDA.l $288998, X
+  TAX
+  AND.b #$3F : STA.b $04
+  LDA.l $02F88D, X
+endif
+  CMP.b #$01 : BEQ .size_large
+  CMP.b #$02 : BEQ .size_wide
+  CMP.b #$03 : BEQ .size_tall
+  BRA .check_subcell
+
+.size_wide
+  ; Wide (2x1): c1 = c0 + 1 if col < 7.
+  LDA.b $04 : AND.b #$07 : CMP.b #$07 : BCS .check_subcell
+  LDA.b $04 : INC : STA.b $07
+  BRA .check_subcell
+
+.size_tall
+  ; Tall (1x2): c2 = c0 + 8 if row < 7 (c0 < $38).
+  LDA.b $04 : CMP.b #$38 : BCS .check_subcell
+  CLC : ADC.b #$08 : STA.b $08
+  BRA .check_subcell
+
+.size_large
+  ; Large (2x2): c1 = c0+1 (col<7), c2 = c0+8 (row<7), c3 = c0+9 (both).
+  LDA.b $04 : AND.b #$07 : CMP.b #$07 : BCS .large_no_right
+  LDA.b $04 : INC : STA.b $07
+.large_no_right
+  LDA.b $04 : CMP.b #$38 : BCS .check_subcell
+  CLC : ADC.b #$08 : STA.b $08
+  LDA.b $07 : CMP.b #$FF : BEQ .check_subcell
+  LDA.b $08 : INC : STA.b $09
+
+.check_subcell
+  ; Resolve Link's active sub-quadrant from ($7E0700 & $7E) >> 1 when it lies
+  ; inside {c0, c1, c2, c3}; otherwise keep $8A & $3F (or c0).
+  LDA.l $7E0700 : AND.b #$7E : LSR
+  CMP.b $04 : BEQ .use_subcell
+  CMP.b $07 : BEQ .use_subcell
+  CMP.b $08 : BEQ .use_subcell
+  CMP.b $09 : BEQ .use_subcell
+  LDA.b $0A
+  CMP.b $04 : BEQ .footprint_done
+  CMP.b $07 : BEQ .footprint_done
+  CMP.b $08 : BEQ .footprint_done
+  CMP.b $09 : BEQ .footprint_done
+  LDA.b $04
+.use_subcell
+  STA.b $0A
+
+.footprint_done
   ; Iterate 64 cells: Y = cell 0..63, row = Y>>3, col = Y&7.
   ; Dest tilemap offset = menu_offset(11 + row, 6 + col) = $02CC + row*$40 + col*2.
   LDY.b #$00
 .cell_loop
-  TYA : CMP.b $04 : BEQ .is_link
+  TYA : CMP.b $0A : BEQ .is_link
+  CMP.b $04 : BEQ .fp_tl
+  CMP.b $07 : BEQ .fp_tr
+  CMP.b $08 : BEQ .fp_bl
+  CMP.b $09 : BEQ .fp_br
   LDA.b $06 : BNE .indoor_cell
   TYA : CLC : ADC.b $05 : TAX
   LDA.l .terrain, X : ASL : TAX
@@ -272,8 +397,26 @@ MenuMap_DrawMiniMap_Long:
   REP #$20
   LDA.w #$317B                          ; muted gray grid cell indoors
   BRA .store_tile
+.fp_tl
+  LDA.b #$00 : BRA .is_footprint
+.fp_tr
+  LDA.b #$40 : BRA .is_footprint
+.fp_bl
+  LDA.b #$80 : BRA .is_footprint
+.fp_br
+  LDA.b #$C0
+.is_footprint
+  STA.b $0B
+  LDA.l $7E0207 : AND.b #$10 : BNE .fp_gold
+  LDA.b #$25 : ORA.b $0B : XBA : LDA.b #$7B
+  REP #$20
+  BRA .store_tile
+.fp_gold
+  LDA.b #$35 : ORA.b $0B : XBA : LDA.b #$7B
+  REP #$20
+  BRA .store_tile
 .is_link
-  LDA.w $0207 : AND.b #$10 : BNE .link_gold
+  LDA.l $7E0207 : AND.b #$10 : BNE .link_gold
   REP #$20
   LDA.w #$256D                          ; bright red/white Link pin
   BRA .store_tile
@@ -291,13 +434,15 @@ MenuMap_DrawMiniMap_Long:
   PLA
   STA.l $7E1000, X
   SEP #$30
-  INY : CPY.b #$40 : BCC .cell_loop
+  INY : CPY.b #$40 : BCS .done
+  BRL .cell_loop
+.done
   RTL
 
   ; Terrain palette words for MiniMap_Cell ($017B):
   ; 0 = water/sea (blue $2D7B), 1 = grass/land (green $3D7B),
   ; 2 = desert/beach/mountain (tan $297B), 3 = landmark/castle/shrine (gold $357B),
-  ; 4 = lava/fortress (red $257B), 5 = abyss/shadow/sky (gray $317B)
+  ; 4 = lava/fortress (red $257B), 5 = abyss/shadow/sky/ice (gray $317B)
 .palettes
   dw $2D7B, $3D7B, $297B, $357B, $257B, $317B
 
@@ -324,14 +469,14 @@ MenuMap_DrawMiniMap_Long:
   db 0,0,0,0, 0,0,2,2 ; $78-$7F Underwater, Abyss Beach
 
   ; World 2: Special Overworld — Lyra Sea / East Kalyxo / Sky Islands ($80-$BF)
-  db 1,1,1,3, 5,5,5,3 ; $80-$87 Tail Woods, Korok Cove, Garrison, Sky Islands, Sky Tower
-  db 5,1,1,3, 5,5,5,5 ; $88-$8F Curtain, Korok Cove, Garrison, Sky Islands
-  db 0,3,0,0, 0,0,0,0 ; $90-$97 Sea Zora, Shrine Wisdom, North Reef, Sea/Clouds
-  db 0,0,1,0, 0,0,0,0 ; $98-$9F Sea Zora, Zora Quay, Kalyxo Coast, Sea/Clouds
-  db 1,1,0,1, 0,0,3,3 ; $A0-$A7 Zora Coast, Lyra Sea, Shrine of Courage
-  db 1,1,1,1, 1,1,3,3 ; $A8-$AF Deku Coast, Islands, Shrine of Courage
-  db 2,2,0,1, 1,3,0,0 ; $B0-$B7 Goron Desert, Lyra Sea, Crescent, Tower Island
-  db 2,2,0,1, 1,3,5,5 ; $B8-$BF Goron Desert, Harbor, Crescent, Tower, Snow Island
+  db 1,1,1,3, 5,5,5,3 ; $80-$87 Forest Glade, Korok Cove N, Royal Garrison N, Sky Islands, Sky Tower
+  db 5,1,1,3, 5,5,5,5 ; $88-$8F Curtain, Korok Cove S, Royal Garrison S, Sky Islands
+  db 3,3,0,0, 0,0,0,0 ; $90-$97 Sea Zora Temple, Shrine of Wisdom, North Reef/Sea
+  db 0,2,0,0, 0,0,0,0 ; $98-$9F Zora Lagoon, Zora Quay dock/beach, Lyra Sea
+  db 1,1,0,1, 0,0,1,3 ; $A0-$A7 Zora Coast, Lyra Sea + Twin-Tree Isl, Courage Island N + Shrine
+  db 1,1,0,0, 1,0,1,1 ; $A8-$AF Deku Grove, Lyra Sea + Green Isl, Courage Island S
+  db 2,2,0,1, 1,3,0,0 ; $B0-$B7 Goron Coast N, Lyra Sea, Crescent Atoll N, Pirate Ship N, Sea
+  db 2,2,0,1, 1,3,5,5 ; $B8-$BF Goron Coast S, Harbor/Sea, Crescent Atoll S, Pirate Ship S, Frost Glacier
 }
 
 ; =========================================================
