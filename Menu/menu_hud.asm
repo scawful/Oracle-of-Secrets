@@ -175,13 +175,11 @@ HUD_Update:
   ; Check if the user has bombs equipped
   JSR HUD_ItemBoxItem : LDA $7EF33F, X : AND.w #$00FF
   CPX.w #$0004 : BEQ .bomb_count
-if !ENABLE_GOLDSTAR_CELL == 1
   CPX.w #$001C : BNE .not_bombs
     LDA.l BombchuAmmo : AND.w #$00FF
     CMP.w #!BOMBCHU_AMMO_MAX+1 : BCC .draw_bomb_count
     LDA.w #$0000
     BRA .draw_bomb_count
-endif
   BRA .not_bombs
   .bomb_count
     ; Number of bombs Link has.
@@ -341,12 +339,7 @@ HUD_UpdateItemBox:
     .flute_not_equipped
 
     CPX.w #$0003 : BNE .hookshot_not_equipped
-if !ENABLE_GOLDSTAR_CELL == 1
       LDA.w #$0000
-else
-      LDA.w GoldstarOrHookshot : BEQ .hookshot_not_equipped
-        SEC : SBC.w #$0001
-endif
     .hookshot_not_equipped
 
     CPX.w #$0010 : BNE .custom_rod_not_equipped
@@ -359,11 +352,9 @@ endif
       LDA.w #$0001
     .portal_rod_not_equipped
 
-if !ENABLE_GOLDSTAR_CELL == 1
     CPX.w #$001A : BNE .not_goldstar_cell
     LDX.w #$0003 : LDA.w #$0001
     .not_goldstar_cell
-endif
     JSR HUD_DrawItem
     RTS
 
@@ -431,7 +422,6 @@ HUD_DrawItem:
   LDA.l HUD_OcarinaIcons+6,X : STA.l $7EC7B8
   RTS
 .not_ocarina
-if !ENABLE_GOLDSTAR_CELL == 1
   ; Switch Hook ($7EF342 == 2) shares slot $03 (A == 0; Goldstar uses A == 1).
   CPX.w #$0003 : BNE .not_switch_hook
   TAY : BNE .not_switch_hook
@@ -459,7 +449,6 @@ if !ENABLE_GOLDSTAR_CELL == 1
   dw $340D,$340E,$340F,$3425 ; Garo
   dw $24F5,$34F6,$24C0,$24F5 ; Switch Hook ($1F virtual X-HUD icon)
   .ordinary
-endif
   STA $02
   TXA : DEC A : ASL A : TAX
   LDA $FA93, X : STA $04

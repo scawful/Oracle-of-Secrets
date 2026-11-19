@@ -2,31 +2,22 @@
 ; on the left the Moon Pearl, heart pieces and a 2x2 block of passive gear (shield,
 ; glove, boots, flippers). Supplies live on Equipment; the area name heads the Map page.
 ; No ownership or save-format changes. DBR = $2D.
-if !ENABLE_MENU_MAP_TRAVEL == 1
   !QuestPearlCol = menu_offset(0,3)     ; absolute (17,7)
   !QuestCountCol = menu_offset(6,9)     ; absolute (19,9-11), under the hearts at (17,10)
-else
-  !QuestPearlCol = menu_offset(0,2)
-  !QuestCountCol = menu_offset(6,23)
-endif
 
 Menu_Quest_Init:
 {
   SEP #$30
   STZ.w $0207
-if !ENABLE_MENU_MAP_TRAVEL == 1
   JSL QuestSongs_Init                ; pick the song cursor ($020B)
-endif
   RTS
 }
 
 Menu_QuestScreen:
 {
   SEP #$30
-if !ENABLE_MENU_MAP_TRAVEL == 1
   ; A/Y on a learned song binds it to the Ocarina (consumes A).
   JSL QuestSongs_Frame : BCS .no_journal
-endif
   LDA.b $F4 : BIT.b #$90 : BEQ .no_start
     LDA.b #!MENU_STATE_INIT_SCROLL_DOWN : STA.w $0200
     RTS
@@ -78,17 +69,10 @@ Menu_Quest_Draw:
   JSR Menu_DrawHeartPieces
   JSR Menu_Quest_Progress
   JSR Menu_Quest_Gear
-if !ENABLE_MENU_MAP_TRAVEL == 1
   ; The dungeon row (map, big chest key, big key, treasure) is on the Map page.
   REP #$30
   JSR Menu_DrawMusicNotes            ; bottom row: the six songs
   JSL QuestSongs_DrawCursor          ; bracket + footer song name
-else
-  REP #$30
-  JSR Menu_DrawBigKey
-  REP #$30
-  JSR Menu_DrawBigChestKey
-endif
   SEP #$30
   RTS
 }

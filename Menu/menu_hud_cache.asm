@@ -172,9 +172,7 @@ HUD_Update_Impl:
   LDA.l ItemBindingSavedX
   CMP.b #$01 : BEQ .codex_ammo_arrows
   CMP.b #$04 : BEQ .codex_ammo_bombs
-if !ENABLE_GOLDSTAR_CELL == 1
   CMP.b #$1C : BEQ .codex_ammo_chu
-endif
   CMP.b #$06 : BEQ .codex_bottle0
   CMP.b #$0C : BEQ .codex_bottle1
   CMP.b #$0D : BEQ .codex_ocarina_song
@@ -183,9 +181,7 @@ endif
   LDA.b #$00 : BRA .codex_ammo_ready
   .codex_ammo_arrows : LDA.l $7EF377 : BRA .codex_ammo_ready
   .codex_ammo_bombs  : LDA.l $7EF343 : BRA .codex_ammo_ready
-if !ENABLE_GOLDSTAR_CELL == 1
   .codex_ammo_chu    : LDA.l BombchuAmmo : BRA .codex_ammo_ready
-endif
   .codex_ocarina_song : JSL Ocarina_ValidSong_Long : BRA .codex_ammo_ready
   .codex_bottle0 : LDA.l $7EF35C : BRA .codex_ammo_ready
   .codex_bottle1 : LDA.l $7EF35D : BRA .codex_ammo_ready
@@ -267,9 +263,7 @@ endif
   ; Check bombs / bombchu / arrows once and skip HexToDecimal if unchanged.
   JSL HUD_ItemBoxItem_long
   CPX.w #$0004 : BEQ .calc_bombs
-if !ENABLE_GOLDSTAR_CELL == 1
   CPX.w #$001C : BEQ .calc_bombchu
-endif
   CPX.w #$0001 : BEQ .calc_arrows
   LDA.w #$0000
   BRA .check_ammo_cache
@@ -278,13 +272,11 @@ endif
   LDA.l $7EF343 : AND.w #$00FF
   BRA .check_ammo_cache
 
-if !ENABLE_GOLDSTAR_CELL == 1
   .calc_bombchu
   LDA.l BombchuAmmo : AND.w #$00FF
   CMP.w #!BOMBCHU_AMMO_MAX+1 : BCC .check_ammo_cache
   LDA.w #$0000
   BRA .check_ammo_cache
-endif
 
   .calc_arrows
   LDA.l $7EF377 : AND.w #$00FF
@@ -308,9 +300,7 @@ endif
   LDA.w #!HudYCountRest1 : STA.l !HudYCount+2
 
   CPX.w #$0004 : BEQ .draw_ammo_digits
-if !ENABLE_GOLDSTAR_CELL == 1
   CPX.w #$001C : BEQ .draw_ammo_digits
-endif
   CPX.w #$0001 : BNE .ammo_done
 
   .draw_ammo_digits

@@ -1230,9 +1230,7 @@
       "base": 8319913,
       "size": 1,
       "status": "pending",
-      "condition": {
-        "ENABLE_GOLDSTAR_CELL": 1
-      },
+      "condition": {},
       "lifetime": "Save file in separate RC candidate; not merged into shared source.",
       "reset": "GoldstarInventory_Migrate reads legacy Hookshot=2 once.",
       "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
@@ -1255,9 +1253,7 @@
       "base": 8319914,
       "size": 1,
       "status": "pending",
-      "condition": {
-        "ENABLE_GOLDSTAR_CELL": 1
-      },
+      "condition": {},
       "lifetime": "Save file in separate RC candidate; not merged into shared source.",
       "reset": "Migration marker $A5; not a general save-format version.",
       "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
@@ -2192,9 +2188,7 @@
       "base": 8320018,
       "size": 1,
       "status": "shared",
-      "condition": {
-        "ENABLE_MENU_MAP_TRAVEL": 1
-      },
+      "condition": {},
       "lifetime": "Save file; native five-page save and checksum block.",
       "reset": "Vanilla new-file initialization zeros it. TravelDest_MarkVisited ORs bit i on each overworld area load whose area equals LoadTransport_screen_id entry i ($02EAE5). No migration: existing saves start at 0 and the picker refuses until Link enters a destination area.",
       "save": "First byte of the former FreeBlock_Dreams prefix (F413-F437 RoomSolvedBits, now F438-F49E free; F49F-F4BF reserved for the special-event marker and areas 80-9F flags). SaveGameFile copies the F300 page to primary and backup; checksum covers offsets 0000-04FD. Native save/reopen proof (at the earlier F4BF address, same code path): SRAM slot byte holds the mask and reset/reopen restores it. Moved from $7EF4BF on 2026-11-16; saves written by the F4BF builds keep a stale byte there.",
@@ -2655,9 +2649,7 @@
       "base": 8265471,
       "size": 1,
       "status": "proposed",
-      "condition": {
-        "ENABLE_MENU_MAP_TRAVEL": 1
-      },
+      "condition": {},
       "lifetime": "One conditional transient WRAM byte after the horse tail ($7E1EFF < $7E1F00; $7E1EFE is Horse_AnchorArea). Set by the Map page when Map closes the menu; consumed by Menu_Exit the same frame the menu closes. A map opened from the page sets 3, which lives through the map module and reopens the page.",
       "reset": "MenuMapTravel_Init clears it when the page is drawn; MenuMapTravel_ExitAction clears it before acting; MenuFlow_MapInit clears 3 when the page is drawn again after the map.",
       "save": "Volatile WRAM; not saved in SRAM.",
@@ -3190,9 +3182,7 @@
       "base": 8258234,
       "size": 4,
       "status": "shared",
-      "condition": {
-        "ENABLE_MENU_MAP_TRAVEL": 1
-      },
+      "condition": {},
       "lifetime": "Menu-session bytes at vanilla-unused $7E02BA-$7E02BD (usdasm UNUSED_7E02BA-BE): EquipCursor, MapCursor, CrossRow, CrossDir. Read and written only by Menu/menu_cursor_flow.asm.",
       "reset": "Zero at boot. MenuFlow_UploadRight clears CrossRow on every menu open; the two cursors persist across opens until power-off by design.",
       "save": "Volatile WRAM; never saved; never read in gameplay.",
@@ -3236,9 +3226,7 @@
       "base": 8258239,
       "size": 1,
       "status": "shared",
-      "condition": {
-        "ENABLE_MENU_MAP_TRAVEL": 1
-      },
+      "condition": {},
       "lifetime": "Menu-session byte at vanilla-unused $7E02BF (usdasm UNUSED_7E02BF, freed when the tunic popup was removed). Stores 0=Items, 1=Quest, 2=Equipment, 3=Map.",
       "reset": "Zero at boot (Items). Updated while on Items or stats pages; preserved during Ocarina Soaring ($10).",
       "save": "Volatile WRAM; never saved; never read in gameplay.",

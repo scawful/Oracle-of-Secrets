@@ -315,10 +315,8 @@ endif
 
 ; Soaring visited bits + bird picker. Bank $34 is full; every access in
 ; the file is long (.l / JML / JSL), so it runs from this bank unchanged.
-if !ENABLE_MENU_MAP_TRAVEL == 1
 incsrc "Overworld/travel_destinations.asm"
 %log_end("Overworld/travel_destinations.asm", !LOG_ITEMS)
-endif
 
 ; Abyss load spawn menu: bank $34 is full. Entered only by JML, exits by
 ; JML/RTL, absolute operands are low WRAM (mirrored), so it runs from here.
@@ -382,9 +380,7 @@ incsrc "Menu/menu_tunic.asm"
 incsrc "Items/heavy_sword.asm"
 
 ; Menu cursor memory, page-edge crossing, map return, tunic popup (bank $2D full).
-if !ENABLE_MENU_MAP_TRAVEL == 1
 incsrc "Menu/menu_cursor_flow.asm"
-endif
 
 ; Cached HUD update (Menu bank $2E has <64 bytes before D8 boss slot $2EB800).
 if !DISABLE_MENU == 0

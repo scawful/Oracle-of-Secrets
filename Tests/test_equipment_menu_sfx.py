@@ -332,8 +332,6 @@ class EquipmentMenuSfxContract(unittest.TestCase):
             ("mask/song", r"(\.sound\n\s*LDA\.b #\$)20( : STA\.w \$012F)", self.flags),
             ("one-ring wear", r"(\.wear\n\s*STA\.l RingSlot1\n\s*LDA\.b #\$)20( : STA\.w \$012F)",
              self.flags),
-            ("multi-ring on", r"(\.on\n\s*JSR RingMenu_StoreRingToSlotStack\n\s*SEP #\$30\n"
-             r"\s*LDA\.b #\$)20( : STA\.w \$012F)", dict(self.flags, ENABLE_ONE_RING=0)),
         ]
         for bad_sfx in ("22", "0D"):
             for name, pattern, flags in mutants:

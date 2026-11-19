@@ -30,7 +30,7 @@ sys.dont_write_bytecode = True
 SOUND_QUEUE, WATCH_DEPTH = 0x7E012F, 512
 MOVE_SOUND, BOSS_DYING = 0x20, 0x22
 # Action -> (label in active.job/candidatex.sym, offset of its STA.w $012F).
-# The unwear site is the default !ENABLE_ONE_RING == 1 branch.
+# The unwear site clears RingSlot1.
 STORE_SITES = {"move": ("Menu_Equipment_Move_accept", 10),
                "select": ("Menu_Equipment_Select_sound", 2),
                "wear": ("Menu_Page3_ToggleRing_wear", 6),

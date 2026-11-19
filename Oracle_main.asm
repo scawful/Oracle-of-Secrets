@@ -67,8 +67,6 @@ if !SPECIAL_OVERWORLD_PALETTE_ENABLED == 1
   assert !SPECIAL_OVERWORLD_NATIVE == 1, "Native palette lifecycle requires native readers"
   assert !DISABLE_OVERWORLD == 0, "Native palette lifecycle requires the overworld module"
 endif
-assert !ENABLE_ONE_RING == 1, "Page 3 Layout A requires !ENABLE_ONE_RING == 1"
-assert !ENABLE_GOLDSTAR_CELL == 1, "Goldstar cell is permanently active"
 incsrc    "Core/structs.asm"
 
 ; Vanilla WRAM and SRAM

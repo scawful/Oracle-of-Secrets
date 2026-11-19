@@ -62,19 +62,15 @@ endif
   .icon
     TAY                                         ; Y = item ID
     CPY.w #$000D : BEQ .ocarina_icon
-if !ENABLE_GOLDSTAR_CELL == 1
     CPY.w #$001B : BCS .new_icon                ; Byrna, Bombchu, Gust Jar / Switch Hook
-endif
     ; Logical cells draw like the Y box: Portal = rod entry level 1,
     ; Goldstar = hookshot entry level 1. Neither has a count.
     CPY.w #$0019 : BNE +
       LDY.w #$0010 : LDA.w #$0001 : BRA .level
     +
-if !ENABLE_GOLDSTAR_CELL == 1
     CPY.w #$001A : BNE +
       LDY.w #$0003 : LDA.w #$0001 : BRA .level
     +
-endif
     TAX
     LDA.l Menu_AddressIndex-1, X : AND.w #$00FF : TAX
     LDA.l $7EF300, X : AND.w #$00FF             ; ownership level
@@ -85,14 +81,10 @@ endif
       LDA.w #$0000                              ; Fishing Rod: entry 0 at $0DF8A9
     +
     CPY.w #$0003 : BNE +
-if !ENABLE_GOLDSTAR_CELL == 1
       CMP.w #$0002 : BNE .x_hookshot_icon
         LDY.w #$001F : BRA .new_icon            ; Switch Hook ($7EF342 == 2)
       .x_hookshot_icon
       LDA.w #$0000                              ; Hookshot cell: hookshot icon
-else
-      LDA.w GoldstarOrHookshot : AND.w #$00FF : DEC
-endif
     +
     .level
     ASL #3 : PHA
@@ -101,14 +93,12 @@ endif
     PLA
     LDA.w #$000D
     BRA .blit_bank
-if !ENABLE_GOLDSTAR_CELL == 1
   ; Prototype cells past vanilla's pointer table: the Y box's own icons
   ; (HUD_DrawItem .new_icons, 4 words per item from Byrna $1B).
   .new_icon
     TYA : SEC : SBC.w #$001B : ASL #3           ; values 0..4: ASL #3 clears C
     ADC.w #HUD_DrawItem_new_icons&$FFFF : TAX
     BRA .blit_bank2e
-endif
   ; Ocarina ($0D): dynamic song-colored icon from HUD_OcarinaIcons (grey + 6 songs).
   .ocarina_icon
     SEP #$20
@@ -117,9 +107,7 @@ endif
     AND.w #$00FF : ASL #3                       ; values 0..6: ASL #3 clears C
     ADC.w #HUD_OcarinaIcons&$FFFF : TAX
   .blit_bank2e
-if !ENABLE_GOLDSTAR_CELL == 1
     assert (HUD_DrawItem_new_icons>>16) == (HUD_OcarinaIcons>>16)
-endif
     LDA.w #HUD_OcarinaIcons>>16
   .blit_bank
     PHB
@@ -136,16 +124,12 @@ endif
     CPY.w #$0004 : BNE +
       LDA.l $7EF343 : BRA .count                ; bombs
     +
-if !ENABLE_GOLDSTAR_CELL == 1
     CPY.w #$001C : BEQ +
       JMP .no_count
     +
     LDA.l BombchuAmmo : AND.w #$00FF            ; same cap as the Y count
     CMP.w #!BOMBCHU_AMMO_MAX+1 : BCC .count
       LDA.w #$0000
-else
-    JMP .no_count
-endif
     .count
     ; Two digits (tiles $2490-$2499, as HexToDecimal draws).
     AND.w #$00FF

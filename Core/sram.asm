@@ -508,8 +508,8 @@ Part00Flags             = $7EF30F
 ;   +1 $7EF3A2 MAGICRINGS   rings owned (..pa hlbs, bit order of the ring menu)
 ;   +2 $7EF3A3 RingSlot1    equipped ring ID (0 = empty; 2 Power, 3 Armor,
 ;                            4 Heart, 5 Light, 6 Blast, 7 Steadfast)
-;   +3 $7EF3A4 RingSlot2    (0 with !ENABLE_ONE_RING: file load clears it)
-;   +4 $7EF3A5 RingSlot3    (0 with !ENABLE_ONE_RING: file load clears it)
+;   +3 $7EF3A4 RingSlot2    (file load clears it; only RingSlot1 is worn)
+;   +4 $7EF3A5 RingSlot3    (file load clears it; only RingSlot1 is worn)
 ;   +5 $7EF3A6 PortalRodOwned (below). Was RingSlotsNum, a ring slot count
 ;                            that nothing read or wrote; the one-ring rule
 ;                            (decisions.org 2026-09-28) retired it.
@@ -907,7 +907,7 @@ RichardQuestFlags  = $7EF3C4
 ; Note: $7EF4FE-4FF are checksum (do not use)
 ;
 ; Soaring: one bit per bird destination (bit i = LoadTransport entry i),
-; set on first entry to that area. Used only when !ENABLE_MENU_MAP_TRAVEL.
+; set on first entry to that area.
 TravelSpotsVisited = $7EF412 ; one byte
 ; Room-state bit (Dungeons/room_state.asm): one bit per room $000-$127,
 ; byte = room >> 3, mask = 1 << (room & 7). Used only when !ENABLE_ROOM_STATE_BITS.

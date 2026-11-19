@@ -1,7 +1,6 @@
 ; Restored vanilla Cane of Byrna, in the bank-$07 item extension.
 ; The split item grid assigns logical $1B, while $10/$19 remain the rods.
 ; Function $0D still enters the existing dispatcher at $07AF3E.
-if !ENABLE_GOLDSTAR_CELL == 1
 LinkItem_RestoredByrna:
 {
   LDA.l ByrnaOwned : CMP.b #$01 : BNE .return
@@ -63,4 +62,3 @@ org $08DC7C ; @hook module=Items name=ByrnaSelectedItem kind=jsl target=Byrna_Is
   JSL Byrna_IsSelected : NOP
 assert pc() == $08DC81
 pullpc
-endif

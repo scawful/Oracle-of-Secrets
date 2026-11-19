@@ -300,13 +300,11 @@ endif
     BRA .return
   .travel_bird_already_released
 
-if !ENABLE_MENU_MAP_TRAVEL == 1
   ; No visited destination yet: error sound, no bird.
   LDA.l TravelSpotsVisited : BNE .has_destination
     LDA.b #$3C : STA.w $012E
     RTS
   .has_destination
-endif
 
   LDY.b #$04
   LDA.b #$27

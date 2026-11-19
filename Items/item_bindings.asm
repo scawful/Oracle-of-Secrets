@@ -85,11 +85,9 @@ ItemBindings_Owner:
   db $4C, $4E, $50, $51, $4D, $5E       ; Ocarina Book Somaria FishingRod Feather Bottle3
   db $49, $47, $58, $48, $52, $5F       ; Deku Zora Wolf Bunny Stone Bottle4
   db PortalRodOwned&$FF                 ; $19 Portal Rod
-if !ENABLE_GOLDSTAR_CELL == 1
   db GoldstarOwned&$FF, ByrnaOwned&$FF  ; $1A Goldstar, $1B Byrna
   db BombchuOwned&$FF, SwitchHookOwned&$FF ; $1C Bombchu, $1D Gust Jar / Switch Hook
   db GaroMaskOwned&$FF                  ; $1E Garo Mask (R only)
-endif
 ItemBindings_Owner_End:
 ItemBindings_Max:
   db $00
@@ -98,9 +96,7 @@ ItemBindings_Max:
   db $00, $00, $00, $00, $00, $00
   db $00, $00, $00, $00, $00, $00
   db $02
-if !ENABLE_GOLDSTAR_CELL == 1
   db $02, $02, $02, $02, $02
-endif
 ItemBindings_ActionTable:
   db $00
   db $03, $02, $0E, $01, $0A, $0B       ; Bow Boomerang Hookshot Bombs Powder Bottle1
@@ -108,9 +104,7 @@ ItemBindings_ActionTable:
   db $08, $0C, $12, $0D, $07, $0B       ; Ocarina Book Somaria FishingRod Feather Bottle3
   db $00, $00, $00, $00, $00, $0B       ; Deku Zora Wolf Bunny Stone (R-only), Bottle4
   db $0D                                ; $19 Portal Rod: rod routine
-if !ENABLE_GOLDSTAR_CELL == 1
   db $0E, $0D, $01, $0E, $00            ; $1A Goldstar, $1B Byrna, $1C Bombchu, $1D Gust Jar/Switch Hook, $1E Garo (R-only)
-endif
 
 ; Item the running action belongs to, for handlers that pick a variant by
 ; item ID. X latch owning $0303: the X item. Otherwise $0202 (Y, unchanged).

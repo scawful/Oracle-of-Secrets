@@ -11,7 +11,6 @@
 !ENABLE_D8_FARORE_GRAPHICS           = 0
 !ENABLE_DEBUG_TOOLS                  = 0
 !ENABLE_GLADE_AMBUSH                 = 0
-!ENABLE_GOLDSTAR_CELL                = 1
 !ENABLE_HORSE_CROWD_CHARGE           = 0
 !ENABLE_HORSE_FORM                   = 1
 !ENABLE_HORSE_PARK_ANYWHERE          = 1
@@ -19,12 +18,9 @@
 !ENABLE_KALYXO_DOCKS_PROFILE         = 0
 !ENABLE_LYRA_TALKERS                 = 0
 !ENABLE_LYRA_TEMPLE_ZORA             = 0
-!ENABLE_MENU_MAP_TRAVEL              = 1
-!ENABLE_MENU_PAGE_LOOP               = 1
 !ENABLE_MINECART_CART_SHUTTERS       = 0
 !ENABLE_MINECART_LIFT_TOSS           = 0
 !ENABLE_OCARINA_SONG_TINT            = 0
-!ENABLE_ONE_RING                     = 1
 !ENABLE_OW_AUX_EXTENSION             = 0
 !ENABLE_RANCH_MILK                   = 0
 !ENABLE_SKY_OVERLAY_SOURCE_PROFILE   = 1

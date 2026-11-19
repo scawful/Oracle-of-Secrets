@@ -29,13 +29,11 @@ endif
 org $07AF3E ; Cane of Byrna
 LinkItem_FishingRodAndPortalRod:
 {
-if !ENABLE_GOLDSTAR_CELL == 1
   %SelectedItem()
   CMP.b #$1B : BNE .not_byrna
     JSR LinkItem_RestoredByrna
     RTS
   .not_byrna
-endif
   ; The Portal Rod has its own Items cell ($0202 = $19, Menu_ItemIndex $0D
   ; like the Fishing Rod cell $10). The cell picks the rod; no L/R switch.
   %SelectedItem()

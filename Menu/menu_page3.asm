@@ -43,16 +43,6 @@
 ;   (+ an empty spare cell), rings on grid row 3, red brackets on the worn
 ;   mask/ring, no "A:EQUIP  X:LOG" prompt (X still opens the Journal).
 ;   Slot numbers stay: 0-5 rings, 6-10 masks; the spare cell is no slot.
-; - !ENABLE_ONE_RING: one worn ring (RingSlot1); A on it takes it off.
-; - !ENABLE_MENU_PAGE_LOOP: Masks&Rings <- Items -> Quest, wrapping. Items
-;   stays on the left BG3 half, Quest and page 3 on the right one. A Quest
-;   <-> page 3 turn draws the target into the left half, scrolls there in
-;   the button's direction, then uploads it to the right half and sets
-;   $E4 = $0100 in one frame (Menu_Page3_ScrollTo). Leaving for Items redraws
-;   Items first (Menu_Page3_ScrollFrom). No Y shortcut to the rings.
-; - !ENABLE_PORTAL_ROD_CELL: the Deku cell ($13, empty in the grid) shows
-;   the Portal Rod, whose Y-item value is $19 (Menu_PortalRod_*).
-; =========================================================
 
 
 !P3_FirstMaskSlot = $06
@@ -66,42 +56,32 @@
 Menu_Page3_Turn:
 {
   SEP #$30
-if !ENABLE_MENU_MAP_TRAVEL == 1
   JMP MenuMapTravel_Turn                 ; four-page ring
-endif
   CMP.b #$01 : BEQ .right
   REP #$20
   LDA.w #$FFF8 : STA.w MenuScrollHDirection
   SEP #$20
   LDA.w $0200 : CMP.b #!MENU_STATE_ITEM_SCREEN : BEQ .items_left
-if !ENABLE_MENU_PAGE_LOOP == 1
   LDA.w MenuScrollLevelH : BNE .equipment_left
-endif
   BRA .to_items
 .items_left
   LDA.b #$20 : STA.w MenuScrollLevelH
   BRA .to_right_half
-if !ENABLE_MENU_PAGE_LOOP == 1
 .equipment_left
   STZ.w MenuScrollLevelH
   BRA .to_right_half
-endif
 .right
   REP #$20
   LDA.w #$0008 : STA.w MenuScrollHDirection
   SEP #$20
   LDA.w $0200 : CMP.b #!MENU_STATE_ITEM_SCREEN : BEQ .items_right
-if !ENABLE_MENU_PAGE_LOOP == 1
   LDA.w MenuScrollLevelH : BEQ .quest_right
-endif
   BRA .to_items
 .items_right
   STZ.w MenuScrollLevelH
   BRA .to_right_half
-if !ENABLE_MENU_PAGE_LOOP == 1
 .quest_right
   LDA.b #$20 : STA.w MenuScrollLevelH
-endif
 .to_right_half
   LDA.b #!MENU_STATE_SCROLL_TO
   BRA .begin
@@ -118,7 +98,6 @@ endif
 Menu_Page3_ItemScreen:
 {
   SEP #$30
-if !ENABLE_MENU_MAP_TRAVEL == 1
   ; After the field map or reopening a remembered right-half page, $E5 != 0
   ; holds the right half on screen: jump straight to state $06 with no dead
   ; frame, and record page 0 when remaining on Items.
@@ -127,9 +106,7 @@ if !ENABLE_MENU_MAP_TRAVEL == 1
     JMP Menu_Page3_StatsScreen
   .no_map_return
   LDA.b #$00 : STA.l MenuFlow_LastPage
-endif
   LDA.b $F6 : BIT.b #$30 : BEQ .no_lr   ; L = $20, R = $10
-if !ENABLE_MENU_MAP_TRAVEL == 1
     LDA.b $F4 : BIT.b #$90 : BEQ .ring_turn ; B/Start keep priority
       JMP Menu_ItemScreen
     .ring_turn
@@ -137,25 +114,8 @@ if !ENABLE_MENU_MAP_TRAVEL == 1
       LDA.b #$FF : JMP Menu_Page3_Turn
     .ring_right
     LDA.b #$01 : JMP Menu_Page3_Turn
-else
-    AND.b #$20 : STA.w MenuScrollLevelH ; L wins, as in Menu_CheckHScroll
-    JMP Menu_ItemScreen
-endif
   .no_lr
 
-if !ENABLE_MENU_PAGE_LOOP == 0
-  ; Y without B/Start: page 3, cursor on the rings.
-  LDA.b $F4 : AND.b #$D0 : CMP.b #$40 : BNE .no_y
-  JSR Menu_CheckRingsUnlocked : BCC .no_y
-    LDA.b #$21 : STA.w MenuScrollLevelH
-    REP #$20
-    LDA.w #$FFF8 : STA.w MenuScrollHDirection
-    SEP #$20
-    LDA.b #!MENU_STATE_SCROLL_TO : STA.w $0200
-    LDA.b #$06 : STA.w $012F            ; same sound as Menu_CheckHScroll
-    RTS
-  .no_y
-endif
 
 if !MENU_DROP_RING_BOX == 1
   ; Select ($F4 bit 5) without B/Start: open Context Help Popup for Items page.
@@ -174,21 +134,10 @@ endif
   ; Menu_FindNext*Item would stop on an empty cell.
   LDA.b $F4 : AND.b #$0F : BEQ .items
     JSR Menu_Page3_GridHasItem : BCS .grid_move
-if !ENABLE_GOLDSTAR_CELL == 1
       LDA.b $F4 : AND.b #$F3 : STA.b $F4 ; empty grid may still turn pages
-else
-      LDA.b $F4 : AND.b #$F0 : STA.b $F4
-endif
       BRA .items
     .grid_move
-if !ENABLE_GOLDSTAR_CELL == 1
     BRA .items                  ; custom grid keeps $0202 a logical item ID
-else
-    ; From the Portal Rod ($19) search from its cell ($13), so the move
-    ; follows the grid; Menu_ItemScreen turns a $13 result back into $19.
-    LDA.w $0202 : CMP.b #$19 : BNE .items
-      LDA.b #$13 : STA.w $0202
-endif
   .items
   JMP Menu_ItemScreen
 }
@@ -202,13 +151,11 @@ Menu_Page3_ScrollTo:
   SEP #$20
   LDA.b $E4 : BNE .scrolling
     LDA.w MenuScrollLevelH : BEQ .quest
-if !ENABLE_MENU_MAP_TRAVEL == 1
       CMP.b #$40 : BNE .equipment
         JSR MenuMapTravel_Init
         JSR MenuMapTravel_Draw
         BRA .upload
       .equipment
-endif
       JSR Menu_Page3_InitCursor
       JSR Menu_Page3_Draw
       BRA .upload
@@ -217,7 +164,6 @@ endif
     JSR Menu_RefreshQuestScreen
     .upload
     SEP #$30
-if !ENABLE_MENU_PAGE_LOOP == 1
     ; From Items: the right half. From Quest or page 3 ($E5 = 1): the left
     ; half, which the scroll reaches by wrapping.
     LDA.b #$23
@@ -225,13 +171,9 @@ if !ENABLE_MENU_PAGE_LOOP == 1
       LDA.b #$22
     .half
     STA.w $0116
-else
-    LDA.b #$23 : STA.w $0116             ; right screen ($6C00)
-endif
     LDA.b #$01 : STA.b $17
   .scrolling
   SEP #$20
-if !ENABLE_MENU_PAGE_LOOP == 1
   JSR Menu_ScrollHorizontal : BCC .loop_not_done ; returns with 16-bit A
     SEP #$30
     LDA.b $E5 : BNE .home
@@ -246,18 +188,6 @@ if !ENABLE_MENU_PAGE_LOOP == 1
   .loop_not_done
   SEP #$30
   RTS
-else
-  LDA.w MenuScrollLevelH : BNE .page3
-    JMP Menu_ScrollTo                    ; Quest: unchanged path
-
-  .page3
-  JSR Menu_ScrollHorizontal : BCC .not_done   ; returns with 16-bit A
-    SEP #$20
-    INC.w $0200                          ; $06: Menu_Page3_StatsScreen
-  .not_done
-  SEP #$20
-  RTS
-endif
 }
 
 ; ---------------------------------------------------------
@@ -265,7 +195,6 @@ endif
 Menu_Page3_StatsScreen:
 {
   SEP #$30
-if !ENABLE_MENU_MAP_TRAVEL == 1
   JSL MenuFlow_Frame                   ; Equipment cursor memory
   ; Four-page ring: L/R turn from every right-half page; B/Start keep priority.
   LDA.b $F4 : BIT.b #$90 : BNE .ring_no_lr
@@ -290,22 +219,18 @@ endif
   LDA.w MenuScrollLevelH : CMP.b #$40 : BNE .ring_not_map
     JMP MenuMapTravel_Screen
   .ring_not_map
-endif
   LDA.w MenuScrollLevelH : BNE .page3
   LDA.b $F4 : BIT.b #$90 : BNE .quest_input
   LDA.b $F6 : AND.b #$B0 : BNE .quest_input
   LDA.b $F4 : AND.b #$03 : BEQ .quest_input
-if !ENABLE_MENU_MAP_TRAVEL == 1
   ; Left/right step through learned songs; only a row edge turns the page.
   JSL QuestSongs_Move : BCS .quest_input
   LDA.b $F4 : AND.b #$01
-endif
   BNE .quest_turn
   LDA.b #$FF
 .quest_turn
   JMP Menu_Page3_Turn
 .quest_input
-if !ENABLE_MENU_PAGE_LOOP == 1
     ; Quest. R goes on to page 3; B/Start and L retain their priority (same order as
     ; Menu_CheckHScroll: B/Start, L, R).
     LDA.b $F4 : BIT.b #$90 : BNE .quest
@@ -316,7 +241,6 @@ if !ENABLE_MENU_PAGE_LOOP == 1
       LDA.w #$0008                        ; R: it comes in from the right
       BRA .turn_to_right_page
     .quest
-endif
     JMP Menu_StatsScreen
 
   .page3
@@ -331,7 +255,6 @@ endif
     LDA.w #$0008
     BRA .scroll
   .left
-if !ENABLE_MENU_PAGE_LOOP == 1
     ; L: Quest, coming in from the left (state $05 draws it).
     STZ.w MenuScrollLevelH
     REP #$20
@@ -342,10 +265,6 @@ if !ENABLE_MENU_PAGE_LOOP == 1
     LDA.b #!MENU_STATE_SCROLL_TO : STA.w $0200
     LDA.b #$06 : STA.w $012F
     RTS
-else
-    REP #$20
-    LDA.w #$FFF8
-endif
   .scroll
   STA.w MenuScrollHDirection
   SEP #$30
@@ -368,20 +287,14 @@ endif
     RTS
   .no_x
 
-if !ENABLE_MENU_MAP_TRAVEL == 1
   LDA.w $020B : PHA
-endif
   JSR Menu_Page3_Move
   SEP #$30
-if !ENABLE_MENU_MAP_TRAVEL == 1
   PLA : EOR.w $020B : TAX              ; X != 0: the cursor moved this frame
-endif
   LDA.w $0200 : CMP.b #!MENU_STATE_STATS_SCREEN : BEQ .select
   RTS                                  ; page turn owns the rest of this frame
 .select
-if !ENABLE_MENU_MAP_TRAVEL == 1
   TXA : BNE .moved                     ; A/Y act on the cell the player saw
-endif
   JSR Menu_Page3_Select
 .moved
   INC.w $0207                            ; cursor blink
@@ -430,13 +343,11 @@ Menu_Page3_GridFilter:
     LDA.l PortalRodOwned                 ; cell $13 holds the Portal Rod
     RTS
   .not_portal_cell
-if !ENABLE_GOLDSTAR_CELL == 1
   CMP.b #$14 : BNE .not_goldstar_cell
   PLA
   LDA.l GoldstarOwned
   RTS
   .not_goldstar_cell
-endif
   JSR Menu_Page3_IsMaskItem
   PLA
   BCC .keep
@@ -450,7 +361,6 @@ endif
 ; 8-bit A/X/Y. Keeps X, Y.
 Menu_Page3_GridHasItem:
 {
-if !ENABLE_GOLDSTAR_CELL == 1
   PHX : PHY
   LDX.b #$00
   .custom_scan
@@ -459,27 +369,6 @@ if !ENABLE_GOLDSTAR_CELL == 1
   PLY : PLX : CLC : RTS
   .custom_found
   PLY : PLX : SEC : RTS
-else
-  PHX : PHY
-  LDA.l PortalRodOwned : BNE .found
-  LDY.b #$17                   ; table index (item ID - 1)
-  .loop
-    CPY.b #$12 : BCC .check
-    CPY.b #$17 : BCC .next     ; $12-$16 = masks $13-$17
-    .check
-    TYX
-    LDA.l Menu_AddressLong, X : TAX
-    LDA.l $7EF300, X : BNE .found
-    .next
-    DEY : BPL .loop
-  PLY : PLX
-  CLC
-  RTS
-  .found
-  PLY : PLX
-  SEC
-  RTS
-endif
 }
 
 ; ---------------------------------------------------------
@@ -583,7 +472,6 @@ Menu_Page3_Select:
 ; out slot 1 when all three are full).
 Menu_Page3_ToggleRing:
 {
-if !ENABLE_ONE_RING == 1
   ; One ring: A on the worn ring takes it off; another ring replaces it.
   CMP.l RingSlot1 : BNE .wear
     LDA.b #$00 : STA.l RingSlot1
@@ -595,29 +483,6 @@ if !ENABLE_ONE_RING == 1
   LDA.b #$20 : STA.w $012F
   LDA.b #$20 : STA.w $0207               ; show the new marker first
   RTS
-else
-  CMP.l RingSlot1 : BNE .not_1
-    LDA.b #$00 : STA.l RingSlot1
-    BRA .off
-  .not_1
-  CMP.l RingSlot2 : BNE .not_2
-    LDA.b #$00 : STA.l RingSlot2
-    BRA .off
-  .not_2
-  CMP.l RingSlot3 : BNE .on
-    LDA.b #$00 : STA.l RingSlot3
-  .off
-  LDA.b #$0C : STA.w $012F
-  STZ.w $0207
-  RTS
-
-  .on
-  JSR RingMenu_StoreRingToSlotStack
-  SEP #$30
-  LDA.b #$20 : STA.w $012F
-  LDA.b #$20 : STA.w $0207               ; show the new marker first
-  RTS
-endif
 }
 
 ; ---------------------------------------------------------
@@ -844,7 +709,6 @@ Menu_Page3_Nav:
   db $0A, $08, $03, $03   ; 9 Bunny
   db $06, $09, $04, $04   ; 10 Stone
 
-if !ENABLE_MENU_PAGE_LOOP == 1
 ; ---------------------------------------------------------
 ; State $07 wrapper (page loop): a Quest <-> page 3 turn leaves a copy of
 ; that page on the left half, so draw Items there on the first frame
@@ -853,16 +717,13 @@ Menu_Page3_ScrollFrom:
 {
   SEP #$20
   LDA.b $E4 : BNE .scrolling
-if !ENABLE_MENU_MAP_TRAVEL == 1 && !ENABLE_GOLDSTAR_CELL == 1
     JSL MenuFlow_ItemsEnter              ; D-pad cross: matching row
-endif
     JSR Menu_RefreshInventoryScreen      ; returns SEP #$30
     LDA.b #$22 : STA.w $0116             ; left half
     LDA.b #$01 : STA.b $17
   .scrolling
   JMP Menu_ScrollFrom
 }
-endif
 
 ; ---------------------------------------------------------
 ; Menu open (Menu_InitGraphics): PortalRodOwned follows Maple's upgrade
@@ -882,20 +743,11 @@ Menu_PortalRod_SyncOwned:
 ; so $0202 = $13 there means the Portal Rod ($19). 8-bit A.
 Menu_PortalRod_CellToItem:
 {
-if !ENABLE_GOLDSTAR_CELL == 1
   RTS                          ; custom navigation already returns logical IDs
-else
-  LDA.w $0202 : CMP.b #$13 : BNE .done
-    LDA.b #$19 : STA.w $0202
-  .done
-  RTS
-endif
 }
 
   incsrc "menu_equipment.asm"
-if !ENABLE_MENU_MAP_TRAVEL == 1
   incsrc "menu_map_travel.asm"         ; uses Menu_Equipment_Bracket
-endif
 
 print "Bank2D Free Space: ", dec($2E0000-pc()), " bytes"
 assert pc() <= $2E0000, "Menu/menu_page3.asm overflows bank $2D"

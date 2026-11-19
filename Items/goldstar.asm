@@ -50,11 +50,7 @@ pullpc
 HookMaskCheck:
 {
   LDA.w GoldstarOrHookshot : AND.w #$00FF :  CMP.w #$0002 : BNE .not_mask
-if !ENABLE_GOLDSTAR_CELL == 1
     LDA $0304 : AND.w #$00FF : CMP.w #$000E : BNE .not_mask
-else
-    LDA $0202 : AND.w #$00FF : CMP.w #$0003 : BNE .not_mask
-endif
       ; morning star graphics oam tile pattern id
       LDA.w $0109 : AND #$FF00 : ORA.w #$004A
       RTL
@@ -321,11 +317,7 @@ LinkOAM_WeaponTiles = $0D839B
 LinkOAM_GoldstarWeaponTiles:
 {
   REP #$20
-if !ENABLE_GOLDSTAR_CELL == 1
   LDA.w $0304 : AND.w #$00FF : CMP.w #$000E : BEQ +
-else
-  LDA.w $0202 : AND.w #$00FF : CMP.w #$0003 : BEQ +
-endif
     LDA.w LinkOAM_WeaponTiles, Y
     RTL
   + ; $22D892
@@ -964,7 +956,6 @@ BeginGoldstarOrHookshot:
     JML GustJar_Start
   .not_gust_jar
   JSL SwitchHook_Init
-if !ENABLE_GOLDSTAR_CELL == 1
   ; Latch the selected weapon only at launch. Ancilla draw/collision and
   ; retract continue using this value even if the menu is opened in flight.
   %SelectedItem()
@@ -974,7 +965,6 @@ if !ENABLE_GOLDSTAR_CELL == 1
   LDA.b #$02
   .latch
   STA.w GoldstarOrHookshot
-endif
   LDA.w GoldstarOrHookshot : CMP #$02 : BEQ .begin_goldstar
     JMP .begin_hookshot
 
@@ -1011,11 +1001,7 @@ ApplyGoldstarDamageClass:
 {
   PHA
   ; If the hookshot is active
-if !ENABLE_GOLDSTAR_CELL == 1
   LDA.w $0304 : CMP.b #$0E : BNE .return
-else
-  LDA.w $0202 : CMP.b #$03 : BNE .return
-endif
     ; If the goldstar is active, swap in the damage class
     LDA.w GoldstarOrHookshot : CMP.b #$02 : BNE .return
       PLA
@@ -1032,22 +1018,6 @@ endif
 
 CheckForSwitchToGoldstar:
 {
-if !ENABLE_GOLDSTAR_CELL == 0
-  ; Check for L or R button to swap Hookshot/Goldstar
-  JSL CheckNewRButtonPress : BCS .do_swap
-  JSL CheckNewLButtonPress : BEQ .continue
-  .do_swap
-  ; Must have both hookshot upgrades ($7EF342 == $02)
-  LDA.l $7EF342 : CMP.b #$02 : BNE .continue
-    ; Toggle: if goldstar ($02), switch to hookshot ($01)
-    ;         if hookshot or unset ($01/$00), switch to goldstar ($02)
-    LDA.w GoldstarOrHookshot : CMP.b #$02 : BEQ .set_hookshot
-      LDA.b #$02 : STA.w GoldstarOrHookshot  ; Set to goldstar
-      JMP .continue
-    .set_hookshot:
-      LDA.b #$01 : STA.w GoldstarOrHookshot  ; Set to hookshot
-  .continue:
-endif
   LDA.b $3A : AND.b #$40 ; Restore vanilla code
   RTL
 }
@@ -1084,7 +1054,6 @@ ItemReceipt_KeepGoldstar:
   STA.l BombchuAmmo
   RTL
   .not_bombchu_receipt
-if !ENABLE_GOLDSTAR_CELL == 1
   PHA
   JSL GoldstarInventory_Migrate
   PLA
@@ -1094,17 +1063,12 @@ if !ENABLE_GOLDSTAR_CELL == 1
   .not_goldstar_receipt
   CPY.b #$0A : BNE .write
   LDA.b #$01 : BRA .write
-else
-  CPY.b #$0A : BNE .write
-    CMP.b [$00] : BCC .done
-endif
   .write
   STA.b [$00]
   .done
   RTL
 }
 
-if !ENABLE_GOLDSTAR_CELL == 1
 ; 8-bit A; preserve X/Y. Legacy 2 gave access to both weapons, so keep it.
 ; After migration, receipt $13 grants only Goldstar and $0A only Hookshot.
 GoldstarInventory_Migrate:
@@ -1118,7 +1082,6 @@ GoldstarInventory_Migrate:
   .done
   RTL
 }
-endif
 
 pushpc
 

@@ -207,7 +207,6 @@ Menu_DrawItemName:
     RTS
   .haveItem
 
-if !ENABLE_GOLDSTAR_CELL == 1
   LDA.w $0202 : CMP.b #$1B : BCC .not_new_item
   CMP.b #$1E : BCS .not_new_item
   REP #$30
@@ -237,9 +236,6 @@ if !ENABLE_GOLDSTAR_CELL == 1
   RTS
   .not_goldstar_cell
   LDA.w $0202
-else
-  LDA.w $0202 : CMP.b #$03 : BEQ .goldstar
-endif
                 CMP.b #$05 : BEQ .mushroom
                 CMP.b #$0D : BEQ .ocarina
                 CMP.b #$10 : BEQ .custom_rods

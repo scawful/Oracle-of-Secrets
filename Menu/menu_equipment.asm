@@ -12,7 +12,6 @@
 if not(defined("MENU_EQUIPMENT_SUPPLIES_VISIBLE"))
   !MENU_EQUIPMENT_SUPPLIES_VISIBLE = 0
 endif
-assert !ENABLE_MENU_MAP_TRAVEL == 1 || !MENU_EQUIPMENT_SUPPLIES_VISIBLE == 0, "Songs and Supplies share Equipment band 3"
 ; Two-slot swords: Sword ($7EF359) is the equipped combat/graphics level.
 ; Sword-slot logic, names and placeholders live in menu_sword_slots.asm
 ; (Items bank $2B; Menu banks $2D/$2E are full).
@@ -23,9 +22,7 @@ Menu_Equipment_Init:
   JSL SwordSlots_Sync
   JSL UpdateFluteSong_Long
   STZ.w $0207
-if !ENABLE_MENU_MAP_TRAVEL == 1
   JSL MenuFlow_EquipRestore : BCS .done ; D-pad cross or remembered slot
-endif
   LDA.l BoundMask : DEC : CMP.b #$06 : BCS .first
   STA.w $020B
   JSR Menu_Equipment_Owned : BNE .done
@@ -61,12 +58,7 @@ Menu_Equipment_Owned:
   TXA : INC #2 : BRA .done
 .song
   CMP.b #$12 : BCS .supplies
-if !ENABLE_MENU_MAP_TRAVEL == 1
   BRA .none                          ; songs live on the Quest page
-else
-  SEC : SBC.b #$0B                    ; song 1-6 < Ocarina progression
-  JSL Ocarina_SongLearned_Long : BCC .none ; song 6 = Epona bit
-endif
   INC : BRA .done                    ; colored note variants 2-7
 .supplies
   CMP.b #$18 : BCS .sword
@@ -255,9 +247,7 @@ Menu_Equipment_Draw:
 .icons
   CPY.b #$0C : BCC .draw_icon
   CPY.b #$18 : BCS .draw_icon         ; GEAR row
-if !ENABLE_MENU_MAP_TRAVEL == 1
   CPY.b #$12 : BCC .next_icon         ; songs live on the Quest page
-endif
 if !MENU_EQUIPMENT_SUPPLIES_VISIBLE == 0
   CPY.b #$12 : BCS .next_icon         ; supplies are hidden
 endif

@@ -76,7 +76,7 @@ endif
 AbyssLanding = $7E02B8 ; state (0 off, 1 armed, 2 mosaic, 3 pan); +1 = camera rows left
 assert AbyssLanding+2 <= $7E02C0
 
-; Menu cursor flow (!ENABLE_MENU_MAP_TRAVEL, Menu/menu_cursor_flow.asm; Items in
+; Menu cursor flow (Menu/menu_cursor_flow.asm; Items in
 ; Menu/menu_item_bindings.asm and Menu/menu_select_item.asm).
 ; Vanilla-unused $7E02BA-$7E02BE (usdasm UNUSED_7E02BA-BE, zero at boot).
 ; Not persistent: the cursors last across menu opens until power-off.
@@ -169,7 +169,6 @@ assert DungeonWeb_BurnedMaskEnd == $7ECC80
 ; Separate conditional owner after the horse tail. $7E1EFE is Horse_AnchorArea
 ; when park-anywhere is on (the menu cleared her park on every open), so this
 ; byte sits at $7E1EFF.
-if !ENABLE_MENU_MAP_TRAVEL == 1
 base $7E1EFF
 {
 MenuMapTravel_Pending:   skip 1 ; 0 none, 1 field map, 3 map open: reopen page
@@ -177,7 +176,6 @@ assert MenuMapTravel_Pending == $7E1EFF
 assert pc() <= $7E1F00, "Map page pending byte exceeds its bounded WRAM tail"
 }
 base off
-endif
 
 ; Explicit bounded aliases for the reserved palette history; no consumer yet.
 SpecialOverworldPaletteHoleCache = $7E1E8C

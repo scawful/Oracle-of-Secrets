@@ -17,13 +17,11 @@ Menu_ItemIndex:
   db $0D
 
 ; =========================================================
-if !ENABLE_GOLDSTAR_CELL == 1
   db $0E ; $1A Goldstar uses the existing hookshot/chain handler
   db $0D ; $1B Byrna shares the rod action, with separate ownership
   db $01 ; $1C Bombchu: native bomb action
   db $0E ; $1D Switch Hook: native chain action
   db $00 ; $1E Garo: Equipment binding only
-endif
 Menu_ItemIndex_End:
 
 ; Decides which graphics is drawn
@@ -56,13 +54,11 @@ Menu_AddressIndex:
   db $7EF352 ; Stone Mask
   db $7EF35F ; Bottle #4
   db PortalRodOwned&$FF ; $19 Portal Rod ($7EF3A6)
-if !ENABLE_GOLDSTAR_CELL == 1
   db GoldstarOwned&$FF ; $1A
   db ByrnaOwned&$FF    ; $1B
   db BombchuOwned&$FF  ; $1C
   db SwitchHookOwned&$FF ; $1D
   db GaroMaskOwned&$FF ; $1E
-endif
 
 ; =========================================================
 
@@ -104,118 +100,43 @@ Menu_ItemCursorPositions:
 
   ; Logical ID $19 Portal Rod: Row 4 Col 5 (bottom-right tool)
   dw (15*64)+(13*2)     ; $19 Portal Rod  (row 20, col 18)
-if !ENABLE_GOLDSTAR_CELL == 1
   dw (9*64)+(13*2)      ; $1A Goldstar    (row 14, col 18)
   dw (12*64)+(10*2)     ; $1B Byrna       (row 17, col 15)
   dw (6*64)+(13*2)      ; $1C Bombchu     (row 11, col 18)
   dw (12*64)+(13*2)     ; $1D Gust Jar    (row 17, col 18)
   dw (15*64)+(19*2)     ; $1E Garo Mask   (Equipment)
-endif
 Menu_ItemCursorPositions_End:
 
 ; =========================================================
 
 Menu_FindNextItem:
 {
-if !ENABLE_GOLDSTAR_CELL == 1
   LDA.b #$01
   JMP Menu_CustomGridMove
-else
-  SEP #$30                   ; Ensure 8-bit A, X, Y
-  LDY.b #$18                 ; Max 24 items to check (use Y as counter)
-  .loop
-    LDA.w $0202 : INC A
-    CMP.b #$19 : BCC .no_reset
-      LDA.b #$01
-    .no_reset
-    STA.w $0202
-    TAX : DEX                ; X = position - 1 (for table index)
-    LDA.l Menu_AddressLong, X : TAX  ; Load offset from table
-    LDA.l $7EF300, X         ; Load item value
-    JSR Menu_Page3_GridFilter ; masks count as empty cells
-    BNE .found               ; Item exists, done
-    DEY : BNE .loop          ; Keep searching
-  .found
-  RTS
-endif
 }
 
 ; =========================================================
 
 Menu_FindPrevItem:
 {
-if !ENABLE_GOLDSTAR_CELL == 1
   LDA.b #$FF
   JMP Menu_CustomGridMove
-else
-  SEP #$30                   ; Ensure 8-bit A, X, Y
-  LDY.b #$18                 ; Max 24 items to check (use Y as counter)
-  .loop
-    LDA.w $0202 : DEC A : BNE .no_reset
-      LDA.b #$18
-    .no_reset
-    STA.w $0202
-    TAX : DEX                ; X = position - 1 (for table index)
-    LDA.l Menu_AddressLong, X : TAX  ; Load offset from table
-    LDA.l $7EF300, X         ; Load item value
-    JSR Menu_Page3_GridFilter ; masks count as empty cells
-    BNE .found               ; Item exists, done
-    DEY : BNE .loop          ; Keep searching
-  .found
-  RTS
-endif
 }
 
 ; =========================================================
 
 Menu_FindNextDownItem:
 {
-if !ENABLE_GOLDSTAR_CELL == 1
   LDA.b #$06
   JMP Menu_CustomGridMove
-else
-  SEP #$30                        ; Ensure 8-bit mode
-  LDA.w $0202 : CLC : ADC.b #$06
-  CMP.b #$19 : BCC .no_reset
-    SBC.b #$18
-  .no_reset
-  STA.w $0202
-  TAX : DEX                       ; X = position - 1
-  LDA.l Menu_AddressLong, X : TAX ; Load offset from table
-  LDA.l $7EF300, X
-  JSR Menu_Page3_GridFilter       ; masks count as empty cells
-  BNE +
-    JMP Menu_FindNextItem         ; If empty, scan horizontally
-  +
-  RTS
-endif
 }
 
 ; =========================================================
 
 Menu_FindNextUpItem:
 {
-if !ENABLE_GOLDSTAR_CELL == 1
   LDA.b #$FA
   JMP Menu_CustomGridMove
-else
-  SEP #$30                        ; Ensure 8-bit mode
-  LDA.w $0202 : SEC : SBC.b #$06
-  BEQ .wrap                       ; If zero, wrap
-  BPL .no_reset                   ; If positive (1+), valid
-  .wrap
-    CLC : ADC.b #$18              ; Wrap to bottom row
-  .no_reset
-  STA.w $0202
-  TAX : DEX                       ; X = position - 1
-  LDA.l Menu_AddressLong, X : TAX ; Load offset from table
-  LDA.l $7EF300, X
-  JSR Menu_Page3_GridFilter       ; masks count as empty cells
-  BNE +
-    JMP Menu_FindNextItem         ; If empty, scan horizontally
-  +
-  RTS
-endif
 }
 
 
@@ -247,13 +168,11 @@ if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
     RTS
   .ordinary_item_screen
 endif
-if !ENABLE_GOLDSTAR_CELL == 1
   JSR Menu_SplitValidateSelection
   LDA.w $0202 : STA.l MenuFlow_ItemsCursor
   STZ.w $0207
   LDA.b #$04 : STA.w $0200
   RTS
-endif
   SEP   #$30
   LDY.w $0202 : BNE .all_good
     ; Loop through the SRM of each item to see if we have
@@ -329,13 +248,11 @@ Menu_AddressLong:
   db $52 ; Stone Mask
   db $5F ; Bottle 4
   db PortalRodOwned&$FF ; $19 Portal Rod ($7EF3A6)
-if !ENABLE_GOLDSTAR_CELL == 1
   db GoldstarOwned&$FF ; $1A
   db ByrnaOwned&$FF    ; $1B
   db BombchuOwned&$FF  ; $1C
   db SwitchHookOwned&$FF ; $1D
   db GaroMaskOwned&$FF ; $1E
-endif
 
 GotoNextItem_Local:
 {
@@ -372,9 +289,7 @@ SearchForEquippedItem_Override:
 {
   PHB : PHK : PLB
   SEP   #$30
-if !ENABLE_ONE_RING == 1
   JSR OneRing_MigrateSlots ; file load (Module05) and RefreshIcon
-endif
   ; $030F is volatile WRAM and survives a warm file switch (Save and Quit ->
   ; another file). Clear it so the loaded file's SavedOcarinaSong decides;
   ; otherwise the previous file's song would be written into this file.
@@ -382,11 +297,9 @@ endif
   STZ.w CurrentSong
   JSL UpdateFluteSong_Long ; restore/validate the saved song on file load
 
-if !ENABLE_GOLDSTAR_CELL == 1
   JSL GoldstarInventory_Migrate
   JSR Menu_SplitValidateSelection
   REP #$30 : PLB : RTL
-endif
   LDY.b #$18
   .next_check
   LDX.w Menu_AddressLong-1, Y
@@ -421,7 +334,6 @@ endif
   RTL
 }
 
-if !ENABLE_ONE_RING == 1
 ; One ring (decisions.org 2026-09-28): saves from before the rule can hold
 ; rings in RingSlot2/3. Keep one worn ring: an empty slot 1 takes slot 2's
 ; ring, else slot 3's; then clear slots 2-3. Nothing else writes slots 2-3
@@ -438,7 +350,6 @@ OneRing_MigrateSlots:
   LDA.b #$00 : STA.l RingSlot2 : STA.l RingSlot3
   RTS
 }
-endif
 
 pushpc
 
@@ -460,7 +371,6 @@ assert pc() <= $0DE3C7
 pullpc
 
 
-if !ENABLE_GOLDSTAR_CELL == 1
 ; Validate logical IDs, not physical cells. Used after old-save migration,
 ; file load and menu initialization, including Goldstar-only inventories.
 Menu_SplitValidateSelection:
@@ -495,9 +405,7 @@ Menu_SplitValidateSelection:
   .no
   CLC : RTS
 }
-endif
 
-if !ENABLE_GOLDSTAR_CELL == 1
 ; Option A 4x6 grid (logical item IDs unchanged for battery-save compatibility):
 ;   Row 1: Bow($01) Boomerang($02) Hookshot($03) Bombs($04) Bombchu($1C)  | Bottle1($06)
 ;   Row 2: Hammer($07) Powder($05) FireRod($09)  IceRod($0A) Goldstar($1A)| Bottle2($0C)
@@ -597,4 +505,3 @@ Menu_CustomGridMove:
   STA.w $0202
   RTS
 }
-endif

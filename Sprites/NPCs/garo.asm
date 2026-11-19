@@ -8,7 +8,7 @@
 ; Main replaces a contact JSL, so A/Y and $00-$03 are caller scratch; C must
 ; be clear for Garo to skip the following vanilla statue collision response.
 
-if !ENABLE_GOLDSTAR_CELL == 1 && !DISABLE_MASKS == 0
+if !DISABLE_MASKS == 0
 
 pushpc
 ; @hook Garo_Healing kind=jsl target=Garo_Healing

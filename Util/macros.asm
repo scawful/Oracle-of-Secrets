@@ -70,21 +70,17 @@ endif
 ; banish (Sprites/Bosses/kydrog.asm).
 !ENABLE_GLADE_AMBUSH                = 0
 ; M2 pause menu (decisions.org 2026-09-28: "Masks & Rings page after the M1
-; playtest: layout A, one ring", "Masks stay Y items"). Active RC defaults on.
+; playtest: layout A, one ring", "Masks stay Y items"). Permanent.
 ; One ring: one worn ring (RingSlot1). A new ring replaces the worn one; A on
 ; the worn ring takes it off. Ring effects read slot 1 only. File load moves
 ; an old save's slot 2/3 ring into an empty slot 1 and clears slots 2-3. The
 ; Quest page draws no rings.
-!ENABLE_ONE_RING                    = 1
 ; Page loop: L and R always move one page, wrapping Masks&Rings <- Items ->
 ; Quest; the Items "Y:RINGS" prompt and Y shortcut are removed.
-!ENABLE_MENU_PAGE_LOOP              = 1
 ; Map page (v4): a fourth page, Items -> Equipment -> Quest -> Map
 ; -> Items. Map opens the field map; the dungeon row sits under it. The six
-; songs move from Equipment to the Quest bottom row. Needs MENU_PAGE3, PAGE_LOOP,
-; EQUIPMENT_MENU.
+; songs move from Equipment to the Quest bottom row.
 ; WRAM: MenuMapTravel_Pending $7E1EFF (Core/symbols.asm).
-!ENABLE_MENU_MAP_TRAVEL             = 1
 ; Garrison/Sky fly list; source preview until T3 native and save proof.
 !ENABLE_SPECIAL_OVERWORLD_SOARING   = 0
 ; D8 Sky boss (sprite $C3, Sprites/Bosses/d8_boss.asm):
@@ -241,9 +237,6 @@ macro OOS_HookMx(addr, kind, target, name, expected_m, expected_x)
     ; @hook module=Util name=<name> kind=<kind> target=<target> expected_m=<expected_m> expected_x=<expected_x>
 endmacro
 
-if not(defined("ENABLE_GOLDSTAR_CELL"))
-  !ENABLE_GOLDSTAR_CELL = 1
-endif
 
 ; Build-derived native reader mode. Direct legacy assembly stays disabled.
 !SPECIAL_OVERWORLD_NATIVE = 0

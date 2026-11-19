@@ -142,16 +142,13 @@ MenuFlow_RecordTurn:
 .map_top
   LDA.b #$00 : BRA .store               ; Map/Dungeon icons: top row (ordinal 0)
 .items
-if !ENABLE_GOLDSTAR_CELL == 1
   LDX.b #$17
 .find
   LDA.l Menu_CustomGridItems,X : CMP.w $0202 : BEQ .found
   DEX : BPL .find
-endif
 .clear
   LDA.b #$00 : STA.l MenuFlow_CrossRow
   BRA .done
-if !ENABLE_GOLDSTAR_CELL == 1
 .found
   TXA : LDX.b #$00
 .div
@@ -159,7 +156,6 @@ if !ENABLE_GOLDSTAR_CELL == 1
   SBC.b #$06 : INX : BRA .div           ; C set from CMP
 .row
   TXA
-endif
 .store
   INC : STA.l MenuFlow_CrossRow
 .done
@@ -348,7 +344,6 @@ MenuFlow_MapDraw:
   RTL
 }
 
-if !ENABLE_GOLDSTAR_CELL == 1
 ; ---------------------------------------------------------
 ; Menu_Page3_ScrollFrom, first frame (Items redraw). A D-pad cross moves
 ; the Items cursor to the owned cell nearest the source row and entry
@@ -397,7 +392,6 @@ MenuFlow_ItemsEnter:
   PLP
   RTL
 }
-endif
 
 ; ---------------------------------------------------------
 ; Songs. The six notes sit on the Quest bottom row (Menu_DrawMusicNotes,

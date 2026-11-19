@@ -138,8 +138,8 @@ class QuestEssenceLayout(unittest.TestCase):
         y, x = re.search(r"!QuestHeart = \$1000\+!QuestRow\+menu_offset\((\d+),(\d+)\)", draw).groups()
         cells["heart piece"] = square(to_cell(self.offset(qy + int(y), qx + int(x))))
         # Four-page menu: the dungeon row is drawn on the Map page, not here.
-        self.assertNotIn("Menu_DrawBigKey", between(quest, "Menu_Quest_Draw:", "else"))
-        notes = between(block(draw, "Menu_DrawMusicNotes"), "if !ENABLE_MENU_MAP_TRAVEL == 1", "else")
+        self.assertNotIn("Menu_DrawBigKey", block(quest, "Menu_Quest_Draw"))
+        notes = block(draw, "Menu_DrawMusicNotes").split(".positions", 1)[1]
         songs = re.findall(r"menu_offset\((\d+),(\d+)\)", notes)
         self.assertEqual(len(songs), 6, "six song notes")
         for index, (y, x) in enumerate(songs):

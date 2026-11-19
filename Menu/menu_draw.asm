@@ -178,21 +178,12 @@ Menu_DrawPendantIcons:
 ; (Menu_DrawMusicNotes), and the dungeon row sits on the Map page under the
 ; Map cell (MenuMapTravel_Draw). Without it the dungeon row is on the Quest
 ; bottom row between Pearl and hearts.
-if !ENABLE_MENU_MAP_TRAVEL == 1
   !QuestRow = menu_offset(13,0)         ; absolute row 17, below the 2x2 passive gear block
   !DungeonRow = menu_offset(11,0)       ; Map & Spoils page, absolute row 15
-else
-  !QuestRow = menu_offset(17,0)
-  !DungeonRow = !QuestRow
-endif
 
 Menu_DrawHeartPieces:
 {
-if !ENABLE_MENU_MAP_TRAVEL == 1
   !QuestHeart = $1000+!QuestRow+menu_offset(4,10)  ; Quest lower-left row, beside the Pearl: absolute (17,10)
-else
-  !QuestHeart = $1000+!QuestRow+menu_offset(4,24)  ; Quest bottom row, right end
-endif
   ; Empty heart container
   LDX.w #$2484 : STX.w !QuestHeart ; top left
   LDX.w #$6484 : STX.w !QuestHeart+2 ; top right
@@ -248,13 +239,8 @@ Menu_DrawMusicNotes:
 ; long to place its full-size 4x4 C4 cursor. Four-page menu: Quest row 21,
 ; cols 6, 9, 13, 17, 21, 24 (4x4 cursor rows 20..23: clear of D5 and border).
 .positions
-if !ENABLE_MENU_MAP_TRAVEL == 1
   dw menu_offset(17,2),menu_offset(17,5),menu_offset(17,9)
   dw menu_offset(17,13),menu_offset(17,17),menu_offset(17,20)
-else
-  dw menu_offset(9,3),menu_offset(9,6),menu_offset(9,9)
-  dw menu_offset(9,13),menu_offset(9,16),menu_offset(9,19)
-endif
 }
 
 ; Song order on the row (slot -> song) and its inverse (song - 1 -> slot).
@@ -263,15 +249,9 @@ endif
 ; Healing, Storms, Soaring, Time and Secrets in the teacher-count order.
 ; QuestSongs_* (bank $2B) read both tables long.
 Menu_SongOrder:
-if !ENABLE_MENU_MAP_TRAVEL == 1
   db 6,1,2,3,4,5
 Menu_SongSlot:
   db 1,2,3,4,5,0
-else
-  db 1,2,3,4,5,6
-Menu_SongSlot:
-  db 0,1,2,3,4,5
-endif
 
 ; =========================================================
 
@@ -297,18 +277,11 @@ DrawYItems:
   JSR DrawMenuItem
 
   LDA.l $7EF342 : AND.w #$00FF : BEQ .no_hookshot
-if !ENABLE_GOLDSTAR_CELL == 1
     LDY.w #HookGFX
     CMP.w #$0002 : BNE .hook_icon_ready
       LDY.w #.switch_hook_gfx
     .hook_icon_ready
     LDA.w #$0001
-else
-    LDA.w GoldstarOrHookshot : BNE .spoof_hookshot
-      LDA #$0001 ; No goldstar, but hookshot
-    .spoof_hookshot
-    LDY.w #HookGFX
-endif
     STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
     LDX.w #menu_offset(7,8)
     JSR DrawMenuItem
@@ -327,7 +300,6 @@ endif
     JSR DrawMenuItem
   .no_bomb
 
-if !ENABLE_GOLDSTAR_CELL == 1
   LDA.l BombchuOwned : AND.w #$00FF : CMP.w #$0001 : BEQ .bombchuowned_value
     LDA.w #$0000
   .bombchuowned_value
@@ -336,7 +308,6 @@ if !ENABLE_GOLDSTAR_CELL == 1
   LDX.w #menu_offset(7,14)
   LDY.w #BombchuGFX
   JSR DrawMenuItem
-endif
 
   LDA.w #$7EF35C
   LDX.w #menu_offset(7,20)
@@ -365,12 +336,10 @@ endif
   LDY.w #Ice_rodGFX
   JSR DrawMenuItem
 
-if !ENABLE_GOLDSTAR_CELL == 1
   LDA.w #GoldstarOwned&$FFFF
   LDX.w #menu_offset(10,14)
   LDY.w #HookGFX+8
   JSR DrawMenuItem
-endif
 
   LDA.w #$7EF35D
   LDX.w #menu_offset(10,20)
@@ -396,7 +365,6 @@ endif
   LDY.w #SomariaGFX
   JSR DrawMenuItem
 
-if !ENABLE_GOLDSTAR_CELL == 1
   LDA.l ByrnaOwned : AND.w #$00FF : CMP.w #$0001 : BEQ .byrna_value
     LDA.w #$0000
   .byrna_value
@@ -414,7 +382,6 @@ if !ENABLE_GOLDSTAR_CELL == 1
   LDX.w #menu_offset(13,14)
   LDY.w #GustJarGFX
   JSR DrawMenuItem
-endif
 
   LDA.w #$7EF35E
   LDX.w #menu_offset(13,20)
@@ -542,11 +509,7 @@ Menu_DrawBigKey:
         LDA.w #$01
         STA.w ShortSpoof
         LDA.w #ShortSpoof
-if !ENABLE_MENU_MAP_TRAVEL == 1
         LDX.w #!DungeonRow+menu_offset(0,20) ; Map & Spoils page: Chest at (15,24)
-else
-        LDX.w #!DungeonRow+menu_offset(0,17) ; dungeon row, 4th
-endif
         LDY.w #TreasureChestGFX
         JSR DrawMenuItem
 
@@ -560,37 +523,13 @@ endif
       STA.w ShortSpoof
       LDA.w #ShortSpoof
       ; Draw the big key (or big key with chest if we've gotten the treasure) icon
-if !ENABLE_MENU_MAP_TRAVEL == 1
       LDX.w #!DungeonRow+menu_offset(0,17) ; Map & Spoils page: BigKey at (15,21)
-else
-      LDX.w #!DungeonRow+menu_offset(0,13) ; dungeon row, 3rd
-endif
       LDY.w #BigKeyGFX
       JSR DrawMenuItem
 
     .dontHaveBigKey
   .notInPalace
 
-if !ENABLE_MENU_MAP_TRAVEL == 0
-  LDA $040C : AND.w #$00FF : CMP.w #$00FF : BEQ .notInPalaceAgain
-    LSR A : TAX
-    ; Check if we have the map in this dungeon
-    LDA $7EF368
-
-    .locateMapFlag
-
-    ASL A : DEX : BPL .locateMapFlag : BCC .dontHaveMap
-      LDA.w #$01
-      STA.w ShortSpoof
-      LDA.w #ShortSpoof
-      ; Draw the big key (or big key with chest if we've gotten the treasure) icon
-      LDX.w #!DungeonRow+menu_offset(0,5) ; dungeon row, 1st
-      LDY.w #MapGFX
-      JSR DrawMenuItem
-
-    .dontHaveMap
-  .notInPalaceAgain
-endif
   RTS
 }
 
@@ -759,11 +698,7 @@ Menu_DrawBigChestKey:
       LDA.w #$01
       STA.w ShortSpoof
       LDA.w #ShortSpoof
-if !ENABLE_MENU_MAP_TRAVEL == 1
       LDX.w #!DungeonRow+menu_offset(0,14) ; Map & Spoils page: ChestKey at (15,18)
-else
-      LDX.w #!DungeonRow+menu_offset(0,9) ; dungeon row, 2nd
-endif
       LDY.w #BigChestKeyGFX
       JSR DrawMenuItem
     .dontHaveCompass
@@ -871,47 +806,9 @@ endif
 
 Menu_DrawMagicRings:
 {
-if !ENABLE_ONE_RING == 1
   ; One ring (scawful 2026-09-28): the Quest page shows no rings. The worn
   ; ring is the red bracket on page 3; r21-22 c17-26 keep the frame tiles.
   RTS
-else
-  ; No ring owned: leave the three equipped-ring slots as frame background.
-  JSR Menu_CheckRingsUnlocked : BCS .rings_unlocked
-    RTS
-  .rings_unlocked
-  LDA.l RingSlot1 : AND.w #$00FF : CMP.w #$0001 : BCC .no_attack
-    BRA .draw_storms
-  .no_attack
-  LDA.w #$0001
-  .draw_storms
-  STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(17,14)
-  LDY.w #RingGFX
-  JSR DrawMenuItem
-
-  LDA.l RingSlot2 : AND.w #$00FF : CMP.w #$0001 : BCC .no_defense
-    BRA .draw_defense
-  .no_defense
-  LDA.w #$0001
-  .draw_defense
-  STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(17,17)
-  LDY.w #RingGFX
-  JSR DrawMenuItem
-
-  LDA.l RingSlot3 : AND.w #$00FF : CMP.w #$0001 : BCC .no_luck
-    BRA .draw_luck
-  .no_luck
-  LDA.w #$0001
-  .draw_luck
-  STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(17,20)
-  LDY.w #RingGFX
-  JSR DrawMenuItem
-
-  RTS
-endif
 }
 
 if !MENU_DROP_RING_BOX == 0

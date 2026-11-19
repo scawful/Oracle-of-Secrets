@@ -222,7 +222,9 @@ class BombchuReceiptTests(unittest.TestCase):
         start = menu.index('Menu_OracleTreasureOwned:\n')
         menu = menu[start:menu.index('\n}\n',start)+3]
         cls.images = {}
-        for enabled in (0,1):
+        # The Goldstar cell is permanent. The historical receipt is assembled
+        # with the cell enabled so it stays comparable to the shipping grant.
+        for enabled in (1,):
             asm = (f'lorom\n!ENABLE_GOLDSTAR_CELL = {enabled}\n!BOMBCHU_AMMO_MAX = 20\n'
                    'SwitchHookOwned = $7EF3AE\nBombchuOwned = $7EF3AD\nBombchuAmmo = $7EF3B0\nGoldstarOwned = $7EF3A6\nGoldstarInventoryVersion = $7EF3A7\n'
                    'org $2B8000\n'+cls.old_grant+'OriginalEnd:\norg $2B8200\n'+cls.new_grant+'NewEnd:\n'

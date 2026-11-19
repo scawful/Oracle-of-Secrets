@@ -45,9 +45,7 @@ Menu_Bindings_Open:
   CMP.b #$13 : BCC .check_garo
   CMP.b #$18 : BCC .clear
 .check_garo
-if !ENABLE_GOLDSTAR_CELL == 1
   CMP.b #$1E : BEQ .clear
-endif
   JSR ItemBindings_ValidateY : BCC .clear
   STA.w $0202
   BRA .keep

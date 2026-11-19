@@ -1,6 +1,6 @@
 ; =========================================================
 ; Travel destinations: visited bits and the unlocked-only bird picker.
-; Gated by !ENABLE_MENU_MAP_TRAVEL (included from overworld.asm, bank $34).
+; Included from Items/all_items.asm (bank $34 is full).
 ;
 ; TravelSpotsVisited ($7EF412) holds one bit per bird destination:
 ; bit i = destination i of LoadTransport_screen_id ($02EAE5, 8 words).

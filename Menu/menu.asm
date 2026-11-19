@@ -65,9 +65,7 @@ incsrc "menu_palette.asm"
 if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
 !MENU_STATE_SPECIAL_SOARING     = $10
 endif
-if !ENABLE_MENU_MAP_TRAVEL == 1
 !MENU_STATE_SPOIL_POPUP         = $11
-endif
 
 ; =========================================================
 ; SUBROUTINE TABLE
@@ -99,11 +97,7 @@ Menu_Entry:
     dw Menu_Page3_ItemScreen   ; 04
     dw Menu_Page3_ScrollTo     ; 05
     dw Menu_Page3_StatsScreen  ; 06
-if !ENABLE_MENU_PAGE_LOOP == 1
     dw Menu_Page3_ScrollFrom   ; 07 (redraws Items first)
-else
-    dw Menu_ScrollFrom         ; 07
-endif
     dw Menu_ScrollUp           ; 08
 if !MENU_DROP_RING_BOX == 1
     dw Menu_HelpPopup          ; 09 (Select Context Help Popup across all 4 pages)
@@ -121,9 +115,7 @@ if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
 else
     dw Menu_HelpPopup          ; 10 (pad slot when soaring off)
 endif
-if !ENABLE_MENU_MAP_TRAVEL == 1
     dw Menu_SpoilPopup         ; 11 (Map & Spoils detail/use popup)
-endif
 }
 
 if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
@@ -135,9 +127,7 @@ endif
 
 Menu_InitGraphics:
 {
-if !ENABLE_GOLDSTAR_CELL == 1
   JSL GoldstarInventory_Migrate
-endif
   JSL MaskBinding_MigrateSelection
   LDA.w $0780 : STA.w $00
   JSR Menu_PortalRod_SyncOwned
@@ -175,11 +165,7 @@ incsrc "menu_draw.asm"
 
 Menu_UploadRight:
 {
-if !ENABLE_MENU_MAP_TRAVEL == 1
   JSL MenuFlow_UploadRight              ; Quest, or the Map page after the map
-else
-  JSR Menu_Quest_Draw
-endif
 
   SEP #$30
   LDA.b #$23 : STA.w $0116
@@ -308,7 +294,6 @@ Menu_ItemScreen:
 .active
   INC $0207
   JSL Menu_Bindings_Input              ; A/Y bind Y, X binds X; B/Start close above
-if !ENABLE_GOLDSTAR_CELL == 1
   LDA.w $0202 : BNE .have_item
   LDA.b $F4 : AND.b #$03 : BEQ .do_no_input
   AND.b #$01 : BNE .empty_turn
@@ -317,7 +302,6 @@ if !ENABLE_GOLDSTAR_CELL == 1
   JSR Menu_Page3_Turn
   JMP .exit
 .have_item
-endif
   LDA.w $0202 : BEQ .do_no_input
     ; Scroll through joypad 1 inputs
     ASL : TAY : LDA.b $F4
@@ -331,21 +315,17 @@ endif
   BRA .no_inputs
 
   .move_right
-if !ENABLE_GOLDSTAR_CELL == 1
   LDA.b #$01 : JSR Menu_CustomGridTryPageTurn : BCC .right_in_row
   JMP .exit
 .right_in_row
-endif
   JSR Menu_DeleteCursor
   JSR Menu_FindNextItem
   BRA .draw_cursor
 
   .move_left
-if !ENABLE_GOLDSTAR_CELL == 1
   LDA.b #$FF : JSR Menu_CustomGridTryPageTurn : BCC .left_in_row
   JMP .exit
 .left_in_row
-endif
   JSR Menu_DeleteCursor
   JSR Menu_FindPrevItem
   BRA .draw_cursor
@@ -511,9 +491,7 @@ Menu_Exit:
 if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
   JSL SpecialSoaring_Complete
 endif
-if !ENABLE_MENU_MAP_TRAVEL == 1
   JSL MenuMapTravel_ExitAction       ; Map request from the Map page
-endif
   RTS
 }
 
@@ -909,7 +887,6 @@ endif
 ; =========================================================
 ; 11 MAP & SPOILS DETAIL / USE POPUP
 
-if !ENABLE_MENU_MAP_TRAVEL == 1
 Menu_SpoilPopup:
 {
   SEP #$30
@@ -943,7 +920,6 @@ Menu_SpoilPopup:
 .stay
   RTS
 }
-endif
 
 ; =========================================================
 ; 09 MENU RING BOX
@@ -987,42 +963,9 @@ endif
 
 RingMenu_StoreRingToSlotStack:
 {
-if !ENABLE_ONE_RING == 1
   ; One ring (decisions.org 2026-09-28): the new ring replaces the worn one.
   STA.l RingSlot1
   RTS
-else
-  ; TODO: Check how many ring slots we currently have
-
-  ; Check if the ring is already in a slot
-  STA.b $00
-  LDA.b $00 : CMP.l RingSlot1 : BEQ .return
-  LDA.b $00 : CMP.l RingSlot2 : BEQ .return
-  LDA.b $00 : CMP.l RingSlot3 : BEQ .return
-  PHA
-  ; Check the SRAM for an available ring slot
-  ; If none is available we shift the stack
-  ; $7EF38C-7EF38E (Size 03)
-
-  LDA.l RingSlot1 : BEQ .slot1_available
-  LDA.l RingSlot2 : BEQ .slot2_available
-  LDA.l RingSlot3 : BEQ .slot3_available
-
-  ; Shift the stack
-  LDA.l RingSlot2 : STA.l RingSlot1
-  LDA.l RingSlot3 : STA.l RingSlot2
-  .slot3_available
-  PLA : STA.l RingSlot3
-  .return
-  RTS
-
-  .slot1_available
-  PLA : STA.l RingSlot1
-  RTS
-  .slot2_available
-  PLA : STA.l RingSlot2
-  RTS
-endif
 }
 
 if !MENU_DROP_RING_BOX == 0
@@ -1194,11 +1137,10 @@ incsrc "menu_map_names.asm"
     JSR Menu_DrawBackground : RTL
   Menu_Page3_IsMaskItem_Long:
     JSR Menu_Page3_IsMaskItem : RTL
-if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1 && !ENABLE_MENU_MAP_TRAVEL == 1
+if !ENABLE_SPECIAL_OVERWORLD_SOARING == 1
   Menu_SoaringRequested_Long:
     JSR Menu_SoaringRequested : RTL
 endif
-if !ENABLE_MENU_MAP_TRAVEL == 1
   ; Long wrappers for Menu/menu_cursor_flow.asm (bank $2B); DBR stays $2D.
   Menu_Quest_Init_Long:
     JSR Menu_Quest_Init : RTL
@@ -1220,7 +1162,6 @@ if !ENABLE_MENU_MAP_TRAVEL == 1
     JSR Menu_Quest_Number3 : RTL
   Menu_OracleTreasureOwned_Long:
     JSR Menu_OracleTreasureOwned : RTL
-endif
 %log_end("Menu/menu.asm", !LOG_MENU)
 incsrc "menu_hud.asm"
 %log_end("Menu/menu_hud.asm", !LOG_MENU)

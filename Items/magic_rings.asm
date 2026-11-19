@@ -15,7 +15,7 @@
 ; FOUNDRINGS   - rings found, not yet appraised (Eon Zora, Error NPC)
 ; MAGICRINGS   - rings appraised and owned (Vasu ORs FOUNDRINGS in)
 ; RingSlot1-3  - equipped ring IDs (0 = empty, 2-7 = ring menu index + 2).
-;                With !ENABLE_ONE_RING only RingSlot1 is used.
+;                Only RingSlot1 is worn.
 ;
 ; Save bytes: see RingSaveBlock in Core/sram.asm.
 FOUNDRINGS     = RingSaveBlock+0   ; $7EF3A1
@@ -39,15 +39,11 @@ DamageSubclassValue = $0DB8F1
 !RingID_Steadfast = $07
 
 ; In: A = ring ID, 8-bit A. Out: C set = the ring is in any equipped slot
-; (with !ENABLE_ONE_RING: the ring is RingSlot1, the only worn ring).
+; (the ring is RingSlot1, the only worn ring).
 ; Keeps A, X, Y. Called with JSR from the checks below (same bank).
 MagicRing_IsEquipped:
 {
   CMP.l RingSlot1 : BEQ .equipped
-if !ENABLE_ONE_RING == 0
-  CMP.l RingSlot2 : BEQ .equipped
-  CMP.l RingSlot3 : BEQ .equipped
-endif
     CLC
     RTS
   .equipped
