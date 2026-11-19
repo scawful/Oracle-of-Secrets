@@ -39,13 +39,72 @@ GustJarOwned      = SwitchHookOwned ; $7EF3AE (exact 1 = owned)
 !GustJarWaveXH    = $027C
 !GustJarWaveYL    = $027D ; blast wave world Y (16-bit)
 !GustJarWaveYH    = $027E
-!GustJarFlags     = $027F ; bit0=wind signal (sand/web/pinwheel), bit1=launched entity
-!GustJarOamAllocD = $0DBA8C ; vanilla OAM_AllocateFromRegionD
+!GustJarFlags     = $027F ; bit0=wind signal, bit1=launched entity, bit2=pose/facing lock, bit3=blast recoil peak
+!GustJarOamAllocB = $0DBA84 ; vanilla OAM_AllocateFromRegionB (behind Link)
+!GustJarOamAllocD = $0DBA8C ; vanilla OAM_AllocateFromRegionD (in front of Link)
 !GustJarOWTileAct = $1BBD7A ; vanilla HandleItemTileAction_Overworld
 
 assert !GustJarFlags < $0280, "Gust Jar exceeds vanilla free WRAM $0224-$027F"
 
+; Hook LinkOAM_ContinueWithAnimation ($0DA435, M/X=8, DBR=$0D) to drive Link's
+; two-hand Gust Jar holding/bracing pose during inhale and recoil follow-through
+; without disturbing vanilla movement, collision, sword, or mask form states.
+pushpc
+org $0DA435 ; @hook module=Items name=GustJar_LinkPoseOamHook kind=jsl target=GustJar_LinkPoseOamHook expected_m=8 expected_x=8
+  assert read4($0DA435) == $C003548C && read1($0DA439) == $05, "LinkOAM_ContinueWithAnimation moved"
+  JSL GustJar_LinkPoseOamHook
+  NOP
+assert pc() == $0DA43A
+pullpc
+
 GustJar_CodeStart:
+
+; ---------------------------------------------------------
+; LinkOAM_ContinueWithAnimation ($0DA435) pose hook (M/X=8, DBR=$0D).
+; Overrides Link's pose only while Gust Jar owns pose/facing-lock (bit 2):
+;   - Inhale (state=1): Up/Down -> $0E (symmetrical two-hand hold);
+;     Left/Right -> $16 (forward-braced two-hand push/hold), mapping walk step $2E
+;     smoothly into 0..5 with a subtle Tier 2/3 brace pulse when planted.
+;   - Blast follow-through (state=2, bit 2): $18 (braced grab recoil), frame 1
+;     lean-back kickback on D/L/R during bit 3 peak, frame 0 on Up & recovery.
+; Shield is hidden ($FF) natively on $0E, $16, and $18.
+; Exit: $0354 = Y; Z flag reflects CPY #$05 for $0DA43A BEQ .not_recoiling.
+; ---------------------------------------------------------
+GustJar_LinkPoseOamHook:
+{
+  LDA.w !GustJarState : BEQ .done
+  LDA.w !GustJarFlags : BIT.b #$04 : BEQ .done
+  LDA.b $5D : ORA.w $02E0 : BNE .done
+
+  LDA.w !GustJarState : CMP.b #$02 : BEQ .blast_pose
+
+  ; Phase 1 (Inhale): Up/Down -> $0E (symmetrical two-hand hold), Left/Right -> $16 (braced forward push/hold).
+  LDY.b #$16
+  LDA.b $2F : CMP.b #$04 : BCS + : LDY.b #$0E : +
+  LDA.b $2E : BEQ .planted
+  - : CMP.b #$06 : BCC .set_frame
+    SEC : SBC.b #$06 : BRA -
+  .planted
+  LDA.w !GustJarTier : CMP.b #$02 : BCC .zero
+  LDA.w !GustJarCharge : AND.b #$08 : BEQ .zero
+    LDA.b #$01 : BRA .set_frame
+
+  .blast_pose
+  ; Phase 2 (Blast Release Follow-Through): crisp braced recoil ($18).
+  LDY.b #$18
+  LDA.b $2F : BEQ .zero
+  LDA.w !GustJarFlags : AND.b #$08 : BEQ .zero
+    LDA.b #$01 : BRA .set_frame
+  .zero
+  LDA.b #$00
+  .set_frame
+  STA.b $02
+
+  .done
+  STY.w $0354
+  CPY.b #$05
+  RTL
+}
 
 ; ---------------------------------------------------------
 ; Public puzzle hook for sand/web/pinwheel consumers.
@@ -77,13 +136,10 @@ GustJar_Start:
   LDA.w !GustJarState : BEQ .init
     JSR GustJar_Abort
   .init
+  JSR GustJar_ClearVars
   LDA.b #$01 : STA.w !GustJarState
   STA.w !GustJarTier
-  STZ.w !GustJarCharge
-  STZ.w !GustJarCapKind
-  STZ.w !GustJarCapSlot
-  STZ.w !GustJarWaveTmr
-  STZ.w !GustJarFlags
+  LDA.b #$04 : STA.w !GustJarFlags ; bit2 = Link pose & facing-lock active
   LDA.b $2F : AND.b #$06 : STA.w !GustJarDir
 
   ; Latch physical trigger button (2=X, 1=Y) for hold/release tracking.
@@ -92,15 +148,102 @@ GustJar_Start:
   .use_x
   STA.w !GustJarButton
 
-  ; Hold stance: keep $3A bit 6 claimed, slow walk/aim speed ($5E=$08).
+  ; Hold stance: claim $3A bit 6, lock facing ($50 bit 0), slow strafe ($5E=$0E),
+  ; and suppress sword swing ($02E3) while both hands hold the jar.
   LDA.b #$40 : TSB.b $3A
-  LDA.b #$08 : STA.b $5E
+  JSR GustJar_LockFacing
+  LDA.b #$0E : STA.b $5E
   LDA.b #$09 : STA.w $012E ; SFX2.09 crisp wind-intake fwish
   PLB : RTL
 
   .refuse
   LDA.b #$40 : TRB.b $3A
   PLB : RTL
+}
+
+; Shared compact helpers (preserve bank headroom in $39F000-$39FFFF).
+GustJar_ClearVars:
+{
+  LDX.b #$0C
+  - : STZ.w !GustJarState, X : DEX : BPL -
+  RTS
+}
+GustJar_LockFacing:
+{
+  LDA.b #$01 : TSB.b $50
+  LDA.w !GustJarDir : STA.b $2F
+  LDA.b #$02 : STA.w $02E3
+  RTS
+}
+GustJar_Abs16:
+{
+  BPL + : EOR.w #$FFFF : INC A : +
+  RTS
+}
+GustJar_SignExt16:
+{
+  AND.w #$00FF : BIT.w #$0080 : BEQ + : ORA.w #$FF00 : +
+  RTS
+}
+GustJar_LoadSprPos16Y:
+{
+  LDA.w SprX, Y : STA.b $04 : LDA.w SprXH, Y : STA.b $05
+  LDA.w SprY, Y : STA.b $06 : LDA.w SprYH, Y : STA.b $07
+  RTS
+}
+GustJar_LoadAncPos16X:
+{
+  LDA.w $0C04, X : STA.b $00 : LDA.w $0C18, X : STA.b $01
+  LDA.w $0BFA, X : STA.b $02 : LDA.w $0C0E, X : STA.b $03
+  RTS
+}
+GustJar_StoreAncDestX:
+{
+  LDA.b $04 : STA.w $0C04, X : LDA.b $05 : STA.w $0C18, X
+  LDA.b $06 : STA.w $0BFA, X : LDA.b $07 : STA.w $0C0E, X
+  RTS
+}
+GustJar_ModuleOk:
+{
+  LDA.b $10 : CMP.b #$07 : BEQ .ok
+  CMP.b #$09 : BEQ .ok
+  CMP.b #$0B : BNE .no
+  .ok : SEC : RTS
+  .no : CLC : RTS
+}
+; C=1 if sprite Y is alive (state 9 or $B) and on Link's indoor floor.
+GustJar_SprAliveOnFloorY:
+{
+  LDA.w SprState, Y : CMP.b #$09 : BEQ .alive
+  CMP.b #$0B : BNE .no
+  .alive
+  LDA.b $1B : BEQ .ok
+    LDA.w SprFloor, Y : CMP.b $EE : BNE .no
+  .ok
+  SEC : RTS
+  .no
+  CLC : RTS
+}
+; C=1 if inhale is at Tier 3 or an entity is corked in the nozzle.
+GustJar_IsHighCharge:
+{
+  LDA.w !GustJarTier : CMP.b #$03 : BCS .yes
+  LDA.w !GustJarCapKind : BNE .yes
+  CLC : RTS
+  .yes
+  SEC : RTS
+}
+; Compute signed ($00=VX, $01=VY) along !GustJarDir from magnitude in A. Preserves X/Y.
+GustJar_DirVel:
+{
+  STZ.b $00 : STZ.b $01
+  PHA
+  LDA.w !GustJarDir
+  BEQ .u : CMP.b #$02 : BEQ .d : CMP.b #$04 : BEQ .l
+  PLA : STA.b $00 : RTS
+  .l : PLA : EOR.b #$FF : INC A : STA.b $00 : RTS
+  .d : PLA : STA.b $01 : RTS
+  .u : PLA : EOR.b #$FF : INC A : STA.b $01 : RTS
 }
 
 ; ---------------------------------------------------------
@@ -126,6 +269,26 @@ GustJar_FrameTick:
 }
 
 ; ---------------------------------------------------------
+; Release Link's Gust Jar pose, facing lock, slow-strafe speed & sword lock.
+; Guarded by !GustJarFlags bit 2 so later blast-wave expiry never cancels
+; a subsequent sword charge or Pegasus dash started after follow-through.
+; ---------------------------------------------------------
+GustJar_ReleasePose:
+{
+  LDA.w !GustJarFlags : BIT.b #$04 : BEQ .done
+    AND.b #$F3 : STA.w !GustJarFlags ; clear bit2 (pose/lock) & bit3 (recoil peak)
+    LDA.b #$40 : TRB.b $3A
+    LDA.b #$01 : TRB.b $50           ; unlock facing direction
+    STZ.w $02E3                      ; restore sword immediately
+    LDA.b $5E : CMP.b #$06 : BEQ .clr_5e
+    CMP.b #$0E : BNE .done
+    .clr_5e
+    STZ.b $5E
+  .done
+  RTS
+}
+
+; ---------------------------------------------------------
 ; Immediate safe abort & cleanup (transition, damage, swim, doorway, menu, mask).
 ; ---------------------------------------------------------
 GustJar_Abort:
@@ -144,20 +307,9 @@ GustJar_Abort:
     LDX.w !GustJarCapSlot : CPX.b #$05 : BCS .clear_state
     LDA.b #$00 : STA.w $029E, X
   .clear_state
-  LDA.b #$40 : TRB.b $3A
-  LDA.b $5E : CMP.b #$08 : BNE +
-    STZ.b $5E
-  +
-  STZ.w !GustJarState
-  STZ.w !GustJarButton
-  STZ.w !GustJarCharge
-  STZ.w !GustJarTier
-  STZ.w !GustJarDir
-  STZ.w !GustJarCapKind
-  STZ.w !GustJarCapSlot
-  STZ.w !GustJarWaveTmr
-  STZ.w !GustJarFlags
-  RTS
+  JSR GustJar_ReleasePose
+  LDA.b #$40 : TRB.b $3A ; defense-in-depth if aborted mid-init
+  JMP GustJar_ClearVars
 }
 
 ; ---------------------------------------------------------
@@ -166,11 +318,8 @@ GustJar_Abort:
 GustJar_ContextOk:
 {
   LDA.l GustJarOwned : CMP.b #$01 : BNE .no
-  LDA.b $10 : CMP.b #$07 : BEQ .mod_ok
-  CMP.b #$09 : BEQ .mod_ok
-  CMP.b #$0B : BNE .no
-  .mod_ok
-  LDA.b $11 : ORA.b $6C : ORA.b $5D : ORA.b $4D : ORA.b $46 : BNE .no
+  JSR GustJar_ModuleOk : BCC .no
+  LDA.b $11 : ORA.b $6C : ORA.b $5D : ORA.b $4D : ORA.b $46 : ORA.b $3C : BNE .no
   LDA.w $0FFC : ORA.w $02E4 : ORA.w $0308 : BNE .no
   ; Base Link (0), Minish (5), GBC (6), Moosh (7) only.
   LDA.w !CurrentMask : BEQ .ok
@@ -201,10 +350,10 @@ GustJar_TickInhale:
     JMP GustJar_FireBlast
   .held
 
-  ; Keep hold stance + track Link facing smoothly.
+  ; Keep hold stance, lock Link facing ($2F = !GustJarDir, $50 bit 0) for true
+  ; Minish Cap strafing, and suppress sword swing while both hands hold the jar.
   LDA.b #$40 : TSB.b $3A
-  LDA.b #$08 : STA.b $5E
-  LDA.b $2F : AND.b #$06 : STA.w !GustJarDir
+  JSR GustJar_LockFacing
 
   ; Advance charge (0..$60) and compute Tier 1 / 2 / 3.
   LDA.w !GustJarCharge : CMP.b #$60 : BCS .charge_capped
@@ -225,10 +374,15 @@ GustJar_TickInhale:
   .set_tier
   STA.w !GustJarTier
 
-  ; Expose wind signal flag at Tier >= 2 for sand/web/pinwheel puzzles.
-  CMP.b #$02 : BCC .no_sig
-    LDA.w !GustJarFlags : ORA.b #$01 : STA.w !GustJarFlags
-  .no_sig
+  ; Slow strafe footing: Tier 1 = $0E (1.0 px/f), Tier 2/3 = $06 (0.5 px/f heavy
+  ; braced crawl + slower footstep cycle). Expose wind signal at Tier >= 2.
+  CMP.b #$02 : BCC .t1_speed
+    LDA.b #$01 : TSB.w !GustJarFlags ; expose wind signal (bit2 already set on Start)
+    LDA.b #$06 : BRA .set_speed
+  .t1_speed
+    LDA.b #$0E
+  .set_speed
+  STA.b $5E
 
   ; Periodic suction SFX cadence (faster at higher tiers).
   LDA.w !GustJarCharge : AND.b #$07 : BNE .sfx_done
@@ -246,12 +400,15 @@ GustJar_TickInhale:
   JSR GustJar_InhaleSprites
   JSR GustJar_InhaleAncillae
 
-  ; At Tier >= 2 every 8 frames, clear Overworld bushes/tall grass ahead.
-  LDA.w !GustJarTier : CMP.b #$02 : BCC .draw
-  LDA.w !GustJarCharge : AND.b #$07 : BNE .draw
-    JSR GustJar_CutAheadOverworld
-  .draw
+  ; Draw held jar & inhale funnel while ($08,$0A) nozzle world coords are fresh.
+  JSR GustJar_DrawHeldJar
   JSR GustJar_DrawInhaleOAM
+
+  ; At Tier >= 2 every 8 frames, clear Overworld bushes/tall grass ahead.
+  LDA.w !GustJarTier : CMP.b #$02 : BCC .done
+  LDA.w !GustJarCharge : AND.b #$07 : BNE .done
+    JSR GustJar_CutAheadOverworld
+  .done
   RTS
 }
 
@@ -303,16 +460,13 @@ GustJar_HoldCaptured:
   CMP.b #$0B : BNE .drop
   .sp_ok
   ; Subtle 1 px suction vibration on frame bit 1.
-  LDA.b $1A : AND.b #$02 : LSR A : STA.b $00
+  LDA.b $1A : AND.b #$02 : LSR A : STA.b $00 : STZ.b $01
   REP #$20
-  LDA.b $08 : SEC : SBC.w #$0008
+  LDA.b $08 : SEC : SBC.w #$0008 : CLC : ADC.b $00 : STA.b $04
+  LDA.b $0A : SEC : SBC.w #$0008 : STA.b $06
   SEP #$20
-  CLC : ADC.b $00 : STA.w SprX, Y
-  XBA : ADC.b #$00 : STA.w SprXH, Y
-  REP #$20
-  LDA.b $0A : SEC : SBC.w #$0008
-  SEP #$20
-  STA.w SprY, Y : XBA : STA.w SprYH, Y
+  LDA.b $04 : STA.w SprX, Y : LDA.b $05 : STA.w SprXH, Y
+  LDA.b $06 : STA.w SprY, Y : LDA.b $07 : STA.w SprYH, Y
   LDA.b #$00
   STA.w SprXSpeed, Y : STA.w SprYSpeed, Y
   STA.w SprTimerF, Y
@@ -328,7 +482,7 @@ GustJar_HoldCaptured:
 
 ; ---------------------------------------------------------
 ; Cone membership test for point ($00=X16, $02=Y16) relative to Link center.
-; In:  $00/$02 = target center X/Y (16-bit), $06 = cone range (40/60/80 px).
+; In:  $00/$02 = target center X/Y (16-bit); cone range read from !GustJarTier.
 ; Out: C=1 inside cone ($04 = forward distance low byte); C=0 outside.
 ; Preserves X and Y.
 ; ---------------------------------------------------------
@@ -375,15 +529,14 @@ GustJar_InCone:
 
   .check_axes
   ; A = signed perp; take |perp| into $0C.
-  BPL .perp_pos
-    EOR.w #$FFFF : INC A
-  .perp_pos
+  JSR GustJar_Abs16
   STA.b $0C
 
-  ; Require 4 <= fwd <= range ($06).
+  ; Require 4 <= fwd <= tier cone range (40/60/80 px).
   LDA.b $04 : BMI .out
   CMP.w #$0004 : BCC .out
-  LDA.b $06 : AND.w #$00FF
+  PHX : LDX.w !GustJarTier : LDA.w GustJar_ConeRange-1, X : PLX
+  AND.w #$00FF
   CMP.b $04 : BCC .out
 
   ; Half-width = 16 + (fwd >> 2); require |perp| <= half-width.
@@ -403,8 +556,6 @@ GustJar_InCone:
 ; ---------------------------------------------------------
 GustJar_InhaleSprites:
 {
-  LDX.w !GustJarTier
-  LDA.w GustJar_ConeRange-1, X : STA.b $06
   LDY.b #$0F
   .loop
   ; Skip already-captured sprite.
@@ -412,19 +563,15 @@ GustJar_InhaleSprites:
     TYA : CMP.w !GustJarCapSlot : BNE .not_cap
       JMP .next
   .not_cap
-  LDA.w SprState, Y : CMP.b #$09 : BEQ .alive
-  CMP.b #$0B : BEQ .alive
+  JSR GustJar_SprAliveOnFloorY : BCS .floor_ok
     JMP .next
-  .alive
-  LDA.b $1B : BEQ .floor_ok
-    LDA.w SprFloor, Y : CMP.b $EE : BEQ .floor_ok
-      JMP .next
   .floor_ok
   ; Compute sprite center ($00=X+8, $02=Y+8).
-  LDA.w SprX, Y : CLC : ADC.b #$08 : STA.b $00
-  LDA.w SprXH, Y : ADC.b #$00 : STA.b $01
-  LDA.w SprY, Y : CLC : ADC.b #$08 : STA.b $02
-  LDA.w SprYH, Y : ADC.b #$00 : STA.b $03
+  JSR GustJar_LoadSprPos16Y
+  REP #$20
+  LDA.b $04 : CLC : ADC.w #$0008 : STA.b $00
+  LDA.b $06 : CLC : ADC.w #$0008 : STA.b $02
+  SEP #$20
   JSR GustJar_InCone : BCC .next
 
   ; Classify target sprite.
@@ -446,17 +593,13 @@ GustJar_InhaleSprites:
   ; 3. Movable Statue ($1C, excluding Elegy of Stone echo) & Ice Block ($D5).
   CMP.b #$1C : BNE .not_statue
     LDA.w SprFrame, Y : CMP.b #!Stone_Marker : BEQ .next
+  .pull_block
     LDA.b #$01 : STA.b $07
     JSR GustJar_PullSpriteReverseDir
     STZ.w $0642 ; statue recomputes pressure-plate contact
     BRA .next
   .not_statue
-  CMP.b #Sprite_IceBlock : BNE .not_ice
-    LDA.b #$01 : STA.b $07
-    JSR GustJar_PullSpriteReverseDir
-    STZ.w $0642
-    BRA .next
-  .not_ice
+  CMP.b #Sprite_IceBlock : BEQ .pull_block
 
   ; 4. Light/Normal Enemies (filter out bosses, NPCs, portals, harmless/immovable).
   JSR GustJar_IsPullableEnemy : BCC .next
@@ -519,53 +662,26 @@ GustJar_TryCaptureOrPullSprite:
 
 ; ---------------------------------------------------------
 ; Pull sprite Y toward Link ($22, $20+4) by step $07, respecting $0E70 walls.
+; Reuses GustJar_StepSpriteDir (0=U, 2=D, 4=L, 6=R) for identical wall checks.
 ; ---------------------------------------------------------
 GustJar_PullSpriteToLink:
 {
-  ; X axis
+  LDA.w SprX, Y : STA.b $0C : LDA.w SprXH, Y : STA.b $0D
   REP #$20
-  LDA.w SprX, Y : AND.w #$00FF : STA.b $0C
-  LDA.w SprXH, Y : XBA : AND.w #$FF00 : ORA.b $0C
-  CMP.b $22 : BEQ .do_y
-  BCC .move_right
-    ; Sprite is right of Link -> pull left (wall bit 1 = $02).
-    SEP #$20
-    LDA.w $0E70, Y : AND.b #$02 : BNE .do_y8
-    LDA.w SprX, Y : SEC : SBC.b $07 : STA.w SprX, Y
-    LDA.w SprXH, Y : SBC.b #$00 : STA.w SprXH, Y
-    BRA .do_y8
-  .move_right
-    ; Sprite is left of Link -> pull right (wall bit 0 = $01).
-    SEP #$20
-    LDA.w $0E70, Y : AND.b #$01 : BNE .do_y8
-    LDA.w SprX, Y : CLC : ADC.b $07 : STA.w SprX, Y
-    LDA.w SprXH, Y : ADC.b #$00 : STA.w SprXH, Y
-    BRA .do_y8
-  .do_y
+  LDA.b $0C : CMP.b $22
   SEP #$20
-  .do_y8
-  ; Y axis (target LinkY + 4)
+  BEQ .do_y
+  LDA.b #$06 : BCC + : LDA.b #$04 : + ; Left if SprX > LinkX else Right
+  JSR GustJar_StepSpriteDir
+  .do_y
+  LDA.w SprY, Y : STA.b $0C : LDA.w SprYH, Y : STA.b $0D
   REP #$20
   LDA.b $20 : CLC : ADC.w #$0004 : STA.b $0E
-  LDA.w SprY, Y : AND.w #$00FF : STA.b $0C
-  LDA.w SprYH, Y : XBA : AND.w #$FF00 : ORA.b $0C
-  CMP.b $0E : BEQ .done16
-  BCC .move_down
-    ; Sprite is below Link -> pull up (wall bit 3 = $08).
-    SEP #$20
-    LDA.w $0E70, Y : AND.b #$08 : BNE .done
-    LDA.w SprY, Y : SEC : SBC.b $07 : STA.w SprY, Y
-    LDA.w SprYH, Y : SBC.b #$00 : STA.w SprYH, Y
-    RTS
-  .move_down
-    ; Sprite is above Link -> pull down (wall bit 2 = $04).
-    SEP #$20
-    LDA.w $0E70, Y : AND.b #$04 : BNE .done
-    LDA.w SprY, Y : CLC : ADC.b $07 : STA.w SprY, Y
-    LDA.w SprYH, Y : ADC.b #$00 : STA.w SprYH, Y
-    RTS
-  .done16
+  LDA.b $0C : CMP.b $0E
   SEP #$20
+  BEQ .done
+  LDA.b #$02 : BCC + : LDA.b #$00 : + ; Up if SprY > LinkY+4 else Down
+  JMP GustJar_StepSpriteDir
   .done
   RTS
 }
@@ -582,33 +698,27 @@ GustJar_PushSpriteAlongDir:
   LDA.w !GustJarDir
 GustJar_StepSpriteDir:
 {
-  BEQ .up
-  CMP.b #$02 : BEQ .down
-  CMP.b #$04 : BEQ .left
-  ; Right (6): wall bit 0 ($01)
-  LDA.w $0E70, Y : AND.b #$01 : BNE .blocked
+  LSR A : TAX
+  LDA.w $0E70, Y : AND.w .wall_bit, X : BNE .blocked
+  TXA : BEQ .up : CMP.b #$01 : BEQ .down : CMP.b #$02 : BEQ .left
+  ; Right (3)
   LDA.w SprX, Y : CLC : ADC.b $07 : STA.w SprX, Y
   LDA.w SprXH, Y : ADC.b #$00 : STA.w SprXH, Y
   RTS
   .left
-  ; Left (4): wall bit 1 ($02)
-  LDA.w $0E70, Y : AND.b #$02 : BNE .blocked
   LDA.w SprX, Y : SEC : SBC.b $07 : STA.w SprX, Y
   LDA.w SprXH, Y : SBC.b #$00 : STA.w SprXH, Y
   RTS
   .down
-  ; Down (2): wall bit 2 ($04)
-  LDA.w $0E70, Y : AND.b #$04 : BNE .blocked
   LDA.w SprY, Y : CLC : ADC.b $07 : STA.w SprY, Y
   LDA.w SprYH, Y : ADC.b #$00 : STA.w SprYH, Y
   RTS
   .up
-  ; Up (0): wall bit 3 ($08)
-  LDA.w $0E70, Y : AND.b #$08 : BNE .blocked
   LDA.w SprY, Y : SEC : SBC.b $07 : STA.w SprY, Y
   LDA.w SprYH, Y : SBC.b #$00 : STA.w SprYH, Y
   .blocked
   RTS
+  .wall_bit : db $08, $04, $02, $01 ; U, D, L, R
 }
 
 ; ---------------------------------------------------------
@@ -617,30 +727,20 @@ GustJar_StepSpriteDir:
 ; ---------------------------------------------------------
 GustJar_InhaleAncillae:
 {
-  LDX.w !GustJarTier
-  LDA.w GustJar_ConeRange-1, X : STA.b $06
   LDX.b #$04
   .loop
   LDA.w !GustJarCapKind : CMP.b #$02 : BNE .not_cap
     TXA : CMP.w !GustJarCapSlot : BEQ .next
   .not_cap
   LDA.w $0C4A, X
-  CMP.b #$07 : BEQ .is_bomb
-  CMP.b #$2C : BNE .next
-  ; Somaria Block: skip if carried by Link.
-  LDA.w $0380, X : BNE .next
-  BRA .check_cone
-
-  .is_bomb
-  ; Active Bomb: skip if exploding or carried by Link.
-  LDA.w $0C5E, X : BNE .next
-  LDA.w $0380, X : BNE .next
+  CMP.b #$2C : BEQ .chk_carry
+  CMP.b #$07 : BNE .next
+  LDA.w $0C5E, X : BNE .next ; Active Bomb: skip if exploding
+  .chk_carry
+  LDA.w $0380, X : BNE .next ; Skip if carried by Link
 
   .check_cone
-  LDA.w $0C04, X : STA.b $00
-  LDA.w $0C18, X : STA.b $01
-  LDA.w $0BFA, X : STA.b $02
-  LDA.w $0C0E, X : STA.b $03
+  JSR GustJar_LoadAncPos16X
   JSR GustJar_InCone : BCC .next
 
   ; Capture live Bomb within 20 px of nozzle.
@@ -701,7 +801,10 @@ GustJar_FireBlast:
   LDA.b $0B : STA.w !GustJarWaveYH
 
   LDA.b #$02 : STA.w !GustJarState
-  LDA.b #$01 : STA.w !GustJarFlags ; wind-blast signal active
+  ; bit0=wind signal, bit2=7-frame follow-through pose/facing lock, bit3=4-frame recoil kickback peak
+  LDA.b #$0D : STA.w !GustJarFlags
+  LDA.b #$06 : STA.b $5E
+  JSR GustJar_LockFacing
   LDX.w !GustJarTier : CPX.b #$04 : BCC +
     LDX.b #$01
   +
@@ -719,46 +822,38 @@ GustJar_FireBlast:
   JSR GustJar_ApplyAncillaBlastVel
   LDA.b #$0A : STA.w $029E, X ; airborne arc
   STZ.w $0BF0, X
-  LDA.w !GustJarFlags : ORA.b #$02 : STA.w !GustJarFlags
-  RTS
+  BRA .mark_launched
 
   .launch_sprite
   LDY.w !GustJarCapSlot : CPY.b #$10 : BCS .done
-  LDA.w !GustJarDir : LSR A : TAX
-  LDA.w !GustJarTier : DEC A : ASL #2 : STA.b $00
-  TXA : CLC : ADC.b $00 : TAX
-  LDA.w GustJar_LaunchVX, X : STA.w SprXSpeed, Y : STA.w SprXRecoil, Y
-  LDA.w GustJar_LaunchVY, X : STA.w SprYSpeed, Y : STA.w SprYRecoil, Y
+  LDX.w !GustJarTier : LDA.w GustJar_LaunchSpd-1, X
+  JSR GustJar_DirVel
+  LDA.b $00 : STA.w SprXSpeed, Y : STA.w SprXRecoil, Y
+  LDA.b $01 : STA.w SprYSpeed, Y : STA.w SprYRecoil, Y
   LDA.b #$08 : STA.w SprHeight, Y
   LDA.b #$10 : STA.w SprTimerF, Y ; upward arc velocity
   LDA.b #$0C : STA.w SprRecoil, Y
-  LDA.w !GustJarFlags : ORA.b #$02 : STA.w !GustJarFlags
+  .mark_launched
+  LDA.b #$02 : TSB.w !GustJarFlags
   .done
-  RTS
+  ; Render frame-0 recoil jar & muzzle puff immediately (zero 1-frame release flicker).
+  JSR GustJar_DrawHeldJar
+  JMP GustJar_DrawWaveOAM
 }
 
 GustJar_WaveLife:
   db 14, 20, 26
-; Launch velocities indexed by (tier-1)*4 + dir/2 (U, D, L, R).
-GustJar_LaunchVX:
-  db $00, $00, $C8, $38 ; Tier 1 (+/- $38)
-  db $00, $00, $BC, $44 ; Tier 2 (+/- $44)
-  db $00, $00, $B0, $50 ; Tier 3 (+/- $50)
-GustJar_LaunchVY:
-  db $C8, $38, $00, $00 ; Tier 1
-  db $BC, $44, $00, $00 ; Tier 2
-  db $B0, $50, $00, $00 ; Tier 3
+GustJar_LaunchSpd:
+  db $38, $44, $50 ; Tier 1 / 2 / 3 launch speed magnitude
 
 ; Set ancilla X velocity along !GustJarDir scaled by !GustJarTier.
 GustJar_ApplyAncillaBlastVel:
 {
-  PHY
-  LDA.w !GustJarDir : LSR A : STA.w $0C72, X : TAY
-  LDA.w !GustJarTier : DEC A : ASL #2 : STA.b $00
-  TYA : CLC : ADC.b $00 : TAY
-  LDA.w GustJar_LaunchVY, Y : STA.w $0C22, X
-  LDA.w GustJar_LaunchVX, Y : STA.w $0C2C, X
-  PLY
+  LDA.w !GustJarDir : LSR A : STA.w $0C72, X
+  PHX : LDX.w !GustJarTier : LDA.w GustJar_LaunchSpd-1, X : PLX
+  JSR GustJar_DirVel
+  LDA.b $01 : STA.w $0C22, X
+  LDA.b $00 : STA.w $0C2C, X
   RTS
 }
 
@@ -769,20 +864,27 @@ GustJar_ApplyAncillaBlastVel:
 GustJar_TickWave:
 {
   ; Abort cleanly on room/screen transition or non-gameplay module.
-  LDA.b $10 : CMP.b #$07 : BEQ .mod_ok
-  CMP.b #$09 : BEQ .mod_ok
-  CMP.b #$0B : BNE .abort
-  .mod_ok
+  JSR GustJar_ModuleOk : BCC .abort
   LDA.b $11 : BNE .abort
 
-  ; Release Link's button-hold lock quickly after 5 follow-through frames.
-  LDX.w !GustJarTier : LDA.w GustJar_WaveLife-1, X
-  SEC : SBC.b #$05
-  CMP.w !GustJarWaveTmr : BCC .keep_lock
-    LDA.b #$40 : TRB.b $3A
-    LDA.b $5E : CMP.b #$08 : BNE .keep_lock
-      STZ.b $5E
-  .keep_lock
+  ; Manage crisp 7-frame blast follow-through pose (4-frame recoil kickback + 3-frame recovery).
+  ; Release Link's movement/pose/facing immediately if hurt/interrupted or once 7 frames elapse.
+  LDA.w !GustJarFlags : BIT.b #$04 : BEQ .pose_done
+    LDA.b $5D : ORA.b $4D : ORA.b $46 : ORA.b $6C : BNE .end_pose
+    LDA.w $0FFC : ORA.w $02E4 : ORA.w $0308 : BNE .end_pose
+    LDX.w !GustJarTier : LDA.w GustJar_WaveLife-1, X
+    SEC : SBC.w !GustJarWaveTmr ; elapsed frames (0..)
+    CMP.b #$07 : BCS .end_pose
+    CMP.b #$04 : BCC .keep_recoil
+      LDA.w !GustJarFlags : AND.b #$F7 : STA.w !GustJarFlags ; clear bit3 -> recovery pose
+    .keep_recoil
+    JSR GustJar_LockFacing
+    LDA.b #$06 : STA.b $5E
+    JSR GustJar_DrawHeldJar
+    BRA .pose_done
+  .end_pose
+    JSR GustJar_ReleasePose
+  .pose_done
 
   DEC.w !GustJarWaveTmr : BNE .alive
   .abort
@@ -791,26 +893,16 @@ GustJar_TickWave:
   .alive
   ; Advance Wave center forward by (Tier + 2) px/frame (3/4/5 px/frame).
   LDA.w !GustJarTier : CLC : ADC.b #$02 : STA.b $07
+  STZ.b $08
   LDA.w !GustJarDir
-  BEQ .adv_u
-  CMP.b #$02 : BEQ .adv_d
-  CMP.b #$04 : BEQ .adv_l
-  ; Right
-  LDA.w !GustJarWaveXL : CLC : ADC.b $07 : STA.w !GustJarWaveXL
-  LDA.w !GustJarWaveXH : ADC.b #$00 : STA.w !GustJarWaveXH
-  BRA .adv_done
-  .adv_l
-  LDA.w !GustJarWaveXL : SEC : SBC.b $07 : STA.w !GustJarWaveXL
-  LDA.w !GustJarWaveXH : SBC.b #$00 : STA.w !GustJarWaveXH
-  BRA .adv_done
-  .adv_d
-  LDA.w !GustJarWaveYL : CLC : ADC.b $07 : STA.w !GustJarWaveYL
-  LDA.w !GustJarWaveYH : ADC.b #$00 : STA.w !GustJarWaveYH
-  BRA .adv_done
-  .adv_u
-  LDA.w !GustJarWaveYL : SEC : SBC.b $07 : STA.w !GustJarWaveYL
-  LDA.w !GustJarWaveYH : SBC.b #$00 : STA.w !GustJarWaveYH
+  REP #$20 : AND.w #$00FF
+  BEQ .adv_u : CMP.w #$0002 : BEQ .adv_d : CMP.w #$0004 : BEQ .adv_l
+  LDA.w !GustJarWaveXL : CLC : ADC.b $07 : STA.w !GustJarWaveXL : BRA .adv_done
+  .adv_l : LDA.w !GustJarWaveXL : SEC : SBC.b $07 : STA.w !GustJarWaveXL : BRA .adv_done
+  .adv_d : LDA.w !GustJarWaveYL : CLC : ADC.b $07 : STA.w !GustJarWaveYL : BRA .adv_done
+  .adv_u : LDA.w !GustJarWaveYL : SEC : SBC.b $07 : STA.w !GustJarWaveYL
   .adv_done
+  SEP #$20
 
   ; Drive launched entity (impact damage + Portal Rod warp!).
   LDA.w !GustJarFlags : BIT.b #$02 : BEQ .no_launched
@@ -855,12 +947,10 @@ GustJar_TickLaunched:
   LDX.w !GustJarCapSlot : CPX.b #$05 : BCS .clear
   LDA.w $0C4A, X : CMP.b #$07 : BNE .clear
   LDA.w $0C5E, X : BNE .clear
-  LDA.w $0C04, X : STA.b $00 : LDA.w $0C18, X : STA.b $01
-  LDA.w $0BFA, X : STA.b $02 : LDA.w $0C0E, X : STA.b $03
+  JSR GustJar_LoadAncPos16X
   JSR GustJar_FindPortalExit : BCC .done
     ; Warp bomb cleanly to counterpart portal exit!
-    LDA.b $04 : STA.w $0C04, X : LDA.b $05 : STA.w $0C18, X
-    LDA.b $06 : STA.w $0BFA, X : LDA.b $07 : STA.w $0C0E, X
+    JSR GustJar_StoreAncDestX
     LDA.b #$30 : STA.w $012F ; SFX3.$30 portal warp zap
     BRA .clear
 
@@ -892,17 +982,14 @@ GustJar_TickLaunched:
   .hit_alive
   PHY : TXY
   JSR GustJar_IsPullableEnemy
-  PLY
-  BCC .hit_next
+  BCC .hit_skip_ply
+    JSR GustJar_LoadSprPos16Y
+    PLY
   ; Distance check <= 16 px against launched sprite ($00/$02).
   REP #$20
-  LDA.w SprX, X : AND.w #$00FF : STA.b $04
-  LDA.w SprXH, X : XBA : AND.w #$FF00 : ORA.b $04
-  SEC : SBC.b $00 : BPL + : EOR.w #$FFFF : INC A : +
+  LDA.b $04 : SEC : SBC.b $00 : JSR GustJar_Abs16
   CMP.w #$0010 : BCS .hit_next16
-  LDA.w SprY, X : AND.w #$00FF : STA.b $04
-  LDA.w SprYH, X : XBA : AND.w #$FF00 : ORA.b $04
-  SEC : SBC.b $02 : BPL + : EOR.w #$FFFF : INC A : +
+  LDA.b $06 : SEC : SBC.b $02 : JSR GustJar_Abs16
   CMP.w #$0010 : BCS .hit_next16
   SEP #$20
   ; Impact hit! Damage = Tier * 2 (2 / 4 / 6 HP).
@@ -918,6 +1005,9 @@ GustJar_TickLaunched:
   .impact_sfx
   LDA.b #$08 : STA.w $012E ; smash impact cue
   JMP .clear
+  .hit_skip_ply
+  PLY
+  BRA .hit_next
   .hit_next16
   SEP #$20
   .hit_next
@@ -940,28 +1030,17 @@ GustJar_WaveSprites:
     TYA : CMP.w !GustJarCapSlot : BNE .not_self
       JMP .next
   .not_self
-  LDA.w SprState, Y : CMP.b #$09 : BEQ .alive
-  CMP.b #$0B : BEQ .alive
+  JSR GustJar_SprAliveOnFloorY : BCS .floor_ok
     JMP .next
-  .alive
-  LDA.b $1B : BEQ .floor_ok
-    LDA.w SprFloor, Y : CMP.b $EE : BEQ .floor_ok
-      JMP .next
   .floor_ok
   ; Within 20 px of (WaveX, WaveY)?
+  JSR GustJar_LoadSprPos16Y
   REP #$20
-  LDA.w SprX, Y : AND.w #$00FF : STA.b $00
-  LDA.w SprXH, Y : XBA : AND.w #$FF00 : ORA.b $00
-  CLC : ADC.w #$0008 : SEC : SBC.w !GustJarWaveXL
-  BPL + : EOR.w #$FFFF : INC A : +
+  LDA.b $04 : CLC : ADC.w #$0008 : SEC : SBC.w !GustJarWaveXL : JSR GustJar_Abs16
+  CMP.w #$0014 : BCS .next16_near
+  LDA.b $06 : CLC : ADC.w #$0008 : SEC : SBC.w !GustJarWaveYL : JSR GustJar_Abs16
   CMP.w #$0014 : BCC +
-    JMP .next16
-  +
-  LDA.w SprY, Y : AND.w #$00FF : STA.b $00
-  LDA.w SprYH, Y : XBA : AND.w #$FF00 : ORA.b $00
-  CLC : ADC.w #$0008 : SEC : SBC.w !GustJarWaveYL
-  BPL + : EOR.w #$FFFF : INC A : +
-  CMP.w #$0014 : BCC +
+  .next16_near
     JMP .next16
   +
   SEP #$20
@@ -983,26 +1062,20 @@ GustJar_WaveSprites:
   ; 2. Movable Statue ($1C non-Stone) or Ice Block ($D5) -> push forward!
   CMP.b #$1C : BNE .not_statue
     LDA.w SprFrame, Y : CMP.b #!Stone_Marker : BEQ .next
+  .push_block
     LDA.b #$02 : STA.b $07
     JSR GustJar_PushSpriteAlongDir
     STZ.w $0642
     BRA .next
   .not_statue
-  CMP.b #Sprite_IceBlock : BNE .not_ice
-    LDA.b #$02 : STA.b $07
-    JSR GustJar_PushSpriteAlongDir
-    STZ.w $0642
-    BRA .next
-  .not_ice
+  CMP.b #Sprite_IceBlock : BEQ .push_block
 
   ; 3. Normal/Light Enemy -> knockback recoil + brief stun!
   JSR GustJar_IsPullableEnemy : BCC .next
-  LDA.w !GustJarDir : LSR A : TAX
-  LDA.w !GustJarTier : DEC A : ASL #2 : STA.b $00
-  TXA : CLC : ADC.b $00 : TAX
-  LDA.w .kb_x, X : STA.w SprXRecoil, Y
-  LDA.w .kb_y, X : STA.w SprYRecoil, Y
   LDX.w !GustJarTier
+  LDA.w .kb_spd-1, X : JSR GustJar_DirVel
+  LDA.b $00 : STA.w SprXRecoil, Y
+  LDA.b $01 : STA.w SprYRecoil, Y
   LDA.w .kb_tmr-1, X : STA.w SprRecoil, Y
   LDA.b #$0B : STA.w SprState, Y
   LDA.b #$18 : STA.w SprStunTimer, Y
@@ -1018,14 +1091,7 @@ GustJar_WaveSprites:
   RTS
 
   .kb_tmr : db $0C, $10, $14
-  .kb_x
-  db $00, $00, $D8, $28 ; Tier 1 (+/- $28)
-  db $00, $00, $C8, $38 ; Tier 2 (+/- $38)
-  db $00, $00, $B8, $48 ; Tier 3 (+/- $48)
-  .kb_y
-  db $D8, $28, $00, $00
-  db $C8, $38, $00, $00
-  db $B8, $48, $00, $00
+  .kb_spd : db $28, $38, $48
 }
 
 ; ---------------------------------------------------------
@@ -1037,27 +1103,20 @@ GustJar_WaveAncillae:
   LDX.b #$04
   .loop
   LDA.w $0C4A, X
-  CMP.b #$07 : BEQ .bomb
-  CMP.b #$2C : BNE .next_near
-  LDA.w $0380, X : BNE .next_near
-  BRA .chk_dist
-  .bomb
+  CMP.b #$2C : BEQ .chk_carry
+  CMP.b #$07 : BNE .next_near
   LDA.w $0C5E, X : BNE .next_near
+  .chk_carry
   LDA.w $0380, X : BEQ .chk_dist
   .next_near
   JMP .next
 
   .chk_dist
+  JSR GustJar_LoadAncPos16X
   REP #$20
-  LDA.w $0C04, X : AND.w #$00FF : STA.b $00
-  LDA.w $0C18, X : XBA : AND.w #$FF00 : ORA.b $00
-  STA.b $00
-  SEC : SBC.w !GustJarWaveXL : BPL + : EOR.w #$FFFF : INC A : +
+  LDA.b $00 : SEC : SBC.w !GustJarWaveXL : JSR GustJar_Abs16
   CMP.w #$0014 : BCS .next16
-  LDA.w $0BFA, X : AND.w #$00FF : STA.b $02
-  LDA.w $0C0E, X : XBA : AND.w #$FF00 : ORA.b $02
-  STA.b $02
-  SEC : SBC.w !GustJarWaveYL : BPL + : EOR.w #$FFFF : INC A : +
+  LDA.b $02 : SEC : SBC.w !GustJarWaveYL : JSR GustJar_Abs16
   CMP.w #$0014 : BCS .next16
   SEP #$20
 
@@ -1068,13 +1127,11 @@ GustJar_WaveAncillae:
   .push_somaria
     LDA.w !GustJarTier : INC A : STA.b $07 ; 2/3/4 px/frame
     LDA.w !GustJarDir : JSR GustJar_StepAncillaDir
-    LDA.w $0C04, X : STA.b $00 : LDA.w $0C18, X : STA.b $01
-    LDA.w $0BFA, X : STA.b $02 : LDA.w $0C0E, X : STA.b $03
+    JSR GustJar_LoadAncPos16X
 
   .chk_portal
   JSR GustJar_FindPortalExit : BCC .next
-    LDA.b $04 : STA.w $0C04, X : LDA.b $05 : STA.w $0C18, X
-    LDA.b $06 : STA.w $0BFA, X : LDA.b $07 : STA.w $0C0E, X
+    JSR GustJar_StoreAncDestX
     LDA.b #$30 : STA.w $012F ; SFX3.$30 portal warp zap
     BRA .next
 
@@ -1102,19 +1159,12 @@ GustJar_FindPortalExit:
   LDA.b $1B : BEQ .fl_ok
     LDA.w SprFloor, Y : CMP.b $EE : BNE .next_near
   .fl_ok
+  JSR GustJar_LoadSprPos16Y
   REP #$20
-  LDA.w SprX, Y : AND.w #$00FF : STA.b $04
-  LDA.w SprXH, Y : XBA : AND.w #$FF00 : ORA.b $04
-  SEC : SBC.b $00 : BPL + : EOR.w #$FFFF : INC A : +
-  CMP.w #$0010 : BCC +
-    JMP .next16
-  +
-  LDA.w SprY, Y : AND.w #$00FF : STA.b $06
-  LDA.w SprYH, Y : XBA : AND.w #$FF00 : ORA.b $06
-  SEC : SBC.b $02 : BPL + : EOR.w #$FFFF : INC A : +
-  CMP.w #$0010 : BCC +
-    JMP .next16
-  +
+  LDA.b $04 : SEC : SBC.b $00 : JSR GustJar_Abs16
+  CMP.w #$0010 : BCS .next16
+  LDA.b $06 : SEC : SBC.b $02 : JSR GustJar_Abs16
+  CMP.w #$0010 : BCS .next16
   SEP #$20
 
   ; Match Items/portal_rod.asm counterpart validation!
@@ -1130,19 +1180,16 @@ GustJar_FindPortalExit:
   CMP.w SprSubtype, Y : BNE .none
   LDA.w SprType, Y : CMP.b #$03 : BNE .none
   LDA.w SprState, Y : CMP.b #$09 : BCC .none
+  JSR GustJar_LoadSprPos16Y
   LDA.w SprSubtype, Y : CMP.b #$02 : BNE .exit_orange
     ; Exit +16 px right of Blue portal.
-    LDA.w SprX, Y : CLC : ADC.b #$10 : STA.b $04
-    LDA.w SprXH, Y : ADC.b #$00 : STA.b $05
-    LDA.w SprY, Y : STA.b $06
-    LDA.w SprYH, Y : STA.b $07
+    LDA.b $04 : CLC : ADC.b #$10 : STA.b $04
+    LDA.b $05 : ADC.b #$00 : STA.b $05
     PLY : SEC : RTS
   .exit_orange
     ; Exit +16 px below Orange portal.
-    LDA.w SprX, Y : STA.b $04
-    LDA.w SprXH, Y : STA.b $05
-    LDA.w SprY, Y : CLC : ADC.b #$10 : STA.b $06
-    LDA.w SprYH, Y : ADC.b #$00 : STA.b $07
+    LDA.b $06 : CLC : ADC.b #$10 : STA.b $06
+    LDA.b $07 : ADC.b #$00 : STA.b $07
     PLY : SEC : RTS
 
   .next16
@@ -1208,115 +1255,379 @@ GustJar_TryCutOverworldFoliage:
 }
 
 ; ---------------------------------------------------------
-; Swirling Wind-Suction OAM FX (3/4/5 puffs rushing inward into nozzle).
-; Uses Region D ($0DBA8C) and always-resident OBJ page-0 puff tiles ($CF/$DF).
+; Shared OAM helpers: BG priority table (mirrors LinkOAM_ObjectPriority $0DA126)
+; and 16-bit directional offset + screen-bounds clipping helper.
+; ---------------------------------------------------------
+GustJar_GetPrio:
+{
+  LDA.b $EE : AND.b #$03 : TAX
+  LDA.w GustJar_OamPrioTbl, X
+  RTS
+}
+GustJar_OamPrioTbl:
+  db $20, $10, $30, $20
+
+; Emit 1 clipped 8x8 OAM sprite at ($00=X, $01=Y) with tile in A, flip-attr in $04?
+; Actually takes: $00=X, $01=Y, A=tile, $07=base_attr, X=slot idx, Y=X*4.
+; Computes animated H/V flip from (X*2 ^ $1A) & $06 and advances Y += 4, writes $92[X]=0.
+GustJar_EmitWindOam8:
+{
+  PHA
+  LDA.b $00 : STA.b ($90), Y : INY
+  LDA.b $01 : STA.b ($90), Y : INY
+  PLA : STA.b ($90), Y : INY
+  TXA : ASL A : EOR.b $1A : AND.b #$06 : ASL #5 : ORA.b $07
+  STA.b ($90), Y
+  PHX : TXY : LDA.b #$00 : STA.b ($92), Y
+  TYA : INC A : ASL #2 : TAY : PLX
+  RTS
+}
+
+; Apply signed 8-bit forward ($05) and perpendicular ($06) offsets relative to
+; 16-bit screen anchor ($0C=X16, $0E=Y16) along !GustJarDir.
+; Out (M=8): $00 = OAM X, $01 = OAM Y ($F0 if clipped offscreen).
+; Preserves X, Y, $02..$0F.
+GustJar_ApplyDirOffset16:
+{
+  REP #$20
+  LDA.b $05 : JSR GustJar_SignExt16 : PHA ; stack = signed fwd16
+  LDA.b $06 : JSR GustJar_SignExt16 : STA.b $00 ; $00 = signed perp16
+  SEP #$20
+
+  LDA.w !GustJarDir
+  BEQ .up
+  CMP.b #$02 : BEQ .down
+  CMP.b #$04 : BEQ .left
+
+  ; Right (6): sx = $0C + fwd, sy = $0E + perp
+  REP #$20
+  PLA : CLC : ADC.b $0C : PHA
+  BRA .horiz_y
+
+  .left
+  ; Left (4): sx = $0C - fwd, sy = $0E + perp
+  REP #$20
+  LDA.b $0C : SEC : SBC.b 1, S : STA.b 1, S
+  .horiz_y
+  LDA.b $0E : CLC : ADC.b $00
+  CMP.w #$00E0 : BCS .clip_pop
+  XBA : STA.b $00 ; $01 = sy8
+  PLA
+  CMP.w #$00F8 : BCS .clip
+  SEP #$20
+  STA.b $00
+  RTS
+
+  .down
+  REP #$20
+  LDA.b $0E : CLC : ADC.b 1, S : STA.b 1, S
+  BRA .vert_x
+
+  .up
+  REP #$20
+  LDA.b $0E : SEC : SBC.b 1, S : STA.b 1, S
+  .vert_x
+  LDA.b $0C : CLC : ADC.b $00
+  CMP.w #$00F8 : BCS .clip_pop
+  STA.b $00 ; $00 = sx8
+  PLA
+  CMP.w #$00E0 : BCS .clip
+  SEP #$20
+  STA.b $01
+  RTS
+
+  .clip_pop
+  PLA
+  .clip
+  SEP #$20
+  LDA.b #$F0 : STA.b $01
+  RTS
+}
+
+; ---------------------------------------------------------
+; Visible Held Gust Jar OAM Sprite (All 4 Directions U/D/L/R).
+; Resident tile $72 (Small Magic Jar — byte-identical across LW $01, UW $0A,
+; DW/Special $0B) with OAM Pal 4 (emerald green/gold), pulsing to Pal 2
+; (glowing blue/gold) on Tier 3, corked capture, or blast recoil peak.
+;   - Up: Region B ($0DBA84) behind Link; D/L/R: Region D ($0DBA8C) in front
+;     with active nozzle mouth spark / blast muzzle flash.
+;   - Tier 2/3 suction tremble & 2px recoil kickback on blast peak.
+; Preserves $08..$0B (nozzle world coords needed by DrawInhaleOAM).
+; ---------------------------------------------------------
+GustJar_DrawHeldJar:
+{
+  ; Verify Link is onscreen in 16-bit, then compute 8-bit jar coords cleanly.
+  REP #$20
+  LDA.b $22 : SEC : SBC.b $E2 : CMP.w #$00F8 : BCS .off16
+  STA.b $00
+  LDA.b $20 : SEC : SBC.b $E8 : CMP.w #$00E0 : BCC .on16
+  .off16
+  SEP #$20
+  RTS
+  .on16
+  SEP #$20
+  STA.b $01 ; $00=LinkScreenX (0..247), $01=LinkScreenY (0..223)
+
+  LDA.w !GustJarDir : LSR A : TAX ; X = 0(U), 1(D), 2(L), 3(R)
+  LDA.b $00 : CLC : ADC.w .jar_dx, X : STA.b $00
+  LDA.b $01 : CLC : ADC.w .jar_dy, X : STA.b $01
+
+  ; Blast peak recoil kickback (2px back) vs Inhale suction tremble (+/-1px).
+  LDA.w !GustJarState : CMP.b #$02 : BNE .inhale_jit
+    LDA.w !GustJarFlags : BIT.b #$08 : BEQ .chk_clip
+    LDA.b $00 : CLC : ADC.w .kick_dx, X : STA.b $00
+    LDA.b $01 : CLC : ADC.w .kick_dy, X : STA.b $01
+    BRA .chk_clip
+
+  .inhale_jit
+  JSR GustJar_IsHighCharge : BCS .fast_jit
+  LDA.w !GustJarTier : CMP.b #$02 : BCC .chk_clip
+    LDA.b $1A : AND.b #$04 : BEQ .chk_clip
+    LDA.b #$01 : BRA .apply_jit
+  .fast_jit
+    LDA.b $1A : AND.b #$02 : BEQ + : LDA.b #$01 : BRA .apply_jit : +
+    LDA.b #$FF
+  .apply_jit
+  CPX.b #$02 : BCS +
+    CLC : ADC.b $00 : STA.b $00 : BRA .chk_clip
+  +
+  CLC : ADC.b $01 : STA.b $01
+
+  .chk_clip
+  ; Reject screen-edge wraps (LinkX<5 -5 -> >=$FB; LinkX>235 +13 -> >=$F8).
+  LDA.b $00 : CMP.b #$F8 : BCS .ret
+  LDA.b $01 : CMP.b #$E0 : BCS .ret
+
+  JSR GustJar_GetPrio : STA.b $04
+
+  ; Jar palette: Pal 4 ($08 green/gold), pulsing to Pal 2 ($04 blue/gold)
+  ; on blast peak, Tier 3, or corked entity. H-flip when facing Left.
+  LDA.w !GustJarState : CMP.b #$02 : BNE .chk_t3
+    LDA.w !GustJarFlags : BIT.b #$08 : BNE .blue : BRA .green
+  .chk_t3
+  JSR GustJar_IsHighCharge : BCC .green
+  LDA.b $1A : AND.b #$04 : BEQ .green
+  .blue
+  LDA.b #$04 : BRA .got_pal
+  .green
+  LDA.b #$08
+  .got_pal
+  ORA.b $04
+  LDX.w !GustJarDir : CPX.b #$04 : BNE + : ORA.b #$40 : +
+  STA.b $05
+
+  ; Facing Up: Region B (4B) behind Link; D/L/R: Region D (8B) in front of Link.
+  ; NOTE: Vanilla OAM_AllocateFromRegion* ($0DBB58) returns Y=$90 (non-zero!),
+  ; so LDY #$00 MUST occur AFTER the JSL allocator call.
+  LDA.w !GustJarDir : BNE .in_front
+    LDA.b #$04 : JSL !GustJarOamAllocB
+    LDY.b #$00
+    BRA .emit_jar
+
+  .ret
+  RTS
+
+  .in_front
+  LDA.b #$08 : JSL !GustJarOamAllocD
+  LDY.b #$00
+  ; Slot 0: Nozzle mouth spark (inhale) / muzzle burst (blast peak) / hidden (recovery).
+  LDA.b #$F0 : STA.b $07 ; default clipped Y
+  LDA.b #$CF : STA.b $06 ; default tile
+  LDA.w !GustJarState : CMP.b #$02 : BNE .m_inhale
+    LDA.w !GustJarFlags : BIT.b #$08 : BEQ .m_write
+    LDA.b #$A9 : BRA .m_pos
+  .m_inhale
+  LDX.b #$00
+  JSR GustJar_IsHighCharge : BCC + : LDX.b #$02 : +
+  LDA.b $1A : AND.b #$04 : BEQ + : INX : +
+  LDA.w .mouth_tiles, X
+  .m_pos
+  STA.b $06
+  LDA.w !GustJarDir : LSR A : TAX
+  LDA.b $00 : CLC : ADC.w .mouth_dx, X : CMP.b #$F8 : BCS .m_write
+  STA.b $02
+  LDA.b $01 : CLC : ADC.w .mouth_dy, X : CMP.b #$E0 : BCS .m_write
+  STA.b $07
+  .m_write
+  LDA.b $02 : STA.b ($90), Y : INY
+  LDA.b $07 : STA.b ($90), Y : INY
+  LDA.b $06 : STA.b ($90), Y : INY
+  LDA.b $1A : AND.b #$06 : ASL #5 : ORA.b #$04 : ORA.b $04
+  STA.b ($90), Y : INY
+
+  .emit_jar
+  LDA.b $00 : STA.b ($90), Y : INY
+  LDA.b $01 : STA.b ($90), Y : INY
+  LDA.b #$72 : STA.b ($90), Y : INY ; Always-resident Magic Jar tile
+  LDA.b $05 : STA.b ($90), Y
+  TYA : LSR #2 : TAY : LDA.b #$00
+  - : STA.b ($92), Y : DEY : BPL -
+  RTS
+
+  ; Indexed by !GustJarDir >> 1 (0=U, 1=D, 2=L, 3=R).
+  .jar_dx      : db  4,  4, -5, 13
+  .jar_dy      : db -4, 14, 10, 10
+  .kick_dx     : db  0,  0,  2, -2
+  .kick_dy     : db  2, -2,  0,  0
+  .mouth_dx    : db  0,  0, -5,  5
+  .mouth_dy    : db  0,  6,  0,  0
+  .mouth_tiles : db $CF, $CE, $8C, $A9
+}
+
+; ---------------------------------------------------------
+; Upgraded Directional Wind-Suction Funnel OAM FX (4/5/6 wind streaks & swirls).
+; Particles race INWARD from outer reach (40/60/80 px by tier), tapering cleanly
+; into the jar mouth with rotating H/V flip frames and 16-bit edge clipping.
 ; ---------------------------------------------------------
 GustJar_DrawInhaleOAM:
 {
-  ; Count = Tier + 2 (3, 4, or 5 puffs); allocate Count * 4 bytes.
+  LDA.w !GustJarTier : CLC : ADC.b #$03 : STA.b $04
+  ASL #2
+  JSL !GustJarOamAllocD
+
+  JSR GustJar_GetPrio : ORA.b #$04 : STA.b $07 ; BG prio | Pal 2
+
+  ; Precompute frame * (Tier + 1) once into $02 (2x / 3x / 4x suction speed).
+  LDX.w !GustJarTier : LDA.b $1A
+  - : CLC : ADC.b $1A : DEX : BNE -
+  STA.b $02
+
+  ; 16-bit nozzle screen anchor centered for 8x8 into ($0C, $0E).
+  REP #$20
+  LDA.b $08 : SEC : SBC.b $E2 : SEC : SBC.w #$0004 : STA.b $0C
+  LDA.b $0A : SEC : SBC.b $E8 : SEC : SBC.w #$0004 : STA.b $0E
+  SEP #$20
+
+  LDY.b #$00
+  LDX.b #$00
+  .part
+  LDA.b $02 : CLC : ADC.w .phase_off, X : AND.b #$1F
+  EOR.b #$1F : STA.b $03 ; inv: 31 (outer cone) -> 0 (jar mouth)
+
+  ; Forward distance ($05) scaled by Tier (4..42 / 4..66 / 4..81 px).
+  LDA.w !GustJarTier : CMP.b #$02 : BCC .d1 : BEQ .d2
+    LDA.b $03 : LSR A : STA.b $05
+    LDA.b $03 : ASL A : CLC : ADC.b $05 : BRA .d_add
+  .d2
+    LDA.b $03 : ASL A : BRA .d_add
+  .d1
+    LDA.b $03 : LSR #2 : CLC : ADC.b $03
+  .d_add
+  ADC.b #$04 : STA.b $05
+
+  ; Funneling perpendicular offset ($06): tapers +/-15 -> 0 into jar mouth + swirl ripple.
+  LDA.b $03 : LSR A : STA.b $06
+  LDA.w .lane_sign, X : BEQ .l_zero
+  CMP.b #$01 : BEQ .l_ok
+    LDA.b $06 : EOR.b #$FF : INC A : STA.b $06 : BRA .l_ok
+  .l_zero
+    STZ.b $06
+  .l_ok
+  LDA.b $1A : LSR A : CLC : ADC.b $03 : AND.b #$07 : PHX : TAX
+  LDA.w .swirl, X : PLX
+  CLC : ADC.b $06 : STA.b $06
+
+  JSR GustJar_ApplyDirOffset16
+
+  ; Table-driven stage tile: 0=inner ($CF/$A9), 2=mid ($CD/$CE), 4=outerV ($CC/$CD), 6=outerH ($C2/$CC).
+  LDA.b $03 : CMP.b #$08 : BCC .t_inner
+  CMP.b #$12 : BCC .t_mid
+    LDA.w !GustJarDir : CMP.b #$04 : LDA.b #$04 : BCC .t_idx
+    LDA.b #$06 : BRA .t_idx
+  .t_mid : LDA.b #$02 : BRA .t_idx
+  .t_inner : LDA.b #$00
+  .t_idx
+  STA.b $05
+  TXA : EOR.b $1A : AND.b #$02 : BEQ + : INC.b $05 : +
+  PHX : LDX.b $05 : LDA.w .tiles, X : PLX
+  JSR GustJar_EmitWindOam8
+
+  INX : CPX.b $04 : BCS + : JMP .part : +
+  RTS
+
+  .phase_off : db 0, 11, 21, 5, 16, 26
+  .lane_sign : db 1, 2, 1, 2, 0, 2
+  .swirl     : db 0, 2, 3, 2, 0, -2, -3, -2
+  .tiles     : db $CF, $A9, $CD, $CE, $CC, $CD, $C2, $CC
+}
+
+; ---------------------------------------------------------
+; Upgraded Expanding Multi-Puff Gust Blast Cyclone OAM FX (3/4/5 sprites).
+;   - Tier 1 (3 sprites): nimble 8x8 core ($A9/$CE) + 2 expanding crescent wings.
+;   - Tier 2 (4 sprites): 16x16 cyclone core ($86->$EE) + 2 wings + tail streak.
+;   - Tier 3 (5 sprites): 16x16 cyclone core ($86->$EE) + 4 wide expanding wings!
+; ---------------------------------------------------------
+GustJar_DrawWaveOAM:
+{
   LDA.w !GustJarTier : CLC : ADC.b #$02 : STA.b $04
   ASL #2
   JSL !GustJarOamAllocD
 
-  LDY.b #$00 ; OAM low offset
-  LDX.b #$00 ; particle index
-  .part
-  ; Progress t = (31 - ((frame*3 + idx*7) & 31)) * tier_scale -> rushes INWARD!
-  LDA.b $1A : ASL A : CLC : ADC.b $1A : STA.b $00
-  TXA : ASL #3 : CLC : ADC.b $00 : AND.b #$1F
-  EOR.b #$1F : STA.b $05 ; 31 -> 0 inward!
-  LDA.w !GustJarTier : CMP.b #$02 : BCC .dist_ok
-    ASL.b $05 ; up to 62 px at Tier 2/3
-  .dist_ok
-  ; Swirl perpendicular offset from sine-like 8-entry table.
-  LDA.b $1A : LSR A : CLC : ADC.b $05 : AND.b #$07 : PHX : TAX
-  LDA.w .swirl, X : PLX : STA.b $06
+  JSR GustJar_GetPrio : ORA.b #$04 : STA.b $07 ; BG prio | Pal 2
 
-  ; Base screen coords of nozzle ($08-$E2, $0A-$E8).
-  LDA.b $08 : SEC : SBC.b $E2 : STA.b $00
-  LDA.b $0A : SEC : SBC.b $E8 : STA.b $01
-  LDA.w !GustJarDir
-  BEQ .p_u
-  CMP.b #$02 : BEQ .p_d
-  CMP.b #$04 : BEQ .p_l
-  ; Right: X += dist, Y += swirl (hide if X wraps past 255)
-  LDA.b $00 : CLC : ADC.b $05 : STA.b $00 : BCS .offscreen
-  LDA.b $01 : CLC : ADC.b $06 : STA.b $01
-  BRA .emit
-  .p_l
-  ; Left: X -= dist, Y += swirl (hide if X underflows below 0)
-  LDA.b $00 : SEC : SBC.b $05 : STA.b $00 : BCC .offscreen
-  LDA.b $01 : CLC : ADC.b $06 : STA.b $01
-  BRA .emit
-  .p_d
-  ; Down: Y += dist, X += swirl
-  LDA.b $01 : CLC : ADC.b $05 : STA.b $01 : BCS .offscreen
-  LDA.b $00 : CLC : ADC.b $06 : STA.b $00
-  BRA .emit
-  .p_u
-  ; Up: Y -= dist, X += swirl
-  LDA.b $01 : SEC : SBC.b $05 : STA.b $01 : BCC .offscreen
-  LDA.b $00 : CLC : ADC.b $06 : STA.b $00
-  BRA .emit
-  .offscreen
-  LDA.b #$F0 : STA.b $01
+  ; Wave age ($03) & expansion = age >> 2 ($02, 0..6 px).
+  LDX.w !GustJarTier
+  LDA.w GustJar_WaveLife-1, X : SEC : SBC.w !GustJarWaveTmr : STA.b $03
+  LSR #2 : STA.b $02
 
-  .emit
-  LDA.b $00 : STA.b ($90), Y : INY
-  LDA.b $01 : STA.b ($90), Y : INY
-  TXA : EOR.b $1A : AND.b #$02 : BEQ .tile_a
-    LDA.b #$DF : BRA .tile_b
-  .tile_a
-    LDA.b #$CF
-  .tile_b
-  STA.b ($90), Y : INY
-  LDA.b $1A : AND.b #$04 : ASL #4 : ORA.b #$22 ; prio 2, pal 1, flip flutter
-  STA.b ($90), Y : INY
+  ; 16-bit screen anchor centered for 8x8 ($0C, $0E).
+  REP #$20
+  LDA.w !GustJarWaveXL : SEC : SBC.b $E2 : SEC : SBC.w #$0004 : STA.b $0C
+  LDA.w !GustJarWaveYL : SEC : SBC.b $E8 : SEC : SBC.w #$0004 : STA.b $0E
+  SEP #$20
 
-  PHX : TXY : LDA.b #$00 : STA.b ($92), Y
-  TYA : INC A : ASL #2 : TAY : PLX
-  INX : CPX.b $04 : BCS .done
-  JMP .part
-  .done
+  ; --- Slot 0: Leading Cyclone Core ---
+  LDX.b #$00 : LDY.b #$00
+  STZ.b $05 : STZ.b $06
+  JSR GustJar_ApplyDirOffset16
+  LDA.w !GustJarTier : CMP.b #$02 : BCS .core16
+    LDA.b $1A : AND.b #$02 : BEQ + : LDA.b #$CE : BRA ++ : + : LDA.b #$A9 : ++
+    JSR GustJar_EmitWindOam8
+    BRA .wings
+  .core16
+    LDA.b $01 : CMP.b #$F0 : BEQ .c16_go
+      SEC : SBC.b #$04 : BCC .c16_hide : STA.b $01
+      LDA.b $00 : SEC : SBC.b #$04 : BCS +
+      .c16_hide
+      LDA.b #$F0 : STA.b $01 : BRA .c16_go
+    + : STA.b $00
+    .c16_go
+    LDA.b $03 : CMP.b #$03 : LDA.b #$EE : BCS + : LDA.b #$86 : +
+    JSR GustJar_EmitWindOam8
+    LDA.b #$02 : STA.b ($92) ; promote slot 0 to 16x16!
+
+  ; --- Slots 1..Count-1: Expanding Crescent Wings & Tail Streak (8x8) ---
+  .wings
+  LDX.b #$01
+  .wloop
+  ; Special case: Tier 2 Slot 3 = trailing wind streak behind core.
+  CPX.b #$03 : BNE .table_wing
+  LDA.w !GustJarTier : CMP.b #$03 : BCS .table_wing
+    LDA.b #$F6 : STA.b $05
+    STZ.b $06
+    LDA.w !GustJarDir : CMP.b #$04 : LDA.b #$CC : BCC .w_draw
+    LDA.b #$C2 : BRA .w_draw
+
+  .table_wing
+  LDA.w .w_back-1, X : STA.b $05
+  LDA.w .w_perp-1, X : CLC : ADC.b $02 : STA.b $06
+  TXA : AND.b #$01 : BNE .w_setp ; odd X (1,3) -> +, even X (2,4) -> -
+    LDA.b $06 : EOR.b #$FF : INC A : STA.b $06
+  .w_setp
+  LDA.b $1A : AND.b #$04 : BEQ + : LDA.b #$03 : +
+  EOR.w .w_tile-1, X
+
+  .w_draw
+  PHA
+  JSR GustJar_ApplyDirOffset16
+  PLA
+  JSR GustJar_EmitWindOam8
+  INX : CPX.b $04 : BCC .wloop
   RTS
 
-  .swirl : db 0, 5, 7, 5, 0, -5, -7, -5
-}
-
-; ---------------------------------------------------------
-; Gust Blast Wave Crescent OAM FX (3 puffs around WaveX/WaveY).
-; ---------------------------------------------------------
-GustJar_DrawWaveOAM:
-{
-  LDA.w !GustJarWaveXL : SEC : SBC.b $E2 : STA.b $00
-  LDA.w !GustJarWaveYL : SEC : SBC.b $E8 : STA.b $01
-  CMP.b #$E0 : BCS .skip
-
-  LDA.b #$0C ; 3 OAM sprites
-  JSL !GustJarOamAllocD
-  LDX.b #$00
-  LDY.b #$00
-  .loop
-  LDA.w !GustJarDir : CMP.b #$04 : BCS .vert_spread
-    ; Up/Down wave -> spread along X (-8, 0, +8)
-    LDA.b $00 : CLC : ADC.w .spread, X : STA.b ($90), Y : INY
-    LDA.b $01 : STA.b ($90), Y : INY
-    BRA .tile
-  .vert_spread
-    ; Left/Right wave -> spread along Y (-8, 0, +8)
-    LDA.b $00 : STA.b ($90), Y : INY
-    LDA.b $01 : CLC : ADC.w .spread, X : STA.b ($90), Y : INY
-  .tile
-  LDA.b #$CF : CPX.b #$01 : BNE + : LDA.b #$A9 : +
-  STA.b ($90), Y : INY
-  LDA.b $1A : AND.b #$02 : ASL #5 : ORA.b #$24 ; prio 2, pal 2
-  STA.b ($90), Y : INY
-  PHX : TXY : LDA.b #$00 : STA.b ($92), Y
-  TYA : INC A : ASL #2 : TAY : PLX
-  INX : CPX.b #$03 : BCC .loop
-  .skip
-  RTS
-  .spread : db -8, 0, 8
+  .w_back : db $FC, $FC, $F8, $F8
+  .w_perp : db   7,   7,  13,  13
+  .w_tile : db $CE, $CE, $CC, $CC
 }
 
 GustJar_CodeEnd:

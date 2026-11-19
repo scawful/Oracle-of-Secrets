@@ -40,6 +40,7 @@ def find_lakesnes() -> Path:
 
 
 # Shared stubs for vanilla SNES services called by tested modules.
+STUB_OAM_B = 0x0DBA84
 STUB_OAM_D = 0x0DBA8C
 STUB_OW_TILE_ACT = 0x1BBD7A
 STUB_CANCEL_DASH = 0x0790B0
@@ -70,6 +71,8 @@ def _assemble_suite(folder: Path) -> tuple[bytes, dict[str, int]]:
     put_rom(0x0287E5, bytes.fromhex("C2 21 A5 E2"))
     put_rom(0x028053, bytes.fromhex("6B"))
     put_rom(0x02A5CC, bytes.fromhex("22 FA E3 00 20 90 BB"))
+    # Preimage asserted by Items/gust_jar.asm (LinkOAM_ContinueWithAnimation)
+    put_rom(0x0DA435, bytes.fromhex("8C 54 03 C0 05"))
 
     rom_path = folder / "fixture.sfc"
     rom_path.write_bytes(image)
@@ -189,21 +192,67 @@ class Q323Fixture(Fixture):
     def __init__(self, lib, rom: bytes, labels: dict[str, int]):
         super().__init__(lib, rom, labels)
         self.stubs = {
+            STUB_OAM_B: "oam_b",
             STUB_OAM_D: "oam_d",
             STUB_OW_TILE_ACT: "ow_tile_act",
             STUB_CANCEL_DASH: "cancel_dash",
         }
         self.oam_allocs: list[int] = []
+        self.oam_records: list[tuple[str, int, int, int]] = []  # (region, size, low_addr, hi_addr)
+        self._oam_b_off = 0x01D0
+        self._oam_d_off = 0x0030
         self.ow_cuts: list[tuple[int, int, int]] = []
         self.cancel_dash_calls = 0
         self.cpu.db = 0x07  # Gameplay DBR mirror
 
+    def reset_oam_frame(self):
+        self.oam_records.clear()
+        self._oam_b_off = 0x01D0
+        self._oam_d_off = 0x0030
+
+    def read_oam_sprites(self, region: str | None = None) -> list[tuple[str, int, int, int, int, int]]:
+        """Return list of (region, x, y, tile, attr, hi) for OAM records emitted since reset."""
+        out = []
+        for reg, size, lo, hi in self.oam_records:
+            if region is not None and reg != region:
+                continue
+            for i in range(size // 4):
+                x = self.get(lo + i * 4)
+                y = self.get(lo + i * 4 + 1)
+                tile = self.get(lo + i * 4 + 2)
+                attr = self.get(lo + i * 4 + 3)
+                h = self.get(hi + i)
+                out.append((reg, x, y, tile, attr, h))
+        return out
+
     def stub(self, name: str):
-        if name == "oam_d":
+        if name == "oam_b":
             size = self.cpu.a & 0xFF
             self.oam_allocs.append(size)
-            self.word(0x90, 0x0830)
-            self.word(0x92, 0x0A2C)
+            off = self._oam_b_off
+            if off + size > 0x0200:
+                off = 0x01D0
+            self._oam_b_off = off + size
+            lo, hi = 0x0800 + off, 0x0A20 + (off >> 2)
+            self.word(0x90, lo)
+            self.word(0x92, hi)
+            # Match vanilla $0DBB0A/$0DBB58: clobbers $0E/$0F and returns Y = $90 (non-zero!).
+            self.put(0x0E, size); self.put(0x0F, 0)
+            self.cpu.y = lo & 0xFF
+            self.oam_records.append(("B", size, lo, hi))
+        elif name == "oam_d":
+            size = self.cpu.a & 0xFF
+            self.oam_allocs.append(size)
+            off = self._oam_d_off
+            if off + size > 0x00C0:
+                off = 0x0030
+            self._oam_d_off = off + size
+            lo, hi = 0x0800 + off, 0x0A20 + (off >> 2)
+            self.word(0x90, lo)
+            self.word(0x92, hi)
+            self.put(0x0E, size); self.put(0x0F, 0)
+            self.cpu.y = lo & 0xFF
+            self.oam_records.append(("D", size, lo, hi))
         elif name == "ow_tile_act":
             self.ow_cuts.append((self.get(0x0301), self.get(0x00) | (self.get(0x01) << 8),
                                  self.get(0x02) | (self.get(0x03) << 8)))
@@ -602,7 +651,8 @@ class TestQ323GustJarAndGaroGlide(unittest.TestCase):
                 self._start_gust(fx, button=btn, facing=6)
                 self.assertEqual(fx.get(0x0273), 1)    # Inhaling
                 self.assertEqual(fx.get(0x0274), btn)  # Button latched
-                self.assertEqual(fx.get(0x5E), 0x08)   # Slow creep stance
+                self.assertEqual(fx.get(0x5E), 0x0E)   # Tier 1 slow strafe stance
+                self.assertEqual(fx.get(0x50) & 0x01, 0x01)  # Facing locked
 
                 # Holding latched button advances charge while ignoring the other button
                 for i in range(6):
@@ -621,14 +671,17 @@ class TestQ323GustJarAndGaroGlide(unittest.TestCase):
                 self.assertEqual(fx.get(0x0273), 2)     # Blast Wave active!
                 self.assertEqual(fx.get(0x012E), 0x07)  # Fwoosh SFX!
                 self.assertGreater(fx.get(0x027A), 0)   # Wave timer active
+                self.assertEqual(fx.get(0x027F) & 0x0C, 0x0C)  # Follow-through pose + recoil peak!
 
-                # After follow-through, $3A bit 6 & $5E release while wave finishes flying
+                # After follow-through, $3A bit 6, $50 bit 0 & $5E release while wave finishes flying
                 for i in range(20):
                     fx.put(0x1A, 10 + i)
                     fx.run_jsl("GustJar_FrameTick")
                 self.assertEqual(fx.get(0x0273), 0)
                 self.assertEqual(fx.get(0x3A) & 0x40, 0)
+                self.assertEqual(fx.get(0x50) & 0x01, 0)
                 self.assertEqual(fx.get(0x5E), 0)
+                self.assertEqual(fx.get(0x02E3), 0)
 
     def test_gust_jar_three_charge_tiers_and_wind_signal_hook(self):
         fx = self.make_fx()
@@ -858,8 +911,243 @@ class TestQ323GustJarAndGaroGlide(unittest.TestCase):
                 fx.run_jsl("GustJar_FrameTick")
                 self.assertEqual(fx.get(0x0273), 0, f"{label} must abort Gust Jar")
                 self.assertEqual(fx.get(0x3A) & 0x40, 0, f"{label} must clear $3A bit 6")
+                self.assertEqual(fx.get(0x50) & 0x01, 0, f"{label} must unlock facing $50 bit 0")
                 self.assertEqual(fx.get(0x5E), 0, f"{label} must clear slow-walk $5E")
+                self.assertEqual(fx.get(0x02E3), 0, f"{label} must clear sword hold $02E3")
                 self.assertEqual(fx.get(0x0F70), 0, f"{label} must ground any captured sprite")
+
+    def test_gust_jar_facing_lock_strafe_speed_and_blast_follow_through(self):
+        fx = self.make_fx()
+        self._start_gust(fx, button=1, facing=6)  # Start facing Right
+        self.assertEqual(fx.get(0x50) & 0x01, 0x01)
+        self.assertEqual(fx.get(0x5E), 0x0E)
+        self.assertEqual(fx.get(0x02E3), 2)
+
+        # Simulate sideways/backwards movement attempting to turn Link Left ($2F=4):
+        # Gust Jar must keep Link's facing locked to Right (6) for Minish Cap strafing!
+        for i in range(0x18):
+            fx.put(0x1A, i)
+            fx.put(0x2F, 4)  # External facing perturbation
+            fx.run_jsl("GustJar_FrameTick")
+            self.assertEqual(fx.get(0x2F), 6, "Facing must stay locked to !GustJarDir during inhale")
+            self.assertEqual(fx.get(0x50) & 0x01, 0x01)
+            self.assertEqual(fx.get(0x02E3), 2)
+        # At Tier 2 ($18 frames), slow strafe deepens to heavy braced footing ($5E=$06)
+        self.assertEqual(fx.get(0x0276), 2)
+        self.assertEqual(fx.get(0x5E), 0x06)
+
+        # Release Y -> fires Tier 2 blast (WaveLife=20) with 7-frame recoil follow-through
+        fx.put(0xF0, 0x00)
+        fx.run_jsl("GustJar_FrameTick")
+        self.assertEqual(fx.get(0x0273), 2)
+        self.assertEqual(fx.get(0x027A), 20)
+        self.assertEqual(fx.get(0x027F) & 0x0C, 0x0C)  # pose + recoil peak active
+
+        # Frames 0..3 of follow-through: peak kickback bit 3 stays set, facing locked
+        for f in range(4):
+            fx.put(0x1A, 30 + f)
+            fx.put(0x2F, 2)
+            fx.run_jsl("GustJar_FrameTick")
+            self.assertEqual(fx.get(0x2F), 6)
+            self.assertEqual(fx.get(0x027F) & 0x0C, 0x0C, f"Peak recoil expected on elapsed={f}")
+
+        # Frames 4..6 of follow-through: peak bit 3 clears -> planted recovery (bit 2 still set)
+        for f in range(4, 7):
+            fx.put(0x1A, 30 + f)
+            fx.run_jsl("GustJar_FrameTick")
+            self.assertEqual(fx.get(0x027F) & 0x0C, 0x04, f"Recovery pose expected on elapsed={f}")
+            self.assertEqual(fx.get(0x50) & 0x01, 0x01)
+
+        # Frame 7: pose/facing/speed/sword lock release cleanly while blast wave keeps flying!
+        fx.put(0x1A, 40)
+        fx.run_jsl("GustJar_FrameTick")
+        self.assertEqual(fx.get(0x0273), 2, "Wave must still be flying after follow-through")
+        self.assertEqual(fx.get(0x027F) & 0x0C, 0)
+        self.assertEqual(fx.get(0x3A) & 0x40, 0)
+        self.assertEqual(fx.get(0x50) & 0x01, 0)
+        self.assertEqual(fx.get(0x5E), 0)
+        self.assertEqual(fx.get(0x02E3), 0)
+
+        # If Link immediately starts charging sword ($50=1, $5E=$0C) while wave finishes,
+        # wave expiry MUST NOT clobber Link's new sword facing lock or speed!
+        fx.put(0x50, 0x01)
+        fx.put(0x5E, 0x0C)
+        for f in range(15):
+            fx.put(0x1A, 50 + f)
+            fx.run_jsl("GustJar_FrameTick")
+        self.assertEqual(fx.get(0x0273), 0)
+        self.assertEqual(fx.get(0x50), 0x01, "Wave expiry must not stomp new sword facing lock")
+        self.assertEqual(fx.get(0x5E), 0x0C, "Wave expiry must not stomp new sword speed")
+
+        # Cannot start Gust Jar mid-sword-swing ($3C != 0)
+        fx2 = self.make_fx()
+        fx2.setup_link(x=0x100, y=0x100, facing=2)
+        fx2.put(0x7EF3AE, 1); fx2.put(0x3C, 3); fx2.put(0x3A, 0x40)
+        fx2.run_jsl("GustJar_Start")
+        self.assertEqual(fx2.get(0x0273), 0)
+        self.assertEqual(fx2.get(0x3A) & 0x40, 0)
+
+    def test_gust_jar_link_pose_oam_hook_all_states_and_passthrough(self):
+        fx = self.make_fx()
+        # 1. Idle passthrough: preserves Y, writes $0354, and Z flag matches CPY #$05
+        fx.put(0x0273, 0)
+        _, _, z5 = fx.run_jsl("GustJar_LinkPoseOamHook", y=0x05, db=0x0D)
+        self.assertEqual(fx.get(0x0354), 0x05)
+        self.assertTrue(z5, "Idle CPY #$05 must set Z=1 when Y==5")
+        _, _, z0 = fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
+        self.assertEqual(fx.get(0x0354), 0x00)
+        self.assertFalse(z0, "Idle CPY #$05 must set Z=0 when Y==0")
+
+        # 2. Inhale pose: Up/Down -> $0E (symmetrical hold), Left/Right -> $16, walk $2E wraps mod 6
+        for facing, exp_pose in ((0, 0x0E), (2, 0x0E), (4, 0x16), (6, 0x16)):
+            with self.subTest(phase="inhale", facing=facing):
+                fx.put(0x0273, 1); fx.put(0x027F, 0x04); fx.put(0x5D, 0); fx.put(0x02E0, 0)
+                fx.put(0x2F, facing); fx.put(0x2E, 7)  # $2E=7 wraps -> frame 1
+                _, _, z = fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
+                self.assertEqual(fx.get(0x0354), exp_pose)
+                self.assertEqual(fx.get(0x02), 1)
+                self.assertFalse(z)
+
+        # Planted Tier 2/3 brace pulse toggles $02 between 0 and 1 on charge bit 3
+        fx.put(0x2F, 6); fx.put(0x2E, 0); fx.put(0x0276, 2)
+        fx.put(0x0275, 0x18)  # bit 3 set
+        fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
+        self.assertEqual(fx.get(0x02), 1)
+        fx.put(0x0275, 0x20)  # bit 3 clear
+        fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
+        self.assertEqual(fx.get(0x02), 0)
+
+        # 3. Blast follow-through recoil ($18): peak -> frame 1 on D/L/R, frame 0 on Up; recovery -> frame 0
+        fx.put(0x0273, 2); fx.put(0x027F, 0x0D)  # bit2+bit3 recoil peak
+        for facing, exp_fr in ((0, 0), (2, 1), (4, 1), (6, 1)):
+            fx.put(0x2F, facing)
+            fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
+            self.assertEqual(fx.get(0x0354), 0x18)
+            self.assertEqual(fx.get(0x02), exp_fr)
+        fx.put(0x027F, 0x05); fx.put(0x2F, 6)  # recovery (bit3 clear)
+        fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
+        self.assertEqual(fx.get(0x0354), 0x18)
+        self.assertEqual(fx.get(0x02), 0)
+
+        # 4. Bunny ($02E0!=0) or special LinkState ($5D!=0) must NOT be overridden
+        fx.put(0x02E0, 1)
+        fx.run_jsl("GustJar_LinkPoseOamHook", y=0x21, db=0x0D)
+        self.assertEqual(fx.get(0x0354), 0x21)
+        fx.put(0x02E0, 0); fx.put(0x5D, 2)
+        fx.run_jsl("GustJar_LinkPoseOamHook", y=0x05, db=0x0D)
+        self.assertEqual(fx.get(0x0354), 0x05)
+
+    def test_gust_jar_visible_held_jar_oam_all_dirs_priority_tremble_and_glow(self):
+        # Verify held jar tile $72 across all 4 directions + Region B (Up) vs Region D (D/L/R)
+        dir_expect = [
+            (0, "B", 0x60 + 4, 0x60 - 4, 0x00),   # Up: behind Link in Region B, no H-flip
+            (2, "D", 0x60 + 4, 0x60 + 14, 0x00),  # Down: in front in Region D, no H-flip
+            (4, "D", 0x60 - 5, 0x60 + 10, 0x40),  # Left: in front in Region D, H-flipped
+            (6, "D", 0x60 + 13, 0x60 + 10, 0x00), # Right: in front in Region D, no H-flip
+        ]
+        for facing, exp_reg, exp_x, exp_y, exp_hflip in dir_expect:
+            with self.subTest(facing=facing):
+                fx = self.make_fx()
+                self._start_gust(fx, button=1, facing=facing)
+                fx.reset_oam_frame()
+                # Pre-dirty high OAM bytes with 16x16 ($02) to prove both jar & mouth clear to 8x8!
+                for hi_addr in range(0x0A20, 0x0AA0):
+                    fx.put(hi_addr, 0x02)
+                fx.put(0x1A, 0)
+                fx.run_jsl("GustJar_FrameTick")
+                reg_sprites = fx.read_oam_sprites(exp_reg)
+                jar_sprites = [s for s in reg_sprites if s[3] == 0x72]
+                self.assertEqual(len(jar_sprites), 1, f"Expected 1 held jar ($72) in Region {exp_reg}")
+                _, jx, jy, jtile, jattr, jhi = jar_sprites[0]
+                self.assertEqual((jx, jy), (exp_x, exp_y))
+                self.assertEqual(jattr & 0x0E, 0x08, "Tier 1 jar must use green/gold OAM Palette 4 ($08)")
+                self.assertEqual(jattr & 0x40, exp_hflip)
+                self.assertEqual(jattr & 0x30, 0x20, "Normal floor ($EE=0) uses BG prio 2 ($20)")
+                self.assertEqual(jhi, 0x00, "Held jar is 8x8")
+                if exp_reg == "D":
+                    self.assertEqual(reg_sprites[0][5], 0x00, "Mouth spark slot 0 must also clear high OAM to 8x8")
+
+        # Verify Tier 3 rapid +/-1px tremble AND Pal 4 <-> Pal 2 pulsing glow
+        fx = self.make_fx()
+        self._start_gust(fx, button=1, facing=6)
+        fx.put(0x0275, 0x40)  # Tier 3 charge
+        ys_seen, pals_seen = set(), set()
+        for f in (0, 2, 4, 6):
+            fx.reset_oam_frame()
+            fx.put(0x1A, f)
+            fx.run_jsl("GustJar_FrameTick")
+            jar = [s for s in fx.read_oam_sprites("D") if s[3] == 0x72][0]
+            ys_seen.add(jar[2])
+            pals_seen.add(jar[4] & 0x0E)
+        self.assertEqual(ys_seen, {0x60 + 10 - 1, 0x60 + 10 + 1}, "Tier 3 must rumble +/-1px on Y when facing Right")
+        self.assertEqual(pals_seen, {0x04, 0x08}, "Tier 3 must pulse between Pal 4 (green) and Pal 2 (blue)")
+
+        # Verify Blast Peak 2px recoil kickback + Pal 2 flash + muzzle burst ($A9)
+        # starts immediately on frame 0 (FireBlast release frame — zero 1-frame flicker!)
+        fx.reset_oam_frame()
+        fx.put(0xF0, 0x00)
+        fx.put(0x1A, 1)
+        fx.run_jsl("GustJar_FrameTick")  # enters state 2 & renders frame-0 recoil + wave!
+        jar_f0 = [s for s in fx.read_oam_sprites("D") if s[3] == 0x72]
+        self.assertEqual(len(jar_f0), 1, "Frame-0 release must draw held jar without 1-frame blink")
+        self.assertEqual(jar_f0[0][1], 0x60 + 13 - 2, "Blast peak must kick jar 2px back toward Link")
+        self.assertEqual(jar_f0[0][4] & 0x0E, 0x04, "Blast peak must flash Pal 2")
+        self.assertEqual(fx.read_oam_sprites("D")[0][3], 0xA9, "Blast peak must emit $A9 muzzle burst")
+
+    def test_gust_jar_upgraded_inhale_funnel_and_expanding_cyclone_wave_oam(self):
+        # 1. Inhale OAM scales 4 / 5 / 6 wind sprites across Tier 1 / 2 / 3 with resident wind tiles
+        wind_tiles = {0xC2, 0xCC, 0xCD, 0xCE, 0xA9, 0xCF, 0x8C}
+        for charge, exp_tier, exp_wind_cnt in ((0x04, 1, 4), (0x1A, 2, 5), (0x40, 3, 6)):
+            with self.subTest(inhale_tier=exp_tier):
+                fx = self.make_fx()
+                self._start_gust(fx, button=1, facing=6)
+                fx.put(0x0275, charge)
+                fx.reset_oam_frame()
+                fx.put(0x1A, 5)
+                fx.run_jsl("GustJar_FrameTick")
+                # Region D gets 2 sprites (held jar + mouth spark) + exp_wind_cnt funnel streaks
+                self.assertEqual(len(fx.oam_records), 2)
+                self.assertEqual(fx.oam_records[0][1], 8)
+                self.assertEqual(fx.oam_records[1][1], exp_wind_cnt * 4)
+                wind_sprs = fx.read_oam_sprites("D")[2:]
+                self.assertEqual(len(wind_sprs), exp_wind_cnt)
+                for _, x, y, tile, attr, hi in wind_sprs:
+                    self.assertIn(tile, wind_tiles, f"Unexpected wind tile {tile:#04x}")
+                    self.assertEqual(attr & 0x0E, 0x04, "Wind particles must use icy sky-blue OAM Pal 2")
+                    self.assertEqual(hi, 0x00)
+
+        # 2. Blast Wave OAM: Tier 1 = 3x 8x8; Tier 2 = 1x 16x16 + 3x 8x8; Tier 3 = 1x 16x16 + 4x 8x8 expanding!
+        for charge, exp_tier, exp_cnt, exp_core_hi in ((0x04, 1, 3, 0x00), (0x1A, 2, 4, 0x02), (0x40, 3, 5, 0x02)):
+            with self.subTest(wave_tier=exp_tier):
+                fx = self.make_fx()
+                self._start_gust(fx, button=1, facing=6)
+                fx.put(0x0275, charge)
+                fx.run_jsl("GustJar_FrameTick")  # latch tier
+                fx.put(0xF0, 0x00)
+                fx.run_jsl("GustJar_FrameTick")  # FireBlast
+                # Tick 1 (age=1): Tier 2/3 core uses $86 billowing puff cloud (16x16)
+                fx.reset_oam_frame()
+                fx.put(0x1A, 2)
+                fx.run_jsl("GustJar_FrameTick")
+                wave_rec = fx.oam_records[-1]  # DrawWaveOAM is last alloc
+                self.assertEqual(wave_rec[1], exp_cnt * 4)
+                wave_sprs_early = fx.read_oam_sprites("D")[-exp_cnt:]
+                self.assertEqual(wave_sprs_early[0][5], exp_core_hi)
+                if exp_tier >= 2:
+                    self.assertEqual(wave_sprs_early[0][3], 0x86, "Early Tier 2/3 wave core must be $86 puff cloud")
+                spread_early = abs(wave_sprs_early[1][2] - wave_sprs_early[2][2])
+
+                # Advance 6 more ticks (age=7): Tier 2/3 core transitions to $EE cyclone & wings widen!
+                for k in range(6):
+                    fx.reset_oam_frame()
+                    fx.put(0x1A, 4 + k)
+                    fx.run_jsl("GustJar_FrameTick")
+                wave_sprs_late = fx.read_oam_sprites("D")[-exp_cnt:]
+                if exp_tier >= 2:
+                    self.assertEqual(wave_sprs_late[0][3], 0xEE, "Sustained Tier 2/3 wave core must be $EE cyclone")
+                    self.assertEqual(wave_sprs_late[0][5], 0x02, "Cyclone core must remain 16x16")
+                spread_late = abs(wave_sprs_late[1][2] - wave_sprs_late[2][2])
+                self.assertGreater(spread_late, spread_early, "Crescent wings must widen as wave travels")
 
     def test_switch_hook_trade_gate_isolated_from_gust_jar_1d(self):
         fx = self.make_fx()
