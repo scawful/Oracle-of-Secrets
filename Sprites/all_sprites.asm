@@ -410,6 +410,10 @@ incsrc "Sprites/NPCs/follower_swim_draw.asm"
 incsrc "Sprites/NPCs/piratian.asm"
 %log_end("piratian", !LOG_SPRITES)
 
+%log_start("hook_swap_brothers", !LOG_SPRITES)
+incsrc "Sprites/NPCs/hook_swap_brothers.asm"
+%log_end("hook_swap_brothers", !LOG_SPRITES)
+
 ; A file that orgs into a vanilla bank must pushpc/pullpc, or the next incsrc
 ; lands on vanilla code (fortune_teller.asm put ranch_girl/cloud_bridge on the
 ; vanilla fortune teller at $0DC92E until 2026-09-26).

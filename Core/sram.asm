@@ -132,18 +132,19 @@ endmacro
 ; ---------------------------------------------------------
 ; SideQuestProgress Bits ($7EF3D7)
 ; ---------------------------------------------------------
-; Bitfield: .dgo mwcn
+; Bitfield: .sgo mwcn
 !SideQuest_MetMaskSalesman = $01  ; bit 0 - Shown "need Ocarina"
 !SideQuest_CursedCucco     = $02  ; bit 1 - Ranch quest started
 !SideQuest_DekuScrubFound  = $04  ; bit 2 - Withering Deku found
 !SideQuest_GotMushroom     = $08  ; bit 3 - Toadstool Woods
 !SideQuest_OldManMountain  = $10  ; bit 4 - (TBD)
 !SideQuest_GoronQuest      = $20  ; bit 5 - Rock Meat collecting
+!SideQuest_SwapDiamond     = $40  ; bit 6 - Abyss $56 Swap-Diamond Trial cleared
 
 ; ---------------------------------------------------------
 ; SideQuestProgress2 Bits ($7EF3D8)
 ; ---------------------------------------------------------
-; Bitfield: .bts fser
+; Bitfield: rbts fser (bit 7 = $80 used by Masks/horse_minigame.asm !SideQuest2_RanchArchery)
 !SideQuest2_RanchGirl      = $01  ; bit 0 - Revealed by powder, Ocarina given
 !SideQuest2_EponaSong      = $02  ; bit 1 - Ranch Girl taught Epona's Song (song 6)
 !SideQuest2_SongOfHealing  = $04  ; bit 2 - Mask Salesman taught
