@@ -457,6 +457,7 @@ if !ENABLE_GOLDSTAR_CELL == 1
   dw $2C7B,$2C8F,$2CAC,$2CAF ; Bombchu
   dw $28F2,$2930,$357E,$357F ; Gust Jar (S1/P1)
   dw $340D,$340E,$340F,$3425 ; Garo
+  dw $24F5,$34F6,$24C0,$24F5 ; Switch Hook ($1F virtual X-HUD icon)
   .ordinary
 endif
   STA $02

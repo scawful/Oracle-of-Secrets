@@ -189,6 +189,7 @@ class StartupGbcSpawnTests(unittest.TestCase):
             "SavedWorld = $7EF3CA\n"
             "SpawnPoint = $7EF3C8\n"
             "GameState = $7EF3C5\n"
+            "GoldstarOwned = $7EF3A9\n"
             "!GameState_FaroreRescued = $03\n"
             "org $2C8000\n"
             + spawn_body,
@@ -336,14 +337,18 @@ class StartupGbcSpawnTests(unittest.TestCase):
             f.close()
 
     def test_abyss_spawn_menu_option1_kalyxo_routes_to_light_world_menu(self) -> None:
-        for goldstar, expected_msg in [(0x00, 0x0184), (0x02, 0x0185)]:
-            with self.subTest(goldstar=goldstar):
+        for goldstar_owned, hookshot_slot, expected_msg in [
+            (0x00, 0x02, 0x0184),  # Switch Hook alone ($7EF342=2) must NOT unlock Mountain Cave
+            (0x01, 0x01, 0x0185),  # GoldstarOwned ($7EF3A9=1) unlocks Mountain Cave
+        ]:
+            with self.subTest(goldstar_owned=goldstar_owned, hookshot_slot=hookshot_slot):
                 f = Fixture(self._lib, self._spawn_rom, self._spawn_labels)
                 try:
                     f.put(0x7EF3CA, 0x40)
                     f.put(0x1CE8, 0x01)    # Choice 1 = Start From Kalyxo
                     f.put(0x7EF3D6, 0x04)  # Hall of Secrets unlocked
-                    f.put(0x7EF342, goldstar)
+                    f.put(0x7EF3A9, goldstar_owned)
+                    f.put(0x7EF342, hookshot_slot)
                     f.put(0x00BC, 0x3B)
                     f.put(0x02B2, 0x06)
                     stop = _run_until_stop(f, "AbyssSpawnMenu_Select", stops={0x0281ED})

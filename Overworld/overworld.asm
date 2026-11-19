@@ -142,8 +142,8 @@ pushpc
 org $028192 : JML LoadCheckpointOrWorld ; @hook module=Overworld name=LoadCheckpointOrWorld kind=jml target=LoadCheckpointOrWorld expected_m=8 expected_x=8
 assert pc() == $028196
 
-; [W3 owner: Overworld] USDASM Module05_LoadFile ($0281E2): check Flute/Ocarina slot ($7EF342 == #$02, was Mirror $7EF353) for mountain spawn.
-org $0281E2 : LDA.l $7EF342 : CMP.b #$02
+; [W3 owner: Overworld] USDASM Module05_LoadFile ($0281E2): check GoldstarOwned ($7EF3A9 >= #$01, matching abyss_spawn_menu.asm) for mountain spawn so Hookshot/Switch Hook trade-back stays stable.
+org $0281E2 : LDA.l GoldstarOwned : CMP.b #$01
 
 ; [W3 owner: Overworld] USDASM Module05_LoadFile ($0281CD): check Hall of Secrets spawn bit ($7EF3D6 == #$04, was GameState >= #$02).
 org $0281CD : LDA.l $7EF3D6 : CMP.b #$04

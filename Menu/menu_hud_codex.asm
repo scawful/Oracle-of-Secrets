@@ -84,6 +84,9 @@ endif
     +
     CPY.w #$0003 : BNE +
 if !ENABLE_GOLDSTAR_CELL == 1
+      CMP.w #$0002 : BNE .x_hookshot_icon
+        LDY.w #$001F : BRA .new_icon            ; Switch Hook ($7EF342 == 2)
+      .x_hookshot_icon
       LDA.w #$0000                              ; Hookshot cell: hookshot icon
 else
       LDA.w GoldstarOrHookshot : AND.w #$00FF : DEC

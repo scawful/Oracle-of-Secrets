@@ -35,8 +35,11 @@
 Sprite_BeanVendor_Long:
 {
   PHB : PHK : PLB
-    ; Subtype 2: Part00 house villager (Core/part00.asm).
+    ; Subtype 2: Part00 house villager (Core/part00.asm) — strictly Room $0104
+    ; so Mayor Ruul (Room $0119, Sprite 0x07 sub=2) is never hijacked.
     LDA.w SprSubtype, X : CMP.b #$02 : BNE +
+      LDA.b $A0 : CMP.b #$04 : BNE +
+      LDA.b $A1 : CMP.b #$01 : BNE +
       JSL HouseVillager_Main
       PLB
       RTL
