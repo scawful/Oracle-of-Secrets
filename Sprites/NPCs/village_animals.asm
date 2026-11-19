@@ -27,7 +27,7 @@
 ;              solicited talk (!Rat_MsgWolf) + panicked squeak SFX.
 ;   4. Village Cat ($28 Action 3, hooked at $06:8CA1 / $06:AE34 / $06:AF1A):
 ;      - Extends Storyteller ($28) prep to Wayward Village OW $23 and houses
-;        ($0102, $0103, $0104, $0107, $0119), plus temporary $000F compatibility
+;        ($0102, $0103, $0104, $0106, $0107, $0119, $011F), plus temporary $000F compatibility
 ;        until removed from Maple's Hut.
 ;      - Human: native $0149 ("Will you pet the cat?") + happy purr hop.
 ;      - Minish / Wolf: solicited form reactions (!Cat_MsgMinish / !Cat_MsgWolf).
@@ -329,8 +329,10 @@ VillageCat_Prep:
   CMP.w #$0102 : BEQ .cat_ind
   CMP.w #$0103 : BEQ .cat_ind
   CMP.w #$0104 : BEQ .cat_ind
+  CMP.w #$0106 : BEQ .cat_ind
   CMP.w #$0107 : BEQ .cat_ind
   CMP.w #$0119 : BEQ .cat_ind
+  CMP.w #$011F : BEQ .cat_ind
   SEP #$20
 
   .bounded_vanilla
