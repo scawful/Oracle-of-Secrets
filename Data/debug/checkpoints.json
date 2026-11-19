@@ -1490,7 +1490,7 @@
     {
       "id": "jump-garrison-8b",
       "label": "Garrison bottom $8B",
-      "reason": "Paired with $83. Same area-warp refusal. Edge guard: $8B connects north to $83 and west to $8A (Overworld/lyra_edge_guard.asm)."
+      "reason": "Paired with $83. Same area-warp refusal. Edge guard: $8B connects north to $83 and west to $8A (Overworld/special_overworld/edge_guard.asm)."
     },
     {
       "id": "jump-seazora-90",

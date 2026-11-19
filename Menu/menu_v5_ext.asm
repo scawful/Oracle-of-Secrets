@@ -86,7 +86,7 @@ Menu_C4_DrawEquipCursor_Long:
 ; and indoors ($1B != 0). Cleanly wraps names > 12 chars onto 2 centered lines
 ; at the last word boundary so no name ever clips the right frame border (col 27).
 ; Compact 64-byte Special OW index table + 17 unique 16-char names.
-; Grounded in Overworld/lyra_edge_guard.asm and Docs/Technical/terminology_glossary.md.
+; Grounded in Overworld/special_overworld/edge_guard.asm and Docs/Technical/terminology_glossary.md.
 ; In/out: M/X=16. Uses $00-$09.
 MenuMap_DrawAreaNameRight_Long:
 {
