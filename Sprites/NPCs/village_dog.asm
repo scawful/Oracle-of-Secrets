@@ -62,8 +62,9 @@ Sprite_VillageDog_Prep:
   TXA : AND.b #$03 : STA.w SprMiscD, X ; Stagger initial idle phase per slot
   TXA : ASL #4 : ORA.b #$28 : STA.w SprTimerD, X
   LDA.b $1B : BNE .done ; Coat variation is Overworld outdoors only
+  LDA.w $0AAE : CMP.b #$0A : BNE .done ; Only use SP6 cream-taupe when Village Aux2 ($0A) is loaded
     JSL GetRandomInt : AND.b #$01 : BEQ .done
-      LDA.b #$08 : STA.w SprMiscG, X ; Palette 7 ($3F/$7F) golden-cream coat
+      LDA.b #$0A : STA.w SprMiscG, X ; Palette 6 ($3D/$7D) cream-taupe coat (never SP7 Link palette)
   .done
   PLB
   RTL

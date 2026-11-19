@@ -627,6 +627,42 @@ def main():
             ], rupee_dmas
         case("link_dma_prefix_preserves_animated_rupee", verify_link_dma_prefix_animates_rupee)
 
+        def verify_link_dma_prefix_preserves_horse_during_dialogue(f):
+            # Retroid bug_004340: talking to Running Man ($74) or any NPC while mounted
+            # enters Module $0E, Submodule $02 (Dialogue). Horse_LinkDmaPrefix MUST grant
+            # bit 7 of Horse_PalLoaded and skip native Link overwrite (JML $008ADB), and
+            # Horse_NmiUpload MUST take .steady -> .replay without calling Horse_RestoreItemCells.
+            f.word(0x1EDE, 0x4852)
+            f.put(0x02B2, 0x09)
+            f.put(0x10, 0x0E)
+            f.put(0x11, 0x02)        # Dialogue / Messaging
+            f.put(0x1B, 0x00)
+            f.put(0x1EEC, 0x01)      # Horse_PalLoaded bit 0 set, bit 7 clear
+            f.word(0x0AE0, 0xB280)
+            f.word(0x0AE2, 0xB2E0)
+            f.run_jml("Horse_LinkDmaPrefix", mf=True, xf=False)
+            assert f.jumped_target == "dma_8adb", f"Dialogue took {f.jumped_target}, expected dma_8adb"
+            assert f.get(0x1EEC) == 0x81, f"Expected Horse_PalLoaded=$81, got ${f.get(0x1EEC):02X}"
+
+            # Follow-on NMI upload in same vblank: keeps mounted cells with zero item-restore DMA.
+            f.dma_writes.clear()
+            f.put(0x1EEB, 0xFF)      # Horse_NpcUploadedFrame = FF
+            f.put(0x1EE7, 0x06)      # Horse_Frame = 6
+            f.put(0x1EE8, 0x06)      # Horse_UploadedFrame = 6 (already uploaded)
+            f.put(0x1EED, 0x01)      # skip trailing BG replay
+            f.run_jsl("Horse_NmiUpload", mf=True, xf=False)
+            assert f.dma_writes == [], f"Expected zero DMA during steady dialogue, got {f.dma_writes}"
+            assert f.get(0x1EE8) == 0x06, "Horse_UploadedFrame must remain 6 (not reset to FF)"
+
+            # Contrast: non-whitelisted $0E submodule ($05) and active Map ($07, $0200!=0) take .native!
+            for sub, sub200 in ((0x05, 0x00), (0x07, 0x01)):
+                f.put(0x10, 0x0E); f.put(0x11, sub); f.put(0x0200, sub200)
+                f.put(0x1EEC, 0x01)
+                f.run_jml("Horse_LinkDmaPrefix", mf=True, xf=False)
+                assert f.jumped_target == "dma_8a12", (sub, sub200, f.jumped_target)
+                assert (f.get(0x1EEC) & 0x80) == 0, (sub, sub200, hex(f.get(0x1EEC)))
+        case("link_dma_prefix_preserves_horse_during_dialogue", verify_link_dma_prefix_preserves_horse_during_dialogue)
+
         def verify_all_19_frames_vram_and_oam_dropable_safe(f):
             # Execute Horse_NmiUpload + Horse_DrawPlayerOam_Long for ALL 19 frames!
             for frame in range(19):
