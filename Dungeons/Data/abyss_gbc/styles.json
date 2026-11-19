@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "description": "Declarative Eon Abyss GBC interior styles (Q327-1A / Q328 A4). Style IDs are 1-based list indices.",
+  "defaults": {
+    "diagonal": "wall",
+    "deep": "second",
+    "stairs": "stripes",
+    "floor_meta": "0xA0",
+    "skip_floors": ["0xB", "0xC", "0xE", "0xF"],
+    "skip_unchanged_sheets": true
+  },
+  "styles": [
+    {
+      "name": "onox",
+      "notes": "Fortress of Secrets main rooms and island block (b14/p6; Seasons Onox tileset $44).",
+      "donor": {
+        "png": "donor_raw_fortress/seasons_gfx_tileset44.png",
+        "map": "donor_raw_fortress/seasons_tilesetMappings44.bin",
+        "pal": "donor_pal/seasons_44.txt"
+      },
+      "rooms": ["0x00C", "0x01C", "0x04C", "0x05C", "0x06B", "0x06D", "0x04D", "0x05D", "0x06C"],
+      "more_rooms": ["0x07B", "0x07C", "0x07D", "0x08B", "0x08D", "0x09B", "0x09D"]
+    },
+    {
+      "name": "fire",
+      "notes": "Fortress of Secrets fire rooms $2D/$3D (b14/p6; Seasons Sword & Shield Maze Fire tileset $42).",
+      "donor": {
+        "png": "donor_raw_fortress/seasons_gfx_tileset42.png",
+        "map": "donor_raw_fortress/seasons_tilesetMappings42.bin",
+        "pal": "donor_pal/seasons_42.txt"
+      },
+      "rooms": ["0x02D", "0x03D"]
+    },
+    {
+      "name": "rites",
+      "notes": "Fortress of Secrets boss and final hallway $0D/$1D (b14/p6; Ages Room of Rites tileset $46).",
+      "donor": {
+        "png": "donor_raw_fortress/ages_gfx_tileset46.png",
+        "map": "donor_raw_fortress/ages_tilesetMappings46.bin",
+        "pal": "donor_pal/ages_46.txt"
+      },
+      "rooms": ["0x00D", "0x01D"]
+    },
+    {
+      "name": "finale",
+      "notes": "Eon Abyss finale sanctum ($00/$10 + Kydreeok Octagon $02; b19/p32; Onox donor with throne floor A1, blue carpet, Triforce inlay).",
+      "donor": {
+        "png": "donor_raw_fortress/seasons_gfx_tileset44.png",
+        "map": "donor_raw_fortress/seasons_tilesetMappings44.bin",
+        "pal": "donor_pal/seasons_44.txt"
+      },
+      "rooms": ["0x000", "0x010"],
+      "more_rooms": ["0x002"],
+      "floor_meta": "0xA1",
+      "row_pal": {"2": 3, "3": 4, "4": 4, "5": 4, "6": 4, "7": 3},
+      "posterize_like": "0x00C",
+      "accent": {"2": 7},
+      "accent_floors": {
+        "0x0E1": {
+          "meta": "0xA2",
+          "shades": {"0": 4, "1": 5, "2": 6, "3": 3}
+        }
+      },
+      "inlays": [
+        {
+          "object": "0xFF8",
+          "blocks": 2,
+          "under": "0x0E1",
+          "keep": {"5": 0, "4": 0}
+        }
+      ]
+    },
+    {
+      "name": "palace",
+      "notes": "Shrine of Origins ($05, b1/p4) and Abyss Pyramid Fairy ($116, b18/p10): Ages palace tileset $5A (teal walls, green checker floor).",
+      "donor": {
+        "png": "donor_raw_fortress/ages_gfx_tileset5a.png",
+        "map": "donor_raw_fortress/ages_tilesetMappings5a.bin",
+        "pal": "donor_pal/ages_5a.txt"
+      },
+      "rooms": ["0x005"],
+      "more_rooms": ["0x116"],
+      "accent": {"6": 6},
+      "accent_floors": {
+        "0x0C5": {
+          "meta": "0xA2",
+          "shades": {"0": 4, "1": 5, "2": 6, "3": 3}
+        }
+      }
+    },
+    {
+      "name": "house",
+      "notes": "Abyss houses and shops: Windmill ($C9), Dream Hut ($0F), 7 b3 houses ($F4/$F5/$100/$102/$107/$110/$11C), and b17 interiors ($111/$122). Seasons indoors A ($2C) with warm tan wood floor.",
+      "donor": {
+        "png": "donor_raw_house/seasons_gfx_tileset2c.png",
+        "map": "donor_raw_house/seasons_tilesetMappings2c.bin",
+        "pal": "donor_pal/seasons_2c.txt",
+        "disasm": {
+          "game": "seasons",
+          "layout": "2c",
+          "palette_label": "paletteData5760",
+          "gfx": [
+            {"file": "gfx_tileset_dungeon_standard_1", "addr": "0x8800", "count": "0x20"},
+            {"file": "gfx_tileset_indoors_1", "addr": "0x8A00"},
+            {"file": "gfx_tileset_indoors_2", "addr": "0x9000"},
+            {"file": "gfx_tileset_vases", "addr": "0x8860"}
+          ]
+        }
+      },
+      "extra_pal": {
+        "8": [[28, 22, 14], [22, 15, 8], [14, 8, 4], [0, 0, 0]]
+      },
+      "row_pal": {"5": 8, "6": 8},
+      "rooms": ["0x0C9"],
+      "more_rooms": [
+        "0x00F", "0x0F4", "0x0F5", "0x100", "0x102", "0x107", "0x110", "0x11C",
+        "0x111", "0x122"
+      ]
+    },
+    {
+      "name": "volcanic",
+      "notes": "Eon Abyss volcanic/mountain cave network ($04/$13/$14/$15/$23/$24; b13/p24): Seasons Subrosia Indoors ($30 + PALH_TILESET_SUBROSIA_INDOORS).",
+      "donor": {
+        "disasm": {
+          "game": "seasons",
+          "layout": "30",
+          "palette_label": "paletteData5970",
+          "gfx": [
+            {"file": "gfx_tileset_dungeon_standard_1", "addr": "0x8800", "count": "0x20"},
+            {"file": "gfx_tileset_subrosia_indoors_1", "addr": "0x8A00"},
+            {"file": "gfx_tileset_subrosia_indoors_2", "addr": "0x9000"},
+            {"file": "gfx_tileset_subrosia_indoors_replacement", "addr": "0x8860"}
+          ]
+        }
+      },
+      "rooms": ["0x004", "0x013", "0x014", "0x015", "0x023", "0x024"],
+      "row_pal": {"2": 3, "3": 4, "4": 4, "5": 4, "6": 4, "7": 3}
+    },
+    {
+      "name": "cave",
+      "notes": "Eon Abyss caves ($D0/$D1/$D2/$F6/$10E/$112/$114/$117/$11E/$123/$124/$125; b6/b20): Seasons Cave ($2F + PALH_TILESET_CAVE, row 7 = GBC pal 5 teal water).",
+      "donor": {
+        "disasm": {
+          "game": "seasons",
+          "layout": "2f",
+          "palette_label": "paletteData5880",
+          "gfx": [
+            {"file": "gfx_tileset_dungeon_standard_1", "addr": "0x8800", "count": "0x20"},
+            {"file": "gfx_tileset_cave_1", "addr": "0x8A00"},
+            {"file": "gfx_tileset_cave_2", "addr": "0x9000"},
+            {"file": "gfx_tileset_cave_replacement", "addr": "0x8860"}
+          ]
+        }
+      },
+      "rooms": [
+        "0x0D0", "0x0D1", "0x0D2", "0x0F6", "0x10E", "0x112",
+        "0x114", "0x117", "0x11E", "0x123", "0x124", "0x125"
+      ],
+      "row_pal": {"2": 3, "3": 4, "4": 4, "5": 4, "6": 4, "7": 5}
+    }
+  ]
+}

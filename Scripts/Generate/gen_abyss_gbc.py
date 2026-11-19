@@ -1,44 +1,35 @@
 #!/usr/bin/env python3
-"""Generate Eon Abyss GBC interior sheets, palettes and tables.
+"""Generate, verify, and preview Eon Abyss GBC interior sheets, palettes, and ASM tables.
 
-Reads the room headers, object words and BG sheets of a built ROM plus GBC donor
-tilesets (oracles-disasm PNG + tilesetMappings + 24-line palette text), and writes
-Dungeons/Data/abyss_gbc/:
-  <style>.<sheet>.txt   GBC version of a BG sheet (sheet_codec text grid, reviewable)
-  <style>.<sheet>.lz2   the same sheet, LC-LZ2
+Declarative style definitions live in Dungeons/Data/abyss_gbc/styles.json.
+Build reads room headers, object words, and BG sheets from a ROM plus GBC donor
+tilesets (prebuilt gbc_interiors directory and/or local oracles-disasm clone),
+and writes Dungeons/Data/abyss_gbc/:
+  styles.json           declarative style definitions (source of truth)
+  <style>.<sheet>.txt   GBC version of a modified BG sheet (sheet_codec text grid)
+  <style>.<sheet>.lz2   the same sheet, LC-LZ2 compressed
   abyss_gbc.asm         room style table, sheet map, stream pointers, palettes
-  coverage.json         chars written from donor art vs posterized fallback
-
-Per style, every BG sheet in slots 0-6 of the style's rooms gets a GBC copy:
-  1. Chars drawn by wall objects ($001-$004, $061-$064), concave/convex corners
-     ($100-$10F) and the rooms' floor fills receive the donor metatile chars for
-     the same role (B0-B3 walls, B4-BB corners, A0 floor), flips undone.
-     A style may name its own floor metatile, a carpet object drawn in a second
-     donor palette that shares one SNES row ("accent"), and inlay objects whose
-     chars are rebuilt as carpet under the kept SNES pixels (finale style).
-  2. Objects the GBC sets have no direct match for get the closest donor art:
-     deep walls $007/$008/$067/$068 -> second wall set 38-3B, deep corners
-     $118-$11B -> concave corners B8-BB, layered stairs $130/$131/$F9C/$F9D ->
-     stair stripes 50, diagonal ceilings $0A0-$0A3 -> black A9, diagonal walls
-     $009-$014 -> stepped wall slices (--diagonal wall) or a flat stepped fill
-     (--diagonal fill).
-  3. Every other char is posterized to the donor's four shades (no donor match;
-     listed in coverage.json as fallback).
-Layer-2 masks $0C2/$0C6/$FF3 draw chars $1E9/$1EC (sheet $0F, all transparent)
-and need no art.
-The palette table holds 6 BG rows x 15 colours per style (rows 2-7). Each SNES row
-gets the donor palette that most of its donor-mapped chars use.
+  coverage.json         styles digest, palettes, donor vs posterized char coverage
 
 Usage:
-  python3 Scripts/Generate/gen_abyss_gbc.py build --rom Roms/oos168x.sfc --donor <gbc_interiors dir>
+  python3 Scripts/Generate/gen_abyss_gbc.py build --rom <rom.sfc> [--donor <dir>] [--oracles-disasm <dir>]
+  python3 Scripts/Generate/gen_abyss_gbc.py --check [--rom <rom.sfc>] [--donor <dir>] [--oracles-disasm <dir>]
+  python3 Scripts/Generate/gen_abyss_gbc.py --preview-room 0x002[,0x00F,...] --rom <rom.sfc> --out <sheet.png>
 """
 from __future__ import annotations
 
 import argparse
-import json
-import sys
 from collections import Counter, defaultdict
+import difflib
+import hashlib
+import json
+import os
 from pathlib import Path
+import shutil
+import struct
+import subprocess
+import sys
+import tempfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gen_wall_profiles as gw  # noqa: E402
@@ -48,61 +39,10 @@ import sheet_table as st  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
 OUT = REPO / "Dungeons/Data/abyss_gbc"
-
-# "more_rooms" share a style's sheets and palette but cast no palette votes, so
-# rooms reviewed earlier keep their colours when a style grows.
-# Style id = position + 1. Room lists follow the 2026-11-05 look plan (scawful picks):
-# Onox $44 main Fortress, Fire $42 for $2D/$3D, Rites $46 for $0D/$1D.
-# The pendant shrines (Wisdom, Courage, Power) are not in this set: they move to the
-# Lyra Sea (scawful, 2026-11-16) and keep SNES art.
-STYLES = [
-    {"name": "onox", "png": "donor_raw_fortress/seasons_gfx_tileset44.png",
-     "map": "donor_raw_fortress/seasons_tilesetMappings44.bin", "pal": "donor_pal/seasons_44.txt",
-     "rooms": [0x0C, 0x1C, 0x4C, 0x5C, 0x6B, 0x6D, 0x4D, 0x5D, 0x6C],
-     # Fortress island block, same header blockset 14 (no new art).
-     "more_rooms": [0x7B, 0x7C, 0x7D, 0x8B, 0x8D, 0x9B, 0x9D]},
-    {"name": "fire", "png": "donor_raw_fortress/seasons_gfx_tileset42.png",
-     "map": "donor_raw_fortress/seasons_tilesetMappings42.bin", "pal": "donor_pal/seasons_42.txt",
-     "rooms": [0x2D, 0x3D]},
-    {"name": "rites", "png": "donor_raw_fortress/ages_gfx_tileset46.png",
-     "map": "donor_raw_fortress/ages_tilesetMappings46.bin", "pal": "donor_pal/ages_46.txt",
-     "rooms": [0x0D, 0x1D]},
-    # Finale rooms: onox donor with a throne-room floor, a carpet and the Triforce inlay.
-    {"name": "finale", "png": "donor_raw_fortress/seasons_gfx_tileset44.png",
-     "map": "donor_raw_fortress/seasons_tilesetMappings44.bin", "pal": "donor_pal/seasons_44.txt",
-     "rooms": [0x00, 0x10],
-     "floor_meta": 0xA1,
-     # Same wall colours and posterize ranking as the onox rooms.
-     "row_pal": {2: 3, 3: 4, 4: 4, 5: 4, 6: 4, 7: 3}, "posterize_like": 0x0C,
-     # SNES row 2 also carries donor palette 7 (blue) in its three spare indices.
-     "accent": {2: 7},
-     # Carpet $0E1 -> donor carpet A2 in the accent palette (donor shade -> glyph value):
-     # light-blue field, dark-blue lattice, pale dots, so the gold inlay stands out.
-     "accent_floors": {0x0E1: (0xA2, {0: 4, 1: 5, 2: 6, 3: 3})},
-     # Triforce inlay $FF8: two 4x4 blocks. SNES indices 5/4 (triangle body and the
-     # carpet line showing through it) -> brightest gold, everything else -> the
-     # carpet under it.
-     "inlays": [{"object": 0xFF8, "blocks": 2, "under": 0x0E1, "keep": {5: 0, 4: 0}}]},
-    # Shrine of Origins (scawful pick "1 palace", 2026-11-16): Ages palace set,
-    # teal walls and green checker floor.
-    {"name": "palace", "png": "donor_raw_fortress/ages_gfx_tileset5a.png",
-     "map": "donor_raw_fortress/ages_tilesetMappings5a.bin", "pal": "donor_pal/ages_5a.txt",
-     "rooms": [0x05],
-     # SNES row 6 also carries donor palette 6 (blue) in its three spare indices.
-     "accent": {6: 6},
-     # Teal panel $0C5 around the chest (walkable floor) -> donor blue tile A2.
-     "accent_floors": {0x0C5: (0xA2, {0: 4, 1: 5, 2: 6, 3: 3})}},
-    # Abyss house interiors (scawful, 2026-11-18: "land interior gbc graphics in eon
-    # abyss"): Seasons tileset $2C (indoors A), wooden walls B0-BB, board floor A0.
-    # $C9 = windmill (QUEUE199R millstone_ring).
-    {"name": "house", "png": "donor_raw_house/seasons_gfx_tileset2c.png",
-     "map": "donor_raw_house/seasons_tilesetMappings2c.bin", "pal": "donor_pal/seasons_2c.txt",
-     # Floor rows 5-6: tan wood instead of the donor's green boards (scawful
-     # 2026-11-18 "Tan wood"); a warmer, darker brown than the cream wall palette 3.
-     "extra_pal": {8: [(0x1C, 0x16, 0x0E), (0x16, 0x0F, 0x08), (0x0E, 0x08, 0x04), (0, 0, 0)]},
-     "row_pal": {5: 8, 6: 8},
-     "rooms": [0xC9]},
-]
+DEFAULT_STYLES = OUT / "styles.json"
+DEFAULT_DISASM = Path("/Users/scawful/src/third_party/oracles-disasm")
+BANK_CAPACITY = 0x8000
+CODE_RESERVE = 0x0200  # headroom reserved for Dungeons/abyss_gbc_interiors.asm code in Bank $5A
 
 # Object -> (donor metatile, shape). Shapes give word k's (col, row) in the object.
 # Draw orders checked against vanilla bank $01 (usdasm):
@@ -115,65 +55,197 @@ COLMAJ_2x4 = [(k // 4, k % 4) for k in range(8)]
 ROWMAJ_4x2 = [(k % 4, k // 4) for k in range(8)]
 COLMAJ_4x4 = [(k // 4, k % 4) for k in range(16)]
 COLMAJ_2x2 = [(k // 2, k % 2) for k in range(4)]
+
 ROLE_OBJECTS = {
     0x001: (0xB0, COLMAJ_2x4), 0x003: (0xB0, COLMAJ_2x4),
     0x002: (0xB2, COLMAJ_2x4), 0x004: (0xB2, COLMAJ_2x4),
     0x061: (0xB3, ROWMAJ_4x2), 0x063: (0xB3, ROWMAJ_4x2),
     0x062: (0xB1, ROWMAJ_4x2), 0x064: (0xB1, ROWMAJ_4x2),
-    # concave: NW SW NE SE (top), then the same for bottom $108-$10B
-    0x100: (0xB8, COLMAJ_4x4), 0x101: (0xBA, COLMAJ_4x4), 0x102: (0xB9, COLMAJ_4x4), 0x103: (0xBB, COLMAJ_4x4),
-    0x108: (0xB8, COLMAJ_4x4), 0x109: (0xBA, COLMAJ_4x4), 0x10A: (0xB9, COLMAJ_4x4), 0x10B: (0xBB, COLMAJ_4x4),
-    # convex (inner) corners, top $104-$107 then bottom $10C-$10F. Checked: the
-    # $104 word grid has its wall block at NW (left column = north-wall profile,
-    # top row = west-wall profile), $105 = v-flip (SW), $106 = h-flip (NE),
-    # $107 = both (SE). Donor B7/B5/B6/B4 have the wall block at NW/SW/NE/SE
-    # (real Ages room 05:24).
-    0x104: (0xB7, COLMAJ_4x4), 0x105: (0xB5, COLMAJ_4x4), 0x106: (0xB6, COLMAJ_4x4), 0x107: (0xB4, COLMAJ_4x4),
+    # concave: NW SW NE SE (top), then bottom $108-$10B
+    0x100: (0xB8, COLMAJ_4x4), 0x101: (0xBA, COLMAJ_4x4),
+    0x102: (0xB9, COLMAJ_4x4), 0x103: (0xBB, COLMAJ_4x4),
+    0x108: (0xB8, COLMAJ_4x4), 0x109: (0xBA, COLMAJ_4x4),
+    0x10A: (0xB9, COLMAJ_4x4), 0x10B: (0xBB, COLMAJ_4x4),
+    # convex (inner) corners, top $104-$107
+    0x104: (0xB7, COLMAJ_4x4), 0x105: (0xB5, COLMAJ_4x4),
+    0x106: (0xB6, COLMAJ_4x4), 0x107: (0xB4, COLMAJ_4x4),
 }
-# Roles added after the first styled rooms were reviewed. Their palette votes go
-# to a second tally that only decides rows the roles above leave unclaimed, so
-# rooms already styled keep their colours.
+
 EXTRA_ROLE_OBJECTS = {
-    0x10C: (0xB7, COLMAJ_4x4), 0x10D: (0xB5, COLMAJ_4x4), 0x10E: (0xB6, COLMAJ_4x4), 0x10F: (0xB4, COLMAJ_4x4),
+    0x10C: (0xB7, COLMAJ_4x4), 0x10D: (0xB5, COLMAJ_4x4),
+    0x10E: (0xB6, COLMAJ_4x4), 0x10F: (0xB4, COLMAJ_4x4),
     # deep walls N S W E -> second GBC wall set (38 top, 39 right, 3A bottom, 3B left)
     0x007: (0x38, COLMAJ_2x2), 0x008: (0x3A, COLMAJ_2x2),
     0x067: (0x3B, COLMAJ_2x2), 0x068: (0x39, COLMAJ_2x2),
-    # deep corners NW SW NE SE: corner and inner chars from the concave corners
-    # (their two wall chars are already set by the deep walls above)
-    0x118: (0xB8, COLMAJ_2x2), 0x119: (0xBA, COLMAJ_2x2), 0x11A: (0xB9, COLMAJ_2x2), 0x11B: (0xBB, COLMAJ_2x2),
-    # layered stairs (north $130/$131, south $F9C/$F9D) -> GBC stair stripes
+    # deep corners NW SW NE SE
+    0x118: (0xB8, COLMAJ_2x2), 0x119: (0xBA, COLMAJ_2x2),
+    0x11A: (0xB9, COLMAJ_2x2), 0x11B: (0xBB, COLMAJ_2x2),
+    # layered stairs -> GBC stair stripes
     0x130: (0x50, COLMAJ_4x4), 0x131: (0x50, COLMAJ_4x4),
     0xF9C: (0x50, COLMAJ_4x4), 0xF9D: (0x50, COLMAJ_4x4),
 }
-# Solid fills: one flat glyph, no palette vote (a flat tile reads in any row).
-FILL_OBJECTS = {0x0A0: 0xA9, 0x0A1: 0xA9, 0x0A2: 0xA9, 0x0A3: 0xA9}  # diagonal ceilings -> black
-# Diagonal walls $009-$014 draw one 5-char column (void edge, 3 body, floor trim)
-# stepped one row per column. GBC sets have no diagonals; per char of the $009
-# column: (donor metatile, col, row). No palette votes: the trim char uses a
-# different palette row per object group.
+
+FILL_OBJECTS = {0x0A0: 0xA9, 0x0A1: 0xA9, 0x0A2: 0xA9, 0x0A3: 0xA9}
 DIAGONAL_OBJECTS = range(0x009, 0x015)
 DIAGONAL_STYLES = {
-    # stepped slices of the north wall under a black step
     "wall": [(0xA9, 0, 0), (0xB0, 0, 0), (0xB0, 0, 1), (0xB0, 0, 0), (0xB0, 0, 1)],
-    # flat dark steps with the wall's inner edge
     "fill": [(0xA9, 0, 0), (0xA8, 0, 0), (0xA8, 0, 0), (0xA8, 0, 0), (0xB0, 0, 1)],
 }
-# Alternates for objects with no direct GBC equivalent (review options).
 DEEP_STYLES = {
-    "second": {},  # default above: second GBC wall set 38-3B
-    "main": {0x007: (0xB0, COLMAJ_2x2), 0x008: (0xB2, COLMAJ_2x2),
-             0x067: (0xB3, COLMAJ_2x2), 0x068: (0xB1, COLMAJ_2x2)},
+    "second": {},
+    "main": {
+        0x007: (0xB0, COLMAJ_2x2), 0x008: (0xB2, COLMAJ_2x2),
+        0x067: (0xB3, COLMAJ_2x2), 0x068: (0xB1, COLMAJ_2x2),
+    },
 }
 STAIR_STYLES = {
-    "stripes": {},  # default above: stair stripes 50
-    "icons": {0x130: (0x44, COLMAJ_4x4), 0x131: (0x44, COLMAJ_4x4),
-              0xF9C: (0x45, COLMAJ_4x4), 0xF9D: (0x45, COLMAJ_4x4)},
+    "stripes": {},
+    "icons": {
+        0x130: (0x44, COLMAJ_4x4), 0x131: (0x44, COLMAJ_4x4),
+        0xF9C: (0x45, COLMAJ_4x4), 0xF9D: (0x45, COLMAJ_4x4),
+    },
 }
 FLOOR_META = 0xA0
-STREAM_BUDGET = 0x7000  # bank $5A bytes for streams after code + tables
-# Checked: RoomDraw_A_Many32x32Blocks ($018A44) writes the 8 floor words
-# row-major 4x2 (tilemap +$000..+$006, then +$080..+$086), twice vertically.
 FLOOR_SHAPE = ROWMAJ_4x2
+DEFAULT_SKIP_FLOORS = (0xB, 0xC, 0xE, 0xF)
+
+
+def parse_int(value: int | str) -> int:
+    if isinstance(value, int):
+        return value
+    text = str(value).strip()
+    if text.startswith("$"):
+        return int(text[1:], 16)
+    return int(text, 0)
+
+
+def parse_room_id(value: str) -> int:
+    text = value.strip()
+    if text.startswith("$"):
+        return int(text[1:], 16)
+    if text.lower().startswith("0x"):
+        return int(text, 16)
+    return int(text, 16)
+
+
+def canonical_styles_sha256(raw_config: dict) -> str:
+    payload = json.dumps(raw_config, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def load_styles_config(path: Path = DEFAULT_STYLES) -> tuple[dict, dict, list[dict], str]:
+    """Load and validate styles.json. Returns (raw_config, defaults, normalized_styles, sha256)."""
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if raw.get("schema_version") != 1:
+        raise ValueError(f"{path}: unsupported schema_version {raw.get('schema_version')!r}")
+    defaults_raw = raw.get("defaults", {})
+    defaults = {
+        "diagonal": defaults_raw.get("diagonal", "wall"),
+        "deep": defaults_raw.get("deep", "second"),
+        "stairs": defaults_raw.get("stairs", "stripes"),
+        "floor_meta": parse_int(defaults_raw.get("floor_meta", FLOOR_META)),
+        "skip_floors": [parse_int(v) for v in defaults_raw.get("skip_floors", DEFAULT_SKIP_FLOORS)],
+        "skip_unchanged_sheets": bool(defaults_raw.get("skip_unchanged_sheets", True)),
+    }
+    if defaults["diagonal"] not in DIAGONAL_STYLES:
+        raise ValueError(f"{path}: invalid default diagonal style {defaults['diagonal']!r}")
+    if defaults["deep"] not in DEEP_STYLES:
+        raise ValueError(f"{path}: invalid default deep style {defaults['deep']!r}")
+    if defaults["stairs"] not in STAIR_STYLES:
+        raise ValueError(f"{path}: invalid default stairs style {defaults['stairs']!r}")
+
+    styles_raw = raw.get("styles")
+    if not isinstance(styles_raw, list) or not styles_raw:
+        raise ValueError(f"{path}: 'styles' must be a non-empty list")
+
+    seen_names: set[str] = set()
+    seen_rooms: dict[int, str] = {}
+    styles: list[dict] = []
+    for entry in styles_raw:
+        name = entry.get("name")
+        if not isinstance(name, str) or not name or not name.replace("_", "").isalnum():
+            raise ValueError(f"{path}: invalid style name {name!r}")
+        if name in seen_names:
+            raise ValueError(f"{path}: duplicate style name {name!r}")
+        seen_names.add(name)
+
+        rooms = [parse_int(r) for r in entry.get("rooms", [])]
+        more_rooms = [parse_int(r) for r in entry.get("more_rooms", [])]
+        if not rooms:
+            raise ValueError(f"{path}: style {name!r} must have at least one room in 'rooms'")
+        for r in rooms + more_rooms:
+            if not (0 <= r < gw.ROOM_COUNT):
+                raise ValueError(f"{path}: style {name!r} room 0x{r:03X} out of range 0..0x{gw.ROOM_COUNT-1:03X}")
+            if r in seen_rooms:
+                raise ValueError(
+                    f"{path}: duplicate room 0x{r:03X} in style {name!r} (already in {seen_rooms[r]!r})"
+                )
+            seen_rooms[r] = name
+
+        donor = entry.get("donor", {})
+        if not isinstance(donor, dict) or (not donor.get("disasm") and not all(k in donor for k in ("png", "map", "pal"))):
+            raise ValueError(f"{path}: style {name!r} donor must specify png/map/pal and/or disasm")
+
+        row_pal = {}
+        for k, v in entry.get("row_pal", {}).items():
+            rk, rv = parse_int(k), parse_int(v)
+            if not (2 <= rk <= 7):
+                raise ValueError(f"{path}: style {name!r} row_pal key {rk} must be in 2..7")
+            row_pal[rk] = rv
+
+        extra_pal = {}
+        for k, cols in entry.get("extra_pal", {}).items():
+            ek = parse_int(k)
+            if ek < 8 or len(cols) != 4:
+                raise ValueError(f"{path}: style {name!r} extra_pal {k} must have id>=8 and 4 RGB tuples")
+            parsed_cols = []
+            for c in cols:
+                if len(c) != 3 or any(not (0 <= int(ch) <= 31) for ch in c):
+                    raise ValueError(f"{path}: style {name!r} extra_pal {k} invalid 5-bit RGB {c!r}")
+                parsed_cols.append((int(c[0]), int(c[1]), int(c[2])))
+            extra_pal[ek] = parsed_cols
+
+        accent = {}
+        for k, v in entry.get("accent", {}).items():
+            ak, av = parse_int(k), parse_int(v)
+            if not (2 <= ak <= 7):
+                raise ValueError(f"{path}: style {name!r} accent row {ak} must be in 2..7")
+            accent[ak] = av
+
+        accent_floors = {}
+        for obj_k, spec in entry.get("accent_floors", {}).items():
+            obj_id = parse_int(obj_k)
+            meta = parse_int(spec["meta"])
+            shades = {parse_int(sk): parse_int(sv) for sk, sv in spec["shades"].items()}
+            accent_floors[obj_id] = (meta, shades)
+
+        inlays = []
+        for inl in entry.get("inlays", []):
+            inlays.append({
+                "object": parse_int(inl["object"]),
+                "blocks": parse_int(inl["blocks"]),
+                "under": parse_int(inl["under"]),
+                "keep": {parse_int(sk): parse_int(sv) for sk, sv in inl["keep"].items()},
+            })
+
+        norm = {
+            "name": name,
+            "notes": entry.get("notes", ""),
+            "donor": donor,
+            "rooms": rooms,
+            "more_rooms": more_rooms,
+            "floor_meta": parse_int(entry["floor_meta"]) if "floor_meta" in entry else defaults["floor_meta"],
+            "skip_floors": [parse_int(v) for v in entry.get("skip_floors", defaults["skip_floors"])],
+            "row_pal": row_pal,
+            "extra_pal": extra_pal,
+            "accent": accent,
+            "accent_floors": accent_floors,
+            "inlays": inlays,
+            "posterize_like": parse_int(entry["posterize_like"]) if "posterize_like" in entry else None,
+        }
+        styles.append(norm)
+
+    return raw, defaults, styles, canonical_styles_sha256(raw)
 
 
 def object_words(rom: bytes, obj: int, n: int) -> list[int]:
@@ -193,21 +265,87 @@ def lum(rgb):
     return 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
 
 
+def _parse_disasm_palette(pal_file: Path, label: str) -> dict[int, list[tuple[int, int, int]]]:
+    txt = pal_file.read_text(encoding="utf-8")
+    anchor = label + ":"
+    if anchor not in txt:
+        raise ValueError(f"Palette label {label!r} not found in {pal_file}")
+    cols: list[tuple[int, int, int]] = []
+    for ln in txt[txt.index(anchor):].splitlines()[1:]:
+        stripped = ln.strip()
+        if stripped.startswith("m_RGB16"):
+            parts = stripped.split()
+            cols.append(tuple(int(p.lstrip("$"), 16) for p in parts[1:4]))
+            if len(cols) == 24:
+                break
+    if len(cols) != 24:
+        raise ValueError(f"Palette label {label!r} yielded {len(cols)} colors (expected 24)")
+    return {2 + i: cols[i * 4:i * 4 + 4] for i in range(6)}
+
+
 class Donor:
-    def __init__(self, root: Path, style: dict):
+    def __init__(self, donor_root: Path | None, disasm_root: Path | None, style: dict):
         from PIL import Image
-        im = Image.open(root / style["png"])
-        self.px = im.load()
-        self.maps = (root / style["map"]).read_bytes()
-        vals = [tuple(int(v, 16) for v in ln.split()) for ln in (root / style["pal"]).read_text().splitlines() if ln.strip()]
-        self.pal = {2 + i: vals[i * 4:i * 4 + 4] for i in range(6)}  # 5-bit RGB, GBC palettes 2-7
-        self.pal.update(style.get("extra_pal", {}))  # style-made palettes, ids 8+
 
-    def char(self, i):
-        x0, y0 = (i % 16) * 8, (i // 16) * 8
-        return [[self.px[x0 + x, y0 + y] & 3 for x in range(8)] for y in range(8)]
+        spec = style["donor"]
+        use_prebuilt = (
+            donor_root is not None
+            and all(k in spec for k in ("png", "map", "pal"))
+            and (donor_root / spec["png"]).is_file()
+            and (donor_root / spec["map"]).is_file()
+            and (donor_root / spec["pal"]).is_file()
+        )
+        if use_prebuilt:
+            im = Image.open(donor_root / spec["png"])
+            px = im.load()
+            self.vram = [
+                [[px[(i % 16) * 8 + x, (i // 16) * 8 + y] & 3 for x in range(8)] for y in range(8)]
+                for i in range(256)
+            ]
+            self.maps = (donor_root / spec["map"]).read_bytes()
+            vals = [
+                tuple(int(v, 16) for v in ln.split())
+                for ln in (donor_root / spec["pal"]).read_text(encoding="utf-8").splitlines()
+                if ln.strip()
+            ]
+            self.pal = {2 + i: vals[i * 4:i * 4 + 4] for i in range(6)}
+        elif "disasm" in spec:
+            if disasm_root is None or not disasm_root.is_dir():
+                raise FileNotFoundError(
+                    f"Style {style['name']!r} requires --oracles-disasm directory (not found: {disasm_root})"
+                )
+            dspec = spec["disasm"]
+            game = dspec["game"]
+            gfx_dir = disasm_root / f"gfx_compressible/{game}"
+            self.vram = [[[0] * 8 for _ in range(8)] for _ in range(256)]
+            for item in dspec["gfx"]:
+                im = Image.open(gfx_dir / f"{item['file']}.png")
+                px = im.load()
+                w, h = im.size
+                chars = [
+                    [[px[cx * 8 + x, cy * 8 + y] & 3 for x in range(8)] for y in range(8)]
+                    for cy in range(h // 8)
+                    for cx in range(w // 8)
+                ]
+                count = parse_int(item["count"]) if "count" in item else len(chars)
+                base = (parse_int(item["addr"]) - 0x8800) // 16
+                for idx in range(min(count, len(chars))):
+                    if 0 <= base + idx < 256:
+                        self.vram[base + idx] = chars[idx]
+            layout_path = disasm_root / f"tileset_layouts/{game}/tilesetMappings{dspec['layout']}.bin"
+            self.maps = layout_path.read_bytes()
+            pal_path = disasm_root / f"data/{game}/paletteData.s"
+            self.pal = _parse_disasm_palette(pal_path, dspec["palette_label"])
+        else:
+            raise FileNotFoundError(
+                f"Style {style['name']!r} donor assets missing under {donor_root} and no 'disasm' recipe"
+            )
+        self.pal.update(style.get("extra_pal", {}))
 
-    def quadrant(self, meta, qx, qy):
+    def char(self, i: int):
+        return self.vram[i]
+
+    def quadrant(self, meta: int, qx: int, qy: int):
         """8x8 shade grid (GBC colour 0-3) and GBC palette of a metatile quadrant."""
         e = self.maps[meta * 8:meta * 8 + 8]
         k = qy * 2 + qx
@@ -229,23 +367,117 @@ def unflip(g, word):
     return g
 
 
-def build(a: argparse.Namespace) -> int:
-    rom = Path(a.rom).read_bytes()
-    donor_root = Path(a.donor)
-    OUT.mkdir(parents=True, exist_ok=True)
-    streams = []  # (label, path)
-    sheet_map = []  # per style: dict sheet -> stream index (1-based)
-    palettes = []
-    coverage = {}
-    room_style = [0] * gw.ROOM_COUNT
+def bank_5a_stream_budget(num_styles: int, num_streams: int) -> int:
+    table_bytes = (
+        gw.ROOM_COUNT
+        + 256 * num_styles
+        + 4 * num_streams
+        + 2 * num_styles
+        + 180 * num_styles
+    )
+    budget = BANK_CAPACITY - CODE_RESERVE - table_bytes
+    if budget <= 0:
+        raise ValueError(f"Bank $5A tables ({table_bytes} B) exceed bank capacity")
+    return budget
 
-    for sid, style in enumerate(STYLES, 1):
-        donor = Donor(donor_root, style)
-        voters = set(style["rooms"])
-        rooms = style["rooms"] + style.get("more_rooms", [])
-        for r in rooms:
+
+def render_abyss_asm(
+    styles: list[dict],
+    sheet_map: list[dict[int, int]],
+    streams: list[str],
+    palettes: list[list[int]],
+    stream_sizes: dict[str, int],
+) -> tuple[str, dict[str, int]]:
+    """Deterministically generate abyss_gbc.asm and bank usage metrics."""
+    room_style = [0] * gw.ROOM_COUNT
+    for sid, style in enumerate(styles, 1):
+        for r in style["rooms"] + style["more_rooms"]:
             room_style[r] = sid
-        # sheets per slot 0-6 (slot 7 is shared animated/door art and stays SNES)
+
+    lines = [
+        "; Generated by Scripts/Generate/gen_abyss_gbc.py. Do not edit.",
+        f"; Styles: {', '.join(f'{i}={s['name']}' for i, s in enumerate(styles, 1))}",
+        "AbyssGbc_RoomStyle:",
+    ]
+    for i in range(0, gw.ROOM_COUNT, 16):
+        lines.append("  db " + ", ".join(f"${v:02X}" for v in room_style[i:i + 16]))
+
+    lines.append("AbyssGbc_SheetMap:")
+    for smap in sheet_map:
+        row = [smap.get(s, 0) for s in range(256)]
+        for i in range(0, 256, 16):
+            lines.append("  db " + ", ".join(f"${v:02X}" for v in row[i:i + 16]))
+
+    lines.append("AbyssGbc_Ptr:")
+    for stem in streams:
+        lines.append(f"  dl AbyssGbc_{stem.replace('.', '_')} : db $00")
+
+    lines.append("AbyssGbc_PalOffset:")
+    lines.append("  dw " + ", ".join(f"${i * 180:04X}" for i in range(len(palettes))))
+
+    lines.append("AbyssGbc_Pal:")
+    for words in palettes:
+        for i in range(0, len(words), 15):
+            lines.append("  dw " + ", ".join(f"${w:04X}" for w in words[i:i + 15]))
+
+    budget_a = bank_5a_stream_budget(len(styles), len(streams))
+    used_a, used_b, bank_b = 0, 0, False
+    for stem in streams:
+        size = stream_sizes[stem]
+        if not bank_b and used_a + size > budget_a:
+            lines += ['assert pc() <= $5B0000, "Abyss GBC bank $5A overrun"', "org $5B8000"]
+            bank_b = True
+        if bank_b:
+            used_b += size
+        else:
+            used_a += size
+        lines.append(f'AbyssGbc_{stem.replace(".", "_")}: incbin "Dungeons/Data/abyss_gbc/{stem}.lz2"')
+    if not bank_b:
+        lines.append('assert pc() <= $5B0000, "Abyss GBC bank $5A overrun"')
+    else:
+        lines.append('assert pc() <= $5C0000, "Abyss GBC bank $5B overrun"')
+    if used_b > BANK_CAPACITY:
+        raise ValueError(f"Abyss GBC Bank $5B stream overflow: {used_b} > {BANK_CAPACITY}")
+
+    metrics = {
+        "bank5a_stream_budget": budget_a,
+        "bank5a_stream_bytes": used_a,
+        "bank5b_stream_bytes": used_b,
+        "bank5b_free_bytes": BANK_CAPACITY - used_b,
+        "total_lz2_bytes": used_a + used_b,
+    }
+    return "\n".join(lines) + "\n", metrics
+
+
+def generate_artifacts(
+    rom: bytes,
+    styles_path: Path,
+    donor_root: Path | None,
+    disasm_root: Path | None,
+    *,
+    diagonal: str | None = None,
+    deep: str | None = None,
+    stairs: str | None = None,
+) -> tuple[dict[str, bytes | str], dict[str, int]]:
+    """Build all Abyss GBC artifacts in memory. Returns ({filename: content}, metrics)."""
+    _, defaults, styles, styles_sha = load_styles_config(styles_path)
+    diag_mode = diagonal or defaults["diagonal"]
+    deep_mode = deep or defaults["deep"]
+    stairs_mode = stairs or defaults["stairs"]
+    skip_unchanged = defaults["skip_unchanged_sheets"]
+
+    streams: list[str] = []
+    sheet_map: list[dict[int, int]] = []
+    palettes: list[list[int]] = []
+    stream_sizes: dict[str, int] = {}
+    artifacts: dict[str, bytes | str] = {}
+    coverage_styles: dict[str, dict] = {}
+
+    for style in styles:
+        donor = Donor(donor_root, disasm_root, style)
+        voters = set(style["rooms"])
+        rooms = style["rooms"] + style["more_rooms"]
+
         slot_sheets: dict[int, set[int]] = defaultdict(set)
         pal_ids = []
         for r in rooms:
@@ -254,7 +486,6 @@ def build(a: argparse.Namespace) -> int:
             for slot, s in enumerate(gw.effective_slots(rom, bs)[:7]):
                 slot_sheets[slot].add(s)
 
-        # donor glyph per (char, from word) ; first writer wins
         glyph: dict[int, list] = {}
         votes: dict[int, Counter] = defaultdict(Counter)
         extra_votes: dict[int, Counter] = defaultdict(Counter)
@@ -269,13 +500,11 @@ def build(a: argparse.Namespace) -> int:
             if c not in glyph:
                 glyph[c] = unflip(g, word)
 
-        floor_meta = style.get("floor_meta", FLOOR_META)
-        # Glyph values: 0-3 = shade of the row's donor palette, 4-6 = shade 0-2 of
-        # the row's accent palette (style key "accent").
-        for obj, (meta, shades) in style.get("accent_floors", {}).items():
+        floor_meta = style["floor_meta"]
+        for obj, (meta, shades) in style["accent_floors"].items():
             for (col, row), w in zip(FLOOR_SHAPE, object_words(rom, obj, 8)):
                 place(w, meta, col, row, None, shades)
-        for inlay in style.get("inlays", []):
+        for inlay in style["inlays"]:
             meta, shades = style["accent_floors"][inlay["under"]]
             under_c = object_words(rom, inlay["under"], 1)[0] & 0x3FF
             ws = object_words(rom, inlay["object"], 16 * inlay["blocks"])
@@ -290,47 +519,53 @@ def build(a: argparse.Namespace) -> int:
                 sg = sc.sheet_to_grid(bytes(data[:0x600]))
                 tx, ty = (c % 16) * 8, ((c % 64) // 16) * 8
                 src = [[sg[ty + y][tx + x] for x in range(8)] for y in range(8)]
-                src = unflip(src, w)  # as drawn on screen
-                # The carpet words alternate h-flip per column starting flipped, so
-                # block column c sits on carpet quadrant (c + 1) % 2.
+                src = unflip(src, w)
                 ug, _ = donor.quadrant(meta, (col + 1) % 2, row % 2)
-                out = [[inlay["keep"][src[y][x]] if src[y][x] in inlay["keep"] else shades[ug[y][x]]
-                        for x in range(8)] for y in range(8)]
+                out = [
+                    [inlay["keep"][src[y][x]] if src[y][x] in inlay["keep"] else shades[ug[y][x]]
+                     for x in range(8)]
+                    for y in range(8)
+                ]
                 glyph[c] = unflip(out, w)
 
-        extra = {**EXTRA_ROLE_OBJECTS, **DEEP_STYLES[a.deep], **STAIR_STYLES[a.stairs]}
+        extra = {**EXTRA_ROLE_OBJECTS, **DEEP_STYLES[deep_mode], **STAIR_STYLES[stairs_mode]}
         for roles, tally in ((ROLE_OBJECTS, votes), (extra, extra_votes)):
             for obj, (meta, shape) in roles.items():
                 for (col, row), w in zip(shape, object_words(rom, obj, len(shape))):
                     place(w, meta, col, row, tally)
         for obj, meta in FILL_OBJECTS.items():
             place(object_words(rom, obj, 1)[0], meta, 0, 0, None)
-        diag = {w & 0x3FF: spec for w, spec in
-                zip(object_words(rom, DIAGONAL_OBJECTS[0], 5), DIAGONAL_STYLES[a.diagonal])}
+        diag = {
+            w & 0x3FF: spec
+            for w, spec in zip(object_words(rom, DIAGONAL_OBJECTS[0], 5), DIAGONAL_STYLES[diag_mode])
+        }
         for obj in DIAGONAL_OBJECTS:
             for w in object_words(rom, obj, 5):
                 if (w & 0x3FF) in diag:
                     meta, col, row = diag[w & 0x3FF]
                     place(w, meta, col, row, None)
+
         table = gw.room_object_table(rom, rooms)
+        skip_floors = set(style["skip_floors"])
         for r in rooms:
             p = gw.snes_pc(table + 3 * r)
             b = rom[gw.snes_pc(int.from_bytes(rom[p:p + 3], "little"))]
             for f in (b >> 4, b & 0xF):
+                if f in skip_floors:
+                    continue
                 for k in range(8):
                     w = gw.rom_word(rom, gw.OBJ_TABLE_PC + f * 16 + 2 * k)
                     col, row = FLOOR_SHAPE[k]
                     place(w, floor_meta, col, row, votes if r in voters else None)
 
-        # palette rows 2-7: donor palette by vote, default = floor palette
         floor_pal = donor.quadrant(floor_meta, 0, 0)[1]
         row_pal = {}
         for r in range(2, 8):
             tally = votes[r] or extra_votes[r]
             row_pal[r] = tally.most_common(1)[0][0] if tally else floor_pal
-        row_pal.update(style.get("row_pal", {}))
-        # posterize: rank SNES indices 1-7 by mean luminance over the rooms' rows 2-7
-        like = style.get("posterize_like")
+        row_pal.update(style["row_pal"])
+
+        like = style["posterize_like"]
         snes = gw.palette(rom, gw.room_blockset_palette(rom, like)[1] if like is not None else pal_ids[0])
         mean = {}
         for i in range(1, 8):
@@ -340,24 +575,20 @@ def build(a: argparse.Namespace) -> int:
                 vals.append(lum(((w & 31) * 8, ((w >> 5) & 31) * 8, ((w >> 10) & 31) * 8)))
             mean[i] = sum(vals) / len(vals)
         fp = donor.pal[floor_pal]
-        donor_rank = sorted(range(4), key=lambda k: -lum(c5(fp[k])))  # brightest first
+        donor_rank = sorted(range(4), key=lambda k: -lum(c5(fp[k])))
         ranked = sorted(mean, key=lambda i: -mean[i])
         quant = {0: 0}
         for n, i in enumerate(ranked):
             quant[i] = donor_rank[min(3, n * 4 // 7)] + 1
 
-        # Palette entry i (1-7) holds the donor shade that SNES index i posterizes
-        # to, so sheets this style does not remap (slot 7, animated, unlisted)
-        # still read by luminance instead of falling to the darkest shade.
         inv = {}
         for i in range(1, 8):
             inv.setdefault(quant[i] - 1, i)
-        # Accent: the three indices that duplicate a shade (one each for the three
-        # brightest) hold the accent palette's shades 0-2, brightest first. Its
-        # shade 3 is the row's own darkest shade.
-        accent = style.get("accent", {})
-        spare = sorted((i for i in range(1, 8) if i not in inv.values()),
-                       key=lambda i: donor_rank.index(quant[i] - 1))
+        accent = style["accent"]
+        spare = sorted(
+            (i for i in range(1, 8) if i not in inv.values()),
+            key=lambda i: donor_rank.index(quant[i] - 1),
+        )
         pix = {**inv, **{4 + k: i for k, i in enumerate(spare)}}
         words = []
         for r in range(2, 8):
@@ -367,24 +598,24 @@ def build(a: argparse.Namespace) -> int:
                 acc = sorted(donor.pal[accent[r]][:3], key=lambda c: -lum(c5(c)))
                 for k, i in enumerate(spare):
                     half[i - 1] = acc[k]
-            row = half + [cols[0]] + half  # 1-7, 8, 9-15
+            row = half + [cols[0]] + half
             for c in row:
                 words.append(c[0] | (c[1] << 5) | (c[2] << 10))
         palettes.append(words)
 
-
-        smap = {}
-        cov = {}
+        smap: dict[int, int] = {}
+        cov: dict[str, dict | str] = {}
         for slot in sorted(slot_sheets):
             for s in sorted(slot_sheets[slot]):
-                if s in smap:
+                if s in smap or f"{s:02X}" in cov:
                     continue
                 addr = st.ptr(rom, s)
                 data, _ = st.decomp(rom, addr)
                 if len(data) < 0x600:
                     cov[f"{s:02X}"] = "skipped: not a 0x600-byte 3bpp sheet"
                     continue
-                g = sc.sheet_to_grid(bytes(data[:0x600]))
+                orig = sc.sheet_to_grid(bytes(data[:0x600]))
+                g = [row[:] for row in orig]
                 donor_chars, fallback = [], []
                 for t in range(64):
                     tx, ty = (t % 16) * 8, (t // 16) * 8
@@ -396,78 +627,598 @@ def build(a: argparse.Namespace) -> int:
                             if dg:
                                 g[ty + y][tx + x] = pix[dg[y][x]]
                             elif accent and v:
-                                # free the spare indices for the accent palette
                                 g[ty + y][tx + x] = inv[quant[v] - 1]
                     if dg:
                         donor_chars.append(c)
                     elif any(g[ty + y][tx + x] for y in range(8) for x in range(8)):
                         fallback.append(c)
-                stem = f"{style['name']}.{s:02X}"
-                (OUT / f"{stem}.txt").write_text(sc.grid_to_text(g))
-                (OUT / f"{stem}.lz2").write_bytes(lz2.compress(sc.grid_to_sheet(g)))
-                streams.append(stem)
-                smap[s] = len(streams)
-                cov[f"{s:02X}"] = {"slot": slot, "donor_chars": [f"{c:03X}" for c in donor_chars],
-                                   "posterized_chars": len(fallback)}
-        sheet_map.append(smap)
-        coverage[style["name"]] = {"rooms": [f"{r:02X}" for r in rooms], "row_palettes": {str(k): v for k, v in row_pal.items()},
-                                   "row_votes": {str(r): dict(sorted(votes[r].items())) for r in range(2, 8)},
-                                   "extra_row_votes": {str(r): dict(sorted(extra_votes[r].items())) for r in range(2, 8)},
-                                   "sheets": cov}
 
-    lines = [
-        "; Generated by Scripts/Generate/gen_abyss_gbc.py. Do not edit.",
-        f"; Styles: {', '.join(f'{i}={s['name']}' for i, s in enumerate(STYLES, 1))}",
-        "AbyssGbc_RoomStyle:",
-    ]
-    for i in range(0, gw.ROOM_COUNT, 16):
-        lines.append("  db " + ", ".join(f"${v:02X}" for v in room_style[i:i + 16]))
-    lines.append("AbyssGbc_SheetMap:")
-    for smap in sheet_map:
-        row = [smap.get(s, 0) for s in range(256)]
-        for i in range(0, 256, 16):
-            lines.append("  db " + ", ".join(f"${v:02X}" for v in row[i:i + 16]))
-    lines.append("AbyssGbc_Ptr:")
-    for stem in streams:
-        lines.append(f"  dl AbyssGbc_{stem.replace('.', '_')} : db $00")
-    lines.append("AbyssGbc_PalOffset:")
-    lines.append("  dw " + ", ".join(f"${i * 180:04X}" for i in range(len(palettes))))
-    lines.append("AbyssGbc_Pal:")
-    for words in palettes:
-        for i in range(0, len(words), 15):
-            lines.append("  dw " + ", ".join(f"${w:04X}" for w in words[i:i + 15]))
-    # Streams fill the rest of bank $5A (code + tables stay under STREAM_BUDGET), then $5B.
-    used, bank_b = 0, False
-    for stem in streams:
-        size = (OUT / f"{stem}.lz2").stat().st_size
-        if not bank_b and used + size > STREAM_BUDGET:
-            lines += ["assert pc() <= $5B0000, \"Abyss GBC bank $5A overrun\"", "org $5B8000"]
-            bank_b = True
-        used += size
-        lines.append(f"AbyssGbc_{stem.replace('.', '_')}: incbin \"Dungeons/Data/abyss_gbc/{stem}.lz2\"")
-    lines.append("assert pc() <= $5C0000, \"Abyss GBC bank $5B overrun\"")
-    (OUT / "abyss_gbc.asm").write_text("\n".join(lines) + "\n")
-    (OUT / "coverage.json").write_text(json.dumps(coverage, indent=1) + "\n")
-    total = sum((OUT / f"{s}.lz2").stat().st_size for s in streams)
-    print(f"styles={len(STYLES)} streams={len(streams)} lz2_bytes={total}")
+                identical = (g == orig)
+                remapped = not (skip_unchanged and identical)
+                if remapped:
+                    stem = f"{style['name']}.{s:02X}"
+                    txt_data = sc.grid_to_text(g)
+                    lz2_data = lz2.compress(sc.grid_to_sheet(g))
+                    artifacts[f"{stem}.txt"] = txt_data
+                    artifacts[f"{stem}.lz2"] = lz2_data
+                    streams.append(stem)
+                    stream_sizes[stem] = len(lz2_data)
+                    smap[s] = len(streams)
+                cov[f"{s:02X}"] = {
+                    "slot": slot,
+                    "remapped": remapped,
+                    "donor_chars": [f"{c:03X}" for c in donor_chars],
+                    "posterized_chars": len(fallback),
+                }
+        sheet_map.append(smap)
+        coverage_styles[style["name"]] = {
+            "rooms": [f"{r:02X}" for r in rooms],
+            "row_palettes": {str(k): v for k, v in row_pal.items()},
+            "row_votes": {str(r): dict(sorted(votes[r].items())) for r in range(2, 8)},
+            "extra_row_votes": {str(r): dict(sorted(extra_votes[r].items())) for r in range(2, 8)},
+            "palette_words": [f"{w:04X}" for w in words],
+            "sheets": cov,
+        }
+
+    asm_text, metrics = render_abyss_asm(styles, sheet_map, streams, palettes, stream_sizes)
+    artifacts["abyss_gbc.asm"] = asm_text
+    coverage_doc = {
+        "schema_version": 2,
+        "styles_sha256": styles_sha,
+        "streams": streams,
+        "bank_metrics": metrics,
+        "styles": coverage_styles,
+    }
+    artifacts["coverage.json"] = json.dumps(coverage_doc, indent=1) + "\n"
+    metrics["styles"] = len(styles)
+    metrics["rooms"] = sum(len(s["rooms"]) + len(s["more_rooms"]) for s in styles)
+    metrics["streams"] = len(streams)
+    return artifacts, metrics
+
+
+def cmd_build(a: argparse.Namespace) -> int:
+    out_dir = Path(a.out_dir)
+    styles_path = Path(a.styles) if a.styles else (out_dir / "styles.json")
+    rom = Path(a.rom).read_bytes()
+    if not st.relocated(rom):
+        print(
+            "[WARN] --rom appears unpatched (sheet table not relocated); pass a built oos168x.sfc "
+            "so Bank $01 wall_profile_selector object words match runtime.",
+            file=sys.stderr,
+        )
+    donor_root = Path(a.donor) if a.donor else None
+    disasm_root = Path(a.oracles_disasm) if a.oracles_disasm else (DEFAULT_DISASM if DEFAULT_DISASM.is_dir() else None)
+
+    artifacts, metrics = generate_artifacts(
+        rom, styles_path, donor_root, disasm_root,
+        diagonal=a.diagonal, deep=a.deep, stairs=a.stairs,
+    )
+    out_dir.mkdir(parents=True, exist_ok=True)
+    expected_names = set(artifacts.keys())
+    # Remove stale .txt/.lz2 files from earlier style configurations
+    for stale in sorted(out_dir.iterdir()):
+        if stale.suffix in (".txt", ".lz2") and stale.name not in expected_names:
+            stale.unlink()
+    for name, content in sorted(artifacts.items()):
+        target = out_dir / name
+        if isinstance(content, bytes):
+            target.write_bytes(content)
+        else:
+            target.write_text(content, encoding="utf-8")
+
+    print(
+        f"styles={metrics['styles']} rooms={metrics['rooms']} streams={metrics['streams']} "
+        f"lz2_bytes={metrics['total_lz2_bytes']} "
+        f"bank5A_streams={metrics['bank5a_stream_bytes']}/{metrics['bank5a_stream_budget']} "
+        f"bank5B_streams={metrics['bank5b_stream_bytes']}/{BANK_CAPACITY}"
+    )
     return 0
 
 
-def main() -> int:
+def cmd_check(a: argparse.Namespace) -> int:
+    out_dir = Path(a.out_dir)
+    styles_path = Path(a.styles) if a.styles else (out_dir / "styles.json")
+    errors: list[str] = []
+
+    try:
+        _, _, styles, styles_sha = load_styles_config(styles_path)
+    except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        print(f"[FAIL] styles.json validation failed: {exc}", file=sys.stderr)
+        return 1
+
+    cov_path = out_dir / "coverage.json"
+    asm_path = out_dir / "abyss_gbc.asm"
+    if not cov_path.is_file():
+        errors.append(f"Missing {cov_path}")
+    if not asm_path.is_file():
+        errors.append(f"Missing {asm_path}")
+    if errors:
+        for e in errors:
+            print(f"[FAIL] {e}", file=sys.stderr)
+        return 1
+
+    cov_doc = json.loads(cov_path.read_text(encoding="utf-8"))
+    if cov_doc.get("styles_sha256") != styles_sha:
+        errors.append(
+            f"styles.json digest drift: coverage.json has {cov_doc.get('styles_sha256')!r}, "
+            f"styles.json has {styles_sha!r} (re-run build)"
+        )
+
+    cov_styles = cov_doc.get("styles", {})
+    expected_style_names = [s["name"] for s in styles]
+    if list(cov_styles.keys()) != expected_style_names:
+        errors.append(
+            f"Style order/set mismatch: styles.json={expected_style_names} vs coverage.json={list(cov_styles.keys())}"
+        )
+
+    streams = cov_doc.get("streams", [])
+    stream_index = {stem: idx for idx, stem in enumerate(streams, 1)}
+    sheet_map: list[dict[int, int]] = []
+    palettes: list[list[int]] = []
+    stream_sizes: dict[str, int] = {}
+    expected_stems: set[str] = set()
+
+    for style in styles:
+        name = style["name"]
+        centry = cov_styles.get(name)
+        if not isinstance(centry, dict):
+            errors.append(f"Missing coverage entry for style {name!r}")
+            continue
+        expected_rooms = [f"{r:02X}" for r in style["rooms"] + style["more_rooms"]]
+        if centry.get("rooms") != expected_rooms:
+            errors.append(f"Style {name!r} rooms mismatch: styles.json={expected_rooms} vs coverage.json={centry.get('rooms')}")
+        for rk, rv in style["row_pal"].items():
+            if centry.get("row_palettes", {}).get(str(rk)) != rv:
+                errors.append(
+                    f"Style {name!r} row_pal[{rk}] mismatch: styles.json={rv} vs coverage.json={centry.get('row_palettes', {}).get(str(rk))}"
+                )
+        pwords_hex = centry.get("palette_words", [])
+        if len(pwords_hex) != 90:
+            errors.append(f"Style {name!r} palette_words has {len(pwords_hex)} words (expected 90)")
+            palettes.append([0] * 90)
+        else:
+            palettes.append([int(w, 16) for w in pwords_hex])
+
+        smap: dict[int, int] = {}
+        for shex, sinfo in centry.get("sheets", {}).items():
+            if not isinstance(sinfo, dict) or not sinfo.get("remapped", True):
+                continue
+            stem = f"{name}.{shex}"
+            expected_stems.add(stem)
+            if stem not in stream_index:
+                errors.append(f"Remapped sheet {stem} missing from coverage.json streams list")
+            else:
+                smap[int(shex, 16)] = stream_index[stem]
+        sheet_map.append(smap)
+
+    if set(streams) != expected_stems or len(streams) != len(expected_stems):
+        errors.append(
+            f"Stream list mismatch: streams={len(streams)} expected_remapped={len(expected_stems)}"
+        )
+
+    # Verify every .txt -> .lz2 matches deterministically and no orphan files exist
+    for stem in streams:
+        txt_p = out_dir / f"{stem}.txt"
+        lz2_p = out_dir / f"{stem}.lz2"
+        if not txt_p.is_file():
+            errors.append(f"Missing {txt_p.name}")
+            continue
+        if not lz2_p.is_file():
+            errors.append(f"Missing {lz2_p.name}")
+            continue
+        expected_lz2 = lz2.compress(sc.grid_to_sheet(sc.text_to_grid(txt_p.read_text(encoding="utf-8"))))
+        actual_lz2 = lz2_p.read_bytes()
+        if expected_lz2 != actual_lz2:
+            errors.append(
+                f"Drift in {lz2_p.name}: checked-in ({len(actual_lz2)} B) != recompressed {txt_p.name} ({len(expected_lz2)} B)"
+            )
+        stream_sizes[stem] = len(actual_lz2)
+
+    disk_sheet_files = {p.name for p in out_dir.iterdir() if p.suffix in (".txt", ".lz2")}
+    expected_sheet_files = {f"{stem}.{ext}" for stem in expected_stems for ext in ("txt", "lz2")}
+    orphans = sorted(disk_sheet_files - expected_sheet_files)
+    if orphans:
+        errors.append(f"Orphan sheet files in {out_dir}: {', '.join(orphans[:10])}")
+
+    if not errors:
+        try:
+            expected_asm, metrics = render_abyss_asm(styles, sheet_map, streams, palettes, stream_sizes)
+        except ValueError as exc:
+            errors.append(str(exc))
+            expected_asm, metrics = "", {}
+        else:
+            actual_asm = asm_path.read_text(encoding="utf-8")
+            if expected_asm != actual_asm:
+                diff = "".join(
+                    difflib.unified_diff(
+                        actual_asm.splitlines(keepends=True),
+                        expected_asm.splitlines(keepends=True),
+                        fromfile="abyss_gbc.asm (checked-in)",
+                        tofile="abyss_gbc.asm (expected)",
+                        n=2,
+                    )
+                )
+                errors.append(f"abyss_gbc.asm drift detected:\n{diff[:1200]}")
+
+    # Optional full ROM + donor deterministic rebuild verification
+    if not errors and a.rom:
+        rom_bytes = Path(a.rom).read_bytes()
+        donor_root = Path(a.donor) if a.donor else None
+        disasm_root = Path(a.oracles_disasm) if a.oracles_disasm else (DEFAULT_DISASM if DEFAULT_DISASM.is_dir() else None)
+        rebuilt, _ = generate_artifacts(
+            rom_bytes, styles_path, donor_root, disasm_root,
+            diagonal=a.diagonal, deep=a.deep, stairs=a.stairs,
+        )
+        for name, expected in sorted(rebuilt.items()):
+            p = out_dir / name
+            if not p.is_file():
+                errors.append(f"Full rebuild check: missing {name}")
+                continue
+            actual = p.read_bytes() if isinstance(expected, bytes) else p.read_text(encoding="utf-8")
+            if actual != expected:
+                errors.append(f"Full rebuild check: drift in {name}")
+
+    if errors:
+        for e in errors:
+            print(f"[FAIL] {e}", file=sys.stderr)
+        return 1
+
+    print(
+        f"[OK] abyss_gbc check passed: styles={len(styles)} "
+        f"rooms={sum(len(s['rooms']) + len(s['more_rooms']) for s in styles)} "
+        f"streams={len(streams)} lz2_bytes={metrics['total_lz2_bytes']} "
+        f"bank5A_streams={metrics['bank5a_stream_bytes']}/{metrics['bank5a_stream_budget']} "
+        f"bank5B_streams={metrics['bank5b_stream_bytes']}/{BANK_CAPACITY}"
+    )
+    return 0
+
+
+def _find_z3ed(explicit: str | None) -> Path | None:
+    if explicit:
+        p = Path(explicit)
+        return p if p.is_file() else None
+    env = os.environ.get("YAZE_Z3ED")
+    if env and Path(env).is_file():
+        return Path(env)
+    which = shutil.which("z3ed")
+    if which:
+        return Path(which)
+    cand = Path.home() / ".local/bin/z3ed"
+    return cand if cand.is_file() else None
+
+
+def _load_font(size: int):
+    from PIL import ImageFont
+    for candidate in (
+        "/System/Library/Fonts/Menlo.ttc",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+    ):
+        if os.path.exists(candidate):
+            return ImageFont.truetype(candidate, size)
+    return ImageFont.load_default()
+
+
+def _bgr555_to_rgb(w: int) -> tuple[int, int, int]:
+    return (((w & 31) * 255) // 31, (((w >> 5) & 31) * 255) // 31, (((w >> 10) & 31) * 255) // 31)
+
+
+def _render_sheet_strip_fallback(rom: bytes, slots: list[int], pal_words: list[int], overrides: dict[int, bytes]):
+    """Pure-Python 3bpp sheet strip preview fallback when z3ed is unavailable."""
+    from PIL import Image
+    # 7 sheets side by side (each 128x32 -> scaled 1x or stacked 2x4 -> 384x160)
+    tile_w, tile_h = 128, 32
+    cols_n = 2
+    rows_n = (len(slots) + 1) // 2
+    img = Image.new("RGB", (cols_n * tile_w + 8, rows_n * (tile_h + 14) + 8), (18, 18, 22))
+    px = img.load()
+    # Use row 2 palette (first 15 colors, index 0 = black)
+    pal_rgb = [(0, 0, 0)] + [_bgr555_to_rgb(pal_words[i]) for i in range(7)]
+    for idx, s in enumerate(slots):
+        if s in overrides:
+            raw, _ = lz2.decompress(overrides[s], 0)
+        else:
+            raw, _ = st.decomp(rom, st.ptr(rom, s))
+        grid = sc.sheet_to_grid(bytes(raw[:0x600])) if len(raw) >= 0x600 else [[0] * 128 for _ in range(32)]
+        ox = (idx % cols_n) * tile_w + 4
+        oy = (idx // cols_n) * (tile_h + 14) + 14
+        for y in range(min(32, len(grid))):
+            for x in range(min(128, len(grid[y]))):
+                px[ox + x, oy + y] = pal_rgb[grid[y][x] & 7]
+    return img.resize((384, 384), Image.NEAREST)
+
+
+def _render_room_z3ed(z3ed: Path, rom_path: Path, room: int, out_png: Path) -> None:
+    proc = subprocess.run(
+        [str(z3ed), "dungeon-render", f"--rom={rom_path}", f"--room=0x{room:03X}", f"--output={out_png}", "--format=json"],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"z3ed dungeon-render failed for 0x{room:03X}: {(proc.stderr or proc.stdout).strip()[:300]}")
+
+
+def _patch_scratch_rom(rom: bytes, room: int, pal_words: list[int], sheet_lz2: dict[int, bytes]) -> bytes:
+    """Create an in-memory scratch ROM copy with GBC sheets + palette patched for preview rendering."""
+    buf = bytearray(rom)
+    pc = 0x2D0000  # Bank $5A in unheadered 4MB LoROM
+    for s, blob in sheet_lz2.items():
+        bank = pc >> 15
+        addr = 0x8000 | (pc & 0x7FFF)
+        if addr + len(blob) > 0x10000:
+            bank += 1
+            pc = bank << 15
+            addr = 0x8000
+        buf[pc:pc + len(blob)] = blob
+        if s < st.N:
+            buf[st.pc(st.TBL_BANK) + s] = bank
+            buf[st.pc(st.TBL_HIGH) + s] = (addr >> 8) & 0xFF
+            buf[st.pc(st.TBL_LOW) + s] = addr & 0xFF
+        if st.relocated(rom) or s >= st.N:
+            buf[st.pc(st.NEW_BANK) + s] = bank
+            buf[st.pc(st.NEW_HIGH) + s] = (addr >> 8) & 0xFF
+            buf[st.pc(st.NEW_LOW) + s] = addr & 0xFF
+        pc += len(blob)
+
+    _, pid = gw.room_blockset_palette(rom, room)
+    off = gw.rom_word(rom, gw.snes_pc(gw.PAL_INDEX) + pid)
+    pal_pc = gw.snes_pc(gw.PAL_DATA) + off
+    for i, w in enumerate(pal_words):
+        struct.pack_into("<H", buf, pal_pc + 2 * i, w)
+    return bytes(buf)
+
+
+def cmd_preview_room(a: argparse.Namespace) -> int:
+    from PIL import Image, ImageDraw
+
+    out_dir = Path(a.out_dir)
+    styles_path = Path(a.styles) if a.styles else (out_dir / "styles.json")
+    _, _, styles, _ = load_styles_config(styles_path)
+    cov_doc = json.loads((out_dir / "coverage.json").read_text(encoding="utf-8"))
+    cov_styles = cov_doc.get("styles", {})
+
+    rom_path = Path(a.rom)
+    if not rom_path.is_file():
+        print(f"[FAIL] ROM not found: {rom_path}", file=sys.stderr)
+        return 1
+    rom = rom_path.read_bytes()
+
+    room_ids: list[int] = []
+    for raw_arg in a.preview_room:
+        for tok in raw_arg.split(","):
+            tok = tok.strip()
+            if tok:
+                rid = parse_room_id(tok)
+                if not (0 <= rid < gw.ROOM_COUNT):
+                    print(f"[FAIL] Room ID 0x{rid:03X} out of range", file=sys.stderr)
+                    return 1
+                room_ids.append(rid)
+    if not room_ids:
+        print("[FAIL] No room IDs supplied to --preview-room", file=sys.stderr)
+        return 1
+
+    room_to_style: dict[int, tuple[int, dict]] = {}
+    for sid, style in enumerate(styles, 1):
+        for r in style["rooms"] + style["more_rooms"]:
+            room_to_style[r] = (sid, style)
+
+    z3ed = None if a.no_z3ed else _find_z3ed(a.z3ed)
+    panel_size = a.panel_size
+    sidebar_w = 340
+    gap = 12
+    f_hdr = _load_font(15)
+    f_sub = _load_font(12)
+    f_mono = _load_font(11)
+
+    rows_imgs = []
+    summary = []
+
+    with tempfile.TemporaryDirectory(prefix="oos-abyss-preview-") as td:
+        tdir = Path(td)
+        for rid in room_ids:
+            bs, pid = gw.room_blockset_palette(rom, rid)
+            slots = gw.effective_slots(rom, bs)[:7]
+            st_pair = room_to_style.get(rid)
+            if st_pair is not None:
+                sid, style = st_pair
+                sname = style["name"]
+                centry = cov_styles[sname]
+                pal_words = [int(w, 16) for w in centry["palette_words"]]
+                sheet_lz2: dict[int, bytes] = {}
+                slot_stats = []
+                total_donor = 0
+                total_fallback = 0
+                for slot_idx, s in enumerate(slots):
+                    shex = f"{s:02X}"
+                    sinfo = centry["sheets"].get(shex, {})
+                    if isinstance(sinfo, dict):
+                        remapped = bool(sinfo.get("remapped", True))
+                        d_cnt = len(sinfo.get("donor_chars", []))
+                        f_cnt = int(sinfo.get("posterized_chars", 0))
+                    else:
+                        remapped, d_cnt, f_cnt = False, 0, 0
+                    total_donor += d_cnt
+                    total_fallback += f_cnt
+                    if remapped:
+                        sheet_lz2[s] = (out_dir / f"{sname}.{shex}.lz2").read_bytes()
+                    slot_stats.append({
+                        "slot": slot_idx,
+                        "sheet": shex,
+                        "remapped": remapped,
+                        "donor_chars": d_cnt,
+                        "fallback_chars": f_cnt,
+                    })
+            else:
+                sid, sname = 0, "vanilla"
+                pal_words = gw.palette(rom, pid)
+                sheet_lz2 = {}
+                slot_stats = [
+                    {"slot": i, "sheet": f"{s:02X}", "remapped": False, "donor_chars": 0, "fallback_chars": 64}
+                    for i, s in enumerate(slots)
+                ]
+                total_donor, total_fallback = 0, len(slots) * 64
+
+            if z3ed is not None:
+                v_png = tdir / f"v_{rid:03X}.png"
+                g_png = tdir / f"g_{rid:03X}.png"
+                _render_room_z3ed(z3ed, rom_path, rid, v_png)
+                if sid > 0:
+                    patched = _patch_scratch_rom(rom, rid, pal_words, sheet_lz2)
+                    patched_rom = tdir / f"gbc_{rid:03X}.sfc"
+                    patched_rom.write_bytes(patched)
+                    _render_room_z3ed(z3ed, patched_rom, rid, g_png)
+                else:
+                    shutil.copy(v_png, g_png)
+                im_vanilla = Image.open(v_png).convert("RGB").resize((panel_size, panel_size), Image.NEAREST)
+                im_gbc = Image.open(g_png).convert("RGB").resize((panel_size, panel_size), Image.NEAREST)
+                render_mode = "z3ed"
+            else:
+                v_pal = gw.palette(rom, pid)
+                im_vanilla = _render_sheet_strip_fallback(rom, slots, v_pal, {}).resize((panel_size, panel_size), Image.NEAREST)
+                im_gbc = _render_sheet_strip_fallback(rom, slots, pal_words, sheet_lz2).resize((panel_size, panel_size), Image.NEAREST)
+                render_mode = "sheet-fallback"
+
+            row_h = panel_size + 28
+            row_w = panel_size * 2 + sidebar_w + gap * 2
+            row_canvas = Image.new("RGB", (row_w, row_h), (24, 24, 30))
+            draw = ImageDraw.Draw(row_canvas)
+            draw.text((4, 6), f"Room ${rid:03X}  BEFORE: Vanilla SNES (b{bs}/p{pid})", fill=(215, 220, 235), font=f_sub)
+            draw.text(
+                (panel_size + gap + 4, 6),
+                f"AFTER: GBC '{sname}' (style #{sid}, $7EF3CA==$40)",
+                fill=(130, 235, 165) if sid else (235, 180, 110),
+                font=f_sub,
+            )
+            row_canvas.paste(im_vanilla, (0, 26))
+            row_canvas.paste(im_gbc, (panel_size + gap, 26))
+
+            sx = panel_size * 2 + gap * 2
+            draw.rectangle((sx, 26, row_w - 2, row_h - 2), fill=(18, 19, 25), outline=(60, 64, 78))
+            y = 34
+            draw.text((sx + 10, y), f"Room 0x{rid:03X}  ->  {sname} (#{sid})", fill=(255, 255, 255), font=f_sub)
+            y += 20
+            draw.text((sx + 10, y), f"Header: b{bs} / p{pid}  |  Renderer: {render_mode}", fill=(180, 190, 210), font=f_mono)
+            y += 16
+            draw.text((sx + 10, y), "Gate: $7EF3CA == $40 (LW $00 / SW $80 = SNES)", fill=(160, 210, 255), font=f_mono)
+            y += 20
+            tot = max(1, total_donor + total_fallback)
+            donor_pct = (100.0 * total_donor) / tot
+            draw.text(
+                (sx + 10, y),
+                f"Coverage: {total_donor} donor / {total_fallback} fallback ({donor_pct:.1f}%)",
+                fill=(255, 235, 140),
+                font=f_mono,
+            )
+            y += 18
+            # Coverage bar
+            bar_w = sidebar_w - 22
+            donor_w = int(bar_w * total_donor / tot)
+            draw.rectangle((sx + 10, y, sx + 10 + bar_w, y + 10), fill=(70, 75, 95))
+            if donor_w > 0:
+                draw.rectangle((sx + 10, y, sx + 10 + donor_w, y + 10), fill=(75, 200, 120))
+            y += 18
+            draw.text((sx + 10, y), "Slot Sheet Mode    Donor  Fallback", fill=(160, 170, 190), font=f_mono)
+            y += 15
+            for ss in slot_stats:
+                mode_lbl = "REMAP " if ss["remapped"] else "PASS  "
+                col_fill = (130, 230, 155) if ss["donor_chars"] else ((180, 200, 240) if ss["remapped"] else (150, 155, 170))
+                draw.text(
+                    (sx + 10, y),
+                    f"  {ss['slot']}   ${ss['sheet']}  {mode_lbl}  {ss['donor_chars']:3d}     {ss['fallback_chars']:3d}",
+                    fill=col_fill,
+                    font=f_mono,
+                )
+                y += 15
+
+            if sid > 0:
+                y += 8
+                draw.text((sx + 10, y), "GBC Palette Rows 2-7 (shades 1-7):", fill=(180, 190, 210), font=f_mono)
+                y += 16
+                for pr in range(3):
+                    for col_idx, row_off in enumerate((pr, pr + 3)):
+                        base_x = sx + 10 + col_idx * 160
+                        draw.text((base_x, y + 1), f"r{row_off+2}:", fill=(170, 175, 195), font=f_mono)
+                        for ci in range(7):
+                            rgb = _bgr555_to_rgb(pal_words[row_off * 15 + ci])
+                            bx = base_x + 24 + ci * 18
+                            draw.rectangle((bx, y, bx + 15, y + 12), fill=rgb, outline=(45, 45, 55))
+                    y += 16
+
+            rows_imgs.append(row_canvas)
+            summary.append({
+                "room": f"0x{rid:03X}",
+                "style_id": sid,
+                "style": sname,
+                "blockset": bs,
+                "palette": pid,
+                "renderer": render_mode,
+                "donor_chars": total_donor,
+                "fallback_chars": total_fallback,
+                "donor_pct": round(donor_pct, 1),
+                "slots": slot_stats,
+            })
+
+    title_h = 34
+    sheet_w = max(r.width for r in rows_imgs) + 2 * gap
+    sheet_h = title_h + sum(r.height for r in rows_imgs) + gap * (len(rows_imgs) + 1)
+    sheet = Image.new("RGB", (sheet_w, sheet_h), (14, 15, 20))
+    draw = ImageDraw.Draw(sheet)
+    draw.text(
+        (gap, 10),
+        f"Eon Abyss GBC Interiors Preview ({len(room_ids)} room{'s' if len(room_ids) != 1 else ''}) — Vanilla SNES vs GBC ($7EF3CA == $40)",
+        fill=(255, 255, 255),
+        font=f_hdr,
+    )
+    y = title_h + gap
+    for rimg in rows_imgs:
+        sheet.paste(rimg, (gap, y))
+        y += rimg.height + gap
+
+    out_png = Path(a.out) if a.out else Path(f"/tmp/abyss_gbc_preview_{'_'.join(f'{r:03X}' for r in room_ids)}.png")
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    sheet.save(out_png)
+    print(json.dumps({"out": str(out_png), "rooms": summary}, indent=2))
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    sub = ap.add_subparsers(dest="cmd", required=True)
-    b = sub.add_parser("build")
-    b.add_argument("--rom", default=str(REPO / "Roms/oos168x.sfc"))
-    b.add_argument("--donor", required=True, help="AFS gbc_interiors directory with donor_raw_* and donor_pal")
-    b.add_argument("--diagonal", choices=sorted(DIAGONAL_STYLES), default="wall",
-                   help="art for diagonal walls $009-$014 (default: stepped wall slices)")
-    b.add_argument("--deep", choices=sorted(DEEP_STYLES), default="second",
-                   help="art for deep walls $007/$008/$067/$068 (default: second GBC wall set)")
-    b.add_argument("--stairs", choices=sorted(STAIR_STYLES), default="stripes",
-                   help="art for layered stairs $130/$131/$F9C/$F9D (default: stair stripes)")
-    b.set_defaults(fn=build)
-    a = ap.parse_args()
-    return a.fn(a)
+    ap.add_argument("--check", action="store_true", help="Verify checked-in .txt/.lz2/abyss_gbc.asm match styles.json")
+    ap.add_argument("--preview-room", action="append", default=[], metavar="ROOM_ID[,ROOM_ID...]",
+                    help="Render vanilla SNES vs GBC contact sheet for one or more hex room IDs")
+    ap.add_argument("--rom", default=str(REPO / "Roms/oos168x.sfc"), help="Read-only ROM path")
+    ap.add_argument("--donor", help="Prebuilt gbc_interiors donor directory")
+    ap.add_argument("--oracles-disasm", help="Local oracles-disasm checkout for disasm-backed donor recipes")
+    ap.add_argument("--styles", help="Override path to styles.json (default: <out-dir>/styles.json)")
+    ap.add_argument("--out-dir", default=str(OUT), help="Output/checked-in abyss_gbc directory")
+    ap.add_argument("--out", help="Output PNG path for --preview-room")
+    ap.add_argument("--z3ed", help="Explicit z3ed binary path for --preview-room")
+    ap.add_argument("--no-z3ed", action="store_true", help="Force pure-Python sheet-strip preview fallback")
+    ap.add_argument("--panel-size", type=int, default=320, help="Square pixel size of each room render panel")
+    ap.add_argument("--diagonal", choices=sorted(DIAGONAL_STYLES), default=None)
+    ap.add_argument("--deep", choices=sorted(DEEP_STYLES), default=None)
+    ap.add_argument("--stairs", choices=sorted(STAIR_STYLES), default=None)
+    return ap
+
+
+def main(argv: list[str] | None = None) -> int:
+    raw_argv = list(sys.argv[1:] if argv is None else argv)
+    mode = None
+    if raw_argv and raw_argv[0] in ("build", "check", "preview-room"):
+        mode = raw_argv.pop(0)
+    ap = build_parser()
+    a = ap.parse_args(raw_argv)
+
+    if mode == "check" or a.check:
+        # Only run full ROM rebuild check if --rom was explicitly supplied
+        if "--rom" not in raw_argv and not any(tok.startswith("--rom=") for tok in raw_argv):
+            a.rom = None
+        return cmd_check(a)
+    if mode == "preview-room" or a.preview_room:
+        return cmd_preview_room(a)
+    if mode == "build":
+        return cmd_build(a)
+    ap.print_help()
+    return 2
 
 
 if __name__ == "__main__":
