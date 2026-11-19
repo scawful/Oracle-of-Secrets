@@ -10,6 +10,7 @@ SourceSpriteSheet_43: incbin "sheets/spr43.bin"
 SourceSpriteSheet_47: incbin "sheets/spr47.bin"
 SourceSpriteSheet_0F: incbin "sheets/spr0F.bin"
 SourceSpriteSheet_38: incbin "sheets/spr38.bin"
+SourceSpriteSheet_33: incbin "sheets/spr33.bin"
 assert pc() <= $410000 || pc() == $418000, "Source sprite sheets crossed bank $40"
 org $478000
 SourceGlobalSheet_E3: incbin "sheets/gE3.bin"
@@ -124,6 +125,13 @@ org $23FEAB ; @hook module=Core kind=data protected_size=1
   db $E2
 org $23FFAB ; @hook module=Core kind=data protected_size=1
   db $A5
+; Sprite $33, global $A6: Deku Scrub NPCs ($A0) outline consistency cleanup across F0-F4 and 2-frame idle blink/breathing tiles for Deku Butler ($09/$0A/$19/$1A) and Deku Princess ($29/$2A/$39/$3A); col $B kept free.
+org $23FDA6 ; @hook module=Core kind=data protected_size=1
+  db $C0
+org $23FEA6 ; @hook module=Core kind=data protected_size=1
+  db $E8
+org $23FFA6 ; @hook module=Core kind=data protected_size=1
+  db $40
 ; Global $E3 (sprite-relative $70): Kalyxo Docks ordinary 3bpp background; shared Secret Beach LOW deck sheet.
 org $23FDE3 ; @hook module=Core kind=data protected_size=1
   db $C7

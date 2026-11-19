@@ -110,10 +110,12 @@ Sprite_DekuScrub_Prep:
   LDA.b AreaIndex : CMP.b #$2E : BNE .check_next
     ; Deku Butler
     LDA.b #$07 : STA.w SprAction, X
+    LDA.b #$03 : STA.w SprFrame, X
     JMP +
   .check_next
   CMP.b #$2F : BNE .continue
     LDA.b #$08 : STA.w SprAction, X
+    LDA.b #$04 : STA.w SprFrame, X
     JMP +
   .continue
 
@@ -121,12 +123,15 @@ Sprite_DekuScrub_Prep:
                         CMP.b #$02 : BEQ .DekuPrincess
   LDA.l $7EF301 : BEQ +
     LDA.b #$04 : STA.w SprAction, X
+    LDA.b #$02 : STA.w SprFrame, X
     JMP +
   .DekuButler
     LDA.b #$05 : STA.w SprAction, X
+    LDA.b #$03 : STA.w SprFrame, X
     JMP ++
   .DekuPrincess
     LDA.b #$06 : STA.w SprAction, X
+    LDA.b #$04 : STA.w SprFrame, X
     ++
     ; Check if tail palace is cleared
     LDA.l Crystals : AND #$10 : BEQ +
@@ -210,7 +215,7 @@ endif
 
   DekuButler:
   {
-    %PlayAnimation(3, 3, 10)
+    JSR DekuButler_TickIdleFrame
     JSL Sprite_PlayerCantPassThrough
     %ShowSolicitedMessage($080)
     RTS
@@ -218,7 +223,7 @@ endif
 
   DekuPrincess:
   {
-    %PlayAnimation(4, 4, 10)
+    JSR DekuPrincess_TickIdleFrame
     JSL Sprite_PlayerCantPassThrough
     %ShowSolicitedMessage($0C3)
     RTS
@@ -226,8 +231,7 @@ endif
 
   DekuButler_Peacetime:
   {
-    %StartOnFrame(3)
-    %PlayAnimation(3, 3, 10)
+    JSR DekuButler_TickIdleFrame
     JSL Sprite_PlayerCantPassThrough
     %ShowSolicitedMessage($1B9) : BCC +
     +
@@ -236,11 +240,29 @@ endif
 
   DekuPrinces_Peacetime:
   {
-    %StartOnFrame(4)
-    %PlayAnimation(4, 4, 10)
+    JSR DekuPrincess_TickIdleFrame
     JSL Sprite_PlayerCantPassThrough
     %ShowSolicitedMessage($1BA) : BCC +
     +
+    RTS
+  }
+
+  ; Gentle periodic 2-frame idle animation (64-frame cycle: 48f open, 16f blink+bob).
+  ; Butler uses frames 3/5; Princess uses frames 4/6 offset by half a cycle ($20)
+  ; so they blink naturally out of phase.
+  DekuButler_TickIdleFrame:
+  {
+    LDA.b FrameCounter : AND.b #$3F : CMP.b #$30
+    LDA.b #$03 : BCC + : LDA.b #$05 : +
+    STA.w SprFrame, X
+    RTS
+  }
+
+  DekuPrincess_TickIdleFrame:
+  {
+    LDA.b FrameCounter : CLC : ADC.b #$20 : AND.b #$3F : CMP.b #$30
+    LDA.b #$04 : BCC + : LDA.b #$06 : +
+    STA.w SprFrame, X
     RTS
   }
 }
@@ -295,14 +317,17 @@ Sprite_DekuScrub_Draw:
 
   RTS
 
+  ; Frames: 0-1 Cursed, 2 Withered, 3 Butler 0, 4 Princess 0, 5 Butler 1, 6 Princess 1
   .start_index
-    db $00, $04, $08, $0C, $10
+    db $00, $04, $08, $0C, $10, $14, $18
   .nbr_of_tiles
-    db 3, 3, 3, 3, 3
+    db 3, 3, 3, 3, 3, 3, 3
   .x_offsets
     dw 4, 4, -4, -4
     dw 4, -4, -4, 4
     dw -8, -8, 8, 8
+    dw -4, 4, -4, 4
+    dw -4, -4, 4, 4
     dw -4, 4, -4, 4
     dw -4, -4, 4, 4
   .y_offsets
@@ -311,19 +336,27 @@ Sprite_DekuScrub_Draw:
     dw 4, -12, -12, 4
     dw -12, -12, 4, 4
     dw 4, -12, 4, -12
+    dw 4, 4, -11, -11
+    dw 4, -11, 4, -11
   .chr
     db $2E, $0E, $0E, $2E
     db $2C, $2C, $0C, $0C
     db $20, $00, $02, $22
     db $04, $05, $24, $25
     db $27, $07, $27, $07
+    db $24, $25, $09, $09
+    db $29, $07, $29, $07
   .properties
     db $3B, $7B, $3B, $7B
     db $3B, $7B, $3B, $7B
     db $3B, $3B, $3B, $3B
     db $3B, $3B, $3B, $3B
     db $3B, $3B, $7B, $7B
+    db $3B, $3B, $3B, $7B
+    db $3B, $3B, $7B, $7B
   .sizes
+    db $02, $02, $02, $02
+    db $02, $02, $02, $02
     db $02, $02, $02, $02
     db $02, $02, $02, $02
     db $02, $02, $02, $02

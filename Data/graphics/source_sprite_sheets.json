@@ -47,6 +47,13 @@
       "why": "Windmill Guy ($B2) authentic GBC Oracle of Seasons spr_guruguru (4d10d/4d11e) in blank tiles $0F/$1F/$2F/$3F/$28-$2B/$38-$3B of Room $00C9 sheet $38; all 52 existing tiles preserved."
     },
     {
+      "sprite_sheet": "0x33",
+      "source": "spr33.txt",
+      "base_sha256": "efedd2c0edd286dff21662aa4515440e9adb00e1fdb41af5d1aff9d26cd8d09b",
+      "identity": false,
+      "why": "Deku Scrub NPCs ($A0) outline consistency cleanup across F0-F4 and 2-frame idle blink/breathing tiles for Deku Butler ($09/$0A/$19/$1A) and Deku Princess ($29/$2A/$39/$3A); col $B kept free."
+    },
+    {
       "decoded_sha256": "705208a1541b6ffb1d84cd05b00e284c2b6bfcf08a1ad5b14d72088b3205cd24",
       "global_sheet": "0xE3",
       "source": "docks/docks_gE3_slot6.txt",
