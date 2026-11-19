@@ -1,29 +1,43 @@
 #!/usr/bin/env python3
-"""Generate custom 4BPP Majora's Mask-style hand-held Deku Flower hover wings.
+"""Generate custom 4BPP Majora's Mask-style overhead Deku Flower-Leaf hover art.
 
 Output:
-  Data/graphics/items/deku_flower_wings.4bpp (768 bytes = $0300 = 6 x 16x16 frames)
+  Data/graphics/items/deku_flower_wings.4bpp (1,536 bytes = $0600 = 12 x 16x16 frames)
 
 Each 128-byte frame is stored in SNES 16x16 OBJ row-major DMA order:
   +$00..$3F (64 B): Top row    (TL tile 32B + TR tile 32B) -> VRAM $4070
   +$40..$7F (64 B): Bottom row (BL tile 32B + BR tile 32B) -> VRAM $4170
 
-Geometry & Fist-Grip Invariant (Left wing normal, Right wing H-flipped via ORA #$40):
-  Each Left-wing frame curves its green Deku stem diagonally down-right into the
-  bottom-inner corner (cols 12..15, rows 11..15) so the gripped stem connects
-  directly into Deku Link's hands across all 4 facings with zero detached gap,
-  while keeping inner cols 12..15 clear on rows 0..8 so the blossoms never
-  obscure Deku Link's face, eyes, or snout.
+Directional Geometry & Overhead Invariants:
+  Frames 0..5 — FRONT / BACK (Up/Down) Overhead Flower-Leaf Propellers:
+    Left flower drawn normal, Right flower H-flipped (ORA #$40), held overhead
+    above Deku Link's cap/shoulders (dx = +-13, dy = -7/-6). Each Left-side
+    frame curves its slender green stem down-inward into the bottom-inner
+    corner (cols 12..15, rows 10..15) while keeping face-clearance cols 14..15
+    empty on rows 0..7 so blossoms never obscure Deku Link's cap or face.
+  Frames 6..11 — SIDE PROFILE (Left/Right) Overhead Flower-Leaf Propellers:
+    Completely distinct foreshortened 3/4 side-profile flower-leaf blossoms
+    tilted forward into Deku Link's flight direction, with sculpted green
+    underside calyx and a centered vertical-swept stem (cols 7..11) dropping
+    cleanly onto his cap crown. On Left facing, BOTH OAM slots face Left
+    (normal, staggered in 3/4 foreground/background depth); on Right facing,
+    BOTH OAM slots are H-flipped (ORA #$40) and mirrored symmetrically.
 
-Frame map (streamed during NMI by DekuWings_NmiUpload in Bank $35):
-  Phase 1 — Steady Levitating Glide (FallTimer >= #$50):
-    0 (+$000): Full lush wide-open 3-petal helicopter blossom
-    1 (+$080): Tilted 45 deg CW diagonal spin sweep
-    2 (+$100): Edge-on foreshortened fast spin flash with motion wisps
-    3 (+$180): Tilted 45 deg CCW diagonal spin sweep
-  Phase 2 — End-of-Hover Frantic Flapping (FallTimer < #$50):
-    4 (+$200): Flap-Up high upstroke (blossom pitched sharply upward; paired with -2px OAM lift)
-    5 (+$280): Flap-Down low downstroke (blossom swept downward/outward + wind streaks; paired with +2px Y, +-1px X)
+Frame map (streamed during NMI by DekuWings_NmiUpload from Bank $38 tail):
+  Front/Back (LinkFaceDir = $00 Up / $02 Down):
+    0 (+$000): Phase 1 Levitate — Wide horizontal 3-leaf helicopter canopy
+    1 (+$080): Phase 1 Levitate — Tilted 45 deg CW rotor spin sweep
+    2 (+$100): Phase 1 Levitate — Edge-on high-speed horizontal spin flash
+    3 (+$180): Phase 1 Levitate — Tilted 45 deg CCW rotor spin sweep
+    4 (+$200): Phase 2 Fall Flap-Up — Scalloped leaves pitched skyward (-2px Y)
+    5 (+$280): Phase 2 Fall Flap-Down — Drooping bent leaves + wind streaks (+2px Y, +-1px X)
+  Side Profile (LinkFaceDir = $04 Left / $06 Right):
+    6 (+$300): Phase 1 Side Spin — 3/4 side-profile tilted forward-left
+    7 (+$380): Phase 1 Side Spin — Razor-flat side-profile edge spin blur
+    8 (+$400): Phase 1 Side Spin — 3/4 side-profile tilted back-right
+    9 (+$480): Phase 1 Side Spin — 3/4 side-profile cupped broad leaf canopy
+   10 (+$500): Phase 2 Side Flap-Up — Tall narrow skyward-folded profile (-2px Y)
+   11 (+$580): Phase 2 Side Flap-Down — Inverted-umbrella drooping profile + wind streaks (+2px Y)
 
 Palette invariant:
   Uses ONLY Deku Link's SP-7 palette indices (Masks/deku_mask.asm `deku_palette`,
@@ -51,13 +65,14 @@ WINGS_LEGEND = {
     "g": 3,   # $26C9 #4AB44A emerald green (calyx & stem body)
     "l": 4,   # $17AA #52EE29 bright lime leaf highlight
     "o": 5,   # $21F4 #A47B41 warm golden-ochre (petal under-shade)
-    "y": 6,   # $17DF #FFF629 bright sunny yellow-gold (blossom core)
+    "y": 6,   # $17DF #FFF629 bright sunny yellow-gold (flower-leaf core)
     "c": 7,   # $42DB #DEB483 warm cream-gold transition
     "k": 8,   # $14A5 #292929 crisp ALTTP charcoal outline
     "r": 9,   # $14BC #E62929 vibrant rose-crimson (petal mid-tip accent)
     "d": 10,  # $14B2 #942929 deep rose-magenta shade
     "w": 12,  # $7FFF #FFFFFF pure white specular highlight / spin glint
     "m": 13,  # $7A18 #C583F6 radiant Majora's Mask orchid-pink/magenta tips!
+    "e": 14,  # $178C #62E629 sunlit yellow-lime sepal accent
 }
 
 # Exact RGB colors from Masks/deku_mask.asm `deku_palette` for accurate preview rendering
@@ -79,136 +94,278 @@ DEKU_SP7_RGB = {
     14: (98, 230, 41, 255),
 }
 
-# Frame 0: Phase 1 Levitate — Full Lush Wide-Open 3-Petal Majora's Mask Flower Blossom
-WING_0_WIDE = [
-    "................",
-    "...kkk..kkk.....",
-    ".kkmmwkkwmmkk...",
-    "kmwwrryyyrwwmk..",
-    "kmrryywwyyrrmk..",
-    "kdrryyyyyyyrdk..",
-    ".kdryyccyyyrdk..",
-    "..kkooyyyoook...",
-    "....kklggglk....",
-    "......kfggglk...",
-    ".......kfgglk...",
-    "........kfgflk..",
-    ".........kfgfk..",
+# =========================================================================
+# FRONT / BACK FRAMES (0..5): Overhead Twin Flower-Leaf Propellers (Up/Down)
+# Broad open scalloped flower-leaves + slim flared calyx + slender stem.
+# =========================================================================
+
+# Frame 0 (F0): Phase 1 Levitate — Wide Open 3-Leaf Scalloped Majora's Mask Canopy
+FRONT_0_WIDE = [
+    "..kkk...kkk.....",
+    ".kmwwk.kwmmk....",
+    "kmwrykkkyrwmkk..",
+    "kmryyywwyyyrmk..",
+    "kdryycyycyyrdk..",
+    ".kkooyyyyookk...",
+    "..kllggggllk....",
+    "...kkffggfk.....",
+    "......kfggk.....",
+    ".......kfgk.....",
+    "........kfgk....",
+    ".........kfgk...",
+    "..........kfgk..",
     "..........kfgbk.",
     "...........kbgk.",
     "............kkk.",
 ]
 
-# Frame 1: Phase 1 Levitate — Tilted 45 deg CW Lush Spinning Blossom
-WING_1_CW = [
+# Frame 1 (F1): Phase 1 Levitate — Tilted 45 deg CW Helicopter Leaf Spin Sweep
+FRONT_1_CW = [
     "......kkkk......",
     ".....kmwwmk.....",
-    "....kmwwrmmk....",
-    "....kmryyrmk....",
-    "..kkryywwyrk....",
-    ".kmmryyyyyok....",
-    "kmwryycyook.....",
-    "kmrryooklggk....",
-    "kddookkfgglk....",
-    ".kkk...kfgglk...",
-    "........kfgflk..",
-    ".........kfgfk..",
-    "..........kfgfk.",
+    "....kmwrymmk....",
+    "...kmryyyrmk....",
+    ".kkwryywwyrk....",
+    "kmwryyycyyok....",
+    "kmrryyyoookk....",
+    "kddoooklgglk....",
+    ".kkkk..kfggk....",
+    "........kfgk....",
+    "........kfgk....",
+    ".........kfgk...",
+    "..........kfgk..",
     "..........kfgbk.",
     "...........kbgk.",
     "............kkk.",
 ]
 
-# Frame 2: Phase 1 Levitate — Edge-On Fast Propeller Flash + Horizontal Spin Wisps
-WING_2_EDGE = [
-    "....kkkk........",
-    "...kmmwmk.......",
-    "..kmwwrmmk......",
-    "wm.kmwyyrmk.mw..",
-    "..kmrywwyrk.....",
-    "mw.kdyyyydk.wm..",
-    "...kdoyyodk.....",
-    "....kkoook......",
-    ".....klgglk.....",
-    "......kfgglk....",
-    ".......kfgglk...",
-    "........kfgflk..",
-    ".........kfgfk..",
+# Frame 2 (F2): Phase 1 Levitate — Edge-On Fast Horizontal Propeller Spin Flash
+FRONT_2_EDGE = [
+    "................",
+    "................",
+    "..kkkkkkkkk.....",
+    "wkmwyywwywmkmw..",
+    ".kmrrywwyrrdk...",
+    "m.kdooyyoodk.w..",
+    "...kllggllk.....",
+    ".....kfggfk.....",
+    "......kfggk.....",
+    ".......kfgk.....",
+    "........kfgk....",
+    ".........kfgk...",
+    "..........kfgk..",
     "..........kfgbk.",
     "...........kbgk.",
     "............kkk.",
 ]
 
-# Frame 3: Phase 1 Levitate — Tilted 45 deg CCW Lush Spinning Blossom
-WING_3_CCW = [
+# Frame 3 (F3): Phase 1 Levitate — Tilted 45 deg CCW Helicopter Leaf Spin Sweep
+FRONT_3_CCW = [
     ".kkkk...........",
     "kmwwmk..........",
-    "kmmrwmk.........",
-    "kmryyykkk.......",
-    "kmryywwyykk.....",
-    ".kdryyyyyrmk....",
-    "..kooyyyyrmmk...",
-    "....kggloyrdk...",
-    ".....kfggkook...",
-    "......kfgglk....",
-    ".......kfgglk...",
-    "........kfgflk..",
-    ".........kfgfk..",
+    "kmwrymk.........",
+    "kmryyykkkk......",
+    "kmryywwyymwk....",
+    ".kdryyycyrmmk...",
+    "..kkooyyyrdk....",
+    "....klggoook....",
+    ".....kfggkk.....",
+    ".......kfgk.....",
+    "........kfgk....",
+    ".........kfgk...",
+    "..........kfgk..",
     "..........kfgbk.",
     "...........kbgk.",
     "............kkk.",
 ]
 
-# Frame 4: Phase 2 End-of-Hover FLAP-UP (High Upstroke — scalloped blossom pitched sharply UP)
-# Paired with -2px OAM Y lift; stem extends cleanly to cols 13..15, row 15 to keep grip in hand.
-WING_4_FLAP_UP = [
-    "..kkk..kkk......",
-    ".kmwwkkwmmk.....",
-    "kmwwrryyrwmk....",
-    "kmrryywwyrmk....",
-    ".kmrryyyyrdk....",
-    "..kdryyyyydk....",
-    "...kdryyyodk....",
-    "....kkooyook....",
-    "......kklgglk...",
-    "........kfgglk..",
-    ".........kfgfk..",
-    "..........kfgfk.",
-    "..........kfgfk.",
-    "...........kfgbk",
+# Frame 4 (F4): Phase 2 Fall FLAP-UP (Scalloped leaves folded sharply skyward)
+# Paired with -2px OAM Y lift; slender taut stem anchors to cols 12..15, row 15.
+FRONT_4_FLAP_UP = [
+    ".kkk...kkk......",
+    "kmwwk.kwmmk.....",
+    "kmwrykkywmk.....",
+    "kmryyywwymk.....",
+    ".kmryyyyyrmk....",
+    "..kdryyyydk.....",
+    "...kooyyook.....",
+    "....klggglk.....",
+    "......kfggk.....",
+    ".......kfgk.....",
+    "........kfgk....",
+    ".........kfgk...",
+    "..........kfgk..",
+    "..........kfgbk.",
     "...........kfgbk",
     "............kbgk",
 ]
 
-# Frame 5: Phase 2 End-of-Hover FLAP-DOWN (Low Downstroke — drooping blossom + air-rush streaks)
-# Paired with +2px OAM Y & +-1px X spread; flexed stem anchors at cols 12..15, rows 10..13.
-WING_5_FLAP_DOWN = [
+# Frame 5 (F5): Phase 2 Fall FLAP-DOWN (Drooping bent flower-leaf + wind streaks)
+# Paired with +2px OAM Y & +-1px outward spread; small calyx hub + long drooping petal.
+FRONT_5_FLAP_DOWN = [
     "................",
-    "...w.....m......",
-    ".m...w..........",
+    "..w.....m.......",
+    "....w...........",
+    ".m..............",
+    "......kkkkk.....",
+    "....kklggggk....",
+    "..kkoyyggfggk...",
+    ".koyyyyykffgk...",
+    "kmryywwyykkfgk..",
+    "kmwryyycyykfgk..",
+    "kmwrmryyyk.kfgk.",
+    "kmwrmkkyk..kfgbk",
+    ".kddk..k....kbgk",
+    "..kk........kbgk",
+    ".............kkk",
     "................",
-    "......kkkk......",
-    "....kkggggkk....",
-    "..kkoolllgggk...",
-    ".koorryyygglgk..",
-    "kmrryywwyykgggk.",
-    "kmwwrryyyyk.kfgk",
-    "kmwwrmkyyk..kfgk",
-    "kmmrmk.kk...kbgk",
-    ".kddk.......kbgk",
-    "..kk.........kkk",
+]
+
+# =========================================================================
+# SIDE PROFILE FRAMES (6..11): Sleek Foreshortened 3/4 Overhead Flower-Leaves
+# Drawn normal on Left facing ($04), H-flipped via ORA #$40 on Right ($06).
+# Both OAM slots face forward into flight direction, staggered in 3/4 depth!
+# =========================================================================
+
+# Frame 6 (S0): Phase 1 Side Spin — Sleek 3/4 Profile Tilted Forward-Left
+SIDE_0_TILT_FWD = [
+    "................",
+    "................",
+    ".......kkkkkk...",
+    "..kkkkkwmmwwmk..",
+    "kmwwryyyywwyrmk.",
+    "kmrryyccyyyrdk..",
+    ".kddooyylggkk...",
+    "...kkkllggfk....",
+    "......kffgfk....",
+    ".......kfgk.....",
+    "........kfgk....",
+    "........kfgbk...",
+    ".........kbgk...",
+    "..........kkk...",
     "................",
     "................",
 ]
 
-FRAMES: list[tuple[str, list[str]]] = [
-    ("frame0_wide",      WING_0_WIDE),
-    ("frame1_cw",        WING_1_CW),
-    ("frame2_edge",      WING_2_EDGE),
-    ("frame3_ccw",       WING_3_CCW),
-    ("frame4_flap_up",   WING_4_FLAP_UP),
-    ("frame5_flap_down", WING_5_FLAP_DOWN),
+# Frame 7 (S1): Phase 1 Side Spin — Razor-Flat Side-Profile Edge Spin Blur
+SIDE_1_EDGE_BLUR = [
+    "................",
+    "................",
+    "................",
+    "..kkkkkkkkkkk...",
+    "wkmwwyywwyywmkw.",
+    "mkdrryyyyyyrdkm.",
+    "..kkloooooolkk..",
+    ".....klggglk....",
+    "......kffgfk....",
+    ".......kfgk.....",
+    "........kfgk....",
+    "........kfgbk...",
+    ".........kbgk...",
+    "..........kkk...",
+    "................",
+    "................",
 ]
+
+# Frame 8 (S2): Phase 1 Side Spin — Sleek 3/4 Profile Tilted Back-Right
+SIDE_2_TILT_BACK = [
+    "................",
+    "................",
+    ".kkkkkk.........",
+    "kmwwmmwkkkkk....",
+    "kmrywwyyyyrmmk..",
+    ".kdryyccyyyrrmk.",
+    "..kkgglyyooddk..",
+    "....kfgllkkk....",
+    ".....kfgffk.....",
+    ".......kfgk.....",
+    "........kfgk....",
+    "........kfgbk...",
+    ".........kbgk...",
+    "..........kkk...",
+    "................",
+    "................",
+]
+
+# Frame 9 (S3): Phase 1 Side Spin — Sleek Cupped 3/4 Crescent Leaf Canopy
+SIDE_3_CUP_WIDE = [
+    "................",
+    "................",
+    ".kkk......kkk...",
+    "kmwwkkkkkkwmmk..",
+    "kmryyywwyyyrmwk.",
+    ".kdryyyccyyyrdk.",
+    "..kklooyyyoolk..",
+    "....kllgggllk...",
+    "......kffgfk....",
+    ".......kfgk.....",
+    "........kfgk....",
+    "........kfgbk...",
+    ".........kbgk...",
+    "..........kkk...",
+    "................",
+    "................",
+]
+
+# Frame 10 (S4): Phase 2 Side FLAP-UP — Swept-Back Tall Folded Leaf Profile (-2px Y)
+SIDE_4_FLAP_UP = [
+    ".....kkkk.......",
+    "....kmwwmk......",
+    "...kmwrymmkk....",
+    "...kmryyyrmk....",
+    "..kmryywwyrk....",
+    "..kmryyyyyok....",
+    "...kdryyyodk....",
+    "....kklgglk.....",
+    ".....kffgfk.....",
+    "......kfgk......",
+    ".......kfgk.....",
+    ".......kfgk.....",
+    "........kfgk....",
+    "........kbgk....",
+    ".........kkk....",
+    "................",
+]
+
+# Frame 11 (S5): Phase 2 Side FLAP-DOWN — Gull-Wing Drooping Profile + Air Streaks (+2px Y)
+SIDE_5_FLAP_DOWN = [
+    "................",
+    "...w......m.....",
+    ".m....w.........",
+    ".........w......",
+    ".....kkkkkk.....",
+    "...kkllggllkk...",
+    "..koyyggggyyok..",
+    ".koyyyykfkyyyok.",
+    "kmrywwykfkywwrmk",
+    "kmwryykfgkkyrmwk",
+    "kmwrmk.kfgk.kmrk",
+    ".kddk..kbgk.kddk",
+    "..kk....kkk..kk.",
+    "................",
+    "................",
+    "................",
+]
+
+FRONT_FRAMES: list[tuple[str, list[str]]] = [
+    ("front0_wide",      FRONT_0_WIDE),
+    ("front1_cw",        FRONT_1_CW),
+    ("front2_edge",      FRONT_2_EDGE),
+    ("front3_ccw",       FRONT_3_CCW),
+    ("front4_flap_up",   FRONT_4_FLAP_UP),
+    ("front5_flap_down", FRONT_5_FLAP_DOWN),
+]
+
+SIDE_FRAMES: list[tuple[str, list[str]]] = [
+    ("side0_tilt_fwd",   SIDE_0_TILT_FWD),
+    ("side1_edge_blur",  SIDE_1_EDGE_BLUR),
+    ("side2_tilt_back",  SIDE_2_TILT_BACK),
+    ("side3_cup_wide",   SIDE_3_CUP_WIDE),
+    ("side4_flap_up",    SIDE_4_FLAP_UP),
+    ("side5_flap_down",  SIDE_5_FLAP_DOWN),
+]
+
+FRAMES: list[tuple[str, list[str]]] = FRONT_FRAMES + SIDE_FRAMES
 
 
 def parse_grid(name: str, rows: list[str]) -> list[list[int]]:
@@ -267,56 +424,69 @@ def build_4bpp() -> bytes:
     for name, rows in FRAMES:
         grid = parse_grid(name, rows)
         out += encode_block_16x16(grid)
-    assert len(out) == 6 * 128 == 0x300, f"Unexpected 4BPP size {len(out)}"
+    assert len(out) == 12 * 128 == 0x600, f"Unexpected 4BPP size {len(out)}"
     return bytes(out)
 
 
 def render_preview(out_png: Path, scale: int = 6) -> None:
     from PIL import Image, ImageDraw
 
-    grids = [(name, parse_grid(name, rows)) for name, rows in FRAMES]
+    front_grids = [(name, parse_grid(name, rows)) for name, rows in FRONT_FRAMES]
+    side_grids = [(name, parse_grid(name, rows)) for name, rows in SIDE_FRAMES]
 
-    def blit(canvas: Image.Image, grid: list[list[int]], x0: int, y0: int, hflip: bool = False) -> None:
+    def blit(canvas: Image.Image, grid: list[list[int]], x0: int, y0: int,
+             sc: int = scale, hflip: bool = False) -> None:
         spr = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
         px = spr.load()
         for y in range(16):
             for x in range(16):
                 sx = 15 - x if hflip else x
                 px[x, y] = DEKU_SP7_RGB[grid[y][sx]]
-        spr = spr.resize((16 * scale, 16 * scale), Image.Resampling.NEAREST)
+        spr = spr.resize((16 * sc, 16 * sc), Image.Resampling.NEAREST)
         canvas.alpha_composite(spr, (x0, y0))
 
     cell = 16 * scale
     pad = 16
-    w = pad + len(grids) * (cell + pad)
-    h = 30 + cell + 34 + cell + 34
-    img = Image.new("RGBA", (w, h), (30, 36, 44, 255))
+    w = pad + 6 * (cell + pad)
+    h = 34 + 3 * (cell + 34)
+    img = Image.new("RGBA", (w, h), (26, 32, 40, 255))
     draw = ImageDraw.Draw(img)
-    draw.text((pad, 6), "Deku Flower Hover Wings - 6-Frame 4BPP SP-7 Preview (F0..F3 Levitate Spin, F4..F5 Flap)", fill=(245, 245, 245, 255))
+    draw.text(
+        (pad, 8),
+        "Deku Overhead Flower-Leaves - 12-Frame 4BPP SP-7 Preview (Row 1: Front/Back F0..F5 | Row 2: Side S0..S5 | Row 3: Paired 3/4 Depth)",
+        fill=(245, 245, 245, 255),
+    )
 
-    ry1 = 30
-    for i, (name, grid) in enumerate(grids):
+    # Row 1: Front/Back frames 0..5
+    ry1 = 34
+    for i, (name, grid) in enumerate(front_grids):
         cx = pad + i * (cell + pad)
-        bg = (68, 122, 58, 255) if i < 4 else (92, 86, 54, 255)
+        bg = (64, 118, 56, 255) if i < 4 else (92, 84, 52, 255)
         draw.rectangle((cx, ry1, cx + cell - 1, ry1 + cell - 1), fill=bg, outline=(105, 118, 130, 255))
-        blit(img, grid, cx, ry1, hflip=False)
+        blit(img, grid, cx, ry1, sc=scale, hflip=False)
         draw.text((cx + 2, ry1 + cell + 4), f"F{i}: {name}", fill=(235, 235, 235, 255))
 
+    # Row 2: Side Profile frames 6..11 (S0..S5)
     ry2 = ry1 + cell + 34
-    pair_sc = max(2, scale // 2)
-    for i, (name, grid) in enumerate(grids):
+    for i, (name, grid) in enumerate(side_grids):
         cx = pad + i * (cell + pad)
-        draw.rectangle((cx, ry2, cx + cell - 1, ry2 + cell - 1), fill=(42, 52, 68, 255), outline=(105, 118, 130, 255))
-        for hf, ox in ((False, cx + 2), (True, cx + cell - 16 * pair_sc - 2)):
-            spr = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
-            px = spr.load()
-            for y in range(16):
-                for x in range(16):
-                    sx = 15 - x if hf else x
-                    px[x, y] = DEKU_SP7_RGB[grid[y][sx]]
-            spr = spr.resize((16 * pair_sc, 16 * pair_sc), Image.Resampling.NEAREST)
-            img.alpha_composite(spr, (ox, ry2 + (cell - 16 * pair_sc) // 2))
-        draw.text((cx + 2, ry2 + cell + 4), f"Paired F{i} (L+R)", fill=(215, 228, 240, 255))
+        bg = (54, 96, 116, 255) if i < 4 else (96, 74, 88, 255)
+        draw.rectangle((cx, ry2, cx + cell - 1, ry2 + cell - 1), fill=bg, outline=(105, 118, 130, 255))
+        blit(img, grid, cx, ry2, sc=scale, hflip=False)
+        draw.text((cx + 2, ry2 + cell + 4), f"S{i} (F{i+6}): {name}", fill=(235, 235, 235, 255))
+
+    # Row 3: Staggered 3/4 Side Depth Pair Preview (Far behind, Near in front)
+    ry3 = ry2 + cell + 34
+    pair_sc = max(3, scale - 2)
+    for i, (name, grid) in enumerate(side_grids):
+        cx = pad + i * (cell + pad)
+        draw.rectangle((cx, ry3, cx + cell - 1, ry3 + cell - 1), fill=(42, 52, 68, 255), outline=(105, 118, 130, 255))
+        # Draw Far slot first (shifted +7px back, -2px up in SNES px), then Near slot on top
+        base_x = cx + (cell - 23 * pair_sc) // 2
+        base_y = ry3 + (cell - 18 * pair_sc) // 2 + 2 * pair_sc
+        blit(img, grid, base_x + 7 * pair_sc, base_y - 2 * pair_sc, sc=pair_sc, hflip=False)
+        blit(img, grid, base_x, base_y, sc=pair_sc, hflip=False)
+        draw.text((cx + 2, ry3 + cell + 4), f"3/4 Left Pair S{i}", fill=(215, 228, 240, 255))
 
     out_png.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_png)
@@ -348,7 +518,7 @@ def main(argv: list[str] | None = None) -> int:
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_bytes(data)
-    print(f"Wrote {args.out} ({len(data)} bytes = ${len(data):04X}, 6 x 16x16 frames)")
+    print(f"Wrote {args.out} ({len(data)} bytes = ${len(data):04X}, 12 x 16x16 frames)")
     return 0
 
 
