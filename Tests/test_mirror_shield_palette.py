@@ -187,6 +187,16 @@ class Mini65816:
                 lhs = self.a & mmask
                 self.p = (self.p & ~1) | int(lhs >= v)
                 self.nz(lhs - v, m)
+            elif op == 0xCF:  # CMP long
+                v = self.read(self.take(3), m)
+                lhs = self.a & mmask
+                self.p = (self.p & ~1) | int(lhs >= v)
+                self.nz(lhs - v, m)
+            elif op == 0xC0:  # CPY #imm
+                v = self.take(ix)
+                lhs = self.y & xmask
+                self.p = (self.p & ~1) | int(lhs >= v)
+                self.nz(lhs - v, ix)
             elif op == 0x18:  # CLC
                 self.p &= ~1
             elif op == 0x69:  # ADC #imm
@@ -195,11 +205,53 @@ class Mini65816:
                 tot = lhs + v + (self.p & 1)
                 self.p = (self.p & ~0x41) | int(tot > mmask) | (0x40 if ~(lhs ^ v) & (lhs ^ tot) & (mmask + 1 >> 1) else 0)
                 self.load_a(tot & mmask)
+            elif op == 0x63:  # ADC sr,S
+                off = self.take()
+                # stack grows upward in Python list: top byte is stack[-1] == 1,S, next is stack[-2] == 2,S
+                val = 0
+                for i in range(m):
+                    val |= self.stack[-off - i] << (8 * i)
+                lhs = self.a & mmask
+                tot = lhs + val + (self.p & 1)
+                self.p = (self.p & ~0x41) | int(tot > mmask)
+                self.load_a(tot & mmask)
+            elif op == 0x3A:  # DEC A
+                self.load_a(((self.a & mmask) - 1) & mmask)
+            elif op == 0x0A:  # ASL A
+                lhs = self.a & mmask
+                self.p = (self.p & ~1) | int(bool(lhs & (mmask + 1 >> 1)))
+                self.load_a((lhs << 1) & mmask)
+            elif op == 0x4A:  # LSR A
+                lhs = self.a & mmask
+                self.p = (self.p & ~1) | (lhs & 1)
+                self.load_a(lhs >> 1)
+            elif op == 0x99:  # STA abs,Y
+                addr = ((self.db << 16) | self.take(2)) + (self.y & xmask)
+                self.put(addr, self.a, m)
             elif op == 0xD0:  # BNE
                 off = self.take()
                 off -= 256 if off >= 128 else 0
                 if not (self.p & 2):
                     self.pc += off
+            elif op == 0xF0:  # BEQ
+                off = self.take()
+                off -= 256 if off >= 128 else 0
+                if self.p & 2:
+                    self.pc += off
+            elif op == 0x90:  # BCC
+                off = self.take()
+                off -= 256 if off >= 128 else 0
+                if not (self.p & 1):
+                    self.pc += off
+            elif op == 0xB0:  # BCS
+                off = self.take()
+                off -= 256 if off >= 128 else 0
+                if self.p & 1:
+                    self.pc += off
+            elif op == 0x80:  # BRA
+                off = self.take()
+                off -= 256 if off >= 128 else 0
+                self.pc += off
             elif op == 0xE6:  # INC dp
                 addr = self.d + self.take()
                 v = (self.read(addr, m) + 1) & mmask
@@ -208,6 +260,9 @@ class Mini65816:
             elif op == 0xE8:  # INX
                 self.x = (self.x + 1) & xmask
                 self.nz(self.x, ix)
+            elif op == 0xC8:  # INY
+                self.y = (self.y + 1) & xmask
+                self.nz(self.y, ix)
             elif op == 0x88:  # DEY
                 self.y = (self.y - 1) & xmask
                 self.nz(self.y, ix)
@@ -216,15 +271,33 @@ class Mini65816:
             elif op == 0xAA:  # TAX
                 self.x = self.a & xmask
                 self.nz(self.x, ix)
+            elif op == 0xBB:  # TYX
+                self.x = self.y & xmask
+                self.nz(self.x, ix)
             elif op == 0xEB:  # XBA
                 lo, hi = self.a & 0xFF, (self.a >> 8) & 0xFF
                 self.a = (lo << 8) | hi
                 self.nz(hi, 1)
+            elif op == 0x48:  # PHA
+                self.push(self.a & mmask, m)
+            elif op == 0x68:  # PLA
+                self.load_a(self.pop(m))
+            elif op == 0xDA:  # PHX
+                self.push(self.x & xmask, ix)
+            elif op == 0xFA:  # PLX
+                self.x = self.pop(ix)
+                self.nz(self.x, ix)
             elif op == 0x5A:  # PHY
                 self.push(self.y & xmask, ix)
             elif op == 0x7A:  # PLY
                 self.y = self.pop(ix)
                 self.nz(self.y, ix)
+            elif op == 0x08:  # PHP
+                self.push(self.p, 1)
+            elif op == 0x28:  # PLP
+                self.p = self.pop(1)
+            elif op == 0x8B:  # PHB
+                self.push(self.db, 1)
             elif op == 0xAB:  # PLB
                 self.db = self.pop(1)
                 self.nz(self.db, 1)
@@ -266,6 +339,7 @@ class MirrorShieldPaletteTests(unittest.TestCase):
             "lorom\n"
             "!DISABLE_OVERWORLD = 0\n"
             "Shield = $7EF35A\n"
+            "SavedWorld = $7EF3CA\n"
             "PALB_SPR5B = $7EC4B0\n"
             "PAL_SPR5B = $7EC6B0\n"
             "LoadDayNightPaletteEffect = $348000\n"
@@ -277,7 +351,7 @@ class MirrorShieldPaletteTests(unittest.TestCase):
         if "z3asm" not in Path(cls.asm_bin).name:
             args += ["--no-title-check", "--fix-checksum=off"]
         args += ["--symbols=wla", f"--symbols-path={sym_path}", str(src), str(rom_path)]
-        res = subprocess.run(args, capture_output=True, text=True)
+        res = subprocess.run(args, cwd=ROOT, capture_output=True, text=True)
         if res.returncode != 0:
             raise AssertionError(res.stdout + res.stderr)
         cls.rom = rom_path.read_bytes()
@@ -288,9 +362,10 @@ class MirrorShieldPaletteTests(unittest.TestCase):
 
     def test_hook_annotations_and_rom_bytes(self) -> None:
         text = ASM_PATH.read_text(encoding="utf-8")
+        # Light World L1/L2 ROM palettes ($1BD648/$1BD650) MUST remain untouched vanilla SNES.
+        self.assertNotIn("org $1BD648", text)
+        self.assertNotIn("org $1BD650", text)
         for line_tag in (
-            "org $1BD648 ; @hook module=Items name=PaletteData_ShieldWooden kind=data protected_size=8",
-            "org $1BD650 ; @hook module=Items name=PaletteData_ShieldIronKite kind=data protected_size=8",
             "org $1BD658 ; @hook module=Items name=PaletteData_ShieldMirror kind=data protected_size=8",
             "org $1BED4A ; @hook module=Items name=MirrorShield_LoadColor8 kind=jml target=MirrorShield_LoadColor8 expected_m=16 expected_x=16 protected_size=5",
             "org $0ED73C ; @hook module=Items name=MirrorShield_RefreshColor8 kind=jml target=MirrorShield_RefreshColor8 expected_m=16 expected_x=16 protected_size=5",
@@ -299,16 +374,11 @@ class MirrorShieldPaletteTests(unittest.TestCase):
             "org $00D533 ; @hook module=Items name=MirrorShield_RemapPickupWRAM kind=jml target=MirrorShield_RemapPickupWRAM expected_m=16 expected_x=16 protected_size=4",
         ):
             self.assertIn(line_tag, text)
-        for addr, expected in (
-            (0x1BD648, [0x379F, 0x0865, 0x15F9, 0x08EF]),
-            (0x1BD650, [0x7BDE, 0x1CA4, 0x6ECE, 0x4947]),
-            (0x1BD658, [0x373C, 0x18A5, 0x7FFE, 0x5589]),
-        ):
-            pal_words = [
-                int.from_bytes(self.rom[pc(addr) + i * 2 : pc(addr) + i * 2 + 2], "little")
-                for i in range(4)
-            ]
-            self.assertEqual(pal_words, expected)
+        pal_words = [
+            int.from_bytes(self.rom[pc(0x1BD658) + i * 2 : pc(0x1BD658) + i * 2 + 2], "little")
+            for i in range(4)
+        ]
+        self.assertEqual(pal_words, [0x373C, 0x18A5, 0x7FFE, 0x5589])
         self.assertEqual(self.rom[pc(0x1BED4A) + 4], 0xEA)
         self.assertEqual(self.rom[pc(0x0ED73C) + 4], 0xEA)
         self.assertEqual(self.rom[pc(0x00D510) + 4], 0xEA)
@@ -316,48 +386,69 @@ class MirrorShieldPaletteTests(unittest.TestCase):
     def test_color8_load_and_refresh_hooks(self) -> None:
         def stub_day_night(cpu: Mini65816) -> None:
             self.assertEqual(cpu.p & 0x30, 0x00)
-            self.assertEqual(cpu.a, 0x7B13)
-            self.assertEqual(cpu.x, 0x01B0)
-            tinted = 0x6A0B  # simulated midnight tint
+            tinted = 0x6A0B if cpu.a == 0x7B13 else cpu.a
             cpu.put(0x7EC300 + cpu.x, tinted, 2)
             cpu.a = tinted
             cpu.pc = cpu.pop(3) + 1
 
+        # Light World ($00): L1/L2 stay untouched vanilla SNES; L3 writes Option D C8
         for shield in (0, 1, 2, 3):
             cpu = Mini65816(self.rom, p=0x00)
             cpu.stubs[0x348000] = stub_day_night
+            cpu.put(0x7EF3CA, 0x00, 1)  # Light World
             cpu.put(0x7EF35A, shield, 1)
             cpu.put(0x7EC4B0, 0x1234, 2)
             cpu.put(0x7EC6B0, 0x5678, 2)
+            cpu.put(0x7EC6B8, 0x9999, 2)
             cpu.put(0x15, 4, 1)
             cpu.push(0x02FFEF, 3)
             cpu.run(self.labels["MirrorShield_LoadColor8"], {0x02FFF0})
             self.assertEqual(cpu.p & 0x30, 0x30)
             self.assertEqual(cpu.read(0x15, 1), 5)
-            expected = 0x6A0B if shield == 3 else None
+            self.assertEqual(cpu.read(0x7EC6B8, 2), 0x9999)  # LW L1/L2 untouched
             if shield == 3:
-                self.assertEqual(cpu.read(0x7EC4B0, 2), expected)
-                self.assertEqual(cpu.read(0x7EC6B0, 2), expected)
+                self.assertEqual(cpu.read(0x7EC4B0, 2), 0x6A0B)
+                self.assertEqual(cpu.read(0x7EC6B0, 2), 0x6A0B)
                 self.assertEqual(cpu.calls, [0x348000])
             else:
                 self.assertEqual(cpu.read(0x7EC4B0, 2), 0x1234)
                 self.assertEqual(cpu.read(0x7EC6B0, 2), 0x5678)
                 self.assertEqual(cpu.calls, [])
 
-        # Refresh hook inspects DP $0D so zap state ($0D=2) does not override with C8
+        # Dark World ($40): L1 writes GBC Wooden, L2 writes GBC Iron-Kite into SP-5 C12..C15
+        for shield, want_pal in (
+            (1, [0x379F, 0x0865, 0x15F9, 0x08EF]),
+            (2, [0x7BDE, 0x1CA4, 0x6ECE, 0x4947]),
+        ):
+            cpu = Mini65816(self.rom, p=0x00)
+            cpu.stubs[0x348000] = stub_day_night
+            cpu.put(0x7EF3CA, 0x40, 1)  # Dark World / Eon Abyss
+            cpu.put(0x7EF35A, shield, 1)
+            cpu.put(0x15, 4, 1)
+            cpu.push(0x02FFEF, 3)
+            cpu.run(self.labels["MirrorShield_LoadColor8"], {0x02FFF0})
+            self.assertEqual(cpu.p & 0x30, 0x30)
+            self.assertEqual(cpu.read(0x15, 1), 5)
+            got = [cpu.read(0x7EC6B8 + i * 2, 2) for i in range(4)]
+            self.assertEqual(got, want_pal)
+
+        # Refresh hook inspects DP $0D so zap state ($0D=2 while Shield=3) never overrides C8 or DW pal
         for dp_0d in (0, 1, 2, 3, 4):
             cpu = Mini65816(self.rom, p=0x00)
             cpu.stubs[0x348000] = stub_day_night
+            cpu.put(0x7EF3CA, 0x40, 1)
             cpu.put(0x0D, dp_0d, 1)
             cpu.put(0x7EF35A, 3, 1)
             cpu.put(0x7EC4B0, 0x1111, 2)
             cpu.put(0x7EC6B0, 0x2222, 2)
+            cpu.put(0x7EC6B8, 0xAAAA, 2)
             cpu.put(0x15, 9, 1)
             cpu.push(0x07FFEF, 3)
             cpu.run(self.labels["MirrorShield_RefreshColor8"], {0x07FFF0})
             self.assertEqual(cpu.p & 0x30, 0x30)
             self.assertEqual(cpu.read(0x15, 1), 10)
             self.assertEqual(cpu.read(0x7EC6B0, 2), 0x6A0B if dp_0d == 3 else 0x2222)
+            self.assertEqual(cpu.read(0x7EC6B8, 2), 0xAAAA)  # zap $0D=2 didn't overwrite L3 pal!
 
     def test_capture_item_id_abi(self) -> None:
         for item_id in (0x00, 0x06, 0x20, 0x2D, 0x2E, 0x39, 0xFF):
@@ -408,6 +499,21 @@ class MirrorShieldPaletteTests(unittest.TestCase):
             want = expected_pixels if item_id == 0x2E else pattern
             for idx in range(4):
                 self.assertEqual(decode_tile_pixels(cpu.read_bytes(0x7EBD40 + idx * 32, 32)), want)
+
+    def test_shield_world_sync_tiles_lw_vs_dw(self) -> None:
+        lw_blob = (ROOT / "Data/graphics/items/vanilla_shields_lw.4bpp").read_bytes()
+        dw_blob = (ROOT / "Data/graphics/items/gbc_shields_dw.4bpp").read_bytes()
+        for world, blob in ((0x00, lw_blob), (0x40, dw_blob)):
+            for shield in (1, 2, 3):
+                cpu = Mini65816(self.rom, a=0x1234, x=0x0055, y=0x0066, p=0x30, db=0x2B)
+                cpu.put(0x7EF3CA, world, 1)
+                cpu.put(0x7EF35A, shield, 1)
+                cpu.push(0x02FFEF, 3)
+                cpu.run(self.labels["ShieldWorld_SyncTiles"], {0x02FFF0})
+                self.assertEqual((cpu.p & 0x30, cpu.db, cpu.stack), (0x30, 0x2B, []))
+                got = cpu.read_bytes(0x7E9300, 0x180)
+                want = blob[(shield - 1) * 0x180 : shield * 0x180]
+                self.assertEqual(got, want, f"Mismatch for world=${world:02X} shield={shield}")
 
 
 if __name__ == "__main__":

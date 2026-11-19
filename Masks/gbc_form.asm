@@ -67,6 +67,7 @@ LinkState_GameboyInDungeonEntrance:
         LDA.b #$3B : STA.b $BC ; change link's sprite
         JSL UpdateGbcPalette
   .return
+  JSL ShieldWorld_SyncBoth
   JSL $0AFE80 ; Underworld_HandleLayerEffect
   RTL
 }
@@ -92,6 +93,7 @@ LoadOverworld_CheckForGbcLink:
   .refresh
   JSL Palette_ArmorAndGloves
   .done
+  JSL ShieldWorld_SyncBoth
   STZ.b $B0
   STZ.b $11
   RTL
@@ -127,6 +129,7 @@ MirrorWarp_PearllessArrival:
     LDA.b #$06 : STA.w $02B2
     ; UpdateGbcPalette updates both live ($7EC6E0) and aux ($7EC4E0) buffers.
     JSL UpdateGbcPalette
+    JSL ShieldWorld_SyncBoth
     RTL
   .vanilla
   LDY.b #$04 : LDA.b #$23
@@ -156,6 +159,7 @@ MirrorWarp_PearlArrival:
     LDA.b #$06 : STA.w $02B2
     ; UpdateGbcPalette updates both live ($7EC6E0) and aux ($7EC4E0) buffers.
     JSL UpdateGbcPalette
+    JSL ShieldWorld_SyncBoth
   .done
   LDA.l $7EF357
   RTL
@@ -203,6 +207,7 @@ LinkState_GameboyForm:
   STZ $02B2
   JSL Palette_ArmorAndGloves
   .return
+  JSL ShieldWorld_SyncBoth
   JSL $07F1E6
   RTL
 }

@@ -467,14 +467,16 @@ class WindmillDualArchAndShieldContractsTests(unittest.TestCase):
                 self.assertEqual(g5f[sy + y][sx : sx + 8], g5c[dy + y][dx : dx + 8])
 
     def test_menu_shield_gfx_and_2bpp_asset(self) -> None:
+        # Light World menu icons remain vanilla SNES; DW-only GBC shields use 4BPP runtime blobs.
         gfx = MENU_GFX_ASM.read_text(encoding="utf-8")
-        self.assertIn("dw $34FD, $74FD, $34FE, $74FE", gfx)
-        self.assertIn("dw $30FF, $70FF, $309F, $709F", gfx)
+        self.assertIn("dw $2CFD, $6CFD, $2CFE, $6CFE", gfx)
+        self.assertIn("dw $2CFF, $6CFF, $2C9F, $6C9F", gfx)
         self.assertIn("dw $2C80, $2C81, $2C8D, $2C8E", gfx)
-        raw_2bpp = (ROOT / "Data/graphics/items/gbc_shields.2bpp").read_bytes()
-        self.assertEqual(len(raw_2bpp), 128)
-        for i in range(8):
-            self.assertTrue(any(raw_2bpp[i * 16 : (i + 1) * 16]))
+        lw_4bpp = (ROOT / "Data/graphics/items/vanilla_shields_lw.4bpp").read_bytes()
+        dw_4bpp = (ROOT / "Data/graphics/items/gbc_shields_dw.4bpp").read_bytes()
+        self.assertEqual(len(lw_4bpp), 1152)
+        self.assertEqual(len(dw_4bpp), 1152)
+        self.assertNotEqual(lw_4bpp, dw_4bpp)
 
     def test_expanded_palette_catalog_valid_and_complete(self) -> None:
         pcc.validate_palette_catalog(CATALOG_JSON)

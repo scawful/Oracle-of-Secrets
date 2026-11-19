@@ -1,20 +1,22 @@
 ; ==============================================================================
-; GBC-Style Shield Trilogy Palettes & Mirror Shield Option D (SP-5 Color 8)
+; Dark-World-Only GBC Shield Trilogy + Mirror Shield Option D (SP-5 Color 8)
 ; ==============================================================================
-; Replaces all three shield palette rows in PaletteData ($1BD648..$1BD65F) to
-; pair with source-built GBC Link shield sheets ($5F/$5C in source_sprite_sheets.json)
-; and Menu/HUD 2bpp icons (Data/graphics/menu_icons.json):
-;   - PaletteData_shield_00 ($1BD648, L1 Wooden Shield, C12..C15):
+; Light World ($7EF3CA == $00) & Special Overworld keep 100% vanilla SNES ALTTP
+; shields (Sheets $5F/$5C, Menu icons, and ROM PaletteData $1BD648/$1BD650).
+;
+; Eon Abyss / Dark World ($7EF3CA == $40) switches Link's equipped shield tiles
+; ($7E9300..$7E947F, 384B) and SP-5 C12..C15 palette dynamically:
+;   - L1 Wooden Shield (DW only):
 ;       C12 = $379F (#F8E068 bright golden-brass rim & emblem)
 ;       C13 = $0865 (#281810 deep warm umber outline)
 ;       C14 = $15F9 (#C87828 warm Oracle oak wood)
 ;       C15 = $08EF (#783810 deep walnut wood grain shadow)
-;   - PaletteData_shield_01 ($1BD650, L2 Iron / Kite Shield, C12..C15):
+;   - L2 Iron / Kite Shield (DW only):
 ;       C12 = $7BDE (#F0F0F8 gleaming silver bevel & Oracle kite crest)
 ;       C13 = $1CA4 (#202838 deep cool navy-steel outline)
 ;       C14 = $6ECE (#70B0DC cool steely-blue kite face)
 ;       C15 = $4947 (#385090 deep iron-slate shadow)
-;   - PaletteData_shield_02 ($1BD658, L3 Oracle Mirror Shield, C12..C15 + SP-5 C8):
+;   - L3 Mirror Shield (Option D 5-color palette in LW & DW; GBC art in DW only):
 ;       Uses free OAM SP-5 Color 8 ($01B0 -> PALB_SPR5B $7EC4B0 / PAL_SPR5B $7EC6B0)
 ;       for Mirror Shield's cool steel highlight (#98C0F0 / $7B13), preserving
 ;       Master Sword ($1BD642):
@@ -22,25 +24,17 @@
 ;       C13 = $18A5 (#282830 cool dark outline)
 ;       C14 = $7FFE (#F0F8F8 white specular sheen)
 ;       C15 = $5589 (#4860A8 deep blue-steel shadow)
-;   - Sheet $5F (front tiles 32,33,48,49 -> $7E9300/$7E93C0) and Sheet $5C
-;     ($2E tiles 36,37,52,53 -> $7EBD40) encode 3bpp color 2 as 4BPP 1010b (C10,
-;     Sword mid) while shading uses 1100b..1111b (bp2=1). Remapping bp1 &= bp2
-;     converts only 1010b -> 1000b (C8) and leaves 0000b and 1100b..1111b intact.
+;   - Pre-decoded 4BPP tile blobs (3 x 384B = 1152B each) live in Bank $34
+;     ($34F000+) so ShieldWorld_SyncTiles / ShieldWorld_SyncBoth swap LW <-> DW
+;     shields in ~0.18 ms without touching $7F0000 decompression scratch or DP.
 ; ==============================================================================
 
 !MirrorShield_Color8 = $7B13 ; BGR555 #98C0F0
 
 pushpc
 
-; Shield level 1 (GBC Wooden Shield) palette C12..C15 in PaletteData ($1BD648, 8B).
-org $1BD648 ; @hook module=Items name=PaletteData_ShieldWooden kind=data protected_size=8
-  dw $379F, $0865, $15F9, $08EF
-
-; Shield level 2 (GBC Iron / Kite Shield) palette C12..C15 in PaletteData ($1BD650, 8B).
-org $1BD650 ; @hook module=Items name=PaletteData_ShieldIronKite kind=data protected_size=8
-  dw $7BDE, $1CA4, $6ECE, $4947
-
 ; Shield level 3 (Mirror Shield) palette C12..C15 in PaletteData ($1BD658, 8B).
+; L1 ($1BD648) & L2 ($1BD650) stay untouched vanilla SNES for Light World.
 org $1BD658 ; @hook module=Items name=PaletteData_ShieldMirror kind=data protected_size=8
   dw $373C, $18A5, $7FFE, $5589
 
@@ -84,13 +78,63 @@ MirrorShield_ApplyColor8:
   RTS
 }
 
+; Entry: M=16, X=16, A = active shield level (1..3).
+; - L3: applies Option D SP-5 Color 8 in both Light World and Dark World.
+; - L1/L2: leaves vanilla SNES palette intact in Light World; in Dark World
+;   ($7EF3CA == #$40), writes GBC Wooden / Iron-Kite C12..C15 to SP-5.
+; Clobbers A, X, Y. Returns M=16, X=16.
+MirrorShield_ApplyWorldPalette:
+{
+  CMP.w #$0003 : BNE .check_dw_l12
+    JSR MirrorShield_ApplyColor8
+    RTS
+.check_dw_l12
+  CMP.w #$0001 : BEQ .is_l12
+  CMP.w #$0002 : BNE .done
+.is_l12
+  PHA
+  SEP #$20
+  LDA.l SavedWorld : CMP.b #$40
+  REP #$20
+  BNE .pop_done
+  PLA
+  ; Dark World ($40): pick 8-byte GBC palette table for L1 (0) or L2 (8).
+  DEC A : ASL #3 : TAX ; X = 0 (Wooden) or 8 (Iron-Kite)
+  LDY.w #$01B8         ; CGRAM byte offset SP-5 C12 ($7EC4B8/$7EC6B8)
+.pal_loop
+  LDA.l GbcShieldPal_Table,X
+  PHX : PHY
+  TYX                  ; X = CGRAM byte offset for LoadDayNightPaletteEffect
+  if !DISABLE_OVERWORLD == 0
+    JSL LoadDayNightPaletteEffect
+    TYX                ; reload X = CGRAM byte offset (Y preserved)
+  else
+    STA.l $7EC300,X
+  endif
+  STA.l $7EC500,X
+  PLY : PLX
+  INX : INX
+  INY : INY
+  CPY.w #$01C0 : BCC .pal_loop
+  RTS
+.pop_done
+  PLA
+.done
+  RTS
+}
+
+GbcShieldPal_Table:
+  ; L1 GBC Wooden Shield (C12..C15)
+  dw $379F, $0865, $15F9, $08EF
+  ; L2 GBC Iron / Kite Shield (C12..C15)
+  dw $7BDE, $1CA4, $6ECE, $4947
+
 ; Exit hook for Palettes_Load_Shield ($1BED4A -> M=8, X=8).
 MirrorShield_LoadColor8:
 {
   REP #$30
-  LDA.l Shield : AND.w #$00FF : CMP.w #$0003 : BNE .skip
-    JSR MirrorShield_ApplyColor8
-.skip
+  LDA.l Shield : AND.w #$00FF
+  JSR MirrorShield_ApplyWorldPalette
   SEP #$30
   INC.b $15
   RTL
@@ -98,12 +142,26 @@ MirrorShield_LoadColor8:
 
 ; Exit hook for RefreshLinkEquipmentPalettes ($0ED73C -> M=8, X=8).
 ; Checks DP $0D (active shield argument loaded before RefreshLinkEquipmentPalettes)
-; so zap flash ($0D=$02) stays untouched and shock recovery ($0D=$7EF35A=3) restores C8.
+; so electrocution zap flash ($0D != Shield) stays untouched, while shock recovery
+; ($0D == Shield) restores both Option D C8 (L3) and Dark World GBC L1/L2 colors.
 MirrorShield_RefreshColor8:
 {
   REP #$30
-  LDA.b $0D : AND.w #$00FF : CMP.w #$0003 : BNE .skip
-    JSR MirrorShield_ApplyColor8
+  LDA.b $0D : AND.w #$00FF
+  CMP.w #$0003 : BEQ .apply
+  ; For L1/L2, only apply when $0D matches the player's actual equipped shield
+  ; (guards against zap-flash $0D=$02 clobbering shock palette).
+  PHA
+  SEP #$20
+  LDA.b $0D : CMP.l Shield
+  REP #$20
+  BNE .pop_skip
+  PLA
+.apply
+  JSR MirrorShield_ApplyWorldPalette
+  BRA .skip
+.pop_skip
+  PLA
 .skip
   SEP #$30
   INC.b $15
@@ -138,10 +196,20 @@ MirrorShield_RemapTilesC10ToC8:
 }
 
 ; Exit hook for DecompressShieldGraphics ($00D333 -> M=8, X=8, restores caller DBR).
-; Remaps equipped front shield top ($7E9300, tiles 32..33) & bottom ($7E93C0, tiles 48..49).
+; - In Dark World ($7EF3CA == #$40): overwrites $7E9300..$7E947F with the GBC
+;   Shield Trilogy 4BPP tiles for equipped Shield 1..3 (Option D pre-baked on L3).
+; - In Light World / Special OW: leaves vanilla SNES tiles intact and applies
+;   Option D C10->C8 remap to L3 front tiles ($7E9300/$7E93C0).
 MirrorShield_RemapEquippedWRAM:
 {
   REP #$30
+  SEP #$20
+  LDA.l SavedWorld : CMP.b #$40
+  REP #$20
+  BNE .light_world
+    JSL ShieldWorld_SyncTiles
+    BRA .done
+.light_world
   LDA.l Shield : AND.w #$00FF : CMP.w #$0003 : BNE .done
   LDX.w #$9300 : LDY.w #$0002 : JSR MirrorShield_RemapTilesC10ToC8
   LDX.w #$93C0 : LDY.w #$0002 : JSR MirrorShield_RemapTilesC10ToC8
@@ -173,3 +241,83 @@ MirrorShield_RemapPickupWRAM:
   PLB
   RTL
 }
+
+; ==============================================================================
+; Bank $34 tail ($34F000-$34FFFF): Dark-World / Light-World Shield 4BPP Swapper
+; Preserves all registers, P, DBR, DP, and $7F0000 scratch (safe from any hook).
+; ==============================================================================
+pushpc
+org $34F000
+
+; Copies the equipped shield's 12 4BPP tiles (384 bytes) into GFX_SHIELD ($7E9300):
+;   SavedWorld ($7EF3CA) == #$40 -> GbcShields_4bpp (DW GBC Shield Trilogy)
+;   otherwise                    -> VanillaShields_4bpp (LW vanilla SNES shields)
+ShieldWorld_SyncTiles:
+{
+  PHP : PHB : REP #$30
+  PHA : PHX : PHY
+  LDA.l Shield : AND.w #$00FF
+  BEQ .done
+  CMP.w #$0004 : BCS .done
+  ; Offset = (shield - 1) * $0180 ($0000 / $0180 / $0300)
+  DEC A : XBA             ; $0000 / $0100 / $0200
+  PHA
+  LSR A                   ; $0000 / $0080 / $0100
+  CLC : ADC 1,S           ; $0000 / $0180 / $0300
+  PLX                     ; discard pushed temp
+  TAX
+  SEP #$20
+  LDA.l SavedWorld : CMP.b #$40
+  REP #$20
+  BNE .use_lw
+    TXA : CLC : ADC.w #GbcShields_4bpp : TAX
+    BRA .copy
+.use_lw
+  TXA : CLC : ADC.w #VanillaShields_4bpp : TAX
+.copy
+  ; Set DBR = $7E so STA.w $9300,Y writes directly to GFX_SHIELD ($7E9300..$7E947F).
+  SEP #$20
+  LDA.b #$7E : PHA : PLB
+  REP #$20
+  LDY.w #$0000
+.loop
+  LDA.l $340000,X
+  STA.w $9300,Y
+  INX : INX : INY : INY
+  CPY.w #$0180 : BCC .loop
+.done
+  PLY : PLX : PLA
+  PLB : PLP
+  RTL
+}
+
+; Syncs BOTH equipped shield tiles ($7E9300..$7E947F) and shield palette
+; (Palettes_Load_Shield -> MirrorShield_LoadColor8). Preserves A, X, Y, P, DBR, DP $00-$07.
+ShieldWorld_SyncBoth:
+{
+  PHP : PHB : REP #$30
+  PHA : PHX : PHY
+  LDA.b $00 : PHA
+  LDA.b $02 : PHA
+  LDA.b $04 : PHA
+  LDA.b $06 : PHA
+  JSL ShieldWorld_SyncTiles
+  JSL $1BED29 ; Palettes_Load_Shield (runs MirrorShield_LoadColor8 -> world-aware!)
+  REP #$30
+  PLA : STA.b $06
+  PLA : STA.b $04
+  PLA : STA.b $02
+  PLA : STA.b $00
+  PLY : PLX : PLA
+  PLB : PLP
+  RTL
+}
+
+VanillaShields_4bpp:
+  incbin "Data/graphics/items/vanilla_shields_lw.4bpp"
+
+GbcShields_4bpp:
+  incbin "Data/graphics/items/gbc_shields_dw.4bpp"
+
+assert pc() <= $350000, "ShieldWorld data/routines exceeded Bank $34"
+pullpc

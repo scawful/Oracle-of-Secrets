@@ -10,8 +10,6 @@ SourceSpriteSheet_43: incbin "sheets/spr43.bin"
 SourceSpriteSheet_47: incbin "sheets/spr47.bin"
 SourceSpriteSheet_0F: incbin "sheets/spr0F.bin"
 SourceSpriteSheet_38: incbin "sheets/spr38.bin"
-SourceSpriteSheet_5F: incbin "sheets/spr5F.bin"
-SourceSpriteSheet_5C: incbin "sheets/spr5C.bin"
 assert pc() <= $410000 || pc() == $418000, "Source sprite sheets crossed bank $40"
 org $478000
 SourceGlobalSheet_E3: incbin "sheets/gE3.bin"
@@ -126,20 +124,6 @@ org $23FEAB ; @hook module=Core kind=data protected_size=1
   db $E2
 org $23FFAB ; @hook module=Core kind=data protected_size=1
   db $A5
-; Sprite $5F, global $D2: GBC-style Shield Trilogy equipped Link tiles ($04-$09/$14-$19 L1 Wooden, $0A-$0F/$1A-$1F L2 Iron-Kite, $20-$25/$30-$35 L3 Oracle Mirror); all non-shield tiles preserved.
-org $23FDD2 ; @hook module=Core kind=data protected_size=1
-  db $C0
-org $23FED2 ; @hook module=Core kind=data protected_size=1
-  db $E8
-org $23FFD2 ; @hook module=Core kind=data protected_size=1
-  db $40
-; Sprite $5C, global $CF: GBC-style Shield Trilogy item receipt icons ($0F/$1F L1/L2 pickup, $24-$25/$34-$35 L3 Oracle Mirror pickup); all non-shield tiles preserved.
-org $23FDCF ; @hook module=Core kind=data protected_size=1
-  db $C0
-org $23FECF ; @hook module=Core kind=data protected_size=1
-  db $EC
-org $23FFCF ; @hook module=Core kind=data protected_size=1
-  db $36
 ; Global $E3 (sprite-relative $70): Kalyxo Docks ordinary 3bpp background; shared Secret Beach LOW deck sheet.
 org $23FDE3 ; @hook module=Core kind=data protected_size=1
   db $C7
