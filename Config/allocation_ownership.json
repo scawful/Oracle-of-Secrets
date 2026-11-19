@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "9f6b3a4dfd2a3dc69d17247c1392974753cd554cf9794405f2815aecbee98271"
+      "sha256": "1c1725d1ba608e2cef936b30b1436366caacc28e3f7b09040baf7215c1788600"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -125,7 +125,7 @@
     "shared:Overworld/overworld.asm": {
       "source_set": "shared",
       "path": "Overworld/overworld.asm",
-      "sha256": "03ed1b40c3b877c161920dbf08abd730043b92e196db7a09dec25b7f63b9ce60"
+      "sha256": "43fe19300c29b08e42f425c744fd07310f53fd7d137a2f0c5cb1c7f6208fdd8e"
     },
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
@@ -135,7 +135,7 @@
     "shared:Menu/menu_map_travel.asm": {
       "source_set": "shared",
       "path": "Menu/menu_map_travel.asm",
-      "sha256": "d40a815375a93b68c6b6f2e0fe9579af63ec016478d20be7d159d956da63c6b8"
+      "sha256": "99df1ebb49257ee9574961e8294fb7056da24f6751b13809497395dd286cf60b"
     },
     "shared:Core/Cutscene/experiment.asm": {
       "source_set": "shared",
@@ -230,7 +230,7 @@
     "shared:Overworld/time_system.asm": {
       "source_set": "shared",
       "path": "Overworld/time_system.asm",
-      "sha256": "56c503c12c0d8fff898bc70a23f6fdd47b63a982ca278de477f60d9ae1a2ad01"
+      "sha256": "163813aaf004d63e66cb1ac6b7e279558b22d5c4523c74e9ce220fc8d828d495"
     },
     "shared:Overworld/aux_palette_extension.asm": {
       "source_set": "shared",
@@ -290,7 +290,7 @@
     "shared:Items/special_soaring.asm": {
       "source_set": "shared",
       "path": "Items/special_soaring.asm",
-      "sha256": "b18973fd650b792f3adae9300f223c047cf8f1fdc84226165c71df8921d8c52a"
+      "sha256": "91e9f2326ae2dc90226f0d0c0fe5e5bda4399ed9ccaa475b7d9a88cce823ac61"
     },
     "shared:Items/switch_hook.asm": {
       "source_set": "shared",
@@ -300,7 +300,7 @@
     "shared:Items/sky_watch_log.asm": {
       "source_set": "shared",
       "path": "Items/sky_watch_log.asm",
-      "sha256": "029d77bbd049212b7e1c73ccb401f7a29cc3df39a94315a046c8bb297e319211"
+      "sha256": "8e03ea2fcecf01408e834bfc3c3971fae4697cba18889f69a8d259f244ebb62e"
     },
     "shared:Dungeons/d6_chu_gate_97.asm": {
       "source_set": "shared",
@@ -365,7 +365,7 @@
     "shared:Overworld/entrances.asm": {
       "source_set": "shared",
       "path": "Overworld/entrances.asm",
-      "sha256": "dd89c03e9601eb9bbffb167d68fe8f1aa3de1233d448188b6edc4b4eb0b57c12"
+      "sha256": "ee084bf16a9bde94bc978d2187c49882205e611536b21962dc518092f275c6d9"
     },
     "shared:Masks/horse_ground_clearance.asm": {
       "source_set": "shared",
@@ -375,7 +375,7 @@
     "shared:Items/all_items.asm": {
       "source_set": "shared",
       "path": "Items/all_items.asm",
-      "sha256": "db750076fdd41705d924372d307983d161ecd5c7ea59ca959a128935b1918105"
+      "sha256": "85242e4eabc89df6a17d15c53fefd49f9254f9c27e5daeddce0f741f577077bc"
     },
     "shared:Masks/horse_park_anywhere.asm": {
       "source_set": "shared",
@@ -450,7 +450,7 @@
     "shared:Overworld/lyra_edge_guard.asm": {
       "source_set": "shared",
       "path": "Overworld/lyra_edge_guard.asm",
-      "sha256": "4312a362b50346a998b4a20b863eedf53a5378634d06ca7b6351eefc4ed78adc"
+      "sha256": "4fe6197381258271ae2b8a53e2c7af515008b639b17e164222db52f924e2bde3"
     },
     "shared:Overworld/village_bar_exit.asm": {
       "source_set": "shared",
