@@ -152,7 +152,12 @@ Sprite_Ganondorf_Prep:
     DEX : DEX : BPL .black
   SEP #$20
   PLX
-  LDA.b #$1F : STA.w $012C ; final-boss theme, independent of Kydreeok's death fanfare
+  ; Final-boss theme $1F only exists in the underworld song bank ($0136 != 0).
+  ; Guard like kydreeok.asm so an overworld song bank cannot crash the SPC driver
+  ; and hang Module19_02_LoadMusicAndScreen at $008891.
+  LDA.w $0136 : BEQ .keep_song
+    LDA.b #$1F : STA.w $012C ; final-boss theme, independent of Kydreeok's death fanfare
+  .keep_song
   STZ.w BossReinject
   PLB
   RTL
@@ -1190,37 +1195,41 @@ Ganondorf_DoorGate:
 {
   LDA.b $A0 : ORA.b $A1 : BNE .open
   LDA.l GanondorfFight : CMP.b #$02 : BEQ .open
-  CMP.b #$03 : BEQ .shut ; beast alive: keep shut, spawn nothing
-  ; Kydreeok must have died first (kydreeok.asm sets FinaleBeat), then the placeholder beat runs out.
-  LDA.w FinaleBeat : BEQ .shut
-    PHX : PHY
-    LDX.b #$0F
-    .scan ; a live Ganondorf (fight = 1) means wait; a stale fight = 1 with none respawns him
-      LDA.w SprState, X : BEQ .next
-      LDA.w SprType, X : CMP.b #Sprite_Ganondorf : BEQ .wait
-      .next
-      DEX : BPL .scan
-    JSR Finale_BeatRumble
-    LDA.w FinaleBeat : CMP.b #$01 : BEQ .go
-      DEC.w FinaleBeat
-      BRA .wait
-    .go
-    LDX.b #$00 ; spawn copies slot 0's position; overwritten below
-    LDA.b #Sprite_Ganondorf : JSL Sprite_SpawnDynamically : BMI .full
-      TYX
-      LDA.b #$70 : STA.w SprX, X
-      LDA.b $23 : STA.w SprXH, X ; Link's room quadrant
-      LDA.b #$80 : STA.w SprY, X
-      LDA.b $21 : STA.w SprYH, X
-      LDA.b $EE : STA.w SprFloor, X
-      JSL Sprite_Ganondorf_Prep
-      LDA.b #$01 : STA.l GanondorfFight
-    .full
-    .wait
-    PLY : PLX
-    .shut
-    SEC
-    RTL
+  PHX : PHY
+  LDX.b #$0F
+  .scan ; a live Ganondorf or Ganon Beast (SprType == Sprite_Ganondorf) means wait
+    LDA.w SprState, X : BEQ .next
+    LDA.w SprType, X : CMP.b #Sprite_Ganondorf : BEQ .wait
+    .next
+    DEX : BPL .scan
+  ; No live boss in room $00: if FinaleBeat was cleared by Save & Quit or a stale
+  ; GanondorfFight (1 or 3) reloaded room $00 directly after Kydreeok died
+  ; ($7EF005 bit 3), re-arm the beat so room $00 never softlocks empty with the door shut.
+  LDA.w FinaleBeat : BNE .have_beat
+    LDA.l $7EF005 : AND.b #$08 : BEQ .wait
+    LDA.b #$40 : STA.w FinaleBeat
+  .have_beat
+  JSR Finale_BeatRumble
+  LDA.w FinaleBeat : CMP.b #$01 : BEQ .go
+    DEC.w FinaleBeat
+    BRA .wait
+  .go
+  LDX.b #$00 ; spawn copies slot 0's position; overwritten below
+  LDA.b #Sprite_Ganondorf : JSL Sprite_SpawnDynamically : BMI .full
+    TYX
+    LDA.b #$70 : STA.w SprX, X
+    LDA.b $23 : STA.w SprXH, X ; Link's room quadrant
+    LDA.b #$80 : STA.w SprY, X
+    LDA.b $21 : STA.w SprYH, X
+    LDA.b $EE : STA.w SprFloor, X
+    JSL Sprite_Ganondorf_Prep
+    LDA.b #$01 : STA.l GanondorfFight
+  .full
+  .wait
+  PLY : PLX
+  .shut
+  SEC
+  RTL
   .open
   CLC
   RTL

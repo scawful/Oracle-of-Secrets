@@ -173,6 +173,22 @@ LoadOverworldPitAreas:
   RTL
 }
 
+; DetermineConsequencesOfFalling replaces Link's Y ($20) with ($E8 - $10) before
+; calling Overworld_GetPitDestination ($1BB860). If camera scroll $E8 is desynced
+; or clamped on Final Sanctum (OW $4D), $1BB860 can miss the four hole rows and
+; fall back to Chris Houlihan ($82) while clearing $7EF3CA to Light World ($00).
+; OW $4D only has one pit destination (Entrance $7B -> Room $0002 in Dark World).
+Overworld_ResolvePitDestination:
+{
+  JSL Overworld_GetPitDestination
+  LDA.b $8A : CMP.b #$4D : BNE .done
+  LDA.w $010E : CMP.b #$82 : BNE .done
+    LDA.b #$7B : STA.w $010E
+    LDA.b #$40 : STA.l $7EF3CA
+  .done
+  RTL
+}
+
 ; Returned from Bank $2B (Items/all_items.asm) once custom_gfx DMA blobs moved to $57/$59.
 incsrc "Overworld/richard_quest.asm"
 if !SPECIAL_OVERWORLD_NATIVE == 1
@@ -194,6 +210,8 @@ org $0794D9 ; @hook module=Overworld
     JSL $01FFD9 ; TakeDamageFromPit
     RTS
   .overworld_pit_transition
+  JSL Overworld_ResolvePitDestination
+  assert pc() == $0794E8
 
 org $1AF5C3 : CMP.b #$4B ; Fortress ceremony waterfall (Fortress moved $5E -> $4B)
 
