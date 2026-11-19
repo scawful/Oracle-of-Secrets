@@ -5,7 +5,8 @@
 ; $20, Module05_LoadFile $0281AB): SavedWorld is the respawn lock
 ; (LoadDarkWorldIntro). From GameState 3 (Farore rescued) an outdoor Abyss
 ; load shows the vanilla spawn-select box with message $21B instead:
-;   0 = Pyramid      (keeps the Abyss load, exit room $20)
+;   0 = Eon Abyss    (keeps the Abyss load, spawns outside the Abyss Windmill
+;                     via exit room $C9 -> area $63, Exit #39)
 ;   1 = Kalyxo       (SavedWorld = 0, then the vanilla light world menu
 ;                     $0184/$0185: Link's House / Hall of Secrets /
 ;                     Mountain Cave, same gates as a light world load)
@@ -46,12 +47,14 @@ AbyssSpawnMenu_Select:
 
   .abyss_menu
   LDA.w $1CE8 : BNE .light_world
-    ; Pyramid: the native Module05 outdoor Abyss branch ($02819C-$0281BC).
+    ; Eon Abyss: spawn outside the Abyss Windmill (exit room $00C9 -> area $63,
+    ; Exit #39) using the same outdoor Module08 sequence as $02819C-$0281BC.
+    ; Kydrog's initial story warp to the Pyramid ($0281AB) remains unchanged.
     JSL $0DE395 ; SearchForEquippedItem_long
     JSL $0DFA6C ; RebuildHUD_long2
     JSL $0DDD32 ; UpdateEquippedItem_long
     STZ.w $010A
-    LDA.b #$20 : STA.b $A0 ; ROOM 0020
+    LDA.b #$C9 : STA.b $A0 ; ROOM 00C9 (Abyss Windmill exit #39 -> area $63)
     STZ.b $A1
     ; The text box shade uses HDMA; Module08 loads with HDMA off.
     STZ.b $9B

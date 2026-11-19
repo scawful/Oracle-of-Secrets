@@ -311,6 +311,16 @@ endif
   ; at offset 0 contains garbage. Must load from Pool_BGColorTable instead.
   LDA.b $1B : BNE .skip_bg_fix
 
+  ; Module05_LoadFile ($0281F6) and Module1B_SpawnSelect ($0281ED re-entry)
+  ; call Interface_PrepAndDisplayMessage ($10 = $0E, $010C = $05/$1B) right
+  ; before Underworld_LoadPalettes with $1B = 0. Keep SetBGandFixedColorBlack
+  ; intact instead of overwriting CGRAM 0 with overworld grass green.
+  LDA.b $10 : CMP.b #$05 : BEQ .skip_bg_fix
+              CMP.b #$1B : BEQ .skip_bg_fix
+              CMP.b #$0E : BNE .refresh_bg
+    LDA.w $010C : CMP.b #$05 : BEQ .skip_bg_fix
+                  CMP.b #$1B : BEQ .skip_bg_fix
+  .refresh_bg
   ; The helper widens the word index and restores the normal X=8 ABI.
   JSL RefreshOverworldBackdrop
   .skip_bg_fix

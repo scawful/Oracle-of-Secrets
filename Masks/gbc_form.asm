@@ -12,27 +12,29 @@ UpdateGbcPalette:
   CMP #$0002 : BEQ .red_mail
 
   .loop
-  LDA.l GameboyLinkPalette, X : STA $7EC6E0, X
+  ; Write both live CGRAM ($7EC6E0) and aux/fade target ($7EC4E0) so fades,
+  ; spotlights, and menu/map exits never revert GBC Link to normal Link colors.
+  LDA.l GameboyLinkPalette, X : STA.l $7EC6E0, X : STA.l $7EC4E0, X
   DEX : DEX : BPL .loop
   SEP #$30 ; go back to 8 bit mode
-  INC $15  ; update the palette
-  RTL      ; or RTS depending on where you need it
+  INC.b $15 ; update the palette
+  RTL
   .blue_mail
   LDX #$001E
     .loop2
-    LDA.l GameboyLinkBlueMail, X : STA $7EC6E0, X
+    LDA.l GameboyLinkBlueMail, X : STA.l $7EC6E0, X : STA.l $7EC4E0, X
     DEX : DEX : BPL .loop2
   SEP #$30 ; go back to 8 bit mode
-  INC $15  ; update the palette
-  RTL      ; or RTS depending on where you need it
+  INC.b $15 ; update the palette
+  RTL
   .red_mail
   LDX #$001E
     .loop3
-    LDA.l GameboyLinkRedMail, X : STA $7EC6E0, X
+    LDA.l GameboyLinkRedMail, X : STA.l $7EC6E0, X : STA.l $7EC4E0, X
     DEX : DEX : BPL .loop3
   SEP #$30 ; go back to 8 bit mode
-  INC $15  ; update the palette
-  RTL      ; or RTS depending on where you need it
+  INC.b $15 ; update the palette
+  RTL
 }
 
 GameboyLinkPalette:
@@ -61,33 +63,35 @@ LinkState_GameboyInDungeonEntrance:
   ; run, which is after the load fade on file load and continue.
   LDA.l SavedWorld : BEQ .return
     LDA.w !CurrentMask : CMP.b #$05 : BEQ .return
+        LDA.b #$06 : STA.w $02B2
+        LDA.b #$3B : STA.b $BC ; change link's sprite
         JSL UpdateGbcPalette
-        LDA #$3B : STA $BC ; change link's sprite
   .return
   JSL $0AFE80 ; Underworld_HandleLayerEffect
   RTL
 }
 
-; Retain GBC sprite when exiting DW dungeons
+; Retain GBC sprite when exiting DW dungeons or loading into the Eon Abyss
 LoadOverworld_CheckForGbcLink:
 {
   ; Cosmetic GBC transitions must not replace an active mask form.
   LDA.w !CurrentMask : BEQ +
-  CMP.b #$08 : BEQ .return
-  CMP.b #$05 : BCC .return
+  CMP.b #$08 : BEQ .refresh
+  CMP.b #$05 : BCC .refresh
   +
   ; SavedWorld, not $0FFF: on file load and continue Sprite_Main has not run
   ; yet, so $0FFF is still 0 here and the spotlight showed normal Link.
   LDA.l SavedWorld : BEQ .return_lw
-    LDA.w !CurrentMask : CMP.b #$05 : BEQ .return
-        LDA.b #$06 : STA $02B2
-        LDA.b #$3B : STA $BC   ; change link's sprite
+    LDA.w !CurrentMask : CMP.b #$05 : BEQ .refresh
+        LDA.b #$06 : STA.w $02B2
+        LDA.b #$3B : STA.b $BC   ; change link's sprite
         JSL UpdateGbcPalette
-        JMP .return
+        BRA .done
   .return_lw
   STZ.w $02B2
-  .return
+  .refresh
   JSL Palette_ArmorAndGloves
+  .done
   STZ.b $B0
   STZ.b $11
   RTL
@@ -102,9 +106,9 @@ OverworldTransition_CheckForGbcLink:
   +
   LDA.l SavedWorld : BEQ .return
     LDA.w !CurrentMask : CMP.b #$05 : BEQ .return
-      LDA #$3B : STA $BC   ; change link's sprite
-      LDA #$06 : STA $02B2
-      JSL Palette_ArmorAndGloves
+      LDA.b #$3B : STA.b $BC   ; change link's sprite
+      LDA.b #$06 : STA.w $02B2
+      JSL UpdateGbcPalette
   .return
   JSL Link_HandleMovingAnimation_FullLongEntry
   RTL
@@ -121,14 +125,8 @@ MirrorWarp_PearllessArrival:
     LDA.b #$01 : STA.w $02E0 : STA.b $56
     LDA.b #$3B : STA.b $BC
     LDA.b #$06 : STA.w $02B2
+    ; UpdateGbcPalette updates both live ($7EC6E0) and aux ($7EC4E0) buffers.
     JSL UpdateGbcPalette
-    ; The warp's white filter fades toward the aux palette; keep it in step.
-    REP #$30
-    LDX.w #$001E
-    .copy
-    LDA.l $7EC6E0, X : STA.l $7EC4E0, X
-    DEX : DEX : BPL .copy
-    SEP #$30
     RTL
   .vanilla
   LDY.b #$04 : LDA.b #$23
@@ -156,14 +154,8 @@ MirrorWarp_PearlArrival:
   LDA.w !CurrentMask : CMP.b #$05 : BEQ .done
     LDA.b #$3B : STA.b $BC
     LDA.b #$06 : STA.w $02B2
+    ; UpdateGbcPalette updates both live ($7EC6E0) and aux ($7EC4E0) buffers.
     JSL UpdateGbcPalette
-    ; The warp's white filter fades toward the aux palette; keep it in step.
-    REP #$30
-    LDX.w #$001E
-    .copy
-    LDA.l $7EC6E0, X : STA.l $7EC4E0, X
-    DEX : DEX : BPL .copy
-    SEP #$30
   .done
   LDA.l $7EF357
   RTL
