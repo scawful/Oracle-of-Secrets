@@ -71,6 +71,7 @@ PlayerTransform:
 
 ResetToLinkGraphics:
 {
+  STZ.b DekuFloating
   JSL GaroMask_Clear
 if !ENABLE_HORSE_FORM == 1
   JSL HorseForm_ClearState
@@ -622,6 +623,9 @@ DekuLink_SpinOrRecoil:
       LDY.b #$1C
       JML Moosh_SelectHoverFrame
     +
+    CMP.b #$01 : BNE .recoil
+      JSL DekuWings_DrawHoverOam
+    .recoil
     LDY.b #$05 ; Recoil
     JML $0DA435 ; JML $0DA40B
   .spin
@@ -750,6 +754,7 @@ DekuLink_HoverBasedOnInput:
     .auto_cancel
     ; Reset LinkState to Default
     JSL Moosh_EndHover
+    STZ.b DekuFloating
 
     LDA.b #$01 : STA.w $0AAA
     STZ.w $0324 : STZ.w $031C : STZ.w $031D
@@ -1517,6 +1522,7 @@ DekuLink_CancelBeforeTransition:
 {
   LDA.w DekuFloating : BEQ +
     STZ.b $5D
+    STZ.b DekuFloating
   +
   STZ.b $27
   STZ.b $28

@@ -380,6 +380,9 @@ endif
   LDX.w #$0400 : STX.w $4305
   LDA.b #1 : STA.w $420B
   .replay_done
+  if defined("DEKU_WINGS_NMI_DEFINED")
+    JSL DekuWings_NmiUpload
+  endif
   PLY : PLB : RTL
 }
 
