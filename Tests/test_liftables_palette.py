@@ -235,6 +235,12 @@ class LiftablesPaletteCompiledTests(unittest.TestCase):
                 "A0 C7 0D A2 02 00 C9 36 00 F0 16 A2 04 00 A0 C8 0D C9 2A 07 F0 0B "
                 "C9 7E 03 D0 45 A0 C5 0D A2 03 00"
             ),
+            0x02AD0A: bytes.fromhex(
+                "D3 0D D4 0D D5 0D D6 0D D7 0D D8 0D D9 0D DA 0D "
+                "D1 0D D2 0D D3 0D D4 0D D1 0D D2 0D D7 0D D8 0D "
+                "18 09 19 09 1A 09 1B 09 "
+                "DB 0D DC 0D DD 0D DE 0D D1 0D D2 0D DB 0D DC 0D"
+            ),
         }
         for snes_addr, raw in patches.items():
             pc = snes_to_pc(snes_addr)
@@ -577,6 +583,20 @@ class LiftablesPaletteCompiledTests(unittest.TestCase):
         h = self.make_harness()
         self.assertEqual(h.run_until(0x1BBDC4, {0x1BBDEC, 0x1BBDC9}, a=0x072A, m8=False, x8=False), 0x1BBDEC)
         self.assertEqual(h.run_until(0x1BBE36, {0x1BBE3B, 0x1BBE8D}, a=0x072A, m8=False, x8=False), 0x1BBE3B)
+
+    def test_graveyard_map32_update_tiles_repointed_option_a(self):
+        pc = snes_to_pc(0x02AD0A)
+        words = [int.from_bytes(self.rom[pc + i * 2:pc + i * 2 + 2], "little") for i in range(28)]
+        expected = [
+            0x0EB1, 0x0EB2, 0x0EB3, 0x0EB4,  # corpse bottom
+            0x0EB5, 0x0EB6, 0x0EB7, 0x0EB8,  # Grave 13 stairs bottom
+            0x0DD1, 0x0DD2, 0x0EB1, 0x0EB2,  # corpse top
+            0x0DD1, 0x0DD2, 0x0EB5, 0x0EB6,  # Grave 13 stairs top
+            0x0918, 0x0919, 0x091A, 0x091B,  # cave stairs untouched
+            0x0F83, 0x0F84, 0x0F85, 0x0F86,  # Grave 14 pit bottom
+            0x0DD1, 0x0DD2, 0x0F83, 0x0F84,  # Grave 14 pit top
+        ]
+        self.assertEqual(words, expected)
 
 
 if __name__ == "__main__":

@@ -106,6 +106,26 @@ org $1BC176 ; @hook module=Overworld name=Liftables_BombTileMatch kind=jml targe
   NOP #29
 assert pc() == $1BC197
 
+; 3. Map32UpdateTiles Graveyard push reveals ($02AD0A-$02AD41, Q326 Option A):
+;    Base ROM Tile16s $0DD3-$0DDE were overwritten by water/cliffs placed 140x on
+;    SW $87/$B5/$BD. The 12 restored vanilla grave reveals live in globally
+;    unreferenced slots $0EB1-$0EB8 (corpse dirt + Grave 13 stairs) and
+;    $0F83-$0F86 (Grave 14 t20 pit); $0DD1/$0DD2 top edges and $0918-$091B
+;    cave stairs at $02AD2A remain untouched.
+assert read4($02AD0A) == $0DD40DD3 && read4($02AD12) == $0DD80DD7 && read4($02AD1A) == $0DD20DD1 && read4($02AD22) == $0DD20DD1, "Map32UpdateTiles grave reveals (corpse/stairs) moved"
+org $02AD0A ; @hook module=Overworld name=Liftables_GraveyardRevealsTop kind=patch expected_m=16 expected_x=16 protected_size=32
+  dw $0EB1, $0EB2, $0EB3, $0EB4 ; open grave with corpse bottom half (was $0DD3-$0DD6)
+  dw $0EB5, $0EB6, $0EB7, $0EB8 ; open grave with stairs bottom half (was $0DD7-$0DDA)
+  dw $0DD1, $0DD2, $0EB1, $0EB2 ; open grave with corpse top half
+  dw $0DD1, $0DD2, $0EB5, $0EB6 ; open grave with stairs top half
+assert pc() == $02AD2A
+
+assert read4($02AD32) == $0DDC0DDB && read4($02AD3A) == $0DD20DD1, "Map32UpdateTiles grave reveals (pit) moved"
+org $02AD32 ; @hook module=Overworld name=Liftables_GraveyardRevealsPit kind=patch expected_m=16 expected_x=16 protected_size=16
+  dw $0F83, $0F84, $0F85, $0F86 ; open grave with pit bottom half (was $0DDB-$0DDE)
+  dw $0DD1, $0DD2, $0F83, $0F84 ; open grave with pit top half
+assert pc() == $02AD42
+
 pullpc
 
 ; =============================================================================
