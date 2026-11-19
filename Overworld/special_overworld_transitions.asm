@@ -116,6 +116,9 @@ SpecialOverworld_LoadWorldMapPalette:
 }
 
 ; Special Overworld World Map landmark icons ($80-$BF).
+; Coordinates aligned pixel-for-pixel to pirate05 Lyra Sea Mode 7 map
+; (central 256x256 geography at x128..383, y128..383, 1:16 world scale;
+; ZERO icons under the $84-$87/$8C-$8F/$94-$97/$9C-$9F cloud bank).
 ; Entry: M=8, X=8, A = icon index (0..3).
 ; Sets $7EC108..$7EC10B (Y/X), $0B..$0D (size/props/tile), $7EC025 (OAM slot).
 ; Exit: C set = draw icon, C clear = already collected (skip).
@@ -152,13 +155,15 @@ SpecialOverworld_SetupMapIcon:
   CLC
   RTL
 
-  ; 0: Shrine of Wisdom ($91), 1: Shrine of Courage ($A6),
-  ; 2: Shrine of Power ($B0),  3: Sky Tower / D8 ($87)
+  ; 0: Shrine of Wisdom ($91 plateau, px 174,205 -> $02E0,$04D0)
+  ; 1: Shrine of Courage ($A6/$AE temple box, px 362,296 -> $0EA0,$0A80)
+  ; 2: Shrine of Power ($B0 Goron Coast, px 143,335 -> $00F0,$0CF0)
+  ; 3: Sky Tower / D8 ($83/$8B visible spire outside clouds, px 239,152 -> $06F0,$0180)
   .CollectMask: db !Pendant_Wisdom, !Pendant_Courage, !Pendant_Power, !Crystal_D8_Sky
-  .PosXHi:      db $03, $0D, $02, $0F
-  .PosXLo:      db $00, $C0, $00, $00
-  .PosYHi:      db $04, $09, $0D, $01
-  .PosYLo:      db $E0, $C0, $C0, $00
+  .PosXHi:      db $02, $0E, $00, $06
+  .PosXLo:      db $E0, $A0, $F0, $F0
+  .PosYHi:      db $04, $0A, $0C, $01
+  .PosYLo:      db $D0, $80, $F0, $80
   .Tile:        db $60, $60, $60, $66
   .Props:       db $34, $38, $32, $34
   .OamSlot:     db $0D, $0A, $08, $0B

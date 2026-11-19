@@ -679,14 +679,14 @@ class SpecialOverworldTransitionsTests(unittest.TestCase):
                 got0 = f.get(0x7EC500) | (f.get(0x7EC501) << 8)
                 self.assertEqual(got0, exp_word0, f"palette word0 mismatch for area ${area:02X}")
 
-            # 4. Special Overworld landmark icons (shown when uncollected, hidden when collected)
+            # 4. Special Overworld landmark icons (pirate05 coordinates; shown when uncollected, hidden when collected)
             f.put(0x7EF374, 0x00)  # no pendants
             f.put(0x7EF37A, 0x00)  # no crystals
             expected_coords = [
-                (0x0300, 0x04E0),  # 0: Shrine of Wisdom ($91)
-                (0x0DC0, 0x09C0),  # 1: Shrine of Courage ($A6)
-                (0x0200, 0x0DC0),  # 2: Shrine of Power ($B0)
-                (0x0F00, 0x0100),  # 3: Sky Tower / D8 ($87)
+                (0x02E0, 0x04D0),  # 0: Shrine of Wisdom ($91 plateau)
+                (0x0EA0, 0x0A80),  # 1: Shrine of Courage ($A6/$AE temple box)
+                (0x00F0, 0x0CF0),  # 2: Shrine of Power ($B0 Goron Coast)
+                (0x06F0, 0x0180),  # 3: Sky Tower / D8 ($83/$8B visible spire outside clouds)
             ]
             for idx, (ex, ey) in enumerate(expected_coords):
                 _run_jsl(f, self.labels["SpecialOverworld_SetupMapIcon"], a=idx)

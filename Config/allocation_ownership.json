@@ -466,11 +466,6 @@
       "source_set": "shared",
       "path": "Overworld/special_overworld_transitions.asm",
       "sha256": "64ca3bf22fe113f32d774066d41090f0f702d2347e09d663eb88c35140293507"
-    },
-    "shared:Scripts/Tools/generate_special_world_map.py": {
-      "source_set": "shared",
-      "path": "Scripts/Tools/generate_special_world_map.py",
-      "sha256": "1c8287fb7bb609e6c58538a11d40631a65345a772811856f9c968c92953d2bfc"
     }
   },
   "claims": [
@@ -3601,11 +3596,10 @@
         "DISABLE_OVERWORLD": 0
       },
       "lifetime": "Compiled ROM assets ($5F8000-$5FD1FF) matching LW ($408000) and DW ($418000) Mode 7 World Map layout (Bank $42 is owned by Masks/all_masks.asm).",
-      "reset": "Generated deterministically by Scripts/Tools/generate_special_world_map.py from base ROM.",
+      "reset": "Curated hand-crafted Kalyxo-style pirate05 Lyra Sea Mode 7 assets in Overworld/world_map/{SwMapTileset,SwMapGfx,sw_palette}.bin.",
       "save": "ROM assets only; no SRAM format change.",
       "provenance": [
-        "shared:Overworld/world_map.asm",
-        "shared:Scripts/Tools/generate_special_world_map.py"
+        "shared:Overworld/world_map.asm"
       ],
       "anchors": [
         "org $5F8000"
