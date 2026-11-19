@@ -835,6 +835,9 @@ pullpc
 Horse_PlayerOamHook:
 {
   LDA.w !CurrentMask : CMP.b #!Horse_MaskId : BEQ .chk_horse
+if defined("KORL_MOUNT_DEFINED")
+  JML KORL_PlayerOamHook
+endif
   .native_oam
     LDY.b #$00 : LDA.b $11
     RTL

@@ -76,6 +76,9 @@ ResetToLinkGraphics:
 if !ENABLE_HORSE_FORM == 1
   JSL HorseForm_ClearState
 endif
+if defined("KORL_MOUNT_DEFINED")
+  JSL KORL_ClearState
+endif
   JSL LinkGraphics_IsD8 : BCS .normal
   LDA $0FFF : BNE +
   .normal
@@ -221,6 +224,9 @@ endif
   LDA.b #$10 : STA $BC
 
   .original_palette
+if defined("KORL_MOUNT_DEFINED")
+  JSL KORL_RefreshPaletteIfMounted
+endif
   REP #$21
   JSL Tunic_GetWorn ; worn colour; keeps P, so carry stays clear
   JSL $1BEDFF ; Read Original Palette Code
@@ -1663,6 +1669,9 @@ LinkMain_FrameHook:
   JSL MinishPortal_Maintain
 if !ENABLE_HORSE_FORM == 1
   JSL HorseForm_FrameTick
+endif
+if defined("KORL_MOUNT_DEFINED")
+  JSL KORL_FrameTick
 endif
   JSL GaroMask_FrameTick
 if !DISABLE_ITEMS == 0

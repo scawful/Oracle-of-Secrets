@@ -60,6 +60,8 @@ assert GaroGuardTimer == $07EE
 assert GaroCooldown < $0800
 assert GaroLungeTimer == $07FF
 
+!KORL_MOUNT_DEFINED = 1
+
 incsrc "Masks/mask_routines.asm"
 
 ; Start of free space in bank 07
@@ -132,3 +134,19 @@ assert pc()-HorseNpcTail == 512, "NPC tail rows must preserve its final four spa
   incsrc "Masks/horse_form.asm"
 assert pc() <= $53D000, "Horse Form behavior overlapped Sprite_HorseNPC slot in bank $53"
 endif
+
+; King of Red Lions Water Mount in dedicated free bank $60 ($608000-$60FFFF, PC 0x300000-0x307FFF;
+; zero ZScream / Special Overworld overlap; >= 16 KiB headroom remaining).
+org $608000
+KORL_Graphics:
+  incbin "Data/graphics/mounts/korl_sparse.4bpp"
+KORL_Graphics_End:
+assert (KORL_Graphics>>16) == ((KORL_Graphics_End-1)>>16), "KORL sparse graphics crossed bank $60"
+KORL_Palette:
+  incbin "Data/graphics/mounts/korl_palette.bin"
+assert pc()-KORL_Palette == 14, "KORL palette must be 14 bytes (7 BGR555 colors for SP-3[9..15])"
+  incsrc "Data/graphics/mounts/korl_sparse_tables.asm"
+assert KORL_Graphics_End-KORL_Graphics == !KORL_DictionaryBytes, "KORL sparse dictionary size mismatch"
+  incsrc "Masks/korl_mount.asm"
+assert pc() <= $60C000, "King of Red Lions exceeded its bounded Bank $60 slice ($608000-$60BFFF)"
+print "End of Masks/korl_mount.asm       ", pc

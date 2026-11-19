@@ -141,12 +141,14 @@ Horse_LinkDmaPrefix:
   ; Overworld-overlay $0E submodules keep mounted OAM on screen, so her cells
   ; must stay intact (Item menu, Dialogue, Potions, Save menu, Map/Flute fade).
   CMP.b #$0E : BNE .native
-  LDA.b $11 : CMP.b #$01 : BEQ .eligible
-  CMP.b #$02 : BEQ .eligible
   JSL Horse_IsSafeOverlay : BCS .eligible
   .native
+if defined("KORL_MOUNT_DEFINED")
+  JML KORL_LinkDmaPrefix
+else
   LDY.w #$4100 : STY.w $2116
   JML $008A12
+endif
 
   .eligible
   ; Single-pass DBR=$00 slot check (replaces JSL Horse_SlotsBusy + second
@@ -479,6 +481,10 @@ endif
   LDA.b $04 : BNE .replay_skip_anim
 
   .replay
+if defined("KORL_MOUNT_DEFINED")
+  JSL KORL_NmiUpload
+  BCS .replay_skip_anim
+endif
   LDA.w Horse_DismountCooldown&$FFFF : BNE .replay_skip_anim
   CLC : BRA .replay_epilogue
   .replay_skip_anim
