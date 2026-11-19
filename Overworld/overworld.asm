@@ -197,6 +197,7 @@ if !SPECIAL_OVERWORLD_NATIVE == 1
 incsrc "Overworld/lyra_edge_guard.asm"
 endif
 incsrc "Overworld/village_bar_exit.asm"
+incsrc "Overworld/liftables_palette_fix.asm"
 
 Overworld_Bank34CodeEnd:
 print "Bank34 Free Space: ", dec($34FFFF-pc()), " bytes"
