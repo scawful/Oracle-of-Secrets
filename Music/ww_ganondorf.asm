@@ -53,11 +53,14 @@ GanondorfBattle:
 
   ; ---------------------------------------------
   ; Intro Channels
+  ; Mastering pass 2026-11-19: tamed cymbal ($F8 -> $9C), timpani/snare ($C8 -> $80),
+  ; balanced intro brass/strings, and excluded slots 3 & 4 (percussion) from echo.
   {  
     .IntroChannel0_Trombone
       %SetMasterVolume($88)
       %SetTempo(100)
       %Trombone()
+      %SetChannelVolume($B8)
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.intro+!ARAMC, 1)
       %CallSubroutine(.strings01+!ARAMC, 1)
@@ -67,6 +70,7 @@ GanondorfBattle:
 
     .IntroChannel1_ChoirAndTrumpet
       %Choir()
+      %SetChannelVolume($B0)
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.intro+!ARAMC, 1)
       %Trumpet()
@@ -77,6 +81,7 @@ GanondorfBattle:
 
     .IntroChannel2_Strings
       %Strings()
+      %SetChannelVolume($B8)
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.intro+!ARAMC, 1)
       %CallSubroutine(.strings01+!ARAMC, 1)
@@ -86,7 +91,7 @@ GanondorfBattle:
 
     .IntroChannel3_Horn
       %Horn()
-      %SetChannelVolume($C8)
+      %SetChannelVolume($B4)
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.intro+!ARAMC, 1)
       %CallSubroutine(.strings01+!ARAMC, 1)
@@ -95,7 +100,7 @@ GanondorfBattle:
 
     .IntroChannel4_TimpaniAndSnare
       %Tympani()
-      %SetChannelVolume($C8)
+      %SetChannelVolume($80)
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.silence+!ARAMC, 3)
       %CallSubroutine(.drums+!ARAMC, 1)
@@ -107,11 +112,11 @@ GanondorfBattle:
 
     .IntroChannel5_Cymbal
       %Cymbal()
-      %SetChannelVolume($F8)
+      %SetChannelVolume($9C)
       %SetDurationN(!4th, $7F) ; 1/4
-      ; Mix pass 2026-11-05: echo on slots 0,1,2,4,5; timpani/snare dry.
-      %EchoVBits($37, $1E, $1E)
-      %EchoParams($01, $14, $02)
+      ; Echo on slots 0,1,2,5 only; slots 3 (timpani/snare) & 4 (cymbal) stay dry.
+      %EchoVBits($27, $18, $18)
+      %EchoParams($02, $14, $02)
       %CallSubroutine(.silence+!ARAMC, 3)
       %CallSubroutine(.drums+!ARAMC, 1)
       db !4th, G2, Tie, Tie
@@ -123,17 +128,16 @@ GanondorfBattle:
   ; Main Channels
   {
     .Channel0_Piano
-      %SetMasterVolume($C8)
+      %SetMasterVolume($A2)
       %Piano()
 
-      ; Mix pass 2026-11-05: the bass ostinato was ~11 dB over each brass
-      ; part. Lowered and dry; echo on horn, trumpet, trombone/cymbal and
-      ; timpani/choir only (bits 1-4).
-      %SetChannelVolume($C0)
+      ; Mastering pass 2026-11-19: master $C8 -> $A2, echo on brass only
+      ; (bits 1-3); piano bass, timpani (bit 4) and snare (bit 5) stay dry.
+      %SetChannelVolume($9C)
       %SetPan($0A)
       %SetDurationN(!4th, $7F) ; 1/4
 
-      %EchoVBits($1E, $1E, $1E)
+      %EchoVBits($0E, $18, $18)
       %EchoParams($02, $14, $02)
 
       %CallSubroutine(.piano01+!ARAMC, 2)
@@ -155,7 +159,7 @@ GanondorfBattle:
 
     .Channel1_Horn
       %Horn()
-      %SetChannelVolume($E0)
+      %SetChannelVolume($B4)
       %SetPan($06)
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.silence+!ARAMC, 4)
@@ -171,7 +175,7 @@ GanondorfBattle:
 
     .Channel2_Trumpet
       %Trumpet()
-      %SetChannelVolume($E8)
+      %SetChannelVolume($BA)
       %SetPan($0E)
       %SetDurationN(!4th, $7F) ; 1/4
       
@@ -190,7 +194,7 @@ GanondorfBattle:
 
     .Channel3_TromboneAndCymbal
       %Trombone()
-      %SetChannelVolume($C8)
+      %SetChannelVolume($A8)
       %SetPan($0A)
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.silence+!ARAMC, 4)
@@ -203,10 +207,10 @@ GanondorfBattle:
 
       %CallSubroutine(.intro+!ARAMC, 1)
         %Cymbal()
-        %SetChannelVolume($F8)
+        %SetChannelVolume($9C)
         %SetDurationN(!4th, $7F) ; 1/4
-        %EchoVBits($1E, $1E, $1E)
-        %EchoParams($01, $14, $02)
+        %EchoVBits($06, $18, $18)
+        %EchoParams($02, $14, $02)
       %CallSubroutine(.drums+!ARAMC, 1)
       db !4th, G2, Tie, Tie
       %Trombone()
@@ -216,19 +220,19 @@ GanondorfBattle:
 
     .Channel4_Timpani
       %Tympani()
-      %SetChannelVolume($78)
+      %SetChannelVolume($7C)
       %SetPan($09)
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.timpani01+!ARAMC, 12)
       %Choir()
-      %SetChannelVolume($A8)
+      %SetChannelVolume($9C)
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.choir01+!ARAMC, 2)
       db $00
 
     .Channel5_Snare
       %Snare()
-      %SetChannelVolume($8C)
+      %SetChannelVolume($80)
       %SetPan($0C)
       %SetDurationN(!32nd, $7F) ; 1/32
       %CallSubroutine(.snare01+!ARAMC, 24)

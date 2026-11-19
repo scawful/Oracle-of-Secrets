@@ -32,15 +32,15 @@ dw $0000
 
 
 .Channel0
-%SetMasterVolume($9E) ; was $C8
-; Mix pass 3 2026-11-05: master down to sit with the other dungeon songs
-; (D8 Sky, entrance $29). Notes unchanged.
+%SetMasterVolume($98) ; mastering pass 2026-11-19 (was $9E)
+; Mix pass 4 2026-11-19: tamed tympani ($C4 -> $84, dry) and trimmed hot
+; strings/ocarina/harp channels so D8 Sky sits cleanly with dungeon songs.
 ; Mix pass 2 2026-11-05: echo on the strings pad and harp only (bits 2, 5);
 ; the arpeggio and ocarina lead stay dry so they read in front.
 ; Delay 2 = ARAM $C000-$CFFF, below the song block.
 %EchoVBits($24, $18, $18)
 %EchoParams($02, $14, $02)
-%SetChannelVolume($C4)
+%SetChannelVolume($84) ; tamed tympani (was $C4)
 %SetPan($0A)
 %SetTempo(62);
 %SetInstrument($02) ; Tympani
@@ -57,7 +57,7 @@ db $00 ; End
 
 
 .Channel1
-%SetChannelVolume($98)
+%SetChannelVolume($8C)
 %SetPan($10)
 %SetInstrument($18) ; Guitar
 %SetDurationN($48, $7F) ; 1/4
@@ -91,7 +91,7 @@ db $00 ; End
 
 
 .Channel2
-%SetChannelVolume($80)
+%SetChannelVolume($78)
 %SetPan($04)
 %SetInstrument($09) ; Strings
 %SetDurationN($48, $7F) ; 1/4
@@ -125,7 +125,7 @@ db $00 ; End
 
 
 .Channel3
-%SetChannelVolume($D0)
+%SetChannelVolume($A8)
 %SetPan($0D)
 %SetInstrument($09) ; Strings
 %SetDurationN($24, $5D) ; 1/8, staccato
@@ -144,7 +144,7 @@ db $00 ; End
 
 
 .Channel4
-%SetChannelVolume($D0)
+%SetChannelVolume($A8)
 %SetPan($0A)
 %SetInstrument($0D) ; Ocarina
 %SetDurationN($48, $7F) ; 1/4
@@ -198,7 +198,7 @@ db $00 ; End
 
 
 .Channel5
-%SetChannelVolume($C8)
+%SetChannelVolume($9C)
 %SetPan($07)
 %SetInstrument($0F) ; Harp
 %SetDurationN($48, $7F) ; 1/4

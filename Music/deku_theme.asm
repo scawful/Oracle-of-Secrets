@@ -35,9 +35,9 @@ dw $0000
 %SetMasterVolume($90)
 %SetTempo(45)
 %EchoVBits($07, $00, $00) ; echo on channels 0-2
-%EchoParams($02, $40, $02) ; delay, feedback, filter
-%EchoVolumeFade($30, $20, $20) ; echo fade-in
-%SetChannelVolume($E0)
+%EchoParams($02, $28, $02) ; warm feedback (was $40)
+%EchoVolumeFade($30, $1A, $1A) ; gentle ambience (was $20)
+%SetChannelVolume($B8) ; warm strings lead (was $E0)
 %SetPan($0B)
 %SetInstrument($09) ; Strings
 %SetDurationN($48, $7F) ; 1/4
@@ -56,7 +56,7 @@ db $00 ; End
 
 
 .Channel1
-%SetChannelVolume($D0)
+%SetChannelVolume($AC) ; warm strings harmony (was $D0)
 %SetPan($08)
 %SetInstrument($09) ; Strings
 %SetDurationN($48, $7F) ; 1/4
@@ -75,7 +75,7 @@ db $00 ; End
 
 
 .Channel2
-%SetChannelVolume($90)
+%SetChannelVolume($88) ; gentle choir drone (was $90)
 %SetPan($0A)
 %SetInstrument($15) ; Choir (was trumpet $11)
 %SetDurationN($48, $7F) ; 1/4

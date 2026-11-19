@@ -64,14 +64,16 @@ GreatSea:
 
   ; ---------------------------------------------
   ; Intro Channels (12 bars each)
+  ; Mastering pass 2026-11-19: master $C8 -> $A2 (Hyrule Field parity),
+  ; trumpet $E8 -> $B6, tympani $B0 -> $78 (dry), warmer backing & echo.
   {
     .Channel0_Choir
-      %SetMasterVolume($C8)
+      %SetMasterVolume($A2)
       %SetTempo(86)              ; ~140 BPM (500*86/256 ticks/s, quarter = 72 ticks)
       %EchoVBits($0F, $14, $14)
-      %EchoParams($02, $0A, $02)
+      %EchoParams($02, $14, $02)
       %Choir()
-      %SetChannelVolume($A0)
+      %SetChannelVolume($88)
       %SetPan($0A)
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.intro_choir00+!ARAMC, 2) ; 3 plays = 12 bars
@@ -79,16 +81,16 @@ GreatSea:
 
     .Channel1_Strings
       %Strings()
-      %SetChannelVolume($B0)
-      %SetPan($0C)
+      %SetChannelVolume($92)
+      %SetPan($0D)
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.intro_strings+!ARAMC, 2) ; 3 plays = 12 bars
       db $00
 
     .Channel2_Piano
       %Piano()
-      %SetChannelVolume($A0)
-      %SetPan($08)
+      %SetChannelVolume($84)
+      %SetPan($07)
       %ChannelTranspose($0C)
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.intro_lead+!ARAMC, 11) ; 12 plays = 12 bars
@@ -102,14 +104,14 @@ GreatSea:
 
     .MainChannel0_Choir
       %Choir()
-      %SetChannelVolume($A0)
+      %SetChannelVolume($86)
       %SetDurationN(!4th, $7F) ; intro_lead left the duration at 1/8
       %CallSubroutine(.main_pad+!ARAMC, 0)
       db $00
 
     .MainChannel1_Strings
       %Strings()
-      %SetChannelVolume($A8)
+      %SetChannelVolume($90)
       %CallSubroutine(.r_Fs+!ARAMC, 1)
       %CallSubroutine(.r_G+!ARAMC, 1)
       %CallSubroutine(.r_A+!ARAMC, 1)
@@ -130,7 +132,7 @@ GreatSea:
 
     .MainChannel2_Piano
       %Piano()
-      %SetChannelVolume($98)
+      %SetChannelVolume($82)
       %ChannelTranspose($0C)
       %CallSubroutine(.r_Fs+!ARAMC, 1)
       %CallSubroutine(.r_G+!ARAMC, 1)
@@ -152,7 +154,7 @@ GreatSea:
 
     .MainChannel3_Trumpet
       %Trumpet()
-      %SetChannelVolume($E8)
+      %SetChannelVolume($B6)
       %SetPan($0A)
       %TremoloOn(1, 4, 4)
       %CallSubroutine(.main_trumpet+!ARAMC, 0) ; 111 beats
@@ -161,7 +163,7 @@ GreatSea:
 
     .MainChannel5_Drums
       %Tympani()
-      %SetChannelVolume($B0)
+      %SetChannelVolume($78)
       %SetPan($0A)
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.main_drums+!ARAMC, 0) ; 30 bars

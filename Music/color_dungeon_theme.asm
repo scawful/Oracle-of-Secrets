@@ -38,12 +38,12 @@ dw $0000
 
 
 .Channel0
-%SetMasterVolume($6F)
+%SetMasterVolume($7C) ; mastering pass 2026-11-19 (was $6F with $FF ch0)
 %SetTempo(93);
-%EchoVBits($FF, $00, $00) ; echo on all channels
-%EchoParams($02, $40, $02) ; delay, feedback, filter
-%EchoVolumeFade($30, $20, $20) ; echo fade-in
-%SetChannelVolume($FF)
+%EchoVBits($37, $00, $00) ; echo on melodic channels only (ch3 snare dry)
+%EchoParams($02, $26, $02) ; warm feedback (was $40)
+%EchoVolumeFade($30, $18, $18) ; subtle ambience (was $20)
+%SetChannelVolume($B0) ; tamed square wave (was $FF)
 %SetPan($08)
 %SetInstrument($03) ; Square wave
 %SetDurationN($24, $7F) ; 1/8
@@ -126,7 +126,7 @@ db $00 ; End                          ;]
 
 
 .Channel1
-%SetChannelVolume($C7)
+%SetChannelVolume($B4)
 %SetInstrument($18) ; Piano
 %SetDurationN($48, $7F) ; 1/4
 %CallSubroutine(.sub101+!ARAMC, 1)      ;]----- Melody
@@ -164,7 +164,7 @@ db $00 ; End                                                                    
 
 
 .Channel2
-%SetChannelVolume($B7)
+%SetChannelVolume($A6)
 %SetPan($0B)
 %SetInstrument($18) ; Piano
 %SetDurationN($24, $7F) ; 1/8
@@ -229,7 +229,7 @@ db $00 ; End                                                                    
 
 
 .Channel3
-%SetChannelVolume($81)
+%SetChannelVolume($70)
 %SetInstrument($13) ; Snare
 %SetDurationN($48, $7F) ; 1/4
 %CallSubroutine(.sub301+!ARAMC, 4)
@@ -279,7 +279,7 @@ db $00 ; End
 
 
 .Channel4
-%SetChannelVolume($C7)
+%SetChannelVolume($B4)
 %SetInstrument($09) ; Strings
 %SetDurationN($48, $7F) ; 1/4
 %CallSubroutine(.sub401+!ARAMC, 1)      ;]----- Melody
@@ -337,7 +337,7 @@ db $00 ; End                          ;]
 
 
 .Channel5
-%SetChannelVolume($90) ; echo copy, 10 dB under ch0
+%SetChannelVolume($68) ; echo copy under ch0 $B0 (was $90)
 %SetPan($0D)
 %SetInstrument($03) ; Square wave
 %SetDurationN($12, $7F) ; 1/16

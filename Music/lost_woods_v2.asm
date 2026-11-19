@@ -6,8 +6,9 @@
 ; ASM Framework by Zarby89
 ; Notes: v1.01 from the 2023 Oracle build (commit 31a8d5a2). Its header said
 ;   "Ported by Letterbomb"; scawful credits Potentialing (Zeldix days).
-; Mix and echo: Letterbomb v1.10 (master $C8, echo $02/$50/$02, channel balance),
-;   all channels +5 dB so the song matches the overworld theme loudness.
+; Mix and echo: 2026-11-19 mastering pass (master $A0, timpani cut & dry out
+;   of echo, warm $26 feedback / $1A echo vol, gentle stereo spread) so the
+;   mix sits warmly with vanilla ALTTP on headphones/Retroid/Mesen2 DSP.
 ; Note bytes are unchanged from v1.01. Fits the old v2 slot (582 bytes).
 ;=====================================================================================
 
@@ -46,12 +47,13 @@ dw $0000
 
 
 .Channel0Intro
-%SetMasterVolume($C8) ; v1.10 master (was $9F)
-%SetChannelVolume($98) ; +5 dB makeup, timpani
+%SetMasterVolume($A0) ; warm overworld master (was $C8)
+%SetChannelVolume($60) ; tamed timpani pulse (was $98)
+%SetPan($0A) ; center bass foundation
 %SetTempo(85);
-%EchoVBits($FF, $00, $00) ; v1.10 echo: all channels
-%EchoParams($02, $50, $02) ; v1.10 delay, feedback, filter
-%EchoVolumeFade($32, $32, $32) ; v1.10 echo fade-in
+%EchoVBits($FE, $00, $00) ; echo on ch1-5 only; ch0 timpani stays dry
+%EchoParams($02, $26, $02) ; warm feedback (was $50)
+%EchoVolumeFade($32, $1A, $1A) ; controlled ambience (was $32)
 %SetInstrument($02) ; Tympani
 %SetDurationN($12, $7F) ; 1/16
 db F3s, Tie, F3s, F3s, F3s, Tie, F3s, F3s, F3s, Tie, $24, F3s, Tie, C4
@@ -79,7 +81,8 @@ db $00 ; End
 
 
 .Channel1
-%SetChannelVolume($A0) ; v1.10 balance +5 dB makeup (v1.01 was $9A)
+%SetChannelVolume($9C) ; ocarina lead clear on top (was $A0)
+%SetPan($0A)
 %SetInstrument($0D) ; Ocarina
 %SetDurationN($24, $7F) ; 1/8
 %CallSubroutine(.sub3+!ARAMC, 1)
@@ -99,7 +102,8 @@ db $00 ; End
 
 
 .Channel2
-%SetChannelVolume($A0) ; v1.10 balance +5 dB makeup (v1.01 default $FF)
+%SetChannelVolume($80) ; balanced harp backing (was $A0)
+%SetPan($07)
 %SetInstrument($0F) ; Harp
 %SetDurationN($48, $7F) ; 1/4
 %CallSubroutine(.sub4+!ARAMC, 4)
@@ -129,7 +133,8 @@ db $00 ; End
 
 
 .Channel3
-%SetChannelVolume($75) ; v1.10 balance +5 dB makeup (v1.01 default $FF)
+%SetChannelVolume($6C) ; gentle guitar rhythm (was $75)
+%SetPan($0D)
 %SetInstrument($18) ; Guitar
 %SetDurationN($24, $7F) ; 1/8
 %CallSubroutine(.sub8+!ARAMC, 2)
@@ -147,7 +152,8 @@ db $00 ; End
 
 
 .Channel4
-%SetChannelVolume($A2) ; counter-melody, v1.01 ratio to the lead (was $9D)
+%SetChannelVolume($8A) ; guitar counter-melody (was $A2)
+%SetPan($0C)
 %SetInstrument($18) ; Guitar
 %SetDurationN($48, $7F) ; 1/4
 %CallSubroutine(.sub9+!ARAMC, 32)
@@ -166,7 +172,8 @@ db $00 ; End
 
 
 .Channel5
-%SetChannelVolume($A0) ; v1.10 balance +5 dB makeup (v1.01 default $FF)
+%SetChannelVolume($80) ; balanced harp backing (was $A0)
+%SetPan($08)
 %SetInstrument($0F) ; Harp
 %SetDurationN($48, $7F) ; 1/4
 %CallSubroutine(.sub9+!ARAMC, 32)

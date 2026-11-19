@@ -32,12 +32,12 @@ dw $0000
 
 
 .Channel0
-%SetMasterVolume($B0)
+%SetMasterVolume($9C)
 %SetTempo(97);
-%EchoVBits($FF, $00, $00) ; echo on all channels
-%EchoParams($02, $40, $02) ; delay, feedback, filter
-%EchoVolumeFade($30, $20, $20) ; echo fade-in
-%SetChannelVolume($C0)
+%EchoVBits($2F, $00, $00) ; echo on melodic channels (exclude muted ch4 snare)
+%EchoParams($02, $28, $02) ; warm dungeon feedback (was $40)
+%EchoVolumeFade($30, $18, $18) ; subtle ambience (was $20)
+%SetChannelVolume($88)
 %SetPan($07)
 %SetInstrument($03) ; Square wave
 %SetDurationN($48, $7F) ; 1/4
@@ -81,7 +81,7 @@ db $00 ; End
 
 
 .Channel1
-%SetChannelVolume($C0)
+%SetChannelVolume($88)
 %SetPan($0D)
 %SetInstrument($03) ; Square wave
 %SetDurationN($24, $7F) ; 1/8
@@ -116,7 +116,7 @@ db $00 ; End
 
 
 .Channel2
-%SetChannelVolume($B8)
+%SetChannelVolume($A8)
 %SetPan($08)
 %SetInstrument($09) ; Strings
 %SetDurationN($48, $7F) ; 1/4
@@ -139,7 +139,7 @@ db $00 ; End
 
 
 .Channel3
-%SetChannelVolume($A0)
+%SetChannelVolume($94)
 %SetInstrument($18) ; Piano
 %SetDurationN($24, $7F) ; 1/8
 db Rest, $48, G4
@@ -189,7 +189,7 @@ db $00 ; End
 
 
 .Channel5
-%SetChannelVolume($B8)
+%SetChannelVolume($A8)
 %SetPan($0C)
 %SetInstrument($09) ; Strings
 %SetDurationN($48, $7F) ; 1/4

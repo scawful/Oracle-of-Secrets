@@ -46,6 +46,10 @@ dw $0000
 %SetTempo(80);
 ; Loudness pass 2026-11-05: every channel was at $FF. Levels follow
 ; vanilla overworld songs (lead $C8-$D0, pads $A0-$C8).
+; Mastering pass 2026-11-19: explicit light echo on ch0-4 so ch5 snare stays
+; dry instead of inheriting prior song echo, and gently softened snare.
+%EchoVBits($1F, $12, $12) ; ch0-4 shimmer; ch5 snare dry
+%EchoParams($02, $14, $02) ; gentle icy ambience
 %SetChannelVolume($C0) ; choir pad
 %SetInstrument($15) ; Choir
 %SetDurationN($48, $7F) ; 1/4
@@ -302,14 +306,14 @@ db $00 ; End of the channel
 
 
 .Channel5
-%SetChannelVolume($AE)
+%SetChannelVolume($98) ; softened snare shimmer (was $AE)
 %SetInstrument($13) ; Snare
 %SetDurationN($48, $7F) ; 1/4
 db Rest
 %CallSubroutine(.sub4+!ARAMC, 23)
 db $24, Rest
 %CallSubroutine(.sub22+!ARAMC, 128)
-%SetChannelVolume($AF)
+%SetChannelVolume($98) ; softened snare rhythm (was $AF)
 db C4, Tie, Tie, C4, Tie, C4, $09, C4, Tie, Tie, C4, C4, C4, Tie, C4, $24, A3s, Tie, Tie, A3s, Tie, A3s, $09, A3s, Tie, Tie, A3s, A3s, A3s, Tie, A3s
 %CallSubroutine(.sub8+!ARAMC, 1)
 %CallSubroutine(.sub9+!ARAMC, 2)
