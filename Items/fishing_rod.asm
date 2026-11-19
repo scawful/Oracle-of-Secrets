@@ -165,7 +165,7 @@ LinkItem_FishingRod:
     JMP EndFishing
   +
 
-  LDA.b $F4 : AND #$40 : BEQ .exit
+  JSL ItemBindings_UsePress : BEQ .exit
   .reel
   LDA.b #$08 : STA $3D ;set timer to 8 frames
   STZ.w $0300 ; set animation frame to 0 (pull back)
@@ -279,7 +279,7 @@ CheckYButtonPress:
 {
   BIT.b $3A : BVS .fail
   LDA.b $46 : BNE .fail
-  LDA.b $F4 : AND.b #$40 : BEQ .fail
+  JSL ItemBindings_UsePress : BEQ .fail
     TSB.b $3A
     SEC
     RTS

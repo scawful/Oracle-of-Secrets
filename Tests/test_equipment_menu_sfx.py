@@ -18,7 +18,9 @@ PAGE3 = ROOT / "Menu" / "menu_page3.asm"
 SFX = ROOT / "Core" / "sfx.asm"
 SWORD_SLOTS = ROOT / "Menu" / "menu_sword_slots.asm"
 FLAGS = ROOT / "Config" / "feature_flags.asm"
-MENU_CURSOR, EQUIP_CONFIRM, BOSS_DYING, ERROR = 0x20, 0x0D, 0x22, 0x3C
+MENU_CURSOR, EQUIP_CONFIRM, RING_UNEQUIP, HEART_REFILL, BOSS_DYING, ERROR = (
+    0x20, 0x20, 0x0C, 0x0D, 0x22, 0x3C
+)
 SOUND_PORTS = ("$012E", "$012F")
 INPUTS = [(f6, f4) for f6 in (0x00, 0x80, 0x40, 0x30) for f4 in (0x00, 0x40, 0x80, 0x3F)]
 
@@ -163,7 +165,7 @@ def expected(slot, f6, f4, owned, rings, one_ring):
     if slot < 0x0C:
         ring = slot - 4
         if ring in rings:
-            return [("$012F", MENU_CURSOR)], {f"RingSlot{rings.index(ring) + 1}": 0, "$0207": 0x00}, []
+            return [("$012F", RING_UNEQUIP)], {f"RingSlot{rings.index(ring) + 1}": 0, "$0207": 0x00}, []
         if one_ring:
             return [("$012F", EQUIP_CONFIRM)], {"RingSlot1": ring, "$0207": 0x20}, []
         return [("$012F", EQUIP_CONFIRM)], {"$0207": 0x20}, [("RingMenu_StoreRingToSlotStack", ring)]
@@ -201,6 +203,7 @@ def check_select(test, equipment_text, page3_text, flags):
                     test.assertEqual((menu.sounds, changed, menu.calls),
                                      expected(slot, f6, f4, owned, rings, one_ring), label)
                     test.assertNotIn(("$012F", BOSS_DYING), menu.sounds, label)
+                    test.assertNotIn(("$012F", HEART_REFILL), menu.sounds, label)
                     cases += 1
     return cases
 
@@ -215,6 +218,7 @@ class EquipmentMenuSfxContract(unittest.TestCase):
     def test_sound_ids_and_equipment_call_chain(self):
         sfx = SFX.read_text(encoding="utf-8")
         self.assertRegex(sfx, r"SFX3 - queued via \$012F")
+        self.assertRegex(sfx, r"SFX3\.0C .*Non-blank text character")
         self.assertRegex(sfx, r"SFX3\.0D .*HUD heart")
         self.assertRegex(sfx, r"SFX3\.20 .*Menu / Text cursor moved")
         self.assertRegex(sfx, r"SFX3\.22 .*Boss dying / Deleting file")
@@ -323,24 +327,25 @@ class EquipmentMenuSfxContract(unittest.TestCase):
                     self.assertEqual(menu.sounds, [("$012F", 6)])
                     self.assertTrue(menu.c)
 
-    def test_pre_fix_boss_sound_fails_contract(self):
+    def test_pre_fix_boss_and_heart_refill_sounds_fail_contract(self):
         mutants = [
-            ("mask/song", r"(\.sound\n\s*LDA\.b #\$)0D( : STA\.w \$012F)", self.flags),
-            ("one-ring wear", r"(\.wear\n\s*STA\.l RingSlot1\n\s*LDA\.b #\$)0D( : STA\.w \$012F)",
+            ("mask/song", r"(\.sound\n\s*LDA\.b #\$)20( : STA\.w \$012F)", self.flags),
+            ("one-ring wear", r"(\.wear\n\s*STA\.l RingSlot1\n\s*LDA\.b #\$)20( : STA\.w \$012F)",
              self.flags),
             ("multi-ring on", r"(\.on\n\s*JSR RingMenu_StoreRingToSlotStack\n\s*SEP #\$30\n"
-             r"\s*LDA\.b #\$)0D( : STA\.w \$012F)", dict(self.flags, ENABLE_ONE_RING=0)),
+             r"\s*LDA\.b #\$)20( : STA\.w \$012F)", dict(self.flags, ENABLE_ONE_RING=0)),
         ]
-        for name, pattern, flags in mutants:
-            with self.subTest(name):
-                equipment, page3 = self.equipment, self.page3
-                if name == "mask/song":
-                    equipment, count = re.subn(pattern, r"\g<1>22\2", equipment)
-                else:
-                    page3, count = re.subn(pattern, r"\g<1>22\2", page3)
-                self.assertEqual(count, 1)
-                with self.assertRaises(AssertionError):
-                    check_select(self, equipment, page3, flags)
+        for bad_sfx in ("22", "0D"):
+            for name, pattern, flags in mutants:
+                with self.subTest(f"{name}-{bad_sfx}"):
+                    equipment, page3 = self.equipment, self.page3
+                    if name == "mask/song":
+                        equipment, count = re.subn(pattern, rf"\g<1>{bad_sfx}\2", equipment)
+                    else:
+                        page3, count = re.subn(pattern, rf"\g<1>{bad_sfx}\2", page3)
+                    self.assertEqual(count, 1)
+                    with self.assertRaises(AssertionError):
+                        check_select(self, equipment, page3, flags)
 
 
 if __name__ == "__main__":

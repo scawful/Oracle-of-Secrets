@@ -568,7 +568,7 @@ Menu_Page3_Select:
     LDA.w $020B : SEC : SBC.b #!P3_FirstMaskSlot-1
     STA.l BoundMask
     LDA.b #$20 : STA.w $0207             ; show the new marker first
-    LDA.b #$0D : STA.w $012F             ; equip confirm chime (SFX3.$0D)
+    LDA.b #$20 : STA.w $012F             ; subtle equip tick (SFX3.$20)
     RTS
 
   .error
@@ -587,12 +587,12 @@ if !ENABLE_ONE_RING == 1
   ; One ring: A on the worn ring takes it off; another ring replaces it.
   CMP.l RingSlot1 : BNE .wear
     LDA.b #$00 : STA.l RingSlot1
-    LDA.b #$20 : STA.w $012F
+    LDA.b #$0C : STA.w $012F
     STZ.w $0207
     RTS
   .wear
   STA.l RingSlot1
-  LDA.b #$0D : STA.w $012F
+  LDA.b #$20 : STA.w $012F
   LDA.b #$20 : STA.w $0207               ; show the new marker first
   RTS
 else
@@ -607,14 +607,14 @@ else
   CMP.l RingSlot3 : BNE .on
     LDA.b #$00 : STA.l RingSlot3
   .off
-  LDA.b #$20 : STA.w $012F
+  LDA.b #$0C : STA.w $012F
   STZ.w $0207
   RTS
 
   .on
   JSR RingMenu_StoreRingToSlotStack
   SEP #$30
-  LDA.b #$0D : STA.w $012F
+  LDA.b #$20 : STA.w $012F
   LDA.b #$20 : STA.w $0207               ; show the new marker first
   RTS
 endif

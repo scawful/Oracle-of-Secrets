@@ -80,7 +80,7 @@ Menu_Bindings_Input:
     LDA.b #$80 : TRB.b $F6            ; A binds Y here
   .bind_y
     LDA.w $0202 : STA.l ItemBindingMenuY
-    LDA.b #$0D : JSR .changed         ; crisp confirm chime (SFX3.$0D)
+    LDA.b #$20 : JSR .changed         ; subtle Zelda confirm tick (SFX3.$20)
   .no_y
   LDA.b $F6 : BIT.b #$40 : BEQ .done
     LDA.b #$40 : TRB.b $F6            ; X binds here; no Journal shortcut
@@ -91,12 +91,12 @@ Menu_Bindings_Input:
     .versioned
     LDA.w $0202 : CMP.l ItemBindingSavedX : BNE .assign
       LDA.b #$00 : STA.l ItemBindingSavedX ; same item again: clear X
-      LDA.b #$20                      ; soft unbind tap (SFX3.$20)
+      LDA.b #$0C                      ; soft quiet unbind blip (SFX3.$0C)
       BRA .x_changed
     .assign
     STA.l ItemBindingCursor
     JSL ItemBindings_AssignX : BCC .refuse
-    LDA.b #$0D                        ; crisp confirm chime (SFX3.$0D)
+    LDA.b #$20                        ; subtle Zelda confirm tick (SFX3.$20)
   .x_changed
     JSR .changed
   .done
@@ -108,7 +108,7 @@ Menu_Bindings_Input:
   BRA .done
 
   ; Old markers are erased by repainting the page once, as a page turn does.
-  ; In: A = SFX3 ID ($0D bind confirm, $20 unbind/clear).
+  ; In: A = SFX3 ID ($20 bind confirm, $0C unbind/clear).
   .changed
   PHA
   JSL Menu_RefreshInventoryScreen_Long    ; returns SEP #$30

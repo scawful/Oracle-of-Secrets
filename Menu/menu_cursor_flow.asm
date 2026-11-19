@@ -517,10 +517,15 @@ QuestSongs_Frame:
   LDX.w $020B : LDA.l Menu_SongOrder,X
   STA.w CurrentSong
   STA.l SavedOcarinaSong                ; survives save/reload ($030F does not)
+  ; Keep Y's item when Ocarina is already bound to X; otherwise equip Ocarina to Y.
+  LDA.l ItemBindingSavedVersion : CMP.b #$01 : BNE .equip_y
+  LDA.l ItemBindingSavedX : CMP.b #$0D : BEQ .song_sfx
+.equip_y
   LDA.b #$0D : STA.w $0202              ; normal Y item, independent of mask
   STA.l ItemBindingMenuY                ; Menu_Bindings_Close restores $0202 from this
+.song_sfx
   STZ.w $0207
-  LDA.b #$0D : STA.w $012F
+  LDA.b #$20 : STA.w $012F
   SEC
   RTL
 .none

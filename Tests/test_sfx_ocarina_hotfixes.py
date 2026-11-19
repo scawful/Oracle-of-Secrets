@@ -3,11 +3,12 @@
 
 Covers:
 1. Menu UI SFX audit contracts:
-   - Zero SFX3.$22 (Boss dying / Deleting file) or SFX3.$35 (partial heart container)
-     anywhere in Menu/*.asm.
-   - Menu_Bindings_Input emits SFX3.$0D on Y/X bind, SFX3.$20 on X-clear, SFX2.$3C on refuse.
+   - Zero SFX3.$22 (Boss dying / Deleting file), SFX3.$35 (partial heart container),
+     or shrill SFX3.$0D (HUD heart refill) anywhere in Menu/*.asm.
+   - Menu_Bindings_Input emits SFX3.$20 on Y/X bind, SFX3.$0C on X-clear, SFX2.$3C on refuse.
    - Menu_Equipment_Select, Menu_Page3_Select, Menu_Page3_ToggleRing, QuestSongs_Frame,
-     MagicBag_ConsumeItem, and RingMenu_Controls follow the unified UI SFX palette.
+     MagicBag_ConsumeItem, and RingMenu_Controls follow the subtle UI SFX palette
+     (SFX3.$20 confirm/equip, SFX3.$0C unbind/unequip, SFX3.$0B Magic Bag consume, SFX2.$3C error).
 2. Ocarina jingle songs (Items/ocarina.asm):
    - Assembles the real Bank $1A Ocarina SFX streams + accompaniment/pointer patches
      with asar and decodes every stream byte-for-byte with an authentic ALTTP SPC700
@@ -150,7 +151,7 @@ def assemble_ocarina_bank1a() -> tuple[bytes, dict[str, int]]:
 
 
 class TestQ330MenuSfx(unittest.TestCase):
-    def test_no_boss_dying_or_partial_heart_container_sfx_in_menu(self):
+    def test_no_boss_dying_partial_heart_or_heart_refill_sfx_in_menu(self):
         for path in sorted(MENU_DIR.glob("*.asm")):
             text = path.read_text(encoding="utf-8")
             for lineno, raw in enumerate(text.splitlines(), 1):
@@ -165,15 +166,21 @@ class TestQ330MenuSfx(unittest.TestCase):
                     r"#\$35\s*:\s*STA(?:\.w)?\s+\$012F",
                     f"{path.name}:{lineno} still plays SFX3.$35 (partial Heart Container jingle)!",
                 )
+                self.assertNotRegex(
+                    code,
+                    r"#\$0D\s*:\s*STA(?:\.w)?\s+\$012F",
+                    f"{path.name}:{lineno} still plays shrill SFX3.$0D (HUD heart refill)!",
+                )
 
     def test_menu_item_bindings_distinct_confirm_unbind_and_error_sfx(self):
         txt = (MENU_DIR / "menu_item_bindings.asm").read_text(encoding="utf-8")
         m = re.search(r"^Menu_Bindings_Input:\s*\n\{(.*?)^\}", txt, re.M | re.S)
         self.assertIsNotNone(m)
         body = m.group(1)
-        self.assertIn("LDA.b #$0D : JSR .changed", body)
+        self.assertNotIn("#$0D", body, "Menu_Bindings_Input must not play SFX3.$0D")
+        self.assertIn("LDA.b #$20 : JSR .changed", body)
+        self.assertIn("LDA.b #$0C", body)
         self.assertIn("LDA.b #$20", body)
-        self.assertIn("LDA.b #$0D", body)
         self.assertIn("LDA.b #$3C : STA.w $012E", body)
         self.assertIn("PLA : STA.w $012F", body)
 
@@ -182,16 +189,29 @@ class TestQ330MenuSfx(unittest.TestCase):
         m = re.search(r"^MagicBag_ConsumeItem:\s*\n\{(.*?)^\}", menu_txt, re.M | re.S)
         self.assertIsNotNone(m)
         self.assertIn("LDA.b #$0B : STA.w $012F", m.group(1))
-        self.assertIn("LDA.b #$0D : STA.w $012F", m.group(1))
+        self.assertIn("LDA.b #$20 : STA.w $012F", m.group(1))
+        self.assertNotIn("LDA.b #$0D : STA.w $012F", m.group(1))
         self.assertIn("LDA.b #$3C : STA.w $012E", m.group(1))
 
         flow_txt = (MENU_DIR / "menu_cursor_flow.asm").read_text(encoding="utf-8")
         qm = re.search(r"^QuestSongs_Frame:\s*\n\{(.*?)^\}", flow_txt, re.M | re.S)
         self.assertIsNotNone(qm)
-        self.assertIn("LDA.b #$0D : STA.w $012F", qm.group(1))
+        self.assertIn("LDA.b #$20 : STA.w $012F", qm.group(1))
+        self.assertNotIn("LDA.b #$0D : STA.w $012F", qm.group(1))
+
+        equip_txt = (MENU_DIR / "menu_equipment.asm").read_text(encoding="utf-8")
+        em = re.search(r"^Menu_Equipment_Select:\s*\n\{(.*?)^\}", equip_txt, re.M | re.S)
+        self.assertIsNotNone(em)
+        self.assertIn("LDA.b #$20 : STA.w $012F", em.group(1))
+        self.assertNotIn("LDA.b #$0D : STA.w $012F", em.group(1))
 
         p3_txt = (MENU_DIR / "menu_page3.asm").read_text(encoding="utf-8")
         self.assertNotIn("LDA.b #$22 : STA.w $012F", p3_txt)
+        self.assertNotIn("LDA.b #$0D : STA.w $012F", p3_txt)
+        tm = re.search(r"^Menu_Page3_ToggleRing:\s*\n\{(.*?)^\}", p3_txt, re.M | re.S)
+        self.assertIsNotNone(tm)
+        self.assertIn("LDA.b #$0C : STA.w $012F", tm.group(1))
+        self.assertIn("LDA.b #$20 : STA.w $012F", tm.group(1))
 
 
 class TestQ330OcarinaJingles(unittest.TestCase):

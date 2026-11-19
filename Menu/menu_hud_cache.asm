@@ -177,6 +177,7 @@ if !ENABLE_GOLDSTAR_CELL == 1
 endif
   CMP.b #$06 : BEQ .codex_bottle0
   CMP.b #$0C : BEQ .codex_bottle1
+  CMP.b #$0D : BEQ .codex_ocarina_song
   CMP.b #$12 : BEQ .codex_bottle2
   CMP.b #$18 : BEQ .codex_bottle3
   LDA.b #$00 : BRA .codex_ammo_ready
@@ -185,6 +186,7 @@ endif
 if !ENABLE_GOLDSTAR_CELL == 1
   .codex_ammo_chu    : LDA.l BombchuAmmo : BRA .codex_ammo_ready
 endif
+  .codex_ocarina_song : JSL Ocarina_ValidSong_Long : BRA .codex_ammo_ready
   .codex_bottle0 : LDA.l $7EF35C : BRA .codex_ammo_ready
   .codex_bottle1 : LDA.l $7EF35D : BRA .codex_ammo_ready
   .codex_bottle2 : LDA.l $7EF35E : BRA .codex_ammo_ready

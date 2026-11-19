@@ -61,10 +61,9 @@ endif
 
   .icon
     TAY                                         ; Y = item ID
+    CPY.w #$000D : BEQ .ocarina_icon
 if !ENABLE_GOLDSTAR_CELL == 1
-    CPY.w #$001B : BCC +                        ; Bombchu, Switch Hook
-      JMP .new_icon
-    +
+    CPY.w #$001B : BCS .new_icon                ; Byrna, Bombchu, Gust Jar / Switch Hook
 endif
     ; Logical cells draw like the Y box: Portal = rod entry level 1,
     ; Goldstar = hookshot entry level 1. Neither has a count.
@@ -82,6 +81,9 @@ endif
     CPY.w #$0004 : BNE +
       LDA.w #$0001                              ; Bombs: count, one icon
     +
+    CPY.w #$0010 : BNE +
+      LDA.w #$0000                              ; Fishing Rod: entry 0 at $0DF8A9
+    +
     CPY.w #$0003 : BNE +
 if !ENABLE_GOLDSTAR_CELL == 1
       CMP.w #$0002 : BNE .x_hookshot_icon
@@ -97,34 +99,52 @@ endif
     TYA : DEC : ASL : TAX
     LDA.l $0DFA93, X : CLC : ADC 1,S : TAX
     PLA
-    LDA.l $0D0000+0, X : STA.l $7EC770
-    LDA.l $0D0000+2, X : STA.l $7EC772
-    LDA.l $0D0000+4, X : STA.l $7EC7B0
-    LDA.l $0D0000+6, X : STA.l $7EC7B2
-
-    CPY.w #$0001 : BNE +
-      LDA.l $7EF377 : BRA .count                ; arrows
-    +
-    CPY.w #$0004 : BEQ +
-      JMP .no_count
-    +
-      LDA.l $7EF343                             ; bombs
-      BRA .count
+    LDA.w #$000D
+    BRA .blit_bank
 if !ENABLE_GOLDSTAR_CELL == 1
   ; Prototype cells past vanilla's pointer table: the Y box's own icons
   ; (HUD_DrawItem .new_icons, 4 words per item from Byrna $1B).
   .new_icon
-    TYA : SEC : SBC.w #$001B : ASL #3 : TAX
-    LDA.l HUD_DrawItem_new_icons+0, X : STA.l $7EC770
-    LDA.l HUD_DrawItem_new_icons+2, X : STA.l $7EC772
-    LDA.l HUD_DrawItem_new_icons+4, X : STA.l $7EC7B0
-    LDA.l HUD_DrawItem_new_icons+6, X : STA.l $7EC7B2
+    TYA : SEC : SBC.w #$001B : ASL #3           ; values 0..4: ASL #3 clears C
+    ADC.w #HUD_DrawItem_new_icons&$FFFF : TAX
+    BRA .blit_bank2e
+endif
+  ; Ocarina ($0D): dynamic song-colored icon from HUD_OcarinaIcons (grey + 6 songs).
+  .ocarina_icon
+    SEP #$20
+    JSL Ocarina_ValidSong_Long
+    REP #$20
+    AND.w #$00FF : ASL #3                       ; values 0..6: ASL #3 clears C
+    ADC.w #HUD_OcarinaIcons&$FFFF : TAX
+  .blit_bank2e
+if !ENABLE_GOLDSTAR_CELL == 1
+    assert (HUD_DrawItem_new_icons>>16) == (HUD_OcarinaIcons>>16)
+endif
+    LDA.w #HUD_OcarinaIcons>>16
+  .blit_bank
+    PHB
+    SEP #$20 : PHA : PLB : REP #$20
+    LDA.w $0000, X : STA.l $7EC770
+    LDA.w $0002, X : STA.l $7EC772
+    LDA.w $0004, X : STA.l $7EC7B0
+    LDA.w $0006, X : STA.l $7EC7B2
+    PLB
+
+    CPY.w #$0001 : BNE +
+      LDA.l $7EF377 : BRA .count                ; arrows
+    +
+    CPY.w #$0004 : BNE +
+      LDA.l $7EF343 : BRA .count                ; bombs
+    +
+if !ENABLE_GOLDSTAR_CELL == 1
     CPY.w #$001C : BEQ +
       JMP .no_count
     +
     LDA.l BombchuAmmo : AND.w #$00FF            ; same cap as the Y count
     CMP.w #!BOMBCHU_AMMO_MAX+1 : BCC .count
       LDA.w #$0000
+else
+    JMP .no_count
 endif
     .count
     ; Two digits (tiles $2490-$2499, as HexToDecimal draws).

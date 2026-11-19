@@ -13,10 +13,11 @@
 
 ; C=owned and latchable, A unchanged. M8 near helper; any X width, X/Y/P
 ; kept except C. Latchable items start on one new press. Handlers that pick
-; a variant by item ID (bomb/Bombchu, rod/Portal, chain/Goldstar/Switch Hook)
-; read ItemBindings_EffectiveItem, so X sees the X item.
-; Bottles, Mirror, Ocarina, Book, Fishing Rod, Byrna (held button), masks and
-; Garo stay Y-only: they own a menu, song, fishing or held state.
+; a variant by item ID (bomb/Bombchu, rod/Portal/Byrna, chain/Goldstar/Switch Hook,
+; Wolf/Ocarina) read ItemBindings_EffectiveItem, so X sees the X item.
+; Masks ($13-$17) and Garo Mask ($1E) stay R-only (Equipment); all 24 Items
+; grid slots (including Bottles 1-4, Mirror, Ocarina, Book, Fishing Rod and
+; Byrna) are X-bindable.
 ItemBindings_Validate:
 {
   PHX : PHY : PHP : SEP #$30            ; SEP #$10 clears X/Y high bytes
@@ -76,7 +77,7 @@ ItemBindings_IsLatchable:
 
 ; Indexed by logical ID (= menu grid index). Owner: offset into $7EF300.
 ; Logical cells own exactly 1 (Max $02); entries follow Menu_ItemIndex,
-; including its cell flags. ActionTable == $00 marks Y-only items.
+; including its cell flags. ActionTable == $00 marks R-only masks.
 ItemBindings_Owner:
   db $00
   db $40, $41, $42, $43, $44, $5C       ; Bow Boomerang Hookshot Bombs Powder Bottle1
@@ -85,9 +86,9 @@ ItemBindings_Owner:
   db $49, $47, $58, $48, $52, $5F       ; Deku Zora Wolf Bunny Stone Bottle4
   db PortalRodOwned&$FF                 ; $19 Portal Rod
 if !ENABLE_GOLDSTAR_CELL == 1
-  db GoldstarOwned&$FF, ByrnaOwned&$FF  ; $1A Goldstar, $1B Byrna (Y only)
-  db BombchuOwned&$FF, SwitchHookOwned&$FF ; $1C Bombchu, $1D Switch Hook
-  db GaroMaskOwned&$FF                  ; $1E Garo Mask (Y only)
+  db GoldstarOwned&$FF, ByrnaOwned&$FF  ; $1A Goldstar, $1B Byrna
+  db BombchuOwned&$FF, SwitchHookOwned&$FF ; $1C Bombchu, $1D Gust Jar / Switch Hook
+  db GaroMaskOwned&$FF                  ; $1E Garo Mask (R only)
 endif
 ItemBindings_Owner_End:
 ItemBindings_Max:
@@ -102,13 +103,13 @@ if !ENABLE_GOLDSTAR_CELL == 1
 endif
 ItemBindings_ActionTable:
   db $00
-  db $03, $02, $0E, $01, $0A, $00
-  db $04, $09, $05, $06, $00, $00
-  db $00, $00, $12, $00, $07, $00
-  db $00, $00, $00, $00, $00, $00
-  db $0D                                ; Portal: rod routine
+  db $03, $02, $0E, $01, $0A, $0B       ; Bow Boomerang Hookshot Bombs Powder Bottle1
+  db $04, $09, $05, $06, $14, $0B       ; Hammer Lamp FireRod IceRod Mirror Bottle2
+  db $08, $0C, $12, $0D, $07, $0B       ; Ocarina Book Somaria FishingRod Feather Bottle3
+  db $00, $00, $00, $00, $00, $0B       ; Deku Zora Wolf Bunny Stone (R-only), Bottle4
+  db $0D                                ; $19 Portal Rod: rod routine
 if !ENABLE_GOLDSTAR_CELL == 1
-  db $0E, $00, $01, $0E, $00            ; Goldstar chain, -, Bombchu bomb, Switch Hook chain, -
+  db $0E, $0D, $01, $0E, $00            ; $1A Goldstar, $1B Byrna, $1C Bombchu, $1D Gust Jar/Switch Hook, $1E Garo (R-only)
 endif
 
 ; Item the running action belongs to, for handlers that pick a variant by

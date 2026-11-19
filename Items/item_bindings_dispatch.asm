@@ -1,8 +1,9 @@
 ; Dual-item binding: live dispatcher and vanilla hooks.
 ; Included from Items/all_items.asm after Items/item_bindings_adapter.asm.
-; Hooks: CheckYButtonPress new-press read ($07B07B) and both native X field-map
-; reads ($0288F9 dungeon, $02A55A overworld). Routing joins MaskBinding_Tick's
-; regular-item branch; reset joins LoadCheckpointOrWorld.
+; Hooks: CheckYButtonPress new-press read ($07B07B), both native X field-map
+; reads ($0288F9 dungeon, $02A55A overworld), LinkItem_ShovelAndFlute Ocarina
+; dispatch ($07A313), and Ancilla31_CaneOfByrna cancel check ($08DCBE).
+; Routing joins MaskBinding_Tick's regular-item branch; reset joins LoadCheckpointOrWorld.
 assert !DISABLE_ITEMS == 0, "Dual-item binding needs the item modules"
 ; ---------------------------------------------------------
 ; Live dispatcher. All entries run inside gameplay with D=0; long addressing
@@ -29,10 +30,10 @@ ItemBindings_Route:
   LDA.b #$05 : BRA .ancilla
   .other
   ; Other latchable handlers: item-use bits, a Link state (hookshot pull,
-  ; feather jump) or a live shot ancilla keep the action owned: hookshot
-  ; ($1F), Fire Rod shot ($02), Ice Rod shot ($0B). The Ice Rod water
-  ; freeze (Items/ice_rod.asm) reads $0303/$0304 == 6 when the shot lands,
-  ; so an X shot must keep the action until it ends.
+  ; feather jump, mirror warp) or a live shot/shield ancilla keep the action
+  ; owned: hookshot ($1F), Fire Rod ($02), Ice Rod ($0B), Byrna ($30/$31),
+  ; or active Fishing Rod ($7F5BA2). The Ice Rod water freeze (Items/ice_rod.asm)
+  ; reads $0303/$0304 == 6 when the shot lands, so an X shot keeps ownership.
   PHA
   LDA.w $0301 : ORA.w $037A : ORA.b $5D
   BEQ +
@@ -40,7 +41,13 @@ ItemBindings_Route:
   +
   PLA : CMP.b #$0E : BEQ .hookshot
   CMP.b #$06 : BEQ .ice_rod
-  CMP.b #$05 : BNE .held
+  CMP.b #$05 : BEQ .fire_rod
+  CMP.b #$0D : BNE .held
+  JSR ItemBindings_RodOrByrna
+  BEQ .end_latch
+  CMP.b #$01 : BEQ .busy
+  BRA .held
+  .fire_rod
   LDA.b #$02 : BRA .ancilla
   .ice_rod
   LDA.b #$0B : BRA .ancilla
@@ -53,18 +60,19 @@ ItemBindings_Route:
   DEX : BPL -
   .held
   LDA.b $3A : AND.b #$40 : BNE .busy
+  .end_latch
   JSL ItemBindings_EndAction
   BRA .idle
   .busy
   LDA.l ItemBindingAction
+  JSR ItemBindings_SyncBottle
   PLY : PLX : SEC : RTL
 
   .idle
   JSR ItemBindings_Admitted : BCC .decline
   ; Hydrate once per session: AdapterReset leaves the cursor at zero.
-  ; Load directly (not AdapterLoad): any Y item, latchable or not (a bottle),
-  ; must still let X route. Load never writes $0202; the lines below then
-  ; set saved Y and the cursor from $0202.
+  ; Load directly (not AdapterLoad): any owned Y item still lets X route.
+  ; Load never writes $0202; the lines below set saved Y and cursor from $0202.
   LDA.l ItemBindingCursor : BNE .hydrated
   LDA.l $7E0202 : BEQ .decline
   JSL ItemBindings_Load
@@ -78,20 +86,80 @@ ItemBindings_Route:
   LDA.w $0301 : ORA.w $037A : BNE .no_start
   LDA.b $3A : AND.b #$40 : BNE .no_start
   LDA.b $3C : ORA.b $46 : ORA.b $6C : ORA.b $5D : BNE .no_start
-  LDA.w $0FFC : ORA.w $02E0 : BNE .no_start
+  LDA.w $0FFC : BNE .no_start
+  LDA.w $02E0 : BEQ .can_start
+    ; Bunny state ($02E0 != 0): only Mirror ($14) and Bottles ($0B) may start
+    ; (matches vanilla Link_HandleYItem at $079B16).
+    LDA.b $F4 : AND.b #$40 : BNE .bunny_y
+    LDA.b $F6 : AND.b #$40 : BEQ .no_start
+    LDA.l ItemBindingSavedX : BRA .bunny_chk
+    .bunny_y
+    LDA.l ItemBindingSavedY
+    .bunny_chk
+    JSR ItemBindings_MapAction
+    CMP.b #$0B : BEQ .can_start
+    CMP.b #$14 : BNE .no_start
+  .can_start
   ; X and Y may share an action routine (Bombs/Bombchu, Hookshot/Goldstar/
-  ; Switch Hook, Fishing/Portal): the routine's variant read goes through
-  ; ItemBindings_EffectiveItem, so each button fires its own item.
+  ; Switch Hook, Fishing/Portal/Byrna, Bottles 1-4): variant reads go through
+  ; ItemBindings_EffectiveItem / ItemBindings_SyncBottle, so each button fires
+  ; its own item.
   LDA.b #$01 : BRA .try
   .no_start
   LDA.b #$00
   .try
   JSL ItemBindings_TryBegin : BCC .decline
-  LDA.l ItemBindingAction
-  PLY : PLX : SEC : RTL
+  BRA .busy
 
   .decline
   PLY : PLX : CLC : RTL
+}
+
+; M8/X8 near helper for Action == #$0D (Fishing Rod $10, Byrna $1B, Portal $19).
+; Out: A = 0 -> release latch immediately, 1 -> busy, 2 -> fall through to .held.
+ItemBindings_RodOrByrna:
+{
+  LDA.l ItemBindingLogical : CMP.b #$10 : BNE .byrna
+    LDA.l $7F5BA2 : BNE .busy
+    BRA .held
+  .byrna
+  CMP.b #$1B : BNE .held
+    LDA.l ItemBindingButton : CMP.b #$02 : BNE .byrna_y
+      LDA.l ItemBindingSavedX : CMP.b #$1B : BNE .release
+      BRA .scan
+    .byrna_y
+    LDA.l $7E0202 : CMP.b #$1B : BNE .release
+    .scan
+    LDX.b #$04
+    -
+    LDA.w $0C4A,X : CMP.b #$30 : BEQ .busy
+    CMP.b #$31 : BEQ .busy
+    DEX : BPL -
+  .held
+  LDA.b #$02 : RTS
+  .busy
+  LDA.b #$01 : RTS
+  .release
+  LDA.b #$00 : RTS
+}
+
+; M8 near helper: keep BottleIndex ($7EF34F, 1..4) synced to the active bottle
+; button whenever Action == #$0B ($06->1, $0C->2, $12->3, $18->4). Keeps A/X/Y.
+ItemBindings_SyncBottle:
+{
+  CMP.b #$0B : BNE .done
+  PHA
+  LDA.l ItemBindingLogical
+  CMP.b #$06 : BNE + : LDA.b #$01 : BRA .store
++ CMP.b #$0C : BNE + : LDA.b #$02 : BRA .store
++ CMP.b #$12 : BNE + : LDA.b #$03 : BRA .store
++ CMP.b #$18 : BNE .skip : LDA.b #$04
+.store
+  STA.l BottleIndex
+.skip
+  PLA
+.done
+  RTS
 }
 
 ; C=1 when the prototype may route: a form whose Y uses regular items
@@ -198,6 +266,34 @@ ItemBindings_MapPress:
   LDA.b #$00 : RTL
 }
 
+; Replaces JSL MaskBinding_IsOcarina at $07A313 (LinkItem_ShovelAndFlute), M8.
+; Z set means Ocarina: active Wolf ($02B2 == 3) always digs; otherwise read
+; ItemBindings_EffectiveItem so X-bound Ocarina plays even while Y holds
+; another item. X/Y preserved.
+ItemBindings_IsOcarina:
+{
+  LDA.w !CurrentMask : CMP.b #$03 : BNE .item
+  LDA.b #$01 : RTL
+  .item
+  JSL ItemBindings_EffectiveItem
+  CMP.b #$0D : RTL
+}
+
+; Replaces BIT $F4 : BVC $08DCCD at $08DCBE (Ancilla31_CaneOfByrna), M8/X8.
+; Pressing the button that started Byrna (X when ItemBindingButton == 2, Y
+; otherwise) toggles the barrier off. Preserves X/Y.
+ItemBindings_ByrnaCancel:
+{
+  LDA.l ItemBindingButton : CMP.b #$02 : BNE .y
+  LDA.b $F6 : BIT.b #$40 : BNE .cancel
+  JML $08DCCD
+  .y
+  BIT.b $F4 : BVS .cancel
+  JML $08DCCD
+  .cancel
+  JML $08DCC2
+}
+
 pushpc
 assert read4($07B07B) == $4029F4A5, "CheckYButtonPress new-press read moved"
 org $07B07B ; @hook module=Items name=ItemBindings_UsePress kind=jsl target=ItemBindings_UsePress expected_m=8
@@ -208,4 +304,11 @@ org $0288F9 ; @hook module=Items name=ItemBindings_DungeonMapPress kind=jsl targ
 assert read4($02A55A) == $4029F6A5, "Overworld X map read moved"
 org $02A55A ; @hook module=Items name=ItemBindings_OverworldMapPress kind=jsl target=ItemBindings_MapPress expected_m=8
   JSL ItemBindings_MapPress
+if !DISABLE_MASKS == 0
+org $07A313 ; @hook module=Items name=ItemBindings_IsOcarina kind=jsl target=ItemBindings_IsOcarina expected_m=8
+  JSL ItemBindings_IsOcarina
+endif
+assert read4($08DCBE) == $0B50F424, "Byrna cancel button check moved"
+org $08DCBE ; @hook module=Items name=ItemBindings_ByrnaCancel kind=jml target=ItemBindings_ByrnaCancel expected_m=8 expected_x=8 protected_size=4
+  JML ItemBindings_ByrnaCancel
 pullpc

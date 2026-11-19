@@ -140,17 +140,54 @@ def exercise(lib, rom, labels):
             f.run('AssignY'); assert not f.cpu.c and f.field('SavedY') == 1
         check(f'unsupported-binding-refusal-{invalid}', refusal)
 
-    for y_only, sram in ((0x06, 0x7EF35C), (0x0B, 0x7EF353), (0x0D, 0x7EF34C),
-                         (0x10, 0x7EF351), (0x1B, 0x7EF3AC), (0x1E, 0x7EF3AF)):
-        def retain_y_only(f, y_only=y_only, sram=sram):
+    for item_id, sram, action in (
+        (0x06, 0x7EF35C, 0x0B),  # Bottle 1
+        (0x0B, 0x7EF353, 0x14),  # Mirror
+        (0x0C, 0x7EF35D, 0x0B),  # Bottle 2
+        (0x0D, 0x7EF34C, 0x08),  # Ocarina
+        (0x0E, 0x7EF34E, 0x0C),  # Book of Secrets
+        (0x10, 0x7EF351, 0x0D),  # Fishing Rod
+        (0x12, 0x7EF35E, 0x0B),  # Bottle 3
+        (0x18, 0x7EF35F, 0x0B),  # Bottle 4
+        (0x1B, 0x7EF3AC, 0x0D),  # Cane of Byrna
+    ):
+        def x_bind_extended(f, item_id=item_id, sram=sram, action=action):
             f.put(sram, 1)
             f.field('SavedVersion', 0); f.field('SavedX', 2)
-            f.put(0x202, y_only)
+            f.put(0x202, item_id)
             f.run('Load')
-            assert [f.field(k) for k in FIELDS] == [1, y_only, 0, y_only, 0, 0, 0]
-            f.run('SetCursor', y_only)
-            assert not f.cpu.c and f.field('Cursor') == y_only
-        check(f'retain-owned-y-only-{y_only:02X}', retain_y_only)
+            assert [f.field(k) for k in FIELDS] == [1, item_id, 0, item_id, 0, 0, 0]
+            f.run('SetCursor', item_id)
+            assert f.cpu.c and f.field('Cursor') == item_id
+            f.run('AssignX')
+            assert f.cpu.c and f.field('SavedX') == item_id
+            f.put(0xF6, 0x40)
+            f.run('TryBegin', 1)
+            assert f.cpu.c and [f.field(k) for k in ('Logical', 'Action', 'Button')] == [item_id, action, 2]
+            f.run('EndAction')
+            assert f.field('Button') == 0
+        check(f'x-bind-extended-{item_id:02X}', x_bind_extended)
+
+    # Masks ($13-$17) and Garo Mask ($1E) remain R-only (Equipment), never X-bindable.
+    for mask_id, sram in (
+        (0x13, 0x7EF349),  # Deku Mask
+        (0x14, 0x7EF347),  # Zora Mask
+        (0x15, 0x7EF358),  # Wolf Mask
+        (0x16, 0x7EF348),  # Bunny Hood
+        (0x17, 0x7EF352),  # Stone Mask
+        (0x1E, 0x7EF3AF),  # Garo Mask
+    ):
+        def retain_mask_r_only(f, mask_id=mask_id, sram=sram):
+            f.put(sram, 1)
+            f.field('SavedVersion', 0); f.field('SavedX', 2)
+            f.put(0x202, mask_id)
+            f.run('Load')
+            assert [f.field(k) for k in FIELDS] == [1, mask_id, 0, mask_id, 0, 0, 0]
+            f.run('SetCursor', mask_id)
+            assert not f.cpu.c and f.field('Cursor') == mask_id
+            f.run('AssignX')
+            assert not f.cpu.c and f.field('SavedX') == 0
+        check(f'mask-r-only-{mask_id:02X}', retain_mask_r_only)
 
     for button, logical, action in ((1, 1, 3), (2, 2, 2)):
         def latch(f, button=button, logical=logical, action=action):

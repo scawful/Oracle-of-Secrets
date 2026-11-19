@@ -141,10 +141,8 @@ endif
   JSL MaskBinding_MigrateSelection
   LDA.w $0780 : STA.w $00
   JSR Menu_PortalRod_SyncOwned
-  LDA.w $0202
-  CMP.b #$10 : BNE .not_fishing
-    JSL DismissRodFromMenu
-  .not_fishing
+  JSL DismissRodFromMenu               ; clears any active Y or X fishing session
+  JSL ItemBindings_EffectiveItem       ; catches active X-bound bottle/hammer too
   CMP.b #$06 : BEQ .bottle
   CMP.b #$0C : BEQ .bottle
   CMP.b #$12 : BEQ .bottle
@@ -759,8 +757,8 @@ MagicBag_ConsumeItem:
 
 .deferred_use
     PLB
-    ; Confirm sound (SFX3.$0D)
-    LDA.b #$0D : STA.w $012F
+    ; Subtle confirm tick (SFX3.$20)
+    LDA.b #$20 : STA.w $012F
     ; Trigger menu scroll up to return to gameplay
     LDA.b #!MENU_STATE_SCROLL_UP : STA.w $0200
     BRA .exit
@@ -1044,7 +1042,7 @@ RingMenu_Controls:
       INY #2
       TYA                 ; Transfer Y to A
       JSR RingMenu_StoreRingToSlotStack
-      LDA.b #$0D : STA.w $012F  ; Play equip confirm chime (SFX3.$0D)
+      LDA.b #$20 : STA.w $012F  ; Play subtle equip tick (SFX3.$20)
   .no_a
 
   ; Y button: Close ring menu, return to previous screen
