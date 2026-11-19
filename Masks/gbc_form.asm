@@ -61,13 +61,20 @@ LinkState_GameboyInDungeonEntrance:
   ; if link is in the dark world, change his sprite to the gbc one
   ; SavedWorld, not $0FFF: Sprite_Main copies it to $0FFF only once sprites
   ; run, which is after the load fade on file load and continue.
+  ; Note: Module07_Underworld ($0287A4) calls this every frame indoors. Guard
+  ; against re-applying palette/shield sync once GBC form is already active;
+  ; LW/DW dungeon loads already sync shield tiles & palette via $02C64B
+  ; (Palettes_Load_Shield -> MirrorShield_LoadColor8).
   LDA.l SavedWorld : BEQ .return
     LDA.w !CurrentMask : CMP.b #$05 : BEQ .return
-        LDA.b #$06 : STA.w $02B2
-        LDA.b #$3B : STA.b $BC ; change link's sprite
-        JSL UpdateGbcPalette
+    CMP.b #$06 : BNE .apply_gbc
+    LDA.b $BC : CMP.b #$3B : BEQ .return
+  .apply_gbc
+    LDA.b #$06 : STA.w $02B2
+    LDA.b #$3B : STA.b $BC ; change link's sprite
+    JSL UpdateGbcPalette
+    JSL ShieldWorld_SyncBoth
   .return
-  JSL ShieldWorld_SyncBoth
   JSL $0AFE80 ; Underworld_HandleLayerEffect
   RTL
 }

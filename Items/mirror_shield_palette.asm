@@ -308,7 +308,8 @@ ShieldWorld_SyncTiles:
 }
 
 ; Syncs BOTH equipped shield tiles ($7E9300..$7E947F) and shield palette
-; (Palettes_Load_Shield -> MirrorShield_LoadColor8). Preserves A, X, Y, P, DBR, DP $00-$07.
+; (Palettes_Load_Shield -> MirrorShield_LoadColor8 -> ShieldWorld_SyncTiles +
+; MirrorShield_ApplyWorldPalette). Preserves A, X, Y, P, DBR, DP $00-$07.
 ShieldWorld_SyncBoth:
 {
   PHP : PHB : REP #$30
@@ -317,8 +318,7 @@ ShieldWorld_SyncBoth:
   LDA.b $02 : PHA
   LDA.b $04 : PHA
   LDA.b $06 : PHA
-  JSL ShieldWorld_SyncTiles
-  JSL $1BED29 ; Palettes_Load_Shield (runs MirrorShield_LoadColor8 -> world-aware!)
+  JSL $1BED29 ; Palettes_Load_Shield (exits via MirrorShield_LoadColor8 -> tiles + palette!)
   REP #$30
   PLA : STA.b $06
   PLA : STA.b $04
