@@ -16,7 +16,7 @@
 ;   slots and writes palette row 5 plus the SECRETS plate colours (row 2)
 ;   into the fade target buffer $7EC300. IntroTitleCardPaletteFadeIn
 ;   brings $7EC500 up to them.
-; - Intro subs 7 and 8 rotate row 5 colours 1-8 every 8 frames (vortex).
+; - Intro subs 7 and 8 rotate row 5 colours 1-8 every 32 frames (gentle vortex).
 ; =========================================================
 
 pushpc
@@ -108,14 +108,14 @@ OracleTitle_Load:
 }
 
 ; ---------------------------------------------------------
-; Intro subs 7 and 8: rotate BG2 colours 1-8 every 8 frames in both
-; palette buffers, so the fade and the live palette stay in step.
+; Intro subs 7 and 8: rotate BG2 colours 1-8 every 32 frames (~1.875 Hz) in both
+; palette buffers so the vortex feels gentle and avoids rapid strobing.
 OracleTitle_Cycle:
 {
   JSL $0CC404                         ; Intro_HandleAllTriforceAnimations (replaced)
   PHP
   SEP #$20
-  LDA.b $1A : AND.b #$07 : BNE .done
+  LDA.b $1A : AND.b #$1F : BNE .done
   REP #$30
   PHX
   LDA.l $7EC3A2 : PHA
