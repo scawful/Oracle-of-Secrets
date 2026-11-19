@@ -1,5 +1,5 @@
 ; =========================================================
-; Lyra/Sky overlay fix (!ENABLE_LYRA_OVERLAY_FIX)
+; Lyra/Sky overlay fix
 ;
 ; scawful 2026-11-08: "if Lyra sea doesn't support overlays how can we
 ; support song of storms ? We may need to fix that gap".
@@ -37,8 +37,8 @@
 ;       makes the call a no-op for $8A >= $A0; other areas are unchanged.
 ;       (The tail pointer table, F2b, is a separate job.)
 ;
-; Included from Items/all_items.asm (bank $2B free space) only when the
-; flag is on. The ZSCustomOverworld.asm hook site is gated by the same flag.
+; Included from Items/all_items.asm (bank $2B free space).
+; The ZSCustomOverworld.asm hook site calls LyraOverlay_UseTablePath.
 ; =========================================================
 
 ; ---------------------------------------------------------

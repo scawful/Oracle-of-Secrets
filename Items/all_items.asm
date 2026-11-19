@@ -326,9 +326,7 @@ incsrc "Overworld/abyss_spawn_menu.asm"
 
 ; Lyra overlay fix: bank $34 is full. JSL entries only, exits by RTL/JML,
 ; operands are direct page, long or immediate, so it runs from here.
-if !ENABLE_LYRA_OVERLAY_FIX == 1
 incsrc "Overworld/lyra_overlay_fix.asm"
-endif
 
 ; Ranch milk sale: bank $30 is full. Entered by JSL, exits by RTL, operands
 ; are long, immediate or low WRAM ($1CE8, mirrored), so it runs from here.

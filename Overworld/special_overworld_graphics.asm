@@ -320,7 +320,7 @@ SpecialOverworldAnimationDecompress:
 SpecialAnimationDestinations:
   dw $A680,$AA80,$AE80
 if defined("LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY")
-if !ENABLE_SKY_OVERWORLD_ROUTE == 1 && !ENABLE_LYRA_OVERLAY_FIX == 1
+if !ENABLE_SKY_OVERWORLD_ROUTE == 1
 if !LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY != 0
 incsrc "sky_overlay_transition.asm"
 endif

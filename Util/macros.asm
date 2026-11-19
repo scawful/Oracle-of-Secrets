@@ -51,7 +51,6 @@ endif
 ; Default 0 while live $027 has 222 tiles and yaze (water_fill_zone.cc) serializes db counts;
 ; enable (=1) alongside the yaze dw writer when a >255-tile $027 basin lands.
 !ENABLE_WATER_FILL_16BIT_COUNT       = 0
-!ENABLE_MINECART_PLANNED_TRACK_TABLE = 1
 !ENABLE_MINECART_CART_SHUTTERS       = 0
 ; Qualified Room97 Bombchu target; tag39/AF binding remains required.
 !ENABLE_D6_CHU_GATE_97              = 1
@@ -86,14 +85,6 @@ endif
 ; EQUIPMENT_MENU.
 ; WRAM: MenuMapTravel_Pending $7E1EFF (Core/symbols.asm).
 !ENABLE_MENU_MAP_TRAVEL             = 1
-; Lyra/Sky overlay fix: Overworld_ReloadSubscreenOverlay (ZSCustomOverworld,
-; $02AF58) skipped the subscreen-overlay table for every area >= $80, so a
-; reload on a tail map ($A0-$BF) or during Song of Storms rain on a Sky map
-; lost its overlay; and the map16 event overlay jump ($02EF50) indexes a
-; 160-entry vector table that tail maps ($A0-$BF) overrun. The reload now
-; takes the table path for tail maps and for rain, and the event overlay
-; is a no-op for $8A >= $A0 (Overworld/lyra_overlay_fix.asm).
-!ENABLE_LYRA_OVERLAY_FIX            = 1
 ; Garrison/Sky fly list; source preview until T3 native and save proof.
 !ENABLE_SPECIAL_OVERWORLD_SOARING   = 0
 ; D8 Sky boss (sprite $C3, Sprites/Bosses/d8_boss.asm):

@@ -20,30 +20,17 @@
   ;   - Tracks 6,7: 0xB8 has track tiles but ZERO stop tiles (needs editor fix)
   ;   - Tracks 9,14: Rooms 0x78/0x79 have no custom collision data at all
   ;
-  ; Guardrail: toggle `!ENABLE_MINECART_PLANNED_TRACK_TABLE` to quickly
-  ; enable/disable planned (non-placed) tracks without backing out commits.
+  ; Planned tracks 4-31 are part of the shipped 32-word table.
   ;
   .TrackStartingRooms
   dw $0098, $0097, $0087, $0088  ; Tracks 0-3  (ACTIVE)
-  if !ENABLE_MINECART_PLANNED_TRACK_TABLE == 1
-    dw $0077, $00A8, $00B8, $00B8  ; Tracks 4-7  (planned: NW Hall, B1 NW, B1 SW x2)
-    dw $00B9, $0078, $0089, $00DA  ; Tracks 8-11 (planned: B1 SE, Miniboss, E Hall, B2 E)
-    dw $00D9, $00D8, $0079, $0097  ; Tracks 12-15(planned: B2 Mid, B2 West, NE Hall, SW Hall)
-    dw $00D8, $0000, $0000, $0000  ; Track 16 (Pre-Boss), 17-19 reserved
-    dw $0000, $0000, $0000, $0000  ; Tracks 20-23 reserved
-    dw $0000, $0000, $0000, $0000  ; Tracks 24-27 reserved
-    dw $0000, $0000, $0000, $0000  ; Tracks 28-31 reserved
-  else
-    ; Disable all non-core tracks (4-31). When room==0, Sprite_Minecart_Prep
-    ; will self-disable these carts via the room/coord sanity checks.
-    dw $0000, $0000, $0000, $0000  ; Tracks 4-7  disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 8-11 disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 12-15 disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 16-19 disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 20-23 disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 24-27 disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 28-31 disabled
-  endif
+  dw $0077, $00A8, $00B8, $00B8  ; Tracks 4-7  (planned: NW Hall, B1 NW, B1 SW x2)
+  dw $00B9, $0078, $0089, $00DA  ; Tracks 8-11 (planned: B1 SE, Miniboss, E Hall, B2 E)
+  dw $00D9, $00D8, $0079, $0097  ; Tracks 12-15(planned: B2 Mid, B2 West, NE Hall, SW Hall)
+  dw $00D8, $0000, $0000, $0000  ; Track 16 (Pre-Boss), 17-19 reserved
+  dw $0000, $0000, $0000, $0000  ; Tracks 20-23 reserved
+  dw $0000, $0000, $0000, $0000  ; Tracks 24-27 reserved
+  dw $0000, $0000, $0000, $0000  ; Tracks 28-31 reserved
 
   ; Starting X/Y coordinates for each track's initial spawn position.
   ;
@@ -81,46 +68,26 @@
 
   .TrackStartingX
   dw $1190, $0E40, $0F70, $1160  ; Tracks 0-3  (T1/T2 preserve placed carts)
-  if !ENABLE_MINECART_PLANNED_TRACK_TABLE == 1
-    dw $0E80, $1070, $1070, $1070  ; Tracks 4-7  (0x77 t16, 0xA8 t14, 0xB8 t14 x2)
-    dw $1310, $0F80, $1270, $15A0  ; Tracks 8-11 (0xB9 t34, 0x78 TBD, 0x89 t14, 0xDA t52)
-    dw $1258, $11C0, $1200, $0E40  ; Tracks 12-15(0xD9 t11, D8 SE t56, 0x79 TBD, 0x97 t8)
-    dw $1070, $0000, $0000, $0000  ; Track 16 (0xD8 t14), 17-19 reserved
-    dw $0000, $0000, $0000, $0000  ; Tracks 20-23 reserved
-    dw $0000, $0000, $0000, $0000  ; Tracks 24-27 reserved
-    dw $0000, $0000, $0000, $0000  ; Tracks 28-31 reserved
-  else
-    dw $0000, $0000, $0000, $0000  ; Tracks 4-7  disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 8-11 disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 12-15 disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 16-19 disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 20-23 disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 24-27 disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 28-31 disabled
-  endif
+  dw $0E80, $1070, $1070, $1070  ; Tracks 4-7  (0x77 t16, 0xA8 t14, 0xB8 t14 x2)
+  dw $1310, $0F80, $1270, $15A0  ; Tracks 8-11 (0xB9 t34, 0x78 TBD, 0x89 t14, 0xDA t52)
+  dw $1258, $11C0, $1200, $0E40  ; Tracks 12-15(0xD9 t11, D8 SE t56, 0x79 TBD, 0x97 t8)
+  dw $1070, $0000, $0000, $0000  ; Track 16 (0xD8 t14), 17-19 reserved
+  dw $0000, $0000, $0000, $0000  ; Tracks 20-23 reserved
+  dw $0000, $0000, $0000, $0000  ; Tracks 24-27 reserved
+  dw $0000, $0000, $0000, $0000  ; Tracks 28-31 reserved
 
   .TrackStartingXEnd
   assert .TrackStartingXEnd-.TrackStartingX == $20*2, "Minecart X table must contain 32 words"
 
   .TrackStartingY
   dw $1380, $1360, $1180, $10D0  ; Tracks 0-3  (T1/T2 preserve placed carts)
-  if !ENABLE_MINECART_PLANNED_TRACK_TABLE == 1
-    dw $0EA8, $1560, $1610, $1700  ; Tracks 4-7  (0x77 t21, 0xA8 t44, 0xB8 t2, 0xB8 t32)
-    dw $1660, $0F00, $1110, $1A50  ; Tracks 8-11 (0xB9 t12, 0x78 TBD, 0x89 t34, 0xDA t10)
-    dw $1A80, $1BB0, $0F80, $1360  ; Tracks 12-15(0xD9 t16, D8 SE t54, 0x79 TBD, 0x97 t44)
-    dw $1A70, $0000, $0000, $0000  ; Track 16 (0xD8 t14), 17-19 reserved
-    dw $0000, $0000, $0000, $0000  ; Tracks 20-23 reserved
-    dw $0000, $0000, $0000, $0000  ; Tracks 24-27 reserved
-    dw $0000, $0000, $0000, $0000  ; Tracks 28-31 reserved
-  else
-    dw $0000, $0000, $0000, $0000  ; Tracks 4-7  disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 8-11 disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 12-15 disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 16-19 disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 20-23 disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 24-27 disabled
-    dw $0000, $0000, $0000, $0000  ; Tracks 28-31 disabled
-  endif
+  dw $0EA8, $1560, $1610, $1700  ; Tracks 4-7  (0x77 t21, 0xA8 t44, 0xB8 t2, 0xB8 t32)
+  dw $1660, $0F00, $1110, $1A50  ; Tracks 8-11 (0xB9 t12, 0x78 TBD, 0x89 t34, 0xDA t10)
+  dw $1A80, $1BB0, $0F80, $1360  ; Tracks 12-15(0xD9 t16, D8 SE t54, 0x79 TBD, 0x97 t44)
+  dw $1A70, $0000, $0000, $0000  ; Track 16 (0xD8 t14), 17-19 reserved
+  dw $0000, $0000, $0000, $0000  ; Tracks 20-23 reserved
+  dw $0000, $0000, $0000, $0000  ; Tracks 24-27 reserved
+  dw $0000, $0000, $0000, $0000  ; Tracks 28-31 reserved
 
   .TrackStartingYEnd
   assert .TrackStartingYEnd-.TrackStartingY == $20*2, "Minecart Y table must contain 32 words"

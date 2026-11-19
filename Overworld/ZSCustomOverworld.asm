@@ -2296,16 +2296,12 @@ Overworld_ReloadSubscreenOverlay_Interupt:
         REP #$20 ; Set A in 16bit mode.
 
         ; Check to see if we are in a SW overworld area.
-if !ENABLE_LYRA_OVERLAY_FIX == 1
         ; Lyra/Sky overlay fix (Overworld/lyra_overlay_fix.asm): tail maps
         ; ($A0-$BF) and Song of Storms rain on a Sky map take the overlay
-        ; table path below. Same 7 bytes as LDA/CMP/BCC; A is reloaded by
-        ; both paths, M stays 16, X/Y are untouched.
+        ; table path below. A is reloaded by the callee, M stays 16, and
+        ; X/Y are untouched. The JSL/BCC/NOP slot is 7 bytes.
         JSL Oracle_LyraOverlay_UseTablePath : BCC .notExtendedArea
         NOP
-else
-        LDA.b $8A : CMP.w #$0080 : BCC .notExtendedArea
-endif
             ; $0182 is the exit room number used for getting to Zora's Domain.
             LDA.b $A0 : CMP.w #$0182 : BNE .notZoraFalls   
                 SEP #$20 ; Set A in 8bit mode.
@@ -3127,7 +3123,7 @@ NewOverworld_FinishTransGfx:
     ; we are in the whirlpool module.
     LDA.b $11 : CMP.b #$2E : BEQ .whirpool
 if defined("LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY")
-if !ENABLE_SKY_OVERWORLD_ROUTE == 1 && !ENABLE_LYRA_OVERLAY_FIX == 1
+if !ENABLE_SKY_OVERWORLD_ROUTE == 1
         JSL Oracle_LyraOverlay_HideStale
 endif
 endif
@@ -4013,7 +4009,7 @@ Overworld_LoadBGColorAndSubscreenOverlay:
     LDA.w #$8040 : STA.b $9D
 
 if defined("LYRA_CURRENT_RESIDENT_OVERLAY_DIRECTORY")
-if !ENABLE_SKY_OVERWORLD_ROUTE == 1 && !ENABLE_LYRA_OVERLAY_FIX == 1
+if !ENABLE_SKY_OVERWORLD_ROUTE == 1
     JSL.l Oracle_LyraOverlay_ShouldHideSubscreen : BCC .keepSubscreen
 else
     JSL.l Docks_ShouldHideSubscreen : BCC .keepSubscreen
