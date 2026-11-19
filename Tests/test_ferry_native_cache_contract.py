@@ -49,8 +49,8 @@ class FerryNativeCacheContract(unittest.TestCase):
 
     def test_existing_special_soaring_cache_wire_equivalence(self):
         words = words_after(ROOT / "Items/special_soaring.asm", "SpecialSoaring_Caches")
-        self.assertEqual(len(words), 50)
-        for start in (0, 25):
+        self.assertEqual(len(words), 150)
+        for start in range(0, 150, 25):
             with self.subTest(area=words[start]):
                 self.assertEqual(emit_fixture(words[start:start + 25]), struct.pack("<25H", *words[start:start + 25]))
 
