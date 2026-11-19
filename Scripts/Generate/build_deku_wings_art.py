@@ -1,18 +1,29 @@
 #!/usr/bin/env python3
-"""Generate custom 4BPP Majora's Mask-style spinning Deku Flower hover wings.
+"""Generate custom 4BPP Majora's Mask-style hand-held Deku Flower hover wings.
 
 Output:
-  Data/graphics/items/deku_flower_wings.4bpp (512 bytes = $0200 = 4 x 16x16 frames)
+  Data/graphics/items/deku_flower_wings.4bpp (768 bytes = $0300 = 6 x 16x16 frames)
 
 Each 128-byte frame is stored in SNES 16x16 OBJ row-major DMA order:
   +$00..$3F (64 B): Top row    (TL tile 32B + TR tile 32B) -> VRAM $4070
   +$40..$7F (64 B): Bottom row (BL tile 32B + BR tile 32B) -> VRAM $4170
 
+Geometry & Fist-Grip Invariant (Left wing normal, Right wing H-flipped via ORA #$40):
+  Each Left-wing frame curves its green Deku stem diagonally down-right into the
+  bottom-inner corner (cols 12..15, rows 11..15) so the gripped stem connects
+  directly into Deku Link's hands across all 4 facings with zero detached gap,
+  while keeping inner cols 12..15 clear on rows 0..8 so the blossoms never
+  obscure Deku Link's face, eyes, or snout.
+
 Frame map (streamed during NMI by DekuWings_NmiUpload in Bank $35):
-  0 (+$000): Full wide-open blossom propeller fan (broad horizontal span)
-  1 (+$080): Tilted 45 deg CW diagonal spin sweep
-  2 (+$100): Edge-on narrow foreshortened spin flash with motion glint
-  3 (+$180): Tilted 45 deg CCW diagonal spin sweep
+  Phase 1 — Steady Levitating Glide (FallTimer >= #$50):
+    0 (+$000): Full lush wide-open 3-petal helicopter blossom
+    1 (+$080): Tilted 45 deg CW diagonal spin sweep
+    2 (+$100): Edge-on foreshortened fast spin flash with motion wisps
+    3 (+$180): Tilted 45 deg CCW diagonal spin sweep
+  Phase 2 — End-of-Hover Frantic Flapping (FallTimer < #$50):
+    4 (+$200): Flap-Up high upstroke (blossom pitched sharply upward; paired with -2px OAM lift)
+    5 (+$280): Flap-Down low downstroke (blossom swept downward/outward + wind streaks; paired with +2px Y, +-1px X)
 
 Palette invariant:
   Uses ONLY Deku Link's SP-7 palette indices (Masks/deku_mask.asm `deku_palette`,
@@ -36,7 +47,7 @@ OUT_4BPP = ROOT / "Data/graphics/items/deku_flower_wings.4bpp"
 WINGS_LEGEND = {
     ".": 0,   # transparent
     "f": 1,   # $15C5 #297329 deep forest green (stem / calyx shade)
-    "b": 2,   # $150E #734129 warm bark brown (stem grip base)
+    "b": 2,   # $150E #734129 warm bark brown (gripped stem butt)
     "g": 3,   # $26C9 #4AB44A emerald green (calyx & stem body)
     "l": 4,   # $17AA #52EE29 bright lime leaf highlight
     "o": 5,   # $21F4 #A47B41 warm golden-ochre (petal under-shade)
@@ -68,95 +79,135 @@ DEKU_SP7_RGB = {
     14: (98, 230, 41, 255),
 }
 
-# Frame 0: Full Wide Open — Broad twin helicopter petals spread wide with pink/magenta
-# scalloped tips, golden-yellow radiant heart, crisp white glint, emerald calyx & stem.
+# Frame 0: Phase 1 Levitate — Full Lush Wide-Open 3-Petal Majora's Mask Flower Blossom
 WING_0_WIDE = [
     "................",
-    "................",
-    "..kkk......kkk..",
-    ".kmmmk.kk.kmmmk.",
-    "kmwwrmkyykrmwwmk",
-    "kmrryyyyyyyyrrmk",
-    "kdrryywwwwyyrrmk",
-    ".kdryycyycyyrdk.",
-    "..kkooyyyoookk..",
-    "....kklgglkk....",
-    ".....kfggfk.....",
-    "......kfgk......",
-    "......kfgk......",
-    "......kbgk......",
-    ".......kk.......",
-    "................",
+    "...kkk..kkk.....",
+    ".kkmmwkkwmmkk...",
+    "kmwwrryyyrwwmk..",
+    "kmrryywwyyrrmk..",
+    "kdrryyyyyyyrdk..",
+    ".kdryyccyyyrdk..",
+    "..kkooyyyoook...",
+    "....kklggglk....",
+    "......kfggglk...",
+    ".......kfgglk...",
+    "........kfgflk..",
+    ".........kfgfk..",
+    "..........kfgbk.",
+    "...........kbgk.",
+    "............kkk.",
 ]
 
-# Frame 1: Tilted 45 deg CW — Right blade lifts high with vivid orchid-pink/white flash,
-# left blade sweeps lower in warm rose/gold underside shadow; stem locked at cols 7-8.
+# Frame 1: Phase 1 Levitate — Tilted 45 deg CW Lush Spinning Blossom
 WING_1_CW = [
-    "................",
-    "..........kkk...",
-    ".........kmwmk..",
-    "........kmwrmmk.",
-    "......kkryyyrmk.",
-    "....kkyywwyyrdk.",
-    "..kkryyyyyoook..",
-    ".kmmryyyoook....",
-    "kmmrryooklggk...",
-    "kdrryokkfggfk...",
-    ".kddok.kfgk.....",
-    "..kkk.kfgk......",
-    "......kfgk......",
-    "......kbgk......",
-    ".......kk.......",
-    "................",
+    "......kkkk......",
+    ".....kmwwmk.....",
+    "....kmwwrmmk....",
+    "....kmryyrmk....",
+    "..kkryywwyrk....",
+    ".kmmryyyyyok....",
+    "kmwryycyook.....",
+    "kmrryooklggk....",
+    "kddookkfgglk....",
+    ".kkk...kfgglk...",
+    "........kfgflk..",
+    ".........kfgfk..",
+    "..........kfgfk.",
+    "..........kfgbk.",
+    "...........kbgk.",
+    "............kkk.",
 ]
 
-# Frame 2: Edge-On Narrow Spin — High-speed foreshortened vertical blade flashing bright
-# white/orchid/gold down the center with sleek horizontal propeller-blur wisps; stem at cols 7-8.
+# Frame 2: Phase 1 Levitate — Edge-On Fast Propeller Flash + Horizontal Spin Wisps
 WING_2_EDGE = [
+    "....kkkk........",
+    "...kmmwmk.......",
+    "..kmwwrmmk......",
+    "wm.kmwyyrmk.mw..",
+    "..kmrywwyrk.....",
+    "mw.kdyyyydk.wm..",
+    "...kdoyyodk.....",
+    "....kkoook......",
+    ".....klgglk.....",
+    "......kfgglk....",
+    ".......kfgglk...",
+    "........kfgflk..",
+    ".........kfgfk..",
+    "..........kfgbk.",
+    "...........kbgk.",
+    "............kkk.",
+]
+
+# Frame 3: Phase 1 Levitate — Tilted 45 deg CCW Lush Spinning Blossom
+WING_3_CCW = [
+    ".kkkk...........",
+    "kmwwmk..........",
+    "kmmrwmk.........",
+    "kmryyykkk.......",
+    "kmryywwyykk.....",
+    ".kdryyyyyrmk....",
+    "..kooyyyyrmmk...",
+    "....kggloyrdk...",
+    ".....kfggkook...",
+    "......kfgglk....",
+    ".......kfgglk...",
+    "........kfgflk..",
+    ".........kfgfk..",
+    "..........kfgbk.",
+    "...........kbgk.",
+    "............kkk.",
+]
+
+# Frame 4: Phase 2 End-of-Hover FLAP-UP (High Upstroke — scalloped blossom pitched sharply UP)
+# Paired with -2px OAM Y lift; stem extends cleanly to cols 13..15, row 15 to keep grip in hand.
+WING_4_FLAP_UP = [
+    "..kkk..kkk......",
+    ".kmwwkkwmmk.....",
+    "kmwwrryyrwmk....",
+    "kmrryywwyrmk....",
+    ".kmrryyyyrdk....",
+    "..kdryyyyydk....",
+    "...kdryyyodk....",
+    "....kkooyook....",
+    "......kklgglk...",
+    "........kfgglk..",
+    ".........kfgfk..",
+    "..........kfgfk.",
+    "..........kfgfk.",
+    "...........kfgbk",
+    "...........kfgbk",
+    "............kbgk",
+]
+
+# Frame 5: Phase 2 End-of-Hover FLAP-DOWN (Low Downstroke — drooping blossom + air-rush streaks)
+# Paired with +2px OAM Y & +-1px X spread; flexed stem anchors at cols 12..15, rows 10..13.
+WING_5_FLAP_DOWN = [
+    "................",
+    "...w.....m......",
+    ".m...w..........",
     "................",
     "......kkkk......",
-    ".....kmmwmk.....",
-    "....kmwwrmmk....",
-    ".wm.kmwyyrmk.mw.",
-    "....krywwyrk....",
-    ".mw.kdyyyydk.wm.",
-    "....kdoyyodk....",
-    ".....kkoook.....",
-    ".....klgglk.....",
-    ".....kfggfk.....",
-    "......kfgk......",
-    "......kfgk......",
-    "......kbgk......",
-    ".......kk.......",
+    "....kkggggkk....",
+    "..kkoolllgggk...",
+    ".koorryyygglgk..",
+    "kmrryywwyykgggk.",
+    "kmwwrryyyyk.kfgk",
+    "kmwwrmkyyk..kfgk",
+    "kmmrmk.kk...kbgk",
+    ".kddk.......kbgk",
+    "..kk.........kkk",
     "................",
-]
-
-# Frame 3: Tilted 45 deg CCW — Left blade lifts high catching orchid-pink/white highlight,
-# right blade dips lower in warm rose/ochre shadow; stem locked at cols 7-8.
-WING_3_CCW = [
-    "................",
-    "...kkk..........",
-    "..kmwmk.........",
-    ".kmmrwmk........",
-    ".kmryyyrkk......",
-    ".kdrywwyykk.....",
-    "..koooyyyyykk...",
-    "....kooyyyrmmk..",
-    "...kgglkooyrrmmk",
-    "...kfggfkoyyrrdk",
-    ".....kgfk.koodk.",
-    "......kgfk.kkk..",
-    "......kfgk......",
-    "......kbgk......",
-    ".......kk.......",
     "................",
 ]
 
 FRAMES: list[tuple[str, list[str]]] = [
-    ("frame0_wide", WING_0_WIDE),
-    ("frame1_cw",   WING_1_CW),
-    ("frame2_edge", WING_2_EDGE),
-    ("frame3_ccw",  WING_3_CCW),
+    ("frame0_wide",      WING_0_WIDE),
+    ("frame1_cw",        WING_1_CW),
+    ("frame2_edge",      WING_2_EDGE),
+    ("frame3_ccw",       WING_3_CCW),
+    ("frame4_flap_up",   WING_4_FLAP_UP),
+    ("frame5_flap_down", WING_5_FLAP_DOWN),
 ]
 
 
@@ -216,11 +267,11 @@ def build_4bpp() -> bytes:
     for name, rows in FRAMES:
         grid = parse_grid(name, rows)
         out += encode_block_16x16(grid)
-    assert len(out) == 4 * 128 == 0x200, f"Unexpected 4BPP size {len(out)}"
+    assert len(out) == 6 * 128 == 0x300, f"Unexpected 4BPP size {len(out)}"
     return bytes(out)
 
 
-def render_preview(out_png: Path, scale: int = 8) -> None:
+def render_preview(out_png: Path, scale: int = 6) -> None:
     from PIL import Image, ImageDraw
 
     grids = [(name, parse_grid(name, rows)) for name, rows in FRAMES]
@@ -236,29 +287,27 @@ def render_preview(out_png: Path, scale: int = 8) -> None:
         canvas.alpha_composite(spr, (x0, y0))
 
     cell = 16 * scale
-    pad = 18
-    w = pad + 4 * (cell + pad)
-    h = 28 + cell + 30 + cell + 46
+    pad = 16
+    w = pad + len(grids) * (cell + pad)
+    h = 30 + cell + 34 + cell + 34
     img = Image.new("RGBA", (w, h), (30, 36, 44, 255))
     draw = ImageDraw.Draw(img)
-    draw.text((pad, 6), "Deku Flower Hover Wings - 4BPP SP-7 Preview (8x)", fill=(245, 245, 245, 255))
+    draw.text((pad, 6), "Deku Flower Hover Wings - 6-Frame 4BPP SP-7 Preview (F0..F3 Levitate Spin, F4..F5 Flap)", fill=(245, 245, 245, 255))
 
-    # Row 1: Individual 4 spin frames on grass background
     ry1 = 30
     for i, (name, grid) in enumerate(grids):
         cx = pad + i * (cell + pad)
-        draw.rectangle((cx, ry1, cx + cell - 1, ry1 + cell - 1), fill=(68, 122, 58, 255), outline=(105, 118, 130, 255))
+        bg = (68, 122, 58, 255) if i < 4 else (92, 86, 54, 255)
+        draw.rectangle((cx, ry1, cx + cell - 1, ry1 + cell - 1), fill=bg, outline=(105, 118, 130, 255))
         blit(img, grid, cx, ry1, hflip=False)
-        draw.text((cx + 4, ry1 + cell + 4), f"F{i}: {name}", fill=(235, 235, 235, 255))
+        draw.text((cx + 2, ry1 + cell + 4), f"F{i}: {name}", fill=(235, 235, 235, 255))
 
-    # Row 2: Counter-rotating paired left+right wings on swamp/night background
     ry2 = ry1 + cell + 34
+    pair_sc = max(2, scale // 2)
     for i, (name, grid) in enumerate(grids):
         cx = pad + i * (cell + pad)
         draw.rectangle((cx, ry2, cx + cell - 1, ry2 + cell - 1), fill=(42, 52, 68, 255), outline=(105, 118, 130, 255))
-        # Draw mini 4x twin pair side by side
-        pair_sc = scale // 2
-        for side, hf, ox in [(0, False, cx + 8), (1, True, cx + cell - 16 * pair_sc - 8)]:
+        for hf, ox in ((False, cx + 2), (True, cx + cell - 16 * pair_sc - 2)):
             spr = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
             px = spr.load()
             for y in range(16):
@@ -266,8 +315,8 @@ def render_preview(out_png: Path, scale: int = 8) -> None:
                     sx = 15 - x if hf else x
                     px[x, y] = DEKU_SP7_RGB[grid[y][sx]]
             spr = spr.resize((16 * pair_sc, 16 * pair_sc), Image.Resampling.NEAREST)
-            img.alpha_composite(spr, (ox, ry2 + 24))
-        draw.text((cx + 4, ry2 + cell + 4), f"Paired F{i} (L+R)", fill=(215, 228, 240, 255))
+            img.alpha_composite(spr, (ox, ry2 + (cell - 16 * pair_sc) // 2))
+        draw.text((cx + 2, ry2 + cell + 4), f"Paired F{i} (L+R)", fill=(215, 228, 240, 255))
 
     out_png.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_png)
@@ -279,7 +328,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", type=Path, default=OUT_4BPP, help="Output 4BPP path")
     ap.add_argument("--check", action="store_true", help="Verify output matches freshly built bytes")
     ap.add_argument("--preview", type=Path, help="Write zoomed RGBA preview sheet PNG")
-    ap.add_argument("--scale", type=int, default=8, help="Preview integer pixel scale (default 8)")
+    ap.add_argument("--scale", type=int, default=6, help="Preview integer pixel scale (default 6)")
     args = ap.parse_args(argv)
 
     data = build_4bpp()
@@ -299,7 +348,7 @@ def main(argv: list[str] | None = None) -> int:
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_bytes(data)
-    print(f"Wrote {args.out} ({len(data)} bytes = ${len(data):04X}, 4 x 16x16 frames)")
+    print(f"Wrote {args.out} ({len(data)} bytes = ${len(data):04X}, 6 x 16x16 frames)")
     return 0
 
 

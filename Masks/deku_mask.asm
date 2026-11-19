@@ -31,18 +31,23 @@ deku_palette:
   dw $14A5, $14BC, $14B2, $14A5, $7FFF, $7A18, $178C
 
 ; =========================================================
-; Majora's Mask Spinning Deku Flower Hover Wings (Bank $35)
+; Majora's Mask Hand-Held Deku Flower Hover Wings (Bank $35)
 ; Active only while Deku Link (!CurrentMask == #$01) hovers
 ; ($5D == #$0A, DekuFloating != 0).
-; Streams active 16x16 spin frame (128 B) into Shield VRAM slot
+; Streams active 16x16 frame (128 B) into Shield VRAM slot
 ; $4070/$4170 (OAM tile $07) — Deku Link hides Shield and Gust Jar
 ; cannot run during hover, so zero VRAM conflict.
+;
+; 2-Phase Hover Animation (driven by FallTimer $5C & $1A):
+;   Phase 1 (FallTimer >= #$50): Steady levitating glide (frames 0..3 spin)
+;   Phase 2a ($20..$4F):         End-of-hover flapping (frames 4<->5 every 4f)
+;   Phase 2b (< #$20):           Frantic panic flapping (frames 4<->5 every 2f)
 ; =========================================================
 
 DekuFlowerWingsGfx:
   incbin "Data/graphics/items/deku_flower_wings.4bpp"
 DekuFlowerWingsGfxEnd:
-assert DekuFlowerWingsGfxEnd-DekuFlowerWingsGfx == $0200, "Deku flower wings GFX must be 4 x 16x16 frames (512B)"
+assert DekuFlowerWingsGfxEnd-DekuFlowerWingsGfx == $0300, "Deku flower wings GFX must be 6 x 16x16 frames (768B)"
 assert (DekuFlowerWingsGfx>>16) == ((DekuFlowerWingsGfxEnd-1)>>16), "Deku flower wings DMA source crosses bank"
 
 ; Chained at the tail of Horse_NmiUpload ($008B5C).
@@ -72,8 +77,20 @@ DekuWings_NmiUpload:
   PHX : PHY
 
   LDA.b #DekuFlowerWingsGfx>>16 : STA.w $4304
-  ; Select spin frame 0..3 every 2 frames: (($1A >> 1) & 3) * 128
+  ; 2-phase frame selection (strictly mirrored in DekuWings_DrawHoverOam):
+  ;   FallTimer >= $50 -> frames 0..3: ($1A >> 1) & 3
+  ;   FallTimer $20..$4F -> frames 4..5: 4 + (($1A >> 2) & 1)
+  ;   FallTimer <  $20 -> frames 4..5: 4 + (($1A >> 1) & 1)
+  LDA.b FallTimer : CMP.b #$50 : BCS .spin_phase
+    CMP.b #$20 : BCC .flap_fast
+      LDA.b $1A : LSR #2 : BRA .flap_done
+    .flap_fast
+    LDA.b $1A : LSR A
+    .flap_done
+    AND.b #$01 : ORA.b #$04 : BRA .have_frame
+  .spin_phase
   LDA.b $1A : LSR A : AND.b #$03
+  .have_frame
   REP #$20
   AND.w #$00FF : ASL #7
   CLC : ADC.w #DekuFlowerWingsGfx : TAY
@@ -105,8 +122,8 @@ DekuWings_NmiUpload:
 }
 
 ; Post-Ancilla OAM renderer called from DekuLink_SpinOrRecoil (PlayerOam_Main).
-; Draws twin counter-rotating 16x16 spinning Deku Flower Wings in Region C
-; above Deku Link's outstretched hands using SP-7 (Deku palette, tile $07).
+; Draws twin hand-held 16x16 Deku Flower Wings in Region C anchored directly
+; into Deku Link's hands across all 4 facings using SP-7 (Deku palette, tile $07).
 ; Entry/Exit: M=8, X=8; preserves DBR, X, Y, and zero-page $00..$0F.
 DekuWings_DrawHoverOam:
 {
@@ -138,41 +155,89 @@ DekuWings_DrawHoverOam:
   .have_z
   STA.b $06 : STZ.b $07
 
-  ; Gentle 2px vertical hover bob ($08/$09 signed 16-bit)
+  ; Facing direction index ($0D = (LinkFaceDir >> 1) & 3: 0=Up, 1=Down, 2=Left, 3=Right)
+  LDA.b LinkFaceDir : LSR A : AND.b #$03 : STA.b $0D
+
+  ; 2-phase motion (synchronized with DekuWings_NmiUpload):
+  ;   Phase 1 (FallTimer >= $50): serene 1px levitation bob, spread=0
+  ;   Phase 2 (FallTimer <  $50): Flap-Up (-2px Y, spread=0) <-> Flap-Down (+2px Y, spread=1)
+  LDA.b FallTimer : CMP.b #$50 : BCS .phase_levitate
+    CMP.b #$20 : BCC .flap_fast
+      LDA.b $1A : LSR #2 : BRA .flap_parity
+    .flap_fast
+    LDA.b $1A : LSR A
+    .flap_parity
+    AND.b #$01 : BNE .flap_down
+      STZ.b $0E
+      LDA.b #$FE ; -2 px on Flap-Up (Frame 4)
+      BRA .have_bob
+    .flap_down
+    LDA.b #$01 : STA.b $0E ; +-1 px outward thrust on Flap-Down (Frame 5)
+    LDA.b #$02             ; +2 px on Flap-Down (Frame 5)
+    BRA .have_bob
+
+  .phase_levitate
+  STZ.b $0E
   LDA.b $1A : LSR #3 : AND.b #$03 : TAX
-  LDA.w .bob_y, X : STA.b $08
-  BPL + : LDA.b #$FF : BRA ++ : + : LDA.b #$00 : ++
+  LDA.w .bob_y, X
+
+  .have_bob
+  ; Total signed vertical offset ($08/$09) = dir_dy[dir] + bob_y (range -2..+4)
+  LDX.b $0D
+  CLC : ADC.w .dir_dy, X : STA.b $08
+  BPL .dy_pos
+    LDA.b #$FF : BRA .dy_hi
+  .dy_pos
+  LDA.b #$00
+  .dy_hi
   STA.b $09
 
-  ; Screen base: $00 = LinkSX16, $02 = WingSY16 = (LinkY - CamY) - AirZ - 6 + bob
+  ; Screen base: $00 = LinkSX16, $02 = WingSY16 = (LinkY - CamY) - AirZ + dy_total
   REP #$20
   LDA.b $22 : SEC : SBC.b $E2 : STA.b $00
   LDA.b $20 : SEC : SBC.b $E8
   SEC : SBC.b $06
-  SEC : SBC.w #$0006
   CLC : ADC.b $08
   STA.b $02
+  SEP #$20
+
+  ; Precompute Left Wing X16 ($06/$07) and Right Wing X16 ($08/$09) BEFORE
+  ; calling OAM_AllocateFromRegionC, because vanilla $0DBB0A clobbers $0C..$0F.
+  LDX.b $0D
+  LDA.w .dir_dx_l, X : SEC : SBC.b $0E : STA.b $06
+  BPL .xl_pos
+    LDA.b #$FF : BRA .xl_hi
+  .xl_pos
+  LDA.b #$00
+  .xl_hi
+  STA.b $07
+  LDA.w .dir_dx_r, X : CLC : ADC.b $0E : STA.b $08
+  STZ.b $09
+
+  REP #$20
+  LDA.b $00 : CLC : ADC.b $06 : STA.b $06
+  LDA.b $00 : CLC : ADC.b $08 : STA.b $08
   SEP #$20
 
   ; BG priority from $EE + Deku SP-7 ($0E), NT=0
   LDA.b $EE : AND.b #$03 : TAX
   LDA.w .prio_tbl, X : ORA.b #$0E : STA.b $04
 
-  ; Allocate 2 OAM slots (8 B) from Region C (above Link, post-Ancilla safe).
-  ; OAM_AllocateFromRegionC leaves Y non-zero; always reload Y after JSL.
+  ; Allocate 2 OAM slots (8 B) from Region C (above Link & ground sprites, post-Ancilla safe).
+  ; OAM_AllocateFromRegionC leaves Y non-zero and clobbers $0C..$0F; reload Y after JSL.
   LDA.b #$08 : JSL OAM_AllocateFromRegionC
 
-  ; Slot 0 (Left hand wing): X = LinkSX16 - 6, normal orientation
+  ; Slot 0 (Left hand wing): normal orientation
   REP #$20
-  LDA.b $00 : SEC : SBC.w #$0006 : STA.b $0A
+  LDA.b $06 : STA.b $0A
   SEP #$20
   LDY.b #$00 : LDX.b #$00
   LDA.b $04
   JSR .emit_wing
 
-  ; Slot 1 (Right hand wing): X = LinkSX16 + 6, H-flipped for counter-rotation
+  ; Slot 1 (Right hand wing): H-flipped for mirrored hand grip & counter-rotation
   REP #$20
-  LDA.b $00 : CLC : ADC.w #$0006 : STA.b $0A
+  LDA.b $08 : STA.b $0A
   SEP #$20
   LDY.b #$04 : LDX.b #$01
   LDA.b $04 : ORA.b #$40
@@ -226,7 +291,14 @@ DekuWings_DrawHoverOam:
   RTS
 
   .bob_y
-    db 0, -1, -2, -1
+    db 0, -1, -1, 0
+  ; Per-facing hand anchor offsets indexed by (LinkFaceDir >> 1) & 3: Up, Down, Left, Right
+  .dir_dx_l
+    db -12, -12, -10, -9
+  .dir_dx_r
+    db  12,  12,   9, 10
+  .dir_dy
+    db   0,   2,   2,  2
   .prio_tbl
     db $20, $10, $30, $20
 }
