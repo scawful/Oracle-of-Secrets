@@ -359,9 +359,9 @@
       "source_set": "shared",
       "path": "Overworld/richard_quest.asm"
     },
-    "shared:Overworld/lyra_edge_guard.asm": {
+    "shared:Overworld/special_overworld/edge_guard.asm": {
       "source_set": "shared",
-      "path": "Overworld/lyra_edge_guard.asm"
+      "path": "Overworld/special_overworld/edge_guard.asm"
     },
     "shared:Overworld/village_bar_exit.asm": {
       "source_set": "shared",

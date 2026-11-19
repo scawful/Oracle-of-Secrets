@@ -14,8 +14,9 @@
 ;                                Tail Woods ($80), walled North Reef ($92), or
 ;                                reserved Fortress slot ($9B).
 ;
-; LyraEdgeGuard replaces the JSL target at $02A9C4 (.transition). It runs the
-; vanilla Player_IsScreenTransitionPermitted ($07F439) first and returns its
+; SpecialOverworldEdgeGuard replaces the JSL target at $02A9C4 (.transition).
+; LyraEdgeGuard is a searchable alias and exports Oracle_LyraEdgeGuard.
+; The guard runs vanilla Player_IsScreenTransitionPermitted ($07F439) first and returns its
 ; refusal unchanged. On any Special Overworld map ($80-$BF), it looks up the
 ; physical cell's 4-direction permission mask in .Permissions (indexed via
 ; ($7E0700 & $7E) >> 1) and refuses disallowed transitions the same way vanilla
@@ -44,7 +45,11 @@
 ; Exit:   M=8, X=8. X, Y, D and the data bank untouched. A, N, Z clobbered.
 ;         C clear = transition permitted, C set = refused.
 ;         On a guard refusal: $27 = $28 = 0, $22 = $0FC2, $20 = $0FC4.
+; LyraEdgeGuard shares this entry. The brace binds sublabels to
+; SpecialOverworldEdgeGuard. Inside namespace Oracle both entry names
+; export, and ZSCustomOverworld.asm still enters through JSL.l Oracle_LyraEdgeGuard.
 LyraEdgeGuard:
+SpecialOverworldEdgeGuard:
 {
   JSL $07F439 : BCS .done                 ; Player_IsScreenTransitionPermitted
 
@@ -171,4 +176,4 @@ LyraEdgeGuard:
   db !EG_L|!EG_U                          ; $BF: Snow Island E <-> $B7, $BE (col 7 E / row 7 S blocked)
 }
 
-print  "End of lyra_edge_guard.asm        ", pc
+print  "End of special_overworld/edge_guard.asm ", pc

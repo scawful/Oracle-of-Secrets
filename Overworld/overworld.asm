@@ -205,7 +205,7 @@ Overworld_ResolvePitDestination:
 ; Returned from Bank $2B (Items/all_items.asm) once custom_gfx DMA blobs moved to $57/$59.
 incsrc "Overworld/richard_quest.asm"
 if !SPECIAL_OVERWORLD_NATIVE == 1
-incsrc "Overworld/lyra_edge_guard.asm"
+incsrc "Overworld/special_overworld/edge_guard.asm"
 endif
 incsrc "Overworld/village_bar_exit.asm"
 incsrc "Overworld/liftables_palette_fix.asm"

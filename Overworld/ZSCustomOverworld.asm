@@ -5259,10 +5259,12 @@ OverworldHandleTransitions:
 
     ; Just makes sure we're not using a medallion or input is disabled.
     if !SPECIAL_OVERWORLD_NATIVE == 1
-    ; Lyra edge guard (Overworld/lyra_edge_guard.asm): runs the vanilla check
-    ; first, then refuses the open outer edges of tail maps $A0-$BF. Same 4
-    ; bytes; M=8, X=8 in and out, X and Y kept, C set = no transition.
-    ; Covered by this block's org $02A9C4 entry in hooks.json.
+    ; Special Overworld edge guard (Overworld/special_overworld/edge_guard.asm):
+    ; runs the vanilla check first, then refuses disallowed edges on maps
+    ; $80-$BF. Same 4 bytes; M=8, X=8 in and out, X and Y kept, C set = no
+    ; transition. Primary label SpecialOverworldEdgeGuard; Oracle_LyraEdgeGuard
+    ; remains the alias this JSL enters. Covered by this block's org $02A9C4
+    ; entry in hooks.json.
     LyraCall_EdgeGuard = pc()
     JSL.l Oracle_LyraEdgeGuard : BCS .noTransition
     else

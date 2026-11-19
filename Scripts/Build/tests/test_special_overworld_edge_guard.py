@@ -1,4 +1,4 @@
-"""Compiled Asar + 65816 execution tests for Overworld/lyra_edge_guard.asm.
+"""Compiled Asar + 65816 execution tests for Overworld/special_overworld/edge_guard.asm.
 
 Covers all 64 Special Overworld maps ($80-$BF) across all 4 directions
 (256 transitions), overlay hard-blocks ($93-$97, $9C-$9F), outer world edges,
@@ -16,7 +16,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
-SOURCE = ROOT / "Overworld" / "lyra_edge_guard.asm"
+SOURCE = ROOT / "Overworld" / "special_overworld" / "edge_guard.asm"
 ASAR_BIN = os.environ.get("ASAR_BIN") or shutil.which("asar")
 
 DIR_RIGHT = 0x00
@@ -110,11 +110,13 @@ def snes_to_pc(addr: int) -> int:
     return ((addr >> 16) & 0x7F) * 0x8000 + (addr & 0x7FFF)
 
 
-def assemble_guard(directory: Path) -> tuple[bytes, dict[str, int]]:
+def assemble_guard(directory: Path, *, namespace: bool = False) -> tuple[bytes, dict[str, int]]:
     rom_path = directory / "probe.sfc"
     asm_path = directory / "probe.asm"
     sym_path = directory / "probe.sym"
     rom_path.write_bytes(bytes(0x400000))
+    prefix = "namespace Oracle\n{\n" if namespace else ""
+    suffix = "\n}\nnamespace off\n" if namespace else ""
     asm_path.write_text(
         "lorom\n"
         "!LYRA_CURRENT_FIRST = $00A0\n"
@@ -124,8 +126,10 @@ def assemble_guard(directory: Path) -> tuple[bytes, dict[str, int]]:
         "  CLC\n"
         "  RTL\n"
         "org $348000\n"
-        f'incsrc "{SOURCE}"\n'
-        "EdgeGuardEnd:\n",
+        + prefix
+        + f'incsrc "{SOURCE}"\n'
+        "EdgeGuardEnd:\n"
+        + suffix,
         encoding="utf-8",
     )
     proc = subprocess.run(
@@ -354,7 +358,7 @@ def _run_65816(
 
 
 @unittest.skipUnless(ASAR_BIN, "asar required")
-class LyraEdgeGuardTests(unittest.TestCase):
+class SpecialOverworldEdgeGuardTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.tmp = tempfile.TemporaryDirectory()
@@ -391,7 +395,7 @@ class LyraEdgeGuardTests(unittest.TestCase):
             wram[0x0700:0x0702] = cell2.to_bytes(2, "little")
         res = _run_65816(
             rom,
-            self.labels["LyraEdgeGuard"],
+            self.labels["SpecialOverworldEdgeGuard"],
             wram,
             x=x_in,
             y=direction,
@@ -399,6 +403,21 @@ class LyraEdgeGuardTests(unittest.TestCase):
             dp=0x0000,
         )
         return res, wram
+
+    def test_legacy_label_aliases_primary_entry(self) -> None:
+        self.assertEqual(self.labels["LyraEdgeGuard"], self.labels["SpecialOverworldEdgeGuard"])
+        self.assertIn("SpecialOverworldEdgeGuard_Permissions", self.labels)
+        self.assertIn("SpecialOverworldEdgeGuard_DirMask", self.labels)
+
+    def test_oracle_namespace_keeps_legacy_export(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            _, labels = assemble_guard(Path(tmp), namespace=True)
+        self.assertEqual(
+            labels["Oracle_LyraEdgeGuard"],
+            labels["Oracle_SpecialOverworldEdgeGuard"],
+        )
+        self.assertIn("Oracle_SpecialOverworldEdgeGuard_Permissions", labels)
+        self.assertIn("Oracle_SpecialOverworldEdgeGuard_DirMask", labels)
 
     def test_all_64_special_maps_all_4_directions(self) -> None:
         dir_bits = (BIT_RIGHT, BIT_LEFT, BIT_DOWN, BIT_UP)
