@@ -10,15 +10,19 @@ Source artwork (verified pixel-for-pixel from GameyFireBro's OoS submissions):
 Output:
   Data/graphics/sprites/ice_wolfos.4bpp (4,096 bytes = $1000 = 128 x 8x8 tiles)
     - +$0000..$07FF (2,048 B): VRAM $5800..$5BFF (n=1, OAM $80..$BF)
-      4 sleek quadruped walk/crouch frames matching Sprite_Wolfos_Draw.
+      4 sleek quadruped walk/crouch frames matching Sprite_Wolfos_Draw, plus
+      compact 8x8 Ice Wolfos Frost Shard tiles in the free $88/$89/$98 slots
+      ($88 crystal F0, $89 twinkling glint F1, $98 shatter burst).
     - +$0800..$0FFF (2,048 B): VRAM $5C00..$5FFF (n=1, OAM $C0..$FF)
       6 standing front/back/snarl frames + Wolf Mask ($CC) + lunge ($CE/$EC/$EE).
 
-All pixels use indices 0..7 (bp3 = 0), compatible with both standard 3BPP
-low-half OAM palettes:
-  - Standard Wolfos (OAM Pal 5 low half, $7EC6A2 / $7EC4A2):
+All pixels use indices 0..7 (bp3 = 0), compatible with all three Wolfos
+3BPP low-half OAM palettes (and OAM Pal 2 for the 8x8 Frost Shard):
+  - Standard Enemy Wolfos (OAM Pal 5 low half, $7EC6A2 / $7EC4A2 — Cobalt Blue):
+      $7FFF, $02BF, $00B6, $4D06, $14A5, $7ED2, $65CA
+  - Castle Mask-Quest Wolfos (OAM Pal 5 low half, $7EC6A2 / $7EC4A2 — Steel-Grey):
       $7FFF, $02BF, $00B6, $460D, $14A5, $5694, $39AB
-  - Ice Wolfos (OAM Pal 6 low half, $7EC6C2 / $7EC4C2):
+  - Ice Wolfos (OAM Pal 6 low half, $7EC6C2 / $7EC4C2 — White / Lavender-Ice):
       $7FFF, $02BF, $00B6, $7E56, $14A5, $7FDD, $6AD5
 
 Usage:
@@ -105,7 +109,57 @@ SHEET_MAIN_ROWS = [
     "...5555555555........555555..........555555..........555555..........555555..........555555..............555555.................",
 ]
 
-PAL_STANDARD_RGB = [
+# Compact 8x8 Frost Shard tiles stamped into the unused $88/$89/$98 sub-tiles
+# of Sheet 1 (VRAM $5800 / OAM $80..$BF, rendered with OAM Pal 2 icy cyan/blue).
+# Slot $88 (tx=8..9, ty=0..1) is 100% blank on all body frames (dropped from Draw).
+FROST_SHARD_TILES_8X8: dict[tuple[int, int], list[str]] = {
+    # $88 (tx=8, ty=0): Faceted diamond ice shard (Frame 0)
+    (8, 0): [
+        "...55...",
+        "..5615..",
+        ".561165.",
+        "57111675",
+        "52711725",
+        ".527725.",
+        "..5225..",
+        "...55...",
+    ],
+    # $89 (tx=9, ty=0): Twinkling 4-point crystal glint (Frame 1)
+    (9, 0): [
+        "...15...",
+        "..5615..",
+        ".561165.",
+        "16111165",
+        "57111721",
+        ".527725.",
+        "..5725..",
+        "...51...",
+    ],
+    # $98 (tx=8, ty=1): Expiring miniature crystal shatter burst
+    (8, 1): [
+        ".1....6.",
+        "..6552..",
+        "..5115..",
+        ".651751.",
+        "..5725..",
+        "..2556..",
+        ".6....1.",
+        "........",
+    ],
+}
+
+PAL_BLUE_RGB = [
+    (0, 0, 0, 0),
+    (255, 255, 255, 255),  # 1: $7FFF white gleam / fangs
+    (255, 173,   0, 255),  # 2: $02BF golden-amber eyes
+    (181,  41,   0, 255),  # 3: $00B6 crimson mouth
+    ( 49,  65, 156, 255),  # 4: $4D06 deep royal indigo mane & tail
+    ( 41,  41,  41, 255),  # 5: $14A5 charcoal outline
+    (148, 181, 255, 255),  # 6: $7ED2 bright sky-cobalt fur highlight
+    ( 82, 115, 205, 255),  # 7: $65CA classic Oracle cobalt-blue fur
+]
+
+PAL_QUEST_RGB = [
     (0, 0, 0, 0),
     (255, 255, 255, 255),  # 1: $7FFF white gleam / teeth
     (255, 173,   0, 255),  # 2: $02BF golden-amber eyes
@@ -115,6 +169,8 @@ PAL_STANDARD_RGB = [
     (165, 165, 173, 255),  # 6: $5694 silver-grey fur
     ( 90, 107, 115, 255),  # 7: $39AB dark steel shadow
 ]
+
+PAL_STANDARD_RGB = PAL_QUEST_RGB  # Backward-compatible alias
 
 PAL_ICE_RGB = [
     (0, 0, 0, 0),
@@ -139,6 +195,21 @@ def parse_sheet(rows: list[str]) -> list[list[int]]:
             raise ValueError(f"Row {y}: expected 128 cols, got {len(row)}")
         grid.append([CHAR_TO_IDX[ch] for ch in row])
     return grid
+
+
+def stamp_frost_shards(walk_grid: list[list[int]]) -> None:
+    """Stamp compact 8x8 frost shard tiles into verified-empty $88/$89/$98 slots."""
+    for (tx, ty), tile_rows in FROST_SHARD_TILES_8X8.items():
+        if len(tile_rows) != 8:
+            raise ValueError(f"Shard tile ({tx},{ty}) must be 8 rows")
+        x0, y0 = tx * 8, ty * 8
+        for r, row in enumerate(tile_rows):
+            if len(row) != 8:
+                raise ValueError(f"Shard tile ({tx},{ty}) row {r} must be 8 cols")
+            for c, ch in enumerate(row):
+                if walk_grid[y0 + r][x0 + c] != 0:
+                    raise ValueError(f"Walk sheet pixel ({x0+c},{y0+r}) is not empty!")
+                walk_grid[y0 + r][x0 + c] = CHAR_TO_IDX[ch]
 
 
 def encode_tile_4bpp(grid: list[list[int]], tx: int, ty: int) -> bytes:
@@ -174,6 +245,7 @@ def encode_sheet_4bpp(grid: list[list[int]]) -> bytes:
 
 def build_bytes() -> bytes:
     walk_grid = parse_sheet(SHEET_WALK_ROWS)
+    stamp_frost_shards(walk_grid)
     main_grid = parse_sheet(SHEET_MAIN_ROWS)
     data = encode_sheet_4bpp(walk_grid) + encode_sheet_4bpp(main_grid)
     assert len(data) == 4096
@@ -184,10 +256,12 @@ def write_preview(path: Path) -> None:
     from PIL import Image, ImageDraw
 
     walk_grid = parse_sheet(SHEET_WALK_ROWS)
+    stamp_frost_shards(walk_grid)
     main_grid = parse_sheet(SHEET_MAIN_ROWS)
     scale = 3
     rows = [
-        ("Standard Wolfos (OAM Pal 5: Steel-Grey / Gold Eyes)", PAL_STANDARD_RGB),
+        ("Standard Enemy Wolfos (OAM Pal 5: Oracle Cobalt Blue / Indigo)", PAL_BLUE_RGB),
+        ("Castle Mask-Quest Wolfos (OAM Pal 5: Steel-Grey / Gold)", PAL_QUEST_RGB),
         ("Ice Wolfos (OAM Pal 6: White / Lavender-Ice / Gold Eyes)", PAL_ICE_RGB),
     ]
     out = Image.new("RGBA", (264 * scale, len(rows) * (36 * scale + 18) + 8), (24, 30, 42, 255))

@@ -519,7 +519,7 @@ class TestWolfosCombat(unittest.TestCase):
         self.assertEqual(self.rom[pc:pc + 4096], art)
 
     def test_prep_uploads_palettes_safely_and_restores_inidispq(self):
-        # Standard Quest Wolfos (Castle $1B): OAM Pal 5 C1..C7; Link Sword C9..C11 untouched!
+        # Variant 2 — Castle Mask-Quest Wolfos (Castle $1B): Steel-Grey / Gold in OAM Pal 5; Link Sword C9..C11 untouched!
         h = self.make()
         h.put(INIDISPQ, 0x0F)
         h.put(INDOORS, 0)
@@ -527,9 +527,12 @@ class TestWolfosCombat(unittest.TestCase):
         h.put(SPR_STATE + 2, 0x09)
         h.put16(0x7EC6B2, 0x1234)  # Link sword color sentinel in SP-5 C9
         h.call_jsl("Sprite_Wolfos_Prep", x=2)
+        self.assertEqual(h.get(SPR_MISCA + 2), FLAG_QUEST)
         self.assertEqual(h.get(SPR_MISCG + 2), 0x0A)
         self.assertEqual(h.get16(0x7EC6A2), 0x7FFF)  # C1 white
         self.assertEqual(h.get16(0x7EC6A4), 0x02BF)  # C2 gold eyes
+        self.assertEqual(h.get16(0x7EC6A8), 0x460D)  # C4 slate-steel mane (Grey Quest!)
+        self.assertEqual(h.get16(0x7EC6AC), 0x5694)  # C6 silver-grey fur
         self.assertEqual(h.get16(0x7EC6B2), 0x1234, "Must never clobber Link Sword SP-5 C9..C11!")
         # Verify VRAM DMA to $5800 for $1000 bytes and INIDISP restored to $13 ($0F)
         inidisp_writes = [v for reg, v in h.hw_writes if reg == 0x2100]
@@ -540,7 +543,26 @@ class TestWolfosCombat(unittest.TestCase):
         self.assertIn((0x4306, 0x10), h.hw_writes)
         self.assertIn((0x420B, 0x01), h.hw_writes)
 
-        # Ice Wolfos (Snowpeak $04): OAM Pal 6 C1..C7; INIDISPQ=$80 fade-in preserved!
+        # Variant 1 — Standard Enemy Wolfos (non-Castle / non-Snowpeak OW $25): Oracle Cobalt Blue in OAM Pal 5!
+        hb = self.make()
+        hb.put(INIDISPQ, 0x0F)
+        hb.put(INDOORS, 0)
+        hb.put(OW_AREA, 0x25)  # Kalyxo Field -> Standard Enemy Blue Wolfos!
+        hb.put(WOLF_MASK, 1)   # Must NOT despawn when WolfMask is already owned!
+        hb.put(SPR_STATE + 0, 0x09)
+        hb.put16(0x7EC6B2, 0x9ABC)
+        hb.call_jsl("Sprite_Wolfos_Prep", x=0)
+        self.assertEqual(hb.get(SPR_STATE + 0), 0x09)
+        self.assertEqual(hb.get(SPR_MISCA + 0), 0x00, "Standard Enemy Wolfos must have no Quest/Ice flags!")
+        self.assertEqual(hb.get(SPR_HEALTH + 0), 0x1E, "Standard Blue Wolfos must have 30 HP!")
+        self.assertEqual(hb.get(SPR_MISCG + 0), 0x0A)
+        self.assertEqual(hb.get16(0x7EC6A8), 0x4D06)  # C4 deep royal indigo mane!
+        self.assertEqual(hb.get16(0x7EC6AC), 0x7ED2)  # C6 bright sky-cobalt fur!
+        self.assertEqual(hb.get16(0x7EC6AE), 0x65CA)  # C7 classic Oracle cobalt-blue fur!
+        self.assertEqual(hb.get16(0x7EC4AE), 0x65CA)  # Fade buffer mirrored!
+        self.assertEqual(hb.get16(0x7EC6B2), 0x9ABC, "Must never clobber Link Sword SP-5 C9..C11!")
+
+        # Variant 3 — Ice Wolfos (Snowpeak $04): OAM Pal 6 C1..C7; INIDISPQ=$80 fade-in preserved!
         h2 = self.make()
         h2.put(INIDISPQ, 0x80)
         h2.put(INDOORS, 0)
@@ -555,18 +577,66 @@ class TestWolfosCombat(unittest.TestCase):
         self.assertEqual(h2.get16(0x7EC6D2), 0x5678, "C8..C15 must stay untouched!")
         self.assertEqual([v for reg, v in h2.hw_writes if reg == 0x2100], [0x80, 0x80])
 
-    # --- 2. Variant Detection & Bug #1 Despawn Fix ---
-
-    def test_castle_quest_wolfos_despawns_when_wolf_mask_owned(self):
-        # Bug #1 regression: InCutSceneFlag=0, WolfMask=1 MUST despawn Castle Wolfos
+    def test_explicit_subtypes_override_location_autodetect(self):
+        # Subtype $03 forces Standard Blue Enemy even on Castle $1B (and ignores WolfMask!)
         h = self.make()
         h.put(INDOORS, 0)
         h.put(OW_AREA, 0x1B)
-        h.put(IN_CUTSCENE, 0)
         h.put(WOLF_MASK, 1)
         h.put(SPR_STATE + 0, 0x09)
+        h.put(SPR_SUBTYPE + 0, 0x03)
         h.call_jsl("Sprite_Wolfos_Prep", x=0)
-        self.assertEqual(h.get(SPR_STATE + 0), 0x00, "Castle Wolfos must stay gone after WolfMask earned!")
+        self.assertEqual(h.get(SPR_STATE + 0), 0x09)
+        self.assertEqual(h.get(SPR_MISCA + 0), 0x00)
+        self.assertEqual(h.get16(0x7EC6AE), 0x65CA)  # Oracle Cobalt Blue!
+
+        # Subtype $04 forces Grey Quest Wolfos even in an indoor room
+        h2 = self.make()
+        h2.put(INDOORS, 1)
+        h2.put16(ROOM_ID, 0x0051)
+        h2.put(WOLF_MASK, 0)
+        h2.put(SPR_STATE + 0, 0x09)
+        h2.put(SPR_SUBTYPE + 0, 0x04)
+        h2.call_jsl("Sprite_Wolfos_Prep", x=0)
+        self.assertEqual(h2.get(SPR_MISCA + 0), FLAG_QUEST)
+        self.assertEqual(h2.get(SPR_HEALTH + 0), 0x32)
+        self.assertEqual(h2.get16(0x7EC6AC), 0x5694)  # Steel-Grey Quest!
+
+        # Subtype $01 (Roving Ice) and $02 (Alpha Ice) force Ice Wolfos anywhere
+        for sub, exp_flags, exp_hp in ((0x01, FLAG_ICE, 0x24), (0x02, FLAG_ICE | FLAG_ALPHA, 0x30)):
+            h3 = self.make()
+            h3.put(INDOORS, 0)
+            h3.put(OW_AREA, 0x1B)
+            h3.put(SPR_STATE + 0, 0x09)
+            h3.put(SPR_SUBTYPE + 0, sub)
+            h3.call_jsl("Sprite_Wolfos_Prep", x=0)
+            self.assertEqual(h3.get(SPR_MISCA + 0), exp_flags)
+            self.assertEqual(h3.get(SPR_HEALTH + 0), exp_hp)
+            self.assertEqual(h3.get(SPR_MISCG + 0), 0x0C)
+
+        # Indoor non-$0120 dungeon room with Subtype $00 defaults to Blue Standard Enemy!
+        h4 = self.make()
+        h4.put(INDOORS, 1)
+        h4.put16(ROOM_ID, 0x0051)
+        h4.put(SPR_STATE + 0, 0x09)
+        h4.call_jsl("Sprite_Wolfos_Prep", x=0)
+        self.assertEqual(h4.get(SPR_MISCA + 0), 0x00)
+        self.assertEqual(h4.get(SPR_HEALTH + 0), 0x1E)
+        self.assertEqual(h4.get16(0x7EC6AE), 0x65CA)
+
+    # --- 2. Variant Detection & Bug #1 Despawn Fix ---
+
+    def test_castle_quest_wolfos_despawns_when_wolf_mask_owned(self):
+        # Bug #1 regression: InCutSceneFlag=0, WolfMask=1 MUST despawn Castle Wolfos ($0B & $1B)
+        for castle_area in (0x0B, 0x1A, 0x1B, 0x1C):
+            h = self.make()
+            h.put(INDOORS, 0)
+            h.put(OW_AREA, castle_area)
+            h.put(IN_CUTSCENE, 0)
+            h.put(WOLF_MASK, 1)
+            h.put(SPR_STATE + 0, 0x09)
+            h.call_jsl("Sprite_Wolfos_Prep", x=0)
+            self.assertEqual(h.get(SPR_STATE + 0), 0x00, f"Castle area ${castle_area:02X} Wolfos must stay gone after WolfMask earned!")
 
         # Conversely, Snowpeak Ice Wolfos MUST still spawn even when WolfMask == 1!
         h2 = self.make()
@@ -678,17 +748,27 @@ class TestWolfosCombat(unittest.TestCase):
         h.put(OW_AREA, 0x1B)
         h.put(SPR_STATE + 0, 0x09)
         h.set_spr_pos(0, 0x0100, 0x0100)
-        h.set_link_pos(0x0140, 0x0100)  # 64px to the right -> enters Circle when TimerA==0
+        h.set_link_pos(0x0144, 0x0100)  # 68px (> $3E) to the right -> enters Circle when TimerA==0
         h.call_jsl("Sprite_Wolfos_Prep", x=0)
         h.put(SPR_TIMERA + 0, 0)
         h.rng_seq = [0]  # CW orbit
         h.call_jsl("Sprite_Wolfos_Long", x=0)
         self.assertEqual(h.get(SPR_ACTION + 0), ACT_CIRCLE)
 
-        # Next frame: Circle computes tangential velocity (vx=0, vy=-13 for Link directly right!)
+        # Next frame: Circle computes curved velocity (perpendicular vy != 0 AND inward radial pull vx > 0!)
         h.call_jsl("Sprite_Wolfos_Long", x=0)
-        vy = h.get(SPR_YSPD + 0)
-        self.assertNotEqual(vy, 0, "CirclePlayer must produce real perpendicular orbital velocity!")
+        vx_c = h.get(SPR_XSPD + 0)
+        vy_c = h.get(SPR_YSPD + 0)
+        self.assertNotEqual(vy_c, 0, "CirclePlayer must produce real perpendicular orbital velocity!")
+        self.assertGreater(vx_c, 0)
+        self.assertLess(vx_c, 0x80, "Far Circle (> $3E) must curve smoothly inward toward Link!")
+
+        # Wall collision during Circle immediately flips CW -> CCW and reverses vy!
+        h.tile_collision = 0x04  # Bottom wall hit
+        prev_orbit = h.get(SPR_MISCB + 0) & 0x01
+        h.call_jsl("Sprite_Wolfos_Long", x=0)
+        self.assertNotEqual(h.get(SPR_MISCB + 0) & 0x01, prev_orbit, "Wall hit in Circle must flip orbit dir!")
+        h.tile_collision = 0x00
 
         # Trigger hit -> Stagger -> DodgeHop away from Link
         prev_hp = h.get(SPR_HEALTH + 0)
@@ -704,7 +784,48 @@ class TestWolfosCombat(unittest.TestCase):
         self.assertEqual(h.get(SPR_ACTION + 0), ACT_DODGEHOP)
         vx = h.get(SPR_XSPD + 0)
         self.assertGreaterEqual(vx, 0x80, "DodgeHop must leap negatively (away from Link on right)!")
-        self.assertEqual((0x100 - vx), 0x18, "DodgeHop speed must be full $18 (not stale $02)!")
+        self.assertEqual((0x100 - vx), 0x1A, "DodgeHop speed must be full $1A!")
+
+        # Wall hit behind Wolfos during DodgeHop pivots laterally (non-zero Y speed!)
+        h.tile_collision = 0x02  # Left wall hit behind Wolfos
+        h.call_jsl("Sprite_Wolfos_Long", x=0)
+        self.assertNotEqual(h.get(SPR_YSPD + 0), 0, "Blocked DodgeHop must pivot laterally around Link!")
+
+    def test_stalk_obstacle_wall_slide_and_telegraph_micro_coil(self):
+        # Stalk hitting a horizontal wall slides vertically toward Link instead of grinding!
+        h = self.make()
+        h.put(INDOORS, 0)
+        h.put(OW_AREA, 0x25)  # Blue Standard Enemy Wolfos
+        h.put(SPR_STATE + 0, 0x09)
+        h.set_spr_pos(0, 0x0100, 0x0100)
+        h.set_link_pos(0x0170, 0x0120)  # Far right + slightly below
+        h.call_jsl("Sprite_Wolfos_Prep", x=0)
+        h.tile_collision = 0x01  # Blocked on right wall
+        h.call_jsl("Sprite_Wolfos_Long", x=0)
+        self.assertEqual(h.get(SPR_ACTION + 0), ACT_STALK)
+        self.assertEqual(h.get(SPR_XSPD + 0), 0x00, "Horizontal wall hit must zero blocked X speed!")
+        self.assertEqual(h.get(SPR_YSPD + 0), 0x10, "Must slide smoothly vertically (+Y) toward Link!")
+
+        # Telegraph triggers a subtle 6-frame micro-coil away from Link before locking!
+        h.tile_collision = 0x00
+        h.set_spr_pos(0, 0x0100, 0x0100)
+        h.set_link_pos(0x0128, 0x0100)  # 40px right
+        h.put(SPR_TIMERC + 0, 0)
+        h.call_jsl("Sprite_Wolfos_Long", x=0)
+        self.assertEqual(h.get(SPR_ACTION + 0), ACT_TELEGRAPH)
+        self.assertEqual(h.get(SPR_TIMERE + 0), 0x06, "Telegraph must arm 6-frame micro-coil timer!")
+        # First tick coils backward (SprX decreases slightly away from Link on right)
+        h.tick_timers(0)
+        h.call_jsl("Sprite_Wolfos_Long", x=0)
+        x_after_coil = h.get(SPR_X + 0) | (h.get(SPR_XH + 0) << 8)
+        self.assertLess(x_after_coil, 0x0100, "Telegraph opening frames must coil slightly back from Link!")
+        # After coil timer expires, velocity locks to 0 until lunge!
+        for _ in range(6):
+            h.tick_timers(0)
+            h.call_jsl("Sprite_Wolfos_Long", x=0)
+        self.assertEqual(h.get(SPR_ACTION + 0), ACT_TELEGRAPH)
+        self.assertEqual(h.get(SPR_XSPD + 0), 0)
+        self.assertEqual(h.get(SPR_YSPD + 0), 0)
 
     # --- 5. Ice Wolfos Shards, Alpha Enrage & Fire Melt ---
 
@@ -739,9 +860,15 @@ class TestWolfosCombat(unittest.TestCase):
             h.get(SPR_XSPD + 3),
             "Ice Shard must travel strictly faster than lunging Ice Wolfos!",
         )
-        self.assertEqual(h.get(SPR_HITBOX + sh) & 0x40, 0x40, "Ice Shard MUST have Statis=1 so it never blocks shutters!")
+        self.assertEqual(h.get(SPR_HITBOX + sh), 0x45, "Ice Shard MUST have Statis=1 + compact 8x4 hitbox $05!")
         self.assertEqual(h.get(SPR_PRIZE + sh) & 0x20, 0x20, "Ice Shard must be shield-blockable!")
         self.assertEqual(h.get(SPR_MISCA + sh), 3, "Ice Shard must record parent slot 3!")
+        # Verify mouth spawn offset (Facing Right: parent_x + 20, parent_y + 3!)
+        px = h.get(SPR_X + 3) | (h.get(SPR_XH + 3) << 8)
+        py = h.get(SPR_Y + 3) | (h.get(SPR_YH + 3) << 8)
+        sx = h.get(SPR_X + sh) | (h.get(SPR_XH + sh) << 8)
+        sy = h.get(SPR_Y + sh) | (h.get(SPR_YH + sh) << 8)
+        self.assertEqual((sx - px, sy - py), (20, 3), "Right-facing Ice Shard must spawn at jaws (+20,+3)!")
 
         # Drop Alpha Ice Wolfos HP by 24 (Fire Rod melt!) -> triggers Enrage + heavy melt stagger!
         h.put(SPR_HEALTH + 3, 0x18)  # 24 HP (50%)
@@ -751,7 +878,7 @@ class TestWolfosCombat(unittest.TestCase):
         self.assertIn(0x26, h.sfx3)  # Fierce enrage howl
         self.assertIn(0x21, h.sfx3)  # Heavy melt crunch
 
-        # Clear old shard & launch Phase 2 Enraged lunge -> spawns TWO fanned shards!
+        # Clear old shard & launch Phase 2 Enraged lunge -> spawns TWO symmetric V-spread shards!
         h.put(SPR_STATE + sh, 0)
         h.put(SPR_ACTION + 3, ACT_STALK)
         h.put(SPR_TIMERC + 3, 0)
@@ -763,16 +890,65 @@ class TestWolfosCombat(unittest.TestCase):
             h.call_jsl("Sprite_Wolfos_Long", x=3)
         shards2 = [s for s in range(16) if h.get(SPR_STATE + s) == 0x09 and h.get(SPR_SUBTYPE + s) == 0x80]
         self.assertEqual(len(shards2), 2, "Enraged Alpha Ice Wolfos lunge must spawn 2 fanned Ice Shards!")
-        # Verify the two shards have distinct spread velocities
-        v0 = (h.get(SPR_XSPD + shards2[0]), h.get(SPR_YSPD + shards2[0]))
-        v1 = (h.get(SPR_XSPD + shards2[1]), h.get(SPR_YSPD + shards2[1]))
-        self.assertNotEqual(v0, v1, "Enraged dual Ice Shards must fan apart!")
+        # Verify the two shards have symmetric opposite Y spread around +X forward vector!
+        vy0 = h.get(SPR_YSPD + shards2[0])
+        vy1 = h.get(SPR_YSPD + shards2[1])
+        self.assertNotEqual(vy0, 0)
+        self.assertEqual((vy0 + vy1) & 0xFF, 0, "Enraged dual Ice Shards must form a symmetric V-spread!")
 
         # Kill parent -> shards despawn cleanly on next tick!
         h.put(SPR_STATE + 3, 0x06)
         for s in shards2:
             h.call_jsl("Sprite_Wolfos_Long", x=s)
             self.assertEqual(h.get(SPR_STATE + s), 0x00, "Shard must despawn when parent dies!")
+
+    def test_frost_shard_mouth_offsets_all_4_dirs_and_point_blank_forward_aim(self):
+        # Verify exact 16-bit safe directional mouth offsets & forward aim even at point-blank 12px!
+        cases = [
+            # (label, parent_x, parent_y, link_dx, link_dy, exp_off_x, exp_off_y, exp_sign_x, exp_sign_y)
+            ("Right_carry",  0x00F8, 0x0100, +12,   0, +20,  +3, +1,  0),
+            ("Left_borrow",  0x0104, 0x0100, -12,   0, -12,  +3, -1,  0),
+            ("Down_carry",   0x0100, 0x00F8,   0, +12,  +4, +12,  0, +1),
+            ("Up_borrow",    0x0100, 0x0104,   0, -12,  +4, -11,  0, -1),
+        ]
+        for label, px0, py0, ldx, ldy, edx, edy, esx, esy in cases:
+            with self.subTest(direction=label):
+                h = self.make()
+                h.put(INDOORS, 1)
+                h.put16(ROOM_ID, 0x0120)
+                h.put(SPR_STATE + 0, 0x09)
+                h.set_spr_pos(0, px0, py0)
+                h.set_link_pos(px0 + ldx, py0 + ldy)
+                h.call_jsl("Sprite_Wolfos_Prep", x=0)
+                h.put(SPR_TIMERC + 0, 0)
+                h.call_jsl("Sprite_Wolfos_Long", x=0)
+                self.assertEqual(h.get(SPR_ACTION + 0), ACT_TELEGRAPH)
+                # Lock position before lunge trigger to test exact page-boundary borrow/carry!
+                h.put(SPR_TIMERE + 0, 0)
+                h.set_spr_pos(0, px0, py0)
+                for _ in range(0x14):
+                    h.tick_timers(0)
+                    h.call_jsl("Sprite_Wolfos_Long", x=0)
+                self.assertEqual(h.get(SPR_ACTION + 0), ACT_LUNGE)
+                shards = [s for s in range(16) if h.get(SPR_STATE + s) == 0x09 and h.get(SPR_SUBTYPE + s) == 0x80]
+                self.assertEqual(len(shards), 1)
+                sh = shards[0]
+                sx = h.get(SPR_X + sh) | (h.get(SPR_XH + sh) << 8)
+                sy = h.get(SPR_Y + sh) | (h.get(SPR_YH + sh) << 8)
+                self.assertEqual((sx, sy), ((px0 + edx) & 0xFFFF, (py0 + edy) & 0xFFFF))
+                # Ensure point-blank target STILL fires strictly forward (never backwards!)
+                vx = h.get(SPR_XSPD + sh)
+                vy = h.get(SPR_YSPD + sh)
+                vx_s = vx - 256 if vx >= 128 else vx
+                vy_s = vy - 256 if vy >= 128 else vy
+                if esx > 0:
+                    self.assertGreater(vx_s, 0)
+                elif esx < 0:
+                    self.assertLess(vx_s, 0)
+                if esy > 0:
+                    self.assertGreater(vy_s, 0)
+                elif esy < 0:
+                    self.assertLess(vy_s, 0)
 
     # --- 6. Subdued -> Song of Healing -> Wolf Mask & Draw OOB Fix ---
 
@@ -880,7 +1056,8 @@ class TestWolfosCombat(unittest.TestCase):
         self.assertNotIn("Sprite_OAM_AllocateDeferToPlayer", [c[0] for c in h.calls])
 
     def test_ice_shard_draw_and_16bit_distance_no_wrap(self):
-        # Verify Ice Shard draws global Sheet $79 crystal ($AA -> $AC) with spinning OAM Pal 2 ($24/$64/$A4/$E4)
+        # Verify compact 8x8 Ice Shard draws $88 <-> $89 (twinkling) -> $98 (shatter)
+        # with OAM Pal 2 + n=1 ($25/$65/$A5/$E5) and size=0 (8x8 small!)
         h = self.make()
         h.put(SPR_STATE + 4, 0x09)
         h.put(SPR_SUBTYPE + 4, 0x80)
@@ -888,17 +1065,45 @@ class TestWolfosCombat(unittest.TestCase):
         h.put(SPR_STATE + 0, 0x09)  # Live parent
         h.put(SPR_TIMERA + 4, 0x20)
         h.set_spr_pos(4, 0x0080, 0x0070)
-        h.put(FRAME_CTR, 0x04)  # ($04 & $0C) << 4 | $24 = $64
+        h.put(0x0A20, 0xFF)  # Sentinel to confirm size bit 1 is cleared to 0 (8x8)!
+        h.put(FRAME_CTR, 0x00)  # ($00 & $0C) << 4 | $25 = $25; ($00 & $04) == 0 -> $88
         h.call_jsl("Sprite_Wolfos_Long", x=4)
-        self.assertEqual(h.get(0x0802), 0xAA, "Live Ice Shard must draw frost crystal $AA!")
-        self.assertEqual(h.get(0x0803), 0x64, "Ice Shard must spin with OAM Pal 2 ($04), n=0!")
+        self.assertEqual(h.get(0x0802), 0x88, "Live Ice Shard frame 0 must draw 8x8 diamond $88!")
+        self.assertEqual(h.get(0x0803), 0x25, "Ice Shard must use OAM Pal 2 ($04) + n=1 ($25)!")
+        self.assertEqual(h.get(0x0A20) & 0x02, 0x00, "Ice Shard MUST be compact 8x8 (size bit = 0)!")
 
-        # Near end of life (TimerA < 8) switches to shattering frost shard $AC
-        h.put(SPR_TIMERA + 4, 0x04)
-        h.put(FRAME_CTR, 0x08)  # ($08 & $0C) << 4 | $24 = $A4
+        # Alternate twinkle frame ($1A & $04 != 0) draws $89 with H-flip ($65)!
+        h.put(FRAME_CTR, 0x04)  # ($04 & $0C) << 4 | $25 = $65; ($04 & $04) != 0 -> $89
         h.call_jsl("Sprite_Wolfos_Long", x=4)
-        self.assertEqual(h.get(0x0802), 0xAC, "Expiring Ice Shard must draw shatter tile $AC!")
-        self.assertEqual(h.get(0x0803), 0xA4)
+        self.assertEqual(h.get(0x0802), 0x89, "Live Ice Shard frame 1 must draw 8x8 glint $89!")
+        self.assertEqual(h.get(0x0803), 0x65, "Ice Shard must spin with OAM Pal 2 + n=1 ($65)!")
+
+        # Near end of life (TimerA < 6) switches to compact shattering crystal $98
+        h.put(SPR_TIMERA + 4, 0x04)
+        h.put(FRAME_CTR, 0x08)  # ($08 & $0C) << 4 | $25 = $A5
+        h.call_jsl("Sprite_Wolfos_Long", x=4)
+        self.assertEqual(h.get(0x0802), 0x98, "Expiring Ice Shard must draw 8x8 shatter tile $98!")
+        self.assertEqual(h.get(0x0803), 0xA5)
+        self.assertEqual(h.get(0x0A20) & 0x02, 0x00, "Shattering shard MUST stay compact 8x8!")
+
+        # Verify body walk/attack frames 8, 11, 12, 14 never emit shard slots $88 or $8C!
+        hb = self.make()
+        hb.put(INDOORS, 0)
+        hb.put(OW_AREA, 0x25)
+        hb.put(SPR_STATE + 0, 0x09)
+        hb.set_spr_pos(0, 0x0080, 0x0080)
+        hb.call_jsl("Sprite_Wolfos_Prep", x=0)
+        for frame_id in (8, 11, 12, 14):
+            for i in range(16):
+                hb.put(0x0800 + i, 0xFF)
+            hb.put(SPR_ACTION + 0, ACT_RECOVER)
+            hb.put(SPR_TIMERA + 0, 0x10)
+            hb.put(SPR_FRAME + 0, frame_id)
+            hb.call_jsl("Sprite_Wolfos_Long", x=0)
+            drawn_chrs = [hb.get(0x0802 + 4 * t) for t in range(3)]
+            self.assertNotIn(0x88, drawn_chrs, f"Frame {frame_id} must not draw Frost Shard slot $88!")
+            self.assertNotIn(0x8C, drawn_chrs, f"Frame {frame_id} must not draw blank slot $8C!")
+            self.assertEqual(hb.get(0x080C), 0xFF, f"Frame {frame_id} must only emit 3 tiles (not 4)!")
 
         # Verify 16-bit distance at dx=260px does NOT wrap to 4px and trigger melee telegraph!
         h2 = self.make()

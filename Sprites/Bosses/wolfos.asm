@@ -1,23 +1,31 @@
 ; =========================================================
 ; Wolfos & Ice Wolfos Sprite ($A9)
 ;
-; Variants (auto-detected in Prep or selected via SprSubtype):
-;   Subtype $00 (default):
-;     - Castle / Light World Outdoors: Standard Quest Wolfos
-;       (Steel-Grey / Gold-Eyed; subdued at HP <= 4 -> Song of Healing -> Wolf Mask;
-;        stays gone once WolfMask ($7EF358) != 0).
-;     - Mount Snowpeak ($03..$07) Outdoors: Roving Ice Wolfos (36 HP).
-;     - Wolfos Cave Room $0120 (Ice Rod Guardian): Alpha Ice Wolfos Mini-Boss (48 HP,
-;       Frost Enrage at <= 24 HP, dual-spread Ice Shards, opens Room $120 shutter on death).
-;   Subtype $01: Roving Ice Wolfos (36 HP, White / Lavender-Ice / Gold-Eyed).
-;   Subtype $02: Alpha / Mini-Boss Ice Wolfos (48 HP, Frost Enrage phase).
-;   Subtype $80: Child Ice Shard Projectile (Statis=1, blockable by shield).
+; 3-Variant Hierarchy (auto-detected in Prep or selected via SprSubtype):
+;   Variant 1 — Standard Enemy Wolfos (Oracle Cobalt Blue / Royal Indigo, Pal 5):
+;     - Default combat Wolfos outside Kalyxo Castle ($0B, $1A..$1C) & Snowpeak ($03..$07)
+;       and in all indoor/dungeon rooms other than Wolfos Cave ($0120).
+;     - 30 HP, 1 heart contact damage, normal death & prize drop (never despawns on WolfMask).
+;     - Explicit override: SprSubtype = $03.
+;   Variant 2 — Castle Mask-Quest Wolfos (Steel-Grey / Gold, Pal 5 — matches Wolf Mask $CC):
+;     - Auto-detected on Kalyxo Castle ($0B) & Castle Quest areas ($1A..$1C), or SprSubtype = $04.
+;     - 30 effective HP (+20 overkill buffer); subdues -> Song of Healing -> Wolf Mask ($7EF358);
+;       despawns permanently once WolfMask != 0.
+;   Variant 3 — Ice Wolfos (White / Lavender-Ice / Gold-Eyed, Pal 6):
+;     - Mount Snowpeak ($03..$07) Outdoors or SprSubtype = $01: Roving Ice Wolfos (36 HP).
+;     - Wolfos Cave Room $0120 or SprSubtype = $02: Alpha Ice Wolfos Mini-Boss (48 HP,
+;       Frost Enrage at <= 24 HP, dual V-spread 8x8 mouth Frost Shards, opens Room $120 shutter).
+;   Child Projectile — SprSubtype = $80:
+;     - Compact 8x8 Frost Shard ($88/$89/$98, n=1, Pal 2 icy cyan/blue) spawned directly in
+;       front of Ice Wolfos's jaws/mouth; Statis=1, compact hitbox $05, shield-blockable.
 ;
 ; Combat Rhythm (OoT / Majora's Mask inspired):
-;   Stalk -> Circle (flank orbit) <-> Frontal Claw Guard (clinks normal frontal sword;
-;   bypassed by flanks/back, Spin Attack, Fire Rod, Lamp, Bombs, Boomerang, Hookshot)
-;   -> Telegraphed 4-Dir Windup -> Fast 4-Dir Claw Lunge (+ Ice Shard on Ice Wolfos)
-;   -> Vulnerable Recovery Window -> Stagger / Dodge Backhop.
+;   Smooth Diagonal Stalk (with obstacle wall-slide) -> Curved Flanking Circle Orbit
+;   (tangent + radial spacing spring, instant wall-hit reversal) <-> Frontal Claw Guard
+;   (clinks normal frontal sword; bypassed by flanks/back, Spin Attack, Fire Rod, Lamp,
+;   Bombs, Boomerang, Hookshot) -> Micro-Coil 4-Dir Telegraph -> Fast Aimed Claw Lunge
+;   (+ compact 8x8 mouth Frost Shard on Ice Wolfos) -> Vulnerable Recovery -> Stagger /
+;   Wall-Aware Pivot DodgeHop.
 ;
 ; Elemental Profile (Ice Wolfos via DMGTABLE $7F6A90):
 ;   - Weak to Fire Rod / Lamp (16 HP melt!) and Bombos (64 HP)
@@ -65,19 +73,20 @@
 
 ; SprMiscB, X ($0DB0,X) bit layout:
 ;   bit 0 ($01): Circle orbit direction (0 = CW, 1 = CCW)
+;   bit 1 ($02): Circle consecutive wall-hit guard (breaks corner stalls cleanly)
 ;   bit 4 ($10): Subdued dialogue ($023) already shown
 
 ; Other Sprite RAM slots:
 ;   SprMiscC ($0DE0,X): Cached previous HP for hit detection
-;   SprMiscD ($0E90,X): Scratch / secondary shard flag
+;   SprMiscD ($0E90,X): Scratch / secondary shard spread mode (0=direct, 1=+V, 2=-V)
 ;   SprMiscE ($0EB0,X): Facing direction (0=Right, 1=Left, 2=Down, 3=Up)
 ;   SprMiscF ($0EC0,X): Lunge frost-shard fired flag / hurt scratch
-;   SprMiscG ($0ED0,X): Per-instance OAM palette bits ($0A=Pal 5 std, $0C=Pal 6 ice)
+;   SprMiscG ($0ED0,X): Per-instance OAM palette bits ($0A=Pal 5 Blue/Grey, $0C=Pal 6 Ice)
 ;   SprTimerA ($0DF0,X): Current combat phase timer
 ;   SprTimerB ($0E00,X): Animation cadence timer
 ;   SprTimerC ($0E10,X): Attack cooldown timer
 ;   SprTimerD ($0EE0,X): Guard cooldown (combat) / HealPulse & Brandish hold (quest)
-;   SprTimerE ($0F10,X): Enrage / telegraph shimmer helper
+;   SprTimerE ($0F10,X): Telegraph micro-coil / enrage shimmer timer
 
 ; AI Action IDs (SprAction, X)
 !WolfosAct_Stalk     = $00
@@ -94,32 +103,36 @@
 !WolfosAct_Dismiss   = $0B
 
 ; Subtype IDs (SprSubtype, X)
-!WolfosSub_Default   = $00
-!WolfosSub_IceRoving = $01
-!WolfosSub_IceAlpha  = $02
-!WolfosSub_IceShard  = $80 ; Child frost shard projectile (bit 7 set)
+!WolfosSub_Default   = $00 ; Auto-detect from area/room
+!WolfosSub_IceRoving = $01 ; Explicit Roving Ice Wolfos (White/Ice, 36 HP)
+!WolfosSub_IceAlpha  = $02 ; Explicit Alpha Ice Wolfos (White/Ice, 48 HP, Enrage)
+!WolfosSub_StdBlue   = $03 ; Explicit Standard Enemy Wolfos (Oracle Blue, 30 HP)
+!WolfosSub_QuestGrey = $04 ; Explicit Castle Mask-Quest Wolfos (Steel-Grey, Wolf Mask)
+!WolfosSub_IceShard  = $80 ; Child 8x8 frost shard projectile (bit 7 set)
 
 ; Combat Tuning
-!Wolfos_StdHP        = $1E ; 30 HP (non-quest standard Wolfos)
+!Wolfos_StdHP        = $1E ; 30 HP (Blue Standard Enemy Wolfos)
 !Wolfos_QuestHP      = $32 ; 50 HP total - 20 HP safety buffer = 30 effective HP
 !Wolfos_IceHP        = $24 ; 36 HP (roving Snowpeak Ice Wolfos)
 !Wolfos_AlphaHP      = $30 ; 48 HP (Room $120 Ice Rod Guardian / Subtype 2)
 !Wolfos_EnrageHP     = $18 ; 24 HP (50% of Alpha)
 !Wolfos_SubdueHP     = $15 ; Quest Wolfos subdues when HP < 21 (cannot overkill!)
 
-!Wolfos_StalkSpdStd  = $0E
-!Wolfos_StalkSpdIce  = $12
-!Wolfos_CircleSpdStd = $0D
-!Wolfos_CircleSpdIce = $11
-!Wolfos_DodgeSpdStd  = $18
-!Wolfos_DodgeSpdIce  = $1C
-!Wolfos_LungeSpdStd  = $22
-!Wolfos_LungeSpdIce  = $26
-!Wolfos_LungeSpdRage = $2A
+!Wolfos_StalkSpdStd  = $10
+!Wolfos_StalkSpdIce  = $14
+!Wolfos_CircleSpdStd = $0F
+!Wolfos_CircleSpdIce = $13
+!Wolfos_DodgeSpdStd  = $1A
+!Wolfos_DodgeSpdIce  = $1E
+!Wolfos_LungeSpdStd  = $24
+!Wolfos_LungeSpdIce  = $28
+!Wolfos_LungeSpdRage = $2C
+!Wolfos_CoilSpd      = $06 ; Crisp 1-2px predatory coil-back during opening Telegraph
 !Wolfos_ShardSpeed   = $40 ; Significantly faster than lunge so frost shards streak cleanly ahead!
 
 !Wolfos_GuardDur     = $1C ; 28 frames
 !Wolfos_DodgeDur     = $12 ; 18 frames
+!Wolfos_CoilDur      = $06 ; 6-frame micro-coil at start of Telegraph
 !Wolfos_TeleDurStd   = $18 ; 24 frames
 !Wolfos_TeleDurIce   = $14 ; 20 frames
 !Wolfos_TeleDurRage  = $10 ; 16 frames
@@ -181,34 +194,44 @@ Sprite_Wolfos_Prep:
   .body_prep
 
   ; Determine variant flags -> A -> SprMiscA, X
-  LDA.b #$00
+  ; Explicit SprSubtype overrides ($01..$04) skip location auto-detection.
   LDY.w SprSubtype, X
-  CPY.b #!WolfosSub_IceRoving : BNE .not_sub1
-    ORA.b #!WolfosFlag_Ice
-    BRA .check_location
-  .not_sub1
-  CPY.b #!WolfosSub_IceAlpha : BNE .check_location
-    ORA.b #(!WolfosFlag_Ice|!WolfosFlag_Alpha)
+  BEQ .auto_detect
+    CPY.b #!WolfosSub_IceRoving : BNE .not_sub1
+      LDA.b #!WolfosFlag_Ice : BRA .store_flags
+    .not_sub1
+    CPY.b #!WolfosSub_IceAlpha : BNE .not_sub2
+      LDA.b #(!WolfosFlag_Ice|!WolfosFlag_Alpha) : BRA .store_flags
+    .not_sub2
+    CPY.b #!WolfosSub_StdBlue : BNE .not_sub3
+      LDA.b #$00 : BRA .store_flags
+    .not_sub3
+    CPY.b #!WolfosSub_QuestGrey : BNE .auto_detect
+      LDA.b #!WolfosFlag_Quest : BRA .store_flags
 
-  .check_location
+  .auto_detect
+  LDA.b #$00
   LDY.b $1B : BNE .check_indoor_room
-    ; Outdoors: check Mount Snowpeak areas $03..$07
+    ; Outdoors: Mount Snowpeak areas $03..$07 -> Roving Ice Wolfos
     LDY.b $8A
-    CPY.b #$03 : BCC .check_quest_flag
-    CPY.b #$08 : BCS .check_quest_flag
-      ORA.b #!WolfosFlag_Ice
+    CPY.b #$03 : BCC .check_castle_quest
+    CPY.b #$08 : BCS .check_castle_quest
+      LDA.b #!WolfosFlag_Ice
       BRA .store_flags
-    .check_quest_flag
-    ; Non-Ice overworld Wolfos (Kalyxo Castle) runs the Wolf Mask quest.
-    BIT.b #!WolfosFlag_Ice : BNE .store_flags
-      ORA.b #!WolfosFlag_Quest
+    .check_castle_quest
+    ; Outdoors: Kalyxo Castle ($0B) & Castle Quest Grounds ($1A/$1B/$1C) -> Grey Mask-Quest Wolfos
+    CPY.b #$0B : BEQ .is_castle_quest
+    CPY.b #$1A : BCC .store_flags
+    CPY.b #$1D : BCS .store_flags
+    .is_castle_quest
+      LDA.b #!WolfosFlag_Quest
       BRA .store_flags
 
   .check_indoor_room
-  ; Indoors: Room $0120 (Wolfos Cave — Ice Rod Guardian) is Alpha Ice Wolfos!
+  ; Indoors: Room $0120 (Wolfos Cave — Ice Rod Guardian) -> Alpha Ice Wolfos!
   LDY.b $A1 : CPY.b #$01 : BNE .store_flags
   LDY.b $A0 : CPY.b #$20 : BNE .store_flags
-    ORA.b #(!WolfosFlag_Ice|!WolfosFlag_Alpha)
+    LDA.b #(!WolfosFlag_Ice|!WolfosFlag_Alpha)
 
   .store_flags
   STA.w SprMiscA, X
@@ -239,9 +262,9 @@ Sprite_Wolfos_Prep:
   LDA.b #$20 : STA.w SprTimerA, X
   LDA.b #$24 : STA.w SprTimerC, X
 
-  ; Configure Ice Wolfos vs Standard Wolfos stats, palette, and DMGTABLE.
-  LDA.w SprMiscA, X : BIT.b #!WolfosFlag_Ice : BEQ .prep_standard
-    ; Ice Wolfos (Roving 36 HP / Alpha 48 HP)
+  ; Configure Ice Wolfos vs Castle Quest Grey Wolfos vs Standard Blue Wolfos.
+  LDA.w SprMiscA, X : BIT.b #!WolfosFlag_Ice : BEQ .prep_non_ice
+    ; Variant 3: Ice Wolfos (Roving 36 HP / Alpha 48 HP, OAM Pal 6)
     BIT.b #!WolfosFlag_Alpha : BEQ .roving_hp
       LDA.b #!Wolfos_AlphaHP
       BRA .set_ice_hp
@@ -256,19 +279,24 @@ Sprite_Wolfos_Prep:
     JSR Wolfos_SetIceDamageTable
     BRA .upload_art
 
-  .prep_standard
-    LDA.w SprMiscA, X : BIT.b #!WolfosFlag_Quest : BEQ .non_quest_hp
-      LDA.b #!Wolfos_QuestHP ; 30 effective HP + 20 HP overkill buffer
-      BRA .set_std_hp
-    .non_quest_hp
-      LDA.b #!Wolfos_StdHP
-    .set_std_hp
+  .prep_non_ice
+    LDA.b #$01 : STA.w SprBump, X      ; 1 heart Green / 1/2 Blue / 1/4 Red
+    LDA.b #$0A : STA.w SprMiscG, X     ; OAM Palette 5 (Blue Std or Steel-Grey Quest)
+    JSR Wolfos_SetStdDamageTable
+    LDA.w SprMiscA, X : BIT.b #!WolfosFlag_Quest : BEQ .prep_std_blue
+      ; Variant 2: Castle Mask-Quest Wolfos (Steel-Grey / Gold, matches Wolf Mask)
+      LDA.b #!Wolfos_QuestHP           ; 30 effective HP + 20 HP overkill buffer
+      STA.w SprHealth, X
+      STA.w SprMiscC, X
+      JSR Wolfos_ApplyQuestPalette
+      BRA .upload_art
+
+  .prep_std_blue
+    ; Variant 1: Standard Enemy Wolfos (Oracle Cobalt Blue / Royal Indigo)
+    LDA.b #!Wolfos_StdHP
     STA.w SprHealth, X
     STA.w SprMiscC, X
-    LDA.b #$01 : STA.w SprBump, X      ; 1 heart Green / 1/2 Blue / 1/4 Red
-    LDA.b #$0A : STA.w SprMiscG, X     ; OAM Palette 5 (Steel-Grey/Gold)
-    JSR Wolfos_ApplyStdPalette
-    JSR Wolfos_SetStdDamageTable
+    JSR Wolfos_ApplyBluePalette
 
   .upload_art
   JSR Wolfos_ApplyGraphics
@@ -344,46 +372,55 @@ Sprite_Wolfos_Main:
 }
 
 ; ---------------------------------------------------------
-; $00: Stalk — Prowl toward Link, transition to Circle / Guard / Telegraph
+; $00: Stalk — Smooth diagonal prowl with obstacle wall-slide & close-range spacing
 ; ---------------------------------------------------------
 Wolfos_Act_Stalk:
 {
   JSR Wolfos_GuardOff
   JSR Wolfos_ProcessCombatDamage : BCS .done
   JSL Sprite_CheckDamageToPlayerSameLayer
-  JSR Wolfos_FacePlayer
+  JSR Wolfos_FacePlayerSmooth
   JSR Wolfos_CheckTriggerGuard : BCS .done
 
   JSR Wolfos_ComputeDeltaToPlayer ; A = clamped Manhattan dist
-  CMP.b #$36 : BCS .check_circle
+  CMP.b #$38 : BCS .check_circle
     ; Within lunge reach and cooldown ready -> Telegraph!
-    LDA.w SprTimerC, X : BNE .check_circle
+    LDA.w SprTimerC, X : BNE .check_too_close
       JSR Wolfos_EnterTelegraph
       RTS
 
+  .check_too_close
+  ; If Link crowds inside 28px while cooldown ticks, backhop or circle cleanly!
+  CMP.b #$1C : BCS .check_circle
+    LDA.w SprTimerA, X : BNE .quick_circle
+      JSR Wolfos_EnterDodgeHop
+      RTS
+    .quick_circle
+    LDA.b #$20 : STA.w SprTimerA, X
+    LDA.b #!WolfosAct_Circle : STA.w SprAction, X
+    RTS
+
   .check_circle
-  CMP.b #$4C : BCS .approach
+  CMP.b #$52 : BCS .approach
     LDA.w SprTimerA, X : BNE .approach
-      ; Enter OoT flank Circle with random orbit direction
+      ; Enter curved OoT flank Circle with random orbit direction
       JSL GetRandomInt : AND.b #$01 : STA.b $0E
-      LDA.w SprMiscB, X : AND.b #$FE : ORA.b $0E : STA.w SprMiscB, X
+      LDA.w SprMiscB, X : AND.b #$FC : ORA.b $0E : STA.w SprMiscB, X
       LDA.w SprMiscA, X : BIT.b #!WolfosFlag_Ice : BNE .ice_circ_dur
-        LDA.b #$2C : BRA .set_circ
+        LDA.b #$2E : BRA .set_circ
       .ice_circ_dur
-        LDA.b #$24
+        LDA.b #$26
       .set_circ
       STA.w SprTimerA, X
       LDA.b #!WolfosAct_Circle : STA.w SprAction, X
       RTS
 
   .approach
-  LDA.w SprMiscA, X : BIT.b #!WolfosFlag_Ice : BNE .ice_spd
-    LDA.b #!Wolfos_StalkSpdStd : BRA .apply_spd
-  .ice_spd
-    LDA.b #!Wolfos_StalkSpdIce
-  .apply_spd
+  JSR Wolfos_GetStalkSpeed
   JSL Sprite_ApplySpeedTowardsPlayer
-  JSL Sprite_BounceFromTileCollision
+  JSL Sprite_CheckTileCollision : BEQ .stalk_move
+    JSR Wolfos_SteerAroundObstacle
+  .stalk_move
   JSL Sprite_Move
   JSR Wolfos_AnimateWalk
   .done
@@ -391,42 +428,72 @@ Wolfos_Act_Stalk:
 }
 
 ; ---------------------------------------------------------
-; $01: Circle — Orbit Link tangentially while facing him
+; $01: Circle — Curved flanking orbit (tangent + radial spacing spring)
+;               with instant wall-hit reversal & anti-corner stall
 ; ---------------------------------------------------------
 Wolfos_Act_Circle:
 {
   JSR Wolfos_GuardOff
-  JSR Wolfos_ProcessCombatDamage : BCS .done
+  JSR Wolfos_ProcessCombatDamage : BCC .not_hit
+    RTS
+  .not_hit
   JSL Sprite_CheckDamageToPlayerSameLayer
-  JSR Wolfos_FacePlayer
-  JSR Wolfos_CheckTriggerGuard : BCS .done
+  JSR Wolfos_FacePlayerSmooth
+  JSR Wolfos_CheckTriggerGuard : BCC .no_guard
+    RTS
+  .no_guard
 
   JSR Wolfos_ComputeDeltaToPlayer ; A = clamped Manhattan dist
-  CMP.b #$58 : BCC .in_orbit_range
-    ; Link backed off -> resume stalking
-    LDA.b #$18 : STA.w SprTimerA, X
+  STA.b $0C                       ; Pass current dist to ApplyCircleVelocity
+  CMP.b #$5C : BCC .in_orbit_range
+    ; Link backed off -> resume predatory stalking
+    LDA.b #$14 : STA.w SprTimerA, X
     LDA.b #!WolfosAct_Stalk : STA.w SprAction, X
     RTS
 
   .in_orbit_range
-  LDA.w SprTimerA, X : BNE .do_orbit
-    ; Orbit beat complete -> lunge if ready, else swap orbit / stalk
+  ; Opportunistic pounce: if cooldown ready & inside sweet range during late beat
+  LDA.w SprTimerA, X : BEQ .orbit_done
+  CMP.b #$10 : BCS .do_orbit
+  LDA.w SprTimerC, X : BNE .do_orbit
+  LDA.b $0C : CMP.b #$34 : BCS .do_orbit
+    JSR Wolfos_EnterTelegraph
+    RTS
+
+  .orbit_done
+    ; Orbit beat complete -> lunge if ready, else swap orbit & stalk
     LDA.w SprTimerC, X : BNE .re_stalk
       JSR Wolfos_EnterTelegraph
       RTS
     .re_stalk
-    LDA.w SprMiscB, X : EOR.b #$01 : STA.w SprMiscB, X
-    LDA.b #$1C : STA.w SprTimerA, X
+    LDA.w SprMiscB, X : EOR.b #$01 : AND.b #$FD : STA.w SprMiscB, X
+    LDA.b #$18 : STA.w SprTimerA, X
     LDA.b #!WolfosAct_Stalk : STA.w SprAction, X
     RTS
 
   .do_orbit
   JSR Wolfos_ApplyCircleVelocity
-  JSL Sprite_CheckTileCollision : BEQ .no_wall_flip
-    ; Wall hit while orbiting -> flip orbit direction cleanly
-    LDA.w SprMiscB, X : EOR.b #$01 : STA.w SprMiscB, X
-  .no_wall_flip
-  JSL Sprite_BounceFromTileCollision
+  JSL Sprite_CheckTileCollision : BEQ .clear_wall_bit
+    ; Wall/cliff hit while orbiting -> flip CW/CCW immediately and recompute!
+    LDA.w SprMiscB, X : BIT.b #$02 : BNE .corner_break
+      EOR.b #$01 : ORA.b #$02 : STA.w SprMiscB, X
+      JSR Wolfos_ApplyCircleVelocity
+      JSL Sprite_Move
+      JSR Wolfos_AnimateWalk
+      RTS
+    .corner_break
+    ; Blocked on both arcs (tight corner) -> break into lunge or stalk pivot!
+    AND.b #$FD : EOR.b #$01 : STA.w SprMiscB, X
+    LDA.w SprTimerC, X : BNE .corner_to_stalk
+      JSR Wolfos_EnterTelegraph
+      RTS
+    .corner_to_stalk
+    LDA.b #$12 : STA.w SprTimerA, X
+    LDA.b #!WolfosAct_Stalk : STA.w SprAction, X
+    RTS
+
+  .clear_wall_bit
+  LDA.w SprMiscB, X : AND.b #$FD : STA.w SprMiscB, X
   JSL Sprite_Move
   JSR Wolfos_AnimateWalk
   .done
@@ -475,14 +542,26 @@ Wolfos_Act_Guard:
 }
 
 ; ---------------------------------------------------------
-; $03: DodgeHop — Crisp evasive backhop away from Link
+; $03: DodgeHop — Crisp evasive backhop with lateral wall-pivot
 ; ---------------------------------------------------------
 Wolfos_Act_DodgeHop:
 {
   JSR Wolfos_GuardOff
   JSR Wolfos_ProcessCombatDamage : BCS .done
   JSL Sprite_PlayerCantPassThrough
-  JSL Sprite_BounceFromTileCollision
+  JSL Sprite_CheckTileCollision : BEQ .hop_move
+    ; Back hit a wall/cliff -> pivot 90 deg laterally around Link instead of grinding!
+    LDA.w SprMiscB, X : EOR.b #$01 : STA.w SprMiscB, X
+    AND.b #$01 : BNE .pivot_ccw
+      LDA.w SprXSpeed, X : PHA
+      LDA.w SprYSpeed, X : STA.w SprXSpeed, X
+      PLA : EOR.b #$FF : INC A : STA.w SprYSpeed, X
+      BRA .hop_move
+    .pivot_ccw
+      LDA.w SprXSpeed, X : PHA
+      LDA.w SprYSpeed, X : EOR.b #$FF : INC A : STA.w SprXSpeed, X
+      PLA : STA.w SprYSpeed, X
+  .hop_move
   JSL Sprite_Move
   JSR Wolfos_FacePlayer
   JSR Wolfos_SetGuardFrame
@@ -503,15 +582,25 @@ Wolfos_Act_DodgeHop:
 }
 
 ; ---------------------------------------------------------
-; $04: Telegraph — Unmistakable 4-dir crouch/snarl windup before Lunge
+; $04: Telegraph — Predatory micro-coil crouch/snarl windup before Lunge
 ; ---------------------------------------------------------
 Wolfos_Act_Telegraph:
 {
   JSR Wolfos_GuardOff
   JSR Wolfos_ProcessCombatDamage : BCS .done
   JSL Sprite_CheckDamageToPlayerSameLayer
-  STZ.w SprXSpeed, X
-  STZ.w SprYSpeed, X
+
+  ; First 6 frames (SprTimerE > 0): subtle 1-2px coil-back & live tracking!
+  LDA.w SprTimerE, X : BEQ .coil_locked
+    JSR Wolfos_FacePlayer
+    JSL Sprite_CheckTileCollision : BNE .coil_locked
+      JSL Sprite_Move
+      BRA .tele_pose
+  .coil_locked
+    STZ.w SprXSpeed, X
+    STZ.w SprYSpeed, X
+
+  .tele_pose
   JSR Wolfos_SetTelegraphFrame
 
   ; Readable telegraph pulse flash (safe: never clobbers real hurt flash)
@@ -527,7 +616,7 @@ Wolfos_Act_Telegraph:
 }
 
 ; ---------------------------------------------------------
-; $05: Lunge — Symmetric 4-dir high-speed claw dash (+ Ice Shard on Ice Wolfos)
+; $05: Lunge — Aimed high-speed claw dash (+ 8x8 mouth Frost Shard on Ice Wolfos)
 ; ---------------------------------------------------------
 Wolfos_Act_Lunge:
 {
@@ -536,7 +625,13 @@ Wolfos_Act_Lunge:
   JSL Sprite_CheckDamageToPlayerSameLayer
   JSR Wolfos_SetLungeFrame
 
-  ; Periodic dash dust (Standard) or frost breath trail (Ice Wolfos)
+  ; Smooth landing deceleration on final 4 frames of lunge
+  LDA.w SprTimerA, X : CMP.b #$04 : BNE .check_trail
+    LDA.w SprXSpeed, X : CMP.b #$80 : ROR A : STA.w SprXSpeed, X
+    LDA.w SprYSpeed, X : CMP.b #$80 : ROR A : STA.w SprYSpeed, X
+
+  .check_trail
+  ; Periodic dash dust (Standard/Quest) or frost mist trail (Ice Wolfos)
   LDA.w SprTimerA, X : AND.b #$03 : CMP.b #$02 : BNE .move_lunge
     LDA.w SprMiscA, X : BIT.b #!WolfosFlag_Ice : BNE .frost_trail
       LDA.b #$10 : STA.b $08
@@ -783,13 +878,16 @@ Wolfos_CheckTriggerGuard:
   RTS
 }
 
-; Enter Telegraph state (all 4 directions symmetric!)
+; Enter Telegraph state with subtle 6-frame predator micro-coil backstep
 Wolfos_EnterTelegraph:
 {
   JSR Wolfos_GuardOff
   JSR Wolfos_FacePlayer
-  STZ.w SprXSpeed, X
-  STZ.w SprYSpeed, X
+  ; Compute subtle slow coil-back velocity away from Link (~1-2px recoil crouch)
+  LDA.b #!Wolfos_CoilSpd : JSL Sprite_ApplySpeedTowardsPlayer
+  JSL Sprite_InvertSpeed_XY
+  LDA.b #!Wolfos_CoilDur : STA.w SprTimerE, X
+
   LDA.w SprMiscA, X
   BIT.b #!WolfosFlag_Enraged : BNE .rage_tele
   BIT.b #!WolfosFlag_Ice : BNE .ice_tele
@@ -811,7 +909,7 @@ Wolfos_EnterTelegraph:
   RTS
 }
 
-; Launch symmetric 4-dir Lunge (+ Ice Shard burst for Ice Wolfos!)
+; Launch symmetric 4-dir Lunge (+ compact 8x8 mouth Frost Shards for Ice Wolfos!)
 Wolfos_StartLunge:
 {
   JSR Wolfos_GuardOff
@@ -833,15 +931,19 @@ Wolfos_StartLunge:
     LDA.b #!Wolfos_LungeSpdRage
 
   .apply_lunge_vel
-  ; Aim directly toward Link at high lunge speed, ensuring minimum cardinal snap
+  ; Aim smoothly toward Link (diagonal or cardinal) at high lunge speed
   JSL Sprite_ApplySpeedTowardsPlayer
   LDA.b #$06 : JSL Sound_SetSfx3PanLong ; Claw lunge swoosh!
 
-  ; Ice Wolfos fires a telegraphed Ice Shard (two fanned shards when Enraged!)
+  ; Ice Wolfos fires compact 8x8 Frost Shard directly from its jaws!
+  ; Phase 1: 1 direct aimed shard; Enraged Alpha Phase 2: 2 symmetric V-spread shards!
   LDA.w SprMiscA, X : BIT.b #!WolfosFlag_Ice : BEQ .set_lunge_act
-    LDA.b #$00 : JSR Wolfos_SpawnIceShard ; Primary aimed frost shard
-    LDA.w SprMiscA, X : BIT.b #!WolfosFlag_Enraged : BEQ .set_lunge_act
-      LDA.b #$01 : JSR Wolfos_SpawnIceShard ; Enraged spread shard!
+    BIT.b #!WolfosFlag_Enraged : BNE .rage_dual_shards
+      LDA.b #$00 : JSR Wolfos_SpawnIceShard ; Phase 1: direct aimed mouth shard
+      BRA .set_lunge_act
+    .rage_dual_shards
+      LDA.b #$01 : JSR Wolfos_SpawnIceShard ; Phase 2 Enraged: +angle V-spread shard
+      LDA.b #$02 : JSR Wolfos_SpawnIceShard ; Phase 2 Enraged: -angle V-spread shard
 
   .set_lunge_act
   LDA.b #!WolfosAct_Lunge : STA.w SprAction, X
@@ -951,7 +1053,20 @@ Wolfos_ComputeDeltaToPlayer:
   RTS
 }
 
-; Update SprMiscE, X with 4-way facing toward Link (0=R, 1=L, 2=D, 3=U).
+; Return current Stalk speed in A (faster for Ice & Enraged Alpha).
+Wolfos_GetStalkSpeed:
+{
+  LDA.w SprMiscA, X
+  BIT.b #!WolfosFlag_Enraged : BNE .rage
+  BIT.b #!WolfosFlag_Ice : BNE .ice
+    LDA.b #!Wolfos_StalkSpdStd : RTS
+  .ice
+    LDA.b #!Wolfos_StalkSpdIce : RTS
+  .rage
+    LDA.b #!Wolfos_StalkSpdIce+2 : RTS
+}
+
+; Update SprMiscE, X with exact 4-way facing toward Link (0=R, 1=L, 2=D, 3=U).
 Wolfos_FacePlayer:
 {
   JSR Wolfos_ComputeDeltaToPlayer
@@ -975,6 +1090,63 @@ Wolfos_FacePlayer:
       SEP #$20
       LDA.b #$02 : STA.w SprMiscE, X ; Down
       RTS
+}
+
+; Anti-jitter facing for continuous movement (Stalk/Circle):
+; Uses a 6px hysteresis band so 45-degree diagonal prowling never flickers!
+Wolfos_FacePlayerSmooth:
+{
+  JSR Wolfos_ComputeDeltaToPlayer
+  LDA.w SprMiscE, X : CMP.b #$02 : BCS .currently_vert
+    ; Currently horizontal -> switch to vertical only if |dy| > |dx| + 6
+    REP #$20
+    LDA.b $04 : CLC : ADC.w #$0006 : CMP.b $06 : BCC .go_vert
+    .go_horiz
+      LDA.b $00 : BPL .horiz_right
+        SEP #$20 : LDA.b #$01 : STA.w SprMiscE, X : RTS
+      .horiz_right
+        SEP #$20 : LDA.b #$00 : STA.w SprMiscE, X : RTS
+  .currently_vert
+    ; Currently vertical -> switch to horizontal only if |dx| > |dy| + 6
+    REP #$20
+    LDA.b $06 : CLC : ADC.w #$0006 : CMP.b $04 : BCC .go_horiz
+    .go_vert
+      LDA.b $02 : BPL .vert_down
+        SEP #$20 : LDA.b #$03 : STA.w SprMiscE, X : RTS
+      .vert_down
+        SEP #$20 : LDA.b #$02 : STA.w SprMiscE, X : RTS
+}
+
+; Slide smoothly around walls/cliffs while Stalking instead of grinding!
+; In: A = collision bitmask from Sprite_CheckTileCollision ($03=H wall, $0C=V wall).
+Wolfos_SteerAroundObstacle:
+{
+  STA.b $0D
+  JSR Wolfos_ComputeDeltaToPlayer
+  JSR Wolfos_GetStalkSpeed : STA.b $0E
+
+  LDA.b $0D : BIT.b #$03 : BEQ .check_vert_wall
+  BIT.b #$0C : BNE .cornered
+    ; Horizontal wall hit, vertical axis open -> slide vertically toward Link
+    STZ.w SprXSpeed, X
+    LDA.b $03 : BMI .slide_up
+      LDA.b $0E : STA.w SprYSpeed, X : RTS
+    .slide_up
+      LDA.b $0E : EOR.b #$FF : INC A : STA.w SprYSpeed, X : RTS
+
+  .check_vert_wall
+  LDA.b $0D : BIT.b #$0C : BEQ .cornered
+    ; Vertical wall hit, horizontal axis open -> slide horizontally toward Link
+    STZ.w SprYSpeed, X
+    LDA.b $01 : BMI .slide_left
+      LDA.b $0E : STA.w SprXSpeed, X : RTS
+    .slide_left
+      LDA.b $0E : EOR.b #$FF : INC A : STA.w SprXSpeed, X : RTS
+
+  .cornered
+  LDA.w SprMiscB, X : EOR.b #$01 : STA.w SprMiscB, X
+  JSL Sprite_BounceFromTileCollision
+  RTS
 }
 
 ; Check if Link is within 56px AND inside the 90-degree frontal cone of SprMiscE.
@@ -1019,27 +1191,64 @@ Wolfos_IsLinkInFront:
   RTS
 }
 
-; Compute perpendicular orbital velocity around Link (CW/CCW via SprMiscB bit 0).
+; Compute curved flanking orbital velocity around Link (CW/CCW via SprMiscB bit 0).
+; Blends tangential orbit with a radial spacing spring (using dist in $0C):
+;   - dist >= $3E: +1/2 inward pull (curves smoothly into strike range)
+;   - dist <  $24: -1/2 outward push (maintains clean spacing)
+;   - sweet spot : +1/4 gentle centripetal pull (true circular arc, no outward drift!)
 Wolfos_ApplyCircleVelocity:
 {
-  LDA.w SprMiscA, X : BIT.b #!WolfosFlag_Ice : BNE .ice_cspd
+  LDA.w SprMiscA, X
+  BIT.b #!WolfosFlag_Enraged : BNE .rage_cspd
+  BIT.b #!WolfosFlag_Ice : BNE .ice_cspd
     LDA.b #!Wolfos_CircleSpdStd : BRA .get_vec
   .ice_cspd
-    LDA.b #!Wolfos_CircleSpdIce
+    LDA.b #!Wolfos_CircleSpdIce : BRA .get_vec
+  .rage_cspd
+    LDA.b #!Wolfos_CircleSpdIce+2
   .get_vec
   JSL Sprite_ApplySpeedTowardsPlayer
 
+  ; Save radial vector (rx, ry) in ($0A, $0B)
+  LDA.w SprXSpeed, X : STA.b $0A
+  LDA.w SprYSpeed, X : STA.b $0B
+
+  ; Pure tangent (tx, ty) -> ($0D, $0E)
   LDA.w SprMiscB, X : AND.b #$01 : BNE .ccw
-    ; CW: vx' = vy, vy' = -vx
-    LDA.w SprXSpeed, X : PHA
-    LDA.w SprYSpeed, X : STA.w SprXSpeed, X
-    PLA : EOR.b #$FF : INC A : STA.w SprYSpeed, X
-    RTS
+    ; CW: tx = ry, ty = -rx
+    LDA.b $0B : STA.b $0D
+    LDA.b $0A : EOR.b #$FF : INC A : STA.b $0E
+    BRA .blend_radial
   .ccw
-    ; CCW: vx' = -vy, vy' = vx
-    LDA.w SprXSpeed, X : PHA
-    LDA.w SprYSpeed, X : EOR.b #$FF : INC A : STA.w SprXSpeed, X
-    PLA : STA.w SprYSpeed, X
+    ; CCW: tx = -ry, ty = rx
+    LDA.b $0B : EOR.b #$FF : INC A : STA.b $0D
+    LDA.b $0A : STA.b $0E
+
+  .blend_radial
+  LDA.b $0C
+  CMP.b #$3E : BCS .pull_in_half
+  CMP.b #$24 : BCC .push_out_half
+    ; Sweet spot ($24..$3D): +1/4 inward centripetal pull
+    LDA.b $0A : CMP.b #$80 : ROR A : CMP.b #$80 : ROR A
+    CLC : ADC.b $0D : STA.w SprXSpeed, X
+    LDA.b $0B : CMP.b #$80 : ROR A : CMP.b #$80 : ROR A
+    CLC : ADC.b $0E : STA.w SprYSpeed, X
+    RTS
+
+  .pull_in_half
+    ; Too far (>= $3E): +1/2 inward pull
+    LDA.b $0A : CMP.b #$80 : ROR A
+    CLC : ADC.b $0D : STA.w SprXSpeed, X
+    LDA.b $0B : CMP.b #$80 : ROR A
+    CLC : ADC.b $0E : STA.w SprYSpeed, X
+    RTS
+
+  .push_out_half
+    ; Too close (< $24): -1/2 outward push
+    LDA.b $0A : CMP.b #$80 : ROR A : STA.b $0F
+    LDA.b $0D : SEC : SBC.b $0F : STA.w SprXSpeed, X
+    LDA.b $0B : CMP.b #$80 : ROR A : STA.b $0F
+    LDA.b $0E : SEC : SBC.b $0F : STA.w SprYSpeed, X
     RTS
 }
 
@@ -1142,8 +1351,8 @@ Wolfos_SpawnFrostBurst:
   .oy : db $00, $00, $F4, $0C
 }
 
-; Spawn a child Ice Shard projectile aimed at Link.
-; In: A = 0 (direct aimed shard) or 1 (angled spread shard for Enraged Alpha).
+; Spawn a compact 8x8 Frost Shard directly in front of Ice Wolfos's mouth.
+; In: A = 0 (direct aimed), 1 (+angle V-spread), or 2 (-angle V-spread).
 Wolfos_SpawnIceShard:
 {
   STA.w SprMiscD, X
@@ -1156,8 +1365,8 @@ Wolfos_SpawnIceShard:
   LDA.b #!WolfosSub_IceShard : STA.w SprSubtype, Y
   LDA.b #$00 : STA.w SprAction, Y
   TXA : STA.w SprMiscA, Y              ; Parent Wolfos slot
-  LDA.b #$00 : STA.w SprNbrOAM, Y      ; 1 OAM tile
-  LDA.b #$43 : STA.w SprHitbox, Y      ; Statis=1 (bit 6) + small hitbox 3
+  LDA.b #$00 : STA.w SprNbrOAM, Y      ; 1 OAM tile (compact 8x8)
+  LDA.b #$45 : STA.w SprHitbox, Y      ; Statis=1 (bit 6) + compact 8x4 hitbox $05
   LDA.b #$01 : STA.w SprHealth, Y
   LDA.b #$01 : STA.w SprBump, Y        ; 1 heart Green / 1/2 Blue
   LDA.b #$40 : STA.w $0E60, Y          ; ImperviousAll
@@ -1168,30 +1377,66 @@ Wolfos_SpawnIceShard:
   LDA.b #$FF : STA.w SprBulletproof, Y
   LDA.b #$3C : STA.w SprTimerA, Y      ; 60-frame lifetime
 
-  ; Position at parent center
+  ; First place at parent center so aiming is ALWAYS forward (even at point-blank!)
   LDA.w SprX, X : STA.w SprX, Y
   LDA.w SprXH, X : STA.w SprXH, Y
   LDA.w SprY, X : STA.w SprY, Y
   LDA.w SprYH, X : STA.w SprYH, Y
 
-  ; Aim velocity toward Link on the child slot (keep stack balanced: PHX then PHA!)
+  ; Aim velocity toward Link on the child slot (preserve parent X & child Y!)
   PHX
+  PHY
   LDA.w SprMiscD, X : PHA
   TYX
   LDA.b #!Wolfos_ShardSpeed : JSL Sprite_ApplySpeedTowardsPlayer
-  PLA : BEQ .direct_done
-    ; Enraged spread shard: add perpendicular deflection (~1/2 speed) for a crisp V-fan
+  PLA : BEQ .aim_done
+    ; Enraged Alpha symmetric V-spread (±3/8 perp: ~20.5 deg each side, 41 deg V)
+    PHA
     LDA.w SprXSpeed, X : STA.b $00
     LDA.w SprYSpeed, X : STA.b $01
-    ; vx' = vx - (vy >> 1)
-    LDA.b $01 : CMP.b #$80 : ROR A : STA.b $02
-    LDA.b $00 : SEC : SBC.b $02 : STA.w SprXSpeed, X
-    ; vy' = vy + (vx >> 1)
-    LDA.b $00 : CMP.b #$80 : ROR A : STA.b $02
-    LDA.b $01 : CLC : ADC.b $02 : STA.w SprYSpeed, X
-  .direct_done
+    ; $02 = (vy >> 2) + (vy >> 3)
+    LDA.b $01 : CMP.b #$80 : ROR A : CMP.b #$80 : ROR A : STA.b $02
+    CMP.b #$80 : ROR A : CLC : ADC.b $02 : STA.b $02
+    ; $03 = (vx >> 2) + (vx >> 3)
+    LDA.b $00 : CMP.b #$80 : ROR A : CMP.b #$80 : ROR A : STA.b $03
+    CMP.b #$80 : ROR A : CLC : ADC.b $03 : STA.b $03
+    PLA : CMP.b #$01 : BNE .spread_neg
+      ; +angle: vx' = vx - dy_perp, vy' = vy + dx_perp
+      LDA.b $00 : SEC : SBC.b $02 : STA.w SprXSpeed, X
+      LDA.b $01 : CLC : ADC.b $03 : STA.w SprYSpeed, X
+      BRA .aim_done
+    .spread_neg
+      ; -angle: vx' = vx + dy_perp, vy' = vy - dx_perp
+      LDA.b $00 : CLC : ADC.b $02 : STA.w SprXSpeed, X
+      LDA.b $01 : SEC : SBC.b $03 : STA.w SprYSpeed, X
+  .aim_done
+  PLY
   PLX
+
+  ; Offset shard directly in front of Ice Wolfos's open mouth (16-bit safe!)
+  ; Indexed by SprMiscE, X (0=Right, 1=Left, 2=Down, 3=Up)
+  LDA.w SprMiscE, X : ASL A : STA.b $04
+  LDA.w SprXH, X : XBA : LDA.w SprX, X
+  PHY
+  LDY.b $04
+  REP #$20
+  CLC : ADC.w .mouth_dx, Y
+  SEP #$20
+  PLY
+  STA.w SprX, Y : XBA : STA.w SprXH, Y
+
+  LDA.w SprYH, X : XBA : LDA.w SprY, X
+  PHY
+  LDY.b $04
+  REP #$20
+  CLC : ADC.w .mouth_dy, Y
+  SEP #$20
+  PLY
+  STA.w SprY, Y : XBA : STA.w SprYH, Y
   RTS
+
+  .mouth_dx : dw $0014, $FFF4, $0004, $0004 ; R:+20, L:-12, D:+4,  U:+4
+  .mouth_dy : dw $0003, $0003, $000C, $FFF5 ; R:+3,  L:+3,  D:+12, U:-11
 }
 
 ; Child Ice Shard Main Update
@@ -1222,7 +1467,7 @@ Wolfos_IceShard_Main:
   RTS
 }
 
-; Child Ice Shard Direct 1-Tile Draw (Global Page 0 Sheet $79 $AA/$AC frost crystal!)
+; Child Ice Shard Compact 8x8 Draw (ice_wolfos.4bpp n=1 tiles $88/$89/$98!)
 Wolfos_IceShard_Draw:
 {
   JSL Sprite_PrepOamCoord : BCC .on_screen
@@ -1236,27 +1481,31 @@ Wolfos_IceShard_Draw:
   AND.w #$0100 : STA.b $0E
   INY
   LDA.b $02 : STA ($90), Y
-  CLC : ADC.w #$0010 : CMP.w #$0100
+  CLC : ADC.w #$0008 : CMP.w #$0100
   SEP #$20
   BCC .vis_y
     LDA.b #$F0 : STA ($90), Y
   .vis_y
 
   INY
-  ; Spiky frost star ($AA), switches to shattering frost burst ($AC) near end
-  LDA.w SprTimerA, X : CMP.b #$08 : BCS .crystal_chr
-    LDA.b #$AC : BRA .store_chr
-  .crystal_chr
-    LDA.b #$AA
+  ; Compact 8x8 diamond frost shard ($88 <-> $89 twinkling every 4 frames),
+  ; switching to miniature crystal shatter ($98) on the final 6 frames!
+  LDA.w SprTimerA, X : CMP.b #$06 : BCS .live_chr
+    LDA.b #$98 : BRA .store_chr
+  .live_chr
+    LDA.b $1A : AND.b #$04 : BNE .glint_chr
+      LDA.b #$88 : BRA .store_chr
+    .glint_chr
+      LDA.b #$89
   .store_chr
   STA ($90), Y
 
   INY
-  ; Spin H/V flip every 4 frames, Pri 2, OAM Pal 2 ($04 = icy blue/white), n=0
-  LDA.b $1A : AND.b #$0C : ASL #4 : ORA.b #$24
+  ; Spin H/V flip every 4 frames, Pri 2 ($20), OAM Pal 2 ($04 icy cyan/blue), n=1 ($01)
+  LDA.b $1A : AND.b #$0C : ASL #4 : ORA.b #$25
   STA ($90), Y
 
-  LDA.b #$02 : ORA.b $0F : STA ($92) ; 16x16 + X bit 8
+  LDA.b $0F : STA ($92) ; Compact 8x8 (size bit 1 = 0) + X bit 8
   RTS
 }
 
@@ -1294,18 +1543,18 @@ Wolfos_SetIceDamageTable:
 }
 
 ; =========================================================
-; GameyFireBro Art & Palette Uploaders
+; 3-Variant Palette & Unified 4BPP Art Uploaders
 ; =========================================================
 
-; Upload GameyFireBro's Steel-Grey / Gold-Eyed palette (7 colors = 14 B)
+; Variant 1 — Upload Oracle Cobalt Blue / Royal Indigo palette (7 colors = 14 B)
 ; into OAM Pal 5 low half ($7EC6A2 / $7EC4A2); Link's Sword C9..C11 untouched!
-Wolfos_ApplyStdPalette:
+Wolfos_ApplyBluePalette:
 {
   PHX
   REP #$30
   LDX.w #$000C
   .loop
-    LDA.l Wolfos_StdPalette, X
+    LDA.l Wolfos_BluePalette, X
     STA.l $7EC6A2, X
     STA.l $7EC4A2, X
     DEX : DEX : BPL .loop
@@ -1315,7 +1564,25 @@ Wolfos_ApplyStdPalette:
   RTS
 }
 
-; Upload GameyFireBro's White / Lavender-Ice / Gold-Eyed palette (7 colors = 14 B)
+; Variant 2 — Upload Castle Mask-Quest Steel-Grey / Gold palette (7 colors = 14 B)
+; into OAM Pal 5 low half ($7EC6A2 / $7EC4A2); Link's Sword C9..C11 untouched!
+Wolfos_ApplyQuestPalette:
+{
+  PHX
+  REP #$30
+  LDX.w #$000C
+  .loop
+    LDA.l Wolfos_QuestPalette, X
+    STA.l $7EC6A2, X
+    STA.l $7EC4A2, X
+    DEX : DEX : BPL .loop
+  SEP #$30
+  LDA.b #$01 : STA.b $15
+  PLX
+  RTS
+}
+
+; Variant 3 — Upload Ice Wolfos White / Lavender-Ice / Gold palette (7 colors = 14 B)
 ; into OAM Pal 6 low half ($7EC6C2 / $7EC4C2); C8..C15 untouched!
 Wolfos_ApplyIcePalette:
 {
@@ -1365,6 +1632,8 @@ Wolfos_ApplyGraphics:
 ;   12-13: Attack Right (12=crouch guard/telegraph, 13=jaw-open lunge)
 ;   14-15: Attack Left  (14=crouch guard/telegraph, 15=jaw-open lunge)
 ;   16:    Wolf Mask    ($CC, 1 tile, .nbr_of_tiles = 0!)
+; Note: Unused blank tiles $88 (Frames 8/11) and $8C (Frames 12/14) are omitted
+;       so the 8x8 Frost Shard tiles ($88/$89/$98) stay 100% isolated from body frames.
 ; =========================================================
 
 Sprite_Wolfos_Draw:
@@ -1418,9 +1687,9 @@ Sprite_Wolfos_Draw:
   RTS
 
   .start_index
-  db $00, $02, $04, $06, $08, $0A, $0C, $10, $14, $18, $1C, $20, $24, $28, $2B, $2F, $32
+  db $00, $02, $04, $06, $08, $0A, $0C, $10, $14, $17, $1B, $1F, $22, $25, $28, $2B, $2E
   .nbr_of_tiles
-  db 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 2, 3, 2, 0
+  db 1, 1, 1, 1, 1, 1, 3, 3, 2, 3, 3, 2, 2, 2, 2, 2, 0
   .x_offsets
   dw 0, 0
   dw 0, 0
@@ -1430,13 +1699,13 @@ Sprite_Wolfos_Draw:
   dw 0, 0
   dw 8, -8, -8, 8
   dw -8, 8, 8, -8
-  dw -8, 8, -8, 8
+  dw 8, -8, 8
   dw -8, 8, 8, -8
   dw 8, -8, -8, 8
-  dw 8, -8, 8, -8
-  dw -8, 8, 8, -8
+  dw -8, 8, -8
   dw -8, 8, 8
-  dw 8, -8, -8, 8
+  dw -8, 8, 8
+  dw 8, -8, -8
   dw 8, -8, -8
   dw 0
   .y_offsets
@@ -1448,13 +1717,13 @@ Sprite_Wolfos_Draw:
   dw 0, -16
   dw 0, 0, -16, -16
   dw 0, 0, -16, -16
-  dw -16, -16, 0, 0
+  dw -16, 0, 0
   dw 0, 0, -16, -16
   dw 0, 0, -16, -16
-  dw -16, -16, 0, 0
-  dw 0, 0, -16, -16
+  dw -16, 0, 0
   dw 0, 0, -16
-  dw 0, 0, -16, -16
+  dw 0, 0, -16
+  dw 0, 0, -16
   dw 0, 0, -16
   dw 0
   .chr
@@ -1466,13 +1735,13 @@ Sprite_Wolfos_Draw:
   db $EA, $CA
   db $A2, $A0, $80, $82
   db $A4, $A6, $86, $84
-  db $88, $8A, $A8, $AA
+  db $8A, $A8, $AA
   db $A2, $A0, $80, $82
   db $A4, $A6, $86, $84
-  db $88, $8A, $A8, $AA
-  db $AC, $AE, $8E, $8C
+  db $8A, $A8, $AA
+  db $AC, $AE, $8E
   db $EC, $EE, $CE
-  db $AC, $AE, $8E, $8C
+  db $AC, $AE, $8E
   db $EC, $EE, $CE
   db $CC ; Wolf Mask
   ; Palette bits 3..1 cleared ($21 normal / $61 H-flip); SprMiscG supplies OAM pal!
@@ -1485,26 +1754,30 @@ Sprite_Wolfos_Draw:
   db $21, $21
   db $21, $21, $21, $21
   db $21, $21, $21, $21
-  db $21, $21, $21, $21
-  db $61, $61, $61, $61
-  db $61, $61, $61, $61
-  db $61, $61, $61, $61
-  db $21, $21, $21, $21
   db $21, $21, $21
   db $61, $61, $61, $61
+  db $61, $61, $61, $61
+  db $61, $61, $61
+  db $21, $21, $21
+  db $21, $21, $21
+  db $61, $61, $61
   db $61, $61, $61
   db $21
 }
 
 ; =========================================================
-; Embedded GameyFireBro Palettes & 4BPP Sprite Sheets
+; Embedded 3-Variant Palettes & 4BPP Sprite Sheets
 ; =========================================================
 
-; Standard Wolfos (OAM Pal 5 C1..C7): Steel-Grey / Gold-Eyed
-Wolfos_StdPalette:
+; Variant 1 — Standard Enemy Wolfos (OAM Pal 5 C1..C7): Oracle Cobalt Blue / Royal Indigo
+Wolfos_BluePalette:
+  dw $7FFF, $02BF, $00B6, $4D06, $14A5, $7ED2, $65CA
+
+; Variant 2 — Castle Mask-Quest Wolfos (OAM Pal 5 C1..C7): Steel-Grey / Gold (Wolf Mask)
+Wolfos_QuestPalette:
   dw $7FFF, $02BF, $00B6, $460D, $14A5, $5694, $39AB
 
-; Ice Wolfos (OAM Pal 6 C1..C7): White / Lavender-Ice / Gold-Eyed
+; Variant 3 — Ice Wolfos (OAM Pal 6 C1..C7): White / Lavender-Ice / Gold-Eyed
 Wolfos_IcePalette:
   dw $7FFF, $02BF, $00B6, $7E56, $14A5, $7FDD, $6AD5
 
