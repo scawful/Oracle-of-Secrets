@@ -1,6 +1,6 @@
 {
   "schema": "oracle-debug-checkpoints/1",
-  "description": "Story checkpoints for the Mesen2-OOS Cheats & Warps panel and mesen2_client.py checkpoint. Order follows AFS knowledge/planning/story_canon_beat_sheet.md. See Data/debug/README.md. b67 (0392d772) adds editor jumps for the three shrines, D8 Sky entrance $29, Wayward Village and its bar doors, the four Magic Bean areas, and Ranch archery. Special pages $83/$8B, $90/$98, $A8/$A9, and $B0/$B1/$B8/$B9 stay in todo: area warp still refuses $80+.",
+  "description": "Story checkpoints for the Mesen2-OOS Cheats & Warps panel and mesen2_client.py checkpoint. Order follows AFS knowledge/planning/story_canon_beat_sheet.md. See Data/debug/README.md. b67 (0392d772) adds editor jumps for the three shrines, D8 Sky entrance $29, Wayward Village and its bar doors, the four Magic Bean areas, and Ranch archery. Special pages $83/$8B, $90/$98, $A8/$A9, and $B0/$B1/$B8/$B9 stay in todo: area warp refuses $80+, and the b67 image is built with ENABLE_DEBUG_TOOLS off so WarpDispatcher is absent.",
   "rom_tested": {
     "path": "Roms/Playtest/oos-v0.9.0-b17.sfc",
     "sha256": "a0fdd4220d4da24b9c8cd087f5cb68a9758b85fbf733655f7888d0fa844b008c"
@@ -1485,7 +1485,7 @@
     {
       "id": "jump-garrison-83",
       "label": "Garrison top $83 (tall area with $8B)",
-      "reason": "b67 SpecialSoaring cache names TallArea $83+$8B (Items/special_soaring.asm). Area warp refuses $80+. Debug warp (Util/item_cheat.asm) loads it; X=Y=0 uses the camera-bounds interior."
+      "reason": "b67 SpecialSoaring cache names TallArea $83+$8B (Items/special_soaring.asm). Area warp refuses $80+. Util/item_cheat.asm loads this only when ENABLE_DEBUG_TOOLS is 1. The b67 image keeps that flag at 0, so $3CB400 is empty and fly cannot land here."
     },
     {
       "id": "jump-garrison-8b",
@@ -1515,7 +1515,7 @@
     {
       "id": "jump-lyra-b0",
       "label": "Goron Desert NW $B0 (parent of $B0/$B1/$B8/$B9)",
-      "reason": "b67 64x64 desert. Shrine of Power doors $03/$05/$09/$0B sit on this area, but the overworld page itself has no exit-table warp. Debug warp loads $80-$BF."
+      "reason": "b67 64x64 desert. Shrine rooms $76/$83/$84/$86 exit to $B0 (headless module $08 from room $84 landed module $0B area $B0). warp-area still refuses $80+, and ENABLE_DEBUG_TOOLS=0 leaves WarpDispatcher out, so this stays a todo rather than a checkpoint id."
     },
     {
       "id": "jump-lyra-b1",
@@ -1555,7 +1555,7 @@
     {
       "id": "jump-sky-8c",
       "label": "Sky landing $8C",
-      "reason": "Areas $80+ are excluded from area warp. b67 debug warp can load $8C; the checkpoint client cannot."
+      "reason": "Areas $80+ are excluded from area warp. The b67 image does not include WarpDispatcher (ENABLE_DEBUG_TOOLS=0), so fly cannot load $8C."
     }
   ]
 }

@@ -63,11 +63,12 @@ follower graphics (Impa) are rebuilt.
   that are.
 - Special areas `$80+` are excluded from `warp-area`. The exit-table load
   skips their setup. `village-impa` and `kalyxo-return` therefore land in the
-  village and outside the Hall of Secrets. On b67 the debug warp in
-  `Util/item_cheat.asm` does load `$80-$BF` through the cached-exit record
-  (X and Y both 0 pick the camera-bounds interior). The checkpoint client does
-  not call that path, so Garrison `$83+$8B`, Sea Zora `$90+$98`, Deku
-  `$A8+$A9`, and Goron Desert `$B0/$B1/$B8/$B9` stay in `todo`.
+  village and outside the Hall of Secrets. `Util/item_cheat.asm` can load
+  `$80-$BF` through the cached-exit record when `ENABLE_DEBUG_TOOLS` is 1
+  (X and Y both 0 pick the camera-bounds interior). The b67 image keeps that
+  flag at 0, so `$3CB400` is empty. `fly` writes the older `$7E074C` mailbox
+  and times out. Garrison `$83+$8B`, Sea Zora `$90+$98`, Deku `$A8+$A9`, and
+  Goron Desert `$B0/$B1/$B8/$B9` stay in `todo`.
 - Warps need normal play (module `$07/$09/$0B`, submodule 0): close text boxes
   first. Follower `$02` makes the game load the spawn point; the warp refuses.
 - Mesen2 builds without the SPC state-load fix (`Spc::AfterStateLoad`) hang in
