@@ -313,11 +313,35 @@ class WindmillGuyCompiledTests(unittest.TestCase):
         self.assertEqual(cpu.calls, [])
 
     def test_guru_guru_draws_two_frames_and_preserves_miscc(self) -> None:
-        for frame, expected_dy_head, expected_crank_y, expected_crank_prop in (
-            (0, -13, 2, 0x2B),
-            (1, -12, 4, 0xAB),
-            (3, -12, 4, 0xAB),  # stale frame clamped via AND #$01
-        ):
+        cases = (
+            (
+                0,
+                [
+                    (128, 96, 0xE8, 0x2B, 0x02),
+                    (128 + 8, (96 - 8) & 0xFF, 0xDF, 0x2B, 0x00),
+                    (128, (96 - 8) & 0xFF, 0xCF, 0x2B, 0x00),
+                ],
+            ),
+            (
+                1,
+                [
+                    (128, 96, 0xEA, 0x2B, 0x02),
+                    (128 + 8, (96 - 8) & 0xFF, 0xFF, 0x2B, 0x00),
+                    (128, (96 - 8) & 0xFF, 0xEF, 0x2B, 0x00),
+                    (128 + 2, (96 - 9) & 0xFF, 0xCF, 0x2B, 0x00),
+                ],
+            ),
+            (
+                3,  # stale frame clamped via AND #$01 -> Frame 1
+                [
+                    (128, 96, 0xEA, 0x2B, 0x02),
+                    (128 + 8, (96 - 8) & 0xFF, 0xFF, 0x2B, 0x00),
+                    (128, (96 - 8) & 0xFF, 0xEF, 0x2B, 0x00),
+                    (128 + 2, (96 - 9) & 0xFF, 0xCF, 0x2B, 0x00),
+                ],
+            ),
+        )
+        for frame, expected in cases:
             with self.subTest(frame=frame):
                 cpu = Mini65816(self.rom, x=2, p=0x30, db=0x06)
                 cpu.put(0x7E0D80 + 2, 0, 1)  # Windmill Guy NPC
@@ -350,7 +374,6 @@ class WindmillGuyCompiledTests(unittest.TestCase):
                 self.assertEqual(cpu.read(0x7E0DF0 + 2, 1), 1)  # SprMiscC = 1 preserved!
                 self.assertEqual(cpu.calls, [0x348000, 0x348010, 0x348020, 0x348030])
 
-                # Inspect all 6 emitted OAM entries (slots 0..5 = Crank, Head, Body, HornBot, HornTop, HornNeck)
                 oam = [
                     (
                         cpu.read(0x7E0800 + i * 4 + 0, 1),
@@ -359,16 +382,7 @@ class WindmillGuyCompiledTests(unittest.TestCase):
                         cpu.read(0x7E0800 + i * 4 + 3, 1),
                         cpu.read(0x7E0A20 + i, 1),
                     )
-                    for i in range(6)
-                ]
-                dy_h = 0 if (frame & 1) == 0 else 1
-                expected = [
-                    ((128 - 5) & 0xFF, (96 + expected_crank_y) & 0xFF, 0xFF, expected_crank_prop, 0x00),
-                    (128, (96 + expected_dy_head) & 0xFF, 0xE8, 0x2B, 0x02),
-                    (128, 96, 0xEA, 0x2B, 0x02),
-                    (128 + 12, (96 - 15 + dy_h) & 0xFF, 0xEF, 0x2D, 0x00),
-                    (128 + 12, (96 - 23 + dy_h) & 0xFF, 0xDF, 0x2D, 0x00),
-                    (128 + 4, (96 - 20 + dy_h) & 0xFF, 0xCF, 0x2D, 0x00),
+                    for i in range(len(expected))
                 ]
                 self.assertEqual(oam, expected)
 
@@ -411,11 +425,15 @@ class WindmillDualArchAndShieldContractsTests(unittest.TestCase):
         self.assertIn((0x0139, 0x0138), pairs)  # $0362 -> neighbor $0FE9
 
     def test_source_sheets_have_valid_pixel_budgets_and_zero_sword_bleed(self) -> None:
-        # Sheet $38: all 12 Guru-Guru tiles non-empty
+        # Sheet $38: all 12 authentic GBC Guru-Guru tiles non-empty and strictly 3-color GBC ({0,4,5,7})
         g38 = sc.text_to_grid((ROOT / "Data/graphics/spr38.txt").read_text(encoding="utf-8"))
+        used_guru = set()
         for t in (0x0F, 0x1F, 0x2F, 0x3F, 0x28, 0x29, 0x38, 0x39, 0x2A, 0x2B, 0x3A, 0x3B):
             tx, ty = (t % 16) * 8, (t // 16) * 8
-            self.assertTrue(any(g38[ty + y][tx + x] for y in range(8) for x in range(8)), f"spr38 tile ${t:02X} empty")
+            tile_vals = {g38[ty + y][tx + x] for y in range(8) for x in range(8)}
+            self.assertTrue(tile_vals - {0}, f"spr38 tile ${t:02X} empty")
+            used_guru.update(tile_vals)
+        self.assertEqual(used_guru, {0, 4, 5, 7})
 
         # Sheet $5F: L1 ($04-$09/$14-$19) and L2 ($0A-$0F/$1A-$1F) MUST NOT use 3bpp 1/2/3 (Sword colors!)
         g5f = sc.text_to_grid((ROOT / "Data/graphics/spr5f.txt").read_text(encoding="utf-8"))

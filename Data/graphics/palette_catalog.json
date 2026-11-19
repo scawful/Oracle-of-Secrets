@@ -54,18 +54,18 @@
       "index": 3,
       "world": "shared",
       "use": "mixed",
-      "description": "Seven colors (C1..C7) for OBJ5 or OBJ6, selected by room or area paletteset. In House paletteset $05 (Room $00C9 Windmill), PALSPR1=$03 binds this row to OBJ5 with peach skin (#F7A56B), oak wood (#AD5A21), gold brass (#F7DE42), deep green tunic (#009C39), white eyes (#FFFFFF), and outline (#292929).",
+      "description": "Seven colors (C1..C7) for OBJ5 or OBJ6, selected by room or area paletteset. In House paletteset $05 (Room $00C9 Windmill), PALSPR1=$03 binds this row to OBJ5, matching authentic GBC Oracle of Seasons standardSpritePaletteData[0] with bold outline (#292929), Oracle green (#009C39), and warm peach skin (#F7A56B).",
       "provenance": "Native Palettes_Load_SpriteAux1 $1B:ECC5 reads $0AAD; Palettes_Load_SpriteAux2 $1B:ECE4 reads $0AAE. Both use PaletteData_spriteaux_00 at PC $0DD4E0 + index * 14. Core/tables.asm UnderworldPaletteSets[$05] = $04,$04,$03,$0A.",
       "ownership": "rom",
       "usages": [
         {
-          "name": "Windmill Guy (Guru-Guru) body & music box",
-          "context": "Sprite $B2 inside Room $00C9 (Eon Abyss Windmill, spriteset 34 / paletteset $05). Uses OBJ5 ($2B/$AB) for head, green tunic, wooden music box, and rotating crank.",
+          "name": "Windmill Guy (GBC Oracle of Seasons Guru-Guru)",
+          "context": "Sprite $B2 inside Room $00C9 (Eon Abyss Windmill, spriteset 34 / paletteset $05). Uses OBJ5 ($2B) exclusively for authentic 3-color GBC spr_guruguru frames 4d10d & 4d11e.",
           "obj_row": 5,
           "sprite_sheets": [
             56
           ],
-          "source": "Sprites/NPCs/windmill_guy.asm Sprite_WindmillGuy_Draw; pixel source Data/graphics/spr38.txt via Data/graphics/source_sprite_sheets.json (sprite $38 / global $AB, blank tiles $28-$2B/$38-$3B/$3F -> VRAM $E8/$EA/$FF).",
+          "source": "Sprites/NPCs/windmill_guy.asm Sprite_WindmillGuy_Draw; pixel source Data/graphics/spr38.txt via Data/graphics/source_sprite_sheets.json (sprite $38 / global $AB, blank tiles $0F/$1F/$2F/$3F/$28-$2B/$38-$3B -> VRAM $CF/$DF/$EF/$FF/$E8/$EA).",
           "use": "npcs"
         }
       ]
@@ -215,26 +215,15 @@
     },
     {
       "key": "oracle.actors.aux3.0a",
-      "name": "Actor half-row 0A (Windmill Guy Horn OBJ6)",
+      "name": "Actor half-row 0A (House OBJ6)",
       "group": "sprites_aux3",
       "index": 10,
       "world": "shared",
       "use": "npcs",
-      "description": "Seven colors (C1..C7) for OBJ5 or OBJ6. In House paletteset $05 (Room $00C9 Windmill), PALSPR2=$0A binds this row to OBJ6 with gleaming white (#FFFFFF), pewter silver (#D6C6BD), shaded metal (#8C6352), antique brass (#9C8C18/#D6C642), and outline (#292929).",
+      "description": "Seven colors (C1..C7) for OBJ5 or OBJ6. In House paletteset $05 (Room $00C9 Windmill), PALSPR2=$0A binds this row to OBJ6 with white (#FFFFFF), pewter (#D6C6BD), warm brown (#8C6352), antique gold (#9C8C18/#D6C642), and outline (#292929).",
       "provenance": "Native Palettes_Load_SpriteAux2 $1B:ECE4 reads $0AAE; PaletteData_spriteaux_00 at PC $0DD4E0 + 10 * 14. Core/tables.asm UnderworldPaletteSets[$05] = $04,$04,$03,$0A.",
       "ownership": "rom",
-      "usages": [
-        {
-          "name": "Windmill Guy (Guru-Guru) gramophone horn",
-          "context": "Sprite $B2 inside Room $00C9 (spriteset 34 / paletteset $05). Uses OBJ6 ($2D) for the 3-tile curved pewter gramophone horn.",
-          "obj_row": 6,
-          "sprite_sheets": [
-            56
-          ],
-          "source": "Sprites/NPCs/windmill_guy.asm Sprite_WindmillGuy_Draw; Data/graphics/spr38.txt blank tiles $0F/$1F/$2F (-> VRAM $CF/$DF/$EF).",
-          "use": "npcs"
-        }
-      ]
+      "usages": []
     },
     {
       "key": "oracle.link.blue_mail",

@@ -44,7 +44,7 @@
       "source": "spr38.txt",
       "base_sha256": "ab0f303a1dd42e1ab42e5a6cf1857067c3b5a0698f4c5d8f5a938b518bbebc5a",
       "identity": false,
-      "why": "Windmill Guy ($B2) Guru-Guru 2-frame NPC art in blank tiles $0F/$1F/$2F/$3F/$28-$2B/$38-$3B of Room $00C9 sheet $38; all 52 existing tiles preserved."
+      "why": "Windmill Guy ($B2) authentic GBC Oracle of Seasons spr_guruguru (4d10d/4d11e) in blank tiles $0F/$1F/$2F/$3F/$28-$2B/$38-$3B of Room $00C9 sheet $38; all 52 existing tiles preserved."
     },
     {
       "sprite_sheet": "0x5F",

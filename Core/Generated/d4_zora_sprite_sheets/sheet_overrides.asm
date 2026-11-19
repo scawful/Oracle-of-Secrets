@@ -124,7 +124,7 @@ org $23FE82 ; @hook module=Core kind=data protected_size=1
   db $DE
 org $23FF82 ; @hook module=Core kind=data protected_size=1
   db $68
-; Sprite $38, global $AB: Windmill Guy ($B2) Guru-Guru 2-frame NPC art in blank tiles $0F/$1F/$2F/$3F/$28-$2B/$38-$3B of Room $00C9 sheet $38; all 52 existing tiles preserved.
+; Sprite $38, global $AB: Windmill Guy ($B2) authentic GBC Oracle of Seasons spr_guruguru (4d10d/4d11e) in blank tiles $0F/$1F/$2F/$3F/$28-$2B/$38-$3B of Room $00C9 sheet $38; all 52 existing tiles preserved.
 org $23FDAB ; @hook module=Core kind=data protected_size=1
   db $C0
 org $23FEAB ; @hook module=Core kind=data protected_size=1
@@ -137,14 +137,14 @@ org $23FDD2 ; @hook module=Core kind=data protected_size=1
 org $23FED2 ; @hook module=Core kind=data protected_size=1
   db $E8
 org $23FFD2 ; @hook module=Core kind=data protected_size=1
-  db $5D
+  db $40
 ; Sprite $5C, global $CF: GBC-style Shield Trilogy item receipt icons ($0F/$1F L1/L2 pickup, $24-$25/$34-$35 L3 Oracle Mirror pickup); all non-shield tiles preserved.
 org $23FDCF ; @hook module=Core kind=data protected_size=1
   db $C0
 org $23FECF ; @hook module=Core kind=data protected_size=1
   db $EC
 org $23FFCF ; @hook module=Core kind=data protected_size=1
-  db $53
+  db $36
 ; Global $E3 (sprite-relative $70): Kalyxo Docks ordinary 3bpp background; shared Secret Beach LOW deck sheet.
 org $23FDE3 ; @hook module=Core kind=data protected_size=1
   db $C7

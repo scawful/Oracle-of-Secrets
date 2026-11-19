@@ -23,18 +23,18 @@
 ;
 ; GRAPHICS / PALETTES:
 ;   Room $00C9 uses spriteset $22 (34) -> slot 3 loads Sheet $38 (VRAM $C0..$FF).
-;   Guru-Guru occupies the 12 blank tiles of Sheet $38 via Data/graphics/spr38.txt:
-;     $E8 ($28/$29/$38/$39): Head/ears/eyes/beard/collar (16x16, OBJ5 $2B)
-;     $EA ($2A/$2B/$3A/$3B): Tunic/wooden music box/feet (16x16, OBJ5 $2B)
-;     $CF/$DF/$EF ($0F/$1F/$2F): Pewter gramophone horn (3x 8x8, OBJ6 $2D)
-;     $FF ($3F): Music box crank + left hand (8x8, OBJ5 $2B / Frame 1 V-flip $AB)
+;   Authentic GBC Oracle of Seasons spr_guruguru (frames 4d10d & 4d11e) occupies
+;   the 12 blank tiles of Sheet $38 via Data/graphics/spr38.txt (OBJ5 $2B only):
+;     Frame 0 (4d10d, 16x24, 3 tiles): $CF/$DF (horn 16x8), $E8 (body 16x16)
+;     Frame 1 (4d11e, 16x25, 4 tiles): $CF backmost (+2,-9 horn cap),
+;                                      $EF/$FF (horn 16x8), $EA (body 16x16)
 ; =========================================================
 
 ; Shared vanilla symbol referenced by Overworld/richard_quest.asm & Sprites/NPCs/ranch_girl.asm.
 SpriteDraw_RaceGameLady =  $1AF92C
 
 !SPRID              = Sprite_WindmillGuy
-!NbrTiles           = 06 ; 6 body/horn/crank tiles + 1 shadow = 7 OAM slots (zero-based)
+!NbrTiles           = 04 ; Max 4 body/horn tiles (Frame 1) + 1 shadow = 5 OAM slots (zero-based)
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -99,7 +99,7 @@ Sprite_WindmillGuy_Draw:
   LDA.w .start_index, Y : STA.b $06
 
   PHX
-  LDX.b #$05 ; 6 tiles per frame (indices 5..0 -> OAM slots 0..5)
+  LDA.w .nbr_of_tiles, Y : TAX
   LDY.b #$00
   .nextTile
     PHX
@@ -136,31 +136,33 @@ Sprite_WindmillGuy_Draw:
   RTS
 
   .start_index
-  db $00, $06
+  db $00, $03
+  .nbr_of_tiles
+  db $02, $03 ; Frame 0: 3 tiles (4d10d); Frame 1: 4 tiles (4d11e, exact 16x25)
 
-  ; Order per frame (index 5 drawn to OAM slot 0 frontmost, index 0 backmost):
-  ;   0: Horn neck ($CF)  1: Horn top ($DF)   2: Horn bot ($EF)
-  ;   3: Body/Box ($EA)   4: Head ($E8)       5: Crank ($FF)
+  ; Order per frame (highest index drawn to OAM slot 0 frontmost, index 0 backmost):
+  ;   Frame 0 (3 tiles): 0=$CF horn L, 1=$DF horn R, 2=$E8 body 16x16
+  ;   Frame 1 (4 tiles): 0=$CF backmost T07 cap (+2,-9), 1=$EF horn L, 2=$FF horn R, 3=$EA body 16x16
   .x_offsets
-  dw 4, 12, 12, 0, 0, -5      ; Frame 0: Idle / Crank Up
-  dw 4, 12, 12, 0, 0, -5      ; Frame 1: Crank Down + Nod
+  dw 0, 8, 0            ; Frame 0 (OoS 4d10d)
+  dw 2, 0, 8, 0         ; Frame 1 (OoS 4d11e)
 
   .y_offsets
-  dw -20, -23, -15, 0, -13, 2 ; Frame 0
-  dw -19, -22, -14, 0, -12, 4 ; Frame 1
+  dw -8, -8, 0          ; Frame 0
+  dw -9, -8, -8, 0      ; Frame 1
 
   .chr
-  db $CF, $DF, $EF, $EA, $E8, $FF
-  db $CF, $DF, $EF, $EA, $E8, $FF
+  db $CF, $DF, $E8
+  db $CF, $EF, $FF, $EA
 
-  ; Priority 2 ($20) + OBJ page 1 ($01): OBJ5 = $2B ($AB V-flip), OBJ6 = $2D
+  ; Priority 2 ($20) + OBJ5 ($0A) + OBJ page 1 ($01) = $2B (single GBC palette row)
   .properties
-  db $2D, $2D, $2D, $2B, $2B, $2B
-  db $2D, $2D, $2D, $2B, $2B, $AB
+  db $2B, $2B, $2B
+  db $2B, $2B, $2B, $2B
 
   .sizes
-  db $00, $00, $00, $02, $02, $00
-  db $00, $00, $00, $02, $02, $00
+  db $00, $00, $02
+  db $00, $00, $00, $02
 }
 
 Sprite_WindmillGuy_Prep:
@@ -171,7 +173,7 @@ Sprite_WindmillGuy_Prep:
 Sprite_WindmillGuy_Main:
 {
   JSL Sprite_PlayerCantPassThrough
-  %PlayAnimation(0, 1, 16)
+  %PlayAnimation(0, 1, 12)
 
   LDA.l $7EF34C : CMP.b #$01 : BCC .no_ocarina
                   CMP.b #$02 : BCC .need_healing
