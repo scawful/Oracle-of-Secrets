@@ -1179,10 +1179,10 @@ class TestQ323GustJarAndGaroGlide(unittest.TestCase):
         # + custom Minish Cap mouth sheen ($1A L/R, $19 Down)
         # + ZERO recycled Small Magic Jar ($72) or Portal Rod ($EE) tiles!
         dir_expect = [
-            (0, "B", 0x60 + 0, 0x60 - 9, 0x00, None),   # Up: behind Link in Region B, no H-flip
-            (2, "C", 0x60 + 0, 0x60 + 13, 0x00, 0x19),  # Down: top-priority in Region C, $19 curl sheen
-            (4, "C", 0x60 - 9, 0x60 + 6, 0x40, 0x1A),   # Left: top-priority in Region C, H-flipped, $1A sheen
-            (6, "C", 0x60 + 9, 0x60 + 6, 0x00, 0x1A),   # Right: top-priority in Region C, no H-flip, $1A sheen
+            (0, "B", 0x60 + 0, 0x60 - 11, 0x00, None),   # Up: behind Link in Region B, no H-flip
+            (2, "C", 0x60 + 0, 0x60 + 15, 0x00, 0x19),   # Down: top-priority in Region C, $19 curl sheen
+            (4, "C", 0x60 - 12, 0x60 + 8, 0x40, 0x1A),   # Left: held clear of face, H-flipped, $1A sheen
+            (6, "C", 0x60 + 12, 0x60 + 8, 0x00, 0x1A),   # Right: held clear of face, no H-flip, $1A sheen
         ]
         for facing, exp_reg, exp_x, exp_y, exp_hflip, exp_mouth in dir_expect:
             with self.subTest(facing=facing):
@@ -1211,18 +1211,19 @@ class TestQ323GustJarAndGaroGlide(unittest.TestCase):
                     self.assertEqual(reg_sprites[0][3], exp_mouth, "Expected custom Minish Cap nozzle sheen")
                     self.assertEqual(reg_sprites[0][5], 0x00, "Mouth sheen slot 0 must be 8x8 ($00)")
 
-        # Verify smooth left-edge clipping when facing Left at LinkScreenX=4 (jar_sx = -5 -> hi=$03!)
+        # Verify smooth left-edge clipping when facing Left at LinkScreenX=4 (jar_sx = 4 - 12 = -8 -> $F8, hi=$03!)
         fx_edge = self.make_fx()
         self._start_gust(fx_edge, button=1, facing=4)
-        fx_edge.set_word(0xE2, 0x00FC)  # LinkX=0x100 -> screenX=4, jar_sx = 4 - 9 = -5 ($FB)
+        fx_edge.set_word(0xE2, 0x00FC)  # LinkX=0x100 -> screenX=4, jar_sx = 4 - 12 = -8 ($F8)
         fx_edge.reset_oam_frame()
         fx_edge.run_jsl("GustJar_FrameTick")
         fx_edge.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
         jar_edge = [s for s in fx_edge.read_oam_sprites("C") if s[3] == 0x07][0]
-        self.assertEqual(jar_edge[1], 0xFB)
+        self.assertEqual(jar_edge[1], 0xF8)
         self.assertEqual(jar_edge[5], 0x03, "Left-edge overhang must use 16x16 + X-msb=1 ($03)")
 
-        # Verify Tier 3 rapid +/-1px tremble AND Pal 4 <-> Pal 2 pulsing glow
+        # Verify Tier 3 / Full holds the swollen jar 2px further forward (Right: 0x60+12+2 = 0x6E)
+        # + rapid +/-1px tremble AND Pal 4 <-> Pal 2 pulsing glow
         fx = self.make_fx()
         self._start_gust(fx, button=1, facing=6)
         fx.put(0x0275, 0x40)  # Tier 3 charge
@@ -1233,9 +1234,10 @@ class TestQ323GustJarAndGaroGlide(unittest.TestCase):
             fx.run_jsl("GustJar_FrameTick")
             fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)
             jar = [s for s in fx.read_oam_sprites("C") if s[3] == 0x07][0]
+            self.assertEqual(jar[1], 0x60 + 14, "Full/swollen jar must shift +2px further out of Link's face")
             ys_seen.add(jar[2])
             pals_seen.add(jar[4] & 0x0E)
-        self.assertEqual(ys_seen, {0x60 + 6 - 1, 0x60 + 6 + 1}, "Tier 3 must rumble +/-1px on Y when facing Right")
+        self.assertEqual(ys_seen, {0x60 + 8 - 1, 0x60 + 8 + 1}, "Tier 3 must rumble +/-1px on Y when facing Right")
         self.assertEqual(pals_seen, {0x04, 0x08}, "Tier 3 must pulse between Pal 4 (emerald) and Pal 2 (wind glow)")
 
         # Verify Blast Peak 2px recoil kickback + Pal 2 flash + muzzle burst ($A9)
@@ -1247,7 +1249,7 @@ class TestQ323GustJarAndGaroGlide(unittest.TestCase):
         fx.run_jsl("GustJar_LinkPoseOamHook", y=0x00, db=0x0D)  # renders frame-0 recoil + wave!
         jar_f0 = [s for s in fx.read_oam_sprites("C") if s[3] == 0x07]
         self.assertEqual(len(jar_f0), 1, "Frame-0 release must draw held jar ($07) without 1-frame blink")
-        self.assertEqual(jar_f0[0][1], 0x60 + 9 - 2, "Blast peak must kick jar 2px back toward Link")
+        self.assertEqual(jar_f0[0][1], 0x60 + 12 - 2, "Blast peak must kick jar 2px back toward Link")
         self.assertEqual(jar_f0[0][4] & 0x0E, 0x04, "Blast peak must flash Pal 2")
         self.assertEqual(jar_f0[0][5], 0x02, "Held jar stays 16x16 during blast peak")
         self.assertEqual(fx.read_oam_sprites("C")[0][3], 0xA9, "Blast peak must emit $A9 muzzle burst")

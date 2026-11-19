@@ -1559,7 +1559,15 @@ GustJar_DrawHeldJar:
     BRA .chk_clip
 
   .inhale_jit
-  JSR GustJar_IsHighCharge : BCS .fast_jit
+  JSR GustJar_IsHighCharge : BCC .not_full_push
+    ; Hold the swollen/primed jar 2px further forward at arm's length so it
+    ; stays completely clear of Link's face while braced to unleash.
+    REP #$20
+    LDA.b $00 : CLC : ADC.w .full_dx, X : STA.b $00
+    LDA.b $02 : CLC : ADC.w .full_dy, X : STA.b $02
+    SEP #$20
+    BRA .fast_jit
+  .not_full_push
   LDA.w !GustJarTier : CMP.b #$02 : BCC .chk_clip
     LDA.b $1A : AND.b #$04 : BEQ .chk_clip
     LDA.b #$01 : BRA .apply_jit
@@ -1697,8 +1705,10 @@ GustJar_DrawHeldJar:
   RTS
 
   ; Indexed by !GustJarDir (0=U, 2=D, 4=L, 6=R).
-  .jar_dx   : dw   0,   0,  -9,   9
-  .jar_dy   : dw  -9,  13,   6,   6
+  .jar_dx   : dw   0,   0, -12,  12
+  .jar_dy   : dw -11,  15,   8,   8
+  .full_dx  : dw   0,   0,  -2,   2
+  .full_dy  : dw  -2,   2,   0,   0
   .kick_dx  : dw   0,   0,   2,  -2
   .kick_dy  : dw   2,  -2,   0,   0
   .mouth_dx : dw   0,   4,  -2,  10
