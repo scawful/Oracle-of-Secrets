@@ -42,22 +42,33 @@
       "index": 1,
       "world": "dark_world",
       "use": "mixed",
-      "description": "Four shared OBJ rows (1-4), selected by world state. Light World actor bindings are not automatically valid here.",
+      "description": "Four shared OBJ rows (1-4), selected by world state ($8A bit $40). Light World actor bindings are not automatically valid here.",
       "provenance": "Native Palettes_Load_SpriteMain $1B:ECA2-$1B:ECB2 selects the alternate bank with $8A bit $40; Yaze global_sprites[1], PC $0DD290. Oracle source e0748350; Yaze palette_constants.h at 9aa6b639; source review 2026-10-16.",
       "ownership": "rom",
       "usages": []
     },
     {
       "key": "oracle.actors.aux3.03",
-      "name": "Actor half-row 03",
+      "name": "Actor half-row 03 (Windmill Guy OBJ5)",
       "group": "sprites_aux3",
       "index": 3,
       "world": "shared",
       "use": "mixed",
-      "description": "Seven colors for OBJ5 or OBJ6, selected by context. The disassembly names aux1 and aux2 both refer to this Yaze group; this is not sprites_aux1.",
-      "provenance": "Native Palettes_Load_SpriteAux1 $1B:ECC5 reads $0AAD; Palettes_Load_SpriteAux2 $1B:ECE4 reads $0AAE. Both use PaletteData_spriteaux_00 at PC $0DD4E0 + index * 14. Yaze room.cc BuildDungeonSpriteRenderPalette maps paletteset bytes 2 and 3 to sprites_aux3. Oracle source e0748350; Yaze palette_constants.h at 9aa6b639; source review 2026-10-16.",
+      "description": "Seven colors (C1..C7) for OBJ5 or OBJ6, selected by room or area paletteset. In House paletteset $05 (Room $00C9 Windmill), PALSPR1=$03 binds this row to OBJ5 with peach skin (#F7A56B), oak wood (#AD5A21), gold brass (#F7DE42), deep green tunic (#009C39), white eyes (#FFFFFF), and outline (#292929).",
+      "provenance": "Native Palettes_Load_SpriteAux1 $1B:ECC5 reads $0AAD; Palettes_Load_SpriteAux2 $1B:ECE4 reads $0AAE. Both use PaletteData_spriteaux_00 at PC $0DD4E0 + index * 14. Core/tables.asm UnderworldPaletteSets[$05] = $04,$04,$03,$0A.",
       "ownership": "rom",
-      "usages": []
+      "usages": [
+        {
+          "name": "Windmill Guy (Guru-Guru) body & music box",
+          "context": "Sprite $B2 inside Room $00C9 (Eon Abyss Windmill, spriteset 34 / paletteset $05). Uses OBJ5 ($2B/$AB) for head, green tunic, wooden music box, and rotating crank.",
+          "obj_row": 5,
+          "sprite_sheets": [
+            56
+          ],
+          "source": "Sprites/NPCs/windmill_guy.asm Sprite_WindmillGuy_Draw; pixel source Data/graphics/spr38.txt via Data/graphics/source_sprite_sheets.json (sprite $38 / global $AB, blank tiles $28-$2B/$38-$3B/$3F -> VRAM $E8/$EA/$FF).",
+          "use": "npcs"
+        }
+      ]
     },
     {
       "key": "oracle.actors.aux3.05",
@@ -102,10 +113,21 @@
       "index": 0,
       "world": "shared",
       "use": "hud",
-      "description": "The main HUD palette. Some colors are supplied by ASM: Menu/menu_palette.asm writes $1BD662 and $1BD66A. Other colors remain in the edit ROM.",
-      "provenance": "Yaze PaletteMetadata::kHud, PC $0DD660; Oracle Menu/menu_palette.asm org $1BD662 and org $1BD66A. Oracle source e0748350; Yaze palette_constants.h at 9aa6b639; source review 2026-10-16.",
+      "description": "Main 2bpp HUD/Menu palette bank (rows 0-7). Menu/menu_palette.asm overrides rows 0-5 ($1BD662-$1BD68E): Pal 5 ($34xx, wood/gold) draws L1 Wooden Shield, Pal 4 ($30xx, steel/silver) draws L2 Iron/Kite Shield, and Pal 3 ($2Cxx, blue/white) draws L3 Oracle Mirror Shield.",
+      "provenance": "Yaze PaletteMetadata::kHud, PC $0DD660; Oracle Menu/menu_palette.asm org $1BD662..$1BD68A; Menu/menu_gfx_table.asm ShieldGFX; Data/graphics/menu_icons.json shield_tiles.",
       "ownership": "asm",
-      "usages": []
+      "usages": [
+        {
+          "name": "Menu/HUD GBC Shield Trilogy",
+          "context": "2bpp HUD sheet $6B tiles $0FD/$0FE (L1 Pal 5), $0FF/$09F (L2 Pal 4), $080/$081/$08D/$08E (L3 Pal 3).",
+          "obj_row": 0,
+          "sprite_sheets": [
+            107
+          ],
+          "source": "Menu/menu_gfx_table.asm ShieldGFX + Data/graphics/menu_icons.json shield_tiles (items/gbc_shields.2bpp -> HUD sheet $6B).",
+          "use": "hud"
+        }
+      ]
     },
     {
       "key": "oracle.map.dark_world",
@@ -117,6 +139,313 @@
       "description": "All 128 map colors are replaced from dw_palette.bin during the build. This is source metadata; it does not grant a write permission or replace the hack manifest.",
       "provenance": "Yaze PaletteMetadata::kOverworldMiniMap, PC $055C27; Oracle Overworld/world_map.asm org $0ADC27 and incbin dw_palette.bin. Oracle source e0748350; Yaze palette_constants.h at 9aa6b639; source review 2026-10-16.",
       "ownership": "asm",
+      "usages": []
+    },
+    {
+      "key": "oracle.shields.wooden",
+      "name": "GBC Wooden Shield (L1, SP5 C12-C15)",
+      "group": "shields",
+      "index": 0,
+      "world": "shared",
+      "use": "link_items",
+      "description": "Level 1 GBC Wooden Shield palette loaded into OAM SP5 C12..C15 ($01B8): C12=$379F (#F8E068 golden-brass rim/boss), C13=$0865 (#281810 umber outline), C14=$15F9 (#C87828 warm oak), C15=$08EF (#783810 walnut grain). Uses 3bpp indices 4..7 only (zero sword-color bleed).",
+      "provenance": "Items/mirror_shield_palette.asm org $1BD648 (PaletteData_ShieldWooden, PC $0DD648); Palettes_Load_Shield $1B:ED29; RefreshLinkEquipmentPalettes $0E:D6E8.",
+      "ownership": "asm",
+      "usages": [
+        {
+          "name": "Equipped L1 Wooden Shield & pickup icon",
+          "context": "Link Down/Up/Left/Right shield tiles ($04-$09/$14-$19 on sheet $5F) and item receipt ($0F/$1F on sheet $5C), mapped via Do3To4RightPal into SP5 C12..C15.",
+          "obj_row": 5,
+          "sprite_sheets": [
+            95,
+            92
+          ],
+          "source": "Data/graphics/spr5f.txt & Data/graphics/spr5c.txt via Data/graphics/source_sprite_sheets.json; Items/mirror_shield_palette.asm org $1BD648.",
+          "use": "link_items"
+        }
+      ]
+    },
+    {
+      "key": "oracle.shields.iron_kite",
+      "name": "GBC Iron / Kite Shield (L2, SP5 C12-C15)",
+      "group": "shields",
+      "index": 1,
+      "world": "shared",
+      "use": "link_items",
+      "description": "Level 2 GBC Iron / Kite Shield palette loaded into OAM SP5 C12..C15 ($01B8): C12=$7BDE (#F0F0F8 silver bevel/crest), C13=$1CA4 (#202838 navy-steel outline), C14=$6ECE (#70B0DC steely-blue face), C15=$4947 (#385090 iron-slate shadow). Uses 3bpp indices 4..7 only (eliminating vanilla Fire Shield sword-color bleed).",
+      "provenance": "Items/mirror_shield_palette.asm org $1BD650 (PaletteData_ShieldIronKite, PC $0DD650); Palettes_Load_Shield $1B:ED29; RefreshLinkEquipmentPalettes $0E:D6E8.",
+      "ownership": "asm",
+      "usages": [
+        {
+          "name": "Equipped L2 Iron / Kite Shield & pickup icon",
+          "context": "Link Down/Up/Left/Right shield tiles ($0A-$0F/$1A-$1F on sheet $5F) and item receipt ($0F/$1F on sheet $5C), mapped via Do3To4RightPal into SP5 C12..C15.",
+          "obj_row": 5,
+          "sprite_sheets": [
+            95,
+            92
+          ],
+          "source": "Data/graphics/spr5f.txt & Data/graphics/spr5c.txt via Data/graphics/source_sprite_sheets.json; Items/mirror_shield_palette.asm org $1BD650.",
+          "use": "link_items"
+        }
+      ]
+    },
+    {
+      "key": "oracle.shields.mirror_option_d",
+      "name": "GBC Oracle Mirror Shield (L3, SP5 C12-C15 + SP5[8])",
+      "group": "shields",
+      "index": 2,
+      "world": "shared",
+      "use": "link_items",
+      "description": "Level 3 Oracle Mirror Shield 5-color Option D palette: SP5 C12..C15 ($1BD658: $373C gold bezel, $18A5 cool outline, $7FFE white specular, $5589 deep blue-steel) PLUS free OAM SP5 Color 8 ($01B0 -> PALB_SPR5B $7EC4B0 / PAL_SPR5B $7EC6B0 = $7B13 #98C0F0 cool steel highlight), with day/night tinting and WRAM bp1&=bp2 remap preserving Master Sword C9..C11.",
+      "provenance": "Items/mirror_shield_palette.asm org $1BD658, $1BED4A, $0ED73C, $00D333, $00D510, $00D533 (PC $0DD658).",
+      "ownership": "asm",
+      "usages": [
+        {
+          "name": "Equipped L3 Oracle Mirror Shield & pickup icon",
+          "context": "Link Down/Up/Left/Right shield tiles ($20-$25/$30-$35 on sheet $5F) and pickup $2E ($24-$25/$34-$35 on sheet $5C). Front/pickup 3bpp index 2 remaps from C10 -> SP5[8] ($7B13).",
+          "obj_row": 5,
+          "sprite_sheets": [
+            95,
+            92
+          ],
+          "source": "Items/mirror_shield_palette.asm + Data/graphics/spr5f.txt & Data/graphics/spr5c.txt via Data/graphics/source_sprite_sheets.json.",
+          "use": "link_items"
+        }
+      ]
+    },
+    {
+      "key": "oracle.actors.aux3.0a",
+      "name": "Actor half-row 0A (Windmill Guy Horn OBJ6)",
+      "group": "sprites_aux3",
+      "index": 10,
+      "world": "shared",
+      "use": "npcs",
+      "description": "Seven colors (C1..C7) for OBJ5 or OBJ6. In House paletteset $05 (Room $00C9 Windmill), PALSPR2=$0A binds this row to OBJ6 with gleaming white (#FFFFFF), pewter silver (#D6C6BD), shaded metal (#8C6352), antique brass (#9C8C18/#D6C642), and outline (#292929).",
+      "provenance": "Native Palettes_Load_SpriteAux2 $1B:ECE4 reads $0AAE; PaletteData_spriteaux_00 at PC $0DD4E0 + 10 * 14. Core/tables.asm UnderworldPaletteSets[$05] = $04,$04,$03,$0A.",
+      "ownership": "rom",
+      "usages": [
+        {
+          "name": "Windmill Guy (Guru-Guru) gramophone horn",
+          "context": "Sprite $B2 inside Room $00C9 (spriteset 34 / paletteset $05). Uses OBJ6 ($2D) for the 3-tile curved pewter gramophone horn.",
+          "obj_row": 6,
+          "sprite_sheets": [
+            56
+          ],
+          "source": "Sprites/NPCs/windmill_guy.asm Sprite_WindmillGuy_Draw; Data/graphics/spr38.txt blank tiles $0F/$1F/$2F (-> VRAM $CF/$DF/$EF).",
+          "use": "npcs"
+        }
+      ]
+    },
+    {
+      "key": "oracle.link.blue_mail",
+      "name": "Link blue mail",
+      "group": "armors",
+      "index": 1,
+      "world": "shared",
+      "use": "link_items",
+      "description": "Link OBJ7 colors for Blue Mail tunic (15 colors, C1..C15). Shield contrast checked against this row.",
+      "provenance": "Yaze PaletteMetadata::kArmor index 1, PC $0DD326; native RefreshLinkEquipmentPalettes $0E:D6E8.",
+      "ownership": "rom",
+      "usages": []
+    },
+    {
+      "key": "oracle.link.red_mail",
+      "name": "Link red mail",
+      "group": "armors",
+      "index": 2,
+      "world": "shared",
+      "use": "link_items",
+      "description": "Link OBJ7 colors for Red Mail tunic (15 colors, C1..C15). Shield contrast checked against this row.",
+      "provenance": "Yaze PaletteMetadata::kArmor index 2, PC $0DD344; native RefreshLinkEquipmentPalettes $0E:D6E8.",
+      "ownership": "rom",
+      "usages": []
+    },
+    {
+      "key": "oracle.swords.fighter",
+      "name": "Sword L1 (Fighter Sword, SP5 C9-C11)",
+      "group": "swords",
+      "index": 0,
+      "world": "shared",
+      "use": "link_items",
+      "description": "Level 1 sword blade colors loaded into OAM SP5 C9..C11 ($01B2). Independent of SP5[8] (Mirror Shield) and SP5 C12..C15 (Shields).",
+      "provenance": "Yaze PaletteMetadata::kSword index 0, PC $0DD630; RefreshLinkEquipmentPalettes $0E:D6F0.",
+      "ownership": "rom",
+      "usages": [
+        {
+          "name": "Equipped Fighter Sword",
+          "context": "Link sword animation tiles on sheet $5E, mapped via Do3To4RightPal into SP5 C9..C11.",
+          "obj_row": 5,
+          "sprite_sheets": [
+            94
+          ],
+          "source": "Base ROM sprite sheet $5E ($D1); DecompressSwordGraphics.",
+          "use": "link_items"
+        }
+      ]
+    },
+    {
+      "key": "oracle.swords.master",
+      "name": "Sword L2 (Master Sword, SP5 C9-C11)",
+      "group": "swords",
+      "index": 1,
+      "world": "shared",
+      "use": "link_items",
+      "description": "Level 2 Master Sword colors in OAM SP5 C9..C11 ($01B2). Preserved untouched when equipping L1/L2/L3 GBC shields.",
+      "provenance": "Yaze PaletteMetadata::kSword index 1, PC $0DD636; RefreshLinkEquipmentPalettes $0E:D6F0.",
+      "ownership": "rom",
+      "usages": [
+        {
+          "name": "Equipped Master Sword",
+          "context": "Link sword animation tiles on sheet $5E, SP5 C9..C11.",
+          "obj_row": 5,
+          "sprite_sheets": [
+            94
+          ],
+          "source": "Base ROM sprite sheet $5E ($D1); DecompressSwordGraphics.",
+          "use": "link_items"
+        }
+      ]
+    },
+    {
+      "key": "oracle.swords.tempered",
+      "name": "Sword L3 (Tempered Sword, SP5 C9-C11)",
+      "group": "swords",
+      "index": 2,
+      "world": "shared",
+      "use": "link_items",
+      "description": "Level 3 Tempered Sword colors in OAM SP5 C9..C11 ($01B2).",
+      "provenance": "Yaze PaletteMetadata::kSword index 2, PC $0DD63C; RefreshLinkEquipmentPalettes $0E:D6F0.",
+      "ownership": "rom",
+      "usages": [
+        {
+          "name": "Equipped Tempered Sword",
+          "context": "Link sword animation tiles on sheet $5E, SP5 C9..C11.",
+          "obj_row": 5,
+          "sprite_sheets": [
+            94
+          ],
+          "source": "Base ROM sprite sheet $5E ($D1); DecompressSwordGraphics.",
+          "use": "link_items"
+        }
+      ]
+    },
+    {
+      "key": "oracle.swords.gold",
+      "name": "Sword L4 (Gold Sword, SP5 C9-C11)",
+      "group": "swords",
+      "index": 3,
+      "world": "shared",
+      "use": "link_items",
+      "description": "Level 4 Gold Sword colors in OAM SP5 C9..C11 ($01B2). Mirror Shield Option D remaps shield C10 -> SP5[8] specifically so this row stays untouched.",
+      "provenance": "Yaze PaletteMetadata::kSword index 3, PC $0DD642; Items/mirror_shield_palette.asm preserves C9..C11.",
+      "ownership": "rom",
+      "usages": [
+        {
+          "name": "Equipped Gold Sword",
+          "context": "Link sword animation tiles on sheet $5E, SP5 C9..C11.",
+          "obj_row": 5,
+          "sprite_sheets": [
+            94
+          ],
+          "source": "Base ROM sprite sheet $5E ($D1); DecompressSwordGraphics.",
+          "use": "link_items"
+        }
+      ]
+    },
+    {
+      "key": "oracle.actors.aux1.00",
+      "name": "Overworld SP0 (Lifted Scenery / Heavy Rock & DW Light Rock)",
+      "group": "sprites_aux1",
+      "index": 0,
+      "world": "shared",
+      "use": "environment",
+      "description": "Overworld OBJ0 / SP0 sprite palette slot. Outdoors, Overworld/liftables_palette_fix.asm dynamically syncs SP0[9..15] ($0112..$011E in $7EC300/$7EC500) from live BG2/BG5/BG6 so LW Heavy Rocks, LW Grass Poof, DW Small Light Rocks/Skulls ($020F), and DW Heavy Rocks match every biome and TimeSystem tint.",
+      "provenance": "Yaze PaletteMetadata::kSpritesAux1 index 0; Overworld/liftables_palette_fix.asm Liftables_SyncPtrs_LW & Liftables_SyncPtrs_DW (Q325).",
+      "ownership": "asm",
+      "usages": [
+        {
+          "name": "Lifted overworld rocks & grass debris (Sprite $EC)",
+          "context": "Outdoors ($1B==0): CommonSprite $01 (LW) and $0B (DW) upper-half indices 9..15 mapped onto SP0 ($00) when translucency $0ABD==0.",
+          "obj_row": 0,
+          "sprite_sheets": [
+            1,
+            11
+          ],
+          "source": "Overworld/liftables_palette_fix.asm Liftables_ResolvePaletteAndSync + Liftables_Pairs_LW_HeavyRock / DW_LightRock / DW_HeavyRock / LW_Grass.",
+          "use": "environment"
+        }
+      ]
+    },
+    {
+      "key": "oracle.actors.aux2.00",
+      "name": "Overworld Env[6..9] / SP6 (Lifted Bushes, Signs & LW Light Rocks)",
+      "group": "sprites_aux2",
+      "index": 0,
+      "world": "shared",
+      "use": "environment",
+      "description": "Overworld environment sprite palette bank (Env[6..9] loaded into OAM SP6 upper half $01D2..$01DE). Outdoors, Overworld/liftables_palette_fix.asm syncs SP6[9..15] directly from live BG2/BG4/BG5/BG6 so lifted LW/DW Bushes ($0036), Signs ($0101/$017D), and LW Light Rocks ($020F) match biome MainPal and Record-411 palettes.",
+      "provenance": "Yaze PaletteMetadata::kSpritesAux2 index 0; Overworld/liftables_palette_fix.asm Liftables_SyncPtrs_LW & Liftables_SyncPtrs_DW (Q325).",
+      "ownership": "asm",
+      "usages": [
+        {
+          "name": "Lifted overworld bushes, signs & LW light rocks (Sprite $EC)",
+          "context": "Outdoors ($1B==0): CommonSprite $01 (LW) and $0B (DW) upper-half indices 9..15 on SP6 ($0C); indoors ($1B!=0) retains vanilla Env[6..9] behavior.",
+          "obj_row": 6,
+          "sprite_sheets": [
+            1,
+            11
+          ],
+          "source": "Overworld/liftables_palette_fix.asm Liftables_Pairs_LW_Bush / LW_Sign / LW_LightRock / DW_Bush / DW_Sign.",
+          "use": "environment"
+        }
+      ]
+    },
+    {
+      "key": "oracle.overworld.main.light_world",
+      "name": "Overworld Main 00 (Kalyxo Light World BG2-BG6)",
+      "group": "ow_main",
+      "index": 0,
+      "world": "light_world",
+      "use": "environment",
+      "description": "Primary Kalyxo Light World BG terrain palettes (BG2 heavy rock, BG4 signs, BG5 light rocks, BG6 foliage/grass). Serves as live CGRAM source for Overworld/liftables_palette_fix.asm SP0/SP6 sync.",
+      "provenance": "Yaze PaletteMetadata::kOverworldMain index 0, PC $0DE6C8; Overworld/liftables_palette_fix.asm Liftables_SyncPtrs_LW.",
+      "ownership": "rom",
+      "usages": []
+    },
+    {
+      "key": "oracle.overworld.main.dark_world",
+      "name": "Overworld Main 01 (Eon Abyss Primary BG2-BG6)",
+      "group": "ow_main",
+      "index": 1,
+      "world": "dark_world",
+      "use": "environment",
+      "description": "Primary Eon Abyss / Dark World BG terrain palettes (BG2 signs/heavy skulls, BG5 sage light rocks/skulls, BG6 brown/swamp shrubs). Live CGRAM source for DW SP0/SP6 lifted-scenery separation.",
+      "provenance": "Yaze PaletteMetadata::kOverworldMain index 1, PC $0DE70E; Overworld/liftables_palette_fix.asm Liftables_SyncPtrs_DW.",
+      "ownership": "rom",
+      "usages": []
+    },
+    {
+      "key": "oracle.overworld.main.abyss_alt",
+      "name": "Overworld Main 02 (Alternate Biome / Snow & Slate BG2-BG6)",
+      "group": "ow_main",
+      "index": 2,
+      "world": "shared",
+      "use": "environment",
+      "description": "Alternate overworld biome main palette set (used on high-elevation / alternate terrain screens). Lifted rocks and bushes automatically track its live BG rows via liftables_palette_fix.asm.",
+      "provenance": "Yaze PaletteMetadata::kOverworldMain index 2, PC $0DE754; Overworld/liftables_palette_fix.asm.",
+      "ownership": "rom",
+      "usages": []
+    },
+    {
+      "key": "oracle.underworld.main.02_house",
+      "name": "Underworld Main 02 (House / Eon Windmill Interior)",
+      "group": "dungeon_main",
+      "index": 2,
+      "world": "underworld",
+      "use": "environment",
+      "description": "House interior main BG palette set (PALBG=$04 in Core/tables.asm UnderworldPaletteSets[$02/$05/$15]). In Eon Abyss ($7EF3CA != 0), Dungeons/abyss_gbc_interiors.asm replaces BG rows 2-7 in Room $00C9 (Windmill) with the GBC house tan-wood palette ($092C/$2657/$47FF).",
+      "provenance": "Yaze PaletteMetadata::kDungeonMain index 2; Core/tables.asm UnderworldPaletteSets[$05]; Dungeons/abyss_gbc_interiors.asm AbyssGbc_Pal (style house).",
+      "ownership": "rom",
       "usages": []
     }
   ]
