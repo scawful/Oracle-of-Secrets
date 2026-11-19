@@ -4,56 +4,85 @@ Menu_SoaringRequested:
 {
   SEP #$30
   LDA.w $010C : CMP.b #$0B : BNE .no
-  LDA.w $1AF0 : AND.b #$FE : CMP.b #$80 : BNE .no
+  LDA.w $1AF0 : AND.b #$F8 : CMP.b #$80 : BNE .no
   SEC : RTS
   .no
   CLC : RTS
 }
 
+; M8/X8 -> returns A = max selectable row index (5 if Sky learned, else 4).
+Menu_SoaringMaxRow:
+{
+  LDA.l SkySoaringLearned : CMP.b #!SKY_SOARING_LEARNED : BNE .no_sky
+  LDA.b #$05 : RTS
+  .no_sky
+  LDA.b #$04 : RTS
+}
+
 Menu_DrawSoaring:
 {
   JSR Menu_DrawBackground
+  ; Title (row 6, col 8)
   LDX.w #$001C
   .title
   LDA.w .title_text,X : STA.w $1000+menu_offset(6,8),X
   DEX #2 : BPL .title
-  LDX.w #$000E
-  .garrison
-  LDA.w .garrison_text,X : STA.w $1000+menu_offset(11,10),X
-  DEX #2 : BPL .garrison
-  SEP #$30
-  LDA.l SkySoaringLearned : CMP.b #!SKY_SOARING_LEARNED : BNE .locked
-  REP #$30
-  LDX.w #$0004
-  .sky
-  LDA.w .sky_text,X : STA.w $1000+menu_offset(15,10),X
-  DEX #2 : BPL .sky
-  BRA .prompt
-  .locked
-  LDA.b #$80 : STA.w $1AF0
-  REP #$30
-  .prompt
+
+  ; Prompt (row 22, col 9)
   LDX.w #$001A
   .prompt_text
-  LDA.w .prompt_labels,X : STA.w $1000+menu_offset(21,7),X
+  LDA.w .prompt_labels,X : STA.w $1000+menu_offset(22,9),X
   DEX #2 : BPL .prompt_text
+
+  ; Determine visible row count and clamp cursor if Sky is locked.
   SEP #$30
-  LDA.w $1AF0 : AND.b #$01 : BEQ .first
+  JSR Menu_SoaringMaxRow : STA.b $00
+  LDA.w $1AF0 : AND.b #$07
+  CMP.b $00 : BCC .cursor_ok : BEQ .cursor_ok
+    LDA.b #$80 : STA.w $1AF0
+  .cursor_ok
+
+  ; Stream-draw destination rows 0..$00 at rows 10, 12, 14, 16, 18, [20].
+  ; Each entry in .rows is [byte_len, word chars...]; row stride is $0080 (2 rows).
   REP #$30
-  LDX.w #menu_offset(15,7) : BRA .cursor
-  .first
+  LDA.w #.rows : STA.b $04
+  LDA.w #menu_offset(10,10) : STA.b $02
+  SEP #$20
+  LDA.b #$00 : STA.b $01
+  .row_loop
+    REP #$20
+    LDA ($04) : TAY
+    INC.b $04 : INC.b $04
+    LDX.b $02
+    .char_loop
+      LDA ($04) : STA.w $1000,X
+      INC.b $04 : INC.b $04
+      INX #2
+      DEY #2 : BNE .char_loop
+    LDA.b $02 : CLC : ADC.w #$0080 : STA.b $02
+    SEP #$20
+    LDA.b $01 : CMP.b $00 : BEQ .draw_cursor
+    INC : STA.b $01
+    BRA .row_loop
+
+  .draw_cursor
+  LDA.w $1AF0 : AND.b #$07
   REP #$30
-  LDX.w #menu_offset(11,7)
-  .cursor
-  ; A small existing font colon marks the selected row.
+  AND.w #$00FF : XBA : LSR            ; row * $0080
+  CLC : ADC.w #menu_offset(10,7) : TAX
+  ; A small existing font colon marks the selected row (col 7).
   LDA.w #$256B : STA.w $1000,X
   RTS
+
   .title_text
   dw "SONG_OF_SOARING"
-  .garrison_text
-  dw "GARRISON"
-  .sky_text
-  dw "SKY"
+  .rows
+  dw 16 : dw "GARRISON"
+  dw 20 : dw "ZORA_COAST"
+  dw 20 : dw "DEKU_GROVE"
+  dw 22 : dw "GORON_COAST"
+  dw 24 : dw "COURAGE_ISLE"
+  dw 6  : dw "SKY"
   .prompt_labels
   dw "A:FLY___B:BACK"
 }
@@ -63,10 +92,25 @@ Menu_SpecialSoaring:
   SEP #$30
   ; Cancel has priority; closing uses the ordinary menu animation.
   LDA.b $F4 : AND.b #$90 : BNE .cancel
+  JSR Menu_SoaringMaxRow : STA.b $00
+  LDA.w $1AF0 : AND.b #$07
+  CMP.b $00 : BCC + : BEQ +
+    LDA.b #$00
+  +
+  TAX
   LDA.b $F6 : AND.b #$80 : BNE .select
-  LDA.b $F4 : AND.b #$0F : BEQ .draw
-  LDA.l SkySoaringLearned : CMP.b #!SKY_SOARING_LEARNED : BNE .draw
-  LDA.w $1AF0 : EOR.b #$01 : STA.w $1AF0
+  LDA.b $F4 : AND.b #$0A : BNE .prev ; Up ($08) or Left ($02)
+  LDA.b $F4 : AND.b #$05 : BNE .next ; Down ($04) or Right ($01)
+  TXA : ORA.b #$80 : STA.w $1AF0
+  BRA .draw
+  .prev
+  DEX : BPL .moved
+    LDX.b $00 : BRA .moved
+  .next
+  INX : CPX.b $00 : BCC .moved : BEQ .moved
+    LDX.b #$00
+  .moved
+  TXA : ORA.b #$80 : STA.w $1AF0
   LDA.b #$20 : STA.w $012F
   .draw
   JSR Menu_DrawSoaring
@@ -75,7 +119,7 @@ Menu_SpecialSoaring:
   LDA.b #$01 : STA.b $17
   RTS
   .select
-  LDA.w $1AF0 : ORA.b #$40 : STA.w $1AF0
+  TXA : ORA.b #$C0 : STA.w $1AF0
   BRA .close
   .cancel
   STZ.w $1AF0
