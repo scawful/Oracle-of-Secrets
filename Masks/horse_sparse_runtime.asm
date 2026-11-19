@@ -1,11 +1,23 @@
 ; Sparse native horse frames. All temporary work uses stack-preserved direct page.
 ; No new WRAM, global sheet ID, or P2/follower/shadow ownership.
+; Dropable-safe Page 0 VRAM map ($4000-$43FF):
+;   $4000-$407F/$4100-$417F ($00-$07): Horse parts 0..3 (Link Head/Body/Aux/Sword/Shield)
+;   $4080-$409F/$4180-$419F ($08-$09): Rider Head
+;   $40A0-$40AF/$41A0-$41AF ($0A/$1A): Narrow 8x16 Horse part 4 (8-part frames 8/9/16 only)
+;   $40B0-$40BF/$41B0-$41BF ($0B/$1B): PRESERVED & ANIMATED Rupee dropable ($D9/$DA/$DB)
+;   $40C0-$40DF/$41C0-$41DF ($0C-$0D): Rider Body (Link Push Block)
+;   $40E0-$40FF/$41E0-$41FF ($0E-$0F): PRESERVED Swagduck / Item Receipt ($22)
+;   $4200-$425F/$4300-$435F ($20-$25): PRESERVED Follower / Mounted Arrows / Heart Container / P2
+;   $4260-$427F/$4360-$437F ($26-$27): Horse part (Boomerang ancilla, restored on dismount)
+;   $4280-$429F/$4380-$439F ($28-$29): PRESERVED Small Shadow ($38) & Heart dropable ($29/$39)
+;   $42A0-$42DF/$43A0-$43DF ($2A-$2D): Horse parts (Arrow ancillas remapped to $20-$23, restored)
+;   $42E0-$42FF/$43E0-$43FF ($2E-$2F): PRESERVED Bombchu pickup ($DD)
 HorseMounted_Chr:
-  db $00,$02,$04,$06,$0C,$26,$2A,$2C
+  db $00,$02,$04,$06,$26,$2A,$2C,$0A
 HorseMounted_Vram:
-  dw $4000,$4080,$40C0,$4260,$42A0,$42C0
+  dw $4000,$4080,$40C0,$40A0,$4260,$42A0,$42C0
 HorseMounted_RowBytes:
-  dw $0100,$0080,$0040,$0040,$0040,$0040
+  dw $0100,$0040,$0040,$0020,$0040,$0040,$0040
 HorseNpc_Vram:
   dw $5000,$5020,$5040,$5060,$5080,$50A0,$50C0,$50E0
 HorseRestore_Vram:
@@ -122,6 +134,15 @@ Horse_LinkDmaPrefix:
   ; Required post-prefix DMA channel banks and X size for original8ADB body.
   LDA.b #$7E
   STA.w $4304 : STA.w $4314 : STA.w $4324 : STA.w $4334 : STA.w $4344
+  ; Keep animated Rupee dropables ($D9/$DA/$DB -> CHR $0B/$1B, VRAM $40B0/$41B0)
+  ; live every frame while mounted; Rider Body moved to $0C/$1C so $0B/$1B stays clean.
+  LDX.w #$0020
+  LDY.w #$40B0 : STY.w $2116
+  LDY.w $0AE0  : STY.w $4302 : STX.w $4305
+  LDA.b #$01   : STA.w $420B
+  LDY.w #$41B0 : STY.w $2116
+  LDY.w $0AE2  : STY.w $4302 : STX.w $4305
+  STA.w $420B
   LDX.w #$0040
   BRA .arrow_check
   .native
@@ -233,24 +254,48 @@ endif
   CMP.l Horse_UploadedFrame : BNE .upload_mounted
   BRL .replay
   .upload_mounted
-  LDA.l Horse_Frame : JSR Horse_FramePointerBase
-  ; Six fixed groups; no per-piece loop or destination-table walk.
+  LDA.l Horse_Frame : CMP.b #!Horse_FrameCount : BCC + : LDA.b #6 : +
+  STA.b $06
+  JSR Horse_FramePointerBase
+  ; Group 0: Horse parts 0..3 -> $4000/$4100 ($0100 bytes per row).
   REP #$20
   LDA.w #$0100 : STA.b $0A
   LDX.b $04
   LDA.l HorseFrame_GroupPointers+0, X : TAX
   LDY.w #$4000 : SEP #$20 : JSR Horse_DmaGroup
+  ; Group 1: Rider Head -> $4080/$4180, Rider Body -> $40C0/$41C0 ($0B/$1B untouched).
   REP #$20
-  LDA.w #$0080 : STA.b $0A
   LDX.b $04
   LDA.l HorseFrame_GroupPointers+2, X : TAX
-  LDY.w #$4080 : SEP #$20 : JSR Horse_DmaGroup
+  SEP #$20 : JSR Horse_DmaRider
+  ; Branch on 8-part frames (8, 9, 16) vs 6/7-part frames.
+  REP #$20 : LDA.b $06 : AND.w #$00FF : TAX : SEP #$20
+  LDA.l HorseFrame_Count, X : CMP.b #8 : BEQ .upload_8part
+  ; 6/7-part frames: parts 4,5 (,6) -> $4260, $42A0 (, $42C0).
+  PHA                                   ; preserve part count (6 or 7)
   REP #$20
   LDA.w #$0040 : STA.b $0A
   LDX.b $04
   LDA.l HorseFrame_GroupPointers+4, X : TAX
-  LDY.w #$40C0 : SEP #$20 : JSR Horse_DmaGroup
+  LDY.w #$4260 : SEP #$20 : JSR Horse_DmaGroup
   REP #$20
+  LDX.b $04
+  LDA.l HorseFrame_GroupPointers+6, X : TAX
+  LDY.w #$42A0 : SEP #$20 : JSR Horse_DmaGroup
+  PLA : CMP.b #7 : BCC .upload_done     ; 6-part frames skip unused $42C0 DMA
+  REP #$20
+  LDX.b $04
+  LDA.l HorseFrame_GroupPointers+8, X : TAX
+  LDY.w #$42C0 : SEP #$20 : JSR Horse_DmaGroup
+  BRA .upload_done
+  .upload_8part
+  ; 8-part frames (8, 9, 16): part 4 is narrow 8x16 -> $40A0/$41A0 ($0A/$1A only).
+  REP #$20
+  LDX.b $04
+  LDA.l HorseFrame_GroupPointers+4, X : TAX
+  SEP #$20 : JSR Horse_DmaPart4Narrow
+  REP #$20
+  LDA.w #$0040 : STA.b $0A
   LDX.b $04
   LDA.l HorseFrame_GroupPointers+6, X : TAX
   LDY.w #$4260 : SEP #$20 : JSR Horse_DmaGroup
@@ -262,7 +307,8 @@ endif
   LDX.b $04
   LDA.l HorseFrame_GroupPointers+10, X : TAX
   LDY.w #$42C0 : SEP #$20 : JSR Horse_DmaGroup
-  LDA.l Horse_Frame : CMP.b #!Horse_FrameCount : BCC + : LDA.b #6 : +
+  .upload_done
+  LDA.b $06
   STA.l Horse_UploadedFrame
   BRL .replay ; mounted and NPC uploads are mutually exclusive
 

@@ -349,6 +349,7 @@ if !ENABLE_HORSE_PARK_ANYWHERE == 1
 endif
 
   JSR HorseForm_SuppressMountedButtons
+  JSR HorseForm_ThrottleHostiles
   JSL HorseGame_KidStartCheck
 
   ; Refresh SP-3[9..15] + SP-7 if a palette reload reset SP-3 to uniform fill.
@@ -945,6 +946,10 @@ Horse_DrawPlayerOam_Long:
   LDA.b $24 : CMP.b #$F0 : BCC .shadow_on
     BRL .shadow_done
   .shadow_on
+  ; Guard 12-slot (48-byte) player OAM allocation before appending 2 shadow slots.
+  REP #$20
+  TYA : SEC : SBC.w $0352 : CMP.w #41 : BCS .shadow_done_m16
+  SEP #$20
   ; Slots 6..7: Ground hoof shadow (two 8x8 tiles $6C at SX16, SY16+12)
   LDA.b #$6C : STA.b $0B
   LDA.b #$08 : ORA.b $65 : STA.b $0A
@@ -961,6 +966,7 @@ Horse_DrawPlayerOam_Long:
   LDA.b $00 : CLC : ADC.w #$0008 : STA.b $08
   JSR HorseOam_WriteSlot
   INY #4
+  .shadow_done_m16
   .shadow_done
 
   ; Clear only unused entries; an eight-part horse consumes all twelve slots.
@@ -1026,7 +1032,7 @@ Horse_ApplyFencePriority:
   dw  6, 6,  6, 22, 22, 22
 }
 
-; Emits 16x16 Rider Head ($08) or Body ($0A) on SP-7 using DP $0D=frame. Returns M=16, X=16.
+; Emits 16x16 Rider Head ($08) or Body ($0C) on SP-7 using DP $0D=frame. Returns M=16, X=16.
 Horse_EmitRiderHead:
 {
   REP #$30
@@ -1045,7 +1051,7 @@ Horse_EmitRiderBody:
   SEP #$20
   LDA.l HorseRider_BodyX, X : STA.b $08
   LDA.l HorseRider_BodyY, X : STA.b $09
-  LDA.b #$0A : STA.b $0B
+  LDA.b #$0C : STA.b $0B
 }
 
 Horse_EmitRiderCommon:
@@ -1075,58 +1081,6 @@ Horse_EmitRiderCommon:
   RTS
 }
 
-; Sparse horse parts, signed source offsets and width-aware horizontal mirroring.
-Horse_EmitEponaBody:
-{
-  REP #$30
-  LDA.b $0D : AND.w #$00FF : ASL #3 : TAX
-  .loop
-    PHX
-    SEP #$20
-    LDA.l HorsePiece_X, X : STA.b $08
-    LDA.l HorsePiece_Y, X : STA.b $09
-    REP #$20 : TXA : AND.w #7 : TAX : SEP #$20
-    LDA.l HorseMounted_Chr, X : STA.b $0B
-    LDA.b #$06 : STA.b $0A
-    LDA.b $2F : CMP.b #4 : BNE .not_flip
-      REP #$20 : LDA.b $0D : AND.w #$00FF : TAX : SEP #$20
-      LDA.l HorseFrame_Width, X : SEC : SBC.b #16 : SEC : SBC.b $08 : STA.b $08
-      LDA.b #$46 : STA.b $0A
-    .not_flip
-    LDA.b $09 : BEQ .upper_prio : BMI .upper_prio
-      LDA.b $0A : ORA.b $65 : BRA +
-    .upper_prio
-      LDA.b $0A : ORA.b $64
-    +
-    STA.b $0A
-    LDA.b #2 : STA.b $0C
-    LDA.b $09 : PHA
-    REP #$20
-    LDA.b $08 : AND.w #$00FF
-    BIT.w #$0080 : BEQ + : ORA.w #$FF00 : +
-    CLC : ADC.b $04 : STA.b $08
-    SEP #$20 : PLA : REP #$20 : AND.w #$00FF
-    BIT.w #$0080 : BEQ + : ORA.w #$FF00 : +
-    CLC : ADC.b $06 : STA.b $0E
-    JSR HorseOam_WriteSlot
-    INY #4
-    PLX : INX : PHX
-    TXA : AND.w #7 : STA.b $08
-    LDA.b $0D : AND.w #$00FF : TAX
-    LDA.l HorseFrame_Count, X : AND.w #$00FF : CMP.b $08
-    PLX
-    ; An eight-part frame wraps the index to zero after its final part.
-    LDA.b $08 : BEQ .done
-    ; Compare the next part index against this frame count.
-    PHX
-    LDA.b $0D : AND.w #$00FF : TAX
-    LDA.b $08 : SEP #$20 : CMP.l HorseFrame_Count, X : REP #$20
-    PLX : BCS .done
-    BRL .loop
-    .done
-  RTS
-}
-
-; HorseOam_WriteSlot and HorseOam_HideAll relocated into Masks/horse_ground_clearance.asm
-; ($53E000-$53E7FF, same bank $53) to free ~88 bytes before $53D000.
+; Horse_EmitEponaBody, Horse_EmitPart4Narrow, HorseOam_WriteSlot and HorseOam_HideAll
+; live in Masks/horse_mounted_helpers.asm (same bank $53, $53D000-$53DFFF slice).
 incsrc "Masks/horse_ground_clearance.asm"

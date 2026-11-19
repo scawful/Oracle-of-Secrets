@@ -9,18 +9,24 @@ pushpc
 org $53E000
 HorseForm_ConstrainGroundInput:
 {
-  LDA.l Horse_State : BEQ + : RTS : +
+  LDA.l Horse_State : BNE .early_exit
+  LDA.b $F0 : AND.b #$0F : BNE .have_input
+  .early_exit
+  RTS
+  .have_input
   PHP : REP #$30
   PHA : PHX : PHY
   LDA.b $00 : PHA : LDA.b $02 : PHA : LDA.b $04 : PHA
   LDA.b $06 : PHA : LDA.b $08 : PHA : LDA.b $0A : PHA
   LDA.b $0C : PHA : LDA.b $0E : PHA
   SEP #$30
+  LDA.b $F0 : AND.b #$0F : STA.b $0F  ; original D-pad nibble (preserved for orthogonal slide check)
   LDX.b #$03
   .direction
-  LDA.l .buttons, X : AND.b $F0 : BEQ .next_direction
+  LDA.l .buttons, X : AND.b $F0 : BNE + : BRL .next_direction : +
   PHX
   TXA : ASL : STA.b $0E
+  STZ.b $06                           ; blocked-point bitmask for corner-slide check
   LDY.b #$02
   CPX.b #$02 : BCC + : LDY.b #$03 : +
   .point
@@ -37,10 +43,10 @@ HorseForm_ConstrainGroundInput:
   .vertical_edge
     LDA.b $0A : CLC : ADC.b $08 : STA.b $0A
   .query
-  JSR .query_side                     ; out-of-area side probe reads clear
+  JSR .query_side                     ; out-of-area probe reads clear (all 4 directions)
   ; A named water gap blocks like a wall unless a valid long jump crosses it
   ; from here (.gap_point: A = $00 clear, $FF block, else the attribute).
-  JSR .gap_point : CMP.b #$FF : BEQ .block
+  JSR .gap_point : CMP.b #$FF : BEQ .point_blocked
   CMP.b #$01 : BEQ .solid
   CMP.b #$02 : BNE .clear_point
   .solid
@@ -49,15 +55,32 @@ HorseForm_ConstrainGroundInput:
   JSR .is_fence : BCS .fence_clear
   JSR .fence_ahead : BCS .fence_clear
   SEP #$20
-  .block
-  PLY : PLX
+  .point_blocked
+  ; Middle probe blocked -> dead-stop immediately (no corner-slide possible).
+  ; Outer corner probe blocked -> record bit in $06 and finish checking the edge.
+  PLY
+  CPY.b #$01 : BEQ .block_mid
+  CPY.b #$02 : BNE .mark_corner
+    LDA.b $0E : CMP.b #$04 : BCS .block_mid ; W/E Y=2 is lower-mid
+  .mark_corner
+  TYX : LDA.l .pt_bit, X : ORA.b $06 : STA.b $06
+  DEY : BMI .edge_done
+  BRL .point
+  .block_mid
+  PLX
   LDA.l .buttons, X : TRB.b $F0 : TRB.b $F2
   BRA .next_direction
   .fence_clear
   SEP #$20
   .clear_point
-  PLY : DEY : BPL .point
+  PLY : DEY : BMI .edge_done
+  BRL .point
+  .edge_done
   PLX
+  LDA.b $06 : BEQ .next_direction     ; all edge points clear
+  ; At least one outer corner hit: always strip forward dir so Epona cannot clip.
+  LDA.l .buttons, X : TRB.b $F0 : TRB.b $F2
+  JSR HorseClearance_ResolveCorner
   .next_direction
   DEX : BMI .restore
   BRL .direction
@@ -131,13 +154,14 @@ HorseForm_ConstrainGroundInput:
   ; valid jump: block) or the attribute unchanged (not a gap). Clearing a
   ; jumpable gap point lets the horse keep walking and turn to face the gap,
   ; so CheckFenceJump's probes can reach it (the queue123 freeze class).
-  ; A side probe outside the current area would wrap ($070E/$070A masks in
-  ; Horse_QueryTileAt) to the opposite edge of this area; skip it. Native
-  ; Link collision and the area transition still own the seam itself.
-  ; In: A16/X8, $0A/$0C = probe point, X = edge index. Out: M8/X8, A = tile
-  ; attribute and $04 = Tile16, or A = $00 / $04 = $0000 (clear) when skipped.
+  ; Any leading-edge probe outside the current area would wrap ($070E/$070A masks
+  ; in Horse_QueryTileAt) to the opposite edge of this area; treat it as clear for
+  ; all 4 directions (N/S/W/E). Native Link collision, outer-world bounds and the
+  ; area transition still own the seam itself.
+  ; In: A16/X8, $0A/$0C = probe point. Out: M8/X8, A = tile attribute and
+  ; $04 = Tile16, or A = $00 / $04 = $0000 (clear) when outside current area.
   .query_side
-  CPX.b #$04 : BCC + : JSR .point_outside_area : BCC +
+  JSR .point_outside_area : BCC +
     STZ.b $04
     SEP #$20 : LDA.b #$00
     RTS
@@ -159,10 +183,13 @@ HorseForm_ConstrainGroundInput:
   SEC
   RTS
   .gap_point
+  ; Fast-path: all HorseLongGapTile16s have high byte >= $02 ($02B8/$0F90/$0F91/$0FF0).
+  LDX.b $05 : BEQ .gap_none
   PHA
   REP #$20 : JSR HorseLong_IsGap : SEP #$20
   BCS +
   PLA
+  .gap_none
   RTS
   + PLA
   LDA.b $0E : LSR : STA.l Horse_JumpDir
@@ -172,14 +199,16 @@ HorseForm_ConstrainGroundInput:
   + RTS
   .buttons
   db $08,$04,$02,$01 ; north, south, west, east
-  ; Ground lane clearance around Link ($22,$20): symmetric corridor matching
-  ; Kalyxo 16px bridges/archways (widens OW $11 bridge to a 19px lane).
+  .pt_bit
+  db $01,$02,$04,$08
+  ; Ground lane clearance around Link ($22,$20): gently inset leading edges &
+  ; corners for smooth riding through 16px bridges/archways without wall clipping.
   .edge_x
-  dw $0000,$0000,$FFF8,$0017
+  dw $0000,$0000,$FFFA,$0015
   .edge_y
-  dw $FFF4,$0014,$0000,$0000
+  dw $FFF6,$0013,$0000,$0000
   .along
-  dw $0002,$0008,$000D,$0014
+  dw $0003,$0008,$000C,$0012
 }
 HorseGroundClearance_End:
 ; Ranch fence Tile16s Epona can jump: Toto Ranch fence set, $02D6, and the Kalyxo-art
@@ -543,44 +572,8 @@ HorseLong_Lerp:
   RTS
 }
 
-; Relocated from Masks/horse_form.asm (same bank $53) to relieve $53D000 ceiling.
-; Writes one OAM entry at Y ($0800+Y) and $0A20+(Y>>2). Requires DBR=$00. Keeps Y.
-; Inputs (M=16): $08=screen X (signed), $0E=screen Y (signed), $0B=tile, $0A=attr, $0C=size (0 or 2).
-HorseOam_WriteSlot:
-{
-  ; Clip Y if completely offscreen vertically (224..65519)
-  LDA.b $0E : CLC : ADC.w #$0010 : CMP.w #$0100 : BCS .offscreen
-  ; Clip X if outside [-16..255]
-  LDA.b $08 : CLC : ADC.w #$0010 : CMP.w #$0110 : BCS .offscreen
-
-  ; On screen: write OAM $0800..$0803 via DBR=$00 WRAM mirror
-  SEP #$20
-  LDA.b $08 : STA.w $0800, Y        ; X low
-  LDA.b $0E : STA.w $0801, Y        ; Y
-  LDA.b $0B : STA.w $0802, Y        ; tile
-  LDA.b $0A : STA.w $0803, Y        ; attr
-
-  ; Compute $0A20 index and high X bit
-  LDA.b $09 : AND.b #$01              ; high bit of Screen X ($08/$09)
-  ORA.b $0C                           ; size bit ($02 or $00)
-  PHA
-  REP #$20
-  TYA : LSR #2 : TAX
-  SEP #$20
-  PLA : STA.w $0A20, X
-  REP #$20
-  RTS
-
-  .offscreen
-  SEP #$20
-  LDA.b #$F0 : STA.w $0801, Y
-  REP #$20
-  TYA : LSR #2 : TAX
-  SEP #$20
-  LDA.b #$01 : STA.w $0A20, X
-  REP #$20
-  RTS
-}
+; HorseOam_WriteSlot and HorseOam_HideAll relocated into Masks/horse_mounted_helpers.asm
+; (same bank $53, $53D000-$53DFFF slice) to keep $53E000-$53E7FF roomy.
 
 ; Fast Tile16 lookup without calling vanilla $00882E.
 ; Inputs: DP $0A = 16-bit world Y px, DP $0C = 16-bit world X px (M/X=8).
@@ -721,17 +714,6 @@ HorseForm_CheckLandingWalkable:
   dw 4, 11, 8
   .off_y
   dw 12, 12, 8
-}
-
-HorseOam_HideAll:
-{
-  LDA.w $0352 : LSR #2 : TAX
-  LDA.w #$0101
-  LDY.b #5
-- STA.w $0A20, X
-  INX : INX
-  DEY : BPL -
-  RTS
 }
 
 assert pc() <= $53E800, "Horse grounded clearance exceeded its bounded bank53 slice"
